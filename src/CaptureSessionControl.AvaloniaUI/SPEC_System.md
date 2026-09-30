@@ -172,7 +172,7 @@ flowchart TB
   - 設定の適用: `CaptureSettings` → `FadeMaskDragRectOptions`（コアのマッパーで一元化）→ `Options`（同一値スキップ）
   - 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、複合コントロールへ注入
   - カーソル上書き抑止（Crop 中の十字カーソル維持）
-  - 確定 → 論理 Rect（`CropBoundsMath.ComputeCropBounds` で閉区間化） / キャンセル → 0x0 の空矩形を返却（いずれもコア型 `EsRectInt`）
+  - 確定 → 論理 Rect（`CropBoundsMath.ComputeCropBounds` で区間の流儀に従い終点のピクセルを加算） / キャンセル → 0x0 の空矩形を返却（いずれもコア型 `EsRectInt`）
   - サイズラベルの文言生成（`CropLabelTexts` に委譲）
 - **可視性**: internal
 - **依存**: CropViewControl / FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectOptions）/ Platform.Core（`Native.ICursorOverrideGuard` / ICoordTransform / CoordTransform）/ CropBoundsMath / CropLabelTexts
@@ -186,7 +186,7 @@ flowchart TB
   - モード別の選択処理（AreaSelect: ドラッグ選択 + ルーペ / Screen・WindowSelect: 要素検出 + ハイライト）
   - **選択スタイル（ハイライト型 / ドラッグ型）の判定はコアの `CaptureTypeTraits.IsHighlighted` が単一所有する**（本クラスは結果を 1 度読んで、十字カーソル・ルーペ・確定操作の配線を導く。 種別を直接比較しない）
   - **完了は 1 回だけ**の規則はコアの `CaptureSessionState` が単一所有する（確定とキャンセルの競合で二重完了にしない）
-  - **確定矩形の計算はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（種別ごとの閉区間化と画像内へのクランプを組み合わせた唯一の入口。 退化した結果は確定せずキャンセルする）。 サイズラベルの表示倍率はコア（`MonitorScalingMath.ResolveForDomainRect`）へ委譲する
+  - **確定矩形の計算はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（種別が決める区間の流儀に従った終点の加算と画像内へのクランプを組み合わせた唯一の入口。 退化した結果は確定せずキャンセルする）。 サイズラベルの表示倍率はコア（`MonitorScalingMath.ResolveForDomainRect`）へ委譲する
   - **事前切り出しキャッシュ（同一判定・所有権の受け渡し・旧値の破棄）はコアの `CaptureClipCache` が単一所有する**（本クラスは切り出しをバックグラウンドで実行して `Store` するだけ）。 適用範囲はハイライト型のホバー時のみ（範囲選択はドラッグ中の連続更新でキャッシュが無駄になるため）
   - **ドメイン⇔画面物理の変換はコアの `CaptureClipMath` が単一所有する**（本クラスはコアの矩形を Avalonia の型へ写すだけ）
   - **確定対象の選択（ハイライト矩形 / 選択矩形）はコアの `CaptureTypeTraits.ResolveRect` が単一所有する**（サイズラベルの文言生成もこの結果を使う）

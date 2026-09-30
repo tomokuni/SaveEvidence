@@ -21,20 +21,20 @@
 
 ## 2. 機能一覧
 
-- **切り出し矩形の計算**（`CropBoundsMath`）: 選択矩形（半開区間）→ 画像内のピクセル矩形。 画像内へのクランプ・端数の丸め（0.5 は切り上げ）・閉区間（始点・終点のピクセルを含む。 **`+1` の規則をここが単一所有する**）・最小サイズ判定を単一所有する
-- **選択矩形→切り出し矩形の解決**（`CaptureClipMath.ResolveCaptureRect`）: 確定時の切り出し矩形を決める**唯一の入口**（選択矩形も占有範囲も**画面物理座標**で渡す）。 種別ごとの閉区間化（`CaptureTypeTraits`）とクランプ・丸め（`CropBoundsMath`）を組み合わせ、画像の右端・下端で透明な余白が付かないようにする（両 UI が同じ 1 行を呼ぶ）。 UI の選択矩形が画像ローカル座標の場合は、境界で `ToScreenRect` により画面物理座標へ戻してから渡す（１つの座標空間に揃えることで取り違えの余地をなくす）
+- **切り出し矩形の計算**（`CropBoundsMath`）: 選択矩形 → 画像内のピクセル矩形。 画像内へのクランプ・端数の丸め（0.5 は切り上げ）・終点のピクセルの加算（始点・終点を含むかは矩形の `EsRectInterval` が持ち、**加算の判断をここが単一所有する**）・最小サイズ判定を単一所有する
+- **選択矩形→切り出し矩形の解決**（`CaptureClipMath.ResolveCaptureRect`）: 確定時の切り出し矩形を決める**唯一の入口**（選択矩形も占有範囲も**画面物理座標**で渡す）。 種別ごとの区間の流儀（`CaptureTypeTraits.ResolveInterval`）とクランプ・丸め（`CropBoundsMath`）を組み合わせ、画像の右端・下端で透明な余白が付かないようにする（両 UI が同じ 1 行を呼ぶ）。 UI の選択矩形が画像ローカル座標の場合は、境界で `ToScreenRect` により画面物理座標へ戻してから渡す（１つの座標空間に揃えることで取り違えの余地をなくす）
 - **外観・動作設定**（`CaptureSettings`）: 全メンバー nullable の record。 null は「デフォルト値」または「現在値維持（部分更新）」を表し、`Validate` / `ToNonNull` を提供する
 - **キャプチャ結果**（`CaptureResult`）: `EsBitmap?`（画像）と `EsRectInt?`（仮想スクリーン座標の領域）の組
 - **複合コントロールの設定変換**（`FadeMaskDragRectOptionsMapper`）: `CaptureSettings` → `FadeMaskDragRectOptions`（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）の**寸法・表示可否**の対応を単一所有する（両 UI のホストが同じ変換を使う。 **色・枠線の太さ・表示可否は描画にだけ必要な設定のため写像せず**、提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有する）
 - **ラベル文言の単一所有**（`CaptureLabelTexts`）: キャプチャ種別→動作モードの写像と、操作ラベル（確定・キャンセル方法）・情報ラベル（ウィンドウタイトル）の文言を単一所有する（汎用コントロールは文言を持たず、ホストがプロバイダで与える）
 - **切り出し結果の適用先**（`ICaptureTarget`）: 撮影・切り出しの結果をアプリ側へ渡すポート（現在の画像・画像差し替えの通知・切り出しの適用）。 アプリのドメイン操作（Undo 退避・未保存化・ステータス通知）は実装側に残す
   - **画像の平均色**（`ImageColorMath`）: 標本間引きで平均色を求める（描画の背景色の決定に使う）
-  - **キャプチャ種別の性質**（`CaptureTypeTraits`）: ハイライト型（クリック確定）か・切り出しを閉区間（終点 +1）で扱うか・カーソル下の検出対象（画面 / ウィンドウ）の判定を単一所有する
+  - **キャプチャ種別の性質**（`CaptureTypeTraits`）: ハイライト型（クリック確定）か・切り出しの区間の流儀（終点のピクセルを含むか）・カーソル下の検出対象（画面 / ウィンドウ）の判定を単一所有する
 - **モニタの実表示倍率**（`MonitorScalingMath`）: 対象矩形の**中心**を含むモニタの倍率を解決する（該当なしはフォールバック）。 ドメイン座標からは**原点の加算**も本クラスが行う（`ResolveForDomainRect`）。 判定に使う一覧の構築（**倍率未確定（0 以下）の除外**）も `Collect` が単一所有する（両 UI が同じ判定点・同じ対象を使う）
 - **ハイライトの状態と判断**（`CaptureHighlight` / `CaptureHighlightSession`）: カーソル下の要素の検出結果から「ハイライトの有無・矩形（ドメイン座標）・表示名」を導出する。 **未検出の正規化・ドメイン変換・表示名の変化の判定・診断ログ**を単一所有し、UI は戻り値を設定するだけにする（直前の状態はセッションのプロパティから読む）
 - **オーバーレイのキー操作**（`CaptureKeyActions`）: Enter（Return を含む）= 確定 / Escape = キャンセルを単一所有する。 **確定対象が無い場合の Enter は何もしない**（何も検出していない状態でキャンセル扱いにしない）。 UI はキーを `EsKey` へ変換して渡すだけにする
 - **クリック確定の状態**（`CaptureClickSelection`）: スクリーン選択 / ウィンドウ選択の「押下で固定・解放で確定」を単一所有する。 退化した検出（空の矩形）は固定せず、押下のたびに置き換え、解放で 1 回だけ取り出す（固定が無い解放では確定しない）
-- **切り出しのサイズラベル**（`CropLabelTexts`）: `LT: (l, t),  RB: (r, b),  WH: (w+1, h+1), Zoom: (pz%)` 形式。 撮影の選択（`CaptureLabelTexts.ResolveSizeLabel`）とは用途が違うため別途単一所有する。 **未選択は描かない**という判断も `ResolveSizeLabel` が持つ
+- **切り出しのサイズラベル**（`CropLabelTexts`）: `LT: (l, t),  RB: (r, b),  WH: (w+1, h+1), Zoom: (pz%)` 形式。 `WH` は含まれるピクセル数であり、終点を含めるかの判断は矩形の `EsRectInterval` が持つ（切り出し範囲と同じ値を使う）。 撮影の選択（`CaptureLabelTexts.ResolveSizeLabel`）とは用途が違うため別途単一所有する。 **未選択は描かない**という判断も `ResolveSizeLabel` が持つ
 - **サイズラベルの文言解決**（`CaptureLabelTexts.ResolveSizeLabel`）: 「確定対象があれば矩形から生成・無ければホスト指定の文言」という規則を単一所有する（UI が同じ三項演算を書かない。 表示倍率のデリゲートは表示時のみ評価する）
 - **設定の部分更新マージ**（`CaptureSettingsMerge`）: 全 45 項目の「null は現在値維持・非 null は上書き」と、同値再設定のスキップ（参照を差し替えない）を単一所有する
 - **セッションの排他スロット**（`CaptureSessionSlot{TCapture, TCrop}`）: 撮影と切り出しで同時に 1 つだけ実行できる規則と、「未実行なら false」の既定値解決を単一所有する
@@ -65,12 +65,12 @@ CaptureSessionControl.Core
 using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.Platform.Core.Geometry;
 
-// 選択矩形（画像ピクセル・半開区間）から切り出し範囲を求める
+// 選択矩形（画像ピクセル）から切り出し範囲を求める
+// 終点のピクセルを含めるかは矩形の Interval が決める（ドラッグ選択は Closed）
 var bounds = CropBoundsMath.ComputeCropBounds(
-    new EsRect(10, 10, 40, 40),      // 選択矩形
-    new EsSize(1920, 1080),          // 画像サイズ
-    minSelectionSize: 6,             // これ未満は空（切り出し不可）
-    closedInterval: true);           // 終点の 1 ピクセルを含める
+    new EsRect(10, 10, 40, 40, EsRectInterval.Closed),   // 選択矩形（ドラッグ選択）
+    new EsSize(1920, 1080),                              // 画像サイズ
+    minSelectionSize: 6);                                // これ未満は空（切り出し不可）
 
 if (!bounds.IsEmpty)
 {
@@ -91,7 +91,7 @@ src/
 │   ├── CropBoundsMath.cs                  # 切り出し矩形の計算
 │   ├── CropLabelTexts.cs                  # 切り出しのサイズラベル書式
 │   ├── ImageColorMath.cs                  # 画像の平均色（標本間引き）
-│   ├── CaptureTypeTraits.cs               # キャプチャ種別の性質（ハイライト型・閉区間・検出対象）
+│   ├── CaptureTypeTraits.cs               # キャプチャ種別の性質（ハイライト型・区間の流儀・検出対象）
 │   ├── CaptureElementTarget.cs            # カーソル下の検出対象（画面 / ウィンドウ）
 │   ├── MonitorScalingMath.cs              # モニタの実表示倍率（矩形中心で判定・倍率未確定の除外）
 │   ├── CaptureHighlight.cs                # ハイライトの状態・判断・ログ（検出→ハイライト）
@@ -119,11 +119,11 @@ src/
 │   └── CaptureResult.cs                   # キャプチャ結果（record）
 └── tests/
     ├── CaptureSessionControl.Core.Tests.csproj
-    ├── CropBoundsMath.Tests.cs            # クランプ・丸め・閉区間・丸め規則（41 件）
-    ├── CropLabelTexts.Tests.cs            # 閉区間のピクセル数・ズーム率の丸め・未選択時の表示可否（9 件）
+    ├── CropBoundsMath.Tests.cs            # クランプ・丸め・区間の流儀・丸め規則（41 件）
+    ├── CropLabelTexts.Tests.cs            # 含まれるピクセル数・ズーム率の丸め・未選択時の表示可否（10 件）
 
     ├── ImageColorMath.Tests.cs            # 平均色（標本間引き・空画像。5 件）
-    ├── CaptureTypeTraits.Tests.cs         # ハイライト型・閉区間・検出対象・検出呼び分け・確定対象（16 件）
+    ├── CaptureTypeTraits.Tests.cs         # ハイライト型・区間の流儀・検出対象・検出呼び分け・確定対象（16 件）
     ├── MonitorScalingMath.Tests.cs        # 中心判定・境界・フォールバック・ドメイン座標・一覧の構築・代表値（19 件）
     ├── CaptureClipMath.Tests.cs           # 切り出し矩形の解決（座標空間の契約・整数/浮動小数）・双方向変換・画像の共有値（34 件）
     ├── CaptureImageHolder.Tests.cs        # 保持の規則（差し替え・破棄後・フォールバック）（8 件）

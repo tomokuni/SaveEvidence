@@ -189,14 +189,15 @@ public class CropBoundsMathTests
     }
 
     // ====================================================================
-    // ComputeCropBounds（最小サイズ判定 + 半開区間 → 閉区間）
+    // ComputeCropBounds（最小サイズ判定 + 区間の流儀に応じた終点の加算）
     // ====================================================================
 
     [Fact]
     public void ComputeCropBounds_閉区間で始点終点のピクセルを含む()
     {
         // 選択矩形 (10,10,40,40) = 半開区間 [10,50)。 閉区間では [10,50] = 41×41 ピクセル
-        var result = CropBoundsMath.ComputeCropBounds(new EsRect(10, 10, 40, 40), new EsSize(100, 100), 1.0);
+        var result = CropBoundsMath.ComputeCropBounds(
+            new EsRect(10, 10, 40, 40, EsRectInterval.Closed), new EsSize(100, 100), 1.0);
 
         Assert.Equal(new EsRectInt(10, 10, 41, 41), result);
     }
@@ -206,7 +207,8 @@ public class CropBoundsMathTests
     {
         // 選択矩形が画像右端 (80,80,20,20) = [80,100)。 閉区間では [80,100] = 21 ピクセルだが、
         // 画像サイズ 100 を超えないよう 20 ピクセルにクランプする
-        var result = CropBoundsMath.ComputeCropBounds(new EsRect(80, 80, 20, 20), new EsSize(100, 100), 1.0);
+        var result = CropBoundsMath.ComputeCropBounds(
+            new EsRect(80, 80, 20, 20, EsRectInterval.Closed), new EsSize(100, 100), 1.0);
 
         Assert.Equal(new EsRectInt(80, 80, 20, 20), result);
     }
@@ -224,7 +226,8 @@ public class CropBoundsMathTests
     public void ComputeCropBounds_負座標は0にクランプする()
     {
         // 選択矩形が画像外（負座標）→ 0 にクランプして閉区間で切り出す
-        var result = CropBoundsMath.ComputeCropBounds(new EsRect(-5, -5, 20, 20), new EsSize(100, 100), 1.0);
+        var result = CropBoundsMath.ComputeCropBounds(
+            new EsRect(-5, -5, 20, 20, EsRectInterval.Closed), new EsSize(100, 100), 1.0);
 
         Assert.Equal(new EsRectInt(0, 0, 16, 16), result);
     }
@@ -247,11 +250,11 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ComputeCropBounds_半開区間の指定では終点のピクセルを加えない()
+    public void ComputeCropBounds_半開区間の矩形では終点のピクセルを加えない()
     {
         // スクリーン選択・ウィンドウ選択のハイライト矩形は全ピクセルを含むため加算しない
         var result = CropBoundsMath.ComputeCropBounds(
-            new EsRect(10, 10, 40, 40), new EsSize(100, 100), 1.0, closedInterval: false);
+            new EsRect(10, 10, 40, 40), new EsSize(100, 100), 1.0);
 
         Assert.Equal(new EsRectInt(10, 10, 40, 40), result);
     }

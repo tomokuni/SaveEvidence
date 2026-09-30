@@ -51,7 +51,7 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ CropBoundsMath（静的クラス）                           │
-│  ComputeCropBounds(selection, imageSize, min, closed)│
+│  ComputeCropBounds(selection, imageSize, min)  │
 │    ├─ 最小サイズ判定                                  │
 │    ├─ ToPixelRect      （クランプ + 四捨五入）         │
 │    └─ ToClosedInterval （終点の 1 ピクセル + 端のクランプ）│
@@ -72,7 +72,7 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ 種別・モニタの判断（静的クラス）                        │
-│  CaptureTypeTraits: IsHighlighted / UsesClosedInterval│
+│  CaptureTypeTraits: IsHighlighted / ResolveInterval│
 │                     GetElementTarget                  │
 │  MonitorScalingMath: ResolveForRect / ResolveForDomainRect（中心で判定）      │
 │                     Collect（倍率未確定の除外） / ResolveScaling（代表値）      │
@@ -123,7 +123,7 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 ```mermaid
 classDiagram
     class CropBoundsMath {
-        +ComputeCropBounds(EsRect, EsSize, double, bool) EsRectInt
+        +ComputeCropBounds(EsRect, EsSize, double) EsRectInt
         +ToPixelRect(EsRect, EsSize) EsRectInt
         +ToClosedInterval(EsRectInt) EsRectInt
         +ToClosedInterval(EsRectInt, EsSize) EsRectInt
@@ -131,7 +131,7 @@ classDiagram
     }
     class CaptureTypeTraits {
         +IsHighlighted(CaptureType) bool
-        +UsesClosedInterval(CaptureType) bool
+        +ResolveInterval(CaptureType) EsRectInterval
         +GetElementTarget(CaptureType) CaptureElementTarget
         +FindUnderCursor(IElementFinder, CaptureType, EsPointInt) ElementFinderResults
         +ResolveRect(CaptureType, EsRect, EsRect) EsRect?
@@ -248,7 +248,7 @@ flowchart TD
     C -- はい --> D[四捨五入して画像内へクランプ]
     D --> E{幅・高さ >= 1px?}
     E -- いいえ --> Z
-    E -- はい --> F{閉区間か?}
+    E -- はい --> F{矩形の Interval は Closed か?}
     F -- いいえ --> G[矩形を返す]
     F -- はい --> H[終点の 1px を加える（端でクランプ）]
     H --> G
@@ -263,7 +263,7 @@ flowchart TD
 
 ## 6. 設計判断
 
-- **切り出し規則を 1 箇所に置く**: 閉区間（終点の 1 px を含む）と端のクランプという切り出しの規則は `CropBoundsMath` が単一所有し、撮影の確定（`CaptureClipMath`）と切り出し（`CropSession`）が委譲する。 規則が複数箇所にあると、同じドラッグでも 1 px 異なる矩形になる。
+- **切り出し規則を 1 箇所に置く**: 終点のピクセルを含めるか（矩形の `EsRectInterval`）と端のクランプという切り出しの規則は `CropBoundsMath` が単一所有し、撮影の確定（`CaptureClipMath`）と切り出し（`CropSession`）が委譲する。 規則が複数箇所にあると、同じドラッグでも 1 px 異なる矩形になる。
 - **色は `System.Drawing.Color`**: UI 非依存のプリミティブ（`System.Drawing.Primitives`）で、MewUI のコントロールがそのまま受け取れる。 設定から複合コントロールの設定値（`FadeMaskDragRectOptions`）への変換は本プロジェクトの `FadeMaskDragRectOptionsMapper` が単一所有する（両 UI で同じ変換を使う）。 ただし**色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる）。
 - **判定を「クランプ前の値」で行う**: 画像外へ出た選択矩形を「大きい」と誤判定しないため、最小サイズの判定は画像内へクランプする前の値で行う。
 - **丸めは 0.5 を切り上げ**: `Math.Round` の既定（銀行丸め）はピクセル座標の直感に反するため `MidpointRounding.AwayFromZero` を使う。
@@ -272,11 +272,11 @@ flowchart TD
 
 | 対象 | 内容 |
 | --- | --- |
-| `CropBoundsMath` | 純粋関数のためヘッドレスで検証する。 四捨五入（0.5 の切り上げ）・画像外のクランプ・画像と重ならない場合の空・1 ピクセル未満の空・最小サイズ・閉区間と端のクランプ・画像サイズ 0 以下・丸め規則の公開（41 件）。 Avalonia 版 / MewUI 版から移した境界値テストを 1 箇所へ集約した |
+| `CropBoundsMath` | 純粋関数のためヘッドレスで検証する。 四捨五入（0.5 の切り上げ）・画像外のクランプ・画像と重ならない場合の空・1 ピクセル未満の空・最小サイズ・区間の流儀に応じた終点の加算と端のクランプ・画像サイズ 0 以下・丸め規則の公開（41 件）。 Avalonia 版 / MewUI 版から移した境界値テストを 1 箇所へ集約した |
 | `CaptureSettings` / `CaptureSettingsMerge` | 既定値の解決（`ToNonNull`）・部分更新のマージ・同値スキップ・範囲外の検証 |
-| `CaptureTypeTraits` | 3 種別すべての性質（ハイライト・閉区間・検出対象）と未定義値のフォールバック・検出関数の呼び分け・確定対象の選択（16 件） |
+| `CaptureTypeTraits` | 3 種別すべての性質（ハイライト・区間の流儀・検出対象）と未定義値のフォールバック・検出関数の呼び分け・確定対象の選択（16 件） |
 | `MonitorScalingMath` | 中心を含むモニタの選択・単一モニタ・どのモニタにも含まれない場合のフォールバック・負座標・ドメイン座標からの原点加算 |
-| `CropLabelTexts` / `ImageColorMath` | ラベル書式（閉区間の `WH`・倍率の丸め）・平均色（単色・標本間引き・null 検証） |
+| `CropLabelTexts` / `ImageColorMath` | ラベル書式（区間の流儀に応じた `WH`・倍率の丸め）・平均色（単色・標本間引き・null 検証） |
 | `CaptureClipMath` / `CaptureClipCache` | 画面物理⇔画像ローカル座標の双方向変換（往復一致）・座標空間の混在で切り出せなくなる機序・切り出しの未取得時 null・同一判定・所有権の移動・旧値の破棄 |
 | `CaptureTiming` / `CropSessionActions` | 方針値（タイムアウト・画面外座標）と、1 操作で実行する内容の決定（4 通りの入力） |
 | `CaptureVirtualScreen` | 撮影対象の範囲（単一・複数モニタ・負の原点・モニタが無い場合）と、タイムアウト待ち・未使用結果の破棄 |

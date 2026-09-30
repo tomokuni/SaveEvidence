@@ -26,11 +26,11 @@ public class CaptureTypeTraitsTests
     }
 
     [Fact]
-    public void UsesClosedInterval_範囲選択のみtrue()
+    public void ResolveInterval_範囲選択のみ閉区間になる()
     {
-        Assert.True(CaptureTypeTraits.UsesClosedInterval(CaptureType.AreaSelect));
-        Assert.False(CaptureTypeTraits.UsesClosedInterval(CaptureType.ScreenSelect));
-        Assert.False(CaptureTypeTraits.UsesClosedInterval(CaptureType.WindowSelect));
+        Assert.Equal(EsRectInterval.Closed, CaptureTypeTraits.ResolveInterval(CaptureType.AreaSelect));
+        Assert.Equal(EsRectInterval.HalfOpen, CaptureTypeTraits.ResolveInterval(CaptureType.ScreenSelect));
+        Assert.Equal(EsRectInterval.HalfOpen, CaptureTypeTraits.ResolveInterval(CaptureType.WindowSelect));
     }
 
     [Fact]
@@ -48,12 +48,14 @@ public class CaptureTypeTraitsTests
     }
 
     [Fact]
-    public void IsHighlighted_とUsesClosedInterval_は排他である()
+    public void IsHighlighted_とResolveInterval_は排他である()
     {
-        // ハイライト型は検出矩形（全ピクセルを含む閉区間）を使うため +1 しない
+        // ハイライト型は検出矩形（全ピクセルを含む）を使うため +1 しない
         foreach (var type in Enum.GetValues<CaptureType>())
         {
-            Assert.NotEqual(CaptureTypeTraits.IsHighlighted(type), CaptureTypeTraits.UsesClosedInterval(type));
+            Assert.NotEqual(
+                CaptureTypeTraits.IsHighlighted(type),
+                CaptureTypeTraits.ResolveInterval(type) == EsRectInterval.Closed);
         }
     }
 

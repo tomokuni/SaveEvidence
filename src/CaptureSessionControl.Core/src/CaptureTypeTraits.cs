@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャ種別（<see cref="CaptureType"/>）の性質を単一所有する。</summary>
 /// <remarks>
-/// 「どの種別がハイライト型（クリック確定）か」「どの種別が閉区間（終点 +1）か」「どの検出関数を使うか」は<br/>
+/// 「どの種別がハイライト型（クリック確定）か」「どの種別が閉区間（終点のピクセルを含む）か」「どの検出関数を使うか」は<br/>
 /// UI 実装に依存しない規則であるため本クラスへ集約する（両 UI が同じ判定を別表現で持たない）。<br/>
 /// 種別は <c>Platform.Core</c> の <see cref="CaptureType"/> が所有し、本クラスはその性質を導出するだけである。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
@@ -26,15 +26,17 @@ public static class CaptureTypeTraits
     public static bool IsHighlighted(CaptureType captureType)
         => captureType is CaptureType.ScreenSelect or CaptureType.WindowSelect;
 
-    /// <summary>切り出し範囲を閉区間（終点のピクセルを含む）として扱う種別かどうかを判定する。</summary>
+    /// <summary>切り出し範囲の区間の流儀（終点のピクセルを含むか）を取得する。</summary>
     /// <param name="captureType">キャプチャ種別。</param>
-    /// <returns>範囲選択の場合は true。 ハイライト型は false（検出矩形が既に全ピクセルを含む）。</returns>
+    /// <returns>範囲選択の場合は <see cref="EsRectInterval.Closed"/>。 ハイライト型は <see cref="EsRectInterval.HalfOpen"/>。</returns>
     /// <remarks>
-    /// ドラッグで作る矩形は「始点から終点まで」を意図するため終点のピクセルを含める（+1）が、<br/>
-    /// ハイライト矩形はホストが全ピクセルを含む閉区間として与えるため加算しない（1 ピクセル大きく切り出されるのを防ぐ）。
+    /// ドラッグで作る矩形は「始点から終点まで」を意図するため終点のピクセルを含める（<c>+1</c>）が、<br/>
+    /// ハイライト矩形は検出結果が全ピクセルを含むため加算しない（1 ピクセル大きく切り出されるのを防ぐ）。<br/>
+    /// 種別は矩形の出自（ドラッグ / 検出）を決めるため、そのまま区間の流儀を決める<br/>
+    /// （切り出し側は返された値で矩形を組み、ピクセル数の判断は <see cref="EsRectInterval"/> を読む側へ閉じる）。
     /// </remarks>
-    public static bool UsesClosedInterval(CaptureType captureType)
-        => captureType == CaptureType.AreaSelect;
+    public static EsRectInterval ResolveInterval(CaptureType captureType)
+        => captureType == CaptureType.AreaSelect ? EsRectInterval.Closed : EsRectInterval.HalfOpen;
 
     /// <summary>カーソル下の要素を検出する対象を取得する。</summary>
     /// <param name="captureType">キャプチャ種別。</param>

@@ -304,13 +304,13 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 
 | 種別 | 変換 | 備考 |
 | --- | --- | --- |
-| AreaSelect | `+1`（閉区間化） | 半開区間の選択矩形を始点・終点を含む形へ変換する |
+| AreaSelect | `+1`（`Closed`） | 半開区間の選択矩形を始点・終点を含む形（終点のピクセルを加算）へ変換する |
 | ScreenSelect / WindowSelect | 変換なし | 検出した画面・ウィンドウの矩形は全ピクセルを含む。 `+1` すると画面外・ウィンドウ外へ 1 px はみ出す |
-| Crop | `+1`（閉区間化、画像の端でクランプ） | `CropBoundsMath.ComputeCropBounds` が単一所有する |
+| Crop | `+1`（`Closed`、画像の端でクランプ） | `CropBoundsMath.ComputeCropBounds` が単一所有する |
 | 撮影（全種別） | 上表の変換 + 画像内へのクランプ | 確定時の切り出し矩形は `CaptureClipMath.ResolveCaptureRect` が単一所有する（種別の性質とクランプ・丸めを組み合わせた唯一の入口。 画像の右端・下端で透明な余白が付かない） |
 | Crop のサイズラベル | `WH: (右端 − 左端 + 1, 下端 − 上端 + 1)` | 閉区間のピクセル数で表示（`CropLabelTexts` が単一所有する） |
 
-種別ごとの適用有無はコアの `CaptureTypeTraits.UsesClosedInterval` が単一所有します（AreaSelect のみ true）。
+種別ごとの適用有無はコアの `CaptureTypeTraits.ResolveInterval` が単一所有します（AreaSelect のみ `Closed`）。
 
 具体例: ドラッグ (10,10) → (50,50) の選択矩形は `Rect(10, 10, 40, 40)`（半開区間 [10,50)）ですが、切り出しは **`EsRectInt(10, 10, 41, 41)`（[10,50] の 41×41 ピクセル）** になります。
 
@@ -325,7 +325,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 5. `OverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示）
    - AreaSelect: Marquee ドラッグ選択 + Loupe（仮想スクリーン Bitmap 取得完了後に表示開始。 Source 未設定の「画像外の色のみ」表示を防止）
    - Screen / WindowSelect: Pointer 移動で要素検出 → ハイライト。 **クリック（左ボタン押下でハイライト固定 → 解放で確定）/ Enter キーで確定 / Esc キーでキャンセル**
-6. 確定時: 選択矩形を種別に応じて切り出し矩形へ変換（AreaSelect は閉区間化。 ScreenSelect / WindowSelect は変換なし）し、**枠選択中に事前切り出し済みのキャッシュを再利用**（不一致時のみ切り出し。 枠の変更がない場合は切り出しスキップ）
+6. 確定時: 選択矩形を種別に応じて切り出し矩形へ変換（AreaSelect は終点のピクセルを加算。 ScreenSelect / WindowSelect は変換なし）し、**枠選択中に事前切り出し済みのキャッシュを再利用**（不一致時のみ切り出し。 枠の変更がない場合は切り出しスキップ）
    - 非アクティブ化 / Close → キャンセル（0x0 空結果）
 7. 結果を `CaptureResult(Image, SourceBounds)` で TCS 経由返却 → `CaptureCompleted` イベント（同期・画像変更） → オーナー配置復帰 → オーナー除外解除
 

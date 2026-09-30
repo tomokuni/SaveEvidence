@@ -30,25 +30,31 @@ public static class CaptureClipMath
     /// <param name="localRect">画像ローカル座標の矩形。</param>
     /// <param name="origin">画像の原点（画面物理ピクセル）。</param>
     /// <returns>画面物理座標の矩形。</returns>
-    /// <remarks>ドメイン（画像ローカル）で保持している選択矩形を画面物理座標へ戻すときに使う（双方向の対称性を保つ）。</remarks>
+    /// <remarks>ドメイン（画像ローカル）で保持している選択矩形を画面物理座標へ戻すときに使う（双方向の対称性を保つ）。<br/>
+    /// 寸法は変わらないため区間の流儀（<see cref="EsRect.Interval"/>）はそのまま引き継ぐ。
+    /// </remarks>
     public static EsRect ToScreenRect(EsRect localRect, EsPointInt origin)
         => new(
             localRect.X + origin.X,
             localRect.Y + origin.Y,
             localRect.Width,
-            localRect.Height);
+            localRect.Height,
+            localRect.Interval);
 
     /// <summary>画面物理座標の矩形を画像ローカル座標へ変換する（浮動小数版）。</summary>
     /// <param name="captureRect">画面物理座標の矩形。</param>
     /// <param name="origin">画像の原点（画面物理ピクセル）。</param>
     /// <returns>画像ローカル座標の矩形。</returns>
-    /// <remarks>選択矩形（浮動小数）を画像ローカル座標へ戻して描画へ渡すときに使う。</remarks>
+    /// <remarks>選択矩形（浮動小数）を画像ローカル座標へ戻して描画へ渡すときに使う。<br/>
+    /// 寸法は変わらないため区間の流儀（<see cref="EsRect.Interval"/>）はそのまま引き継ぐ。
+    /// </remarks>
     public static EsRect ToLocalRect(EsRect captureRect, EsPointInt origin)
         => new(
             captureRect.X - origin.X,
             captureRect.Y - origin.Y,
             captureRect.Width,
-            captureRect.Height);
+            captureRect.Height,
+            captureRect.Interval);
 
     /// <summary>画像ローカル座標の整数矩形を画面物理座標へ変換する（<see cref="ToLocalRect(EsRectInt, EsPointInt)"/> の逆変換）。</summary>
     /// <param name="localRect">画像ローカル座標の矩形（整数ピクセル）。</param>
@@ -117,8 +123,8 @@ public static class CaptureClipMath
     /// <returns>切り出し矩形（画面物理ピクセル）。 切り出せない場合は <see cref="EsRectInt.IsEmpty"/> が true。</returns>
     /// <remarks>
     /// 1. 選択矩形を画像ローカル座標へ変換する（原点の減算）。<br/>
-    /// 2. ドラッグ選択（<see cref="CaptureType.AreaSelect"/>）は半開区間を閉区間化して終点のピクセルを含める。<br/>
-    ///    ハイライト型（スクリーン選択 / ウィンドウ選択）の検出矩形は全ピクセルを含むため加算しない。<br/>
+    /// 2. 種別が決める区間の流儀（<see cref="CaptureTypeTraits.ResolveInterval"/>）を矩形へ付け、<br/>
+    ///    ドラッグ選択（<see cref="CaptureType.AreaSelect"/>）は終点のピクセルを含める（ハイライト型の検出矩形は全ピクセルを含むため加算しない）。<br/>
     /// 3. 端数を丸めて画像の範囲へクランプする（画像の右端・下端で 1 ピクセルはみ出すと、切り出し結果の端に透明な余白が付く）。<br/>
     /// 4. 画面物理座標へ戻す（原点の加算）。<br/>
     /// <br/>
@@ -129,13 +135,13 @@ public static class CaptureClipMath
     public static EsRectInt ResolveCaptureRect(CaptureType captureType, EsRect screenRect, EsRectInt imageBounds)
     {
         var origin = imageBounds.TopLeft;
-        var local = CropBoundsMath.ComputeCropBounds(
-            ToLocalRect(screenRect, origin),
+        var local = ToLocalRect(screenRect, origin).WithInterval(CaptureTypeTraits.ResolveInterval(captureType));
+        var crop = CropBoundsMath.ComputeCropBounds(
+            local,
             new EsSize(imageBounds.Width, imageBounds.Height),
-            minSelectionSize: 0,
-            CaptureTypeTraits.UsesClosedInterval(captureType));
+            minSelectionSize: 0);
 
-        return local.IsEmpty ? default : ToScreenRect(local, origin);
+        return crop.IsEmpty ? default : ToScreenRect(crop, origin);
     }
 
     /// <summary>仮想スクリーン画像から切り出し矩形の領域を取り出す。</summary>

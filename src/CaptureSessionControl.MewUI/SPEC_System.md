@@ -137,7 +137,7 @@ sequenceDiagram
     OW->>OW: 2 フレーム目で透明を解除（背景は画像の平均色）
     App->>OW: Enter / 左クリック（確定）
     OW->>OW: CaptureClipMath.ToScreenRect（画像ローカル → 画面物理）
-    OW->>OW: CaptureClipMath.ResolveCaptureRect（クランプ + 閉区間化）
+    OW->>OW: CaptureClipMath.ResolveCaptureRect（クランプ + 区間の流儀）
     OW->>OW: CaptureClipMath.Extract（画像からの切り出し）
     OW-->>App: 切り出した EsBitmap
     OW->>OS: 配置を復帰 + 除外を解除

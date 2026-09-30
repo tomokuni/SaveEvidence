@@ -17,7 +17,7 @@
 | `CaptureClickSelection` | クラス | クリック確定の固定（押下で固定・解放で取り出し） |
 | `CropLabelTexts` | 静的クラス | 切り出しのサイズラベル書式の単一所有 |
 | `CaptureLabelTexts` | 静的クラス | キャプチャ種別→動作モードの写像と、ラベル文言（操作ラベル・情報ラベル・サイズラベル）の単一所有 |
-| `CaptureTypeTraits` | 静的クラス | キャプチャ種別の性質（ハイライト型・閉区間・検出対象）の単一所有 |
+| `CaptureTypeTraits` | 静的クラス | キャプチャ種別の性質（ハイライト型・区間の流儀・検出対象）の単一所有 |
 | `CaptureElementTarget` | 列挙型 | カーソル下の検出対象（画面 / ウィンドウ） |
 | `MonitorScalingMath` | 静的クラス | 対象矩形の中心を含むモニタの実表示倍率の解決（純粋関数） |
 | `ImageColorMath` | 静的クラス | 画像の平均色（標本間引き） |
@@ -79,7 +79,7 @@
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `ComputeCropBounds` | `EsRectInt ComputeCropBounds(EsRect selection, EsSize imageSize, double minSelectionSize, bool closedInterval = true)` | 選択矩形から切り出し範囲を求める。 切り出せない場合は `IsEmpty` が true の矩形 |
+| `ComputeCropBounds` | `EsRectInt ComputeCropBounds(EsRect selection, EsSize imageSize, double minSelectionSize)` | 選択矩形から切り出し範囲を求める。 切り出せない場合は `IsEmpty` が true の矩形 |
 | `RoundToPixel` | `int RoundToPixel(double value)` | 座標を四捨五入して整数へ直す（0.5 は切り上げ。 詳細は 7.17） |
 | `ToPixelRect` | `EsRectInt ToPixelRect(EsRect selection, EsSize imageSize)` | 半開区間のまま画像内の整数矩形へ変換（クランプ・四捨五入） |
 | `ToClosedInterval` | `EsRectInt ToClosedInterval(EsRectInt rect)` | 終点の 1 ピクセルを加える（`+1` のみ。 クランプはしない） |
@@ -93,14 +93,16 @@
 | 2 | 選択矩形が `minSelectionSize` 未満（画像内へクランプする前の値で判定）の場合は空を返す |
 | 3 | 座標は四捨五入（0.5 は切り上げ）し、画像の範囲へクランプする |
 | 4 | 幅・高さが 1 ピクセル未満の場合は空を返す |
-| 5 | `closedInterval` が true の場合は終点の 1 ピクセルを加える（画像の右端・下端でクランプ） |
+| 5 | `selection.Interval` が `Closed` の場合は終点の 1 ピクセルを加える（画像の右端・下端でクランプ） |
 
 ### 4.2 使い分け
 
-| 用途 | `closedInterval` |
+| 用途 | `selection.Interval` |
 | --- | --- |
-| 範囲選択（ドラッグ）の切り出し | `true`（始点・終点のピクセルを含む） |
-| スクリーン選択・ウィンドウ選択の切り出し | `false`（検出結果が全ピクセルを含むため加算しない） |
+| 範囲選択（ドラッグ）の切り出し | `Closed`（始点・終点のピクセルを含む） |
+| スクリーン選択・ウィンドウ選択の切り出し | `HalfOpen`（検出結果が全ピクセルを含むため加算しない） |
+
+終点の 1 ピクセルを加えるかの判断は**矩形の** **`EsRectInterval`** が持つため、本クラスは受け取った値に従うだけで判定を持ちません（判定を各所へ散らさない）。 種別から矩形の流儀を導くのは `CaptureTypeTraits.ResolveInterval` です。
 
 確定時の切り出し矩形は、本クラスと種別の性質を組み合わせた `CaptureClipMath.ResolveCaptureRect` が求めます（両 UI が同じ規則を使う唯一の入口。 種別ごとの分岐を UI に書かない）。
 
@@ -157,7 +159,7 @@
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
 | `IsHighlighted` | `bool IsHighlighted(CaptureType captureType)` | 選択矩形を検出対象のハイライトとして描く種別（スクリーン選択・ウィンドウ選択）かどうか。 **選択スタイル（ハイライト型 / ドラッグ型）の分区を単一所有する**ため、UI は十字カーソルの要否・ルーペの利用・確定操作の配線を本結果から導く |
-| `UsesClosedInterval` | `bool UsesClosedInterval(CaptureType captureType)` | 切り出しで終点の 1 ピクセルを加える種別（範囲選択のみ）かどうか |
+| `ResolveInterval` | `EsRectInterval ResolveInterval(CaptureType captureType)` | 切り出しで終点の 1 ピクセルを加える種別（範囲選択のみ `Closed`）かどうかを区間の流儀で返す |
 | `GetElementTarget` | `CaptureElementTarget GetElementTarget(CaptureType captureType)` | カーソル下から検出する対象（スクリーン選択は画面、他はウィンドウ） |
 | `FindUnderCursor` | `ElementFinderResults FindUnderCursor(IElementFinder? finder, CaptureType captureType, EsPointInt screenPoint)` | カーソル下の要素を検出する。 **検出関数の呼び分けを単一所有する**（`finder` が null の場合は未検出）。 ホバー・押下の各経路で同じ分岐を書かない |
 | `ResolveRect` | `EsRect? ResolveRect(CaptureType captureType, EsRect? highlightRect, EsRect? selectionRect)` | 確定対象の矩形を解決する（ハイライト型はハイライト矩形、それ以外は選択矩形）。 UI は未検出・未選択を null へ正規化して渡す |
@@ -177,8 +179,8 @@
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `FormatCropSizeLabel` | `string FormatCropSizeLabel(EsRect rect, double zoomPercent)` | 切り出しのサイズラベル（`LT` / `RB` / `WH` / `Zoom`）。 `WH` は終点のピクセルを含む（右端−左端＋1） |
-| `ResolveSizeLabel` | `string? ResolveSizeLabel(bool hasSelection, EsRect selectionRect, double zoomPercent)` | 選択がある場合はラベル、**未選択の場合は null**（描画しない）を返す |
+| `FormatCropSizeLabel` | `string FormatCropSizeLabel(EsRect selectionDomainRect, double zoomPercent)` | 切り出しのサイズラベル（`LT` / `RB` / `WH` / `Zoom`）。 `WH` は含まれるピクセル数であり、終点を含めるかの判断は矩形の `EsRectInterval` が持つ（`Closed` なら右端−左端＋1） |
+| `ResolveSizeLabel` | `string? ResolveSizeLabel(bool hasSelection, EsRect selectionDomainRect, double zoomPercent)` | 選択がある場合はラベル、**未選択の場合は null**（描画しない）を返す |
 
 ### 7.4 ImageColorMath
 
@@ -243,7 +245,7 @@
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `ResolveCaptureRect` | `EsRectInt ResolveCaptureRect(CaptureType captureType, EsRect screenRect, EsRectInt imageBounds)` | 選択矩形（画面物理座標）から切り出し矩形（画面物理座標）を求める。 **確定時の切り出し矩形を決める唯一の入口**（種別ごとの閉区間化・画像内へのクランプ・端数の丸めを組み合わせる）。 切り出せない場合は `IsEmpty` |
+| `ResolveCaptureRect` | `EsRectInt ResolveCaptureRect(CaptureType captureType, EsRect screenRect, EsRectInt imageBounds)` | 選択矩形（画面物理座標）から切り出し矩形（画面物理座標）を求める。 **確定時の切り出し矩形を決める唯一の入口**（種別が決める区間の流儀に従った終点の加算・画像内へのクランプ・端数の丸めを組み合わせる）。 切り出せない場合は `IsEmpty` |
 | `ResolveCaptureRect`（整数版） | `EsRectInt ResolveCaptureRect(CaptureType captureType, EsRectInt screenRect, EsRectInt imageBounds)` | クリック確定・ホバーの検出矩形（整数）向けの同じ規則の入口（UI が整数矩形を浮動小数矩形へ広げないため） |
 | `ImageSize` | `EsSize ImageSize(EsBitmap image)` | 画像のピクセルサイズ（コアの値型）。 コアの型同士の変換を UI に書かせない |
 | `ImageBounds` | `EsRectInt ImageBounds(EsBitmap image, EsPointInt origin)` | 画像の占有範囲（原点とサイズ。 切り出しのクランプ境界になる） |

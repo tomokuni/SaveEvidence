@@ -112,9 +112,12 @@ internal sealed class CropSession(
             }
 
             if (!_state.TryComplete()) return; // 二重完了を防ぐ
-            // 切り出し範囲の計算（閉区間化・画像内へのクランプ・端数の丸め）はコアが単一所有する
+            // UI の矩形型（Rect）は区間の流儀を持てないため、切り出しの手前で付ける
+            // （切り出しの対象は常にドラッグ選択 = 範囲選択であり、規則はキャプチャ種別が単一所有する）
+            var selection = logicalRect.ToEsRect().WithInterval(CaptureTypeTraits.ResolveInterval(CaptureType.AreaSelect));
+            // 切り出し範囲の計算（画像内へのクランプ・端数の丸め・終点の加算）はコアが単一所有する
             var bounds = CropBoundsMath.ComputeCropBounds(
-                logicalRect.ToEsRect(), CaptureClipMath.ImageSize(currentImage), _settings.MinSelectionSize!.Value);
+                selection, CaptureClipMath.ImageSize(currentImage), _settings.MinSelectionSize!.Value);
             // 退化した選択（切り出せない矩形）はキャンセルとして記録する（規則はコアが単一所有する）
             _log.LogCropFinished(bounds);
             Cleanup();
@@ -209,7 +212,10 @@ internal sealed class CropSession(
         // サイズラベルも描画時に最新のズーム率から生成する（ズーム率表示の追従）。
         // 書式と「未選択なら描かない」規則はコアが単一所有する。
         cropView.SizeLabelOverrideProvider = () => CropLabelTexts.ResolveSizeLabel(
-            cropView.HasSelection, cropView.SelectionDomainRect.ToEsRect(), cropView.ZoomPercent);
+            cropView.HasSelection,
+            // 切り出しの対象は常にドラッグ選択（範囲選択）のため、区間の流儀をここで付ける
+            cropView.SelectionDomainRect.ToEsRect().WithInterval(CaptureTypeTraits.ResolveInterval(CaptureType.AreaSelect)),
+            cropView.ZoomPercent);
         // 操作ラベルの文言はホスト（切り出し文脈）が与える（汎用コアは文言を持たない）。
         // 情報ラベルは切り出しでは表示しない（CaptureLabelTexts が切り出しモードで null を返す）。
         cropView.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(cropView.SelectionMode);

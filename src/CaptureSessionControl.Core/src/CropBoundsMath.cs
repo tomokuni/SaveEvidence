@@ -18,19 +18,19 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 public static class CropBoundsMath
 {
     /// <summary>選択矩形から切り出し範囲を求める。</summary>
-    /// <param name="selection">選択矩形（画像ピクセル座標・半開区間）。</param>
+    /// <param name="selection">選択矩形（画像ピクセル座標）。 区間の流儀（<see cref="EsRectInterval"/>）で終点のピクセルを含めるかを決める。</param>
     /// <param name="imageSize">画像のピクセルサイズ。</param>
     /// <param name="minSelectionSize">選択矩形の最小サイズ（画像ピクセル）。 これ未満は空を返す。</param>
-    /// <param name="closedInterval">true の場合は閉区間（終点の 1 ピクセルを含む）。 false の場合は半開区間のまま。</param>
     /// <returns>切り出し範囲。 切り出せない場合は <c>default</c>（<see cref="EsRectInt.IsEmpty"/> が true）。</returns>
     /// <remarks>
-    /// ドラッグ選択の矩形は半開区間（幅 = 終点 − 始点）だが、アプリの仕様は「始点・終点のピクセルを<br/>
+    /// ドラッグ選択の矩形は半開区間（幅 = 終点 − 始点）で与えられ、アプリの仕様は「始点・終点のピクセルを<br/>
     /// 切り出し対象に含める（閉区間）」である。 一方、スクリーン選択・ウィンドウ選択のハイライト矩形は<br/>
-    /// 検出結果が全ピクセルを含むため加算しない（<paramref name="closedInterval"/> = false）。<br/>
+    /// 検出結果が全ピクセルを含むため加算しない。 この区別は <paramref name="selection"/> の<br/>
+    /// <see cref="EsRect.Interval"/> が持つ（本メソッドは受け取った値に従うだけで、終点の扱いを再判定しない）。<br/>
     /// 最小サイズの判定は画像内へクランプする前の値で行う（画像外へ出た選択を「大きい」と誤判定しない）。
     /// </remarks>
     public static EsRectInt ComputeCropBounds(
-        EsRect selection, EsSize imageSize, double minSelectionSize, bool closedInterval = true)
+        EsRect selection, EsSize imageSize, double minSelectionSize)
     {
         if (imageSize.Width <= 0 || imageSize.Height <= 0)
         {
@@ -48,7 +48,7 @@ public static class CropBoundsMath
             return default;
         }
 
-        return closedInterval ? ToClosedInterval(rect, imageSize) : rect;
+        return selection.IsClosedInterval ? ToClosedInterval(rect, imageSize) : rect;
     }
 
     /// <summary>選択矩形（半開区間）を画像内の整数矩形へ変換する。</summary>
