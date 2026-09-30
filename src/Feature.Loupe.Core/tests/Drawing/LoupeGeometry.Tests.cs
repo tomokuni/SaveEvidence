@@ -7,7 +7,7 @@ namespace EsUtil.Feature.Loupe.Core.Tests.Drawing;
 
 /// <summary><see cref="LoupeGeometry"/> の解決（UI 非依存・並列実行）のテスト。</summary>
 /// <remarks>
-/// 表示サイズ（DIP）からの物理ピクセルサイズの解決、描画先によるクランプ、切り出し領域の導出のみを検証するため、<br/>
+/// 表示サイズ（DIP）からの物理ピクセルサイズの解決と切り出し領域の導出のみを検証するため、<br/>
 /// UI 初期化に依存せず <c>[Fact]</c> で並列実行する（両 UI が同じ手順で描画の幾何を組み立てることを保証する）。
 /// </remarks>
 public class LoupeGeometryTests
@@ -29,18 +29,10 @@ public class LoupeGeometryTests
         double displaySize, double dipToDeviceScaling, int expectedPixelSize)
         => Assert.Equal(expectedPixelSize, Resolve(displaySize, dipToDeviceScaling).PixelSize);
 
-    /// <summary>描画先の領域が指定された場合は最小辺へクランプされることを検証する。</summary>
+    /// <summary>描画先の大きさに関わらず表示サイズを縮小しないことを検証する。</summary>
     [Fact]
-    public void ResolveGeometry_描画先の領域へクランプする()
-        => Assert.Equal(150, Resolve(640, 1.0, new EsSize(200, 150)).PixelSize);
-
-    /// <summary>描画先の領域が未確定（0 以下）の場合はクランプしないことを検証する。</summary>
-    [Fact]
-    public void ResolveGeometry_描画先が未確定ならクランプしない()
-    {
-        Assert.Equal(160, Resolve(160, 1.0, new EsSize(0, 0)).PixelSize);
-        Assert.Equal(160, Resolve(160, 1.0).PixelSize);
-    }
+    public void ResolveGeometry_描画先の大きさで縮小しない()
+        => Assert.Equal(640, Resolve(640, 1.0).PixelSize);
 
     /// <summary>換算結果の下限が 1 になることを検証する。</summary>
     /// <param name="size">表示サイズ（DIP）。</param>
@@ -191,13 +183,12 @@ public class LoupeGeometryTests
     /// <summary>表示サイズ（DIP）とスケーリングから描画の幾何を解決する。</summary>
     /// <param name="displaySize">表示サイズ（DIP）。</param>
     /// <param name="dipToDeviceScaling">スケーリング係数。</param>
-    /// <param name="availableSize">描画先の領域サイズ。 未確定の場合は null。</param>
     /// <returns>描画の幾何。</returns>
-    private static LoupeGeometry Resolve(double displaySize, double dipToDeviceScaling, EsSize? availableSize = null)
+    private static LoupeGeometry Resolve(double displaySize, double dipToDeviceScaling)
     {
         var loupe = new Loupe(LoupeOptions.Default) { DipToDeviceScaling = dipToDeviceScaling };
 
-        return loupe.ResolveGeometry(displaySize, availableSize);
+        return loupe.ResolveGeometry(displaySize);
     }
 
     /// <summary>テスト用の描画の幾何を生成する（スケーリング 1.0・表示サイズ＝物理ピクセル）。</summary>

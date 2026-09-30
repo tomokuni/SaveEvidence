@@ -638,7 +638,7 @@ public class LoupeControlTests
     }
 
     [AvaloniaFact]
-    public void 親パネルより大きいRequestedSizeはクランプされる()
+    public void 親パネルより大きいRequestedSizeは縮小しない()
     {
         var control = CreateControl();
         control.Options = control.Options with { RequestedSize = 400 }; // パネル (300,300) より大きい
@@ -648,19 +648,22 @@ public class LoupeControlTests
         window.Show();
         control.CenterPoint = new Point(50, 50);
 
-        // 表示サイズは親パネルの最小辺 (300) にクランプされる
-        Assert.Equal(300, control.Width);
-        Assert.Equal(300, control.Height);
+        // 要求サイズは領域に合わせて縮小しない（要素サイズは要求サイズのまま）
+        Assert.Equal(400, control.Width);
+        Assert.Equal(400, control.Height);
+
+        // 親領域が収められないため配置もしない（コアが位置を返さない）
+        Assert.Null(control.RenderTransform);
         window.Close();
     }
 
-    /// <summary>親パネルへ接続した後に RequestedSize を変更してもクランプが維持されることを検証する。</summary>
+    /// <summary>親パネルへ接続した後に RequestedSize を変更しても表示サイズと描画サイズが一致することを検証する。</summary>
     /// <remarks>
-    /// 表示サイズの決定（クランプと、親未接続時の基本サイズへのフォールバック）は 1 箇所で行う。<br/>
-    /// 複数箇所で書き込むと、要求サイズの変更直後にクランプ前の値で描画される（表示サイズと描画ビットマップが食い違う）。
+    /// 表示サイズの決定（要求サイズの適用と、親未接続時の扱い）は 1 箇所で行う。<br/>
+    /// 複数箇所で書き込むと、要求サイズの変更直後に古い値で描画される（表示サイズと描画ビットマップが食い違う）。
     /// </remarks>
     [AvaloniaFact]
-    public async Task 親パネル接続後のRequestedSize変更でもクランプが維持される()
+    public async Task 親パネル接続後のRequestedSize変更でも表示サイズと描画サイズが一致する()
     {
         var control = new LoupeControl { Options = LoupeOptions.Default with { RequestedSize = 400, ZoomLevel = 2 }, IsVisible = true }; // パネル (300,300) より大きい
         var panel = new Panel { Width = 300, Height = 300 };
@@ -669,14 +672,14 @@ public class LoupeControlTests
         window.Show();
         control.CenterPoint = new Point(50, 50);
         await control.WaitForRenderedAsync();
-        Assert.Equal(300, control.LoupeBitmap!.Size.Width);
+        Assert.Equal(400, control.LoupeBitmap!.Size.Width);
 
         // 接続後にさらに大きい要求へ変更し、レイアウト（Arrange）を待たずに描画する
         control.Options = control.Options with { RequestedSize = 500 };
         await control.WaitForRenderedAsync();
 
-        // 表示サイズ（親パネルの 300 DIP）と描画ビットマップの一辺（物理ピクセル）が一致する
-        Assert.Equal(300, control.LoupeBitmap!.Size.Width);
+        // 表示サイズ（要求サイズ）と描画ビットマップの一辺（物理ピクセル）が一致する
+        Assert.Equal(500, control.LoupeBitmap!.Size.Width);
         window.Close();
     }
 

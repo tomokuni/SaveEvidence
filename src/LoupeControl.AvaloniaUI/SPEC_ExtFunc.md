@@ -214,7 +214,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 | `RequestedSize` | `int` | `160` | `1`〜`4096` | ルーペの基本サイズ（DIP・一辺） |
 | `ZoomLevel` | `int` | `4` | `1`〜`64` | 拡大率 |
 
-**表示サイズ（`RequestedSize`）のクランプはコア（ファサード）が内包**します: 表示サイズはコアが本値（基本サイズ）を親領域サイズにクランプして導出します（ホストは基本サイズを設定するだけ）。クランプした「実際の表示サイズ」は公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
+**表示サイズ（`RequestedSize`）はコア（ファサード）がそのまま使います**: 表示サイズはコアが本値（基本サイズ）をそのまま使います（領域に合わせた縮小はしません。ホストは基本サイズを設定するだけです）。表示サイズは公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
 **設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。DPI スケーリング係数（`DipToDeviceScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
 
@@ -352,8 +352,8 @@ void RefreshPosition()
 
 | 項目 | 計算方法 |
 | --- | --- |
-| 表示サイズ | 基本サイズ（`Options.RequestedSize`）を親パネルサイズにクランプ（親より大きい場合は縮小） |
-| 表示位置 | 中心 →（ポート）→ 親パネル DIP → カーソル右下 + `PositionOffset` → 親パネル内にクランプ（`RenderTransform` で反映） |
+| 表示サイズ | 基本サイズ（`Options.RequestedSize`）をそのまま使う（親パネルが收められない場合は配置しない） |
+| 表示位置 | 中心 →（ポート）→ 親パネル DIP → カーソル右下 + `PositionOffset` → 親パネル内へ補正（`RenderTransform` で反映） |
 
 再評価タイミング: `CenterPoint` 変更 / ポート設定（`SetCoordTransform`）/ `PositionOffset` 変更 / `Options` 変更 / `IsVisible` 変更 / レイアウト時（`ArrangeCore` オーバーライド）/ 外部要求（`RefreshPosition`）。
 
@@ -454,8 +454,8 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 `LoupeControl` は画像生成と内部Image表示に加え、**表示位置・表示サイズを自己計算**します
 （座標変換ポート方式。Marquee と同様）。
 
-- 表示位置: `CenterPoint`（ドメイン座標）を `SetCoordTransform` で設定したポートで親パネル DIP へ変換し、カーソル右下 + `PositionOffset` + クランプした位置を `RenderTransform` で反映します。
-- 表示サイズ: `Options.RequestedSize`（基本サイズ）を親パネルサイズにクランプして内部管理します（ホストは基本サイズを設定するだけ）。
+- 表示位置: `CenterPoint`（ドメイン座標）を `SetCoordTransform` で設定したポートで親パネル DIP へ変換し、カーソル右下 + `PositionOffset` + 補正した位置を `RenderTransform` で反映します。
+- 表示サイズ: `Options.RequestedSize`（基本サイズ）をそのまま表示サイズとして内部管理します（ホストは基本サイズを設定するだけ）。
 - 再評価タイミング: `CenterPoint` 変更 / ポート設定 / `PositionOffset` 変更 / `Options` 変更 / レイアウト時（`ArrangeCore`）/ 外部要求（`RefreshPosition`）。
 
 上位APでは次の処理を行います。

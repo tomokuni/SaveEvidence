@@ -240,7 +240,7 @@ public class LoupeSkiaPainterTests
             CenterPoint = center,
         };
 
-        return presenter.ResolveDrawPlan(LoupeSize, null, static (_, _) => default);
+        return presenter.ResolveDrawPlan(LoupeSize, static (_, _) => default);
     }
 
     /// <summary>テスト用の外観を生成する（指定しない色は透明＝描かない）。</summary>

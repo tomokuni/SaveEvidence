@@ -129,14 +129,13 @@ public partial class LoupePresenter
     public void SetCoordTransform(ICoordTransform? port) => _core.SetCoordTransform(port);
 
     /// <summary>親領域のサイズを通知して表示レイアウト（表示サイズ・表示位置）を解決する。</summary>
-    /// <param name="parentSize">親領域のサイズ（DIP）。 未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
-    /// <returns>表示レイアウト（表示サイズと表示位置。 拡大中心が未設定の場合は位置が null）。</returns>
-    /// <remarks>クランプ・オフセット・中心の座標変換の規則はコアが単一所有する（本メソッドは委譲するだけである）。</remarks>
+    /// <param name="parentSize">親領域のサイズ（DIP）。 未確定（幅または高さが 0 以下）の場合は位置を補正しない。</param>
+    /// <returns>表示レイアウト（表示サイズと表示位置。 拡大中心が未設定の場合と、親領域が表示サイズを収められない場合は位置が null）。</returns>
+    /// <remarks>位置の補正・オフセット・中心の座標変換の規則はコアが単一所有する（本メソッドは委譲するだけである）。</remarks>
     public LoupeLayout ResolveLayout(EsSize parentSize) => _core.ResolveLayout(parentSize);
 
     /// <summary>現在の状態から描画 1 フレーム分の計画を解決する。</summary>
     /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP。 通常は <see cref="ResolveLayout"/> の結果）。</param>
-    /// <param name="availableSize">描画先の領域サイズ（物理ピクセル）。 未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
     /// <param name="measureText">テキストの実寸を測る関数。 null 不可。</param>
     /// <returns>描画計画（幾何・外観・層の順序・ラベル配置を解決済み）。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
@@ -148,15 +147,16 @@ public partial class LoupePresenter
     /// 4. 描く層だけを順序どおりに並べる（テキストは最後 = 最上位）。<br/>
     /// <br/>
     /// 実寸の測定は描画 API に依存するため、UI 層が関数として渡す<br/>
-    /// （配置の計算（クランプ）は <see cref="ResolveLabelPlacements"/> が単一所有する）。
+    /// （配置の計算（補正）は <see cref="ResolveLabelPlacements"/> が単一所有する）。<br/>
+    /// 描画先の表面は、本メソッドが返す計画の <see cref="LoupeDrawPlan.PixelSize"/> と同じ大きさで用意する（呼び出し側の責務）。
     /// </remarks>
     public virtual LoupeDrawPlan ResolveDrawPlan(
-        double displaySize, EsSize? availableSize, Func<string, double, EsSize> measureText)
+        double displaySize, Func<string, double, EsSize> measureText)
     {
         ArgumentNullException.ThrowIfNull(measureText);
 
         var appearance = Appearance;
-        var geometry = _core.ResolveGeometry(displaySize, availableSize);
+        var geometry = _core.ResolveGeometry(displaySize);
         var surface = geometry.SurfaceBounds;
 
         IReadOnlyList<EsRect> crosshair = appearance.ShowCrosshair

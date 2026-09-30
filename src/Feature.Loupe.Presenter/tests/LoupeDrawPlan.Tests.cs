@@ -135,6 +135,6 @@ public class LoupeDrawPlanTests
             CenterPoint = center,
         };
 
-        return presenter.ResolveDrawPlan(LoupeSize, null, static (_, _) => default);
+        return presenter.ResolveDrawPlan(LoupeSize, static (_, _) => default);
     }
 }

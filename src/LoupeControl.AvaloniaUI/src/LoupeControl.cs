@@ -147,7 +147,7 @@ public sealed class LoupeControl : Panel
     /// <param name="port">座標変換ポート（Inverse = 論理→親パネルDIP）。null の場合は等価変換。</param>
     /// <remarks>
     /// MarqueeControl と同様に、外部から与えたポートで表示位置（<see cref="Visual.RenderTransform"/>）と<br/>
-    /// 表示サイズ（親パネルサイズによるクランプ）を計算する。<br/>
+    /// 表示サイズ（要求サイズ）と表示位置（オフセット・領域内への補正）を計算する。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等の<br/>
     /// レイアウト変化に追従できる（イベント時の DIP キャッシュは使わない）。<br/>
     /// ポートの保持と、未設定（null）を等価変換として扱う規則はコア（ファサード）が単一所有する。
@@ -167,7 +167,7 @@ public sealed class LoupeControl : Panel
 
     /// <summary>表示位置と表示サイズを最新のレイアウトから再計算する。</summary>
     /// <remarks>
-    /// 表示サイズ・位置の計算（親領域の最小辺へのクランプ・オフセット・親領域内へのクランプ）は<br/>
+    /// 表示サイズ・位置の計算（要求サイズと、オフセット・親領域内への位置の補正）は<br/>
     /// コア（<see cref="LoupePresenter.ResolveLayout"/>）が単一所有する（未確定の扱いもコアが判断する）。<br/>
     /// 呼び出しタイミング: <see cref="CenterPoint"/> 変更・ポート設定・<see cref="PositionOffset"/> 変更・<see cref="Options"/> 変更・レイアウト（Arrange）。<br/>
     /// 要素サイズ（Width / Height）も同じ値から設定する（描画ビットマップと必ず一致する）。
@@ -176,15 +176,15 @@ public sealed class LoupeControl : Panel
     {
         var parent = Parent as Panel;
 
-        // 親領域未接続（配置前・テスト等）はクランプの基準が無いためクランプされない（規則はコアが単一所有する）
+        // 親領域未接続（配置前・テスト等）は位置の補正基準が無いため補正されない（規則はコアが単一所有する）
         var layout = _presenter.ResolveLayout(ParentAreaSize);
 
         // 表示サイズは要素サイズ・描画サイズ（物理ピクセルへの換算元）で同じ値を使う
-        // （別々にクランプすると丸めの違いで要素が親領域からはみ出しうる）
+        // （別々に求めると丸めの違いで要素と描画ビットマップの大きさが食い違う）
         Width = layout.DisplaySize;
         Height = layout.DisplaySize;
 
-        // 配置は親が接続され表示中の場合のみ行う（拡大中心が未設定ならコアが配置位置を返さない）
+        // 配置は親が接続され表示中の場合のみ行う（拡大中心が未設定か、親領域が表示サイズを収められない場合はコアが位置を返さない）
         if (parent is null || !IsVisible || layout.Position is not { } position)
         {
             return;
@@ -220,7 +220,7 @@ public sealed class LoupeControl : Panel
     {
         // テキストは描画層が文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
         // （実寸は要素の大きさ（親から割り当てられたサイズ）を基準に測る）
-        var plan = _presenter.ResolveDrawPlan(finalSize.Width, null, MeasureText);
+        var plan = _presenter.ResolveDrawPlan(finalSize.Width, MeasureText);
         SyncLabels(plan.Labels);
 
         return base.ArrangeOverride(finalSize);
@@ -394,9 +394,9 @@ public sealed class LoupeControl : Panel
     // 公開プロパティ（設定・環境）
     // ====================================================================
 
-    /// <summary>レイアウト（クランプ）の基準になる親パネルのサイズ。</summary>
-    /// <value>親パネルのサイズ（DIP）。親が未接続（配置前・テスト等）の場合は 0x0（クランプしない）。</value>
-    /// <remarks>親のサイズが確定しているかの判定とクランプはコア（<see cref="LoupePresenter.ResolveLayout"/>）が単一所有する。</remarks>
+    /// <summary>レイアウト（位置の補正）の基準になる親パネルのサイズ。</summary>
+    /// <value>親パネルのサイズ（DIP）。 親が未接続（配置前・テスト等）の場合は 0x0（補正しない）。</value>
+    /// <remarks>親のサイズが確定しているかの判定と位置の補正はコア（<see cref="LoupePresenter.ResolveLayout"/>）が単一所有する。</remarks>
     private EsSize ParentAreaSize => (Parent as Panel)?.Bounds.Size.ToEsSize() ?? default;
 
     /// <summary>ルーペの設定（表示サイズ・拡大率）を取得または設定する。</summary>
@@ -404,7 +404,7 @@ public sealed class LoupeControl : Panel
     /// <remarks>
     /// 設定の値・既定値・数値項目の安全域への補正はコアの <see cref="LoupeOptions"/> が単一所有する（本コントロールは保持しない）。<br/>
     /// 一部の項目だけを変える場合は <c>LoupeOptions.Default with { ZoomLevel = 8 }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
-    /// 表示サイズは本値（要求サイズ）を <see cref="UpdatePosition"/> が親パネルサイズにクランプして導出する。<br/>
+    /// 表示サイズは本値（要求サイズ）がそのまま使われる（領域に合わせた縮小はしない）。<br/>
     /// 変更すると再描画・表示位置の再計算・座標ラベルの更新が行われる。<br/>
     /// 色は UI 非依存の <see cref="System.Drawing.Color"/> で受け取り、描画時に <see cref="Brush"/> へ変換する。
     /// </remarks>
@@ -595,10 +595,10 @@ public sealed class LoupeControl : Panel
     {
         try
         {
-            // 描画計画（描画層が解決した幾何・外観・層の順序）は現在のレイアウト（親領域でのクランプ結果）から組み立てる
+            // 描画計画（描画層が解決した幾何・外観・層の順序）は現在のレイアウト（要求サイズ）から組み立てる
             // （値・単位・換算は描画層が単一所有する。開始時に固定しない）
             var plan = _presenter.ResolveDrawPlan(
-                _presenter.ResolveLayout(ParentAreaSize).DisplaySize, null, MeasureText);
+                _presenter.ResolveLayout(ParentAreaSize).DisplaySize, MeasureText);
 
             var bitmap = await LoupeRenderPipeline.RenderAsync(Source, plan);
 

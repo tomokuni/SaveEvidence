@@ -119,7 +119,7 @@ classDiagram
     class LoupePresenter {
         <<Feature.Loupe.Presenter / 提示層>>
         +LoupeAppearance Appearance
-        +ResolveDrawPlan(displaySize, availableSize, measureText) LoupeDrawPlan
+        +ResolveDrawPlan(displaySize, measureText) LoupeDrawPlan
     }
     class LoupeSkiaPainter {
         <<LoupeControl.MewUI / 描画実装>>
@@ -143,7 +143,7 @@ classDiagram
         +int CaptureSize
         +EsPoint? CaptureTopLeft
         +LoupeMagnifiedImage? MagnifiedImage
-        +ResolvePixelSize(size, dipToDeviceScaling, availableSize) int$
+        +int PixelSize
     }
     class LoupeLabelPlacement {
         <<Feature.Loupe.Presenter>>
@@ -158,7 +158,7 @@ classDiagram
         +Options / DipToDeviceScaling / CenterPoint / PositionOffset
         +SetCoordTransform(port) void
         +ResolveLayout(parentSize) LoupeLayout
-        +ResolveGeometry(displaySize, availableSize) LoupeGeometry
+        +ResolveGeometry(displaySize) LoupeGeometry
     }
     class EsPoint {
         <<Platform.Core>>
@@ -194,7 +194,7 @@ sequenceDiagram
 
     MW->>LC: PaintSurface(canvas, info)
     LC->>C: ResolveLayout / ResolveGeometry（表示サイズ・幾何）
-    LC->>P: ResolveDrawPlan(displaySize, availableSize, SkiaText.Measure)（提示層が幾何・外観・層の順序・ラベル配置を解決する）
+    LC->>P: ResolveDrawPlan(displaySize, SkiaText.Measure)（提示層が幾何・外観・層の順序・ラベル配置を解決する）
     LC->>R: LoupeSkiaPainter.Paint(SKCanvas, Source, plan)（層の順に写す）
     R->>SK: 画像外の色（plan.Appearance.PasteboardColor）を表面全体へ塗る
     alt Source と切り出し領域が揃っている
@@ -227,8 +227,9 @@ sequenceDiagram
 6. **DPI を自動追従させる**。`OnDpiChanged` で `DipToDeviceScaling` を更新し、ホストが DPI を扱わずに済むようにした。
 7. **`Options` はレイアウトにも影響する**。`MeasureContent` が要求サイズを返すため、
 プロパティへ `MewPropertyOptions.AffectsLayout` を付与して再測定を促す（未付与では変更が反映されない）。
-描画サイズは `Options.RequestedSize` × `DipToDeviceScaling` を物理ピクセルへ換算し、キャンバスより大きい場合はキャンバスに合わせる
-   （「領域へクランプする」規則と DIP → 物理ピクセルの換算はコアのファサード（`Loupe.ResolveLayout` / `Loupe.ResolveGeometry`）が単一所有し、Avalonia 版の親パネルへのクランプと同じ規則を使う）。
+描画サイズは `Options.RequestedSize` × `DipToDeviceScaling` を物理ピクセルへ換算する
+   （DIP → 物理ピクセルの換算はコアのファサード（`Loupe.ResolveGeometry`）が単一所有する。 本コントロールは表示サイズをキャンバスの大きさから導くため、
+   キャンバスと描画サイズは常に一致し、領域に合わせた縮小は行わない）。
 8. **静的画像では連続再描画を無効化する**。`ContinuousAnimation` を `false` にし、プロパティ変更時のみ再描画する。
 9. **座標ラベルはコントロールがテキスト要素として表示する**（両 UI 共通）。文言は提示層の `LoupePresenter`（`LabelTexts` partial）、表示可否と体裁（フォントサイズ・色・角丸）は外観（`LoupeAppearance`）、実寸 → 配置の写像は同層の `LoupePresenter`（`LabelPlan` partial） が単一所有し、コントロールは自 UI の実寸（`SkiaText.Measure`）を渡して要素を配置する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）。Avalonia 版も同じ契約を使い、測定 API（`FormattedText`）だけが異なる。
 10. **値の補正と変更ログはプロパティの登録が所有する**。`MewProperty.Register` の `coerce` / `changed` へ渡すため、

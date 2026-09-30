@@ -41,7 +41,7 @@ protected override void Render(DrawingContext context)
 }
 ```
 
-- 表示位置（左上）が必要なら `LoupePresenter.ResolveLayout(parentSize)` を使う（親領域へ収めるクランプはコアが単一所有する）。
+- 表示位置（左上）が必要なら `LoupePresenter.ResolveLayout(parentSize)` を使う（オフセット加算と領域内への位置の補正はコアが単一所有する）。
 - 拡大元画像は UI ごとに型が異なるため `LoupeDrawPlan` に含めません。 UI が `EsBitmap` を解決して描画へ渡します。
 - 実寸測定（`MeasureText`）は描画 API 依存のため UI 層が与えます。
 

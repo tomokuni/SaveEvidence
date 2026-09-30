@@ -14,7 +14,7 @@
 | --- | --- |
 | 基底クラス | `Aprillz.MewUI.Controls.Panel`（子の `SkiaCanvasView` が Skia で直接描画する） |
 | 中間バッファ | **生成しない**。画面のキャンバスへ直接描画する（Avalonia 版は `RenderTargetBitmap` を経由する） |
-| 描画サイズ | `Options.RequestedSize` × `DipToDeviceScaling`（物理ピクセル）。キャンバスより大きい場合はキャンバスに合わせる（クランプ規則はコアが単一所有） |
+| 描画サイズ | `Options.RequestedSize` × `DipToDeviceScaling`（物理ピクセル）。 表示サイズはキャンバスの大きさから導くため常に一致する（領域に合わせた縮小はしない） |
 | 拡大方式 | 最近傍（画素をそのまま拡大表示する） |
 | DPI 追従 | `OnDpiChanged` で表示スケーリング係数を DPI から換算した値へ自動更新する（換算規則は `DpiScaler.ToScaling` が単一所有。ホストの設定は不要） |
 | 連続再描画 | **無効**。プロパティ変更時にのみ再描画する（静止画のため） |
@@ -61,7 +61,7 @@ var loupe = new LoupeControl
 `Source` と `CenterPoint` を更新すると自動的に再描画されます（`InvalidateVisual`）。表示位置はホストが決めます。
 
 ```csharp
-// 位置決めはコアのファサードが計算する（中心 + オフセット、親領域内へクランプ）
+// 位置決めはコアのファサードが計算する（中心 + オフセット、親領域内へ補正）
 var layout = loupe.ResolveLayout(parentSize);
 if (layout.Position is { } position)
 {

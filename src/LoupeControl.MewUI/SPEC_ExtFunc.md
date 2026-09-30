@@ -107,7 +107,7 @@
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `Canvas` | `SKCanvas` | ルーペを描画したキャンバス（座標系はルーペ画像のピクセル） |
-| `PixelSize` | `int` | 実際に描画したルーペの一辺のサイズ（物理ピクセル。`Options.RequestedSize` × `DipToDeviceScaling` をキャンバスでクランプした値） |
+| `PixelSize` | `int` | 実際に描画したルーペの一辺のサイズ（物理ピクセル。`Options.RequestedSize` × `DipToDeviceScaling` を切り上げ・最低 1） |
 | `CaptureTopLeft` | `EsPoint?` | 切り出し領域の左上（ドメイン座標）。中心未設定時は null（オーバーレイを描画できない） |
 | `Scale` | `double` | ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。DPI スケーリングの影響を受けない） |
 

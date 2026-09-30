@@ -5,7 +5,7 @@ namespace EsUtil.Feature.Loupe.Core.Drawing;
 /// <summary>ルーペの描画 1 フレーム分の幾何（コアが責任を持つ値の全量）。</summary>
 /// <param name="Center">拡大中心（ドメイン座標）。 ファサードの <c>Loupe.CenterPoint</c>（UI が設定する状態）を 1 フレーム分の幾何へ写した値である。 未設定は null（切り出し領域と中心座標ラベルの基準を持たない）。</param>
 /// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。 ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
-/// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。 切り上げ・最低 1。 描画先が指定された場合はクランプ済み）。</param>
+/// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。 切り上げ・最低 1）。 描画先の表面は本値と同じ大きさで用意する（呼び出し側の責務）。</param>
 /// <param name="DipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数（環境値）。</param>
 /// <param name="ZoomLevel">拡大率（設定の補正済みの値）。</param>
 /// <remarks>
@@ -15,6 +15,8 @@ namespace EsUtil.Feature.Loupe.Core.Drawing;
 /// （描画層が切り上げや矩形を組み立てると、切り出しの実行と十字線の交点とで規則が分かれる）。<br/>
 /// <b>寸法は換算済みの値を保持する</b>: DIP の表示サイズを物理ピクセルへ換算する手順はコアが単一所有する<br/>
 /// （描画層は <see cref="PixelSize"/> をそのまま使う）。<br/>
+/// 描画先の表面（描画バッファ）は本値と同じ大きさで用意する（本コアは描画先を知らないため、
+/// 表面の大きさの判定は呼び出し側が行う）。<br/>
 /// 拡大元画像（<c>EsBitmap</c>）は含めない（型が UI に依存するため、描画の起動時に引数で受け取る）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>

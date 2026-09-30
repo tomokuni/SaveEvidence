@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
 using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
 
 namespace EsUtil.Feature.Loupe.Core.Setting;
@@ -39,10 +38,7 @@ public sealed record LoupeOptions
 
     /// <summary>ルーペの基本サイズ（DIP。 一辺）を取得する。</summary>
     /// <value>表示サイズ（DIP）。 既定は 160。 設定時は 1〜4096 へ補正される。</value>
-    /// <remarks>
-    /// 表示サイズは本値（基本サイズ）を UI 層が親領域・描画先へクランプして導出する<br/>
-    /// （クランプの規則は <see cref="EsSize.ClampToArea(double)"/> が単一所有する）。
-    /// </remarks>
+    /// <remarks>本値がそのまま表示サイズになる（親領域に合わせた縮小はしない）。</remarks>
     public int RequestedSize
     {
         get;

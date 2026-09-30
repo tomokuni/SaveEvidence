@@ -53,20 +53,20 @@ sequenceDiagram
   participant P as 描画層（本コアを参照する上位の層）
 
   UI->>Fac: ResolveLayout(parentSize)
-  Fac->>Core: parentSize.ClampToArea(requestedSize)
-  Core-->>Fac: 表示サイズ（DIP。要素サイズ・描画サイズ・位置クランプで同じ値を使う）
+  Fac->>Core: 要求サイズ（そのまま）と、親領域が収められるかの判定
+  Core-->>Fac: 表示サイズ（DIP。要素サイズ・描画サイズで同じ値を使う）
   Fac->>PC: ICoordTransform.Inverse(center) → EsPoint（親領域 DIP）
   Fac->>Core: ComputePosition(表示サイズ, parentSize, centerDip, offset)
   Core-->>Fac: EsPoint（表示位置）
   Fac-->>UI: LoupeLayout（表示サイズ + 表示位置）
   UI->>UI: 要素サイズ（Width / Height）と RenderTransform / Arrange へ反映する
 
-  UI->>Fac: ResolveGeometry(表示サイズ, canvasSize)
-  Fac->>Core: DIP → 物理ピクセル・クランプ・切り出し領域の算出
+  UI->>Fac: ResolveGeometry(表示サイズ)
+  Fac->>Core: DIP → 物理ピクセル・切り出し領域の算出
   Core-->>Fac: LoupeGeometry（物理ピクセル・切り出し領域を解決済み）
   Fac-->>UI: LoupeGeometry（描画計画の解決と通知の両方で使用）
 
-  UI->>P: ResolveDrawPlan(表示サイズ, 描画先, 実寸測定)
+  UI->>P: ResolveDrawPlan(表示サイズ, 実寸測定)
   P->>Core: ResolveGeometry(...)
   Core-->>P: LoupeGeometry
   P-->>UI: LoupeDrawPlan（描画面・矩形・層の順序・ラベル配置）
@@ -87,7 +87,7 @@ sequenceDiagram
 | `src/Placement/LoupeLayout.cs` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズ + 表示位置。 配置しない場合は位置が null） |
 | （本プロジェクトには置かない） | 描画計画と外観 | — | 提示（描画計画の解決）と外観は **描画層（本コアを参照する上位の層）が所有します**（本コアは描画 API も描画の抽象も持たない） |
 | `src/Logging/LoupeLogMessage.cs` | `LoupeLogMessage` | internal | コアが出力するログ定義（`LoggerMessage` ソース生成）の単一所有（**上位層が出力する定義と書式は上位層が単一所有する**） |
-| `src/Loupe.Geometry.cs`（ルート） | `Loupe` の partial | public | 幾何の入口（`ResolveLayout` / `ResolveGeometry`）と内部手順（表示位置のオフセット加算と親領域内へのクランプ。 親サイズ未確定の判定も扱う）。 内部手順は `private static` に閉じる |
+| `src/Loupe.Geometry.cs`（ルート） | `Loupe` の partial | public | 幾何の入口（`ResolveLayout` / `ResolveGeometry`）と内部手順（表示位置のオフセット加算と親領域内への補正、領域が正方形を収められるかの判定）。 内部手順は `private static` に閉じる |
 
 ## 5. 単一所有（同じ真実を 2 箇所に持たない）
 
@@ -105,9 +105,9 @@ sequenceDiagram
 | 切り出し領域の左上（中心 → 左上の変換） | `LoupeGeometry.CaptureTopLeft`（中心未設定は null。 描画完了通知のためにも使う） |
 | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） | `LoupeGeometry.MagnifiedImage`（切り出しの実行は描画実装） |
 | 描画先の全領域（描画層が下地を塗る矩形） | `LoupeGeometry.SurfaceBounds` |
-| 表示サイズの親領域へのクランプと表示サイズの決定 | `Loupe.ResolveLayout`（規則は `Platform.Core` の `EsSize.ClampToArea`。 状態を保持しないため、親領域のサイズを引数で受ける） |
-| 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（内部手順は `Loupe.Geometry.cs` の private static `ComputePosition`。 親サイズ未確定の判定は `EsSize.HasArea`） |
-| 描画の幾何（物理ピクセルサイズ）の組み立てと描画先へのクランプ | `Loupe.ResolveGeometry`（規則は `Platform.Core` の `DpiScaler.ScaleToPixel` と `EsSize.ClampToArea`） |
+| 表示サイズの決定と、領域が正方形を収められるかの判定 | `Loupe.ResolveLayout`（要求サイズをそのまま表示サイズにする。 状態を保持しないため、親領域のサイズを引数で受ける） |
+| 表示位置（中心 + オフセットと親領域内への補正） | `Loupe.ResolveLayout`（内部手順は `Loupe.Geometry.cs` の private static `ComputePosition`。 親サイズ未確定の判定は `EsSize.HasArea`） |
+| 描画の幾何（物理ピクセルサイズ）の組み立て | `Loupe.ResolveGeometry`（規則は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
 | 描画完了通知の内容（切り出し左上・拡大率） | `LoupeGeometry.CaptureTopLeft` / `ZoomLevel`（描画の幾何が単一所有する。 専用の通知型を持たない） |
 | 中心座標ラベルの文言・基準点 | 描画層 |
 | ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0） | 描画層の外観 |
@@ -120,14 +120,13 @@ sequenceDiagram
 | 設定・環境値・拡大中心・位置オフセットの変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter） |
 | ログの書式とレベル、変化判定（同値なら出力しない） | `LoupeLogMessage`（コアが出力する定義。 上位層が出力する定義と書式は上位層が単一所有する） |
 
-**2 つのクランプは対象も単位も異なります**（表示サイズ＝親パネル・DIP、描画面＝描画先の表面・物理ピクセル）。 規則は同じ（`EsSize.ClampToArea` = 最小辺を上限）ですが、値は一致しません。<br/>
-親パネルと描画先の表面は、いずれもルーペの表示サイズ以上であることを前提とします。 拡大中心が端に寄った場合は、表示サイズを変えずに表示位置を `EsSize.ClampOffset` で領域内へ補正します。
+**表示サイズは縮小しません**（要求サイズをそのまま使います）。 親パネルが表示サイズを収められない場合、`ResolveLayout` は位置を null（配置しない = その領域には描画できない）として返します。 描画先の表面は本コアが知らないため判定せず、`PixelSize` と同じ大きさで用意するのは呼び出し側の責務です。 拡大中心が端に寄った場合は、表示サイズを変えずに表示位置を `EsSize.ClampOffset` で領域内へ補正します。
 
 ## 6. 例外処理ポリシー
 
 本プロジェクトは純粋計算で構成されます。 例外を送出するのは `EsBitmap` の引数検証（`ArgumentOutOfRangeException`）と破棄後アクセス（`ObjectDisposedException`）のみです。 破棄済みソースの例外の捕捉は描画実装（各 UI の painter）の責務とします。
 
-**前提条件違反（親パネル・描画先がルーペの表示サイズ未満）も例外にしません**（領域の最小辺へ縮小した値を返す。 ルーペが消えるのを避けるための防御であり、配置・描画の正しさは保証しない）。
+**領域が表示サイズを収められない場合も例外にしません**（配置しないとして位置を null で返す。 ルーペを縮小してまで描画しないため）。
 
 ## 7. 可視性ポリシー
 

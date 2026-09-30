@@ -45,8 +45,8 @@ sequenceDiagram
   participant L as Loupe（コア）
   participant Painter as 描画実装（UI）
 
-  UI->>P: ResolveDrawPlan(表示サイズ, 描画先, 実寸測定)
-  P->>L: ResolveGeometry(表示サイズ, 描画先)
+  UI->>P: ResolveDrawPlan(表示サイズ, 実寸測定)
+  P->>L: ResolveGeometry(表示サイズ)
   L-->>P: LoupeGeometry（物理ピクセル・切り出し領域）
   P->>P: 十字線 / 枠線の矩形・文言・層の順序・配置を解決（外観を使用）
   P-->>UI: LoupeDrawPlan

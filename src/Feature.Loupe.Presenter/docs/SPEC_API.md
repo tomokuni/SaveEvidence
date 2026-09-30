@@ -41,7 +41,7 @@
 | `Appearance` | property | 外観（本層が単一所有する） |
 | `SetCoordTransform(ICoordTransform?)` | method | コアへ委譲する |
 | `ResolveLayout(EsSize)` | method | コアへ委譲する（表示サイズ + 位置） |
-| `ResolveDrawPlan(double displaySize, EsSize? availableSize, Func<string, double, EsSize> measureText)` | method（`virtual`） | 描画計画（`LoupeDrawPlan`）を解決する。 `measureText` が null なら `ArgumentNullException` |
+| `ResolveDrawPlan(double displaySize, Func<string, double, EsSize> measureText)` | method（`virtual`） | 描画計画（`LoupeDrawPlan`）を解決する。 `measureText` が null なら `ArgumentNullException` |
 
 ### `LoupeAppearance` のメンバー
 
@@ -130,7 +130,7 @@ var presenter = new LoupePresenter(new Loupe(new LoupeOptions { RequestedSize = 
 };
 
 // 描画計画（UI が見る唯一の描画値）を解決する
-var plan = presenter.ResolveDrawPlan(displaySize: 160, availableSize: null, measureText: MeasureText);
+var plan = presenter.ResolveDrawPlan(displaySize: 160, measureText: MeasureText);
 
 // UI は Layers の順に自 UI の描画 API を呼び、Labels を要素として配置する
 foreach (var layer in plan.Layers) { /* Pasteboard → Image → Crosshair → Border → Label */ }

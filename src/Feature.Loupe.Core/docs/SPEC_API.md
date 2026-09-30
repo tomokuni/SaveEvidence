@@ -57,28 +57,26 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 | `CenterPoint` | property | 拡大中心（ドメイン座標 = 元画像ピクセル座標）。 未設定（null）は切り出し領域を決められないため、`LoupeGeometry` は拡大画像の幾何（`MagnifiedImage` / `CaptureTopLeft`）を持たず、配置も行わない。 **変化したときだけ**変更ログを出力する |
 | `PositionOffset` | property | 拡大中心からの右下オフセット（DIP。 既定は 0）。 **変化したときだけ**変更ログを出力する |
 | `SetCoordTransform(ICoordTransform?)` | method | ドメイン ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換） |
-| `ResolveLayout(EsSize)` | method | **どこへ・どの大きさで置くか**を決める（親領域 DIP の世界）。 親領域サイズから表示レイアウト（`LoupeLayout` = 表示サイズ + 位置）を解決する（拡大中心未設定時は位置が null） |
-| `ResolveGeometry(double displaySize, EsSize? availableSize = null)` | method | **何を・何ピクセルで描くか**を決める（物理ピクセルの世界）。 描画 1 フレーム分の幾何（`LoupeGeometry`）の解決（DIP → 物理ピクセルの換算・描画先へのクランプ・切り出し領域の算出を含む） |
+| `ResolveLayout(EsSize)` | method | **どこへ・どの大きさで置くか**を決める（親領域 DIP の世界）。 親領域サイズから表示レイアウト（`LoupeLayout` = 表示サイズ + 位置）を解決する（拡大中心未設定時と、親領域が収められない場合は位置が null） |
+| `ResolveGeometry(double displaySize)` | method | **何を・何ピクセルで描くか**を決める（物理ピクセルの世界）。 描画 1 フレーム分の幾何（`LoupeGeometry`）の解決（DIP → 物理ピクセルの換算・切り出し領域の算出を含む） |
 
-**本型が単一所有するもの**: 表示レイアウトの解決（表示サイズの補正と表示位置の決定）・描画の幾何の解決・**設定変更の検出とログ出力**。
+**本型が単一所有するもの**: 表示レイアウトの解決（表示サイズの決定と表示位置の補正）・描画の幾何の解決・**設定変更の検出とログ出力**。
 
 | メソッド | 決めること | 入力 | 出力 |
 | --- | --- | --- | --- |
-| `ResolveLayout` | 配置（どこへ・どの大きさで置くか） | 親領域のサイズ（DIP） | 表示サイズ（要求サイズを親領域の最小辺へクランプ）＋表示位置（拡大中心 → 親領域 DIP → オフセット加算 → 親領域内へクランプ） |
-| `ResolveGeometry` | 描画（何を・何ピクセルで描くか） | 表示サイズ（DIP）＋描画先のサイズ（物理ピクセル） | 描画面（DIP → 物理ピクセルへ換算し描画先でクランプ）＋切り出し領域（拡大中心から導出） |
+| `ResolveLayout` | 配置（どこへ・どの大きさで置くか） | 親領域のサイズ（DIP） | 表示サイズ（要求サイズをそのまま）＋表示位置（拡大中心 → 親領域 DIP → オフセット加算 → 親領域内へ補正） |
+| `ResolveGeometry` | 描画（何を・何ピクセルで描くか） | 表示サイズ（DIP） | 描画面（DIP → 物理ピクセルへ換算）＋切り出し領域（拡大中心から導出） |
 
-**2 つのクランプは、同じ規則（`EsSize.ClampToArea` = 領域の最小辺を上限とし、領域が未確定ならクランプしない）を別の世界へ適用したものです。**
+**表示サイズは縮小しません**（領域に収めるためにサイズを変えると、要素サイズ・描画ビットマップ・切り出し領域の対応が崩れるため）。 領域が収められるかどうかは次のように扱います。
 
-| クランプ | 対象 | 単位 | 目的 |
-| --- | --- | --- | --- |
-| 表示サイズ | 親パネル（ルーペを置くセル） | DIP | 親パネルへ収める（要素サイズ・位置・`RenderTransform` が同じ値を使う） |
-| 描画面 | 描画先の表面（描画バッファ） | 物理ピクセル | 描画先へ収める（切り出し領域も連動して縮む） |
+| 領域 | 収められない場合の扱い |
+| --- | --- |
+| 親パネル（配置） | 配置しない（`LoupeLayout.Position` が null） |
+| 描画先の表面（描画） | 本コアは描画先を知らないため判定しない（`PixelSize` と同じ大きさの表面を呼び出し側が用意する） |
 
-配置の基準は親パネル、描画面の基準は描画先の表面であり、対象も単位も違うため両者の結果は一致しません（例: 125% の画面では 120 DIP = 150 px）。 したがって `ResolveGeometry` へは `Options.RequestedSize` の生値ではなく、**`ResolveLayout(parentSize).DisplaySize`（親領域でクランプ済みの値）**を渡します。
+**はみ出しの補正**: 表示サイズは変えず、拡大中心が領域の端に寄った場合に表示位置を `EsSize.ClampOffset` で領域内へ補正します（0〜領域の長さ − 表示サイズ）。 表示位置は `ResolveLayout(parentSize).Position` が返す値をそのまま使います（要素サイズ・描画サイズ・位置は同じ表示サイズから導出します）。
 
-**前提条件**: 親パネルと描画先の表面は、いずれもルーペの表示サイズ以上であること（小さい場合はルーペをその領域へ収められない）。 前提を満たさない場合、コアは例外にせず領域の最小辺へ縮小した値を返します（ルーペが消えるのを避けるための防御。 配置・描画の正しさは保証しません）。
-
-**はみ出しの補正**: 拡大中心が領域の端に寄った場合は、表示位置を `EsSize.ClampOffset` で領域内へ補正します（0〜領域の長さ − 表示サイズ）。 収まらない場合は左上寄せの 0 になります（位置で合わせ、表示サイズの再クランプは行いません）。
+`ResolveGeometry` へは `ResolveLayout(parentSize).DisplaySize`（= 要求サイズ）を渡します。 表示サイズを縮小しないためどちらを渡しても同じ値になりますが、実際に描く要素の大きさをそのまま渡す形に統一します。
 
 ### `LoupeOptions` のメンバー
 
@@ -86,7 +84,7 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `RequestedSize` | `int` | `160` | ルーペの基本サイズ（DIP・一辺）。 安全域 1〜4096。 表示サイズは UI 層が親領域・描画先へクランプして導出する |
+| `RequestedSize` | `int` | `160` | ルーペの基本サイズ（DIP・一辺）。 安全域 1〜4096。 本値がそのまま表示サイズになる（親領域に合わせた縮小はしない） |
 | `ZoomLevel` | `int` | `4` | 拡大率（偶数推奨）。 安全域 1〜64 |
 
 `record` のため `with` 式による部分変更と値の等価比較ができます。 等価比較は UI のプロパティシステムと併せて「同値の再設定では再描画しない」動作を保証します。
@@ -127,8 +125,8 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 var loupe = new Loupe(options) { CenterPoint = cursorDomain, DipToDeviceScaling = 1.25 };
 loupe.SetCoordTransform(port);
 
-var layout = loupe.ResolveLayout(parentSize);          // 表示サイズ + 表示位置（配置しない場合は Position が null）
-var geometry = loupe.ResolveGeometry(layout.DisplaySize, canvasSize); // 幾何（物理ピクセル・切り出し領域を解決済み）
+var layout = loupe.ResolveLayout(parentSize);          // 表示サイズ（要求サイズ）+ 表示位置（配置しない場合は Position が null）
+var geometry = loupe.ResolveGeometry(layout.DisplaySize); // 幾何（物理ピクセル・切り出し領域を解決済み）
 
 // 描画完了通知（ホストが描画済み画像へオーバーレイを描くための情報）は幾何から読む
 var captureTopLeft = geometry.CaptureTopLeft;   // 切り出し領域の左上（ドメイン座標。中心未設定は null）
@@ -147,7 +145,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 | --- | --- | --- |
 | `Center` | `EsPoint?` | 拡大中心（ドメイン座標 = 元画像ピクセル座標）。 null の場合は拡大画像を描画しない |
 | `DisplaySize` | `double` | ルーペの一辺の表示サイズ（DIP。 ラベルの位置の基準であり、物理ピクセルサイズの換算元） |
-| `PixelSize` | `int` | ルーペの一辺のサイズ（物理ピクセル。 表示サイズ × `DipToDeviceScaling` を描画先でクランプ済み） |
+| `PixelSize` | `int` | ルーペの一辺のサイズ（物理ピクセル。 表示サイズ × `DipToDeviceScaling` を切り上げ・最低 1）。 描画先の表面は本値と同じ大きさで用意する |
 | `DipToDeviceScaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数（描画計画の解決（枠線の太さの換算）にも使う） |
 | `ZoomLevel` | `int` | 拡大率（1〜64。 設定 `Options.ZoomLevel` の値。 描画完了通知のスケールにも使う） |
 | `CaptureSize` | `int`（導出） | 切り出し領域の一辺（ドメインピクセル）。 物理ピクセルサイズを拡大率で割った切り上げ。 位置パラメータではなく `PixelSize` / `ZoomLevel` からの導出であり、切り上げの規則も本値が単一所有する |
@@ -204,8 +202,8 @@ loupe.PositionOffset = 16;
 var layout = loupe.ResolveLayout(parentSize: new EsSize(800, 600));
 
 // 描画の幾何（1 フレーム分。UI 層は本値を組み立てず、描画層へ渡す）
-// displaySize は ResolveLayout がクランプした後の値（Options.RequestedSize の生値ではない）
-var geometry = loupe.ResolveGeometry(layout.DisplaySize, availableSize: new EsSize(800, 600));
+// displaySize は ResolveLayout が返した値（= 要求サイズ。 領域に合わせた縮小はしない）
+var geometry = loupe.ResolveGeometry(layout.DisplaySize);
 var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描画先
 ```
 
@@ -219,7 +217,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 | 親領域 DIP | 表示レイアウト（表示サイズ・表示位置）。 `ICoordTransform.Inverse` で得る |
 | 物理ピクセル | 描画の幾何のサイズ・寸法。 表示 DIP × `DipToDeviceScaling` |
 
-- 拡大中心は `ICoordTransform` を通して親領域 DIP へ変換し、`PositionOffset` を加えてから親領域内へクランプします。
+- 拡大中心は `ICoordTransform` を通して親領域 DIP へ変換し、`PositionOffset` を加えてから親領域内へ補正します。
 - 切り出し領域の一辺は物理ピクセルサイズを拡大率で割った切り上げです。
 
 ## 6. 制限事項

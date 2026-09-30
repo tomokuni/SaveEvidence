@@ -191,7 +191,7 @@ public sealed class LoupeControl : Panel
     /// <summary>ルーペ中心からの右下オフセット（DIP）を取得または設定する。</summary>
     /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。既定は 0。</value>
     /// <remarks>
-    /// 保持と位置のクランプはコア（ファサード）が単一所有する。<br/>
+    /// 保持と位置の補正はコア（ファサード）が単一所有する。<br/>
     /// 本コントロールは位置を持たない（ホストが <see cref="ResolveLayout"/> の結果で配置する）ため、設定時は再配置を要求する。
     /// </remarks>
     public double PositionOffset
@@ -217,10 +217,10 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>親領域のサイズから表示レイアウト（表示サイズ・表示位置）を解決する。</summary>
-    /// <param name="parentSize">親領域のサイズ（DIP）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
-    /// <returns>表示レイアウト（表示サイズと表示位置。拡大中心未設定時は位置が null）。</returns>
+    /// <param name="parentSize">親領域のサイズ（DIP）。 未確定（幅または高さが 0 以下）の場合は位置を補正しない。</param>
+    /// <returns>表示レイアウト（表示サイズと表示位置。 拡大中心未設定時と、親領域が表示サイズを収められない場合は位置が null）。</returns>
     /// <remarks>
-    /// 本コントロールは位置を持たないため、ホストが本メソッドの結果で配置する（クランプ・オフセットの規則はコアが単一所有する）。<br/>
+    /// 本コントロールは位置を持たないため、ホストが本メソッドの結果で配置する（オフセット・位置の補正の規則はコアが単一所有する）。<br/>
     /// 描画サイズも同じ値から決まる（描画ビットマップと配置サイズを一致させる）。
     /// </remarks>
     public LoupeLayout ResolveLayout(EsSize parentSize) => _presenter.ResolveLayout(parentSize);
@@ -321,7 +321,7 @@ public sealed class LoupeControl : Panel
         // テキストは描画層が文言と基準点を渡し、要素として置くか画像として描くかは本層が決める
         // （表示サイズは要素の大きさ（ホストが描画層のレイアウト結果で配置したサイズ）である）
         // 実寸は配置（本ルート）と描画（OnPaintSurface）の両方で同じ値を使う必要があるため、同じ測定関数を渡す
-        var plan = _presenter.ResolveDrawPlan(bounds.Size.Width, null, MewUITextMeasure.Measure);
+        var plan = _presenter.ResolveDrawPlan(bounds.Size.Width, MewUITextMeasure.Measure);
         SyncLabels(plan.Labels, bounds);
     }
 
@@ -424,7 +424,7 @@ public sealed class LoupeControl : Panel
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
     /// 描画計画（描画層が解決した幾何・外観・層の順序）を自 UI の公開プロパティから組み立てて描画層へ渡す<br/>
-    /// （DIP → 物理ピクセルの換算と描画先へのクランプは描画層が単一所有する）。<br/>
+    /// （DIP → 物理ピクセルの換算は描画層が単一所有する）。<br/>
     /// <b>描く層とその順序は描画層が単一所有する</b>（<see cref="LoupeDrawPlan.Layers"/> の順に処理する）。<br/>
     /// <b>キャンバスを拡大せず 1:1 で描く</b>: 描画計画の矩形（描画面・拡大画像の描画先・枠線の太さ）は<b>物理ピクセル</b>で<br/>
     /// 解決されるため、拡大すると設定した拡大率より大きい画像をルーペ領域へ描くことになり、切り取られてずれる。<br/>
@@ -438,9 +438,8 @@ public sealed class LoupeControl : Panel
         // 倍率は描画面と割り当て領域（DIP）の比から求め、保持値とファサードへも反映する
         // （反映しないと、拡大画像がルーペ領域より小さい倍率で描かれる）。
         var scaling = ApplySurfaceScaling(info);
-        var surfaceSize = info.Size.ToEsSize();
         var plan = _presenter.ResolveDrawPlan(
-            DpiScaler.ToDip(surfaceSize, scaling).Width, surfaceSize, MewUITextMeasure.Measure);
+            DpiScaler.ToDip(info.Size.ToEsSize(), scaling).Width, MewUITextMeasure.Measure);
 
         try
         {

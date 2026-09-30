@@ -50,8 +50,7 @@ internal sealed class GridLoupePresenter : LoupePresenter
 
     /// <summary>中心の格子線と四隅の鉤を載せた描画計画を解決する。</summary>
     /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP）。</param>
-    /// <param name="availableSize">描画先の領域サイズ（物理ピクセル）。null 可。</param>
-    /// <param name="measureText">テキストの実寸を測る関数。null 不可。</param>
+    /// <param name="measureText">テキストの実寸を測る関数。 null 不可。</param>
     /// <returns>十字線と枠線だけを差し替えた描画計画。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>
@@ -59,9 +58,9 @@ internal sealed class GridLoupePresenter : LoupePresenter
     /// （差し替えるのは装飾の値だけであり、差し替えても他の値の整合は崩れない）。
     /// </remarks>
     public override LoupeDrawPlan ResolveDrawPlan(
-        double displaySize, EsSize? availableSize, Func<string, double, EsSize> measureText)
+        double displaySize, Func<string, double, EsSize> measureText)
     {
-        var plan = base.ResolveDrawPlan(displaySize, availableSize, measureText);
+        var plan = base.ResolveDrawPlan(displaySize, measureText);
         var surface = plan.SurfaceBounds;
         var scaling = DipToDeviceScaling;
 

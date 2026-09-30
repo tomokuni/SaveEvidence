@@ -417,7 +417,7 @@ internal sealed class MarqueeState
     /// <remarks>
     /// 矩形の四隅を境界内にクリップし、その包絡矩形（bounding box）を返す。<br/>
     /// 矩形全体を境界内に収める（<see cref="SetSelection"/> 等の外部復元・設定変更時の即時適用用）。<br/>
-    /// 包絡矩形の計算は <see cref="EsRect.ClampToArea(EsSize)"/> が単一所有する（ルーペの位置と同じ規則）。
+    /// 包絡矩形の計算は <see cref="EsRect.ClampToArea(EsSize)"/> が単一所有する（四隅を個別にクランプし、その包絡を返す規則）。
     /// </remarks>
     internal EsRect ClipRectToBounds(EsRect rect)
         => Port.Bounds is { } size ? rect.ClampToArea(size) : rect;

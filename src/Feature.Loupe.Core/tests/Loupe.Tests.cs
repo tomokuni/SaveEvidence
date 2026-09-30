@@ -67,23 +67,25 @@ public class LoupeTests
     // ====================================================================
 
     [Fact]
-    public void ResolveLayout_要求サイズを親領域の最小辺へクランプする()
+    public void ResolveLayout_要求サイズをそのまま表示サイズにする()
     {
         var loupe = new Loupe(new LoupeOptions { RequestedSize = 200 });
 
         var layout = loupe.ResolveLayout(new EsSize(120, 300));
 
-        Assert.Equal(120, layout.DisplaySize);
+        // 要求サイズは領域に合わせて縮小しない
+        Assert.Equal(200, layout.DisplaySize);
     }
 
     [Fact]
-    public void ResolveLayout_親領域が未確定なら要求サイズを表示サイズにする()
+    public void ResolveLayout_親領域が未確定なら要求サイズと中心の位置を返す()
     {
-        var loupe = new Loupe(new LoupeOptions { RequestedSize = 200 });
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 200 }) { CenterPoint = new EsPoint(500, 600) };
 
         var layout = loupe.ResolveLayout(default);
 
         Assert.Equal(200, layout.DisplaySize);
+        Assert.Equal(new EsPoint(500, 600), layout.Position);
     }
 
     [Fact]
@@ -91,10 +93,9 @@ public class LoupeTests
     {
         var loupe = new Loupe(new LoupeOptions { RequestedSize = 200 });
 
-        // 要求サイズと親領域の小さい方（親領域 400x300 なので要求サイズ 400 がクランプされる）
         loupe.Options = loupe.Options with { RequestedSize = 400 };
 
-        Assert.Equal(300, loupe.ResolveLayout(ParentSize).DisplaySize);
+        Assert.Equal(400, loupe.ResolveLayout(ParentSize).DisplaySize);
     }
 
     // ====================================================================
@@ -177,11 +178,11 @@ public class LoupeTests
         Assert.Equal(new EsPoint(0, 0), layout.Position);
     }
 
-    /// <summary>表示サイズが親領域より大きくても負の位置にならないことを検証する。</summary>
+    /// <summary>親領域が表示サイズを収められない場合は配置しないことを検証する。</summary>
     [Fact]
-    public void ResolveLayout_表示サイズが親領域より大きくても負の位置にしない()
+    public void ResolveLayout_親領域が収められない場合は配置しない()
     {
-        // 表示サイズは親領域の最小辺（100）へクランプされるため、可動域は 0 になる
+        // 要求サイズ 300 は親領域 100x100 に収まらない（縮小もしない）
         var loupe = new Loupe(LoupeOptions.Default with { RequestedSize = 300 })
         {
             CenterPoint = new EsPoint(0, 0),
@@ -190,8 +191,8 @@ public class LoupeTests
 
         var layout = loupe.ResolveLayout(new EsSize(100, 100));
 
-        Assert.Equal(100, layout.DisplaySize);
-        Assert.Equal(new EsPoint(0, 0), layout.Position);
+        Assert.Equal(300, layout.DisplaySize);
+        Assert.Null(layout.Position);
     }
 
     // ====================================================================
@@ -217,25 +218,25 @@ public class LoupeTests
     }
 
     [Fact]
-    public void ResolveGeometry_描画先の領域へクランプする()
+    public void ResolveGeometry_描画先の大きさで縮小しない()
     {
         var loupe = new Loupe(new LoupeOptions { RequestedSize = 300 });
 
-        var geometry = loupe.ResolveGeometry(300, new EsSize(200, 150));
+        var geometry = loupe.ResolveGeometry(300);
 
-        Assert.Equal(150, geometry.PixelSize);
+        Assert.Equal(300, geometry.PixelSize);
     }
 
     [Fact]
-    public void ResolveGeometry_レイアウトのクランプ結果を物理ピクセルへ換算する()
+    public void ResolveGeometry_表示サイズを物理ピクセルへ換算する()
     {
         var loupe = new Loupe(new LoupeOptions { RequestedSize = 300 });
 
         var layout = loupe.ResolveLayout(new EsSize(120, 400));
         var geometry = loupe.ResolveGeometry(layout.DisplaySize);
 
-        // 表示サイズ（DIP）が親領域の最小辺へクランプされ、その値が物理ピクセルへ換算される
-        Assert.Equal(120, geometry.PixelSize);
+        // 表示サイズ（DIP）は要求サイズのまま（縮小しない）、その値が物理ピクセルへ換算される
+        Assert.Equal(300, geometry.PixelSize);
     }
 
     [Fact]
@@ -276,7 +277,7 @@ public class LoupeTests
         Assert.Equal(4, geometry.ZoomLevel);
     }
 
-    /// <summary>拡大率が切り出しサイズの切り上げ（描画先によるクランプを含む）に影響されないことを検証する。</summary>
+    /// <summary>拡大率が切り出しサイズの切り上げに影響されないことを検証する。</summary>
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <remarks>
     /// 実描画は切り出し領域（切り出しサイズのドメインピクセル）を <c>ZoomLevel</c> 倍で描くため、<br/>

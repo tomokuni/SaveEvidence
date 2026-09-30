@@ -339,7 +339,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="domainPos">ルーペ中心（ドメイン = 元画像ピクセル / 仮想スクリーンピクセル）。</param>
     /// <remarks>
     /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordTransform"/>）から自己計算する<br/>
-    /// （カーソル右下 + オフセット + クランプ）。配置前（Parent 未接続）の呼び出しは無視される。<br/>
+    /// （カーソル右下 + オフセット + 親領域内への補正）。 配置前（Parent 未接続）の呼び出しは無視される。<br/>
     /// <b>拡大元画像が未設定の間は表示しない</b>（未設定の市松模様を防ぐ。Source 設定後に呼び出し直すことで表示される）。
     /// </remarks>
     public void SetLoupePosition(Point domainPos)
@@ -603,7 +603,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="sender">イベント送信元（MarqueeControl）。</param>
     /// <param name="e">ルーペ中心（ドメイン座標）。</param>
     /// <remarks>
-    /// 表示位置・サイズは LoupeControl が座標変換ポートから自己計算する（カーソル右下 + オフセット + クランプ）。<br/>
+    /// 表示位置・サイズは LoupeControl が座標変換ポートから自己計算する（カーソル右下 + オフセット + 親領域内への補正）。<br/>
     /// <b>拡大元画像が未設定の間は表示しない</b>（AreaSelect の背景キャプチャ完了前は Source が null のため、<br/>
     /// 表示すると市松模様が見える。Source 設定後の表示開始はホスト（<see cref="SetLoupePosition"/> 経由）が行う）。<br/>
     /// ホストへの通知（<see cref="LoupePositionMoved"/>）は追加制御（Source 設定等）のフックとして発行する。

@@ -222,8 +222,8 @@ sequenceDiagram
     Facade->>Facade: 表示可否を再判定 / InvalidateArrange
     Note over Facade: レイアウト（ArrangeContent）
     Facade->>Loupe: ResolveLayout(parentSize)
-    Loupe->>Loupe: コアのファサードがクランプ・オフセットを適用して位置を解決
-    Loupe-->>Facade: LoupeLayout（DisplaySize / Position）  ※親領域へクランプ済み
+    Loupe->>Loupe: コアのファサードがオフセットと位置の補正を適用して位置を解決
+    Loupe-->>Facade: LoupeLayout（DisplaySize / Position）  ※親領域内へ補正済み
     Facade->>Loupe: Arrange(位置・サイズ)
 ```
 
@@ -249,7 +249,7 @@ ArrangeContent(bounds)                     … bounds はウィンドウ絶対�
 | ルーペ画像が未設定 | ルーペを表示しない（中心は記録する） |
 | 選択矩形のサイズが 0 以下 | 選択なしとして扱う |
 | 未定義のモード値 | `WindowSelect` と同じ扱いにする（例外にしない） |
-| ルーペの位置が親領域の外 | 親領域内へクランプする |
+| ルーペの位置が親領域の外 | 親領域内へ補正する |
 | 破線を描画しない状態（選択なし・選択矩形を使わないモード・切り出し左上が未設定） | 何もしない（例外にしない） |
 | `Log` が null | `NullLogger` へフォールバックする（出力なし） |
 

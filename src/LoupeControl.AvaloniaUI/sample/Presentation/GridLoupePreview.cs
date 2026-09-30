@@ -49,7 +49,7 @@ internal sealed class GridLoupePreview : Control
     public override void Render(DrawingContext context)
     {
         var layout = _presenter.ResolveLayout(new EsSize(Bounds.Width, Bounds.Height));
-        var plan = _presenter.ResolveDrawPlan(layout.DisplaySize, null, MeasureText);
+        var plan = _presenter.ResolveDrawPlan(layout.DisplaySize, MeasureText);
 
         LoupeContextPainter.Paint(context, Source, in plan);
     }
