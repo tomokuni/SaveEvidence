@@ -1,5 +1,8 @@
 using System.Globalization;
+using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
@@ -12,11 +15,78 @@ namespace EsUtil.Feature.Loupe.Presenter.Logging;
 /// <b>「値を所有する主体が記録する」規則</b>により、コアが所有する設定（<c>LoupeOptions</c> / 拡大中心 / 環境値）は<br/>
 /// コアのログ定義（<c>Feature.Loupe.Core</c> の <c>LoupeLogMessage</c>）が記録し、本層は重複して記録しない<br/>
 /// （どの層まで値が伝搬したかをログの接頭辞から追える）。<br/>
+/// <b>本層を通過した値も Trace で記録する</b>: コアへ伝搬するだけのプロパティ（<c>Options</c> 等）であっても、<br/>
+/// ホストの設定が本層を通ったことを確認できるようにする（既定の出力では溢れさせない）。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、呼び出し側では logger 引数を省略する。
 /// </remarks>
 internal static partial class LoupePresenterLogMessage
 {
+    /// <summary>未設定を表す文字列。</summary>
+    private const string Null = "null";
+
+    /// <summary>提示層の生成を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Information<br/>出力書式: <c>[Feature.Loupe.Presenter] Presenter created</c><br/>
+    /// 生成時点では出力先が未設定のため、<b>ロガーが設定された時点で 1 度だけ</b>記録する。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    [LoggerMessage(LogLevel.Information, "[Feature.Loupe.Presenter] Presenter created")]
+    internal static partial void LogPresenterCreated(this ILogger logger);
+
+    /// <summary>出力先（ロガー）の設定を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Trace<br/>出力書式: <c>[Feature.Loupe.Presenter] Logger attached</c><br/>
+    /// 本層はロガーをコアへ伝搬するだけであり、値の変換を行わない（通過の確認を Trace で残す）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    [LoggerMessage(LogLevel.Trace, "[Feature.Loupe.Presenter] Logger attached")]
+    internal static partial void LogLoggerAttached(this ILogger logger);
+
+    /// <summary>コアへ伝搬した値を記録する（本層を通過した確認用）。</summary>
+    /// <remarks>
+    /// LogLevel: Trace<br/>出力書式: <c>[Feature.Loupe.Presenter] Forwarded: {Name} {Value}</c><br/>
+    /// 値の整形は型ごとのオーバーロードが単一所有する（呼び出し側に整形処理を置かない）。<br/>
+    /// 設定（値が変化したときにのみ意味を持つもの）は <see cref="LogAppearanceChanged"/> が Debug で記録する。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">整形済みの値。</param>
+    [LoggerMessage(LogLevel.Trace, "[Feature.Loupe.Presenter] Forwarded: {Name} {Value}")]
+    internal static partial void LogForwarded(this ILogger logger, string name, string value);
+
+    /// <summary>設定（<see cref="LoupeOptions"/>）をコアへ伝搬したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">伝搬した設定。</param>
+    internal static void LogForwarded(this ILogger logger, string name, LoupeOptions value)
+        => logger.LogForwarded(name, $"RequestedSize={value.RequestedSize}, ZoomLevel={value.ZoomLevel}");
+
+    /// <summary>実数値をコアへ伝搬したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">伝搬した実数値。</param>
+    /// <remarks>数値の書式は現在のカルチャに依存しない（ログを環境非依存にする）。</remarks>
+    internal static void LogForwarded(this ILogger logger, string name, double value)
+        => logger.LogForwarded(name, value.ToString(format: null, CultureInfo.InvariantCulture));
+
+    /// <summary>拡大中心（ドメイン座標）をコアへ伝搬したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">伝搬した拡大中心（未設定は null）。</param>
+    internal static void LogForwarded(this ILogger logger, string name, EsPoint? value)
+        => logger.LogForwarded(name, value is { } p
+            ? $"({p.X.ToString(CultureInfo.InvariantCulture)}, {p.Y.ToString(CultureInfo.InvariantCulture)})"
+            : Null);
+
+    /// <summary>座標変換ポートをコアへ伝搬したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">伝搬した座標変換ポート（未設定は null）。</param>
+    /// <remarks>ポートは値として比較・整形できないため、設定された実装の種別のみを記録する。</remarks>
+    internal static void LogForwarded(this ILogger logger, string name, ICoordTransform? value)
+        => logger.LogForwarded(name, value?.GetType().Name ?? Null);
+
     /// <summary>設定値変更のログ（変更前後）。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Loupe.Presenter] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>

@@ -1,14 +1,17 @@
-using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Geometry;
+using Microsoft.Extensions.Logging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 
 namespace EsUtil.Feature.Loupe.Presenter.Tests;
 
-/// <summary><see cref="LoupePresenter"/> の単体テスト（外観の保持と変更の記録）。</summary>
+/// <summary><see cref="LoupePresenter"/> の単体テスト（外観の保持・変更の記録・コアへの伝搬）。</summary>
 /// <remarks>
-/// 提示層が単一所有するもの（外観・描画計画）のうち、外観の保持と変更ログを検証する<br/>
-/// （描画計画の解決は <see cref="LoupeDrawPlan.Tests"/> が担う）。<br/>
+/// 提示層が単一所有するもの（外観・描画計画）のうち、外観の保持と変更ログ、および
+/// コアへ伝搬する値の通過の記録を検証する（描画計画の解決は <see cref="LoupeDrawPlan.Tests"/> が担う）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public class LoupePresenterTests
@@ -37,6 +40,7 @@ public class LoupePresenterTests
         var presenter = new LoupePresenter();
         var logger = new RecordingLogger();
         presenter.Log = logger;
+        logger.Messages.Clear();
 
         presenter.Appearance = LoupeAppearance.Default with { ShowCrosshair = false };
 
@@ -50,13 +54,76 @@ public class LoupePresenterTests
         var presenter = new LoupePresenter();
         var logger = new RecordingLogger();
         presenter.Log = logger;
+        logger.Messages.Clear();
 
         presenter.Appearance = LoupeAppearance.Default with { };
 
         Assert.Empty(logger.Messages);
     }
 
-    /// <summary>設定（<see cref="LoupeOptions"/>）の変更がコアのログへ流れることを検証する。</summary>
+    /// <summary>本層の生成がロガーの設定時に 1 度だけ記録されることを検証する。</summary>
+    /// <remarks>生成時は出力先が未設定のため、ロガーが設定された時点で記録する。</remarks>
+    [Fact]
+    public void Log_本層の生成はロガーの設定時に一度だけ記録する()
+    {
+        var presenter = new LoupePresenter();
+        var logger = new RecordingLogger();
+
+        presenter.Log = logger;
+        presenter.Log = logger;   // 再設定（生成の記録は繰り返さない）
+
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Core] Facade created: RequestedSize=160, ZoomLevel=4",
+                "[Feature.Loupe.Core] Logger attached",
+                "[Feature.Loupe.Presenter] Presenter created",
+                "[Feature.Loupe.Presenter] Logger attached",
+                "[Feature.Loupe.Core] Logger attached",
+                "[Feature.Loupe.Presenter] Logger attached",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>コアへ伝搬するプロパティが本層の通過として Trace で記録されることを検証する。</summary>
+    /// <remarks>
+    /// 値の保持と変更の記録はコアが行うため、本層は「通過したこと」だけを残す。<br/>
+    /// 値が変化した場合はコアの変更ログも出力される（コアの拡大中心も Trace のため）、<br/>
+    /// 本層の接頭辞を持つ Trace の出力だけを抽出して検証する。
+    /// </remarks>
+    [Fact]
+    public void コアへ伝搬する値は通過をTraceで記録する()
+    {
+        var presenter = new LoupePresenter();
+        var logger = new RecordingLogger();
+        presenter.Log = logger;
+        logger.Messages.Clear();
+        logger.Levels.Clear();
+
+        presenter.Options = LoupeOptions.Default with { RequestedSize = 200, ZoomLevel = 8 };
+        presenter.DipToDeviceScaling = 1.25;
+        presenter.CenterPoint = new EsPoint(10, 20);
+        presenter.PositionOffset = 16;
+        presenter.SetCoordTransform(new CoordTransform(p => p, p => p, () => null));
+
+        var traceMessages = logger.Messages
+            .Zip(logger.Levels, static (message, level) => (message, level))
+            .Where(static entry =>
+                entry.level == LogLevel.Trace &&
+                entry.message.StartsWith("[Feature.Loupe.Presenter] ", StringComparison.Ordinal))
+            .Select(static entry => entry.message);
+
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Presenter] Forwarded: Options RequestedSize=200, ZoomLevel=8",
+                "[Feature.Loupe.Presenter] Forwarded: DipToDeviceScaling 1.25",
+                "[Feature.Loupe.Presenter] Forwarded: CenterPoint (10, 20)",
+                "[Feature.Loupe.Presenter] Forwarded: PositionOffset 16",
+                "[Feature.Loupe.Presenter] Forwarded: SetCoordTransform CoordTransform",
+            ],
+            traceMessages);
+    }
+
+    /// <summary>設定（<see cref="LoupeOptions"/>）の変更がコアのログ定義で記録されることを検証する。</summary>
     /// <remarks>
     /// 設定を所有するのはコアであり、記録もコアが行う（提示層は委譲するだけである）。<br/>
     /// ログの出力先は提示層の <c>Log</c> からコアへ伝搬する。
@@ -67,9 +134,16 @@ public class LoupePresenterTests
         var presenter = new LoupePresenter();
         var logger = new RecordingLogger();
         presenter.Log = logger;
+        logger.Messages.Clear();
 
         presenter.Options = LoupeOptions.Default with { ZoomLevel = 8 };
 
-        Assert.Equal("[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8", Assert.Single(logger.Messages));
+        // コアの変更ログ（Debug）と本層の通過ログ（Trace）がこの順で出力される
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8",
+                "[Feature.Loupe.Presenter] Forwarded: Options RequestedSize=160, ZoomLevel=8",
+            ],
+            logger.Messages);
     }
 }

@@ -56,6 +56,10 @@ public partial class LoupePresenter
     /// <summary>描く層の組合せのうち、テキストの有無を表すビット。</summary>
     private const int TextBit = 8;
 
+    /// <summary>本層の生成の記録を済ませたかどうか。</summary>
+    /// <remarks>出力先の設定は複数回起こりうるため、生成の記録は 1 度だけにする。</remarks>
+    private bool _createdLogged;
+
     /// <summary>層の並び（ペーストボードを除く 4 つの有無 = 16 通り）。</summary>
     /// <remarks>
     /// 描画のたびに一覧を組み立てないよう、全通りを事前生成して共有する<br/>
@@ -65,43 +69,74 @@ public partial class LoupePresenter
 
     /// <summary>ルーペの設定（計算に必要な値。 表示サイズ・拡大率）を取得または設定する。</summary>
     /// <value>設定の単一値。 既定は <see cref="LoupeOptions.Default"/>。</value>
-    /// <remarks>保持・ログ・補正はコアが単一所有する（本プロパティはコアへ委譲するだけである）。</remarks>
+    /// <remarks>
+    /// 保持・ログ・補正はコアが単一所有する（本プロパティはコアへ委譲するだけである）。<br/>
+    /// 本層を通過したことは Trace で記録する（ホストの設定が本層を通ったかを確認できるようにする）。
+    /// </remarks>
     public LoupeOptions Options
     {
         get => _core.Options;
-        set => _core.Options = value;
+        set
+        {
+            _core.Options = value;
+            Log.LogForwarded(nameof(Options), value);
+        }
     }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
     /// <value>スケーリング係数（0.1〜8.0）。 範囲外・非有限は補正済みの値を設定する。 既定は 1.0。</value>
+    /// <remarks>保持とログはコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。</remarks>
     public double DipToDeviceScaling
     {
         get => _core.DipToDeviceScaling;
-        set => _core.DipToDeviceScaling = value;
+        set
+        {
+            _core.DipToDeviceScaling = value;
+            Log.LogForwarded(nameof(DipToDeviceScaling), value);
+        }
     }
 
     /// <summary>拡大表示する中心座標（ドメイン座標）を取得または設定する。</summary>
     /// <value>拡大中心（元画像ピクセル座標）。 未設定は null。</value>
+    /// <remarks>保持とログ（Trace）はコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。</remarks>
     public EsPoint? CenterPoint
     {
         get => _core.CenterPoint;
-        set => _core.CenterPoint = value;
+        set
+        {
+            _core.CenterPoint = value;
+            Log.LogForwarded(nameof(CenterPoint), value);
+        }
     }
 
     /// <summary>拡大中心からの右下オフセット（DIP）を取得または設定する。</summary>
     /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。 既定は 0。</value>
+    /// <remarks>保持とログはコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。</remarks>
     public double PositionOffset
     {
         get => _core.PositionOffset;
-        set => _core.PositionOffset = value;
+        set
+        {
+            _core.PositionOffset = value;
+            Log.LogForwarded(nameof(PositionOffset), value);
+        }
     }
 
     /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。 null を設定した場合は出力なし（<c>LoggerFallback</c> が吸収する）。</value>
+    /// <remarks>
+    /// 保持はコアが単一所有する（本層は委譲するだけである）。<br/>
+    /// <b>初回の設定時に本層の生成を 1 度だけ記録する</b>（生成時は出力先が未設定のため、その場では記録できない）。
+    /// </remarks>
     public ILogger Log
     {
         get => _core.Log;
-        set => _core.Log = value;
+        set
+        {
+            _core.Log = value;
+            LogPresenterCreatedOnce();
+            _core.Log.LogLoggerAttached();
+        }
     }
 
     /// <summary>外観（色・フォント・角丸・枠線の太さ・表示可否）を取得または設定する。</summary>
@@ -126,7 +161,15 @@ public partial class LoupePresenter
 
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
-    public void SetCoordTransform(ICoordTransform? port) => _core.SetCoordTransform(port);
+    /// <remarks>
+    /// 保持とログはコアが単一所有する（本層は委譲するだけである）。<br/>
+    /// 低頻度のメソッド呼び出しのため、本層を通過したことを Trace で記録する。
+    /// </remarks>
+    public void SetCoordTransform(ICoordTransform? port)
+    {
+        _core.SetCoordTransform(port);
+        Log.LogForwarded(nameof(SetCoordTransform), port);
+    }
 
     /// <summary>親領域のサイズを通知して表示レイアウト（表示サイズ・表示位置）を解決する。</summary>
     /// <param name="parentSize">親領域のサイズ（DIP）。 未確定（幅または高さが 0 以下）の場合は位置を補正しない。</param>
@@ -180,6 +223,22 @@ public partial class LoupePresenter
             geometry.CaptureTopLeft,
             geometry.ZoomLevel,
             geometry.PixelSize);
+    }
+
+    /// <summary>本層の生成を 1 度だけ記録する（既に記録済みの場合は何もしない）。</summary>
+    /// <remarks>
+    /// 生成時点では出力先（<see cref="Log"/>）が未設定のため、ロガーが設定された時点で記録する<br/>
+    /// （コアの生成の記録と合わせて、どの設定で生成されたファサードからのログかを追えるようにする）。
+    /// </remarks>
+    private void LogPresenterCreatedOnce()
+    {
+        if (_createdLogged)
+        {
+            return;
+        }
+
+        _createdLogged = true;
+        _core.Log.LogPresenterCreated();
     }
 
     /// <summary>描く層だけを描画順に並べる。</summary>

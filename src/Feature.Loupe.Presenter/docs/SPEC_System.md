@@ -122,11 +122,19 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 
 ## 10. ログ
 
-UI が出力するログ（拡大元画像の変更・描画の例外）の定義と書式は本層が単一所有します（`[Feature.Loupe.Presenter]` の接頭辞）。
+本層が出力するログの定義と書式は本層が単一所有します（`[Feature.Loupe.Presenter]` の接頭辞）。
 
-**UI 固有の処理に対応するログは各 UI 実装が所有します**（中間ビットマップを生成する描画パイプライン固有のログ等）。 コアが出力するログ（設定・拡大中心・環境値の変更）は `Feature.Loupe.Core` の `LoupeLogMessage` が単一所有します。
+**値の保持と変更の記録はコアが行います**（`Feature.Loupe.Core` の `LoupeLogMessage`）。 本層はコアへ伝搬するだけの値についても**本層を通過したことを Trace で記録**します（ホストの設定が本層を通ったかを確認できるようにするため。 既定の出力では溢れさせません）。
 
-| 契機 | 出力 |
-| --- | --- |
-| `Appearance` の set | 変化した項目だけ（`LogAppearanceChanged`。 LogLevel: Debug、書式 `[Feature.Loupe.Presenter] Setting: {Name} {OldValue} → {NewValue}`） |
-| 拡大元画像の変更・描画の例外 | 各 UI が所有する定義 |
+| 契機 | 出力 | レベル |
+| --- | --- | --- |
+| 生成（`Log` の初回設定時） | `Presenter created` | Information |
+| `Log` の set | `Logger attached`（通過の記録） | Trace |
+| `Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の set | `Forwarded: {名前} {値}`（通過の記録） | Trace |
+| `SetCoordTransform` | `Forwarded: SetCoordTransform {ポート}`（通過の記録） | Trace |
+| `Appearance` の set | 変化した項目だけ（`LogAppearanceChanged`。 書式 `Setting: {Name} {OldValue} → {NewValue}`） | Debug |
+| `ResolveLayout` / `ResolveDrawPlan` | 出力しない（毎フレーム呼ばれる） | — |
+
+**生成の記録はコンストラクターではなく `Log` の初回設定時に行います**（構築時点では出力先が未設定であり、その場で出力しても記録が残らないため。 コアも同じ規則で生成を記録します）。
+
+**UI が出力するログ（拡大元画像の変更・描画の例外）の定義と書式も本層が単一所有します**（`[Feature.Loupe.Presenter]` の接頭辞）。 **UI 固有の処理に対応するログは各 UI 実装が所有します**（中間ビットマップを生成する描画パイプライン固有のログ等）。

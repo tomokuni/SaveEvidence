@@ -18,16 +18,17 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupePresenter` | class | 提示のファサード（コアのラップ・外観の保持・描画計画の解決）。 `sealed` ではない（派生で見た目を差し替えられる） |
+| `LoupePresenter` | class（`partial`） | 提示のファサード（コアのラップ・外観の保持・描画計画の解決）。 `sealed` ではない（派生で見た目を差し替えられる） |
 | `Setting.LoupeAppearance` | record | 外観（色・フォント・角丸・枠線の太さ・表示可否） |
 | `Drawing.LoupeDrawPlan` | record struct | 1 フレーム分の描画計画（描画面・矩形・層の順序・ラベル配置・通知用の値） |
 | `Drawing.LoupeDrawLayer` | enum | 描画層（`Pasteboard` / `Image` / `Crosshair` / `Border` / `Label`） |
 | `Drawing.LoupeTextPlacement` | record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・描画領域） |
 | `Label.LoupeLabelPlacement` | record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
-| `LoupePresenter.LabelPlan.cs` | static class | 実寸 → `LoupeLabelPlacement` の写像 |
-| `Logging.LoupePresenterLogMessage` | static partial class | 本層が単一所有する設定の変更ログ（内部手順。 ホストは参照しない） |
+| `Logging.LoupePresenterLogMessage` | static partial class | 本層が出力するログ定義（生成・通過の記録・外観の変更。 内部手順でありホストは参照しない） |
 
-`LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelTexts.cs` / `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）。
+**`LoupePresenter` は複数のファイルに分かれた `partial class` です**（`LoupePresenter.cs` = ファサード本体、`LoupePresenter.DrawPlan.cs` = 装飾矩形の導出、`LoupePresenter.LabelPlan.cs` = 実寸 → 配置指示の写像、`LoupePresenter.LabelTexts.cs` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。 実寸 → 配置の写像も `LoupePresenter` のメンバーです。
+
+`LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelTexts.cs` / `LoupePresenter.LabelPlan.cs` / `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）。
 
 ### `LoupePresenter` のメンバー
 
@@ -35,13 +36,15 @@
 
 | メンバー | 種別 | 説明 |
 | --- | --- | --- |
-| `Options` | property | コアの設定（計算に必要な値）を転送する |
-| `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` | property | コアの環境値・拡大中心・オフセットを転送する |
-| `Log` | property | コアのロガーを転送する |
-| `Appearance` | property | 外観（本層が単一所有する） |
-| `SetCoordTransform(ICoordTransform?)` | method | コアへ委譲する |
-| `ResolveLayout(EsSize)` | method | コアへ委譲する（表示サイズ + 位置） |
-| `ResolveDrawPlan(double displaySize, Func<string, double, EsSize> measureText)` | method（`virtual`） | 描画計画（`LoupeDrawPlan`）を解決する。 `measureText` が null なら `ArgumentNullException` |
+| `Options` | property | コアの設定（計算に必要な値）を転送する（**本層を通過したことを Trace で記録する**） |
+| `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` | property | コアの環境値・拡大中心・オフセットを転送する（**本層を通過したことを Trace で記録する**） |
+| `Log` | property | コアのロガーを転送する。 **初回の設定時に本層の生成を 1 度だけ記録する** |
+| `Appearance` | property | 外観（本層が単一所有する）。 **変化したときだけ**変更ログ（Debug）を出力する |
+| `SetCoordTransform(ICoordTransform?)` | method | コアへ委譲する（**本層を通過したことを Trace で記録する**） |
+| `ResolveLayout(EsSize)` | method | コアへ委譲する（表示サイズ + 位置。 毎フレーム呼ばれるためログは出力しない） |
+| `ResolveDrawPlan(double displaySize, Func<string, double, EsSize> measureText)` | method（`virtual`） | 描画計画（`LoupeDrawPlan`）を解決する。 `measureText` が null なら `ArgumentNullException`。 毎フレーム呼ばれるためログは出力しない |
+
+**ログの出力方針**: 生成（`Log` の初回設定時に 1 度だけ。 Information）・本層を通過した値（Trace）・本層が単一所有する外観の変更（Debug）を出力します。 値の保持と変更の記録はコアが行うため、本層は「通過したこと」を Trace で残します（ホストの設定が本層を通ったかを確認できます。 詳細は [`SPEC_System.md`](SPEC_System.md) の「ログ」を参照）。
 
 ### `LoupeAppearance` のメンバー
 
