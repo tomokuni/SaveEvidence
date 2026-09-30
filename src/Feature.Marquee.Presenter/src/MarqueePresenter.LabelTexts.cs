@@ -17,10 +17,6 @@ namespace EsUtil.Feature.Marquee.Presenter;
 /// </remarks>
 public partial class MarqueePresenter
 {
-    /// <summary>カーソル座標ラベルをカーソルから離すオフセット（DIP）。</summary>
-    /// <remarks>ラベルがカーソルに重ならないための余白である。</remarks>
-    private const double CoordLabelOffset = 8.0;
-
     /// <summary>ラベルを矩形の枠線から離す余白（DIP）。</summary>
     /// <remarks>
     /// 基準点は注目矩形の左上であり、そのまま置くとラベルの背景が矩形の枠線に重なって文字が読みにくくなる。<br/>
@@ -100,7 +96,7 @@ public partial class MarqueePresenter
     /// <returns>座標ラベルのテキスト配置。 表示しない場合は null。</returns>
     /// <remarks>
     /// 文言は <see cref="EsPoint.Format(int)"/> が文字列化する。<br/>
-    /// 基準点は「カーソル + <see cref="CoordLabelOffset"/>」である（ラベルは左上起点で置く）。
+    /// 基準点は「カーソル + <see cref="MarqueeAppearance.CoordLabelOffset"/>」である（ラベルは左上起点で置く）。
     /// </remarks>
     internal static MarqueeTextPlacement? ResolveCoordLabelText(
         in MarqueeGeometry geometry, MarqueeAppearance appearance, ICoordTransform port)
@@ -111,10 +107,11 @@ public partial class MarqueePresenter
         }
 
         var cursor = port.Inverse(geometry.MousePosition);
+        var offset = appearance.CoordLabelOffset;
 
         return new MarqueeTextPlacement(
             geometry.MousePosition.Format(),
-            new EsPoint(cursor.X + CoordLabelOffset, cursor.Y + CoordLabelOffset),
+            new EsPoint(cursor.X + offset, cursor.Y + offset),
             geometry.ClientSize);
     }
 

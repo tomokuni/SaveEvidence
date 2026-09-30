@@ -7,7 +7,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 選択矩形の幾何計算・状態機械・入力の解釈（判断）を 1 箇所に集約し、UI ごとの実装差から切り離す |
-| 提供形態 | クラスライブラリ（`Feature.Marquee.Core.dll`） |
+| 提供形態 | クラスライブラリ（`EsUtil.Feature.Marquee.Core.dll`。 アセンブリ名はルート名前空間と一致する） |
 | 想定利用者 | UI 実装と、それらを組み込むホストアプリケーション |
 | 汎用性 | 特定のアプリ・UI に依存しない。 他コントロールの語彙を持たない（将来そのまま別プロジェクトへ独立できる） |
 
@@ -116,34 +116,7 @@ stateDiagram-v2
 | `src/Logging/MarqueeLogMessage.cs` | `MarqueeLogMessage` | internal | LoggerMessage 定義（入力の判断・設定変更） |
 | `src/Selection/MarqueeSelection.cs` | `MarqueeSelection` | internal readonly record struct | 選択矩形の値と、その値だけから決まる純粋な幾何計算（正規化・ハンドル位置・対角・境界クリップ・ドラッグ変形。 状態機械と幾何の解決が使うため internal） |
 
-## 5. 単一所有（同じ真実を 2 箇所に持たない）
-
-| 対象 | 所有者 |
-| --- | --- |
-| 選択の状態遷移の判断 | `MarqueeSession` |
-| 選択矩形・ドラッグ・nudge の状態（遷移は操作メソッドでのみ変更できる） | `MarqueeState` |
-| 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `MarqueeSelection`（値の振る舞い） |
-| 注目矩形の優先順（ハイライト → 選択） | `MarqueeRenderRequest.ResolveFocusRect`（静的メソッドが規則を持ち、`Focus` が呼ぶ） |
-| 選択矩形の区間の流儀（終点のピクセルを含むか）と、DIP 変換時の終点 +1 | 選択矩形の生成元（`MarqueeSelection.FromPoints` が `EsRectInterval.Closed`、ホストが与えるハイライト矩形は `HalfOpen`）が `EsRect.Interval` として持ち、`MarqueeRenderRequest.ToDipRect` が読む |
-| 座標変換ポートの決定（ポート優先・倍率の等価変換） | `MarqueeRenderRequest.ResolvePort`（`ResolvedPort` が呼ぶ） |
-| ハンドルの位置（8 方向）と大きさの適用 | `Marquee.Geometry.cs`（`Marquee.ResolveHandles`。 位置の式は `MarqueeSelection.Handle`） |
-| 始点マーカーの太さ（2.0。 設定で変更しない固定値） | `Marquee.Geometry.cs` の private 定数 |
-| ハンドル枠の太さ（1.5。 設定で変更しない固定値） | `Marquee.Geometry.cs` の private 定数（`MarqueeHandles.BorderThickness` として解決済みで渡す） |
-| 設定の既定値・範囲補正 | `Marquee.Limits`（`MarqueeOptions` の生成時の `init` アクセサが参照する） |
-| 枠線の太さの安全域（0.5〜64.0・既定 2.0） | `Marquee.Limits`（**補正を適用するのは描画層の外観**の生成時の `init` アクセサ） |
-| 未設定（0 以下）の解決規則（表示スケールが未指定のときに倍率を使う） | `Marquee.Limits.ResolveDisplayScale`（public。 `Limits` は数値スキーマに加えて本規則を持つ） |
-| 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。 デリゲートを生成しない） |
-| 入力の判断に伴うログと設定変更のログ | `MarqueeLogMessage` |
-| 設定変更の差分検出（変化した項目だけを出力） | `MarqueeLogMessage.LogOptionsChanged`（出力の契機は `Marquee.Options` / `DomainToDipScaling` / `HighlightDomainRect` の setter） |
-| ラベルの文言と自動生成（書式を含む）・配置の写像 | 描画層（本コアを参照する上位の層）の描画計画の解決 |
-| ラベルの表示可否（設定値と注目矩形の有無） | 描画層の外観の述語 |
-| ラベルの既定色・フォントサイズ・枠線の太さ・内側余白 | 描画層の外観 |
-| 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層の外観（本コアは色を持つ型を公開しない） |
-| 描画する層とその順序（層にある ⇔ 描く値がある） | 描画層の層の選択（描画計画の `Layers`） |
-| 装飾の矩形（暗転領域・枠線・塗り）と枠線 4 辺の式 | 描画層の描画計画（辺の式は `EsRect.ComputeInnerEdges` が単一所有する） |
-| 描画 API の呼び出し（層の順序と写し方、色の参照） | 各 UI の描画実装。 描画層は描画計画をデータとして渡すだけである |
-
-## 6. 例外処理ポリシー
+## 5. 例外処理ポリシー
 
 | 状況 | 扱い |
 | --- | --- |
@@ -155,14 +128,14 @@ stateDiagram-v2
 | 設定値の範囲外・非数 | 生成時に補正する（例外にしない）。 安全域は `Marquee.Limits` が単一所有し、`MarqueeOptions` の `init` アクセサが適用する（描画層の外観も同じ `Limits` を参照する） |
 | 選択もハイライトも無い | 注目矩形を null とする（判断はコアが下し、UI 層は null を描かないことで扱う） |
 
-## 7. 可視性ポリシー
+## 6. 可視性ポリシー
 
 - 外部が使わない型・メンバーは `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Core.Tests`）で公開します。
 - **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
 - `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。
 - **層 3（内部ヘルパー）は外部参照 0 件を実測して絞り込んだ結果**です。 UI 実装が参照するのは `Marquee`・幾何の契約・列挙型・`MarqueeOptions` のみです（幾何計算は `internal` であり UI 実装からは参照できません）。
 
-## 8. テスト方針
+## 7. テスト方針
 
 | 方針 | 内容 |
 | --- | --- |
@@ -175,7 +148,7 @@ stateDiagram-v2
 dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 ```
 
-## 9. 設計判断（UI 非依存の境界）
+## 8. 設計判断（UI 非依存の境界）
 
 本プロジェクトの型は、UI フレームワークの型をシグネチャに持たないことを境界の条件としています。
 
@@ -191,26 +164,33 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層の外観が単一所有する）。 色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は各 UI の描画境界で行う |
 | 選択矩形の区間の流儀 | 「終点を含む」規則（DIP への 変換時の +1）は矩形の `Interval`（`EsRectInterval`）が単一所有し、`MarqueeRenderRequest.ToDipRect` が読む（UI ごとに +1 すると片方だけずれる） |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層が単一所有する（コアは素材（マウス位置・注目矩形）だけを渡す） |
-| 設定では変更しない固定値 | **公開しません**。 コア内だけで使う値（ハンドル枠の太さ・始点マーカーの太さ）は幾何の解決（`Marquee.Geometry.cs`）の private 定数とし、UI 層は解決済みの値（`MarqueeHandles.BorderThickness` 等）を受け取る |
-| フォントサイズの安全域 | 6〜48 と「非数は既定値」は描画層の外観が単一所有する |
+| 設定の既定値・範囲補正 | `Marquee.Limits`（`MarqueeOptions` の生成時の `init` アクセサが参照する） |
+| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層が単一所有する（コアは素材（マウス位置・注目矩形）だけを渡す） |
+| 設定する値・しない値 | **寸法・対話パラメータは `MarqueeOptions` として公開する**（ハンドルの一辺サイズ・枠線の太さ・十字マーカーの長さ・ヒット半径・最小サイズ・境界クリップの可否）。 **体裁（色・ラベルのフォントサイズ・十字マーカーの線の太さ・カーソル座標ラベルのオフセット）は公開しない**（描画にだけ必要な設定のため、描画層の外観が単一所有する） |
 | ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.Bounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
 | 描画面の原点 | コアは原点が常に (0, 0) である前提で幾何を返す（親の座標を混ぜるとハンドルがずれるため、描画領域は原点を持たない `EsSize` で受ける） |
 
-## 10. ログ
+## 9. ログ
 
-ロガーは `Marquee.Log` で受け取り、**入力の判断**（`[Feature.Marquee.Core] MouseDown` / `MouseUp` / `DoubleClick` / `DragStart` / `KeyDown` / `ConfirmRequested` / `CancelRequested` 等。 Debug。 位置の記録は Trace）と**設定の変更**（`[Feature.Marquee.Core] Setting: {名前} {前} → {後}`。 Debug）を出力します。 ロガー未設定（null）は出力なしです。
+ロガーは `Marquee.Log` で受け取り（**コンストラクターからの注入も可能**）、**生成**（`[Feature.Marquee.Core] Facade created`。 Information。 生成時の設定を 1 度だけ）・**入力の判断**（`[Feature.Marquee.Core] MouseDown` / `MouseUp` / `DoubleClick` / `DragStart` / `KeyDown` / `ConfirmRequested` / `CancelRequested` 等。 Debug。 位置の記録は Trace）・**設定の変更**（`[Feature.Marquee.Core] Setting: {名前} {前} → {後}`）を出力します。 ロガー未設定（null）は出力なしです。
 
-| 契機 | 出力 |
-| --- | --- |
-| `Options` の change | 変化した項目だけ（`HandleSize` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`） |
-| `HighlightDomainRect` の set | 有無が変化したときだけ（`False → True` / `True → False`） |
-| `DomainToDipScaling` の set | 変化したときだけ |
+**出力の方針**（頻度でレベルを分ける）:
+
+| 頻度 | 契機 | レベル |
+| --- | --- | --- |
+| 生成 | コンストラクターでの注入、または `Log` の初回設定 | Information |
+| 低頻度 | ロガーの設定（`Logger attached`）・`Options` の変更（変化した項目だけ）・`DomainToDipScaling` の変更・`SetCoordTransform` の呼び出し・入力の判断 | Debug |
+| 高頻度 | `HighlightDomainRect` の変更（ホバーのたびに変わりうる） | Trace |
+
+**出力しないもの**: 毎フレーム呼ばれる解決メソッド（`CreateRequest` / `ResolveGeometry`）と、マウス移動のたびに呼ばれる入力通知（`Move`）。
+
+`Options` の変更では `HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds` のうち**変化した項目だけ**を出力します。
 
 **差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。 ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。 **描画にだけ必要な設定（外観・表示スケーリング係数）の変更ログは描画層が所有します**。
 
 **メッセージの接頭辞は、そのログを定義しているアセンブリ名（本コアは `[Feature.Marquee.Core]`）とします**（接頭辞で出力元の層を読み分けられるようにする。 全層が同じ接頭辞だと、ログを見てもどのアセンブリの定義が出力したかを特定できない）。
 
-## 11. 名称（Marquee の由来）
+## 10. 名称（Marquee の由来）
 
 `Marquee` は**マーキー選択**（ドラッグで矩形の範囲を指定する操作）の標準語に由来する名前です（Photoshop の矩形マーキー、Qt の `QRubberBand`、Windows Explorer のラバーバンド選択が同じ操作）。
 

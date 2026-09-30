@@ -3,6 +3,7 @@ using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using Microsoft.Extensions.Logging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Core.Interaction;
@@ -340,10 +341,21 @@ public class MarqueeControlTests
         var control = CreateControl(new CursorServiceSpy());
         var logger = new RecordingLogger();
         control.Log = logger;
+        logger.Messages.Clear();
+        logger.Levels.Clear();
 
-        control.Options = control.Options with { ClampToDomainBounds = false };
+        var options = control.Options with { ClampToDomainBounds = false };
+        control.Options = options;
 
-        Assert.Equal("[Feature.Marquee.Core] Setting: ClampToDomainBounds True → False", Assert.Single(logger.Messages));
+        // 「値を所有する主体が記録する」規則により、コアが Debug で記録し、提示層を通過したことを Trace で記録する
+        // （どの層まで値が伝搬したかをログの接頭辞から追える）
+        Assert.Equal(
+            [
+                "[Feature.Marquee.Core] Setting: ClampToDomainBounds True → False",
+                $"[Feature.Marquee.Presenter] Forwarded: Options HandleSize={options.HandleSize}, MinSelectionSize={options.MinSelectionSize}",
+            ],
+            logger.Messages);
+        Assert.Equal([LogLevel.Debug, LogLevel.Trace], logger.Levels);
     }
 
     [Fact]
@@ -352,6 +364,7 @@ public class MarqueeControlTests
         var control = CreateControl(new CursorServiceSpy());
         var logger = new RecordingLogger();
         control.Log = logger;
+        logger.Messages.Clear();
 
         // 既定値（true）と同じ値を設定してもログは流れない（外観設定の再適用でログが溢れない）
         control.Options = control.Options with { ClampToDomainBounds = true };
@@ -365,6 +378,7 @@ public class MarqueeControlTests
         var control = CreateControl(new CursorServiceSpy());
         var logger = new RecordingLogger();
         control.Log = logger;
+        logger.Messages.Clear();
 
         // 外観を保持するのは提示層であり、変更の記録も提示層が行う（コアは外観を知らない）。
         // 変化した項目だけを出力する（外観の再適用でログが溢れない）。
@@ -381,6 +395,7 @@ public class MarqueeControlTests
         var control = CreateControl(new CursorServiceSpy());
         var logger = new RecordingLogger();
         control.Log = logger;
+        logger.Messages.Clear();
 
         control.Appearance = control.Appearance with { };
 

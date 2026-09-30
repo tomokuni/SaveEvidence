@@ -99,8 +99,7 @@ public class MarqueeGeometryResolutionTests
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
 
         Assert.NotNull(geometry.Marker);
-        // マーカーの太さ（2.0）と半幅（MarkerLength / 2）はコアが解決済みで渡す
-        Assert.Equal(2.0, geometry.Marker!.Value.Thickness);
+        // 半幅（MarkerLength / 2）はコアが解決済みで渡す（線の太さは体裁のため描画層の外観が持つ）
         Assert.Equal(MarqueeOptions.Default.MarkerLength / 2, geometry.Marker!.Value.Size);
     }
 

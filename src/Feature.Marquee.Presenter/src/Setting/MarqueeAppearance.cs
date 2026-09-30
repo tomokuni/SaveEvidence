@@ -203,6 +203,44 @@ public sealed record MarqueeAppearance
         init => field = CoerceBorderThickness(value);
     } = BorderThicknessDefault;
 
+    /// <summary>十字マーカー（始点マーカー）の線の太さを取得する。</summary>
+    /// <value>線の太さ（DIP）。 0.5〜64 へ補正済み。 既定は 2.0。</value>
+    /// <remarks>
+    /// 塗りの中に隠れない細さでありながら、拡大表示でも線が判別できる太さである。<br/>
+    /// 着色（<see cref="MarkerColor"/>）と同様に<b>描画にだけ必要な体裁</b>のため、コアの幾何には含めない<br/>
+    /// （安全域への補正も本型が単一所有する。 設定の経路によらず範囲内の値だけが保持される）。
+    /// </remarks>
+    public double MarkerThickness
+    {
+        get;
+        init => field = CoerceMarkerThickness(value);
+    } = MarkerThicknessDefault;
+
+    /// <summary>十字マーカーの線の太さの既定値（DIP）。</summary>
+    /// <value>既定の線の太さ（DIP）。</value>
+    public const double MarkerThicknessDefault = 2.0;
+
+    /// <summary>十字マーカーの線の太さの最小値（DIP）。</summary>
+    /// <value>受け付ける下限。</value>
+    private const double MarkerThicknessMin = 0.5;
+
+    /// <summary>十字マーカーの線の太さの最大値（DIP）。</summary>
+    /// <value>受け付ける上限。</value>
+    private const double MarkerThicknessMax = 64.0;
+
+    /// <summary>カーソル座標ラベルをカーソルから離すオフセット（DIP）を取得する。</summary>
+    /// <value>ラベルの基準点をカーソルの右下へ離す量（DIP）。 既定は 8.0。</value>
+    /// <remarks>
+    /// ラベルがカーソルに重ならないための余白である。<br/>
+    /// 基準点は「カーソル + 本値」であり、0 を指定するとラベルがカーソルに重なる。<br/>
+    /// 体裁（描画にだけ必要なレイアウト値）のためコアには置かず、本型が単一所有する。
+    /// </remarks>
+    public double CoordLabelOffset { get; init; } = CoordLabelOffsetDefault;
+
+    /// <summary>カーソル座標ラベルのオフセットの既定値（DIP）。</summary>
+    /// <value>既定のオフセット（DIP）。</value>
+    public const double CoordLabelOffsetDefault = 8.0;
+
     // ----------------------------------------------------------------
     // 表示可否の述語
     // ----------------------------------------------------------------
@@ -240,4 +278,11 @@ public sealed record MarqueeAppearance
     /// </remarks>
     private static double CoerceLabelFontSize(double value, double defaultValue)
         => double.IsFinite(value) ? Math.Clamp(value, LabelFontSizeMin, LabelFontSizeMax) : defaultValue;
+
+    /// <summary>十字マーカーの線の太さを安全域（0.5〜64）へ補正する。</summary>
+    /// <param name="value">補正する値（DIP）。</param>
+    /// <returns>0.5〜64 に補正した値。 非数の場合は既定値。</returns>
+    /// <remarks>非数を素通しすると線が描画されなくなるため、本型が単一所有する。</remarks>
+    private static double CoerceMarkerThickness(double value)
+        => double.IsFinite(value) ? Math.Clamp(value, MarkerThicknessMin, MarkerThicknessMax) : MarkerThicknessDefault;
 }

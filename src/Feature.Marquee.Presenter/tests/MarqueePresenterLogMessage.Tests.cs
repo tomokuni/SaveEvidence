@@ -78,6 +78,8 @@ public class MarqueePresenterLogMessageTests
             SizeLabelFontSize = 13.0,
             CoordLabelFontSize = 11.0,
             LabelPadding = 5.0,
+            MarkerThickness = 3.0,
+            CoordLabelOffset = 12.0,
             ShowHandles = false,
             ShowSizeLabel = false,
             ShowCoordLabel = false,
@@ -92,7 +94,7 @@ public class MarqueePresenterLogMessageTests
 
         logger.LogAppearanceChanged(MarqueeAppearance.Default, after);
 
-        Assert.Equal(24, logger.Messages.Count);
+        Assert.Equal(26, logger.Messages.Count);
     }
 
     [Fact]

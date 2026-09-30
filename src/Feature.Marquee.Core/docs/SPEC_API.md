@@ -33,7 +33,7 @@
 | --- | --- | --- |
 | `MarqueeGeometry` | record struct | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MousePosition` ＋ `SurfaceDipRect`）。 **コアが責任を持つ値の全量** |
 | `MarqueeRenderRequest` | record struct | 1 フレーム分の幾何を解決する入力（設定・状態と、描画時に決まる値）。 `Marquee.CreateRequest` が生成し、`Marquee.ResolveGeometry` へ渡す。 値の組は `MarqueeRenderRequest.Create` が 1 箇所に閉じる。 **`Create` を public にする理由**: ファサード（`Marquee.CreateRequest`）と独自 UI が入力を組み立てる唯一の入口である（描画先の領域を知るのは呼び出し側だけである） |
-| `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの幾何（位置はコアが解決済み） |
+| `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの幾何（位置と寸法はコアが解決済み。 **色と線の太さは描画層の外観が持つ**） |
 
 ### `EsUtil.Feature.Marquee.Core.Interaction`
 
@@ -60,7 +60,7 @@
 | `Log` | property | ロガー。 null は `NullLogger` へ吸収される |
 | `Options` | property | 設定。 設定すると対話パラメータを反映し、**変化した項目をログ出力**し、境界外選択の禁止の変化時のみ即時クリップを行う |
 | `DomainToDipScaling` | property | 座標変換ポート未指定時に適用する倍率。 既定は `Limits.DomainToDipScalingDefault`（1.0）。 設定時は 0.1〜8.0 へ補正される |
-| `HighlightDomainRect` | property | ハイライト矩形（ドメイン座標）。 null が「ハイライトしない」。 **変更は有無の変化だけをログ出力する**（操作中に高頻度で変化しうるため） |
+| `HighlightDomainRect` | property | ハイライト矩形（ドメイン座標）。 null が「ハイライトしない」。 **変更は最も低いレベル（Trace）で記録する**（ホバーのたびに変わりうる最も頻度の高い設定のため） |
 | `HasSelection` / `SelectionDomainRect` | property | 選択の有無と選択矩形（ドメイン座標） |
 | `CreateSnapshot(EsPoint?)` | method | 状態スナップショットの生成 |
 | `SetCoordTransform(ICoordTransform?)` | method | 座標変換ポートの設定（null は等価変換） |
@@ -73,13 +73,14 @@
 | `CreateRequest(EsSize)` | method | 幾何 1 フレーム分の入力（`MarqueeRenderRequest`）の生成（設定・状態と、描画時に決まる値） |
 | `ResolveGeometry(MarqueeRenderRequest)` | method | 1 フレーム分の幾何（`MarqueeGeometry`）の解決 |
 
-**設定では変更しない固定値（ハンドル枠の太さ 1.5・始点マーカーの太さ 2.0・カーソル座標ラベルのオフセット 8.0）は公開しません**。 参照するのはコアの幾何の解決と描画層の文言生成だけであり、UI 層は解決済みの値（`MarqueeHandles.BorderThickness` 等）や描画層が返す配置指示を受け取って使うためです（公開面へ出す必然性がない）。
+**設定では変更しない固定値はありません**（すべて `MarqueeOptions` の設定として公開します）。 ハンドルの一辺サイズと枠線の太さ・十字マーカーの長さは `MarqueeOptions` が持ち、**十字マーカーの線の太さは体裁（描画にだけ必要な設定）のため描画層の外観が持ちます**。 UI 層は解決済みの値（`MarqueeHandles.BorderThickness` 等）や描画層が返す配置指示を受け取って使います。
 
 ### `MarqueeOptions` のメンバー
 
 | 分類 | メンバー | 既定値 | 安全域（生成時に補正） |
 | --- | --- | --- | --- |
 | 寸法 | `HandleSize` | 10.0 | 1.0〜256.0 |
+| 寸法 | `HandleBorderThickness` | 1.5（ハンドル枠の線の太さ。 見えている大きさを決めるため、`HandleHitRadius` と揃えて設定する） | 0.5〜64.0 |
 | 寸法 | `MarkerLength` | 16.0（幾何の半幅は 1/2） | 2.0〜4096.0 |
 | 対話 | `HandleHitRadius` | 12.0（DIP） | 0.0〜256.0 |
 | 対話 | `MinSelectionSize` | 6.0（ドメイン座標。 これ未満はキャンセル扱い） | 1.0〜4096.0 |
@@ -101,12 +102,14 @@
 | `MarkerLengthMin` / `MarkerLengthMax` / `MarkerLengthDefault` | `2.0` / `4096.0` / `16.0` | 十字マーカーの全長（DIP） |
 | `HandleHitRadiusMin` / `HandleHitRadiusMax` / `HandleHitRadiusDefault` | `0.0` / `256.0` / `12.0` | ハンドルのヒットテスト半径（DIP） |
 | `MinSelectionSizeMin` / `MinSelectionSizeMax` / `MinSelectionSizeDefault` | `1.0` / `4096.0` / `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
+| `HandleBorderThicknessMin` / `HandleBorderThicknessMax` / `HandleBorderThicknessDefault` | `0.5` / `64.0` / `1.5` | ドラッグハンドルの枠線の太さ（DIP） |
 | `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `0.5` / `64.0` / `2.0` | 枠線の太さ（DIP。 描画層の外観の既定値も本値を参照する） |
 | `DomainToDipScalingMin` / `DomainToDipScalingMax` / `DomainToDipScalingDefault` | `0.1` / `8.0` / `1.0` | ポート未指定時に適用する倍率（環境値。 他の数値より後に置く） |
 
 | メソッド | 説明 |
 | --- | --- |
 | `CoerceHandleSize(double)` / `CoerceMarkerLength(double)` / `CoerceHandleHitRadius(double)` / `CoerceMinSelectionSize(double)` | 各寸法を安全域へ補正（非有限は既定値） |
+| `CoerceHandleBorderThickness(double)` | ハンドルの枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する） |
 | `CoerceBorderThickness(double)` | 枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する。 描画層の外観が使う） |
 | `CoerceDomainToDipScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
 | `ResolveDisplayScale(double, double)` | 表示スケールの解決（**public**。 未設定（0 以下）は倍率を使う。 描画層のサイズラベル書式が使う） |
@@ -145,7 +148,7 @@
 | `FocusDipRect` | 注目矩形（DIP。 選択もハイライトも無い場合は null）。 終点の `+1` は選択した矩形の `Interval` が決める（ドラッグの選択 = 閉区間、ハイライト矩形 = 半開区間）。 暗転マスクを抜く領域である |
 | `FocusDomainRect` | 注目矩形（ドメイン座標。 選択した矩形をそのまま渡すため `Interval` も保持する）。 ホストが矩形ごとの表示スケールを解決するために使う |
 | `Handles` | ドラッグハンドルの幾何（`HandleDipRects` 8 方向・`BorderThickness`）。 選択が無い場合は null |
-| `Marker` | 始点マーカーの幾何（`Center` / `Thickness` / `Size`＝半幅）。 nudge 中でない場合は null |
+| `Marker` | 始点マーカーの幾何（`Center` / `Size`＝半幅）。 nudge 中でない場合は null。 線の太さは描画層の外観（`MarkerThickness`）が持つ |
 | `MousePosition` | 直近のマウス位置（ドメイン座標）。 カーソル座標ラベルの基準 |
 
 **幾何は「描く値の無い項目は null / 空」で返します**（注目矩形なし・選択なし・nudge 中でない）。 **表示可否（ハンドル・ラベルを描くかどうか）は本コアの責務ではありません**（描画層の外観が単一所有します）。
@@ -202,6 +205,7 @@ var plan = ResolveDrawPlanByHost(new EsSize(800, 600), MeasureText);
 - ビューポートの変化の通知は本コアに含みません（同じ理由で UI 層（ホスト）が持ち、変化を検知したら `RefreshOverlay()` を呼びます）。
 - 描画 API は提供しません。 描画計画（外観・文言・層の順序）は描画層（本コアを参照する上位の層）が単一所有し、描画は各 UI が行います。
 - **装飾（暗転マスク・外枠・内側の塗り）の概念を持ちません**。 装飾は選択矩形単体の概念ではなく、組み込み先の表示であるため、描画層が単一所有します（本コアは注目矩形という幾何だけを返します）。
+- **始点マーカーの線の太さを含みません**（描画にだけ必要な体裁であるため、描画層の外観が単一所有します。 本コアは中心と半幅だけを返します）。
 - 色（ハンドル・始点マーカー・ラベル・装飾）は本コアに含みません（描画にだけ必要な設定であるため、描画層の外観が単一所有します）。
 - 文言（サイズラベルの書式・カーソル座標ラベルの文字列）は本コアに含みません（描画層が単一所有します。 本コアはマウス位置という素材だけを返します）。
 - 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。 ホストが文言の生成と描画を行います。

@@ -9,7 +9,7 @@
 - 描画計画の座標は**ローカル DIP**です（原点 (0, 0)・サイズは描画領域）。 ドメイン → DIP の変換はコアが済ませています。
 - 実寸測定（`measureText`）は描画 API 依存のため UI 層が関数として渡します。
 - 本層は外観（`MarqueeAppearance`）を単一所有します（描画にだけ必要な設定のため）。 寸法・対話パラメータはコア（`MarqueeOptions`）が単一所有します。
-- **本層が単一所有する設定（外観・表示スケーリング係数）の変更は本層が記録します**（`MarqueePresenterLogMessage`。 値を所有する主体が記録する）。
+- **本層が単一所有する設定（外観・表示スケーリング係数）の変更は本層が記録します**（`MarqueePresenterLogMessage`。 値を所有する主体が記録する）。 **コアへ伝搬するだけの値も、本層を通過したことを Trace で記録します**。
 
 ## 2. 公開 API
 
@@ -34,7 +34,7 @@
 
 | メンバー | 説明 |
 | --- | --- |
-| `MarqueePresenter(IMarqueeEffects effects, ICursorService? cursor = null, MarqueeOptions? options = null)` | コアのファサードを内部に生成する。 `effects` は null 不可（null なら `ArgumentNullException`）。 `cursor` は null 可（カーソル操作を行わない） |
+| `MarqueePresenter(IMarqueeEffects effects, ICursorService? cursor = null, MarqueeOptions? options = null, ILogger? logger = null)` | コアのファサードを内部に生成する。 `effects` は null 不可（null なら `ArgumentNullException`）。 `cursor` は null 可（カーソル操作を行わない）。 `logger` は null 可（**注入するとその場で本層とコアの生成を記録する**。 後から `Log` でも設定できる） |
 | `Appearance` | 外観（`MarqueeAppearance`）。 既定は `MarqueeAppearance.Default`。 設定すると次の描画から反映される（`set`） |
 | `ResolveDrawPlan(EsSize clientSize, Func<string, double, EsSize> measureText)` | 1 フレーム分の描画計画を解決する（`virtual`）。 処理は「幾何の解決 → 装飾矩形の導出 → ラベルの文言と配置 → 層の順序」の順。 `measureText` が null なら `ArgumentNullException` |
 | `DisplayScaleScaling` | サイズラベルの DisplayScale 表示に使う係数（0 以下は `DomainToDipScaling` と同値） |
@@ -42,7 +42,7 @@
 | `SizeLabelDisplayScalingProvider` | 表示スケールを矩形ごとに解決するプロバイダ（null の場合は `DisplayScaleScaling`） |
 | `Options` | 選択の設定（寸法・対話パラメータ）。 コアへ委譲する |
 | `DomainToDipScaling` / `HighlightDomainRect` | 環境値・ホストが与える実行時状態。 コアへ委譲する |
-| `Log` | ロガー。 null は `NullLogger` へ吸収される |
+| `Log` | ロガー。 null は `NullLogger` へ吸収される。 **コンストラクターで未注入の場合は初回の設定時に本層とコアの生成を 1 度だけ記録する** |
 | `Notified` | 通知（`MarqueeNotice`）。 UI 層は自 UI の公開イベントへ転送する |
 | `HasSelection` / `SelectionDomainRect` / `CreateSnapshot(EsPoint?)` | 状態の読み取り |
 | `SetCoordTransform(ICoordTransform?)` / `ToDomain(EsPoint)` / `ToDip(EsPoint)` | 座標変換（コアへ委譲） |
@@ -85,6 +85,8 @@
 | 体裁 | `SizeLabelFontSize` / `CoordLabelFontSize` | `double` | 6〜48 へ補正済み。 非数は既定値 |
 | 体裁 | `LabelFontSizeMin` / `LabelFontSizeMax` | `double`（const） | 6.0 / 48.0 |
 | 体裁 | `LabelPadding` / `LabelPaddingDefault` | `double` | 4.0（ラベル共通の内側余白。 行送りも本値から導く） |
+| 体裁 | `CoordLabelOffset` / `CoordLabelOffsetDefault` | `double` | 8.0（カーソル座標ラベルをカーソルから離すオフセット（DIP）。 0 はカーソルに重なる） |
+| 体裁 | `MarkerThickness` / `MarkerThicknessDefault` | `double` | 2.0（十字マーカーの線の太さ（DIP）。 0.5〜64 へ補正済み） |
 | 表示可否 | `ShowHandles` / `ShowSizeLabel` / `ShowCoordLabel` | `bool` | `true` |
 | 表示可否 | `ShowOverlay` / `ShowOuterBorder` | `bool` | `true` |
 | 表示可否 | `ShowFullOverlay` | `bool` | `false`（注目矩形が無くても全面を暗転する） |

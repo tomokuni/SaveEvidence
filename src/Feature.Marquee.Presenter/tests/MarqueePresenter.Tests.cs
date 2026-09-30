@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.Marquee.Core.Contract;
@@ -84,6 +85,84 @@ public class MarqueePresenterTests
         Assert.Equal(appearance, presenter.Appearance);
     }
 
+    /// <summary>指定された数のログを保持するロガーを用意し、直前までの記録を消す。</summary>
+    /// <param name="presenter">対象の提示層。</param>
+    /// <returns>記録を消した後のロガー。</returns>
+    private static RecordingLogger AttachLogger(MarqueePresenter presenter)
+    {
+        var logger = new RecordingLogger();
+        presenter.Log = logger;
+        logger.Messages.Clear();
+        logger.Levels.Clear();
+        return logger;
+    }
+
+    /// <summary>本層の生成がロガーの設定時に一度だけ記録されることを検証する。</summary>
+    [Fact]
+    public void Log_生成の記録はロガーの設定時に一度だけ出力する()
+    {
+        var effects = new EffectsSpy();
+        var presenter = new MarqueePresenter(effects);
+        var logger = new RecordingLogger();
+
+        presenter.Log = logger;
+        presenter.Log = logger;   // 再設定（生成の記録は繰り返さない）
+
+        Assert.Equal(
+            [
+                "[Feature.Marquee.Core] Facade created: HandleSize=10, MinSelectionSize=6",
+                "[Feature.Marquee.Core] Logger attached",
+                "[Feature.Marquee.Presenter] Presenter created",
+                "[Feature.Marquee.Presenter] Logger attached",
+                "[Feature.Marquee.Core] Logger attached",
+                "[Feature.Marquee.Presenter] Logger attached",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>コンストラクターでロガーを注入すると、その場で本層とコアの生成が記録されることを検証する。</summary>
+    [Fact]
+    public void 生成_コンストラクターでロガーを注入すると生成を記録する()
+    {
+        var effects = new EffectsSpy();
+        var logger = new RecordingLogger();
+
+        var presenter = new MarqueePresenter(effects, cursor: null, options: null, logger);
+
+        Assert.Equal(
+            [
+                "[Feature.Marquee.Core] Facade created: HandleSize=10, MinSelectionSize=6",
+                "[Feature.Marquee.Core] Logger attached",
+                "[Feature.Marquee.Presenter] Presenter created",
+                "[Feature.Marquee.Presenter] Logger attached",
+            ],
+            logger.Messages);
+
+        // 注入後に同じロガーを設定し直しても生成の記録は繰り返さない
+        presenter.Log = logger;
+
+        Assert.Equal(6, logger.Messages.Count);
+    }
+
+    /// <summary>コアへ伝搬した値が本層の通過として記録されることを検証する。</summary>
+    /// <remarks>値の所有者（コア）が Debug で記録し、本層を通過したことを Trace で記録する（どの層まで伝搬したかを追える）。</remarks>
+    [Fact]
+    public void Log_コアへ伝搬した値を記録する()
+    {
+        var presenter = CreatePresenter(out _);
+        var logger = AttachLogger(presenter);
+
+        presenter.DomainToDipScaling = 1.25;
+
+        Assert.Equal(
+            [
+                "[Feature.Marquee.Core] Setting: DomainToDipScaling 1 → 1.25",
+                "[Feature.Marquee.Presenter] Forwarded: DomainToDipScaling 1.25",
+            ],
+            logger.Messages);
+        Assert.Equal([LogLevel.Debug, LogLevel.Trace], logger.Levels);
+    }
+
     /// <summary>外観の変更が変化した項目として記録されることを検証する。</summary>
     /// <remarks>
     /// 「値を所有する主体が記録する」規則により、提示層が保持する外観の変更は提示層が記録する<br/>
@@ -95,6 +174,8 @@ public class MarqueePresenterTests
         var presenter = CreatePresenter(out _);
         var logger = new RecordingLogger();
         presenter.Log = logger;
+        logger.Messages.Clear();
+        logger.Levels.Clear();
 
         presenter.Appearance = MarqueeAppearance.Default with { ShowHandles = false };
 
@@ -108,6 +189,7 @@ public class MarqueePresenterTests
         var presenter = CreatePresenter(out _);
         var logger = new RecordingLogger();
         presenter.Log = logger;
+        logger.Messages.Clear();
 
         presenter.DisplayScaleScaling = 1.25;
 

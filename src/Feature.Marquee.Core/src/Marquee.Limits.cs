@@ -69,6 +69,17 @@ public sealed partial class Marquee
         /// <remarks>装飾の外観（<c>MarqueeOuterDecoAppearance</c> / <c>MarqueeInnerDecoAppearance</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
         public const double BorderThicknessDefault = 2.0;
 
+        /// <summary>ドラッグハンドルの枠線の太さの最小値（DIP）。</summary>
+        /// <remarks>0 以下の指定を無効化する（ハンドルの輪郭は細い線でも視認できる必要がある）。</remarks>
+        public const double HandleBorderThicknessMin = 0.5;
+
+        /// <summary>ドラッグハンドルの枠線の太さの最大値（DIP）。</summary>
+        public const double HandleBorderThicknessMax = 64.0;
+
+        /// <summary>ドラッグハンドルの枠線の太さの既定値（DIP）。</summary>
+        /// <remarks>塗りの中に隠れない細さでありながら、拡大表示でも輪郭が判別できる太さである。</remarks>
+        public const double HandleBorderThicknessDefault = 1.5;
+
         /// <summary>ポート未指定時に適用する倍率の最小値（環境値。 他の数値より後に置く）。</summary>
         public const double DomainToDipScalingMin = 0.1;
 
@@ -113,6 +124,13 @@ public sealed partial class Marquee
         /// </remarks>
         public static double CoerceBorderThickness(double value)
             => CoerceFinite(value, BorderThicknessMin, BorderThicknessMax, BorderThicknessDefault);
+
+        /// <summary>ドラッグハンドルの枠線の太さを安全域へ補正する。</summary>
+        /// <param name="value">補正する値（DIP）。</param>
+        /// <returns>安全域に補正した値。 非有限の場合は既定値。</returns>
+        /// <remarks>補正は設定型（<see cref="MarqueeOptions"/>）の生成時に適用する（設定の経路によらず範囲内の値だけが保持される）。</remarks>
+        public static double CoerceHandleBorderThickness(double value)
+            => CoerceFinite(value, HandleBorderThicknessMin, HandleBorderThicknessMax, HandleBorderThicknessDefault);
 
         /// <summary>ポート未指定時に適用する倍率を安全域へ補正する。</summary>
         /// <param name="value">補正する値。</param>

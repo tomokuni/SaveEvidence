@@ -62,15 +62,26 @@ public sealed partial class Marquee
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
     private double _domainToDipScaling = DomainToDipScalingDefault;
 
+    /// <summary>生成の記録（<c>MarqueeLogMessage.LogFacadeCreated</c>）を済ませたかどうか。</summary>
+    /// <remarks>出力先の設定は複数回起こりうるため、生成の記録は 1 度だけにする。</remarks>
+    private bool _createdLogged;
+
     /// <summary>ファサードを初期化する。</summary>
     /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。 null 不可。</param>
     /// <param name="cursor">カーソルサービス。 null 可（null の場合はカーソル操作を行わない）。</param>
     /// <param name="options">初期設定。 null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
+    /// <param name="logger">ロガー。 null 可（null の場合は出力なし。 後から <see cref="Log"/> でも設定できる）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="effects"/> が null の場合。</exception>
+    /// <remarks>
+    /// <b>ロガーを注入した場合は、その場で生成の記録を出力する</b>（コンストラクター呼び出しの記録と、<br/>
+    /// 生成時の設定を 1 度だけ出力する規則を兼ねる）。 注入しない場合は出力先が未設定のため、<br/>
+    /// <see cref="Log"/> が初めて設定された時点で生成の記録を出力する（<see cref="LogCreatedOnce"/>）。
+    /// </remarks>
     public Marquee(
         IMarqueeEffects effects,
         ICursorService? cursor = null,
-        MarqueeOptions? options = null)
+        MarqueeOptions? options = null,
+        ILogger? logger = null)
     {
         ArgumentNullException.ThrowIfNull(effects);
 
@@ -78,6 +89,12 @@ public sealed partial class Marquee
         _cursor = cursor;
         _session = new MarqueeSession(options ?? MarqueeOptions.Default);
         _session.Notified += OnSessionNotified;
+
+        if (logger is not null)
+        {
+            // コンストラクター由来の注入（生成の記録を今すぐ出力する）
+            Log = logger;
+        }
     }
 
     /// <summary>上位（UI 層）へ伝える通知。 UI 層は自 UI の公開イベントへ転送する。</summary>
@@ -85,12 +102,21 @@ public sealed partial class Marquee
     public event EventHandler<MarqueeNotice>? Notified;
 
     /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
-    /// <value>注入されたロガー。 null 可（null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> へフォールバックする）。</value>
-    /// <remarks>保持・フォールバック・各判断のログ出力はセッション（コア）が単一所有する（本クラスは委譲するだけ）。</remarks>
+    /// <value>ロガー。 null を設定した場合は出力なし（<see cref="LoggerFallback"/> が吸収する）。</value>
+    /// <remarks>
+    /// 保持はセッション（コアの状態機械）が単一所有する（本クラスは委譲し、生成の記録だけを自前で行う）。<br/>
+    /// <b>生成の記録</b>: コンストラクターでロガーが注入されていない場合、本プロパティの <b>初回の設定時</b>に
+    /// 生成時の設定を 1 度だけ記録する（生成時は出力先が未設定のため、その場では記録できない。 2 回目以降の設定では繰り返さない）。
+    /// </remarks>
     public ILogger Log
     {
         get => _session.Log;
-        set => _session.Log = value;
+        set
+        {
+            _session.Log = value;
+            LogCreatedOnce();
+            Log.LogLoggerAttached();
+        }
     }
 
     // ====================================================================
@@ -136,6 +162,7 @@ public sealed partial class Marquee
     /// 注目矩形の優先順（ハイライト → 選択）の規則はコアが単一所有する。<br/>
     /// 終点の加算の判断は本値の <see cref="EsRect.Interval"/> が持つため、検出結果の全ピクセルを含む矩形は<br/>
     /// <see cref="EsRectInterval.HalfOpen"/>（既定）のままでよく、<c>+1</c> を打ち消す指定は不要である。<br/>
+    /// <b>最も頻度が高い設定</b>（ホバーのたびに変わりうる）ため、変更の記録は最も低いレベル（Trace）で行う。<br/>
     /// 変更は本コアが検出して出力する（同値判定を UI 層に置かない）。
     /// </remarks>
     public EsRect? HighlightDomainRect
@@ -145,8 +172,7 @@ public sealed partial class Marquee
         {
             if (SetIfChanged(ref field, value, out var previous))
             {
-                // 矩形は操作中に高頻度で変化しうるため、設定の有無の変化だけを記録する
-                Log.LogSettingChanged(nameof(HighlightDomainRect), previous is not null, value is not null);
+                Log.LogHighlightDomainRectChanged(previous, value);
             }
         }
     }
@@ -181,9 +207,11 @@ public sealed partial class Marquee
     /// </remarks>
     public void SetCoordTransform(ICoordTransform? port)
     {
+        var previous = _coordPort;
         _coordPort = port;
         _session.SetPort(port);
         _effects.RequestRedraw();
+        Log.LogCoordTransformChanged(previous, port);
     }
 
     /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
@@ -323,6 +351,23 @@ public sealed partial class Marquee
     /// <param name="sender">送信元（セッション）。</param>
     /// <param name="notice">通知（種別・座標・スナップショット）。</param>
     private void OnSessionNotified(object? sender, MarqueeNotice notice) => Notified?.Invoke(this, notice);
+
+    /// <summary>生成時の設定を 1 度だけ記録する（既に記録済みの場合は何もしない）。</summary>
+    /// <remarks>
+    /// 生成時にロガーが注入されていない場合、出力先（<see cref="Log"/>）が未設定のためその場では記録できず、<br/>
+    /// ロガーが設定された時点で生成時の設定を出力する（「どの設定で生成されたファサードからのログか」を追えるようにする。 記録は 1 回だけとする）。<br/>
+    /// コンストラクターから注入された場合はその時点で既に記録済みであるため、本メソッドは何もしない。
+    /// </remarks>
+    private void LogCreatedOnce()
+    {
+        if (_createdLogged)
+        {
+            return;
+        }
+
+        _createdLogged = true;
+        Log.LogFacadeCreated(_session.Options.HandleSize, _session.Options.MinSelectionSize);
+    }
 
     /// <summary>新しい値を保持する（同値なら何もしない）。</summary>
     /// <typeparam name="T">値の型。</typeparam>

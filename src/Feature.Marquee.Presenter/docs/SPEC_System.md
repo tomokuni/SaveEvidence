@@ -7,7 +7,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否）を 1 箇所に集約する |
-| 提供形態 | クラスライブラリ（`Feature.Marquee.Presenter.dll`） |
+| 提供形態 | クラスライブラリ（`EsUtil.Feature.Marquee.Presenter.dll`。 アセンブリ名はルート名前空間と一致する） |
 | 想定利用者 | UI 実装と、それらを組み込むホストアプリケーション・独自コントロールの作者 |
 | 汎用性 | 特定のアプリ・UI・コントロールに依存しない。 寸法・対話パラメータはコアが、外観と描画計画は本層が単一所有する |
 | 前提としないもの | **コントロール化**（ホイール操作・ビューポート連携・組み込み先の概念は UI 層が持つ） |
@@ -101,7 +101,7 @@ flowchart TD
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
 | `src/MarqueePresenter.cs` | `MarqueePresenter` | public（`sealed` でない） | 提示のファサード。 コアの保持、設定・環境値・入力の転送、外観の保持、描画計画の解決（`ResolveDrawPlan`） |
-| `src/Setting/MarqueeAppearance.cs` | `MarqueeAppearance` | public sealed record | 外観の単一所有者（色・ラベルの体裁・枠線の太さ・表示可否・述語） |
+| `src/Setting/MarqueeAppearance.cs` | `MarqueeAppearance` | public sealed record | 外観の単一所有者（色・ラベルの体裁・十字マーカーの線の太さ・カーソル座標ラベルのオフセット・枠線の太さ・表示可否・述語） |
 | `src/Drawing/MarqueeDrawPlan.cs` | `MarqueeDrawPlan` | public readonly record struct | 描画計画（UI が見る唯一の描画値） |
 | `src/Drawing/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public enum | 描画層の順序 |
 | `src/MarqueePresenter.DrawPlan.cs` | `MarqueePresenter`（`DrawPlan` partial） | internal | 枠線 4 辺・暗転領域の矩形の計算 |
@@ -109,26 +109,9 @@ flowchart TD
 | `src/MarqueePresenter.LabelTexts.cs` | `MarqueePresenter`（`LabelTexts` partial） | internal | サイズラベル・カーソル座標ラベルの文言と基準点 |
 | `src/MarqueePresenter.LabelPlan.cs` | `MarqueePresenter`（`LabelPlan` partial） | internal | 実寸 → ラベル要素の配置指示の写像 |
 | `src/Label/MarqueeLabelPlacement.cs` | `MarqueeLabelPlacement` | public readonly record struct | ラベル要素の配置指示 |
-| `src/Logging/MarqueePresenterLogMessage.cs` | `MarqueePresenterLogMessage` | internal static partial | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） |
+| `src/Logging/MarqueePresenterLogMessage.cs` | `MarqueePresenterLogMessage` | internal static partial | 本層のログ定義（生成・ロガー設定・本層が単一所有する設定の変更・コアへの転送） |
 
-## 5. 単一所有（同じ真実を 2 箇所に持たない）
-
-| 対象 | 所有者 |
-| --- | --- |
-| 色（ハンドル・十字マーカー・ラベル・装飾） | `MarqueeAppearance` |
-| ラベルのフォントサイズ・内側余白と、その安全域（6〜48） | `MarqueeAppearance`（枠線の太さの安全域はコアの `Marquee.Limits` を参照する） |
-| 表示可否（ハンドル・サイズラベル・座標ラベル・暗転・外枠・全面暗転・内側の塗りと枠線）とその述語 | `MarqueeAppearance` |
-| 枠線の太さ（外側・内側）と補正 | `MarqueeAppearance`（補正の式はコアの `Marquee.Limits.CoerceBorderThickness` へ委譲する） |
-| 描画する層とその順序（層にある ⇔ 描く値がある） | `MarqueePresenter.ResolveLayers`（`MarqueeDrawPlan.Layers`） |
-| 枠線 4 辺の矩形（太さは辺ごとの式で導出） | `MarqueePresenter.ComputeBorderDipRects` |
-| 暗転領域（描画面から注目矩形を除いた 4 領域） | `MarqueePresenter.ComputeOverlayDipRects` |
-| サイズラベルの文言（書式・表示スケール） | `MarqueePresenter.ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
-| 矩形に基づくラベルの基準点（注目矩形の左上から「矩形の線幅 + 1 DIP」内側） | `MarqueePresenter.ResolveLabelAnchor`（`MarqueeDrawPlan.LabelAnchor` としても公開する） |
-| カーソル座標ラベルの文言と基準点（カーソル + 8.0 DIP） | `MarqueePresenter.ResolveCoordLabelText` |
-| ラベルの体裁（背景 = 実寸 + 内側余白 × 2・クランプ・並び順） | `MarqueePresenter`（`LabelPlan` partial） |
-| 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） | `MarqueePresenterLogMessage` |
-
-## 6. 例外処理ポリシー
+## 5. 例外処理ポリシー
 
 | 状況 | 扱い |
 | --- | --- |
@@ -137,14 +120,14 @@ flowchart TD
 | 表示可否が無効な項目 | 空のコレクション / null として返す（例外にしない。 UI 層は層を見るだけでよい） |
 | サイズラベルの文言プロバイダが null または空文字を返す | 自動生成へフォールバックする（例外にしない） |
 
-## 7. 可視性ポリシー
+## 6. 可視性ポリシー
 
 - UI 層とホストが使う面（`MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueePresenter`（`LabelPlan` partial） / `MarqueeLabelPlacement` / `MarqueeTextPlacement`）は `public` とします。
 - **本層の内部手順は `internal`** とします（`MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenterLogMessage`）。 UI 層は解決済みの値（`MarqueeDrawPlan` の矩形・`Labels`）を受け取るため、これらを参照する必要がありません。 単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Presenter.Tests`）で公開します。
 - **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
 - `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。
 
-## 8. テスト方針
+## 7. テスト方針
 
 | 方針 | 内容 |
 | --- | --- |
@@ -158,7 +141,7 @@ flowchart TD
 dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.csproj
 ```
 
-## 9. 設計判断（UI 非依存の境界）
+## 8. 設計判断（UI 非依存の境界）
 
 本プロジェクトの型は、UI フレームワークの型をシグネチャに持たないことを境界の条件としています。
 
@@ -173,10 +156,20 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 | 設定変更ログの所有者 | 値を所有する主体が記録する（コアの設定はコア、本層の外観は本層、UI の値は各 UI）。 接頭辞から伝搬を追える |
 | 外観の拡張点 | `MarqueePresenter` を `sealed` にしない（`Appearance` の差し替えと `ResolveDrawPlan` の上書きで独自の見た目を提供できることが役割） |
 
-## 10. ログ
+## 9. ログ
 
 - 本層が単一所有する設定（外観・表示スケーリング係数）の変更は、本層が記録します（`MarqueePresenterLogMessage`）。
-- 出力先は `MarqueePresenter.Log`（コアのファサードが保持するロガー）です（ホストは 1 回設定するだけで、コアと本層のログが同じ基盤へ出ます）。
+- 出力先は `MarqueePresenter.Log`（コアのファサードが保持するロガー）です（ホストは 1 回設定するだけで、コアと本層のログが同じ基盤へ出ます）。 **コンストラクターからの注入も可能**です。
+- **出力の方針**（頻度でレベルを分ける）:
+
+| 頻度 | 契機 | レベル |
+| --- | --- | --- |
+| 生成 | コンストラクターでの注入、または `Log` の初回設定（本層とコアの生成をそれぞれ 1 度だけ） | Information |
+| 低頻度 | 本層が所有する設定の変更（外観・表示スケーリング係数。 **変化した項目だけ**） | Debug |
+| 高頻度 | コアへ伝搬した値の通過（`Options` / `DomainToDipScaling` / `HighlightDomainRect` / `SetCoordTransform`） | Trace |
+
+**出力しないもの**: 毎フレーム呼ばれる解決メソッド（`ResolveDrawPlan`）と、マウス移動のたびに呼ばれる入力通知（`Move`）。
+
 - **変化した項目だけ**を出力します（外観の再適用でログが溢れないため）。
-- コアが所有する設定（`MarqueeOptions`・倍率・ハイライト矩形）はコアが記録します（本層は重複して記録しません）。
+- コアが所有する設定（`MarqueeOptions`・倍率・ハイライト矩形）の**値の変更**はコアが記録します（本層は重複して記録せず、通過したことだけを Trace で記録します）。
 - 付加情報ラベル（操作・情報ラベル）はホストが所有します（文言の生成と描画。 本層は文言を生成しません）。

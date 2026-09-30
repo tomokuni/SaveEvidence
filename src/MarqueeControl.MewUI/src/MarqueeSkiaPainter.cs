@@ -110,7 +110,7 @@ public static class MarqueeSkiaPainter
         {
             IsAntialias = false,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = (float)marker.Thickness,
+            StrokeWidth = (float)appearance.MarkerThickness,
             Color = appearance.MarkerColor.ToSKColor(),
         };
 

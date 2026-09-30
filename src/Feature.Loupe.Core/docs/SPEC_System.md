@@ -7,7 +7,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | ルーペの表示レイアウトと描画の幾何の解決を 1 箇所に集約し、UI ごとの実装差から切り離す |
-| 提供形態 | クラスライブラリ（`Feature.Loupe.Core.dll`） |
+| 提供形態 | クラスライブラリ（`EsUtil.Feature.Loupe.Core.dll`。 アセンブリ名はルート名前空間と一致する） |
 | 想定利用者 | UI 実装と、それらを組み込むホストアプリケーション |
 | 汎用性 | 特定のアプリ・UI に依存しない。 コントロールを「Core / Presenter / UI」に分ける構成のパイロット実装であり、そのまま別プロジェクトへ独立できる |
 
@@ -89,53 +89,20 @@ sequenceDiagram
 | `src/Logging/LoupeLogMessage.cs` | `LoupeLogMessage` | internal | コアが出力するログ定義（`LoggerMessage` ソース生成）の単一所有（**上位層が出力する定義と書式は上位層が単一所有する**） |
 | `src/Loupe.Geometry.cs`（ルート） | `Loupe` の partial | public | 幾何の入口（`ResolveLayout` / `ResolveGeometry`）と内部手順（表示位置のオフセット加算と親領域内への補正、領域が正方形を収められるかの判定）。 内部手順は `private static` に閉じる |
 
-## 5. 単一所有（同じ真実を 2 箇所に持たない）
-
-| 計算 / 値 | 所有者 |
-| --- | --- |
-| ルーペの設定（表示サイズ・拡大率）とその既定値 | `LoupeOptions` |
-| 設定の数値項目の安全域への補正（生成時） | `LoupeOptions`（`init` アクセサ。 規則は `Loupe.Limits` が単一所有する） |
-| 設定の変更ログの差分検出（変化した項目だけを出力） | `LoupeLogMessage.LogOptionsChanged`（出力の契機は `Loupe.Options` の setter） |
-| 枠線の太さとラベル表示の可否（描画にだけ必要な設定） | 描画層の外観 |
-| 描画の色（下地・枠線・十字線・中心座標ラベルの 5 色）とその既定値 | 描画層の外観 |
-| 数値パラメータ（スカラー）の安全域への補正 | `Loupe.Limits` |
-| 描画の可否（十字線・枠線・中心座標ラベルの表示可否） | 描画層の外観（明示フラグ。 透明色を代用にしない） |
-| ラベル表示の可否（設定と中心の有無） | 描画層の外観の述語 |
-| 切り出し領域の一辺（ドメインピクセル） | `LoupeGeometry.CaptureSize`（導出プロパティ。 切り上げの規則も本値が単一所有する） |
-| 切り出し領域の左上（中心 → 左上の変換） | `LoupeGeometry.CaptureTopLeft`（中心未設定は null。 描画完了通知のためにも使う） |
-| 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） | `LoupeGeometry.MagnifiedImage`（切り出しの実行は描画実装） |
-| 描画先の全領域（描画層が下地を塗る矩形） | `LoupeGeometry.SurfacePixelRect` |
-| 表示サイズの決定と、領域が正方形を収められるかの判定 | `Loupe.ResolveLayout`（要求サイズをそのまま表示サイズにする。 状態を保持しないため、親領域のサイズを引数で受ける） |
-| 表示位置（中心 + オフセットと親領域内への補正） | `Loupe.ResolveLayout`（内部手順は `Loupe.Geometry.cs` の private static `ComputePosition`。 親サイズ未確定の判定は `EsSize.HasArea`） |
-| 描画の幾何（物理ピクセルサイズ）の組み立て | `Loupe.ResolveGeometry`（規則は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
-| 描画完了通知の内容（切り出し左上・拡大率） | `LoupeGeometry.CaptureTopLeft` / `ZoomLevel`（描画の幾何が単一所有する。 専用の通知型を持たない） |
-| 中心座標ラベルの文言・基準点 | 描画層 |
-| ラベルの既定の見た目（文字色 = 白、背景色 = 黒 60%、フォントサイズ = 12.0） | 描画層の外観 |
-| 十字線・枠線の矩形 | 描画層 |
-| ラベルの余白・背景矩形・文字原点 | 描画層 |
-| 描画層と順序 | 描画層の描画計画の解決 |
-| DIP → 物理ピクセルの変換（切り上げ・最低 1） | `Platform.Core` の `DpiScaler.ScaleToPixel` |
-| 寸法値の物理ピクセル換算（枠線の太さ） | 描画層の描画計画の解決（換算の式は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
-| 区画数の切り上げ（切り出し領域の一辺） | `LoupeGeometry.CaptureSize`（導出プロパティ） |
-| 設定・環境値・拡大中心・位置オフセットの変更の検出（変化したときだけ出力） | `Loupe`（`Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の setter） |
-| ログの書式とレベル、変化判定（同値なら出力しない） | `LoupeLogMessage`（コアが出力する定義。 上位層が出力する定義と書式は上位層が単一所有する） |
-
-**表示サイズは縮小しません**（要求サイズをそのまま使います）。 親パネルが表示サイズを収められない場合、`ResolveLayout` は位置を null（配置しない = その領域には描画できない）として返します。 描画先の表面は本コアが知らないため判定せず、`PixelSize` と同じ大きさで用意するのは呼び出し側の責務です。 拡大中心が端に寄った場合は、表示サイズを変えずに表示位置を `EsSize.ClampOffset` で領域内へ補正します。
-
-## 6. 例外処理ポリシー
+## 5. 例外処理ポリシー
 
 本プロジェクトは純粋計算で構成されます。 例外を送出するのは `EsBitmap` の引数検証（`ArgumentOutOfRangeException`）と破棄後アクセス（`ObjectDisposedException`）のみです。 破棄済みソースの例外の捕捉は描画実装（各 UI の painter）の責務とします。
 
 **領域が表示サイズを収められない場合も例外にしません**（配置しないとして位置を null で返す。 ルーペを縮小してまで描画しないため）。
 
-## 7. 可視性ポリシー
+## 6. 可視性ポリシー
 
 - 大部分の型・メンバーを `public` とします（UI 非依存の汎用ライブラリとして、外部の UI アダプタ実装を可能にするため）。 内部手順は `internal` とし、単体テストにのみ `InternalsVisibleTo` で公開します。
 - **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
 - 可視性の変更（`public` → `internal`）は破壊的な設計変更として扱います。
 - **UI 固有のログは各 UI 実装が所有します**（中間ビットマップを生成する描画パイプライン固有のログ等）。
 
-## 8. テスト方針
+## 7. テスト方針
 
 | 方針 | 内容 |
 | --- | --- |
@@ -149,7 +116,7 @@ sequenceDiagram
 dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 ```
 
-## 9. 設計判断（UI 非依存の境界）
+## 8. 設計判断（UI 非依存の境界）
 
 本プロジェクトの型は、UI フレームワークの型をシグネチャに持たないことを境界の条件としています。
 
@@ -165,7 +132,7 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 | 設定では変更しない固定値 | **公開しません**。 描画層内だけで使う値（中心座標ラベルの上端余白）は描画層の private 定数とし、UI 層は解決済みの値をコアの型（`LoupeLabelPlacement`）で受け取る |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は描画層の外観が単一所有する |
 
-## 10. ログ
+## 9. ログ
 
 ロガーは `Loupe.Log` で受け取り、**ファサードの生成・低頻度の設定変更・低頻度のメソッド呼び出し**（`[Feature.Loupe.Core] Setting: {名前} {前} → {後}` 等。 Debug）を出力します。 ロガー未設定（null）は出力なしです。
 

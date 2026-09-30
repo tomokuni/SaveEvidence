@@ -5,12 +5,15 @@ namespace EsUtil.SaveEvidence.Marquee.MewUI.Tests;
 /// <summary>ログ出力を収集するテスト用 <see cref="ILogger"/> 実装。</summary>
 /// <remarks>
 /// LoggerMessage ソース生成コードの state 走査（Count・インデクサ・列挙・範囲外アクセス）を実行させつつ、<br/>
-/// 整形済みのメッセージを収集して内容を検証できるようにする。
+/// 整形済みのメッセージとそのレベルを収集して内容を検証できるようにする。
 /// </remarks>
 internal sealed class RecordingLogger : ILogger
 {
     /// <summary>収集したログメッセージ。</summary>
     public List<string> Messages { get; } = [];
+
+    /// <summary>収集したログレベル（<see cref="Messages"/> と同じ並び）。</summary>
+    public List<LogLevel> Levels { get; } = [];
 
     /// <inheritdoc />
     public IDisposable? BeginScope<TState>(TState state)
@@ -44,5 +47,6 @@ internal sealed class RecordingLogger : ILogger
         }
 
         Messages.Add(formatter(state, exception));
+        Levels.Add(logLevel);
     }
 }

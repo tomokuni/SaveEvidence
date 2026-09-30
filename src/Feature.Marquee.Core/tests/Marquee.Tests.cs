@@ -2,6 +2,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.Marquee.Core.Contract;
@@ -417,6 +418,55 @@ public class MarqueeTests
         Assert.Same(NullLogger.Instance, marquee.Log);
     }
 
+    /// <summary>生成の記録がロガーの設定時に一度だけ出力されることを検証する。</summary>
+    /// <remarks>
+    /// 生成の記録はロガーが最初に設定された時点で 1 度だけ行う（生成時は出力先が未設定のため、その場では記録できない）。
+    /// </remarks>
+    [Fact]
+    public void Log_生成の記録はロガーの設定時に一度だけ出力する()
+    {
+        var effects = new EffectsSpy();
+        var marquee = new Marquee(effects, cursor: null, new MarqueeOptions { HandleSize = 14.0, MinSelectionSize = 9.0 });
+        var logger = new RecordingLogger();
+
+        marquee.Log = logger;
+        marquee.Log = logger;   // 再設定（生成の記録は繰り返さない）
+
+        Assert.Equal(
+            [
+                "[Feature.Marquee.Core] Facade created: HandleSize=14, MinSelectionSize=9",
+                "[Feature.Marquee.Core] Logger attached",
+                "[Feature.Marquee.Core] Logger attached",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>コンストラクターでロガーを注入すると、その場で生成の記録が出力されることを検証する。</summary>
+    /// <remarks>
+    /// 注入時は出力先が確定しているため、コンストラクター呼び出しの記録（生成時の設定）をその場で出力する。<br/>
+    /// コンストラクター由来の注入は 1 度だけであり、後からの再設定と同様に生成の記録は繰り返さない。
+    /// </remarks>
+    [Fact]
+    public void 生成_コンストラクターでロガーを注入すると生成を記録する()
+    {
+        var effects = new EffectsSpy();
+        var logger = new RecordingLogger();
+
+        var marquee = new Marquee(effects, cursor: null, new MarqueeOptions { HandleSize = 14.0 }, logger);
+
+        Assert.Equal(
+            [
+                "[Feature.Marquee.Core] Facade created: HandleSize=14, MinSelectionSize=6",
+                "[Feature.Marquee.Core] Logger attached",
+            ],
+            logger.Messages);
+
+        // 注入後に同じロガーを設定し直しても生成の記録は繰り返さない
+        marquee.Log = logger;
+
+        Assert.Equal(3, logger.Messages.Count);
+    }
+
     /// <summary>環境値（倍率）の変更が変化したときだけ記録されることを検証する。</summary>
     [Fact]
     public void DomainToDipScaling_変更したときだけ記録する()
@@ -424,6 +474,8 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out _);
         var logger = new RecordingLogger();
         marquee.Log = logger;
+        logger.Messages.Clear();
+        logger.Levels.Clear();
 
         marquee.DomainToDipScaling = 1.25;
         marquee.DomainToDipScaling = 1.25;   // 同値
@@ -435,26 +487,54 @@ public class MarqueeTests
                 "[Feature.Marquee.Core] Setting: DomainToDipScaling 1.25 → 2",
             ],
             logger.Messages);
+        // 低頻度の設定変更は Debug で記録する
+        Assert.All(logger.Levels, level => Assert.Equal(LogLevel.Debug, level));
     }
 
-    /// <summary>ハイライト矩形の変更が有無の変化だけ記録されることを検証する。</summary>
-    /// <remarks>矩形は操作中に高頻度で変化しうるため、記録するのは有無の変化だけである（座標の値自体は記録しない）。</remarks>
+    /// <summary>ハイライト矩形の変更が最も低いレベル（Trace）で記録されることを検証する。</summary>
+    /// <remarks>矩形はホバーのたびに変わりうる（最も頻度が高い）ため、既定の出力では溢れさせない。</remarks>
     [Fact]
-    public void HighlightRect_有無の変化だけ記録する()
+    public void HighlightRect_変更を最も低いレベルで記録する()
     {
         var marquee = CreateMarquee(null, out _);
         var logger = new RecordingLogger();
         marquee.Log = logger;
+        logger.Messages.Clear();
+        logger.Levels.Clear();
 
         marquee.HighlightDomainRect = new EsRect(1, 2, 3, 4);
-        marquee.HighlightDomainRect = new EsRect(5, 6, 7, 8);   // どちらも非 null（有無は変わらない）
+        marquee.HighlightDomainRect = new EsRect(1, 2, 3, 4);   // 同値
+        marquee.HighlightDomainRect = new EsRect(5, 6, 7, 8);
         marquee.HighlightDomainRect = null;
 
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: HighlightDomainRect False → True",
-                "[Feature.Marquee.Core] Setting: HighlightDomainRect True → False",
+                "[Feature.Marquee.Core] Setting: HighlightDomainRect null → (1, 2, 3, 4)",
+                "[Feature.Marquee.Core] Setting: HighlightDomainRect (1, 2, 3, 4) → (5, 6, 7, 8)",
+                "[Feature.Marquee.Core] Setting: HighlightDomainRect (5, 6, 7, 8) → null",
             ],
             logger.Messages);
+        Assert.All(logger.Levels, level => Assert.Equal(LogLevel.Trace, level));
+    }
+
+    /// <summary>座標変換ポートの設定が低頻度のメソッド呼び出しとして記録されることを検証する。</summary>
+    [Fact]
+    public void SetCoordTransform_設定を記録する()
+    {
+        var marquee = CreateMarquee(null, out _);
+        var logger = new RecordingLogger();
+        marquee.Log = logger;
+        logger.Messages.Clear();
+        logger.Levels.Clear();
+
+        marquee.SetCoordTransform(CoordTransform.Identity);
+        marquee.SetCoordTransform(CoordTransform.Identity);   // 同一インスタンス（同値扱い）
+        marquee.SetCoordTransform(null);
+
+        // ポートは値として比較・整形できないため、設定の有無と実装型名で記録する
+        Assert.Equal(2, logger.Messages.Count);
+        Assert.StartsWith("[Feature.Marquee.Core] Setting: CoordTransform null → ", logger.Messages[0], StringComparison.Ordinal);
+        Assert.Equal("[Feature.Marquee.Core] Setting: CoordTransform CoordTransform → null", logger.Messages[1]);
+        Assert.All(logger.Levels, level => Assert.Equal(LogLevel.Debug, level));
     }
 }

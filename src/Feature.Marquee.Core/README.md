@@ -63,7 +63,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 
 | 差し替えたいもの | 方法 |
 | --- | --- |
-| 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `MarkerLength` / `HitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）を変える |
+| 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）を変える |
 | UI への効果の適用 | `IMarqueeEffects` を実装する（不要なメンバーは `MarqueeEffectsBase` を継承して省略できる） |
 | 見た目（色・フォント・枠線の太さ・表示可否）と文言 | 描画層の外観・描画計画（上位の層）を変える（本コアは色も文言も持たない） |
 | ドメイン境界 | `SetCoordTransform` に `ICoordTransform`（`Bounds` 付き）を設定し、`ClampToDomainBounds` でクリップを有効にする |
@@ -89,7 +89,7 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 ## ドキュメント
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
-- [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・単一所有・設計判断・ログ・名称の由来
+- [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・設計判断・ログ・名称の由来
 - [`src/README.md`](../README.md) — リポジトリ全体の層構成
 
 ## ライセンス

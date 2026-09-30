@@ -70,7 +70,7 @@ protected override void Render(DrawingContext context)
 | 見た目（色・フォント・枠線の太さ・表示可否） | `MarqueeAppearance` を変える（UI の `Appearance` プロパティへ設定する） |
 | 描画計画の構成（層・装飾・文言の独自化） | `MarqueePresenter` を継承し `ResolveDrawPlan` を上書きする、または `MarqueePresenterXxx` を作る |
 | 描画そのもの | UI 層の描画実装を差し替える |
-| 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `MarkerLength` / `HitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）を変える（コアが単一所有する） |
+| 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）を変える（コアが単一所有する） |
 | 付加情報ラベル（操作・情報）の体裁 | コントロール固有の付加情報であるため本層に置かない（組み込み先のホストが文言と描画を持つ） |
 
 ## ビルド
@@ -90,7 +90,7 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 ## ドキュメント
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
-- [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・単一所有・設計判断・ログ
+- [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・設計判断・ログ
 - [`src/README.md`](../README.md) — リポジトリ全体の層構成
 
 ## ライセンス

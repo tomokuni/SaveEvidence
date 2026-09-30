@@ -7,7 +7,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 「どう見せるか」（描画計画と外観）を 1 箇所に集約し、UI ごとの実装差から切り離す |
-| 提供形態 | クラスライブラリ（`Feature.Loupe.Presenter.dll`） |
+| 提供形態 | クラスライブラリ（`EsUtil.Feature.Loupe.Presenter.dll`。 アセンブリ名はルート名前空間と一致する） |
 | 想定利用者 | UI 実装と、それらを組み込むホストアプリケーション |
 | 汎用性 | 特定のアプリに依存しない（描画 API の抽象も持たないため、UI フレームワーク非依存） |
 
@@ -72,31 +72,16 @@ sequenceDiagram
 | `src/LoupePresenter.LabelTexts.cs` | `LoupePresenter`（`LabelTexts` partial） | internal | 文言（`EsPoint.Format`）と基準点（左上の内側）の生成 |
 | `src/Logging/LoupePresenterLogMessage.cs` | `LoupePresenterLogMessage` | internal | 本層が単一所有する設定（外観）の変更ログ |
 
-## 5. 単一所有（同じ真実を 2 箇所に持たない）
-
-| 計算 / 値 | 所有者 |
-| --- | --- |
-| 外観（色・フォント・角丸・枠線の太さ・表示可否）とその既定値 | `LoupeAppearance` |
-| 枠線の太さの安全域への補正 | `LoupeAppearance`（`init` アクセサ。 規則は `Loupe.Limits`） |
-| 描画層とその順序 | `LoupeDrawPlan.Layers`（組合せ表は `LoupePresenter` が事前生成する） |
-| 描く層の選択（描く値がある層だけを含める） | `LoupePresenter.ResolveLayers` |
-| 十字線・枠線の矩形 | `LoupePresenter`（`DrawPlan` partial） |
-| 枠線の太さの物理ピクセル換算 | `LoupePresenter.ResolveDrawPlan`（換算の式は `Platform.Core` の `DpiScaler.ScaleToPixel`） |
-| 中心座標ラベルの文言と基準点 | `LoupePresenter`（`LabelTexts` partial） |
-| ラベルの背景矩形・文字原点（実寸 + 余白、クランプ） | `LoupePresenter`（`LabelPlan` partial） |
-| 描画完了通知の組み立てに使う値の選択 | `LoupeDrawPlan`（コアの幾何から写す） |
-| 本層が単一所有する設定（外観）の変更ログ | `LoupePresenterLogMessage` |
-
-## 6. 例外処理ポリシー
+## 5. 例外処理ポリシー
 
 `LoupePresenter.ResolveDrawPlan` / `LoupePresenter.ResolveLabelPlacements` は引数（`measureText` / `appearance`）が null なら `ArgumentNullException` を送出します。 描画中にソースが破棄された場合（`ObjectDisposedException`）の吸収は描画実装（各 UI）の責務です。
 
-## 7. 可視性ポリシー
+## 6. 可視性ポリシー
 
 - UI が参照する型（`LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeLabelPlacement` / `LoupePresenter`（`LabelPlan` partial））は `public` とします。
 - 本層とテストだけが使う内部ヘルパー（`LoupePresenter`（`DrawPlan` partial） / `LoupePresenter`（`LabelTexts` partial） / `LoupePresenterLogMessage`）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.Loupe.Presenter.Tests`）で公開します。
 
-## 8. テスト方針
+## 7. テスト方針
 
 | 方針 | 内容 |
 | --- | --- |
@@ -109,7 +94,7 @@ sequenceDiagram
 dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.csproj
 ```
 
-## 9. 設計判断（UI 非依存の境界と描画 API の抽象を持たない理由）
+## 8. 設計判断（UI 非依存の境界と描画 API の抽象を持たない理由）
 
 | 判断 | 内容 |
 | --- | --- |
@@ -120,7 +105,7 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 | 中間ビットマップの非同期生成 | UI のディスパッチャーに依存し、中間ビットマップを持つ UI にだけ必要なため、その UI 実装が所有する |
 | 継承による差し替え | `LoupePresenter` は `sealed` にしない（外観の差し替え・`ResolveDrawPlan` の上書きで独自の見た目を提供することを役割とする） |
 
-## 10. ログ
+## 9. ログ
 
 本層が出力するログの定義と書式は本層が単一所有します（`[Feature.Loupe.Presenter]` の接頭辞）。
 

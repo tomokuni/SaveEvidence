@@ -1,5 +1,8 @@
 using System.Globalization;
+using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
@@ -12,11 +15,80 @@ namespace EsUtil.Feature.Marquee.Presenter.Logging;
 /// <b>「値を所有する主体が記録する」規則</b>により、コアが所有する設定（<c>MarqueeOptions</c> / 倍率 / ハイライト矩形）は<br/>
 /// コアのログ定義（<c>Feature.Marquee.Core</c> の <c>MarqueeLogMessage</c>）が記録し、本層は重複して記録しない<br/>
 /// （どの層まで値が伝搬したかをログの接頭辞から追える）。<br/>
+/// <b>本層を通過した値は Trace で記録する</b>: コアへ伝搬するだけのプロパティであっても、<br/>
+/// ホストの設定が本層を通ったことを確認できるようにする（既定の出力では溢れさせない）。<br/>
+/// <b>出力の方針</b>: 生成（ロガーの設定時に記録）・本層が所有する設定の変更（Debug）・コアへの転送（Trace）。<br/>
+/// 毎フレーム呼ばれる解決メソッド（<c>ResolveDrawPlan</c>）と高頻度の入力通知（<c>Move</c>）は出力しない。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、呼び出し側では logger 引数を省略する。
 /// </remarks>
 internal static partial class MarqueePresenterLogMessage
 {
+    /// <summary>未設定を表す文字列。</summary>
+    private const string Null = "null";
+
+    /// <summary>提示層の生成を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Information<br/>出力書式: <c>[Feature.Marquee.Presenter] Presenter created</c><br/>
+    /// 生成時点では出力先が未設定のため、<b>ロガーが設定された時点で 1 度だけ</b>記録する。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    [LoggerMessage(LogLevel.Information, "[Feature.Marquee.Presenter] Presenter created")]
+    internal static partial void LogPresenterCreated(this ILogger logger);
+
+    /// <summary>出力先（ロガー）の設定を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Trace<br/>出力書式: <c>[Feature.Marquee.Presenter] Logger attached</c><br/>
+    /// 本層はロガーをコアへ伝搬するだけであり、値の変換を行わない（通過の確認を Trace で残す）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    [LoggerMessage(LogLevel.Trace, "[Feature.Marquee.Presenter] Logger attached")]
+    internal static partial void LogLoggerAttached(this ILogger logger);
+
+    /// <summary>コアへ伝搬した値を記録する（本層を通過した確認用）。</summary>
+    /// <remarks>
+    /// LogLevel: Trace<br/>出力書式: <c>[Feature.Marquee.Presenter] Forwarded: {Name} {Value}</c><br/>
+    /// 値の整形は型ごとのオーバーロードが単一所有する（呼び出し側に整形処理を置かない）。<br/>
+    /// 本層が所有する設定（値が変化したときにのみ意味を持つもの）は <see cref="LogAppearanceChanged"/> などが Debug で記録する。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">整形済みの値。</param>
+    [LoggerMessage(LogLevel.Trace, "[Feature.Marquee.Presenter] Forwarded: {Name} {Value}")]
+    internal static partial void LogForwarded(this ILogger logger, string name, string value);
+
+    /// <summary>設定（<see cref="MarqueeOptions"/>）をコアへ伝搬したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">伝搬した設定。</param>
+    /// <remarks>項目数が多いため代表値だけを記録する（全項目の差分はコアが Debug で出力する）。</remarks>
+    internal static void LogForwarded(this ILogger logger, string name, MarqueeOptions value)
+        => logger.LogForwarded(name, $"HandleSize={Format(value.HandleSize)}, MinSelectionSize={Format(value.MinSelectionSize)}");
+
+    /// <summary>実数値をコアへ伝搬したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">伝搬した実数値。</param>
+    internal static void LogForwarded(this ILogger logger, string name, double value)
+        => logger.LogForwarded(name, Format(value));
+
+    /// <summary>矩形（未指定は null）をコアへ伝搬したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">伝搬した矩形（未指定は null）。</param>
+    internal static void LogForwarded(this ILogger logger, string name, EsRect? value)
+        => logger.LogForwarded(name, value is { } rect
+            ? $"({Format(rect.X)}, {Format(rect.Y)}, {Format(rect.Width)}, {Format(rect.Height)})"
+            : Null);
+
+    /// <summary>座標変換ポートをコアへ伝搬したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">値の名前（項目名）。</param>
+    /// <param name="value">伝搬した座標変換ポート（未設定は null）。</param>
+    /// <remarks>ポートは値として比較・整形できないため、設定された実装の種別のみを記録する。</remarks>
+    internal static void LogForwarded(this ILogger logger, string name, ICoordTransform? value)
+        => logger.LogForwarded(name, value?.GetType().Name ?? Null);
+
     /// <summary>設定値変更のログ（変更前後）。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Presenter] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
@@ -91,6 +163,8 @@ internal static partial class MarqueePresenterLogMessage
         logger.LogSettingChanged(nameof(MarqueeAppearance.HandleColor), oldValue.HandleColor, newValue.HandleColor);
         logger.LogSettingChanged(nameof(MarqueeAppearance.HandleBorderColor), oldValue.HandleBorderColor, newValue.HandleBorderColor);
         logger.LogSettingChanged(nameof(MarqueeAppearance.MarkerColor), oldValue.MarkerColor, newValue.MarkerColor);
+        logger.LogSettingChanged(nameof(MarqueeAppearance.MarkerThickness), oldValue.MarkerThickness, newValue.MarkerThickness);
+        logger.LogSettingChanged(nameof(MarqueeAppearance.CoordLabelOffset), oldValue.CoordLabelOffset, newValue.CoordLabelOffset);
         logger.LogSettingChanged(nameof(MarqueeAppearance.SizeLabelColor), oldValue.SizeLabelColor, newValue.SizeLabelColor);
         logger.LogSettingChanged(
             nameof(MarqueeAppearance.SizeLabelBackgroundColor), oldValue.SizeLabelBackgroundColor, newValue.SizeLabelBackgroundColor);
@@ -141,4 +215,10 @@ internal static partial class MarqueePresenterLogMessage
             oldValue.ToString(format: null, CultureInfo.InvariantCulture),
             newValue.ToString(format: null, CultureInfo.InvariantCulture));
     }
+
+    /// <summary>実数値をカルチャに依存しない文字列へ整形する。</summary>
+    /// <param name="value">整形する値。</param>
+    /// <returns>整形した文字列。</returns>
+    /// <remarks>ログの書式を環境非依存にする（小数点の記号がロケールで変わらないようにする）。</remarks>
+    private static string Format(double value) => value.ToString(format: null, CultureInfo.InvariantCulture);
 }

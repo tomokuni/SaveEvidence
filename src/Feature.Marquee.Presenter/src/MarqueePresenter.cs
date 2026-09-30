@@ -70,13 +70,35 @@ public partial class MarqueePresenter
     /// <remarks>0 以下を倍率と同値として扱う解決は <c>Marquee.Limits.ResolveDisplayScale</c> が単一所有する。</remarks>
     private double _displayScaleScaling;
 
+    /// <summary>本層の生成の記録（<c>MarqueePresenterLogMessage.LogPresenterCreated</c>）を済ませたかどうか。</summary>
+    /// <remarks>出力先の設定は複数回起こりうるため、生成の記録は 1 度だけにする。</remarks>
+    private bool _createdLogged;
+
     /// <summary>選択矩形コントロールの提示層を初期化する。</summary>
     /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。 null 不可。</param>
     /// <param name="cursor">カーソルサービス。 null 可（null の場合はカーソル操作を行わない）。</param>
     /// <param name="options">初期設定。 null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
+    /// <param name="logger">ロガー。 null 可（null の場合は出力なし。 後から <see cref="Log"/> でも設定できる）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="effects"/> が null の場合。</exception>
-    public MarqueePresenter(IMarqueeEffects effects, ICursorService? cursor = null, MarqueeOptions? options = null)
-        => _core = new MarqueeFacade(effects, cursor, options);
+    /// <remarks>
+    /// <b>ロガーを注入した場合は、その場で生成の記録を出力する</b>（コンストラクター呼び出しの記録と、<br/>
+    /// 本層とコアの生成を 1 度だけ出力する規則を兼ねる）。 注入しない場合は出力先が未設定のため、<br/>
+    /// <see cref="Log"/> が初めて設定された時点で生成の記録を出力する。
+    /// </remarks>
+    public MarqueePresenter(
+        IMarqueeEffects effects,
+        ICursorService? cursor = null,
+        MarqueeOptions? options = null,
+        ILogger? logger = null)
+    {
+        _core = new MarqueeFacade(effects, cursor, options);
+
+        if (logger is not null)
+        {
+            // コンストラクタ由来の注入（本層とコアの生成の記録を今すぐ出力する）
+            Log = logger;
+        }
+    }
 
     /// <summary>外観（色・ラベルの体裁・枠線の太さ・表示可否）を取得または設定する。</summary>
     /// <value>外観の単一値。 既定は <see cref="MarqueeAppearance.Default"/>。</value>
@@ -128,10 +150,20 @@ public partial class MarqueePresenter
 
     /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。 null を設定した場合は出力なし（コアが <c>LoggerFallback</c> で吸収する）。</value>
+    /// <remarks>
+    /// 保持はコアが単一所有する（本層は委譲するだけである）。<br/>
+    /// <b>生成の記録</b>: コンストラクターでロガーが注入されていない場合、本プロパティの <b>初回の設定時</b>に<br/>
+    /// 本層とコアの生成を 1 度だけ記録する（生成時は出力先が未設定のため、その場では記録できない。 2 回目以降の設定では繰り返さない）。
+    /// </remarks>
     public ILogger Log
     {
         get => _core.Log;
-        set => _core.Log = value;
+        set
+        {
+            _core.Log = value;
+            LogPresenterCreatedOnce();
+            _core.Log.LogLoggerAttached();
+        }
     }
 
     /// <summary>上位（UI 層）へ伝える通知を取得する。 UI 層は自 UI の公開イベントへ転送する。</summary>
@@ -148,26 +180,47 @@ public partial class MarqueePresenter
 
     /// <summary>選択矩形の設定（計算に必要な値）を取得または設定する。</summary>
     /// <value>反映済みの設定。 既定は <see cref="MarqueeOptions.Default"/>。</value>
+    /// <remarks>
+    /// 保持・ログ・補正はコアが単一所有する（本プロパティはコアへ委譲するだけである）。<br/>
+    /// 本層を通過したことは Trace で記録する（ホストの設定が本層を通ったかを確認できるようにする）。
+    /// </remarks>
     public MarqueeOptions Options
     {
         get => _core.Options;
-        set => _core.Options = value;
+        set
+        {
+            _core.Options = value;
+            Log.LogForwarded(nameof(Options), value);
+        }
     }
 
     /// <summary>ポート未指定時に適用する倍率を取得または設定する。</summary>
     /// <value>ドメイン → DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される。</value>
+    /// <remarks>保持とログはコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。</remarks>
     public double DomainToDipScaling
     {
         get => _core.DomainToDipScaling;
-        set => _core.DomainToDipScaling = value;
+        set
+        {
+            _core.DomainToDipScaling = value;
+            Log.LogForwarded(nameof(DomainToDipScaling), value);
+        }
     }
 
     /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
+    /// <remarks>
+    /// 保持とログ（Trace）はコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。<br/>
+    /// 最も頻度が高い設定（ホバーのたびに変わりうる）のため、本層の記録も Trace とする。
+    /// </remarks>
     public EsRect? HighlightDomainRect
     {
         get => _core.HighlightDomainRect;
-        set => _core.HighlightDomainRect = value;
+        set
+        {
+            _core.HighlightDomainRect = value;
+            Log.LogForwarded(nameof(HighlightDomainRect), value);
+        }
     }
 
     /// <summary>選択矩形があるかどうかを取得する。</summary>
@@ -189,7 +242,12 @@ public partial class MarqueePresenter
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート。 null の場合は等価変換。</param>
-    public void SetCoordTransform(ICoordTransform? port) => _core.SetCoordTransform(port);
+    /// <remarks>保持とログはコアが単一所有する（本層は委譲し、低頻度のメソッド呼び出しとして通過を Trace で記録する）。</remarks>
+    public void SetCoordTransform(ICoordTransform? port)
+    {
+        _core.SetCoordTransform(port);
+        Log.LogForwarded(nameof(SetCoordTransform), port);
+    }
 
     /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
     /// <param name="localDip">ローカル DIP 座標。</param>
@@ -360,6 +418,23 @@ public partial class MarqueePresenter
         }
 
         return table;
+    }
+
+    /// <summary>本層の生成を 1 度だけ記録する（既に記録済みの場合は何もしない）。</summary>
+    /// <remarks>
+    /// 生成時にロガーが注入されていない場合、出力先（<see cref="Log"/>）が未設定のためその場では記録できない。<br/>
+    /// ロガーが設定された時点で本層の生成を出力する（記録は 1 回だけとする）。<br/>
+    /// コンストラクターから注入された場合はその時点で既に記録済みであるため、本メソッドは何もしない。
+    /// </remarks>
+    private void LogPresenterCreatedOnce()
+    {
+        if (_createdLogged)
+        {
+            return;
+        }
+
+        _createdLogged = true;
+        Log.LogPresenterCreated();
     }
 
     /// <summary>新しい値を保持する（同値なら何もしない）。</summary>

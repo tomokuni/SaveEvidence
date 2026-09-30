@@ -48,6 +48,19 @@ public sealed record MarqueeOptions
         init => field = CoerceHandleSize(value);
     } = HandleSizeDefault;
 
+    /// <summary>ドラッグハンドルの枠線の太さを取得する。</summary>
+    /// <value>ハンドル枠の線の太さ（DIP）。 既定は 1.5。 設定時は 0.5〜64.0 へ補正される。</value>
+    /// <remarks>
+    /// ハンドルの見えている大きさ（<see cref="HandleSize"/> の矩形と、その周囲へ描かれる枠線）を決めるため、<br/>
+    /// 設定値は描画だけでなくヒットテストの余地にも影響する（大きいハンドルを細い枠で描くと、見えている範囲と当たる範囲が食い違う）。<br/>
+    /// 本値と <see cref="HandleHitRadius"/> を揃えて設定することで、表示と操作が同じ大きさになる。
+    /// </remarks>
+    public double HandleBorderThickness
+    {
+        get;
+        init => field = CoerceHandleBorderThickness(value);
+    } = HandleBorderThicknessDefault;
+
     /// <summary>十字マーカーの全長を取得する。</summary>
     /// <value>十字マーカーの全長（DIP）。 中心から両端までの半幅はこの 1/2。 既定は 16.0。 設定時は 2.0〜4096.0 へ補正される。</value>
     public double MarkerLength

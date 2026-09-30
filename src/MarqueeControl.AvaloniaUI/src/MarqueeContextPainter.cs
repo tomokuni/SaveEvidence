@@ -98,7 +98,7 @@ public static class MarqueeContextPainter
     {
         var center = marker.Center;
         var half = marker.Size;
-        var pen = new Pen(SolidColorBrushCache.GetOrCreate(appearance.MarkerColor), marker.Thickness);
+        var pen = new Pen(SolidColorBrushCache.GetOrCreate(appearance.MarkerColor), appearance.MarkerThickness);
 
         context.DrawLine(
             pen, new EsPoint(center.X - half, center.Y).ToAvaloniaPoint(), new EsPoint(center.X + half, center.Y).ToAvaloniaPoint());
