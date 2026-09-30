@@ -195,7 +195,7 @@ UI フレームワーク非依存のサイズ・ベクター・矩形。各 UI �
 | `Intersect` | `EsRect Intersect(EsRect other)` | 2 つの矩形の重なり部分を返す（重なりが無い場合は空。幅・高さは負にならない） |
 
 ```csharp
-// 選択矩形の枠線（マーキー）とルーペの外枠（Loupe）が同じ式を共用する
+// 選択矩形の枠線と拡大表示の外枠が同じ式を共用する
 var edges = hole.ComputeInnerEdges(Math.Max(0.5, borderThickness));
 ```
 

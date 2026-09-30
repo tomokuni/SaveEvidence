@@ -83,6 +83,20 @@ graph LR
 
 本プロジェクトは値型・列挙型と純粋計算で構成されます。例外は `EsBitmap` の引数検証（`ArgumentOutOfRangeException`）と破棄後アクセス（`ObjectDisposedException`）のみです。
 
+## ログ出力ポリシー
+
+**値型・列挙型・純粋計算（`Geometry/` / `Imaging/` / `Coord/` / `LoggerFallback`）はログを出力しません**（ログ定義も持ちません）。 同じ入力からは同じ結果が得られ、失敗は例外として呼び出し側へ返るため、記録すべき状態がありません。
+
+ログを出力するのは `Native/` 配下の Windows 実装だけです（`WinCaptureService` / `WinCursorService` / `WinWindowService` と、その定義 `PlatformLog`）。 出力元は接頭辞（`[CaptureService]` / `[Cursor]` / `[WindowService]`）で読み分けられます。
+
+| 出力元 | 内容（LogLevel） | 出力する理由 |
+| --- | --- | --- |
+| `WinCaptureService` | 仮想スクリーンの範囲・キャプチャの完了（Debug） | OS の状態（モニタ構成・DPI）に依存し、失敗の原因が呼び出し側のコードに現れない |
+| `WinCursorService` | カーソル表示状態の変更（Information） | Win32 API の戻り値が真偽のみであり、実際に適用されたかを呼び出し側で確認できない |
+| `WinWindowService` | ウィンドウの非表示・キャプチャ除外・領域設定（Information）と、ハング時の退避（Warning） | 対象ウィンドウが外部プロセスに属するため、操作の成否を呼び出し側で再現できない |
+
+`Native/` 配下は「OS 操作が外部要因で失敗しうる」唯一の領域であり、原因を残せるのがログだけであるため例外とします。 **高頻度の呼び出し（カーソル位置の取得・マウス移動に伴う操作）はログ対象外**とし、記録するのは状態が変化したときだけです。
+
 ## 設計判断（UI 非依存の境界）
 
 本プロジェクトの型は、UI フレームワークの型を保持しないことを境界の条件としています。
@@ -93,7 +107,7 @@ graph LR
 | 座標・寸法 | `Avalonia.Point` / `Size` / `Vector` → `EsPoint` / `EsSize` / `EsVector` へ統一し、UI 境界で 1 行変換する |
 | 色 | `System.Drawing.Color`（共有フレームワーク同梱でクロスプラットフォーム。`System.Drawing.Common` ではない）を使い、UI の色型への変換は境界で行う |
 | Skia の描画プリミティブ | SkiaSharp は外部パッケージであるため、Skia に依存する型（描画ポートの適合・ビットマップの相互変換・テキスト測定）は Skia を使用する上位層が単一所有する（本プロジェクトは SkiaSharp を参照しない） |
-| 描画の契約 | 各コントロールの提示層（`Feature.*.Presenter`）が単一所有する（本プロジェクトは参照される側であり、それらを参照しない） |
+| 描画の契約 | 描画計画を担う上位の層が単一所有する（本プロジェクトは参照される側であり、それらを参照しない） |
 | ロガー未設定 | `LoggerFallback.OrNullLogger()` が単一所有し、各所の `?? NullLogger.Instance` を排除する |
 
 ### コア型の命名
