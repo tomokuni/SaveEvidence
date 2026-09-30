@@ -54,21 +54,21 @@ public static class MarqueeSkiaPainter
         }
     }
 
-    /// <summary>装飾（暗転マスク・穴あけ枠・内側の塗り・内枠）を描く。</summary>
+    /// <summary>装飾（暗転マスク・外枠・内側の塗り・内枠）を描く。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
     /// <param name="plan">描画計画。</param>
     /// <param name="appearance">外観。</param>
     private static void DrawDecoration(SKCanvas canvas, in MarqueeDrawPlan plan, MarqueeAppearance appearance)
     {
-        SkiaFill.Rects(canvas, plan.OverlayRegions, appearance.OverlayColor);
-        SkiaFill.Rects(canvas, plan.OuterBorderRects, appearance.OuterBorderColor);
+        SkiaFill.Rects(canvas, plan.OverlayDipRects, appearance.OverlayColor);
+        SkiaFill.Rects(canvas, plan.OuterBorderDipRects, appearance.OuterBorderColor);
 
-        if (plan.InnerFillRect is { } fill)
+        if (plan.InnerFillDipRect is { } fill)
         {
             SkiaFill.Rect(canvas, fill, appearance.InnerFillColor);
         }
 
-        SkiaFill.Rects(canvas, plan.InnerBorderRects, appearance.InnerBorderColor);
+        SkiaFill.Rects(canvas, plan.InnerBorderDipRects, appearance.InnerBorderColor);
     }
 
     /// <summary>ドラッグハンドル（塗り + 枠線）を描く。</summary>
@@ -92,7 +92,7 @@ public static class MarqueeSkiaPainter
             Color = appearance.HandleBorderColor.ToSKColor(),
         };
 
-        foreach (var bounds in handles.Rects)
+        foreach (var bounds in handles.HandleDipRects)
         {
             var rect = bounds.ToSKRect();
             canvas.DrawRect(rect, fill);

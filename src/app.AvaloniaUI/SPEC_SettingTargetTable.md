@@ -88,7 +88,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 | MarqueeControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
-| `MarqueeAppearance.HandleBorderColor`（ハンドルの枠線色） | ✅ `MarqueeAppearance.HandleBorderColor` / `MarqueeAppearance.OuterBorderColor`（同じ値） | ✅ | 描画にだけ必要な色は `MarqueeAppearance` が単一所有し、ホストが同じ値をハンドルの枠線と穴あけ枠へも割り当てる（選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なる） |
+| `MarqueeAppearance.HandleBorderColor`（ハンドルの枠線色） | ✅ `MarqueeAppearance.HandleBorderColor` / `MarqueeAppearance.OuterBorderColor`（同じ値） | ✅ | 描画にだけ必要な色は `MarqueeAppearance` が単一所有し、ホストが同じ値をハンドルの枠線と外枠へも割り当てる（選択枠線と暗転マスクの外枠は同じ矩形に重なる） |
 | （枠線の太さ） | ✅ `MarqueeAppearance.OuterBorderThickness` | ✅ | 枠線の太さは外観（`MarqueeAppearance`）が単一所有する。 ハンドルの枠線太さはコア内部の固定値（1.5。 `MarqueeHandles.BorderThickness` として描画計画へ渡る） |
 | `MarqueeAppearance.HandleColor` | ✅ `MarqueeAppearance.HandleColor` | ✅ | |
 | `HandleSize` | ✅ `Options.Marquee.HandleSize` | ✅ | |
@@ -117,7 +117,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `SizeLabelFontSize`（外観） | ✅ `MarqueeAppearance.SizeLabelFontSize` | ✅ | サイズラベルのフォントサイズ |
 | `ShowSizeLabel`（`MarqueeAppearance`） | ✅ `MarqueeAppearance.ShowSizeLabel` | ✅ | サイズラベル表示 |
 | `OuterBorderColor`（外観） | ✅ `MarqueeAppearance.OuterBorderColor` | ✅ | `MarqueeAppearance.HandleBorderColor` と共通適用（同じ矩形に重なるため）。 描画の可否は `MarqueeAppearance.ShowOuterBorder` |
-| `InnerFillColor` / `InnerBorderColor`（外観） | ✅ `MarqueeAppearance.InnerFillColor` / `.InnerBorderColor` | —（設定なし） | 穴あけ矩形の内側。 既定は透明で、描画の可否は `MarqueeAppearance.ShowInnerFill` / `ShowInnerBorder`（既定 false） |
+| `InnerFillColor` / `InnerBorderColor`（外観） | ✅ `MarqueeAppearance.InnerFillColor` / `.InnerBorderColor` | —（設定なし） | 注目矩形の内側。 既定は透明で、描画の可否は `MarqueeAppearance.ShowInnerFill` / `ShowInnerBorder`（既定 false） |
 | `BorderThickness`（`MarqueeAppearance`） | ✅ `MarqueeAppearance.OuterBorderThickness` | ✅ | 枠線の太さ（外観が単一所有する） |
 | `InfoColor` / `InfoBackgroundColor` / `InfoFontSize` / `ShowInfoLabel`（`FadeMaskDragRectLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 情報ラベル（3 行目）。 **文言の生成と描画はホスト**が行う |
 | `OperationColor` / `OperationFontSize` / `OperationBackgroundColor` / `ShowOperationLabel`（`FadeMaskDragRectLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 操作ラベル（2 行目）。 **文言の生成と描画はホスト**が行う |

@@ -61,7 +61,7 @@ LoupeAppearance loupe = CapturePaintMapper.ToLoupeAppearance(settings, backgroun
 ## 設計上の約束
 
 1. **色だけを写像する**。 寸法・表示可否はコアの設定マッパーが単一所有する。
-2. **枠線の色は 1 つ**: 選択枠線（ハンドルの枠線）と暗転マスクの穴あけ枠は同じ矩形に重なるため、同じ設定値
+2. **枠線の色は 1 つ**: 選択枠線（ハンドルの枠線）と暗転マスクの外枠は同じ矩形に重なるため、同じ設定値
    （`BorderColor`）を両方へ割り当てる。
 3. **内側の塗り・内側の枠線は写像しない**（描画の可否は `MarqueeAppearance` のフラグが単一所有する）。
 4. **画像外の色は設定**（`LoupePasteboardColor`。 ホストは色を引数で渡さない）。

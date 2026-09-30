@@ -19,14 +19,17 @@ public class MarqueeSelectionTests
     [Fact]
     public void FromPoints_始点と終点から正規化された矩形を生成する()
     {
+        // ドラッグ由来の選択は閉区間（始点・終点のピクセルを含む）
+        var expected = new EsRect(10, 20, 30, 40, EsRectInterval.Closed);
+
         // 右下方向（通常）
-        Assert.Equal(new EsRect(10, 20, 30, 40), MarqueeSelection.FromPoints(new EsPoint(10, 20), new EsPoint(40, 60)).Rect);
+        Assert.Equal(expected, MarqueeSelection.FromPoints(new EsPoint(10, 20), new EsPoint(40, 60)).Rect);
         // 左上方向（反転）
-        Assert.Equal(new EsRect(10, 20, 30, 40), MarqueeSelection.FromPoints(new EsPoint(40, 60), new EsPoint(10, 20)).Rect);
+        Assert.Equal(expected, MarqueeSelection.FromPoints(new EsPoint(40, 60), new EsPoint(10, 20)).Rect);
         // X のみ反転
-        Assert.Equal(new EsRect(10, 20, 30, 40), MarqueeSelection.FromPoints(new EsPoint(40, 20), new EsPoint(10, 60)).Rect);
+        Assert.Equal(expected, MarqueeSelection.FromPoints(new EsPoint(40, 20), new EsPoint(10, 60)).Rect);
         // Y のみ反転
-        Assert.Equal(new EsRect(10, 20, 30, 40), MarqueeSelection.FromPoints(new EsPoint(10, 60), new EsPoint(40, 20)).Rect);
+        Assert.Equal(expected, MarqueeSelection.FromPoints(new EsPoint(10, 60), new EsPoint(40, 20)).Rect);
     }
 
     // ====================================================================

@@ -21,7 +21,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
 /// 状態は持たない（選択矩形・ハイライトは複合コントロール <see cref="FadeMaskDragRectControl"/> が保持）。<br/>
 /// - AreaSelect: 複合コントロール（Marquee + Loupe）でドラッグ選択し、ルーペで拡大表示する。<br/>
 /// - ScreenSelect / WindowSelect: ウィンドウの Pointer イベントから <see cref="IElementFinder"/> で検出し、<br/>
-///   複合コントロールのハイライト状態（LogicalHighlightRect / HasHighlight 等）に設定する。<br/>
+///   複合コントロールのハイライト状態（HighlightDomainRect / HasHighlight 等）に設定する。<br/>
 /// 確定フロー（非表示 → DWM 待機 → キャプチャ）は本クラスが直接行う（<see cref="ICaptureService"/> に委譲）。
 /// </remarks>
 internal sealed partial class OverlayWindow : Window
@@ -285,7 +285,7 @@ internal sealed partial class OverlayWindow : Window
     /// </remarks>
     private void OnAreaConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
         // ドメイン（ウィンドウローカル物理ピクセル）→ 画面物理座標の変換はコアが単一所有する
-        => CompleteSelection(CaptureClipMath.ToScreenRect(e.SelectionRect.ToEsRect(), Position.ToEsPointInt()));
+        => CompleteSelection(CaptureClipMath.ToScreenRect(e.SelectionDomainRect.ToEsRect(), Position.ToEsPointInt()));
 
     /// <summary>AreaSelect のキャンセル要求（Esc キー・ダブルクリック外等）を受けてキャプチャをキャンセルする。</summary>
     /// <param name="sender">イベント送信元（FadeMaskDragRectControl）。</param>

@@ -223,7 +223,7 @@ public partial class LoupePresenter
             ? ComputeCrosshairRects(surface, geometry.ZoomLevel, geometry.CaptureSize)
             : [];
         IReadOnlyList<EsRect> border = appearance.ShowBorder
-            ? ComputeBorderRects(
+            ? ComputeBorderPixelRects(
                 surface, DpiScaler.ScaleToPixel(appearance.BorderThickness, geometry.DipToDeviceScaling))
             : [];
 

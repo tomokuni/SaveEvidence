@@ -37,7 +37,7 @@
 | `CoordLabelColor` | `CoordLabelColor` | カーソル座標ラベルの文字色 |
 | `CoordLabelBackgroundColor` | `CoordLabelBackgroundColor` | カーソル座標ラベルの背景色 |
 | `OverlayColor` | `OverlayColor` | 暗転マスク（オーバーレイ）の色 |
-| `OuterBorderColor` | `BorderColor` | 穴あけ枠の色（**ハンドルの枠線と共通**） |
+| `OuterBorderColor` | `BorderColor` | 外枠の色（**ハンドルの枠線と共通**） |
 
 **写像しない項目**: 内側の塗り（`InnerFillColor`）と内側の枠線（`InnerBorderColor`）。 描画の可否は
 `MarqueeAppearance` の明示フラグが単一所有するため、色は既定の透明を保ちます。

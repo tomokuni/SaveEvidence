@@ -9,7 +9,7 @@
   Avalonia 版と MewUI 版の挙動は同じ計算に基づきます。
 - **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへ直接描画します。 描画計画（層の順序・装飾矩形・文言・配置）は提示層（`Feature.Marquee.Presenter`）が単一所有し、描画は自 UI の描画 API（Skia）で行います。
 - **外観の設定（`Appearance`）**: 色・フォントサイズ・枠線の太さ・表示可否は**描画にだけ必要な設定**のためコアには含めず、外観（`Feature.Marquee.Presenter` の `MarqueeAppearance`）が単一所有します。 `Appearance` プロパティで指定し（既定は `MarqueeAppearance.Default`）、部分変更は `MarqueeAppearance.Default with { ... }` で行います。 **描くかどうかは色のアルファではなく外観の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` / `ShowFullOverlay`）が決めます**。
-- **文字は UI 層が要素として配置する**: サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueePresenter`（`LabelTexts` partial） が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueePresenter`（`LabelPlan` partial） が単一所有**し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。 サイズラベルの基準点は穴あけ矩形の左上から**枠線の幅 + 1 DIP 内側**（枠線と背景の重なりを無くす）。 実寸測定は自 UI の API（`SkiaText.Measure`）で行う。 操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
+- **文字は UI 層が要素として配置する**: サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueePresenter`（`LabelTexts` partial） が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueePresenter`（`LabelPlan` partial） が単一所有**し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。 サイズラベルの基準点は注目矩形の左上から**枠線の幅 + 1 DIP 内側**（枠線と背景の重なりを無くす）。 実寸測定は自 UI の API（`SkiaText.Measure`）で行う。 操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - **DPI 追従**: `OnDpiChanged` でスケーリング係数を更新し、DIP 座標で描画します（枠線・ハンドルの画面上の大きさを保ちます）。
 - **コア型のイベント引数**: イベントの座標は UI 非依存のコア型（`EsPoint` / `EsRect`）で公開します（境界変換が不要）。
 
@@ -115,7 +115,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP） |
 
-色とラベルの体裁（フォントサイズ・内側余白）に加え、**表示可否（ハンドル・ラベル・暗転・穴あけ枠・内側の塗りと枠線）も外観の単一値 `MarqueeAppearance`（`EsUtil.Feature.Marquee.Presenter.Setting`）が単一所有します**。
+色とラベルの体裁（フォントサイズ・内側余白）に加え、**表示可否（ハンドル・ラベル・暗転・外枠・内側の塗りと枠線）も外観の単一値 `MarqueeAppearance`（`EsUtil.Feature.Marquee.Presenter.Setting`）が単一所有します**。
 
 `MarqueeAppearance` の項目（既定値は本型が単一所有する）:
 
@@ -125,10 +125,10 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `MarkerColor` | `System.Drawing.Color` | 白 | 十字マーカーの色 |
 | `SizeLabelColor` / `SizeLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | サイズラベルの文字色と背景色 |
 | `CoordLabelColor` / `CoordLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | ラベルの文字色と背景色 |
-| `OverlayColor` / `OuterBorderColor` | `System.Drawing.Color` | 黒 50% / `#FFA9A9A9` | 暗転マスクと穴あけ枠の色 |
-| `InnerFillColor` / `InnerBorderColor` | `System.Drawing.Color` | 透明 / 透明 | 穴あけ矩形の内側の塗り色と枠線色 |
+| `OverlayColor` / `OuterBorderColor` | `System.Drawing.Color` | 黒 50% / `#FFA9A9A9` | 暗転マスクと外枠の色 |
+| `InnerFillColor` / `InnerBorderColor` | `System.Drawing.Color` | 透明 / 透明 | 注目矩形の内側の塗り色と枠線色 |
 | `ShowHandles` / `ShowSizeLabel` / `ShowCoordLabel` | `bool` | `true` | ハンドル・サイズラベル・カーソル座標ラベルの表示可否 |
-| `ShowOverlay` / `ShowOuterBorder` | `bool` | `true` | 暗転マスクと穴あけ枠の表示可否 |
+| `ShowOverlay` / `ShowOuterBorder` | `bool` | `true` | 暗転マスクと外枠の表示可否 |
 | `ShowFullOverlay` / `ShowInnerFill` / `ShowInnerBorder` | `bool` | `false` | 全面暗転・内側の塗り・内側の枠線の表示可否 |
 
 色は UI 非依存の `System.Drawing.Color` で指定します。 設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueeAppearance.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。

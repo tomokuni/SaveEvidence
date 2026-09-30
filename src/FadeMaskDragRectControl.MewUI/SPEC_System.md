@@ -48,7 +48,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 | 層 | 責務 |
 | --- | --- |
 | `FadeMaskDragRectControl.Core` | 動作モードの定義、モード → 子コントロールの有効・無効の写像、ルーペ画像への破線オーバーレイ描画 |
-| 各コントロールの `*.Core` | 選択矩形の状態機械、選択矩形の外側の装飾（暗転マスク・穴あけ枠）の寸法と表示可否、ルーペの表示位置計算（色は描画にだけ必要な設定のため各コントロールの `*.UIBase` が単一所有する） |
+| 各コントロールの `*.Core` | 選択矩形の状態機械、選択矩形の外側の装飾（暗転マスク・外枠）の寸法と表示可否、ルーペの表示位置計算（色は描画にだけ必要な設定のため各コントロールの `*.UIBase` が単一所有する） |
 | `FadeMaskDragRectControl.MewUI` | 内包コントロールの生成・重ね合わせ・イベント配線・状態同期・配置（レイアウト）・ラベル設定の委譲・付加情報（操作・情報ラベル）の描画・描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）の委譲 |
 | ホスト | モードの指定、座標変換ポートの設定、ルーペ画像の供給、ラベル文言の供給、破線色・外観（`MarqueeAppearance` / `LoupeAppearance`）の供給、ログの注入、確定・キャンセル後の後始末 |
 
@@ -61,7 +61,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 | ルーペの位置決めを本クラスで行う | MewUI のルーペは位置を持たない（描画のみ）ため、親領域サイズ・中心・オフセットから配置する必要がある。 計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有し、本クラスは結果を Arrange へ渡すだけにする |
 | 設定をコアの単一値（`FadeMaskDragRectOptions`）として公開した | 既定値・項目の対応・子コントロールへの分配規則を UI に持たせない（Avalonia 版と同一の設定値を使うため、見た目も一致する）。 値の解決（設定とモードからの写し）は UIBase の `FadeMaskDragRectChildValues` が単一所有し、本クラスは代入するだけである。 色・表示可否はコアの計算に入らない（描画にだけ必要）ためコアの設定値に含めず、提示層の `MarqueeAppearance` / `LoupeAppearance` を別プロパティで与える |
 | イベント引数をコア型で公開した | 内包コントロールのイベント引数と同一の型になり境界変換が不要になる |
-| 選択矩形コントロールへ座標変換ポートを渡すようにした | ズームビューのレターボックス等オフセット付きの変換でも、外側の装飾の穴あけと選択矩形が一致する（等倍スケールのみでは位置がずれる） |
+| 選択矩形コントロールへ座標変換ポートを渡すようにした | ズームビューのレターボックス等オフセット付きの変換でも、外側の装飾の注目と選択矩形が一致する（等倍スケールのみでは位置がずれる） |
 | 付加情報（操作・情報ラベル）はホストが文言を生成し、描画は UIBase が行う | サイズ・カーソル座標ラベルは選択矩形コントロールがテキスト要素として表示する（実寸から配置矩形を求める写像は描画層 `Feature.Marquee.Presenter` の `MarqueePresenter.ResolveLabelPlacements` が単一所有する）。 操作・情報ラベルは選択コントロールの概念ではないため、ホストが `FadeMaskDragRectOptions.Labels` の外観に従って文言を生成し、積み上げ（位置・表示可否）は描画層 `FadeMaskDragRectControl.UIBase` の `FadeMaskHostLabelRenderer` が単一所有する |
 | ルーペ画像上の破線はルーペの `Rendered` で描画する | MewUI のルーペは中間ビットマップを作らないため、描画先（キャンバス）を受け取れるイベントが必要（破線の幾何はコアが単一所有し、Avalonia 版と同じ見た目になる。 中心座標ラベルはルーペコントロールがテキスト要素として表示する） |
 | ログはドラッグ選択コントロールとルーペへ伝搬する | 入力操作と表示状態の変化を 1 箇所の設定で有効化できる（Avalonia 版と同じ範囲。 外側の装飾の描画もドラッグ選択コントロールが担うため、そのログも同じロガーで出力される） |
@@ -105,8 +105,8 @@ classDiagram
         +MarqueeAppearance MarqueeAppearance
         +LoupeAppearance LoupeAppearance
         +bool HasSelection
-        +EsRect SelectionRect
-        +EsRect? LogicalHighlightRect
+        +EsRect SelectionDomainRect
+        +EsRect? HighlightDomainRect
         +bool ShowFullOverlay
         +EsPoint? LoupeCenterPoint
         +double DomainToDipScaling
@@ -261,7 +261,7 @@ ArrangeContent(bounds)                     … bounds はウィンドウ絶対�
    非表示のルーペにサイズが付き、テストで「配置されていない」ことを検証できない。
 3. **`Panel` の `ArrangeContent` の `bounds` はウィンドウ絶対座標**（子も同じ座標系で `Arrange` する）。
    親の原点を加算して配置する。
-4. **暗転マスクの座標変換はポートで渡す**。 等倍スケール（`DomainToDipScaling`）だけでは、オフセット付きの変換で穴あけ位置がずれる。
+4. **暗転マスクの座標変換はポートで渡す**。 等倍スケール（`DomainToDipScaling`）だけでは、オフセット付きの変換で注目位置がずれる。
 
 ## 未実装（今後の判断）
 

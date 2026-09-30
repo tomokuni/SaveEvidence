@@ -18,7 +18,7 @@ Avalonia 版と同一の解釈になります。
 | `FadeMaskDragRectControl.UIBase` | 設定とモードから子コントロールへ適用する値の解決（`FadeMaskDragRectChildValues`）、付加情報ラベルの縦積みの配置指示（`FadeMaskHostLabelRenderer`）、ラベル 1 行の体裁（`MarqueeHostLabelRenderer`） |
 | `MarqueeControl.MewUI` / `Feature.Marquee.Core` | 選択矩形の入力と状態機械 |
 | `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | 描画にだけ必要な提示層の型（描画計画・外観（`MarqueeAppearance` / `LoupeAppearance`）・ラベル配置） |
-| `Feature.Marquee.Core`（`Decoration` 名前空間） | 選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の設定・外観・幾何・描画内容の解決（名前空間 `EsUtil.Feature.Marquee.Core.Decoration`。 描画は `MarqueeControl` が行う） |
+| `Feature.Marquee.Core`（`Decoration` 名前空間） | 選択矩形の**外側に描く装飾**（暗転マスク・外枠・ハイライト）の設定・外観・幾何・描画内容の解決（名前空間 `EsUtil.Feature.Marquee.Core.Decoration`。 描画は `MarqueeControl` が行う） |
 | `LoupeControl.MewUI` / `Feature.Loupe.Core` | 拡大鏡の描画と表示位置計算 |
 | `Platform.Core` | コア幾何型・座標変換ポート・画像コンテナ |
 | `Aprillz.MewUI.Skia`（0.21.1 固定） | `Panel`・`MewProperty`・SkiaSharp |
@@ -49,8 +49,8 @@ Avalonia 版と同一の解釈になります。
 | --- | --- | --- | --- |
 | `Mode` | `FadeMaskDragRectMode` | `AreaSelect` | 動作モード（可視性と全面暗転を一括切替） |
 | `HasSelection` | `bool`（取得のみ） | `false` | 選択矩形が有効か |
-| `SelectionRect` | `EsRect`（取得のみ） | 空矩形 | 選択矩形（ドメイン座標。 未選択時は 0x0） |
-| `LogicalHighlightRect` | `EsRect?` | `null` | ハイライト矩形（ドメイン座標。 **null はハイライトなし**。 選択矩形より優先） |
+| `SelectionDomainRect` | `EsRect`（取得のみ） | 空矩形 | 選択矩形（ドメイン座標。 未選択時は 0x0） |
+| `HighlightDomainRect` | `EsRect?` | `null` | ハイライト矩形（ドメイン座標。 **null はハイライトなし**。 選択矩形より優先） |
 | `ShowFullOverlay` | `bool`（取得のみ） | `true` | 全面暗転の有無（モードから導出） |
 | `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（ドメイン座標） |
 | `Options` | `FadeMaskDragRectOptions`（コア） | `FadeMaskDragRectOptions.Default` | 設定の単一値（下記）。 同じ値の再設定はスキップされる |

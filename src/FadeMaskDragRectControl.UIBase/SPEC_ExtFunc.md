@@ -9,7 +9,7 @@
 | 機能 | 提供元 | 内容 |
 | --- | --- | --- |
 | 子コントロールの値の解決 | `FadeMaskDragRectChildValues.Resolve` | 設定とモードから、内包コントロールへ適用する値（選択矩形の設定・装飾の設定・ルーペの設定・オフセット・入力の可否）を解決する |
-| 付加情報ラベルの配置指示 | `FadeMaskHostLabelRenderer.Resolve` | 操作ラベル・情報ラベルを穴あけ矩形の内側（**矩形の線幅 + 1 DIP**）から縦に積む配置指示（描画順）を返す |
+| 付加情報ラベルの配置指示 | `FadeMaskHostLabelRenderer.Resolve` | 操作ラベル・情報ラベルを注目矩形の内側（**矩形の線幅 + 1 DIP**）から縦に積む配置指示（描画順）を返す |
 | ラベル 1 行の体裁の適用 | `MarqueeHostLabelRenderer.Resolve` | 基準点・文言・色・内側余白から、背景と文字の配置指示（背景 = 文字の実寸 + 内側余白 × 2）を返す |
 
 ## 公開 API の可視性
@@ -32,13 +32,13 @@
 | `LoupeOffset` | `double` | ルーペのカーソル中心からの右下オフセット（DIP） |
 | `IsHitTestVisible` | `bool` | 選択矩形コントロールが入力を受け取るか（選択矩形を使うモードのみ true） |
 
-### `Resolve(FadeMaskDragRectOptions options, FadeMaskDragRectMode mode, EsRect? highlightRect)`
+### `Resolve(FadeMaskDragRectOptions options, FadeMaskDragRectMode mode, EsRect? highlightDomainRect)`
 
 | 入力 | 内容 |
 | --- | --- |
 | `options` | 設定の単一値（`FadeMaskDragRectOptions`） |
 | `mode` | 動作モード。 未定義の値は「選択矩形を使わない」扱いになる |
-| `highlightRect` | ハイライト矩形（ドメイン座標）。 **実行時状態のため設定に含まれず、呼び出し側が現在値を渡す**。 null はハイライトなし |
+| `highlightDomainRect` | ハイライト矩形（ドメイン座標）。 **実行時状態のため設定に含まれず、呼び出し側が現在値を渡す**。 null はハイライトなし |
 
 | モード | `MarqueeAppearance.ShowHandles` | `MarqueeAppearance.ShowFullOverlay` | `IsHitTestVisible` |
 | --- | --- | --- | --- |
@@ -56,7 +56,7 @@
 
 | 引数 | 制約 |
 | --- | --- |
-| `plan` | 選択矩形コントロールが解決した描画計画（穴あけ矩形とサイズラベルの表示可否を参照する） |
+| `plan` | 選択矩形コントロールが解決した描画計画（注目矩形とサイズラベルの表示可否を参照する） |
 | `labels` | 付加情報ラベルの外観（表示可否・寸法・色） |
 | `appearance` | 選択矩形コントロールの外観（null 不可。 サイズラベルのフォントサイズを行送りに使う） |
 | `operationText` | 操作ラベルの文言（**ホストが生成する**。 null または空文字は返さない） |
@@ -67,9 +67,9 @@
 
 ### 配置の規則
 
-1. **穴あけ矩形（選択またはハイライトの領域）が無い場合は空のリストを返します**（積み上げの基準が無いため）。
-2. 積み上げの開始位置は穴あけ矩形の左上から「矩形の線幅 + 1 DIP」だけ内側へ寄せた点（`MarqueeDrawPlan.LabelAnchor`）です。 **サイズラベルが描かれている場合はその下から始めます**（重なりを避ける）。
-3. **操作ラベル → 情報ラベルの順**に、表示可否を満たす行だけを返します（左端は穴あけ矩形の左端に揃う）。
+1. **注目矩形（選択またはハイライトの領域）が無い場合は空のリストを返します**（積み上げの基準が無いため）。
+2. 積み上げの開始位置は注目矩形の左上から「矩形の線幅 + 1 DIP」だけ内側へ寄せた点（`MarqueeDrawPlan.LabelAnchor`）です。 **サイズラベルが描かれている場合はその下から始めます**（重なりを避ける）。
+3. **操作ラベル → 情報ラベルの順**に、表示可否を満たす行だけを返します（左端は注目矩形の左端に揃う）。
 4. **表示可否は設定スイッチと文言の有無の両方**が成立したときだけ真です（対象外のモードでは文言が空になるため、
    スイッチだけでは判定できません）。
 5. 体裁（背景 = 文字の実寸 + 内側余白）は `MarqueeHostLabelRenderer` が、体裁の値（内側余白）は `MarqueeAppearance`（`Feature.Marquee.Presenter`）が単一所有します。

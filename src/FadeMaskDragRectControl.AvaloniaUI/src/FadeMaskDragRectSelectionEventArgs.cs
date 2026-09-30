@@ -8,5 +8,5 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 /// 内包コントロール（MarqueeControl）の型（SelectionRectEventArgs）に依存しない独自型とし、<br/>
 /// ホストは FadeMaskDragRectControl の公開 API のみで利用できる（公開型のカプセル化）。
 /// </remarks>
-/// <param name="SelectionRect">選択矩形（ドメイン座標）。</param>
-public sealed record FadeMaskDragRectSelectionEventArgs(Rect SelectionRect);
+/// <param name="SelectionDomainRect">選択矩形（ドメイン座標）。</param>
+public sealed record FadeMaskDragRectSelectionEventArgs(Rect SelectionDomainRect);

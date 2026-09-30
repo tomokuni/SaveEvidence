@@ -32,11 +32,11 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 /// 選択矩形の可否はコアの <c>FadeMaskDragRectSelection</c> が単一所有する（UI 層は判断を持たず、コアの結果を割り当てるだけになる）。<br/>
 /// <br/>
 /// <b>選択状態の単一のソース</b>: 選択矩形はドラッグ選択コントロールのセッションが単一所有する。 本クラスは選択状態を複製せず、<br/>
-/// 読み取り（<see cref="HasSelection"/> / <see cref="SelectionRect"/>）と設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）を委譲するだけとする。<br/>
+/// 読み取り（<see cref="HasSelection"/> / <see cref="SelectionDomainRect"/>）と設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）を委譲するだけとする。<br/>
 /// <br/>
 /// <b>内部構造</b>:<br/>
 /// - <see cref="MarqueeControl"/>: ドラッグ選択の本体（ドメイン座標 + 座標変換ポート）。<br/>
-///   選択矩形の<b>外側に描く装飾</b>（暗転マスク・穴あけ枠・サイズラベル・ハイライト）も本コントロールが描画する。<br/>
+///   選択矩形の<b>外側に描く装飾</b>（暗転マスク・外枠・サイズラベル・ハイライト）も本コントロールが描画する。<br/>
 /// - <see cref="LoupeControl"/>: 拡大鏡（中心 = ドメイン座標、表示位置はコアの計算で本クラスが配置する）。<br/>
 /// <br/>
 /// <b>配線（本クラス内で完結）</b>:<br/>
@@ -163,17 +163,17 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形。 未選択時は 0x0 の空矩形。</value>
     /// <remarks>選択状態の真のソースはドラッグ選択コントロールのセッションであり、本プロパティはその読み取りを委譲するだけである。</remarks>
-    public EsRect SelectionRect => _marquee.SelectionRect;
+    public EsRect SelectionDomainRect => _marquee.SelectionDomainRect;
 
     /// <summary>ハイライト矩形（ドメイン座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。 未検出時は null（<b>null が「ハイライトしない」を意味する</b>）。 選択矩形より優先される。</value>
-    public EsRect? LogicalHighlightRect
+    public EsRect? HighlightDomainRect
     {
-        get => _marquee.HighlightRect;
-        set => _marquee.HighlightRect = value;
+        get => _marquee.HighlightDomainRect;
+        set => _marquee.HighlightDomainRect = value;
     }
 
-    /// <summary>全面暗転（穴あけなし）を表示するかどうかを取得する。</summary>
+    /// <summary>全面暗転（注目なし）を表示するかどうかを取得する。</summary>
     /// <value>全面暗転する場合は true。 モードから導出される読み取り専用の値（外観の表示可否を参照する）。</value>
     public bool ShowFullOverlay => _marquee.Appearance.ShowFullOverlay;
 
@@ -343,7 +343,7 @@ public sealed class FadeMaskDragRectControl : Panel
         }
     }
 
-    /// <summary>選択状態をクリアして全面暗転（穴あけなし）に戻す。</summary>
+    /// <summary>選択状態をクリアして全面暗転（注目なし）に戻す。</summary>
     /// <remarks>セッションの選択状態と nudge をまとめて初期化する（状態の初期化はセッションが単一所有する）。</remarks>
     public void ClearSelection() => _marquee.ResetSelection();
 
@@ -516,7 +516,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="placement">配置指示（寸法は実寸を反映済み）。</param>
     private static void DrawLabel(SKCanvas canvas, in MarqueeLabelPlacement placement)
     {
-        var bounds = placement.Bounds;
+        var bounds = placement.DipRect;
         var textOrigin = new EsPoint(bounds.X + placement.PaddingX, bounds.Y + placement.PaddingY);
         SkiaLabel.Draw(
             canvas, bounds, placement.BackgroundColor, placement.Text, textOrigin,
@@ -546,7 +546,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
     /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。</param>
     /// <remarks>
-    /// 選択矩形（<see cref="SelectionRect"/> = ドメイン座標）は <c>(ドメイン座標 − captureTopLeft) × scale</c> で<br/>
+    /// 選択矩形（<see cref="SelectionDomainRect"/> = ドメイン座標）は <c>(ドメイン座標 − captureTopLeft) × scale</c> で<br/>
     /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
     /// 破線を描画しない場合（選択矩形を使わないモード・選択なし）は何もしない。
     /// </remarks>
@@ -560,7 +560,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
         FadeMaskDragRectSkiaRenderer.DrawSelectionRect(
             canvas,
-            _marquee.SelectionRect,
+            _marquee.SelectionDomainRect,
             captureTopLeft,
             scale,
             pixelSize,

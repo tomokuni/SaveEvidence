@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャ設定（<see cref="CaptureSettings"/>）から複合コントロールの設定（<see cref="FadeMaskDragRectOptions"/>）への変換。</summary>
 /// <remarks>
-/// 設定項目と外観（選択矩形・外側の装飾（暗転マスク・穴あけ枠・ラベル）・ルーペ・選択矩形破線）の対応を単一所有する。<br/>
+/// 設定項目と外観（選択矩形・外側の装飾（暗転マスク・外枠・ラベル）・ルーペ・選択矩形破線）の対応を単一所有する。<br/>
 /// 両 UI のホスト（セッション）が本変換を使うため、UI ごとに見た目がずれる余地がない（UI 非依存の型のみで完結する）。<br/>
 /// <br/>
 /// <b>本変換の対象外</b>（ホストが個別に設定する）:<br/>

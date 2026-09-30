@@ -133,10 +133,12 @@ public sealed partial class Marquee
     /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
     /// <remarks>
     /// ホストが与える実行時状態である（選択矩形と異なり選択コントロールの操作では変化しない）。<br/>
-    /// 穴あけ矩形の優先順（ハイライト → 選択）の規則はコアが単一所有する。<br/>
+    /// 注目矩形の優先順（ハイライト → 選択）の規則はコアが単一所有する。<br/>
+    /// 終点の加算の判断は本値の <see cref="EsRect.Interval"/> が持つため、検出結果の全ピクセルを含む矩形は<br/>
+    /// <see cref="EsRectInterval.HalfOpen"/>（既定）のままでよく、<c>+1</c> を打ち消す指定は不要である。<br/>
     /// 変更は本コアが検出して出力する（同値判定を UI 層に置かない）。
     /// </remarks>
-    public EsRect? HighlightRect
+    public EsRect? HighlightDomainRect
     {
         get;
         set
@@ -144,7 +146,7 @@ public sealed partial class Marquee
             if (SetIfChanged(ref field, value, out var previous))
             {
                 // 矩形は操作中に高頻度で変化しうるため、設定の有無の変化だけを記録する
-                Log.LogSettingChanged(nameof(HighlightRect), previous is not null, value is not null);
+                Log.LogSettingChanged(nameof(HighlightDomainRect), previous is not null, value is not null);
             }
         }
     }
@@ -159,7 +161,11 @@ public sealed partial class Marquee
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形。 未選択時は 0x0 の空矩形。</value>
-    public EsRect SelectionRect => _session.SelectionRect;
+    /// <remarks>
+    /// 区間の流儀（<see cref="EsRect.Interval"/>）は選択の作成元が決める（ドラッグ由来は <see cref="EsRectInterval.Closed"/>）。<br/>
+    /// 本値をそのまま他の用途へ渡せば、終点の加算の判断も付いて回る（呼び出し側で再判定しない）。
+    /// </remarks>
+    public EsRect SelectionDomainRect => _session.SelectionDomainRect;
 
     /// <summary>現在の選択状態のスナップショット（ポーリング不要の完全状態）を生成する。</summary>
     /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。 null の場合は直近の位置。</param>
@@ -279,13 +285,13 @@ public sealed partial class Marquee
         => MarqueeRenderRequest.Create(
             _session.Options,
             clientSize,
-            _session.HasSelection ? _session.SelectionRect : null,
+            _session.HasSelection ? _session.SelectionDomainRect : null,
             _session.NudgeActive,
             _session.MarkerPosition,
             _session.LastMousePosition,
             _coordPort,
             _domainToDipScaling,
-            HighlightRect);
+            HighlightDomainRect);
 
     // ====================================================================
     // 内部ヘルパー

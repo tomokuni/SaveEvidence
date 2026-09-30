@@ -57,7 +57,7 @@ classDiagram
     +LoupeOptions Loupe
     +double LoupeOffset
     +bool IsHitTestVisible
-    +Resolve(options, mode, highlightRect)$ FadeMaskDragRectChildValues
+    +Resolve(options, mode, highlightDomainRect)$ FadeMaskDragRectChildValues
   }
   class FadeMaskHostLabelRenderer {
     <<static>>
@@ -112,7 +112,7 @@ sequenceDiagram
   MC->>UI: Rendered（描画計画）
   UI->>UI: 文言プロバイダを評価する（ホストの責務）
   UI->>UB: Resolve(描画計画, ラベルの外観, 選択矩形の外観, 操作文言, 情報文言, 実寸測定)
-  UB->>UB: 穴あけ矩形の内側（線幅 + 1 DIP）から積み上げ位置を決める
+  UB->>UB: 注目矩形の内側（線幅 + 1 DIP）から積み上げ位置を決める
   UB->>MH: Resolve(基準点, 文言, 体裁, 実寸測定)（行ごと）
   MH-->>UB: 配置指示（背景 + 文字）
   UB-->>UI: 配置指示（描画順）
@@ -123,9 +123,9 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-  A[Resolve] --> B{穴あけ矩形があるか}
+  A[Resolve] --> B{注目矩形があるか}
   B -- いいえ --> Z[空のリストを返す]
-  B -- はい --> C[y = 穴あけ矩形の上端]
+  B -- はい --> C[y = 注目矩形の上端]
   C --> D{サイズラベルが表示されるか}
   D -- はい --> E[y = 行送り 1 行分下げる]
   D -- いいえ --> F[操作ラベルの判定へ]
@@ -165,7 +165,7 @@ flowchart TD
 | 外観（`appearance`）が null | `ArgumentNullException`（呼び出し側の実装誤りであり、回復して続行すべき状況ではない） |
 | 実寸測定（`measureText`）が null | `ArgumentNullException`（同上） |
 | ラベル 1 行の文言が null | `ArgumentNullException`（同上） |
-| 穴あけ矩形が無い | 空のリストを返す（早期リターン。 選択もハイライトも無い状態は正常） |
+| 注目矩形が無い | 空のリストを返す（早期リターン。 選択もハイライトも無い状態は正常） |
 | 付加情報の文言が null / 空 | その行を返さない（対象外のモードで発生する正常な入力） |
 | ハイライト矩形が null | 「ハイライトなし」として解決する（null が無効を意味する） |
 
@@ -198,7 +198,7 @@ tests/
 | 外観が null の場合の例外 | 1 |
 | 設定の値がそのまま写されること | 1 |
 | 値の等価性 | 1 |
-| 穴あけ矩形が無ければ空を返すこと | 1 |
+| 注目矩形が無ければ空を返すこと | 1 |
 | 操作・情報ラベルを縦に積むこと | 1 |
 | サイズラベルの下から積むこと | 1 |
 | サイズラベルを描かない設定では先頭へ繰り上がること | 1 |

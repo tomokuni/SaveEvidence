@@ -26,10 +26,10 @@ internal sealed class MarqueeState
     private MarqueeSelection _selection;
 
     /// <summary>選択矩形（ドメイン座標）。 未選択時は 0x0。</summary>
-    internal EsRect SelectionRect => _selection.Rect;
+    internal EsRect SelectionDomainRect => _selection.Rect;
 
     /// <summary>選択矩形が有効かどうか（幅・高さが 0 より大きい）。</summary>
-    internal bool HasSelection => !SelectionRect.IsEmpty;
+    internal bool HasSelection => !SelectionDomainRect.IsEmpty;
 
     /// <summary>ドラッグの始点（ドメイン座標）。 未選択時の nudge の基点にもなる。</summary>
     internal EsPoint StartPoint { get; private set; }
@@ -100,7 +100,7 @@ internal sealed class MarqueeState
     internal MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null)
         => new(
             GetInteractionState(),
-            SelectionRect,
+            SelectionDomainRect,
             ActiveTarget,
             mousePosition ?? LastMousePosition,
             IsMouseDown,
@@ -245,7 +245,7 @@ internal sealed class MarqueeState
         IsDragging = true;
         ActiveTarget = MarqueeHitTarget.None;
         _dragStartPoint = startPos;
-        _dragStartRect = SelectionRect;
+        _dragStartRect = SelectionDomainRect;
         LastMousePosition = startPos;
     }
 
@@ -257,7 +257,7 @@ internal sealed class MarqueeState
         ActiveTarget = handle;
         IsDragging = true;
         _dragStartPoint = position;
-        _dragStartRect = SelectionRect;
+        _dragStartRect = SelectionDomainRect;
         LastMousePosition = position;
     }
 
@@ -343,7 +343,7 @@ internal sealed class MarqueeState
             var dragged = _selection.Drag(dx, dy, ActiveTarget, minSize);
             _selection = bounds is { } b ? dragged.ClampToBounds(b, ActiveTarget) : dragged;
             // ドラッグ基準を nudge 後の状態に合わせる（次の UpdateDrag で nudge が失われるのを防ぐ）
-            _dragStartRect = SelectionRect;
+            _dragStartRect = SelectionDomainRect;
             _dragStartPoint = _selection.Handle(ActiveTarget);
             LastMousePosition = _dragStartPoint;
         }
@@ -405,8 +405,8 @@ internal sealed class MarqueeState
     internal bool ClampSelectionToBounds()
     {
         if (!HasSelection) return false;
-        var clipped = ClipRectToBounds(SelectionRect);
-        if (clipped == SelectionRect) return false;
+        var clipped = ClipRectToBounds(SelectionDomainRect);
+        if (clipped == SelectionDomainRect) return false;
         _selection = new MarqueeSelection(clipped);
         return true;
     }

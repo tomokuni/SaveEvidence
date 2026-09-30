@@ -63,7 +63,7 @@ public class MarqueeSessionTests
 
         Assert.True(session.IsDragging);
         Assert.False(session.HasSelection);
-        Assert.Equal(new EsRect(10, 10, 0, 0), session.SelectionRect);
+        Assert.Equal(new EsRect(10, 10, 0, 0), session.SelectionDomainRect);
         Assert.Equal([MarqueeNoticeKind.SelectionStarted], Kinds(notices));
         Assert.True(feedback.Redraw);
         Assert.True(feedback.RequestFocus);
@@ -88,7 +88,7 @@ public class MarqueeSessionTests
 
         // 基準点がハンドル点へ揃っているため、ハンドル点への移動では矩形が変わらない
         session.Move(new EsPoint(150, 130));
-        Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionRect);
+        Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionDomainRect);
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class MarqueeSessionTests
 
         // スナップしないため、押下位置からの移動量がそのまま矩形へ反映される
         session.Move(new EsPoint(80, 80));
-        Assert.Equal(new EsRect(60, 60, 100, 80), session.SelectionRect);
+        Assert.Equal(new EsRect(60, 60, 100, 80), session.SelectionDomainRect);
     }
 
     [Fact]
@@ -169,7 +169,8 @@ public class MarqueeSessionTests
 
         var feedback = session.Move(new EsPoint(50, 50));
 
-        Assert.Equal(new EsRect(10, 10, 40, 40), session.SelectionRect);
+        // ドラッグ由来の選択矩形は閉区間（始点・終点のピクセルを含む）
+        Assert.Equal(new EsRect(10, 10, 40, 40, EsRectInterval.Closed), session.SelectionDomainRect);
         Assert.Equal(
             [MarqueeNoticeKind.SelectionChanged, MarqueeNoticeKind.MarkerPositionMoved],
             Kinds(notices));
@@ -258,7 +259,9 @@ public class MarqueeSessionTests
         session.Release(new EsPoint(80, 80));
 
         Assert.Contains(MarqueeNoticeKind.SelectionCompleted, Kinds(notices));
-        Assert.Equal(new EsRect(10, 10, 70, 70), Find(notices, MarqueeNoticeKind.SelectionCompleted).Snapshot.SelectionRect);
+        Assert.Equal(
+            new EsRect(10, 10, 70, 70, EsRectInterval.Closed),
+            Find(notices, MarqueeNoticeKind.SelectionCompleted).Snapshot.SelectionDomainRect);
         Assert.False(session.IsDragging);
     }
 
@@ -280,11 +283,11 @@ public class MarqueeSessionTests
         Assert.True(feedback.UpdateCursorShape);
 
         // 抑制: nudge 位置へのエコー移動は矩形を上書きしない（通知も発生しない）
-        var rectBefore = session.SelectionRect;
+        var rectBefore = session.SelectionDomainRect;
         notices.Clear();
         session.Move(nudgePosition);
         Assert.Empty(notices);
-        Assert.Equal(rectBefore, session.SelectionRect);
+        Assert.Equal(rectBefore, session.SelectionDomainRect);
     }
 
     // ====================================================================
@@ -459,7 +462,7 @@ public class MarqueeSessionTests
 
         var feedback = session.SetSelection(new EsRect(50, 50, 100, 80));
 
-        Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionRect);
+        Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionDomainRect);
         Assert.True(session.HasSelection);
         Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
@@ -474,7 +477,7 @@ public class MarqueeSessionTests
         session.SetSelection(new EsRect(150, 150, 100, 100));
 
         // 境界 200x200 に収まるように切り詰められる
-        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionRect);
+        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionDomainRect);
     }
 
     [Fact]
@@ -485,7 +488,7 @@ public class MarqueeSessionTests
 
         session.SetSelection(new EsRect(150, 150, 100, 100));
 
-        Assert.Equal(new EsRect(150, 150, 100, 100), session.SelectionRect);
+        Assert.Equal(new EsRect(150, 150, 100, 100), session.SelectionDomainRect);
     }
 
     [Fact]
@@ -532,7 +535,7 @@ public class MarqueeSessionTests
         var feedback = session.SetSelection(new EsRect(10, 20, 30, 40));
 
         Assert.False(session.NudgeActive);
-        Assert.Equal(new EsRect(10, 20, 30, 40), session.SelectionRect);
+        Assert.Equal(new EsRect(10, 20, 30, 40), session.SelectionDomainRect);
         Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
     }
 
@@ -577,7 +580,7 @@ public class MarqueeSessionTests
 
         var notice = Assert.Single(notices);
         Assert.Equal(MarqueeNoticeKind.ConfirmRequested, notice.Kind);
-        Assert.Equal(new EsRect(50, 50, 100, 80), notice.Snapshot.SelectionRect);
+        Assert.Equal(new EsRect(50, 50, 100, 80), notice.Snapshot.SelectionDomainRect);
         Assert.False(session.HasSelection);
         Assert.True(feedback.Redraw);
     }
@@ -641,7 +644,7 @@ public class MarqueeSessionTests
 
         var feedback = session.ApplyClampToBounds();
 
-        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionRect);
+        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionDomainRect);
         Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
     }
@@ -749,7 +752,7 @@ public class MarqueeSessionTests
 
         var feedback = session.ApplyOptions(session.Options with { ClampToDomainBounds = true });
 
-        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionRect);
+        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionDomainRect);
         Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
         Assert.Equal("[Feature.Marquee.Core] Setting: ClampToDomainBounds False → True", Assert.Single(logger.Messages));

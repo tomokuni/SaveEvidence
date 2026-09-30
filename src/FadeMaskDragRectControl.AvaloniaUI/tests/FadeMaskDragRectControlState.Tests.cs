@@ -110,7 +110,7 @@ public class FadeMaskDragRectControlStateTests
         var control = new FadeMaskDragRectControl();
 
         control.Options = FadeMaskDragRectOptions.Default;
-        // 選択枠線（装飾の穴あけ枠）とハンドルの枠線は同じ矩形に重なるため、ホストが同じ色・太さを与える
+        // 選択枠線（装飾の外枠）とハンドルの枠線は同じ矩形に重なるため、ホストが同じ色・太さを与える
         control.MarqueeAppearance = control.MarqueeAppearance with
         {
             OuterBorderColor = System.Drawing.Color.Red,

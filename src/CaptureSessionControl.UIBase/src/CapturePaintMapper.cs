@@ -24,7 +24,7 @@ internal static class CapturePaintMapper
     /// <returns>選択矩形コントロールの描画に使う色。</returns>
     /// <remarks>
     /// 1. ハンドル・始点マーカー・ラベル・暗転マスクの色を写像する。<br/>
-    /// 2. 枠線（<see cref="CaptureSettings.BorderColor"/>）は、暗転マスクの穴あけ枠（外側の装飾）とハンドルの枠線の両方へ同じ値を割り当てる<br/>
+    /// 2. 枠線（<see cref="CaptureSettings.BorderColor"/>）は、暗転マスクの外枠（外側の装飾）とハンドルの枠線の両方へ同じ値を割り当てる<br/>
     ///    （両者は同じ矩形に重なるため、別々の値にすると見た目が崩れる）。<br/>
     /// 3. サイズラベルの背景はラベル共通の背景色（<see cref="CaptureSettings.TextBackgroundColor"/>）を使う。<br/>
     /// 4. 内側の塗り・内側の枠線は写像しない（描画の可否は <see cref="MarqueeAppearance"/> のフラグが単一所有するため、既定の透明を保つ）。<br/>

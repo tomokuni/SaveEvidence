@@ -47,7 +47,7 @@ internal sealed partial class OverlayWindow
     {
         var highlight = _highlight.Update(_captureType, detection, Position.ToEsPointInt());
         // 未検出は null で表す（null が「ハイライトしない」を意味する）
-        SelectionOverlay.LogicalHighlightRect = highlight.DomainRect is { } rect ? rect.ToAvaloniaRect() : null;
+        SelectionOverlay.HighlightDomainRect = highlight.DomainRect is { } rect ? rect.ToAvaloniaRect() : null;
         return highlight;
     }
 
@@ -75,7 +75,7 @@ internal sealed partial class OverlayWindow
         => CaptureTypeTraits.ResolveRect(
             _captureType,
             _highlight.DomainRect,
-            SelectionOverlay.HasSelection ? SelectionOverlay.SelectionRect.ToEsRect() : null);
+            SelectionOverlay.HasSelection ? SelectionOverlay.SelectionDomainRect.ToEsRect() : null);
 
     /// <summary>クリック確定型の押下時処理（ハイライトを固定する）。</summary>
     /// <param name="sender">イベント送信元。</param>

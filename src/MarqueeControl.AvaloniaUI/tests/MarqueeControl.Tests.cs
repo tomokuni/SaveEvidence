@@ -133,7 +133,7 @@ public class MarqueeControlTests
 
         Assert.NotNull(duringDrag);
         // ドラッグ中の矩形（ドメイン座標）が Snapshot に含まれる
-        Assert.Equal(new EsRect(20, 20, 60, 60), duringDrag!.Snapshot.SelectionRect);
+        Assert.Equal(new EsRect(20, 20, 60, 60, EsRectInterval.Closed), duringDrag!.Snapshot.SelectionDomainRect);
         // 新規選択ドラッグ中はハンドルなし（None）
         Assert.Equal(MarqueeHitTarget.None, duringDrag.Snapshot.ActiveTarget);
         // ドラッグ中の状態は Dragging
@@ -164,7 +164,7 @@ public class MarqueeControlTests
         // リサイズドラッグ中はアクティブハンドルが TopLeft
         Assert.Equal(MarqueeHitTarget.TopLeft, duringResize!.Snapshot.ActiveTarget);
         // リサイズ後の矩形（ドメイン座標）が Snapshot に含まれる
-        Assert.Equal(new EsRect(30, 30, 120, 100), duringResize.Snapshot.SelectionRect);
+        Assert.Equal(new EsRect(30, 30, 120, 100), duringResize.Snapshot.SelectionDomainRect);
         // リサイズドラッグ中の状態は Dragging
         Assert.Equal(MarqueeInteractionState.Dragging, duringResize.Snapshot.State);
 
@@ -804,7 +804,7 @@ public class MarqueeControlTests
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
         // キー 1 回で終点が 1 ドメインピクセルだけ動く（フォーカス経由と TopLevel 購読の 2 経路で二重処理されると 2 px 動く）
-        Assert.Equal(new EsRect(20, 20, 31, 30), control.CurrentSnapshot.SelectionRect);
+        Assert.Equal(new EsRect(20, 20, 31, 30, EsRectInterval.Closed), control.CurrentSnapshot.SelectionDomainRect);
         Assert.Single(rects);
         window.Close();
     }
@@ -1514,7 +1514,7 @@ public class MarqueeControlTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(control.HasSelection, "ウィンドウ経由のドラッグが MarqueeControl へ届いていない（ヒットテストの欠落）");
-        Assert.Equal(new EsRect(20, 20, 160, 160), control.SelectionRect);
+        Assert.Equal(new EsRect(20, 20, 160, 160, EsRectInterval.Closed), control.SelectionDomainRect);
         window.Close();
     }
 
@@ -1545,7 +1545,7 @@ public class MarqueeControlTests
 
         var border = Assert.Single(control.Children.OfType<Border>());
 
-        // 穴あけ矩形の左上（40, 60）から「線幅 6 + 余白 1」内側へ置かれる
+        // 注目矩形の左上（40, 60）から「線幅 6 + 余白 1」内側へ置かれる
         Assert.Equal(40 + thickness + 1, border.Margin.Left);
         Assert.Equal(60 + thickness + 1, border.Margin.Top);
         window.Close();

@@ -49,7 +49,7 @@
 | `LoupeOffset` | `double` | `20.0` | ルーペのカーソル中心からの右下オフセット（DIP） |
 | `Default`（static） | `FadeMaskDragRectOptions` | — | 部分変更の基点（`Default with { ... }`） |
 
-装飾の設定は持ちません（表示可否・太さ・色は外観（提示層の `MarqueeAppearance`）が、ハイライト矩形は `MarqueePresenter.HighlightRect` が単一所有する）。
+装飾の設定は持ちません（表示可否・太さ・色は外観（提示層の `MarqueeAppearance`）が、ハイライト矩形は `MarqueePresenter.HighlightDomainRect` が単一所有する）。
 
 **色は描画にだけ必要な設定のため本値に含みません**（提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有し、ホストがコントロールへ設定します）。 例外はルーペ画像へ直接書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）で、これは描画 API ではなくピクセル書き込みに使うため本値が持ちます。
 
@@ -86,7 +86,7 @@ FadeMaskDragRectOptions options = FadeMaskDragRectOptions.Default with
 | メンバー | 型 | 内容 |
 | --- | --- | --- |
 | `UsesSelection` | `bool` | 選択矩形・ルーペ・選択矩形の破線を使用するモードか（`Crop` / `AreaSelect`） |
-| `ShowFullOverlay` | `bool` | 全面暗転（穴あけなし）を表示するか。 `UsesSelection` と同値 |
+| `ShowFullOverlay` | `bool` | 全面暗転（注目なし）を表示するか。 `UsesSelection` と同値 |
 | `ShowSelectionOverlay` | `bool` | ルーペ画像上へ選択矩形の破線を描画するか。 `UsesSelection` と同値 |
 | `IsLoupeVisible(hasSource, hasCenter)` | `bool` | ルーペを表示するか（選択矩形を使うモード **かつ** 画像あり **かつ** 中心あり） |
 
@@ -108,8 +108,8 @@ FadeMaskDragRectOptions options = FadeMaskDragRectOptions.Default with
 
 | メソッド | 内容 |
 | --- | --- |
-| `DrawSelectionRect(EsBitmap bitmap, EsRect selectionRect, EsPoint captureTopLeft, double scale, Color colorA, Color colorB)` | 選択矩形の 4 辺を 2 色の破線で `EsBitmap`（ルーペの表示画像）へ書き込む |
-| `EnumerateDashes(EsRect selectionRect, EsPoint captureTopLeft, double scale, int pixelSize)` | 選択矩形の 4 辺の破線を 1 ピクセル厚の矩形として列挙する（`IReadOnlyList<Dash>`） |
+| `DrawSelectionRect(EsBitmap bitmap, EsRect selectionDomainRect, EsPoint captureTopLeft, double scale, Color colorA, Color colorB)` | 選択矩形の 4 辺を 2 色の破線で `EsBitmap`（ルーペの表示画像）へ書き込む |
+| `EnumerateDashes(EsRect selectionDomainRect, EsPoint captureTopLeft, double scale, int pixelSize)` | 選択矩形の 4 辺の破線を 1 ピクセル厚の矩形として列挙する（`IReadOnlyList<Dash>`） |
 
 **破線の幾何は `EnumerateDashes` が単一所有**し、描画先は呼び出し側が選べます（Avalonia 版は `DrawSelectionRect` で `EsBitmap` へ直接書き込み、MewUI 版は `EnumerateDashes` の結果を `SKCanvas` へ描きます）。 このため両 UI の破線が同じ位置・長さ・色順になります。
 

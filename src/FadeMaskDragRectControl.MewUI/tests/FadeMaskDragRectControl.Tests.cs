@@ -41,8 +41,8 @@ public class FadeMaskDragRectControlTests
 
         Assert.Equal(FadeMaskDragRectMode.AreaSelect, control.Mode);
         Assert.False(control.HasSelection);
-        Assert.Equal(default, control.SelectionRect);
-        Assert.Null(control.LogicalHighlightRect);
+        Assert.Equal(default, control.SelectionDomainRect);
+        Assert.Null(control.HighlightDomainRect);
         Assert.True(control.ShowFullOverlay);
         Assert.True(control.Marquee.IsVisible);
         Assert.Null(control.LoupeCenterPoint);
@@ -151,7 +151,7 @@ public class FadeMaskDragRectControlTests
         control.SetSelection(new EsRect(10, 20, 100, 80));
 
         Assert.True(control.HasSelection);
-        Assert.Equal(new EsRect(10, 20, 100, 80), control.SelectionRect);
+        Assert.Equal(new EsRect(10, 20, 100, 80), control.SelectionDomainRect);
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class FadeMaskDragRectControlTests
         control.SetSelection(new EsRect(10, 20, 0, 80));
 
         Assert.False(control.HasSelection);
-        Assert.Equal(default, control.SelectionRect);
+        Assert.Equal(default, control.SelectionDomainRect);
     }
 
     [Fact]
@@ -186,20 +186,20 @@ public class FadeMaskDragRectControlTests
         control.SetSelection(new EsRect(5, 6, 30, 40));
 
         Assert.True(control.HasSelection);
-        Assert.Equal(new EsRect(5, 6, 30, 40), control.SelectionRect);
+        Assert.Equal(new EsRect(5, 6, 30, 40), control.SelectionDomainRect);
     }
 
     [Fact]
     public void ハイライト_設定と取得が委譲される()
     {
-        var control = new FadeMaskDragRectControl { LogicalHighlightRect = new EsRect(1, 2, 3, 4) };
+        var control = new FadeMaskDragRectControl { HighlightDomainRect = new EsRect(1, 2, 3, 4) };
 
-        Assert.Equal(new EsRect(1, 2, 3, 4), control.LogicalHighlightRect);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightDomainRect);
 
-        // ハイライトの有無は矩形の null が表す（null にすると穴あけ矩形として使われない）
-        control.LogicalHighlightRect = null;
+        // ハイライトの有無は矩形の null が表す（null にすると注目矩形として使われない）
+        control.HighlightDomainRect = null;
 
-        Assert.Null(control.LogicalHighlightRect);
+        Assert.Null(control.HighlightDomainRect);
     }
 
     // ====================================================================
@@ -271,7 +271,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
 
         // サイズラベルは選択矩形コントロール単体の概念であるため選択コアが単一所有する。<br/>
-        // 文言プロバイダ未設定のため穴あけ矩形から自動生成される
+        // 文言プロバイダ未設定のため注目矩形から自動生成される
         // サイズラベルの表示可否は描画にだけ必要な設定であり、外観が単一所有する
         Assert.True(control.Marquee.Appearance.ShowSizeLabel);
         Assert.Null(control.SizeLabelOverrideProvider);
@@ -652,7 +652,7 @@ public class FadeMaskDragRectControlTests
         control.RequestConfirm();
 
         Assert.NotNull(raised);
-        Assert.Equal(new EsRect(10, 20, 100, 80), raised!.SelectionRect);
+        Assert.Equal(new EsRect(10, 20, 100, 80), raised!.SelectionDomainRect);
     }
 
     [Fact]

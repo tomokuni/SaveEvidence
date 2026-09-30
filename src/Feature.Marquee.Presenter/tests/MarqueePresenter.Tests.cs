@@ -114,18 +114,18 @@ public class MarqueePresenterTests
         Assert.Equal("[Feature.Marquee.Presenter] Setting: DisplayScaleScaling 0 → 1.25", Assert.Single(logger.Messages));
     }
 
-    /// <summary>ハイライト矩形がコアへ委譲され、穴あけ矩形として優先されることを検証する。</summary>
+    /// <summary>ハイライト矩形がコアへ委譲され、注目矩形として優先されることを検証する。</summary>
     [Fact]
     public void HighlightRect_コアへ委譲しハイライトを優先する()
     {
         var presenter = CreatePresenter(out _);
         presenter.SetSelection(new EsRect(10, 20, 30, 40));
-        presenter.HighlightRect = new EsRect(1, 2, 3, 4);
+        presenter.HighlightDomainRect = new EsRect(1, 2, 3, 4);
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
-        // ハイライト矩形が穴あけ矩形になる（優先順はコアが単一所有する）
-        Assert.Equal(new EsRect(1, 2, 3, 4), plan.HoleRect);
+        // ハイライト矩形が注目矩形になる（優先順はコアが単一所有する）
+        Assert.Equal(new EsRect(1, 2, 3, 4), plan.FocusDipRect);
     }
 
     // ====================================================================
@@ -154,14 +154,14 @@ public class MarqueePresenterTests
     public void ResolveDrawPlan_選択ありではハンドルを返す()
     {
         var presenter = CreatePresenter(out _);
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
         // ハンドル矩形は選択領域の閉区間（終点 +1）の左上を中心に置く（幾何はコアが単一所有する）
         Assert.NotNull(plan.Handles);
-        Assert.Equal(8, plan.Handles!.Value.Rects.Count);
-        Assert.Equal(new EsRect(5, 15, 10, 10), plan.Handles!.Value.Rects[0]);
+        Assert.Equal(8, plan.Handles!.Value.HandleDipRects.Count);
+        Assert.Equal(new EsRect(5, 15, 10, 10), plan.Handles!.Value.HandleDipRects[0]);
     }
 
     /// <summary>ハンドルを隠す外観ではハンドルが null になることを検証する。</summary>
@@ -169,7 +169,7 @@ public class MarqueePresenterTests
     public void ResolveDrawPlan_ハンドルを隠す外観ではnullになる()
     {
         var presenter = CreatePresenter(out _, appearance: MarqueeAppearance.Default with { ShowHandles = false });
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
@@ -199,13 +199,13 @@ public class MarqueePresenterTests
         // Inverse（ドメイン → DIP）は 2 倍
         presenter.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         // 描画領域のサイズは使わない（座標変換ポートだけが結果に影響する）ため既定値で解決する
         var plan = presenter.ResolveDrawPlan(default, MeasureText);
 
         // 選択領域は閉区間（終点 +1）で変換されるため、左上ハンドルは (15, 35) から始まる
-        Assert.Equal(new EsRect(15, 35, 10, 10), plan.Handles!.Value.Rects[0]);
+        Assert.Equal(new EsRect(15, 35, 10, 10), plan.Handles!.Value.HandleDipRects[0]);
     }
 
     /// <summary>描画領域のサイズが座標ラベルのクランプへ渡されることを検証する。</summary>
@@ -219,8 +219,8 @@ public class MarqueePresenterTests
 
         // ラベルは描画領域の外へ出ない（クランプ規則は EsSize.ClampOffset が単一所有する）
         var label = Assert.Single(plan.Labels);
-        Assert.True(label.Bounds.Right <= 200, $"右端が領域外: {label.Bounds.Right}");
-        Assert.True(label.Bounds.Bottom <= 100, $"下端が領域外: {label.Bounds.Bottom}");
+        Assert.True(label.DipRect.Right <= 200, $"右端が領域外: {label.DipRect.Right}");
+        Assert.True(label.DipRect.Bottom <= 100, $"下端が領域外: {label.DipRect.Bottom}");
     }
 
     /// <summary>サイズラベルと座標ラベルが両方ある場合はサイズラベルが先になることを検証する。</summary>
@@ -228,7 +228,7 @@ public class MarqueePresenterTests
     public void ResolveDrawPlan_ラベルはサイズラベルが先になる()
     {
         var presenter = CreatePresenter(out _);
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
         presenter.Move(new EsPoint(30, 40));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
@@ -238,9 +238,9 @@ public class MarqueePresenterTests
         Assert.Equal("(30, 40)", plan.Labels[1].Text);
     }
 
-    /// <summary>ラベルの基準点が「矩形の線幅 + 1」だけ穴あけ矩形の内側へ寄ることを検証する。</summary>
+    /// <summary>ラベルの基準点が「矩形の線幅 + 1」だけ注目矩形の内側へ寄ることを検証する。</summary>
     /// <remarks>
-    /// 枠線は穴あけ矩形の内側へ <c>OuterBorderThickness</c> の幅で描かれるため、ラベルをその幅の分だけ内側へ寄せる<br/>
+    /// 枠線は注目矩形の内側へ <c>OuterBorderThickness</c> の幅で描かれるため、ラベルをその幅の分だけ内側へ寄せる<br/>
     /// （重なると背景の上に線が乗り、文字が読みにくくなる）。<br/>
     /// ホストの付加情報ラベルが使う基準点（<see cref="MarqueeDrawPlan.LabelAnchor"/>）も同じ値である
     /// （サイズラベルと付加情報ラベルで寄せ幅が異なると縦積みがずれる）。
@@ -252,14 +252,14 @@ public class MarqueePresenterTests
         var presenter = CreatePresenter(
             out _,
             appearance: MarqueeAppearance.Default with { OuterBorderThickness = thickness });
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
-        // 穴あけ矩形の左上 (10, 20) から「線幅 5 + 余白 1」内側が基準点になる
+        // 注目矩形の左上 (10, 20) から「線幅 5 + 余白 1」内側が基準点になる
         var anchor = new EsPoint(10 + thickness + 1, 20 + thickness + 1);
         Assert.Equal(anchor, plan.LabelAnchor);
-        Assert.Equal(anchor, plan.Labels[0].Bounds.TopLeft);
+        Assert.Equal(anchor, plan.Labels[0].DipRect.TopLeft);
     }
 
     /// <summary>枠線を描かない設定では余白（1 DIP）だけが残ることを検証する。</summary>
@@ -270,7 +270,7 @@ public class MarqueePresenterTests
         var presenter = CreatePresenter(
             out _,
             appearance: MarqueeAppearance.Default with { ShowOuterBorder = false, OuterBorderThickness = 5.0 });
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
@@ -278,18 +278,18 @@ public class MarqueePresenterTests
         Assert.Equal(new EsPoint(11, 21), plan.LabelAnchor);
     }
 
-    /// <summary>装飾（暗転・穴あけ枠）が外観の表示可否に従って解決されることを検証する。</summary>
+    /// <summary>装飾（暗転・外枠）が外観の表示可否に従って解決されることを検証する。</summary>
     [Fact]
     public void ResolveDrawPlan_装飾は外観の表示可否に従う()
     {
         var presenter = CreatePresenter(out _, appearance: MarqueeAppearance.Default with { ShowOverlay = false });
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
         // 暗転を描かない設定では暗転領域が空になる（他は既定どおり描く）
-        Assert.Empty(plan.OverlayRegions);
-        Assert.NotEmpty(plan.OuterBorderRects);
+        Assert.Empty(plan.OverlayDipRects);
+        Assert.NotEmpty(plan.OuterBorderDipRects);
         Assert.True(plan.HasDecoration);
     }
 
@@ -298,7 +298,7 @@ public class MarqueePresenterTests
     public void ResolveDrawPlan_サイズラベルの文言プロバイダを優先する()
     {
         var presenter = CreatePresenter(out _);
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
         presenter.SizeLabelOverrideProvider = () => "ホストの文言";
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
@@ -327,7 +327,8 @@ public class MarqueePresenterTests
         presenter.Release(new EsPoint(50, 40));
 
         Assert.True(presenter.HasSelection);
-        Assert.Equal(new EsRect(10, 10, 40, 30), presenter.SelectionRect);
+        // ドラッグ由来の選択矩形は閉区間（始点・終点のピクセルを含む）
+        Assert.Equal(new EsRect(10, 10, 40, 30, EsRectInterval.Closed), presenter.SelectionDomainRect);
         Assert.True(effects.RedrawCount > 0, "再描画が要求されていない");
     }
 }

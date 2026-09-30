@@ -25,11 +25,11 @@ namespace EsUtil.Feature.Marquee.Presenter;
 /// <br/>
 /// <b>本クラスが単一所有するもの</b>:<br/>
 /// - 外観（色・ラベルの体裁・枠線の太さ・表示可否）<br/>
-/// - 装飾（暗転マスク・穴あけ枠・内側の塗り）の矩形の導出（コアが返す幾何から）<br/>
+/// - 装飾（暗転マスク・外枠・内側の塗り）の矩形の導出（コアが返す幾何から）<br/>
 /// - ラベルの文言（サイズの書式・表示スケール）と配置の写像<br/>
 /// - 描く層とその順序（<see cref="MarqueeDrawLayer"/>）<br/>
 /// <br/>
-/// <b>コアが単一所有するもの</b>: 選択の状態機械・入力の解釈・穴あけ矩形の決定・ハンドル / マーカーの位置・設定の既定値と補正・ログ。<br/>
+/// <b>コアが単一所有するもの</b>: 選択の状態機械・入力の解釈・注目矩形の決定・ハンドル / マーカーの位置・設定の既定値と補正・ログ。<br/>
 /// <br/>
 /// <b>本クラスは UI フレームワークに依存しない</b>（色は UI 非依存の <c>System.Drawing.Color</c>、描画は行わない）。<br/>
 /// 派生クラスで <see cref="Appearance"/> を差し替えるか <see cref="ResolveDrawPlan"/> を上書きすることで、独自の見た目を提供できる<br/>
@@ -164,10 +164,10 @@ public partial class MarqueePresenter
 
     /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
-    public EsRect? HighlightRect
+    public EsRect? HighlightDomainRect
     {
-        get => _core.HighlightRect;
-        set => _core.HighlightRect = value;
+        get => _core.HighlightDomainRect;
+        set => _core.HighlightDomainRect = value;
     }
 
     /// <summary>選択矩形があるかどうかを取得する。</summary>
@@ -176,7 +176,7 @@ public partial class MarqueePresenter
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形。 未選択時は 0x0 の空矩形。</value>
-    public EsRect SelectionRect => _core.SelectionRect;
+    public EsRect SelectionDomainRect => _core.SelectionDomainRect;
 
     /// <summary>現在の選択状態のスナップショットを生成する。</summary>
     /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。 null の場合は直近の位置。</param>
@@ -247,7 +247,7 @@ public partial class MarqueePresenter
     /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>
     /// 処理フロー:<br/>
-    /// 1. コアから幾何（穴あけ矩形・ハンドル・マーカー）を解決する。<br/>
+    /// 1. コアから幾何（注目矩形・ハンドル・マーカー）を解決する。<br/>
     /// 2. 装飾（暗転領域・外枠・内側の塗り・内枠）の矩形を、外観（表示可否・太さ）と幾何から導出する。<br/>
     /// 3. ラベルの文言と基準点を解決し、実寸から配置指示へ写す。<br/>
     /// 4. 描く層だけを順序どおりに並べる（テキストは最後 = 最上位）。<br/>
@@ -262,18 +262,18 @@ public partial class MarqueePresenter
         var appearance = Appearance;
         var request = _core.CreateRequest(clientSize);
         var geometry = _core.ResolveGeometry(in request);
-        var surface = geometry.SurfaceBounds;
-        var hole = geometry.HoleRect;
+        var surface = geometry.SurfaceDipRect;
+        var focus = geometry.FocusDipRect;
 
-        var overlayRegions = appearance.ShowOverlay && appearance.ShouldDrawOverlay(hole is not null)
-            ? ComputeOverlayRegions(surface, hole)
+        var overlayRegions = appearance.ShowOverlay && appearance.ShouldDrawOverlay(focus is not null)
+            ? ComputeOverlayDipRects(surface, focus)
             : [];
-        var outerBorders = hole is { } outerHole && appearance.ShowOuterBorder
-            ? ComputeBorderRects(outerHole, appearance.OuterBorderThickness)
+        var outerBorders = focus is { } outerFocus && appearance.ShowOuterBorder
+            ? ComputeBorderDipRects(outerFocus, appearance.OuterBorderThickness)
             : [];
-        var innerFill = hole is { } fillHole && appearance.ShowInnerFill ? fillHole : (EsRect?)null;
-        var innerBorders = hole is { } innerHole && appearance.ShowInnerBorder
-            ? ComputeBorderRects(innerHole, appearance.InnerBorderThickness)
+        var innerFill = focus is { } fillFocus && appearance.ShowInnerFill ? fillFocus : (EsRect?)null;
+        var innerBorders = focus is { } innerFocus && appearance.ShowInnerBorder
+            ? ComputeBorderDipRects(innerFocus, appearance.InnerBorderThickness)
             : [];
 
         var sizeLabel = ResolveSizeLabelText(
@@ -284,8 +284,8 @@ public partial class MarqueePresenter
         return new MarqueeDrawPlan(
             appearance,
             surface,
-            hole,
-            hole is { } anchorHole ? ResolveLabelAnchor(anchorHole, appearance) : null,
+            focus,
+            focus is { } anchorFocus ? ResolveLabelAnchor(anchorFocus, appearance) : null,
             overlayRegions,
             outerBorders,
             innerFill,
@@ -298,7 +298,7 @@ public partial class MarqueePresenter
 
     /// <summary>描く層だけを描画順に並べる。</summary>
     /// <param name="overlayRegions">暗転領域。</param>
-    /// <param name="outerBorderRects">穴あけ枠の矩形。</param>
+    /// <param name="outerBorderRects">外枠の矩形。</param>
     /// <param name="innerFillRect">内側の塗り。</param>
     /// <param name="innerBorderRects">内側の枠線。</param>
     /// <param name="handles">ドラッグハンドル。 null の場合は層を含めない。</param>

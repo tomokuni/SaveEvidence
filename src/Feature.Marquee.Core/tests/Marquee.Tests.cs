@@ -89,7 +89,7 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out _);
 
         Assert.False(marquee.HasSelection);
-        Assert.Equal(default, marquee.SelectionRect);
+        Assert.Equal(default, marquee.SelectionDomainRect);
         Assert.Equal(MarqueeHitTarget.None, marquee.CreateSnapshot().ActiveTarget);
     }
 
@@ -225,7 +225,7 @@ public class MarqueeTests
         // 設定を ON へ切り替えると既存の選択矩形が境界内へクリップされる
         marquee.Options = marquee.Options with { ClampToDomainBounds = true };
 
-        Assert.Equal(new EsRect(50, 50, 50, 50), marquee.SelectionRect);
+        Assert.Equal(new EsRect(50, 50, 50, 50), marquee.SelectionDomainRect);
     }
 
     [Fact]
@@ -446,14 +446,14 @@ public class MarqueeTests
         var logger = new RecordingLogger();
         marquee.Log = logger;
 
-        marquee.HighlightRect = new EsRect(1, 2, 3, 4);
-        marquee.HighlightRect = new EsRect(5, 6, 7, 8);   // どちらも非 null（有無は変わらない）
-        marquee.HighlightRect = null;
+        marquee.HighlightDomainRect = new EsRect(1, 2, 3, 4);
+        marquee.HighlightDomainRect = new EsRect(5, 6, 7, 8);   // どちらも非 null（有無は変わらない）
+        marquee.HighlightDomainRect = null;
 
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: HighlightRect False → True",
-                "[Feature.Marquee.Core] Setting: HighlightRect True → False",
+                "[Feature.Marquee.Core] Setting: HighlightDomainRect False → True",
+                "[Feature.Marquee.Core] Setting: HighlightDomainRect True → False",
             ],
             logger.Messages);
     }

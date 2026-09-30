@@ -61,7 +61,7 @@ sequenceDiagram
     P->>M: CreateRequest(描画領域のサイズ)
     M-->>P: MarqueeRenderRequest
     P->>M: ResolveGeometry(request)
-    M-->>P: MarqueeGeometry（穴あけ矩形・ハンドル・マーカー・マウス位置）
+    M-->>P: MarqueeGeometry（注目矩形・ハンドル・マーカー・マウス位置）
     P->>P: 装飾矩形の導出・ラベルの文言と配置・層の順序・外観の解決
     P-->>D: 構築
     P-->>UI: MarqueeDrawPlan
@@ -75,8 +75,8 @@ sequenceDiagram
 flowchart TD
     A[ResolveDrawPlan] --> B[幾何の解決<br/>Marquee.ResolveGeometry]
     B --> C{外観の表示可否}
-    C -->|ShowOverlay かつ穴あり| D[暗転領域 = 描画面 − 穴あけ矩形<br/>4 領域]
-    C -->|ShowOuterBorder かつ穴あり| E[穴あけ枠 = 4 辺]
+    C -->|ShowOverlay かつ穴あり| D[暗転領域 = 描画面 − 注目矩形<br/>4 領域]
+    C -->|ShowOuterBorder かつ穴あり| E[外枠 = 4 辺]
     C -->|ShowInnerFill / ShowInnerBorder かつ穴あり| F[内側の塗り・内枠]
     C -->|ShowHandles かつ選択あり| G[ハンドル]
     B --> H[マーカーはコアが nudge 中のみ返す]
@@ -91,7 +91,7 @@ flowchart TD
 
 - **層は描く値がある場合だけ含めます**（層の有無 = 描く値の有無）。 UI 層は層ごとの可否を判定しません。
 - **テキストの層は必ず末尾**です（UI 要素として置く場合も子要素は親より後に描かれるため、常に最上位になります）。
-- 穴あけ矩形は 1 回だけ解決し、暗転領域・枠線・内側・サイズラベルのすべてに同じ値を渡します（各所が個別に変換すると矩形がずれます）。
+- 注目矩形は 1 回だけ解決し、暗転領域・枠線・内側・サイズラベルのすべてに同じ値を渡します（各所が個別に変換すると矩形がずれます）。
 
 ## 4. コンポーネント構成
 
@@ -117,13 +117,13 @@ flowchart TD
 | --- | --- |
 | 色（ハンドル・十字マーカー・ラベル・装飾） | `MarqueeAppearance` |
 | ラベルのフォントサイズ・内側余白と、その安全域（6〜48） | `MarqueeAppearance`（枠線の太さの安全域はコアの `Marquee.Limits` を参照する） |
-| 表示可否（ハンドル・サイズラベル・座標ラベル・暗転・穴あけ枠・全面暗転・内側の塗りと枠線）とその述語 | `MarqueeAppearance` |
+| 表示可否（ハンドル・サイズラベル・座標ラベル・暗転・外枠・全面暗転・内側の塗りと枠線）とその述語 | `MarqueeAppearance` |
 | 枠線の太さ（外側・内側）と補正 | `MarqueeAppearance`（補正の式はコアの `Marquee.Limits.CoerceBorderThickness` へ委譲する） |
 | 描画する層とその順序（層にある ⇔ 描く値がある） | `MarqueePresenter.ResolveLayers`（`MarqueeDrawPlan.Layers`） |
-| 枠線 4 辺の矩形（太さは辺ごとの式で導出） | `MarqueePresenter.ComputeBorderRects` |
-| 暗転領域（描画面から穴あけ矩形を除いた 4 領域） | `MarqueePresenter.ComputeOverlayRegions` |
+| 枠線 4 辺の矩形（太さは辺ごとの式で導出） | `MarqueePresenter.ComputeBorderDipRects` |
+| 暗転領域（描画面から注目矩形を除いた 4 領域） | `MarqueePresenter.ComputeOverlayDipRects` |
 | サイズラベルの文言（書式・表示スケール） | `MarqueePresenter.ResolveSizeLabelText`（書式は private の `FormatSizeLabel`） |
-| 矩形に基づくラベルの基準点（穴あけ矩形の左上から「矩形の線幅 + 1 DIP」内側） | `MarqueePresenter.ResolveLabelAnchor`（`MarqueeDrawPlan.LabelAnchor` としても公開する） |
+| 矩形に基づくラベルの基準点（注目矩形の左上から「矩形の線幅 + 1 DIP」内側） | `MarqueePresenter.ResolveLabelAnchor`（`MarqueeDrawPlan.LabelAnchor` としても公開する） |
 | カーソル座標ラベルの文言と基準点（カーソル + 8.0 DIP） | `MarqueePresenter.ResolveCoordLabelText` |
 | ラベルの体裁（背景 = 実寸 + 内側余白 × 2・クランプ・並び順） | `MarqueePresenter`（`LabelPlan` partial） |
 | 本層が単一所有する設定（外観・表示スケーリング係数）の変更ログ（変化した項目だけ） | `MarqueePresenterLogMessage` |

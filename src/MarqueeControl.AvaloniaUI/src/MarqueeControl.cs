@@ -131,7 +131,7 @@ public sealed partial class MarqueeControl : Panel
         // 外観（色・ラベル体裁・表示可否）とハイライト矩形（ホストが与える実行時状態）は提示層が単一所有する
         // （本層は公開プロパティを委譲するだけである）
         _marquee.Appearance = GetValue(AppearanceProperty);
-        _marquee.HighlightRect = GetValue(HighlightRectProperty);
+        _marquee.HighlightDomainRect = GetValue(HighlightDomainRectProperty);
         _marquee.DisplayScaleScaling = GetValue(DisplayScaleScalingProperty);
 
         // 図形（装飾・ハンドル・始点マーカー）は専用の子コントロールが描く。
@@ -181,7 +181,7 @@ public sealed partial class MarqueeControl : Panel
     static MarqueeControl()
     {
         // 設定（外観・ハイライト・環境値）の変更は再描画を要求する
-        AffectsRender<MarqueeControl>(OptionsProperty, AppearanceProperty, HighlightRectProperty, DomainToDipScalingProperty, DisplayScaleScalingProperty);
+        AffectsRender<MarqueeControl>(OptionsProperty, AppearanceProperty, HighlightDomainRectProperty, DomainToDipScalingProperty, DisplayScaleScalingProperty);
 
         // 外観（色・ラベル体裁・表示可否）を提示層へ伝搬し、保持している描画計画を破棄する（描画可否の判断は提示層が単一所有する）
         AppearanceProperty.Changed.AddClassHandler<MarqueeControl>(
@@ -192,10 +192,10 @@ public sealed partial class MarqueeControl : Panel
             });
 
         // ハイライト矩形（ホストが与える実行時状態）を提示層へ伝搬する（選択矩形より優先される）
-        HighlightRectProperty.Changed.AddClassHandler<MarqueeControl>(
+        HighlightDomainRectProperty.Changed.AddClassHandler<MarqueeControl>(
             static (c, e) =>
             {
-                c._marquee.HighlightRect = e.GetNewValue<EsRect?>();
+                c._marquee.HighlightDomainRect = e.GetNewValue<EsRect?>();
                 c.InvalidateRender();
             });
 
@@ -394,25 +394,25 @@ public sealed partial class MarqueeControl : Panel
     // ハイライト矩形（ホストが与える実行時状態）
     // ====================================================================
 
-    /// <summary><see cref="HighlightRect"/> 依存関係プロパティ（ハイライトする矩形）。</summary>
+    /// <summary><see cref="HighlightDomainRect"/> 依存関係プロパティ（ハイライトする矩形）。</summary>
     /// <remarks>
     /// <b>選択矩形ではなくホストが与える実行時状態</b>であるため、設定（<see cref="Options"/>）には含めない。<br/>
     /// <b>null が「ハイライトしない」を意味する</b>（有効フラグは持たない）。 設定値は不変（<see cref="EsRect"/> の値）であり、<br/>
     /// 同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。
     /// </remarks>
-    public static readonly StyledProperty<EsRect?> HighlightRectProperty =
-        AvaloniaProperty.Register<MarqueeControl, EsRect?>(nameof(HighlightRect));
+    public static readonly StyledProperty<EsRect?> HighlightDomainRectProperty =
+        AvaloniaProperty.Register<MarqueeControl, EsRect?>(nameof(HighlightDomainRect));
 
     /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
     /// <remarks>
     /// 選択矩形と異なり選択コントロールの操作では変化しない（ホストが与える）。<br/>
-    /// 値がある場合は選択矩形より優先して穴あけ矩形になる（優先順はコアが単一所有する）。
+    /// 値がある場合は選択矩形より優先して注目矩形になる（優先順はコアが単一所有する）。
     /// </remarks>
-    public EsRect? HighlightRect
+    public EsRect? HighlightDomainRect
     {
-        get => GetValue(HighlightRectProperty);
-        set => SetValue(HighlightRectProperty, value);
+        get => GetValue(HighlightDomainRectProperty);
+        set => SetValue(HighlightDomainRectProperty, value);
     }
 
     // ====================================================================
@@ -459,7 +459,7 @@ public sealed partial class MarqueeControl : Panel
     }
 
     /// <summary>サイズラベルのテキストを描画時に評価するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数。 null または空文字の場合は穴あけ矩形から自動生成する。</value>
+    /// <value>描画のたびに呼び出される関数。 null または空文字の場合は注目矩形から自動生成する。</value>
     /// <remarks>
     /// デリゲート（ホスト結線）のため外観（<see cref="Appearance"/>）には含めない（値の等価比較の対象外にするため）。<br/>
     /// 保持はコア（<see cref="MarqueePresenter.SizeLabelOverrideProvider"/>）が単一所有し、本 setter が再描画を要求する。<br/>
@@ -498,7 +498,7 @@ public sealed partial class MarqueeControl : Panel
 
     /// <summary>現在の選択状態のスナップショット（ポーリング不要の完全状態）。</summary>
     /// <remarks>
-    /// <see cref="MarqueeSnapshot"/> の全項目（State / SelectionRect / ActiveTarget / MousePosition /<br/>
+    /// <see cref="MarqueeSnapshot"/> の全項目（State / SelectionDomainRect / ActiveTarget / MousePosition /<br/>
     /// IsMouseDown / IsDragging / NudgeActive / HasSelection）を公開する。 ホスト（上位 AP）はイベント引数の<br/>
     /// Snapshot と同一形式で現在の状態を取得できる（状態のポーリングは本プロパティで完結）。<br/>
     /// 選択状態の判定（確定・キャンセル等の操作分岐）は <see cref="MarqueeSnapshot.HasSelection"/> を使用する。
@@ -513,7 +513,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形（ドメイン座標）。 未選択時は 0x0 の空矩形。</value>
     /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
-    public EsRect SelectionRect => _marquee.SelectionRect;
+    public EsRect SelectionDomainRect => _marquee.SelectionDomainRect;
 
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。 null の場合は等価変換。</param>
@@ -627,7 +627,7 @@ public sealed partial class MarqueeControl : Panel
     /// <param name="snapshot">通知時点の状態スナップショット。</param>
     /// <returns>選択矩形（DIP）とスナップショットを含むイベント引数。</returns>
     private static SelectionRectEventArgs ToRectArgs(MarqueeSnapshot snapshot)
-        => new(snapshot.SelectionRect.ToAvaloniaRect(), snapshot);
+        => new(snapshot.SelectionDomainRect.ToAvaloniaRect(), snapshot);
 
     /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
     /// <param name="kind">カーソル形状の種別（コア提供）。</param>

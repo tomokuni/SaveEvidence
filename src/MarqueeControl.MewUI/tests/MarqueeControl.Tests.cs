@@ -109,7 +109,7 @@ public class MarqueeControlTests
             ShowCoordLabel = false,
             OuterBorderThickness = 3.0,
         };
-        control.HighlightRect = new EsRect(1, 2, 3, 4);
+        control.HighlightDomainRect = new EsRect(1, 2, 3, 4);
 
         var options = control.Options;
         Assert.Equal(3.0, control.Appearance.OuterBorderThickness);
@@ -117,7 +117,7 @@ public class MarqueeControlTests
         Assert.Equal(14.0, options.HandleSize);
         Assert.Equal(24.0, options.MarkerLength);
         Assert.False(control.Appearance.ShowCoordLabel);
-        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightRect);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightDomainRect);
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class MarqueeControlTests
         var snapshot = control.CurrentSnapshot;
 
         Assert.Equal(MarqueeInteractionState.NoSelection, snapshot.State);
-        Assert.Equal(default, snapshot.SelectionRect);
+        Assert.Equal(default, snapshot.SelectionDomainRect);
         Assert.Equal(MarqueeHitTarget.None, snapshot.ActiveTarget);
         Assert.False(snapshot.HasSelection);
         Assert.False(snapshot.IsMouseDown);
@@ -166,7 +166,7 @@ public class MarqueeControlTests
 
         var snapshot = control.CurrentSnapshot;
         Assert.Equal(MarqueeInteractionState.Selected, snapshot.State);
-        Assert.Equal(new EsRect(10, 10, 50, 40), snapshot.SelectionRect);
+        Assert.Equal(new EsRect(10, 10, 50, 40), snapshot.SelectionDomainRect);
         Assert.True(snapshot.HasSelection);
     }
 
@@ -186,7 +186,7 @@ public class MarqueeControlTests
         Assert.NotNull(raised);
         Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Rect);
         // Snapshot はイベント引数の矩形と同一の選択矩形（ドメイン座標）を保持する
-        Assert.Equal(new EsRect(10, 10, 50, 40), raised.Snapshot.SelectionRect);
+        Assert.Equal(new EsRect(10, 10, 50, 40), raised.Snapshot.SelectionDomainRect);
         Assert.Equal(MarqueeInteractionState.Selected, raised.Snapshot.State);
     }
 

@@ -64,7 +64,7 @@ public class FadeMaskDragRectOptionsTests
     }
 
     /// <summary>装飾の設定である項目が本値に含まれないことを検証する。</summary>
-    /// <remarks>暗転マスク・穴あけ枠の外観と表示可否は、提示層の <c>MarqueeAppearance</c> が単一所有する。</remarks>
+    /// <remarks>暗転マスク・外枠の外観と表示可否は、提示層の <c>MarqueeAppearance</c> が単一所有する。</remarks>
     [Fact]
     public void 装飾_選択矩形の設定とは別の値が単一所有する()
     {

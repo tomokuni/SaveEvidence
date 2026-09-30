@@ -15,7 +15,7 @@ namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 /// （体裁の計算は描画層（<c>MarqueeAppearance</c> / <c>MarqueePresenter</c>）が単一所有する）。<br/>
 /// <br/>
 /// <b>サイズラベルとカーソル座標ラベルは同じ型を使う</b>: 差は「基準点・領域」だけであり、<br/>
-/// 位置の算出（穴あけ矩形の左上 / カーソル + オフセット）は描画層が単一所有する。<br/>
+/// 位置の算出（注目矩形の左上 / カーソル + オフセット）は描画層が単一所有する。<br/>
 /// <b>単位は DIP</b>である（描画領域・選択矩形の座標系と同じ）。
 /// </remarks>
 public readonly record struct MarqueeTextPlacement(

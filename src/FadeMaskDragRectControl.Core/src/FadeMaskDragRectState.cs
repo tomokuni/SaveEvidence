@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 /// </remarks>
 internal readonly record struct FadeMaskDragRectState(bool UsesSelection)
 {
-    /// <summary>全面暗転（穴あけなし）を表示するかどうかを取得する。</summary>
+    /// <summary>全面暗転（注目なし）を表示するかどうかを取得する。</summary>
     /// <value>選択矩形を使うモードでは true（切り出し・領域選択は全面を暗転して穴を開ける）。</value>
     /// <remarks>選択矩形を使わないモード（ScreenSelect / WindowSelect）はハイライトのみを表示するため全面暗転しない。</remarks>
     public bool ShowFullOverlay => UsesSelection;

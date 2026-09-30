@@ -143,7 +143,7 @@ internal sealed class CaptureOverlay
         => CaptureTypeTraits.ResolveRect(
             _type,
             _highlight.DomainRect,
-            _selector.HasSelection ? _selector.SelectionRect : null);
+            _selector.HasSelection ? _selector.SelectionDomainRect : null);
 
     /// <summary>撮影セッションを実行し、確定した領域を返す。</summary>
     /// <param name="owner">オーナーウィンドウ（撮影中は画面外へ退避し、終了後に戻す）。</param>
@@ -537,7 +537,7 @@ internal sealed class CaptureOverlay
     /// 選択矩形（画像ローカル座標）を確定の入口（画面物理座標）へ揃えて渡す（記録と解決は入口が担う）。
     /// </remarks>
     private void OnSelectorConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
-        => ConfirmScreen(CaptureClipMath.ToScreenRect(e.SelectionRect, _screenBounds.TopLeft));
+        => ConfirmScreen(CaptureClipMath.ToScreenRect(e.SelectionDomainRect, _screenBounds.TopLeft));
 
     /// <summary>現在のオーバーレイウィンドウを閉じる。</summary>
     /// <remarks>
@@ -561,7 +561,7 @@ internal sealed class CaptureOverlay
         var highlight = _highlight.Update(_type, found, _screenBounds.TopLeft);
 
         // 未検出は null で表す（null が「ハイライトしない」を意味する）
-        _selector.LogicalHighlightRect = highlight.DomainRect;
+        _selector.HighlightDomainRect = highlight.DomainRect;
 
         // 情報ラベル（ウィンドウタイトル）の文言は描画時に評価されるため、表示名が変わった場合だけ再描画を要求する
         if (highlight.TitleChanged)

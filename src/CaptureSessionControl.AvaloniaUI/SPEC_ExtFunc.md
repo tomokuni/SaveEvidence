@@ -347,7 +347,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 4. カーソル上書き抑止（Crop 中の十字カーソル維持）
 5. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポートへ転送する（Ctrl+ホイール = ズーム / 通常ホイール = パン）
 6. **Crop 中の設定変更（`AppearanceSettings` setter）**: `CropSession.ApplySettings` で外観・クリップ設定を再適用（選択状態・ルーペ位置は維持）。 キャプチャセッションはモーダル全画面のため対象外
-7. **矩形外クリック・選択キャンセル**: 複合コントロールが `SelectionStarted` / `SelectionCancelled` を購読し、Marquee の選択状態（`Options.LogicalSelectionRect` / `Options.HasSelection`）をクリアして全面暗転（穴あけなし）に戻す（配線は複合コントロール内で完結）
+7. **矩形外クリック・選択キャンセル**: 複合コントロールが `SelectionStarted` / `SelectionCancelled` を購読し、Marquee の選択状態（`Options.LogicalSelectionRect` / `Options.HasSelection`）をクリアして全面暗転（注目なし）に戻す（配線は複合コントロール内で完結）
 8. 確定（`ConfirmRequested` → `CropBoundsMath.ComputeCropBounds`）→ 切り出し範囲をコア型 `EsRectInt` で返却
    - 切り出し範囲は**現在の画像**（確定時点の `CropViewControl.Source`）の範囲へクランプする（開始時のサイズで固定しない。 実行中に画像が差し替わっても差し替え後の画像で切り出す）
    - キャンセル（`CancelRequested` / `Deactivated`）→ 0x0 の空矩形

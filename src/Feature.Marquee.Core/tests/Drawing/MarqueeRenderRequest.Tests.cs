@@ -9,7 +9,7 @@ namespace EsUtil.Feature.Marquee.Core.Tests.Drawing;
 
 /// <summary><see cref="MarqueeRenderRequest"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
-/// 描画入力の組み立てと、描画入力から導出する値（座標変換ポートの決定・論理座標から DIP への変換・穴あけ矩形の決定）を検証する。<br/>
+/// 描画入力の組み立てと、描画入力から導出する値（座標変換ポートの決定・論理座標から DIP への変換・注目矩形の決定）を検証する。<br/>
 /// UI 初期化に依存せず <c>[Fact]</c> で並列実行する。
 /// </remarks>
 public class MarqueeRenderRequestTests
@@ -35,7 +35,7 @@ public class MarqueeRenderRequestTests
             port,
             scaling)
         {
-            HighlightRect = highlight,
+            HighlightDomainRect = highlight,
         };
 
     /// <summary>組み立てがすべての値をそのまま保持することを検証する。</summary>
@@ -55,17 +55,17 @@ public class MarqueeRenderRequestTests
             new EsPoint(70, 80),
             port,
             domainToDipScaling: 1.25,
-            highlightRect: highlight);
+            highlightDomainRect: highlight);
 
         Assert.Equal(options, request.Options);
         Assert.Equal(new EsSize(640, 480), request.ClientSize);
-        Assert.Equal(new EsRect(10, 20, 30, 40), request.SelectionRect);
+        Assert.Equal(new EsRect(10, 20, 30, 40), request.SelectionDomainRect);
         Assert.True(request.MarkerActive);
         Assert.Equal(new EsPoint(50, 60), request.MarkerPosition);
         Assert.Equal(new EsPoint(70, 80), request.MousePosition);
         Assert.Same(port, request.Port);
         Assert.Equal(1.25, request.DomainToDipScaling);
-        Assert.Equal(highlight, request.HighlightRect);
+        Assert.Equal(highlight, request.HighlightDomainRect);
     }
 
     /// <summary>省略したハイライト矩形が null になることを検証する。</summary>
@@ -75,22 +75,22 @@ public class MarqueeRenderRequestTests
         var request = MarqueeRenderRequest.Create(
             MarqueeOptions.Default,
             new EsSize(100, 100),
-            selectionRect: null,
+            selectionDomainRect: null,
             markerActive: false,
             new EsPoint(0, 0),
             new EsPoint(0, 0),
             port: null,
             domainToDipScaling: 1.0);
 
-        Assert.Null(request.HighlightRect);
-        Assert.Null(request.SelectionRect);
+        Assert.Null(request.HighlightDomainRect);
+        Assert.Null(request.SelectionDomainRect);
     }
 
-    /// <summary>等価変換では終点に +1 した閉区間の矩形になることを検証する。</summary>
+    /// <summary>閉区間の矩形は終点に +1 してから DIP 変換されることを検証する。</summary>
     [Fact]
-    public void ToDipRect_等価変換で終点に1を加算した閉区間になる()
+    public void ToDipRect_閉区間の矩形は終点に1を加算する()
     {
-        var logical = new EsRect(10, 20, 30, 40);
+        var logical = new EsRect(10, 20, 30, 40, EsRectInterval.Closed);
 
         var result = CreateRequest().ToDipRect(logical, CoordTransform.Identity);
 
@@ -101,7 +101,7 @@ public class MarqueeRenderRequestTests
     [Fact]
     public void ToDipRect_スケール2倍のポートで座標が拡大される()
     {
-        var logical = new EsRect(10, 20, 30, 40);
+        var logical = new EsRect(10, 20, 30, 40, EsRectInterval.Closed);
 
         var result = CreateRequest().ToDipRect(logical, CoordTransform.Scale(2.0));
 
@@ -112,35 +112,34 @@ public class MarqueeRenderRequestTests
         Assert.Equal(82, result.Height);
     }
 
-    /// <summary>閉区間を無効にすると終点を加算しないことを検証する。</summary>
+    /// <summary>半開区間の矩形は終点を加算しないことを検証する（ハイライト矩形・検出結果）。</summary>
     [Fact]
-    public void ToDipRect_closedIntervalがfalseなら終点を加算しない()
+    public void ToDipRect_半開区間の矩形は終点を加算しない()
     {
         var logical = new EsRect(10, 20, 30, 40);
 
-        var result = CreateRequest().ToDipRect(logical, CoordTransform.Identity, closedInterval: false);
+        var result = CreateRequest().ToDipRect(logical, CoordTransform.Identity);
 
         Assert.Equal(new EsRect(10, 20, 30, 40), result);
     }
 
-    /// <summary>穴あけ矩形が設定と状態から導出されることを検証する（選択矩形は閉区間）。</summary>
+    /// <summary>注目矩形が設定と状態から導出されることを検証する（選ばれた矩形をそのまま返す）。</summary>
     [Fact]
-    public void Hole_選択矩形を閉区間として返す()
+    public void Focus_選択矩形をそのまま返す()
     {
-        var selection = new EsRect(10, 20, 30, 40);
+        var selection = new EsRect(10, 20, 30, 40, EsRectInterval.Closed);
 
-        var hole = CreateRequest(selection: selection).Hole;
+        var focus = CreateRequest(selection: selection).Focus;
 
-        Assert.NotNull(hole);
-        Assert.Equal(selection, hole.Value.Rect);
-        Assert.True(hole.Value.ClosedInterval);
+        Assert.Equal(selection, focus);
+        Assert.True(focus!.Value.IsClosedInterval);
     }
 
-    /// <summary>どちらも無ければ穴あけ矩形が null になることを検証する。</summary>
+    /// <summary>どちらも無ければ注目矩形が null になることを検証する。</summary>
     [Fact]
-    public void Hole_選択もハイライトも無ければnullになる()
+    public void Focus_選択もハイライトも無ければnullになる()
     {
-        Assert.Null(CreateRequest().Hole);
+        Assert.Null(CreateRequest().Focus);
     }
 
     /// <summary>DIP 矩形がドメイン座標の矩形へ逆換算されることを検証する。</summary>
@@ -170,70 +169,68 @@ public class MarqueeRenderRequestTests
 
     /// <summary>ハイライト矩形があればハイライト矩形を優先することを検証する。</summary>
     [Fact]
-    public void ResolveHoleRect_ハイライトがあればハイライト矩形を優先する()
+    public void ResolveFocusRect_ハイライトがあればハイライト矩形を優先する()
     {
         var highlight = new EsRect(1, 2, 3, 4);
-        var selection = new EsRect(10, 20, 30, 40);
+        var selection = new EsRect(10, 20, 30, 40, EsRectInterval.Closed);
 
-        var result = MarqueeRenderRequest.ResolveHoleRect(highlight, selection);
+        var result = MarqueeRenderRequest.ResolveFocusRect(highlight, selection);
 
-        Assert.NotNull(result);
-        Assert.Equal(highlight, result.Value.Rect);
-        // ハイライト矩形はホストが閉区間として与えるため、終点を +1 しない
-        Assert.False(result.Value.ClosedInterval);
+        Assert.Equal(highlight, result);
+        // ハイライト矩形は検出結果（全ピクセルを含む）のため、終点を +1 しない半開区間を引き継ぐ
+        Assert.False(result!.Value.IsClosedInterval);
     }
 
-    /// <summary>ハイライトが無く選択だけがある場合は選択矩形を閉区間として返すことを検証する。</summary>
+    /// <summary>ハイライトが無く選択だけがある場合は選択矩形を返すことを検証する。</summary>
     [Fact]
-    public void ResolveHoleRect_ハイライトが無ければ選択矩形を返す()
+    public void ResolveFocusRect_ハイライトが無ければ選択矩形を返す()
     {
-        var selection = new EsRect(10, 20, 30, 40);
+        var selection = new EsRect(10, 20, 30, 40, EsRectInterval.Closed);
 
-        var result = MarqueeRenderRequest.ResolveHoleRect(null, selection);
+        var result = MarqueeRenderRequest.ResolveFocusRect(null, selection);
 
-        Assert.NotNull(result);
-        Assert.Equal(selection, result.Value.Rect);
-        // 選択矩形は閉区間（終点のピクセルも含む）として扱う
-        Assert.True(result.Value.ClosedInterval);
+        Assert.Equal(selection, result);
+        // ドラッグの選択矩形は閉区間（終点のピクセルも含む）を引き継ぐ
+        Assert.True(result!.Value.IsClosedInterval);
     }
 
     /// <summary>どちらも null なら null を返すことを検証する。</summary>
     [Fact]
-    public void ResolveHoleRect_両方nullならnullを返す()
+    public void ResolveFocusRect_両方nullならnullを返す()
     {
-        var result = MarqueeRenderRequest.ResolveHoleRect(null, null);
+        var result = MarqueeRenderRequest.ResolveFocusRect(null, null);
 
         Assert.Null(result);
     }
 
     /// <summary>ハイライト矩形が選ばれた場合は終点を加算せずに DIP 変換されることを検証する。</summary>
     [Fact]
-    public void ResolveHoleRectDip_ハイライト矩形は終点を加算せずDIP変換する()
+    public void ResolveFocusDipRect_ハイライト矩形は終点を加算せずDIP変換する()
     {
         var highlight = new EsRect(1, 2, 3, 4);
-        var request = CreateRequest(highlight: highlight, selection: new EsRect(10, 20, 30, 40));
+        var request = CreateRequest(highlight: highlight, selection: new EsRect(10, 20, 30, 40, EsRectInterval.Closed));
 
-        var result = request.ResolveHoleRectDip(CoordTransform.Identity);
+        var result = request.ResolveFocusDipRect(CoordTransform.Identity);
 
         Assert.Equal(new EsRect(1, 2, 3, 4), result);
     }
 
     /// <summary>選択矩形が選ばれた場合は終点を加算して DIP 変換されることを検証する。</summary>
     [Fact]
-    public void ResolveHoleRectDip_選択矩形は終点を加算してDIP変換する()
+    public void ResolveFocusDipRect_選択矩形は終点を加算してDIP変換する()
     {
-        var request = CreateRequest(selection: new EsRect(10, 20, 30, 40));
+        var request = CreateRequest(selection: new EsRect(10, 20, 30, 40, EsRectInterval.Closed));
 
-        var result = request.ResolveHoleRectDip(CoordTransform.Identity);
+        var result = request.ResolveFocusDipRect(CoordTransform.Identity);
 
         Assert.Equal(new EsRect(10, 20, 31, 41), result);
     }
 
     /// <summary>どちらも null なら null を返すことを検証する。</summary>
     [Fact]
-    public void ResolveHoleRectDip_両方nullならnullを返す()
+    public void ResolveFocusDipRect_両方nullならnullを返す()
     {
-        var result = CreateRequest().ResolveHoleRectDip(CoordTransform.Identity);
+        var result = CreateRequest().ResolveFocusDipRect(CoordTransform.Identity);
 
         Assert.Null(result);
     }

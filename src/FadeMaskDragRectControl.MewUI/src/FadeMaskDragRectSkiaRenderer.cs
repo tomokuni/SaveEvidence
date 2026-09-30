@@ -16,7 +16,7 @@ internal static class FadeMaskDragRectSkiaRenderer
 {
     /// <summary>選択矩形の 4 辺を 2 色の破線でキャンバスへ描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（ピクセル等倍で描画できる状態であること）。</param>
-    /// <param name="selectionRect">選択矩形（ドメイン座標系・半開区間）。</param>
+    /// <param name="selectionDomainRect">選択矩形（ドメイン座標系・半開区間）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
     /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。</param>
@@ -24,7 +24,7 @@ internal static class FadeMaskDragRectSkiaRenderer
     /// <param name="colorB">破線の色 B（色 A と交互に使用する）。</param>
     public static void DrawSelectionRect(
         SKCanvas canvas,
-        EsRect selectionRect,
+        EsRect selectionDomainRect,
         EsPoint captureTopLeft,
         double scale,
         int pixelSize,
@@ -35,7 +35,7 @@ internal static class FadeMaskDragRectSkiaRenderer
 
         using var paint = new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill };
 
-        foreach (var dash in FadeMaskDragRectOverlay.EnumerateDashes(selectionRect, captureTopLeft, scale, pixelSize))
+        foreach (var dash in FadeMaskDragRectOverlay.EnumerateDashes(selectionDomainRect, captureTopLeft, scale, pixelSize))
         {
             paint.Color = (dash.IsColorA ? colorA : colorB).ToSKColor();
             canvas.DrawRect(new SKRect(dash.X, dash.Y, dash.X + dash.Width, dash.Y + dash.Height), paint);

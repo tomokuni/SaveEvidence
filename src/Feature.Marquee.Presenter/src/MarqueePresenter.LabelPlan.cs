@@ -89,13 +89,13 @@ public partial class MarqueePresenter
         var height = textSize.Height + padding * 2;
 
         // 基準点は文字の左上である（水平・垂直の揃えは持たない）
-        var bounds = new EsRect(
+        var dipRect = new EsRect(
             placement.ClampArea.ClampOffset(placement.Point.X, width, EsAxis.X),
             placement.ClampArea.ClampOffset(placement.Point.Y, height, EsAxis.Y),
             width,
             height);
 
         return new MarqueeLabelPlacement(
-            bounds, padding, padding, placement.Text, fontSize, textColor, backgroundColor);
+            dipRect, padding, padding, placement.Text, fontSize, textColor, backgroundColor);
     }
 }

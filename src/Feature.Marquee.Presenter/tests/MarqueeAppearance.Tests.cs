@@ -36,11 +36,11 @@ public class MarqueeAppearanceTests
     }
 
     [Fact]
-    public void 既定の穴あけ枠はハンドル枠と同じ色である()
+    public void 既定の外枠はハンドル枠と同じ色である()
     {
         var paint = new MarqueeAppearance();
 
-        // 穴あけ枠とハンドル枠は同じ矩形に重なるため、既定値を共有する
+        // 外枠とハンドル枠は同じ矩形に重なるため、既定値を共有する
         Assert.Equal(MarqueeAppearance.DefaultBorderColor, paint.OuterBorderColor);
         Assert.Equal(paint.HandleBorderColor, paint.OuterBorderColor);
     }
@@ -102,21 +102,21 @@ public class MarqueeAppearanceTests
         Assert.Equal(new MarqueeAppearance(), MarqueeAppearance.Default);
     }
 
-    /// <summary>サイズラベルの表示可否が設定値と穴あけ矩形の有無の両方で決まることを検証する。</summary>
+    /// <summary>サイズラベルの表示可否が設定値と注目矩形の有無の両方で決まることを検証する。</summary>
     /// <param name="showSizeLabel">表示の設定値。</param>
-    /// <param name="hasHoleRect">穴あけ矩形があるかどうか。</param>
+    /// <param name="hasFocusRect">注目矩形があるかどうか。</param>
     /// <param name="expected">描画するかどうか。</param>
-    /// <remarks>ラベルの基準点は穴あけ矩形の左上であり、文言も矩形の寸法から作るため、矩形が無いときは描画しない。</remarks>
+    /// <remarks>ラベルの基準点は注目矩形の左上であり、文言も矩形の寸法から作るため、矩形が無いときは描画しない。</remarks>
     [Theory]
     [InlineData(true, true, true)]
     [InlineData(true, false, false)]
     [InlineData(false, true, false)]
     [InlineData(false, false, false)]
-    public void ShouldShowSizeLabel_設定値と矩形の有無で決まる(bool showSizeLabel, bool hasHoleRect, bool expected)
+    public void ShouldShowSizeLabel_設定値と矩形の有無で決まる(bool showSizeLabel, bool hasFocusRect, bool expected)
     {
         var appearance = MarqueeAppearance.Default with { ShowSizeLabel = showSizeLabel };
 
-        Assert.Equal(expected, appearance.ShouldShowSizeLabel(hasHoleRect));
+        Assert.Equal(expected, appearance.ShouldShowSizeLabel(hasFocusRect));
     }
 
     /// <summary>カーソル座標ラベルの表示可否が設定値で決まることを検証する。</summary>
@@ -133,20 +133,20 @@ public class MarqueeAppearanceTests
         Assert.Equal(expected, appearance.ShouldShowCoordLabel());
     }
 
-    /// <summary>暗転オーバーレイの描画可否が穴あけ矩形の有無と全面暗転の設定で決まることを検証する。</summary>
+    /// <summary>暗転オーバーレイの描画可否が注目矩形の有無と全面暗転の設定で決まることを検証する。</summary>
     /// <param name="showFullOverlay">全面暗転の設定値。</param>
-    /// <param name="hasHoleRect">穴あけ矩形があるかどうか。</param>
+    /// <param name="hasFocusRect">注目矩形があるかどうか。</param>
     /// <param name="expected">描画するかどうか。</param>
     [Theory]
     [InlineData(false, true, true)]
     [InlineData(false, false, false)]
     [InlineData(true, true, true)]
     [InlineData(true, false, true)]
-    public void ShouldDrawOverlay_矩形の有無と全面暗転で決まる(bool showFullOverlay, bool hasHoleRect, bool expected)
+    public void ShouldDrawOverlay_矩形の有無と全面暗転で決まる(bool showFullOverlay, bool hasFocusRect, bool expected)
     {
         var appearance = MarqueeAppearance.Default with { ShowFullOverlay = showFullOverlay };
 
-        Assert.Equal(expected, appearance.ShouldDrawOverlay(hasHoleRect));
+        Assert.Equal(expected, appearance.ShouldDrawOverlay(hasFocusRect));
     }
 
     /// <summary>既定の枠線の太さが両 UI の期待値と一致することを検証する。</summary>

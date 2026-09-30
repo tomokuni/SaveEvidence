@@ -8,7 +8,7 @@
 - 座標は `EsPoint` / `EsRect` / `EsSize` / `EsKey`（`EsUtil.Platform.Core`）で扱います。
 - カーソル操作は `ICursorService` 抽象にのみ依存します（`null` の場合は何もしません）。
 - **本コアが返すのは幾何だけです**。 文言・表示可否・描画順・色は描画層（本コアを参照する上位の層）が単一所有します。 **描画と実寸測定**は利用者（UI 実装）が行います（実寸は描画 API でしか測れないため）。
-- **装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。 装飾は選択矩形単体の概念ではなく、組み込み先の表示であるため、描画層が単一所有します。
+- **装飾（暗転マスク・外枠・内側の塗り）の概念を持ちません**。 装飾は選択矩形単体の概念ではなく、組み込み先の表示であるため、描画層が単一所有します。
 
 ## 2. 公開 API
 
@@ -31,9 +31,8 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `MarqueeGeometry` | record struct | 1 フレーム分の幾何（`ClientSize` / `HoleRect` / `HoleDomainRect` / `Handles` / `Marker` / `MousePosition` ＋ `SurfaceBounds`）。 **コアが責任を持つ値の全量** |
+| `MarqueeGeometry` | record struct | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MousePosition` ＋ `SurfaceDipRect`）。 **コアが責任を持つ値の全量** |
 | `MarqueeRenderRequest` | record struct | 1 フレーム分の幾何を解決する入力（設定・状態と、描画時に決まる値）。 `Marquee.CreateRequest` が生成し、`Marquee.ResolveGeometry` へ渡す。 値の組は `MarqueeRenderRequest.Create` が 1 箇所に閉じる。 **`Create` を public にする理由**: ファサード（`Marquee.CreateRequest`）と独自 UI が入力を組み立てる唯一の入口である（描画先の領域を知るのは呼び出し側だけである） |
-| `MarqueeHoleRect` | record struct | 穴あけ矩形と**閉区間かどうか**の組（選択矩形は閉区間（終点 +1）、ハイライト矩形はホストが全ピクセルを含む閉区間として与えるため +1 しない） |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの幾何（位置はコアが解決済み） |
 
 ### `EsUtil.Feature.Marquee.Core.Interaction`
@@ -61,8 +60,8 @@
 | `Log` | property | ロガー。 null は `NullLogger` へ吸収される |
 | `Options` | property | 設定。 設定すると対話パラメータを反映し、**変化した項目をログ出力**し、境界外選択の禁止の変化時のみ即時クリップを行う |
 | `DomainToDipScaling` | property | 座標変換ポート未指定時に適用する倍率。 既定は `Limits.DomainToDipScalingDefault`（1.0）。 設定時は 0.1〜8.0 へ補正される |
-| `HighlightRect` | property | ハイライト矩形（ドメイン座標）。 null が「ハイライトしない」。 **変更は有無の変化だけをログ出力する**（操作中に高頻度で変化しうるため） |
-| `HasSelection` / `SelectionRect` | property | 選択の有無と選択矩形（ドメイン座標） |
+| `HighlightDomainRect` | property | ハイライト矩形（ドメイン座標）。 null が「ハイライトしない」。 **変更は有無の変化だけをログ出力する**（操作中に高頻度で変化しうるため） |
+| `HasSelection` / `SelectionDomainRect` | property | 選択の有無と選択矩形（ドメイン座標） |
 | `CreateSnapshot(EsPoint?)` | method | 状態スナップショットの生成 |
 | `SetCoordTransform(ICoordTransform?)` | method | 座標変換ポートの設定（null は等価変換） |
 | `ToDomain(EsPoint)` / `ToDip(EsPoint)` | method | 座標変換 |
@@ -90,7 +89,7 @@
 
 **本型は表示可否を持ちません**。 ハンドル・サイズラベル・カーソル座標ラベル・装飾を描くかどうかは、**描画の外観（描画層が単一所有する）の明示フラグ**が単一所有します（述語は `ShouldShowSizeLabel(bool)` / `ShouldShowCoordLabel()` / `ShouldDrawOverlay(bool)`）。
 
-**本型は色もラベルのフォントサイズも持ちません**。 これらは描画にだけ必要な設定であるため、描画層の外観が単一所有します（部分変更の基点は外観の `Default`。 ハンドル枠と穴あけ枠の既定は外観が単一所有する共通の既定枠線色 = `#FFA9A9A9`、フォントサイズはサイズラベル 14.0 / カーソル座標ラベル 12.0、枠線の太さは外枠 / 内枠（既定 2.0）、内側余白は `LabelPadding`（既定 4.0））。 ラベルの文字色・背景色の既定値（白 / 黒 60%）も外観が単一所有するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
+**本型は色もラベルのフォントサイズも持ちません**。 これらは描画にだけ必要な設定であるため、描画層の外観が単一所有します（部分変更の基点は外観の `Default`。 ハンドル枠と外枠の既定は外観が単一所有する共通の既定枠線色 = `#FFA9A9A9`、フォントサイズはサイズラベル 14.0 / カーソル座標ラベル 12.0、枠線の太さは外枠 / 内枠（既定 2.0）、内側余白は `LabelPadding`（既定 4.0））。 ラベルの文字色・背景色の既定値（白 / 黒 60%）も外観が単一所有するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
 
 ### `Marquee.Limits` のメンバー
 
@@ -142,14 +141,14 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| `ClientSize` / `SurfaceBounds` | 描画領域のサイズ（DIP）と、原点（0, 0）からの描画面全体 |
-| `HoleRect` | 穴あけ矩形（DIP。 選択もハイライトも無い場合は null）。 選択は閉区間（終点 +1）、ハイライトは +0 |
-| `HoleDomainRect` | 穴あけ矩形（ドメイン座標）。 ホストが矩形ごとの表示スケールを解決するために使う |
-| `Handles` | ドラッグハンドルの幾何（`Rects` 8 方向・`BorderThickness`）。 選択が無い場合は null |
+| `ClientSize` / `SurfaceDipRect` | 描画領域のサイズ（DIP）と、原点（0, 0）からの描画面全体 |
+| `FocusDipRect` | 注目矩形（DIP。 選択もハイライトも無い場合は null）。 終点の `+1` は選択した矩形の `Interval` が決める（ドラッグの選択 = 閉区間、ハイライト矩形 = 半開区間）。 暗転マスクを抜く領域である |
+| `FocusDomainRect` | 注目矩形（ドメイン座標。 選択した矩形をそのまま渡すため `Interval` も保持する）。 ホストが矩形ごとの表示スケールを解決するために使う |
+| `Handles` | ドラッグハンドルの幾何（`HandleDipRects` 8 方向・`BorderThickness`）。 選択が無い場合は null |
 | `Marker` | 始点マーカーの幾何（`Center` / `Thickness` / `Size`＝半幅）。 nudge 中でない場合は null |
 | `MousePosition` | 直近のマウス位置（ドメイン座標）。 カーソル座標ラベルの基準 |
 
-**幾何は「描く値の無い項目は null / 空」で返します**（穴あけ矩形なし・選択なし・nudge 中でない）。 **表示可否（ハンドル・ラベルを描くかどうか）は本コアの責務ではありません**（描画層の外観が単一所有します）。
+**幾何は「描く値の無い項目は null / 空」で返します**（注目矩形なし・選択なし・nudge 中でない）。 **表示可否（ハンドル・ラベルを描くかどうか）は本コアの責務ではありません**（描画層の外観が単一所有します）。
 
 ### 操作の受理条件
 
@@ -177,7 +176,7 @@ marquee.Move(new EsPoint(400, 300));
 var handled = marquee.KeyDown(EsKey.Right, cursorPosition: null);   // nudge・Escape・Enter
 marquee.Release(new EsPoint(400, 300));
 
-// 1 フレーム分の幾何（描画領域のサイズを渡す。穴あけ矩形・ハンドル・マーカー）
+// 1 フレーム分の幾何（描画領域のサイズを渡す。注目矩形・ハンドル・マーカー）
 var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(800, 600)));
 ```
 
@@ -191,7 +190,7 @@ var plan = ResolveDrawPlanByHost(new EsSize(800, 600), MeasureText);
 | 座標系 | 用途 |
 | --- | --- |
 | ドメイン座標 | 選択矩形・入力座標・通知座標・ハイライト矩形。 利用者が座標変換ポートで定義する |
-| ローカル DIP | 幾何の座標（`HoleRect` / `Handles` / `Marker`）。 `ICoordTransform.Inverse` で得る |
+| ローカル DIP | 幾何の座標（`FocusDipRect` / `Handles` / `Marker`）。 `ICoordTransform.Inverse` で得る |
 
 - 選択矩形は**閉区間**（始点・終点とも含む）として扱い、DIP への変換時に終点へ +1 します。 **ハイライト矩形はホストが全ピクセルを含む閉区間として与えるため +1 しません**（優先順と閉区間の規則は `MarqueeRenderRequest` が単一所有します）。
 - ドメイン境界（`ICoordTransform.Bounds`）は `ClampToDomainBounds` が有効な場合のクリップ範囲です。
@@ -202,7 +201,7 @@ var plan = ResolveDrawPlanByHost(new EsSize(800, 600), MeasureText);
 - ホイール操作（Ctrl+ズーム / スクロール）は本コアに含みません（組み込み先が存在して初めて意味を持つ処理であるため、UI 層（ホスト）がビューポートへ転送します）。
 - ビューポートの変化の通知は本コアに含みません（同じ理由で UI 層（ホスト）が持ち、変化を検知したら `RefreshOverlay()` を呼びます）。
 - 描画 API は提供しません。 描画計画（外観・文言・層の順序）は描画層（本コアを参照する上位の層）が単一所有し、描画は各 UI が行います。
-- **装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。 装飾は選択矩形単体の概念ではなく、組み込み先の表示であるため、描画層が単一所有します（本コアは穴あけ矩形という幾何だけを返します）。
+- **装飾（暗転マスク・外枠・内側の塗り）の概念を持ちません**。 装飾は選択矩形単体の概念ではなく、組み込み先の表示であるため、描画層が単一所有します（本コアは注目矩形という幾何だけを返します）。
 - 色（ハンドル・始点マーカー・ラベル・装飾）は本コアに含みません（描画にだけ必要な設定であるため、描画層の外観が単一所有します）。
 - 文言（サイズラベルの書式・カーソル座標ラベルの文字列）は本コアに含みません（描画層が単一所有します。 本コアはマウス位置という素材だけを返します）。
 - 操作ラベル・情報ラベル（アプリ固有の付加情報）は本コアが関知しません。 ホストが文言の生成と描画を行います。

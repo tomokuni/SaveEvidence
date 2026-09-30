@@ -38,7 +38,7 @@ UI 実装
 ```
 
 - 上位層は下位層のみを参照します（逆参照なし）。
-- 本コアは UI フレームワークを参照しません。 **描画 API も色も持たず、返すのは幾何だけ**です。 装飾（暗転マスク・穴あけ枠・内側の塗り）は**本コアの概念ではありません**（選択矩形単体の概念ではなく、組み込み先の表示であるため描画層が単一所有します）。
+- 本コアは UI フレームワークを参照しません。 **描画 API も色も持たず、返すのは幾何だけ**です。 装飾（暗転マスク・外枠・内側の塗り）は**本コアの概念ではありません**（選択矩形単体の概念ではなく、組み込み先の表示であるため描画層が単一所有します）。
 - **描画計画（外観・文言・層の順序・装飾の矩形）は描画層が単一所有**し、描画層は本コアの幾何（`MarqueeGeometry`）だけを参照します（幾何計算は持ちません。 ハンドル位置の計算は本コアが済ませています）。
 
 ### 3.2 データフロー（入力 → 描画）
@@ -62,7 +62,7 @@ sequenceDiagram
     UI->>H: 公開イベント
     UI->>P: ResolveDrawPlan(描画領域のサイズ, 実寸測定)
     P->>M: CreateRequest(描画領域のサイズ) → ResolveGeometry(request)
-    M-->>P: MarqueeGeometry（穴あけ矩形・ハンドル・マーカー）
+    M-->>P: MarqueeGeometry（注目矩形・ハンドル・マーカー）
     P-->>UI: MarqueeDrawPlan（層の順序・装飾の矩形・ラベル配置・外観）
     UI->>UI: Layers の順に図形を描き、ラベルは要素として配置
     UI->>H: Rendered（描画計画を渡す）
@@ -96,11 +96,10 @@ stateDiagram-v2
 | `src/Marquee.cs`（ルート） | `Marquee` | public | ファサード。 設定・環境値の保持、入力の通知、外部操作、幾何の解決、効果の適用 |
 | `src/Interaction/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態遷移の判断。 通知と効果を返す |
 | `src/Interaction/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。 **状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
-| `src/Marquee.Geometry.cs`（ルート） | `Marquee`（**partial**） | internal | 幾何の**内部手順**（穴あけ矩形の DIP 変換・ハンドル位置・始点マーカー。 穴あけ矩形とポートは 1 回だけ解決する）。 公開の入口 `ResolveGeometry` は `Marquee.cs` が持つ |
-| `src/Drawing/MarqueeGeometry.cs` | `MarqueeGeometry` | public | 1 フレーム分の幾何（`ClientSize` / `HoleRect` / `HoleDomainRect` / `Handles` / `Marker` / `MousePosition` ＋ `SurfaceBounds`）。 **コアが責任を持つ値の全量** |
-| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | 幾何解決の入力（設定・状態・描画時に決まる値）。 `MarqueeRenderRequest.Create` が値の組を 1 箇所に閉じ、`Marquee.CreateRequest` が状態を写して生成する。 **本値から導出する値（座標変換ポートの決定・穴あけ矩形の決定・DIP 変換）は本値のインスタンスメンバーが単一所有する**（`ResolvedPort` / `Hole` / `ResolveHoleRectDip` / `ToDipRect` / `ToDomainRect`） |
+| `src/Marquee.Geometry.cs`（ルート） | `Marquee`（**partial**） | internal | 幾何の**内部手順**（注目矩形の DIP 変換・ハンドル位置・始点マーカー。 注目矩形とポートは 1 回だけ解決する）。 公開の入口 `ResolveGeometry` は `Marquee.cs` が持つ |
+| `src/Drawing/MarqueeGeometry.cs` | `MarqueeGeometry` | public | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MousePosition` ＋ `SurfaceDipRect`）。 **コアが責任を持つ値の全量** |
+| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | 幾何解決の入力（設定・状態・描画時に決まる値）。 `MarqueeRenderRequest.Create` が値の組を 1 箇所に閉じ、`Marquee.CreateRequest` が状態を写して生成する。 **本値から導出する値（座標変換ポートの決定・注目矩形の決定・DIP 変換）は本値のインスタンスメンバーが単一所有する**（`ResolvedPort` / `Focus` / `ResolveFocusDipRect` / `ToDipRect` / `ToDomainRect`） |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。 既定値を単一所有し、生成時に安全域（`Marquee.Limits`）へ補正する（寸法・対話パラメータのみ。 体裁と表示可否は描画層の外観が単一所有する） |
-| `src/Drawing/MarqueeHoleRect.cs` | `MarqueeHoleRect` | public | 穴あけ矩形と閉区間の指定（どちらの矩形を優先するかと +1 の判断を 1 値で持つ） |
 | `src/Drawing/MarqueeHandles.cs` | `MarqueeHandles` | public | ドラッグハンドルの幾何（8 方向の矩形・枠線の太さ） |
 | `src/Drawing/MarqueeMarker.cs` | `MarqueeMarker` | public | 始点マーカー（十字線）の幾何（中心・太さ・半幅） |
 | `src/Interaction/MarqueeSnapshot.cs` | `MarqueeSnapshot` | public | 状態のスナップショット（`readonly record struct`。 値型のため通知でヒープを確保しない） |
@@ -124,8 +123,8 @@ stateDiagram-v2
 | 選択の状態遷移の判断 | `MarqueeSession` |
 | 選択矩形・ドラッグ・nudge の状態（遷移は操作メソッドでのみ変更できる） | `MarqueeState` |
 | 純粋な幾何計算（正規化・ハンドル位置・境界クリップ・ドラッグ変形） | `MarqueeSelection`（値の振る舞い） |
-| 穴あけ矩形の優先順（ハイライト → 選択） | `MarqueeRenderRequest.ResolveHoleRect`（静的メソッドが規則を持ち、`Hole` が呼ぶ） |
-| 選択矩形の閉区間（DIP 変換時の終点 +1）とハイライト矩形の +0 | `MarqueeRenderRequest.ToDipRect` / `ResolveHoleRect`（規則を導出する `MarqueeHoleRect` が指定を持つ） |
+| 注目矩形の優先順（ハイライト → 選択） | `MarqueeRenderRequest.ResolveFocusRect`（静的メソッドが規則を持ち、`Focus` が呼ぶ） |
+| 選択矩形の区間の流儀（終点のピクセルを含むか）と、DIP 変換時の終点 +1 | 選択矩形の生成元（`MarqueeSelection.FromPoints` が `EsRectInterval.Closed`、ホストが与えるハイライト矩形は `HalfOpen`）が `EsRect.Interval` として持ち、`MarqueeRenderRequest.ToDipRect` が読む |
 | 座標変換ポートの決定（ポート優先・倍率の等価変換） | `MarqueeRenderRequest.ResolvePort`（`ResolvedPort` が呼ぶ） |
 | ハンドルの位置（8 方向）と大きさの適用 | `Marquee.Geometry.cs`（`Marquee.ResolveHandles`。 位置の式は `MarqueeSelection.Handle`） |
 | 始点マーカーの太さ（2.0。 設定で変更しない固定値） | `Marquee.Geometry.cs` の private 定数 |
@@ -135,9 +134,9 @@ stateDiagram-v2
 | 未設定（0 以下）の解決規則（表示スケールが未指定のときに倍率を使う） | `Marquee.Limits.ResolveDisplayScale`（public。 `Limits` は数値スキーマに加えて本規則を持つ） |
 | 効果の適用順 | `MarqueeFeedback.ApplyCursor` / `ApplyVisual`（適用先は `IMarqueeEffects`。 デリゲートを生成しない） |
 | 入力の判断に伴うログと設定変更のログ | `MarqueeLogMessage` |
-| 設定変更の差分検出（変化した項目だけを出力） | `MarqueeLogMessage.LogOptionsChanged`（出力の契機は `Marquee.Options` / `DomainToDipScaling` / `HighlightRect` の setter） |
+| 設定変更の差分検出（変化した項目だけを出力） | `MarqueeLogMessage.LogOptionsChanged`（出力の契機は `Marquee.Options` / `DomainToDipScaling` / `HighlightDomainRect` の setter） |
 | ラベルの文言と自動生成（書式を含む）・配置の写像 | 描画層（本コアを参照する上位の層）の描画計画の解決 |
-| ラベルの表示可否（設定値と穴あけ矩形の有無） | 描画層の外観の述語 |
+| ラベルの表示可否（設定値と注目矩形の有無） | 描画層の外観の述語 |
 | ラベルの既定色・フォントサイズ・枠線の太さ・内側余白 | 描画層の外観 |
 | 色（ハンドル・始点マーカー・ラベル・装飾） | 描画層の外観（本コアは色を持つ型を公開しない） |
 | 描画する層とその順序（層にある ⇔ 描く値がある） | 描画層の層の選択（描画計画の `Layers`） |
@@ -154,7 +153,7 @@ stateDiagram-v2
 | 座標変換ポート未設定 | 等価変換（1 ドメインピクセル = 1 DIP・境界なし）として扱う |
 | 未定義の `EsKey` | 何もしない（`default` の効果を返す） |
 | 設定値の範囲外・非数 | 生成時に補正する（例外にしない）。 安全域は `Marquee.Limits` が単一所有し、`MarqueeOptions` の `init` アクセサが適用する（描画層の外観も同じ `Limits` を参照する） |
-| 選択もハイライトも無い | 穴あけ矩形を null とする（判断はコアが下し、UI 層は null を描かないことで扱う） |
+| 選択もハイライトも無い | 注目矩形を null とする（判断はコアが下し、UI 層は null を描かないことで扱う） |
 
 ## 7. 可視性ポリシー
 
@@ -187,11 +186,11 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | カーソル操作 | `ICursorService` 抽象にのみ依存する（未指定はカーソル操作を行わない）。 UI のカーソル型への写像は効果（`IMarqueeEffects.SetCursorShape`）を受けた UI が行う |
 | 効果の適用 | UI 固有の操作（フォーカス・再描画・ポインターキャプチャ・画面座標変換）は `IMarqueeEffects` を唯一の境界とし、コアは UI 型を知らない（不要なメンバーの空実装は `MarqueeEffectsBase` で省略できる） |
 | 文字の描画 | コアはマウス位置という素材だけを返し、文言・基準点・実寸 → 配置矩形の写像は描画層（上位の層）が、実寸測定と要素の配置は UI 層が行う（実寸は描画 API 依存のため）。 色は描画層の外観が与える |
-| 装飾 | コアは穴あけ矩形（幾何）だけを返し、装飾の矩形・表示可否・色は描画層が単一所有する（装飾は組み込み先の表示であり、選択単体の概念ではない） |
+| 装飾 | コアは注目矩形（幾何）だけを返し、装飾の矩形・表示可否・色は描画層が単一所有する（装飾は組み込み先の表示であり、選択単体の概念ではない） |
 | 再描画のバッチ化 | UI のディスパッチャーに依存するため UI 層が単一所有する（コアは同期計算のみ） |
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層の外観が単一所有する）。 色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は各 UI の描画境界で行う |
-| 選択矩形の閉区間 | 「終点を含む」規則（DIP への変換時の +1）はコア（`MarqueeRenderRequest.ToDipRect` の `closedInterval` と、その指定を導出する `MarqueeHoleRect`）が単一所有する（UI ごとに +1 すると片方だけずれる） |
-| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層が単一所有する（コアは素材（マウス位置・穴あけ矩形）だけを渡す） |
+| 選択矩形の区間の流儀 | 「終点を含む」規則（DIP への 変換時の +1）は矩形の `Interval`（`EsRectInterval`）が単一所有し、`MarqueeRenderRequest.ToDipRect` が読む（UI ごとに +1 すると片方だけずれる） |
+| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層が単一所有する（コアは素材（マウス位置・注目矩形）だけを渡す） |
 | 設定では変更しない固定値 | **公開しません**。 コア内だけで使う値（ハンドル枠の太さ・始点マーカーの太さ）は幾何の解決（`Marquee.Geometry.cs`）の private 定数とし、UI 層は解決済みの値（`MarqueeHandles.BorderThickness` 等）を受け取る |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は描画層の外観が単一所有する |
 | ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.Bounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
@@ -204,7 +203,7 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | 契機 | 出力 |
 | --- | --- |
 | `Options` の change | 変化した項目だけ（`HandleSize` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`） |
-| `HighlightRect` の set | 有無が変化したときだけ（`False → True` / `True → False`） |
+| `HighlightDomainRect` の set | 有無が変化したときだけ（`False → True` / `True → False`） |
 | `DomainToDipScaling` の set | 変化したときだけ |
 
 **差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。 ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。 **描画にだけ必要な設定（外観・表示スケーリング係数）の変更ログは描画層が所有します**。

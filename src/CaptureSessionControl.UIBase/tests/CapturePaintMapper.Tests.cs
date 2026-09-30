@@ -44,10 +44,10 @@ public class CapturePaintMapperTests
         Assert.Equal(DrawingColor.FromArgb(70, 80, 90), paint.OverlayColor);
     }
 
-    /// <summary>選択枠線（ハンドルの枠線）と暗転マスクの穴あけ枠が同じ色になることを検証する。</summary>
+    /// <summary>選択枠線（ハンドルの枠線）と暗転マスクの外枠が同じ色になることを検証する。</summary>
     /// <remarks>両者は同じ矩形に重なって描画されるため、片方だけ別の色にすると見た目が崩れる。</remarks>
     [Fact]
-    public void 変換_穴あけ枠とハンドル枠は同じ枠線色になる()
+    public void 変換_外枠とハンドル枠は同じ枠線色になる()
     {
         var settings = CreateSettings() with { BorderColor = DrawingColor.Red };
 

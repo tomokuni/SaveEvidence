@@ -61,22 +61,22 @@ public class MarqueeDrawPlanTests
     {
         var plan = ResolvePlan();
 
-        Assert.Equal(new EsRect(0, 0, 200, 100), plan.SurfaceBounds);
+        Assert.Equal(new EsRect(0, 0, 200, 100), plan.SurfaceDipRect);
     }
 
     [Fact]
-    public void ResolveDrawPlan_穴あけ矩形が無い場合は装飾もハンドルも持たない()
+    public void ResolveDrawPlan_注目矩形が無い場合は装飾もハンドルも持たない()
     {
-        // 座標ラベルはカーソル位置を基準にするため、穴あけ矩形が無くても表示できる（外観で無効化して素の状態を見る）
+        // 座標ラベルはカーソル位置を基準にするため、注目矩形が無くても表示できる（外観で無効化して素の状態を見る）
         var plan = ResolvePlan(MarqueeAppearance.Default with { ShowCoordLabel = false });
 
-        Assert.Null(plan.HoleRect);
+        Assert.Null(plan.FocusDipRect);
         Assert.Null(plan.Handles);
         Assert.Null(plan.Marker);
-        Assert.Null(plan.InnerFillRect);
-        Assert.Empty(plan.OverlayRegions);
-        Assert.Empty(plan.OuterBorderRects);
-        Assert.Empty(plan.InnerBorderRects);
+        Assert.Null(plan.InnerFillDipRect);
+        Assert.Empty(plan.OverlayDipRects);
+        Assert.Empty(plan.OuterBorderDipRects);
+        Assert.Empty(plan.InnerBorderDipRects);
         Assert.False(plan.HasDecoration);
         Assert.False(plan.HasText);
     }
@@ -85,16 +85,16 @@ public class MarqueeDrawPlanTests
     public void ResolveDrawPlan_選択がある場合は装飾とハンドルを解決する()
     {
         var presenter = CreatePresenter(MarqueeAppearance.Default with { ShowCoordLabel = false });
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
-        Assert.Equal(new EsRect(10, 20, 101, 51), plan.HoleRect);
+        Assert.Equal(new EsRect(10, 20, 101, 51), plan.FocusDipRect);
         Assert.NotNull(plan.Handles);
-        Assert.Equal(8, plan.Handles!.Value.Rects.Count);
-        // 暗転は穴あけ矩形を除いた 4 領域、枠線は 4 辺
-        Assert.Equal(4, plan.OverlayRegions.Count);
-        Assert.Equal(4, plan.OuterBorderRects.Count);
+        Assert.Equal(8, plan.Handles!.Value.HandleDipRects.Count);
+        // 暗転は注目矩形を除いた 4 領域、枠線は 4 辺
+        Assert.Equal(4, plan.OverlayDipRects.Count);
+        Assert.Equal(4, plan.OuterBorderDipRects.Count);
         Assert.True(plan.HasDecoration);
     }
 
@@ -108,24 +108,24 @@ public class MarqueeDrawPlanTests
             ShowInnerBorder = true,
         };
         var presenter = CreatePresenter(appearance);
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
-        // 内側の塗りは穴あけ矩形そのもの、内側の枠線は 4 辺
-        Assert.Equal(new EsRect(10, 20, 101, 51), plan.InnerFillRect);
-        Assert.Equal(4, plan.InnerBorderRects.Count);
+        // 内側の塗りは注目矩形そのもの、内側の枠線は 4 辺
+        Assert.Equal(new EsRect(10, 20, 101, 51), plan.InnerFillDipRect);
+        Assert.Equal(4, plan.InnerBorderDipRects.Count);
     }
 
     [Fact]
-    public void ResolveDrawPlan_全面暗転は穴あけ矩形が無くても暗転領域を持つ()
+    public void ResolveDrawPlan_全面暗転は注目矩形が無くても暗転領域を持つ()
     {
         var appearance = MarqueeAppearance.Default with { ShowCoordLabel = false, ShowFullOverlay = true };
 
         var plan = ResolvePlan(appearance);
 
-        // 穴あけ矩形が無い全面暗転では、描画面の全体が 1 領域になる
-        var region = Assert.Single(plan.OverlayRegions);
+        // 注目矩形が無い全面暗転では、描画面の全体が 1 領域になる
+        var region = Assert.Single(plan.OverlayDipRects);
         Assert.Equal(new EsRect(0, 0, 200, 100), region);
         Assert.True(plan.HasDecoration);
     }
@@ -156,7 +156,7 @@ public class MarqueeDrawPlanTests
         var none = ResolvePlan(appearance with { ShowOverlay = false, ShowOuterBorder = false });
         Assert.Empty(none.Layers);
 
-        // 既定（暗転と枠線を描く）でも穴あけ矩形が無いため装飾の層は含まれない
+        // 既定（暗転と枠線を描く）でも注目矩形が無いため装飾の層は含まれない
         Assert.DoesNotContain(MarqueeDrawLayer.Decoration, plan.Layers);
     }
 
@@ -164,7 +164,7 @@ public class MarqueeDrawPlanTests
     public void ResolveDrawPlan_テキストがある場合は層の最後に置く()
     {
         var presenter = CreatePresenter();
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
@@ -178,7 +178,7 @@ public class MarqueeDrawPlanTests
     {
         var appearance = MarqueeAppearance.Default with { ShowHandles = false, ShowCoordLabel = false };
         var presenter = CreatePresenter(appearance);
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
@@ -193,13 +193,13 @@ public class MarqueeDrawPlanTests
         // Inverse（ドメイン → DIP）は 2 倍
         presenter.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
-        presenter.SetSelection(new EsRect(10, 20, 100, 50));
+        presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var plan = presenter.ResolveDrawPlan(default, MeasureText);
 
-        // 幾何（コア）と同じ変換結果が穴あけ矩形になる
-        Assert.Equal(new EsRect(20, 40, 202, 102), plan.HoleRect);
-        Assert.Equal(4, plan.OuterBorderRects.Count);
+        // 幾何（コア）と同じ変換結果が注目矩形になる
+        Assert.Equal(new EsRect(20, 40, 202, 102), plan.FocusDipRect);
+        Assert.Equal(4, plan.OuterBorderDipRects.Count);
     }
 
     [Fact]

@@ -34,15 +34,15 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 /// <br/>
 /// <b>公開型のカプセル化</b>: 公開 API は内包コントロール（MarqueeControl / LoupeControl）の型を<br/>
 /// 参照しない（イベント引数は本クラス独自の <see cref="FadeMaskDragRectSelectionEventArgs"/> / <see cref="FadeMaskDragRectPointEventArgs"/>、<br/>
-/// 状態は <see cref="HasSelection"/> / <see cref="SelectionRect"/> / ハイライトプロパティで提供）。<br/>
+/// 状態は <see cref="HasSelection"/> / <see cref="SelectionDomainRect"/> / ハイライトプロパティで提供）。<br/>
 /// 内包コントロールへの直接アクセスは internal（テスト用）であり、ホストは本クラスの公開 API のみを使う。<br/>
 /// <br/>
 /// <b>選択状態の単一のソース</b>: 選択矩形は選択矩形コントロールのセッションが単一所有する。 本クラスは選択状態を複製せず、<br/>
-/// 読み取り（<see cref="HasSelection"/> / <see cref="SelectionRect"/>）と設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）を委譲するだけとする。<br/>
+/// 読み取り（<see cref="HasSelection"/> / <see cref="SelectionDomainRect"/>）と設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）を委譲するだけとする。<br/>
 /// <br/>
 /// <b>内部構造</b>:<br/>
 /// - MarqueeControl: ドラッグ選択の本体（ドメイン座標 + 座標変換ポート）。<br/>
-///   選択矩形の<b>外側に描く装飾</b>（暗転マスク・穴あけ枠・サイズラベル・ハイライト）も本コントロールが描画する。<br/>
+///   選択矩形の<b>外側に描く装飾</b>（暗転マスク・外枠・サイズラベル・ハイライト）も本コントロールが描画する。<br/>
 /// - LoupeControl: 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算）。<br/>
 /// <br/>
 /// <b>配線（本クラス内で完結）</b>:<br/>
@@ -176,7 +176,7 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>現在の選択矩形（ドメイン座標）。 未選択時は 0x0 の空矩形。</summary>
     /// <remarks>選択状態の真のソースは選択矩形コントロールのセッションであり、本プロパティはその読み取りを委譲するだけである。</remarks>
-    public Rect SelectionRect => _marquee.SelectionRect.ToAvaloniaRect();
+    public Rect SelectionDomainRect => _marquee.SelectionDomainRect.ToAvaloniaRect();
 
     /// <summary>Enter キーまたは RequestConfirm による確定要求イベント（選択確定後のみ発火）。</summary>
     public event EventHandler<FadeMaskDragRectSelectionEventArgs>? ConfirmRequested;
@@ -220,7 +220,7 @@ public sealed class FadeMaskDragRectControl : Panel
         }
     }
 
-    /// <summary>選択状態をクリアして全面暗転（穴あけなし）に戻す。</summary>
+    /// <summary>選択状態をクリアして全面暗転（注目なし）に戻す。</summary>
     /// <remarks>セッションの選択状態と nudge をまとめて初期化する（状態の初期化はセッションが単一所有する）。</remarks>
     public void ClearSelection() => _marquee.ResetSelection();
 
@@ -260,7 +260,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>サイズラベルを描画時に評価するプロバイダを取得または設定する。</summary>
     /// <value>描画時に呼び出される関数。 null の場合は自動生成（コアの既定）を使う。</value>
     /// <remarks>
-    /// ホストは最新の選択状態（<see cref="SelectionRect"/> / <see cref="HasSelection"/> 等）からサイズラベル文字列を生成するクロージャを設定する。<br/>
+    /// ホストは最新の選択状態（<see cref="SelectionDomainRect"/> / <see cref="HasSelection"/> 等）からサイズラベル文字列を生成するクロージャを設定する。<br/>
     /// - Crop: 論理座標（元画像ピクセル）+ 実表示ズーム率で生成（レイアウト変化に追従）。<br/>
     /// - 範囲選択（AreaSelect）等: 設定値（<c>CaptureSettings.SizeLabelOverride</c>）を返す。<br/>
     /// 設定時は選択矩形コントロールへ伝搬し、再描画を要求する。
@@ -420,13 +420,13 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 選択矩形コントロールのハイライト矩形（実行時状態）へ委譲する（変更は自動で再描画される）。<br/>
     /// <b>null が「ハイライトしない」を意味する</b>（有効フラグは持たない。 ハイライトをやめる場合は null にする）。
     /// </remarks>
-    public Rect? LogicalHighlightRect
+    public Rect? HighlightDomainRect
     {
-        get => _marquee.HighlightRect?.ToAvaloniaRect();
-        set => _marquee.HighlightRect = value?.ToEsRect();
+        get => _marquee.HighlightDomainRect?.ToAvaloniaRect();
+        set => _marquee.HighlightDomainRect = value?.ToEsRect();
     }
 
-    /// <summary>全面暗転（穴あけなし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
+    /// <summary>全面暗転（注目なし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
     /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ（外観の表示可否を参照する）。</remarks>
     public bool ShowFullOverlay => _marquee.Appearance.ShowFullOverlay;
 
@@ -548,7 +548,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>文字は配置指示の色で描き、ブラシは色ごとのキャッシュから得る。</remarks>
     private static void DrawLabel(DrawingContext context, in MarqueeLabelPlacement placement)
     {
-        var bounds = placement.Bounds;
+        var bounds = placement.DipRect;
         context.FillRectangle(SolidColorBrushCache.GetOrCreate(placement.BackgroundColor), bounds.ToAvaloniaRect());
 
         var formatted = new FormattedText(
@@ -568,7 +568,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// 選択矩形の破線は <see cref="LoupeControl"/> 内部では描画せず、本クラス（ホスト側）が<br/>
     /// <see cref="LoupeControl.Rendered"/> イベントで通知された <see cref="LoupeRenderedEventArgs.Bitmap"/> へ直接描画する。<br/>
-    /// 選択矩形（<see cref="SelectionRect"/> = ドメイン座標）は <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で<br/>
+    /// 選択矩形（<see cref="SelectionDomainRect"/> = ドメイン座標）は <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で<br/>
     /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
     /// <b>中心座標ラベルはルーペコントロールがテキスト要素として表示する</b>（本クラスは破線だけを描く）。<br/>
     /// 描画しない場合（選択矩形を使わないモード・選択なし・切り出し領域の左上が未設定）でも、<br/>
@@ -584,7 +584,7 @@ public sealed class FadeMaskDragRectControl : Panel
             // 破線色（色A / 色B）を 2 つ用意し、交互に塗る（描画はコアが単一所有する）
             FadeMaskDragRectOverlay.DrawSelectionRect(
                 e.Bitmap,
-                _marquee.SelectionRect,
+                _marquee.SelectionDomainRect,
                 topLeft.ToEsPoint(),
                 e.Scale,
                 _options.SelectionRectColorA,

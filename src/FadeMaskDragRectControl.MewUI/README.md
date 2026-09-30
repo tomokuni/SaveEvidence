@@ -44,7 +44,7 @@ selection.SetLoupeSource(bitmap);
 selection.SetLoupePosition(new EsPoint(120, 340));
 
 // 確定・キャンセルを購読する
-selection.ConfirmRequested += (_, e) => Capture(e.SelectionRect);
+selection.ConfirmRequested += (_, e) => Capture(e.SelectionDomainRect);
 selection.CancelRequested += (_, _) => Cancel();
 
 // ホイール操作（ズーム・パン）はホストが扱う
@@ -76,8 +76,8 @@ grid.Add(selection);    // 暗転マスク + 選択矩形 + ルーペ（上）
 | `Mode` | 動作モード（既定は `AreaSelect`） |
 | `Options` | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 コアの `FadeMaskDragRectOptions`。 **色は含まない**） |
 | `MarqueeAppearance` / `LoupeAppearance` | 描画にだけ必要な外観の単一値（提示層の `MarqueeAppearance` / `LoupeAppearance`。 内包コントロールへ委譲） |
-| `HasSelection` / `SelectionRect` | 現在の選択状態（ドメイン座標） |
-| `LogicalHighlightRect` | ハイライト（`ScreenSelect` / `WindowSelect` の穴あけ矩形。 null はハイライトなし） |
+| `HasSelection` / `SelectionDomainRect` | 現在の選択状態（ドメイン座標） |
+| `HighlightDomainRect` | ハイライト（`ScreenSelect` / `WindowSelect` の注目矩形。 null はハイライトなし） |
 | `ShowFullOverlay` | 全面暗転の有無（モードから導出） |
 | `LoupeCenterPoint` | ルーペ中心（ドメイン座標） |
 | `OperationTextProvider` / `InfoTextProvider` | 操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に生成するデリゲート（文言はホストが与える） |

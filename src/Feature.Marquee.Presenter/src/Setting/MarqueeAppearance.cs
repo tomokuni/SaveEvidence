@@ -23,8 +23,8 @@ namespace EsUtil.Feature.Marquee.Presenter.Setting;
 public sealed record MarqueeAppearance
 {
     /// <summary>ハンドル枠の色の既定値（ダークグレー）。</summary>
-    /// <value>アルファを含む色。 装飾の枠線（穴あけ枠）と共通の見た目である。</value>
-    /// <remarks>穴あけ枠と同じ矩形に重なるため、既定値を共有する（同じ色を 2 箇所へ書かない）。</remarks>
+    /// <value>アルファを含む色。 装飾の枠線（外枠）と共通の見た目である。</value>
+    /// <remarks>外枠と同じ矩形に重なるため、既定値を共有する（同じ色を 2 箇所へ書かない）。</remarks>
     public static readonly DrawingColor DefaultBorderColor = DrawingColor.FromArgb(255, 169, 169, 169);
 
     /// <summary>ラベルの文字色の既定値（白）。</summary>
@@ -58,7 +58,7 @@ public sealed record MarqueeAppearance
 
     /// <summary>ドラッグハンドルの枠線色を取得する。</summary>
     /// <value>ハンドルの枠線色。 既定はダークグレー（<c>#FFA9A9A9</c>）。</value>
-    /// <remarks>装飾の穴あけ枠と同じ矩形に重なるため、見た目を揃える場合はホストが同じ色を割り当てる。</remarks>
+    /// <remarks>装飾の外枠と同じ矩形に重なるため、見た目を揃える場合はホストが同じ色を割り当てる。</remarks>
     public DrawingColor HandleBorderColor { get; init; } = DefaultBorderColor;
 
     /// <summary>十字マーカー（始点マーカー）の色を取得する。</summary>
@@ -85,15 +85,15 @@ public sealed record MarqueeAppearance
     /// <value>アルファを含む色。 既定は黒 50%（<c>#80000000</c>）。</value>
     public DrawingColor OverlayColor { get; init; } = DrawingColor.FromArgb(128, 0, 0, 0);
 
-    /// <summary>穴あけ枠（外側の装飾の枠線）の色を取得する。</summary>
+    /// <summary>外枠（外側の装飾の枠線）の色を取得する。</summary>
     /// <value>アルファを含む色。 既定はダークグレー（<c>#FFA9A9A9</c>。 ハンドル枠と共通）。</value>
     public DrawingColor OuterBorderColor { get; init; } = DefaultBorderColor;
 
-    /// <summary>穴あけ矩形の内側の塗り色を取得する。</summary>
+    /// <summary>注目矩形の内側の塗り色を取得する。</summary>
     /// <value>アルファを含む色。 既定は透明（描画の可否は <see cref="ShowInnerFill"/> が決める）。</value>
     public DrawingColor InnerFillColor { get; init; } = DrawingColor.Transparent;
 
-    /// <summary>穴あけ矩形の内側の枠線色を取得する。</summary>
+    /// <summary>注目矩形の内側の枠線色を取得する。</summary>
     /// <value>アルファを含む色。 既定は透明（描画の可否は <see cref="ShowInnerBorder"/> が決める）。</value>
     public DrawingColor InnerBorderColor { get; init; } = DrawingColor.Transparent;
 
@@ -154,7 +154,7 @@ public sealed record MarqueeAppearance
     public bool ShowHandles { get; init; } = true;
 
     /// <summary>サイズラベルを表示するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合は穴あけ矩形の左上に位置と寸法を表示する。 false の場合は描かない。</value>
+    /// <value>true（既定）の場合は注目矩形の左上に位置と寸法を表示する。 false の場合は描かない。</value>
     /// <remarks>他のラベル（操作・情報）はホストが自前で描くため、本設定には含まれない。</remarks>
     public bool ShowSizeLabel { get; init; } = true;
 
@@ -166,24 +166,24 @@ public sealed record MarqueeAppearance
     /// <value>true（既定）の場合は暗転する。 false の場合は暗転を描かない。</value>
     public bool ShowOverlay { get; init; } = true;
 
-    /// <summary>穴あけ枠（外側の枠線）を描くかどうかを取得する。</summary>
+    /// <summary>外枠（外側の枠線）を描くかどうかを取得する。</summary>
     /// <value>true（既定）の場合は枠線を描く。 false の場合は描かない。</value>
     public bool ShowOuterBorder { get; init; } = true;
 
-    /// <summary>穴あけ矩形が無くても全面を暗転するかどうかを取得する。</summary>
+    /// <summary>注目矩形が無くても全面を暗転するかどうかを取得する。</summary>
     /// <value>true の場合は選択が無くても画面全体を暗転する。 既定は false。</value>
     /// <remarks>ハイライトのみを表示するモード（全画面の暗転 + ハイライト矩形）で使用する。</remarks>
     public bool ShowFullOverlay { get; init; }
 
-    /// <summary>穴あけ矩形の内側を塗るかどうかを取得する。</summary>
+    /// <summary>注目矩形の内側を塗るかどうかを取得する。</summary>
     /// <value>true の場合は塗る。 既定は false（塗らない）。</value>
     public bool ShowInnerFill { get; init; }
 
-    /// <summary>穴あけ矩形の内側の枠線を描くかどうかを取得する。</summary>
+    /// <summary>注目矩形の内側の枠線を描くかどうかを取得する。</summary>
     /// <value>true の場合は描く。 既定は false（描かない）。</value>
     public bool ShowInnerBorder { get; init; }
 
-    /// <summary>穴あけ枠（外側の枠線）の太さ（DIP）を取得する。</summary>
+    /// <summary>外枠（外側の枠線）の太さ（DIP）を取得する。</summary>
     /// <value>枠線の太さ（DIP）。 0.5〜64 へ補正済み。 既定は 2.0。</value>
     /// <remarks>
     /// 安全域への補正は本型が単一所有する（設定の経路によらず範囲内の値だけが保持される）。<br/>
@@ -195,7 +195,7 @@ public sealed record MarqueeAppearance
         init => field = CoerceBorderThickness(value);
     } = BorderThicknessDefault;
 
-    /// <summary>穴あけ矩形の内側の枠線の太さ（DIP）を取得する。</summary>
+    /// <summary>注目矩形の内側の枠線の太さ（DIP）を取得する。</summary>
     /// <value>枠線の太さ（DIP）。 0.5〜64 へ補正済み。 既定は 2.0。</value>
     public double InnerBorderThickness
     {
@@ -208,10 +208,10 @@ public sealed record MarqueeAppearance
     // ----------------------------------------------------------------
 
     /// <summary>サイズラベルを描画するかどうかを判定する。</summary>
-    /// <param name="hasHoleRect">穴あけ矩形（選択またはハイライトの領域）があるかどうか。</param>
+    /// <param name="hasFocusRect">注目矩形（選択またはハイライトの領域）があるかどうか。</param>
     /// <returns>描画する場合は true。</returns>
-    /// <remarks>ラベルの基準点は穴あけ矩形の左上であり、文言も矩形の寸法から作るため、矩形が無いときは描画しない。</remarks>
-    public bool ShouldShowSizeLabel(bool hasHoleRect) => ShowSizeLabel && hasHoleRect;
+    /// <remarks>ラベルの基準点は注目矩形の左上であり、文言も矩形の寸法から作るため、矩形が無いときは描画しない。</remarks>
+    public bool ShouldShowSizeLabel(bool hasFocusRect) => ShowSizeLabel && hasFocusRect;
 
     /// <summary>カーソル座標ラベルを描画するかどうかを判定する。</summary>
     /// <returns>描画する場合は true。</returns>
@@ -219,10 +219,10 @@ public sealed record MarqueeAppearance
     public bool ShouldShowCoordLabel() => ShowCoordLabel;
 
     /// <summary>暗転オーバーレイを描画するかどうかを判定する。</summary>
-    /// <param name="hasHoleRect">穴あけ矩形（選択またはハイライトの領域）があるかどうか。</param>
+    /// <param name="hasFocusRect">注目矩形（選択またはハイライトの領域）があるかどうか。</param>
     /// <returns>描画する場合は true。</returns>
-    /// <remarks>穴あけ矩形がある場合、または全面暗転表示が有効な場合に描画する。</remarks>
-    public bool ShouldDrawOverlay(bool hasHoleRect) => hasHoleRect || ShowFullOverlay;
+    /// <remarks>注目矩形がある場合、または全面暗転表示が有効な場合に描画する。</remarks>
+    public bool ShouldDrawOverlay(bool hasFocusRect) => hasFocusRect || ShowFullOverlay;
 
     /// <summary>指定されたハンドル塗り色を描画に使う色へ解決する。</summary>
     /// <param name="color">設定された塗り色。</param>

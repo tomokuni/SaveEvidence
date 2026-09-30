@@ -47,10 +47,10 @@ public class LoupePresenterDrawPlanTests
 
     /// <summary>枠線が 4 辺（上下左右）の矩形で返ることを検証する。</summary>
     [Fact]
-    public void ComputeBorderRects_枠線の4辺の矩形を返す()
+    public void ComputeBorderPixelRects_枠線の4辺の矩形を返す()
     {
         // 一辺 100・width=2 → 上 = 100×2、内側 = 100-4 = 96
-        var rects = LoupePresenter.ComputeBorderRects(new EsRect(0, 0, 100, 100), 2.0);
+        var rects = LoupePresenter.ComputeBorderPixelRects(new EsRect(0, 0, 100, 100), 2.0);
 
         Assert.Equal(4, rects.Count);
         Assert.Equal(new EsRect(0, 0, 100, 2), rects[0]);   // 上
@@ -62,9 +62,9 @@ public class LoupePresenterDrawPlanTests
     /// <summary>枠線の太さが描画面より大きい場合は面の短辺で上限を取り、内側が 0 になることを検証する。</summary>
     /// <remarks>太さの安全域への補正は外観（<c>LoupeAppearance.BorderThickness</c> の生成時）が担う。</remarks>
     [Fact]
-    public void ComputeBorderRects_幅が描画面を超えるなら内側が0になる()
+    public void ComputeBorderPixelRects_幅が描画面を超えるなら内側が0になる()
     {
-        var rects = LoupePresenter.ComputeBorderRects(new EsRect(0, 0, 100, 100), 200.0);
+        var rects = LoupePresenter.ComputeBorderPixelRects(new EsRect(0, 0, 100, 100), 200.0);
 
         Assert.Equal(new EsRect(0, 0, 100, 100), rects[0]);  // 上（全面）
         Assert.Equal(new EsRect(0, 0, 100, 100), rects[1]);  // 下（全面）

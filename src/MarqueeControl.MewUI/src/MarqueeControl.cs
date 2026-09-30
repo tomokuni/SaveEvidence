@@ -78,16 +78,16 @@ public sealed class MarqueeControl : Panel
                 owner.InvalidateRender();
             });
 
-    /// <summary><see cref="HighlightRect"/> プロパティ（ハイライトする矩形）。</summary>
+    /// <summary><see cref="HighlightDomainRect"/> プロパティ（ハイライトする矩形）。</summary>
     /// <remarks>
     /// <b>選択矩形ではなくホストが与える実行時状態</b>であるため、設定（<see cref="Options"/>）には含めない。
     /// </remarks>
-    public static readonly MewProperty<EsRect?> HighlightRectProperty =
+    public static readonly MewProperty<EsRect?> HighlightDomainRectProperty =
         MewProperty<EsRect?>.Register<MarqueeControl>(
-            nameof(HighlightRect), null, MewPropertyOptions.AffectsRender,
+            nameof(HighlightDomainRect), null, MewPropertyOptions.AffectsRender,
             changed: static (owner, _, newValue) =>
             {
-                owner._marquee.HighlightRect = newValue;
+                owner._marquee.HighlightDomainRect = newValue;
                 owner.InvalidateRender();
             });
 
@@ -159,7 +159,7 @@ public sealed class MarqueeControl : Panel
         _marquee.Notified += OnNotified;
         // 外観（色・ラベル体裁・表示可否）とハイライト矩形（ホストが与える実行時状態）は提示層が単一所有する
         _marquee.Appearance = GetValue(AppearanceProperty);
-        _marquee.HighlightRect = GetValue(HighlightRectProperty);
+        _marquee.HighlightDomainRect = GetValue(HighlightDomainRectProperty);
 
         // 図形は専用の子キャンバスが描く（ラベル要素より先に子として加えるため、常にラベルの下になる）
         _shapes = new ShapeCanvas(this) { IsHitTestVisible = false };
@@ -251,12 +251,12 @@ public sealed class MarqueeControl : Panel
     /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
     /// <remarks>
     /// 選択矩形と異なり選択コントロールの操作では変化しない（ホストが与える）。<br/>
-    /// 値がある場合は選択矩形より優先して穴あけ矩形になる（優先順はコアが単一所有する）。
+    /// 値がある場合は選択矩形より優先して注目矩形になる（優先順はコアが単一所有する）。
     /// </remarks>
-    public EsRect? HighlightRect
+    public EsRect? HighlightDomainRect
     {
-        get => GetValue(HighlightRectProperty);
-        set => SetValue(HighlightRectProperty, value);
+        get => GetValue(HighlightDomainRectProperty);
+        set => SetValue(HighlightDomainRectProperty, value);
     }
 
     /// <summary>座標変換ポートへ適用する倍率を取得または設定する。</summary>
@@ -329,7 +329,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>現在の選択状態のスナップショットを取得する（ポーリング不要の完全状態）。</summary>
-    /// <value>State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / IsDragging / NudgeActive / HasSelection を含むスナップショット。</value>
+    /// <value>State / SelectionDomainRect / ActiveTarget / MousePosition / IsMouseDown / IsDragging / NudgeActive / HasSelection を含むスナップショット。</value>
     public MarqueeSnapshot CurrentSnapshot => _marquee.CreateSnapshot();
 
     /// <summary>選択矩形があるかどうかを取得する。</summary>
@@ -340,7 +340,7 @@ public sealed class MarqueeControl : Panel
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
     /// <value>選択矩形（ドメイン座標）。 未選択時は 0x0 の空矩形。</value>
     /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
-    public EsRect SelectionRect => _marquee.SelectionRect;
+    public EsRect SelectionDomainRect => _marquee.SelectionDomainRect;
 
     /// <summary>操作ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。 null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
@@ -517,8 +517,8 @@ public sealed class MarqueeControl : Panel
 
             Apply(border, placement);
             border.Arrange(new Rect(
-                bounds.X + placement.Bounds.X, bounds.Y + placement.Bounds.Y,
-                placement.Bounds.Width, placement.Bounds.Height));
+                bounds.X + placement.DipRect.X, bounds.Y + placement.DipRect.Y,
+                placement.DipRect.Width, placement.DipRect.Height));
         }
     }
 
@@ -746,7 +746,7 @@ public sealed class MarqueeControl : Panel
     /// <param name="snapshot">通知時点の状態スナップショット。</param>
     /// <returns>選択矩形とスナップショットを含むイベント引数。</returns>
     private static SelectionRectEventArgs ToRectArgs(MarqueeSnapshot snapshot)
-        => new(snapshot.SelectionRect, snapshot);
+        => new(snapshot.SelectionDomainRect, snapshot);
 
     /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
     /// <param name="kind">カーソル形状の種別（コア提供）。</param>
@@ -771,7 +771,7 @@ public sealed class MarqueeControl : Panel
     /// <b>描画の手順は提示層が単一所有する</b>: 層の順序と描画 API への写し方は描画計画（<see cref="MarqueeDrawPlan"/>）が持ち、<br/>
     /// 本メソッドは自 UI の描画面へ写すだけである（<see cref="MarqueeSkiaPainter.Paint"/>）。<br/>
     /// <b>ラベルは本パネルの子要素が描く</b>ため図形の層のみを描く。<br/>
-    /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なる（別々に描くと線幅が二重になる）。<br/>
+    /// 選択枠線は装飾の外枠（同じ矩形の内側）と重なる（別々に描くと線幅が二重になる）。<br/>
     /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>
     /// 背景は塗らない（透明のままにして下の画像を透かす）。
     /// </remarks>

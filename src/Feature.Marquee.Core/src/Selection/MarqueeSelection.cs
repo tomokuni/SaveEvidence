@@ -19,14 +19,19 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
     /// <summary>始点と終点から正規化された選択矩形を生成する。</summary>
     /// <param name="start">始点（ドメイン座標）。</param>
     /// <param name="end">終点（ドメイン座標）。</param>
-    /// <returns>幅・高さが常に 0 以上の選択矩形。</returns>
-    /// <remarks>始点が終点より右下でも同じ矩形になる（ドラッグ方向に依存しない）。</remarks>
+    /// <returns>幅・高さが常に 0 以上の選択矩形（区間は <see cref="EsRectInterval.Closed"/>）。</returns>
+    /// <remarks>
+    /// 始点が終点より右下でも同じ矩形になる（ドラッグ方向に依存しない）。<br/>
+    /// ドラッグで作る選択は「始点のピクセルから終点のピクセルまで」を意図するため、区間の流儀を <see cref="EsRectInterval.Closed"/> で与える<br/>
+    /// （幅は <c>|終点 − 始点|</c> のまま。 <c>+1</c> の判断は受け取った側が <see cref="EsRect.Interval"/> を読んで行う）。
+    /// </remarks>
     internal static MarqueeSelection FromPoints(EsPoint start, EsPoint end)
         => new(new EsRect(
             Math.Min(start.X, end.X),
             Math.Min(start.Y, end.Y),
             Math.Abs(end.X - start.X),
-            Math.Abs(end.Y - start.Y)));
+            Math.Abs(end.Y - start.Y),
+            EsRectInterval.Closed));
 
     /// <summary>指定したハンドルの位置（矩形上の点）を取得する。</summary>
     /// <param name="handle">ハンドル種別。</param>
@@ -70,6 +75,7 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
     /// 移動（<see cref="MarqueeHitTarget.Move"/>）の場合は矩形全体が境界内に収まるようにシフトする（サイズは維持）。<br/>
     /// それ以外のハンドル変形は固定角（ハンドルと反対側の隅）を動かさず、動く辺のみ境界内に制限する。
     /// </remarks>
+    /// <remarks>寸法は変わらないため、区間の流儀（<see cref="EsRect.Interval"/>）はそのまま引き継ぐ。</remarks>
     internal MarqueeSelection ClampToBounds(EsRect bounds, MarqueeHitTarget handle)
     {
         double l = Rect.X;
@@ -94,7 +100,7 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
             if (b > bounds.Bottom) b = bounds.Bottom;
         }
 
-        return new MarqueeSelection(new EsRect(l, t, r - l, b - t));
+        return new MarqueeSelection(new EsRect(l, t, r - l, b - t, Rect.Interval));
     }
 
     /// <summary>ドラッグハンドル操作による変形を計算する。</summary>
@@ -136,6 +142,6 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
         if (x2 - x1 < m) x2 = x1 + m;
         if (y2 - y1 < m) y2 = y1 + m;
 
-        return new MarqueeSelection(new EsRect(x1, y1, x2 - x1, y2 - y1));
+        return new MarqueeSelection(new EsRect(x1, y1, x2 - x1, y2 - y1, Rect.Interval));
     }
 }

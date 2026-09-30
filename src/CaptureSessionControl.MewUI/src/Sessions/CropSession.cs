@@ -182,7 +182,7 @@ internal sealed class CropSession
 
         // 切り出し範囲の計算（閉区間化・画像内へのクランプ・端数の丸め）はコアが単一所有する
         var pixels = CropBoundsMath.ComputeCropBounds(
-            _selector.SelectionRect, CaptureClipMath.ImageSize(image), _settings.MinSelectionSize!.Value);
+            _selector.SelectionDomainRect, CaptureClipMath.ImageSize(image), _settings.MinSelectionSize!.Value);
         // 退化した選択（切り出せない矩形）はキャンセルとして記録する（規則はコアが単一所有する）
         _log.LogCropFinished(pixels);
         EndSession();
@@ -315,7 +315,7 @@ internal sealed class CropSession
         // 書式と「未選択なら描かない」規則はコアが単一所有する
         // （Avalonia 版と同じ文言・同じ表示条件になる）。
         _selector.SizeLabelOverrideProvider = () => CropLabelTexts.ResolveSizeLabel(
-            _selector.HasSelection, _selector.SelectionRect, _view.ZoomPercent);
+            _selector.HasSelection, _selector.SelectionDomainRect, _view.ZoomPercent);
 
         // 操作ラベル・情報ラベルの文言はキャプチャコア（CaptureLabelTexts）が単一所有する。
         // 情報ラベルは切り出しでは表示しない（GetInfoText が切り出しモードで null を返す）。

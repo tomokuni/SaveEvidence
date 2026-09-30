@@ -111,7 +111,7 @@ var viewport = CropPreview.ContentToViewport(new Point(100, 100));
 var content = CropPreview.ViewportToContent(new Point(200, 200));
 
 // 選択イベント
-CropPreview.ConfirmRequested += (_, e) => OnConfirm(e.SelectionRect);
+CropPreview.ConfirmRequested += (_, e) => OnConfirm(e.SelectionDomainRect);
 CropPreview.CancelRequested += (_, _) => OnCancel();
 ```
 

@@ -77,7 +77,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 - MarqueeControl は上位 AP に依存しない（再利用可能）。
 - **判断はコア（`Marquee`）・反映は UI**: nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルはコアが決め、コントロールは `IMarqueeEffects` を実装して要求された効果を適用するだけにする。
 - **描画計画と外観は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueePresenter`（`LabelPlan` partial））が単一所有**し、本コントロールは `Appearance` プロパティで外観を与え、`ResolveDrawPlan` が返す描画計画を自 UI の描画 API（`DrawingContext`）で写すだけです（**描画 API の抽象は持ちません**）。 装飾の**判断**も持ちません（状態（選択矩形・nudge）はコア（`MarqueeState`）に集約する）。
-- **装飾（暗転・穴あけ枠・ハイライト・内側の塗り）は選択矩形コントロール単体の概念ではない**（組み込み先の表示である）ため、提示層が単一所有します。 本コントロールは `Appearance` で外観（表示可否・太さ・色）を設定し、描画計画の装飾矩形を描きます。
+- **装飾（暗転・外枠・ハイライト・内側の塗り）は選択矩形コントロール単体の概念ではない**（組み込み先の表示である）ため、提示層が単一所有します。 本コントロールは `Appearance` で外観（表示可否・太さ・色）を設定し、描画計画の装飾矩形を描きます。
 - **文字（サイズラベル・座標ラベル）は本コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**。 配置するラベルの一覧と順序は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial））が単一所有し（ラベルの色とフォントサイズは外観 `MarqueeAppearance` から写す）、本コントロールは自 UI の API（`FormattedText`）で測った実寸を渡して返された配置を要素へ反映する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
 - 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
 - 上位 AP へはイベントのみで通知し、上位 AP はポインター・キーイベントを直接処理しない。
@@ -173,7 +173,7 @@ flowchart TB
 - **公開API**:
 - イベント 8 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ConfirmRequested` / `CancelRequested` / `Rendered`（描画完了。 描画コンテキストと描画内容を渡し、ホストは付加情報（操作・情報ラベル）を描ける。 サイズ・座標ラベルはコントロールがテキスト要素として表示する）。 **生のポインター入力（Mouse 系）は公開しない**（ホストは自 UI の入力イベントを使う。 押下状態は `CurrentSnapshot.IsMouseDown`）
   - StyledProperty 4 種: `Options`（不変の設定値 `MarqueeOptions`。 寸法・対話パラメータを内包） / `Appearance`（外観の単一値 `MarqueeAppearance`） / `DomainToDipScaling` / `DisplayScaleScaling`（環境値。 XAML のバインディング・スタイルで設定できるよう依存関係プロパティとして公開する）。 設定はコア（ファサード）または提示層（外観）へ委譲する（MewUI 版と同じ形）
-  - プロパティ: `Log`（保持・`NullLogger` へのフォールバックはコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。 デリゲートのため設定値に含めない） / `HasSelection` / `SelectionRect`
+  - プロパティ: `Log`（保持・`NullLogger` へのフォールバックはコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。 デリゲートのため設定値に含めない） / `HasSelection` / `SelectionDomainRect`
   - メソッド: `SetCoordTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `RefreshOverlay` / **`InvalidateRender()`**（描画に関わる変更の唯一の入口。 図形の層・ラベル・配置をまとめて無効化する）
 - **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画の起動のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・装飾の描画内容）と描画の手順はコアと描画層へ委譲する
 - **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeGeometry（Feature.Marquee.Core）/ MarqueePresenter（描画計画と配置の写像）/ MarqueeAppearance / MarqueeDrawPlan（Feature.Marquee.Presenter）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Core の `Native`）/ ScreenConverter（Platform.AvaloniaUI）
@@ -253,9 +253,9 @@ flowchart TB
 ### 6.10 Marquee（コアの幾何解決）
 
 - **分類**: 公開ファサード（`public sealed partial class`）の**幾何解決の部分**（`Marquee.Geometry.cs`。 コア提供）
-- **責務**: 1 フレーム分の幾何（穴あけ矩形・ハンドル・始点マーカー・マウス位置）を解決する（`MarqueeRenderRequest` → `MarqueeGeometry`）
+- **責務**: 1 フレーム分の幾何（注目矩形・ハンドル・始点マーカー・マウス位置）を解決する（`MarqueeRenderRequest` → `MarqueeGeometry`）
 - **可視性**: `ResolveGeometry` / `CreateRequest` は public（写し・ホストが使う窓口）。 内部手順（ハンドル・マーカー）は private
-- **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。 **描く値の無い項目は null / 空で返す**（穴あけ矩形なし・選択なし・nudge 中でない）。 **表示可否は本コアの責務ではなく、提示層の外観（`MarqueeAppearance`）が単一所有する**
+- **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。 **描く値の無い項目は null / 空で返す**（注目矩形なし・選択なし・nudge 中でない）。 **表示可否は本コアの責務ではなく、提示層の外観（`MarqueeAppearance`）が単一所有する**
 
 ### 6.11 MarqueeHitTarget
 
@@ -266,7 +266,7 @@ flowchart TB
 ### 6.12 公開イベント引数
 
 - `MarqueeInteractionState` enum（public）: NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging
-- `MarqueeSnapshot` readonly record struct（public）: State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。 座標は UI 非依存の `EsRect` / `EsPoint`（各 UI の境界で自前の型へ変換する）。 値型のため通知のたびにヒープを確保しない
+- `MarqueeSnapshot` readonly record struct（public）: State / SelectionDomainRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。 座標は UI 非依存の `EsRect` / `EsPoint`（各 UI の境界で自前の型へ変換する）。 値型のため通知のたびにヒープを確保しない
 - `SelectionRectEventArgs`（public）: Rect（Avalonia）+ Snapshot
 - `MarqueePointEventArgs`（public）: Point（Avalonia）+ Snapshot
 - `MarqueeRenderedEventArgs`（public）: Context（`DrawingContext`。 描画中のみ有効）+ Content（`MarqueeDrawPlan`。 描画計画）

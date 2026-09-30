@@ -189,7 +189,7 @@ MarqueeControl/sample/
 | 差し替える対象 | 差し替え方 |
 | --- | --- |
 | 外観（色・枠線の太さ・表示可否） | 生成時に `Appearance`（`MarqueeAppearance`）を設定する |
-| 装飾（暗転・穴あけ枠・内側の塗り）の矩形 | `ResolveDrawPlan` を上書きし、計画（`MarqueeDrawPlan`）の矩形を差し替える |
+| 装飾（暗転・外枠・内側の塗り）の矩形 | `ResolveDrawPlan` を上書きし、計画（`MarqueeDrawPlan`）の矩形を差し替える |
 | ラベルの文言・配置 | 同上（`MarqueeDrawPlan.Labels` を差し替える） |
 
 差し替えは値の置き換えだけで完結するため、UI ごとの描画実装（Avalonia は `MarqueeContextPainter`、MewUI は `MarqueeSkiaPainter`）は変更不要です。

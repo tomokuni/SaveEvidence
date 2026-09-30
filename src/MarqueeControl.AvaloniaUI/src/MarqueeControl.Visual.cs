@@ -101,7 +101,7 @@ public sealed partial class MarqueeControl
     /// 本メソッドは自 UI の描画面へ写すだけである（<see cref="MarqueeContextPainter.Paint"/>）。<br/>
     /// <b>ラベルは <see cref="Border"/> + <see cref="TextBlock"/> の子要素として配置する</b>ため図形の層だけを描く<br/>
     /// （子は親より後に描かれるため常に最上位になる）。<br/>
-    /// 選択枠線は装飾の穴あけ枠（同じ矩形の内側）と重なるため描画しない（別々に描くと線幅が二重になる）。
+    /// 選択枠線は装飾の外枠（同じ矩形の内側）と重なるため描画しない（別々に描くと線幅が二重になる）。
     /// </remarks>
     internal void RenderShapes(DrawingContext context)
     {
@@ -178,9 +178,9 @@ public sealed partial class MarqueeControl
     {
         border.Background = SolidColorBrushCache.GetOrCreate(placement.BackgroundColor);
         border.Padding = new Thickness(placement.PaddingX, placement.PaddingY);
-        border.Width = placement.Bounds.Width;
-        border.Height = placement.Bounds.Height;
-        border.Margin = new Thickness(placement.Bounds.X, placement.Bounds.Y, 0, 0);
+        border.Width = placement.DipRect.Width;
+        border.Height = placement.DipRect.Height;
+        border.Margin = new Thickness(placement.DipRect.X, placement.DipRect.Y, 0, 0);
         border.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
         border.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
 

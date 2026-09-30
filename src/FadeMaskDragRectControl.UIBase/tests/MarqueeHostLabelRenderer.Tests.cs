@@ -37,7 +37,7 @@ public class MarqueeHostLabelRendererTests
         var placement = MarqueeHostLabelRenderer.Resolve(anchor, "W", 14.0, s_text, s_background, 4, Measure);
 
         // 背景は基準点（10, 20）を左上とする
-        Assert.Equal(anchor, placement.Bounds.TopLeft);
+        Assert.Equal(anchor, placement.DipRect.TopLeft);
     }
 
     [Fact]
@@ -47,8 +47,8 @@ public class MarqueeHostLabelRendererTests
             new EsPoint(10, 20), "W", 14.0, s_text, s_background, padding: 4, Measure);
 
         // 背景 = 文字の実寸 + 内側余白 × 2（四方へ同じ余白を空ける）
-        Assert.Equal(s_measured.Width + 8, placement.Bounds.Width);
-        Assert.Equal(s_measured.Height + 8, placement.Bounds.Height);
+        Assert.Equal(s_measured.Width + 8, placement.DipRect.Width);
+        Assert.Equal(s_measured.Height + 8, placement.DipRect.Height);
         Assert.Equal(4, placement.PaddingX);
         Assert.Equal(4, placement.PaddingY);
     }
@@ -61,8 +61,8 @@ public class MarqueeHostLabelRendererTests
         var wide = MarqueeHostLabelRenderer.Resolve(
             new EsPoint(10, 10), "W", 14.0, s_text, s_background, padding: 8, Measure);
 
-        Assert.True(wide.Bounds.Width > narrow.Bounds.Width, "内側余白が背景の大きさへ反映されていない");
-        Assert.True(wide.Bounds.Height > narrow.Bounds.Height, "内側余白が背景の高さへ反映されていない");
+        Assert.True(wide.DipRect.Width > narrow.DipRect.Width, "内側余白が背景の大きさへ反映されていない");
+        Assert.True(wide.DipRect.Height > narrow.DipRect.Height, "内側余白が背景の高さへ反映されていない");
     }
 
     [Fact]

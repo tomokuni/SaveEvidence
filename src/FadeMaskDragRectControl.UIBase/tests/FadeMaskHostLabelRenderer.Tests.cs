@@ -26,8 +26,8 @@ public class FadeMaskHostLabelRendererTests
     /// <summary>情報ラベルのフォントサイズ（DIP）。</summary>
     private const double InfoFontSize = 14.0;
 
-    /// <summary>穴あけ矩形の左上（DIP）。</summary>
-    private static readonly EsPoint HoleTopLeft = new(20, 30);
+    /// <summary>注目矩形の左上（DIP）。</summary>
+    private static readonly EsPoint FocusTopLeft = new(20, 30);
 
     /// <summary>測定に使う固定の実寸（テキストの実測値を模した値）。</summary>
     private static readonly EsSize MeasuredSize = new(40.0, 14.0);
@@ -50,19 +50,19 @@ public class FadeMaskHostLabelRendererTests
         };
 
     /// <summary>テスト用の描画計画を生成する。</summary>
-    /// <param name="holeRect">穴あけ矩形（null の場合は穴あけなし）。</param>
-    /// <param name="labelAnchor">ラベルの基準点。 null の場合は穴あけ矩形の左上を使う。</param>
+    /// <param name="focusDipRect">注目矩形（null の場合は注目なし）。</param>
+    /// <param name="labelAnchor">ラベルの基準点。 null の場合は注目矩形の左上を使う。</param>
     /// <returns>描画計画（装飾・ハンドル・マーカー・ラベルは本テストの対象外のため空）。</returns>
     /// <remarks>
-    /// 基準点は既定で穴あけ矩形の左上にする（積み上げの規則だけを検証するため）。<br/>
+    /// 基準点は既定で注目矩形の左上にする（積み上げの規則だけを検証するため）。<br/>
     /// 内側へ寄せた基準点を使う場合は <paramref name="labelAnchor"/> を指定する。
     /// </remarks>
-    private static MarqueeDrawPlan CreateContent(EsRect? holeRect, EsPoint? labelAnchor = null)
+    private static MarqueeDrawPlan CreateContent(EsRect? focusDipRect, EsPoint? labelAnchor = null)
         => new(
             MarqueeAppearance.Default,
             default,
-            holeRect,
-            labelAnchor ?? holeRect?.TopLeft,
+            focusDipRect,
+            labelAnchor ?? focusDipRect?.TopLeft,
             [],
             [],
             null,
@@ -87,7 +87,7 @@ public class FadeMaskHostLabelRendererTests
     private static EsSize Measure(string text, double fontSize) => MeasuredSize;
 
     [Fact]
-    public void 解決_穴あけ矩形が無ければ空を返す()
+    public void 解決_注目矩形が無ければ空を返す()
     {
         var placements = FadeMaskHostLabelRenderer.Resolve(
             CreateContent(null), CreateLabels(), CreateAppearance(), "確定: Enter", "メモ帳", Measure);
@@ -99,7 +99,7 @@ public class FadeMaskHostLabelRendererTests
     public void 解決_操作ラベルと情報ラベルを縦に積む()
     {
         var placements = FadeMaskHostLabelRenderer.Resolve(
-            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
             CreateLabels(),
             CreateAppearance(),
             "確定: Enter",
@@ -107,13 +107,13 @@ public class FadeMaskHostLabelRendererTests
             Measure);
 
         Assert.Equal(2, placements.Count);
-        // 操作ラベルは穴あけ矩形の左上に置かれる（左端は穴あけ矩形の左端に揃える）
-        Assert.Equal(HoleTopLeft, placements[0].Bounds.TopLeft);
+        // 操作ラベルは注目矩形の左上に置かれる（左端は注目矩形の左端に揃える）
+        Assert.Equal(FocusTopLeft, placements[0].DipRect.TopLeft);
         Assert.Equal("確定: Enter", placements[0].Text);
         // 情報ラベルは操作ラベルの下（行送り = 行の高さ + 内側余白 × 2）
-        var infoTop = HoleTopLeft.Y + OperationFontSize + CreateAppearance().LabelPadding * 2;
-        Assert.Equal(infoTop, placements[1].Bounds.Y);
-        Assert.Equal(HoleTopLeft.X, placements[1].Bounds.X);
+        var infoTop = FocusTopLeft.Y + OperationFontSize + CreateAppearance().LabelPadding * 2;
+        Assert.Equal(infoTop, placements[1].DipRect.Y);
+        Assert.Equal(FocusTopLeft.X, placements[1].DipRect.X);
         Assert.Equal("メモ帳", placements[1].Text);
     }
 
@@ -123,7 +123,7 @@ public class FadeMaskHostLabelRendererTests
         var appearance = CreateAppearance() with { ShowSizeLabel = true };
 
         var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
-            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
             CreateLabels(showInfo: false),
             appearance,
             "確定: Enter",
@@ -131,8 +131,8 @@ public class FadeMaskHostLabelRendererTests
             Measure));
 
         // サイズラベルの行送り分だけ下へずれる（行の高さは外観のフォントサイズを使う）
-        var expectedTop = HoleTopLeft.Y + appearance.SizeLabelFontSize + appearance.LabelPadding * 2;
-        Assert.Equal(expectedTop, placement.Bounds.Y);
+        var expectedTop = FocusTopLeft.Y + appearance.SizeLabelFontSize + appearance.LabelPadding * 2;
+        Assert.Equal(expectedTop, placement.DipRect.Y);
     }
 
     /// <summary>サイズラベルを描かない設定では付加情報が先頭へ繰り上がることを検証する。</summary>
@@ -140,14 +140,14 @@ public class FadeMaskHostLabelRendererTests
     public void 解決_サイズラベルを描かない設定なら先頭へ繰り上がる()
     {
         var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
-            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
             CreateLabels(showInfo: false),
             CreateAppearance(),
             "確定: Enter",
             null,
             Measure));
 
-        Assert.Equal(HoleTopLeft.Y, placement.Bounds.Y);
+        Assert.Equal(FocusTopLeft.Y, placement.DipRect.Y);
     }
 
     [Theory]
@@ -157,7 +157,7 @@ public class FadeMaskHostLabelRendererTests
     public void 解決_表示スイッチが無効ならその行を返さない(bool showOperation, bool showInfo)
     {
         var placements = FadeMaskHostLabelRenderer.Resolve(
-            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
             CreateLabels(showOperation, showInfo),
             CreateAppearance(),
             "確定: Enter",
@@ -166,15 +166,15 @@ public class FadeMaskHostLabelRendererTests
 
         if (showOperation)
         {
-            // 操作ラベルが先頭（穴あけ矩形の左上）に置かれる
+            // 操作ラベルが先頭（注目矩形の左上）に置かれる
             Assert.Equal("確定: Enter", placements[0].Text);
-            Assert.Equal(HoleTopLeft, placements[0].Bounds.TopLeft);
+            Assert.Equal(FocusTopLeft, placements[0].DipRect.TopLeft);
         }
         else if (showInfo)
         {
-            // 操作ラベルを描かない場合は情報ラベルが先頭（穴あけ矩形の左上）へ繰り上がる
+            // 操作ラベルを描かない場合は情報ラベルが先頭（注目矩形の左上）へ繰り上がる
             Assert.Equal("メモ帳", Assert.Single(placements).Text);
-            Assert.Equal(HoleTopLeft, placements[0].Bounds.TopLeft);
+            Assert.Equal(FocusTopLeft, placements[0].DipRect.TopLeft);
         }
         else
         {
@@ -182,35 +182,35 @@ public class FadeMaskHostLabelRendererTests
         }
     }
 
-    /// <summary>基準点が穴あけ矩形の左上と異なる場合は基準点から積むことを検証する。</summary>
+    /// <summary>基準点が注目矩形の左上と異なる場合は基準点から積むことを検証する。</summary>
     /// <remarks>基準点は背景が選択矩形の枠線に重ならないよう内側へ寄せた値であり、積み上げはその値を基準にする。</remarks>
     [Fact]
     public void 解決_基準点から積む()
     {
-        var hole = new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80);
-        var anchor = new EsPoint(HoleTopLeft.X + 2, HoleTopLeft.Y + 2);
+        var focus = new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80);
+        var anchor = new EsPoint(FocusTopLeft.X + 2, FocusTopLeft.Y + 2);
 
         var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
-            CreateContent(hole, anchor),
+            CreateContent(focus, anchor),
             CreateLabels(showInfo: false),
             CreateAppearance(),
             "確定: Enter",
             null,
             Measure));
 
-        Assert.Equal(anchor, placement.Bounds.TopLeft);
+        Assert.Equal(anchor, placement.DipRect.TopLeft);
     }
 
     /// <summary>文言が空の行を返さないことを検証する。</summary>
     /// <remarks>
     /// 空文字は「描かない」を意味する（ホストの付加情報が対象外のモード等で発生する）。<br/>
-    /// 描かない行の分だけ後続の行が繰り上がる（穴あけ矩形の左上から積み直す）。
+    /// 描かない行の分だけ後続の行が繰り上がる（注目矩形の左上から積み直す）。
     /// </remarks>
     [Fact]
     public void 解決_文言が空ならその行を返さない()
     {
         var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
-            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
             CreateLabels(),
             CreateAppearance(),
             string.Empty,
@@ -218,7 +218,7 @@ public class FadeMaskHostLabelRendererTests
             Measure));
 
         Assert.Equal("メモ帳", placement.Text);
-        Assert.Equal(HoleTopLeft, placement.Bounds.TopLeft);
+        Assert.Equal(FocusTopLeft, placement.DipRect.TopLeft);
     }
 
     /// <summary>空白のみの文言を空として扱わないことを検証する。</summary>
@@ -227,7 +227,7 @@ public class FadeMaskHostLabelRendererTests
     public void 解決_空白のみの文言は返す()
     {
         var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
-            CreateContent(new EsRect(HoleTopLeft.X, HoleTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
             CreateLabels(showInfo: false),
             CreateAppearance(),
             "   ",

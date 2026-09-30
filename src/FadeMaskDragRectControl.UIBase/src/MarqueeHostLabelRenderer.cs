@@ -47,8 +47,8 @@ public static class MarqueeHostLabelRenderer
         ArgumentNullException.ThrowIfNull(measureText);
 
         var textSize = measureText(text, fontSize);
-        var bounds = new EsRect(anchor.X, anchor.Y, textSize.Width + padding * 2, textSize.Height + padding * 2);
+        var dipRect = new EsRect(anchor.X, anchor.Y, textSize.Width + padding * 2, textSize.Height + padding * 2);
 
-        return new MarqueeLabelPlacement(bounds, padding, padding, text, fontSize, textColor, backgroundColor);
+        return new MarqueeLabelPlacement(dipRect, padding, padding, text, fontSize, textColor, backgroundColor);
     }
 }

@@ -44,7 +44,7 @@ FadeMaskDragRectOptions options = FadeMaskDragRectOptions.Default with
 {
     Loupe = LoupeOptions.Default with { RequestedSize = 240 },
 };
-// 選択矩形の設定は外側の装飾（暗転マスク・穴あけ枠）の寸法と表示可否も含むため、そのまま 1 回で分配できる
+// 選択矩形の設定は外側の装飾（暗転マスク・外枠）の寸法と表示可否も含むため、そのまま 1 回で分配できる
 // （色・枠線の太さ・表示可否は外観（提示層の MarqueeAppearance / LoupeAppearance）が単一所有し、ホストがコントロールの Appearance へ設定する）
 MarqueeOptions marquee = options.Marquee;
 
@@ -57,7 +57,7 @@ bool usable = FadeMaskDragRectSelection.IsUsable(width, height);
 
 // ルーペ画像への選択矩形オーバーレイ（倍率 2 未満では描画しない）
 FadeMaskDragRectOverlay.DrawSelectionRect(
-    bitmap, selectionRect, captureTopLeft, scale, colorA, colorB);
+    bitmap, selectionDomainRect, captureTopLeft, scale, colorA, colorB);
 ```
 
 | メソッド | 用途 |
@@ -74,7 +74,7 @@ FadeMaskDragRectOverlay.DrawSelectionRect(
 2. **モードの単一所有**: `FadeMaskDragRectMode` は本プロジェクトのみが定義する。 各 UI は `Mode` プロパティの型として参照する。
 3. **モード解釈の単一所有**: モードと状態（表示可否）の対応は `FadeMaskDragRectModes` / `FadeMaskDragRectState` のみが持つ。 UI 側に `switch` を書かない。
 4. **選択矩形の可否も本プロジェクトが持つ**（UI 側に「幅 > 0」の判定を書かない）。
-5. **枠線の太さは外観が単一所有する**: 選択枠線は暗転マスクの穴あけ枠と重なるため、`MarqueeAppearance.OuterBorderThickness` の 1 値だけが太さを持つ（写し替える導出処理を持たない）。
+5. **枠線の太さは外観が単一所有する**: 選択枠線は暗転マスクの外枠と重なるため、`MarqueeAppearance.OuterBorderThickness` の 1 値だけが太さを持つ（写し替える導出処理を持たない）。
 6. **描画は `EsBitmap` へ直接書く**: UI の描画 API を使わないため、両 UI で共有できる。
 7. **座標はコア型**: `EsRect` / `EsPoint` を使用する（変換は各 UI の境界で 1 行）。 色を持つのはルーペ画像上の破線（`SelectionRectColorA` / `SelectionRectColorB`）だけで、コントロールの外観色は持たない（外観（提示層の `MarqueeAppearance` / `LoupeAppearance`）が単一所有する）。
 

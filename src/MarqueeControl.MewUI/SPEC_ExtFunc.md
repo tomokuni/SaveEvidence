@@ -67,8 +67,8 @@ Avalonia 版と同一の挙動になります。
 | `SizeLabelColor` / `SizeLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | サイズラベルの文字色と背景色 |
 | `CoordLabelColor` / `CoordLabelBackgroundColor` | `System.Drawing.Color` | 白 / 黒 60% | 座標ラベルの文字色と背景色 |
 | `SizeLabelFontSize` / `CoordLabelFontSize` | `double` | 14.0 / 12.0 | サイズラベル（1 行目）と座標ラベルのフォントサイズ（DIP。 6〜48 に補正。 非数は既定値へ補正） |
-| `OverlayColor` / `OuterBorderColor` | `System.Drawing.Color` | 黒 50% / `#FFA9A9A9` | 暗転マスクと穴あけ枠の色 |
-| `InnerFillColor` / `InnerBorderColor` | `System.Drawing.Color` | 透明 / 透明 | 穴あけ矩形の内側の塗り色と枠線色 |
+| `OverlayColor` / `OuterBorderColor` | `System.Drawing.Color` | 黒 50% / `#FFA9A9A9` | 暗転マスクと外枠の色 |
+| `InnerFillColor` / `InnerBorderColor` | `System.Drawing.Color` | 透明 / 透明 | 注目矩形の内側の塗り色と枠線色 |
 
 ## 5. メソッド
 
@@ -86,7 +86,7 @@ Avalonia 版と同一の挙動になります。
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `CurrentSnapshot` | `MarqueeSnapshot` | 現在の状態（State / SelectionRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。 `readonly record struct`） |
+| `CurrentSnapshot` | `MarqueeSnapshot` | 現在の状態（State / SelectionDomainRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。 `readonly record struct`） |
 
 ## 7. イベント
 
@@ -116,7 +116,7 @@ using EsUtil.SaveEvidence.Marquee.MewUI;
 // サイズ・座標ラベルはコントロールがテキスト要素として表示する（図形もコントロールが描く）。
 marquee.Rendered += (_, e) =>
 {
-    // e.Content.HoleRect（基準）と Options.Labels（外観）を使って描く。
+    // e.Content.FocusDipRect（基準）と Options.Labels（外観）を使って描く。
 };
 ```
 
@@ -183,7 +183,7 @@ var marquee = new MarqueeControl
     // 外観（色・フォントサイズ・枠線の太さ・表示可否）
     Appearance = MarqueeAppearance.Default with
     {
-        // 選択枠線は装飾（暗転マスクの穴あけ枠）が描く
+        // 選択枠線は装飾（暗転マスクの外枠）が描く
         OuterBorderColor = System.Drawing.Color.FromArgb(255, 0, 120, 215),
         OuterBorderThickness = 2.0,
         ShowOverlay = true,

@@ -8,9 +8,9 @@
 
 **操作の唯一の窓口は公開ファサード `Marquee`** です。 UI 層とホストは本型だけを参照します（状態機械と幾何の導出は内部実装です）。
 
-**描画は本コアの関心事ではありません**。 描画 API も描画ポートも持たず、返すのは幾何（穴あけ矩形・ハンドル・始点マーカー）だけです。 色・フォント・枠線の太さ・表示可否・文言・描画順は描画層（本コアを参照する上位の層）が単一所有します。
+**描画は本コアの関心事ではありません**。 描画 API も描画ポートも持たず、返すのは幾何（注目矩形・ハンドル・始点マーカー）だけです。 色・フォント・枠線の太さ・表示可否・文言・描画順は描画層（本コアを参照する上位の層）が単一所有します。
 
-**装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。 装飾は選択矩形単体の概念ではなく、組み込み先の表示だからです（描画層が単一所有します）。
+**装飾（暗転マスク・外枠・内側の塗り）の概念を持ちません**。 装飾は選択矩形単体の概念ではなく、組み込み先の表示だからです（描画層が単一所有します）。
 
 UI 非依存のためヘッドレス実行が不要で、`[Fact]` で並列実行できます。
 
@@ -30,7 +30,7 @@ marquee.Move(new EsPoint(400, 300));
 var handled = marquee.KeyDown(EsKey.Right, cursorPosition: null);   // nudge・Escape・Enter
 marquee.Release(new EsPoint(400, 300));
 
-// 1 フレーム分の幾何（描画領域のサイズを渡す。穴あけ矩形・ハンドル・マーカー）
+// 1 フレーム分の幾何（描画領域のサイズを渡す。注目矩形・ハンドル・マーカー）
 var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(800, 600)));
 
 // 通知（公開イベントへ転送する）
@@ -44,7 +44,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 | グループ | 型 |
 | --- | --- |
 | ファサード | `Marquee`（操作の唯一の窓口） / `Marquee.Limits`（既定値・安全域・未設定の解決規則） |
-| 幾何 | `Drawing.MarqueeGeometry` / `Drawing.MarqueeHandles` / `Drawing.MarqueeMarker` / `Drawing.MarqueeHoleRect` / `Drawing.MarqueeRenderRequest` |
+| 幾何 | `Drawing.MarqueeGeometry` / `Drawing.MarqueeHandles` / `Drawing.MarqueeMarker` / `Drawing.MarqueeRenderRequest` |
 | 効果と通知 | `Contract.IMarqueeEffects` / `Contract.MarqueeEffectsBase` / `Interaction.MarqueeNotice` / `Interaction.MarqueeNoticeKind` / `Interaction.MarqueeCursorKind` |
 | 状態の値 | `Interaction.MarqueeHitTarget` / `Interaction.MarqueeInteractionState` / `Interaction.MarqueeSnapshot` |
 | 設定 | `Setting.MarqueeOptions`（寸法・対話パラメータ。 色・フォント・表示可否は持たない） |

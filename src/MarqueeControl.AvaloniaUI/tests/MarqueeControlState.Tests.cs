@@ -73,7 +73,7 @@ public class MarqueeControlStateTests
             ShowCoordLabel = false,
             OuterBorderThickness = 3.0,
         };
-        control.HighlightRect = new EsRect(1, 2, 3, 4);
+        control.HighlightDomainRect = new EsRect(1, 2, 3, 4);
 
         var options = control.Options;
         Assert.Equal(3.0, control.Appearance.OuterBorderThickness);
@@ -85,7 +85,7 @@ public class MarqueeControlStateTests
         Assert.Equal(24.0, options.MarkerLength);
         Assert.False(control.Appearance.ShowCoordLabel);
         Assert.Equal(14.0, control.Appearance.CoordLabelFontSize);
-        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightRect);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightDomainRect);
     }
 
     // ====================================================================
@@ -97,20 +97,20 @@ public class MarqueeControlStateTests
     {
         var control = CreateControl();
 
-        // 未選択時: State=NoSelection / SelectionRect=0x0 / HasSelection=false / NudgeActive=false
+        // 未選択時: State=NoSelection / SelectionDomainRect=0x0 / HasSelection=false / NudgeActive=false
         var snap0 = control.CurrentSnapshot;
         Assert.Equal(MarqueeInteractionState.NoSelection, snap0.State);
-        Assert.Equal(default, snap0.SelectionRect);
+        Assert.Equal(default, snap0.SelectionDomainRect);
         Assert.Equal(MarqueeHitTarget.None, snap0.ActiveTarget);
         Assert.False(snap0.HasSelection);
         Assert.False(snap0.IsMouseDown);
         Assert.False(snap0.NudgeActive);
 
-        // 選択時: State=Selected / SelectionRect 反映 / HasSelection=true
+        // 選択時: State=Selected / SelectionDomainRect 反映 / HasSelection=true
         control.SetSelection(new Rect(10, 10, 50, 40));
         var snap1 = control.CurrentSnapshot;
         Assert.Equal(MarqueeInteractionState.Selected, snap1.State);
-        Assert.Equal(new EsRect(10, 10, 50, 40), snap1.SelectionRect);
+        Assert.Equal(new EsRect(10, 10, 50, 40), snap1.SelectionDomainRect);
         Assert.True(snap1.HasSelection);
         Assert.False(snap1.NudgeActive);
     }
@@ -266,7 +266,7 @@ public class MarqueeControlStateTests
 
         Assert.NotNull(raised);
         // Snapshot はイベント引数の Rect と同一の選択矩形（ドメイン座標）を保持する
-        Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Snapshot.SelectionRect);
+        Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Snapshot.SelectionDomainRect);
         // 選択復元後はハンドルなし（新規選択・移動・未選択時は None）
         Assert.Equal(MarqueeHitTarget.None, raised.Snapshot.ActiveTarget);
         // 選択確定後の状態は Selected

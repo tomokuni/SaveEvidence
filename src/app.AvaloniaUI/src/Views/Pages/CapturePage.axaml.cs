@@ -1027,7 +1027,7 @@ public sealed partial class CapturePage : UserControl
         {
             // ハイライトなし（外側・内側とも描かない。 サイズ・座標ラベルも表示しない）
             AutoCropHighlight.Appearance = s_autoCropIdleAppearance;
-            AutoCropHighlight.HighlightRect = null;
+            AutoCropHighlight.HighlightDomainRect = null;
             return;
         }
 
@@ -1036,7 +1036,7 @@ public sealed partial class CapturePage : UserControl
         var bottomRight = ContentToViewportDomain(new Point(target.Right, target.Bottom));
 
         AutoCropHighlight.Appearance = s_autoCropHighlightAppearance;
-        AutoCropHighlight.HighlightRect = new EsRect(
+        AutoCropHighlight.HighlightDomainRect = new EsRect(
             topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 

@@ -103,8 +103,8 @@ classDiagram
   }
   class FadeMaskDragRectOverlay {
     <<static>>
-    +DrawSelectionRect(bitmap, selectionRect, captureTopLeft, scale, colorA, colorB)$
-    +EnumerateDashes(selectionRect, captureTopLeft, scale, pixelSize)$ IReadOnlyList~Dash~
+    +DrawSelectionRect(bitmap, selectionDomainRect, captureTopLeft, scale, colorA, colorB)$
+    +EnumerateDashes(selectionDomainRect, captureTopLeft, scale, pixelSize)$ IReadOnlyList~Dash~
   }
   class Dash {
     <<readonly record struct>>
@@ -161,7 +161,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A[EnumerateDashes selectionRect, captureTopLeft, scale, pixelSize] --> B{scale が 2.0 未満か}
+  A[EnumerateDashes selectionDomainRect, captureTopLeft, scale, pixelSize] --> B{scale が 2.0 未満か}
   B -- はい --> Z[空を返す（破線が潰れるため描かない）]
   B -- いいえ --> C[ドメイン座標 → 画像ピクセル座標へ変換（終点は +1 して閉区間化）]
   C --> D{切り出し領域と交差するか}
@@ -181,7 +181,7 @@ flowchart TD
 | モードと表示可否の対応 | `FadeMaskDragRectModes` / `FadeMaskDragRectState` |
 | 選択として成立するサイズの条件（幅 > 0 かつ 高さ > 0） | `FadeMaskDragRectSelection.IsUsable` |
 | 選択矩形の破線の幾何（位置・長さ・色順・最小倍率） | `FadeMaskDragRectOverlay.EnumerateDashes` |
-| 枠線の太さ（選択枠線と暗転マスクの穴あけ枠で共通） | `MarqueeAppearance.OuterBorderThickness`（提示層） |
+| 枠線の太さ（選択枠線と暗転マスクの外枠で共通） | `MarqueeAppearance.OuterBorderThickness`（提示層） |
 | コントロールの外観色 | 提示層の `MarqueeAppearance` / `LoupeAppearance`（本プロジェクトは持たない） |
 | 操作・情報ラベルの文言 | ホスト（本プロジェクトは外観のみ持つ） |
 

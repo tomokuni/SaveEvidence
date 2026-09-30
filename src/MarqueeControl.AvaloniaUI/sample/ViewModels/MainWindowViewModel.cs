@@ -52,7 +52,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private Rect _selectionRect;
 
     /// <summary>現在の選択矩形（ドメイン座標）。</summary>
-    public Rect SelectionRect
+    public Rect SelectionDomainRect
     {
         get => _selectionRect;
         set => SetProperty(ref _selectionRect, value);
@@ -228,7 +228,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public void UpdateSelection(bool hasSelection, Rect rect)
     {
         HasSelection = hasSelection;
-        SelectionRect = rect;
+        SelectionDomainRect = rect;
 
         if (!hasSelection)
         {

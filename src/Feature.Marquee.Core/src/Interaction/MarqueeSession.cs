@@ -74,7 +74,7 @@ internal sealed class MarqueeSession
 
     /// <summary>現在の選択矩形（ドメイン座標）。</summary>
     /// <value>選択矩形。 未選択時は 0x0。</value>
-    internal EsRect SelectionRect => _state.SelectionRect;
+    internal EsRect SelectionDomainRect => _state.SelectionDomainRect;
 
     /// <summary>選択矩形が有効かどうか（幅・高さが 0 より大きい）。</summary>
     /// <value>選択ありの場合は true。</value>
@@ -172,7 +172,7 @@ internal sealed class MarqueeSession
             // 移動（Move）は掴んだ位置を維持するのが自然なためスナップしない。
             if (handle != MarqueeHitTarget.Move)
             {
-                var handlePosition = new MarqueeSelection(_state.SelectionRect).Handle(handle);
+                var handlePosition = new MarqueeSelection(_state.SelectionDomainRect).Handle(handle);
                 _state.SnapToHandle(handlePosition);
                 feedback = feedback with
                 {
@@ -265,8 +265,8 @@ internal sealed class MarqueeSession
 
         if (wasDragging)
         {
-            var cancelled = _state.SelectionRect.Width < Options.MinSelectionSize
-                || _state.SelectionRect.Height < Options.MinSelectionSize;
+            var cancelled = _state.SelectionDomainRect.Width < Options.MinSelectionSize
+                || _state.SelectionDomainRect.Height < Options.MinSelectionSize;
             _state.EndDrag();
 
             if (cancelled)
@@ -421,8 +421,8 @@ internal sealed class MarqueeSession
     {
         // 選択の復元は nudge 状態を解除するため、解除の判定は復元より前に行う（カーソルの再表示を落とさない）
         var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
-        var selectionRect = Options.ClampToDomainBounds ? _state.ClipRectToBounds(rect) : rect;
-        _state.SetSelection(selectionRect);
+        var selectionDomainRect = Options.ClampToDomainBounds ? _state.ClipRectToBounds(rect) : rect;
+        _state.SetSelection(selectionDomainRect);
         NotifyState(MarqueeNoticeKind.SelectionChanged);
         return feedback;
     }
@@ -449,7 +449,7 @@ internal sealed class MarqueeSession
             return default;
         }
 
-        Log.LogConfirmRequested(_state.SelectionRect);
+        Log.LogConfirmRequested(_state.SelectionDomainRect);
         NotifyState(MarqueeNoticeKind.ConfirmRequested);
         var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
         _state.Reset();
@@ -541,12 +541,12 @@ internal sealed class MarqueeSession
     /// </remarks>
     private MarqueeFeedback DoubleClick(EsPoint position, MarqueeCursorAction cursor)
     {
-        var inside = _state.HasSelection && _state.SelectionRect.Contains(position);
+        var inside = _state.HasSelection && _state.SelectionDomainRect.Contains(position);
         Log.LogDoubleClick(position.X, position.Y, inside);
 
         if (inside)
         {
-            Log.LogConfirmRequested(_state.SelectionRect);
+            Log.LogConfirmRequested(_state.SelectionDomainRect);
             NotifyAt(MarqueeNoticeKind.ConfirmRequested, position);
             _state.Reset();
             return new MarqueeFeedback { Redraw = true, Cursor = cursor };

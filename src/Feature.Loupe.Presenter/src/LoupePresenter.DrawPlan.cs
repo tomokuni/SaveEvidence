@@ -44,6 +44,6 @@ public partial class LoupePresenter
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（選択矩形の枠線と同じ式）。<br/>
     /// 太さは面の短辺で上限を取る（面より太い枠線は面全体を覆い、矩形が面からはみ出さない）。
     /// </remarks>
-    internal static IReadOnlyList<EsRect> ComputeBorderRects(EsRect surface, double thickness)
+    internal static IReadOnlyList<EsRect> ComputeBorderPixelRects(EsRect surface, double thickness)
         => surface.ComputeInnerEdges(Math.Min(thickness, Math.Min(surface.Width, surface.Height)));
 }

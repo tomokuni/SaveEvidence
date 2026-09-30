@@ -320,7 +320,7 @@ public sealed partial class CropViewControl : Panel
     public bool HasSelection => _selectionOverlay.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）。 未選択時は 0x0 の空矩形。</summary>
-    public Rect SelectionRect => _selectionOverlay.SelectionRect;
+    public Rect SelectionDomainRect => _selectionOverlay.SelectionDomainRect;
 
     /// <summary>選択状態を外部から設定する（暗転マスクとルーペへ同期）。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。 サイズ 0 以下は選択なし。</param>

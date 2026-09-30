@@ -25,7 +25,7 @@ public sealed class MarqueeRenderedEventArgs : EventArgs
     /// <summary>1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・ラベル・層の順序）。</summary>
     /// <value>コントロールが実際に描画に使った値（描くものが無い項目は空・null）。</value>
     /// <remarks>
-    /// ラベルの契約も含むため、ホストは穴あけ矩形（<see cref="MarqueeDrawPlan.HoleRect"/>）を基準に付加情報を配置できる。<br/>
+    /// ラベルの契約も含むため、ホストは注目矩形（<see cref="MarqueeDrawPlan.FocusDipRect"/>）を基準に付加情報を配置できる。<br/>
     /// 文字の有無は <see cref="MarqueeDrawPlan.HasText"/> で判定できる。
     /// </remarks>
     public MarqueeDrawPlan Content { get; }

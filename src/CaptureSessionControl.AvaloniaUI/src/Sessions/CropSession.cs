@@ -131,7 +131,7 @@ internal sealed class CropSession(
             _completion.TrySetResult(default(EsRectInt));
         }
 
-        void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionRect);
+        void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionDomainRect);
 
         void OnCancelEvent(object? sender, EventArgs e) => OnCancel();
 
@@ -209,7 +209,7 @@ internal sealed class CropSession(
         // サイズラベルも描画時に最新のズーム率から生成する（ズーム率表示の追従）。
         // 書式と「未選択なら描かない」規則はコアが単一所有する。
         cropView.SizeLabelOverrideProvider = () => CropLabelTexts.ResolveSizeLabel(
-            cropView.HasSelection, cropView.SelectionRect.ToEsRect(), cropView.ZoomPercent);
+            cropView.HasSelection, cropView.SelectionDomainRect.ToEsRect(), cropView.ZoomPercent);
         // 操作ラベルの文言はホスト（切り出し文脈）が与える（汎用コアは文言を持たない）。
         // 情報ラベルは切り出しでは表示しない（CaptureLabelTexts が切り出しモードで null を返す）。
         cropView.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(cropView.SelectionMode);

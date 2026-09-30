@@ -99,7 +99,7 @@ flowchart TB
     end
     subgraph Dep["内包コントロール（外部プロジェクト）"]
         direction TB
-        DR["MarqueeControl<br/>EsUtil.SaveEvidence.Marquee.AvaloniaUI<br/>（選択矩形の外側の装飾（暗転マスク・穴あけ枠・ハイライト）も描画）"]
+        DR["MarqueeControl<br/>EsUtil.SaveEvidence.Marquee.AvaloniaUI<br/>（選択矩形の外側の装飾（暗転マスク・外枠・ハイライト）も描画）"]
 
         LC["LoupeControl<br/>EsUtil.SaveEvidence.Loupe.AvaloniaUI"]
     end
@@ -151,14 +151,14 @@ flowchart TB
 
 | コンポーネント | プロジェクト | 責務 |
 | --- | --- | --- |
-| `MarqueeControl` | MarqueeControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート）と、選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の描画。 **サイズラベルとカーソル座標ラベルはテキスト要素として配置し**、操作・情報ラベルは本クラス（ホスト）が `Options.Labels` に従って描く |
+| `MarqueeControl` | MarqueeControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート）と、選択矩形の**外側に描く装飾**（暗転マスク・外枠・ハイライト）の描画。 **サイズラベルとカーソル座標ラベルはテキスト要素として配置し**、操作・情報ラベルは本クラス（ホスト）が `Options.Labels` に従って描く |
 | `LoupeControl` | LoupeControl | 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算）。 **中心座標ラベルはテキスト要素として配置する** |
 
 ### 6.5 公開イベント引数
 
 | 型 | プロジェクト | 用途 |
 | --- | --- | --- |
-| `FadeMaskDragRectSelectionEventArgs` | 本プロジェクト | 確定要求イベントの引数（`SelectionRect: Rect`（ドメイン座標）） |
+| `FadeMaskDragRectSelectionEventArgs` | 本プロジェクト | 確定要求イベントの引数（`SelectionDomainRect: Rect`（ドメイン座標）） |
 | `FadeMaskDragRectPointEventArgs` | 本プロジェクト | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
 | `FadeMaskDragRectMode` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 動作モード（描画モード・可視性・全面暗転の切替） |
 | `FadeMaskDragRectOptions` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 **色は含まない**） |

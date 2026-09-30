@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Marquee.Sample.Presentation;
 /// 外観（<see cref="MarqueePresenter.Appearance"/>）と描画計画（<see cref="MarqueeDrawPlan"/>）を派生クラスで差し替えられる。<br/>
 /// 差し替えは公開 API だけで行う（コアの internal 型も描画 API も参照しない）。<br/>
 /// <br/>
-/// <b>見た目</b>: 穴あけ枠を破線風に分割し、内側に三分割のガイド線を引く。<br/>
+/// <b>見た目</b>: 外枠を破線風に分割し、内側に三分割のガイド線を引く。<br/>
 /// 破線もガイド線も「塗る矩形の列」として計画へ載せるため、描画実装（<c>MarqueeContextPainter</c> / <c>MarqueeSkiaPainter</c>）は<br/>
 /// 変更なしにそのまま描ける（層の順序は既定の計画から引き継ぐ）。<br/>
 /// <br/>
@@ -63,39 +63,39 @@ internal sealed class GuideMarqueePresenter : MarqueePresenter
             InnerFillColor = InnerFillColor,
         };
 
-    /// <summary>穴あけ矩形へ破線の枠と三分割のガイド線を載せた描画計画を解決する。</summary>
+    /// <summary>注目矩形へ破線の枠と三分割のガイド線を載せた描画計画を解決する。</summary>
     /// <param name="clientSize">描画領域のサイズ（DIP）。</param>
     /// <param name="measureText">テキストの実寸を測る関数。 null 不可。</param>
-    /// <returns>装飾だけを差し替えた描画計画。 穴あけ矩形が無い場合は既定の計画をそのまま返す。</returns>
+    /// <returns>装飾だけを差し替えた描画計画。 注目矩形が無い場合は既定の計画をそのまま返す。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>
-    /// 穴あけ矩形が無い場合（未選択かつハイライトも無い）は差し替える対象が無いため、既定の計画を返す<br/>
+    /// 注目矩形が無い場合（未選択かつハイライトも無い）は差し替える対象が無いため、既定の計画を返す<br/>
     /// （装飾の層は計画が持つ値から決まるため、値の無い層を計画へ足さない）。
     /// </remarks>
     public override MarqueeDrawPlan ResolveDrawPlan(EsSize clientSize, Func<string, double, EsSize> measureText)
     {
         var plan = base.ResolveDrawPlan(clientSize, measureText);
 
-        return plan.HoleRect is { } hole
+        return plan.FocusDipRect is { } focus
             ? plan with
             {
-                OuterBorderRects = CreateDashedFrame(hole),
-                InnerBorderRects = CreateThirdsGuides(hole),
+                OuterBorderDipRects = CreateDashedFrame(focus),
+                InnerBorderDipRects = CreateThirdsGuides(focus),
             }
             : plan;
     }
 
     /// <summary>矩形の 4 辺を破線へ分割する。</summary>
-    /// <param name="hole">穴あけ矩形（DIP）。</param>
+    /// <param name="focus">注目矩形（DIP）。</param>
     /// <returns>破線 1 本ずつの矩形（DIP）。</returns>
-    private static IReadOnlyList<EsRect> CreateDashedFrame(EsRect hole)
+    private static IReadOnlyList<EsRect> CreateDashedFrame(EsRect focus)
     {
         var rects = new List<EsRect>();
 
-        AddHorizontalDashes(rects, hole.X, hole.Y, hole.Width);
-        AddHorizontalDashes(rects, hole.X, hole.Bottom - LineThickness, hole.Width);
-        AddVerticalDashes(rects, hole.X, hole.Y, hole.Height);
-        AddVerticalDashes(rects, hole.Right - LineThickness, hole.Y, hole.Height);
+        AddHorizontalDashes(rects, focus.X, focus.Y, focus.Width);
+        AddHorizontalDashes(rects, focus.X, focus.Bottom - LineThickness, focus.Width);
+        AddVerticalDashes(rects, focus.X, focus.Y, focus.Height);
+        AddVerticalDashes(rects, focus.Right - LineThickness, focus.Y, focus.Height);
 
         return rects;
     }
@@ -132,20 +132,20 @@ internal sealed class GuideMarqueePresenter : MarqueePresenter
         }
     }
 
-    /// <summary>穴あけ矩形の内側へ三分割のガイド線を引く。</summary>
-    /// <param name="hole">穴あけ矩形（DIP）。</param>
+    /// <summary>注目矩形の内側へ三分割のガイド線を引く。</summary>
+    /// <param name="focus">注目矩形（DIP）。</param>
     /// <returns>ガイド線の矩形（縦 2 本 + 横 2 本。 DIP）。</returns>
-    private static IReadOnlyList<EsRect> CreateThirdsGuides(EsRect hole)
+    private static IReadOnlyList<EsRect> CreateThirdsGuides(EsRect focus)
     {
-        var horizontal = hole.Height / ThirdsDenominator;
-        var vertical = hole.Width / ThirdsDenominator;
+        var horizontal = focus.Height / ThirdsDenominator;
+        var vertical = focus.Width / ThirdsDenominator;
 
         return
         [
-            new EsRect(hole.X + vertical, hole.Y, LineThickness, hole.Height),
-            new EsRect(hole.X + vertical * 2, hole.Y, LineThickness, hole.Height),
-            new EsRect(hole.X, hole.Y + horizontal, hole.Width, LineThickness),
-            new EsRect(hole.X, hole.Y + horizontal * 2, hole.Width, LineThickness),
+            new EsRect(focus.X + vertical, focus.Y, LineThickness, focus.Height),
+            new EsRect(focus.X + vertical * 2, focus.Y, LineThickness, focus.Height),
+            new EsRect(focus.X, focus.Y + horizontal, focus.Width, LineThickness),
+            new EsRect(focus.X, focus.Y + horizontal * 2, focus.Width, LineThickness),
         ];
     }
 }

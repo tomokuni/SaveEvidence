@@ -58,21 +58,21 @@ public static class MarqueeContextPainter
         }
     }
 
-    /// <summary>装飾（暗転マスク・穴あけ枠・内側の塗り・内枠）を描く。</summary>
+    /// <summary>装飾（暗転マスク・外枠・内側の塗り・内枠）を描く。</summary>
     /// <param name="context">描画先の描画コンテキスト。</param>
     /// <param name="plan">描画計画。</param>
     /// <param name="appearance">外観。</param>
     private static void DrawDecoration(DrawingContext context, in MarqueeDrawPlan plan, MarqueeAppearance appearance)
     {
-        FillRects(context, plan.OverlayRegions, appearance.OverlayColor);
-        FillRects(context, plan.OuterBorderRects, appearance.OuterBorderColor);
+        FillRects(context, plan.OverlayDipRects, appearance.OverlayColor);
+        FillRects(context, plan.OuterBorderDipRects, appearance.OuterBorderColor);
 
-        if (plan.InnerFillRect is { } fill)
+        if (plan.InnerFillDipRect is { } fill)
         {
             context.DrawRectangle(SolidColorBrushCache.GetOrCreate(appearance.InnerFillColor), null, fill.ToAvaloniaRect());
         }
 
-        FillRects(context, plan.InnerBorderRects, appearance.InnerBorderColor);
+        FillRects(context, plan.InnerBorderDipRects, appearance.InnerBorderColor);
     }
 
     /// <summary>ドラッグハンドル（塗り + 枠線）を描く。</summary>
@@ -84,7 +84,7 @@ public static class MarqueeContextPainter
         var fill = SolidColorBrushCache.GetOrCreate(appearance.HandleColor);
         var pen = new Pen(SolidColorBrushCache.GetOrCreate(appearance.HandleBorderColor), handles.BorderThickness);
 
-        foreach (var bounds in handles.Rects)
+        foreach (var bounds in handles.HandleDipRects)
         {
             context.DrawRectangle(fill, pen, bounds.ToAvaloniaRect());
         }

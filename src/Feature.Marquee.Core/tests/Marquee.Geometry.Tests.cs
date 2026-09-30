@@ -10,7 +10,7 @@ namespace EsUtil.Feature.Marquee.Core.Tests;
 
 /// <summary><see cref="Marquee.ResolveGeometry"/>（1 フレーム分の幾何の解決）の単体テスト。</summary>
 /// <remarks>
-/// コアが返すのは幾何（穴あけ矩形・ハンドル・始点マーカー・マウス位置）だけである。<br/>
+/// コアが返すのは幾何（注目矩形・ハンドル・始点マーカー・マウス位置）だけである。<br/>
 /// 装飾の矩形・文言・表示可否・描画順は描画層（本コアを参照する上位の層）が単一所有するため、本テストでは扱わない。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
@@ -30,28 +30,29 @@ public class MarqueeGeometryResolutionTests
 
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
 
-        Assert.Null(geometry.HoleRect);
-        Assert.Null(geometry.HoleDomainRect);
+        Assert.Null(geometry.FocusDipRect);
+        Assert.Null(geometry.FocusDomainRect);
         Assert.Null(geometry.Handles);
         Assert.Null(geometry.Marker);
     }
 
-    /// <summary>選択がある場合は穴あけ矩形と 8 方向のハンドルを返す。</summary>
+    /// <summary>選択がある場合は注目矩形と 8 方向のハンドルを返す。</summary>
     [Fact]
-    public void ResolveGeometry_選択ありでは穴あけ矩形とハンドルを返す()
+    public void ResolveGeometry_選択ありでは注目矩形とハンドルを返す()
     {
         var marquee = CreateMarquee();
-        marquee.SetSelection(new EsRect(10, 20, 100, 50));
+        // ドラッグの選択矩形は閉区間（始点・終点のピクセルを含む）である
+        marquee.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
 
         // 選択矩形は閉区間（終点 +1）として DIP へ変換される（ドメイン座標はそのまま保持する）
-        Assert.Equal(new EsRect(10, 20, 101, 51), geometry.HoleRect);
-        Assert.Equal(new EsRect(10, 20, 100, 50), geometry.HoleDomainRect);
+        Assert.Equal(new EsRect(10, 20, 101, 51), geometry.FocusDipRect);
+        Assert.Equal(EsRectInterval.Closed, geometry.FocusDomainRect!.Value.Interval);
         Assert.NotNull(geometry.Handles);
-        Assert.Equal(8, geometry.Handles!.Value.Rects.Count);
-        // 左上ハンドルは穴あけ矩形の左上を中心に置く（一辺は HandleSize）
-        Assert.Equal(new EsRect(5, 15, 10, 10), geometry.Handles!.Value.Rects[0]);
+        Assert.Equal(8, geometry.Handles!.Value.HandleDipRects.Count);
+        // 左上ハンドルは注目矩形の左上を中心に置く（一辺は HandleSize）
+        Assert.Equal(new EsRect(5, 15, 10, 10), geometry.Handles!.Value.HandleDipRects[0]);
     }
 
     /// <summary>ハイライト矩形が選択矩形より優先され、終点を加算しないことを検証する。</summary>
@@ -59,13 +60,13 @@ public class MarqueeGeometryResolutionTests
     public void ResolveGeometry_ハイライト矩形を優先し終点を加算しない()
     {
         var marquee = CreateMarquee();
-        marquee.SetSelection(new EsRect(10, 20, 100, 50));
-        marquee.HighlightRect = new EsRect(1, 2, 3, 4);
+        marquee.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
+        marquee.HighlightDomainRect = new EsRect(1, 2, 3, 4);
 
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
 
-        // ハイライト矩形はホストが全ピクセルを含む閉区間として与えるため、+1 しない
-        Assert.Equal(new EsRect(1, 2, 3, 4), geometry.HoleRect);
+        // ハイライト矩形は検出結果（全ピクセルを含む）のため半開区間のまま与えられ、+1 しない
+        Assert.Equal(new EsRect(1, 2, 3, 4), geometry.FocusDipRect);
         // ハンドルは選択矩形から解決される（ハイライトはハンドルの対象ではない）
         Assert.NotNull(geometry.Handles);
     }
@@ -103,21 +104,21 @@ public class MarqueeGeometryResolutionTests
         Assert.Equal(MarqueeOptions.Default.MarkerLength / 2, geometry.Marker!.Value.Size);
     }
 
-    /// <summary>座標変換ポートが穴あけ矩形とハンドルの両方へ同じ規則で適用されることを検証する。</summary>
+    /// <summary>座標変換ポートが注目矩形とハンドルの両方へ同じ規則で適用されることを検証する。</summary>
     [Fact]
-    public void ResolveGeometry_座標変換ポートを穴あけ矩形とハンドルへ適用する()
+    public void ResolveGeometry_座標変換ポートを注目矩形とハンドルへ適用する()
     {
         var marquee = CreateMarquee();
         // Inverse（ドメイン → DIP）は 2 倍
         marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
-        marquee.SetSelection(new EsRect(10, 20, 100, 50));
+        marquee.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
 
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(default));
 
         // 選択領域は閉区間（終点 +1）で変換される（(10,20)-(111,71) → (20,40)-(222,142)）
-        Assert.Equal(new EsRect(20, 40, 202, 102), geometry.HoleRect);
-        Assert.Equal(new EsRect(15, 35, 10, 10), geometry.Handles!.Value.Rects[0]);
+        Assert.Equal(new EsRect(20, 40, 202, 102), geometry.FocusDipRect);
+        Assert.Equal(new EsRect(15, 35, 10, 10), geometry.Handles!.Value.HandleDipRects[0]);
     }
 
     /// <summary>描画面の全体が描画領域のサイズから導出されることを検証する。</summary>
@@ -129,7 +130,7 @@ public class MarqueeGeometryResolutionTests
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(320, 240)));
 
         Assert.Equal(new EsSize(320, 240), geometry.ClientSize);
-        Assert.Equal(new EsRect(0, 0, 320, 240), geometry.SurfaceBounds);
+        Assert.Equal(new EsRect(0, 0, 320, 240), geometry.SurfaceDipRect);
     }
 
     /// <summary>マウス位置が入力のまま幾何へ引き継がれることを検証する。</summary>

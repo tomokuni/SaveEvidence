@@ -647,7 +647,7 @@ internal static class CapturePage
             {
                 // ハイライトなし（外側・内側とも描かない。 サイズ・座標ラベルも表示しない）
                 autoCropHighlight.Appearance = s_autoCropIdleAppearance;
-                autoCropHighlight.HighlightRect = null;
+                autoCropHighlight.HighlightDomainRect = null;
                 return;
             }
 
@@ -655,7 +655,7 @@ internal static class CapturePage
             var bottomRight = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.Right, target.Bottom));
 
             autoCropHighlight.Appearance = s_autoCropHighlightAppearance;
-            autoCropHighlight.HighlightRect = new EsRect(
+            autoCropHighlight.HighlightDomainRect = new EsRect(
                 topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
         }
 
