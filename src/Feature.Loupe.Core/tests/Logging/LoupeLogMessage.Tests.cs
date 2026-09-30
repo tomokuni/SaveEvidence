@@ -1,4 +1,5 @@
 using System.Globalization;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -24,7 +25,7 @@ public class LoupeLogMessageTests
         InvokeAll(logger);
 
         Assert.True(logger.IsEnabled(LogLevel.Trace));
-        Assert.Equal(4, logger.Messages.Count);
+        Assert.Equal(6, logger.Messages.Count);
     }
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
@@ -42,10 +43,57 @@ public class LoupeLogMessageTests
         var logger = new RecordingLogger();
         InvokeAll(logger);
 
-        Assert.Equal("[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
-        Assert.Equal("[Feature.Loupe.Core] Setting: RequestedSize 160 → 240", logger.Messages[1]);
-        Assert.Equal("[Feature.Loupe.Core] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[2]);
-        Assert.Equal("[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8", logger.Messages[3]);
+        Assert.Equal("[Feature.Loupe.Core] Facade created: RequestedSize=160, ZoomLevel=4", logger.Messages[0]);
+        Assert.Equal("[Feature.Loupe.Core] Logger attached", logger.Messages[1]);
+        Assert.Equal("[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8", logger.Messages[2]);
+        Assert.Equal("[Feature.Loupe.Core] Setting: RequestedSize 160 → 240", logger.Messages[3]);
+        Assert.Equal("[Feature.Loupe.Core] Setting: CenterPoint (1.5, 2.5) → null", logger.Messages[4]);
+        Assert.Equal("[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8", logger.Messages[5]);
+    }
+
+    /// <summary>生成の記録が Information、ロガー設定の記録が Debug で出力されることを検証する。</summary>
+    /// <remarks>生成はホストがログを設定した時点で 1 度だけ記録する（構築時は出力先が未設定のため）。</remarks>
+    [Fact]
+    public void 生成とロガー設定の記録レベルが期待どおりである()
+    {
+        var logger = new RecordingLogger();
+
+        logger.LogFacadeCreated(160, 4);
+        logger.LogLoggerAttached();
+
+        Assert.Equal([LogLevel.Information, LogLevel.Debug], logger.Levels);
+    }
+
+    /// <summary>拡大中心の記録が最も低いレベル（Trace）で出力されることを検証する。</summary>
+    /// <remarks>中心はマウス移動ごとに変わるため、既定の出力では溢れさせない。</remarks>
+    [Fact]
+    public void 拡大中心の記録はTraceで出力する()
+    {
+        var logger = new RecordingLogger();
+
+        logger.LogCenterPointChanged(new EsPoint(10, 20), new EsPoint(30, 40));
+
+        Assert.Equal([LogLevel.Trace], logger.Levels);
+        Assert.Equal("[Feature.Loupe.Core] Setting: CenterPoint (10, 20) → (30, 40)", Assert.Single(logger.Messages));
+    }
+
+    /// <summary>座標変換ポートの変更が未設定と実装型名で記録されることを検証する。</summary>
+    [Fact]
+    public void 座標変換ポートの変更は未設定と実装型名で記録する()
+    {
+        var logger = new RecordingLogger();
+        var port = new CoordTransform(p => p, p => p, () => null);
+
+        logger.LogCoordTransformChanged(null, port);
+        logger.LogCoordTransformChanged(port, port);   // 同値 → 出力しない
+        logger.LogCoordTransformChanged(port, null);
+
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Core] Setting: CoordTransform null → CoordTransform",
+                "[Feature.Loupe.Core] Setting: CoordTransform CoordTransform → null",
+            ],
+            logger.Messages);
     }
 
     /// <summary>拡大中心のログが両 UI 共通の書式（括弧付き座標）で出力されることを検証する。</summary>
@@ -176,9 +224,12 @@ public class LoupeLogMessageTests
     /// <remarks>出力書式の検証がメッセージの並びに依存するため、呼び出す順序を固定する。</remarks>
     private static void InvokeAll(ILogger logger)
     {
-        logger.LogSettingChanged("ZoomLevel", "4", "8");                             // 1
-        logger.LogSettingChanged("RequestedSize", 160, 240);                          // 2
-        logger.LogCenterPointChanged(new EsPoint(1.5, 2.5), null);                    // 3
-        logger.LogOptionsChanged(new LoupeOptions(), new LoupeOptions { ZoomLevel = 8 });  // 4
+        logger.LogFacadeCreated(160, 4);                                              // 1
+        logger.LogLoggerAttached();                                                   // 2
+        logger.LogSettingChanged("ZoomLevel", "4", "8");                             // 3
+        logger.LogSettingChanged("RequestedSize", 160, 240);                          // 4
+        logger.LogCenterPointChanged(new EsPoint(1.5, 2.5), null);                    // 5
+        logger.LogCoordTransformChanged(null, null);                                  // 6（同値のため出力しない）
+        logger.LogOptionsChanged(new LoupeOptions(), new LoupeOptions { ZoomLevel = 8 });  // 7
     }
 }

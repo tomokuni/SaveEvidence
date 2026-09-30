@@ -53,9 +53,17 @@ public sealed partial class Loupe
     /// <summary>拡大中心からの右下オフセット（DIP。 既定は 0）。</summary>
     private double _positionOffset;
 
+    /// <summary>生成の記録（<c>LoupeLogMessage.LogFacadeCreated</c>）を済ませたかどうか。</summary>
+    /// <remarks>出力先の設定は複数回起こりうるため、生成の記録は 1 度だけにする。</remarks>
+    private bool _createdLogged;
+
     /// <summary>ファサードを初期化する。</summary>
     /// <param name="options">初期設定。 null 可（null の場合は <see cref="LoupeOptions.Default"/>）。</param>
-    /// <remarks>初期値は本フィールドへ直接保持する（変更ログの経路を通さない。 構築時点では出力先が未設定である）。</remarks>
+    /// <remarks>
+    /// 初期値は本フィールドへ直接保持する（変更ログの経路を通さない。 構築時点では出力先が未設定である）。<br/>
+    /// <b>生成の記録</b>: 出力先（<see cref="Log"/>）が未設定のため構築时には記録できず、ロガーが設定された時点で<br/>
+    /// 1 度だけ生成時の設定を出力する（<see cref="LogCreatedOnce"/>）。
+    /// </remarks>
     public Loupe(LoupeOptions? options = null)
     {
         _options = options ?? LoupeOptions.Default;
@@ -65,12 +73,18 @@ public sealed partial class Loupe
     /// <value>ロガー。 null を設定した場合は出力なし（<see cref="LoggerFallback"/> が吸収する）。</value>
     /// <remarks>
     /// ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義（<see cref="LoupeLogMessage"/>）だけを持つ。<br/>
-    /// 設定・環境値・拡大中心の変更は本コアが検出して出力する（UI 層に同値判定・差分検出・変換を持たせない）。
+    /// 設定・環境値・拡大中心の変更は本コアが検出して出力する（UI 層に同値判定・差分検出・変換を持たせない）。<br/>
+    /// <b>初回の設定時に生成時の設定を 1 度だけ記録する</b>（生成時は出力先が未設定のため、本コアは生成を記録できない）。
     /// </remarks>
     public ILogger Log
     {
         get => field.OrNullLogger();
-        set => field = value.OrNullLogger();
+        set
+        {
+            field = value.OrNullLogger();
+            LogCreatedOnce();
+            Log.LogLoggerAttached();
+        }
     }
 
     // ====================================================================
@@ -121,7 +135,7 @@ public sealed partial class Loupe
     /// <b>状態として保持する理由</b>: 表示位置の解決（<see cref="ResolveLayout"/>）と描画の幾何の解決（<see cref="ResolveGeometry"/>）が<br/>
     /// 同じ中心を使うため、1 箇所に保持して両者で必ず同じ値になるようにする（引数で渡すと呼び出し側が 2 経路へ同じ値を渡す責務を負う）。<br/>
     /// 設定は毎フレームではなく入力イベントのたびであり、解決メソッドは保持した値を読むだけである。<br/>
-    /// 変更は本コアが検出して出力する（マウス移動ごとに UI が設定しても、変化したときだけ記録される）。
+    /// <b>最も頻度の高い設定値</b>のため、変更の記録は最も低いレベル（Trace）で行う（既定の出力では溢れさせない）。
     /// </remarks>
     public EsPoint? CenterPoint
     {
@@ -157,13 +171,35 @@ public sealed partial class Loupe
     /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等のレイアウト変化に追従できる<br/>
-    /// （イベント時の DIP キャッシュは使わない）。
+    /// （イベント時の DIP キャッシュは使わない）。<br/>
+    /// <b>低頻度のメソッド呼び出し</b>のため、設定の変更を記録する（同じポートの再設定は出力しない）。
     /// </remarks>
-    public void SetCoordTransform(ICoordTransform? port) => _coordPort = port;
+    public void SetCoordTransform(ICoordTransform? port)
+    {
+        var previous = _coordPort;
+        _coordPort = port;
+        Log.LogCoordTransformChanged(previous, port);
+    }
 
     // ====================================================================
     // 内部ヘルパー
     // ====================================================================
+
+    /// <summary>生成時の設定を 1 度だけ記録する（既に記録済みの場合は何もしない）。</summary>
+    /// <remarks>
+    /// 生成時点では出力先（<see cref="Log"/>）が未設定のため、ロガーが設定された時点で生成時の設定を出力する<br/>
+    /// （「どの設定で生成されたファサードからのログか」を追えるようにする。 記録は 1 回だけとする）。
+    /// </remarks>
+    private void LogCreatedOnce()
+    {
+        if (_createdLogged)
+        {
+            return;
+        }
+
+        _createdLogged = true;
+        Log.LogFacadeCreated(_options.RequestedSize, _options.ZoomLevel);
+    }
 
     /// <summary>新しい値を保持する（同値なら何もしない）。</summary>
     /// <typeparam name="T">値の型。</typeparam>

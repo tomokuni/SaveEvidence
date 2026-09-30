@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.Loupe.Core.Setting;
@@ -359,12 +360,70 @@ public class LoupeTests
         Assert.Same(NullLogger.Instance, loupe.Log);
     }
 
+    /// <summary>生成の記録がロガーの設定時に 1 度だけ出力されることを検証する。</summary>
+    /// <remarks>構築時は出力先が未設定のため、ロガーが設定された時点で生成時の設定を記録する。</remarks>
+    [Fact]
+    public void Log_生成の記録はロガーの設定時に一度だけ出力する()
+    {
+        var loupe = new Loupe(new LoupeOptions { RequestedSize = 200, ZoomLevel = 8 });
+        var logger = new RecordingLogger();
+
+        loupe.Log = logger;
+        loupe.Log = logger;   // 再設定（生成の記録は繰り返さない）
+
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Core] Facade created: RequestedSize=200, ZoomLevel=8",
+                "[Feature.Loupe.Core] Logger attached",
+                "[Feature.Loupe.Core] Logger attached",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>座標変換ポートの設定が変化したときだけ記録されることを検証する。</summary>
+    [Fact]
+    public void SetCoordTransform_変更したときだけ記録する()
+    {
+        var loupe = new Loupe { Log = new RecordingLogger() };
+        var logger = (RecordingLogger)loupe.Log;
+        logger.Messages.Clear();
+
+        var port = CreateDoublingPort();
+        loupe.SetCoordTransform(port);
+        loupe.SetCoordTransform(port);   // 同値（同じインスタンス）
+        loupe.SetCoordTransform(null);
+
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Core] Setting: CoordTransform null → CoordTransform",
+                "[Feature.Loupe.Core] Setting: CoordTransform CoordTransform → null",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>拡大中心の変更が最も低いレベル（Trace）で記録されることを検証する。</summary>
+    /// <remarks>中心はマウス移動ごとに設定されるため、既定の出力では溢れさせない。</remarks>
+    [Fact]
+    public void CenterPoint_変更はTraceで記録する()
+    {
+        var loupe = new Loupe { Log = new RecordingLogger() };
+        var logger = (RecordingLogger)loupe.Log;
+        logger.Messages.Clear();
+        logger.Levels.Clear();
+
+        loupe.CenterPoint = new EsPoint(10, 20);
+
+        Assert.Equal([LogLevel.Trace], logger.Levels);
+        Assert.Equal("[Feature.Loupe.Core] Setting: CenterPoint null → (10, 20)", Assert.Single(logger.Messages));
+    }
+
     /// <summary>表示位置オフセットの変更が変化したときだけ記録されることを検証する。</summary>
     [Fact]
     public void PositionOffset_変更したときだけ記録する()
     {
         var loupe = new Loupe { Log = new RecordingLogger() };
         var logger = (RecordingLogger)loupe.Log;
+        logger.Messages.Clear();
 
         loupe.PositionOffset = 20;
         loupe.PositionOffset = 20;   // 同値

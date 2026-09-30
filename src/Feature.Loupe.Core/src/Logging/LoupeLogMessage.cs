@@ -1,4 +1,5 @@
 using System.Globalization;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using EsUtil.Feature.Loupe.Core.Setting;
@@ -11,6 +12,9 @@ namespace EsUtil.Feature.Loupe.Core.Logging;
 /// コアが単一所有する（UI 実装ごとに持つと書式がずれ、片方だけ修正される）。<br/>
 /// 値の文字列化（<c>(X, Y)</c>）も本クラスが行い、UI 側に整形処理を置かない。<br/>
 /// 「変化したときだけ出力する」判断（同値の再設定）も本クラスが単一所有する（UI 層に同値判定を置かない）。<br/>
+/// <b>出力する操作</b>: 生成（ロガーの設定時に記録）・低頻度の設定変更（Debug）・低頻度のメソッド呼び出し（Debug）・<br/>
+/// マウス移動ごとに変わる拡大中心（Trace。 頻度が高いため既定の出力では溢れさせない）。<br/>
+/// 毎フレーム呼ばれる解決メソッド（<c>ResolveLayout</c> / <c>ResolveGeometry</c>）は出力しない。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、呼び出し側では logger 引数を省略する。<br/>
 /// <b>可視性</b>: コアが出力する定義だけを持つため <c>internal</c> とする<br/>
@@ -22,6 +26,31 @@ internal static partial class LoupeLogMessage
     /// <summary>未設定を表す文字列。</summary>
     private const string Null = "null";
 
+    /// <summary>座標変換ポートの設定名（ログの項目名）。</summary>
+    private const string CoordTransformName = "CoordTransform";
+
+    /// <summary>ファサードの生成（生成時の設定）を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Information<br/>
+    /// 出力書式: <c>[Feature.Loupe.Core] Facade created: RequestedSize={RequestedSize}, ZoomLevel={ZoomLevel}</c><br/>
+    /// 生成時点では出力先（<see cref="Loupe.Log"/>）が未設定のため、<b>ロガーが設定された時点で 1 度だけ</b>生成時の設定を記録する<br/>
+    /// （どの設定で生成されたファサードからのログかを追えるようにする）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="requestedSize">生成時の要求サイズ（DIP）。</param>
+    /// <param name="zoomLevel">生成時の拡大率。</param>
+    [LoggerMessage(LogLevel.Information, "[Feature.Loupe.Core] Facade created: RequestedSize={RequestedSize}, ZoomLevel={ZoomLevel}")]
+    internal static partial void LogFacadeCreated(this ILogger logger, int requestedSize, int zoomLevel);
+
+    /// <summary>出力先（ロガー）の設定を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Debug<br/>出力書式: <c>[Feature.Loupe.Core] Logger attached</c><br/>
+    /// ログの出力を開始した契機を残す（以降の設定変更のログがどの時点から有効かを追えるようにする）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    [LoggerMessage(LogLevel.Debug, "[Feature.Loupe.Core] Logger attached")]
+    internal static partial void LogLoggerAttached(this ILogger logger);
+
     /// <summary>設定値変更のログ（変更前後）。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Loupe.Core] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
@@ -30,6 +59,18 @@ internal static partial class LoupeLogMessage
     /// <param name="newValue">変更後の値（整形済み）。</param>
     [LoggerMessage(LogLevel.Debug, "[Feature.Loupe.Core] Setting: {Name} {OldValue} → {NewValue}")]
     internal static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
+
+    /// <summary>頻度の高い設定値変更のログ（変更前後。 最も低いレベルで出力する）。</summary>
+    /// <remarks>
+    /// LogLevel: Trace（書式は <see cref="LogSettingChanged(ILogger, string, string, string)"/> と同一）<br/>
+    /// マウス移動ごとに変わる値（拡大中心）が使う（既定の出力では溢れさせない）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="name">設定名。</param>
+    /// <param name="oldValue">変更前の値（整形済み）。</param>
+    /// <param name="newValue">変更後の値（整形済み）。</param>
+    [LoggerMessage(LogLevel.Trace, "[Feature.Loupe.Core] Setting: {Name} {OldValue} → {NewValue}")]
+    internal static partial void LogSettingChangedTrace(this ILogger logger, string name, string oldValue, string newValue);
 
     /// <summary>整数設定値の変更ログ（同値の再設定では出力しない）。</summary>
     /// <remarks>
@@ -98,9 +139,10 @@ internal static partial class LoupeLogMessage
 
     /// <summary>拡大中心（ドメイン座標）の変更ログ（同値の再設定では出力しない）。</summary>
     /// <remarks>
-    /// LogLevel: Debug<br/>出力書式: <c>[Feature.Loupe.Core] Setting: CenterPoint {OldValue} → {NewValue}</c><br/>
-    /// 中心はマウス移動のたびに設定されるため、「変化したときだけ出力する」判断を本メソッドが単一所有する<br/>
-    /// （出力をコアが行うため、UI 層は同値判定を持たない）。
+    /// LogLevel: Trace<br/>出力書式: <c>[Feature.Loupe.Core] Setting: CenterPoint {OldValue} → {NewValue}</c><br/>
+    /// 中心はマウス移動のたびに設定される（最も頻度が高い）ため、<b>最も低いレベル（Trace）</b>で記録する<br/>
+    /// （既定の出力では溢れさせない。 必要時にレベルを下げて追う）。<br/>
+    /// 「変化したときだけ出力する」判断を本メソッドが単一所有する（出力をコアが行うため、UI 層は同値判定を持たない）。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の拡大中心（未設定は null）。</param>
@@ -112,7 +154,25 @@ internal static partial class LoupeLogMessage
             return;
         }
 
-        LogSettingChanged(logger, "CenterPoint", FormatPoint(oldValue), FormatPoint(newValue));
+        logger.LogSettingChangedTrace("CenterPoint", FormatPoint(oldValue), FormatPoint(newValue));
+    }
+
+    /// <summary>座標変換ポートの設定変更を記録する（同値の再設定では出力しない）。</summary>
+    /// <remarks>
+    /// LogLevel: Debug<br/>出力書式: <c>[Feature.Loupe.Core] Setting: CoordTransform {OldValue} → {NewValue}</c><br/>
+    /// 値は未設定（<c>null</c> = 等価変換）またはポートの実装型名で表す（ポートは値として比較・整形できないため）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="oldValue">変更前の座標変換ポート（未設定は null）。</param>
+    /// <param name="newValue">変更後の座標変換ポート（未設定は null）。</param>
+    internal static void LogCoordTransformChanged(this ILogger logger, ICoordTransform? oldValue, ICoordTransform? newValue)
+    {
+        if (ReferenceEquals(oldValue, newValue))
+        {
+            return;
+        }
+
+        logger.LogSettingChanged(CoordTransformName, FormatPort(oldValue), FormatPort(newValue));
     }
 
     /// <summary>設定（<see cref="LoupeOptions"/>）の変更ログ（変化した項目だけを出力する）。</summary>
@@ -142,4 +202,10 @@ internal static partial class LoupeLogMessage
         => point is { } p
             ? $"({p.X.ToString(CultureInfo.InvariantCulture)}, {p.Y.ToString(CultureInfo.InvariantCulture)})"
             : Null;
+
+    /// <summary>座標変換ポートを文字列化する。</summary>
+    /// <param name="port">座標変換ポート。 未設定（null = 等価変換）は null。</param>
+    /// <returns>未設定は <c>null</c>、設定済みはポートの実装型名。</returns>
+    /// <remarks>ポートは値として比較・整形できないため、設定された実装の種別のみを記録する。</remarks>
+    private static string FormatPort(ICoordTransform? port) => port?.GetType().Name ?? Null;
 }
