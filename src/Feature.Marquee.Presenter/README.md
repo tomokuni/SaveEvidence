@@ -9,7 +9,7 @@
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
 | **提示（Presenter）** | 描画の幾何（`MarqueeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `MarqueePresenter` / `MarqueeDrawPlan` / `MarqueeDrawLayer` |
-| **外観** | 色・フォント・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `MarqueeAppearance` |
+| **外観** | 色・ラベルの体裁・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `MarqueeAppearance` |
 
 **描画は行いません**。 UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、本層は**描画計画というデータ**を返し、描画は各 UI の描画実装が自 UI の API で行います。
 
@@ -51,7 +51,7 @@ protected override void Render(DrawingContext context)
 | グループ | 型 |
 | --- | --- |
 | 提示 | `MarqueePresenter`（描画計画の解決。 `sealed` ではない） / `Drawing.MarqueeDrawPlan` / `Drawing.MarqueeDrawLayer` / `Drawing.MarqueeTextPlacement` |
-| 外観 | `Setting.MarqueeAppearance`（色・フォントサイズ・枠線の太さ・表示可否） |
+| 外観 | `Setting.MarqueeAppearance`（色・ラベルの体裁・枠線の太さ・表示可否） |
 | ラベル | `Label.MarqueeLabelPlacement`（配置指示） |
 | ログ | `Logging.MarqueePresenterLogMessage`（internal） |
 
@@ -91,8 +91,7 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・設計判断・ログ
-- [`src/README.md`](../README.md) — リポジトリ全体の層構成
 
 ## ライセンス
 
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。
+MIT License

@@ -63,7 +63,7 @@ sequenceDiagram
     UI->>P: ResolveDrawPlan(描画領域のサイズ, 実寸測定)
     P->>M: CreateRequest(描画領域のサイズ) → ResolveGeometry(request)
     M-->>P: MarqueeGeometry（注目矩形・ハンドル・マーカー）
-    P-->>UI: MarqueeDrawPlan（層の順序・装飾の矩形・ラベル配置・外観）
+    P-->>UI: 描画計画（層の順序・装飾の矩形・ラベル配置・外観）
     UI->>UI: Layers の順に図形を描き、ラベルは要素として配置
     UI->>H: Rendered（描画計画を渡す）
 ```
@@ -101,7 +101,7 @@ stateDiagram-v2
 | `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | 幾何解決の入力（設定・状態・描画時に決まる値）。 `MarqueeRenderRequest.Create` が値の組を 1 箇所に閉じ、`Marquee.CreateRequest` が状態を写して生成する。 **本値から導出する値（座標変換ポートの決定・注目矩形の決定・DIP 変換）は本値のインスタンスメンバーが単一所有する**（`ResolvedPort` / `Focus` / `ResolveFocusDipRect` / `ToDipRect` / `ToDomainRect`） |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。 既定値を単一所有し、生成時に安全域（`Marquee.Limits`）へ補正する（寸法・対話パラメータのみ。 体裁と表示可否は描画層の外観が単一所有する） |
 | `src/Drawing/MarqueeHandles.cs` | `MarqueeHandles` | public | ドラッグハンドルの幾何（8 方向の矩形・枠線の太さ） |
-| `src/Drawing/MarqueeMarker.cs` | `MarqueeMarker` | public | 始点マーカー（十字線）の幾何（中心・太さ・半幅） |
+| `src/Drawing/MarqueeMarker.cs` | `MarqueeMarker` | public | 始点マーカー（十字線）の幾何（中心・半幅。 線の太さは描画層の外観が持つ） |
 | `src/Interaction/MarqueeSnapshot.cs` | `MarqueeSnapshot` | public | 状態のスナップショット（`readonly record struct`。 値型のため通知でヒープを確保しない） |
 | `src/Interaction/MarqueeNotice.cs` | `MarqueeNotice` | public | 通知（種別・通知座標・スナップショット。 値型） |
 | `src/Interaction/MarqueeNoticeKind.cs` | `MarqueeNoticeKind` | public | 通知の種別 |
@@ -164,8 +164,7 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層の外観が単一所有する）。 色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は各 UI の描画境界で行う |
 | 選択矩形の区間の流儀 | 「終点を含む」規則（DIP への 変換時の +1）は矩形の `Interval`（`EsRectInterval`）が単一所有し、`MarqueeRenderRequest.ToDipRect` が読む（UI ごとに +1 すると片方だけずれる） |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層が単一所有する（コアは素材（マウス位置・注目矩形）だけを渡す） |
-| 設定の既定値・範囲補正 | `Marquee.Limits`（`MarqueeOptions` の生成時の `init` アクセサが参照する） |
-| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層が単一所有する（コアは素材（マウス位置・注目矩形）だけを渡す） |
+| 設定値の安全域の適用 | 補正は設定型の生成時に適用し（`init` アクセサ）、安全域は `Marquee.Limits` が単一所有する（設定の経路（オブジェクト初期化子・`with` 式・逆シリアル化）によらず範囲内の値だけを保持する） |
 | 設定する値・しない値 | **寸法・対話パラメータは `MarqueeOptions` として公開する**（ハンドルの一辺サイズ・枠線の太さ・十字マーカーの長さ・ヒット半径・最小サイズ・境界クリップの可否）。 **体裁（色・ラベルのフォントサイズ・十字マーカーの線の太さ・カーソル座標ラベルのオフセット）は公開しない**（描画にだけ必要な設定のため、描画層の外観が単一所有する） |
 | ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.Bounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
 | 描画面の原点 | コアは原点が常に (0, 0) である前提で幾何を返す（親の座標を混ぜるとハンドルがずれるため、描画領域は原点を持たない `EsSize` で受ける） |

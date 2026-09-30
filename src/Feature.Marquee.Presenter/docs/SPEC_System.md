@@ -75,9 +75,9 @@ sequenceDiagram
 flowchart TD
     A[ResolveDrawPlan] --> B[幾何の解決<br/>Marquee.ResolveGeometry]
     B --> C{外観の表示可否}
-    C -->|ShowOverlay かつ穴あり| D[暗転領域 = 描画面 − 注目矩形<br/>4 領域]
-    C -->|ShowOuterBorder かつ穴あり| E[外枠 = 4 辺]
-    C -->|ShowInnerFill / ShowInnerBorder かつ穴あり| F[内側の塗り・内枠]
+    C -->|ShowOverlay かつ注目矩形あり| D[暗転領域 = 描画面 − 注目矩形<br/>4 領域]
+    C -->|ShowOuterBorder かつ注目矩形あり| E[外枠 = 4 辺]
+    C -->|ShowInnerFill / ShowInnerBorder かつ注目矩形あり| F[内側の塗り・内枠]
     C -->|ShowHandles かつ選択あり| G[ハンドル]
     B --> H[マーカーはコアが nudge 中のみ返す]
     D --> I[ラベルの文言と配置<br/>MarqueePresenter]
@@ -122,8 +122,8 @@ flowchart TD
 
 ## 6. 可視性ポリシー
 
-- UI 層とホストが使う面（`MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueePresenter`（`LabelPlan` partial） / `MarqueeLabelPlacement` / `MarqueeTextPlacement`）は `public` とします。
-- **本層の内部手順は `internal`** とします（`MarqueePresenter`（`DrawPlan` partial） / `MarqueePresenter`（`LabelTexts` partial） / `MarqueePresenterLogMessage`）。 UI 層は解決済みの値（`MarqueeDrawPlan` の矩形・`Labels`）を受け取るため、これらを参照する必要がありません。 単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Presenter.Tests`）で公開します。
+- UI 層とホストが使う面（`MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueeLabelPlacement` / `MarqueeTextPlacement`）は `public` とします。
+- **本層の内部手順は `internal`** とします（`MarqueePresenter` の `DrawPlan` / `LabelPlan` / `LabelTexts` partial のメンバーと `MarqueePresenterLogMessage`）。 UI 層は解決済みの値（`MarqueeDrawPlan` の矩形・`Labels`）を受け取るため、これらを参照する必要がありません。 **`partial` はファイル分割であって可視性ではなく**、実寸 → 配置の写像（`ResolveLabelPlacements`）も内部手順です。 単体テストにのみ `InternalsVisibleTo`（`Feature.Marquee.Presenter.Tests`）で公開します。
 - **クラスが `internal` の場合、そのメンバーも `internal` とします**（`public` と書いても外部から見えないため、可視性の宣言を実態と一致させる）。
 - `[EditorBrowsable]` による「見えにくくする」対処は行いません（公開面も契約も変わらず、見つけにくくなるだけのため）。
 

@@ -22,13 +22,11 @@
 | `MarqueePresenter` | class（`sealed` でない） | 提示のファサード。 コアを内部に保持し、設定・環境値・入力の転送と、外観の保持、描画計画の解決を行う。 **継承して `ResolveDrawPlan` を上書きできることが役割**（独自の見た目を提供する） |
 | `Drawing.MarqueeDrawPlan` | readonly record struct | 1 フレーム分の描画計画（外観・描画面・注目矩形・暗転領域・枠線矩形・内側の塗りと枠線・ハンドル・マーカー・層の順序・ラベル配置）。 **UI が見る唯一の描画値** |
 | `Drawing.MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。 **層にある ⇔ 描く値がある** |
-| `Setting.MarqueeAppearance` | sealed record | **外観の単一所有者**（色・ラベルの体裁・枠線の太さ・表示可否）。 `Default` を基点に `with` 式で部分変更する |
+| `Setting.MarqueeAppearance` | sealed record | **外観の単一所有者**（色・ラベルの体裁・十字マーカーの線の太さ・カーソル座標ラベルのオフセット・枠線の太さ・表示可否）。 `Default` を基点に `with` 式で部分変更する |
 | `Drawing.MarqueeTextPlacement` | readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域）。 **要素として置くか canvas へ描くかは UI 層が決める** |
 | `Label.MarqueeLabelPlacement` | readonly record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
-| `MarqueePresenter.LabelPlan.cs` | static class | `MarqueeTextPlacement` から `MarqueeLabelPlacement` を解決する |
-| `MarqueePresenter.DrawPlan.cs` | internal static class | 装飾矩形の計算（本層の内部手順。 UI 層は解決済みの矩形を `MarqueeDrawPlan` から受け取る） |
-| `MarqueePresenter.LabelTexts.cs` | internal static class | ラベルの文言と基準点の生成（本層の内部手順。 UI 層は `MarqueeDrawPlan.Labels` を受け取る） |
-| `Logging.MarqueePresenterLogMessage` | internal static partial class | 本層が単一所有する設定の変更ログ（内部手順。 ホストはロガーを設定するだけ） |
+
+**`MarqueePresenter` は複数のファイルに分かれた `public partial class` です**（`MarqueePresenter.cs` = ファサード本体、`DrawPlan` = 装飾矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。 partial のメンバー（`ResolveLabelPlacements` など）と `Logging.MarqueePresenterLogMessage` は `internal`（本層とテストのみが使う）であり、本リファレンスには載せません（内部手順は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照してください）。
 
 ### `MarqueePresenter` のメンバー
 
@@ -102,17 +100,13 @@
 | `ShouldShowCoordLabel()` | 表示の設定が有効（基準点はカーソル位置であり、位置はコアの幾何が常に持つ） |
 | `ShouldDrawOverlay(bool hasFocusRect)` | 注目矩形がある、または全面暗転（`ShowFullOverlay`）が有効 |
 
-### `MarqueePresenter`（`LabelPlan` partial） のメンバー
+### ラベル配置の解決（`internal`。 本リファレンスには載せない）
 
-| メンバー | 説明 |
-| --- | --- |
-| `Resolve(MarqueeTextPlacement? sizeLabel, MarqueeTextPlacement? coordLabel, MarqueeAppearance appearance, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`MarqueeLabelPlacement`）の一覧を**順序どおり**（サイズラベル → カーソル座標ラベル）で返す。 どちらも無い場合は空（一覧を生成しない）。 体裁（フォントサイズ・色・内側余白）は `appearance`（外観の単一値）から写す。 `appearance` または `measureText` が null なら `ArgumentNullException` |
+実寸 → ラベル要素の配置指示の写像（`ResolveLabelPlacements`）は本層の内部手順です（入出力の型（`MarqueeTextPlacement` / `MarqueeLabelPlacement`）は公開しています）。
 
-### `MarqueePresenterLogMessage`（`internal static partial class`）
+### `MarqueePresenterLogMessage`（`internal`。 本リファレンスには載せない）
 
-| メンバー | 説明 |
-| --- | --- |
-| `LogAppearanceChanged(this ILogger, MarqueeAppearance oldValue, MarqueeAppearance newValue)` | 外観の変更を記録する（**変化した項目だけ**）。 LogLevel: Debug、書式 `[Feature.Marquee.Presenter] Setting: {Name} {OldValue} → {NewValue}` |
+本層が出力するログの定義（生成・ロガー設定・本層が単一所有する設定の変更・コアへの転送）です。 **外部公開しない**（呼び出すのは値を所有する本層だけで、ホストはロガーを設定するだけです）。 出力の方針は [`SPEC_System.md`](SPEC_System.md) の「ログ」を参照してください。
 
 - 書式はコアの設定変更ログ（`[Feature.Marquee.Core]`）と本文を揃え、接頭辞だけを本プロジェクトにします（どの層まで値が伝搬したかをログから追えます）。
 - 色は `#AARRGGBB`（`DrawingColorExtensions.ToHexText`）、数値はカルチャに依存しない表記です。
@@ -134,7 +128,7 @@
 | --- | --- |
 | `DipRect` | 要素を置く矩形（背景の大きさ = 文字の実寸 + 内側余白 × 2。 領域クランプ適用済み） |
 | `PaddingX` / `PaddingY` | 要素の内側余白（外観の値。 要素の `Padding` にそのまま写す） |
-| `Text` / `FontSize` / `TextColor` / `BackgroundColor` | 文言・フォントサイズ・色は外観（`MarqueeAppearance`）と `MarqueePresenter`（`LabelTexts` partial） が与える（UI は判断しない） |
+| `Text` / `FontSize` / `TextColor` / `BackgroundColor` | 文言・フォントサイズ・色は外観（`MarqueeAppearance`）と本層（文言の生成）が与える（UI は判断しない） |
 | 角丸 | 持たない（選択矩形のラベルは矩形である） |
 
 ### 付加情報ラベルの体裁

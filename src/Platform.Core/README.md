@@ -75,8 +75,7 @@ dotnet test src/Platform.Core/tests/Platform.Core.Tests.csproj
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・依存の判定基準・設計判断
-- [`../README.md`](../README.md) — リポジトリ全体の層構成
 
 ## ライセンス
 
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）
+MIT License

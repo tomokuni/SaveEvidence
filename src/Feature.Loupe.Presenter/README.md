@@ -35,7 +35,7 @@ public void SetCenter(EsPoint domainPoint)
 // 3. 描画（描画計画の解決は提示層、描画は自 UI の API）
 protected override void Render(DrawingContext context)
 {
-    var plan = _presenter.ResolveDrawPlan(displaySize, surfaceSize, MeasureText);  // 幾何・層・文言・配置を解決済み
+    var plan = _presenter.ResolveDrawPlan(displaySize, MeasureText);  // 幾何・層・文言・配置を解決済み
     // 描画は自 UI の描画 API で行う（自 UI の型へ写して層の順に描く）
     PaintByOwnApi(context, _source, in plan);
     // ラベルを要素として置く場合は plan.Labels（配置指示）を要素へ写す

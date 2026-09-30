@@ -69,9 +69,9 @@ sequenceDiagram
   UI->>P: ResolveDrawPlan(表示サイズ, 実寸測定)
   P->>Core: ResolveGeometry(...)
   Core-->>P: LoupeGeometry
-  P-->>UI: LoupeDrawPlan（描画面・矩形・層の順序・ラベル配置）
+  P-->>UI: 描画計画（描画面・矩形・層の順序・ラベル配置）
 
-  Note over UI: 描画は UI が LoupeDrawPlan を自 UI の描画 API へ写す
+  Note over UI: 描画は UI が描画計画を自 UI の描画 API へ写す
   Note over UI: 描画完了通知（切り出し左上・拡大率）は描画計画（CaptureTopLeft / ZoomLevel）から読む
 ```
 
@@ -110,7 +110,7 @@ sequenceDiagram
 | 単位 | ファサード（表示レイアウト・描画の幾何・設定・ログ） |
 | 配置 | **ソースのフォルダを鏡映**する（`tests/Drawing` / `tests/Logging` / `tests/Placement` / `tests/Setting`。 ファサードの partial のテストはルート） |
 | UI 依存の検証 | 上位（UI 側）のテストが担う（コントロール生成・描画・依存プロパティ経由の反映・イベント発火・描画の画素検証。 画素検証はソフトウェア描画の UI 側で行う。 中間ビットマップの画素を読めない UI では不可能なため） |
-| 合計 | 95 件（`[Theory]` は展開後のケース数） |
+| 合計 | 102 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
@@ -129,7 +129,7 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 | 色 | コアは色を持たない（色は描画にだけ必要な設定であり、描画層の外観が単一所有する）。 色の型は UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画の境界で行う |
 | 切り出し領域の左上 | 切り出し（描画実装）と描画完了通知の 2 経路で重複する計算を `LoupeGeometry.CaptureTopLeft` が単一所有する（切り出しと通知が同じ値を使う） |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」は描画にだけ必要な規則のため、描画層（本コアを参照する上位の層）が単一所有する（コアは値を渡さない） |
-| 設定では変更しない固定値 | **公開しません**。 描画層内だけで使う値（中心座標ラベルの上端余白）は描画層の private 定数とし、UI 層は解決済みの値をコアの型（`LoupeLabelPlacement`）で受け取る |
+| 設定では変更しない固定値 | **公開しません**。 描画層内だけで使う体裁値（中心座標ラベルの余白）は描画層の private 定数とし、UI 層は描画層が解決した配置指示を受け取る |
 | フォントサイズの安全域 | 6〜48 と「非数は既定値」は描画層の外観が単一所有する |
 
 ## 9. ログ

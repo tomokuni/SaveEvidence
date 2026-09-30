@@ -104,7 +104,6 @@ UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行され、**�
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・設計判断・ログ
-- [`src/README.md`](../README.md) — リポジトリ全体の層構成
 
 ## ライセンス
 

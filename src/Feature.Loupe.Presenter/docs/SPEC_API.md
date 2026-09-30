@@ -26,9 +26,9 @@
 | `Label.LoupeLabelPlacement` | record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
 | `Logging.LoupePresenterLogMessage` | static partial class | 本層が出力するログ定義（生成・通過の記録・外観の変更。 内部手順でありホストは参照しない） |
 
-**`LoupePresenter` は複数のファイルに分かれた `partial class` です**（`LoupePresenter.cs` = ファサード本体、`LoupePresenter.DrawPlan.cs` = 装飾矩形の導出、`LoupePresenter.LabelPlan.cs` = 実寸 → 配置指示の写像、`LoupePresenter.LabelTexts.cs` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。 実寸 → 配置の写像も `LoupePresenter` のメンバーです。
+**`LoupePresenter` は複数のファイルに分かれた `public partial class` です**（`LoupePresenter.cs` = ファサード本体、`DrawPlan` = 十字線・枠線の矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。
 
-`LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelTexts.cs` / `LoupePresenter.LabelPlan.cs` / `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）。
+`LoupePresenter` の partial（`DrawPlan` = 十字線・枠線の矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）のメンバーと `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）であり、本リファレンスには載せません（内部手順は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照してください）。
 
 ### `LoupePresenter` のメンバー
 
@@ -84,17 +84,13 @@
 | `Crosshair` / `Border` | 十字線 / 枠線（表示可否が有効な場合のみ） |
 | `Label` | 中心座標ラベル（ラベルがある場合のみ。 常に最上位） |
 
-### `LoupePresenter`（`LabelPlan` partial） のメンバー
+### ラベル配置の解決（`internal`。 本リファレンスには載せない）
 
-| メンバー | 説明 |
-| --- | --- |
-| `Resolve(LoupeTextPlacement? coordLabel, LoupeAppearance appearance, Func<string, double, EsSize> measureText)` | 配置するラベル要素（`LoupeLabelPlacement`）を 1 件返す（テキストが無い場合は空）。 `appearance` または `measureText` が null なら `ArgumentNullException` |
+実寸 → ラベル要素の配置指示の写像は本層の内部手順です（入出力の型（`LoupeTextPlacement` / `LoupeLabelPlacement`）は公開しています）。
 
-### `LoupePresenterLogMessage` のメンバー
+### `LoupePresenterLogMessage`（`internal`。 本リファレンスには載せない）
 
-| メンバー | 説明 |
-| --- | --- |
-| `LogAppearanceChanged(LoupeAppearance, LoupeAppearance)` | 外観の変更ログ（**変化した項目だけ**。 LogLevel: Debug、書式 `[Feature.Loupe.Presenter] Setting: {Name} {OldValue} → {NewValue}`） |
+本層が出力するログの定義（生成・通過の記録・外観の変更）です。 **外部公開しない**（呼び出すのは値を所有する本層だけで、ホストはロガーを設定するだけです）。 出力の方針は [`SPEC_System.md`](SPEC_System.md) の「ログ」を参照してください。
 
 **拡大元画像（`Source`）と描画の例外のログは各 UI が所有します**（コントロール固有の値であるため。 接頭辞だけを揃える）。
 
@@ -104,9 +100,9 @@
 
 描画計画は**UI が見る唯一の描画値**です。 UI は `Layers` の順に自 UI の描画 API を呼び、`Labels` を要素として置くか文字として描くかを決めます。 **描く値はすべて解決済み**であり、UI は幾何計算（矩形の導出・寸法の換算）を行いません。
 
-### ラベル（`LoupePresenter`（`LabelPlan` partial） → `LoupeLabelPlacement`）
+### ラベル（本層の配置指示 → `LoupeLabelPlacement`）
 
-- `Labels` の各要素は**配置矩形・内側余白・文言・フォントサイズ・色・角丸**を持ちます（背景の大きさは「実寸 + 内側余白 × 2」。 クランプは `LoupePresenter`（`LabelPlan` partial） が単一所有する）。
+- `Labels` の各要素は**配置矩形・内側余白・文言・フォントサイズ・色・角丸**を持ちます（背景の大きさは「実寸 + 内側余白 × 2」。 領域クランプは本層が済ませています）。
 - **要素として置くか canvas へ描くかは UI 層が決めます**（要素は親より後に描かれるため常に最上位になる）。
 
 ### 描画の順序

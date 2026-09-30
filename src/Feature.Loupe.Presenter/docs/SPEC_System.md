@@ -70,7 +70,7 @@ sequenceDiagram
 | `src/Label/LoupeLabelPlacement.cs` | `LoupeLabelPlacement` | public | ラベル要素の配置指示 |
 | `src/LoupePresenter.LabelPlan.cs` | `LoupePresenter`（`LabelPlan` partial） | internal | 実寸 → 配置指示の写像（クランプの単一所有） |
 | `src/LoupePresenter.LabelTexts.cs` | `LoupePresenter`（`LabelTexts` partial） | internal | 文言（`EsPoint.Format`）と基準点（左上の内側）の生成 |
-| `src/Logging/LoupePresenterLogMessage.cs` | `LoupePresenterLogMessage` | internal | 本層が単一所有する設定（外観）の変更ログ |
+| `src/Logging/LoupePresenterLogMessage.cs` | `LoupePresenterLogMessage` | internal | 本層のログ定義（生成・ロガー設定・本層が単一所有する外観の変更・コアへの転送） |
 
 ## 5. 例外処理ポリシー
 
@@ -78,8 +78,8 @@ sequenceDiagram
 
 ## 6. 可視性ポリシー
 
-- UI が参照する型（`LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeLabelPlacement` / `LoupePresenter`（`LabelPlan` partial））は `public` とします。
-- 本層とテストだけが使う内部ヘルパー（`LoupePresenter`（`DrawPlan` partial） / `LoupePresenter`（`LabelTexts` partial） / `LoupePresenterLogMessage`）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.Loupe.Presenter.Tests`）で公開します。
+- UI が参照する型（`LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeTextPlacement` / `LoupeLabelPlacement`）は `public` とします。
+- 本層とテストだけが使う内部手順（`LoupePresenter` の `DrawPlan` / `LabelPlan` / `LabelTexts` partial のメンバーと `LoupePresenterLogMessage`）は `internal` とし、単体テストにのみ `InternalsVisibleTo`（`Feature.Loupe.Presenter.Tests`）で公開します。 **`partial` はファイル分割であって可視性ではなく**、`LabelPlan` の実寸 → 配置の写像（`ResolveLabelPlacements`）も内部手順です。
 
 ## 7. テスト方針
 
@@ -88,7 +88,7 @@ sequenceDiagram
 | UI 初期化不要 | 描画計画の値は UI 型を持たないため `[Fact]` / `[Theory]` で並列実行する |
 | 単位 | 描画計画の値・外観・装飾矩形・寸法換算・ラベル写像・ログ定義 |
 | 画素の検証 | 描画 API を持つ UI 側のテストが担う（本層は描画 API を持たないため） |
-| 合計 | 49 件（`[Theory]` は展開後のケース数） |
+| 合計 | 47 件（`[Theory]` は展開後のケース数） |
 
 ```powershell
 dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.csproj
@@ -101,7 +101,7 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 | 描画計画を本層に置く（コアに置かない） | コアは「何を描くか（幾何・判断）」だけを決める。 装飾矩形・文言・表示可否・描画順は描画の都合であり、コアに置くと色・フォントをコアへ持ち込むことになる |
 | **描画 API の抽象を持たない** | UI フレームワークごとの描画モデルは異なり、抽象に集約すると対象 UI（WinUI3 / WinForms 等）が増えるたびに抽象が肥大して差異を吸収しきれなくなる。 本層は描画計画というデータを返し、描画は各 UI が自前で行う |
 | 色の型 | UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画の境界で行う |
-| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「クランプ」は描画にだけ必要な規則のため、本層の `LoupePresenter`（`LabelPlan` partial） が単一所有する |
+| ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「クランプ」は描画にだけ必要な規則のため、本層が単一所有する（実寸 → 配置の写像は partial（`LabelPlan`）の内部手順） |
 | 中間ビットマップの非同期生成 | UI のディスパッチャーに依存し、中間ビットマップを持つ UI にだけ必要なため、その UI 実装が所有する |
 | 継承による差し替え | `LoupePresenter` は `sealed` にしない（外観の差し替え・`ResolveDrawPlan` の上書きで独自の見た目を提供することを役割とする） |
 
