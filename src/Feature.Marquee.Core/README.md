@@ -2,7 +2,7 @@
 
 マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の **UI 非依存の計算層**です。 UI 実装が変わっても同じ状態管理・判断・幾何を共有します。
 
-## 概要
+## 1. 概要
 
 選択矩形の幾何計算・状態機械・ **入力の解釈（判断）** を 1 箇所に集約し、UI ごとの実装差から切り離します。
 
@@ -14,7 +14,7 @@
 
 UI 非依存のためヘッドレス実行が不要で、`[Fact]` で並列実行できます。
 
-## 使い方
+## 2. 使い方
 
 ```csharp
 using EsUtil.Feature.Marquee.Core;
@@ -39,7 +39,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 
 **ホイール操作とビューポートの変化の追従は本コアにありません**（組み込み先が存在して初めて意味を持つ処理のため、ホストがビューポートへ転送します）。
 
-## 含まれるもの
+## 3. 含まれるもの
 
 | グループ | 型 |
 | --- | --- |
@@ -50,7 +50,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 | 設定 | `Setting.MarqueeOptions`（寸法・対話パラメータ。 色・フォント・表示可否は持たない） |
 | ログ | `Logging.MarqueeLogMessage`（internal） |
 
-## 依存
+## 4. 依存
 
 - 直接参照するのは UI 非依存のコア型（`Platform.Core` の `Es*` 幾何型 / `EsKey` / `ICoordTransform` / `ICursorService`）と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成）のみです。
 - **カーソル操作は `ICursorService` 抽象にのみ依存**し、未指定（`null`）の場合は何もしません（既定実装の解決は UI 側の責務です）。
@@ -59,7 +59,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 
 層の全体像は [`src/README.md`](../README.md) を参照してください。
 
-## カスタマイズ
+## 5. カスタマイズ
 
 | 差し替えたいもの | 方法 |
 | --- | --- |
@@ -68,17 +68,17 @@ marquee.Notified += (_, notice) => Raise(notice);
 | 見た目（色・フォント・枠線の太さ・表示可否）と文言 | 描画層の外観・描画計画（上位の層）を変える（本コアは色も文言も持たない） |
 | ドメイン境界 | `SetCoordTransform` に `ICoordTransform`（`Bounds` 付き）を設定し、`ClampToDomainBounds` でクリップを有効にする |
 
-## 座標型
+## 6. 座標型
 
 `EsRect` / `EsPoint` は常にドメイン座標です。 UI 論理座標（DIP）との変換は `ICoordTransform`（`Port`）が担い、各 UI のイベント引数は自前の型（例: Avalonia の `Rect`）で公開して境界で 1 行変換します。 キーは `EsKey` を介して通知します。
 
-## ビルド
+## 7. ビルド
 
 ```powershell
 dotnet build src/Feature.Marquee.Core/src/Feature.Marquee.Core.csproj
 ```
 
-## テスト
+## 8. テスト
 
 ```powershell
 dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
@@ -86,11 +86,11 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 
 `tests/` が単体テストを持ちます。 UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行されます。
 
-## ドキュメント
+## 9. ドキュメント
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・設計判断・ログ・名称の由来
 
-## ライセンス
+## 10. ライセンス
 
 MIT License（全文は [`LICENSE`](LICENSE) を参照）。

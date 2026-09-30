@@ -2,7 +2,7 @@
 
 ルーペ（選択範囲の拡大表示）の **UI 非依存のコア**です。 UI 実装が変わっても同じ計算結果を共有します。
 
-## 概要
+## 1. 概要
 
 ルーペの表示レイアウト（表示サイズ・表示位置）と描画の幾何（切り出し領域・描画面）の解決を 1 箇所に集約し、UI ごとの実装差から切り離します。
 
@@ -13,7 +13,7 @@
 
 UI フレームワークに依存しないため、UI 初期化なしの `[Fact]` で検証できます。
 
-## 使い方
+## 2. 使い方
 
 ```csharp
 using EsUtil.Feature.Loupe.Core;
@@ -37,11 +37,11 @@ var geometry = loupe.ResolveGeometry(layout.DisplaySize);
 var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描画先
 ```
 
-### ログの注入
+### 2.1 ログの注入
 
 ロガーは**コンストラクター（`new Loupe(options, logger)`）と `Log` プロパティのどちらでも注入**できます。 ロガーが確定した時点（コンストラクター注入時、または `Log` の初回設定時）で**生成の記録を 1 度だけ**出力します（それ以降は設定の変更だけが出力されます）。
 
-### 2 つの解決メソッドの使い分け
+### 2.2 2 つの解決メソッドの使い分け
 
 | メソッド | 決めること | 入力 | 出力 |
 | --- | --- | --- | --- |
@@ -50,7 +50,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 
 **表示サイズは縮小しません**。 親パネルが表示サイズを収められない場合、`ResolveLayout` は `Position` を null として返します（配置しない = その領域には描画できません）。 描画先の表面も `PixelSize` と同じ大きさで用意します（本コアは描画先を知らないため判定しません）。 拡大中心が端に寄った場合は、表示サイズを変えずに表示位置を領域内へ補正します。
 
-## 含まれるもの
+## 3. 含まれるもの
 
 | グループ | 型 |
 | --- | --- |
@@ -60,7 +60,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 | 表示レイアウト | `Placement.LoupeLayout`（表示サイズと表示位置） |
 | ログ | `Logging.LoupeLogMessage`（internal） |
 
-## 依存
+## 4. 依存
 
 - 依存は `Platform.Core`（`Es*` 幾何型・`ICoordTransform`）と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成）のみです。
 - UI フレームワークを参照しません。 UI 固有の型は利用者（UI 実装）が境界で変換します。
@@ -68,7 +68,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 
 層の全体像は [`src/README.md`](../README.md) を参照してください。
 
-## カスタマイズ
+## 5. カスタマイズ
 
 | 差し替えたいもの | 方法 |
 | --- | --- |
@@ -78,20 +78,20 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 | 描画計画（層・配置） | 描画層の描画計画の解決（上位の層）を上書きする |
 | 描画そのもの | 各 UI の描画実装を差し替える |
 
-## 座標型
+## 6. 座標型
 
 UI フレームワークの幾何型ではなく、`Platform.Core` のコア幾何型 `EsPoint` / `EsSize` / `EsRect` を使用します。
 
 UI 実装側は、境界（サービス呼び出し・イベント引数の生成箇所）で 1 行の相互変換（`.ToEsPoint()` / `.ToEsSize()` 等）を行います。  
 UI 内部の状態・描画は UI 側の型のままで構いません。
 
-## ビルド
+## 7. ビルド
 
 ```powershell
 dotnet build src/Feature.Loupe.Core/src/Feature.Loupe.Core.csproj
 ```
 
-## テスト
+## 8. テスト
 
 ```powershell
 dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
@@ -100,11 +100,11 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 `tests/` が単体テストを持ちます。  
 UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行され、**ソースのフォルダを鏡映**します（`src/Drawing/` の型は `tests/Drawing/` で検証する）。
 
-## ドキュメント
+## 9. ドキュメント
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・設計判断・ログ
 
-## ライセンス
+## 10. ライセンス
 
 MIT License（全文は [`LICENSE`](LICENSE) を参照）。

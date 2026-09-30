@@ -2,13 +2,13 @@
 
 UI フレームワーク非依存の **共通基盤の型**（キーと入力・幾何・座標変換・画像・OS サービス抽象）を提供するライブラリです。
 
-## 概要
+## 1. 概要
 
 UI フレームワークに依存していた型を本プロジェクトへ切り出すことで、上位のアプリ・コントロールから、UI フレームワーク非依存のまま利用できます。
 
 **実行時のプラットフォーム分岐を持ちません**。 OS サービスの Windows 実装（`Native/Win`）はホストが生成して抽象型として注入します。 テストはモックを注入できるため、Win32 実行環境を必要としません。
 
-## 使い方
+## 2. 使い方
 
 ```csharp
 using EsUtil.Platform.Core.Coord;
@@ -29,7 +29,7 @@ var dip = port.Forward(new EsPoint(100, 100));
 services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKeyService<CaptureType>());
 ```
 
-## 含まれるもの
+## 3. 含まれるもの
 
 | グループ | 型 |
 | --- | --- |
@@ -43,7 +43,7 @@ services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKe
 
 各 UI 実装は、自身の型とコア型を相互変換する Interop 層を個別に提供します（本プロジェクトは UI 型を参照しないため、変換は利用側が持ちます）。
 
-## 依存
+## 4. 依存
 
 - 外部パッケージは Microsoft 公式のみです（`Microsoft.Extensions.Logging.Abstractions`、`Native/Imaging` の `System.Drawing.Common`）。
 - UI フレームワーク（Avalonia / MewUI / WinUI / WinForms）と SkiaSharp を参照しません（Skia への依存は Skia を使用する層が単一所有する）。
@@ -51,7 +51,7 @@ services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKe
 
 判定基準と設計判断は [`docs/SPEC_System.md`](docs/SPEC_System.md) を参照してください。
 
-## カスタマイズ
+## 5. カスタマイズ
 
 | 差し替えたいもの | 方法 |
 | --- | --- |
@@ -59,23 +59,23 @@ services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKe
 | 各 UI の型との相互変換 | Interop 層を自作する（UI 型とコア型の変換は利用側が持ちます） |
 | 画像の描画 | 描画は各 UI が行う（本プロジェクトは `EsBitmap` と配置計算だけを提供する） |
 
-## ビルド
+## 6. ビルド
 
 ```powershell
 dotnet build src/Platform.Core/src/Platform.Core.csproj
 ```
 
-## テスト
+## 7. テスト
 
 ```powershell
 dotnet test src/Platform.Core/tests/Platform.Core.Tests.csproj
 ```
 
-## ドキュメント
+## 8. ドキュメント
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・依存の判定基準・設計判断
 
-## ライセンス
+## 9. ライセンス
 
 MIT License（全文は [`LICENSE`](LICENSE) を参照）。

@@ -2,7 +2,7 @@
 
 ルーペ（拡大鍵）の見た目を定める **コントロール化を前提としない UI 非依存の層**です。 UI 実装が変わっても同じ処理を共有します。
 
-## 概要
+## 1. 概要
 
 本層は 2 つの関心事を持ちます。 どちらも「単体で使う `Loupe` だけでは決まらない」ため、コア（`Feature.Loupe.Core`）には置きません。
 
@@ -15,7 +15,7 @@
 
 **本層はコントロール化を前提とした処理を持ちません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は UI 層または各 UI が持ちます）。
 
-## 使い方
+## 2. 使い方
 
 ルーペ（拡大鏡）を独自コントロールとして実装する場合、**状態の更新**と**描画**から作れます。
 
@@ -47,7 +47,7 @@ protected override void Render(DrawingContext context)
 - 拡大元画像は UI ごとに型が異なるため `LoupeDrawPlan` に含めません。 UI が `EsBitmap` を解決して描画へ渡します。
 - 実寸測定（`MeasureText`）は描画 API 依存のため UI 層が与えます。
 
-## 含まれるもの
+## 3. 含まれるもの
 
 | グループ | 型 |
 | --- | --- |
@@ -56,7 +56,7 @@ protected override void Render(DrawingContext context)
 | ラベル | `Label.LoupeLabelPlacement`（配置指示） |
 | ログ | `Logging.LoupePresenterLogMessage`（internal） |
 
-## 依存
+## 4. 依存
 
 - 依存は `Feature.Loupe.Core`（描画の幾何・寸法・切り出しの計算）と `Platform.Core`（`Es*` 値型）のみです。
 - **UI フレームワークへ依存しません**（描画 API の抽象も持ちません）。
@@ -64,7 +64,7 @@ protected override void Render(DrawingContext context)
 
 層の全体像は [`src/README.md`](../README.md) を参照してください。
 
-## カスタマイズ
+## 5. カスタマイズ
 
 | 差し替えたいもの | 方法 |
 | --- | --- |
@@ -73,13 +73,13 @@ protected override void Render(DrawingContext context)
 | 描画そのもの | UI 層の描画実装を差し替える |
 | 表示サイズ・拡大率 | `LoupeOptions`（`RequestedSize` / `ZoomLevel`）を変える（コアが単一所有する） |
 
-## ビルド
+## 6. ビルド
 
 ```powershell
 dotnet build src/Feature.Loupe.Presenter/src/Feature.Loupe.Presenter.csproj
 ```
 
-## テスト
+## 7. テスト
 
 ```powershell
 dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.csproj
@@ -87,11 +87,11 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 
 `tests/` が単体テストを持ちます。 描画計画の値（矩形・層・配置）は UI 型を持たないため **UI 初期化なしで検証**でき、画素の検証は UI 側（ソフトウェア描画の UI）のテストが担います。
 
-## ドキュメント
+## 8. ドキュメント
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・設計判断・ログ
 
-## ライセンス
+## 9. ライセンス
 
 MIT License（全文は [`LICENSE`](LICENSE) を参照）。

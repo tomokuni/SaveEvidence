@@ -2,7 +2,7 @@
 
 マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の見た目を定める **コントロール化を前提としない UI 非依存の層**です。 UI 実装が変わっても同じ処理を共有します。
 
-## 概要
+## 1. 概要
 
 本層は 2 つの関心事を持ちます。 どちらも「単体で使う `Marquee` だけでは決まらない」ため、コア（`Feature.Marquee.Core`）には置きません。
 
@@ -15,7 +15,7 @@
 
 **本層はコントロール化を前提とした処理を持ちません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は UI 層が持ちます）。
 
-## 使い方
+## 2. 使い方
 
 マーキー選択だけを持つ独自コントロールは、**入力の転送**・**効果の受領**・**描画**の 3 点を書けば作れます。
 
@@ -46,7 +46,7 @@ protected override void Render(DrawingContext context)
 - 座標変換（ドメイン ⇔ DIP）は `MarqueePresenter.SetCoordTransform` へ注入します（未指定は等倍）。
 - **ホイール操作（ズーム・パン）と表示の変化（パン・ズーム）への追従はホスト（UI 層）が扱います**（ビューポートが存在して初めて意味を持つ処理のため）。
 
-## 含まれるもの
+## 3. 含まれるもの
 
 | グループ | 型 |
 | --- | --- |
@@ -55,7 +55,7 @@ protected override void Render(DrawingContext context)
 | ラベル | `Label.MarqueeLabelPlacement`（配置指示） |
 | ログ | `Logging.MarqueePresenterLogMessage`（internal） |
 
-## 依存
+## 4. 依存
 
 - 依存は `Feature.Marquee.Core`（幾何・状態・判断・ファサード）と `Platform.Core`（`Es*` 値型・`ICoordTransform`・`ICursorService`）、`Microsoft.Extensions.Logging.Abstractions`（外観の変更ログの定義）のみです。
 - **UI フレームワークへ依存しません**（描画 API の抽象も持ちません）。
@@ -63,7 +63,7 @@ protected override void Render(DrawingContext context)
 
 層の全体像は [`src/README.md`](../README.md) を参照してください。
 
-## カスタマイズ
+## 5. カスタマイズ
 
 | 差し替えたいもの | 方法 |
 | --- | --- |
@@ -73,13 +73,13 @@ protected override void Render(DrawingContext context)
 | 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）を変える（コアが単一所有する） |
 | 付加情報ラベル（操作・情報）の体裁 | コントロール固有の付加情報であるため本層に置かない（組み込み先のホストが文言と描画を持つ） |
 
-## ビルド
+## 6. ビルド
 
 ```powershell
 dotnet build src/Feature.Marquee.Presenter/src/Feature.Marquee.Presenter.csproj
 ```
 
-## テスト
+## 7. テスト
 
 ```powershell
 dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.csproj
@@ -87,11 +87,11 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 
 `tests/` が単体テストを持ちます。 描画計画の値（矩形・層・配置・文言）は UI 型を持たないため **UI 初期化なしで検証**でき、画素の検証は描画 API を持つ UI 側のテストが担います。
 
-## ドキュメント
+## 8. ドキュメント
 
 - [`docs/SPEC_API.md`](docs/SPEC_API.md) — 公開 API のリファレンスと使用例
 - [`docs/SPEC_System.md`](docs/SPEC_System.md) — アーキテクチャ・設計判断・ログ
 
-## ライセンス
+## 9. ライセンス
 
 MIT License（全文は [`LICENSE`](LICENSE) を参照）。
