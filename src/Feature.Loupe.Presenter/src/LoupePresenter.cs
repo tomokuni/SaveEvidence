@@ -67,6 +67,22 @@ public partial class LoupePresenter
     /// </remarks>
     private static readonly IReadOnlyList<LoupeDrawLayer>[] s_layers = CreateLayers();
 
+    /// <summary><see cref="LoupePresenter"/> の新しいインスタンスを初期化します。</summary>
+    /// <param name="logger">ロガー。 null 可（null の場合は出力なし。 後から <see cref="Log"/> でも設定できる）。</param>
+    /// <remarks>
+    /// <b>ロガーを注入した場合は、その場で生成の記録を出力する</b>（コンストラクター呼び出しの記録と、
+    /// 生成を 1 度だけ出力する規則を兼ねる）。 注入しない場合は出力先が未設定のため、
+    /// <see cref="Log"/> が初めて設定された時点で生成の記録を出力する。
+    /// </remarks>
+    public LoupePresenter(ILogger? logger = null)
+    {
+        if (logger is not null)
+        {
+            // コンストラクタ由来の注入（本層とコアの生成の記録を今すぐ出力する）
+            Log = logger;
+        }
+    }
+
     /// <summary>ルーペの設定（計算に必要な値。 表示サイズ・拡大率）を取得または設定する。</summary>
     /// <value>設定の単一値。 既定は <see cref="LoupeOptions.Default"/>。</value>
     /// <remarks>
@@ -126,7 +142,8 @@ public partial class LoupePresenter
     /// <value>ロガー。 null を設定した場合は出力なし（<c>LoggerFallback</c> が吸収する）。</value>
     /// <remarks>
     /// 保持はコアが単一所有する（本層は委譲するだけである）。<br/>
-    /// <b>初回の設定時に本層の生成を 1 度だけ記録する</b>（生成時は出力先が未設定のため、その場では記録できない）。
+    /// <b>生成の記録</b>: コンストラクターでロガーが注入されていない場合、本プロパティの <b>初回の設定時</b>に
+    /// 本層とコアの生成を 1 度だけ記録する（生成時は出力先が未設定のため、その場では記録できない）。
     /// </remarks>
     public ILogger Log
     {

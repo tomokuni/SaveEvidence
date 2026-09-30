@@ -61,8 +61,8 @@ public class LoupePresenterTests
         Assert.Empty(logger.Messages);
     }
 
-    /// <summary>本層の生成がロガーの設定時に 1 度だけ記録されることを検証する。</summary>
-    /// <remarks>生成時は出力先が未設定のため、ロガーが設定された時点で記録する。</remarks>
+    /// <summary>本層の生成がロガーの設定時に 1 度だけ記録されることを検証する（注入しない場合）。</summary>
+    /// <remarks>生成時に出力先が未設定のため、ロガーが設定された時点で記録する。</remarks>
     [Fact]
     public void Log_本層の生成はロガーの設定時に一度だけ記録する()
     {
@@ -80,6 +80,50 @@ public class LoupePresenterTests
                 "[Feature.Loupe.Presenter] Logger attached",
                 "[Feature.Loupe.Core] Logger attached",
                 "[Feature.Loupe.Presenter] Logger attached",
+            ],
+            logger.Messages);
+    }
+
+    /// <summary>コンストラクターでロガーを注入すると、その場で本層とコアの生成が記録されることを検証する。</summary>
+    /// <remarks>注入時は出力先が確定しているため、コンストラクター呼び出しの記録をその場で出力する。</remarks>
+    [Fact]
+    public void 生成_コンストラクターでロガーを注入すると生成を記録する()
+    {
+        var logger = new RecordingLogger();
+
+        var presenter = new LoupePresenter(logger);
+
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Core] Facade created: RequestedSize=160, ZoomLevel=4",
+                "[Feature.Loupe.Core] Logger attached",
+                "[Feature.Loupe.Presenter] Presenter created",
+                "[Feature.Loupe.Presenter] Logger attached",
+            ],
+            logger.Messages);
+
+        // 注入後に同じロガーを設定し直しても生成の記録は繰り返さない
+        presenter.Log = logger;
+
+        Assert.Equal(6, logger.Messages.Count);
+    }
+
+    /// <summary>コンストラクターでロガーを注入した場合も、通過と変更が記録されることを検証する。</summary>
+    [Fact]
+    public void 生成_コンストラクター注入後も通過と変更を記録する()
+    {
+        var logger = new RecordingLogger();
+        var presenter = new LoupePresenter(logger);
+        logger.Messages.Clear();
+
+        presenter.Options = LoupeOptions.Default with { ZoomLevel = 8 };
+        presenter.Appearance = LoupeAppearance.Default with { ShowCrosshair = false };
+
+        Assert.Equal(
+            [
+                "[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8",
+                "[Feature.Loupe.Presenter] Forwarded: Options RequestedSize=160, ZoomLevel=8",
+                "[Feature.Loupe.Presenter] Setting: ShowCrosshair True → False",
             ],
             logger.Messages);
     }
