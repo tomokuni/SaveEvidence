@@ -14,18 +14,18 @@ namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 /// <b>適用パターン</b>: Facade（撮影・切り出しの 2 セッションの窓口を 1 つの API にまとめる）。<br/>
 /// Avalonia 版の <c>CaptureSessionControl</c> に相当し、<b>本ライブラリの公開 API は本クラスだけ</b>である。<br/>
 /// <br/>
-/// <b>排他の単一所有</b>: 撮影と切り出しは同時に 1 つだけ実行できる。この規則はコアの<br/>
+/// <b>排他の単一所有</b>: 撮影と切り出しは同時に 1 つだけ実行できる。 この規則はコアの<br/>
 /// <c>CaptureSessionSlot</c> が単一所有し、本クラスがその唯一の適用者になる（両 UI で同じ規則が働く）。<br/>
 /// 実行中の要求は無視する（既存のセッションを中断しない）。<br/>
 /// <br/>
 /// <b>セッションの寿命</b>: 撮影（<see cref="Capture"/>）は呼び出し内で完結し、切り出し（<see cref="ToggleCrop"/>）は<br/>
-/// 開始から確定・キャンセルまで長生きする。どちらもセッションごとにインスタンスを生成し、終了時に破棄する<br/>
+/// 開始から確定・キャンセルまで長生きする。 どちらもセッションごとにインスタンスを生成し、終了時に破棄する<br/>
 /// （切り出しのオーバーレイは表示ツリーへ加えて、終了時に取り外す）。<br/>
 /// <br/>
 /// <b>UI 固有のホスト結線</b>: プレビューの切り出しは既存のビュー（<see cref="CropViewControl"/>）とオーバーレイを<br/>
 /// 重ねる領域（<see cref="Grid"/>）が必要なため、ホストが生成して本クラスへ渡す。<br/>
 /// <br/>
-/// <b>テーマ</b>: 切り出しのルーペの市松模様の下地色はテーマに依存する。テーマ変更の購読はホストが行い、<br/>
+/// <b>テーマ</b>: 切り出しのルーペの市松模様の下地色はテーマに依存する。 テーマ変更の購読はホストが行い、<br/>
 /// <see cref="UpdateCropThemeColor"/> で反映する（本クラスはテーマの通知元を知らない）。
 /// </remarks>
 public sealed class CaptureSessionControl
@@ -43,18 +43,18 @@ public sealed class CaptureSessionControl
     /// <summary>切り出しのオーバーレイを重ねる領域（プレビューと同じセル）。</summary>
     private readonly Grid _cropHost;
 
-    /// <summary>内部ロガー（インスタンス単位。複数インスタンスで混線しない）。</summary>
+    /// <summary>内部ロガー（インスタンス単位。 複数インスタンスで混線しない）。</summary>
     private readonly ILogger _log;
 
-    /// <summary>設定（全メンバー non-null）。撮影と切り出しが同じ値を使う（本クラスが単一所有する）。</summary>
+    /// <summary>設定（全メンバー non-null）。 撮影と切り出しが同じ値を使う（本クラスが単一所有する）。</summary>
     private CaptureSettings _settings;
 
     /// <summary>インスタンスを生成する。</summary>
     /// <param name="cropView">切り出しの対象となるプレビューコントロール。</param>
     /// <param name="cropTarget">切り出しの適用先（アプリ側の実装）。</param>
     /// <param name="cropHost">切り出しのオーバーレイを重ねる領域（プレビューと同じセル）。</param>
-    /// <param name="initialSettings">初期設定。null メンバーはデフォルト値が使用される。</param>
-    /// <param name="logger">内部ログの転送先。null の場合はログを出力しない。</param>
+    /// <param name="initialSettings">初期設定。 null メンバーはデフォルト値が使用される。</param>
+    /// <param name="logger">内部ログの転送先。 null の場合はログを出力しない。</param>
     /// <exception cref="ArgumentNullException"><paramref name="cropView"/> / <paramref name="cropTarget"/> / <paramref name="cropHost"/> が null の場合。</exception>
     public CaptureSessionControl(
         CropViewControl cropView, ICaptureTarget cropTarget, Grid cropHost,
@@ -94,11 +94,11 @@ public sealed class CaptureSessionControl
         }
     }
 
-    /// <summary>撮影（スクリーン選択 / ウィンドウ選択 / 領域選択）を実行する。UI スレッドから呼び出すこと。</summary>
+    /// <summary>撮影（スクリーン選択 / ウィンドウ選択 / 領域選択）を実行する。 UI スレッドから呼び出すこと。</summary>
     /// <param name="owner">オーナーウィンドウ（撮影中は画面外へ退避し、終了後に戻す）。</param>
     /// <param name="type">キャプチャ種別。</param>
     /// <param name="services">アプリ全体で共有するサービス（キャプチャ・検出・ウィンドウ操作）。</param>
-    /// <returns>切り出した画像。キャンセル・取得失敗・退化した選択の場合は null。</returns>
+    /// <returns>切り出した画像。 キャンセル・取得失敗・退化した選択の場合は null。</returns>
     /// <remarks>
     /// 1. 撮影セッションを生成し、排他の受付を試みる（実行中のセッションがある場合は何もせず null を返す）。<br/>
     /// 2. 受付できた場合は撮影セッションを実行する（画像の取得・オーバーレイの表示・確定待ち・画像の破棄）。<br/>
@@ -131,7 +131,7 @@ public sealed class CaptureSessionControl
     /// <summary>切り出しの開始・確定・キャンセルを 1 つの操作で切り替える（ツールバーのボタン用）。</summary>
     /// <remarks>
     /// どの操作を行うかの判断はコア（<see cref="CropSessionActions.Resolve"/>）が単一所有する<br/>
-    /// （Avalonia ホストの切り出しボタンと同じ規則を使う。UI ごとに条件を書くと片方だけ変わる）。<br/>
+    /// （Avalonia ホストの切り出しボタンと同じ規則を使う。 UI ごとに条件を書くと片方だけ変わる）。<br/>
     /// キー（Enter / Escape）と同じ操作を 1 つのメソッドへ集約し、経路違いの重複を作らない。<br/>
     /// 開始できない場合（撮影中）は何もしない。
     /// </remarks>

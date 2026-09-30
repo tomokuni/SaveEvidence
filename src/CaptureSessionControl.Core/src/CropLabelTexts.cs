@@ -39,9 +39,9 @@ public static class CropLabelTexts
 
     /// <summary>切り出しのサイズ情報ラベルを解決する（未選択の場合は描画しない）。</summary>
     /// <param name="hasSelection">選択矩形があるかどうか。</param>
-    /// <param name="selectionRect">選択矩形（論理座標 = 元画像ピクセル）。選択が無い場合は参照しない。</param>
+    /// <param name="selectionRect">選択矩形（論理座標 = 元画像ピクセル）。 選択が無い場合は参照しない。</param>
     /// <param name="zoomPercent">内包するビューポートの実効ズーム率（%）。</param>
-    /// <returns>サイズ情報ラベル文字列。未選択の場合は null（描画しない）。</returns>
+    /// <returns>サイズ情報ラベル文字列。 未選択の場合は null（描画しない）。</returns>
     /// <remarks>
     /// 「未選択なら描かない」という規則を単一所有する<br/>
     /// （UI が同じ三項演算を書くと、同じ状態で表示が食い違う）。

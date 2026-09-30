@@ -99,7 +99,7 @@ public class EsBitmapAvaloniaTests
     // パフォーマンス計測（ToAvaloniaWriteableBitmap vs ToAvaloniaBitmap）
     // ====================================================================
 
-    /// <summary>計測結果のログ出力（計測の可視化。アサートはせず計測結果のみ）。</summary>
+    /// <summary>計測結果のログ出力（計測の可視化。 アサートはせず計測結果のみ）。</summary>
     /// <param name="label">計測ラベル。</param>
     /// <param name="width">画像幅。</param>
     /// <param name="height">画像高さ。</param>
@@ -141,7 +141,7 @@ public class EsBitmapAvaloniaTests
     [AvaloniaFact]
     public void Benchmark_ToAvaloniaWriteableBitmap_vs_ToAvaloniaBitmap_4K画像()
     {
-        // 4K（3840x2160）。メモリ使用が大きいため繰り返し回数を減らす。
+        // 4K（3840x2160）。 メモリ使用が大きいため繰り返し回数を減らす。
         using var bmp = EsBitmap.Create(3840, 2160);
         const int n = 5;
 

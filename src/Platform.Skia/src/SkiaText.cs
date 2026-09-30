@@ -21,7 +21,7 @@ public static class SkiaText
 
     /// <summary>テキストを描画するフォントを解決する。</summary>
     /// <param name="text">描画するテキスト。</param>
-    /// <returns>ASCII のみの場合は既定のフォント。非 ASCII を含む場合は字形を持つフォント（見つからなければ既定のフォント）。</returns>
+    /// <returns>ASCII のみの場合は既定のフォント。 非 ASCII を含む場合は字形を持つフォント（見つからなければ既定のフォント）。</returns>
     /// <remarks>
     /// <see cref="SKTypeface.Default"/> は日本語等のグリフを持たない環境があり、その場合は豆腐（□）になる。<br/>
     /// 非 ASCII を含む場合は先頭の非 ASCII 文字の字形を持つフォントを探し、解決結果を保持して再利用する。
@@ -40,7 +40,7 @@ public static class SkiaText
     /// <summary>テキストの実寸（幅・行高）を測定する。</summary>
     /// <param name="text">測定するテキスト。</param>
     /// <param name="fontSize">フォントサイズ（物理ピクセル）。</param>
-    /// <returns>テキストの実寸（幅・行高）。行高はフォントの <c>Descent - Ascent</c>。</returns>
+    /// <returns>テキストの実寸（幅・行高）。 行高はフォントの <c>Descent - Ascent</c>。</returns>
     public static EsSize Measure(string text, double fontSize)
     {
         using var font = new SKFont(ResolveTypeface(text), (float)fontSize);
@@ -67,7 +67,7 @@ public static class SkiaText
 
     /// <summary>テキストが ASCII のみで構成されているかを判定する。</summary>
     /// <param name="text">判定するテキスト。</param>
-    /// <returns>すべての文字が ASCII（0x7F 以下）の場合は true。空文字も true。</returns>
+    /// <returns>すべての文字が ASCII（0x7F 以下）の場合は true。 空文字も true。</returns>
     private static bool IsAsciiOnly(string text)
     {
         foreach (var character in text)
@@ -82,7 +82,7 @@ public static class SkiaText
     }
 
     /// <summary>非 ASCII の字形を持つフォントを解決する。</summary>
-    /// <returns>字形を持つフォント。見つからない場合は null。</returns>
+    /// <returns>字形を持つフォント。 見つからない場合は null。</returns>
     private static SKTypeface? ResolveFallbackTypeface()
     {
         foreach (var character in "あ漢")

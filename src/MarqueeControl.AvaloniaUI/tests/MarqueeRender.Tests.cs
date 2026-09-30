@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI.Tests;
 /// <summary>描画の回帰テスト（図形とラベルが実際に描画されるか）。</summary>
 /// <remarks>
 /// 図形は子の描画層（<c>ShapeLayer</c>）が描くため、<b>親の <c>InvalidateVisual</c> では再描画されない</b><br/>
-/// （子は自分の描画リストを持つ）。状態の変更で図形が再描画されないと、選択矩形が表示されない不具合になる。<br/>
+/// （子は自分の描画リストを持つ）。 状態の変更で図形が再描画されないと、選択矩形が表示されない不具合になる。<br/>
 /// ラベルは実寸から配置矩形を決めるため、実寸を測らないと背景が内側余白だけの大きさになり文字が切り落とされる。<br/>
 /// 本テストは描画完了イベント（<see cref="MarqueeControl.Rendered"/>）と要素の寸法で両方を検出する。
 /// </remarks>

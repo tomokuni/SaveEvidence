@@ -21,16 +21,16 @@ internal static class SettingsColorMath
     private const int RgbLength = 6;
 
     /// <summary>設定の色文字列を MewUI の色へ変換する。</summary>
-    /// <param name="argb">設定の色文字列（<c>#AARRGGBB</c> / <c>#RRGGBB</c>。前後の空白と <c>#</c> は省略可能）。null 可。</param>
+    /// <param name="argb">設定の色文字列（<c>#AARRGGBB</c> / <c>#RRGGBB</c>。 前後の空白と <c>#</c> は省略可能）。 null 可。</param>
     /// <param name="fallback">解析できない場合に使用する色。</param>
-    /// <returns>変換した色。解析できない場合は <paramref name="fallback"/>。</returns>
+    /// <returns>変換した色。 解析できない場合は <paramref name="fallback"/>。</returns>
     public static MewUIColor ToMewUIColor(string? argb, MewUIColor fallback)
         => TryParse(argb, out var value) ? MewUIColor.FromArgb(value) : fallback;
 
     /// <summary>設定の色文字列を System.Drawing の色へ変換する。</summary>
-    /// <param name="argb">設定の色文字列（<c>#AARRGGBB</c> / <c>#RRGGBB</c>。前後の空白と <c>#</c> は省略可能）。null 可。</param>
+    /// <param name="argb">設定の色文字列（<c>#AARRGGBB</c> / <c>#RRGGBB</c>。 前後の空白と <c>#</c> は省略可能）。 null 可。</param>
     /// <param name="fallback">解析できない場合に使用する色。</param>
-    /// <returns>変換した色。解析できない場合は <paramref name="fallback"/>。</returns>
+    /// <returns>変換した色。 解析できない場合は <paramref name="fallback"/>。</returns>
     public static DrawingColor ToDrawingColor(string? argb, DrawingColor fallback)
     {
         if (!TryParse(argb, out var value))
@@ -55,8 +55,8 @@ internal static class SettingsColorMath
         => $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
 
     /// <summary>設定の色文字列を解析する。</summary>
-    /// <param name="argb">設定の色文字列。null 可。</param>
-    /// <param name="value">解析結果（<c>0xAARRGGBB</c>）。解析できない場合は 0。</param>
+    /// <param name="argb">設定の色文字列。 null 可。</param>
+    /// <param name="value">解析結果（<c>0xAARRGGBB</c>）。 解析できない場合は 0。</param>
     /// <returns>解析できた場合は true。</returns>
     /// <remarks>
     /// 前後の空白を除去し、先頭の <c>#</c> があれば外して 6 桁または 8 桁の 16 進数として解釈する。<br/>

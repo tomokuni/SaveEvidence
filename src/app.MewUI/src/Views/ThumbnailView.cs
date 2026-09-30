@@ -14,12 +14,12 @@ namespace EsUtil.SaveEvidence.MewUI.Views;
 /// 本クラスは「幅を固定し、高さを画像の縦横比から決める」計測だけを担う。<br/>
 /// <br/>
 /// <b>余白</b>: 画像の縦横比と領域の縦横比が異なる場合、余白は透明のままにする（親の背景がそのまま見える）。<br/>
-/// <b>責務の境界</b>: 拡大率の制御（ズーム・パン）は持たない。表示中の画像を「収める」計算のみを担う。<br/>
+/// <b>責務の境界</b>: 拡大率の制御（ズーム・パン）は持たない。 表示中の画像を「収める」計算のみを担う。<br/>
 /// <b>再描画</b>: 静止画のため連続再描画を無効化し、<see cref="SkiaImageView.Source"/> の変更時のみ描画する。
 /// </remarks>
 internal sealed class ThumbnailView : SkiaImageView
 {
-    /// <summary><see cref="RequestedSize"/> プロパティ（幅。DIP）。</summary>
+    /// <summary><see cref="RequestedSize"/> プロパティ（幅。 DIP）。</summary>
     /// <remarks>
     /// 変更はレイアウトと描画の両方に影響する（物理ピクセル数が変わるため、描画側も再実行が必要）。
     /// </remarks>
@@ -29,7 +29,7 @@ internal sealed class ThumbnailView : SkiaImageView
             MewPropertyOptions.AffectsRender | MewPropertyOptions.AffectsLayout);
 
     /// <summary>サムネイルの幅（DIP）を取得または設定する。</summary>
-    /// <value>幅（DIP）。0 以下は 0 として扱い、領域を要求しない。</value>
+    /// <value>幅（DIP）。 0 以下は 0 として扱い、領域を要求しない。</value>
     /// <remarks>高さは画像の縦横比から決めるため保持しない。</remarks>
     public int RequestedSize
     {

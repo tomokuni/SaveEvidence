@@ -21,7 +21,7 @@ public sealed class CaptureCompletion<TResult>
 
     /// <summary>セッションの結果を設定して完了させる。</summary>
     /// <param name="result">セッションの結果（キャンセルの場合は <c>default</c> 等）。</param>
-    /// <returns>この呼び出しで完了した場合は true。既に完了している場合は false。</returns>
+    /// <returns>この呼び出しで完了した場合は true。 既に完了している場合は false。</returns>
     /// <remarks>最初の 1 件だけが有効になる（2 件目以降は無視される）。</remarks>
     public bool TrySetResult(TResult result) => _source.TrySetResult(result);
 }

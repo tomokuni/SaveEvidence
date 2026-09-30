@@ -27,14 +27,14 @@ public sealed class CapacityLimitedCache<TKey, TValue> where TKey : notnull
     private readonly ConcurrentDictionary<TKey, TValue> _cache = [];
 
     /// <summary>既定容量（<see cref="DefaultCapacity"/>）のキャッシュを生成する。</summary>
-    /// <param name="factory">キーから値を生成する関数。null 不可。</param>
+    /// <param name="factory">キーから値を生成する関数。 null 不可。</param>
     /// <exception cref="ArgumentNullException"><paramref name="factory"/> が null の場合。</exception>
     public CapacityLimitedCache(Func<TKey, TValue> factory) : this(factory, DefaultCapacity)
     {
     }
 
     /// <summary>指定した容量のキャッシュを生成する。</summary>
-    /// <param name="factory">キーから値を生成する関数。null 不可。</param>
+    /// <param name="factory">キーから値を生成する関数。 null 不可。</param>
     /// <param name="capacity">キャッシュの最大保持数（1 以上）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="factory"/> が null の場合。</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="capacity"/> が 1 未満の場合。</exception>

@@ -35,9 +35,9 @@ FadeMaskDragRectControl（_selectionOverlay）
   └─ Platform.AvaloniaUI（Avalonia アダプタ）／Platform.Core（抽象・値型。Win32 実装は Native 配下）
 ```
 
-- **`CaptureSessionControl.AvaloniaUI` は `CropViewControl` を内包しません**。`StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。
-- **切り出しの対象画像は `CropViewControl.Source`（app が設定するプレビュー画像）から解決**します（画像を引数で渡さない。確定時の範囲は現在の画像へクランプするため、実行中の差し替えにも追従する）。
-- **`CropViewControl` のインスタンスは `app.AvaloniaUI` が所有**します（`CapturePage.axaml` の `crop:CropViewControl x:Name="CropView"`）。プレビュー表示（`Source` / `CenterAlign` / `Appearance`）は app の責務です。
+- **`CaptureSessionControl.AvaloniaUI` は `CropViewControl` を内包しません**。 `StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。
+- **切り出しの対象画像は `CropViewControl.Source`（app が設定するプレビュー画像）から解決**します（画像を引数で渡さない。 確定時の範囲は現在の画像へクランプするため、実行中の差し替えにも追従する）。
+- **`CropViewControl` のインスタンスは `app.AvaloniaUI` が所有**します（`CapturePage.axaml` の `crop:CropViewControl x:Name="CropView"`）。 プレビュー表示（`Source` / `CenterAlign` / `Appearance`）は app の責務です。
 - `FadeMaskDragRectControl` は**2 つの場所**で再利用されます（資源分離・再利用）：
   1. `OverlayWindow.SelectionOverlay`：画面キャプチャ（領域選択）用
   2. `CropViewControl._selectionOverlay`：プレビュー Crop（切出し）用
@@ -51,13 +51,13 @@ FadeMaskDragRectControl（_selectionOverlay）
 | コントロール | 公開する外観プロパティ | 備考 |
 | --- | --- | --- |
 | `app.AvaloniaUI` | — | `CaptureSessionControl.AvaloniaUI` の `AppearanceSettings`（`CaptureSettings`）へ `CaptureSettingsMapper` で変換して渡す |
-| `CaptureSessionControl.AvaloniaUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。実行中の Crop セッションへ即時反映 |
-| `CropViewControl` | `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `DomainToDipScaling` / `LoupeDipToDeviceScaling` / `Appearance` / `CenterAlign` | 設定は `FadeMaskDragRectControl` へ委譲。DPI スケーリング・プレビューの市松模様は個別プロパティ（コードから動的設定） |
+| `CaptureSessionControl.AvaloniaUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。 実行中の Crop セッションへ即時反映 |
+| `CropViewControl` | `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `DomainToDipScaling` / `LoupeDipToDeviceScaling` / `Appearance` / `CenterAlign` | 設定は `FadeMaskDragRectControl` へ委譲。 DPI スケーリング・プレビューの市松模様は個別プロパティ（コードから動的設定） |
 | `ZoomViewControl` | `Appearance` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観（市松模様のサイズと 2 色・スクロールバー） |
 | `FadeMaskDragRectControl` | `Options`（`FadeMaskDragRectOptions`）/ `MarqueeAppearance`（外観）/ `LoupeAppearance`（`LoupeAppearance`）/ `DomainToDipScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` / `Mode` / `ShowFullOverlay` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | 下位（Marquee（選択の設定） / 装飾 / Loupe）の設定を一括公開（コアの設定値 1 つ）+ 外観（提示層の単一値 2 つ: `MarqueeAppearance` / `LoupeAppearance`）+ DPI スケーリングとラベル文言プロバイダを個別公開 |
-| `MarqueeControl` | `Options`（`MarqueeOptions`。ハンドル寸法・マーカー寸法・対話パラメータ）/ `Appearance`（`MarqueeAppearance`。色・枠線の太さ・表示可否）/ `DomainToDipScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` | `FadeMaskDragRectOptions.Marquee`（選択の設定）と外観（`MarqueeAppearance`）からそれぞれ設定（枠線の太さと色は `MarqueeAppearance` が単一所有する）。**操作・情報ラベルは本コントロールの概念ではない**ため、ホスト（`FadeMaskDragRectControl`）が `Options.Labels` で描く |
-| `LoupeControl` | `Options`（`LoupeOptions`。基本サイズ・拡大率）/ `Appearance`（`LoupeAppearance`。色・枠線の太さ・表示可否）/ `DipToDeviceScaling`（DPI 自動取得）/ `PositionOffset` | `FadeMaskDragRectOptions.Loupe` から設定（`DipToDeviceScaling` と外観を除く） |
-| `Platform.AvaloniaUI` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。`Platform.Core` 提供）を提供 |
+| `MarqueeControl` | `Options`（`MarqueeOptions`。 ハンドル寸法・マーカー寸法・対話パラメータ）/ `Appearance`（`MarqueeAppearance`。 色・枠線の太さ・表示可否）/ `DomainToDipScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` | `FadeMaskDragRectOptions.Marquee`（選択の設定）と外観（`MarqueeAppearance`）からそれぞれ設定（枠線の太さと色は `MarqueeAppearance` が単一所有する）。 **操作・情報ラベルは本コントロールの概念ではない**ため、ホスト（`FadeMaskDragRectControl`）が `Options.Labels` で描く |
+| `LoupeControl` | `Options`（`LoupeOptions`。 基本サイズ・拡大率）/ `Appearance`（`LoupeAppearance`。 色・枠線の太さ・表示可否）/ `DipToDeviceScaling`（DPI 自動取得）/ `PositionOffset` | `FadeMaskDragRectOptions.Loupe` から設定（`DipToDeviceScaling` と外観を除く） |
+| `Platform.AvaloniaUI` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。 `Platform.Core` 提供）を提供 |
 
 ### 2.3 反映経路
 
@@ -74,7 +74,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 - 設定画面の変更は `Settings` の `PropertyChanged` で **即時反映** される。
 - CaptureSessionControl.AvaloniaUI への反映は `CaptureSettings`（nullable record・部分更新）を介して行い、`null` のメンバーは現在値を維持する。
-- **色はコアの設定値（`FadeMaskDragRectOptions`）に含まれない**。UI 間で共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が `CaptureSettings` から `MarqueeAppearance` / `LoupeAppearance` を組み立て、ホスト（`CropSession` / `CaptureOverlay`）がコントロールの `MarqueeAppearance` / `LoupeAppearance` プロパティへ設定する（Core → UIBase の逆流を作らないため）。
+- **色はコアの設定値（`FadeMaskDragRectOptions`）に含まれない**。 UI 間で共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が `CaptureSettings` から `MarqueeAppearance` / `LoupeAppearance` を組み立て、ホスト（`CropSession` / `CaptureOverlay`）がコントロールの `MarqueeAppearance` / `LoupeAppearance` プロパティへ設定する（Core → UIBase の逆流を作らないため）。
 - テーマ・画像配置・市松模様等、app 内で直接処理する項目は個別の購読で反映される。
 - `Platform.AvaloniaUI` は共通基盤のため、外観設定の公開対象ではない（参考として記載）。
 
@@ -89,7 +89,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | MarqueeControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
 | `MarqueeAppearance.HandleBorderColor`（ハンドルの枠線色） | ✅ `MarqueeAppearance.HandleBorderColor` / `MarqueeAppearance.OuterBorderColor`（同じ値） | ✅ | 描画にだけ必要な色は `MarqueeAppearance` が単一所有し、ホストが同じ値をハンドルの枠線と穴あけ枠へも割り当てる（選択枠線と暗転マスクの穴あけ枠は同じ矩形に重なる） |
-| （枠線の太さ） | ✅ `MarqueeAppearance.OuterBorderThickness` | ✅ | 枠線の太さは外観（`MarqueeAppearance`）が単一所有する。ハンドルの枠線太さはコア内部の固定値（1.5。`MarqueeHandles.BorderThickness` として描画計画へ渡る） |
+| （枠線の太さ） | ✅ `MarqueeAppearance.OuterBorderThickness` | ✅ | 枠線の太さは外観（`MarqueeAppearance`）が単一所有する。 ハンドルの枠線太さはコア内部の固定値（1.5。 `MarqueeHandles.BorderThickness` として描画計画へ渡る） |
 | `MarqueeAppearance.HandleColor` | ✅ `MarqueeAppearance.HandleColor` | ✅ | |
 | `HandleSize` | ✅ `Options.Marquee.HandleSize` | ✅ | |
 | `HandleHitRadius` | ✅ `Options.Marquee.HandleHitRadius` | ✅ | |
@@ -111,25 +111,25 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | --- | --- | --- | --- |
 | `DomainToDipScaling` | ✅ `DomainToDipScaling`（個別プロパティ） | —（コードから動的設定） | DPI スケーリング |
 | `DisplayScaleScaling` | ✅ `DisplayScaleScaling`（個別プロパティ） | —（コードから動的設定） | マルチスクリーン補正 |
-| `OverlayColor`（外観） | ✅ `MarqueeAppearance.OverlayColor` | ✅ | 暗転オーバーレイの色。描画の可否は `MarqueeAppearance.ShowOverlay` |
+| `OverlayColor`（外観） | ✅ `MarqueeAppearance.OverlayColor` | ✅ | 暗転オーバーレイの色。 描画の可否は `MarqueeAppearance.ShowOverlay` |
 | `SizeLabelColor`（外観） | ✅ `MarqueeAppearance.SizeLabelColor` | ✅ | サイズラベル（1 行目）の文字色 |
 | `SizeLabelBackgroundColor`（外観） | ✅ `MarqueeAppearance.SizeLabelBackgroundColor` | ✅ | サイズラベル（1 行目）の背景色 |
 | `SizeLabelFontSize`（外観） | ✅ `MarqueeAppearance.SizeLabelFontSize` | ✅ | サイズラベルのフォントサイズ |
 | `ShowSizeLabel`（`MarqueeAppearance`） | ✅ `MarqueeAppearance.ShowSizeLabel` | ✅ | サイズラベル表示 |
-| `OuterBorderColor`（外観） | ✅ `MarqueeAppearance.OuterBorderColor` | ✅ | `MarqueeAppearance.HandleBorderColor` と共通適用（同じ矩形に重なるため）。描画の可否は `MarqueeAppearance.ShowOuterBorder` |
-| `InnerFillColor` / `InnerBorderColor`（外観） | ✅ `MarqueeAppearance.InnerFillColor` / `.InnerBorderColor` | —（設定なし） | 穴あけ矩形の内側。既定は透明で、描画の可否は `MarqueeAppearance.ShowInnerFill` / `ShowInnerBorder`（既定 false） |
+| `OuterBorderColor`（外観） | ✅ `MarqueeAppearance.OuterBorderColor` | ✅ | `MarqueeAppearance.HandleBorderColor` と共通適用（同じ矩形に重なるため）。 描画の可否は `MarqueeAppearance.ShowOuterBorder` |
+| `InnerFillColor` / `InnerBorderColor`（外観） | ✅ `MarqueeAppearance.InnerFillColor` / `.InnerBorderColor` | —（設定なし） | 穴あけ矩形の内側。 既定は透明で、描画の可否は `MarqueeAppearance.ShowInnerFill` / `ShowInnerBorder`（既定 false） |
 | `BorderThickness`（`MarqueeAppearance`） | ✅ `MarqueeAppearance.OuterBorderThickness` | ✅ | 枠線の太さ（外観が単一所有する） |
-| `InfoColor` / `InfoBackgroundColor` / `InfoFontSize` / `ShowInfoLabel`（`FadeMaskDragRectLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 情報ラベル（3 行目）。**文言の生成と描画はホスト**が行う |
-| `OperationColor` / `OperationFontSize` / `OperationBackgroundColor` / `ShowOperationLabel`（`FadeMaskDragRectLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 操作ラベル（2 行目）。**文言の生成と描画はホスト**が行う |
+| `InfoColor` / `InfoBackgroundColor` / `InfoFontSize` / `ShowInfoLabel`（`FadeMaskDragRectLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 情報ラベル（3 行目）。 **文言の生成と描画はホスト**が行う |
+| `OperationColor` / `OperationFontSize` / `OperationBackgroundColor` / `ShowOperationLabel`（`FadeMaskDragRectLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 操作ラベル（2 行目）。 **文言の生成と描画はホスト**が行う |
 | `Mode` | —（`Mode` で公開） | —（セッションで決定） | 子コントロールの有効・無効と全面暗転（`FadeMaskDragRectMode`） |
 
-- サイズラベルの表示可否は外観（`MarqueeAppearance.ShowSizeLabel`）が、装飾の太さと描画可否は同じ外観（`MarqueeAppearance`）が、操作・情報ラベルは `Options.Labels`（`FadeMaskDragRectLabelOptions`）が単一所有する。**描画にだけ必要な設定（色・枠線の太さ・表示可否と、ラベルのフォントサイズ・角丸）は外観 `MarqueeAppearance` / `LoupeAppearance`（`FadeMaskDragRectControl.MarqueeAppearance` / `.LoupeAppearance`）が単一所有する**。
-- `Mode` は `FadeMaskDragRectControl.Mode`（`FadeMaskDragRectMode`）として公開される（モードが決めるのは子コントロールの有効・無効と全面暗転のみ。文言はホストがプロバイダで与える）。
-- **例外**: `DomainToDipScaling` / `DisplayScaleScaling` は設定（`Options`）の**対象外**の環境値で、`FadeMaskDragRectControl.DomainToDipScaling` / `.DisplayScaleScaling`（個別プロパティ）として公開される。DPI スケーリング・マルチスクリーン補正のため設定画面では設定不可（セッションがコードから動的設定）。
+- サイズラベルの表示可否は外観（`MarqueeAppearance.ShowSizeLabel`）が、装飾の太さと描画可否は同じ外観（`MarqueeAppearance`）が、操作・情報ラベルは `Options.Labels`（`FadeMaskDragRectLabelOptions`）が単一所有する。 **描画にだけ必要な設定（色・枠線の太さ・表示可否と、ラベルのフォントサイズ・角丸）は外観 `MarqueeAppearance` / `LoupeAppearance`（`FadeMaskDragRectControl.MarqueeAppearance` / `.LoupeAppearance`）が単一所有する**。
+- `Mode` は `FadeMaskDragRectControl.Mode`（`FadeMaskDragRectMode`）として公開される（モードが決めるのは子コントロールの有効・無効と全面暗転のみ。 文言はホストがプロバイダで与える）。
+- **例外**: `DomainToDipScaling` / `DisplayScaleScaling` は設定（`Options`）の**対象外**の環境値で、`FadeMaskDragRectControl.DomainToDipScaling` / `.DisplayScaleScaling`（個別プロパティ）として公開される。 DPI スケーリング・マルチスクリーン補正のため設定画面では設定不可（セッションがコードから動的設定）。
 
 ### 3.3 LoupeControl の公開外観と FadeMaskDragRectControl での公開有無
 
-ルーペの**設定（基本サイズ・拡大率）**はコアの `LoupeOptions` が単一所有し、`LoupeControl` は `Options`（`LoupeOptions`）として公開します。**外観（色・枠線の太さ・表示可否と、ラベルのフォントサイズ・角丸）**は提示層の `LoupeAppearance` が単一所有し、`LoupeControl.Appearance` として公開します。
+ルーペの**設定（基本サイズ・拡大率）**はコアの `LoupeOptions` が単一所有し、`LoupeControl` は `Options`（`LoupeOptions`）として公開します。 **外観（色・枠線の太さ・表示可否と、ラベルのフォントサイズ・角丸）**は提示層の `LoupeAppearance` が単一所有し、`LoupeControl.Appearance` として公開します。
 
 | LoupeControl の公開プロパティ | FadeMaskDragRectControl での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
@@ -149,7 +149,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 
 - ルーペの設定も `FadeMaskDragRectControl.Options`（`FadeMaskDragRectOptions`）と `LoupeAppearance` 経由で公開され、コアの `LoupeOptions` と提示層の `LoupeAppearance` へ組み立てて一括設定される。
 - `SelectionRectColorA / B` は `LoupeControl` には公開されず、`FadeMaskDragRectControl` がルーペ描画完了時に破線オーバーレイを描画する際に用いる（`Options` から参照）。
-- **例外**: `DipToDeviceScaling` は設定（`Options`）の**対象外**の環境値で、`FadeMaskDragRectControl.LoupeDipToDeviceScaling`（個別プロパティ）として公開される。DPI スケーリング（`MainWindow.DesktopScaling`）から自動取得するため設定画面では設定不可。
+- **例外**: `DipToDeviceScaling` は設定（`Options`）の**対象外**の環境値で、`FadeMaskDragRectControl.LoupeDipToDeviceScaling`（個別プロパティ）として公開される。 DPI スケーリング（`MainWindow.DesktopScaling`）から自動取得するため設定画面では設定不可。
 
 ### 3.4 FadeMaskDragRectControl の公開外観プロパティと CropViewControl での公開有無
 
@@ -162,11 +162,11 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `MarqueeAppearance`（外観） | ✅ `SelectionOverlayMarqueeAppearance`（そのまま委譲） | ✅ | 描画にだけ必要な色（選択矩形・装飾） |
 | `LoupeAppearance`（`LoupeAppearance` ） | ✅ `SelectionOverlayLoupeAppearance`（そのまま委譲） | ✅ | 描画にだけ必要な色（ルーペの画像外・枠線・十字線・中心座標ラベル） |
 | `DomainToDipScaling` | ✅ `DomainToDipScaling`（個別プロパティ） | —（コードから動的設定） | DPI スケーリング |
-| `DisplayScaleScaling` | —（公開しない） | — | マルチスクリーン補正。Crop では使用しない（Crop のサイズラベルは `DomainToDipScaling` と同値で動作する） |
+| `DisplayScaleScaling` | —（公開しない） | — | マルチスクリーン補正。 Crop では使用しない（Crop のサイズラベルは `DomainToDipScaling` と同値で動作する） |
 | `LoupeDipToDeviceScaling` | ✅ `LoupeDipToDeviceScaling`（個別プロパティ） | —（DPI から自動取得） | ルーペ描画スケール |
 | `Mode`（`FadeMaskDragRectMode`） | ✅ `SelectionMode`（`FadeMaskDragRectMode` をそのまま委譲） | — | |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | ✅ `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider`（そのまま委譲） | — | ラベル文言プロバイダ（キャプチャセッションが `CaptureLabelTexts` から与える） |
-| `ShowFullOverlay` | —（公開しない） | — | モードから導出される描画状態。`FadeMaskDragRectControl` の公開面であり、`CropViewControl` は透過しない |
+| `ShowFullOverlay` | —（公開しない） | — | モードから導出される描画状態。 `FadeMaskDragRectControl` の公開面であり、`CropViewControl` は透過しない |
 
 - `CropViewControl` は `FadeMaskDragRectControl` の `Options` / `MarqueeAppearance` / `LoupeAppearance` と DPI スケーリング個別プロパティをそのまま公開する（型を透過）。
 - `DomainToDipScaling` / `LoupeDipToDeviceScaling` は `Options` には**含まれず**、個別プロパティで公開される（**コードから動的設定**のため設定画面では設定不可）。
@@ -174,18 +174,18 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 ### 3.5 CropViewControl の公開外観プロパティと CaptureSessionControl.AvaloniaUI での公開有無
 
 `CropViewControl` は自身の公開設定として `SelectionOverlayOptions`（`FadeMaskDragRectOptions`）、`DomainToDipScaling` / `LoupeDipToDeviceScaling`、`Appearance`、`CenterAlign` 等を公開する。
-`CaptureSessionControl.AvaloniaUI` は**`CaptureSettings`（`CaptureSessionControl.AppearanceSettings`）**を公開しており、Crop セッション開始時に `CaptureSettings` → `FadeMaskDragRectOptions`（`ToFadeMaskDragRectOptions`。コアのマッパー。**寸法・表示可否のみ**）と `MarqueeAppearance` / `LoupeAppearance`（`CaptureSessionControl.UIBase` の `CapturePaintMapper`。**外観（色・枠線の太さ・表示可否）**）へ変換して `CropViewControl.SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` へ設定する。
+`CaptureSessionControl.AvaloniaUI` は**`CaptureSettings`（`CaptureSessionControl.AppearanceSettings`）**を公開しており、Crop セッション開始時に `CaptureSettings` → `FadeMaskDragRectOptions`（`ToFadeMaskDragRectOptions`。 コアのマッパー。 **寸法・表示可否のみ**）と `MarqueeAppearance` / `LoupeAppearance`（`CaptureSessionControl.UIBase` の `CapturePaintMapper`。 **外観（色・枠線の太さ・表示可否）**）へ変換して `CropViewControl.SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` へ設定する。
 DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は `CaptureSettings` に含まれず、セッションが個別プロパティ （`cropView.DomainToDipScaling` 等）で設定する。
 
 | CropViewControl の公開プロパティ | CaptureSessionControl.AvaloniaUI での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
-| `SelectionOverlayOptions`（`FadeMaskDragRectOptions`） | ✅ `CaptureSettings`（コアのマッパーで変換） | ✅ | `CaptureSettings` → `FadeMaskDragRectOptions`（寸法・表示可否。全て設定画面で設定可能） |
+| `SelectionOverlayOptions`（`FadeMaskDragRectOptions`） | ✅ `CaptureSettings`（コアのマッパーで変換） | ✅ | `CaptureSettings` → `FadeMaskDragRectOptions`（寸法・表示可否。 全て設定画面で設定可能） |
 | `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` （`MarqueeAppearance` / `LoupeAppearance`） | ✅ `CaptureSettings`（`CaptureSessionControl.UIBase` の `CapturePaintMapper` で組み立て） | ✅ | **色・枠線の太さ・表示可否はコアのマッパーでは写像しない**（Core → UIBase の逆流を作らないため、外観は UI 層のホストが組み立てる） |
 | `DomainToDipScaling` | ✅ `cropView.DomainToDipScaling`（セッションが設定） | —（コードから動的設定） | DPI スケーリング（Crop は 1.0 固 定） |
 | `LoupeDipToDeviceScaling` | ✅ `cropView.LoupeDipToDeviceScaling`（セッションが設定） | —（DPI から自動取得） | ルーペ描画スケール（`CaptureSettings.LoupeDipToDeviceScaling` 由来） |
-| `Appearance`（`ZoomViewAppearance`） | — | ✅（`Settings.PreviewCheckerColorA/B` / `PreviewCheckerSize`） | プレビューの市松模様（画像の透明部分の背景）。`app.AvaloniaUI` 側（`CapturePage`）で直接設定する。描く範囲は画像の表示矩形の内側だけであり、画像の外（ペーストボード）は背景の単色になる |
+| `Appearance`（`ZoomViewAppearance`） | — | ✅（`Settings.PreviewCheckerColorA/B` / `PreviewCheckerSize`） | プレビューの市松模様（画像の透明部分の背景）。 `app.AvaloniaUI` 側（`CapturePage`）で直接設定する。 描く範囲は画像の表示矩形の内側だけであり、画像の外（ペーストボード）は背景の単色になる |
 | `CenterAlign` | — | ✅（`Settings.CenterAlign`） | `app.AvaloniaUI` 側（`CapturePage`）で直接設定 |
-| `SelectionMode`（`FadeMaskDragRectMode`） | — | — | 選択モード。`CaptureSettings` に含まれず、`CropViewControl` の既定（`Crop`）を使う（`CropSession` は読み取りのみ）。 `fadeMaskDragRect` 以外の値（自動切り出しの矩形は `Rects` で描く）へ切り替えるホストは無い |
+| `SelectionMode`（`FadeMaskDragRectMode`） | — | — | 選択モード。 `CaptureSettings` に含まれず、`CropViewControl` の既定（`Crop`）を使う（`CropSession` は読み取りのみ）。 `fadeMaskDragRect` 以外の値（自動切り出しの矩形は `Rects` で描く）へ切り替えるホストは無い |
 
 - `app.AvaloniaUI` の `Settings` → `CaptureSettingsMapper.From` → `CaptureSessionControl.AppearanceSettings`（`CaptureSettings`）が設定される。
 - Capture セッション開始時に、`CaptureSettings` → `ToFadeMaskDragRectOptions` → `CropViewControl.SelectionOverlayOptions`（`FadeMaskDragRectOptions`）と、`CapturePaintMapper` → `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance`（外観）へ**変換**して設定する（`CaptureSettings` は 1 つの型だが、 反映先はコアの設定値と外観の 2 つに分かれる）。
@@ -206,8 +206,8 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| 選択枠の色（不透明度含む） | `CaptureBorderColor` | `MarqueeControl.Appearance.HandleBorderColor` / `MarqueeControl.Appearance.OuterBorderColor`（同じ値。アルファ込み） |
-| 選択枠の太さ | `CaptureBorderThickness` | `MarqueeAppearance.OuterBorderThickness`（装飾の寸法が単一所有する。ハンドルの枠線太さはコア内部の固定値 1.5） |
+| 選択枠の色（不透明度含む） | `CaptureBorderColor` | `MarqueeControl.Appearance.HandleBorderColor` / `MarqueeControl.Appearance.OuterBorderColor`（同じ値。 アルファ込み） |
+| 選択枠の太さ | `CaptureBorderThickness` | `MarqueeAppearance.OuterBorderThickness`（装飾の寸法が単一所有する。 ハンドルの枠線太さはコア内部の固定値 1.5） |
 | 選択矩形の最小サイズ | `MinSelectionSize` | `Options.Marquee.MinSelectionSize` |
 | 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `MarqueeControl.Appearance.OverlayColor`（アルファ込み） |
 | ルーペの拡大率 | `LoupeZoomLevel` | `LoupeControl.Options.ZoomLevel` |
@@ -228,10 +228,10 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 | スクロール不要時は中央に配置 | `CenterAlign` | `CropView.CenterAlign`（画像配置） |
 | 市松模様 A（色） | `PreviewCheckerColorA` | `CropView.Appearance.CheckerColorA`（プレビューの市松模様） |
 | 市松模様 B（色） | `PreviewCheckerColorB` | `CropView.Appearance.CheckerColorB`（プレビューの市松模様） |
-| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.Appearance.CheckerSize`（プレビュー）。実効値は `ZoomViewAppearance.ResolveCheckerTileSize` が決める（0 以下 = 描かない / 1 は下限 2 へ切り上げ） |
+| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.Appearance.CheckerSize`（プレビュー）。 実効値は `ZoomViewAppearance.ResolveCheckerTileSize` が決める（0 以下 = 描かない / 1 は下限 2 へ切り上げ） |
 | ルーペの画像外の色 | `LoupePasteboardColor` | `LoupeControl.Appearance.PasteboardColor`（ルーペの画像外は無地） |
 
-- 市松模様は「画像設定」の詳細設定で管理し、**プレビューの画像の透明部分（画像の表示矩形の内側）に適用**する（画像のレターボックス＝ペーストボードは背景の単色のまま。ルーペは市松模様を使わず、画像外を無地の色で示す）。
+- 市松模様は「画像設定」の詳細設定で管理し、**プレビューの画像の透明部分（画像の表示矩形の内側）に適用**する（画像のレターボックス＝ペーストボードは背景の単色のまま。 ルーペは市松模様を使わず、画像外を無地の色で示す）。
 
 ## 7. キャプチャ設定
 
@@ -240,8 +240,8 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
 | キャプチャ時にメインウィンドウを隠す | `HideMainWindowOnCapture` | `CaptureSettings.HideOwnerWindow` |
-| キャプチャ枠の色（不透明度含む） | `CaptureBorderColor` | `MarqueeControl.Appearance.HandleBorderColor` / `MarqueeControl.Appearance.OuterBorderColor`（同じ値。アルファ込み） |
-| キャプチャ枠の太さ | `CaptureBorderThickness` | `MarqueeAppearance.OuterBorderThickness`（装飾の寸法が単一所有する。ハンドルの枠線太さはコア内部の固定値 1.5） |
+| キャプチャ枠の色（不透明度含む） | `CaptureBorderColor` | `MarqueeControl.Appearance.HandleBorderColor` / `MarqueeControl.Appearance.OuterBorderColor`（同じ値。 アルファ込み） |
+| キャプチャ枠の太さ | `CaptureBorderThickness` | `MarqueeAppearance.OuterBorderThickness`（装飾の寸法が単一所有する。 ハンドルの枠線太さはコア内部の固定値 1.5） |
 | 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `MarqueeControl.Appearance.OverlayColor`（アルファ込み） |
 
 - 選択矩形の最小サイズ（`MinSelectionSize`）は「外観設定」（§4）に配置。
@@ -261,7 +261,7 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 | 座標ラベルの背景色（不透明度含む） | `CoordLabelBackgroundColor` | `MarqueeControl.Appearance.CoordLabelBackgroundColor`（アルファ込み） |
 | 座標ラベルのフォントサイズ | `CoordLabelFontSize` | `MarqueeAppearance.CoordLabelFontSize`（外観の `MarqueeAppearance`） |
 
-- 設定は複合コントロールの設定値（`FadeMaskDragRectOptions.Marquee`。寸法・対話パラメータ）と外観（`MarqueeAppearance`）経由で子コントロールへ分配される（選択矩形コントロールは同じ項目の個別プロパティを公開しない）。
+- 設定は複合コントロールの設定値（`FadeMaskDragRectOptions.Marquee`。 寸法・対話パラメータ）と外観（`MarqueeAppearance`）経由で子コントロールへ分配される（選択矩形コントロールは同じ項目の個別プロパティを公開しない）。
 
 - 座標ラベルの外観（色・背景・フォント）は外観設定（詳細・折り畳みなし）内に配置（不透明度は色のアルファに統合済み）。
 
@@ -273,8 +273,8 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 | 枠色 | `LoupeFrameColor` | `LoupeControl.Appearance.BorderColor` |
 | 枠の太さ | `LoupeFrameWidth` | `LoupeControl.Appearance.BorderThickness` |
 | 十字線色（不透明度含む） | `LoupeCrossColor` | `LoupeControl.Appearance.CrossColor`（アルファ込みの色） |
-| 選択矩形破線の色A（不透明度含む） | `LoupeSelectionRectColorA` | `FadeMaskDragRectOptions.SelectionRectColorA`（アルファ込み。ルーペの Bitmap へ破線を描く `FadeMaskDragRectControl` が使用） |
-| 選択矩形破線の色B（不透明度含む） | `LoupeSelectionRectColorB` | `FadeMaskDragRectOptions.SelectionRectColorB`（アルファ込み。同上） |
+| 選択矩形破線の色A（不透明度含む） | `LoupeSelectionRectColorA` | `FadeMaskDragRectOptions.SelectionRectColorA`（アルファ込み。 ルーペの Bitmap へ破線を描く `FadeMaskDragRectControl` が使用） |
+| 選択矩形破線の色B（不透明度含む） | `LoupeSelectionRectColorB` | `FadeMaskDragRectOptions.SelectionRectColorB`（アルファ込み。 同上） |
 | 座標ラベルのテキスト色 | `LoupeCoordLabelColor` | `LoupeControl.Appearance.CoordLabelColor` |
 | 座標ラベルの背景色（不透明度含む） | `LoupeCoordLabelBackgroundColor` | `LoupeControl.Appearance.CoordLabelBackgroundColor`（アルファ込みの色） |
 | 座標ラベルのフォントサイズ | `LoupeCoordLabelFontSize` | `LoupeControl.Appearance.CoordLabelFontSize` |
@@ -294,7 +294,7 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 
 ## 10. ラベル設定
 
-> 表示の ON/OFF チェックボックス（`SizeLabelVisible` / `ShowSubLines` / `InfoLabelVisible` / `ShowCoordLabel` / `LoupeShowCoordLabel`）は設定画面下部の「外観設定」の先頭カテゴリ（ラベル設定）に配置。テキスト色・背景色・フォントサイズは外観設定内の対応カテゴリ（選択矩形内のラベル / カーソル位置の座標ラベル / ルーペの中心座標ラベル）に配置。
+> 表示の ON/OFF チェックボックス（`SizeLabelVisible` / `ShowSubLines` / `InfoLabelVisible` / `ShowCoordLabel` / `LoupeShowCoordLabel`）は設定画面下部の「外観設定」の先頭カテゴリ（ラベル設定）に配置。 テキスト色・背景色・フォントサイズは外観設定内の対応カテゴリ（選択矩形内のラベル / カーソル位置の座標ラベル / ルーペの中心座標ラベル）に配置。
 
 ### 10.1 1 行目: サイズラベル
 
@@ -309,7 +309,7 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| 矩形操作を矩形内に表示 | `ShowSubLines` | `FadeMaskDragRectOptions.Labels.ShowOperationLabel`（**ホストが描く**。文言の生成は `CaptureLabelTexts` が単一所有する） |
+| 矩形操作を矩形内に表示 | `ShowSubLines` | `FadeMaskDragRectOptions.Labels.ShowOperationLabel`（**ホストが描く**。 文言の生成は `CaptureLabelTexts` が単一所有する） |
 | テキスト色 | `SubLineColor` | `FadeMaskDragRectOptions.Labels.OperationColor` |
 | 背景色（不透明度含む） | `SubLineBackgroundColor` | `FadeMaskDragRectOptions.Labels.OperationBackgroundColor`（アルファ込み） |
 | フォントサイズ | `SubLineFontSize` | `FadeMaskDragRectOptions.Labels.OperationFontSize` |
@@ -318,7 +318,7 @@ DPI スケーリング（`DomainToDipScaling` / `LoupeDipToDeviceScaling`）は 
 
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
-| 選択中のウィンドウのタイトルを表示 | `InfoLabelVisible` | `FadeMaskDragRectOptions.Labels.ShowInfoLabel`（**ホストが描く**。文言はモードから `CaptureLabelTexts` が決める） |
+| 選択中のウィンドウのタイトルを表示 | `InfoLabelVisible` | `FadeMaskDragRectOptions.Labels.ShowInfoLabel`（**ホストが描く**。 文言はモードから `CaptureLabelTexts` が決める） |
 | テキスト色 | `InfoLabelColor` | `FadeMaskDragRectOptions.Labels.InfoColor` |
 | 背景色（不透明度含む） | `InfoLabelBackgroundColor` | `FadeMaskDragRectOptions.Labels.InfoBackgroundColor`（アルファ込み） |
 | フォントサイズ | `InfoLabelFontSize` | `FadeMaskDragRectOptions.Labels.InfoFontSize` |

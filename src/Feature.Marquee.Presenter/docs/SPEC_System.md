@@ -180,4 +180,3 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 - **変化した項目だけ**を出力します（外観の再適用でログが溢れないため）。
 - コアが所有する設定（`MarqueeOptions`・倍率・ハイライト矩形）はコアが記録します（本層は重複して記録しません）。
 - 付加情報ラベル（操作・情報ラベル）はホストが所有します（文言の生成と描画。 本層は文言を生成しません）。
-

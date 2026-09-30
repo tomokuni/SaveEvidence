@@ -15,7 +15,7 @@ public static partial class ZoomLogMessage
 {
     /// <summary>ズームイン（⊖⊕ ボタン）の実行前後を記録する。</summary>
     /// <remarks>LogLevel: Information<br/>出力書式: <c>[ZoomIn] {Current}% -&gt; {Target}%</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="current">変更前の実効ズーム率（%）。</param>
     /// <param name="target">変更後のズーム率（%）。</param>
     [LoggerMessage(LogLevel.Information, "[ZoomIn] {Current}% -> {Target}%")]
@@ -23,7 +23,7 @@ public static partial class ZoomLogMessage
 
     /// <summary>ズームアウト（⊖⊕ ボタン）の実行前後を記録する。</summary>
     /// <remarks>LogLevel: Information<br/>出力書式: <c>[ZoomOut] {Current}% -&gt; {Target}%</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="current">変更前の実効ズーム率（%）。</param>
     /// <param name="target">変更後のズーム率（%）。</param>
     [LoggerMessage(LogLevel.Information, "[ZoomOut] {Current}% -> {Target}%")]
@@ -31,7 +31,7 @@ public static partial class ZoomLogMessage
 
     /// <summary>Ctrl+ホイールのズームインの実行前後を記録する。</summary>
     /// <remarks>LogLevel: Information<br/>出力書式: <c>[ZoomInWheel] {Current}% -&gt; {Target}%</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="current">変更前の実効ズーム率（%）。</param>
     /// <param name="target">変更後のズーム率（%）。</param>
     [LoggerMessage(LogLevel.Information, "[ZoomInWheel] {Current}% -> {Target}%")]
@@ -39,7 +39,7 @@ public static partial class ZoomLogMessage
 
     /// <summary>Ctrl+ホイールのズームアウトの実行前後を記録する。</summary>
     /// <remarks>LogLevel: Information<br/>出力書式: <c>[ZoomOutWheel] {Current}% -&gt; {Target}%</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="current">変更前の実効ズーム率（%）。</param>
     /// <param name="target">変更後のズーム率（%）。</param>
     [LoggerMessage(LogLevel.Information, "[ZoomOutWheel] {Current}% -> {Target}%")]

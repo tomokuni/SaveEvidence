@@ -5,7 +5,7 @@ namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>簡易確認ダイアログ（はい / いいえ）を表示する静的ヘルパー（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版 <c>ConfirmDialog</c> に相当する。MewUI は XAML を持たないため C# マークアップで組み立てる。<br/>
+/// Avalonia 版 <c>ConfirmDialog</c> に相当する。 MewUI は XAML を持たないため C# マークアップで組み立てる。<br/>
 /// ウィンドウ装飾なし（<c>Borderless</c>）・固定サイズのモーダルダイアログとしてオーナーの中央に表示する。<br/>
 /// 用途: 保存時の上書き確認など（<c>MainViewModel.ConfirmOverwriteAsync</c> へ配線する）。
 /// </remarks>
@@ -29,7 +29,7 @@ internal static class ConfirmDialog
     /// 1. メッセージと はい / いいえ のボタンを縦に積んだウィンドウを組み立てる。<br/>
     /// 2. 選択結果を <see cref="TaskCompletionSource{TResult}"/> へ設定し、ダイアログを閉じる。<br/>
     /// 3. ダイアログが閉じるまで待ってから結果を返す。<br/>
-    /// 4. Esc と閉じる操作（Alt+F4 等）でも待機が完了するようにする（キャンセル扱い。永久待ちを防ぐ）。
+    /// 4. Esc と閉じる操作（Alt+F4 等）でも待機が完了するようにする（キャンセル扱い。 永久待ちを防ぐ）。
     /// </remarks>
     public static async Task<bool> ShowAsync(Window owner, string title, string message)
     {

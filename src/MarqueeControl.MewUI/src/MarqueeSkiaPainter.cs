@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.Marquee.MewUI;
 /// <b>位置付け</b>: 描く層とその順序は描画層（<see cref="MarqueePresenter"/>）が <see cref="MarqueeDrawPlan.Layers"/> として単一所有する。<br/>
 /// 本クラスは順序を判断せず、層ごとに Skia の描画 API を呼ぶだけである（座標・色・寸法はすべて計画に解決済み）。<br/>
 /// <br/>
-/// <b>キャンバスの抽象化を持たない</b>: 描画 API は本クラスが直接呼ぶ。共有できるプリミティブは<br/>
+/// <b>キャンバスの抽象化を持たない</b>: 描画 API は本クラスが直接呼ぶ。 共有できるプリミティブは<br/>
 /// <see cref="SkiaFill"/> / <see cref="SkiaText"/> / <see cref="SkiaLabel"/> が単一所有する。<br/>
 /// <br/>
 /// <b>テキストは描かない</b>: ラベルは UI 要素（<c>Border</c> + <c>TextBlock</c>）として配置するため、<br/>
@@ -21,7 +21,7 @@ namespace EsUtil.SaveEvidence.Marquee.MewUI;
 public static class MarqueeSkiaPainter
 {
     /// <summary>描画計画を描画順に描く。</summary>
-    /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。null 不可。</param>
+    /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。 null 不可。</param>
     /// <param name="plan">描画層が解決した描画計画（層の順序・矩形・色を持つ）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="canvas"/> が null の場合。</exception>
     public static void Paint(SKCanvas canvas, in MarqueeDrawPlan plan)
@@ -30,7 +30,7 @@ public static class MarqueeSkiaPainter
 
         var appearance = plan.Appearance;
 
-        // 描画順は描画層（Layers）が単一所有する。本クラスは順に写すだけで、順序を判断しない
+        // 描画順は描画層（Layers）が単一所有する。 本クラスは順に写すだけで、順序を判断しない
         foreach (var layer in plan.Layers)
         {
             switch (layer)

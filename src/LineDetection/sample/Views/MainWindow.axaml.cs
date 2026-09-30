@@ -6,7 +6,7 @@ using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
-/// <summary>メインウィンドウ。ナビゲーションで選択されたページ（線分検出・データ検証・データ作成）を表示する。</summary>
+/// <summary>メインウィンドウ。 ナビゲーションで選択されたページ（線分検出・データ検証・データ作成）を表示する。</summary>
 /// <remarks>
 /// ナビゲーション（左ペイン）とページ切替（<see cref="DetectPage"/> / <see cref="VerifyPage"/> / <see cref="CreatePage"/>）を統括する。<br/>
 /// ページごとの状態は各ページの ViewModel が独立して保持する（ページ間で共有しない）。<br/>

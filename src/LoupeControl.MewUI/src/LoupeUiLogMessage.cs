@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Loupe.MewUI;
 internal static partial class LoupeUiLogMessage
 {
     /// <summary>拡大元画像の変更ログ（同値の再設定では出力しない）。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の拡大元画像（未設定は null）。</param>
     /// <param name="newValue">変更後の拡大元画像（未設定は null）。</param>
     /// <remarks>
@@ -35,7 +35,7 @@ internal static partial class LoupeUiLogMessage
     }
 
     /// <summary>設定変更のログ。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値（整形済み）。</param>
     /// <param name="newValue">変更後の値（整形済み）。</param>
@@ -44,7 +44,7 @@ internal static partial class LoupeUiLogMessage
     private static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
 
     /// <summary>ルーペ描画の例外エラーログ。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="exception">発生した例外。</param>
     /// <remarks>
     /// LogLevel: Error<br/>出力書式: <c>[LoupeControl.MewUI] Update exception</c>（例外スタックトレース付き）<br/>

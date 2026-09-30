@@ -11,7 +11,7 @@ namespace EsUtil.Platform.Skia;
 /// Skia への依存は本層へ閉じ込め、コアは自前のピクセルバッファだけを所有する。<br/>
 /// <br/>
 /// <b>所有権</b>: 双方向とも<b>コアのバッファの所有権は移動しない</b>。<br/>
-/// - <see cref="ToSKBitmap"/> は<b>非所有ビュー</b>を返す（コアのバッファを指すだけ。破棄してもコアのバッファは解放されない）。<br/>
+/// - <see cref="ToSKBitmap"/> は<b>非所有ビュー</b>を返す（コアのバッファを指すだけ。 破棄してもコアのバッファは解放されない）。<br/>
 /// - <see cref="ToEsBitmap(SKBitmap)"/> は<b>複製</b>を作る（引数の <see cref="SKBitmap"/> の所有権は呼び出し側に残る）。<br/>
 /// <br/>
 /// <b>ビューの寿命</b>: <see cref="ToSKBitmap"/> が返す <see cref="SKBitmap"/> は、対応する <see cref="EsBitmap"/> が<br/>
@@ -21,8 +21,8 @@ namespace EsUtil.Platform.Skia;
 public static class EsBitmapSkiaExtensions
 {
     /// <summary>コアのビットマップを指す非所有ビューを返す。</summary>
-    /// <param name="bitmap">対象のビットマップ。null 不可。</param>
-    /// <returns>同じピクセルバッファを指す <see cref="SKBitmap"/>（非所有）。破棄してもコアのバッファは解放されない。</returns>
+    /// <param name="bitmap">対象のビットマップ。 null 不可。</param>
+    /// <returns>同じピクセルバッファを指す <see cref="SKBitmap"/>（非所有）。 破棄してもコアのバッファは解放されない。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="bitmap"/> が null の場合。</exception>
     /// <exception cref="ObjectDisposedException"><paramref name="bitmap"/> が破棄済みの場合。</exception>
     /// <exception cref="InvalidOperationException">ビューの作成に失敗した場合。</exception>
@@ -49,11 +49,11 @@ public static class EsBitmapSkiaExtensions
     }
 
     /// <summary>Skia のビットマップを複製してコアのビットマップを生成する。</summary>
-    /// <param name="bitmap">元のビットマップ（BGRA8888・アルファ乗算済み）。null 不可。</param>
+    /// <param name="bitmap">元のビットマップ（BGRA8888・アルファ乗算済み）。 null 不可。</param>
     /// <returns>複製されたコアのビットマップ（所有権は呼び出し側）。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="bitmap"/> が null の場合。</exception>
     /// <remarks>
-    /// 引数の所有権は呼び出し側に残る（本メソッドは引数を破棄しない）。不要になった時点で呼び出し側が破棄する。<br/>
+    /// 引数の所有権は呼び出し側に残る（本メソッドは引数を破棄しない）。 不要になった時点で呼び出し側が破棄する。<br/>
     /// 元のビットマップが BGRA8888・アルファ乗算済みでない場合は、Skia が変換せずにバイト列を写すため<br/>
     /// 成分順が一致しない（呼び出し側で形式を保証する）。<br/>
     /// 全行をコピーできる場合は 0 埋めを省く（大きな画像の書き込み量を減らす）。

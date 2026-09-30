@@ -8,7 +8,7 @@ internal static class TestHelper
     /// <summary>描画先（キャンバスとその画素を読む手段）を生成する。</summary>
     /// <param name="width">幅（ピクセル）。</param>
     /// <param name="height">高さ（ピクセル）。</param>
-    /// <returns>生成した描画先。破棄は呼び出し側。</returns>
+    /// <returns>生成した描画先。 破棄は呼び出し側。</returns>
     public static RenderTarget CreateTarget(int width, int height) => new(width, height);
 }
 

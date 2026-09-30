@@ -11,8 +11,8 @@ namespace EsUtil.Platform.AvaloniaUI;
 public static class ColorExtensions
 {
     /// <summary>不透明度を指定して、基準色（名前付き色等）から色を生成する。</summary>
-    /// <param name="alpha">不透明度（0〜255。255 = 完全不透明）。</param>
-    /// <param name="baseColor">基準色（例: <see cref="Colors.Black"/>）。RGB はそのまま、アルファのみ差し替えられる。</param>
+    /// <param name="alpha">不透明度（0〜255。 255 = 完全不透明）。</param>
+    /// <param name="baseColor">基準色（例: <see cref="Colors.Black"/>）。 RGB はそのまま、アルファのみ差し替えられる。</param>
     /// <returns>指定の不透明度を適用した色。</returns>
     /// <remarks>
     /// 既存の <c>Color.FromArgb(alpha, r, g, b)</c> では RGB 値の意味が判別しにくいため、<br/>

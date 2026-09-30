@@ -21,7 +21,7 @@ internal static class BottomAlignWrapLayout
     /// <param name="sizes">各アイテムの計測済みサイズ。</param>
     /// <param name="availableWidth">利用可能幅。</param>
     /// <param name="wrap">折り返すかどうか（幅が有限かつ正なら true）。</param>
-    /// <param name="spacing">アイテム間の間隔。0 以上の値。</param>
+    /// <param name="spacing">アイテム間の間隔。 0 以上の値。</param>
     /// <returns>推奨サイズ（幅 = 行の最大幅、高さ = 行高さの合計）。</returns>
     /// <remarks>アイテムが無い場合は空のサイズを返す。</remarks>
     public static EsSize Measure(IReadOnlyList<EsSize> sizes, double availableWidth, bool wrap, double spacing = 0)
@@ -59,7 +59,7 @@ internal static class BottomAlignWrapLayout
     /// <summary>アイテムのサイズ群を幅で折り返し、各行内で下端揃えした配置矩形を計算する。</summary>
     /// <param name="sizes">各アイテムの計測済みサイズ。</param>
     /// <param name="finalWidth">確定した配置幅。</param>
-    /// <param name="spacing">アイテム間の間隔。0 以上の値。</param>
+    /// <param name="spacing">アイテム間の間隔。 0 以上の値。</param>
     /// <returns>各アイテムの配置矩形（<paramref name="sizes"/> と同じ並び順）。</returns>
     /// <remarks>
     /// 行の高さは行内の最大アイテム高さで決め、各アイテムは「行の上端 + (行高さ − アイテム高さ)」へ配置する。<br/>

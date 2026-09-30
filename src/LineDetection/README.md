@@ -20,9 +20,9 @@
 
 ## 1. 概要
 
-Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブラリ**です。キャプチャ画像（スクリーンショット等）から、Windows のウィンドウ枠となる水平・垂直の辺を検出します。
+Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブラリ**です。 キャプチャ画像（スクリーンショット等）から、Windows のウィンドウ枠となる水平・垂直の辺を検出します。
 
-- **ロジック方式（Canny + Hough）**: モデル不要の画像処理方式。Canny エッジ + HoughLinesP で水平・垂直の辺を検出し、矩形（ウィンドウの 4 辺）を優先出力します。
+- **ロジック方式（Canny + Hough）**: モデル不要の画像処理方式。 Canny エッジ + HoughLinesP で水平・垂直の辺を検出し、矩形（ウィンドウの 4 辺）を優先出力します。
 
 検出器は共通インターフェース `ILineDetector` で抽象化されるため、方式を差し替えて利用できます。
 
@@ -43,7 +43,7 @@ Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブ
 - .NET 10
 - Avalonia 12.1 以降
 - OpenCvSharp5（ロジック方式・内部利用）
-  - OpenCvSharp5.runtime.win.slim（ネイティブ。`videoio` を除く縮小構成。動画入出力を使わないため `opencv_videoio_ffmpeg500_64.dll` 約 31 MB を持ち込まない）
+  - OpenCvSharp5.runtime.win.slim（ネイティブ。 `videoio` を除く縮小構成。 動画入出力を使わないため `opencv_videoio_ffmpeg500_64.dll` 約 31 MB を持ち込まない）
 
 ## 4. インストール
 
@@ -70,7 +70,7 @@ var lines = detector.Detect(unified);
 
 ### 検出結果
 
-`Detect` は `IReadOnlyList<LineDetectionResult>` を返します。各結果は始点・終点・向き（水平 / 垂直）・スコア（長さ）を持ちます。
+`Detect` は `IReadOnlyList<LineDetectionResult>` を返します。 各結果は始点・終点・向き（水平 / 垂直）・スコア（長さ）を持ちます。
 
 ```csharp
 foreach (var line in lines)
@@ -81,7 +81,7 @@ foreach (var line in lines)
 
 ## 6. サンプルアプリケーション
 
-外観・機能を再現したサンプルアプリが `src/LineDetection/sample/` にあります。クリップボードから画像を貼り付けて検出結果（線分一覧・画像上のオーバーレイ・ルーペ拡大）を確認できます。
+外観・機能を再現したサンプルアプリが `src/LineDetection/sample/` にあります。 クリップボードから画像を貼り付けて検出結果（線分一覧・画像上のオーバーレイ・ルーペ拡大）を確認できます。
 
 `RunSample.bat` または次で起動します。
 

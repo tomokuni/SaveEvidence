@@ -17,7 +17,7 @@ internal static class CropViewImage
 {
     /// <summary>表示中の画像（切り出しの元画像）を取得する。</summary>
     /// <param name="cropView">切り出しの対象となる複合コントロール。</param>
-    /// <returns>表示中の画像。未設定・破棄済み・表示アダプタ以外の場合は null。</returns>
+    /// <returns>表示中の画像。 未設定・破棄済み・表示アダプタ以外の場合は null。</returns>
     internal static EsBitmap? CurrentImage(this CropViewControl cropView)
         => (cropView.Source as EsBitmapAvaloniaImage)?.Bitmap;
 }

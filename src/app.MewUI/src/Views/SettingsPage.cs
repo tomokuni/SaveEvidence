@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>アプリケーション設定ページ（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版 <c>SettingsPage.axaml</c> に相当する。設定は <c>Settings</c>（コア）が単一所有し、<br/>
+/// Avalonia 版 <c>SettingsPage.axaml</c> に相当する。 設定は <c>Settings</c>（コア）が単一所有し、<br/>
 /// 本ページは各項目の編集 UI を組み立ててプロパティへ接続するだけを担う。<br/>
 /// <br/>
 /// <b>保存</b>: 変更のたびに <see cref="ISettingsService.Save"/> を呼ぶ（Avalonia 版と同一のタイミング）。<br/>
@@ -53,7 +53,7 @@ internal static class SettingsPage
 
     /// <summary>設定ページを構築する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
-    /// <returns>ページの内容（表示のたびの更新は不要。設定は即時反映される）。</returns>
+    /// <returns>ページの内容（表示のたびの更新は不要。 設定は即時反映される）。</returns>
     /// <remarks>
     /// 1. 設定の変更通知を購読し、変更のたびに設定ファイルへ保存する。<br/>
     /// 2. 各セクション（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観）を縦 1 列で積む。<br/>
@@ -363,7 +363,7 @@ internal static class SettingsPage
 
     /// <summary>セクションの共通部分（枠・見出し・項目の並び）を構築する。</summary>
     /// <param name="title">見出し。</param>
-    /// <param name="action">見出しの右端へ置く操作ボタン。null の場合は置かない。</param>
+    /// <param name="action">見出しの右端へ置く操作ボタン。 null の場合は置かない。</param>
     /// <param name="rows">項目行。</param>
     /// <returns>セクションの要素。</returns>
     /// <remarks>
@@ -397,7 +397,7 @@ internal static class SettingsPage
     }
 
     /// <summary>項目行（項目名 + 編集 UI）を構築する。</summary>
-    /// <param name="label">項目名。空文字の場合は項目名の列を確保せず、編集 UI を左端へ置く。</param>
+    /// <param name="label">項目名。 空文字の場合は項目名の列を確保せず、編集 UI を左端へ置く。</param>
     /// <param name="control">編集 UI。</param>
     /// <returns>項目名と編集 UI を横に並べた要素。</returns>
     private static Element Row(string label, Element control)
@@ -420,7 +420,7 @@ internal static class SettingsPage
     /// <summary>チェックボックスの行を構築する。</summary>
     /// <param name="initial">初期値。</param>
     /// <param name="apply">変更の反映先。</param>
-    /// <param name="text">チェックボックスのラベル。null の場合はラベルなし。</param>
+    /// <param name="text">チェックボックスのラベル。 null の場合はラベルなし。</param>
     /// <returns>チェックボックス。</returns>
     private static FrameworkElement CheckRow(bool initial, Action<bool> apply, string? text = null)
     {
@@ -569,7 +569,7 @@ internal static class SettingsPage
 
     /// <summary>ホットキー設定を表示用の文字列へ変換する。</summary>
     /// <param name="setting">対象のホットキー設定。</param>
-    /// <returns>表示文字列。未設定（<see cref="EsKey.None"/>）の場合は「(未設定)」。</returns>
+    /// <returns>表示文字列。 未設定（<see cref="EsKey.None"/>）の場合は「(未設定)」。</returns>
     private static string Format(HotKeySetting setting)
         => setting.Key == EsKey.None ? "(未設定)" : setting.ToString();
 

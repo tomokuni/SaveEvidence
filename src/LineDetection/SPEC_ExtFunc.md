@@ -29,11 +29,11 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 - 検出方式は `ILineDetector` を通して抽象化され、ロジック方式を同一のインターフェースで利用できます。
 - 入力は `EsBitmap`（BGRA・1 ピクセル 4 バイト）で、出力は線分リストです。
-- OpenCvSharp は内部利用に閉じており、公開 API には露出しません。ネイティブは `OpenCvSharp5.runtime.win.slim`（`videoio` を除く縮小構成）を参照します。
+- OpenCvSharp は内部利用に閉じており、公開 API には露出しません。 ネイティブは `OpenCvSharp5.runtime.win.slim`（`videoio` を除く縮小構成）を参照します。
 
 ## 2. 公開 API
 
-名前空間: `EsUtil.SaveEvidence.LineDetection`（UI 非依存。旧名 `Estable.AvaloniaUI.LineDetection`）
+名前空間: `EsUtil.SaveEvidence.LineDetection`（UI 非依存。 旧名 `Estable.AvaloniaUI.LineDetection`）
 
 ### 2.1. LineOrientation 列挙型
 
@@ -53,9 +53,9 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | `Start` | `EsPoint`（`EsUtil.Platform.Core.Geometry`） | 始点（画像座標・ピクセル）。 |
 | `End` | `EsPoint`（`EsUtil.Platform.Core.Geometry`） | 終点（画像座標・ピクセル）。 |
 | `Orientation` | `LineOrientation` | 線分の向き（水平 / 垂直）。 |
-| `Score` | `double` | 確からしさ（長さ・信頼度等）。大きいほど有力。 |
+| `Score` | `double` | 確からしさ（長さ・信頼度等）。 大きいほど有力。 |
 
-座標は UI フレームワーク非依存のコア型（`EsPoint`）で公開します。UI 側で描画する場合は、各 UI の相互変換（Avalonia 版は `EsGeometryAvaloniaInterop.ToAvaloniaPoint`）で境界変換します。
+座標は UI フレームワーク非依存のコア型（`EsPoint`）で公開します。 UI 側で描画する場合は、各 UI の相互変換（Avalonia 版は `EsGeometryAvaloniaInterop.ToAvaloniaPoint`）で境界変換します。
 
 ### 2.3. ILineDetector インターフェース
 
@@ -64,13 +64,13 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | メンバー | 説明 |
 | --- | --- |
 | `string Name { get; }` | 検出方式の表示名。 |
-| `string ModelInfo { get; }` | モデルサイズの表示。モデルを使わない方式は空文字。 |
-| `string? ErrorMessage { get; }` | モデル読込・実行エラーのメッセージ。正常時は null。 |
-| `IReadOnlyList<LineDetectionResult> Detect(EsBitmap image)` | 画像から水平・垂直の辺（線分）を検出する。スコア降順。 |
+| `string ModelInfo { get; }` | モデルサイズの表示。 モデルを使わない方式は空文字。 |
+| `string? ErrorMessage { get; }` | モデル読込・実行エラーのメッセージ。 正常時は null。 |
+| `IReadOnlyList<LineDetectionResult> Detect(EsBitmap image)` | 画像から水平・垂直の辺（線分）を検出する。 スコア降順。 |
 
 ### 2.4. LogicLineDetector クラス
 
-ロジック方式（Canny エッジ + HoughLinesP）による検出器。`ILineDetector` を実装します。
+ロジック方式（Canny エッジ + HoughLinesP）による検出器。 `ILineDetector` を実装します。
 
 #### 2.4.1. プロパティ
 
@@ -101,8 +101,8 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 - 4 辺が矩形を構成する組み合わせのみを候補にします（左右の垂直線が矩形の縦範囲を覆い、上下の水平線が矩形の横範囲を覆うこと）。
 - 同一座標の線分は 1 本に統合し、範囲（垂直線は Y・水平線は X の最小〜最大）を合併します（断片化した辺を 1 本として扱う）。
-- 戻り値は面積昇順で、最大 256 件です。UI が全候補を描画するため、候補数を上限で制限します。
-- 垂直 2 本・水平 2 本が揃わない場合は空を返します。幅・高さが 1 未満の矩形は除外します。
+- 戻り値は面積昇順で、最大 256 件です。 UI が全候補を描画するため、候補数を上限で制限します。
+- 垂直 2 本・水平 2 本が揃わない場合は空を返します。 幅・高さが 1 未満の矩形は除外します。
 
 ## 3. 入力・出力
 
@@ -129,4 +129,4 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 ## 6. スレッド安全性
 
-- `LogicLineDetector` はステートレス（パラメータは変更可能ですが、`Detect` 中のスレッド安全は保証しません。`Detect` に対して排他アクセスしてください）。
+- `LogicLineDetector` はステートレス（パラメータは変更可能ですが、`Detect` 中のスレッド安全は保証しません。 `Detect` に対して排他アクセスしてください）。

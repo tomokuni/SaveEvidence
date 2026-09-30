@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.Tests;
 /// <summary><see cref="FadeMaskDragRectOverlay"/>（選択矩形破線オーバーレイ描画）の単体テスト。</summary>
 /// <remarks>
 /// 描画は純粋な静的メソッド（<see cref="EsBitmap"/> のみを使用）のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
-/// 期待値は実測（画素の読み出し）で確認する。画素は BGRA のタプルで返る。
+/// 期待値は実測（画素の読み出し）で確認する。 画素は BGRA のタプルで返る。
 /// </remarks>
 public class FadeMaskDragRectOverlayTests
 {
@@ -53,7 +53,7 @@ public class FadeMaskDragRectOverlayTests
     {
         using var bitmap = CreateSolidBitmap(64, 64);
 
-        // 上辺の y は 0。破線は 1 ピクセル描画 + 1 ピクセル空白の 2 ピクセル周期で、色は A → B → A … と切り替わる
+        // 上辺の y は 0。 破線は 1 ピクセル描画 + 1 ピクセル空白の 2 ピクセル周期で、色は A → B → A … と切り替わる
         FadeMaskDragRectOverlay.DrawSelectionRect(
             bitmap, new EsRect(0, 0, 10, 10), new EsPoint(0, 0), 4.0, DrawingColor.Red, DrawingColor.Blue);
 
@@ -100,7 +100,7 @@ public class FadeMaskDragRectOverlayTests
     {
         using var bitmap = CreateSolidBitmap(16, 16);
 
-        // 画像より大きい矩形（倍率 4 で 84x84）。画像内に入る上辺・左辺のみが描画される
+        // 画像より大きい矩形（倍率 4 で 84x84）。 画像内に入る上辺・左辺のみが描画される
         FadeMaskDragRectOverlay.DrawSelectionRect(
             bitmap, new EsRect(0, 0, 20, 20), new EsPoint(0, 0), 4.0, DrawingColor.Black, DrawingColor.Transparent);
 

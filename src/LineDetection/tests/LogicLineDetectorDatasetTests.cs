@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.LineDetection.Tests;
 /// </remarks>
 public sealed class LogicLineDetectorDatasetTests
 {
-    /// <summary>許容誤差（ドメイン座標・ピクセル）。0 は完全一致を意味する。</summary>
+    /// <summary>許容誤差（ドメイン座標・ピクセル）。 0 は完全一致を意味する。</summary>
     private const int Tolerance = 0;
 
     /// <summary>dataset フォルダ（テスト出力基準）。</summary>
@@ -73,7 +73,7 @@ public sealed class LogicLineDetectorDatasetTests
 
     /// <summary>JSON から最初の GroundTruth ウィンドウの境界を読み込む。</summary>
     /// <param name="jsonPath">JSON ファイルのパス。</param>
-    /// <returns>境界（X/Y/Right/Bottom）。無い場合は null。</returns>
+    /// <returns>境界（X/Y/Right/Bottom）。 無い場合は null。</returns>
     private static (int X, int Y, int Right, int Bottom)? LoadGroundTruth(string jsonPath)
     {
         using var doc = JsonDocument.Parse(File.ReadAllText(jsonPath));
@@ -92,7 +92,7 @@ public sealed class LogicLineDetectorDatasetTests
 
     /// <summary>検出結果から外側の境界（排他座標）を復元する。</summary>
     /// <param name="results">検出結果の線分一覧。</param>
-    /// <returns>境界（X/Y/Right/Bottom）。垂直 2 本・水平 2 本が揃わない場合は null。</returns>
+    /// <returns>境界（X/Y/Right/Bottom）。 垂直 2 本・水平 2 本が揃わない場合は null。</returns>
     /// <remarks>垂直線の X 座標の min/max と水平線の Y 座標の min/max から矩形を復元する。</remarks>
     private static (int X, int Y, int Right, int Bottom)? TryReconstructBounds(IReadOnlyList<LineDetectionResult> results)
     {

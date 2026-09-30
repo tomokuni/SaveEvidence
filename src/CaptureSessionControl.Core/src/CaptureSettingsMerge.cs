@@ -13,8 +13,8 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 public static class CaptureSettingsMerge
 {
     /// <summary>入力の非 null 項目を現在値へ上書きした設定を生成する。</summary>
-    /// <param name="input">部分更新の入力（null の項目は現在値を維持する）。null の場合は既定値のみの設定を返す。</param>
-    /// <param name="current">現在の設定（全メンバー non-null）。null の場合は <see cref="CaptureSettings.ToNonNull"/> の既定値を使う。</param>
+    /// <param name="input">部分更新の入力（null の項目は現在値を維持する）。 null の場合は既定値のみの設定を返す。</param>
+    /// <param name="current">現在の設定（全メンバー non-null）。 null の場合は <see cref="CaptureSettings.ToNonNull"/> の既定値を使う。</param>
     /// <returns>マージ結果（全メンバー non-null）。</returns>
     /// <remarks>
     /// 差分検出（同一値の再設定をスキップするか）は本メソッドの責務ではない（呼び出し側がレコードの値等価で判定する）。<br/>
@@ -80,7 +80,7 @@ public static class CaptureSettingsMerge
     /// <param name="input">部分更新の入力（null の項目は現在値を維持する）。</param>
     /// <param name="current">現在の設定（参照が差し替わる）。</param>
     /// <param name="logger">変更ログの出力先（null の場合は出力しない）。</param>
-    /// <returns>設定が変更された場合は true。同一値の再設定（マージ結果が現在値と等しい）の場合は false。</returns>
+    /// <returns>設定が変更された場合は true。 同一値の再設定（マージ結果が現在値と等しい）の場合は false。</returns>
     /// <remarks>
     /// 1. 部分更新の入力へ <see cref="CaptureSettings.Validate"/> を適用する（範囲外は例外）。<br/>
     /// 2. 現在値へマージする（null の項目は現在値を維持）。<br/>

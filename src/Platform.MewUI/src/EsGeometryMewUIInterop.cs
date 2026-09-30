@@ -13,7 +13,7 @@ namespace EsUtil.Platform.MewUI;
 /// 変換は拡張メソッドとして提供し、呼び出し側は <c>using EsUtil.Platform.MewUI;</c> のみで利用できる。<br/>
 /// MewUI の幾何型（<see cref="MewUIPoint"/> 等）は Avalonia と同じく <c>double</c> ベースの値型のため、値の損失なく往復できる。<br/>
 /// <b>例外（負のサイズ）</b>: MewUI の <see cref="MewUIRect"/> / <see cref="MewUISize"/> は<b>負のサイズを 0 にクランプ</b>する<br/>
-/// （Avalonia は負の値を保持する）。空の矩形（負のサイズ）を MewUI へ渡すと 0 サイズになる（座標 X / Y は保持される）。<br/>
+/// （Avalonia は負の値を保持する）。 空の矩形（負のサイズ）を MewUI へ渡すと 0 サイズになる（座標 X / Y は保持される）。<br/>
 /// </remarks>
 public static class EsGeometryMewUIInterop
 {

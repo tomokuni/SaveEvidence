@@ -54,7 +54,7 @@ public class ZoomConfigTests
     [InlineData(100.0, 100.0, 1.1)] // MaxZoom == MinZoom（範囲内なら許容）
     public void コンストラクタ_最大値が最小値未満なら例外を投げる(double minZoom, double maxZoom, double wheelFactor)
     {
-        // MaxZoom < MinZoom のみ例外。MaxZoom == MinZoom は許容（レベルの範囲が点になる）
+        // MaxZoom < MinZoom のみ例外。 MaxZoom == MinZoom は許容（レベルの範囲が点になる）
         if (maxZoom < minZoom)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>

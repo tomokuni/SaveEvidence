@@ -82,7 +82,7 @@ public class ZoomMathTests
     }
 
     // ====================================================================
-    // ComputeOffsetAfterScaleChange（ズーム率変更時のオフセット。コンテンツ座標不変）
+    // ComputeOffsetAfterScaleChange（ズーム率変更時のオフセット。 コンテンツ座標不変）
     // ====================================================================
 
     [Fact]
@@ -306,7 +306,7 @@ public class ZoomMathTests
     [Fact]
     public void ComputeEffectiveScale_Fit中はFitScaleを返す()
     {
-        // zoomPercent = 0（Fit）。画像 1000x500、ビューポート 400x200
+        // zoomPercent = 0（Fit）。 画像 1000x500、ビューポート 400x200
         // scaleX = 400/1000 = 0.4、scaleY = 200/500 = 0.4（min = 0.4）
         var scale = ZoomMath.ComputeEffectiveScale(0, new EsSize(1000, 500), new EsSize(400, 200));
 

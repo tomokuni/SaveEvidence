@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.ZoomView.MewUI.Tests;
 
 /// <summary><see cref="ZoomViewControl"/>（MewUI）のテスト。</summary>
 /// <remarks>
-/// 判断・値・計算はコア（<see cref="ZoomViewSession"/>。Core.Tests が全網羅する）が単一所有するため、<br/>
+/// 判断・値・計算はコア（<see cref="ZoomViewSession"/>。 Core.Tests が全網羅する）が単一所有するため、<br/>
 /// 本テストは <b>UI 層の責務（入力の反映・通知の転送・描画内容）</b>のみを検証する。<br/>
 /// MewUI の要素生成とレイアウト（<c>Measure</c> / <c>Arrange</c>）はホスト登録を必要としないため、UI を表示せずに検証できる。<br/>
 /// 描画結果の検証は <c>ZoomSkiaRenderer.Tests.cs</c> が担う。

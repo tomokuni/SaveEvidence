@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.Views.Pages;
 /// <remarks>
 /// キャプチャ設定、保存設定、ルーペ設定、ホットキー設定、画像設定、色設定を
 /// 一画面で編集する。<br/>
-/// 全設定は変更即座に自動保存される。ホットキーの有効化はキャプチャページ表示時に行う。<br/>
+/// 全設定は変更即座に自動保存される。 ホットキーの有効化はキャプチャページ表示時に行う。<br/>
 /// </remarks>
 public sealed partial class SettingsPage : UserControl
 {

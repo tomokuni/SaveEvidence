@@ -32,7 +32,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | --- | --- |
 | 言語 | C#（.NET 10） |
 | UI フレームワーク | Avalonia 12.1 |
-| 画像処理 | OpenCvSharp5（OpenCV・内部利用。ネイティブは `OpenCvSharp5.runtime.win.slim`） |
+| 画像処理 | OpenCvSharp5（OpenCV・内部利用。 ネイティブは `OpenCvSharp5.runtime.win.slim`） |
 
 ## 3. アーキテクチャ
 
@@ -72,12 +72,12 @@ flowchart TB
 
 | ファイル | 責務 |
 | --- | --- |
-| `ILineDetector.cs` | `ILineDetector`（インターフェース）を定義。検出方式の抽象化。 |
+| `ILineDetector.cs` | `ILineDetector`（インターフェース）を定義。 検出方式の抽象化。 |
 | `LineDetectionResult.cs` | `LineOrientation`（向き）enum・`LineDetectionResult`（結果レコード）を定義。 |
 | `LineDetectionOptions.cs` | ロジック方式の検出パラメータ（不変値・検証付き）と既定値（`Default`）を定義。 |
-| `LineRectangleReconstructor.cs` | 線分の集合から矩形（ウィンドウの 4 辺）を構成する静的ヘルパー（`EsRectInt` を返す）。4 辺が矩形を構成する組み合わせのみを対象とし、候補数と処理量に上限を設けて UI のブロックを防ぐ。 |
+| `LineRectangleReconstructor.cs` | 線分の集合から矩形（ウィンドウの 4 辺）を構成する静的ヘルパー（`EsRectInt` を返す）。 4 辺が矩形を構成する組み合わせのみを対象とし、候補数と処理量に上限を設けて UI のブロックを防ぐ。 |
 | `LineSegmentMath.cs` | 線分の演算（接続判定・平行判定・長さ等）の内部ヘルパー。 |
-| `LogicLineDetector.cs` | ロジック方式の検出器。Canny + HoughLinesP + 幾何学的一貫性による矩形検出。 |
+| `LogicLineDetector.cs` | ロジック方式の検出器。 Canny + HoughLinesP + 幾何学的一貫性による矩形検出。 |
 | `MatHelper.cs` | `EsBitmap` ↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
 
 ## 5. 依存関係
@@ -87,11 +87,11 @@ flowchart TB
 - `LineRectangleReconstructor.cs` → `LineDetectionResult` / `EsRectInt`（Platform.Core）
 - `MatHelper.cs` → OpenCvSharp（内部のみ）・`EsBitmap`（Platform.Core）
 
-本プロジェクトは **UI フレームワーク非依存**です（依存は `Platform.Core` と OpenCvSharp のみ。Avalonia への依存なし）。座標はコア型（`EsPoint` / `EsRectInt`）で公開し、UI 側は境界で各 UI の型へ変換します。
+本プロジェクトは **UI フレームワーク非依存**です（依存は `Platform.Core` と OpenCvSharp のみ。 Avalonia への依存なし）。 座標はコア型（`EsPoint` / `EsRectInt`）で公開し、UI 側は境界で各 UI の型へ変換します。
 
 ### ネイティブの構成（slim プロファイル）
 
-使用する OpenCV API は `imgproc`（`CvtColor` / `Canny` / `HoughLinesP`）と `imgcodecs`（テストの `ImRead`）だけで、動画入出力（`videoio` の `VideoCapture` / `VideoWriter`）を使いません。そのためネイティブは `OpenCvSharp5.runtime.win.slim` を参照します。
+使用する OpenCV API は `imgproc`（`CvtColor` / `Canny` / `HoughLinesP`）と `imgcodecs`（テストの `ImRead`）だけで、動画入出力（`videoio` の `VideoCapture` / `VideoWriter`）を使いません。 そのためネイティブは `OpenCvSharp5.runtime.win.slim` を参照します。
 
 | 参照 | `OpenCvSharpExtern.dll` | `opencv_videoio_ffmpeg500_64.dll` |
 | --- | --- | --- |
@@ -102,9 +102,9 @@ slim が無効化するモジュール（`videoio` / `video` / `dnn` / `ml` / `h
 
 ### 名前空間
 
-`Estable.AvaloniaUI.LineDetection` は UI 非依存化前の名残です。UI 非依存のアセンブリは `EsUtil.*`（`EsUtil.Platform.Core.*` 等）に置く方針のため、**`EsUtil.SaveEvidence.LineDetection` へ改名**しました。
+`Estable.AvaloniaUI.LineDetection` は UI 非依存化前の名残です。 UI 非依存のアセンブリは `EsUtil.*`（`EsUtil.Platform.Core.*` 等）に置く方針のため、**`EsUtil.SaveEvidence.LineDetection` へ改名**しました。
 
-いずれも他の検出器へ依存しません（疎結合）。`MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(EsBitmap)`）には露出しません。
+いずれも他の検出器へ依存しません（疎結合）。 `MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。 OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(EsBitmap)`）には露出しません。
 
 ## 6. 検出アルゴリズム
 
@@ -128,10 +128,10 @@ EsBitmap (BGRA8888)
 
 - **クラスタリング**（`MergeCollinearAll`）: 同一垂直座標の断片を広いギャップ（`RectMergeGap=200`）で連結します。
 - **枠の外側の境界への補正**（`SnapToEdgeByGradient`）: 元画像の輝度プロファイルから枠線コアを求め、外側の境界（排他座標）を返します。
-- **近接平行線の統合**（`MergeParallelLines`）: 透過枠で分裂した枠線を 1 本に統合します。代表座標はエッジ支持率が最も高い線分、同点ならスパンが最長の線分を採用します。
+- **近接平行線の統合**（`MergeParallelLines`）: 透過枠で分裂した枠線を 1 本に統合します。 代表座標はエッジ支持率が最も高い線分、同点ならスパンが最長の線分を採用します。
 - **エッジ支持率フィルタ**（`EdgeSupportRatio`）: 文字列（断続エッジ）を除外します。
 - **矩形探索**（`BuildRectangles`）: 対辺同長（比率 `OppositeSpanRatio`）・コーナー近接（辺の長さ × `CornerToleranceRatio`）を満たし、画像端からの距離合計が最小の矩形を選択します。
 
 ## 7. 例外処理ポリシー
 
-- `LogicLineDetector`: 例外を投げません。画像の幾何学的特徴のみで検出するため、実行時エラーは発生しません。
+- `LogicLineDetector`: 例外を投げません。 画像の幾何学的特徴のみで検出するため、実行時エラーは発生しません。

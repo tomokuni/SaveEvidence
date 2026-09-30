@@ -8,12 +8,12 @@ namespace EsUtil.Platform.MewUI.Imaging;
 /// <summary><see cref="EsBitmap"/> を親が割り当てた領域へ描画する表示ビュー（MewUI / Skia 版）。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: Adapter（<see cref="EsBitmap"/> を MewUI の要素として適合させる）。<br/>
-/// <b>用途</b>: 「割り当てられた領域いっぱいへ 1 枚の画像を敷く」表示に使う。表示サイズは親のレイアウトに従う<br/>
-/// （本クラス自身は要求サイズを持たない）。縦横比から大きさを決める表示は、本クラスを継承して<br/>
+/// <b>用途</b>: 「割り当てられた領域いっぱいへ 1 枚の画像を敷く」表示に使う。 表示サイズは親のレイアウトに従う<br/>
+/// （本クラス自身は要求サイズを持たない）。 縦横比から大きさを決める表示は、本クラスを継承して<br/>
 /// <see cref="MeasureContent"/> を上書きする。<br/>
 /// <br/>
 /// <b>配置方法</b>: <see cref="UniformDraw"/> が false（既定）の場合は領域全体へ引き伸ばし、<br/>
-/// true の場合は縦横比を保って中央へ収める（余白は描画しない）。撮影画像のように領域と同じ縦横比の<br/>
+/// true の場合は縦横比を保って中央へ収める（余白は描画しない）。 撮影画像のように領域と同じ縦横比の<br/>
 /// 画像は引き伸ばし、縦横比の異なるサムネイルは収める使い分けになる。<br/>
 /// <br/>
 /// <b>再描画</b>: 静止画のため連続再描画を無効化し、<see cref="Source"/> の変更時のみ描画する。<br/>
@@ -40,7 +40,7 @@ public class SkiaImageView : SkiaCanvasView
     }
 
     /// <summary>表示する画像を取得または設定する。</summary>
-    /// <value>表示する画像。null の場合は何も描画しない（余白のみ）。</value>
+    /// <value>表示する画像。 null の場合は何も描画しない（余白のみ）。</value>
     public EsBitmap? Source
     {
         get => GetValue(SourceProperty);
@@ -48,7 +48,7 @@ public class SkiaImageView : SkiaCanvasView
     }
 
     /// <summary>縦横比を保って領域へ収めるかどうかを取得する。</summary>
-    /// <value>true の場合は縦横比を保って中央へ収める。false の場合は領域全体へ引き伸ばす。既定値は false。</value>
+    /// <value>true の場合は縦横比を保って中央へ収める。 false の場合は領域全体へ引き伸ばす。 既定値は false。</value>
     /// <remarks>派生クラスが固定値を与える（プロパティにすると、使い分けのない側へ不要な設定面が増える）。</remarks>
     protected virtual bool UniformDraw => false;
 

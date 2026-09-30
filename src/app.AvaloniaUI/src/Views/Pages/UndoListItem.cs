@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.Views.Pages;
 public sealed class UndoListItem
 {
     /// <summary>表示する画像（Undo / Redo スタックの画像または現在のプレビュー画像）。</summary>
-    /// <remarks><see cref="IImage"/> として公開する（<see cref="EsBitmapAvaloniaImage"/> など。破棄は所有者に委ねる）。</remarks>
+    /// <remarks><see cref="IImage"/> として公開する（<see cref="EsBitmapAvaloniaImage"/> など。 破棄は所有者に委ねる）。</remarks>
     public required IImage Thumbnail { get; init; }
 
     /// <summary>ラベル（例: "現在" / "Undo 1" / "Redo 1"）。</summary>

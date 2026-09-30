@@ -23,7 +23,7 @@ public enum CaptureKeyAction
 /// <summary>キャプチャオーバーレイのキー操作の解釈を単一所有する。</summary>
 /// <remarks>
 /// <b>規則</b>:<br/>
-/// 1. Enter（Return を含む）は確定とする。ただし<b>確定対象が無い場合は何もしない</b><br/>
+/// 1. Enter（Return を含む）は確定とする。 ただし<b>確定対象が無い場合は何もしない</b><br/>
 ///    （何も検出していない状態の Enter でキャンセル扱いにしない）。<br/>
 /// 2. Escape はキャンセルとする。<br/>
 /// 3. その他のキーは何もしない。<br/>
@@ -38,10 +38,10 @@ public static class CaptureKeyActions
     /// <summary>押下されたキーから実行すべき操作を解決する。</summary>
     /// <param name="key">押下されたキー（UI 非依存のキー識別子）。</param>
     /// <param name="hasConfirmTarget">確定できる対象（ハイライト矩形・選択矩形）があるかどうか。</param>
-    /// <returns>実行すべき操作。対象外のキー・確定対象が無い場合の Enter は <see cref="CaptureKeyAction.None"/>。</returns>
+    /// <returns>実行すべき操作。 対象外のキー・確定対象が無い場合の Enter は <see cref="CaptureKeyAction.None"/>。</returns>
     /// <remarks>
     /// 確定対象の有無を引数で受けるのは、「確定できるか」の判断がキャプチャ種別に依存するためである<br/>
-    /// （ハイライト型は検出矩形、ドラッグ型は選択矩形。判定は <see cref="CaptureTypeTraits.ResolveRect"/> が単一所有する）。
+    /// （ハイライト型は検出矩形、ドラッグ型は選択矩形。 判定は <see cref="CaptureTypeTraits.ResolveRect"/> が単一所有する）。
     /// </remarks>
     public static CaptureKeyAction Resolve(EsKey key, bool hasConfirmTarget) => key switch
     {

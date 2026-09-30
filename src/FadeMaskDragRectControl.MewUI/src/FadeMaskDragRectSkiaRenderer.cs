@@ -19,7 +19,7 @@ internal static class FadeMaskDragRectSkiaRenderer
     /// <param name="selectionRect">選択矩形（ドメイン座標系・半開区間）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。切り出し領域との交差判定に使用する。</param>
+    /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。</param>
     /// <param name="colorA">破線の色 A（描画開始色）。</param>
     /// <param name="colorB">破線の色 B（色 A と交互に使用する）。</param>
     public static void DrawSelectionRect(

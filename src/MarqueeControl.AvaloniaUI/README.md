@@ -1,6 +1,6 @@
 # MarqueeControl
 
-> プロジェクト名: `MarqueeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `Feature.Marquee.Core`、MewUI 版は `MarqueeControl.MewUI` にあります。
+> プロジェクト名: `MarqueeControl.AvaloniaUI`（Avalonia UI 版）。 UI 非依存のロジックは `Feature.Marquee.Core`、MewUI 版は `MarqueeControl.MewUI` にあります。
 
 ## 目次
 
@@ -23,7 +23,7 @@
 
 ## 1. 概要
 
-Avalonia UI 用のリサイズ可能な領域選択コントロールです。マウスドラッグ・キーボード微調整（nudge）・描画をコントロール内で完結します。
+Avalonia UI 用のリサイズ可能な領域選択コントロールです。 マウスドラッグ・キーボード微調整（nudge）・描画をコントロール内で完結します。
 
 ## 2. 機能一覧
 
@@ -33,17 +33,17 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。�
 - 矢印キーによる1Pixel単位のキーボード微調整（nudge）
 - ドメイン座標系で正確な nudge（矢印キー1回 = ドメイン1Pixel）
 - ドラッグハンドル・始点マーカーの自己描画
-- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト・内側の塗り（**表示可否と太さと色**はすべて外観（`Feature.Marquee.Presenter` の `MarqueeAppearance`）が単一所有し、装飾の矩形の導出と描画順は提示層（同層の `MarqueePresenter`）が単一所有する）。**選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
+- **選択矩形の外側に描く装飾の描画**: 暗転マスク・穴あけ枠・ハイライト・内側の塗り（**表示可否と太さと色**はすべて外観（`Feature.Marquee.Presenter` の `MarqueeAppearance`）が単一所有し、装飾の矩形の導出と描画順は提示層（同層の `MarqueePresenter`）が単一所有する）。 **選択枠線はこの穴あけ枠が兼ねる**（別々に描くと線幅が二重になるため）
 - **ハンドル表示の切替**: `Appearance.ShowHandles = false` でハンドルを描かず枠線と外側の装飾だけを表示する（表示可否は描画にだけ必要な設定のため外観が単一所有する）
-- **外観の設定（`Appearance`）**: 色・フォントサイズ・枠線の太さ・表示可否は**描画にだけ必要な設定**のためコアには含めず、提示層（`Feature.Marquee.Presenter` の `MarqueeAppearance`）が単一所有する。`Appearance` プロパティで指定し（既定は `MarqueeAppearance.Default`）、部分変更は `Appearance = MarqueeAppearance.Default with { ... }` で行う（指定しない項目は既定値を保つ）。**描くかどうかは色のアルファではなく外観の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` / `ShowFullOverlay`）が決める**
+- **外観の設定（`Appearance`）**: 色・フォントサイズ・枠線の太さ・表示可否は**描画にだけ必要な設定**のためコアには含めず、提示層（`Feature.Marquee.Presenter` の `MarqueeAppearance`）が単一所有する。 `Appearance` プロパティで指定し（既定は `MarqueeAppearance.Default`）、部分変更は `Appearance = MarqueeAppearance.Default with { ... }` で行う（指定しない項目は既定値を保つ）。 **描くかどうかは色のアルファではなく外観の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` / `ShowFullOverlay`）が決める**
 - カーソル座標ラベルの表示（任意設定・`(x, y)` 形式）
-- **文字は UI 層が要素として配置する**: サイズラベルとカーソル座標ラベルの**文言・基準点は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial））が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は同層の `MarqueePresenter`（`LabelPlan` partial） が単一所有**し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。サイズラベルの基準点は穴あけ矩形の左上から**枠線の幅 + 1 DIP 内側**（枠線と背景の重なりを無くす）。実寸測定は自 UI の API（`FormattedText`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
+- **文字は UI 層が要素として配置する**: サイズラベルとカーソル座標ラベルの**文言・基準点は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial））が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は同層の `MarqueePresenter`（`LabelPlan` partial） が単一所有**し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。 サイズラベルの基準点は穴あけ矩形の左上から**枠線の幅 + 1 DIP 内側**（枠線と背景の重なりを無くす）。 実寸測定は自 UI の API（`FormattedText`）で行う。 操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - Avalonia Binding 対応の StyledProperty
-- ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。型は `Platform.Core` 提供）
-- **閉区間描画（始点・終点を含む）**: ハンドルと外側の装飾（穴あけ枠）は終点（Right/Bottom）に +1 して DIP 変換（キャプチャの閉区間 +1 と一致。規則はコアの描画入力（`MarqueeRenderRequest.ToDipRect`）が単一所有）
-- **ホイール操作は本コントロールが扱わない（ホストの責務）**: ホイール（ズーム・パン）はコントロール化を前提とした処理であり、**ホストが本コントロールの `PointerWheelChanged` を購読してビューポート（`ZoomViewControl` 等）へ転送**します（本コントロールは素通しし、`e.Handled` を立てません）。表示の変化への追従もホストが `RefreshOverlay()` を呼びます
-- **薄い UI 層**: 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの公開ファサード（`Marquee`）が担います。本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画計画の写し」のみを行います
+- ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。 型は `Platform.Core` 提供）
+- **閉区間描画（始点・終点を含む）**: ハンドルと外側の装飾（穴あけ枠）は終点（Right/Bottom）に +1 して DIP 変換（キャプチャの閉区間 +1 と一致。 規則はコアの描画入力（`MarqueeRenderRequest.ToDipRect`）が単一所有）
+- **ホイール操作は本コントロールが扱わない（ホストの責務）**: ホイール（ズーム・パン）はコントロール化を前提とした処理であり、**ホストが本コントロールの `PointerWheelChanged` を購読してビューポート（`ZoomViewControl` 等）へ転送**します（本コントロールは素通しし、`e.Handled` を立てません）。 表示の変化への追従もホストが `RefreshOverlay()` を呼びます
+- **薄い UI 層**: 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの公開ファサード（`Marquee`）が担います。 本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画計画の写し」のみを行います
 
 ## 3. システム要件
 
@@ -146,7 +146,7 @@ MarqueeControl は 3 つの座標系を使い分けます。
 
 ## 7. サンプル
 
-`sample/` に動作確認用のサンプルアプリが含まれています。マウスドラッグによる選択・nudge・外観変更・イベントログを確認できます。
+`sample/` に動作確認用のサンプルアプリが含まれています。 マウスドラッグによる選択・nudge・外観変更・イベントログを確認できます。
 
 ```bash
 dotnet run --project sample/MarqueeControl.AvaloniaUI.Sample.csproj
@@ -178,7 +178,7 @@ MarqueeControl/
 
 ### 9.1 共有コア（`Feature.Marquee.Core`）と提示層（`Feature.Marquee.Presenter`）
 
-UI 非依存の幾何計算・状態機械・入力の解釈は `src/Feature.Marquee.Core` が単一所有し、描画計画（層の順序・装飾矩形・文言・配置）と外観（`MarqueeAppearance`）は `src/Feature.Marquee.Presenter` が単一所有します（Avalonia / MewUI で共有）。UI 層は描画計画を自 UI の描画 API で描き、ラベル要素の配置を担います。
+UI 非依存の幾何計算・状態機械・入力の解釈は `src/Feature.Marquee.Core` が単一所有し、描画計画（層の順序・装飾矩形・文言・配置）と外観（`MarqueeAppearance`）は `src/Feature.Marquee.Presenter` が単一所有します（Avalonia / MewUI で共有）。 UI 層は描画計画を自 UI の描画 API で描き、ラベル要素の配置を担います。
 
 本コントロールの層構成（Core / Presenter / UI）は [`src/README.md`](../README.md) を参照してください。
 
@@ -197,7 +197,7 @@ Feature.Marquee.Core/
 
 ### 9.2 装飾（提示層が単一所有する）
 
-選択矩形の**外側・内側に描く装飾**（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は、選択矩形コントロール単体の概念ではない（撮影オーバーレイ等へ組み込むときの表示である）ため、提示層（`Feature.Marquee.Presenter`）が単一所有します。装飾の矩形は `MarqueePresenter`（`DrawPlan` partial） が計算し、表示可否と太さと色は外観（`MarqueeAppearance`）が持ち、描画順は `MarqueePresenter` が決めます（詳細は同プロジェクトの `README.md`）。
+選択矩形の**外側・内側に描く装飾**（暗転マスク・穴あけ枠・ハイライト・内側の塗り）は、選択矩形コントロール単体の概念ではない（撮影オーバーレイ等へ組み込むときの表示である）ため、提示層（`Feature.Marquee.Presenter`）が単一所有します。 装飾の矩形は `MarqueePresenter`（`DrawPlan` partial） が計算し、表示可否と太さと色は外観（`MarqueeAppearance`）が持ち、描画順は `MarqueePresenter` が決めます（詳細は同プロジェクトの `README.md`）。
 
 ## 10. ライセンス
 

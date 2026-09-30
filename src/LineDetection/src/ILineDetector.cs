@@ -8,10 +8,10 @@ public interface ILineDetector
     /// <summary>検出方式の表示名。</summary>
     string Name { get; }
 
-    /// <summary>モデルサイズの表示（例: "48 MB"）。モデルを使わない方式は空文字。</summary>
+    /// <summary>モデルサイズの表示（例: "48 MB"）。 モデルを使わない方式は空文字。</summary>
     string ModelInfo { get; }
 
-    /// <summary>モデル読込・実行エラーのメッセージ（モデル未配置等）。正常時は null。</summary>
+    /// <summary>モデル読込・実行エラーのメッセージ（モデル未配置等）。 正常時は null。</summary>
     string? ErrorMessage { get; }
 
     /// <summary>画像から水平・垂直の辺（線分）を検出する。</summary>

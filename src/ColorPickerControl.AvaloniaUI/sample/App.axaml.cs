@@ -13,10 +13,10 @@ namespace EsUtil.SaveEvidence.ColorPicker.Sample;
 /// </remarks>
 public partial class App : Application
 {
-    /// <summary>アプリケーション初期化。AXAML をロードする。</summary>
+    /// <summary>アプリケーション初期化。 AXAML をロードする。</summary>
     public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
-    /// <summary>フレームワーク初期化後の処理。メインウィンドウを表示する。</summary>
+    /// <summary>フレームワーク初期化後の処理。 メインウィンドウを表示する。</summary>
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)

@@ -14,12 +14,12 @@
 | --- | --- |
 | 基底クラス | `Aprillz.MewUI.Skia.Controls.SkiaCanvasView`（SkiaSharp で直接描画する） |
 | 描画 | 画像を 1 回の `DrawBitmap` で表示矩形へ描画する（Avalonia 版は `Image` + `RenderTransform` で拡大する） |
-| ズーム | `ZoomConfig`（範囲・ホイール倍率・レベル集合）に従う。既定は 10〜500% の 23 段階・ホイール ×1.1 |
+| ズーム | `ZoomConfig`（範囲・ホイール倍率・レベル集合）に従う。 既定は 10〜500% の 23 段階・ホイール ×1.1 |
 | 入力 | 左ドラッグでパン / ホイールでパン / Shift+ホイールで横パン / Ctrl+ホイールでポインタ中心のズーム |
 | DPI 追従 | `OnDpiChanged` で表示スケーリング係数を DPI から換算した値（`DpiScaler.ToScaling`）へ自動更新する |
-| 連続再描画 | **無効**。ズーム・パンの変更時にのみ再描画する |
+| 連続再描画 | **無効**。 ズーム・パンの変更時にのみ再描画する |
 | スクロールバー | 画像がビューポートより大きい軸にオーバーレイ表示する（サムのドラッグ・トラックのクリックで移動） |
-| ホイール操作の公開 API | `PanByWheel` / `ZoomByWheel`（ホストが他のコントロールで受けたホイールを転送する。換算とズーム率の決定は本コントロールが単一所有） |
+| ホイール操作の公開 API | `PanByWheel` / `ZoomByWheel`（ホストが他のコントロールで受けたホイールを転送する。 換算とズーム率の決定は本コントロールが単一所有） |
 
 ## インストール（プロジェクト参照）
 
@@ -63,14 +63,14 @@ zoomView.ZoomChanged += (_, e) =>
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Source` | `EsBitmap?` | `null` | ズーム対象の画像。設定すると Fit 表示へリセットする |
+| `Source` | `EsBitmap?` | `null` | ズーム対象の画像。 設定すると Fit 表示へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
 | `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数（DPI 変更で自動更新される環境値） |
-| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし・スクロールバー表示 | **外観の単一値**（下地色・市松模様（サイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）。コアが単一所有する）。市松模様は画像の透明部分の背景であり、描く範囲は画像の表示矩形の内側だけである（画像の外は下地色の単色になる） |
-| `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。0 より大きい値のみ設定でき、範囲へクランプされる |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし・スクロールバー表示 | **外観の単一値**（下地色・市松模様（サイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）。 コアが単一所有する）。 市松模様は画像の透明部分の背景であり、描く範囲は画像の表示矩形の内側だけである（画像の外は下地色の単色になる） |
+| `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。 0 より大きい値のみ設定でき、範囲へクランプされる |
 | `IsFit` | `bool` | `true` | Fit 表示中かどうか（`ZoomPercent` は 0 にならないため Fit 判定はこちら） |
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
-| `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（null は `NullLogger`。Avalonia 版と同一の書式） |
+| `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（null は `NullLogger`。 Avalonia 版と同一の書式） |
 
 ## メソッド
 
@@ -78,7 +78,7 @@ zoomView.ZoomChanged += (_, e) =>
 | --- | --- |
 | `ZoomIn()` / `ZoomOut()` | 段階レベルを 1 つ移動する（移動先がなければ何もしない） |
 | `ZoomFit()` | Fit 表示へ戻す（Fit へ移行する唯一の経路） |
-| `PanByWheel(delta, shift)` / `ZoomByWheel(zoomIn, center)` | ホイール入力の反映（コントロールが自ら使う経路。ホストからの転送にも使える） |
+| `PanByWheel(delta, shift)` / `ZoomByWheel(zoomIn, center)` | ホイール入力の反映（コントロールが自ら使う経路。 ホストからの転送にも使える） |
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
 | `DisplaySize()` | 画像の表示サイズ（ビューポート座標・DIP） |
 | `ViewportToContentImage(pos)` / `ContentToViewportImage(pos)` | 画像表示矩形の原点基準の座標変換（中央寄せ補正を含む） |
@@ -92,7 +92,7 @@ zoomView.ZoomChanged += (_, e) =>
 
 ## ズーム操作ログ
 
-`Log` プロパティへ `ILogger` を設定すると、ズーム操作の前後のズーム率を Information で出力します（既定は出力なし）。書式は Avalonia 版と同一です。
+`Log` プロパティへ `ILogger` を設定すると、ズーム操作の前後のズーム率を Information で出力します（既定は出力なし）。 書式は Avalonia 版と同一です。
 
 | 出力元 | 出力例 |
 | --- | --- |

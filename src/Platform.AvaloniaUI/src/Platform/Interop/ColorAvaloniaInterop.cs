@@ -5,7 +5,7 @@ namespace EsUtil.Platform.AvaloniaUI.Interop;
 
 /// <summary>Avalonia の色型とコア色型（<see cref="DrawingColor"/>）を相互変換する。</summary>
 /// <remarks>
-/// コアロジックの色は <see cref="DrawingColor"/>（<c>System.Drawing.Primitives</c>。クロスプラットフォーム）で扱い、<br/>
+/// コアロジックの色は <see cref="DrawingColor"/>（<c>System.Drawing.Primitives</c>。 クロスプラットフォーム）で扱い、<br/>
 /// UI 境界でのみ本クラスで変換する。<br/>
 /// 変換は拡張メソッドとして提供し、呼び出し側は <c>using EsUtil.Platform.AvaloniaUI;</c> のみで利用できる。<br/>
 /// <see cref="DrawingColor"/> は <c>System.Drawing.Common</c>（Windows 専用の描画 API）ではなく<br/>

@@ -14,7 +14,7 @@ namespace EsUtil.SaveEvidence.MewUI.Services;
 /// </remarks>
 internal sealed class MewUIImageWriter : EsUtil.SaveEvidence.Services.IImageWriter
 {
-    /// <summary>エンコード品質（0〜100）。非可逆形式に適用する。</summary>
+    /// <summary>エンコード品質（0〜100）。 非可逆形式に適用する。</summary>
     private const int EncodeQuality = 100;
 
     /// <summary>拡張子ごとの保存形式（判別できない拡張子は PNG とする）。</summary>
@@ -54,7 +54,7 @@ internal sealed class MewUIImageWriter : EsUtil.SaveEvidence.Services.IImageWrit
 
     /// <summary>ファイルパスの拡張子から保存形式を決める。</summary>
     /// <param name="filePath">保存先のファイルパス。</param>
-    /// <returns>保存形式。未知の拡張子の場合は PNG。</returns>
+    /// <returns>保存形式。 未知の拡張子の場合は PNG。</returns>
     private static SKEncodedImageFormat ResolveFormat(string filePath)
     {
         var extension = Path.GetExtension(filePath);

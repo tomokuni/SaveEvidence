@@ -175,7 +175,7 @@ public class CropViewControlTests
         var control = CreateLaidOut();
         control.Source = image;
 
-        // Fit = 200%。画像表示矩形の原点 (0,0)。
+        // Fit = 200%。 画像表示矩形の原点 (0,0)。
         var viewport = control.ContentToViewport(new EsPoint(25, 30));
         var content = control.ViewportToContent(viewport);
 

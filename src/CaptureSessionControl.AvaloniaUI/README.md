@@ -25,7 +25,7 @@
 
 ## 1. 概要
 
-画面キャプチャ（全画面 / ウィンドウ選択 / 範囲選択）と切出し（Crop）を提供する Avalonia UI ライブラリです。**Facade パターン**の単一エントリポイント `CaptureSessionControl` から利用します。
+画面キャプチャ（全画面 / ウィンドウ選択 / 範囲選択）と切出し（Crop）を提供する Avalonia UI ライブラリです。 **Facade パターン**の単一エントリポイント `CaptureSessionControl` から利用します。
 
 ## 2. 機能一覧
 
@@ -116,35 +116,35 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出（0 以下は 1.0 へ正規化）
 2. `SelectionCaptureSession` を生成（Platform.AvaloniaUI からサービスを注入）
-3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`）→ 画面外へ退避（`HideOwnerWindow`。非表示ではなく `Opacity=0` + 位置退避）
+3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`）→ 画面外へ退避（`HideOwnerWindow`。 非表示ではなく `Opacity=0` + 位置退避）
 4. **仮想スクリーン全体をバックグラウンド + タイムアウト付きでキャプチャ（全モード共通の切り出し元）**
 5. `OverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示）
    - AreaSelect: Marquee ドラッグ選択 + Loupe
    - Screen / WindowSelect: カーソル位置の要素検出 → ハイライト
-6. **枠選択中に事前切り出し**（ハイライト型のホバー時。同じ矩形ならスキップ・キャッシュ再利用。事前切り出しの有無はコアの `CaptureTypeTraits.IsHighlighted` で決まる）
+6. **枠選択中に事前切り出し**（ハイライト型のホバー時。 同じ矩形ならスキップ・キャッシュ再利用。 事前切り出しの有無はコアの `CaptureTypeTraits.IsHighlighted` で決まる）
 7. **確定時: 事前切り出しキャッシュを再利用**（不一致時のみ切り出し）
 8. 結果を `CaptureResult` で返却 → `CaptureCompleted`（画像変更） → オーナー再表示 → 除外解除
 
 ### StartCropAsync
 
-1. 切り出しの対象画像は `CropViewControl` が表示している画像（`CropViewControl.Source`）から解決する（画像を引数で受け取らない）。画像が未設定・表示アダプタ（`EsBitmapAvaloniaImage`）以外の場合は開始しない（結果 null）→ 開始できた場合は `CropSession` を生成 → `RunAsync`
-2. **FadeMaskDragRectControl**（Marquee + Loupe の配線を内包する複合コントロール。暗転マスクは Marquee の外側の装飾）を `CropViewControl.Rects` へ配置する
+1. 切り出しの対象画像は `CropViewControl` が表示している画像（`CropViewControl.Source`）から解決する（画像を引数で受け取らない）。 画像が未設定・表示アダプタ（`EsBitmapAvaloniaImage`）以外の場合は開始しない（結果 null）→ 開始できた場合は `CropSession` を生成 → `RunAsync`
+2. **FadeMaskDragRectControl**（Marquee + Loupe の配線を内包する複合コントロール。 暗転マスクは Marquee の外側の装飾）を `CropViewControl.Rects` へ配置する
 3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordTransform` で内包コントロール（Marquee / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
 4. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する
-5. **ビューポート変化の通知**: ホストがプレビューのパン・ズームを検知したら `NotifyCropViewportChanged()` を呼ぶ（暗転マスク・選択枠・ルーペが追従。ScrollViewer 連携のスクロールも同じ経路で処理）
+5. **ビューポート変化の通知**: ホストがプレビューのパン・ズームを検知したら `NotifyCropViewportChanged()` を呼ぶ（暗転マスク・選択枠・ルーペが追従。 ScrollViewer 連携のスクロールも同じ経路で処理）
 6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `EsRectInt`（コア型）で返却 / キャンセル → 0x0 の空矩形
-   - 確定時の切り出し範囲は**現在の画像**（確定時点の `CropViewControl.Source`）の範囲へクランプする（実行中に画像が差し替わっても差し替え後の画像で切り出す。画像が消えた場合はキャンセルとして扱う）
+   - 確定時の切り出し範囲は**現在の画像**（確定時点の `CropViewControl.Source`）の範囲へクランプする（実行中に画像が差し替わっても差し替え後の画像で切り出す。 画像が消えた場合はキャンセルとして扱う）
 
 ## 7. 依存関係
 
 | プロジェクト | 利用機能 |
 | --- | --- |
 | `Platform.AvaloniaUI` | `Platform.AvaloniaUI`（サービス生成）/ `ICaptureService` / `IWindowService` / `IElementFinder` は `Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `Platform.Core`、`ScreenConverter` は `Platform.AvaloniaUI` |
-| `CropViewControl.AvaloniaUI` | `CropViewControl`（ズーム + 領域選択 + ルーペを内包する高レベル複合コントロール。切り出しの対象） |
-| `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（Marquee + Loupe を内包する複合コントロール。公開 API は本コントロールのみ） |
-| `CaptureSessionControl.Core` | `CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / ログ定義（両 UI 共通の規則。UI 非依存） |
+| `CropViewControl.AvaloniaUI` | `CropViewControl`（ズーム + 領域選択 + ルーペを内包する高レベル複合コントロール。 切り出しの対象） |
+| `FadeMaskDragRectControl` | `FadeMaskDragRectControl`（Marquee + Loupe を内包する複合コントロール。 公開 API は本コントロールのみ） |
+| `CaptureSessionControl.Core` | `CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / ログ定義（両 UI 共通の規則。 UI 非依存） |
 
-CaptureSessionControl.AvaloniaUI は内包コントロール（`MarqueeControl`（外側の装飾を含む） / `LoupeControl`）を直接参照しない（窓口は `FadeMaskDragRectControl` のみ。公開型のカプセル化）。
+CaptureSessionControl.AvaloniaUI は内包コントロール（`MarqueeControl`（外側の装飾を含む） / `LoupeControl`）を直接参照しない（窓口は `FadeMaskDragRectControl` のみ。 公開型のカプセル化）。
 
 ## 8. ドキュメント
 
@@ -163,13 +163,13 @@ CaptureSessionControl.AvaloniaUI/
 └── tests/                        # 単体テスト
 ```
 
-`CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。利用側は `using EsUtil.Platform.Core;` を追加してください。
+`CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。 利用側は `using EsUtil.Platform.Core;` を追加してください。
 
-`CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。利用側は `using EsUtil.SaveEvidence.CaptureSession;` を追加してください。**色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
+`CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。 利用側は `using EsUtil.SaveEvidence.CaptureSession;` を追加してください。 **色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
 
-設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。利用側は `using EsUtil.SaveEvidence.CaptureSession.UIBase;` を追加してください。
+設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。 利用側は `using EsUtil.SaveEvidence.CaptureSession.UIBase;` を追加してください。
 
-**撮影オーバーレイ（`StartCaptureAsync`）も同じ写像で外観（色）を適用します**（切り出しと同じ見た目になる。適用しないと設定した色が反映されない）。
+**撮影オーバーレイ（`StartCaptureAsync`）も同じ写像で外観（色）を適用します**（切り出しと同じ見た目になる。 適用しないと設定した色が反映されない）。
 
 ## 10. ライセンス
 

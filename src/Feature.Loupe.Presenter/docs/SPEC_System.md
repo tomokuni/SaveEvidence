@@ -130,4 +130,3 @@ UI が出力するログ（拡大元画像の変更・描画の例外）の定�
 | --- | --- |
 | `Appearance` の set | 変化した項目だけ（`LogAppearanceChanged`。 LogLevel: Debug、書式 `[Feature.Loupe.Presenter] Setting: {Name} {OldValue} → {NewValue}`） |
 | 拡大元画像の変更・描画の例外 | 各 UI が所有する定義 |
-

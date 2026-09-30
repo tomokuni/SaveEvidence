@@ -13,7 +13,7 @@ internal static partial class LoupeRenderLog
 {
     /// <summary>再描画コアの実行ログ。</summary>
     /// <remarks>LogLevel: Trace<br/>出力書式: <c>[LoupeControl.AvaloniaUI] RenderCore: generation={Generation}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="generation">描画世代番号。</param>
     [LoggerMessage(LogLevel.Trace, "[LoupeControl.AvaloniaUI] RenderCore: generation={Generation}")]
     public static partial void LogRenderCore(this ILogger logger, long generation);
@@ -23,7 +23,7 @@ internal static partial class LoupeRenderLog
     /// LogLevel: Trace<br/>
     /// 出力書式: <c>[LoupeControl.AvaloniaUI] GenerateAsync done: set={Set} disposed={Disposed} visible={Visible} gen={Generation} current={Current}</c>
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="set">生成したビットマップを表示へ反映したかどうか。</param>
     /// <param name="disposed">古い世代のビットマップとして破棄したかどうか。</param>
     /// <param name="visible">表示状態。</param>

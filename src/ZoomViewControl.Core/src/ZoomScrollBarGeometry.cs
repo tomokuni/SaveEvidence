@@ -21,14 +21,14 @@ internal static class ZoomScrollBarGeometry
     private const double DefaultMinThumbLength = 24.0;
 
     /// <summary>スクロールバーの配置を計算する。</summary>
-    /// <param name="contentSize">元画像のサイズ（コンテンツ座標）。0 以下の場合は空を返す。</param>
+    /// <param name="contentSize">元画像のサイズ（コンテンツ座標）。 0 以下の場合は空を返す。</param>
     /// <param name="viewportSize">ビューポートのサイズ（DIP）。</param>
     /// <param name="scale">コンテンツ座標 → ビューポート DIP の実効スケール（正の値）。</param>
     /// <param name="offset">現在のスクロールオフセット（コンテンツ座標）。</param>
     /// <param name="thickness">スクロールバーの太さ（DIP）。</param>
     /// <param name="margin">ビューポート端からの余白（DIP）。</param>
-    /// <param name="minThumbLength">サムの最小長（DIP）。0 以下の場合は既定値（24）。</param>
-    /// <returns>水平・垂直のスクロールバー。スクロール不要な軸は null。</returns>
+    /// <param name="minThumbLength">サムの最小長（DIP）。 0 以下の場合は既定値（24）。</param>
+    /// <returns>水平・垂直のスクロールバー。 スクロール不要な軸は null。</returns>
     /// <remarks>
     /// 1. 各軸の表示サイズ（<paramref name="contentSize"/> × <paramref name="scale"/>）がビューポート以下の場合は null を返す。<br/>
     /// 2. トラックはビューポートの右端・下端へ余白を空けて配置する。<br/>
@@ -63,7 +63,7 @@ internal static class ZoomScrollBarGeometry
     /// <param name="contentLength">元画像の当該軸の長さ（コンテンツ座標）。</param>
     /// <param name="viewportLength">ビューポートの当該軸の長さ（DIP）。</param>
     /// <param name="scale">コンテンツ座標 → ビューポート DIP の実効スケール。</param>
-    /// <returns>最大スクロール量（コンテンツ座標）。0 未満にはならない。</returns>
+    /// <returns>最大スクロール量（コンテンツ座標）。 0 未満にはならない。</returns>
     public static double MaxContentOffset(double contentLength, double viewportLength, double scale)
         => scale <= 0 ? 0 : Math.Max(0, contentLength - viewportLength / scale);
 
@@ -72,7 +72,7 @@ internal static class ZoomScrollBarGeometry
     /// <param name="trackLength">トラックの長さ（DIP）。</param>
     /// <param name="thumbLength">サムの長さ（DIP）。</param>
     /// <param name="maxContentOffset">最大スクロール量（コンテンツ座標）。</param>
-    /// <returns>コンテンツ座標のオフセット。可動範囲を超える場合は両端へクランプする。</returns>
+    /// <returns>コンテンツ座標のオフセット。 可動範囲を超える場合は両端へクランプする。</returns>
     /// <remarks>サムのドラッグ中に、ポインタ位置から新しいオフセットを求めるために使用する。</remarks>
     public static double ContentOffsetFromThumb(
         double thumbOffset, double trackLength, double thumbLength, double maxContentOffset)
@@ -81,7 +81,7 @@ internal static class ZoomScrollBarGeometry
     /// <summary>サムの可動範囲（トラック長 − サム長）を計算する。</summary>
     /// <param name="bar">対象のスクロールバー。</param>
     /// <param name="isVertical">垂直軸の場合は true。</param>
-    /// <returns>サムが移動できる長さ（DIP）。0 未満にはならない。</returns>
+    /// <returns>サムが移動できる長さ（DIP）。 0 未満にはならない。</returns>
     /// <remarks>トラックの可動長の計算を単一所有する（UI 層に <c>track − thumb</c> を書かない）。</remarks>
     public static double MovableThumbRange(ZoomScrollBar bar, bool isVertical)
         => isVertical
@@ -92,7 +92,7 @@ internal static class ZoomScrollBarGeometry
     /// <param name="thumbOffset">サムの左上位置（トラックの可動範囲内の相対位置・DIP）。</param>
     /// <param name="movableRange">サムの可動範囲（<see cref="MovableThumbRange"/> が返す値・DIP）。</param>
     /// <param name="maxContentOffset">最大スクロール量（コンテンツ座標）。</param>
-    /// <returns>コンテンツ座標のオフセット。可動範囲を超える場合は両端へクランプする。</returns>
+    /// <returns>コンテンツ座標のオフセット。 可動範囲を超える場合は両端へクランプする。</returns>
     public static double ContentOffsetFromThumbInRange(
         double thumbOffset, double movableRange, double maxContentOffset)
     {

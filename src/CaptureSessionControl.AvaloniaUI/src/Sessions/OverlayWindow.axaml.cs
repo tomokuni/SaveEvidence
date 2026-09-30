@@ -29,13 +29,13 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>キャプチャ種別。</summary>
     private readonly CaptureType _captureType;
 
-    /// <summary>キャプチャ完了コールバック（確定・キャンセル・エラー時に呼ばれる）。切り出し矩形は画面物理座標。</summary>
+    /// <summary>キャプチャ完了コールバック（確定・キャンセル・エラー時に呼ばれる）。 切り出し矩形は画面物理座標。</summary>
     private readonly Action<EsBitmap?, EsRectInt?> _onComplete;
 
     /// <summary>DPI スケーリング係数（プライマリスクリーン基準）。</summary>
     private readonly double _scaling;
 
-    /// <summary>ネイティブウィンドウ操作（Alt+Tab 非表示・ハング時退避）。プラットフォーム抽象。</summary>
+    /// <summary>ネイティブウィンドウ操作（Alt+Tab 非表示・ハング時退避）。 プラットフォーム抽象。</summary>
     private readonly IWindowService _windowService;
 
     /// <summary>画面キャプチャ（プラットフォーム抽象）。</summary>
@@ -55,11 +55,11 @@ internal sealed partial class OverlayWindow : Window
     /// </remarks>
     private readonly CaptureSessionState _state = new();
 
-    /// <summary>クリック確定型の押下時に固定したハイライト矩形（固定なしの解放では確定しない）。コアの状態が単一所有する。</summary>
+    /// <summary>クリック確定型の押下時に固定したハイライト矩形（固定なしの解放では確定しない）。 コアの状態が単一所有する。</summary>
     private readonly CaptureClickSelection _clickSelection = new();
 
     /// <summary>仮想スクリーン全体の EsBitmap（全モード共通のキャプチャソース・切り出し元）を取得する。</summary>
-    /// <value>撮影した画像。未取得（背景撮影中・取得失敗）の場合は null。</value>
+    /// <value>撮影した画像。 未取得（背景撮影中・取得失敗）の場合は null。</value>
     private EsBitmap? VirtualScreenBitmap => _captureImage.Image;
 
     /// <summary>事前切り出し済みのキャッシュ（同一判定・所有権の受け渡し・旧値の破棄をコアが単一所有する）。</summary>
@@ -68,7 +68,7 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>モニタごとの矩形と実表示倍率（構築時に 1 回だけ解決する）。</summary>
     private IReadOnlyList<(EsRectInt Bounds, double Scale)> _monitors = [];
 
-    /// <summary>ウィンドウが覆う仮想スクリーンの範囲（画面物理ピクセル）。画像未取得時の切り出し範囲の判定に使う。</summary>
+    /// <summary>ウィンドウが覆う仮想スクリーンの範囲（画面物理ピクセル）。 画像未取得時の切り出し範囲の判定に使う。</summary>
     private EsRectInt _screenBounds;
 
     /// <summary>撮影した画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時の範囲をコアが単一所有する）。</summary>
@@ -88,7 +88,7 @@ internal sealed partial class OverlayWindow : Window
     /// <param name="settings">キャプチャ設定（全メンバー non-null）。</param>
     /// <param name="scaling">DPI スケーリング係数。</param>
     /// <param name="onComplete">キャプチャ完了コールバック（切り出し矩形は画面物理座標）。</param>
-    /// <param name="logger">内部ロガー。null の場合は出力なし。</param>
+    /// <param name="logger">内部ロガー。 null の場合は出力なし。</param>
     /// <remarks>オーバーレイの生成が 1 回の撮影セッションの開始となる（コアの状態へ開始を記録する）。</remarks>
     public OverlayWindow(
         IWindowService windowService,
@@ -162,13 +162,13 @@ internal sealed partial class OverlayWindow : Window
     /// 複合コントロール（Marquee + Loupe の配線を内包）へモード・外観・座標変換を設定する。<br/>
     /// - モード: キャプチャ種別に応じて描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替。<br/>
     /// - 設定: 設定変換（<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）で 1 値へ変換して一括適用。<br/>
-    /// - 座標変換: DomainScale（ドメイン = ウィンドウローカル物理ピクセル = ローカル DIP × scaling。画面物理へは Position 加算）。
+    /// - 座標変換: DomainScale（ドメイン = ウィンドウローカル物理ピクセル = ローカル DIP × scaling。 画面物理へは Position 加算）。
     /// </remarks>
     private void ConfigureSelectionControls(CaptureSettings s)
     {
         // モード（描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替）
         // - AreaSelect: Marquee + Loupe 有効（全面暗転 + 選択矩形 + ルーペ）
-        // - ScreenSelect / WindowSelect: Marquee のみ有効（ハイライト表示。クリック確定フローは本クラスが担う）
+        // - ScreenSelect / WindowSelect: Marquee のみ有効（ハイライト表示。 クリック確定フローは本クラスが担う）
         // 内包コントロール（ルーペ / ドラッグ）の詳細ログ（Trace）をホストのログ基盤へ転送する（不具合調査用）。
         SelectionOverlay.Log = _log;
         // モード写像（キャプチャ種別 → 動作モード）はキャプチャコアが単一所有する
@@ -180,7 +180,7 @@ internal sealed partial class OverlayWindow : Window
         // （設定を反映しないと、切り出し（Crop）とキャプチャで見た目が食い違う）
         SelectionOverlay.MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(s);
         SelectionOverlay.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
-        // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。コードから動的設定）。
+        // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。 コードから動的設定）。
         // ドメインはウィンドウローカル物理ピクセル（= ローカル DIP × スケーリング）のため、ウィンドウのスケーリング（_scaling）を設定する。
         SelectionOverlay.DomainToDipScaling = _scaling;
         SelectionOverlay.DisplayScaleScaling = _scaling;
@@ -256,7 +256,7 @@ internal sealed partial class OverlayWindow : Window
     /// <param name="e">キーイベント。</param>
     /// <remarks>
     /// どのキーがどの操作かの解釈はコアの <see cref="CaptureKeyActions"/> が単一所有する<br/>
-    /// （確定対象が無い場合の Enter は何もしない。キャンセル扱いにしない）。<br/>
+    /// （確定対象が無い場合の Enter は何もしない。 キャンセル扱いにしない）。<br/>
     /// 確定対象の判定もコア（<see cref="CaptureTypeTraits.ResolveRect"/>）へ委譲する。<br/>
     /// 確定はハイライト矩形（ドメイン座標）を画面物理座標へ戻して行う。
     /// </remarks>

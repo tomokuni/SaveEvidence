@@ -28,7 +28,7 @@ public class SkiaColorInteropTests
     public void ToSKColor_透明も保持する()
     {
         // アルファ 0 は「描画しない」の判定（コア）に使うため、0 のまま渡す
-        // （System.Drawing.Color.Transparent は透明な白。成分をそのまま保持することを確かめる）
+        // （System.Drawing.Color.Transparent は透明な白。 成分をそのまま保持することを確かめる）
         var source = DrawingColor.Transparent;
 
         var result = source.ToSKColor();

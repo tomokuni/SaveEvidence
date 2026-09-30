@@ -61,7 +61,7 @@ public sealed partial class CapturePage : UserControl
     /// <summary>進行中の Crop セッションの Task。</summary>
     private Task<EsRectInt?>? _cropTask;
 
-    // Undo スタック（DI から取得するシングルトン。UndoPage と共有）
+    // Undo スタック（DI から取得するシングルトン。 UndoPage と共有）
     private readonly UndoStack _undoStack = null!;
 
     // 親Window参照（Loaded まで待たずに Initialize で確保）
@@ -159,7 +159,7 @@ public sealed partial class CapturePage : UserControl
         CropView.PointerPressed += OnImageDoubleClicked;
 
         // ビューポート（パン・ズーム・表示サイズ）の変化を Crop オーバーレイへ通知する
-        // （暗転マスク・選択枠・ルーペの追従。ScrollViewer 連携の ScrollChanged に相当する中継）。
+        // （暗転マスク・選択枠・ルーペの追従。 ScrollViewer 連携の ScrollChanged に相当する中継）。
         // Crop 未実行時は CaptureSessionControl 側で無視されるため、常時購読で問題ない。
         CropView.ViewportChanged += (_, _) =>
         {
@@ -196,7 +196,7 @@ public sealed partial class CapturePage : UserControl
         _settingsService.Current.PropertyChanged += OnSettingsPropertyChanged;
     }
 
-    /// <summary>設定プロパティ変更時のハンドラ。ホットキー設定の変更をメニュー表示へ反映する。</summary>
+    /// <summary>設定プロパティ変更時のハンドラ。 ホットキー設定の変更をメニュー表示へ反映する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">プロパティ変更イベント。</param>
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -223,9 +223,9 @@ public sealed partial class CapturePage : UserControl
         CaptureAreaMenuItem.InputGesture = ToKeyGesture(_settingsService.Current.AreaSelectHotKey);
     }
 
-    /// <summary>ホットキー設定を KeyGesture に変換する。未設定（Key.None）の場合は null を返す。</summary>
+    /// <summary>ホットキー設定を KeyGesture に変換する。 未設定（Key.None）の場合は null を返す。</summary>
     /// <param name="setting">ホットキー設定。</param>
-    /// <returns>KeyGesture。未設定の場合は null。</returns>
+    /// <returns>KeyGesture。 未設定の場合は null。</returns>
     private static KeyGesture? ToKeyGesture(HotKeySetting setting)
     {
         if (setting.Key == EsKey.None) return null;
@@ -568,7 +568,7 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>設定の色文字列（<c>#AARRGGBB</c>）をコアの色型へ変換する。</summary>
-    /// <param name="value">色文字列。null・空・不正な場合は <paramref name="fallback"/> を返す。</param>
+    /// <param name="value">色文字列。 null・空・不正な場合は <paramref name="fallback"/> を返す。</param>
     /// <param name="fallback">解析できない場合の色。</param>
     /// <returns>解析した色。</returns>
     private static System.Drawing.Color ParseColor(string? value, System.Drawing.Color fallback)
@@ -615,7 +615,7 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>復元した画像へプレビューを差し替える。</summary>
-    /// <param name="image">復元する画像（EsBitmap）。所有権は ViewModel へ移る。</param>
+    /// <param name="image">復元する画像（EsBitmap）。 所有権は ViewModel へ移る。</param>
     private void RestoreImage(EsBitmap image)
     {
         _viewModel.PreviewImage?.Dispose();
@@ -726,7 +726,7 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>確定した切り出し範囲（コア型の画面物理矩形）で画像を切り出す。</summary>
-    /// <param name="bounds">切り出す矩形（コア型。UI 型へ変換せずそのまま適用先へ渡す）。</param>
+    /// <param name="bounds">切り出す矩形（コア型。 UI 型へ変換せずそのまま適用先へ渡す）。</param>
     /// <remarks>
     /// 適用先（<c>CropPreviewCommand</c>）はコア型（<see cref="EsRectInt"/>）を要求するため、<br/>
     /// 境界（UI 層）で変換せずコア型のまま渡す（UI 型を渡すと型が一致せず例外になる）。
@@ -815,13 +815,13 @@ public sealed partial class CapturePage : UserControl
     /// <summary>Fit 表示ボタンのクリック時に画像をウィンドウに合わせて表示する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ルーティングイベント。</param>
-    /// <remarks>ズーム率を 0（自動 Fit）に設定する。ズーム率は CropViewControl が適用し、ZoomChanged でスライダ・ViewModel へ同期される。</remarks>
+    /// <remarks>ズーム率を 0（自動 Fit）に設定する。 ズーム率は CropViewControl が適用し、ZoomChanged でスライダ・ViewModel へ同期される。</remarks>
     private void OnZoomFitButtonClick(object? sender, RoutedEventArgs e) => CropView.ZoomFit();
 
-    /// <summary>ズームインする（Ctrl+キー等の外部からの要求用。⊖⊕ボタンと同じ遷移）。</summary>
+    /// <summary>ズームインする（Ctrl+キー等の外部からの要求用。 ⊖⊕ボタンと同じ遷移）。</summary>
     public void ZoomInByButton() => CropView.ZoomIn();
 
-    /// <summary>ズームアウトする（Ctrl+キー等の外部からの要求用。⊖⊕ボタンと同じ遷移）。</summary>
+    /// <summary>ズームアウトする（Ctrl+キー等の外部からの要求用。 ⊖⊕ボタンと同じ遷移）。</summary>
     public void ZoomOutByButton() => CropView.ZoomOut();
 
     /// <summary>拡大率スライダの値変更時にズームを適用する。</summary>
@@ -842,7 +842,7 @@ public sealed partial class CapturePage : UserControl
     private const double ZoomSliderEpsilon = 0.01;
 
     /// <summary>現在のズーム率をスライダに反映する（再入防止付きラッパー）。</summary>
-    /// <param name="zoom">現在の実効ズーム率（%）。Fit 中は実効倍率。</param>
+    /// <param name="zoom">現在の実効ズーム率（%）。 Fit 中は実効倍率。</param>
     /// <remarks>
     /// 実効ズーム率の変化（<see cref="ZoomViewControl.ZoomChanged"/>）を受けて、スライダ値を現在のズーム率へ同期する。<br/>
     /// Fit 中も実際に表示されている実効倍率をスライダに反映する（スライダ範囲 <see cref="ZoomSlider.Minimum"/> 〜 <see cref="ZoomSlider.Maximum"/> にクランプ）。<br/>
@@ -882,7 +882,7 @@ public sealed partial class CapturePage : UserControl
     /// <summary>拡大率フライアウトメニューの選択時にズーム率を設定する。</summary>
     /// <param name="sender">選択された MenuItem。</param>
     /// <param name="e">ルーティングイベント。</param>
-    /// <remarks>Tag は拡大率の数値（0 = 自動）。自動選択後はスライダを最小値に合わせる。</remarks>
+    /// <remarks>Tag は拡大率の数値（0 = 自動）。 自動選択後はスライダを最小値に合わせる。</remarks>
     private void OnZoomFlyoutItemClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not MenuItem { Tag: { } tag }) return;
@@ -910,7 +910,7 @@ public sealed partial class CapturePage : UserControl
         }
 
         var viewportPos = e.GetPosition(CropView);
-        // 画像内かどうかを判定する（画像原点を起点とした表示サイズ内か。矩形は 1 回の計算で取得）
+        // 画像内かどうかを判定する（画像原点を起点とした表示サイズ内か。 矩形は 1 回の計算で取得）
         var imageRect = CropView.ImageRectViewport();
         var displayPoint = viewportPos - imageRect.Position;
         if (displayPoint.X < 0 || displayPoint.Y < 0 ||
@@ -1007,14 +1007,14 @@ public sealed partial class CapturePage : UserControl
     /// 1. 検出矩形の枠線は <see cref="CropViewControl.Rects"/> へ<b>ドメイン座標</b>で渡す（座標変換は CropView が単一所有する）。<br/>
     /// 2. ホバー中の 1 件は <see cref="CropViewControl.Rects"/> から外し、<see cref="AutoCropHighlight"/>（Marquee）の<br/>
     ///    ハイライト矩形 + 内側の外観（<see cref="MarqueeAppearance"/>）で「枠線 + 半透明の塗り」として強調する<br/>
-    ///    （ハイライト矩形は DIP 座標で渡す。Marquee の座標変換ポートは未指定・倍率 1 のため等価変換になる）。<br/>
+    ///    （ハイライト矩形は DIP 座標で渡す。 Marquee の座標変換ポートは未指定・倍率 1 のため等価変換になる）。<br/>
     /// 3. 自動切り出しが無効な場合はハイライトを消し、矩形の一覧も空にする。
     /// </remarks>
     private void UpdateAutoCropOverlay()
     {
         var hovered = _viewModel.IsAutoCropActive ? _viewModel.HoveredRect : null;
 
-        // 検出矩形の枠線（ホバー中の 1 件を除く。ホバー分は Marquee のハイライトが描く）
+        // 検出矩形の枠線（ホバー中の 1 件を除く。 ホバー分は Marquee のハイライトが描く）
         CropView.Rects = _viewModel.IsAutoCropActive
             ? [.. _viewModel.DetectedRects
                 .Where(rect => rect != hovered)
@@ -1025,7 +1025,7 @@ public sealed partial class CapturePage : UserControl
 
         if (hovered is not { } target)
         {
-            // ハイライトなし（外側・内側とも描かない。サイズ・座標ラベルも表示しない）
+            // ハイライトなし（外側・内側とも描かない。 サイズ・座標ラベルも表示しない）
             AutoCropHighlight.Appearance = s_autoCropIdleAppearance;
             AutoCropHighlight.HighlightRect = null;
             return;

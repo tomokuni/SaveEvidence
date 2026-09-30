@@ -80,7 +80,7 @@ public sealed class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>切出し（Crop）の結果を更新する。</summary>
-    /// <param name="rect">切り出し範囲（元画像上の論理座標）。null はキャンセル。</param>
+    /// <param name="rect">切り出し範囲（元画像上の論理座標）。 null はキャンセル。</param>
     public void UpdateCropResult(Avalonia.PixelRect? rect)
     {
         if (rect is { } r && r.Width > 0 && r.Height > 0)

@@ -2,7 +2,7 @@
 
 ## 概要
 
-`ZoomViewControl.AvaloniaUI`（Avalonia UI 実装）と `ZoomViewControl.MewUI`（MewUI 実装）が共有する、UI フレームワーク非依存のズーム・パンロジックを提供するライブラリです。SaveEvidence のマルチ UI 対応における「コントロールの Core / UI 分割」の 2 例目（ティア E）です。
+`ZoomViewControl.AvaloniaUI`（Avalonia UI 実装）と `ZoomViewControl.MewUI`（MewUI 実装）が共有する、UI フレームワーク非依存のズーム・パンロジックを提供するライブラリです。 SaveEvidence のマルチ UI 対応における「コントロールの Core / UI 分割」の 2 例目（ティア E）です。
 
 ## 技術スタック
 
@@ -20,7 +20,7 @@ graph LR
 ```
 
 - `ZoomViewControl.Core` は UI フレームワークへ依存しません。
-- UI 実装は、コア型と自身の型（`Avalonia.Point` / `Vector` / `Size`）を境界で相互変換します。変換は 1 行に限定し、UI 側の状態（`RenderTransform` 等）とイベント引数は UI の型のまま維持します。
+- UI 実装は、コア型と自身の型（`Avalonia.Point` / `Vector` / `Size`）を境界で相互変換します。 変換は 1 行に限定し、UI 側の状態（`RenderTransform` 等）とイベント引数は UI の型のまま維持します。
 - 状態と判断（Fit の表現・実効ズーム率の導出・可否・キャッシュの無効化・遷移の適用・パン・スクロールバー）は `ZoomViewSession` が単一所有します。
 - `ZoomViewSession` / `ZoomConfig` / 契約型（`ZoomState` / `ZoomFeedback` / `ZoomNotice`）/ 外観（`ZoomViewAppearance`）/ ログは `public` です。
 - 計算（`ZoomTransition` / `ZoomMath` / `ZoomAvailability` / `ZoomScrollBarGeometry`）は `internal` とし、`InternalsVisibleTo`（`ZoomViewControl.AvaloniaUI` / `ZoomViewControl.MewUI` / `ZoomViewControl.AvaloniaUI.Tests` / `ZoomViewControl.MewUI.Tests` / `ZoomViewControl.Core.Tests`）で UI 実装とテストへ公開します。
@@ -29,18 +29,18 @@ graph LR
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `ZoomConfig.cs` | `public sealed class` | ズーム遷移の設定（検証付き不変値）。不変条件の検証と `With` による部分更新 |
-| `ZoomViewSession.cs` | `public sealed class` | 状態（ズーム率・オフセット・設定・表示条件）の保持と、入力の解釈・判断（実効ズーム率・可否・遷移適用・パン・スクロールバー）。契約（`ZoomFeedback` / `ZoomNotice`）を返す |
+| `ZoomConfig.cs` | `public sealed class` | ズーム遷移の設定（検証付き不変値）。 不変条件の検証と `With` による部分更新 |
+| `ZoomViewSession.cs` | `public sealed class` | 状態（ズーム率・オフセット・設定・表示条件）の保持と、入力の解釈・判断（実効ズーム率・可否・遷移適用・パン・スクロールバー）。 契約（`ZoomFeedback` / `ZoomNotice`）を返す |
 | `ZoomState.cs` | `public readonly record struct` | 通知する 4 値（実効ズーム率・Fit 状態・可否） |
-| `ZoomFeedback.cs` | `public readonly record struct` | UI が適用する効果（再描画・ポインタキャプチャ）。適用順を単一所有する |
+| `ZoomFeedback.cs` | `public readonly record struct` | UI が適用する効果（再描画・ポインタキャプチャ）。 適用順を単一所有する |
 | `ZoomNotice.cs` | `public enum` / `public sealed record` | 通知の種別と通知時点の値 |
-| `ZoomViewAppearance.cs` | `public sealed record` | 下地・市松模様・スクロールバーの外観。描画可否と市松模様を描く範囲（画像の表示矩形の内側）・タイル矩形を単一所有する |
+| `ZoomViewAppearance.cs` | `public sealed record` | 下地・市松模様・スクロールバーの外観。 描画可否と市松模様を描く範囲（画像の表示矩形の内側）・タイル矩形を単一所有する |
 | `ZoomScrollBarMetrics.cs` | `public readonly record struct` | 標準スクロールバー部品へ写す同期値（最大オフセット・表示範囲・可否） |
 | `ZoomLogMessage.cs` / `ZoomLogFormat.cs` | `public static partial class` / `public static class` | ログ定義（両 UI 共通の書式）と値の文字列化・丸め |
 | `ZoomTransition.cs` | `internal static class` | ⊖⊕ 段階遷移・Ctrl+ホイール ×1.1 遷移・ズーム可否判定（純粋関数） |
 | `ZoomMath.cs` | `internal static class` | Fit 実効倍率・ズーム中心維持・スクロール範囲クランプ・座標変換・% ↔ 倍率の換算（純粋関数） |
 | `ZoomAvailability.cs` | `internal readonly record struct` | ズーム可否を単一に保持する値オブジェクト |
-| `ZoomScrollBarGeometry.cs` | `internal static class` | スクロールバーのトラック・サムの矩形と可動範囲、サム位置からのオフセット逆算（純粋関数）。`ZoomScrollBar` も本ファイルが定義する |
+| `ZoomScrollBarGeometry.cs` | `internal static class` | スクロールバーのトラック・サムの矩形と可動範囲、サム位置からのオフセット逆算（純粋関数）。 `ZoomScrollBar` も本ファイルが定義する |
 
 ## データフロー
 
@@ -84,13 +84,13 @@ sequenceDiagram
 ## 可視性ポリシー
 
 - `ZoomViewSession` / `ZoomConfig` / 契約型 / 外観 / ログは `public`（UI 実装とホストが共有する公開契約）。
-- 計算（`ZoomTransition` / `ZoomMath` / `ZoomAvailability` / `ZoomScrollBarGeometry`）は `internal`。`internal` → `public` の変更は破壊的な設計変更として扱います。
+- 計算（`ZoomTransition` / `ZoomMath` / `ZoomAvailability` / `ZoomScrollBarGeometry`）は `internal`。 `internal` → `public` の変更は破壊的な設計変更として扱います。
 
 ## テスト
 
 - `src/ZoomViewControl.Core/tests`（`ZoomViewControl.Core.Tests`）が本プロジェクトのテストを持ちます。
 - UI 初期化が不要なため、すべて `[Fact]`（`AvaloniaFact` ではない）で並列実行されます。
-- **状態と判断はすべて本プロジェクトのテストが網羅します**（`ZoomViewSession.Tests.cs`）。UI 側のテストは入力の反映・通知の転送・描画（UI 固有のホスト結線）のみを検証します。
+- **状態と判断はすべて本プロジェクトのテストが網羅します**（`ZoomViewSession.Tests.cs`）。 UI 側のテストは入力の反映・通知の転送・描画（UI 固有のホスト結線）のみを検証します。
 
 ## 層の責務の境界
 
@@ -104,7 +104,7 @@ UI 層に残る分岐（コアへ移せない例外）は次の 4 種のみで�
 1. 描画先の構築と描画（Avalonia = 子 `Image` + `RenderTransform` + 標準 `ScrollBar` / MewUI = `SKCanvas`）
 2. DPI の取得と `DipToDeviceScaling`、ポインタキャプチャ API の呼び出し
 3. レイアウト（`Bounds` の確定とビューポートのセッションへの通知）
-4. 見た目の差（スクロールバーの太さ・余白。Avalonia は標準部品を使うためコアの値を参照しない）
+4. 見た目の差（スクロールバーの太さ・余白。 Avalonia は標準部品を使うためコアの値を参照しない）
 
 ## 移行の経緯
 

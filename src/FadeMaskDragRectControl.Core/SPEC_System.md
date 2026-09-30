@@ -2,7 +2,7 @@
 
 ## 概要
 
-`FadeMaskDragRectControl.Core` は、領域選択の複合コントロール `FadeMaskDragRectControl` の **UI 非依存コア**です。Avalonia 版と MewUI 版が次の 5 つを共有します。
+`FadeMaskDragRectControl.Core` は、領域選択の複合コントロール `FadeMaskDragRectControl` の **UI 非依存コア**です。 Avalonia 版と MewUI 版が次の 5 つを共有します。
 
 1. **動作モードの型**（両 UI が同一の enum を使う）
 2. **設定の単一値**（既定値・項目の対応・子コントロールへの分配規則を UI に持たせない）
@@ -22,7 +22,7 @@
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
 | ルート名前空間 | `EsUtil.SaveEvidence.FadeMaskDragRect` |
-| 汎用性 | 特定のアプリ・UI に依存しない。UI フレームワークを参照しない |
+| 汎用性 | 特定のアプリ・UI に依存しない。 UI フレームワークを参照しない |
 
 ## アーキテクチャ
 
@@ -39,7 +39,7 @@ graph LR
 - 本プロジェクトは UI フレームワークへ依存しません。
 - 依存の向きは **Core → Platform.Core / Feature.*Core** の一方向です（本プロジェクトを参照する側は UI 実装とホストで、逆向きの参照はありません）。
 - 設定の構成要素（`MarqueeOptions` / `LoupeOptions`）を再利用するため、Marquee / Loupe のコアを参照します。
-- **色は本プロジェクトが持ちません**（`MarqueeAppearance` / `LoupeAppearance` が提示層で単一所有する）。例外はルーペ画像へピクセルで書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）です。これは描画 API ではなく `EsBitmap` への直接書き込みに使うため、本プロジェクトが所有します。
+- **色は本プロジェクトが持ちません**（`MarqueeAppearance` / `LoupeAppearance` が提示層で単一所有する）。 例外はルーペ画像へピクセルで書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）です。 これは描画 API ではなく `EsBitmap` への直接書き込みに使うため、本プロジェクトが所有します。
 
 ## コンポーネント構成
 
@@ -51,7 +51,7 @@ graph LR
 | `FadeMaskDragRectModes.cs` | `internal static class` | モード → 状態の解決 |
 | `FadeMaskDragRectState.cs` | `internal readonly record struct` | モードから導出する表示可否 |
 | `FadeMaskDragRectSelection.cs` | `internal static class` | 選択矩形の可否判定 |
-| `FadeMaskDragRectOverlay.cs` | `internal static class` | 破線の列挙（`EnumerateDashes`）と `EsBitmap` への描画（`DrawSelectionRect`）。入れ子に `Dash` |
+| `FadeMaskDragRectOverlay.cs` | `internal static class` | 破線の列挙（`EnumerateDashes`）と `EsBitmap` への描画（`DrawSelectionRect`）。 入れ子に `Dash` |
 
 ## クラス図
 
@@ -155,7 +155,7 @@ flowchart TD
   D --> J[全面暗転しない / 破線を描かない / ルーペを表示しない]
 ```
 
-未定義の値は `Crop` でも `AreaSelect` でもないため後者（選択矩形を使わない）へ落ちます。これは `WindowSelect` と同じ扱いです。
+未定義の値は `Crop` でも `AreaSelect` でもないため後者（選択矩形を使わない）へ落ちます。 これは `WindowSelect` と同じ扱いです。
 
 ## 選択矩形オーバーレイの描画（フローチャート）
 
@@ -187,14 +187,14 @@ flowchart TD
 
 ## 例外処理ポリシー
 
-- 引数の null は `ArgumentNullException.ThrowIfNull` で拒否します（`DrawSelectionRect` の `bitmap`）。これは**呼び出し側の実装誤り**であり、回復して続行すべき状況ではないためです。
+- 引数の null は `ArgumentNullException.ThrowIfNull` で拒否します（`DrawSelectionRect` の `bitmap`）。 これは**呼び出し側の実装誤り**であり、回復して続行すべき状況ではないためです。
 - 画像の外側へはみ出すピクセル書き込みは `EsBitmap.TrySetPixel` が false を返すだけで、例外にしません（画像端に接する選択矩形は正常な入力のため）。
 - 本プロジェクトは外部 I/O・非同期処理・リソース解放を持ちません。
 
 ## 可視性ポリシー
 
 - ホストと UI 実装が使う契約（`FadeMaskDragRectMode` / `FadeMaskDragRectOptions` / `FadeMaskDragRectLabelOptions`）は `public`。
-- モード解釈・可否判定・破線描画（`FadeMaskDragRectModes` / `FadeMaskDragRectState` / `FadeMaskDragRectSelection` / `FadeMaskDragRectOverlay`）は `internal`。UI 実装が参照しますが公開 API 面を増やしません。
+- モード解釈・可否判定・破線描画（`FadeMaskDragRectModes` / `FadeMaskDragRectState` / `FadeMaskDragRectSelection` / `FadeMaskDragRectOverlay`）は `internal`。 UI 実装が参照しますが公開 API 面を増やしません。
 - `internal` は `InternalsVisibleTo`（`FadeMaskDragRectControl.AvaloniaUI` / `.MewUI` / `.AvaloniaUI.Tests` / `.MewUI.Tests` / `.Core.Tests`）で公開します。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。
 
@@ -208,7 +208,7 @@ tests/
 └── FadeMaskDragRectSelection.Tests.cs  # 選択矩形の可否判定（9 件）
 ```
 
-合計 42 件（`[Theory]` は展開後のケース数）。UI 初期化が不要なため、すべて `[Fact]` / `[Theory]` で並列実行されます。
+合計 42 件（`[Theory]` は展開後のケース数）。 UI 初期化が不要なため、すべて `[Fact]` / `[Theory]` で並列実行されます。
 
 ```powershell
 dotnet test src/FadeMaskDragRectControl.Core/tests/FadeMaskDragRectControl.Core.Tests.csproj

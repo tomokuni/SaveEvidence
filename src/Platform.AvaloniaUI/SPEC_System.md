@@ -57,7 +57,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 - 依存は**一方向の階層構造**（本プロジェクト → `Platform.Core`（`Native/` を含む））。
 - 上位 AP（`MarqueeControl` / `CaptureSessionControl.AvaloniaUI` / `app.AvaloniaUI`）は本プロジェクトを参照すれば、
   サービス抽象・コア値型・Win32 実装・Avalonia アダプタをすべて利用できる。
-- 本プロジェクトは「Avalonia の型に依存するもの」だけを置く。UI 非依存の型は `Platform.Core` 側に置く。
+- 本プロジェクトは「Avalonia の型に依存するもの」だけを置く。 UI 非依存の型は `Platform.Core` 側に置く。
 
 ## 4. 例外処理ポリシー
 
@@ -111,11 +111,11 @@ flowchart TB
 
 | コンポーネント | 説明 |
 | --- | --- |
-| `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（名前ベース変換。Avalonia の `Key` は `PageUp` / `Prior` 等の別名で同値を持つため数値変換しない） |
-| `EsWindowStateAvaloniaInterop` | `EsWindowState` ⇔ `Avalonia.Controls.WindowState`（名前ベース変換。メンバー数が 4 と少ないため `Enum.IsDefined` で未定義値を検出し `Normal` へフォールバックする） |
+| `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（名前ベース変換。 Avalonia の `Key` は `PageUp` / `Prior` 等の別名で同値を持つため数値変換しない） |
+| `EsWindowStateAvaloniaInterop` | `EsWindowState` ⇔ `Avalonia.Controls.WindowState`（名前ベース変換。 メンバー数が 4 と少ないため `Enum.IsDefined` で未定義値を検出し `Normal` へフォールバックする） |
 | `EsGeometryAvaloniaInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` ⇔ Avalonia の対応型 |
 | `EsPlatformHandleAvaloniaInterop` | `Avalonia.Platform.IPlatformHandle` ⇔ `EsPlatformHandle` |
-| `ColorAvaloniaInterop` | `Avalonia.Media.Color` ⇔ `System.Drawing.Color`（コアの色型。`System.Drawing.Primitives` は共有フレームワーク同梱のため Windows 専用ではない） |
+| `ColorAvaloniaInterop` | `Avalonia.Media.Color` ⇔ `System.Drawing.Color`（コアの色型。 `System.Drawing.Primitives` は共有フレームワーク同梱のため Windows 専用ではない） |
 | `CursorOverrideGuardAvaloniaExtensions` | `ICursorOverrideGuard.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲） |
 
 - **可視性**: public
@@ -126,7 +126,7 @@ flowchart TB
 | --- | --- |
 | `EsBitmapAvaloniaExtensions` | `EsBitmap`（Core）の Avalonia 向け生成・変換・ピクセル操作拡張 |
 | `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ（Skia 直描画・所有権を保持） |
-| `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（スレッド安全。容量超過時は全体をクリア） |
+| `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（スレッド安全。 容量超過時は全体をクリア） |
 | `SolidColorBrushCache` | `System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有するキャッシュ（描画アダプタとラベル要素の配置が共用する） |
 | `AvaloniaTextMeasure` | テキストの実寸測定を単一所有する（ラベルの配置矩形は実寸から決まるため、UI ごとの測定の食い違いを防ぐ） |
 | `ColorExtensions` | C# 14 静的拡張メンバー `FromAColor`（基準色＋不透明度から色を生成） |

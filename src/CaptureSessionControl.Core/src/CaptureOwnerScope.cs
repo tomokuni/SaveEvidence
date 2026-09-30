@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// そのため本クラスが手順（順序を含む）を単一所有する（UI は同じ手順を書かない）。<br/>
 /// <br/>
 /// <b>手順（順序が重要）</b>:<br/>
-/// 1. キャプチャ除外（<c>WDA_EXCLUDEFROMCAPTURE</c>）を設定する。非表示の DWM 反映を待たずに効くため、<br/>
+/// 1. キャプチャ除外（<c>WDA_EXCLUDEFROMCAPTURE</c>）を設定する。 非表示の DWM 反映を待たずに効くため、<br/>
 ///    先に設定すると撮影画像へ自ウィンドウが写らない。<br/>
 /// 2. オーナーを画面外へ退避する（<see cref="ICaptureOwnerWindow.HideOffScreen"/>）。<br/>
 /// 3. 撮影する（呼び出し側の処理）。<br/>
@@ -56,7 +56,7 @@ public sealed class CaptureOwnerScope : IDisposable
         // 1. 撮影より先にキャプチャ除外を設定する（画面キャプチャへ自ウィンドウを写さない）
         _excluded = windowService.SetCaptureExclusion(handle, exclude: true);
 
-        // 2. 画面外へ退避する（非表示は使わない。位置の変更のためウィンドウは再作成されない）
+        // 2. 画面外へ退避する（非表示は使わない。 位置の変更のためウィンドウは再作成されない）
         owner.HideOffScreen();
         _owner = owner;
     }

@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 /// <summary><see cref="ColorEntry"/> の単体テスト（全色一覧・ソート・表示名・辞書）。</summary>
 /// <remarks>
 /// 純粋データ（静的構築された色一覧）と純粋演算（<see cref="ColorEntry.GetSortKey"/>）のみを検証するため、
-/// Avalonia ヘッドレス実行を必要としない。並列実行を妨げないよう <c>[Fact]</c> で検証する。
+/// Avalonia ヘッドレス実行を必要としない。 並列実行を妨げないよう <c>[Fact]</c> で検証する。
 /// </remarks>
 public class ColorEntryTests
 {

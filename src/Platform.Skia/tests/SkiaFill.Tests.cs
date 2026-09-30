@@ -15,7 +15,7 @@ public class SkiaFillTests
     /// <summary>テスト用の描画先（透明で初期化したビットマップとキャンバス）。</summary>
     /// <param name="width">幅（ピクセル）。</param>
     /// <param name="height">高さ（ピクセル）。</param>
-    /// <returns>生成した描画先。破棄は呼び出し側。</returns>
+    /// <returns>生成した描画先。 破棄は呼び出し側。</returns>
     private static (SKBitmap Bitmap, SKCanvas Canvas) CreateTarget(int width, int height)
     {
         var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul));

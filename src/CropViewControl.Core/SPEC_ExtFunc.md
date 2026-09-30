@@ -1,6 +1,6 @@
 # CropViewControl.Core 外部機能仕様書
 
-`CropViewControl.Core` は UI フレームワーク非依存の矩形オーバーレイ定義とラスタライズを提供します。名前空間はすべて `EsUtil.SaveEvidence.CropView` です。
+`CropViewControl.Core` は UI フレームワーク非依存の矩形オーバーレイ定義とラスタライズを提供します。 名前空間はすべて `EsUtil.SaveEvidence.CropView` です。
 
 ## 公開 API の可視性
 
@@ -24,7 +24,7 @@ public readonly record struct OverlayRect(
 | `Bounds` | `EsRect` | 矩形（ドメイン座標 = 元画像ピクセル座標） |
 | `Style` | `OverlayLineStyle` | 枠線スタイル |
 | `Foreground` | `System.Drawing.Color` | 前景色（透明度を含む） |
-| `Background` | `System.Drawing.Color` | 背景色（透明度を含む）。破線の市松風 2 色目 |
+| `Background` | `System.Drawing.Color` | 背景色（透明度を含む）。 破線の市松風 2 色目 |
 | `Thickness` | `double` | 枠線の太さ（ピクセル） |
 
 UI 実装の `CropViewControl.Rects` に設定すると、矩形が View（ビューポート）へ描画されます（Avalonia 版はさらにルーペ画像へも描画します）。
@@ -38,15 +38,15 @@ UI 実装の `CropViewControl.Rects` に設定すると、矩形が View（ビ�
 | `ViewportRectFromCorners(EsPoint topLeft, EsPoint bottomRight)` | ビューポート座標の 2 点から矩形を組み立てる（負サイズは 0 へクランプ） |
 | `Resolve(OverlayRect rect, EsPoint topLeft, EsPoint bottomRight)` | 矩形情報を描画入力（`OverlayRectFrame`）へ解決する |
 
-**「どう描くか」の判断（負サイズのクランプ・太さの下限・破線かどうか）は本型が単一所有**します。UI 層はドメイン座標 → ビューポート座標の変換だけを行い、本メソッドへ渡します。
+**「どう描くか」の判断（負サイズのクランプ・太さの下限・破線かどうか）は本型が単一所有**します。 UI 層はドメイン座標 → ビューポート座標の変換だけを行い、本メソッドへ渡します。
 
-クランプが必要な理由は、縮小・中央寄せで右下が左上を逆転し得るためです（負のサイズを描画先へ渡すと例外になります）。MewUI の値型は負のサイズを 0 へクランプしますが Avalonia は保持するため、本メソッドを通して両 UI の挙動を揃えます。
+クランプが必要な理由は、縮小・中央寄せで右下が左上を逆転し得るためです（負のサイズを描画先へ渡すと例外になります）。 MewUI の値型は負のサイズを 0 へクランプしますが Avalonia は保持するため、本メソッドを通して両 UI の挙動を揃えます。
 
 ## `OverlayRectFrame`（描画入力）
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `Bounds` | `EsRect` | ビューポート座標（DIP）の矩形。幅・高さは 0 以上へクランプ済み |
+| `Bounds` | `EsRect` | ビューポート座標（DIP）の矩形。 幅・高さは 0 以上へクランプ済み |
 | `Foreground` | `System.Drawing.Color` | 前景色 |
 | `Background` | `System.Drawing.Color` | 背景色（破線のときの下地） |
 | `Thickness` | `double` | 枠線の太さ（下限以上） |
@@ -63,14 +63,14 @@ UI 層は本値を描画先の型へ写すだけで、式と判断を持ちま�
 | メンバー | 説明 |
 | --- | --- |
 | `Solid` | 実線 |
-| `Dashed` | 破線（長いダッシュ。ダッシュ長 8 / 間隔 4） |
-| `Dotted` | 点線（短いダッシュ。ダッシュ長 2 / 間隔 2） |
+| `Dashed` | 破線（長いダッシュ。 ダッシュ長 8 / 間隔 4） |
+| `Dotted` | 点線（短いダッシュ。 ダッシュ長 2 / 間隔 2） |
 
 ## `OverlayLineDash`（内部・ダッシュ長の単一所有）
 
 | メンバー | 説明 |
 | --- | --- |
-| `Get(OverlayLineStyle style)` | スタイルに対応するダッシュ長と間隔を返す（実線は 0 / 0）。単位は呼び出し側の描画経路に従う |
+| `Get(OverlayLineStyle style)` | スタイルに対応するダッシュ長と間隔を返す（実線は 0 / 0）。 単位は呼び出し側の描画経路に従う |
 | `IsDashed(OverlayLineStyle style)` | 破線または点線の場合は true（実線は false） |
 | `SolidLength` / `DashedLength` / `DashedGap` / `DottedLength` / `DottedGap` | ダッシュ長の定数 |
 
@@ -95,7 +95,7 @@ UI 層は本値を描画先の型へ写すだけで、式と判断を持ちま�
 ### 線の太さ
 
 - 太さの下限は `OverlayRectLayout.EffectiveThickness`（1 ピクセル）が単一所有し、本経路はそれを四捨五入して整数化します（ラスタライズ固有の処理）。
-- 半幅（`太さ / 2`）だけ中心の両側へ広げて描画します。範囲外のピクセルは `EsBitmap.TrySetPixel` が無視します。
+- 半幅（`太さ / 2`）だけ中心の両側へ広げて描画します。 範囲外のピクセルは `EsBitmap.TrySetPixel` が無視します。
 
 ## 依存関係
 

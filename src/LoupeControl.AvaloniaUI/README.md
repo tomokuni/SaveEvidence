@@ -1,6 +1,6 @@
 # LoupeControl
 
-> プロジェクト名: `LoupeControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `Feature.Loupe.Core`、MewUI 版は `LoupeControl.MewUI` にあります。
+> プロジェクト名: `LoupeControl.AvaloniaUI`（Avalonia UI 版）。 UI 非依存のロジックは `Feature.Loupe.Core`、MewUI 版は `LoupeControl.MewUI` にあります。
 
 ## 目次
 
@@ -29,7 +29,7 @@
 
 ## 1. 概要
 
-Avalonia UI 用の拡大鏡コントロールです。画像の任意のピクセル座標を中心に領域を拡大し、十字線・枠線付きで表示します（画像外は無地）。
+Avalonia UI 用の拡大鏡コントロールです。 画像の任意のピクセル座標を中心に領域を拡大し、十字線・枠線付きで表示します（画像外は無地）。
 
 画像端から外れた領域は透明として扱われるため、画像がルーペの視野から離れるほど、その部分だけ画像外の色（無地）で埋まります。
 
@@ -50,9 +50,9 @@ Avalonia UI 用の拡大鏡コントロールです。画像の任意のピク�
 - 古い描画結果の自動破棄
 - 非表示時の生成Bitmap解放
 - `ILogger` によるエラー通知
-- 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。ホスト側のオーバーレイ描画用。線分・選択矩形等の破線はホストが描画済み Bitmap へ直接描く）
+- 描画完了通知イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。 ホスト側のオーバーレイ描画用。 線分・選択矩形等の破線はホストが描画済み Bitmap へ直接描く）
 - 中心座標ラベルはコントロールが **`Border` + `TextBlock` の子要素として配置**します（文言・表示可否はコア、実寸 → 配置矩形の写像は描画層（`Feature.Loupe.Presenter` の `LoupePresenter`（`LabelPlan` partial））、実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有）
-- **座標変換ポート（`SetCoordTransform(ICoordTransform?)` + `PositionOffset`）**: MarqueeControl と同方式。表示位置（`RenderTransform`）と表示サイズ（要求サイズ）をレイアウト時に自己計算（ウィンドウサイズ変更・ズーム・スクロールに追従）
+- **座標変換ポート（`SetCoordTransform(ICoordTransform?)` + `PositionOffset`）**: MarqueeControl と同方式。 表示位置（`RenderTransform`）と表示サイズ（要求サイズ）をレイアウト時に自己計算（ウィンドウサイズ変更・ズーム・スクロールに追従）
 - **`RefreshPosition()`**: パン・ズーム等のレイアウト非変更なビューポート変化時に、表示位置・サイズを再計算（座標変換ポートは呼び出し毎に最新の表示状態を評価）
 
 ## 3. システム要件
@@ -128,7 +128,7 @@ public sealed class MainViewModel
 }
 ```
 
-`LoupeControl` は `Panel` なので、親の `Panel` や `Canvas` のVisual Treeへ配置してください。表示位置・表示サイズは座標変換ポート方式（`SetCoordTransform` + `PositionOffset`）で自己計算します。
+`LoupeControl` は `Panel` なので、親の `Panel` や `Canvas` のVisual Treeへ配置してください。 表示位置・表示サイズは座標変換ポート方式（`SetCoordTransform` + `PositionOffset`）で自己計算します。
 
 ### Code-behind
 
@@ -160,7 +160,7 @@ Canvas.SetTop(loupe, 220);
 
 ### 非同期描画
 
-ルーペ画像の生成は非同期で実行され、古い描画結果は自動的に破棄されます。複数のプロパティが連続して変更された場合、再描画は 1 フレームに 1 回に結合されます。
+ルーペ画像の生成は非同期で実行され、古い描画結果は自動的に破棄されます。 複数のプロパティが連続して変更された場合、再描画は 1 フレームに 1 回に結合されます。
 
 ## 7. サポート外の画像
 
@@ -172,11 +172,11 @@ Canvas.SetTop(loupe, 220);
 loupe.Log = logger;
 ```
 
-`LoupeControl` はログをファイルへ直接出力しません。ファイル、コンソール、デバッグ出力などの出力先は利用側の `ILogger` 構成に依存します。
+`LoupeControl` はログをファイルへ直接出力しません。 ファイル、コンソール、デバッグ出力などの出力先は利用側の `ILogger` 構成に依存します。
 
 ## 8. 所有権とライフサイクル
 
-- `Source` に設定した元画像（`Bitmap` / `EsBitmapAvaloniaImage`）は利用側が所有します。`LoupeControl` は元画像を破棄しません。
+- `Source` に設定した元画像（`Bitmap` / `EsBitmapAvaloniaImage`）は利用側が所有します。 `LoupeControl` は元画像を破棄しません。
 - ルーペ表示用に内部生成したBitmapは `LoupeControl` が所有します。
 - 非表示化、`Clear()`、新しい描画結果の採用時に、古い生成Bitmapを破棄します。
 - 非同期処理で古くなった生成結果も採用せず破棄します。
@@ -213,7 +213,7 @@ dotnet run --project sample/LoupeControl.AvaloniaUI.Sample.csproj
 
 ## 12. プロジェクト構成
 
-本コントロールは、UI フレームワーク非依存のロジックと設定を `Feature.Loupe.Core` へ、描画計画と外観を `Feature.Loupe.Presenter` へ分離しています（マルチ UI 対応）。層構成（Core / Presenter / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
+本コントロールは、UI フレームワーク非依存のロジックと設定を `Feature.Loupe.Core` へ、描画計画と外観を `Feature.Loupe.Presenter` へ分離しています（マルチ UI 対応）。 層構成（Core / Presenter / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ```text
 LoupeControl.AvaloniaUI/

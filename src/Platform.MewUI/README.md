@@ -12,14 +12,14 @@ Avalonia 版の `Platform.AvaloniaUI` と同じ役割を MewUI 向けに提供�
 | 型 | 内容 |
 | --- | --- |
 | `EsKeyMewUIInterop` | `EsKey` ⇔ `Aprillz.MewUI.Key`（`ToMewUIKey()` / `ToEsKey()` / `IsRepresentable()`） |
-| `EsGeometryMewUIInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` ⇔ MewUI の対応型。色（`System.Drawing.Color` ⇔ `Aprillz.MewUI.Color`）の変換も含む |
+| `EsGeometryMewUIInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` ⇔ MewUI の対応型。 色（`System.Drawing.Color` ⇔ `Aprillz.MewUI.Color`）の変換も含む |
 | `EsWindowStateMewUIInterop` | `EsWindowState` ⇔ `Aprillz.MewUI.Controls.WindowState` |
 | `EsPlatformHandleMewUIInterop` | `Aprillz.MewUI.Window` → `EsPlatformHandle`（`Window.Handle` は `nint`） |
-| `WindowPlacementMath` | ウィンドウ配置の DIP ⇔ 画面物理ピクセルの変換、スケールの正規化、復元可否の判定（純粋関数。`WindowStartupLocation` / `WindowSize` へ DIP を渡すために使う）。**換算と正規化は `Platform.Core` の `DpiScaler`（両 UI 共通の単一所有者）へ委譲する** |
-| `Imaging.SkiaImageView` | `EsBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生。`Source` を設定するだけで描く） |
-| `Imaging.SkiaImageRenderer`（internal） | `EsBitmap` を Skia キャンバスへ敷く描画層（`SkiaImageView` とその派生が共用。画素で検証できる） |
-| `Imaging.SkiaSurfaceScale` | 描画面（物理ピクセル）と表示領域（DIP）の比から、描画に使う実効倍率を解決する。**DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いて画像とずれる** |
-| `Imaging.MewUITextMeasure` | MewUI のテキスト エンジンで文字列の実寸を測る（ラベルの配置の唯一の入口）。**描画に使うエンジンで測る**ため、Skia の実測より広い値を返す（文字要素の背景を実寸から作る場合に必要。描画エンジンを持たない単体テストでは Skia で代用する） |
+| `WindowPlacementMath` | ウィンドウ配置の DIP ⇔ 画面物理ピクセルの変換、スケールの正規化、復元可否の判定（純粋関数。 `WindowStartupLocation` / `WindowSize` へ DIP を渡すために使う）。 **換算と正規化は `Platform.Core` の `DpiScaler`（両 UI 共通の単一所有者）へ委譲する** |
+| `Imaging.SkiaImageView` | `EsBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生。 `Source` を設定するだけで描く） |
+| `Imaging.SkiaImageRenderer`（internal） | `EsBitmap` を Skia キャンバスへ敷く描画層（`SkiaImageView` とその派生が共用。 画素で検証できる） |
+| `Imaging.SkiaSurfaceScale` | 描画面（物理ピクセル）と表示領域（DIP）の比から、描画に使う実効倍率を解決する。 **DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いて画像とずれる** |
+| `Imaging.MewUITextMeasure` | MewUI のテキスト エンジンで文字列の実寸を測る（ラベルの配置の唯一の入口）。 **描画に使うエンジンで測る**ため、Skia の実測より広い値を返す（文字要素の背景を実寸から作る場合に必要。 描画エンジンを持たない単体テストでは Skia で代用する） |
 
 依存方向:
 
@@ -35,7 +35,7 @@ UI 実装（MewUI ホスト）は本プロジェクトを参照し、境界で 1
 ## 重要な非対称性（`EsKey`）
 
 `EsKey` は Avalonia / Win32 のキー体系（**223 メンバー**）に合わせているのに対し、MewUI の `Key` は
-**抽象化された小さな集合（91 メンバー・独自採番。Win32 の仮想キーコードではない）** です。そのため:
+**抽象化された小さな集合（91 メンバー・独自採番。 Win32 の仮想キーコードではない）** です。 そのため:
 
 | 項目 | 内容 |
 | --- | --- |
@@ -45,14 +45,14 @@ UI 実装（MewUI ホスト）は本プロジェクトを参照し、境界で 1
 | 未定義値 | `Enum.IsDefined` で検出し `None` へフォールバック（`Enum.TryParse` は数値文字列を受け付けるため） |
 
 **ホットキーの設定ファイル互換性**: `EsKey` の名前を変えなければ、既存の `settings.json` をそのまま読み込めます
-（`JsonStringEnumConverter` が名前で保存するため）。ただし MewUI ホストで扱えないキーは `None` になるため、
+（`JsonStringEnumConverter` が名前で保存するため）。 ただし MewUI ホストで扱えないキーは `None` になるため、
 MewUI 版のホットキー設定 UI では利用可能なキーに制限がかかります。
 
 ## MewUI 固有の挙動（注意点）
 
 | 項目 | 内容 |
 | --- | --- |
-| 負のサイズ | MewUI の `Rect` / `Size` は**負のサイズを 0 にクランプ**する（Avalonia は保持する）。空の矩形（負のサイズ）を MewUI へ渡すと 0 サイズになる（X / Y は保持） |
+| 負のサイズ | MewUI の `Rect` / `Size` は**負のサイズを 0 にクランプ**する（Avalonia は保持する）。 空の矩形（負のサイズ）を MewUI へ渡すと 0 サイズになる（X / Y は保持） |
 | ウィンドウハンドル | `Window.Handle` は `nint` のため `EsPlatformHandle` へそのまま変換できる |
 
 ## ビルド
@@ -63,7 +63,7 @@ dotnet build src/Platform.MewUI/src/Platform.MewUI.csproj
 
 ## テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、すべて `[Fact]` で並列実行されます。
+`tests/` が本プロジェクトの単体テストを持ちます。 UI 初期化が不要なため、すべて `[Fact]` で並列実行されます。
 
 ```powershell
 dotnet test src/Platform.MewUI/tests/Platform.MewUI.Tests.csproj

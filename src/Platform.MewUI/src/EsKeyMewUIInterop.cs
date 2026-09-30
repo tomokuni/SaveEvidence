@@ -6,12 +6,12 @@ namespace EsUtil.Platform.MewUI;
 /// <summary>UI フレームワーク非依存の <see cref="EsKey"/> と MewUI の <see cref="MewUIKey"/> を相互変換する。</summary>
 /// <remarks>
 /// <b>対応関係</b>: <see cref="EsKey"/> は Avalonia / Win32 のキー体系（223 メンバー）に合わせているのに対し、<br/>
-/// MewUI の <see cref="MewUIKey"/> は抽象化された小さな集合（91 メンバー・独自採番。Win32 の仮想キーコードではない）である。<br/>
+/// MewUI の <see cref="MewUIKey"/> は抽象化された小さな集合（91 メンバー・独自採番。 Win32 の仮想キーコードではない）である。<br/>
 /// そのため <b>値による対応付けはできず</b>、メンバー名で変換する。<br/>
 /// <br/>
 /// <b>名前が異なるキー</b>: <see cref="EsKey.Back"/> ⇔ <see cref="MewUIKey.Backspace"/> の 1 組のみ
 /// （<see cref="KeyAliases"/> で吸収する）。<br/>
-/// <b>対応先がないキー</b>: MewUI が表現できない <see cref="EsKey"/>（133 メンバー。例: <c>BrowserBack</c> / <c>DbeRoman</c>）は
+/// <b>対応先がないキー</b>: MewUI が表現できない <see cref="EsKey"/>（133 メンバー。 例: <c>BrowserBack</c> / <c>DbeRoman</c>）は
 /// <see cref="MewUIKey.None"/> を返す。<br/>
 /// <b>設定ファイルの互換性</b>: ホットキーは <c>JsonStringEnumConverter</c> が名前で保存するため、<br/>
 /// 変換は数値ではなく名前ベースで行う（<c>EsKey</c> 側の名前を変えなければ既存設定をそのまま読み込める）。<br/>
@@ -34,7 +34,7 @@ public static class EsKeyMewUIInterop
 
     /// <summary><see cref="EsKey"/> を MewUI の <see cref="MewUIKey"/> へ変換する。</summary>
     /// <param name="key">変換対象のキー。</param>
-    /// <returns>対応する MewUI のキー。対応先がない場合（MewUI が表現できないキー・未定義値）は <see cref="MewUIKey.None"/>。</returns>
+    /// <returns>対応する MewUI のキー。 対応先がない場合（MewUI が表現できないキー・未定義値）は <see cref="MewUIKey.None"/>。</returns>
     /// <remarks>
     /// 1. 名前が異なるキー（<see cref="EsKey.Back"/> 等）を別名表で解決する<br/>
     /// 2. 未定義値（<c>(EsKey)999</c> 等）は <see cref="Enum.IsDefined{T}(T)"/> で検出し <see cref="MewUIKey.None"/> を返す
@@ -58,7 +58,7 @@ public static class EsKeyMewUIInterop
 
     /// <summary>MewUI の <see cref="MewUIKey"/> を <see cref="EsKey"/> へ変換する。</summary>
     /// <param name="key">変換対象のキー。</param>
-    /// <returns>対応する <see cref="EsKey"/>。対応先がない場合（未定義値）は <see cref="EsKey.None"/>。</returns>
+    /// <returns>対応する <see cref="EsKey"/>。 対応先がない場合（未定義値）は <see cref="EsKey.None"/>。</returns>
     /// <remarks>
     /// 1. 名前が異なるキー（<see cref="MewUIKey.Backspace"/> 等）を別名表で解決する<br/>
     /// 2. 未定義値は <see cref="Enum.IsDefined{T}(T)"/> で検出し <see cref="EsKey.None"/> を返す<br/>

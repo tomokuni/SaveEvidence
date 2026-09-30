@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>カーソル下の要素の検出結果を選択オーバーレイへ反映するための状態を表す。</summary>
-/// <param name="DomainRect">ハイライト矩形（ドメイン座標 = 画像ローカル物理ピクセル）。未検出の場合は null（<b>null が「ハイライトなし」を意味する</b>）。</param>
+/// <param name="DomainRect">ハイライト矩形（ドメイン座標 = 画像ローカル物理ピクセル）。 未検出の場合は null（<b>null が「ハイライトなし」を意味する</b>）。</param>
 /// <param name="TitleChanged">直前の検出と比べて表示名が変わったかどうか。</param>
 /// <remarks>
 /// UI 層は本値を選択コントロールへ設定するだけにし、座標変換・空文字への正規化・変化の判定を書かない。<br/>
@@ -22,27 +22,27 @@ public readonly record struct CaptureHighlight(EsRect? DomainRect, bool TitleCha
 /// UI フレームワークに依存しないため、本クラスが単一所有する（両 UI が同じ手順で同じ表示にする）。<br/>
 /// <br/>
 /// <b>所有する判断</b>:<br/>
-/// 1. 未検出時の正規化（矩形は null・表示名は空文字。検出矩形を使わない）。<br/>
+/// 1. 未検出時の正規化（矩形は null・表示名は空文字。 検出矩形を使わない）。<br/>
 /// 2. 画面物理座標 → ドメイン座標の変換（画像の原点を減算する。<see cref="CaptureClipMath.ToLocalRect(EsRectInt, EsPointInt)"/> へ委譲）。<br/>
-/// 3. 表示名の変化の判定（情報ラベルの再描画に必要な最小限の判断。UI ごとの文字列比較を書かせない）。<br/>
-/// 4. 検出結果のログ（<see cref="CaptureLogMessage.LogHighlight"/>。両 UI で同じ事象を同じ書式で記録する）。<br/>
+/// 3. 表示名の変化の判定（情報ラベルの再描画に必要な最小限の判断。 UI ごとの文字列比較を書かせない）。<br/>
+/// 4. 検出結果のログ（<see cref="CaptureLogMessage.LogHighlight"/>。 両 UI で同じ事象を同じ書式で記録する）。<br/>
 /// <br/>
 /// <b>ハイライトの有無は <see cref="DomainRect"/> の null が表す</b>（有効フラグを別に持たない）。<br/>
 /// <b>状態</b>は「直前の表示名」とハイライト矩形を持ち、矩形の複製を選択コントロールへ渡す。
 /// </remarks>
-/// <param name="logger">内部ログの転送先。null の場合はログを出力しない。</param>
+/// <param name="logger">内部ログの転送先。 null の場合はログを出力しない。</param>
 public sealed class CaptureHighlightSession(ILogger? logger = null)
 {
     /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
     private readonly ILogger _log = logger.OrNullLogger();
 
     /// <summary>直前に検出した要素の表示名（未検出・未取得の場合は空文字）を取得する。</summary>
-    /// <value>情報ラベル（ウィンドウタイトル）に表示する文言。未検出の場合は空文字。</value>
+    /// <value>情報ラベル（ウィンドウタイトル）に表示する文言。 未検出の場合は空文字。</value>
     /// <remarks>情報ラベルの文言プロバイダが参照する（表示時のみ評価される）。</remarks>
     public string Title { get; private set; } = CaptureLogFormat.Text(null);
 
     /// <summary>直前に検出した要素のハイライト矩形（ドメイン座標）を取得する。</summary>
-    /// <value>ハイライト矩形（画像ローカル物理ピクセル）。未検出の場合は null。</value>
+    /// <value>ハイライト矩形（画像ローカル物理ピクセル）。 未検出の場合は null。</value>
     /// <remarks>サイズラベルの対象の解決（<see cref="CaptureTypeTraits.ResolveRect"/>）が参照する（未検出の判定も兼ねる）。</remarks>
     public EsRect? DomainRect { get; private set; }
 

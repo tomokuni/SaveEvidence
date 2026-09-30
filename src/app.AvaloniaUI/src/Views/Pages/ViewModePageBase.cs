@@ -64,7 +64,7 @@ public abstract class ViewModePageBase : UserControl
         PropertyChanged += OnIsVisiblePropertyChanged;
     }
 
-    /// <summary>ページの表示状態変更時のハンドラ。表示されるたびに設定を復元して一覧を更新する。</summary>
+    /// <summary>ページの表示状態変更時のハンドラ。 表示されるたびに設定を復元して一覧を更新する。</summary>
     private void OnIsVisiblePropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
         if (e.Property == IsVisibleProperty && IsVisible)
@@ -75,7 +75,7 @@ public abstract class ViewModePageBase : UserControl
         }
     }
 
-    /// <summary>表示モードボタンの共通クリックハンドラ。対応する表示モードに切り替え、一覧を再構築する。</summary>
+    /// <summary>表示モードボタンの共通クリックハンドラ。 対応する表示モードに切り替え、一覧を再構築する。</summary>
     protected void OnViewModeClick(object? sender, RoutedEventArgs e)
     {
         if (sender is ToggleButton { Tag: string tag } && int.TryParse(tag, out var index))

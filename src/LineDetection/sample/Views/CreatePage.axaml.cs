@@ -6,7 +6,7 @@ using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
-/// <summary>「データ作成」ページのコードビハインド。Marquee キャプチャの呼び出しと結果の反映を担う。</summary>
+/// <summary>「データ作成」ページのコードビハインド。 Marquee キャプチャの呼び出しと結果の反映を担う。</summary>
 /// <remarks>
 /// CaptureSessionControl は UI スレッドから呼び出す必要があるため、ボタンイベントから直接呼び出す。<br/>
 /// キャプチャ結果（画像 + 領域）は <see cref="CreatePageViewModel.ApplyCaptureResult"/> で ViewModel へ渡し、<br/>

@@ -166,17 +166,17 @@ sequenceDiagram
 
 ## 設計判断
 
-1. **Facade を `Grid` 派生で実装した**。Avalonia 版は `Panel` 派生だが、MewUI では `Grid`（`Panel` は abstract）が子の重ね合わせに適する。
-2. **オーバーレイは別キャンバスにした**。ズームビューは画像の描画と入力を持ち、オーバーレイは矩形の描画のみを持つ。
+1. **Facade を `Grid` 派生で実装した**。 Avalonia 版は `Panel` 派生だが、MewUI では `Grid`（`Panel` は abstract）が子の重ね合わせに適する。
+2. **オーバーレイは別キャンバスにした**。 ズームビューは画像の描画と入力を持ち、オーバーレイは矩形の描画のみを持つ。
    1 つのキャンバスに統合すると、ズームビューの内部状態（ズーム率・オフセット）へオーバーレイが依存することになる。
    重ね合わせることで**入力は下のズームビューが受け取り、描画は上のオーバーレイが担う**という単純な分担になる。
-3. **破線は「背景色の実線 + 前景色の破線」で表現した**。Avalonia 版が下層矩形と破線矩形を重ねる方式と同じであり、
+3. **破線は「背景色の実線 + 前景色の破線」で表現した**。 Avalonia 版が下層矩形と破線矩形を重ねる方式と同じであり、
    2 色のダッシュを 1 回の描画で表現する API が Skia にないため。
-4. **ダッシュ長と太さの下限はコアを単一所有元とした**。Avalonia 版のベクター描画・ルーペのラスタ描画・MewUI 版の 3 経路が同じ値を使う（`OverlayLineDash` と `OverlayRectLayout.EffectiveThickness`）。
-5. **描画入力の解決（`OverlayRectLayout.Resolve`）をコアへ置いた**。負サイズのクランプ・太さの下限・破線かどうかを UI が持つと、Avalonia と MewUI で見た目がずれる（実例: 一方だけ負サイズをクランプし、他方は太さの下限を持っていた）。
-6. **枠線は矩形の内側へ描画する**。Avalonia の `Rectangle.Stroke` と同じ見た目にするため（`inset` で半幅ずらす）。
-7. **領域選択オーバーレイを持たない**。ドラッグ選択・暗転マスク・ルーペの複合は `FadeMaskDragRectControl.MewUI` が担うため、本コントロールへ重ねれば済む（依存を増やさず、ホストが構成する。`app.MewUI` の切り出しはこの構成）。
-8. **ログは内包するズームビューへ委譲する**。本コントロール自身はログを持たず、`Log` プロパティをズームビューへ伝搬する（Avalonia 版が `CropViewControl.Log` を内包コントロールへ委譲するのと同じ分担）。
+4. **ダッシュ長と太さの下限はコアを単一所有元とした**。 Avalonia 版のベクター描画・ルーペのラスタ描画・MewUI 版の 3 経路が同じ値を使う（`OverlayLineDash` と `OverlayRectLayout.EffectiveThickness`）。
+5. **描画入力の解決（`OverlayRectLayout.Resolve`）をコアへ置いた**。 負サイズのクランプ・太さの下限・破線かどうかを UI が持つと、Avalonia と MewUI で見た目がずれる（実例: 一方だけ負サイズをクランプし、他方は太さの下限を持っていた）。
+6. **枠線は矩形の内側へ描画する**。 Avalonia の `Rectangle.Stroke` と同じ見た目にするため（`inset` で半幅ずらす）。
+7. **領域選択オーバーレイを持たない**。 ドラッグ選択・暗転マスク・ルーペの複合は `FadeMaskDragRectControl.MewUI` が担うため、本コントロールへ重ねれば済む（依存を増やさず、ホストが構成する。 `app.MewUI` の切り出しはこの構成）。
+8. **ログは内包するズームビューへ委譲する**。 本コントロール自身はログを持たず、`Log` プロパティをズームビューへ伝搬する（Avalonia 版が `CropViewControl.Log` を内包コントロールへ委譲するのと同じ分担）。
 
 ## テスト方針
 
@@ -191,7 +191,7 @@ sequenceDiagram
 
 | 項目 | 内容 |
 | --- | --- |
-| 領域選択オーバーレイ | 対象外。ホストが `FadeMaskDragRectControl.MewUI` を重ねて構成する（`app.MewUI` の切り出しはこの構成） |
+| 領域選択オーバーレイ | 対象外。 ホストが `FadeMaskDragRectControl.MewUI` を重ねて構成する（`app.MewUI` の切り出しはこの構成） |
 | 選択状態の公開 API | `FadeMaskDragRectControl.MewUI` が担う（本コントロールは矩形オーバーレイのみ） |
 | ルーペへの矩形描画 | `LoupeControl.MewUI` の描画完了イベント（`Rendered`）でキャンバスへ打ち込める（選択矩形の破線は `FadeMaskDragRectControl.MewUI` が実装済み） |
 | スクロールバー連携 | 内包するズームビューが自前でスクロールバーを描画・同期する（Avalonia 版の `ZoomableView` も標準 `ScrollBar` を使うため、ホストからの `ScrollViewer` 注入は行わない） |

@@ -118,7 +118,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
             .Where(static f => ImageFileExtensions.IsImageFile(f))
             .ToList();
 
-        // ソート順を適用（比較子を選択。名前順・大文字小文字を区別しない）
+        // ソート順を適用（比較子を選択。 名前順・大文字小文字を区別しない）
         files.Sort(_viewModel.IsSortAscending
             ? StringComparer.OrdinalIgnoreCase
             : Comparer<string>.Create((a, b) => StringComparer.OrdinalIgnoreCase.Compare(b, a)));

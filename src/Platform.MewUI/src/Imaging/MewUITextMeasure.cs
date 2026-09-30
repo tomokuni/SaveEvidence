@@ -28,9 +28,9 @@ public static class MewUITextMeasure
     private static bool s_engineAvailable = true;
 
     /// <summary>テキストの実寸を測る。</summary>
-    /// <param name="text">測定するテキスト。null 不可。</param>
+    /// <param name="text">測定するテキスト。 null 不可。</param>
     /// <param name="fontSize">フォントサイズ（DIP）。</param>
-    /// <returns>テキストの実寸（DIP。描画エンジンが報告する送り幅と行高）。</returns>
+    /// <returns>テキストの実寸（DIP。 描画エンジンが報告する送り幅と行高）。</returns>
     /// <remarks>
     /// ラベルの背景は「文字の実寸 + 内側余白」で作るため、実寸が小さいと背景から文字がはみ出して切れる<br/>
     /// （描画に使うエンジンで測ることで、実際に描かれる幅と一致させる）。

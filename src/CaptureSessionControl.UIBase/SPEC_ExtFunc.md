@@ -1,7 +1,7 @@
 # CaptureSessionControl.UIBase 外部機能仕様書
 
 `CaptureSessionControl.UIBase` は、撮影・切り出しのセッションを実装する両 UI（Avalonia 版 / MewUI 版）が
-共有する**設定写像**を提供します。名前空間は `EsUtil.SaveEvidence.CaptureSession.UIBase`、アセンブリ名は
+共有する**設定写像**を提供します。 名前空間は `EsUtil.SaveEvidence.CaptureSession.UIBase`、アセンブリ名は
 `CaptureSessionControl.UIBase` です。
 
 ## 提供する外部機能
@@ -20,7 +20,7 @@
 | --- | --- | --- |
 | `CapturePaintMapper` | `internal` | `CaptureSessionControl.AvaloniaUI` / `CaptureSessionControl.MewUI` / `CaptureSessionControl.UIBase.Tests` |
 
-`internal` は `InternalsVisibleTo` で両 UI のホストとテストへ公開します。**`internal` → `public` の変更は
+`internal` は `InternalsVisibleTo` で両 UI のホストとテストへ公開します。 **`internal` → `public` の変更は
 破壊的な設計変更として扱います**。
 
 ## `CapturePaintMapper`（内部・設定から色への写像）
@@ -39,7 +39,7 @@
 | `OverlayColor` | `OverlayColor` | 暗転マスク（オーバーレイ）の色 |
 | `OuterBorderColor` | `BorderColor` | 穴あけ枠の色（**ハンドルの枠線と共通**） |
 
-**写像しない項目**: 内側の塗り（`InnerFillColor`）と内側の枠線（`InnerBorderColor`）。描画の可否は
+**写像しない項目**: 内側の塗り（`InnerFillColor`）と内側の枠線（`InnerBorderColor`）。 描画の可否は
 `MarqueeAppearance` の明示フラグが単一所有するため、色は既定の透明を保ちます。
 
 ### `ToLoupeAppearance(CaptureSettings settings)`
@@ -59,7 +59,7 @@
 
 | 引数 | 制約 |
 | --- | --- |
-| `settings` | 全メンバー non-null（`CaptureSettings.ToNonNull` 済みを渡す）。null は `ArgumentNullException` |
+| `settings` | 全メンバー non-null（`CaptureSettings.ToNonNull` 済みを渡す）。 null は `ArgumentNullException` |
 
 ## 依存関係
 
@@ -69,11 +69,11 @@
 | `Feature.Marquee.Presenter`（`EsUtil.Feature.Marquee.Presenter.Setting`） | 写像先の外観（`MarqueeAppearance`） |
 | `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Presenter.Setting`） | 写像先の描画の設定（`LoupeAppearance`） |
 
-UI フレームワーク（Avalonia / MewUI）への依存はありません。外部パッケージへの直接依存もありません。
+UI フレームワーク（Avalonia / MewUI）への依存はありません。 外部パッケージへの直接依存もありません。
 
 ## 本層を置く理由（設計上の位置付け）
 
 写像元がセッションの設定型（`CaptureSettings`）であるため、再利用ライブラリ（`FadeMaskDragRectControl.UIBase`）
-に置くと後者が製品の設定型へ依存します。また写像先が描画層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter`）の
-型であるため、`CaptureSessionControl.Core` にも置けません（Core → UIBase の逆流になる）。両 UI のホストが
+に置くと後者が製品の設定型へ依存します。 また写像先が描画層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter`）の
+型であるため、`CaptureSessionControl.Core` にも置けません（Core → UIBase の逆流になる）。 両 UI のホストが
 参照できる中間の層として本層を置きます。

@@ -62,7 +62,7 @@ public sealed partial class LineItem : ObservableObject
     public LineOrientation Orientation { get; }
 
     /// <summary>確からしさ（長さ・信頼度等）。</summary>
-    /// <value>線分の長さ（ピクセル）。大きいほど有力。</value>
+    /// <value>線分の長さ（ピクセル）。 大きいほど有力。</value>
     public double Score { get; }
 
     /// <summary>線分の長さ（ピクセル）。</summary>

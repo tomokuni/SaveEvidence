@@ -58,8 +58,8 @@ internal static class FadeMaskDragRectOverlay
     /// <param name="selectionRect">選択矩形（ドメイン座標系・半開区間）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。切り出し領域との交差判定に使用する。0 以下の場合は交差判定しない。</param>
-    /// <returns>破線の一覧（上辺 → 下辺 → 左辺 → 右辺の順。色は辺ごとに色 A から始まり交互に切り替わる）。</returns>
+    /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。 0 以下の場合は交差判定しない。</param>
+    /// <returns>破線の一覧（上辺 → 下辺 → 左辺 → 右辺の順。 色は辺ごとに色 A から始まり交互に切り替わる）。</returns>
     /// <remarks>
     /// 1. 倍率が <see cref="MinimumScale"/> 未満の場合は空を返す（破線が潰れるため）。<br/>
     /// 2. 選択矩形（ドメイン座標）をルーペ画像ピクセル座標へ変換する（終点は半開区間のため +1 して閉区間化する）。<br/>
@@ -99,7 +99,7 @@ internal static class FadeMaskDragRectOverlay
     /// <param name="from">始点（画像ピクセル座標）。</param>
     /// <param name="to">終点（画像ピクセル座標）。</param>
     /// <remarks>
-    /// 水平または垂直の辺を想定する。色はダッシュごとに色 A → 色 B → 色 A … と交互に切り替える（辺ごとに色 A から始まる）。<br/>
+    /// 水平または垂直の辺を想定する。 色はダッシュごとに色 A → 色 B → 色 A … と交互に切り替える（辺ごとに色 A から始まる）。<br/>
     /// 座標が負の方向へ向かう辺（終点が始点より小さい）は破線を生成しない（矩形の幅・高さは常に 0 以上のため通常は発生しない）。
     /// </remarks>
     private static void AppendEdge(List<Dash> dashes, EsPoint from, EsPoint to)
@@ -139,9 +139,9 @@ internal static class FadeMaskDragRectOverlay
     /// <summary>破線の 1 ダッシュ（1 ピクセル厚の矩形と色の種別）。</summary>
     /// <param name="X">左上 X 座標（画像ピクセル）。</param>
     /// <param name="Y">左上 Y 座標（画像ピクセル）。</param>
-    /// <param name="Width">幅（ピクセル。最低 1）。</param>
-    /// <param name="Height">高さ（ピクセル。最低 1）。</param>
+    /// <param name="Width">幅（ピクセル。 最低 1）。</param>
+    /// <param name="Height">高さ（ピクセル。 最低 1）。</param>
     /// <param name="IsColorA">true の場合は色 A、false の場合は色 B で描画する。</param>
-    /// <remarks>水平な辺は高さ 1、垂直な辺は幅 1 になる。画像の外側へはみ出す場合は描画側が無視する。</remarks>
+    /// <remarks>水平な辺は高さ 1、垂直な辺は幅 1 になる。 画像の外側へはみ出す場合は描画側が無視する。</remarks>
     internal readonly record struct Dash(int X, int Y, int Width, int Height, bool IsColorA);
 }

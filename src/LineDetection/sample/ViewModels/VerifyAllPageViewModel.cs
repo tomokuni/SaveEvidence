@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
-/// <summary>「データ全検証」ページの ViewModel。dataset の全画像を一括検証し、正解データ（GroundTruth）と照合する。</summary>
+/// <summary>「データ全検証」ページの ViewModel。 dataset の全画像を一括検証し、正解データ（GroundTruth）と照合する。</summary>
 /// <remarks>
 /// 「データ検証」ページ（単一検証）とは分離し、全画像の検証結果を <see cref="VerifyResults"/> に反映する。<br/>
 /// ページ表示時に自動で全画像を検証する（ボタンは設けない）。<br/>

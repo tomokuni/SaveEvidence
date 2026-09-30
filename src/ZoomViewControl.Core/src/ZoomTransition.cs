@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.ZoomView;
 /// </remarks>
 internal static class ZoomTransition
 {
-    /// <summary>⊖⊕ボタンのズームレベルの既定値（Fit は含まない。23 段階）。</summary>
+    /// <summary>⊖⊕ボタンのズームレベルの既定値（Fit は含まない。 23 段階）。</summary>
     internal static readonly double[] DefaultButtonZoomLevels = [10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500];
 
     /// <summary>Ctrl+ホイールのズーム倍率の既定値。</summary>
@@ -23,11 +23,11 @@ internal static class ZoomTransition
     /// <summary>ズーム率の最大値（固定倍率）の既定値。</summary>
     internal const double DefaultMaxZoom = 500;
 
-    /// <summary>ズームインの次のレベルを返す。移動先がなければ null。</summary>
+    /// <summary>ズームインの次のレベルを返す。 移動先がなければ null。</summary>
     /// <param name="current">現在のズーム率（0 = Fit）。</param>
-    /// <param name="fitZoom">Fit の実効倍率（%）。current &lt;= 0 のときのみ使用。</param>
+    /// <param name="fitZoom">Fit の実効倍率（%）。 current &lt;= 0 のときのみ使用。</param>
     /// <param name="config">ズーム遷移の設定。</param>
-    /// <returns>次のズームレベル。移動先がなければ null。</returns>
+    /// <returns>次のズームレベル。 移動先がなければ null。</returns>
     /// <remarks>
     /// <b>固定倍率表示中</b>: 現在の値より大きい最初のレベルへ移動する（リスト内は隣、リスト外は次に大きい）。<br/>
     /// <b>Fit 実効倍率を挟む</b>: 次に大きいレベル <c>next</c> と Fit 実効倍率 <c>fitZoom</c> が
@@ -52,7 +52,7 @@ internal static class ZoomTransition
         fitZoom = c.ClampZoom(fitZoom);
 
         // 固定倍率（current > 0）で、Fit 実効倍率が「現在値」と「次に大きいレベル」の間に挟まる場合、
-        // fitZoom を次の倍率とする。近接（fitZoom <= current または fitZoom >= next）の場合は段階レベルを優先。
+        // fitZoom を次の倍率とする。 近接（fitZoom <= current または fitZoom >= next）の場合は段階レベルを優先。
         if (current > 0 && current < fitZoom && fitZoom < next)
         {
             return fitZoom;
@@ -60,11 +60,11 @@ internal static class ZoomTransition
         return next;
     }
 
-    /// <summary>ズームアウトの前のレベルを返す。移動先がなければ null。</summary>
+    /// <summary>ズームアウトの前のレベルを返す。 移動先がなければ null。</summary>
     /// <param name="current">現在のズーム率（0 = Fit）。</param>
-    /// <param name="fitZoom">Fit の実効倍率（%）。current &lt;= 0 のとき、または固定倍率で Fit 実効倍率を挟むときに使用。</param>
+    /// <param name="fitZoom">Fit の実効倍率（%）。 current &lt;= 0 のとき、または固定倍率で Fit 実効倍率を挟むときに使用。</param>
     /// <param name="config">ズーム遷移の設定。</param>
-    /// <returns>前のズームレベル。移動先がなければ null。</returns>
+    /// <returns>前のズームレベル。 移動先がなければ null。</returns>
     /// <remarks>
     /// <b>固定倍率表示中</b>: 現在の値より小さい最後のレベルへ移動する（リスト内は隣、リスト外は次に小さい）。<br/>
     /// <b>Fit 実効倍率を挟む</b>: 次に小さいレベル <c>prev</c> と Fit 実効倍率 <c>fitZoom</c> が
@@ -89,7 +89,7 @@ internal static class ZoomTransition
         fitZoom = c.ClampZoom(fitZoom);
 
         // 固定倍率（current > 0）で、Fit 実効倍率が「次に小さいレベル」と「現在値」の間に挟まる場合、
-        // fitZoom を次の倍率とする。近接（prev <= fitZoom）の場合は段階レベルを優先。
+        // fitZoom を次の倍率とする。 近接（prev <= fitZoom）の場合は段階レベルを優先。
         if (current > 0 && prev < fitZoom && fitZoom < current)
         {
             return fitZoom;
@@ -97,11 +97,11 @@ internal static class ZoomTransition
         return prev;
     }
 
-    /// <summary>Ctrl+ホイールのズームイン倍率を返す。移動先がなければ null。</summary>
+    /// <summary>Ctrl+ホイールのズームイン倍率を返す。 移動先がなければ null。</summary>
     /// <param name="current">現在のズーム率（0 = Fit）。</param>
-    /// <param name="fitZoom">Fit の実効倍率（%）。current &lt;= 0 のときのみ使用。</param>
+    /// <param name="fitZoom">Fit の実効倍率（%）。 current &lt;= 0 のときのみ使用。</param>
     /// <param name="config">ズーム遷移の設定。</param>
-    /// <returns>ズームイン後の倍率（Round(現在 × WheelFactor)、MinZoom〜MaxZoom にクランプ）。移動先がなければ null。</returns>
+    /// <returns>ズームイン後の倍率（Round(現在 × WheelFactor)、MinZoom〜MaxZoom にクランプ）。 移動先がなければ null。</returns>
     /// <remarks>
     /// Fit 表示中は実効倍率 × WheelFactor へ移動する（実効倍率 ≥ <see cref="ZoomConfig.MaxZoom"/> なら null = 移動不可）。<br/>
     /// Fit は遷移に含めない。
@@ -117,11 +117,11 @@ internal static class ZoomTransition
         return c.ClampZoom(Math.Round(current * c.WheelFactor));
     }
 
-    /// <summary>Ctrl+ホイールのズームアウト倍率を返す。移動先がなければ null。</summary>
+    /// <summary>Ctrl+ホイールのズームアウト倍率を返す。 移動先がなければ null。</summary>
     /// <param name="current">現在のズーム率（0 = Fit）。</param>
-    /// <param name="fitZoom">Fit の実効倍率（%）。current &lt;= 0 のときのみ使用。</param>
+    /// <param name="fitZoom">Fit の実効倍率（%）。 current &lt;= 0 のときのみ使用。</param>
     /// <param name="config">ズーム遷移の設定。</param>
-    /// <returns>ズームアウト後の倍率（Round(現在 ÷ WheelFactor)、MinZoom〜MaxZoom にクランプ）。移動先がなければ null。</returns>
+    /// <returns>ズームアウト後の倍率（Round(現在 ÷ WheelFactor)、MinZoom〜MaxZoom にクランプ）。 移動先がなければ null。</returns>
     /// <remarks>
     /// Fit 表示中は実効倍率 ÷ WheelFactor へ移動する（実効倍率 ≤ <see cref="ZoomConfig.MinZoom"/> なら null = 移動不可）。<br/>
     /// Fit は遷移に含めない。
@@ -139,21 +139,21 @@ internal static class ZoomTransition
 
     /// <summary>ズームイン可能かどうかを返す。</summary>
     /// <param name="current">現在のズーム率（0 = Fit）。</param>
-    /// <param name="fitZoom">Fit の実効倍率（%）。current &lt;= 0 のときのみ使用。</param>
+    /// <param name="fitZoom">Fit の実効倍率（%）。 current &lt;= 0 のときのみ使用。</param>
     /// <param name="config">ズーム遷移の設定。</param>
     /// <returns>ズームイン可能なら true。</returns>
     internal static bool CanZoomIn(double current, double fitZoom, ZoomConfig? config = null) => NextLevel(current, fitZoom, config) is not null;
 
     /// <summary>ズームアウト可能かどうかを返す。</summary>
     /// <param name="current">現在のズーム率（0 = Fit）。</param>
-    /// <param name="fitZoom">Fit の実効倍率（%）。current &lt;= 0 のときのみ使用。</param>
+    /// <param name="fitZoom">Fit の実効倍率（%）。 current &lt;= 0 のときのみ使用。</param>
     /// <param name="config">ズーム遷移の設定。</param>
     /// <returns>ズームアウト可能なら true。</returns>
     internal static bool CanZoomOut(double current, double fitZoom, ZoomConfig? config = null) => PrevLevel(current, fitZoom, config) is not null;
 
     /// <summary>ズーム操作の可否（ズームイン・ズームアウト）を導出する。</summary>
-    /// <param name="current">現在のズーム率（%）。0 = Fit。</param>
-    /// <param name="fitZoom">Fit の実効倍率（%）。current &lt;= 0 のときのみ使用。</param>
+    /// <param name="current">現在のズーム率（%）。 0 = Fit。</param>
+    /// <param name="fitZoom">Fit の実効倍率（%）。 current &lt;= 0 のときのみ使用。</param>
     /// <param name="config">ズーム遷移の設定。</param>
     /// <param name="hasSource">画像ソースが設定されているか（未設定時は可否を false にする）。</param>
     /// <returns>ズームイン・ズームアウトの可否。</returns>

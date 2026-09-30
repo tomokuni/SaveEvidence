@@ -28,7 +28,7 @@ public static class CaptureTypeTraits
 
     /// <summary>切り出し範囲を閉区間（終点のピクセルを含む）として扱う種別かどうかを判定する。</summary>
     /// <param name="captureType">キャプチャ種別。</param>
-    /// <returns>範囲選択の場合は true。ハイライト型は false（検出矩形が既に全ピクセルを含む）。</returns>
+    /// <returns>範囲選択の場合は true。 ハイライト型は false（検出矩形が既に全ピクセルを含む）。</returns>
     /// <remarks>
     /// ドラッグで作る矩形は「始点から終点まで」を意図するため終点のピクセルを含める（+1）が、<br/>
     /// ハイライト矩形はホストが全ピクセルを含む閉区間として与えるため加算しない（1 ピクセル大きく切り出されるのを防ぐ）。
@@ -38,7 +38,7 @@ public static class CaptureTypeTraits
 
     /// <summary>カーソル下の要素を検出する対象を取得する。</summary>
     /// <param name="captureType">キャプチャ種別。</param>
-    /// <returns>検出対象（スクリーン / ウィンドウ）。ハイライト型以外は <see cref="CaptureElementTarget.Window"/> を返す。</returns>
+    /// <returns>検出対象（スクリーン / ウィンドウ）。 ハイライト型以外は <see cref="CaptureElementTarget.Window"/> を返す。</returns>
     /// <remarks>
     /// 検出対象の判定を本メソッドへ集約し、UI 層は返された対象に対応する検出関数を呼ぶだけにする<br/>
     /// （「スクリーン選択なら画面検出、それ以外はウィンドウ検出」という規則を各 UI に書かない）。
@@ -47,7 +47,7 @@ public static class CaptureTypeTraits
         => captureType == CaptureType.ScreenSelect ? CaptureElementTarget.Screen : CaptureElementTarget.Window;
 
     /// <summary>カーソル下の要素（スクリーン / ウィンドウ）を検出する。</summary>
-    /// <param name="finder">要素検出サービス。null の場合は検出しない。</param>
+    /// <param name="finder">要素検出サービス。 null の場合は検出しない。</param>
     /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="screenPoint">カーソル位置（画面物理ピクセル）。</param>
     /// <returns>検出結果。<paramref name="finder"/> が null の場合は未検出の結果。</returns>
@@ -66,7 +66,7 @@ public static class CaptureTypeTraits
     /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="highlightRect">ハイライト矩形（未検出の場合は null）。</param>
     /// <param name="selectionRect">ドラッグ選択の矩形（未選択の場合は null）。</param>
-    /// <returns>確定対象の矩形。対象が無い場合は null。</returns>
+    /// <returns>確定対象の矩形。 対象が無い場合は null。</returns>
     /// <remarks>
     /// ハイライト型（スクリーン選択 / ウィンドウ選択）はハイライト矩形を、それ以外（範囲選択）はドラッグ選択の矩形を使う。<br/>
     /// 「どちらを確定対象にするか」という判断を単一所有する（UI ごとの優先順位の書き方の違いで挙動が食い違うのを防ぐ）。

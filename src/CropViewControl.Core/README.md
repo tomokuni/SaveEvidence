@@ -6,7 +6,7 @@
 
 クロップビューの矩形オーバーレイのうち、UI フレームワークに依存しない部分（矩形の描画情報・枠線スタイル・破線パターン・描画入力の解決・ルーペ画像へのピクセル描画）を本プロジェクトへ切り出すことで、同じロジックを別 UI からも再利用できます。
 
-**「どう描くか」の判断（負サイズのクランプ・太さの下限・破線かどうか・背景色を使うか）は本プロジェクトが単一所有します**。UI 層は確定した描画入力（`OverlayRectFrame`）を描画先の型へ写すだけで、式と判断を持ちません。
+**「どう描くか」の判断（負サイズのクランプ・太さの下限・破線かどうか・背景色を使うか）は本プロジェクトが単一所有します**。 UI 層は確定した描画入力（`OverlayRectFrame`）を描画先の型へ写すだけで、式と判断を持ちません。
 
 ## 収録する型
 
@@ -36,16 +36,16 @@ CropViewControl.AvaloniaUI（Avalonia 実装） / CropViewControl.MewUI
          └──> Platform.Core（コア幾何型・画像コンテナ）
 ```
 
-本プロジェクトが UI フレームワークへ依存することはありません。外部パッケージへの直接依存もありません。
+本プロジェクトが UI フレームワークへ依存することはありません。 外部パッケージへの直接依存もありません。
 
 ## 座標型・色型
 
 | 用途 | 型 | 変換 |
 | --- | --- | --- |
 | 座標 | `EsRect`（`Platform.Core`） | UI 側で `.ToEsRect()` / `.ToAvaloniaRect()` |
-| 色 | `System.Drawing.Color`（`System.Drawing.Primitives`。クロスプラットフォーム） | UI 側で `.ToDrawingColor()` / `.ToAvaloniaColor()`（`Platform.AvaloniaUI`） |
+| 色 | `System.Drawing.Color`（`System.Drawing.Primitives`。 クロスプラットフォーム） | UI 側で `.ToDrawingColor()` / `.ToAvaloniaColor()`（`Platform.AvaloniaUI`） |
 
-`System.Drawing.Color` は `System.Drawing.Common`（Windows 専用の描画 API）ではなく、共有フレームワーク同梱の値型です。`EsBitmap`（`Platform.Core`）のピクセル API と同じ色型を使います。
+`System.Drawing.Color` は `System.Drawing.Common`（Windows 専用の描画 API）ではなく、共有フレームワーク同梱の値型です。 `EsBitmap`（`Platform.Core`）のピクセル API と同じ色型を使います。
 
 ## ビルド
 
@@ -55,7 +55,7 @@ dotnet build src/CropViewControl.Core/src/CropViewControl.Core.csproj
 
 ## テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、すべて `[Fact]` で並列実行されます。
+`tests/` が本プロジェクトの単体テストを持ちます。 UI 初期化が不要なため、すべて `[Fact]` で並列実行されます。
 
 ```powershell
 dotnet test src/CropViewControl.Core/tests/CropViewControl.Core.Tests.csproj

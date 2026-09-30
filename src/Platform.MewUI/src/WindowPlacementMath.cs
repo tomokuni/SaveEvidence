@@ -18,7 +18,7 @@ public static class WindowPlacementMath
 {
     /// <summary>DIP の座標を画面物理ピクセルの座標へ変換する。</summary>
     /// <param name="dip">DIP の座標。</param>
-    /// <param name="scale">DPI スケール係数（1.0 = 96 DPI）。1 以下の場合は有効値として扱わない。</param>
+    /// <param name="scale">DPI スケール係数（1.0 = 96 DPI）。 1 以下の場合は有効値として扱わない。</param>
     /// <returns>画面物理ピクセルの座標（四捨五入）。</returns>
     /// <remarks>DPI スケールは 1 未満（縮小表示）もあり得るため、0 以下だけを無効として扱う。</remarks>
     public static EsPointInt ToPhysicalPixelPoint(EsPoint dip, double scale)
@@ -62,7 +62,7 @@ public static class WindowPlacementMath
         => DpiScaler.ToDip(physical, scale);
 
     /// <summary>物理ピクセルの矩形が復元に使えるかどうかを判定する。</summary>
-    /// <param name="bounds">判定する矩形。null 可。</param>
+    /// <param name="bounds">判定する矩形。 null 可。</param>
     /// <returns>幅と高さがともに 1 以上なら true。</returns>
     /// <remarks>
     /// 幅・高さが 0 以下の値（壊れた設定ファイル・手編集の誤り）では復元しない<br/>

@@ -44,9 +44,9 @@ Avalonia 版と MewUI 版の間に依存はありません（互いを参照し�
 
 | 層 | 責務 |
 | --- | --- |
-| `Feature.Loupe.Core` | 数値の安全域補正、表示レイアウト、切り出し領域の幾何（`LoupeGeometry`）。設定（`LoupeOptions`）の単一所有 |
-| `Feature.Loupe.Presenter` | 描画計画（層の順序・装飾の矩形・ラベルの文言と配置）と外観（`LoupeAppearance`）の単一所有。UI 非依存であり、UI フレームワークを参照しない |
-| `LoupeControl.MewUI` | 提示層が解決した描画計画を `LoupeSkiaPainter` で `SKCanvas` へ写す。`MewProperty` による入力の受付。DPI の自動追従 |
+| `Feature.Loupe.Core` | 数値の安全域補正、表示レイアウト、切り出し領域の幾何（`LoupeGeometry`）。 設定（`LoupeOptions`）の単一所有 |
+| `Feature.Loupe.Presenter` | 描画計画（層の順序・装飾の矩形・ラベルの文言と配置）と外観（`LoupeAppearance`）の単一所有。 UI 非依存であり、UI フレームワークを参照しない |
+| `LoupeControl.MewUI` | 提示層が解決した描画計画を `LoupeSkiaPainter` で `SKCanvas` へ写す。 `MewProperty` による入力の受付。 DPI の自動追従 |
 | ホスト（`app.MewUI` 等） | `Source` / `CenterPoint` の設定、表示位置の決定（コアのファサード `ResolveLayout` を利用） |
 
 ## コンポーネント構成
@@ -66,9 +66,9 @@ src/LoupeControl.MewUI/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。描画は提示層（`LoupePresenter.ResolveDrawPlan`）が解決した計画を `LoupeSkiaPainter` で `SKCanvas` へ写す（層の順序も描く値も計画が単一所有する）。**描画のたびに描画面（物理ピクセル）と割り当て領域（DIP）の比を実効倍率として `DipToDeviceScaling` へ反映する**（DPI の変更通知は追加直後のコントロールへ届かないため、保持値だけに頼るとルーペ領域より小さい拡大画像を描く） |
-| `LoupeSkiaPainter`（描画実装） | 描画計画（`LoupeDrawPlan`。層の順序・矩形・拡大画像の切り出しと描画の矩形）を Skia の描画 API へ写す。**描く層とその順序は計画が単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない）。色は計画の外観（`LoupeAppearance`）を使う |
-| `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
+| `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。 描画は提示層（`LoupePresenter.ResolveDrawPlan`）が解決した計画を `LoupeSkiaPainter` で `SKCanvas` へ写す（層の順序も描く値も計画が単一所有する）。 **描画のたびに描画面（物理ピクセル）と割り当て領域（DIP）の比を実効倍率として `DipToDeviceScaling` へ反映する**（DPI の変更通知は追加直後のコントロールへ届かないため、保持値だけに頼るとルーペ領域より小さい拡大画像を描く） |
+| `LoupeSkiaPainter`（描画実装） | 描画計画（`LoupeDrawPlan`。 層の順序・矩形・拡大画像の切り出しと描画の矩形）を Skia の描画 API へ写す。 **描く層とその順序は計画が単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない）。 色は計画の外観（`LoupeAppearance`）を使う |
+| `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。 `SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
 
@@ -214,27 +214,27 @@ sequenceDiagram
 
 ## 設計判断
 
-1. **中間ビットマップを持たない**。Avalonia 版は `RenderTargetBitmap` に描いて `EsBitmap` へコピーするが、
+1. **中間ビットマップを持たない**。 Avalonia 版は `RenderTargetBitmap` に描いて `EsBitmap` へコピーするが、
    MewUI 版は `SkiaCanvasView` のキャンバスへ直接描画する（コピーとメモリ確保を排除）。
-2. **拡大は最近傍で行う**。ルーペは画素をそのまま拡大する用途であり、補間すると画素が判別できなくなる。
-3. **装飾矩形の導出は提示層が単一所有する**。両 UI で同じ見た目を保証するため、
+2. **拡大は最近傍で行う**。 ルーペは画素をそのまま拡大する用途であり、補間すると画素が判別できなくなる。
+3. **装飾矩形の導出は提示層が単一所有する**。 両 UI で同じ見た目を保証するため、
    Avalonia 版と MewUI 版は同じ描画計画を使う（描画実装は計画を写すだけである）。
-4. **設定（基本サイズ・拡大率）はコアの `LoupeOptions` が、外観（枠線の太さ・表示可否・色）は提示層の `LoupeAppearance` が単一所有する**。UI 層は `Options` と `Appearance` を公開して描画時に読むだけであり、既定値・数値項目の補正もそれぞれの型が持つ。
+4. **設定（基本サイズ・拡大率）はコアの `LoupeOptions` が、外観（枠線の太さ・表示可否・色）は提示層の `LoupeAppearance` が単一所有する**。 UI 層は `Options` と `Appearance` を公開して描画時に読むだけであり、既定値・数値項目の補正もそれぞれの型が持つ。
    表示可否と枠線の太さが外観に集約されているため、両 UI の見た目が一致する
    （従来は Avalonia が既定で十字線を描き MewUI は描かないという既定値のドリフトがあった）。
-5. **位置を持たない**。表示位置は「親領域サイズ」「中心座標」「オフセット」に依存するホスト側の関心事であり、
-   計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有する。コントロールは入力と描画のみを担う。
-6. **DPI を自動追従させる**。`OnDpiChanged` で `DipToDeviceScaling` を更新し、ホストが DPI を扱わずに済むようにした。
-7. **`Options` はレイアウトにも影響する**。`MeasureContent` が要求サイズを返すため、
+5. **位置を持たない**。 表示位置は「親領域サイズ」「中心座標」「オフセット」に依存するホスト側の関心事であり、
+   計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有する。 コントロールは入力と描画のみを担う。
+6. **DPI を自動追従させる**。 `OnDpiChanged` で `DipToDeviceScaling` を更新し、ホストが DPI を扱わずに済むようにした。
+7. **`Options` はレイアウトにも影響する**。 `MeasureContent` が要求サイズを返すため、
 プロパティへ `MewPropertyOptions.AffectsLayout` を付与して再測定を促す（未付与では変更が反映されない）。
 描画サイズは `Options.RequestedSize` × `DipToDeviceScaling` を物理ピクセルへ換算する
    （DIP → 物理ピクセルの換算はコアのファサード（`Loupe.ResolveGeometry`）が単一所有する。 本コントロールは表示サイズをキャンバスの大きさから導くため、
    キャンバスと描画サイズは常に一致し、領域に合わせた縮小は行わない）。
-8. **静的画像では連続再描画を無効化する**。`ContinuousAnimation` を `false` にし、プロパティ変更時のみ再描画する。
-9. **座標ラベルはコントロールがテキスト要素として表示する**（両 UI 共通）。文言は提示層の `LoupePresenter`（`LabelTexts` partial）、表示可否と体裁（フォントサイズ・色・角丸）は外観（`LoupeAppearance`）、実寸 → 配置の写像は同層の `LoupePresenter`（`LabelPlan` partial） が単一所有し、コントロールは自 UI の実寸（`SkiaText.Measure`）を渡して要素を配置する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）。Avalonia 版も同じ契約を使い、測定 API（`FormattedText`）だけが異なる。
-10. **値の補正と変更ログはプロパティの登録が所有する**。`MewProperty.Register` の `coerce` / `changed` へ渡すため、
+8. **静的画像では連続再描画を無効化する**。 `ContinuousAnimation` を `false` にし、プロパティ変更時のみ再描画する。
+9. **座標ラベルはコントロールがテキスト要素として表示する**（両 UI 共通）。 文言は提示層の `LoupePresenter`（`LabelTexts` partial）、表示可否と体裁（フォントサイズ・色・角丸）は外観（`LoupeAppearance`）、実寸 → 配置の写像は同層の `LoupePresenter`（`LabelPlan` partial） が単一所有し、コントロールは自 UI の実寸（`SkiaText.Measure`）を渡して要素を配置する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）。 Avalonia 版も同じ契約を使い、測定 API（`FormattedText`）だけが異なる。
+10. **値の補正と変更ログはプロパティの登録が所有する**。 `MewProperty.Register` の `coerce` / `changed` へ渡すため、
    setter を経由しない設定（バインディング等）でも安全域が保たれ、変更が記録される
-   （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。規則と書式はコアが単一所有する）。
+   （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。 規則と書式はコアが単一所有する）。
 設定（`Options`）の数値項目はコアの型が、外観（`Appearance`）の数値項目は提示層の型が生成時に補正するため、コントロールは `coerce` を登録しない（環境値の `DipToDeviceScaling` のみ登録する）。
 
 ## テスト方針
@@ -250,9 +250,9 @@ sequenceDiagram
 
 | 項目 | 内容 |
 | --- | --- |
-| 座標変換ポート | 実装済み（`SetCoordTransform`。ホストが設定し、コントロールはファサードへ転送する。Avalonia 版と同じ API） |
+| 座標変換ポート | 実装済み（`SetCoordTransform`。 ホストが設定し、コントロールはファサードへ転送する。 Avalonia 版と同じ API） |
 | 再生成の要求メソッド | `Clear` / `RequestRender` 相当（現在はプロパティ変更で自動再描画） |
-| 座標ラベル以外の文字描画 | 日本語のフォントフォールバック（ラベルは `MarqueeControl.MewUI`（選択矩形の外側の装飾）側で対応済み。本コントロールの座標ラベルは数値のみのため未適用） |
+| 座標ラベル以外の文字描画 | 日本語のフォントフォールバック（ラベルは `MarqueeControl.MewUI`（選択矩形の外側の装飾）側で対応済み。 本コントロールの座標ラベルは数値のみのため未適用） |
 
 ## ログ
 
@@ -260,7 +260,7 @@ sequenceDiagram
 
 | レベル | 出力元 |
 | --- | --- |
-| Debug | `Source` / `CenterPoint` / `RequestedSize` / `DipToDeviceScaling` / `ZoomLevel` の変更（補正後の値を渡す。変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は本プロジェクトの `LoupeUiLogMessage`、外観は提示層の `LoupePresenterLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は設定の前後を渡すだけ。設定の変更は変化した項目だけを出力する） |
+| Debug | `Source` / `CenterPoint` / `RequestedSize` / `DipToDeviceScaling` / `ZoomLevel` の変更（補正後の値を渡す。 変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は本プロジェクトの `LoupeUiLogMessage`、外観は提示層の `LoupePresenterLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は設定の前後を渡すだけ。 設定の変更は変化した項目だけを出力する） |
 | Error | 描画処理の例外（アプリを落とさずログへ記録して描画を中止する） |
 
 Avalonia 版の Trace ログ（再描画パイプライン）は持ちません（MewUI 版は中間ビットマップを作らず同期描画するため）。  

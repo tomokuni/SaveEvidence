@@ -166,7 +166,7 @@ public partial class LineCanvasView : UserControl
             return;
         }
 
-        // 選択中 = オレンジ / ホバー中 = 赤。色は事前に選んでから描画する（ループ内のキャストを避ける）
+        // 選択中 = オレンジ / ホバー中 = 赤。 色は事前に選んでから描画する（ループ内のキャストを避ける）
         foreach (var line in lines)
         {
             var start = new Point((line.Start.X - topLeft.X) * e.Scale, (line.Start.Y - topLeft.Y) * e.Scale);
@@ -194,7 +194,7 @@ public partial class LineCanvasView : UserControl
     /// <param name="end">線分の終点（Bitmap ピクセル座標）。</param>
     /// <param name="color">描画色（不透明）。</param>
     /// <param name="dash">破線パターン（描画長・間隔長の交互リスト・ルーピクセル）。</param>
-    /// <param name="thickness">線の太さ（ルーピクセル）。1 ドメインピクセル = ズーム倍率（<see cref="LoupeRenderedEventArgs.Scale"/>）分。</param>
+    /// <param name="thickness">線の太さ（ルーピクセル）。 1 ドメインピクセル = ズーム倍率（<see cref="LoupeRenderedEventArgs.Scale"/>）分。</param>
     /// <remarks>
     /// 既存ピクセルを保持したまま、<paramref name="dash"/> のパターンで線分上のピクセルを塗る。<br/>
     /// 線の太さは <paramref name="thickness"/> の分だけ線分の両側へ広げて塗る（中心線の法線方向）。<br/>
@@ -210,7 +210,7 @@ public partial class LineCanvasView : UserControl
             return;
         }
 
-        // 破線パターンの合計長（周期）。正でない場合は何も描画しない
+        // 破線パターンの合計長（周期）。 正でない場合は何も描画しない
         double dashTotal = 0;
         foreach (var d in dash)
         {
@@ -234,7 +234,7 @@ public partial class LineCanvasView : UserControl
             return;
         }
 
-        // 線の太さ（最小 1px）。法線方向へ half ピクセルずつ広げる
+        // 線の太さ（最小 1px）。 法線方向へ half ピクセルずつ広げる
         var half = Math.Max(0, (int)Math.Ceiling(thickness / 2.0) - 1);
         var ux = -dy / length; // 法線 X
         var uy = dx / length;  // 法線 Y

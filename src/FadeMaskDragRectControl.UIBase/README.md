@@ -1,14 +1,14 @@
 # FadeMaskDragRectControl.UIBase
 
-`FadeMaskDragRectControl`（領域選択の複合コントロール）の **UI 間で共有する処理**です。Avalonia 版と MewUI 版が
+`FadeMaskDragRectControl`（領域選択の複合コントロール）の **UI 間で共有する処理**です。 Avalonia 版と MewUI 版が
 同じ分配規則とラベル配置を使うことを保証します。
 
 ## 目的
 
-- **設定とモードから内包コントロールの値への解決を 1 箇所へ集約**する。以前は両 UI が
+- **設定とモードから内包コントロールの値への解決を 1 箇所へ集約**する。 以前は両 UI が
   「設定の写し → モードから導出する項目の上書き」という 2 段の分配をそれぞれ持っており、片方だけ規則が
   変わる余地があった。
-- **付加情報ラベル（操作・情報）の積み上げを 1 箇所へ集約**する。体裁は既に
+- **付加情報ラベル（操作・情報）の積み上げを 1 箇所へ集約**する。 体裁は既に
   本層の `MarqueeHostLabelRenderer` と `MarqueeAppearance`（`Feature.Marquee.Presenter`）が単一所有しているが、
   「どの文言をどの位置へ積むか」は両 UI が別々に書いていた。
 
@@ -22,9 +22,9 @@ FadeMaskDragRectControl.UIBase（値の解決 ＋ ラベルの描画）
 FadeMaskDragRectControl.AvaloniaUI / .MewUI（子コントロールへの代入・配線）
 ```
 
-- **値の決定は本層、代入は UI 層**。結果を代入するには子コントロール（UI 固有型）が必要なため、本層は
+- **値の決定は本層、代入は UI 層**。 結果を代入するには子コントロール（UI 固有型）が必要なため、本層は
   UI 非依存の値（コアの設定型）までを返す。
-- モードの解釈はコア（`FadeMaskDragRectModes`）が単一所有する。本層はその結果を値へ反映するだけである。
+- モードの解釈はコア（`FadeMaskDragRectModes`）が単一所有する。 本層はその結果を値へ反映するだけである。
 
 ## 構成
 
@@ -44,7 +44,7 @@ FadeMaskDragRectControl.UIBase
     └── Platform.Core（コア幾何型・値型・描画ポート）
 ```
 
-UI フレームワークへ依存しません。外部パッケージへの直接依存もありません。
+UI フレームワークへ依存しません。 外部パッケージへの直接依存もありません。
 
 `FadeMaskDragRectControl.Core` の `internal` 型（`FadeMaskDragRectModes` / `FadeMaskDragRectState`）を参照するため、
 同プロジェクトの `InternalsVisibleTo` に本アセンブリが含まれます。
@@ -82,7 +82,7 @@ tests/
 └── MarqueeHostLabelRenderer.Tests.cs      # ラベル 1 行の体裁（背景の寸法の検証）
 ```
 
-合計 26 件（`[Theory]` は展開後のケース数）。UI 初期化が不要なため、すべて `[Fact]` / `[Theory]` で並列実行されます。
+合計 26 件（`[Theory]` は展開後のケース数）。 UI 初期化が不要なため、すべて `[Fact]` / `[Theory]` で並列実行されます。
 
 ```powershell
 dotnet test src/FadeMaskDragRectControl.UIBase/tests/FadeMaskDragRectControl.UIBase.Tests.csproj

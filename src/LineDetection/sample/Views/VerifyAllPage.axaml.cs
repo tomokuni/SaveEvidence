@@ -3,7 +3,7 @@ using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
-/// <summary>「データ全検証」ページのコードビハインド。ページ表示時に全画像の検証を自動実行する。</summary>
+/// <summary>「データ全検証」ページのコードビハインド。 ページ表示時に全画像の検証を自動実行する。</summary>
 /// <remarks>
 /// <see cref="VerifyAllPageViewModel.VerifyAll"/> はページが表示されたときに自動で呼び出し、<br/>
 /// 全画像の検証結果（一致/不一致・差分）を一覧へ反映する。

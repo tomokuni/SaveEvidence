@@ -44,7 +44,7 @@ internal static class LoupeRenderPipeline
                 $"LoupeControl は {source!.GetType().FullName} をサポートしていません。Bitmap または EsBitmapAvaloniaImage を指定してください。");
         }
 
-        // 抽出元の EsBitmap を解決する（Bitmap は複製、EsBitmapAvaloniaImage は共有参照。破棄済みは null）
+        // 抽出元の EsBitmap を解決する（Bitmap は複製、EsBitmapAvaloniaImage は共有参照。 破棄済みは null）
         var resolved = LoupeSourceResolver.Resolve(source, out var sourceBitmap);
 
         try

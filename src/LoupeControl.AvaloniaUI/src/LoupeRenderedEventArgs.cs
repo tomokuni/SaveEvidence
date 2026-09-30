@@ -22,7 +22,7 @@ public sealed class LoupeRenderedEventArgs : EventArgs
 {
     /// <summary>表示情報を初期化する。</summary>
     /// <param name="bitmap">描画済みのルーペ画像（EsBitmap）。</param>
-    /// <param name="captureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null。</param>
+    /// <param name="captureTopLeft">切り出し領域の左上（ドメイン座標）。 中心未設定時は null。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
     public LoupeRenderedEventArgs(EsBitmap bitmap, Point? captureTopLeft, double scale)
     {
@@ -31,7 +31,7 @@ public sealed class LoupeRenderedEventArgs : EventArgs
         Scale = scale;
     }
 
-    /// <summary>描画済みのルーペ画像（EsBitmap）。イベントハンドラ内でピクセルへオーバーレイを描画できる。</summary>
+    /// <summary>描画済みのルーペ画像（EsBitmap）。 イベントハンドラ内でピクセルへオーバーレイを描画できる。</summary>
     /// <remarks>
     /// イベントハンドラ内で <see cref="Bitmap"/> のピクセルを更新した内容は、イベント終了後に
     /// <see cref="LoupeControl"/> が表示へ反映する（イベントは表示反映前に同期的に発火する）。<br/>
@@ -39,11 +39,11 @@ public sealed class LoupeRenderedEventArgs : EventArgs
     /// </remarks>
     public EsBitmap Bitmap { get; }
 
-    /// <summary>切り出し領域の左上（ドメイン座標）。中心未設定時は null。</summary>
-    /// <value>切り出し領域の左上（元画像ピクセル座標）。null の場合はオーバーレイを描画できない。</value>
+    /// <summary>切り出し領域の左上（ドメイン座標）。 中心未設定時は null。</summary>
+    /// <value>切り出し領域の左上（元画像ピクセル座標）。 null の場合はオーバーレイを描画できない。</value>
     public Point? CaptureTopLeft { get; }
 
     /// <summary>ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</summary>
-    /// <value>変換係数（拡大率と同値。DPI スケーリングの影響を受けない）。</value>
+    /// <value>変換係数（拡大率と同値。 DPI スケーリングの影響を受けない）。</value>
     public double Scale { get; }
 }

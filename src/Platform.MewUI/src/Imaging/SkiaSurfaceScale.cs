@@ -16,7 +16,7 @@ public static class SkiaSurfaceScale
 {
     /// <summary>描画面の実サイズと表示領域の比からスケーリング係数を解決する。</summary>
     /// <param name="surfacePixels">描画面の一辺の長さ（物理ピクセル）。</param>
-    /// <param name="dipLength">同じ辺の表示領域の長さ（DIP）。0 以下の場合は <paramref name="fallback"/> を使う。</param>
+    /// <param name="dipLength">同じ辺の表示領域の長さ（DIP）。 0 以下の場合は <paramref name="fallback"/> を使う。</param>
     /// <param name="fallback">表示領域が未確定のときに使う係数（DPI から与えられる値）。</param>
     /// <returns>スケーリング係数（0.1〜8.0 へ補正済み）。</returns>
     /// <remarks>

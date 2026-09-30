@@ -33,7 +33,7 @@ public sealed class BottomAlignWrapPanel : Panel
     {
         var wrap = !double.IsInfinity(availableSize.Width) && availableSize.Width > 0;
 
-        // 子要素の計測（幅のみ制約する。高さはコンテンツ任せ）→ 計測結果を純粋計算へ委譲
+        // 子要素の計測（幅のみ制約する。 高さはコンテンツ任せ）→ 計測結果を純粋計算へ委譲
         var sizes = new List<EsSize>(Children.Count);
         foreach (var child in Children)
         {

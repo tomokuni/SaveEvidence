@@ -4,7 +4,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 /// <summary>色名と色を表す文字列の組を表すレコード。</summary>
 /// <param name="Name">色の英語名（例: "Red"）。</param>
-/// <param name="Value">色を表す文字列（`Color.TryParse` で解釈可能。現在は色名 = `Colors` のプロパティ名。例: "Red"）。</param>
+/// <param name="Value">色を表す文字列（`Color.TryParse` で解釈可能。 現在は色名 = `Colors` のプロパティ名。 例: "Red"）。</param>
 /// <remarks>
 /// ドロップダウンの選択肢データであり、コントロール内部で生成・使用する（外部から直接扱わない）。<br/>
 /// そのため公開 API ではなく internal 型とする（公開 API は ColorPicker.axaml.cs に集約）。<br/>
@@ -27,10 +27,10 @@ internal sealed record ColorEntry(string Name, string Value)
 
     // ──────────────── 静的初期化 ────────────────
 
-    /// <summary>静的コンストラクタ。全色一覧（色名順 / 色相順）を構築する。</summary>
+    /// <summary>静的コンストラクタ。 全色一覧（色名順 / 色相順）を構築する。</summary>
     /// <remarks>
     /// <see cref="ColorString.ColorNames"/> の全色からエントリを生成し、配列へ一度だけ実体化する
-    /// （遅延シーケンスを 2 回列挙する従来実装を排除。ソートは実体化済み配列に対して行う）。<br/>
+    /// （遅延シーケンスを 2 回列挙する従来実装を排除。 ソートは実体化済み配列に対して行う）。<br/>
     /// リフレクションによる <see cref="Colors"/> 列挙は <see cref="ColorString"/> が単一所有する
     /// （<see cref="DynamicDependency"/> 属性も <see cref="ColorString"/> 側に移設済み）。
     /// </remarks>
@@ -53,7 +53,7 @@ internal sealed record ColorEntry(string Name, string Value)
     /// テスト（ColorPickerControl.AvaloniaUI.Tests）が未定義色名の分岐を検証するため internal 公開する。</remarks>
     internal static (int priority, float key) GetSortKey(string colorName)
     {
-        // 色名は ColorString が所有する辞書を引く（解析より高速。未定義は無彩色の先頭に置く）
+        // 色名は ColorString が所有する辞書を引く（解析より高速。 未定義は無彩色の先頭に置く）
         if (!ColorString.ColorNames.TryGetValue(colorName, out var c)) return (0, 0f);
 
         var r = c.R / 255f;

@@ -21,7 +21,7 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI.Tests;
 public class FadeMaskDragRectControlTests
 {
     /// <summary>テスト用の拡大元画像を生成する。</summary>
-    /// <returns>生成した画像。破棄は呼び出し側。</returns>
+    /// <returns>生成した画像。 破棄は呼び出し側。</returns>
     private static EsUtil.Platform.Core.Imaging.EsBitmap CreateSource()
         => EsUtil.Platform.Core.Imaging.EsBitmap.Create(32, 32, DrawingColor.White);
 
@@ -453,7 +453,7 @@ public class FadeMaskDragRectControlTests
 
     /// <summary>座標変換ポート（コアのファサードが内部保持）をリフレクションで取得する。</summary>
     /// <param name="control">対象のコントロール。</param>
-    /// <returns>保持している座標変換ポート。未設定の場合は null。</returns>
+    /// <returns>保持している座標変換ポート。 未設定の場合は null。</returns>
     /// <remarks>
     /// ポートは公開プロパティではなくメソッドで設定し、コアのファサード（<c>Marquee</c>）が内部で保持する（読み取り API を持たない）。<br/>
     /// 提示層（Presenter）がコアを内包するため、提示層の内部フィールドを経由してコアまで辿る。<br/>

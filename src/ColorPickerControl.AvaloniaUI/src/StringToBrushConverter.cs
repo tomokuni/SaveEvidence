@@ -22,7 +22,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 /// </remarks>
 public sealed class StringToBrushConverter : IValueConverter
 {
-    /// <summary>解析済み入力文字列 → ブラシ のキャッシュ（Flyweight。同一入力のブラシ生成を再利用）。</summary>
+    /// <summary>解析済み入力文字列 → ブラシ のキャッシュ（Flyweight。 同一入力のブラシ生成を再利用）。</summary>
     /// <remarks>
     /// キーは入力文字列そのもの（"Red" と "#FFFF0000" は別エントリ）。<br/>
     /// キャッシュは静的であるため、複数インスタンス・複数バインディングで共有される。<br/>
@@ -35,17 +35,17 @@ public sealed class StringToBrushConverter : IValueConverter
     internal const int BrushCacheCapacity = 256;
 
     /// <summary>色名 → IBrush に変換する。</summary>
-    /// <param name="value">変換元の値。色と不透明度を統合した文字列（例: "Red", "Red+50%", "#336699+75%"）。</param>
+    /// <param name="value">変換元の値。 色と不透明度を統合した文字列（例: "Red", "Red+50%", "#336699+75%"）。</param>
     /// <param name="targetType">変換先の型。</param>
     /// <param name="parameter">変換パラメーター（未使用）。</param>
     /// <param name="culture">カルチャ情報（未使用）。</param>
-    /// <returns>変換結果の <see cref="IBrush"/>。解釈できない場合は <see cref="Brushes.Transparent"/>。</returns>
+    /// <returns>変換結果の <see cref="IBrush"/>。 解釈できない場合は <see cref="Brushes.Transparent"/>。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
     /// 1. キャッシュを引き、ヒットした場合は解析せず既存ブラシを返す。<br/>
     /// 2. <see cref="ColorString.TryParse(string, out Color, out double)"/> で解析可能な文字列のみ<br/>
     ///    <see cref="SolidColorBrush"/> を生成し、<see cref="ColorString.AddWithCapacityLimit{T}"/> で登録する<br/>
-    ///    （不透明度はアルファへ合成される。容量超過時は自動で全クリアされる）。
+    ///    （不透明度はアルファへ合成される。 容量超過時は自動で全クリアされる）。
     /// </remarks>
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

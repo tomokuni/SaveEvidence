@@ -390,7 +390,7 @@ public class LoupeControlTests
     {
         var control = CreateControl();
 
-        // プロパティのスタイル値を直接設定する（バインディングと同じ経路。CLR プロパティの setter を通らない）
+        // プロパティのスタイル値を直接設定する（バインディングと同じ経路。 CLR プロパティの setter を通らない）
         // 数値項目の補正は値の型（LoupeOptions）が生成時に適用するため、
         // どの設定経路でも範囲内の値だけがコントロールへ渡る（UI 側に補正の登録を要求しない）。
         control.SetValue(LoupeControl.OptionsProperty, LoupeOptions.Default with
@@ -455,7 +455,7 @@ public class LoupeControlTests
     {
         var control = new LoupeControl();
 
-        // ルーペ座標ラベルは既定で表示（設定画面の現在値）。色は描画の設定（白 / 黒 60% = #99000000）
+        // ルーペ座標ラベルは既定で表示（設定画面の現在値）。 色は描画の設定（白 / 黒 60% = #99000000）
         Assert.True(control.Appearance.ShowCoordLabel);
         Assert.Equal(DrawingColor.White, control.Appearance.CoordLabelColor);
         Assert.Equal(DrawingColor.FromArgb(153, 0, 0, 0), control.Appearance.CoordLabelBackgroundColor);
@@ -503,7 +503,7 @@ public class LoupeControlTests
             Typeface.Default, control.Appearance.CoordLabelFontSize, Brushes.White);
         Assert.True(label.Width > text.Width);
 
-        // 左上（基準点はルーペの左上から 2 DIP。描画層が配置を単一所有する）
+        // 左上（基準点はルーペの左上から 2 DIP。 描画層が配置を単一所有する）
         Assert.Equal(2.0, label.Margin.Left, 1);
         Assert.Equal(2.0, label.Margin.Top, 1);
     }
@@ -751,7 +751,7 @@ public class LoupeControlTests
     {
         // 回帰テスト: SetLoupeBitmap が using で即座に破棄した WriteableBitmap を Image.Source に
         // 設定すると、レイアウトパス（Image.MeasureOverride → Bitmap.get_Size）で ObjectDisposedException が
-        // 発生し、領域選択開始時にアプリがハングする。表示用画像（EsBitmapAvaloniaImage）はコントロールが所有し、
+        // 発生し、領域選択開始時にアプリがハングする。 表示用画像（EsBitmapAvaloniaImage）はコントロールが所有し、
         // 内包する EsBitmap が有効なまま保持されることを検証する。
         var control = CreateControl();
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);

@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.MewUI.Services;
 
 /// <summary>キャプチャ（スクリーン / ウィンドウ / 範囲選択）の開始と結果の反映を担う窓口。</summary>
 /// <remarks>
-/// <b>役割</b>: 撮影の実行を Facade（<see cref="CaptureSessionControl"/>。CaptureSessionControl.MewUI）へ委ね、<br/>
+/// <b>役割</b>: 撮影の実行を Facade（<see cref="CaptureSessionControl"/>。 CaptureSessionControl.MewUI）へ委ね、<br/>
 /// 確定した画像をプレビューへ反映する。<br/>
 /// 呼び出し経路（ツールバーのボタン / グローバルホットキー）は複数あるが、処理は本クラスへ集約する（DRY）。<br/>
 /// <br/>
@@ -34,10 +34,10 @@ internal static class CaptureFlow
     /// <param name="captureSession">撮影・切り出しの Facade（排他とセッション寿命の窓口）。</param>
     /// <remarks>
     /// 1. 撮影中・オーナーウィンドウ未取得の場合は何もしない。<br/>
-    /// 2. オーバーレイを表示して選択を待つ（確定した領域が返る。キャンセル時は null）。<br/>
+    /// 2. オーバーレイを表示して選択を待つ（確定した領域が返る。 キャンセル時は null）。<br/>
     /// 3. 画像が返った場合のみ、Undo への退避 → 未保存化 → プレビュー設定 → ステータス通知を行う。<br/>
     /// 4. 例外が発生しても撮影中フラグを必ず戻す（以降のキャプチャが起動できなくなるのを防ぐ）。<br/>
-    /// <b>切り出し中</b>は Facade が受付を拒否する（コアの排他規則。画像は変更されない）。
+    /// <b>切り出し中</b>は Facade が受付を拒否する（コアの排他規則。 画像は変更されない）。
     /// </remarks>
     public static void Start(AppServices services, CaptureType type, CaptureSessionControl captureSession)
     {

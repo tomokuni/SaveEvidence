@@ -21,5 +21,5 @@ public enum ZoomNoticeKind
 /// </remarks>
 /// <param name="Kind">通知の種別。</param>
 /// <param name="State">通知時点のズーム状態（<see cref="ZoomNoticeKind.ZoomChanged"/> で意味を持つ）。</param>
-/// <param name="ImageRect">通知時点の画像表示矩形（ビューポート座標。画像未設定時は空）。</param>
+/// <param name="ImageRect">通知時点の画像表示矩形（ビューポート座標。 画像未設定時は空）。</param>
 public sealed record ZoomNotice(ZoomNoticeKind Kind, ZoomState State, EsRect ImageRect);

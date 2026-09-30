@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.MewUI.Views;
 /// <remarks>
 /// Avalonia 版 <c>UndoPage.axaml</c> に相当する。<br/>
 /// <br/>
-/// <b>表示順</b>: Redo（新しい未来）→ 現在 → Undo（古い過去）の固定。現在プレビューに表示中の画像を青枠で強調する。<br/>
+/// <b>表示順</b>: Redo（新しい未来）→ 現在 → Undo（古い過去）の固定。 現在プレビューに表示中の画像を青枠で強調する。<br/>
 /// <b>表示モード</b>: 特大 / 大 / 中。<c>Settings.UndoViewModeIndex</c> へ保存・復元し、名前と範囲の補正は<br/>
 /// <see cref="ViewModeDisplay"/>（コア）が単一所有する。<br/>
 /// <b>サムネイル</b>: <see cref="ThumbnailView"/> が画像を正方形へ収めて描画する。<br/>
@@ -59,7 +59,7 @@ internal static class UndoPage
 
         var modeButtons = new ToggleButton[ViewModeDisplay.Count];
 
-        // 表示モードの切り替え（解除は許さない。常に 1 つを選択状態に保つ）
+        // 表示モードの切り替え（解除は許さない。 常に 1 つを選択状態に保つ）
         void OnModeChanged(int index, bool isChecked)
         {
             if (isChecked)
@@ -152,7 +152,7 @@ internal static class UndoPage
             .Margin(new Thickness(2, AppStyles.ToolbarMarginTop, AppStyles.ToolbarMarginRight, AppStyles.ToolbarMarginBottom))
             .Children(modeElements);
 
-        // ステータスバーは 3 項目。右端のヒントのみ右寄せにする（Avalonia 版と同じ配置）
+        // ステータスバーは 3 項目。 右端のヒントのみ右寄せにする（Avalonia 版と同じ配置）
         var status = new StackPanel()
             .Horizontal()
             .Spacing(12)
@@ -179,7 +179,7 @@ internal static class UndoPage
             Rebuild();
         }
 
-        // ツールバー（上端 6 DIP。タイトルバー領域の下） / 一覧（残余） / ステータスの 3 段。
+        // ツールバー（上端 6 DIP。 タイトルバー領域の下） / 一覧（残余） / ステータスの 3 段。
         // ツールバーはタイトルバー領域に重ねて置き、一覧はタイトルバー領域の下から始める（Avalonia 版と同じ）
         FrameworkElement content = new Grid()
             .Rows("Auto,*,Auto")
@@ -199,7 +199,7 @@ internal static class UndoPage
     }
 
     /// <summary>サムネイル 1 件分の要素を生成する。</summary>
-    /// <param name="image">サムネイルの元画像（所有権はスタック側が保持する。本ページは破棄しない）。</param>
+    /// <param name="image">サムネイルの元画像（所有権はスタック側が保持する。 本ページは破棄しない）。</param>
     /// <param name="label">サムネイル下のラベル。</param>
     /// <param name="isCurrent">現在プレビューに表示中の画像かどうか（true の場合は青枠で強調する）。</param>
     /// <param name="iconSize">サムネイルの一辺のサイズ（DIP）。</param>

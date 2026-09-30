@@ -36,13 +36,13 @@ internal static class AppStyles
     // レイアウト値（Avalonia 版と同一）
     // ====================================================================
 
-    /// <summary>ツールバーの上余白（DIP）。ウィンドウ最上部（タイトルバー領域）とのスペース。</summary>
+    /// <summary>ツールバーの上余白（DIP）。 ウィンドウ最上部（タイトルバー領域）とのスペース。</summary>
     public const double ToolbarMarginTop = 6;
 
     /// <summary>ツールバーの下余白（DIP）。</summary>
     public const double ToolbarMarginBottom = 2;
 
-    /// <summary>ツールバーの右余白（DIP）。ウィンドウ右上のシステムボタンとの重なりを防ぐ。</summary>
+    /// <summary>ツールバーの右余白（DIP）。 ウィンドウ右上のシステムボタンとの重なりを防ぐ。</summary>
     public const double ToolbarMarginRight = 140;
 
     /// <summary>ツールバーのボタン・テキストボックスの高さ（DIP）。</summary>
@@ -54,29 +54,29 @@ internal static class AppStyles
     /// <summary>ツールバーのボタンの垂直余白（DIP）。</summary>
     public const double ToolbarPaddingY = 4;
 
-    /// <summary>ツールバー行の高さ（DIP。上余白 + ボタン高さ + 下余白）。</summary>
+    /// <summary>ツールバー行の高さ（DIP。 上余白 + ボタン高さ + 下余白）。</summary>
     public const double ToolbarRowHeight = ToolbarMarginTop + ToolbarButtonHeight + ToolbarMarginBottom;
 
-    /// <summary>ツールバーのプルダウンを出す上端（DIP）。ツールバーの直下に合わせる。</summary>
+    /// <summary>ツールバーのプルダウンを出す上端（DIP）。 ツールバーの直下に合わせる。</summary>
     public const double MenuTop = ToolbarMarginTop + ToolbarButtonHeight;
 
-    /// <summary>ページ内容の上端（DIP）。タイトルバー領域（32）に内容を重ねないための余白。</summary>
+    /// <summary>ページ内容の上端（DIP）。 タイトルバー領域（32）に内容を重ねないための余白。</summary>
     public const double PageTopInset = ToolbarRowHeight;
 
     /// <summary>ステータスバーのボタンの高さ（DIP）。</summary>
     public const double StatusButtonHeight = 20;
 
-    /// <summary>ステータスバーのスライダの高さ（DIP）。Avalonia 版と同じ値。</summary>
+    /// <summary>ステータスバーのスライダの高さ（DIP）。 Avalonia 版と同じ値。</summary>
     /// <remarks>Avalonia 版はスライダ（24）が行の高さを決めるため、本値がステータスバーの高さになる。</remarks>
     public const double StatusSliderHeight = 24;
 
-    /// <summary>ステータスバーの左右の余白（DIP。Avalonia 版の <c>Margin="4,1"</c> と同じ）。</summary>
+    /// <summary>ステータスバーの左右の余白（DIP。 Avalonia 版の <c>Margin="4,1"</c> と同じ）。</summary>
     public const double StatusPaddingX = 4;
 
-    /// <summary>ステータスバーの上下の余白（DIP。キャプチャページ）。</summary>
+    /// <summary>ステータスバーの上下の余白（DIP。 キャプチャページ）。</summary>
     public const double StatusPaddingY = 1;
 
-    /// <summary>ステータスバーの上下の余白（DIP。一覧ページ）。</summary>
+    /// <summary>ステータスバーの上下の余白（DIP。 一覧ページ）。</summary>
     public const double ListStatusPaddingY = 2;
 
     /// <summary>ステータスバーのボタンの最小幅（DIP）。</summary>
@@ -122,7 +122,7 @@ internal static class AppStyles
     /// <summary>ウィンドウ操作ボタン（最小化・最大化）のスタイル名。</summary>
     public const string WindowButton = "window-button";
 
-    /// <summary>ウィンドウ操作ボタン（閉じる。ホバーで赤）のスタイル名。</summary>
+    /// <summary>ウィンドウ操作ボタン（閉じる。 ホバーで赤）のスタイル名。</summary>
     public const string WindowCloseButton = "window-close-button";
 
     /// <summary>サムネイルの枠のスタイル名。</summary>
@@ -177,14 +177,14 @@ internal static class AppStyles
     /// <summary>ナビ項目の選択背景色（暗色テーマ）。</summary>
     private static readonly MewUIColor s_navSelectedDark = MewUIColor.FromArgb(255, 58, 63, 75);
 
-    /// <summary>閉じるボタンのホバー背景色（赤。Windows の標準と同じ）。</summary>
+    /// <summary>閉じるボタンのホバー背景色（赤。 Windows の標準と同じ）。</summary>
     private static readonly MewUIColor s_closeHover = MewUIColor.FromArgb(255, 196, 43, 28);
 
     /// <summary>ウィンドウ操作ボタンのホバー背景色（半透明のグレー）。</summary>
     /// <remarks>半透明のため下地の色に応じて明暗し、明色・暗色のどちらのテーマでも「薄いグレー」に見える。</remarks>
     private static readonly MewUIColor s_windowButtonHover = MewUIColor.FromArgb(60, 128, 128, 128);
 
-    /// <summary>ウィンドウ操作ボタンの押下背景色（半透明のグレー。ホバーより濃い）。</summary>
+    /// <summary>ウィンドウ操作ボタンの押下背景色（半透明のグレー。 ホバーより濃い）。</summary>
     private static readonly MewUIColor s_windowButtonPressed = MewUIColor.FromArgb(96, 128, 128, 128);
 
     /// <summary>閉じるボタンのホバー時の文字色（白）。</summary>
@@ -193,20 +193,20 @@ internal static class AppStyles
     /// <summary>サムネイルの枠色（グレー）。</summary>
     private static readonly MewUIColor s_thumbnailBorder = MewUIColor.FromArgb(255, 128, 128, 128);
 
-    /// <summary>サムネイルの枠色（ホバー時のハイライト。青）。</summary>
+    /// <summary>サムネイルの枠色（ホバー時のハイライト。 青）。</summary>
     private static readonly MewUIColor s_thumbnailHoverBorder = MewUIColor.FromArgb(255, 0, 120, 212);
 
-    /// <summary>サムネイルの枠色（現在表示中の画像。青）。</summary>
+    /// <summary>サムネイルの枠色（現在表示中の画像。 青）。</summary>
     private static readonly MewUIColor s_thumbnailCurrentBorder = MewUIColor.FromArgb(255, 0, 120, 212);
 
-    /// <summary>一覧アイテムのホバー時の背景（明色テーマ用。黒 10%）。</summary>
+    /// <summary>一覧アイテムのホバー時の背景（明色テーマ用。 黒 10%）。</summary>
     /// <remarks>
     /// Avalonia 版は <c>ListBox</c> の項目（<c>ListBoxItem</c>）がホバー時に薄い帯を表示する。<br/>
     /// MewUI は <c>ListBox</c> を使わないため、同じ見た目の帯をアイテム側で描く（実測値は黒 / 白の 10%）。
     /// </remarks>
     private static readonly MewUIColor s_thumbnailHoverBackgroundLight = MewUIColor.FromArgb(26, 0, 0, 0);
 
-    /// <summary>一覧アイテムのホバー時の背景（暗色テーマ用。白 10%）。</summary>
+    /// <summary>一覧アイテムのホバー時の背景（暗色テーマ用。 白 10%）。</summary>
     private static readonly MewUIColor s_thumbnailHoverBackgroundDark = MewUIColor.FromArgb(26, 255, 255, 255);
 
     /// <summary>現在表示中のサムネイルの枠線の太さ（DIP）。</summary>
@@ -283,11 +283,11 @@ internal static class AppStyles
     /// <summary>設定ページのカードの角丸（DIP）。</summary>
     private const double SettingsCardCornerRadius = 6;
 
-    /// <summary>サムネイルの枠線の太さ（DIP。通常時）。</summary>
+    /// <summary>サムネイルの枠線の太さ（DIP。 通常時）。</summary>
     private const double ThumbnailFrameThickness = 1;
 
     /// <summary>サムネイルの枠色（通常時）。</summary>
-    /// <value>グレー。テーマに依存しない（Avalonia 版の <c>SystemControlForegroundChromeGrayBrush</c> 相当）。</value>
+    /// <value>グレー。 テーマに依存しない（Avalonia 版の <c>SystemControlForegroundChromeGrayBrush</c> 相当）。</value>
     public static MewUIColor ThumbnailBorder => s_thumbnailBorder;
 
     /// <summary>サムネイルの枠色（ホバー時）。</summary>
@@ -468,7 +468,7 @@ internal static class AppStyles
 
     /// <summary>テーマモードをアプリ全体へ適用する。</summary>
     /// <param name="mode">適用するテーマモード。</param>
-    /// <returns>適用した場合は true。アプリが未初期化の場合は false。</returns>
+    /// <returns>適用した場合は true。 アプリが未初期化の場合は false。</returns>
     /// <remarks>
     /// テーマは <c>Application.Run</c> の後（起動時コールバック）でしか変更できない<br/>
     /// （それより前は <c>Application.Current</c> が未初期化で例外になる）。<br/>

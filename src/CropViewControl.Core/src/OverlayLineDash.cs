@@ -26,7 +26,7 @@ internal static class OverlayLineDash
 
     /// <summary>枠線スタイルに対応するダッシュ長と間隔を取得する。</summary>
     /// <param name="style">枠線スタイル。</param>
-    /// <returns>ダッシュ長と間隔（実線はどちらも <see cref="SolidLength"/>）。単位は呼び出し側の描画経路に従う。</returns>
+    /// <returns>ダッシュ長と間隔（実線はどちらも <see cref="SolidLength"/>）。 単位は呼び出し側の描画経路に従う。</returns>
     internal static (double DashLength, double GapLength) Get(OverlayLineStyle style) => style switch
     {
         OverlayLineStyle.Dashed => (DashedLength, DashedGap),
@@ -36,6 +36,6 @@ internal static class OverlayLineDash
 
     /// <summary>枠線スタイルが破線（ダッシュ）かどうかを判定する。</summary>
     /// <param name="style">枠線スタイル。</param>
-    /// <returns>破線または点線の場合は true。実線の場合は false。</returns>
+    /// <returns>破線または点線の場合は true。 実線の場合は false。</returns>
     internal static bool IsDashed(OverlayLineStyle style) => style != OverlayLineStyle.Solid;
 }

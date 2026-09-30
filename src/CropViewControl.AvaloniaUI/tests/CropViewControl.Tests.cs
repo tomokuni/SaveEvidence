@@ -80,7 +80,7 @@ public class CropViewTests
     {
         var view = CreateView();
 
-        // 太さ 0（コアの下限 1 へ補正される）の破線。画像 10x10 を 400x200 へ Fit した倍率は 20 倍
+        // 太さ 0（コアの下限 1 へ補正される）の破線。 画像 10x10 を 400x200 へ Fit した倍率は 20 倍
         view.Rects = [new OverlayRect(new EsRect(10, 10, 50, 40), OverlayLineStyle.Dashed, DrawingColor.Red, DrawingColor.White, 0.0)];
 
         var group = Assert.IsType<Panel>(Assert.Single(view.RectOverlayChildren));
@@ -227,7 +227,7 @@ public class CropViewTests
         // 画像を null へ戻す（画像なしに戻る）
         view.Source = null;
 
-        // 選択はクリアされる。オーバーレイの表示・ヒットテスト状態は SetSelectionOverlayVisible が専任のため維持される。
+        // 選択はクリアされる。 オーバーレイの表示・ヒットテスト状態は SetSelectionOverlayVisible が専任のため維持される。
         Assert.False(view.HasSelection);
         Assert.True(view.SelectionOverlay.IsVisible);
         Assert.True(view.SelectionOverlay.IsHitTestVisible);

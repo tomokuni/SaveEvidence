@@ -16,7 +16,7 @@ public enum LineOrientation
 /// <param name="Start">始点（画像座標・ピクセル）。</param>
 /// <param name="End">終点（画像座標・ピクセル）。</param>
 /// <param name="Orientation">線分の向き（水平 / 垂直）。</param>
-/// <param name="Score">確からしさ（長さ・信頼度等）。大きいほど有力。</param>
+/// <param name="Score">確からしさ（長さ・信頼度等）。 大きいほど有力。</param>
 /// <remarks>
 /// 座標は UI フレームワーク非依存の <see cref="EsPoint"/>（double の XY 値型）で保持する。
 /// これにより検出ロジック（<see cref="LogicLineDetector"/>）と上位の表示境界（app / sample）を分離し、<br/>

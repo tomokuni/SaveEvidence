@@ -11,13 +11,13 @@ namespace EsUtil.SaveEvidence.CropView;
 /// 座標変換（ドメイン座標 → ビューポート座標）は UI 層が担う（ズームビューの変換を経由するため）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-/// <param name="Bounds">ビューポート座標（DIP）の矩形。幅・高さは 0 以上へクランプ済み。</param>
+/// <param name="Bounds">ビューポート座標（DIP）の矩形。 幅・高さは 0 以上へクランプ済み。</param>
 /// <param name="Foreground">前景色（透明度を含む）。</param>
-/// <param name="Background">背景色（透明度を含む）。破線のときの下地。</param>
+/// <param name="Background">背景色（透明度を含む）。 破線のときの下地。</param>
 /// <param name="Thickness">枠線の太さ（ピクセル。<see cref="OverlayRectLayout.MinimumThickness"/> 以上）。</param>
-/// <param name="IsDashed">破線（破線または点線）かどうか。実線の場合は false。</param>
-/// <param name="DashLength">ダッシュ長（単位は描画経路に従う）。実線は 0。</param>
-/// <param name="GapLength">ダッシュの間隔（単位は描画経路に従う）。実線は 0。</param>
+/// <param name="IsDashed">破線（破線または点線）かどうか。 実線の場合は false。</param>
+/// <param name="DashLength">ダッシュ長（単位は描画経路に従う）。 実線は 0。</param>
+/// <param name="GapLength">ダッシュの間隔（単位は描画経路に従う）。 実線は 0。</param>
 public readonly record struct OverlayRectFrame(
     EsRect Bounds,
     DrawingColor Foreground,
@@ -33,7 +33,7 @@ public readonly record struct OverlayRectFrame(
     public double HalfThickness => Thickness / 2;
 
     /// <summary>背景色の下地を描くかどうかを取得する。</summary>
-    /// <value>破線の場合は true。実線の場合は false（下地を塗ると矩形内部が塗り潰される）。</value>
+    /// <value>破線の場合は true。 実線の場合は false（下地を塗ると矩形内部が塗り潰される）。</value>
     public bool DrawsBackground => IsDashed;
 
     /// <summary>描画できる大きさかどうかを取得する。</summary>

@@ -110,7 +110,7 @@ parentPanel.Children.Add(colorPicker);
 
 ### 4.2 選択色の取得・監視
 
-`SelectedColor` は双方向バインド対応です。ViewModel のプロパティと直接バインドできます。
+`SelectedColor` は双方向バインド対応です。 ViewModel のプロパティと直接バインドできます。
 
 ```csharp
 // モデル保存用（常に #AARRGGBB 形式へ正規化済み）
@@ -134,13 +134,13 @@ if (colorPicker.HasValidationError)
 
 ### 5.1 プロパティ
 
-公開プロパティ（StyledProperty）は以下の通りです。StyledProperty は同ファイルに定義されます（Avalonia のバインディング・スタイル設定に必要なため public）。
+公開プロパティ（StyledProperty）は以下の通りです。 StyledProperty は同ファイルに定義されます（Avalonia のバインディング・スタイル設定に必要なため public）。
 
 #### 5.1.1 選択状態
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `SelectedColor` | `string` | `"White"` | 現在選択されている色。**保存値は `#AARRGGBB`（アルファ先頭8桁）形式**（双方向バインド）。色名 / `#RRGGBB` / `#AARRGGBB` / `{色}+{不透明度%}` のいずれを設定しても `#AARRGGBB` へ正規化される |
+| `SelectedColor` | `string` | `"White"` | 現在選択されている色。 **保存値は `#AARRGGBB`（アルファ先頭8桁）形式**（双方向バインド）。 色名 / `#RRGGBB` / `#AARRGGBB` / `{色}+{不透明度%}` のいずれを設定しても `#AARRGGBB` へ正規化される |
 
 #### 5.1.2 表示・動作設定
 
@@ -148,14 +148,14 @@ if (colorPicker.HasValidationError)
 | --- | --- | --- | --- |
 | `ColorSortMode` | `ColorSortMode` | `ByHue` | ドロップダウンの色の並び順（`ByHue` / `ByName`） |
 | `HighlightBorderOnError` | `bool` | `false` | バリデーション失敗時に ComboBox の枠線を赤くするか |
-| `Log` | `ILogger` | `NullLogger` | 内部ロガー（null 設定時は `NullLogger` へフォールバック）。診断ログの出力先 |
+| `Log` | `ILogger` | `NullLogger` | 内部ロガー（null 設定時は `NullLogger` へフォールバック）。 診断ログの出力先 |
 
 #### 5.1.3 バリデーション状態（読み取り専用）
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
 | `HasValidationError` | `bool` | 現在の `SelectedColor` が無効な場合 `true` |
-| `ValidationErrorMessage` | `string?` | 無効な場合の理由。有効時は `null` |
+| `ValidationErrorMessage` | `string?` | 無効な場合の理由。 有効時は `null` |
 
 #### 5.1.4 ComboBox レイアウト
 
@@ -165,13 +165,13 @@ if (colorPicker.HasValidationError)
 | --- | --- | --- | --- |
 | `ComboBoxMinWidth` | `double` | `120` | ComboBox の最小幅（DIP 座標系） |
 | `ComboBoxMaxWidth` | `double` | `Infinity` | ComboBox の最大幅（DIP 座標系） |
-| `ComboBoxWidth` | `double` | `NaN` | ComboBox の明示的な幅（DIP 座標系。NaN は自動） |
-| `ComboBoxPadding` | `Thickness?` | `null` | 内部パディング（DIP 座標系。null はテーマ標準。スウォッチ分が自動加算される） |
-| `ComboBoxMargin` | `Thickness?` | `null` | マージン（DIP 座標系。null はテーマ標準） |
+| `ComboBoxWidth` | `double` | `NaN` | ComboBox の明示的な幅（DIP 座標系。 NaN は自動） |
+| `ComboBoxPadding` | `Thickness?` | `null` | 内部パディング（DIP 座標系。 null はテーマ標準。 スウォッチ分が自動加算される） |
+| `ComboBoxMargin` | `Thickness?` | `null` | マージン（DIP 座標系。 null はテーマ標準） |
 
 ### 5.2 メソッド
 
-公開メソッドは定義されていません。コントロールは StyledProperty（双方向バインド）とイベント通知のみでホストと連携します。
+公開メソッドは定義されていません。 コントロールは StyledProperty（双方向バインド）とイベント通知のみでホストと連携します。
 
 ### 5.3 イベント
 
@@ -199,8 +199,8 @@ if (colorPicker.HasValidationError)
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `Convert(object?, Type, object?, CultureInfo)` | `object?` | 色名/16進コード（`{色}+{不透明度%}` 形式も可） → `IBrush`。不透明度はアルファへ合成。解釈不能な場合は `Brushes.Transparent` |
-| `ConvertBack(object?, Type, object?, CultureInfo)` | `object?` | 未サポート。常に `NotSupportedException` |
+| `Convert(object?, Type, object?, CultureInfo)` | `object?` | 色名/16進コード（`{色}+{不透明度%}` 形式も可） → `IBrush`。 不透明度はアルファへ合成。 解釈不能な場合は `Brushes.Transparent` |
+| `ConvertBack(object?, Type, object?, CultureInfo)` | `object?` | 未サポート。 常に `NotSupportedException` |
 
 #### 5.4.4 ColorDisplayConverter
 
@@ -209,14 +209,14 @@ ComboBox の `Text` プロパティとのバインドに使用する（`Selected
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `Convert(object?, Type, object?, CultureInfo)` | `object?` | 保存値（例: `#80FF0000`）→ 表示テキスト（例: `Red+50%`）。不透明度 100% は `{色}` のみ。解釈不能な場合は入力をそのまま返す |
-| `ConvertBack(object?, Type, object?, CultureInfo)` | `object?` | 入力テキスト（例: `Red+50%`）→ 保存値（例: `#80FF0000`）。解釈不能な場合は入力をそのまま返す |
+| `Convert(object?, Type, object?, CultureInfo)` | `object?` | 保存値（例: `#80FF0000`）→ 表示テキスト（例: `Red+50%`）。 不透明度 100% は `{色}` のみ。 解釈不能な場合は入力をそのまま返す |
+| `ConvertBack(object?, Type, object?, CultureInfo)` | `object?` | 入力テキスト（例: `Red+50%`）→ 保存値（例: `#80FF0000`）。 解釈不能な場合は入力をそのまま返す |
 
 #### 5.4.5 ColorString（`ColorString.cs`）
 
 色と不透明度を統合した文字列形式（`{色}+{不透明度%}`）の解析・整形・正規化を提供する静的ユーティリティ。
 
-- **形式**: `{色}` は色名（Avalonia `Colors` の 140 色）が定義されていれば色名、未定義なら `#RRGGBB`。不透明度はパーセント（0〜100%）で表し、100% の場合は省略
+- **形式**: `{色}` は色名（Avalonia `Colors` の 140 色）が定義されていれば色名、未定義なら `#RRGGBB`。 不透明度はパーセント（0〜100%）で表し、100% の場合は省略
 - **保存値の正規化**: `ToArgbHex` で `#AARRGGBB`（アルファ先頭・常時アルファ含む）へ統一
 - **表示**: `ToDisplayText` で `{色}+{不透明度%}` 形式へ整形（画面表示用）
 
@@ -231,10 +231,10 @@ ComboBox の `Text` プロパティとのバインドに使用する（`Selected
 
 **解析・整形の規則**:
 
-- 不透明度の合成は **四捨五入**（例: `Red+50%` → アルファ `128`（`#80`）。`Red+33%` → `84`）。浮動小数誤差を避けるため `pct × 255 ÷ 100` の整数演算で算出する
+- 不透明度の合成は **四捨五入**（例: `Red+50%` → アルファ `128`（`#80`）。 `Red+33%` → `84`）。 浮動小数誤差を避けるため `pct × 255 ÷ 100` の整数演算で算出する
 - 色名表示は以下の優先順で決定する:  
   1. アルファも含めて完全一致する色名  
-  2. RGB のみ一致する色名（同 RGB で複数ある場合は不透明（A=255）の色名を優先。例: 半透明の白は `White+50%` と表示され `Transparent` は使われない）  
+  2. RGB のみ一致する色名（同 RGB で複数ある場合は不透明（A=255）の色名を優先。 例: 半透明の白は `White+50%` と表示され `Transparent` は使われない）  
   3. 一致する色名が無い場合は `#RRGGBB`
 
 ## 6. 入力動作
@@ -267,13 +267,13 @@ ComboBox の `Text` プロパティとのバインドに使用する（`Selected
 
 ### 6.5 ColorView テーマ（内包）
 
-`ColorView`（カラーピッカー）のテーマは**コントロールに内包**されています。ホスト側で
+`ColorView`（カラーピッカー）のテーマは**コントロールに内包**されています。 ホスト側で
 `<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />` を
 指定しなくても、Flyout 内の ColorView が正しく描画されます。
 
 - ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます。
 - 未指定の場合のみ、内包テーマ（Fluent.xaml）がデフォルトとして適用されます。
-- **Native AOT のホストは `StyleInclude` をアプリの XAML に書いてください**（内包テーマは実行時の XAML 解決に依存するため AOT では適用できません。ロードに失敗した場合はテーマ適用を行わず、ホストの取り込みに任せます）。
+- **Native AOT のホストは `StyleInclude` をアプリの XAML に書いてください**（内包テーマは実行時の XAML 解決に依存するため AOT では適用できません。 ロードに失敗した場合はテーマ適用を行わず、ホストの取り込みに任せます）。
 
 ## 7. 制限事項
 

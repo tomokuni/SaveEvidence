@@ -19,7 +19,7 @@ public static class FadeMaskDragRectOptionsMapper
     /// <param name="settings">キャプチャ設定（全メンバー non-null。<c>ToNonNull</c> 済みを渡す）。</param>
     /// <returns>複合コントロールへ一括設定できる設定値。</returns>
     /// <remarks>
-    /// 1. 選択矩形の設定（<see cref="MarqueeOptions"/>）を組み立てる（選択の判断に必要な項目のみ。色は含まない）。<br/>
+    /// 1. 選択矩形の設定（<see cref="MarqueeOptions"/>）を組み立てる（選択の判断に必要な項目のみ。 色は含まない）。<br/>
     /// 2. ルーペの設定（<see cref="LoupeOptions"/>）を組み立てる（計算に必要な値のみ）。<br/>
     /// 4. 選択矩形破線の色とルーペのオフセットを設定する（オフセットは <see cref="CaptureSettings.LoupeOffset"/> を使う）。<br/>
     /// 5. ホスト固有の付加情報（操作・情報ラベル）の外観（<see cref="FadeMaskDragRectLabelOptions"/>）を組み立てる。<br/>

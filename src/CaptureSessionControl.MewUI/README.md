@@ -15,7 +15,7 @@
 
 ## 1. 概要
 
-画面キャプチャ（スクリーン選択 / ウィンドウ選択 / 範囲選択）の **MewUI 版セッション**です。仮想スクリーン（全モニター）を 1 枚の画像として敷いたオーバーレイを表示し、選択された領域を切り出して返します。
+画面キャプチャ（スクリーン選択 / ウィンドウ選択 / 範囲選択）の **MewUI 版セッション**です。 仮想スクリーン（全モニター）を 1 枚の画像として敷いたオーバーレイを表示し、選択された領域を切り出して返します。
 
 撮影・切り出しの共通規則（切り出し矩形・設定・セッション状態・オーナー退避）は `CaptureSessionControl.Core` が単一所有し、本プロジェクトは MewUI の描画・入力・ウィンドウ操作だけを担います。
 
@@ -24,13 +24,13 @@
 - **3 種のキャプチャモード**: スクリーン選択（カーソル下のモニター）/ ウィンドウ選択（カーソル下の最前面ウィンドウ）/ 範囲選択（ドラッグ）
 - **仮想スクリーン全体を対象**: 全モニターを 1 枚の画像として取得し、オーバーレイで全面を覆う（1 モニターに限定するとカーソルのあるモニターでしか操作できないため）
 - **自ウィンドウの写り込み防止**: 撮影前にキャプチャ除外（`WDA_EXCLUDEFROMCAPTURE`）を設定し、画面外へ退避する
-- **ちらつきの防止**: オーナーの退避は非表示ではなく位置の変更。オーバーレイは透明で表示し、画像が合成されたフレームで透明を解除する
-- **選択矩形のクロップ**: 確定時は種別に応じて切り出す（範囲選択は閉区間 = 始点・終点のピクセルを含む。切り出し矩形の解決は Core の `CaptureClipMath.ResolveCaptureRect`（**画面物理座標の入口**。選択矩形は画像ローカル座標のため `ToScreenRect` で戻してから渡す）、切り出しは Core の `CaptureClipMath`）
-- **キーボード操作**: Enter（Return を含む）= 確定 / Escape = キャンセル（確定対象が無い状態の Enter は何もしない。解釈は Core の `CaptureKeyActions` が単一所有する）
-- **クリック確定**: 左押下でカーソル下の要素を固定し、解放時に確定する（押下を伴わない解放・退化した検出では確定しない。規則は Core の `CaptureClickSelection` が単一所有する）
+- **ちらつきの防止**: オーナーの退避は非表示ではなく位置の変更。 オーバーレイは透明で表示し、画像が合成されたフレームで透明を解除する
+- **選択矩形のクロップ**: 確定時は種別に応じて切り出す（範囲選択は閉区間 = 始点・終点のピクセルを含む。 切り出し矩形の解決は Core の `CaptureClipMath.ResolveCaptureRect`（**画面物理座標の入口**。 選択矩形は画像ローカル座標のため `ToScreenRect` で戻してから渡す）、切り出しは Core の `CaptureClipMath`）
+- **キーボード操作**: Enter（Return を含む）= 確定 / Escape = キャンセル（確定対象が無い状態の Enter は何もしない。 解釈は Core の `CaptureKeyActions` が単一所有する）
+- **クリック確定**: 左押下でカーソル下の要素を固定し、解放時に確定する（押下を伴わない解放・退化した検出では確定しない。 規則は Core の `CaptureClickSelection` が単一所有する）
 - **プレビューの切り出し**（`CaptureSessionControl.ToggleCrop`）: プレビューの上へ領域選択のオーバーレイを重ね、ドラッグで指定した領域で現在の画像を切り出す（適用先は Core の `ICaptureTarget`）
 - **撮影と切り出しの排他**: 同時に実行できるのはどちらか 1 つ（規則は Core の `CaptureSessionSlot` が単一所有し、本ライブラリの Facade がその唯一の適用者になる）
-- **設定の単一所有と即時反映**: 設定（`AppearanceSettings`）は Facade が単一所有し、撮影と切り出しで同じ値を使う。設定時は部分更新（null メンバーのみ現在値を維持）・検証・同値スキップ・適用ログを Core（`CaptureSettingsMerge.Apply`）が担い、実行中の切り出しセッションへは即時反映する
+- **設定の単一所有と即時反映**: 設定（`AppearanceSettings`）は Facade が単一所有し、撮影と切り出しで同じ値を使う。 設定時は部分更新（null メンバーのみ現在値を維持）・検証・同値スキップ・適用ログを Core（`CaptureSettingsMerge.Apply`）が担い、実行中の切り出しセッションへは即時反映する
 - **ラベル描画**: サイズラベル・操作ラベル・情報ラベルを選択矩形の左上へ表示する
 - **UI 非依存のサービス注入**: キャプチャ・要素検出・ウィンドウ操作は `Platform.Core` の抽象を受け取る（本ライブラリはアプリの型を参照しない）
 
@@ -72,7 +72,7 @@ session.ToggleCrop();
 session.AppearanceSettings = changed;
 ```
 
-`CaptureSettings` は `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します。ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。アプリの `Settings` → `CaptureSettings` の変換は `app.Core` の `CaptureSettingsMapper` が担います）。
+`CaptureSettings` は `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します。 ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。 アプリの `Settings` → `CaptureSettings` の変換は `app.Core` の `CaptureSettingsMapper` が担います）。
 
 ## 5. ドキュメント
 

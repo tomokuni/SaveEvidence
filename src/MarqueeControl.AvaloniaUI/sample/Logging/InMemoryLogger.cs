@@ -22,7 +22,7 @@ public sealed class InMemoryLogger(Action<string> onLog) : ILogger
     /// <param name="logLevel">ログレベル。</param>
     /// <param name="eventId">イベントID。</param>
     /// <param name="state">ログ状態。</param>
-    /// <param name="exception">例外。null の場合はなし。</param>
+    /// <param name="exception">例外。 null の場合はなし。</param>
     /// <param name="formatter">メッセージ整形デリゲート。</param>
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {

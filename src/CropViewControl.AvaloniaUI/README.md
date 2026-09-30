@@ -1,6 +1,6 @@
 # CropView
 
-> プロジェクト名: `CropViewControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `CropViewControl.Core`、MewUI 版は `CropViewControl.MewUI` にあります。
+> プロジェクト名: `CropViewControl.AvaloniaUI`（Avalonia UI 版）。 UI 非依存のロジックは `CropViewControl.Core`、MewUI 版は `CropViewControl.MewUI` にあります。
 
 ## 目次
 
@@ -37,15 +37,15 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 - **画像表示**: 拡大（`ZoomIn` / `ZoomOut`）/ 原寸 / Fit 表示（`ZoomFit`）/ パン（マウスドラッグ・ホイール）
 - **領域選択**: ドラッグ選択・暗転マスク・ルーペ（`FadeMaskDragRectControl` へ委譲）
   - 設定は `SelectionOverlayOptions`（コアの寸法・対話パラメータ）、外観は `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance`（描画にだけ必要な設定）で与える。
-  - オーバーレイの可視性・ヒットテストは `SetSelectionOverlayVisible` で制御（Crop セッションの開始・終了時にホストが切替）。初期状態（画像なし）は非表示・ヒットテスト不可。
+  - オーバーレイの可視性・ヒットテストは `SetSelectionOverlayVisible` で制御（Crop セッションの開始・終了時にホストが切替）。 初期状態（画像なし）は非表示・ヒットテスト不可。
 - **外部提供矩形**: `Rects`（`IReadOnlyList<OverlayRect>`）を View（ビューポート）とルーペの両方へ描画
   - 矩形情報（`OverlayRect`）: 矩形・破線種類・前景色・背景色・線幅
   - 破線種類（`OverlayLineStyle`）: `Solid` / `Dashed` / `Dotted`
 - **座標変換**: `ContentToViewport` / `ViewportToContent`（ドメイン ↔ ビューポート座標）
 - **選択モード**: `SelectionMode`（`FadeMaskDragRectMode`）で切替（既定 `Crop`）
-- **イベント**: `ZoomChanged` / `ViewportChanged`（ズームビューポートから中継）/ `ConfirmRequested` / `CancelRequested`（領域選択オーバーレイから中継）。領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送する
+- **イベント**: `ZoomChanged` / `ViewportChanged`（ズームビューポートから中継）/ `ConfirmRequested` / `CancelRequested`（領域選択オーバーレイから中継）。 領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送する
 
-> **層の責務**: 本コントロールは Facade であり、自身は判断を持ちません。画像表示・領域選択の状態と判断は内包するコントロール（`ZoomViewControl` /`FadeMaskDragRectControl`）とそのコアが単一所有し、本コントロールは子要素の生成・重ね順・入力の転送・コア確定値の描画先への写像を担います。
+> **層の責務**: 本コントロールは Facade であり、自身は判断を持ちません。 画像表示・領域選択の状態と判断は内包するコントロール（`ZoomViewControl` /`FadeMaskDragRectControl`）とそのコアが単一所有し、本コントロールは子要素の生成・重ね順・入力の転送・コア確定値の描画先への写像を担います。
 
 ## 3. システム要件
 

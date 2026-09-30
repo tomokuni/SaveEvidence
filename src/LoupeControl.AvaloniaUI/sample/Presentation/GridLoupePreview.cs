@@ -18,7 +18,7 @@ namespace EsUtil.SaveEvidence.Loupe.Sample.Presentation;
 /// </remarks>
 internal sealed class GridLoupePreview : Control
 {
-    /// <summary>見本のルーペの一辺（DIP）。プレビューの高さも同じ値にする。</summary>
+    /// <summary>見本のルーペの一辺（DIP）。 プレビューの高さも同じ値にする。</summary>
     internal const int DisplaySize = 150;
 
     /// <summary>見本の拡大率。</summary>

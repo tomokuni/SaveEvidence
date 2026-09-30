@@ -52,7 +52,7 @@ public class ColorPickerFlyoutFactoryTests
         var colorView = FindColorView(flyout.Content);
         Assert.NotNull(colorView);
 
-        // 半透明（A=128）。ColorView は HSV(float) 経由で色を保持するため
+        // 半透明（A=128）。 ColorView は HSV(float) 経由で色を保持するため
         // アルファが僅かに量子化される場合がある（128 → 127 など）。
         colorView!.Color = Color.FromAColor(128, Colors.Red);
         Dispatcher.UIThread.RunJobs();

@@ -8,19 +8,19 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect;
 /// - <see cref="Crop"/>: 選択矩形 + 暗転マスク + ルーペを有効化する（プレビュー内の切出し）。<br/>
 /// - <see cref="AreaSelect"/>: 選択矩形 + 暗転マスク + ルーペを有効化する（全画面オーバーレイの領域選択）。<br/>
 /// - <see cref="ScreenSelect"/> / <see cref="WindowSelect"/>: 暗転マスクのみ有効化する<br/>
-///   （選択矩形・ルーペは無効。ハイライト表示のみで、クリック確定フローはホストが担う）。
+///   （選択矩形・ルーペは無効。 ハイライト表示のみで、クリック確定フローはホストが担う）。
 /// </remarks>
 public enum FadeMaskDragRectMode
 {
-    /// <summary>切出し（プレビューコントロール上のオーバーレイ。全面暗転 + 選択矩形 + ルーペ）。</summary>
+    /// <summary>切出し（プレビューコントロール上のオーバーレイ。 全面暗転 + 選択矩形 + ルーペ）。</summary>
     Crop,
 
-    /// <summary>範囲選択（全画面オーバーレイ。全面暗転 + 選択矩形 + ルーペ + ドラッグハンドル）。</summary>
+    /// <summary>範囲選択（全画面オーバーレイ。 全面暗転 + 選択矩形 + ルーペ + ドラッグハンドル）。</summary>
     AreaSelect,
 
-    /// <summary>スクリーン選択（ハイライト + スクリーン番号ラベルのみ。クリック確定フローはホストが担う）。</summary>
+    /// <summary>スクリーン選択（ハイライト + スクリーン番号ラベルのみ。 クリック確定フローはホストが担う）。</summary>
     ScreenSelect,
 
-    /// <summary>ウィンドウ選択（ハイライト + ウィンドウタイトルラベルのみ。クリック確定フローはホストが担う）。</summary>
+    /// <summary>ウィンドウ選択（ハイライト + ウィンドウタイトルラベルのみ。 クリック確定フローはホストが担う）。</summary>
     WindowSelect,
 }

@@ -37,7 +37,7 @@
 | 名前空間 | `app.Views` / `app.ViewModels` / `app.Models` / `app.Services` 等 |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
-| 主な用途 | 画面キャプチャアプリ本体。ズーム・パン表示は `CropViewControl`（`ZoomViewControl` を内包）に委譲 |
+| 主な用途 | 画面キャプチャアプリ本体。 ズーム・パン表示は `CropViewControl`（`ZoomViewControl` を内包）に委譲 |
 
 ## 2. 目的
 
@@ -53,7 +53,7 @@
 
 ## 3. テーマ（外観設定）
 
-設定画面「外観設定」でテーマモードを選択できます。選択は即時反映され、次回起動時に復元されます。
+設定画面「外観設定」でテーマモードを選択できます。 選択は即時反映され、次回起動時に復元されます。
 
 | モード | 挙動 |
 | --- | --- |
@@ -61,7 +61,7 @@
 | `ダーク` | 常にダークテーマ |
 | `システム` | OS のダーク / ライト設定に追従（既定値） |
 
-- **反映方式**: `ThemeMode`（`Settings.ThemeMode`）→ `App.RequestedThemeVariant` へ反映。FluentTheme の DynamicResource により全コントロールの色が自動的に切り替わる
+- **反映方式**: `ThemeMode`（`Settings.ThemeMode`）→ `App.RequestedThemeVariant` へ反映。 FluentTheme の DynamicResource により全コントロールの色が自動的に切り替わる
 - **設定ファイル**: enum は文字列で保存（`"ThemeMode": "Dark"`）
 
 ### 3.1 テーマ対応コンポーネント
@@ -92,7 +92,7 @@
 
 - **保存タイミング**: 表示モード・ソート切替操作のたびに保存（`SaveViewSettings`）
 - **復元タイミング**: ページ初期化 / `Loaded` / ナビゲーションで表示されるたび（`IsVisible` 変更時）
-- **復元時の同期**: 復元した表示モード・ソート順を ToggleButton の選択状態（チェック）へ同期する。同期対象は対応するボタン群のみ（表示モードボタンは Tag=0〜2、ソートボタンは Tag=asc/desc。他グループには触れない）
+- **復元時の同期**: 復元した表示モード・ソート順を ToggleButton の選択状態（チェック）へ同期する。 同期対象は対応するボタン群のみ（表示モードボタンは Tag=0〜2、ソートボタンは Tag=asc/desc。 他グループには触れない）
 
 ### 4.2 一覧表示
 
@@ -103,15 +103,15 @@
 
 ナビパネル「Undo 一覧」から、キャプチャページの Undo / Redo スタックと現在のプレビュー画像をサムネイル一覧表示します。
 
-- **表示順**: 時系列順で「新しい → 古い」の固定。`Redo（新しい）→ 現在 → Undo（古い）` の順に並ぶ
+- **表示順**: 時系列順で「新しい → 古い」の固定。 `Redo（新しい）→ 現在 → Undo（古い）` の順に並ぶ
   - Redo: `_redoStack[0]`（現在に最も近い未来）から順に「Redo 1」「Redo 2」…
   - 現在: 現在のプレビュー画像（ラベル「現在」）
   - Undo: `_stack[^1]`（現在の直前）から順に「Undo 1」「Undo 2」…
 - **現在の画像の強調**: 現在のキャプチャページに表示中の画像は青枠（`BorderBrush #0078D4`・`BorderThickness 3`）で強調表示する
-- **表示モード**: ツールバーの特大 / 大 / 中 ボタンで切替可能。選択状態は `Settings.UndoViewModeIndex`（0=特大, 1=大, 2=中、既定 1=大）に保存・復元される。アイコンサイズはフォルダビューと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する
+- **表示モード**: ツールバーの特大 / 大 / 中 ボタンで切替可能。 選択状態は `Settings.UndoViewModeIndex`（0=特大, 1=大, 2=中、既定 1=大）に保存・復元される。 アイコンサイズはフォルダビューと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する
 - **外部ツール表示**: サムネイルのダブルクリックで一時フォルダへ PNG として保存し、OS の既定アプリ（外部ツール）で開く（Undo / Redo スタックの画像はファイルではなく Bitmap のため）
-- **更新タイミング**: ナビゲーションで Undo 一覧を表示するたびに最新の履歴を読み込む（`UndoPage` が `IsVisible` 変更を監視し、保存済み設定の復元と一覧の再構築を行う。UndoStack / MainViewModel は DI シングルトンから取得）
-- **表示モードの保存・復元**: 表示モード切替操作のたびに保存（`SaveViewModeSettings`）。復元はページ表示時（範囲チェック付き・`ViewModeDisplay.ClampIndex`）
+- **更新タイミング**: ナビゲーションで Undo 一覧を表示するたびに最新の履歴を読み込む（`UndoPage` が `IsVisible` 変更を監視し、保存済み設定の復元と一覧の再構築を行う。 UndoStack / MainViewModel は DI シングルトンから取得）
+- **表示モードの保存・復元**: 表示モード切替操作のたびに保存（`SaveViewModeSettings`）。 復元はページ表示時（範囲チェック付き・`ViewModeDisplay.ClampIndex`）
 
 ### 4.4 ラベル設定（キャプチャ・切出し時の左上ラベル）
 
@@ -123,12 +123,12 @@
 | 2 行目 | 操作ラベル | `SubLineColor` | `SubLineBackgroundColor` | `SubLineFontSize` |
 | 3 行目 | 情報ラベル | `InfoLabelColor` | `InfoLabelBackgroundColor` | `InfoLabelFontSize` |
 
-- **背景色**: 色と不透明度を統合した `#AARRGGBB` 形式（例: 黒 60% = `#99000000`）。カラーピッカー（ColorPickerControl）の Flyout で不透明度（アルファ）も設定できる
+- **背景色**: 色と不透明度を統合した `#AARRGGBB` 形式（例: 黒 60% = `#99000000`）。 カラーピッカー（ColorPickerControl）の Flyout で不透明度（アルファ）も設定できる
 - **キャプチャテキストの色の一本化**: キャプチャテキストの色は 1 行目（サイズラベル）の文字色に一本化する（設定キー `CaptureTextColor` は「ラベル設定」の 1 行目へマップ）
 
 ### 4.5 キーボードショートカット（Ctrl キー）
 
-メニューを開かずに効く Ctrl ショートカットを提供します。`Ctrl` とメニュー項目のアクセラレータ文字（`S` / `C` / `V` / `Z` / `Y` / `R`）の組み合わせ、およびズーム（`Ctrl + / Ctrl -`）です。
+メニューを開かずに効く Ctrl ショートカットを提供します。 `Ctrl` とメニュー項目のアクセラレータ文字（`S` / `C` / `V` / `Z` / `Y` / `R`）の組み合わせ、およびズーム（`Ctrl + / Ctrl -`）です。
 
 | ショートカット | 操作 |
 | --- | --- |
@@ -141,13 +141,13 @@
 | `Ctrl +` | ズームイン（⊖⊕ボタンと同じ 23 段階遷移） |
 | `Ctrl -` | ズームアウト（⊖⊕ボタンと同じ 23 段階遷移） |
 
-- **Capture 系はホットキーに一本化**: `Capture - スクリーン / ウィンドウ / 範囲選択` は Ctrl ショートカット（Ctrl+Q/W/E）を実装しない。グローバルホットキー（WM_HOTKEY）がアプリ内外で動作するため、ショートカットの重複を避ける
+- **Capture 系はホットキーに一本化**: `Capture - スクリーン / ウィンドウ / 範囲選択` は Ctrl ショートカット（Ctrl+Q/W/E）を実装しない。 グローバルホットキー（WM_HOTKEY）がアプリ内外で動作するため、ショートカットの重複を避ける
 
-- **実装**: 全ショートカットは `CapturePage.OnGlobalKeyDown`（`KeyDown` を Tunnel で購読）で一括処理する。テキスト入力中（ファイル名テンプレート等）はテキスト編集ショートカット（Ctrl+C/V/Z/Y）を優先するため無視する
-- **メニュー項目への表記**: 各メニュー項目の `InputGesture` に `KeyGesture` を設定し、メニュー展開時に項目の右側へショートカットキーを表示する。`InputGesture` は表示のみでキー処理は行わない（処理は `OnGlobalKeyDown` またはグローバルホットキーが担当）。ショートカット未実装の項目（Crop - 自動切り出し 等）には表示しない
-- **Capture 系メニューはホットキー設定を表示**: `Capture - スクリーン / ウィンドウ / 範囲選択` の `InputGesture` は**ホットキー設定**（`SelectScreenHotKey` / `WindowSelectHotKey` / `AreaSelectHotKey`、settings.json の値）を表示する。設定画面でホットキーを変更するとメニュー表示も即時更新される。ホットキーが未設定（`Key.None`）の場合は表示しない。キー操作はグローバルホットキー（WM_HOTKEY）が担当する
+- **実装**: 全ショートカットは `CapturePage.OnGlobalKeyDown`（`KeyDown` を Tunnel で購読）で一括処理する。 テキスト入力中（ファイル名テンプレート等）はテキスト編集ショートカット（Ctrl+C/V/Z/Y）を優先するため無視する
+- **メニュー項目への表記**: 各メニュー項目の `InputGesture` に `KeyGesture` を設定し、メニュー展開時に項目の右側へショートカットキーを表示する。 `InputGesture` は表示のみでキー処理は行わない（処理は `OnGlobalKeyDown` またはグローバルホットキーが担当）。 ショートカット未実装の項目（Crop - 自動切り出し 等）には表示しない
+- **Capture 系メニューはホットキー設定を表示**: `Capture - スクリーン / ウィンドウ / 範囲選択` の `InputGesture` は**ホットキー設定**（`SelectScreenHotKey` / `WindowSelectHotKey` / `AreaSelectHotKey`、settings.json の値）を表示する。 設定画面でホットキーを変更するとメニュー表示も即時更新される。 ホットキーが未設定（`Key.None`）の場合は表示しない。 キー操作はグローバルホットキー（WM_HOTKEY）が担当する
 - **Alt アクセラレータは無効**: メニューの Header にアクセラレータ文字（`(_X)`）を含めないため、メニュー展開中の `Alt+S` 等は機能しない（Alt はメニュー展開専用）
-- **ホットキーとの関係**: 設定画面のホットキー（`SelectScreenHotKey` 等・WM_HOTKEY のグローバル登録）とは独立。Capture 系以外の Ctrl ショートカットはホットキーと競合しないキーを使用する
+- **ホットキーとの関係**: 設定画面のホットキー（`SelectScreenHotKey` 等・WM_HOTKEY のグローバル登録）とは独立。 Capture 系以外の Ctrl ショートカットはホットキーと競合しないキーを使用する
 
 ## 5. ファイル名テンプレートのバリデーション
 
@@ -160,11 +160,11 @@
   - 画像の変更（新規キャプチャ・切り出し・貼り付け・Undo / Redo 復元）で `IsSaved` が false に戻り、再び保存可能になる
 - **エラーメッセージ**: `ValidationMessage`（例: 「ファイル名に使用できない文字 ('/') が含まれています。」）
 - **即時反映**: テキスト入力中も含め即時検証・反映され、エラー解消で自動的に通常表示へ戻る
-- **オートインクリメント**: 保存成功後に、テンプレート文字列の**右端の数値**をインクリメントして次のファイル名を自動生成する（`FileNameTemplate.IncrementRightmostNumber`。桁数は維持: `screenshot_001.png` → `screenshot_002.png`）。数値がなければそのまま維持される
+- **オートインクリメント**: 保存成功後に、テンプレート文字列の**右端の数値**をインクリメントして次のファイル名を自動生成する（`FileNameTemplate.IncrementRightmostNumber`。 桁数は維持: `screenshot_001.png` → `screenshot_002.png`）。 数値がなければそのまま維持される
 
 ### 5.1 プレースホルダ
 
-ファイル名テンプレートでは、`{ }` で囲われた文字列がプレースホルダとして扱われ、内部の日時トークンが現在日時へ置換されます。トークンは自由に組み合わせられます。
+ファイル名テンプレートでは、`{ }` で囲われた文字列がプレースホルダとして扱われ、内部の日時トークンが現在日時へ置換されます。 トークンは自由に組み合わせられます。
 
 | トークン | 内容 | 例 |
 | --- | --- | --- |
@@ -179,7 +179,7 @@
 
 - プレースホルダ内でトークンを自由に組み合わせられる（例: `{yyyyMMdd}` → `20260819`、`{HHmm}` → `2352`、`{date}` → `20260819`）
 - 未定義の文字列（例: `{example}`）はトークン置換されず、中括弧が外れてそのまま出力される
-- 日時は保存実行時点の現在日時で置換される（`FileNameTemplate.Generate`。`now` 引数へ日時を渡すと呼び出し側が時刻を固定できる）
+- 日時は保存実行時点の現在日時で置換される（`FileNameTemplate.Generate`。 `now` 引数へ日時を渡すと呼び出し側が時刻を固定できる）
 - ToolTip にはプレースホルダの説明が表示される（`{date}` / `{time}` 等は XAML マークアップ拡張と衝突するためコードビハインドで構築）
 
 ### 5.2 エスケープ
@@ -218,19 +218,19 @@
 保存先フォルダのテキストボックスは、入力値（プレースホルダ解決後）が**存在しない場合に枠線が赤くなる**（`validation-error` クラス）。
 
 - 判定: `MainViewModel.HasInvalidSaveFolder`（解決後パスが空、または `Directory.Exists` が false の場合 true）
-- 表示: テキストボックスの枠線が赤くなる（`TextBox.validation-error /template/ Border#PART_BorderElement` スタイル。フォーカス・ホバー状態でも優先）
+- 表示: テキストボックスの枠線が赤くなる（`TextBox.validation-error /template/ Border#PART_BorderElement` スタイル。 フォーカス・ホバー状態でも優先）
 - 入力中も即時反映される（`SaveFolderPath` の変更通知に連動）
 
 ## 7. 画像プレビュー（ズーム連携）
 
-プレビュー画像のズーム・パン・Fit 表示は `CropViewControl`（`ZoomViewControl` を内包する複合コントロール）に委譲します。CapturePage は `CropView`（`CropViewControl`）の `Source` を設定し、`ZoomChanged` / `ViewportChanged` を購読して操作を指示します。
+プレビュー画像のズーム・パン・Fit 表示は `CropViewControl`（`ZoomViewControl` を内包する複合コントロール）に委譲します。 CapturePage は `CropView`（`CropViewControl`）の `Source` を設定し、`ZoomChanged` / `ViewportChanged` を購読して操作を指示します。
 
 ### 7.1 拡大率表示と座標表示
 
-- **拡大率表示**: `CropView.ZoomChanged` イベントの `e.ZoomPercent` から `MainViewModel.ZoomDisplayText`（例: "120%"）を生成し、ステータスバーがバインディングで表示する。Fit 中も実効倍率の % を表示する（「自動」表記なし）
+- **拡大率表示**: `CropView.ZoomChanged` イベントの `e.ZoomPercent` から `MainViewModel.ZoomDisplayText`（例: "120%"）を生成し、ステータスバーがバインディングで表示する。 Fit 中も実効倍率の % を表示する（「自動」表記なし）
 - **座標表示**: `CapturePage.OnImagePointerMoved` が `CropView.ImageRectViewport()` / `CropView.ViewportToContent()`（`ViewportToContentDomain` ヘルパー経由）でポインタのドメイン座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `-`）
 - **フライアウト選択肢**: 拡大率ボタンのクリックで表示されるフライアウト（0=自動 + 固定倍率 10〜500% の 13 段階）から選択し、`CropView.ZoomPercent`（`MainViewModel.ZoomPercent`）を設定する（`CapturePage.OnZoomFlyoutItemClick`）
-- **切り出し中のズーム・パン**: 切り出し中は選択オーバーレイがプレビューを覆うため、ホイールは `CropViewControl` が内部でビューポートへ転送する（Ctrl+ホイール = カーソル位置を中心にズーム / 通常ホイール = パン / Shift+ホイール = 横パン）。ステータスバーの ⊕⊖ ボタン・スライダ・`Ctrl +` / `Ctrl -` は切り出し中も使用できる（選択矩形はドメイン座標で不変のため維持される）。スクロールバーはオーバーレイの下になり掴めないため、パンはホイールで行う
+- **切り出し中のズーム・パン**: 切り出し中は選択オーバーレイがプレビューを覆うため、ホイールは `CropViewControl` が内部でビューポートへ転送する（Ctrl+ホイール = カーソル位置を中心にズーム / 通常ホイール = パン / Shift+ホイール = 横パン）。 ステータスバーの ⊕⊖ ボタン・スライダ・`Ctrl +` / `Ctrl -` は切り出し中も使用できる（選択矩形はドメイン座標で不変のため維持される）。 スクロールバーはオーバーレイの下になり掴めないため、パンはホイールで行う
 
 詳細仕様（遷移ルール・表示方式・公開 API）は `ZoomViewControl` の `SPEC_ExtFunc.md` を参照してください。
 

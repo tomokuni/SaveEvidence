@@ -77,7 +77,7 @@ public class MarqueeControlTests
         var control = CreateControl(new CursorServiceSpy());
         var options = control.Options;
 
-        // ハンドルの枠線の既定は装飾の枠線と同じ DarkGray（#FFA9A9A9。設定画面の選択枠の色と一致）
+        // ハンドルの枠線の既定は装飾の枠線と同じ DarkGray（#FFA9A9A9。 設定画面の選択枠の色と一致）
         // 外観の既定は枠線と暗転を描く
         Assert.Equal(2.0, control.Appearance.OuterBorderThickness);
         Assert.True(control.Appearance.ShowHandles);

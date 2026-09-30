@@ -68,7 +68,7 @@ public class MainWindowViewModel : ObservableObject
         set => SetProperty(ref _comboBoxMaxWidth, value);
     }
 
-    /// <summary>ComboBox の明示的な幅（NaN は自動。ColorPickerControl へバインド）。</summary>
+    /// <summary>ComboBox の明示的な幅（NaN は自動。 ColorPickerControl へバインド）。</summary>
     public double ComboBoxWidth
     {
         get => _comboBoxWidth;

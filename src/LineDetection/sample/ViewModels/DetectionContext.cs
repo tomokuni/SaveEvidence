@@ -68,14 +68,14 @@ public sealed partial class DetectionContext : ObservableObject
     /// <summary>ルーペ内に破線表示する線分一覧（選択中を優先し、なければホバー中）。</summary>
     public IReadOnlyList<LineItem> LoupeOverlayLines { get; private set; } = [];
 
-    /// <summary>選択順の追跡リスト（先頭が最も古い選択）。上限超過時の解除対象の判定に使用する。</summary>
+    /// <summary>選択順の追跡リスト（先頭が最も古い選択）。 上限超過時の解除対象の判定に使用する。</summary>
     private readonly List<LineItem> _selectionOrder = [];
 
     /// <summary>画像が設定済みかどうか（画像プレースホルダーの表示切替に使用）。</summary>
     public bool HasImage => Image is not null;
 
     /// <summary>選択中の検出方式。</summary>
-    /// <remarks>使用側（ページ ViewModel）が設定する。既定値は null。</remarks>
+    /// <remarks>使用側（ページ ViewModel）が設定する。 既定値は null。</remarks>
     public LineDetectorOption? SelectedDetector { get; set; }
 
     /// <summary>垂直線分のグループ見出しテキスト。</summary>
@@ -84,7 +84,7 @@ public sealed partial class DetectionContext : ObservableObject
     /// <summary>水平線分のグループ見出しテキスト。</summary>
     public string HorizontalCountText => $"水平線分（{HorizontalLines.Count}）";
 
-    /// <summary>選択中の線分の表示テキスト（一覧・改行区切り）。未選択時は「なし」。</summary>
+    /// <summary>選択中の線分の表示テキスト（一覧・改行区切り）。 未選択時は「なし」。</summary>
     public string SelectedLineText { get; private set; } = "選択中: なし";
 
     /// <summary>画像の変更時に表示状態を更新する。</summary>
@@ -98,7 +98,7 @@ public sealed partial class DetectionContext : ObservableObject
     }
 
     /// <summary>クリップボードから取得した画像を表示画像として設定し、選択中の方式で再検出する。</summary>
-    /// <param name="bitmap">クリップボードから取得した画像。null の場合は何もしない。</param>
+    /// <param name="bitmap">クリップボードから取得した画像。 null の場合は何もしない。</param>
     /// <remarks>画像の所有権は本コンテキストへ移る（次回の画像更新時に <see cref="Image"/> を破棄する）。</remarks>
     public void SetPastedImage(Bitmap? bitmap)
     {

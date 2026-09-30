@@ -29,7 +29,7 @@ public static class SkiaFill
 
     /// <summary>複数の矩形を同じ色で塗る（ペイントを 1 つだけ生成する）。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
-    /// <param name="rects">塗る矩形の一覧（コア座標）。空の場合は何もしない。</param>
+    /// <param name="rects">塗る矩形の一覧（コア座標）。 空の場合は何もしない。</param>
     /// <param name="color">塗り色（不透明度はアルファ）。</param>
     /// <remarks>辺（4 本）のような同色の矩形を列挙する場合にまとめて塗る（ペイントの生成を 1 回に抑える）。</remarks>
     public static void Rects(SKCanvas canvas, IReadOnlyList<EsRect> rects, DrawingColor color)
@@ -53,7 +53,7 @@ public static class SkiaFill
     /// <summary>角丸矩形を塗る（半径 0 の場合は四角形）。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
     /// <param name="rect">塗る矩形（コア座標）。</param>
-    /// <param name="cornerRadius">角の半径（物理ピクセル）。0 の場合は四角形として塗る。</param>
+    /// <param name="cornerRadius">角の半径（物理ピクセル）。 0 の場合は四角形として塗る。</param>
     /// <param name="color">塗り色（不透明度はアルファ）。</param>
     /// <remarks>角丸なし（0）は「描かない」ではなく「四角形として描く」指定である（呼び出し側の分岐を不要にする）。</remarks>
     public static void RoundRect(SKCanvas canvas, EsRect rect, double cornerRadius, DrawingColor color)

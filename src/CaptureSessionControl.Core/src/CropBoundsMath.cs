@@ -20,12 +20,12 @@ public static class CropBoundsMath
     /// <summary>選択矩形から切り出し範囲を求める。</summary>
     /// <param name="selection">選択矩形（画像ピクセル座標・半開区間）。</param>
     /// <param name="imageSize">画像のピクセルサイズ。</param>
-    /// <param name="minSelectionSize">選択矩形の最小サイズ（画像ピクセル）。これ未満は空を返す。</param>
-    /// <param name="closedInterval">true の場合は閉区間（終点の 1 ピクセルを含む）。false の場合は半開区間のまま。</param>
-    /// <returns>切り出し範囲。切り出せない場合は <c>default</c>（<see cref="EsRectInt.IsEmpty"/> が true）。</returns>
+    /// <param name="minSelectionSize">選択矩形の最小サイズ（画像ピクセル）。 これ未満は空を返す。</param>
+    /// <param name="closedInterval">true の場合は閉区間（終点の 1 ピクセルを含む）。 false の場合は半開区間のまま。</param>
+    /// <returns>切り出し範囲。 切り出せない場合は <c>default</c>（<see cref="EsRectInt.IsEmpty"/> が true）。</returns>
     /// <remarks>
     /// ドラッグ選択の矩形は半開区間（幅 = 終点 − 始点）だが、アプリの仕様は「始点・終点のピクセルを<br/>
-    /// 切り出し対象に含める（閉区間）」である。一方、スクリーン選択・ウィンドウ選択のハイライト矩形は<br/>
+    /// 切り出し対象に含める（閉区間）」である。 一方、スクリーン選択・ウィンドウ選択のハイライト矩形は<br/>
     /// 検出結果が全ピクセルを含むため加算しない（<paramref name="closedInterval"/> = false）。<br/>
     /// 最小サイズの判定は画像内へクランプする前の値で行う（画像外へ出た選択を「大きい」と誤判定しない）。
     /// </remarks>
@@ -54,7 +54,7 @@ public static class CropBoundsMath
     /// <summary>選択矩形（半開区間）を画像内の整数矩形へ変換する。</summary>
     /// <param name="selection">選択矩形（画像ピクセル座標・半開区間）。</param>
     /// <param name="imageSize">画像のピクセルサイズ。</param>
-    /// <returns>画像内に収めた矩形。切り出せる範囲が無い場合は <c>default</c>。</returns>
+    /// <returns>画像内に収めた矩形。 切り出せる範囲が無い場合は <c>default</c>。</returns>
     /// <remarks>
     /// 1. 画像が空なら空を返す。<br/>
     /// 2. 左右・上下をそれぞれ四捨五入（0.5 は切り上げ）して整数へ直し、画像の範囲へクランプする。<br/>
@@ -83,7 +83,7 @@ public static class CropBoundsMath
     }
 
     /// <summary>半開区間の矩形を閉区間（始点・終点のピクセルを含む）へ広げる。</summary>
-    /// <param name="rect">切り出し矩形（半開区間。幅 = 終点 − 始点）。</param>
+    /// <param name="rect">切り出し矩形（半開区間。 幅 = 終点 − 始点）。</param>
     /// <returns>終点の 1 ピクセルを加えた矩形（画像の端でのクランプは行わない）。</returns>
     /// <remarks>
     /// 画像の端でのクランプが不要な場合（切り出し範囲が画像を超えないことが保証されている場合）に使う。<br/>
@@ -93,7 +93,7 @@ public static class CropBoundsMath
         => new(rect.X, rect.Y, rect.Width + 1, rect.Height + 1);
 
     /// <summary>半開区間の矩形を閉区間（始点・終点のピクセルを含む）へ広げる（画像の端でクランプする）。</summary>
-    /// <param name="rect">切り出し矩形（半開区間。幅 = 終点 − 始点）。</param>
+    /// <param name="rect">切り出し矩形（半開区間。 幅 = 終点 − 始点）。</param>
     /// <param name="imageSize">画像のピクセルサイズ。</param>
     /// <returns>終点の 1 ピクセルを加えた矩形（画像の外へはみ出さないようクランプする）。</returns>
     /// <remarks>画像の右端・下端では画像サイズを超えないようにクランプする。</remarks>

@@ -1,6 +1,6 @@
 # ColorPickerControl
 
-> プロジェクト名: `ColorPickerControl.AvaloniaUI`（Avalonia UI 版）。MewUI 側は標準の `ColorPicker` を使うため移植していません（`XxxControl.Core` / `XxxControl.MewUI` は作成しません）。
+> プロジェクト名: `ColorPickerControl.AvaloniaUI`（Avalonia UI 版）。 MewUI 側は標準の `ColorPicker` を使うため移植していません（`XxxControl.Core` / `XxxControl.MewUI` は作成しません）。
 
 ## 目次
 
@@ -26,7 +26,7 @@
 
 ## 1. 概要
 
-Avalonia UI 用の色選択コントロールです。色名/16進コード入力の ComboBox とカラーピッカーを統合し、選択色のプレビュー・バリデーションを自己完結します。
+Avalonia UI 用の色選択コントロールです。 色名/16進コード入力の ComboBox とカラーピッカーを統合し、選択色のプレビュー・バリデーションを自己完結します。
 
 ## 2. 機能一覧
 
@@ -104,11 +104,11 @@ panel.Children.Add(colorPicker);
 - **テキスト入力**: 色名または16進コードを直接入力できます。
 - **ドロップダウン選択**: 選択後にテキストの全選択が自動解除されます。
 - **無効な入力**: フォーカス喪失時に最終有効値へ自動復帰します。
-- **カラーピッカー**: 右端の「…」ボタンで Flyout 形式の ColorView を開きます。OK で適用、キャンセルで破棄。
+- **カラーピッカー**: 右端の「…」ボタンで Flyout 形式の ColorView を開きます。 OK で適用、キャンセルで破棄。
 
 ## 7. ColorView テーマ（内包テーマ）
 
-カラーピッカー（`ColorView`）のテーマは**コントロールに内包**されています。ホスト側で `<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />` を指定しなくても、Flyout 内の ColorView が正しく描画されます。
+カラーピッカー（`ColorView`）のテーマは**コントロールに内包**されています。 ホスト側で `<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />` を指定しなくても、Flyout 内の ColorView が正しく描画されます。
 
 - ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます。
 - 未指定の場合のみ、内包テーマがデフォルトとして自動適用されます（重複追加なし）。
@@ -124,7 +124,7 @@ panel.Children.Add(colorPicker);
 
 ## 9. サンプル
 
-`sample/` に動作確認用のサンプルアプリが含まれています。以下の機能をデモします。
+`sample/` に動作確認用のサンプルアプリが含まれています。 以下の機能をデモします。
 
 - 色相順（`ByHue`）と色名順（`ByName`）の切替（並び順切替 ComboBox 連動）
 - `HighlightBorderOnError` による枠線強調の有効/無効

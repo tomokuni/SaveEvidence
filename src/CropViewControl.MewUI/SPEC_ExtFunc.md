@@ -19,12 +19,12 @@ CropViewControl は、**画像の表示（拡大・パン・Fit）**と、**外�
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Source` | `EsBitmap?` | `null` | 表示する画像。設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする |
+| `Source` | `EsBitmap?` | `null` | 表示する画像。 設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
-| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。コアが単一所有する |
-| `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（ドメイン座標 = 元画像ピクセル座標）。null は設定できない |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。 コアが単一所有する |
+| `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（ドメイン座標 = 元画像ピクセル座標）。 null は設定できない |
 | `ZoomView` | `ZoomViewControl` | — | 内包するズームビューポート |
-| `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。**0 より大きい値のみ設定可能**（0 以下は無視） |
+| `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。 **0 より大きい値のみ設定可能**（0 以下は無視） |
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
 | `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（null の吸収はコアが単一所有する） |
 
@@ -35,7 +35,7 @@ CropViewControl は、**画像の表示（拡大・パン・Fit）**と、**外�
 | `ZoomIn()` / `ZoomOut()` | 段階レベルを 1 つ移動する（移動先がなければ何もしない） |
 | `ZoomFit()` | Fit 表示へ戻す |
 | `PanByWheel(EsVector, bool)` | ホイールの回転量（X/Y）と Shift 併用でパンする（換算はズームビューが単一所有） |
-| `ZoomByWheel(bool, EsPoint?)` | Ctrl+ホイールのズームを適用する（位置はズーム中心。null はビューポート中心） |
+| `ZoomByWheel(bool, EsPoint?)` | Ctrl+ホイールのズームを適用する（位置はズーム中心。 null はビューポート中心） |
 | `TranslatePositionFrom(Element, EsPoint)` | 重ねた要素のローカル座標を本コントロールの座標へ変換する |
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
 | `ViewportToContent(EsPoint)` | ビューポート座標 → ドメイン座標（画像表示矩形の原点基準） |
@@ -52,11 +52,11 @@ CropViewControl は、**画像の表示（拡大・パン・Fit）**と、**外�
 
 | 項目 | 仕様 |
 | --- | --- |
-| 座標系 | ドメイン座標（元画像ピクセル）。表示時にビューポート座標へ変換する |
+| 座標系 | ドメイン座標（元画像ピクセル）。 表示時にビューポート座標へ変換する |
 | 実線（`Solid`） | 前景色（`Foreground`）の枠のみを描画する |
 | 破線（`Dashed`） / 点線（`Dotted`） | 背景色（`Background`）の実線の上へ前景色の破線を重ねる（市松風の視認性） |
 | ダッシュ長 | 破線 = 8 / 間隔 4、点線 = 2 / 間隔 2（`CropViewControl.Core` の `OverlayLineDash` が単一所有） |
-| 線の太さ | `Thickness`（DIP）。0 以下は 1 として扱う。枠は矩形の内側へ描画する |
+| 線の太さ | `Thickness`（DIP）。 0 以下は 1 として扱う。 枠は矩形の内側へ描画する |
 | サイズ 0 の矩形 | 何も描画しない |
 | 色 | `System.Drawing.Color`（アルファを含む） |
 
@@ -94,13 +94,13 @@ CropViewControl は、**画像の表示（拡大・パン・Fit）**と、**外�
 
 ## ログ
 
-`Log` プロパティへ `ILogger` を設定すると、内包するズームビューへ伝搬します（ズーム操作の前後のズーム率を Information で出力。Avalonia 版と同一の書式）。
+`Log` プロパティへ `ILogger` を設定すると、内包するズームビューへ伝搬します（ズーム操作の前後のズーム率を Information で出力。 Avalonia 版と同一の書式）。
 詳細は `../ZoomViewControl.MewUI/SPEC_ExtFunc.md` を参照してください。
 
 ## 非対応（今後の対応）
 
 | 項目 | 状況 |
 | --- | --- |
-| 領域選択オーバーレイ | 対象外。ホストが `FadeMaskDragRectControl.MewUI` を重ねて構成する（`app.MewUI` の切り出しはこの構成） |
+| 領域選択オーバーレイ | 対象外。 ホストが `FadeMaskDragRectControl.MewUI` を重ねて構成する（`app.MewUI` の切り出しはこの構成） |
 | 選択状態の設定（`SetSelection` 等） | `FadeMaskDragRectControl.MewUI` が担う（本コントロールは矩形オーバーレイのみ） |
 | ルーペへの矩形描画 | `LoupeControl.MewUI` の描画完了イベント（`Rendered`）でキャンバスへ打ち込める（選択矩形の破線は `FadeMaskDragRectControl.MewUI` が実装済み） |

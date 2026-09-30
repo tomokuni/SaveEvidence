@@ -28,20 +28,20 @@ UI 非依存のコア（選択範囲を拡大表示するルーペの計算）�
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeGeometry` | record struct | 1 フレーム分の描画の幾何（コア⇔UI の契約）。<br/>UI 層は値の組を自分で組み立てず、`Loupe.ResolveGeometry` が返した値を受け取る |
-| `LoupeMagnifiedImage` | record struct | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。<br/>`LoupeGeometry` の導出値 |
+| `LoupeGeometry` | record struct | 1 フレーム分の描画の幾何（コア⇔UI の契約）。</br>UI 層は値の組を自分で組み立てず、`Loupe.ResolveGeometry` が返した値を受け取る |
+| `LoupeMagnifiedImage` | record struct | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。</br>`LoupeGeometry` の導出値 |
 
 ### `EsUtil.Feature.Loupe.Core.Setting`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeOptions` | record | 計算に必要な設定（表示サイズ・拡大率）と既定値・補正。<br/>**色・フォント・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
+| `LoupeOptions` | record | 計算に必要な設定（表示サイズ・拡大率）と既定値・補正。</br>**色・フォント・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
 
 ### `EsUtil.Feature.Loupe.Core.Placement`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeLayout` | readonly record struct | 表示レイアウトの値（表示サイズ（DIP）と表示位置。<br/>配置しない場合は位置が null） |
+| `LoupeLayout` | readonly record struct | 表示レイアウトの値（表示サイズ（DIP）と表示位置。</br>配置しない場合は位置が null） |
 
 ### `Loupe`（ファサード）のメンバー
 

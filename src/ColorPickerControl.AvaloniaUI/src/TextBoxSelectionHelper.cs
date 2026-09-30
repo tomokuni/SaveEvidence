@@ -31,9 +31,9 @@ internal static class TextBoxSelectionHelper
 
     /// <summary>ビジュアルツリーから <see cref="TextBox"/> を再帰検索する。</summary>
     /// <param name="visual">検索対象のビジュアルツリー。</param>
-    /// <returns>最初に見つかった <see cref="TextBox"/>。存在しない場合は null。</returns>
+    /// <returns>最初に見つかった <see cref="TextBox"/>。 存在しない場合は null。</returns>
     /// <remarks>
-    /// 深さ優先探索で <see cref="TextBox"/> を検索する。自身が <see cref="TextBox"/> の場合は自身を返す。
+    /// 深さ優先探索で <see cref="TextBox"/> を検索する。 自身が <see cref="TextBox"/> の場合は自身を返す。
     /// </remarks>
     internal static TextBox? FindTextBox(Visual visual)
     {

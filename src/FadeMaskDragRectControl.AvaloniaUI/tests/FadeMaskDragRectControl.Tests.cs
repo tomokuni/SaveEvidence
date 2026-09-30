@@ -116,7 +116,7 @@ public class FadeMaskDragRectControlTests
     }
 
     // ====================================================================
-    // Options（設定の単一値。内包コントロールへの分配）
+    // Options（設定の単一値。 内包コントロールへの分配）
     // ====================================================================
 
     [AvaloniaFact]
@@ -170,7 +170,7 @@ public class FadeMaskDragRectControlTests
 
         control.Options = options;
 
-        // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
+        // DPI スケーリングは設定（Options）の対象外（環境値。 個別プロパティで設定）
         control.DomainToDipScaling = 2.0;
         control.DisplayScaleScaling = 1.5;
 
@@ -220,7 +220,7 @@ public class FadeMaskDragRectControlTests
         control.MarqueeAppearance = MarqueeAppearance.Default with { CoordLabelFontSize = 14.0, ShowCoordLabel = true };
         control.LoupeAppearance = control.LoupeAppearance with { CoordLabelFontSize = 13.0 };
 
-        // ルーペ描画スケールは設定（Options）の対象外（環境値。個別プロパティで設定）
+        // ルーペ描画スケールは設定（Options）の対象外（環境値。 個別プロパティで設定）
         control.LoupeDipToDeviceScaling = 2.0;
 
         Assert.Equal(150, control.Loupe.Options.RequestedSize);
@@ -488,7 +488,7 @@ public class FadeMaskDragRectControlTests
     /// <summary>破線色のみを変更した場合でもルーペ Bitmap が再生成される（ホスト側オーバーレイはルーペのプロパティではない）。</summary>
     /// <remarks>
     /// 破線色（<c>SelectionRectColorA / B</c>）はルーペの設定（<c>LoupeOptions</c>）に含まれず、<br/>
-    /// ルーペ Bitmap へホストが描画するオーバーレイの色である。したがって破線色のみの変更では<br/>
+    /// ルーペ Bitmap へホストが描画するオーバーレイの色である。 したがって破線色のみの変更では<br/>
     /// ルーペのプロパティ通知が発生せず、明示的な再生成要求が無いと Bitmap が古い色のまま残る。
     /// </remarks>
     [AvaloniaFact]
@@ -629,7 +629,7 @@ public class FadeMaskDragRectControlTests
     /// <param name="condition">成立を待つ条件。</param>
     /// <remarks>
     /// ルーペの描画は Dispatcher へのポスト（描画フェーズ）と非同期生成で行われるため、<br/>
-    /// 待機中は Dispatcher をポンプして描画ジョブと非同期の継続を進める。上限に達しても例外にはしない。
+    /// 待機中は Dispatcher をポンプして描画ジョブと非同期の継続を進める。 上限に達しても例外にはしない。
     /// </remarks>
     private static async Task PumpUntilAsync(Func<bool> condition)
     {
@@ -658,7 +658,7 @@ public class FadeMaskDragRectControlTests
 
     /// <summary>コントロールの座標変換ポートをリフレクションで取得する。</summary>
     /// <param name="control">対象のコントロール。</param>
-    /// <returns>設定されている座標変換ポート。未設定の場合は null。</returns>
+    /// <returns>設定されている座標変換ポート。 未設定の場合は null。</returns>
     /// <remarks>
     /// ポートはコアのファサード（<c>Marquee</c> / <c>Loupe</c>）が単一所有し、コントロールはファサードへ委譲するだけである。<br/>
     /// 選択矩形コントロールもルーペコントロールも提示層（Presenter）を保持し、その内部にコアのファサード（<c>_core</c>）を持つため、<br/>
@@ -933,7 +933,7 @@ public class FadeMaskDragRectControlTests
 
         control.ClearLoupe();
 
-        // Loupe.Clear は非表示（+ Bitmap 解放）を担う（IsVisible のみ公開検証。Bitmap 解放は LoupeControl の責務）
+        // Loupe.Clear は非表示（+ Bitmap 解放）を担う（IsVisible のみ公開検証。 Bitmap 解放は LoupeControl の責務）
         Assert.False(control.Loupe.IsVisible);
         window.Close();
     }

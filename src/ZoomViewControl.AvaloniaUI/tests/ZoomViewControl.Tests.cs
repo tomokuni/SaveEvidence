@@ -218,7 +218,7 @@ public class ZoomViewControlTests
     // ホイール操作の公開 API（オーバーレイからの転送用）
     // ====================================================================
 
-    /// <summary>パン可能な状態（100% 表示。画像 1000x500・ビューポート 400x200）のコントロールを生成する。</summary>
+    /// <summary>パン可能な状態（100% 表示。 画像 1000x500・ビューポート 400x200）のコントロールを生成する。</summary>
     /// <returns>100% 表示にしたコントロール。</returns>
     private static ZoomViewControl CreatePannableView()
     {
@@ -233,7 +233,7 @@ public class ZoomViewControlTests
         var view = CreatePannableView();
         var before = view.ImageRectViewport();
 
-        // 1 ノッチ = 48 DIP。実効倍率 1.0 のため表示位置が 48 上へ移動する
+        // 1 ノッチ = 48 DIP。 実効倍率 1.0 のため表示位置が 48 上へ移動する
         view.PanByWheel(new Vector(0, 1), shift: false);
 
         var after = view.ImageRectViewport();

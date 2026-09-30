@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 public interface ICaptureTarget
 {
     /// <summary>現在の画像を取得する。</summary>
-    /// <value>表示中の画像。未設定の場合は null。</value>
+    /// <value>表示中の画像。 未設定の場合は null。</value>
     /// <remarks>所有権は実装側にあり、セッションは破棄しない。</remarks>
     EsBitmap? CurrentImage { get; }
 

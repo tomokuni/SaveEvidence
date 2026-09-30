@@ -36,10 +36,10 @@ public sealed class ZoomViewSession
     /// <summary>ズームビューの外観（下地・市松模様・スクロールバー）。</summary>
     private ZoomViewAppearance _appearance = ZoomViewAppearance.Default;
 
-    /// <summary>内部ズーム率（%）。0 = Fit、0 より大きい値は固定倍率。</summary>
+    /// <summary>内部ズーム率（%）。 0 = Fit、0 より大きい値は固定倍率。</summary>
     private double _zoomPercent;
 
-    /// <summary>パン位置（コンテンツ座標。ビューポート左上に対応する）。</summary>
+    /// <summary>パン位置（コンテンツ座標。 ビューポート左上に対応する）。</summary>
     private EsVector _offset;
 
     /// <summary>画像が設定されているかどうか。</summary>
@@ -54,13 +54,13 @@ public sealed class ZoomViewSession
     /// <summary>画像がビューポートより小さい軸を中央寄せするかどうか。</summary>
     private bool _centerAlign = true;
 
-    /// <summary>Fit 実効倍率（%）のキャッシュ。null = 未計算。</summary>
+    /// <summary>Fit 実効倍率（%）のキャッシュ。 null = 未計算。</summary>
     private double? _fitZoomCache;
 
-    /// <summary>ズーム可否のキャッシュ。null = 未計算。</summary>
+    /// <summary>ズーム可否のキャッシュ。 null = 未計算。</summary>
     private ZoomAvailability? _availability;
 
-    /// <summary>ズーム中心として使用するポインタ位置（ビューポート座標）。null の場合はビューポート中心。</summary>
+    /// <summary>ズーム中心として使用するポインタ位置（ビューポート座標）。 null の場合はビューポート中心。</summary>
     private EsPoint? _pointerPosition;
 
     /// <summary>ドラッグ開始時に掴んだコンテンツ座標（grab 原点）。</summary>
@@ -79,7 +79,7 @@ public sealed class ZoomViewSession
     private double _scrollBarDragStartThumb;
 
     /// <summary>ズームビューの状態管理クラスを初期化する。</summary>
-    /// <param name="config">ズーム遷移の設定。null の場合は <see cref="ZoomConfig.Default"/>。</param>
+    /// <param name="config">ズーム遷移の設定。 null の場合は <see cref="ZoomConfig.Default"/>。</param>
     public ZoomViewSession(ZoomConfig? config = null) => _config = config ?? ZoomConfig.Default;
 
     /// <summary>ズーム状態（実効ズーム率・Fit 状態・可否）が確定したときに送る通知。</summary>
@@ -87,7 +87,7 @@ public sealed class ZoomViewSession
     public event EventHandler<ZoomNotice>? Notified;
 
     /// <summary>ロガーを取得または設定する。</summary>
-    /// <value>ロガー。null を設定した場合は出力なしとして扱う。</value>
+    /// <value>ロガー。 null を設定した場合は出力なしとして扱う。</value>
     /// <remarks>null の吸収は <see cref="LoggerFallback.OrNullLogger"/> が単一所有する（呼び出し側・UI 層で null 判定しない）。</remarks>
     public ILogger Log
     {
@@ -108,11 +108,11 @@ public sealed class ZoomViewSession
     public bool HasSource => _hasSource;
 
     /// <summary>元画像のサイズ（コンテンツ座標）を取得する。</summary>
-    /// <value>元画像のサイズ。未設定時は 0。</value>
+    /// <value>元画像のサイズ。 未設定時は 0。</value>
     public EsSize ContentSize => _contentSize;
 
     /// <summary>ビューポートのサイズ（DIP）を取得する。</summary>
-    /// <value>ビューポートのサイズ。未レイアウト時は 0。</value>
+    /// <value>ビューポートのサイズ。 未レイアウト時は 0。</value>
     public EsSize ViewportSize => _viewportSize;
 
     /// <summary>画像がビューポートより小さい軸を中央寄せするかどうかを取得する。</summary>
@@ -120,7 +120,7 @@ public sealed class ZoomViewSession
     public bool CenterAlign => _centerAlign;
 
     /// <summary>内部ズーム率（%）を取得する。</summary>
-    /// <value>0 = Fit、0 より大きい値は固定倍率。Fit 判定には <see cref="IsFit"/> を使用する。</value>
+    /// <value>0 = Fit、0 より大きい値は固定倍率。 Fit 判定には <see cref="IsFit"/> を使用する。</value>
     /// <remarks>遷移（<see cref="ZoomTransition"/>）は本値を期待する（実効ズーム率は Fit 中も 0 にならないため）。</remarks>
     public double InternalZoomPercent => _zoomPercent;
 
@@ -129,11 +129,11 @@ public sealed class ZoomViewSession
     public bool IsFit => _zoomPercent <= 0;
 
     /// <summary>内部ズーム率を倍率へ換算した値を取得する（Fit 中は 0）。</summary>
-    /// <value>倍率（1.0 = 100%）。Fit 中は 0（実効スケールには <see cref="EffectiveScale"/> を使用する）。</value>
+    /// <value>倍率（1.0 = 100%）。 Fit 中は 0（実効スケールには <see cref="EffectiveScale"/> を使用する）。</value>
     public double Scale => ZoomMath.ScaleFromPercent(_zoomPercent);
 
     /// <summary>Fit 表示時の実効倍率（%）をクランプなしで取得する。</summary>
-    /// <value>実表示倍率（%）。画像未設定・ビューポート未確定時は <see cref="ZoomMath.FallbackFitZoomPercent"/>。</value>
+    /// <value>実表示倍率（%）。 画像未設定・ビューポート未確定時は <see cref="ZoomMath.FallbackFitZoomPercent"/>。</value>
     /// <remarks>
     /// 現在の表示状態に依存しない（固定倍率表示中でも常に一定の Fit 実効倍率を返す）。<br/>
     /// ホットパス（ズーム可否・実効倍率の参照）で毎回計算しないようキャッシュし、<br/>
@@ -157,12 +157,12 @@ public sealed class ZoomViewSession
     }
 
     /// <summary>現在の表示に使用する実効スケールを取得する。</summary>
-    /// <value>倍率（1.0 = 100%）。固定倍率中はズーム率 / 100、Fit 中は Fit スケール、画像なしは 1。</value>
+    /// <value>倍率（1.0 = 100%）。 固定倍率中はズーム率 / 100、Fit 中は Fit スケール、画像なしは 1。</value>
     /// <remarks>ゼロ除算を避けるため、座標変換・パン量の計算には必ず本値を使用する（Fit 中は <see cref="Scale"/> が 0 のため）。</remarks>
     public double EffectiveScale => ZoomMath.ComputeEffectiveScale(_zoomPercent, _contentSize, _viewportSize);
 
     /// <summary>現在の実効ズーム率（%）を取得する。</summary>
-    /// <value>Fit 中はクランプした Fit 実効倍率、固定倍率中はズーム率。0 にはならない。</value>
+    /// <value>Fit 中はクランプした Fit 実効倍率、固定倍率中はズーム率。 0 にはならない。</value>
     public double ZoomPercent => ComputeEffectiveZoomPercent(_zoomPercent);
 
     /// <summary>現在のパン位置（コンテンツ座標）を取得する。</summary>
@@ -170,11 +170,11 @@ public sealed class ZoomViewSession
     public EsVector Offset => _offset;
 
     /// <summary>ズームイン可能かどうかを取得する。</summary>
-    /// <value>ズームイン可能な場合は true。画像未設定時は false。</value>
+    /// <value>ズームイン可能な場合は true。 画像未設定時は false。</value>
     public bool CanZoomIn => GetAvailability().CanZoomIn;
 
     /// <summary>ズームアウト可能かどうかを取得する。</summary>
-    /// <value>ズームアウト可能な場合は true。画像未設定時は false。</value>
+    /// <value>ズームアウト可能な場合は true。 画像未設定時は false。</value>
     /// <remarks>参照のたびに可否を計算しないよう、状態変化時にキャッシュを無効化して遅延計算する。</remarks>
     public bool CanZoomOut => GetAvailability().CanZoomOut;
 
@@ -183,18 +183,18 @@ public sealed class ZoomViewSession
     public ZoomState CurrentState => new(ZoomPercent, IsFit, CanZoomIn, CanZoomOut);
 
     /// <summary>画像の表示サイズ（ビューポート座標・DIP）を取得する。</summary>
-    /// <value>元画像サイズに実効スケールを掛けたサイズ。画像未設定時は 0。</value>
+    /// <value>元画像サイズに実効スケールを掛けたサイズ。 画像未設定時は 0。</value>
     public EsSize DisplaySize
         => new(_contentSize.Width * EffectiveScale, _contentSize.Height * EffectiveScale);
 
     /// <summary>画像表示矩形の原点（ビューポート座標）を取得する。</summary>
-    /// <value>画像の表示矩形の左上座標。Fit 中央寄せ・パンの補正を含む。</value>
+    /// <value>画像の表示矩形の左上座標。 Fit 中央寄せ・パンの補正を含む。</value>
     /// <remarks>画像内座標への変換（<c>ViewportToContentImage</c>）の基準点を単一所有する。</remarks>
     public EsPoint ImageOrigin
         => ZoomMath.ComputeImageOrigin(DisplaySize, _viewportSize, _zoomPercent, _offset, Scale, _centerAlign);
 
     /// <summary>画像の表示矩形（ビューポート座標・DIP）を取得する。</summary>
-    /// <value>画像の表示矩形。画像未設定・ビューポート未確定時は空。</value>
+    /// <value>画像の表示矩形。 画像未設定・ビューポート未確定時は空。</value>
     /// <remarks>オーバーレイ（切り出しの暗転マスク・選択枠・ルーペ等）が本矩形を参照して追従する。</remarks>
     public EsRect ImageRect
     {
@@ -242,7 +242,7 @@ public sealed class ZoomViewSession
     /// <returns>UI が適用する効果（再描画）。</returns>
     /// <remarks>
     /// Fit 実効倍率はビューポートに依存するため、常にキャッシュを無効化する<br/>
-    /// （Fit 中でなくてもキャッシュを破棄する。固定倍率中にリサイズしても古い Fit 値を使わない）。
+    /// （Fit 中でなくてもキャッシュを破棄する。 固定倍率中にリサイズしても古い Fit 値を使わない）。
     /// </remarks>
     public ZoomFeedback SetViewport(EsSize viewportSize)
     {
@@ -311,8 +311,8 @@ public sealed class ZoomViewSession
     }
 
     /// <summary>ズーム率を設定する（ズーム中心を維持する）。</summary>
-    /// <param name="zoomPercent">新しいズーム率（%）。0 以下は Fit。</param>
-    /// <param name="center">ズーム中心（ビューポート座標）。null の場合はビューポート中心。</param>
+    /// <param name="zoomPercent">新しいズーム率（%）。 0 以下は Fit。</param>
+    /// <param name="center">ズーム中心（ビューポート座標）。 null の場合はビューポート中心。</param>
     /// <returns>UI が適用する効果（再描画）。</returns>
     /// <remarks>
     /// ズーム中心のコンテンツ座標を不変に保つようオフセットを再計算する（<see cref="ZoomMath.ComputeOffsetAfterScaleChange"/>）。<br/>
@@ -326,7 +326,7 @@ public sealed class ZoomViewSession
 
         if (zoomPercent <= 0)
         {
-            // Fit: オフセットをリセットする（Fit スケールで描画する。ズーム中心は不要）
+            // Fit: オフセットをリセットする（Fit スケールで描画する。 ズーム中心は不要）
             _offset = default;
         }
         else if (oldScale > 0 && _hasSource)
@@ -365,7 +365,7 @@ public sealed class ZoomViewSession
     /// <summary>パン位置を設定する（コンテンツ座標）。</summary>
     /// <param name="offset">パン位置（コンテンツ座標）。</param>
     /// <returns>UI が適用する効果（変化した場合のみ再描画）。</returns>
-    /// <remarks>スクロール範囲へクランプされる。クランプ結果が現在値と同じ場合は何もしない（不要な再描画・通知を避ける）。</remarks>
+    /// <remarks>スクロール範囲へクランプされる。 クランプ結果が現在値と同じ場合は何もしない（不要な再描画・通知を避ける）。</remarks>
     public ZoomFeedback SetOffset(EsVector offset)
     {
         var clamped = ClampOffsetForCurrentState(offset);
@@ -386,7 +386,7 @@ public sealed class ZoomViewSession
         => SetOffset(new EsVector(_offset.X + delta.X, _offset.Y + delta.Y));
 
     /// <summary>ホイールの回転量でパンする（回転量から移動量への換算を単一所有する）。</summary>
-    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。1 ノッチ = 1.0）。</param>
+    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。 1 ノッチ = 1.0）。</param>
     /// <param name="shift">Shift 併用かどうか（縦回転を横パンとして扱う）。</param>
     /// <returns>UI が適用する効果（変化した場合のみ再描画）。</returns>
     /// <remarks>
@@ -448,13 +448,13 @@ public sealed class ZoomViewSession
 
     /// <summary>ズームインする（⊖⊕ ボタン）。</summary>
     /// <returns>UI が適用する効果（移動先がある場合のみ再描画）。</returns>
-    /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。ログも出力しない。</remarks>
+    /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。 ログも出力しない。</remarks>
     public ZoomFeedback ZoomIn()
         => ApplyZoomStep((current, fitZoom) => ZoomTransition.NextLevel(current, fitZoom, _config), Log.LogZoomIn);
 
     /// <summary>ズームアウトする（⊖⊕ ボタン）。</summary>
     /// <returns>UI が適用する効果（移動先がある場合のみ再描画）。</returns>
-    /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。ログも出力しない。</remarks>
+    /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。 ログも出力しない。</remarks>
     public ZoomFeedback ZoomOut()
         => ApplyZoomStep((current, fitZoom) => ZoomTransition.PrevLevel(current, fitZoom, _config), Log.LogZoomOut);
 
@@ -465,7 +465,7 @@ public sealed class ZoomViewSession
 
     /// <summary>Ctrl+ホイールのズームを適用する。</summary>
     /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
-    /// <param name="pointerPosition">ズーム中心とする位置（ビューポート座標）。null の場合はビューポート中心。</param>
+    /// <param name="pointerPosition">ズーム中心とする位置（ビューポート座標）。 null の場合はビューポート中心。</param>
     /// <returns>UI が適用する効果（移動先がある場合のみ再描画）。</returns>
     /// <remarks>
     /// 本コントロール上でホイールが発生した場合と、ホストが他のコントロールで受けたホイールを転送する場合の双方が使用する。<br/>
@@ -487,7 +487,7 @@ public sealed class ZoomViewSession
     }
 
     /// <summary>現在のスクロールバーの配置を計算する。</summary>
-    /// <returns>水平・垂直のスクロールバー。スクロール不要な軸・非表示の場合は null。</returns>
+    /// <returns>水平・垂直のスクロールバー。 スクロール不要な軸・非表示の場合は null。</returns>
     /// <remarks>描画とヒット判定が同じ配置を参照するよう、UI 層は本メソッドの結果のみを使う。</remarks>
     public (ZoomScrollBar? Horizontal, ZoomScrollBar? Vertical) CurrentScrollBars()
         => _appearance.ShowScrollBars
@@ -498,7 +498,7 @@ public sealed class ZoomViewSession
 
     /// <summary>指定軸のスクロールバー同期値（最大オフセット・表示範囲・可否）を計算する。</summary>
     /// <param name="vertical">垂直軸の場合は true（水平軸は false）。</param>
-    /// <returns>スクロールバー同期値。画像未設定・スケール未確定時はスクロール不可。</returns>
+    /// <returns>スクロールバー同期値。 画像未設定・スケール未確定時はスクロール不可。</returns>
     /// <remarks>
     /// 標準のスクロールバー部品を持つ UI が <c>Maximum</c> / <c>ViewportSize</c> / <c>IsVisible</c> へ写すための値である。<br/>
     /// 算出式（<c>ScrollMath</c>）を UI 層へ漏らさないための入口として本メソッドが単一所有する。
@@ -671,14 +671,14 @@ public sealed class ZoomViewSession
     }
 
     /// <summary>実効ズーム率（%）を導出する（Fit 中はクランプした実効倍率・固定倍率中は内部ズーム率）。</summary>
-    /// <param name="internalZoom">内部ズーム率（%）。0 = Fit。</param>
-    /// <returns>実効ズーム率（%）。0 にはならない（Fit 中も実効倍率を返す）。</returns>
+    /// <param name="internalZoom">内部ズーム率（%）。 0 = Fit。</param>
+    /// <returns>実効ズーム率（%）。 0 にはならない（Fit 中も実効倍率を返す）。</returns>
     private double ComputeEffectiveZoomPercent(double internalZoom)
         => internalZoom <= 0 ? _config.ClampZoom(FitZoomPercent) : internalZoom;
 
     /// <summary>現在の状態に応じてオフセットをスクロール範囲内へクランプする。</summary>
     /// <param name="offset">クランプするオフセット（コンテンツ座標）。</param>
-    /// <returns>クランプ後のオフセット。Fit 中または画像未設定時は原点。</returns>
+    /// <returns>クランプ後のオフセット。 Fit 中または画像未設定時は原点。</returns>
     /// <remarks>Fit 中（内部スケールが 0）と画像未設定時はパンできないため原点を返す（ゼロ除算も避ける）。</remarks>
     private EsVector ClampOffsetForCurrentState(EsVector offset)
         => !_hasSource || _zoomPercent <= 0
@@ -691,7 +691,7 @@ public sealed class ZoomViewSession
         => _availability ??= BuildAvailability();
 
     /// <summary>ズーム可否を計算する。</summary>
-    /// <returns>ズーム可否。画像未設定時は何れも不可。</returns>
+    /// <returns>ズーム可否。 画像未設定時は何れも不可。</returns>
     private ZoomAvailability BuildAvailability()
     {
         var (canZoomIn, canZoomOut) = ZoomTransition.BuildAvailability(_zoomPercent, FitZoomPercent, _config, _hasSource);

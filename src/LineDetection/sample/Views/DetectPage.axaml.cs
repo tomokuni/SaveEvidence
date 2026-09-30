@@ -6,7 +6,7 @@ using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
-/// <summary>「線分検出」ページのコードビハインド。検出結果リストのホバー・クリックと、クリップボード貼り付けを担う。</summary>
+/// <summary>「線分検出」ページのコードビハインド。 検出結果リストのホバー・クリックと、クリップボード貼り付けを担う。</summary>
 /// <remarks>
 /// 検出結果リストの行のホバー/クリックは <see cref="DetectionContext.SetLineHover"/> / <see cref="DetectionContext.ToggleSelect"/> へ委譲する。<br/>
 /// Ctrl+V でクリップボードの画像を貼り付け、選択中の検出方式で再検出する。
@@ -92,7 +92,7 @@ public partial class DetectPage : UserControl
     }
 
     /// <summary>Avalonia クリップボードから画像を読み取る。</summary>
-    /// <returns>取得した Bitmap。画像がクリップボードに無い場合は null。</returns>
+    /// <returns>取得した Bitmap。 画像がクリップボードに無い場合は null。</returns>
     /// <remarks>
     /// <see cref="IClipboard.TryGetDataAsync"/> でクリップボードのデータ転送を取得し、<br/>
     /// 各アイテムを <c>TryGetBitmapAsync</c> で画像に変換する。

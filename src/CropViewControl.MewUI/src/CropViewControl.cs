@@ -18,15 +18,15 @@ namespace EsUtil.SaveEvidence.CropView.MewUI;
 /// - <see cref="ZoomViewControl"/>: 画像ビューポート（拡大・パン・Fit）。<br/>
 /// - <see cref="RectOverlayCanvas"/>: ホストから渡された <see cref="Rects"/> をビューポート座標へ変換して描画する透明オーバーレイ。<br/>
 /// <br/>
-/// <b>領域選択オーバーレイ</b>: 本コントロールは含まない。ホストが <c>FadeMaskDragRectControl.MewUI</c> を重ねて構成する<br/>
-/// （ドラッグ選択・暗転マスク・ルーペ。`app.MewUI` の切り出しはこの構成）。
+/// <b>領域選択オーバーレイ</b>: 本コントロールは含まない。 ホストが <c>FadeMaskDragRectControl.MewUI</c> を重ねて構成する<br/>
+/// （ドラッグ選択・暗転マスク・ルーペ。 `app.MewUI` の切り出しはこの構成）。
 /// </remarks>
 public sealed class CropViewControl : Grid
 {
     /// <summary>ズーム・パンビューポート（拡大・パン・Fit）。</summary>
     private readonly ZoomViewControl _zoomView = new();
 
-    /// <summary>外部提供矩形のオーバーレイ（透明。入力は下のズームビューへ通す）。</summary>
+    /// <summary>外部提供矩形のオーバーレイ（透明。 入力は下のズームビューへ通す）。</summary>
     private readonly RectOverlayCanvas _rectOverlay;
 
     /// <summary>外部提供矩形（ドメイン座標）。</summary>
@@ -49,7 +49,7 @@ public sealed class CropViewControl : Grid
     }
 
     /// <summary>表示する画像（ズーム・パンの対象）を取得または設定する。</summary>
-    /// <value>表示する画像。null の場合は何も表示しない。設定すると Fit 表示へリセットする。</value>
+    /// <value>表示する画像。 null の場合は何も表示しない。 設定すると Fit 表示へリセットする。</value>
     public EsBitmap? Source
     {
         get => _zoomView.Source;
@@ -77,7 +77,7 @@ public sealed class CropViewControl : Grid
     }
 
     /// <summary>外部提供矩形（ドメイン座標）を取得または設定する。</summary>
-    /// <value>ビューポートとルーペへ描画する矩形。空の場合は何も描画しない。</value>
+    /// <value>ビューポートとルーペへ描画する矩形。 空の場合は何も描画しない。</value>
     /// <remarks>設定すると矩形オーバーレイを再描画する。</remarks>
     public IReadOnlyList<OverlayRect> Rects
     {
@@ -96,7 +96,7 @@ public sealed class CropViewControl : Grid
     public ZoomViewControl ZoomView => _zoomView;
 
     /// <summary>ズーム操作ログの出力先を取得または設定する（内包するズームビューへ伝搬する）。</summary>
-    /// <value>ロガー。null を設定した場合は出力なしとなる（null の吸収はコアが単一所有する）。</value>
+    /// <value>ロガー。 null を設定した場合は出力なしとなる（null の吸収はコアが単一所有する）。</value>
     public ILogger Log
     {
         get => _zoomView.Log;
@@ -104,7 +104,7 @@ public sealed class CropViewControl : Grid
     }
 
     /// <summary>現在のズーム率（%）を取得または設定する。</summary>
-    /// <value>Fit 中は実効倍率、固定倍率中はズーム率。0 より大きい値のみ設定できる。</value>
+    /// <value>Fit 中は実効倍率、固定倍率中はズーム率。 0 より大きい値のみ設定できる。</value>
     public double ZoomPercent
     {
         get => _zoomView.ZoomPercent;
@@ -134,7 +134,7 @@ public sealed class CropViewControl : Grid
     }
 
     /// <summary>画像の表示矩形（ビューポート座標・DIP）を取得する。</summary>
-    /// <returns>画像の表示矩形。画像未設定時は空の矩形。</returns>
+    /// <returns>画像の表示矩形。 画像未設定時は空の矩形。</returns>
     public EsRect ImageRectViewport() => _zoomView.ImageRectViewport();
 
     /// <summary>ズームインする（段階遷移）。</summary>
@@ -159,14 +159,14 @@ public sealed class CropViewControl : Grid
     public EsPoint ContentToViewport(EsPoint contentPos) => _zoomView.ContentToViewportImage(contentPos);
 
     /// <summary>ホイールの回転量でビューポートをパンする（ホストが他のコントロールで受けたホイールの転送用）。</summary>
-    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。1 ノッチ = 1.0）。</param>
+    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。 1 ノッチ = 1.0）。</param>
     /// <param name="shift">Shift 併用かどうか（縦回転を横パンとして扱う）。</param>
     /// <remarks>回転量から移動量への換算とクランプはズームビューポートが単一所有する。</remarks>
     public void PanByWheel(EsVector delta, bool shift) => _zoomView.PanByWheel(delta, shift);
 
     /// <summary>Ctrl+ホイールのズームを適用する（ホストが他のコントロールで受けたホイールの転送用）。</summary>
     /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
-    /// <param name="viewportPosition">ズーム中心とする位置（ビューポート座標・DIP）。null の場合はビューポート中心。</param>
+    /// <param name="viewportPosition">ズーム中心とする位置（ビューポート座標・DIP）。 null の場合はビューポート中心。</param>
     /// <remarks>ズーム率の遷移と表示の適用はズームビューポートが単一所有する。</remarks>
     public void ZoomByWheel(bool zoomIn, EsPoint? viewportPosition = null)
         => _zoomView.ZoomByWheel(zoomIn, viewportPosition);

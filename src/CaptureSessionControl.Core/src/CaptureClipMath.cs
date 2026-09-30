@@ -16,9 +16,9 @@ public static class CaptureClipMath
 {
     /// <summary>画面物理座標の切り出し矩形を画像ローカル座標へ変換する。</summary>
     /// <param name="captureRect">切り出し矩形（画面物理ピクセル・閉区間）。</param>
-    /// <param name="origin">仮想スクリーン画像の原点（画面物理ピクセル。画像の左上が対応する座標）。</param>
+    /// <param name="origin">仮想スクリーン画像の原点（画面物理ピクセル。 画像の左上が対応する座標）。</param>
     /// <returns>画像ローカル座標の矩形。</returns>
-    /// <remarks>画像ローカル座標 = 画面物理座標 − 原点。原点が負値（プライマリ以外が左・上）でも同じ式で扱える。</remarks>
+    /// <remarks>画像ローカル座標 = 画面物理座標 − 原点。 原点が負値（プライマリ以外が左・上）でも同じ式で扱える。</remarks>
     public static EsRectInt ToLocalRect(EsRectInt captureRect, EsPointInt origin)
         => new(
             captureRect.X - origin.X,
@@ -98,8 +98,8 @@ public static class CaptureClipMath
     /// <summary>選択矩形（画面物理座標）から切り出し矩形（画面物理座標）を求める。</summary>
     /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="screenRect">選択矩形（画面物理座標・整数ピクセル）。</param>
-    /// <param name="imageBounds">切り出し元画像の占有範囲（画面物理座標）。原点が負値でもよい。</param>
-    /// <returns>切り出し矩形（画面物理ピクセル）。切り出せない場合は <see cref="EsRectInt.IsEmpty"/> が true。</returns>
+    /// <param name="imageBounds">切り出し元画像の占有範囲（画面物理座標）。 原点が負値でもよい。</param>
+    /// <returns>切り出し矩形（画面物理ピクセル）。 切り出せない場合は <see cref="EsRectInt.IsEmpty"/> が true。</returns>
     /// <remarks>
     /// 検出矩形（クリック確定・ホバー）は整数で与えられるため、浮動小数版と同じ規則を適用する本オーバーロードを提供する<br/>
     /// （UI が整数矩形を浮動小数矩形へ広げる変換を書かないため）。
@@ -113,8 +113,8 @@ public static class CaptureClipMath
     /// <summary>選択矩形（画面物理座標）から切り出し矩形（画面物理座標）を求める。</summary>
     /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="screenRect">選択矩形（画面物理座標）。</param>
-    /// <param name="imageBounds">切り出し元画像の占有範囲（画面物理座標）。原点が負値でもよい。</param>
-    /// <returns>切り出し矩形（画面物理ピクセル）。切り出せない場合は <see cref="EsRectInt.IsEmpty"/> が true。</returns>
+    /// <param name="imageBounds">切り出し元画像の占有範囲（画面物理座標）。 原点が負値でもよい。</param>
+    /// <returns>切り出し矩形（画面物理ピクセル）。 切り出せない場合は <see cref="EsRectInt.IsEmpty"/> が true。</returns>
     /// <remarks>
     /// 1. 選択矩形を画像ローカル座標へ変換する（原点の減算）。<br/>
     /// 2. ドラッグ選択（<see cref="CaptureType.AreaSelect"/>）は半開区間を閉区間化して終点のピクセルを含める。<br/>
@@ -139,10 +139,10 @@ public static class CaptureClipMath
     }
 
     /// <summary>仮想スクリーン画像から切り出し矩形の領域を取り出す。</summary>
-    /// <param name="virtualScreen">仮想スクリーン画像。null の場合は切り出さない。</param>
+    /// <param name="virtualScreen">仮想スクリーン画像。 null の場合は切り出さない。</param>
     /// <param name="origin">仮想スクリーン画像の原点（画面物理ピクセル）。</param>
     /// <param name="captureRect">切り出し矩形（画面物理ピクセル・閉区間）。</param>
-    /// <returns>切り出した画像。切り出せない場合（未取得・破棄済み）は null。</returns>
+    /// <returns>切り出した画像。 切り出せない場合（未取得・破棄済み）は null。</returns>
     /// <remarks>
     /// 仮想スクリーン未取得（切り取り元が無い）場合は null を返し、呼び出し側が代替の取得経路<br/>
     /// （領域指定の画面キャプチャ）へフォールバックできるようにする。<br/>

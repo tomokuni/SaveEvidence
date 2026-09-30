@@ -16,10 +16,10 @@ namespace EsUtil.SaveEvidence.CaptureSession.MewUI.Sessions;
 
 /// <summary>プレビュー画像の切り出し（Crop）セッション（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版の <c>CropSession</c>（<c>CaptureSessionControl.AvaloniaUI</c>）に相当する。プレビューの上へ領域選択の<br/>
+/// Avalonia 版の <c>CropSession</c>（<c>CaptureSessionControl.AvaloniaUI</c>）に相当する。 プレビューの上へ領域選択の<br/>
 /// オーバーレイを重ね、ドラッグで指定した領域で現在の画像を切り出す。<br/>
 /// <b>1 セッション = 1 インスタンス</b>であり、生成・実行・破棄は Facade（<see cref="CaptureSessionControl"/>）が担う<br/>
-/// （本クラスは公開しない。排他の受付は Facade がコアの <c>CaptureSessionSlot</c> で行う）。<br/>
+/// （本クラスは公開しない。 排他の受付は Facade がコアの <c>CaptureSessionSlot</c> で行う）。<br/>
 /// <br/>
 /// <b>ライフサイクル</b>: 生成時にオーバーレイを表示ツリーへ加えて表示し、確定（Enter / イベント）または<br/>
 /// キャンセル（Escape）で表示ツリーから外れて終了する（終了は <c>onEnded</c> で Facade へ通知する）。<br/>
@@ -28,21 +28,21 @@ namespace EsUtil.SaveEvidence.CaptureSession.MewUI.Sessions;
 /// <br/>
 /// <b>座標変換</b>: プレビューはズーム・パンできるため、ローカル DIP ↔ 画像ピクセルの変換は<br/>
 /// 内包する <see cref="CropViewControl"/>（ズームビューポート）へ委譲する（画像矩形・実効倍率・Fit / 中央寄せの<br/>
-/// 原点補正を単一所有する）。ズーム・パンで表示が変わった時は<br/>
+/// 原点補正を単一所有する）。 ズーム・パンで表示が変わった時は<br/>
 /// <see cref="CropViewControl.ViewportChanged"/> でポートを作り直す。<br/>
 /// <br/>
 /// <b>テーマ</b>: 市松模様の下地色はテーマに依存するため、Facade が <see cref="UpdateThemeColor"/> で更新する<br/>
-/// （テーマ変更の購読はホストが行う。本クラスはテーマの通知元を知らない）。<br/>
+/// （テーマ変更の購読はホストが行う。 本クラスはテーマの通知元を知らない）。<br/>
 /// <br/>
 /// <b>外観</b>: 枠線・ハンドル・十字マーカー・座標ラベルは <see cref="CaptureSettings"/> に従う（Avalonia 版の<br/>
-/// <c>CropSession</c> と同じマッピング）。白枠などの固定値は持たない（設定を変えると反映されなくなるため）。<br/>
+/// <c>CropSession</c> と同じマッピング）。 白枠などの固定値は持たない（設定を変えると反映されなくなるため）。<br/>
 /// <br/>
 /// <b>ズーム・パン</b>: 切り出し中もホイール（Ctrl = ズーム / 通常 = パン）でプレビューを操作できる<br/>
 /// （オーバーレイ上のホイールを <see cref="CropViewControl.PanByWheel"/> / <see cref="CropViewControl.ZoomByWheel"/> へ転送する）。
 /// </remarks>
 internal sealed class CropSession
 {
-    /// <summary>ロガー（ホストが注入する。null の場合は出力しない）。</summary>
+    /// <summary>ロガー（ホストが注入する。 null の場合は出力しない）。</summary>
     private readonly ILogger _log;
 
     /// <summary>対象のプレビューコントロール。</summary>
@@ -174,7 +174,7 @@ internal sealed class CropSession
             return;
         }
 
-        // 完了は 1 回だけ受け付ける（実行中でない場合も false になる。規則はコアが単一所有する）
+        // 完了は 1 回だけ受け付ける（実行中でない場合も false になる。 規則はコアが単一所有する）
         if (!_state.TryComplete())
         {
             return;
@@ -198,7 +198,7 @@ internal sealed class CropSession
     /// <remarks>選択を破棄してオーバーレイを取り外す（画像は差し替えない）。</remarks>
     internal void Cancel()
     {
-        // 完了は 1 回だけ受け付ける（確定とキャンセルの競合で二重終了にしない。規則はコアが単一所有する）
+        // 完了は 1 回だけ受け付ける（確定とキャンセルの競合で二重終了にしない。 規則はコアが単一所有する）
         if (!_state.TryComplete())
         {
             return;
@@ -211,7 +211,7 @@ internal sealed class CropSession
     /// <summary>セッション実行中に最新の設定を再適用する（切り出し中の設定変更の即時反映）。</summary>
     /// <param name="newSettings">最新の設定（null メンバーは現在値を維持）。</param>
     /// <remarks>
-    /// Facade（<c>AppearanceSettings</c>）の変更時に呼ばれる。外観・クリップ設定を再適用する。<br/>
+    /// Facade（<c>AppearanceSettings</c>）の変更時に呼ばれる。 外観・クリップ設定を再適用する。<br/>
     /// セッションの選択状態・ルーペの表示位置は維持される（座標変換ポートは再設定されるが、動的評価のため追従）。
     /// </remarks>
     internal void ApplySettings(CaptureSettings newSettings)

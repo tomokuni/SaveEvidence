@@ -18,7 +18,7 @@ namespace EsUtil.SaveEvidence.LineDetection;
 /// </remarks>
 public sealed class LogicLineDetector : ILineDetector
 {
-    /// <summary>検出パラメータ（不変値・検証付き）。既定は <see cref="LineDetectionOptions.Default"/>。</summary>
+    /// <summary>検出パラメータ（不変値・検証付き）。 既定は <see cref="LineDetectionOptions.Default"/>。</summary>
     public LineDetectionOptions Options { get; }
 
     /// <summary>方式の表示名。</summary>
@@ -148,7 +148,7 @@ public sealed class LogicLineDetector : ILineDetector
     /// <param name="imageHeight">画像の高さ（矩形の判定に使用）。</param>
     /// <param name="gray">グレースケール画像（枠の外側の境界の補正に使用）。</param>
     /// <param name="edges">Canny エッジ画像（エッジ支持率の判定に使用）。</param>
-    /// <returns>構成した矩形の 4 辺（コーナー近傍で交差する線分）の一覧。構成できない場合は空。</returns>
+    /// <returns>構成した矩形の 4 辺（コーナー近傍で交差する線分）の一覧。 構成できない場合は空。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
     /// 1. 同じ垂直座標に並ぶ断片を広いギャップ（<see cref="RectMergeGap"/>）で連結し、<br/>
@@ -161,7 +161,7 @@ public sealed class LogicLineDetector : ILineDetector
     /// 5. 水平線のペア（上・下）と垂直線のペア（左・右）の組み合わせを探索し、<br/>
     ///    以下の<b>矩形の幾何学的一貫性</b>を満たすもののうち、<br/>
     ///    画像の端からの距離合計が最小（= ウィンドウ外枠に近い）ものを選択する<br/>
-    ///    ・対辺の長さが揃っている（上辺 ≈ 下辺・左辺 ≈ 右辺。比率 <see cref="OppositeSpanRatio"/> で許容）<br/>
+    ///    ・対辺の長さが揃っている（上辺 ≈ 下辺・左辺 ≈ 右辺。 比率 <see cref="OppositeSpanRatio"/> で許容）<br/>
     ///    ・4 つのコーナーそれぞれで、水平線または垂直線の<b>少なくとも一方の端点</b>が<br/>
     ///      コーナー座標の近傍（辺の長さ × <see cref="CornerToleranceRatio"/>）にある<br/>
     ///    （ウィンドウ枠はコーナーが丸く欠ける・他ウィンドウが重なるため、<br/>
@@ -403,7 +403,7 @@ public sealed class LogicLineDetector : ILineDetector
     /// <param name="segments">同一向きの線分群。</param>
     /// <param name="isHorizontal">水平線分の場合は true。</param>
     /// <param name="tolerance">統合する平行線の最大距離（ピクセル）。</param>
-    /// <param name="imageCenter">画像中心の垂直方向座標（水平線分は Y・垂直線分は X）。代表座標の決定に使用。</param>
+    /// <param name="imageCenter">画像中心の垂直方向座標（水平線分は Y・垂直線分は X）。 代表座標の決定に使用。</param>
     /// <param name="edges">Canny エッジ画像（エッジ支持率の判定に使用）。</param>
     /// <returns>統合後の線分一覧（垂直座標は代表線分・水平範囲はマージ）。</returns>
     /// <remarks>
@@ -487,16 +487,16 @@ public sealed class LogicLineDetector : ILineDetector
     /// <summary>線分の垂直方向座標（水平線は Y・垂直線は X）を、元画像の輝度プロファイルの枠の外側の境界（排他座標の辺）へ補正する。</summary>
     /// <param name="seg">対象の線分（クラスタ平均の位置）。</param>
     /// <param name="isHorizontal">水平線分の場合は true。</param>
-    /// <param name="imageCenter">画像中心の垂直方向座標（水平線分は Y・垂直線分は X）。背景（ウィンドウ内側）の判定に使用。</param>
+    /// <param name="imageCenter">画像中心の垂直方向座標（水平線分は Y・垂直線分は X）。 背景（ウィンドウ内側）の判定に使用。</param>
     /// <param name="gray">グレースケール画像（輝度プロファイルの算出に使用）。</param>
-    /// <returns>枠の外側の境界（排他座標）へ補正した線分。枠線が見つからない場合は元の線分。</returns>
+    /// <returns>枠の外側の境界（排他座標）へ補正した線分。 枠線が見つからない場合は元の線分。</returns>
     /// <remarks>
     /// Canny のガウシアンブラーはエッジ位置を内側にシフトさせるため、<br/>
     /// 元画像の輝度プロファイルから枠線の位置を直接求める。<br/>
     /// 1. 線分の垂直方向座標の近傍で、各列（垂直線）/各行（水平線）の平均輝度を計算する<br/>
     /// 2. <b>クラスタ中心より画像中心側（= ウィンドウ内側）のピクセル群の中央値</b>を背景の輝度の初期値とし、<br/>
     ///    背景と異なるピクセル（枠線）を除外しながら平均を収束させる（反復平均）<br/>
-    ///    （ウィンドウ内の背景はクラスタ中心の内側にある。上辺なら下側・左辺なら右側）<br/>
+    ///    （ウィンドウ内の背景はクラスタ中心の内側にある。 上辺なら下側・左辺なら右側）<br/>
     /// 3. 枠線コア（クラスタ中心の近傍 ±<see cref="BandRadius"/> で背景と異なるピクセルのうち<br/>
     ///    クラスタ中心に最も近いもの）を求め、そこから<b>ウィンドウ外側方向</b>（右辺・下辺は +、左辺・上辺は −）へ<br/>
     ///    背景と異なるピクセルが続く限り進み、<b>外側の境界（排他座標の辺）</b>を採用する<br/>
@@ -579,8 +579,8 @@ public sealed class LogicLineDetector : ILineDetector
     /// <param name="lumas">垂直方向座標の近傍の各列/行の平均輝度（-1 は無効）。</param>
     /// <param name="baseCoord">輝度プロファイルの先頭に対応する座標（X または Y）。</param>
     /// <param name="centerCoord">検出線分の垂直方向座標（クラスタ中心・X または Y）。</param>
-    /// <param name="imageCenter">画像中心の垂直方向座標（X または Y）。背景（ウィンドウ内側）の判定に使用。</param>
-    /// <returns>枠の外側の境界の位置（座標）。枠線が見つからない場合は null。</returns>
+    /// <param name="imageCenter">画像中心の垂直方向座標（X または Y）。 背景（ウィンドウ内側）の判定に使用。</param>
+    /// <returns>枠の外側の境界の位置（座標）。 枠線が見つからない場合は null。</returns>
     /// <remarks>
     /// 1. <b>クラスタ中心より画像中心側（= ウィンドウ内側）のピクセル群の中央値</b>を背景の輝度の初期値とし、<br/>
     ///    背景と異なるピクセル（枠線）を除外しながら平均を収束させる（反復平均・最大 4 回）<br/>
@@ -735,8 +735,8 @@ public sealed class LogicLineDetector : ILineDetector
     /// <param name="seg">対象の線分。</param>
     /// <param name="edges">Canny エッジ画像。</param>
     /// <param name="isHorizontal">水平線分の場合は true。</param>
-    /// <param name="bandRadius">垂直方向の帯の半径（ピクセル）。既定は <see cref="EdgeBandRadius"/>。</param>
-    /// <returns>線分上のエッジピクセルの割合（0.0〜1.0）。線分の長さが 0 の場合は 0.0。</returns>
+    /// <param name="bandRadius">垂直方向の帯の半径（ピクセル）。 既定は <see cref="EdgeBandRadius"/>。</param>
+    /// <returns>線分上のエッジピクセルの割合（0.0〜1.0）。 線分の長さが 0 の場合は 0.0。</returns>
     /// <remarks>
     /// 線分を 1 ピクセル刻みで辿り、各点の<b>垂直方向の帯（±<paramref name="bandRadius"/>）</b>に<br/>
     /// エッジ（輝度 &gt; 0）がある割合を返す。<br/>

@@ -51,7 +51,7 @@ public class FadeMaskHostLabelRendererTests
 
     /// <summary>テスト用の描画計画を生成する。</summary>
     /// <param name="holeRect">穴あけ矩形（null の場合は穴あけなし）。</param>
-    /// <param name="labelAnchor">ラベルの基準点。null の場合は穴あけ矩形の左上を使う。</param>
+    /// <param name="labelAnchor">ラベルの基準点。 null の場合は穴あけ矩形の左上を使う。</param>
     /// <returns>描画計画（装飾・ハンドル・マーカー・ラベルは本テストの対象外のため空）。</returns>
     /// <remarks>
     /// 基準点は既定で穴あけ矩形の左上にする（積み上げの規則だけを検証するため）。<br/>

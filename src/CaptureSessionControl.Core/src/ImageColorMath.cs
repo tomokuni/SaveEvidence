@@ -17,7 +17,7 @@ public static class ImageColorMath
 
     /// <summary>画像の平均色を求める（標本間引き）。</summary>
     /// <param name="image">対象の画像。</param>
-    /// <returns>平均色（不透明）。画素数が 0 の場合は黒。</returns>
+    /// <returns>平均色（不透明）。 画素数が 0 の場合は黒。</returns>
     /// <remarks>
     /// 長辺を <see cref="SampleDivisor"/> で割った間隔（最低 1 ピクセル）でサンプルする。<br/>
     /// アルファは平均せず不透明として返す（下地色として使うため）。

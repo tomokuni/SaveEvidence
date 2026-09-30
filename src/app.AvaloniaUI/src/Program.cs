@@ -44,7 +44,7 @@ internal static class Program
         appLog.LogAppStartup(version);
 
         // グローバル例外ハンドラを登録（未処理の例外をすべて補足・記録してクラッシュ原因を特定できるようにする）
-        // ① AppDomain レベルの未処理例外（アプリ全体。スタックトレースを含む Critical で記録）
+        // ① AppDomain レベルの未処理例外（アプリ全体。 スタックトレースを含む Critical で記録）
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             var ex = e.ExceptionObject as Exception;
@@ -59,7 +59,7 @@ internal static class Program
             }
         };
 
-        // ② Task の未観測例外（fire-and-forget のタスクで発生する例外。ルーペの非同期生成などが対象）
+        // ② Task の未観測例外（fire-and-forget のタスクで発生する例外。 ルーペの非同期生成などが対象）
         TaskScheduler.UnobservedTaskException += (_, e) =>
         {
             appLog.LogUnhandledException(e.Exception, "TaskScheduler.UnobservedTaskException");
@@ -76,7 +76,7 @@ internal static class Program
         };
 
         // ④ 例外が最初に投げられた時点を記録する（破棄済みピクセルなどの「最初の例外」を捉える）。
-        // 握りつぶされる例外も含むためログ量が膨大になる。次回の不具合調査時のみ、
+        // 握りつぶされる例外も含むためログ量が膨大になる。 次回の不具合調査時のみ、
         // ビルド時に <DefineConstants>FirstChanceLogging</DefineConstants> を付けて有効化する。
 #if FirstChanceLogging
         AppDomain.CurrentDomain.FirstChanceException += (_, e) =>
@@ -115,14 +115,14 @@ internal static class Program
     {
         // Settings（シングルトンとして共有インスタンスを管理）。
         // JSON ソース生成コンテキストを注入する: 反射ベースのシリアル化は Native AOT / トリミングで
-        // 公開プロパティが削除され、保存時に設定が空（{}）になる（実測。AOT 配布で設定が全損した）。
+        // 公開プロパティが削除され、保存時に設定が空（{}）になる（実測。 AOT 配布で設定が全損した）。
         services.AddSingleton<ISettingsService>(_ => new SettingsService(SettingsJsonContext.Default));
 
-        // OS 依存サービスの登録（実装はホストが直接生成する。アクション識別子は CaptureType）
+        // OS 依存サービスの登録（実装はホストが直接生成する。 アクション識別子は CaptureType）
         services.AddSingleton<IGlobalHotKeyService<CaptureType>>(
             _ => new WinGlobalHotKeyService<CaptureType>());
 
-        // 画像の書き込み（UI 依存の実装。MainViewModel（app.Core）へ注入する）
+        // 画像の書き込み（UI 依存の実装。 MainViewModel（app.Core）へ注入する）
         services.AddSingleton<IImageWriter, AvaloniaImageWriter>();
 
         // ViewModels

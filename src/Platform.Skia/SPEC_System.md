@@ -7,7 +7,7 @@
 1. **ビットマップの相互変換**（`EsBitmapSkiaExtensions`）— コアの `EsBitmap` と `SKBitmap` を変換する（非所有ビュー／複製）
 2. **描画の部品**（`SkiaFill` / `SkiaLabel` / `SkiaText`）と**変換**（`SkiaColorInterop` / `SkiaGeometryInterop`）
 
-**描画 API の抽象は持ちません**（UI フレームワークごとの描画モデルの差は抽象では吸収しきれないため）。描画の呼び出し（層の順序）は各 UI が行います。
+**描画 API の抽象は持ちません**（UI フレームワークごとの描画モデルの差は抽象では吸収しきれないため）。 描画の呼び出し（層の順序）は各 UI が行います。
 
 外部機能と公開 API は [SPEC_ExtFunc](SPEC_ExtFunc.md)、利用手順は [README](README.md) を参照してください。
 
@@ -16,7 +16,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | `Platform.Core` の判定基準（外部パッケージなし）を守るため、Skia 依存を本層へ隔離する |
-| 提供形態 | クラスライブラリ（`Platform.Skia.dll`）。SkiaSharp を参照する唯一のプロジェクト |
+| 提供形態 | クラスライブラリ（`Platform.Skia.dll`）。 SkiaSharp を参照する唯一のプロジェクト |
 | 想定利用者 | `Platform.MewUI`、MewUI 系の各コントロール（Marquee / Loupe / FadeMaskDragRect / ZoomView）、`app.MewUI`、テスト |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効・`AllowUnsafeBlocks` 有効＝ピクセルポインタのため） |
@@ -140,7 +140,7 @@ sequenceDiagram
 | ラベル 1 件の描画順（背景 → 文字） | `SkiaLabel` |
 | 色・幾何の相互変換 | `SkiaColorInterop` / `SkiaGeometryInterop` |
 | コアのピクセルバッファとピクセル操作 | `EsBitmap`（`Platform.Core`） |
-| 画像配置の矩形計算 | `ImageDrawMath`（`Platform.Core`。Skia を必要としないため本層に置かない） |
+| 画像配置の矩形計算 | `ImageDrawMath`（`Platform.Core`。 Skia を必要としないため本層に置かない） |
 
 ## 例外処理ポリシー
 
@@ -154,7 +154,7 @@ sequenceDiagram
 
 ## 可視性ポリシー
 
-- 全型が `public` です。MewUI 系の複数プロジェクトが同じ変換と描画の部品を使うためです。
+- 全型が `public` です。 MewUI 系の複数プロジェクトが同じ変換と描画の部品を使うためです。
 - `Platform.Skia.Tests` からのみ `internal` 型へアクセスできます（現在 `internal` 型はありません）。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。
 

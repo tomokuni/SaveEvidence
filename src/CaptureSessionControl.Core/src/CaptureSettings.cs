@@ -4,7 +4,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャの外観および拡大鏡の設定値を保持するレコード型。</summary>
 /// <param name="HideOwnerWindow">キャプチャ時にオーナーウィンドウを非表示にするか。</param>
-/// <param name="MinSelectionSize">選択矩形の最小サイズ。単位はモードにより異なる: AreaSelect では物理ピクセル、Crop では論理座標（元画像ピクセル）。</param>
+/// <param name="MinSelectionSize">選択矩形の最小サイズ。 単位はモードにより異なる: AreaSelect では物理ピクセル、Crop では論理座標（元画像ピクセル）。</param>
 /// <param name="BorderColor">選択枠線の色（不透明度は色のアルファに統合）。</param>
 /// <param name="BorderThickness">選択枠線の太さ（DIP）。</param>
 /// <param name="OverlayColor">暗転オーバーレイの色（不透明度は色のアルファに統合）。</param>
@@ -21,7 +21,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <param name="LoupeCrossColor">ルーペの十字線の色（不透明度は色のアルファに統合）。</param>
 /// <param name="LoupeFrameColor">ルーペの枠の色。</param>
 /// <param name="LoupeFrameThickness">ルーペの枠の太さ（ピクセル）。</param>
-/// <param name="LoupePasteboardColor">ルーペの画像外（ペーストボード）の色（無地。不透明度は色のアルファに統合）。</param>
+/// <param name="LoupePasteboardColor">ルーペの画像外（ペーストボード）の色（無地。 不透明度は色のアルファに統合）。</param>
 /// <param name="LoupeSelectionRectColorA">ルーペ画像上の選択矩形破線の色 A（FadeMaskDragRectOptions.SelectionRectColorA・不透明度はアルファに統合）。</param>
 /// <param name="LoupeSelectionRectColorB">ルーペ画像上の選択矩形破線の色 B（FadeMaskDragRectOptions.SelectionRectColorB・不透明度はアルファに統合）。</param>
 /// <param name="LoupeShowCoordLabel">ルーペの上側に中心座標ラベル（"xy (x, y)"）を表示するか。</param>

@@ -13,7 +13,7 @@ using EsUtil.Platform.Skia;
 
 namespace EsUtil.SaveEvidence.ZoomView.MewUI;
 
-/// <summary>ズーム・パン可能な画像表示コントロール（MewUI 実装。Skia のキャンバスへ直接描画する）。</summary>
+/// <summary>ズーム・パン可能な画像表示コントロール（MewUI 実装。 Skia のキャンバスへ直接描画する）。</summary>
 /// <remarks>
 /// <b>UI 層の責務は 3 つだけ</b>である（判断・値・計算はコアの <see cref="ZoomViewSession"/> が単一所有する）。<br/>
 /// 1. <b>入力ブリッジ</b>: マウス・ホイールのイベントをコア型へ変換してセッションへ渡し、返された効果（再描画・ポインタキャプチャ）を適用する。<br/>
@@ -52,9 +52,9 @@ public sealed class ZoomViewControl : SkiaCanvasView
     public ZoomViewControl() : this(ZoomConfig.Default) { }
 
     /// <summary>ズームビューコントロールを指定の設定で初期化する。</summary>
-    /// <param name="config">ズーム遷移の設定。null の場合は既定値。</param>
+    /// <param name="config">ズーム遷移の設定。 null の場合は既定値。</param>
     /// <remarks>
-    /// 画像は静止画として扱い連続再描画を無効化する。ズーム・パンの変更時のみ再描画する。<br/>
+    /// 画像は静止画として扱い連続再描画を無効化する。 ズーム・パンの変更時のみ再描画する。<br/>
     /// セッションの通知（ズーム状態・ビューポートの変化）を購読し、自 UI の公開イベントへ転送する。
     /// </remarks>
     public ZoomViewControl(ZoomConfig? config)
@@ -67,11 +67,11 @@ public sealed class ZoomViewControl : SkiaCanvasView
     }
 
     /// <summary>ズームの状態・判断・計算を単一所有するセッションを取得する（テスト用アクセサ）。</summary>
-    /// <value>セッション。ホストは本プロパティを使わず、コントロールの公開 API を使用する。</value>
+    /// <value>セッション。 ホストは本プロパティを使わず、コントロールの公開 API を使用する。</value>
     internal ZoomViewSession Session => _session;
 
     /// <summary>ズーム操作ログの出力先を取得または設定する。</summary>
-    /// <value>ロガー。null を設定した場合は出力なしとして扱う。</value>
+    /// <value>ロガー。 null を設定した場合は出力なしとして扱う。</value>
     /// <remarks>null の吸収はコア（<see cref="LoggerFallback.OrNullLogger"/>）が単一所有する（呼び出し側で null 判定しない）。</remarks>
     public ILogger Log
     {
@@ -90,7 +90,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     public event EventHandler? ViewportChanged;
 
     /// <summary>表示する画像（ズーム対象）を取得または設定する。</summary>
-    /// <value>ズーム対象の画像。null の場合は何も表示しない。設定すると Fit 表示へリセットする。</value>
+    /// <value>ズーム対象の画像。 null の場合は何も表示しない。 設定すると Fit 表示へリセットする。</value>
     public EsBitmap? Source
     {
         get => GetValue(SourceProperty);
@@ -106,7 +106,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
-    /// <value>スケーリング係数。DPI 変更時に自動更新される。</value>
+    /// <value>スケーリング係数。 DPI 変更時に自動更新される。</value>
     public double DipToDeviceScaling
     {
         get => GetValue(DipToDeviceScalingProperty);
@@ -114,7 +114,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     }
 
     /// <summary>ズームビューの外観（下地・市松模様・スクロールバー）を取得または設定する。</summary>
-    /// <value>外観の単一値。既定は暗色の下地・市松模様なし・スクロールバー表示。</value>
+    /// <value>外観の単一値。 既定は暗色の下地・市松模様なし・スクロールバー表示。</value>
     /// <remarks>
     /// 外観はコア（<see cref="ZoomViewAppearance"/>）が単一所有する。<br/>
     /// 本プロパティはコアへ渡す窓口であり、本コントロールは外観値を保持しない（同値の再設定では再描画しない）。
@@ -126,7 +126,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     }
 
     /// <summary>現在の実効ズーム率（%）を取得または設定する。</summary>
-    /// <value>Fit 中は実効倍率（ビューポートと元画像サイズから算出）、固定倍率中はズーム率。0 にはならない。</value>
+    /// <value>Fit 中は実効倍率（ビューポートと元画像サイズから算出）、固定倍率中はズーム率。 0 にはならない。</value>
     /// <remarks>
     /// <b>setter</b> は 0 より大きい値のみ受け付ける（Fit へは <see cref="ZoomFit"/> を使用する）。<br/>
     /// 設定値は <see cref="ZoomConfig"/> の範囲へクランプされ、ズーム中心を維持したまま倍率を変更する。
@@ -139,55 +139,55 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>現在 Fit 表示中かどうかを取得する。</summary>
     /// <value>Fit 表示中なら true。</value>
-    /// <remarks><see cref="ZoomPercent"/> は実効値のため 0 にならない。Fit 判定には本プロパティを使用する。</remarks>
+    /// <remarks><see cref="ZoomPercent"/> は実効値のため 0 にならない。 Fit 判定には本プロパティを使用する。</remarks>
     public bool IsFit => _session.IsFit;
 
     /// <summary>ズームイン可能かどうかを取得する。</summary>
-    /// <value>ズームイン可能なら true。画像未設定時は false。</value>
+    /// <value>ズームイン可能なら true。 画像未設定時は false。</value>
     public bool CanZoomIn => _session.CanZoomIn;
 
     /// <summary>ズームアウト可能かどうかを取得する。</summary>
-    /// <value>ズームアウト可能なら true。画像未設定時は false。</value>
+    /// <value>ズームアウト可能なら true。 画像未設定時は false。</value>
     public bool CanZoomOut => _session.CanZoomOut;
 
     /// <summary>画像の表示サイズ（ビューポート座標・DIP）を取得する。</summary>
-    /// <returns>表示サイズ。画像未設定時は default。</returns>
+    /// <returns>表示サイズ。 画像未設定時は default。</returns>
     public EsSize DisplaySize() => _session.DisplaySize;
 
     /// <summary>画像の表示矩形（ビューポート座標・DIP）を取得する。</summary>
-    /// <returns>画像の表示矩形。画像未設定時は default。</returns>
+    /// <returns>画像の表示矩形。 画像未設定時は default。</returns>
     public EsRect ImageRectViewport() => _session.ImageRect;
 
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準）。</summary>
     /// <param name="viewportPos">ビューポート座標（DIP）。</param>
     /// <returns>コンテンツ座標（元画像ピクセル）。</returns>
-    /// <remarks>Fit 中央寄せの原点補正を含む。変換はコアのセッションへ委譲する。</remarks>
+    /// <remarks>Fit 中央寄せの原点補正を含む。 変換はコアのセッションへ委譲する。</remarks>
     public EsPoint ViewportToContentImage(EsPoint viewportPos) => _session.ViewportToContentImage(viewportPos);
 
     /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準）。</summary>
     /// <param name="contentPos">コンテンツ座標（元画像ピクセル）。</param>
     /// <returns>ビューポート座標（DIP）。</returns>
-    /// <remarks>Fit 中央寄せの原点補正を含む。変換はコアのセッションへ委譲する。</remarks>
+    /// <remarks>Fit 中央寄せの原点補正を含む。 変換はコアのセッションへ委譲する。</remarks>
     public EsPoint ContentToViewportImage(EsPoint contentPos) => _session.ContentToViewportImage(contentPos);
 
     /// <summary>ホイールの回転量でパンする（回転量から移動量への換算を単一所有する）。</summary>
-    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。1 ノッチ = 1.0）。</param>
+    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。 1 ノッチ = 1.0）。</param>
     /// <param name="shift">Shift 併用かどうか（縦回転を横パンとして扱う）。</param>
     /// <remarks>ホストが他のコントロール（選択オーバーレイ等）で受けたホイールを転送する場合にも使用する。</remarks>
     public void PanByWheel(EsVector delta, bool shift) => Apply(_session.PanByWheel(delta, shift));
 
     /// <summary>Ctrl+ホイールのズームを適用する（ホイール操作の公開 API）。</summary>
     /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
-    /// <param name="pointerPosition">ズーム中心とする位置（DIP）。null の場合はビューポート中心。</param>
+    /// <param name="pointerPosition">ズーム中心とする位置（DIP）。 null の場合はビューポート中心。</param>
     /// <remarks>ホストが他のコントロールで受けたホイールを転送する場合にも使用する。</remarks>
     public void ZoomByWheel(bool zoomIn, EsPoint? pointerPosition = null)
         => Apply(_session.ZoomByWheel(zoomIn, pointerPosition));
 
-    /// <summary>ズームインする（⊖⊕ ボタン。次のレベルへ移動する）。</summary>
+    /// <summary>ズームインする（⊖⊕ ボタン。 次のレベルへ移動する）。</summary>
     /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。</remarks>
     public void ZoomIn() => Apply(_session.ZoomIn());
 
-    /// <summary>ズームアウトする（⊖⊕ ボタン。前のレベルへ移動する）。</summary>
+    /// <summary>ズームアウトする（⊖⊕ ボタン。 前のレベルへ移動する）。</summary>
     /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。</remarks>
     public void ZoomOut() => Apply(_session.ZoomOut());
 
@@ -223,7 +223,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <summary>左ボタン押下でパンまたはスクロールバーのドラッグを開始する。</summary>
     /// <param name="e">マウスの情報。</param>
     /// <remarks>
-    /// スクロールバーのサム・トラック上ならドラッグを開始する（パンより優先する。判断はコア）。<br/>
+    /// スクロールバーのサム・トラック上ならドラッグを開始する（パンより優先する。 判断はコア）。<br/>
     /// それ以外は grab 方式のパンを開始する（掴んだ位置のコンテンツ座標をセッションが保存する）。
     /// </remarks>
     protected override void OnMouseDown(MouseEventArgs e)
@@ -320,7 +320,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     private void OnCenterAlignChanged() => Apply(_session.SetCenterAlign(CenterAlign));
 
     /// <summary>元画像のサイズ（コンテンツ座標）を取得する。</summary>
-    /// <returns>元画像のサイズ。画像未設定時は default。</returns>
+    /// <returns>元画像のサイズ。 画像未設定時は default。</returns>
     /// <remarks><c>EsBitmap.Size</c> は <c>System.Drawing.Size</c> のため、コア幾何型へ変換する。</remarks>
     private EsSize ContentSize
     {
@@ -337,7 +337,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     }
 
     /// <summary>ビューポートのサイズ（DIP）を取得する。</summary>
-    /// <returns>ビューポートのサイズ。未レイアウト時は default。</returns>
+    /// <returns>ビューポートのサイズ。 未レイアウト時は default。</returns>
     private EsSize CurrentViewport()
     {
         var bounds = Bounds;
@@ -472,7 +472,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>スクロールバー 1 本を描画する。</summary>
     /// <param name="canvas">描画先のキャンバス。</param>
-    /// <param name="bar">描画するスクロールバー。null の場合は何もしない。</param>
+    /// <param name="bar">描画するスクロールバー。 null の場合は何もしない。</param>
     /// <param name="trackPaint">トラックの描画設定。</param>
     /// <param name="thumbPaint">サムの描画設定。</param>
     private static void DrawScrollBar(SKCanvas canvas, ZoomScrollBar? bar, SKPaint trackPaint, SKPaint thumbPaint)

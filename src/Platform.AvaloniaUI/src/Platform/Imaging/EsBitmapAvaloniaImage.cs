@@ -11,7 +11,7 @@ namespace EsUtil.Platform.AvaloniaUI.Imaging;
 /// 本クラスは Avalonia / Skia 依存の境界層（`Platform.AvaloniaUI`）に配置する。<br/>
 /// <br/>
 /// <b>描画（標準経路）</b>: <see cref="Draw"/> は <see cref="EsBitmap"/> を <see cref="Bitmap"/>（<c>ImmutableBitmap</c>）
-/// へ変換して <c>DrawImage</c> で標準描画する。Skia の標準描画（<c>IDrawableBitmapImpl.Draw</c>）を経由するため、
+/// へ変換して <c>DrawImage</c> で標準描画する。 Skia の標準描画（<c>IDrawableBitmapImpl.Draw</c>）を経由するため、
 /// カスタム描画オペレーション（<c>DrawingContext.Custom</c>）と異なり確実に再描画される。<br/>
 /// <br/>
 /// <b>所有権</b>: 内包する <see cref="EsBitmap"/> の所有権は本クラスが保持し、<see cref="Dispose"/> で解放する。<br/>
@@ -21,11 +21,11 @@ namespace EsUtil.Platform.AvaloniaUI.Imaging;
 /// </remarks>
 public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
 {
-    /// <summary>内部の EsBitmap（コア。所有権は本クラスが保持）。</summary>
+    /// <summary>内部の EsBitmap（コア。 所有権は本クラスが保持）。</summary>
     private EsBitmap? _bitmap;
 
     /// <summary><see cref="EsBitmap"/> を内包して初期化する（所有権を譲り受ける）。</summary>
-    /// <param name="bitmap">内包する EsBitmap。所有権が本クラスへ移る。</param>
+    /// <param name="bitmap">内包する EsBitmap。 所有権が本クラスへ移る。</param>
     /// <remarks>破棄は <see cref="Dispose"/> で行う（呼び出し側は破棄しないこと）。</remarks>
     public EsBitmapAvaloniaImage(EsBitmap bitmap)
     {
@@ -50,7 +50,7 @@ public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
     /// <param name="destRect">出力先の描画先矩形。</param>
     /// <remarks>
     /// <b>標準描画</b>: <see cref="EsBitmap"/> を <see cref="Bitmap"/>（内部実装 <c>ImmutableBitmap</c>）へ変換し、
-    /// <c>SplitDrawImage</c> / <c>DrawImage</c> の標準経路で描画する。カスタム描画オペレーション（<c>Custom</c>）ではなく
+    /// <c>SplitDrawImage</c> / <c>DrawImage</c> の標準経路で描画する。 カスタム描画オペレーション（<c>Custom</c>）ではなく
     /// 標準の <c>DrawBitmap</c> 経路を辿るため、マウス移動中の再描画でも確実に表示される。<br/>
     /// <b>注意</b>: <see cref="Bitmap"/> へ変換する際にピクセルを複製する（毎回スナップショット）。<br/>
     /// 破棄済みの場合は何も描画しない（safe no-op）。
@@ -77,8 +77,8 @@ public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
         context.DrawImage(av, sourceRect, destRect);
     }
 
-    /// <summary>内包する EsBitmap（参照アクセサ。破棄は <see cref="Dispose"/> が担う）。</summary>
-    /// <value>内包する EsBitmap。破棄済みの場合は null。</value>
+    /// <summary>内包する EsBitmap（参照アクセサ。 破棄は <see cref="Dispose"/> が担う）。</summary>
+    /// <value>内包する EsBitmap。 破棄済みの場合は null。</value>
     /// <remarks>
     /// ホスト（上位 AP）が内部状態を参照するために使用する。<br/>
     /// <b>破棄禁止</b>: 返された EsBitmap を破棄しないこと（所有権は本クラスが保持）。<br/>

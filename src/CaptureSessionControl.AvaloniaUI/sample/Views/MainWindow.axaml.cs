@@ -10,7 +10,7 @@ using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sample.Views;
 
-/// <summary>メインウィンドウ。CaptureSessionControl の呼び出し・結果反映・Crop プレビューを担う。</summary>
+/// <summary>メインウィンドウ。 CaptureSessionControl の呼び出し・結果反映・Crop プレビューを担う。</summary>
 /// <remarks>
 /// CaptureSessionControl は UI スレッドから呼び出す必要があるため、ボタンイベントから直接呼び出す。<br/>
 /// Crop プレビューはダミー画像（グリッド付き）を生成して表示し、その上で切り出しを確認できる。<br/>
@@ -30,7 +30,7 @@ public sealed partial class MainWindow : Window
     /// <summary>ビューモデル。</summary>
     private readonly MainWindowViewModel _vm = new();
 
-    /// <summary>Crop プレビュー用のダミー画像（EsBitmapAvaloniaImage。Skia 直描画・ゼロコピー表示）。</summary>
+    /// <summary>Crop プレビュー用のダミー画像（EsBitmapAvaloniaImage。 Skia 直描画・ゼロコピー表示）。</summary>
     private EsBitmapAvaloniaImage? _previewBitmap;
 
     /// <summary>MainWindow を初期化する。</summary>
@@ -57,7 +57,7 @@ public sealed partial class MainWindow : Window
         Closed += (_, _) => _capture.Dispose();
     }
 
-    /// <summary>キャプチャ完了イベント（同期実行）。画像変更をここで行い、完了後にオーナーが再表示される。</summary>
+    /// <summary>キャプチャ完了イベント（同期実行）。 画像変更をここで行い、完了後にオーナーが再表示される。</summary>
     /// <param name="result">キャプチャ結果（null = キャンセル・エラー）。</param>
     /// <remarks>
     /// 同期型イベントのため、このハンドラ（画像変更）の完了後に、キャプチャセッションの後続処理（オーナー再表示）が実行される。<br/>
@@ -67,7 +67,7 @@ public sealed partial class MainWindow : Window
     {
         if (result?.Image is { } image)
         {
-            // 画像変更（同期実行。このハンドラの完了後に APP が再表示される）。キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換。
+            // 画像変更（同期実行。 このハンドラの完了後に APP が再表示される）。 キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換。
             _vm.CapturedImage = image.ToAvaloniaBitmap();
             _vm.AddLog("[Event] CaptureCompleted（同期）：キャプチャ画像を更新しました。");
         }

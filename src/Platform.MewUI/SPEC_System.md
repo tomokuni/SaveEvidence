@@ -33,14 +33,14 @@ graph LR
 
 | ファイル | 内容 |
 | --- | --- |
-| `EsKeyMewUIInterop.cs` | `EsKey` ⇔ `Aprillz.MewUI.Key`。別名表（`Back` ⇔ `Backspace`）と未定義値の防御 |
+| `EsKeyMewUIInterop.cs` | `EsKey` ⇔ `Aprillz.MewUI.Key`。 別名表（`Back` ⇔ `Backspace`）と未定義値の防御 |
 | `EsGeometryMewUIInterop.cs` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / 色（`System.Drawing.Color` ⇔ `Aprillz.MewUI.Color`） |
 | `EsWindowStateMewUIInterop.cs` | `EsWindowState` ⇔ `Aprillz.MewUI.Controls.WindowState` |
 | `EsPlatformHandleMewUIInterop.cs` | `Aprillz.MewUI.Window` → `EsPlatformHandle` |
 | `Imaging/SkiaImageView.cs` | `EsBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生） |
 | `Imaging/SkiaImageRenderer.cs`（internal） | `EsBitmap` を Skia キャンバスへ敷く描画層（画素で検証できる） |
 | `Imaging/SkiaSurfaceScale.cs` | 描画面（物理ピクセル）と表示領域（DIP）の比から描画に使う実効倍率を解決する（DPI の通知が届かないコントロールでも画像と同じ倍率で描く） |
-| `Imaging/MewUITextMeasure.cs` | MewUI のテキスト エンジン（DirectWrite の GDI 互換レイアウト）で文字列の実寸を測る。描画エンジンを持たない環境では Skia の実測で代用する |
+| `Imaging/MewUITextMeasure.cs` | MewUI のテキスト エンジン（DirectWrite の GDI 互換レイアウト）で文字列の実寸を測る。 描画エンジンを持たない環境では Skia の実測で代用する |
 
 ## 単一所有（Single Source of Truth）
 
@@ -57,7 +57,7 @@ graph LR
 ### 名前ベースの変換（値ベースではない）
 
 `EsKey` は Avalonia / Win32 のキー体系（223 メンバー）に合わせているのに対し、MewUI `Key` は
-抽象化された小さな集合（91 メンバー・独自採番）です。採番体系が異なるため、**値による対応付けはできません**。
+抽象化された小さな集合（91 メンバー・独自採番）です。 採番体系が異なるため、**値による対応付けはできません**。
 
 ### `Enum.IsDefined` による未定義値の防御
 
@@ -91,7 +91,7 @@ graph LR
 - 回帰検知のための固定値（MewUI のキー数 91、名前が異なるキーは `Backspace` のみ、負サイズのクランプ）を含みます。
   MewUI をアップグレードした際はこれらのテストで破壊的変更を検出します。
 - 画像の描画（`SkiaImageRenderer`）は、コントロールを表示せず `SKBitmap` + `SKCanvas` で画素を直接検証します
-  （塗り分け・余白の透明・未設定／破棄済み／描画先が空の場合の非描画・再描画時のクリア。6 件）。
+  （塗り分け・余白の透明・未設定／破棄済み／描画先が空の場合の非描画・再描画時のクリア。 6 件）。
 - `SkiaImageView` のプロパティは、基底クラスで登録した `MewProperty` を派生クラスのインスタンスでも
   共有できることを含めて検証します（4 件）。
 
@@ -103,4 +103,4 @@ Avalonia 版の `Platform.AvaloniaUI` にある以下は、MewUI 側では**未�
 | --- | --- |
 | `ScreenConverter`（`TopLevel` / `Visual` 依存の画面座標変換） | MewUI 側の対応型（`Window` の座標・DPI 取得 API）を調査してから実装する |
 | `CursorOverrideGuardAttach`（`ICursorOverrideGuard.Attach(TopLevel)` 相当） | MewUI 側のカーソル抑止 API の有無を調査する必要がある |
-| 画像アダプタ（`EsBitmapAvaloniaExtensions` / `EsBitmapAvaloniaImage` 相当） | **不要**。MewUI は `SkiaCanvasView` で `EsBitmap.ToSKBitmap()` を直接描画できる（PoC で実証済み） |
+| 画像アダプタ（`EsBitmapAvaloniaExtensions` / `EsBitmapAvaloniaImage` 相当） | **不要**。 MewUI は `SkiaCanvasView` で `EsBitmap.ToSKBitmap()` を直接描画できる（PoC で実証済み） |

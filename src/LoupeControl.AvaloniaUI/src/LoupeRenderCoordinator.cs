@@ -33,11 +33,11 @@ public sealed class LoupeRenderCoordinator
     private long _renderGeneration;
 
     /// <summary>再描画コーディネーターを初期化する。</summary>
-    /// <param name="isVisible">現在表示中かどうかを取得するコールバック。null 不可。</param>
-    /// <param name="releaseBitmap">ビットマップを解放して表示をクリアするコールバック。null 不可。</param>
-    /// <param name="startRender">指定した世代番号で描画を開始するコールバック。null 不可。</param>
-    /// <param name="logRenderCore">再描画コア実行の記録コールバック（出力の有無はロガー自身が判定する）。null 不可。</param>
-    /// <param name="post">実行キューへ処理を投入するコールバック（UI 層が実行キューと優先度を指定する）。null 不可。</param>
+    /// <param name="isVisible">現在表示中かどうかを取得するコールバック。 null 不可。</param>
+    /// <param name="releaseBitmap">ビットマップを解放して表示をクリアするコールバック。 null 不可。</param>
+    /// <param name="startRender">指定した世代番号で描画を開始するコールバック。 null 不可。</param>
+    /// <param name="logRenderCore">再描画コア実行の記録コールバック（出力の有無はロガー自身が判定する）。 null 不可。</param>
+    /// <param name="post">実行キューへ処理を投入するコールバック（UI 層が実行キューと優先度を指定する）。 null 不可。</param>
     /// <exception cref="ArgumentNullException">いずれかのコールバックが null の場合。</exception>
     public LoupeRenderCoordinator(
         Func<bool> isVisible,
@@ -60,7 +60,7 @@ public sealed class LoupeRenderCoordinator
     }
 
     /// <summary>現在の世代番号。</summary>
-    /// <value>世代番号（描画要求のたびに増える）。古い世代のビットマップ破棄判定に使用する。</value>
+    /// <value>世代番号（描画要求のたびに増える）。 古い世代のビットマップ破棄判定に使用する。</value>
     public long Generation => _renderGeneration;
 
     /// <summary>指定した世代のビットマップを表示へ反映してよいか判定する。</summary>

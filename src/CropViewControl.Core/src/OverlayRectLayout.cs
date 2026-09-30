@@ -16,7 +16,7 @@ public static class OverlayRectLayout
     public const double MinimumThickness = 1.0;
 
     /// <summary>枠線の太さを有効値へ補正する。</summary>
-    /// <param name="thickness">要求された太さ（ピクセル。0 以下も可）。</param>
+    /// <param name="thickness">要求された太さ（ピクセル。 0 以下も可）。</param>
     /// <returns>補正後の太さ（<see cref="MinimumThickness"/> 以上）。</returns>
     public static double EffectiveThickness(double thickness) => Math.Max(MinimumThickness, thickness);
 

@@ -45,14 +45,14 @@ namespace EsUtil.SaveEvidence.CropView.AvaloniaUI;
 /// </remarks>
 public sealed partial class CropViewControl : Panel
 {
-    /// <summary>ズーム・パンビューポート（自己完結型複合コントロール。拡大・パン・Fit）。</summary>
+    /// <summary>ズーム・パンビューポート（自己完結型複合コントロール。 拡大・パン・Fit）。</summary>
     private readonly ZoomViewControl _zoomView = new() { ZIndex = 0 };
 
     /// <summary>領域選択オーバーレイ（ドラッグ選択・暗転マスク・ルーペ）。</summary>
     /// <remarks>画像がない間は <see cref="Source"/> に応じてヒットテストを切るとともに非表示にする（画像なしでの選択矩形作成と全面暗転を防止）。</remarks>
     private readonly FadeMaskDragRectControl _selectionOverlay = new() { ZIndex = 10, IsHitTestVisible = false, IsVisible = false };
 
-    /// <summary>内部ロガー（ズームビューポートへ伝搬）。null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/>。</summary>
+    /// <summary>内部ロガー（ズームビューポートへ伝搬）。 null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/>。</summary>
     /// <remarks><see cref="ZoomViewControl.Log"/> へ委譲する（ズーム操作・座標変換の詳細ログをホストのログ基盤へ転送）。</remarks>
     public ILogger Log
     {
@@ -96,7 +96,7 @@ public sealed partial class CropViewControl : Panel
         // ルーペ描画完了時に、外部提供矩形をルーペ Bitmap へ描画する
         _selectionOverlay.LoupeRendered += OnLoupeRendered;
 
-        // 既定は Crop（プレビュー内の切出し）。ホストが SelectionMode で変更できる
+        // 既定は Crop（プレビュー内の切出し）。 ホストが SelectionMode で変更できる
         _selectionOverlay.Mode = FadeMaskDragRectMode.Crop;
     }
 
@@ -125,7 +125,7 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>領域選択オーバーレイのローカル座標をビューポート（ズームビュー）のローカル座標へ変換する。</summary>
     /// <param name="overlayPosition">オーバーレイのローカル座標（DIP）。</param>
-    /// <returns>ビューポートのローカル座標（DIP）。同一ビジュアルツリーに無い場合は null（ズーム中心はビューポート中心になる）。</returns>
+    /// <returns>ビューポートのローカル座標（DIP）。 同一ビジュアルツリーに無い場合は null（ズーム中心はビューポート中心になる）。</returns>
     /// <remarks>
     /// 両者は通常同一領域を占める（重ね合わせ）が、レイアウトの差に依存しないようビジュアルツリーの変換に委譲する。
     /// </remarks>
@@ -147,7 +147,7 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>領域選択オーバーレイの設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）。<see cref="FadeMaskDragRectControl.Options"/> へ委譲する。</summary>
-    /// <value>設定の単一値。既定は <see cref="FadeMaskDragRectOptions.Default"/>。</value>
+    /// <value>設定の単一値。 既定は <see cref="FadeMaskDragRectOptions.Default"/>。</value>
     public FadeMaskDragRectOptions SelectionOverlayOptions
     {
         get => _selectionOverlay.Options;
@@ -171,7 +171,7 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>領域選択オーバーレイの選択矩形コントロールが使う色。<see cref="FadeMaskDragRectControl.MarqueeAppearance"/> へ委譲する。</summary>
-    /// <value>外観の単一値。既定は <see cref="MarqueeAppearance.Default"/>。</value>
+    /// <value>外観の単一値。 既定は <see cref="MarqueeAppearance.Default"/>。</value>
     /// <remarks>色は描画にだけ必要な設定のため、コアの設定ではない（セッションが設定する）。</remarks>
     public MarqueeAppearance SelectionOverlayMarqueeAppearance
     {
@@ -180,7 +180,7 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>領域選択オーバーレイのルーペが使う色。<see cref="FadeMaskDragRectControl.LoupeAppearance"/> へ委譲する。</summary>
-    /// <value>色の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
+    /// <value>色の単一値。 既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>色は描画にだけ必要な設定のため、コアの設定ではない（セッションが設定する）。</remarks>
     public LoupeAppearance SelectionOverlayLoupeAppearance
     {
@@ -203,7 +203,7 @@ public sealed partial class CropViewControl : Panel
             _zoomView.Source = value;
             UpdateLoupeSource();
             // 画像が null に変わるときは選択状態をクリアする。
-            // （オーバーレイの表示・ヒットテストは SetSelectionOverlayVisible が専任。ここでは触らない）
+            // （オーバーレイの表示・ヒットテストは SetSelectionOverlayVisible が専任。 ここでは触らない）
             if (value is null)
             {
                 ClearSelection();
@@ -242,7 +242,7 @@ public sealed partial class CropViewControl : Panel
     // 公開 API: ズーム
     // ====================================================================
 
-    /// <summary>現在のズーム率（%）。0 = Fit（自動）。変更時は <see cref="ZoomViewControl"/> が表示を適用する。</summary>
+    /// <summary>現在のズーム率（%）。 0 = Fit（自動）。 変更時は <see cref="ZoomViewControl"/> が表示を適用する。</summary>
     /// <remarks>
     /// ズーム率は <see cref="ZoomViewControl"/> が単一所有するため、getter / setter は <see cref="ZoomViewControl.ZoomPercent"/> へ委譲する。<br/>
     /// （表示・通知は <see cref="ZoomViewControl"/> が行う）。<c>double</c> でスライダ等の連続値も設定できる。
@@ -253,10 +253,10 @@ public sealed partial class CropViewControl : Panel
         set => _zoomView.ZoomPercent = value;
     }
 
-    /// <summary>ズームインする（⊖⊕ボタン相当。段階遷移）。</summary>
+    /// <summary>ズームインする（⊖⊕ボタン相当。 段階遷移）。</summary>
     public void ZoomIn() => _zoomView.ZoomIn();
 
-    /// <summary>ズームアウトする（⊖⊕ボタン相当。段階遷移）。</summary>
+    /// <summary>ズームアウトする（⊖⊕ボタン相当。 段階遷移）。</summary>
     public void ZoomOut() => _zoomView.ZoomOut();
 
     /// <summary>Fit 表示（ウィンドウに合わせて画像を表示）に戻す。</summary>
@@ -294,10 +294,10 @@ public sealed partial class CropViewControl : Panel
     public Rect ImageRectViewport() => _zoomView.ImageRectViewport();
 
     /// <summary>ズームビューの外観（下地・市松模様・スクロールバーの色）を取得または設定する（<see cref="ZoomViewControl.Appearance"/> へ委譲）。</summary>
-    /// <value>外観の単一値。既定は <see cref="ZoomViewAppearance.Default"/>。</value>
+    /// <value>外観の単一値。 既定は <see cref="ZoomViewAppearance.Default"/>。</value>
     /// <remarks>
     /// 市松模様は画像の透明部分の背景であり、描く範囲（画像の表示矩形の内側）はコアが単一所有する<br/>
-    /// （画像の外＝ペーストボードは下地色の単色になる）。設定は <c>PreviewChecker*</c> をホストが写像する。
+    /// （画像の外＝ペーストボードは下地色の単色になる）。 設定は <c>PreviewChecker*</c> をホストが写像する。
     /// </remarks>
     public ZoomViewAppearance Appearance
     {
@@ -309,28 +309,28 @@ public sealed partial class CropViewControl : Panel
     // 公開 API: 選択状態（FadeMaskDragRectControl へ委譲）
     // ====================================================================
 
-    /// <summary>領域選択オーバーレイ（テスト用アクセサ。画像なし時のドラッグ無効化の検証用）。</summary>
+    /// <summary>領域選択オーバーレイ（テスト用アクセサ。 画像なし時のドラッグ無効化の検証用）。</summary>
     internal FadeMaskDragRectControl SelectionOverlay => _selectionOverlay;
 
-    /// <summary>矩形オーバーレイの子要素（テスト用アクセサ。コア確定値の写像を検証する）。</summary>
+    /// <summary>矩形オーバーレイの子要素（テスト用アクセサ。 コア確定値の写像を検証する）。</summary>
     /// <value>矩形 1 件につき 1 つの Panel（破線の場合は背景の下層と前景の上層を含む）。</value>
     internal IReadOnlyList<Control> RectOverlayChildren => [.. _rectOverlay.Children];
 
     /// <summary>現在の選択状態（選択矩形の有無）。</summary>
     public bool HasSelection => _selectionOverlay.HasSelection;
 
-    /// <summary>現在の選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</summary>
+    /// <summary>現在の選択矩形（ドメイン座標）。 未選択時は 0x0 の空矩形。</summary>
     public Rect SelectionRect => _selectionOverlay.SelectionRect;
 
     /// <summary>選択状態を外部から設定する（暗転マスクとルーペへ同期）。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。サイズ 0 以下は選択なし。</param>
+    /// <param name="rect">選択矩形（ドメイン座標）。 サイズ 0 以下は選択なし。</param>
     public void SetSelection(Rect rect) => _selectionOverlay.SetSelection(rect);
 
     /// <summary>選択状態をクリアする（全面暗転に戻す）。</summary>
     public void ClearSelection() => _selectionOverlay.ClearSelection();
 
     /// <summary>領域選択オーバーレイの可視性とヒットテストを設定する（Crop セッションの開始・終了時に制御）。</summary>
-    /// <param name="visible">true でオーバーレイを可視化しヒットテストを有効化する。false で非表示かつヒットテストを無効化する。</param>
+    /// <param name="visible">true でオーバーレイを可視化しヒットテストを有効化する。 false で非表示かつヒットテストを無効化する。</param>
     /// <remarks>
     /// オーバーレイはプレビュー表示時（キャプチャ完了・画像読込）は非表示で、Crop セッション中のみ表示する。<br/>
     /// Crop モード（<see cref="SelectionMode"/>）では全面暗転を描画するため、プレビュー表示時に勝手に表示すると<br/>
@@ -347,7 +347,7 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>座標変換ポートを設定する（内包コントロールへ分配）。</summary>
-    /// <param name="port">座標変換ポート。null で等価変換。</param>
+    /// <param name="port">座標変換ポート。 null で等価変換。</param>
     public void SetCoordTransform(ICoordTransform? port) => _selectionOverlay.SetCoordTransform(port);
 
     /// <summary>内包 Marquee へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
@@ -355,7 +355,7 @@ public sealed partial class CropViewControl : Panel
     public void FocusMarquee() => _selectionOverlay.FocusMarquee();
 
     /// <summary>ルーペの拡大元画像を設定する（<see cref="FadeMaskDragRectControl.SetLoupeSource"/> へ委譲）。</summary>
-    /// <param name="source">ルーペの拡大元画像。null でルーペをクリア。</param>
+    /// <param name="source">ルーペの拡大元画像。 null でルーペをクリア。</param>
     public void SetLoupeSource(IImage? source) => _selectionOverlay.SetLoupeSource(source);
 
     /// <summary>ルーペのソースをクリアする（<see cref="FadeMaskDragRectControl.ClearLoupe"/> へ委譲）。</summary>
@@ -467,7 +467,7 @@ public sealed partial class CropViewControl : Panel
     /// <returns>作成した Panel（破線の場合は背景色の下層 + 前景色の上層を重ねた要素）。</returns>
     /// <remarks>
     /// 破線（<see cref="OverlayLineStyle.Dashed"/> / <see cref="OverlayLineStyle.Dotted"/>）の場合は
-    /// 前景色と背景色をダッシュごとに交互に塗る（市松風）。Avalonia の <c>StrokeDashArray</c> は
+    /// 前景色と背景色をダッシュごとに交互に塗る（市松風）。 Avalonia の <c>StrokeDashArray</c> は
     /// 単色しか表現できないため、前景色で破線を描き、背景色を下層の別矩形で表現する。<br/>
     /// 幅・高さ・太さ・ダッシュ長・描画可否はコア（<see cref="OverlayRectFrame"/>）が確定した値を使う（本メソッドは式を持たない）。
     /// </remarks>
@@ -475,7 +475,7 @@ public sealed partial class CropViewControl : Panel
     {
         var bounds = frame.Bounds;
 
-        // 背景色を下層に、前景色（破線）を上層に重ねる（破線の市松風）。実線は前景色のみ。
+        // 背景色を下層に、前景色（破線）を上層に重ねる（破線の市松風）。 実線は前景色のみ。
         var backgroundElement = new Rectangle
         {
             Width = bounds.Width,
@@ -492,7 +492,7 @@ public sealed partial class CropViewControl : Panel
             StrokeDashArray = frame.IsDashed ? new AvaloniaList<double>([frame.DashLength, frame.GapLength]) : null,
         };
 
-        // 2 要素を重ねて返す（背景 → 前景）。Canvas の子として両方を追加するため、親要素としてグルーピングする。
+        // 2 要素を重ねて返す（背景 → 前景）。 Canvas の子として両方を追加するため、親要素としてグルーピングする。
         var group = new Panel
         {
             Width = bounds.Width,

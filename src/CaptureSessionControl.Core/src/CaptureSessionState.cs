@@ -7,8 +7,8 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <br/>
 /// <b>規則</b>:<br/>
 /// 1. 実行中に <see cref="TryBegin"/> を呼ぶと false を返す（既存セッションを継続する）。<br/>
-/// 2. 完了（確定・キャンセル）は 1 回だけ受け付ける。2 回目以降の <see cref="TryComplete"/> は false を返す。<br/>
-/// 3. <see cref="End"/> で実行中フラグを落とす（後片付け）。完了フラグも同時にリセットされるため、<br/>
+/// 2. 完了（確定・キャンセル）は 1 回だけ受け付ける。 2 回目以降の <see cref="TryComplete"/> は false を返す。<br/>
+/// 3. <see cref="End"/> で実行中フラグを落とす（後片付け）。 完了フラグも同時にリセットされるため、<br/>
 ///    同じインスタンスを次のセッションへ再利用できる。<br/>
 /// <br/>
 /// <b>スレッド</b>: 撮影はバックグラウンドの完了通知（仮想スクリーンの取得等）からも触れるため、内部で排他する。
@@ -27,7 +27,7 @@ public sealed class CaptureSessionState
     public bool IsCompleted { get; private set; }
 
     /// <summary>セッションを開始する。</summary>
-    /// <returns>開始できた場合は true。既に実行中の場合は false（再入禁止）。</returns>
+    /// <returns>開始できた場合は true。 既に実行中の場合は false（再入禁止）。</returns>
     /// <remarks>開始すると完了フラグはリセットされる（前回のセッションの状態を引き継がない）。</remarks>
     public bool TryBegin()
     {
@@ -45,7 +45,7 @@ public sealed class CaptureSessionState
     }
 
     /// <summary>セッションを完了する（確定またはキャンセル）。</summary>
-    /// <returns>完了を受け付けた場合は true。既に完了している・開始していない場合は false。</returns>
+    /// <returns>完了を受け付けた場合は true。 既に完了している・開始していない場合は false。</returns>
     /// <remarks>二重完了（確定とキャンセルの競合、非アクティブ化とキー入力の重なり等）を防ぐ。</remarks>
     public bool TryComplete()
     {
@@ -62,7 +62,7 @@ public sealed class CaptureSessionState
     }
 
     /// <summary>実行中フラグを落とす（後片付け）。</summary>
-    /// <remarks>完了していない場合でも呼べる（例外時の後片付けに使う）。次回の <see cref="TryBegin"/> で再開できる。</remarks>
+    /// <remarks>完了していない場合でも呼べる（例外時の後片付けに使う）。 次回の <see cref="TryBegin"/> で再開できる。</remarks>
     public void End()
     {
         lock (_gate)

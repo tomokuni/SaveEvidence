@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.CropView;
 internal static class OverlayRectRasterizer
 {
     /// <summary>矩形の 4 辺（上・下・左・右）を描画する。</summary>
-    /// <param name="bitmap">描画対象の EsBitmap。書き込み先のサイズ（正方形）は <see cref="EsBitmap.Width"/>。</param>
+    /// <param name="bitmap">描画対象の EsBitmap。 書き込み先のサイズ（正方形）は <see cref="EsBitmap.Width"/>。</param>
     /// <param name="rect">描画する矩形（ドメイン座標）とスタイル。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
@@ -63,7 +63,7 @@ internal static class OverlayRectRasterizer
         double sign = length >= 0 ? 1 : -1;
         double distance = Math.Abs(length);
 
-        // 線の太さ（1 ピクセル以上。偶数幅は中心から片側へ寄る）
+        // 線の太さ（1 ピクセル以上。 偶数幅は中心から片側へ寄る）
         // 下限の規則は OverlayRectLayout.EffectiveThickness が単一所有する（両 UI のベクター描画と共有）
         var thickness = (int)Math.Round(OverlayRectLayout.EffectiveThickness(rect.Thickness));
         var half = Math.Max(0, thickness / 2);

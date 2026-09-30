@@ -66,10 +66,10 @@ flowchart TB
 
 - ホストは `CropViewControl` にのみ依存します（Facade）。
 - 画像表示（`ZoomViewControl`）・領域選択（`FadeMaskDragRectControl`）・矩形描画は本コントロール内で配線されます。
-- 領域選択オーバーレイの可視性とヒットテストは `SetSelectionOverlayVisible` で制御します（Crop セッションの開始・終了時にホストが切替）。`Source` 設定では制御しません。
+- 領域選択オーバーレイの可視性とヒットテストは `SetSelectionOverlayVisible` で制御します（Crop セッションの開始・終了時にホストが切替）。 `Source` 設定では制御しません。
   - 初期状態（`Source` 未設定）はオーバーレイを不可視（`IsVisible = false`）+ ヒットテスト不可（`IsHitTestVisible = false`）にします（コンストラクタで設定）。
     - 画像なしでの選択矩形作成を防止し、Crop モードの全面暗転で市松模様が暗くならないようにします。
-  - `Source` が `null` に変わるときは**選択のみクリア**します（オーバーレイの表示・ヒットテスト状態は維持。`SetSelectionOverlayVisible` が専任）。
+  - `Source` が `null` に変わるときは**選択のみクリア**します（オーバーレイの表示・ヒットテスト状態は維持。 `SetSelectionOverlayVisible` が専任）。
   - `Source` が設定されてもオーバーレイは自動では表示しません（プレビュー表示時は非表示）。
     - キャプチャ完了直後に Crop モード（全面暗転）が残るのを防ぐため、Crop セッション開始時に `SetSelectionOverlayVisible(true)` で表示します。
   - Crop セッション終了時は `SetSelectionOverlayVisible(false)` で非表示 + 選択クリアに戻します。
@@ -78,8 +78,8 @@ flowchart TB
 
 | ファイル | 責務 |
 | --- | --- |
-| `CropViewControl.cs` | 高レベル複合コントロール本体。ZoomViewControl / FadeMaskDragRect / 矩形オーバーレイの組み立て・配線・子の重なり順・入力の転送。ズーム操作・座標変換・コア確定値の図形要素への写像。 |
-| `CropViewControl.Core/src/OverlayRect.cs` | 外部提供矩形の描画情報（record struct）。矩形（`EsRect`）・破線種類・前景色・背景色・線幅。 |
+| `CropViewControl.cs` | 高レベル複合コントロール本体。 ZoomViewControl / FadeMaskDragRect / 矩形オーバーレイの組み立て・配線・子の重なり順・入力の転送。 ズーム操作・座標変換・コア確定値の図形要素への写像。 |
+| `CropViewControl.Core/src/OverlayRect.cs` | 外部提供矩形の描画情報（record struct）。 矩形（`EsRect`）・破線種類・前景色・背景色・線幅。 |
 | `CropViewControl.Core/src/OverlayLineStyle.cs` | 枠線スタイル enum（Solid / Dashed / Dotted）。 |
 | `CropViewControl.Core/src/OverlayRectLayout.cs` | 描画入力の解決（負サイズのクランプ・太さの下限・破線の判定）。 |
 | `CropViewControl.Core/src/OverlayRectFrame.cs` | 矩形 1 個分の描画入力（配置・太さ・半幅・破線・色・描画可否）。 |
@@ -92,8 +92,8 @@ flowchart TB
 - `CropViewControl.cs` → `LoupeControl`（ルーペへの矩形描画のため `LoupeRenderedEventArgs`）
 - `CropViewControl.cs` → `CropViewControl.Core`（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）
 - `CropViewControl.cs` → `Platform.AvaloniaUI`（座標変換ポート `ICoordTransform` は `Platform.Core` 提供 / `EsBitmap` は `Platform.Core` 提供 / 色の相互変換は `ColorAvaloniaInterop`）/ `Microsoft.Extensions.Logging`（`ILogger`）
-- `OverlayRect.cs` → `Platform.Core`（`EsRect`）。色は `System.Drawing.Color`（UI 非依存）
-- `OverlayRectRasterizer.cs` → `Platform.Core`（`EsBitmap` / `EsPoint`）。Avalonia には依存しない
+- `OverlayRect.cs` → `Platform.Core`（`EsRect`）。 色は `System.Drawing.Color`（UI 非依存）
+- `OverlayRectRasterizer.cs` → `Platform.Core`（`EsBitmap` / `EsPoint`）。 Avalonia には依存しない
 - `OverlayLineStyle.cs` → `EsUtil` 非依存（純粋 enum）
 
 依存方向は **CropViewControl → CropViewControl.Core → Platform.Core** の一方向です。

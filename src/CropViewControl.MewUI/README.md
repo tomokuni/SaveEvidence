@@ -14,12 +14,12 @@
 | 適用パターン | Facade（ズームビューと矩形オーバーレイを内包し、ホストへ統一インターフェースを提供する） |
 | 層の責務 | UI 層は入力・描画・ホスト結線のみを担い、判断を持たない（矩形のクランプ・太さの下限・市松の描画可否はコアが単一所有する） |
 | 内部構造 | `ZoomViewControl`（画像ビューポート）+ `RectOverlayCanvas`（透明な矩形オーバーレイ）を重ねる |
-| 矩形の描画 | 実線は前景色の枠のみ。破線は「背景色の実線 → 前景色の破線」の 2 回描画で市松風の視認性を出す |
+| 矩形の描画 | 実線は前景色の枠のみ。 破線は「背景色の実線 → 前景色の破線」の 2 回描画で市松風の視認性を出す |
 | 座標変換 | 画像表示矩形の原点基準（Fit 中央寄せの補正を含む）で画像と正確に一致する |
 | 入力 | 下のズームビューが受け取る（オーバーレイは `IsHitTestVisible = false`） |
 | DPI 追従 | 内包するズームビューが `OnDpiChanged` で自動追従する |
-| 選択オーバーレイ | 対象外。ホストが `FadeMaskDragRectControl.MewUI` を重ねて構成する（`app.MewUI` の切り出しはこの構成） |
-| ログ | `Log` プロパティ（内包するズームビューへ伝搬する。ズーム操作の前後のズーム率を Information で出力） |
+| 選択オーバーレイ | 対象外。 ホストが `FadeMaskDragRectControl.MewUI` を重ねて構成する（`app.MewUI` の切り出しはこの構成） |
+| ログ | `Log` プロパティ（内包するズームビューへ伝搬する。 ズーム操作の前後のズーム率を Information で出力） |
 
 ## インストール（プロジェクト参照）
 
@@ -62,12 +62,12 @@ cropView.ZoomChanged += (_, e) => zoomText.Text = $"{e.ZoomPercent:0}%";
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Source` | `EsBitmap?` | `null` | 表示する画像。設定すると Fit 表示へリセットする |
+| `Source` | `EsBitmap?` | `null` | 表示する画像。 設定すると Fit 表示へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする |
-| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。コアが単一所有する |
-| `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（ドメイン座標）。設定すると再描画する |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。 コアが単一所有する |
+| `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（ドメイン座標）。 設定すると再描画する |
 | `ZoomView` | `ZoomViewControl` | — | 内包するズームビューポート（座標変換・表示サイズの利用に使う） |
-| `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。0 より大きい値のみ設定できる |
+| `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。 0 より大きい値のみ設定できる |
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
 | `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（内包するズームビューへ伝搬する） |
 
@@ -77,7 +77,7 @@ cropView.ZoomChanged += (_, e) => zoomText.Text = $"{e.ZoomPercent:0}%";
 | --- | --- |
 | `ZoomIn()` / `ZoomOut()` / `ZoomFit()` | 段階遷移・Fit 表示（内包するズームビューへ委譲） |
 | `PanByWheel(delta, shift)` | ホイールの回転量でパンする（ホストがオーバーレイ等で受けたホイールの転送用） |
-| `ZoomByWheel(zoomIn, position)` | Ctrl+ホイールのズームを適用する（同上。`position` はズーム中心） |
+| `ZoomByWheel(zoomIn, position)` | Ctrl+ホイールのズームを適用する（同上。 `position` はズーム中心） |
 | `TranslatePositionFrom(element, position)` | 重ねた要素のローカル座標を本コントロールの座標へ変換する（ズーム中心の座標合わせ用） |
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
 | `ViewportToContent(pos)` / `ContentToViewport(pos)` | 画像表示矩形の原点基準の座標変換 |
@@ -87,7 +87,7 @@ cropView.ZoomChanged += (_, e) => zoomText.Text = $"{e.ZoomPercent:0}%";
 | イベント | 説明 |
 | --- | --- |
 | `ZoomChanged` | ズーム率・Fit 状態・ズーム可否（内包するズームビューから中継） |
-| `ViewportChanged` | ビューポートの変化（パン・ズーム・リサイズ。内包するズームビューから中継） |
+| `ViewportChanged` | ビューポートの変化（パン・ズーム・リサイズ。 内包するズームビューから中継） |
 
 ## 構成
 

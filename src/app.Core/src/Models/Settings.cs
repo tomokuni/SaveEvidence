@@ -29,7 +29,7 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private HotKeySetting _areaSelectHotKey = new(HotKeyModifiers.Control | HotKeyModifiers.Shift, EsKey.E);
 
-    /// <summary>ファイル名テンプレート文字列を取得または設定する。{date}や{time}のプレースホルダを使用可能。</summary>
+    /// <summary>ファイル名テンプレート文字列を取得または設定する。 {date}や{time}のプレースホルダを使用可能。</summary>
     [ObservableProperty]
     private string _fileNameTemplate = "screenshot_007_{date}-{time}.png";
 
@@ -39,7 +39,7 @@ public sealed partial class Settings : ObservableObject
     private string _saveFolderPath = "{MyPictures}\\SaveEvidence";
 
     /// <summary>MainWindow のウィンドウ位置・サイズを取得または設定する。</summary>
-    /// <remarks>画面物理座標（整数ピクセル）。UI 実装側で自 UI の型へ変換して使用する。</remarks>
+    /// <remarks>画面物理座標（整数ピクセル）。 UI 実装側で自 UI の型へ変換して使用する。</remarks>
     [ObservableProperty]
     private EsRectInt? _mainWindowBounds;
 
@@ -52,7 +52,7 @@ public sealed partial class Settings : ObservableObject
     private bool _isNavigationExpanded = true;
 
     /// <summary>テーマモード（Light / Dark / System）を取得または設定する。</summary>
-    /// <remarks>アプリ全体のテーマ（<c>RequestedThemeVariant</c>）に反映される。既定は OS 追従（System）。</remarks>
+    /// <remarks>アプリ全体のテーマ（<c>RequestedThemeVariant</c>）に反映される。 既定は OS 追従（System）。</remarks>
     [ObservableProperty]
     private ThemeMode _themeMode = ThemeMode.System;
 
@@ -69,22 +69,22 @@ public sealed partial class Settings : ObservableObject
     private int _folderMediumIconSize = 160;
 
     /// <summary>FolderViewForm の表示モード（0=特大, 1=大, 2=中）。</summary>
-    /// <remarks>フォルダビューの表示モード選択状態。起動時に復元される。</remarks>
+    /// <remarks>フォルダビューの表示モード選択状態。 起動時に復元される。</remarks>
     [ObservableProperty]
     private int _folderViewModeIndex = 1;
 
     /// <summary>FolderViewForm のソート順（true=昇順, false=降順）。</summary>
-    /// <remarks>フォルダビューのソート順選択状態。起動時に復元される。</remarks>
+    /// <remarks>フォルダビューのソート順選択状態。 起動時に復元される。</remarks>
     [ObservableProperty]
     private bool _folderViewSortAscending = true;
 
     /// <summary>Undo 一覧の表示モード（0=特大, 1=大, 2=中）。</summary>
-    /// <remarks>Undo 一覧ページの表示モード選択状態。起動時に復元される。</remarks>
+    /// <remarks>Undo 一覧ページの表示モード選択状態。 起動時に復元される。</remarks>
     [ObservableProperty]
     private int _undoViewModeIndex = 1;
 
     /// <summary>プレビュー画像の中央寄せ（true）／左上寄せ（false）を取得または設定する。</summary>
-    /// <remarks>デフォルトは false（左上寄せ。設定画面の現在値）。</remarks>
+    /// <remarks>デフォルトは false（左上寄せ。 設定画面の現在値）。</remarks>
     [ObservableProperty]
     private bool _centerAlign;
 
@@ -195,7 +195,7 @@ public sealed partial class Settings : ObservableObject
     private string _previewCheckerColorB = "#4CA9A9A9";
 
     /// <summary>ルーペの画像外（ペーストボード）の色を取得または設定する。</summary>
-    /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: 中性グレー <c>#FF535353</c>。透明にすると背後の要素が見える）。</remarks>
+    /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: 中性グレー <c>#FF535353</c>。 透明にすると背後の要素が見える）。</remarks>
     [ObservableProperty]
     private string _loupePasteboardColor = "#FF535353";
 
@@ -345,7 +345,7 @@ public sealed partial class Settings : ObservableObject
     }
 
     /// <summary>表示モードインデックスに対応するアイコンサイズを取得する。</summary>
-    /// <param name="viewModeIndex">表示モード（0=特大, 1=大, 2=中）。範囲外は中アイコン。</param>
+    /// <param name="viewModeIndex">表示モード（0=特大, 1=大, 2=中）。 範囲外は中アイコン。</param>
     /// <returns>アイコンサイズ（ピクセル）。</returns>
     /// <remarks>フォルダビューと Undo 一覧のサムネイルサイズで共用する（単一所有・DRY）。</remarks>
     public int GetIconSize(int viewModeIndex) => viewModeIndex switch

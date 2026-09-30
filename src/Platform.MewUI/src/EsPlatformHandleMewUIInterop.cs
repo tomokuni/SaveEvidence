@@ -12,7 +12,7 @@ namespace EsUtil.Platform.MewUI;
 public static class EsPlatformHandleMewUIInterop
 {
     /// <summary>MewUI のウィンドウをコアのネイティブウィンドウ識別子へ変換する。</summary>
-    /// <param name="window">変換元のウィンドウ。null の場合はハンドル値 0。</param>
+    /// <param name="window">変換元のウィンドウ。 null の場合はハンドル値 0。</param>
     /// <returns>コアの識別子（Win32: HWND 相当）。</returns>
     public static EsPlatformHandle ToEsPlatformHandle(this Window? window)
         => new(window?.Handle ?? 0);

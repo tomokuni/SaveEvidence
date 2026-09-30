@@ -14,7 +14,7 @@ using EsUtil.Platform.AvaloniaUI.Interop;
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 /// <summary>
-/// 「データ作成」ページの ViewModel。評価用データ作成（Marquee キャプチャ → 正解ウィンドウ選択 → 保存）を統括する。
+/// 「データ作成」ページの ViewModel。 評価用データ作成（Marquee キャプチャ → 正解ウィンドウ選択 → 保存）を統括する。
 /// </summary>
 /// <remarks>
 /// キャプチャの開始（Marquee）は UI スレッドから行う必要があるため、<see cref="Views.MainWindow"/> の
@@ -58,7 +58,7 @@ public sealed partial class CreatePageViewModel : ObservableObject
     public int SelectedCount => WindowInfos.Count(w => w.IsSelected);
 
     /// <summary>キャプチャ結果（画像 + 領域）を反映し、領域内ウィンドウを列挙する。</summary>
-    /// <param name="result">キャプチャ結果。null・画像なしの場合は何もしない。</param>
+    /// <param name="result">キャプチャ結果。 null・画像なしの場合は何もしない。</param>
     /// <remarks>
     /// 1. キャプチャ画像と領域（<see cref="CaptureBounds"/>）を保存する<br/>
     /// 2. <see cref="IElementFinder.ListWindows"/>（Win32 の EnumWindows・Z オーダー順）で現在のウィンドウ一覧を取得する<br/>

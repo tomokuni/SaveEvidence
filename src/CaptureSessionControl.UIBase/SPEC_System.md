@@ -2,7 +2,7 @@
 
 ## 概要
 
-`CaptureSessionControl.UIBase` は、撮影・切り出しのセッションを実装する両 UI が共有する**設定写像**を提供します。対象は次の 1 つです。
+`CaptureSessionControl.UIBase` は、撮影・切り出しのセッションを実装する両 UI が共有する**設定写像**を提供します。 対象は次の 1 つです。
 
 - **キャプチャ設定（`CaptureSettings`）→ 外観（`MarqueeAppearance` / `LoupeAppearance`）の写像**
 
@@ -15,12 +15,12 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 設定から色への写像を 1 箇所へ集約し、両 UI で同じ見た目になるようにする |
-| 提供形態 | クラスライブラリ（`CaptureSessionControl.UIBase.dll`）。**公開 API は持たない**（`internal` のみ） |
+| 提供形態 | クラスライブラリ（`CaptureSessionControl.UIBase.dll`）。 **公開 API は持たない**（`internal` のみ） |
 | 想定利用者 | 両 UI のホスト（`CaptureSessionControl.AvaloniaUI` / `CaptureSessionControl.MewUI` の撮影オーバーレイ・切り出しセッション） |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
 | ルート名前空間 | `EsUtil.SaveEvidence.CaptureSession.UIBase` |
-| 汎用性 | 特定の UI に依存しない。UI フレームワークを参照しない |
+| 汎用性 | 特定の UI に依存しない。 UI フレームワークを参照しない |
 
 ## アーキテクチャ
 
@@ -33,7 +33,7 @@ graph LR
   U --> L[Feature.Loupe.Presenter]
 ```
 
-依存の向きは **UI → UIBase（本層）→ Core / 各提示層の設定**の一方向です。逆向きの参照はありません。
+依存の向きは **UI → UIBase（本層）→ Core / 各提示層の設定**の一方向です。 逆向きの参照はありません。
 
 ### 本層を置く理由
 
@@ -102,7 +102,7 @@ sequenceDiagram
 | 枠線の色（選択枠線と穴あけ枠で共通） | 設定の `BorderColor` 1 項目 |
 
 **写像漏れの防止**: 写像は 1 箇所（`CapturePaintMapper`）に集約されており、以前は両 UI に同じ写像が 2 コピー
-存在していました（片方だけ更新される余地があった）。本層への集約により、両 UI のホストが同じ写像を使うことが
+存在していました（片方だけ更新される余地があった）。 本層への集約により、両 UI のホストが同じ写像を使うことが
 構造的に保証されます。
 
 ## 例外処理ポリシー
@@ -110,13 +110,13 @@ sequenceDiagram
 | 状況 | 挙動 |
 | --- | --- |
 | `settings` が null | `ArgumentNullException`（呼び出し側の実装誤りであり、回復して続行すべき状況ではない） |
-| 設定メンバーの null | 想定外（`ToNonNull` 済みを渡す契約）。`!` で参照する |
+| 設定メンバーの null | 想定外（`ToNonNull` 済みを渡す契約）。 `!` で参照する |
 
 本層は外部 I/O・非同期処理・リソース解放を持ちません。
 
 ## 可視性ポリシー
 
-- **公開 API を持ちません**（すべて `internal`）。写像は両 UI のホストが使う内部処理のためです。
+- **公開 API を持ちません**（すべて `internal`）。 写像は両 UI のホストが使う内部処理のためです。
 - `internal` は `InternalsVisibleTo`（`CaptureSessionControl.AvaloniaUI` / `CaptureSessionControl.MewUI` /
   `CaptureSessionControl.UIBase.Tests`）で公開します。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。

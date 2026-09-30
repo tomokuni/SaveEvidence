@@ -29,7 +29,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
-本プロジェクト（FadeMaskDragRect）は、このシステムのうち**領域選択の複合コントロール**（Marquee（外側の装飾を含む）+ Loupe の組み立て・配線・状態同期）を担います。Facade / Composite パターンでホストへ統一インターフェースを提供し、CaptureSessionControl.AvaloniaUI のセッション（OverlayWindow / CropSession）から使用されます。
+本プロジェクト（FadeMaskDragRect）は、このシステムのうち**領域選択の複合コントロール**（Marquee（外側の装飾を含む）+ Loupe の組み立て・配線・状態同期）を担います。 Facade / Composite パターンでホストへ統一インターフェースを提供し、CaptureSessionControl.AvaloniaUI のセッション（OverlayWindow / CropSession）から使用されます。
 
 ## 2. 技術スタック
 
@@ -58,7 +58,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ### 3.2 依存方向
 
-- 依存は**一方向の階層構造**（FadeMaskDragRectControl → MarqueeControl / LoupeControl / Platform.AvaloniaUI）。逆依存なし。
+- 依存は**一方向の階層構造**（FadeMaskDragRectControl → MarqueeControl / LoupeControl / Platform.AvaloniaUI）。 逆依存なし。
 - 内包コントロールは上位 AP の設定型（CaptureSettings 等）に依存しない（コアの `FadeMaskDragRectOptions` が変換先の境界）。
 - ホスト（上位 AP）は FadeMaskDragRectControl の公開 API のみを使用する（内包コントロールへの直接操作はテスト用アクセサ経由のみ）。
 - 配線・状態同期は本コントロールに集約し、セッションは配線コードを持たない（DRY）。
@@ -125,15 +125,15 @@ flowchart TB
 | 基底クラス | `Avalonia.Controls.Panel` |
 | 可視性 | public sealed |
 | 責務 | 内包コントロール（Marquee / Loupe）の生成・配置・配線・状態同期と、ホストへの統一インターフェース提供 |
-| 内部アクセサ（internal） | `Loupe` / `Marquee`（自身の Tests のみアクセス可。公開型のカプセル化のため internal 化） |
-| 公開プロパティ（外観） | `MarqueeAppearance` / `LoupeAppearance`（描画にだけ必要な外観の単一値。内包コントロールへそのまま委譲する） |
+| 内部アクセサ（internal） | `Loupe` / `Marquee`（自身の Tests のみアクセス可。 公開型のカプセル化のため internal 化） |
+| 公開プロパティ（外観） | `MarqueeAppearance` / `LoupeAppearance`（描画にだけ必要な外観の単一値。 内包コントロールへそのまま委譲する） |
 | 内部フィールド | `_marquee`（MarqueeControl）/ `_loupeControl`（LoupeControl） |
 
 ### 6.2 FadeMaskDragRectMode
 
 | 項目 | 内容 |
 | --- | --- |
-| ファイル | `FadeMaskDragRectControl.Core/src/FadeMaskDragRectMode.cs`（UI 非依存コア。`FadeMaskDragRectControl.Core`） |
+| ファイル | `FadeMaskDragRectControl.Core/src/FadeMaskDragRectMode.cs`（UI 非依存コア。 `FadeMaskDragRectControl.Core`） |
 | 種類 | public enum |
 | メンバー | `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` |
 | 責務 | 子コントロールの可視性（Marquee / Loupe）・全面暗転・破線の切替指示 |
@@ -151,8 +151,8 @@ flowchart TB
 
 | コンポーネント | プロジェクト | 責務 |
 | --- | --- | --- |
-| `MarqueeControl` | MarqueeControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート）と、選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の描画。**サイズラベルとカーソル座標ラベルはテキスト要素として配置し**、操作・情報ラベルは本クラス（ホスト）が `Options.Labels` に従って描く |
-| `LoupeControl` | LoupeControl | 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算）。**中心座標ラベルはテキスト要素として配置する** |
+| `MarqueeControl` | MarqueeControl | ドラッグ選択・リサイズ・nudge（ドメイン座標 + 座標変換ポート）と、選択矩形の**外側に描く装飾**（暗転マスク・穴あけ枠・ハイライト）の描画。 **サイズラベルとカーソル座標ラベルはテキスト要素として配置し**、操作・情報ラベルは本クラス（ホスト）が `Options.Labels` に従って描く |
+| `LoupeControl` | LoupeControl | 拡大鏡（中心 = ドメイン座標、表示位置 = 座標変換ポートから自己計算）。 **中心座標ラベルはテキスト要素として配置する** |
 
 ### 6.5 公開イベント引数
 
@@ -161,7 +161,7 @@ flowchart TB
 | `FadeMaskDragRectSelectionEventArgs` | 本プロジェクト | 確定要求イベントの引数（`SelectionRect: Rect`（ドメイン座標）） |
 | `FadeMaskDragRectPointEventArgs` | 本プロジェクト | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
 | `FadeMaskDragRectMode` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 動作モード（描画モード・可視性・全面暗転の切替） |
-| `FadeMaskDragRectOptions` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。**色は含まない**） |
+| `FadeMaskDragRectOptions` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 **色は含まない**） |
 | `MarqueeAppearance` / `LoupeAppearance` | EsUtil.Feature.Marquee.Presenter.Setting / EsUtil.Feature.Loupe.Presenter.Setting（提示層） | 描画にだけ必要な外観の単一値（内包コントロールへ委譲する） |
 | `FadeMaskDragRectChildValues` / `FadeMaskHostLabelRenderer` | EsUtil.SaveEvidence.FadeMaskDragRect.UIBase（UI 間の共有層） | 設定とモードから子コントロールへ適用する値の解決と、付加情報ラベルの描画 |
 | `ICoordTransform` / `CoordTransform` | Platform.Core | ドメイン ↔ DIP の座標変換ポート |
@@ -170,7 +170,7 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- `FadeMaskDragRectControl` → `FadeMaskDragRectControl.UIBase` / `MarqueeControl` / `LoupeControl` / `Platform.AvaloniaUI` の**一方向依存**（逆依存なし）。値の解決は `FadeMaskDragRectChildValues`（UIBase）が、付加情報ラベルの描画は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは代入と描画を行う。描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）は内包コントロールの提示層が単一所有し、本コントロールはプロパティで転送するだけである（コアの設定値には色・表示可否を含めない）。
+- `FadeMaskDragRectControl` → `FadeMaskDragRectControl.UIBase` / `MarqueeControl` / `LoupeControl` / `Platform.AvaloniaUI` の**一方向依存**（逆依存なし）。 値の解決は `FadeMaskDragRectChildValues`（UIBase）が、付加情報ラベルの描画は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは代入と描画を行う。 描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）は内包コントロールの提示層が単一所有し、本コントロールはプロパティで転送するだけである（コアの設定値には色・表示可否を含めない）。
 - 内包コントロールは上位 AP の設定型（CaptureSettings 等）に依存しない（コアの `FadeMaskDragRectOptions` が変換先の境界）。
 - ホスト（上位 AP）は `FadeMaskDragRectControl` の公開 API のみを使用する（内包コントロールへの直接アクセスは internal 化され、外部からは不可能）。
 
@@ -206,10 +206,10 @@ sequenceDiagram
 
 | 内包イベント | 複合コントロールの処理 | 同期先 |
 | --- | --- | --- |
-| `SelectionChanged` | ルーペの再描画を要求（`RequestRender`） | 選択矩形と外側の装飾は `MarqueeControl` がセッションから直接読んで描画する（本クラスは同期しない）。ルーペの選択矩形破線は Rendered イベント経由で描画し、描画の可否はコアの `ShowSelectionOverlay` が単一所有する（UI は派生値を保持しない） |
-| `Rendered`（選択矩形コントロール） | 付加情報（操作・情報ラベル）を描く | 描画内容全体（`Content`）を受け取り、付加情報を描く。**サイズ・座標ラベルはコントロールがテキスト要素として表示する**（文言はコアが、配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial） が単一所有する）。付加情報の積み上げ（位置・表示可否）は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは描画ポートを用意して文言を渡すだけである |
-| `Rendered`（ルーペ） | 破線を描く（中心座標ラベルはコントロールが表示する） | 選択矩形の破線。ラベルの寸法・配置はコアが単一所有する |
-| 表示の変化（ホスト通知） | `RefreshOverlay()`（再描画 + ルーペ位置再計算） | Marquee 再描画 + Loupe（RefreshPosition）。選択矩形は表示の変化で不変のため再同期しない |
+| `SelectionChanged` | ルーペの再描画を要求（`RequestRender`） | 選択矩形と外側の装飾は `MarqueeControl` がセッションから直接読んで描画する（本クラスは同期しない）。 ルーペの選択矩形破線は Rendered イベント経由で描画し、描画の可否はコアの `ShowSelectionOverlay` が単一所有する（UI は派生値を保持しない） |
+| `Rendered`（選択矩形コントロール） | 付加情報（操作・情報ラベル）を描く | 描画内容全体（`Content`）を受け取り、付加情報を描く。 **サイズ・座標ラベルはコントロールがテキスト要素として表示する**（文言はコアが、配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial） が単一所有する）。 付加情報の積み上げ（位置・表示可否）は `FadeMaskHostLabelRenderer`（UIBase）が単一所有し、本コントロールは描画ポートを用意して文言を渡すだけである |
+| `Rendered`（ルーペ） | 破線を描く（中心座標ラベルはコントロールが表示する） | 選択矩形の破線。 ラベルの寸法・配置はコアが単一所有する |
+| 表示の変化（ホスト通知） | `RefreshOverlay()`（再描画 + ルーペ位置再計算） | Marquee 再描画 + Loupe（RefreshPosition）。 選択矩形は表示の変化で不変のため再同期しない |
 | `SelectionStarted` | （購読しない） | セッションが自身の選択を初期化するため同期不要（外側の装飾はセッションの状態をそのまま読む） |
 | `SelectionCancelled` | （購読しない） | 同上 |
 | `LoupePositionMoved` | `CenterPoint` 更新 + 表示可否の再判定 | Loupe + ホスト通知（`LoupePositionMoved`） |

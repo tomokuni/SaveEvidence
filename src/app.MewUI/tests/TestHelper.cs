@@ -12,7 +12,7 @@ internal static class TestHelper
     /// <summary>指定サイズの画像を生成する（内容は単色）。</summary>
     /// <param name="width">幅（1 以上）。</param>
     /// <param name="height">高さ（1 以上）。</param>
-    /// <returns>生成した画像。所有権は呼び出し側。</returns>
+    /// <returns>生成した画像。 所有権は呼び出し側。</returns>
     public static EsBitmap CreateBitmap(int width = 4, int height = 4)
     {
         // 所有権は FromSKBitmap へ移るため using を付けない
@@ -30,7 +30,7 @@ internal static class TestHelper
 
     /// <summary>ファイルの実際の保存形式を読み取る。</summary>
     /// <param name="filePath">対象のファイルパス。</param>
-    /// <returns>判別した保存形式。判別できない場合は null。</returns>
+    /// <returns>判別した保存形式。 判別できない場合は null。</returns>
     public static SKEncodedImageFormat? ReadFormat(string filePath)
     {
         using var stream = File.OpenRead(filePath);

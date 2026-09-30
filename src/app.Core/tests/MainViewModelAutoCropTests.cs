@@ -68,7 +68,7 @@ public sealed class MainViewModelAutoCropTests
     /// <returns>生成した EsBitmap。</returns>
     /// <remarks>
     /// 重なり合うウィンドウ風の枠（コーナーがずれて 1 つの矩形を構成しない）と、<br/>
-    /// 表・テキスト相当の短い罫線を描く。検出器は矩形を構成できないため、<br/>
+    /// 表・テキスト相当の短い罫線を描く。 検出器は矩形を構成できないため、<br/>
     /// 検出した線分をそのまま返す経路（多数の線分）を通る。
     /// </remarks>
     private static EsBitmap CreateLineHeavyBitmap(int width, int height)
@@ -134,7 +134,7 @@ public sealed class MainViewModelAutoCropTests
         Assert.NotEmpty(vm.DetectedRects);
         Assert.True(vm.DetectedRects.Count <= 256, $"候補が上限を超えている: {vm.DetectedRects.Count}");
 
-        // 修正前は同じ画像で数千万件（数十秒・数 GB）になっていた。上限内なら数秒で終わる
+        // 修正前は同じ画像で数千万件（数十秒・数 GB）になっていた。 上限内なら数秒で終わる
         Assert.True(stopwatch.Elapsed.TotalSeconds < 15, $"自動切り出しに時間がかかりすぎている: {stopwatch.Elapsed.TotalSeconds:0.0} 秒");
     }
 

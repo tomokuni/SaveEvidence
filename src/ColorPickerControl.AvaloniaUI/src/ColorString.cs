@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 /// <summary>色文字列（色名 or 16進 + 不透明度%）の解析・整形・正規化を提供するユーティリティ。</summary>
 /// <remarks>
 /// 色と不透明度を統合した文字列のうち、**保存値**と**画面表示**の 2 形式を定義する:<br/>
-/// - 保存値（<see cref="ToArgbHex"/> の出力）: <c>#AARRGGBB</c>（アルファ先頭 8 桁。例: "#80FF0000"）<br/>
+/// - 保存値（<see cref="ToArgbHex"/> の出力）: <c>#AARRGGBB</c>（アルファ先頭 8 桁。 例: "#80FF0000"）<br/>
 /// - 画面表示（<see cref="ToDisplayText"/> / <see cref="Format"/> の出力）: <c>{色}+{不透明度%}</c><br/>
 ///   - 色名が <see cref="Colors"/> に定義されている色: 色名で表す（例: "Red"）<br/>
 ///   - 色名が未定義の色: <c>#RRGGBB</c> で表す（例: "#336699"）<br/>
@@ -125,7 +125,7 @@ public static class ColorString
     internal static IReadOnlyDictionary<string, Color> ColorNames => s_colorNames;
 
     /// <summary>指定された色名が <see cref="Colors"/> に定義されているか判定する。</summary>
-    /// <param name="name">色名（例: "Red"）。大文字小文字は無視。</param>
+    /// <param name="name">色名（例: "Red"）。 大文字小文字は無視。</param>
     /// <returns>定義されている場合は <see langword="true"/>。</returns>
     public static bool IsDefinedColorName(string name)
         => s_colorNames.ContainsKey(name);
@@ -200,8 +200,8 @@ public static class ColorString
     }
 
     /// <summary>色と不透明度を「{色}+{不透明度%}」形式の文字列へ整形する。</summary>
-    /// <param name="color">色（RGB。アルファは無視される）。</param>
-    /// <param name="opacity">不透明度（0.0〜1.0）。1.0 の場合は不透明度部分を省略する。</param>
+    /// <param name="color">色（RGB。 アルファは無視される）。</param>
+    /// <param name="opacity">不透明度（0.0〜1.0）。 1.0 の場合は不透明度部分を省略する。</param>
     /// <returns>整形結果の文字列（例: "Red", "Red+50%", "#336699+75%"）。</returns>
     /// <remarks>
     /// 色名が <see cref="Colors"/> に定義されている場合は色名で、未定義の場合は <c>#RRGGBB</c> で表す。<br/>
@@ -216,9 +216,9 @@ public static class ColorString
 
     /// <summary>保存値（色名 / #RRGGBB / #AARRGGBB / +% 形式）を画面表示用テキスト（{色}+{不透明度%}）へ変換する。</summary>
     /// <param name="text">保存値（例: "#80FF0000", "Red", "Red+50%", "#336699+75%"）。</param>
-    /// <returns>表示用テキスト（例: "Red+50%", "Red", "#336699+75%"）。解析できない場合は入力をそのまま返す。</returns>
+    /// <returns>表示用テキスト（例: "Red+50%", "Red", "#336699+75%"）。 解析できない場合は入力をそのまま返す。</returns>
     /// <remarks>
-    /// ComboBox などの画面表示に使用する。不透明度は <c>+{n}%</c> 形式で表し、1.0（100%）の場合は省略する。<br/>
+    /// ComboBox などの画面表示に使用する。 不透明度は <c>+{n}%</c> 形式で表し、1.0（100%）の場合は省略する。<br/>
     /// <c>+{n}%</c> 形式を含まない入力（#AARRGGBB 等）はアルファ成分を不透明度として解釈する。<br/>
     /// 処理フロー:<br/>
     /// 1. 表示テキストキャッシュを引き、ヒットした場合は即座に返す（整形の毎回実行を排除）。<br/>
@@ -251,7 +251,7 @@ public static class ColorString
 
     /// <summary>任意の色文字列（色名 / #RRGGBB / #AARRGGBB / +% 形式）を <c>#AARRGGBB</c>（アルファ先頭16進）へ正規化する。</summary>
     /// <param name="text">入力文字列（例: "Red", "Red+50%", "#80FF0000"）。</param>
-    /// <returns><c>#AARRGGBB</c> 形式の保存値（例: "#80FF0000"）。解析できない場合は入力をそのまま返す。</returns>
+    /// <returns><c>#AARRGGBB</c> 形式の保存値（例: "#80FF0000"）。 解析できない場合は入力をそのまま返す。</returns>
     /// <remarks>
     /// Settings などの保存値は Avalonia 標準の <c>#AARRGGBB</c>（アルファ先頭）とする。<br/>
     /// 色名・#RRGGBB はアルファ 255（不透明）へ、<c>+{n}%</c> は指定された不透明度へ正規化する。<br/>
@@ -303,7 +303,7 @@ public static class ColorString
     /// <returns><c>#AARRGGBB</c> 形式の文字列（例: "#80FF0000"）。</returns>
     /// <remarks>
     /// 保存値（<see cref="ColorPickerControl.SelectedColor"/> / Settings）の形式は Avalonia 標準の
-    /// <c>#AARRGGBB</c> とする（<see cref="Color.Parse"/> と整合。不透明度はアルファ成分として統合される）。<br/>
+    /// <c>#AARRGGBB</c> とする（<see cref="Color.Parse"/> と整合。 不透明度はアルファ成分として統合される）。<br/>
     /// カラーピッカー（ColorView）の OK 確定時など、色オブジェクトを直接保存値へ変換する場合に使用する。
     /// </remarks>
     public static string ToArgbHex(Color color)
@@ -311,11 +311,11 @@ public static class ColorString
 
     /// <summary>指定された色に対応する色名（<see cref="Colors"/>）を検索する。</summary>
     /// <param name="color">色。</param>
-    /// <returns>一致する色名。未定義の場合は null。</returns>
+    /// <returns>一致する色名。 未定義の場合は null。</returns>
     /// <remarks>
     /// アルファも含めて完全一致する色名を最優先する（<see cref="s_exactNameByColor"/> の O(1) 検索）。<br/>
-    /// 完全一致が無い場合は RGB のみで一致する色名を返す（<see cref="s_nameByRgb"/>。同 RGB で複数ある場合は
-    /// 不透明（A=255）の色名が優先登録されている。例: White と Transparent は同 RGB のため、
+    /// 完全一致が無い場合は RGB のみで一致する色名を返す（<see cref="s_nameByRgb"/>。 同 RGB で複数ある場合は
+    /// 不透明（A=255）の色名が優先登録されている。 例: White と Transparent は同 RGB のため、
     /// 半透明の白は "White" と表示される）。
     /// </remarks>
     private static string? FindColorName(Color color)

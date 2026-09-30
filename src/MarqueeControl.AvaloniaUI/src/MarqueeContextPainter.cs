@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 /// 本クラスは順序を判断せず、層ごとに Avalonia の描画 API を呼ぶだけである（座標・色・寸法はすべて計画に解決済み）。<br/>
 /// <br/>
 /// <b>キャンバスの抽象化を持たない</b>: 描画 API は本クラスが直接呼ぶ（UI フレームワークをまたぐ描画の抽象は、<br/>
-/// フレームワークごとの描画モデルの差を吸収しきれないため導入しない）。色 → ブラシの共有は<br/>
+/// フレームワークごとの描画モデルの差を吸収しきれないため導入しない）。 色 → ブラシの共有は<br/>
 /// <see cref="SolidColorBrushCache"/> が単一所有する。<br/>
 /// <br/>
 /// <b>テキストは描かない</b>: ラベルは UI 要素（<c>Border</c> + <c>TextBlock</c>）として配置するため、<br/>
@@ -25,7 +25,7 @@ namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 public static class MarqueeContextPainter
 {
     /// <summary>描画計画を描画順に描く。</summary>
-    /// <param name="context">描画先の描画コンテキスト（<c>Render</c> の実行中のみ有効）。null 不可。</param>
+    /// <param name="context">描画先の描画コンテキスト（<c>Render</c> の実行中のみ有効）。 null 不可。</param>
     /// <param name="plan">描画層が解決した描画計画（層の順序・矩形・色を持つ）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="context"/> が null の場合。</exception>
     public static void Paint(DrawingContext context, in MarqueeDrawPlan plan)
@@ -34,7 +34,7 @@ public static class MarqueeContextPainter
 
         var appearance = plan.Appearance;
 
-        // 描画順は描画層（Layers）が単一所有する。本クラスは順に写すだけで、順序を判断しない
+        // 描画順は描画層（Layers）が単一所有する。 本クラスは順に写すだけで、順序を判断しない
         foreach (var layer in plan.Layers)
         {
             switch (layer)

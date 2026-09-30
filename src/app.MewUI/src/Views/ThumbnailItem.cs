@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.MewUI.Views;
 
 /// <summary>一覧（フォルダビュー / Undo 一覧）のサムネイル 1 件分の要素を組み立てる。</summary>
 /// <remarks>
-/// <b>構成</b>: 枠（<see cref="Border"/>。画像 + 影付き）とラベルを縦に並べる。<br/>
+/// <b>構成</b>: 枠（<see cref="Border"/>。 画像 + 影付き）とラベルを縦に並べる。<br/>
 /// Avalonia 版の ItemTemplate（<c>Border.thumbnail-frame</c> + <c>BoxShadow</c> + <c>TextBlock</c>）に相当する。<br/>
 /// <br/>
 /// <b>影</b>: MewUI には <c>BoxShadow</c> が無いため <see cref="ShadowDecorator"/> で描く。<br/>

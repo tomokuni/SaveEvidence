@@ -11,7 +11,7 @@ using EsUtil.SaveEvidence.ZoomView.Sample.ViewModels;
 
 namespace EsUtil.SaveEvidence.ZoomView.Sample.Views;
 
-/// <summary>メインウィンドウ。ZoomViewControl の ZoomViewControl（自己完結型複合コントロール）の動作確認を担う。</summary>
+/// <summary>メインウィンドウ。 ZoomViewControl の ZoomViewControl（自己完結型複合コントロール）の動作確認を担う。</summary>
 /// <remarks>
 /// ズーム操作（ボタン・スライダ・Ctrl+ホイール）は <c>ZoomViewControl</c> が自己完結し、<br/>
 /// ズーム率・可否・表示テキストの変化を <c>ZoomChanged</c> イベントで購読して UI へ反映する。<br/>
@@ -45,7 +45,7 @@ public partial class MainWindow : Window
 
         // スライダの変更を ZoomViewControl へ反映する
         // （XAML ロード中の Slider 初期化（Value の coerce）でも ValueChanged が発火するため、
-        //  依存注入後のコンストラクタで購読する。XAML 属性では未注入状態で呼ばれてしまう）
+        //  依存注入後のコンストラクタで購読する。 XAML 属性では未注入状態で呼ばれてしまう）
         ZoomSlider.ValueChanged += OnZoomSliderValueChanged;
 
         // ViewModel のプロパティ変更時にズーム表示を適用する
@@ -83,7 +83,7 @@ public partial class MainWindow : Window
     /// <summary>Fit ボタンクリック（ズーム率 0 = 自動）。</summary>
     private void OnFitClick(object? sender, RoutedEventArgs e) => ZoomableView.ZoomFit();
 
-    /// <summary>ズームスライダの変更ハンドラ。スライダ操作によるズーム率の適用を行う。</summary>
+    /// <summary>ズームスライダの変更ハンドラ。 スライダ操作によるズーム率の適用を行う。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">値変更イベント。</param>
     /// <remarks>プログラム側の同期（<see cref="SyncZoomSlider"/>）による変更は無視する。</remarks>
@@ -98,7 +98,7 @@ public partial class MainWindow : Window
     private const double ZoomSliderEpsilon = 0.01;
 
     /// <summary>ズームスライダの値を現在のズーム率へ同期する。</summary>
-    /// <param name="zoom">現在の実効ズーム率（%）。Fit 中は実効倍率。</param>
+    /// <param name="zoom">現在の実効ズーム率（%）。 Fit 中は実効倍率。</param>
     /// <remarks>
     /// 実効ズーム率の変化（<see cref="ZoomViewControl.ZoomChanged"/>）を受けて、スライダ値を現在のズーム率へ同期する。<br/>
     /// Fit 中も実際に表示されている実効倍率をスライダに反映する（スライダ範囲 <see cref="ZoomSlider.Minimum"/> 〜 <see cref="ZoomSlider.Maximum"/> にクランプ）。<br/>

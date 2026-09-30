@@ -15,13 +15,13 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 internal static class LoupeSourceResolver
 {
     /// <summary>ソース解決の結果。</summary>
-    /// <param name="Bitmap">切り出し元の EsBitmap。未対応・破棄済み・null の場合は null。</param>
-    /// <param name="IsSourceBitmap">ソースが <see cref="Bitmap"/> 由来か（複製破棄が必要か）。false の場合は共有参照（破棄しない）。</param>
+    /// <param name="Bitmap">切り出し元の EsBitmap。 未対応・破棄済み・null の場合は null。</param>
+    /// <param name="IsSourceBitmap">ソースが <see cref="Bitmap"/> 由来か（複製破棄が必要か）。 false の場合は共有参照（破棄しない）。</param>
     public readonly record struct Result(EsBitmap? Bitmap, bool IsSourceBitmap);
 
     /// <summary>ソース画像がルーペで対応可能な型（<see cref="Bitmap"/> / <see cref="EsBitmapAvaloniaImage"/>）かどうかを判定する。</summary>
     /// <param name="source">判定するソース画像。</param>
-    /// <returns>対応可能なら true。null は「画像なし」として対応可能、未対応型は false。</returns>
+    /// <returns>対応可能なら true。 null は「画像なし」として対応可能、未対応型は false。</returns>
     /// <remarks>
     /// <see cref="LoupeRenderPipeline"/> の未対応型判定（<see cref="NotSupportedException"/>）を単一所有する（DRY）。<br/>
     /// null は「画像なし」を表すため対応可能（市松模様のみで描画する）として扱う。
@@ -31,8 +31,8 @@ internal static class LoupeSourceResolver
 
     /// <summary>ソース画像から切り出し元の EsBitmap を解決する。</summary>
     /// <param name="source">ルーペのソース画像（<see cref="Bitmap"/> / <see cref="EsBitmapAvaloniaImage"/>）。</param>
-    /// <param name="sourceBitmap">解決した切り出し元。未対応・破棄済み・null の場合は null。</param>
-    /// <returns>破棄済み・未対応型の場合は false（市松模様のみで描画する）。それ以外は true。</returns>
+    /// <param name="sourceBitmap">解決した切り出し元。 未対応・破棄済み・null の場合は null。</param>
+    /// <returns>破棄済み・未対応型の場合は false（市松模様のみで描画する）。 それ以外は true。</returns>
     /// <remarks>
     /// <see cref="Bitmap"/> は複製（<c>ToEsBitmap()</c>）を返し、破棄は呼び出し側が行う（<see cref="Result.IsSourceBitmap"/> = true）。<br/>
     /// <see cref="EsBitmapAvaloniaImage"/> は共有参照を返し、破棄しない（<see cref="Result.IsSourceBitmap"/> = false）。<br/>
@@ -70,7 +70,7 @@ internal static class LoupeSourceResolver
             return new Result(sourceBitmap, IsSourceBitmap: false);
         }
 
-        // 対応可能型は上で全て処理済み。未対応型（IImage の他の実装）は切り出し元を解決せず null を返す。
+        // 対応可能型は上で全て処理済み。 未対応型（IImage の他の実装）は切り出し元を解決せず null を返す。
         return new Result(null, IsSourceBitmap: false);
     }
 }

@@ -50,7 +50,7 @@ public class MainViewModelStateTests
         var name = FileNameTemplate.Generate("img_{yyyy}-{MM}-{dd}_{HH}-{mm}-{ss}.png");
         var after = DateTime.Now;
 
-        // 既定（now 指定なし）は現在日時を使う。秒単位の境界で失敗しないよう前後 1 秒の許容を持つ
+        // 既定（now 指定なし）は現在日時を使う。 秒単位の境界で失敗しないよう前後 1 秒の許容を持つ
         Assert.Matches(@"^img_(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})\.png$", name);
 
         var parsed = DateTime.ParseExact(

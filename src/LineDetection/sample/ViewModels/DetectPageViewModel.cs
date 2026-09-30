@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
-/// <summary>「線分検出」ページの ViewModel。クリップボードの画像からウィンドウ枠となる辺（線分）を検出する。</summary>
+/// <summary>「線分検出」ページの ViewModel。 クリップボードの画像からウィンドウ枠となる辺（線分）を検出する。</summary>
 /// <remarks>
 /// 検出対象の画像・検出結果・ルーペ・ポインタ状態は <see cref="DetectionContext"/> が保持する。<br/>
 /// 本ページ専用のコンテキストを生成し、他のページとは状態を共有しない。<br/>
@@ -46,7 +46,7 @@ public sealed partial class DetectPageViewModel : ObservableObject
     }
 
     /// <summary>クリップボードから取得した画像を表示画像として設定し、選択中の方式で再検出する。</summary>
-    /// <param name="bitmap">クリップボードから取得した画像。null の場合は何もしない。</param>
+    /// <param name="bitmap">クリップボードから取得した画像。 null の場合は何もしない。</param>
     /// <remarks>画像の所有権は <see cref="DetectionContext"/> へ移る（次回の画像更新時に <see cref="DetectionContext.Image"/> を破棄する）。</remarks>
     public void SetPastedImage(Bitmap? bitmap)
         => Context.SetPastedImage(bitmap);

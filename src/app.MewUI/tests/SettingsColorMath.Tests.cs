@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.MewUI.Tests;
 
 /// <summary><see cref="SettingsColorMath"/> の単体テスト（色文字列の解析と整形）。</summary>
 /// <remarks>
-/// 設定は色を <c>#AARRGGBB</c> の文字列で保持する。桁数の違い（6 / 8）・大文字小文字・不正入力を固定する。
+/// 設定は色を <c>#AARRGGBB</c> の文字列で保持する。 桁数の違い（6 / 8）・大文字小文字・不正入力を固定する。
 /// </remarks>
 public class SettingsColorMathTests
 {

@@ -29,7 +29,7 @@ public sealed class DebugLogger : ILogger
     /// <param name="logLevel">ログレベル。</param>
     /// <param name="eventId">イベント ID。</param>
     /// <param name="state">状態。</param>
-    /// <param name="exception">例外（未使用。formatter が含める）。</param>
+    /// <param name="exception">例外（未使用。 formatter が含める）。</param>
     /// <param name="formatter">ログメッセージ整形関数。</param>
     public void Log<TState>(
         LogLevel logLevel,

@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.UIBase;
 /// <summary>キャプチャ設定（<see cref="CaptureSettings"/>）から描画の設定（色）を組み立てる。</summary>
 /// <remarks>
 /// <b>なぜ本層が持つか</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c> / <c>LoupeAppearance</c>）が<br/>
-/// 単一所有する。コアの設定マッパー（<c>FadeMaskDragRectOptionsMapper</c>）は <c>CaptureSessionControl.Core</c> にあり<br/>
+/// 単一所有する。 コアの設定マッパー（<c>FadeMaskDragRectOptionsMapper</c>）は <c>CaptureSessionControl.Core</c> にあり<br/>
 /// 描画の設定を参照できない（Core → UIBase の逆流になる）ため、色の写像は本層が担う。<br/>
 /// <br/>
 /// <b>なぜセッション側の共有層か</b>: 写像元がセッションの設定型（<see cref="CaptureSettings"/>）であるため、<br/>

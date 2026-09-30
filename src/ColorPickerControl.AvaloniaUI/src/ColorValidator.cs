@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 internal static class ColorValidator
 {
     /// <summary>指定された色文字列が有効か判定する。</summary>
-    /// <param name="color">検証対象の色文字列。null は無効。</param>
+    /// <param name="color">検証対象の色文字列。 null は無効。</param>
     /// <returns>有効な色の場合は <see langword="true"/>。</returns>
     /// <remarks>
     /// null は <see cref="ColorString.TryParse(string?, out Color, out double)"/> が false を返すため、

@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Services;
 /// <see cref="Save"/> を明示的に呼び出すまでファイルへの書き込みは行われない。<br/>
 /// <br/>
 /// <b>トリミング / Native AOT 対応</b>: 既定は反射ベースのシリアル化で、トリミング・AOT では<br/>
-/// プロパティが削除されて設定が空になる（実測）。JSON ソース生成コンテキストを注入すると、<br/>
+/// プロパティが削除されて設定が空になる（実測）。 JSON ソース生成コンテキストを注入すると、<br/>
 /// 生成されたメタデータで読み書きするため AOT でも動作する。<br/>
 /// コンテキストは <c>Settings</c> を参照する側のアセンブリ（例: アプリ本体）で定義する必要がある<br/>
 /// （同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
@@ -55,7 +55,7 @@ public sealed class SettingsService : ISettingsService
     }
 
     /// <summary>JSON ソース生成コンテキストを指定して設定管理を初期化する。</summary>
-    /// <param name="context">ソース生成コンテキスト（<c>Settings</c> を含むもの）。null の場合は反射ベース。</param>
+    /// <param name="context">ソース生成コンテキスト（<c>Settings</c> を含むもの）。 null の場合は反射ベース。</param>
     /// <remarks>
     /// トリミング / Native AOT で配布する場合は、必ずコンテキストを渡すこと（反射では設定が空になる）。<br/>
     /// 型情報はコンテキストから直接取り出さず、本クラスのオプション（書式・変換器）を経由して取得する。<br/>
@@ -112,7 +112,7 @@ public sealed class SettingsService : ISettingsService
     }
 
     /// <summary>JSON の書式と変換器を設定したオプションを生成する。</summary>
-    /// <param name="context">ソース生成コンテキスト。null の場合は反射ベース。</param>
+    /// <param name="context">ソース生成コンテキスト。 null の場合は反射ベース。</param>
     /// <returns>生成したオプション。</returns>
     /// <remarks>
     /// 書式（インデント・コメント許容・末尾カンマ許容）と変換器は、ソース生成の有無にかかわらず共通とする<br/>
@@ -134,7 +134,7 @@ public sealed class SettingsService : ISettingsService
             WriteIndented = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
-            // enum は名前で保存する。AOT 対応のためジェネリック版を使う（型ごとに指定する）。
+            // enum は名前で保存する。 AOT 対応のためジェネリック版を使う（型ごとに指定する）。
             Converters =
             {
                 new EsRectIntJsonConverter(),

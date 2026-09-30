@@ -48,7 +48,7 @@ public sealed partial class MarqueeControl
 
             // ウィンドウの非アクティブ化（Alt+Tab 等）でも nudge を終了する。
             // Avalonia のフォーカスは TopLevel 単位で保持されるため、ウィンドウを離れてもコントロールはフォーカスを失わない
-            // （Win32 の WM_KILLFOCUS に相当する契機。MewUI 版のフォーカス喪失による nudge 終了と同じ扱いにする）。
+            // （Win32 の WM_KILLFOCUS に相当する契機。 MewUI 版のフォーカス喪失による nudge 終了と同じ扱いにする）。
             if (topLevel is WindowBase window)
             {
                 _attachedWindow = window;
@@ -119,7 +119,7 @@ public sealed partial class MarqueeControl
     // ラベル（テキスト要素として配置する）
     // ====================================================================
 
-    /// <summary>配置中のラベル要素（背景 + テキスト）。子の末尾側へ置くため常に最上位になる。</summary>
+    /// <summary>配置中のラベル要素（背景 + テキスト）。 子の末尾側へ置くため常に最上位になる。</summary>
     private readonly List<Border> _labels = [];
 
     /// <summary>子要素の配置を確定し、ラベル要素を追加・更新する。</summary>

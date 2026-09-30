@@ -1,7 +1,7 @@
 namespace EsUtil.SaveEvidence.ZoomView;
 
 /// <summary>ズームビューの現在状態（実効ズーム率・Fit 状態・ズーム可否）を表す値オブジェクト。</summary>
-/// <param name="ZoomPercent">実効ズーム率（%）。Fit 中はクランプ済みの Fit 実効倍率を返す（0 にはならない）。</param>
+/// <param name="ZoomPercent">実効ズーム率（%）。 Fit 中はクランプ済みの Fit 実効倍率を返す（0 にはならない）。</param>
 /// <param name="IsFit">Fit 表示中かどうか（内部ズーム率が 0 = 自動）。</param>
 /// <param name="CanZoomIn">ズームイン可能かどうか（画像未設定時は false）。</param>
 /// <param name="CanZoomOut">ズームアウト可能かどうか（画像未設定時は false）。</param>

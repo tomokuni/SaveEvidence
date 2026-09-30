@@ -29,7 +29,7 @@ public readonly record struct FadeMaskDragRectChildValues(
     /// <summary>設定とモードから内包コントロールへ適用する値を解決する。</summary>
     /// <param name="options">設定の単一値。</param>
     /// <param name="mode">動作モード。</param>
-    /// <param name="marqueeAppearance">選択矩形の外観（ホストが与えた現在値。モードから導出する項目だけを上書きする）。null 不可。</param>
+    /// <param name="marqueeAppearance">選択矩形の外観（ホストが与えた現在値。 モードから導出する項目だけを上書きする）。 null 不可。</param>
     /// <returns>内包コントロールへ適用する値。</returns>
     /// <remarks>
     /// 1. モードから表示可否を解決する（判断はコアの <c>FadeMaskDragRectModes</c> が単一所有する）。<br/>

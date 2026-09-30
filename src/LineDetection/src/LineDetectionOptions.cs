@@ -1,17 +1,17 @@
 namespace EsUtil.SaveEvidence.LineDetection;
 
 /// <summary>ロジック方式の線分検出パラメータ（不変値・検証付き）。</summary>
-/// <param name="CannyThreshold1">Canny の低閾値。正の値。</param>
+/// <param name="CannyThreshold1">Canny の低閾値。 正の値。</param>
 /// <param name="CannyThreshold2">Canny の高閾値。<paramref name="CannyThreshold1"/> 以上。</param>
-/// <param name="HoughThreshold">HoughLinesP の投票閾値。正の値。</param>
-/// <param name="MinLineLength">検出する線分の最小長さ（ピクセル）。正の値。</param>
-/// <param name="MaxLineGap">同一線分とみなす最大ギャップ（ピクセル）。0 以上。</param>
-/// <param name="AngleTolerance">水平 / 垂直とみなす角度許容差（度）。0 以上 90 未満。</param>
-/// <param name="ClusterTolerance">辺のクラスタリング許容差（ピクセル）。0 以上。</param>
+/// <param name="HoughThreshold">HoughLinesP の投票閾値。 正の値。</param>
+/// <param name="MinLineLength">検出する線分の最小長さ（ピクセル）。 正の値。</param>
+/// <param name="MaxLineGap">同一線分とみなす最大ギャップ（ピクセル）。 0 以上。</param>
+/// <param name="AngleTolerance">水平 / 垂直とみなす角度許容差（度）。 0 以上 90 未満。</param>
+/// <param name="ClusterTolerance">辺のクラスタリング許容差（ピクセル）。 0 以上。</param>
 /// <param name="MinEdgeSupportRatio">線分に沿ったエッジピクセルの最小割合（0.0〜1.0）。</param>
-/// <param name="ParallelMergeTolerance">矩形の辺に統合する平行線の最大距離（ピクセル）。0 以上。</param>
-/// <param name="CornerToleranceRatio">矩形のコーナー判定の許容差（辺の長さに対する比率）。0 以上。</param>
-/// <param name="OppositeSpanRatio">矩形の対辺の長さの差の許容比率。0 以上。</param>
+/// <param name="ParallelMergeTolerance">矩形の辺に統合する平行線の最大距離（ピクセル）。 0 以上。</param>
+/// <param name="CornerToleranceRatio">矩形のコーナー判定の許容差（辺の長さに対する比率）。 0 以上。</param>
+/// <param name="OppositeSpanRatio">矩形の対辺の長さの差の許容比率。 0 以上。</param>
 /// <remarks>
 /// ロジック方式（Canny + Hough）の検出パラメータを単一の不変値として集約する。<br/>
 /// <see cref="LogicLineDetector"/> が既定値（<see cref="Default"/>）を所有し、不変条件を満たさない値は生成時に例外を投げる。<br/>

@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
 
 /// <summary>全コンポーネントを統括する Facade パターンの窓口として、外部アプリケーションに単一の API を提供する。</summary>
 /// <remarks>
-/// IDisposable を実装する。Dispose 後は全ての公開操作が ObjectDisposedException を投げる。<br/>
+/// IDisposable を実装する。 Dispose 後は全ての公開操作が ObjectDisposedException を投げる。<br/>
 /// StartCaptureAsync / StartCropAsync 実行中に同一インスタンスへ再呼び出しされた場合は無視する（既存のセッションを継続）。<br/>
 /// <br/>
     /// <b>薄い統括者</b>: 状態は MarqueeControl / LoupeControl が保持し、<br/>
@@ -32,7 +32,7 @@ public sealed class CaptureSessionControl : IDisposable
     /// <b>同期型イベント</b>のため、ハンドラの完了後にキャプチャセッションの後続処理（オーナー再表示）が実行される。<br/>
     /// ホストは本イベントの受信時に画像変更（キャプチャ結果の反映）を行うことで、<br/>
     /// 「APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）」の順序を保証できる。<br/>
-    /// 引数はキャプチャ結果（キャンセル時は 0x0 の空結果）。UI スレッドで発行される。
+    /// 引数はキャプチャ結果（キャンセル時は 0x0 の空結果）。 UI スレッドで発行される。
     /// </remarks>
     public event Action<CaptureResult?>? CaptureCompleted;
 
@@ -46,15 +46,15 @@ public sealed class CaptureSessionControl : IDisposable
     /// <remarks>排他規則（片方が実行中なら他方も開始できない）はコアの <see cref="CaptureSessionSlot{TCapture, TCrop}"/> が単一所有する。</remarks>
     private readonly CaptureSessionSlot<SelectionCaptureSession, CropSession> _slot = new();
 
-    /// <summary>内部ロガー（インスタンス単位。複数インスタンスで混線しない）。</summary>
+    /// <summary>内部ロガー（インスタンス単位。 複数インスタンスで混線しない）。</summary>
     private readonly ILogger _log;
 
     /// <summary>ネイティブウィンドウ操作サービス（キャプチャ除外・退避等）。</summary>
     private readonly IWindowService _windowService;
 
     /// <summary>インスタンスを生成する。</summary>
-    /// <param name="initialSettings">初期設定。null メンバーはデフォルト値が使用される。</param>
-    /// <param name="logger">内部ログの転送先。null の場合はログを出力しない。</param>
+    /// <param name="initialSettings">初期設定。 null メンバーはデフォルト値が使用される。</param>
+    /// <param name="logger">内部ログの転送先。 null の場合はログを出力しない。</param>
     /// <exception cref="ArgumentOutOfRangeException">設定値が許容範囲外の場合。</exception>
     public CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)
     {
@@ -92,10 +92,10 @@ public sealed class CaptureSessionControl : IDisposable
         }
     }
 
-    /// <summary>選択キャプチャ（ScreenSelect / WindowSelect / AreaSelect）を開始する。UI スレッドから呼び出すこと。</summary>
+    /// <summary>選択キャプチャ（ScreenSelect / WindowSelect / AreaSelect）を開始する。 UI スレッドから呼び出すこと。</summary>
     /// <param name="type">キャプチャ種別。</param>
     /// <param name="owner">オーナーウィンドウ（スクリーン情報の取得元・キャプチャ除外設定）。</param>
-    /// <returns>キャプチャ結果。キャンセル時は 0x0 の空の結果。</returns>
+    /// <returns>キャプチャ結果。 キャンセル時は 0x0 の空の結果。</returns>
     /// <remarks>
     /// 実行中に同一インスタンスへ再呼び出しされた場合は null を返す（既存セッションを継続）。<br/>
     /// DPI スケーリング係数はオーナーウィンドウのスクリーン情報から算出する。
@@ -132,14 +132,14 @@ public sealed class CaptureSessionControl : IDisposable
         }
     }
 
-    /// <summary>切出し（Crop）を開始する。UI スレッドから呼び出すこと。</summary>
-    /// <param name="cropView">切り出しを行う高レベル複合コントロール（ズーム + 領域選択 + ルーペを内包）。表示中の画像が切り出しの対象になる。</param>
+    /// <summary>切出し（Crop）を開始する。 UI スレッドから呼び出すこと。</summary>
+    /// <param name="cropView">切り出しを行う高レベル複合コントロール（ズーム + 領域選択 + ルーペを内包）。 表示中の画像が切り出しの対象になる。</param>
     /// <param name="hostWindow">ホストウィンドウ。</param>
-    /// <returns>確定時は元画像上の切り出し範囲（コア型）、キャンセル時は 0x0 の空矩形。開始できなかった場合は null。</returns>
+    /// <returns>確定時は元画像上の切り出し範囲（コア型）、キャンセル時は 0x0 の空矩形。 開始できなかった場合は null。</returns>
     /// <exception cref="ArgumentException"><paramref name="cropView"/> が表示している画像のサイズが 0 の場合。</exception>
     /// <remarks>
     /// 切り出しの対象画像は <paramref name="cropView"/> が表示している画像（<see cref="CropViewControl.Source"/>）から解決する<br/>
-    /// （画像を別引数で受け取らない。表示している画像と切り出す画像を二重所有しない）。<br/>
+    /// （画像を別引数で受け取らない。 表示している画像と切り出す画像を二重所有しない）。<br/>
     /// 画像が設定されていない場合と表示アダプタ（<c>EsBitmapAvaloniaImage</c>）以外が設定されている場合は、<br/>
     /// 開始できなかったことを null の結果で表す（実行中の再呼び出しと同じ表現）。<br/>
     /// 切り出しの境界（元画像の範囲）は開始時に固定せず、確定時に<b>現在の画像</b>から都度解決する<br/>
@@ -226,7 +226,7 @@ public sealed class CaptureSessionControl : IDisposable
 
     /// <summary>進行中の切出し（Crop）を現在の選択矩形で確定する（Enter キー相当）。</summary>
     /// <remarks>
-    /// Crop 実行中のみ有効。選択確定時のみ Marquee の <see cref="MarqueeControl.RequestConfirm"/> に委譲する。<br/>
+    /// Crop 実行中のみ有効。 選択確定時のみ Marquee の <see cref="MarqueeControl.RequestConfirm"/> に委譲する。<br/>
     /// Capture 実行中 / 操作なしでは何もしない（Capture の確定はユーザー操作で完結する）。
     /// </remarks>
     public void Confirm()
@@ -239,7 +239,7 @@ public sealed class CaptureSessionControl : IDisposable
     /// <remarks>
     /// ビューポート実装（ScrollViewer / RenderTransform ベースのパン・ズーム等）に依存せず、<br/>
     /// ホスト（上位 AP）がプレビューのビューポート変化を検知した際に呼び出す。<br/>
-    /// Crop 実行中のみ有効（未実行時は何もしない）。暗転マスク・選択枠・ルーペがビューポート変化に追従する。
+    /// Crop 実行中のみ有効（未実行時は何もしない）。 暗転マスク・選択枠・ルーペがビューポート変化に追従する。
     /// </remarks>
     public void NotifyCropViewportChanged()
     {

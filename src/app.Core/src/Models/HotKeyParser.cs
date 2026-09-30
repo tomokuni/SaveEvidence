@@ -5,7 +5,7 @@ namespace EsUtil.SaveEvidence.Models;
 
 /// <summary>ホットキー文字列を解析する静的ユーティリティ。</summary>
 /// <remarks>
-/// "Ctrl + Shift + Q", "Ctrl+Shift+Q" 等の形式に対応する。大文字小文字は区別しない。<br/>
+/// "Ctrl + Shift + Q", "Ctrl+Shift+Q" 等の形式に対応する。 大文字小文字は区別しない。<br/>
 /// View（SettingsPage）から分離した UI 非依存の純粋ロジックであり、ヘッドレスなしの <c>[Fact]</c> で並列テストできる。
 /// </remarks>
 public static class HotKeyParser
@@ -15,8 +15,8 @@ public static class HotKeyParser
     /// <param name="setting">変換結果。</param>
     /// <returns>解釈に成功した場合は true。</returns>
     /// <remarks>
-    /// "Ctrl + Shift + Q", "Ctrl+Shift+Q" 等の形式に対応する。大文字小文字は区別しない。<br/>
-    /// 最低 1 つの修飾キーが必要。キー名が解釈できない場合は false。
+    /// "Ctrl + Shift + Q", "Ctrl+Shift+Q" 等の形式に対応する。 大文字小文字は区別しない。<br/>
+    /// 最低 1 つの修飾キーが必要。 キー名が解釈できない場合は false。
     /// </remarks>
     public static bool TryParse(string text, out HotKeySetting setting)
     {

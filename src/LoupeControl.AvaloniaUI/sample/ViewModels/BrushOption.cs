@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.Loupe.Sample.ViewModels;
 public sealed record BrushOption(string Name, IBrush? Brush)
 {
     /// <summary>選択肢の色を取得する。</summary>
-    /// <value>単色ブラシの色。「なし」（null）・単色以外のブラシの場合は null。</value>
+    /// <value>単色ブラシの色。 「なし」（null）・単色以外のブラシの場合は null。</value>
     /// <remarks>ルーペの外観は UI 非依存の色型で渡すため、ブラシから色を取り出す。</remarks>
     public Color? Color => (Brush as ISolidColorBrush)?.Color;
 
@@ -55,7 +55,7 @@ public static class BrushOptions
     /// <summary>オレンジ。</summary>
     public static BrushOption Orange { get; } = new("オレンジ", Brushes.Orange);
 
-    /// <summary>画像外（ペーストボード）の既定色（#CCCCCC。従来の市松模様 B と同じ濃さ）。</summary>
+    /// <summary>画像外（ペーストボード）の既定色（#CCCCCC。 従来の市松模様 B と同じ濃さ）。</summary>
     public static BrushOption Pasteboard { get; } = new("#CCCCCC", new SolidColorBrush(Color.FromRgb(0xCC, 0xCC, 0xCC)));
 
     /// <summary>全選択肢。</summary>

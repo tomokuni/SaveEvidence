@@ -4,7 +4,7 @@ using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 
-/// <summary>「データ検証」ページのコードビハインド。検出結果リストのホバー・クリックを担う。</summary>
+/// <summary>「データ検証」ページのコードビハインド。 検出結果リストのホバー・クリックを担う。</summary>
 /// <remarks>
 /// 検出結果リストの行のホバー/クリックは <see cref="DetectionContext.SetLineHover"/> / <see cref="DetectionContext.ToggleSelect"/> へ委譲する。
 /// </remarks>

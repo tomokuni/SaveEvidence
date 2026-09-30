@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 /// <summary>ColorView（カラーピッカー）テーマのアプリケーションへの自動適用を管理する。</summary>
 /// <remarks>
 /// Flyout / Popup はオーバーレイレイヤーに表示されるため、コントロールのローカル Styles では
-/// ColorView へテーマが伝播しない。そのため <see cref="Application.Current"/> の Styles へ追加する。<br/>
+/// ColorView へテーマが伝播しない。 そのため <see cref="Application.Current"/> の Styles へ追加する。<br/>
 /// - アプリ側で既に ColorView の StyleInclude が指定されている場合は追加しない（明示指定を優先）。<br/>
 /// - 未指定の場合のみ、内包テーマ（Fluent.xaml）を <see cref="AvaloniaXamlLoader.Load(Uri, Uri)"/> で
 ///   ロードしてデフォルトとして一度だけ追加する。<br/>
@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 /// <br/>
 /// <b>Native AOT</b>: 実行時の XAML 解決ができないため、内包テーマのロードは
 /// <c>No precompiled XAML found</c> で失敗する（ホストはアプリの XAML で ColorView テーマを
-/// <c>StyleInclude</c> として取り込むこと。起動は継続し、本クラスは何もしない）。<br/>
+/// <c>StyleInclude</c> として取り込むこと。 起動は継続し、本クラスは何もしない）。<br/>
 /// <br/>
 /// <b>適用パターン</b>: シングルトン相当の静的管理（適用済みフラグと<b>二重チェックロック</b>で二重適用を防止）。<br/>
 /// <br/>
@@ -48,11 +48,11 @@ internal static class ColorViewThemeManager
         => EnsureAppliedCore(Application.Current);
 
     /// <summary>ColorView テーマを指定アプリケーションへ自動適用する（デフォルト内包・明示指定を優先）。</summary>
-    /// <param name="app">対象アプリケーション。null の場合は何もしない。</param>
+    /// <param name="app">対象アプリケーション。 null の場合は何もしない。</param>
     /// <remarks>
     /// - 適用済みフラグをロック外で先判定し、true なら即座に終了（Flyout 表示毎のロック取得を回避）。<br/>
     /// - アプリ側で明示的に ColorView テーマ（StyleInclude）が指定されている場合はそれに従う<br/>
-    ///   （内包テーマは追加しない。フラグは立てず、後付けの明示指定も尊重する）。<br/>
+    ///   （内包テーマは追加しない。 フラグは立てず、後付けの明示指定も尊重する）。<br/>
     /// - 未指定の場合のみ、内包テーマを一度だけ追加する（ロック内で再確認する二重チェックロック）。<br/>
     /// - デザインモード / Application 未初期化時は何もしない。
     /// </remarks>
@@ -63,7 +63,7 @@ internal static class ColorViewThemeManager
             return;
         }
 
-        // 適用済みならロックを取得せず即座に終了する（高速パス。volatile 読み取り）
+        // 適用済みならロックを取得せず即座に終了する（高速パス。 volatile 読み取り）
         if (s_applied)
         {
             return;

@@ -20,7 +20,7 @@ public static class AvaloniaTextMeasure
     private static readonly SolidColorBrush s_brush = new(Colors.White);
 
     /// <summary>テキストの実寸を測る。</summary>
-    /// <param name="text">測定するテキスト。null 不可。</param>
+    /// <param name="text">測定するテキスト。 null 不可。</param>
     /// <param name="fontSize">フォントサイズ（DIP）。</param>
     /// <returns>テキストの実寸（DIP）。</returns>
     /// <remarks><see cref="FormattedText"/> は実寸を 2 つの double でしか公開しないため、境界でコアのサイズ型へ組み立てる。</remarks>

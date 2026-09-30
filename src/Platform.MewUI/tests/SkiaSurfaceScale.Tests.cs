@@ -7,7 +7,7 @@ namespace EsUtil.Platform.MewUI.Tests;
 /// <summary><see cref="SkiaSurfaceScale"/> のテスト（描画面と表示領域から実効倍率を求める）。</summary>
 /// <remarks>
 /// DPI の通知は追加直後のコントロールへ届かないことがあるため、描画面（物理ピクセル）と<br/>
-/// 表示領域（DIP）の比から倍率を求める。ここが誤ると図形が 100% で描かれ、画像と重ねたときにずれる。
+/// 表示領域（DIP）の比から倍率を求める。 ここが誤ると図形が 100% で描かれ、画像と重ねたときにずれる。
 /// </remarks>
 public sealed class SkiaSurfaceScaleTests
 {

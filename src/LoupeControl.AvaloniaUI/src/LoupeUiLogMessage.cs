@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 internal static partial class LoupeUiLogMessage
 {
     /// <summary>拡大元画像の変更ログ（同値の再設定では出力しない）。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の拡大元画像（未設定は null）。</param>
     /// <param name="newValue">変更後の拡大元画像（未設定は null）。</param>
     /// <remarks>
@@ -34,7 +34,7 @@ internal static partial class LoupeUiLogMessage
     }
 
     /// <summary>設定変更のログ。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値（整形済み）。</param>
     /// <param name="newValue">変更後の値（整形済み）。</param>
@@ -43,7 +43,7 @@ internal static partial class LoupeUiLogMessage
     private static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
 
     /// <summary>ルーペ描画の例外エラーログ。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="exception">発生した例外。</param>
     /// <remarks>
     /// LogLevel: Error<br/>出力書式: <c>[LoupeControl.AvaloniaUI] Update exception</c>（例外スタックトレース付き）<br/>
@@ -53,8 +53,8 @@ internal static partial class LoupeUiLogMessage
     public static partial void LogUpdateError(this ILogger logger, Exception exception);
 
     /// <summary>ソース画像の寸法をログ用の文字列（<c>幅x高さ</c>）へ整形する。</summary>
-    /// <param name="source">対象のソース画像。null は「画像なし」。</param>
-    /// <returns><c>幅x高さ</c> 形式の文字列。null・寸法取得不能（破棄済み）は <c>null</c> または型名。</returns>
+    /// <param name="source">対象のソース画像。 null は「画像なし」。</param>
+    /// <returns><c>幅x高さ</c> 形式の文字列。 null・寸法取得不能（破棄済み）は <c>null</c> または型名。</returns>
     /// <remarks>
     /// <see cref="IImage.Size"/> の参照は破棄済みビットマップで例外になるため、<br/>
     /// 例外時は型名を返す（ログ出力で例外を発生させない）。

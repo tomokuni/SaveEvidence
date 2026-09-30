@@ -34,7 +34,7 @@ internal static class CapturePage
     /// <summary>ロガー（Avalonia 版と同じログファイルへ出力する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(CapturePage));
 
-    /// <summary>自動切り出しの検出矩形の枠線の太さ（DIP。Avalonia 版と同じ）。</summary>
+    /// <summary>自動切り出しの検出矩形の枠線の太さ（DIP。 Avalonia 版と同じ）。</summary>
     private const double AutoCropBorderThickness = 2;
 
     /// <summary>ツールバーのアイコンの一辺（DIP）。</summary>
@@ -43,7 +43,7 @@ internal static class CapturePage
     /// <summary>ツールバーのアイコンを生成する解像度（ピクセル）。</summary>
     private const int IconRasterSize = 32;
 
-    /// <summary>メニューアイコン（ハンバーガー）の大きさ（半径。DIP）。</summary>
+    /// <summary>メニューアイコン（ハンバーガー）の大きさ（半径。 DIP）。</summary>
     private const double MenuGlyphSize = 6;
 
     /// <summary>ズームスライダの最小値（%）。</summary>
@@ -78,17 +78,17 @@ internal static class CapturePage
     /// <summary>カーソルがプレビュー外にあるときのルーペとプレビューの余白（DIP）。</summary>
     private const double DefaultMargin = 16;
 
-    /// <summary>拡大率メニューの選択肢（%。0 = 自動は別途追加する）。</summary>
+    /// <summary>拡大率メニューの選択肢（%。 0 = 自動は別途追加する）。</summary>
     /// <remarks>Avalonia 版のフライアウトと同じ段階を使う。</remarks>
     private static readonly double[] s_zoomMenuLevels = [10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
 
-    /// <summary>自動切り出しの検出矩形の枠線色（水色・不透明。Avalonia 版と同じ）。</summary>
+    /// <summary>自動切り出しの検出矩形の枠線色（水色・不透明。 Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropBorder = System.Drawing.Color.FromArgb(255, 0, 191, 255);
 
-    /// <summary>自動切り出しの検出矩形の枠線色（ホバー中・赤・不透明。Avalonia 版と同じ）。</summary>
+    /// <summary>自動切り出しの検出矩形の枠線色（ホバー中・赤・不透明。 Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropHoverBorder = System.Drawing.Color.FromArgb(255, 255, 59, 48);
 
-    /// <summary>自動切り出しの検出矩形の塗り色（ホバー中・赤 16%。Avalonia 版と同じ）。</summary>
+    /// <summary>自動切り出しの検出矩形の塗り色（ホバー中・赤 16%。 Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropHoverFill = System.Drawing.Color.FromArgb(40, 255, 59, 48);
 
     /// <summary>自動切り出しのホバー強調に使う外観（内側の塗りと枠線）。</summary>
@@ -179,10 +179,10 @@ internal static class CapturePage
             }
         };
 
-        // ── メニュー（☰ の下へ出すプルダウン。Avalonia 版の MenuFlyout に相当）──
+        // ── メニュー（☰ の下へ出すプルダウン。 Avalonia 版の MenuFlyout に相当）──
         var menuPanel = BuildMenu(viewModel, services, captureSession);
 
-        // ── 拡大率メニュー（% 表示のクリックで出す。Avalonia 版のフライアウトに相当）──
+        // ── 拡大率メニュー（% 表示のクリックで出す。 Avalonia 版のフライアウトに相当）──
         var zoomMenu = BuildZoomMenu(crop);
 
         // テーマ変更時に描き直すアイコン（画像と元の SVG ファイル名）
@@ -282,7 +282,7 @@ internal static class CapturePage
             .Spacing(4)
             .Children(pointerLabel, imageSizeLabel, saveStatusLabel, savedFileLabel, messageLabel);
 
-        // 右: 拡大率（⊖ / ⊕ / Fit / % 表示。% はクリックで拡大率メニューを出す）
+        // 右: 拡大率（⊖ / ⊕ / Fit / % 表示。 % はクリックで拡大率メニューを出す）
         var zoomOut = StatusIconButton("ic_fluent_subtract_circle_24_regular.svg", "ズームアウト", crop.ZoomOut, iconImages);
         zoomOut.BindIsEnabled(canZoomOut);
         var zoomIn = StatusIconButton("ic_fluent_add_circle_24_regular.svg", "ズームイン", crop.ZoomIn, iconImages);
@@ -304,7 +304,7 @@ internal static class CapturePage
         var zoomLabel = new TextBlock().Text("拡大率:").FontSize(AppStyles.StatusFontSize);
         zoomLabel.VerticalAlignment = VerticalAlignment.Center;
 
-        // ズームスライダ（10〜500%）。Avalonia 版と同じ範囲・幅・高さを使う
+        // ズームスライダ（10〜500%）。 Avalonia 版と同じ範囲・幅・高さを使う
         zoomSlider = new Slider
         {
             Minimum = ZoomSliderMinimum,
@@ -362,7 +362,7 @@ internal static class CapturePage
         var status = new Grid().Columns("*").Rows("Auto");
         status.Add(statusGrid);
 
-        // ツールバー / プレビュー（残余） / ステータスの 3 段。余白は Avalonia 版と同じく付けない
+        // ツールバー / プレビュー（残余） / ステータスの 3 段。 余白は Avalonia 版と同じく付けない
         var statusBar = new Border()
             .Padding(AppStyles.StatusPaddingX, AppStyles.StatusPaddingY)
             .StyleName(AppStyles.StatusBar)
@@ -638,14 +638,14 @@ internal static class CapturePage
         // 入力を奪わない（IsHitTestVisible = false）ため、ズームビューのホイール・ドラッグ・ホバーはそのまま働く。
         var autoCropHighlight = new MarqueeControl { IsHitTestVisible = false };
 
-        // ホバー中の検出矩形の強調を更新する（矩形は DIP 座標へ変換して渡す。パン・ズームのたびに位置が変わる）。
+        // ホバー中の検出矩形の強調を更新する（矩形は DIP 座標へ変換して渡す。 パン・ズームのたびに位置が変わる）。
         // 強調の描画は Marquee の外観（内側の塗り・枠線）とハイライト矩形が単一所有する。
         void UpdateAutoCropHighlight()
         {
             var hovered = viewModel.IsAutoCropActive ? viewModel.HoveredRect : null;
             if (hovered is not { } target)
             {
-                // ハイライトなし（外側・内側とも描かない。サイズ・座標ラベルも表示しない）
+                // ハイライトなし（外側・内側とも描かない。 サイズ・座標ラベルも表示しない）
                 autoCropHighlight.Appearance = s_autoCropIdleAppearance;
                 autoCropHighlight.HighlightRect = null;
                 return;
@@ -702,7 +702,7 @@ internal static class CapturePage
         AppStyles.ThemeChanged += () => ApplyCheckerboard(cropView, settings);
 
         // マウス移動はヒットテスト対象の要素（ズームビュー）だけが受け取るため、ズームビューへ購読する
-        // （祖先の CropViewControl へは移動イベントが届かない）。ズームビューはプレビュー領域全体を占めるため、
+        // （祖先の CropViewControl へは移動イベントが届かない）。 ズームビューはプレビュー領域全体を占めるため、
         // 座標系は CropViewControl と一致する。
         var zoomView = cropView.ZoomView;
 
@@ -761,7 +761,7 @@ internal static class CapturePage
             }
         };
 
-        // 撮影・切り出しの Facade。撮影と切り出しの排他（同時に 1 つだけ）とセッションの寿命を単一所有する。
+        // 撮影・切り出しの Facade。 撮影と切り出しの排他（同時に 1 つだけ）とセッションの寿命を単一所有する。
         // ログは Facade 自身のカテゴリで記録する（ページのログと混ざらないようにする）
         captureSession = new CaptureSessionControl(
             cropView,
@@ -793,7 +793,7 @@ internal static class CapturePage
     /// <summary>マウスポインタ位置のドメイン座標（画像ピクセル）をステータスバーへ表示する。</summary>
     /// <param name="viewModel">アプリのメイン ViewModel（表示文字列の保持元）。</param>
     /// <param name="view">プレビュー（座標変換と画像矩形の取得元）。</param>
-    /// <param name="cursorDip">カーソル位置（プレビューのローカル DIP）。null の場合は "-" を表示する。</param>
+    /// <param name="cursorDip">カーソル位置（プレビューのローカル DIP）。 null の場合は "-" を表示する。</param>
     /// <remarks>
     /// 1. 画像が無い・カーソルが無い場合は "-" を表示する。<br/>
     /// 2. カーソルが画像の表示矩形の外にある場合は "-" を表示する（画像外の余白を座標として扱わない）。<br/>
@@ -827,7 +827,7 @@ internal static class CapturePage
     /// <param name="viewModel">アプリのメイン ViewModel（検出矩形の保持元）。</param>
     /// <param name="view">プレビュー（座標変換と画像矩形の取得元）。</param>
     /// <param name="cursorDip">カーソル位置（プレビューのローカル DIP）。</param>
-    /// <returns>カーソル位置を含む矩形（面積が最小）。画像外・矩形なしの場合は null。</returns>
+    /// <returns>カーソル位置を含む矩形（面積が最小）。 画像外・矩形なしの場合は null。</returns>
     /// <remarks>
     /// 1. 画像が無い場合は null を返す。<br/>
     /// 2. カーソルが画像の表示矩形の外にある場合は null を返す（画像外の余白を座標として扱わない）。<br/>

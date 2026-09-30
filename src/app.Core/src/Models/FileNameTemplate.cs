@@ -46,7 +46,7 @@ public sealed partial class FileNameTemplate
     /// テンプレート内の数値はそのまま使用される（事前に IncrementRightmostNumber で更新済みであること）。
     /// </summary>
     /// <param name="template">テンプレート文字列</param>
-    /// <param name="now">置換に使う日時。null（既定）の場合は現在日時を使う。</param>
+    /// <param name="now">置換に使う日時。 null（既定）の場合は現在日時を使う。</param>
     /// <returns>生成されたファイル名</returns>
     /// <remarks>
     /// 日時を引数で受け取るのは、呼び出し側が時刻を固定して結果を再現できるようにするためである<br/>
@@ -64,7 +64,7 @@ public sealed partial class FileNameTemplate
     /// <see cref="System.Numerics.BigInteger"/> として扱う。
     /// </summary>
     /// <param name="text">置換対象の文字列</param>
-    /// <returns>置換後の文字列。数値が見つからない場合は元の文字列をそのまま返す。</returns>
+    /// <returns>置換後の文字列。 数値が見つからない場合は元の文字列をそのまま返す。</returns>
     /// <example>"screenshot_05.png" → "screenshot_06.png"</example>
     public static string IncrementRightmostNumber(string text)
     {

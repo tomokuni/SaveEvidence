@@ -1,13 +1,13 @@
 # ZoomViewControl.Core 外部機能仕様書
 
-`ZoomViewControl.Core` は UI フレームワーク非依存のズーム・パンロジックを提供します。**状態と判断は `ZoomViewSession` が単一所有**し、UI 層は入力の変換・効果の適用・描画だけを担います。
+`ZoomViewControl.Core` は UI フレームワーク非依存のズーム・パンロジックを提供します。 **状態と判断は `ZoomViewSession` が単一所有**し、UI 層は入力の変換・効果の適用・描画だけを担います。
 
 ## 公開 API の可視性
 
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
 | `ZoomViewSession` | `public` | 任意（UI 実装が状態と判断を委譲する） |
-| `ZoomConfig` | `public` | 任意（本コアの拡張点。ホストがズーム範囲・倍率・レベル集合を指定する） |
+| `ZoomConfig` | `public` | 任意（本コアの拡張点。 ホストがズーム範囲・倍率・レベル集合を指定する） |
 | `ZoomState` | `public` | 任意（通知する 4 値） |
 | `ZoomFeedback` | `public` | 任意（UI が適用する効果） |
 | `ZoomNotice` / `ZoomNoticeKind` | `public` | 任意（セッションから UI への通知） |
@@ -42,14 +42,14 @@
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `SetContent` | `ZoomFeedback SetContent(bool hasSource, EsSize contentSize)` | コンテンツ（画像）の設定。Fit 表示へリセットする |
-| `SetViewport` | `ZoomFeedback SetViewport(EsSize viewportSize)` | ビューポートのサイズ。Fit キャッシュを常に無効化する |
+| `SetContent` | `ZoomFeedback SetContent(bool hasSource, EsSize contentSize)` | コンテンツ（画像）の設定。 Fit 表示へリセットする |
+| `SetViewport` | `ZoomFeedback SetViewport(EsSize viewportSize)` | ビューポートのサイズ。 Fit キャッシュを常に無効化する |
 | `SetCenterAlign` | `ZoomFeedback SetCenterAlign(bool centerAlign)` | 中央寄せ／左上寄せ（同値なら何もしない） |
 | `SetAppearance` | `ZoomFeedback SetAppearance(ZoomViewAppearance appearance)` | 外観（同値なら何もしない） |
 | `ApplyConfig` | `ZoomFeedback ApplyConfig(ZoomConfig config)` | 設定の反映（可否のキャッシュを破棄する） |
 | `SetFixedZoom` | `ZoomFeedback SetFixedZoom(double zoomPercent)` | 実効ズーム率の設定（0 以下は無視、範囲へクランプ、ズーム中心を維持） |
-| `SetZoom` | `ZoomFeedback SetZoom(double zoomPercent, EsPoint? center = null)` | 内部ズーム率の設定（0 以下は Fit。ズーム中心を維持） |
-| `SetOffset` | `ZoomFeedback SetOffset(EsVector offset)` | パン位置の設定（クランプ。同値なら何もしない） |
+| `SetZoom` | `ZoomFeedback SetZoom(double zoomPercent, EsPoint? center = null)` | 内部ズーム率の設定（0 以下は Fit。 ズーム中心を維持） |
+| `SetOffset` | `ZoomFeedback SetOffset(EsVector offset)` | パン位置の設定（クランプ。 同値なら何もしない） |
 | `PanBy` | `ZoomFeedback PanBy(EsVector delta)` | コンテンツ座標の移動量でパン |
 | `PanByWheel` | `ZoomFeedback PanByWheel(EsVector delta, bool shift)` | ホイールの回転量でパン（実効倍率で除す） |
 | `Press` / `Move` / `Release` | `ZoomFeedback Press(EsPoint position)` ほか | grab 方式のパン開始・追従・終了 |
@@ -64,17 +64,17 @@
 
 ### 通知
 
-`Notified`（`EventHandler<ZoomNotice>`）が `ZoomChanged`（`ZoomState` を運ぶ）と `ViewportChanged`（画像表示矩形を運ぶ）を送ります。UI 層は自 UI の公開イベントへ転送するだけです。
+`Notified`（`EventHandler<ZoomNotice>`）が `ZoomChanged`（`ZoomState` を運ぶ）と `ViewportChanged`（画像表示矩形を運ぶ）を送ります。 UI 層は自 UI の公開イベントへ転送するだけです。
 
 ## `ZoomViewAppearance`（外観）
 
-下地色・市松模様（タイルサイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を単一所有します。描画の可否（`HasCheckerboard` / `HasScrollBarTrack`）と、市松模様を描く範囲（`ComputeCheckerArea`。画像の表示矩形とビューポートの交差）・明色タイル矩形（`ComputeLightTileRects`）、タイルサイズの実効値（`ResolveCheckerTileSize`。0 以下 = 描かない / 1 は下限 2 へ切り上げ）も本型が持ちます。色は UI 非依存の `System.Drawing.Color` です。
+下地色・市松模様（タイルサイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を単一所有します。 描画の可否（`HasCheckerboard` / `HasScrollBarTrack`）と、市松模様を描く範囲（`ComputeCheckerArea`。 画像の表示矩形とビューポートの交差）・明色タイル矩形（`ComputeLightTileRects`）、タイルサイズの実効値（`ResolveCheckerTileSize`。 0 以下 = 描かない / 1 は下限 2 へ切り上げ）も本型が持ちます。 色は UI 非依存の `System.Drawing.Color` です。
 
-**市松模様は画像の透明部分の背景**であり、描く範囲は画像の表示矩形の内側に限ります（画像の外＝ペーストボードは下地色 `BackgroundColor` の単色になります）。タイルの格子はビューポートの原点 `(0, 0)` を基準にするため、画像をパンしても模様が這いません。範囲の外へはみ出すタイルは範囲で切り取った矩形として返します（呼び出し側は描画先をクリップする必要がありません）。
+**市松模様は画像の透明部分の背景**であり、描く範囲は画像の表示矩形の内側に限ります（画像の外＝ペーストボードは下地色 `BackgroundColor` の単色になります）。 タイルの格子はビューポートの原点 `(0, 0)` を基準にするため、画像をパンしても模様が這いません。 範囲の外へはみ出すタイルは範囲で切り取った矩形として返します（呼び出し側は描画先をクリップする必要がありません）。
 
 ## `ZoomLogMessage` / `ZoomLogFormat`（ログ）
 
-ズーム操作の実行前後を Information で記録します。書式は両 UI で同一です（例: `[ZoomIn] 50% -> 62%`）。**変更前の値は実効ズーム率**（Fit 中は実効倍率）を記録し、丸めは `ZoomLogFormat.Percent` が単一所有します。
+ズーム操作の実行前後を Information で記録します。 書式は両 UI で同一です（例: `[ZoomIn] 50% -> 62%`）。 **変更前の値は実効ズーム率**（Fit 中は実効倍率）を記録し、丸めは `ZoomLogFormat.Percent` が単一所有します。
 
 ## `ZoomConfig`（設定値）
 
@@ -82,10 +82,10 @@
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `MinZoom` | `double` | ズーム率の最小値（固定倍率。%）。0 より大きい |
-| `MaxZoom` | `double` | ズーム率の最大値（固定倍率。%）。`MinZoom` 以上 |
-| `WheelFactor` | `double` | Ctrl+ホイールのズーム倍率。1 より大きい |
-| `ButtonZoomLevels` | `IReadOnlyList<double>` | ⊖⊕ ボタンのズームレベル集合。非空・昇順・`MinZoom`〜`MaxZoom` の範囲内 |
+| `MinZoom` | `double` | ズーム率の最小値（固定倍率。 %）。 0 より大きい |
+| `MaxZoom` | `double` | ズーム率の最大値（固定倍率。 %）。 `MinZoom` 以上 |
+| `WheelFactor` | `double` | Ctrl+ホイールのズーム倍率。 1 より大きい |
+| `ButtonZoomLevels` | `IReadOnlyList<double>` | ⊖⊕ ボタンのズームレベル集合。 非空・昇順・`MinZoom`〜`MaxZoom` の範囲内 |
 | `Default` | `ZoomConfig`（static） | 既定値（MinZoom=10 / MaxZoom=500 / WheelFactor=1.1 / 23 段階） |
 | `ZoomConfig()` | コンストラクタ | 既定値で生成する |
 | `ZoomConfig(double, double, double, IReadOnlyList<double>)` | コンストラクタ | 全プロパティを指定して生成する（検証付き） |
@@ -104,10 +104,10 @@
 
 | メソッド | 説明 |
 | --- | --- |
-| `NextLevel(double current, double fitZoom, ZoomConfig? config = null)` | ズームインの次のレベル。移動先がなければ null。Fit 実効倍率がレベルの間に挟まる場合はそれを経由する |
-| `PrevLevel(double current, double fitZoom, ZoomConfig? config = null)` | ズームアウトの前のレベル。移動先がなければ null |
-| `WheelZoomIn(double current, double fitZoom, ZoomConfig? config = null)` | Ctrl+ホイールのズームイン倍率（`Round(現在 × WheelFactor)`、範囲にクランプ）。移動不可は null |
-| `WheelZoomOut(double current, double fitZoom, ZoomConfig? config = null)` | Ctrl+ホイールのズームアウト倍率。移動不可は null |
+| `NextLevel(double current, double fitZoom, ZoomConfig? config = null)` | ズームインの次のレベル。 移動先がなければ null。 Fit 実効倍率がレベルの間に挟まる場合はそれを経由する |
+| `PrevLevel(double current, double fitZoom, ZoomConfig? config = null)` | ズームアウトの前のレベル。 移動先がなければ null |
+| `WheelZoomIn(double current, double fitZoom, ZoomConfig? config = null)` | Ctrl+ホイールのズームイン倍率（`Round(現在 × WheelFactor)`、範囲にクランプ）。 移動不可は null |
+| `WheelZoomOut(double current, double fitZoom, ZoomConfig? config = null)` | Ctrl+ホイールのズームアウト倍率。 移動不可は null |
 | `CanZoomIn(double current, double fitZoom, ZoomConfig? config = null)` | ズームイン可能か（`NextLevel` が null でないか） |
 | `CanZoomOut(double current, double fitZoom, ZoomConfig? config = null)` | ズームアウト可能か（`PrevLevel` が null でないか） |
 | `BuildAvailability(double current, double fitZoom, ZoomConfig config, bool hasSource)` | ズーム可否（`CanZoomIn` / `CanZoomOut`）をまとめて計算する |
@@ -118,12 +118,12 @@
 
 | メソッド | 説明 |
 | --- | --- |
-| `FitScale(EsSize imageSize, EsSize viewportSize)` | Fit 表示時の実効スケール（Uniform。幅・高さのスケールの小さい方） |
+| `FitScale(EsSize imageSize, EsSize viewportSize)` | Fit 表示時の実効スケール（Uniform。 幅・高さのスケールの小さい方） |
 | `FitZoomPercent(EsSize imageSize, EsSize viewportSize)` | Fit 実効倍率（%）= `FitScale × 100` |
 | `ComputeEffectiveScale(double zoomPercent, EsSize imageSize, EsSize viewportSize)` | 現在の表示に使用する実効スケール（固定倍率は `zoomPercent / 100`、Fit は `FitScale`） |
-| `MaxCentered(double displaySize, double viewportSize, bool centerAlign)` | 中央寄せの原点補正（軸単位）。スクロール対象の軸では 0 |
+| `MaxCentered(double displaySize, double viewportSize, bool centerAlign)` | 中央寄せの原点補正（軸単位）。 スクロール対象の軸では 0 |
 | `ComputeImageOrigin(EsSize displaySize, EsSize viewportSize, double zoomPercent, EsVector offset, double scale, bool centerAlign)` | 画像原点のビューポート座標 |
-| `ComputeOffsetAfterScaleChange(EsVector offset, EsPoint center, double oldScale, double newScale, EsSize contentSize, EsSize viewport)` | ズーム率変更後のオフセット（ズーム中心のコンテンツ座標を不変に保つ。スクロール範囲にクランプ） |
+| `ComputeOffsetAfterScaleChange(EsVector offset, EsPoint center, double oldScale, double newScale, EsSize contentSize, EsSize viewport)` | ズーム率変更後のオフセット（ズーム中心のコンテンツ座標を不変に保つ。 スクロール範囲にクランプ） |
 | `ClampOffset(EsVector offset, double scale, EsSize contentSize, EsSize viewport)` | オフセットをスクロール範囲内へクランプ |
 | `ViewportToContent(EsPoint viewportPos, EsVector offset, double effectiveScale)` | ビューポート座標 → コンテンツ座標（オフセット基準） |
 | `ContentToViewport(EsPoint contentPos, EsVector offset, double effectiveScale)` | コンテンツ座標 → ビューポート座標（オフセット基準） |

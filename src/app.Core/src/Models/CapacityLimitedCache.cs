@@ -13,7 +13,7 @@ internal static class CapacityLimitedCache
     /// <typeparam name="TKey">キー型。</typeparam>
     /// <typeparam name="TValue">値型。</typeparam>
     /// <param name="cache">対象のキャッシュ。</param>
-    /// <param name="capacity">保持数の上限。上限到達後の新規登録時に全クリアでリセットする。</param>
+    /// <param name="capacity">保持数の上限。 上限到達後の新規登録時に全クリアでリセットする。</param>
     /// <param name="key">キー。</param>
     /// <param name="factory">値の生成関数（キーを受け取る）。</param>
     /// <returns>キャッシュされた値。</returns>

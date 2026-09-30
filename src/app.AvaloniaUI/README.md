@@ -1,6 +1,6 @@
 # SaveEvidence (app)
 
-> プロジェクト名: `app.AvaloniaUI`（Avalonia UI 版）。MewUI 版は `app.MewUI`、UI 非依存のコアは `app.Core` にあります。
+> プロジェクト名: `app.AvaloniaUI`（Avalonia UI 版）。 MewUI 版は `app.MewUI`、UI 非依存のコアは `app.Core` にあります。
 
 ## 目次
 
@@ -38,7 +38,7 @@ Windows デスクトップ上の画面をキャプチャし、プレビュー・
 
 - **キャプチャ**: 全画面（`ScreenSelect`）/ ウィンドウ選択（`WindowSelect`）/ 範囲選択（`AreaSelect`）の 3 モード
 - **切出し（Crop）**: プレビュー画像上の選択矩形で元画像から切り出し
-- **自動切り出し（LineDetection）**: ウィンドウ矩形を検出して自動切り出し（検出結果を画像上に水色の実線枠で表示・ホバー中は「赤枠 + 半透明の赤塗り」・矩形内のダブルクリックで確定・矩形外のダブルクリックまたは Escape でキャンセル。ホバー中もホイール・ドラッグでズーム・パンできる）
+- **自動切り出し（LineDetection）**: ウィンドウ矩形を検出して自動切り出し（検出結果を画像上に水色の実線枠で表示・ホバー中は「赤枠 + 半透明の赤塗り」・矩形内のダブルクリックで確定・矩形外のダブルクリックまたは Escape でキャンセル。 ホバー中もホイール・ドラッグでズーム・パンできる）
 - **ズーム・パン**: Fit 表示・固定倍率（10〜500%）・パン・マウスホイールズーム（`CropViewControl` が内包する `ZoomViewControl` に委譲）
 - **保存**: ファイル名テンプレート（日時プレースホルダ・オートインクリメント）・上書き確認
 - **クリップボード連携**: 画像のコピー / 貼り付け
@@ -80,7 +80,7 @@ buildScript\AvaloniaUI_publish_aot.bat
 
 - ネイティブ DLL は `libSkiaSharp.dll` / `av_libglesv2.dll` / `libHarfBuzzSharp.dll` / `OpenCvSharpExtern.dll` です。
 - OpenCV のネイティブは縮小構成（`OpenCvSharp5.runtime.win.slim`）のため、動画入出力（`videoio`）と FFmpeg（`opencv_videoio_ffmpeg500_64.dll` 約 31 MB）を同梱しません（本アプリは動画を扱わない）。
-- **設定の JSON はソース生成コンテキスト（`SettingsJsonContext`）を `SettingsService` へ注入しています。**
+- **設定の JSON はソース生成コンテキスト（`SettingsJsonContext`）を `SettingsService` へ注入しています。 **
   反射ベースのシリアル化は AOT / トリミングで公開プロパティが削除され、終了時に**設定が空（`{}`）になって全損します**（実測）。
   設定項目を追加するときは `Settings` を変更すれば自動で追従しますが、`SettingsJsonContext` を消したり別経路で `SettingsService` を生成しないでください。
 
@@ -88,7 +88,7 @@ buildScript\AvaloniaUI_publish_aot.bat
 
 1. アプリを起動するとキャプチャページが表示されます。
 2. ツールバーのキャプチャボタン（全画面 / ウィンドウ選択 / 範囲選択）またはグローバルホットキーでキャプチャを開始します。
-3. キャプチャ結果がプレビューに表示されます。必要に応じて切出し・ズームを行います。
+3. キャプチャ結果がプレビューに表示されます。 必要に応じて切出し・ズームを行います。
 4. 「保存」ボタンまたは `Ctrl+S` で保存します（ファイル名テンプレートに従って自動命名）。
 
 ## 6. 画面構成
@@ -108,15 +108,15 @@ buildScript\AvaloniaUI_publish_aot.bat
 
 - ツールバーのキャプチャボタン
 - キャプチャメニュー（`Capture`）
-- グローバルホットキー（他アプリを操作中でも動作。設定画面でカスタマイズ可能）
+- グローバルホットキー（他アプリを操作中でも動作。 設定画面でカスタマイズ可能）
 
-キャプチャ中はアプリ本体が自動的に非表示になり、選択した領域（またはウィンドウ・全画面）がキャプチャされます。完了するとプレビューが更新されます。
+キャプチャ中はアプリ本体が自動的に非表示になり、選択した領域（またはウィンドウ・全画面）がキャプチャされます。 完了するとプレビューが更新されます。
 
 ## 8. 画像の保存
 
 ### 8.1 ファイル名テンプレート
 
-保存ファイル名はテンプレート文字列から自動生成されます。`{ }` で囲まれたトークンを日時値へ置換します。
+保存ファイル名はテンプレート文字列から自動生成されます。 `{ }` で囲まれたトークンを日時値へ置換します。
 
 | トークン | 置換後 | 例 |
 | --- | --- | --- |
@@ -131,7 +131,7 @@ buildScript\AvaloniaUI_publish_aot.bat
 
 - 複合トークン（例: `{yyyyMMdd}`）も使用できます。
 - 中括弧自体は `{{` / `}}` でエスケープします。
-- **オートインクリメント**: テンプレート内の一番右の数値連続が保存ごとに +1 されます（例: `screenshot_01.png` → `screenshot_02.png`。`99` → `100`、`099` → `100`）。
+- **オートインクリメント**: テンプレート内の一番右の数値連続が保存ごとに +1 されます（例: `screenshot_01.png` → `screenshot_02.png`。 `99` → `100`、`099` → `100`）。
 
 ### 8.2 保存先フォルダ
 
@@ -177,7 +177,7 @@ buildScript\AvaloniaUI_publish_aot.bat
 
 ## 12. 設定画面
 
-設定画面では以下のカテゴリを編集できます。変更は即座に自動保存されます。
+設定画面では以下のカテゴリを編集できます。 変更は即座に自動保存されます。
 
 | カテゴリ | 内容 |
 | --- | --- |
@@ -200,10 +200,10 @@ buildScript\AvaloniaUI_publish_aot.bat
 | プロジェクト | 役割 |
 | --- | --- |
 | `app.Core` | UI 非依存のモデル・設定・ユーティリティ・表示用 ViewModel（設定モデル / 設定サービス / ファイル名テンプレート / Undo スタック / ホットキー解析 / 表示文字列） |
-| `CaptureSessionControl.AvaloniaUI` | キャプチャ / 切出しセッション（Facade `CaptureSessionControl`）。`CropViewControl` / `ZoomViewControl` は本プロジェクト経由の推移的依存 |
+| `CaptureSessionControl.AvaloniaUI` | キャプチャ / 切出しセッション（Facade `CaptureSessionControl`）。 `CropViewControl` / `ZoomViewControl` は本プロジェクト経由の推移的依存 |
 | `ColorPickerControl` | 色選択コントロール（設定画面の色入力） |
 | `Platform.AvaloniaUI` | プラットフォーム抽象（キャプチャ・要素検出・ウィンドウ操作・ホットキー） |
-| `LineDetection` | ウィンドウ矩形検出（`LogicLineDetector`。自動切り出し用） |
+| `LineDetection` | ウィンドウ矩形検出（`LogicLineDetector`。 自動切り出し用） |
 
 ## 15. ドキュメント
 

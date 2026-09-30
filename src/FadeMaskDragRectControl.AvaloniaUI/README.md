@@ -1,6 +1,6 @@
 # FadeMaskDragRectControl
 
-> プロジェクト名: `FadeMaskDragRectControl.AvaloniaUI`（Avalonia UI 版）。UI 非依存のロジックは `FadeMaskDragRectControl.Core`、MewUI 版は `FadeMaskDragRectControl.MewUI` にあります。
+> プロジェクト名: `FadeMaskDragRectControl.AvaloniaUI`（Avalonia UI 版）。 UI 非依存のロジックは `FadeMaskDragRectControl.Core`、MewUI 版は `FadeMaskDragRectControl.MewUI` にあります。
 
 ## 目次
 
@@ -23,7 +23,7 @@
 
 ## 1. 概要
 
-Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ選択（`MarqueeControl`。暗転マスクはその**外側の装飾**として描画される）・拡大鏡（`LoupeControl`）の**組み立て・配線・状態同期を 1 箇所に集約**し、ホスト（上位 AP）へ統一インターフェースを提供します。ホストはライフサイクルとモード固有処理に専念できます。
+Avalonia UI 用の**領域選択複合コントロール**です。 ドラッグ選択（`MarqueeControl`。 暗転マスクはその**外側の装飾**として描画される）・拡大鏡（`LoupeControl`）の**組み立て・配線・状態同期を 1 箇所に集約**し、ホスト（上位 AP）へ統一インターフェースを提供します。 ホストはライフサイクルとモード固有処理に専念できます。
 
 ## 2. 機能一覧
 
@@ -33,8 +33,8 @@ Avalonia UI 用の**領域選択複合コントロール**です。ドラッグ�
 - **設定の一括適用**: `Options` プロパティ（1 つの設定値）で選択矩形 / 暗転マスク / ルーペ / 選択矩形破線を 1 回で適用（既定値・項目の対応・枠線の太さの共用規則はコアが単一所有）
 - **外観の一括適用**: `MarqueeAppearance` / `LoupeAppearance` プロパティ（描画にだけ必要な外観の単一値）で内包する選択矩形・ルーペの外観を適用（コアの設定値は色・表示可否を持たない）
 - **座標変換ポートの一括分配**: `SetCoordTransform(ICoordTransform?)` で 2 コントロールへ同一ポートを分配
-- **表示の変化への追従**: `RefreshOverlay()` でパン・ズーム等の表示変化を通知（Marquee の再描画 + ルーペ位置再計算）。ホイール操作はホストが本コントロールの `PointerWheelChanged` を購読してビューポートへ転送する
-- **選択状態の外部設定**: `SetSelection` / `ClearSelection` で選択矩形を設定（選択状態の単一のソースは `MarqueeControl` のセッションであり、本コントロールはその読み取りと委譲のみを行う。ルーペの選択矩形破線は `LoupeRendered` イベント経由で描画）
+- **表示の変化への追従**: `RefreshOverlay()` でパン・ズーム等の表示変化を通知（Marquee の再描画 + ルーペ位置再計算）。 ホイール操作はホストが本コントロールの `PointerWheelChanged` を購読してビューポートへ転送する
+- **選択状態の外部設定**: `SetSelection` / `ClearSelection` で選択矩形を設定（選択状態の単一のソースは `MarqueeControl` のセッションであり、本コントロールはその読み取りと委譲のみを行う。 ルーペの選択矩形破線は `LoupeRendered` イベント経由で描画）
 - **ルーペ描画完了の通知**: `LoupeRendered` イベントで描画済み Bitmap と切り出し左上・スケールを通知（ホストが外部提供矩形を Bitmap へ直接描画できる）
 - **ログの伝搬**: `Log` プロパティ（`ILogger`）で内包するドラッグ選択コントロールとルーペの操作ログをホストのログ基盤へ転送
 - **ルーペ制御**: `SetLoupePosition` / `SetLoupeSource` / `ClearLoupe` / `LoupeCenterPoint` で中心・ソース・後片付けを制御
@@ -125,7 +125,7 @@ SelectionOverlay.Loupe.Source = bitmap;
 ## 6. 座標系
 
 - **ドメイン座標**: 元画像ピクセル（Crop）または仮想スクリーンピクセル（AreaSelect）など、ホストが定義する論理座標。
-- **DIP 座標**: コントロールローカル DIP。`SetCoordTransform` で注入した `ICoordTransform` がドメイン ↔ DIP を双方向変換します（描画時に毎回評価され、ズーム・スクロール・ウィンドウサイズ変更に追従）。
+- **DIP 座標**: コントロールローカル DIP。 `SetCoordTransform` で注入した `ICoordTransform` がドメイン ↔ DIP を双方向変換します（描画時に毎回評価され、ズーム・スクロール・ウィンドウサイズ変更に追従）。
 - **閉区間描画**: 選択領域は始点・終点を含む閉区間として扱い、暗転マスク（非暗転領域）とルーペの選択枠（`LoupeRendered` イベント経由でホスト側が描画）が一致します。
 
 ## 7. サンプル
@@ -178,7 +178,7 @@ FadeMaskDragRectControl.Core/
 
 「設定とモードから子コントロールへ適用する値の解決」と「付加情報ラベル（操作・情報）の描画」は
 `src/FadeMaskDragRectControl.UIBase`（名前空間 `EsUtil.SaveEvidence.FadeMaskDragRect.UIBase`）が単一所有します
-（Avalonia / MewUI で共有。片方の UI だけ分配規則が変わる余地をなくすため）。
+（Avalonia / MewUI で共有。 片方の UI だけ分配規則が変わる余地をなくすため）。
 
 ```text
 FadeMaskDragRectControl.UIBase/

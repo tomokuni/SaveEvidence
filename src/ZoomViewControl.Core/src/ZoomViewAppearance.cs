@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.ZoomView;
 /// 描画の可否（市松を描くか・トラックを描くか）も本型が判定し、UI 層は <c>Has*</c> を問い合わせるだけでよい<br/>
 /// （両 UI で判定がずれない）。<br/>
 /// <b>市松模様は画像の透明部分の背景である</b>ため、描く範囲は画像の表示矩形の内側に限る<br/>
-/// （範囲の解決は <see cref="ComputeCheckerArea"/> が単一所有する。矩形の外＝ペーストボードは下地色の単色になる）。<br/>
+/// （範囲の解決は <see cref="ComputeCheckerArea"/> が単一所有する。 矩形の外＝ペーストボードは下地色の単色になる）。<br/>
 /// 色は UI 非依存の <see cref="DrawingColor"/> を使用し、各 UI の色型への変換は境界（UI 層）で 1 行行う。<br/>
 /// スクロールバーの太さ・余白は UI ごとに見た目が異なってよい値であり、ホストが本値で与える<br/>
 /// （Avalonia 版は標準 <c>ScrollBar</c> を使うため本値の幾何は参照しない）。
@@ -33,39 +33,39 @@ public sealed record ZoomViewAppearance
     public static ZoomViewAppearance Default { get; } = new();
 
     /// <summary>画像が描画されていない領域の下地色を取得する。</summary>
-    /// <value>アルファを含む色。既定は暗色（#FF202020）。</value>
+    /// <value>アルファを含む色。 既定は暗色（#FF202020）。</value>
     /// <remarks>市松模様を描く場合も、まず本色で全面を塗ってからタイルを重ねる（タイルは半透明のため下地と合成される）。</remarks>
     public DrawingColor BackgroundColor { get; init; } = DrawingColor.FromArgb(255, 32, 32, 32);
 
     /// <summary>市松模様（画像の透明部分の背景）の 1 タイルの一辺（DIP）を取得する。</summary>
-    /// <value>1 タイルの一辺（DIP）。既定は 0（市松模様を描かない）。</value>
+    /// <value>1 タイルの一辺（DIP）。 既定は 0（市松模様を描かない）。</value>
     /// <remarks>
-    /// 0 以下は「描かない」を意味する（下地色の単色背景になる）。ホストが用途に応じて指定する。<br/>
+    /// 0 以下は「描かない」を意味する（下地色の単色背景になる）。 ホストが用途に応じて指定する。<br/>
     /// 1 は 1 ピクセルの隙間が見えないため、実効値は 2 になる（<see cref="ResolveCheckerTileSize"/> が単一所有する）。<br/>
     /// 本値はタイルの大きさだけを決める（描く範囲は <see cref="ComputeCheckerArea"/> が単一所有する）。
     /// </remarks>
     public int CheckerSize { get; init; }
 
-    /// <summary>市松模様のタイルサイズの下限（実効値。これ未満の値は本色へ切り上げる）。</summary>
+    /// <summary>市松模様のタイルサイズの下限（実効値。 これ未満の値は本色へ切り上げる）。</summary>
     public const int MinimumCheckerTileSize = 2;
 
     /// <summary>要求されたタイルサイズを実効値へ解決する（0 以下は描かない・1 は下限へ切り上げ）。</summary>
-    /// <param name="checkerSize">要求されたタイルサイズ（DIP。0 以下も可）。</param>
+    /// <param name="checkerSize">要求されたタイルサイズ（DIP。 0 以下も可）。</param>
     /// <returns>実効タイルサイズ。<c>0</c> の場合は市松模様を描かない。</returns>
     /// <remarks>
     /// タイル 1 の市松模様は明暗の隙間が見えない（1 ピクセル幅の市松が縞に見える）ため、下限へ切り上げる。<br/>
     /// 本規則を UI 層（ホストのブラシ構築含む）に置くと、UI ごとに「0 の意味」がずれる（実際に Avalonia は 0 を 2 へ、<br/>
-    /// MewUI は 0 を「描かない」と解釈していた）。両 UI が同じ意味を共有するよう、本メソッドが単一所有する。
+    /// MewUI は 0 を「描かない」と解釈していた）。 両 UI が同じ意味を共有するよう、本メソッドが単一所有する。
     /// </remarks>
     public static int ResolveCheckerTileSize(int checkerSize)
         => checkerSize <= 0 ? 0 : Math.Max(MinimumCheckerTileSize, checkerSize);
 
     /// <summary>市松模様の明色（色 A）を取得する。</summary>
-    /// <value>アルファを含む色。既定は白。</value>
+    /// <value>アルファを含む色。 既定は白。</value>
     public DrawingColor CheckerColorA { get; init; } = DrawingColor.FromArgb(255, 255, 255, 255);
 
     /// <summary>市松模様の暗色（色 B）を取得する。</summary>
-    /// <value>アルファを含む色。既定は薄いグレー。</value>
+    /// <value>アルファを含む色。 既定は薄いグレー。</value>
     public DrawingColor CheckerColorB { get; init; } = DrawingColor.FromArgb(255, 204, 204, 204);
 
     /// <summary>オーバーレイスクロールバーを表示するかどうかを取得する。</summary>
@@ -74,19 +74,19 @@ public sealed record ZoomViewAppearance
     public bool ShowScrollBars { get; init; } = true;
 
     /// <summary>スクロールバーの太さ（DIP）を取得する。</summary>
-    /// <value>太さ（DIP）。既定は <see cref="DefaultScrollBarThickness"/>。</value>
+    /// <value>太さ（DIP）。 既定は <see cref="DefaultScrollBarThickness"/>。</value>
     public double ScrollBarThickness { get; init; } = DefaultScrollBarThickness;
 
     /// <summary>スクロールバーとビューポート端との余白（DIP）を取得する。</summary>
-    /// <value>余白（DIP）。既定は <see cref="DefaultScrollBarMargin"/>。</value>
+    /// <value>余白（DIP）。 既定は <see cref="DefaultScrollBarMargin"/>。</value>
     public double ScrollBarMargin { get; init; } = DefaultScrollBarMargin;
 
     /// <summary>スクロールバーのサムの色を取得する。</summary>
-    /// <value>アルファを含む色。既定は白 63%。</value>
+    /// <value>アルファを含む色。 既定は白 63%。</value>
     public DrawingColor ScrollBarColor { get; init; } = DrawingColor.FromArgb(160, 255, 255, 255);
 
     /// <summary>スクロールバーのトラックの色を取得する。</summary>
-    /// <value>アルファを含む色。既定は白 16%。</value>
+    /// <value>アルファを含む色。 既定は白 16%。</value>
     /// <remarks>アルファ 0 の場合はトラックを描かない（サムのみの表示を要求するホスト向け）。</remarks>
     public DrawingColor ScrollBarTrackColor { get; init; } = DrawingColor.FromArgb(40, 255, 255, 255);
 
@@ -102,7 +102,7 @@ public sealed record ZoomViewAppearance
     /// <summary>市松模様を描く領域（画像の表示矩形のうちビューポート内の部分）を求める。</summary>
     /// <param name="imageRect">画像の表示矩形（ビューポート座標・DIP）。</param>
     /// <param name="viewportSize">ビューポートのサイズ（DIP）。</param>
-    /// <returns>市松模様を描く領域（DIP）。市松模様を描かない場合・可視部分が無い場合は空。</returns>
+    /// <returns>市松模様を描く領域（DIP）。 市松模様を描かない場合・可視部分が無い場合は空。</returns>
     /// <remarks>
     /// 市松模様は<b>画像の透明部分の背景</b>であるため、画像の表示矩形の外（ペーストボード）へは描かない<br/>
     /// （外側は下地色 <see cref="BackgroundColor"/> の単色になる）。<br/>
@@ -112,8 +112,8 @@ public sealed record ZoomViewAppearance
         => HasCheckerboard ? imageRect.ClampToArea(viewportSize) : default;
 
     /// <summary>市松模様の明色タイル（色 A）の矩形を列挙する。</summary>
-    /// <param name="area">市松模様を描く領域（ビューポート座標・DIP。例: <see cref="ComputeCheckerArea"/> の結果）。</param>
-    /// <returns>明色タイルの矩形の一覧。市松模様を描かない場合・領域が空の場合は空。</returns>
+    /// <param name="area">市松模様を描く領域（ビューポート座標・DIP。 例: <see cref="ComputeCheckerArea"/> の結果）。</param>
+    /// <returns>明色タイルの矩形の一覧。 市松模様を描かない場合・領域が空の場合は空。</returns>
     /// <remarks>
     /// 描画手順は「暗色（<see cref="CheckerColorB"/>）で領域を塗る → 明色（<see cref="CheckerColorA"/>）のタイルを重ねる」。<br/>
     /// 本メソッドが返すのは手順の後半（明色タイル）であり、タイルの配置規則（<c>(列 + 行)</c> が偶数）を単一所有する。<br/>

@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <summary>撮影の確定時に使う切り出し画像の事前キャッシュ（状態と判断）を単一所有する。</summary>
 /// <remarks>
 /// 撮影セッションは「確定前に選択中の矩形で切り出しておき、確定時はそれを再利用する」ことで確定から<br/>
-/// 画像表示までの待ち時間を短縮する。この<b>キャッシュの同一判定・所有権の受け渡し・旧値の破棄順序</b>は<br/>
+/// 画像表示までの待ち時間を短縮する。 この<b>キャッシュの同一判定・所有権の受け渡し・旧値の破棄順序</b>は<br/>
 /// UI フレームワークに依存しない規則であるため、本クラスが単一所有する。<br/>
 /// <br/>
 /// <b>規則</b>:<br/>
@@ -63,7 +63,7 @@ public sealed class CaptureClipCache : IDisposable
 
     /// <summary>指定した矩形のキャッシュを取り出す（所有権は呼び出し側へ移る）。</summary>
     /// <param name="captureRect">取り出す切り出し矩形（画面物理ピクセル・閉区間）。</param>
-    /// <returns>一致するキャッシュ画像。一致しない・未キャッシュの場合は null。</returns>
+    /// <returns>一致するキャッシュ画像。 一致しない・未キャッシュの場合は null。</returns>
     /// <remarks>
     /// 取り出した画像は以降 <see cref="Dispose"/> では破棄されない（呼び出し側が所有する）。<br/>
     /// 同じ矩形で <see cref="Take"/> を 2 回呼ぶと 2 回目は null になる（二重破棄を防ぐ）。
@@ -86,7 +86,7 @@ public sealed class CaptureClipCache : IDisposable
 
     /// <summary>切り出した画像をキャッシュへ格納する（旧いキャッシュは破棄する）。</summary>
     /// <param name="captureRect">切り出し矩形（画面物理ピクセル・閉区間）。</param>
-    /// <param name="bitmap">切り出した画像。null の場合は何もしない。</param>
+    /// <param name="bitmap">切り出した画像。 null の場合は何もしない。</param>
     /// <remarks>
     /// 破棄済みの場合は渡された画像を破棄する（呼び出し側の後片付けを不要にする）。<br/>
     /// 格納できるのは 1 件のみで、置き換え時に旧値を破棄する。
@@ -121,7 +121,7 @@ public sealed class CaptureClipCache : IDisposable
     }
 
     /// <summary>保持している画像を破棄する。</summary>
-    /// <remarks>複数回呼んでも安全である。以降の <see cref="Store"/> は渡された画像をその場で破棄する。</remarks>
+    /// <remarks>複数回呼んでも安全である。 以降の <see cref="Store"/> は渡された画像をその場で破棄する。</remarks>
     public void Dispose()
     {
         EsBitmap? cached;

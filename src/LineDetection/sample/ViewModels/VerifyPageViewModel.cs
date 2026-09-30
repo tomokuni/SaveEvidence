@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
-/// <summary>「データ検証」ページの ViewModel。選択した dataset 画像を検出し、正解データ（GroundTruth）と照合する。</summary>
+/// <summary>「データ検証」ページの ViewModel。 選択した dataset 画像を検出し、正解データ（GroundTruth）と照合する。</summary>
 /// <remarks>
 /// 線分検出ページとは独立した <see cref="DetectionContext"/> を保持し、検出結果・ルーペ・ポインタ状態を専有する。<br/>
 /// ドロップダウンで選択した画像 1 件を検出して正解と照合し、<see cref="VerifyResults"/> に結果を反映する。<br/>
@@ -39,7 +39,7 @@ public sealed partial class VerifyPageViewModel : ObservableObject
         Context.SelectedDetector = new LineDetectorOption(new LogicLineDetector());
         DatasetItems = DatasetVerifier.LoadDatasetItems();
 
-        // 初期選択を Initial_window とする（大文字小文字を無視して照合。見つからない場合は未選択のまま）
+        // 初期選択を Initial_window とする（大文字小文字を無視して照合。 見つからない場合は未選択のまま）
         SelectedDatasetItem = DatasetItems.FirstOrDefault(
             e => e.Name.Equals(InitialDatasetName, StringComparison.OrdinalIgnoreCase));
     }
@@ -51,7 +51,7 @@ public sealed partial class VerifyPageViewModel : ObservableObject
     /// <param name="value">選択されたエントリ。</param>
     /// <remarks>
     /// 選択した画像を <see cref="DetectionContext.Image"/> に設定して検出し、JSON との一致・不一致を
-    /// <see cref="VerifyResults"/> に反映する。画像が無い場合は何もしない。
+    /// <see cref="VerifyResults"/> に反映する。 画像が無い場合は何もしない。
     /// </remarks>
     partial void OnSelectedDatasetItemChanged(DatasetEntry? value)
     {

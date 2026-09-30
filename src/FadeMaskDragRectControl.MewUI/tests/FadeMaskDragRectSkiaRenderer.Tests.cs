@@ -37,7 +37,7 @@ public class FadeMaskDragRectSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(64, 64);
 
-        // 上辺の y は 0。破線は 1 ピクセル描画 + 1 ピクセル空白の 2 ピクセル周期で、色は A → B → A … と切り替わる
+        // 上辺の y は 0。 破線は 1 ピクセル描画 + 1 ピクセル空白の 2 ピクセル周期で、色は A → B → A … と切り替わる
         FadeMaskDragRectSkiaRenderer.DrawSelectionRect(
             target.Canvas, new EsRect(0, 0, 10, 10), new EsPoint(0, 0), 4.0, 64,
             DrawingColor.Red, DrawingColor.Blue);
@@ -83,7 +83,7 @@ public class FadeMaskDragRectSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(16, 16);
 
-        // 画像より大きい矩形（倍率 4 で 84x84）。画像内に入る上辺（y = 0）が描画される
+        // 画像より大きい矩形（倍率 4 で 84x84）。 画像内に入る上辺（y = 0）が描画される
         FadeMaskDragRectSkiaRenderer.DrawSelectionRect(
             target.Canvas, new EsRect(0, 0, 20, 20), new EsPoint(0, 0), 4.0, 16,
             DrawingColor.Red, DrawingColor.Blue);

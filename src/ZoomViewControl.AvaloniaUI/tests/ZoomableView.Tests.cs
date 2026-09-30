@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.ZoomView.AvaloniaUI.Tests;
 
 /// <summary><see cref="ZoomableView"/>（内部ビューポート）のテスト。</summary>
 /// <remarks>
-/// 判断・値・計算はコア（<see cref="ZoomViewSession"/>。Core.Tests が全網羅する）が単一所有するため、<br/>
+/// 判断・値・計算はコア（<see cref="ZoomViewSession"/>。 Core.Tests が全網羅する）が単一所有するため、<br/>
 /// 本テストは <b>Avalonia 固有の UI 層の責務</b>のみを検証する。<br/>
 /// - 画像のレイアウト（Fit = Uniform / 固定倍率 = RenderTransform）<br/>
 /// - 標準スクロールバーへの同期（範囲・表示範囲・表示可否）<br/>
@@ -28,7 +28,7 @@ public class ZoomableViewTests
         => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(width, height, Colors.White);
 
     /// <summary>ビューポートを確定させたビューポートを生成する。</summary>
-    /// <param name="image">表示する画像。null の場合は設定しない。</param>
+    /// <param name="image">表示する画像。 null の場合は設定しない。</param>
     /// <param name="viewportWidth">ビューポートの幅（DIP）。</param>
     /// <param name="viewportHeight">ビューポートの高さ（DIP）。</param>
     /// <returns>生成したビューポート。</returns>
@@ -47,7 +47,7 @@ public class ZoomableViewTests
 
     /// <summary>コントロールをウィンドウに表示する。</summary>
     /// <param name="control">表示するコントロール。</param>
-    /// <param name="size">ウィンドウ（＝ビューポート）の一辺（DIP）。画像より小さくするとパン可能になる。</param>
+    /// <param name="size">ウィンドウ（＝ビューポート）の一辺（DIP）。 画像より小さくするとパン可能になる。</param>
     /// <returns>表示したウィンドウ。</returns>
     private static Window Show(Control control, double size = 200)
     {

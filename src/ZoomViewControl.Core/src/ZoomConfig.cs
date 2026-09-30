@@ -11,11 +11,11 @@ namespace EsUtil.SaveEvidence.ZoomView;
 /// </remarks>
 public sealed class ZoomConfig
 {
-    /// <summary>ズーム率の最小値（固定倍率。%）。</summary>
+    /// <summary>ズーム率の最小値（固定倍率。 %）。</summary>
     /// <value>0 より大きい。</value>
     public double MinZoom { get; }
 
-    /// <summary>ズーム率の最大値（固定倍率。%）。</summary>
+    /// <summary>ズーム率の最大値（固定倍率。 %）。</summary>
     /// <value><see cref="MinZoom"/> 以上。</value>
     public double MaxZoom { get; }
 
@@ -35,10 +35,10 @@ public sealed class ZoomConfig
         ZoomTransition.DefaultButtonZoomLevels) { }
 
     /// <summary>すべてのプロパティを指定して <see cref="ZoomConfig"/> を生成する。</summary>
-    /// <param name="minZoom">ズーム率の最小値。0 より大きい。</param>
+    /// <param name="minZoom">ズーム率の最小値。 0 より大きい。</param>
     /// <param name="maxZoom">ズーム率の最大値。<paramref name="minZoom"/> 以上。</param>
-    /// <param name="wheelFactor">Ctrl+ホイールのズーム倍率。1 より大きい。</param>
-    /// <param name="buttonZoomLevels">⊖⊕ ボタンのズームレベル集合。非空・昇順・範囲内。</param>
+    /// <param name="wheelFactor">Ctrl+ホイールのズーム倍率。 1 より大きい。</param>
+    /// <param name="buttonZoomLevels">⊖⊕ ボタンのズームレベル集合。 非空・昇順・範囲内。</param>
     /// <remarks>各値の妥当性を検証し、不正な場合は <see cref="ArgumentException"/> を投げる。</remarks>
     public ZoomConfig(double minZoom, double maxZoom, double wheelFactor, IReadOnlyList<double> buttonZoomLevels)
     {
@@ -57,10 +57,10 @@ public sealed class ZoomConfig
         ZoomTransition.DefaultButtonZoomLevels);
 
     /// <summary>一部のプロパティを差し替えた、検証付きの新しい <see cref="ZoomConfig"/> を返す。</summary>
-    /// <param name="minZoom">新しい最小値。null の場合は現在値。</param>
-    /// <param name="maxZoom">新しい最大値。null の場合は現在値。</param>
-    /// <param name="wheelFactor">新しいズーム倍率。null の場合は現在値。</param>
-    /// <param name="buttonZoomLevels">新しいレベル集合。null の場合は現在値。</param>
+    /// <param name="minZoom">新しい最小値。 null の場合は現在値。</param>
+    /// <param name="maxZoom">新しい最大値。 null の場合は現在値。</param>
+    /// <param name="wheelFactor">新しいズーム倍率。 null の場合は現在値。</param>
+    /// <param name="buttonZoomLevels">新しいレベル集合。 null の場合は現在値。</param>
     /// <returns>検証済みの新しい <see cref="ZoomConfig"/>。</returns>
     /// <remarks>コンストラクタ（検証付き）を経由するため、不正な値には <see cref="ArgumentException"/> が投げられる。</remarks>
     public ZoomConfig With(

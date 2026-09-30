@@ -20,12 +20,12 @@ namespace EsUtil.SaveEvidence.MewUI;
 /// <summary>SaveEvidence の MewUI 版ホスト。</summary>
 /// <remarks>
 /// <b>構成</b>: UI 非依存の <c>app.Core</c>（設定・ViewModel）と <c>Platform.MewUI</c>（Interop）を使い、<br/>
-/// UI 層だけを MewUI で実装する。Avalonia 版 <c>app</c> と同じコアロジックを共有する。<br/>
+/// UI 層だけを MewUI で実装する。 Avalonia 版 <c>app</c> と同じコアロジックを共有する。<br/>
 /// <br/>
 /// <b>必須の初期化</b>:<br/>
-/// 1. <c>DpiHelper.EnablePerMonitorDpiAwareness()</c>（DPI 対応。呼ばないとウィンドウ配置の復元がずれる）<br/>
+/// 1. <c>DpiHelper.EnablePerMonitorDpiAwareness()</c>（DPI 対応。 呼ばないとウィンドウ配置の復元がずれる）<br/>
 /// 2. <c>Direct2DBackend.Register()</c> / <c>Win32Platform.Register()</c>（バックエンドとプラットフォームホストの明示登録）<br/>
-/// 3. <c>SkiaDirect2DInterop.Register()</c>（Direct2D ⇔ Skia の GPU ブリッジ。未登録でも動作するが遅い）<br/>
+/// 3. <c>SkiaDirect2DInterop.Register()</c>（Direct2D ⇔ Skia の GPU ブリッジ。 未登録でも動作するが遅い）<br/>
 /// <br/>
 /// <b>ウィンドウ配置の復元</b>: 位置・サイズの DIP はモニターの DPI が必要なため、<c>Application.Run</c> の<br/>
 /// <c>startup</c>（ディスパッチャ導入後・ウィンドウ表示前）で復元する。<br/>
@@ -53,7 +53,7 @@ internal static class Program
         // Direct2D ⇔ Skia のブリッジを有効化する（未登録だと Skia 描画が毎フレーム CPU 転送になる）
         SkiaDirect2DInterop.Register();
 
-        // 未処理の例外を記録する（クラッシュ原因をログから特定できるようにする。Avalonia 版と同じ対象）
+        // 未処理の例外を記録する（クラッシュ原因をログから特定できるようにする。 Avalonia 版と同じ対象）
         RegisterExceptionLogging();
 
         // 設定は UI 非依存の共通実装を使う（%LOCALAPPDATA%\SaveEvidence\settings.json）
@@ -99,8 +99,8 @@ internal static class Program
     /// <remarks>
     /// 1. <c>AppDomain.UnhandledException</c>: アプリ全体の未処理例外（プロセス終了を伴う）。<br/>
     /// 2. <c>TaskScheduler.UnobservedTaskException</c>: 待機されなかったタスクの例外（観測済みにして継続する）。<br/>
-    /// 3. <c>Application.DispatcherUnhandledException</c>: UI スレッドの例外。記録後に <c>Handled</c> を立てて<br/>
-    ///    ウィンドウの表示を維持する（Avalonia 版と同じ扱い。UI スレッドを黙って終了させない）。<br/>
+    /// 3. <c>Application.DispatcherUnhandledException</c>: UI スレッドの例外。 記録後に <c>Handled</c> を立てて<br/>
+    ///    ウィンドウの表示を維持する（Avalonia 版と同じ扱い。 UI スレッドを黙って終了させない）。<br/>
     /// <b>書式</b>: Avalonia 版と同じ <c>未処理の例外: {発生源}</c> で記録し、同じログファイルで追跡できるようにする。
     /// </remarks>
     private static void RegisterExceptionLogging()
@@ -140,7 +140,7 @@ internal static class Program
     /// <param name="settingsService">設定サービス。</param>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <remarks>
-    /// 1. ウィンドウハンドルをサービスへ渡す（<c>WM_HOTKEY</c> の受信先。ウィンドウプロシージャのサブクラス化を含む）。<br/>
+    /// 1. ウィンドウハンドルをサービスへ渡す（<c>WM_HOTKEY</c> の受信先。 ウィンドウプロシージャのサブクラス化を含む）。<br/>
     /// 2. 3 種のキャプチャに割り当てられた設定を登録する（未設定のものはスキップされる）。<br/>
     /// 3. 押下時は <c>MainViewModel.StartSelectionMode</c> を経由してキャプチャを開始する<br/>
     ///    （ツールバーのボタンと同じ経路に一本化し、開始処理を二重所有しない）。<br/>
@@ -164,8 +164,8 @@ internal static class Program
     }
 
     /// <summary>骨格確認用のプレビュー画像を生成する。</summary>
-    /// <returns>生成した画像。所有権は呼び出し側（<c>MainViewModel</c> へ渡す）。</returns>
-    /// <remarks>キャプチャ実装までの暫定。グラデーションにすることで描画の成否を目視で判定できる。</remarks>
+    /// <returns>生成した画像。 所有権は呼び出し側（<c>MainViewModel</c> へ渡す）。</returns>
+    /// <remarks>キャプチャ実装までの暫定。 グラデーションにすることで描画の成否を目視で判定できる。</remarks>
     private static EsBitmap CreatePlaceholderImage()
     {
         // 所有権は FromSKBitmap へ移るため using を付けない（付けると戻り値が破棄済みになる）

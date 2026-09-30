@@ -19,7 +19,7 @@ internal static class DatasetVerifier
     /// <summary>1 つの dataset エントリを検出し、JSON と照合した結果を返す。</summary>
     /// <param name="entry">検証対象のエントリ。</param>
     /// <param name="detector">使用する検出器。</param>
-    /// <returns>検証結果（画像名・一致/不一致・4 辺の詳細）。矩形を復元できない場合は 4 辺が空の結果を返す。</returns>
+    /// <returns>検証結果（画像名・一致/不一致・4 辺の詳細）。 矩形を復元できない場合は 4 辺が空の結果を返す。</returns>
     /// <remarks>
     /// 検出結果から復元した矩形を <see cref="DatasetEntry.Bounds"/>（ドメイン座標・排他座標）と<br/>
     /// 0px 誤差で照合し、一致 / 不一致を <see cref="VerifyResultItem.IsCorrect"/> に反映する。<br/>
@@ -69,7 +69,7 @@ internal static class DatasetVerifier
 
     /// <summary>検出結果から正解の矩形（排他座標）を復元する。</summary>
     /// <param name="results">検出結果の線分一覧。</param>
-    /// <returns>復元した矩形の境界（X/Y/Right/Bottom）。復元できない場合は null。</returns>
+    /// <returns>復元した矩形の境界（X/Y/Right/Bottom）。 復元できない場合は null。</returns>
     /// <remarks>
     /// ロジック方式は矩形を 4 辺（垂直 2 本・水平 2 本）として返すため、<br/>
     /// 垂直線の X 座標の min/max と水平線の Y 座標の min/max から外側の境界を復元する。<br/>
@@ -113,7 +113,7 @@ internal static class DatasetVerifier
     /// <returns>読み込んだエントリ一覧（正解 JSON がある画像のみ）。</returns>
     /// <remarks>
     /// <c>dataset</c> 配下の各 PNG に対応する JSON を探し、<c>GroundTruthWindows[0].Bounds</c> を読み込む。<br/>
-    /// 対応する JSON が無い場合は一覧に含めない。フォルダが無い場合は空リスト。
+    /// 対応する JSON が無い場合は一覧に含めない。 フォルダが無い場合は空リスト。
     /// </remarks>
     public static IReadOnlyList<DatasetEntry> LoadDatasetItems()
     {

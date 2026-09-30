@@ -5,7 +5,7 @@ namespace EsUtil.SaveEvidence.LineDetection;
 /// <summary>検出された線分（<see cref="LineDetectionResult"/>）から矩形（ウィンドウの 4 辺）を復元する純粋ロジック。</summary>
 /// <remarks>
 /// <see cref="LogicLineDetector"/> の検出結果（水平・垂直の線分）から、<b>4 辺が実際に矩形を構成する</b>組み合わせのみを<br/>
-/// 矩形候補として生成する。これにより複数ウィンドウを含む画像では複数の矩形候補が得られる。<br/>
+/// 矩形候補として生成する。 これにより複数ウィンドウを含む画像では複数の矩形候補が得られる。<br/>
 /// 候補にする条件は「左右の垂直線が矩形の縦範囲を覆い、上下の水平線が矩形の横範囲を覆う」ことである<br/>
 /// （覆わない組み合わせは矩形を構成しないため候補にしない）。<br/>
 /// 同一座標の線分は 1 本に統合し、その範囲（最小〜最大）を合併する。<br/>
@@ -37,7 +37,7 @@ public static class LineRectangleReconstructor
 
     /// <summary>検出された線分から矩形（ウィンドウの 4 辺）の候補を復元する。</summary>
     /// <param name="results">検出された線分一覧。</param>
-    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsRectInt"/>。面積昇順・最大 <see cref="MaxCandidates"/> 件）。</returns>
+    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsRectInt"/>。 面積昇順・最大 <see cref="MaxCandidates"/> 件）。</returns>
     /// <remarks>
     /// 垂直 2 本・水平 2 本が揃わない場合は復元できない（空リストを返す）。<br/>
     /// 幅・高さが 1 未満（同一座標のペア）のものは除外する。<br/>
@@ -146,7 +146,7 @@ public static class LineRectangleReconstructor
 
     /// <summary>矩形の面積（ピクセル数）を求める。</summary>
     /// <param name="rect">対象の矩形。</param>
-    /// <returns>面積（幅 × 高さ）。桁あふれを避けるため 64 ビットで計算する。</returns>
+    /// <returns>面積（幅 × 高さ）。 桁あふれを避けるため 64 ビットで計算する。</returns>
     private static long Area(EsRectInt rect) => (long)rect.Width * rect.Height;
 
     /// <summary>候補を面積の小さい順に <see cref="MaxCandidates"/> 件まで間引く。</summary>

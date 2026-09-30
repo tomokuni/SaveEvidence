@@ -31,7 +31,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
-本プロジェクト（CaptureSessionControl.AvaloniaUI）は、このシステムのうち**画面キャプチャ（ScreenSelect / WindowSelect / AreaSelect）と切出し（Crop）のセッション統括**を担います。上位 AP（app）へは Task ベースの公開 Facade（`CaptureSessionControl`）を提供し、内部でオーバーレイ（`OverlayWindow`）と複合コントロール（`FadeMaskDragRectControl`）を組み立てて実行します。
+本プロジェクト（CaptureSessionControl.AvaloniaUI）は、このシステムのうち**画面キャプチャ（ScreenSelect / WindowSelect / AreaSelect）と切出し（Crop）のセッション統括**を担います。 上位 AP（app）へは Task ベースの公開 Facade（`CaptureSessionControl`）を提供し、内部でオーバーレイ（`OverlayWindow`）と複合コントロール（`FadeMaskDragRectControl`）を組み立てて実行します。
 
 ## 2. 技術スタック
 
@@ -47,7 +47,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
 | **依存プロジェクト** | FadeMaskDragRect（複合コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
 
-CaptureSessionControl.AvaloniaUI は内包コントロール（MarqueeControl / LoupeControl）を直接参照しない（公開型のカプセル化。窓口は FadeMaskDragRectControl のみ。推移的依存として各プロジェクトを利用）。
+CaptureSessionControl.AvaloniaUI は内包コントロール（MarqueeControl / LoupeControl）を直接参照しない（公開型のカプセル化。 窓口は FadeMaskDragRectControl のみ。 推移的依存として各プロジェクトを利用）。
 
 ## 3. アーキテクチャ
 
@@ -75,7 +75,7 @@ CaptureSessionControl.AvaloniaUI は内包コントロール（MarqueeControl / 
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成で出力する。定義はすべて `CaptureSessionControl.Core`（`CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`）が単一所有し、本 UI は定義を持たない（`_log.LogXxx` を呼ぶだけ）。現在の定義は Debug / Trace のみで、Error / Warning は定義していない（例外は上位 AP が処理する）。
+- ログは LoggerMessage ソース生成で出力する。 定義はすべて `CaptureSessionControl.Core`（`CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`）が単一所有し、本 UI は定義を持たない（`_log.LogXxx` を呼ぶだけ）。 現在の定義は Debug / Trace のみで、Error / Warning は定義していない（例外は上位 AP が処理する）。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -147,9 +147,9 @@ flowchart TB
   - プラットフォームサービスの注入（`Platform.Core` の `Native.Win` 経由）
 - **公開メンバー**:
   - コンストラクタ: `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)`
-  - プロパティ: `AppearanceSettings`（`CaptureSettings`。getter は全メンバー non-null / setter は部分更新 + 検証）/ `IsCropping`（切り出し中かどうか）
+  - プロパティ: `AppearanceSettings`（`CaptureSettings`。 getter は全メンバー non-null / setter は部分更新 + 検証）/ `IsCropping`（切り出し中かどうか）
   - メソッド: `StartCaptureAsync(CaptureType, Window)` / `StartCropAsync(CropViewControl, Window)` / `ResolveCropAction()` / `Cancel()` / `Confirm()` / `NotifyCropViewportChanged()` / `Dispose()`
-  - イベント: `CaptureCompleted`（`Action<CaptureResult?>?`。同期実行・UI スレッド）
+  - イベント: `CaptureCompleted`（`Action<CaptureResult?>?`。 同期実行・UI スレッド）
 - **可視性**: public
 - **依存**: SelectionCaptureSession / CropSession / CaptureSettings / CaptureResult / CaptureType / CaptureSessionSlot / CaptureSettingsMerge / Platform.AvaloniaUI
 
@@ -157,7 +157,7 @@ flowchart TB
 
 - **分類**: 内部セッションクラス（`internal sealed class`・Primary Constructor）
 - **責務**:
-  - 背景キャプチャ（全モード共通の仮想スクリーン全体。バックグラウンド + 5 秒タイムアウト）
+  - 背景キャプチャ（全モード共通の仮想スクリーン全体。 バックグラウンド + 5 秒タイムアウト）
   - オーナーウィンドウのキャプチャ除外設定と画面外退避（`CaptureOwnerScope` に委譲）
   - `OverlayWindow` の生成・表示と、コアの完了通知（`CaptureCompletion`）での結果待機
   - 結果の返却（キャンセル時は画像 null / 矩形 0x0）
@@ -184,20 +184,20 @@ flowchart TB
   - 全画面透明・Topmost・Alt+Tab 非表示の選択オーバーレイ
   - 選択 UI の配置: `VirtualScreenImage`（背景）/ `SelectionOverlay`（FadeMaskDragRectControl 複合コントロール）
   - モード別の選択処理（AreaSelect: ドラッグ選択 + ルーペ / Screen・WindowSelect: 要素検出 + ハイライト）
-  - **選択スタイル（ハイライト型 / ドラッグ型）の判定はコアの `CaptureTypeTraits.IsHighlighted` が単一所有する**（本クラスは結果を 1 度読んで、十字カーソル・ルーペ・確定操作の配線を導く。種別を直接比較しない）
+  - **選択スタイル（ハイライト型 / ドラッグ型）の判定はコアの `CaptureTypeTraits.IsHighlighted` が単一所有する**（本クラスは結果を 1 度読んで、十字カーソル・ルーペ・確定操作の配線を導く。 種別を直接比較しない）
   - **完了は 1 回だけ**の規則はコアの `CaptureSessionState` が単一所有する（確定とキャンセルの競合で二重完了にしない）
-  - **確定矩形の計算はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（種別ごとの閉区間化と画像内へのクランプを組み合わせた唯一の入口。退化した結果は確定せずキャンセルする）。サイズラベルの表示倍率はコア（`MonitorScalingMath.ResolveForDomainRect`）へ委譲する
-  - **事前切り出しキャッシュ（同一判定・所有権の受け渡し・旧値の破棄）はコアの `CaptureClipCache` が単一所有する**（本クラスは切り出しをバックグラウンドで実行して `Store` するだけ）。適用範囲はハイライト型のホバー時のみ（範囲選択はドラッグ中の連続更新でキャッシュが無駄になるため）
+  - **確定矩形の計算はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（種別ごとの閉区間化と画像内へのクランプを組み合わせた唯一の入口。 退化した結果は確定せずキャンセルする）。 サイズラベルの表示倍率はコア（`MonitorScalingMath.ResolveForDomainRect`）へ委譲する
+  - **事前切り出しキャッシュ（同一判定・所有権の受け渡し・旧値の破棄）はコアの `CaptureClipCache` が単一所有する**（本クラスは切り出しをバックグラウンドで実行して `Store` するだけ）。 適用範囲はハイライト型のホバー時のみ（範囲選択はドラッグ中の連続更新でキャッシュが無駄になるため）
   - **ドメイン⇔画面物理の変換はコアの `CaptureClipMath` が単一所有する**（本クラスはコアの矩形を Avalonia の型へ写すだけ）
   - **確定対象の選択（ハイライト矩形 / 選択矩形）はコアの `CaptureTypeTraits.ResolveRect` が単一所有する**（サイズラベルの文言生成もこの結果を使う）
   - **検出関数の呼び分けはコアの `CaptureTypeTraits.FindUnderCursor` が単一所有する**（ホバー・押下で同じ分岐を書かない）
-  - **ハイライトの状態（矩形のドメイン座標・表示名・表示名の変化）はコアの `CaptureHighlightSession` が単一所有する**（本クラスは検出結果を渡して戻り値を選択コントロールへ設定するだけ。診断ログもコアが出し、確定対象・キーの確定可否はコアの状態を参照する）
-  - **画像の共有値（サイズ・占有範囲・サイズの検証）はコアの `CaptureClipMath` が単一所有する**（`ImageSize` / `ImageBounds` / `ValidateImage`。UI はコアの型同士の変換を書かない）
-- **撮影対象の範囲（全モニタの包含矩形）と「モニタが無ければ撮影しない」前提条件はコアの `CaptureVirtualScreen.ResolveBounds` が単一所有する**（本クラスは列挙した矩形を渡して、返った範囲をウィンドウへ配置するだけ。物理ピクセル → DIP の換算は `Platform.Core` の `DpiScaler.ToDip` に委譲する）
-  - **撮影画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時のフォールバック範囲）はコアの `CaptureImageHolder` が単一所有する**（本クラスは受け取った画像を渡して可否を見るだけ。クローズ後の破棄漏れを防ぐ）
+  - **ハイライトの状態（矩形のドメイン座標・表示名・表示名の変化）はコアの `CaptureHighlightSession` が単一所有する**（本クラスは検出結果を渡して戻り値を選択コントロールへ設定するだけ。 診断ログもコアが出し、確定対象・キーの確定可否はコアの状態を参照する）
+  - **画像の共有値（サイズ・占有範囲・サイズの検証）はコアの `CaptureClipMath` が単一所有する**（`ImageSize` / `ImageBounds` / `ValidateImage`。 UI はコアの型同士の変換を書かない）
+- **撮影対象の範囲（全モニタの包含矩形）と「モニタが無ければ撮影しない」前提条件はコアの `CaptureVirtualScreen.ResolveBounds` が単一所有する**（本クラスは列挙した矩形を渡して、返った範囲をウィンドウへ配置するだけ。 物理ピクセル → DIP の換算は `Platform.Core` の `DpiScaler.ToDip` に委譲する）
+  - **撮影画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時のフォールバック範囲）はコアの `CaptureImageHolder` が単一所有する**（本クラスは受け取った画像を渡して可否を見るだけ。 クローズ後の破棄漏れを防ぐ）
   - **背景取得のタイムアウトと未使用結果の破棄はコアの `CaptureVirtualScreen` が単一所有する**（本クラスは取得と UI スレッドへの反映のみを担う）
-  - **確定・事前切り出しの切り出し矩形はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（ドラッグは浮動小数版・クリック確定は整数版。UI は選択矩形の型を広げない）
-  - **選択矩形と占有範囲は同じ座標空間（画面物理座標）で渡す**（本 UI のドラッグ選択のドメインはウィンドウローカル物理ピクセルのため、確定時に `CaptureClipMath.ToScreenRect` で画面物理座標へ戻してから画面物理座標の占有範囲と組み合わせる。切り出し矩形の求解は画面物理座標の 1 つの入口に統一されている）
+  - **確定・事前切り出しの切り出し矩形はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（ドラッグは浮動小数版・クリック確定は整数版。 UI は選択矩形の型を広げない）
+  - **選択矩形と占有範囲は同じ座標空間（画面物理座標）で渡す**（本 UI のドラッグ選択のドメインはウィンドウローカル物理ピクセルのため、確定時に `CaptureClipMath.ToScreenRect` で画面物理座標へ戻してから画面物理座標の占有範囲と組み合わせる。 切り出し矩形の求解は画面物理座標の 1 つの入口に統一されている）
   - **サイズラベルの文言はコアの `CaptureLabelTexts.ResolveSizeLabel` が解決する**（確定対象が無ければ設定の明示指定を使う規則を含む）
   - **オーナーの画面スケーリングの代表値はコアの `MonitorScalingMath.ResolveScaling` が解決する**（画面が取得できない場合は基準値・0 以下は正規化）
   - **キー操作（Enter = 確定 / Escape = キャンセル）の解釈はコアの `CaptureKeyActions` が単一所有する**（確定対象が無い場合の Enter は何もしない）。
@@ -211,16 +211,16 @@ flowchart TB
   - ログ定義はコア（`CaptureLogMessage` / `CaptureLogFormat`）が単一所有する（本クラスは `_log.LogXxx` を呼ぶだけ）
   - クリック確定 → キャプチャ実行 → 結果コールバック
   - 非アクティブ化 / Close → キャンセル
-- **可視性**: internal（クラス。コンストラクタ等のシグネチャは public）
+- **可視性**: internal（クラス。 コンストラクタ等のシグネチャは public）
 - **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CaptureClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CaptureLogMessage / CaptureResult
 
 ### 6.5 公開データ型
 
 | コンポーネント | 説明 |
 | --- | --- |
-| `CaptureType` enum | `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）。UI 非依存の共通基盤 `Platform.Core`（`EsUtil.Platform.Core`）提供 |
-| `CaptureSettings` record | キャプチャの外観・動作設定（全メンバー nullable・部分更新可・`Validate()` / `ToNonNull()`）。共通基盤 `CaptureSessionControl.Core` 提供 |
-| `CaptureResult` record | キャプチャ結果（`Image` / `SourceBounds`。キャンセル時は画像 null・矩形 0x0）。共通基盤 `CaptureSessionControl.Core` 提供 |
+| `CaptureType` enum | `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）。 UI 非依存の共通基盤 `Platform.Core`（`EsUtil.Platform.Core`）提供 |
+| `CaptureSettings` record | キャプチャの外観・動作設定（全メンバー nullable・部分更新可・`Validate()` / `ToNonNull()`）。 共通基盤 `CaptureSessionControl.Core` 提供 |
+| `CaptureResult` record | キャプチャ結果（`Image` / `SourceBounds`。 キャンセル時は画像 null・矩形 0x0）。 共通基盤 `CaptureSessionControl.Core` 提供 |
 
 ## 7. 依存ルール
 
@@ -252,7 +252,7 @@ sequenceDiagram
 
 ## 9. ログ
 
-ログ定義は `CaptureSessionControl.Core`（`CaptureLogMessage` / `CaptureSettingsLogMessage`）が単一所有する（LoggerMessage ソース生成）。本 UI はログ定義を持たない。
+ログ定義は `CaptureSessionControl.Core`（`CaptureLogMessage` / `CaptureSettingsLogMessage`）が単一所有する（LoggerMessage ソース生成）。 本 UI はログ定義を持たない。
 各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogCaptureStart(type)`）。
 `CaptureSessionControl` コンストラクタの `logger` 引数で注入し、null の場合は出力しない（app では NLog へ転送）。
 出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
@@ -279,17 +279,17 @@ sequenceDiagram
 
 ### 9.2 ログ定義一覧
 
-全ログ（`CaptureLogMessage` / `CaptureSettingsLogMessage`。`CaptureSessionControl.Core`）:
+全ログ（`CaptureLogMessage` / `CaptureSettingsLogMessage`。 `CaptureSessionControl.Core`）:
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
 | `Debug` | `CaptureLogMessage.LogCaptureStart` | キャプチャセッション開始（種別） |
-| `Debug` | `CaptureLogMessage.LogCaptureFinished` | キャプチャセッションの終了（確定は `CaptureCompleted`（矩形）→ `Result`（画像サイズ / 矩形）の 2 件、キャンセルは `CaptureCancelled` の 1 件。出力の組はコアが単一所有する） |
+| `Debug` | `CaptureLogMessage.LogCaptureFinished` | キャプチャセッションの終了（確定は `CaptureCompleted`（矩形）→ `Result`（画像サイズ / 矩形）の 2 件、キャンセルは `CaptureCancelled` の 1 件。 出力の組はコアが単一所有する） |
 | `Debug` | `CaptureLogMessage.LogConfirmRequested` | 選択の確定要求（Enter / ダブルクリック等） |
 | `Debug` | `CaptureLogMessage.LogCancelRequested` | 選択のキャンセル要求（Esc / 非アクティブ化等） |
-| `Debug` | `CaptureLogMessage.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ。画像未取得はサイズ 0） |
-| `Trace` | `CaptureLogMessage.LogHighlight` | ハイライト検出結果（検出矩形 / タイトル / クラス名。マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用。`CaptureHighlightSession` が出す） |
+| `Debug` | `CaptureLogMessage.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ。 画像未取得はサイズ 0） |
+| `Trace` | `CaptureLogMessage.LogHighlight` | ハイライト検出結果（検出矩形 / タイトル / クラス名。 マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用。 `CaptureHighlightSession` が出す） |
 | `Debug` | `CaptureLogMessage.LogCropStart` | Crop セッション開始（元画像サイズ） |
-| `Debug` | `CaptureLogMessage.LogCropFinished` | Crop セッションの終了（切り出せた場合は `CropCompleted`（矩形）、退化した選択は `CropCancelled`。出力の組はコアが単一所有する） |
+| `Debug` | `CaptureLogMessage.LogCropFinished` | Crop セッションの終了（切り出せた場合は `CropCompleted`（矩形）、退化した選択は `CropCancelled`。 出力の組はコアが単一所有する） |
 | `Debug` | `CaptureLogMessage.LogCropCancelled` | Crop キャンセル（Esc・非アクティブ化・ウィンドウクローズ等） |
 | `Debug` | `CaptureSettingsLogMessage.LogSettingApplied` | 設定の適用（変化時の 1 回のみ） |

@@ -57,7 +57,7 @@ internal static partial class IconLoader
 
     /// <summary>指定 SVG のパス形状を読み込む。</summary>
     /// <param name="fileName">SVG ファイル名（例: "ic_fluent_save_24_regular.svg"）。</param>
-    /// <returns>SVG のパス形状。読み込めない場合は空の形状。</returns>
+    /// <returns>SVG のパス形状。 読み込めない場合は空の形状。</returns>
     /// <remarks>読み込み失敗（リソース欠落・パスデータ不正）でも例外にせず空の形状を返す（UI を壊さない）。</remarks>
     public static SKPath LoadPath(string fileName)
     {
@@ -76,9 +76,9 @@ internal static partial class IconLoader
 
     /// <summary>指定 SVG を指定サイズ・指定色でラスタライズした画像を取得する。</summary>
     /// <param name="fileName">SVG ファイル名。</param>
-    /// <param name="size">生成する画像の一辺（ピクセル）。1 未満は 1 として扱う。</param>
+    /// <param name="size">生成する画像の一辺（ピクセル）。 1 未満は 1 として扱う。</param>
     /// <param name="color">アイコンの色。</param>
-    /// <returns>ラスタライズした画像。生成結果はキャッシュして共有する。</returns>
+    /// <returns>ラスタライズした画像。 生成結果はキャッシュして共有する。</returns>
     /// <remarks>
     /// 24x24 の viewBox を <paramref name="size"/> へ等方スケールして描画する。<br/>
     /// 生成した画像は本クラスが所有し、呼び出し側は破棄しない（キャッシュから共有されるため）。
@@ -123,9 +123,9 @@ internal static partial class IconLoader
 
     /// <summary>指定 SVG の画像からウィンドウ（タスクバー）アイコンを生成する。</summary>
     /// <param name="fileName">SVG ファイル名。</param>
-    /// <param name="size">アイコンの一辺（ピクセル。既定 32）。</param>
+    /// <param name="size">アイコンの一辺（ピクセル。 既定 32）。</param>
     /// <param name="color">アイコンの色。</param>
-    /// <returns>生成した <see cref="IconSource"/>。複数サイズを含む。</returns>
+    /// <returns>生成した <see cref="IconSource"/>。 複数サイズを含む。</returns>
     /// <remarks>
     /// MewUI の <see cref="IconSource.FromBytes"/> は ICO 形式を要求するため、<br/>
     /// 各サイズの PNG を ICO コンテナ（Vista 以降の PNG 埋め込み形式）へ詰めて渡す。<br/>

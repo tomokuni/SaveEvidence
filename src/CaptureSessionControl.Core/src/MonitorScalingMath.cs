@@ -20,7 +20,7 @@ public static class MonitorScalingMath
 
     /// <summary>画面のスケーリング一覧から正規化済みのスケーリングを解決する。</summary>
     /// <param name="scalings">画面のスケーリング一覧（UI の画面情報の順序を保つ）。</param>
-    /// <returns>先頭の画面のスケーリング（未確定は基準値へ正規化）。画面が 1 枚も無い場合は基準値。</returns>
+    /// <returns>先頭の画面のスケーリング（未確定は基準値へ正規化）。 画面が 1 枚も無い場合は基準値。</returns>
     /// <remarks>
     /// 「オーナーの画面が見つからない場合（ヘッドレステスト等）は基準値を使う」という規則を単一所有する<br/>
     /// （UI が「一覧が空なら 0 を渡して正規化する」という二段の判定を書かない）。
@@ -62,7 +62,7 @@ public static class MonitorScalingMath
     /// <param name="target">対象の矩形（画面物理ピクセル）。</param>
     /// <param name="monitors">モニターの一覧（矩形と表示倍率の組）。</param>
     /// <param name="fallback">含まれるモニターが無い場合に使う倍率。</param>
-    /// <returns>対象矩形の中心を含むモニターの表示倍率。無い場合は <paramref name="fallback"/>。</returns>
+    /// <returns>対象矩形の中心を含むモニターの表示倍率。 無い場合は <paramref name="fallback"/>。</returns>
     /// <remarks>
     /// 判定点は矩形の<b>中心</b>とする（矩形は 1 つのモニターに収まるのが通常であり、<br/>
     /// 左上を基準にすると枠を跨いだ瞬間に隣のモニターの倍率になる）。<br/>
@@ -92,10 +92,10 @@ public static class MonitorScalingMath
 
     /// <summary>ドメイン座標（画像ピクセル）の矩形から、その中心を含むモニターの表示倍率を解決する。</summary>
     /// <param name="domainRect">対象の矩形（ドメイン座標 = 画像ピクセル）。</param>
-    /// <param name="origin">ドメイン座標の原点（画面物理ピクセル。ウィンドウ位置または仮想スクリーン原点）。</param>
+    /// <param name="origin">ドメイン座標の原点（画面物理ピクセル。 ウィンドウ位置または仮想スクリーン原点）。</param>
     /// <param name="monitors">モニターの一覧（矩形と表示倍率の組）。</param>
     /// <param name="fallback">含まれるモニターが無い場合に使う倍率。</param>
-    /// <returns>対象矩形の中心を含むモニターの表示倍率。無い場合は <paramref name="fallback"/>。</returns>
+    /// <returns>対象矩形の中心を含むモニターの表示倍率。 無い場合は <paramref name="fallback"/>。</returns>
     /// <remarks>
     /// ドメイン座標を画面物理座標へ戻す（原点の加算）前処理を本クラスが単一所有する<br/>
     /// （各 UI が原点の加算と丸めを書くと、UI ごとに判定点が 1 ピクセルずれる）。

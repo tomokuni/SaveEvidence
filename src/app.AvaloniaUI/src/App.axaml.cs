@@ -20,7 +20,7 @@ namespace EsUtil.SaveEvidence;
 public sealed partial class App : Application
 {
     /// <summary>
-    /// XAML の読み込み。EsUtil.SaveEvidence.axaml で定義されたリソースとスタイルを適用する。
+    /// XAML の読み込み。 EsUtil.SaveEvidence.axaml で定義されたリソースとスタイルを適用する。
     /// </summary>
     public override void Initialize()
     {
@@ -56,14 +56,14 @@ public sealed partial class App : Application
     {
         var settings = Program.SettingsService.Current;
 
-        // 設定変更時にテーマを再適用する（購読解除は不要。App はアプリ生存期間中生き続ける）
+        // 設定変更時にテーマを再適用する（購読解除は不要。 App はアプリ生存期間中生き続ける）
         settings.PropertyChanged -= OnSettingsPropertyChanged;
         settings.PropertyChanged += OnSettingsPropertyChanged;
 
         UpdateRequestedTheme(settings.ThemeMode);
     }
 
-    /// <summary>設定プロパティ変更時のハンドラ。テーマモード変更のみテーマへ反映する。</summary>
+    /// <summary>設定プロパティ変更時のハンドラ。 テーマモード変更のみテーマへ反映する。</summary>
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Models.Settings.ThemeMode) && sender is Models.Settings settings)

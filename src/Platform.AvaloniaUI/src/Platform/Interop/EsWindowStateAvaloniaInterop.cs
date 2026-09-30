@@ -14,7 +14,7 @@ public static class EsWindowStateAvaloniaInterop
 {
     /// <summary><see cref="EsWindowState"/> を Avalonia の <see cref="AvaloniaWindowState"/> へ変換する。</summary>
     /// <param name="state">変換対象のウィンドウ状態。</param>
-    /// <returns>対応する Avalonia のウィンドウ状態。未定義値・名前が一致しない場合は <see cref="AvaloniaWindowState.Normal"/>。</returns>
+    /// <returns>対応する Avalonia のウィンドウ状態。 未定義値・名前が一致しない場合は <see cref="AvaloniaWindowState.Normal"/>。</returns>
     public static AvaloniaWindowState ToAvaloniaWindowState(this EsWindowState state) =>
         System.Enum.IsDefined(state) && System.Enum.TryParse<AvaloniaWindowState>(state.ToString(), out var result)
             ? result
@@ -22,7 +22,7 @@ public static class EsWindowStateAvaloniaInterop
 
     /// <summary>Avalonia の <see cref="AvaloniaWindowState"/> を <see cref="EsWindowState"/> へ変換する。</summary>
     /// <param name="state">変換対象のウィンドウ状態。</param>
-    /// <returns>対応する <see cref="EsWindowState"/>。未定義値・名前が一致しない場合は <see cref="EsWindowState.Normal"/>。</returns>
+    /// <returns>対応する <see cref="EsWindowState"/>。 未定義値・名前が一致しない場合は <see cref="EsWindowState.Normal"/>。</returns>
     public static EsWindowState ToEsWindowState(this AvaloniaWindowState state) =>
         System.Enum.IsDefined(state) && System.Enum.TryParse<EsWindowState>(state.ToString(), out var result)
             ? result

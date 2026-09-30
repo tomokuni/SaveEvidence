@@ -43,7 +43,7 @@
               └──────────────────────┘
 ```
 
-Avalonia 版と MewUI 版の間に依存はありません。共通する計算は必ず `ZoomViewControl.Core` を経由します。
+Avalonia 版と MewUI 版の間に依存はありません。 共通する計算は必ず `ZoomViewControl.Core` を経由します。
 
 ### 責務の分担
 
@@ -74,7 +74,7 @@ src/ZoomViewControl.MewUI/
 | --- | --- |
 | `ZoomViewControl` | `MewProperty`（`Source` / `CenterAlign` / `DipToDeviceScaling`）の定義、`Appearance` の窓口、入力の変換と効果の適用、通知の転送、描画順の所有、DPI 追従 |
 | `ZoomSkiaRenderer` | コアが確定した表示矩形へ `DrawBitmap` で描画するだけ（判断・計算を持たない） |
-| `RenderTarget`（テスト） | ウィンドウ不要の描画先。`SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
+| `RenderTarget`（テスト） | ウィンドウ不要の描画先。 `SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
 ## クラス図
 
@@ -207,20 +207,20 @@ sequenceDiagram
 
 ## 設計判断
 
-1. **Avalonia 版の 2 クラス構成を 1 クラスに統合した**。Avalonia 版は `Image` + `RenderTransform` + `ScrollBar` を扱うために内部ビューポート（`ZoomableView`）を分けているが、
+1. **Avalonia 版の 2 クラス構成を 1 クラスに統合した**。 Avalonia 版は `Image` + `RenderTransform` + `ScrollBar` を扱うために内部ビューポート（`ZoomableView`）を分けているが、
    MewUI 版は Skia へ直接描画するため分離する理由がない（YAGNI）。
-2. **画像を 1 回の `DrawBitmap` で描画する**。Avalonia 版の Transform 合成に相当する処理はコアが確定済みであり、
+2. **画像を 1 回の `DrawBitmap` で描画する**。 Avalonia 版の Transform 合成に相当する処理はコアが確定済みであり、
    Skia 側は表示矩形へ描くだけでよい（中間バッファも Transform も不要）。
-3. **`ZoomSkiaRenderer` は判断を持たない描画層に絞った**。コアの `ZoomViewSession.ImageRect` を読んで描くだけにし、
-   コントロールを表示せずに画素を検証できるようにするため（ルーペと同じ方式。テスト容易性を優先）。
-4. **`ZoomPercent` を `MewProperty` にしなかった**。Avalonia 版と同じく「0 以下は無視」「Fit は `ZoomFit` のみ」という
+3. **`ZoomSkiaRenderer` は判断を持たない描画層に絞った**。 コアの `ZoomViewSession.ImageRect` を読んで描くだけにし、
+   コントロールを表示せずに画素を検証できるようにするため（ルーペと同じ方式。 テスト容易性を優先）。
+4. **`ZoomPercent` を `MewProperty` にしなかった**。 Avalonia 版と同じく「0 以下は無視」「Fit は `ZoomFit` のみ」という
    半ば手続き的な意味を持つプロパティであり、宣言的バインディングに馴染まない（変更は `ZoomChanged` で通知する）。
-5. **キャンバスを DPI スケーリングしてから DIP 座標で描画する**。コアの計算はすべて DIP のため、
+5. **キャンバスを DPI スケーリングしてから DIP 座標で描画する**。 コアの計算はすべて DIP のため、
    物理ピクセルへ変換するのは描画の境界 1 箇所に閉じる。
-6. **スクロールバーはオーバーレイで自前描画する**。Avalonia 版は標準の `ScrollBar` を同期表示するが、
+6. **スクロールバーはオーバーレイで自前描画する**。 Avalonia 版は標準の `ScrollBar` を同期表示するが、
    MewUI 版はトラックとサムの矩形をコア（`ZoomScrollBarGeometry`）で計算し、`SKCanvas` へ直接描画する
-   （描画と入力が同じ配置計算を共有する）。画像がビューポートに収まる軸には生成しない。
-7. **マウスキャプチャを使う**。ドラッグ中にポインタがコントロール外へ出てもパンが継続するようにするため。
+   （描画と入力が同じ配置計算を共有する）。 画像がビューポートに収まる軸には生成しない。
+7. **マウスキャプチャを使う**。 ドラッグ中にポインタがコントロール外へ出てもパンが継続するようにするため。
 
 ## テスト方針
 
@@ -249,4 +249,4 @@ sequenceDiagram
 | Ctrl+ホイール | `LogZoomInWheel` / `LogZoomOutWheel` |
 
 コアの `ZoomViewSession.ApplyZoomStep` が遷移とログを共通処理として担い、各操作は記録するログだけを選びます（遷移しない場合はログも出しません）。  
-出力先は `Log` プロパティへ注入します（既定は `NullLogger`。`CropViewControl.MewUI` 経由でホストが設定する）。
+出力先は `Log` プロパティへ注入します（既定は `NullLogger`。 `CropViewControl.MewUI` 経由でホストが設定する）。

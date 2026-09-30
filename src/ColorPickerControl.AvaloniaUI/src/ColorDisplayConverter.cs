@@ -22,20 +22,20 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 public sealed class ColorDisplayConverter : IValueConverter
 {
     /// <summary>保存値（#AARRGGBB）を画面表示テキスト（{色}+{不透明度%}）へ変換する。</summary>
-    /// <param name="value">変換元の値。保存値（例: "#80FF0000"）。</param>
+    /// <param name="value">変換元の値。 保存値（例: "#80FF0000"）。</param>
     /// <param name="targetType">変換先の型。</param>
     /// <param name="parameter">変換パラメーター（未使用）。</param>
     /// <param name="culture">カルチャ情報（未使用）。</param>
-    /// <returns>表示テキスト（例: "Red+50%"）。解析できない場合は入力をそのまま返す。</returns>
+    /// <returns>表示テキスト（例: "Red+50%"）。 解析できない場合は入力をそのまま返す。</returns>
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         => value is string text ? ColorString.ToDisplayText(text) : value;
 
     /// <summary>入力テキスト（{色}+{不透明度%}）を保存値（#AARRGGBB）へ変換する。</summary>
-    /// <param name="value">変換元の値。入力テキスト（例: "Red+50%"）。</param>
+    /// <param name="value">変換元の値。 入力テキスト（例: "Red+50%"）。</param>
     /// <param name="targetType">変換先の型。</param>
     /// <param name="parameter">変換パラメーター（未使用）。</param>
     /// <param name="culture">カルチャ情報（未使用）。</param>
-    /// <returns>保存値（例: "#80FF0000"）。解析できない場合は入力をそのまま返す。</returns>
+    /// <returns>保存値（例: "#80FF0000"）。 解析できない場合は入力をそのまま返す。</returns>
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => value is string text ? ColorString.ToArgbHex(text) : value;
 }

@@ -29,7 +29,7 @@ internal static class TestHelper
     /// <summary>指定サイズの画像を生成する（不透明の単色で塗りつぶし）。</summary>
     /// <param name="size">一辺のサイズ（ピクセル）。</param>
     /// <param name="color">塗りつぶす色。</param>
-    /// <returns>生成した画像。所有権は呼び出し側。</returns>
+    /// <returns>生成した画像。 所有権は呼び出し側。</returns>
     public static EsBitmap CreateBitmap(int size, SKColor color)
     {
         // 所有権は FromSKBitmap へ移るため using を付けない
@@ -40,10 +40,10 @@ internal static class TestHelper
     }
 
     /// <summary>元画像の中央を区別できるテスト画像を生成する（中心 1 画素のみ別色）。</summary>
-    /// <param name="size">一辺のサイズ（ピクセル）。奇数を推奨。</param>
+    /// <param name="size">一辺のサイズ（ピクセル）。 奇数を推奨。</param>
     /// <param name="background">背景色。</param>
     /// <param name="center">中心画素の色。</param>
-    /// <returns>生成した画像。所有権は呼び出し側。</returns>
+    /// <returns>生成した画像。 所有権は呼び出し側。</returns>
     public static EsBitmap CreateBitmapWithCenter(int size, SKColor background, SKColor center)
     {
         // 所有権は FromSKBitmap へ移るため using を付けない

@@ -2,7 +2,7 @@
 
 ## 概要
 
-SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）と将来の MewUI ホストが共有する、UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供するライブラリです。SaveEvidence のマルチ UI 対応における「app の Core / UI 分割」（ティア F）です。
+SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）と将来の MewUI ホストが共有する、UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供するライブラリです。 SaveEvidence のマルチ UI 対応における「app の Core / UI 分割」（ティア F）です。
 
 ## 技術スタック
 
@@ -22,7 +22,7 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）と将来の MewUI �
 ```
 
 - `app.Core` は UI フレームワークへ依存しません。
-- `app.Core` の名前空間は `app.AvaloniaUI` と同一（`EsUtil.SaveEvidence.*`）です。アセンブリのみが異なるため、`app.AvaloniaUI` 側の `using` を変更せずに移設できます。
+- `app.Core` の名前空間は `app.AvaloniaUI` と同一（`EsUtil.SaveEvidence.*`）です。 アセンブリのみが異なるため、`app.AvaloniaUI` 側の `using` を変更せずに移設できます。
 - `internal` 型（`CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay`）は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `app.AvaloniaUI.Tests` / `app.Core.Tests` / `app.MewUI.Tests`）で UI 実装とテストへ公開します。
 
 ## コンポーネント構成
@@ -75,7 +75,7 @@ sequenceDiagram
 
 | 注入点 | 種類 | 内容 |
 | --- | --- | --- |
-| `IImageWriter` | コンストラクター引数 | 画像のエンコード・保存（Avalonia 版は `AvaloniaImageWriter`。`Program.cs` で DI 登録） |
+| `IImageWriter` | コンストラクター引数 | 画像のエンコード・保存（Avalonia 版は `AvaloniaImageWriter`。 `Program.cs` で DI 登録） |
 | `CopyToClipboardAsync` | コールバック | `EsBitmap` を受け取り、UI 型へ変換してクリップボードへ書く |
 | `PasteFromClipboardAsync` | コールバック | クリップボードから読み、UI 型から `EsBitmap` へ変換して返す |
 | `ConfirmOverwriteAsync` | コールバック | 上書き確認ダイアログ |
@@ -84,14 +84,14 @@ sequenceDiagram
 
 ## 例外処理ポリシー
 
-例外を送出しません。入力の不正（解釈できないホットキー文字列・無効なテンプレート）は `bool` の戻り値（`TryParse` / `IsValidTemplate`）またはクランプ（`ClampIndex`）で表現します。
+例外を送出しません。 入力の不正（解釈できないホットキー文字列・無効なテンプレート）は `bool` の戻り値（`TryParse` / `IsValidTemplate`）またはクランプ（`ClampIndex`）で表現します。
 
-`UndoStack` が保持する `EsBitmap` の破棄は所有者（`UndoStack`）が行います。`Undo` / `Redo` の戻り値の所有権は呼び出し側へ移ります。
+`UndoStack` が保持する `EsBitmap` の破棄は所有者（`UndoStack`）が行います。 `Undo` / `Redo` の戻り値の所有権は呼び出し側へ移ります。
 
 ## 可視性ポリシー
 
 - `AppPage` / `ThemeMode` / `Settings` / `FileNameTemplate` / `UndoStack` / `HotKeyParser` / `ISettingsService` / `SettingsService` / `FolderViewViewModel` / `UndoViewModel` は `public`（`app.AvaloniaUI` と MewUI ホストが共有する契約）。
-- `CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay` / `EsRectIntJsonConverter` は `internal`。`internal` → `public` の変更は破壊的な設計変更として扱います。
+- `CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay` / `EsRectIntJsonConverter` は `internal`。 `internal` → `public` の変更は破壊的な設計変更として扱います。
 
 ## 設定ファイルの互換性
 
@@ -112,7 +112,7 @@ sequenceDiagram
 
 ### 第一段階（UI 型を持たないファイル）
 
-従来 `app.AvaloniaUI`（Avalonia）プロジェクト内にあった以下のファイルを本プロジェクトへ切り出しました。いずれも UI フレームワークの型をシグネチャに持たないため、名前空間を変えずに移設できました。
+従来 `app.AvaloniaUI`（Avalonia）プロジェクト内にあった以下のファイルを本プロジェクトへ切り出しました。 いずれも UI フレームワークの型をシグネチャに持たないため、名前空間を変えずに移設できました。
 
 | ファイル | 移行内容 |
 | --- | --- |
@@ -140,7 +140,7 @@ sequenceDiagram
 
 | ファイル | 移行内容 |
 | --- | --- |
-| `Services/IImageWriter.cs` | 移設（`EsBitmap` のみ依存のためそのまま）。具象実装 `AvaloniaImageWriter` は `app.AvaloniaUI` 側に残す |
+| `Services/IImageWriter.cs` | 移設（`EsBitmap` のみ依存のためそのまま）。 具象実装 `AvaloniaImageWriter` は `app.AvaloniaUI` 側に残す |
 
 併せて以下を実施しました。
 
@@ -152,11 +152,11 @@ sequenceDiagram
 
 | ファイル | 移行内容 |
 | --- | --- |
-| `ViewModels/MainViewModel.cs` | 移設 + UI 型の除去。クリップボードのコールバックを `Bitmap?` → `EsBitmap` へ変更、`IImageWriter` を必須引数化（既定実装 `AvaloniaImageWriter` の生成を削除）、`ZoomViewControl` への `<see cref>` を一般表現へ |
+| `ViewModels/MainViewModel.cs` | 移設 + UI 型の除去。 クリップボードのコールバックを `Bitmap?` → `EsBitmap` へ変更、`IImageWriter` を必須引数化（既定実装 `AvaloniaImageWriter` の生成を削除）、`ZoomViewControl` への `<see cref>` を一般表現へ |
 
 併せて以下を実施しました。
 
-- `LineDetection` の名前空間は `EsUtil.SaveEvidence.LineDetection`（旧名 `Estable.AvaloniaUI.LineDetection`。UI 非依存のため）
+- `LineDetection` の名前空間は `EsUtil.SaveEvidence.LineDetection`（旧名 `Estable.AvaloniaUI.LineDetection`。 UI 非依存のため）
 - `app.AvaloniaUI` の `MainWindow`（View）が `EsBitmap` ⇔ `Avalonia.Bitmap` の境界変換を担当
 - `app.AvaloniaUI` の `Program.cs` で `IImageWriter`（`AvaloniaImageWriter`）を DI 登録
 - `app.AvaloniaUI` の `LineDetection` 直接参照を削除（`app.Core` 経由の推移的参照へ）
@@ -168,6 +168,6 @@ sequenceDiagram
 
 | ファイル | 依存する UI 型 |
 | --- | --- |
-| `Services/AvaloniaImageWriter.cs` | Avalonia Skia（`WriteableBitmap`）。`IImageWriter` の Avalonia 実装 |
+| `Services/AvaloniaImageWriter.cs` | Avalonia Skia（`WriteableBitmap`）。 `IImageWriter` の Avalonia 実装 |
 | `Services/CaptureSettingsMapper.cs` | `Avalonia.Media`（色）・`CaptureSessionControl.AvaloniaUI` |
 | `Views/**` / `Controls/**` / `Converters/**` / `Icons/**` / `Logging/AppLog.cs` | Avalonia の UI 型 |

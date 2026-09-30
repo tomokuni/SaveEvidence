@@ -14,7 +14,7 @@ namespace EsUtil.SaveEvidence.MewUI.Views;
 /// <remarks>
 /// Avalonia 版 <c>FolderViewPage.axaml</c> に相当する。<br/>
 /// <br/>
-/// <b>一覧</b>: 保存先フォルダの画像をサムネイル + ファイル名で並べる。ウィンドウ幅に合わせて折り返す。<br/>
+/// <b>一覧</b>: 保存先フォルダの画像をサムネイル + ファイル名で並べる。 ウィンドウ幅に合わせて折り返す。<br/>
 /// <b>表示モード</b>: 特大 / 大 / 中。<c>Settings.FolderViewModeIndex</c> へ保存し、次回起動時に復元する。<br/>
 /// <b>ソート順</b>: 名前の昇順 / 降順。<c>Settings.FolderViewSortAscending</c> へ保存する。<br/>
 /// <b>サムネイル</b>: 文字列とした画像の縮小デコードとキャッシュは <see cref="ImageThumbnailLoader"/> が所有する。<br/>
@@ -74,7 +74,7 @@ internal static class FolderViewPage
             viewModel.ItemCount = files.Count;
         }
 
-        // 表示モードの切り替え（解除は許さない。常に 1 つを選択状態に保つ）
+        // 表示モードの切り替え（解除は許さない。 常に 1 つを選択状態に保つ）
         var modeButtons = new ToggleButton[ViewModeDisplay.Count];
         void OnModeChanged(int index, bool isChecked)
         {
@@ -159,7 +159,7 @@ internal static class FolderViewPage
             .. sortButtons,
         ];
 
-        // ステータスバーは 4 項目。保存先フォルダのみ右端へ寄せる（Avalonia 版と同じ配置）
+        // ステータスバーは 4 項目。 保存先フォルダのみ右端へ寄せる（Avalonia 版と同じ配置）
         var status = new StackPanel()
             .Horizontal()
             .Spacing(12)
@@ -199,7 +199,7 @@ internal static class FolderViewPage
             Rebuild();
         }
 
-        // ツールバー（上端 6 DIP。タイトルバー領域の下） / 一覧（残余） / ステータスの 3 段。
+        // ツールバー（上端 6 DIP。 タイトルバー領域の下） / 一覧（残余） / ステータスの 3 段。
         // ツールバーはタイトルバー領域に重ねて置き、一覧はタイトルバー領域の下から始める（Avalonia 版と同じ）
         var toolbar = new StackPanel()
             .Horizontal()
@@ -247,9 +247,9 @@ internal static class FolderViewPage
     }
 
     /// <summary>保存先フォルダの画像ファイルを読み込む。</summary>
-    /// <param name="folderPath">対象のフォルダパス。未解決の場合は空文字。</param>
+    /// <param name="folderPath">対象のフォルダパス。 未解決の場合は空文字。</param>
     /// <param name="ascending">true の場合は名前の昇順、false の場合は降順。</param>
-    /// <returns>並べ替え済みのファイルパス。フォルダが無い・読めない場合は空。</returns>
+    /// <returns>並べ替え済みのファイルパス。 フォルダが無い・読めない場合は空。</returns>
     /// <remarks>
     /// フォルダ列挙で失敗してもページを表示できるよう、例外は空の一覧として扱う<br/>
     /// （アクセス拒否のフォルダを指定した場合にページごと落ちるのを防ぐ）。

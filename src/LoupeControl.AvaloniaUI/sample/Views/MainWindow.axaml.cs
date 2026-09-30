@@ -7,7 +7,7 @@ using EsUtil.SaveEvidence.Loupe.Sample.ViewModels;
 
 namespace EsUtil.SaveEvidence.Loupe.Sample.Views;
 
-/// <summary>メインウィンドウ。マウス追従とルーペ配置を担う。</summary>
+/// <summary>メインウィンドウ。 マウス追従とルーペ配置を担う。</summary>
 /// <remarks>
 /// マウス位置（View 固有の操作）の取得とルーペの配置のみをコードビハインドで行い、<br/>
 /// 外観設定は <see cref="MainWindowViewModel"/> へバインドする。<br/>
@@ -45,7 +45,7 @@ public partial class MainWindow : Window
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ポインタイベント引数。</param>
     /// <remarks>
-    /// 中心座標は画像の外もそのまま許可する。LoupeControl は画像外の領域を透明として切り出し、<br/>
+    /// 中心座標は画像の外もそのまま許可する。 LoupeControl は画像外の領域を透明として切り出し、<br/>
     /// 画像外は無地の色（ペーストボード）で表示される（視野全体が画像外になった場合も全面がその色）。<br/>
     /// Stretch=None のため画像ローカル DIP ≒ 元画像ピクセル。<br/>
     /// ルーペの表示位置は LoupeControl.UpdatePosition（RenderTransform + PositionOffset）が計算するため、

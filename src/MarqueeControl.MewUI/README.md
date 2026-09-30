@@ -1,15 +1,15 @@
 # MarqueeControl.MewUI
 
-`MarqueeControl`（リサイズ可能なドラッグ矩形）の **MewUI 版**です。Avalonia 版と同一の UI 非依存コア（`Feature.Marquee.Core`）と描画層（`Feature.Marquee.Presenter`）を使い、
-入力の受付と効果の適用・カーソル制御・描画ポートの適合のみを MewUI で実装しています。層構成（Core / Presenter / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
+`MarqueeControl`（リサイズ可能なドラッグ矩形）の **MewUI 版**です。 Avalonia 版と同一の UI 非依存コア（`Feature.Marquee.Core`）と描画層（`Feature.Marquee.Presenter`）を使い、
+入力の受付と効果の適用・カーソル制御・描画ポートの適合のみを MewUI で実装しています。 層構成（Core / Presenter / UI）の全体像は [`src/README.md`](../README.md) を参照してください。
 
 ## 特徴
 
 - **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `Feature.Marquee.Core` が単一所有します（UI 層は公開ファサード `Marquee` だけを参照し、内部の状態機械・フレーム解決には触れません）。
   Avalonia 版と MewUI 版の挙動は同じ計算に基づきます。
-- **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへ直接描画します。描画計画（層の順序・装飾矩形・文言・配置）は提示層（`Feature.Marquee.Presenter`）が単一所有し、描画は自 UI の描画 API（Skia）で行います。
-- **外観の設定（`Appearance`）**: 色・フォントサイズ・枠線の太さ・表示可否は**描画にだけ必要な設定**のためコアには含めず、外観（`Feature.Marquee.Presenter` の `MarqueeAppearance`）が単一所有します。`Appearance` プロパティで指定し（既定は `MarqueeAppearance.Default`）、部分変更は `MarqueeAppearance.Default with { ... }` で行います。**描くかどうかは色のアルファではなく外観の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` / `ShowFullOverlay`）が決めます**。
-- **文字は UI 層が要素として配置する**: サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueePresenter`（`LabelTexts` partial） が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueePresenter`（`LabelPlan` partial） が単一所有**し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。サイズラベルの基準点は穴あけ矩形の左上から**枠線の幅 + 1 DIP 内側**（枠線と背景の重なりを無くす）。実寸測定は自 UI の API（`SkiaText.Measure`）で行う。操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
+- **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへ直接描画します。 描画計画（層の順序・装飾矩形・文言・配置）は提示層（`Feature.Marquee.Presenter`）が単一所有し、描画は自 UI の描画 API（Skia）で行います。
+- **外観の設定（`Appearance`）**: 色・フォントサイズ・枠線の太さ・表示可否は**描画にだけ必要な設定**のためコアには含めず、外観（`Feature.Marquee.Presenter` の `MarqueeAppearance`）が単一所有します。 `Appearance` プロパティで指定し（既定は `MarqueeAppearance.Default`）、部分変更は `MarqueeAppearance.Default with { ... }` で行います。 **描くかどうかは色のアルファではなく外観の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` / `ShowFullOverlay`）が決めます**。
+- **文字は UI 層が要素として配置する**: サイズラベルとカーソル座標ラベルの**文言と基準点は提示層の `MarqueePresenter`（`LabelTexts` partial） が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は提示層の `MarqueePresenter`（`LabelPlan` partial） が単一所有**し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。 サイズラベルの基準点は穴あけ矩形の左上から**枠線の幅 + 1 DIP 内側**（枠線と背景の重なりを無くす）。 実寸測定は自 UI の API（`SkiaText.Measure`）で行う。 操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - **DPI 追従**: `OnDpiChanged` でスケーリング係数を更新し、DIP 座標で描画します（枠線・ハンドルの画面上の大きさを保ちます）。
 - **コア型のイベント引数**: イベントの座標は UI 非依存のコア型（`EsPoint` / `EsRect`）で公開します（境界変換が不要）。
 
@@ -78,7 +78,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | 左ドラッグ（矩形内） | 移動 |
 | ダブルクリック（矩形内） | 確定要求（`ConfirmRequested`） |
 | ダブルクリック（矩形外） | キャンセル要求（`CancelRequested`） |
-| 矢印キー | nudge（1 ドメインピクセル単位の微調整。カーソルを非表示にして十字マーカーを表示） |
+| 矢印キー | nudge（1 ドメインピクセル単位の微調整。 カーソルを非表示にして十字マーカーを表示） |
 | Enter | 確定要求（`ConfirmRequested`） |
 | Escape | キャンセル要求（`CancelRequested`） |
 
@@ -101,16 +101,16 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の**計算に必要な設定**（寸法・対話パラメータ）。変更すると再描画され、対話パラメータはコアへ伝搬する（**色・表示可否は含まない**） |
-| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（`EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）。変更すると次の描画で提示層が新しい外観で描画計画を解決する |
-| `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新）。描画は描画面と表示領域の比を使うため、追加直後で未更新でも画像と同じ倍率になる |
+| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の**計算に必要な設定**（寸法・対話パラメータ）。 変更すると再描画され、対話パラメータはコアへ伝搬する（**色・表示可否は含まない**） |
+| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（`EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）。 変更すると次の描画で提示層が新しい外観で描画計画を解決する |
+| `DipToDeviceScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新）。 描画は描画面と表示領域の比を使うため、追加直後で未更新でも画像と同じ倍率になる |
 
-`MarqueeOptions` の項目（既定値はコアが単一所有。Avalonia 版と同一）:
+`MarqueeOptions` の項目（既定値はコアが単一所有。 Avalonia 版と同一）:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `HandleSize` | `double` | `10.0` | ハンドルの一辺サイズ（DIP） |
-| `HandleHitRadius` | `double` | `12.0` | ハンドルのヒットテスト半径（DIP。0.0〜256.0 に補正） |
+| `HandleHitRadius` | `double` | `12.0` | ハンドルのヒットテスト半径（DIP。 0.0〜256.0 に補正） |
 | `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
 | `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP） |
@@ -131,7 +131,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `ShowOverlay` / `ShowOuterBorder` | `bool` | `true` | 暗転マスクと穴あけ枠の表示可否 |
 | `ShowFullOverlay` / `ShowInnerFill` / `ShowInnerBorder` | `bool` | `false` | 全面暗転・内側の塗り・内側の枠線の表示可否 |
 
-色は UI 非依存の `System.Drawing.Color` で指定します。設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueeAppearance.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
+色は UI 非依存の `System.Drawing.Color` で指定します。 設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueeAppearance.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
 
 ## 主なメソッド
 
@@ -141,7 +141,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `SetSelection(EsRect)` | 選択矩形を復元する（`Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
 | `RequestConfirm()` / `RequestCancel()` | Enter / Escape と同じ条件で確定・キャンセルを要求する |
-| `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画と配置の再評価を要求。選択の状態は変更しない） |
+| `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画と配置の再評価を要求。 選択の状態は変更しない） |
 | `InvalidateRender()` | 描画に関わる変更の唯一の入口（図形の Skia キャンバス・ラベル・配置をまとめて無効化する） |
 | `CurrentSnapshot` | 現在の状態のスナップショット（`MarqueeSnapshot`） |
 
@@ -151,9 +151,9 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 `LoupePositionMoved` /
 `ConfirmRequested` / `CancelRequested` / `Rendered`
 
-**生のポインター入力（Mouse 系）の公開イベントは持ちません**（ホストは自 UI の入力イベントを使います。押下状態は `CurrentSnapshot.IsMouseDown`）。
+**生のポインター入力（Mouse 系）の公開イベントは持ちません**（ホストは自 UI の入力イベントを使います。 押下状態は `CurrentSnapshot.IsMouseDown`）。
 
-`Rendered` は描画完了の通知です（描画のたびに発火し、引数の `Content` に装飾・ハンドル・マーカー・ラベルと層の順序が含まれます）。コントロールの描画中に発火するため、ハンドラ内で描画を完了させます。
+`Rendered` は描画完了の通知です（描画のたびに発火し、引数の `Content` に装飾・ハンドル・マーカー・ラベルと層の順序が含まれます）。 コントロールの描画中に発火するため、ハンドラ内で描画を完了させます。
 
 ## テスト
 
@@ -162,7 +162,7 @@ dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 ```
 
 - 描画（ハンドル・十字マーカー・外側/内側の装飾）の画素検証は UI 非依存の描画層（`Feature.Marquee.Presenter`）のテストが担うため、本プロジェクトは描画のテストを持たない。
-- ラベル要素の配置（実寸 → 配置矩形）の検証は描画層の `MarqueePresenter.LabelPlan.Tests.cs` が担う。UI 層の要素配置は `MarqueeControl.Tests.cs` が検証する。
+- ラベル要素の配置（実寸 → 配置矩形）の検証は描画層の `MarqueePresenter.LabelPlan.Tests.cs` が担う。 UI 層の要素配置は `MarqueeControl.Tests.cs` が検証する。
 - `MarqueeControl.Tests.cs`: 依存プロパティの既定値・補正、`CurrentSnapshot`、選択の復元・境界クリップ、確定・キャンセル、`Log` のフォールバックと設定変更ログ。
 - ログの定義（操作ログ・設定変更）はコアの `MarqueeLogMessage` にあり、その検証はコアのテストが行います（設定（外観・表示スケーリング係数）の変更ログは提示層の `MarqueePresenterLogMessage` が所有し、`Feature.Marquee.Presenter.Tests` が検証します）。
 
@@ -170,8 +170,8 @@ dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 
 ## 操作ログ
 
-`Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。書式・レベルは Avalonia 版と同一です。  
-ログはコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。本プロジェクトはログ定義を持ちません。
+`Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。 書式・レベルは Avalonia 版と同一です。  
+ログはコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。 本プロジェクトはログ定義を持ちません。
 
 | レベル | 出力内容 |
 | --- | --- |
@@ -184,7 +184,7 @@ dotnet test src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj
 
 - `ScrollViewer` の自動連携を行わない（ホストが変化を検知して `RefreshOverlay()` を呼ぶ）。
 - フォーカス非依存の矢印キー nudge。
-  - 文字（ラベル・座標ラベル）の要素配置（UI 層の責務。配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial） が求める）。
+  - 文字（ラベル・座標ラベル）の要素配置（UI 層の責務。 配置矩形は描画層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial） が求める）。
 
 ## ライセンス
 

@@ -47,7 +47,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private Point? _centerPoint;
 
-    /// <summary>拡大中心（元画像ピクセル座標）。画像の外では null。</summary>
+    /// <summary>拡大中心（元画像ピクセル座標）。 画像の外では null。</summary>
     public Point? CenterPoint
     {
         get => _centerPoint;
@@ -84,7 +84,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private int _requestedSize = 240;
 
-    /// <summary>ルーペの基本サイズ（DIP・ユーザー設定値）。表示サイズはコントロール（LoupeControl）がクランプを内包して導出する。</summary>
+    /// <summary>ルーペの基本サイズ（DIP・ユーザー設定値）。 表示サイズはコントロール（LoupeControl）がクランプを内包して導出する。</summary>
     public int RequestedSize
     {
         get => _requestedSize;
@@ -271,8 +271,8 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
-    /// <summary>ルーペの外観（色・枠線の太さ。描画にだけ必要な設定）。</summary>
-    /// <value>選択中の色と枠線の太さから組み立てた外観。依存する選択肢の変更で再評価される。</value>
+    /// <summary>ルーペの外観（色・枠線の太さ。 描画にだけ必要な設定）。</summary>
+    /// <value>選択中の色と枠線の太さから組み立てた外観。 依存する選択肢の変更で再評価される。</value>
     /// <remarks>外観の既定値・型は描画の設定（<c>LoupeAppearance</c>）が単一所有する（コアは外観を持たない）。</remarks>
     public LoupeAppearance Appearance => new()
     {
@@ -282,7 +282,7 @@ public sealed class MainWindowViewModel : ObservableObject
         BorderThickness = BorderThickness,
     };
 
-    /// <summary>ルーペの設定（計算に必要な値。コアの <see cref="LoupeOptions"/> が単一所有する）。</summary>
+    /// <summary>ルーペの設定（計算に必要な値。 コアの <see cref="LoupeOptions"/> が単一所有する）。</summary>
     /// <value>現在の設定（コントロールの <c>Options</c> へ一括でバインドする）。</value>
     /// <remarks>
     /// 設定を 1 つの値にまとめて公開する（コントロール側の公開プロパティも 1 つである）。<br/>

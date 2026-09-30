@@ -14,7 +14,7 @@ namespace EsUtil.SaveEvidence.MewUI.Views;
 /// 実際の割り当てサイズは配置引数からしか得られない。<br/>
 /// そのため「親領域のサイズを知って位置を決める」処理は配置フェーズで実行する。<br/>
 /// <br/>
-/// <b>位置の決定</b>: 位置は <c>Func&lt;親サイズ, 位置&gt;</c> として渡す。呼び出し側は都度最新の基準（カーソル位置等）を<br/>
+/// <b>位置の決定</b>: 位置は <c>Func&lt;親サイズ, 位置&gt;</c> として渡す。 呼び出し側は都度最新の基準（カーソル位置等）を<br/>
 /// 参照でき、クランプ等の計算はコアの計算クラスへ委譲できる。
 /// </remarks>
 internal sealed class OverlayHost : Panel
@@ -25,14 +25,14 @@ internal sealed class OverlayHost : Panel
     /// <summary>子のサイズ（DIP）。</summary>
     private EsSize _childSize;
 
-    /// <summary>親領域のサイズから子の位置を求める関数。null の場合は左上へ置く。</summary>
+    /// <summary>親領域のサイズから子の位置を求める関数。 null の場合は左上へ置く。</summary>
     private Func<EsSize, EsPoint>? _position;
 
     /// <summary>重ねる子を指定して領域を初期化する。</summary>
     /// <param name="child">重ねる子コントロール（本クラスの子として追加する）。</param>
     /// <remarks>
     /// 本クラスは親領域の残余全体を占めるため、ヒットテストを有効にすると下の要素（プレビュー等）へ<br/>
-    /// 入力が届かなくなる。重ねるのは表示専用の要素（ルーペ）に限るため、入力は常に下へ通す。
+    /// 入力が届かなくなる。 重ねるのは表示専用の要素（ルーペ）に限るため、入力は常に下へ通す。
     /// </remarks>
     public OverlayHost(Element child)
     {

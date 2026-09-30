@@ -27,7 +27,7 @@ public sealed partial class UndoPage : ViewModePageBase
 {
     private UndoViewModel _viewModel = null!;
 
-    /// <summary>Undo / Redo スタック（DI から取得するシングルトン。CapturePage と共有）。</summary>
+    /// <summary>Undo / Redo スタック（DI から取得するシングルトン。 CapturePage と共有）。</summary>
     private UndoStack _undoStack = null!;
 
     /// <summary>UndoPage を初期化する。</summary>
@@ -92,7 +92,7 @@ public sealed partial class UndoPage : ViewModePageBase
                 ThumbnailWidth = size
             });
 
-        // 1. Redo スタック（新しい順。_redoStack[0] が現在に最も近い未来）
+        // 1. Redo スタック（新しい順。 _redoStack[0] が現在に最も近い未来）
         // UndoStack は EsBitmap を保持し、表示境界で EsBitmapAvaloniaImage（IImage）へ変換する。
         // 変換した IImage は UndoListItem が参照する（所有権は UndoStack / ViewModel が保持）。
         var redo = _undoStack.GetRedoHistory();
@@ -109,7 +109,7 @@ public sealed partial class UndoPage : ViewModePageBase
             AddItem(new EsBitmapAvaloniaImage(currentImage), "現在", isCurrent: true);
         }
 
-        // 3. Undo スタック（新しい順。_stack[^1] が現在の直前）
+        // 3. Undo スタック（新しい順。 _stack[^1] が現在の直前）
         var undo = _undoStack.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {

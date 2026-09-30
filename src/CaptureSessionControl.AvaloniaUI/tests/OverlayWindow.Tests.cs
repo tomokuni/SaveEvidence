@@ -143,7 +143,7 @@ public class OverlayWindowTests
     // ====================================================================
     // 閉区間キャプチャ（始点・終点のピクセルを含む）
     // ====================================================================
-    // 高速化: 確定時の切り出し（仮想スクリーンから。CaptureArea を呼ばない）
+    // 高速化: 確定時の切り出し（仮想スクリーンから。 CaptureArea を呼ばない）
     // ====================================================================
 
     [AvaloniaFact]
@@ -214,7 +214,7 @@ public class OverlayWindowTests
             onComplete: (_, bounds) => capturedBounds = bounds, captureService: captureService);
         window.Show();
 
-        // セカンダリが左・上にある構成（仮想スクリーンの原点が負値）。画像は (0,0)-(99,99) のローカル座標を持つ
+        // セカンダリが左・上にある構成（仮想スクリーンの原点が負値）。 画像は (0,0)-(99,99) のローカル座標を持つ
         var virtualScreen = EsBitmap.Create(100, 100);
         window.SetVirtualScreen(virtualScreen, new PixelPoint(-50, -60));
 
@@ -397,7 +397,7 @@ public class OverlayWindowTests
     {
         // 回帰テスト: SetVirtualScreen が using で即座に破棄した WriteableBitmap を Image.Source に
         // 設定すると、レイアウトパス（Image.MeasureOverride → Bitmap.get_Size）で ObjectDisposedException が
-        // 発生し、領域選択開始時にアプリがハングする。背景（VirtualScreenImage）とルーペの拡大元画像は
+        // 発生し、領域選択開始時にアプリがハングする。 背景（VirtualScreenImage）とルーペの拡大元画像は
         // 本ウィンドウが所有し、有効なまま保持されることを検証する。
         var window = CreateWindow(CaptureType.AreaSelect);
         window.Show();
@@ -449,7 +449,7 @@ public class OverlayWindowTests
     /// <param name="isCompleted">完了条件を判定する述語（true になるまで待機）。</param>
     /// <remarks>
     /// 確定時の切り出しは <c>Task.Run</c>（別スレッド）→ <c>Dispatcher.Post</c>（UI スレッド）で完了するため、<br/>
-    /// 固定回数の Dispatcher ポストでは完了が保証されない。完了条件をポーリングして確実に待つ。<br/>
+    /// 固定回数の Dispatcher ポストでは完了が保証されない。 完了条件をポーリングして確実に待つ。<br/>
     /// 5 秒でタイムアウトし、テストを失敗させる。
     /// </remarks>
     private static async Task WaitForCompletionAsync(Func<bool> isCompleted)
@@ -512,7 +512,7 @@ public class OverlayWindowTests
                 IsDetected: true,
                 Title: "Screen 1"),
         };
-        // scaling = 2.0（オーバーレイの表示スケール。DisplayScaleScaling も _scaling で初期化される）
+        // scaling = 2.0（オーバーレイの表示スケール。 DisplayScaleScaling も _scaling で初期化される）
         var window = CreateWindow(CaptureType.ScreenSelect, scaling: 2.0, elementFinder: finder);
 
         // マルチモニタでカーソル位置のスクリーンのスケーリングが異なっても、

@@ -117,17 +117,17 @@ internal sealed class ZoomableView : Panel
     /// <remarks>親コントロール（複合コントロール）は本セッションを介して公開 API を提供する。</remarks>
     internal ZoomViewSession Session => _session;
 
-    /// <summary>画像表示コントロール（内部実装。テスト用アクセサとして公開）。</summary>
+    /// <summary>画像表示コントロール（内部実装。 テスト用アクセサとして公開）。</summary>
     internal Image ImageControl => _image;
 
-    /// <summary>縦スクロールバー（内部実装。テスト用アクセサとして公開）。</summary>
+    /// <summary>縦スクロールバー（内部実装。 テスト用アクセサとして公開）。</summary>
     internal ScrollBar VerticalScrollBar => _verticalScrollBar;
 
-    /// <summary>横スクロールバー（内部実装。テスト用アクセサとして公開）。</summary>
+    /// <summary>横スクロールバー（内部実装。 テスト用アクセサとして公開）。</summary>
     internal ScrollBar HorizontalScrollBar => _horizontalScrollBar;
 
     /// <summary>表示する画像（ズーム対象）を取得または設定する。</summary>
-    /// <value>表示する画像。null の場合は何も表示しない。設定すると Fit 表示へリセットする。</value>
+    /// <value>表示する画像。 null の場合は何も表示しない。 設定すると Fit 表示へリセットする。</value>
     /// <remarks>画像のサイズ（コンテンツ座標）もここでセッションへ通知する（UI がサイズ型を変換する唯一の箇所）。</remarks>
     public IImage? Source
     {
@@ -179,10 +179,10 @@ internal sealed class ZoomableView : Panel
 
     /// <summary>セッションの表示条件に応じて <see cref="Image"/> のレイアウト（Fit / 固定倍率）を切り替える。</summary>
     /// <remarks>
-    /// <b>Fit</b>: <c>Uniform</c> で明示サイズなし（<c>RenderTransform</c> なし）。中央寄せは <see cref="Image"/> 自身の配置で行う。<br/>
-    /// <b>固定倍率</b>: 元サイズのまま <c>RenderTransform</c> でスケール + パンする。画像の配置は常に左上とし、<br/>
+    /// <b>Fit</b>: <c>Uniform</c> で明示サイズなし（<c>RenderTransform</c> なし）。 中央寄せは <see cref="Image"/> 自身の配置で行う。<br/>
+    /// <b>固定倍率</b>: 元サイズのまま <c>RenderTransform</c> でスケール + パンする。 画像の配置は常に左上とし、<br/>
     /// 中央寄せは <see cref="ApplyTransform"/> が translate で行う（<c>RenderTransform</c> は左上基準に拡大縮小するため、<br/>
-    /// <c>HorizontalAlignment</c> による中央寄せはスケール ≠ 1 でずれる。translate に統一して座標変換と描画位置を一致させる）。
+    /// <c>HorizontalAlignment</c> による中央寄せはスケール ≠ 1 でずれる。 translate に統一して座標変換と描画位置を一致させる）。
     /// </remarks>
     private void ApplyImageLayout()
     {

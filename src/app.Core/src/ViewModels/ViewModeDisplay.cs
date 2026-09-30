@@ -10,14 +10,14 @@ internal static class ViewModeDisplay
     private static readonly string[] s_names = ["特大", "大", "中"];
 
     /// <summary>表示モードインデックスに対応する表示名を取得する。</summary>
-    /// <param name="index">表示モード（0=特大, 1=大, 2=中）。範囲外は空文字。</param>
-    /// <returns>表示名（例: "大"）。範囲外は空文字。</returns>
+    /// <param name="index">表示モード（0=特大, 1=大, 2=中）。 範囲外は空文字。</param>
+    /// <returns>表示名（例: "大"）。 範囲外は空文字。</returns>
     public static string GetText(int index)
         => (uint)index < s_names.Length ? s_names[index] : "";
 
-    /// <summary>表示モードインデックスを有効範囲（0 〜 <see cref="Count"/> - 1）に収める。不正値は既定（大=1）にフォールバックする。</summary>
+    /// <summary>表示モードインデックスを有効範囲（0 〜 <see cref="Count"/> - 1）に収める。 不正値は既定（大=1）にフォールバックする。</summary>
     /// <param name="index">表示モード（0=特大, 1=大, 2=中）。</param>
-    /// <returns>有効範囲内のインデックス。範囲外は 1（大）。</returns>
+    /// <returns>有効範囲内のインデックス。 範囲外は 1（大）。</returns>
     public static int ClampIndex(int index)
         => index is >= 0 and < Count ? index : 1;
 

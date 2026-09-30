@@ -11,7 +11,7 @@ namespace EsUtil.Platform.AvaloniaUI.Interop;
 public static class EsPlatformHandleAvaloniaInterop
 {
     /// <summary>Avalonia のネイティブハンドルを <see cref="EsPlatformHandle"/> へ変換する。</summary>
-    /// <param name="handle">変換元のハンドル。null の場合は <see cref="EsPlatformHandle.Handle"/> = 0 の値。</param>
+    /// <param name="handle">変換元のハンドル。 null の場合は <see cref="EsPlatformHandle.Handle"/> = 0 の値。</param>
     /// <returns>コアのハンドル。</returns>
     public static EsPlatformHandle ToEsPlatformHandle(this IPlatformHandle? handle)
         => handle is null

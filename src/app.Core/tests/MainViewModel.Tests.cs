@@ -20,7 +20,7 @@ namespace EsUtil.SaveEvidence.Tests;
 /// </remarks>
 public class MainViewModelTests
 {
-    /// <summary>テスト用の ISettingsService モック（設定をメモリ上に保持する簡易実装）。StateTests からも共有する。</summary>
+    /// <summary>テスト用の ISettingsService モック（設定をメモリ上に保持する簡易実装）。 StateTests からも共有する。</summary>
     internal sealed class MockSettingsService : ISettingsService
     {
         public Settings Current { get; } = new();

@@ -48,7 +48,7 @@ public class MarqueeControlTests
     /// <param name="screenPoint">GetCursorScreenPoint が返す初期の画面物理座標。</param>
     private sealed class MockCursorService(EsPointInt screenPoint) : ICursorService
     {
-        /// <summary>カーソル位置（画面物理座標）。テストから変更可能。</summary>
+        /// <summary>カーソル位置（画面物理座標）。 テストから変更可能。</summary>
         public EsPointInt Position { get; set; } = screenPoint;
 
         /// <summary>カーソルの表示状態（ShowCursor の呼び出し結果）。</summary>
@@ -762,7 +762,7 @@ public class MarqueeControlTests
         var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
-        // ドラッグ開始（コントロールはフォーカスなし。OnKeyDown は呼ばれない）
+        // ドラッグ開始（コントロールはフォーカスなし。 OnKeyDown は呼ばれない）
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(10, 10)), 0UL, LeftPressed(), KeyModifiers.None, 1));
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None));
 
@@ -1024,7 +1024,7 @@ public class MarqueeControlTests
         mock.Position = ScreenConverter.LocalDipToScreen(control, new Point(300, 200)).ToEsPointInt();
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
-        // nudge 終了（マウス Up。StartPoint は (301,200) のまま残る）
+        // nudge 終了（マウス Up。 StartPoint は (301,200) のまま残る）
         control.RaiseEvent(new PointerReleasedEventArgs(control, new Pointer(1, PointerType.Mouse, true), window,
             ToScreenPoint(control, new Point(301, 200)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
@@ -1080,14 +1080,14 @@ public class MarqueeControlTests
         var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
-        // 新規選択ドラッグ開始（(10,10) → (50,50)。終点 = 50,50）
+        // 新規選択ドラッグ開始（(10,10) → (50,50)。 終点 = 50,50）
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(10, 10)), 0UL, LeftPressed(), KeyModifiers.None, 1));
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None));
 
         // nudge（終点が 1px 右へ移動 → (51,50)）
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
-        // nudge 中にマウスを動かす（実マウス位置 (80,80)。nudge 位置の基点を上書きしない）
+        // nudge 中にマウスを動かす（実マウス位置 (80,80)。 nudge 位置の基点を上書きしない）
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftPressed(), KeyModifiers.None));
 
         // マウス解放 → ルーペ位置は nudge 位置（(51,50)）のまま（実マウス位置 (80,80) に飛ばない）
@@ -1126,14 +1126,14 @@ public class MarqueeControlTests
         var window = Show(control);
         var pointer = CreatePointer();
 
-        // 新規選択ドラッグ（(10,10) → (50,50)。終点 = 右下ハンドル位置）
+        // 新規選択ドラッグ（(10,10) → (50,50)。 終点 = 右下ハンドル位置）
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(10, 10)), 0UL, LeftPressed(), KeyModifiers.None, 1));
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None));
 
         // nudge（終点が (51,50) へ移動 = 右下ハンドル）
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
-        // 解放（nudge 終了。SuppressEchoAt = (51,50)）
+        // 解放（nudge 終了。 SuppressEchoAt = (51,50)）
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(51, 50)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         // 一旦ハンドルから離れる（カーソルは Default に戻る）
@@ -1159,7 +1159,7 @@ public class MarqueeControlTests
         var window = Show(control);
         var pointer = CreatePointer();
 
-        // 新規選択ドラッグ（(10,10) → (50,50)。終点 = 右下ハンドル位置）
+        // 新規選択ドラッグ（(10,10) → (50,50)。 終点 = 右下ハンドル位置）
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(10, 10)), 0UL, LeftPressed(), KeyModifiers.None, 1));
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None));
 
@@ -1168,11 +1168,11 @@ public class MarqueeControlTests
         // 実コードの ToScreen（LocalDipToScreen）と同じ変換で期待値を求める（PixelPoint 型）
         var nudgeScreenPos = ScreenConverter.LocalDipToScreen(control, new Point(51, 50));
 
-        // nudge 中にマウスを動かす（実マウス位置 (80,80)。カーソルはそこに移動した状態）
+        // nudge 中にマウスを動かす（実マウス位置 (80,80)。 カーソルはそこに移動した状態）
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftPressed(), KeyModifiers.None));
 
         // 解放 → カーソルは nudge 位置（(51,50) の画面物理座標）へ戻ってから再表示される
-        // （移動した位置 (80,80) に表示されない。SetCursorScreenPoint は再表示前に行われる）
+        // （移動した位置 (80,80) に表示されない。 SetCursorScreenPoint は再表示前に行われる）
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
         Assert.True(mock.Visible);
@@ -1214,7 +1214,7 @@ public class MarqueeControlTests
         var pointer = CreatePointer();
         control.SetSelection(new Rect(20, 20, 60, 60));
 
-        // 矩形中心 (50,50) で Down（Move ハンドル。ヒット半径 12 から離れている）→ 掴んだ位置を維持するためスナップなし
+        // 矩形中心 (50,50) で Down（Move ハンドル。 ヒット半径 12 から離れている）→ 掴んだ位置を維持するためスナップなし
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(50, 50)), 0UL, LeftPressed(), KeyModifiers.None, 1));
 
         Assert.Null(mock.LastSetPoint);
@@ -1227,7 +1227,7 @@ public class MarqueeControlTests
         var control = CreateControl();
         var window = Show(control);
         var pointer = CreatePointer();
-        // クリップ有効（境界 200x200）。マウス位置と矩形の角がずれる状況を作る
+        // クリップ有効（境界 200x200）。 マウス位置と矩形の角がずれる状況を作る
         control.Options = control.Options with { ClampToDomainBounds = true };
         control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         control.SetSelection(new Rect(20, 20, 60, 60));
@@ -1255,8 +1255,8 @@ public class MarqueeControlTests
         var positions = new List<Point>();
         control.LoupePositionMoved += (_, e) => positions.Add(e.Point);
 
-        // 矩形内のオフセット位置 (40,40) を押下（Move 判定。ヒット半径 12 から離れている。スナップなし）
-        // → (60,60) へドラッグ。矩形は (40,40,60,60) になり中心は (70,70) だが、
+        // 矩形内のオフセット位置 (40,40) を押下（Move 判定。 ヒット半径 12 から離れている。 スナップなし）
+        // → (60,60) へドラッグ。 矩形は (40,40,60,60) になり中心は (70,70) だが、
         //   ルーペはマウス位置（掴んだ位置）(60,60) を追従する（矩形中心に飛ばない）
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(40, 40)), 0UL, LeftPressed(), KeyModifiers.None, 1));
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(60, 60)), 0UL, LeftPressed(), KeyModifiers.None));

@@ -20,7 +20,7 @@ using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Marquee.Sample.Views;
 
-/// <summary>メインウィンドウ。MarqueeControl のイベント購読・設定反映・座標ポート設定を担う。</summary>
+/// <summary>メインウィンドウ。 MarqueeControl のイベント購読・設定反映・座標ポート設定を担う。</summary>
 /// <remarks>
 /// 座標ポートは「ドメイン = コントロールローカル DIP」の等価変換（DPI 100% 相当）で動作確認する。<br/>
 /// 選択状態は <see cref="MainWindowViewModel"/> へ同期し、コントロール設定は PropertyChanged を購読して反映する。<br/>
@@ -29,7 +29,7 @@ public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _vm = new();
 
-    /// <summary>背景に敷くダミー画像（ドメイン面のサイズ感を示す）。Skia 直描画（EsBitmapAvaloniaImage）で表示する。</summary>
+    /// <summary>背景に敷くダミー画像（ドメイン面のサイズ感を示す）。 Skia 直描画（EsBitmapAvaloniaImage）で表示する。</summary>
     private static readonly EsBitmapAvaloniaImage Backdrop = CreateBackdrop();
 
     /// <summary>画像の論理幅（ドメインピクセル）。</summary>
@@ -94,7 +94,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>ズーム倍率を Canvas・画像・MarqueeControl のサイズと座標ポートへ適用する。</summary>
-    /// <param name="anchor">ズームの中心（Canvasローカル座標）。null の場合は初期化のみ。</param>
+    /// <param name="anchor">ズームの中心（Canvasローカル座標）。 null の場合は初期化のみ。</param>
     /// <param name="oldZoom">適用前のズーム倍率（スクロール位置の調整用）。</param>
     /// <remarks>
     /// スクロールオフセットの調整は<b>同期的</b>に行う（<c>Dispatcher.Post</c> を使わない）。<br/>
@@ -138,7 +138,7 @@ public partial class MainWindow : Window
         _vm.AddLog($"[App] ズーム: {_zoom:F2}x");
     }
 
-    /// <summary>選択面のマウスホイール処理。Ctrl+ホイールでズーム、通常ホイールはスクロール。</summary>
+    /// <summary>選択面のマウスホイール処理。 Ctrl+ホイールでズーム、通常ホイールはスクロール。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ホイールイベント引数。</param>
     private void OnCanvasWheelChanged(object? sender, PointerWheelEventArgs e)
@@ -169,7 +169,7 @@ public partial class MainWindow : Window
     private void ApplyControlSettings()
     {
         // 選択枠線は装飾（暗転マスクの穴あけ枠）が描くため、色は外観へ、太さも外観（枠線の太さ）へ与える
-        // （ハンドルの枠線も同じ色に揃える。両者は同じ矩形に重なる）
+        // （ハンドルの枠線も同じ色に揃える。 両者は同じ矩形に重なる）
         var borderColor = _vm.BorderColorOption.Color.ToDrawingColor();
         Marquee.Appearance = Marquee.Appearance with
         {
@@ -361,7 +361,7 @@ public partial class MainWindow : Window
     /// <returns>生成した WriteableBitmap。</returns>
     /// <remarks>
     /// ビットマップサイズは <see cref="ImageWidth"/> / <see cref="ImageHeight"/> に合わせる
-    /// （const のためリテラルで指定。グリッド間隔は 100px で視認性を確保する）。
+    /// （const のためリテラルで指定。 グリッド間隔は 100px で視認性を確保する）。
     /// </remarks>
     private static EsBitmapAvaloniaImage CreateBackdrop()
     {
@@ -373,7 +373,7 @@ public partial class MainWindow : Window
         {
             for (var x = 0; x < width; x++)
             {
-                // 淡いグリッド（100px 間隔。画像サイズ拡大に合わせて間隔も広げる）
+                // 淡いグリッド（100px 間隔。 画像サイズ拡大に合わせて間隔も広げる）
                 var isGrid = x % 100 == 0 || y % 100 == 0;
                 byte v = isGrid ? (byte)200 : (byte)235;
                 bitmap.SetPixel(x, y, v, v, v, 255);

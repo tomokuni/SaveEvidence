@@ -37,7 +37,7 @@ internal sealed partial class OverlayWindow
     /// コアの <see cref="CaptureClipMath.ResolveCaptureRect"/> が単一所有する。
     /// 切り出せる矩形が無い場合（退化した選択）はキャンセルとして完了する。<br/>
     /// <b>確定要求の記録はこの入口が担う</b>（キー・クリック・アダプタ要求のすべてがここを通るため、<br/>
-    /// 経路ごとにログを書くと抜けや重複が生じる）。記録する矩形は画面物理座標（両 UI で同じ意味になる）。<br/>
+    /// 経路ごとにログを書くと抜けや重複が生じる）。 記録する矩形は画面物理座標（両 UI で同じ意味になる）。<br/>
     /// 単体テストから呼び出し可能（internal）。
     /// </remarks>
     internal void CompleteSelection(EsRect screenRect)
@@ -59,14 +59,14 @@ internal sealed partial class OverlayWindow
     /// <param name="captureRect">切り出し矩形（画面物理座標・閉区間済み）。</param>
     /// <remarks>
     /// <b>高速化</b>: 仮想スクリーン全体はセッション開始時にバックグラウンド取得済みのため、<br/>
-    /// 確定時はその Bitmap から切り出す。枠選択中に <see cref="PreExtractClip"/> で事前切り出し済みの<br/>
+    /// 確定時はその Bitmap から切り出す。 枠選択中に <see cref="PreExtractClip"/> で事前切り出し済みの<br/>
     /// キャッシュ（<see cref="CaptureClipCache"/>）が現在の矩形と一致する場合はそれを再利用する（切り出しスキップ）。<br/>
     /// キャッシュ不一致はバックグラウンドで切り出す（ピクセルコピーで UI スレッドをブロックしない）。<br/>
     /// Bitmap 上の座標 = 画面物理座標 − 仮想スクリーンの原点（コアの保持クラスが保持する）。
     /// </remarks>
     private void CompleteSelectionCore(EsRectInt captureRect)
     {
-        // 完了は 1 回だけ受け付ける（確定とキャンセルの競合で二重完了にしない。規則はコアが単一所有する）
+        // 完了は 1 回だけ受け付ける（確定とキャンセルの競合で二重完了にしない。 規則はコアが単一所有する）
         if (!_state.TryComplete()) return;
 
         if (captureRect.IsEmpty)
@@ -77,7 +77,7 @@ internal sealed partial class OverlayWindow
             return;
         }
 
-        // 事前切り出しのキャッシュが同じ矩形なら再利用する（切り出しスキップ。判定と所有権の移動はコアが担う）
+        // 事前切り出しのキャッシュが同じ矩形なら再利用する（切り出しスキップ。 判定と所有権の移動はコアが担う）
         if (_clipCache.Take(captureRect) is { } cached)
         {
             _onComplete(cached, captureRect);
@@ -124,7 +124,7 @@ internal sealed partial class OverlayWindow
     {
         // 切り出し矩形（画面物理座標）: 種別に応じた閉区間化・画像内へのクランプはコアが単一所有する
         var captureRect = CaptureClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds);
-        // 切り出せない矩形・同じ矩形はスキップ（矩形の変更がない場合は同じ画像になる。判断はコアが担う）
+        // 切り出せない矩形・同じ矩形はスキップ（矩形の変更がない場合は同じ画像になる。 判断はコアが担う）
         if (captureRect.IsEmpty || _clipCache.HasCached(captureRect)) return;
 
         // バックグラウンドで切り出す（破棄済みの画像はコアが null を返すため例外処理は不要）
@@ -180,7 +180,7 @@ internal sealed partial class OverlayWindow
     /// ルーペの Source も同時に設定する（AreaSelect のウィンドウ表示時は Bitmap が未取得のため、
     /// 取得完了時に改めて設定しないと市松模様のままになる）。<br/>
     /// <b>クローズ後</b>: ウィンドウの後片付けが済んでおり、渡された Bitmap は保持せずその場で破棄される<br/>
-    /// （背景撮影の完了がキャンセルより遅れた場合の破棄漏れを防ぐ。規則はコアの保持クラスが単一所有する）。
+    /// （背景撮影の完了がキャンセルより遅れた場合の破棄漏れを防ぐ。 規則はコアの保持クラスが単一所有する）。
     /// </remarks>
     public void SetVirtualScreen(EsBitmap? bitmap, PixelPoint origin)
     {
@@ -190,7 +190,7 @@ internal sealed partial class OverlayWindow
         _log.LogVirtualScreen(origin.ToEsPointInt(), bitmap);
         // 固定背景画像（VirtualScreenImage）とルーペの拡大元画像（Source）へ同一の EsBitmapAvaloniaImage を設定する。
         // WriteableBitmap を生成せず、EsBitmap を内包した IImage（EsBitmapAvaloniaImage）を Source に設定する
-        // （Skia 直描画・ゼロコピー。破棄はコアの保持クラスの Dispose が一元管理する）。
+        // （Skia 直描画・ゼロコピー。 破棄はコアの保持クラスの Dispose が一元管理する）。
         EsBitmapAvaloniaImage? displayImage = bitmap is null ? null : new EsBitmapAvaloniaImage(bitmap);
         VirtualScreenImage.Source = displayImage;
 

@@ -167,7 +167,7 @@ public class CropBoundsMathTests
     [InlineData(4.5, 5)]
     public void RoundToPixel_偶数へ丸めない(double value, int expected)
     {
-        // Math.Round の既定（銀行丸め）なら 2.5→2 / 3.5→4 / 4.5→4 になる。AwayFromZero は常に切り上げる
+        // Math.Round の既定（銀行丸め）なら 2.5→2 / 3.5→4 / 4.5→4 になる。 AwayFromZero は常に切り上げる
         Assert.Equal(expected, CropBoundsMath.RoundToPixel(value));
     }
 
@@ -195,7 +195,7 @@ public class CropBoundsMathTests
     [Fact]
     public void ComputeCropBounds_閉区間で始点終点のピクセルを含む()
     {
-        // 選択矩形 (10,10,40,40) = 半開区間 [10,50)。閉区間では [10,50] = 41×41 ピクセル
+        // 選択矩形 (10,10,40,40) = 半開区間 [10,50)。 閉区間では [10,50] = 41×41 ピクセル
         var result = CropBoundsMath.ComputeCropBounds(new EsRect(10, 10, 40, 40), new EsSize(100, 100), 1.0);
 
         Assert.Equal(new EsRectInt(10, 10, 41, 41), result);
@@ -204,7 +204,7 @@ public class CropBoundsMathTests
     [Fact]
     public void ComputeCropBounds_画像右端では幅が画像サイズにクランプされる()
     {
-        // 選択矩形が画像右端 (80,80,20,20) = [80,100)。閉区間では [80,100] = 21 ピクセルだが、
+        // 選択矩形が画像右端 (80,80,20,20) = [80,100)。 閉区間では [80,100] = 21 ピクセルだが、
         // 画像サイズ 100 を超えないよう 20 ピクセルにクランプする
         var result = CropBoundsMath.ComputeCropBounds(new EsRect(80, 80, 20, 20), new EsSize(100, 100), 1.0);
 

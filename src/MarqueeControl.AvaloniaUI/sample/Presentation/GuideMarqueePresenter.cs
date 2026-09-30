@@ -46,9 +46,9 @@ internal sealed class GuideMarqueePresenter : MarqueePresenter
     private static readonly DrawingColor InnerFillColor = DrawingColor.FromArgb(28, 255, 255, 255);
 
     /// <summary>見本の提示層を初期化する。</summary>
-    /// <param name="effects">効果の適用先。null 不可。</param>
-    /// <param name="cursor">カーソルサービス。null 可。</param>
-    /// <param name="options">初期設定。null 可。</param>
+    /// <param name="effects">効果の適用先。 null 不可。</param>
+    /// <param name="cursor">カーソルサービス。 null 可。</param>
+    /// <param name="options">初期設定。 null 可。</param>
     /// <remarks>外観は生成時に自前の値へ差し替える（利用側から変更されても本クラスの見た目の規則は崩れない）。</remarks>
     public GuideMarqueePresenter(IMarqueeEffects effects, ICursorService? cursor = null, MarqueeOptions? options = null)
         : base(effects, cursor, options)
@@ -65,8 +65,8 @@ internal sealed class GuideMarqueePresenter : MarqueePresenter
 
     /// <summary>穴あけ矩形へ破線の枠と三分割のガイド線を載せた描画計画を解決する。</summary>
     /// <param name="clientSize">描画領域のサイズ（DIP）。</param>
-    /// <param name="measureText">テキストの実寸を測る関数。null 不可。</param>
-    /// <returns>装飾だけを差し替えた描画計画。穴あけ矩形が無い場合は既定の計画をそのまま返す。</returns>
+    /// <param name="measureText">テキストの実寸を測る関数。 null 不可。</param>
+    /// <returns>装飾だけを差し替えた描画計画。 穴あけ矩形が無い場合は既定の計画をそのまま返す。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>
     /// 穴あけ矩形が無い場合（未選択かつハイライトも無い）は差し替える対象が無いため、既定の計画を返す<br/>
@@ -134,7 +134,7 @@ internal sealed class GuideMarqueePresenter : MarqueePresenter
 
     /// <summary>穴あけ矩形の内側へ三分割のガイド線を引く。</summary>
     /// <param name="hole">穴あけ矩形（DIP）。</param>
-    /// <returns>ガイド線の矩形（縦 2 本 + 横 2 本。DIP）。</returns>
+    /// <returns>ガイド線の矩形（縦 2 本 + 横 2 本。 DIP）。</returns>
     private static IReadOnlyList<EsRect> CreateThirdsGuides(EsRect hole)
     {
         var horizontal = hole.Height / ThirdsDenominator;

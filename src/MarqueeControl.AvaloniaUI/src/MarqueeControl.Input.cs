@@ -22,7 +22,7 @@ public sealed partial class MarqueeControl
     // キーボード（矢印キー nudge・Escape/Enter の確定/キャンセル）
     // ====================================================================
 
-    /// <summary>キーダウン処理（フォーカス非依存）。コアへ通知し、返された効果を適用する。</summary>
+    /// <summary>キーダウン処理（フォーカス非依存）。 コアへ通知し、返された効果を適用する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">キーイベント。</param>
     /// <remarks>
@@ -41,7 +41,7 @@ public sealed partial class MarqueeControl
     /// <param name="e">フォーカスイベント。</param>
     /// <remarks>
     /// nudge 中はカーソルを非表示にするため、nudge を継続できない文脈（フォーカス喪失）では終了して再表示する
-    /// （非表示残留の防止。判断は提示層（<see cref="MarqueePresenter"/>）が単一所有する）。<br/>
+    /// （非表示残留の防止。 判断は提示層（<see cref="MarqueePresenter"/>）が単一所有する）。<br/>
     /// 本コントロールは矢印キーを TopLevel から購読するため、フォーカス移動後もキーを受け取り続ける。
     /// 「カーソルを隠したまま操作対象を離れる」状態を作らないため、MewUI 版と同じ契機で終了する。<br/>
     /// ウィンドウの非アクティブ化（Alt+Tab 等）はビジュアルツリーの接続時の購読（<c>Deactivated</c>）が扱う。
@@ -53,7 +53,7 @@ public sealed partial class MarqueeControl
     }
 
     /// <summary>現在のカーソル位置（ドメイン座標）を取得する。</summary>
-    /// <returns>カーソル位置（ドメイン座標）。TopLevel を特定できない場合は null。</returns>
+    /// <returns>カーソル位置（ドメイン座標）。 TopLevel を特定できない場合は null。</returns>
     /// <remarks>
     /// nudge の基点精度を上げるために記録する（マウス移動が未発生でも現在位置から微調整を開始でき、原点へ飛ばない）。<br/>
     /// 画面物理座標 → ビジュアルの DIP → ドメイン座標の順に変換する（境界の 1 行変換）。

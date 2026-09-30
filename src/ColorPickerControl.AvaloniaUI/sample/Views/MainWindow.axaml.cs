@@ -4,7 +4,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.Sample.Views;
 
 /// <summary>メインウィンドウ。</summary>
 /// <remarks>
-/// AXAML で定義されたレイアウトを表示する。コードビハインドは最小限。<br/>
+/// AXAML で定義されたレイアウトを表示する。 コードビハインドは最小限。<br/>
 /// </remarks>
 public partial class MainWindow : Window
 {

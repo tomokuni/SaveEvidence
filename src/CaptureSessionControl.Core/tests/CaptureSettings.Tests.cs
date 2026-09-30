@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 /// <summary><see cref="CaptureSettings"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 値の検証（<see cref="CaptureSettings.Validate"/>）と、null をデフォルトで埋める規則<br/>
-/// （<see cref="CaptureSettings.ToNonNull"/>）を固定する。UI 初期化は不要なため <c>[Fact]</c> で並列実行する。
+/// （<see cref="CaptureSettings.ToNonNull"/>）を固定する。 UI 初期化は不要なため <c>[Fact]</c> で並列実行する。
 /// </remarks>
 public class CaptureSettingsTests
 {

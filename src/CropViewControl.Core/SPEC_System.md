@@ -2,7 +2,7 @@
 
 ## 概要
 
-`CropViewControl.AvaloniaUI`（Avalonia UI 実装）と `CropViewControl.MewUI`（MewUI 実装）が共有する、UI フレームワーク非依存の矩形オーバーレイ定義と描画の計算を提供するライブラリです。SaveEvidence のマルチ UI 対応における「コントロールの Core / UI 分割」の 3 例目（ティア E）です。
+`CropViewControl.AvaloniaUI`（Avalonia UI 実装）と `CropViewControl.MewUI`（MewUI 実装）が共有する、UI フレームワーク非依存の矩形オーバーレイ定義と描画の計算を提供するライブラリです。 SaveEvidence のマルチ UI 対応における「コントロールの Core / UI 分割」の 3 例目（ティア E）です。
 
 ## 技術スタック
 
@@ -21,7 +21,7 @@ graph LR
 
 - `CropViewControl.Core` は UI フレームワークへ依存しません。
 - UI 実装は、コア型（`EsRect` / `System.Drawing.Color`）と自身の型（`Avalonia.Rect` / `Avalonia.Media.Color` / `SKColor`）を境界で相互変換します。
-- 公開型は `OverlayRect` / `OverlayLineStyle` / `OverlayRectLayout` / `OverlayRectFrame` です。`OverlayLineDash` / `OverlayRectRasterizer` は `internal` とし、`InternalsVisibleTo`（`CropViewControl.AvaloniaUI` / `CropViewControl.MewUI.Tests` / `CropViewControl.Core.Tests`）で UI 実装とテストへ公開します。
+- 公開型は `OverlayRect` / `OverlayLineStyle` / `OverlayRectLayout` / `OverlayRectFrame` です。 `OverlayLineDash` / `OverlayRectRasterizer` は `internal` とし、`InternalsVisibleTo`（`CropViewControl.AvaloniaUI` / `CropViewControl.MewUI.Tests` / `CropViewControl.Core.Tests`）で UI 実装とテストへ公開します。
 
 ## コンポーネント構成
 
@@ -68,12 +68,12 @@ sequenceDiagram
 
 ## 例外処理ポリシー
 
-本プロジェクトは値型とピクセル操作で構成され、例外を送出しません。範囲外座標への書き込みは `EsBitmap.TrySetPixel` が false を返して無視します。
+本プロジェクトは値型とピクセル操作で構成され、例外を送出しません。 範囲外座標への書き込みは `EsBitmap.TrySetPixel` が false を返して無視します。
 
 ## 可視性ポリシー
 
 - `OverlayRect` / `OverlayLineStyle` / `OverlayRectLayout` / `OverlayRectFrame` は `public`（ホストと UI 実装が使う契約）。
-- `OverlayLineDash` / `OverlayRectRasterizer` は `internal`。`internal` → `public` の変更は破壊的な設計変更として扱います。
+- `OverlayLineDash` / `OverlayRectRasterizer` は `internal`。 `internal` → `public` の変更は破壊的な設計変更として扱います。
 
 ## テスト
 
@@ -92,4 +92,4 @@ sequenceDiagram
 | `DrawRectToLoupe` / `DrawRectEdge` / `StampPixel`（`CropViewControl` の private static） | `OverlayRectRasterizer` へ統合（`Point` → `EsPoint`、`Avalonia.Media.Color` → `System.Drawing.Color`） |
 | 破線パターン（ベクター側 `CreateRectElement` とラスタ側 `DrawRectEdge` に二重定義） | `OverlayLineDash` へ一元化し、両経路が参照する |
 
-`OverlayRect` は `CropViewControl.Rects` の型として公開されており、利用箇所は UI 実装とそのテストに加え、ホスト（`app.AvaloniaUI` / `app.MewUI`）が検出矩形の枠線を描く用途でも使用します。このため名前空間は UI 非依存の `EsUtil.SaveEvidence.CropView` へ統一しました。
+`OverlayRect` は `CropViewControl.Rects` の型として公開されており、利用箇所は UI 実装とそのテストに加え、ホスト（`app.AvaloniaUI` / `app.MewUI`）が検出矩形の枠線を描く用途でも使用します。 このため名前空間は UI 非依存の `EsUtil.SaveEvidence.CropView` へ統一しました。

@@ -52,7 +52,7 @@ public class CaptureClipMathTests
     [Fact]
     public void ResolveCaptureRect_原点が負値でも画面物理座標で返す()
     {
-        // セカンダリが左・上にある構成（原点が負値）。ローカル (0,0) から切り出す = 画面物理 (-1920,-200) から
+        // セカンダリが左・上にある構成（原点が負値）。 ローカル (0,0) から切り出す = 画面物理 (-1920,-200) から
         var result = CaptureClipMath.ResolveCaptureRect(
             CaptureType.AreaSelect, new EsRect(-1920, -200, 40, 40), new EsRectInt(-1920, -200, 100, 100));
 
@@ -213,7 +213,7 @@ public class CaptureClipMathTests
     [Fact]
     public void ResolveCaptureRect_最小サイズを適用しない()
     {
-        // 最小サイズは選択操作（Marquee）が所有する。検出矩形は要素の大きさであり小さい要素も対象にする
+        // 最小サイズは選択操作（Marquee）が所有する。 検出矩形は要素の大きさであり小さい要素も対象にする
         var result = CaptureClipMath.ResolveCaptureRect(
             CaptureType.WindowSelect, new EsRect(10, 10, 1, 1), new EsRectInt(0, 0, 100, 100));
 

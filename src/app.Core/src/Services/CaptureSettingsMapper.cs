@@ -9,17 +9,17 @@ namespace EsUtil.SaveEvidence.Services;
 
 /// <c>DisplayScaleScaling</c> はコードから動的に設定されるため、<br/>
 /// 設定画面の固定値は使用しない（CropSession が Provider を動的設定 / OverlayWindow.Highlight が
-/// DisplayScaleScaling を動的設定）。ここでは null（自動生成）と 0（自動 = Scaling と同値）を渡す。
+/// DisplayScaleScaling を動的設定）。 ここでは null（自動生成）と 0（自動 = Scaling と同値）を渡す。
 /// </remarks>
 internal static class CaptureSettingsMapper
 {
     /// <summary>設定を CaptureSessionControl 用の CaptureSettings へ変換する。</summary>
     /// <param name="settings">アプリ設定。</param>
-    /// <param name="renderScaling">描画スケール（ウィンドウの DPI スケーリング。100% = 1.0 / 125% = 1.25 / 150% = 1.5 / 200% = 2.0）。</param>
+    /// <param name="renderScaling">描画スケール（ウィンドウの DPI スケーリング。 100% = 1.0 / 125% = 1.25 / 150% = 1.5 / 200% = 2.0）。</param>
     /// <returns>変換後の CaptureSettings。</returns>
     public static CaptureSettings From(Settings settings, double renderScaling)
     {
-        // Settings → CaptureSettings に変換（全メンバーを明示的に設定。色は Color 型で渡す）
+        // Settings → CaptureSettings に変換（全メンバーを明示的に設定。 色は Color 型で渡す）
         return new CaptureSettings(
             HideOwnerWindow: settings.HideMainWindowOnCapture,
             MinSelectionSize: settings.MinSelectionSize,
@@ -70,8 +70,8 @@ internal static class CaptureSettingsMapper
     }
 
     /// <summary>設定の色文字列（<c>#AARRGGBB</c> / <c>#RRGGBB</c>）を色へ変換する。</summary>
-    /// <param name="argb">設定の色文字列。前後の空白と <c>#</c> は省略可能。</param>
-    /// <returns>変換した色。解析できない場合は透明。</returns>
+    /// <param name="argb">設定の色文字列。 前後の空白と <c>#</c> は省略可能。</param>
+    /// <returns>変換した色。 解析できない場合は透明。</returns>
     /// <remarks>
     /// 設定（<c>Settings</c>）は色と不透明度を統合した 16 進文字列で保持する。<br/>
     /// MewUI 版の <c>SettingsColorMath</c> と同じ規則（8 桁 = AARRGGBB / 6 桁 = RRGGBB・アルファ 255）。

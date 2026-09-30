@@ -37,9 +37,9 @@ public static class EsBitmapAvaloniaExtensions
     // ====================================================================
 
     /// <summary>単色の Avalonia WriteableBitmap を生成する。</summary>
-    /// <param name="width">幅（ピクセル）。正の値。</param>
-    /// <param name="height">高さ（ピクセル）。正の値。</param>
-    /// <param name="color">塗りつぶし色（Avalonia Color。アルファ乗算して書き込む）。</param>
+    /// <param name="width">幅（ピクセル）。 正の値。</param>
+    /// <param name="height">高さ（ピクセル）。 正の値。</param>
+    /// <param name="color">塗りつぶし色（Avalonia Color。 アルファ乗算して書き込む）。</param>
     /// <returns>単色の <see cref="WriteableBitmap"/>（所有権は呼び出し側）。</returns>
     /// <remarks>
     /// 各テスト・サンプルで重複していた <c>new WriteableBitmap(...)</c> + 色塗りループを一元化する。<br/>
@@ -57,9 +57,9 @@ public static class EsBitmapAvaloniaExtensions
     }
 
     /// <summary>単色の <see cref="EsBitmapAvaloniaImage"/> を生成する（Avalonia 表示境界の <see cref="IImage"/>）。</summary>
-    /// <param name="width">幅（ピクセル）。正の値。</param>
-    /// <param name="height">高さ（ピクセル）。正の値。</param>
-    /// <param name="color">塗りつぶし色（Avalonia Color。アルファ乗算して書き込む）。</param>
+    /// <param name="width">幅（ピクセル）。 正の値。</param>
+    /// <param name="height">高さ（ピクセル）。 正の値。</param>
+    /// <param name="color">塗りつぶし色（Avalonia Color。 アルファ乗算して書き込む）。</param>
     /// <returns>単色の <see cref="EsBitmapAvaloniaImage"/>（破棄は呼び出し側）。</returns>
     /// <remarks>
     /// <c>WriteableBitmap</c> を生成せず、<see cref="EsBitmap"/> を内包する <see cref="EsBitmapAvaloniaImage"/> を返す<br/>
@@ -79,7 +79,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <returns>生成されたビットマップ。</returns>
     /// <remarks>
     /// <c>Bitmap.CopyPixels</c>（ネイティブ memcpy 相当）で、SKBitmap のピクセルバッファへ直接コピーする。<br/>
-    /// 中間バッファ（byte[]）を介さないため高速・低アロケーション。PNG エンコード/デコードや System.Drawing を経由しない（可逆）。
+    /// 中間バッファ（byte[]）を介さないため高速・低アロケーション。 PNG エンコード/デコードや System.Drawing を経由しない（可逆）。
     /// </remarks>
     public static unsafe EsBitmap ToEsBitmap(this Bitmap bitmap)
     {
@@ -90,7 +90,7 @@ public static class EsBitmapAvaloniaExtensions
         var dstStride = result.Stride;
         var dst = (byte*)result.Address;
 
-        // CopyPixels は宛先バッファを stride のピッチで埋める。SKBitmap のピクセルバッファを直接宛先にし、中間 byte[] を排除する。
+        // CopyPixels は宛先バッファを stride のピッチで埋める。 SKBitmap のピクセルバッファを直接宛先にし、中間 byte[] を排除する。
         bitmap.CopyPixels(
             new PixelRect(0, 0, w, h),
             (nint)dst,
@@ -140,7 +140,7 @@ public static class EsBitmapAvaloniaExtensions
 
     /// <summary>公開コンストラクタ（<c>new Bitmap(PixelFormat, AlphaFormat, Address, PixelSize, dpi, Stride)</c>）で Avalonia の標準 <see cref="Bitmap"/> を生成する。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
-    /// <returns>標準描画経路（<c>IImage</c>）で確実に描画される <see cref="Bitmap"/>。所有権は呼び出し側。</returns>
+    /// <returns>標準描画経路（<c>IImage</c>）で確実に描画される <see cref="Bitmap"/>。 所有権は呼び出し側。</returns>
     /// <remarks>
     /// <see cref="Bitmap"/> の公開コンストラクタへ <see cref="EsBitmap.Address"/>（ピクセルバッファ）を直接渡して生成する。<br/>
     /// Skia の内部実装（<c>ImmutableBitmap</c>）がピクセルを複製するためコピーは発生するが、<br/>
@@ -181,7 +181,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <summary>Avalonia PixelRect で指定された矩形領域を切り出す。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <param name="rect">切り出し領域（画像ローカルピクセル）。</param>
-    /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
+    /// <returns>切り出された新しいビットマップ（要求サイズ。 ソース範囲外は透明パディング）。</returns>
     /// <remarks>
     /// コアの <c>Crop(int, int, int, int)</c> へ委譲する。<br/>
     /// 幅・高さが 0 以下の場合は <see cref="ArgumentOutOfRangeException"/>。
@@ -192,7 +192,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <summary>指定座標（Avalonia PixelPoint）のピクセルを Avalonia Color で取得する。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <param name="point">座標（ピクセル）。</param>
-    /// <returns>取得した Avalonia Color。範囲外は IndexOutOfRangeException。</returns>
+    /// <returns>取得した Avalonia Color。 範囲外は IndexOutOfRangeException。</returns>
     public static AvaloniaColor GetPixel(this EsBitmap bitmap, PixelPoint point)
     {
         var color = bitmap.GetPixel(new EsPointInt(point.X, point.Y));
@@ -202,7 +202,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <summary>指定座標（Avalonia PixelPoint）へ Avalonia Color を書き込む。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <param name="point">座標（ピクセル）。</param>
-    /// <param name="color">設定する Avalonia Color。アルファ乗算して書き込む。</param>
+    /// <param name="color">設定する Avalonia Color。 アルファ乗算して書き込む。</param>
     public static void SetPixel(this EsBitmap bitmap, PixelPoint point, AvaloniaColor color)
         => bitmap.SetPixel(new EsPointInt(point.X, point.Y), Color.FromArgb(color.A, color.R, color.G, color.B));
 
@@ -211,7 +211,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <param name="x">X 座標（ピクセル）。</param>
     /// <param name="y">Y 座標（ピクセル）。</param>
     /// <param name="color">設定する Avalonia Color。</param>
-    /// <returns>書き込めたかどうか。範囲外の場合は false。</returns>
+    /// <returns>書き込めたかどうか。 範囲外の場合は false。</returns>
     /// <remarks>
     /// <see cref="EsBitmap.TrySetPixel"/> へ委譲する（Avalonia Color → System.Drawing Color へ変換）。<br/>
     /// 範囲外チェックはコア側で行う。
@@ -221,7 +221,7 @@ public static class EsBitmapAvaloniaExtensions
 
     /// <summary>全ピクセルを指定色（Avalonia Color）で塗りつぶす。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
-    /// <param name="color">塗りつぶし色。アルファ乗算して書き込む。</param>
+    /// <param name="color">塗りつぶし色。 アルファ乗算して書き込む。</param>
     public static void Clear(this EsBitmap bitmap, AvaloniaColor color)
     {
         var premult = Premultiply(color);

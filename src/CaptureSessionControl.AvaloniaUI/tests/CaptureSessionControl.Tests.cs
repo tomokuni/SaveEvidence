@@ -96,7 +96,7 @@ public class CaptureSessionControlTests
         var session = new SelectionCaptureSession(
             new MockWindowService(), new MockCaptureService(), new MockElementFinder(),
             CaptureType.ScreenSelect,
-            // タイムアウトは廃止済み。Cancel() でキャンセルさせてタスクを完了する
+            // タイムアウトは廃止済み。 Cancel() でキャンセルさせてタスクを完了する
             // （ヘッドレス環境では Close() が Deactivated を発火しないため、Closed 経由で完了する）
             new CaptureSettings(HideOwnerWindow: true),
             1.0,
@@ -170,7 +170,7 @@ public class CaptureSessionControlTests
         // Cancel() でキャンセルしてタスクを完了する
         session.Cancel();
         var result = await task;
-        // 復元は即時（async の待機は不要）。イベント（画像変更）の完了後に実行される
+        // 復元は即時（async の待機は不要）。 イベント（画像変更）の完了後に実行される
         Assert.True(owner.IsVisible);
         Assert.Equal(1.0, owner.Opacity);
 
@@ -349,7 +349,7 @@ public class CaptureSessionControlTests
     /// <summary>切り出しの境界は開始時には固定されず、確定時に「現在の画像」から都度解決されることを検証する。</summary>
     /// <remarks>
     /// 開始時の画像サイズを固定して保持すると、実行中に画像が差し替わった場合に差し替え前の範囲でクランプしてしまう<br/>
-    /// （100x100 → 40x40 の差し替え後も 81x81 の矩形が返る）。現在の画像（40x40）でクランプされることを固定する。
+    /// （100x100 → 40x40 の差し替え後も 81x81 の矩形が返る）。 現在の画像（40x40）でクランプされることを固定する。
     /// </remarks>
     [AvaloniaFact]
     public async Task StartCropAsync_画像差し替え後は新しい画像のサイズで切り出す()

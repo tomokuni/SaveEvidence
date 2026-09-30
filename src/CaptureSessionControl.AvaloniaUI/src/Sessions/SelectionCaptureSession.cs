@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
 /// 内部実装であり、公開 API は <see cref="CaptureSessionControl"/> を使用する。<br/>
 /// ユーザーの選択操作（ScreenSelect / WindowSelect / AreaSelect）の開始〜完了を一区切りのセッションとして完結させる。<br/>
 /// プラットフォーム抽象（<see cref="ICaptureService"/> / <see cref="IWindowService"/> / <see cref="IElementFinder"/>）は注入され、<br/>
-/// 内部で生成しない（DIP）。状態は保持せず、<see cref="OverlayWindow"/> が選択 UI を担う。
+/// 内部で生成しない（DIP）。 状態は保持せず、<see cref="OverlayWindow"/> が選択 UI を担う。
 /// </remarks>
 internal sealed class SelectionCaptureSession(
     IWindowService windowService,
@@ -33,9 +33,9 @@ internal sealed class SelectionCaptureSession(
     /// <summary>表示中の選択オーバーレイウィンドウ（キャンセル用）。</summary>
     private OverlayWindow? _window;
 
-    /// <summary>キャプチャセッションを開始する。UI スレッドから呼び出すこと。</summary>
+    /// <summary>キャプチャセッションを開始する。 UI スレッドから呼び出すこと。</summary>
     /// <param name="owner">オーナーウィンドウ（キャプチャ除外設定・所有ウィンドウとして使用）。</param>
-    /// <returns>キャプチャ結果。キャンセル時は 0x0 の空の結果。</returns>
+    /// <returns>キャプチャ結果。 キャンセル時は 0x0 の空の結果。</returns>
     /// <remarks>
     /// 背景キャプチャは UI スレッドをブロックしないようバックグラウンドで実行する。<br/>
     /// 画面キャプチャは DWM 応答不能時に長時間ブロックする可能性があるため、タイムアウト付きで実行する。<br/>

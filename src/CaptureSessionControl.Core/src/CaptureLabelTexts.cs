@@ -47,7 +47,7 @@ public static class CaptureLabelTexts
 
     /// <summary>情報ラベル（ウィンドウタイトル）に表示する文言を取得する。</summary>
     /// <param name="mode">動作モード。</param>
-    /// <param name="windowTitle">検出したウィンドウタイトル。null 可。</param>
+    /// <param name="windowTitle">検出したウィンドウタイトル。 null 可。</param>
     /// <returns>ウィンドウ選択の場合はウィンドウタイトル、それ以外は null（情報ラベルを描かない）。</returns>
     /// <remarks>
     /// 情報ラベルはウィンドウ選択でのみ意味を持つため、他モードでは null を返して描画させない。<br/>

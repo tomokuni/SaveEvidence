@@ -67,7 +67,7 @@ public sealed class LoupeControl : Panel
                 o.InvalidateArrange();
             });
 
-    /// <summary><see cref="Options"/> プロパティ（表示サイズ・拡大率。コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
+    /// <summary><see cref="Options"/> プロパティ（表示サイズ・拡大率。 コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
     /// <remarks>
     /// 個別に公開していた設定（表示サイズ・拡大率）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
     /// <see cref="MeasureContent"/> が要求サイズを返すため、変更はレイアウトにも影響する（<c>AffectsLayout</c>）。<br/>
@@ -104,7 +104,7 @@ public sealed class LoupeControl : Panel
             },
             coerce: static (_, value) => CoerceDipToDeviceScaling(value));
 
-    /// <summary><see cref="Appearance"/> プロパティ（外観。描画にだけ必要な設定）。</summary>
+    /// <summary><see cref="Appearance"/> プロパティ（外観。 描画にだけ必要な設定）。</summary>
     /// <remarks>
     /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）には含めず、<br/>
     /// 描画の設定（<see cref="LoupeAppearance"/>）として本コントロールが公開する（描画層が単一所有する）。
@@ -136,11 +136,11 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     private readonly ShapeCanvas _shapes;
 
-    /// <summary>配置中のラベル要素（背景 + テキスト）。子の末尾側へ置くため常に最上位になる。</summary>
+    /// <summary>配置中のラベル要素（背景 + テキスト）。 子の末尾側へ置くため常に最上位になる。</summary>
     private readonly List<Border> _labels = [];
 
     /// <summary>拡大元の 100% 画像を取得または設定する。</summary>
-    /// <value>拡大元の画像。null の場合は市松模様のみを表示する。</value>
+    /// <value>拡大元の画像。 null の場合は市松模様のみを表示する。</value>
     public EsBitmap? Source
     {
         get => GetValue(SourceProperty);
@@ -148,7 +148,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>拡大表示する中心座標（元画像ピクセル座標）を取得または設定する。</summary>
-    /// <value>拡大中心。null の場合は市松模様のみを表示する。</value>
+    /// <value>拡大中心。 null の場合は市松模様のみを表示する。</value>
     public EsPoint? CenterPoint
     {
         get => GetValue(CenterPointProperty);
@@ -156,7 +156,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>ルーペの設定（表示サイズ・拡大率）を取得または設定する。</summary>
-    /// <value>設定の単一値。既定はコアの既定値（<see cref="LoupeOptions.Default"/>）。</value>
+    /// <value>設定の単一値。 既定はコアの既定値（<see cref="LoupeOptions.Default"/>）。</value>
     /// <remarks>
     /// 一部の項目だけを変える場合は <c>LoupeOptions.Default with { ZoomLevel = 8 }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
     /// 設定の値・既定値・数値項目の安全域への補正はコアの <see cref="LoupeOptions"/> が単一所有する。<br/>
@@ -169,7 +169,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>外観（色・フォント・角丸・枠線の太さ・表示可否）を取得または設定する。</summary>
-    /// <value>外観の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
+    /// <value>外観の単一値。 既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>
     /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）ではなく本プロパティが単一所有する。<br/>
     /// 変更すると再描画され、ラベル要素の再配置が行われる。
@@ -181,7 +181,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
-    /// <value>スケーリング係数。範囲外・非有限は 0.1〜8.0 または既定値へ補正される。</value>
+    /// <value>スケーリング係数。 範囲外・非有限は 0.1〜8.0 または既定値へ補正される。</value>
     public double DipToDeviceScaling
     {
         get => GetValue(DipToDeviceScalingProperty);
@@ -189,7 +189,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>ルーペ中心からの右下オフセット（DIP）を取得または設定する。</summary>
-    /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。既定は 0。</value>
+    /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。 既定は 0。</value>
     /// <remarks>
     /// 保持と位置の補正はコア（ファサード）が単一所有する。<br/>
     /// 本コントロールは位置を持たない（ホストが <see cref="ResolveLayout"/> の結果で配置する）ため、設定時は再配置を要求する。
@@ -205,7 +205,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。null の場合は等価変換。</param>
+    /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// 保持と、未設定（null）を等価変換として扱う規則はコア（ファサード）が単一所有する。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化に追従する（設定時は再配置を要求する）。
@@ -268,7 +268,7 @@ public sealed class LoupeControl : Panel
     public event EventHandler<LoupeRenderedEventArgs>? Rendered;
 
     /// <summary>設定変更ログの出力先を取得または設定する。</summary>
-    /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
+    /// <value>ロガー。 null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>
     /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。<br/>
     /// getter / setter とも null を <see cref="NullLogger"/> へ安全に変換する。<br/>

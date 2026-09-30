@@ -11,7 +11,7 @@ using EsUtil.SaveEvidence.Services;
 namespace EsUtil.SaveEvidence.ViewModels;
 
 /// <summary>
-/// メイン画面の ViewModel。CommunityToolkit.Mvvm ソースジェネレーターにより、
+/// メイン画面の ViewModel。 CommunityToolkit.Mvvm ソースジェネレーターにより、
 /// プロパティ変更通知とコマンドを自動生成する。
 /// </summary>
 /// <remarks>
@@ -20,7 +20,7 @@ namespace EsUtil.SaveEvidence.ViewModels;
 /// 設定管理は <see cref="Services.SettingsService"/> を介して行い、疎結合な設計を実現する。<br/>
 /// 画像のライフサイクル管理（Dispose）は <c>OnPreviewImageChanging</c> で行う。<br/>
 /// ピクセル操作（切出し）は UI 非依存の <see cref="EsBitmap"/> に委譲し、
-/// 画面キャプチャは <see cref="CaptureType"/> に委譲する（プラットフォーム抽象。DIP）。<br/>
+/// 画面キャプチャは <see cref="CaptureType"/> に委譲する（プラットフォーム抽象。 DIP）。<br/>
 /// クリップボードと上書き確認は UI が必要なため、コールバックとして UI 実装側から注入する（依存性逆転）。
 /// </remarks>
 public sealed partial class MainViewModel : ObservableObject
@@ -68,7 +68,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// MainViewModel の新しいインスタンスを初期化する。
     /// </summary>
     /// <param name="settingsService">設定サービス</param>
-    /// <param name="imageWriter">画像書き込みサービス。UI 実装（Avalonia 版は <c>AvaloniaImageWriter</c>）を注入する。</param>
+    /// <param name="imageWriter">画像書き込みサービス。 UI 実装（Avalonia 版は <c>AvaloniaImageWriter</c>）を注入する。</param>
     public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
     {
         _settingsService = settingsService;
@@ -84,7 +84,7 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateSaveFolderResolution();
     }
 
-    /// <summary>プレビュー画像（EsBitmap。表示は表示境界で Avalonia WriteableBitmap へ変換する）</summary>
+    /// <summary>プレビュー画像（EsBitmap。 表示は表示境界で Avalonia WriteableBitmap へ変換する）</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasPreviewImage))]
     [NotifyPropertyChangedFor(nameof(CanCopy))]
@@ -126,7 +126,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>保存先フォルダパスのプレースホルダ（<c>{MyPictures}</c> 等）を展開する。</summary>
     /// <param name="path">プレースホルダを含む可能性のあるフォルダパス。</param>
-    /// <returns>展開後のパス。プレースホルダが無ければ入力をそのまま返す。</returns>
+    /// <returns>展開後のパス。 プレースホルダが無ければ入力をそのまま返す。</returns>
     /// <remarks>
     /// 対応プレースホルダ: <c>{MyPictures}</c> → <see cref="Environment.SpecialFolder.MyPictures"/>。<br/>
     /// 大文字小文字は区別しない（<c>{mypictures}</c> も展開する）。<br/>
@@ -139,12 +139,12 @@ public sealed partial class MainViewModel : ObservableObject
                 Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
                 StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>現在のズーム率（%）。0 = 自動（Fit）。表示用ストア（ズーム率の単一所有は ZoomableView。ZoomChanged で更新）。</summary>
-    /// <remarks>スライダ・ズーム表示のバインディング用に保持する。ズーム率の実ソースは ZoomViewControl 側。</remarks>
+    /// <summary>現在のズーム率（%）。 0 = 自動（Fit）。 表示用ストア（ズーム率の単一所有は ZoomableView。 ZoomChanged で更新）。</summary>
+    /// <remarks>スライダ・ズーム表示のバインディング用に保持する。 ズーム率の実ソースは ZoomViewControl 側。</remarks>
     [ObservableProperty]
     private double _zoomPercent;
 
-    /// <summary>切出し選択範囲があるかどうか。View 側から設定される。</summary>
+    /// <summary>切出し選択範囲があるかどうか。 View 側から設定される。</summary>
     [ObservableProperty]
     private bool _hasSelection;
 
@@ -153,11 +153,11 @@ public sealed partial class MainViewModel : ObservableObject
     private bool _isAutoCropActive;
 
     /// <summary>自動切り出しで検出された矩形候補群（画像座標 <see cref="EsRectInt"/>・閉区間・面積昇順）。</summary>
-    /// <value>4 辺が矩形を構成する候補のみ。座標の重複は統合し、最大 256 件に制限される。</value>
+    /// <value>4 辺が矩形を構成する候補のみ。 座標の重複は統合し、最大 256 件に制限される。</value>
     [ObservableProperty]
     private IReadOnlyList<EsRectInt> _detectedRects = [];
 
-    /// <summary>現在ホバー中の矩形（複数矩形内にある場合は最も面積の小さいもの）。なければ null。</summary>
+    /// <summary>現在ホバー中の矩形（複数矩形内にある場合は最も面積の小さいもの）。 なければ null。</summary>
     [ObservableProperty]
     private EsRectInt? _hoveredRect;
 
@@ -166,7 +166,7 @@ public sealed partial class MainViewModel : ObservableObject
     private string _statusMessage = "";
 
     /// <summary>ナビゲーションパネルの展開状態（true = 展開 / false = アイコンのみ収納）。</summary>
-    /// <remarks>展開時はタイトル + テキスト + アイコンを表示する。収納時はアイコンのみ表示する。</remarks>
+    /// <remarks>展開時はタイトル + テキスト + アイコンを表示する。 収納時はアイコンのみ表示する。</remarks>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(NavPanelWidth))]
     private bool _isNavigationExpanded = true;
@@ -201,16 +201,16 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>保存済みファイル名（未保存の場合は空欄）。</summary>
     public string SavedFileName => IsSaved ? _lastSavedFileName : "";
 
-    /// <summary>拡大率の表示テキスト（Fit 時も実効拡大率を % で表示する。「自動」表記は行わない）。View 側から設定される。</summary>
+    /// <summary>拡大率の表示テキスト（Fit 時も実効拡大率を % で表示する。 「自動」表記は行わない）。 View 側から設定される。</summary>
     [ObservableProperty]
     private string _zoomDisplayText = "100%";
 
-    /// <summary>マウスポインタ位置のドメイン座標（画像ピクセル）の表示テキスト。画像外は "-"。View 側から設定される。</summary>
+    /// <summary>マウスポインタ位置のドメイン座標（画像ピクセル）の表示テキスト。 画像外は "-"。 View 側から設定される。</summary>
     [ObservableProperty]
     private string _pointerDisplayText = "-";
 
     /// <summary>画像サイズ（ドメイン座標 = 元画像ピクセル）の表示テキスト。</summary>
-    /// <remarks>画像未設定時は空欄。画像サイズはズーム状態に依存しない固定値。</remarks>
+    /// <remarks>画像未設定時は空欄。 画像サイズはズーム状態に依存しない固定値。</remarks>
     public string ImageSizeDisplayText => PreviewImage is { } img ? $"{img.Size.Width} x {img.Size.Height}" : "";
 
     /// <summary>ファイル名テンプレートが有効かどうかを取得する。</summary>
@@ -218,17 +218,17 @@ public sealed partial class MainViewModel : ObservableObject
     public bool HasValidTemplate => _validationMessage is null;
 
     /// <summary>ファイル名テンプレートが無効かどうかを取得する（枠線エラー表示用）。</summary>
-    /// <remarks><see cref="HasValidTemplate"/> の否定。View の <c>validation-error</c> クラスバインディングに使用する。</remarks>
+    /// <remarks><see cref="HasValidTemplate"/> の否定。 View の <c>validation-error</c> クラスバインディングに使用する。</remarks>
     public bool HasInvalidTemplate => !HasValidTemplate;
 
-    /// <summary>ファイル名テンプレートの検証エラーメッセージを取得する。有効な場合は null。</summary>
+    /// <summary>ファイル名テンプレートの検証エラーメッセージを取得する。 有効な場合は null。</summary>
     public string? ValidationMessage => _validationMessage;
 
     /// <summary>設定オブジェクトを取得する。</summary>
     public Settings Settings => _settingsService.Current;
 
     /// <summary>
-    /// プレビュー画像変更前の処理（破棄は行わない。変更後に破棄する）。
+    /// プレビュー画像変更前の処理（破棄は行わない。 変更後に破棄する）。
     /// </summary>
     /// <param name="value">新しい画像（このメソッド内では未使用）</param>
     /// <remarks>
@@ -239,7 +239,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// </remarks>
     partial void OnPreviewImageChanging(EsBitmap? value)
     {
-        // 前回の画像を保持（OnPreviewImageChanged で破棄。Image.Source 更新前に破棄しない）
+        // 前回の画像を保持（OnPreviewImageChanged で破棄。 Image.Source 更新前に破棄しない）
         _previousPreviewImage = _previewImage;
         IsSaved = false;
         _lastSavedFileName = "";
@@ -294,7 +294,7 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>指定された画像（EsBitmap）をプレビューとして設定する。</summary>
-    /// <param name="image">設定する画像。所有権が本型へ移る。</param>
+    /// <param name="image">設定する画像。 所有権が本型へ移る。</param>
     public void SetPreviewImage(EsBitmap image) => PreviewImage = image;
 
     /// <summary>画像をクリップボードにコピーする。</summary>
@@ -365,7 +365,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>検出された線分から矩形（ウィンドウの 4 辺）の候補を復元する。</summary>
     /// <param name="results">検出された線分一覧。</param>
-    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsRectInt"/>。面積昇順・最大 256 件）。</returns>
+    /// <returns>復元した矩形候補の一覧（画像座標・閉区間 <see cref="EsRectInt"/>。 面積昇順・最大 256 件）。</returns>
     /// <remarks>
     /// 線分→矩形復元のロジックは <see cref="LineRectangleReconstructor"/>（純粋クラス）へ委譲する（単一所有・DRY）。<br/>
     /// 本メソッドはホストからの呼び出し窓口（アプリ固有の委譲）として維持する。
@@ -374,9 +374,9 @@ public sealed partial class MainViewModel : ObservableObject
         => LineRectangleReconstructor.Reconstruct(results);
 
     /// <summary>指定座標（画像ピクセル）を含む自動切り出しの検出矩形を求める。</summary>
-    /// <param name="x">X 座標（画像ピクセル。ドメイン座標）。</param>
-    /// <param name="y">Y 座標（画像ピクセル。ドメイン座標）。</param>
-    /// <returns>座標を含む矩形のうち面積が最小のもの。含む矩形がない場合は null。</returns>
+    /// <param name="x">X 座標（画像ピクセル。 ドメイン座標）。</param>
+    /// <param name="y">Y 座標（画像ピクセル。 ドメイン座標）。</param>
+    /// <returns>座標を含む矩形のうち面積が最小のもの。 含む矩形がない場合は null。</returns>
     /// <remarks>
     /// 自動切り出しのホバー強調（<see cref="HoveredRect"/>）とダブルクリックの確定・キャンセル判定で共用する。<br/>
     /// 複数の矩形が重なる場合は<b>面積が最小</b>のものを選ぶ（内側のウィンドウを優先するため）。<br/>

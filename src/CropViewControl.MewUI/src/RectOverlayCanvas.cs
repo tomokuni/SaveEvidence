@@ -39,7 +39,7 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
     }
 
     /// <summary>描画する矩形（ドメイン座標）を設定する。</summary>
-    /// <param name="rects">描画する矩形。空の場合は何も描画しない。</param>
+    /// <param name="rects">描画する矩形。 空の場合は何も描画しない。</param>
     public void SetRects(IReadOnlyList<OverlayRect> rects)
     {
         _rects = rects;

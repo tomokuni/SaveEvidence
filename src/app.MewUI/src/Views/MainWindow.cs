@@ -35,11 +35,11 @@ internal sealed class MainWindow
     /// <remarks>Avalonia 版 <c>MainWindow.axaml</c> の <c>MinWidth</c> / <c>MinHeight</c> と同じ値。</remarks>
     private static readonly Size MinWindowSize = new(800, 400);
 
-    /// <summary>タイトルバー領域の高さ（DIP）。非クライアント領域をこの高さでクライアント領域へ拡張する。</summary>
+    /// <summary>タイトルバー領域の高さ（DIP）。 非クライアント領域をこの高さでクライアント領域へ拡張する。</summary>
     private const double TitleBarHeight = 32;
 
     /// <summary>ナビパネル上部（タイトルバー領域）の高さ（DIP）。</summary>
-    /// <remarks>Avalonia 版と同じ 50。トグルボタン（高さ 28）を中央に置くと上端に余白が生まれ、ツールバーと高さが揃う。</remarks>
+    /// <remarks>Avalonia 版と同じ 50。 トグルボタン（高さ 28）を中央に置くと上端に余白が生まれ、ツールバーと高さが揃う。</remarks>
     private const double NavHeaderHeight = 50;
 
     /// <summary>ナビ項目のアイコンの一辺（DIP）。</summary>
@@ -341,7 +341,7 @@ internal sealed class MainWindow
         return window;
     }
 
-    /// <summary>ウィンドウ操作ボタンのアイコンの大きさ（半径。DIP）。</summary>
+    /// <summary>ウィンドウ操作ボタンのアイコンの大きさ（半径。 DIP）。</summary>
     private const double WindowGlyphSize = 5;
 
     /// <summary>現在のウィンドウ状態に応じた最大化ボタンのアイコン種別を求める。</summary>

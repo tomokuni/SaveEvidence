@@ -1,6 +1,6 @@
 # app.Core 外部機能仕様書
 
-`app.Core` は UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供します。名前空間は `app.AvaloniaUI` と同一の `EsUtil.SaveEvidence.*` です。
+`app.Core` は UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供します。 名前空間は `app.AvaloniaUI` と同一の `EsUtil.SaveEvidence.*` です。
 
 ## 公開 API の可視性
 
@@ -22,13 +22,13 @@
 
 ## `Enum.ThemeMode`（列挙型）
 
-テーマモード。各メンバーは `System.ComponentModel.DescriptionAttribute` で表示名を保持します。
+テーマモード。 各メンバーは `System.ComponentModel.DescriptionAttribute` で表示名を保持します。
 
 ## `Models.Settings`（クラス）
 
 アプリケーションの設定を表すデータモデルです（`ObservableObject` を継承し、`[ObservableProperty]` で変更通知を発行）。
 
-UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / `EsWindowState`）で保持します。永続化ロジックは含まず、読み書きは `Services.SettingsService` を介します。
+UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / `EsWindowState`）で保持します。 永続化ロジックは含まず、読み書きは `Services.SettingsService` を介します。
 
 | プロパティ（抜粋） | 型 | 説明 |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 ## `Services.ISettingsService` / `Services.SettingsService`（クラス）
 
-設定の読み書きを提供します。保存先は `%LOCALAPPDATA%\SaveEvidence\settings.json` です。
+設定の読み書きを提供します。 保存先は `%LOCALAPPDATA%\SaveEvidence\settings.json` です。
 
 | メンバー | 説明 |
 | --- | --- |
@@ -53,10 +53,10 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 - 排他制御（`Lock`）によりスレッドセーフな読み書きを保証します。
 - 読み込み・書き込みの失敗は握りつぶし、既定値または現状のまま続行します（設定ファイル破損で起動できなくならないようにするため）。
-- enum は名前で保存します（例: `"ThemeMode": "Dark"`）。enum の変換器は AOT 対応のジェネリック版（型ごとに指定）を使用します。
+- enum は名前で保存します（例: `"ThemeMode": "Dark"`）。 enum の変換器は AOT 対応のジェネリック版（型ごとに指定）を使用します。
 - 書式（インデント・コメント許容・末尾カンマ許容・矩形の 4 項目保存）は、ソース生成の有無にかかわらず共通です。
 
-> **トリミング / Native AOT**: コンテキストを注入しないと設定が空（`{}`）になります。コンテキストは `Settings` を参照する側のアセンブリに置いてください（同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
+> **トリミング / Native AOT**: コンテキストを注入しないと設定が空（`{}`）になります。 コンテキストは `Settings` を参照する側のアセンブリに置いてください（同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
 
 ## `Services.EsRectIntJsonConverter`（内部・クラス）
 
@@ -73,15 +73,15 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | --- | --- |
 | `Save(EsBitmap image, string filePath)` | 画像を指定パスへ書き込む（拡張子から形式を自動判別） |
 
-- UI フレームワーク非依存（`EsBitmap` のみに依存）です。具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードします。
+- UI フレームワーク非依存（`EsBitmap` のみに依存）です。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードします。
 - テストではモックに差し替え、ヘッドレス不要で検証できます。
 
 ## `Models.FileNameTemplate`（静的クラス）
 
 | メソッド | 説明 |
 | --- | --- |
-| `Generate(string template, DateTime? now = null)` | テンプレートから実際のファイル名を生成する（`{ }` 内の日時トークンを置換する。`now` を省略すると現在日時を使う） |
-| `IncrementRightmostNumber(string text)` | 右端の数値連続を +1 する（桁数を維持。`decimal` で扱えない桁数は `BigInteger`） |
+| `Generate(string template, DateTime? now = null)` | テンプレートから実際のファイル名を生成する（`{ }` 内の日時トークンを置換する。 `now` を省略すると現在日時を使う） |
+| `IncrementRightmostNumber(string text)` | 右端の数値連続を +1 する（桁数を維持。 `decimal` で扱えない桁数は `BigInteger`） |
 | `IsValidTemplate(string template, out string? errorMessage)` | ファイル名として使用可能かを検証する（使用不可文字を検出） |
 
 日時を引数（`now`）で受け取るのは、呼び出し側が時刻を固定して結果を再現できるようにするためです（本番の呼び出しは現在日時を使います）。
@@ -101,8 +101,8 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `MaxCount` | Undo の最大保存段数（5） |
 | `Count` / `RedoCount` | 現在の Undo / Redo スタック深度 |
 | `IsRestoring` | Undo 復元中かどうか（復元中の `Push` を無視するために使用） |
-| `GetUndoHistory()` / `GetRedoHistory()` | スタック内の画像を古い順に取得する（読み取り専用。変更・破棄してはならない） |
-| `Push(EsBitmap? currentImage)` | 現在の画像を Undo スタックへプッシュする（画素コピーで複製。Redo 履歴はクリア） |
+| `GetUndoHistory()` / `GetRedoHistory()` | スタック内の画像を古い順に取得する（読み取り専用。 変更・破棄してはならない） |
+| `Push(EsBitmap? currentImage)` | 現在の画像を Undo スタックへプッシュする（画素コピーで複製。 Redo 履歴はクリア） |
 | `Undo(EsBitmap? currentImage)` | 現在の画像を Redo スタックへ退避し、Undo スタックの最新画像を返す（所有権は呼び出し側） |
 | `Redo()` | Redo スタックから最新の画像を返す（所有権は呼び出し側） |
 | `Clear()` | 全画像を破棄して両スタックを空にする |
@@ -115,22 +115,22 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | --- | --- |
 | `TryParse(string text, out HotKeySetting setting)` | ホットキー文字列を `HotKeySetting` へ変換する（成功時 true） |
 
-- "Ctrl + Shift + Q" / "Ctrl+Shift+Q" 形式に対応します。大文字小文字は区別しません。
-- 最低 1 つの修飾キーが必要です。キー名が解釈できない場合は false を返します。
+- "Ctrl + Shift + Q" / "Ctrl+Shift+Q" 形式に対応します。 大文字小文字は区別しません。
+- 最低 1 つの修飾キーが必要です。 キー名が解釈できない場合は false を返します。
 
 ## `Models.CapacityLimitedCache`（内部・静的クラス）
 
 | メソッド | 説明 |
 | --- | --- |
-| `GetOrAdd<TKey, TValue>(ConcurrentDictionary<TKey, TValue> cache, int capacity, TKey key, Func<TKey, TValue> factory)` | キャッシュに値を取得または追加する。容量超過時はキャッシュ全体をクリアして肥大化を防ぐ |
+| `GetOrAdd<TKey, TValue>(ConcurrentDictionary<TKey, TValue> cache, int capacity, TKey key, Func<TKey, TValue> factory)` | キャッシュに値を取得または追加する。 容量超過時はキャッシュ全体をクリアして肥大化を防ぐ |
 
 ## `Models.ImageFileExtensions`（内部・静的クラス）
 
-フォルダビューの一覧に含める画像ファイルの拡張子判定。判定は拡張子のみで行い、大文字・小文字は区別しません。
+フォルダビューの一覧に含める画像ファイルの拡張子判定。 判定は拡張子のみで行い、大文字・小文字は区別しません。
 
 | メンバー | 説明 |
 | --- | --- |
-| `All` | 対象拡張子の一覧（読み取り専用）。`.png` / `.jpg` / `.jpeg` / `.bmp` / `.gif` / `.tiff` / `.tif` / `.webp` |
+| `All` | 対象拡張子の一覧（読み取り専用）。 `.png` / `.jpg` / `.jpeg` / `.bmp` / `.gif` / `.tiff` / `.tif` / `.webp` |
 | `IsImageFile(string path)` | 拡張子が対象のいずれかなら true |
 
 - 拡張子の抽出には `Path.GetExtension` を使用するため、`.png` のようにドットで始まる名前も画像として扱われます（末尾のドット `a.` は空文字のため対象外）。
@@ -174,13 +174,13 @@ Undo 一覧の表示モード状態を保持し、変更を通知します（`Ob
 public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 ```
 
-`IImageWriter` は UI 実装を注入します（Avalonia 版は `app.AvaloniaUI` の `AvaloniaImageWriter`。`Program.cs` の DI で登録）。既定実装の自動生成は行いません（UI 非依存を保つため）。
+`IImageWriter` は UI 実装を注入します（Avalonia 版は `app.AvaloniaUI` の `AvaloniaImageWriter`。 `Program.cs` の DI で登録）。 既定実装の自動生成は行いません（UI 非依存を保つため）。
 
 ### 主なプロパティ
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `PreviewImage` | `EsBitmap?` | プレビュー画像（所有権は本 ViewModel。差し替え時に旧画像を破棄） |
+| `PreviewImage` | `EsBitmap?` | プレビュー画像（所有権は本 ViewModel。 差し替え時に旧画像を破棄） |
 | `Settings` | `Settings` | 設定オブジェクト（`ISettingsService.Current`） |
 | `HasPreviewImage` / `CanCopy` / `CanSave` / `CanPaste` | `bool` | 各操作の可否（コマンドの `CanExecute`） |
 | `DetectedRects` | `IReadOnlyList<EsRectInt>` | 自動切り出しで検出した矩形候補群（画像座標・面積昇順・最大 256 件） |
@@ -200,10 +200,10 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | メンバー | 説明 |
 | --- | --- |
 | `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る） |
-| `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。同名時は `ConfirmOverwriteAsync`） |
+| `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`） |
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`） |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`） |
-| `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。両 UI のホバー強調と確定・キャンセル判定が共用する |
+| `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。 両 UI のホバー強調と確定・キャンセル判定が共用する |
 | `CopyToClipboard()` / `PasteFromClipboard()` | クリップボード操作（実体はコールバックへ委譲） |
 
 ### UI 依存の注入点

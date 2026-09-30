@@ -26,7 +26,7 @@ internal sealed partial class OverlayWindow
         var highlight = ApplyHighlight(detection);
         // ハイライト検出結果を外側の装飾（MarqueeControl）の描画へ反映する（再描画要求）
         RequestOverlayRender();
-        // ホバー中の枠（ハイライト）を事前切り出しする（確定時の高速化。同じ矩形ならコアがスキップする）
+        // ホバー中の枠（ハイライト）を事前切り出しする（確定時の高速化。 同じ矩形ならコアがスキップする）
         if (highlight.DomainRect is not null)
         {
             PreExtractClip(detection.Bounds);
@@ -52,8 +52,8 @@ internal sealed partial class OverlayWindow
     }
 
     /// <summary>ドメイン矩形の中心が含まれるモニタのスケーリング係数を返す（サイズラベルの DisplayScale 表示用）。</summary>
-    /// <param name="domainRect">ドメイン矩形（= 画面物理 − Position。ウィンドウローカル物理ピクセル）。</param>
-    /// <returns>矩形中心のモニタのスケーリング係数。該当なしはオーバーレイのスケーリング（<see cref="_scaling"/>）。</returns>
+    /// <param name="domainRect">ドメイン矩形（= 画面物理 − Position。 ウィンドウローカル物理ピクセル）。</param>
+    /// <returns>矩形中心のモニタのスケーリング係数。 該当なしはオーバーレイのスケーリング（<see cref="_scaling"/>）。</returns>
     /// <remarks>
     /// ドメイン矩形の中心に <see cref="Position"/> を加算して画面物理座標へ戻し、中心を含むモニタを特定する。<br/>
     /// 「原点の加算」「中心で判定する」「該当なしはフォールバック」という規則はコア（<see cref="MonitorScalingMath"/>）が単一所有する<br/>
@@ -65,7 +65,7 @@ internal sealed partial class OverlayWindow
             domainRect, Position.ToEsPointInt(), _monitors, _scaling);
 
     /// <summary>サイズラベルの対象となる確定矩形（ドメイン座標）を解決する。</summary>
-    /// <returns>確定対象の矩形。対象がない場合は null。</returns>
+    /// <returns>確定対象の矩形。 対象がない場合は null。</returns>
     /// <remarks>
     /// 「ハイライト型はハイライト矩形・それ以外は選択矩形」という優先順位はコア（<see cref="CaptureTypeTraits.ResolveRect"/>）が単一所有する。<br/>
     /// ハイライト矩形はコアのハイライト状態（<see cref="CaptureHighlightSession"/>）から読む<br/>

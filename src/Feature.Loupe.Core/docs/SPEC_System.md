@@ -191,4 +191,3 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 設定値の変更は `LogSettingChanged(名前, 前, 後)`（整数 / 実数 / 真偽）で出力し、**設定名は `nameof` をコアが付与します**（UI 層に設定名の文字列を持たせません）。 拡大中心は座標の整形（`(X, Y)`）を伴うため専用の定義（`LogCenterPointChanged`）を持ちます。 設定の変更ログの対象項目は `LoupeOptions` の項目（表示サイズ・拡大率）に一致します。
 
 **UI が出力するログ（拡大元画像の変更・描画の例外）とその書式は描画層が単一所有します**（コアは UI が呼ぶ定義を持ちません）。 **UI 固有の処理に対応するログは各 UI 実装が所有します**（中間ビットマップを生成する描画パイプライン固有のログ等）。
-

@@ -26,7 +26,7 @@ CaptureSessionControl.Core（本プロジェクト。共通規則）
 Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 ```
 
-依存は一方向です。Core は UI フレームワーク（Avalonia / MewUI）を参照せず、`Microsoft.Extensions.Logging.Abstractions` のみに依存します。
+依存は一方向です。 Core は UI フレームワーク（Avalonia / MewUI）を参照せず、`Microsoft.Extensions.Logging.Abstractions` のみに依存します。
 
 ### 3.2 層の責務の境界
 
@@ -263,8 +263,8 @@ flowchart TD
 
 ## 6. 設計判断
 
-- **切り出し規則を 1 箇所に置く**: 閉区間（終点の 1 px を含む）と端のクランプという切り出しの規則は `CropBoundsMath` が単一所有し、撮影の確定（`CaptureClipMath`）と切り出し（`CropSession`）が委譲する。規則が複数箇所にあると、同じドラッグでも 1 px 異なる矩形になる。
-- **色は `System.Drawing.Color`**: UI 非依存のプリミティブ（`System.Drawing.Primitives`）で、MewUI のコントロールがそのまま受け取れる。設定から複合コントロールの設定値（`FadeMaskDragRectOptions`）への変換は本プロジェクトの `FadeMaskDragRectOptionsMapper` が単一所有する（両 UI で同じ変換を使う）。ただし**色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる）。
+- **切り出し規則を 1 箇所に置く**: 閉区間（終点の 1 px を含む）と端のクランプという切り出しの規則は `CropBoundsMath` が単一所有し、撮影の確定（`CaptureClipMath`）と切り出し（`CropSession`）が委譲する。 規則が複数箇所にあると、同じドラッグでも 1 px 異なる矩形になる。
+- **色は `System.Drawing.Color`**: UI 非依存のプリミティブ（`System.Drawing.Primitives`）で、MewUI のコントロールがそのまま受け取れる。 設定から複合コントロールの設定値（`FadeMaskDragRectOptions`）への変換は本プロジェクトの `FadeMaskDragRectOptionsMapper` が単一所有する（両 UI で同じ変換を使う）。 ただし**色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる）。
 - **判定を「クランプ前の値」で行う**: 画像外へ出た選択矩形を「大きい」と誤判定しないため、最小サイズの判定は画像内へクランプする前の値で行う。
 - **丸めは 0.5 を切り上げ**: `Math.Round` の既定（銀行丸め）はピクセル座標の直感に反するため `MidpointRounding.AwayFromZero` を使う。
 
@@ -272,7 +272,7 @@ flowchart TD
 
 | 対象 | 内容 |
 | --- | --- |
-| `CropBoundsMath` | 純粋関数のためヘッドレスで検証する。四捨五入（0.5 の切り上げ）・画像外のクランプ・画像と重ならない場合の空・1 ピクセル未満の空・最小サイズ・閉区間と端のクランプ・画像サイズ 0 以下・丸め規則の公開（41 件）。Avalonia 版 / MewUI 版から移した境界値テストを 1 箇所へ集約した |
+| `CropBoundsMath` | 純粋関数のためヘッドレスで検証する。 四捨五入（0.5 の切り上げ）・画像外のクランプ・画像と重ならない場合の空・1 ピクセル未満の空・最小サイズ・閉区間と端のクランプ・画像サイズ 0 以下・丸め規則の公開（41 件）。 Avalonia 版 / MewUI 版から移した境界値テストを 1 箇所へ集約した |
 | `CaptureSettings` / `CaptureSettingsMerge` | 既定値の解決（`ToNonNull`）・部分更新のマージ・同値スキップ・範囲外の検証 |
 | `CaptureTypeTraits` | 3 種別すべての性質（ハイライト・閉区間・検出対象）と未定義値のフォールバック・検出関数の呼び分け・確定対象の選択（16 件） |
 | `MonitorScalingMath` | 中心を含むモニタの選択・単一モニタ・どのモニタにも含まれない場合のフォールバック・負座標・ドメイン座標からの原点加算 |

@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.Icons;
 /// - <see cref="LoadGeometry"/>: UI 上の <see cref="PathIcon"/> 用ジオメトリ（パスデータ）を返す。<br/>
 /// - <see cref="LoadWindowIcon"/>: ウィンドウ / アプリのアイコン用 <see cref="WindowIcon"/> を返す。<br/>
 /// 実装の詳細: SVG は AvaloniaResource として埋め込まれ（EsUtil.SaveEvidence.csproj の <c>AvaloniaResource</c>）、<br/>
-/// 実行時に <c>avares://</c> で読み込む。パスデータは <c>StreamGeometry.Parse</c> で解析する。
+/// 実行時に <c>avares://</c> で読み込む。 パスデータは <c>StreamGeometry.Parse</c> で解析する。
 /// </remarks>
 internal static partial class IconLoader
 {
@@ -36,7 +36,7 @@ internal static partial class IconLoader
     /// <returns>パスデータから生成したジオメトリ。</returns>
     /// <remarks>
     /// パスデータが抽出できない・リソースが見つからない場合は空ジオメトリ（M0,0）を返す<br/>
-    /// （表示上のフェールセーフ。アイコン欠落時もアプリはクラッシュしない）。
+    /// （表示上のフェールセーフ。 アイコン欠落時もアプリはクラッシュしない）。
     /// </remarks>
     public static Geometry LoadGeometry(string fileName)
         => CapacityLimitedCache.GetOrAdd(s_geometryCache, GeometryCacheCapacity, fileName, static f =>
@@ -56,7 +56,7 @@ internal static partial class IconLoader
 
     /// <summary>指定 SVG ファイルからウィンドウアイコンを生成する。</summary>
     /// <param name="fileName">SVG ファイル名。</param>
-    /// <param name="size">アイコンのサイズ（ピクセル。既定 32）。</param>
+    /// <param name="size">アイコンのサイズ（ピクセル。 既定 32）。</param>
     /// <returns>生成した <see cref="WindowIcon"/>。</returns>
     /// <remarks>
     /// 24x24 のジオメトリを <paramref name="size"/> に等方スケールして描画し、<br/>
@@ -85,7 +85,7 @@ internal static partial class IconLoader
     /// <returns>SVG の XML テキスト。</returns>
     /// <remarks>
     /// アセンブリ名は本クラスが属するアセンブリ（<c>app.AvaloniaUI.csproj</c> の <c>AssemblyName</c> = SaveEvidence）から<br/>
-    /// 動的に解決する（<see cref="Assembly.GetName"/>）。アセンブリ名変更時も追従する。
+    /// 動的に解決する（<see cref="Assembly.GetName"/>）。 アセンブリ名変更時も追従する。
     /// </remarks>
     private static string ReadSvg(string fileName)
     {

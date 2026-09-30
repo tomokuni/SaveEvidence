@@ -23,12 +23,12 @@ public static class SkiaLabel
     /// <param name="textOrigin">文字の左上原点（背景の内側）。</param>
     /// <param name="fontSize">フォントサイズ（物理ピクセル）。</param>
     /// <param name="textColor">文字色。</param>
-    /// <param name="cornerRadius">背景の角丸半径（物理ピクセル）。0 以下は四角形（既定）。</param>
+    /// <param name="cornerRadius">背景の角丸半径（物理ピクセル）。 0 以下は四角形（既定）。</param>
     /// <remarks>
-    /// 1. 背景（<see cref="SkiaFill.RoundRect"/>。角丸 0 は四角形）を塗る。<br/>
+    /// 1. 背景（<see cref="SkiaFill.RoundRect"/>。 角丸 0 は四角形）を塗る。<br/>
     /// 2. 文字（<see cref="SkiaText.Draw"/>）を左上原点で描く。<br/>
     /// <br/>
-    /// 文字は背景の後に描く（先に描くと背景に隠れる）。本メソッドが順序を保証する。
+    /// 文字は背景の後に描く（先に描くと背景に隠れる）。 本メソッドが順序を保証する。
     /// </remarks>
     public static void Draw(
         SKCanvas canvas,

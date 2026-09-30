@@ -17,7 +17,7 @@ internal sealed class EsRectIntJsonConverter : JsonConverter<EsRectInt>
     /// <param name="reader">JSON リーダー。</param>
     /// <param name="typeToConvert">変換対象の型。</param>
     /// <param name="options">シリアライズ オプション。</param>
-    /// <returns>読み取った矩形。欠落したプロパティは 0。</returns>
+    /// <returns>読み取った矩形。 欠落したプロパティは 0。</returns>
     public override EsRectInt Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         int x = 0, y = 0, w = 0, h = 0;

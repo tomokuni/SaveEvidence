@@ -4,8 +4,8 @@ using EsUtil.Platform.Core.Imaging;
 namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>キャプチャ操作の結果を表すレコード型。</summary>
-/// <param name="Image">キャプチャした画像。エラー時は null。</param>
-/// <param name="SourceBounds">キャプチャした領域（仮想画面座標）。エラー時は null。</param>
+/// <param name="Image">キャプチャした画像。 エラー時は null。</param>
+/// <param name="SourceBounds">キャプチャした領域（仮想画面座標）。 エラー時は null。</param>
 /// <remarks>
 /// `Image` と `SourceBounds` は常に同時に null または同時に非 null となる。<br/>
 /// - エラー時: 両方 null<br/>
@@ -17,8 +17,8 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 public sealed record CaptureResult(EsBitmap? Image, EsRectInt? SourceBounds)
 {
     /// <summary>切り出し結果と領域からキャプチャ結果を生成する（未確定はキャンセルの結果へ正規化する）。</summary>
-    /// <param name="image">切り出した画像。キャンセル（未確定）の場合は null。</param>
-    /// <param name="bounds">切り出した領域（画面物理座標）。キャンセル（未確定）の場合は null。</param>
+    /// <param name="image">切り出した画像。 キャンセル（未確定）の場合は null。</param>
+    /// <param name="bounds">切り出した領域（画面物理座標）。 キャンセル（未確定）の場合は null。</param>
     /// <returns>キャンセルの場合は画像 null・領域 0x0 の空結果、それ以外は指定された値の結果。</returns>
     /// <remarks>
     /// 「キャンセルは 0x0 の空結果として返す」規則を単一所有する<br/>

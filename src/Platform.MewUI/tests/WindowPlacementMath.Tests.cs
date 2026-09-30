@@ -6,7 +6,7 @@ namespace EsUtil.Platform.MewUI.Tests;
 /// <summary><see cref="WindowPlacementMath"/> のテスト（DIP ⇔ 画面物理ピクセルの変換）。</summary>
 /// <remarks>
 /// 設定ファイルは画面物理ピクセル、MewUI のウィンドウは DIP のため、この変換がずれると<br/>
-/// ウィンドウが画面外へ復元される。純粋関数のみのため UI 初期化なしで並列検証できる。
+/// ウィンドウが画面外へ復元される。 純粋関数のみのため UI 初期化なしで並列検証できる。
 /// </remarks>
 public sealed class WindowPlacementMathTests
 {

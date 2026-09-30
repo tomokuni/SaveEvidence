@@ -17,10 +17,10 @@ namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 
 /// <summary>画面全体を覆うキャプチャ選択オーバーレイ（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版 <c>CaptureSessionControl.AvaloniaUI</c> の <c>OverlayWindow</c> に相当する。撮影から選択・確定までの<br/>
+/// Avalonia 版 <c>CaptureSessionControl.AvaloniaUI</c> の <c>OverlayWindow</c> に相当する。 撮影から選択・確定までの<br/>
 /// 1 セッションを担い、確定した領域を <see cref="EsBitmap"/> として返す。<br/>
 /// <b>1 セッション = 1 インスタンス</b>であり、生成・実行・破棄は Facade（<see cref="CaptureSessionControl"/>）が担う<br/>
-/// （本クラスは公開しない。排他の受付は Facade がコアの <c>CaptureSessionSlot</c> で行う）。<br/>
+/// （本クラスは公開しない。 排他の受付は Facade がコアの <c>CaptureSessionSlot</c> で行う）。<br/>
 /// <br/>
 /// <b>全体の流れ</b>:<br/>
 /// 1. 設定に従ってオーナーウィンドウを画面外へ退避する（<see cref="CaptureSettings.HideOwnerWindow"/>）。<br/>
@@ -29,21 +29,21 @@ namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 /// 4. 選択を確定すると、選択矩形で画像を切り出して返す（Escape はキャンセル）。<br/>
 /// 5. オーナーウィンドウを元の位置へ戻す。<br/>
 /// <br/>
-/// <b>座標系</b>: ドメイン = 画像ローカルピクセル（画像の左上が原点）。撮影範囲の原点（仮想スクリーンの原点。<br/>
+/// <b>座標系</b>: ドメイン = 画像ローカルピクセル（画像の左上が原点）。 撮影範囲の原点（仮想スクリーンの原点。<br/>
 /// 負値になりうる）が画像の (0, 0) に対応するため、画面物理ピクセルとは原点の分だけ異なる。<br/>
 /// 画像ローカルとローカル DIP の変換は <see cref="ICoordTransform"/> が担い、<br/>
-/// 選択コントロールへ注入する（コントロール側は座標系を意識しない）。要素の検出とマウス入力は画面物理ピクセルで扱う。<br/>
+/// 選択コントロールへ注入する（コントロール側は座標系を意識しない）。 要素の検出とマウス入力は画面物理ピクセルで扱う。<br/>
 /// <b>切り出し矩形の求解は画面物理座標に統一する</b>（選択矩形（画像ローカル）は確定の入口で <c>ToScreenRect</c> により戻す）。<br/>
 /// <br/>
 /// <b>モード</b>:<br/>
 /// - 範囲選択（<see cref="CaptureType.AreaSelect"/>）: ドラッグで矩形を指定する（<c>FadeMaskDragRectControl</c> の範囲選択モード）。<br/>
 /// - スクリーン選択 / ウィンドウ選択: カーソル下の要素をハイライトし、左ボタンの解放または Enter で確定する。<br/>
 /// <br/>
-/// <b>入力</b>: Enter = 確定 / Escape = キャンセル。範囲選択は矢印キーでの微調整にも対応する（コントロール側の機能）。
+/// <b>入力</b>: Enter = 確定 / Escape = キャンセル。 範囲選択は矢印キーでの微調整にも対応する（コントロール側の機能）。
 /// </remarks>
 internal sealed class CaptureOverlay
 {
-    /// <summary>ロガー（ホストが注入する。null の場合は出力しない）。</summary>
+    /// <summary>ロガー（ホストが注入する。 null の場合は出力しない）。</summary>
     private readonly ILogger _log;
 
     /// <summary>選択確定の結果（キャンセル時は null）。</summary>
@@ -74,7 +74,7 @@ internal sealed class CaptureOverlay
 
     /// <summary>モニターごとの表示倍率（モニター矩形と DPI スケールの組）。</summary>
     /// <remarks>
-    /// サイズラベルの表示倍率（DisplayScale）に使う。仮想スクリーン全体を 1 枚のウィンドウで覆うと<br/>
+    /// サイズラベルの表示倍率（DisplayScale）に使う。 仮想スクリーン全体を 1 枚のウィンドウで覆うと<br/>
     /// ウィンドウの倍率は 1 つに定まるため、モニターごとの実倍率は位置から解決する必要がある。<br/>
     /// セッション中はモニター構成が変わらないため、<see cref="Show"/> で一度だけ解決する。
     /// </remarks>
@@ -92,7 +92,7 @@ internal sealed class CaptureOverlay
     /// <summary>カーソル下の要素のハイライト状態（ドメイン座標への変換・表示名・ログをコアが単一所有する）。</summary>
     private readonly CaptureHighlightSession _highlight;
 
-    /// <summary>クリック確定の固定（押下で固定・解放で確定。退化した検出は固定しない規則をコアが単一所有する）。</summary>
+    /// <summary>クリック確定の固定（押下で固定・解放で確定。 退化した検出は固定しない規則をコアが単一所有する）。</summary>
     private readonly CaptureClickSelection _clickSelection = new();
 
     /// <summary>セッションの状態（再入禁止・完了は 1 回だけ）。</summary>
@@ -121,7 +121,7 @@ internal sealed class CaptureOverlay
         _selector = new FadeMaskDragRectControl { Mode = CaptureLabelTexts.ToSelectionMode(type), Log = _log };
         // 設定はコアのマッパーで 1 値に変換して一括適用する（変換はコアが単一所有する）。
         // 色は描画にだけ必要な設定のため、描画の設定として与える
-        // （ルーペの市松模様の下地色は透明にし、背後の撮影画像を透かす。Avalonia 版と同じ扱いにする）
+        // （ルーペの市松模様の下地色は透明にし、背後の撮影画像を透かす。 Avalonia 版と同じ扱いにする）
         _selector.Options = settings.ToFadeMaskDragRectOptions();
         _selector.MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(settings);
         _selector.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(settings);
@@ -132,7 +132,7 @@ internal sealed class CaptureOverlay
     }
 
     /// <summary>確定の対象となる選択矩形（画像ピクセル）を解決する。</summary>
-    /// <returns>確定対象の矩形。対象が無い場合は null。</returns>
+    /// <returns>確定対象の矩形。 対象が無い場合は null。</returns>
     /// <remarks>
     /// 「ハイライト型はハイライト矩形・それ以外は選択矩形」という選択スタイルの判断はコア
     /// （<see cref="CaptureTypeTraits.ResolveRect"/>）が単一所有する。<br/>
@@ -148,25 +148,25 @@ internal sealed class CaptureOverlay
     /// <summary>撮影セッションを実行し、確定した領域を返す。</summary>
     /// <param name="owner">オーナーウィンドウ（撮影中は画面外へ退避し、終了後に戻す）。</param>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
-    /// <returns>切り出した画像。キャンセル・取得失敗・退化した選択の場合は null。</returns>
+    /// <returns>切り出した画像。 キャンセル・取得失敗・退化した選択の場合は null。</returns>
     /// <remarks>
     /// 1. 設定に従ってオーナーをキャプチャ除外に設定し、画面外へ退避する（設定: メインウィンドウを隠す）。<br/>
     /// 2. 仮想スクリーン（全モニターを包含する領域）を 1 枚の画像として取得する。<br/>
     /// 3. オーバーレイを表示し、確定またはキャンセルまで待つ。<br/>
     /// 4. 取得した画像を破棄してオーナーを元の位置へ戻し、キャプチャ除外を解除する。<br/>
-    /// <b>排他</b>: 撮影と切り出しは同時に 1 つだけ実行できる。受付は Facade<br/>
+    /// <b>排他</b>: 撮影と切り出しは同時に 1 つだけ実行できる。 受付は Facade<br/>
     /// （<see cref="CaptureSessionControl"/>）がコアの <c>CaptureSessionSlot</c> で行う（本クラスは受付を判定しない）。<br/>
     /// <b>自ウィンドウの写り込み防止</b>: 撮影の前にウィンドウを画面外へ退避させ、併せて<br/>
     /// <c>SetCaptureExclusion</c>（<c>WDA_EXCLUDEFROMCAPTURE</c>）を設定する。<br/>
     /// <b>チラつきの防止</b>: 退避は非表示（<c>Hide</c>）ではなく位置の変更とし、復帰時に<br/>
     /// ウィンドウを再作成させない（Avalonia 版と同じ方式）。<br/>
-    /// <b>対象範囲</b>: 全モニター（仮想スクリーン）を対象にする。1 モニターに限定すると、<br/>
+    /// <b>対象範囲</b>: 全モニター（仮想スクリーン）を対象にする。 1 モニターに限定すると、<br/>
     /// カーソルのあるモニターでしか選択できないため（Avalonia 版と同じ挙動）。
     /// </remarks>
     internal EsBitmap? Run(Window owner, CaptureOverlayServices services)
     {
         // オーナーの退避とキャプチャ除外の設定・解除は CaptureOwnerScope（コア）が単一所有する
-        // （手順: 除外の設定 → 画面外へ退避 → 撮影 → 配置の復帰 → 除外の解除。Avalonia 版と同じ）
+        // （手順: 除外の設定 → 画面外へ退避 → 撮影 → 配置の復帰 → 除外の解除。 Avalonia 版と同じ）
         using var ownerScope = CaptureOwnerScope.Enter(
             services.Window, owner.ToEsPlatformHandle(), new OwnerWindowAdapter(owner),
             hideOwner: _settings.HideOwnerWindow!.Value);
@@ -184,7 +184,7 @@ internal sealed class CaptureOverlay
         // 画像の占有範囲（画面物理座標）= 撮影時の原点 + 画像サイズ（原点は負値になりうる）
         _screenBounds = CaptureClipMath.ImageBounds(screen, origin);
         _log.LogCaptureStart(_type.ToString());
-        // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する。Avalonia 版と同じ診断情報を残す）
+        // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する。 Avalonia 版と同じ診断情報を残す）
         _log.LogVirtualScreen(origin, screen);
 
         try
@@ -204,7 +204,7 @@ internal sealed class CaptureOverlay
     /// <param name="window">対象のウィンドウ。</param>
     /// <remarks>
     /// 非表示（<c>Hide</c>）は復帰時の再作成でちらつくため使わず、位置の変更（画面外配置）で退避する。<br/>
-    /// 復帰時は前面へ戻す（撮影後にユーザーの操作対象へ戻すため。Avalonia 版はオーバーレイの閉じる操作が担う）。
+    /// 復帰時は前面へ戻す（撮影後にユーザーの操作対象へ戻すため。 Avalonia 版はオーバーレイの閉じる操作が担う）。
     /// </remarks>
     private sealed class OwnerWindowAdapter(Window window) : ICaptureOwnerWindow
     {
@@ -219,7 +219,7 @@ internal sealed class CaptureOverlay
         {
             _savedPosition = window.Position;
 
-            // 画面外（仮想スクリーン座標の外）へ退避する。負の大きな座標は Windows で
+            // 画面外（仮想スクリーン座標の外）へ退避する。 負の大きな座標は Windows で
             // 標準的に使われる「画面外配置」であり、ヒットテスト・検出の対象外になる。
             // 値（画面外座標）はコアが単一所有する（Avalonia 版と同じ値を使う）
             var offScreen = CaptureTiming.OwnerOffScreenCoord;
@@ -252,14 +252,14 @@ internal sealed class CaptureOverlay
     /// <returns>平均色（不透明）。</returns>
     /// <remarks>
     /// 標本の間引きと「不透明として返す」規則はコア（<see cref="ImageColorMath"/>）が単一所有する<br/>
-    /// （本メソッドはコアの色型を MewUI の色型へ写すだけ。変換は Platform 層の
+    /// （本メソッドはコアの色型を MewUI の色型へ写すだけ。 変換は Platform 層の
     /// <c>ToMewUIColor</c> が単一所有する）。
     /// </remarks>
     private static Color AverageColor(EsBitmap image)
         => ImageColorMath.AverageColor(image).ToMewUIColor();
 
     /// <summary>確定した結果を取得する（未確定の場合は null）。</summary>
-    /// <value>切り出した画像。キャンセル・未確定の場合は null。</value>
+    /// <value>切り出した画像。 キャンセル・未確定の場合は null。</value>
     /// <remarks>完了通知（コアの <see cref="CaptureCompletion{TResult}"/>）のタスクから読む（UI 側で結果を保持しない）。</remarks>
     private EsBitmap? Result => _result.Task.IsCompletedSuccessfully ? _result.Task.Result : null;
 
@@ -278,7 +278,7 @@ internal sealed class CaptureOverlay
         // セッションを開始する（完了は 1 回だけ受け付ける）
         _state.TryBegin();
 
-        // モニターごとの実倍率を解決する（サイズラベルの DisplayScale 用。構成はセッション中に変わらない）。
+        // モニターごとの実倍率を解決する（サイズラベルの DisplayScale 用。 構成はセッション中に変わらない）。
         // ハイライト型のみがサイズラベルの表示倍率を使う（ドラッグ選択は対応するモニターを持たない）。
         // 倍率が未確定のモニターの除外はコア（MonitorScalingMath）が単一所有する
         if (CaptureTypeTraits.IsHighlighted(_type))
@@ -298,11 +298,11 @@ internal sealed class CaptureOverlay
             .Content(content);
 
         // 透明の間はウィンドウの背景色だけが合成されるため、透明を解除した瞬間の 1 フレームは
-        // 背景色が見える。背景を撮影画像の平均色に合わせて、その差を目立たなくする。
+        // 背景色が見える。 背景を撮影画像の平均色に合わせて、その差を目立たなくする。
         window.Background = AverageColor(Screen);
 
         // ウィンドウは表示時に背景色で塗られるため、そのまま表示すると画像を描くまでの
-        // 数十 ms が背景色の面として見える（実測: 65 ms 表示）。そのため透明な状態で表示し、
+        // 数十 ms が背景色の面として見える（実測: 65 ms 表示）。 そのため透明な状態で表示し、
         // 画像が合成されたフレームで透明を解除する。
         // 物理ピクセルでの配置は起動時の配置より後（1 フレーム目）に行う必要があるため、ここで行う。
         var revealed = false;
@@ -336,7 +336,7 @@ internal sealed class CaptureOverlay
         window.ShowInTaskbar = false;
 
         // 十字カーソルはドラッグで矩形を作る種別（ハイライト型以外 = 範囲選択）で使う
-        // （選択スタイルの判定はコアが単一所有する。Avalonia 版と同じ見え方にする）
+        // （選択スタイルの判定はコアが単一所有する。 Avalonia 版と同じ見え方にする）
         if (!CaptureTypeTraits.IsHighlighted(_type))
         {
             window.Cursor = CursorType.Cross;
@@ -363,7 +363,7 @@ internal sealed class CaptureOverlay
         _selector.CancelRequested += (_, _) => Cancel();
 
         // 他のウィンドウへ切り替わった（非アクティブ化した）場合はキャンセルする
-        // （最前面のオーバーレイが残り続けるのを防ぐ。Avalonia 版と同じ扱い）
+        // （最前面のオーバーレイが残り続けるのを防ぐ。 Avalonia 版と同じ扱い）
         window.Deactivated += Cancel;
 
         window.Loaded += () =>
@@ -389,7 +389,7 @@ internal sealed class CaptureOverlay
         // 確定対象が無い場合の Enter は何もしない（確定できない状態でキャンセル扱いにしない）
         window.PreviewKeyDown += e =>
         {
-            // 確定対象は 1 度だけ解決して効果へ渡す（Avalonia 版と同じ形。再解決しない）
+            // 確定対象は 1 度だけ解決して効果へ渡す（Avalonia 版と同じ形。 再解決しない）
             var target = ResolveSelection();
             switch (CaptureKeyActions.Resolve(e.Key.ToEsKey(), target is not null))
             {
@@ -419,7 +419,7 @@ internal sealed class CaptureOverlay
                     return;
                 }
 
-                // 検出矩形（画面物理）を固定する。退化した検出結果は固定されない
+                // 検出矩形（画面物理）を固定する。 退化した検出結果は固定されない
                 _clickSelection.Fix(CaptureTypeTraits.FindUnderCursor(_finder, _type, ToScreenPoint(e.ScreenPosition)).Bounds);
             };
             window.MouseUp += e =>
@@ -451,7 +451,7 @@ internal sealed class CaptureOverlay
     ///    （<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）が単一所有するため、本メソッドでは設定しない。<br/>
     /// 3. 描画モード（操作ラベルの文言選定）は複合コントロールの <see cref="FadeMaskDragRectControl.Mode"/> が単一所有する。
     /// 4. 操作ラベル・情報ラベルの文言をホスト（キャプチャ文脈）がプロバイダで与える（モード別の文言と情報ラベルの表示可否は
-    ///    <c>CaptureLabelTexts</c> が単一所有する。表示名はコアの <see cref="CaptureHighlightSession"/> を参照する）。
+    ///    <c>CaptureLabelTexts</c> が単一所有する。 表示名はコアの <see cref="CaptureHighlightSession"/> を参照する）。
     /// 5. 表示する矩形の選択（ハイライト型 / ドラッグ型）はコア（<see cref="CaptureTypeTraits.ResolveRect"/>）が単一所有し、
     ///    サイズラベ ルの文言（書式）もコアが単一所有する（本ホストは表示スケールだけを与える）。
     /// 6. サイズラベルの表示可否はコア（<c>MarqueeOptions.ShowSizeLabel</c>）が単一所有するため本メソッドでは判定しない。
@@ -491,7 +491,7 @@ internal sealed class CaptureOverlay
     }
 
     /// <summary>解決済みの切り出し矩形でキャプチャを完了する。</summary>
-    /// <param name="pixels">切り出し矩形（画面物理座標・閉区間済み）。空の場合はキャンセルとして完了する。</param>
+    /// <param name="pixels">切り出し矩形（画面物理座標・閉区間済み）。 空の場合はキャンセルとして完了する。</param>
     /// <remarks>切り出し結果の所有権は呼び出し側へ移す（仮想スクリーン画像はセッション終了時に破棄される）。</remarks>
     private void CompleteCapture(EsRectInt pixels)
     {
@@ -509,7 +509,7 @@ internal sealed class CaptureOverlay
 
         // 切り出し矩形は画面物理座標のため、画像の原点を渡して取り出す（座標変換はコアが単一所有する）
         var image = CaptureClipMath.Extract(Screen, _screenBounds.TopLeft, pixels);
-        // 完了の記録（確定は 2 件）はコアが単一所有する。領域は契約どおり仮想画面座標（画面物理）で渡す
+        // 完了の記録（確定は 2 件）はコアが単一所有する。 領域は契約どおり仮想画面座標（画面物理）で渡す
         _log.LogCaptureFinished(CaptureResult.From(image, pixels));
         _result.TrySetResult(image);
         Close();
@@ -549,7 +549,7 @@ internal sealed class CaptureOverlay
     /// <summary>カーソル下の要素を検出してハイライトを更新する。</summary>
     /// <param name="screenPoint">カーソル位置（画面物理ピクセル）。</param>
     /// <remarks>
-    /// 検出対象はキャプチャ種別で決まる。スクリーン選択はカーソル下のモニター（画面全体）、<br/>
+    /// 検出対象はキャプチャ種別で決まる。 スクリーン選択はカーソル下のモニター（画面全体）、<br/>
     /// ウィンドウ選択はカーソル下の最前面ウィンドウを検出し、その矩形をハイライトする。<br/>
     /// 矩形のドメイン座標への変換・未検出の正規化・表示名の保持・ログはコア
     /// （<see cref="CaptureHighlightSession"/>）が単一所有する（本クラスは結果を設定するだけ）。
@@ -587,7 +587,7 @@ internal sealed class CaptureOverlay
     /// <remarks>
     /// 画像はウィンドウのクライアント領域全体へ等倍で描画するため、変換は倍率の乗除算だけになる。<br/>
     /// 倍率の適用方向（Forward = DIP → 画像ピクセル）は Platform.Core の <see cref="CoordTransform.DomainScale(Func{double}, Func{EsSize?})"/> が<br/>
-    /// 単一所有する（UI が倍率式を書かない）。境界は画像サイズで、選択を画像外へ出さないためのクランプに使われる。
+    /// 単一所有する（UI が倍率式を書かない）。 境界は画像サイズで、選択を画像外へ出さないためのクランプに使われる。
     /// </remarks>
     private ICoordTransform CreatePort()
         => CoordTransform.DomainScale(
@@ -596,7 +596,7 @@ internal sealed class CaptureOverlay
 
     /// <summary>選択矩形（ドメイン座標）が属するモニターの表示倍率を返す。</summary>
     /// <param name="domainRect">選択矩形（画像ピクセル = 仮想スクリーン座標から原点を引いた値）。</param>
-    /// <returns>そのモニターの DPI スケール（1.0 = 100%）。該当が無い場合はウィンドウの倍率。</returns>
+    /// <returns>そのモニターの DPI スケール（1.0 = 100%）。 該当が無い場合はウィンドウの倍率。</returns>
     /// <remarks>
     /// ドメイン座標を画面物理座標（原点を加算）へ戻してからモニターを判定する。<br/>
     /// 「原点の加算」「判定点（矩形の中心）」「フォールバック」の規則はコア（<see cref="MonitorScalingMath"/>）が単一所有する

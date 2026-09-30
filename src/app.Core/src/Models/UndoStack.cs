@@ -41,7 +41,7 @@ public sealed class UndoStack
     /// <summary>
     /// 現在の画像を Undo スタックにプッシュする。
     /// </summary>
-    /// <param name="currentImage">現在表示中の画像。null の場合は何もしない。</param>
+    /// <param name="currentImage">現在表示中の画像。 null の場合は何もしない。</param>
     /// <remarks>
     /// 画像はピクセルコピーで複製されるため、元の画像に変更があっても影響を受けない。<br/>
     /// 新しい操作のため Redo 履歴はクリアされる。
@@ -58,10 +58,10 @@ public sealed class UndoStack
     }
 
     /// <summary>
-    /// Undo を実行する。現在の画像を Redo スタックへ退避し、Undo スタックから最新の画像を返す。
+    /// Undo を実行する。 現在の画像を Redo スタックへ退避し、Undo スタックから最新の画像を返す。
     /// </summary>
-    /// <param name="currentImage">現在表示中の画像（Redo スタックへ退避される）。null の場合は退避しない。</param>
-    /// <returns>復元された画像。スタックが空の場合は null。</returns>
+    /// <param name="currentImage">現在表示中の画像（Redo スタックへ退避される）。 null の場合は退避しない。</param>
+    /// <returns>復元された画像。 スタックが空の場合は null。</returns>
     /// <remarks>
     /// 呼び出し元は返された画像の所有権を持つため、適切に破棄する責任がある。
     /// </remarks>
@@ -87,9 +87,9 @@ public sealed class UndoStack
     }
 
     /// <summary>
-    /// Redo を実行する。Redo スタックから最新の画像を返す。
+    /// Redo を実行する。 Redo スタックから最新の画像を返す。
     /// </summary>
-    /// <returns>復元された画像。スタックが空の場合は null。</returns>
+    /// <returns>復元された画像。 スタックが空の場合は null。</returns>
     /// <remarks>
     /// 呼び出し元は返された画像の所有権を持つため、適切に破棄する責任がある。
     /// </remarks>
@@ -123,7 +123,7 @@ public sealed class UndoStack
 
     /// <summary>スタック末尾の画像を取り出して削除する。</summary>
     /// <param name="stack">対象のスタック（空でないこと）。</param>
-    /// <returns>末尾の画像。呼び出し元が所有権を持つ。</returns>
+    /// <returns>末尾の画像。 呼び出し元が所有権を持つ。</returns>
     private static EsBitmap PopLast(List<EsBitmap> stack)
     {
         var last = stack[^1];

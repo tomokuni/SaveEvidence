@@ -39,7 +39,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
-本プロジェクト（ColorPickerControl）は、このシステムのうち**色選択 UI**（色名 / 16進入力 + ドロップダウン + カラーピッカー）を担う再利用可能なコントロールです。app の設定画面などから双方向バインディングで利用されます。
+本プロジェクト（ColorPickerControl）は、このシステムのうち**色選択 UI**（色名 / 16進入力 + ドロップダウン + カラーピッカー）を担う再利用可能なコントロールです。 app の設定画面などから双方向バインディングで利用されます。
 
 ## 2. 技術スタック
 
@@ -86,7 +86,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（`Logging/ColorPickerLog.cs`）で出力する。高頻度イベントは Debug / Trace、障害は Error で記録する。
+- ログは LoggerMessage ソース生成（`Logging/ColorPickerLog.cs`）で出力する。 高頻度イベントは Debug / Trace、障害は Error で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -124,7 +124,7 @@ flowchart TB
 - **分類**: 公開コントロール（`public sealed partial class : UserControl`）
 - **責務**:
   - `SelectedColor`（色名/16進コード）の双方向バインド対応の保持（公開 API は ColorPicker.axaml.cs に集約）
-  - 入力バリデーション状態の管理（`UpdateValidationStatus`。検証自体は `ColorValidator` に委譲）
+  - 入力バリデーション状態の管理（`UpdateValidationStatus`。 検証自体は `ColorValidator` に委譲）
   - ドロップダウン（ComboBox）の構築と並び順切替（`ColorSortMode`）
   - テキスト選択の自動解除（`OnSelectionChanged` → `TextBoxSelectionHelper.ResetSelection`）
   - 無効入力の最終有効値復帰（`OnLostFocus`）
@@ -148,13 +148,13 @@ flowchart TB
 
 ### 6.3 ColorEntry
 
-- **分類**: 内部レコード（色名 + 色を表す文字列の組。ドロップダウンの選択肢データ）
-- **可視性**: `internal sealed record`（公開 API ではなく内部型。外部から直接扱わない）
+- **分類**: 内部レコード（色名 + 色を表す文字列の組。 ドロップダウンの選択肢データ）
+- **可視性**: `internal sealed record`（公開 API ではなく内部型。 外部から直接扱わない）
 - **責務**:
   - 色の英語名・色名（`Color.TryParse` で解釈可能な文字列）の保持
   - 全色一覧の静的提供（`All` / `AllByHue`）
   - 色相順ソートキーの計算（`GetSortKey`）
-- **特徴**: 色一覧は `ColorString.ColorNames`（`ColorString` が構築済みの辞書）を再利用する（リフレクション走査の重複排除・単一所有）。`Value` パラメータには現在の実装では色名（= `Colors` のプロパティ名）が保持される
+- **特徴**: 色一覧は `ColorString.ColorNames`（`ColorString` が構築済みの辞書）を再利用する（リフレクション走査の重複排除・単一所有）。 `Value` パラメータには現在の実装では色名（= `Colors` のプロパティ名）が保持される
 - **依存**: ColorString / Avalonia.Media
 
 ### 6.4 ColorSortMode
@@ -167,7 +167,7 @@ flowchart TB
 
 - **分類**: 公開 IValueConverter（`public sealed class`）
 - **責務**: 色名/16進コード → `IBrush`（スウォッチ背景）
-- **特徴**: 解釈不能な値は `Brushes.Transparent`。`ConvertBack` は `NotSupportedException`。解析済み色のブラシはカラー選択で再利用され、容量管理は `ColorString.AddWithCapacityLimit` に委譲（単一所有）
+- **特徴**: 解釈不能な値は `Brushes.Transparent`。 `ConvertBack` は `NotSupportedException`。 解析済み色のブラシはカラー選択で再利用され、容量管理は `ColorString.AddWithCapacityLimit` に委譲（単一所有）
 - **依存**: Avalonia.Media / Avalonia.Data.Converters / ColorString
 
 ### 6.6 ColorString
@@ -179,7 +179,7 @@ flowchart TB
   - 画面表示は `ToDisplayText` / `Format` で `{色}+{不透明度%}` 形式へ整形（不透明度 100% は省略）
   - `TryParse` で両形式を受け付ける（色と不透明度の合成）
   - 色 → 色名 の逆引き辞書（ARGB 完全一致 / RGB 一致）を保持し、色名の検索に利用する
-  - 容量管理は `AddWithCapacityLimit` ヘルパーに一元化（単一所有。`StringToBrushConverter` のブラシキャッシュも委譲）
+  - 容量管理は `AddWithCapacityLimit` ヘルパーに一元化（単一所有。 `StringToBrushConverter` のブラシキャッシュも委譲）
   - `Colors` のリフレクション列挙を単一所有し、`ColorEntry` が再利用する
 - **依存**: Avalonia.Media
 
@@ -187,35 +187,35 @@ flowchart TB
 
 - **分類**: 公開 IValueConverter（`public sealed class`）
 - **責務**: 保存値（`#AARRGGBB`）と画面表示テキスト（`{色}+{不透明度%}`）の相互変換
-- **特徴**: `Convert` / `ConvertBack` とも `ColorString`（`ToDisplayText` / `ToArgbHex`）に委譲。解釈不能な値は入力をそのまま返す
+- **特徴**: `Convert` / `ConvertBack` とも `ColorString`（`ToDisplayText` / `ToArgbHex`）に委譲。 解釈不能な値は入力をそのまま返す
 - **依存**: Avalonia.Media / Avalonia.Data.Converters / ColorString
 
 ### 6.8 ColorValidator
 
 - **分類**: 内部静的ユーティリティ（`internal static class`）
 - **責務**: 色文字列（色名 / #RRGGBB / #AARRGGBB / +% 形式）の妥当性検証（`IsValid`）
-- **特徴**: 検証は `ColorString.TryParse` に一元委譲（解析ロジックの二重所有を排除）。UI 非依存のため他プロジェクトでも流用可能
+- **特徴**: 検証は `ColorString.TryParse` に一元委譲（解析ロジックの二重所有を排除）。 UI 非依存のため他プロジェクトでも流用可能
 - **依存**: ColorString
 
 ### 6.9 TextBoxSelectionHelper
 
 - **分類**: 内部静的ユーティリティ（`internal static class`）
 - **責務**: ビジュアルツリー内の `TextBox` の検索（`FindTextBox`）とテキスト選択の解除（`ResetSelection`）
-- **特徴**: ドロップダウン選択後のテキスト全選択解除を担当。`ColorPickerControl` から独立しており、ComboBox 等の他のコントロールでも流用可能
+- **特徴**: ドロップダウン選択後のテキスト全選択解除を担当。 `ColorPickerControl` から独立しており、ComboBox 等の他のコントロールでも流用可能
 - **依存**: Avalonia ビジュアルツリー
 
 ### 6.10 ColorViewThemeManager
 
 - **分類**: 内部静的ユーティリティ（`internal static class`）
 - **責務**: ColorView（カラーピッカー）テーマのアプリケーションへの自動適用（`EnsureApplied` / `EnsureAppliedCore` / `IsColorViewTheme`）
-- **特徴**: ホストの明示指定（StyleInclude）を優先し、未指定時のみ内包テーマを一度だけ適用する。**Native AOT では実行時の XAML 解決ができないためロードに失敗するが、例外にはせずホストの XAML 取り込みに任せる**
+- **特徴**: ホストの明示指定（StyleInclude）を優先し、未指定時のみ内包テーマを一度だけ適用する。 **Native AOT では実行時の XAML 解決ができないためロードに失敗するが、例外にはせずホストの XAML 取り込みに任せる**
 - **依存**: Avalonia.Application / AvaloniaXamlLoader
 
 ### 6.11 ColorPickerFlyoutFactory
 
-- **分類**: 内部静的ファクトリ（`internal static class`。Simple Factory パターン）
+- **分類**: 内部静的ファクトリ（`internal static class`。 Simple Factory パターン）
 - **責務**: カラーピッカー（ColorView）を格納した Flyout の構築（`Create`）と OK / キャンセルイベントの配線
-- **特徴**: 初期色は `SelectedColor` を `ColorString.TryParse` で解析（失敗時は白）。OK は `ColorString.ToArgbHex` で `#AARRGGBB` へ変換し、コールバック（`Action<string>`）経由で `SelectedColor` へ反映。OK / キャンセルボタンの共通外観は生成ヘルパー（`CreateActionButton`）に集約し、重複を排除。テーマ適用は `ColorViewThemeManager` に委譲
+- **特徴**: 初期色は `SelectedColor` を `ColorString.TryParse` で解析（失敗時は白）。 OK は `ColorString.ToArgbHex` で `#AARRGGBB` へ変換し、コールバック（`Action<string>`）経由で `SelectedColor` へ反映。 OK / キャンセルボタンの共通外観は生成ヘルパー（`CreateActionButton`）に集約し、重複を排除。 テーマ適用は `ColorViewThemeManager` に委譲
 - **依存**: ColorViewThemeManager / ColorString / ColorPickerLog / Avalonia.Controls.ColorPicker（ColorView）
 
 ## 7. 依存ルール
@@ -223,7 +223,7 @@ flowchart TB
 - 依存方向は**一方向の階層構造**（XAML → コントロール → 生成/検証 → ドメイン/コンバーター）。
 - 公開 API（StyledProperty・公開プロパティ）は `ColorPicker.axaml.cs` に集約する。
 - 関心事ごとの専用クラス（Factory / ThemeManager / Validator / Helper）は internal とし、コントロールからのみ参照する（外部へは公開しない）。
-- 依存は 1 方向のみ（コントロール → Factory/Validator/Helper → ColorString / ColorViewThemeManager）。双方向依存・循環参照は持たない。
+- 依存は 1 方向のみ（コントロール → Factory/Validator/Helper → ColorString / ColorViewThemeManager）。 双方向依存・循環参照は持たない。
 - 状態管理はすべて StyledProperty（Avalonia プロパティシステム）に集約し、private フィールドは補助（`_lastValidColor`）のみ。
 - ドメインロジック（`ColorString` / `ColorEntry`）は UI 非依存（Avalonia.Media のみ）。
 - 上位APへは双方向バインド（StyledProperty）と PropertyChanged のみで連携。

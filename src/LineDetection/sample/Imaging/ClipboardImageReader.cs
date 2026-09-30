@@ -18,7 +18,7 @@ internal static class ClipboardImageReader
     private const uint CF_DIB = 8;
 
     /// <summary>クリップボードを開いて CF_DIB 画像を読み取る。</summary>
-    /// <returns>取得した画像。画像が無い・失敗時は null。</returns>
+    /// <returns>取得した画像。 画像が無い・失敗時は null。</returns>
     /// <remarks>
     /// 1. <c>OpenClipboard</c> でクリップボードを開く<br/>
     /// 2. <c>GetClipboardData(CF_DIB)</c> で DIB を取得<br/>
@@ -63,7 +63,7 @@ internal static class ClipboardImageReader
 
     /// <summary>DIB メモリ（BITMAPINFOHEADER 先頭）を解析して BGRA8888 の Bitmap を生成する。</summary>
     /// <param name="dibPtr">DIB メモリの先頭ポインター。</param>
-    /// <returns>生成した Bitmap。解析できない場合は null。</returns>
+    /// <returns>生成した Bitmap。 解析できない場合は null。</returns>
     /// <remarks>
     /// BITMAPINFOHEADER（40 バイト）→ カラーマスク/パレット → ピクセルデータのレイアウトを解析し、<br/>
     /// 32/24/16/8bpp を BGRA8888 へ変換する（ボトムアップ行は上下反転して配置する）。

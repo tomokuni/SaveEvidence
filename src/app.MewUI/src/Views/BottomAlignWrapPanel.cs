@@ -22,7 +22,7 @@ namespace EsUtil.SaveEvidence.MewUI.Views;
 internal sealed class BottomAlignWrapPanel : Panel
 {
     /// <summary>パネルを初期化する。</summary>
-    /// <param name="spacing">アイテム間の間隔（DIP）。0 以上の値。</param>
+    /// <param name="spacing">アイテム間の間隔（DIP）。 0 以上の値。</param>
     public BottomAlignWrapPanel(double spacing = 0) => Spacing = spacing;
 
     /// <summary>アイテム間の間隔（DIP）を取得する。</summary>
@@ -32,7 +32,7 @@ internal sealed class BottomAlignWrapPanel : Panel
     /// <summary>子要素を幅で折り返しながら各行の高さを計算する。</summary>
     /// <param name="availableSize">親から提示された利用可能サイズ。</param>
     /// <returns>必要なサイズ（幅 = 行の最大幅、高さ = 行高さの合計）。</returns>
-    /// <remarks>子要素は幅のみ制約（高さはコンテンツ任せ）で計測する。利用可能幅が無限の場合は折り返さない。</remarks>
+    /// <remarks>子要素は幅のみ制約（高さはコンテンツ任せ）で計測する。 利用可能幅が無限の場合は折り返さない。</remarks>
     protected override Size MeasureContent(Size availableSize)
     {
         var wrap = !double.IsInfinity(availableSize.Width) && availableSize.Width > 0;

@@ -20,7 +20,7 @@ internal static class ImageFileExtensions
 
     /// <summary>指定されたパスが画像ファイルかどうかを判定する。</summary>
     /// <param name="path">判定するパス（拡張子のみを使用する）。</param>
-    /// <returns>一覧に含める画像の場合は true。拡張子が無い・対象外の場合は false。</returns>
+    /// <returns>一覧に含める画像の場合は true。 拡張子が無い・対象外の場合は false。</returns>
     public static bool IsImageFile(string path)
         => s_all.Contains(Path.GetExtension(path));
 }

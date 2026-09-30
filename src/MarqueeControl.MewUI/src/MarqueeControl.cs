@@ -31,21 +31,21 @@ namespace EsUtil.SaveEvidence.Marquee.MewUI;
 /// 本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画」のみを行う薄い層である。<br/>
 /// <br/>
 /// <b>座標系</b>:<br/>
-/// - ドメイン座標 = 選択対象（画像ピクセル・仮想スクリーンピクセル等）。コアはこの座標で動作する。<br/>
-/// - ローカル DIP = 本コントロールのローカル座標。入力と描画はこの座標で行い、境界でポート（<see cref="ICoordTransform"/>）により変換する。<br/>
+/// - ドメイン座標 = 選択対象（画像ピクセル・仮想スクリーンピクセル等）。 コアはこの座標で動作する。<br/>
+/// - ローカル DIP = 本コントロールのローカル座標。 入力と描画はこの座標で行い、境界でポート（<see cref="ICoordTransform"/>）により変換する。<br/>
 /// <br/>
 /// <b>操作</b>:<br/>
 /// - 左ドラッグ: 新規選択、またはハンドルのリサイズ・移動<br/>
-/// - 矢印キー: nudge（1 ドメインピクセル単位の微調整。カーソルを非表示にして十字マーカーを表示する）<br/>
+/// - 矢印キー: nudge（1 ドメインピクセル単位の微調整。 カーソルを非表示にして十字マーカーを表示する）<br/>
 /// - Escape: キャンセル要求 / Enter: 確定要求<br/>
 /// <br/>
 /// <b>Avalonia 版との違い</b>:<br/>
 /// - 描画は中間ビットマップを経由せず <see cref="SkiaCanvasView"/> のキャンバスへ直接行う。<br/>
 /// - イベント引数の座標はコア型（<see cref="EsPoint"/> / <see cref="EsRect"/>）で公開する（境界変換が不要）。<br/>
-/// - <c>ScrollViewer</c> の自動連携は行わない。ビューポートの変化はホストが検知して再描画を要求する。<br/>
+/// - <c>ScrollViewer</c> の自動連携は行わない。 ビューポートの変化はホストが検知して再描画を要求する。<br/>
 /// - 矢印キーの nudge はフォーカスを必要とする（Avalonia 版の TopLevel 購読によるフォーカス非依存とは異なる）。<br/>
 /// - ドラッグ中はマウスキャプチャを行う（コントロール外への移動でもイベントを受け取る）。<br/>
-/// - ログ出力は <see cref="Log"/> プロパティで注入する（デフォルトは <see cref="NullLogger"/>。Avalonia 版と同一の書式）。
+/// - ログ出力は <see cref="Log"/> プロパティで注入する（デフォルトは <see cref="NullLogger"/>。 Avalonia 版と同一の書式）。
 /// </remarks>
 public sealed class MarqueeControl : Panel
 {
@@ -64,7 +64,7 @@ public sealed class MarqueeControl : Panel
                 owner.InvalidateRender();
             });
 
-    /// <summary><see cref="Appearance"/> プロパティ（外観。描画にだけ必要な設定）。</summary>
+    /// <summary><see cref="Appearance"/> プロパティ（外観。 描画にだけ必要な設定）。</summary>
     /// <remarks>
     /// 外観（色・ラベル体裁・表示可否）はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/>）には含めず、<br/>
     /// 提示層（<c>Feature.Marquee.Presenter</c>）の <see cref="MarqueeAppearance"/> が単一所有する。
@@ -124,7 +124,7 @@ public sealed class MarqueeControl : Panel
     /// </remarks>
     private readonly ShapeCanvas _shapes;
 
-    /// <summary>配置中のラベル要素（背景 + テキスト）。子の末尾側へ置くため常に最上位になる。</summary>
+    /// <summary>配置中のラベル要素（背景 + テキスト）。 子の末尾側へ置くため常に最上位になる。</summary>
     private readonly List<Border> _labels = [];
 
     /// <summary>コアが要求する効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。</summary>
@@ -141,7 +141,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>カーソルサービスを注入してドラッグ矩形コントロールを初期化する。</summary>
-    /// <param name="cursorService">カーソルサービス。null の場合は Windows 既定実装を使用する。</param>
+    /// <param name="cursorService">カーソルサービス。 null の場合は Windows 既定実装を使用する。</param>
     /// <remarks>
     /// 静止画として扱い連続再描画を無効化する（選択の変更時のみ再描画する）。<br/>
     /// フォーカスを失った時点で nudge を終了する（カーソルの非表示残留を防ぐ）。<br/>
@@ -190,7 +190,7 @@ public sealed class MarqueeControl : Panel
         }
     }
 
-    /// <summary>ドラッグの始点が決定されたときに発火する（新規選択のドラッグ開始。座標はドメイン座標）。</summary>
+    /// <summary>ドラッグの始点が決定されたときに発火する（新規選択のドラッグ開始。 座標はドメイン座標）。</summary>
     public event EventHandler<MarqueePointEventArgs>? SelectionStarted;
 
     /// <summary>選択矩形が変更されたときに発火する。</summary>
@@ -206,7 +206,7 @@ public sealed class MarqueeControl : Panel
     /// <remarks>通常追従ではポインタ位置、ドラッグ・nudge 中は動いている側のハンドル位置を通知する。</remarks>
     public event EventHandler<MarqueePointEventArgs>? LoupePositionMoved;
 
-    /// <summary>Enter キーによる確定要求時に発火する（選択確定後のみ。ドラッグ中は発火しない）。</summary>
+    /// <summary>Enter キーによる確定要求時に発火する（選択確定後のみ。 ドラッグ中は発火しない）。</summary>
     public event EventHandler<SelectionRectEventArgs>? ConfirmRequested;
 
     /// <summary>Escape キーによるキャンセル要求時に発火する（選択の破棄は本コントロールが実施済み）。</summary>
@@ -214,7 +214,7 @@ public sealed class MarqueeControl : Panel
 
     /// <summary>描画完了（コントロールが図形を描き終えたこと）を通知するイベント。</summary>
     /// <remarks>
-    /// 本コントロールは文字（ラベル・座標ラベル）を描かない。テキストの実寸測定は描画 API に依存するため、<br/>
+    /// 本コントロールは文字（ラベル・座標ラベル）を描かない。 テキストの実寸測定は描画 API に依存するため、<br/>
     /// 「どの文言をどこへ描くか」はコアが決め、実際の配置は本コントロールが行う（<c>MarqueePresenter</c>）。<br/>
     /// 契約は文字に限定せず**描画内容全体**（<see cref="MarqueeRenderedEventArgs.Content"/>）を渡すため、ホストは文字以外の上書きもできる。<br/>
     /// <b>描画中に発火する</b>ため、ハンドラ内で描画を完了させること（キャンバスを保持しない）。<br/>
@@ -223,7 +223,7 @@ public sealed class MarqueeControl : Panel
     public event EventHandler<MarqueeRenderedEventArgs>? Rendered;
 
     /// <summary>寸法・対話パラメータをまとめた設定を取得または設定する。</summary>
-    /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。既定は <see cref="MarqueeOptions.Default"/>。</value>
+    /// <value>設定（枠線・ハンドル・十字マーカー・座標ラベルの外観、最小選択サイズ・ヒットテスト半径・境界外選択の禁止）。 既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定を変更すると再描画され、対話パラメータ（最小サイズ・ヒットテスト半径・境界外選択の禁止）はファサードへ伝搬する。<br/>
     /// 一部の項目だけを変える場合は <c>MarqueeOptions.Default with { MinSelectionSize = 8 }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
@@ -236,7 +236,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>描画にだけ必要な外観（色・ラベル体裁・表示可否）を取得または設定する。</summary>
-    /// <value>外観の単一値。既定は <see cref="MarqueeAppearance.Default"/>。</value>
+    /// <value>外観の単一値。 既定は <see cref="MarqueeAppearance.Default"/>。</value>
     /// <remarks>
     /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="Options"/>）ではなく本プロパティが与える。<br/>
     /// 変更すると次の描画で提示層が新しい外観で描画計画を解決する。
@@ -248,7 +248,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
-    /// <value>ハイライト矩形。null（既定）の場合はハイライトしない。</value>
+    /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
     /// <remarks>
     /// 選択矩形と異なり選択コントロールの操作では変化しない（ホストが与える）。<br/>
     /// 値がある場合は選択矩形より優先して穴あけ矩形になる（優先順はコアが単一所有する）。
@@ -260,7 +260,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>座標変換ポートへ適用する倍率を取得または設定する。</summary>
-    /// <value>ドメイン → DIP の倍率。既定は 1.0。</value>
+    /// <value>ドメイン → DIP の倍率。 既定は 1.0。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
     /// <see cref="SetCoordTransform"/> が未設定の場合のみ使われる（ポート優先）。<br/>
@@ -274,7 +274,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>サイズラベル表示用のスケーリング係数を取得または設定する（マルチスクリーン補正）。</summary>
-    /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値が使用される。</value>
+    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値が使用される。</value>
     /// <remarks>0 以下を <see cref="DomainToDipScaling"/> と同値として扱う規則はコア（<see cref="MarqueePresenter.DisplayScaleScaling"/>）が単一所有する。</remarks>
     public double DisplayScaleScaling
     {
@@ -287,7 +287,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>サイズラベルのテキストを提供する関数を取得または設定する。</summary>
-    /// <value>サイズラベルのテキストを返す関数。null または空文字の場合は自動生成する。</value>
+    /// <value>サイズラベルのテキストを返す関数。 null または空文字の場合は自動生成する。</value>
     /// <remarks>
     /// デリゲート（ホスト結線）のため外観（<see cref="Appearance"/>）には含めない（値の等価比較の対象外にするため）。<br/>
     /// 保持はコア（<see cref="MarqueePresenter.SizeLabelOverrideProvider"/>）が単一所有し、本 setter が再描画を要求する。<br/>
@@ -304,7 +304,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
+    /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。 null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
     /// <remarks>
     /// マルチモニタでモニタごとに表示スケールが異なる場合、ホストは矩形からモニタを判定してそのスケールを返す。<br/>
     /// 文言（書式）はコアが単一所有するため、ホストは数値だけを与える。<br/>
@@ -321,7 +321,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
-    /// <value>スケーリング係数。DPI 変更時に自動更新される。</value>
+    /// <value>スケーリング係数。 DPI 変更時に自動更新される。</value>
     public double DipToDeviceScaling
     {
         get => GetValue(DipToDeviceScalingProperty);
@@ -338,12 +338,12 @@ public sealed class MarqueeControl : Panel
     public bool HasSelection => _marquee.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
-    /// <value>選択矩形（ドメイン座標）。未選択時は 0x0 の空矩形。</value>
+    /// <value>選択矩形（ドメイン座標）。 未選択時は 0x0 の空矩形。</value>
     /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
     public EsRect SelectionRect => _marquee.SelectionRect;
 
     /// <summary>操作ログの出力先を取得または設定する。</summary>
-    /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
+    /// <value>ロガー。 null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>
     /// 保持とフォールバック、ファサードへの伝搬はコア（<see cref="MarqueePresenter.Log"/>）が単一所有する（本層は委譲するだけ）。<br/>
     /// 入力の判断に伴うログはコアが同じロガーで出力する。
@@ -355,7 +355,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート。null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
+    /// <param name="port">座標変換ポート。 null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
     /// <remarks>
     /// ホスト（上位 AP）がモードに応じた変換ポートを設定する（範囲選択: 仮想スクリーンピクセル / 切出し: 元画像ピクセル）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
@@ -372,7 +372,7 @@ public sealed class MarqueeControl : Panel
     public void SetSelection(EsRect rect) => _marquee.SetSelection(rect);
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
-    /// <remarks>nudge 中だった場合はカーソルを再表示する（非表示残留の防止。状態の初期化はコアが担う）。</remarks>
+    /// <remarks>nudge 中だった場合はカーソルを再表示する（非表示残留の防止。 状態の初期化はコアが担う）。</remarks>
     public void ResetSelection() => _marquee.ResetSelection();
 
     /// <summary>キャンセル要求を処理する（Escape キーと同じ条件）。</summary>
@@ -417,7 +417,7 @@ public sealed class MarqueeControl : Panel
     private EsSize _frameSize;
 
     /// <summary>1 フレーム分の描画計画を解決して保持する（同じ基準サイズでは再解決しない）。</summary>
-    /// <param name="clientSize">描画領域のサイズ（DIP。DIP 換算済みの描画先サイズ）。</param>
+    /// <param name="clientSize">描画領域のサイズ（DIP。 DIP 換算済みの描画先サイズ）。</param>
     /// <returns>そのフレームの描画計画。</returns>
     /// <remarks>
     /// 図形の描画（<c>OnPaintSurface</c>）とラベルの配置（<c>ArrangeContent</c>）が同じ描画計画を使う。<br/>
@@ -440,7 +440,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>保持している描画計画を取得する（未解決の場合のみ解決する）。</summary>
-    /// <param name="clientSize">描画領域のサイズ（DIP。未解決時の解決にだけ使う）。</param>
+    /// <param name="clientSize">描画領域のサイズ（DIP。 未解決時の解決にだけ使う）。</param>
     /// <returns>そのフレームの描画計画。</returns>
     /// <remarks>
     /// 描画フェーズ（<c>OnPaintSurface</c>）は配置フェーズが解決した値をそのまま使う<br/>
@@ -611,7 +611,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>現在のカーソル位置（ドメイン座標）を取得する。</summary>
-    /// <returns>カーソル位置（ドメイン座標）。ウィンドウを特定できない場合は null。</returns>
+    /// <returns>カーソル位置（ドメイン座標）。 ウィンドウを特定できない場合は null。</returns>
     /// <remarks>
     /// nudge の基点精度を上げるために記録する（マウス移動が未発生でも現在位置から微調整を開始でき、原点へ飛ばない）。<br/>
     /// 画面物理座標 → ウィンドウのクライアント座標 → ドメイン座標の順に変換する（境界の 1 行変換）。
@@ -666,15 +666,15 @@ public sealed class MarqueeControl : Panel
 
         /// <summary>ドメイン座標を画面物理座標へ変換する。</summary>
         /// <param name="domainPoint">ドメイン座標。</param>
-        /// <returns>画面物理座標。ウィンドウを特定できない場合は既定値。</returns>
+        /// <returns>画面物理座標。 ウィンドウを特定できない場合は既定値。</returns>
         public override EsPointInt ToScreenPoint(EsPoint domainPoint)
             => owner.ToScreen(domainPoint);
     }
 
     /// <summary>ドメイン座標を画面物理座標へ変換する。</summary>
     /// <param name="domainPos">ドメイン座標。</param>
-    /// <returns>画面物理座標。ウィンドウを特定できない場合は default。</returns>
-    /// <remarks>カーソルの移動（nudge）に使用する。変換できない場合は原点へカーソルが飛ぶため、呼び出し側は nudge 中のウィンドウ表示を前提とする。</remarks>
+    /// <returns>画面物理座標。 ウィンドウを特定できない場合は default。</returns>
+    /// <remarks>カーソルの移動（nudge）に使用する。 変換できない場合は原点へカーソルが飛ぶため、呼び出し側は nudge 中のウィンドウ表示を前提とする。</remarks>
     private EsPointInt ToScreen(EsPoint domainPos)
     {
         if (FindVisualRoot() is not Window window)

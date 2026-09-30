@@ -43,34 +43,34 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Source` | `IImage?` | 表示画像。ZoomViewControl とルーペへ伝搬。変更時は Fit 表示にリセット。オーバーレイの可視性は本プロパティでは制御しない（`SetSelectionOverlayVisible` が専任）。`null` に変わるときは選択のみクリア。 |
-| `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（ドメイン座標）。View とルーペの両方へ描画。 |
-| `SelectionMode` | `FadeMaskDragRectMode` | 選択モード（既定 `Crop`）。FadeMaskDragRectControl へ委譲。 |
-| `SelectionOverlayOptions` | `FadeMaskDragRectOptions`（コア） | 領域選択オーバーレイの設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線の寸法・表示可否）。FadeMaskDragRectControl へ委譲。 |
-| `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 領域選択オーバーレイの選択矩形・ルーペが使う外観（描画にだけ必要な設定。コアの設定には含まれない）。FadeMaskDragRectControl へ委譲。 |
-| `Log` | `ILogger` | 内部ロガー（ズームビューポートへ伝搬）。null の場合の吸収はコアが単一所有する（出力なし）。 |
-| `DomainToDipScaling` | `double` | DPI スケーリング係数（`FadeMaskDragRectControl.DomainToDipScaling` へ委譲。コードから動的設定） |
-| `LoupeDipToDeviceScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（`FadeMaskDragRectControl.LoupeDipToDeviceScaling` へ委譲。DPI から自動取得） |
-| `ZoomPercent` | `double` | 現在のズーム率（%）。0 = Fit（自動）。スライダ等の連続値も設定できる。 |
+| `Source` | `IImage?` | 表示画像。 ZoomViewControl とルーペへ伝搬。 変更時は Fit 表示にリセット。 オーバーレイの可視性は本プロパティでは制御しない（`SetSelectionOverlayVisible` が専任）。 `null` に変わるときは選択のみクリア。 |
+| `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（ドメイン座標）。 View とルーペの両方へ描画。 |
+| `SelectionMode` | `FadeMaskDragRectMode` | 選択モード（既定 `Crop`）。 FadeMaskDragRectControl へ委譲。 |
+| `SelectionOverlayOptions` | `FadeMaskDragRectOptions`（コア） | 領域選択オーバーレイの設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線の寸法・表示可否）。 FadeMaskDragRectControl へ委譲。 |
+| `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 領域選択オーバーレイの選択矩形・ルーペが使う外観（描画にだけ必要な設定。 コアの設定には含まれない）。 FadeMaskDragRectControl へ委譲。 |
+| `Log` | `ILogger` | 内部ロガー（ズームビューポートへ伝搬）。 null の場合の吸収はコアが単一所有する（出力なし）。 |
+| `DomainToDipScaling` | `double` | DPI スケーリング係数（`FadeMaskDragRectControl.DomainToDipScaling` へ委譲。 コードから動的設定） |
+| `LoupeDipToDeviceScaling` | `double` | ルーペの DIP → 物理ピクセル倍率（`FadeMaskDragRectControl.LoupeDipToDeviceScaling` へ委譲。 DPI から自動取得） |
+| `ZoomPercent` | `double` | 現在のズーム率（%）。 0 = Fit（自動）。 スライダ等の連続値も設定できる。 |
 | `CanZoomIn` | `bool` | 現在のズーム状態でズームインが可能か。 |
 | `CanZoomOut` | `bool` | 現在のズーム状態でズームアウトが可能か。 |
 | `CenterAlign` | `bool` | 画像の中央寄せ / 左上寄せ（その軸で画像がビューポートより小さい場合に有効）。 |
-| `Appearance` | `ZoomViewAppearance`（コア） | ズームビューの外観（下地色・市松模様（サイズと 2 色）・スクロールバー）。市松模様は画像の透明部分の背景であり、描く範囲は画像の表示矩形の内側だけである（画像の外＝ペーストボードは背景の単色になる）。 |
+| `Appearance` | `ZoomViewAppearance`（コア） | ズームビューの外観（下地色・市松模様（サイズと 2 色）・スクロールバー）。 市松模様は画像の透明部分の背景であり、描く範囲は画像の表示矩形の内側だけである（画像の外＝ペーストボードは背景の単色になる）。 |
 | `HasSelection` | `bool` | 現在の選択状態（選択矩形の有無）。 |
-| `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標）。未選択時は 0x0。 |
+| `SelectionRect` | `Rect` | 現在の選択矩形（ドメイン座標）。 未選択時は 0x0。 |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | サイズラベルを描画時に評価するプロバイダ（FadeMaskDragRectControl へ委譲）。 |
-| `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | 操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に評価するプロバイダ（FadeMaskDragRectControl へ委譲。文言はホストが与える）。 |
+| `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | 操作ラベル（2 行目）・情報ラベル（3 行目）の文言を描画時に評価するプロバイダ（FadeMaskDragRectControl へ委譲。 文言はホストが与える）。 |
 
 #### 2.1.2 メソッド
 
 | メソッド | 説明 |
 | --- | --- |
-| `void ZoomIn()` | ズームイン（段階遷移。遷移の規則はコア（`EsUtil.SaveEvidence.ZoomView`）が単一所有する）。 |
-| `void ZoomOut()` | ズームアウト（段階遷移。同上）。 |
+| `void ZoomIn()` | ズームイン（段階遷移。 遷移の規則はコア（`EsUtil.SaveEvidence.ZoomView`）が単一所有する）。 |
+| `void ZoomOut()` | ズームアウト（段階遷移。 同上）。 |
 | `void ZoomFit()` | Fit 表示（ウィンドウに合わせて表示）に戻す（`ZoomIn` / `ZoomOut` と対になるズーム操作）。 |
 | `void SetSelection(Rect rect)` | 選択状態を外部から設定（FadeMaskDragRectControl へ委譲）。 |
 | `void ClearSelection()` | 選択状態をクリア（FadeMaskDragRectControl へ委譲）。 |
-| `void SetSelectionOverlayVisible(bool visible)` | 領域選択オーバーレイの可視性とヒットテストを設定（Crop セッションの開始・終了時に制御）。`false` で選択もクリア。 |
+| `void SetSelectionOverlayVisible(bool visible)` | 領域選択オーバーレイの可視性とヒットテストを設定（Crop セッションの開始・終了時に制御）。 `false` で選択もクリア。 |
 | `void SetCoordTransform(ICoordTransform? port)` | 座標変換ポートを設定（内包コントロールへ分配）。 |
 | `void RequestConfirm()` | 選択確定要求（FadeMaskDragRectControl へ委譲）。 |
 | `void RequestCancel()` | 選択キャンセル要求（FadeMaskDragRectControl へ委譲）。 |
@@ -88,28 +88,28 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | --- | --- | --- |
 | `ConfirmRequested` | `EventHandler<FadeMaskDragRectSelectionEventArgs>` | 選択確定要求（FadeMaskDragRectControl へ委譲）。 |
 | `CancelRequested` | `EventHandler?` | 選択キャンセル要求（FadeMaskDragRectControl へ委譲）。 |
-| `ZoomChanged` | `EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（ZoomViewControl へ委譲）。パン・nudge の座標表示は継承元の `PointerMoved` を使う。 |
+| `ZoomChanged` | `EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（ZoomViewControl へ委譲）。 パン・nudge の座標表示は継承元の `PointerMoved` を使う。 |
 | `ViewportChanged` | `EventHandler?` | ビューポート（パン・ズーム・表示状態）変化の通知（ZoomViewControl へ委譲）。 |
 
 ### 2.2. OverlayRect 構造体
 
-外部提供矩形の描画情報（不変レコード構造体）。UI 非依存の `CropViewControl.Core`（名前空間 `EsUtil.SaveEvidence.CropView`）が提供する。
+外部提供矩形の描画情報（不変レコード構造体）。 UI 非依存の `CropViewControl.Core`（名前空間 `EsUtil.SaveEvidence.CropView`）が提供する。
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `Bounds` | `EsRect`（`EsUtil.Platform.Core.Geometry`） | 矩形（ドメイン座標 = 元画像ピクセル座標）。 |
 | `Style` | `OverlayLineStyle` | 枠線スタイル。 |
 | `Foreground` | `System.Drawing.Color` | 前景色（透明度を含む）。 |
-| `Background` | `System.Drawing.Color` | 背景色（透明度を含む）。破線の市松風 2 色目。 |
+| `Background` | `System.Drawing.Color` | 背景色（透明度を含む）。 破線の市松風 2 色目。 |
 | `Thickness` | `double` | 枠線の太さ（ピクセル）。 |
 
 コンストラクタ: `OverlayRect(EsRect Bounds, OverlayLineStyle Style, System.Drawing.Color Foreground, System.Drawing.Color Background, double Thickness)`
 
-色はコアの色型（`System.Drawing.Color`）です。Avalonia の色を使う場合は、境界変換（`Platform.AvaloniaUI` の `ColorAvaloniaInterop`）で変換する。
+色はコアの色型（`System.Drawing.Color`）です。 Avalonia の色を使う場合は、境界変換（`Platform.AvaloniaUI` の `ColorAvaloniaInterop`）で変換する。
 
 ### 2.4. OverlayRectLayout / OverlayRectFrame（描画入力の解決）
 
-矩形の描画に必要な値（負サイズのクランプ・太さの下限・破線かどうか・背景色を使うか・ダッシュ長）を解決するコア型です。UI 層は `OverlayRectLayout.Resolve` の結果を描画先の型へ写すだけで、式と判断を持ちません（詳細は `../CropViewControl.Core/SPEC_ExtFunc.md`）。
+矩形の描画に必要な値（負サイズのクランプ・太さの下限・破線かどうか・背景色を使うか・ダッシュ長）を解決するコア型です。 UI 層は `OverlayRectLayout.Resolve` の結果を描画先の型へ写すだけで、式と判断を持ちません（詳細は `../CropViewControl.Core/SPEC_ExtFunc.md`）。
 
 ```csharp
 new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Orange.ToDrawingColor(), Colors.White.ToDrawingColor(), 2.0)
@@ -117,13 +117,13 @@ new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Or
 
 ### 2.3. OverlayLineStyle 列挙型
 
-枠線スタイル（UI 非依存の `CropViewControl.Core` 提供）。ダッシュ長はコアが単一所有し、ビューポート（図形要素）とルーペ画像（ピクセル）の両経路で共有する。
+枠線スタイル（UI 非依存の `CropViewControl.Core` 提供）。 ダッシュ長はコアが単一所有し、ビューポート（図形要素）とルーペ画像（ピクセル）の両経路で共有する。
 
 | メンバー | 説明 |
 | --- | --- |
 | `Solid` | 実線。 |
-| `Dashed` | 破線（長いダッシュ。ダッシュ長 8 / 間隔 4）。 |
-| `Dotted` | 点線（短いダッシュ。ダッシュ長 2 / 間隔 2）。 |
+| `Dashed` | 破線（長いダッシュ。 ダッシュ長 8 / 間隔 4）。 |
+| `Dotted` | 点線（短いダッシュ。 ダッシュ長 2 / 間隔 2）。 |
 
 ## 3. 入力・出力
 
@@ -131,10 +131,10 @@ new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Or
 
 - `Source`（`IImage?`）で表示画像を設定します。
 - 画像変更時は Fit 表示にリセットされます。
-- 領域選択オーバーレイの可視性とヒットテストは `SetSelectionOverlayVisible` で制御します（Crop セッションの開始・終了時にホストが切替）。`Source` 設定では制御しません。
+- 領域選択オーバーレイの可視性とヒットテストは `SetSelectionOverlayVisible` で制御します（Crop セッションの開始・終了時にホストが切替）。 `Source` 設定では制御しません。
   - 初期状態（`Source` 未設定）はオーバーレイを不可視（`IsVisible = false`）+ ヒットテスト不可（`IsHitTestVisible = false`）にします。
     - 画像なしでの選択矩形作成と、Crop モードの全面暗転で市松模様が暗くならないようにします。
-  - `Source` が `null` に変わるときは**選択のみクリア**します（オーバーレイの表示・ヒットテスト状態は維持。`SetSelectionOverlayVisible` が専任）。
+  - `Source` が `null` に変わるときは**選択のみクリア**します（オーバーレイの表示・ヒットテスト状態は維持。 `SetSelectionOverlayVisible` が専任）。
   - プレビュー表示時（キャプチャ完了・画像読込）は、`Source` 設定だけではオーバーレイを自動表示しません。
     - これにより、キャプチャ完了直後に Crop モード（全面暗転）が残るのを防ぎます。
   - Crop セッション中のみオーバーレイが可視化され、暗転マスクが表示されます。

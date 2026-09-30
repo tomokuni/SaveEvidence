@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.Marquee.MewUI;
 public sealed class MarqueeRenderedEventArgs : EventArgs
 {
     /// <summary>描画先のキャンバス（DPI スケーリング適用済み・描画中のみ有効）。</summary>
-    /// <value>コントロールの描画面。ホストはここへ付加情報を描く。</value>
+    /// <value>コントロールの描画面。 ホストはここへ付加情報を描く。</value>
     public SKCanvas Canvas { get; }
 
     /// <summary>1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・ラベル・層の順序）。</summary>

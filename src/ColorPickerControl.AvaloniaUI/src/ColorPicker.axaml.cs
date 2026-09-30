@@ -127,7 +127,7 @@ public sealed partial class ColorPickerControl : UserControl
     }
 
     /// <summary>バリデーションエラーメッセージを取得する。</summary>
-    /// <value>無効な場合の理由説明。有効な場合は null。</value>
+    /// <value>無効な場合の理由説明。 有効な場合は null。</value>
     public string? ValidationErrorMessage
     {
         get => GetValue(ValidationErrorMessageProperty);
@@ -206,7 +206,7 @@ public sealed partial class ColorPickerControl : UserControl
     // 定数
     // ====================================================================
 
-    /// <summary>色スウォッチの幅＋両脇マージン（ピクセル）。Left Padding に加算される。</summary>
+    /// <summary>色スウォッチの幅＋両脇マージン（ピクセル）。 Left Padding に加算される。</summary>
     private const double SwatchPaddingOffset = 20;
 
     /// <summary>スウォッチの縦位置をテキストと揃えるための微調整（ピクセル）。</summary>
@@ -216,7 +216,7 @@ public sealed partial class ColorPickerControl : UserControl
     // コンストラクタ・初期化
     // ====================================================================
 
-    /// <summary>直前に有効だった色（無効入力の復帰先）。コンストラクタ・入力処理で使用する。</summary>
+    /// <summary>直前に有効だった色（無効入力の復帰先）。 コンストラクタ・入力処理で使用する。</summary>
     private string? _lastValidColor;
 
     /// <summary>ColorPickerControl を初期化する。</summary>

@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 public sealed class MarqueeRenderedEventArgs : EventArgs
 {
     /// <summary>描画コンテキスト（<c>Render</c> の実行中のみ有効）。</summary>
-    /// <value>コントロールの描画コンテキスト。ホストはここへ付加情報を描く。</value>
+    /// <value>コントロールの描画コンテキスト。 ホストはここへ付加情報を描く。</value>
     public DrawingContext Context { get; }
 
     /// <summary>1 フレーム分の描画内容（装飾・ハンドル・始点マーカー・ラベル・層の順序）。</summary>

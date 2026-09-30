@@ -67,7 +67,7 @@ public class ColorPickerTests
         var control = CreateControl();
 
         // 注: ヘッドレス環境ではテーマ未適用のため ComboBox の TwoWay バインディングが
-        // SelectedColor を空文字に上書きする。ここでは SelectedColor 以外のデフォルト値を検証する。
+        // SelectedColor を空文字に上書きする。 ここでは SelectedColor 以外のデフォルト値を検証する。
         Assert.Equal(ColorSortMode.ByHue, control.ColorSortMode);
         Assert.False(control.HasValidationError);
         Assert.Null(control.ValidationErrorMessage);

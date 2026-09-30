@@ -31,7 +31,7 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 /// モードごとの可否（選択矩形・ルーペ・全面暗転・破線）はコアの <c>FadeMaskDragRectModes</c> が、<br/>
 /// 選択矩形の可否はコアの <c>FadeMaskDragRectSelection</c> が単一所有する（UI 層は判断を持たず、コアの結果を割り当てるだけになる）。<br/>
 /// <br/>
-/// <b>選択状態の単一のソース</b>: 選択矩形はドラッグ選択コントロールのセッションが単一所有する。本クラスは選択状態を複製せず、<br/>
+/// <b>選択状態の単一のソース</b>: 選択矩形はドラッグ選択コントロールのセッションが単一所有する。 本クラスは選択状態を複製せず、<br/>
 /// 読み取り（<see cref="HasSelection"/> / <see cref="SelectionRect"/>）と設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）を委譲するだけとする。<br/>
 /// <br/>
 /// <b>内部構造</b>:<br/>
@@ -52,7 +52,7 @@ namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 /// - <see cref="FadeMaskDragRectMode.ScreenSelect"/> / <see cref="FadeMaskDragRectMode.WindowSelect"/>: ハイライトのみを描画し、<br/>
 ///   入力を受けない（クリック確定フローはホストが担う）。<br/>
 /// <br/>
-/// <b>座標系</b>: 選択矩形・ルーペ中心はドメイン座標で扱う。ドメイン ↔ ローカル DIP の変換は<br/>
+/// <b>座標系</b>: 選択矩形・ルーペ中心はドメイン座標で扱う。 ドメイン ↔ ローカル DIP の変換は<br/>
 /// 座標変換ポート（<see cref="SetCoordTransform"/>）が担い、ルーペへも同じポートを適用する。<br/>
 /// <br/>
 /// <b>描画先の選択（フレームワーク差）</b>: ルーペ画像上の選択矩形の破線は、描画完了イベントで通知されたキャンバスへ<br/>
@@ -109,11 +109,11 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>Escape キーまたは <see cref="RequestCancel"/> によるキャンセル要求イベント。</summary>
     public event EventHandler? CancelRequested;
 
-    /// <summary>ルーペ中心の更新イベント（ドメイン座標。ホストの追加制御用フック）。</summary>
+    /// <summary>ルーペ中心の更新イベント（ドメイン座標。 ホストの追加制御用フック）。</summary>
     public event EventHandler<FadeMaskDragRectPointEventArgs>? LoupePositionMoved;
 
     /// <summary>設定（選択矩形・暗転マスク・ルーペ・選択矩形破線の外観）を取得または設定する。</summary>
-    /// <value>設定の単一値。既定は <see cref="FadeMaskDragRectOptions.Default"/>（内包コントロールの既定値）。</value>
+    /// <value>設定の単一値。 既定は <see cref="FadeMaskDragRectOptions.Default"/>（内包コントロールの既定値）。</value>
     /// <remarks>
     /// 一部の項目だけを変える場合は <c>FadeMaskDragRectOptions.Default with { ... }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
     /// 設定を 1 つの値にまとめているため、内包コントロールへ分配する規則（枠線の共用等）はコアが単一所有する。<br/>
@@ -135,7 +135,7 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>動作モードを取得または設定する（内包コントロールの有効・無効と全面暗転を一括で切り替える）。</summary>
-    /// <value>動作モード。既定値は <see cref="FadeMaskDragRectMode.AreaSelect"/>。</value>
+    /// <value>動作モード。 既定値は <see cref="FadeMaskDragRectMode.AreaSelect"/>。</value>
     /// <remarks>
     /// - Crop / AreaSelect: 選択矩形とルーペを表示し、全面暗転を有効化する。<br/>
     /// - ScreenSelect / WindowSelect: 選択矩形とルーペを非表示にし、全面暗転を無効化する（ハイライトのみ）。
@@ -161,12 +161,12 @@ public sealed class FadeMaskDragRectControl : Panel
     public bool HasSelection => _marquee.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
-    /// <value>選択矩形。未選択時は 0x0 の空矩形。</value>
+    /// <value>選択矩形。 未選択時は 0x0 の空矩形。</value>
     /// <remarks>選択状態の真のソースはドラッグ選択コントロールのセッションであり、本プロパティはその読み取りを委譲するだけである。</remarks>
     public EsRect SelectionRect => _marquee.SelectionRect;
 
     /// <summary>ハイライト矩形（ドメイン座標）を取得または設定する。</summary>
-    /// <value>ハイライト矩形。未検出時は null（<b>null が「ハイライトしない」を意味する</b>）。選択矩形より優先される。</value>
+    /// <value>ハイライト矩形。 未検出時は null（<b>null が「ハイライトしない」を意味する</b>）。 選択矩形より優先される。</value>
     public EsRect? LogicalHighlightRect
     {
         get => _marquee.HighlightRect;
@@ -174,16 +174,16 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>全面暗転（穴あけなし）を表示するかどうかを取得する。</summary>
-    /// <value>全面暗転する場合は true。モードから導出される読み取り専用の値（外観の表示可否を参照する）。</value>
+    /// <value>全面暗転する場合は true。 モードから導出される読み取り専用の値（外観の表示可否を参照する）。</value>
     public bool ShowFullOverlay => _marquee.Appearance.ShowFullOverlay;
 
     /// <summary>ルーペ中心（ドメイン座標）を取得する。</summary>
-    /// <value>ルーペ中心。未設定時は null。</value>
+    /// <value>ルーペ中心。 未設定時は null。</value>
     /// <remarks>中心の真のソースはルーペコントロールへ集約し、本プロパティはその参照のみを返す。</remarks>
     public EsPoint? LoupeCenterPoint => _loupe.CenterPoint;
 
     /// <summary>選択矩形コントロールの外観（描画にだけ必要な設定）を取得または設定する。</summary>
-    /// <value>外観の単一値。既定は <see cref="MarqueeAppearance.Default"/>。</value>
+    /// <value>外観の単一値。 既定は <see cref="MarqueeAppearance.Default"/>。</value>
     /// <remarks>
     /// 色・ラベル体裁・表示可否・枠線の太さはコアの計算に入らない（描画にだけ必要）ため、<br/>
     /// 設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
@@ -202,10 +202,10 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>ルーペの描画に使う色（描画にだけ必要な設定）を取得または設定する。</summary>
-    /// <value>色の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
+    /// <value>色の単一値。 既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>
     /// 色はコアの計算に入らない（描画にだけ必要）ため、設定（<see cref="Options"/>）には含めず本プロパティが与える。<br/>
-    /// 内包するルーペコントロールへそのまま転送する（下地色もここで与える。ホストが背後の要素を透かすかを決める）。
+    /// 内包するルーペコントロールへそのまま転送する（下地色もここで与える。 ホストが背後の要素を透かすかを決める）。
     /// </remarks>
     public LoupeAppearance LoupeAppearance
     {
@@ -213,14 +213,14 @@ public sealed class FadeMaskDragRectControl : Panel
         set => _loupe.Appearance = value;
     }
 
-    /// <summary>ドラッグ選択コントロール（テスト用アクセサ。設定は <see cref="Options"/> 経由で設定する）。</summary>
+    /// <summary>ドラッグ選択コントロール（テスト用アクセサ。 設定は <see cref="Options"/> 経由で設定する）。</summary>
     internal MarqueeControl Marquee => _marquee;
 
-    /// <summary>ルーペコントロール（テスト用アクセサ。配置の検証に使用する）。</summary>
+    /// <summary>ルーペコントロール（テスト用アクセサ。 配置の検証に使用する）。</summary>
     internal LoupeControl Loupe => _loupe;
 
     /// <summary>操作ラベル（アプリ固有の付加情報）の文言を描画時に生成するデリゲート。</summary>
-    /// <value>描画のたびに評価される関数。null または空文字を返す場合は描かない。</value>
+    /// <value>描画のたびに評価される関数。 null または空文字を返す場合は描かない。</value>
     /// <remarks>
     /// 文言はアプリ固有（選択コントロールの概念ではない）ため、コアは関知しない<br/>
     /// （本クラスが文言の取得と描画を行い、<c>CaptureLabelTexts</c> 等が文言を単一所有する）。
@@ -228,12 +228,12 @@ public sealed class FadeMaskDragRectControl : Panel
     public Func<string?>? OperationTextProvider { get; set; }
 
     /// <summary>情報ラベル（ウィンドウタイトル）の文言を描画時に生成するデリゲート。</summary>
-    /// <value>描画のたびに評価される関数。null または空文字を返す場合は描かない。</value>
+    /// <value>描画のたびに評価される関数。 null または空文字を返す場合は描かない。</value>
     /// <remarks>文言はアプリ固有のため、コアは関知しない（本クラスが取得と描画を行う）。</remarks>
     public Func<string?>? InfoTextProvider { get; set; }
 
     /// <summary>サイズラベルの文言を描画時に評価するデリゲートを取得または設定する。</summary>
-    /// <value>描画時に呼び出される関数。null または空文字を返す場合はサイズラベルを描画しない。</value>
+    /// <value>描画時に呼び出される関数。 null または空文字を返す場合はサイズラベルを描画しない。</value>
     /// <remarks>
     /// ホストは最新の選択状態から文言を生成するクロージャを設定する（設定しない場合はコアが矩形から自動生成する）。
     /// </remarks>
@@ -244,10 +244,10 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
-    /// <value>描画時に呼び出される関数（引数はドメイン座標の矩形）。null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
+    /// <value>描画時に呼び出される関数（引数はドメイン座標の矩形）。 null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
     /// <remarks>
     /// ホストは最新の選択状態からモニタの実表示スケールを解決するクロージャを設定する（例: 矩形を含むモニタのスケール）。<br/>
-    /// 文言（書式）はコアが単一所有するため、ホストは数値だけを与える。設定時は選択矩形コントロールへ伝搬し、再描画を要求する。
+    /// 文言（書式）はコアが単一所有するため、ホストは数値だけを与える。 設定時は選択矩形コントロールへ伝搬し、再描画を要求する。
     /// </remarks>
     public Func<EsRect, double>? SizeLabelDisplayScalingProvider
     {
@@ -256,7 +256,7 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）を取得または設定する。</summary>
-    /// <value>スケーリング係数。ドメイン座標がローカル DIP と一致する場合は 1.0。</value>
+    /// <value>スケーリング係数。 ドメイン座標がローカル DIP と一致する場合は 1.0。</value>
     /// <remarks>
     /// 環境値（ユーザー設定ではない）のため設定（<see cref="Options"/>）には含めず、ホストが与える。<br/>
     /// 座標変換ポート（<see cref="SetCoordTransform"/>）が設定されている場合はそちらが優先される。
@@ -267,8 +267,8 @@ public sealed class FadeMaskDragRectControl : Panel
         set => _marquee.DomainToDipScaling = value;
     }
 
-    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。0 以下は <see cref="DomainToDipScaling"/> と同値）を取得または設定する。</summary>
-    /// <value>サイズラベルの DisplayScale に使う倍率。0 以下は <see cref="DomainToDipScaling"/> から解決される。</value>
+    /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正。 0 以下は <see cref="DomainToDipScaling"/> と同値）を取得または設定する。</summary>
+    /// <value>サイズラベルの DisplayScale に使う倍率。 0 以下は <see cref="DomainToDipScaling"/> から解決される。</value>
     /// <remarks>環境値のため設定（<see cref="Options"/>）には含めず、ホストが与える。</remarks>
     public double DisplayScaleScaling
     {
@@ -277,7 +277,7 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>ルーペの DIP → 物理ピクセル倍率を取得または設定する。</summary>
-    /// <value>スケーリング係数（0.1〜8.0）。既定は 1.0。</value>
+    /// <value>スケーリング係数（0.1〜8.0）。 既定は 1.0。</value>
     /// <remarks>環境値（DPI）のため設定（<see cref="Options"/>）には含めず、ホストが与える。</remarks>
     public double LoupeDipToDeviceScaling
     {
@@ -286,11 +286,11 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
-    /// <param name="port">座標変換ポート。null の場合は <see cref="DomainToDipScaling"/> 相当の等倍スケール（コアが解決）を使う。</param>
+    /// <param name="port">座標変換ポート。 null の場合は <see cref="DomainToDipScaling"/> 相当の等倍スケール（コアが解決）を使う。</param>
     /// <remarks>
     /// ドラッグ選択とルーペへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。<br/>
-    /// null はそのまま渡す（未設定を倍率で解決する規則はコアが単一所有する）。ルーペの表示位置計算のみ本クラスが行うため、<br/>
+    /// null はそのまま渡す（未設定を倍率で解決する規則はコアが単一所有する）。 ルーペの表示位置計算のみ本クラスが行うため、<br/>
     /// その用途では等価変換で代替する。
     /// </remarks>
     public void SetCoordTransform(ICoordTransform? port)
@@ -301,7 +301,7 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>操作ログの出力先を取得または設定する（内包するコントロールへ伝搬する）。</summary>
-    /// <value>ロガー。null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
+    /// <value>ロガー。 null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>ドラッグ選択コントロールとルーペへ伝搬する（Avalonia 版と同じ範囲）。</remarks>
     public ILogger Log
     {
@@ -369,8 +369,8 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>ルーペの拡大元画像を設定する。</summary>
-    /// <param name="source">拡大元の画像。null の場合は解除する。</param>
-    /// <remarks>画像を設定しただけでは表示しない（表示開始は <see cref="SetLoupePosition"/> が担う）。解除時は表示も解除する。</remarks>
+    /// <param name="source">拡大元の画像。 null の場合は解除する。</param>
+    /// <remarks>画像を設定しただけでは表示しない（表示開始は <see cref="SetLoupePosition"/> が担う）。 解除時は表示も解除する。</remarks>
     public void SetLoupeSource(EsBitmap? source)
     {
         _loupe.Source = source;
@@ -429,7 +429,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="bounds">本コントロールへ割り当てられた矩形（ウィンドウ絶対座標・DIP）。</param>
     /// <remarks>
     /// ルーペの表示サイズ・位置はコア（ルーペコントロールのファサード）が単一所有する<br/>
-    /// （親領域の最小辺へのクランプ・オフセット・親領域内へのクランプ。親サイズが 0 の場合の扱いもコアが判断する）。<br/>
+    /// （親領域の最小辺へのクランプ・オフセット・親領域内へのクランプ。 親サイズが 0 の場合の扱いもコアが判断する）。<br/>
     /// 非表示（未表示・画像未設定・中心未設定）の場合はサイズ 0 で配置する。
     /// </remarks>
     protected override void ArrangeContent(Rect bounds)
@@ -544,7 +544,7 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="canvas">描画先のキャンバス（ピクセル等倍で描画できる状態であること）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。切り出し領域との交差判定に使用する。</param>
+    /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。</param>
     /// <remarks>
     /// 選択矩形（<see cref="SelectionRect"/> = ドメイン座標）は <c>(ドメイン座標 − captureTopLeft) × scale</c> で<br/>
     /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
@@ -582,7 +582,7 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     // ====================================================================
-    // イベント発火（ホストへの通知。発火形式を一貫させるため private ヘルパーに集約）
+    // イベント発火（ホストへの通知。 発火形式を一貫させるため private ヘルパーに集約）
     // ====================================================================
 
     /// <summary>確定要求イベントを発火する。</summary>

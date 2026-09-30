@@ -12,29 +12,29 @@ SaveEvidence 本体（Avalonia UI 実装 `app.AvaloniaUI`）および将来の M
 | --- | --- | --- |
 | `Enum.AppPage` | `public` | ナビゲーションページの識別子 |
 | `Enum.ThemeMode` | `public` | テーマモード（`Description` 属性で表示名を保持） |
-| `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。ウィンドウ位置は `EsRectInt`、状態は `EsWindowState` で保持 |
-| `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
-| `Services.IImageWriter` | `public` | 画像（`EsBitmap`）のファイル書き込みの抽象。具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードする |
+| `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。 ウィンドウ位置は `EsRectInt`、状態は `EsWindowState` で保持 |
+| `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。 JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
+| `Services.IImageWriter` | `public` | 画像（`EsBitmap`）のファイル書き込みの抽象。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードする |
 | `Services.EsRectIntJsonConverter` | `internal` | `EsRectInt` の JSON コンバーター（`X` / `Y` / `Width` / `Height` のみを読み書き） |
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
-| `Models.UndoStack` | `public` | 画像の Undo / Redo スタック（`EsBitmap` のクローンを保持。最大 5 段） |
+| `Models.UndoStack` | `public` | 画像の Undo / Redo スタック（`EsBitmap` のクローンを保持。 最大 5 段） |
 | `Models.HotKeyParser` | `public` | ホットキー文字列（"Ctrl + Shift + Q" 等）の解析 |
 | `Models.CapacityLimitedCache` | `internal` | 容量制限付きの静的キャッシュ（超過分は破棄） |
 | `Models.ImageFileExtensions` | `internal` | 画像ファイルの拡張子判定（フォルダビューの一覧抽出） |
 | `ViewModels.ViewModeDisplay` | `internal` | 表示モード（特大 / 大 / 中）の表示文字列変換 |
 | `ViewModels.FolderViewViewModel` | `public` | フォルダビューの表示モード・ソート状態 |
 | `ViewModels.UndoViewModel` | `public` | Undo 一覧の表示モード状態 |
-| `ViewModels.MainViewModel` | `public` | メイン画面の状態（プレビュー画像・ズーム表示・保存・自動切り出し）。UI 依存はコールバック（クリップボード / 上書き確認）で注入する |
+| `ViewModels.MainViewModel` | `public` | メイン画面の状態（プレビュー画像・ズーム表示・保存・自動切り出し）。 UI 依存はコールバック（クリップボード / 上書き確認）で注入する |
 
 `internal` の型は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `app.AvaloniaUI.Tests` / `app.Core.Tests` / `app.MewUI.Tests`）で UI 実装とテストからのみ参照できます。
 
 ## 名前空間
 
-本プロジェクトは UI 非依存ですが、**名前空間は `app.AvaloniaUI` と同一（`EsUtil.SaveEvidence.*`）** です。アセンブリのみが異なるため、`app.AvaloniaUI` 側の `using` を変更せずに移設できます。
+本プロジェクトは UI 非依存ですが、**名前空間は `app.AvaloniaUI` と同一（`EsUtil.SaveEvidence.*`）** です。 アセンブリのみが異なるため、`app.AvaloniaUI` 側の `using` を変更せずに移設できます。
 
 ## 設定ファイルの互換性
 
-`EsRectInt` は専用の JSON コンバーター（`EsRectIntJsonConverter`）が `X` / `Y` / `Width` / `Height` のみを読み書きし、`EsWindowState` は enum の名前で書き出すため、**移設前（`Avalonia.PixelRect` / `Avalonia.Controls.WindowState`）と同一の JSON 形式**になります。既存の `settings.json` はそのまま読み込めます。
+`EsRectInt` は専用の JSON コンバーター（`EsRectIntJsonConverter`）が `X` / `Y` / `Width` / `Height` のみを読み書きし、`EsWindowState` は enum の名前で書き出すため、**移設前（`Avalonia.PixelRect` / `Avalonia.Controls.WindowState`）と同一の JSON 形式**になります。 既存の `settings.json` はそのまま読み込めます。
 
 ### トリミング / Native AOT 対応
 
@@ -57,7 +57,7 @@ app.AvaloniaUI（Avalonia 実装） / app.MewUI
          └──> LineDetection（窓枠検出。UI 非依存）
 ```
 
-UI フレームワークへ依存しません。外部依存は MVVM の `CommunityToolkit.Mvvm`（UI フレームワーク非依存）のみです。
+UI フレームワークへ依存しません。 外部依存は MVVM の `CommunityToolkit.Mvvm`（UI フレームワーク非依存）のみです。
 
 ## UI 依存の注入（依存性逆転）
 
@@ -81,7 +81,7 @@ dotnet build src/app.Core/src/app.Core.csproj
 
 ## テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。UI 初期化が不要なため、すべて `[Fact]` で並列実行されます。
+`tests/` が本プロジェクトの単体テストを持ちます。 UI 初期化が不要なため、すべて `[Fact]` で並列実行されます。
 
 ```powershell
 dotnet test src/app.Core/tests/app.Core.Tests.csproj

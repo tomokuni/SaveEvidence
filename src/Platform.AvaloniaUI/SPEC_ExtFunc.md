@@ -145,18 +145,18 @@ ICoordTransform dipPort = ScreenConverter.CreateVisualDipPort(control);
 
 | 型 | 説明 |
 | --- | --- |
-| `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（`ToAvaloniaKey()` / `ToEsKey()`。数値ではなく名前で変換） |
-| `EsWindowStateAvaloniaInterop` | `EsWindowState` ⇔ `Avalonia.Controls.WindowState`（名前で変換。未定義値は `Normal` へフォールバック） |
+| `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（`ToAvaloniaKey()` / `ToEsKey()`。 数値ではなく名前で変換） |
+| `EsWindowStateAvaloniaInterop` | `EsWindowState` ⇔ `Avalonia.Controls.WindowState`（名前で変換。 未定義値は `Normal` へフォールバック） |
 | `EsGeometryAvaloniaInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` ⇔ Avalonia の対応型 |
 | `EsPlatformHandleAvaloniaInterop` | `Avalonia.Platform.IPlatformHandle` ⇔ `EsPlatformHandle`（null はハンドル値 0 に変換） |
-| `ColorAvaloniaInterop` | `Avalonia.Media.Color` ⇔ `System.Drawing.Color`（コアの色型。ARGB をそのまま保持） |
+| `ColorAvaloniaInterop` | `Avalonia.Media.Color` ⇔ `System.Drawing.Color`（コアの色型。 ARGB をそのまま保持） |
 | `CursorOverrideGuardAvaloniaExtensions` | `ICursorOverrideGuard.Attach(this ICursorOverrideGuard, TopLevel)` |
 
 ### 5.3 ColorExtensions（C# 14 静的拡張メンバー）
 
 | メソッド | シグネチャ | 説明 |
 | --- | --- | --- |
-| `FromAColor` | `static Color FromAColor(byte alpha, Color baseColor)` | 基準色（名前付き色等）と不透明度から色を生成する（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%）。RGB 直指定より可読性が高い |
+| `FromAColor` | `static Color FromAColor(byte alpha, Color baseColor)` | 基準色（名前付き色等）と不透明度から色を生成する（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%）。 RGB 直指定より可読性が高い |
 
 ### 5.4 EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache
 
@@ -176,9 +176,9 @@ ICoordTransform dipPort = ScreenConverter.CreateVisualDipPort(control);
 
 | 型 | 説明 |
 | --- | --- |
-| `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ。`Draw` は Skia 直描画（`WriteableBitmap`` を生成しない）。`Dispose` で内包を解放 |
-| `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。スレッド安全。値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
-| `AvaloniaTextMeasure` | テキストの実寸を測る（`Measure(text, fontSize)`。ラベルの配置矩形の計算に使う。測定に色は影響しないためブラシは固定で共有する） |
+| `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ。 `Draw` は Skia 直描画（`WriteableBitmap`` を生成しない）。`Dispose` で内包を解放 |
+| `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。 スレッド安全。 値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
+| `AvaloniaTextMeasure` | テキストの実寸を測る（`Measure(text, fontSize)`。 ラベルの配置矩形の計算に使う。 測定に色は影響しないためブラシは固定で共有する） |
 
 ```csharp
 // 色 → ブラシの共有（描画のたびに生成しない）

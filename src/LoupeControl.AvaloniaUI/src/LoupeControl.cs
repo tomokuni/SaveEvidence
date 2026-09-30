@@ -50,15 +50,15 @@ namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 /// 描画時にブラシへ変換する（色の文字列解析は行わない）。<br/>
 /// 不透明度は色のアルファに統合する（例: 十字線の赤 40% = <c>#66FF0000</c>）。<br/>
 /// 設定（<see cref="Options"/>）の数値項目はコアの型が生成時に安全域へ補正する<br/>
-/// （UI 側に補正の登録を置かない）。環境値の <see cref="DipToDeviceScaling"/> のみ本コントロールが補正（coerce）する。<br/>
+/// （UI 側に補正の登録を置かない）。 環境値の <see cref="DipToDeviceScaling"/> のみ本コントロールが補正（coerce）する。<br/>
 /// <br/>
 /// **公開 API 一覧**:<br/>
 /// - 入力: <see cref="Source"/> / <see cref="CenterPoint"/><br/>
-/// - 設定: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有。表示サイズ・拡大率）<br/>
+/// - 設定: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有。 表示サイズ・拡大率）<br/>
 /// - 環境: <see cref="DipToDeviceScaling"/>（DPI スケーリング係数）<br/>
 /// - 位置: <see cref="SetCoordTransform"/> / <see cref="PositionOffset"/> / <see cref="RefreshPosition"/><br/>
 /// - ログ: <see cref="Log"/><br/>
-/// - イベント: <see cref="Rendered"/>（描画完了時に描画済み Bitmap と表示情報を通知。ホストが Bitmap に直接オーバーレイを描画できる）<br/>
+/// - イベント: <see cref="Rendered"/>（描画完了時に描画済み Bitmap と表示情報を通知。 ホストが Bitmap に直接オーバーレイを描画できる）<br/>
 /// - 操作: <see cref="Clear()"/>（非表示にしてビットマップを解放） / <see cref="RequestRender()"/>（プロパティ変更を伴わない再生成要求）<br/>
 /// </remarks>
 public sealed class LoupeControl : Panel
@@ -120,7 +120,7 @@ public sealed class LoupeControl : Panel
     /// <summary>ルーペ画像を表示する子要素（生成ビットマップを <see cref="Image.Source"/> へ設定する）。</summary>
     private readonly Image _image;
 
-    /// <summary>配置中のラベル要素（背景 + テキスト）。子の末尾側へ置くため常に最上位になる。</summary>
+    /// <summary>配置中のラベル要素（背景 + テキスト）。 子の末尾側へ置くため常に最上位になる。</summary>
     private readonly List<Border> _labels = [];
 
     /// <summary>再描画のバッチ化コーディネーター（Dispatcher へのポストで 1 フレームに 1 回に結合）。</summary>
@@ -129,7 +129,7 @@ public sealed class LoupeControl : Panel
     /// <summary>ルーペ中心（<see cref="CenterPoint"/>）からの右下オフセット（DIP）を取得または設定する。</summary>
     /// <value>カーソル位置（ルーペ中心）からの右下方向へのオフセット量（DIP）。</value>
     /// <remarks>
-    /// ホスト（上位 AP）が設定する。設定後の位置反映は <see cref="UpdatePosition"/> で行う（保持はコアが単一所有する）。<br/>
+    /// ホスト（上位 AP）が設定する。 設定後の位置反映は <see cref="UpdatePosition"/> で行う（保持はコアが単一所有する）。<br/>
     /// C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義する。
     /// </remarks>
     public double PositionOffset
@@ -144,7 +144,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>論理座標（ドメイン）↔ 親パネル DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（Inverse = 論理→親パネルDIP）。null の場合は等価変換。</param>
+    /// <param name="port">座標変換ポート（Inverse = 論理→親パネルDIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// MarqueeControl と同様に、外部から与えたポートで表示位置（<see cref="Visual.RenderTransform"/>）と<br/>
     /// 表示サイズ（要求サイズ）と表示位置（オフセット・領域内への補正）を計算する。<br/>
@@ -190,7 +190,7 @@ public sealed class LoupeControl : Panel
             return;
         }
 
-        // 同一インスタンスの値を更新して再利用する（毎回の生成を回避。StyledProperty 変更で再適用される）
+        // 同一インスタンスの値を更新して再利用する（毎回の生成を回避。 StyledProperty 変更で再適用される）
         _positionTransform.X = position.X;
         _positionTransform.Y = position.Y;
         RenderTransform = _positionTransform;
@@ -213,8 +213,8 @@ public sealed class LoupeControl : Panel
     /// <returns>割り当てサイズ。</returns>
     /// <remarks>
     /// <b>位置はコアと描画層が決める</b>: コアのテキスト配置から <c>LoupePresenter</c> が求めた配置指示に従って<br/>
-    /// ラベル要素を配置するだけであり、本クラスは位置の計算を持たない。要素は <see cref="Panel.Children"/> の末尾へ<br/>
-    /// 置かれるため常に最上位になる。実寸は自 UI の描画 API（<see cref="FormattedText"/>）で測って渡す。
+    /// ラベル要素を配置するだけであり、本クラスは位置の計算を持たない。 要素は <see cref="Panel.Children"/> の末尾へ<br/>
+    /// 置かれるため常に最上位になる。 実寸は自 UI の描画 API（<see cref="FormattedText"/>）で測って渡す。
     /// </remarks>
     protected override Size ArrangeOverride(Size finalSize)
     {
@@ -355,7 +355,7 @@ public sealed class LoupeControl : Panel
         AvaloniaProperty.Register<LoupeControl, double>(
             nameof(DipToDeviceScaling), defaultValue: DipToDeviceScalingDefault, coerce: static (_, value) => CoerceDipToDeviceScaling(value));
 
-    /// <summary><see cref="Options"/> 依存関係プロパティ（表示サイズ・拡大率。コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
+    /// <summary><see cref="Options"/> 依存関係プロパティ（表示サイズ・拡大率。 コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
     /// <remarks>
     /// 個別に公開していた設定（表示サイズ・拡大率）を 1 つの不変オブジェクトへ統合し、公開プロパティを 1 つに縮小する。<br/>
     /// 設定値の既定値と数値項目の安全域への補正はコアの <see cref="LoupeOptions"/> が単一所有するため、<br/>
@@ -364,7 +364,7 @@ public sealed class LoupeControl : Panel
     public static readonly StyledProperty<LoupeOptions> OptionsProperty =
         AvaloniaProperty.Register<LoupeControl, LoupeOptions>(nameof(Options), defaultValue: LoupeOptions.Default);
 
-    /// <summary><see cref="Appearance"/> 依存関係プロパティ（外観。描画にだけ必要な設定）。</summary>
+    /// <summary><see cref="Appearance"/> 依存関係プロパティ（外観。 描画にだけ必要な設定）。</summary>
     /// <remarks>
     /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）には含めず、<br/>
     /// 描画の設定（<see cref="LoupeAppearance"/>）として本コントロールが公開する（描画層が単一所有する）。
@@ -376,14 +376,14 @@ public sealed class LoupeControl : Panel
     // 公開プロパティ（入力）
     // ====================================================================
 
-    /// <summary>拡大元の元画像（100%画像）。Binding で与える。</summary>
+    /// <summary>拡大元の元画像（100%画像）。 Binding で与える。</summary>
     public IImage? Source
     {
         get => GetValue(SourceProperty);
         set => SetValue(SourceProperty, value);
     }
 
-    /// <summary>拡大表示する中心座標（元画像ピクセル座標）。Binding で与える。</summary>
+    /// <summary>拡大表示する中心座標（元画像ピクセル座標）。 Binding で与える。</summary>
     public Point? CenterPoint
     {
         get => GetValue(CenterPointProperty);
@@ -400,7 +400,7 @@ public sealed class LoupeControl : Panel
     private EsSize ParentAreaSize => (Parent as Panel)?.Bounds.Size.ToEsSize() ?? default;
 
     /// <summary>ルーペの設定（表示サイズ・拡大率）を取得または設定する。</summary>
-    /// <value>設定の単一値。既定はコアの既定値（<see cref="LoupeOptions.Default"/>）。</value>
+    /// <value>設定の単一値。 既定はコアの既定値（<see cref="LoupeOptions.Default"/>）。</value>
     /// <remarks>
     /// 設定の値・既定値・数値項目の安全域への補正はコアの <see cref="LoupeOptions"/> が単一所有する（本コントロールは保持しない）。<br/>
     /// 一部の項目だけを変える場合は <c>LoupeOptions.Default with { ZoomLevel = 8 }</c> の形で指定する（指定しない項目は既定値を保つ）。<br/>
@@ -415,7 +415,7 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>外観（色・フォント・角丸・枠線の太さ・表示可否）を取得または設定する。</summary>
-    /// <value>外観の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
+    /// <value>外観の単一値。 既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>
     /// 外観はコアの計算に入らない（描画にだけ必要）ため、コアの設定（<see cref="LoupeOptions"/>）ではなく本プロパティが単一所有する。<br/>
     /// 変更すると再生成とラベル要素の再配置が行われる。
@@ -434,8 +434,8 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>ログ用に Avalonia 座標をコア座標へ変換する。</summary>
-    /// <param name="point">変換する座標。未設定は null。</param>
-    /// <returns>コア座標。未設定は null。</returns>
+    /// <param name="point">変換する座標。 未設定は null。</param>
+    /// <returns>コア座標。 未設定は null。</returns>
     /// <remarks>値の書式（<c>(X, Y)</c>）はコア（<c>LoupeLogMessage.LogCenterPointChanged</c>）が単一所有する。</remarks>
     private static EsPoint? ToEsPoint(Point? point) => point?.ToEsPoint();
 
@@ -474,15 +474,15 @@ public sealed class LoupeControl : Panel
     // 出力（internal）
     // ====================================================================
 
-    /// <summary>表示用の画像アダプタ（EsBitmapAvaloniaImage）。所有権は本コントロールが保持し、外部へ公開しない。</summary>
+    /// <summary>表示用の画像アダプタ（EsBitmapAvaloniaImage）。 所有権は本コントロールが保持し、外部へ公開しない。</summary>
     /// <remarks>
     /// <see cref="Image.Source"/> へ設定する <see cref="EsBitmapAvaloniaImage"/> を保持する。<br/>
     /// <c>WriteableBitmap</c> を生成せず Skia 直描画するため、破棄は <see cref="ReleaseBitmap"/> で行う。
     /// </remarks>
     private EsBitmapAvaloniaImage? _loupeImage;
 
-    /// <summary>内部描画結果（EsBitmap）。所有権は本コントロールが保持し、外部へ公開しない。</summary>
-    /// <remarks><see cref="_loupeImage"/> が内包する EsBitmap を返す（共有参照。破棄はしないこと）。</remarks>
+    /// <summary>内部描画結果（EsBitmap）。 所有権は本コントロールが保持し、外部へ公開しない。</summary>
+    /// <remarks><see cref="_loupeImage"/> が内包する EsBitmap を返す（共有参照。 破棄はしないこと）。</remarks>
     internal EsBitmap? LoupeBitmap => _loupeImage?.Bitmap;
 
     // ====================================================================
@@ -490,7 +490,7 @@ public sealed class LoupeControl : Panel
     // ====================================================================
 
     /// <summary>内部ロガー（描画エラーの記録と UI 固有のログに使う）。</summary>
-    /// <value>注入されたロガー。null 可（null の場合は <see cref="NullLogger"/> へフォールバックする）。</value>
+    /// <value>注入されたロガー。 null 可（null の場合は <see cref="NullLogger"/> へフォールバックする）。</value>
     /// <remarks>設定・環境値・拡大中心の変更ログはコアが出力するため、同じロガーをコアへも渡す。</remarks>
     public ILogger Log
     {
@@ -502,7 +502,7 @@ public sealed class LoupeControl : Panel
         }
     }
 
-    /// <summary>内部ロガー（未設定は null。読み取り時に <see cref="LoggerFallback"/> が吸収する）。</summary>
+    /// <summary>内部ロガー（未設定は null。 読み取り時に <see cref="LoggerFallback"/> が吸収する）。</summary>
     private ILogger? _log;
 
     // ====================================================================
@@ -520,7 +520,7 @@ public sealed class LoupeControl : Panel
     public event EventHandler<LoupeRenderedEventArgs>? Rendered;
 
     /// <summary><see cref="Rendered"/> イベントを発火する（描画済み EsBitmap と表示情報を構築して通知）。</summary>
-    /// <param name="bitmap">描画済みのルーペ画像（EsBitmap）。ホストがピクセルにオーバーレイを描画できる。</param>
+    /// <param name="bitmap">描画済みのルーペ画像（EsBitmap）。 ホストがピクセルにオーバーレイを描画できる。</param>
     /// <param name="plan">実際に描画した描画計画（切り出し領域の左上と拡大率を持つ）。</param>
     /// <remarks>
     /// 切り出し領域の左上・拡大率は描画計画（<see cref="LoupeDrawPlan.CaptureTopLeft"/> / <see cref="LoupeDrawPlan.ZoomLevel"/>）が単一所有する。<br/>
@@ -596,7 +596,7 @@ public sealed class LoupeControl : Panel
         try
         {
             // 描画計画（描画層が解決した幾何・外観・層の順序）は現在のレイアウト（要求サイズ）から組み立てる
-            // （値・単位・換算は描画層が単一所有する。開始時に固定しない）
+            // （値・単位・換算は描画層が単一所有する。 開始時に固定しない）
             var plan = _presenter.ResolveDrawPlan(
                 _presenter.ResolveLayout(ParentAreaSize).DisplaySize, MeasureText);
 
@@ -643,7 +643,7 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     private void SetLoupeBitmap(EsBitmap bmp, in LoupeDrawPlan plan)
     {
-        // ホストが EsBitmap のピクセルへオーバーレイ（破線等）を描画するフック。イベント内でピクセルが更新される
+        // ホストが EsBitmap のピクセルへオーバーレイ（破線等）を描画するフック。 イベント内でピクセルが更新される
         RaiseRendered(bmp, plan);
 
         // イベント後の EsBitmap（ホストのオーバーレイ描画を含む）を表示境界で Avalonia 画像として反映する。

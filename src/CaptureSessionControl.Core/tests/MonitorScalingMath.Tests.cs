@@ -101,7 +101,7 @@ public class MonitorScalingMathTests
     [Fact]
     public void ResolveForRect_境界を跨ぐ矩形は中心のモニターで決まる()
     {
-        // 左上が左モニター・右下が右モニター。中心が右モニターに入る
+        // 左上が左モニター・右下が右モニター。 中心が右モニターに入る
         var target = new EsRectInt(1900, 0, 100, 100);
 
         Assert.Equal(1.5, MonitorScalingMath.ResolveForRect(target, s_dualMonitors, fallback: 9.9));

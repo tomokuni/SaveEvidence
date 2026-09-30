@@ -103,7 +103,7 @@ public partial class SettingsServiceJsonTests
 
     /// <summary>指定された経路で設定を JSON へ直列化する。</summary>
     /// <param name="settings">対象の設定。</param>
-    /// <param name="context">ソース生成コンテキスト。null の場合は反射ベース。</param>
+    /// <param name="context">ソース生成コンテキスト。 null の場合は反射ベース。</param>
     /// <returns>生成した JSON。</returns>
     private static string Serialize(Settings settings, JsonSerializerContext? context)
     {
@@ -118,7 +118,7 @@ public partial class SettingsServiceJsonTests
 /// <summary>テスト用の JSON ソース生成コンテキスト。</summary>
 /// <remarks>
 /// 本コンテキストは <c>Settings</c> を参照するアセンブリに置く必要がある（同一アセンブリ内では<br/>
-/// MVVM のソース生成結果を JSON のソース生成が見られないため）。ここではテストアセンブリが該当する。
+/// MVVM のソース生成結果を JSON のソース生成が見られないため）。 ここではテストアセンブリが該当する。
 /// </remarks>
 [JsonSerializable(typeof(Settings))]
 internal sealed partial class TestSettingsJsonContext : JsonSerializerContext;

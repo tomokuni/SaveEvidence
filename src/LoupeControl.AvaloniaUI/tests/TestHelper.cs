@@ -11,7 +11,7 @@ public static class TestHelper
     /// <param name="control">対象のコントロール。</param>
     /// <remarks>
     /// 描画は Dispatcher へのポスト（描画フェーズ）と非同期生成で行われるため、テストは通知（<see cref="LoupeControl.Rendered"/>）を<br/>
-    /// 待つ（ホストと同じ契約で待機する）。待機中は Dispatcher をポンプして描画ジョブと非同期の継続を進める。<br/>
+    /// 待つ（ホストと同じ契約で待機する）。 待機中は Dispatcher をポンプして描画ジョブと非同期の継続を進める。<br/>
     /// 描画要求が出ていない場合（非表示・変更なし）は完了しないため、呼び出し前に状態変更で要求を発生させること。
     /// </remarks>
     public static async Task WaitForRenderedAsync(this LoupeControl control)

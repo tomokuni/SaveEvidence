@@ -99,7 +99,7 @@ public class BottomAlignWrapLayoutTests
 
         var rects = BottomAlignWrapLayout.Arrange(sizes, finalWidth: 1000);
 
-        // 行の高さ = 100。各アイテムの下端（Y + Height）が行の下端（100）で揃う
+        // 行の高さ = 100。 各アイテムの下端（Y + Height）が行の下端（100）で揃う
         Assert.Equal(0.0, rects[0].Y);
         Assert.Equal(50.0, rects[1].Y);  // 100 - 50
         Assert.Equal(20.0, rects[2].Y);  // 100 - 80
@@ -129,7 +129,7 @@ public class BottomAlignWrapLayoutTests
 
         var rects = BottomAlignWrapLayout.Arrange(sizes, finalWidth: 100);
 
-        // 幅 150 のアイテムは単独行。次のアイテムは下の行に置かれる
+        // 幅 150 のアイテムは単独行。 次のアイテムは下の行に置かれる
         Assert.Equal(0.0, rects[0].Y);
         Assert.Equal(100.0, rects[1].Y); // 先頭の高さ（100）の下の行
     }

@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.CropView;
 /// <param name="Bounds">矩形（ドメイン座標 = 元画像ピクセル座標）。</param>
 /// <param name="Style">枠線スタイル。</param>
 /// <param name="Foreground">前景色（透明度を含む）。</param>
-/// <param name="Background">背景色（透明度を含む）。破線の市松風 2 色目。</param>
+/// <param name="Background">背景色（透明度を含む）。 破線の市松風 2 色目。</param>
 /// <param name="Thickness">枠線の太さ（ピクセル）。</param>
 /// <remarks>
 /// UI 実装（Avalonia / MewUI のクロップビュー）の <c>Rects</c> に設定すると、<br/>

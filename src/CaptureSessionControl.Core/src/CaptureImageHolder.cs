@@ -18,7 +18,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <br/>
 /// <b>スレッド</b>: 背景の切り出し結果は UI スレッドで反映する想定だが、受け取りと破棄が競合しないよう内部で排他する。
 /// </remarks>
-/// <param name="fallbackBounds">画像が未取得の間に使う占有範囲（画面物理ピクセル。ウィンドウが覆う範囲）。</param>
+/// <param name="fallbackBounds">画像が未取得の間に使う占有範囲（画面物理ピクセル。 ウィンドウが覆う範囲）。</param>
 public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
 {
     /// <summary>状態を保護するゲート。</summary>
@@ -34,7 +34,7 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
     private bool _disposed;
 
     /// <summary>保持している画像を取得する。</summary>
-    /// <value>撮影した画像。未取得（背景撮影中・取得失敗・破棄済み）の場合は null。</value>
+    /// <value>撮影した画像。 未取得（背景撮影中・取得失敗・破棄済み）の場合は null。</value>
     public EsBitmap? Image
     {
         get
@@ -47,7 +47,7 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
     }
 
     /// <summary>画像の原点（画面物理ピクセル）を取得する。</summary>
-    /// <value>画像の左上が対応する画面物理座標。画像が未取得の場合は既定値。</value>
+    /// <value>画像の左上が対応する画面物理座標。 画像が未取得の場合は既定値。</value>
     public EsPointInt Origin
     {
         get
@@ -79,9 +79,9 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
     }
 
     /// <summary>画像と原点を保持する（旧い画像は破棄する）。</summary>
-    /// <param name="image">保持する画像。null の場合は「未取得」として扱う（旧い画像を破棄して解放する）。</param>
+    /// <param name="image">保持する画像。 null の場合は「未取得」として扱う（旧い画像を破棄して解放する）。</param>
     /// <param name="origin">画像の原点（画面物理ピクセル）。</param>
-    /// <returns>保持した場合は true。破棄済みのため受け付けなかった場合は false（渡された画像はその場で破棄する）。</returns>
+    /// <returns>保持した場合は true。 破棄済みのため受け付けなかった場合は false（渡された画像はその場で破棄する）。</returns>
     /// <remarks>破棄済みの場合に画像をその場で破棄するのは、背景撮影の完了がウィンドウの後片付けより遅れた場合の破棄漏れを防ぐためである。</remarks>
     public bool Set(EsBitmap? image, EsPointInt origin)
     {
@@ -110,7 +110,7 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
     }
 
     /// <summary>保持している画像を破棄する。</summary>
-    /// <remarks>複数回呼んでも安全である。以降の <see cref="Set"/> は渡された画像をその場で破棄する。</remarks>
+    /// <remarks>複数回呼んでも安全である。 以降の <see cref="Set"/> は渡された画像をその場で破棄する。</remarks>
     public void Dispose()
     {
         EsBitmap? held;

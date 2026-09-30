@@ -36,12 +36,12 @@ public sealed class CaptureSessionSlot<TCapture, TCrop>
     public bool IsBusy => HasCapture || HasCrop;
 
     /// <summary>進行中の切り出しセッションを取得する。</summary>
-    /// <value>切り出しセッション。未実行の場合は null。</value>
+    /// <value>切り出しセッション。 未実行の場合は null。</value>
     public TCrop? Crop => _crop;
 
     /// <summary>撮影セッションの開始を受け付ける。</summary>
     /// <param name="session">開始する撮影セッション。</param>
-    /// <returns>受け付けた場合は true。既にセッションが実行中の場合は false（<paramref name="session"/> は保持しない）。</returns>
+    /// <returns>受け付けた場合は true。 既にセッションが実行中の場合は false（<paramref name="session"/> は保持しない）。</returns>
     /// <remarks>他のセッション（切り出し）が実行中の場合も受け付けない（同時実行は 1 つまで）。</remarks>
     public bool TryBeginCapture(TCapture session)
     {
@@ -67,7 +67,7 @@ public sealed class CaptureSessionSlot<TCapture, TCrop>
 
     /// <summary>切り出しセッションの開始を受け付ける。</summary>
     /// <param name="session">開始する切り出しセッション。</param>
-    /// <returns>受け付けた場合は true。既にセッションが実行中の場合は false（<paramref name="session"/> は保持しない）。</returns>
+    /// <returns>受け付けた場合は true。 既にセッションが実行中の場合は false（<paramref name="session"/> は保持しない）。</returns>
     /// <remarks>他のセッション（撮影）が実行中の場合も受け付けない（同時実行は 1 つまで）。</remarks>
     public bool TryBeginCrop(TCrop session)
     {
@@ -93,7 +93,7 @@ public sealed class CaptureSessionSlot<TCapture, TCrop>
 
     /// <summary>進行中のセッションの矩形選択の有無を取得する。</summary>
     /// <param name="hasSelection">切り出しセッションの選択の有無を返す関数（未実行の場合は呼ばれない）。</param>
-    /// <returns>切り出しセッションが実行中で選択がある場合は true。それ以外は false。</returns>
+    /// <returns>切り出しセッションが実行中で選択がある場合は true。 それ以外は false。</returns>
     /// <remarks>
     /// 「セッション未実行なら false」という既定値の解決を単一所有する（UI 層で <c>?.</c> と <c>??</c> を書かない）。<br/>
     /// 撮影セッションは選択の有無を公開しないため対象外である。
@@ -105,8 +105,8 @@ public sealed class CaptureSessionSlot<TCapture, TCrop>
     }
 
     /// <summary>進行中のセッションをすべてキャンセルする。</summary>
-    /// <param name="cancelCapture">撮影セッションのキャンセル。null の場合は撮影を対象外とする。</param>
-    /// <param name="cancelCrop">切り出しセッションのキャンセル。null の場合は切り出しを対象外とする。</param>
+    /// <param name="cancelCapture">撮影セッションのキャンセル。 null の場合は撮影を対象外とする。</param>
+    /// <param name="cancelCrop">切り出しセッションのキャンセル。 null の場合は切り出しを対象外とする。</param>
     /// <remarks>
     /// 「実行中のみキャンセルする」判定を単一所有する（UI 層で null 判定を書かない）。<br/>
     /// キャンセル後に保持を解放するのは呼び出し元の終了処理（<see cref="EndCapture"/> / <see cref="EndCrop"/>）である。

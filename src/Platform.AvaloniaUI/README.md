@@ -30,16 +30,16 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 
 ## 2. 機能一覧
 
-- **画面座標変換**: `ScreenConverter`（コントロールローカル DIP ↔ 画面物理。Avalonia の `TopLevel` に依存するため本プロジェクトに残す）
+- **画面座標変換**: `ScreenConverter`（コントロールローカル DIP ↔ 画面物理。 Avalonia の `TopLevel` に依存するため本プロジェクトに残す）
 - **座標変換ポート**: `ICoordTransform` / `CoordTransform` は UI フレームワーク非依存のコア型として `Platform.Core` が提供
 - **ネイティブ実装**: Win32 実装（`EsUtil.Platform.Core.Native.Win`）は `Platform.Core` が提供（**実行時のプラットフォーム分岐は持たず、ホストが生成して抽象型として注入する**）
 - **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPointInt`・`EsRectInt`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
 - **カーソル抑止の仲介**: `CursorOverrideGuardAvaloniaExtensions.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲）
 - **画像ユーティリティ**: `EsBitmap`（`Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
 - **画像アダプタ**（`EsBitmapAvaloniaImage`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
-- **ブラシキャッシュ**: `SolidColorBrushCache`（`System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有する。描画アダプタとラベル要素の配置が共用する）
-- **テキスト実寸の測定**: `AvaloniaTextMeasure`（ラベル要素の配置矩形を実寸から決めるための唯一の入口。UI ごとに測定を書くと片方だけ実寸 0 になり、文字が切り落とされる）
-- **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
+- **ブラシキャッシュ**: `SolidColorBrushCache`（`System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有する。 描画アダプタとラベル要素の配置が共用する）
+- **テキスト実寸の測定**: `AvaloniaTextMeasure`（ラベル要素の配置矩形を実寸から決めるための唯一の入口。 UI ごとに測定を書くと片方だけ実寸 0 になり、文字が切り落とされる）
+- **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。 名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
 
 ## 3. システム要件
 
@@ -102,7 +102,7 @@ guard.Attach(window);   // TopLevel → EsPlatformHandle の変換を仲介す�
 
 ### 座標変換ポート
 
-座標変換ポートは UI フレームワーク非依存のコア型として `Platform.Core`（`EsUtil.Platform.Core.Coord` 名前空間）が提供します。座標はコア幾何型（`EsPoint` / `EsSize` / `EsVector`）で扱います。
+座標変換ポートは UI フレームワーク非依存のコア型として `Platform.Core`（`EsUtil.Platform.Core.Coord` 名前空間）が提供します。 座標はコア幾何型（`EsPoint` / `EsSize` / `EsVector`）で扱います。
 
 ```csharp
 // 等価変換（1 ドメイン = 1 DIP・無制限）
@@ -149,11 +149,11 @@ Win32 実装（`Native.Win`）はホストが生成して抽象型として注�
 
 ### 依存方向
 
-`Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Core`（`Native/` の Win32 実装を含む） の一方向の階層構造です。上位 AP（MarqueeControl / CaptureSessionControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
+`Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Core`（`Native/` の Win32 実装を含む） の一方向の階層構造です。 上位 AP（MarqueeControl / CaptureSessionControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
 
 ## 7. サンプル
 
-サンプルアプリケーションはありません（ライブラリプロジェクトのため）。各コントロールプロジェクト（MarqueeControl / LoupeControl 等）の sample が本ライブラリを利用しています。
+サンプルアプリケーションはありません（ライブラリプロジェクトのため）。 各コントロールプロジェクト（MarqueeControl / LoupeControl 等）の sample が本ライブラリを利用しています。
 
 ## 8. ドキュメント
 

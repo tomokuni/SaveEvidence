@@ -48,7 +48,7 @@ public sealed partial class MainWindow : Window
     /// <summary>アプリケーションロガー。</summary>
     private static readonly ILogger _logger = AppLog.CreateLogger("MainWindow");
 
-    // ナビゲーション状態（AppPage 型。初期値 null: コンストラクタの NavigateTo(AppPage.Capture) が
+    // ナビゲーション状態（AppPage 型。 初期値 null: コンストラクタの NavigateTo(AppPage.Capture) が
     // 早期 return せず、初期ページの選択状態が設定されるようにする）
     private AppPage? _navSelectedPage;
 
@@ -105,7 +105,7 @@ public sealed partial class MainWindow : Window
         // ウィンドウ位置・サイズの復元
         RestoreWindowBounds();
 
-        // ナビゲーション開閉状態の復元（設定ファイルから。購読設定前のため書き戻しは発生しない）
+        // ナビゲーション開閉状態の復元（設定ファイルから。 購読設定前のため書き戻しは発生しない）
         _viewModel.IsNavigationExpanded = _settingsService.Current.IsNavigationExpanded;
 
         // ナビゲーション開閉状態の変更を設定ファイルへ即時保存する（次回起動時に復元）
@@ -149,7 +149,7 @@ public sealed partial class MainWindow : Window
     /// </remarks>
     private void UpdateNavPanelLayout()
     {
-        // 収納時はコンテンツ高さ（Top）。展開時は全高（Stretch）
+        // 収納時はコンテンツ高さ（Top）。 展開時は全高（Stretch）
         NavPanel.VerticalAlignment = _viewModel.IsNavigationExpanded ? VerticalAlignment.Stretch : VerticalAlignment.Top;
         NavPanel.Height = double.NaN; // Auto（コンテンツ高さ）
     }
@@ -419,8 +419,8 @@ public sealed partial class MainWindow : Window
         _logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
     }
 
-    /// <summary>キャプチャ完了イベントの受信処理（同期実行。画像変更を行う）。</summary>
-    /// <param name="result">キャプチャ結果。キャンセル時は 0x0 の空結果。</param>
+    /// <summary>キャプチャ完了イベントの受信処理（同期実行。 画像変更を行う）。</summary>
+    /// <param name="result">キャプチャ結果。 キャンセル時は 0x0 の空結果。</param>
     /// <remarks>
     /// イベントは同期型のため、本ハンドラ（画像変更）の完了後に<br/>
     /// CaptureSessionControl のキャプチャセッションがオーナー（本ウィンドウ）を再表示する。<br/>
