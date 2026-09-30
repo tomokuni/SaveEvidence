@@ -55,7 +55,7 @@ internal sealed partial class OverlayWindow
     /// <param name="domainRect">ドメイン矩形（= 画面物理 − Position。 ウィンドウローカル物理ピクセル）。</param>
     /// <returns>矩形中心のモニタのスケーリング係数。 該当なしはオーバーレイのスケーリング（<see cref="_scaling"/>）。</returns>
     /// <remarks>
-    /// ドメイン矩形の中心に <see cref="Position"/> を加算して画面物理座標へ戻し、中心を含むモニタを特定する。<br/>
+    /// ドメイン矩形の中心に <c>Position</c> を加算して画面物理座標へ戻し、中心を含むモニタを特定する。<br/>
     /// 「原点の加算」「中心で判定する」「該当なしはフォールバック」という規則はコア（<see cref="MonitorScalingMath"/>）が単一所有する<br/>
     /// （UI ごとに判定点がずれると、同じ矩形で表示倍率が食い違う）。<br/>
     /// モニタ一覧は構築時に 1 回だけ解決したものを再利用する（描画のたびに列挙・配列生成をしない）。

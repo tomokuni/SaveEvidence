@@ -41,7 +41,7 @@ public static class DpiScaler
     /// <summary>DPI をスケーリング係数（表示 DIP → 物理ピクセル）へ換算する。</summary>
     /// <param name="dpi">DPI（画面・モニターの実効 DPI）。</param>
     /// <returns>スケーリング係数（<see cref="StandardDpi"/> を 1.0 とする倍率）。</returns>
-    /// <remarks>DPI の変化（モニター間の移動）を <see cref="ScaleToPixel"/> へ渡す倍率へ変換する規則を単一所有する。</remarks>
+    /// <remarks>DPI の変化（モニター間の移動）を <see cref="ScaleToPixel(int, double)"/> へ渡す倍率へ変換する規則を単一所有する。</remarks>
     public static double ToScaling(double dpi) => dpi / StandardDpi;
 
     /// <summary>DIP 値をスケーリング係数で物理ピクセルへ変換する（切り上げ・最低 1）。</summary>

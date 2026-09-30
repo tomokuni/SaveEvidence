@@ -10,7 +10,6 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.CaptureSession.MewUI.Sessions;
 
@@ -31,7 +30,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.MewUI.Sessions;
 /// 原点補正を単一所有する）。 ズーム・パンで表示が変わった時は<br/>
 /// <see cref="CropViewControl.ViewportChanged"/> でポートを作り直す。<br/>
 /// <br/>
-/// <b>テーマ</b>: 市松模様の下地色はテーマに依存するため、Facade が <see cref="UpdateThemeColor"/> で更新する<br/>
+/// <b>テーマ</b>: 市松模様の下地色はテーマに依存するため、Facade が <see cref="ApplySettings"/> で更新する<br/>
 /// （テーマ変更の購読はホストが行う。 本クラスはテーマの通知元を知らない）。<br/>
 /// <br/>
 /// <b>外観</b>: 枠線・ハンドル・十字マーカー・座標ラベルは <see cref="CaptureSettings"/> に従う（Avalonia 版の<br/>
@@ -65,7 +64,7 @@ internal sealed class CropSession
 
     /// <summary>長命のオブジェクト（ビュー・適用先）への購読を解除する処理（終了時に 1 回だけ実行する）。</summary>
     /// <remarks>
-    /// ビューポートと適用先はアプリと同じ寿命を持つため、終了したセッションのハンドラを残すと<br>
+    /// ビューポートと適用先はアプリと同じ寿命を持つため、終了したセッションのハンドラを残すと<br/>
     /// セッションの数だけ呼び出しが増え、終了したセッションを参照し続ける（リークになる）。
     /// </remarks>
     private readonly List<Action> _unsubscribe = [];

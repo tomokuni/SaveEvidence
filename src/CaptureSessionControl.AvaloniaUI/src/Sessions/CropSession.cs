@@ -11,8 +11,6 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using Microsoft.Extensions.Logging;
-
-using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
@@ -25,7 +23,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
 /// - 配線（SelectionChanged → 暗転マスク同期 / LoupePositionMoved → ルーペ更新 / 確定・キャンセル）は<br/>
 ///   複合コントロール内で完結する（ホストの配線コードは不要）。<br/>
 /// - ドメイン = 元画像ピクセル（論理座標）。 座標変換は <see cref="CropViewControl"/> が内包する<br/>
-///   <see cref="ZoomViewControl"/>（ズーム・パン・Fit）へ委譲する（ズーム座標の単一所有）。<br/>
+///   ズーム・パン・Fit のビューポートへ委譲する（ズーム座標の単一所有）。<br/>
 /// <br/>
 /// プレビュー状態（ScrollOffset / ViewportOrigin / ZoomPercent）は保持しない。<br/>
 /// オーバーレイ（Marquee / Loupe）とズームビューポートは <see cref="CropViewControl"/> 内で<br/>
@@ -72,8 +70,8 @@ internal sealed class CropSession(
     /// <param name="cropView">変換の基準となる複合コントロール。</param>
     /// <returns>ToDomain = ビューポートDIP → 元画像ピクセル、ToDip = 元画像ピクセル → ビューポートDIP、DomainBounds = 現在の画像のサイズのポート。</returns>
     /// <remarks>
-    /// 内包する <see cref="ZoomViewControl"/> の座標変換（<see cref="ZoomViewControl.ViewportToContentImage"/> /
-    /// <see cref="ZoomViewControl.ContentToViewportImage"/>）を委譲する。 これにより、ズーム・パン・Fit・中央寄せの<br/>
+    /// <see cref="CropViewControl"/> の座標変換（<see cref="CropViewControl.ViewportToContent"/> /
+    /// <see cref="CropViewControl.ContentToViewport"/>）へ委譲する。 これにより、ズーム・パン・Fit・中央寄せの<br/>
     /// 原点補正を全て内包ビューポートが単一所有し、ホストが変換を重複実装する必要がない（DRY 原則）。<br/>
     /// 境界は表示中の画像から都度評価する（切り出しのドメインは <see cref="CropViewImage"/> が単一所有する）。
     /// </remarks>

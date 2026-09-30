@@ -49,7 +49,7 @@ public sealed class ZoomViewControl : Panel
 
     /// <summary>内部ロガー（横断的関心事）を取得または設定する。</summary>
     /// <value>ロガー。 null を設定した場合は出力なしとして扱う。</value>
-    /// <remarks>null の吸収はコア（<see cref="LoggerFallback.OrNullLogger"/>）が単一所有する（呼び出し側で null 判定しない）。</remarks>
+    /// <remarks>null の吸収はコア（<see cref="EsUtil.Platform.Core.LoggerFallback.OrNullLogger"/>）が単一所有する（呼び出し側で null 判定しない）。</remarks>
     public ILogger Log
     {
         get => Session.Log;

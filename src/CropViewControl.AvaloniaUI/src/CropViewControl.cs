@@ -5,8 +5,6 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using EsUtil.Feature.Marquee.Presenter;
-using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
@@ -406,7 +404,7 @@ public sealed partial class CropViewControl : Panel
         remove => _selectionOverlay.CancelRequested -= value;
     }
 
-    /// <summary>==========================================================
+    // ====================================================================
     // 矩形オーバーレイ（外部提供矩形の描画）
     // ====================================================================
 

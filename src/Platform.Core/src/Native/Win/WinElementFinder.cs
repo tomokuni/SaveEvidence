@@ -72,7 +72,7 @@ public sealed class WinElementFinder : IElementFinder
     /// <param name="screenPoint">判定する位置（画面物理座標）。</param>
     /// <returns>ウィンドウの検出結果（矩形・タイトル・識別子）。 未検出時は <see cref="ElementFinderResults.IsDetected"/> = false。</returns>
     /// <remarks>
-    /// <see cref="EnumWindows"/> の列挙順（最前面順）で、<paramref name="screenPoint"/> を含む最初のウィンドウを採用する。<br/>
+    /// <c>EnumWindows</c> の列挙順（最前面順）で、<paramref name="screenPoint"/> を含む最初のウィンドウを採用する。<br/>
     /// 除外条件（自プロセス・不可視・無効・最小化・0x0・タスクバー/デスクトップ）は <see cref="IsEligibleWindow"/> で適用し、<br/>
     /// ホットパスで毎回全列挙しないよう、最初の一致で列挙を早期終了する。
     /// </remarks>

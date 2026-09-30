@@ -32,7 +32,7 @@ internal sealed record ColorEntry(string Name, string Value)
     /// <see cref="ColorString.ColorNames"/> の全色からエントリを生成し、配列へ一度だけ実体化する
     /// （遅延シーケンスを 2 回列挙する従来実装を排除。 ソートは実体化済み配列に対して行う）。<br/>
     /// リフレクションによる <see cref="Colors"/> 列挙は <see cref="ColorString"/> が単一所有する
-    /// （<see cref="DynamicDependency"/> 属性も <see cref="ColorString"/> 側に移設済み）。
+    /// （<c>DynamicDependency</c> 属性も <see cref="ColorString"/> 側に移設済み）。
     /// </remarks>
     static ColorEntry()
     {

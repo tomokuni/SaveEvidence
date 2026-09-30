@@ -11,8 +11,6 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 
-using DrawingColor = System.Drawing.Color;
-
 namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 
 /// <summary>画面全体を覆うキャプチャ選択オーバーレイ（MewUI 版）。</summary>
@@ -102,7 +100,7 @@ internal sealed class CaptureOverlay
     /// <summary>設定（ラベルの再組み立てに使用する）。</summary>
     private readonly CaptureSettings _settings;
 
-    /// <summary>オーバーレイを初期化する（内部用。<see cref="Capture"/> から生成する）。</summary>
+    /// <summary>オーバーレイを初期化する（内部用。<see cref="CaptureSessionControl.Capture(Window, CaptureType, CaptureOverlayServices)"/> から生成する）。</summary>
     /// <param name="type">キャプチャ種別。</param>
     /// <param name="settings">設定（選択枠・暗転・ルーペ・ラベルの外観）。</param>
     /// <param name="finder">要素検出サービス（スクリーン選択 / ウィンドウ選択で使用）。</param>
@@ -265,11 +263,10 @@ internal sealed class CaptureOverlay
 
     /// <summary>オーバーレイを表示し、確定またはキャンセルまで待つ。</summary>
     /// <param name="owner">オーナーウィンドウ。</param>
-    /// <param name="settings">設定（ルーペの外観）。</param>
-    /// <param name="windowService">ネイティブウィンドウ操作（物理ピクセルでの配置に使用する）。</param>
+    /// <param name="services">オーバーレイの実行に必要なサービス（撮影サービス・ウィンドウ操作）。</param>
     /// <remarks>
     /// ウィンドウは仮想スクリーンの位置・サイズでボーダーレス・最前面に表示する。<br/>
-    /// 確定・キャンセルのいずれでもウィンドウを閉じ、<see cref="ShowDialog"/> の入れ子ループを終わらせる。
+    /// 確定・キャンセルのいずれでもウィンドウを閉じ、<c>ShowDialog</c> の入れ子ループを終わらせる。
     /// </remarks>
     private void Show(Window owner, CaptureOverlayServices services)
     {
@@ -471,7 +468,7 @@ internal sealed class CaptureOverlay
     /// <remarks>
     /// 切り出し矩形の決定（種別ごとの閉区間化・画像内へのクランプ・端数の丸め）はコアが単一所有する。<br/>
     /// <b>入口は画面物理座標に統一する</b>: 選択矩形（画像ローカル座標）は呼び出し側で
-    /// <see cref="CaptureClipMath.ToScreenRect"/> により戻してから渡す（占有範囲と同じ座標空間にする。
+    /// <see cref="CaptureClipMath.ToScreenRect(EsRect, EsPointInt)"/> により戻してから渡す（占有範囲と同じ座標空間にする。
     /// 混ぜると原点が負値のマルチモニタで切り出し位置がずれ・幅が 0 になる）。<br/>
     /// 結果の領域は<see cref="CaptureResult.SourceBounds"/>（仮想画面座標）と同じ座標空間になる。
     /// </remarks>
@@ -586,7 +583,7 @@ internal sealed class CaptureOverlay
     /// <returns>ローカル DIP ⇔ 画像ピクセルを変換するポート。</returns>
     /// <remarks>
     /// 画像はウィンドウのクライアント領域全体へ等倍で描画するため、変換は倍率の乗除算だけになる。<br/>
-    /// 倍率の適用方向（ToDomain = DIP → 画像ピクセル）は Platform.Core の <see cref="CoordTransform.DipToDomain(Func{double}, Func{EsSize?})} が<br/>
+    /// 倍率の適用方向（ToDomain = DIP → 画像ピクセル）は Platform.Core の <see cref="CoordTransform.DipToDomain(Func{double}, Func{EsSize?})"/> が<br/>
     /// 単一所有する（UI が倍率式を書かない）。 境界は画像サイズで、選択を画像外へ出さないためのクランプに使われる。
     /// </remarks>
     private ICoordTransform CreatePort()

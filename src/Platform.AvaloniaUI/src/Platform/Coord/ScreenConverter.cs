@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.Platform.AvaloniaUI.Coord;
 
@@ -20,7 +19,7 @@ public static class ScreenConverter
     /// <param name="source">変換元のコントロール。</param>
     /// <param name="local">コントロールローカル DIP 座標。</param>
     /// <returns>画面物理座標。</returns>
-    /// <remarks><see cref="TopLevel.PointToScreen"/> に委譲する。</remarks>
+    /// <remarks><c>TopLevel.PointToScreen</c> に委譲する。</remarks>
     public static PixelPoint LocalDipToScreen(Visual source, Point local)
     {
         var topLevel = TopLevel.GetTopLevel(source);
@@ -34,7 +33,7 @@ public static class ScreenConverter
     /// <param name="screen">画面物理座標。</param>
     /// <returns>コントロールローカル DIP 座標。</returns>
     /// <remarks>
-    /// <see cref="TopLevel.PointToClient"/> と <see cref="VisualExtensions.TranslatePoint"/> に委譲する。<br/>
+    /// <c>TopLevel.PointToClient</c> と <see cref="VisualExtensions.TranslatePoint"/> に委譲する。<br/>
     /// ビジュアルツリー未接続時は等価変換（画面座標をそのまま返す）。
     /// </remarks>
     public static Point ScreenToLocalDip(Visual source, PixelPoint screen)

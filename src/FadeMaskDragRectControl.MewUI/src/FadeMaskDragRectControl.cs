@@ -1,7 +1,5 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Feature.Marquee.Presenter;
-using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Feature.Marquee.Presenter.Label;
 using EsUtil.Feature.Marquee.Presenter.Setting;
@@ -301,7 +299,7 @@ public sealed class FadeMaskDragRectControl : Panel
     }
 
     /// <summary>操作ログの出力先を取得または設定する（内包するコントロールへ伝搬する）。</summary>
-    /// <value>ロガー。 null を設定した場合は <see cref="NullLogger"/> へフォールバックする（出力なし）。</value>
+    /// <value>ロガー。 null を設定した場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> へフォールバックする（出力なし）。</value>
     /// <remarks>ドラッグ選択コントロールとルーペへ伝搬する（Avalonia 版と同じ範囲）。</remarks>
     public ILogger Log
     {

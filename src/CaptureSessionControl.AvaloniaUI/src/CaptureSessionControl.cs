@@ -226,7 +226,7 @@ public sealed class CaptureSessionControl : IDisposable
 
     /// <summary>進行中の切出し（Crop）を現在の選択矩形で確定する（Enter キー相当）。</summary>
     /// <remarks>
-    /// Crop 実行中のみ有効。 選択確定時のみ Marquee の <see cref="MarqueeControl.RequestConfirm"/> に委譲する。<br/>
+    /// Crop 実行中のみ有効。 選択確定時のみ複合コントロールの <see cref="CropViewControl.RequestConfirm"/> に委譲する。<br/>
     /// Capture 実行中 / 操作なしでは何もしない（Capture の確定はユーザー操作で完結する）。
     /// </remarks>
     public void Confirm()

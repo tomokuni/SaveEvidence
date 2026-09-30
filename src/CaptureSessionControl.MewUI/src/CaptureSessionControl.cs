@@ -5,7 +5,6 @@ using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 
@@ -26,7 +25,7 @@ namespace EsUtil.SaveEvidence.CaptureSession.MewUI;
 /// 重ねる領域（<see cref="Grid"/>）が必要なため、ホストが生成して本クラスへ渡す。<br/>
 /// <br/>
 /// <b>テーマ</b>: 切り出しのルーペの市松模様の下地色はテーマに依存する。 テーマ変更の購読はホストが行い、<br/>
-/// <see cref="UpdateCropThemeColor"/> で反映する（本クラスはテーマの通知元を知らない）。
+/// <see cref="AppearanceSettings"/> で反映する（本クラスはテーマの通知元を知らない）。
 /// </remarks>
 public sealed class CaptureSessionControl
 {

@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 /// <summary>色文字列（色名 or 16進 + 不透明度%）の解析・整形・正規化を提供するユーティリティ。</summary>
 /// <remarks>
 /// 色と不透明度を統合した文字列のうち、**保存値**と**画面表示**の 2 形式を定義する:<br/>
-/// - 保存値（<see cref="ToArgbHex"/> の出力）: <c>#AARRGGBB</c>（アルファ先頭 8 桁。 例: "#80FF0000"）<br/>
+/// - 保存値（<see cref="ToArgbHex(Color)"/> の出力）: <c>#AARRGGBB</c>（アルファ先頭 8 桁。 例: "#80FF0000"）<br/>
 /// - 画面表示（<see cref="ToDisplayText"/> / <see cref="Format"/> の出力）: <c>{色}+{不透明度%}</c><br/>
 ///   - 色名が <see cref="Colors"/> に定義されている色: 色名で表す（例: "Red"）<br/>
 ///   - 色名が未定義の色: <c>#RRGGBB</c> で表す（例: "#336699"）<br/>
@@ -303,7 +303,7 @@ public static class ColorString
     /// <returns><c>#AARRGGBB</c> 形式の文字列（例: "#80FF0000"）。</returns>
     /// <remarks>
     /// 保存値（<see cref="ColorPickerControl.SelectedColor"/> / Settings）の形式は Avalonia 標準の
-    /// <c>#AARRGGBB</c> とする（<see cref="Color.Parse"/> と整合。 不透明度はアルファ成分として統合される）。<br/>
+    /// <c>#AARRGGBB</c> とする（<see cref="Color.Parse(string)"/> と整合。 不透明度はアルファ成分として統合される）。<br/>
     /// カラーピッカー（ColorView）の OK 確定時など、色オブジェクトを直接保存値へ変換する場合に使用する。
     /// </remarks>
     public static string ToArgbHex(Color color)

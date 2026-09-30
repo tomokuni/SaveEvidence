@@ -211,7 +211,7 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>切り出し元画像の占有範囲（画面物理ピクセル）を取得する。</summary>
     /// <value>仮想スクリーン画像があればその範囲、未取得（背景撮影中）ならウィンドウが覆う仮想スクリーンの範囲。</value>
     /// <remarks>
-    /// 切り出し矩形の決定（閉区間化・画像内へのクランプ）はコア（<see cref="CaptureClipMath.ResolveCaptureRect"/>）が単一所有する。<br/>
+    /// 切り出し矩形の決定（閉区間化・画像内へのクランプ）はコア（<see cref="CaptureClipMath.ResolveCaptureRect(CaptureType, EsRectInt, EsRectInt)"/>）が単一所有する。<br/>
     /// 未取得時のフォールバック（どちらの取得経路を使うか）もコアの保持クラスが単一所有する。
     /// </remarks>
     private EsRectInt CaptureImageBounds => _captureImage.Bounds;
@@ -281,7 +281,7 @@ internal sealed partial class OverlayWindow : Window
     /// <param name="e">選択矩形イベント（Rect はドメイン = ウィンドウローカル物理ピクセル）。</param>
     /// <remarks>
     /// ドメイン（ウィンドウローカル物理ピクセル）の選択矩形を画面物理座標へ変換（Position 加算）して確定する。<br/>
-    /// 確定要求の記録と切り出しは <see cref="CompleteSelection"/> が担う。
+    /// 確定要求の記録と切り出しは <see cref="CompleteSelection(EsRect)"/> が担う。
     /// </remarks>
     private void OnAreaConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
         // ドメイン（ウィンドウローカル物理ピクセル）→ 画面物理座標の変換はコアが単一所有する

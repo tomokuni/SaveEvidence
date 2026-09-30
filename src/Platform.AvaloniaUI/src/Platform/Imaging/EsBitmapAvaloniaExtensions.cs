@@ -105,7 +105,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <returns>変換された Avalonia WriteableBitmap。</returns>
     /// <remarks>
     /// 内部 SKBitmap を複製して Avalonia に渡すため、返された Bitmap の破棄は呼び出し側が所有する。<br/>
-    /// ゼロコピーで受け渡したい場合は <see cref="ToSKBitmap(EsBitmap)"/> を使用すること。
+    /// ゼロコピーで受け渡したい場合は <c>ToSKBitmap</c> を使用すること。
     /// </remarks>
     public static unsafe WriteableBitmap ToAvaloniaWriteableBitmap(this EsBitmap bitmap)
     {

@@ -16,12 +16,12 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 /// **適用パターン**: Simple Factory（シンプルファクトリ）— 生成ロジックを静的なファクトリメソッドへ集約。<br/>
 /// <br/>
 /// **構成**:<br/>
-/// - ColorView の初期色は <see cref="ColorString.TryParse(string?, out Color, out double)"/> で解析
+/// - ColorView の初期色は <see cref="ColorString.TryParse(string, out Color, out double)"/> で解析
 ///   （失敗時は白）。 Hex 入力タブは <c>#AARRGGBB</c>（アルファ先頭）形式で表示する。<br/>
 /// - OK ボタンは <see cref="ColorString.ToArgbHex(Color)"/> で保存値へ変換し、
 ///   <see cref="Action{T}"/>（applyColor）経由で <see cref="ColorPickerControl.SelectedColor"/> へ反映する。<br/>
 /// - テーマ適用は <see cref="ColorViewThemeManager"/> に委譲する（依存は一方向）。<br/>
-/// - ログ出力は <see cref="ColorPickerLog"/> の LoggerMessage 定義を使用する。
+/// - ログ出力は <c>ColorPickerLog</c> の LoggerMessage 定義を使用する。
 /// </remarks>
 internal static class ColorPickerFlyoutFactory
 {

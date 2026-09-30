@@ -10,7 +10,7 @@ namespace EsUtil.Platform.MewUI;
 /// そのため <b>値による対応付けはできず</b>、メンバー名で変換する。<br/>
 /// <br/>
 /// <b>名前が異なるキー</b>: <see cref="EsKey.Back"/> ⇔ <see cref="MewUIKey.Backspace"/> の 1 組のみ
-/// （<see cref="KeyAliases"/> で吸収する）。<br/>
+/// （<see cref="s_esToMew"/> で吸収する）。<br/>
 /// <b>対応先がないキー</b>: MewUI が表現できない <see cref="EsKey"/>（133 メンバー。 例: <c>BrowserBack</c> / <c>DbeRoman</c>）は
 /// <see cref="MewUIKey.None"/> を返す。<br/>
 /// <b>設定ファイルの互換性</b>: ホットキーは <c>JsonStringEnumConverter</c> が名前で保存するため、<br/>

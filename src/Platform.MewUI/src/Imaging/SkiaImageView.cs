@@ -10,7 +10,7 @@ namespace EsUtil.Platform.MewUI.Imaging;
 /// <b>適用パターン</b>: Adapter（<see cref="EsBitmap"/> を MewUI の要素として適合させる）。<br/>
 /// <b>用途</b>: 「割り当てられた領域いっぱいへ 1 枚の画像を敷く」表示に使う。 表示サイズは親のレイアウトに従う<br/>
 /// （本クラス自身は要求サイズを持たない）。 縦横比から大きさを決める表示は、本クラスを継承して<br/>
-/// <see cref="MeasureContent"/> を上書きする。<br/>
+/// <c>MeasureContent</c> を上書きする。<br/>
 /// <br/>
 /// <b>配置方法</b>: <see cref="UniformDraw"/> が false（既定）の場合は領域全体へ引き伸ばし、<br/>
 /// true の場合は縦横比を保って中央へ収める（余白は描画しない）。 撮影画像のように領域と同じ縦横比の<br/>
@@ -25,7 +25,7 @@ public class SkiaImageView : SkiaCanvasView
     /// <summary><see cref="Source"/> プロパティ（表示する画像）。</summary>
     /// <remarks>
     /// 変更は描画とレイアウトの両方に影響しうる（縦横比から大きさを決める派生クラスがあるため）。<br/>
-    /// 派生クラスが <see cref="MeasureContent"/> で <see cref="Source"/> を参照するので、両方を無効化対象にする。
+    /// 派生クラスが <c>MeasureContent</c> で <see cref="Source"/> を参照するので、両方を無効化対象にする。
     /// </remarks>
     public static readonly MewProperty<EsBitmap?> SourceProperty =
         MewProperty<EsBitmap?>.Register<SkiaImageView>(
