@@ -453,4 +453,73 @@ public class EsRectTests
         Assert.Equal(3, width);
         Assert.Equal(4, height);
     }
+
+    // ====================================================================
+    // 区間の流儀（Interval）
+    // ====================================================================
+
+    [Fact]
+    public void Interval_既定は半開区間である()
+    {
+        Assert.Equal(EsRectInterval.HalfOpen, new EsRect(1, 2, 3, 4).Interval);
+        Assert.Equal(EsRectInterval.HalfOpen, default(EsRect).Interval);
+        Assert.Equal(EsRectInterval.HalfOpen, EsRect.Empty.Interval);
+    }
+
+    [Fact]
+    public void IsClosedInterval_閉区間の指定を判定する()
+    {
+        Assert.False(new EsRect(1, 2, 3, 4).IsClosedInterval);
+        Assert.True(new EsRect(1, 2, 3, 4, EsRectInterval.Closed).IsClosedInterval);
+    }
+
+    [Fact]
+    public void WithInterval_幾何を保ったまま流儀だけを差し替える()
+    {
+        var rect = new EsRect(1, 2, 3, 4).WithInterval(EsRectInterval.Closed);
+
+        Assert.Equal(new EsRect(1, 2, 3, 4, EsRectInterval.Closed), rect);
+        Assert.Equal(EsRectInterval.HalfOpen, rect.WithInterval(EsRectInterval.HalfOpen).Interval);
+    }
+
+    [Theory]
+    [InlineData(EsRectInterval.Closed)]
+    [InlineData(EsRectInterval.HalfOpen)]
+    public void 幾何を差し替えるメソッド_流儀を引き継ぐ(EsRectInterval interval)
+    {
+        var rect = new EsRect(10, 20, 100, 80, interval);
+        var other = rect.WithInterval(EsRectInterval.HalfOpen);
+
+        Assert.Equal(interval, rect.WithX(11).Interval);
+        Assert.Equal(interval, rect.WithY(21).Interval);
+        Assert.Equal(interval, rect.WithWidth(101).Interval);
+        Assert.Equal(interval, rect.WithHeight(81).Interval);
+        Assert.Equal(interval, rect.WithPosition(new EsPoint(12, 22)).Interval);
+        Assert.Equal(interval, rect.WithSize(new EsSize(102, 82)).Interval);
+        Assert.Equal(interval, rect.Offset(1, 2).Interval);
+        Assert.Equal(interval, rect.Inflate(1, 2).Interval);
+        Assert.Equal(interval, rect.Inflate(new EsThickness(1, 2, 3, 4)).Interval);
+        Assert.Equal(interval, rect.Deflate(new EsThickness(1, 2, 3, 4)).Interval);
+        Assert.Equal(interval, new EsRect(-10, -20, -100, -80, interval).Normalize().Interval);
+        Assert.Equal(interval, rect.ClampToArea(new EsSize(1000, 1000)).Interval);
+        Assert.Equal(interval, rect.Intersect(other).Interval);
+        Assert.Equal(interval, rect.Union(other).Interval);
+        Assert.Equal(interval, rect.Union(new EsPoint(0, 0)).Interval);
+        Assert.Equal(interval, new EsRect(0, 0, 0, 0, interval).Union(new EsPoint(5, 5)).Interval);
+    }
+
+    [Fact]
+    public void CenterRect_流儀は配置する矩形から引き継ぐ()
+    {
+        var area = new EsRect(0, 0, 100, 100, EsRectInterval.HalfOpen);
+        var content = new EsRect(0, 0, 40, 20, EsRectInterval.Closed);
+
+        Assert.Equal(EsRectInterval.Closed, area.CenterRect(content).Interval);
+    }
+
+    [Fact]
+    public void NearlyEquals_流儀は比較しない()
+    {
+        Assert.True(new EsRect(1, 2, 3, 4).NearlyEquals(new EsRect(1, 2, 3, 4, EsRectInterval.Closed)));
+    }
 }

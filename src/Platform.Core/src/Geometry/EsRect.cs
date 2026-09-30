@@ -14,17 +14,26 @@ namespace EsUtil.Platform.Core.Geometry;
 /// <b>Contains の区間は閉区間</b>（左右端・上下端とも含む）であり、Avalonia と同じである。 MewUI・WinUI3 は右端・下端を含まないため、<br/>
 /// その判定が必要な箇所は <see cref="ContainsExclusive"/> を使う（置き換え前の挙動を壊さないため既定は現行のまま）。<br/>
 /// <b>Left / Top / Position</b> は <see cref="X"/> / <see cref="Y"/> / <see cref="TopLeft"/> と同値のため設けない（同名の別 API を増やさない）。<br/>
-/// <b>Intersect の非交差時</b>は左上座標を保った空の矩形を返す（Avalonia は <c>default</c> を返すため意味が異なる）。
+/// <b>Intersect の非交差時</b>は左上座標を保った空の矩形を返す（Avalonia は <c>default</c> を返すため意味が異なる）。<br/>
+/// <b>区間の流儀（<see cref="Interval"/>）</b>: 幅・高さが終点を含むかどうかを値として持つ。<br/>
+/// ピクセル数へ変換するときの <c>+1</c> の判断は本値が単一所有し、下流の層は <see cref="EsRectInterval"/> を再判定しない。<br/>
+/// 既定は <see cref="EsRectInterval.HalfOpen"/>（幅 = ピクセル数）であり、従来の挙動を変えない。
 /// </remarks>
 /// <param name="X">左上 X 座標（呼び出し側の座標系に従う）。</param>
 /// <param name="Y">左上 Y 座標（呼び出し側の座標系に従う）。</param>
 /// <param name="Width">幅（0 以下は空の矩形を表す）。</param>
 /// <param name="Height">高さ（0 以下は空の矩形を表す）。</param>
-public readonly record struct EsRect(double X, double Y, double Width, double Height)
+/// <param name="Interval">幅・高さが終点を含むかどうか（既定は <see cref="EsRectInterval.HalfOpen"/> = 幅がピクセル数）。</param>
+public readonly record struct EsRect(double X, double Y, double Width, double Height, EsRectInterval Interval = EsRectInterval.HalfOpen)
 {
     /// <summary>空の矩形（全て 0）を取得する。</summary>
     /// <value>左上が原点で幅・高さとも 0 の矩形。</value>
     public static readonly EsRect Empty = default;
+
+    /// <summary>幅・高さが終点を含むかどうか（ピクセル数へ変換するときの <c>+1</c> の判断）を取得する。</summary>
+    /// <value><see cref="EsRectInterval.HalfOpen"/>（幅 = ピクセル数。 既定）または <see cref="EsRectInterval.Closed"/>。</value>
+    /// <remarks>閉区間への変換（<c>+1</c>）は利用側が本値を見て 1 箇所で行う（各所で再判定しない）。</remarks>
+    public bool IsClosedInterval => Interval == EsRectInterval.Closed;
 
     /// <summary>右端の X 座標（左上 X + 幅）。</summary>
     /// <value>呼び出し側の座標系に従う。</value>
@@ -88,67 +97,74 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
     /// <returns>成分をそのまま引き継いだ矩形。</returns>
     public static EsRect FromRectInt(EsRectInt rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
 
+    /// <summary>区間の流儀を差し替えた矩形を返す。</summary>
+    /// <param name="interval">新しい区間の流儀。</param>
+    /// <returns>座標・幅・高さを引き継ぎ、区間の流儀だけを差し替えた矩形。</returns>
+    /// <remarks>生成の 1 箇所（ドラッグ由来 = <see cref="EsRectInterval.Closed"/>、検出由来 = <see cref="EsRectInterval.HalfOpen"/>）が本メソッドを使う。</remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public EsRect WithInterval(EsRectInterval interval) => new(X, Y, Width, Height, interval);
+
     /// <summary>X 座標だけを差し替えた矩形を返す。</summary>
     /// <param name="x">新しい左上 X 座標。</param>
     /// <returns>他の成分を引き継いだ矩形。</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public EsRect WithX(double x) => new(x, Y, Width, Height);
+    public EsRect WithX(double x) => new(x, Y, Width, Height, Interval);
 
     /// <summary>Y 座標だけを差し替えた矩形を返す。</summary>
     /// <param name="y">新しい左上 Y 座標。</param>
     /// <returns>他の成分を引き継いだ矩形。</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public EsRect WithY(double y) => new(X, y, Width, Height);
+    public EsRect WithY(double y) => new(X, y, Width, Height, Interval);
 
     /// <summary>幅だけを差し替えた矩形を返す。</summary>
     /// <param name="width">新しい幅。</param>
     /// <returns>他の成分を引き継いだ矩形。</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public EsRect WithWidth(double width) => new(X, Y, width, Height);
+    public EsRect WithWidth(double width) => new(X, Y, width, Height, Interval);
 
     /// <summary>高さだけを差し替えた矩形を返す。</summary>
     /// <param name="height">新しい高さ。</param>
     /// <returns>他の成分を引き継いだ矩形。</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public EsRect WithHeight(double height) => new(X, Y, Width, height);
+    public EsRect WithHeight(double height) => new(X, Y, Width, height, Interval);
 
     /// <summary>左上座標だけを差し替えた矩形を返す。</summary>
     /// <param name="position">新しい左上座標。</param>
     /// <returns>幅・高さを引き継いだ矩形。</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public EsRect WithPosition(EsPoint position) => new(position.X, position.Y, Width, Height);
+    public EsRect WithPosition(EsPoint position) => new(position.X, position.Y, Width, Height, Interval);
 
     /// <summary>サイズだけを差し替えた矩形を返す。</summary>
     /// <param name="size">新しいサイズ。</param>
     /// <returns>左上座標を引き継いだ矩形。</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public EsRect WithSize(EsSize size) => new(X, Y, size.Width, size.Height);
+    public EsRect WithSize(EsSize size) => new(X, Y, size.Width, size.Height, Interval);
 
     /// <summary>指定量だけ平行移動した矩形を返す。</summary>
     /// <param name="dx">X 方向の移動量。</param>
     /// <param name="dy">Y 方向の移動量。</param>
     /// <returns>移動後の矩形（幅・高さは変わらない）。</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public EsRect Offset(double dx, double dy) => new(X + dx, Y + dy, Width, Height);
+    public EsRect Offset(double dx, double dy) => new(X + dx, Y + dy, Width, Height, Interval);
 
     /// <summary>4 辺を指定量だけ広げた（狭めた）矩形を返す。</summary>
     /// <param name="dx">左右へ広げる量（負値は狭める）。</param>
     /// <param name="dy">上下へ広げる量（負値は狭める）。</param>
     /// <returns>左上を (−dx, −dy) だけ移動し、幅・高さを 2×dx / 2×dy だけ増減した矩形。</returns>
-    public EsRect Inflate(double dx, double dy) => new(X - dx, Y - dy, Width + 2 * dx, Height + 2 * dy);
+    public EsRect Inflate(double dx, double dy) => new(X - dx, Y - dy, Width + 2 * dx, Height + 2 * dy, Interval);
 
     /// <summary>4 辺を厚さ分だけ広げた矩形を返す。</summary>
     /// <param name="thickness">辺ごとに広げる厚さ（負値は狭める）。</param>
     /// <returns>左・上を厚さ分移動し、幅・高さを左右・上下の合計だけ増減した矩形。</returns>
     public EsRect Inflate(EsThickness thickness)
-        => new(X - thickness.Left, Y - thickness.Top, Width + thickness.Horizontal, Height + thickness.Vertical);
+        => new(X - thickness.Left, Y - thickness.Top, Width + thickness.Horizontal, Height + thickness.Vertical, Interval);
 
     /// <summary>4 辺を厚さ分だけ狭めた矩形を返す。</summary>
     /// <param name="thickness">辺ごとに狭める厚さ（負値は広げる）。</param>
     /// <returns>左・上を厚さ分移動し、幅・高さを左右・上下の合計だけ減らした矩形（負のサイズもそのまま返す）。</returns>
     /// <remarks>負のサイズを 0 にクランプしない（クランプするかは用途で異なる。 必要な箇所は <see cref="Normalize"/> を使う）。</remarks>
     public EsRect Deflate(EsThickness thickness)
-        => new(X + thickness.Left, Y + thickness.Top, Width - thickness.Horizontal, Height - thickness.Vertical);
+        => new(X + thickness.Left, Y + thickness.Top, Width - thickness.Horizontal, Height - thickness.Vertical, Interval);
 
     /// <summary>幅・高さが正になるように正規化した矩形を返す。</summary>
     /// <returns>幅・高さが正の矩形（左上は対角へ移動する）。 既に正の場合は同じ値。 非数を含む場合は空の矩形。</returns>
@@ -178,7 +194,7 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
             height = -height;
         }
 
-        return new EsRect(x, y, width, height);
+        return new EsRect(x, y, width, height, Interval);
     }
 
     /// <summary>指定した点が本矩形の内側に含まれるかどうかを判定する。</summary>
@@ -223,7 +239,7 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
         var top = Math.Min(Y, other.Y);
         var right = Math.Max(Right, other.Right);
         var bottom = Math.Max(Bottom, other.Bottom);
-        return new EsRect(left, top, right - left, bottom - top);
+        return new EsRect(left, top, right - left, bottom - top, Interval);
     }
 
     /// <summary>点を含むように拡大した矩形を返す（和集合）。</summary>
@@ -232,21 +248,21 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
     /// <remarks>WinUI3 の <c>Rect.Union(Point)</c> と同じ操作である。</remarks>
     public EsRect Union(EsPoint point)
     {
-        if (IsEmpty) return new EsRect(point.X, point.Y, 0, 0);
+        if (IsEmpty) return new EsRect(point.X, point.Y, 0, 0, Interval);
 
         var left = Math.Min(X, point.X);
         var top = Math.Min(Y, point.Y);
         var right = Math.Max(Right, point.X);
         var bottom = Math.Max(Bottom, point.Y);
-        return new EsRect(left, top, right - left, bottom - top);
+        return new EsRect(left, top, right - left, bottom - top, Interval);
     }
 
     /// <summary>指定した矩形を本矩形の中央へ配置した矩形を返す。</summary>
     /// <param name="rect">中央へ配置する矩形。</param>
     /// <returns>本矩形の中央に置いた、<paramref name="rect"/> と同じサイズの矩形。</returns>
-    /// <remarks>Avalonia の <c>CenterRect</c> と同じ規則である。</remarks>
+    /// <remarks>Avalonia の <c>CenterRect</c> と同じ規則である。 区間の流儀は <paramref name="rect"/> から引き継ぐ（サイズを引き継ぐため）。</remarks>
     public EsRect CenterRect(EsRect rect)
-        => new(X + (Width - rect.Width) / 2, Y + (Height - rect.Height) / 2, rect.Width, rect.Height);
+        => new(X + (Width - rect.Width) / 2, Y + (Height - rect.Height) / 2, rect.Width, rect.Height, rect.Interval);
 
     /// <summary>本矩形の内側に太さ分の余白を取った 4 辺の矩形を計算する（ヒープ確保なし）。</summary>
     /// <param name="thickness">辺の太さ（矩形の内側へ取る量）。 負値はそのまま扱う（下限の正規化は呼び出し側が行う）。</param>
@@ -279,7 +295,10 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
     /// <summary>2 つの矩形がほぼ等しいかどうかを判定する。</summary>
     /// <param name="other">比較する矩形。</param>
     /// <returns>全ての成分が許容誤差の範囲で等しい場合は true。</returns>
-    /// <remarks>許容誤差の判定は <c>EsMath.AreClose</c> が単一所有する。</remarks>
+    /// <remarks>
+    /// 許容誤差の判定は <c>EsMath.AreClose</c> が単一所有する。<br/>
+    /// 幾何だけを比較し、区間の流儀（<see cref="Interval"/>）は比較しない（流儀は形状ではなく解釈の指定である）。
+    /// </remarks>
     public bool NearlyEquals(EsRect other)
         => EsMath.AreClose(X, other.X) && EsMath.AreClose(Y, other.Y)
             && EsMath.AreClose(Width, other.Width) && EsMath.AreClose(Height, other.Height);
@@ -300,6 +319,23 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
     /// <returns>(X, Y, Width, Height) 形式のタプル。</returns>
     public (double X, double Y, double Width, double Height) ToTuple() => (X, Y, Width, Height);
 
+    /// <summary>幾何の 4 成分（X・Y・幅・高さ）へ分解する。</summary>
+    /// <param name="x">左上 X 座標。</param>
+    /// <param name="y">左上 Y 座標。</param>
+    /// <param name="width">幅。</param>
+    /// <param name="height">高さ。</param>
+    /// <remarks>
+    /// 区間の流儀（<see cref="Interval"/>）は分解の対象に含めない（幾何と解釈を分けて受け取る）。<br/>
+    /// 5 成分（流儀を含む）で受け取りたい場合は <see cref="Interval"/> を直接参照する。
+    /// </remarks>
+    public void Deconstruct(out double x, out double y, out double width, out double height)
+    {
+        x = X;
+        y = Y;
+        width = Width;
+        height = Height;
+    }
+
     /// <summary>本矩形を領域（左上を原点・指定サイズ）内へクランプする（四隅の包絡矩形）。</summary>
     /// <param name="area">クランプ先の領域のサイズ（左上を原点とする。 幅・高さは 0 以上）。</param>
     /// <returns>領域内へ収めた矩形。 負の辺（幅・高さ）は 0 になる。</returns>
@@ -314,7 +350,7 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
         var top = Math.Clamp(Y, 0, area.Height);
         var right = Math.Clamp(Right, 0, area.Width);
         var bottom = Math.Clamp(Bottom, 0, area.Height);
-        return new EsRect(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
+        return new EsRect(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top), Interval);
     }
 
     /// <summary>本矩形と別の矩形の交差（重なり合う部分）を求める。</summary>
@@ -330,6 +366,6 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
         var top = Math.Max(Y, other.Y);
         var right = Math.Min(Right, other.Right);
         var bottom = Math.Min(Bottom, other.Bottom);
-        return new EsRect(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
+        return new EsRect(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top), Interval);
     }
 }

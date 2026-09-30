@@ -34,7 +34,7 @@ services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKe
 | グループ | 型 |
 | --- | --- |
 | キーと入力 | `EsKey` / `EsWindowState` / `HotKeyModifiers` / `HotKeySetting` / `CaptureType` |
-| 幾何 | `EsPoint` / `EsSize` / `EsVector` / `EsRect` とその整数版、`EsThickness` / `EsRounding` / `EsAxis` |
+| 幾何 | `EsPoint` / `EsSize` / `EsVector` / `EsRect` とその整数版、`EsThickness` / `EsRounding` / `EsRectInterval` / `EsAxis` |
 | 座標変換 | `ICoordTransform` / `CoordTransform` / `ScrollMath` / `DpiScaler` |
 | 画像 | `EsBitmap`（自前のピクセルバッファ） / `ImageDrawMath` / `ImageDrawMode` |
 | OS サービス抽象 | `ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>` |
