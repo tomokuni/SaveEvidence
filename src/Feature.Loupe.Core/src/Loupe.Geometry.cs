@@ -48,11 +48,14 @@ public sealed partial class Loupe
     // ====================================================================
 
     /// <summary>現在の状態から描画 1 フレーム分の幾何を解決する。</summary>
-    /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP。通常は <see cref="ResolveLayout"/> の結果）。</param>
+    /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP）。<see cref="ResolveLayout"/> が返したクランプ済みの値を渡す（<c>Options.RequestedSize</c> の生値ではない）。</param>
     /// <param name="availableSize">描画先の領域サイズ（物理ピクセル）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
     /// <returns>描画の幾何（描画面・拡大画像の切り出しと描画の矩形・切り出し領域の一辺を解決済み）。</returns>
     /// <remarks>
-    /// 表示サイズは呼び出し側が決めて渡す（親領域へのクランプは <see cref="ResolveLayout"/> が、<br/>
+    /// <b><see cref="ResolveLayout"/> との役割の違い</b>: <see cref="ResolveLayout"/> は「どこへ・どの大きさで置くか」を<br/>
+    /// 親領域 DIP の世界で決め、本メソッドは「何を・何ピクセルで描くか」を物理ピクセルの世界で決める<br/>
+    /// （配置の基準は親パネル、描画面の基準は描画先の表面であり、両者のクランプ結果は一致しない）。<br/>
+    /// したがって表示サイズは呼び出し側が決めて渡す（親領域へのクランプは <see cref="ResolveLayout"/> が、<br/>
     /// 実際の描画面からの導出は描画先を知る UI 層が担う）。本クラスは親領域のサイズを保持しない<br/>
     /// （保持すると「クランプの基準」が暗黙の状態になり、値をいつ解決したかに依存する）。<br/>
     /// <b>本メソッドがコアの公開する描画の唯一の入口である</b>: 装飾（十字線・枠線）・文言・表示可否・描画順は<br/>
