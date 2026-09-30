@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
+using Microsoft.Extensions.Logging;
 using System.Runtime.InteropServices;
 
 namespace EsUtil.Platform.Core.Native.Win;
@@ -8,6 +9,7 @@ namespace EsUtil.Platform.Core.Native.Win;
 /// P/Invoke 呼び出しは <c>WinNative</c> に委譲する。<br/>
 /// 自己完結型: 自ウィンドウの除外（自プロセスのウィンドウ）とスクリーン境界は外部からの設定なしに解決する。<br/>
 /// ホスト（アプリ）が生成して注入する（テストではモックを注入できる）。<br/>
+/// Windows の操作が失敗した場合は記録する（列挙の失敗は Warning、1 件ごとの矩形取得の失敗は Debug）。<br/>
 /// 継承不可。<br/>
 /// </remarks>
 public sealed class WinElementFinder : IElementFinder
@@ -15,21 +17,39 @@ public sealed class WinElementFinder : IElementFinder
     /// <summary>クラス名取得バッファのサイズ（文字数）。</summary>
     private const int ClassNameBufferSize = 256;
 
+    /// <summary>列挙の目的（検出）を表す文字列。</summary>
+    private const string FindFilter = "Find";
+
+    /// <summary>列挙の目的（一覧）を表す文字列。</summary>
+    private const string ListFilter = "List";
+
+    /// <summary>ロガー（null の場合は出力なし）。</summary>
+    private readonly ILogger _log;
+
     private IReadOnlyList<EsRectInt>? _screenBounds;
+
+    /// <summary><see cref="WinElementFinder"/> の新しいインスタンスを初期化します。</summary>
+    /// <param name="logger">ロガー。 null の場合は出力なし。</param>
+    public WinElementFinder(ILogger? logger = null)
+    {
+        _log = logger.OrNullLogger();
+    }
 
     /// <summary>全ディスプレイモニターの矩形（画面物理座標）を列挙する（自己完結）。</summary>
     /// <returns>各モニターの矩形リスト。</returns>
     /// <remarks>
     /// Win32 の <c>EnumDisplayMonitors</c> で全モニターを列挙する（Avalonia の TopLevel 非依存）。<br/>
-    /// 列挙に失敗した場合は空リストを返す（フォールバック）。
+    /// 列挙に失敗した場合は空リストを返し、失敗を記録する（フォールバック）。
     /// </remarks>
     private IReadOnlyList<EsRectInt> EnumerateMonitorBounds()
         => _screenBounds ??= EnumerateMonitorBoundsCore();
 
-    private static IReadOnlyList<EsRectInt> EnumerateMonitorBoundsCore()
+    /// <summary><see cref="EnumerateMonitorBounds"/> の実体（失敗を記録する）。</summary>
+    /// <returns>各モニターの矩形リスト。 列挙できなかった場合は空リスト。</returns>
+    private IReadOnlyList<EsRectInt> EnumerateMonitorBoundsCore()
     {
         var bounds = new List<EsRectInt>();
-        WinNative.EnumDisplayMonitors(
+        var enumerated = WinNative.EnumDisplayMonitors(
             IntPtr.Zero, IntPtr.Zero, (_, _, lprcMonitor, _) =>
             {
                 if (lprcMonitor != IntPtr.Zero)
@@ -39,6 +59,12 @@ public sealed class WinElementFinder : IElementFinder
                 }
                 return true;
             }, IntPtr.Zero);
+
+        if (!enumerated)
+        {
+            _log.LogMonitorEnumerationFailed();
+        }
+
         return bounds;
     }
 
@@ -55,7 +81,7 @@ public sealed class WinElementFinder : IElementFinder
         var selfPid = WinNative.GetCurrentProcessId();
         ElementFinderResults result = default;
 
-        WinNative.EnumWindows((hWnd, _) =>
+        var enumerated = WinNative.EnumWindows((hWnd, _) =>
         {
             if (IsEligibleWindow(hWnd, selfPid, out var candidate) && candidate.Bounds.Contains(screenPoint))
             {
@@ -64,6 +90,11 @@ public sealed class WinElementFinder : IElementFinder
             }
             return true;
         }, IntPtr.Zero);
+
+        if (!enumerated)
+        {
+            _log.LogWindowEnumerationFailed(FindFilter);
+        }
 
         return result;
     }
@@ -83,11 +114,21 @@ public sealed class WinElementFinder : IElementFinder
         if (WinNative.IsIconic(hWnd)) return false;
         if (IsExcludedClass(hWnd)) return false;
 
-        if (!WinNative.GetWindowRect(hWnd, out var rect)) return false;
+        if (!WinNative.GetWindowRect(hWnd, out var rect))
+        {
+            // 矩形を取得できないウィンドウは選択対象にできない（列挙の内部で起こりうるため Debug）
+            _log.LogWindowRectUnavailable(hWnd.ToString("X"));
+            return false;
+        }
+
         if (rect.Width <= 0 || rect.Height <= 0) return false;
 
         var handle = new EsPlatformHandle(hWnd, "HWND");
-        if (!TryGetWindowVisibleRect(handle, out var visibleRect)) return false;
+        if (!TryGetWindowVisibleRect(handle, out var visibleRect))
+        {
+            _log.LogWindowRectUnavailable(hWnd.ToString("X"));
+            return false;
+        }
         var title = GetWindowTitle(handle);
         var className = GetWindowClassName(hWnd);
         if (IsExcludedFrame(className, title)) return false;
@@ -139,12 +180,17 @@ public sealed class WinElementFinder : IElementFinder
 
         // EnumWindows: 全トップレベルウィンドウを列挙し、除外条件を適用して一覧化する
         // 除外判定は IsEligibleWindow（FindWindowUnderCursor と共用・単一所有）に委譲する。
-        WinNative.EnumWindows((hWnd, _) =>
+        var enumerated = WinNative.EnumWindows((hWnd, _) =>
         {
             if (IsEligibleWindow(hWnd, selfPid, out var candidate))
                 results.Add(candidate);
             return true;
         }, IntPtr.Zero);
+
+        if (!enumerated)
+        {
+            _log.LogWindowEnumerationFailed(ListFilter);
+        }
 
         return results;
     }

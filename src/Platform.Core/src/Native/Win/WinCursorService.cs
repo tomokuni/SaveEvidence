@@ -40,7 +40,8 @@ public sealed class WinCursorService : ICursorService
         }
         else
         {
-            // 取得失敗時は表示中とみなす（フォールバック）
+            // 取得失敗時は表示中とみなす（フォールバック）。 失敗は記録する
+            _log.LogCursorVisibilityQueryFailed();
             _cursorVisible = true;
         }
     }
@@ -51,10 +52,17 @@ public sealed class WinCursorService : ICursorService
 
     /// <summary>現在のカーソル位置を画面物理座標で取得する。</summary>
     /// <returns>現在のカーソル位置（画面物理座標）。</returns>
-    /// <remarks>WM_SETCURSOR 等の OS イベント外でカーソルの絶対位置が必要な場合に使用する。</remarks>
+    /// <remarks>
+    /// WM_SETCURSOR 等の OS イベント外でカーソルの絶対位置が必要な場合に使用する。<br/>
+    /// <b>取得に失敗した場合は原点を返し、失敗を記録する</b>（例外にしない。 高頻度で呼ばれるため既定の出力では溢れないよう Warning）。
+    /// </remarks>
     public EsPointInt GetCursorScreenPoint()
     {
-        WinNative.GetCursorPos(out var pt);
+        if (!WinNative.GetCursorPos(out var pt))
+        {
+            _log.LogCursorPositionQueryFailed();
+        }
+
         return new EsPointInt(pt.X, pt.Y);
     }
 
@@ -64,8 +72,17 @@ public sealed class WinCursorService : ICursorService
 
     /// <summary>カーソルを画面物理座標に移動する。</summary>
     /// <param name="point">移動先の画面物理座標。</param>
+    /// <remarks>
+    /// nudge（カーソルキーによる選択の移動）で使用する。<br/>
+    /// <b>移動に失敗した場合は失敗を記録する</b>（例外にしない）。
+    /// </remarks>
     public void SetCursorScreenPoint(EsPointInt point)
-        => WinNative.SetCursorPos(point.X, point.Y);
+    {
+        if (!WinNative.SetCursorPos(point.X, point.Y))
+        {
+            _log.LogCursorPositionSetFailed(point.X, point.Y);
+        }
+    }
 
     // ====================================================================
     // カーソル表示/非表示

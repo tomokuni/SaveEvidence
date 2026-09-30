@@ -402,7 +402,7 @@ public readonly record struct ElementFinderResults(
 | `WinCursorOverrideGuard` | `ICursorOverrideGuard` |
 | `WinGlobalHotKeyService<T>` | `IGlobalHotKeyService<T>`（`T : notnull`） |
 
-`Native.Win.WinNative`（internal）が Win32 P/Invoke の宣言を集約し、`Native.PlatformLog`（internal）が本層のログ定義を担います。
+`Native.Win.WinNative`（internal）が Win32 P/Invoke の宣言を集約し、`Native.NativeLogMessage`（internal）が本層のログ定義を担います。
 
 ### `Native.Imaging.EsBitmapDrawingExtensions`（static class）
 

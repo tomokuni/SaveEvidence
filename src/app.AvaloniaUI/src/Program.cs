@@ -119,8 +119,9 @@ internal static class Program
         services.AddSingleton<ISettingsService>(_ => new SettingsService(SettingsJsonContext.Default));
 
         // OS 依存サービスの登録（実装はホストが直接生成する。 アクション識別子は CaptureType）
+        // ホットキーの登録・解除の失敗は OS 操作の失敗としてアプリのログ基盤へ記録する
         services.AddSingleton<IGlobalHotKeyService<CaptureType>>(
-            _ => new WinGlobalHotKeyService<CaptureType>());
+            _ => new WinGlobalHotKeyService<CaptureType>(AppLog.CreateLogger("WinGlobalHotKeyService")));
 
         // 画像の書き込み（UI 依存の実装。 MainViewModel（app.Core）へ注入する）
         services.AddSingleton<IImageWriter, AvaloniaImageWriter>();

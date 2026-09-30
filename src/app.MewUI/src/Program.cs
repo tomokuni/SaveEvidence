@@ -79,7 +79,8 @@ internal static class Program
         var window = MainWindow.Create(services);
 
         // グローバルホットキーはウィンドウハンドルとメッセージフックを必要とするため、初回描画後に登録する
-        var hotKeys = new WinGlobalHotKeyService<CaptureType>();
+        // （登録・解除の失敗は OS 操作の失敗として同じログ基盤へ記録する）
+        var hotKeys = new WinGlobalHotKeyService<CaptureType>(s_logger);
         window.Closed += hotKeys.Dispose;
         window.FirstFrameRendered += () => RegisterHotKeys(hotKeys, window, settings, services);
 

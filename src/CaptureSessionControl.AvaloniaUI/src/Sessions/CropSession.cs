@@ -41,7 +41,8 @@ internal sealed class CropSession(
     private readonly ILogger _log = logger.OrNullLogger();
 
     /// <summary>カーソル上書き抑止（Crop 中の十字カーソル維持）。</summary>
-    private readonly ICursorOverrideGuard _cursorGuard = new WinCursorOverrideGuard();
+    /// <remarks>WndProc の差し替えに失敗した場合（OS 操作の失敗）は共通のロガーへ記録される（null の場合は出力なし）。</remarks>
+    private readonly ICursorOverrideGuard _cursorGuard = new WinCursorOverrideGuard(logger);
 
     /// <summary>座標変換ポート（ビューポートDIP ↔ 元画像ピクセル）。</summary>
     /// <remarks>

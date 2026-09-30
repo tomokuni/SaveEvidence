@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -43,9 +44,9 @@ public sealed partial class WinCaptureService(ILogger? logger = null) : ICapture
     /// </remarks>
     public EsBitmap? CaptureArea(EsRectInt bounds)
     {
-        var sdRect = new DrawingRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
-        using var sdBmp = CaptureSdBitmap(sdRect);
-        return sdBmp.ToEsBitmap();
+        var drawingRect = new DrawingRect(bounds.X, bounds.Y, bounds.Width, bounds.Height);
+        using var bitmap = CaptureBitmap(drawingRect);
+        return bitmap.ToEsBitmap();
     }
 
     /// <summary>仮想スクリーン（全モニタを包含する領域）全体を 1 回のキャプチャで取得する。</summary>
@@ -61,7 +62,12 @@ public sealed partial class WinCaptureService(ILogger? logger = null) : ICapture
         // Win32 の仮想スクリーン境界（全モニタのバウンディングボックス）を取得
         var (vx, vy, vw, vh) = WinNative.GetVirtualScreenBounds();
         origin = new EsPointInt(vx, vy);
-        if (vw <= 0 || vh <= 0) return null;
+        if (vw <= 0 || vh <= 0)
+        {
+            // 境界が取得できない場合はキャプチャできない（OS 操作の失敗として記録する）
+            _log.LogVirtualScreenBoundsInvalid(vx, vy, vw, vh);
+            return null;
+        }
 
         _log.LogVirtualScreenBounds(vx, vy, vw, vh);
         return CaptureArea(new EsRectInt(vx, vy, vw, vh));
@@ -70,20 +76,34 @@ public sealed partial class WinCaptureService(ILogger? logger = null) : ICapture
     /// <summary>指定された画面領域を System.Drawing.Bitmap としてキャプチャする（内部ヘルパー）。</summary>
     /// <param name="bounds">キャプチャする画面領域（画面物理座標）。</param>
     /// <returns>キャプチャした System.Drawing.Bitmap。</returns>
+    /// <exception cref="ExternalException">CopyFromScreen（GDI+）が失敗した場合。</exception>
     /// <remarks>
     /// CopyFromScreen は GDI の同期コールであり、DWM 応答不能時にはブロックする可能性がある。<br/>
     /// 呼び出し側（SelectionSession）はバックグラウンド実行とタイムアウトで保護する。<br/>
     /// <c>Format32bppPArgb</c>（アルファ乗算済み・不透明）で生成し、<see cref="EsBitmapDrawingExtensions.ToEsBitmap(System.Drawing.Bitmap)"/>
-    /// が PArgb を直接読み取れるようにする（アルファ強制不要）。
+    /// が PArgb を直接読み取れるようにする（アルファ強制不要）。<br/>
+    /// <b>GDI+ の失敗は記録して呼び出し側へ伝搬する</b>（Windows の操作が失敗した原因を残す）。
     /// </remarks>
-    private DrawingBitmap CaptureSdBitmap(DrawingRect bounds)
+    private DrawingBitmap CaptureBitmap(DrawingRect bounds)
     {
-        _log.LogCaptureSdBitmap(bounds);
+        _log.LogCaptureArea(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         var bitmap = new DrawingBitmap(bounds.Width, bounds.Height, PixelFormat.Format32bppPArgb);
-        using var g = Graphics.FromImage(bitmap);
-        g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, bounds.Size);
-        _log.LogCaptureSdBitmapDone(bitmap.Width, bitmap.Height);
+        using (var g = Graphics.FromImage(bitmap))
+        {
+            try
+            {
+                g.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, bounds.Size);
+            }
+            catch (ExternalException ex)
+            {
+                // 記録してから伝搬する（呼び出し側の振る舞いを変えない）
+                _log.LogCaptureFailed(bounds.X, bounds.Y, bounds.Width, bounds.Height, ex);
+                bitmap.Dispose();
+                throw;
+            }
+        }
+
+        _log.LogCaptureAreaDone(bitmap.Width, bitmap.Height);
         return bitmap;
     }
-
 }

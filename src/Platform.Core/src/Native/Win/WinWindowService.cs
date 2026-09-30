@@ -30,16 +30,24 @@ public sealed class WinWindowService : IWindowService
     /// <remarks>
     /// WS_EX_TOOLWINDOW を拡張スタイルに追加し、Alt+Tab の切り替え候補から除外する。<br/>
     /// 無効なハンドルの場合は何もしない。<br/>
+    /// <b>現在のスタイルを取得できない場合は書き換えない</b>（取得できない状態で書き換えると、既存の<br/>
+    /// 拡張スタイルのビットを失いウィンドウの振る舞いを壊すため。 失敗は記録する）。
     /// </remarks>
     public void HideFromTaskSwitcher(EsPlatformHandle handle)
     {
         var nativeHwnd = handle.Handle;
         if (nativeHwnd == IntPtr.Zero) return;
 
-        _log.LogWindowHiddenFromTaskSwitcher(nativeHwnd.ToString("X"));
-        var exStyle = WinNative.GetWindowLongPtr(nativeHwnd, WinNative.GWL_EXSTYLE).ToInt64();
-        WinNative.SetWindowLongPtr(nativeHwnd, WinNative.GWL_EXSTYLE,
-            new IntPtr(exStyle | WinNative.WS_EX_TOOLWINDOW));
+        var exStyle = WinNative.GetWindowLongPtr(nativeHwnd, WinNative.GWL_EXSTYLE);
+        if (exStyle == IntPtr.Zero)
+        {
+            _log.LogWindowStyleQueryFailed(nativeHwnd.ToString("X"));
+            return;
+        }
+
+        var success = WinNative.SetWindowLongPtr(nativeHwnd, WinNative.GWL_EXSTYLE,
+            new IntPtr(exStyle.ToInt64() | WinNative.WS_EX_TOOLWINDOW)) != IntPtr.Zero;
+        _log.LogWindowHiddenFromTaskSwitcher(nativeHwnd.ToString("X"), success);
     }
 
     /// <summary>ウィンドウをキャプチャから除外する/除外を解除する（仕様 6.2.1）。</summary>
@@ -105,16 +113,17 @@ public sealed class WinWindowService : IWindowService
         var nativeHwnd = handle.Handle;
         if (nativeHwnd == IntPtr.Zero) return;
 
-        _log.LogWindowEvacuated(nativeHwnd.ToString("X"));
-
         // 1. Topmost を解除
-        WinNative.SetWindowPos(nativeHwnd, WinNative.HWND_NOTOPMOST, 0, 0, 0, 0,
+        var unsetTopmost = WinNative.SetWindowPos(nativeHwnd, WinNative.HWND_NOTOPMOST, 0, 0, 0, 0,
             WinNative.SWP_NOMOVE | WinNative.SWP_NOSIZE | WinNative.SWP_NOACTIVATE);
 
-        // 2. ウィンドウを非表示にする
-        WinNative.ShowWindow(nativeHwnd, WinNative.SW_HIDE);
+        // 2. ウィンドウを非表示にする（戻り値は非表示化の前の可視状態であり、失敗を意味しない）
+        var wasVisible = WinNative.ShowWindow(nativeHwnd, WinNative.SW_HIDE);
 
         // 3. WM_CLOSE を送信
-        WinNative.PostMessage(nativeHwnd, WinNative.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+        var posted = WinNative.PostMessage(nativeHwnd, WinNative.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+
+        // OS 操作の結果を記録する（いずれかが失敗しても処理は続行する。 退避はベストエフォート）
+        _log.LogWindowEvacuated(nativeHwnd.ToString("X"), unsetTopmost, wasVisible, posted);
     }
 }

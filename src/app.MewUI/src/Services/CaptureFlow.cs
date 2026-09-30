@@ -54,11 +54,13 @@ internal static class CaptureFlow
             // 撮影セッション（UI 非依存のライブラリ）へ、UI 非依存のサービスを渡す。
             // 設定は Facade（CaptureSessionControl）が単一所有するため、ここでは組み立てない。
             // ログはアプリのログ基盤（AppLog）のロガーを渡し、撮影の開始・確定・キャンセルを同じファイルへ記録する。
+            // OS 操作の失敗（キャプチャ・列挙・ウィンドウ操作）も同じロガーへ記録される。
+            var logger = AppLog.CreateLogger(nameof(CaptureSessionControl));
             var overlayServices = new CaptureOverlayServices(
-                new WinCaptureService(),
-                new WinElementFinder(),
-                new WinWindowService(),
-                AppLog.CreateLogger(nameof(CaptureSessionControl)));
+                new WinCaptureService(logger),
+                new WinElementFinder(logger),
+                new WinWindowService(logger),
+                logger);
 
             var image = captureSession.Capture(owner, type, overlayServices);
             if (image is null)

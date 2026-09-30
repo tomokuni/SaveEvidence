@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.Platform.Core.Native.Win;
 
@@ -11,6 +12,7 @@ namespace EsUtil.Platform.Core.Native.Win;
 /// <br/>
 /// Windows 固有のメッセージ番号（WM_SETCURSOR）とヒットテスト値（HTCLIENT）の判定は本クラスに内蔵し、<br/>
 /// 利用側にはアタッチのみを公開する（プラットフォーム分離）。<br/>
+/// <b>OS 操作の失敗は記録する</b>（WndProc の差し替え）。<br/>
 /// ホスト（アプリ）が生成して注入する（テストではモックを注入できる）。<br/>
 /// 継承不可。<br/>
 /// </remarks>
@@ -27,6 +29,16 @@ public sealed class WinCursorOverrideGuard : ICursorOverrideGuard
 
     /// <summary>サブクラス化した WndProc デリゲート。 GC 防止のためフィールドに保持する。</summary>
     private WinNative.WndProcDelegate? _wndProcDelegate;
+
+    /// <summary>ロガー（null の場合は出力なし）。</summary>
+    private readonly ILogger _log;
+
+    /// <summary><see cref="WinCursorOverrideGuard"/> の新しいインスタンスを初期化します。</summary>
+    /// <param name="logger">ロガー。 null の場合は出力なし。</param>
+    public WinCursorOverrideGuard(ILogger? logger = null)
+    {
+        _log = logger.OrNullLogger();
+    }
 
     /// <summary>サブクラス化が設定されているかどうか。</summary>
     public bool IsAttached => _hwnd != IntPtr.Zero;
@@ -46,6 +58,12 @@ public sealed class WinCursorOverrideGuard : ICursorOverrideGuard
         _wndProcDelegate = WndProc;
         _originalWndProc = WinNative.SetWindowLongPtr(
             hwnd, WinNative.GWLP_WNDPROC, Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+
+        if (_originalWndProc == IntPtr.Zero)
+        {
+            // 差し替えに失敗すると OS によるカーソル上書きを抑止できない（OS 操作の失敗）
+            _log.LogCursorGuardSubclassFailed(hwnd.ToString("X"));
+        }
     }
 
     /// <summary>サブクラス化を解除し、元の WndProc を復元する。</summary>

@@ -149,4 +149,4 @@ flowchart TB
 ## 9. ログ
 
 本プロジェクトはログを出力しません。
-ログ定義（`PlatformLog`）は `Platform.Core`（`Native/`）が所有し、Win 実装が使用します。
+ログ定義（`NativeLogMessage`）は `Platform.Core`（`Native/`）が所有し、Win 実装が使用します。

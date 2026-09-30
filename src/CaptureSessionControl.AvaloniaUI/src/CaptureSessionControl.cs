@@ -111,7 +111,7 @@ public sealed class CaptureSessionControl : IDisposable
         var session = new SelectionCaptureSession(
             _windowService,
             new WinCaptureService(_log),
-            new WinElementFinder(),
+            new WinElementFinder(_log),
             type, _currentSettings, scaling,
             // キャプチャ完了イベントを公開イベントへ中継する（同期実行 → ホストの画像変更後に再表示）
             onCaptured: result => CaptureCompleted?.Invoke(result),
