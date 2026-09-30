@@ -3,7 +3,7 @@ using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
 
 namespace EsUtil.Feature.Loupe.Core.Setting;
 
-/// <summary>ルーペの設定（計算に必要な値。表示サイズ・拡大率）をまとめた不変の値オブジェクト。</summary>
+/// <summary>ルーペの設定（計算に必要な値。 表示サイズ・拡大率）をまとめた不変の値オブジェクト。</summary>
 /// <remarks>
 /// 個別の依存関係プロパティとして公開していた設定を 1 つの値にまとめ、UI 層の公開 API を 1 プロパティへ縮小する。<br/>
 /// 設定の既定値も本型が単一所有する（各 UI 実装は既定値を持たず、本型を UI のプロパティ型へ橋渡しするだけ）。<br/>
@@ -22,7 +22,7 @@ namespace EsUtil.Feature.Loupe.Core.Setting;
 /// <br/>
 /// <b>等価性</b>: レコードの値等価性により、同値の設定を再代入しても UI 側の変更通知（再描画）は発生しない。<br/>
 /// <br/>
-/// <b>安全域への補正</b>: 数値項目の補正は本型の生成時に適用する（<c>init</c> アクセサ。安全域は <c>Loupe.Limits</c> が単一所有する）。<br/>
+/// <b>安全域への補正</b>: 数値項目の補正は本型の生成時に適用する（<c>init</c> アクセサ。 安全域は <c>Loupe.Limits</c> が単一所有する）。<br/>
 /// 値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず、範囲内の値だけが保持される<br/>
 /// （UI 側に補正の登録を要求すると、登録を忘れた UI だけ安全域外の値を保持する）。
 /// </remarks>
@@ -37,8 +37,8 @@ public sealed record LoupeOptions
     // 寸法（表示レイアウトと描画の両方に使用する）
     // ----------------------------------------------------------------
 
-    /// <summary>ルーペの基本サイズ（DIP。一辺）を取得する。</summary>
-    /// <value>表示サイズ（DIP）。既定は 160。設定時は 1〜4096 へ補正される。</value>
+    /// <summary>ルーペの基本サイズ（DIP。 一辺）を取得する。</summary>
+    /// <value>表示サイズ（DIP）。 既定は 160。 設定時は 1〜4096 へ補正される。</value>
     /// <remarks>
     /// 表示サイズは本値（基本サイズ）を UI 層が親領域・描画先へクランプして導出する<br/>
     /// （クランプの規則は <see cref="EsSize.ClampToArea(double)"/> が単一所有する）。
@@ -50,7 +50,7 @@ public sealed record LoupeOptions
     } = RequestedSizeDefault;
 
     /// <summary>拡大率を取得する。</summary>
-    /// <value>拡大率（偶数推奨）。既定は 4。設定時は 1〜64 へ補正される。</value>
+    /// <value>拡大率（偶数推奨）。 既定は 4。 設定時は 1〜64 へ補正される。</value>
     /// <remarks>
     /// 拡大率は切り出し領域の一辺（物理ピクセルサイズ ÷ 本値の切り上げ）と、拡大画像の描画先の大きさに使う<br/>
     /// （切り上げの規則は <c>LoupeGeometry.CaptureSize</c> が単一所有する）。

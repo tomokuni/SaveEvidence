@@ -18,7 +18,7 @@ public partial class MarqueePresenter
 
     /// <summary>矩形の四辺に描く枠線の矩形を計算する。</summary>
     /// <param name="rect">対象の矩形（DIP 座標）。</param>
-    /// <param name="thickness">枠線の太さ（DIP）。補正済みの値を渡す（安全域は <c>Marquee.Limits</c> が単一所有する）。</param>
+    /// <param name="thickness">枠線の太さ（DIP）。 補正済みの値を渡す（安全域は <c>Marquee.Limits</c> が単一所有する）。</param>
     /// <returns>上・下・左・右の順の枠線矩形（4 個）。</returns>
     /// <remarks>
     /// 辺の矩形の計算は <see cref="EsRect.ComputeInnerEdges(double)"/> が単一所有する（ルーペの枠線と同じ式）。<br/>
@@ -28,9 +28,9 @@ public partial class MarqueePresenter
         => rect.ComputeInnerEdges(Math.Min(thickness, Math.Min(rect.Width, rect.Height)));
 
     /// <summary>描画面から穴あけ矩形を除いた暗転領域（4 帯）を計算する。</summary>
-    /// <param name="surface">描画面の全体（DIP。左上を原点とする矩形）。</param>
-    /// <param name="hole">穴あけ矩形（DIP）。null の場合は全面（1 領域）。</param>
-    /// <returns>暗転して塗る矩形の一覧（上・下・左・右の順）。幅・高さが 0 以下の領域は含めない。</returns>
+    /// <param name="surface">描画面の全体（DIP。 左上を原点とする矩形）。</param>
+    /// <param name="hole">穴あけ矩形（DIP）。 null の場合は全面（1 領域）。</param>
+    /// <returns>暗転して塗る矩形の一覧（上・下・左・右の順）。 幅・高さが 0 以下の領域は含めない。</returns>
     /// <remarks>
     /// 暗転領域は描画面（<paramref name="surface"/>）を基準に計算する（描画 API のコンテキスト原点は常にコントロールの左上であるため、<br/>
     /// 親座標を混ぜるとマスクが原点分ずれる）。<br/>

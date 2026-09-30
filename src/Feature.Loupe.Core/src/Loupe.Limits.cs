@@ -45,13 +45,13 @@ public sealed partial class Loupe
         /// <summary>枠線の太さの既定値（ピクセル）。</summary>
         public const int BorderThicknessDefault = 2;
 
-        /// <summary>スケーリング係数の最小値（環境値。他の数値より後に置く）。</summary>
+        /// <summary>スケーリング係数の最小値（環境値。 他の数値より後に置く）。</summary>
         public const double DipToDeviceScalingMin = 0.1;
 
         /// <summary>スケーリング係数の最大値（環境値）。</summary>
         public const double DipToDeviceScalingMax = 8.0;
 
-        /// <summary>スケーリング係数の既定値（環境値。非有限値のフォールバックも兼ねる）。</summary>
+        /// <summary>スケーリング係数の既定値（環境値。 非有限値のフォールバックも兼ねる）。</summary>
         public const double DipToDeviceScalingDefault = 1.0;
 
         /// <summary>表示サイズ要求値を安全域へ補正する（1〜4096）。</summary>
@@ -69,9 +69,9 @@ public sealed partial class Loupe
         /// <returns>安全域へ補正した値。</returns>
         public static int CoerceBorderThickness(int value) => Math.Clamp(value, BorderThicknessMin, BorderThicknessMax);
 
-        /// <summary>スケーリング係数を安全域へ補正する（0.1〜8.0。非有限値は既定値）。</summary>
+        /// <summary>スケーリング係数を安全域へ補正する（0.1〜8.0。 非有限値は既定値）。</summary>
         /// <param name="value">補正する値。</param>
-        /// <returns>安全域へ補正した値。非有限値の場合は既定値。</returns>
+        /// <returns>安全域へ補正した値。 非有限値の場合は既定値。</returns>
         public static double CoerceDipToDeviceScaling(double value)
             => CoerceFinite(value, DipToDeviceScalingMin, DipToDeviceScalingMax, DipToDeviceScalingDefault);
 

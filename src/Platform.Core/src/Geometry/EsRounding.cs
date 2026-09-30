@@ -12,7 +12,7 @@ public enum EsRounding
     /// <summary>0 の方向へ切り捨てる（<c>Math.Truncate</c> と同じ）。</summary>
     Truncate,
 
-    /// <summary>最も近い整数へ丸める（既定。0.5 は 0 から遠い方へ）。</summary>
+    /// <summary>最も近い整数へ丸める（既定。 0.5 は 0 から遠い方へ）。</summary>
     Round,
 
     /// <summary>正の無限大の方向へ切り上げる（<c>Math.Ceiling</c> と同じ）。</summary>

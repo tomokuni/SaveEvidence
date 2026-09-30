@@ -30,7 +30,7 @@ namespace EsUtil.Feature.Loupe.Presenter;
 /// <br/>
 /// <b>本クラスは UI フレームワークに依存しない</b>（色は UI 非依存の <c>System.Drawing.Color</c>、描画は行わない）。<br/>
 /// 派生クラスで <see cref="Appearance"/> を差し替えるか <see cref="ResolveDrawPlan"/> を上書きすることで、独自の見た目を提供できる<br/>
-/// （このため本クラスは <c>sealed</c> にしない。拡張点を持つことが役割である）。
+/// （このため本クラスは <c>sealed</c> にしない。 拡張点を持つことが役割である）。
 /// </remarks>
 public partial class LoupePresenter
 {
@@ -59,12 +59,12 @@ public partial class LoupePresenter
     /// <summary>層の並び（ペーストボードを除く 4 つの有無 = 16 通り）。</summary>
     /// <remarks>
     /// 描画のたびに一覧を組み立てないよう、全通りを事前生成して共有する<br/>
-    /// （<see cref="LoupeDrawPlan.Layers"/> は読取専用の参照として渡す）。層を追加した場合は本表も更新する。
+    /// （<see cref="LoupeDrawPlan.Layers"/> は読取専用の参照として渡す）。 層を追加した場合は本表も更新する。
     /// </remarks>
     private static readonly IReadOnlyList<LoupeDrawLayer>[] s_layers = CreateLayers();
 
-    /// <summary>ルーペの設定（計算に必要な値。表示サイズ・拡大率）を取得または設定する。</summary>
-    /// <value>設定の単一値。既定は <see cref="LoupeOptions.Default"/>。</value>
+    /// <summary>ルーペの設定（計算に必要な値。 表示サイズ・拡大率）を取得または設定する。</summary>
+    /// <value>設定の単一値。 既定は <see cref="LoupeOptions.Default"/>。</value>
     /// <remarks>保持・ログ・補正はコアが単一所有する（本プロパティはコアへ委譲するだけである）。</remarks>
     public LoupeOptions Options
     {
@@ -73,7 +73,7 @@ public partial class LoupePresenter
     }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
-    /// <value>スケーリング係数（0.1〜8.0）。範囲外・非有限は補正済みの値を設定する。既定は 1.0。</value>
+    /// <value>スケーリング係数（0.1〜8.0）。 範囲外・非有限は補正済みの値を設定する。 既定は 1.0。</value>
     public double DipToDeviceScaling
     {
         get => _core.DipToDeviceScaling;
@@ -81,7 +81,7 @@ public partial class LoupePresenter
     }
 
     /// <summary>拡大表示する中心座標（ドメイン座標）を取得または設定する。</summary>
-    /// <value>拡大中心（元画像ピクセル座標）。未設定は null。</value>
+    /// <value>拡大中心（元画像ピクセル座標）。 未設定は null。</value>
     public EsPoint? CenterPoint
     {
         get => _core.CenterPoint;
@@ -89,7 +89,7 @@ public partial class LoupePresenter
     }
 
     /// <summary>拡大中心からの右下オフセット（DIP）を取得または設定する。</summary>
-    /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。既定は 0。</value>
+    /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。 既定は 0。</value>
     public double PositionOffset
     {
         get => _core.PositionOffset;
@@ -97,7 +97,7 @@ public partial class LoupePresenter
     }
 
     /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
-    /// <value>ロガー。null を設定した場合は出力なし（<c>LoggerFallback</c> が吸収する）。</value>
+    /// <value>ロガー。 null を設定した場合は出力なし（<c>LoggerFallback</c> が吸収する）。</value>
     public ILogger Log
     {
         get => _core.Log;
@@ -105,7 +105,7 @@ public partial class LoupePresenter
     }
 
     /// <summary>外観（色・フォント・角丸・枠線の太さ・表示可否）を取得または設定する。</summary>
-    /// <value>外観の単一値。既定は <see cref="LoupeAppearance.Default"/>。</value>
+    /// <value>外観の単一値。 既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>
     /// 外観はコアの計算・判断に入らないため本クラスが保持する。<br/>
     /// 一部の項目だけを変える場合は <c>LoupeAppearance.Default with { ... }</c> の形で指定する。<br/>
@@ -125,19 +125,19 @@ public partial class LoupePresenter
     }
 
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。null の場合は等価変換。</param>
+    /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
     public void SetCoordTransform(ICoordTransform? port) => _core.SetCoordTransform(port);
 
     /// <summary>親領域のサイズを通知して表示レイアウト（表示サイズ・表示位置）を解決する。</summary>
-    /// <param name="parentSize">親領域のサイズ（DIP）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
-    /// <returns>表示レイアウト（表示サイズと表示位置。拡大中心が未設定の場合は位置が null）。</returns>
+    /// <param name="parentSize">親領域のサイズ（DIP）。 未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
+    /// <returns>表示レイアウト（表示サイズと表示位置。 拡大中心が未設定の場合は位置が null）。</returns>
     /// <remarks>クランプ・オフセット・中心の座標変換の規則はコアが単一所有する（本メソッドは委譲するだけである）。</remarks>
     public LoupeLayout ResolveLayout(EsSize parentSize) => _core.ResolveLayout(parentSize);
 
     /// <summary>現在の状態から描画 1 フレーム分の計画を解決する。</summary>
-    /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP。通常は <see cref="ResolveLayout"/> の結果）。</param>
-    /// <param name="availableSize">描画先の領域サイズ（物理ピクセル）。未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
-    /// <param name="measureText">テキストの実寸を測る関数。null 不可。</param>
+    /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP。 通常は <see cref="ResolveLayout"/> の結果）。</param>
+    /// <param name="availableSize">描画先の領域サイズ（物理ピクセル）。 未確定（幅または高さが 0 以下）の場合はクランプしない。</param>
+    /// <param name="measureText">テキストの実寸を測る関数。 null 不可。</param>
     /// <returns>描画計画（幾何・外観・層の順序・ラベル配置を解決済み）。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>
@@ -183,15 +183,15 @@ public partial class LoupePresenter
     }
 
     /// <summary>描く層だけを描画順に並べる。</summary>
-    /// <param name="magnifiedImage">拡大画像の切り出しと描画の矩形。null の場合は層を含めない。</param>
-    /// <param name="crosshairRects">十字線の矩形。空の場合は層を含めない。</param>
-    /// <param name="borderRects">枠線の矩形。空の場合は層を含めない。</param>
-    /// <param name="coordLabelText">中心座標ラベルのテキスト配置。null の場合は層を含めない。</param>
+    /// <param name="magnifiedImage">拡大画像の切り出しと描画の矩形。 null の場合は層を含めない。</param>
+    /// <param name="crosshairRects">十字線の矩形。 空の場合は層を含めない。</param>
+    /// <param name="borderRects">枠線の矩形。 空の場合は層を含めない。</param>
+    /// <param name="coordLabelText">中心座標ラベルのテキスト配置。 null の場合は層を含めない。</param>
     /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
     /// <remarks>
-    /// ペーストボード（画像外の色）は常に含める（描画面を置き換えて前フレームの残像を残さないため。透明色を指定した場合も描画面の消去が必要）。<br/>
+    /// ペーストボード（画像外の色）は常に含める（描画面を置き換えて前フレームの残像を残さないため。 透明色を指定した場合も描画面の消去が必要）。<br/>
     /// テキストは末尾へ置き、常に最上位にする（UI 要素として置く UI は本層を無視してよい）。<br/>
-    /// 層の有無は<b>描く値の有無</b>から決まる（層にある ⇔ 描く値がある。外観の明示フラグは値の解決時に適用済み）。<br/>
+    /// 層の有無は<b>描く値の有無</b>から決まる（層にある ⇔ 描く値がある。 外観の明示フラグは値の解決時に適用済み）。<br/>
     /// 一覧はビットの組合せで事前生成したものを返す（描画のたびの確保を避ける）。
     /// </remarks>
     private static IReadOnlyList<LoupeDrawLayer> ResolveLayers(

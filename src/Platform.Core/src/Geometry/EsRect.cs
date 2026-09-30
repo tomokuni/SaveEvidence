@@ -11,7 +11,7 @@ namespace EsUtil.Platform.Core.Geometry;
 /// <see cref="Union(EsRect)"/> / <see cref="Union(EsPoint)"/> は WinUI3 と Avalonia、<see cref="Intersects"/> /<br/>
 /// <see cref="Contains(EsRect)"/> / <see cref="CenterRect"/> / <see cref="Normalize"/> / <see cref="WithX"/> 系は Avalonia・MewUI、<br/>
 /// <see cref="Offset(double,double)"/> / <see cref="Inflate(double,double)"/> は .NET 標準・MewUI に対応する。<br/>
-/// <b>Contains の区間は閉区間</b>（左右端・上下端とも含む）であり、Avalonia と同じである。MewUI・WinUI3 は右端・下端を含まないため、<br/>
+/// <b>Contains の区間は閉区間</b>（左右端・上下端とも含む）であり、Avalonia と同じである。 MewUI・WinUI3 は右端・下端を含まないため、<br/>
 /// その判定が必要な箇所は <see cref="ContainsExclusive"/> を使う（置き換え前の挙動を壊さないため既定は現行のまま）。<br/>
 /// <b>Left / Top / Position</b> は <see cref="X"/> / <see cref="Y"/> / <see cref="TopLeft"/> と同値のため設けない（同名の別 API を増やさない）。<br/>
 /// <b>Intersect の非交差時</b>は左上座標を保った空の矩形を返す（Avalonia は <c>default</c> を返すため意味が異なる）。
@@ -146,12 +146,12 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
     /// <summary>4 辺を厚さ分だけ狭めた矩形を返す。</summary>
     /// <param name="thickness">辺ごとに狭める厚さ（負値は広げる）。</param>
     /// <returns>左・上を厚さ分移動し、幅・高さを左右・上下の合計だけ減らした矩形（負のサイズもそのまま返す）。</returns>
-    /// <remarks>負のサイズを 0 にクランプしない（クランプするかは用途で異なる。必要な箇所は <see cref="Normalize"/> を使う）。</remarks>
+    /// <remarks>負のサイズを 0 にクランプしない（クランプするかは用途で異なる。 必要な箇所は <see cref="Normalize"/> を使う）。</remarks>
     public EsRect Deflate(EsThickness thickness)
         => new(X + thickness.Left, Y + thickness.Top, Width - thickness.Horizontal, Height - thickness.Vertical);
 
     /// <summary>幅・高さが正になるように正規化した矩形を返す。</summary>
-    /// <returns>幅・高さが正の矩形（左上は対角へ移動する）。既に正の場合は同じ値。非数を含む場合は空の矩形。</returns>
+    /// <returns>幅・高さが正の矩形（左上は対角へ移動する）。 既に正の場合は同じ値。 非数を含む場合は空の矩形。</returns>
     /// <remarks>Avalonia の <c>Normalize</c> と同じ規則である（非数を含む矩形は空にする）。</remarks>
     public EsRect Normalize()
     {
@@ -185,7 +185,7 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
     /// <param name="point">判定する点。</param>
     /// <returns>含まれる場合は true。</returns>
     /// <remarks>
-    /// 左右端・上下端のいずれも含む（閉区間）。Avalonia の矩形型と同じ判定であり、
+    /// 左右端・上下端のいずれも含む（閉区間）。 Avalonia の矩形型と同じ判定であり、
     /// 置き換え前の挙動（ハンドルのヒットテスト等）を維持する。
     /// </remarks>
     public bool Contains(EsPoint point)
@@ -212,7 +212,7 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
 
     /// <summary>2 つの矩形を包含する最小の矩形を返す（和集合）。</summary>
     /// <param name="other">もう一方の矩形。</param>
-    /// <returns>両者を包含する矩形。いずれかが空（幅・高さが 0 以下）の場合はもう一方を返す。</returns>
+    /// <returns>両者を包含する矩形。 いずれかが空（幅・高さが 0 以下）の場合はもう一方を返す。</returns>
     /// <remarks>整数矩形の <see cref="EsRectInt.Union(EsRectInt)"/> と同じ規則である。</remarks>
     public EsRect Union(EsRect other)
     {
@@ -228,7 +228,7 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
 
     /// <summary>点を含むように拡大した矩形を返す（和集合）。</summary>
     /// <param name="point">含める点。</param>
-    /// <returns>点を含む最小の矩形。本矩形が空の場合は点を左上とする面積 0 の矩形。</returns>
+    /// <returns>点を含む最小の矩形。 本矩形が空の場合は点を左上とする面積 0 の矩形。</returns>
     /// <remarks>WinUI3 の <c>Rect.Union(Point)</c> と同じ操作である。</remarks>
     public EsRect Union(EsPoint point)
     {
@@ -249,7 +249,7 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
         => new(X + (Width - rect.Width) / 2, Y + (Height - rect.Height) / 2, rect.Width, rect.Height);
 
     /// <summary>本矩形の内側に太さ分の余白を取った 4 辺の矩形を計算する（ヒープ確保なし）。</summary>
-    /// <param name="thickness">辺の太さ（矩形の内側へ取る量）。負値はそのまま扱う（下限の正規化は呼び出し側が行う）。</param>
+    /// <param name="thickness">辺の太さ（矩形の内側へ取る量）。 負値はそのまま扱う（下限の正規化は呼び出し側が行う）。</param>
     /// <returns>上・下・左・右の 4 辺の矩形。</returns>
     /// <remarks>
     /// 上辺は上端、下辺は下端から太さ分、左右の辺は上下の辺の内側へ収まる（角で二重に塗らない）。<br/>
@@ -268,11 +268,11 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
     }
 
     /// <summary>本矩形の内側に太さ分の余白を取った 4 辺の矩形を計算する。</summary>
-    /// <param name="thickness">辺の太さ（矩形の内側へ取る量）。負値はそのまま扱う（下限の正規化は呼び出し側が行う）。</param>
-    /// <returns>上・下・左・右の順の辺の矩形（4 個）。左右の辺の高さは負にならず 0 にクランプされる。</returns>
+    /// <param name="thickness">辺の太さ（矩形の内側へ取る量）。 負値はそのまま扱う（下限の正規化は呼び出し側が行う）。</param>
+    /// <returns>上・下・左・右の順の辺の矩形（4 個）。 左右の辺の高さは負にならず 0 にクランプされる。</returns>
     /// <remarks>
     /// 計算は <see cref="ResolveInnerEdges(double)"/> が単一所有する（本メソッドは配列を必要とする既存 API との互換のための委譲であり、<br/>
-    /// 1 回の呼び出しで 4 要素の配列を確保する）。毎フレーム呼ばれる箇所は <see cref="ResolveInnerEdges(double)"/> を使う。
+    /// 1 回の呼び出しで 4 要素の配列を確保する）。 毎フレーム呼ばれる箇所は <see cref="ResolveInnerEdges(double)"/> を使う。
     /// </remarks>
     public IReadOnlyList<EsRect> ComputeInnerEdges(double thickness) => ResolveInnerEdges(thickness).ToArray();
 
@@ -301,8 +301,8 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
     public (double X, double Y, double Width, double Height) ToTuple() => (X, Y, Width, Height);
 
     /// <summary>本矩形を領域（左上を原点・指定サイズ）内へクランプする（四隅の包絡矩形）。</summary>
-    /// <param name="area">クランプ先の領域のサイズ（左上を原点とする。幅・高さは 0 以上）。</param>
-    /// <returns>領域内へ収めた矩形。負の辺（幅・高さ）は 0 になる。</returns>
+    /// <param name="area">クランプ先の領域のサイズ（左上を原点とする。 幅・高さは 0 以上）。</param>
+    /// <returns>領域内へ収めた矩形。 負の辺（幅・高さ）は 0 になる。</returns>
     /// <remarks>
     /// 四隅を個別にクランプし、その包絡矩形（bounding box）を返す（矩形全体を領域内へ収める）。<br/>
     /// 「四隅をクランプして包絡矩形を取る」規則を単一所有するため、一部だけがはみ出す場合も同じ手順で収まる。<br/>
@@ -319,7 +319,7 @@ public readonly record struct EsRect(double X, double Y, double Width, double He
 
     /// <summary>本矩形と別の矩形の交差（重なり合う部分）を求める。</summary>
     /// <param name="other">交差を求める相手の矩形。</param>
-    /// <returns>2 つの矩形の重なり部分。重なりが無い場合は空の矩形。</returns>
+    /// <returns>2 つの矩形の重なり部分。 重なりが無い場合は空の矩形。</returns>
     /// <remarks>
     /// 「重なりが無い場合は空」を単一所有するため、呼び出し側は <see cref="IsEmpty"/> で判定できる<br/>
     /// （<c>Math.Max(0, ...)</c> による幅・高さの切り下げを各所へ書かせない）。

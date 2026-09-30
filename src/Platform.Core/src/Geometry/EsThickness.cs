@@ -6,7 +6,7 @@ namespace EsUtil.Platform.Core.Geometry;
 /// 4 辺を個別に持つため、片側だけ太い枠も 1 つの値で表せる。<br/>
 /// 各 UI 実装の厚さ型との変換は Interop 層が提供する。
 /// </remarks>
-/// <param name="Left">左辺の厚さ（負値も許容。縮小を表す）。</param>
+/// <param name="Left">左辺の厚さ（負値も許容。 縮小を表す）。</param>
 /// <param name="Top">上辺の厚さ（負値も許容）。</param>
 /// <param name="Right">右辺の厚さ（負値も許容）。</param>
 /// <param name="Bottom">下辺の厚さ（負値も許容）。</param>

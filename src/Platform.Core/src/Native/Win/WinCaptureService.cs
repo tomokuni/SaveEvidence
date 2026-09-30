@@ -18,7 +18,7 @@ namespace EsUtil.Platform.Core.Native.Win;
 /// <see cref="ICaptureService"/> の実装であり、テスト時のモックに備える。<br/>
 /// Windows 固有の型（System.Drawing.Bitmap / Rectangle / IntPtr）は本クラス（Win 実装）の内部に閉じ、<br/>
 /// 公開 API（<see cref="ICaptureService"/>）は UI 非依存の型（<see cref="EsBitmap"/> / <see cref="EsRectInt"/>）のみを使用する。<br/>
-/// ホスト（アプリ）が生成して注入する（Windows のみ。テストではモックを注入できる）。<br/>
+/// ホスト（アプリ）が生成して注入する（Windows のみ。 テストではモックを注入できる）。<br/>
 /// System.Drawing は Windows 専用のため、本クラスは <see cref="SupportedOSPlatformAttribute"/> で Windows に限定する。<br/>
 /// 継承不可。<br/>
 /// </remarks>
@@ -34,7 +34,7 @@ public sealed partial class WinCaptureService(ILogger? logger = null) : ICapture
 
     /// <summary>指定された画面領域をキャプチャし、EsBitmap として返す。</summary>
     /// <param name="bounds">キャプチャする画面領域（画面物理座標）。</param>
-    /// <returns>キャプチャした EsBitmap。失敗時は null。破棄は呼び出し側。</returns>
+    /// <returns>キャプチャした EsBitmap。 失敗時は null。 破棄は呼び出し側。</returns>
     /// <remarks>
     /// 内部で System.Drawing（CopyFromScreen）を使用してキャプチャし、<see cref="EsBitmap"/> へ変換する。<br/>
     /// <see cref="EsBitmap"/>（SKBitmap 内部）の生成はスレッド非依存のため、<br/>
@@ -50,7 +50,7 @@ public sealed partial class WinCaptureService(ILogger? logger = null) : ICapture
 
     /// <summary>仮想スクリーン（全モニタを包含する領域）全体を 1 回のキャプチャで取得する。</summary>
     /// <param name="origin">仮想スクリーンの原点（全モニタのバウンディングボックス左上、画面物理座標）。</param>
-    /// <returns>仮想スクリーン全体の EsBitmap。キャプチャ失敗時は null。破棄は呼び出し側。</returns>
+    /// <returns>仮想スクリーン全体の EsBitmap。 キャプチャ失敗時は null。 破棄は呼び出し側。</returns>
     /// <remarks>
     /// 仮想スクリーン境界は Win32 の <c>GetSystemMetrics</c>（SM_XVIRTUALSCREEN 等）で取得し、<br/>
     /// 全モニタを包含する矩形を 1 回の CopyFromScreen でキャプチャする。<br/>

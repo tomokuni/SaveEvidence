@@ -64,13 +64,13 @@ internal static partial class WinNative
 
     /// <summary>Win32 CURSORINFO 構造体（カーソルの表示状態・位置）。</summary>
     /// <remarks>
-    /// <see cref="GetCursorInfo"/> の出力先。表示状態（<see cref="flags"/> の <see cref="CURSOR_SHOWING"/>）を<br/>
+    /// <see cref="GetCursorInfo"/> の出力先。 表示状態（<see cref="flags"/> の <see cref="CURSOR_SHOWING"/>）を<br/>
     /// 取得して、Win32 の表示カウンタと <see cref="WinCursorService"/> の状態追跡を同期するために使用する。<br/>
     /// </remarks>
     [StructLayout(LayoutKind.Sequential)]
     internal struct CURSORINFO
     {
-        /// <summary>構造体のサイズ（cbSize）。呼び出し前に設定する。</summary>
+        /// <summary>構造体のサイズ（cbSize）。 呼び出し前に設定する。</summary>
         public int cbSize;
 
         /// <summary>カーソルの表示状態（<see cref="CURSOR_SHOWING"/> とのビット演算で判定）。</summary>
@@ -91,12 +91,12 @@ internal static partial class WinNative
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     internal delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
-    /// <summary>EnumWindows のコールバック。true を返すと列挙を継続する。</summary>
+    /// <summary>EnumWindows のコールバック。 true を返すと列挙を継続する。</summary>
     /// <param name="hWnd">ウィンドウハンドル。</param>
     /// <param name="lParam">アプリケーション定義の値。</param>
     internal delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
-    /// <summary>EnumDisplayMonitors のコールバック。true を返すと列挙を継続する。</summary>
+    /// <summary>EnumDisplayMonitors のコールバック。 true を返すと列挙を継続する。</summary>
     /// <param name="hMonitor">モニターハンドル。</param>
     /// <param name="hdcMonitor">モニターのデバイスコンテキスト。</param>
     /// <param name="lprcMonitor">モニターの矩形（画面物理座標）へのポインター。</param>
@@ -202,7 +202,7 @@ internal static partial class WinNative
     internal static partial int ShowCursor([MarshalAs(UnmanagedType.Bool)] bool bShow);
 
     /// <summary>カーソルの表示状態・位置を取得する（user32.GetCursorInfo）。</summary>
-    /// <param name="pci">カーソル情報の出力先。cbSize を事前に設定する。</param>
+    /// <param name="pci">カーソル情報の出力先。 cbSize を事前に設定する。</param>
     /// <returns>成功した場合は <see langword="true"/>。</returns>
     /// <remarks>
     /// 表示状態（<see cref="CURSORINFO.flags"/> の <see cref="CURSOR_SHOWING"/>）を取得して、<br/>
@@ -212,7 +212,7 @@ internal static partial class WinNative
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static partial bool GetCursorInfo(ref CURSORINFO pci);
 
-    /// <summary>指定したウィンドウの情報を取得/設定する（user32.SetWindowLongPtrW）。WndProc サブクラス化とスタイル設定に使用する。</summary>
+    /// <summary>指定したウィンドウの情報を取得/設定する（user32.SetWindowLongPtrW）。 WndProc サブクラス化とスタイル設定に使用する。</summary>
     /// <param name="hWnd">対象ウィンドウのハンドル。</param>
     /// <param name="nIndex">設定する情報のインデックス（<see cref="GWLP_WNDPROC"/> / <see cref="GWL_EXSTYLE"/> 等）。</param>
     /// <param name="dwNewLong">設定する値。</param>
@@ -352,7 +352,7 @@ internal static partial class WinNative
     /// <see cref="WDA_EXCLUDEFROMCAPTURE"/> を設定すると、そのウィンドウは画面キャプチャ（CopyFromScreen / DXGI 等）に
     /// 一切写らなくなる（フレームタイミングに依存しない決定的な除外）。<br/>
     /// キャプチャ前に設定し、キャプチャ後に <see cref="WDA_NONE"/> へ戻す。<br/>
-    /// Windows 10 2004（build 19041）以降で利用可能。それ以前では失敗（false）を返す。<br/>
+    /// Windows 10 2004（build 19041）以降で利用可能。 それ以前では失敗（false）を返す。<br/>
     /// </remarks>
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -392,7 +392,7 @@ internal static partial class WinNative
     // ============================================================
 
     /// <summary>仮想スクリーン（全モニタを包含するバウンディングボックス）の境界を取得する。</summary>
-    /// <returns>仮想スクリーンの境界（画面物理座標）。プライマリモニタが (0,0) にない場合は負値になり得る。</returns>
+    /// <returns>仮想スクリーンの境界（画面物理座標）。 プライマリモニタが (0,0) にない場合は負値になり得る。</returns>
     /// <remarks>
     /// Win32 の仮想スクリーン全体を 1 回のキャプチャ（CopyFromScreen / BitBlt）で取得するための基準境界。<br/>
     /// 複数モニタ環境でも全モニタを包含する矩形を返す。<br/>
@@ -471,7 +471,7 @@ internal static partial class WinNative
 
     /// <summary>UI 非依存の <see cref="EsKey"/> を Win32 仮想キーコードへ変換する。</summary>
     /// <param name="key">変換対象のキー。</param>
-    /// <returns>対応する Win32 仮想キーコード。不明なキーはキャスト値。</returns>
+    /// <returns>対応する Win32 仮想キーコード。 不明なキーはキャスト値。</returns>
     /// <remarks>RegisterHotKey の vk パラメータに渡すために使用する。</remarks>
     internal static uint KeyToWin32VirtualKey(EsKey key) => key switch
     {

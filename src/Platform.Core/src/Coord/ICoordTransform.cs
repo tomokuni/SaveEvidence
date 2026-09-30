@@ -27,6 +27,6 @@ public interface ICoordTransform
     /// <returns>座標系 A の点。</returns>
     EsPoint Inverse(EsPoint p);
 
-    /// <summary>座標系 B の境界（クリップ範囲）。null = 無制限。</summary>
+    /// <summary>座標系 B の境界（クリップ範囲）。 null = 無制限。</summary>
     EsSize? Bounds { get; }
 }

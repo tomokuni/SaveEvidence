@@ -8,7 +8,7 @@ namespace EsUtil.Feature.Loupe.Presenter.Tests;
 /// <summary><see cref="LoupeAppearance"/> のテスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
 /// 色・フォント・角丸・枠線の太さ・表示可否は描画にだけ必要な設定であり、本層が単一所有する。<br/>
-/// 既定値と部分変更を検証する。実際の描画結果は描画 API を持つ UI 側のテストが画素で検証する。
+/// 既定値と部分変更を検証する。 実際の描画結果は描画 API を持つ UI 側のテストが画素で検証する。
 /// </remarks>
 public class LoupeAppearanceTests
 {

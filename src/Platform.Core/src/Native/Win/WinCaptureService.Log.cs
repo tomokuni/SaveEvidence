@@ -17,7 +17,7 @@ internal static partial class WinCaptureServiceLog
     /// 出力書式: <c>[CaptureService] CaptureVirtualScreen: bounds=({X},{Y},{Width},{Height})</c> <br/>
     /// 出力例: <c>[CaptureService] CaptureVirtualScreen: bounds=(1920,0,3840,1080)</c>
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="x">仮想スクリーン原点X。</param>
     /// <param name="y">仮想スクリーン原点Y。</param>
     /// <param name="width">仮想スクリーン幅。</param>
@@ -31,7 +31,7 @@ internal static partial class WinCaptureServiceLog
     /// 出力書式: <c>[CaptureService] CaptureSdBitmap: bounds={Bounds}</c> <br/>
     /// 出力例: <c>[CaptureService] CaptureSdBitmap: bounds={X=0,Y=0,Width=1920,Height=1080}</c>
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="bounds">キャプチャ矩形。</param>
     [LoggerMessage(LogLevel.Debug, "[CaptureService] CaptureSdBitmap: bounds={Bounds}")]
     internal static partial void LogCaptureSdBitmap(this ILogger logger, DrawingRect bounds);
@@ -42,7 +42,7 @@ internal static partial class WinCaptureServiceLog
     /// 出力書式: <c>[CaptureService] CaptureSdBitmap: done, bitmap={Width}x{Height}</c> <br/>
     /// 出力例: <c>[CaptureService] CaptureSdBitmap: done, bitmap=1920x1080</c>
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="width">Bitmap 幅。</param>
     /// <param name="height">Bitmap 高さ。</param>
     [LoggerMessage(LogLevel.Debug, "[CaptureService] CaptureSdBitmap: done, bitmap={Width}x{Height}")]

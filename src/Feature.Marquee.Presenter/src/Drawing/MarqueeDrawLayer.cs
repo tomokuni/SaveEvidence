@@ -13,7 +13,7 @@ namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 /// </remarks>
 public enum MarqueeDrawLayer
 {
-    /// <summary>選択矩形の外側・内側に描く装飾（暗転マスク・穴あけ枠・枠線・内側の塗り。描く値がある場合のみ）。</summary>
+    /// <summary>選択矩形の外側・内側に描く装飾（暗転マスク・穴あけ枠・枠線・内側の塗り。 描く値がある場合のみ）。</summary>
     Decoration,
 
     /// <summary>ドラッグハンドル（選択がある場合のみ）。</summary>
@@ -22,7 +22,7 @@ public enum MarqueeDrawLayer
     /// <summary>始点マーカー（nudge 中のみ）。</summary>
     Marker,
 
-    /// <summary>テキスト（サイズラベル・カーソル座標ラベル。テキストがある場合のみ。常に最上位）。</summary>
+    /// <summary>テキスト（サイズラベル・カーソル座標ラベル。 テキストがある場合のみ。 常に最上位）。</summary>
     /// <remarks>UI 要素として置く UI は本層を無視してよい（基底のフックの既定は何もしない）。</remarks>
     Label,
 }

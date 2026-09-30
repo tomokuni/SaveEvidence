@@ -13,7 +13,7 @@ public static class DrawingColorExtensions
 {
     /// <summary>色が可視（アルファが 0 より大きい）かどうかを判定する。</summary>
     /// <param name="color">判定する色。</param>
-    /// <returns>アルファが 0 より大きい場合は true。アルファ 0（完全な透明）の場合は false。</returns>
+    /// <returns>アルファが 0 より大きい場合は true。 アルファ 0（完全な透明）の場合は false。</returns>
     /// <remarks>判定に使うのはアルファのみである（RGB は描画に現れないため見ない）。</remarks>
     public static bool IsVisible(this DrawingColor color) => color.A > 0;
 

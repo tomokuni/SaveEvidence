@@ -14,7 +14,7 @@ namespace EsUtil.Feature.Loupe.Presenter.Tests;
 /// </remarks>
 public class LoupeDrawPlanTests
 {
-    /// <summary>描画計画の一辺（DIP/物理ピクセル。スケーリング 1.0）。</summary>
+    /// <summary>描画計画の一辺（DIP/物理ピクセル。 スケーリング 1.0）。</summary>
     private const int LoupeSize = 32;
 
     [Fact]

@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 namespace EsUtil.Feature.Marquee.Core.Drawing;
 
 /// <summary>ドラッグハンドルの描画内容（描画に必要な値のみをコアが決定した結果）。</summary>
-/// <param name="Rects">ハンドルの矩形（DIP。ハンドル 8 方向の位置と大きさをコアが解決済み）。</param>
+/// <param name="Rects">ハンドルの矩形（DIP。 ハンドル 8 方向の位置と大きさをコアが解決済み）。</param>
 /// <param name="BorderThickness">ハンドル枠の線の太さ（DIP）。</param>
 /// <remarks>
 /// ハンドルの中心位置（8 方向）と一辺サイズの適用は <see cref="Marquee.ResolveGeometry"/> が単一所有するため、<br/>

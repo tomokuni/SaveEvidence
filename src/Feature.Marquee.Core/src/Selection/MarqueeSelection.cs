@@ -4,12 +4,12 @@ using EsUtil.Platform.Core.Geometry;
 namespace EsUtil.Feature.Marquee.Core.Selection;
 
 /// <summary>選択矩形（ドメイン座標）と、その矩形だけから決まる純粋な幾何計算。</summary>
-/// <param name="Rect">選択矩形（ドメイン座標）。未選択は幅・高さが 0。</param>
+/// <param name="Rect">選択矩形（ドメイン座標）。 未選択は幅・高さが 0。</param>
 /// <remarks>
 /// <b>適用パターン</b>: Value Object（不変の矩形と、その値だけから決まる計算を 1 つの型へ閉じる）。<br/>
 /// <br/>
 /// ハンドル位置・対角・ドラッグ変形・境界クリップは「その矩形」に対する計算であるため、独立した静的クラスではなく<br/>
-/// 値の振る舞いとして持つ（利用者に矩形を引数で渡させない。矩形を差し替える操作は新しい値を返す）。<br/>
+/// 値の振る舞いとして持つ（利用者に矩形を引数で渡させない。 矩形を差し替える操作は新しい値を返す）。<br/>
 /// 状態機械（<see cref="MarqueeState"/>）とコアの幾何の解決（<c>Marquee.ResolveGeometry</c>）が共通利用する（DRY 原則）。<br/>
 /// コア型（<see cref="EsRect"/> / <see cref="EsPoint"/>）のみに依存し、UI フレームワークへ依存しない（UI 型との相互変換は各 UI の Interop 層が担う）。<br/>
 /// <b>可視性</b>: 状態機械の内部手順とコアの幾何の解決だけが使う（描画層は解決済みの矩形を受け取る）ため internal とする。
@@ -30,7 +30,7 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
 
     /// <summary>指定したハンドルの位置（矩形上の点）を取得する。</summary>
     /// <param name="handle">ハンドル種別。</param>
-    /// <returns>ハンドルの位置。未知のハンドル（<see cref="MarqueeHitTarget.None"/> を含む）の場合は右下隅。</returns>
+    /// <returns>ハンドルの位置。 未知のハンドル（<see cref="MarqueeHitTarget.None"/> を含む）の場合は右下隅。</returns>
     /// <remarks>
     /// ハンドル位置はヒットテスト・nudge の追従先・描画（ハンドル矩形の中心）で共通利用する（DRY 原則）。<br/>
     /// 移動（<see cref="MarqueeHitTarget.Move"/>）は矩形の中心を返す（掴む位置の基準）。
@@ -54,7 +54,7 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
     /// <returns>始点と反対側の隅の座標。</returns>
     /// <remarks>
     /// 矩形の左端が始点の X と一致する場合は右辺（<see cref="EsRect.Right"/>）、それ以外は左端を終点とする<br/>
-    /// （Y も同様に下端または上端）。nudge の終点移動と基点更新で共通利用する。<br/>
+    /// （Y も同様に下端または上端）。 nudge の終点移動と基点更新で共通利用する。<br/>
     /// 浮動小数の誤差を許容するため、一致判定には微小なしきい値を使う。
     /// </remarks>
     internal EsPoint OppositeCorner(EsPoint startPoint)
@@ -101,7 +101,7 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
     /// <param name="dx">X 方向の移動量（ドメイン座標）。</param>
     /// <param name="dy">Y 方向の移動量（ドメイン座標）。</param>
     /// <param name="handle">アクティブなハンドル。</param>
-    /// <param name="minSize">選択矩形の最小サイズ（補正済みの値を渡す。安全域は <c>Marquee.Limits</c> が単一所有する）。</param>
+    /// <param name="minSize">選択矩形の最小サイズ（補正済みの値を渡す。 安全域は <c>Marquee.Limits</c> が単一所有する）。</param>
     /// <returns>変形後の選択矩形（反転を正規化し、最小サイズを保証する）。</returns>
     /// <remarks>
     /// ハンドルを反対側までドラッグした場合（左端が右端を超える等）は矩形を反転（正規化）する。<br/>

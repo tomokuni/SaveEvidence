@@ -30,7 +30,7 @@ namespace EsUtil.Feature.Marquee.Core;
 /// 装飾の設定の保持、ラベルの文言プロバイダの保持。<br/>
 /// <br/>
 /// <b>描画は本コアの関心事ではない</b>: 本コアは描画 API も描画面も知らない（幾何の値（<c>MarqueeGeometry</c>）と<br/>
-/// その描画順を表す層のデータを返すだけである）。描画は UI 層が行い、<br/>
+/// その描画順を表す層のデータを返すだけである）。 描画は UI 層が行い、<br/>
 /// 層の順序に従った描画手順は描画層（本コアを参照する上位の層）が単一所有する。<br/>
 /// <br/>
 /// <b>UI 層の責務</b>: 入力イベントの受付と座標変換（<see cref="ToDomain"/> / <see cref="ToDip"/>）、<br/>
@@ -49,10 +49,10 @@ public sealed partial class Marquee
     /// <summary>効果（フォーカス・再描画・カーソル操作）の適用先（UI 層が実装する）。</summary>
     private readonly IMarqueeEffects _effects;
 
-    /// <summary>カーソルサービス（nudge のカーソル移動・表示切替）。null の場合はカーソル操作を行わない。</summary>
+    /// <summary>カーソルサービス（nudge のカーソル移動・表示切替）。 null の場合はカーソル操作を行わない。</summary>
     private readonly ICursorService? _cursor;
 
-    /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は <see cref="DomainToDipScaling"/> を倍率として使う）。</summary>
+    /// <summary>外部から指定された座標変換ポート（null = 未指定。 未指定時は <see cref="DomainToDipScaling"/> を倍率として使う）。</summary>
     /// <remarks>
     /// セッションは null を等価変換に置換して保持するため、<b>指定の有無（null かどうか）は本フィールドだけが保持する</b>。<br/>
     /// この区別が必要なのは、ポート未指定時に倍率（<see cref="DomainToDipScaling"/>）を使う規則をコアが単一所有するためである。
@@ -63,9 +63,9 @@ public sealed partial class Marquee
     private double _domainToDipScaling = DomainToDipScalingDefault;
 
     /// <summary>ファサードを初期化する。</summary>
-    /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。null 不可。</param>
-    /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
-    /// <param name="options">初期設定。null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
+    /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。 null 不可。</param>
+    /// <param name="cursor">カーソルサービス。 null 可（null の場合はカーソル操作を行わない）。</param>
+    /// <param name="options">初期設定。 null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="effects"/> が null の場合。</exception>
     public Marquee(
         IMarqueeEffects effects,
@@ -80,12 +80,12 @@ public sealed partial class Marquee
         _session.Notified += OnSessionNotified;
     }
 
-    /// <summary>上位（UI 層）へ伝える通知。UI 層は自 UI の公開イベントへ転送する。</summary>
+    /// <summary>上位（UI 層）へ伝える通知。 UI 層は自 UI の公開イベントへ転送する。</summary>
     /// <remarks>通知の種別と公開イベントの対応は UI 層が持ち、判断（確定・キャンセル等）は本クラスが済ませている。</remarks>
     public event EventHandler<MarqueeNotice>? Notified;
 
     /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
-    /// <value>注入されたロガー。null 可（null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> へフォールバックする）。</value>
+    /// <value>注入されたロガー。 null 可（null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/> へフォールバックする）。</value>
     /// <remarks>保持・フォールバック・各判断のログ出力はセッション（コア）が単一所有する（本クラスは委譲するだけ）。</remarks>
     public ILogger Log
     {
@@ -98,7 +98,7 @@ public sealed partial class Marquee
     // ====================================================================
 
     /// <summary>現在の設定（寸法・対話パラメータ）を取得または設定する。</summary>
-    /// <value>反映済みの設定。既定は <see cref="MarqueeOptions.Default"/>。</value>
+    /// <value>反映済みの設定。 既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定すると対話パラメータをセッションへ伝搬し（境界外選択の禁止の即時クリップを含む）、再描画を要求する。<br/>
     /// 同値の設定を再適用しても効果は発生しない（判断はコアが単一所有する）。
@@ -110,10 +110,10 @@ public sealed partial class Marquee
     }
 
     /// <summary>ポート未指定時に適用する倍率を取得または設定する。</summary>
-    /// <value>ドメイン → DIP の倍率。既定は 1.0。設定時は 0.1〜8.0 へ補正される（0 以下・等倍は等価変換として扱う）。</value>
+    /// <value>ドメイン → DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される（0 以下・等倍は等価変換として扱う）。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
-    /// 座標変換ポート（<see cref="SetCoordTransform"/>）が設定されている場合は使われない（ポート優先。規則はコアが単一所有する）。<br/>
+    /// 座標変換ポート（<see cref="SetCoordTransform"/>）が設定されている場合は使われない（ポート優先。 規則はコアが単一所有する）。<br/>
     /// 選択矩形と十字マーカーの描画はセッションのポートのみを使うため本値の影響を受けない<br/>
     /// （本値が影響するのはサイズラベル・座標ラベルの位置と寸法）。
     /// </remarks>
@@ -130,7 +130,7 @@ public sealed partial class Marquee
     }
 
     /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
-    /// <value>ハイライト矩形。null（既定）の場合はハイライトしない。</value>
+    /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
     /// <remarks>
     /// ホストが与える実行時状態である（選択矩形と異なり選択コントロールの操作では変化しない）。<br/>
     /// 穴あけ矩形の優先順（ハイライト → 選択）の規則はコアが単一所有する。<br/>
@@ -158,16 +158,16 @@ public sealed partial class Marquee
     public bool HasSelection => _session.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
-    /// <value>選択矩形。未選択時は 0x0 の空矩形。</value>
+    /// <value>選択矩形。 未選択時は 0x0 の空矩形。</value>
     public EsRect SelectionRect => _session.SelectionRect;
 
     /// <summary>現在の選択状態のスナップショット（ポーリング不要の完全状態）を生成する。</summary>
-    /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。null の場合は直近の位置。</param>
+    /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。 null の場合は直近の位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・操作フラグを含むスナップショット。</returns>
     public MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null) => _session.CreateSnapshot(mousePosition);
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート。null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
+    /// <param name="port">座標変換ポート。 null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
     /// <remarks>
     /// ホストがモードに応じた変換ポートを設定する（範囲選択: 仮想スクリーンピクセル / 切出し: 元画像ピクセル）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
@@ -218,7 +218,7 @@ public sealed partial class Marquee
 
     /// <summary>キー入力を通知する（Escape のキャンセル・Enter の確定・矢印キーの微調整）。</summary>
     /// <param name="key">押下されたキー。</param>
-    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。取得できない場合は null。</param>
+    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。 取得できない場合は null。</param>
     /// <returns>入力が処理された場合は true（UI 層は自 UI の「処理済み」フラグへ設定する）。</returns>
     /// <remarks>
     /// キーの解釈（nudge の許可条件を含む）はセッションが単一所有し、返された効果を本クラスが UI へ適用する。<br/>
@@ -249,7 +249,7 @@ public sealed partial class Marquee
 
     /// <summary>選択状態と nudge 状態を初期化する（再描画される）。</summary>
     /// <remarks>
-    /// nudge 中だった場合はカーソルを再表示する（非表示の残留を防ぐ。判断はセッションが単一所有する）。<br/>
+    /// nudge 中だった場合はカーソルを再表示する（非表示の残留を防ぐ。 判断はセッションが単一所有する）。<br/>
     /// 上位（UI 層）が対話を終了する場合の後片付けにも本メソッドを使う（「終了」自体は UI のライフサイクルであり、<br/>
     /// コアが必要とするのは「対話状態の初期化」だけである）。
     /// </remarks>
@@ -268,7 +268,7 @@ public sealed partial class Marquee
     // ====================================================================
 
     /// <summary>現在の状態から描画 1 フレーム分の入力を生成する。</summary>
-    /// <param name="clientSize">描画領域のサイズ（DIP。UI 実装の描画先のサイズ）。</param>
+    /// <param name="clientSize">描画領域のサイズ（DIP。 UI 実装の描画先のサイズ）。</param>
     /// <returns>描画の入力（設定・状態と、描画時に決まる値を解決済み）。</returns>
     /// <remarks>
     /// 設定・状態の読み出し（選択矩形・マーカー位置・マウス位置・ハイライト矩形）は本メソッドが単一所有するため、<br/>

@@ -8,16 +8,16 @@ namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 /// <summary>選択矩形コントロールの描画 1 フレーム分の計画（描画層が解決した値を UI 層へ渡す唯一の契約）。</summary>
 /// <param name="Appearance">外観（色・ラベルの体裁・枠線の太さ・表示可否）。</param>
 /// <param name="SurfaceBounds">描画面の全体（左上を原点とする矩形・DIP）。</param>
-/// <param name="HoleRect">穴あけ矩形（DIP。閉区間は解決済み）。選択もハイライトも無い場合は null。</param>
-/// <param name="LabelAnchor">ラベルの基準点（穴あけ矩形の内側へ寄せた左上・DIP）。穴あけ矩形が無い場合は null。</param>
-/// <param name="OverlayRegions">暗転して塗る領域（DIP）。暗転を描かない設定の場合は空。</param>
-/// <param name="OuterBorderRects">穴あけ枠の矩形（DIP の 4 辺）。枠線を描かない設定または穴あけ矩形が無い場合は空。</param>
-/// <param name="InnerFillRect">穴あけ矩形の内側の塗り（DIP）。塗らない設定または穴あけ矩形が無い場合は null。</param>
-/// <param name="InnerBorderRects">穴あけ矩形の内側の枠線（DIP の 4 辺）。描かない設定または穴あけ矩形が無い場合は空。</param>
-/// <param name="Handles">ドラッグハンドルの幾何（DIP の矩形列と枠線の太さ）。選択が無い場合は null。</param>
-/// <param name="Marker">始点マーカー（DIP）。nudge 中でない場合は null。</param>
-/// <param name="Layers">描く層とその順序（<b>描画順は描画層が単一所有する</b>）。先頭から順に処理する。</param>
-/// <param name="Labels">テキスト（サイズラベル・カーソル座標ラベル）の配置指示。表示しない場合は空。</param>
+/// <param name="HoleRect">穴あけ矩形（DIP。 閉区間は解決済み）。 選択もハイライトも無い場合は null。</param>
+/// <param name="LabelAnchor">ラベルの基準点（穴あけ矩形の内側へ寄せた左上・DIP）。 穴あけ矩形が無い場合は null。</param>
+/// <param name="OverlayRegions">暗転して塗る領域（DIP）。 暗転を描かない設定の場合は空。</param>
+/// <param name="OuterBorderRects">穴あけ枠の矩形（DIP の 4 辺）。 枠線を描かない設定または穴あけ矩形が無い場合は空。</param>
+/// <param name="InnerFillRect">穴あけ矩形の内側の塗り（DIP）。 塗らない設定または穴あけ矩形が無い場合は null。</param>
+/// <param name="InnerBorderRects">穴あけ矩形の内側の枠線（DIP の 4 辺）。 描かない設定または穴あけ矩形が無い場合は空。</param>
+/// <param name="Handles">ドラッグハンドルの幾何（DIP の矩形列と枠線の太さ）。 選択が無い場合は null。</param>
+/// <param name="Marker">始点マーカー（DIP）。 nudge 中でない場合は null。</param>
+/// <param name="Layers">描く層とその順序（<b>描画順は描画層が単一所有する</b>）。 先頭から順に処理する。</param>
+/// <param name="Labels">テキスト（サイズラベル・カーソル座標ラベル）の配置指示。 表示しない場合は空。</param>
 /// <remarks>
 /// <b>描く値はすべて本値に解決済み</b>である（描画実装は計算を持たず、<paramref name="Layers"/> の順に写すだけ）。<br/>
 /// したがって描画実装が幾何計算（矩形の導出・ハイライトの優先順・閉区間の解決）を行うことはない。<br/>

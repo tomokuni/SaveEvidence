@@ -24,7 +24,7 @@ internal static partial class LoupeLogMessage
 
     /// <summary>設定値変更のログ（変更前後）。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Loupe.Core] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値（整形済み）。</param>
     /// <param name="newValue">変更後の値（整形済み）。</param>
@@ -37,7 +37,7 @@ internal static partial class LoupeLogMessage
     /// 「変化したときだけ出力する」判断と数値の文字列化は <see cref="LogSettingChangedIfChanged"/> が単一所有する<br/>
     /// （外観設定の再適用でログが溢れるのを防ぐ規則）。
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -46,7 +46,7 @@ internal static partial class LoupeLogMessage
 
     /// <summary>実数設定値の変更ログ（同値の再設定では出力しない）。</summary>
     /// <remarks><see cref="LogSettingChanged(ILogger, string, int, int)"/> の実数版（書式・規則とも同一）。</remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -58,7 +58,7 @@ internal static partial class LoupeLogMessage
     /// <see cref="LogSettingChanged(ILogger, string, int, int)"/> の真偽版。<br/>
     /// <c>bool</c> は <see cref="IFormattable"/> を実装しないため本体の汎用版へは委譲できない（書式は型の標準表記）。
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -74,7 +74,7 @@ internal static partial class LoupeLogMessage
 
     /// <summary>数値設定値の変更ログ（同値の再設定では出力しない）の本体。</summary>
     /// <typeparam name="T">数値の型（整数・実数）。</typeparam>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -102,7 +102,7 @@ internal static partial class LoupeLogMessage
     /// 中心はマウス移動のたびに設定されるため、「変化したときだけ出力する」判断を本メソッドが単一所有する<br/>
     /// （出力をコアが行うため、UI 層は同値判定を持たない）。
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の拡大中心（未設定は null）。</param>
     /// <param name="newValue">変更後の拡大中心（未設定は null）。</param>
     internal static void LogCenterPointChanged(this ILogger logger, EsPoint? oldValue, EsPoint? newValue)
@@ -122,7 +122,7 @@ internal static partial class LoupeLogMessage
     /// （UI 層は前後の値を渡さず、コアが保持する値の変化を知るだけでよい）。<br/>
     /// 外観の再適用で設定数ぶんのログが溢れないよう、各項目のログが同値判定を行う（変化した項目だけが出力される）。
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の設定。</param>
     /// <param name="newValue">変更後の設定。</param>
     internal static void LogOptionsChanged(this ILogger logger, LoupeOptions oldValue, LoupeOptions newValue)
@@ -132,8 +132,8 @@ internal static partial class LoupeLogMessage
     }
 
     /// <summary>拡大中心（ドメイン座標）を文字列化する。</summary>
-    /// <param name="point">拡大中心。未設定は null。</param>
-    /// <returns><c>(X, Y)</c> 形式の文字列。未設定は <c>null</c>。</returns>
+    /// <param name="point">拡大中心。 未設定は null。</param>
+    /// <returns><c>(X, Y)</c> 形式の文字列。 未設定は <c>null</c>。</returns>
     /// <remarks>
     /// 座標はドメイン座標（元画像ピクセル）のため、そのままの値を表示する（丸めない）。<br/>
     /// 数値の書式は現在のカルチャに依存しない（ログを環境非依存にする）。

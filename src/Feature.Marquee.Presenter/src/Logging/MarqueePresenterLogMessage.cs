@@ -19,7 +19,7 @@ internal static partial class MarqueePresenterLogMessage
 {
     /// <summary>設定値変更のログ（変更前後）。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Presenter] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値（整形済み）。</param>
     /// <param name="newValue">変更後の値（整形済み）。</param>
@@ -27,7 +27,7 @@ internal static partial class MarqueePresenterLogMessage
     internal static partial void LogSettingChanged(this ILogger logger, string name, string oldValue, string newValue);
 
     /// <summary>整数設定値の変更ログ（同値の再設定では出力しない）。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -35,7 +35,7 @@ internal static partial class MarqueePresenterLogMessage
         => logger.LogSettingChangedIfChanged(name, oldValue, newValue);
 
     /// <summary>実数設定値の変更ログ（同値の再設定では出力しない）。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -43,7 +43,7 @@ internal static partial class MarqueePresenterLogMessage
         => logger.LogSettingChangedIfChanged(name, oldValue, newValue);
 
     /// <summary>真偽設定値の変更ログ（同値の再設定では出力しない）。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -58,12 +58,12 @@ internal static partial class MarqueePresenterLogMessage
     }
 
     /// <summary>色設定値の変更ログ（同値の再設定では出力しない）。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の色。</param>
     /// <param name="newValue">変更後の色。</param>
     /// <remarks>
-    /// 同値の判定は成分（<see cref="DrawingColor.ToArgb"/>）で行う。色の <c>==</c> は生成経路（名前付き色か<br/>
+    /// 同値の判定は成分（<see cref="DrawingColor.ToArgb"/>）で行う。 色の <c>==</c> は生成経路（名前付き色か<br/>
     /// ARGB 生成か）の違いでも不一致になるため、同じ色に「変更なし」のログが出てしまうのを防ぐ。
     /// </remarks>
     internal static void LogSettingChanged(this ILogger logger, string name, DrawingColor oldValue, DrawingColor newValue)
@@ -83,7 +83,7 @@ internal static partial class MarqueePresenterLogMessage
     /// （ホストは前後の値を渡さず、値を保持する提示層が変化を知るだけでよい）。<br/>
     /// 外観の再適用で項目数ぶんのログが溢れないよう、各項目のログが同値判定を行う（変化した項目だけが出力される）。
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の外観。</param>
     /// <param name="newValue">変更後の外観。</param>
     internal static void LogAppearanceChanged(this ILogger logger, MarqueeAppearance oldValue, MarqueeAppearance newValue)
@@ -120,7 +120,7 @@ internal static partial class MarqueePresenterLogMessage
 
     /// <summary>数値設定値の変更ログ（同値の再設定では出力しない）の本体。</summary>
     /// <typeparam name="T">数値の型（整数・実数）。</typeparam>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>

@@ -71,11 +71,11 @@ public static class DpiScaler
     }
     /// <summary>物理ピクセルの長さを DIP へ変換する（<see cref="ScaleToPixel(int, double)"/> の逆変換）。</summary>
     /// <param name="physical">変換する物理ピクセルの長さ。</param>
-    /// <param name="scaling">スケーリング係数（表示 DIP → 物理ピクセル）。0 以下は基準値へ正規化する。</param>
+    /// <param name="scaling">スケーリング係数（表示 DIP → 物理ピクセル）。 0 以下は基準値へ正規化する。</param>
     /// <returns>DIP の長さ。</returns>
     /// <remarks>
     /// ウィンドウの位置・サイズを物理ピクセルから DIP へ戻す場面（全モニタの包含矩形をウィンドウへ適用する等）で使う。<br/>
-    /// <b>切り上げ・最低 1 の正規化は行わない</b>（座標の換算では値をそのまま保つ。DIP 値へ変換する方向では
+    /// <b>切り上げ・最低 1 の正規化は行わない</b>（座標の換算では値をそのまま保つ。 DIP 値へ変換する方向では
     /// 最低値の規則を持ち込むと、ウィンドウの幅が 1 以上に化けてレイアウトが崩れる）。<br/>
     /// 係数の正規化（0 以下は基準値）は <see cref="NormalizeScaling"/> と単一所有であり、変換の対称性を保つ。
     /// </remarks>
@@ -83,14 +83,14 @@ public static class DpiScaler
 
     /// <summary>物理ピクセルの長さを DIP へ変換する（<see cref="ScaleToPixel(double, double)"/> の逆変換）。</summary>
     /// <param name="physical">変換する物理ピクセルの長さ（浮動小数）。</param>
-    /// <param name="scaling">スケーリング係数（表示 DIP → 物理ピクセル）。0 以下は基準値へ正規化する。</param>
+    /// <param name="scaling">スケーリング係数（表示 DIP → 物理ピクセル）。 0 以下は基準値へ正規化する。</param>
     /// <returns>DIP の長さ。</returns>
     /// <remarks>丸めを行わない（切り上げ・最低 1 の規則は物理ピクセルへ変換する方向のものであり、逆方向には適用しない）。</remarks>
     public static double ToDip(double physical, double scaling) => physical / NormalizeScaling(scaling);
 
     /// <summary>物理ピクセルのサイズを DIP のサイズへ変換する（<see cref="ScaleToPixel(int, double)"/> の逆変換）。</summary>
     /// <param name="physicalSize">変換する物理ピクセルのサイズ。</param>
-    /// <param name="scaling">スケーリング係数（表示 DIP → 物理ピクセル）。0 以下は基準値へ正規化する。</param>
+    /// <param name="scaling">スケーリング係数（表示 DIP → 物理ピクセル）。 0 以下は基準値へ正規化する。</param>
     /// <returns>DIP のサイズ。</returns>
     /// <remarks>
     /// 成分ごとの換算は <see cref="ToDip(double, double)"/>（単一所有者）へ委譲する（両 UI で同じ丸め規則になる）。<br/>

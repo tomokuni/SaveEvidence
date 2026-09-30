@@ -64,7 +64,7 @@ public sealed class CoordTransform : ICoordTransform
     }
 
     /// <summary>ドメイン座標 = ローカル DIP × 倍率のスケーリングポートを生成する（Forward = DIP→ドメインの乗算）。</summary>
-    /// <param name="factorProvider">DIP → ドメインのスケール倍率を提供する関数（呼び出し毎に評価。0 以下の場合は 1.0 として扱う）。</param>
+    /// <param name="factorProvider">DIP → ドメインのスケール倍率を提供する関数（呼び出し毎に評価。 0 以下の場合は 1.0 として扱う）。</param>
     /// <returns>Forward = ローカル DIP → ドメイン（倍率で乗算）、Inverse = ドメイン → ローカル DIP（倍率で除算）のポート。</returns>
     /// <remarks>
     /// ドメイン座標（例: 画面物理ピクセル = ローカル DIP × DisplayScaling）に合わせた方向のスケーリングポートを提供する。<br/>
@@ -82,7 +82,7 @@ public sealed class CoordTransform : ICoordTransform
     }
 
     /// <summary>ドメイン座標 = ローカル DIP × 倍率のスケーリングポートを、境界付きで生成する。</summary>
-    /// <param name="factorProvider">DIP → ドメインのスケール倍率を提供する関数（呼び出し毎に評価。0 以下の場合は 1.0 として扱う）。</param>
+    /// <param name="factorProvider">DIP → ドメインのスケール倍率を提供する関数（呼び出し毎に評価。 0 以下の場合は 1.0 として扱う）。</param>
     /// <param name="boundsProvider">ドメイン座標の境界（画像サイズ等）を提供する関数（呼び出し毎に評価）。</param>
     /// <returns>Forward = ローカル DIP → ドメイン（倍率で乗算）、Inverse = ドメイン → ローカル DIP（倍率で除算）のポート。</returns>
     /// <remarks>
@@ -102,7 +102,7 @@ public sealed class CoordTransform : ICoordTransform
     /// <summary>画像レイアウト（レターボックス・スケール）を呼び出し毎に評価する動的ポートを生成する（Forward = DIP→論理）。</summary>
     /// <param name="viewportSizeProvider">表示領域サイズ（DIP）を提供する関数（呼び出し毎に評価）。</param>
     /// <param name="sourceSize">元画像サイズ（ピクセル）。</param>
-    /// <param name="uniformProvider">Stretch.Uniform 相当かどうかを提供する関数（呼び出し毎に評価。null の場合は true）。</param>
+    /// <param name="uniformProvider">Stretch.Uniform 相当かどうかを提供する関数（呼び出し毎に評価。 null の場合は true）。</param>
     /// <returns>Forward = DIP→論理、Inverse = 論理→DIP、Bounds = 元画像サイズのポート。</returns>
     /// <remarks>
     /// レイアウト計算（レターボックス・スケール）は <see cref="ComputeImageRenderInfo"/> に委譲し、
@@ -137,8 +137,8 @@ public sealed class CoordTransform : ICoordTransform
     /// <summary>画像レイアウトの X スケール（元画像ピクセル / DIP）を取得する（ズーム率導出用）。</summary>
     /// <param name="viewportSizeProvider">表示領域サイズ（DIP）を提供する関数（呼び出し毎に評価）。</param>
     /// <param name="sourceSize">元画像サイズ（ピクセル）。</param>
-    /// <param name="uniformProvider">Stretch.Uniform 相当かどうかを提供する関数（呼び出し毎に評価。null の場合は true）。</param>
-    /// <returns>X スケール（元画像ピクセル / DIP）。表示領域・元画像サイズが 0 以下の場合は 1.0。</returns>
+    /// <param name="uniformProvider">Stretch.Uniform 相当かどうかを提供する関数（呼び出し毎に評価。 null の場合は true）。</param>
+    /// <returns>X スケール（元画像ピクセル / DIP）。 表示領域・元画像サイズが 0 以下の場合は 1.0。</returns>
     /// <remarks>
     /// <see cref="ImageLayout"/> と同じレイアウト計算（<see cref="ComputeImageRenderInfo"/>）から
     /// X スケールのみを導出する（サイズラベルのズーム率表示等に使用・単一実装・DRY 原則）。

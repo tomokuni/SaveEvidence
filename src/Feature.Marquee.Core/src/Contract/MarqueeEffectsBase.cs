@@ -56,7 +56,7 @@ public abstract class MarqueeEffectsBase : IMarqueeEffects
 
     /// <summary>ドメイン座標を画面物理座標へ変換する（既定では変換せず既定値を返す）。</summary>
     /// <param name="domainPoint">ドメイン座標。</param>
-    /// <returns>画面物理座標。既定では <c>default</c>。</returns>
+    /// <returns>画面物理座標。 既定では <c>default</c>。</returns>
     /// <remarks>
     /// 実カーソルを動かす nudge（<see cref="ICursorService"/> を渡した場合）だけが必要とする。<br/>
     /// カーソルサービスを渡さない場合は呼ばれない。

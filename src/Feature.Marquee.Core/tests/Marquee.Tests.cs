@@ -19,9 +19,9 @@ namespace EsUtil.Feature.Marquee.Core.Tests;
 public class MarqueeTests
 {
     /// <summary>ファサードと効果のスパイを生成する。</summary>
-    /// <param name="cursor">カーソルサービス。null 可。</param>
+    /// <param name="cursor">カーソルサービス。 null 可。</param>
     /// <param name="effects">生成した効果のスパイ。</param>
-    /// <param name="options">初期設定。null の場合は既定値。</param>
+    /// <param name="options">初期設定。 null の場合は既定値。</param>
     /// <returns>ファサード。</returns>
     private static Marquee CreateMarquee(ICursorService? cursor, out EffectsSpy effects, MarqueeOptions? options = null)
     {
@@ -57,7 +57,7 @@ public class MarqueeTests
     /// <summary>ポインター移動の処理がヒープを確保しないことを検証する。</summary>
     /// <remarks>
     /// ポインター移動は操作中に連続して発生するため、通知・スナップショットを値型にして確保を避ける<br/>
-    /// （デリゲートの生成も行わない）。計測は <see cref="GC.GetAllocatedBytesForCurrentThread"/> で行う。
+    /// （デリゲートの生成も行わない）。 計測は <see cref="GC.GetAllocatedBytesForCurrentThread"/> で行う。
     /// </remarks>
     [Fact]
     public void Move_ポインター移動はヒープを確保しない()

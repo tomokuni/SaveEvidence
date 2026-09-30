@@ -10,7 +10,7 @@ internal sealed class CursorServiceSpy : ICursorService
     /// <summary><see cref="ShowCursor"/> に渡された値の履歴（呼び出し順）。</summary>
     public List<bool> ShowCalls { get; } = [];
 
-    /// <summary>呼び出しの履歴（種類と値。呼び出し順の検証に使用する）。</summary>
+    /// <summary>呼び出しの履歴（種類と値。 呼び出し順の検証に使用する）。</summary>
     public List<string> Calls { get; } = [];
 
     /// <summary><see cref="ICursorService.GetCursorScreenPoint"/> の戻り値。</summary>

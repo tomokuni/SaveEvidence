@@ -1,17 +1,17 @@
 # Feature.Loupe.Presenter
 
-ルーペ（拡大鍵）の見た目を定める **コントロール化を前提としない UI 非依存の層**です。UI 実装が変わっても同じ処理を共有します。
+ルーペ（拡大鍵）の見た目を定める **コントロール化を前提としない UI 非依存の層**です。 UI 実装が変わっても同じ処理を共有します。
 
 ## 概要
 
-本層は 2 つの関心事を持ちます。どちらも「単体で使う `Loupe` だけでは決まらない」ため、コア（`Feature.Loupe.Core`）には置きません。
+本層は 2 つの関心事を持ちます。 どちらも「単体で使う `Loupe` だけでは決まらない」ため、コア（`Feature.Loupe.Core`）には置きません。
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
 | **提示（Presenter）** | 描画の幾何（`LoupeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `LoupePresenter` / `LoupeDrawPlan` / `LoupeDrawLayer` |
 | **外観** | 色・フォント・角丸・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `LoupeAppearance` |
 
-**描画は行いません**。UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、本層は**描画計画というデータ**を返し、描画は各 UI の描画実装が自 UI の API で行います。
+**描画は行いません**。 UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、本層は**描画計画というデータ**を返し、描画は各 UI の描画実装が自 UI の API で行います。
 
 **本層はコントロール化を前提とした処理を持ちません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は UI 層または各 UI が持ちます）。
 
@@ -42,14 +42,14 @@ protected override void Render(DrawingContext context)
 ```
 
 - 表示位置（左上）が必要なら `LoupePresenter.ResolveLayout(parentSize)` を使う（親領域へ収めるクランプはコアが単一所有する）。
-- 拡大元画像は UI ごとに型が異なるため `LoupeDrawPlan` に含めません。UI が `EsBitmap` を解決して描画へ渡します。
+- 拡大元画像は UI ごとに型が異なるため `LoupeDrawPlan` に含めません。 UI が `EsBitmap` を解決して描画へ渡します。
 - 実寸測定（`MeasureText`）は描画 API 依存のため UI 層が与えます。
 
 ## 含まれるもの
 
 | グループ | 型 |
 | --- | --- |
-| 提示 | `LoupePresenter`（描画計画の解決。`sealed` ではない） / `Drawing.LoupeDrawPlan` / `Drawing.LoupeDrawLayer` / `Drawing.LoupeTextPlacement` |
+| 提示 | `LoupePresenter`（描画計画の解決。 `sealed` ではない） / `Drawing.LoupeDrawPlan` / `Drawing.LoupeDrawLayer` / `Drawing.LoupeTextPlacement` |
 | 外観 | `Setting.LoupeAppearance`（色・フォント・角丸・枠線の太さ・表示可否） |
 | ラベル | `Label.LoupeLabelPlacement`（配置指示） |
 | ログ | `Logging.LoupePresenterLogMessage`（internal） |
@@ -83,7 +83,7 @@ dotnet build src/Feature.Loupe.Presenter/src/Feature.Loupe.Presenter.csproj
 dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.csproj
 ```
 
-`tests/` が単体テストを持ちます。描画計画の値（矩形・層・配置）は UI 型を持たないため **UI 初期化なしで検証**でき、画素の検証は UI 側（ソフトウェア描画の UI）のテストが担います。
+`tests/` が単体テストを持ちます。 描画計画の値（矩形・層・配置）は UI 型を持たないため **UI 初期化なしで検証**でき、画素の検証は UI 側（ソフトウェア描画の UI）のテストが担います。
 
 ## ドキュメント
 

@@ -10,7 +10,7 @@ namespace EsUtil.Platform.Core.Coord;
 public static class CoordTransformExtensions
 {
     /// <summary>座標変換ポートを解決する。</summary>
-    /// <param name="port">座標変換ポート。null 可。</param>
-    /// <returns>指定されたポート。null の場合は <see cref="CoordTransform.Identity"/>（等価変換）。</returns>
+    /// <param name="port">座標変換ポート。 null 可。</param>
+    /// <returns>指定されたポート。 null の場合は <see cref="CoordTransform.Identity"/>（等価変換）。</returns>
     public static ICoordTransform OrIdentity(this ICoordTransform? port) => port ?? CoordTransform.Identity;
 }

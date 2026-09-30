@@ -37,7 +37,7 @@ public sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T 
     /// <inheritdoc/>
     public void RegisterAll(IReadOnlyList<(T Action, HotKeySetting Setting)> registrations)
     {
-        // 全解除は一度だけ行う（RegisterCore 内では解除しない。空辞書の無駄なスキャンを回避）
+        // 全解除は一度だけ行う（RegisterCore 内では解除しない。 空辞書の無駄なスキャンを回避）
         UnregisterAll();
         foreach (var (action, setting) in registrations)
         {
@@ -78,7 +78,7 @@ public sealed class WinGlobalHotKeyService<T> : IGlobalHotKeyService<T> where T 
         _wndProcDelegate = null;
     }
 
-    /// <summary>サブクラス化した WndProc。WM_HOTKEY メッセージを捕捉して対応するアクションを配信する。</summary>
+    /// <summary>サブクラス化した WndProc。 WM_HOTKEY メッセージを捕捉して対応するアクションを配信する。</summary>
     private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
     {
         if (msg == WinNative.WM_HOTKEY)

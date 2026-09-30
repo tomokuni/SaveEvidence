@@ -11,7 +11,7 @@ namespace EsUtil.Feature.Marquee.Core.Tests;
 /// </remarks>
 internal sealed class EffectsSpy : IMarqueeEffects
 {
-    /// <summary>呼び出しの履歴（種類と値。発生順の検証に使用する）。</summary>
+    /// <summary>呼び出しの履歴（種類と値。 発生順の検証に使用する）。</summary>
     public List<string> Calls { get; } = [];
 
     /// <summary>再描画の要求回数。</summary>

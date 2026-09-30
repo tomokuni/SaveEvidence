@@ -19,7 +19,7 @@ public sealed class WinWindowService : IWindowService
     private readonly ILogger _log;
 
     /// <summary><see cref="WinWindowService"/> の新しいインスタンスを初期化します。</summary>
-    /// <param name="logger">ロガー。null の場合は出力なし。</param>
+    /// <param name="logger">ロガー。 null の場合は出力なし。</param>
     public WinWindowService(ILogger? logger = null)
     {
         _log = logger.OrNullLogger();
@@ -50,7 +50,7 @@ public sealed class WinWindowService : IWindowService
     /// WDA_EXCLUDEFROMCAPTURE により、そのウィンドウは画面キャプチャ（CopyFromScreen / DXGI 等）に
     /// 一切写らなくなる（フレームタイミングに依存しない決定的な除外）。<br/>
     /// 除外設定時のみ DWM の再合成待ち（<c>DwmFlush</c>）を行い、設定直後のキャプチャを防ぐ。<br/>
-    /// Windows 10 2004（build 19041）以降で利用可能。それ以前では失敗（false）を返す。<br/>
+    /// Windows 10 2004（build 19041）以降で利用可能。 それ以前では失敗（false）を返す。<br/>
     /// </remarks>
     public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude)
     {
@@ -70,7 +70,7 @@ public sealed class WinWindowService : IWindowService
 
     /// <summary>ウィンドウの位置とサイズを画面物理ピクセルで指定する（仕様 2.3）。</summary>
     /// <param name="handle">対象ウィンドウの識別子。</param>
-    /// <param name="bounds">設定する矩形（画面物理ピクセル。負の座標可）。</param>
+    /// <param name="bounds">設定する矩形（画面物理ピクセル。 負の座標可）。</param>
     /// <returns>成功した場合は <see langword="true"/>。</returns>
     /// <remarks>
     /// SetWindowPos により、OS の作業領域補正を受けずに物理ピクセルで配置する。<br/>

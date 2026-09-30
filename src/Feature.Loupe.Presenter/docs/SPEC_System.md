@@ -1,6 +1,6 @@
 # Feature.Loupe.Presenter システム仕様書
 
-ルーペ（拡大鍵）の見た目を定める **コントロール化を前提としない UI 非依存層**の構造・依存・例外処理・設計判断を記載します。公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
+ルーペ（拡大鍵）の見た目を定める **コントロール化を前提としない UI 非依存層**の構造・依存・例外処理・設計判断を記載します。 公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
 
 ## 1. システム概要
 
@@ -19,7 +19,7 @@
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
 | ルート名前空間 | `EsUtil.Feature.Loupe.Presenter`（配下はフォルダに追従: `.Setting` / `.Drawing` / `.Label` / `.Logging`） |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（`cref` の検証のみ） |
-| テスト | xUnit v3（UI 初期化不要。`InternalsVisibleTo` で `internal` を検証する） |
+| テスト | xUnit v3（UI 初期化不要。 `InternalsVisibleTo` で `internal` を検証する） |
 | 依存 | `Feature.Loupe.Core` と `Platform.Core` のみ（UI フレームワーク・SkiaSharp を参照しない） |
 
 ## 3. アーキテクチャ
@@ -56,12 +56,12 @@ sequenceDiagram
 
 ## 4. コンポーネント構成
 
-ルート（`src/`）に置くのは**ファサード本体**（`LoupePresenter.cs`）とその partial（`LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelPlan.cs` / `LoupePresenter.LabelTexts.cs`）です。描画計画の値・外観・ラベル要素の配置指示は用途別のフォルダへまとめます。
-**1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Loupe.Presenter`。`Setting` / `Drawing` / `Label` / `Logging` は `EsUtil.Feature.Loupe.Presenter.<フォルダ名>`）。コア（`Feature.Loupe.Core`）と同じ規約です。
+ルート（`src/`）に置くのは**ファサード本体**（`LoupePresenter.cs`）とその partial（`LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelPlan.cs` / `LoupePresenter.LabelTexts.cs`）です。 描画計画の値・外観・ラベル要素の配置指示は用途別のフォルダへまとめます。
+**1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Loupe.Presenter`。 `Setting` / `Drawing` / `Label` / `Logging` は `EsUtil.Feature.Loupe.Presenter.<フォルダ名>`）。 コア（`Feature.Loupe.Core`）と同じ規約です。
 
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
-| `src/LoupePresenter.cs` | `LoupePresenter` | public | 提示のファサード。コアのラップ、外観の保持、描画計画（`ResolveDrawPlan`）と表示レイアウト（`ResolveLayout`）の解決、層の組合せ表の単一所有 |
+| `src/LoupePresenter.cs` | `LoupePresenter` | public | 提示のファサード。 コアのラップ、外観の保持、描画計画（`ResolveDrawPlan`）と表示レイアウト（`ResolveLayout`）の解決、層の組合せ表の単一所有 |
 | `src/Setting/LoupeAppearance.cs` | `LoupeAppearance` | public | 外観（色・フォント・角丸・枠線の太さ・表示可否）の単一所有と補正 |
 | `src/Drawing/LoupeDrawPlan.cs` | `LoupeDrawPlan` | public | 描画計画の値（UI が見る唯一の描画値） |
 | `src/Drawing/LoupeDrawLayer.cs` | `LoupeDrawLayer` | public | 描画層と順序の単一所有 |
@@ -77,7 +77,7 @@ sequenceDiagram
 | 計算 / 値 | 所有者 |
 | --- | --- |
 | 外観（色・フォント・角丸・枠線の太さ・表示可否）とその既定値 | `LoupeAppearance` |
-| 枠線の太さの安全域への補正 | `LoupeAppearance`（`init` アクセサ。規則は `Loupe.Limits`） |
+| 枠線の太さの安全域への補正 | `LoupeAppearance`（`init` アクセサ。 規則は `Loupe.Limits`） |
 | 描画層とその順序 | `LoupeDrawPlan.Layers`（組合せ表は `LoupePresenter` が事前生成する） |
 | 描く層の選択（描く値がある層だけを含める） | `LoupePresenter.ResolveLayers` |
 | 十字線・枠線の矩形 | `LoupePresenter`（`DrawPlan` partial） |
@@ -89,7 +89,7 @@ sequenceDiagram
 
 ## 6. 例外処理ポリシー
 
-`LoupePresenter.ResolveDrawPlan` / `LoupePresenter.ResolveLabelPlacements` は引数（`measureText` / `appearance`）が null なら `ArgumentNullException` を送出します。描画中にソースが破棄された場合（`ObjectDisposedException`）の吸収は描画実装（各 UI）の責務です。
+`LoupePresenter.ResolveDrawPlan` / `LoupePresenter.ResolveLabelPlacements` は引数（`measureText` / `appearance`）が null なら `ArgumentNullException` を送出します。 描画中にソースが破棄された場合（`ObjectDisposedException`）の吸収は描画実装（各 UI）の責務です。
 
 ## 7. 可視性ポリシー
 
@@ -113,8 +113,8 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 
 | 判断 | 内容 |
 | --- | --- |
-| 描画計画を本層に置く（コアに置かない） | コアは「何を描くか（幾何・判断）」だけを決める。装飾矩形・文言・表示可否・描画順は描画の都合であり、コアに置くと色・フォントをコアへ持ち込むことになる |
-| **描画 API の抽象を持たない** | UI フレームワークごとの描画モデルは異なり、抽象に集約すると対象 UI（WinUI3 / WinForms 等）が増えるたびに抽象が肥大して差異を吸収しきれなくなる。本層は描画計画というデータを返し、描画は各 UI が自前で行う |
+| 描画計画を本層に置く（コアに置かない） | コアは「何を描くか（幾何・判断）」だけを決める。 装飾矩形・文言・表示可否・描画順は描画の都合であり、コアに置くと色・フォントをコアへ持ち込むことになる |
+| **描画 API の抽象を持たない** | UI フレームワークごとの描画モデルは異なり、抽象に集約すると対象 UI（WinUI3 / WinForms 等）が増えるたびに抽象が肥大して差異を吸収しきれなくなる。 本層は描画計画というデータを返し、描画は各 UI が自前で行う |
 | 色の型 | UI 非依存の `System.Drawing.Color` とし、UI の色型への変換は描画の境界で行う |
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「クランプ」は描画にだけ必要な規則のため、本層の `LoupePresenter`（`LabelPlan` partial） が単一所有する |
 | 中間ビットマップの非同期生成 | UI のディスパッチャーに依存し、中間ビットマップを持つ UI にだけ必要なため、その UI 実装が所有する |
@@ -124,10 +124,10 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 
 UI が出力するログ（拡大元画像の変更・描画の例外）の定義と書式は本層が単一所有します（`[Feature.Loupe.Presenter]` の接頭辞）。
 
-**UI 固有の処理に対応するログは各 UI 実装が所有します**（中間ビットマップを生成する描画パイプライン固有のログ等）。コアが出力するログ（設定・拡大中心・環境値の変更）は `Feature.Loupe.Core` の `LoupeLogMessage` が単一所有します。
+**UI 固有の処理に対応するログは各 UI 実装が所有します**（中間ビットマップを生成する描画パイプライン固有のログ等）。 コアが出力するログ（設定・拡大中心・環境値の変更）は `Feature.Loupe.Core` の `LoupeLogMessage` が単一所有します。
 
 | 契機 | 出力 |
 | --- | --- |
-| `Appearance` の set | 変化した項目だけ（`LogAppearanceChanged`。LogLevel: Debug、書式 `[Feature.Loupe.Presenter] Setting: {Name} {OldValue} → {NewValue}`） |
+| `Appearance` の set | 変化した項目だけ（`LogAppearanceChanged`。 LogLevel: Debug、書式 `[Feature.Loupe.Presenter] Setting: {Name} {OldValue} → {NewValue}`） |
 | 拡大元画像の変更・描画の例外 | 各 UI が所有する定義 |
 

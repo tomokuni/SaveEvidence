@@ -11,7 +11,7 @@ namespace EsUtil.Platform.Core.Geometry;
 /// <see cref="Dot"/> は .NET 標準（<c>System.Numerics.Vector2</c>）・Avalonia・MewUI に対応する<br/>
 /// （Avalonia の <c>SquaredLength</c> と同義）。<see cref="Cross"/> / <see cref="Min"/> / <see cref="Max"/> / <see cref="Abs"/> は<br/>
 /// .NET 標準・Avalonia に対応する。<br/>
-/// <b>ゼロ ベクターの正規化</b>はゼロ ベクターを返す（MewUI と同じ。非数を返さない）。<br/>
+/// <b>ゼロ ベクターの正規化</b>はゼロ ベクターを返す（MewUI と同じ。 非数を返さない）。<br/>
 /// <b>WinUI3</b> には単純なベクター型が無い（<c>Windows.Foundation.Numerics.Vector2</c> は X / Y のみ）ため対応しない。
 /// </remarks>
 /// <param name="X">X 方向の成分（呼び出し側の座標系に従う）。</param>
@@ -36,7 +36,7 @@ public readonly record struct EsVector(double X, double Y)
 
     /// <summary>長さの 2 乗を取得する。</summary>
     /// <value>X² + Y²（常に 0 以上）。</value>
-    /// <remarks>Avalonia の <c>Vector.SquaredLength</c> と同じ値である。平方根を避けたい比較（距離の大小判定等）で使う。</remarks>
+    /// <remarks>Avalonia の <c>Vector.SquaredLength</c> と同じ値である。 平方根を避けたい比較（距離の大小判定等）で使う。</remarks>
     public double LengthSquared => X * X + Y * Y;
 
     /// <summary>長さ（ユークリッド ノルム）を取得する。</summary>
@@ -60,7 +60,7 @@ public readonly record struct EsVector(double X, double Y)
     public EsVector Abs() => new(Math.Abs(X), Math.Abs(Y));
 
     /// <summary>同じ向きの単位ベクターを返す。</summary>
-    /// <returns>長さ 1 のベクター。ゼロ ベクターの場合はゼロ ベクター。</returns>
+    /// <returns>長さ 1 のベクター。 ゼロ ベクターの場合はゼロ ベクター。</returns>
     /// <remarks>ゼロ ベクターで非数（0 ÷ 0）を返さないため、長さが 0 の場合は <see cref="Zero"/> を返す。</remarks>
     public EsVector Normalize()
     {
@@ -91,7 +91,7 @@ public readonly record struct EsVector(double X, double Y)
     /// <summary>2 つのベクターの外積（2 次元のスカラー）を求める。</summary>
     /// <param name="a">1 つ目のベクター。</param>
     /// <param name="b">2 つ目のベクター。</param>
-    /// <returns>外積（a.X × b.Y − a.Y × b.X）。正なら b は a の左回り。</returns>
+    /// <returns>外積（a.X × b.Y − a.Y × b.X）。 正なら b は a の左回り。</returns>
     public static double Cross(EsVector a, EsVector b) => a.X * b.Y - a.Y * b.X;
 
     /// <summary>座標へ変換する。</summary>

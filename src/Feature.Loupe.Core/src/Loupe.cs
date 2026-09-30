@@ -38,7 +38,7 @@ namespace EsUtil.Feature.Loupe.Core;
 /// </remarks>
 public sealed partial class Loupe
 {
-    /// <summary>外部から指定された座標変換ポート（null = 未指定。未指定時は等価変換として扱う）。</summary>
+    /// <summary>外部から指定された座標変換ポート（null = 未指定。 未指定時は等価変換として扱う）。</summary>
     private ICoordTransform? _coordPort;
 
     /// <summary>ルーペの設定（既定は <see cref="LoupeOptions.Default"/>）。</summary>
@@ -47,22 +47,22 @@ public sealed partial class Loupe
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数（既定は 1.0）。</summary>
     private double _dipToDeviceScaling = DipToDeviceScalingDefault;
 
-    /// <summary>拡大表示する中心座標（ドメイン座標。未設定は null）。</summary>
+    /// <summary>拡大表示する中心座標（ドメイン座標。 未設定は null）。</summary>
     private EsPoint? _centerPoint;
 
-    /// <summary>拡大中心からの右下オフセット（DIP。既定は 0）。</summary>
+    /// <summary>拡大中心からの右下オフセット（DIP。 既定は 0）。</summary>
     private double _positionOffset;
 
     /// <summary>ファサードを初期化する。</summary>
-    /// <param name="options">初期設定。null 可（null の場合は <see cref="LoupeOptions.Default"/>）。</param>
-    /// <remarks>初期値は本フィールドへ直接保持する（変更ログの経路を通さない。構築時点では出力先が未設定である）。</remarks>
+    /// <param name="options">初期設定。 null 可（null の場合は <see cref="LoupeOptions.Default"/>）。</param>
+    /// <remarks>初期値は本フィールドへ直接保持する（変更ログの経路を通さない。 構築時点では出力先が未設定である）。</remarks>
     public Loupe(LoupeOptions? options = null)
     {
         _options = options ?? LoupeOptions.Default;
     }
 
     /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
-    /// <value>ロガー。null を設定した場合は出力なし（<see cref="LoggerFallback"/> が吸収する）。</value>
+    /// <value>ロガー。 null を設定した場合は出力なし（<see cref="LoggerFallback"/> が吸収する）。</value>
     /// <remarks>
     /// ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義（<see cref="LoupeLogMessage"/>）だけを持つ。<br/>
     /// 設定・環境値・拡大中心の変更は本コアが検出して出力する（UI 層に同値判定・差分検出・変換を持たせない）。
@@ -78,7 +78,7 @@ public sealed partial class Loupe
     // ====================================================================
 
     /// <summary>ルーペの設定（表示サイズ・拡大率）。</summary>
-    /// <value>設定の単一値。既定は <see cref="LoupeOptions.Default"/>。</value>
+    /// <value>設定の単一値。 既定は <see cref="LoupeOptions.Default"/>。</value>
     /// <remarks>
     /// 設定の値・既定値・数値項目の安全域への補正は <see cref="LoupeOptions"/> が単一所有する。<br/>
     /// 変更すると表示サイズ（要求サイズのクランプ結果）も変わるため、UI 層は <see cref="ResolveLayout"/> を呼び直す。<br/>
@@ -97,9 +97,9 @@ public sealed partial class Loupe
     }
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数。</summary>
-    /// <value>スケーリング係数（0.1〜8.0）。範囲外・非有限は補正済みの値を設定する。既定は 1.0。</value>
+    /// <value>スケーリング係数（0.1〜8.0）。 範囲外・非有限は補正済みの値を設定する。 既定は 1.0。</value>
     /// <remarks>
-    /// 環境値（DPI）のため <see cref="Options"/> には含めない。補正の規則は <see cref="Loupe.Limits"/> が単一所有し、<br/>
+    /// 環境値（DPI）のため <see cref="Options"/> には含めない。 補正の規則は <see cref="Loupe.Limits"/> が単一所有し、<br/>
     /// どの設定経路（初期化・UI の依存関係プロパティ・直接代入）でも範囲内の値だけが保持される。<br/>
     /// 変更は本コアが検出して出力する（UI 層に同値判定を置かない）。
     /// </remarks>
@@ -116,7 +116,7 @@ public sealed partial class Loupe
     }
 
     /// <summary>拡大表示する中心座標（ドメイン座標）。</summary>
-    /// <value>拡大中心（元画像ピクセル座標）。未設定は null（切り出し領域を決められないため、拡大画像を描かず配置もしない）。</value>
+    /// <value>拡大中心（元画像ピクセル座標）。 未設定は null（切り出し領域を決められないため、拡大画像を描かず配置もしない）。</value>
     /// <remarks>
     /// UI 層が設定する状態であり、解決した 1 フレーム分の写しは <see cref="LoupeGeometry.Center"/> が持つ。<br/>
     /// 変更は本コアが検出して出力する（マウス移動ごとに UI が設定しても、変化したときだけ記録される）。
@@ -134,7 +134,7 @@ public sealed partial class Loupe
     }
 
     /// <summary>拡大中心からの右下オフセット（DIP）。</summary>
-    /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。既定は 0。</value>
+    /// <value>カーソル位置（拡大中心）からの右下方向へのオフセット量（DIP）。 既定は 0。</value>
     /// <remarks>
     /// 表示位置をカーソルから離して配置するためのホスト指定値である（位置のクランプはコアが行う）。<br/>
     /// 変更は本コアが検出して出力する（UI 層に同値判定を置かない）。
@@ -152,7 +152,7 @@ public sealed partial class Loupe
     }
 
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。null の場合は等価変換。</param>
+    /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等のレイアウト変化に追従できる<br/>
     /// （イベント時の DIP キャッシュは使わない）。

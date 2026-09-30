@@ -44,7 +44,7 @@ public sealed class WinElementFinder : IElementFinder
 
     /// <summary>指定位置の最前面ウィンドウを検出する。</summary>
     /// <param name="screenPoint">判定する位置（画面物理座標）。</param>
-    /// <returns>ウィンドウの検出結果（矩形・タイトル・識別子）。未検出時は <see cref="ElementFinderResults.IsDetected"/> = false。</returns>
+    /// <returns>ウィンドウの検出結果（矩形・タイトル・識別子）。 未検出時は <see cref="ElementFinderResults.IsDetected"/> = false。</returns>
     /// <remarks>
     /// <see cref="EnumWindows"/> の列挙順（最前面順）で、<paramref name="screenPoint"/> を含む最初のウィンドウを採用する。<br/>
     /// 除外条件（自プロセス・不可視・無効・最小化・0x0・タスクバー/デスクトップ）は <see cref="IsEligibleWindow"/> で適用し、<br/>
@@ -71,7 +71,7 @@ public sealed class WinElementFinder : IElementFinder
     /// <summary>ウィンドウを選択対象とするか判定し、対象なら検出結果を返す（<see cref="ListWindows"/> と共用）。</summary>
     /// <param name="hWnd">ウィンドウハンドル。</param>
     /// <param name="selfPid">自プロセスの PID（自ウィンドウの除外用）。</param>
-    /// <param name="candidate">選択対象の検出結果。対象外なら default。</param>
+    /// <param name="candidate">選択対象の検出結果。 対象外なら default。</param>
     /// <returns>選択対象なら true。</returns>
     private bool IsEligibleWindow(IntPtr hWnd, uint selfPid, out ElementFinderResults candidate)
     {
@@ -98,16 +98,16 @@ public sealed class WinElementFinder : IElementFinder
 
     /// <summary>指定位置が含まれるスクリーンを検出する。</summary>
     /// <param name="screenPoint">判定する位置（画面物理座標）。</param>
-    /// <returns>スクリーンの検出結果（矩形・「Screen {インデックス}」）。未検出時は <see cref="ElementFinderResults.IsDetected"/> = false。</returns>
+    /// <returns>スクリーンの検出結果（矩形・「Screen {インデックス}」）。 未検出時は <see cref="ElementFinderResults.IsDetected"/> = false。</returns>
     /// <remarks>
     /// <see cref="ListScreens"/>（全スクリーン一覧）を列挙し、<paramref name="screenPoint"/> を含む最初の<br/>
-    /// スクリーンを採用する。スクリーン境界は Win32 の <c>EnumDisplayMonitors</c> から自己解決する。
+    /// スクリーンを採用する。 スクリーン境界は Win32 の <c>EnumDisplayMonitors</c> から自己解決する。
     /// </remarks>
     public ElementFinderResults FindScreenUnderCursor(EsPointInt screenPoint)
         => ListScreens().FirstOrDefault(r => r.Bounds.Contains(screenPoint));
 
     /// <summary>全スクリーンの一覧を返す（仮想スクリーンの1枚画像に対するスナップショット管理用）。</summary>
-    /// <returns>全スクリーンの検出結果一覧（矩形・「Screen {インデックス}」）。列挙できない場合は空リスト。</returns>
+    /// <returns>全スクリーンの検出結果一覧（矩形・「Screen {インデックス}」）。 列挙できない場合は空リスト。</returns>
     /// <remarks>
     /// 全スクリーンを1枚の画像（仮想スクリーン）として取得した際に、その画像内のスクリーン境界を<br/>
     /// 座標系（画像ローカル）で特定するための一覧を返す。<br/>
@@ -125,7 +125,7 @@ public sealed class WinElementFinder : IElementFinder
     }
 
     /// <summary>全ウィンドウの一覧を返す（仮想スクリーンの1枚画像に対するスナップショット管理用）。</summary>
-    /// <returns>全ウィンドウの検出結果一覧（矩形・タイトル・識別子）。列挙できない場合は空リスト。</returns>
+    /// <returns>全ウィンドウの検出結果一覧（矩形・タイトル・識別子）。 列挙できない場合は空リスト。</returns>
     /// <remarks>
     /// 全スクリーンを1枚の画像（仮想スクリーン）として取得した際に、その画像内のウィンドウ境界を<br/>
     /// 座標系（画像ローカル）で特定するための一覧を返す。<br/>
@@ -151,7 +151,7 @@ public sealed class WinElementFinder : IElementFinder
 
     /// <summary>ウィンドウのクラス名を取得する。</summary>
     /// <param name="hWnd">ウィンドウハンドル。</param>
-    /// <returns>クラス名。取得できない場合は空文字。</returns>
+    /// <returns>クラス名。 取得できない場合は空文字。</returns>
     /// <remarks><see cref="ListWindows"/> の結果（<see cref="ElementFinderResults.ClassName"/>）と除外判定（<see cref="IsExcludedClass"/>）で使用する。</remarks>
     private static string GetWindowClassName(IntPtr hWnd)
     {
@@ -220,7 +220,7 @@ public sealed class WinElementFinder : IElementFinder
 
     /// <summary>ウィンドウのタイトルを取得する。</summary>
     /// <param name="handle">タイトルを取得するウィンドウのハンドル。</param>
-    /// <returns>ウィンドウタイトル。取得できない場合は空文字。</returns>
+    /// <returns>ウィンドウタイトル。 取得できない場合は空文字。</returns>
     /// <remarks>インターフェイスからは公開せず、<see cref="FindWindowUnderCursor"/> の内部実装として使用する。</remarks>
     internal string GetWindowTitle(EsPlatformHandle handle)
     {

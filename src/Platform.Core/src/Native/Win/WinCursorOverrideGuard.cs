@@ -19,13 +19,13 @@ public sealed class WinCursorOverrideGuard : ICursorOverrideGuard
     /// <summary>lParam 下位ワード（ヒットテスト結果）を取得するための 16bit マスク。</summary>
     private const int LowWordMask = 0xFFFF;
 
-    /// <summary>サブクラス化中のウィンドウハンドル。未アタッチ時は <see cref="IntPtr.Zero"/>。</summary>
+    /// <summary>サブクラス化中のウィンドウハンドル。 未アタッチ時は <see cref="IntPtr.Zero"/>。</summary>
     private IntPtr _hwnd;
 
     /// <summary>元の WndProc アドレス。</summary>
     private IntPtr _originalWndProc;
 
-    /// <summary>サブクラス化した WndProc デリゲート。GC 防止のためフィールドに保持する。</summary>
+    /// <summary>サブクラス化した WndProc デリゲート。 GC 防止のためフィールドに保持する。</summary>
     private WinNative.WndProcDelegate? _wndProcDelegate;
 
     /// <summary>サブクラス化が設定されているかどうか。</summary>
@@ -62,7 +62,7 @@ public sealed class WinCursorOverrideGuard : ICursorOverrideGuard
     /// <summary>サブクラス化を解除する。</summary>
     public void Dispose() => Detach();
 
-    /// <summary>サブクラス化した WndProc。フックしたメッセージ以外は元の WndProc へ委譲する。</summary>
+    /// <summary>サブクラス化した WndProc。 フックしたメッセージ以外は元の WndProc へ委譲する。</summary>
     /// <remarks>
     /// WM_SETCURSOR かつクライアント領域（HTCLIENT）内ではカーソル上書きを抑止し、<br/>
     /// メッセージを処理済み（TRUE）として元の WndProc へ委譲しない。<br/>
@@ -73,7 +73,7 @@ public sealed class WinCursorOverrideGuard : ICursorOverrideGuard
         // WM_SETCURSOR: OS がカーソル形状を上書きしようとしたときに送られる。
         if (msg == WinNative.WM_SETCURSOR)
         {
-            // lParam 下位ワード = ヒットテスト結果。クライアント領域内のときのみ抑止する。
+            // lParam 下位ワード = ヒットテスト結果。 クライアント領域内のときのみ抑止する。
             int hitTest = (int)(lParam.ToInt64() & LowWordMask);
             if (hitTest == WinNative.HTCLIENT)
                 return new IntPtr(1); // 処理済み（TRUE）: OS によるカーソル上書きを抑止

@@ -65,7 +65,7 @@ public class WinElementFinderTests
         var windows = finder.ListWindows();
 
         // 実環境（Windows）でウィンドウが 1 つ以上ある場合は、クラス名が空でないことを確認する
-        // （デスクトップウィンドウの特定・除外の検証に使用。ヘッドレス環境では 0 件でスキップ）
+        // （デスクトップウィンドウの特定・除外の検証に使用。 ヘッドレス環境では 0 件でスキップ）
         foreach (var w in windows)
         {
             Assert.NotNull(w.ClassName);

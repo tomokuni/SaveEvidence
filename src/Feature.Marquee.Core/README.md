@@ -1,16 +1,16 @@
 # Feature.Marquee.Core
 
-マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の **UI 非依存の計算層**です。UI 実装が変わっても同じ状態管理・判断・幾何を共有します。
+マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の **UI 非依存の計算層**です。 UI 実装が変わっても同じ状態管理・判断・幾何を共有します。
 
 ## 概要
 
 選択矩形の幾何計算・状態機械・**入力の解釈（判断）**を 1 箇所に集約し、UI ごとの実装差から切り離します。
 
-**操作の唯一の窓口は公開ファサード `Marquee`** です。UI 層とホストは本型だけを参照します（状態機械と幾何の導出は内部実装です）。
+**操作の唯一の窓口は公開ファサード `Marquee`** です。 UI 層とホストは本型だけを参照します（状態機械と幾何の導出は内部実装です）。
 
-**描画は本コアの関心事ではありません**。描画 API も描画ポートも持たず、返すのは幾何（穴あけ矩形・ハンドル・始点マーカー）だけです。色・フォント・枠線の太さ・表示可否・文言・描画順は描画層（本コアを参照する上位の層）が単一所有します。
+**描画は本コアの関心事ではありません**。 描画 API も描画ポートも持たず、返すのは幾何（穴あけ矩形・ハンドル・始点マーカー）だけです。 色・フォント・枠線の太さ・表示可否・文言・描画順は描画層（本コアを参照する上位の層）が単一所有します。
 
-**装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。装飾は選択矩形単体の概念ではなく、組み込み先の表示だからです（描画層が単一所有します）。
+**装飾（暗転マスク・穴あけ枠・内側の塗り）の概念を持ちません**。 装飾は選択矩形単体の概念ではなく、組み込み先の表示だからです（描画層が単一所有します）。
 
 UI 非依存のためヘッドレス実行が不要で、`[Fact]` で並列実行できます。
 
@@ -47,7 +47,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 | 幾何 | `Drawing.MarqueeGeometry` / `Drawing.MarqueeHandles` / `Drawing.MarqueeMarker` / `Drawing.MarqueeHoleRect` / `Drawing.MarqueeRenderRequest` |
 | 効果と通知 | `Contract.IMarqueeEffects` / `Contract.MarqueeEffectsBase` / `Interaction.MarqueeNotice` / `Interaction.MarqueeNoticeKind` / `Interaction.MarqueeCursorKind` |
 | 状態の値 | `Interaction.MarqueeHitTarget` / `Interaction.MarqueeInteractionState` / `Interaction.MarqueeSnapshot` |
-| 設定 | `Setting.MarqueeOptions`（寸法・対話パラメータ。色・フォント・表示可否は持たない） |
+| 設定 | `Setting.MarqueeOptions`（寸法・対話パラメータ。 色・フォント・表示可否は持たない） |
 | ログ | `Logging.MarqueeLogMessage`（internal） |
 
 ## 依存
@@ -70,7 +70,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 
 ## 座標型
 
-`EsRect` / `EsPoint` は常にドメイン座標です。UI 論理座標（DIP）との変換は `ICoordTransform`（`Port`）が担い、各 UI のイベント引数は自前の型（例: Avalonia の `Rect`）で公開して境界で 1 行変換します。キーは `EsKey` を介して通知します。
+`EsRect` / `EsPoint` は常にドメイン座標です。 UI 論理座標（DIP）との変換は `ICoordTransform`（`Port`）が担い、各 UI のイベント引数は自前の型（例: Avalonia の `Rect`）で公開して境界で 1 行変換します。 キーは `EsKey` を介して通知します。
 
 ## ビルド
 
@@ -84,7 +84,7 @@ dotnet build src/Feature.Marquee.Core/src/Feature.Marquee.Core.csproj
 dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 ```
 
-`tests/` が単体テストを持ちます。UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行されます。
+`tests/` が単体テストを持ちます。 UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行されます。
 
 ## ドキュメント
 

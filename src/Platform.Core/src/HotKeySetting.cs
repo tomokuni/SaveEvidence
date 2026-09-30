@@ -4,7 +4,7 @@ namespace EsUtil.Platform.Core;
 /// <remarks>
 /// <see cref="Modifiers"/> と <see cref="Key"/> の組合せで一意のホットキーを定義する。<br/>
 /// <c>ToString()</c> で "Ctrl + Shift + Q" のようなユーザー可読な文字列を返す。<br/>
-/// <see cref="Key"/> は UI フレームワーク非依存の <see cref="EsKey"/> を使用する。各 UI 実装は、
+/// <see cref="Key"/> は UI フレームワーク非依存の <see cref="EsKey"/> を使用する。 各 UI 実装は、
 /// 自身のキー型との相互変換を Interop 層で提供する（本プロジェクトは UI 型を参照しない）。<br/>
 /// </remarks>
 /// <param name="Modifiers">修飾キー（Alt / Control / Shift / Windows の組合せ）</param>

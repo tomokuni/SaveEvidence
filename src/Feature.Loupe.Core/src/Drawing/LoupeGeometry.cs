@@ -3,9 +3,9 @@ using EsUtil.Platform.Core.Geometry;
 namespace EsUtil.Feature.Loupe.Core.Drawing;
 
 /// <summary>ルーペの描画 1 フレーム分の幾何（コアが責任を持つ値の全量）。</summary>
-/// <param name="Center">拡大中心（ドメイン座標）。ファサードの <c>Loupe.CenterPoint</c>（UI が設定する状態）を 1 フレーム分の幾何へ写した値である。未設定は null（拡大画像を描かず、中心座標ラベルも表示しない）。</param>
-/// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
-/// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。切り上げ・最低 1。描画先が指定された場合はクランプ済み）。</param>
+/// <param name="Center">拡大中心（ドメイン座標）。 ファサードの <c>Loupe.CenterPoint</c>（UI が設定する状態）を 1 フレーム分の幾何へ写した値である。 未設定は null（拡大画像を描かず、中心座標ラベルも表示しない）。</param>
+/// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。 ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
+/// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。 切り上げ・最低 1。 描画先が指定された場合はクランプ済み）。</param>
 /// <param name="DipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数（環境値）。</param>
 /// <param name="ZoomLevel">拡大率（設定の補正済みの値）。</param>
 /// <remarks>
@@ -65,9 +65,9 @@ public readonly record struct LoupeGeometry(
             new EsRect(0, 0, CaptureSize * ZoomLevel, CaptureSize * ZoomLevel));
 
     /// <summary>整数の切り上げ除算を行う（余りを 1 区画として数える）。</summary>
-    /// <param name="value">割られる値（物理ピクセルサイズ）。1 以上。</param>
-    /// <param name="divisor">割る値（1 区画の長さ = 拡大率）。1 以上。</param>
+    /// <param name="value">割られる値（物理ピクセルサイズ）。 1 以上。</param>
+    /// <param name="divisor">割る値（1 区画の長さ = 拡大率）。 1 以上。</param>
     /// <returns>切り上げた商（区画数）。</returns>
-    /// <remarks>切り捨てると端の区画が失われる（除数は 1 以上を前提とする。0 を渡すと <see cref="double"/> の除算が無限大になる）。</remarks>
+    /// <remarks>切り捨てると端の区画が失われる（除数は 1 以上を前提とする。 0 を渡すと <see cref="double"/> の除算が無限大になる）。</remarks>
     private static int CeilDiv(int value, int divisor) => (int)Math.Ceiling((double)value / divisor);
 }

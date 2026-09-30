@@ -15,9 +15,9 @@ namespace EsUtil.Feature.Marquee.Core.Tests.Drawing;
 public class MarqueeRenderRequestTests
 {
     /// <summary>検証に使う描画入力を生成する（導出の検証に必要な値だけを指定する）。</summary>
-    /// <param name="highlight">ハイライト矩形（ドメイン座標）。null の場合はハイライトなし。</param>
-    /// <param name="selection">選択矩形（ドメイン座標）。null の場合は選択なし。</param>
-    /// <param name="port">座標変換ポート。null の場合は未指定（倍率による）。</param>
+    /// <param name="highlight">ハイライト矩形（ドメイン座標）。 null の場合はハイライトなし。</param>
+    /// <param name="selection">選択矩形（ドメイン座標）。 null の場合は選択なし。</param>
+    /// <param name="port">座標変換ポート。 null の場合は未指定（倍率による）。</param>
     /// <param name="scaling">ポート未指定時に適用する倍率。</param>
     /// <returns>生成した描画入力。</returns>
     private static MarqueeRenderRequest CreateRequest(

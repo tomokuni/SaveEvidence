@@ -18,7 +18,7 @@ internal static partial class PlatformLog
     /// 表示状態が変化したときのみ呼び出される（同じ状態の再設定はスキップされる）。<br/>
     /// 出力書式: <c>[Cursor] 表示状態変更: show={show}</c>
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="show">変更後の表示状態（true=表示, false=非表示）。</param>
     [LoggerMessage(LogLevel.Information, "[Cursor] 表示状態変更: show={Show}")]
     public static partial void LogCursorVisibilityChanged(this ILogger logger, bool show);
@@ -28,7 +28,7 @@ internal static partial class PlatformLog
     /// LogLevel: Information <br/>
     /// 出力書式: <c>[WindowService] HideFromTaskSwitcher: hwnd=0x{Hwnd}</c>
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="hwnd">対象ウィンドウのハンドル（16進文字列）。</param>
     [LoggerMessage(LogLevel.Information, "[WindowService] HideFromTaskSwitcher: hwnd=0x{Hwnd}")]
     public static partial void LogWindowHiddenFromTaskSwitcher(this ILogger logger, string hwnd);
@@ -38,7 +38,7 @@ internal static partial class PlatformLog
     /// LogLevel: Information <br/>
     /// 出力書式: <c>[WindowService] SetCaptureExclusion: hwnd=0x{Hwnd}, exclude={Exclude}, success={Success}</c>
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="hwnd">対象ウィンドウのハンドル（16進文字列）。</param>
     /// <param name="exclude">キャプチャ除外する場合は true。</param>
     /// <param name="success">API 呼び出しの成否。</param>
@@ -50,7 +50,7 @@ internal static partial class PlatformLog
     /// LogLevel: Information <br/>
     /// 出力書式: <c>[WindowService] SetBounds: hwnd=0x{Hwnd}, bounds=({X}, {Y}, {Width}, {Height}), success={Success}</c>
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="hwnd">対象ウィンドウのハンドル（16進文字列）。</param>
     /// <param name="x">矩形の左端（画面物理ピクセル）。</param>
     /// <param name="y">矩形の上端（画面物理ピクセル）。</param>
@@ -65,7 +65,7 @@ internal static partial class PlatformLog
     /// LogLevel: Warning <br/>
     /// 出力書式: <c>[WindowService] EvacuateWindow: hwnd=0x{Hwnd}</c>
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="hwnd">対象ウィンドウのハンドル（16進文字列）。</param>
     [LoggerMessage(LogLevel.Warning, "[WindowService] EvacuateWindow: hwnd=0x{Hwnd}")]
     public static partial void LogWindowEvacuated(this ILogger logger, string hwnd);

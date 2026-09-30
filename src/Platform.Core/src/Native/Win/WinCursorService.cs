@@ -22,7 +22,7 @@ public sealed class WinCursorService : ICursorService
     private static readonly int CursorInfoSize = Marshal.SizeOf<WinNative.CURSORINFO>();
 
     /// <summary><see cref="WinCursorService"/> の新しいインスタンスを初期化します。</summary>
-    /// <param name="logger">ロガー。null の場合は出力なし。</param>
+    /// <param name="logger">ロガー。 null の場合は出力なし。</param>
     /// <remarks>
     /// 表示状態（<see cref="_cursorVisible"/>）は Win32 の <c>GetCursorInfo</c> から実状態を取得して初期化する。<br/>
     /// これにより、他コードがカーソルを非表示にした状態（表示カウンタが負）で本サービスを生成しても、<br/>

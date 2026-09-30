@@ -18,7 +18,7 @@ public static class ImageDrawMath
     /// <param name="targetWidth">描画先の幅。</param>
     /// <param name="targetHeight">描画先の高さ。</param>
     /// <param name="mode">配置方法（縦横比を保つ / 領域全体へ引き伸ばす）。</param>
-    /// <returns>描画先の矩形。元画像または描画先が空の場合は空の矩形（<see cref="EsRect.IsEmpty"/> が真）。</returns>
+    /// <returns>描画先の矩形。 元画像または描画先が空の場合は空の矩形（<see cref="EsRect.IsEmpty"/> が真）。</returns>
     /// <remarks>
     /// 1. 元画像・描画先のいずれかが 0 以下なら空の矩形を返す。<br/>
     /// 2. <see cref="ImageDrawMode.Fill"/> は描画先の全域（左上を原点）を返す。<br/>

@@ -20,7 +20,7 @@ namespace EsUtil.Feature.Marquee.Core.Interaction;
 /// - UI 層: 入力イベントの受付（座標の取得）と、本クラスが返す効果の適用・通知の公開イベントへの転送・状態の描画のみ。<br/>
 /// <br/>
 /// 座標系:<br/>
-/// 選択矩形・nudge はドメイン座標で扱う。UI 層は入力座標を <see cref="ToDomain"/> で変換し、描画座標を <see cref="ToDip"/> で得る。<br/>
+/// 選択矩形・nudge はドメイン座標で扱う。 UI 層は入力座標を <see cref="ToDomain"/> で変換し、描画座標を <see cref="ToDip"/> で得る。<br/>
 /// <br/>
 /// 依存分離: コア型（<see cref="EsRect"/> / <see cref="EsPoint"/> / <see cref="EsKey"/>）と座標変換ポート（<see cref="ICoordTransform"/>）の<br/>
 /// 抽象にのみ依存し、UI フレームワークへ依存しない。<br/>
@@ -37,30 +37,30 @@ internal sealed class MarqueeSession
     /// <summary>選択・ドラッグ・nudge の状態と純粋計算。</summary>
     private readonly MarqueeState _state;
 
-    /// <summary>内部ロガー（未設定は null。読み取り時に <see cref="LoggerFallback"/> が吸収する）。</summary>
+    /// <summary>内部ロガー（未設定は null。 読み取り時に <see cref="LoggerFallback"/> が吸収する）。</summary>
     private ILogger? _log;
 
     /// <summary>状態管理クラスを初期化する。</summary>
-    /// <param name="options">初期設定。null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
+    /// <param name="options">初期設定。 null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
     internal MarqueeSession(MarqueeOptions? options = null)
     {
         _state = new MarqueeState();
         Options = options ?? MarqueeOptions.Default;
     }
 
-    /// <summary>上位（UI 層）へ伝える通知。UI 層は自 UI の公開イベントへ転送する。</summary>
+    /// <summary>上位（UI 層）へ伝える通知。 UI 層は自 UI の公開イベントへ転送する。</summary>
     internal event EventHandler<MarqueeNotice>? Notified;
 
     /// <summary>選択・ドラッグ・nudge の状態（本クラスが内部で使用する状態機械）。</summary>
-    /// <value>状態機械。外部は <see cref="CreateSnapshot"/> または各読み取りプロパティを使う。</value>
+    /// <value>状態機械。 外部は <see cref="CreateSnapshot"/> または各読み取りプロパティを使う。</value>
     /// <remarks>
     /// 本プロパティはコア・テストからのみ参照する（状態機械は可変プロパティを持つため、外部からの直接操作を避ける）。<br/>
     /// ホストと UI 実装は <see cref="CreateSnapshot"/>（<see cref="MarqueeSnapshot"/>）または個別の読み取りプロパティを使う。
     /// </remarks>
     internal MarqueeState State => _state;
 
-    /// <summary>ロガー。null を設定した場合は出力なし。</summary>
-    /// <value>注入されたロガー。null 可（null の場合は <see cref="NullLogger"/> へフォールバックする）。</value>
+    /// <summary>ロガー。 null を設定した場合は出力なし。</summary>
+    /// <value>注入されたロガー。 null 可（null の場合は <see cref="NullLogger"/> へフォールバックする）。</value>
     internal ILogger Log
     {
         get => _log.OrNullLogger();
@@ -68,12 +68,12 @@ internal sealed class MarqueeSession
     }
 
     /// <summary>現在の設定（寸法・対話パラメータ）。</summary>
-    /// <value>反映済みの設定。既定は <see cref="MarqueeOptions.Default"/>。</value>
+    /// <value>反映済みの設定。 既定は <see cref="MarqueeOptions.Default"/>。</value>
     /// <remarks>本クラスは対話パラメータのみを使用する（外観は UI 層が描画時に読む）。</remarks>
     internal MarqueeOptions Options { get; private set; } = MarqueeOptions.Default;
 
     /// <summary>現在の選択矩形（ドメイン座標）。</summary>
-    /// <value>選択矩形。未選択時は 0x0。</value>
+    /// <value>選択矩形。 未選択時は 0x0。</value>
     internal EsRect SelectionRect => _state.SelectionRect;
 
     /// <summary>選択矩形が有効かどうか（幅・高さが 0 より大きい）。</summary>
@@ -88,8 +88,8 @@ internal sealed class MarqueeSession
     /// <value>nudge 中の場合は true。</value>
     internal bool NudgeActive => _state.NudgeActive;
 
-    /// <summary>直近のマウス位置（ドメイン座標。カーソル座標ラベルの描画に使用する）。</summary>
-    /// <value>直近のマウス位置。未移動時は既定値。</value>
+    /// <summary>直近のマウス位置（ドメイン座標。 カーソル座標ラベルの描画に使用する）。</summary>
+    /// <value>直近のマウス位置。 未移動時は既定値。</value>
     internal EsPoint LastMousePosition => _state.LastMousePosition;
 
     /// <summary>十字マーカーが追従する位置（ドメイン座標）。</summary>
@@ -97,12 +97,12 @@ internal sealed class MarqueeSession
     internal EsPoint MarkerPosition => _state.GetMarkerPosition();
 
     /// <summary>公開イベント用の状態スナップショットを生成する。</summary>
-    /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。null の場合は直近の位置。</param>
+    /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。 null の場合は直近の位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・操作フラグを含むスナップショット。</returns>
     internal MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null) => _state.CreateSnapshot(mousePosition);
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート。null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
+    /// <param name="port">座標変換ポート。 null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
     internal void SetPort(ICoordTransform? port) => _state.SetPort(port.OrIdentity());
 
     /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
@@ -167,7 +167,7 @@ internal sealed class MarqueeSession
             _state.StartDrag(handle, position);
 
             // リサイズハンドル（8 方向）ではポインターをハンドル点へスナップし、追従位置もハンドル点へ揃える
-            // （ポインター・矩形の角・追従位置を一体にする）。ドラッグ基準点もハンドル点に揃えることで、
+            // （ポインター・矩形の角・追従位置を一体にする）。 ドラッグ基準点もハンドル点に揃えることで、
             // スナップ後の最初の移動がハンドル点からの差分として正しく矩形へ反映される。
             // 移動（Move）は掴んだ位置を維持するのが自然なためスナップしない。
             if (handle != MarqueeHitTarget.Move)
@@ -286,7 +286,7 @@ internal sealed class MarqueeSession
             // nudge の状態は最小サイズ未満のキャンセル経路（状態の初期化）で既に解除されている場合があるため、
             // 「nudge 中だった」の記録で再表示を要求する（カーソルの非表示残留を防ぐ）。
             // nudge 中にユーザーが物理マウスを動かしても、カーソルは nudge 位置へ戻してから再表示する
-            // （nudge から解放までのマウス移動はキャンセルする。SetCursorScreenPoint は再表示前に行う）
+            // （nudge から解放までのマウス移動はキャンセルする。 SetCursorScreenPoint は再表示前に行う）
             _state.EndNudge();
             feedback = feedback with { Cursor = MarqueeCursorAction.Show };
             NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, nudgePosition);
@@ -308,7 +308,7 @@ internal sealed class MarqueeSession
 
     /// <summary>キー入力を通知する（キャンセル・確定・矢印キーの微調整）。</summary>
     /// <param name="key">押下されたキー。</param>
-    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。取得できない場合は null。</param>
+    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。 取得できない場合は null。</param>
     /// <returns>UI 層が適用する効果（処理済み・再描画・カーソル操作）。</returns>
     /// <remarks>
     /// Escape はキャンセル要求、Enter は確定要求として扱い、常に処理済みとする。<br/>
@@ -341,13 +341,13 @@ internal sealed class MarqueeSession
 
     /// <summary>矢印キーによる微調整（nudge）を通知する。</summary>
     /// <param name="key">押下されたキー。</param>
-    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。取得できない場合は null。</param>
+    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。 取得できない場合は null。</param>
     /// <returns>UI 層が適用する効果（処理済み・再描画・カーソル操作）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
     /// 1. 領域作成後はマウス押下中のみ許可する（ドラッグ完了後の nudge は無効）。<br/>
     /// 2. 矢印キー以外は処理しない。<br/>
-    /// 3. 押下時点のカーソル位置を記録する（基点の精度向上。未移動時に基点が原点になり飛ぶのを防ぐ）。<br/>
+    /// 3. 押下時点のカーソル位置を記録する（基点の精度向上。 未移動時に基点が原点になり飛ぶのを防ぐ）。<br/>
     /// 4. 未選択・未ドラッグで nudge セッション開始時のみ基点をカーソル位置へ同期する。<br/>
     /// 5. nudge セッションを開始する（カーソル非表示・十字マーカー表示）。<br/>
     /// 6. 1 ドメインピクセル単位の整数加算で矩形を更新し、変更通知と追従位置を通知する。<br/>
@@ -384,7 +384,7 @@ internal sealed class MarqueeSession
             feedback = feedback with { Cursor = MarqueeCursorAction.Hide };
         }
 
-        // nudge 適用（ドメイン座標の整数加算のみ。浮動小数の誤差を累積しない）
+        // nudge 適用（ドメイン座標の整数加算のみ。 浮動小数の誤差を累積しない）
         _state.Nudge(dx, dy, Options.MinSelectionSize, Options.ClampToDomainBounds);
         NotifyState(MarqueeNoticeKind.SelectionChanged);
 
@@ -412,10 +412,10 @@ internal sealed class MarqueeSession
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
     /// <param name="rect">選択矩形（ドメイン座標）。</param>
-    /// <returns>UI 層が適用する効果（再描画。nudge 中だった場合はカーソルの再表示）。</returns>
+    /// <returns>UI 層が適用する効果（再描画。 nudge 中だった場合はカーソルの再表示）。</returns>
     /// <remarks>
     /// <see cref="MarqueeOptions.ClampToDomainBounds"/> が有効な場合は、はみ出す矩形を境界内へクリップしてから設定する<br/>
-    /// （外部からの復元でも「画像外の選択を禁止」を尊重する）。設定後は選択変更を通知する。
+    /// （外部からの復元でも「画像外の選択を禁止」を尊重する）。 設定後は選択変更を通知する。
     /// </remarks>
     internal MarqueeFeedback SetSelection(EsRect rect)
     {
@@ -428,7 +428,7 @@ internal sealed class MarqueeSession
     }
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>
-    /// <returns>UI 層が適用する効果（再描画。nudge 中だった場合はカーソルの再表示）。</returns>
+    /// <returns>UI 層が適用する効果（再描画。 nudge 中だった場合はカーソルの再表示）。</returns>
     internal MarqueeFeedback Reset()
     {
         var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
@@ -437,7 +437,7 @@ internal sealed class MarqueeSession
     }
 
     /// <summary>確定要求を処理する（Enter キー・ダブルクリック・ホストからの API 呼び出しと同じ経路）。</summary>
-    /// <returns>UI 層が適用する効果（確定した場合は再描画。nudge 中だった場合はカーソルの再表示）。</returns>
+    /// <returns>UI 層が適用する効果（確定した場合は再描画。 nudge 中だった場合はカーソルの再表示）。</returns>
     /// <remarks>
     /// ドラッグ中は無視し、選択確定後のみ確定要求を通知する（通知時点の選択矩形を含む）。<br/>
     /// 確定後は選択状態をクリアする（確定後の再ドラッグ・再確定を防ぐ）。
@@ -457,7 +457,7 @@ internal sealed class MarqueeSession
     }
 
     /// <summary>キャンセル要求を処理する（Escape キー・枠外ダブルクリック・ホストからの API 呼び出しと同じ経路）。</summary>
-    /// <returns>UI 層が適用する効果（選択を破棄した場合または nudge 中だった場合は再描画。nudge 中だった場合はカーソルの再表示）。</returns>
+    /// <returns>UI 層が適用する効果（選択を破棄した場合または nudge 中だった場合は再描画。 nudge 中だった場合はカーソルの再表示）。</returns>
     /// <remarks>ドラッグ中または選択ありの場合は選択を破棄した後にキャンセル要求を通知する。</remarks>
     internal MarqueeFeedback RequestCancel()
     {
@@ -520,7 +520,7 @@ internal sealed class MarqueeSession
 
     /// <summary>nudge 中なら nudge を終了し、カーソルの再表示と再描画を効果に加える。</summary>
     /// <param name="feedback">nudge 終了前の効果。</param>
-    /// <returns>nudge 中だった場合は再描画とカーソル再表示を加えた効果。nudge 中でなければ元の効果。</returns>
+    /// <returns>nudge 中だった場合は再描画とカーソル再表示を加えた効果。 nudge 中でなければ元の効果。</returns>
     /// <remarks>
     /// カーソルの再表示は本メソッドが単一所有する（状態は状態のみを更新し、画面への反映は効果として UI 層へ要求する）。<br/>
     /// nudge 状態を解除する操作（<see cref="MarqueeState.Reset"/> / <see cref="MarqueeState.SetSelection"/>）より<b>前に</b>呼ぶ<br/>
@@ -574,7 +574,7 @@ internal sealed class MarqueeSession
 
     /// <summary>ハンドル種別をカーソル形状の種別へ変換する。</summary>
     /// <param name="handle">ハンドル種別。</param>
-    /// <returns>カーソル形状の種別。ハンドル外（<see cref="MarqueeHitTarget.None"/>）の場合は <see cref="MarqueeCursorKind.Default"/>。</returns>
+    /// <returns>カーソル形状の種別。 ハンドル外（<see cref="MarqueeHitTarget.None"/>）の場合は <see cref="MarqueeCursorKind.Default"/>。</returns>
     /// <remarks>
     /// 「どのハンドルが同じカーソル形状になるか」を単一所有する（UI 層は自 UI のカーソル型へ写像するだけ）。<br/>
     /// 左上と右下、右上と左下は同じ斜めカーソルになる（対角のハンドルは同じ向きの図形で表す）。

@@ -2,7 +2,7 @@ using static EsUtil.Feature.Marquee.Core.Marquee.Limits;
 
 namespace EsUtil.Feature.Marquee.Core.Setting;
 
-/// <summary>選択矩形コントロールの設定（計算に必要な値。寸法・対話パラメータ）をまとめた不変の値オブジェクト。</summary>
+/// <summary>選択矩形コントロールの設定（計算に必要な値。 寸法・対話パラメータ）をまとめた不変の値オブジェクト。</summary>
 /// <remarks>
 /// 個別の依存関係プロパティとして公開していた設定を 1 つの値にまとめ、UI 層の公開 API を 1 プロパティへ縮小する。<br/>
 /// 設定の既定値も本型が単一所有する（各 UI 実装は既定値を持たず、本型を UI のプロパティ型へ橋渡しするだけ）。<br/>
@@ -23,7 +23,7 @@ namespace EsUtil.Feature.Marquee.Core.Setting;
 /// <br/>
 /// <b>等価性</b>: レコードの値等価性により、同値の設定を再代入しても UI 側の変更通知（再描画）は発生しない。<br/>
 /// <br/>
-/// <b>安全域への補正</b>: 数値項目の補正は本型の生成時に適用する（<c>init</c> アクセサ。安全域は <c>Marquee.Limits</c> が単一所有する）。<br/>
+/// <b>安全域への補正</b>: 数値項目の補正は本型の生成時に適用する（<c>init</c> アクセサ。 安全域は <c>Marquee.Limits</c> が単一所有する）。<br/>
 /// 値の設定経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず、範囲内の値だけが保持される<br/>
 /// （UI 側に補正の登録を要求すると、登録を忘れた UI だけ安全域外の値を保持する）。<br/>
 /// <br/>
@@ -41,7 +41,7 @@ public sealed record MarqueeOptions
     // ----------------------------------------------------------------
 
     /// <summary>ドラッグハンドルの一辺サイズを取得する。</summary>
-    /// <value>ハンドルの一辺サイズ（DIP）。既定は 10.0。設定時は 1.0〜256.0 へ補正される。</value>
+    /// <value>ハンドルの一辺サイズ（DIP）。 既定は 10.0。 設定時は 1.0〜256.0 へ補正される。</value>
     public double HandleSize
     {
         get;
@@ -49,7 +49,7 @@ public sealed record MarqueeOptions
     } = HandleSizeDefault;
 
     /// <summary>十字マーカーの全長を取得する。</summary>
-    /// <value>十字マーカーの全長（DIP）。中心から両端までの半幅はこの 1/2。既定は 16.0。設定時は 2.0〜4096.0 へ補正される。</value>
+    /// <value>十字マーカーの全長（DIP）。 中心から両端までの半幅はこの 1/2。 既定は 16.0。 設定時は 2.0〜4096.0 へ補正される。</value>
     public double MarkerLength
     {
         get;
@@ -61,7 +61,7 @@ public sealed record MarqueeOptions
     // ----------------------------------------------------------------
 
     /// <summary>ドラッグハンドルのヒットテスト半径を取得する。</summary>
-    /// <value>ヒットテスト半径（DIP）。既定は 12.0。設定時は 0.0〜256.0 へ補正される。</value>
+    /// <value>ヒットテスト半径（DIP）。 既定は 12.0。 設定時は 0.0〜256.0 へ補正される。</value>
     /// <remarks>
     /// DIP 座標での半径であるため、ズーム・縮小表示を変えてもヒットテストの画面上の大きさが一定になる。<br/>
     /// ドメイン座標系への変換はセッションが行う。
@@ -73,7 +73,7 @@ public sealed record MarqueeOptions
     } = HandleHitRadiusDefault;
 
     /// <summary>選択矩形の最小サイズを取得する。</summary>
-    /// <value>最小サイズ（ドメイン座標）。既定は 6.0。設定時は 1.0〜4096.0 へ補正される。</value>
+    /// <value>最小サイズ（ドメイン座標）。 既定は 6.0。 設定時は 1.0〜4096.0 へ補正される。</value>
     /// <remarks>ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる（判断はセッションが行う）。</remarks>
     public double MinSelectionSize
     {
@@ -82,7 +82,7 @@ public sealed record MarqueeOptions
     } = MinSelectionSizeDefault;
 
     /// <summary>ドメイン境界外の選択を禁止するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合は選択をドメイン境界内に制限する。false の場合は境界外も選択できる。</value>
+    /// <value>true（既定）の場合は選択をドメイン境界内に制限する。 false の場合は境界外も選択できる。</value>
     /// <remarks>
     /// クリップ範囲は座標変換ポートの Bounds で指定する。<br/>
     /// true へ切り替えた場合は既存の選択矩形を即時に境界内へクリップする（セッションが判断する）。

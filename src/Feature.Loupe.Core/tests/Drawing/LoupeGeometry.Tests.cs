@@ -117,7 +117,7 @@ public class LoupeGeometryTests
     /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）が求まることを検証する。</summary>
     /// <param name="centerX">拡大中心のX座標。</param>
     /// <param name="centerY">拡大中心のY座標。</param>
-    /// <param name="size">切り出し領域の一辺（ドメインピクセル）。物理ピクセルサイズは <c>size × zoomLevel</c> で与える。</param>
+    /// <param name="size">切り出し領域の一辺（ドメインピクセル）。 物理ピクセルサイズは <c>size × zoomLevel</c> で与える。</param>
     /// <param name="zoomLevel">拡大率。</param>
     /// <param name="expectedLeft">期待する左上のX座標。</param>
     /// <param name="expectedTop">期待する左上のY座標。</param>
@@ -191,7 +191,7 @@ public class LoupeGeometryTests
     /// <summary>表示サイズ（DIP）とスケーリングから描画の幾何を解決する。</summary>
     /// <param name="displaySize">表示サイズ（DIP）。</param>
     /// <param name="dipToDeviceScaling">スケーリング係数。</param>
-    /// <param name="availableSize">描画先の領域サイズ。未確定の場合は null。</param>
+    /// <param name="availableSize">描画先の領域サイズ。 未確定の場合は null。</param>
     /// <returns>描画の幾何。</returns>
     private static LoupeGeometry Resolve(double displaySize, double dipToDeviceScaling, EsSize? availableSize = null)
     {
@@ -201,7 +201,7 @@ public class LoupeGeometryTests
     }
 
     /// <summary>テスト用の描画の幾何を生成する（スケーリング 1.0・表示サイズ＝物理ピクセル）。</summary>
-    /// <param name="center">拡大中心（ドメイン座標）。未設定は null。</param>
+    /// <param name="center">拡大中心（ドメイン座標）。 未設定は null。</param>
     /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="zoomLevel">拡大率。</param>
     /// <returns>描画の幾何。</returns>

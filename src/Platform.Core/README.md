@@ -6,7 +6,7 @@ UI フレームワーク非依存の **共通基盤の型**（キーと入力・
 
 UI フレームワークに依存していた型を本プロジェクトへ切り出すことで、上位のアプリ・コントロールから、UI フレームワーク非依存のまま利用できます。
 
-**実行時のプラットフォーム分岐を持ちません**。OS サービスの Windows 実装（`Native/Win`）はホストが生成して抽象型として注入します。テストはモックを注入できるため、Win32 実行環境を必要としません。
+**実行時のプラットフォーム分岐を持ちません**。 OS サービスの Windows 実装（`Native/Win`）はホストが生成して抽象型として注入します。 テストはモックを注入できるため、Win32 実行環境を必要としません。
 
 ## 使い方
 
@@ -38,7 +38,7 @@ services.AddSingleton<IGlobalHotKeyService<CaptureType>>(_ => new WinGlobalHotKe
 | 座標変換 | `ICoordTransform` / `CoordTransform` / `ScrollMath` / `DpiScaler` |
 | 画像 | `EsBitmap`（自前のピクセルバッファ） / `ImageDrawMath` / `ImageDrawMode` |
 | OS サービス抽象 | `ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>` |
-| Windows 実装 | `Native.Win.*`（Win32 P/Invoke。ホストが生成して注入する） |
+| Windows 実装 | `Native.Win.*`（Win32 P/Invoke。 ホストが生成して注入する） |
 | 補助 | `EsPlatformHandle` / `LoggerFallback` / `DrawingColorExtensions` |
 
 各 UI 実装は、自身の型とコア型を相互変換する Interop 層を個別に提供します（本プロジェクトは UI 型を参照しないため、変換は利用側が持ちます）。

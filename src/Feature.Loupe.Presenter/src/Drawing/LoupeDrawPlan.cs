@@ -8,12 +8,12 @@ namespace EsUtil.Feature.Loupe.Presenter.Drawing;
 /// <summary>ルーペの描画 1 フレーム分の計画（描画層が解決した値を UI 層へ渡す唯一の契約）。</summary>
 /// <param name="Appearance">外観（色・フォント・角丸・枠線の太さ・表示可否）。</param>
 /// <param name="SurfaceBounds">描画面の全体（左上を原点とし、幅・高さが物理ピクセルサイズの正方形）。</param>
-/// <param name="MagnifiedImage">拡大画像の切り出しと描画の矩形。null の場合は描かない（拡大中心未設定）。</param>
-/// <param name="CrosshairRects">十字線の矩形（縦 1 本・横 1 本。非表示の設定の場合は空）。</param>
-/// <param name="BorderRects">枠線の矩形（上・下・左・右の 4 辺。非表示の設定の場合は空）。</param>
-/// <param name="Layers">描く層とその順序（<b>描画順は描画層が単一所有する</b>）。先頭から順に処理する。</param>
-/// <param name="Labels">テキスト（中心座標ラベル）の配置指示。表示しない場合は空。</param>
-/// <param name="CaptureTopLeft">切り出し領域の左上（ドメイン座標）。中心未設定時は null（描画完了通知の組み立てに使う）。</param>
+/// <param name="MagnifiedImage">拡大画像の切り出しと描画の矩形。 null の場合は描かない（拡大中心未設定）。</param>
+/// <param name="CrosshairRects">十字線の矩形（縦 1 本・横 1 本。 非表示の設定の場合は空）。</param>
+/// <param name="BorderRects">枠線の矩形（上・下・左・右の 4 辺。 非表示の設定の場合は空）。</param>
+/// <param name="Layers">描く層とその順序（<b>描画順は描画層が単一所有する</b>）。 先頭から順に処理する。</param>
+/// <param name="Labels">テキスト（中心座標ラベル）の配置指示。 表示しない場合は空。</param>
+/// <param name="CaptureTopLeft">切り出し領域の左上（ドメイン座標）。 中心未設定時は null（描画完了通知の組み立てに使う）。</param>
 /// <param name="ZoomLevel">拡大率（描画完了通知の組み立てに使う）。</param>
 /// <param name="PixelSize">描画に使う一辺の物理ピクセルサイズ（描画完了通知の組み立てに使う）。</param>
 /// <remarks>

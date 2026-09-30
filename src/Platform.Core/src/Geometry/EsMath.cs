@@ -13,7 +13,7 @@ internal static class EsMath
     /// <summary>2 つの値がほぼ等しいかどうかを判定する。</summary>
     /// <param name="a">比較する値。</param>
     /// <param name="b">比較する値。</param>
-    /// <param name="tolerance">許容誤差（0 以上。既定 1e-9）。</param>
+    /// <param name="tolerance">許容誤差（0 以上。 既定 1e-9）。</param>
     /// <returns>ほぼ等しい場合は true。</returns>
     /// <remarks>
     /// 差が <paramref name="tolerance"/> 以下、または差が両者の大きい方の絶対値 × <paramref name="tolerance"/> 以下のとき true。<br/>

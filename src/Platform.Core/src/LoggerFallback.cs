@@ -12,7 +12,7 @@ namespace EsUtil.Platform.Core;
 public static class LoggerFallback
 {
     /// <summary>ロガーを取得する。</summary>
-    /// <param name="logger">ロガー。null 可。</param>
-    /// <returns>指定されたロガー。null の場合は <see cref="NullLogger.Instance"/>。</returns>
+    /// <param name="logger">ロガー。 null 可。</param>
+    /// <returns>指定されたロガー。 null の場合は <see cref="NullLogger.Instance"/>。</returns>
     public static ILogger OrNullLogger(this ILogger? logger) => logger ?? NullLogger.Instance;
 }

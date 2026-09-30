@@ -16,8 +16,8 @@ namespace EsUtil.Platform.Core.Geometry;
 /// ベクター（<see cref="EsVector"/>）を返す側に統一する（座標が必要な場合は成分を使う）。<br/>
 /// <b>Parse と ToString の上書き</b>は意図的に設けない（レコードの診断表現を丸めた表示文字列へ置き換えないため）。
 /// </remarks>
-/// <param name="X">X 座標（呼び出し側の座標系に従う。DIP またはドメイン座標）。</param>
-/// <param name="Y">Y 座標（呼び出し側の座標系に従う。DIP またはドメイン座標）。</param>
+/// <param name="X">X 座標（呼び出し側の座標系に従う。 DIP またはドメイン座標）。</param>
+/// <param name="Y">Y 座標（呼び出し側の座標系に従う。 DIP またはドメイン座標）。</param>
 public readonly record struct EsPoint(double X, double Y)
 {
     /// <summary>表示に使える小数点以下の最大桁数（<see cref="double"/> の有効桁数）。</summary>
@@ -36,7 +36,7 @@ public readonly record struct EsPoint(double X, double Y)
     public bool IsEmpty => X == 0 && Y == 0;
 
     /// <summary>座標を <c>(x, y)</c> 形式の表示用テキストへ整形する。</summary>
-    /// <param name="decimals">小数点以下の桁数（0〜<see cref="MaxDecimals"/>。既定 0 = 整数に丸める）。</param>
+    /// <param name="decimals">小数点以下の桁数（0〜<see cref="MaxDecimals"/>。 既定 0 = 整数に丸める）。</param>
     /// <returns><c>(x, y)</c> 形式の表示テキスト（桁数に合わせて丸める）。</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="decimals"/> が 0 未満または <see cref="MaxDecimals"/> より大きい場合。</exception>
     /// <remarks>

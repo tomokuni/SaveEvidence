@@ -7,7 +7,7 @@ namespace EsUtil.Feature.Marquee.Core.Interaction;
 /// <summary>1 回の入力通知に対して UI 層が適用する表示上の効果（状態を持たない指示）。</summary>
 /// <remarks>
 /// コアは状態の更新と通知（<see cref="MarqueeNotice"/>）だけを行い、画面への反映方法（再描画・フォーカス・カーソル）は
-/// 本レコードで UI 層へ指示する。UI 層は指示に従って適用するだけで、判断を持たない。<br/>
+/// 本レコードで UI 層へ指示する。 UI 層は指示に従って適用するだけで、判断を持たない。<br/>
 /// カーソル操作の適用は UI 非依存（<see cref="ICursorService"/> と画面座標の変換関数のみで完結する）ため、
 /// 本レコードの <see cref="ApplyCursor"/> が単一所有する（両 UI で同一の手順・順序になる）。<br/>
 /// 濃い既定値（<see cref="Handled"/> 以外は false）を持つため、効果が無い通知では <c>default</c> を返せる。<br/>

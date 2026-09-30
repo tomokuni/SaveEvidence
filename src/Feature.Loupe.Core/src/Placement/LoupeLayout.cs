@@ -2,9 +2,9 @@ using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Feature.Loupe.Core.Placement;
 
-/// <summary>ルーペの表示レイアウト（DIP。表示サイズと表示位置）。</summary>
-/// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。親領域の最小辺へクランプ済み）。</param>
-/// <param name="Position">ルーペの表示位置（左上・親領域の DIP 座標）。配置できない場合は null。</param>
+/// <summary>ルーペの表示レイアウト（DIP。 表示サイズと表示位置）。</summary>
+/// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。 親領域の最小辺へクランプ済み）。</param>
+/// <param name="Position">ルーペの表示位置（左上・親領域の DIP 座標）。 配置できない場合は null。</param>
 /// <remarks>
 /// <see cref="Position"/> が null になるのは、拡大中心が未設定の場合である<br/>
 /// （「配置しない」の判断をコアが単一所有し、UI 層はセルフサイズの反映だけを行う）。<br/>

@@ -33,7 +33,7 @@ namespace EsUtil.Feature.Marquee.Presenter;
 /// <br/>
 /// <b>本クラスは UI フレームワークに依存しない</b>（色は UI 非依存の <c>System.Drawing.Color</c>、描画は行わない）。<br/>
 /// 派生クラスで <see cref="Appearance"/> を差し替えるか <see cref="ResolveDrawPlan"/> を上書きすることで、独自の見た目を提供できる<br/>
-/// （このため本クラスは <c>sealed</c> にしない。拡張点を持つことが役割である）。
+/// （このため本クラスは <c>sealed</c> にしない。 拡張点を持つことが役割である）。
 /// </remarks>
 public partial class MarqueePresenter
 {
@@ -52,7 +52,7 @@ public partial class MarqueePresenter
     /// <summary>層の並び（4 つの有無 = 16 通り）。</summary>
     /// <remarks>
     /// 描画のたびに一覧を組み立てないよう、全通りを事前生成して共有する<br/>
-    /// （<see cref="MarqueeDrawPlan.Layers"/> は読取専用の参照として渡す）。層を追加した場合は本表も更新する。
+    /// （<see cref="MarqueeDrawPlan.Layers"/> は読取専用の参照として渡す）。 層を追加した場合は本表も更新する。
     /// </remarks>
     private static readonly IReadOnlyList<MarqueeDrawLayer>[] s_layers = CreateLayers();
 
@@ -71,15 +71,15 @@ public partial class MarqueePresenter
     private double _displayScaleScaling;
 
     /// <summary>選択矩形コントロールの提示層を初期化する。</summary>
-    /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。null 不可。</param>
-    /// <param name="cursor">カーソルサービス。null 可（null の場合はカーソル操作を行わない）。</param>
-    /// <param name="options">初期設定。null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
+    /// <param name="effects">効果（フォーカス・再描画・カーソル形状・キャプチャ・座標変換）の適用先。 null 不可。</param>
+    /// <param name="cursor">カーソルサービス。 null 可（null の場合はカーソル操作を行わない）。</param>
+    /// <param name="options">初期設定。 null 可（null の場合は <see cref="MarqueeOptions.Default"/>）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="effects"/> が null の場合。</exception>
     public MarqueePresenter(IMarqueeEffects effects, ICursorService? cursor = null, MarqueeOptions? options = null)
         => _core = new MarqueeFacade(effects, cursor, options);
 
     /// <summary>外観（色・ラベルの体裁・枠線の太さ・表示可否）を取得または設定する。</summary>
-    /// <value>外観の単一値。既定は <see cref="MarqueeAppearance.Default"/>。</value>
+    /// <value>外観の単一値。 既定は <see cref="MarqueeAppearance.Default"/>。</value>
     /// <remarks>
     /// 外観はコアの計算・判断に入らないため本クラスが保持する。<br/>
     /// 一部の項目だけを変える場合は <c>MarqueeAppearance.Default with { ... }</c> の形で指定する。<br/>
@@ -99,7 +99,7 @@ public partial class MarqueePresenter
     }
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
-    /// <value>DisplayScale の百分率に使う係数。未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
+    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
     /// <remarks>
     /// 0 以下を倍率と同値として扱う規則は <c>Marquee.Limits.ResolveDisplayScale</c> が単一所有する。<br/>
     /// 変更は本クラスが検出して出力する（UI 層に同値判定を置かない）。
@@ -117,24 +117,24 @@ public partial class MarqueePresenter
     }
 
     /// <summary>サイズラベルの文言を描画時に評価するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数。null または空文字を返す場合は描画層が自動生成する。</value>
+    /// <value>描画のたびに呼び出される関数。 null または空文字を返す場合は描画層が自動生成する。</value>
     /// <remarks>デリゲート（ホスト結線）のため値の等価比較の対象外とする。</remarks>
     public Func<string?>? SizeLabelOverrideProvider { get; set; }
 
     /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
+    /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。 null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
     /// <remarks>デリゲート（ホスト結線）のため値の等価比較の対象外とする。</remarks>
     public Func<EsRect, double>? SizeLabelDisplayScalingProvider { get; set; }
 
     /// <summary>設定の変更ログの出力先を取得または設定する。</summary>
-    /// <value>ロガー。null を設定した場合は出力なし（コアが <c>LoggerFallback</c> で吸収する）。</value>
+    /// <value>ロガー。 null を設定した場合は出力なし（コアが <c>LoggerFallback</c> で吸収する）。</value>
     public ILogger Log
     {
         get => _core.Log;
         set => _core.Log = value;
     }
 
-    /// <summary>上位（UI 層）へ伝える通知を取得する。UI 層は自 UI の公開イベントへ転送する。</summary>
+    /// <summary>上位（UI 層）へ伝える通知を取得する。 UI 層は自 UI の公開イベントへ転送する。</summary>
     /// <remarks>通知の種別と公開イベントの対応は UI 層が持ち、判断（確定・キャンセル等）はコアが済ませている。</remarks>
     public event EventHandler<MarqueeNotice>? Notified
     {
@@ -147,7 +147,7 @@ public partial class MarqueePresenter
     // ====================================================================
 
     /// <summary>選択矩形の設定（計算に必要な値）を取得または設定する。</summary>
-    /// <value>反映済みの設定。既定は <see cref="MarqueeOptions.Default"/>。</value>
+    /// <value>反映済みの設定。 既定は <see cref="MarqueeOptions.Default"/>。</value>
     public MarqueeOptions Options
     {
         get => _core.Options;
@@ -155,7 +155,7 @@ public partial class MarqueePresenter
     }
 
     /// <summary>ポート未指定時に適用する倍率を取得または設定する。</summary>
-    /// <value>ドメイン → DIP の倍率。既定は 1.0。設定時は 0.1〜8.0 へ補正される。</value>
+    /// <value>ドメイン → DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される。</value>
     public double DomainToDipScaling
     {
         get => _core.DomainToDipScaling;
@@ -163,7 +163,7 @@ public partial class MarqueePresenter
     }
 
     /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
-    /// <value>ハイライト矩形。null（既定）の場合はハイライトしない。</value>
+    /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
     public EsRect? HighlightRect
     {
         get => _core.HighlightRect;
@@ -175,11 +175,11 @@ public partial class MarqueePresenter
     public bool HasSelection => _core.HasSelection;
 
     /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
-    /// <value>選択矩形。未選択時は 0x0 の空矩形。</value>
+    /// <value>選択矩形。 未選択時は 0x0 の空矩形。</value>
     public EsRect SelectionRect => _core.SelectionRect;
 
     /// <summary>現在の選択状態のスナップショットを生成する。</summary>
-    /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。null の場合は直近の位置。</param>
+    /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。 null の場合は直近の位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・操作フラグを含むスナップショット。</returns>
     public MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null) => _core.CreateSnapshot(mousePosition);
 
@@ -188,7 +188,7 @@ public partial class MarqueePresenter
     // ====================================================================
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート。null の場合は等価変換。</param>
+    /// <param name="port">座標変換ポート。 null の場合は等価変換。</param>
     public void SetCoordTransform(ICoordTransform? port) => _core.SetCoordTransform(port);
 
     /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
@@ -216,7 +216,7 @@ public partial class MarqueePresenter
 
     /// <summary>キー入力を通知する。</summary>
     /// <param name="key">押下されたキー。</param>
-    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。取得できない場合は null。</param>
+    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。 取得できない場合は null。</param>
     /// <returns>入力が処理された場合は true。</returns>
     public bool KeyDown(EsKey key, EsPoint? cursorPosition) => _core.KeyDown(key, cursorPosition);
 
@@ -241,8 +241,8 @@ public partial class MarqueePresenter
     // ====================================================================
 
     /// <summary>現在の状態から描画 1 フレーム分の計画を解決する。</summary>
-    /// <param name="clientSize">描画領域のサイズ（DIP。原点は常に 0）。</param>
-    /// <param name="measureText">テキストの実寸を測る関数。null 不可。</param>
+    /// <param name="clientSize">描画領域のサイズ（DIP。 原点は常に 0）。</param>
+    /// <param name="measureText">テキストの実寸を測る関数。 null 不可。</param>
     /// <returns>描画計画（幾何・外観・層の順序・ラベル配置を解決済み）。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
     /// <remarks>
@@ -301,13 +301,13 @@ public partial class MarqueePresenter
     /// <param name="outerBorderRects">穴あけ枠の矩形。</param>
     /// <param name="innerFillRect">内側の塗り。</param>
     /// <param name="innerBorderRects">内側の枠線。</param>
-    /// <param name="handles">ドラッグハンドル。null の場合は層を含めない。</param>
-    /// <param name="marker">始点マーカー。null の場合は層を含めない。</param>
-    /// <param name="sizeLabel">サイズラベル。null の場合は数えない。</param>
-    /// <param name="coordLabel">カーソル座標ラベル。null の場合は数えない。</param>
+    /// <param name="handles">ドラッグハンドル。 null の場合は層を含めない。</param>
+    /// <param name="marker">始点マーカー。 null の場合は層を含めない。</param>
+    /// <param name="sizeLabel">サイズラベル。 null の場合は数えない。</param>
+    /// <param name="coordLabel">カーソル座標ラベル。 null の場合は数えない。</param>
     /// <returns>描く層の一覧（先頭から順に処理する）。</returns>
     /// <remarks>
-    /// <b>層にある ⇔ 描く値がある</b>（ルーペの層と同じ規則。描く値の無い層は含めない）。<br/>
+    /// <b>層にある ⇔ 描く値がある</b>（ルーペの層と同じ規則。 描く値の無い層は含めない）。<br/>
     /// テキストはどちらかの文言がある場合だけ末尾へ置き、常に最上位にする。
     /// </remarks>
     private static IReadOnlyList<MarqueeDrawLayer> ResolveLayers(

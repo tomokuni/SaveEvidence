@@ -1,17 +1,17 @@
 # Feature.Marquee.Presenter
 
-マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の見た目を定める **コントロール化を前提としない UI 非依存の層**です。UI 実装が変わっても同じ処理を共有します。
+マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の見た目を定める **コントロール化を前提としない UI 非依存の層**です。 UI 実装が変わっても同じ処理を共有します。
 
 ## 概要
 
-本層は 2 つの関心事を持ちます。どちらも「単体で使う `Marquee` だけでは決まらない」ため、コア（`Feature.Marquee.Core`）には置きません。
+本層は 2 つの関心事を持ちます。 どちらも「単体で使う `Marquee` だけでは決まらない」ため、コア（`Feature.Marquee.Core`）には置きません。
 
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
 | **提示（Presenter）** | 描画の幾何（`MarqueeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `MarqueePresenter` / `MarqueeDrawPlan` / `MarqueeDrawLayer` |
 | **外観** | 色・フォント・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `MarqueeAppearance` |
 
-**描画は行いません**。UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、本層は**描画計画というデータ**を返し、描画は各 UI の描画実装が自 UI の API で行います。
+**描画は行いません**。 UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、本層は**描画計画というデータ**を返し、描画は各 UI の描画実装が自 UI の API で行います。
 
 **本層はコントロール化を前提とした処理を持ちません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は UI 層が持ちます）。
 
@@ -50,7 +50,7 @@ protected override void Render(DrawingContext context)
 
 | グループ | 型 |
 | --- | --- |
-| 提示 | `MarqueePresenter`（描画計画の解決。`sealed` ではない） / `Drawing.MarqueeDrawPlan` / `Drawing.MarqueeDrawLayer` / `Drawing.MarqueeTextPlacement` |
+| 提示 | `MarqueePresenter`（描画計画の解決。 `sealed` ではない） / `Drawing.MarqueeDrawPlan` / `Drawing.MarqueeDrawLayer` / `Drawing.MarqueeTextPlacement` |
 | 外観 | `Setting.MarqueeAppearance`（色・フォントサイズ・枠線の太さ・表示可否） |
 | ラベル | `Label.MarqueeLabelPlacement`（配置指示） |
 | ログ | `Logging.MarqueePresenterLogMessage`（internal） |
@@ -85,7 +85,7 @@ dotnet build src/Feature.Marquee.Presenter/src/Feature.Marquee.Presenter.csproj
 dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.csproj
 ```
 
-`tests/` が単体テストを持ちます。描画計画の値（矩形・層・配置・文言）は UI 型を持たないため **UI 初期化なしで検証**でき、画素の検証は描画 API を持つ UI 側のテストが担います。
+`tests/` が単体テストを持ちます。 描画計画の値（矩形・層・配置・文言）は UI 型を持たないため **UI 初期化なしで検証**でき、画素の検証は描画 API を持つ UI 側のテストが担います。
 
 ## ドキュメント
 

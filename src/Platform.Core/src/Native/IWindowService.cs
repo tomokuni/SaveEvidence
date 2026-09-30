@@ -22,22 +22,22 @@ public interface IWindowService
     /// <summary>ウィンドウをキャプチャ（GDI CopyFromScreen / DXGI 等）から除外する/除外を解除する。</summary>
     /// <param name="handle">対象ウィンドウの識別子。</param>
     /// <param name="exclude">キャプチャ除外する場合は <see langword="true"/>、除外を解除する場合は <see langword="false"/>。</param>
-    /// <returns>成功した場合は <see langword="true"/>。未対応プラットフォーム・無効なハンドルでは <see langword="false"/>。</returns>
+    /// <returns>成功した場合は <see langword="true"/>。 未対応プラットフォーム・無効なハンドルでは <see langword="false"/>。</returns>
     /// <remarks>
     /// キャプチャ前に除外を設定し、キャプチャ後に解除することで、オーナーウィンドウ（選択オーバーレイ等）が<br/>
     /// キャプチャ画像に写り込むのを防ぐ（フレームタイミングに依存しない決定的な除外）。<br/>
-    /// Windows 10 2004（build 19041）以降で利用可能。それ以前では失敗（false）を返す。<br/>
+    /// Windows 10 2004（build 19041）以降で利用可能。 それ以前では失敗（false）を返す。<br/>
     /// 除外設定が反映されるまで 1 フレーム待つ（設定直後のキャプチャを防ぐ）。
     /// </remarks>
     bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude);
 
     /// <summary>ウィンドウの位置とサイズを画面物理ピクセルで指定する。</summary>
     /// <param name="handle">対象ウィンドウの識別子。</param>
-    /// <param name="bounds">設定する矩形（画面物理ピクセル。負の座標可）。</param>
-    /// <returns>成功した場合は <see langword="true"/>。無効なハンドル・未対応プラットフォームでは <see langword="false"/>。</returns>
+    /// <param name="bounds">設定する矩形（画面物理ピクセル。 負の座標可）。</param>
+    /// <returns>成功した場合は <see langword="true"/>。 無効なハンドル・未対応プラットフォームでは <see langword="false"/>。</returns>
     /// <remarks>
     /// UI フレームワークの論理座標（DIP）による配置は、全モニターを跨ぐウィンドウでは OS により<br/>
-    /// 作業領域内へ補正される（実測）。物理ピクセルで指定したい場合に本メソッドを使う。<br/>
+    /// 作業領域内へ補正される（実測）。 物理ピクセルで指定したい場合に本メソッドを使う。<br/>
     /// ウィンドウは可視領域外（負の大きな座標）へも配置できる。
     /// </remarks>
     bool SetBounds(EsPlatformHandle handle, EsRectInt bounds);

@@ -22,7 +22,7 @@ public static class ScrollMath
     /// <param name="contentSize">コンテンツサイズ（コンテンツ座標）。</param>
     /// <param name="viewportSize">ビューポートサイズ（表示座標）。</param>
     /// <param name="scale">スケール（倍率 / 100）。</param>
-    /// <returns>最大オフセット。コンテンツがビューポート以下の場合は 0。</returns>
+    /// <returns>最大オフセット。 コンテンツがビューポート以下の場合は 0。</returns>
     /// <remarks>
     /// 描画位置 = スケール × (コンテンツ座標 − オフセット) の定義に基づき、<br/>
     /// オフセットの最大値はコンテンツ − ビューポート / スケール。

@@ -7,12 +7,12 @@ namespace EsUtil.Platform.Core.Imaging;
 /// <summary>複数のビットマップ種別を横断して扱う軽量なユニバーサルビットマップラッパー（コア）。</summary>
 /// <remarks>
 /// <b>設計</b>: 本型は自前のピクセルバッファ（アンマネージド）だけを所有し、ビットマップ種別に依存しない
-/// ピクセル操作のみを提供する。外部パッケージへ依存しない（UI 非依存・可搬の判定基準を満たす）。<br/>
+/// ピクセル操作のみを提供する。 外部パッケージへ依存しない（UI 非依存・可搬の判定基準を満たす）。<br/>
 /// UI ごとの生成・変換（System.Drawing / Avalonia / Skia）は各プラットフォーム層の拡張が担う。<br/>
 /// <br/>
 /// <b>メモリ確保</b>: <see cref="NativeMemory.AlignedAlloc"/> で 64 バイト整列して確保し、確保直後に全領域を 0 で初期化する
-/// （透明 = 全成分 0 が「描かれていない」の表現であるため）。全領域を直後に書く手順（複製・色付き生成・切り出し）は
-/// 0 初期化を省き、切り出しでは書かれない領域（パディング）だけを透明にする。整列は<b>確保の基底アドレスのみ</b>に適用し、
+/// （透明 = 全成分 0 が「描かれていない」の表現であるため）。 全領域を直後に書く手順（複製・色付き生成・切り出し）は
+/// 0 初期化を省き、切り出しでは書かれない領域（パディング）だけを透明にする。 整列は<b>確保の基底アドレスのみ</b>に適用し、
 /// <see cref="Stride"/> は <c>幅 × 4</c>（パディングなし）とする（行も整列させるとストライドが変わり、
 /// ピクセル形式を共有する他の実装の期待値を壊す）。<br/>
 /// <br/>
@@ -25,7 +25,7 @@ namespace EsUtil.Platform.Core.Imaging;
 public sealed class EsBitmap : IDisposable
 {
     /// <summary>1 ピクセルあたりのバイト数（BGRA8888）。</summary>
-    /// <value>4。ストライドは常に <c>幅 × 本値</c> である。</value>
+    /// <value>4。 ストライドは常に <c>幅 × 本値</c> である。</value>
     /// <remarks>相互変換（System.Drawing / Avalonia / Skia）がストライドを計算するために使う（同じ 4 を各所へ書かない）。</remarks>
     public const int BytesPerPixel = 4;
 
@@ -38,11 +38,11 @@ public sealed class EsBitmap : IDisposable
     private bool _disposed;
 
     /// <summary>指定サイズのピクセルバッファを確保する。</summary>
-    /// <param name="width">幅（ピクセル）。0 以上。</param>
-    /// <param name="height">高さ（ピクセル）。0 以上。</param>
-    /// <param name="clear">true の場合は全領域を 0（透明）で初期化する。直後に全領域を書く場合は false にして 0 埋めを省く。</param>
+    /// <param name="width">幅（ピクセル）。 0 以上。</param>
+    /// <param name="height">高さ（ピクセル）。 0 以上。</param>
+    /// <param name="clear">true の場合は全領域を 0（透明）で初期化する。 直後に全領域を書く場合は false にして 0 埋めを省く。</param>
     /// <remarks>
-    /// ストライドは <c>幅 × 4</c>（パディングなし）である。ストライドを本来の値に固定することで、<br/>
+    /// ストライドは <c>幅 × 4</c>（パディングなし）である。 ストライドを本来の値に固定することで、<br/>
     /// ピクセル形式を共有する他の実装（Skia の <c>RowBytes</c> も <c>幅 × 4</c>）とコピー手順が一致する。<br/>
     /// <b><paramref name="clear"/> = false は全領域を直後に書く場合だけ使う</b>（書かない領域は不定値のまま残る）。
     /// </remarks>
@@ -94,8 +94,8 @@ public sealed class EsBitmap : IDisposable
     // ====================================================================
 
     /// <summary>指定サイズの空のビットマップ（BGRA8888・全ピクセル透明）を生成する。</summary>
-    /// <param name="width">幅（ピクセル）。0 以上。</param>
-    /// <param name="height">高さ（ピクセル）。0 以上。</param>
+    /// <param name="width">幅（ピクセル）。 0 以上。</param>
+    /// <param name="height">高さ（ピクセル）。 0 以上。</param>
     /// <returns>生成されたビットマップ。</returns>
     public static EsBitmap Create(int width, int height)
         => new(width, height);
@@ -107,8 +107,8 @@ public sealed class EsBitmap : IDisposable
         => Create(size.Width, size.Height);
 
     /// <summary>指定サイズのビットマップ（BGRA8888）を生成し、全ピクセルを指定色で塗りつぶす。</summary>
-    /// <param name="width">幅（ピクセル）。0 以上。</param>
-    /// <param name="height">高さ（ピクセル）。0 以上。</param>
+    /// <param name="width">幅（ピクセル）。 0 以上。</param>
+    /// <param name="height">高さ（ピクセル）。 0 以上。</param>
     /// <param name="color">塗りつぶし色。</param>
     /// <returns>生成されたビットマップ（全ピクセルが指定色）。</returns>
     /// <remarks>
@@ -131,8 +131,8 @@ public sealed class EsBitmap : IDisposable
         => Create(size.Width, size.Height, color);
 
     /// <summary>直後に全領域を書き込む前提でピクセルバッファを確保する（0 埋めをしない）。</summary>
-    /// <param name="width">幅（ピクセル）。0 以上。</param>
-    /// <param name="height">高さ（ピクセル）。0 以上。</param>
+    /// <param name="width">幅（ピクセル）。 0 以上。</param>
+    /// <param name="height">高さ（ピクセル）。 0 以上。</param>
     /// <returns>生成されたビットマップ（ピクセルは不定値）。</returns>
     /// <remarks>
     /// 全領域を必ず書く手順（全行のコピー・全ピクセルの塗りつぶし）から使う（大きな画像の 0 埋めを丸ごと省ける）。<br/>
@@ -160,11 +160,11 @@ public sealed class EsBitmap : IDisposable
     /// <summary>幅・高さ（ピクセル）。</summary>
     public EsSizeInt Size { get; init; }
 
-    /// <summary>ピクセルデータ先頭アドレス（BGRA8888）。ピクセルを持たない場合は 0。</summary>
+    /// <summary>ピクセルデータ先頭アドレス（BGRA8888）。 ピクセルを持たない場合は 0。</summary>
     /// <value>確保したバッファの先頭アドレス（バッファは <see cref="Dispose"/> で解放する）。</value>
     public nint Address => _buffer;
 
-    /// <summary>1 ラインあたりのバイト数（パディングなし。常に <c>幅 × 4</c>）。</summary>
+    /// <summary>1 ラインあたりのバイト数（パディングなし。 常に <c>幅 × 4</c>）。</summary>
     public int Stride { get; init; }
 
     /// <summary>破棄済みかどうか。</summary>
@@ -180,7 +180,7 @@ public sealed class EsBitmap : IDisposable
     public string ToSizeText() => $"{Width}x{Height}";
 
     /// <summary>画像の寸法を「幅x高さ」形式の文字列へ整形する。</summary>
-    /// <param name="bitmap">対象のビットマップ。null 可。</param>
+    /// <param name="bitmap">対象のビットマップ。 null 可。</param>
     /// <returns>寸法の文字列（例: <c>1920x1080</c>）。<paramref name="bitmap"/> が null の場合は <c>null</c>。</returns>
     /// <remarks>未設定を表す文字列を 1 か所に集約する（呼び出し側が <c>"null"</c> を書かないため）。</remarks>
     public static string ToSizeText(EsBitmap? bitmap) => bitmap is null ? "null" : bitmap.ToSizeText();
@@ -192,7 +192,7 @@ public sealed class EsBitmap : IDisposable
     /// <summary>指定座標のピクセルを BGRA で取得する。</summary>
     /// <param name="x">X 座標（ピクセル）。</param>
     /// <param name="y">Y 座標（ピクセル）。</param>
-    /// <returns>(B, G, R, A) のタプル。範囲外は IndexOutOfRangeException。</returns>
+    /// <returns>(B, G, R, A) のタプル。 範囲外は IndexOutOfRangeException。</returns>
     public unsafe (byte B, byte G, byte R, byte A) GetPixel(int x, int y)
     {
         ThrowIfDisposed();
@@ -202,7 +202,7 @@ public sealed class EsBitmap : IDisposable
 
     /// <summary>指定座標のピクセルを取得する。</summary>
     /// <param name="point">座標（ピクセル）。</param>
-    /// <returns>取得した色（<see cref="Color"/>）。範囲外は IndexOutOfRangeException。</returns>
+    /// <returns>取得した色（<see cref="Color"/>）。 範囲外は IndexOutOfRangeException。</returns>
     public Color GetPixel(EsPointInt point)
     {
         var (b, g, r, a) = GetPixel(point.X, point.Y);
@@ -236,7 +236,7 @@ public sealed class EsBitmap : IDisposable
     /// <param name="x">X 座標（ピクセル）。</param>
     /// <param name="y">Y 座標（ピクセル）。</param>
     /// <param name="color">設定する色。</param>
-    /// <returns>書き込めたかどうか。範囲外の場合は false。</returns>
+    /// <returns>書き込めたかどうか。 範囲外の場合は false。</returns>
     /// <remarks>
     /// 描画（破線・矩形オーバーレイ等）で範囲外を無視したい場合に使用する。<br/>
     /// <see cref="SetPixel(int, int, byte, byte, byte, byte)"/> は範囲外で例外のため、<br/>
@@ -297,16 +297,16 @@ public sealed class EsBitmap : IDisposable
     }
 
     /// <summary>画像から指定された矩形領域を切り出す。</summary>
-    /// <param name="x">切り出し領域の左上X座標（画像ローカルピクセル）。負値の場合はソース左端より外側が透明パディングとなる。</param>
-    /// <param name="y">切り出し領域の左上Y座標（画像ローカルピクセル）。負値の場合はソース上端より外側が透明パディングとなる。</param>
-    /// <param name="width">切り出し領域の幅（ピクセル）。正の値。</param>
-    /// <param name="height">切り出し領域の高さ（ピクセル）。正の値。</param>
-    /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
+    /// <param name="x">切り出し領域の左上X座標（画像ローカルピクセル）。 負値の場合はソース左端より外側が透明パディングとなる。</param>
+    /// <param name="y">切り出し領域の左上Y座標（画像ローカルピクセル）。 負値の場合はソース上端より外側が透明パディングとなる。</param>
+    /// <param name="width">切り出し領域の幅（ピクセル）。 正の値。</param>
+    /// <param name="height">切り出し領域の高さ（ピクセル）。 正の値。</param>
+    /// <returns>切り出された新しいビットマップ（要求サイズ。 ソース範囲外は透明パディング）。</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="width"/> / <paramref name="height"/> が0以下。</exception>
     /// <remarks>
     /// デスティネーションのコピーで覆われない領域は透明にするため、ソース範囲外は透明パディングとなる。<br/>
     /// 左上がソースの外（負）の場合も、要求矩形とソースの位置関係を保ってコピーする<br/>
-    /// （内容を左上へ詰めない。画像外の領域が透明のまま残る）。<br/>
+    /// （内容を左上へ詰めない。 画像外の領域が透明のまま残る）。<br/>
     /// 矩形がソースと交差しない場合は全ピクセル透明のビットマップを返す。<br/>
     /// 内部ではピクセルバッファ（<see cref="Address"/>）へ直接アクセスし、行単位でコピーする<br/>
     /// （0 埋めは行わず、コピーされないパディングだけを透明にする）。<br/>
@@ -400,7 +400,7 @@ public sealed class EsBitmap : IDisposable
 
     /// <summary>画像から指定された矩形領域を切り出す。</summary>
     /// <param name="rect">切り出し領域（画像ローカルピクセル）。</param>
-    /// <returns>切り出された新しいビットマップ（要求サイズ。ソース範囲外は透明パディング）。</returns>
+    /// <returns>切り出された新しいビットマップ（要求サイズ。 ソース範囲外は透明パディング）。</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="rect"/> の幅・高さが0以下。</exception>
     /// <remarks>
     /// デスティネーションのコピーで覆われない領域は透明にするため、ソース範囲外は透明パディングとなる。<br/>

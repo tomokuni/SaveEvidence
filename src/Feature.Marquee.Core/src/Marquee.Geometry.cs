@@ -26,7 +26,7 @@ public sealed partial class Marquee
 
     /// <summary>描画対象の 8 方向ハンドル（<see cref="MarqueeHitTarget.None"/> / <see cref="MarqueeHitTarget.Move"/> を除く）。</summary>
     /// <remarks>
-    /// 列挙順は <see cref="MarqueeHitTarget"/> の宣言順。描画の幾何の解決が本一覧を走査してハンドルの矩形を作る（一覧の単一所有）。<br/>
+    /// 列挙順は <see cref="MarqueeHitTarget"/> の宣言順。 描画の幾何の解決が本一覧を走査してハンドルの矩形を作る（一覧の単一所有）。<br/>
     /// 読み取り専用の一覧として共有する（呼び出し側が書き換えない）。
     /// </remarks>
     private static readonly IReadOnlyList<MarqueeHitTarget> s_directionalHandles =
@@ -61,7 +61,7 @@ public sealed partial class Marquee
     /// <summary>ドラッグハンドルの幾何を解決する。</summary>
     /// <param name="request">描画の入力。</param>
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
-    /// <returns>ハンドルの幾何。選択が無い場合は null。</returns>
+    /// <returns>ハンドルの幾何。 選択が無い場合は null。</returns>
     /// <remarks>
     /// 中心位置（8 方向）と一辺サイズの適用を本メソッドが解決し、描画層へは矩形の一覧として渡す<br/>
     /// （位置の式を描画層が持つと、ハンドルのヒットテストと同じ規則が 2 箇所になる）。<br/>
@@ -91,7 +91,7 @@ public sealed partial class Marquee
     /// <summary>始点マーカー（十字線）の幾何を解決する。</summary>
     /// <param name="request">描画の入力。</param>
     /// <param name="port">解決済みの座標変換ポート（論理座標 → DIP）。</param>
-    /// <returns>マーカーの幾何。nudge 中でない場合は null。</returns>
+    /// <returns>マーカーの幾何。 nudge 中でない場合は null。</returns>
     private static MarqueeMarker? ResolveMarker(in MarqueeRenderRequest request, ICoordTransform port)
     {
         if (!request.MarkerActive)

@@ -151,7 +151,7 @@ public readonly record struct EsRectInt(int X, int Y, int Width, int Height)
 
     /// <summary>本矩形と別の矩形の交差（重なり合う部分）を求める。</summary>
     /// <param name="other">交差を求める相手の矩形。</param>
-    /// <returns>2 つの矩形の重なり部分。重なりが無い場合は左上座標を保った空の矩形。</returns>
+    /// <returns>2 つの矩形の重なり部分。 重なりが無い場合は左上座標を保った空の矩形。</returns>
     /// <remarks><see cref="EsRect.Intersect(EsRect)"/> と同じ規則である（非交差時は左上を保つ）。</remarks>
     public EsRectInt Intersect(EsRectInt other)
     {
@@ -164,7 +164,7 @@ public readonly record struct EsRectInt(int X, int Y, int Width, int Height)
 
     /// <summary>2 つの矩形を包含する最小の矩形を返す（和集合）。</summary>
     /// <param name="other">もう一方の矩形。</param>
-    /// <returns>両者を包含する矩形。いずれかが空（幅・高さが 0 以下）の場合はもう一方を返す。</returns>
+    /// <returns>両者を包含する矩形。 いずれかが空（幅・高さが 0 以下）の場合はもう一方を返す。</returns>
     /// <remarks>仮想スクリーン境界（全モニタのバウンディングボックス）の算出に使用する。</remarks>
     public EsRectInt Union(EsRectInt other)
     {
@@ -180,7 +180,7 @@ public readonly record struct EsRectInt(int X, int Y, int Width, int Height)
 
     /// <summary>点を含むように拡大した矩形を返す（和集合）。</summary>
     /// <param name="point">含める点。</param>
-    /// <returns>点を含む最小の矩形。本矩形が空の場合は点を左上とする面積 0 の矩形。</returns>
+    /// <returns>点を含む最小の矩形。 本矩形が空の場合は点を左上とする面積 0 の矩形。</returns>
     /// <remarks>WinUI3 の <c>Rect.Union(Point)</c> と同じ操作である。</remarks>
     public EsRectInt Union(EsPointInt point)
     {

@@ -3,7 +3,7 @@ namespace EsUtil.Feature.Marquee.Core.Interaction;
 /// <summary>操作位置に対応するカーソル形状の種別（UI 非依存）。</summary>
 /// <remarks>
 /// どの操作位置（ハンドル）が同じカーソル形状になるか（例: 左上と右下は同じ斜めカーソル）は UI に依存しない判断のため、<br/>
-/// コアが単一所有する。各 UI は本種別を自 UI のカーソル型へ写像するだけでよい。<br/>
+/// コアが単一所有する。 各 UI は本種別を自 UI のカーソル型へ写像するだけでよい。<br/>
 /// ハンドルから本種別への変換は <see cref="MarqueeSession.ToCursorKind"/> が担う。<br/>
 /// <br/>
 /// - <see cref="Default"/>: ハンドル外（既定の矢印）<br/>

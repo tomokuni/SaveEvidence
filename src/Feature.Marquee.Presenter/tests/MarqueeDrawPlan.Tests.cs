@@ -18,8 +18,8 @@ namespace EsUtil.Feature.Marquee.Presenter.Tests;
 public class MarqueeDrawPlanTests
 {
     /// <summary>提示層を生成する（テスト用の効果スパイとカーソルなし）。</summary>
-    /// <param name="appearance">外観。null の場合は既定。</param>
-    /// <param name="options">設定。null の場合は既定。</param>
+    /// <param name="appearance">外観。 null の場合は既定。</param>
+    /// <param name="options">設定。 null の場合は既定。</param>
     /// <returns>提示層。</returns>
     private static MarqueePresenter CreatePresenter(MarqueeAppearance? appearance = null, MarqueeOptions? options = null)
     {
@@ -40,8 +40,8 @@ public class MarqueeDrawPlanTests
     private static EsSize MeasureText(string text, double fontSize) => new(40.0, 14.0);
 
     /// <summary>描画計画を解決する（描画領域 200×100）。</summary>
-    /// <param name="appearance">外観。null の場合は既定。</param>
-    /// <param name="options">設定。null の場合は既定。</param>
+    /// <param name="appearance">外観。 null の場合は既定。</param>
+    /// <param name="options">設定。 null の場合は既定。</param>
     /// <returns>描画計画。</returns>
     private static MarqueeDrawPlan ResolvePlan(MarqueeAppearance? appearance = null, MarqueeOptions? options = null)
         => CreatePresenter(appearance, options).ResolveDrawPlan(new EsSize(200, 100), MeasureText);

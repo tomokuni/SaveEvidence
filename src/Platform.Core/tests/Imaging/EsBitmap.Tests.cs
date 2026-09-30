@@ -27,7 +27,7 @@ public class EsBitmapTests
         using var bmp = Create(6, 8);
         Assert.Equal(6, bmp.Size.Width);
         Assert.Equal(8, bmp.Size.Height);
-        // ストライドは幅×4 で固定される（行パディングなし。整列は確保の基底のみ）
+        // ストライドは幅×4 で固定される（行パディングなし。 整列は確保の基底のみ）
         Assert.Equal(6 * 4, bmp.Stride);
         Assert.False(bmp.IsDisposed);
     }
@@ -426,7 +426,7 @@ public class EsBitmapTests
         // 中間行の左パディング（1 列）と右パディング（5 列）
         Assert.Equal((byte)0, result.GetPixel(0, 2).A);
         Assert.Equal((byte)0, result.GetPixel(5, 2).A);
-        // 下端のパディング行（4 行。高さ 10 のうち上端 2 + コピー 4）
+        // 下端のパディング行（4 行。 高さ 10 のうち上端 2 + コピー 4）
         Assert.Equal((byte)0, result.GetPixel(5, 9).A);
         // コピーされた領域は赤のまま
         Assert.Equal((byte)255, result.GetPixel(1, 2).R);

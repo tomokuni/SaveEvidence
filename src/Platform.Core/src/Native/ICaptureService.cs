@@ -22,7 +22,7 @@ public interface ICaptureService
 {
     /// <summary>指定された画面領域をキャプチャする（EsBitmap で返す）。</summary>
     /// <param name="bounds">キャプチャする画面領域（画面物理座標）。</param>
-    /// <returns>キャプチャした EsBitmap。失敗時は null。破棄は呼び出し側。</returns>
+    /// <returns>キャプチャした EsBitmap。 失敗時は null。 破棄は呼び出し側。</returns>
     /// <remarks>
     /// <see cref="EsBitmap"/>（SKBitmap 内部）の生成はスレッド非依存のため、<br/>
     /// 画面キャプチャ（GDI 同期コール等）と同一のバックグラウンドスレッドで実行可能である。<br/>
@@ -30,8 +30,8 @@ public interface ICaptureService
     EsBitmap? CaptureArea(EsRectInt bounds);
 
     /// <summary>仮想スクリーン（全モニタを包含する領域）全体を 1 回のキャプチャで取得する。</summary>
-    /// <param name="origin">仮想スクリーンの原点（全モニタのバウンディングボックス左上、画面物理座標。プライマリモニタが (0,0) にない場合は負値）。</param>
-    /// <returns>仮想スクリーン全体の EsBitmap。キャプチャ失敗時は null。破棄は呼び出し側。</returns>
+    /// <param name="origin">仮想スクリーンの原点（全モニタのバウンディングボックス左上、画面物理座標。 プライマリモニタが (0,0) にない場合は負値）。</param>
+    /// <returns>仮想スクリーン全体の EsBitmap。 キャプチャ失敗時は null。 破棄は呼び出し側。</returns>
     /// <remarks>
     /// 仮想スクリーン境界の取得（Windows: GetSystemMetrics）と全体キャプチャをプラットフォーム実装に委ね、<br/>
     /// 利用側（選択サブシステム）はプラットフォーム固有 API に依存しない（DIP）。<br/>

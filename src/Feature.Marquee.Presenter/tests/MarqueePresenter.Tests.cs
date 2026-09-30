@@ -17,8 +17,8 @@ public class MarqueePresenterTests
 {
     /// <summary>提示層と効果のスパイを生成する。</summary>
     /// <param name="effects">生成した効果のスパイ。</param>
-    /// <param name="options">初期設定。null の場合は既定値。</param>
-    /// <param name="appearance">初期の外観。null の場合は既定値。</param>
+    /// <param name="options">初期設定。 null の場合は既定値。</param>
+    /// <param name="appearance">初期の外観。 null の場合は既定値。</param>
     /// <returns>提示層。</returns>
     private static MarqueePresenter CreatePresenter(
         out EffectsSpy effects, MarqueeOptions? options = null, MarqueeAppearance? appearance = null)

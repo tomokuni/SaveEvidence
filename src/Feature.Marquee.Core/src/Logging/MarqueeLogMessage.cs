@@ -10,7 +10,7 @@ namespace EsUtil.Feature.Marquee.Core.Logging;
 /// 入力に伴う判断（ドラッグ開始・確定・キャンセル・クリック・キー処理）はコアの状態管理クラスが担うため、<br/>
 /// その経過のログ定義もコアが所有する。<br/>
 /// <b>ホイール要求のログは本層が所有しない</b>（ズーム・スクロールはコントロール化のための要求であり、<br/>
-/// ホスト（UI 層）が持つ。本クラスは入力判断のログだけを持つ）。<br/>
+/// ホスト（UI 層）が持つ。 本クラスは入力判断のログだけを持つ）。<br/>
 /// ログ基盤（ファイル出力・レベル制御）はホストアプリケーションが所有する（本クラスは定義のみ）。<br/>
 /// <b>可視性</b>: 本定義を呼ぶのはコアの状態機械だけであり、UI 層・ホストはロガー（<see cref="Marquee.Log"/>）を渡すだけでよいため internal とする。
 /// </remarks>
@@ -18,7 +18,7 @@ internal static partial class MarqueeLogMessage
 {
     /// <summary>ポインター押下（マウス Down）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] MouseDown: pos=({X}, {Y}) clickCount={ClickCount} hasSelection={HasSelection}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="x">ドメイン座標 X。</param>
     /// <param name="y">ドメイン座標 Y。</param>
     /// <param name="clickCount">クリック数（2 = ダブルクリック）。</param>
@@ -28,7 +28,7 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>ポインター解放（マウス Up）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] MouseUp: pos=({X}, {Y}) wasDragging={WasDragging} hasSelection={HasSelection}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="x">ドメイン座標 X。</param>
     /// <param name="y">ドメイン座標 Y。</param>
     /// <param name="wasDragging">ドラッグ中だったかどうか。</param>
@@ -38,7 +38,7 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>ダブルクリックのログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] DoubleClick: pos=({X}, {Y}) inside={Inside}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="x">ドメイン座標 X。</param>
     /// <param name="y">ドメイン座標 Y。</param>
     /// <param name="inside">選択矩形の内側かどうか。</param>
@@ -47,7 +47,7 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>マウス押下直前の位置のログ（移動の高頻度ログは行わない）。</summary>
     /// <remarks>LogLevel: Trace<br/>出力書式: <c>[Feature.Marquee.Core] Position before MouseDown: pos=({X}, {Y})</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="x">ドメイン座標 X。</param>
     /// <param name="y">ドメイン座標 Y。</param>
     [LoggerMessage(LogLevel.Trace, "[Feature.Marquee.Core] Position before MouseDown: pos=({X}, {Y})")]
@@ -55,7 +55,7 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>マウス解放直後の位置のログ（移動の高頻度ログは行わない）。</summary>
     /// <remarks>LogLevel: Trace<br/>出力書式: <c>[Feature.Marquee.Core] Position after MouseUp: pos=({X}, {Y})</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="x">ドメイン座標 X。</param>
     /// <param name="y">ドメイン座標 Y。</param>
     [LoggerMessage(LogLevel.Trace, "[Feature.Marquee.Core] Position after MouseUp: pos=({X}, {Y})")]
@@ -63,7 +63,7 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>マウスドラッグ開始（新規選択・ハンドル操作）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] DragStart: handle={Handle} pos=({X}, {Y})</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="handle">操作対象のハンドル（None = 新規選択）。</param>
     /// <param name="x">ドメイン座標 X。</param>
     /// <param name="y">ドメイン座標 Y。</param>
@@ -72,7 +72,7 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>キー入力（矢印キー nudge・Enter 確定・Escape キャンセル）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] KeyDown: key={Key} handled={Handled}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="key">押下されたキー。</param>
     /// <param name="handled">処理されたかどうか。</param>
     [LoggerMessage(LogLevel.Debug, "[Feature.Marquee.Core] KeyDown: key={Key} handled={Handled}")]
@@ -80,20 +80,20 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>確定要求（Enter・ダブルクリック・API 呼び出し）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] ConfirmRequested: rect={Rect}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="rect">確定する選択矩形（整形済み）。</param>
     [LoggerMessage(LogLevel.Debug, "[Feature.Marquee.Core] ConfirmRequested: rect={Rect}")]
     internal static partial void LogConfirmRequested(this ILogger logger, string rect);
 
     /// <summary>キャンセル要求（Escape・枠外ダブルクリック・API 呼び出し）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] CancelRequested</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     [LoggerMessage(LogLevel.Debug, "[Feature.Marquee.Core] CancelRequested")]
     internal static partial void LogCancelRequested(this ILogger logger);
 
     /// <summary>設定値変更のログ（変更前後）。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] Setting: {Name} {OldValue} → {NewValue}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -105,7 +105,7 @@ internal static partial class MarqueeLogMessage
     /// <see cref="LogSettingChanged(ILogger, string, string, string)"/> と同じ書式で出力する。<br/>
     /// 「変化したときだけ出力する」判断と数値の文字列化は <see cref="LogSettingChangedIfChanged"/> が単一所有する。
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -114,7 +114,7 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>実数設定値の変更ログ（同値の再設定では出力しない）。</summary>
     /// <remarks><see cref="LogSettingChanged(ILogger, string, int, int)"/> の実数版（書式・規則とも同一）。</remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -126,7 +126,7 @@ internal static partial class MarqueeLogMessage
     /// <see cref="LogSettingChanged(ILogger, string, int, int)"/> の真偽版。<br/>
     /// <c>bool</c> は <see cref="IFormattable"/> を実装しないため本体の汎用版へは委譲できない（書式は型の標準表記）。
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -142,7 +142,7 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>数値設定値の変更ログ（同値の再設定では出力しない）の本体。</summary>
     /// <typeparam name="T">数値の型（整数・実数）。</typeparam>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">設定名。</param>
     /// <param name="oldValue">変更前の値。</param>
     /// <param name="newValue">変更後の値。</param>
@@ -170,7 +170,7 @@ internal static partial class MarqueeLogMessage
     /// 矩形の整形（<c>(X, Y, W, H)</c>）は <see cref="FormatRect"/> が単一所有する
     /// （整形を呼び出し側へ置くと、同じ矩形が経路によって別の書式で出力される）。
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="rect">確定する選択矩形。</param>
     internal static void LogConfirmRequested(this ILogger logger, EsRect rect)
         => logger.LogConfirmRequested(FormatRect(rect));
@@ -182,7 +182,7 @@ internal static partial class MarqueeLogMessage
     /// （UI 層は前後の値を渡さず、コアが保持する値の変化を知るだけでよい）。<br/>
     /// 外観の再適用で設定数ぶんのログが溢れないよう、各項目のログが同値判定を行う（変化した項目だけが出力される）。
     /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。呼び出し側で省略できる）。</param>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前の設定。</param>
     /// <param name="newValue">変更後の設定。</param>
     internal static void LogOptionsChanged(this ILogger logger, MarqueeOptions oldValue, MarqueeOptions newValue)

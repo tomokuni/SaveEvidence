@@ -30,6 +30,6 @@ public interface IMarqueeEffects
 
     /// <summary>ドメイン座標を画面物理座標へ変換する（カーソル移動用）。</summary>
     /// <param name="domainPoint">ドメイン座標。</param>
-    /// <returns>画面物理座標。変換できない場合は既定値。</returns>
+    /// <returns>画面物理座標。 変換できない場合は既定値。</returns>
     EsPointInt ToScreenPoint(EsPoint domainPoint);
 }

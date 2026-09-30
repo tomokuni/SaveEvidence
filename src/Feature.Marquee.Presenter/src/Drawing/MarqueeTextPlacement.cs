@@ -4,9 +4,9 @@ using EsUtil.Platform.Core.Geometry;
 namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 
 /// <summary>描画層が UI 層へ渡すテキスト（文言と基準点）を表す値。</summary>
-/// <param name="Text">表示する文言（描画層が生成する。ホストがプロバイダで与えた場合はその文字列）。</param>
-/// <param name="Point">基準点（DIP。文字の左上を置く点）。</param>
-/// <param name="ClampArea">描画領域のサイズ（DIP。0 以下の軸はクランプしない。既定（0）はクランプなし）。</param>
+/// <param name="Text">表示する文言（描画層が生成する。 ホストがプロバイダで与えた場合はその文字列）。</param>
+/// <param name="Point">基準点（DIP。 文字の左上を置く点）。</param>
+/// <param name="ClampArea">描画領域のサイズ（DIP。 0 以下の軸はクランプしない。 既定（0）はクランプなし）。</param>
 /// <remarks>
 /// <b>描画層はラベルを特殊扱いしない</b>: 描画層が決めるのは「文言・位置・領域」までであり、<br/>
 /// ラベルを<b>テキスト要素（<c>TextBlock</c> 等）として置くか、画像として描くかは UI 層が決める</b>。<br/>

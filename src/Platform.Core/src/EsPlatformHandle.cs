@@ -8,8 +8,8 @@ namespace EsUtil.Platform.Core;
 /// UI フレームワークのオブジェクト（Avalonia の <c>TopLevel</c> 等）には触れない。<br/>
 /// 各 UI 実装のハンドル型との変換は Interop 層が提供する。<br/>
 /// </remarks>
-/// <param name="Handle">ネイティブハンドル値（Win32: HWND / X11: Window ID）。未取得時は 0。</param>
-/// <param name="Descriptor">ハンドルの種別を表す説明（例: "HWND"）。不明な場合は null。</param>
+/// <param name="Handle">ネイティブハンドル値（Win32: HWND / X11: Window ID）。 未取得時は 0。</param>
+/// <param name="Descriptor">ハンドルの種別を表す説明（例: "HWND"）。 不明な場合は null。</param>
 public readonly record struct EsPlatformHandle(nint Handle, string? Descriptor = null)
 {
     /// <summary>有効なハンドルを保持しているかどうかを取得する。</summary>

@@ -25,13 +25,13 @@ public partial class MarqueePresenter
     /// <remarks>
     /// 基準点は穴あけ矩形の左上であり、そのまま置くとラベルの背景が矩形の枠線に重なって文字が読みにくくなる。<br/>
     /// 枠線は矩形の内側へ <see cref="MarqueeAppearance.OuterBorderThickness"/> の幅で描かれるため、その幅に本値を足した分だけ内側へ寄せる<br/>
-    /// （線幅ちょうどでは背景が線に接する。本値は背景と線の間に残す見た目の余白である）。
+    /// （線幅ちょうどでは背景が線に接する。 本値は背景と線の間に残す見た目の余白である）。
     /// </remarks>
     private const double LabelInsetMargin = 1.0;
 
     /// <summary>穴あけ矩形からラベルの基準点（矩形の枠線を避けた左上）を求める。</summary>
     /// <param name="holeRect">穴あけ矩形（選択またはハイライトの領域）。</param>
-    /// <param name="appearance">外観（枠線の太さと表示可否を持つ）。null 不可。</param>
+    /// <param name="appearance">外観（枠線の太さと表示可否を持つ）。 null 不可。</param>
     /// <returns>ラベルの基準点（DIP）。</returns>
     /// <remarks>
     /// 内側への寄せ幅は「矩形の線幅 + <see cref="LabelInsetMargin"/>」であり、本メソッドが単一所有する<br/>
@@ -61,9 +61,9 @@ public partial class MarqueePresenter
     /// <param name="geometry">描画の幾何（穴あけ矩形を持つ）。</param>
     /// <param name="appearance">外観（表示可否と枠線の太さを持つ）。</param>
     /// <param name="displayScaleScaling">座標・サイズを物理ピクセルへ換算する係数（0 以下は倍率として扱う）。</param>
-    /// <param name="overrideProvider">文言プロバイダ。null または空文字を返す場合は自動生成する。</param>
-    /// <param name="displayScalingProvider">表示スケールを矩形ごとに解決するプロバイダ。null の場合は <paramref name="displayScaleScaling"/> を使う。</param>
-    /// <returns>サイズラベルのテキスト配置。表示しない場合は null。</returns>
+    /// <param name="overrideProvider">文言プロバイダ。 null または空文字を返す場合は自動生成する。</param>
+    /// <param name="displayScalingProvider">表示スケールを矩形ごとに解決するプロバイダ。 null の場合は <paramref name="displayScaleScaling"/> を使う。</param>
+    /// <returns>サイズラベルのテキスト配置。 表示しない場合は null。</returns>
     /// <remarks>
     /// 基準点は穴あけ矩形の左上から枠線の幅（+ 余白）だけ内側へ寄せた点である（ラベルは左上起点で置く）。<br/>
     /// 座標の換算は <paramref name="displayScaleScaling"/> を使い、DisplayScale の百分率だけを<br/>
@@ -97,7 +97,7 @@ public partial class MarqueePresenter
     /// <param name="geometry">描画の幾何（カーソル位置とクライアントサイズを持つ）。</param>
     /// <param name="appearance">外観（表示可否を持つ）。</param>
     /// <param name="port">解決済みの座標変換ポート（ドメイン座標 → DIP）。</param>
-    /// <returns>座標ラベルのテキスト配置。表示しない場合は null。</returns>
+    /// <returns>座標ラベルのテキスト配置。 表示しない場合は null。</returns>
     /// <remarks>
     /// 文言は <see cref="EsPoint.Format(int)"/> が文字列化する。<br/>
     /// 基準点は「カーソル + <see cref="CoordLabelOffset"/>」である（ラベルは左上起点で置く）。

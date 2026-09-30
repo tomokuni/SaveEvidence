@@ -17,7 +17,7 @@ namespace EsUtil.Feature.Marquee.Core.Tests;
 public class MarqueeGeometryResolutionTests
 {
     /// <summary>ファサードを生成する。</summary>
-    /// <param name="options">初期設定。null の場合は既定値。</param>
+    /// <param name="options">初期設定。 null の場合は既定値。</param>
     /// <returns>ファサード。</returns>
     private static Marquee CreateMarquee(MarqueeOptions? options = null)
         => new(new EffectsSpy(), cursor: null, options) { Log = NullLogger.Instance };

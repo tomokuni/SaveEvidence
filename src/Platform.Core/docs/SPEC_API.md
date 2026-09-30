@@ -1,6 +1,6 @@
 # Platform.Core API リファレンス
 
-UI フレームワーク非依存の共有ライブラリが提供する公開 API のリファレンスです。使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
+UI フレームワーク非依存の共有ライブラリが提供する公開 API のリファレンスです。 使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
 ## 1. 名前空間と型
 
@@ -18,15 +18,15 @@ UI フレームワーク非依存の共有ライブラリが提供する公開 A
 
 ## 2. 公開 API
 
-公開型を 1 型 1 節で記載します。型名の接頭辞は名前空間を表します（`Coord.` / `Geometry.` / `Imaging.` / `Native.` を省略した型はルート名前空間）。
+公開型を 1 型 1 節で記載します。 型名の接頭辞は名前空間を表します（`Coord.` / `Geometry.` / `Imaging.` / `Native.` を省略した型はルート名前空間）。
 
 ### `EsKey`（enum）
 
-UI フレームワーク非依存のキー識別子。`Avalonia.Input.Key` と同一のメンバー名を持ち、ホットキー設定の文字列表現・JSON シリアライズ（`JsonStringEnumConverter` 使用時）の互換性を保ちます。
+UI フレームワーク非依存のキー識別子。 `Avalonia.Input.Key` と同一のメンバー名を持ち、ホットキー設定の文字列表現・JSON シリアライズ（`JsonStringEnumConverter` 使用時）の互換性を保ちます。
 
 ### `EsWindowState`（enum）
 
-UI フレームワーク非依存のウィンドウ表示状態。`Avalonia.Controls.WindowState` と同一のメンバー名（`Normal` / `Minimized` / `Maximized` / `FullScreen`）を持ち、設定ファイルの JSON シリアライズ（`JsonStringEnumConverter` 使用時）の互換性を保ちます。
+UI フレームワーク非依存のウィンドウ表示状態。 `Avalonia.Controls.WindowState` と同一のメンバー名（`Normal` / `Minimized` / `Maximized` / `FullScreen`）を持ち、設定ファイルの JSON シリアライズ（`JsonStringEnumConverter` 使用時）の互換性を保ちます。
 
 ### `CaptureType`（enum）
 
@@ -38,7 +38,7 @@ UI フレームワーク非依存のウィンドウ表示状態。`Avalonia.Cont
 | `WindowSelect` | ウィンドウ選択（カーソル位置の最前面ウィンドウを対象） |
 | `AreaSelect` | 範囲選択（ドラッグで任意矩形） |
 
-UI フレームワーク非依存のキャプチャ種別。上位のライブラリとホストが共有します。ホストではグローバルホットキーのアクション識別子（`IGlobalHotKeyService<CaptureType>`）としても使用します。
+UI フレームワーク非依存のキャプチャ種別。 上位のライブラリとホストが共有します。 ホストではグローバルホットキーのアクション識別子（`IGlobalHotKeyService<CaptureType>`）としても使用します。
 
 ### `HotKeyModifiers`（`[Flags]` enum）
 
@@ -61,7 +61,7 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 }
 ```
 
-- `ToString()`: "Ctrl + Shift + Q" のようなユーザー可読な文字列を返す。数字キー（`D0`〜`D9`）・記号キー（`OemMinus` 等）は対応する記号で表示する。
+- `ToString()`: "Ctrl + Shift + Q" のようなユーザー可読な文字列を返す。 数字キー（`D0`〜`D9`）・記号キー（`OemMinus` 等）は対応する記号で表示する。
 - レコード型のため、`Modifiers` と `Key` が一致すれば等価。
 
 ### `Coord.ScrollMath`（static class）
@@ -72,37 +72,37 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 
 ### `Coord.DpiScaler`（static class）
 
-- `StandardDpi`: DIP（デバイス非依存ピクセル）の基準 DPI（`96.0` = 1 ピクセル = 1 DIP）。スケーリング係数の算出と、DIP を 1:1 で描く描画先の DPI が共用する。
-- `StandardScaling`: スケーリング係数の基準値（`1.0` = DIP と物理ピクセルが 1:1）。係数が未確定のときに使う値。
+- `StandardDpi`: DIP（デバイス非依存ピクセル）の基準 DPI（`96.0` = 1 ピクセル = 1 DIP）。 スケーリング係数の算出と、DIP を 1:1 で描く描画先の DPI が共用する。
+- `StandardScaling`: スケーリング係数の基準値（`1.0` = DIP と物理ピクセルが 1:1）。 係数が未確定のときに使う値。
 - `ToScaling(double dpi)`: DPI をスケーリング係数（表示 DIP → 物理ピクセル）へ換算する（`StandardDpi` を 1.0 とする倍率）。
-- `IsValidScaling(double scaling)`: スケーリング係数が有効（描画・変換に使える）かどうかを判定する。**有限の正の値のみ有効**とし、0 以下と非数（NaN / 無限大）は無効とする（乗算で座標が整数の上限へ溢れてウィンドウが壊れるのを防ぐ）。
+- `IsValidScaling(double scaling)`: スケーリング係数が有効（描画・変換に使える）かどうかを判定する。 **有限の正の値のみ有効**とし、0 以下と非数（NaN / 無限大）は無効とする（乗算で座標が整数の上限へ溢れてウィンドウが壊れるのを防ぐ）。
 - `NormalizeScaling(double scaling)`: スケーリング係数を有効値へ正規化する（無効な値は `StandardScaling`）。
-- `ScaleToPixel(int/double dipValue, double scaling)`: DIP 値を物理ピクセルへ変換（切り上げ・最低 1。浮動小数誤差を吸収）。
-- `ToDip(int/double physical, double scaling)`: 物理ピクセルを DIP へ変換（`ScaleToPixel` の逆変換。**丸め・最低値の規則は適用しない**）。ウィンドウの位置・サイズを物理ピクセルから DIP へ戻す場面（全モニタの包含矩形をウィンドウへ適用する等）で共用する。
-- `ToDip(EsSize physicalSize, double scaling)`: 物理ピクセルのサイズを DIP のサイズへ変換する（成分ごとの換算を上記 `ToDip` へ委譲する）。コア型同士の換算を UI 側で組み立てないための入口。
+- `ScaleToPixel(int/double dipValue, double scaling)`: DIP 値を物理ピクセルへ変換（切り上げ・最低 1。 浮動小数誤差を吸収）。
+- `ToDip(int/double physical, double scaling)`: 物理ピクセルを DIP へ変換（`ScaleToPixel` の逆変換。 **丸め・最低値の規則は適用しない**）。 ウィンドウの位置・サイズを物理ピクセルから DIP へ戻す場面（全モニタの包含矩形をウィンドウへ適用する等）で共用する。
+- `ToDip(EsSize physicalSize, double scaling)`: 物理ピクセルのサイズを DIP のサイズへ変換する（成分ごとの換算を上記 `ToDip` へ委譲する）。 コア型同士の換算を UI 側で組み立てないための入口。
 - 表示サイズ・市松模様のサイズ・外枠の太さの物理ピクセル換算と、ウィンドウの位置・サイズの換算で共用する。
 
 ### `Geometry.EsAxis`（enum）
 
-レイアウト計算で扱う軸（`X` = 幅 / `Y` = 高さ）です。軸を `bool` で渡すと `true` が横か縦か読めなくなるため、列挙型で指定します。
+レイアウト計算で扱う軸（`X` = 幅 / `Y` = 高さ）です。 軸を `bool` で渡すと `true` が横か縦か読めなくなるため、列挙型で指定します。
 
 ### `Geometry.EsRounding`（enum）
 
-小数を整数へ丸める方法（`Truncate` = 0 の方向へ切り捨て / `Round` = 最も近い整数（0.5 は 0 から遠い方）/ `Ceiling` = 正の方向へ切り上げ）です。`bool` で「切り捨てか四捨五入か」を指定すると呼び出し側で意味が読めないため列挙型にし、丸め規則は整数型の `FromEsXxx(..., EsRounding)` へ集約します。
+小数を整数へ丸める方法（`Truncate` = 0 の方向へ切り捨て / `Round` = 最も近い整数（0.5 は 0 から遠い方）/ `Ceiling` = 正の方向へ切り上げ）です。 `bool` で「切り捨てか四捨五入か」を指定すると呼び出し側で意味が読めないため列挙型にし、丸め規則は整数型の `FromEsXxx(..., EsRounding)` へ集約します。
 
 ### `LoggerFallback`（static class）
 
-ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー。拡張メソッドとして提供します。
+ロガーの null を `NullLogger.Instance` へ吸収する共通ヘルパー。 拡張メソッドとして提供します。
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 拡張メソッド | `OrNullLogger` | `static ILogger OrNullLogger(this ILogger? logger)` | 指定されたロガーを返す。null の場合は `NullLogger.Instance`（出力なし）を返す |
+| 拡張メソッド | `OrNullLogger` | `static ILogger OrNullLogger(this ILogger? logger)` | 指定されたロガーを返す。 null の場合は `NullLogger.Instance`（出力なし）を返す |
 
 ```csharp
 private readonly ILogger _log = logger.OrNullLogger();   // logger が null でも安全
 ```
 
-「ロガー未設定（null）は出力なしとして扱う」規則を単一所有します。各コントロール・サービスは `logger ?? NullLogger.Instance` を自前で書かず本メソッドへ委譲してください。
+「ロガー未設定（null）は出力なしとして扱う」規則を単一所有します。 各コントロール・サービスは `logger ?? NullLogger.Instance` を自前で書かず本メソッドへ委譲してください。
 
 ### `Imaging.DrawingColorExtensions`（static class）
 
@@ -117,11 +117,11 @@ private readonly ILogger _log = logger.OrNullLogger();   // logger が null で�
 ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
 ```
 
-描画の可否は**描画にだけ必要な設定を所有する上位層の外観の明示フラグ**が単一所有します。本メソッドは「ホストの色設定（省略可能な色）をフラグへ写す」場面で使います（`color.A > 0` を各所に書くと、同じ意味の判定が散らばる）。
+描画の可否は**描画にだけ必要な設定を所有する上位層の外観の明示フラグ**が単一所有します。 本メソッドは「ホストの色設定（省略可能な色）をフラグへ写す」場面で使います（`color.A > 0` を各所に書くと、同じ意味の判定が散らばる）。
 
 ### `Imaging.ImageDrawMode`（enum）
 
-画像を描画先の領域へ配置する方法。ブール値の引数で受けると `false` の意味が読めないため、列挙型で表現します。
+画像を描画先の領域へ配置する方法。 ブール値の引数で受けると `false` の意味が読めないため、列挙型で表現します。
 
 | メンバー | 意味 |
 | --- | --- |
@@ -130,11 +130,11 @@ ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
 
 ### `Imaging.ImageDrawMath`（static class）
 
-画像を描画先の領域へ配置する矩形（`SKRect`）の計算。UI ホストを必要としない純粋関数のため、倍率・中央寄せ・空の扱いをヘッドレスで検証できます。
+画像を描画先の領域へ配置する矩形（`SKRect`）の計算。 UI ホストを必要としない純粋関数のため、倍率・中央寄せ・空の扱いをヘッドレスで検証できます。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `ComputeDestination` | `static SKRect ComputeDestination(int sourceWidth, int sourceHeight, int targetWidth, int targetHeight, ImageDrawMode mode)` | 元画像を描画先の領域へ配置する矩形。元画像・描画先のいずれかが 0 以下なら `SKRect.Empty`（描画しない） |
+| `ComputeDestination` | `static SKRect ComputeDestination(int sourceWidth, int sourceHeight, int targetWidth, int targetHeight, ImageDrawMode mode)` | 元画像を描画先の領域へ配置する矩形。 元画像・描画先のいずれかが 0 以下なら `SKRect.Empty`（描画しない） |
 
 ```csharp
 // 親が割り当てた領域（800x600）へ、撮影画像を引き伸ばして敷く
@@ -149,9 +149,9 @@ var dest = ImageDrawMath.ComputeDestination(image.Width, image.Height, 800, 600,
 public readonly record struct EsPoint(double X, double Y);
 ```
 
-UI フレームワーク非依存の 2 次元座標。各 UI 実装は、自身の座標型との相互変換を Interop 層で提供します。
+UI フレームワーク非依存の 2 次元座標。 各 UI 実装は、自身の座標型との相互変換を Interop 層で提供します。
 
-座標ラベルの文言は `Format(int decimals = 0)` が単一所有します（`(x, y)` 形式。`decimals` で小数点以下の桁数を 0〜15 から指定し、既定は 0 = 整数へ丸め）。`ToString()` はレコードの診断表現のままです（デバッガー・ログ・テストの失敗表示から小数を消さないため）。
+座標ラベルの文言は `Format(int decimals = 0)` が単一所有します（`(x, y)` 形式。 `decimals` で小数点以下の桁数を 0〜15 から指定し、既定は 0 = 整数へ丸め）。 `ToString()` はレコードの診断表現のままです（デバッガー・ログ・テストの失敗表示から小数を消さないため）。
 
 ```csharp
 // カーソル座標ラベル（マーキー）・中心座標ラベル（ルーペ）が同じ書式を共用する
@@ -168,7 +168,7 @@ var precise = mousePosition.Format(2);  // "(123.40, 456.70)"
 | `WithX` / `WithY` | `EsPoint WithX(double x)` / `EsPoint WithY(double y)` | 指定した成分だけを差し替えた座標 |
 | `Offset` | `EsPoint Offset(double dx, double dy)` | 指定量だけ平行移動した座標（ベクターでの移動は `p + v` を使う） |
 | `DistanceTo` | `double DistanceTo(EsPoint other)` | 相手までのユークリッド距離（常に 0 以上） |
-| `NearlyEquals` | `bool NearlyEquals(EsPoint other)` | 許容誤差（既定 1e-9。相対誤差も見る）の範囲で等しいか |
+| `NearlyEquals` | `bool NearlyEquals(EsPoint other)` | 許容誤差（既定 1e-9。 相対誤差も見る）の範囲で等しいか |
 | `ToEsVector` | `EsVector ToEsVector()` | 成分をそのまま引き継いだベクター |
 | `FromTuple` / `ToTuple` | `static EsPoint FromTuple((double X, double Y) value)` / `(double X, double Y) ToTuple()` | タプルとの相互変換 |
 | 演算子 | `+`（座標同士 / ベクター）・`-`（座標同士は `EsVector` を返す / ベクター）・単項 `-`・`* /`（係数は左右とも可） | `(a + v)` は並行移動、`(a - b)` は差分ベクター |
@@ -183,16 +183,16 @@ public readonly record struct EsVector(double X, double Y);
 public readonly record struct EsRect(double X, double Y, double Width, double Height);
 ```
 
-UI フレームワーク非依存のサイズ・ベクター・矩形。各 UI 実装は、自身のサイズ型・ベクター型・矩形型との相互変換を Interop 層で提供します。
+UI フレームワーク非依存のサイズ・ベクター・矩形。 各 UI 実装は、自身のサイズ型・ベクター型・矩形型との相互変換を Interop 層で提供します。
 
 `EsRect` は `Right`（`X + Width`）・`Bottom`（`Y + Height`）・`IsEmpty`（幅または高さが 0 以下）に加え、コントロールに依存しない 2 つの規則を単一所有します（各コアが個別に書くと同じ意味の式が散らばり、片方だけ端の扱いを変えると同じ矩形から違う結果になる）。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `ResolveInnerEdges` | `EsRectEdges ResolveInnerEdges(double thickness)` | 上・下・左・右の辺の矩形（4 個）をヒープ確保なしで返す。左右の高さは負にならず 0 にクランプする。太さの下限正規化は行わない（用途で異なるため呼び出し側が行う） |
-| `ComputeInnerEdges` | `IReadOnlyList<EsRect> ComputeInnerEdges(double thickness)` | 同上の配列版（`ResolveInnerEdges` へ委譲。1 回で 4 要素の配列を確保するため、毎フレームの解決は `ResolveInnerEdges` を使う） |
+| `ResolveInnerEdges` | `EsRectEdges ResolveInnerEdges(double thickness)` | 上・下・左・右の辺の矩形（4 個）をヒープ確保なしで返す。 左右の高さは負にならず 0 にクランプする。 太さの下限正規化は行わない（用途で異なるため呼び出し側が行う） |
+| `ComputeInnerEdges` | `IReadOnlyList<EsRect> ComputeInnerEdges(double thickness)` | 同上の配列版（`ResolveInnerEdges` へ委譲。 1 回で 4 要素の配列を確保するため、毎フレームの解決は `ResolveInnerEdges` を使う） |
 | `ClampToArea` | `EsRect ClampToArea(EsSize area)` | 四隅を領域（左上を原点・指定サイズ）内へ個別にクランプし、その包絡矩形を返す（負の辺は 0） |
-| `Intersect` | `EsRect Intersect(EsRect other)` | 2 つの矩形の重なり部分を返す（重なりが無い場合は空。幅・高さは負にならない） |
+| `Intersect` | `EsRect Intersect(EsRect other)` | 2 つの矩形の重なり部分を返す（重なりが無い場合は空。 幅・高さは負にならない） |
 
 ```csharp
 // 選択矩形の枠線と拡大表示の外枠が同じ式を共用する
@@ -204,8 +204,8 @@ var edges = hole.ComputeInnerEdges(Math.Max(0.5, borderThickness));
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
 | `HasArea` | `bool HasArea { get; }` | 幅・高さとも 0 より大きい場合に true（レイアウト前・親未接続の領域は false） |
-| `ClampToArea` | `double ClampToArea(double size)` | サイズを領域の最小辺へクランプする。領域が未確定の場合はクランプしない |
-| `ClampOffset` | `double ClampOffset(double offset, double size, EsAxis axis)` | 1 軸分の位置を `0〜領域の長さ − サイズ` へクランプする（対象の軸の長さが 0 以下ならクランプしない。対象が収まらない場合は 0） |
+| `ClampToArea` | `double ClampToArea(double size)` | サイズを領域の最小辺へクランプする。 領域が未確定の場合はクランプしない |
+| `ClampOffset` | `double ClampOffset(double offset, double size, EsAxis axis)` | 1 軸分の位置を `0〜領域の長さ − サイズ` へクランプする（対象の軸の長さが 0 以下ならクランプしない。 対象が収まらない場合は 0） |
 
 `EsSize` はさらにサイズの操作を提供します。
 
@@ -218,7 +218,7 @@ var edges = hole.ComputeInnerEdges(Math.Max(0.5, borderThickness));
 | `Inflate` / `Deflate` | `EsSize Inflate(EsThickness thickness)` / `EsSize Deflate(EsThickness thickness)` | 4 辺の厚さ分だけ拡大 / 縮小（`Deflate` は 0 でクランプ） |
 | `NearlyEquals` | `bool NearlyEquals(EsSize other)` | 許容誤差の範囲で等しいか |
 | `FromTuple` / `ToTuple` | `static EsSize FromTuple((double Width, double Height) value)` / `(double Width, double Height) ToTuple()` | タプルとの相互変換 |
-| 演算子 | `+` / `-`（サイズ同士）・`* /`（係数）・`*`（`EsVector` と成分ごと）・`/`（サイズ同士は `EsVector` を返す） | 成分ごとの計算。サイズ同士の除算は比をベクターで返す（縦横比の差を求める） |
+| 演算子 | `+` / `-`（サイズ同士）・`* /`（係数）・`*`（`EsVector` と成分ごと）・`/`（サイズ同士は `EsVector` を返す） | 成分ごとの計算。 サイズ同士の除算は比をベクターで返す（縦横比の差を求める） |
 
 `EsRect` は矩形の操作を一式提供します。
 
@@ -232,7 +232,7 @@ var edges = hole.ComputeInnerEdges(Math.Max(0.5, borderThickness));
 | `WithX` 〜 `WithSize` | `EsRect WithX(double x)` / `WithY` / `WithWidth` / `WithHeight` / `WithPosition(EsPoint)` / `WithSize(EsSize)` | 指定した成分だけを差し替えた矩形 |
 | `Offset` | `EsRect Offset(double dx, double dy)` | 位置だけを平行移動（幅・高さは不変） |
 | `Inflate` | `EsRect Inflate(double dx, double dy)` / `EsRect Inflate(EsThickness thickness)` | 4 辺を広げる（左上は移動し、幅・高さは 2 倍量 / 左右・上下の合計を加える） |
-| `Deflate` | `EsRect Deflate(EsThickness thickness)` | 4 辺を狭める（負のサイズもそのまま返す。クランプは `Normalize` を使う） |
+| `Deflate` | `EsRect Deflate(EsThickness thickness)` | 4 辺を狭める（負のサイズもそのまま返す。 クランプは `Normalize` を使う） |
 | `Normalize` | `EsRect Normalize()` | 幅・高さを正にする（非数を含む場合は `Empty`） |
 | `ContainsExclusive` | `bool ContainsExclusive(EsPoint point)` | 右端・下端を含まない判定（MewUI・WinUI3 の `Contains` と同じ半開区間） |
 | `Contains` | `bool Contains(EsRect rect)` | 別の矩形を完全に含むか（左右端・上下端を含む） |
@@ -244,7 +244,7 @@ var edges = hole.ComputeInnerEdges(Math.Max(0.5, borderThickness));
 | `ResolveInnerEdges` | `EsRectEdges ResolveInnerEdges(double thickness)` | 4 辺の矩形をヒープ確保なしで返す（描画計画の解決で使う） |
 | `FromTuple` / `ToTuple` | `static EsRect FromTuple((double X, double Y, double Width, double Height) value)` / `(double X, double Y, double Width, double Height) ToTuple()` | タプルとの相互変換 |
 
-**名前を付けなかったもの**: `Left` / `Top` / `Position` は `X` / `Y` / `TopLeft` と同値のため設けません（同じ内容の別名を増やさない）。`Translate(EsVector)` は `Offset` と同内容のため設けません（ベクターで移す場合は `rect.Offset(v.X, v.Y)`）。
+**名前を付けなかったもの**: `Left` / `Top` / `Position` は `X` / `Y` / `TopLeft` と同値のため設けません（同じ内容の別名を増やさない）。 `Translate(EsVector)` は `Offset` と同内容のため設けません（ベクターで移す場合は `rect.Offset(v.X, v.Y)`）。
 
 ### `Geometry.EsPointInt` / `Geometry.EsSizeInt` / `Geometry.EsRectInt`（readonly record struct）
 
@@ -254,17 +254,17 @@ public readonly record struct EsSizeInt(int Width, int Height);
 public readonly record struct EsRectInt(int X, int Y, int Width, int Height);
 ```
 
-`EsPoint` / `EsSize` / `EsRect` の**整数版**（画面物理ピクセル座標・画像ピクセル座標とその矩形・寸法に使用する）。`EsRectInt` は `Right` / `Bottom` / `TopLeft` / `TopRight` / `BottomLeft` / `BottomRight` / `Center` / `Size` を提供し、`Contains(EsPointInt)`・`Contains(EsRectInt)`（半開区間）・`Intersects`・`Intersect`・`Union(EsRectInt)`・`Union(EsPointInt)` を持ちます。`TopLeft` は矩形の原点（画像の原点等）を座標の手組みなしで取り出すために使います。
+`EsPoint` / `EsSize` / `EsRect` の**整数版**（画面物理ピクセル座標・画像ピクセル座標とその矩形・寸法に使用する）。 `EsRectInt` は `Right` / `Bottom` / `TopLeft` / `TopRight` / `BottomLeft` / `BottomRight` / `Center` / `Size` を提供し、`Contains(EsPointInt)`・`Contains(EsRectInt)`（半開区間）・`Intersects`・`Intersect`・`Union(EsRectInt)`・`Union(EsPointInt)` を持ちます。 `TopLeft` は矩形の原点（画像の原点等）を座標の手組みなしで取り出すために使います。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
 | `EsPointInt.ToEsPoint` | `EsPoint ToEsPoint()` | 小数を扱う `EsPoint` への変換（UI が成分を書き写さない） |
-| `EsPointInt.FromEsPoint` | `static EsPointInt FromEsPoint(EsPoint point, EsRounding rounding = EsRounding.Round)` | 小数座標から生成（丸め規則を `EsMath.RoundToInt` が単一所有。`Point.Truncate` / `Round` / `Ceiling` に対応） |
+| `EsPointInt.FromEsPoint` | `static EsPointInt FromEsPoint(EsPoint point, EsRounding rounding = EsRounding.Round)` | 小数座標から生成（丸め規則を `EsMath.RoundToInt` が単一所有。 `Point.Truncate` / `Round` / `Ceiling` に対応） |
 | `EsSizeInt.ToEsSize` / `FromEsSize` | `EsSize ToEsSize()` / `static EsSizeInt FromEsSize(EsSize size, EsRounding rounding = EsRounding.Round)` | 整数の寸法との相互変換（丸め規則は同じ） |
-| `EsRectInt.FromEsRect` | `static EsRectInt FromEsRect(EsRect rect, EsRounding rounding = EsRounding.Round)` | 小数矩形から生成（X・Y・幅・高さを個別に丸める。四隅を丸めて差を取る規則ではない） |
+| `EsRectInt.FromEsRect` | `static EsRectInt FromEsRect(EsRect rect, EsRounding rounding = EsRounding.Round)` | 小数矩形から生成（X・Y・幅・高さを個別に丸める。 四隅を丸めて差を取る規則ではない） |
 | `EsRectInt.ToEsRect` | `EsRect ToEsRect()` | 小数矩形への変換 |
 | `EsRectInt.Empty` / `EsPointInt.Zero` / `EsSizeInt.Zero` | `static readonly` | 全て 0 の値 |
-| `IsEmpty` | `bool IsEmpty { get; }` | 幅（または高さ）が 0 以下か。点は X・Y とも 0 か |
+| `IsEmpty` | `bool IsEmpty { get; }` | 幅（または高さ）が 0 以下か。 点は X・Y とも 0 か |
 | `FromLTRB` / `FromPoints` | `static EsRectInt FromLTRB(int left, int top, int right, int bottom)` / `FromPoints(EsPointInt topLeft, EsPointInt bottomRight)` | 整数矩形の生成（`Rectangle.FromLTRB` に対応） |
 | `WithX` 〜 `WithHeight` | `EsRectInt WithX(int x)` / `WithY` / `WithWidth` / `WithHeight` | 指定した成分だけを差し替えた矩形 |
 | `Offset` / `Inflate` | `EsRectInt Offset(int dx, int dy)` / `EsRectInt Inflate(int dx, int dy)` | 位置の平行移動 / 4 辺を広げる（`Rectangle.Offset` / `Inflate` に対応） |
@@ -279,11 +279,11 @@ public readonly record struct EsRectInt(int X, int Y, int Width, int Height);
 public readonly record struct EsThickness(double Left, double Top, double Right, double Bottom);
 ```
 
-UI フレームワーク非依存の 4 辺の厚さ（Avalonia / MewUI の `Thickness` に対応）。`new EsThickness(double uniform)`（全辺同値）・`Horizontal`（左 + 右）・`Vertical`（上 + 下）・`FromTuple` / `ToTuple` を提供し、`EsSize` / `EsRect` の `Inflate` / `Deflate` の引数になります。
+UI フレームワーク非依存の 4 辺の厚さ（Avalonia / MewUI の `Thickness` に対応）。 `new EsThickness(double uniform)`（全辺同値）・`Horizontal`（左 + 右）・`Vertical`（上 + 下）・`FromTuple` / `ToTuple` を提供し、`EsSize` / `EsRect` の `Inflate` / `Deflate` の引数になります。
 
 ### `Geometry.EsRectEdges`（readonly struct）
 
-4 辺（上・下・左・右）の矩形を保持する固定長コンテナ（128 バイト）です。`EsRect.ResolveInnerEdges` の戻り値であり、1 回あたり 4 要素の配列（約 160 バイト）を確保する `IReadOnlyList<EsRect>` の代替として、毎フレーム呼ばれる描画計画の解決で使います。`Count`（= 4）・プロパティ（`Top` / `Bottom` / `Left` / `Right`）・インデクサ（0〜3、範囲外は `ArgumentOutOfRangeException`）・`ToArray` を提供します。**`IReadOnlyList<T>` を実装しません**（値型をインターフェース経由で扱うとボックス化するため）。
+4 辺（上・下・左・右）の矩形を保持する固定長コンテナ（128 バイト）です。 `EsRect.ResolveInnerEdges` の戻り値であり、1 回あたり 4 要素の配列（約 160 バイト）を確保する `IReadOnlyList<EsRect>` の代替として、毎フレーム呼ばれる描画計画の解決で使います。 `Count`（= 4）・プロパティ（`Top` / `Bottom` / `Left` / `Right`）・インデクサ（0〜3、範囲外は `ArgumentOutOfRangeException`）・`ToArray` を提供します。 **`IReadOnlyList<T>` を実装しません**（値型をインターフェース経由で扱うとボックス化するため）。
 
 ### 各フレームワークの操作との対照
 
@@ -293,11 +293,11 @@ UI フレームワーク非依存の 4 辺の厚さ（Avalonia / MewUI の `Thic
 | --- | --- | --- | --- | --- | --- |
 | タプル生成 / 分解 | – | – | 分解のみ | – | `FromTuple` / `ToTuple`（分解はレコードの自動生成） |
 | `WithX` / `WithY` 等 | – | – | 点・サイズ・ベクター・矩形 | 点・サイズ・矩形 | 全型 |
-| `IsEmpty` | 点 = (0,0) / サイズ = (0,0) | サイズ = (0,0) / 矩形 = 幅 0 または高さ 0 | 矩形は内部のみ | サイズ = (0,0) / 矩形 = 幅 0 または高さ 0 | 点 = `IsEmpty`（原点）/ サイズ・矩形 = `IsEmpty`（**0 以下 = 面積なし**）。「ちょうど 0」の判定は `HasArea` と併用する |
-| `Contains`（点） | 閉区間 | 半開区間 | 閉区間 | 半開区間 | `Contains`（閉区間。現行互換）と `ContainsExclusive`（半開区間） |
+| `IsEmpty` | 点 = (0,0) / サイズ = (0,0) | サイズ = (0,0) / 矩形 = 幅 0 または高さ 0 | 矩形は内部のみ | サイズ = (0,0) / 矩形 = 幅 0 または高さ 0 | 点 = `IsEmpty`（原点）/ サイズ・矩形 = `IsEmpty`（**0 以下 = 面積なし**）。 「ちょうど 0」の判定は `HasArea` と併用する |
+| `Contains`（点） | 閉区間 | 半開区間 | 閉区間 | 半開区間 | `Contains`（閉区間。 現行互換）と `ContainsExclusive`（半開区間） |
 | `Intersect`（非交差時） | `Empty` | `Empty` | `default` | 空の矩形 | 左上座標を保った空の矩形（現行互換） |
 | `Union` | 矩形のみ | 矩形 / 点 | 矩形のみ | 矩形のみ | 矩形と点の両方 |
-| 平行移動 | `Offset` | – | `Translate(Vector)` | `Offset` | `Offset(double, double)`（単一実装。`Translate` は設けない） |
+| 平行移動 | `Offset` | – | `Translate(Vector)` | `Offset` | `Offset(double, double)`（単一実装。 `Translate` は設けない） |
 | 拡大縮小 | `Inflate` | – | `Inflate` / `Deflate`（`Thickness`） | `Inflate` / `Deflate`（`Thickness`） | `EsRect.Inflate` / `Deflate`（`EsThickness` を受ける版を含む）・`EsSize.Inflate` / `Deflate` |
 | 整数丸め | `Point` / `Size` / `Rectangle` の `Ceiling` / `Round` / `Truncate` | – | – | – | `EsRounding` を渡す `FromEsXxx` に集約（`EsMath.RoundToInt` が単一所有） |
 | 浮動小数の近似比較 | – | – | `NearlyEquals` | – | `NearlyEquals`（`EsMath.AreClose` が単一所有） |
@@ -312,15 +312,15 @@ UI フレームワーク非依存の 4 辺の厚さ（Avalonia / MewUI の `Thic
 public readonly record struct EsPlatformHandle(nint Handle, string? Descriptor = null);
 ```
 
-ネイティブウィンドウ識別子（Win32: HWND 等）。`IsValid`（ハンドル値が 0 以外か）を提供します。座標・寸法ではないためルート名前空間（`EsUtil.Platform.Core`）にあります。
+ネイティブウィンドウ識別子（Win32: HWND 等）。 `IsValid`（ハンドル値が 0 以外か）を提供します。 座標・寸法ではないためルート名前空間（`EsUtil.Platform.Core`）にあります。
 
 ### `Native.ICaptureService`（interface）
 
-画面領域のキャプチャを抽象化します。公開 API は UI フレームワーク非依存の型のみを使用します。**ネイティブ実装を指す抽象は `EsUtil.Platform.Core.Native` 名前空間（`Native/`）に置きます**（値型・幾何はルート〜`Geometry` / `Imaging` / `Coord`）。
+画面領域のキャプチャを抽象化します。 公開 API は UI フレームワーク非依存の型のみを使用します。 **ネイティブ実装を指す抽象は `EsUtil.Platform.Core.Native` 名前空間（`Native/`）に置きます**（値型・幾何はルート〜`Geometry` / `Imaging` / `Coord`）。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `CaptureArea` | `EsBitmap? CaptureArea(EsRectInt bounds)` | 指定画面領域（画面物理座標）をキャプチャ。失敗時は null |
+| `CaptureArea` | `EsBitmap? CaptureArea(EsRectInt bounds)` | 指定画面領域（画面物理座標）をキャプチャ。 失敗時は null |
 | `CaptureVirtualScreen` | `EsBitmap? CaptureVirtualScreen(out EsPointInt origin)` | 仮想スクリーン全体を 1 回でキャプチャ |
 
 ### `Native.ICursorService`（interface）
@@ -335,13 +335,13 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 
 ### `Native.IWindowService`（interface）
 
-ネイティブウィンドウ操作を抽象化します。ウィンドウは `EsPlatformHandle` で識別します。
+ネイティブウィンドウ操作を抽象化します。 ウィンドウは `EsPlatformHandle` で識別します。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
 | `HideFromTaskSwitcher` | `void HideFromTaskSwitcher(EsPlatformHandle handle)` | タスクバー / Alt+Tab 非表示 |
 | `SetCaptureExclusion` | `bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude)` | キャプチャ除外 / 解除（未対応環境は false） |
-| `SetBounds` | `bool SetBounds(EsPlatformHandle handle, EsRectInt bounds)` | 位置・サイズを画面物理ピクセルで指定（未対応環境は false。全モニターを跨ぐ配置に使う） |
+| `SetBounds` | `bool SetBounds(EsPlatformHandle handle, EsRectInt bounds)` | 位置・サイズを画面物理ピクセルで指定（未対応環境は false。 全モニターを跨ぐ配置に使う） |
 | `EvacuateWindow` | `void EvacuateWindow(EsPlatformHandle handle)` | 最前面解除・非表示・クローズ（UI ハング時の退避） |
 
 ### `Native.IElementFinder`（interface）
@@ -387,11 +387,11 @@ public readonly record struct ElementFinderResults(
     string? ClassName = null);
 ```
 
-要素検出の結果。座標は入力と同じ画面物理座標で統一されます。
+要素検出の結果。 座標は入力と同じ画面物理座標で統一されます。
 
 ### `Native.Win.*`（Windows 実装）
 
-上記抽象の Windows 実装です（`EsUtil.Platform.Core.Native.Win`）。**実行時のプラットフォーム分岐（ファクトリ）は持たず、ホストが生成して抽象型として注入します**。テストは同じ抽象を実装したモックを注入するため、Win32 環境を必要としません。
+上記抽象の Windows 実装です（`EsUtil.Platform.Core.Native.Win`）。 **実行時のプラットフォーム分岐（ファクトリ）は持たず、ホストが生成して抽象型として注入します**。 テストは同じ抽象を実装したモックを注入するため、Win32 環境を必要としません。
 
 | クラス | 実装する抽象 |
 | --- | --- |
@@ -406,16 +406,16 @@ public readonly record struct ElementFinderResults(
 
 ### `Native.Imaging.EsBitmapDrawingExtensions`（static class）
 
-`System.Drawing.Bitmap` と `EsBitmap` の相互変換です（`EsUtil.Platform.Core.Native.Imaging`。`System.Drawing.Common` を使う Windows 専用）。
+`System.Drawing.Bitmap` と `EsBitmap` の相互変換です（`EsUtil.Platform.Core.Native.Imaging`。 `System.Drawing.Common` を使う Windows 専用）。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `ToEsBitmap` | `static EsBitmap ToEsBitmap(this DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から `EsBitmap` を作る（複製。元の Bitmap は変更しない） |
+| `ToEsBitmap` | `static EsBitmap ToEsBitmap(this DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から `EsBitmap` を作る（複製。 元の Bitmap は変更しない） |
 | `ToDrawingBitmap` | `static DrawingBitmap ToDrawingBitmap(this EsBitmap bitmap)` | `EsBitmap` から `System.Drawing.Bitmap`（`Format32bppPArgb`）を作る（複製） |
 
 ### `Coord.ICoordTransform`（interface）
 
-2 つの座標系間の変換ポート。座標はコア幾何型で扱います。
+2 つの座標系間の変換ポート。 座標はコア幾何型で扱います。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
@@ -430,20 +430,20 @@ public readonly record struct ElementFinderResults(
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
 | `Identity` | `static ICoordTransform Identity { get; }` | 等価変換（A = B）の既定ポート |
-| `Compose` | `static ICoordTransform Compose(ICoordTransform outer, ICoordTransform inner)` | 2 ポート合成（inner 先行 → outer 後続。Bounds は outer 優先） |
+| `Compose` | `static ICoordTransform Compose(ICoordTransform outer, ICoordTransform inner)` | 2 ポート合成（inner 先行 → outer 後続。 Bounds は outer 優先） |
 | `ScrollOffset` | `static ICoordTransform ScrollOffset(Func<EsVector> offsetProvider)` | スクロールオフセット平行移動（Forward = 減算 / Inverse = 加算） |
 | `Scale` | `static ICoordTransform Scale(double factor)` | 原点基準の等方スケーリング（factor ≤ 0 は 1.0 扱い・固定値） |
 | `DomainScale` | `static ICoordTransform DomainScale(Func<double> factorProvider)` | ドメイン = ローカル DIP × 倍率（呼び出し毎評価） |
-| `DomainScale` | `static ICoordTransform DomainScale(Func<double> factorProvider, Func<EsSize?> boundsProvider)` | 同じ変換に境界（画像サイズ等。呼び出し毎評価）を付けたもの |
+| `DomainScale` | `static ICoordTransform DomainScale(Func<double> factorProvider, Func<EsSize?> boundsProvider)` | 同じ変換に境界（画像サイズ等。 呼び出し毎評価）を付けたもの |
 | `ImageLayout` | `static ICoordTransform ImageLayout(Func<EsSize> viewportSizeProvider, EsSize sourceSize, Func<bool>? uniformProvider = null)` | 画像レイアウト（レターボックス・スケール）の動的ポート（Bounds = 元画像サイズ） |
 | `ImageLayoutScaleX` | `static double ImageLayoutScaleX(Func<EsSize> viewportSizeProvider, EsSize sourceSize, Func<bool>? uniformProvider = null)` | 画像レイアウトの X スケール（ズーム率導出用） |
 | コンストラクタ | `CoordTransform(Func<EsPoint, EsPoint> forward, Func<EsPoint, EsPoint> inverse, Func<EsSize?> bounds)` | 変換関数を直接注入（座標系は利用側が定義） |
 
 ### `Imaging.EsBitmap`（sealed class : IDisposable）
 
-**自前のピクセルバッファ**（BGRA8888・アルファ乗算済み）を所有するピクセルコンテナ。`NativeMemory.AlignedAlloc` で 64 バイト整列して確保し、**確保直後に全領域を 0（透明）で初期化します**（透明 = 全成分 0 が「描かれていない」の表現であるため）。**外部パッケージへ依存しない**。
+**自前のピクセルバッファ**（BGRA8888・アルファ乗算済み）を所有するピクセルコンテナ。 `NativeMemory.AlignedAlloc` で 64 バイト整列して確保し、**確保直後に全領域を 0（透明）で初期化します**（透明 = 全成分 0 が「描かれていない」の表現であるため）。 **外部パッケージへ依存しない**。
 
-**書き込み量の最適化**: 直後に全領域を書く手順（`Create(w, h, color)` / `Clone` / `Crop` / 相互変換）は 0 初期化を省きます（画像サイズ分の書き込みを丸ごと削減する）。`Crop` はコピーされないパディングだけを透明にし、`CreateUninitialized` は「全領域を書く」責任を呼び出し側が持つ前提で未初期化のまま確保します。
+**書き込み量の最適化**: 直後に全領域を書く手順（`Create(w, h, color)` / `Clone` / `Crop` / 相互変換）は 0 初期化を省きます（画像サイズ分の書き込みを丸ごと削減する）。 `Crop` はコピーされないパディングだけを透明にし、`CreateUninitialized` は「全領域を書く」責任を呼び出し側が持つ前提で未初期化のまま確保します。
 
 **生成・変換**:
 
@@ -452,36 +452,36 @@ public readonly record struct ElementFinderResults(
 | 生成 | `Create` | `static EsBitmap Create(int width, int height)` | 指定サイズの空ビットマップ（BGRA8888・Premul）を生成 |
 | 生成 | `Create` | `static EsBitmap Create(EsSizeInt size)` | 指定サイズの空ビットマップを生成 |
 | 生成 | `Create` | `static EsBitmap Create(int width, int height, Color color)` / `static EsBitmap Create(EsSizeInt size, Color color)` | 指定サイズのビットマップを全ピクセル指定色で生成（0 初期化を省く） |
-| 生成 | `CreateUninitialized` | `static EsBitmap CreateUninitialized(int width, int height)` / `static EsBitmap CreateUninitialized(EsSizeInt size)` | 直後に全領域を書く前提で確保（ピクセルは不定値。**書かなければ不定値が見える**） |
+| 生成 | `CreateUninitialized` | `static EsBitmap CreateUninitialized(int width, int height)` / `static EsBitmap CreateUninitialized(EsSizeInt size)` | 直後に全領域を書く前提で確保（ピクセルは不定値。 **書かなければ不定値が見える**） |
 
-> `CreateUninitialized` は全行を書く相互変換（System.Drawing / Avalonia / Skia）が使うために公開しています。書かない領域が残る用途では `Create` を使います。
+> `CreateUninitialized` は全行を書く相互変換（System.Drawing / Avalonia / Skia）が使うために公開しています。 書かない領域が残る用途では `Create` を使います。
 
-**Skia との相互変換**（`ToSKBitmap` / `ToEsBitmap`）は SkiaSharp へ依存するため、Skia を使用する層の拡張メソッドが提供します（`ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製。所有権はコア側に残ります）。
+**Skia との相互変換**（`ToSKBitmap` / `ToEsBitmap`）は SkiaSharp へ依存するため、Skia を使用する層の拡張メソッドが提供します（`ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製。 所有権はコア側に残ります）。
 
 **プロパティ・ピクセル操作・その他**:
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
 | プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（ピクセル） |
-| プロパティ | `Size` | `EsSizeInt` | 幅・高さ（ピクセル。コアの整数サイズ型） |
-| プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（**常に 幅 × 4**。パディングなし） |
-| プロパティ | `BytesPerPixel` | `const int` | 1 ピクセルあたりのバイト数（4。ストライドを計算する相互変換が共用する） |
+| プロパティ | `Size` | `EsSizeInt` | 幅・高さ（ピクセル。 コアの整数サイズ型） |
+| プロパティ | `Stride` | `int` | 1 ラインあたりバイト数（**常に 幅 × 4**。 パディングなし） |
+| プロパティ | `BytesPerPixel` | `const int` | 1 ピクセルあたりのバイト数（4。 ストライドを計算する相互変換が共用する） |
 | プロパティ | `Address` | `nint` | ピクセルデータ先頭アドレス（BGRA8888） |
 | プロパティ | `IsDisposed` | `bool` | 破棄済みか |
-| ピクセル | `GetPixel` | `(byte B, byte G, byte R, byte A) GetPixel(int x, int y)` | 指定座標の BGRA（アルファ乗算済み）を取得。範囲外は `IndexOutOfRangeException` |
+| ピクセル | `GetPixel` | `(byte B, byte G, byte R, byte A) GetPixel(int x, int y)` | 指定座標の BGRA（アルファ乗算済み）を取得。 範囲外は `IndexOutOfRangeException` |
 | ピクセル | `GetPixel` | `Color GetPixel(EsPointInt point)` | 指定座標の BGRA を `System.Drawing.Color` で取得 |
 | ピクセル | `SetPixel` | `void SetPixel(int x, int y, byte b, byte g, byte r, byte a)` | 指定座標の BGRA（アルファ乗算済み）を設定 |
 | ピクセル | `SetPixel` | `void SetPixel(EsPointInt point, Color color)` | 指定座標へ `System.Drawing.Color` を設定 |
 | ピクセル | `TrySetPixel` | `bool TrySetPixel(int x, int y, Color color)` | 指定座標へ色を設定（範囲外は `false`） |
 | ピクセル | `Clear` | `void Clear(byte b, byte g, byte r, byte a)` / `void Clear(Color color)` | 全ピクセルを指定色で塗りつぶし |
 | その他 | `Clone` | `EsBitmap Clone()` | 独立した複製を生成（所有権は呼び出し側） |
-| その他 | `Crop` | `EsBitmap Crop(EsRectInt rect)` / `EsBitmap Crop(int x, int y, int width, int height)` | 指定矩形領域を切り出す（ソース範囲外は透明パディング。位置関係は保たれる。0 初期化は行わず、コピーされないパディングだけを透明にする） |
+| その他 | `Crop` | `EsBitmap Crop(EsRectInt rect)` / `EsBitmap Crop(int x, int y, int width, int height)` | 指定矩形領域を切り出す（ソース範囲外は透明パディング。 位置関係は保たれる。 0 初期化は行わず、コピーされないパディングだけを透明にする） |
 | その他 | `Dispose` | `void Dispose()` | ピクセルバッファを解放（二重呼び出しは無害） |
 | その他 | `ThrowIfDisposed` | `void ThrowIfDisposed()` | 破棄済みなら `ObjectDisposedException` を送出 |
 
-> `Stride` は常に `幅 × 4`（パディングなし）です。`Clear(byte,byte,byte,byte)` は与えられた BGRA 成分をそのまま書き込みます（乗算済みへの変換はしません）。
+> `Stride` は常に `幅 × 4`（パディングなし）です。 `Clear(byte,byte,byte,byte)` は与えられた BGRA 成分をそのまま書き込みます（乗算済みへの変換はしません）。
 
-`System.Drawing.Color`（`System.Drawing.Primitives`）のみに依存するため、**外部パッケージなしで Windows 以外でも動作します**。Skia との変換は Skia を使用する層、System.Drawing.Bitmap との変換を含む Windows 専用の拡張は `Native.Imaging.EsBitmapDrawingExtensions` が提供します。
+`System.Drawing.Color`（`System.Drawing.Primitives`）のみに依存するため、**外部パッケージなしで Windows 以外でも動作します**。 Skia との変換は Skia を使用する層、System.Drawing.Bitmap との変換を含む Windows 専用の拡張は `Native.Imaging.EsBitmapDrawingExtensions` が提供します。
 
 ## 3. 使用例
 
@@ -524,7 +524,7 @@ using var region = bitmap.Crop(new EsRectInt(10, 20, 800, 600));
 
 ## 4. 制限事項
 
-- 本プロジェクトは UI フレームワークへ依存しません。UI 型との相互変換は、各 UI 実装の Interop 層を用意して境界で行います。
-- 実行時のプラットフォーム分岐（ファクトリ）を持ちません。OS サービスの既定実装はホストが生成して抽象型として注入します（テストはモックを注入できます）。
+- 本プロジェクトは UI フレームワークへ依存しません。 UI 型との相互変換は、各 UI 実装の Interop 層を用意して境界で行います。
+- 実行時のプラットフォーム分岐（ファクトリ）を持ちません。 OS サービスの既定実装はホストが生成して抽象型として注入します（テストはモックを注入できます）。
 - `Native/` 配下（Win32 P/Invoke・`System.Drawing.Common`）は Windows 専用です。
 - 描画は本プロジェクトの対象外です（`EsBitmap` と配置計算だけを提供し、描画 API は各 UI が呼びます）。
