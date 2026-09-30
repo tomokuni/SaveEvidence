@@ -78,4 +78,4 @@ dotnet test src/Platform.Core/tests/Platform.Core.Tests.csproj
 
 ## ライセンス
 
-MIT License
+MIT License（全文は [`LICENSE`](LICENSE) を参照）。

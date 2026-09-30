@@ -9,7 +9,7 @@
 | 関心事 | 内容 | 代表型 |
 | --- | --- | --- |
 | **提示（Presenter）** | 描画の幾何（`LoupeGeometry`）と外観から**描画計画**（層の順序・装飾矩形・文言・ラベル配置）を解決する | `LoupePresenter` / `LoupeDrawPlan` / `LoupeDrawLayer` |
-| **外観** | 色・フォント・角丸・枠線の太さ・表示可否（描画にだけ必要な設定の単一値） | `LoupeAppearance` |
+| **外観** | 色・フォント・角丸・枠線の太さ・ラベルのオフセット・表示可否（描画にだけ必要な設定の単一値） | `LoupeAppearance` |
 
 **描画は行いません**。 UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、本層は**描画計画というデータ**を返し、描画は各 UI の描画実装が自 UI の API で行います。
 
@@ -52,7 +52,7 @@ protected override void Render(DrawingContext context)
 | グループ | 型 |
 | --- | --- |
 | 提示 | `LoupePresenter`（描画計画の解決。 `sealed` ではない） / `Drawing.LoupeDrawPlan` / `Drawing.LoupeDrawLayer` / `Drawing.LoupeTextPlacement` |
-| 外観 | `Setting.LoupeAppearance`（色・フォント・角丸・枠線の太さ・表示可否） |
+| 外観 | `Setting.LoupeAppearance`（色・フォント・角丸・枠線の太さ・ラベルのオフセット・表示可否） |
 | ラベル | `Label.LoupeLabelPlacement`（配置指示） |
 | ログ | `Logging.LoupePresenterLogMessage`（internal） |
 
@@ -94,4 +94,4 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 
 ## ライセンス
 
-MIT License
+MIT License（全文は [`LICENSE`](LICENSE) を参照）。

@@ -93,4 +93,4 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 
 ## ライセンス
 
-MIT License
+MIT License（全文は [`LICENSE`](LICENSE) を参照）。

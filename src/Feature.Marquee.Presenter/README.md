@@ -94,4 +94,4 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 
 ## ライセンス
 
-MIT License
+MIT License（全文は [`LICENSE`](LICENSE) を参照）。

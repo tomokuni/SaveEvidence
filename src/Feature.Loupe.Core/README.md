@@ -107,4 +107,4 @@ UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行され、**�
 
 ## ライセンス
 
-MIT License
+MIT License（全文は [`LICENSE`](LICENSE) を参照）。
