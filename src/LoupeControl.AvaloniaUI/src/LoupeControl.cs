@@ -134,7 +134,7 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     public double PositionOffset
     {
-        get => field;
+        get;
         set
         {
             field = value;

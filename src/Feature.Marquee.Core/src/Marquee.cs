@@ -138,7 +138,7 @@ public sealed partial class Marquee
     /// </remarks>
     public EsRect? HighlightRect
     {
-        get => field;
+        get;
         set
         {
             if (SetIfChanged(ref field, value, out var previous))

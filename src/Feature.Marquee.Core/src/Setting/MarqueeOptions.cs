@@ -44,7 +44,7 @@ public sealed record MarqueeOptions
     /// <value>ハンドルの一辺サイズ（DIP）。既定は 10.0。設定時は 1.0〜256.0 へ補正される。</value>
     public double HandleSize
     {
-        get => field;
+        get;
         init => field = CoerceHandleSize(value);
     } = HandleSizeDefault;
 
@@ -52,7 +52,7 @@ public sealed record MarqueeOptions
     /// <value>十字マーカーの全長（DIP）。中心から両端までの半幅はこの 1/2。既定は 16.0。設定時は 2.0〜4096.0 へ補正される。</value>
     public double MarkerLength
     {
-        get => field;
+        get;
         init => field = CoerceMarkerLength(value);
     } = MarkerLengthDefault;
 
@@ -68,7 +68,7 @@ public sealed record MarqueeOptions
     /// </remarks>
     public double HandleHitRadius
     {
-        get => field;
+        get;
         init => field = CoerceHandleHitRadius(value);
     } = HandleHitRadiusDefault;
 
@@ -77,7 +77,7 @@ public sealed record MarqueeOptions
     /// <remarks>ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる（判断はセッションが行う）。</remarks>
     public double MinSelectionSize
     {
-        get => field;
+        get;
         init => field = CoerceMinSelectionSize(value);
     } = MinSelectionSizeDefault;
 

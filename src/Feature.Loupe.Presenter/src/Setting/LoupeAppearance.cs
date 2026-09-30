@@ -67,7 +67,7 @@ public sealed record LoupeAppearance
     /// </remarks>
     public double CoordLabelFontSize
     {
-        get => field;
+        get;
         init => field = CoerceLabelFontSize(value, CoordLabelFontSizeDefault);
     } = CoordLabelFontSizeDefault;
 
@@ -88,7 +88,7 @@ public sealed record LoupeAppearance
     /// <remarks>ラベルの体裁（描画にだけ必要な設定）であるため、描画の設定である本型が単一所有する。</remarks>
     public int CoordLabelCornerRadius
     {
-        get => field;
+        get;
         init => field = Math.Clamp(value, CoordLabelCornerRadiusMin, CoordLabelCornerRadiusMax);
     } = CoordLabelCornerRadiusDefault;
 
@@ -124,7 +124,7 @@ public sealed record LoupeAppearance
     /// </remarks>
     public int BorderThickness
     {
-        get => field;
+        get;
         init => field = CoerceBorderThickness(value);
     } = BorderThicknessDefault;
 

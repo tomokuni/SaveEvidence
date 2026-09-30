@@ -52,7 +52,7 @@ public sealed record MarqueeAppearance
     /// <value>ハンドルの塗り色。既定は白。未指定（全成分 0）を指定した場合は白へ解決される。</value>
     public DrawingColor HandleColor
     {
-        get => field;
+        get;
         init => field = ResolveHandleColor(value);
     } = DrawingColor.White;
 
@@ -105,7 +105,7 @@ public sealed record MarqueeAppearance
     /// <value>フォントサイズ（DIP）。6〜48 へ補正済み。既定は 14.0。</value>
     public double SizeLabelFontSize
     {
-        get => field;
+        get;
         init => field = CoerceLabelFontSize(value, SizeLabelFontSizeDefault);
     } = SizeLabelFontSizeDefault;
 
@@ -117,7 +117,7 @@ public sealed record MarqueeAppearance
     /// <value>フォントサイズ（DIP）。6〜48 へ補正済み。既定は 12.0。</value>
     public double CoordLabelFontSize
     {
-        get => field;
+        get;
         init => field = CoerceLabelFontSize(value, CoordLabelFontSizeDefault);
     } = CoordLabelFontSizeDefault;
 
@@ -191,7 +191,7 @@ public sealed record MarqueeAppearance
     /// </remarks>
     public double OuterBorderThickness
     {
-        get => field;
+        get;
         init => field = CoerceBorderThickness(value);
     } = BorderThicknessDefault;
 
@@ -199,7 +199,7 @@ public sealed record MarqueeAppearance
     /// <value>枠線の太さ（DIP）。0.5〜64 へ補正済み。既定は 2.0。</value>
     public double InnerBorderThickness
     {
-        get => field;
+        get;
         init => field = CoerceBorderThickness(value);
     } = BorderThicknessDefault;
 

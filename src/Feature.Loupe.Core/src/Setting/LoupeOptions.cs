@@ -45,7 +45,7 @@ public sealed record LoupeOptions
     /// </remarks>
     public int RequestedSize
     {
-        get => field;
+        get;
         init => field = CoerceRequestedSize(value);
     } = RequestedSizeDefault;
 
@@ -57,7 +57,7 @@ public sealed record LoupeOptions
     /// </remarks>
     public int ZoomLevel
     {
-        get => field;
+        get;
         init => field = CoerceZoomLevel(value);
     } = ZoomLevelDefault;
 }
