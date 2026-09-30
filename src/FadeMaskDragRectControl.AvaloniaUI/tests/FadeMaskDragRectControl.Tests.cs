@@ -171,10 +171,10 @@ public class FadeMaskDragRectControlTests
         control.Options = options;
 
         // DPI スケーリングは設定（Options）の対象外（環境値。 個別プロパティで設定）
-        control.DomainToDipScaling = 2.0;
+        control.DipToDomainScaling = 2.0;
         control.DisplayScaleScaling = 1.5;
 
-        Assert.Equal(2.0, control.DomainToDipScaling);
+        Assert.Equal(2.0, control.DipToDomainScaling);
         Assert.Equal(1.5, control.DisplayScaleScaling);
 
         // 選択の設定（寸法・対話パラメータ）はコアの MarqueeOptions へ反映される

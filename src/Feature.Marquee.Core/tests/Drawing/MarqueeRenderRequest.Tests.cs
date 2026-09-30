@@ -54,7 +54,7 @@ public class MarqueeRenderRequestTests
             new EsPoint(50, 60),
             new EsPoint(70, 80),
             port,
-            domainToDipScaling: 1.25,
+            dipToDomainScaling: 1.25,
             highlightDomainRect: highlight);
 
         Assert.Equal(options, request.Options);
@@ -64,7 +64,7 @@ public class MarqueeRenderRequestTests
         Assert.Equal(new EsPoint(50, 60), request.MarkerPosition);
         Assert.Equal(new EsPoint(70, 80), request.MousePosition);
         Assert.Same(port, request.Port);
-        Assert.Equal(1.25, request.DomainToDipScaling);
+        Assert.Equal(1.25, request.DipToDomainScaling);
         Assert.Equal(highlight, request.HighlightDomainRect);
     }
 
@@ -80,7 +80,7 @@ public class MarqueeRenderRequestTests
             new EsPoint(0, 0),
             new EsPoint(0, 0),
             port: null,
-            domainToDipScaling: 1.0);
+            dipToDomainScaling: 1.0);
 
         Assert.Null(request.HighlightDomainRect);
         Assert.Null(request.SelectionDomainRect);
@@ -236,7 +236,7 @@ public class MarqueeRenderRequestTests
     {
         var port = CoordTransform.DipToDomain(() => 2.0);
 
-        var result = MarqueeRenderRequest.ResolvePort(port, domainToDipScaling: 3.0);
+        var result = MarqueeRenderRequest.ResolvePort(port, dipToDomainScaling: 3.0);
 
         Assert.Same(port, result);
     }
@@ -245,22 +245,22 @@ public class MarqueeRenderRequestTests
     [Fact]
     public void ResolvePort_ポート未指定なら倍率を適用する()
     {
-        var result = MarqueeRenderRequest.ResolvePort(null, domainToDipScaling: 2.0);
+        var result = MarqueeRenderRequest.ResolvePort(null, dipToDomainScaling: 2.0);
 
         // 倍率はドメイン座標 / ローカル DIP（ドメイン (10,20) → DIP (5,10)）
         Assert.Equal(new EsPoint(5, 10), result.ToDip(new EsPoint(10, 20)));
     }
 
     /// <summary>ポート未指定で倍率が 0 以下・等倍の場合は等価変換になることを検証する。</summary>
-    /// <param name="domainToDipScaling">適用する倍率。</param>
+    /// <param name="dipToDomainScaling">適用する倍率。</param>
     [Theory]
     [InlineData(0.0)]
     [InlineData(-1.0)]
     [InlineData(1.0)]
     [InlineData(double.NaN)]
-    public void ResolvePort_倍率が無効なら等価変換になる(double domainToDipScaling)
+    public void ResolvePort_倍率が無効なら等価変換になる(double dipToDomainScaling)
     {
-        var result = MarqueeRenderRequest.ResolvePort(null, domainToDipScaling);
+        var result = MarqueeRenderRequest.ResolvePort(null, dipToDomainScaling);
 
         Assert.Same(CoordTransform.Identity, result);
     }

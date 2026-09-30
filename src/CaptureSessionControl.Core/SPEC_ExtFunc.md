@@ -128,7 +128,7 @@
 | `SizeLabelVisible` / `SizeLabelColor` / `SizeLabelFontSize` | `bool?` / `System.Drawing.Color?` / `double?` | サイズラベルの表示・色・サイズ |
 | `InfoLabelVisible` / `ShowSubLines` / `SubLineFontSize` | `bool?` / `bool?` / `double?` | 情報ラベル・サブライン |
 | `SizeLabelOverride` | `string?` | サイズラベルの文言明示指定（null = 自動生成） |
-| `DisplayScaleScaling` | `double?` | サイズラベル表示用のスケーリング（0 以下は `DomainToDipScaling` と同値） |
+| `DisplayScaleScaling` | `double?` | サイズラベル表示用のスケーリング（0 以下は `DipToDomainScaling` と同値） |
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |

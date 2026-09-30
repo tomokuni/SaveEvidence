@@ -10,14 +10,14 @@ namespace EsUtil.Feature.Marquee.Core.Tests;
 public class MarqueeLimitsTests
 {
     // ====================================================================
-    // DomainToDipScaling（既定 1.0）
+    // DipToDomainScaling（既定 1.0）
     // ====================================================================
 
     /// <summary>倍率の既定値が等倍であることを検証する。</summary>
     [Fact]
-    public void DomainToDipScalingDefault_等倍である()
+    public void DipToDomainScalingDefault_等倍である()
     {
-        Assert.Equal(1.0, Marquee.Limits.DomainToDipScalingDefault);
+        Assert.Equal(1.0, Marquee.Limits.DipToDomainScalingDefault);
     }
 
     // ====================================================================
@@ -124,9 +124,9 @@ public class MarqueeLimitsTests
     [InlineData(1.25, 1.25)]
     [InlineData(10.0, 8.0)]
     [InlineData(double.NaN, 1.0)]
-    public void CoerceDomainToDipScaling_安全域へ補正する(double value, double expected)
+    public void CoerceDipToDomainScaling_安全域へ補正する(double value, double expected)
     {
-        Assert.Equal(expected, Marquee.Limits.CoerceDomainToDipScaling(value));
+        Assert.Equal(expected, Marquee.Limits.CoerceDipToDomainScaling(value));
     }
 
     // ====================================================================
@@ -155,14 +155,14 @@ public class MarqueeLimitsTests
     }
 
     /// <summary>0 以下で倍率も無効な場合は基準値（等倍）になることを検証する。</summary>
-    /// <param name="domainToDipScaling">指定する倍率。</param>
+    /// <param name="dipToDomainScaling">指定する倍率。</param>
     [Theory]
     [InlineData(0.0)]
     [InlineData(-1.0)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
-    public void ResolveDisplayScale_倍率も無効なら等倍になる(double domainToDipScaling)
+    public void ResolveDisplayScale_倍率も無効なら等倍になる(double dipToDomainScaling)
     {
-        Assert.Equal(1.0, Marquee.Limits.ResolveDisplayScale(displayScaling: 0.0, domainToDipScaling));
+        Assert.Equal(1.0, Marquee.Limits.ResolveDisplayScale(displayScaling: 0.0, dipToDomainScaling));
     }
 }

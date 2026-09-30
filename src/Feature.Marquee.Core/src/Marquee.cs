@@ -52,15 +52,15 @@ public sealed partial class Marquee
     /// <summary>カーソルサービス（nudge のカーソル移動・表示切替）。 null の場合はカーソル操作を行わない。</summary>
     private readonly ICursorService? _cursor;
 
-    /// <summary>外部から指定された座標変換ポート（null = 未指定。 未指定時は <see cref="DomainToDipScaling"/> を倍率として使う）。</summary>
+    /// <summary>外部から指定された座標変換ポート（null = 未指定。 未指定時は <see cref="DipToDomainScaling"/> を倍率として使う）。</summary>
     /// <remarks>
     /// セッションは null を等価変換に置換して保持するため、<b>指定の有無（null かどうか）は本フィールドだけが保持する</b>。<br/>
-    /// この区別が必要なのは、ポート未指定時に倍率（<see cref="DomainToDipScaling"/>）を使う規則をコアが単一所有するためである。
+    /// この区別が必要なのは、ポート未指定時に倍率（<see cref="DipToDomainScaling"/>）を使う規則をコアが単一所有するためである。
     /// </remarks>
     private ICoordTransform? _coordPort;
 
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
-    private double _domainToDipScaling = DomainToDipScalingDefault;
+    private double _dipToDomainScaling = DipToDomainScalingDefault;
 
     /// <summary>生成の記録（<c>MarqueeLogMessage.LogFacadeCreated</c>）を済ませたかどうか。</summary>
     /// <remarks>出力先の設定は複数回起こりうるため、生成の記録は 1 度だけにする。</remarks>
@@ -143,14 +143,14 @@ public sealed partial class Marquee
     /// 選択矩形と十字マーカーの描画はセッションのポートのみを使うため本値の影響を受けない<br/>
     /// （本値が影響するのはサイズラベル・座標ラベルの位置と寸法）。
     /// </remarks>
-    public double DomainToDipScaling
+    public double DipToDomainScaling
     {
-        get => _domainToDipScaling;
+        get => _dipToDomainScaling;
         set
         {
-            if (SetIfChanged(ref _domainToDipScaling, CoerceDomainToDipScaling(value), out var previous))
+            if (SetIfChanged(ref _dipToDomainScaling, CoerceDipToDomainScaling(value), out var previous))
             {
-                Log.LogSettingChanged(nameof(DomainToDipScaling), previous, _domainToDipScaling);
+                Log.LogSettingChanged(nameof(DipToDomainScaling), previous, _dipToDomainScaling);
             }
         }
     }
@@ -318,7 +318,7 @@ public sealed partial class Marquee
             _session.MarkerPosition,
             _session.LastMousePosition,
             _coordPort,
-            _domainToDipScaling,
+            _dipToDomainScaling,
             HighlightDomainRect);
 
     // ====================================================================

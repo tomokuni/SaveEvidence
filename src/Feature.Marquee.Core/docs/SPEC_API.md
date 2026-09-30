@@ -80,7 +80,7 @@
 | `Notified` | event | 通知（`MarqueeNotice`） |
 | `Log` | property | ロガー。 null は `NullLogger` へ吸収される |
 | `Options` | property | 設定。 設定すると対話パラメータを反映し、**変化した項目をログ出力**し、境界外選択の禁止の変化時のみ即時クリップを行う |
-| `DomainToDipScaling` | property | 座標変換ポート未指定時に適用する倍率。 既定は `Limits.DomainToDipScalingDefault`（1.0）。 設定時は 0.1〜8.0 へ補正される |
+| `DipToDomainScaling` | property | 座標変換ポート未指定時に適用する倍率。 既定は `Limits.DipToDomainScalingDefault`（1.0）。 設定時は 0.1〜8.0 へ補正される |
 | `HighlightDomainRect` | property | ハイライト矩形（ドメイン座標）。 null が「ハイライトしない」。 **変更は最も低いレベル（Trace）で記録する**（ホバーのたびに変わりうる最も頻度の高い設定のため） |
 | `HasSelection` / `SelectionDomainRect` | property | 選択の有無と選択矩形（ドメイン座標） |
 | `CreateSnapshot(EsPoint?)` | method | 状態スナップショットの生成 |
@@ -125,14 +125,14 @@
 | `MinSelectionSizeMin` / `MinSelectionSizeMax` / `MinSelectionSizeDefault` | `1.0` / `4096.0` / `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
 | `HandleBorderThicknessMin` / `HandleBorderThicknessMax` / `HandleBorderThicknessDefault` | `0.5` / `64.0` / `1.5` | ドラッグハンドルの枠線の太さ（DIP） |
 | `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `0.5` / `64.0` / `2.0` | 枠線の太さ（DIP。 描画層の外観の既定値も本値を参照する） |
-| `DomainToDipScalingMin` / `DomainToDipScalingMax` / `DomainToDipScalingDefault` | `0.1` / `8.0` / `1.0` | ポート未指定時に適用する倍率（環境値。 他の数値より後に置く） |
+| `DipToDomainScalingMin` / `DipToDomainScalingMax` / `DipToDomainScalingDefault` | `0.1` / `8.0` / `1.0` | ポート未指定時に適用する倍率（環境値。 他の数値より後に置く） |
 
 | メソッド | 説明 |
 | --- | --- |
 | `CoerceHandleSize(double)` / `CoerceMarkerLength(double)` / `CoerceHandleHitRadius(double)` / `CoerceMinSelectionSize(double)` | 各寸法を安全域へ補正（非有限は既定値） |
 | `CoerceHandleBorderThickness(double)` | ハンドルの枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する） |
 | `CoerceBorderThickness(double)` | 枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する。 描画層の外観が使う） |
-| `CoerceDomainToDipScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
+| `CoerceDipToDomainScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
 | `ResolveDisplayScale(double, double)` | 表示スケールの解決（**public**。 未設定（0 以下）は倍率を使う。 描画層のサイズラベル書式が使う） |
 
 ### 2.9 `IMarqueeEffects` のメンバー

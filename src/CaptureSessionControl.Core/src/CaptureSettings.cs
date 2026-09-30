@@ -45,7 +45,7 @@ namespace EsUtil.SaveEvidence.CaptureSession;
 /// <param name="SubLineFontSize">サブラインのフォントサイズ。</param>
 /// <param name="SubLineColor">サブラインの文字色。</param>
 /// <param name="SubLineBackgroundColor">サブライン（2 行目）の背景色（不透明度は色のアルファに統合）。</param>
-/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskDragRectControl.DisplayScaleScaling・0 以下は DomainToDipScaling と同値）。</param>
+/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskDragRectControl.DisplayScaleScaling・0 以下は DipToDomainScaling と同値）。</param>
 /// <remarks>
 /// 全メンバーは nullable とする。<br/>
     /// - 初期設定として使用する場合: null は本クラスの既定値（<see cref="ToNonNull"/> が埋める値）として扱う。<br/>

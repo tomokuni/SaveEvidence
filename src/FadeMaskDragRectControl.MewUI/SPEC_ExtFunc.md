@@ -55,8 +55,8 @@ Avalonia 版と同一の解釈になります。
 | `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（ドメイン座標） |
 | `Options` | `FadeMaskDragRectOptions`（コア） | `FadeMaskDragRectOptions.Default` | 設定の単一値（下記）。 同じ値の再設定はスキップされる |
 | `MarqueeAppearance` / `LoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 各 `Default` | 描画にだけ必要な外観の単一値（コアの設定値には含まれない）。 `MarqueeAppearance` の設定時は**モードから導出する表示可否（ハンドル・全面暗転）を上書きし直す**（代入の順序でモードの判断が失われない） |
-| `DomainToDipScaling` | `double` | `1.0` | ドメイン → DIP 変換の基準倍率（設定には含めない環境値） |
-| `DisplayScaleScaling` | `double` | `0`（`DomainToDipScaling` と同値） | サイズラベルの DisplayScale 補正（環境値） |
+| `DipToDomainScaling` | `double` | `1.0` | ドメイン → DIP 変換の基準倍率（設定には含めない環境値） |
+| `DisplayScaleScaling` | `double` | `0`（`DipToDomainScaling` と同値） | サイズラベルの DisplayScale 補正（環境値） |
 | `LoupeDipToDeviceScaling` | `double` | `1.0` | ルーペの DIP → 物理ピクセル倍率（環境値） |
 
 `Options`（コアの `FadeMaskDragRectOptions`）の項目:

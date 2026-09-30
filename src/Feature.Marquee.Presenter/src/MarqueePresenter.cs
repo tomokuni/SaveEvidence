@@ -121,14 +121,14 @@ public partial class MarqueePresenter
     }
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
-    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値。</value>
+    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DipToDomainScaling"/> と同じ値。</value>
     /// <remarks>
     /// 0 以下を倍率と同値として扱う規則は <c>Marquee.Limits.ResolveDisplayScale</c> が単一所有する。<br/>
     /// 変更は本クラスが検出して出力する（UI 層に同値判定を置かない）。
     /// </remarks>
     public double DisplayScaleScaling
     {
-        get => MarqueeFacade.Limits.ResolveDisplayScale(_displayScaleScaling, _core.DomainToDipScaling);
+        get => MarqueeFacade.Limits.ResolveDisplayScale(_displayScaleScaling, _core.DipToDomainScaling);
         set
         {
             if (SetIfChanged(ref _displayScaleScaling, value, out var previous))
@@ -197,13 +197,13 @@ public partial class MarqueePresenter
     /// <summary>ポート未指定時に適用する倍率を取得または設定する。</summary>
     /// <value>ドメイン → DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される。</value>
     /// <remarks>保持とログはコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。</remarks>
-    public double DomainToDipScaling
+    public double DipToDomainScaling
     {
-        get => _core.DomainToDipScaling;
+        get => _core.DipToDomainScaling;
         set
         {
-            _core.DomainToDipScaling = value;
-            Log.LogForwarded(nameof(DomainToDipScaling), value);
+            _core.DipToDomainScaling = value;
+            Log.LogForwarded(nameof(DipToDomainScaling), value);
         }
     }
 

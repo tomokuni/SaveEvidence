@@ -53,7 +53,7 @@ public class MarqueePresenterTests
     public void DisplayScaleScaling_0以下は倍率と同値になる(double displayScale)
     {
         var presenter = CreatePresenter(out _);
-        presenter.DomainToDipScaling = 1.25;
+        presenter.DipToDomainScaling = 1.25;
 
         presenter.DisplayScaleScaling = displayScale;
 
@@ -65,7 +65,7 @@ public class MarqueePresenterTests
     public void DisplayScaleScaling_正の値はそのまま保持する()
     {
         var presenter = CreatePresenter(out _);
-        presenter.DomainToDipScaling = 1.25;
+        presenter.DipToDomainScaling = 1.25;
 
         presenter.DisplayScaleScaling = 2.0;
 
@@ -152,12 +152,12 @@ public class MarqueePresenterTests
         var presenter = CreatePresenter(out _);
         var logger = AttachLogger(presenter);
 
-        presenter.DomainToDipScaling = 1.25;
+        presenter.DipToDomainScaling = 1.25;
 
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: DomainToDipScaling 1 → 1.25",
-                "[Feature.Marquee.Presenter] Forwarded: DomainToDipScaling 1.25",
+                "[Feature.Marquee.Core] Setting: DipToDomainScaling 1 → 1.25",
+                "[Feature.Marquee.Presenter] Forwarded: DipToDomainScaling 1.25",
             ],
             logger.Messages);
         Assert.Equal([LogLevel.Debug, LogLevel.Trace], logger.Levels);

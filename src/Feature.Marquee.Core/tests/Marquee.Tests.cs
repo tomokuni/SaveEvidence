@@ -245,10 +245,10 @@ public class MarqueeTests
     {
         var marquee = CreateMarquee(null, out var effects);
 
-        marquee.DomainToDipScaling = 2.0;
-        marquee.DomainToDipScaling = 2.0;
+        marquee.DipToDomainScaling = 2.0;
+        marquee.DipToDomainScaling = 2.0;
 
-        Assert.Equal(2.0, marquee.DomainToDipScaling);
+        Assert.Equal(2.0, marquee.DipToDomainScaling);
         // 設定の変更は UI の公開プロパティから渡されるため、描画の更新は UI が観測して行う
         // （コアが効果として再描画を要求するのは入力に伴う場合だけである）
         Assert.Equal(0, effects.RedrawCount);
@@ -469,7 +469,7 @@ public class MarqueeTests
 
     /// <summary>環境値（倍率）の変更が変化したときだけ記録されることを検証する。</summary>
     [Fact]
-    public void DomainToDipScaling_変更したときだけ記録する()
+    public void DipToDomainScaling_変更したときだけ記録する()
     {
         var marquee = CreateMarquee(null, out _);
         var logger = new RecordingLogger();
@@ -477,14 +477,14 @@ public class MarqueeTests
         logger.Messages.Clear();
         logger.Levels.Clear();
 
-        marquee.DomainToDipScaling = 1.25;
-        marquee.DomainToDipScaling = 1.25;   // 同値
-        marquee.DomainToDipScaling = 2.0;
+        marquee.DipToDomainScaling = 1.25;
+        marquee.DipToDomainScaling = 1.25;   // 同値
+        marquee.DipToDomainScaling = 2.0;
 
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: DomainToDipScaling 1 → 1.25",
-                "[Feature.Marquee.Core] Setting: DomainToDipScaling 1.25 → 2",
+                "[Feature.Marquee.Core] Setting: DipToDomainScaling 1 → 1.25",
+                "[Feature.Marquee.Core] Setting: DipToDomainScaling 1.25 → 2",
             ],
             logger.Messages);
         // 低頻度の設定変更は Debug で記録する

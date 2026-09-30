@@ -154,12 +154,12 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.Options = value;
     }
 
-    /// <summary>DPI スケーリング係数（<see cref="FadeMaskDragRectControl.DomainToDipScaling"/> へ委譲）。</summary>
+    /// <summary>DPI スケーリング係数（<see cref="FadeMaskDragRectControl.DipToDomainScaling"/> へ委譲）。</summary>
     /// <remarks>ユーザー設定ではなく、セッション（Crop は 1.0）がコードから動的設定する。</remarks>
-    public double DomainToDipScaling
+    public double DipToDomainScaling
     {
-        get => _selectionOverlay.DomainToDipScaling;
-        set => _selectionOverlay.DomainToDipScaling = value;
+        get => _selectionOverlay.DipToDomainScaling;
+        set => _selectionOverlay.DipToDomainScaling = value;
     }
 
     /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="FadeMaskDragRectControl.LoupeDipToDeviceScaling"/> へ委譲する。</summary>

@@ -182,7 +182,7 @@ internal sealed partial class OverlayWindow : Window
         SelectionOverlay.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。 コードから動的設定）。
         // ドメインはウィンドウローカル物理ピクセル（= ローカル DIP × スケーリング）のため、ウィンドウのスケーリング（_scaling）を設定する。
-        SelectionOverlay.DomainToDipScaling = _scaling;
+        SelectionOverlay.DipToDomainScaling = _scaling;
         SelectionOverlay.DisplayScaleScaling = _scaling;
         SelectionOverlay.LoupeDipToDeviceScaling = s.LoupeDipToDeviceScaling!.Value;
         // サイズラベル: 文言（書式）はコアが単一所有し、本ホストは矩形を含むモニタの実スケール（マルチモニタ補正）だけを提供する。

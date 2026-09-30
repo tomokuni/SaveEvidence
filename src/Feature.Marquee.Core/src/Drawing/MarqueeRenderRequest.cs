@@ -11,8 +11,8 @@ namespace EsUtil.Feature.Marquee.Core.Drawing;
 /// <param name="MarkerActive">始点マーカー（十字線）を描くかどうか（nudge 中かつ十字線が可視の場合に true）。</param>
 /// <param name="MarkerPosition">始点マーカーの中心（ドメイン座標）。</param>
 /// <param name="MousePosition">直近のマウス位置（ドメイン座標。 カーソル座標ラベルの基準）。</param>
-/// <param name="Port">ドメイン座標 ↔ ローカル DIP の座標変換ポート。 null の場合は <paramref name="DomainToDipScaling"/> を倍率として適用する。</param>
-/// <param name="DomainToDipScaling">ポート未指定の場合に適用する倍率（ドメイン座標 / ローカル DIP。 0 以下・等倍は等価変換）。</param>
+/// <param name="Port">ドメイン座標 ↔ ローカル DIP の座標変換ポート。 null の場合は <paramref name="DipToDomainScaling"/> を倍率として適用する。</param>
+/// <param name="DipToDomainScaling">ポート未指定の場合に適用する倍率（ドメイン座標 / ローカル DIP。 0 以下・等倍は等価変換）。</param>
 /// <remarks>
 /// 設定と状態の単一値（<see cref="Options"/>）に、描画時にしか決まらない値（描画領域のサイズ・座標変換ポート・倍率）を加えたものである。<br/>
 /// <b>UI 層は本値を自分で組み立てない</b>: セッションの状態を写す組み立て順は <see cref="Marquee.CreateRequest"/> が単一所有する。<br/>
@@ -29,12 +29,12 @@ public readonly record struct MarqueeRenderRequest(
     EsPoint MarkerPosition,
     EsPoint MousePosition,
     ICoordTransform? Port,
-    double DomainToDipScaling)
+    double DipToDomainScaling)
 {
     /// <summary>使用する座標変換ポートを取得する（ポート優先・未指定なら倍率から生成）。</summary>
     /// <value>使用する座標変換ポート。</value>
     /// <remarks>解決の規則は <see cref="ResolvePort"/> が単一所有する。</remarks>
-    public ICoordTransform ResolvedPort => ResolvePort(Port, DomainToDipScaling);
+    public ICoordTransform ResolvedPort => ResolvePort(Port, DipToDomainScaling);
 
     /// <summary>描画面の全体を取得する（左上を原点（0, 0）とする矩形）。</summary>
     /// <value>幅・高さが <see cref="ClientSize"/> の矩形（DIP）。</value>
@@ -73,7 +73,7 @@ public readonly record struct MarqueeRenderRequest(
     /// <param name="markerPosition">始点マーカーの中心（ドメイン座標）。</param>
     /// <param name="mousePosition">直近のマウス位置（ドメイン座標）。</param>
     /// <param name="port">ドメイン座標 ↔ ローカル DIP の座標変換ポート。 null の場合は倍率を使う。</param>
-    /// <param name="domainToDipScaling">ポート未指定の場合に適用する倍率（ドメイン座標 / ローカル DIP）。</param>
+    /// <param name="dipToDomainScaling">ポート未指定の場合に適用する倍率（ドメイン座標 / ローカル DIP）。</param>
     /// <param name="highlightDomainRect">ハイライト矩形（ドメイン座標）。 null はハイライトなし。</param>
     /// <returns>描画の入力。</returns>
     /// <remarks>
@@ -88,30 +88,30 @@ public readonly record struct MarqueeRenderRequest(
         EsPoint markerPosition,
         EsPoint mousePosition,
         ICoordTransform? port,
-        double domainToDipScaling,
+        double dipToDomainScaling,
         EsRect? highlightDomainRect = null)
-        => new(options, clientSize, selectionDomainRect, markerActive, markerPosition, mousePosition, port, domainToDipScaling)
+        => new(options, clientSize, selectionDomainRect, markerActive, markerPosition, mousePosition, port, dipToDomainScaling)
         {
             HighlightDomainRect = highlightDomainRect,
         };
 
     /// <summary>座標変換ポートを決定する（ポート優先・未指定なら倍率から等価スケールを生成）。</summary>
     /// <param name="port">座標変換ポート。 指定されている場合はそれをそのまま使う。</param>
-    /// <param name="domainToDipScaling">倍率（ドメイン座標 / ローカル DIP）。 ポート未指定の場合に適用する。</param>
+    /// <param name="dipToDomainScaling">倍率（ドメイン座標 / ローカル DIP）。 ポート未指定の場合に適用する。</param>
     /// <returns>使用する座標変換ポート。</returns>
     /// <remarks>
     /// 「ポートがあればそれを使い、無ければ倍率（0 以下・等倍は等価変換）を使う」という規則を単一所有する。<br/>
     /// 各 UI はポートと倍率をそのまま渡すだけで、どちらを使うかを判断しない（両 UI で同じ結果になる）。
     /// </remarks>
-    internal static ICoordTransform ResolvePort(ICoordTransform? port, double domainToDipScaling)
+    internal static ICoordTransform ResolvePort(ICoordTransform? port, double dipToDomainScaling)
     {
         if (port is { } specified)
         {
             return specified;
         }
 
-        return DpiScaler.IsValidScaling(domainToDipScaling) && domainToDipScaling != 1.0
-            ? CoordTransform.DipToDomain(() => domainToDipScaling)
+        return DpiScaler.IsValidScaling(dipToDomainScaling) && dipToDomainScaling != 1.0
+            ? CoordTransform.DipToDomain(() => dipToDomainScaling)
             : CoordTransform.Identity;
     }
 

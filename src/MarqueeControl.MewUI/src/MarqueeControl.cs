@@ -95,17 +95,17 @@ public sealed class MarqueeControl : Panel
     public static readonly MewProperty<double> DipToDeviceScalingProperty =
         MewProperty<double>.Register<MarqueeControl>(nameof(DipToDeviceScaling), DpiScaler.StandardScaling, MewPropertyOptions.AffectsRender);
 
-    /// <summary><see cref="DomainToDipScaling"/> プロパティ（座標変換ポートへ適用する倍率）。</summary>
+    /// <summary><see cref="DipToDomainScaling"/> プロパティ（座標変換ポートへ適用する倍率）。</summary>
     /// <remarks>
     /// <see cref="SetCoordTransform"/> でポートを設定した場合は使用しない（等倍スケール専用の簡易指定）。<br/>
-    /// 既定値はコアの <see cref="DomainToDipScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。
+    /// 既定値はコアの <see cref="DipToDomainScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。
     /// </remarks>
-    public static readonly MewProperty<double> DomainToDipScalingProperty =
+    public static readonly MewProperty<double> DipToDomainScalingProperty =
         MewProperty<double>.Register<MarqueeControl>(
-            nameof(DomainToDipScaling), DomainToDipScalingDefault, MewPropertyOptions.AffectsRender,
+            nameof(DipToDomainScaling), DipToDomainScalingDefault, MewPropertyOptions.AffectsRender,
             changed: static (owner, _, newValue) =>
             {
-                owner._marquee.DomainToDipScaling = newValue;
+                owner._marquee.DipToDomainScaling = newValue;
                 owner.InvalidateRender();
             });
 
@@ -155,7 +155,7 @@ public sealed class MarqueeControl : Panel
         _effects = new Effects(this);
         _marquee = new MarqueePresenter(_effects, _cursor, Options);
         // 現在の環境値（倍率）を提示層へ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
-        _marquee.DomainToDipScaling = GetValue(DomainToDipScalingProperty);
+        _marquee.DipToDomainScaling = GetValue(DipToDomainScalingProperty);
         _marquee.Notified += OnNotified;
         // 外観（色・ラベル体裁・表示可否）とハイライト矩形（ホストが与える実行時状態）は提示層が単一所有する
         _marquee.Appearance = GetValue(AppearanceProperty);
@@ -267,15 +267,15 @@ public sealed class MarqueeControl : Panel
     /// 選択矩形と十字マーカーの描画はファサードの座標変換ポートのみを使うため本値の影響を受けない<br/>
     /// （本値が影響するのは外側の装飾のサイズラベル・ラベル位置）。
     /// </remarks>
-    public double DomainToDipScaling
+    public double DipToDomainScaling
     {
-        get => GetValue(DomainToDipScalingProperty);
-        set => SetValue(DomainToDipScalingProperty, value);
+        get => GetValue(DipToDomainScalingProperty);
+        set => SetValue(DipToDomainScalingProperty, value);
     }
 
     /// <summary>サイズラベル表示用のスケーリング係数を取得または設定する（マルチスクリーン補正）。</summary>
-    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値が使用される。</value>
-    /// <remarks>0 以下を <see cref="DomainToDipScaling"/> と同値として扱う規則はコア（<see cref="MarqueePresenter.DisplayScaleScaling"/>）が単一所有する。</remarks>
+    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DipToDomainScaling"/> と同じ値が使用される。</value>
+    /// <remarks>0 以下を <see cref="DipToDomainScaling"/> と同値として扱う規則はコア（<see cref="MarqueePresenter.DisplayScaleScaling"/>）が単一所有する。</remarks>
     public double DisplayScaleScaling
     {
         get => _marquee.DisplayScaleScaling;
@@ -359,7 +359,7 @@ public sealed class MarqueeControl : Panel
     /// <remarks>
     /// ホスト（上位 AP）がモードに応じた変換ポートを設定する（範囲選択: 仮想スクリーンピクセル / 切出し: 元画像ピクセル）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
-    /// 保持と、ポート未指定時に倍率（<see cref="DomainToDipScaling"/>）を使う規則はコアが単一所有する（本層は委譲するだけ）。
+    /// 保持と、ポート未指定時に倍率（<see cref="DipToDomainScaling"/>）を使う規則はコアが単一所有する（本層は委譲するだけ）。
     /// </remarks>
     public void SetCoordTransform(ICoordTransform? port) => _marquee.SetCoordTransform(port);
 

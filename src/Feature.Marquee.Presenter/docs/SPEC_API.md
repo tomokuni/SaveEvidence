@@ -52,11 +52,11 @@
 | `MarqueePresenter(IMarqueeEffects effects, ICursorService? cursor = null, MarqueeOptions? options = null, ILogger? logger = null)` | コアのファサードを内部に生成する。 `effects` は null 不可（null なら `ArgumentNullException`）。 `cursor` は null 可（カーソル操作を行わない）。 `logger` は null 可（**注入するとその場で本層とコアの生成を記録する**。 後から `Log` でも設定できる） |
 | `Appearance` | 外観（`MarqueeAppearance`）。 既定は `MarqueeAppearance.Default`。 設定すると次の描画から反映される（`set`） |
 | `ResolveDrawPlan(EsSize clientSize, Func<string, double, EsSize> measureText)` | 1 フレーム分の描画計画を解決する（`virtual`）。 処理は「幾何の解決 → 装飾矩形の導出 → ラベルの文言と配置 → 層の順序」の順。 `measureText` が null なら `ArgumentNullException` |
-| `DisplayScaleScaling` | サイズラベルの DisplayScale 表示に使う係数（0 以下は `DomainToDipScaling` と同値） |
+| `DisplayScaleScaling` | サイズラベルの DisplayScale 表示に使う係数（0 以下は `DipToDomainScaling` と同値） |
 | `SizeLabelOverrideProvider` | サイズラベルの文言プロバイダ（null または空文字を返す場合は自動生成） |
 | `SizeLabelDisplayScalingProvider` | 表示スケールを矩形ごとに解決するプロバイダ（null の場合は `DisplayScaleScaling`） |
 | `Options` | 選択の設定（寸法・対話パラメータ）。 コアへ委譲する |
-| `DomainToDipScaling` / `HighlightDomainRect` | 環境値・ホストが与える実行時状態。 コアへ委譲する |
+| `DipToDomainScaling` / `HighlightDomainRect` | 環境値・ホストが与える実行時状態。 コアへ委譲する |
 | `Log` | ロガー。 null は `NullLogger` へ吸収される。 **コンストラクターで未注入の場合は初回の設定時に本層とコアの生成を 1 度だけ記録する** |
 | `Notified` | 通知（`MarqueeNotice`）。 UI 層は自 UI の公開イベントへ転送する |
 | `HasSelection` / `SelectionDomainRect` / `CreateSnapshot(EsPoint?)` | 状態の読み取り |

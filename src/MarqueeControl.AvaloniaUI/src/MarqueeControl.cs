@@ -126,7 +126,7 @@ public sealed partial class MarqueeControl : Panel
         _effects = new Effects(this);
         _marquee = new MarqueePresenter(_effects, _cursor, Options);
         // 現在の環境値（倍率）を提示層へ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
-        _marquee.DomainToDipScaling = GetValue(DomainToDipScalingProperty);
+        _marquee.DipToDomainScaling = GetValue(DipToDomainScalingProperty);
         _marquee.Notified += OnNotified;
         // 外観（色・ラベル体裁・表示可否）とハイライト矩形（ホストが与える実行時状態）は提示層が単一所有する
         // （本層は公開プロパティを委譲するだけである）
@@ -181,7 +181,7 @@ public sealed partial class MarqueeControl : Panel
     static MarqueeControl()
     {
         // 設定（外観・ハイライト・環境値）の変更は再描画を要求する
-        AffectsRender<MarqueeControl>(OptionsProperty, AppearanceProperty, HighlightDomainRectProperty, DomainToDipScalingProperty, DisplayScaleScalingProperty);
+        AffectsRender<MarqueeControl>(OptionsProperty, AppearanceProperty, HighlightDomainRectProperty, DipToDomainScalingProperty, DisplayScaleScalingProperty);
 
         // 外観（色・ラベル体裁・表示可否）を提示層へ伝搬し、保持している描画計画を破棄する（描画可否の判断は提示層が単一所有する）
         AppearanceProperty.Changed.AddClassHandler<MarqueeControl>(
@@ -208,10 +208,10 @@ public sealed partial class MarqueeControl : Panel
             });
 
         // 環境値（倍率）をファサードへ伝搬する（ポート未指定時の倍率の使い方・表示倍率の解決はコアが単一所有する）
-        DomainToDipScalingProperty.Changed.AddClassHandler<MarqueeControl>(
+        DipToDomainScalingProperty.Changed.AddClassHandler<MarqueeControl>(
             static (c, e) =>
             {
-                c._marquee.DomainToDipScaling = e.GetNewValue<double>();
+                c._marquee.DipToDomainScaling = e.GetNewValue<double>();
                 c.InvalidateRender();
             });
         DisplayScaleScalingProperty.Changed.AddClassHandler<MarqueeControl>(
@@ -419,10 +419,10 @@ public sealed partial class MarqueeControl : Panel
     // 描画入力（環境値・ホスト結線・座標変換ポート）
     // ====================================================================
 
-    /// <summary><see cref="DomainToDipScaling"/> 依存関係プロパティ。</summary>
-    /// <remarks>既定値はコアの <see cref="DomainToDipScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。</remarks>
-    public static readonly StyledProperty<double> DomainToDipScalingProperty =
-        AvaloniaProperty.Register<MarqueeControl, double>(nameof(DomainToDipScaling), DomainToDipScalingDefault);
+    /// <summary><see cref="DipToDomainScaling"/> 依存関係プロパティ。</summary>
+    /// <remarks>既定値はコアの <see cref="DipToDomainScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。</remarks>
+    public static readonly StyledProperty<double> DipToDomainScalingProperty =
+        AvaloniaProperty.Register<MarqueeControl, double>(nameof(DipToDomainScaling), DipToDomainScalingDefault);
 
     /// <summary>ドメイン → DIP 変換の基準倍率を取得または設定する。</summary>
     /// <value>ドメイン → DIP 変換の基準倍率。 既定は 1.0。</value>
@@ -432,10 +432,10 @@ public sealed partial class MarqueeControl : Panel
     /// 選択矩形と十字マーカーの描画はファサードの座標変換ポートのみを使うため本値の影響を受けない
     /// （本値が影響するのは装飾のサイズラベル・ラベル位置）。
     /// </remarks>
-    public double DomainToDipScaling
+    public double DipToDomainScaling
     {
-        get => GetValue(DomainToDipScalingProperty);
-        set => SetValue(DomainToDipScalingProperty, value);
+        get => GetValue(DipToDomainScalingProperty);
+        set => SetValue(DipToDomainScalingProperty, value);
     }
 
     /// <summary><see cref="DisplayScaleScaling"/> 依存関係プロパティ。</summary>
@@ -447,10 +447,10 @@ public sealed partial class MarqueeControl : Panel
         AvaloniaProperty.Register<MarqueeControl, double>(nameof(DisplayScaleScaling));
 
     /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
-    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DomainToDipScaling"/> と同じ値が使用される。</value>
+    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DipToDomainScaling"/> と同じ値が使用される。</value>
     /// <remarks>
     /// マルチスクリーン環境では、選択矩形が存在するスクリーンのスケーリング係数を設定する。<br/>
-    /// 0 以下を <see cref="DomainToDipScaling"/> と同値として扱う規則はコア（<see cref="MarqueePresenter.DisplayScaleScaling"/>）が単一所有する。
+    /// 0 以下を <see cref="DipToDomainScaling"/> と同値として扱う規則はコア（<see cref="MarqueePresenter.DisplayScaleScaling"/>）が単一所有する。
     /// </remarks>
     public double DisplayScaleScaling
     {

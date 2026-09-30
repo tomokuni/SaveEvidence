@@ -109,7 +109,7 @@ classDiagram
         +EsRect? HighlightDomainRect
         +bool ShowFullOverlay
         +EsPoint? LoupeCenterPoint
-        +double DomainToDipScaling
+        +double DipToDomainScaling
         +double DisplayScaleScaling
         +double LoupeDipToDeviceScaling
         +Func~string?~? OperationTextProvider
@@ -261,7 +261,7 @@ ArrangeContent(bounds)                     … bounds はウィンドウ絶対�
    非表示のルーペにサイズが付き、テストで「配置されていない」ことを検証できない。
 3. **`Panel` の `ArrangeContent` の `bounds` はウィンドウ絶対座標**（子も同じ座標系で `Arrange` する）。
    親の原点を加算して配置する。
-4. **暗転マスクの座標変換はポートで渡す**。 等倍スケール（`DomainToDipScaling`）だけでは、オフセット付きの変換で注目位置がずれる。
+4. **暗転マスクの座標変換はポートで渡す**。 等倍スケール（`DipToDomainScaling`）だけでは、オフセット付きの変換で注目位置がずれる。
 
 ## 未実装（今後の判断）
 

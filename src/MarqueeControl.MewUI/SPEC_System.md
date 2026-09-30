@@ -204,7 +204,7 @@ classDiagram
           +CoerceMarkerLength(value)$ double
           +CoerceHandleHitRadius(value)$ double
           +CoerceMinSelectionSize(value)$ double
-          +CoerceDomainToDipScaling(value)$ double
+          +CoerceDipToDomainScaling(value)$ double
           +CoerceBorderThickness(value)$ double
       }
     class MarqueeLabelPlacement {

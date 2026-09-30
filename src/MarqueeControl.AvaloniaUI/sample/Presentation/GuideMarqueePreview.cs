@@ -25,7 +25,7 @@ internal sealed class GuideMarqueePreview : Control
     /// <summary>見本の選択矩形と倍率を設定する。</summary>
     public GuideMarqueePreview()
     {
-        _presenter.DomainToDipScaling = 1.0;
+        _presenter.DipToDomainScaling = 1.0;
         _presenter.SetSelection(PreviewSelection);
     }
 
