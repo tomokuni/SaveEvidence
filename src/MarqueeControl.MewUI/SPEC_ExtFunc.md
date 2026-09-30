@@ -27,8 +27,8 @@ Avalonia 版と同一の挙動になります。
 | ドメイン座標 | 選択対象の座標（画像ピクセル・仮想スクリーンピクセル等）。 コアの状態機械はこの座標で動作する |
 | ローカル DIP | 本コントロールのローカル座標。 入力と描画はこの座標で行う |
 
-両者の変換は座標変換ポート（`ICoordTransform`）が担います。 入力（Forward = DIP → ドメイン）と
-描画（Inverse = ドメイン → DIP）の境界で適用されます。
+両者の変換は座標変換ポート（`ICoordTransform`）が担います。 入力（ToDomain = DIP → ドメイン）と
+描画（ToDip = ドメイン → DIP）の境界で適用されます。
 
 ## 4. プロパティ
 
@@ -141,7 +141,7 @@ marquee.Rendered += (_, e) =>
 
 ### 制限
 
-- `Options.ClampToDomainBounds` が有効な場合、選択は `ICoordTransform.Bounds` で示される境界内に制限されます。
+- `Options.ClampToDomainBounds` が有効な場合、選択は `ICoordTransform.DomainBounds` で示される境界内に制限されます。
   新規選択・ハンドル変形・移動・nudge のすべてに適用されます。
 - 選択矩形の幅・高さが `Options.MinSelectionSize` 未満の状態でドラッグを終了するとキャンセル扱いになります
   （`SelectionCancelled` を発火して選択を破棄します）。

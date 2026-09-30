@@ -177,7 +177,7 @@ public partial class LoupePresenter
     }
 
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
+    /// <param name="port">座標変換ポート（ToDip = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// 保持とログはコアが単一所有する（本層は委譲するだけである）。<br/>
     /// 低頻度のメソッド呼び出しのため、本層を通過したことを Trace で記録する。

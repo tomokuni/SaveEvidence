@@ -19,7 +19,7 @@ public class LoupeTests
     private static readonly EsSize ParentSize = new(400, 300);
 
     /// <summary>ドメイン → 親領域 DIP を 2 倍で返す座標変換ポートを生成する。</summary>
-    /// <returns>Inverse が 2 倍の座標変換ポート。</returns>
+    /// <returns>ToDip が 2 倍の座標変換ポート。</returns>
     private static ICoordTransform CreateDoublingPort()
         => new CoordTransform(p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null);
 

@@ -102,26 +102,22 @@ guard.Attach(window);   // TopLevel → EsPlatformHandle の変換を仲介す�
 
 ### 座標変換ポート
 
-座標変換ポートは UI フレームワーク非依存のコア型として `Platform.Core`（`EsUtil.Platform.Core.Coord` 名前空間）が提供します。 座標はコア幾何型（`EsPoint` / `EsSize` / `EsVector`）で扱います。
+座標変換ポートは UI フレームワーク非依存のコア型として `Platform.Core`（`EsUtil.Platform.Core.Coord` 名前空間）が提供します。 軸は「ローカル DIP ↔ ドメイン座標」の 1 つだけで、DIP とデバイスピクセルの換算は `DpiScaler` が単一所有します。 座標はコア幾何型（`EsPoint` / `EsSize` / `EsVector`）で扱います。
 
 ```csharp
-// 等価変換（1 ドメイン = 1 DIP・無制限）
+// 等価変換（ローカル DIP = ドメイン座標・無制限）
 ICoordTransform identity = CoordTransform.Identity;
 
-// スクロールオフセット平行移動（コンテンツ ↔ ビューポート）
-ICoordTransform scroll = CoordTransform.ScrollOffset(() => scrollViewer.Offset.ToEsVector());
+// ドメイン = ローカル DIP × 倍率（呼び出し毎評価。 倍率は ドメイン座標 / ローカル DIP）
+ICoordTransform scale = CoordTransform.DipToDomain(() => 2.0);
 
-// ドメイン = ローカル DIP × 倍率（呼び出し毎評価。DPI 200% 等）
-ICoordTransform scale = CoordTransform.DomainScale(() => 2.0);
-
-// 画像レイアウト（レターボックス・Uniform スケール）。Forward = DIP → 論理（元画像ピクセル）
-ICoordTransform layout = CoordTransform.ImageLayout(() => viewport.Bounds.Size.ToEsSize(), sourceSize.ToEsSize());
-
-// 2 ポート合成（inner 先行 → outer 後続）
-ICoordTransform composed = CoordTransform.Compose(layout, scroll);
+// 画像サイズで境界を付ける（選択を画像外へ出さないためのクランプ）
+ICoordTransform bounded = CoordTransform.DipToDomain(() => 2.0, () => imageSize.ToEsSize());
 ```
 
 Avalonia の `Point` / `Size` / `Vector` を受け渡す場合は、境界で `.ToEsPoint()` / `.ToEsSize()` / `.ToEsVector()`（逆は `.ToAvaloniaPoint()` 等）で変換します。
+
+本プロジェクトは座標変換ポートを提供しません（画面物理はドメイン座標ではない別の軸のため）。 画面座標は下記の名前付きメソッドを使います。
 
 ### 画面座標変換
 

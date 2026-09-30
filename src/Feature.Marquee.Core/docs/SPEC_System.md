@@ -113,7 +113,7 @@ stateDiagram-v2
 | `src/Interaction/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態遷移の判断。 通知と効果を返す |
 | `src/Interaction/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。 **状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
 | `src/Marquee.Geometry.cs`（ルート） | `Marquee`（**partial**） | internal | 幾何の**内部手順**（注目矩形の DIP 変換・ハンドル位置・始点マーカー。 注目矩形とポートは 1 回だけ解決する）。 公開の入口 `ResolveGeometry` は `Marquee.cs` が持つ |
-| `src/Drawing/MarqueeGeometry.cs` | `MarqueeGeometry` | public | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MousePosition` ＋ `SurfaceDipRect`）。 **コアが責任を持つ値の全量** |
+| `src/Drawing/MarqueeGeometry.cs` | `MarqueeGeometry` | public | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MouseDomainPosition` / `MouseDipPosition` ＋ `SurfaceDipRect`）。 **コアが責任を持つ値の全量**。 マウス位置は文言用のドメイン座標と配置用の DIP の両方を渡す（描画層が座標変換ポートを持たないため） |
 | `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | 幾何解決の入力（設定・状態・描画時に決まる値）。 `MarqueeRenderRequest.Create` が値の組を 1 箇所に閉じ、`Marquee.CreateRequest` が状態を写して生成する。 **本値から導出する値（座標変換ポートの決定・注目矩形の決定・DIP 変換）は本値のインスタンスメンバーが単一所有する**（`ResolvedPort` / `Focus` / `ResolveFocusDipRect` / `ToDipRect` / `ToDomainRect`） |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。 既定値を単一所有し、生成時に安全域（`Marquee.Limits`）へ補正する（寸法・対話パラメータのみ。 体裁と表示可否は描画層の外観が単一所有する） |
 | `src/Drawing/MarqueeHandles.cs` | `MarqueeHandles` | public | ドラッグハンドルの幾何（8 方向の矩形・枠線の太さ） |
@@ -182,7 +182,7 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層が単一所有する（コアは素材（マウス位置・注目矩形）だけを渡す） |
 | 設定値の安全域の適用 | 補正は設定型の生成時に適用し（`init` アクセサ）、安全域は `Marquee.Limits` が単一所有する（設定の経路（オブジェクト初期化子・`with` 式・逆シリアル化）によらず範囲内の値だけを保持する） |
 | 設定する値・しない値 | **寸法・対話パラメータは `MarqueeOptions` として公開する**（ハンドルの一辺サイズ・枠線の太さ・十字マーカーの長さ・ヒット半径・最小サイズ・境界クリップの可否）。 **体裁（色・ラベルのフォントサイズ・十字マーカーの線の太さ・カーソル座標ラベルのオフセット）は公開しない**（描画にだけ必要な設定のため、描画層の外観が単一所有する） |
-| ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.Bounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
+| ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.DomainBounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
 | 描画面の原点 | コアは原点が常に (0, 0) である前提で幾何を返す（親の座標を混ぜるとハンドルがずれるため、描画領域は原点を持たない `EsSize` で受ける） |
 
 ## 9. ログ

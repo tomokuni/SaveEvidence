@@ -236,7 +236,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 | 座標系 | 用途 |
 | --- | --- |
 | ドメイン座標 | 拡大中心・切り出し領域。 元画像ピクセル座標 |
-| 親領域 DIP | 表示レイアウト（表示サイズ・表示位置）。 `ICoordTransform.Inverse` で得る |
+| 親領域 DIP | 表示レイアウト（表示サイズ・表示位置）。 `ICoordTransform.ToDip` で得る |
 | 物理ピクセル | 描画の幾何のサイズ・寸法。 表示 DIP × `DipToDeviceScaling` |
 
 - 拡大中心は `ICoordTransform` を通して親領域 DIP へ変換し、`PositionOffset` を加えてから親領域内へ補正します。

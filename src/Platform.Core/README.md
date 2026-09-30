@@ -19,9 +19,9 @@ var rect = EsRect.FromLTRB(10, 20, 110, 120);
 var center = rect.Center;                             // EsPoint
 var inside = rect.ClampToArea(new EsSize(200, 100));  // 領域内へクランプ
 
-// 座標系の変換ポート（画像レイアウト・スクロール・スケーリング）
-var port = CoordTransform.ImageLayout(() => new EsSize(800, 600), new EsSize(1920, 1080));
-var dip = port.Forward(new EsPoint(100, 100));
+// 座標系の変換ポート（ドメイン座標 = ローカル DIP × 倍率）
+var port = CoordTransform.DipToDomain(() => 2.0);
+var domain = port.ToDomain(new EsPoint(100, 100));
 ```
 
 ```csharp

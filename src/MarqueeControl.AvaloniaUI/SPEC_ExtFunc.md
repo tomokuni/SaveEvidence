@@ -157,11 +157,11 @@ marquee.Rendered += (_, e) =>
 
 ### 4.3 座標ポートの設定
 
-選択状態と nudge はドメイン座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。 両者を変換する座標ポート（`ICoordTransform`）をホストが設定します。 ポートの生成は `Platform.Core`（`EsUtil.Platform.Core.Coord`）の `CoordTransform` ファクトリ（`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`）やホスト固有の実装で行います。 座標はコア幾何型（`EsPoint` / `EsSize`）で扱うため、Avalonia 型を渡す場合は相互変換（`.ToEsSize()` 等）します。
+選択状態と nudge はドメイン座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。 両者を変換する座標ポート（`ICoordTransform`）をホストが設定します。 軸は「ドメイン座標 ↔ ローカル DIP」の 1 つだけで、ポートの生成は `Platform.Core`（`EsUtil.Platform.Core.Coord`）の `CoordTransform` ファクトリ（`Identity` / `DipToDomain`）やホスト固有の実装で行います。 座標はコア幾何型（`EsPoint` / `EsSize`）で扱うため、Avalonia 型を渡す場合は相互変換（`.ToEsSize()` 等）します。
 
 ```csharp
 // AreaSelect 例: ドメイン = 仮想スクリーンピクセル（= DIP × scaling・動的評価）
-control.SetCoordTransform(CoordTransform.DomainScale(() => scaling));
+control.SetCoordTransform(CoordTransform.DipToDomain(() => scaling));
 
 // 等価変換（1 ドメイン = 1 DIP）
 control.SetCoordTransform(null);
@@ -341,8 +341,9 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 | メンバー | 説明 |
 | --- | --- |
-| `Forward(Point)` | DIP → ドメイン |
-| `Inverse(Point)` | ドメイン → DIP |
+| `ToDomain(Point)` | DIP → ドメイン |
+| `ToDip(Point)` | ドメイン → DIP |
+| `DomainBounds` | ドメイン座標の境界（null = 無制限） |
 | `Bounds` | ドメインのクリップ範囲（null = 無制限） |
 
 変換関数は呼び出し毎に評価されるため、ズーム・スクロールの動的変化を反映できます。
@@ -364,7 +365,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 | 領域選択（ハンドル変形） | 固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限 |
 | 領域移動（Move ドラッグ・nudge） | 矩形全体が境界内に収まるようにシフト（サイズは維持） |
 
-クリップ範囲は `SetCoordTransform` のポート `Bounds`（`ICoordTransform.Bounds`）で指定します（null = 無制限の場合はクリップされません）。
+クリップ範囲は `SetCoordTransform` のポートの `DomainBounds`（`ICoordTransform.DomainBounds`）で指定します（null = 無制限の場合はクリップされません）。
 
 ## 7. Nudge（キーボード微調整）
 
@@ -415,10 +416,10 @@ nudge 中は十字マーカー（色は `Appearance.MarkerColor`、全長は `Op
 
 選択領域は **閉区間（始点・終点の両ピクセルを含む）** を意図する仕様です。
 
-選択矩形はドメイン座標で半開区間（`幅 = 終点 − 始点`、.NET `Rect` と同一）で保持されますが、描画では **終点（`Right` / `Bottom`）に +1 してから** `Inverse` で DIP 変換します。
+選択矩形はドメイン座標で半開区間（`幅 = 終点 − 始点`、.NET `Rect` と同一）で保持されますが、描画では **終点（`Right` / `Bottom`）に +1 してから** `ToDip` で DIP 変換します。
 
 ```text
-描画用 DIP 矩形 = Rect(Inverse(始点), Inverse(終点 + (1, 1)))
+描画用 DIP 矩形 = Rect(ToDip(始点), ToDip(終点 + (1, 1)))
 ```
 
 ハンドルはこの矩形に対して描画され、**選択枠線は外側の装飾の外枠**（同じ閉区間 +1 の規則を装飾コアが単一所有する）が描きます。

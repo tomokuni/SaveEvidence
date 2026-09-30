@@ -107,7 +107,7 @@ SelectionOverlay.DipToDomainScaling = 1.0;
 SelectionOverlay.LoupeDipToDeviceScaling = 1.0;
 
 // 座標変換ポート（ドメイン = 仮想スクリーンピクセル。Marquee / Loupe へ一括分配）
-SelectionOverlay.SetCoordTransform(CoordTransform.DomainScale(() => scaling));
+SelectionOverlay.SetCoordTransform(CoordTransform.DipToDomain(() => scaling));
 
 // イベント（配線は内部で完結。確定・キャンセルのみ購読）
 SelectionOverlay.ConfirmRequested += (_, e) => OnConfirm(e.Rect);

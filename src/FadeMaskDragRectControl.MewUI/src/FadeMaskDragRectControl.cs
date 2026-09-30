@@ -255,7 +255,7 @@ public sealed class FadeMaskDragRectControl : Panel
         set => _marquee.SizeLabelDisplayScalingProvider = value;
     }
 
-    /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）を取得または設定する。</summary>
+    /// <summary>DPI スケーリング係数（ドメイン座標 / ローカル DIP の倍率）を取得または設定する。</summary>
     /// <value>スケーリング係数。 ドメイン座標がローカル DIP と一致する場合は 1.0。</value>
     /// <remarks>
     /// 環境値（ユーザー設定ではない）のため設定（<see cref="Options"/>）には含めず、ホストが与える。<br/>

@@ -52,7 +52,7 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `MarqueeGeometry` | record struct | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MousePosition` ＋ `SurfaceDipRect`）。 **コアが責任を持つ値の全量** |
+| `MarqueeGeometry` | record struct | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MouseDomainPosition` / `MouseDipPosition` ＋ `SurfaceDipRect`）。 **コアが責任を持つ値の全量** |
 | `MarqueeRenderRequest` | record struct | 1 フレーム分の幾何を解決する入力（設定・状態と、描画時に決まる値）。 `Marquee.CreateRequest` が生成し、`Marquee.ResolveGeometry` へ渡す。 値の組は `MarqueeRenderRequest.Create` が 1 箇所に閉じる。 **`Create` を public にする理由**: ファサード（`Marquee.CreateRequest`）と独自 UI が入力を組み立てる唯一の入口である（描画先の領域を知るのは呼び出し側だけである） |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの幾何（位置と寸法はコアが解決済み。 **色と線の太さは描画層の外観が持つ**） |
 
@@ -170,7 +170,8 @@
 | `FocusDomainRect` | 注目矩形（ドメイン座標。 選択した矩形をそのまま渡すため `Interval` も保持する）。 ホストが矩形ごとの表示スケールを解決するために使う |
 | `Handles` | ドラッグハンドルの幾何（`HandleDipRects` 8 方向・`BorderThickness`）。 選択が無い場合は null |
 | `Marker` | 始点マーカーの幾何（`Center` / `Size`＝半幅）。 nudge 中でない場合は null。 線の太さは描画層の外観（`MarkerThickness`）が持つ |
-| `MousePosition` | 直近のマウス位置（ドメイン座標）。 カーソル座標ラベルの基準 |
+| `MouseDomainPosition` | 直近のマウス位置（ドメイン座標）。 カーソル座標ラベルの文言の基準 |
+| `MouseDipPosition` | 直近のマウス位置（DIP。 座標変換済み）。 カーソル座標ラベルの配置の基準 |
 
 **幾何は「描く値の無い項目は null / 空」で返します**（注目矩形なし・選択なし・nudge 中でない）。 **表示可否（ハンドル・ラベルを描くかどうか）は本コアの責務ではありません**（描画層の外観が単一所有します）。
 
@@ -214,10 +215,10 @@ var plan = ResolveDrawPlanByHost(new EsSize(800, 600), MeasureText);
 | 座標系 | 用途 |
 | --- | --- |
 | ドメイン座標 | 選択矩形・入力座標・通知座標・ハイライト矩形。 利用者が座標変換ポートで定義する |
-| ローカル DIP | 幾何の座標（`FocusDipRect` / `Handles` / `Marker`）。 `ICoordTransform.Inverse` で得る |
+| ローカル DIP | 幾何の座標（`FocusDipRect` / `Handles` / `Marker`）。 `ICoordTransform.ToDip` で得る |
 
 - 選択矩形は**閉区間**（始点・終点とも含む）として扱い、DIP への変換時に終点へ +1 します。 **ハイライト矩形はホストが全ピクセルを含む閉区間として与えるため +1 しません**（優先順と閉区間の規則は `MarqueeRenderRequest` が単一所有します）。
-- ドメイン境界（`ICoordTransform.Bounds`）は `ClampToDomainBounds` が有効な場合のクリップ範囲です。
+- ドメイン境界（`ICoordTransform.DomainBounds`）は `ClampToDomainBounds` が有効な場合のクリップ範囲です。
 - **コアは描画面の原点が常に (0, 0) である前提**で幾何を返します（親の座標を混ぜるとハンドルがずれるため、描画領域は原点を持たない `EsSize` で受けます）。
 
 ## 6. 制限事項

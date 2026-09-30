@@ -104,9 +104,8 @@ overlay.MarqueeAppearance = MarqueeAppearance.Default with { OverlayColor = Syst
 overlay.LoupeAppearance = LoupeAppearance.Default with { BackgroundColor = System.Drawing.Color.White };
 // DPI スケーリングは設定（Options）の対象外（環境値。個別プロパティで設定）
 overlay.DipToDomainScaling = 1.0;
-overlay.SetCoordTransform(CoordTransform.Compose(
-    CoordTransform.ImageLayout(() => preview.Bounds.Size.ToEsSize(), imageSize.ToEsSize(), () => true),
-    CoordTransform.ScrollOffset(() => new EsVector(origin.X, origin.Y))));
+// ドメイン = ローカル DIP × 倍率（倍率は ドメイン座標 / ローカル DIP）。 境界は画像サイズ（選択を画像外へ出さない）
+overlay.SetCoordTransform(CoordTransform.DipToDomain(() => 1.0, () => imageSize.ToEsSize()));
 overlay.Loupe.Source = sourceImage;
 parentPanel.Children.Add(overlay);
 ```

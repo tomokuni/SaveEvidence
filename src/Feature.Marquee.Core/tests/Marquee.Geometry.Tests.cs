@@ -108,7 +108,7 @@ public class MarqueeGeometryResolutionTests
     public void ResolveGeometry_座標変換ポートを注目矩形とハンドルへ適用する()
     {
         var marquee = CreateMarquee();
-        // Inverse（ドメイン → DIP）は 2 倍
+        // ToDip（ドメイン → DIP）は 2 倍
         marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
         marquee.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));

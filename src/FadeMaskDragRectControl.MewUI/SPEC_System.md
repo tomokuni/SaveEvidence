@@ -234,7 +234,7 @@ ArrangeContent(bounds)                     … bounds はウィンドウ絶対�
   ├─ Marquee.Arrange(bounds)              … 選択矩形と外側の装飾は全面（入力もここが受ける）
   └─ ルーペ
        ├─ 非表示（モード不一致・画像未設定・中心未設定）→ サイズ 0 で配置
-       └─ 表示 → Compute(Options.RequestedSize, 親サイズ, port.Inverse(中心), オフセット)
+       └─ 表示 → Compute(Options.RequestedSize, 親サイズ, port.ToDip(中心), オフセット)
                   → Arrange(親原点 + 位置, サイズ)
 ```
 

@@ -278,7 +278,7 @@ public class MarqueePresenterTests
     public void ResolveDrawPlan_座標変換ポートを幾何へ適用する()
     {
         var presenter = CreatePresenter(out _);
-        // Inverse（ドメイン → DIP）は 2 倍
+        // ToDip（ドメイン → DIP）は 2 倍
         presenter.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
         presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));

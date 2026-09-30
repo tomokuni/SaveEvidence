@@ -136,7 +136,7 @@ public sealed partial class Marquee
     }
 
     /// <summary>ポート未指定時に適用する倍率を取得または設定する。</summary>
-    /// <value>ドメイン → DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される（0 以下・等倍は等価変換として扱う）。</value>
+    /// <value>ドメイン座標 / ローカル DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される（0 以下・等倍は等価変換として扱う）。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
     /// 座標変換ポート（<see cref="SetCoordTransform"/>）が設定されている場合は使われない（ポート優先。 規則はコアが単一所有する）。<br/>

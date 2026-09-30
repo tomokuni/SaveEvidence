@@ -13,7 +13,7 @@ namespace EsUtil.Feature.Marquee.Core.Interaction;
 /// 「ドラッグ中なのに選択が無い」のような矛盾した状態を作れない（読み取りはプロパティ、変更は操作）。<br/>
 /// <br/>
 /// 座標系:<br/>
-/// - 選択矩形・nudge はドメイン座標（Forward = UI 論理座標→ドメイン / Inverse = ドメイン→UI 論理座標）で動作する。<br/>
+/// - 選択矩形・nudge はドメイン座標（ToDomain = UI 論理座標→ドメイン / ToDip = ドメイン→UI 論理座標）で動作する。<br/>
 /// - マウス入力・描画は各 UI 実装が UI 論理座標で受け取り、座標変換ポート（<see cref="ICoordTransform"/>）で変換する。<br/>
 /// <br/>
 /// カーソルの表示切替（nudge 中の非表示・終了時の再表示）は<b>効果</b>としてセッションが UI 層へ要求するため、本クラスはカーソル API を知らない。<br/>
@@ -49,7 +49,7 @@ internal sealed class MarqueeState
     /// <summary>nudge（矢印キー微調整）中かどうか。</summary>
     internal bool NudgeActive { get; private set; }
 
-    /// <summary>座標変換ポート（Forward = UI 論理座標→ドメイン / Inverse = ドメイン→UI 論理座標 / Bounds = ドメイン境界）。</summary>
+    /// <summary>座標変換ポート（ToDomain = UI 論理座標→ドメイン / ToDip = ドメイン→UI 論理座標 / DomainBounds = ドメイン境界）。</summary>
     /// <remarks>環境値（注入された依存）であるため、設定は <see cref="SetPort"/> で行う。</remarks>
     internal ICoordTransform Port { get; private set; } = CoordTransform.Identity;
 

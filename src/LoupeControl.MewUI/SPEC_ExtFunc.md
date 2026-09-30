@@ -134,5 +134,5 @@ Avalonia 版の再描画パイプライン（RequestRender / RenderCore / Genera
 
 | 項目 | 状況 |
 | --- | --- |
-| 座標変換ポート（`SetCoordTransform`） | 実装済み（`Inverse` = ドメイン → 親領域 DIP。 表示位置の計算はコアのファサードが行い、コントロールは本ポートをファサードへ渡す） |
+| 座標変換ポート（`SetCoordTransform`） | 実装済み（`ToDip` = ドメイン → 親領域 DIP。 表示位置の計算はコアのファサードが行い、コントロールは本ポートをファサードへ渡す） |
 | 再生成の要求メソッド（`Clear` / `RequestRender`） | 未実装（プロパティ変更で自動再描画される） |

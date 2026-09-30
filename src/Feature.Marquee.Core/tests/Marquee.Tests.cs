@@ -275,7 +275,7 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out var effects);
         effects.Calls.Clear();
 
-        // Forward（DIP → ドメイン）は 1/2 倍、Inverse（ドメイン → DIP）は 2 倍
+        // ToDomain（DIP → ドメイン）は 1/2 倍、ToDip（ドメイン → DIP）は 2 倍
         marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
 

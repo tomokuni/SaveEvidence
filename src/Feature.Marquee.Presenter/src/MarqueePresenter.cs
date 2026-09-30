@@ -195,7 +195,7 @@ public partial class MarqueePresenter
     }
 
     /// <summary>ポート未指定時に適用する倍率を取得または設定する。</summary>
-    /// <value>ドメイン → DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される。</value>
+    /// <value>ドメイン座標 / ローカル DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される。</value>
     /// <remarks>保持とログはコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。</remarks>
     public double DipToDomainScaling
     {

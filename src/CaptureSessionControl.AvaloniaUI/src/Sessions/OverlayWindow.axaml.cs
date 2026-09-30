@@ -162,7 +162,7 @@ internal sealed partial class OverlayWindow : Window
     /// 複合コントロール（Marquee + Loupe の配線を内包）へモード・外観・座標変換を設定する。<br/>
     /// - モード: キャプチャ種別に応じて描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替。<br/>
     /// - 設定: 設定変換（<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）で 1 値へ変換して一括適用。<br/>
-    /// - 座標変換: DomainScale（ドメイン = ウィンドウローカル物理ピクセル = ローカル DIP × scaling。 画面物理へは Position 加算）。
+    /// - 座標変換: DipToDomain（ドメイン = ウィンドウローカル物理ピクセル = ローカル DIP × scaling。 画面物理へは Position 加算）。
     /// </remarks>
     private void ConfigureSelectionControls(CaptureSettings s)
     {

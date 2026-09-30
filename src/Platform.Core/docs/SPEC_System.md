@@ -69,8 +69,8 @@ graph LR
 | `Coord/ScrollMath.cs` | スクロール範囲・ビューポートサイズの純粋計算とホイール 1 段のスクロール量（`WheelScrollUnit`） |
 | `Coord/DpiScaler.cs` | DIP 値を物理ピクセルへ変換する純粋計算（DPI 基準値と DPI → スケーリング換算を含む） |
 | `Coord/CoordTransformExtensions.cs` | 座標変換ポート未設定（null）を等価変換として解決する |
-| `Coord/ICoordTransform.cs` | 座標系間の変換ポート（`Forward` / `Inverse` / `Bounds`） |
-| `Coord/CoordTransform.cs` | 変換ポートの具象実装（`Func` 委譲・`Identity` / `Compose` / `ScrollOffset` / `Scale` / `DomainScale` / `ImageLayout`）。 **画像レイアウト（レターボックス・スケール）と平行移動・スケーリングの純粋計算も単一所有する**（`CalculateUniformLayout` / `ComputeImageRenderInfo` / `OffsetPoint` 等は internal。 各ファクトリが使う） |
+| `Coord/ICoordTransform.cs` | ローカル DIP とドメイン座標の変換ポート（`ToDomain` / `ToDip` / `DomainBounds`） |
+| `Coord/CoordTransform.cs` | 変換ポートの具象実装（`Func` 委譲・`Identity` / `DipToDomain`）。 **原点基準の等方スケーリングの純粋計算も単一所有する**（`MultiplyPoint` / `DividePoint` は internal） |
 | `Geometry/EsPoint.cs` | UI フレームワーク非依存の 2 次元座標（`readonly record struct`）。 座標ラベルの文言（`Format`）と、フレームワーク対照の操作（`WithX` / `Offset` / `DistanceTo` / `NearlyEquals` / 演算子）を提供する |
 | `Geometry/EsSize.cs` | UI フレームワーク非依存の 2 次元サイズ（`readonly record struct`。 領域の確定判定 `HasArea` とクランプ `ClampToArea` / `ClampOffset`。 `Constrain` / `Inflate` / `Deflate` / 四則演算） |
 | `Geometry/EsVector.cs` | UI フレームワーク非依存の 2 次元ベクター（`readonly record struct`。 `Length` / `LengthSquared` / `Normalize` / `Dot` / `Cross` / `Min` / `Max` / `Abs` / 四則演算） |

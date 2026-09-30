@@ -440,7 +440,7 @@ public class MarqueeControlTests
     public void スケールが0の変換でもヒットテストが動作する()
     {
         var control = CreateControl();
-        // Forward が常に (0,0) を返す変換（スケール 0）→ ToDomainRadius は HandleHitRadius にフォールバック
+        // ToDomain が常に (0,0) を返す変換（スケール 0）→ ToDomainRadius は HandleHitRadius にフォールバック
         control.SetCoordTransform(new CoordTransform(_ => new EsPoint(0, 0), p => p, () => null));
         var window = Show(control);
         var pointer = CreatePointer();

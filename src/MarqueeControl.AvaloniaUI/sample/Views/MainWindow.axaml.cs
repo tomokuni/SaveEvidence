@@ -124,7 +124,7 @@ public partial class MainWindow : Window
 
         // 座標ポート: ドメイン = 画像ピクセル（800x500）、DIP = 表示座標（ズーム倍率で変換）
         // SetCoordTransform は内部で InvalidateVisual を呼び、ズーム時のちらつきを防ぐ
-        // Forward = DIP→ドメイン（_zoom で除算 = 画像ピクセルへ）、Inverse = ドメイン→DIP（_zoom で乗算）
+        // ToDomain = DIP→ドメイン（_zoom で除算 = 画像ピクセルへ）、ToDip = ドメイン→DIP（_zoom で乗算）
         Marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / _zoom, p.Y / _zoom),
             p => new EsPoint(p.X * _zoom, p.Y * _zoom),

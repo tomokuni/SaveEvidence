@@ -260,7 +260,7 @@ public sealed class MarqueeControl : Panel
     }
 
     /// <summary>座標変換ポートへ適用する倍率を取得または設定する。</summary>
-    /// <value>ドメイン → DIP の倍率。 既定は 1.0。</value>
+    /// <value>ドメイン座標 / ローカル DIP の倍率。 既定は 1.0。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
     /// <see cref="SetCoordTransform"/> が未設定の場合のみ使われる（ポート優先）。<br/>

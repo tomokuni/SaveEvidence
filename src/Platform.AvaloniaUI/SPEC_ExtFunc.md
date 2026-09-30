@@ -122,9 +122,6 @@ guard.Attach(window);
 ```csharp
 var screenPt = ScreenConverter.LocalDipToScreen(control, localDip); // ローカル DIP → 画面物理
 var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物理 → ローカル DIP
-
-// コントロールローカル DIP ↔ 画面物理の動的変換ポート（TopLevel を毎回解決）
-ICoordTransform dipPort = ScreenConverter.CreateVisualDipPort(control);
 ```
 
 ## 5. 公開API
@@ -138,8 +135,6 @@ ICoordTransform dipPort = ScreenConverter.CreateVisualDipPort(control);
 | --- | --- | --- |
 | `LocalDipToScreen` | `PixelPoint LocalDipToScreen(Visual source, Point local)` | コントロールローカル DIP → 画面物理 Pixel（`TopLevel.PointToScreen` 委譲） |
 | `ScreenToLocalDip` | `Point ScreenToLocalDip(Visual source, PixelPoint screen)` | 画面物理 Pixel → コントロールローカル DIP |
-| `CreateDipPort` | `ICoordTransform CreateDipPort(PixelPoint origin, double renderScaling)`（internal） | 原点＋スケーリングによる変換ポート（`EsPoint` を入出力） |
-| `CreateVisualDipPort` | `ICoordTransform CreateVisualDipPort(Visual source)` | コントロールローカル DIP ↔ 画面物理 Pixel の動的ポート（`TopLevel` を毎回解決） |
 
 ### 5.2 相互変換（Interop）
 

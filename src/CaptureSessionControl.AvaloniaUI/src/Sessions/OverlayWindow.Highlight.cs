@@ -40,7 +40,7 @@ internal sealed partial class OverlayWindow
     /// スクリーン検出・ウィンドウ検出の双方で同じ反映手順（ハイライト矩形・表示可否・診断ログ）を取る。<br/>
     /// 矩形のドメイン座標への変換・未検出の正規化・表示名の保持・ログは<br/>
     /// コアの <see cref="CaptureHighlightSession"/> が単一所有する（本クラスは結果を設定するだけ）。<br/>
-    /// サイズラベルの物理ピクセル換算は、ドメイン（画面物理 − Position）を DIP 変換した DomainScale(_scaling) と<br/>
+    /// サイズラベルの物理ピクセル換算は、ドメイン（画面物理 − Position）を DIP 変換した DipToDomain(_scaling) と<br/>
     /// 往復一致するよう _scaling（オーバーレイの表示スケール）を維持する（マルチモニタでも往復が一致する）。
     /// </remarks>
     private CaptureHighlight ApplyHighlight(ElementFinderResults detection)

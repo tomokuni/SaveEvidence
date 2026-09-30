@@ -177,7 +177,7 @@ public sealed partial class Loupe
     }
 
     /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（Inverse = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
+    /// <param name="port">座標変換ポート（ToDip = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等のレイアウト変化に追従できる<br/>
     /// （イベント時の DIP キャッシュは使わない）。<br/>

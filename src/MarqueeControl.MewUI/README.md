@@ -42,7 +42,7 @@ var marquee = new MarqueeControl
     Appearance = MarqueeAppearance.Default with { OuterBorderColor = System.Drawing.Color.White },
 };
 
-// 2. 座標変換ポートを設定する（Forward = ローカル DIP → ドメイン / Bounds = ドメイン境界）
+// 2. 座標変換ポートを設定する（ToDomain = ローカル DIP → ドメイン / DomainBounds = ドメイン境界）
 marquee.SetCoordTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(1920, 1080)));
 
 // 3. イベントを購読する

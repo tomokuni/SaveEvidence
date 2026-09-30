@@ -125,9 +125,9 @@ marquee.Rendered += (_, e) =>
     // e.Context: ホスト固有の付加情報を描くための描画コンテキスト
 };
 
-// 座標ポートを設定（ドメイン = 画像ピクセル等）。ポート生成は Platform.AvaloniaUI の CoordTransform ファクトリを使用する。
-marquee.SetCoordTransform(CoordTransform.DomainScale(() => 2.0)); // 例: DPI 200%（Forward = DIP→ドメイン × 2）
-// 複雑な変換は Compose / ScrollOffset / ImageLayout 等で組み立てる
+// 座標ポートを設定（ドメイン = 画像ピクセル等）。ポート生成は Platform.Core の CoordTransform ファクトリを使用する。
+marquee.SetCoordTransform(CoordTransform.DipToDomain(() => 2.0)); // 例: DPI 200%（ToDomain = DIP→ドメイン × 2）
+// 第 2 引数に境界（画像サイズ等）を与えると選択をドメイン外へ出さない（省略すると無制限）
 
 panel.Children.Add(marquee);
 ```
@@ -142,7 +142,7 @@ MarqueeControl は 3 つの座標系を使い分けます。
 | コントロールローカル DIP | マウス入力・描画 |
 | 画面物理 Pixel | カーソル操作・画面変換 |
 
-ドメイン ↔ DIP の変換は `SetCoordTransform(ICoordTransform?)` で注入します（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。
+ドメイン ↔ DIP の変換は `SetCoordTransform(ICoordTransform?)` で注入します（ToDomain = DIP→ドメイン / ToDip = ドメイン→DIP / DomainBounds = ドメイン境界）。
 
 ## 7. サンプル
 

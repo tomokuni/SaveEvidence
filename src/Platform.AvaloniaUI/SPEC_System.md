@@ -102,10 +102,9 @@ flowchart TB
 
 - **分類**: 公開静的クラス
 - **責務**: コントロールローカル DIP ↔ 画面物理 Pixel の変換（`TopLevel` の解決を集約する唯一の場所）
-- **公開メソッド**: `LocalDipToScreen(Visual, Point)` / `ScreenToLocalDip(Visual, PixelPoint)` / `CreateVisualDipPort(Visual)`
-- **internal メソッド**: `CreateDipPort(PixelPoint, double)`（純粋な変換ポート）
-- **依存**: Avalonia（`TopLevel` / `Visual` / `PixelPoint`）・`ICoordTransform`（Core）
-- **備考**: `TopLevel` に依存するため他 UI では再利用できない（Avalonia 版専用）。
+- **公開メソッド**: `LocalDipToScreen(Visual, Point)` / `ScreenToLocalDip(Visual, PixelPoint)`
+- **依存**: Avalonia（`TopLevel` / `Visual` / `PixelPoint`）
+- **備考**: `TopLevel` に依存するため他 UI では再利用できない（Avalonia 版専用）。 座標変換ポートは提供しない（ポートの軸は「ローカル DIP ↔ ドメイン座標」であり、画面物理はその軸に含まれない）。
 
 ### 6.2 相互変換（Interop）
 

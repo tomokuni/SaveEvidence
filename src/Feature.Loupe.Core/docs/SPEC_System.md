@@ -70,7 +70,7 @@ sequenceDiagram
   UI->>Fac: ResolveLayout(parentSize)
   Fac->>Core: 要求サイズ（そのまま）と、親領域が収められるかの判定
   Core-->>Fac: 表示サイズ（DIP。要素サイズ・描画サイズで同じ値を使う）
-  Fac->>PC: ICoordTransform.Inverse(center) → EsPoint（親領域 DIP）
+  Fac->>PC: ICoordTransform.ToDip(center) → EsPoint（親領域 DIP）
   Fac->>Core: ComputePosition(表示サイズ, parentSize, centerDip, offset)
   Core-->>Fac: EsPoint（表示位置）
   Fac-->>UI: LoupeLayout（表示サイズ + 表示位置）

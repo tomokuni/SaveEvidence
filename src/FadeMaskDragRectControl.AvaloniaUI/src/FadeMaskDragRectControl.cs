@@ -246,7 +246,7 @@ public sealed class FadeMaskDragRectControl : Panel
     // ====================================================================
 
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
-    /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。 null の場合は倍率（<see cref="DipToDomainScaling"/>）からコアが解決する。</param>
+    /// <param name="port">座標変換ポート（ToDomain = DIP→ドメイン / ToDip = ドメイン→DIP / DomainBounds = ドメイン境界）。 null の場合は倍率（<see cref="DipToDomainScaling"/>）からコアが解決する。</param>
     /// <remarks>
     /// Marquee / Loupe の 2 コントロールへ同一ポートを分配する（1 回の呼び出しで設定完了）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール・ウィンドウサイズ変更等のレイアウト変化に追従する。
@@ -283,7 +283,7 @@ public sealed class FadeMaskDragRectControl : Panel
         set => _marquee.SizeLabelDisplayScalingProvider = value;
     }
 
-    /// <summary>DPI スケーリング係数（ドメイン → DIP 変換の基準倍率）を取得または設定する。</summary>
+    /// <summary>DPI スケーリング係数（ドメイン座標 / ローカル DIP の倍率）を取得または設定する。</summary>
     /// <value>スケーリング係数。 ドメイン座標がローカル DIP と一致する場合は 1.0。</value>
     /// <remarks>
     /// 環境値（ユーザー設定ではない）のため設定（<see cref="Options"/>）には含めず、ホスト（セッション）が与える。<br/>

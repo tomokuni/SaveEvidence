@@ -424,8 +424,8 @@ public sealed partial class MarqueeControl : Panel
     public static readonly StyledProperty<double> DipToDomainScalingProperty =
         AvaloniaProperty.Register<MarqueeControl, double>(nameof(DipToDomainScaling), DipToDomainScalingDefault);
 
-    /// <summary>ドメイン → DIP 変換の基準倍率を取得または設定する。</summary>
-    /// <value>ドメイン → DIP 変換の基準倍率。 既定は 1.0。</value>
+    /// <summary>ドメイン座標 / ローカル DIP の倍率を取得または設定する。</summary>
+    /// <value>ドメイン座標 / ローカル DIP の倍率。 既定は 1.0。</value>
     /// <remarks>
     /// <see cref="SetCoordTransform"/> でポートを設定した場合は使われない（ポート優先）。<br/>
     /// ポートと倍率の使い分け（ポート優先・倍率が 0 以下や等倍なら等価変換）はコアが単一所有する。<br/>
@@ -516,10 +516,10 @@ public sealed partial class MarqueeControl : Panel
     public EsRect SelectionDomainRect => _marquee.SelectionDomainRect;
 
     /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（Forward = DIP→ドメイン / Inverse = ドメイン→DIP / Bounds = ドメイン境界）。 null の場合は等価変換。</param>
+    /// <param name="port">座標変換ポート（ToDomain = DIP→ドメイン / ToDip = ドメイン→DIP / DomainBounds = ドメイン境界）。 null の場合は等価変換。</param>
     /// <remarks>
     /// ホスト（上位 AP）がモードに応じた変換ポートを設定する（AreaSelect: 仮想スクリーンピクセル / Crop: 元画像ピクセル）。<br/>
-    /// ポートの生成はコアの <see cref="EsUtil.Platform.Core.Coord.CoordTransform"/> のファクトリ（<c>Compose</c> / <c>ScrollOffset</c> / <c>DomainScale</c> / <c>ImageLayout</c> 等）で行う。<br/>
+    /// ポートの生成はコアの <see cref="EsUtil.Platform.Core.Coord.CoordTransform"/> のファクトリ（<c>Identity</c> / <c>DipToDomain</c> 等）で行う。<br/>
     /// 未設定時は等価変換（1 ドメインピクセル = 1 DIP・無制限）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
     /// 座標変換の変更は描画（選択矩形・ハンドル・十字線）へ即時反映されるため、再描画を要求する。

@@ -80,13 +80,13 @@ public sealed partial class Marquee
         /// <remarks>塗りの中に隠れない細さでありながら、拡大表示でも輪郭が判別できる太さである。</remarks>
         public const double HandleBorderThicknessDefault = 1.5;
 
-        /// <summary>ポート未指定時に適用する倍率の最小値（環境値。 他の数値より後に置く）。</summary>
+        /// <summary>ポート未指定時に適用する倍率（ドメイン座標 / ローカル DIP）の最小値（環境値。 他の数値より後に置く）。</summary>
         public const double DipToDomainScalingMin = 0.1;
 
-        /// <summary>ポート未指定時に適用する倍率の最大値（環境値）。</summary>
+        /// <summary>ポート未指定時に適用する倍率（ドメイン座標 / ローカル DIP）の最大値（環境値）。</summary>
         public const double DipToDomainScalingMax = 8.0;
 
-        /// <summary>ポート未指定時に適用する倍率の既定値（環境値。 ドメイン座標と DIP が 1:1）。</summary>
+        /// <summary>ポート未指定時に適用する倍率（ドメイン座標 / ローカル DIP）の既定値（環境値。 ドメイン座標と DIP が 1:1）。</summary>
         /// <remarks>各 UI の依存関係プロパティ（<c>DipToDomainScaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
         public const double DipToDomainScalingDefault = 1.0;
 
