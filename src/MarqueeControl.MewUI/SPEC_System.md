@@ -193,7 +193,8 @@ classDiagram
       }
       class MarqueeOptions {
           <<Feature.Marquee.Core>>
-          +double HandleSize / MarkerLength
+          +double HandleSize / HandleBorderThickness
+        +double MarkerLength
           +double HandleHitRadius / MinSelectionSize
           +bool ClampToDomainBounds
       }

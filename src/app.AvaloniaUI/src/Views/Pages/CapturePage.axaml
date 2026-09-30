@@ -1,8 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=app.Core"
-             xmlns:crop="clr-namespace:EsUtil.SaveEvidence.CropView.AvaloniaUI;assembly=CropViewControl.AvaloniaUI"
-             xmlns:marquee="clr-namespace:EsUtil.SaveEvidence.Marquee.AvaloniaUI;assembly=MarqueeControl.AvaloniaUI"
+             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=EsUtil.SaveEvidence"
+             xmlns:crop="clr-namespace:EsUtil.SaveEvidence.CropView.AvaloniaUI;assembly=EsUtil.SaveEvidence.CropView.AvaloniaUI"
+             xmlns:marquee="clr-namespace:EsUtil.SaveEvidence.Marquee.AvaloniaUI;assembly=EsUtil.SaveEvidence.Marquee.AvaloniaUI"
              x:Class="EsUtil.SaveEvidence.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>

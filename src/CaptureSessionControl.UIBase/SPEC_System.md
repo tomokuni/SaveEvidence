@@ -15,7 +15,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 設定から色への写像を 1 箇所へ集約し、両 UI で同じ見た目になるようにする |
-| 提供形態 | クラスライブラリ（`CaptureSessionControl.UIBase.dll`）。 **公開 API は持たない**（`internal` のみ） |
+| 提供形態 | クラスライブラリ（`EsUtil.SaveEvidence.CaptureSession.UIBase.dll`）。 **公開 API は持たない**（`internal` のみ） |
 | 想定利用者 | 両 UI のホスト（`CaptureSessionControl.AvaloniaUI` / `CaptureSessionControl.MewUI` の撮影オーバーレイ・切り出しセッション） |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |

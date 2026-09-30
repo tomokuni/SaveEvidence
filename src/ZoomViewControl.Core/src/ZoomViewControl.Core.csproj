@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>EsUtil.SaveEvidence.ZoomView</RootNamespace>
+    <AssemblyName>EsUtil.SaveEvidence.ZoomView</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。
@@ -24,8 +25,8 @@
 
   <ItemGroup>
     <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
-    <InternalsVisibleTo Include="ZoomViewControl.AvaloniaUI" />
-    <InternalsVisibleTo Include="ZoomViewControl.MewUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.ZoomView.AvaloniaUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.ZoomView.MewUI" />
     <InternalsVisibleTo Include="ZoomViewControl.AvaloniaUI.Tests" />
     <InternalsVisibleTo Include="ZoomViewControl.MewUI.Tests" />
     <InternalsVisibleTo Include="ZoomViewControl.Core.Tests" />

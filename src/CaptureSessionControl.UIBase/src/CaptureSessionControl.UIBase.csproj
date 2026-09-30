@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>EsUtil.SaveEvidence.CaptureSession.UIBase</RootNamespace>
+    <AssemblyName>EsUtil.SaveEvidence.CaptureSession.UIBase</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。
@@ -24,8 +25,8 @@
 
   <ItemGroup>
     <!-- 写像は両 UI のホストとテストからのみ参照する（公開 API を増やさない） -->
-    <InternalsVisibleTo Include="CaptureSessionControl.AvaloniaUI" />
-    <InternalsVisibleTo Include="CaptureSessionControl.MewUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.CaptureSession.AvaloniaUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.CaptureSession.MewUI" />
     <InternalsVisibleTo Include="CaptureSessionControl.UIBase.Tests" />
   </ItemGroup>
 

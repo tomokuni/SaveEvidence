@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=app.Core"
+        xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=EsUtil.SaveEvidence"
         xmlns:pages="clr-namespace:EsUtil.SaveEvidence.Views.Pages"
         xmlns:chrome="clr-namespace:Avalonia.Controls.Chrome;assembly=Avalonia.Controls"
         x:Class="EsUtil.SaveEvidence.Views.MainWindow"

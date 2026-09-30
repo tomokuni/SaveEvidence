@@ -259,7 +259,7 @@
 
 | アセンブリ | 仕様書 |
 | --- | --- |
-| `app.Core` | `../app/SPEC_ExtFunc.md`（アプリ共通のコア仕様） |
+| `EsUtil.SaveEvidence.dll`（app.Core） | `../app/SPEC_ExtFunc.md`（アプリ共通のコア仕様） |
 | `Platform.Core` | `../Platform.Core/docs/SPEC_API.md`（`Native` / `Native.Win` / `Native.Imaging` を含む） |
 | `Platform.MewUI` | `../Platform.MewUI/SPEC_ExtFunc.md` |
 | `LoupeControl.MewUI` | `../LoupeControl.MewUI/SPEC_ExtFunc.md` |

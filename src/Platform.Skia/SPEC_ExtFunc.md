@@ -1,6 +1,6 @@
 # Platform.Skia 外部機能仕様書
 
-`Platform.Skia` は、SkiaSharp への依存を閉じ込めたプラットフォーム層です。 名前空間は `EsUtil.Platform.Skia`、アセンブリ名は `Platform.Skia` です。
+`Platform.Skia` は、SkiaSharp への依存を閉じ込めたプラットフォーム層です。 名前空間は `EsUtil.Platform.Skia`、アセンブリ名は `EsUtil.Platform.Skia` です。
 
 ## 公開 API の可視性
 

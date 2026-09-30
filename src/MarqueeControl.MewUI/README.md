@@ -110,6 +110,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `HandleSize` | `double` | `10.0` | ハンドルの一辺サイズ（DIP） |
+| `HandleBorderThickness` | `double` | `1.5` | ハンドル枠の線の太さ（DIP。 0.5〜64.0 に補正） |
 | `HandleHitRadius` | `double` | `12.0` | ハンドルのヒットテスト半径（DIP。 0.0〜256.0 に補正） |
 | `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
 | `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する |

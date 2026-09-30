@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:loupe="clr-namespace:EsUtil.SaveEvidence.Loupe.AvaloniaUI;assembly=LoupeControl.AvaloniaUI"
+        xmlns:loupe="clr-namespace:EsUtil.SaveEvidence.Loupe.AvaloniaUI;assembly=EsUtil.SaveEvidence.Loupe.AvaloniaUI"
         xmlns:sample="clr-namespace:EsUtil.SaveEvidence.Loupe.Sample.Presentation"
         xmlns:vm="clr-namespace:EsUtil.SaveEvidence.Loupe.Sample.ViewModels"
         x:Class="EsUtil.SaveEvidence.Loupe.Sample.Views.MainWindow"

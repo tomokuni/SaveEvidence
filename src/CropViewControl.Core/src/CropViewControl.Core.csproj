@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>EsUtil.SaveEvidence.CropView</RootNamespace>
+    <AssemblyName>EsUtil.SaveEvidence.CropView</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574 で検出。公開メンバーの未記載は対象外）。
@@ -24,7 +25,7 @@
 
   <ItemGroup>
     <!-- internal 型は使用中のアセンブリとテストにのみ公開する（公開面を増やさない。使わない IVT は残さない） -->
-    <InternalsVisibleTo Include="CropViewControl.AvaloniaUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.CropView.AvaloniaUI" />
     <InternalsVisibleTo Include="CropViewControl.MewUI.Tests" />
     <InternalsVisibleTo Include="CropViewControl.Core.Tests" />
   </ItemGroup>

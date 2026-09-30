@@ -14,7 +14,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 複合コントロールの分配規則とラベル配置を 1 箇所へ集約し、両 UI の挙動が構造的に一致するようにする |
-| 提供形態 | クラスライブラリ（`FadeMaskDragRectControl.UIBase.dll`） |
+| 提供形態 | クラスライブラリ（`EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.dll`） |
 | 想定利用者 | `FadeMaskDragRectControl.AvaloniaUI` / `FadeMaskDragRectControl.MewUI`（および両者のテスト） |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |

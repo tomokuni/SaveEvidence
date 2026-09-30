@@ -2,7 +2,7 @@
 
 `CaptureSessionControl.UIBase` は、撮影・切り出しのセッションを実装する両 UI（Avalonia 版 / MewUI 版）が
 共有する**設定写像**を提供します。 名前空間は `EsUtil.SaveEvidence.CaptureSession.UIBase`、アセンブリ名は
-`CaptureSessionControl.UIBase` です。
+`EsUtil.SaveEvidence.CaptureSession.UIBase` です。
 
 ## 提供する外部機能
 

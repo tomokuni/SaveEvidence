@@ -203,6 +203,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP 座標系。 1.0〜256.0 に補正） |
+| `HandleBorderThickness` | `double` | `1.5` | ドラッグハンドルの枠線の太さ（DIP 座標系。 0.5〜64.0 に補正。 見えている大きさを決めるため `HandleHitRadius` と揃えて設定する） |
 | `MarkerLength` | `double` | `16.0` | nudge 中の十字マーカーの長さ（**全長** = 中心から両端までの長さ・DIP 座標系。 2.0〜4096.0 に補正） |
 | `HandleHitRadius` | `double` | `12.0` | ハンドルヒットテスト半径（**DIP 座標系**。 0.0〜256.0 に補正。 ズーム・縮小表示でも画面上の大きさが一定） |
 | `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標系。 1.0〜4096.0 に補正） |

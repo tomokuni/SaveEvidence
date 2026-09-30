@@ -1,6 +1,6 @@
 # FadeMaskDragRectControl.Core 外部機能仕様書
 
-`FadeMaskDragRectControl.Core` は、領域選択の複合コントロール `FadeMaskDragRectControl`（Avalonia 版 / MewUI 版）が共有する **UI フレームワーク非依存**の機能を提供します。 名前空間はすべて `EsUtil.SaveEvidence.FadeMaskDragRect`、アセンブリ名は `FadeMaskDragRectControl.Core` です。
+`FadeMaskDragRectControl.Core` は、領域選択の複合コントロール `FadeMaskDragRectControl`（Avalonia 版 / MewUI 版）が共有する **UI フレームワーク非依存**の機能を提供します。 名前空間はすべて `EsUtil.SaveEvidence.FadeMaskDragRect`、アセンブリ名は `EsUtil.SaveEvidence.FadeMaskDragRect` です。
 
 ## 提供する外部機能
 

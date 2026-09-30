@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>EsUtil.SaveEvidence.Loupe.MewUI</RootNamespace>
-    <AssemblyName>LoupeControl.MewUI</AssemblyName>
+    <AssemblyName>EsUtil.SaveEvidence.Loupe.MewUI</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- MewUI は API が安定化中（0.x）。破壊的変更を避けるためバージョンを固定する。 -->

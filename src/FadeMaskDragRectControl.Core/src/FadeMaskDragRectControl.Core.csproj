@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>EsUtil.SaveEvidence.FadeMaskDragRect</RootNamespace>
+    <AssemblyName>EsUtil.SaveEvidence.FadeMaskDragRect</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -22,10 +23,10 @@
 
   <ItemGroup>
     <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
-    <InternalsVisibleTo Include="FadeMaskDragRectControl.AvaloniaUI" />
-    <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.FadeMaskDragRect.MewUI" />
     <!-- 設定とモードから子コントロールの値を解決する共有層（internal の Modes / State を参照する） -->
-    <InternalsVisibleTo Include="FadeMaskDragRectControl.UIBase" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.FadeMaskDragRect.UIBase" />
     <InternalsVisibleTo Include="FadeMaskDragRectControl.AvaloniaUI.Tests" />
     <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI.Tests" />
     <InternalsVisibleTo Include="FadeMaskDragRectControl.Core.Tests" />

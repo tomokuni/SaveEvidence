@@ -2,7 +2,7 @@
 
 `FadeMaskDragRectControl.UIBase` は、領域選択の複合コントロール `FadeMaskDragRectControl`（Avalonia 版 / MewUI 版）が
 共有する**UI 非依存の処理**を提供します。 名前空間は `EsUtil.SaveEvidence.FadeMaskDragRect.UIBase`、アセンブリ名は
-`FadeMaskDragRectControl.UIBase` です。
+`EsUtil.SaveEvidence.FadeMaskDragRect.UIBase` です。
 
 ## 提供する外部機能
 

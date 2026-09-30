@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:marquee="clr-namespace:EsUtil.SaveEvidence.Marquee.AvaloniaUI;assembly=MarqueeControl.AvaloniaUI"
+        xmlns:marquee="clr-namespace:EsUtil.SaveEvidence.Marquee.AvaloniaUI;assembly=EsUtil.SaveEvidence.Marquee.AvaloniaUI"
         xmlns:sample="clr-namespace:EsUtil.SaveEvidence.Marquee.Sample.Presentation"
         xmlns:vm="clr-namespace:EsUtil.SaveEvidence.Marquee.Sample.ViewModels"
         x:Class="EsUtil.SaveEvidence.Marquee.Sample.Views.MainWindow"

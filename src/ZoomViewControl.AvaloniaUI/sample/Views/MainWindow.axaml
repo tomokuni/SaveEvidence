@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:zoom="clr-namespace:EsUtil.SaveEvidence.ZoomView.AvaloniaUI;assembly=ZoomViewControl.AvaloniaUI"
+        xmlns:zoom="clr-namespace:EsUtil.SaveEvidence.ZoomView.AvaloniaUI;assembly=EsUtil.SaveEvidence.ZoomView.AvaloniaUI"
         xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ZoomView.Sample.ViewModels"
         x:Class="EsUtil.SaveEvidence.ZoomView.Sample.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"

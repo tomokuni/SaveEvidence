@@ -1,9 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=app.Core"
+             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=EsUtil.SaveEvidence"
              xmlns:enum="using:EsUtil.SaveEvidence.Enum"
              xmlns:converters="clr-namespace:EsUtil.SaveEvidence.Converters"
-             xmlns:controls="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;assembly=ColorPickerControl.AvaloniaUI"
+             xmlns:controls="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;assembly=EsUtil.SaveEvidence.ColorPicker.AvaloniaUI"
              x:Class="EsUtil.SaveEvidence.Views.Pages.SettingsPage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>

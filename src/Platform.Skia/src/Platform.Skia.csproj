@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>EsUtil.Platform.Skia</RootNamespace>
+    <AssemblyName>EsUtil.Platform.Skia</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- SKCanvas / SKBitmap への直接アクセス（ピクセルポインタ）のため unsafe を許可する -->

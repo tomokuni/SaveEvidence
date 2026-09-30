@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:fdr="clr-namespace:EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;assembly=FadeMaskDragRectControl.AvaloniaUI"
+        xmlns:fdr="clr-namespace:EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;assembly=EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI"
         x:Class="EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions.OverlayWindow"
         Title="選択"
         WindowStartupLocation="Manual"

@@ -17,7 +17,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 複合コントロールの設定・モード解釈・選択矩形の可否・破線描画を 1 箇所へ集約し、両 UI の挙動が構造的に一致するようにする |
-| 提供形態 | クラスライブラリ（`FadeMaskDragRectControl.Core.dll`） |
+| 提供形態 | クラスライブラリ（`EsUtil.SaveEvidence.FadeMaskDragRect.dll`） |
 | 想定利用者 | UI 実装（`FadeMaskDragRectControl.AvaloniaUI` / `FadeMaskDragRectControl.MewUI`）、ホスト（`CaptureSessionControl.Core` の設定写像） |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |

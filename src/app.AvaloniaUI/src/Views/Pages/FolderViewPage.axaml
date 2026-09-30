@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=app.Core"
+             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=EsUtil.SaveEvidence"
              xmlns:controls="clr-namespace:EsUtil.SaveEvidence.Controls"
              xmlns:local="clr-namespace:EsUtil.SaveEvidence.Views.Pages"
              x:Class="EsUtil.SaveEvidence.Views.Pages.FolderViewPage"
