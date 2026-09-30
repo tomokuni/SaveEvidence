@@ -97,15 +97,14 @@ sequenceDiagram
 | 設定の数値項目の安全域への補正（生成時） | `LoupeOptions`（`init` アクセサ。 規則は `Loupe.Limits` が単一所有する） |
 | 設定の変更ログの差分検出（変化した項目だけを出力） | `LoupeLogMessage.LogOptionsChanged`（出力の契機は `Loupe.Options` の setter） |
 | 枠線の太さとラベル表示の可否（描画にだけ必要な設定） | 描画層の外観 |
-| 描画の色（ペーストボード・枠線・十字線・中心座標ラベルの 5 色）とその既定値 | 描画層の外観 |
-| 画像外（ペーストボード）の色とその既定値 | 描画層の外観 |
+| 描画の色（下地・枠線・十字線・中心座標ラベルの 5 色）とその既定値 | 描画層の外観 |
 | 数値パラメータ（スカラー）の安全域への補正 | `Loupe.Limits` |
 | 描画の可否（十字線・枠線・中心座標ラベルの表示可否） | 描画層の外観（明示フラグ。 透明色を代用にしない） |
 | ラベル表示の可否（設定と中心の有無） | 描画層の外観の述語 |
 | 切り出し領域の一辺（ドメインピクセル） | `LoupeGeometry.CaptureSize`（導出プロパティ。 切り上げの規則も本値が単一所有する） |
 | 切り出し領域の左上（中心 → 左上の変換） | `LoupeGeometry.CaptureTopLeft`（中心未設定は null。 描画完了通知のためにも使う） |
 | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） | `LoupeGeometry.MagnifiedImage`（切り出しの実行は描画実装） |
-| 描画先の全領域（ペーストボードを塗る矩形） | `LoupeGeometry.SurfaceBounds` |
+| 描画先の全領域（描画層が下地を塗る矩形） | `LoupeGeometry.SurfaceBounds` |
 | 表示サイズの親領域へのクランプと表示サイズの決定 | `Loupe.ResolveLayout`（規則は `Platform.Core` の `EsSize.ClampToArea`。 状態を保持しないため、親領域のサイズを引数で受ける） |
 | 表示位置（中心 + オフセットと親領域内へのクランプ） | `Loupe.ResolveLayout`（内部手順は `Loupe.Geometry.cs` の private static `ComputePosition`。 親サイズ未確定の判定は `EsSize.HasArea`） |
 | 描画の幾何（物理ピクセルサイズ）の組み立てと描画先へのクランプ | `Loupe.ResolveGeometry`（規則は `Platform.Core` の `DpiScaler.ScaleToPixel` と `EsSize.ClampToArea`） |

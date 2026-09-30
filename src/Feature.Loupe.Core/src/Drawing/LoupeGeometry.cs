@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 namespace EsUtil.Feature.Loupe.Core.Drawing;
 
 /// <summary>ルーペの描画 1 フレーム分の幾何（コアが責任を持つ値の全量）。</summary>
-/// <param name="Center">拡大中心（ドメイン座標）。 ファサードの <c>Loupe.CenterPoint</c>（UI が設定する状態）を 1 フレーム分の幾何へ写した値である。 未設定は null（拡大画像を描かず、中心座標ラベルも表示しない）。</param>
+/// <param name="Center">拡大中心（ドメイン座標）。 ファサードの <c>Loupe.CenterPoint</c>（UI が設定する状態）を 1 フレーム分の幾何へ写した値である。 未設定は null（切り出し領域と中心座標ラベルの基準を持たない）。</param>
 /// <param name="DisplaySize">ルーペの一辺の表示サイズ（DIP。 ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
 /// <param name="PixelSize">ルーペの一辺のサイズ（物理ピクセル。 切り上げ・最低 1。 描画先が指定された場合はクランプ済み）。</param>
 /// <param name="DipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数（環境値）。</param>
@@ -36,11 +36,13 @@ public readonly record struct LoupeGeometry(
 
     /// <summary>描画先の全領域（ルーペの一辺が作る正方形）を取得する。</summary>
     /// <value>左上を原点（0, 0）とし、幅・高さが <see cref="PixelSize"/> の矩形（物理ピクセル）。</value>
-    /// <remarks>描画先の原点は常に 0 である（描画層が矩形を組み立てると原点の取り違えが生じるため、本値が導出する）。</remarks>
+    /// <remarks>描画先の原点は常に 0 である（描画層が矩形を組み立てると原点の取り違えが生じるため、本値が導出する）。<br/>
+    /// 描画層は本矩形へ下地を塗る（本コアは塗りも色も持たない）。
+    /// </remarks>
     public EsRect SurfaceBounds => new(0, 0, PixelSize, PixelSize);
 
     /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）を取得する。</summary>
-    /// <value>切り出し領域の左上（ドメイン座標）。<see cref="Center"/> が未設定の場合は null（描画しない）。</value>
+    /// <value>切り出し領域の左上（ドメイン座標）。<see cref="Center"/> が未設定の場合は null（切り出し領域を持たない）。</value>
     /// <remarks>
     /// 中心の整数化（<c>(int)</c>）は切り出し（<c>EsBitmap.Crop</c>）と同じ丸めにする<br/>
     /// （切り出しの実行は描画層が、切り出し領域の通知は描画層が本値から組み立てる）。
@@ -50,7 +52,7 @@ public readonly record struct LoupeGeometry(
         : null;
 
     /// <summary>拡大画像の切り出しと描画の矩形を取得する。</summary>
-    /// <value>切り出しと描画の矩形。<see cref="Center"/> が未設定の場合は null（描画しない）。</value>
+    /// <value>切り出しと描画の矩形。<see cref="Center"/> が未設定の場合は null（切り出し領域を持たない）。</value>
     /// <remarks>
     /// 「切り出した領域を左上原点から <see cref="ZoomLevel"/> 倍の大きさで描く」規則を単一所有する。<br/>
     /// 切り出し元の画像は含めない（切り出しの実行は描画層が <c>EsBitmap.Crop</c> で行う）。<br/>

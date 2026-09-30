@@ -68,7 +68,7 @@ public class LoupeGeometryTests
     {
         var geometry = Resolve(100, 1.25);
 
-        // ペーストボード（画像外の色）は描画先の全面へ描くため、矩形は本値が単一所有する（UI 側で組み立てない）
+        // 描画層が下地を全面へ塗るための矩形である（UI 側で組み立てない）
         Assert.Equal(125, geometry.PixelSize);
         Assert.Equal(new EsRect(0, 0, 125, 125), geometry.SurfaceBounds);
     }
