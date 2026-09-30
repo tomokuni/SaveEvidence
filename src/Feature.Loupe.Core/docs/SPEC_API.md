@@ -3,6 +3,26 @@
 UI 非依存のコア（選択範囲を拡大表示するルーペの計算）が提供する公開 API のリファレンスです。  
 使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
+## 目次
+
+- [1. 前提条件](#1-前提条件)
+- [2. 公開 API](#2-公開-api)
+  - [2.1 `EsUtil.Feature.Loupe.Core`](#21-esutilfeatureloupecore)
+  - [2.2 `EsUtil.Feature.Loupe.Core.Drawing`](#22-esutilfeatureloupecoredrawing)
+  - [2.3 `EsUtil.Feature.Loupe.Core.Setting`](#23-esutilfeatureloupecoresetting)
+  - [2.4 `EsUtil.Feature.Loupe.Core.Placement`](#24-esutilfeatureloupecoreplacement)
+  - [2.5 `Loupe`（ファサード）のメンバー](#25-loupeファサードのメンバー)
+  - [2.6 `LoupeOptions` のメンバー](#26-loupeoptions-のメンバー)
+  - [2.7 `Loupe.Limits` のメンバー](#27-loupelimits-のメンバー)
+  - [2.8 描画の契約（本コアには置かない）](#28-描画の契約本コアには置かない)
+- [3. 契約（利用者が守る・受け取る値）](#3-契約利用者が守る受け取る値)
+  - [3.1 描画の幾何（`LoupeGeometry`）](#31-描画の幾何loupegeometry)
+  - [3.2 切り出し領域の導出（`LoupeGeometry` のメンバー）](#32-切り出し領域の導出loupegeometry-のメンバー)
+  - [3.3 表示可否・装飾・文言（描画層が単一所有）](#33-表示可否装飾文言描画層が単一所有)
+- [4. 使用例](#4-使用例)
+- [5. 座標系](#5-座標系)
+- [6. 制限事項](#6-制限事項)
+
 ## 1. 前提条件
 
 - 本コアは UI フレームワークに依存しません（依存は `Platform.Core` と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成）のみ）。 UI 固有の型は利用者（UI 実装）が境界で変換します。
@@ -17,33 +37,33 @@ UI 非依存のコア（選択範囲を拡大表示するルーペの計算）�
 可視性は public のみを記載します（`internal` は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照）。  
 型名の接頭辞は名前空間を表します（`Drawing.` / `Setting.` / `Placement.` を省略した型はルート名前空間）。
 
-### `EsUtil.Feature.Loupe.Core`
+### 2.1 `EsUtil.Feature.Loupe.Core`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `Loupe` | class | 操作の唯一の窓口となるファサード |
 | `Loupe.Limits`（`Loupe` の入れ子） | static class | 数値パラメータの既定値・安全域と補正 |
 
-### `EsUtil.Feature.Loupe.Core.Drawing`
+### 2.2 `EsUtil.Feature.Loupe.Core.Drawing`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeGeometry` | record struct | 1 フレーム分の描画の幾何（コア⇔UI の契約）。</br>UI 層は値の組を自分で組み立てず、`Loupe.ResolveGeometry` が返した値を受け取る |
 | `LoupeMagnifiedImage` | record struct | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。</br>`LoupeGeometry` の導出値 |
 
-### `EsUtil.Feature.Loupe.Core.Setting`
+### 2.3 `EsUtil.Feature.Loupe.Core.Setting`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeOptions` | record | 計算に必要な設定（表示サイズ・拡大率）と既定値・補正。</br>**色・フォント・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
 
-### `EsUtil.Feature.Loupe.Core.Placement`
+### 2.4 `EsUtil.Feature.Loupe.Core.Placement`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeLayout` | readonly record struct | 表示レイアウトの値（表示サイズ（DIP）と表示位置。</br>配置しない場合は位置が null） |
 
-### `Loupe`（ファサード）のメンバー
+### 2.5 `Loupe`（ファサード）のメンバー
 
 ルーペの**操作の唯一の窓口**（適用パターン: Facade）。  
 UI 層とホストは本型だけを参照し、配置計算・幾何の計算は internal のため外部からは直接呼べません。
@@ -80,7 +100,7 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 
 `ResolveGeometry` へは `ResolveLayout(parentSize).DisplaySize`（= 要求サイズ）を渡します。 表示サイズを縮小しないためどちらを渡しても同じ値になりますが、実際に描く要素の大きさをそのまま渡す形に統一します。
 
-### `LoupeOptions` のメンバー
+### 2.6 `LoupeOptions` のメンバー
 
 計算に必要な設定（表示サイズ・拡大率）を 1 つの値として所有します。 両 UI は本型を 1 プロパティとして公開するだけであり、UI ごとに既定値がずれたり設定プロパティが増えたりしません。
 
@@ -101,7 +121,7 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 
 **含めない値**: 拡大元画像・拡大中心（マウス移動ごとに変わるデータ）、DPI スケーリング係数（環境値）、表示位置のオフセット（UI 固有のホスト結線）。 これらは UI の個別プロパティとして公開します。
 
-### `Loupe.Limits` のメンバー
+### 2.7 `Loupe.Limits` のメンバー
 
 ルーペの数値パラメータの既定値と安全域を単一所有し、範囲外の値を補正します（非有限は既定値）。 **枠線の太さの安全域は描画層の外観が参照します**。
 
@@ -119,7 +139,7 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 | `CoerceBorderThickness(int)` | 枠線の太さを 1〜64 へ補正（描画層の外観が呼ぶ） |
 | `CoerceDipToDeviceScaling(double)` | スケーリング係数を 0.1〜8.0 へ補正。 非有限値は `DipToDeviceScalingDefault` |
 
-### 描画の契約（本コアには置かない）
+### 2.8 描画の契約（本コアには置かない）
 
 描画の契約は本コアにありません（**本コアは描画 API も描画の抽象も持ちません**）。 描画計画の解決は描画層（本コアを参照する上位の層）が、描画は各 UI の描画実装が担います。 層の順序は描画層が単一所有し、UI はその順に写すだけです。
 
@@ -137,7 +157,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 
 ## 3. 契約（利用者が守る・受け取る値）
 
-### 描画の幾何（`LoupeGeometry`）
+### 3.1 描画の幾何（`LoupeGeometry`）
 
 1 フレーム分の描画の幾何（**コア⇔UI の契約**）です。 **UI 層は本値を自分で組み立てません**（設定・環境値から描画に必要な形へ写す組み立て順は `Loupe.ResolveGeometry` が単一所有します）。 UI 層は本値を描画層（上位の層）へ渡すだけで、描画に必要な値の単位と換算（DIP → 物理ピクセル）を持ちません。
 
@@ -161,7 +181,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 
 拡大元画像は UI ごとに型が異なるため本値に含めず、描画実装が解決した `EsBitmap` を別引数として渡します（複数の UI が同じ手順で本値を受け取ります）。
 
-### 切り出し領域の導出（`LoupeGeometry` のメンバー）
+### 3.2 切り出し領域の導出（`LoupeGeometry` のメンバー）
 
 描画の幾何から切り出し領域を導出します（`LoupeGeometry` の値だけから決まるため、独立したクラスを持ちません）。
 
@@ -173,7 +193,7 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 
 **切り出しの実行はありません**: 切り出しは描画実装（各 UI の painter）が `EsBitmap.Crop` を呼んで行います。 本メンバーは「どこを切り出すか」を解決する値だけを持ちます。
 
-### 表示可否・装飾・文言（描画層が単一所有）
+### 3.3 表示可否・装飾・文言（描画層が単一所有）
 
 以下はコアには含みません（描画にだけ必要な設定のため、描画層（本コアを参照する上位の層）が単一所有します）。 「所有者」は 1 つの層（描画層）であり、**外観はその層が持つ設定値**、**描画計画はその層が解決する描画の指示**を指します。
 

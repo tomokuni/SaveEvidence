@@ -101,6 +101,18 @@ public sealed record LoupeAppearance
     /// <summary>中心座標ラベルの角丸半径の既定値（DIP）。</summary>
     public const int CoordLabelCornerRadiusDefault = 2;
 
+    /// <summary>中心座標ラベルをルーペの縁から離すオフセット（DIP）を取得する。</summary>
+    /// <value>ルーペの左上からラベルの基準点までの距離（DIP）。 既定は 2.0。</value>
+    /// <remarks>
+    /// ラベルがルーペの縁と重ならないための余白である（ラベルは左上起点で置くため、左右・上下とも同じ値を使う）。<br/>
+    /// 体裁（描画にだけ必要なレイアウト値）のためコアには置かず、本型が単一所有する。
+    /// </remarks>
+    public double CoordLabelOffset { get; init; } = CoordLabelOffsetDefault;
+
+    /// <summary>中心座標ラベルのオフセットの既定値（DIP）。</summary>
+    /// <value>既定のオフセット（DIP）。</value>
+    public const double CoordLabelOffsetDefault = 2.0;
+
     // ----------------------------------------------------------------
     // 表示可否と寸法（描画にだけ必要。 コアの計算・判断には入らない）
     // ----------------------------------------------------------------

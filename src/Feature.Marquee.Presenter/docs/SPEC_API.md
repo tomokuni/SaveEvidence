@@ -2,6 +2,23 @@
 
 マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する公開 API のリファレンスです。 使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
+## 目次
+
+- [1. 前提条件](#1-前提条件)
+- [2. 公開 API](#2-公開-api)
+  - [2.1 `EsUtil.Feature.Marquee.Presenter`（提示・外観）](#21-esutilfeaturemarqueepresenter提示外観)
+  - [2.2 `MarqueePresenter` のメンバー](#22-marqueepresenter-のメンバー)
+  - [2.3 `MarqueeDrawPlan` のメンバー](#23-marqueedrawplan-のメンバー)
+  - [2.4 `MarqueeAppearance` のメンバー（外観の単一値）](#24-marqueeappearance-のメンバー外観の単一値)
+  - [2.5 ラベル配置の解決（`internal`。 本リファレンスには載せない）](#25-ラベル配置の解決internal-本リファレンスには載せない)
+  - [2.6 `MarqueePresenterLogMessage`（`internal`。 本リファレンスには載せない）](#26-marqueepresenterlogmessageinternal-本リファレンスには載せない)
+- [3. 契約（利用者が守る・受け取る値）](#3-契約利用者が守る受け取る値)
+  - [3.1 描画の呼び分け](#31-描画の呼び分け)
+  - [3.2 ラベル要素（`MarqueeLabelPlacement`）](#32-ラベル要素marqueelabelplacement)
+  - [3.3 付加情報ラベルの体裁](#33-付加情報ラベルの体裁)
+- [4. 使用例](#4-使用例)
+- [5. 制限事項](#5-制限事項)
+
 ## 1. 前提条件
 
 - **描画は本層が行いません**。 本層は描画計画というデータを返し、描画は各 UI の描画実装が自 UI の API で行います（UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、抽象を持ちません）。
@@ -13,7 +30,7 @@
 
 ## 2. 公開 API
 
-### `EsUtil.Feature.Marquee.Presenter`（提示・外観）
+### 2.1 `EsUtil.Feature.Marquee.Presenter`（提示・外観）
 
 ルート直下（`EsUtil.Feature.Marquee.Presenter`）に置くのはファサード（`MarqueePresenter`）だけです。 以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
 
@@ -28,7 +45,7 @@
 
 **`MarqueePresenter` は複数のファイルに分かれた `public partial class` です**（`MarqueePresenter.cs` = ファサード本体、`DrawPlan` = 装飾矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。 partial のメンバー（`ResolveLabelPlacements` など）と `Logging.MarqueePresenterLogMessage` は `internal`（本層とテストのみが使う）であり、本リファレンスには載せません（内部手順は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照してください）。
 
-### `MarqueePresenter` のメンバー
+### 2.2 `MarqueePresenter` のメンバー
 
 | メンバー | 説明 |
 | --- | --- |
@@ -47,7 +64,7 @@
 | `Press(EsPoint, int)` / `Move(EsPoint)` / `Release(EsPoint)` / `KeyDown(EsKey, EsPoint?)` / `EndNudge()` | 入力の転送（コアへ委譲） |
 | `SetSelection(EsRect)` / `ResetSelection()` / `RequestConfirm()` / `RequestCancel()` | 外部操作の転送（コアへ委譲） |
 
-### `MarqueeDrawPlan` のメンバー
+### 2.3 `MarqueeDrawPlan` のメンバー
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
@@ -66,7 +83,7 @@
 | `HasText` | `bool` | ラベルを持つ場合は true（`Labels.Count > 0` と同値） |
 | `HasDecoration` | `bool` | 装飾（暗転領域・外枠・内側の塗り・内枠）のいずれかを持つ場合は true |
 
-### `MarqueeAppearance` のメンバー（外観の単一値）
+### 2.4 `MarqueeAppearance` のメンバー（外観の単一値）
 
 | 分類 | メンバー | 型 | 既定値 |
 | --- | --- | --- | --- |
@@ -100,11 +117,11 @@
 | `ShouldShowCoordLabel()` | 表示の設定が有効（基準点はカーソル位置であり、位置はコアの幾何が常に持つ） |
 | `ShouldDrawOverlay(bool hasFocusRect)` | 注目矩形がある、または全面暗転（`ShowFullOverlay`）が有効 |
 
-### ラベル配置の解決（`internal`。 本リファレンスには載せない）
+### 2.5 ラベル配置の解決（`internal`。 本リファレンスには載せない）
 
 実寸 → ラベル要素の配置指示の写像（`ResolveLabelPlacements`）は本層の内部手順です（入出力の型（`MarqueeTextPlacement` / `MarqueeLabelPlacement`）は公開しています）。
 
-### `MarqueePresenterLogMessage`（`internal`。 本リファレンスには載せない）
+### 2.6 `MarqueePresenterLogMessage`（`internal`。 本リファレンスには載せない）
 
 本層が出力するログの定義（生成・ロガー設定・本層が単一所有する設定の変更・コアへの転送）です。 **外部公開しない**（呼び出すのは値を所有する本層だけで、ホストはロガーを設定するだけです）。 出力の方針は [`SPEC_System.md`](SPEC_System.md) の「ログ」を参照してください。
 
@@ -114,7 +131,7 @@
 
 ## 3. 契約（利用者が守る・受け取る値）
 
-### 描画の呼び分け
+### 3.1 描画の呼び分け
 
 | 描く対象 | 呼ぶ API |
 | --- | --- |
@@ -122,7 +139,7 @@
 | テキスト（サイズ・カーソル座標） | `MarqueeDrawPlan.Labels`（`MarqueeLabelPlacement`。 実寸を反映済み）を要素へ写す、または自 UI の描画 API で文字として描く |
 | 付加情報ラベル（操作・情報）の配置 | コントロール固有の付加情報であるため本層は関知しない（組み込み先のホストが文言と基準点を決める） |
 
-### ラベル要素（`MarqueeLabelPlacement`）
+### 3.2 ラベル要素（`MarqueeLabelPlacement`）
 
 | 項目 | 内容 |
 | --- | --- |
@@ -131,7 +148,7 @@
 | `Text` / `FontSize` / `TextColor` / `BackgroundColor` | 文言・フォントサイズ・色は外観（`MarqueeAppearance`）と本層（文言の生成）が与える（UI は判断しない） |
 | 角丸 | 持たない（選択矩形のラベルは矩形である） |
 
-### 付加情報ラベルの体裁
+### 3.3 付加情報ラベルの体裁
 
 - 背景は基準点（`anchor`）を左上とし、文字の実寸へ内側余白（`padding`）を四方へ加えた大きさになります。
 - 文字は同じ余白だけ内側へ入ります（**背景の四方の余白が等しい**）。

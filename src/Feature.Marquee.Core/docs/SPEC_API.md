@@ -2,6 +2,27 @@
 
 マーキー選択（ドラッグで矩形を選び、移動・リサイズできる操作）の **UI 非依存の計算層**が提供する公開 API のリファレンスです。 使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
+## 目次
+
+- [1. 前提条件](#1-前提条件)
+- [2. 公開 API](#2-公開-api)
+  - [2.1 `EsUtil.Feature.Marquee.Core`](#21-esutilfeaturemarqueecore)
+  - [2.2 `EsUtil.Feature.Marquee.Core.Contract`](#22-esutilfeaturemarqueecorecontract)
+  - [2.3 `EsUtil.Feature.Marquee.Core.Drawing`](#23-esutilfeaturemarqueecoredrawing)
+  - [2.4 `EsUtil.Feature.Marquee.Core.Interaction`](#24-esutilfeaturemarqueecoreinteraction)
+  - [2.5 `EsUtil.Feature.Marquee.Core.Setting`](#25-esutilfeaturemarqueecoresetting)
+  - [2.6 `Marquee`（ファサード）のメンバー](#26-marqueeファサードのメンバー)
+  - [2.7 `MarqueeOptions` のメンバー](#27-marqueeoptions-のメンバー)
+  - [2.8 `Marquee.Limits` のメンバー](#28-marqueelimits-のメンバー)
+  - [2.9 `IMarqueeEffects` のメンバー](#29-imarqueeeffects-のメンバー)
+  - [2.10 `MarqueeNoticeKind` の値](#210-marqueenoticekind-の値)
+- [3. 契約（利用者が守る・受け取る値）](#3-契約利用者が守る受け取る値)
+  - [3.1 幾何（`MarqueeGeometry`）](#31-幾何marqueegeometry)
+  - [3.2 操作の受理条件](#32-操作の受理条件)
+- [4. 使用例](#4-使用例)
+- [5. 座標系](#5-座標系)
+- [6. 制限事項](#6-制限事項)
+
 ## 1. 前提条件
 
 - 本コアは UI フレームワークに依存しません。 UI 固有の型は利用者（UI 実装）が境界で変換します。
@@ -14,20 +35,20 @@
 
 可視性は public のみを記載します（`internal` は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照）。 型名の接頭辞は名前空間を表します（`Contract.` / `Drawing.` / `Interaction.` / `Setting.` を省略した型はルート名前空間）。
 
-### `EsUtil.Feature.Marquee.Core`
+### 2.1 `EsUtil.Feature.Marquee.Core`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `Marquee` | class | 操作の唯一の窓口となるファサード |
 
-### `EsUtil.Feature.Marquee.Core.Contract`
+### 2.2 `EsUtil.Feature.Marquee.Core.Contract`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `IMarqueeEffects` | interface | コアが要求する効果の適用先（UI 実装が実装する） |
 | `MarqueeEffectsBase` | abstract class | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス（必要な効果だけ override する） |
 
-### `EsUtil.Feature.Marquee.Core.Drawing`
+### 2.3 `EsUtil.Feature.Marquee.Core.Drawing`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -35,7 +56,7 @@
 | `MarqueeRenderRequest` | record struct | 1 フレーム分の幾何を解決する入力（設定・状態と、描画時に決まる値）。 `Marquee.CreateRequest` が生成し、`Marquee.ResolveGeometry` へ渡す。 値の組は `MarqueeRenderRequest.Create` が 1 箇所に閉じる。 **`Create` を public にする理由**: ファサード（`Marquee.CreateRequest`）と独自 UI が入力を組み立てる唯一の入口である（描画先の領域を知るのは呼び出し側だけである） |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの幾何（位置と寸法はコアが解決済み。 **色と線の太さは描画層の外観が持つ**） |
 
-### `EsUtil.Feature.Marquee.Core.Interaction`
+### 2.4 `EsUtil.Feature.Marquee.Core.Interaction`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -45,13 +66,13 @@
 | `MarqueeCursorKind` | enum | カーソル形状の種別（`Default` / `DiagonalNWSE` / `DiagonalNESW` / `Vertical` / `Horizontal` / `Move`） |
 | `MarqueeInteractionState` | enum | 対話状態（`NoSelection` / `StartPointNudging` / `Dragging` / `DraggingNudging` / `Selected` / `SelectedNudging`） |
 
-### `EsUtil.Feature.Marquee.Core.Setting`
+### 2.5 `EsUtil.Feature.Marquee.Core.Setting`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `MarqueeOptions` | record | 設定（**計算に必要な値のみ**＝寸法・対話パラメータ）と既定値・補正。 **色・フォントサイズ・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
 
-### `Marquee`（ファサード）のメンバー
+### 2.6 `Marquee`（ファサード）のメンバー
 
 | メンバー | 種別 | 説明 |
 | --- | --- | --- |
@@ -75,7 +96,7 @@
 
 **設定では変更しない固定値はありません**（すべて `MarqueeOptions` の設定として公開します）。 ハンドルの一辺サイズと枠線の太さ・十字マーカーの長さは `MarqueeOptions` が持ち、**十字マーカーの線の太さは体裁（描画にだけ必要な設定）のため描画層の外観が持ちます**。 UI 層は解決済みの値（`MarqueeHandles.BorderThickness` 等）や描画層が返す配置指示を受け取って使います。
 
-### `MarqueeOptions` のメンバー
+### 2.7 `MarqueeOptions` のメンバー
 
 | 分類 | メンバー | 既定値 | 安全域（生成時に補正） |
 | --- | --- | --- | --- |
@@ -92,7 +113,7 @@
 
 **本型は色もラベルのフォントサイズも持ちません**。 これらは描画にだけ必要な設定であるため、描画層の外観が単一所有します（部分変更の基点は外観の `Default`。 ハンドル枠と外枠の既定は外観が単一所有する共通の既定枠線色 = `#FFA9A9A9`、フォントサイズはサイズラベル 14.0 / カーソル座標ラベル 12.0、枠線の太さは外枠 / 内枠（既定 2.0）、内側余白は `LabelPadding`（既定 4.0））。 ラベルの文字色・背景色の既定値（白 / 黒 60%）も外観が単一所有するため、サイズラベル・カーソル座標ラベル・ルーペが同じ見た目になります。
 
-### `Marquee.Limits` のメンバー
+### 2.8 `Marquee.Limits` のメンバー
 
 選択矩形の数値パラメータの既定値と安全域を単一所有し、範囲外の値を補正します（非有限は既定値）。 **数値スキーマに加えて「未設定（0 以下）の解決規則」も持ちます**（`ResolveDisplayScale`）。
 
@@ -114,7 +135,7 @@
 | `CoerceDomainToDipScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
 | `ResolveDisplayScale(double, double)` | 表示スケールの解決（**public**。 未設定（0 以下）は倍率を使う。 描画層のサイズラベル書式が使う） |
 
-### `IMarqueeEffects` のメンバー
+### 2.9 `IMarqueeEffects` のメンバー
 
 | メンバー | 説明 |
 | --- | --- |
@@ -126,7 +147,7 @@
 
 `MarqueeEffectsBase` はこれらの全メンバーを virtual の空実装として提供する `abstract class` です。 独自の UI アダプタは本クラスを継承し、必要な効果（例: `RequestRedraw`）だけを override します（不要なメンバーの空実装を書かなくて済む）。
 
-### `MarqueeNoticeKind` の値
+### 2.10 `MarqueeNoticeKind` の値
 
 | 値 | 発生条件 |
 | --- | --- |
@@ -140,7 +161,7 @@
 
 ## 3. 契約（利用者が守る・受け取る値）
 
-### 幾何（`MarqueeGeometry`）
+### 3.1 幾何（`MarqueeGeometry`）
 
 | 項目 | 内容 |
 | --- | --- |
@@ -153,7 +174,7 @@
 
 **幾何は「描く値の無い項目は null / 空」で返します**（注目矩形なし・選択なし・nudge 中でない）。 **表示可否（ハンドル・ラベルを描くかどうか）は本コアの責務ではありません**（描画層の外観が単一所有します）。
 
-### 操作の受理条件
+### 3.2 操作の受理条件
 
 | 操作 | 受理条件 |
 | --- | --- |

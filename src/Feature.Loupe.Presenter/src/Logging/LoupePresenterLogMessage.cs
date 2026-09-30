@@ -167,6 +167,7 @@ internal static partial class LoupePresenterLogMessage
         logger.LogSettingChanged(nameof(LoupeAppearance.CoordLabelFontSize), oldValue.CoordLabelFontSize, newValue.CoordLabelFontSize);
         logger.LogSettingChanged(
             nameof(LoupeAppearance.CoordLabelCornerRadius), oldValue.CoordLabelCornerRadius, newValue.CoordLabelCornerRadius);
+        logger.LogSettingChanged(nameof(LoupeAppearance.CoordLabelOffset), oldValue.CoordLabelOffset, newValue.CoordLabelOffset);
         logger.LogSettingChanged(nameof(LoupeAppearance.ShowCrosshair), oldValue.ShowCrosshair, newValue.ShowCrosshair);
         logger.LogSettingChanged(nameof(LoupeAppearance.ShowBorder), oldValue.ShowBorder, newValue.ShowBorder);
         logger.LogSettingChanged(nameof(LoupeAppearance.BorderThickness), oldValue.BorderThickness, newValue.BorderThickness);

@@ -2,6 +2,25 @@
 
 ルーペ（拡大鍵）の見た目を定める **コントロール化を前提としない UI 非依存層**が提供する公開 API のリファレンスです。 使い方（概要・クイックスタート・カスタマイズ）は [`../README.md`](../README.md)、アーキテクチャと設計判断は [`SPEC_System.md`](SPEC_System.md) を参照してください。
 
+## 目次
+
+- [1. 前提条件](#1-前提条件)
+- [2. 公開 API](#2-公開-api)
+  - [2.1 `EsUtil.Feature.Loupe.Presenter`（提示・外観）](#21-esutilfeatureloupepresenter提示外観)
+  - [2.2 `LoupePresenter` のメンバー](#22-loupepresenter-のメンバー)
+  - [2.3 `LoupeAppearance` のメンバー](#23-loupeappearance-のメンバー)
+  - [2.4 `LoupeDrawPlan` のメンバー](#24-loupedrawplan-のメンバー)
+  - [2.5 `LoupeDrawLayer` の値](#25-loupedrawlayer-の値)
+  - [2.6 ラベル配置の解決（`internal`。 本リファレンスには載せない）](#26-ラベル配置の解決internal-本リファレンスには載せない)
+  - [2.7 `LoupePresenterLogMessage`（`internal`。 本リファレンスには載せない）](#27-loupepresenterlogmessageinternal-本リファレンスには載せない)
+- [3. 契約（利用者が守る・受け取る値）](#3-契約利用者が守る受け取る値)
+  - [3.1 描画計画（`LoupeDrawPlan`）](#31-描画計画loupedrawplan)
+  - [3.2 ラベル（本層の配置指示 → `LoupeLabelPlacement`）](#32-ラベル本層の配置指示--loupelabelplacement)
+  - [3.3 描画の順序](#33-描画の順序)
+- [4. 使用例](#4-使用例)
+- [5. 座標系](#5-座標系)
+- [6. 制限事項](#6-制限事項)
+
 ## 1. 前提条件
 
 - 本層は UI フレームワークに依存しません（依存は `Feature.Loupe.Core` と `Platform.Core` のみ）。 **描画 API の抽象も持ちません**（描画計画というデータを返し、描画は各 UI が自 UI の API で行います）。
@@ -12,7 +31,7 @@
 
 ## 2. 公開 API
 
-### `EsUtil.Feature.Loupe.Presenter`（提示・外観）
+### 2.1 `EsUtil.Feature.Loupe.Presenter`（提示・外観）
 
 ルート直下（`EsUtil.Feature.Loupe.Presenter`）に置くのはファサード（`LoupePresenter`）だけです。 以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
 
@@ -30,7 +49,7 @@
 
 `LoupePresenter` の partial（`DrawPlan` = 十字線・枠線の矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）のメンバーと `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）であり、本リファレンスには載せません（内部手順は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照してください）。
 
-### `LoupePresenter` のメンバー
+### 2.2 `LoupePresenter` のメンバー
 
 ルーペの**提示の窓口**（適用パターン: Facade / Presenter）。 UI 層は本型だけを参照します。
 
@@ -47,7 +66,7 @@
 
 **ログの出力方針**: 生成（コンストラクター注入時、または `Log` の初回設定時に 1 度だけ。 Information）・本層を通過した値（Trace）・本層が単一所有する外観の変更（Debug）を出力します。 値の保持と変更の記録はコアが行うため、本層は「通過したこと」を Trace で残します（ホストの設定が本層を通ったかを確認できます。 詳細は [`SPEC_System.md`](SPEC_System.md) の「ログ」を参照）。
 
-### `LoupeAppearance` のメンバー
+### 2.3 `LoupeAppearance` のメンバー
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -55,6 +74,7 @@
 | `BorderColor` / `CrossColor` | `Color` | `#FFD3D3D3` / `#66FF0000` | 枠線 / 十字線の色 |
 | `CoordLabelColor` / `CoordLabelBackgroundColor` | `Color` | 白 / `#99000000` | 中心座標ラベルの文字色 / 背景色 |
 | `CoordLabelFontSize` / `CoordLabelCornerRadius` | `double` / `int` | `12.0` / `2` | 中心座標ラベルのフォントサイズ / 角丸（6〜48 / 0〜64 へ補正） |
+| `CoordLabelOffset` | `double` | `2.0` | 中心座標ラベルをルーペの縁から離すオフセット（DIP。 左右・上下に同じ値を使う） |
 | `BorderThickness` | `int` | `2` | 枠線の太さ（DIP。 1〜64 へ補正。 安全域は `Loupe.Limits` が単一所有する） |
 | `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` | `bool` | `true` | 表示可否（描画にだけ必要。 透明色を代用にしない） |
 
@@ -63,7 +83,7 @@
 | `Default` | すべての項目を既定値にした外観 |
 | `ShouldShowCoordLabel(bool hasCenterPoint)` | 中心座標ラベルを描画するかを判定（`ShowCoordLabel` かつ拡大中心あり） |
 
-### `LoupeDrawPlan` のメンバー
+### 2.4 `LoupeDrawPlan` のメンバー
 
 | メンバー | 説明 |
 | --- | --- |
@@ -75,7 +95,7 @@
 | `Labels` | ラベルの配置指示（`LoupeLabelPlacement` の一覧。 空は表示なし） |
 | `CaptureTopLeft` / `ZoomLevel` / `PixelSize` | 描画完了通知（`Rendered`）の組み立てに使う値 |
 
-### `LoupeDrawLayer` の値
+### 2.5 `LoupeDrawLayer` の値
 
 | 値 | 内容 |
 | --- | --- |
@@ -84,11 +104,11 @@
 | `Crosshair` / `Border` | 十字線 / 枠線（表示可否が有効な場合のみ） |
 | `Label` | 中心座標ラベル（ラベルがある場合のみ。 常に最上位） |
 
-### ラベル配置の解決（`internal`。 本リファレンスには載せない）
+### 2.6 ラベル配置の解決（`internal`。 本リファレンスには載せない）
 
 実寸 → ラベル要素の配置指示の写像は本層の内部手順です（入出力の型（`LoupeTextPlacement` / `LoupeLabelPlacement`）は公開しています）。
 
-### `LoupePresenterLogMessage`（`internal`。 本リファレンスには載せない）
+### 2.7 `LoupePresenterLogMessage`（`internal`。 本リファレンスには載せない）
 
 本層が出力するログの定義（生成・通過の記録・外観の変更）です。 **外部公開しない**（呼び出すのは値を所有する本層だけで、ホストはロガーを設定するだけです）。 出力の方針は [`SPEC_System.md`](SPEC_System.md) の「ログ」を参照してください。
 
@@ -96,16 +116,16 @@
 
 ## 3. 契約（利用者が守る・受け取る値）
 
-### 描画計画（`LoupeDrawPlan`）
+### 3.1 描画計画（`LoupeDrawPlan`）
 
 描画計画は**UI が見る唯一の描画値**です。 UI は `Layers` の順に自 UI の描画 API を呼び、`Labels` を要素として置くか文字として描くかを決めます。 **描く値はすべて解決済み**であり、UI は幾何計算（矩形の導出・寸法の換算）を行いません。
 
-### ラベル（本層の配置指示 → `LoupeLabelPlacement`）
+### 3.2 ラベル（本層の配置指示 → `LoupeLabelPlacement`）
 
 - `Labels` の各要素は**配置矩形・内側余白・文言・フォントサイズ・色・角丸**を持ちます（背景の大きさは「実寸 + 内側余白 × 2」。 領域クランプは本層が済ませています）。
 - **要素として置くか canvas へ描くかは UI 層が決めます**（要素は親より後に描かれるため常に最上位になる）。
 
-### 描画の順序
+### 3.3 描画の順序
 
 `LoupeDrawLayer` の順序（`Pasteboard` → `Image` → `Crosshair` → `Border` → `Label`）は `LoupeDrawPlan.Layers` が単一所有します。 UI は順序を判断しません。
 

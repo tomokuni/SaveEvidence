@@ -38,10 +38,20 @@ public class LoupeAppearanceTests
         Assert.Equal(EsUtil.Feature.Loupe.Core.Loupe.Limits.BorderThicknessDefault, paint.BorderThickness);
     }
 
+    /// <summary>中心座標ラベルの体裁の既定を検証する。</summary>
+    [Fact]
+    public void 既定のラベル体裁が期待どおりである()
+    {
+        var paint = new LoupeAppearance();
+
+        Assert.Equal(LoupeAppearance.CoordLabelFontSizeDefault, paint.CoordLabelFontSize);
+        Assert.Equal(LoupeAppearance.CoordLabelCornerRadiusDefault, paint.CoordLabelCornerRadius);
+        Assert.Equal(LoupeAppearance.CoordLabelOffsetDefault, paint.CoordLabelOffset);
+    }
+
     /// <summary>枠線の太さが生成時に安全域へ補正されることを検証する。</summary>
     [Fact]
-    public void 枠線の太さが生成時に安全域へ補正される()
-    {
+    public void 枠線の太さが生成時に安全域へ補正される()    {
         var paint = new LoupeAppearance { BorderThickness = 1000 };
 
         Assert.Equal(EsUtil.Feature.Loupe.Core.Loupe.Limits.BorderThicknessMax, paint.BorderThickness);

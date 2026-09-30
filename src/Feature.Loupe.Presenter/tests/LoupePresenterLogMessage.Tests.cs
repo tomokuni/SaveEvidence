@@ -77,6 +77,33 @@ public class LoupePresenterLogMessageTests
     }
 
     [Fact]
+    public void LogAppearanceChanged_外観の全項目を対象にする()
+    {
+        var logger = new RecordingLogger();
+
+        // 全項目を変更した場合、定義した項目数ぶんのログが出る（項目の追加漏れを検出する）
+        var after = LoupeAppearance.Default with
+        {
+            PasteboardColor = DrawingColor.FromArgb(1, 0, 0, 0),
+            BorderColor = DrawingColor.FromArgb(2, 0, 0, 0),
+            CrossColor = DrawingColor.FromArgb(3, 0, 0, 0),
+            CoordLabelColor = DrawingColor.FromArgb(4, 0, 0, 0),
+            CoordLabelBackgroundColor = DrawingColor.FromArgb(5, 0, 0, 0),
+            CoordLabelFontSize = 13.0,
+            CoordLabelCornerRadius = 3,
+            CoordLabelOffset = 4.0,
+            ShowCrosshair = false,
+            ShowBorder = false,
+            BorderThickness = 5,
+            ShowCoordLabel = false,
+        };
+
+        logger.LogAppearanceChanged(LoupeAppearance.Default, after);
+
+        Assert.Equal(12, logger.Messages.Count);
+    }
+
+    [Fact]
     public void LogAppearanceChanged_実数項目をカルチャに依存せず記録する()
     {
         var logger = new RecordingLogger();

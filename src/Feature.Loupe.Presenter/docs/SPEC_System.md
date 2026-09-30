@@ -2,6 +2,20 @@
 
 ルーペ（拡大鍵）の見た目を定める **コントロール化を前提としない UI 非依存層**の構造・依存・例外処理・設計判断を記載します。 公開 API は [`SPEC_API.md`](SPEC_API.md)、使い方は [`../README.md`](../README.md) を参照してください。
 
+## 目次
+
+- [1. システム概要](#1-システム概要)
+- [2. 技術スタック](#2-技術スタック)
+- [3. アーキテクチャ](#3-アーキテクチャ)
+  - [3.1 依存方向](#31-依存方向)
+  - [3.2 データフロー（描画計画 → 描画）](#32-データフロー描画計画--描画)
+- [4. コンポーネント構成](#4-コンポーネント構成)
+- [5. 例外処理ポリシー](#5-例外処理ポリシー)
+- [6. 可視性ポリシー](#6-可視性ポリシー)
+- [7. テスト方針](#7-テスト方針)
+- [8. 設計判断（UI 非依存の境界と描画 API の抽象を持たない理由）](#8-設計判断ui-非依存の境界と描画-api-の抽象を持たない理由)
+- [9. ログ](#9-ログ)
+
 ## 1. システム概要
 
 | 項目 | 内容 |
@@ -62,7 +76,7 @@ sequenceDiagram
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
 | `src/LoupePresenter.cs` | `LoupePresenter` | public | 提示のファサード。 コアのラップ、外観の保持、描画計画（`ResolveDrawPlan`）と表示レイアウト（`ResolveLayout`）の解決、層の組合せ表の単一所有 |
-| `src/Setting/LoupeAppearance.cs` | `LoupeAppearance` | public | 外観（色・フォント・角丸・枠線の太さ・表示可否）の単一所有と補正 |
+| `src/Setting/LoupeAppearance.cs` | `LoupeAppearance` | public | 外観（色・フォント・角丸・枠線の太さ・ラベルのオフセット・表示可否）の単一所有と補正 |
 | `src/Drawing/LoupeDrawPlan.cs` | `LoupeDrawPlan` | public | 描画計画の値（UI が見る唯一の描画値） |
 | `src/Drawing/LoupeDrawLayer.cs` | `LoupeDrawLayer` | public | 描画層と順序の単一所有 |
 | `src/Drawing/LoupeTextPlacement.cs` | `LoupeTextPlacement` | public | 文言・基準点・描画領域 |
