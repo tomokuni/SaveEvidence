@@ -126,6 +126,4 @@ UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [
 - 名前空間のセグメントと型名が一致すると **CS0118**（名前空間を種類として使用）になります。 C# の名前解決は「外側の名前空間のメンバー（名前空間を含む）」を、`namespace` 宣言より前に書いた `using` より優先するためです。 実測では `MarqueeControl` / `LoupeControl` / `ZoomViewControl` / `CropViewControl` / `ColorPickerControl` / `FadeMaskDragRectControl` / `CaptureSessionControl` の 7 型が該当します（フォルダ名をそのまま使うと、他の名前空間からこれらの型を単純名で参照できません）。
 - 短縮名にしても `Marquee` / `Loupe`（コアのファサード型）だけはセグメントと一致するため、UI 層は**別名 `using`** で参照します（例: `using MarqueeFacade = EsUtil.Feature.Marquee.Core.Marquee;`。 提示層を介する場合は提示層を参照するため不要です）。
 - コアと提示層は可搬性の単位（`EsUtil.Feature.*`）、UI 層は製品側（`EsUtil.SaveEvidence.*`）に置きます。 `EsUtil.Platform.*` は外部パッケージに依存しない値型・抽象です。
-- **クラスライブラリのアセンブリ名（= 出力 DLL のファイル名）はルート名前空間と一致させます**（例: `Feature.Marquee.Core` プロジェクト → `EsUtil.Feature.Marquee.Core.dll`）。 DLL 名から提供する名前空間が読めるようにするためで、各 `.csproj` の `<AssemblyName>` が `<RootNamespace>` と同じ値を持ちます。
-- **実行ファイル（アプリとサンプル）とテストプロジェクトは対象外**です（実行ファイルは製品名 `SaveEvidence` / `SaveEvidence.MewUI`、テストは `InternalsVisibleTo` が参照するプロジェクト名を維持します）。
-- アセンブリ名を参照する箇所は 2 種類あります（**改名時は両方を追随させる**）: `.csproj` の `InternalsVisibleTo`（アセンブリ名）と、Avalonia XAML の `xmlns` の `assembly=`（`clr-namespace:...;assembly=<アセンブリ名>`。 誤ると Avalonia の XAML コンパイラがビルド時に検出します）。
+- **クラスライブラリのアセンブリ名（= 出力 DLL のファイル名）はルート名前空間と一致させます**（例: `Feature.Marquee.Core` → `EsUtil.Feature.Marquee.Core.dll`。 各 `.csproj` の `<AssemblyName>` が `<RootNamespace>` と同じ値）。
