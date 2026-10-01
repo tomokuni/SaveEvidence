@@ -37,9 +37,6 @@
     <!-- MewUI 版コントロール（コアロジックを共有する） -->
     <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
     <ProjectReference Include="..\..\ZoomViewControl.MewUI\src\ZoomViewControl.MewUI.csproj" />
-    <ProjectReference Include="..\..\CropViewControl.MewUI\src\CropViewControl.MewUI.csproj" />
-    <!-- 領域選択（暗転マスク + 選択矩形 + ルーペ。キャプチャのオーバーレイとプレビューの切り出しで使う） -->
-    <ProjectReference Include="..\..\FadeMaskDragRectControl.MewUI\src\FadeMaskDragRectControl.MewUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

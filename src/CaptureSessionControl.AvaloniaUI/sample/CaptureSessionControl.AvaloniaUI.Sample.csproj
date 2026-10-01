@@ -23,8 +23,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\CaptureSessionControl.AvaloniaUI.csproj" />
-    <!-- Crop プレビュー用の高レベル複合コントロール（ZoomViewControl + 領域選択） -->
-    <ProjectReference Include="..\..\CropViewControl.AvaloniaUI\src\CropViewControl.AvaloniaUI.csproj" />
   </ItemGroup>
 
 </Project>

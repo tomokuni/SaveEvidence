@@ -23,6 +23,9 @@
   <Folder Name="/src/CaptureSessionControl.MewUI/src/">
     <Project Path="src/CaptureSessionControl.MewUI/src/CaptureSessionControl.MewUI.csproj" />
   </Folder>
+  <Folder Name="/src/CaptureSessionControl.MewUI/tests/">
+    <Project Path="src/CaptureSessionControl.MewUI/tests/CaptureSessionControl.MewUI.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/CaptureSessionControl.UIBase/" />
   <Folder Name="/src/CaptureSessionControl.UIBase/src/">
     <Project Path="src/CaptureSessionControl.UIBase/src/CaptureSessionControl.UIBase.csproj" />
@@ -34,14 +37,6 @@
     <Project Path="src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj" />
     <Project Path="src/ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj" />
     <Project Path="src/ColorPickerControl.AvaloniaUI/tests/ColorPickerControl.AvaloniaUI.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/CropViewControl.MewUI/">
-    <Project Path="src/CropViewControl.MewUI/src/CropViewControl.MewUI.csproj" />
-    <Project Path="src/CropViewControl.MewUI/tests/CropViewControl.MewUI.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/CropViewControl.AvaloniaUI/">
-    <Project Path="src/CropViewControl.AvaloniaUI/src/CropViewControl.AvaloniaUI.csproj" />
-    <Project Path="src/CropViewControl.AvaloniaUI/tests/CropViewControl.AvaloniaUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Feature.Marquee.Core/">
     <Project Path="src/Feature.Marquee.Core/src/Feature.Marquee.Core.csproj" />
@@ -57,7 +52,6 @@
     <Project Path="src/MarqueeControl.MewUI/tests/MarqueeControl.MewUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/MarqueeControl.MewUI/src/" />
-  <Folder Name="/src/CropViewControl.MewUI/src/" />
   <Folder Name="/src/Feature.Loupe.Presenter/">
     <Project Path="src/Feature.Loupe.Presenter/src/Feature.Loupe.Presenter.csproj" />
     <Project Path="src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.csproj" />
@@ -68,15 +62,7 @@
     <Project Path="src/MarqueeControl.AvaloniaUI/src/MarqueeControl.AvaloniaUI.csproj" />
     <Project Path="src/MarqueeControl.AvaloniaUI/tests/MarqueeControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/FadeMaskDragRectControl.MewUI/">
-    <Project Path="src/FadeMaskDragRectControl.MewUI/src/FadeMaskDragRectControl.MewUI.csproj" />
-    <Project Path="src/FadeMaskDragRectControl.MewUI/tests/FadeMaskDragRectControl.MewUI.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/FadeMaskDragRectControl.AvaloniaUI/">
-    <Project Path="src/FadeMaskDragRectControl.AvaloniaUI/src/FadeMaskDragRectControl.AvaloniaUI.csproj" />
-    <Project Path="src/FadeMaskDragRectControl.AvaloniaUI/tests/FadeMaskDragRectControl.AvaloniaUI.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/FadeMaskDragRectControl.MewUI/src/" />
+
   <Folder Name="/src/LineDetection/">
     <Project Path="src/LineDetection/sample/LineDetection.Sample.csproj" />
     <Project Path="src/LineDetection/src/LineDetection.csproj" />
@@ -137,4 +123,5 @@
     <Project Path="src/ZoomViewControl.AvaloniaUI/src/ZoomViewControl.AvaloniaUI.csproj" />
     <Project Path="src/ZoomViewControl.AvaloniaUI/tests/ZoomViewControl.AvaloniaUI.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/ZoomViewControl.MewUI/src/" />
 </Solution>

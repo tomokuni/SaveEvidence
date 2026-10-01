@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 写像とラベル配置は両 UI のホストとテストからのみ参照する（公開 API を増やさない） -->
+    <!-- 写像とラベル配置は両 UI のホストとテストからのみ参照する（公開 API を増やさない。 指定はアセンブリ名） -->
     <InternalsVisibleTo Include="EsUtil.SaveEvidence.CaptureSession.AvaloniaUI" />
     <InternalsVisibleTo Include="EsUtil.SaveEvidence.CaptureSession.MewUI" />
     <InternalsVisibleTo Include="CaptureSessionControl.UIBase.Tests" />

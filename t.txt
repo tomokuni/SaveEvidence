@@ -1,0 +1,100 @@
+D:\Dev\Repos\GitHub\SaveEvidence\src\FadeMaskDragRectControl.MewUI\tests\bin\Debug\net10.0\FadeMaskDragRectControl.MewUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\app.Core\tests\bin\Debug\net10.0\app.Core.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\app.MewUI\tests\bin\Debug\net10.0-windows\app.MewUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\CaptureSessionControl.AvaloniaUI\tests\bin\Debug\net10.0-windows10.0.17763.0\CaptureSessionControl.AvaloniaUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\app.AvaloniaUI\tests\bin\Debug\net10.0-windows10.0.17763.0\app.AvaloniaUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\CaptureSessionControl.Core\tests\bin\Debug\net10.0\CaptureSessionControl.Core.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\CropViewControl.MewUI\tests\bin\Debug\net10.0\CropViewControl.MewUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\Feature.Loupe.Core\tests\bin\Debug\net10.0\Feature.Loupe.Core.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+D:\Dev\Repos\GitHub\SaveEvidence\src\Feature.Loupe.Presenter\tests\bin\Debug\net10.0\Feature.Loupe.Presenter.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\CaptureSessionControl.UIBase\tests\bin\Debug\net10.0\CaptureSessionControl.UIBase.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\ColorPickerControl.AvaloniaUI\tests\bin\Debug\net10.0\ColorPickerControl.AvaloniaUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\Feature.Marquee.Core\tests\bin\Debug\net10.0\Feature.Marquee.Core.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\Feature.Marquee.Presenter\tests\bin\Debug\net10.0\Feature.Marquee.Presenter.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\LineDetection\tests\bin\Debug\net10.0\LineDetection.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+D:\Dev\Repos\GitHub\SaveEvidence\src\LoupeControl.AvaloniaUI\tests\bin\Debug\net10.0\LoupeControl.AvaloniaUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+D:\Dev\Repos\GitHub\SaveEvidence\src\LoupeControl.MewUI\tests\bin\Debug\net10.0\LoupeControl.MewUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+D:\Dev\Repos\GitHub\SaveEvidence\src\MarqueeControl.AvaloniaUI\tests\bin\Debug\net10.0\MarqueeControl.AvaloniaUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\MarqueeControl.MewUI\tests\bin\Debug\net10.0\MarqueeControl.MewUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\Platform.AvaloniaUI\tests\bin\Debug\net10.0\Platform.AvaloniaUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\Platform.Core\tests\bin\Debug\net10.0\Platform.Core.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+
+成功!   -失敗:     0、合格:   102、スキップ:     0、合計:   102、期間: 212 ms - Feature.Loupe.Core.Tests.dll (net10.0)
+D:\Dev\Repos\GitHub\SaveEvidence\src\Platform.MewUI\tests\bin\Debug\net10.0\Platform.MewUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+
+成功!   -失敗:     0、合格:    56、スキップ:     0、合計:    56、期間: 294 ms - Feature.Loupe.Presenter.Tests.dll (net10.0)
+D:\Dev\Repos\GitHub\SaveEvidence\src\Platform.Skia\tests\bin\Debug\net10.0\Platform.Skia.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+
+成功!   -失敗:     0、合格:    35、スキップ:     0、合計:    35、期間: 474 ms - CaptureSessionControl.UIBase.Tests.dll (net10.0)
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+
+成功!   -失敗:     0、合格:    55、スキップ:     0、合計:    55、期間: 930 ms - app.MewUI.Tests.dll (net10.0)
+D:\Dev\Repos\GitHub\SaveEvidence\src\ZoomViewControl.AvaloniaUI\tests\bin\Debug\net10.0\ZoomViewControl.AvaloniaUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+D:\Dev\Repos\GitHub\SaveEvidence\src\ZoomViewControl.Core\tests\bin\Debug\net10.0\ZoomViewControl.Core.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+
+成功!   -失敗:     0、合格:    54、スキップ:     0、合計:    54、期間: 2 s - FadeMaskDragRectControl.MewUI.Tests.dll (net10.0)
+D:\Dev\Repos\GitHub\SaveEvidence\src\ZoomViewControl.MewUI\tests\bin\Debug\net10.0\ZoomViewControl.MewUI.Tests.dll (.NETCoreApp,Version=v10.0) のテスト実行
+
+成功!   -失敗:     0、合格:    29、スキップ:     0、合計:    29、期間: 1 s - LineDetection.Tests.dll (net10.0)
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+合計 1 個のテスト ファイルが指定されたパターンと一致しました。
+
+成功!   -失敗:     0、合格:   441、スキップ:     0、合計:   441、期間: 384 ms - Platform.Core.Tests.dll (net10.0)
+
+
+成功!   -失敗:     0、合格:    20、スキップ:     0、合計:    20、期間: 1 s - app.AvaloniaUI.Tests.dll (net10.0)
+成功!   -失敗:     0、合格:    47、スキップ:     0、合計:    47、期間: 764 ms - LoupeControl.MewUI.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:   239、スキップ:     0、合計:   239、期間: 241 ms - Feature.Marquee.Core.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    27、スキップ:     0、合計:    27、期間: 557 ms - CropViewControl.MewUI.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    93、スキップ:     0、合計:    93、期間: 319 ms - Feature.Marquee.Presenter.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:   147、スキップ:     0、合計:   147、期間: 4 s - ColorPickerControl.AvaloniaUI.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:   366、スキップ:     0、合計:   366、期間: 399 ms - CaptureSessionControl.Core.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    53、スキップ:     0、合計:    53、期間: 971 ms - Platform.AvaloniaUI.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    24、スキップ:     0、合計:    24、期間: 2 s - MarqueeControl.MewUI.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:   150、スキップ:     0、合計:   150、期間: 1 s - app.Core.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    72、スキップ:     0、合計:    72、期間: 2 s - LoupeControl.AvaloniaUI.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    50、スキップ:     0、合計:    50、期間: 279 ms - Platform.Skia.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    82、スキップ:     0、合計:    82、期間: 267 ms - Platform.MewUI.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    86、スキップ:     0、合計:    86、期間: 2 s - MarqueeControl.AvaloniaUI.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    24、スキップ:     0、合計:    24、期間: 626 ms
+ - ZoomViewControl.MewUI.Tests.dll (net10.0)
+成功!   -失敗:     0、合格:   211、スキップ:     0、合計:   211、期間: 283 ms - ZoomViewControl.Core.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:   130、スキップ:     0、合計:   130、期間: 3 s - CaptureSessionControl.AvaloniaUI.Tests.dll (net10.0)
+
+成功!   -失敗:     0、合格:    30、スキップ:     0、合計:    30、期間: 792 ms - ZoomViewControl.AvaloniaUI.Tests.dll (net10.0)

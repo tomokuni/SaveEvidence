@@ -19,7 +19,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.ZoomView;

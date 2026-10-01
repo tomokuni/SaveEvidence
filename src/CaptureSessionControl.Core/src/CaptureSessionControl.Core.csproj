@@ -27,20 +27,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
-    <InternalsVisibleTo Include="CaptureSessionControl.Core.Tests" />
-    <InternalsVisibleTo Include="CaptureSessionControl.AvaloniaUI" />
-    <InternalsVisibleTo Include="CaptureSessionControl.AvaloniaUI.Tests" />
-    <InternalsVisibleTo Include="CaptureSessionControl.MewUI" />
-    <InternalsVisibleTo Include="CaptureSessionControl.UIBase" />
-    <InternalsVisibleTo Include="CaptureSessionControl.UIBase.Tests" />
-    <InternalsVisibleTo Include="EsUtil.SaveEvidence.CropView.AvaloniaUI" />
-    <InternalsVisibleTo Include="CropViewControl.MewUI.Tests" />
-    <InternalsVisibleTo Include="EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI" />
-    <InternalsVisibleTo Include="EsUtil.SaveEvidence.FadeMaskDragRect.MewUI" />
+    <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない。 指定はアセンブリ名） -->
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.CaptureSession.AvaloniaUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.CaptureSession.MewUI" />
     <InternalsVisibleTo Include="EsUtil.SaveEvidence.CaptureSession.UIBase" />
-    <InternalsVisibleTo Include="FadeMaskDragRectControl.AvaloniaUI.Tests" />
-    <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI.Tests" />
+    <InternalsVisibleTo Include="CaptureSessionControl.Core.Tests" />
+    <InternalsVisibleTo Include="CaptureSessionControl.AvaloniaUI.Tests" />
+    <InternalsVisibleTo Include="CaptureSessionControl.MewUI.Tests" />
+    <InternalsVisibleTo Include="CaptureSessionControl.UIBase.Tests" />
   </ItemGroup>
 
   <ItemGroup>

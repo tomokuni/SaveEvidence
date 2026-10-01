@@ -30,15 +30,22 @@
     <ProjectReference Include="..\..\CaptureSessionControl.UIBase\src\CaptureSessionControl.UIBase.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型）と DIP 変換 -->
     <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
-    <!-- コアロジックを共有する MewUI 版コントロール（選択オーバーレイ・切り出しビュー） -->
-    <ProjectReference Include="..\..\FadeMaskDragRectControl.MewUI\src\FadeMaskDragRectControl.MewUI.csproj" />
-    <ProjectReference Include="..\..\CropViewControl.MewUI\src\CropViewControl.MewUI.csproj" />
+    <!-- コア幾何型と Skia の描画プリミティブ -->
+    <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
+    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
+    <!-- 画像ビューポート（拡大・パン・Fit。 切り出しの表示） -->
+    <ProjectReference Include="..\..\ZoomViewControl.MewUI\src\ZoomViewControl.MewUI.csproj" />
+    <!-- 複合コントロールを構成する内包コントロール -->
+    <ProjectReference Include="..\..\MarqueeControl.MewUI\src\MarqueeControl.MewUI.csproj" />
+    <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
+    <!-- ホイール要求（ズーム / スクロール）の中継と設定型の参照 -->
+    <ProjectReference Include="..\..\Feature.Marquee.Presenter\src\Feature.Marquee.Presenter.csproj" />
+    <ProjectReference Include="..\..\Feature.Loupe.Core\src\Feature.Loupe.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 本プロジェクトにテストプロジェクトは無いため InternalsVisibleTo を設けない
-         （internal 型は同一アセンブリからのみ使用する。使わない IVT は残さない）。
-         検証はコア（CaptureSessionControl.Core.Tests）が共通規則を担保する。 -->
+    <!-- internal 型（切り出しビューの描画・複合コントロールの内部手順）はテストからのみ参照する（指定はアセンブリ名） -->
+    <InternalsVisibleTo Include="CaptureSessionControl.MewUI.Tests" />
   </ItemGroup>
 
 </Project>

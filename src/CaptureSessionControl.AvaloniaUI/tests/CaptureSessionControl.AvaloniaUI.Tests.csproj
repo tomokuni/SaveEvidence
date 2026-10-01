@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\CaptureSessionControl.AvaloniaUI.csproj" />
-    <ProjectReference Include="..\..\CropViewControl.AvaloniaUI\src\CropViewControl.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\ZoomViewControl.AvaloniaUI\src\ZoomViewControl.AvaloniaUI.csproj" />
   </ItemGroup>
 
   <!-- xUnit 並列化設定（Avalonia ヘッドレスアセンブリ間の静的競合を防ぐためアセンブリ間の並列を無効化） -->

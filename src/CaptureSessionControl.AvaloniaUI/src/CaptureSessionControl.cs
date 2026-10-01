@@ -6,7 +6,6 @@ using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI.Sessions;
-using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
