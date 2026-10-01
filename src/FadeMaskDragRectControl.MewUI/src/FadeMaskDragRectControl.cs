@@ -3,7 +3,7 @@ using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Feature.Marquee.Presenter.Label;
 using EsUtil.Feature.Marquee.Presenter.Setting;
-using EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
+using EsUtil.SaveEvidence.CaptureSession.UIBase;
 using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.SaveEvidence.Loupe.MewUI;
 using EsUtil.Platform.Core;

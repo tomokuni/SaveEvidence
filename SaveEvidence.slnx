@@ -82,13 +82,6 @@
     <Project Path="src/LineDetection/src/LineDetection.csproj" />
     <Project Path="src/LineDetection/tests/LineDetection.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/FadeMaskDragRectControl.UIBase/" />
-  <Folder Name="/src/FadeMaskDragRectControl.UIBase/src/">
-    <Project Path="src/FadeMaskDragRectControl.UIBase/src/FadeMaskDragRectControl.UIBase.csproj" />
-  </Folder>
-  <Folder Name="/src/FadeMaskDragRectControl.UIBase/tests/">
-    <Project Path="src/FadeMaskDragRectControl.UIBase/tests/FadeMaskDragRectControl.UIBase.Tests.csproj" />
-  </Folder>
   <Folder Name="/src/Feature.Loupe.Core/">
     <Project Path="src/Feature.Loupe.Core/src/Feature.Loupe.Core.csproj" />
     <Project Path="src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj" />

@@ -14,17 +14,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- 写像元の設定型（CaptureSettings）。本層はセッションの設定に依存するため、
-         再利用ライブラリ（FadeMaskDragRectControl.UIBase)ではなくセッション側の共有層に置く。 -->
+    <!-- 写像元の設定型（CaptureSettings）と、複合コントロールの設定値・動作モード・状態 -->
     <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
-    <!-- 写像先の色（MarqueePaint / LoupePaint）。描画の設定は UI 非依存の型のため本層で共有できる
+    <!-- 内包コントロールの設定型（MarqueeOptions / LoupeOptions） -->
+    <ProjectReference Include="..\..\Feature.Marquee.Core\src\Feature.Marquee.Core.csproj" />
+    <ProjectReference Include="..\..\Feature.Loupe.Core\src\Feature.Loupe.Core.csproj" />
+    <!-- 写像先の色（MarqueePaint / LoupePaint）と付加情報ラベルの体裁（MarqueeHostLabelRenderer）。
+         描画の設定は UI 非依存の型のため本層で共有できる
          （コアから描画の設定を参照すると Core → UIBase の逆流になる）。 -->
     <ProjectReference Include="..\..\Feature.Marquee.Presenter\src\Feature.Marquee.Presenter.csproj" />
     <ProjectReference Include="..\..\Feature.Loupe.Presenter\src\Feature.Loupe.Presenter.csproj" />
+    <!-- コア幾何型 -->
+    <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 写像は両 UI のホストとテストからのみ参照する（公開 API を増やさない） -->
+    <!-- 写像とラベル配置は両 UI のホストとテストからのみ参照する（公開 API を増やさない） -->
     <InternalsVisibleTo Include="EsUtil.SaveEvidence.CaptureSession.AvaloniaUI" />
     <InternalsVisibleTo Include="EsUtil.SaveEvidence.CaptureSession.MewUI" />
     <InternalsVisibleTo Include="CaptureSessionControl.UIBase.Tests" />

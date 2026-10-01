@@ -2,9 +2,8 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Presenter.Label;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Feature.Marquee.Presenter.Drawing;
-using EsUtil.SaveEvidence.CaptureSession;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
+namespace EsUtil.SaveEvidence.CaptureSession.UIBase;
 
 /// <summary>ホストが描く付加情報ラベル（操作ラベル・情報ラベル）の配置指示を解決する。</summary>
 /// <remarks>

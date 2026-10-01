@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.UIBase.Tests;
 
 /// <summary><see cref="MarqueeHostLabelRenderer"/> の単体テスト（体裁の適用 = 配置指示の解決）。</summary>
 /// <remarks>

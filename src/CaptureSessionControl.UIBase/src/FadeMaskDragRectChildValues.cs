@@ -1,9 +1,8 @@
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.Feature.Marquee.Presenter.Setting;
-using EsUtil.SaveEvidence.CaptureSession;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
+namespace EsUtil.SaveEvidence.CaptureSession.UIBase;
 
 /// <summary>複合コントロールが内包コントロールへ適用する値（設定とモードから解決した結果）。</summary>
 /// <param name="Marquee">選択矩形コントロールの設定（モードから導出するハンドルの表示可否を反映済み）。</param>

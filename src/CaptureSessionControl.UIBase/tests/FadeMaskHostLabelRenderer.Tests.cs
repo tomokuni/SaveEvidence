@@ -6,7 +6,7 @@ using EsUtil.Feature.Marquee.Presenter.Drawing;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.CaptureSession;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.UIBase.Tests;
 
 /// <summary><see cref="FadeMaskHostLabelRenderer"/> の単体テスト（付加情報ラベルの配置指示の解決）。</summary>
 /// <remarks>

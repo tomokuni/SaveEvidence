@@ -6,7 +6,7 @@ using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.SaveEvidence.CaptureSession;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.UIBase.Tests;
 
 /// <summary><see cref="FadeMaskDragRectChildValues"/> の単体テスト（設定とモードから子の値への解決）。</summary>
 /// <remarks>UI 非依存の値の解決のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>

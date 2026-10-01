@@ -3,7 +3,7 @@ using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Feature.Marquee.Presenter.Label;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
+namespace EsUtil.SaveEvidence.CaptureSession.UIBase;
 
 /// <summary>複合コントロールが描く付加情報ラベル（操作ラベル・情報ラベル）の配置指示を解決する。</summary>
 /// <remarks>
