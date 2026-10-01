@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using Avalonia.Media;
-using EsUtil.Platform.AvaloniaUI;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI;
 
 namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 

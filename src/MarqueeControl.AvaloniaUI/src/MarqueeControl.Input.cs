@@ -3,8 +3,8 @@ using Avalonia.Input;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Presenter;
-using EsUtil.Platform.AvaloniaUI.Interop;
-using EsUtil.Platform.AvaloniaUI.Coord;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Coord;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 

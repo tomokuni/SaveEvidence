@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EsUtil.SaveEvidence.App.AvaloniaUI</RootNamespace>
+    <StartupObject>EsUtil.SaveEvidence.App.AvaloniaUI.Program</StartupObject>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <NoWarn>$(NoWarn);CA2101;SYSLIB1051;SYSLIB1054;MVVMTK0042;AVLN3001</NoWarn>
+    <AssemblyName>SaveEvidence</AssemblyName>
+    <UseWindowsForms>false</UseWindowsForms>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <IsPublishable>True</IsPublishable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <IsPublishable>True</IsPublishable>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishReadyToRun>true</PublishReadyToRun>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ヘッドレステスト（app.AvaloniaUI.Tests）から internal メンバーへアクセスできるようにする -->
+    <InternalsVisibleTo Include="App.App.AvaloniaUI.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.*,)" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
+    <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.*,)" />
+    <PackageReference Include="FluentAvaloniaUI" Version="[3.*,)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
+    <PackageReference Include="Serilog" Version="[4.*,)" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="[10.*,)" />
+    <PackageReference Include="Serilog.Sinks.File" Version="[7.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\App.App.Core\src\App.App.Core.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.AvaloniaUI\src\App.Parts.CaptureSessionControl.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\ColorPickerControl.AvaloniaUI\src\ColorPickerControl.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\App.Platform.AvaloniaUI\src\App.Platform.AvaloniaUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- アイコン（SVG）をアセンブリリソースとして埋め込む -->
+    <AvaloniaResource Include="Icons/**" />
+  </ItemGroup>
+
+</Project>
+

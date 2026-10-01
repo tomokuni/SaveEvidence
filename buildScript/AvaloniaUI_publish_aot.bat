@@ -59,7 +59,7 @@ echo.
 
 if exist "%STAGE%" rd /s /q "%STAGE%"
 
-dotnet publish "src\app.AvaloniaUI\src\app.AvaloniaUI.csproj" ^
+dotnet publish "src\App.App.AvaloniaUI\src\App.App.AvaloniaUI.csproj" ^
   -c Release ^
   -r "%RID%" ^
   -p:PublishAot=true ^

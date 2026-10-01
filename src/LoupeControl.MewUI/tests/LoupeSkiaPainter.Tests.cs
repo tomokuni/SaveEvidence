@@ -1,7 +1,7 @@
 using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Skia;
+using EsUtil.SaveEvidence.Platform.Skia;
 using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Feature.Loupe.Presenter.Drawing;
 using EsUtil.Feature.Loupe.Presenter.Setting;

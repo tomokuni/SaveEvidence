@@ -16,8 +16,8 @@ using static EsUtil.Feature.Marquee.Core.Marquee.Limits;
 using EsUtil.Feature.Marquee.Core.Contract;
 using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Platform.AvaloniaUI.Interop;
-using EsUtil.Platform.AvaloniaUI.Coord;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Coord;
 
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI;

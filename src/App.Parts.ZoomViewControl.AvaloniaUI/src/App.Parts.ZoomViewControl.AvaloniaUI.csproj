@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EsUtil.SaveEvidence.Parts.ZoomView.AvaloniaUI</RootNamespace>
+    <AssemblyName>EsUtil.SaveEvidence.Parts.ZoomView.AvaloniaUI</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574、公開メンバーの未記載を CS1591 で検出）。
+         XML は配布物（bin / publish）へ出さない（検証だけに使う）。 -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="[12.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UI 非依存の純粋ロジック（Core）と座標変換ポートを参照する -->
+    <ProjectReference Include="..\..\App.Parts.ZoomViewControl.Core\src\App.Parts.ZoomViewControl.Core.csproj" />
+    <ProjectReference Include="..\..\App.Platform.AvaloniaUI\src\App.Platform.AvaloniaUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="App.Parts.ZoomViewControl.AvaloniaUI.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -113,7 +113,7 @@ if (layout.Position is { } position)
 | --- | --- | --- |
 | `Rendered` | `LoupeRenderedEventArgs` | 描画完了の通知（描画先キャンバス・一辺の物理ピクセル・切り出し領域の左上・スケール）。 ホストはハンドラ内でキャンバスへオーバーレイを追加描画できる |
 
-オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求めます（破線の例は `CaptureSessionControl.MewUI`）。
+オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求めます（破線の例は `App.Parts.CaptureSessionControl.MewUI`）。
 
 ## ログ
 
@@ -160,4 +160,4 @@ dotnet test src/LoupeControl.MewUI/tests/LoupeControl.MewUI.Tests.csproj
 - `../Feature.Loupe.Core/README.md` — 共有する UI 非依存ロジック
 - `../Feature.Loupe.Presenter/README.md` — 共有する UI 非依存の描画層
 - `../LoupeControl.AvaloniaUI/README.md` — Avalonia 版ルーペ
-- `../app.MewUI/README.md` — 組み込み先のアプリ
+- `../App.App.MewUI/README.md` — 組み込み先のアプリ

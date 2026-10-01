@@ -1,5 +1,5 @@
-using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.Platform.Core.Geometry;
 using Avalonia;
 using Avalonia.Controls;

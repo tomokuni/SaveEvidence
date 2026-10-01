@@ -6,7 +6,7 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Platform.Skia;
+using EsUtil.SaveEvidence.Platform.Skia;
 using EsUtil.Feature.Loupe.Core.Setting;
 
 

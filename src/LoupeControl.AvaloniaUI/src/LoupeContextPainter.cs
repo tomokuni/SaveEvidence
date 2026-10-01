@@ -1,6 +1,6 @@
 using Avalonia.Media;
-using EsUtil.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.Loupe.Presenter;

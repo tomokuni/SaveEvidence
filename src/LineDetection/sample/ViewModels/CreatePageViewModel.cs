@@ -4,12 +4,12 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
-using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.LineDetection.Sample.Models;
 using System.Collections.ObjectModel;
 using System.Text.Json;
-using EsUtil.SaveEvidence.CaptureSession;
-using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.Parts.CaptureSession;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 

@@ -7,14 +7,14 @@ using Avalonia.Threading;
 using Point = Avalonia.Point;
 using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
 using EsUtil.Feature.Loupe.Presenter.Setting;
-using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using System.Globalization;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.Loupe.Core.Setting;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI.Tests;

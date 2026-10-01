@@ -9,13 +9,13 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.MewUI;
-using EsUtil.Platform.MewUI.Imaging;
+using EsUtil.SaveEvidence.Platform.MewUI;
+using EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
-using EsUtil.Platform.Skia;
+using EsUtil.SaveEvidence.Platform.Skia;
 using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.Feature.Loupe.Core.Placement;
 

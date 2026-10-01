@@ -29,7 +29,7 @@
     <ProjectReference Include="..\..\Feature.Loupe.Presenter\src\Feature.Loupe.Presenter.csproj" />
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
     <!-- コアの色型 → MewUI の色型へ変換する Interop（色変換の単一所有者） -->
-    <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
+    <ProjectReference Include="..\..\App.Platform.MewUI\src\App.Platform.MewUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,7 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
+    <ProjectReference Include="..\..\App.Platform.Skia\src\App.Platform.Skia.csproj" />
   </ItemGroup>
 
 </Project>

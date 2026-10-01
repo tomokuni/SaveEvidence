@@ -256,11 +256,11 @@
 
 ### プロジェクト構成
 
-- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。 独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / MarqueeControl / LoupeControl / CaptureSessionControl.AvaloniaUI / LineDetection）と、見た目（描画計画と外観）を単一所有する**コントロール化を前提としない UI 非依存層**（Feature.Marquee.Presenter / Feature.Loupe.Presenter）、プラットフォーム層（Platform.AvaloniaUI / Platform.Core / Platform.MewUI）、アプリ本体（`app.AvaloniaUI` / `app.MewUI` / `app.Core`）から構成される。
+- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。 独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / MarqueeControl / LoupeControl / App.Parts.CaptureSessionControl.AvaloniaUI / LineDetection）と、見た目（描画計画と外観）を単一所有する**コントロール化を前提としない UI 非依存層**（Feature.Marquee.Presenter / Feature.Loupe.Presenter）、プラットフォーム層（App.Platform.AvaloniaUI / Platform.Core / App.Platform.MewUI）、アプリ本体（`App.App.AvaloniaUI` / `App.App.MewUI` / `App.App.Core`）から構成される。
 - コントロールの層は **Core（何を描くか・判断）/ Presenter（提示＝描画計画と外観）/ UI（フレームワーク固有の描画と配線）** の 3 層で、依存は `UI → Presenter → Core → Platform.Core` の一方向（コアは Presenter を参照しない）。 層の正典は `src/README.md`。
 - **コントロール化を前提とした処理（ホイール操作・ビューポートの変化の追従・組み込み先の概念）は UI 層が持ちます**（提示層とコアはコントロールに依存しません）。
-- プラットフォーム層は `EsUtil.Platform.*` をルート名前空間とし、`Platform.AvaloniaUI` / `Platform.MewUI` が各 UI のアダプタ、`Platform.Core` が UI 非依存の抽象・値型（`Native/` 配下にサービス抽象と Win32 実装）を担う。
-- `app.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
+- プラットフォーム層は、UI 非依存の `Platform.Core`（ルート名前空間 `EsUtil.Platform.Core`）と、各 UI のアダプタ `App.Platform.AvaloniaUI` / `App.Platform.MewUI` / `App.Platform.Skia`（ルート名前空間 `EsUtil.SaveEvidence.Platform.*`）から構成される。 `Platform.Core` は `Native/` 配下にサービス抽象と Win32 実装を担う。
+- `App.App.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
 - `MarqueeControl` は選択矩形に加えて「選択矩形の外側に描く装飾」（暗転マスク・穴あけ枠・ハイライト・内側の塗り）を描画する。 外観と表示ポリシーは提示層（`Feature.Marquee.Presenter`）の `MarqueeAppearance` が単一所有し、装飾の矩形と描画順の判断は同層の `MarqueePresenter` が持つ（コアは穴あけ矩形という幾何だけを返す）。
 - **ラベルは提示層が文言と描画順を決め、UI 層がテキスト要素を配置する**（サイズラベル・カーソル座標ラベル・Loupe 中心座標ラベル）。 提示層（`Feature.Marquee.Presenter` の `MarqueeLabelPlan` / `Feature.Loupe.Presenter` の `LoupeLabelPlan`）が「実寸 → 要素の配置矩形」の写像を単一所有し、UI は `Border` + `TextBlock` を子として置く。 **ラベルは常に最上位**（`*DrawLayer` の最後の層であり、子要素は親の描画より後に描かれる）。
 - **付加情報ラベル（操作・情報ラベル）はコントロール固有の付加情報**であり選択コントロールの概念ではない。 Core は関知せず、ホストが文言生成（`CaptureLabelTexts`）と描画を行う（体裁は `FadeMaskDragRectControl.UIBase` の `MarqueeHostLabelRenderer` が単一所有する）。
@@ -271,7 +271,7 @@
 
 - 各プロジェクトに README.md（利用仕様書）・docs/SPEC_API.md（API リファレンス）・docs/SPEC_System.md（システム仕様書）を置く。
 - README.md / docs/SPEC_API.md / docs/SPEC_System.md は、コード変更と同時に更新する（仕様と実装の乖離・反映漏れを防ぐ）。
-- `app.AvaloniaUI`（ホスト）は ZoomViewControl の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する。
+- `App.App.AvaloniaUI`（ホスト）は ZoomViewControl の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する。
 
 ### 層ごとの記載範囲（外部プロジェクトを記載しない）
 
@@ -281,6 +281,9 @@
   - `Feature.Loupe.Presenter` … `Feature.Loupe.Core` と `Platform.Core` 以外を記載しない。
   - `Feature.Marquee.Core` … `Platform.Core` 以外を記載しない。
   - `Feature.Marquee.Presenter` … `Feature.Marquee.Core` と `Platform.Core` 以外を記載しない。
+  - `App.Parts.CaptureSessionControl.Core` … `Platform.Core` と「`Feature.Marquee.Core` / `Feature.Loupe.Core`」以外を記載しない。
+  - `App.Parts.CaptureSessionControl.UIBase` … 上記の参照先以外を記載しない。
+  - `App.Parts.ZoomViewControl.Core` … `Platform.Core` 以外を記載しない。
 - 外部プロジェクトが所有する型名も記載しない（相互変換の Interop 層・描画実装・調整役・テスト等）。
 - 外部の層への言及は、プロジェクト名ではなく層の概念（「上位のアプリ・コントロール」「描画層（本コアを参照する上位の層）」「提示層」）で書く（設計の理由は残す）。
 - フレームワーク名（Avalonia / MewUI / WinUI3 / WinForms / Skia / .NET 標準の型）は「外部プロジェクト」に含めない（同名メンバーによる互換性など、事実として必要な場合のみ記載する）。

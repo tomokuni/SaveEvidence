@@ -18,27 +18,25 @@ UI フレームワーク非依存の共有ライブラリが提供する公開 A
   - [2.10 `Geometry.EsRectInterval`（enum）](#210-geometryesrectintervalenum)
   - [2.11 `LoggerFallback`（static class）](#211-loggerfallbackstatic-class)
   - [2.12 `Imaging.DrawingColorExtensions`（static class）](#212-imagingdrawingcolorextensionsstatic-class)
-  - [2.13 `Imaging.ImageDrawMode`（enum）](#213-imagingimagedrawmodeenum)
-  - [2.14 `Imaging.ImageDrawMath`（static class）](#214-imagingimagedrawmathstatic-class)
-  - [2.15 `Geometry.EsPoint`（readonly record struct）](#215-geometryespointreadonly-record-struct)
-  - [2.16 `Geometry.EsSize` / `Geometry.EsVector` / `Geometry.EsRect`（readonly record struct）](#216-geometryessize--geometryesvector--geometryesrectreadonly-record-struct)
-  - [2.17 `Geometry.EsPointInt` / `Geometry.EsSizeInt` / `Geometry.EsRectInt`（readonly record struct）](#217-geometryespointint--geometryessizeint--geometryesrectintreadonly-record-struct)
-  - [2.18 `Geometry.EsThickness`（readonly record struct）](#218-geometryesthicknessreadonly-record-struct)
-  - [2.19 `Geometry.EsRectEdges`（readonly struct）](#219-geometryesrectedgesreadonly-struct)
-  - [2.20 各フレームワークの操作との対照](#220-各フレームワークの操作との対照)
-  - [2.21 `EsPlatformHandle`（readonly record struct）](#221-esplatformhandlereadonly-record-struct)
-  - [2.22 `Native.ICaptureService`（interface）](#222-nativeicaptureserviceinterface)
-  - [2.23 `Native.ICursorService`（interface）](#223-nativeicursorserviceinterface)
-  - [2.24 `Native.IWindowService`（interface）](#224-nativeiwindowserviceinterface)
-  - [2.25 `Native.IElementFinder`（interface）](#225-nativeielementfinderinterface)
-  - [2.26 `Native.ICursorOverrideGuard`（interface : IDisposable）](#226-nativeicursoroverrideguardinterface--idisposable)
-  - [2.27 `Native.IGlobalHotKeyService<T>`（interface : IDisposable）](#227-nativeiglobalhotkeyservicetinterface--idisposable)
-  - [2.28 `Native.ElementFinderResults`（readonly record struct）](#228-nativeelementfinderresultsreadonly-record-struct)
-  - [2.29 `Native.Win.*`（Windows 実装）](#229-nativewinwindows-実装)
-  - [2.30 `Native.Imaging.EsBitmapDrawingExtensions`（static class）](#230-nativeimagingesbitmapdrawingextensionsstatic-class)
-  - [2.31 `Coord.ICoordTransform`（interface）](#231-coordicoordtransforminterface)
-  - [2.32 `Coord.CoordTransform`（sealed class : ICoordTransform）](#232-coordcoordtransformsealed-class--icoordtransform)
-  - [2.33 `Imaging.EsBitmap`（sealed class : IDisposable）](#233-imagingesbitmapsealed-class--idisposable)
+  - [2.13 `Geometry.EsPoint`（readonly record struct）](#213-geometryespointreadonly-record-struct)
+  - [2.14 `Geometry.EsSize` / `Geometry.EsVector` / `Geometry.EsRect`（readonly record struct）](#214-geometryessize--geometryesvector--geometryesrectreadonly-record-struct)
+  - [2.13 `Geometry.EsPointInt` / `Geometry.EsSizeInt` / `Geometry.EsRectInt`（readonly record struct）](#213-geometryespointint--geometryessizeint--geometryesrectintreadonly-record-struct)
+  - [2.14 `Geometry.EsThickness`（readonly record struct）](#214-geometryesthicknessreadonly-record-struct)
+  - [2.13 `Geometry.EsRectEdges`（readonly struct）](#213-geometryesrectedgesreadonly-struct)
+  - [2.14 各フレームワークの操作との対照](#214-各フレームワークの操作との対照)
+  - [2.13 `EsPlatformHandle`（readonly record struct）](#213-esplatformhandlereadonly-record-struct)
+  - [2.14 `Native.ICaptureService`（interface）](#214-nativeicaptureserviceinterface)
+  - [2.13 `Native.ICursorService`（interface）](#213-nativeicursorserviceinterface)
+  - [2.14 `Native.IWindowService`（interface）](#214-nativeiwindowserviceinterface)
+  - [2.13 `Native.IElementFinder`（interface）](#213-nativeielementfinderinterface)
+  - [2.14 `Native.ICursorOverrideGuard`（interface : IDisposable）](#214-nativeicursoroverrideguardinterface--idisposable)
+  - [2.13 `Native.IGlobalHotKeyService<T>`（interface : IDisposable）](#213-nativeiglobalhotkeyservicetinterface--idisposable)
+  - [2.14 `Native.ElementFinderResults`（readonly record struct）](#214-nativeelementfinderresultsreadonly-record-struct)
+  - [2.13 `Native.Win.*`（Windows 実装）](#213-nativewinwindows-実装)
+  - [2.14 `Native.Imaging.EsBitmapDrawingExtensions`（static class）](#214-nativeimagingesbitmapdrawingextensionsstatic-class)
+  - [2.13 `Coord.ICoordTransform`（interface）](#213-coordicoordtransforminterface)
+  - [2.14 `Coord.CoordTransform`（sealed class : ICoordTransform）](#214-coordcoordtransformsealed-class--icoordtransform)
+  - [2.13 `Imaging.EsBitmap`（sealed class : IDisposable）](#213-imagingesbitmapsealed-class--idisposable)
 - [3. 使用例](#3-使用例)
   - [3.1 幾何と座標変換](#31-幾何と座標変換)
   - [3.2 OS サービスの注入（上位のアプリ）](#32-os-サービスの注入上位のアプリ)
@@ -53,7 +51,7 @@ UI フレームワーク非依存の共有ライブラリが提供する公開 A
 | `EsUtil.Platform.Core` | `EsKey` / `EsWindowState` / `HotKeyModifiers` / `HotKeySetting` / `CaptureType` / `EsPlatformHandle` / `LoggerFallback` | キーと入力・ウィンドウ状態・ホットキー・ロガーの補助 |
 | `.Geometry` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` とその整数版、`EsThickness` / `EsRounding` / `EsRectInterval` / `EsAxis` | DIP 相当の幾何値型と領域の規則 |
 | `.Coord` | `ICoordTransform` / `CoordTransform` / `ScrollMath` / `DpiScaler` / `CoordTransformExtensions` | 座標系の変換ポートとスクロール・DPI の純粋計算 |
-| `.Imaging` | `EsBitmap` / `ImageDrawMode` / `ImageDrawMath` / `DrawingColorExtensions` | ピクセルコンテナと画像配置の計算 |
+| `.Imaging` | `EsBitmap` / `DrawingColorExtensions` | ピクセルコンテナと描画色の判定 |
 | `.Native` | `ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>` / `ElementFinderResults` | OS サービスの抽象（UI 非依存） |
 | `.Native.Win` | `WinCaptureService` / `WinCursorService` / `WinWindowService` / `WinElementFinder` / `WinCursorOverrideGuard` / `WinGlobalHotKeyService<T>` | 上記抽象の Windows 実装（ホストが生成して注入する） |
 | `.Native.Imaging` | `EsBitmapDrawingExtensions` | `System.Drawing.Bitmap` との相互変換（Windows 専用） |
@@ -174,31 +172,7 @@ ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
 
 描画の可否は**描画にだけ必要な設定を所有する上位層の外観の明示フラグ**が単一所有します。 本メソッドは「ホストの色設定（省略可能な色）をフラグへ写す」場面で使います（`color.A > 0` を各所に書くと、同じ意味の判定が散らばる）。
 
-### 2.13 `Imaging.ImageDrawMode`（enum）
-
-画像を描画先の領域へ配置する方法。 ブール値の引数で受けると `false` の意味が読めないため、列挙型で表現します。
-
-| メンバー | 意味 |
-| --- | --- |
-| `Fill` | 縦横比を無視して領域全体へ引き伸ばす |
-| `Uniform` | 縦横比を保ち、はみ出さない倍率で中央へ配置する（余白は描画しない） |
-
-### 2.14 `Imaging.ImageDrawMath`（static class）
-
-画像を描画先の領域へ配置する矩形（`SKRect`）の計算。 UI ホストを必要としない純粋関数のため、倍率・中央寄せ・空の扱いをヘッドレスで検証できます。
-
-| メンバー | シグネチャ | 説明 |
-| --- | --- | --- |
-| `ComputeDestination` | `static SKRect ComputeDestination(int sourceWidth, int sourceHeight, int targetWidth, int targetHeight, ImageDrawMode mode)` | 元画像を描画先の領域へ配置する矩形。 元画像・描画先のいずれかが 0 以下なら `SKRect.Empty`（描画しない） |
-
-```csharp
-// 親が割り当てた領域（800x600）へ、撮影画像を引き伸ばして敷く
-var dest = ImageDrawMath.ComputeDestination(image.Width, image.Height, 800, 600, ImageDrawMode.Fill);
-```
-
-画像を描く側は UI ごとに異なるため本クラスは計算だけを担い、実際の描画は各 UI の描画層（Skia を使う UI は独自の描画実装）が行います。
-
-### 2.15 `Geometry.EsPoint`（readonly record struct）
+### 2.13 `Geometry.EsPoint`（readonly record struct）
 
 ```csharp
 public readonly record struct EsPoint(double X, double Y);
@@ -230,7 +204,7 @@ var precise = mousePosition.Format(2);  // "(123.40, 456.70)"
 
 タプルへの分解（`var (x, y) = point;`）はレコードの自動生成が提供します（同じシグネチャを手書きすると二重定義になるため追加しません）。
 
-### 2.16 `Geometry.EsSize` / `Geometry.EsVector` / `Geometry.EsRect`（readonly record struct）
+### 2.14 `Geometry.EsSize` / `Geometry.EsVector` / `Geometry.EsRect`（readonly record struct）
 
 ```csharp
 public readonly record struct EsSize(double Width, double Height);
@@ -308,7 +282,7 @@ var edges = hole.ComputeInnerEdges(Math.Max(0.5, borderThickness));
 
 **名前を付けなかったもの**: `Left` / `Top` / `Position` は `X` / `Y` / `TopLeft` と同値のため設けません（同じ内容の別名を増やさない）。 `Translate(EsVector)` は `Offset` と同内容のため設けません（ベクターで移す場合は `rect.Offset(v.X, v.Y)`）。
 
-### 2.17 `Geometry.EsPointInt` / `Geometry.EsSizeInt` / `Geometry.EsRectInt`（readonly record struct）
+### 2.13 `Geometry.EsPointInt` / `Geometry.EsSizeInt` / `Geometry.EsRectInt`（readonly record struct）
 
 ```csharp
 public readonly record struct EsPointInt(int X, int Y);
@@ -335,7 +309,7 @@ public readonly record struct EsRectInt(int X, int Y, int Width, int Height);
 | 演算子 | `+` / `-`（点・サイズの成分ごと） | 整数の加減算（オーバーフローは .NET の既定どおり） |
 | `FromTuple` / `ToTuple` | `static Xxx FromTuple((...))` / `(...) ToTuple()` | タプルとの相互変換（全 3 型） |
 
-### 2.18 `Geometry.EsThickness`（readonly record struct）
+### 2.14 `Geometry.EsThickness`（readonly record struct）
 
 ```csharp
 public readonly record struct EsThickness(double Left, double Top, double Right, double Bottom);
@@ -343,11 +317,11 @@ public readonly record struct EsThickness(double Left, double Top, double Right,
 
 UI フレームワーク非依存の 4 辺の厚さ（Avalonia / MewUI の `Thickness` に対応）。 `new EsThickness(double uniform)`（全辺同値）・`Horizontal`（左 + 右）・`Vertical`（上 + 下）・`FromTuple` / `ToTuple` を提供し、`EsSize` / `EsRect` の `Inflate` / `Deflate` の引数になります。
 
-### 2.19 `Geometry.EsRectEdges`（readonly struct）
+### 2.13 `Geometry.EsRectEdges`（readonly struct）
 
 4 辺（上・下・左・右）の矩形を保持する固定長コンテナ（128 バイト）です。 `EsRect.ResolveInnerEdges` の戻り値であり、1 回あたり 4 要素の配列（約 160 バイト）を確保する `IReadOnlyList<EsRect>` の代替として、毎フレーム呼ばれる描画計画の解決で使います。 `Count`（= 4）・プロパティ（`Top` / `Bottom` / `Left` / `Right`）・インデクサ（0〜3、範囲外は `ArgumentOutOfRangeException`）・`ToArray` を提供します。 **`IReadOnlyList<T>` を実装しません**（値型をインターフェース経由で扱うとボックス化するため）。
 
-### 2.20 各フレームワークの操作との対照
+### 2.14 各フレームワークの操作との対照
 
 コアの幾何値型は、UI フレームワーク非依存のまま .NET 標準（`System.Drawing.Primitives` / `System.Numerics`）・WinUI3（`Windows.Foundation`）・Avalonia・MewUI の操作を写して提供します（UI 型そのものは参照しません）。
 
@@ -368,7 +342,7 @@ UI フレームワーク非依存の 4 辺の厚さ（Avalonia / MewUI の `Thic
 
 **WinUI3** は本ソリューションに参照アセンブリが無いため、相互変換（Interop）ではなく操作の対照のみを提供します。
 
-### 2.21 `EsPlatformHandle`（readonly record struct）
+### 2.13 `EsPlatformHandle`（readonly record struct）
 
 ```csharp
 public readonly record struct EsPlatformHandle(nint Handle, string? Descriptor = null);
@@ -376,7 +350,7 @@ public readonly record struct EsPlatformHandle(nint Handle, string? Descriptor =
 
 ネイティブウィンドウ識別子（Win32: HWND 等）。 `IsValid`（ハンドル値が 0 以外か）を提供します。 座標・寸法ではないためルート名前空間（`EsUtil.Platform.Core`）にあります。
 
-### 2.22 `Native.ICaptureService`（interface）
+### 2.14 `Native.ICaptureService`（interface）
 
 画面領域のキャプチャを抽象化します。 公開 API は UI フレームワーク非依存の型のみを使用します。 **ネイティブ実装を指す抽象は `EsUtil.Platform.Core.Native` 名前空間（`Native/`）に置きます**（値型・幾何はルート〜`Geometry` / `Imaging` / `Coord`）。
 
@@ -385,7 +359,7 @@ public readonly record struct EsPlatformHandle(nint Handle, string? Descriptor =
 | `CaptureArea` | `EsBitmap? CaptureArea(EsRectInt bounds)` | 指定画面領域（画面物理座標）をキャプチャ。 失敗時は null |
 | `CaptureVirtualScreen` | `EsBitmap? CaptureVirtualScreen(out EsPointInt origin)` | 仮想スクリーン全体を 1 回でキャプチャ |
 
-### 2.23 `Native.ICursorService`（interface）
+### 2.13 `Native.ICursorService`（interface）
 
 OS 依存のカーソル操作を抽象化します（UI フレームワーク標準で代替可能な機能は含めません）。
 
@@ -395,7 +369,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `SetCursorScreenPoint` | `void SetCursorScreenPoint(EsPointInt point)` | カーソルを画面物理座標へ移動 |
 | `ShowCursor` | `void ShowCursor(bool show)` | マウスポインターの表示/非表示を切替 |
 
-### 2.24 `Native.IWindowService`（interface）
+### 2.14 `Native.IWindowService`（interface）
 
 ネイティブウィンドウ操作を抽象化します。 ウィンドウは `EsPlatformHandle` で識別します。
 
@@ -406,7 +380,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `SetBounds` | `bool SetBounds(EsPlatformHandle handle, EsRectInt bounds)` | 位置・サイズを画面物理ピクセルで指定（未対応環境は false。 全モニターを跨ぐ配置に使う） |
 | `EvacuateWindow` | `void EvacuateWindow(EsPlatformHandle handle)` | 最前面解除・非表示・クローズ（UI ハング時の退避） |
 
-### 2.25 `Native.IElementFinder`（interface）
+### 2.13 `Native.IElementFinder`（interface）
 
 指定位置の要素（ウィンドウ・スクリーン）検出を抽象化します。
 
@@ -417,7 +391,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `ListScreens` | `IReadOnlyList<ElementFinderResults> ListScreens()` | 全スクリーン一覧 |
 | `ListWindows` | `IReadOnlyList<ElementFinderResults> ListWindows()` | 全ウィンドウ一覧 |
 
-### 2.26 `Native.ICursorOverrideGuard`（interface : IDisposable）
+### 2.14 `Native.ICursorOverrideGuard`（interface : IDisposable）
 
 選択操作中のカーソル上書き抑止を抽象化します。
 
@@ -427,7 +401,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `Attach` | `void Attach(EsPlatformHandle handle)` | 指定ウィンドウに抑止をアタッチ |
 | `Dispose` | `void Dispose()` | 抑止を解除 |
 
-### 2.27 `Native.IGlobalHotKeyService<T>`（interface : IDisposable）
+### 2.13 `Native.IGlobalHotKeyService<T>`（interface : IDisposable）
 
 グローバルホットキーの登録・解除・アクション配信を抽象化します。
 
@@ -438,7 +412,7 @@ OS 依存のカーソル操作を抽象化します（UI フレームワーク�
 | `UnregisterAll` | `void UnregisterAll()` | 全ホットキーを解除 |
 | `HotKeyPressed` | `event Action<T>? HotKeyPressed` | ホットキー押下時にアクションを配信 |
 
-### 2.28 `Native.ElementFinderResults`（readonly record struct）
+### 2.14 `Native.ElementFinderResults`（readonly record struct）
 
 ```csharp
 public readonly record struct ElementFinderResults(
@@ -451,7 +425,7 @@ public readonly record struct ElementFinderResults(
 
 要素検出の結果。 座標は入力と同じ画面物理座標で統一されます。
 
-### 2.29 `Native.Win.*`（Windows 実装）
+### 2.13 `Native.Win.*`（Windows 実装）
 
 上記抽象の Windows 実装です（`EsUtil.Platform.Core.Native.Win`）。 **実行時のプラットフォーム分岐（ファクトリ）は持たず、ホストが生成して抽象型として注入します**。 テストは同じ抽象を実装したモックを注入するため、Win32 環境を必要としません。
 
@@ -466,7 +440,7 @@ public readonly record struct ElementFinderResults(
 
 `Native.Win.WinNative`（internal）が Win32 P/Invoke の宣言を集約し、`Native.NativeLogMessage`（internal）が本層のログ定義を担います。
 
-### 2.30 `Native.Imaging.EsBitmapDrawingExtensions`（static class）
+### 2.14 `Native.Imaging.EsBitmapDrawingExtensions`（static class）
 
 `System.Drawing.Bitmap` と `EsBitmap` の相互変換です（`EsUtil.Platform.Core.Native.Imaging`。 `System.Drawing.Common` を使う Windows 専用）。
 
@@ -475,7 +449,7 @@ public readonly record struct ElementFinderResults(
 | `ToEsBitmap` | `static EsBitmap ToEsBitmap(this DrawingBitmap bitmap)` | `System.Drawing.Bitmap` から `EsBitmap` を作る（複製。 元の Bitmap は変更しない） |
 | `ToDrawingBitmap` | `static DrawingBitmap ToDrawingBitmap(this EsBitmap bitmap)` | `EsBitmap` から `System.Drawing.Bitmap`（`Format32bppPArgb`）を作る（複製） |
 
-### 2.31 `Coord.ICoordTransform`（interface）
+### 2.13 `Coord.ICoordTransform`（interface）
 
 ローカル DIP とドメイン座標の双方向変換ポート。 座標はコア幾何型で扱います。 軸はこの 1 つだけであり、DIP とデバイスピクセルの換算は `DpiScaler` が単一所有します。
 
@@ -485,7 +459,7 @@ public readonly record struct ElementFinderResults(
 | `ToDip` | `EsPoint ToDip(EsPoint domain)` | ドメイン座標 → ローカル DIP 座標 |
 | `DomainBounds` | `EsSize? DomainBounds { get; }` | ドメイン座標の境界（null = 無制限） |
 
-### 2.32 `Coord.CoordTransform`（sealed class : ICoordTransform）
+### 2.14 `Coord.CoordTransform`（sealed class : ICoordTransform）
 
 `Func` 委譲による変換ポートを提供します。 倍率の向きは 1 通り（ドメイン座標 / ローカル DIP）だけです。
 
@@ -495,7 +469,7 @@ public readonly record struct ElementFinderResults(
 | `DipToDomain` | `static ICoordTransform DipToDomain(Func<double> domainPerDip, Func<EsSize?>? domainBounds = null)` | ドメイン = ローカル DIP × `domainPerDip`（呼び出し毎評価。 倍率は ドメイン座標 / ローカル DIP。 0 以下は 1.0 扱い。 境界を省略すると無制限） |
 | コンストラクタ | `CoordTransform(Func<EsPoint, EsPoint> toDomain, Func<EsPoint, EsPoint> toDip, Func<EsSize?> domainBounds)` | 変換関数を直接注入（軸は利用側が定義） |
 
-### 2.33 `Imaging.EsBitmap`（sealed class : IDisposable）
+### 2.13 `Imaging.EsBitmap`（sealed class : IDisposable）
 
 **自前のピクセルバッファ**（BGRA8888・アルファ乗算済み）を所有するピクセルコンテナ。 `NativeMemory.AlignedAlloc` で 64 バイト整列して確保し、**確保直後に全領域を 0（透明）で初期化します**（透明 = 全成分 0 が「描かれていない」の表現であるため）。 **外部パッケージへ依存しない**。
 

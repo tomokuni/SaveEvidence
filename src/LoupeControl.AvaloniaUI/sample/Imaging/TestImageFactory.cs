@@ -1,5 +1,5 @@
 using Avalonia.Media;
-using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.Loupe.Sample.Imaging;

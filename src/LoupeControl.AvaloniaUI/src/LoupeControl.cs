@@ -7,7 +7,7 @@ using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Feature.Loupe.Presenter.Drawing;
 using EsUtil.Feature.Loupe.Presenter.Label;
 using EsUtil.Feature.Loupe.Presenter.Setting;
-using EsUtil.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
@@ -15,7 +15,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using static EsUtil.Feature.Loupe.Core.Loupe.Limits;
-using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.Loupe.Core.Setting;
 
 

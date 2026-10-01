@@ -3,7 +3,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
-using EsUtil.Platform.Skia;
+using EsUtil.SaveEvidence.Platform.Skia;
 
 
 namespace EsUtil.SaveEvidence.Loupe.MewUI.Tests;
