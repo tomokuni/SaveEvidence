@@ -104,7 +104,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | Marquee | [`Feature.Marquee.Core`](Feature.Marquee.Core/README.md) | [`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) |
 | Loupe | [`Feature.Loupe.Core`](Feature.Loupe.Core/README.md) | [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md) |
 | CaptureSession | [`CaptureSessionControl.Core`](CaptureSessionControl.Core/README.md) | [`CaptureSessionControl.UIBase`](CaptureSessionControl.UIBase/README.md) |
-| FadeMaskDragRect | [`CaptureSessionControl.Core`](CaptureSessionControl.Core/README.md) | [`FadeMaskDragRectControl.UIBase`](FadeMaskDragRectControl.UIBase/README.md) |
+| FadeMaskDragRect | [`CaptureSessionControl.Core`](CaptureSessionControl.Core/README.md) | [`CaptureSessionControl.UIBase`](CaptureSessionControl.UIBase/README.md) |
 
 FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) / [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md)）。
 

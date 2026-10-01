@@ -10,6 +10,9 @@
   色が無言で効かなくなる）。
 - **製品の設定型を再利用ライブラリへ持ち込まない**。 写像元がセッションの設定型（`CaptureSettings`）であるため、
   本層は `CaptureSessionControl` 側の共有層として置く。
+- **複合コントロールの共有処理も本層が持つ**。 設定とモードから子コントロールの値を決める手順（`FadeMaskDragRectChildValues`）と、
+  付加情報ラベル（操作・情報）の配置指示（`FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`）は
+  同じ「UI 間で共有する処理」であり、本層に集約して両 UI の配線が同じ規則を使うことを保証する。
 
 ## 層の位置付け
 
@@ -24,23 +27,28 @@ Feature.Marquee.Presenter / Feature.Loupe.Presenter ─┐（描画の設定＝�
 
 - `CaptureSessionControl.Core` は描画層を参照できない（Core → UIBase の逆流になる）。 したがって**色の写像は
   コアに置けない**。
-- `FadeMaskDragRectControl.UIBase` は再利用ライブラリであるため、製品の設定型（`CaptureSettings`）へ依存させない。
-  よって本層は `CaptureSessionControl` 側に置く。
-- **寸法・表示可否は本層が写像しない**（`FadeMaskDragRectOptionsMapper`（コア）が単一所有する）。 本層は色だけを扱う。
+- 製品の設定型（`CaptureSettings`）に依存する写像は、再利用ライブラリではなく本層（セッション側の共有層）に置く。
+- **寸法・表示可否は本層が写像しない**（`FadeMaskDragRectOptionsMapper`（コア） が単一所有する）。 写像は色だけを扱う。
 
 ## 構成
 
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `CapturePaintMapper` | `internal static` | `CaptureSettings` → `MarqueeAppearance` / `LoupeAppearance` の写像 |
+| `FadeMaskDragRectChildValues` | `public readonly record struct` | 設定とモードから内包コントロールへ適用する値を解決する |
+| `FadeMaskHostLabelRenderer` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示を解決する |
+| `MarqueeHostLabelRenderer` | `public static class` | ラベル 1 行の体裁（背景 = 文字の実寸 + 内側余白 × 2）の配置指示を解決する |
 
 ## 依存関係
 
 ```text
 CaptureSessionControl.UIBase
-    ├── CaptureSessionControl.Core（CaptureSettings）
-    ├── Feature.Marquee.Presenter（MarqueeAppearance）
-    └── Feature.Loupe.Presenter（LoupeAppearance）
+    ├─ CaptureSessionControl.Core（CaptureSettings / FadeMaskDragRectOptions / Mode / Modes）
+    ├─ Feature.Marquee.Core（MarqueeOptions）
+    ├─ Feature.Loupe.Core（LoupeOptions）
+    ├─ Feature.Marquee.Presenter（MarqueeAppearance / MarqueeLabelPlacement）
+    ├─ Feature.Loupe.Presenter（LoupeAppearance）
+    └─ Platform.Core（Es* 幾何型）
 ```
 
 UI フレームワークへ依存しません。 外部パッケージへの直接依存もありません。
@@ -71,7 +79,10 @@ LoupeAppearance loupe = CapturePaintMapper.ToLoupeAppearance(settings, backgroun
 
 ```text
 tests/
-└── CapturePaintMapper.Tests.cs  # 写像の網羅・枠線の共有・画像外の色・引数の検証（6 件）
+├── CapturePaintMapper.Tests.cs         # 写像の網羅・枠線の共有・画像外の色・引数の検証（8 件）
+├── FadeMaskDragRectChildValues.Tests.cs # モードから導出する値の上書き（9 件）
+├── FadeMaskHostLabelRenderer.Tests.cs  # 付加情報ラベルの縦積みと表示可否（12 件）
+└── MarqueeHostLabelRenderer.Tests.cs   # ラベル 1 行の体裁（背景の寸法の検証）（6 件）
 ```
 
 ```powershell
