@@ -3,7 +3,7 @@ using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Loupe.Core.Setting;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="FadeMaskDragRectOptions"/> の単体テスト（既定値・部分変更）。</summary>
 /// <remarks>UI 非依存の値型のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>

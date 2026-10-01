@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="FadeMaskDragRectSelection"/> の単体テスト（選択矩形の可否判定）。</summary>
 /// <remarks>UI 非依存の判定のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>

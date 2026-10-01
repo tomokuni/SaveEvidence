@@ -6,6 +6,7 @@ using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using Xunit;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 
@@ -123,3 +124,4 @@ public class FadeMaskDragRectControlStateTests
         Assert.Equal(1.0, control.MarqueeAppearance.OuterBorderThickness);
     }
 }
+

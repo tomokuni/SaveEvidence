@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core;
-using EsUtil.SaveEvidence.FadeMaskDragRect;
 
 namespace EsUtil.SaveEvidence.CaptureSession;
 

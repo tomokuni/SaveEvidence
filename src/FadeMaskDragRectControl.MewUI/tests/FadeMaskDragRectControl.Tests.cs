@@ -10,6 +10,7 @@ using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Marquee.Presenter.Setting;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI.Tests;
 
@@ -704,3 +705,4 @@ public class FadeMaskDragRectControlTests
         Assert.True(control.ShowFullOverlay);
     }
 }
+

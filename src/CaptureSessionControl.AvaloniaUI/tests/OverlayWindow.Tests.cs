@@ -10,7 +10,6 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.FadeMaskDragRect;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;

@@ -6,6 +6,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.MewUI;
 using Microsoft.Extensions.Logging;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CropView.MewUI;
 
@@ -179,3 +180,4 @@ public sealed class CropViewControl : Grid
     public EsPoint TranslatePositionFrom(Element element, EsPoint position)
         => element.TranslatePoint(new Point(position.X, position.Y), this).ToEsPoint();
 }
+

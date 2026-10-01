@@ -35,7 +35,7 @@
     <!-- 座標変換ポート（ICoordTransform / CoordTransform） -->
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
     <!-- UI 非依存の動作モード・選択矩形オーバーレイ描画 -->
-    <ProjectReference Include="..\..\FadeMaskDragRectControl.Core\src\FadeMaskDragRectControl.Core.csproj" />
+    <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
   </ItemGroup>
 
 </Project>

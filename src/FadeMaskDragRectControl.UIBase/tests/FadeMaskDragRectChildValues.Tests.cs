@@ -4,6 +4,7 @@ using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase.Tests;
 
@@ -105,3 +106,4 @@ public class FadeMaskDragRectChildValuesTests
         Assert.NotEqual(a, FadeMaskDragRectChildValues.Resolve(CreateOptions(), FadeMaskDragRectMode.WindowSelect, CreateAppearance()));
     }
 }
+

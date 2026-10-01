@@ -2,7 +2,7 @@ using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Feature.Loupe.Core.Setting;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>領域選択の複合コントロール（選択矩形 + 暗転マスク + ルーペ）の設定を 1 つにまとめた不変の値。</summary>
 /// <remarks>

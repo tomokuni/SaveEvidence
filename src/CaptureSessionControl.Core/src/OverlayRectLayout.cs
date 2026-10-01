@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.SaveEvidence.CropView;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>オーバーレイ矩形を描画するための配置と外観の計算を単一所有する（純粋関数）。</summary>
 /// <remarks>

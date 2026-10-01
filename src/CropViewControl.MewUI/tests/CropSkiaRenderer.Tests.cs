@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CropView.MewUI.Tests;
 
@@ -217,3 +218,4 @@ public class CropSkiaRendererTests
         Assert.Throws<ArgumentNullException>(() => CropSkiaRenderer.Render(null!, CreateFrame(info)));
     }
 }
+

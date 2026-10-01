@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="FadeMaskDragRectOverlay"/>（選択矩形破線オーバーレイ描画）の単体テスト。</summary>
 /// <remarks>

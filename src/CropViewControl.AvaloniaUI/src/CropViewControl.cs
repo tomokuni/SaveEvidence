@@ -10,7 +10,7 @@ using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using EsUtil.SaveEvidence.ZoomView.AvaloniaUI;
-using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;

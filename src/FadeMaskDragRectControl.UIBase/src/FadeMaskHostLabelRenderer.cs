@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Presenter.Label;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.UIBase;
 
@@ -105,3 +106,4 @@ public static class FadeMaskHostLabelRenderer
     private static double NextTop(double top, double lineHeight, double padding)
         => top + lineHeight + padding * 2;
 }
+

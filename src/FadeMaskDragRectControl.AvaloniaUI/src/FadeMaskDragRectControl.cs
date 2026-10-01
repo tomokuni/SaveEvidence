@@ -15,6 +15,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using EsUtil.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;
 
@@ -653,3 +654,4 @@ public sealed class FadeMaskDragRectControl : Panel
         return finalSize;
     }
 }
+

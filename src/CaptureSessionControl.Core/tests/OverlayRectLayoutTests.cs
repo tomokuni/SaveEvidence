@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.SaveEvidence.CropView.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="OverlayRectLayout"/> と <see cref="OverlayRectFrame"/> の仕様テスト。</summary>
 /// <remarks>

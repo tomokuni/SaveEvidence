@@ -26,7 +26,7 @@
 
   <ItemGroup>
     <!-- UI 非依存の矩形オーバーレイ定義とラスタライザ -->
-    <ProjectReference Include="..\..\CropViewControl.Core\src\CropViewControl.Core.csproj" />
+    <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
     <!-- 領域選択オーバーレイ（Marquee + FadeMask + Loupe） -->
     <ProjectReference Include="..\..\FadeMaskDragRectControl.AvaloniaUI\src\FadeMaskDragRectControl.AvaloniaUI.csproj" />
     <!-- 画像ビューポート（拡大・パン・Fit） -->

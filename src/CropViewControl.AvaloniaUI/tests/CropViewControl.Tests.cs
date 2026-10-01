@@ -12,7 +12,7 @@ using Size = Avalonia.Size;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Feature.Marquee.Presenter;
-using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;

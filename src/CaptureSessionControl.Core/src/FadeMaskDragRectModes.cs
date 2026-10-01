@@ -1,4 +1,4 @@
-namespace EsUtil.SaveEvidence.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>動作モード（<see cref="FadeMaskDragRectMode"/>）から導出される状態を提供する静的クラス。</summary>
 /// <remarks>

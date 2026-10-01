@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.Skia;
+using EsUtil.SaveEvidence.CaptureSession;
 
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
@@ -44,3 +45,4 @@ internal static class FadeMaskDragRectSkiaRenderer
 
     // ※ 色の変換（コアの色型 → Skia）は Platform.Core の SkiaColorInterop（拡張メソッド）を共用する
 }
+

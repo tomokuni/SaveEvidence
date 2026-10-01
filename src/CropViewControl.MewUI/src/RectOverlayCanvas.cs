@@ -4,6 +4,7 @@ using EsUtil.SaveEvidence.ZoomView.MewUI;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CropView.MewUI;
 
@@ -100,3 +101,4 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
         }
     }
 }
+

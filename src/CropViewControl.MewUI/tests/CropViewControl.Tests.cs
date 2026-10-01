@@ -5,6 +5,7 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CropView.MewUI.Tests;
 
@@ -247,3 +248,4 @@ public class CropViewControlTests
         Assert.Same(control.ZoomView.Log, control.Log);
     }
 }
+

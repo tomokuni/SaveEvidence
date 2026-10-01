@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.SaveEvidence.CropView;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>オーバーレイとして表示する矩形の描画情報。</summary>
 /// <param name="Bounds">矩形（ドメイン座標 = 元画像ピクセル座標）。</param>

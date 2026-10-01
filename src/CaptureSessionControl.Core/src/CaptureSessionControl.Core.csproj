@@ -14,9 +14,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Platform.Core: コア幾何型・DPI 変換。FadeMaskDragRectControl.Core: 複合コントロールの設定値（CaptureSettings からの変換先） -->
+    <!-- Platform.Core: コア幾何型・DPI 変換 -->
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
-    <ProjectReference Include="..\..\FadeMaskDragRectControl.Core\src\FadeMaskDragRectControl.Core.csproj" />
+    <!-- 動作モードから FadeMaskRenderMode への変換、および設定の単一値（MarqueeOptions / LoupeOptions）の集約のため -->
+    <ProjectReference Include="..\..\Feature.Marquee.Core\src\Feature.Marquee.Core.csproj" />
+    <ProjectReference Include="..\..\Feature.Loupe.Core\src\Feature.Loupe.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,8 +27,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- internal 型はテストからのみ参照する（公開 API を増やさない） -->
+    <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
     <InternalsVisibleTo Include="CaptureSessionControl.Core.Tests" />
+    <InternalsVisibleTo Include="CaptureSessionControl.AvaloniaUI" />
+    <InternalsVisibleTo Include="CaptureSessionControl.AvaloniaUI.Tests" />
+    <InternalsVisibleTo Include="CaptureSessionControl.MewUI" />
+    <InternalsVisibleTo Include="CaptureSessionControl.UIBase" />
+    <InternalsVisibleTo Include="CaptureSessionControl.UIBase.Tests" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.CropView.AvaloniaUI" />
+    <InternalsVisibleTo Include="CropViewControl.MewUI.Tests" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.FadeMaskDragRect.MewUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.FadeMaskDragRect.UIBase" />
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.AvaloniaUI.Tests" />
+    <InternalsVisibleTo Include="FadeMaskDragRectControl.MewUI.Tests" />
   </ItemGroup>
 
   <ItemGroup>

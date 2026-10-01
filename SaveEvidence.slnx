@@ -35,11 +35,6 @@
     <Project Path="src/ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj" />
     <Project Path="src/ColorPickerControl.AvaloniaUI/tests/ColorPickerControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/CropViewControl.Core/">
-    <Project Path="src/CropViewControl.Core/src/CropViewControl.Core.csproj" />
-    <Project Path="src/CropViewControl.Core/tests/CropViewControl.Core.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/CropViewControl.Core/src/" />
   <Folder Name="/src/CropViewControl.MewUI/">
     <Project Path="src/CropViewControl.MewUI/src/CropViewControl.MewUI.csproj" />
     <Project Path="src/CropViewControl.MewUI/tests/CropViewControl.MewUI.Tests.csproj" />
@@ -73,11 +68,6 @@
     <Project Path="src/MarqueeControl.AvaloniaUI/src/MarqueeControl.AvaloniaUI.csproj" />
     <Project Path="src/MarqueeControl.AvaloniaUI/tests/MarqueeControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/FadeMaskDragRectControl.Core/">
-    <Project Path="src/FadeMaskDragRectControl.Core/src/FadeMaskDragRectControl.Core.csproj" />
-    <Project Path="src/FadeMaskDragRectControl.Core/tests/FadeMaskDragRectControl.Core.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/FadeMaskDragRectControl.Core/src/" />
   <Folder Name="/src/FadeMaskDragRectControl.MewUI/">
     <Project Path="src/FadeMaskDragRectControl.MewUI/src/FadeMaskDragRectControl.MewUI.csproj" />
     <Project Path="src/FadeMaskDragRectControl.MewUI/tests/FadeMaskDragRectControl.MewUI.Tests.csproj" />

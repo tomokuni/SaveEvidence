@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <!-- UI 非依存の純粋ロジック（Core）とコア幾何型を参照する -->
-    <ProjectReference Include="..\..\CropViewControl.Core\src\CropViewControl.Core.csproj" />
+    <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
     <ProjectReference Include="..\..\ZoomViewControl.MewUI\src\ZoomViewControl.MewUI.csproj" />
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
   </ItemGroup>

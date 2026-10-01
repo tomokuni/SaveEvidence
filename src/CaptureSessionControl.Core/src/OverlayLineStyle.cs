@@ -1,4 +1,4 @@
-namespace EsUtil.SaveEvidence.CropView;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>オーバーレイ矩形（外部提供の矩形）の枠線スタイル。</summary>
 public enum OverlayLineStyle

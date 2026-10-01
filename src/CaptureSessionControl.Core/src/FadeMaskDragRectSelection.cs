@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>選択矩形の可否判定を提供する静的クラス。</summary>
 /// <remarks>

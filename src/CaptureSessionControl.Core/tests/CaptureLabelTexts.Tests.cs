@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core;
-using EsUtil.SaveEvidence.FadeMaskDragRect;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.CaptureSession.Tests;

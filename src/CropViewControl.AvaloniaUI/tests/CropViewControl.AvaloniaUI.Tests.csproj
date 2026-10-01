@@ -25,7 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\src\CropViewControl.AvaloniaUI.csproj" />
     <!-- 矩形オーバーレイの型・ラスタライザを直接検証するため Core を参照する -->
-    <ProjectReference Include="..\..\CropViewControl.Core\src\CropViewControl.Core.csproj" />
+    <ProjectReference Include="..\..\CaptureSessionControl.Core\src\CaptureSessionControl.Core.csproj" />
     <ProjectReference Include="..\..\FadeMaskDragRectControl.AvaloniaUI\src\FadeMaskDragRectControl.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\ZoomViewControl.AvaloniaUI\src\ZoomViewControl.AvaloniaUI.csproj" />
   </ItemGroup>

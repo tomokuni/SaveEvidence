@@ -22,6 +22,7 @@ using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.Loupe.Core.Setting;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI.Tests;
 
@@ -1017,3 +1018,4 @@ public class FadeMaskDragRectControlTests
     // 選択矩形破線オーバーレイの描画は純粋な静的メソッド（DrawSelectionRectOverlay）のため、
     // EsBitmap のみを使用し、ヘッドレス不要で並列実行できるテスト（FadeMaskDragRectOverlayTests）で検証する。
 }
+

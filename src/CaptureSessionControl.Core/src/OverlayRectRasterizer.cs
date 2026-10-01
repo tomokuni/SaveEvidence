@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.SaveEvidence.CropView;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>オーバーレイ矩形の 4 辺をルーペ画像（<see cref="EsBitmap"/>）へラスタライズする。</summary>
 /// <remarks>

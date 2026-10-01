@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.SaveEvidence.CropView;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>オーバーレイ矩形 1 個分の描画入力（コア⇔UI の契約）。</summary>
 /// <remarks>

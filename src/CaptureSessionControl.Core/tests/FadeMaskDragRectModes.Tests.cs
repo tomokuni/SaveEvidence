@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace EsUtil.SaveEvidence.FadeMaskDragRect.Tests;
+namespace EsUtil.SaveEvidence.CaptureSession.Tests;
 
 /// <summary><see cref="FadeMaskDragRectModes"/> の単体テスト（モードから導出される状態）。</summary>
 /// <remarks>純粋な分岐のみのため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>

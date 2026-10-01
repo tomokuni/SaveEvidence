@@ -1,4 +1,4 @@
-namespace EsUtil.SaveEvidence.CropView;
+namespace EsUtil.SaveEvidence.CaptureSession;
 
 /// <summary>オーバーレイ矩形の枠線スタイルに対応するダッシュ長を単一所有する。</summary>
 /// <remarks>
