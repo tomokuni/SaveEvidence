@@ -1,4 +1,3 @@
-using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;

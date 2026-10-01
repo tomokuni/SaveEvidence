@@ -5,7 +5,6 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.CaptureSession;
 
 namespace EsUtil.SaveEvidence.CaptureSession.MewUI.Tests.CropView;
 

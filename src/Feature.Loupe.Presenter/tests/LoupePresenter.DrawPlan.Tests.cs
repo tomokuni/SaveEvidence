@@ -1,6 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
-using EsUtil.Feature.Loupe.Presenter.Drawing;
 
 namespace EsUtil.Feature.Loupe.Presenter.Tests;
 

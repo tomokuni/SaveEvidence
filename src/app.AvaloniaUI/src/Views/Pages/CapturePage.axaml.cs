@@ -1,7 +1,5 @@
-using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Globalization;
-using Rect = Avalonia.Rect;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.CaptureSession.AvaloniaUI;
@@ -19,14 +17,12 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Views.Pages;

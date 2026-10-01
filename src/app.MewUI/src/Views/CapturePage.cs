@@ -3,7 +3,6 @@ using Aprillz.MewUI.Controls;
 using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.SaveEvidence.CaptureSession.MewUI;
 using EsUtil.SaveEvidence.Marquee.MewUI;
-using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.ZoomView.MewUI;
 using EsUtil.SaveEvidence.ZoomView;
@@ -17,7 +16,6 @@ using EsUtil.SaveEvidence.MewUI.Icons;
 using EsUtil.SaveEvidence.MewUI.Logging;
 using EsUtil.SaveEvidence.MewUI.Services;
 using MewUIColor = Aprillz.MewUI.Color;
-using EsUtil.Feature.Marquee.Core.Setting;
 
 namespace EsUtil.SaveEvidence.MewUI.Views;
 

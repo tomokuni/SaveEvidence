@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
-using EsUtil.Feature.Loupe.Presenter;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coord;
@@ -12,7 +11,6 @@ using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 using System.ComponentModel;
 using System.Reactive.Linq;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Loupe.Core.Setting;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;
 

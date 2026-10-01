@@ -1,7 +1,6 @@
 using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
-using DrawingColor = System.Drawing.Color;
 using EsUtil.Feature.Loupe.Presenter.Drawing;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 

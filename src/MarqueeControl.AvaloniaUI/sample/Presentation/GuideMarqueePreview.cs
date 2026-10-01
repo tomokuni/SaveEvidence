@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Media;
-using EsUtil.Feature.Marquee.Presenter;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 

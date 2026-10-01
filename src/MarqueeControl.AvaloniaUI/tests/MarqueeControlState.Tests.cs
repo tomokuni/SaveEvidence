@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter;
 
 namespace EsUtil.SaveEvidence.Marquee.AvaloniaUI.Tests;
 

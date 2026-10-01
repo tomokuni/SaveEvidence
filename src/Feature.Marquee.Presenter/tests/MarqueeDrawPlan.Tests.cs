@@ -1,4 +1,3 @@
-using EsUtil.Feature.Marquee.Core.Drawing;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;

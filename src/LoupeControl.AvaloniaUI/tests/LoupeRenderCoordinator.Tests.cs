@@ -1,4 +1,3 @@
-using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.Loupe.AvaloniaUI.Tests;
