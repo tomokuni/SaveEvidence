@@ -29,7 +29,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 | 言語 | C#（.NET 10） |
 | UI フレームワーク | Avalonia 12.1 |
 | 内包コントロール | ZoomViewControl / FadeMaskDragRectControl |
-| 依存プロジェクト | `CropViewControl.Core`（矩形オーバーレイの定義と描画入力の解決）/ `ZoomViewControl` / `FadeMaskDragRectControl` |
+| 依存プロジェクト | `CaptureSessionControl.Core`（矩形オーバーレイの定義と描画入力の解決）/ `ZoomViewControl` / `FadeMaskDragRectControl` |
 
 ## 3. アーキテクチャ
 
@@ -51,7 +51,7 @@ flowchart TB
         Loupe["LoupeControl"]
         Zoom["ZoomViewControl"]
         DR["MarqueeControl（外側の装飾）"]
-        Core["CropViewControl.Core<br/>OverlayRect / OverlayRectLayout<br/>OverlayRectFrame / OverlayRectRasterizer"]
+        Core["CaptureSessionControl.Core<br/>OverlayRect / OverlayRectLayout<br/>OverlayRectFrame / OverlayRectRasterizer"]
     end
 
     H -->|"Source / Rects / SelectionMode / Zoom"| Ctl
@@ -79,24 +79,24 @@ flowchart TB
 | ファイル | 責務 |
 | --- | --- |
 | `CropViewControl.cs` | 高レベル複合コントロール本体。 ZoomViewControl / FadeMaskDragRect / 矩形オーバーレイの組み立て・配線・子の重なり順・入力の転送。 ズーム操作・座標変換・コア確定値の図形要素への写像。 |
-| `CropViewControl.Core/src/OverlayRect.cs` | 外部提供矩形の描画情報（record struct）。 矩形（`EsRect`）・破線種類・前景色・背景色・線幅。 |
-| `CropViewControl.Core/src/OverlayLineStyle.cs` | 枠線スタイル enum（Solid / Dashed / Dotted）。 |
-| `CropViewControl.Core/src/OverlayRectLayout.cs` | 描画入力の解決（負サイズのクランプ・太さの下限・破線の判定）。 |
-| `CropViewControl.Core/src/OverlayRectFrame.cs` | 矩形 1 個分の描画入力（配置・太さ・半幅・破線・色・描画可否）。 |
-| `CropViewControl.Core/src/OverlayLineDash.cs` | スタイルごとのダッシュ長の単一所有（ベクター経路とラスタ経路で共有）。 |
-| `CropViewControl.Core/src/OverlayRectRasterizer.cs` | 矩形の 4 辺をルーペ画像（`EsBitmap`）へ描画する（太さ・破線の色交互）。 |
+| `CaptureSessionControl.Core/src/OverlayRect.cs` | 外部提供矩形の描画情報（record struct）。 矩形（`EsRect`）・破線種類・前景色・背景色・線幅。 |
+| `CaptureSessionControl.Core/src/OverlayLineStyle.cs` | 枠線スタイル enum（Solid / Dashed / Dotted）。 |
+| `CaptureSessionControl.Core/src/OverlayRectLayout.cs` | 描画入力の解決（負サイズのクランプ・太さの下限・破線の判定）。 |
+| `CaptureSessionControl.Core/src/OverlayRectFrame.cs` | 矩形 1 個分の描画入力（配置・太さ・半幅・破線・色・描画可否）。 |
+| `CaptureSessionControl.Core/src/OverlayLineDash.cs` | スタイルごとのダッシュ長の単一所有（ベクター経路とラスタ経路で共有）。 |
+| `CaptureSessionControl.Core/src/OverlayRectRasterizer.cs` | 矩形の 4 辺をルーペ画像（`EsBitmap`）へ描画する（太さ・破線の色交互）。 |
 
 ## 5. 依存関係
 
 - `CropViewControl.cs` → `ZoomViewControl` / `FadeMaskDragRectControl` / `Avalonia`
 - `CropViewControl.cs` → `LoupeControl`（ルーペへの矩形描画のため `LoupeRenderedEventArgs`）
-- `CropViewControl.cs` → `CropViewControl.Core`（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）
+- `CropViewControl.cs` → `CaptureSessionControl.Core`（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）
 - `CropViewControl.cs` → `Platform.AvaloniaUI`（座標変換ポート `ICoordTransform` は `Platform.Core` 提供 / `EsBitmap` は `Platform.Core` 提供 / 色の相互変換は `ColorAvaloniaInterop`）/ `Microsoft.Extensions.Logging`（`ILogger`）
 - `OverlayRect.cs` → `Platform.Core`（`EsRect`）。 色は `System.Drawing.Color`（UI 非依存）
 - `OverlayRectRasterizer.cs` → `Platform.Core`（`EsBitmap` / `EsPoint`）。 Avalonia には依存しない
 - `OverlayLineStyle.cs` → `EsUtil` 非依存（純粋 enum）
 
-依存方向は **CropViewControl → CropViewControl.Core → Platform.Core** の一方向です。
+依存方向は **CropViewControl → CaptureSessionControl.Core → Platform.Core** の一方向です。
 
 ## 6. 例外処理ポリシー
 

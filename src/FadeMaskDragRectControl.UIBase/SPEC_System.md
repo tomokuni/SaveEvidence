@@ -27,7 +27,7 @@
 graph LR
   A[FadeMaskDragRectControl.AvaloniaUI] --> U[FadeMaskDragRectControl.UIBase]
   B[FadeMaskDragRectControl.MewUI] --> U
-  U --> C[FadeMaskDragRectControl.Core]
+  U --> C[CaptureSessionControl.Core]
   U --> M[Feature.Marquee.Core]
   U --> L[Feature.Loupe.Core]
   U --> H[Feature.Marquee.Presenter]
@@ -174,7 +174,7 @@ flowchart TD
 ## 可視性ポリシー
 
 - 両 UI が参照する値と配置指示は `public`（UI 層が直接使う契約）。
-- `FadeMaskDragRectControl.Core` の `internal` 型（`FadeMaskDragRectModes` / `FadeMaskDragRectState`）は
+- `CaptureSessionControl.Core` の `internal` 型（`FadeMaskDragRectModes` / `FadeMaskDragRectState`）は
   `InternalsVisibleTo`（`FadeMaskDragRectControl.UIBase`）で参照します。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。
 

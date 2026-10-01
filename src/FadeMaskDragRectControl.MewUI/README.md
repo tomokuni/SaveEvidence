@@ -8,7 +8,7 @@
 - **Facade / Composite**: 2 つの MewUI コントロール（`MarqueeControl`（外側の装飾を含む） / `LoupeControl`）を
   重ねて配置し、ホストへ統一インターフェースを提供します。 ホストはライフサイクルとモード固有処理に専念できます。
 - **モード切替**: `Mode` を設定するだけで、選択矩形とルーペの可視性・全面暗転が切り替わります
-  （モードの解釈は `FadeMaskDragRectControl.Core` が単一所有）。
+  （モードの解釈は `CaptureSessionControl.Core` が単一所有）。
 - **状態同期の内蔵**: 選択矩形の変更・開始・キャンセルを暗転マスクへ同期し、前の矩形の残留を防ぎます。
 - **ルーペの自動配置**: 中心（ドメイン座標）+ オフセットから表示位置を計算し、親領域内へ補正します
   （計算はコアの公開ファサード `Loupe.ResolveLayout` が単一所有）。
@@ -18,7 +18,7 @@
 ## 使い方
 
 ```csharp
-using EsUtil.SaveEvidence.FadeMaskDragRect;
+using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.SaveEvidence.FadeMaskDragRect.MewUI;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;

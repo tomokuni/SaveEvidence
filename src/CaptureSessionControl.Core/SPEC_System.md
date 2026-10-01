@@ -235,6 +235,55 @@ classDiagram
     CaptureResult ..> EsRectInt : 保持
 ```
 
+### 3.5 統合したコア（矩形オーバーレイ / 領域選択）
+
+切り出しビューの矩形オーバーレイと、領域選択の複合コントロールのコアを本プロジェクトが所有します（旧 `CaptureSessionControl.Core` / `CaptureSessionControl.Core` を統合）。
+
+```text
+┌──────────────────────────────────────────────────────┐
+│ 矩形オーバーレイ（契約と判断）                          │
+│  OverlayRect（record struct）: Bounds / Style / 前景色 / 背景色 / Thickness │
+│  OverlayLineStyle: Solid / Dashed / Dotted            │
+│  OverlayRectLayout: Resolve（クランプ・太さの下限・破線の判定） / EffectiveThickness │
+│  OverlayRectFrame（record struct）: 描画入力（配置・太さ・半幅・破線・色・可否） │
+│  OverlayLineDash: Get / IsDashed（ダッシュ長の単一所有） │
+│  OverlayRectRasterizer: Draw（4 辺を EsBitmap へラスタライズ） │
+└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ 領域選択の複合コントロールのコア                        │
+│  FadeMaskDragRectMode: Crop / AreaSelect / ScreenSelect / WindowSelect │
+│  FadeMaskDragRectOptions（record）: Marquee / Labels / Loupe / 破線色 2 / LoupeOffset │
+│  FadeMaskDragRectLabelOptions（record）: 操作・情報ラベルの外観 │
+│  FadeMaskDragRectModes: Resolve（モード → 状態）        │
+│  FadeMaskDragRectState: UsesSelection / ShowFullOverlay / ShowSelectionOverlay │
+│  FadeMaskDragRectSelection: IsUsable（選択の可否）       │
+│  FadeMaskDragRectOverlay: DrawSelectionRect（2 色の破線） │
+└──────────────────────────────────────────────────────┘
+```
+
+**矩形オーバーレイは「どう描くか」の判断（負サイズのクランプ・太さの 1 ピクセル下限・破線かどうか・背景色を使うか）を本プロジェクトが単一所有**し、UI 層はドメイン座標 → ビューポート座標の変換と、確定した描画入力の写像だけを行います（MewUI の値型は負のサイズを 0 へクランプしますが Avalonia は保持するため、本層を通して両 UI の挙動を揃えます）。
+
+**領域選択のコアは動作モードの型・設定の単一値・モードから導出する表示可否・選択矩形の可否判定・ルーペ画像への破線描画を単一所有**します（両 UI が同じ型と判断を使うため、UI ごとに `switch` や「幅 > 0」の判定を書く余地がありません）。
+
+```mermaid
+classDiagram
+    class OverlayLineStyle { <<enum>> Solid  Dashed  Dotted }
+    class OverlayRect { <<readonly record struct>> +EsRect Bounds  +OverlayLineStyle Style  +Color Foreground  +Color Background  +double Thickness }
+    class OverlayRectFrame { <<readonly record struct>> +EsRect Bounds  +double Thickness  +double HalfThickness  +bool IsDashed  +bool DrawsBackground  +bool HasDrawableSize }
+    class OverlayRectLayout { <<static>> +Resolve(rect, topLeft, bottomRight)$ OverlayRectFrame  +EffectiveThickness(thickness)$ double }
+    class FadeMaskDragRectMode { <<enum>> Crop  AreaSelect  ScreenSelect  WindowSelect }
+    class FadeMaskDragRectOptions { <<record>> +MarqueeOptions Marquee  +LoupeOptions Loupe  +FadeMaskDragRectLabelOptions Labels  +double LoupeOffset }
+    class FadeMaskDragRectState { <<readonly record struct>> +bool UsesSelection  +bool ShowFullOverlay  +bool ShowSelectionOverlay }
+    class FadeMaskDragRectModes { <<static>> +Resolve(mode)$ FadeMaskDragRectState }
+
+    OverlayRectLayout ..> OverlayRect : 入力
+    OverlayRectLayout ..> OverlayRectFrame : 生成
+    OverlayRect ..> OverlayLineStyle : 参照
+    FadeMaskDragRectOptions *-- FadeMaskDragRectLabelOptions : Labels
+    FadeMaskDragRectModes ..> FadeMaskDragRectState : 生成
+    FadeMaskDragRectModes ..> FadeMaskDragRectMode : 参照
+```
+
 ## 4. 処理フロー
 
 ### 4.1 切り出し範囲の計算
@@ -260,6 +309,7 @@ flowchart TD
 | --- | --- |
 | 設定値が範囲外（`CaptureSettings.Validate`） | `ArgumentOutOfRangeException`（null メンバーは対象外） |
 | 切り出しできない入力（`CropBoundsMath`） | 例外を投げず、`IsEmpty` が true の矩形を返す（呼び出し側がキャンセル扱いにする） |
+| 画像の外側へはみ出すピクセル書き込み（`OverlayRectRasterizer` / `FadeMaskDragRectOverlay`） | `EsBitmap.TrySetPixel` が false を返すだけで、例外にしない（画像端に接する矩形は正常な入力のため） |
 
 ## 6. 設計判断
 
@@ -267,6 +317,8 @@ flowchart TD
 - **色は `System.Drawing.Color`**: UI 非依存のプリミティブ（`System.Drawing.Primitives`）で、MewUI のコントロールがそのまま受け取れる。 設定から複合コントロールの設定値（`FadeMaskDragRectOptions`）への変換は本プロジェクトの `FadeMaskDragRectOptionsMapper` が単一所有する（両 UI で同じ変換を使う）。 ただし**色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる）。
 - **判定を「クランプ前の値」で行う**: 画像外へ出た選択矩形を「大きい」と誤判定しないため、最小サイズの判定は画像内へクランプする前の値で行う。
 - **丸めは 0.5 を切り上げ**: `Math.Round` の既定（銀行丸め）はピクセル座標の直感に反するため `MidpointRounding.AwayFromZero` を使う。
+- **矩形の描画判断を 1 箇所に置く**: 負サイズのクランプ・太さの 1 ピクセル下限・破線かどうか・背景色を使うかは `OverlayRectLayout` が単一所有する。 経路（ベクターの図形要素 / ラスタライズ）ごとに判断すると見た目がずれる。
+- **モードの解釈を 1 箇所に置く**: モードと表示可否（選択矩形・破線・全面暗転・ルーペ）の対応は `FadeMaskDragRectModes` / `FadeMaskDragRectState` が単一所有する。 UI が `switch` を書くと片方の UI だけ挙動がずれる。
 
 ## 7. 検証
 
@@ -282,3 +334,9 @@ flowchart TD
 | `CaptureVirtualScreen` | 撮影対象の範囲（単一・複数モニタ・負の原点・モニタが無い場合）と、タイムアウト待ち・未使用結果の破棄 |
 | `CaptureSessionState` / `CaptureSessionSlot` | 再入の禁止・単一完了・撮影と切り出しの相互排他・選択有無の委譲・一括キャンセル |
 | `CaptureLogMessage` | 全定義の本文書式とイベント ID（記録ロガーで検証） |
+| `OverlayRectLayout` / `OverlayLineDash` | 負サイズのクランプ・太さの下限・破線の判定とダッシュ長の引き継ぎ（ベクター経路とラスタ経路が同じ数値を使う） |
+| `OverlayRectRasterizer` | ルーペ画像へのラスタライズ（画素検証） |
+| `FadeMaskDragRectModes` / `State` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否（12 件） |
+| `FadeMaskDragRectOptions` / `LabelOptions` | 既定値・部分変更・（6 件） |
+| `FadeMaskDragRectSelection` | 選択として成立するサイズの判定（9 件） |
+| `FadeMaskDragRectOverlay` | 破線の列挙と描画の画素検証（15 件） |

@@ -55,7 +55,7 @@ CropViewControl は、**画像の表示（拡大・パン・Fit）**と、**外�
 | 座標系 | ドメイン座標（元画像ピクセル）。 表示時にビューポート座標へ変換する |
 | 実線（`Solid`） | 前景色（`Foreground`）の枠のみを描画する |
 | 破線（`Dashed`） / 点線（`Dotted`） | 背景色（`Background`）の実線の上へ前景色の破線を重ねる（市松風の視認性） |
-| ダッシュ長 | 破線 = 8 / 間隔 4、点線 = 2 / 間隔 2（`CropViewControl.Core` の `OverlayLineDash` が単一所有） |
+| ダッシュ長 | 破線 = 8 / 間隔 4、点線 = 2 / 間隔 2（`CaptureSessionControl.Core` の `OverlayLineDash` が単一所有） |
 | 線の太さ | `Thickness`（DIP）。 0 以下は 1 として扱う。 枠は矩形の内側へ描画する |
 | サイズ 0 の矩形 | 何も描画しない |
 | 色 | `System.Drawing.Color`（アルファを含む） |

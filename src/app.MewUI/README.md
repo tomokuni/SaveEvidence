@@ -80,7 +80,7 @@ app.MewUI ──> app.Core ──> Platform.Core / LineDetection
     ├──> Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
     ├──> Platform.Core の Win32 実装（キャプチャ等。Native.Win）
     ├──> LoupeControl.MewUI ──> Feature.Loupe.Core（UI 非依存のルーペロジック）
-    └──> CropViewControl.MewUI ──> ZoomViewControl.MewUI / CropViewControl.Core（画像表示と矩形オーバーレイ）
+    └──> CropViewControl.MewUI ──> ZoomViewControl.MewUI / CaptureSessionControl.Core（画像表示と矩形オーバーレイ）
 ```
 
 Avalonia 版 `app.AvaloniaUI` とはコアを共有し、UI 層のみが異なります。

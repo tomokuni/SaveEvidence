@@ -99,11 +99,11 @@
 
 | 依存 | 用途 |
 | --- | --- |
-| `FadeMaskDragRectControl.Core`（`EsUtil.SaveEvidence.FadeMaskDragRect`） | 設定・動作モード・モードから導出する状態の解決 |
+| `CaptureSessionControl.Core`（`EsUtil.SaveEvidence.CaptureSession`） | 設定・動作モード・モードから導出する状態の解決 |
 | `Feature.Marquee.Core` / `Feature.Loupe.Core` / `Feature.Marquee.Presenter` | 内包コントロールの設定型（`MarqueeOptions` / `LoupeOptions`）と外観（`MarqueeAppearance`）・描画計画（`MarqueeDrawPlan`） |
 | `Platform.Core` | コア幾何型・値型 |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。 外部パッケージへの直接依存もありません。
 
-`FadeMaskDragRectControl.Core` の `internal` 型（`FadeMaskDragRectModes` / `FadeMaskDragRectState`）を参照するため、
+`CaptureSessionControl.Core` の `internal` 型（`FadeMaskDragRectModes` / `FadeMaskDragRectState`）を参照するため、
 同プロジェクトの `InternalsVisibleTo` に本アセンブリが含まれます。

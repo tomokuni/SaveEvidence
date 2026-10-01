@@ -46,6 +46,8 @@
 - **撮影セッションの方針値**（`CaptureTiming`）: 画面キャプチャのタイムアウトと、オーナーウィンドウの画面外退避座標（両 UI で同じ値を使う）
 - **切り出しの操作内容**（`CropSessionActions`）: 1 つのボタン（キー）で「開始・確定・キャンセル」を切り替える判断を単一所有する（未実行→開始 / 選択あり→確定 / 選択なし→キャンセル）
 - **ログ定義**（`CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`）: 書式・レベル・イベント ID・**完了時の出力の組**（確定は `CaptureCompleted` → `Result` の 2 件、キャンセルは `CaptureCancelled` の 1 件 = `LogCaptureFinished`）を単一所有する（UI 層は呼ぶだけ。 未検出・未取得の空文字化・未取得のサイズ 0 化も含む）
+- **矩形オーバーレイ**（`OverlayRect` / `OverlayRectLayout` 他）: 画像上へ実線・破線・点線の矩形を描く契約と、**「どう描くか」の判断**（負サイズのクランプ・太さの 1 ピクセル下限・破線の判定とダッシュ長・背景色を使うか）を単一所有する（切り出しビューと外部提供矩形が共有する）
+- **領域選択の複合コントロールのコア**（`FadeMaskDragRectMode` / `FadeMaskDragRectOptions` 他）: 動作モードの型・設定の単一値・モードから導出する表示可否・選択矩形の可否判定・ルーペ画像への破線描画を単一所有する（両 UI の複合コントロールが同じ型と判断を使う）
 - **UI 非依存**: Avalonia / MewUI のどちらの型も参照しない（色は `System.Drawing.Color`、座標は `Es*` 型）
 
 ## 3. 依存関係
@@ -53,7 +55,8 @@
 ```text
 CaptureSessionControl.Core
     ├── Platform.Core（Es* 幾何型 / EsBitmap）
-    ├── FadeMaskDragRectControl.Core（FadeMaskDragRectOptions。設定の変換先）
+    ├─ Feature.Marquee.Core（MarqueeOptions・選択矩形の幾何）
+    ├─ Feature.Loupe.Core（LoupeOptions）
     └── Microsoft.Extensions.Logging.Abstractions（ログ定義のソース生成）
 ```
 
@@ -116,7 +119,20 @@ src/
 │   ├── CaptureSettings.cs                 # 外観・動作設定（record）
 │   ├── FadeMaskDragRectOptionsMapper.cs   # 設定 → 複合コントロールの設定値への変換
 │   ├── CaptureLabelTexts.cs               # 撮影の操作・情報ラベル文言とモード写像
-│   └── CaptureResult.cs                   # キャプチャ結果（record）
+│   ├── CaptureResult.cs                   # キャプチャ結果（record）
+│   ├── OverlayRect.cs                     # 外部提供矩形の描画情報（矩形・スタイル・色・太さ）
+│   ├── OverlayLineStyle.cs                # 枠線スタイル（実線 / 破線 / 点線）
+│   ├── OverlayRectLayout.cs               # 描画入力の解決（クランプ・太さの下限・破線の判定）
+│   ├── OverlayRectFrame.cs                # 矩形 1 個分の描画入力
+│   ├── OverlayLineDash.cs                 # スタイルごとのダッシュ長の単一所有
+│   ├── OverlayRectRasterizer.cs           # 矩形の 4 辺を EsBitmap へラスタライズする
+│   ├── FadeMaskDragRectMode.cs            # 領域選択の動作モード
+│   ├── FadeMaskDragRectOptions.cs         # 複合コントロールの設定の単一値
+│   ├── FadeMaskDragRectLabelOptions.cs    # 付加情報ラベル（操作・情報）の外観
+│   ├── FadeMaskDragRectModes.cs           # モード → 状態の解決
+│   ├── FadeMaskDragRectState.cs           # モードから導出する表示可否
+│   ├── FadeMaskDragRectSelection.cs       # 選択矩形の可否判定
+│   └── FadeMaskDragRectOverlay.cs         # ルーペ画像への選択矩形破線の描画
 └── tests/
     ├── CaptureSessionControl.Core.Tests.csproj
     ├── CropBoundsMath.Tests.cs            # クランプ・丸め・区間の流儀・丸め規則（41 件）
@@ -144,10 +160,17 @@ src/
     ├── CaptureClickSelection.Tests.cs     # 固定と取り出しの規則（8 件）
     ├── CaptureResult.Tests.cs             # キャンセル結果の正規化（4 件）
     ├── FadeMaskDragRectOptionsMapper.Tests.cs  # 設定項目と寸法・表示可否の対応（7 件）
+    ├── FadeMaskDragRectModes.Tests.cs       # モードの解決・ルーペ表示可否（12 件）
+    ├── FadeMaskDragRectOptions.Tests.cs     # 既定値・部分変更・外側の装飾の単一所有（6 件）
+    ├── FadeMaskDragRectOverlay.Tests.cs     # 破線の列挙と描画の画素検証（15 件）
+    ├── FadeMaskDragRectSelection.Tests.cs   # 選択矩形の可否判定（9 件）
+    ├── OverlayLineDashTests.cs            # スタイルごとのダッシュ長（8 件）
+    ├── OverlayRectLayoutTests.cs          # クランプ・太さの下限・破線の判定（21 件）
+    ├── OverlayRectRasterizerTests.cs      # ルーペ画像へのラスタライズ（画素検証。11 件）
     └── CaptureTargetContractTests.cs      # ICaptureTarget の契約（3 件）
 ```
 
-テストは **290 件**（うちコア固有の新規型 21 ファイル）。
+テストは **366 件**。
 
 ## 7. ライセンス
 

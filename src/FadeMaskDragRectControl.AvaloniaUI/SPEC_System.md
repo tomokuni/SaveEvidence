@@ -88,7 +88,7 @@ flowchart TB
         Ctl["FadeMaskDragRectControl<br/>public sealed<br/>: Panel<br/>FadeMaskDragRectControl.cs（公開 API ＋ 配線 ＋ レイアウト）"]
         Args["FadeMaskDragRectSelectionEventArgs<br/>FadeMaskDragRectPointEventArgs<br/>public sealed record"]
     end
-    subgraph Core["FadeMaskDragRectControl.Core（UI 非依存）"]
+    subgraph Core["CaptureSessionControl.Core（UI 非依存）"]
         direction TB
         Mode["FadeMaskDragRectMode<br/>public enum"]
         Modes["FadeMaskDragRectModes<br/>internal static<br/>（モード → 状態の解決）"]
@@ -133,7 +133,7 @@ flowchart TB
 
 | 項目 | 内容 |
 | --- | --- |
-| ファイル | `FadeMaskDragRectControl.Core/src/FadeMaskDragRectMode.cs`（UI 非依存コア。 `FadeMaskDragRectControl.Core`） |
+| ファイル | `CaptureSessionControl.Core/src/FadeMaskDragRectMode.cs`（UI 非依存コア。 `CaptureSessionControl.Core`） |
 | 種類 | public enum |
 | メンバー | `Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect` |
 | 責務 | 子コントロールの可視性（Marquee / Loupe）・全面暗転・破線の切替指示 |
@@ -143,7 +143,7 @@ flowchart TB
 
 | 項目 | 内容 |
 | --- | --- |
-| ファイル | `FadeMaskDragRectControl.Core/src/FadeMaskDragRectOptions.cs`（UI 非依存コア） |
+| ファイル | `CaptureSessionControl.Core/src/FadeMaskDragRectOptions.cs`（UI 非依存コア） |
 | 種類 | public sealed record |
 | 備考 | 既定値は各内包コントロールの既定値を参照する（UI 側に既定値の写しを置かない） |
 
@@ -160,8 +160,8 @@ flowchart TB
 | --- | --- | --- |
 | `FadeMaskDragRectSelectionEventArgs` | 本プロジェクト | 確定要求イベントの引数（`SelectionDomainRect: Rect`（ドメイン座標）） |
 | `FadeMaskDragRectPointEventArgs` | 本プロジェクト | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
-| `FadeMaskDragRectMode` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 動作モード（描画モード・可視性・全面暗転の切替） |
-| `FadeMaskDragRectOptions` | EsUtil.SaveEvidence.FadeMaskDragRect（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 **色は含まない**） |
+| `FadeMaskDragRectMode` | EsUtil.SaveEvidence.CaptureSession（コア） | 動作モード（描画モード・可視性・全面暗転の切替） |
+| `FadeMaskDragRectOptions` | EsUtil.SaveEvidence.CaptureSession（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 **色は含まない**） |
 | `MarqueeAppearance` / `LoupeAppearance` | EsUtil.Feature.Marquee.Presenter.Setting / EsUtil.Feature.Loupe.Presenter.Setting（提示層） | 描画にだけ必要な外観の単一値（内包コントロールへ委譲する） |
 | `FadeMaskDragRectChildValues` / `FadeMaskHostLabelRenderer` | EsUtil.SaveEvidence.FadeMaskDragRect.UIBase（UI 間の共有層） | 設定とモードから子コントロールへ適用する値の解決と、付加情報ラベルの描画 |
 | `ICoordTransform` / `CoordTransform` | Platform.Core | ドメイン ↔ DIP の座標変換ポート |

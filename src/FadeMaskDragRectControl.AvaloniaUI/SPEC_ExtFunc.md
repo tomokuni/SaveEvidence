@@ -163,7 +163,7 @@ parentPanel.Children.Add(overlay);
 | 名前 | 種類 | 説明 |
 | --- | --- | --- |
 | `FadeMaskDragRectMode` | enum | 動作モード（`Crop` / `AreaSelect` / `ScreenSelect` / `WindowSelect`） |
-| `FadeMaskDragRectOptions` | record（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）。 `EsUtil.SaveEvidence.FadeMaskDragRect` |
+| `FadeMaskDragRectOptions` | record（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）。 `EsUtil.SaveEvidence.CaptureSession` |
 | `FadeMaskDragRectSelectionEventArgs` | record | 確定要求イベントの引数（`SelectionDomainRect: Rect`（ドメイン座標）） |
 | `FadeMaskDragRectPointEventArgs` | record | ルーペ位置イベントの引数（`Position: Point`（ドメイン座標）） |
 
@@ -173,7 +173,7 @@ parentPanel.Children.Add(overlay);
 
 #### 5.4.1 FadeMaskDragRectMode
 
-UI 非依存コア（`FadeMaskDragRectControl.Core`、名前空間 `EsUtil.SaveEvidence.FadeMaskDragRect`）が単一所有する。
+UI 非依存コア（`CaptureSessionControl.Core`、名前空間 `EsUtil.SaveEvidence.CaptureSession`）が単一所有する。
 モードから描画設定への写像もコア（`FadeMaskDragRectModes`）が持ち、Avalonia / MewUI で共有する。
 
 | 値 | 説明 |

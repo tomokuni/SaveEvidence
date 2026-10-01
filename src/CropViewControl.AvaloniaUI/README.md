@@ -1,6 +1,6 @@
 # CropView
 
-> プロジェクト名: `CropViewControl.AvaloniaUI`（Avalonia UI 版）。 UI 非依存のロジックは `CropViewControl.Core`、MewUI 版は `CropViewControl.MewUI` にあります。
+> プロジェクト名: `CropViewControl.AvaloniaUI`（Avalonia UI 版）。 UI 非依存のロジックは `CaptureSessionControl.Core`、MewUI 版は `CropViewControl.MewUI` にあります。
 
 ## 目次
 
@@ -66,7 +66,7 @@ Avalonia UI 用の**画像表示 + 領域選択を統合した高レベル複合
 ```csharp
 using EsUtil.SaveEvidence.CropView.AvaloniaUI;
 using EsUtil.SaveEvidence.FadeMaskDragRect.AvaloniaUI;   // FadeMaskDragRectMode
-using EsUtil.SaveEvidence.CropView;                      // OverlayRect / OverlayLineStyle
+using EsUtil.SaveEvidence.CaptureSession;                      // OverlayRect / OverlayLineStyle
 using EsUtil.Feature.Marquee.Presenter.Setting;        // MarqueeAppearance（描画にだけ必要な外観）
 using EsUtil.Feature.Loupe.Presenter.Setting;          // LoupeAppearance（描画にだけ必要な色）
 using EsUtil.Platform.Core.Geometry;         // EsRect
@@ -92,7 +92,7 @@ using DrawingColor = System.Drawing.Color;   // コアの色型（Avalonia.Media
 // 画像を設定（Fit 表示にリセット）
 CropPreview.Source = bitmap;
 
-// 外部提供矩形（破線・色・幅）を表示（型は UI 非依存の CropViewControl.Core 提供。色は System.Drawing.Color）
+// 外部提供矩形（破線・色・幅）を表示（型は UI 非依存の CaptureSessionControl.Core 提供。色は System.Drawing.Color）
 CropPreview.Rects = new[]
 {
     new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, DrawingColor.Orange, DrawingColor.White, 2.0),
@@ -129,7 +129,7 @@ Crop プレビューを拡大・パン・Fit しながら、ドラッグ選択 �
 
 ## 8. プロジェクト構成
 
-矩形オーバーレイの UI 非依存な定義とラスタライズは `CropViewControl.Core` へ分離しています（マルチ UI 対応）。
+矩形オーバーレイの UI 非依存な定義とラスタライズは `CaptureSessionControl.Core` へ分離しています（マルチ UI 対応）。
 
 ```text
 CropViewControl.AvaloniaUI/
@@ -142,7 +142,7 @@ CropViewControl.AvaloniaUI/
     ├── TestAppBuilder.cs
     └── CropViewControl.Tests.cs
 
-../CropViewControl.Core/   （OverlayRect / OverlayLineStyle / OverlayRectLayout / OverlayRectFrame / OverlayLineDash / OverlayRectRasterizer）
+../CaptureSessionControl.Core/   （OverlayRect / OverlayLineStyle / OverlayRectLayout / OverlayRectFrame / OverlayLineDash / OverlayRectRasterizer）
 ```
 
 ## 9. ライセンス

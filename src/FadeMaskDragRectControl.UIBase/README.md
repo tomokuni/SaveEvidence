@@ -15,7 +15,7 @@
 ## 層の位置付け
 
 ```text
-FadeMaskDragRectControl.Core（設定・モード・モードから導出する状態）
+CaptureSessionControl.Core（設定・モード・モードから導出する状態）
         ↓
 FadeMaskDragRectControl.UIBase（値の解決 ＋ ラベルの描画）
         ↓
@@ -38,7 +38,7 @@ FadeMaskDragRectControl.AvaloniaUI / .MewUI（子コントロールへの代入�
 
 ```text
 FadeMaskDragRectControl.UIBase
-    ├── FadeMaskDragRectControl.Core（設定・モード・状態の解決）
+    ├── CaptureSessionControl.Core（設定・モード・状態の解決）
     ├── Feature.Marquee.Core / Feature.Loupe.Core（内包コントロールの設定型）
     ├── Feature.Marquee.Presenter（外観・描画計画・ラベル配置）
     └── Platform.Core（コア幾何型・値型・描画ポート）
@@ -46,7 +46,7 @@ FadeMaskDragRectControl.UIBase
 
 UI フレームワークへ依存しません。 外部パッケージへの直接依存もありません。
 
-`FadeMaskDragRectControl.Core` の `internal` 型（`FadeMaskDragRectModes` / `FadeMaskDragRectState`）を参照するため、
+`CaptureSessionControl.Core` の `internal` 型（`FadeMaskDragRectModes` / `FadeMaskDragRectState`）を参照するため、
 同プロジェクトの `InternalsVisibleTo` に本アセンブリが含まれます。
 
 ## 主な API

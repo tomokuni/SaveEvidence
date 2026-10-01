@@ -1,6 +1,6 @@
 # FadeMaskDragRectControl
 
-> プロジェクト名: `FadeMaskDragRectControl.AvaloniaUI`（Avalonia UI 版）。 UI 非依存のロジックは `FadeMaskDragRectControl.Core`、MewUI 版は `FadeMaskDragRectControl.MewUI` にあります。
+> プロジェクト名: `FadeMaskDragRectControl.AvaloniaUI`（Avalonia UI 版）。 UI 非依存のロジックは `CaptureSessionControl.Core`、MewUI 版は `FadeMaskDragRectControl.MewUI` にあります。
 
 ## 目次
 
@@ -156,14 +156,14 @@ FadeMaskDragRectControl.AvaloniaUI/
     └── FadeMaskDragRectControlState.Tests.cs
 ```
 
-### 9.1 共有コア（`FadeMaskDragRectControl.Core`）
+### 9.1 共有コア（`CaptureSessionControl.Core`）
 
 UI 非依存の設定の単一値（`FadeMaskDragRectOptions`）・動作モード・モードから導出する状態・選択矩形の可否判定・
-ルーペの選択矩形オーバーレイ描画は `src/FadeMaskDragRectControl.Core`（名前空間 `EsUtil.SaveEvidence.FadeMaskDragRect`）が
+ルーペの選択矩形オーバーレイ描画は `src/CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が
 単一所有します（Avalonia / MewUI で共有）。
 
 ```text
-FadeMaskDragRectControl.Core/
+CaptureSessionControl.Core/
 ├── src/
 │   ├── FadeMaskDragRectMode.cs       （動作モード enum。両 UI が同一の型を使用する）
 │   ├── FadeMaskDragRectModes.cs      （モード → 状態の解決）

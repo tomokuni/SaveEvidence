@@ -7,14 +7,14 @@
 領域選択の複合コントロール（MewUI 版）です。 選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、
 配線と状態同期を内側で完結させます。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。
 
-動作モードとモードから描画設定への写像は UI 非依存コア（`FadeMaskDragRectControl.Core`）が単一所有し、
+動作モードとモードから描画設定への写像は UI 非依存コア（`CaptureSessionControl.Core`）が単一所有し、
 Avalonia 版と同一の解釈になります。
 
 ## 2. 依存関係
 
 | 参照 | 用途 |
 | --- | --- |
-| `FadeMaskDragRectControl.Core` | 動作モード（`FadeMaskDragRectMode`）と、モードから子コントロールの有効・無効（選択矩形を使うか）への写像 |
+| `CaptureSessionControl.Core` | 動作モード（`FadeMaskDragRectMode`）と、モードから子コントロールの有効・無効（選択矩形を使うか）への写像 |
 | `FadeMaskDragRectControl.UIBase` | 設定とモードから子コントロールへ適用する値の解決（`FadeMaskDragRectChildValues`）、付加情報ラベルの縦積みの配置指示（`FadeMaskHostLabelRenderer`）、ラベル 1 行の体裁（`MarqueeHostLabelRenderer`） |
 | `MarqueeControl.MewUI` / `Feature.Marquee.Core` | 選択矩形の入力と状態機械 |
 | `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | 描画にだけ必要な提示層の型（描画計画・外観（`MarqueeAppearance` / `LoupeAppearance`）・ラベル配置） |

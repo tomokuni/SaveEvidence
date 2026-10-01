@@ -5,7 +5,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 ## システム概要
 
 `FadeMaskDragRectControl.MewUI` は、Avalonia 版 `FadeMaskDragRectControl` と同じ UI 非依存コア
-（`FadeMaskDragRectControl.Core` と各コントロールの Core）を使い、選択矩形・暗転マスク・ルーペを
+（`CaptureSessionControl.Core` と各コントロールの Core）を使い、選択矩形・暗転マスク・ルーペを
 1 つの Facade にまとめた MewUI コントロールです。
 
 ホストは `Mode` と座標変換ポートを設定するだけで、目的のキャプチャ種別に応じた見た目（選択矩形の有無・全面暗転）を得られます。
@@ -34,7 +34,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
                    └────────────────┬─────────────────────────┘
                                     ▼
                     ┌────────────────────────────────┐
-                    │ FadeMaskDragRectControl.Core   │  動作モード・写像・破線描画                    └────────────────┬───────────────┘
+                    │ CaptureSessionControl.Core   │  動作モード・写像・破線描画                    └────────────────┬───────────────┘
                                      ▼
         ┌──────────────┬──────────────┬──────────────┐
         ▼              ▼              ▼
@@ -47,7 +47,7 @@ FadeMaskDragRectControl（MewUI 版）のシステム概要・アーキテクチ
 
 | 層 | 責務 |
 | --- | --- |
-| `FadeMaskDragRectControl.Core` | 動作モードの定義、モード → 子コントロールの有効・無効の写像、ルーペ画像への破線オーバーレイ描画 |
+| `CaptureSessionControl.Core` | 動作モードの定義、モード → 子コントロールの有効・無効の写像、ルーペ画像への破線オーバーレイ描画 |
 | 各コントロールの `*.Core` | 選択矩形の状態機械、選択矩形の外側の装飾（暗転マスク・外枠）の寸法と表示可否、ルーペの表示位置計算（色は描画にだけ必要な設定のため各コントロールの `*.UIBase` が単一所有する） |
 | `FadeMaskDragRectControl.MewUI` | 内包コントロールの生成・重ね合わせ・イベント配線・状態同期・配置（レイアウト）・ラベル設定の委譲・付加情報（操作・情報ラベル）の描画・描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）の委譲 |
 | ホスト | モードの指定、座標変換ポートの設定、ルーペ画像の供給、ラベル文言の供給、破線色・外観（`MarqueeAppearance` / `LoupeAppearance`）の供給、ログの注入、確定・キャンセル後の後始末 |
@@ -143,11 +143,11 @@ classDiagram
         +LoupeOptions Options
     }
     class FadeMaskDragRectModes {
-        <<FadeMaskDragRectControl.Core>>
+        <<CaptureSessionControl.Core>>
         +Resolve(mode)$ FadeMaskDragRectState
     }
     class FadeMaskDragRectOptions {
-        <<FadeMaskDragRectControl.Core>>
+        <<CaptureSessionControl.Core>>
         +MarqueeOptions Marquee
         +LoupeOptions Loupe
         +Color SelectionRectColorA

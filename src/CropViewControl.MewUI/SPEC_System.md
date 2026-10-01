@@ -4,7 +4,7 @@ CropViewControl（MewUI 版）のシステム概要・アーキテクチャ・�
 
 ## システム概要
 
-`CropViewControl.MewUI` は、Avalonia 版 `CropViewControl` と**同一の UI 非依存コア（`CropViewControl.Core` / `ZoomViewControl.Core`）**を使い、
+`CropViewControl.MewUI` は、Avalonia 版 `CropViewControl` と**同一の UI 非依存コア（`CaptureSessionControl.Core` / `ZoomViewControl.Core`）**を使い、
 画像表示（拡大・パン・Fit）と外部提供矩形のオーバーレイ描画を提供する高レベル複合コントロールです。
 
 Facade パターンを適用し、内部のズームビューと矩形オーバーレイをホストから隠蔽します。
@@ -48,7 +48,7 @@ Facade パターンを適用し、内部のズームビューと矩形オーバ�
 
 | 層 | 責務 |
 | --- | --- |
-| `CropViewControl.Core` | 矩形情報（`OverlayRect`）・描画入力の解決（`OverlayRectLayout` / `OverlayRectFrame`）・ダッシュ長（`OverlayLineDash`）の単一所有、ルーペ画像へのラスタライズ |
+| `CaptureSessionControl.Core` | 矩形情報（`OverlayRect`）・描画入力の解決（`OverlayRectLayout` / `OverlayRectFrame`）・ダッシュ長（`OverlayLineDash`）の単一所有、ルーペ画像へのラスタライズ |
 | `ZoomViewControl.Core` | ズーム・パンの幾何計算と状態 |
 | `ZoomViewControl.MewUI` | 画像の描画、ズーム・パンの入力、ビューポート変化の通知 |
 | `CropViewControl.MewUI` | ビューポート座標の変換、コア確定値の描画先への写像、子要素の配置、公開 API の委譲 |
@@ -118,7 +118,7 @@ classDiagram
         +event ViewportChanged
     }
     class OverlayRect {
-        <<CropViewControl.Core>>
+        <<CaptureSessionControl.Core>>
         +EsRect Bounds
         +OverlayLineStyle Style
         +Color Foreground
@@ -126,7 +126,7 @@ classDiagram
         +double Thickness
     }
     class OverlayLineDash {
-        <<internal（CropViewControl.Core）>>
+        <<internal（CaptureSessionControl.Core）>>
         +Get(style)$ (double, double)
         +IsDashed(style)$ bool
     }
@@ -184,7 +184,7 @@ sequenceDiagram
 | --- | --- |
 | `CropSkiaRenderer` | `SKBitmap` + `SKCanvas` へ実際に描画して**画素を実測**する（枠・破線のダッシュ長・境界値・半透明色） |
 | `CropViewControl` | `Measure` / `Arrange` でビューポートを確定させ、委譲・イベント・座標変換を検証する |
-| コアロジック | `CropViewControl.Core.Tests` / `ZoomViewControl.MewUI.Tests` が担保する |
+| コアロジック | `CaptureSessionControl.Core.Tests` / `ZoomViewControl.MewUI.Tests` が担保する |
 | アプリ組み込み | `app.MewUI/verify-ui.ps1` が実機の画素を実測して検証する |
 
 ## 未実装・今後の対応

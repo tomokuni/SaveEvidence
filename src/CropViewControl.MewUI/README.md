@@ -1,11 +1,11 @@
 # CropViewControl.MewUI
 
-`CropViewControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`CropViewControl.Core`）** を使い、描画層を **MewUI** で実装した高レベル複合コントロールです。
+`CropViewControl.AvaloniaUI`（Avalonia UI 実装）と同じ **UI 非依存コア（`CaptureSessionControl.Core`）** を使い、描画層を **MewUI** で実装した高レベル複合コントロールです。
 
 ## 目的
 
 画像表示（拡大・パン・Fit）と外部提供矩形のオーバーレイ描画を、ホストが単一のコントロールとして利用できるようにします。
-ズームの計算は `ZoomViewControl.Core`、矩形のダッシュ長は `CropViewControl.Core` が単一所有するため、**Avalonia 版と同じ見た目・挙動**になります。
+ズームの計算は `ZoomViewControl.Core`、矩形のダッシュ長は `CaptureSessionControl.Core` が単一所有するため、**Avalonia 版と同じ見た目・挙動**になります。
 
 ## 特徴
 
@@ -32,7 +32,7 @@
 ## 使い方
 
 ```csharp
-using EsUtil.SaveEvidence.CropView;
+using EsUtil.SaveEvidence.CaptureSession;
 using EsUtil.SaveEvidence.CropView.MewUI;
 using EsUtil.Platform.Core.Geometry;
 
@@ -117,7 +117,7 @@ dotnet test src/CropViewControl.MewUI/tests/CropViewControl.MewUI.Tests.csproj
 
 ## 関連ドキュメント
 
-- `../CropViewControl.Core/README.md` — 共有する UI 非依存ロジック
+- `../CaptureSessionControl.Core/README.md` — 共有する UI 非依存ロジック
 - `../CropViewControl.AvaloniaUI/README.md` — Avalonia 版クロップビュー
 - `../ZoomViewControl.MewUI/README.md` — 内包するズームビュー
 - `../app.MewUI/README.md` — 組み込み先のアプリ

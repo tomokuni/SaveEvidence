@@ -93,7 +93,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 ### 2.2. OverlayRect 構造体
 
-外部提供矩形の描画情報（不変レコード構造体）。 UI 非依存の `CropViewControl.Core`（名前空間 `EsUtil.SaveEvidence.CropView`）が提供する。
+外部提供矩形の描画情報（不変レコード構造体）。 UI 非依存の `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供する。
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
@@ -109,7 +109,7 @@ CropView は、画像表示（拡大・パン・Fit）と領域選択（ドラ�
 
 ### 2.4. OverlayRectLayout / OverlayRectFrame（描画入力の解決）
 
-矩形の描画に必要な値（負サイズのクランプ・太さの下限・破線かどうか・背景色を使うか・ダッシュ長）を解決するコア型です。 UI 層は `OverlayRectLayout.Resolve` の結果を描画先の型へ写すだけで、式と判断を持ちません（詳細は `../CropViewControl.Core/SPEC_ExtFunc.md`）。
+矩形の描画に必要な値（負サイズのクランプ・太さの下限・破線かどうか・背景色を使うか・ダッシュ長）を解決するコア型です。 UI 層は `OverlayRectLayout.Resolve` の結果を描画先の型へ写すだけで、式と判断を持ちません（詳細は `../CaptureSessionControl.Core/SPEC_ExtFunc.md`）。
 
 ```csharp
 new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Orange.ToDrawingColor(), Colors.White.ToDrawingColor(), 2.0)
@@ -117,7 +117,7 @@ new OverlayRect(new EsRect(10, 10, 200, 150), OverlayLineStyle.Dashed, Colors.Or
 
 ### 2.3. OverlayLineStyle 列挙型
 
-枠線スタイル（UI 非依存の `CropViewControl.Core` 提供）。 ダッシュ長はコアが単一所有し、ビューポート（図形要素）とルーペ画像（ピクセル）の両経路で共有する。
+枠線スタイル（UI 非依存の `CaptureSessionControl.Core` 提供）。 ダッシュ長はコアが単一所有し、ビューポート（図形要素）とルーペ画像（ピクセル）の両経路で共有する。
 
 | メンバー | 説明 |
 | --- | --- |

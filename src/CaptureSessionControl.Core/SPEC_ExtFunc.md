@@ -20,7 +20,6 @@
 | `CaptureTypeTraits` | 静的クラス | キャプチャ種別の性質（ハイライト型・区間の流儀・検出対象）の単一所有 |
 | `CaptureElementTarget` | 列挙型 | カーソル下の検出対象（画面 / ウィンドウ） |
 | `MonitorScalingMath` | 静的クラス | 対象矩形の中心を含むモニタの実表示倍率の解決（純粋関数） |
-| `ImageColorMath` | 静的クラス | 画像の平均色（標本間引き） |
 | `CaptureClipMath` | 静的クラス | 仮想スクリーン画像からの切り出し（画像ローカル座標への変換） |
 | `CaptureClipCache` | クラス | 事前切り出しキャッシュ（同一判定・所有権の受け渡し・旧値の破棄） |
 | `CaptureTiming` | 静的クラス | 撮影セッションの方針値（キャプチャのタイムアウト・画面外退避座標） |
@@ -39,6 +38,13 @@
 | `ICaptureTarget` | インターフェイス | 切り出し結果の適用先（アプリ側が実装するポート） |
 | `ICaptureOwnerWindow` | インターフェイス | 撮影時に退避するオーナーウィンドウ（各 UI が実装するポート） |
 | `ImageColorMath` | 静的クラス | 画像の平均色（標本間引き）。 描画の背景色の決定に使う |
+| `OverlayRect` | record struct | 外部提供矩形の描画情報（矩形・枠線スタイル・前景色・背景色・太さ） |
+| `OverlayLineStyle` | 列挙型 | 枠線スタイル（実線 / 破線 / 点線） |
+| `OverlayRectLayout` | 静的クラス | 矩形情報 → 描画入力（`OverlayRectFrame`）の解決（負サイズのクランプ・太さの下限・破線の判定） |
+| `OverlayRectFrame` | record struct | 矩形 1 個分の描画入力（配置・太さ・半幅・破線の判定と長さ・色・描画可否） |
+| `FadeMaskDragRectMode` | 列挙型 | 領域選択の複合コントロールの動作モード（切り出し / 範囲選択 / スクリーン選択 / ウィンドウ選択） |
+| `FadeMaskDragRectOptions` | record | 複合コントロールの設定の単一値（`Marquee` / `Labels` / `Loupe` / 破線の色 2 / ルーペオフセット） |
+| `FadeMaskDragRectLabelOptions` | record | 付加情報ラベル（操作・情報）の外観（表示可否・寸法・色）。 文言の生成と描画はホストが行う |
 
 名前空間は `EsUtil.SaveEvidence.CaptureSession` です。
 
@@ -356,3 +362,100 @@ UI が発明してはいけない運用方針値を単一所有します。
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
 | `ToFadeMaskDragRectOptions` | `FadeMaskDragRectOptions ToFadeMaskDragRectOptions(this CaptureSettings settings)` | 設定（全メンバー non-null）から複合コントロールの設定（**寸法・表示可否**）を組み立てる。 **色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる） |
+
+## 8. 矩形オーバーレイ（`OverlayRect` 系）
+
+画像上へ実線・破線・点線の矩形を描く契約と、**「どう描くか」の判断**を単一所有します。 UI 層はドメイン座標 → ビューポート座標の変換だけを行い、確定した描画入力（`OverlayRectFrame`）を描画先の型へ写します。
+
+### 8.1 `OverlayRect`（record struct）
+
+```csharp
+public readonly record struct OverlayRect(
+    EsRect Bounds, OverlayLineStyle Style, Color Foreground, Color Background, double Thickness);
+```
+
+| メンバー | 型 | 内容 |
+| --- | --- | --- |
+| `Bounds` | `EsRect` | 矩形（ドメイン座標 = 元画像ピクセル座標） |
+| `Style` | `OverlayLineStyle` | 枠線スタイル |
+| `Foreground` | `System.Drawing.Color` | 前景色（遅明度を含む） |
+| `Background` | `System.Drawing.Color` | 背景色（遅明度を含む）。 破線の市松風 2 色目 |
+| `Thickness` | `double` | 枠線の太さ（ピクセル） |
+
+### 8.2 `OverlayRectLayout`（描画入力の解決）
+
+| メンバー | 内容 |
+| --- | --- |
+| `MinimumThickness` | 枠線の太さの下限（1 ピクセル） |
+| `EffectiveThickness(double thickness)` | 太さを下限以上へ補正する |
+| `ViewportRectFromCorners(EsPoint topLeft, EsPoint bottomRight)` | ビューポート座標の 2 点から矩形を組み立てる（負サイズは 0 へクランプ） |
+| `Resolve(OverlayRect rect, EsPoint topLeft, EsPoint bottomRight)` | 矩形情報を描画入力（`OverlayRectFrame`）へ解決する |
+
+### 8.3 `OverlayRectFrame`（描画入力）
+
+| メンバー | 型 | 内容 |
+| --- | --- | --- |
+| `Bounds` | `EsRect` | ビューポート座標（DIP）の矩形。 幅・高さは 0 以上へクランプ済み |
+| `Foreground` / `Background` | `System.Drawing.Color` | 前景色 / 背景色（破線のときの下地） |
+| `Thickness` / `HalfThickness` | `double` | 枠線の太さ（下限以上）と半幅（矩形の辺の内側へ寄せる量） |
+| `IsDashed` | `bool` | 破線（破線または点線）かどうか |
+| `DashLength` / `GapLength` | `double` | ダッシュ長と間隔（実線は 0） |
+| `DrawsBackground` | `bool` | 背景色の下地を描くかどうか（破線のときだけ true） |
+| `HasDrawableSize` | `bool` | 幅と高さがともに 0 より大きいかどうか（描画可否） |
+
+### 8.4 `OverlayLineStyle`（列挙型）
+
+| メンバー | 内容 |
+| --- | --- |
+| `Solid` | 実線 |
+| `Dashed` | 破線（長いダッシュ。 ダッシュ長 8 / 間隔 4） |
+| `Dotted` | 点線（短いダッシュ。 ダッシュ長 2 / 間隔 2） |
+
+## 9. 領域選択の複合コントロール（`FadeMaskDragRect` 系）
+
+領域選択の複合コントロール（Avalonia 版 / MewUI 版）が共有する型と設定を提供します。 **動作モードの型・設定の単一値・モードから導出する表示可否・選択矩形の可否判定・ルーペ画像への破線描画**を単一所有します。
+
+### 9.1 `FadeMaskDragRectMode`（列挙型）
+
+| メンバー | 内容 |
+| --- | --- |
+| `Crop` | 切り出し（プレビューコントロール上のオーバーレイ。 全面暗転 + 選択矩形 + ルーペ） |
+| `AreaSelect` | 範囲選択（全画面オーバーレイ。 全面暗転 + 選択矩形 + ルーペ + ドラッグハンドル） |
+| `ScreenSelect` | スクリーン選択（ハイライト + スクリーン番号ラベルのみ。 クリック確定はホストが担う） |
+| `WindowSelect` | ウィンドウ選択（ハイライト + ウィンドウタイトルラベルのみ。 クリック確定はホストが担う） |
+
+`Crop` / `AreaSelect` は選択矩形を使うモード、`ScreenSelect` / `WindowSelect` は使わないモードです。 この区別は本プロジェクトのモード解釈が単一所有し、UI 実装は `switch` を持ちません。
+
+### 9.2 `FadeMaskDragRectOptions`（設定の単一値）
+
+| メンバー | 型 | 既定値 | 内容 |
+| --- | --- | --- | --- |
+| `Marquee` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の設定（選択の判断に使う項目のみ。 色は含まない） |
+| `Labels` | `FadeMaskDragRectLabelOptions` | 既定値 | ホストが描く操作・情報ラベルの外観 |
+| `Loupe` | `LoupeOptions` | `LoupeOptions.Default` | ルーペの設定（拡大率・表示サイズ・寸法） |
+| `SelectionRectColorA` | `System.Drawing.Color` | 白 | ルーペ画像上の選択矩形破線の色 A（描画開始色） |
+| `SelectionRectColorB` | `System.Drawing.Color` | 黒 | 同 色 B（色 A と交互に使用する） |
+| `LoupeOffset` | `double` | `20.0` | ルーペのカーソル中心からの右下オフセット（DIP） |
+| `Default`（static） | `FadeMaskDragRectOptions` | — | 部分変更の基点（`Default with { ... }`） |
+
+**色は描画にだけ必要な設定のため本値に含みません**（提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有する）。 例外はルーペ画像へ直接書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）で、これは描画 API ではなくピクセル書き込みに使うため本値が持ちます。
+
+**実行時状態**（選択矩形・ハイライト矩形・ルーペ中心・拡大元画像）と**環境値**（DPI スケーリング）は本値に含みません。
+
+### 9.3 `FadeMaskDragRectLabelOptions`（付加情報ラベルの外観）
+
+| メンバー | 型 | 既定値 | 内容 |
+| --- | --- | --- | --- |
+| `ShowOperationLabel` | `bool` | `true` | 操作ラベル（確定・キャンセルの操作方法）を表示するか |
+| `OperationFontSize` | `double` | `12.0` | 操作ラベルのフォントサイズ（DIP） |
+| `OperationColor` | `System.Drawing.Color` | `#FFDCDCDC` | 操作ラベルの文字色 |
+| `OperationBackgroundColor` | `System.Drawing.Color` | `#99000000` | 操作ラベルの背景色（黒 60%） |
+| `ShowInfoLabel` | `bool` | `true` | 情報ラベル（対象ウィンドウのタイトル等）を表示するか |
+| `InfoFontSize` | `double` | `14.0` | 情報ラベルのフォントサイズ（DIP） |
+| `InfoColor` | `System.Drawing.Color` | 白 | 情報ラベルの文字色 |
+| `InfoBackgroundColor` | `System.Drawing.Color` | `#99000000` | 情報ラベルの背景色（黒 60%） |
+| `Default`（static） | `FadeMaskDragRectLabelOptions` | — | 部分変更の基点 |
+
+**表示可否は 2 つの条件がともに成立したときだけ真**です。 本値のスイッチに加え、ホストが返す文言が空でないことが必要です（対象外のモードでは文言が空になるため、スイッチだけでは判定できません）。
+
+**操作ラベル・情報ラベルは選択矩形コントロールの概念ではありません**（撮影オーバーレイ等へ組み込むホストが必要とする付加情報）。 したがって文言の生成と描画はホストが行い、本値はその描画に使う外観のみを保持します。
