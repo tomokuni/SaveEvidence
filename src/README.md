@@ -8,7 +8,7 @@
 ```mermaid
 flowchart TB
     APP["アプリ層<br/>app.AvaloniaUI / app.MewUI（+ app.Core の ViewModel・Model）<br/>CaptureSessionControl.*（撮影セッション + 切り出しビュー + 領域選択）"]
-    CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI<br/>（ZoomView / CropView は Core と UI のみ）"]
+    CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI<br/>（ZoomView は Core と UI のみ）"]
     PLAT["プラットフォーム層<br/>Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>Platform.Skia（Skia 依存を閉じ込める）<br/>Platform.AvaloniaUI / Platform.MewUI（UI アダプタ）"]
     APP --> CTRL
     APP --> PLAT
@@ -85,7 +85,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | `MarqueeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI |
 | `LoupeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI |
 | `ZoomViewControl` | あり | なし（UI 層が描く） | AvaloniaUI / MewUI |
-| `CropViewControl` | あり | なし | AvaloniaUI / MewUI |
+| `CropViewControl` | あり（`CaptureSessionControl.Core`） | なし | AvaloniaUI / MewUI |
 | `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。 描画手順は持たない） | AvaloniaUI / MewUI |
 | `FadeMaskDragRectControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。 内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI |
 | `ColorPickerControl` | なし（UI のみ） | なし | AvaloniaUI |
@@ -106,6 +106,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | Marquee | [`Feature.Marquee.Core`](Feature.Marquee.Core/README.md) | [`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) |
 | Loupe | [`Feature.Loupe.Core`](Feature.Loupe.Core/README.md) | [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md) |
 | CaptureSession | [`CaptureSessionControl.Core`](CaptureSessionControl.Core/README.md) | [`CaptureSessionControl.UIBase`](CaptureSessionControl.UIBase/README.md) |
+| CropView | [`CaptureSessionControl.Core`](CaptureSessionControl.Core/README.md) | なし |
 | FadeMaskDragRect | [`CaptureSessionControl.Core`](CaptureSessionControl.Core/README.md) | [`CaptureSessionControl.UIBase`](CaptureSessionControl.UIBase/README.md) |
 
 FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) / [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md)）。
