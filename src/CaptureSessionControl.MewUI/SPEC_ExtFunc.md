@@ -8,6 +8,12 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | --- | --- | --- |
 | `CaptureSessionControl` | sealed クラス（Facade） | 撮影と切り出しの窓口。 排他（同時に 1 つだけ）とセッションの寿命を単一所有する |
 | `CaptureOverlayServices` | sealed record | 撮影が必要とするサービスの束（設定は含まない） |
+| `CropViewControl` | sealed クラス（複合コントロール） | 画像ビューポート（拡大・パン・Fit）+ 外部提供矩形オーバーレイ |
+| `FadeMaskDragRectControl` | sealed クラス（複合コントロール） | 暗転マスク + 選択矩形 + ルーペ。 モードで可視性を切替 |
+| `FadeMaskDragRectSelectionEventArgs` | sealed record | 確定要求のイベント引数（`SelectionDomainRect: EsRect`） |
+| `FadeMaskDragRectPointEventArgs` | sealed record | ルーペ位置のイベント引数（`Position: EsPoint`） |
+
+`OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）は `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します。
 
 名前空間は `EsUtil.SaveEvidence.CaptureSession.MewUI` です。
 
@@ -130,3 +136,147 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | キャンセル（Escape 相当） | 選択を破棄してオーバーレイを取り外す（画像は差し替えない） |
 
 切り出しの適用先は `ICaptureTarget`（アプリ側が実装するポート）です。 切り出し結果の適用（Undo 退避・画像差し替え）はアプリ側の責務です。
+
+## 5. CropViewControl（切り出しビュー）
+
+画像の表示（拡大・パン・Fit）と、ホストから渡された矩形のオーバーレイ描画を 1 つのコントロールにまとめた複合コントロールです（Facade パターン）。 画像ビューポートは `ZoomViewControl.MewUI` を内包し、その上に透明な矩形オーバーレイを重ねます。
+
+名前空間は `EsUtil.SaveEvidence.CaptureSession.MewUI`、クラスは `CropViewControl`（`public sealed`、`Grid` 派生）です。
+
+### 5.1 プロパティ
+
+| プロパティ | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `Source` | `EsBitmap?` | `null` | 表示する画像。 設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする |
+| `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。 コアが単一所有する |
+| `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（ドメイン座標 = 元画像ピクセル座標）。 null は設定できない |
+| `ZoomView` | `ZoomViewControl` | — | 内包する画像ビューポート |
+| `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。 **0 より大きい値のみ設定可能**（0 以下は無視） |
+| `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
+| `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（内包する画像ビューポートへ伝搬する） |
+
+### 5.2 メソッド
+
+| メソッド | 説明 |
+| --- | --- |
+| `ZoomIn()` / `ZoomOut()` | 段階レベルを 1 つ移動する（移動先がなければ何もしない） |
+| `ZoomFit()` | Fit 表示へ戻す |
+| `PanByWheel(EsVector, bool)` | ホイールの回転量（X/Y）と Shift 併用でパンする |
+| `ZoomByWheel(bool, EsPoint?)` | Ctrl+ホイールのズームを適用する（位置はズーム中心。 null はビューポート中心） |
+| `TranslatePositionFrom(Element, EsPoint)` | 重ねた要素のローカル座標を本コントロールの座標へ変換する |
+| `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
+| `ViewportToContent(EsPoint)` | ビューポート座標 → ドメイン座標（画像表示矩形の原点基準） |
+| `ContentToViewport(EsPoint)` | ドメイン座標 → ビューポート座標（画像表示矩形の原点基準） |
+
+### 5.3 イベント
+
+| イベント | 引数 | 説明 |
+| --- | --- | --- |
+| `ZoomChanged` | `ZoomChangedEventArgs` | ズーム率・Fit 状態・ズーム可否（内包する画像ビューポートから中継） |
+| `ViewportChanged` | `EventArgs` | パン・ズーム・リサイズ（内包する画像ビューポートから中継） |
+
+### 5.4 矩形オーバーレイの仕様
+
+| 項目 | 仕様 |
+| --- | --- |
+| 座標系 | ドメイン座標（元画像ピクセル）。 表示時にビューポート座標へ変換する |
+| 実線（`Solid`） | 前景色（`Foreground`）の枠のみを描画する |
+| 破線（`Dashed`） / 点線（`Dotted`） | 背景色（`Background`）の実線の上へ前景色の破線を重ねる（市松風の視認性） |
+| ダッシュ長 | 破線 = 8 / 間隔 4、点線 = 2 / 間隔 2（`CaptureSessionControl.Core` の `OverlayLineDash` が単一所有） |
+| 線の太さ | `Thickness`（DIP）。 0 以下は 1 として扱う。 枠は矩形の内側へ描画する |
+| サイズ 0 の矩形 | 何も描画しない |
+| 色 | `System.Drawing.Color`（アルファを含む） |
+
+### 5.5 エラー時の挙動
+
+| 状況 | 挙動 |
+| --- | --- |
+| `Source` が `null` | 何も描画しない（例外にしない） |
+| `Rects` が空 | 何も描画しない（例外にしない） |
+| `ZoomPercent` へ 0 以下を設定 | 無視する（Fit へは `ZoomFit()` を使う） |
+
+領域選択は本コントロールの対象外です。 領域選択は `FadeMaskDragRectControl` を重ねて構成します。
+
+## 6. FadeMaskDragRectControl（領域選択）
+
+選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、配線と状態同期を内側で完結させる複合コントロールです（Facade / Composite パターン）。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。 動作モードとモードから描画設定への写像は UI 非依存コア（`CaptureSessionControl.Core`）が単一所有します。
+
+名前空間は `EsUtil.SaveEvidence.CaptureSession.MewUI`、クラスは `FadeMaskDragRectControl`（`public sealed`、`Panel` 派生）です。
+
+### 6.1 動作モード
+
+| モード | 選択矩形 | ルーペ | 全面暗転 | 用途 |
+| --- | --- | --- | --- | --- |
+| `Crop` | 有効 | 有効 | 有効 | プレビュー内の切出し |
+| `AreaSelect` | 有効 | 有効 | 有効 | 全画面オーバーレイの領域選択 |
+| `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ。 確定フローはホスト） |
+| `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ。 確定フローはホスト） |
+
+既定値は `AreaSelect` です。 未定義の値を設定した場合は `WindowSelect` と同じ扱いになります。
+
+### 6.2 プロパティ
+
+| プロパティ | 型 | 既定値 | 説明 |
+| --- | --- | --- | --- |
+| `Mode` | `FadeMaskDragRectMode` | `AreaSelect` | 動作モード（可視性と全面暗転を一括切替） |
+| `Options` | `FadeMaskDragRectOptions`（コア） | `Default` | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 色は含まない）。 同じ値の再設定はスキップされる |
+| `MarqueeAppearance` / `LoupeAppearance` | 提示層の外観 | 各 `Default` | 描画にだけ必要な外観の単一値（コアの設定値には含まれない）。 `MarqueeAppearance` の設定時はモードから導出する表示可否を上書きし直す |
+| `HasSelection` / `SelectionDomainRect` | `bool` / `EsRect` | `false` / 空矩形 | 選択矩形の有無と現在値（ドメイン座標） |
+| `HighlightDomainRect` | `EsRect?` | `null` | ハイライト矩形（ドメイン座標。 **null はハイライトなし**。 選択矩形より優先） |
+| `ShowFullOverlay` | `bool`（取得のみ） | `true` | 全面暗転の有無（モードから導出） |
+| `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（ドメイン座標） |
+| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` | `double` | 各 `1.0` 等 | DPI スケーリング（設定には含めない環境値） |
+| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | ラベル文言を描画時に評価するデリゲート（null または空文字は描画しない。 文言はホストが与える） |
+| `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包する選択コントロールとルーペへ伝搬する） |
+
+`Options`（コアの `FadeMaskDragRectOptions`）の主な項目は、`Marquee`（`MarqueeOptions`。 寸法・表示可否。 色は含まない）/ `Loupe`（`LoupeOptions`）/ `SelectionRectColorA` / `SelectionRectColorB`（ルーペ画像上の選択矩形破線の 2 色）/ `LoupeOffset`（中心からの右下オフセット。 DIP）です。
+
+### 6.3 メソッド
+
+| メソッド | 説明 |
+| --- | --- |
+| `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを一括設定する（選択矩形・暗転マスク・ルーペの配置で共用。 null は倍率からコアが解決する） |
+| `SetSelection(EsRect)` / `ClearSelection()` | 選択状態の外部設定・クリア |
+| `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe()` | ルーペの制御 |
+| `RequestConfirm()` / `RequestCancel()` | 確定要求・キャンセル要求（Enter / Escape 相当） |
+| `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
+| `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する |
+| `InvalidateOverlay()` | 暗転マスクの再描画を要求する |
+
+### 6.4 イベント
+
+| イベント | 引数 | 発火条件 |
+| --- | --- | --- |
+| `ConfirmRequested` | `FadeMaskDragRectSelectionEventArgs` | 矩形内ダブルクリック・Enter・`RequestConfirm`（選択確定後のみ） |
+| `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel` |
+| `LoupePositionMoved` | `FadeMaskDragRectPointEventArgs` | ルーペ中心の更新（ドメイン座標） |
+
+座標はすべてドメイン座標です。
+
+### 6.5 座標系と操作
+
+| 座標系 | 意味 |
+| --- | --- |
+| ドメイン座標 | 選択対象の座標（画像ピクセル・仮想スクリーンピクセル等）。 選択矩形とルーペ中心はこの座標で扱う |
+| ローカル DIP | コントロールのローカル座標。 入力と描画はこの座標で行う |
+
+両者の変換は座標変換ポート（`ICoordTransform`）が担い、選択矩形・暗転マスク・ルーペの配置で共用します。
+
+| 操作 | 動作 |
+| --- | --- |
+| 左ドラッグ | 選択矩形の作成・リサイズ・移動（内包する選択コントロールが処理する） |
+| 矢印キー | 選択矩形の nudge（内包コントロールへフォーカスがある場合のみ） |
+| Enter / Escape | 確定・キャンセル要求を発火する |
+| マウス移動 | ルーペ中心を更新し、表示位置を再計算する |
+
+ホイール操作（ズーム・パン）と表示の変化の追従は本コントロールの配線ではありません（コントロール化を前提とした処理）。 ホイールはホストが `MouseWheel` を購読してビューポートへ転送し、表示の変化はホストが検知して `RefreshOverlay()` を呼びます。
+
+### 6.6 エラー時の挙動
+
+| 条件 | 動作 |
+| --- | --- |
+| `SetCoordTransform(null)` | 倍率からコアが座標変換を解決する（倍率 1.0 なら等価変換・境界なし） |
+| `SetSelection` にサイズ 0 以下の矩形 | 選択なしとして扱う（例外は発生しない） |
+| ルーペ画像が未設定の状態で `SetLoupePosition` | 中心のみ記録し、表示しない（例外は発生しない） |
+| 未定義の `Mode` を設定 | `WindowSelect` と同じ扱いになる（例外は発生しない） |

@@ -30,6 +30,15 @@
       - [5.4.2 CaptureType](#542-capturetype)
       - [5.4.3 CaptureSettings](#543-capturesettings)
       - [5.4.4 CaptureResult](#544-captureresult)
+    - [5.5 CropViewControl（切り出しビュー）](#55-cropviewcontrol切り出しビュー)
+      - [5.5.1 プロパティ](#551-プロパティ)
+      - [5.5.2 メソッド](#552-メソッド)
+      - [5.5.3 イベント](#553-イベント)
+      - [5.5.4 外部提供矩形](#554-外部提供矩形)
+    - [5.6 FadeMaskDragRectControl（領域選択）](#56-fademaskdragrectcontrol領域選択)
+      - [5.6.1 動作モード](#561-動作モード)
+      - [5.6.2 プロパティ](#562-プロパティ)
+      - [5.6.3 メソッドとイベント](#563-メソッドとイベント)
   - [6. 閉区間キャプチャ（重要な仕様）](#6-閉区間キャプチャ重要な仕様)
   - [7. 動作フロー](#7-動作フロー)
     - [7.1 StartCaptureAsync](#71-startcaptureasync)
@@ -47,8 +56,8 @@
 | 名前空間 | `EsUtil.SaveEvidence.CaptureSession.AvaloniaUI` |
 | 対象フレームワーク | `net10.0-windows10.0.17763.0` |
 | UIフレームワーク | Avalonia 12.1 |
-| 主要設計パターン | Facade（CaptureSessionControl）/ セッション（SelectionCaptureSession / CropSession）/ 薄い統括者 |
-| 主な用途 | 画面キャプチャ（全画面 / ウィンドウ選択 / 範囲選択）と切出し（Crop）の統括 API の提供 |
+| 主要設計パターン | Facade（CaptureSessionControl / CropViewControl / FadeMaskDragRectControl）/ セッション（SelectionCaptureSession / CropSession）/ Composite（内包コントロールの統合）/ 薄い統括者 |
+| 主な用途 | 画面キャプチャ（全画面 / ウィンドウ選択 / 範囲選択）と切出し（Crop）の統括 API の提供、および画像表示 + 領域選択の複合コントロールの提供 |
 
 ## 2. 目的
 
@@ -66,6 +75,8 @@ CaptureSessionControl.AvaloniaUI は内包コントロール（MarqueeControl / 
 - 切出し（`Crop`。 プレビュー画像上の選択矩形で元画像から切り出し範囲を取得）
 - 設定の部分更新（`CaptureSettings`。 全メンバー nullable）
 - キャンセル / 確定（`Cancel()` / `Confirm()`）
+- 切り出しビュー（`CropViewControl`）: 画像表示 + 領域選択 + 外部提供矩形の複合コントロール（[5.5](#55-cropviewcontrol切り出しビュー)）
+- 領域選択（`FadeMaskDragRectControl`）: 暗転マスク + 選択矩形 + ルーペの複合コントロール（[5.6](#56-fademaskdragrectcontrol領域選択)）
 
 ## 3. 外部利用条件
 
@@ -219,7 +230,7 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 
 ### 5.4 型
 
-公開型は `CaptureSessionControl`（本プロジェクト）と、コア公開型の `CaptureType`（`EsUtil.Platform.Core`）・`CaptureSettings` / `CaptureResult`（`EsUtil.SaveEvidence.CaptureSession`。 `CaptureSessionControl.Core`。 UI フレームワーク非依存の共通基盤が提供）です。
+公開型は `CaptureSessionControl`（本プロジェクト）・複合コントロールの `CropViewControl` / `FadeMaskDragRectControl` とそのイベント引数（`FadeMaskDragRectSelectionEventArgs` / `FadeMaskDragRectPointEventArgs`）、およびコア公開型の `CaptureType`（`EsUtil.Platform.Core`）・`CaptureSettings` / `CaptureResult`（`EsUtil.SaveEvidence.CaptureSession`。 `CaptureSessionControl.Core`。 UI フレームワーク非依存の共通基盤が提供）です。
 
 #### 5.4.1 CaptureSessionControl
 
@@ -296,6 +307,105 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 
 キャプチャ結果レコード。 プロパティは「5.1.2 プロパティ」に記載の通りです。
 
+### 5.5 CropViewControl（切り出しビュー）
+
+画像表示 + 領域選択 + 外部提供矩形を統合した高レベル複合コントロール（`Panel` のサブクラス）。 本アセンブリが公開します。 画像ビューポート（`ZoomViewControl`）と領域選択オーバーレイ（`FadeMaskDragRectControl`）を内包し、ホストへ単一インターフェースを提供します。
+
+#### 5.5.1 プロパティ
+
+| プロパティ | 型 | 説明 |
+| --- | --- | --- |
+| `Source` | `IImage?` | 表示画像。 画像ビューポートとルーペへ伝搬し、変更時は Fit 表示にリセットする。 領域選択オーバーレイの可視性は `SetSelectionOverlayVisible` が専任する |
+| `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（ドメイン座標）。 ビューポートとルーペの両方へ描画する |
+| `SelectionMode` | `FadeMaskDragRectMode` | 選択モード（既定 `Crop`）。 領域選択オーバーレイへ委譲する |
+| `SelectionOverlayOptions` | `FadeMaskDragRectOptions`（コア） | 領域選択オーバーレイの設定（寸法・表示可否。 色は含まない） |
+| `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 領域選択オーバーレイの外観（描画にだけ必要な設定） |
+| `Appearance` | `ZoomViewAppearance` | ズームビューの外観（下地色・市松模様等） |
+| `CenterAlign` | `bool` | 画像の中央寄せ（その軸で画像がビューポートより小さい場合に有効） |
+| `ZoomPercent` / `CanZoomIn` / `CanZoomOut` | `double` / `bool` / `bool` | ズーム率（%）と可否。 ズームの計算はコアが単一所有する |
+| `HasSelection` / `SelectionDomainRect` | `bool` / `Rect` | 選択状態と現在の選択矩形（ドメイン座標） |
+| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
+| `Log` | `ILogger` | 内部ロガー（画像ビューポートへ伝搬する） |
+| `DipToDomainScaling` / `LoupeDipToDeviceScaling` | `double` | DPI スケーリング（環境値。 コードから動的設定） |
+
+#### 5.5.2 メソッド
+
+| メソッド | 説明 |
+| --- | --- |
+| `ZoomIn()` / `ZoomOut()` / `ZoomFit()` | 段階遷移・Fit 表示 |
+| `SetSelection(Rect)` / `ClearSelection()` | 選択状態の外部設定・クリア |
+| `SetSelectionOverlayVisible(bool)` | 領域選択オーバーレイの可視性とヒットテストを設定（`false` で選択もクリア） |
+| `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを内包コントロールへ一括分配 |
+| `RequestConfirm()` / `RequestCancel()` | 選択確定 / キャンセル要求 |
+| `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
+| `SetLoupeSource(IImage?)` / `ClearLoupe()` | ルーペの拡大元画像の設定・クリア |
+| `NotifyViewportChanged()` | 表示（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知 |
+| `ImageRectViewport()` / `ContentToViewport(Point)` / `ViewportToContent(Point)` | 画像表示矩形の取得と、ドメイン ↔ ビューポートの座標変換 |
+
+領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送します（上位の配線は不要）。
+
+#### 5.5.3 イベント
+
+| イベント | 型 | 説明 |
+| --- | --- | --- |
+| `ConfirmRequested` | `EventHandler<FadeMaskDragRectSelectionEventArgs>` | 選択確定要求 |
+| `CancelRequested` | `EventHandler?` | 選択キャンセル要求 |
+| `ZoomChanged` | `EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知 |
+| `ViewportChanged` | `EventHandler?` | ビューポート（パン・ズーム・表示状態）変化の通知 |
+
+#### 5.5.4 外部提供矩形
+
+`Rects` の要素（`OverlayRect`）は UI 非依存の `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します。 矩形（`EsRect`）・枠線スタイル（`OverlayLineStyle`）・前景色・背景色・線幅を持ち、実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」で描画します（ダッシュ長はコアの `OverlayLineDash` が単一所有）。
+
+### 5.6 FadeMaskDragRectControl（領域選択）
+
+選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、配線と状態同期を内側で完結させる複合コントロールです。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。
+
+#### 5.6.1 動作モード
+
+| モード | 選択矩形 | ルーペ | 全面暗転 | 用途 |
+| --- | --- | --- | --- | --- |
+| `Crop` | 有効 | 有効 | 有効 | プレビュー内の切出し |
+| `AreaSelect` | 有効 | 有効 | 有効 | 全画面オーバーレイの範囲選択 |
+| `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ。 確定フローはホスト） |
+| `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ。 確定フローはホスト） |
+
+既定値は `AreaSelect` です。 モードの解釈（表示可否・全面暗転）はコアの `FadeMaskDragRectModes` が単一所有します。
+
+#### 5.6.2 プロパティ
+
+| プロパティ | 型 | 説明 |
+| --- | --- | --- |
+| `Mode` | `FadeMaskDragRectMode` | 動作モード（可視性と全面暗転を一括切替。 既定 `AreaSelect`） |
+| `Options` | `FadeMaskDragRectOptions`（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 色は含まない）。 同じ値の再設定はスキップされる |
+| `MarqueeAppearance` / `LoupeAppearance` | 提示層の外観 | 描画にだけ必要な外観の単一値（内包コントロールへ委譲する） |
+| `HasSelection` / `SelectionDomainRect` | `bool` / `Rect` | 選択矩形の有無と現在値（ドメイン座標） |
+| `HighlightDomainRect` | `Rect?` | ハイライト矩形（**null はハイライトなし**） |
+| `ShowFullOverlay` | `bool` | 全面暗転の有無（モードから導出。 読み取り専用） |
+| `LoupeCenterPoint` | `Point?` | ルーペ中心（ドメイン座標。 未設定時は null） |
+| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
+| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` | `double` | DPI スケーリング（環境値） |
+| `Log` | `ILogger` | 操作ログの出力先（内包コントロールへ伝搬する） |
+
+#### 5.6.3 メソッドとイベント
+
+| メソッド | 説明 |
+| --- | --- |
+| `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを一括分配（null で倍率からコアが解決） |
+| `SetSelection(Rect)` / `ClearSelection()` | 選択状態の設定・クリア |
+| `SetLoupePosition(Point)` / `SetLoupeSource(IImage?)` / `ClearLoupe()` | ルーペの制御 |
+| `RequestConfirm()` / `RequestCancel()` | 確定・キャンセル要求 |
+| `FocusMarquee()` / `RefreshOverlay()` / `InvalidateOverlay()` | フォーカス設定・表示の変化への追従・再描画要求 |
+
+| イベント | 型 | 説明 |
+| --- | --- | --- |
+| `ConfirmRequested` | `EventHandler<FadeMaskDragRectSelectionEventArgs>` | 確定要求（選択確定後のみ発火） |
+| `CancelRequested` | `EventHandler?` | キャンセル要求 |
+| `LoupePositionMoved` | `EventHandler<FadeMaskDragRectPointEventArgs>` | ルーペ中心の更新（ドメイン座標） |
+| `LoupeRendered` | `EventHandler<LoupeRenderedEventArgs>` | ルーペ描画完了の通知（ホストがルーペ画像へ外部提供矩形を描く用） |
+
+選択領域は**閉区間**（始点・終点を含む）として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します。
+
 ## 6. 閉区間キャプチャ（重要な仕様）
 
 **選択矩形の始点・終点のピクセルは切出し対象に含まれます（閉区間）**。 ただし、カーソル位置から検出するスクリーン・ウィンドウの矩形は最初から全ピクセルを含むため、範囲選択と扱いが異なります。
@@ -360,5 +470,6 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 - 実行中の再呼び出しは `null` を返します（既存セッションを継続）。 呼び出し側は null を「進行中のため開始できない」と解釈してください。
 - `Dispose()` 後の公開操作は `ObjectDisposedException` を投げます。
 - `StartCropAsync` の `cropView` は `CropViewControl`（ズーム + 領域選択 + ルーペを内包した複合コントロール）です。 選択矩形のオーバーレイ（Marquee / Loupe）はセッションが `CropViewControl.Rects` へ配置するため、利用側での配置は不要です（ズーム・パン・Fit・座標変換は内包する `ZoomViewControl` が単一所有）。 切り出しの対象画像は `cropView.Source` に `EsBitmapAvaloniaImage` として設定しておく必要があります（未設定・非対応の場合は開始せず結果 null）。
+- `CropViewControl` / `FadeMaskDragRectControl` は本アセンブリが公開する複合コントロールです（別プロジェクトではありません）。
 - `CaptureSettings` の数値メンバーは `Validate()` で範囲チェックされ、範囲外は `ArgumentOutOfRangeException` を投げます。
 - キャプチャ画像へのオーバーレイ写り込みは `IWindowService.SetCaptureExclusion`（Windows 10 2004+）で防止します。 それ以前の Windows では写り込みが発生する可能性があります。

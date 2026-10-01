@@ -242,7 +242,7 @@ classDiagram
         +event ZoomChanged
     }
     class CropViewControl {
-        <<CropViewControl.MewUI>>
+        <<CaptureSessionControl.MewUI>>
         +EsBitmap? Source
         +ZoomViewAppearance Appearance
         +IReadOnlyList~OverlayRect~ Rects

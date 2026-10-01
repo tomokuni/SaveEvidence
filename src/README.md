@@ -7,7 +7,7 @@
 
 ```mermaid
 flowchart TB
-    APP["アプリ層<br/>app.AvaloniaUI / app.MewUI（+ app.Core の ViewModel・Model）<br/>CaptureSessionControl.*（撮影セッション）"]
+    APP["アプリ層<br/>app.AvaloniaUI / app.MewUI（+ app.Core の ViewModel・Model）<br/>CaptureSessionControl.*（撮影セッション + 切り出しビュー + 領域選択）"]
     CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI<br/>（ZoomView / CropView は Core と UI のみ）"]
     PLAT["プラットフォーム層<br/>Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>Platform.Skia（Skia 依存を閉じ込める）<br/>Platform.AvaloniaUI / Platform.MewUI（UI アダプタ）"]
     APP --> CTRL
@@ -89,6 +89,8 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。 描画手順は持たない） | AvaloniaUI / MewUI |
 | `FadeMaskDragRectControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。 内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI |
 | `ColorPickerControl` | なし（UI のみ） | なし | AvaloniaUI |
+
+`CropViewControl` と `FadeMaskDragRectControl` は `CaptureSessionControl.AvaloniaUI` / `CaptureSessionControl.MewUI` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。
 
 **コントロール化を前提とした処理は UI が持ちます**: ホイール操作（どの入力がズーム・パンかを決める）・ビューポートの変化の追従・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるためです。
 `LoupeControl` の中間ビットマップの再描画スケジューリング（`LoupeRenderCoordinator`。 Avalonia 版が所有する）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。 同じ必要が生じた時点で実装できます。

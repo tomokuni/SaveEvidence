@@ -29,7 +29,7 @@
 | `CanZoomOut` | `bool` | `false` | ズームアウト可能かどうか（画像未設定時は false） |
 | `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（null は出力なし。 コアが null を吸収する） |
 
-**外観は `Appearance` の 1 値に統合しました**（旧 `ShowScrollBars` / `ScrollBarThickness` / `ScrollBarMargin` / `ScrollBarColor` / `ScrollBarTrackColor` / `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `BackgroundColor` は削除）。 複合コントロール（`CropViewControl.MewUI`）も `Appearance`（`ZoomViewAppearance`）1 値として透過公開します（旧 `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `BackgroundColor` の 4 プロパティは削除し、設定値は `Appearance with { ... }` で組み立てます）。
+**外観は `Appearance` の 1 値に統合しました**（旧 `ShowScrollBars` / `ScrollBarThickness` / `ScrollBarMargin` / `ScrollBarColor` / `ScrollBarTrackColor` / `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `BackgroundColor` は削除）。 複合コントロール（`CaptureSessionControl.MewUI`）も `Appearance`（`ZoomViewAppearance`）1 値として透過公開します（旧 `CheckerSize` / `CheckerColorA` / `CheckerColorB` / `BackgroundColor` の 4 プロパティは削除し、設定値は `Appearance with { ... }` で組み立てます）。
 
 ### メソッド
 

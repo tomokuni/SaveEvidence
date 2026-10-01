@@ -19,6 +19,8 @@
     - [6.3 CropSession](#63-cropsession)
     - [6.4 OverlayWindow](#64-overlaywindow)
     - [6.5 公開データ型](#65-公開データ型)
+    - [6.6 CropViewControl](#66-cropviewcontrol)
+    - [6.7 FadeMaskDragRectControl](#67-fademaskdragrectcontrol)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
   - [9. ログ](#9-ログ)
@@ -33,6 +35,8 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 本プロジェクト（CaptureSessionControl.AvaloniaUI）は、このシステムのうち**画面キャプチャ（ScreenSelect / WindowSelect / AreaSelect）と切出し（Crop）のセッション統括**を担います。 上位 AP（app）へは Task ベースの公開 Facade（`CaptureSessionControl`）を提供し、内部でオーバーレイ（`OverlayWindow`）と複合コントロール（`FadeMaskDragRectControl`）を組み立てて実行します。
 
+本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロール（画像表示 + 領域選択の `CropViewControl` と、領域選択の `FadeMaskDragRectControl`）を同一アセンブリ内に収録します。
+
 ## 2. 技術スタック
 
 | 項目 | 内容 |
@@ -45,9 +49,9 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | FadeMaskDragRect（複合コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
+| **依存プロジェクト** | CaptureSessionControl.UIBase（設定 → 外観の写像）/ ZoomViewControl.AvaloniaUI（画像ビューポート）/ MarqueeControl.AvaloniaUI / LoupeControl.AvaloniaUI（内包コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
 
-CaptureSessionControl.AvaloniaUI は内包コントロール（MarqueeControl / LoupeControl）を直接参照しない（公開型のカプセル化。 窓口は FadeMaskDragRectControl のみ。 推移的依存として各プロジェクトを利用）。
+撮影セッション（`CaptureSessionControl` / `SelectionCaptureSession` / `OverlayWindow`）は内包コントロール（MarqueeControl / LoupeControl）を直接参照しません（窓口は `FadeMaskDragRectControl` のみ。 公開型のカプセル化）。 内包コントロールを参照するのは同一アセンブリ内の複合コントロールだけです。
 
 ## 3. アーキテクチャ
 
@@ -59,7 +63,10 @@ CaptureSessionControl.AvaloniaUI は内包コントロール（MarqueeControl / 
     → オーバーレイ / 複合コントロール（OverlayWindow / FadeMaskDragRectControl）
       → 各コントロール（Marquee / Loupe）+ Platform.AvaloniaUI
 
-横断: CaptureSessionControl.Core（設定のマージ・実行の排他・切り出し範囲・モニタ倍率・ログ定義）
+並置: 公開複合コントロール（CropViewControl / FadeMaskDragRectControl）
+  → 各コントロール（Marquee / Loupe / ZoomView）+ Platform.AvaloniaUI
+
+横断: CaptureSessionControl.Core（設定のマージ・実行の排他・切り出し範囲・モニタ倍率・複合コントロールのモードと設定・ログ定義）
 ```
 
 ### 3.2 依存方向
@@ -95,27 +102,27 @@ flowchart TB
         CS["SelectionCaptureSession<br/>internal sealed<br/>Sessions/SelectionCaptureSession.cs"]
         CrS["CropSession<br/>internal sealed<br/>Sessions/CropSession.cs"]
         OW["OverlayWindow<br/>internal sealed<br/>Sessions/OverlayWindow.axaml(.cs)"]
+        CV["CropViewControl<br/>public sealed<br/>CropViewControl.cs<br/>（切り出しビュー）"]
+        FDR["FadeMaskDragRectControl<br/>public sealed<br/>FadeMaskDragRectControl.cs<br/>（領域選択）"]
     end
     subgraph Core["CaptureSessionControl.Core プロジェクト（両 UI 共通の規則。UI 非依存）"]
         CS2["CaptureSettings / CaptureResult<br/>public sealed record"]
         Sl["CaptureSessionSlot / CaptureSessionState<br/>CaptureCompletion / CaptureOwnerScope"]
         Math["CropBoundsMath / CaptureClipMath / CaptureTypeTraits<br/>MonitorScalingMath / ImageColorMath<br/>CaptureLabelTexts / CropLabelTexts"]
-        Mg["CaptureSettingsMerge / FadeMaskDragRectOptionsMapper"]
+        Mg["CaptureSettingsMerge / FadeMaskDragRectOptionsMapper<br/>OverlayRect / OverlayLineStyle"]
         Log["CaptureLogMessage / CaptureSettingsLogMessage<br/>CaptureLogFormat"]
     end
     subgraph PC["Platform.Core プロジェクト（UI 非依存の基盤）"]
         Ct["CaptureType<br/>public enum"]
     end
-    subgraph Dep["外部依存プロジェクト"]
-        FDR["FadeMaskDragRect<br/>FadeMaskDragRectControl（複合コントロール）<br/>FadeMaskDragRectMode / FadeMaskDragRectOptions<br/>（Marquee（外側の装飾を含む）+ Loupe を内包）"]
-        CV["CropViewControl<br/>CropViewControl（ズーム + 領域選択<br/>+ ルーペを内包する高レベル複合コントロール）"]
-    end
-    subgraph FMCInternal["FadeMaskDragRect の内包コントロール（外部からは非公開・internal）"]
-        DR["MarqueeControl<br/>MarqueeControl（選択矩形 UI ＋ 外側の装飾の描画）"]
-        LP["LoupeControl<br/>LoupeControl（ルーペ表示）"]
+    subgraph Dep["外部依存プロジェクト（内包コントロール）"]
+        DR["MarqueeControl.AvaloniaUI<br/>MarqueeControl（選択矩形 UI ＋ 外側の装飾の描画）"]
+        LP["LoupeControl.AvaloniaUI<br/>LoupeControl（ルーペ表示）"]
+        ZV["ZoomViewControl.AvaloniaUI<br/>ZoomViewControl（画像ビューポート）"]
     end
 
     AP -->|"Task ベース API / 設定 / キャンセル"| Fac
+    AP -->|"Source / Rects / ズーム操作"| CV
     Fac --> CS
     Fac --> CrS
     Fac --> Sl
@@ -126,6 +133,8 @@ flowchart TB
     CrS --> CV
     OW --> FDR
     CrS --> FDR
+    CV --> FDR
+    CV --> ZV
     FDR --> DR
     FDR --> LP
     Fac --> CS2
@@ -175,7 +184,7 @@ flowchart TB
   - 確定 → 論理 Rect（`CropBoundsMath.ComputeCropBounds` で区間の流儀に従い終点のピクセルを加算） / キャンセル → 0x0 の空矩形を返却（いずれもコア型 `EsRectInt`）
   - サイズラベルの文言生成（`CropLabelTexts` に委譲）
 - **可視性**: internal
-- **依存**: CropViewControl / FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectOptions）/ Platform.Core（`Native.ICursorOverrideGuard` / ICoordTransform / CoordTransform）/ CropBoundsMath / CropLabelTexts
+- **依存**: CropViewControl / FadeMaskDragRectControl（同一アセンブリ。 `FadeMaskDragRectControl` / `FadeMaskDragRectOptions`）/ Platform.Core（`Native.ICursorOverrideGuard` / ICoordTransform / CoordTransform）/ CropBoundsMath / CropLabelTexts
 
 ### 6.4 OverlayWindow
 
@@ -212,7 +221,7 @@ flowchart TB
   - クリック確定 → キャプチャ実行 → 結果コールバック
   - 非アクティブ化 / Close → キャンセル
 - **可視性**: internal（クラス。 コンストラクタ等のシグネチャは public）
-- **依存**: FadeMaskDragRect（FadeMaskDragRectControl / FadeMaskDragRectMode）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CaptureClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CaptureLogMessage / CaptureResult
+- **依存**: FadeMaskDragRectControl（同一アセンブリ。 `FadeMaskDragRectControl` / `FadeMaskDragRectMode`）/ Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CaptureClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CaptureLogMessage / CaptureResult
 
 ### 6.5 公開データ型
 
@@ -221,6 +230,36 @@ flowchart TB
 | `CaptureType` enum | `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）。 UI 非依存の共通基盤 `Platform.Core`（`EsUtil.Platform.Core`）提供 |
 | `CaptureSettings` record | キャプチャの外観・動作設定（全メンバー nullable・部分更新可・`Validate()` / `ToNonNull()`）。 共通基盤 `CaptureSessionControl.Core` 提供 |
 | `CaptureResult` record | キャプチャ結果（`Image` / `SourceBounds`。 キャンセル時は画像 null・矩形 0x0）。 共通基盤 `CaptureSessionControl.Core` 提供 |
+| `FadeMaskDragRectSelectionEventArgs` record | 確定要求のイベント引数（`SelectionDomainRect`）。 本プロジェクト提供 |
+| `FadeMaskDragRectPointEventArgs` record | ルーペ位置のイベント引数（`Position`）。 本プロジェクト提供 |
+
+### 6.6 CropViewControl
+
+- **分類**: 公開複合コントロール（`public sealed partial class : Panel`・Facade / Composite パターン）
+- **責務**:
+  - 画像表示（画像ビューポート `ZoomViewControl`）・領域選択オーバーレイ（`FadeMaskDragRectControl`）・外部提供矩形（`Rects`）を 1 コントロールに統合する
+  - 子要素の生成・重ね順・入力の転送（領域選択オーバーレイ上のホイールを画像ビューポートへ転送する）
+  - `ContentToViewport` / `ViewportToContent`（ドメイン ↔ ビューポート。 画像表示矩形の原点基準）とコア確定値の描画先への写像
+- **公開メンバー**: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionDomainRect` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `ContentToViewport` / `ViewportToContent`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`
+- **可視性**: public
+- **依存**: ZoomViewControl / FadeMaskDragRectControl（同一アセンブリ）/ CaptureSessionControl.Core（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）/ Platform.AvaloniaUI（色の相互変換）/ Platform.Core（`EsBitmap` / `ICoordTransform`）
+- **備考**: 画像表示・領域選択の状態と判断は内包コントロールとそのコアが単一所有し、本コントロールは配置・転送・写像のみを担う（自身は判断を持たない）
+
+### 6.7 FadeMaskDragRectControl
+
+- **分類**: 公開複合コントロール（`public sealed class : Panel`・Facade / Composite パターン）
+- **責務**:
+  - 選択矩形（`MarqueeControl`。 選択矩形の外側に描く装飾も同コントロールが描画する）・拡大鏡（`LoupeControl`）の生成・配置・配線・状態同期を 1 箇所に集約する
+  - `Mode` による可視性・全面暗転の一括切替（解釈はコアの `FadeMaskDragRectModes`）
+  - `Options`（コアの設定値）と `MarqueeAppearance` / `LoupeAppearance`（提示層の外観）の一括適用
+  - 設定とモードから子コントロールへ適用する値の解決は `CaptureSessionControl.UIBase` の `FadeMaskDragRectChildValues` が単一所有し、本コントロールは代入するだけ
+  - 座標変換ポートの一括分配（`SetCoordTransform`）
+  - 付加情報（操作・情報ラベル）の描画（`CaptureSessionControl.UIBase` の `FadeMaskHostLabelRenderer`。 文言はホストが与える）
+  - ルーペ画像上の選択矩形破線の描画（`LoupeRendered` イベントで描画先を受け取り、コアの破線幾何を描く）
+- **公開メンバー**: `Mode` / `Options` / `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionDomainRect` / `HighlightDomainRect` / `ShowFullOverlay` / `LoupeCenterPoint` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `RefreshOverlay` / `InvalidateOverlay`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`
+- **可視性**: public（内包コントロールへの直接アクセスは internal）
+- **依存**: MarqueeControl / LoupeControl / CaptureSessionControl.UIBase / CaptureSessionControl.Core（`FadeMaskDragRectMode` / `FadeMaskDragRectModes` / `FadeMaskDragRectOptions` / `FadeMaskDragRectState` / `FadeMaskDragRectOverlay`）/ 提示層の外観（`MarqueeAppearance` / `LoupeAppearance`）/ Platform.Core
+- **備考**: ホイール操作と表示の変化の追従は本コントロールの配線ではなく、ホストが担う（コントロール化を前提とした処理）
 
 ## 7. 依存ルール
 
@@ -230,6 +269,7 @@ flowchart TB
 - セッションへのプラットフォームサービス（ICaptureService / IWindowService / IElementFinder）は注入され、内部で生成しない（DIP）。
 - 上位 AP への通知は Task 返却と `CaptureCompleted` イベント（同期型）の併用（Task が完了結果、イベントが画像変更の順序保証）。
 - 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）。
+- 収録する複合コントロール（`CropViewControl` / `FadeMaskDragRectControl`）も同じ向きの依存に従う（複合コントロール → 内包コントロール / コア / 提示層）。 セッションから見た窓口は `FadeMaskDragRectControl` と `CropViewControl` であり、セッションが内包コントロール（Marquee / Loupe）を直接参照することはない。
 
 ## 8. ライフサイクル
 

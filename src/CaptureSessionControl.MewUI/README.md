@@ -3,13 +3,17 @@
 ## 目次
 
 - [CaptureSessionControl.MewUI](#capturesessioncontrolmewui)
+  - [目次](#目次)
   - [1. 概要](#1-概要)
   - [2. 機能一覧](#2-機能一覧)
   - [3. 依存関係](#3-依存関係)
   - [4. クイックスタート](#4-クイックスタート)
-  - [5. ドキュメント](#5-ドキュメント)
-  - [6. プロジェクト構成](#6-プロジェクト構成)
-  - [7. ライセンス](#7-ライセンス)
+  - [5. 収録コントロール](#5-収録コントロール)
+    - [5.1 CropViewControl（切り出しビュー）](#51-cropviewcontrol切り出しビュー)
+    - [5.2 FadeMaskDragRectControl（領域選択）](#52-fademaskdragrectcontrol領域選択)
+  - [6. ドキュメント](#6-ドキュメント)
+  - [7. プロジェクト構成](#7-プロジェクト構成)
+  - [8. ライセンス](#8-ライセンス)
 
 ---
 
@@ -18,6 +22,8 @@
 画面キャプチャ（スクリーン選択 / ウィンドウ選択 / 範囲選択）の **MewUI 版セッション**です。 仮想スクリーン（全モニター）を 1 枚の画像として敷いたオーバーレイを表示し、選択された領域を切り出して返します。
 
 撮影・切り出しの共通規則（切り出し矩形・設定・セッション状態・オーナー退避）は `CaptureSessionControl.Core` が単一所有し、本プロジェクトは MewUI の描画・入力・ウィンドウ操作だけを担います。
+
+本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロール（`CropViewControl`（切り出しビュー）と `FadeMaskDragRectControl`（領域選択））を同一アセンブリ内に収録します（[5. 収録コントロール](#5-収録コントロール)）。
 
 ## 2. 機能一覧
 
@@ -33,16 +39,23 @@
 - **設定の単一所有と即時反映**: 設定（`AppearanceSettings`）は Facade が単一所有し、撮影と切り出しで同じ値を使う。 設定時は部分更新（null メンバーのみ現在値を維持）・検証・同値スキップ・適用ログを Core（`CaptureSettingsMerge.Apply`）が担い、実行中の切り出しセッションへは即時反映する
 - **ラベル描画**: サイズラベル・操作ラベル・情報ラベルを選択矩形の左上へ表示する
 - **UI 非依存のサービス注入**: キャプチャ・要素検出・ウィンドウ操作は `Platform.Core` の抽象を受け取る（本ライブラリはアプリの型を参照しない）
+- **切り出しビュー（`CropViewControl`）**: 画像ビューポート（拡大・パン・Fit）と外部提供矩形オーバーレイを 1 つの複合コントロールにまとめる
+- **領域選択（`FadeMaskDragRectControl`）**: 暗転マスク + 選択矩形 + ルーペを 1 つの複合コントロールにまとめ、配線と状態同期を内側で完結させる
 
 ## 3. 依存関係
 
 ```text
 CaptureSessionControl.MewUI
-    ├── CaptureSessionControl.Core（撮影・切り出しの共通規則）
+    ├── CaptureSessionControl.Core（撮影・切り出しの共通規則・複合コントロールの設定とモード）
+    ├── CaptureSessionControl.UIBase（設定 → 外観の写像。 両 UI のホストが共有）
     ├── Platform.MewUI（コア型 ⇔ MewUI 型の Interop / DIP 変換）
     ├── Platform.Core（ICaptureService / IElementFinder / IWindowService / ICaptureTarget）
-    ├── FadeMaskDragRectControl.MewUI（暗転マスク + 選択矩形 + ルーペ）
-    └── CropViewControl.MewUI（切り出しビュー。切り出しセッションの対象）
+    ├── Platform.Skia（Skia 依存の閉じ込め）
+    ├── ZoomViewControl.MewUI（切り出しビューの画像ビューポート）
+    ├── MarqueeControl.MewUI（選択矩形と、その外側に描く装飾）
+    ├── LoupeControl.MewUI（拡大鏡）
+    ├── Feature.Marquee.Presenter（描画計画と外観）
+    └── Feature.Loupe.Core（ルーペの配置計算）
 ```
 
 依存は一方向です（アプリから本ライブラリを参照し、逆は参照しない）。
@@ -72,29 +85,110 @@ session.ToggleCrop();
 session.AppearanceSettings = changed;
 ```
 
-`CaptureSettings` は `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します。 ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。 アプリの `Settings` → `CaptureSettings` の変換は `app.Core` の `CaptureSettingsMapper` が担います）。
+`CaptureSettings` は `CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.CaptureSession`）が提供します。 ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。 ホストの設定型 → `CaptureSettings` の変換は上位のアプリが担います）。
 
-## 5. ドキュメント
+## 5. 収録コントロール
+
+本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロールを収録します。 どちらも UI 非依存の共通規則を `CaptureSessionControl.Core` に置き、MewUI 固有の描画・入力・配置だけを持ちます。
+
+### 5.1 CropViewControl（切り出しビュー）
+
+画像の表示（拡大・パン・Fit）と、ホストから渡された矩形のオーバーレイ描画を 1 つのコントロールにまとめた複合コントロールです。 内部で画像ビューポート（`ZoomViewControl`）と透明な矩形オーバーレイを重ね、ホストへ統一インターフェースを提供します（Facade パターン）。
+
+- **矩形オーバーレイ**: `Rects`（`IReadOnlyList<OverlayRect>`。 ドメイン座標）を表示時にビューポート座標へ変換して描画する。 実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」の 2 回描画で市松風の視認性を出す（ダッシュ長はコアの `OverlayLineDash` が単一所有）
+- **座標変換**: `ViewportToContent` / `ContentToViewport` / `ImageRectViewport`（画像表示矩形の原点基準。 Fit 中央寄せの補正を含む）
+- **入力**: 下の画像ビューポートが受け取る（オーバーレイはヒットテスト対象外）。 ホイールの転送用に `PanByWheel` / `ZoomByWheel` を公開する
+- **領域選択は持たない**: 領域選択は `FadeMaskDragRectControl` を重ねて構成する（[5.2](#52-fademaskdragrectcontrol領域選択)）
+
+| プロパティ | 型 | 説明 |
+| --- | --- | --- |
+| `Source` | `EsBitmap?` | 表示する画像。 設定すると Fit 表示へリセットする |
+| `CenterAlign` | `bool` | 画像がビューポートより小さい軸を中央寄せする |
+| `Appearance` | `ZoomViewAppearance` | 下地（市松模様の大きさ・2 色・背景色）の外観の単一値 |
+| `Rects` | `IReadOnlyList<OverlayRect>` | オーバーレイとして描画する矩形（ドメイン座標） |
+| `ZoomView` | `ZoomViewControl` | 内包する画像ビューポート |
+| `ZoomPercent` | `double` | 実効ズーム率（%）。 0 より大きい値のみ設定できる |
+| `CanZoomIn` / `CanZoomOut` | `bool` | ズーム可否（画像未設定時は false） |
+| `Log` | `ILogger` | ズーム操作ログの出力先（内包する画像ビューポートへ伝搬する） |
+
+| メソッド | 説明 |
+| --- | --- |
+| `ZoomIn()` / `ZoomOut()` / `ZoomFit()` | 段階遷移・Fit 表示 |
+| `PanByWheel(EsVector, bool)` | ホイールの回転量でパンする（ホストがオーバーレイ等で受けたホイールの転送用） |
+| `ZoomByWheel(bool, EsPoint?)` | Ctrl+ホイールのズームを適用する（位置はズーム中心） |
+| `TranslatePositionFrom(Element, EsPoint)` | 重ねた要素のローカル座標を本コントロールの座標へ変換する |
+| `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
+| `ViewportToContent(EsPoint)` / `ContentToViewport(EsPoint)` | 画像表示矩形の原点基準の座標変換 |
+
+イベントは `ZoomChanged` / `ViewportChanged`（内包する画像ビューポートから中継）です。
+
+### 5.2 FadeMaskDragRectControl（領域選択）
+
+選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、配線と状態同期を内側で完結させる複合コントロールです（Facade / Composite パターン）。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。
+
+| モード | 選択矩形 | ルーペ | 全面暗転 | 用途 |
+| --- | --- | --- | --- | --- |
+| `Crop` | 有効 | 有効 | 有効 | プレビュー内の切出し |
+| `AreaSelect` | 有効 | 有効 | 有効 | 全画面オーバーレイの領域選択 |
+| `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ） |
+| `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ） |
+
+既定値は `AreaSelect` です。 モードの解釈（表示可否・全面暗転）はコアの `FadeMaskDragRectModes` が単一所有します。
+
+| メンバー | 説明 |
+| --- | --- |
+| `Mode` | 動作モード（既定は `AreaSelect`） |
+| `Options` | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 コアの `FadeMaskDragRectOptions`。 色は含まない） |
+| `MarqueeAppearance` / `LoupeAppearance` | 描画にだけ必要な外観の単一値（提示層の外観。 内包コントロールへ委譲） |
+| `HasSelection` / `SelectionDomainRect` | 現在の選択状態（ドメイン座標） |
+| `HighlightDomainRect` | ハイライト（`ScreenSelect` / `WindowSelect` の注目矩形。 null はハイライトなし） |
+| `ShowFullOverlay` | 全面暗転の有無（モードから導出） |
+| `LoupeCenterPoint` | ルーペ中心（ドメイン座標） |
+| `OperationTextProvider` / `InfoTextProvider` / `SizeLabelOverrideProvider` | 操作ラベル（2 行目）・情報ラベル（3 行目）・サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
+| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` | DPI スケーリング（設定には含めない環境値） |
+| `Log` | 操作ログの出力先（内包する選択コントロールとルーペへ伝搬する） |
+
+| メソッド | 説明 |
+| --- | --- |
+| `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを一括設定（選択矩形・暗転マスク・ルーペの配置で共用。 null の場合は倍率からコアが解決する） |
+| `SetSelection(EsRect)` / `ClearSelection()` | 選択状態の外部設定・クリア |
+| `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe()` | ルーペの制御 |
+| `RequestConfirm()` / `RequestCancel()` | Enter / Escape 相当の確定・キャンセル要求 |
+| `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
+| `RefreshOverlay()` / `InvalidateOverlay()` | 表示の変化への追従・暗転マスクの再描画要求 |
+
+イベントは `ConfirmRequested`（`FadeMaskDragRectSelectionEventArgs`）/ `CancelRequested` / `LoupePositionMoved`（`FadeMaskDragRectPointEventArgs`）です。 イベントの座標はコア型（`EsPoint` / `EsRect`）で公開します。
+
+ホイール操作（ズーム・パン）と表示の変化の追従は本コントロールの配線ではありません（コントロール化を前提とした処理）。 ホイールはホストが受け取ってビューポートへ転送し、表示の変化はホストが検知して `RefreshOverlay()` を呼びます。
+
+## 6. ドキュメント
 
 - `SPEC_ExtFunc.md` — 公開 API の外部仕様
 - `SPEC_System.md` — 設計・依存・実測で判明した制約
 
-## 6. プロジェクト構成
+## 7. プロジェクト構成
 
 ```text
 src/
 │   ├── CaptureSessionControl.MewUI.csproj  # ライブラリ（net10.0-windows）
 │   ├── CaptureSessionControl.cs            # Facade（公開 API。撮影と切り出しの窓口）
 │   ├── CaptureOverlay.cs                   # 撮影セッション（internal。1 セッション = 1 インスタンス）
-│   ├── Sessions/CropSession.cs             # 切り出しセッション（internal。1 セッション = 1 インスタンス）
 │   ├── CaptureOverlayServices.cs           # サービス（キャプチャ・検出・ウィンドウ・ロガー）の束（公開 record）
+│   ├── Sessions/CropSession.cs             # 切り出しセッション（internal。1 セッション = 1 インスタンス）
+│   ├── CropViewControl.cs                  # 切り出しビュー（公開。画像ビューポート + 矩形オーバーレイ）
+│   ├── RectOverlayCanvas.cs                # 透明な矩形オーバーレイ（internal）
+│   ├── CropSkiaRenderer.cs                 # コアの描画入力を Skia へ写す（internal）
+│   ├── FadeMaskDragRectControl.cs          # 領域選択（公開。暗転マスク + 選択矩形 + ルーペ）
+│   ├── FadeMaskDragRectSkiaRenderer.cs     # 選択矩形破線の描画（internal）
+│   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開 record）
+│   ├── FadeMaskDragRectPointEventArgs.cs   # ルーペ位置のイベント引数（公開 record）
 │   └── （撮影画像の描画は Platform.MewUI の SkiaImageView を使う）
 ```
 
-本プロジェクトは UI 操作（描画・入力・ウィンドウ）のみを持ち、共通規則は `CaptureSessionControl.Core` のテストで検証します（本プロジェクトにテストプロジェクトは置きません）。
+本プロジェクトは UI 操作（描画・入力・ウィンドウ）のみを持ち、共通規則は `CaptureSessionControl.Core` が単一所有します。 画面を伴うセッションは実機検証で確認し、複合コントロールは本プロジェクトのテスト（`tests/` 配下。 切り出しビューと領域選択のサブフォルダに分ける）で検証します。
 
 設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。
 
-## 7. ライセンス
+## 8. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

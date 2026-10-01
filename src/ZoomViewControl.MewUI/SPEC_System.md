@@ -249,4 +249,4 @@ sequenceDiagram
 | Ctrl+ホイール | `LogZoomInWheel` / `LogZoomOutWheel` |
 
 コアの `ZoomViewSession.ApplyZoomStep` が遷移とログを共通処理として担い、各操作は記録するログだけを選びます（遷移しない場合はログも出しません）。  
-出力先は `Log` プロパティへ注入します（既定は `NullLogger`。 `CropViewControl.MewUI` 経由でホストが設定する）。
+出力先は `Log` プロパティへ注入します（既定は `NullLogger`。 `CaptureSessionControl.MewUI` 経由でホストが設定する）。
