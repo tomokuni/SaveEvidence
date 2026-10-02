@@ -19,7 +19,7 @@ using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.Loupe.Core.Setting;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Parts.CaptureSession;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 

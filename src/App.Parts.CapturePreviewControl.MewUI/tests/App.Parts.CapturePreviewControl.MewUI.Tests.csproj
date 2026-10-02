@@ -19,7 +19,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
-    <ProjectReference Include="..\..\App.Parts.ZoomViewControl.Core\src\App.Parts.ZoomViewControl.Core.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

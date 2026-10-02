@@ -14,7 +14,7 @@ using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Parts.CaptureSession;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 

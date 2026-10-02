@@ -8,7 +8,7 @@
 ```mermaid
 flowchart TB
     APP["アプリ層<br/>App.App.AvaloniaUI / App.App.MewUI（+ App.App.Core の ViewModel・Model）<br/>App.Parts.CapturePreviewControl.*（撮影セッション + 切り出しビュー + 領域選択 + 切り出しプレビューのビューポート）"]
-    CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI<br/>（ZoomView は Core のみ独立）"]
+    CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI"]
     PLAT["プラットフォーム層<br/>Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>App.Platform.Skia（Skia 依存を閉じ込める）<br/>App.Platform.AvaloniaUI / App.Platform.MewUI（UI アダプタ）"]
     APP --> CTRL
     APP --> PLAT
@@ -84,13 +84,13 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | --- | --- | --- | --- |
 | `MarqueeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI |
 | `LoupeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI |
-| `ZoomViewControl` | あり | なし（UI 層が描く） | `CapturePreviewControl.*` に収録 |
-| `CropViewControl` | あり（`App.Parts.CaptureSessionControl.Core`） | なし | AvaloniaUI / MewUI |
+| `ZoomViewControl` | あり（`App.Parts.CapturePreviewControl.Core`） | なし（UI 層が描く） | `CapturePreviewControl.*` に収録 |
+| `CropViewControl` | あり（`App.Parts.CapturePreviewControl.Core`） | なし | AvaloniaUI / MewUI |
 | `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。 描画手順は持たない） | AvaloniaUI / MewUI |
 | `FadeMaskDragRectControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。 内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI |
 | `ColorPickerControl` | なし（UI のみ） | なし | AvaloniaUI |
 
-`CropViewControl` と `FadeMaskDragRectControl` は `App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。 `ZoomViewControl` も同じアセンブリに収録され、`CropViewControl` が内包する画像ビューポートです（ZoomView の UI 層は独立したプロジェクトではありません。 独立するのは UI 非依存コアの `App.Parts.ZoomViewControl.Core` のみです）。
+`CropViewControl` と `FadeMaskDragRectControl` は `App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。 `ZoomViewControl` も同じアセンブリに収録され、`CropViewControl` が内包する画像ビューポートです（ZoomView の UI 層も独立したプロジェクトではありません。 ズーム・パンの状態と判断は UI 非依存コアの `App.Parts.CapturePreviewControl.Core` が単一所有します）。
 
 **コントロール化を前提とした処理は UI が持ちます**: ホイール操作（どの入力がズーム・パンかを決める）・ビューポートの変化の追従・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるためです。
 `LoupeControl` の中間ビットマップの再描画スケジューリング（`LoupeRenderCoordinator`。 Avalonia 版が所有する）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。 同じ必要が生じた時点で実装できます。
@@ -105,9 +105,10 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | --- | --- | --- |
 | Marquee | [`Feature.Marquee.Core`](Feature.Marquee.Core/README.md) | [`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) |
 | Loupe | [`Feature.Loupe.Core`](Feature.Loupe.Core/README.md) | [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md) |
-| CaptureSession | [`App.Parts.CaptureSessionControl.Core`](App.Parts.CaptureSessionControl.Core/README.md) | [`App.Parts.CaptureSessionControl.UIBase`](App.Parts.CaptureSessionControl.UIBase/README.md) |
-| CropView | [`App.Parts.CaptureSessionControl.Core`](App.Parts.CaptureSessionControl.Core/README.md) | なし |
-| FadeMaskDragRect | [`App.Parts.CaptureSessionControl.Core`](App.Parts.CaptureSessionControl.Core/README.md) | [`App.Parts.CaptureSessionControl.UIBase`](App.Parts.CaptureSessionControl.UIBase/README.md) |
+| CaptureSession | [`App.Parts.CapturePreviewControl.Core`](App.Parts.CapturePreviewControl.Core/README.md) | [`App.Parts.CaptureSessionControl.UIBase`](App.Parts.CaptureSessionControl.UIBase/README.md) |
+| CropView | [`App.Parts.CapturePreviewControl.Core`](App.Parts.CapturePreviewControl.Core/README.md) | なし |
+| ZoomView | [`App.Parts.CapturePreviewControl.Core`](App.Parts.CapturePreviewControl.Core/README.md) | なし（UI 層が描く。 `CropViewControl` が内包） |
+| FadeMaskDragRect | [`App.Parts.CapturePreviewControl.Core`](App.Parts.CapturePreviewControl.Core/README.md) | [`App.Parts.CaptureSessionControl.UIBase`](App.Parts.CaptureSessionControl.UIBase/README.md) |
 
 FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) / [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md)）。
 
@@ -122,7 +123,7 @@ UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [
 | 可搬コア（機能単位） | `Feature.Marquee.Core` / `Feature.Loupe.Core` | `EsUtil.Feature.Marquee.Core`（`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Selection`） / `EsUtil.Feature.Loupe.Core`（`.Drawing` / `.Setting` / `.Logging` / `.Placement`） |
 | 可搬な提示層（機能単位） | `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | `EsUtil.Feature.Marquee.Presenter`（`.Setting` / `.Drawing` / `.Label` / `.Logging`） / `EsUtil.Feature.Loupe.Presenter`（同左） |
 | 製品側のコントロール | `MarqueeControl.AvaloniaUI` 等 | `EsUtil.SaveEvidence.Marquee.AvaloniaUI` 等 |
-| 撮影スタック | `App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` / `App.Parts.CaptureSessionControl.Core` / `App.Parts.CaptureSessionControl.UIBase` / `App.Parts.ZoomViewControl.Core` | `EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI` / `EsUtil.SaveEvidence.Parts.CapturePreview.MewUI` / `EsUtil.SaveEvidence.Parts.CaptureSession`（`.UIBase` を含む） / `EsUtil.SaveEvidence.Parts.ZoomView`（フォルダ名から `Control` を除いた短縮名） |
+| 撮影スタック | `App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` / `App.Parts.CapturePreviewControl.Core` / `App.Parts.CaptureSessionControl.UIBase` | `EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI` / `EsUtil.SaveEvidence.Parts.CapturePreview.MewUI` / `EsUtil.SaveEvidence.Parts.CapturePreview.Core` / `EsUtil.SaveEvidence.Parts.CaptureSession.UIBase` |
 | アプリ | `App.App.Core` / `App.App.AvaloniaUI` / `App.App.MewUI` | `EsUtil.SaveEvidence.App.Core` / `EsUtil.SaveEvidence.App.AvaloniaUI` / `EsUtil.SaveEvidence.App.MewUI` |
 
 **コントロール系の名前空間は、フォルダ名から `Control` を除いた短縮名を使います**（例: `MarqueeControl.AvaloniaUI` → `EsUtil.SaveEvidence.Marquee.AvaloniaUI`）。 これは好みではなく制約です。

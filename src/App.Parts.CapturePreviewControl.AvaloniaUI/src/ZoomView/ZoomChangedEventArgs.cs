@@ -1,5 +1,5 @@
 
-using EsUtil.SaveEvidence.Parts.ZoomView;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 
 /// <summary>ズーム率変更イベントの引数。</summary>

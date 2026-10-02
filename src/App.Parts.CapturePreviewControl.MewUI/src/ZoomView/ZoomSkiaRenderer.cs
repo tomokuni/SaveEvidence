@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using EsUtil.SaveEvidence.Platform.Skia;
-using EsUtil.SaveEvidence.Parts.ZoomView;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;

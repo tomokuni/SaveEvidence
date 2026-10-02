@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
-using EsUtil.SaveEvidence.Parts.CaptureSession;
-using EsUtil.SaveEvidence.Parts.ZoomView;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;

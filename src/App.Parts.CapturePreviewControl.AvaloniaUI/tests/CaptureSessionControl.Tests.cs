@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Avalonia.Headless.XUnit;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
-using EsUtil.SaveEvidence.Parts.CaptureSession;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 

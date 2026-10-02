@@ -1,10 +1,9 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.SaveEvidence.Parts.CaptureSession;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 using EsUtil.SaveEvidence.Marquee.MewUI;
 using EsUtil.Feature.Marquee.Presenter.Setting;
-using EsUtil.SaveEvidence.Parts.ZoomView;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Models;

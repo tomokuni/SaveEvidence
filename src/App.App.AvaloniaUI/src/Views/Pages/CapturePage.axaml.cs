@@ -3,7 +3,7 @@ using System.Globalization;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
-using EsUtil.SaveEvidence.Parts.CaptureSession;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
@@ -17,7 +17,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using EsUtil.Feature.Marquee.Presenter.Setting;
-using EsUtil.SaveEvidence.Parts.ZoomView;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -864,7 +863,7 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>
     /// <see cref="ZoomViewControl.ZoomChanged"/> で通知される可否、または <see cref="ZoomViewControl.CanZoomIn"/> /
     /// <see cref="ZoomViewControl.CanZoomOut"/>（初期表示時の参照）に基づいて、⊖⊕ ボタンの <c>IsEnabled</c> を更新する。<br/>
-    /// 可否はコア（<c>EsUtil.SaveEvidence.Parts.ZoomView</c> のズーム遷移仕様）で判定済みであり、本クラスは判定を持たない。
+    /// 可否はコア（<c>EsUtil.SaveEvidence.Parts.CapturePreview.Core</c> のズーム遷移仕様）で判定済みであり、本クラスは判定を持たない。
     /// </remarks>
     private void UpdateZoomButtonState(bool canZoomIn, bool canZoomOut)
     {

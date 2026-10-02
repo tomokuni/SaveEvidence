@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Platform.Skia;
-using EsUtil.SaveEvidence.Parts.CaptureSession;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;

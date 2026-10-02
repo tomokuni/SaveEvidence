@@ -44,7 +44,7 @@
 - **イベント駆動**: 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）
 - **再入禁止ガード**: 実行中の再呼び出しは `null` を返す（既存セッションを継続）
 - **部分更新設定**: `CaptureSettings` は全メンバー nullable（null = デフォルト値 or 現在値維持）で部分更新が可能
-- **共通規則の単一所有**: 設定のマージ・実行の排他・モニタ倍率・切り出し範囲・ハイライト状態・キー操作・クリック確定・画像の保持と取得の待ち方・ログ定義は `App.Parts.CaptureSessionControl.Core` が所有し、本 UI は委譲する
+- **共通規則の単一所有**: 設定のマージ・実行の排他・モニタ倍率・切り出し範囲・ハイライト状態・キー操作・クリック確定・画像の保持と取得の待ち方・ログ定義は `App.Parts.CapturePreviewControl.Core` が所有し、本 UI は委譲する
 - **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は Platform.Core の `Native`（抽象）と `Native.Win`（Windows 実装）を介して注入（テスト可能・プラットフォーム非依存）
 - **切り出しビュー（`CropViewControl`）**: 画像ビューポート（拡大・パン・Fit）+ 領域選択オーバーレイ + 外部提供矩形を 1 つの複合コントロールにまとめる
 - **領域選択（`FadeMaskDragRectControl`）**: 暗転マスク + 選択矩形 + ルーペを 1 つの複合コントロールにまとめ、配線と状態同期を内側で完結させる
@@ -117,7 +117,7 @@ cropView.ZoomIn();            // 23 段階の次のレベルへ
 cropView.ZoomFit();           // Fit 表示（ビューポートに収まる Uniform 倍率）へ
 ```
 
-ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）は `App.Parts.ZoomViewControl.Core` の `ZoomConfig`（検証付き不変値）に集約され、既定は 10〜500% の 23 段階・ホイール ×1.1 です（`CropViewControl` は既定値を使用します）。
+ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）は `App.Parts.CapturePreviewControl.Core` の `ZoomConfig`（検証付き不変値）に集約され、既定は 10〜500% の 23 段階・ホイール ×1.1 です（`CropViewControl` は既定値を使用します）。
 
 ### 設定の適用
 
@@ -168,7 +168,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 ## 7. 収録コントロール
 
-本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロールと、切り出しビューが内包する画像ビューポートを収録します。 いずれも UI 非依存の共通規則を `App.Parts.CaptureSessionControl.Core` / `App.Parts.ZoomViewControl.Core` に置き、Avalonia 固有の描画・入力・配置だけを持ちます。
+本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロールと、切り出しビューが内包する画像ビューポートを収録します。 いずれも UI 非依存の共通規則を `App.Parts.CapturePreviewControl.Core` に置き、Avalonia 固有の描画・入力・配置だけを持ちます。
 
 ### 7.1 CropViewControl（切り出しビュー）
 
@@ -196,7 +196,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 ### 7.3 ZoomViewControl（切り出しビューの画像ビューポート）
 
-画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールではなく切り出しビューの表示を成立させるために存在します（`CropViewControl` が `Source` / `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ViewportToContent` 等を委譲し、ホストは通常 `CropViewControl` 経由で利用します）。 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー）は UI 非依存コア `App.Parts.ZoomViewControl.Core` の `ZoomViewSession` が単一所有します。
+画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールではなく切り出しビューの表示を成立させるために存在します（`CropViewControl` が `Source` / `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ViewportToContent` 等を委譲し、ホストは通常 `CropViewControl` 経由で利用します）。 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー）は UI 非依存コア `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有します。
 
 - **ズーム遷移**: ⊖⊕ の 23 段階（10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500）/ Ctrl+ホイールの ×1.1・÷1.1 連続遷移（現在値を基準に四捨五入し、10〜500% へクランプ）
 - **Fit 表示**: ビューポートに収まる Uniform 倍率（アスペクト比維持）。 実効倍率は `min(ビューポート幅 ÷ 画像幅, ビューポート高さ ÷ 画像高さ) × 100` で計算し、リサイズに追従する。 段階遷移の際に Fit 実効倍率が間に挟まる場合はそれを経由する
@@ -225,10 +225,9 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 | 参照先 | 利用機能 |
 | --- | --- |
-| `App.Parts.CaptureSessionControl.Core` | `CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `FadeMaskDragRectOptionsMapper` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / `OverlayRect` / `OverlayLineStyle` / `FadeMaskDragRectMode` / `FadeMaskDragRectOptions` / ログ定義（両 UI 共通の規則。 UI 非依存） |
+| `App.Parts.CapturePreviewControl.Core` | 両 UI 共通の規則（`CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `FadeMaskDragRectOptionsMapper` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / `OverlayRect` / `OverlayLineStyle` / `FadeMaskDragRectMode` / `FadeMaskDragRectOptions` / ログ定義）と、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession` / `ZoomConfig` / `ZoomState` / `ZoomViewAppearance` / `ZoomLogMessage`）。 UI 非依存 |
 | `App.Parts.CaptureSessionControl.UIBase` | 設定 → 外観（`MarqueeAppearance` / `LoupeAppearance`）の写像（`CapturePaintMapper`）、設定とモードから子コントロールへ適用する値の解決（`FadeMaskDragRectChildValues`）、付加情報ラベルの描画（`FadeMaskHostLabelRenderer`） |
 | `App.Platform.AvaloniaUI` | サービス生成 / `ScreenConverter` / 色の相互変換（`ColorAvaloniaInterop`）。 抽象（`ICaptureService` / `IWindowService` / `IElementFinder`）は `Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `Platform.Core` |
-| `App.Parts.ZoomViewControl.Core` | 切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession` / `ZoomConfig` / `ZoomState` / `ZoomViewAppearance` / ログ定義。 UI 非依存）。 `ZoomViewControl`（切り出しビューが内包する画像ビューポート）が参照する |
 | `MarqueeControl.AvaloniaUI` | `MarqueeControl`（選択矩形と、その外側に描く装飾（暗転マスク・外枠・ハイライト）） |
 | `LoupeControl.AvaloniaUI` | `LoupeControl`（拡大鏡）/ `LoupeRenderedEventArgs` |
 | `Feature.Marquee.Presenter` | `MarqueeAppearance`（描画にだけ必要な外観） |
@@ -261,7 +260,7 @@ App.Parts.CapturePreviewControl.AvaloniaUI/
 
 `CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。 利用側は `using EsUtil.Platform.Core;` を追加してください。
 
-`CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `App.Parts.CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CaptureSession`）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。 利用側は `using EsUtil.SaveEvidence.Parts.CaptureSession;` を追加してください。 **色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
+`CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `App.Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core`）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。 利用側は `using EsUtil.SaveEvidence.Parts.CapturePreview.Core;` を追加してください。 **色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
 
 設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `App.Parts.CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。 利用側は `using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;` を追加してください。
 

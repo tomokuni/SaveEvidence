@@ -17,7 +17,7 @@
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
-    <ProjectReference Include="..\..\App.Parts.ZoomViewControl.Core\src\App.Parts.ZoomViewControl.Core.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.Core\src\App.Parts.CaptureSessionControl.Core.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
     <!-- 設定 → 色の写像（両 UI で同じ写像を使う） -->
     <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.UIBase\src\App.Parts.CaptureSessionControl.UIBase.csproj" />
     <!-- 画像ビューポート（拡大・パン・Fit。 切り出しの表示） -->

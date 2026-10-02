@@ -13,7 +13,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `FadeMaskDragRectSelectionEventArgs` | sealed record | 確定要求のイベント引数（`SelectionDomainRect: EsRect`） |
 | `FadeMaskDragRectPointEventArgs` | sealed record | ルーペ位置のイベント引数（`Position: EsPoint`） |
 
-`OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）は `App.Parts.CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CaptureSession`）が提供します。
+`OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）は `App.Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core`）が提供します。
 
 名前空間は `EsUtil.SaveEvidence.Parts.CapturePreview.MewUI` です。
 
@@ -32,7 +32,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 ### 2.0 排他の規則
 
 撮影（`Capture`）と切り出し（`ToggleCrop`）は**同時に 1 つだけ**実行できます。  
-この規則は `App.Parts.CaptureSessionControl.Core` の `CaptureSessionSlot` が単一所有し、本 Facade がその唯一の適用者です。  
+この規則は `App.Parts.CapturePreviewControl.Core` の `CaptureSessionSlot` が単一所有し、本 Facade がその唯一の適用者です。  
 実行中の要求は無視し、**実行中のセッションを中断しません**（撮影中に切り出しを開始できない・切り出し中に撮影を開始できない）。
 
 ### 2.1 動作
@@ -75,7 +75,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 - スクリーン選択・ウィンドウ選択は検出結果が全ピクセルを含むため、終点の 1 ピクセルを加算しません。
 - 切り出し矩形は画像の範囲へクランプします（画像の右端・下端で透明な余白が付かないようにするため）。
 - 切り出せる矩形が無い（退化した選択）場合はキャンセル扱い（null）になります。
-- 計算は `App.Parts.CaptureSessionControl.Core` の `CaptureClipMath.ResolveCaptureRect` が単一所有します（種別の性質とクランプ・丸めを組み合わせた唯一の入口）。
+- 計算は `App.Parts.CapturePreviewControl.Core` の `CaptureClipMath.ResolveCaptureRect` が単一所有します（種別の性質とクランプ・丸めを組み合わせた唯一の入口）。
 - 最小サイズは選択操作（Marquee）が判定します（検出矩形は要素の大きさであり、小さい要素も切り出し対象とする）。
 
 ## 3. CaptureOverlayServices
@@ -93,7 +93,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 ## 4. 使用する設定項目
 
-`CaptureSettings`（`App.Parts.CaptureSessionControl.Core`）のうち、本ライブラリが参照する項目です。
+`CaptureSettings`（`App.Parts.CapturePreviewControl.Core`）のうち、本ライブラリが参照する項目です。
 
 | 項目 | 用途 |
 | --- | --- |
@@ -183,7 +183,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | 座標系 | ドメイン座標（元画像ピクセル）。 表示時にビューポート座標へ変換する |
 | 実線（`Solid`） | 前景色（`Foreground`）の枠のみを描画する |
 | 破線（`Dashed`） / 点線（`Dotted`） | 背景色（`Background`）の実線の上へ前景色の破線を重ねる（市松風の視認性） |
-| ダッシュ長 | 破線 = 8 / 間隔 4、点線 = 2 / 間隔 2（`App.Parts.CaptureSessionControl.Core` の `OverlayLineDash` が単一所有） |
+| ダッシュ長 | 破線 = 8 / 間隔 4、点線 = 2 / 間隔 2（`App.Parts.CapturePreviewControl.Core` の `OverlayLineDash` が単一所有） |
 | 線の太さ | `Thickness`（DIP）。 0 以下は 1 として扱う。 枠は矩形の内側へ描画する |
 | サイズ 0 の矩形 | 何も描画しない |
 | 色 | `System.Drawing.Color`（アルファを含む） |
@@ -200,7 +200,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 ## 6. FadeMaskDragRectControl（領域選択）
 
-選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、配線と状態同期を内側で完結させる複合コントロールです（Facade / Composite パターン）。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。 動作モードとモードから描画設定への写像は UI 非依存コア（`App.Parts.CaptureSessionControl.Core`）が単一所有します。
+選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、配線と状態同期を内側で完結させる複合コントロールです（Facade / Composite パターン）。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。 動作モードとモードから描画設定への写像は UI 非依存コア（`App.Parts.CapturePreviewControl.Core`）が単一所有します。
 
 名前空間は `EsUtil.SaveEvidence.Parts.CapturePreview.MewUI`、クラスは `FadeMaskDragRectControl`（`public sealed`、`Panel` 派生）です。
 
@@ -287,7 +287,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールとしてではなく切り出しビューの表示を成立させるために存在します。 ホストは通常 `CropViewControl` の `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ViewportToContent` / `ContentToViewport` / `ImageRectViewport` を経由して利用します（`CropViewControl.ZoomView` で参照できるのは、重ねた要素の座標変換に必要となる場合のためです）。
 
-判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー・Fit 復帰）は UI 非依存コア `App.Parts.ZoomViewControl.Core` の `ZoomViewSession` が単一所有し、入力の変換・効果の適用・描画・通知の転送だけを担います。
+判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー・Fit 復帰）は UI 非依存コア `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有し、入力の変換・効果の適用・描画・通知の転送だけを担います。
 
 ### 7.2 ズーム遷移ルール
 

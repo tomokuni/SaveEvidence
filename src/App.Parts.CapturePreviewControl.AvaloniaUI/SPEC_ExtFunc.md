@@ -162,7 +162,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 
 #### 5.1.2 CaptureResult のプロパティ
 
-`CaptureResult`（record）は UI 非依存の共通基盤 `App.Parts.CaptureSessionControl.Core` が提供する型です。
+`CaptureResult`（record）は UI 非依存の共通基盤 `App.Parts.CapturePreviewControl.Core` が提供する型です。
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
@@ -235,7 +235,7 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 
 ### 5.4 型
 
-公開型は `CaptureSessionControl`（本プロジェクト）・複合コントロールの `CropViewControl` / `FadeMaskDragRectControl` とそのイベント引数（`FadeMaskDragRectSelectionEventArgs` / `FadeMaskDragRectPointEventArgs`）、およびコア公開型の `CaptureType`（`EsUtil.Platform.Core`）・`CaptureSettings` / `CaptureResult`（`EsUtil.SaveEvidence.Parts.CaptureSession`。 `App.Parts.CaptureSessionControl.Core`。 UI フレームワーク非依存の共通基盤が提供）です。
+公開型は `CaptureSessionControl`（本プロジェクト）・複合コントロールの `CropViewControl` / `FadeMaskDragRectControl` とそのイベント引数（`FadeMaskDragRectSelectionEventArgs` / `FadeMaskDragRectPointEventArgs`）、およびコア公開型の `CaptureType`（`EsUtil.Platform.Core`）・`CaptureSettings` / `CaptureResult`（`EsUtil.SaveEvidence.Parts.CapturePreview.Core`。 `App.Parts.CapturePreviewControl.Core`。 UI フレームワーク非依存の共通基盤が提供）です。
 
 #### 5.4.1 CaptureSessionControl
 
@@ -360,7 +360,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 
 #### 5.5.4 外部提供矩形
 
-`Rects` の要素（`OverlayRect`）は UI 非依存の `App.Parts.CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CaptureSession`）が提供します。 矩形（`EsRect`）・枠線スタイル（`OverlayLineStyle`）・前景色・背景色・線幅を持ち、実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」で描画します（ダッシュ長はコアの `OverlayLineDash` が単一所有）。
+`Rects` の要素（`OverlayRect`）は UI 非依存の `App.Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core`）が提供します。 矩形（`EsRect`）・枠線スタイル（`OverlayLineStyle`）・前景色・背景色・線幅を持ち、実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」で描画します（ダッシュ長はコアの `OverlayLineDash` が単一所有）。
 
 ### 5.6 FadeMaskDragRectControl（領域選択）
 
@@ -415,7 +415,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 
 画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールとしてではなく切り出しビューの表示を成立させるために存在します。 ホストは通常 `CropViewControl` の `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ViewportToContent` / `ContentToViewport` / `ImageRectViewport` を経由して利用します（`CropViewControl` は同じ値・操作を透過します）。
 
-判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー・Fit 復帰）は UI 非依存コア `App.Parts.ZoomViewControl.Core` の `ZoomViewSession` が単一所有し、本コントロールは入力の変換・効果の適用・描画・通知の転送だけを担います。
+判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー・Fit 復帰）は UI 非依存コア `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有し、本コントロールは入力の変換・効果の適用・描画・通知の転送だけを担います。
 
 #### 5.7.1 ズーム遷移ルール
 

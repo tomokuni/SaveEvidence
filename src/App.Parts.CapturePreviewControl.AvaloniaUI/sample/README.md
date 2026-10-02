@@ -99,7 +99,7 @@ App.Parts.CapturePreviewControl.AvaloniaUI/sample/
     └── MainWindow.axaml.cs     # CaptureSessionControl の呼び出し・結果反映・ダミー画像生成
 ```
 
-プレビューのズーム・パンは `Views/MainWindow.axaml(.cs)`（⊖ / ⊕ / Fit・拡大率スライダ・中央寄せ・ポインタ座標）と `ViewModels/MainWindowViewModel.cs`（`ZoomPercent` / `ZoomDisplayText` / `CenterAlign`）が担い、実体は `CropViewControl` が内包する画像ビューポート（`App.Parts.ZoomViewControl.Core` の設定）に委譲します。
+プレビューのズーム・パンは `Views/MainWindow.axaml(.cs)`（⊖ / ⊕ / Fit・拡大率スライダ・中央寄せ・ポインタ座標）と `ViewModels/MainWindowViewModel.cs`（`ZoomPercent` / `ZoomDisplayText` / `CenterAlign`）が担い、実体は `CropViewControl` が内包する画像ビューポート（`App.Parts.CapturePreviewControl.Core` の設定）に委譲します。
 
 ## 6. 検証項目（動作確認チェックリスト）
 

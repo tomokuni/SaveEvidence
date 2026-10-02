@@ -9,7 +9,7 @@ using EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using EsUtil.SaveEvidence.Platform.Skia;
-using EsUtil.SaveEvidence.Parts.ZoomView;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;

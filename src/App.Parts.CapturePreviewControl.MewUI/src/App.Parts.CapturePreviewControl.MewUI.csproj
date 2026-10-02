@@ -21,12 +21,12 @@
     <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
     <PackageReference Include="Aprillz.MewUI.Skia.Interop.Direct2D" Version="$(MewUIVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
-    <ProjectReference Include="..\..\App.Parts.ZoomViewControl.Core\src\App.Parts.ZoomViewControl.Core.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- 撮影・切り出しの共通規則（切り出し矩形・設定・セッション状態・退避手順） -->
-    <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.Core\src\App.Parts.CaptureSessionControl.Core.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
     <!-- 設定 → 色の写像（両 UI で同じ写像を使う） -->
     <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.UIBase\src\App.Parts.CaptureSessionControl.UIBase.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型）と DIP 変換 -->

@@ -19,7 +19,7 @@
     <PackageReference Include="Avalonia.Fonts.Inter" Version="[12.*,)" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.*,)" Condition="'$(Configuration)' == 'Debug'" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
-    <ProjectReference Include="..\..\App.Parts.ZoomViewControl.Core\src\App.Parts.ZoomViewControl.Core.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

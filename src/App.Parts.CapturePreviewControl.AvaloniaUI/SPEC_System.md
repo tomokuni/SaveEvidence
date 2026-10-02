@@ -24,7 +24,7 @@
     - [6.8 ZoomViewControl（切り出しビューの画像ビューポート）](#68-zoomviewcontrol切り出しビューの画像ビューポート)
     - [6.9 ZoomableView](#69-zoomableview)
     - [6.10 CheckerboardView](#610-checkerboardview)
-    - [6.11 App.Parts.ZoomViewControl.Core の型（UI 非依存）](#611-apppartszoomviewcontrolcore-の型ui-非依存)
+    - [6.11 App.Parts.CapturePreviewControl.Core の画像ビューポートの型（UI 非依存）](#611-apppartscapturepreviewcontrolcore-の画像ビューポートの型ui-非依存)
   - [7. 依存ルール](#7-依存ルール)
   - [8. ライフサイクル](#8-ライフサイクル)
   - [9. ログ](#9-ログ)
@@ -39,7 +39,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 本プロジェクト（App.Parts.CapturePreviewControl.AvaloniaUI）は、このシステムのうち**画面キャプチャ（ScreenSelect / WindowSelect / AreaSelect）と切出し（Crop）のセッション統括**を担います。 上位 AP（app）へは Task ベースの公開 Facade（`CaptureSessionControl`）を提供し、内部でオーバーレイ（`OverlayWindow`）と複合コントロール（`FadeMaskDragRectControl`）を組み立てて実行します。
 
-本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロール（画像表示 + 領域選択の `CropViewControl` と、領域選択の `FadeMaskDragRectControl`）を同一アセンブリ内に収録します。 `CropViewControl` は画像ビューポート（`ZoomViewControl` / `ZoomableView` / `CheckerboardView`）を内包し、その状態と判断は UI 非依存の `App.Parts.ZoomViewControl.Core`（`ZoomViewSession`）が単一所有します。
+本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロール（画像表示 + 領域選択の `CropViewControl` と、領域選択の `FadeMaskDragRectControl`）を同一アセンブリ内に収録します。 `CropViewControl` は画像ビューポート（`ZoomViewControl` / `ZoomableView` / `CheckerboardView`）を内包し、その状態と判断は UI 非依存の `App.Parts.CapturePreviewControl.Core`（`ZoomViewSession`）が単一所有します。
 
 ## 2. 技術スタック
 
@@ -53,7 +53,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | App.Parts.CaptureSessionControl.UIBase（設定 → 外観の写像）/ App.Parts.ZoomViewControl.Core（切り出しビューの画像ビューポートの状態と判断）/ MarqueeControl.AvaloniaUI / LoupeControl.AvaloniaUI（内包コントロール）/ App.Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
+| **依存プロジェクト** | App.Parts.CapturePreviewControl.Core（撮影セッション・切り出しビュー・領域選択・画像ビューポートの状態と判断）/ App.Parts.CaptureSessionControl.UIBase（設定 → 外観の写像）/ MarqueeControl.AvaloniaUI / LoupeControl.AvaloniaUI（内包コントロール）/ App.Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
 
 撮影セッション（`CaptureSessionControl` / `SelectionCaptureSession` / `OverlayWindow`）は内包コントロール（MarqueeControl / LoupeControl）を直接参照しません（窓口は `FadeMaskDragRectControl` のみ。 公開型のカプセル化）。 内包コントロールを参照するのは同一アセンブリ内の複合コントロールだけです。
 
@@ -70,7 +70,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 並置: 公開複合コントロール（CropViewControl / FadeMaskDragRectControl）
   → 各コントロール（Marquee / Loupe / ZoomView）+ App.Platform.AvaloniaUI
 
-横断: App.Parts.CaptureSessionControl.Core（設定のマージ・実行の排他・切り出し範囲・モニタ倍率・複合コントロールのモードと設定・ログ定義）
+横断: App.Parts.CapturePreviewControl.Core（設定のマージ・実行の排他・切り出し範囲・モニタ倍率・複合コントロールのモードと設定・ログ定義）
 ```
 
 ### 3.2 依存方向
@@ -78,7 +78,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 - 依存は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール → 各コントロール / App.Platform.AvaloniaUI）。
 - 配線・状態同期は複合コントロールに集約し、セッションは薄い統括者（SRP / DRY）。
 - プラットフォームサービス（ICaptureService / IWindowService / IElementFinder）は注入され、内部で生成しない（DIP）。
-- 両 UI 共通の規則（状態・判断・契約・ログ定義）は `App.Parts.CaptureSessionControl.Core` が単一所有し、本プロジェクトは委譲する（同じ規則を両 UI に書かない）。
+- 両 UI 共通の規則（状態・判断・契約・ログ定義）は `App.Parts.CapturePreviewControl.Core` が単一所有し、本プロジェクトは委譲する（同じ規則を両 UI に書かない）。
 
 ## 4. 例外処理ポリシー
 
@@ -86,7 +86,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成で出力する。 定義はすべて `App.Parts.CaptureSessionControl.Core`（`CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`）が単一所有し、本 UI は定義を持たない（`_log.LogXxx` を呼ぶだけ）。 現在の定義は Debug / Trace のみで、Error / Warning は定義していない（例外は上位 AP が処理する）。
+- ログは LoggerMessage ソース生成で出力する。 定義はすべて `App.Parts.CapturePreviewControl.Core`（`CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`）が単一所有し、本 UI は定義を持たない（`_log.LogXxx` を呼ぶだけ）。 現在の定義は Debug / Trace のみで、Error / Warning は定義していない（例外は上位 AP が処理する）。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -111,14 +111,12 @@ flowchart TB
         ZVW["ZoomViewControl<br/>public sealed<br/>ZoomView/ZoomViewControl.cs<br/>（切り出しビューの画像ビューポート）"]
         ZVB["ZoomableView / CheckerboardView<br/>internal sealed<br/>ZoomView/（入力ブリッジ・描画）"]
     end
-    subgraph Core["App.Parts.CaptureSessionControl.Core プロジェクト（両 UI 共通の規則。UI 非依存）"]
+    subgraph Core["App.Parts.CapturePreviewControl.Core プロジェクト（両 UI 共通の規則。UI 非依存）"]
         CS2["CaptureSettings / CaptureResult<br/>public sealed record"]
         Sl["CaptureSessionSlot / CaptureSessionState<br/>CaptureCompletion / CaptureOwnerScope"]
         Math["CropBoundsMath / CaptureClipMath / CaptureTypeTraits<br/>MonitorScalingMath / ImageColorMath<br/>CaptureLabelTexts / CropLabelTexts"]
         Mg["CaptureSettingsMerge / FadeMaskDragRectOptionsMapper<br/>OverlayRect / OverlayLineStyle"]
         Log["CaptureLogMessage / CaptureSettingsLogMessage<br/>CaptureLogFormat"]
-    end
-    subgraph CoreZ["App.Parts.ZoomViewControl.Core プロジェクト（UI 非依存）"]
         ZS["ZoomViewSession<br/>public sealed class（状態と判断を単一所有）"]
         ZC["ZoomConfig / ZoomState / ZoomViewAppearance<br/>public"]
         ZT["ZoomMath / ZoomTransition / ZoomScrollBarGeometry<br/>internal（純粋関数）"]
@@ -243,8 +241,8 @@ flowchart TB
 | コンポーネント | 説明 |
 | --- | --- |
 | `CaptureType` enum | `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）。 UI 非依存の共通基盤 `Platform.Core`（`EsUtil.Platform.Core`）提供 |
-| `CaptureSettings` record | キャプチャの外観・動作設定（全メンバー nullable・部分更新可・`Validate()` / `ToNonNull()`）。 共通基盤 `App.Parts.CaptureSessionControl.Core` 提供 |
-| `CaptureResult` record | キャプチャ結果（`Image` / `SourceBounds`。 キャンセル時は画像 null・矩形 0x0）。 共通基盤 `App.Parts.CaptureSessionControl.Core` 提供 |
+| `CaptureSettings` record | キャプチャの外観・動作設定（全メンバー nullable・部分更新可・`Validate()` / `ToNonNull()`）。 共通基盤 `App.Parts.CapturePreviewControl.Core` 提供 |
+| `CaptureResult` record | キャプチャ結果（`Image` / `SourceBounds`。 キャンセル時は画像 null・矩形 0x0）。 共通基盤 `App.Parts.CapturePreviewControl.Core` 提供 |
 | `FadeMaskDragRectSelectionEventArgs` record | 確定要求のイベント引数（`SelectionDomainRect`）。 本プロジェクト提供 |
 | `FadeMaskDragRectPointEventArgs` record | ルーペ位置のイベント引数（`Position`）。 本プロジェクト提供 |
 
@@ -257,7 +255,7 @@ flowchart TB
   - `ContentToViewport` / `ViewportToContent`（ドメイン ↔ ビューポート。 画像表示矩形の原点基準）とコア確定値の描画先への写像
 - **公開メンバー**: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionDomainRect` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `ContentToViewport` / `ViewportToContent`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`
 - **可視性**: public
-- **依存**: ZoomViewControl / FadeMaskDragRectControl（同一アセンブリ）/ App.Parts.CaptureSessionControl.Core（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）/ App.Platform.AvaloniaUI（色の相互変換）/ Platform.Core（`EsBitmap` / `ICoordTransform`）
+- **依存**: ZoomViewControl / FadeMaskDragRectControl（同一アセンブリ）/ App.Parts.CapturePreviewControl.Core（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）/ App.Platform.AvaloniaUI（色の相互変換）/ Platform.Core（`EsBitmap` / `ICoordTransform`）
 - **備考**: 画像表示・領域選択の状態と判断は内包コントロールとそのコアが単一所有し、本コントロールは配置・転送・写像のみを担う（自身は判断を持たない）
 
 ### 6.7 FadeMaskDragRectControl
@@ -273,7 +271,7 @@ flowchart TB
   - ルーペ画像上の選択矩形破線の描画（`LoupeRendered` イベントで描画先を受け取り、コアの破線幾何を描く）
 - **公開メンバー**: `Mode` / `Options` / `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionDomainRect` / `HighlightDomainRect` / `ShowFullOverlay` / `LoupeCenterPoint` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `RefreshOverlay` / `InvalidateOverlay`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`
 - **可視性**: public（内包コントロールへの直接アクセスは internal）
-- **依存**: MarqueeControl / LoupeControl / App.Parts.CaptureSessionControl.UIBase / App.Parts.CaptureSessionControl.Core（`FadeMaskDragRectMode` / `FadeMaskDragRectModes` / `FadeMaskDragRectOptions` / `FadeMaskDragRectState` / `FadeMaskDragRectOverlay`）/ 提示層の外観（`MarqueeAppearance` / `LoupeAppearance`）/ Platform.Core
+- **依存**: MarqueeControl / LoupeControl / App.Parts.CaptureSessionControl.UIBase / App.Parts.CapturePreviewControl.Core（`FadeMaskDragRectMode` / `FadeMaskDragRectModes` / `FadeMaskDragRectOptions` / `FadeMaskDragRectState` / `FadeMaskDragRectOverlay`）/ 提示層の外観（`MarqueeAppearance` / `LoupeAppearance`）/ Platform.Core
 - **備考**: ホイール操作と表示の変化の追従は本コントロールの配線ではなく、ホストが担う（コントロール化を前提とした処理）
 
 ### 6.8 ZoomViewControl（切り出しビューの画像ビューポート）
@@ -283,7 +281,7 @@ flowchart TB
 - **非公開メンバー**: `Session`（内部ビューポートが所有するセッションへの参照）/ `ZoomableView`（内包するビューポート）/ `CheckerboardView`（画像の透明部分の背景を描く子要素）/ `OnSessionNotified`（通知の転送）
 - **公開 API の詳細**: 外部機能仕様書（`SPEC_ExtFunc.md`）の 5.7 を参照
 - **可視性**: public（`CropViewControl` からは内部部品として扱う）
-- **依存**: `App.Parts.ZoomViewControl.Core`（`ZoomViewSession` / `ZoomConfig` / `ZoomNotice` / `ZoomState`）/ App.Platform.AvaloniaUI（コア型の相互変換）
+- **依存**: `App.Parts.CapturePreviewControl.Core`（`ZoomViewSession` / `ZoomConfig` / `ZoomNotice` / `ZoomState`）/ App.Platform.AvaloniaUI（コア型の相互変換）
 - **状態と判断の所有者**: `ZoomViewSession`（コア）。 本コントロールは値の委譲と通知の転送のみを行う
 
 ### 6.9 ZoomableView
@@ -292,7 +290,7 @@ flowchart TB
 - **責務**: ScrollViewer 不使用のパン・ズームビューポート。 入力（ポインター・ホイール）をコア型へ変換してセッションへ渡し、返された効果（再描画・ポインタキャプチャ）を適用する。 セッションの値（表示サイズ・原点・オフセット・スクロール可否）を `Image` のレイアウト・`RenderTransform`・標準 `ScrollBar` へ写す。 ビューポートのサイズ（`Bounds`）の所有者であり、変更時にセッションへ通知する
 - **内部実装の詳細**: ScrollViewer を使用せず、RenderTransform ベースで配置する（レイアウトによるオフセット上書きが原理的に発生しない）。 描画位置 = 実効スケール × (コンテンツ座標 − オフセット) であり、値（スケール・オフセット・中央寄せ補正）はコアが確定する。 見た目のスクロールバー太さは標準 `ScrollBar` 固有であり、コアの外観（`ZoomViewAppearance`）は参照しない
 - **可視性**: internal
-- **依存**: `App.Parts.ZoomViewControl.Core`（`ZoomViewSession` / `ZoomFeedback` / `ZoomNotice`）/ App.Platform.AvaloniaUI（相互変換）
+- **依存**: `App.Parts.CapturePreviewControl.Core`（`ZoomViewSession` / `ZoomFeedback` / `ZoomNotice`）/ App.Platform.AvaloniaUI（相互変換）
 
 ### 6.10 CheckerboardView
 
@@ -300,11 +298,11 @@ flowchart TB
 - **責務**: 画像の透明部分の背景（市松模様）を描く。 子の順序で画像より先に描かれるようにし、描く範囲（画像の表示矩形の内側）とタイルの位置はコア（`ZoomViewAppearance.ComputeCheckerArea` / `ComputeLightTileRects`）に問い合わせるだけである
 - **内部実装の詳細**: Panel は `Render` をシールしているため、子要素として画像の下にだけ描く層を作る。 画像の外（ペーストボード）は透明のままにし、親の背景をそのまま見せる。 入力は受けず（`IsHitTestVisible` を false）、表示矩形の変化と外観の変更で `InvalidateVisual` する
 - **可視性**: internal
-- **依存**: `App.Parts.ZoomViewControl.Core`（`ZoomViewSession` / `ZoomViewAppearance`）/ App.Platform.AvaloniaUI（ブラシのキャッシュ）
+- **依存**: `App.Parts.CapturePreviewControl.Core`（`ZoomViewSession` / `ZoomViewAppearance`）/ App.Platform.AvaloniaUI（ブラシのキャッシュ）
 
-### 6.11 App.Parts.ZoomViewControl.Core の型（UI 非依存）
+### 6.11 App.Parts.CapturePreviewControl.Core の画像ビューポートの型（UI 非依存）
 
-すべて UI 非依存プロジェクト（名前空間 `EsUtil.SaveEvidence.Parts.ZoomView`）が提供する。
+すべて UI 非依存プロジェクト（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core`）が提供する。
 
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
@@ -329,7 +327,7 @@ flowchart TB
 - 上位 AP への通知は Task 返却と `CaptureCompleted` イベント（同期型）の併用（Task が完了結果、イベントが画像変更の順序保証）。
 - 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）。
 - 収録する複合コントロール（`CropViewControl` / `FadeMaskDragRectControl`）も同じ向きの依存に従う（複合コントロール → 内包コントロール / コア / 提示層）。 セッションから見た窓口は `FadeMaskDragRectControl` と `CropViewControl` であり、セッションが内包コントロール（Marquee / Loupe）を直接参照することはない。
-- 画像ビューポート（`ZoomViewControl`）は `CropViewControl` が内包し、`ZoomViewControl` → `ZoomableView` / `App.Parts.ZoomViewControl.Core` の一方向に従う。 セッション（`CropSession`）はビューポートを直接参照せず、`CropViewControl` の公開メソッド（`ViewportToContent` / `ContentToViewport`）に委譲する。
+- 画像ビューポート（`ZoomViewControl`）は `CropViewControl` が内包し、`ZoomViewControl` → `ZoomableView` / `App.Parts.CapturePreviewControl.Core` の一方向に従う。 セッション（`CropSession`）はビューポートを直接参照せず、`CropViewControl` の公開メソッド（`ViewportToContent` / `ContentToViewport`）に委譲する。
 
 ## 8. ライフサイクル
 
@@ -352,7 +350,7 @@ sequenceDiagram
 
 ## 9. ログ
 
-ログ定義は `App.Parts.CaptureSessionControl.Core`（`CaptureLogMessage` / `CaptureSettingsLogMessage`）が単一所有する（LoggerMessage ソース生成）。 本 UI はログ定義を持たない。
+ログ定義は `App.Parts.CapturePreviewControl.Core`（`CaptureLogMessage` / `CaptureSettingsLogMessage`）が単一所有する（LoggerMessage ソース生成）。 本 UI はログ定義を持たない。
 各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogCaptureStart(type)`）。
 `CaptureSessionControl` コンストラクタの `logger` 引数で注入し、null の場合は出力しない（app では NLog へ転送）。
 出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
@@ -379,7 +377,7 @@ sequenceDiagram
 
 ### 9.2 ログ定義一覧
 
-全ログ（`CaptureLogMessage` / `CaptureSettingsLogMessage`。 `App.Parts.CaptureSessionControl.Core`）:
+全ログ（`CaptureLogMessage` / `CaptureSettingsLogMessage`。 `App.Parts.CapturePreviewControl.Core`）:
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
@@ -394,7 +392,7 @@ sequenceDiagram
 | `Debug` | `CaptureLogMessage.LogCropCancelled` | Crop キャンセル（Esc・非アクティブ化・ウィンドウクローズ等） |
 | `Debug` | `CaptureSettingsLogMessage.LogSettingApplied` | 設定の適用（変化時の 1 回のみ） |
 
-切り出しビューの画像ビューポート（`ZoomViewControl`）の操作ログは UI 非依存コア `App.Parts.ZoomViewControl.Core`（`ZoomLogMessage`）が単一所有する（書式を両 UI で揃え、本 UI は定義を持たない）。 `ZoomViewControl.Log` へ注入された `ILogger` へ出力する（未設定時は `NullLogger`）。
+切り出しビューの画像ビューポート（`ZoomViewControl`）の操作ログは UI 非依存コア `App.Parts.CapturePreviewControl.Core`（`ZoomLogMessage`）が単一所有する（書式を両 UI で揃え、本 UI は定義を持たない）。 `ZoomViewControl.Log` へ注入された `ILogger` へ出力する（未設定時は `NullLogger`）。
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |

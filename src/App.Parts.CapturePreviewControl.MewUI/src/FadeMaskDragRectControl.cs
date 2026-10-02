@@ -14,7 +14,7 @@ using EsUtil.SaveEvidence.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using EsUtil.SaveEvidence.Platform.Skia;
-using EsUtil.SaveEvidence.Parts.CaptureSession;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;

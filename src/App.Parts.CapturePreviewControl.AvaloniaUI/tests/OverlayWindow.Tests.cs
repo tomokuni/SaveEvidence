@@ -15,7 +15,7 @@ using Xunit;
 using Avalonia.Headless.XUnit;
 using BindingFlags = System.Reflection.BindingFlags;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
-using EsUtil.SaveEvidence.Parts.CaptureSession;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 

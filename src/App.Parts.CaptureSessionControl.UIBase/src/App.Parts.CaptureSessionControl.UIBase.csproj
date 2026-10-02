@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <!-- 写像元の設定型（CaptureSettings）と、複合コントロールの設定値・動作モード・状態 -->
-    <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.Core\src\App.Parts.CaptureSessionControl.Core.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
     <!-- 内包コントロールの設定型（MarqueeOptions / LoupeOptions） -->
     <ProjectReference Include="..\..\Feature.Marquee.Core\src\Feature.Marquee.Core.csproj" />
     <ProjectReference Include="..\..\Feature.Loupe.Core\src\Feature.Loupe.Core.csproj" />

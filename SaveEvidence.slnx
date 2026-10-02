@@ -12,12 +12,12 @@
     <Project Path="src/App.App.MewUI/src/App.App.MewUI.csproj" />
     <Project Path="src/App.App.MewUI/tests/App.App.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CaptureSessionControl.Core/" />
-  <Folder Name="/src/App.Parts.CaptureSessionControl.Core/src/">
-    <Project Path="src/App.Parts.CaptureSessionControl.Core/src/App.Parts.CaptureSessionControl.Core.csproj" />
+  <Folder Name="/src/App.Parts.CapturePreviewControl.Core/" />
+  <Folder Name="/src/App.Parts.CapturePreviewControl.Core/src/">
+    <Project Path="src/App.Parts.CapturePreviewControl.Core/src/App.Parts.CapturePreviewControl.Core.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CaptureSessionControl.Core/tests/">
-    <Project Path="src/App.Parts.CaptureSessionControl.Core/tests/App.Parts.CaptureSessionControl.Core.Tests.csproj" />
+  <Folder Name="/src/App.Parts.CapturePreviewControl.Core/tests/">
+    <Project Path="src/App.Parts.CapturePreviewControl.Core/tests/App.Parts.CapturePreviewControl.Core.Tests.csproj" />
   </Folder>
   <Folder Name="/src/App.Parts.CapturePreviewControl.MewUI/" />
   <Folder Name="/src/App.Parts.CapturePreviewControl.MewUI/src/">
@@ -62,7 +62,6 @@
     <Project Path="src/MarqueeControl.AvaloniaUI/src/MarqueeControl.AvaloniaUI.csproj" />
     <Project Path="src/MarqueeControl.AvaloniaUI/tests/MarqueeControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-
   <Folder Name="/src/LineDetection/">
     <Project Path="src/LineDetection/sample/LineDetection.Sample.csproj" />
     <Project Path="src/LineDetection/src/LineDetection.csproj" />
@@ -102,10 +101,6 @@
     <Project Path="src/App.Parts.CapturePreviewControl.AvaloniaUI/sample/App.Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj" />
     <Project Path="src/App.Parts.CapturePreviewControl.AvaloniaUI/src/App.Parts.CapturePreviewControl.AvaloniaUI.csproj" />
     <Project Path="src/App.Parts.CapturePreviewControl.AvaloniaUI/tests/App.Parts.CapturePreviewControl.AvaloniaUI.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/App.Parts.ZoomViewControl.Core/">
-    <Project Path="src/App.Parts.ZoomViewControl.Core/src/App.Parts.ZoomViewControl.Core.csproj" />
-    <Project Path="src/App.Parts.ZoomViewControl.Core/tests/App.Parts.ZoomViewControl.Core.Tests.csproj" />
   </Folder>
   <Folder Name="/src/App.Platform.Skia/" />
   <Folder Name="/src/App.Platform.Skia/src/">

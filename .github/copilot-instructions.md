@@ -256,7 +256,7 @@
 
 ### プロジェクト構成
 
-- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。 独立した再利用可能なコントロール（MarqueeControl / LoupeControl / ColorPickerControl / LineDetection）と、撮影スタック（App.Parts.CapturePreviewControl.AvaloniaUI / App.Parts.CapturePreviewControl.MewUI（撮影セッション + 切り出しビュー + 領域選択 + 切り出しビューの画像ビューポート）/ App.Parts.CaptureSessionControl.Core / App.Parts.CaptureSessionControl.UIBase / App.Parts.ZoomViewControl.Core（切り出しビューの画像ビューポートの状態と判断））と、見た目（描画計画と外観）を単一所有する**コントロール化を前提としない UI 非依存層**（Feature.Marquee.Presenter / Feature.Loupe.Presenter）、プラットフォーム層（App.Platform.AvaloniaUI / Platform.Core / App.Platform.MewUI）、アプリ本体（`App.App.AvaloniaUI` / `App.App.MewUI` / `App.App.Core`）から構成される。
+- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。 独立した再利用可能なコントロール（MarqueeControl / LoupeControl / ColorPickerControl / LineDetection）と、撮影スタック（App.Parts.CapturePreviewControl.AvaloniaUI / App.Parts.CapturePreviewControl.MewUI（撮影セッション + 切り出しビュー + 領域選択 + 切り出しビューの画像ビューポートの描画と配線）/ App.Parts.CapturePreviewControl.Core（撮影セッション + 切り出しビュー + 領域選択 + 切り出しビューの画像ビューポートの状態と判断）/ App.Parts.CaptureSessionControl.UIBase（設定 → 外観の写像））と、見た目（描画計画と外観）を単一所有する**コントロール化を前提としない UI 非依存層**（Feature.Marquee.Presenter / Feature.Loupe.Presenter）、プラットフォーム層（App.Platform.AvaloniaUI / Platform.Core / App.Platform.MewUI）、アプリ本体（`App.App.AvaloniaUI` / `App.App.MewUI` / `App.App.Core`）から構成される。
 - コントロールの層は **Core（何を描くか・判断）/ Presenter（提示＝描画計画と外観）/ UI（フレームワーク固有の描画と配線）** の 3 層で、依存は `UI → Presenter → Core → Platform.Core` の一方向（コアは Presenter を参照しない）。 層の正典は `src/README.md`。
 - **コントロール化を前提とした処理（ホイール操作・ビューポートの変化の追従・組み込み先の概念）は UI 層が持ちます**（提示層とコアはコントロールに依存しません）。
 - プラットフォーム層は、UI 非依存の `Platform.Core`（ルート名前空間 `EsUtil.Platform.Core`）と、各 UI のアダプタ `App.Platform.AvaloniaUI` / `App.Platform.MewUI` / `App.Platform.Skia`（ルート名前空間 `EsUtil.SaveEvidence.Platform.*`）から構成される。 `Platform.Core` は `Native/` 配下にサービス抽象と Win32 実装を担う。
@@ -281,9 +281,8 @@
   - `Feature.Loupe.Presenter` … `Feature.Loupe.Core` と `Platform.Core` 以外を記載しない。
   - `Feature.Marquee.Core` … `Platform.Core` 以外を記載しない。
   - `Feature.Marquee.Presenter` … `Feature.Marquee.Core` と `Platform.Core` 以外を記載しない。
-  - `App.Parts.CaptureSessionControl.Core` … `Platform.Core` と「`Feature.Marquee.Core` / `Feature.Loupe.Core`」以外を記載しない。
+  - `App.Parts.CapturePreviewControl.Core` … `Platform.Core` と「`Feature.Marquee.Core` / `Feature.Loupe.Core`」以外を記載しない。
   - `App.Parts.CaptureSessionControl.UIBase` … 上記の参照先以外を記載しない。
-  - `App.Parts.ZoomViewControl.Core` … `Platform.Core` 以外を記載しない。
 - 外部プロジェクトが所有する型名も記載しない（相互変換の Interop 層・描画実装・調整役・テスト等）。
 - 外部の層への言及は、プロジェクト名ではなく層の概念（「上位のアプリ・コントロール」「描画層（本コアを参照する上位の層）」「提示層」）で書く（設計の理由は残す）。
 - フレームワーク名（Avalonia / MewUI / WinUI3 / WinForms / Skia / .NET 標準の型）は「外部プロジェクト」に含めない（同名メンバーによる互換性など、事実として必要な場合のみ記載する）。

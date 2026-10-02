@@ -22,7 +22,7 @@
 
 画面キャプチャ（スクリーン選択 / ウィンドウ選択 / 範囲選択）の **MewUI 版セッション**です。 仮想スクリーン（全モニター）を 1 枚の画像として敷いたオーバーレイを表示し、選択された領域を切り出して返します。
 
-撮影・切り出しの共通規則（切り出し矩形・設定・セッション状態・オーナー退避）は `App.Parts.CaptureSessionControl.Core` が単一所有し、本プロジェクトは MewUI の描画・入力・ウィンドウ操作だけを担います。
+撮影・切り出しの共通規則（切り出し矩形・設定・セッション状態・オーナー退避）は `App.Parts.CapturePreviewControl.Core` が単一所有し、本プロジェクトは MewUI の描画・入力・ウィンドウ操作だけを担います。
 
 本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロール（`CropViewControl`（切り出しビュー）と `FadeMaskDragRectControl`（領域選択））を同一アセンブリ内に収録します。 `CropViewControl` は画像ビューポート `ZoomViewControl`（[5.3](#53-zoomviewcontrol切り出しビューの画像ビューポート)）を内包します（[5. 収録コントロール](#5-収録コントロール)）。
 
@@ -48,12 +48,11 @@
 
 ```text
 App.Parts.CapturePreviewControl.MewUI
-    ├── App.Parts.CaptureSessionControl.Core（撮影・切り出しの共通規則・複合コントロールの設定とモード）
+    ├── App.Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則・複合コントロールの設定とモード・切り出しビューの画像ビューポートの状態と判断）
     ├── App.Parts.CaptureSessionControl.UIBase（設定 → 外観の写像。 両 UI のホストが共有）
     ├── App.Platform.MewUI（コア型 ⇔ MewUI 型の Interop / DIP 変換）
     ├── Platform.Core（ICaptureService / IElementFinder / IWindowService / ICaptureTarget）
     ├── App.Platform.Skia（Skia 依存の閉じ込め）
-    ├── App.Parts.ZoomViewControl.Core（切り出しビューの画像ビューポートの状態と判断）
     ├── MarqueeControl.MewUI（選択矩形と、その外側に描く装飾）
     ├── LoupeControl.MewUI（拡大鏡）
     ├── Feature.Marquee.Presenter（描画計画と外観）
@@ -74,7 +73,7 @@ var session = new CaptureSessionControl(
     cropView,                  // 切り出しの対象（CropViewControl）
     captureTarget,             // 切り出しの適用先（Core の ICaptureTarget）
     cropHost,                  // 切り出しのオーバーレイを重ねる Grid
-    captureSettings,           // App.Parts.CaptureSessionControl.Core の CaptureSettings
+    captureSettings,           // App.Parts.CapturePreviewControl.Core の CaptureSettings
     logger);
 
 // 撮影: オーバーレイを表示し、確定した領域を取得する（null はキャンセル。切り出し中は受付しない）
@@ -87,11 +86,11 @@ session.ToggleCrop();
 session.AppearanceSettings = changed;
 ```
 
-`CaptureSettings` は `App.Parts.CaptureSessionControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CaptureSession`）が提供します。 ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。 ホストの設定型 → `CaptureSettings` の変換は上位のアプリが担います）。
+`CaptureSettings` は `App.Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core`）が提供します。 ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。 ホストの設定型 → `CaptureSettings` の変換は上位のアプリが担います）。
 
 ## 5. 収録コントロール
 
-本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロールを収録します。 `CropViewControl` は画像ビューポート `ZoomViewControl`（[5.3](#53-zoomviewcontrol切り出しビューの画像ビューポート)）を内包します。 いずれも UI 非依存の共通規則を `App.Parts.CaptureSessionControl.Core` / `App.Parts.ZoomViewControl.Core` に置き、MewUI 固有の描画・入力・配置だけを持ちます。
+本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロールを収録します。 `CropViewControl` は画像ビューポート `ZoomViewControl`（[5.3](#53-zoomviewcontrol切り出しビューの画像ビューポート)）を内包します。 いずれも UI 非依存の共通規則を `App.Parts.CapturePreviewControl.Core` に置き、MewUI 固有の描画・入力・配置だけを持ちます。
 
 ### 5.1 CropViewControl（切り出しビュー）
 
@@ -165,7 +164,7 @@ session.AppearanceSettings = changed;
 
 ### 5.3 ZoomViewControl（切り出しビューの画像ビューポート）
 
-画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールとしてではなく切り出しビューの表示を成立させるために存在します（`CropViewControl` が `Source` / `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ViewportToContent` / `ContentToViewport` を委譲し、ホストは通常 `CropViewControl` 経由で利用します。 `CropViewControl.ZoomView` で参照できるのは、重ねた要素の座標変換に必要となる場合のためです）。 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー）は UI 非依存コア `App.Parts.ZoomViewControl.Core` の `ZoomViewSession` が単一所有します。
+画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールとしてではなく切り出しビューの表示を成立させるために存在します（`CropViewControl` が `Source` / `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ViewportToContent` / `ContentToViewport` を委譲し、ホストは通常 `CropViewControl` 経由で利用します。 `CropViewControl.ZoomView` で参照できるのは、重ねた要素の座標変換に必要となる場合のためです）。 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー）は UI 非依存コア `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有します。
 
 - **ズーム遷移**: ⊖⊕ の 23 段階（10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500）/ Ctrl+ホイールの ×1.1・÷1.1 連続遷移（現在値を基準に四捨五入し、10〜500% へクランプ）
 - **Fit 表示**: ビューポートに収まる Uniform 倍率（`min(ビューポート幅 ÷ 画像幅, ビューポート高さ ÷ 画像高さ) × 100`。 アスペクト比維持）。 リサイズに追従し、段階遷移の際に Fit 実効倍率が間に挟まる場合はそれを経由する
@@ -215,7 +214,7 @@ src/
 │   └── （撮影画像の描画は App.Platform.MewUI の SkiaImageView を使う）
 ```
 
-本プロジェクトは UI 操作（描画・入力・ウィンドウ）のみを持ち、共通規則は `App.Parts.CaptureSessionControl.Core` が単一所有します。 画面を伴うセッションは実機検証で確認し、複合コントロールは本プロジェクトのテスト（`tests/` 配下。 切り出しビューと領域選択のサブフォルダに分ける）で検証します。
+本プロジェクトは UI 操作（描画・入力・ウィンドウ）のみを持ち、共通規則は `App.Parts.CapturePreviewControl.Core` が単一所有します。 画面を伴うセッションは実機検証で確認し、複合コントロールは本プロジェクトのテスト（`tests/` 配下。 切り出しビューと領域選択のサブフォルダに分ける）で検証します。
 
 設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `App.Parts.CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。
 

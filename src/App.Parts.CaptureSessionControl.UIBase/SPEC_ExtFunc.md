@@ -90,7 +90,7 @@
 
 | 依存 | 用途 |
 | --- | --- |
-| `App.Parts.CaptureSessionControl.Core`（`EsUtil.SaveEvidence.Parts.CaptureSession`） | 写像元の設定型（`CaptureSettings`）と、複合コントロールの設定・モード・状態 |
+| `App.Parts.CapturePreviewControl.Core`（`EsUtil.SaveEvidence.Parts.CapturePreview.Core`） | 写像元の設定型（`CaptureSettings`）と、複合コントロールの設定・モード・状態 |
 | `Feature.Marquee.Core` / `Feature.Loupe.Core` | 内包コントロールの設定型（`MarqueeOptions` / `LoupeOptions`） |
 | `Feature.Marquee.Presenter`（`EsUtil.Feature.Marquee.Presenter.*`） | 写像先の外観（`MarqueeAppearance`）とラベル配置の値 |
 | `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Presenter.Setting`） | 写像先の描画の設定（`LoupeAppearance`） |
@@ -101,5 +101,5 @@ UI フレームワーク（Avalonia / MewUI）への依存はありません。 
 ## 本層を置く理由（設計上の位置付け）
 
 写像元がセッションの設定型（`CaptureSettings`）であるため、再利用ライブラリに置くと後者が製品の設定型へ依存します。 また写像先が描画層（`Feature.Marquee.Presenter` / `Feature.Loupe.Presenter`）の
-型であるため、`App.Parts.CaptureSessionControl.Core` にも置けません（Core → UIBase の逆流になる）。 両 UI のホストが
+型であるため、`App.Parts.CapturePreviewControl.Core` にも置けません（Core → UIBase の逆流になる）。 両 UI のホストが
 参照できる中間の層として本層を置きます。 複合コントロールの共有処理（子コントロールへ適用する値の解決・付加情報ラベルの配置指示）も同じ事情（両 UI で同じ規則を使うことを保証する）で本層が持ちます。

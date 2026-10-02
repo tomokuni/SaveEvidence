@@ -17,7 +17,7 @@
 ## 層の位置付け
 
 ```text
-App.Parts.CaptureSessionControl.Core ─────────────┐（設定型・寸法・表示可否）
+App.Parts.CapturePreviewControl.Core ─────────────┐（設定型・寸法・表示可否）
 Feature.Marquee.Presenter / Feature.Loupe.Presenter ─┐（描画の設定＝色）
                                              ↓
                               App.Parts.CaptureSessionControl.UIBase（色の写像）
@@ -25,7 +25,7 @@ Feature.Marquee.Presenter / Feature.Loupe.Presenter ─┐（描画の設定＝�
               App.Parts.CapturePreviewControl.AvaloniaUI / .MewUI（ホスト・配線）
 ```
 
-- `App.Parts.CaptureSessionControl.Core` は描画層を参照できない（Core → UIBase の逆流になる）。 したがって**色の写像は
+- `App.Parts.CapturePreviewControl.Core` は描画層を参照できない（Core → UIBase の逆流になる）。 したがって**色の写像は
   コアに置けない**。
 - 製品の設定型（`CaptureSettings`）に依存する写像は、再利用ライブラリではなく本層（セッション側の共有層）に置く。
 - **寸法・表示可否は本層が写像しない**（`FadeMaskDragRectOptionsMapper`（コア） が単一所有する）。 写像は色だけを扱う。
@@ -43,7 +43,7 @@ Feature.Marquee.Presenter / Feature.Loupe.Presenter ─┐（描画の設定＝�
 
 ```text
 App.Parts.CaptureSessionControl.UIBase
-    ├─ App.Parts.CaptureSessionControl.Core（CaptureSettings / FadeMaskDragRectOptions / Mode / Modes）
+    ├─ App.Parts.CapturePreviewControl.Core（CaptureSettings / FadeMaskDragRectOptions / Mode / Modes）
     ├─ Feature.Marquee.Core（MarqueeOptions）
     ├─ Feature.Loupe.Core（LoupeOptions）
     ├─ Feature.Marquee.Presenter（MarqueeAppearance / MarqueeLabelPlacement）

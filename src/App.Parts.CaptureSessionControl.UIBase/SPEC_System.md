@@ -30,7 +30,7 @@
 graph LR
   A[App.Parts.CapturePreviewControl.AvaloniaUI] --> U[App.Parts.CaptureSessionControl.UIBase]
   B[App.Parts.CapturePreviewControl.MewUI] --> U
-  U --> C[App.Parts.CaptureSessionControl.Core]
+  U --> C[App.Parts.CapturePreviewControl.Core]
   U --> MC[Feature.Marquee.Core / Feature.Loupe.Core]
   U --> M[Feature.Marquee.Presenter]
   U --> L[Feature.Loupe.Presenter]
@@ -43,7 +43,7 @@ graph LR
 
 | 置き場所の候補 | 可否 | 理由 |
 | --- | --- | --- |
-| `App.Parts.CaptureSessionControl.Core` | 不可 | 写像先が提示層の型（`MarqueeAppearance` / `LoupeAppearance`）のため、Core → UIBase の逆流になる |
+| `App.Parts.CapturePreviewControl.Core` | 不可 | 写像先が提示層の型（`MarqueeAppearance` / `LoupeAppearance`）のため、Core → UIBase の逆流になる |
 | 再利用ライブラリ | 不可 | 写像元が製品の設定型（`CaptureSettings`）のため、再利用ライブラリが製品設定へ依存する |
 | `App.Parts.CaptureSessionControl.UIBase`（本層） | 採用 | セッションの設定と両 UI の中間にあり、両 UI のホストが同じ写像・同じ組み立てを共有できる |
 
@@ -66,7 +66,7 @@ classDiagram
     +ToLoupeAppearance(settings, background)$ LoupeAppearance
   }
   class CaptureSettings {
-    <<record / App.Parts.CaptureSessionControl.Core>>
+    <<record / App.Parts.CapturePreviewControl.Core>>
   }
   class MarqueeAppearance {
     <<record / Feature.Marquee.Presenter>>
@@ -103,7 +103,7 @@ sequenceDiagram
 
 | 内容 | 所有者 |
 | --- | --- |
-| 設定から**寸法・表示可否**への写像 | `FadeMaskDragRectOptionsMapper`（`App.Parts.CaptureSessionControl.Core`） |
+| 設定から**寸法・表示可否**への写像 | `FadeMaskDragRectOptionsMapper`（`App.Parts.CapturePreviewControl.Core`） |
 | 設定から**色**への写像 | `CapturePaintMapper`（本層） |
 | 設定とモードから子コントロールへ適用する値 | `FadeMaskDragRectChildValues`（本層） / モードの判断は `FadeMaskDragRectModes`（コア） |
 | 付加情報ラベルの積み上げ位置と表示可否 | `FadeMaskHostLabelRenderer`（本層） |
