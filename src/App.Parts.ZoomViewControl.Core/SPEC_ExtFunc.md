@@ -14,7 +14,7 @@
 | `ZoomViewAppearance` | `public` | 任意（外観の単一値） |
 | `ZoomScrollBar` / `ZoomScrollBarMetrics` | `public` | 任意（スクロールバーの矩形と同期値） |
 | `ZoomLogMessage` / `ZoomLogFormat` | `public` | 任意（ログ定義と書式） |
-| `ZoomTransition` | `internal` | `App.Parts.ZoomViewControl.AvaloniaUI` / `App.Parts.ZoomViewControl.MewUI` / 各テスト |
+| `ZoomTransition` | `internal` | `App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` / 各テスト |
 | `ZoomMath` | `internal` | 同上 |
 | `ZoomAvailability` | `internal` | 同上 |
 | `ZoomScrollBarGeometry` | `internal` | 同上 |

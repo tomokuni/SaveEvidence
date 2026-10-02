@@ -31,12 +31,11 @@
     <!-- 撮影・切り出しの共通規則（切り出し矩形の計算） -->
     <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.Core\src\App.Parts.CaptureSessionControl.Core.csproj" />
     <!-- MewUI 版の撮影セッション（オーバーレイ・切り出しビュー） -->
-    <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.MewUI\src\App.Parts.CaptureSessionControl.MewUI.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.MewUI\src\App.Parts.CapturePreviewControl.MewUI.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型） -->
     <ProjectReference Include="..\..\App.Platform.MewUI\src\App.Platform.MewUI.csproj" />
     <!-- MewUI 版コントロール（コアロジックを共有する） -->
     <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
-    <ProjectReference Include="..\..\App.Parts.ZoomViewControl.MewUI\src\App.Parts.ZoomViewControl.MewUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

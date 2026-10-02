@@ -1,6 +1,6 @@
 # App.Parts.ZoomViewControl.Core
 
-`App.Parts.ZoomViewControl.AvaloniaUI`（Avalonia UI 実装）と `App.Parts.ZoomViewControl.MewUI`（MewUI 実装）が共有する、**UI フレームワーク非依存のズーム・パンロジック**を提供するプロジェクトです。
+`App.Parts.CapturePreviewControl.AvaloniaUI`（Avalonia UI 実装）と `App.Parts.CapturePreviewControl.MewUI`（MewUI 実装）が共有する、**UI フレームワーク非依存のズーム・パンロジック**を提供するプロジェクトです。
 
 ## 目的
 
@@ -25,7 +25,7 @@
 | `ZoomAvailability` | `internal` | ズーム可否（ズームイン・ズームアウト）を単一に保持する値オブジェクト |
 | `ZoomScrollBarGeometry` | `internal` | オーバーレイスクロールバーのトラックとサムの矩形・可動範囲・サム位置からのオフセット逆算（純粋関数） |
 
-`internal` の型は UI 実装（`App.Parts.ZoomViewControl.AvaloniaUI` / `App.Parts.ZoomViewControl.MewUI`）とテストからのみ `InternalsVisibleTo` で参照できます。
+`internal` の型は UI 実装（`App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI`）とテストからのみ `InternalsVisibleTo` で参照できます。
 
 ## 層の責務の境界
 
@@ -54,7 +54,7 @@ UI 層に残してよいもの（コアへ移せない例外）:
 ## 依存方向
 
 ```text
-App.Parts.ZoomViewControl.AvaloniaUI（Avalonia 実装） / App.Parts.ZoomViewControl.MewUI
+App.Parts.CapturePreviewControl.AvaloniaUI（Avalonia 実装） / App.Parts.CapturePreviewControl.MewUI
   └──> App.Parts.ZoomViewControl.Core（本プロジェクト）
          └──> Platform.Core（コア幾何型・スクロール計算）
 ```

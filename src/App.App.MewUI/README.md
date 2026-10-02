@@ -80,7 +80,7 @@ App.App.MewUI ──> App.App.Core ──> Platform.Core / LineDetection
     ├──> App.Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
     ├──> Platform.Core の Win32 実装（キャプチャ等。Native.Win）
     ├──> LoupeControl.MewUI ──> Feature.Loupe.Core（UI 非依存のルーペロジック）
-    └──> App.Parts.CaptureSessionControl.MewUI ──> App.Parts.ZoomViewControl.MewUI / App.Parts.CaptureSessionControl.Core（画像表示と矩形オーバーレイ）
+    └──> App.Parts.CapturePreviewControl.MewUI ──> App.Parts.ZoomViewControl.Core（画像ビューポートの状態と判断）/ App.Parts.CaptureSessionControl.Core（撮影・切り出しの共通規則、複合コントロールの設定とモード）
 ```
 
 Avalonia 版 `App.App.AvaloniaUI` とはコアを共有し、UI 層のみが異なります。
@@ -334,7 +334,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 ## レイアウト（実測済み）
 
 キャプチャページは **3 行の `Grid`（`Rows("Auto,*,Auto")`）** で組み、プレビューを Star 行に置きます。
-プレビューは `App.Parts.CaptureSessionControl.MewUI`（ドラッグでパン・Ctrl+ホイールでズーム・検出矩形のオーバーレイ）で、
+プレビューは `App.Parts.CapturePreviewControl.MewUI`（ドラッグでパン・Ctrl+ホイールでズーム・検出矩形のオーバーレイ）で、
 その上へ `OverlayHost`（絶対配置の領域）でルーペを重ねます。
 ウィンドウを縮めるとナビがコンパクト表示になり、プレビューも追従します（`mewui-resized.png` 参照）。
 

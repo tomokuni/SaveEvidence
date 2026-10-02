@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using EsUtil.Platform.Core;
-using EsUtil.SaveEvidence.Parts.CaptureSession.AvaloniaUI;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 using EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 
 namespace EsUtil.SaveEvidence.LineDetection.Sample.Views;

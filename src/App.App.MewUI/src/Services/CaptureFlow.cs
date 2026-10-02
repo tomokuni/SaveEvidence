@@ -1,5 +1,5 @@
 using Aprillz.MewUI;
-using EsUtil.SaveEvidence.Parts.CaptureSession.MewUI;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.MewUI.Logging;

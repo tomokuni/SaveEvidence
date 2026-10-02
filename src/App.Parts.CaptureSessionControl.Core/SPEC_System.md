@@ -17,7 +17,7 @@
 ### 3.1 レイヤー構造
 
 ```text
-App.Parts.CaptureSessionControl.AvaloniaUI / App.Parts.CaptureSessionControl.MewUI（UI 実装）
+App.Parts.CapturePreviewControl.AvaloniaUI / App.Parts.CapturePreviewControl.MewUI（UI 実装）
         │ 参照
         ▼
 App.Parts.CaptureSessionControl.Core（本プロジェクト。共通規則）

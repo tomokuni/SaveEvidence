@@ -27,7 +27,7 @@
 
 ```mermaid
 graph LR
-  MEWUI["App.Platform.MewUI / *Control.MewUI / App.Parts.ZoomViewControl.MewUI / App.App.MewUI"]
+  MEWUI["App.Platform.MewUI / *Control.MewUI / App.Parts.CapturePreviewControl.MewUI / App.App.MewUI"]
   S[App.Platform.Skia]
   SK[SkiaSharp]
   PC[Platform.Core]

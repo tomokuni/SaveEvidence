@@ -256,7 +256,7 @@
 
 ### プロジェクト構成
 
-- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。 独立した再利用可能なコントロール（ZoomViewControl / ColorPickerControl / CropViewControl / MarqueeControl / LoupeControl / App.Parts.CaptureSessionControl.AvaloniaUI / LineDetection）と、見た目（描画計画と外観）を単一所有する**コントロール化を前提としない UI 非依存層**（Feature.Marquee.Presenter / Feature.Loupe.Presenter）、プラットフォーム層（App.Platform.AvaloniaUI / Platform.Core / App.Platform.MewUI）、アプリ本体（`App.App.AvaloniaUI` / `App.App.MewUI` / `App.App.Core`）から構成される。
+- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。 独立した再利用可能なコントロール（MarqueeControl / LoupeControl / ColorPickerControl / LineDetection）と、撮影スタック（App.Parts.CapturePreviewControl.AvaloniaUI / App.Parts.CapturePreviewControl.MewUI（撮影セッション + 切り出しビュー + 領域選択 + 切り出しビューの画像ビューポート）/ App.Parts.CaptureSessionControl.Core / App.Parts.CaptureSessionControl.UIBase / App.Parts.ZoomViewControl.Core（切り出しビューの画像ビューポートの状態と判断））と、見た目（描画計画と外観）を単一所有する**コントロール化を前提としない UI 非依存層**（Feature.Marquee.Presenter / Feature.Loupe.Presenter）、プラットフォーム層（App.Platform.AvaloniaUI / Platform.Core / App.Platform.MewUI）、アプリ本体（`App.App.AvaloniaUI` / `App.App.MewUI` / `App.App.Core`）から構成される。
 - コントロールの層は **Core（何を描くか・判断）/ Presenter（提示＝描画計画と外観）/ UI（フレームワーク固有の描画と配線）** の 3 層で、依存は `UI → Presenter → Core → Platform.Core` の一方向（コアは Presenter を参照しない）。 層の正典は `src/README.md`。
 - **コントロール化を前提とした処理（ホイール操作・ビューポートの変化の追従・組み込み先の概念）は UI 層が持ちます**（提示層とコアはコントロールに依存しません）。
 - プラットフォーム層は、UI 非依存の `Platform.Core`（ルート名前空間 `EsUtil.Platform.Core`）と、各 UI のアダプタ `App.Platform.AvaloniaUI` / `App.Platform.MewUI` / `App.Platform.Skia`（ルート名前空間 `EsUtil.SaveEvidence.Platform.*`）から構成される。 `Platform.Core` は `Native/` 配下にサービス抽象と Win32 実装を担う。
@@ -271,7 +271,7 @@
 
 - 各プロジェクトに README.md（利用仕様書）・docs/SPEC_API.md（API リファレンス）・docs/SPEC_System.md（システム仕様書）を置く。
 - README.md / docs/SPEC_API.md / docs/SPEC_System.md は、コード変更と同時に更新する（仕様と実装の乖離・反映漏れを防ぐ）。
-- `App.App.AvaloniaUI`（ホスト）は ZoomViewControl の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する。
+- `App.App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
 
 ### 層ごとの記載範囲（外部プロジェクトを記載しない）
 

@@ -26,7 +26,7 @@
 ## 依存関係
 
 ```text
-MarqueeControl.MewUI / LoupeControl.MewUI / App.Parts.CaptureSessionControl.MewUI / App.Parts.ZoomViewControl.MewUI / App.App.MewUI
+MarqueeControl.MewUI / LoupeControl.MewUI / App.Parts.CapturePreviewControl.MewUI / App.Parts.CapturePreviewControl.MewUI / App.App.MewUI
 App.Platform.MewUI
   └──> App.Platform.Skia（本プロジェクト）
          ├──> SkiaSharp（外部パッケージ。本層だけが参照する）

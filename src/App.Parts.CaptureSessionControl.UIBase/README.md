@@ -22,7 +22,7 @@ Feature.Marquee.Presenter / Feature.Loupe.Presenter ─┐（描画の設定＝�
                                              ↓
                               App.Parts.CaptureSessionControl.UIBase（色の写像）
                                              ↓
-              App.Parts.CaptureSessionControl.AvaloniaUI / .MewUI（ホスト・配線）
+              App.Parts.CapturePreviewControl.AvaloniaUI / .MewUI（ホスト・配線）
 ```
 
 - `App.Parts.CaptureSessionControl.Core` は描画層を参照できない（Core → UIBase の逆流になる）。 したがって**色の写像は
@@ -53,7 +53,7 @@ App.Parts.CaptureSessionControl.UIBase
 
 UI フレームワークへ依存しません。 外部パッケージへの直接依存もありません。
 
-`internal` は `InternalsVisibleTo`（`App.Parts.CaptureSessionControl.AvaloniaUI` / `App.Parts.CaptureSessionControl.MewUI` /
+`internal` は `InternalsVisibleTo`（`App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` /
 `App.Parts.CaptureSessionControl.UIBase.Tests`）で公開します。
 
 ## 主な API

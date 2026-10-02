@@ -19,12 +19,12 @@
   <Folder Name="/src/App.Parts.CaptureSessionControl.Core/tests/">
     <Project Path="src/App.Parts.CaptureSessionControl.Core/tests/App.Parts.CaptureSessionControl.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CaptureSessionControl.MewUI/" />
-  <Folder Name="/src/App.Parts.CaptureSessionControl.MewUI/src/">
-    <Project Path="src/App.Parts.CaptureSessionControl.MewUI/src/App.Parts.CaptureSessionControl.MewUI.csproj" />
+  <Folder Name="/src/App.Parts.CapturePreviewControl.MewUI/" />
+  <Folder Name="/src/App.Parts.CapturePreviewControl.MewUI/src/">
+    <Project Path="src/App.Parts.CapturePreviewControl.MewUI/src/App.Parts.CapturePreviewControl.MewUI.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CaptureSessionControl.MewUI/tests/">
-    <Project Path="src/App.Parts.CaptureSessionControl.MewUI/tests/App.Parts.CaptureSessionControl.MewUI.Tests.csproj" />
+  <Folder Name="/src/App.Parts.CapturePreviewControl.MewUI/tests/">
+    <Project Path="src/App.Parts.CapturePreviewControl.MewUI/tests/App.Parts.CapturePreviewControl.MewUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/App.Parts.CaptureSessionControl.UIBase/" />
   <Folder Name="/src/App.Parts.CaptureSessionControl.UIBase/src/">
@@ -98,18 +98,14 @@
     <Project Path="src/App.Platform.AvaloniaUI/src/App.Platform.AvaloniaUI.csproj" />
     <Project Path="src/App.Platform.AvaloniaUI/tests/App.Platform.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CaptureSessionControl.AvaloniaUI/">
-    <Project Path="src/App.Parts.CaptureSessionControl.AvaloniaUI/sample/App.Parts.CaptureSessionControl.AvaloniaUI.Sample.csproj" />
-    <Project Path="src/App.Parts.CaptureSessionControl.AvaloniaUI/src/App.Parts.CaptureSessionControl.AvaloniaUI.csproj" />
-    <Project Path="src/App.Parts.CaptureSessionControl.AvaloniaUI/tests/App.Parts.CaptureSessionControl.AvaloniaUI.Tests.csproj" />
+  <Folder Name="/src/App.Parts.CapturePreviewControl.AvaloniaUI/">
+    <Project Path="src/App.Parts.CapturePreviewControl.AvaloniaUI/sample/App.Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj" />
+    <Project Path="src/App.Parts.CapturePreviewControl.AvaloniaUI/src/App.Parts.CapturePreviewControl.AvaloniaUI.csproj" />
+    <Project Path="src/App.Parts.CapturePreviewControl.AvaloniaUI/tests/App.Parts.CapturePreviewControl.AvaloniaUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/App.Parts.ZoomViewControl.Core/">
     <Project Path="src/App.Parts.ZoomViewControl.Core/src/App.Parts.ZoomViewControl.Core.csproj" />
     <Project Path="src/App.Parts.ZoomViewControl.Core/tests/App.Parts.ZoomViewControl.Core.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/App.Parts.ZoomViewControl.MewUI/">
-    <Project Path="src/App.Parts.ZoomViewControl.MewUI/src/App.Parts.ZoomViewControl.MewUI.csproj" />
-    <Project Path="src/App.Parts.ZoomViewControl.MewUI/tests/App.Parts.ZoomViewControl.MewUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/App.Platform.Skia/" />
   <Folder Name="/src/App.Platform.Skia/src/">
@@ -118,10 +114,4 @@
   <Folder Name="/src/App.Platform.Skia/tests/">
     <Project Path="src/App.Platform.Skia/tests/App.Platform.Skia.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.ZoomViewControl.AvaloniaUI/">
-    <Project Path="src/App.Parts.ZoomViewControl.AvaloniaUI/sample/App.Parts.ZoomViewControl.AvaloniaUI.Sample.csproj" />
-    <Project Path="src/App.Parts.ZoomViewControl.AvaloniaUI/src/App.Parts.ZoomViewControl.AvaloniaUI.csproj" />
-    <Project Path="src/App.Parts.ZoomViewControl.AvaloniaUI/tests/App.Parts.ZoomViewControl.AvaloniaUI.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/App.Parts.ZoomViewControl.MewUI/src/" />
 </Solution>

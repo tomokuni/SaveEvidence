@@ -30,8 +30,8 @@
 
   <ItemGroup>
     <!-- 写像とラベル配置は両 UI のホストとテストからのみ参照する（公開 API を増やさない。 指定はアセンブリ名） -->
-    <InternalsVisibleTo Include="EsUtil.SaveEvidence.Parts.CaptureSession.AvaloniaUI" />
-    <InternalsVisibleTo Include="EsUtil.SaveEvidence.Parts.CaptureSession.MewUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.Parts.CapturePreview.MewUI" />
     <InternalsVisibleTo Include="App.Parts.CaptureSessionControl.UIBase.Tests" />
   </ItemGroup>
 

@@ -1,5 +1,5 @@
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.SaveEvidence.Parts.CaptureSession.AvaloniaUI;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;

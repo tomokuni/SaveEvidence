@@ -48,7 +48,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\App.App.Core\src\App.App.Core.csproj" />
-    <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.AvaloniaUI\src\App.Parts.CaptureSessionControl.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.AvaloniaUI\src\App.Parts.CapturePreviewControl.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\ColorPickerControl.AvaloniaUI\src\ColorPickerControl.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\App.Platform.AvaloniaUI\src\App.Platform.AvaloniaUI.csproj" />
   </ItemGroup>

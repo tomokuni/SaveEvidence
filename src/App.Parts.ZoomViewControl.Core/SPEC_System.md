@@ -2,7 +2,7 @@
 
 ## 概要
 
-`App.Parts.ZoomViewControl.AvaloniaUI`（Avalonia UI 実装）と `App.Parts.ZoomViewControl.MewUI`（MewUI 実装）が共有する、UI フレームワーク非依存のズーム・パンロジックを提供するライブラリです。 SaveEvidence のマルチ UI 対応における「コントロールの Core / UI 分割」の 2 例目（ティア E）です。
+`App.Parts.CapturePreviewControl.AvaloniaUI`（Avalonia UI 実装）と `App.Parts.CapturePreviewControl.MewUI`（MewUI 実装）が共有する、UI フレームワーク非依存のズーム・パンロジックを提供するライブラリです。 SaveEvidence のマルチ UI 対応における「コントロールの Core / UI 分割」の 2 例目（ティア E）です。
 
 ## 技術スタック
 
@@ -14,8 +14,8 @@
 
 ```mermaid
 graph LR
-  A[App.Parts.ZoomViewControl.AvaloniaUI] --> B[App.Parts.ZoomViewControl.Core]
-  C[App.Parts.ZoomViewControl.MewUI] --> B
+  A[App.Parts.CapturePreviewControl.AvaloniaUI] --> B[App.Parts.ZoomViewControl.Core]
+  C[App.Parts.CapturePreviewControl.MewUI] --> B
   B --> D[Platform.Core]
 ```
 
@@ -23,7 +23,7 @@ graph LR
 - UI 実装は、コア型と自身の型（`Avalonia.Point` / `Vector` / `Size`）を境界で相互変換します。 変換は 1 行に限定し、UI 側の状態（`RenderTransform` 等）とイベント引数は UI の型のまま維持します。
 - 状態と判断（Fit の表現・実効ズーム率の導出・可否・キャッシュの無効化・遷移の適用・パン・スクロールバー）は `ZoomViewSession` が単一所有します。
 - `ZoomViewSession` / `ZoomConfig` / 契約型（`ZoomState` / `ZoomFeedback` / `ZoomNotice`）/ 外観（`ZoomViewAppearance`）/ ログは `public` です。
-- 計算（`ZoomTransition` / `ZoomMath` / `ZoomAvailability` / `ZoomScrollBarGeometry`）は `internal` とし、`InternalsVisibleTo`（`App.Parts.ZoomViewControl.AvaloniaUI` / `App.Parts.ZoomViewControl.MewUI` / `App.Parts.ZoomViewControl.AvaloniaUI.Tests` / `App.Parts.ZoomViewControl.MewUI.Tests` / `App.Parts.ZoomViewControl.Core.Tests`）で UI 実装とテストへ公開します。
+- 計算（`ZoomTransition` / `ZoomMath` / `ZoomAvailability` / `ZoomScrollBarGeometry`）は `internal` とし、`InternalsVisibleTo`（`App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` / `App.Parts.CapturePreviewControl.AvaloniaUI.Tests` / `App.Parts.CapturePreviewControl.MewUI.Tests` / `App.Parts.ZoomViewControl.Core.Tests`）で UI 実装とテストへ公開します。
 
 ## コンポーネント構成
 

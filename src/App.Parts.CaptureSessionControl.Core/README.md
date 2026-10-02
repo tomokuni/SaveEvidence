@@ -15,7 +15,7 @@
 
 ## 1. 概要
 
-撮影（スクリーン / ウィンドウ / 範囲選択）と切り出し（Crop）の**共通規則**を提供する UI 非依存ライブラリです。 Avalonia 版（`App.Parts.CaptureSessionControl.AvaloniaUI`）と MewUI 版（`App.Parts.CaptureSessionControl.MewUI`）が同じ規則を使うため、規則の二重実装を防ぐ目的で独立しています。
+撮影（スクリーン / ウィンドウ / 範囲選択）と切り出し（Crop）の**共通規則**を提供する UI 非依存ライブラリです。 Avalonia 版（`App.Parts.CapturePreviewControl.AvaloniaUI`）と MewUI 版（`App.Parts.CapturePreviewControl.MewUI`）が同じ規則を使うため、規則の二重実装を防ぐ目的で独立しています。
 
 **層の責務の境界**: 本プロジェクトは「状態・判断・両 UI 共通の値と計算・コア⇔UI の契約・ログ定義」を担い、UI 層は「入力の受付・Window の生成と表示・DPI の取得・レイアウト・フレームワーク固有の描画」だけを担います。
 

@@ -34,7 +34,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
-本プロジェクト（app）は、このシステムの**実行可能アプリケーション本体**です。 UI（ウィンドウ・ページ・コントロール）・ViewModel・設定サービスを統括し、キャプチャ・切出し・保存・ズーム・フォルダビュー・設定画面をユーザーに提供します。 キャプチャ・切出しのセッションは App.Parts.CaptureSessionControl.AvaloniaUI、色選択は ColorPickerControl、プラットフォーム抽象は App.Platform.AvaloniaUI を利用します。
+本プロジェクト（app）は、このシステムの**実行可能アプリケーション本体**です。 UI（ウィンドウ・ページ・コントロール）・ViewModel・設定サービスを統括し、キャプチャ・切出し・保存・ズーム・フォルダビュー・設定画面をユーザーに提供します。 キャプチャ・切出しのセッションは App.Parts.CapturePreviewControl.AvaloniaUI、色選択は ColorPickerControl、プラットフォーム抽象は App.Platform.AvaloniaUI を利用します。
 
 ## 2. 技術スタック
 
@@ -51,7 +51,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ログ** | Serilog 4.x + Serilog.Sinks.File（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
 | **シリアル化** | System.Text.Json（設定ファイル） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | App.Parts.CaptureSessionControl.AvaloniaUI / ColorPickerControl / App.Platform.AvaloniaUI / LineDetection |
+| **依存プロジェクト** | App.Parts.CapturePreviewControl.AvaloniaUI / ColorPickerControl / App.Platform.AvaloniaUI / LineDetection |
 
 ## 3. アーキテクチャ
 
@@ -61,7 +61,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage）
   → ViewModel Layer（MainViewModel / FolderViewViewModel / UndoViewModel）
     → Model / Service Layer（UndoStack / SettingsService 等）
-      → 外部ライブラリ（App.Parts.CaptureSessionControl.AvaloniaUI / ColorPickerControl / App.Platform.AvaloniaUI / LineDetection）
+      → 外部ライブラリ（App.Parts.CapturePreviewControl.AvaloniaUI / ColorPickerControl / App.Platform.AvaloniaUI / LineDetection）
 ```
 
 ### 3.2 依存方向
@@ -69,7 +69,7 @@ View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage
 - 依存は**一方向の階層構造**（View → ViewModel → Service / Model → 外部ライブラリ）。
 - ViewModel は View の詳細（コントロール型）に依存せず、公開プロパティ・コールバックで連携する。
 - サービスはインターフェース（`ISettingsService`）を介して注入される（DIP）。
-- ズーム計算・表示は `CropViewControl`（`ZoomViewControl` を内包。 App.Parts.CaptureSessionControl.AvaloniaUI 経由の推移的依存）に委譲し、app は `CropViewControl` の `Source` 設定・`ZoomChanged` 購読で操作を指示する（一方向依存）。
+- ズーム計算・表示は `CropViewControl`（`ZoomViewControl` を内包。 App.Parts.CapturePreviewControl.AvaloniaUI 経由の推移的依存）に委譲し、app は `CropViewControl` の `Source` 設定・`ZoomChanged` 購読で操作を指示する（一方向依存）。
 
 ## 4. 例外処理ポリシー
 
@@ -83,7 +83,7 @@ View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage
 
 ### 4.2 本プロジェクト固有の例外処理
 
-- キャプチャセッションの例外は App.Parts.CaptureSessionControl.AvaloniaUI がオーバーレイを閉じて通常状態に復帰する（app は結果を Task で受ける）。
+- キャプチャセッションの例外は App.Parts.CapturePreviewControl.AvaloniaUI がオーバーレイを閉じて通常状態に復帰する（app は結果を Task で受ける）。
 - クリップボードからの画像取得に失敗した場合は無視し、既存のプレビューを維持する。
 - サムネイル読み込み（FolderViewPage）の失敗は null を返し、アイテム一覧に影響させない。
 
@@ -137,7 +137,7 @@ flowchart TB
   - ステータスバーへのポインタ座標・画像サイズ表示
   - Ctrl ショートカット（保存 / コピー / 貼り付け / Undo / Redo / 切り出し / ズーム）の一括処理（`OnGlobalKeyDown`）
 - **公開メンバー**: `Initialize(...)` / `ExitCropMode()` / `CleanupCaptureResources()` 等
-- **依存**: MainViewModel / CropViewControl（App.Parts.CaptureSessionControl.AvaloniaUI 経由の推移的依存）/ CaptureSessionControl / UndoStack / AppLog
+- **依存**: MainViewModel / CropViewControl（App.Parts.CapturePreviewControl.AvaloniaUI 経由の推移的依存）/ CaptureSessionControl / UndoStack / AppLog
 
 ### 6.3 FolderViewPage
 
@@ -175,7 +175,7 @@ flowchart TB
 
 ### 6.6 CropViewControl（ズーム・パン表示と領域選択）
 
-ズーム・パン・Fit 表示は **`CropViewControl`**（内部に `ZoomViewControl` と `FadeMaskDragRectControl` を内包する複合コントロール。 App.Parts.CaptureSessionControl.AvaloniaUI 経由 の推移的依存）が提供する。 CapturePage が `CropViewControl` の `Source` を設定し 、`ZoomChanged`（ズーム率・可否）・`ViewportChanged`（パン・ズーム）を購読して操作を指示する。 `CaptureSessionControl.StartCropAsync` は `CropViewControl` を受け取り、切出しセッション（座標変換・確定・キャンセル）を管理する。 切り出しの対象画像は `CropViewControl.Source` から解決する（画像を別引数で渡さない）。 詳細は `CropViewControl` の `SPEC_System.md` を参照。
+ズーム・パン・Fit 表示は **`CropViewControl`**（内部に `ZoomViewControl` と `FadeMaskDragRectControl` を内包する複合コントロール。 `App.Parts.CapturePreviewControl.AvaloniaUI` 経由の推移的依存）が提供する。 CapturePage が `CropViewControl` の `Source` を設定し、`ZoomChanged`（ズーム率・可否）・`ViewportChanged`（パン・ズーム）を購読して操作を指示する。 `CaptureSessionControl.StartCropAsync` は `CropViewControl` を受け取り、切出しセッション（座標変換・確定・キャンセル）を管理する。 切り出しの対象画像は `CropViewControl.Source` から解決する（画像を別引数で渡さない）。 詳細は `CropViewControl` の `SPEC_System.md` を参照。
 
 ### 6.7 ViewModel 群
 
@@ -212,8 +212,8 @@ flowchart TB
 - 依存方向は**一方向の階層構造**（View → ViewModel → Service / Model → 外部ライブラリ）。
 - View は ViewModel に依存する（DataBindings とイベントハンドラ経由）。 ViewModel は View の詳細（コントロール型）に依存しない。
 - サービスはインターフェース（`ISettingsService`）を介して注入される（DIP）。
-- ズーム計算・表示は `CropViewControl`（`ZoomViewControl` を内包。 App.Parts.CaptureSessionControl.AvaloniaUI 経由の推移的依存）に委譲し、app は `CropViewControl` の `Source` 設定・`ZoomChanged` 購読で操作を指示する（一方向依存）。
-- キャプチャ・切出しの詳細は App.Parts.CaptureSessionControl.AvaloniaUI に委譲し、app は公開 Facade（CaptureSessionControl）のみに依存する。
+- ズーム計算・表示は `CropViewControl`（`ZoomViewControl` を内包。 App.Parts.CapturePreviewControl.AvaloniaUI 経由の推移的依存）に委譲し、app は `CropViewControl` の `Source` 設定・`ZoomChanged` 購読で操作を指示する（一方向依存）。
+- キャプチャ・切出しの詳細は App.Parts.CapturePreviewControl.AvaloniaUI に委譲し、app は公開 Facade（CaptureSessionControl）のみに依存する。
 
 ## 8. ログ
 

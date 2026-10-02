@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=EsUtil.SaveEvidence.App.Core"
-             xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CaptureSession.AvaloniaUI;assembly=EsUtil.SaveEvidence.Parts.CaptureSession.AvaloniaUI"
+             xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;assembly=EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI"
              xmlns:marquee="clr-namespace:EsUtil.SaveEvidence.Marquee.AvaloniaUI;assembly=EsUtil.SaveEvidence.Marquee.AvaloniaUI"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">

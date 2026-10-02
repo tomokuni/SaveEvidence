@@ -127,7 +127,7 @@ tests/
 | `MainWindow` | ナビパネル（自前の合成。 アイコン + ページ名・選択背景）とページ内容の切り替え、タイトルバー（拡張クライアント領域 + ウィンドウボタン）、配置の復元と保存、自動切り出し中の Escape（キャンセル）の処理 |
 | `PageContent` | ページの要素と、表示のたびに実行する処理（設定の再読込・一覧の再構築）の組 |
 | `CapturePage` | ツールバー・クロップビュー・ルーペ・切り出しオーバーレイ・ステータスの配置とコマンド接続。 自動切り出しの検出矩形（水色の実線・ホバーで「赤枠 + 半透明の赤塗り」）を `CropViewControl.Rects` と装飾専用の `MarqueeControl`（内側の装飾 = `InnerDeco`）で表示し、矩形内のダブルクリックで確定、矩形外のダブルクリックでキャンセルする（Escape は `MainWindow` が処理する） |
-| `CaptureSessionControl`（`App.Parts.CaptureSessionControl.MewUI`） | 撮影と切り出しの Facade。 排他（同時に 1 つだけ）とセッションの寿命を単一所有する。 撮影はオーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し、切り出しはプレビュー上の領域選択 → `ICaptureTarget` への適用を行う |
+| `CaptureSessionControl`（`App.Parts.CapturePreviewControl.MewUI`） | 撮影と切り出しの Facade。 排他（同時に 1 つだけ）とセッションの寿命を単一所有する。 撮影はオーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し、切り出しはプレビュー上の領域選択 → `ICaptureTarget` への適用を行う |
 | `ConfirmDialog` | 簡易確認ダイアログ（はい / いいえ）を表示して選択を返す。 `MainWindow` が `MainViewModel.ConfirmOverwriteAsync` へ配線する |
 | `ClickableToolTip` | クリックできるボタンへツールチップとクリック処理をまとめて登録する。 MewUI の不具合でツールチップ表示中の押下が取り消されるため、`Click` が発生しなかった押下を `MouseUp` で補完する |
 | `AppStyles` | ナビ・ツールバー・ウィンドウ操作ボタン・サムネイル枠・面（ナビパネル / ステータスバー / プルダウン / 設定カード）の共通スタイル（`StyleName` で適用する `StyleSheet`）とレイアウト値（Avalonia 版と同一）を単一所有する。 状態で変化するプロパティとテーマに追従する面の色はローカル値で設定せず本スタイルで与える。 テーマの適用（`ApplyTheme`）と、スタイルで表せない値の更新通知（`ThemeChanged`）も本クラスが担う |
@@ -233,7 +233,7 @@ classDiagram
         +int ZoomLevel
     }
     class ZoomViewControl {
-        <<App.Parts.ZoomViewControl.MewUI>>
+        <<App.Parts.CapturePreviewControl.MewUI>>
         +EsBitmap? Source
         +double ZoomPercent
         +ZoomIn() void
@@ -242,7 +242,7 @@ classDiagram
         +event ZoomChanged
     }
     class CropViewControl {
-        <<App.Parts.CaptureSessionControl.MewUI>>
+        <<App.Parts.CapturePreviewControl.MewUI>>
         +EsBitmap? Source
         +ZoomViewAppearance Appearance
         +IReadOnlyList~OverlayRect~ Rects
@@ -284,7 +284,7 @@ classDiagram
     MainWindow ..> MainViewModel : 束縛
     MainWindow ..> ConfirmDialog : 上書き確認の配線
     CapturePage ..> CropViewControl : 配置
-    CapturePage ..> CaptureSessionControl : 撮影と切り出し（App.Parts.CaptureSessionControl.MewUI）
+    CapturePage ..> CaptureSessionControl : 撮影と切り出し（App.Parts.CapturePreviewControl.MewUI）
     CapturePage ..> CaptureFlow : 撮影の開始
     CapturePage ..> EditHistory : 履歴の移動
     CapturePage ..> OverlayHost : ルーペの絶対配置
@@ -624,7 +624,7 @@ sequenceDiagram
 14. **撮影の対象は全モニター（仮想スクリーン）**。 1 モニターに限定するとカーソルのある
     モニターでしか選択できないため、仮想スクリーンを 1 枚の画像とし、オーバーレイで全面を覆う
     （フレームワークの論理座標による配置は OS に補正されるため、物理ピクセルで置き直す）。
-15. **表示状態と画像の配置を別のビューへ分ける**。 撮影のオーバーレイ（`App.Parts.CaptureSessionControl.MewUI`）と
+15. **表示状態と画像の配置を別のビューへ分ける**。 撮影のオーバーレイ（`App.Parts.CapturePreviewControl.MewUI`）と
     サムネイル（`ThumbnailView`）は大きさの要求が異なるが、描画は `App.Platform.MewUI` の `SkiaImageView` が、
     配置の計算は `ImageDrawMath`（`App.Platform.MewUI`）が単一所有する（サムネイルは計測と Uniform 指定だけを加える）。
 16. **色の変換を専用クラスへ分離する**。 設定は色を文字列で保持するため、境界の変換は
@@ -667,7 +667,7 @@ sequenceDiagram
 | `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する（13 件） |
 | `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する（3 件） |
 | ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`verify-ui.ps1` と撮影）で確認する |
-| 組み込み先のコントロール | `LoupeControl.MewUI.Tests` / `App.Parts.ZoomViewControl.MewUI.Tests` が描画と状態を検証する |
+| 組み込み先のコントロール | `LoupeControl.MewUI.Tests` / `App.Parts.CapturePreviewControl.MewUI.Tests` が描画と状態を検証する |
 | コアロジック | `App.App.Core` / `Platform.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |
 
 ### 実機検証（`verify-ui.ps1`）

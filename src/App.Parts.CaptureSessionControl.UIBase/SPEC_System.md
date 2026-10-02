@@ -18,7 +18,7 @@
 | --- | --- |
 | 目的 | 設定から色への写像と、複合コントロールの共有処理を 1 箇所へ集約し、両 UI で同じ見た目・振る舞いになるようにする |
 | 提供形態 | クラスライブラリ（`EsUtil.SaveEvidence.Parts.CaptureSession.UIBase.dll`）。 写像は `internal`、複合コントロールの共有処理は `public` |
-| 想定利用者 | 両 UI のホスト（`App.Parts.CaptureSessionControl.AvaloniaUI` / `App.Parts.CaptureSessionControl.MewUI` の撮影オーバーレイ・切り出しセッション） |
+| 想定利用者 | 両 UI のホスト（`App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` の撮影オーバーレイ・切り出しセッション） |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
 | ルート名前空間 | `EsUtil.SaveEvidence.Parts.CaptureSession.UIBase` |
@@ -28,8 +28,8 @@
 
 ```mermaid
 graph LR
-  A[App.Parts.CaptureSessionControl.AvaloniaUI] --> U[App.Parts.CaptureSessionControl.UIBase]
-  B[App.Parts.CaptureSessionControl.MewUI] --> U
+  A[App.Parts.CapturePreviewControl.AvaloniaUI] --> U[App.Parts.CaptureSessionControl.UIBase]
+  B[App.Parts.CapturePreviewControl.MewUI] --> U
   U --> C[App.Parts.CaptureSessionControl.Core]
   U --> MC[Feature.Marquee.Core / Feature.Loupe.Core]
   U --> M[Feature.Marquee.Presenter]
@@ -129,7 +129,7 @@ sequenceDiagram
 
 - **写像（`CapturePaintMapper`）は `internal`**。 両 UI のホストが使う内部処理のためです。
 - **複合コントロールの共有処理（`FadeMaskDragRectChildValues` / `FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`）は `public`**。 UIBase を参照する側（複合コントロールの UI 実装）が直接使うためです。
-- `internal` は `InternalsVisibleTo`（`App.Parts.CaptureSessionControl.AvaloniaUI` / `App.Parts.CaptureSessionControl.MewUI` /
+- `internal` は `InternalsVisibleTo`（`App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` /
   `App.Parts.CaptureSessionControl.UIBase.Tests`）で公開します。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。
 

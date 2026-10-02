@@ -18,7 +18,7 @@
 
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
-| `CapturePaintMapper` | `internal` | `App.Parts.CaptureSessionControl.AvaloniaUI` / `App.Parts.CaptureSessionControl.MewUI` / `App.Parts.CaptureSessionControl.UIBase.Tests` |
+| `CapturePaintMapper` | `internal` | `App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` / `App.Parts.CaptureSessionControl.UIBase.Tests` |
 
 `internal` は `InternalsVisibleTo` で両 UI のホストとテストへ公開します。 **`internal` → `public` の変更は
 破壊的な設計変更として扱います**。

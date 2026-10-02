@@ -145,7 +145,7 @@ Win32 実装（`Native.Win`）はホストが生成して抽象型として注�
 
 ### 依存方向
 
-`App.Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Core`（`Native/` の Win32 実装を含む） の一方向の階層構造です。 上位 AP（MarqueeControl / App.Parts.CaptureSessionControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
+`App.Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Core`（`Native/` の Win32 実装を含む） の一方向の階層構造です。 上位 AP（MarqueeControl / App.Parts.CapturePreviewControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
 
 ## 7. サンプル
 

@@ -28,12 +28,12 @@
 
   <ItemGroup>
     <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない。 指定はアセンブリ名） -->
-    <InternalsVisibleTo Include="EsUtil.SaveEvidence.Parts.CaptureSession.AvaloniaUI" />
-    <InternalsVisibleTo Include="EsUtil.SaveEvidence.Parts.CaptureSession.MewUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI" />
+    <InternalsVisibleTo Include="EsUtil.SaveEvidence.Parts.CapturePreview.MewUI" />
     <InternalsVisibleTo Include="EsUtil.SaveEvidence.Parts.CaptureSession.UIBase" />
     <InternalsVisibleTo Include="App.Parts.CaptureSessionControl.Core.Tests" />
-    <InternalsVisibleTo Include="App.Parts.CaptureSessionControl.AvaloniaUI.Tests" />
-    <InternalsVisibleTo Include="App.Parts.CaptureSessionControl.MewUI.Tests" />
+    <InternalsVisibleTo Include="App.Parts.CapturePreviewControl.AvaloniaUI.Tests" />
+    <InternalsVisibleTo Include="App.Parts.CapturePreviewControl.MewUI.Tests" />
     <InternalsVisibleTo Include="App.Parts.CaptureSessionControl.UIBase.Tests" />
   </ItemGroup>
 
