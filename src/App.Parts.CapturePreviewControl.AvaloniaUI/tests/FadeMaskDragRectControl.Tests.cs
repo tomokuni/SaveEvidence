@@ -8,7 +8,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
-using EsUtil.SaveEvidence.Marquee.AvaloniaUI;
+using EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Feature.Loupe.Presenter.Setting;

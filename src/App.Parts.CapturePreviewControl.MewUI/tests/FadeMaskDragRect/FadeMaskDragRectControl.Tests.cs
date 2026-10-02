@@ -1,4 +1,4 @@
-using EsUtil.SaveEvidence.Marquee.MewUI;
+using EsUtil.Feature.Marquee.MewUI.MarqueeControl;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Aprillz.MewUI;
@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.FadeMaskDragRect;
 /// <summary><see cref="FadeMaskDragRectControl"/>（MewUI 版の複合コントロール）の単体テスト。</summary>
 /// <remarks>
 /// ウィンドウを必要としない範囲（モード切替・状態同期・配線・配置計算）を検証する。<br/>
-/// マウス・キー入力はウィンドウを必要とするため、内包コントロールのテスト（<c>MarqueeControl.MewUI.Tests</c>）に委ねる。
+/// マウス・キー入力はウィンドウを必要とするため、内包コントロールのテスト（<c>Feature.Marquee.MewUI.MarqueeControl.Tests</c>）に委ねる。
 /// </remarks>
 public class FadeMaskDragRectControlTests
 {

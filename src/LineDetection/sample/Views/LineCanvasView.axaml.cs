@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
+using EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coord;

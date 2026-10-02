@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
-using EsUtil.SaveEvidence.Marquee.MewUI;
+using EsUtil.Feature.Marquee.MewUI.MarqueeControl;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;

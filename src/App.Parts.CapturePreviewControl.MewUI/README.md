@@ -53,10 +53,8 @@ App.Parts.CapturePreviewControl.MewUI
     ├── App.Platform.MewUI（コア型 ⇔ MewUI 型の Interop / DIP 変換）
     ├── Platform.Core（ICaptureService / IElementFinder / IWindowService / ICaptureTarget）
     ├── App.Platform.Skia（Skia 依存の閉じ込め）
-    ├── MarqueeControl.MewUI（選択矩形と、その外側に描く装飾）
-    ├── LoupeControl.MewUI（拡大鏡）
-    ├── Feature.Marquee.Presenter（描画計画と外観）
-    └── Feature.Loupe.Core（ルーペの配置計算）
+    ├── Feature.Marquee.MewUI.MarqueeControl（選択矩形と、その外側に描く装飾。 描画計画と外観は Feature.Marquee.Core / Feature.Marquee.Presenter を推移参照する）
+    └── Feature.Loupe.MewUI.LoupeControl（拡大鏡。 配置計算と外観は Feature.Loupe.Core / Feature.Loupe.Presenter を推移参照する）
 ```
 
 依存は一方向です（アプリから本ライブラリを参照し、逆は参照しない）。

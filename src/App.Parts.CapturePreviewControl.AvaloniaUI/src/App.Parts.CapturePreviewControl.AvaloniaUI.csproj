@@ -43,12 +43,9 @@
     <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
     <!-- 設定 → 色の写像（両 UI で同じ写像を使う） -->
     <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.UIBase\src\App.Parts.CaptureSessionControl.UIBase.csproj" />
-    <!-- 画像ビューポート（拡大・パン・Fit。 切り出しの表示） -->
     <!-- 複合コントロールを構成する内包コントロール -->
-    <ProjectReference Include="..\..\MarqueeControl.AvaloniaUI\src\MarqueeControl.AvaloniaUI.csproj" />
-    <ProjectReference Include="..\..\LoupeControl.AvaloniaUI\src\LoupeControl.AvaloniaUI.csproj" />
-    <!-- ホイール要求（ズーム / スクロール）の中継で型を直接参照する -->
-    <ProjectReference Include="..\..\Feature.Marquee.Presenter\src\Feature.Marquee.Presenter.csproj" />
+    <ProjectReference Include="..\..\Feature.Marquee.AvaloniaUI.MarqueeControl\src\Feature.Marquee.AvaloniaUI.MarqueeControl.csproj" />
+    <ProjectReference Include="..\..\Feature.Loupe.AvaloniaUI.LoupeControl\src\Feature.Loupe.AvaloniaUI.LoupeControl.csproj" />
     <ProjectReference Include="..\..\App.Platform.AvaloniaUI\src\App.Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 

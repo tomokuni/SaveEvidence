@@ -112,7 +112,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) / [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md)）。
 
-UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [`MarqueeControl.MewUI`](MarqueeControl.MewUI/README.md) / [`LoupeControl.AvaloniaUI`](LoupeControl.AvaloniaUI/README.md) / [`LoupeControl.MewUI`](LoupeControl.MewUI/README.md)、
+UI 層は [`Feature.Marquee.AvaloniaUI.MarqueeControl`](Feature.Marquee.AvaloniaUI.MarqueeControl/README.md) / [`Feature.Marquee.MewUI.MarqueeControl`](Feature.Marquee.MewUI.MarqueeControl/README.md) / [`Feature.Loupe.AvaloniaUI.LoupeControl`](Feature.Loupe.AvaloniaUI.LoupeControl/README.md) / [`Feature.Loupe.MewUI.LoupeControl`](Feature.Loupe.MewUI.LoupeControl/README.md)、
 プラットフォーム層は [`Platform.Core`](Platform.Core/README.md) / [`App.Platform.Skia`](App.Platform.Skia/README.md) / [`App.Platform.AvaloniaUI`](App.Platform.AvaloniaUI/README.md) / [`App.Platform.MewUI`](App.Platform.MewUI/README.md) を参照してください。
 
 ## 7. 名前空間とフォルダの対応
@@ -122,13 +122,14 @@ UI 層は [`MarqueeControl.AvaloniaUI`](MarqueeControl.AvaloniaUI/README.md) / [
 | プラットフォーム層 | `Platform.Core`（`Native/` を含む） / `App.Platform.Skia` / `App.Platform.AvaloniaUI` / `App.Platform.MewUI` | `EsUtil.Platform.Core`（`.Native` / `.Native.Win` / `.Native.Imaging` を含む） / `EsUtil.SaveEvidence.Platform.Skia` / `EsUtil.SaveEvidence.Platform.AvaloniaUI` / `EsUtil.SaveEvidence.Platform.MewUI` |
 | 可搬コア（機能単位） | `Feature.Marquee.Core` / `Feature.Loupe.Core` | `EsUtil.Feature.Marquee.Core`（`.Contract` / `.Drawing` / `.Interaction` / `.Setting` / `.Logging` / `.Selection`） / `EsUtil.Feature.Loupe.Core`（`.Drawing` / `.Setting` / `.Logging` / `.Placement`） |
 | 可搬な提示層（機能単位） | `Feature.Marquee.Presenter` / `Feature.Loupe.Presenter` | `EsUtil.Feature.Marquee.Presenter`（`.Setting` / `.Drawing` / `.Label` / `.Logging`） / `EsUtil.Feature.Loupe.Presenter`（同左） |
-| 製品側のコントロール | `MarqueeControl.AvaloniaUI` 等 | `EsUtil.SaveEvidence.Marquee.AvaloniaUI` 等 |
+| 可搬な UI コントロール（機能単位） | `Feature.Marquee.AvaloniaUI.MarqueeControl` 等 | `EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl` 等 |
 | 撮影スタック | `App.Parts.CapturePreviewControl.AvaloniaUI` / `App.Parts.CapturePreviewControl.MewUI` / `App.Parts.CapturePreviewControl.Core` / `App.Parts.CaptureSessionControl.UIBase` | `EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI` / `EsUtil.SaveEvidence.Parts.CapturePreview.MewUI` / `EsUtil.SaveEvidence.Parts.CapturePreview.Core` / `EsUtil.SaveEvidence.Parts.CaptureSession.UIBase` |
 | アプリ | `App.App.Core` / `App.App.AvaloniaUI` / `App.App.MewUI` | `EsUtil.SaveEvidence.App.Core` / `EsUtil.SaveEvidence.App.AvaloniaUI` / `EsUtil.SaveEvidence.App.MewUI` |
 
-**コントロール系の名前空間は、フォルダ名から `Control` を除いた短縮名を使います**（例: `MarqueeControl.AvaloniaUI` → `EsUtil.SaveEvidence.Marquee.AvaloniaUI`）。 これは好みではなく制約です。
+**コントロール系の名前空間は、フォルダ名から `Control` を除いた短縮名を使います**（例: `Feature.Marquee.AvaloniaUI.MarqueeControl` → `EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl`）。 これは好みではなく制約です。
 
 - 名前空間のセグメントと型名が一致すると **CS0118**（名前空間を種類として使用）になります。 C# の名前解決は「外側の名前空間のメンバー（名前空間を含む）」を、`namespace` 宣言より前に書いた `using` より優先するためです。 実測では `MarqueeControl` / `LoupeControl` / `ZoomViewControl` / `CropViewControl` / `ColorPickerControl` / `FadeMaskDragRectControl` / `CaptureSessionControl` の 7 型が該当します（フォルダ名をそのまま使うと、他の名前空間からこれらの型を単純名で参照できません）。
 - 短縮名にしても `Marquee` / `Loupe`（コアのファサード型）だけはセグメントと一致するため、UI 層は**別名 `using`** で参照します（例: `using MarqueeFacade = EsUtil.Feature.Marquee.Core.Marquee;`。 提示層を介する場合は提示層を参照するため不要です）。
-- コアと提示層は可搬性の単位（`EsUtil.Feature.*`）、UI 層は製品側（`EsUtil.SaveEvidence.*`）に置きます。 `EsUtil.Platform.*` は外部パッケージに依存しない値型・抽象です。
+- Loupe / Marquee のコア・提示層・UI コントロールは可搬性の単位（`EsUtil.Feature.*`）、撮影スタックとアプリは製品側（`EsUtil.SaveEvidence.*`）に置きます。 `EsUtil.Platform.*` は外部パッケージに依存しない値型・抽象です。
+- **機能単位の UI コントロールを `EsUtil.Feature.*` に置くのは、利用側がコア・提示層を直接参照せずに済むようにするためです**。 `ProjectReference` は推移的に参照を伝搬するため、利用側は UI コントロールだけを参照すれば、その下の層の型も `using` で解決できます。
 - **クラスライブラリのアセンブリ名（= 出力 DLL のファイル名）はルート名前空間と一致させます**（例: `Feature.Marquee.Core` → `EsUtil.Feature.Marquee.Core.dll`。 各 `.csproj` の `<AssemblyName>` が `<RootNamespace>` と同じ値）。

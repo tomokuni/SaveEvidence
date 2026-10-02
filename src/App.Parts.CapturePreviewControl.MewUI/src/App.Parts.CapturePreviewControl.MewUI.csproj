@@ -33,13 +33,9 @@
     <!-- コア幾何型と Skia の描画プリミティブ -->
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
     <ProjectReference Include="..\..\App.Platform.Skia\src\App.Platform.Skia.csproj" />
-    <!-- 画像ビューポート（拡大・パン・Fit。 切り出しの表示） -->
     <!-- 複合コントロールを構成する内包コントロール -->
-    <ProjectReference Include="..\..\MarqueeControl.MewUI\src\MarqueeControl.MewUI.csproj" />
-    <ProjectReference Include="..\..\LoupeControl.MewUI\src\LoupeControl.MewUI.csproj" />
-    <!-- ホイール要求（ズーム / スクロール）の中継と設定型の参照 -->
-    <ProjectReference Include="..\..\Feature.Marquee.Presenter\src\Feature.Marquee.Presenter.csproj" />
-    <ProjectReference Include="..\..\Feature.Loupe.Core\src\Feature.Loupe.Core.csproj" />
+    <ProjectReference Include="..\..\Feature.Marquee.MewUI.MarqueeControl\src\Feature.Marquee.MewUI.MarqueeControl.csproj" />
+    <ProjectReference Include="..\..\Feature.Loupe.MewUI.LoupeControl\src\Feature.Loupe.MewUI.LoupeControl.csproj" />
   </ItemGroup>
 
   <ItemGroup>

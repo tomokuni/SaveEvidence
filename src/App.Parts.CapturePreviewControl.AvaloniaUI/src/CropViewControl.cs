@@ -7,7 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Feature.Marquee.Presenter.Setting;
-using EsUtil.SaveEvidence.Loupe.AvaloniaUI;
+using EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
