@@ -21,7 +21,6 @@
     <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
     <PackageReference Include="Aprillz.MewUI.Skia.Interop.Direct2D" Version="$(MewUIVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
-    <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
