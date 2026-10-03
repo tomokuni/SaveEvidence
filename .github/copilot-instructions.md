@@ -42,7 +42,7 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 | --- | --- |
 | 共通基盤（可搬） | `EsUtil.Platform.Core` |
 | 再利用可能なコントロール（可搬） | `EsUtil.Feature.Marquee.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI`、`EsUtil.Feature.Loupe.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI`、`ColorPickerControl.AvaloniaUI` |
-| 画像処理（可搬） | `App.LineDetection` |
+| 画像処理（可搬） | `Parts.LineDetection` |
 | プラットフォーム層 | `Platform.AvaloniaUI` / `Platform.MewUI` / `Platform.Skia` |
 | 撮影スタック（製品固有） | `Parts.CapturePreviewControl.Core` / `.AvaloniaUI` / `.MewUI`、`Parts.CaptureSessionControl.UIBase` |
 | アプリ | `App.Core` / `App.AvaloniaUI` / `App.MewUI` |

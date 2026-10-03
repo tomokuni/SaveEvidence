@@ -1,0 +1,120 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels"
+             xmlns:views="clr-namespace:EsUtil.SaveEvidence.Parts.LineDetection.Sample.Views"
+             x:Class="EsUtil.SaveEvidence.Parts.LineDetection.Sample.Views.VerifyPage"
+             x:DataType="vm:VerifyPageViewModel">
+
+    <DockPanel>
+
+        <!-- ───────────── 左: 操作パネル + 検出結果 ───────────── -->
+        <Border DockPanel.Dock="Left" Width="300" Padding="12"
+                BorderBrush="#DDDDDD" BorderThickness="0,0,1,0" Background="#FAFAFA">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="10">
+
+                    <TextBlock Text="dataset 画像を検出し、正解データ（GroundTruth）と照合します。"
+                               FontSize="11" TextWrapping="Wrap"/>
+
+                    <!-- dataset 画像 -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="dataset 画像"/>
+                        <ComboBox ItemsSource="{Binding DatasetItems}" SelectedItem="{Binding SelectedDatasetItem}"
+                                  PlaceholderText="選択してください"/>
+                    </StackPanel>
+
+                    <!-- 検証レポート（検証結果の一覧） -->
+                    <StackPanel Spacing="6" IsVisible="{Binding IsDatasetReportVisible}">
+                        <TextBlock Text="検証結果" FontWeight="Bold"/>
+                        <ItemsControl ItemsSource="{Binding VerifyResults}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:VerifyResultItem">
+                                    <StackPanel Spacing="2" Margin="0,3">
+                                        <!-- データ名（太字）と一致/不一致 -->
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding StatusText}" FontSize="12"/>
+                                        </StackPanel>
+                                        <!-- 4 辺の詳細（改行） -->
+                                        <ItemsControl ItemsSource="{Binding DetailLines}" Margin="12,0,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="x:String">
+                                                    <TextBlock Text="{Binding}" FontSize="11" Foreground="#444444"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                    <Separator/>
+
+                    <!-- 検出結果（「dataset画像を使用」のみ表示） -->
+                    <StackPanel Spacing="10" IsVisible="{Binding IsDetectionResultVisible}">
+                        <TextBlock Text="検出結果" FontWeight="Bold"/>
+                        <TextBlock Text="リストをホバーすると画像上の対応する線分が赤くハイライトされます。"
+                                   FontSize="11" Foreground="#888888" TextWrapping="Wrap"/>
+
+                        <!-- 選択中の線分 -->
+                        <TextBlock Text="{Binding Context.SelectedLineText}" FontSize="11" Foreground="#555555" TextWrapping="Wrap"/>
+
+                        <!-- 垂直線分 -->
+                        <TextBlock Text="{Binding Context.VerticalCountText}" FontWeight="Bold" Margin="0,4,0,0"/>
+                        <ItemsControl ItemsSource="{Binding Context.VerticalLines}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:LineItem">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,1"
+                                                Background="{Binding RowBackground}"
+                                                PointerEntered="OnLinePointerEntered"
+                                                PointerExited="OnLinePointerExited"
+                                                PointerPressed="OnLinePointerPressed">
+                                        <Border Width="10" Height="10" CornerRadius="2"
+                                                Background="{Binding IndicatorBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Summary}" FontSize="11" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- 水平線分 -->
+                        <TextBlock Text="{Binding Context.HorizontalCountText}" FontWeight="Bold" Margin="0,4,0,0"/>
+                        <ItemsControl ItemsSource="{Binding Context.HorizontalLines}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:LineItem">
+                                    <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,1"
+                                                Background="{Binding RowBackground}"
+                                                PointerEntered="OnLinePointerEntered"
+                                                PointerExited="OnLinePointerExited"
+                                                PointerPressed="OnLinePointerPressed">
+                                        <Border Width="10" Height="10" CornerRadius="2"
+                                                Background="{Binding IndicatorBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Summary}" FontSize="11" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- ───────────── 下部: ステータスバー ───────────── -->
+        <Border DockPanel.Dock="Bottom" Padding="12,6"
+                BorderBrush="#DDDDDD" BorderThickness="0,1,0,0" Background="#FAFAFA">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" Text="{Binding Context.StatusText}" FontSize="12" TextWrapping="Wrap"
+                           VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding Context.PointerSourceText}" FontSize="12"
+                           FontFamily="Consolas" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- ───────────── 中央: 画像 + 線分オーバーレイ + ルーペ ───────────── -->
+        <views:LineCanvasView DataContext="{Binding Context}"/>
+
+    </DockPanel>
+
+</UserControl>

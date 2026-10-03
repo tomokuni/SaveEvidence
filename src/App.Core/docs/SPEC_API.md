@@ -63,7 +63,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 `EsRectInt` は読み取り専用プロパティ（`Right` 等）を持つため、専用コンバーターで `X` / `Y` / `Width` / `Height` のみを読み書きします。
 
 - 読み込み時に欠落したプロパティは 0、未知のプロパティは無視します。
-- JSON 形式は移設前（`Avalonia.PixelRect` 用コンバーター）と同一で、既存の設定ファイルをそのまま読み込めます。
+- 既存の設定ファイルをそのまま読み込めます。
 
 ## `Services.IImageWriter`（インターフェース）
 
@@ -221,7 +221,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | 依存 | 用途 |
 | --- | --- |
 | `EsUtil.Platform.Core`（`EsUtil.Platform.Core.*`） | `EsBitmap`（画像の保持・切出し）・`EsRectInt` / `EsPoint`（座標）・`HotKeySetting` / `HotKeyModifiers` / `EsKey`（ホットキー解析）・`EsWindowState`（設定モデル）・`CaptureType`（キャプチャ種別） |
-| `LineDetection`（`EsUtil.SaveEvidence.LineDetection`） | 窓枠の自動検出（`LogicLineDetector`）と矩形復元（`LineRectangleReconstructor`） |
+| `LineDetection`（`EsUtil.SaveEvidence.Parts.LineDetection`） | 窓枠の自動検出（`LogicLineDetector`）と矩形復元（`LineRectangleReconstructor`） |
 | `CommunityToolkit.Mvvm` | `ObservableObject` / `[RelayCommand]` / `[ObservableProperty]` |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。

@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// <summary><see cref="EsRectIntJsonConverter"/> の単体テスト（設定ファイルの JSON 互換）。</summary>
 /// <remarks>
 /// JSON の読み書きのみを検証するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
-/// 移設前（<c>Avalonia.PixelRect</c>）と同一の JSON 形式（<c>X</c> / <c>Y</c> / <c>Width</c> / <c>Height</c>）を<br/>
+/// 既存の設定ファイルと同じ JSON 形式（<c>X</c> / <c>Y</c> / <c>Width</c> / <c>Height</c>）を<br/>
 /// 保つことを検証する（既存の設定ファイルをそのまま読み込めることの保証）。
 /// </remarks>
 public class EsRectIntJsonConverterTests

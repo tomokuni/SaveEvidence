@@ -32,18 +32,18 @@
 ## 2. 実行方法
 
 ```powershell
-dotnet run --project sample/Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj
+dotnet run --project src/Parts.CapturePreviewControl.AvaloniaUI/sample/Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj
 ```
 
 リリース構成で実行する場合:
 
 ```powershell
-dotnet run -c Release --project sample/Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj
+dotnet run -c Release --project src/Parts.CapturePreviewControl.AvaloniaUI/sample/Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj
 ```
 
 ### バッチファイル（リリースビルド＆起動）
 
-`sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
+`src/Parts.CapturePreviewControl.AvaloniaUI/sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
 
 ```text
 RunSample.bat  →  リリースビルド（dotnet build -c Release）→ Parts.CapturePreviewControl.AvaloniaUI.Sample.exe を起動

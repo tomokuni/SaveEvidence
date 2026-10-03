@@ -30,11 +30,11 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 
 ## 名前空間
 
-本プロジェクトは UI 非依存ですが、**名前空間は `App.AvaloniaUI` と同一（`EsUtil.SaveEvidence.*`）** です。 アセンブリのみが異なるため、`App.AvaloniaUI` 側の `using` を変更せずに移設できます。
+本プロジェクトは UI 非依存（Avalonia に依存しません）です。 **名前空間は `EsUtil.SaveEvidence.App.Core`、アセンブリ名は `App.Core`** です（ホストの `App.AvaloniaUI` とは名前空間もアセンブリも別）。
 
 ## 設定ファイルの互換性
 
-`EsRectInt` は専用の JSON コンバーター（`EsRectIntJsonConverter`）が `X` / `Y` / `Width` / `Height` のみを読み書きし、`EsWindowState` は enum の名前で書き出すため、**移設前（`Avalonia.PixelRect` / `Avalonia.Controls.WindowState`）と同一の JSON 形式**になります。 既存の `settings.json` はそのまま読み込めます。
+`EsRectInt` は専用の JSON コンバーター（`EsRectIntJsonConverter`）が `X` / `Y` / `Width` / `Height` のみを読み書きし、`EsWindowState` は enum の名前で書き出すため、**既存の `settings.json` はそのまま読み込めます**。
 
 ### トリミング / Native AOT 対応
 

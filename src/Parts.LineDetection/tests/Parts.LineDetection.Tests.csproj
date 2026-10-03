@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EsUtil.SaveEvidence.Parts.LineDetection.Tests</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ドキュメントコメントを検証する（存在しない cref を CS1574、引数の対応違いを CS1572 / CS1573 で検出）。
+         ライブラリと違い XML は配布物へ出さない（検証だけに使う）。
+         記載のない公開メンバーの指摘（CS1591）は、アプリ・テスト・サンプルでは対象外にする。 -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="*" />
+    <PackageReference Include="xunit.v3" Version="3.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.*" />
+    <PackageReference Include="coverlet.collector" Version="*">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- ライブラリ（LineDetection）の LineDetectionResult が Avalonia.Point を使用するため参照する -->
+    <PackageReference Include="Avalonia" Version="[12.*,)" />
+    <!-- [AvaloniaFact]（ヘッドレステスト）で Bitmap を扱うため -->
+    <PackageReference Include="Avalonia.Headless" Version="[12.*,)" />
+    <PackageReference Include="Avalonia.Headless.XUnit" Version="[12.*,)" />
+    <PackageReference Include="Avalonia.Skia" Version="[12.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Parts.LineDetection.csproj" />
+    <!-- テストで PNG を読み込み Bitmap を構築するために OpenCV を直接参照する
+         （検出器本体（LineDetection）は OpenCV に依存するが、public API には露出しない） -->
+    <PackageReference Include="OpenCvSharp5" Version="[5.*,)" />
+    <!-- ライブラリ本体と同一のネイティブ（slim プロファイル）を使う -->
+    <PackageReference Include="OpenCvSharp5.runtime.win.slim" Version="[5.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- dataset の画像 + 正解 JSON をテスト実行時に参照する -->
+    <None Include="..\sample\dataset\**" Link="dataset\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- xUnit 並列化設定（Avalonia ヘッドレスアセンブリ間の静的競合を防ぐためアセンブリ間の並列を無効化） -->
+    <None Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

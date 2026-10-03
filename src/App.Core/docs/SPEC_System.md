@@ -22,30 +22,30 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 ```
 
 - `App.Core` は UI フレームワークへ依存しません。
-- `App.Core` の名前空間は `App.AvaloniaUI` と同一（`EsUtil.SaveEvidence.*`）です。 アセンブリのみが異なるため、`App.AvaloniaUI` 側の `using` を変更せずに移設できます。
+- 名前空間は `EsUtil.SaveEvidence.App.Core`、アセンブリ名は `App.Core` です（ホストの `EsUtil.SaveEvidence.App.AvaloniaUI` とは名前空間もアセンブリも別）。
 - `internal` 型（`CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay`）は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests`）で UI 実装とテストへ公開します。
 
 ## コンポーネント構成
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `Enum/AppPage.cs` | `public enum` | ナビゲーションページの識別子 |
-| `Enum/ThemeMode.cs` | `public enum` | テーマモード（`Description` 属性で表示名を保持） |
-| `Models/Settings.cs` | `public sealed partial class` | アプリケーション設定（変更通知付き） |
-| `Models/FileNameTemplate.cs` | `public static partial class` | ファイル名テンプレートの解析・生成・検証 |
-| `Models/UndoStack.cs` | `public sealed class` | 画像の Undo / Redo スタック |
-| `Models/HotKeyParser.cs` | `public static class` | ホットキー文字列の解析 |
-| `Models/CapacityLimitedCache.cs` | `internal static class` | 容量制限付きの静的キャッシュ操作 |
-| `Models/ImageFileExtensions.cs` | `internal static class` | 画像ファイルの拡張子判定（フォルダビューの一覧抽出） |
-| `Layout/BottomAlignWrapLayout.cs` | `internal static class` | 折り返しパネルの行高さ・下端揃えの配置計算（Avalonia / MewUI 両版のパネルが委譲する単一所有） |
-| `Services/ISettingsService.cs` | `public interface` | 設定管理サービスの抽象 |
-| `Services/IImageWriter.cs` | `public interface` | 画像（`EsBitmap`）のファイル書き込みの抽象 |
-| `Services/SettingsService.cs` | `public sealed class` | JSON ファイルによる設定管理（反射 / ソース生成の両対応） |
-| `Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
-| `ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モードの表示文字列変換 |
-| `ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | フォルダビューの表示モード・ソート状態 |
-| `ViewModels/UndoViewModel.cs` | `public sealed partial class` | Undo 一覧の表示モード状態 |
-| `ViewModels/MainViewModel.cs` | `public sealed partial class` | メイン画面の状態（プレビュー画像・保存・自動切り出し・ズーム表示） |
+| `src/App.Core/src/Enum/AppPage.cs` | `public enum` | ナビゲーションページの識別子 |
+| `src/App.Core/src/Enum/ThemeMode.cs` | `public enum` | テーマモード（`Description` 属性で表示名を保持） |
+| `src/App.Core/src/Models/Settings.cs` | `public sealed partial class` | アプリケーション設定（変更通知付き） |
+| `src/App.Core/src/Models/FileNameTemplate.cs` | `public static partial class` | ファイル名テンプレートの解析・生成・検証 |
+| `src/App.Core/src/Models/UndoStack.cs` | `public sealed class` | 画像の Undo / Redo スタック |
+| `src/App.Core/src/Models/HotKeyParser.cs` | `public static class` | ホットキー文字列の解析 |
+| `src/App.Core/src/Models/CapacityLimitedCache.cs` | `internal static class` | 容量制限付きの静的キャッシュ操作 |
+| `src/App.Core/src/Models/ImageFileExtensions.cs` | `internal static class` | 画像ファイルの拡張子判定（フォルダビューの一覧抽出） |
+| `src/App.Core/src/Layout/BottomAlignWrapLayout.cs` | `internal static class` | 折り返しパネルの行高さ・下端揃えの配置計算（Avalonia / MewUI 両版のパネルが委譲する単一所有） |
+| `src/App.Core/src/Services/ISettingsService.cs` | `public interface` | 設定管理サービスの抽象 |
+| `src/App.Core/src/Services/IImageWriter.cs` | `public interface` | 画像（`EsBitmap`）のファイル書き込みの抽象 |
+| `src/App.Core/src/Services/SettingsService.cs` | `public sealed class` | JSON ファイルによる設定管理（反射 / ソース生成の両対応） |
+| `src/App.Core/src/Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
+| `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モードの表示文字列変換 |
+| `src/App.Core/src/ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | フォルダビューの表示モード・ソート状態 |
+| `src/App.Core/src/ViewModels/UndoViewModel.cs` | `public sealed partial class` | Undo 一覧の表示モード状態 |
+| `src/App.Core/src/ViewModels/MainViewModel.cs` | `public sealed partial class` | メイン画面の状態（プレビュー画像・保存・自動切り出し・ズーム表示） |
 
 ## 単一所有（Single Source of Truth）
 
@@ -95,79 +95,15 @@ sequenceDiagram
 
 ## 設定ファイルの互換性
 
-| 項目 | 移設前 | 移設後 | JSON 表現 |
-| --- | --- | --- | --- |
-| ウィンドウ位置・サイズ | `Avalonia.PixelRect?` | `EsRectInt?` | `{"X":..,"Y":..,"Width":..,"Height":..}`（変更なし） |
-| ウィンドウ状態 | `Avalonia.Controls.WindowState` | `EsWindowState` | `"Normal"` 等の名前（変更なし） |
+| 項目 | 型 | JSON 表現 |
+| --- | --- | --- |
+| ウィンドウ位置・サイズ | `EsRectInt?` | `{"X":..,"Y":..,"Width":..,"Height":..}` |
+| ウィンドウ状態 | `EsWindowState` | `"Normal"` 等の名前 |
 
-`EsRectInt` は専用コンバーター、`EsWindowState` は `JsonStringEnumConverter` により、移設前と同一の JSON 形式で読み書きされるため、**既存の `settings.json` はそのまま読み込める**。
+`EsRectInt` は専用コンバーター、`EsWindowState` は `JsonStringEnumConverter` により読み書きされるため、**既存の `settings.json` はそのまま読み込める**。
 
 ## テスト
 
 - `src/App.Core/tests`（`App.Core.Tests`）が本プロジェクトのテストを持ちます。
 - UI 初期化が不要なため、すべて `[Fact]`（`AvaloniaFact` ではない）で並列実行されます。
 - UI 依存の検証（ページの描画・入力・画像の表示変換）は `App.AvaloniaUI.Tests`（Avalonia ヘッドレス・直列）が担います。
-
-## 移行の経緯
-
-### 第一段階（UI 型を持たないファイル）
-
-従来 `App.AvaloniaUI`（Avalonia）プロジェクト内にあった以下のファイルを本プロジェクトへ切り出しました。 いずれも UI フレームワークの型をシグネチャに持たないため、名前空間を変えずに移設できました。
-
-| ファイル | 移行内容 |
-| --- | --- |
-| `Enum/AppPage.cs` / `Enum/ThemeMode.cs` | そのまま移設 |
-| `Models/CapacityLimitedCache.cs` | そのまま移設 |
-| `Models/ImageFileExtensions.cs` | 新設（両 UI のフォルダビューで重複していた拡張子一覧を統合） |
-| `Models/FileNameTemplate.cs` | そのまま移設 |
-| `Models/UndoStack.cs` | そのまま移設（`EsBitmap` は `EsUtil.Platform.Core` 提供） |
-| `Models/HotKeyParser.cs` | そのまま移設（不要な `using EsUtil.SaveEvidence.Platform.AvaloniaUI;` を削除） |
-| `ViewModels/ViewModeDisplay.cs` | そのまま移設 |
-| `ViewModels/FolderViewViewModel.cs` / `ViewModels/UndoViewModel.cs` | そのまま移設（`CommunityToolkit.Mvvm` へ依存） |
-
-### 第二段階（設定モデルと設定サービスの UI 非依存化）
-
-| ファイル | 移行内容 |
-| --- | --- |
-| `Models/Settings.cs` | `Avalonia.PixelRect?` → `EsRectInt?`（`MainWindowBounds`）、`Avalonia.Controls.WindowState` → `EsWindowState`（`MainWindowState`） |
-| `Services/ISettingsService.cs` | そのまま移設（`Settings` に依存するため第二段階で実施） |
-| `Services/SettingsService.cs` | そのまま移設（使用するコンバーターを `EsRectIntJsonConverter` へ変更） |
-| `Services/PixelRectConverter.cs` | `EsRectIntJsonConverter` へ改名し、`EsRectInt` 用へ変更（JSON 形式は同一） |
-
-併せて `EsUtil.Platform.Core` に `EsWindowState`、`Platform.AvaloniaUI` に `EsWindowStateAvaloniaInterop` を追加しました。
-
-### 第三段階（`MainViewModel` の UI 非依存化に必要な型）
-
-| ファイル | 移行内容 |
-| --- | --- |
-| `Services/IImageWriter.cs` | 移設（`EsBitmap` のみ依存のためそのまま）。 具象実装 `AvaloniaImageWriter` は `App.AvaloniaUI` 側に残す |
-
-併せて以下を実施しました。
-
-- `CaptureType`（キャプチャ種別）を `Parts.CapturePreviewControl.AvaloniaUI` から `EsUtil.Platform.Core`（`EsUtil.Platform.Core`）へ移設
-- `LineDetection` の `LineDetectionResult` / `LineRectangleReconstructor` を `EsPoint` / `EsRectInt` 化（`LineDetection` が UI 非依存に）
-- `MainViewModel` の画像座標の矩形を `Avalonia.PixelRect` → `EsRectInt` へ変更（本体の移設は次段階）
-
-### 第四段階（`MainViewModel` の移設）
-
-| ファイル | 移行内容 |
-| --- | --- |
-| `ViewModels/MainViewModel.cs` | 移設 + UI 型の除去。 クリップボードのコールバックを `Bitmap?` → `EsBitmap` へ変更、`IImageWriter` を必須引数化（既定実装 `AvaloniaImageWriter` の生成を削除）、`ZoomViewControl` への `<see cref>` を一般表現へ |
-
-併せて以下を実施しました。
-
-- `LineDetection` の名前空間は `EsUtil.SaveEvidence.LineDetection`（旧名 `Estable.AvaloniaUI.LineDetection`。 UI 非依存のため）
-- `App.AvaloniaUI` の `MainWindow`（View）が `EsBitmap` ⇔ `Avalonia.Bitmap` の境界変換を担当
-- `App.AvaloniaUI` の `Program.cs` で `IImageWriter`（`AvaloniaImageWriter`）を DI 登録
-- `App.AvaloniaUI` の `LineDetection` 直接参照を削除（`App.Core` 経由の推移的参照へ）
-- XAML（`MainWindow.axaml` / `CapturePage.axaml` / `SettingsPage.axaml`）の `vm` 名前空間に `;assembly=App.Core` を付与
-
-### 未移設（今後の判断）
-
-以下は UI フレームワークの型をシグネチャに持つため、`App.AvaloniaUI` 側に残しています。
-
-| ファイル | 依存する UI 型 |
-| --- | --- |
-| `Services/AvaloniaImageWriter.cs` | Avalonia Skia（`WriteableBitmap`）。 `IImageWriter` の Avalonia 実装 |
-| `Services/CaptureSettingsMapper.cs` | `Avalonia.Media`（色）・`Parts.CapturePreviewControl.AvaloniaUI` |
-| `Views/**` / `Controls/**` / `Converters/**` / `Icons/**` / `Logging/AppLog.cs` | Avalonia の UI 型 |

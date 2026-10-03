@@ -200,7 +200,7 @@ src/
 │   ├── CaptureSessionControl.cs            # Facade（公開 API。撮影と切り出しの窓口）
 │   ├── CaptureOverlay.cs                   # 撮影セッション（internal。1 セッション = 1 インスタンス）
 │   ├── CaptureOverlayServices.cs           # サービス（キャプチャ・検出・ウィンドウ・ロガー）の束（公開 record）
-│   ├── Sessions/CropSession.cs             # 切り出しセッション（internal。1 セッション = 1 インスタンス）
+│   ├── src/Parts.CapturePreviewControl.MewUI/src/Sessions/CropSession.cs             # 切り出しセッション（internal。1 セッション = 1 インスタンス）
 │   ├── CropViewControl.cs                  # 切り出しビュー（公開。画像ビューポート + 矩形オーバーレイ）
 │   ├── RectOverlayCanvas.cs                # 透明な矩形オーバーレイ（internal）
 │   ├── CropSkiaRenderer.cs                 # コアの描画入力を Skia へ写す（internal）

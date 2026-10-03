@@ -1,4 +1,4 @@
-using EsUtil.SaveEvidence.LineDetection;
+using EsUtil.SaveEvidence.Parts.LineDetection;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Enum;

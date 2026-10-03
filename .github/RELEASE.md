@@ -295,22 +295,22 @@ publish は `buildScript/` の `*_publish_*.bat` をそのまま実行するた�
 
 ```powershell
 # バージョンを設定する（バージョンファイルを更新。冪等）
-& ./.github/scripts/set-version.ps1 -Version 0.2.0
+& .github/scripts/set-version.ps1 -Version 0.2.0
 
 # リリース可否を事前確認する（形式・ブランチ・系列・単調性・タグ未作成）
-$info = & ./.github/scripts/verify-release-version.ps1 -Version 0.2.0 -Branch main | ConvertFrom-Json
+$info = & .github/scripts/verify-release-version.ps1 -Version 0.2.0 -Branch main | ConvertFrom-Json
 $info.tag           # -> v0.2.0
 $info.notesStartTag # -> v0.1.1
 $info.prerelease    # -> False
 
 # 現在のバージョン状況を確認する（読み取りのみ。ネットワークを使わない場合は -NoNetwork）
-& ./.github/scripts/show-current-versions.ps1 -Branch main
+& .github/scripts/show-current-versions.ps1 -Branch main
 ```
 
 バージョンの規則（形式・比較）だけを確認する場合は、ライブラリを直接使えます。
 
 ```powershell
-. ./.github/scripts/version.ps1
+. .github/scripts/version.ps1
 ConvertTo-SemanticVersion -Version '1.2.3-rc.1'   # 不正なら例外
 Get-VersionSeries -Version '1.2.3'                # -> 1.2
 Get-MaxVersion -Versions @('1.0.0', '1.2.0')      # -> 1.2.0

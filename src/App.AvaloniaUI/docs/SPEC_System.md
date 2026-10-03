@@ -79,7 +79,7 @@ View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage
 - ファイル保存・画像処理の例外は catch し、`false` または空値を返す。
 - 設定ファイル読み書きの例外は catch し、デフォルト値で続行する。
 - グローバル例外は Avalonia の標準例外処理に委ねる（デバッグビルドでは Avalonia.Diagnostics が未処理例外を表示）。
-- ログは LoggerMessage ソース生成（`Logging/AppLog.cs`）で出力する。 操作イベントは Information、障害は Error / Warning で記録する。
+- ログは LoggerMessage ソース生成（`src/App.AvaloniaUI/src/Logging/AppLog.cs`）で出力する。 操作イベントは Information、障害は Error / Warning で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -217,7 +217,7 @@ flowchart TB
 
 ## 8. ログ
 
-ログ定義は `Logging/AppLog.cs`（LoggerMessage ソース生成）に集約し、Serilog 経由で `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7日で自動アーカイブ・削除）へ出力する。
+ログ定義は `src/App.AvaloniaUI/src/Logging/AppLog.cs`（LoggerMessage ソース生成）に集約し、Serilog 経由で `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7日で自動アーカイブ・削除）へ出力する。
 
 | LogLevel | 対象 | 例 |
 | --- | --- | --- |

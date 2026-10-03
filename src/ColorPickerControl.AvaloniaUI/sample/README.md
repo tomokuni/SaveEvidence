@@ -26,25 +26,25 @@
 ## 2. 実行方法
 
 ```powershell
-dotnet run --project sample/ColorPickerControl.AvaloniaUI.Sample.csproj
+dotnet run --project src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj
 ```
 
 リリース構成で実行する場合:
 
 ```powershell
-dotnet run -c Release --project sample/ColorPickerControl.AvaloniaUI.Sample.csproj
+dotnet run -c Release --project src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj
 ```
 
 ### バッチファイル（リリースビルド＆起動）
 
-`sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
+`src/ColorPickerControl.AvaloniaUI/sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
 
 ```text
 RunSample.bat  →  リリースビルド（dotnet build -c Release）→ EsUtil.SaveEvidence.ColorPicker.Sample.exe を起動
 ```
 
 > 本サンプルは独立したプロジェクトです。
-> `ColorPickerControl.csproj` は `sample/**` をコンパイル対象から除外しています。
+> `ColorPickerControl.AvaloniaUI.csproj` は `sample/**` をコンパイル対象から除外しています。
 
 ## 3. 画面構成と操作
 

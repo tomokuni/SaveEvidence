@@ -103,12 +103,12 @@ flowchart TB
     subgraph SC["Parts.CapturePreviewControl.AvaloniaUI プロジェクト (Parts.CapturePreviewControl.AvaloniaUI)"]
         direction TB
         Fac["CaptureSessionControl<br/>public sealed<br/>CaptureSessionControl.cs<br/>（Facade・薄い統括者）"]
-        CS["SelectionCaptureSession<br/>internal sealed<br/>Sessions/SelectionCaptureSession.cs"]
-        CrS["CropSession<br/>internal sealed<br/>Sessions/CropSession.cs"]
-        OW["OverlayWindow<br/>internal sealed<br/>Sessions/OverlayWindow.axaml(.cs)"]
+        CS["SelectionCaptureSession<br/>internal sealed<br/>src/Parts.CapturePreviewControl.AvaloniaUI/src/Sessions/SelectionCaptureSession.cs"]
+        CrS["CropSession<br/>internal sealed<br/>src/Parts.CapturePreviewControl.AvaloniaUI/src/Sessions/CropSession.cs"]
+        OW["OverlayWindow<br/>internal sealed<br/>src/Parts.CapturePreviewControl.AvaloniaUI/src/Sessions/OverlayWindow.axaml(.cs)"]
         CV["CropViewControl<br/>public sealed<br/>CropViewControl.cs<br/>（切り出しビュー）"]
         FDR["FadeMaskDragRectControl<br/>public sealed<br/>FadeMaskDragRectControl.cs<br/>（領域選択）"]
-        ZVW["ZoomViewControl<br/>public sealed<br/>ZoomView/ZoomViewControl.cs<br/>（切り出しビューの画像ビューポート）"]
+        ZVW["ZoomViewControl<br/>public sealed<br/>ZoomViewControl.cs<br/>（切り出しビューの画像ビューポート）"]
         ZVB["ZoomableView / CheckerboardView<br/>internal sealed<br/>ZoomView/（入力ブリッジ・描画）"]
     end
     subgraph Core["Parts.CapturePreviewControl.Core プロジェクト（両 UI 共通の規則。UI 非依存）"]

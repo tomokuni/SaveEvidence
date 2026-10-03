@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// <see cref="EsRectInt"/> は読み取り専用プロパティ（<see cref="EsRectInt.Right"/> 等）を持つため、<br/>
 /// 既定のシリアライザーでは書き込み時に不要なプロパティが混入し、読み込み時にコンストラクター引数へ束縛できない。<br/>
 /// 本コンバーターは <c>X</c> / <c>Y</c> / <c>Width</c> / <c>Height</c> のみを読み書きする<br/>
-/// （移設前の <c>Avalonia.PixelRect</c> 用コンバーターと同じ JSON 形式のため、既存の設定ファイルをそのまま読み込める）。<br/>
+/// （<c>X</c> / <c>Y</c> / <c>Width</c> / <c>Height</c> のみを読み書きするため、既存の設定ファイルをそのまま読み込める）。<br/>
 /// </remarks>
 internal sealed class EsRectIntJsonConverter : JsonConverter<EsRectInt>
 {

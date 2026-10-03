@@ -86,7 +86,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（`Logging/ColorPickerLogMessage.cs`）で出力する。 高頻度イベントは Debug / Trace、障害は Error で記録する。
+- ログは LoggerMessage ソース生成（`src/ColorPickerControl.AvaloniaUI/src/Logging/ColorPickerLogMessage.cs`）で出力する。 高頻度イベントは Debug / Trace、障害は Error で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -272,7 +272,7 @@ sequenceDiagram
 
 ## 10. ログ
 
-ログ定義は `Logging/ColorPickerLogMessage.cs`（internal・LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
+ログ定義は `src/ColorPickerControl.AvaloniaUI/src/Logging/ColorPickerLogMessage.cs`（internal・LoggerMessage ソース生成）に集約し、`ILogger` の拡張メソッドとして定義する。
 各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogSelectedColorChanged(old, new)`）。
 ログ出力先の `ILogger` は公開プロパティ `Log` で注入する（未設定時は `NullLogger` のため出力なし）。
 出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。

@@ -29,10 +29,10 @@ internal sealed record ColorEntry(string Name, string Value)
 
     /// <summary>静的コンストラクタ。 全色一覧（色名順 / 色相順）を構築する。</summary>
     /// <remarks>
-    /// <see cref="ColorString.ColorNames"/> の全色からエントリを生成し、配列へ一度だけ実体化する
-    /// （遅延シーケンスを 2 回列挙する従来実装を排除。 ソートは実体化済み配列に対して行う）。<br/>
+    /// <see cref="ColorString.ColorNames"/> の全色からエントリを生成し、配列へ一度だけ実体化する<br/>
+    /// （遅延シーケンスの二重列挙を避ける。 ソートは実体化済み配列に対して行う）。<br/>
     /// リフレクションによる <see cref="Colors"/> 列挙は <see cref="ColorString"/> が単一所有する
-    /// （<c>DynamicDependency</c> 属性も <see cref="ColorString"/> 側に移設済み）。
+    /// （<c>DynamicDependency</c> 属性も <see cref="ColorString"/> 側にある）。
     /// </remarks>
     static ColorEntry()
     {

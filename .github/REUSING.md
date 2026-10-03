@@ -166,9 +166,9 @@ UI ごとに `buildScript/<名前>_publish_*.bat` を作成します。 仕様�
 ```powershell
 # スクリプトの単体確認（バージョン設定・検証。既定のバージョンファイルは Directory.Build.props）
 Copy-Item Directory.Build.props "$env:TEMP/dbp.bak"
-& ./.github/scripts/set-version.ps1 -Version 0.0.2
-& ./.github/scripts/verify-release-version.ps1 -Version 0.0.3 -Branch main
-& ./.github/scripts/show-current-versions.ps1 -Branch main -NoNetwork
+& .github/scripts/set-version.ps1 -Version 0.0.2
+& .github/scripts/verify-release-version.ps1 -Version 0.0.3 -Branch main
+& .github/scripts/show-current-versions.ps1 -Branch main -NoNetwork
 Copy-Item "$env:TEMP/dbp.bak" Directory.Build.props
 
 # パイプラインの確認（CI と同一条件）

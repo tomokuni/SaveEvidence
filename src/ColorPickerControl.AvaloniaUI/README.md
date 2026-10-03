@@ -163,9 +163,9 @@ dotnet run --project sample/ColorPickerControl.AvaloniaUI.Sample.csproj
 ## 12. プロジェクト構成
 
 ```text
-ColorPickerControl/
+ColorPickerControl.AvaloniaUI/
 ├── src/
-│   ├── ColorPickerControl.csproj
+│   ├── ColorPickerControl.AvaloniaUI.csproj
 │   ├── ColorPicker.axaml          # 公開コントロール（UIレイアウト）
 │   ├── ColorPicker.axaml.cs       # コードビハインド（公開 API・StyledProperty・イベント処理・バリデーション状態）
 │   ├── ColorPickerFlyoutFactory.cs# カラーピッカー Flyout 構築（Simple Factory）
