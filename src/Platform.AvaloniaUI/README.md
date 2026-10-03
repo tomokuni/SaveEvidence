@@ -153,8 +153,8 @@ Win32 実装（`Native.Win`）はホストが生成して抽象型として注�
 
 ## 8. ドキュメント
 
-- [外部機能仕様書](SPEC_ExtFunc.md)
-- [システム仕様書](SPEC_System.md)
+- [外部機能仕様書](docs/SPEC_API.md)
+- [システム仕様書](docs/SPEC_System.md)
 
 ## 9. プロジェクト構成
 

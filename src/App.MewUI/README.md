@@ -1,4 +1,4 @@
-# App.MewUI（MewUI 版アプリ本体）
+# App.MewUI
 
 SaveEvidence の **MewUI 版ホストアプリ**です。 UI 非依存のコア（`App.Core` / `EsUtil.Platform.Core`（Win32 実装を含む） /
 `LineDetection`）をそのまま使い、UI 層だけを MewUI で実装します。

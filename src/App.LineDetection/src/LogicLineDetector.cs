@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.LineDetection;
 /// 線分を角度で水平 / 垂直に分類し、同一直線上に並ぶ線分をクラスタリングして長い辺へ統合する。<br/>
 /// ウィンドウ枠は長くて真っ直ぐな水平・垂直の辺で構成されるため、最小長でフィルタして候補とする。<br/>
 /// 文字列（テキスト）の水平エッジは断続的であるため、マージ後の線分上の暗いピクセル割合<br/>
-/// （<see cref="MinEdgeSupportRatio"/>）で除外する（ウィンドウ枠は連続エッジのため残る）。<br/>
+/// （<see cref="LineDetectionOptions.MinEdgeSupportRatio"/>）で除外する（ウィンドウ枠は連続エッジのため残る）。<br/>
 /// 線分が矩形（ウィンドウの 4 辺）を構成できる場合は、4 つの辺がコーナー近傍で交差する<br/>
 /// 閉区間（<see cref="BuildRectangles"/>）として出力する。<br/>
 /// モデルは使用せず、画像の幾何学的特徴のみで検出する。
@@ -114,7 +114,7 @@ public sealed class LogicLineDetector : ILineDetector
     /// <returns>フィルタ後の線分結果（最小長・エッジ支持率でフィルタ済み）。</returns>
     /// <remarks>
     /// 1. マージ後の長さが最小長未満の辺は除外<br/>
-    /// 2. 線分に沿ったエッジの割合（<see cref="MinEdgeSupportRatio"/>）未満の辺は除外（テキスト誤検出の抑制）
+    /// 2. 線分に沿ったエッジの割合（<see cref="LineDetectionOptions.MinEdgeSupportRatio"/>）未満の辺は除外（テキスト誤検出の抑制）
     /// </remarks>
     private IEnumerable<LineDetectionResult> FilterAndScore(List<LineSeg> segments, bool isHorizontal, Mat edges)
     {
@@ -154,16 +154,16 @@ public sealed class LogicLineDetector : ILineDetector
     /// 1. 同じ垂直座標に並ぶ断片を広いギャップ（<see cref="RectMergeGap"/>）で連結し、<br/>
     ///    薄い枠線（HoughLinesP で断片化される）を長い辺として復元する<br/>
     /// 2. 各辺を<b>元画像の輝度プロファイルの枠の外側の境界（排他座標の辺）</b>へ補正する（<see cref="SnapToEdgeByGradient"/>）<br/>
-    /// 3. 近接する平行線（<see cref="ParallelMergeTolerance"/> 以内）を 1 本に統合する<br/>
+    /// 3. 近接する平行線（<see cref="LineDetectionOptions.ParallelMergeTolerance"/> 以内）を 1 本に統合する<br/>
     ///    （枠は透明度で背景色と混ざるため、1 本の枠線が複数の近接平行線として検出されることがある）<br/>
-    /// 4. 線分に沿ったエッジの割合（<see cref="MinEdgeSupportRatio"/>）未満の線分を除外する<br/>
+    /// 4. 線分に沿ったエッジの割合（<see cref="LineDetectionOptions.MinEdgeSupportRatio"/>）未満の線分を除外する<br/>
     ///    （文字列の水平エッジは断続的で割合が低く、ウィンドウ枠は連続エッジで割合が高い）<br/>
     /// 5. 水平線のペア（上・下）と垂直線のペア（左・右）の組み合わせを探索し、<br/>
     ///    以下の<b>矩形の幾何学的一貫性</b>を満たすもののうち、<br/>
     ///    画像の端からの距離合計が最小（= ウィンドウ外枠に近い）ものを選択する<br/>
-    ///    ・対辺の長さが揃っている（上辺 ≈ 下辺・左辺 ≈ 右辺。 比率 <see cref="OppositeSpanRatio"/> で許容）<br/>
+    ///    ・対辺の長さが揃っている（上辺 ≈ 下辺・左辺 ≈ 右辺。 比率 <see cref="LineDetectionOptions.OppositeSpanRatio"/> で許容）<br/>
     ///    ・4 つのコーナーそれぞれで、水平線または垂直線の<b>少なくとも一方の端点</b>が<br/>
-    ///      コーナー座標の近傍（辺の長さ × <see cref="CornerToleranceRatio"/>）にある<br/>
+    ///      コーナー座標の近傍（辺の長さ × <see cref="LineDetectionOptions.CornerToleranceRatio"/>）にある<br/>
     ///    （ウィンドウ枠はコーナーが丸く欠ける・他ウィンドウが重なるため、<br/>
     ///    完全な交差ではなく近接で判定する。<br/>
     ///    長い辺（ウィンドウ枠）はコーナー欠けを許容し、短い線分（誤検出）はコーナーから遠いため除外される。<br/>
@@ -300,10 +300,10 @@ public sealed class LogicLineDetector : ILineDetector
     /// <summary>矩形の辺を復元する際に、同一垂直座標の断片を連結する最大ギャップ（ピクセル）。</summary>
     /// <remarks>
     /// 薄い枠線は HoughLinesP で複数の断片に分割され、コーナー付近や他ウィンドウとの重なりで<br/>
-    /// 広いギャップ（100px 超）が生じるため、<see cref="MaxLineGap"/>（10px）より大幅に広い<br/>
+    /// 広いギャップ（100px 超）が生じるため、<see cref="LineDetectionOptions.MaxLineGap"/>（10px）より大幅に広い<br/>
     /// 200px で連結して 1 本の辺を復元する。<br/>
     /// 文字列の断片も連結されうるが、連結後のエッジ支持率が低いため<br/>
-    /// <see cref="MinEdgeSupportRatio"/> フィルタで除外される。
+    /// <see cref="LineDetectionOptions.MinEdgeSupportRatio"/> フィルタで除外される。
     /// </remarks>
     private const int RectMergeGap = 200;
 
@@ -321,7 +321,7 @@ public sealed class LogicLineDetector : ILineDetector
     /// 「どちらかの辺の端点が近くにあれば良い」とすると、ウィンドウの左辺/右辺だけが近接し、
     /// 上辺がコーナーから大きく離れている場合（例: 別の要素の境界線）に誤って合格してしまうため、
     /// 両方の辺でコーナーを構成できることを要求する。<br/>
-    /// ウィンドウ枠は角丸・他ウィンドウとの重なりでコーナー付近が欠けるが、欠けは限定的（辺の長さ × <see cref="CornerToleranceRatio"/>）なため、
+    /// ウィンドウ枠は角丸・他ウィンドウとの重なりでコーナー付近が欠けるが、欠けは限定的（辺の長さ × <see cref="LineDetectionOptions.CornerToleranceRatio"/>）なため、
     /// 対応する端点が近傍にあれば合格する。
     /// </remarks>
     private bool HasCornerSupport(in LineSeg h1, in LineSeg h2, in LineSeg v1, in LineSeg v2, double cx, double cy)
@@ -380,7 +380,7 @@ public sealed class LogicLineDetector : ILineDetector
     /// <summary>2 つのスパン（平行方向の長さ）がほぼ同じか判定する。</summary>
     /// <param name="span1">一方のスパン。</param>
     /// <param name="span2">他方のスパン。</param>
-    /// <returns>スパンの差が大きい方の比率 <see cref="Options.OppositeSpanRatio"/> 以内なら true。</returns>
+    /// <returns>スパンの差が大きい方の比率 <see cref="LineDetectionOptions.OppositeSpanRatio"/> 以内なら true。</returns>
     /// <remarks>矩形の対辺（上辺と下辺・左辺と右辺）の長さ比較に使用する。<br/>
     /// コーナーが欠けてスパンが揃わないことがあるため、比率で許容する。</remarks>
     private bool SameLength(double span1, double span2)

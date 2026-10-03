@@ -1,8 +1,8 @@
-# ColorPickerControl サンプルアプリケーション
+# ColorPickerControl.AvaloniaUI サンプルアプリケーション
 
 ## 目次
 
-- [ColorPickerControl サンプルアプリケーション](#colorpickercontrol-サンプルアプリケーション)
+- [ColorPickerControl.AvaloniaUI サンプルアプリケーション](#colorpickercontrolavaloniaui-サンプルアプリケーション)
   - [目次](#目次)
   - [1. 概要](#1-概要)
   - [2. 実行方法](#2-実行方法)

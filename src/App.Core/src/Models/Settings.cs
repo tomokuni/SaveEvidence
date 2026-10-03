@@ -292,7 +292,7 @@ public sealed partial class Settings : ObservableObject
     /// 設定画面の外観設定にある「デフォルト値に戻す」ボタンから呼び出される。<br/>
     /// デフォルト値は本クラスのフィールド初期化子（各 <c>[ObservableProperty]</c> フィールドの初期値）を真のソースとし、
     /// 新規インスタンスからコピーする（DRY 原則・二重管理を避ける）。<br/>
-    /// 設定変更は <see cref="SettingsService"/> の <c>PropertyChanged</c> 購読により自動保存される。
+    /// 設定変更は <see cref="Services.SettingsService"/> の <c>PropertyChanged</c> 購読により自動保存される。
     /// </remarks>
     public void ResetAppearanceToDefaults()
     {

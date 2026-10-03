@@ -1,10 +1,10 @@
-# ColorPickerControl
+# ColorPickerControl.AvaloniaUI
 
 > プロジェクト名: `ColorPickerControl.AvaloniaUI`（Avalonia UI 版）。 MewUI 側は標準の `ColorPicker` を使うため移植していません（`XxxControl.Core` / `XxxControl.MewUI` は作成しません）。
 
 ## 目次
 
-- [ColorPickerControl](#colorpickercontrol)
+- [ColorPickerControl.AvaloniaUI](#colorpickercontrolavaloniaui)
   - [目次](#目次)
   - [1. 概要](#1-概要)
   - [2. 機能一覧](#2-機能一覧)
@@ -138,8 +138,8 @@ dotnet run --project sample/ColorPickerControl.AvaloniaUI.Sample.csproj
 
 ## 10. ドキュメント
 
-- [外部機能仕様書](SPEC_ExtFunc.md)
-- [システム仕様書](SPEC_System.md)
+- [外部機能仕様書](docs/SPEC_API.md)
+- [システム仕様書](docs/SPEC_System.md)
 
 ## 11. アーキテクチャ
 

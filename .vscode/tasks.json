@@ -12,16 +12,16 @@
       "problemMatcher": []
     },
     {
-      "label": "テスト実行（app.AvaloniaUI.Tests）",
+      "label": "テスト実行（App.AvaloniaUI.Tests）",
       "type": "shell",
-      "command": "dotnet test src/app.AvaloniaUI/tests/app.AvaloniaUI.Tests.csproj",
+      "command": "dotnet test src/App.AvaloniaUI/tests/App.AvaloniaUI.Tests.csproj",
       "group": "test",
       "problemMatcher": []
     },
     {
       "label": "テスト実行（フィルタ指定）",
       "type": "shell",
-      "command": "dotnet test src/app.AvaloniaUI/tests/app.AvaloniaUI.Tests.csproj --filter ${input:testFilter}",
+      "command": "dotnet test src/App.AvaloniaUI/tests/App.AvaloniaUI.Tests.csproj --filter ${input:testFilter}",
       "group": "test",
       "problemMatcher": []
     }

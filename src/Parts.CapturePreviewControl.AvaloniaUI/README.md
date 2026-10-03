@@ -238,8 +238,8 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 ## 9. ドキュメント
 
-- [外部機能仕様書](SPEC_ExtFunc.md)
-- [システム仕様書](SPEC_System.md)
+- [外部機能仕様書](docs/SPEC_API.md)
+- [システム仕様書](docs/SPEC_System.md)
 
 ## 10. プロジェクト構成
 

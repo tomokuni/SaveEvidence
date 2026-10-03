@@ -1,8 +1,8 @@
-# LineDetection
+# App.LineDetection
 
 ## 目次
 
-- [LineDetection](#linedetection)
+- [App.LineDetection](#applinedetection)
   - [目次](#目次)
   - [1. 概要](#1-概要)
   - [2. 機能一覧](#2-機能一覧)

@@ -2,7 +2,7 @@ namespace EsUtil.SaveEvidence.App.Core.Enum;
 
 /// <summary>メインウィンドウのナビゲーションページを表す列挙型。</summary>
 /// <remarks>
-/// <see cref="Views.MainWindow.NavigateTo"/> の遷移先を識別するために使用する。<br/>
+/// <c>MainWindow</c> のナビゲーション（ページ遷移）の遷移先を識別するために使用する。<br/>
 /// ページ追加時の index ずれによる誤遷移を防ぐため、型安全な enum で管理する。
 /// </remarks>
 public enum AppPage

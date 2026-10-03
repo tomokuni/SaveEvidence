@@ -1,10 +1,10 @@
-# SaveEvidence (app)
+# App.AvaloniaUI
 
 > プロジェクト名: `App.AvaloniaUI`（Avalonia UI 版）。 MewUI 版は `App.MewUI`、UI 非依存のコアは `App.Core` にあります。
 
 ## 目次
 
-- [SaveEvidence (app)](#saveevidence-app)
+- [App.AvaloniaUI](#appavaloniaui)
   - [目次](#目次)
   - [1. 概要](#1-概要)
   - [2. 機能一覧](#2-機能一覧)
