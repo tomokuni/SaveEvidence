@@ -8,10 +8,10 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Tests;
 
 /// <summary>
 /// <see cref="BottomAlignWrapPanel"/> の委譲確認テスト（Control の Measure / Arrange が
-/// <see cref="BottomAlignWrapLayout"/> の純粋計算へ正しく委譲することを検証）。
+/// <see cref="EsUtil.SaveEvidence.App.Core.Layout.BottomAlignWrapLayout"/> の純粋計算へ正しく委譲することを検証）。
 /// </summary>
 /// <remarks>
-/// 折り返し・行高さ・下端揃えの計算ロジック自体は <see cref="BottomAlignWrapLayoutTests"/>（<c>[Fact]</c>・並列）で検証する。<br/>
+/// 折り返し・行高さ・下端揃えの計算ロジック自体は <c>BottomAlignWrapLayoutTests</c>（<c>[Fact]</c>・並列）で検証する。<br/>
 /// 本テストは <see cref="Control"/> のレイアウトエンジン経由で委譲が機能することを確認するため、<br/>
 /// Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）で直列実行する（最小限）。
 /// </remarks>
@@ -38,7 +38,7 @@ public class BottomAlignWrapPanelTests
         return panel;
     }
 
-    /// <summary>Measure が <see cref="BottomAlignWrapLayout"/> の計算結果を子要素の計測から委譲することを確認する。</summary>
+    /// <summary>Measure が <see cref="EsUtil.SaveEvidence.App.Core.Layout.BottomAlignWrapLayout"/> の計算結果を子要素の計測から委譲することを確認する。</summary>
     [AvaloniaFact]
     public void Measure_折り返しと行高さの計算が委譲される()
     {
@@ -49,7 +49,7 @@ public class BottomAlignWrapPanelTests
         Assert.Equal(120.0, panel.DesiredSize.Width);
     }
 
-    /// <summary>Arrange が <see cref="BottomAlignWrapLayout"/> の計算結果を子要素へ委譲することを確認する。</summary>
+    /// <summary>Arrange が <see cref="EsUtil.SaveEvidence.App.Core.Layout.BottomAlignWrapLayout"/> の計算結果を子要素へ委譲することを確認する。</summary>
     [AvaloniaFact]
     public void Arrange_下端揃えの配置が委譲される()
     {

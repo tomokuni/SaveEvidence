@@ -56,8 +56,8 @@
 | 項目 | 内容 |
 | --- | --- |
 | 対象 | `Parts.CapturePreviewControl.AvaloniaUI` |
-| プロジェクト | `Parts.CapturePreviewControl.AvaloniaUI/Parts.CapturePreviewControl.AvaloniaUI.csproj` |
-| 名前空間 | `Parts.CapturePreviewControl.AvaloniaUI` |
+| プロジェクト | `src/Parts.CapturePreviewControl.AvaloniaUI/src/Parts.CapturePreviewControl.AvaloniaUI.csproj` |
+| 名前空間 | `EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI` |
 | 対象フレームワーク | `net10.0-windows10.0.17763.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要設計パターン | Facade（CaptureSessionControl / CropViewControl / FadeMaskDragRectControl）/ セッション（SelectionCaptureSession / CropSession）/ Composite（内包コントロールの統合）/ 薄い統括者 |
@@ -94,7 +94,7 @@ Parts.CapturePreviewControl.AvaloniaUI は内包コントロール（MarqueeCont
 ### 3.2 必要な名前空間
 
 ```csharp
-using Parts.CapturePreviewControl.AvaloniaUI;
+using ${S}AvaloniaUI;
 ```
 
 ### 3.3 スレッド要件
@@ -360,7 +360,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 
 #### 5.5.4 外部提供矩形
 
-`Rects` の要素（`OverlayRect`）は UI 非依存の `Parts.CapturePreviewControl.Core`（名前空間 `Parts.CapturePreviewControl.Core`）が提供します。 矩形（`EsRect`）・枠線スタイル（`OverlayLineStyle`）・前景色・背景色・線幅を持ち、実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」で描画します（ダッシュ長はコアの `OverlayLineDash` が単一所有）。
+`Rects` の要素（`OverlayRect`）は UI 非依存の `Parts.CapturePreviewControl.Core`（名前空間 ${S}Core）が提供します。 矩形（`EsRect`）・枠線スタイル（`OverlayLineStyle`）・前景色・背景色・線幅を持ち、実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」で描画します（ダッシュ長はコアの `OverlayLineDash` が単一所有）。
 
 ### 5.6 FadeMaskDragRectControl（領域選択）
 

@@ -35,9 +35,7 @@ SkiaDirect2DInterop.Register();    // Direct2D ⇔ Skia のブリッジ（未登
 ```text
 src/App.MewUI/
 ├── README.md                # 本ファイル
-├── SPEC_ExtFunc.md          # 外部機能仕様書
-├── SPEC_System.md           # システム仕様書
-├── verify-ui.ps1            # 起動・表示の自動検証（設定を退避して実行する）
+├── docs/                    # SPEC_ExtFunc.md（外部機能仕様書）/ SPEC_System.md（システム仕様書）
 ├── mewui-initial.png        # 検証時の実行結果（証跡）
 ├── mewui-resized.png        # ウィンドウ縮小時の実行結果（証跡）
 └── src/
@@ -365,33 +363,29 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 
 ## 検証
 
-`verify-ui.ps1` は次を自動で行います（GUI の目視に頼らない）。
+実機の表示は次の手順で確認します（GUI の目視に頼らず、撮影した画素を実測する）。
 
 1. `%LOCALAPPDATA%\SaveEvidence\settings.json` を退避する
 2. アプリを起動して `MainWindowHandle` を取得する
-3. `PrintWindow`（`PW_RENDERFULLCONTENT`）で撮影し、`mewui-initial.png` に保存する
+3. `PrintWindow`（`PW_RENDERFULLCONTENT`）で撮影し、PNG に保存する
 4. 画素を実測し、ステータスバーの表示とルーペの非表示（カーソルをウィンドウ外へ退避した状態）を判定する
-5. ウィンドウを縮めて撮影し（`mewui-resized.png`）、追従を確認する
+5. ウィンドウを縮めて撮影し、追従を確認する
 6. プロセスを終了し、退避した設定を復元する
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File src/App.MewUI/verify-ui.ps1
-```
+``
 
-**切り出し中のルーペ（中心座標ラベル）まで検証する場合**: `-VerifyLoupe` を付けます。
+**切り出し中のルーペ（中心座標ラベル）まで検証する場合**: 切り出しを開始してから確認します。
 通常画面（`CapturePage`）はルーペを使わない（ルーペは切り出しと領域選択のオーバーレイが使う）ため、
 切り出しを `Ctrl+R` で開始し、カーソルをプレビュー上へ移動してルーペを表示させます。
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File src/App.MewUI/verify-ui.ps1 -VerifyLoupe
-```
+``
 
 - 判定項目: `loupeShown_loupeVisible`（設定の枠色の画素数）と `loupeShown_labelVisible`
   （ルーペ左上の帯の文字色と暗色背景の画素数。 文字色は実設定の `LoupeCoordLabelColor` から解決する）。
 - 実測例: 一辺 160 DIP のルーペで枠 1264 px・ラベル文字 127 px・背景 815 px。
 - 終了時は `Esc` で切り出しをキャンセルしてからプロセスを終了します。
 
-> **重要（実測の落とし穴）**: 検証スクリプト側のプロセスを **Per-Monitor V2（`SetProcessDpiAwarenessContext(-4)`）**
+> **重要（実測の落とし穴）**: 計測側のプロセスを **Per-Monitor V2（`SetProcessDpiAwarenessContext(-4)`）**
 > にしてください。 未対応だと座標と撮影が `96/dpi` に仮想化され、ウィンドウの下端・右端が切れた画像になるため、
 > **「レイアウトが壊れている」と誤判定します**（実際に誤判定し、存在しない MewUI の制約を記録してしまいました）。
 

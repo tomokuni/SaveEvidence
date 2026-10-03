@@ -486,6 +486,7 @@ internal static class CapturePage
     /// <param name="icon">アイコンの SVG ファイル名。</param>
     /// <param name="toolTip">ツールヒント文字列。</param>
     /// <param name="onClick">クリック時の処理。</param>
+    /// <param name="icons">生成したアイコン画像の登録先（テーマ変更時の描き直しに使う）。</param>
     /// <returns>アイコンだけを表示するボタン。</returns>
     private static Button IconButton(string icon, string toolTip, Action onClick, List<IconImage> icons)
     {

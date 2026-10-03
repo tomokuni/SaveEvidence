@@ -32,8 +32,8 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// MainWindow から分離された画像キャプチャ関連の全機能を提供する。<br/>
 /// CaptureSessionControl による領域選択・切出し、CropViewControl（ズーム + 領域選択 + ルーペを内包）
 /// によるズーム制御、ルーペ表示を統一的に管理する。<br/>
-/// MainWindow とは <see cref="MainWindow.Initialize"/>（CapturePage.Initialize）と
-/// <see cref="MainWindow.StartSelectionMode"/>（キャプチャ開始）で連携する。<br/>
+/// MainWindow とは <see cref="CapturePage.Initialize"/>（初期化）と
+/// <see cref="Views.MainWindow.StartSelectionMode"/>（キャプチャ開始）で連携する。<br/>
 /// Ctrl ショートカット（保存 / コピー / 貼り付け / Undo / Redo / 切り出し / ズーム）は
 /// <see cref="OnGlobalKeyDown"/> で一括処理する。<br/>
 /// Undo / Redo スタックは DI シングルトン（<see cref="UndoStack"/>）から取得し、UndoPage と共有する。
@@ -324,7 +324,7 @@ public sealed partial class CapturePage : UserControl
     /// <summary>保存ボタンの ToolTip（保存先フォルダ付き）を更新する。</summary>
     /// <remarks>
     /// 「画像を保存」と現在の保存先フォルダ（<see cref="MainViewModel.SaveFolderPathResolved"/>）を表示する。<br/>
-    /// 保存先フォルダは <see cref="MainViewModel.PropertyChanged"/> の <c>SaveFolderPath</c> 通知時に再構築される。
+    /// 保存先フォルダは <see cref="INotifyPropertyChanged.PropertyChanged"/> の <c>SaveFolderPath</c> 通知時に再構築される。
     /// </remarks>
     private void UpdateSaveButtonToolTip()
     {
@@ -837,7 +837,7 @@ public sealed partial class CapturePage : UserControl
     /// <param name="zoom">現在の実効ズーム率（%）。 Fit 中は実効倍率。</param>
     /// <remarks>
     /// 実効ズーム率の変化（<see cref="ZoomViewControl.ZoomChanged"/>）を受けて、スライダ値を現在のズーム率へ同期する。<br/>
-    /// Fit 中も実際に表示されている実効倍率をスライダに反映する（スライダ範囲 <see cref="ZoomSlider.Minimum"/> 〜 <see cref="ZoomSlider.Maximum"/> にクランプ）。<br/>
+    /// Fit 中も実際に表示されている実効倍率をスライダに反映する（スライダ範囲 <c>ZoomSlider.Minimum</c> 〜 <c>ZoomSlider.Maximum</c> にクランプ）。<br/>
     /// スライダへの値設定で発火する <see cref="OnZoomSliderValueChanged"/> を無視するためにフラグで保護する。
     /// </remarks>
     private void SyncZoomSlider(double zoom)

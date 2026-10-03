@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Tests;
 
 /// <summary><see cref="CapturePage.IsCtrlShortcut"/> の単体テスト。</summary>
 /// <remarks>
-/// Ctrl ショートカット（<see cref="CapturePage.OnGlobalKeyDown"/>）の修飾キー判定を検証する。<br/>
+/// Ctrl ショートカット（<c>OnGlobalKeyDown</c>）の修飾キー判定を検証する。<br/>
 /// Ctrl のみ押下時は true、Ctrl なし・Alt / Shift 併用は false となることを確認する。
 /// </remarks>
 public class CapturePageShortcutTests

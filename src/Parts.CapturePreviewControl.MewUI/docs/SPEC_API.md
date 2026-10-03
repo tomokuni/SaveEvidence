@@ -13,7 +13,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `FadeMaskDragRectSelectionEventArgs` | sealed record | 確定要求のイベント引数（`SelectionSourceRect: EsRect`） |
 | `FadeMaskDragRectPointEventArgs` | sealed record | ルーペ位置のイベント引数（`Position: EsPoint`） |
 
-`OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）は `Parts.CapturePreviewControl.Core`（名前空間 `Parts.CapturePreviewControl.Core`）が提供します。
+`OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）は `Parts.CapturePreviewControl.Core`（名前空間 ${S}Core）が提供します。
 
 名前空間は `Parts.CapturePreviewControl.MewUI` です。
 

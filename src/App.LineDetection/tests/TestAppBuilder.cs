@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.LineDetection.Tests;
 /// <summary>Avalonia ヘッドレステストのアプリケーションビルダー（アセンブリ属性方式）。</summary>
 /// <remarks>
 /// <c>[AvaloniaFact]</c> のテストは本クラスが提供する AppBuilder で Avalonia を初期化する<br/>
-/// （<see cref="AvaloniaTestApplication"/> アセンブリ属性）。<br/>
+/// （<see cref="Avalonia.Headless.AvaloniaTestApplicationAttribute"/> アセンブリ属性）。<br/>
 /// Skia を有効化することで <see cref="Avalonia.Media.Imaging.Bitmap"/> の読み込みが可能になる。<br/>
 /// テストは全て UI スレッドで実行され、画像のデコード・ピクセル取得が可能になる。
 /// </remarks>

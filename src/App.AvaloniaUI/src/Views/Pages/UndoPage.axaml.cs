@@ -127,7 +127,7 @@ public sealed partial class UndoPage : ViewModePageBase
     /// <param name="e">タップイベント。</param>
     /// <remarks>
     /// Undo / Redo スタックの画像はファイルではなく Bitmap のため、
-    /// 一時フォルダに PNG として保存してから <see cref="Process.Start"/> で開く。
+    /// 一時フォルダに PNG として保存してから <see cref="Process.Start()"/> で開く。
     /// </remarks>
     private void OnItemDoubleTapped(object? sender, TappedEventArgs e)
     {

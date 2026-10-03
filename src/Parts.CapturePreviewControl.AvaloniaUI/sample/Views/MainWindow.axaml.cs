@@ -333,7 +333,7 @@ public sealed partial class MainWindow : Window
     /// <summary>グリッド付きのダミー画像を生成する（Crop プレビュー用）。</summary>
     /// <param name="width">画像の幅。</param>
     /// <param name="height">画像の高さ。</param>
-    /// <returns>生成した <see cref="EsBitmapAvaloniaImage"/>（<see cref="IImage"/> として表示できる）。</returns>
+    /// <returns>生成した <see cref="EsBitmapAvaloniaImage"/>（<see cref="Avalonia.Media.IImage"/> として表示できる）。</returns>
     /// <remarks>
     /// 白地に 100px 間隔の薄いグリッドと、中央に色付きの矩形を描画する（サイズ感・座標の確認用）。<br/>
     /// <b>EsBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、

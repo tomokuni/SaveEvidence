@@ -67,7 +67,7 @@
 必要な名前空間:
 
 ```csharp
-using Parts.CapturePreviewControl.AvaloniaUI;
+using ${S}AvaloniaUI;
 ```
 
 ## 5. クイックスタート
@@ -261,9 +261,9 @@ Parts.CapturePreviewControl.AvaloniaUI/
 
 `CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `EsUtil.Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。 利用側は `using EsUtil.Platform.Core;` を追加してください。
 
-`CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `Parts.CapturePreviewControl.Core`（名前空間 `Parts.CapturePreviewControl.Core`）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。 利用側は `using Parts.CapturePreviewControl.Core;` を追加してください。 **色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
+`CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `Parts.CapturePreviewControl.Core`（名前空間 ${S}Core）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。 利用側は `using ${S}Core;` を追加してください。 **色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
 
-設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `Parts.CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。 利用側は `using Parts.CaptureSessionControl.UIBase;` を追加してください。
+設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `Parts.CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。 利用側は `using $SB;` を追加してください。
 
 **撮影オーバーレイ（`StartCaptureAsync`）も同じ写像で外観（色）を適用します**（切り出しと同じ見た目になる。 適用しないと設定した色が反映されない）。
 

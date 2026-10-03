@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 /// <c>Bitmap.ToEsBitmap()</c> / <c>bitmap.ToAvaloniaWriteableBitmap()</c> は
 /// <c>WriteableBitmap</c> の生成・ピクセルコピーを伴うため、Avalonia ヘッドレスプラットフォームが必要。<br/>
 /// そのため <see cref="AvaloniaHeadlessCollection"/> 内で直列実行する（純粋計算テストは
-/// <see cref="EsBitmapTests"/> で並列実行）。<br/>
+/// <c>EsBitmapTests</c> で並列実行）。<br/>
 /// サイズ・ストライドを主に検証する（ピクセル値はヘッドレス環境で不安定なため検証しない）。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
@@ -155,7 +155,7 @@ public class EsBitmapAvaloniaTests
         LogBenchmark("4K 3840x2160", 3840, 2160, wbTime, bmpTime, n);
     }
 
-    /// <summary>指定回数だけ <see cref="ToAvaloniaWriteableBitmap"/> を実行し、累計ミリ秒を返す。</summary>
+    /// <summary>指定回数だけ <see cref="EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging.EsBitmapAvaloniaExtensions.ToAvaloniaWriteableBitmap(EsUtil.Platform.Core.Imaging.EsBitmap)"/> を実行し、累計ミリ秒を返す。</summary>
     /// <param name="bmp">計測対象のビットマップ。</param>
     /// <param name="iterations">繰り返し回数。</param>
     /// <returns>累計実行時間（ミリ秒）。</returns>
@@ -176,7 +176,7 @@ public class EsBitmapAvaloniaTests
         return (end - start) * 1000.0 / Stopwatch.Frequency;
     }
 
-    /// <summary>指定回数だけ <see cref="ToAvaloniaBitmap"/> を実行し、累計ミリ秒を返す。</summary>
+    /// <summary>指定回数だけ <see cref="EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging.EsBitmapAvaloniaExtensions.ToAvaloniaBitmap(EsUtil.Platform.Core.Imaging.EsBitmap)"/> を実行し、累計ミリ秒を返す。</summary>
     /// <param name="bmp">計測対象のビットマップ。</param>
     /// <param name="iterations">繰り返し回数。</param>
     /// <returns>累計実行時間（ミリ秒）。</returns>

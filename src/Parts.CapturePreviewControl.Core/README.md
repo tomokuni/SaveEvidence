@@ -71,7 +71,7 @@ Parts.CapturePreviewControl.Core
 ## 4. クイックスタート
 
 ```csharp
-using Parts.CapturePreviewControl.Core;
+using ${S}Core;
 using EsUtil.Platform.Core.Geometry;
 
 // 選択矩形（画像ピクセル）から切り出し範囲を求める

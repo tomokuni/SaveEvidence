@@ -16,12 +16,12 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI;
 /// <remarks>
 /// DI コンテナの初期化とメインウィンドウの表示を行う。<br/>
 /// <see cref="IClassicDesktopStyleApplicationLifetime"/> を使用したデスクトップアプリケーションとして動作する。<br/>
-/// 設定のテーマモード（<see cref="Models.Settings.ThemeMode"/>）を <c>RequestedThemeVariant</c> へ反映する。<br/>
+/// 設定のテーマモード（<see cref="EsUtil.SaveEvidence.App.Core.Models.Settings.ThemeMode"/>）を <c>RequestedThemeVariant</c> へ反映する。<br/>
 /// </remarks>
 public sealed partial class App : Application
 {
     /// <summary>
-    /// XAML の読み込み。 EsUtil.SaveEvidence.axaml で定義されたリソースとスタイルを適用する。
+    /// XAML の読み込み。 App.axaml で定義されたリソースとスタイルを適用する。
     /// </summary>
     public override void Initialize()
     {
@@ -48,7 +48,7 @@ public sealed partial class App : Application
 
     /// <summary>設定のテーマモードを <c>RequestedThemeVariant</c> へ反映する。</summary>
     /// <remarks>
-    /// 起動時に設定値を反映し、設定変更（<see cref="Models.Settings.ThemeMode"/>）時は
+    /// 起動時に設定値を反映し、設定変更（<see cref="EsUtil.SaveEvidence.App.Core.Models.Settings.ThemeMode"/>）時は
     /// <see cref="INotifyPropertyChanged.PropertyChanged"/> を購読して即時反映する。<br/>
     /// FluentTheme は <c>RequestedThemeVariant</c> に応じて全リソース（DynamicResource）が自動的に切り替わるため、
     /// 個別のコントロールへの色設定は不要。

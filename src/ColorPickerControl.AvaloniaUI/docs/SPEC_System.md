@@ -86,7 +86,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成（`Logging/ColorPickerLog.cs`）で出力する。 高頻度イベントは Debug / Trace、障害は Error で記録する。
+- ログは LoggerMessage ソース生成（`Logging/ColorPickerLogMessage.cs`）で出力する。 高頻度イベントは Debug / Trace、障害は Error で記録する。
 
 ### 4.2 本プロジェクト固有の例外処理
 

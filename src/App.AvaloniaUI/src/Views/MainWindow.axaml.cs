@@ -290,7 +290,7 @@ public sealed partial class MainWindow : Window
     /// <param name="page">遷移先ページ（<see cref="AppPage"/>）。</param>
     /// <remarks>
     /// ページ遷移は enum で管理し、index のマジックナンバーによる誤遷移（ページ追加時のずれ）を防ぐ。<br/>
-    /// Undo 一覧は <see cref="UndoPage"/> 自身が IsVisible 変更を監視して最新の履歴を読み込むため、
+    /// Undo 一覧は <see cref="Views.Pages.UndoPage"/> 自身が IsVisible 変更を監視して最新の履歴を読み込むため、
     /// MainWindow からの明示的な Refresh 呼び出しは不要。
     /// </remarks>
     private void NavigateTo(AppPage page)

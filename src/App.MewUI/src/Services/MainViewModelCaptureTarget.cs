@@ -7,7 +7,6 @@ using EsUtil.SaveEvidence.App.Core.ViewModels;
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
 /// <summary><see cref="MainViewModel"/> を切り出しセッションの適用先（<see cref="ICaptureTarget"/>）として公開する。</summary>
-/// <param name="viewModel">アプリのメイン ViewModel。</param>
 /// <remarks>
 /// 切り出しセッション（<c>CaptureSessionControl.MewUI</c> の <c>CaptureSessionControl</c>）はアプリの型を参照しないため、<br/>
 /// 本アダプタが境界になる。<br/>
@@ -23,6 +22,8 @@ internal sealed class MainViewModelCaptureTarget : ICaptureTarget
 
     /// <summary>プレビュー画像の変更を切り出しセッションへ中継する。</summary>
     /// <remarks>購読は本インスタンスの生存期間中有効にする（切り出しセッションはページと同期間生きる）。</remarks>
+    /// <summary>指定した ViewModel を適用先として公開する。</summary>
+    /// <param name="viewModel">アプリのメイン ViewModel。</param>
     public MainViewModelCaptureTarget(MainViewModel viewModel)
     {
         _viewModel = viewModel;

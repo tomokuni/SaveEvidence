@@ -48,7 +48,7 @@ public sealed partial class DetectionContext : ObservableObject
     [ObservableProperty]
     private Point _loupeCenter;
 
-    /// <summary>ルーペの表示状態（画像あり && マウスが画像上）。</summary>
+    /// <summary>ルーペの表示状態（画像あり &amp;&amp; マウスが画像上）。</summary>
     [ObservableProperty]
     private bool _isLoupeVisible;
 

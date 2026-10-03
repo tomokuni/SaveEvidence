@@ -196,7 +196,7 @@ public partial class LineCanvasView : UserControl
     /// <remarks>
     /// 既存ピクセルを保持したまま、<paramref name="dash"/> のパターンで線分上のピクセルを塗る。<br/>
     /// 線の太さは <paramref name="thickness"/> の分だけ線分の両側へ広げて塗る（中心線の法線方向）。<br/>
-    /// 描画は <see cref="EsBitmap.SetPixel"/> で行う（BGRA 変換はヘルパーに委譲）。
+    /// 描画は <c>EsBitmap.SetPixel</c> で行う（BGRA 変換はヘルパーに委譲）。
     /// </remarks>
     private static void DrawDashedLine(
         EsBitmap bitmap, Point start, Point end, Color color, IReadOnlyList<double> dash, double thickness)

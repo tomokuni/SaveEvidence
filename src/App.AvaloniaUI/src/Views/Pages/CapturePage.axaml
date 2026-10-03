@@ -144,9 +144,9 @@
             <!-- 左側（左寄せ）: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存済み/未 | 保存ファイル名 -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                 <TextBlock Text="{Binding PointerDisplayText}" FontSize="12" Width="70" VerticalAlignment="Center"
-                           ToolTip.Tip="マウスポインタ位置（ドメイン座標 = 画像ピクセル）"/>
+                           ToolTip.Tip="マウスポインタ位置（対象座標 = 画像ピクセル）"/>
                 <TextBlock Text="{Binding ImageSizeDisplayText}" FontSize="12" Width="80" VerticalAlignment="Center"
-                           ToolTip.Tip="画像サイズ（ドメイン座標 = 元画像ピクセル）"/>
+                           ToolTip.Tip="画像サイズ（対象座標 = 元画像ピクセル）"/>
                 <TextBlock Text="{Binding SaveStatusText}" FontSize="12"/>
                 <TextBlock Text="{Binding SavedFileName}" FontSize="12"/>
                 <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#007ACC" VerticalAlignment="Center"/>

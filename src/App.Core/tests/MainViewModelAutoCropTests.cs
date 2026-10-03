@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// <c>[Fact]</c> で <see cref="MainViewModel.AutoCropWindowCommand"/> を実行し、<br/>
 /// 検出結果（<see cref="MainViewModel.DetectedRects"/>）が設定されることを検証する。<br/>
 /// 単純な矩形パターン（白背景・黒枠線）の <see cref="EsBitmap"/> をプレビューに設定する。<br/>
-/// LineDetection の <see cref="LogicLineDetector"/> は純粋なピクセル検出のため、Avalonia ヘッドレスは不要。
+/// LineDetection の <see cref="EsUtil.SaveEvidence.LineDetection.LogicLineDetector"/> は純粋なピクセル検出のため、Avalonia ヘッドレスは不要。
 /// </remarks>
 public sealed class MainViewModelAutoCropTests
 {

@@ -88,6 +88,7 @@ internal static partial class AppLog
     /// <summary>例外が最初に投げられた時点を記録する（FirstChanceException）。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="ex">最初に投げられた例外。</param>
+    /// <param name="message">記録する例外メッセージ（<paramref name="ex"/> の <c>Message</c>）。</param>
     /// <remarks>
     /// <b>注意</b>: すべての例外（握りつぶされるものも含む）が対象のため、ログ量が非常に多くなる。<br/>
     /// 次回の不具合調査時にのみ有効化することを推奨する（既定では「記録しない」フラグで制御する）。

@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
 /// <summary>画像ファイルを縮小してサムネイル用の <see cref="EsBitmap"/> として読み込むローダー。</summary>
 /// <remarks>
-/// <b>縮小デコード</b>: <see cref="SKCodec.GetPixels"/> へ縮小後の寸法を渡し、原寸のバッファを確保せずにデコードする<br/>
+/// <b>縮小デコード</b>: <see cref="SKCodec.GetPixels(SKImageInfo, out byte[])"/> へ縮小後の寸法を渡し、原寸のバッファを確保せずにデコードする<br/>
 /// （4K のスクリーンショットを多数並べるときのメモリと時間を抑える）。<br/>
 /// <b>キャッシュ</b>: 同一ファイル・同一サイズのデコード結果を共有する。 ファイルの更新日時をキーに含めるため、<br/>
 /// 内容が変われば再デコードされる。 容量管理は <see cref="CapacityLimitedCache"/> へ委譲し、<br/>

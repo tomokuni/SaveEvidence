@@ -33,8 +33,8 @@
 | 項目 | 内容 |
 | --- | --- |
 | 対象 | アプリ本体（テーマ / フォルダビュー / ファイル名テンプレート / 保存 / キャプチャ・プレビュー連携） |
-| プロジェクト | `app/App.AvaloniaUI.csproj` |
-| 名前空間 | `app.Views` / `app.ViewModels` / `app.Models` / `app.Services` 等 |
+| プロジェクト | `src/App.AvaloniaUI/src/App.AvaloniaUI.csproj` |
+| 名前空間 | `EsUtil.SaveEvidence.App.AvaloniaUI.Views` / `.Services` / `.Controls` / `.Converters` / `.Logging` 等 |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主な用途 | 画面キャプチャアプリ本体。 ズーム・パン表示は `CropViewControl`（`ZoomViewControl` を内包）に委譲 |

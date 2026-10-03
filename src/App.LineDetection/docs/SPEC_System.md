@@ -102,7 +102,7 @@ slim が無効化するモジュール（`videoio` / `video` / `dnn` / `ml` / `h
 
 ### 名前空間
 
-`Estable.AvaloniaUI.LineDetection` は UI 非依存化前の名残です。 UI 非依存のアセンブリは `EsUtil.*`（`EsUtil.Platform.Core.*` 等）に置く方針のため、**`EsUtil.SaveEvidence.LineDetection` へ改名**しました。
+UI 非依存のアセンブリは `EsUtil.*`（`EsUtil.Platform.Core.*` 等）に置く方針のため、名前空間は `EsUtil.SaveEvidence.LineDetection` とし、プロジェクトとアセンブリは `App.LineDetection` とする（アセンブリ名はフォルダ名と一致させる規則による）。 旧名の `Estable.AvaloniaUI.LineDetection` は使用しない。
 
 いずれも他の検出器へ依存しません（疎結合）。 `MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。 OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(EsBitmap)`）には露出しません。
 

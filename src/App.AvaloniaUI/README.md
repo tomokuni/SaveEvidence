@@ -235,8 +235,8 @@ src/App.Core/
 └── tests/             # UI 初期化不要の単体テスト（App.Core.Tests・並列実行）
 ```
 
-`App.Core` の型を AXAML から参照する場合は、名前空間が `App.AvaloniaUI` と同一のため
-`xmlns:vm="clr-namespace:EsUtil.SaveEvidence.ViewModels;assembly=App.Core"` のように **`assembly=` の指定が必要**です。
+`App.Core` の型を AXAML から参照する場合は、名前空間が `EsUtil.SaveEvidence.App.Core.*` のため
+`xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"` のように **`assembly=` の指定が必要**です。
 
 ## 17. ライセンス
 

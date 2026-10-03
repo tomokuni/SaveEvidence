@@ -50,10 +50,10 @@ internal sealed class MainWindow
     private const int NavIconRasterSize = 32;
 
     /// <summary>ナビゲーションページの定義（表示名・内容の生成・アイコン）。</summary>
-    /// <param name="Page">対応する <see cref="AppPage"/>。</param>
-    /// <param name="Title">ナビに表示する名前。</param>
-    /// <param name="Icon">ナビに表示するアイコンの SVG ファイル名。</param>
-    /// <param name="Content">内容を生成する関数。</param>
+    /// <param name="page">対応する <see cref="AppPage"/>。</param>
+    /// <param name="title">ナビに表示する名前。</param>
+    /// <param name="icon">ナビに表示するアイコンの SVG ファイル名。</param>
+    /// <param name="content">内容を生成する関数。</param>
     /// <remarks>
     /// <see cref="Array.IndexOf{T}(T[], T) "/> でインデックスを引くため、レコードではなくクラスとし参照の同一性で比較する。<br/>
     /// 値の等価性で比較すると、同じ型・名前のエントリを追加した場合に取り違える。

@@ -9,9 +9,9 @@ namespace EsUtil.SaveEvidence.LineDetection.Tests;
 /// 検出結果から復元した矩形を JSON の <c>GroundTruthWindows[0].Bounds</c>（対象座標・排他座標）と<br/>
 /// 許容誤差 0 pixel で照合する。<br/>
 /// パブリック API（<c>LogicLineDetector.Detect</c>）経由で検証する。<br/>
-/// PNG の読み込みは <see cref="TestHelper.LoadBitmap"/>（OpenCV → <see cref="EsBitmap"/>）を使用する。<br/>
+/// PNG の読み込みは <see cref="TestHelper.LoadBitmap"/>（OpenCV → <see cref="EsUtil.Platform.Core.Imaging.EsBitmap"/>）を使用する。<br/>
 /// <b>EsBitmap 採用理由</b>: ヘッドレスでは <c>WriteableBitmap</c> のピクセル保持が不完全なため、<br/>
-/// <see cref="EsBitmap"/>（Skia 内部・安定）で読み込むことで 0px 一致の厳密検証をヘッドレスでも成立させる。<br/>
+/// <see cref="EsUtil.Platform.Core.Imaging.EsBitmap"/>（Skia 内部・安定）で読み込むことで 0px 一致の厳密検証をヘッドレスでも成立させる。<br/>
 /// <b>対象外の画像</b>: 複数ウィンドウ・エッジ接触ケースの <c>20260903_*</c> は<br/>
 /// 検出精度の改善課題（後続タスク）であり、本テスト（回帰検証）の範囲外とする。
 /// </remarks>
@@ -26,11 +26,11 @@ public sealed class LogicLineDetectorDatasetTests
     /// <summary>dataset の全画像について、検出結果と正解が一致することを検証する。</summary>
     /// <remarks>
     /// 1. dataset 内の各 PNG に対応する JSON を読み込む<br/>
-    /// 2. PNG を <see cref="TestHelper.LoadBitmap"/>（OpenCV → <see cref="EsBitmap"/>）として読み込む<br/>
+    /// 2. PNG を <see cref="TestHelper.LoadBitmap"/>（OpenCV → <see cref="EsUtil.Platform.Core.Imaging.EsBitmap"/>）として読み込む<br/>
     /// 3. <see cref="LogicLineDetector.Detect"/> を実行する<br/>
     /// 4. 検出結果（垂直 2 本・水平 2 本）から外側の境界（排他座標）を復元する<br/>
     /// 5. 復元した境界を <c>GroundTruthWindows[0].Bounds</c> と 0px 誤差で比較する<br/>
-    /// <see cref="EsBitmap"/> はヘッドレスでもピクセルを安定保持するため、<c>[Fact]</c> で並列実行できる。
+    /// <see cref="EsUtil.Platform.Core.Imaging.EsBitmap"/> はヘッドレスでもピクセルを安定保持するため、<c>[Fact]</c> で並列実行できる。
     /// </remarks>
     [Fact]
     public void Detect_全画像が正解と一致する()

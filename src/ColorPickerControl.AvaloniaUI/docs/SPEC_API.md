@@ -43,7 +43,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 対象 | `ColorPickerControl` |
-| プロジェクト | `ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj` |
+| プロジェクト | `src/ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj` |
 | 名前空間 | `EsUtil.SaveEvidence.ColorPicker.AvaloniaUI` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |

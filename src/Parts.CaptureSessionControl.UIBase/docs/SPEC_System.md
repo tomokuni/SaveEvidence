@@ -21,7 +21,7 @@
 | 想定利用者 | 両 UI のホスト（`Parts.CapturePreviewControl.AvaloniaUI` / `Parts.CapturePreviewControl.MewUI` の撮影オーバーレイ・切り出しセッション） |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `Parts.CaptureSessionControl.UIBase` |
+| ルート名前空間 | `EsUtil.SaveEvidence.Parts.CaptureSession.UIBase` |
 | 汎用性 | 特定の UI に依存しない。 UI フレームワークを参照しない |
 
 ## アーキテクチャ

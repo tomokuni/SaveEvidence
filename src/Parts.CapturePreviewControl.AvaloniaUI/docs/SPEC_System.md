@@ -46,7 +46,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | 項目 | 内容 |
 | --- | --- |
 | **プロジェクト** | `Parts.CapturePreviewControl.AvaloniaUI` |
-| **ルート名前空間** | `Parts.CapturePreviewControl.AvaloniaUI` |
+| **ルート名前空間** | `EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI` |
 | **言語** | C# 14（.NET 10.0） |
 | **UI フレームワーク** | Avalonia UI 12.1 |
 | **ターゲットフレームワーク** | net10.0-windows10.0.17763.0 |
@@ -302,7 +302,7 @@ flowchart TB
 
 ### 6.11 Parts.CapturePreviewControl.Core の画像ビューポートの型（UI 非依存）
 
-すべて UI 非依存プロジェクト（名前空間 `Parts.CapturePreviewControl.Core`）が提供する。
+すべて UI 非依存プロジェクト（名前空間 ${S}Core）が提供する。
 
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |

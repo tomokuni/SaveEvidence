@@ -822,6 +822,7 @@ public class OverlayWindowTests
     /// <summary>指定ウィンドウを対象とするポインタ押下イベントを生成する。</summary>
     /// <param name="window">対象のウィンドウ。</param>
     /// <param name="button">押下するボタン。</param>
+    /// <param name="kind">押下の種類（左 / 右など）。</param>
     /// <returns>ポインタ押下イベント。</returns>
     private static PointerPressedEventArgs CreatePointerPressed(
         OverlayWindow window, RawInputModifiers button, PointerUpdateKind kind)

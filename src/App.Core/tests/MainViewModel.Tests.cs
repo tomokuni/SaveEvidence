@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// MainViewModel の画像保存（SaveImageAsync）と保存済み状態（IsSaved / CanSave）の単体テスト。
 /// </summary>
 /// <remarks>
-/// <see cref="SaveImageAsync"/> の画像エンコード・ファイル書き込みは <see cref="IImageWriter"/> に委譲するため、
+/// <see cref="MainViewModel.SaveImageAsync"/> の画像エンコード・ファイル書き込みは <see cref="IImageWriter"/> に委譲するため、
 /// テストでは <see cref="MockImageWriter"/> を注入して Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）を不要にする。<br/>
 /// オートインクリメントの順序（「保存してからインクリメント」）を検証する。<br/>
 /// 「screenshot_001.png」と入力されている場合、「screenshot_001.png」で保存してから<br/>
@@ -244,7 +244,7 @@ public class MainViewModelTests
 
     /// <summary>切り出しコマンドの引数型がコア型（<see cref="EsRectInt"/>）であることを検証する。</summary>
     /// <remarks>
-    /// <see cref="RelayCommand{T}"/> は引数の型が一致しないと <see cref="ArgumentException"/> を投げる。<br/>
+    /// <see cref="CommunityToolkit.Mvvm.Input.RelayCommand{T}"/> は引数の型が一致しないと <see cref="ArgumentException"/> を投げる。<br/>
     /// 切り出しの確定は UI 側で UI 型（例: Avalonia の <c>PixelRect</c>）を生成しやすいため、<br/>
     /// <b>境界（UI 層）でコア型へ変換してからコマンドへ渡す</b>契約をここで固定する<br/>
     /// （UI 型をそのまま渡すと切り出しが例外で失敗する）。

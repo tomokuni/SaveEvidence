@@ -63,7 +63,7 @@ Parts.CapturePreviewControl.MewUI
 
 ```csharp
 using Aprillz.MewUI;
-using Parts.CapturePreviewControl.MewUI;
+using ${S}MewUI;
 using EsUtil.Platform.Core;
 
 // 撮影・切り出しの Facade を生成する（切り出しの対象とオーバーレイを重ねる領域はホストが用意する）
@@ -84,7 +84,7 @@ session.ToggleCrop();
 session.AppearanceSettings = changed;
 ```
 
-`CaptureSettings` は `Parts.CapturePreviewControl.Core`（名前空間 `Parts.CapturePreviewControl.Core`）が提供します。 ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。 ホストの設定型 → `CaptureSettings` の変換は上位のアプリが担います）。
+`CaptureSettings` は `Parts.CapturePreviewControl.Core`（名前空間 ${S}Core）が提供します。 ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。 ホストの設定型 → `CaptureSettings` の変換は上位のアプリが担います）。
 
 ## 5. 収録コントロール
 

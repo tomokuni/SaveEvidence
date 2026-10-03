@@ -652,7 +652,7 @@ sequenceDiagram
 | 全モニターの同時キャプチャ | 対象は全モニター（仮想スクリーン）。 1 モニターに限定するとカーソルのあるモニターでしか選択できないため |
 | 切り出し中のスクロールバー | オーバーレイがビューポートを覆うためスクロールバーは掴めない。 ホイール（通常 / Shift+ホイール）でパンする |
 | 最大化の復元 | `WindowState` は起動時コールバックで適用するが、最大化前の通常配置は設定へ保存しない |
-| ルーペの追従の実機検証 | `verify-ui.ps1` が枠色（設定由来）の画素数で存在を判定する（カーソル追従のため位置に依存しない走査にした） |
+| ルーペの追従の実機検証 | 手動検証（切り出しを開始してカーソルを移動し、撮影した画素で判定する）が枠色（設定由来）の画素数で存在を判定する（カーソル追従のため位置に依存しない走査にした） |
 | 設定変更のログ | 設定ページの変更はログ出力しない（Avalonia 版と同じく操作と起動・終了のみを記録する） |
 
 ## テスト方針
@@ -666,13 +666,13 @@ sequenceDiagram
 | `SettingsService` | ソース生成と反射の書式の一致（既存の設定ファイルとの互換性）を `App.Core.Tests` で検証する（4 件） |
 | `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する（13 件） |
 | `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する（3 件） |
-| ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`verify-ui.ps1` と撮影）で確認する |
+| ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`PrintWindow` による撮影と画素の実測）で確認する |
 | 組み込み先のコントロール | `EsUtil.Feature.Loupe.ControlMewUI.Tests` / `Parts.CapturePreviewControl.MewUI.Tests` が描画と状態を検証する |
 | コアロジック | `App.Core` / `Platform.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |
 
-### 実機検証（`verify-ui.ps1`）
+### 実機検証（手順）
 
-起動 → `PrintWindow`（`PW_RENDERFULLCONTENT`）で撮影 → 画素実測 → リサイズ後の再撮影 → 設定の復元、を自動で行う。
+起動 → `PrintWindow`（`PW_RENDERFULLCONTENT`）で撮影 → 画素実測 → リサイズ後の再撮影 → 設定の復元、を手動で行う。
 
 判定は次の 3 点です。
 

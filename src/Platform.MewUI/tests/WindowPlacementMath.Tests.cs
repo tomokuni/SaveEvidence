@@ -155,7 +155,6 @@ public sealed class WindowPlacementMathTests
     }
 
     /// <summary>幅または高さが 0 以下の場合は復元しないことを検証する。</summary>
-    /// <param name="bounds">判定する矩形。</param>
     [Fact]
     public void IsUsable_幅か高さが0以下ならfalseを返す()
     {

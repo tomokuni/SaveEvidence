@@ -18,7 +18,7 @@ internal static class TestHelper
     /// <param name="path">PNG ファイルのパス。</param>
     /// <returns>構築した EsBitmap（BGRA8888）。</returns>
     /// <remarks>
-    /// 1. <see cref="Cv2.ImRead(string)"/> で BGR 画像を読み込む<br/>
+    /// 1. <c>Cv2.ImRead</c> で BGR 画像を読み込む<br/>
     /// 2. <see cref="ColorConversionCodes.BGR2BGRA"/> で BGRA へ変換する<br/>
     /// 3. <c>Mat.Data</c> から <see cref="EsBitmap"/> のピクセルバッファへ直接コピーする（中間バッファなし）
     /// </remarks>
