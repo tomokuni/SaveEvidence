@@ -112,7 +112,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) / [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md)）。
 
-UI 層は [`Feature.Marquee.AvaloniaUI.MarqueeControl`](Feature.Marquee.AvaloniaUI.MarqueeControl/README.md) / [`Feature.Marquee.MewUI.MarqueeControl`](Feature.Marquee.MewUI.MarqueeControl/README.md) / [`Feature.Loupe.AvaloniaUI.LoupeControl`](Feature.Loupe.AvaloniaUI.LoupeControl/README.md) / [`Feature.Loupe.MewUI.LoupeControl`](Feature.Loupe.MewUI.LoupeControl/README.md)、
+UI 層は [`Feature.Marquee.ControlAvaloniaUI`](Feature.Marquee.ControlAvaloniaUI/README.md) / [`Feature.Marquee.ControlMewUI`](Feature.Marquee.ControlMewUI/README.md) / [`Feature.Loupe.ControlAvaloniaUI`](Feature.Loupe.ControlAvaloniaUI/README.md) / [`Feature.Loupe.ControlMewUI`](Feature.Loupe.ControlMewUI/README.md)、
 プラットフォーム層は [`Platform.Core`](Platform.Core/README.md) / [`App.Platform.Skia`](App.Platform.Skia/README.md) / [`App.Platform.AvaloniaUI`](App.Platform.AvaloniaUI/README.md) / [`App.Platform.MewUI`](App.Platform.MewUI/README.md) を参照してください。
 
 ## 7. 名前空間とフォルダ

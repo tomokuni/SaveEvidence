@@ -54,7 +54,7 @@ Avalonia 版 `App.App.AvaloniaUI` と**同じコア**を使うため、設定フ
 
 （別系統）
 ┌──────────────────────┐
-│  Feature.Loupe.MewUI.LoupeControl  │  MewUI 版ルーペ（描画層）
+│  Feature.Loupe.ControlMewUI  │  MewUI 版ルーペ（描画層）
 └──────────┬───────────┘
            ▼
 ┌──────────────────────┐
@@ -226,7 +226,7 @@ classDiagram
         +NormalizeScale(double)$ double
     }
     class LoupeControl {
-        <<Feature.Loupe.MewUI.LoupeControl>>
+        <<Feature.Loupe.ControlMewUI>>
         +EsBitmap? Source
         +EsPoint? CenterPoint
         +int RequestedSize
@@ -667,7 +667,7 @@ sequenceDiagram
 | `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する（13 件） |
 | `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する（3 件） |
 | ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`verify-ui.ps1` と撮影）で確認する |
-| 組み込み先のコントロール | `Feature.Loupe.MewUI.LoupeControl.Tests` / `App.Parts.CapturePreviewControl.MewUI.Tests` が描画と状態を検証する |
+| 組み込み先のコントロール | `Feature.Loupe.ControlMewUI.Tests` / `App.Parts.CapturePreviewControl.MewUI.Tests` が描画と状態を検証する |
 | コアロジック | `App.App.Core` / `Platform.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |
 
 ### 実機検証（`verify-ui.ps1`）

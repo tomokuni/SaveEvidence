@@ -79,7 +79,7 @@ App.App.MewUI ──> App.App.Core ──> Platform.Core / LineDetection
     │                              │
     ├──> App.Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
     ├──> Platform.Core の Win32 実装（キャプチャ等。Native.Win）
-    ├──> Feature.Loupe.MewUI.LoupeControl ──> Feature.Loupe.Core（UI 非依存のルーペロジック）
+    ├──> Feature.Loupe.ControlMewUI ──> Feature.Loupe.Core（UI 非依存のルーペロジック）
     └──> App.Parts.CapturePreviewControl.MewUI ──> App.Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則、複合コントロールの設定とモード、画像ビューポートの状態と判断）
 ```
 

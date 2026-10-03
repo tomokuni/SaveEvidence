@@ -53,7 +53,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | App.Parts.CapturePreviewControl.Core（撮影セッション・切り出しビュー・領域選択・画像ビューポートの状態と判断）/ App.Parts.CaptureSessionControl.UIBase（設定 → 外観の写像）/ Feature.Marquee.AvaloniaUI.MarqueeControl / Feature.Loupe.AvaloniaUI.LoupeControl（内包コントロール）/ App.Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
+| **依存プロジェクト** | App.Parts.CapturePreviewControl.Core（撮影セッション・切り出しビュー・領域選択・画像ビューポートの状態と判断）/ App.Parts.CaptureSessionControl.UIBase（設定 → 外観の写像）/ Feature.Marquee.ControlAvaloniaUI / Feature.Loupe.ControlAvaloniaUI（内包コントロール）/ App.Platform.AvaloniaUI（ScreenConverter）/ Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
 
 撮影セッション（`CaptureSessionControl` / `SelectionCaptureSession` / `OverlayWindow`）は内包コントロール（MarqueeControl / LoupeControl）を直接参照しません（窓口は `FadeMaskDragRectControl` のみ。 公開型のカプセル化）。 内包コントロールを参照するのは同一アセンブリ内の複合コントロールだけです。
 
@@ -125,8 +125,8 @@ flowchart TB
         Ct["CaptureType<br/>public enum"]
     end
     subgraph Dep["外部依存プロジェクト（内包コントロール）"]
-        DR["Feature.Marquee.AvaloniaUI.MarqueeControl<br/>MarqueeControl（選択矩形 UI ＋ 外側の装飾の描画）"]
-        LP["Feature.Loupe.AvaloniaUI.LoupeControl<br/>LoupeControl（ルーペ表示）"]
+        DR["Feature.Marquee.ControlAvaloniaUI<br/>MarqueeControl（選択矩形 UI ＋ 外側の装飾の描画）"]
+        LP["Feature.Loupe.ControlAvaloniaUI<br/>LoupeControl（ルーペ表示）"]
     end
 
     AP -->|"Task ベース API / 設定 / キャンセル"| Fac
