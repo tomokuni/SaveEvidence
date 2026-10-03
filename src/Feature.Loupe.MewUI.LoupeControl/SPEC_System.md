@@ -125,7 +125,7 @@ classDiagram
         <<Feature.Loupe.MewUI.LoupeControl / 描画実装>>
         +Paint(canvas, source, plan) void$
     }
-    class Loupe.Limits {
+    class LoupeCore.Limits {
         <<Feature.Loupe.Core>>
         +CoerceRequestedSize(v) int$
         +CoerceZoomLevel(v) int$
@@ -153,7 +153,7 @@ classDiagram
         +double FontSize
         +double CornerRadius
     }
-    class Loupe {
+    class LoupeCore {
         <<Feature.Loupe.Core / 公開ファサード>>
         +Options / ClientToPixelScaling / CenterPoint / PositionOffset
         +SetCoordTransform(port) void
@@ -176,7 +176,7 @@ classDiagram
     LoupePresenter ..> LoupeDrawPlan : 層の順序・矩形・ラベル配置（自ら解決する）
     LoupeSkiaPainter ..> LoupeDrawPlan : 描く値（計画が解決済み）
     Loupe ..> LoupeOptions : 設定の単一値
-    LoupeControl ..> Loupe.Limits : 値の補正（プロパティ登録の coerce）
+    LoupeControl ..> LoupeCore.Limits : 値の補正（プロパティ登録の coerce）
     Loupe ..> LoupeGeometry : 表示レイアウト・描画サイズ・幾何の解決
     Loupe ..> EsPoint : ラベル文字列（Format）
 ```

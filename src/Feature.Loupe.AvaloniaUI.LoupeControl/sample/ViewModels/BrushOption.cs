@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl.Sample.ViewModels;
+namespace EsUtil.Feature.Loupe.AvaloniaUI.Sample.ViewModels;
 
 /// <summary>色選択コンボボックス用の選択肢。</summary>
 /// <param name="Name">表示名。</param>

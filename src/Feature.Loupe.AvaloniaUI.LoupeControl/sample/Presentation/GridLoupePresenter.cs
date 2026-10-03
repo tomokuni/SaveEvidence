@@ -1,10 +1,10 @@
-using EsUtil.Feature.Loupe.Presenter;
-using EsUtil.Feature.Loupe.Presenter.Setting;
-using EsUtil.Feature.Loupe.Presenter.Drawing;
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Drawing;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl.Sample.Presentation;
+namespace EsUtil.Feature.Loupe.AvaloniaUI.Sample.Presentation;
 
 /// <summary>格子と四隅の飾りを提供する派生提示層（<see cref="LoupePresenter"/> の拡張の見本）。</summary>
 /// <remarks>

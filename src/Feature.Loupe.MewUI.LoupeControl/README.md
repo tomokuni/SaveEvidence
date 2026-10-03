@@ -31,9 +31,9 @@
 ## 使い方
 
 ```csharp
-using EsUtil.Feature.Loupe.Core;
-using EsUtil.Feature.Loupe.Core.Setting;
-using EsUtil.Feature.Loupe.MewUI.LoupeControl;
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.MewUI;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
@@ -69,7 +69,7 @@ if (layout.Position is { } position)
 }
 ```
 
-> **注意**: `ResolveLayout` はコアのファサード（`Feature.Loupe.Core` の `Loupe`、`public` 型）の API です（汎用コアとして公開されており、`InternalsVisibleTo` は不要です）。
+> **注意**: `ResolveLayout` はコアのファサード（`Feature.Loupe.Core` の `LoupeCore`、`public` 型）の API です（汎用コアとして公開されており、`InternalsVisibleTo` は不要です）。
 
 ## プロパティ
 
@@ -89,7 +89,7 @@ if (layout.Position is { } position)
 | `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。 1〜4096 に補正 |
 | `ZoomLevel` | `int` | 4 | 拡大率。 1〜64 に補正 |
 
-`Appearance`（`LoupeAppearance`。 `EsUtil.Feature.Loupe.Presenter.Setting`）の項目:
+`Appearance`（`LoupeAppearance`。 `EsUtil.Feature.Loupe.Setting`）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -105,7 +105,7 @@ if (layout.Position is { } position)
 
 `Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
 
-数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。 したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、設定値の変更ログはコアの `LoupeLogMessage` が、外観の変更ログは提示層の `LoupePresenterLogMessage` が、拡大元画像の変更と描画の例外のログは**本プロジェクトの `LoupeUiLogMessage`** が単一所有します）。 設定（`Options`）と外観（`Appearance`）の数値項目はそれぞれの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `ClientToPixelScaling` のみ `coerce` を登録します）。
+数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。 したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `LoupeCore.Limits`、設定値の変更ログはコアの `LoupeLogMessage` が、外観の変更ログは提示層の `LoupePresenterLogMessage` が、拡大元画像の変更と描画の例外のログは**本プロジェクトの `LoupeUiLogMessage`** が単一所有します）。 設定（`Options`）と外観（`Appearance`）の数値項目はそれぞれの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `ClientToPixelScaling` のみ `coerce` を登録します）。
 
 ## イベント
 

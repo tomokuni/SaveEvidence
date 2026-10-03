@@ -6,7 +6,7 @@
 
 ルーペの表示レイアウト（表示サイズ・表示位置）と描画の幾何（切り出し領域・描画面）の解決を 1 箇所に集約し、UI ごとの実装差から切り離します。
 
-**操作の唯一の窓口は公開ファサード `Loupe`** です。 UI 層とホストは本型だけを参照し、表示レイアウトと描画の幾何の解決を委ねます（個々の計算クラスは内部実装です）。
+**操作の唯一の窓口は公開ファサード `LoupeCore`** です。 UI 層とホストは本型だけを参照し、表示レイアウトと描画の幾何の解決を委ねます（個々の計算クラスは内部実装です）。
 
 **描画は本コアの関心事ではありません**。  
 描画 API も描画の抽象も持たず、返すのは描画の幾何（`LoupeGeometry`）だけです。 装飾（十字線・枠線）の矩形・文言・表示可否・描画順は描画の都合として描画層（本コアを参照する上位の層）が単一所有します。
@@ -16,13 +16,13 @@ UI フレームワークに依存しないため、UI 初期化なしの `[Fact]
 ## 2. 使い方
 
 ```csharp
-using EsUtil.Feature.Loupe.Core;
-using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Loupe.Setting;
 using EsUtil.Platform.Core.Geometry;
 
 // 設定（計算に必要な値のみ。色・フォント・表示可否は描画層の外観が持つ）
 var options = new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 };
-using var loupe = new Loupe(options, logger);   // ロガーはコンストラクターでも後からでも注入できる
+using var loupe = new LoupeCore(options, logger);   // ロガーはコンストラクターでも後からでも注入できる
 
 // 拡大中心（対象座標 = 元画像ピクセル座標）と表示位置のオフセット（DIP）
 loupe.CenterPoint = new EsPoint(1920, 1080);
@@ -39,7 +39,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 
 ### 2.1 ログの注入
 
-ロガーは**コンストラクター（`new Loupe(options, logger)`）と `Log` プロパティのどちらでも注入**できます。 ロガーが確定した時点（コンストラクター注入時、または `Log` の初回設定時）で**生成の記録を 1 度だけ**出力します（それ以降は設定の変更だけが出力されます）。
+ロガーは**コンストラクター（`new LoupeCore(options, logger)`）と `Log` プロパティのどちらでも注入**できます。 ロガーが確定した時点（コンストラクター注入時、または `Log` の初回設定時）で**生成の記録を 1 度だけ**出力します（それ以降は設定の変更だけが出力されます）。
 
 ### 2.2 2 つの解決メソッドの使い分け
 
@@ -54,7 +54,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 
 | グループ | 型 |
 | --- | --- |
-| ファサード | `Loupe`（操作の唯一の窓口） / `Loupe.Limits`（既定値と安全域・補正） |
+| ファサード | `LoupeCore`（操作の唯一の窓口） / `LoupeCore.Limits`（既定値と安全域・補正） |
 | 描画の幾何 | `Drawing.LoupeGeometry` / `Drawing.LoupeMagnifiedImage` |
 | 設定 | `Setting.LoupeOptions`（表示サイズ・拡大率。 色・フォント・表示可否は持たない） |
 | 表示レイアウト | `Placement.LoupeLayout`（表示サイズと表示位置） |
@@ -73,7 +73,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 | 差し替えたいもの | 方法 |
 | --- | --- |
 | 表示サイズ・拡大率 | `LoupeOptions`（`RequestedSize` / `ZoomLevel`）を変える |
-| 数値の安全域 | `Loupe.Limits` の既定値と補正（`CoerceBorderThickness` 等）を使う |
+| 数値の安全域 | `LoupeCore.Limits` の既定値と補正（`CoerceBorderThickness` 等）を使う |
 | 見た目（色・フォント・枠線の太さ・表示可否） | 描画層の外観（上位の層）を変える（本コアは色を持たない） |
 | 描画計画（層・配置） | 描画層の描画計画の解決（上位の層）を上書きする |
 | 描画そのもの | 各 UI の描画実装を差し替える |
@@ -98,7 +98,7 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 ```
 
 `tests/` が単体テストを持ちます。  
-UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行され、**ソースのフォルダを鏡映**します（`src/Drawing/` の型は `tests/Drawing/` で検証する）。
+UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行され、**ソースのフォルダを鏡映**します（`src/Core/Drawing/` の型は `tests/Core/Drawing/` で検証する）。
 
 ## 9. ドキュメント
 

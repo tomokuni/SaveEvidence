@@ -1,11 +1,11 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Feature.Loupe.Presenter.Setting;
+using EsUtil.Feature.Loupe.Setting;
 using EsUtil.Feature.Marquee.Presenter.Label;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 using EsUtil.Feature.Marquee.MewUI.MarqueeControl;
-using EsUtil.Feature.Loupe.MewUI.LoupeControl;
+using EsUtil.Feature.Loupe.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;

@@ -7,13 +7,13 @@ UI 非依存のコア（選択範囲を拡大表示するルーペの計算）�
 
 - [1. 前提条件](#1-前提条件)
 - [2. 公開 API](#2-公開-api)
-  - [2.1 `EsUtil.Feature.Loupe.Core`](#21-esutilfeatureloupecore)
-  - [2.2 `EsUtil.Feature.Loupe.Core.Drawing`](#22-esutilfeatureloupecoredrawing)
-  - [2.3 `EsUtil.Feature.Loupe.Core.Setting`](#23-esutilfeatureloupecoresetting)
-  - [2.4 `EsUtil.Feature.Loupe.Core.Placement`](#24-esutilfeatureloupecoreplacement)
-  - [2.5 `Loupe`（ファサード）のメンバー](#25-loupeファサードのメンバー)
+  - [2.1 `EsUtil.Feature.Loupe`](#21-esutilfeatureloupe)
+  - [2.2 `EsUtil.Feature.Loupe.Drawing`](#22-esutilfeatureloupedrawing)
+  - [2.3 `EsUtil.Feature.Loupe.Setting`](#23-esutilfeatureloupesetting)
+  - [2.4 `EsUtil.Feature.Loupe.Placement`](#24-esutilfeatureloupeplacement)
+  - [2.5 `LoupeCore`（ファサード）のメンバー](#25-loupecoreファサードのメンバー)
   - [2.6 `LoupeOptions` のメンバー](#26-loupeoptions-のメンバー)
-  - [2.7 `Loupe.Limits` のメンバー](#27-loupelimits-のメンバー)
+  - [2.7 `LoupeCore.Limits` のメンバー](#27-loupecorelimits-のメンバー)
   - [2.8 描画の契約（本コアには置かない）](#28-描画の契約本コアには置かない)
 - [3. 契約（利用者が守る・受け取る値）](#3-契約利用者が守る受け取る値)
   - [3.1 描画の幾何（`LoupeGeometry`）](#31-描画の幾何loupegeometry)
@@ -37,33 +37,33 @@ UI 非依存のコア（選択範囲を拡大表示するルーペの計算）�
 可視性は public のみを記載します（`internal` は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照）。  
 型名の接頭辞は名前空間を表します（`Drawing.` / `Setting.` / `Placement.` を省略した型はルート名前空間）。
 
-### 2.1 `EsUtil.Feature.Loupe.Core`
+### 2.1 `EsUtil.Feature.Loupe`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `Loupe` | class | 操作の唯一の窓口となるファサード |
-| `Loupe.Limits`（`Loupe` の入れ子） | static class | 数値パラメータの既定値・安全域と補正 |
+| `LoupeCore` | class | 操作の唯一の窓口となるファサード |
+| `LoupeCore.Limits`（`LoupeCore` の入れ子） | static class | 数値パラメータの既定値・安全域と補正 |
 
-### 2.2 `EsUtil.Feature.Loupe.Core.Drawing`
+### 2.2 `EsUtil.Feature.Loupe.Drawing`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeGeometry` | record struct | 1 フレーム分の描画の幾何（コア⇔UI の契約）。</br>UI 層は値の組を自分で組み立てず、`Loupe.ResolveGeometry` が返した値を受け取る |
 | `LoupeMagnifiedImage` | record struct | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。</br>`LoupeGeometry` の導出値 |
 
-### 2.3 `EsUtil.Feature.Loupe.Core.Setting`
+### 2.3 `EsUtil.Feature.Loupe.Setting`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeOptions` | record | 計算に必要な設定（表示サイズ・拡大率）と既定値・補正。</br>**色・フォント・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
 
-### 2.4 `EsUtil.Feature.Loupe.Core.Placement`
+### 2.4 `EsUtil.Feature.Loupe.Placement`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeLayout` | readonly record struct | 表示レイアウトの値（表示サイズ（DIP）と表示位置。</br>配置しない場合は位置が null） |
 
-### 2.5 `Loupe`（ファサード）のメンバー
+### 2.5 `LoupeCore`（ファサード）のメンバー
 
 ルーペの**操作の唯一の窓口**（適用パターン: Facade）。  
 UI 層とホストは本型だけを参照し、配置計算・幾何の計算は internal のため外部からは直接呼べません。
@@ -73,7 +73,7 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 | `Loupe(LoupeOptions? options = null, ILogger? logger = null)` | ctor | 生成（設定を省略した場合は `LoupeOptions.Default`）。 **ロガーを注入した場合は、その場で生成の記録を出力する**（注入しない場合は `Log` の初回設定時に出力する）。 描画実装は受け取らない（描画は UI の関心事であり、本コアは描画 API を持たない） |
 | `Log` | property | ロガー。 null は `NullLogger` へ吸収される。 **コンストラクターで注入されていない場合、初回の設定時に生成の記録を 1 度だけ出力する** |
 | `Options` | property | 設定（表示サイズ・拡大率）。 **変化したときだけ**変更ログ（Debug）を出力する |
-| `ClientToPixelScaling` | property | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。 補正は `Loupe.Limits` が単一所有する）。 **変化したときだけ**変更ログ（Debug）を出力する |
+| `ClientToPixelScaling` | property | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。 補正は `LoupeCore.Limits` が単一所有する）。 **変化したときだけ**変更ログ（Debug）を出力する |
 | `CenterPoint` | property | 拡大中心（対象座標 = 元画像ピクセル座標）。 未設定（null）は切り出し領域を決められないため、`LoupeGeometry` は拡大画像の幾何（`MagnifiedImage` / `CaptureTopLeft`）を持たず、配置も行わない。 **変更は最も低いレベル（Trace）で出力する**（マウス移動ごとに変わるため） |
 | `PositionOffset` | property | 拡大中心からの右下オフセット（DIP。 既定は 0）。 **変化したときだけ**変更ログ（Debug）を出力する |
 | `SetCoordTransform(ICoordTransform?)` | method | 対象 ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換）。 **変化したときだけ**変更ログ（Debug）を出力する |
@@ -115,13 +115,13 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 | --- | --- |
 | `Default` | すべての項目を既定値にした設定（部分変更の基点: `LoupeOptions.Default with { ZoomLevel = 8 }`） |
 
-数値項目（`RequestedSize` / `ZoomLevel`）は **`init` アクセサで補正**します（規則は `Loupe.Limits` が単一所有する）。 したがってオブジェクト初期化子・`with` 式・逆シリアル化などの **どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録を要求しません。
+数値項目（`RequestedSize` / `ZoomLevel`）は **`init` アクセサで補正**します（規則は `LoupeCore.Limits` が単一所有する）。 したがってオブジェクト初期化子・`with` 式・逆シリアル化などの **どの設定経路でも**範囲内の値だけが保持され、UI 側に補正の登録を要求しません。
 
-**色・フォント・枠線の太さ・表示可否は本型に含みません**（描画にだけ必要な設定のため、描画層の外観が単一所有します。 枠線の太さの補正はその外観が `Loupe.Limits.CoerceBorderThickness` へ委譲します）。 ホストは UI の `Appearance` プロパティへ外観を指定します。
+**色・フォント・枠線の太さ・表示可否は本型に含みません**（描画にだけ必要な設定のため、描画層の外観が単一所有します。 枠線の太さの補正はその外観が `LoupeCore.Limits.CoerceBorderThickness` へ委譲します）。 ホストは UI の `Appearance` プロパティへ外観を指定します。
 
 **含めない値**: 拡大元画像・拡大中心（マウス移動ごとに変わるデータ）、DPI スケーリング係数（環境値）、表示位置のオフセット（UI 固有のホスト結線）。 これらは UI の個別プロパティとして公開します。
 
-### 2.7 `Loupe.Limits` のメンバー
+### 2.7 `LoupeCore.Limits` のメンバー
 
 ルーペの数値パラメータの既定値と安全域を単一所有し、範囲外の値を補正します（非有限は既定値）。 **枠線の太さの安全域は描画層の外観が参照します**。
 
@@ -144,7 +144,7 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 描画の契約は本コアにありません（**本コアは描画 API も描画の抽象も持ちません**）。 描画計画の解決は描画層（本コアを参照する上位の層）が、描画は各 UI の描画実装が担います。 層の順序は描画層が単一所有し、UI はその順に写すだけです。
 
 ```csharp
-var loupe = new Loupe(options) { CenterPoint = cursorSource, ClientToPixelScaling = 1.25 };
+var loupe = new LoupeCore(options) { CenterPoint = cursorSource, ClientToPixelScaling = 1.25 };
 loupe.SetCoordTransform(port);
 
 var layout = loupe.ResolveLayout(parentSize);          // 表示サイズ（要求サイズ）+ 表示位置（配置しない場合は Position が null）
@@ -209,12 +209,12 @@ var scale = geometry.ZoomLevel;                 // 対象座標 → ルーペ画
 ## 4. 使用例
 
 ```csharp
-using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Loupe.Setting;
 using EsUtil.Platform.Core.Geometry;
 
 // 設定（計算に必要な値のみ。色・フォント・表示可否は描画層の外観が持つ）
 var options = new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 };
-using var loupe = new Loupe(options);
+using var loupe = new LoupeCore(options);
 
 // 拡大中心（対象座標 = 元画像ピクセル座標）と表示位置のオフセット
 loupe.CenterPoint = new EsPoint(1920, 1080);

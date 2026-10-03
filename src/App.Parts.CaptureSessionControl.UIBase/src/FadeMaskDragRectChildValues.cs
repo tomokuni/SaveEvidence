@@ -1,5 +1,5 @@
 using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Loupe.Setting;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 

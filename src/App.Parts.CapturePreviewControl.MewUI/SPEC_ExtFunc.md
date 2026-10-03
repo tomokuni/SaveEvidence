@@ -230,7 +230,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | ラベル文言を描画時に評価するデリゲート（null または空文字は描画しない。 文言はホストが与える） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包する選択コントロールとルーペへ伝搬する） |
 
-`Options`（コアの `FadeMaskDragRectOptions`）の主な項目は、`Marquee`（`MarqueeOptions`。 寸法・表示可否。 色は含まない）/ `Loupe`（`LoupeOptions`）/ `SelectionRectColorA` / `SelectionRectColorB`（ルーペ画像上の選択矩形破線の 2 色）/ `LoupeOffset`（中心からの右下オフセット。 DIP）です。
+`Options`（コアの `FadeMaskDragRectOptions`）の主な項目は、`Marquee`（`MarqueeOptions`。 寸法・表示可否。 色は含まない）/ `LoupeCore`（`LoupeOptions`）/ `SelectionRectColorA` / `SelectionRectColorB`（ルーペ画像上の選択矩形破線の 2 色）/ `LoupeOffset`（中心からの右下オフセット。 DIP）です。
 
 ### 6.3 メソッド
 

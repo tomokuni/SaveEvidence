@@ -61,7 +61,7 @@
 | --- | --- | --- |
 | `Marquee` | `MarqueeOptions` | 選択矩形の設定（モードから導出するハンドルの表示可否を反映済み） |
 | `MarqueeAppearance` | `MarqueeAppearance` | 選択矩形の外観（ハンドルの表示可否と全面暗転の可否を反映済み） |
-| `Loupe` | `LoupeOptions` | ルーペの設定 |
+| `LoupeCore` | `LoupeOptions` | ルーペの設定 |
 | `LoupeOffset` | `double` | ルーペのカーソル中心からの右下オフセット（DIP） |
 | `IsHitTestVisible` | `bool` | 選択矩形コントロールが入力を受け取るか（選択矩形を使うモードのみ true） |
 | `Resolve(options, mode, marqueeAppearance)` | static | 設定とモードから上記の値を解決する。 モードの判断はコアの `FadeMaskDragRectModes.Resolve` に委譲する |
@@ -93,7 +93,7 @@
 | `App.Parts.CapturePreviewControl.Core`（`EsUtil.SaveEvidence.Parts.CapturePreview.Core`） | 写像元の設定型（`CaptureSettings`）と、複合コントロールの設定・モード・状態 |
 | `Feature.Marquee.Core` / `Feature.Loupe.Core` | 内包コントロールの設定型（`MarqueeOptions` / `LoupeOptions`） |
 | `Feature.Marquee.Presenter`（`EsUtil.Feature.Marquee.Presenter.*`） | 写像先の外観（`MarqueeAppearance`）とラベル配置の値 |
-| `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Presenter.Setting`） | 写像先の描画の設定（`LoupeAppearance`） |
+| `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Setting`） | 写像先の描画の設定（`LoupeAppearance`） |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect`） |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。 外部パッケージへの直接依存もありません。

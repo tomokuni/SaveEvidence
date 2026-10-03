@@ -2,7 +2,7 @@ using Avalonia.Media;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 
-namespace EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl.Sample.Imaging;
+namespace EsUtil.Feature.Loupe.AvaloniaUI.Sample.Imaging;
 
 /// <summary>ルーペの動作確認用テスト画像を生成する。</summary>
 public static class TestImageFactory

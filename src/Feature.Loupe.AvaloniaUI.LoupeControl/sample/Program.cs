@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl.Sample;
+namespace EsUtil.Feature.Loupe.AvaloniaUI.Sample;
 
 /// <summary>アプリケーションのエントリポイント。</summary>
 internal static class Program

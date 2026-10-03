@@ -39,7 +39,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | 項目 | 内容 |
 | --- | --- |
 | **プロジェクト** | `Feature.Loupe.AvaloniaUI.LoupeControl` |
-| **ルート名前空間** | `EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl` |
+| **ルート名前空間** | `EsUtil.Feature.Loupe.AvaloniaUI` |
 | **言語** | C# 14（.NET 10.0） |
 | **UI フレームワーク** | Avalonia UI 12.1（StyledProperty / DrawingContext / RenderTargetBitmap / IBrush） |
 | **ターゲットフレームワーク** | net10.0 |
@@ -119,7 +119,7 @@ flowchart TB
         Pos["Loupe（公開ファサード）<br/>public sealed class（Loupe.cs）<br/>値型 LoupeLayout と幾何を解決する"]
         Opt["LoupeOptions<br/>public sealed record<br/>（基本サイズ・拡大率）"]
         Geo["LoupeGeometry<br/>public readonly record struct<br/>（描画面・拡大画像・切り出し領域）"]
-        Coerce["Loupe.Limits<br/>ファサードの入れ子（数値スキーマ）"]
+        Coerce["LoupeCore.Limits<br/>ファサードの入れ子（数値スキーマ）"]
         CLog["LoupeLogMessage<br/>internal static partial class"]
     end
 
@@ -272,6 +272,6 @@ sequenceDiagram
 | `Appearance.BorderThickness` | 1〜64 | **提示層の `LoupeAppearance`（`init` アクセサ）** |
 | `Appearance.CoordLabelFontSize` / `Appearance.CoordLabelCornerRadius` | 6〜48 / 0〜64 | **提示層の `LoupeAppearance`（`init` アクセサ）** |
 
-環境値の `ClientToPixelScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `Loupe.Limits` が単一所有し、UI は登録するだけです）。 MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
+環境値の `ClientToPixelScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `LoupeCore.Limits` が単一所有し、UI は登録するだけです）。 MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
 
 設定（`Options`）の数値項目は**コアの型が生成時に補正**し、外観（`Appearance`）の数値項目は**提示層の型が生成時に補正**するため、UI 側に補正の登録を置きません（値の設定経路（オブジェクト初期化子・`with` 式・逆シリアル化・バインディング）によらず範囲内の値だけが保持されます）。

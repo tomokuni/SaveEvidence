@@ -11,13 +11,12 @@ using Rect = Avalonia.Rect;
 using EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.Feature.Loupe.Presenter.Setting;
+using EsUtil.Feature.Loupe.Setting;
 using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.Core.Coord;
 using Xunit;
 using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
-using EsUtil.Feature.Loupe.Core.Setting;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
@@ -658,7 +657,7 @@ public class FadeMaskDragRectControlTests
     /// <param name="control">対象のコントロール。</param>
     /// <returns>設定されている座標変換ポート。 未設定の場合は null。</returns>
     /// <remarks>
-    /// ポートはコアのファサード（<c>Marquee</c> / <c>Loupe</c>）が単一所有し、コントロールはファサードへ委譲するだけである。<br/>
+    /// ポートはコアのファサード（<c>Marquee</c> / <c>LoupeCore</c>）が単一所有し、コントロールはファサードへ委譲するだけである。<br/>
     /// 選択矩形コントロールもルーペコントロールも提示層（Presenter）を保持し、その内部にコアのファサード（<c>_core</c>）を持つため、<br/>
     /// 検証では提示層の内部フィールドを経由してコアまで辿る。
     /// </remarks>

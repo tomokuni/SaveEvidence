@@ -6,7 +6,7 @@
 
 - [1. 前提条件](#1-前提条件)
 - [2. 公開 API](#2-公開-api)
-  - [2.1 `EsUtil.Feature.Loupe.Presenter`（提示・外観）](#21-esutilfeatureloupepresenter提示外観)
+  - [2.1 `EsUtil.Feature.Loupe`（提示・外観）](#21-esutilfeatureloupe提示外観)
   - [2.2 `LoupePresenter` のメンバー](#22-loupepresenter-のメンバー)
   - [2.3 `LoupeAppearance` のメンバー](#23-loupeappearance-のメンバー)
   - [2.4 `LoupeDrawPlan` のメンバー](#24-loupedrawplan-のメンバー)
@@ -31,9 +31,9 @@
 
 ## 2. 公開 API
 
-### 2.1 `EsUtil.Feature.Loupe.Presenter`（提示・外観）
+### 2.1 `EsUtil.Feature.Loupe`（提示・外観）
 
-ルート直下（`EsUtil.Feature.Loupe.Presenter`）に置くのはファサード（`LoupePresenter`）だけです。 以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
+ルート直下（`EsUtil.Feature.Loupe`）に置くのはファサード（`LoupePresenter`）だけです。 以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -75,7 +75,7 @@
 | `CoordLabelColor` / `CoordLabelBackgroundColor` | `Color` | 白 / `#99000000` | 中心座標ラベルの文字色 / 背景色 |
 | `CoordLabelFontSize` / `CoordLabelCornerRadius` | `double` / `int` | `12.0` / `2` | 中心座標ラベルのフォントサイズ / 角丸（6〜48 / 0〜64 へ補正） |
 | `CoordLabelOffset` | `double` | `2.0` | 中心座標ラベルをルーペの縁から離すオフセット（DIP。 左右・上下に同じ値を使う） |
-| `BorderThickness` | `int` | `2` | 枠線の太さ（DIP。 1〜64 へ補正。 安全域は `Loupe.Limits` が単一所有する） |
+| `BorderThickness` | `int` | `2` | 枠線の太さ（DIP。 1〜64 へ補正。 安全域は `LoupeCore.Limits` が単一所有する） |
 | `ShowCrosshair` / `ShowBorder` / `ShowCoordLabel` | `bool` | `true` | 表示可否（描画にだけ必要。 透明色を代用にしない） |
 
 | メンバー | 説明 |
@@ -132,9 +132,9 @@
 ## 4. 使用例
 
 ```csharp
-using EsUtil.Feature.Loupe.Core;
-using EsUtil.Feature.Loupe.Core.Setting;
-using EsUtil.Feature.Loupe.Presenter.Setting;
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Setting;
 
 // 外観（色・フォント・枠線の太さ・表示可否）を差し替える
 var appearance = LoupeAppearance.Default with
@@ -143,7 +143,7 @@ var appearance = LoupeAppearance.Default with
     ShowCrosshair = false,
 };
 
-var presenter = new LoupePresenter(new Loupe(new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 }))
+var presenter = new LoupePresenter(new LoupeCore(new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 }))
 {
     Appearance = appearance,
     CenterPoint = new EsPoint(1920, 1080),

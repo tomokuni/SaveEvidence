@@ -1,12 +1,12 @@
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Media;
-using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Loupe.Setting;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl;
+using EsUtil.Feature.Loupe.AvaloniaUI;
 
-namespace EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl.Sample.Presentation;
+namespace EsUtil.Feature.Loupe.AvaloniaUI.Sample.Presentation;
 
 /// <summary>派生提示層（<see cref="GridLoupePresenter"/>）の描画計画を描く見本。</summary>
 /// <remarks>

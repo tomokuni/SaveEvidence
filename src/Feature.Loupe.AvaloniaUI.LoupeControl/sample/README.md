@@ -18,7 +18,7 @@
 
 `Feature.Loupe.AvaloniaUI.LoupeControl/sample/` にある **LoupeControl 動作確認用の独立したサンプルアプリケーション**です。
 
-- `LoupeControl`（`EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl.LoupeControl`）を実際に配置して動作を確認できます。
+- `LoupeControl`（`EsUtil.Feature.Loupe.AvaloniaUI`）を実際に配置して動作を確認できます。
 - テスト画像（グラデーション＋グリッド＋マーカー）を生成し、マウス追従で拡大表示します。
 - 外観設定（拡大率・サイズ・十字線・画像外の色・枠線・描画スケール）をスライダー/コンボボックスで変更できます。
 - `LoupeControl` をVisual Treeへ配置し、内部の `Image` 要素で表示します。
@@ -90,7 +90,7 @@ Feature.Loupe.AvaloniaUI.LoupeControl/sample/
 ├── app.manifest                 # Windows DPI 設定（PerMonitorV2）
 ├── Program.cs                   # エントリポイント
 ├── App.axaml / App.axaml.cs     # アプリケーション定義（FluentTheme）
-├── Logging/
+├── AvaloniaUI/Logging/
 │   └── DebugLogger.cs           # LoupeControl.Log の設定例（デバッグ出力へ転送）
 ├── Imaging/
 │   └── TestImageFactory.cs      # テスト画像生成（グラデーション＋グリッド＋マーカー）

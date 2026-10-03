@@ -45,7 +45,7 @@
     <ProjectReference Include="..\..\App.Parts.CaptureSessionControl.UIBase\src\App.Parts.CaptureSessionControl.UIBase.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->
     <ProjectReference Include="..\..\Feature.Marquee.AvaloniaUI.MarqueeControl\src\Feature.Marquee.AvaloniaUI.MarqueeControl.csproj" />
-    <ProjectReference Include="..\..\Feature.Loupe.AvaloniaUI.LoupeControl\src\Feature.Loupe.AvaloniaUI.LoupeControl.csproj" />
+    <ProjectReference Include="..\..\Feature.Loupe.AvaloniaUI.LoupeControl\src\AvaloniaUI\Feature.Loupe.AvaloniaUI.LoupeControl.csproj" />
     <ProjectReference Include="..\..\App.Platform.AvaloniaUI\src\App.Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 

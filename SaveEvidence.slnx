@@ -53,10 +53,10 @@
   </Folder>
   <Folder Name="/src/Feature.Marquee.MewUI.MarqueeControl/src/" />
   <Folder Name="/src/Feature.Loupe.Presenter/">
-    <Project Path="src/Feature.Loupe.Presenter/src/Feature.Loupe.Presenter.csproj" />
-    <Project Path="src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.csproj" />
+    <Project Path="src/Feature.Loupe.Presenter/src/Presenter/Feature.Loupe.Presenter.csproj" />
+    <Project Path="src/Feature.Loupe.Presenter/tests/Presenter/Feature.Loupe.Presenter.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Feature.Loupe.Presenter/src/" />
+  <Folder Name="/src/Feature.Loupe.Presenter/src/Presenter/" />
   <Folder Name="/src/Feature.Marquee.AvaloniaUI.MarqueeControl/">
     <Project Path="src/Feature.Marquee.AvaloniaUI.MarqueeControl/sample/Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.csproj" />
     <Project Path="src/Feature.Marquee.AvaloniaUI.MarqueeControl/src/Feature.Marquee.AvaloniaUI.MarqueeControl.csproj" />
@@ -68,19 +68,19 @@
     <Project Path="src/LineDetection/tests/LineDetection.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Feature.Loupe.Core/">
-    <Project Path="src/Feature.Loupe.Core/src/Feature.Loupe.Core.csproj" />
-    <Project Path="src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj" />
+    <Project Path="src/Feature.Loupe.Core/src/Core/Feature.Loupe.Core.csproj" />
+    <Project Path="src/Feature.Loupe.Core/tests/Core/Feature.Loupe.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Feature.Loupe.Core/src/" />
+  <Folder Name="/src/Feature.Loupe.Core/src/Core/" />
   <Folder Name="/src/Feature.Loupe.MewUI.LoupeControl/">
-    <Project Path="src/Feature.Loupe.MewUI.LoupeControl/src/Feature.Loupe.MewUI.LoupeControl.csproj" />
-    <Project Path="src/Feature.Loupe.MewUI.LoupeControl/tests/Feature.Loupe.MewUI.LoupeControl.Tests.csproj" />
+    <Project Path="src/Feature.Loupe.MewUI.LoupeControl/src/MewUI/Feature.Loupe.MewUI.LoupeControl.csproj" />
+    <Project Path="src/Feature.Loupe.MewUI.LoupeControl/tests/MewUI/Feature.Loupe.MewUI.LoupeControl.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Feature.Loupe.MewUI.LoupeControl/src/" />
+  <Folder Name="/src/Feature.Loupe.MewUI.LoupeControl/src/MewUI/" />
   <Folder Name="/src/Feature.Loupe.AvaloniaUI.LoupeControl/">
     <Project Path="src/Feature.Loupe.AvaloniaUI.LoupeControl/sample/Feature.Loupe.AvaloniaUI.LoupeControl.Sample.csproj" />
-    <Project Path="src/Feature.Loupe.AvaloniaUI.LoupeControl/src/Feature.Loupe.AvaloniaUI.LoupeControl.csproj" />
-    <Project Path="src/Feature.Loupe.AvaloniaUI.LoupeControl/tests/Feature.Loupe.AvaloniaUI.LoupeControl.Tests.csproj" />
+    <Project Path="src/Feature.Loupe.AvaloniaUI.LoupeControl/src/AvaloniaUI/Feature.Loupe.AvaloniaUI.LoupeControl.csproj" />
+    <Project Path="src/Feature.Loupe.AvaloniaUI.LoupeControl/tests/AvaloniaUI/Feature.Loupe.AvaloniaUI.LoupeControl.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Platform.Core/">
     <Project Path="src/Platform.Core/src/Platform.Core.csproj" />
