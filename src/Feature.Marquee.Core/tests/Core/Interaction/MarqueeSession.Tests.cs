@@ -4,9 +4,10 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.Marquee.Interaction;
+using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Setting;
 
-namespace EsUtil.Feature.Marquee.Tests.Interaction;
+namespace EsUtil.Feature.Marquee.Tests.Core.Interaction;
 
 /// <summary><see cref="MarqueeSession"/> の単体テスト（入力の解釈・状態遷移の判断・通知・効果）。</summary>
 /// <remarks>

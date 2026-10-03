@@ -4,7 +4,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using EsUtil.Feature.Loupe.Setting;
 
-namespace EsUtil.Feature.Loupe.Logging;
+namespace EsUtil.Feature.Loupe.Core.Logging;
 
 /// <summary>ルーペのコアが出力する LoggerMessage 定義（ソース生成ログ）。</summary>
 /// <remarks>

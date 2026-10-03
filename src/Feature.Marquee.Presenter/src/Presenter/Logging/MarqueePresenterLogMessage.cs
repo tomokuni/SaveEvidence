@@ -6,7 +6,7 @@ using EsUtil.Feature.Marquee.Setting;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Feature.Marquee.Logging;
+namespace EsUtil.Feature.Marquee.Presenter.Logging;
 
 /// <summary>選択矩形コントロールの提示層が出力する LoggerMessage 定義（ソース生成ログ）。</summary>
 /// <remarks>

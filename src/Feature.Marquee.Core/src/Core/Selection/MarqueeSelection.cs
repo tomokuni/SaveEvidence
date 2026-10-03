@@ -1,7 +1,8 @@
+using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Interaction;
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.Marquee.Selection;
+namespace EsUtil.Feature.Marquee.Core.Selection;
 
 /// <summary>選択矩形（対象座標）と、その矩形だけから決まる純粋な幾何計算。</summary>
 /// <param name="Rect">選択矩形（対象座標）。 未選択は幅・高さが 0。</param>

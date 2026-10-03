@@ -32,7 +32,7 @@
 
 ### 2.1 `EsUtil.Feature.Marquee`（提示・外観）
 
-ルート直下（`EsUtil.Feature.Marquee`）に置くのはファサード（`MarqueePresenter`）だけです。 以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
+ファサード（`MarqueePresenter`）と、ファサードから推移的に参照する公開型（`.Setting` / `.Drawing` / `.Label`）は層フォルダ（`src/Presenter/`）の外へ置きます。 内部手順（ログ定義）は層フォルダ（`src/Presenter/Logging/`）に残り、名前空間に層名を挟みます（`EsUtil.Feature.Marquee.Presenter.Logging`。 **名前空間はフォルダに追従**）。
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -43,7 +43,7 @@
 | `Drawing.MarqueeTextPlacement` | readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域）。 **要素として置くか canvas へ描くかは UI 層が決める** |
 | `Label.MarqueeLabelPlacement` | readonly record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
 
-**`MarqueePresenter` は複数のファイルに分かれた `public partial class` です**（`MarqueePresenter.cs` = ファサード本体、`DrawPlan` = 装飾矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。 partial のメンバー（`ResolveLabelPlacements` など）と `Logging.MarqueePresenterLogMessage` は `internal`（本層とテストのみが使う）であり、本リファレンスには載せません（内部手順は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照してください）。
+**`MarqueePresenter` は複数のファイルに分かれた `public partial class` です**（`MarqueePresenter.cs` = ファサード本体、`DrawPlan` = 装飾矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。 partial のメンバー（`ResolveLabelPlacements` など）と `EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage` は `internal`（本層とテストのみが使う）であり、本リファレンスには載せません（内部手順は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照してください）。
 
 ### 2.2 `MarqueePresenter` のメンバー
 

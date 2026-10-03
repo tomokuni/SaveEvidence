@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Loupe.Drawing;
 using EsUtil.Feature.Loupe.Placement;
 using EsUtil.Feature.Loupe.Setting;
-using EsUtil.Feature.Loupe.Logging;
+using EsUtil.Feature.Loupe.Presenter.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.Feature.Loupe;

@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.Loupe.Setting;
-using EsUtil.Feature.Loupe.Logging;
+using EsUtil.Feature.Loupe.Core.Logging;
 
-namespace EsUtil.Feature.Loupe.Tests.Logging;
+namespace EsUtil.Feature.Loupe.Tests.Core.Logging;
 
 /// <summary><see cref="LoupeLogMessage"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>

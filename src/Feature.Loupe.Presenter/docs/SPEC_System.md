@@ -31,7 +31,7 @@
 | --- | --- |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `EsUtil.Feature.Loupe`（配下はフォルダに追従: `.Setting` / `.Drawing` / `.Label` / `.Logging`） |
+| ルート名前空間 | `EsUtil.Feature.Loupe`（`src/` 直下のフォルダへ追従: `.Setting` / `.Drawing` / `.Label`。 層フォルダ `src/Presenter/` の配下は `.Presenter.Logging`） |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（`cref` の検証のみ） |
 | テスト | xUnit v3（UI 初期化不要。 `InternalsVisibleTo` で `internal` を検証する） |
 | 依存 | `Feature.Loupe.Core` と `Platform.Core` のみ（UI フレームワーク・SkiaSharp を参照しない） |
@@ -70,18 +70,18 @@ sequenceDiagram
 
 ## 4. コンポーネント構成
 
-ルート（`src/`）に置くのは**ファサード本体**（`LoupePresenter.cs`）とその partial（`LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelPlan.cs` / `LoupePresenter.LabelTexts.cs`）です。 描画計画の値・外観・ラベル要素の配置指示は用途別のフォルダへまとめます。
-**1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Loupe`。 `Setting` / `Drawing` / `Label` / `Logging` は `EsUtil.Feature.Loupe.<フォルダ名>`）。 規則は [`.github/命名規約.md`](../../../.github/命名規約.md) が単一所有します。
+**公開面**（ファサード本体 `LoupePresenter.cs` とその partial、描画計画の値・外観・ラベル要素の配置指示）は層フォルダの外（`src/` 直下と用途別のフォルダ）へ置きます。 **内部手順**のうち独立した型であるログ定義（`LoupePresenterLogMessage`）だけは層フォルダ（`src/Presenter/Logging/`）へ残します。
+**1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（`src/` 直下のフォルダは `EsUtil.Feature.Loupe.<フォルダ名>`。 層フォルダ `src/Presenter/` の配下は `EsUtil.Feature.Loupe.Presenter.<フォルダ名>`）。 規則は [`.github/命名規約.md`](../../../.github/命名規約.md) が単一所有します。
 
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
 | `src/LoupePresenter.cs` | `LoupePresenter` | public | 提示のファサード。 コアのラップ、外観の保持、描画計画（`ResolveDrawPlan`）と表示レイアウト（`ResolveLayout`）の解決、層の組合せ表の単一所有 |
-| `src/Presenter/Setting/LoupeAppearance.cs` | `LoupeAppearance` | public | 外観（色・フォント・角丸・枠線の太さ・ラベルのオフセット・表示可否）の単一所有と補正 |
-| `src/Presenter/Drawing/LoupeDrawPlan.cs` | `LoupeDrawPlan` | public | 描画計画の値（UI が見る唯一の描画値） |
-| `src/Presenter/Drawing/LoupeDrawLayer.cs` | `LoupeDrawLayer` | public | 描画層と順序の単一所有 |
-| `src/Presenter/Drawing/LoupeTextPlacement.cs` | `LoupeTextPlacement` | public | 文言・基準点・描画領域 |
+| `src/Setting/LoupeAppearance.cs` | `LoupeAppearance` | public | 外観（色・フォント・角丸・枠線の太さ・ラベルのオフセット・表示可否）の単一所有と補正 |
+| `src/Drawing/LoupeDrawPlan.cs` | `LoupeDrawPlan` | public | 描画計画の値（UI が見る唯一の描画値） |
+| `src/Drawing/LoupeDrawLayer.cs` | `LoupeDrawLayer` | public | 描画層と順序の単一所有 |
+| `src/Drawing/LoupeTextPlacement.cs` | `LoupeTextPlacement` | public | 文言・基準点・描画領域 |
 | `src/LoupePresenter.DrawPlan.cs` | `LoupePresenter`（`DrawPlan` partial） | internal | 十字線（縦横 2 本）と枠線（4 辺）の矩形の計算 |
-| `src/Presenter/Label/LoupeLabelPlacement.cs` | `LoupeLabelPlacement` | public | ラベル要素の配置指示 |
+| `src/Label/LoupeLabelPlacement.cs` | `LoupeLabelPlacement` | public | ラベル要素の配置指示 |
 | `src/LoupePresenter.LabelPlan.cs` | `LoupePresenter`（`LabelPlan` partial） | internal | 実寸 → 配置指示の写像（クランプの単一所有） |
 | `src/LoupePresenter.LabelTexts.cs` | `LoupePresenter`（`LabelTexts` partial） | internal | 文言（`EsPoint.Format`）と基準点（左上の内側）の生成 |
 | `src/Presenter/Logging/LoupePresenterLogMessage.cs` | `LoupePresenterLogMessage` | internal | 本層のログ定義（生成・ロガー設定・本層が単一所有する外観の変更・コアへの転送） |

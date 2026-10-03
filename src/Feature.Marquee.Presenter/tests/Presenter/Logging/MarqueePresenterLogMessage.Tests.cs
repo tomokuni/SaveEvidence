@@ -1,9 +1,9 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee.Logging;
+using EsUtil.Feature.Marquee.Presenter.Logging;
 using EsUtil.Feature.Marquee.Setting;
 
-namespace EsUtil.Feature.Marquee.Tests;
+namespace EsUtil.Feature.Marquee.Tests.Presenter.Logging;
 
 /// <summary><see cref="MarqueePresenterLogMessage"/> の単体テスト（外観の変更ログ）。</summary>
 /// <remarks>

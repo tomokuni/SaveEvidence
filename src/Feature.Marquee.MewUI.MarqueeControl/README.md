@@ -172,14 +172,14 @@ dotnet test src/Feature.Marquee.MewUI.MarqueeControl/tests/Feature.Marquee.MewUI
 ## 操作ログ
 
 `Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。 書式・レベルは Avalonia 版と同一です。  
-ログはコア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）が定義し、ロガーはファサード（`MarqueeCore.Log`）が保持します。 本プロジェクトはログ定義を持ちません。
+ログはコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が定義し、ロガーはファサード（`MarqueeCore.Log`）が保持します。 本プロジェクトはログ定義を持ちません。
 
 | レベル | 出力内容 |
 | --- | --- |
 | Debug | MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / 設定変更（コア）/ 外観・表示スケーリングの変更（提示層） |
 | Trace | MouseDown 直前の位置 / MouseUp 直後の位置 |
 
-定義はコア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）が持ち、本プロジェクトは定義を持ちません。
+定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が持ち、本プロジェクトは定義を持ちません。
 
 ## 未対応
 

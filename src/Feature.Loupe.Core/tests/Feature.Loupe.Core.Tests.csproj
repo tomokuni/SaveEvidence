@@ -19,11 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Presenter\Feature.Loupe.Presenter.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\App.Platform.Skia\src\App.Platform.Skia.csproj" />
+    <ProjectReference Include="..\src\Feature.Loupe.Core.csproj" />
   </ItemGroup>
 
 </Project>

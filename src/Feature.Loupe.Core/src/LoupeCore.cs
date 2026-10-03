@@ -5,7 +5,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using EsUtil.Feature.Loupe.Setting;
 using EsUtil.Feature.Loupe.Drawing;
-using EsUtil.Feature.Loupe.Logging;
+using EsUtil.Feature.Loupe.Core.Logging;
 using static EsUtil.Feature.Loupe.LoupeCore.Limits;
 
 

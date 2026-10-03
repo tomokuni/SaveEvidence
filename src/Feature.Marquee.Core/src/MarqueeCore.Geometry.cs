@@ -2,7 +2,7 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Drawing;
 using EsUtil.Feature.Marquee.Interaction;
-using EsUtil.Feature.Marquee.Selection;
+using EsUtil.Feature.Marquee.Core.Selection;
 
 namespace EsUtil.Feature.Marquee;
 

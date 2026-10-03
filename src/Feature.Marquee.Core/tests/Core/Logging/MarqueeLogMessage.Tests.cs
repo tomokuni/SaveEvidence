@@ -3,10 +3,10 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using EsUtil.Feature.Marquee.Logging;
+using EsUtil.Feature.Marquee.Core.Logging;
 using EsUtil.Feature.Marquee.Setting;
 
-namespace EsUtil.Feature.Marquee.Tests.Logging;
+namespace EsUtil.Feature.Marquee.Tests.Core.Logging;
 
 /// <summary><see cref="MarqueeLogMessage"/> の LoggerMessage 生成コード（IsEnabled 両パス）を検証するテスト。</summary>
 /// <remarks>

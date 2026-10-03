@@ -1,9 +1,9 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Loupe.Logging;
+using EsUtil.Feature.Loupe.Presenter.Logging;
 using EsUtil.Feature.Loupe.Setting;
 
-namespace EsUtil.Feature.Loupe.Tests;
+namespace EsUtil.Feature.Loupe.Tests.Presenter.Logging;
 
 /// <summary><see cref="LoupePresenterLogMessage"/> の単体テスト（外観の変更ログ）。</summary>
 /// <remarks>

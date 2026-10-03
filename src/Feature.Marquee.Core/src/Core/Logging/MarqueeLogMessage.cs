@@ -4,7 +4,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using EsUtil.Feature.Marquee.Setting;
 
-namespace EsUtil.Feature.Marquee.Logging;
+namespace EsUtil.Feature.Marquee.Core.Logging;
 
 /// <summary>Marquee の操作（入力の判断・設定変更）が出力する LoggerMessage 定義（ソース生成ログ）。</summary>
 /// <remarks>

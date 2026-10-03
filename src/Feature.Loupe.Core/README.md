@@ -98,7 +98,7 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 ```
 
 `tests/` が単体テストを持ちます。  
-UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行され、**ソースのフォルダを鏡映**します（`src/Core/Drawing/` の型は `tests/Core/Drawing/` で検証する）。
+UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行され、**ソースのフォルダを鏡映**します（`src/Drawing/` の型は `tests/Drawing/` で検証する）。
 
 ## 9. ドキュメント
 

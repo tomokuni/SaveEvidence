@@ -1,4 +1,4 @@
-namespace EsUtil.Feature.Marquee.Interaction;
+namespace EsUtil.Feature.Marquee.Core.Interaction;
 
 /// <summary>コア（入力の解釈）が UI 層へ要求するポインターキャプチャの操作。</summary>
 /// <remarks>

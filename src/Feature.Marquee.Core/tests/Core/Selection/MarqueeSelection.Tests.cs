@@ -1,9 +1,9 @@
 using EsUtil.Feature.Marquee.Interaction;
-using EsUtil.Feature.Marquee.Selection;
+using EsUtil.Feature.Marquee.Core.Selection;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 
-namespace EsUtil.Feature.Marquee.Tests.Selection;
+namespace EsUtil.Feature.Marquee.Tests.Core.Selection;
 
 /// <summary><see cref="MarqueeSelection"/> の単体テスト（選択矩形の値を扱う純粋な幾何計算）。</summary>
 /// <remarks>

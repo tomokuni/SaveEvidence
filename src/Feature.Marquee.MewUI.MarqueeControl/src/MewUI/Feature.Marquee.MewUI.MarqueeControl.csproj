@@ -24,9 +24,9 @@
 
   <ItemGroup>
     <!-- UI 非依存の選択幾何・状態機械（Core）とコア幾何型を参照する -->
-    <ProjectReference Include="..\..\..\Feature.Marquee.Core\src\Core\Feature.Marquee.Core.csproj" />
+    <ProjectReference Include="..\..\..\Feature.Marquee.Core\src\Feature.Marquee.Core.csproj" />
     <!-- コントロール化の転送規則と描画手順（層の順序と描画ポートへの写し）を単一所有する UI 非依存層 -->
-    <ProjectReference Include="..\..\..\Feature.Marquee.Presenter\src\Presenter\Feature.Marquee.Presenter.csproj" />
+    <ProjectReference Include="..\..\..\Feature.Marquee.Presenter\src\Feature.Marquee.Presenter.csproj" />
     <ProjectReference Include="..\..\..\Platform.Core\src\Platform.Core.csproj" />
   </ItemGroup>
 

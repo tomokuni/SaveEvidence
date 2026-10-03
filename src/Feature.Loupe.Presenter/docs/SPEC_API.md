@@ -33,7 +33,7 @@
 
 ### 2.1 `EsUtil.Feature.Loupe`（提示・外観）
 
-ルート直下（`EsUtil.Feature.Loupe`）に置くのはファサード（`LoupePresenter`）だけです。 以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
+ファサード（`LoupePresenter`）と、ファサードから推移的に参照する公開型（`.Setting` / `.Drawing` / `.Label`）は層フォルダ（`src/Presenter/`）の外へ置きます。 内部手順（ログ定義）は層フォルダ（`src/Presenter/Logging/`）に残り、名前空間に層名を挟みます（`EsUtil.Feature.Loupe.Presenter.Logging`。 **名前空間はフォルダに追従**）。
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -43,11 +43,11 @@
 | `Drawing.LoupeDrawLayer` | enum | 描画層（`Pasteboard` / `Image` / `Crosshair` / `Border` / `Label`） |
 | `Drawing.LoupeTextPlacement` | record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・描画領域） |
 | `Label.LoupeLabelPlacement` | record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
-| `Logging.LoupePresenterLogMessage` | static partial class | 本層が出力するログ定義（生成・通過の記録・外観の変更。 内部手順でありホストは参照しない） |
+| `EsUtil.Feature.Loupe.Presenter.Logging.LoupePresenterLogMessage` | static partial class | 本層が出力するログ定義（生成・通過の記録・外観の変更。 内部手順でありホストは参照しない） |
 
 **`LoupePresenter` は複数のファイルに分かれた `public partial class` です**（`LoupePresenter.cs` = ファサード本体、`DrawPlan` = 十字線・枠線の矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。
 
-`LoupePresenter` の partial（`DrawPlan` = 十字線・枠線の矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）のメンバーと `Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）であり、本リファレンスには載せません（内部手順は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照してください）。
+`LoupePresenter` の partial（`DrawPlan` = 十字線・枠線の矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）のメンバーと `EsUtil.Feature.Loupe.Presenter.Logging.LoupePresenterLogMessage` は `internal`（本層とテストのみが使う）であり、本リファレンスには載せません（内部手順は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照してください）。
 
 ### 2.2 `LoupePresenter` のメンバー
 

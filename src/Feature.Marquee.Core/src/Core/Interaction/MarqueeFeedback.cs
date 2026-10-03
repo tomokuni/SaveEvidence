@@ -1,8 +1,9 @@
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Feature.Marquee.Contract;
+using EsUtil.Feature.Marquee.Interaction;
 
-namespace EsUtil.Feature.Marquee.Interaction;
+namespace EsUtil.Feature.Marquee.Core.Interaction;
 
 /// <summary>1 回の入力通知に対して UI 層が適用する表示上の効果（状態を持たない指示）。</summary>
 /// <remarks>

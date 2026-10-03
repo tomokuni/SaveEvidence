@@ -70,7 +70,7 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 
 | メンバー | 種別 | 説明 |
 | --- | --- | --- |
-| `Loupe(LoupeOptions? options = null, ILogger? logger = null)` | ctor | 生成（設定を省略した場合は `LoupeOptions.Default`）。 **ロガーを注入した場合は、その場で生成の記録を出力する**（注入しない場合は `Log` の初回設定時に出力する）。 描画実装は受け取らない（描画は UI の関心事であり、本コアは描画 API を持たない） |
+| `LoupeCore(LoupeOptions? options = null, ILogger? logger = null)` | ctor | 生成（設定を省略した場合は `LoupeOptions.Default`）。 **ロガーを注入した場合は、その場で生成の記録を出力する**（注入しない場合は `Log` の初回設定時に出力する）。 描画実装は受け取らない（描画は UI の関心事であり、本コアは描画 API を持たない） |
 | `Log` | property | ロガー。 null は `NullLogger` へ吸収される。 **コンストラクターで注入されていない場合、初回の設定時に生成の記録を 1 度だけ出力する** |
 | `Options` | property | 設定（表示サイズ・拡大率）。 **変化したときだけ**変更ログ（Debug）を出力する |
 | `ClientToPixelScaling` | property | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。 補正は `LoupeCore.Limits` が単一所有する）。 **変化したときだけ**変更ログ（Debug）を出力する |

@@ -31,8 +31,8 @@
     - [8.1 状態の初期化と破棄（所有権）](#81-状態の初期化と破棄所有権)
   - [9. ログ](#9-ログ)
     - [9.1 ログ定義一覧](#91-ログ定義一覧)
-      - [コア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）](#コアesutilfeaturemarqueeloggingmarqueelogmessage)
-      - [提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）](#提示層esutilfeaturemarqueeloggingmarqueepresenterlogmessage)
+      - [コア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）](#コアesutilfeaturemarqueecoreloggingmarqueelogmessage)
+      - [提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）](#提示層esutilfeaturemarqueepresenterloggingmarqueepresenterlogmessage)
 
 ---
 
@@ -334,7 +334,7 @@ sequenceDiagram
 
 ## 9. ログ
 
-ログ定義はコア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`、`Feature.Marquee.Core/src/AvaloniaUI/Logging/MarqueeLogMessage.cs`）と、提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）が単一所有する
+ログ定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`、`Feature.Marquee.Core/src/Core/Logging/MarqueeLogMessage.cs`）と、提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が単一所有する
 （入力の判断に伴うログは UI から出せず、後から出すと行の順序が変わるため）。 UI 層に固有のログ定義は持たない
 （通常ホイールのスクロールログは、スクロールの実行をホスト（連携 `ScrollViewer` 等）へ委ねる形になり、
 本コントロール内に記録すべき判断が無くなったため削除した）。
@@ -343,7 +343,7 @@ sequenceDiagram
 
 ### 9.1 ログ定義一覧
 
-#### コア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）
+#### コア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
@@ -358,7 +358,7 @@ sequenceDiagram
 | `Trace` | `MarqueeLogMessage.LogPositionAfterUp` | Up 直後のマウス位置 |
 | `Debug` | `MarqueeLogMessage.LogSettingChanged` | 設定値変更（変更前後） |
 
-#### 提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）
+#### 提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |

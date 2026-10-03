@@ -21,9 +21,9 @@
 
   <ItemGroup>
     <!-- UI 非依存の純粋ロジック（Core）と座標変換ポートを参照する -->
-    <ProjectReference Include="..\..\..\Feature.Loupe.Core\src\Core\Feature.Loupe.Core.csproj" />
+    <ProjectReference Include="..\..\..\Feature.Loupe.Core\src\Feature.Loupe.Core.csproj" />
     <!-- コントロール化の再描画スケジューリングと描画手順（層の順序と描画ポートへの写し）を単一所有する UI 非依存層 -->
-    <ProjectReference Include="..\..\..\Feature.Loupe.Presenter\src\Presenter\Feature.Loupe.Presenter.csproj" />
+    <ProjectReference Include="..\..\..\Feature.Loupe.Presenter\src\Feature.Loupe.Presenter.csproj" />
     <ProjectReference Include="..\..\..\App.Platform.AvaloniaUI\src\App.Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 

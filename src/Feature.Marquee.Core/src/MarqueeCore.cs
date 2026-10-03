@@ -6,7 +6,8 @@ using Microsoft.Extensions.Logging;
 using EsUtil.Feature.Marquee.Contract;
 using EsUtil.Feature.Marquee.Drawing;
 using EsUtil.Feature.Marquee.Interaction;
-using EsUtil.Feature.Marquee.Logging;
+using EsUtil.Feature.Marquee.Core.Interaction;
+using EsUtil.Feature.Marquee.Core.Logging;
 using EsUtil.Feature.Marquee.Setting;
 using static EsUtil.Feature.Marquee.MarqueeCore.Limits;
 

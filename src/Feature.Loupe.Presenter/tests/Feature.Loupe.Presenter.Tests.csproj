@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>EsUtil.Feature.Marquee.Tests</RootNamespace>
+    <RootNamespace>EsUtil.Feature.Loupe.Tests</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
@@ -19,11 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Presenter\Feature.Marquee.Presenter.csproj" />
+    <ProjectReference Include="..\src\Feature.Loupe.Presenter.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\App.Platform.Skia\src\App.Platform.Skia.csproj" />
+    <ProjectReference Include="..\..\App.Platform.Skia\src\App.Platform.Skia.csproj" />
   </ItemGroup>
 
 </Project>

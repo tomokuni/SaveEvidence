@@ -2,8 +2,9 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using EsUtil.Feature.Marquee.Contract;
 using EsUtil.Feature.Marquee.Interaction;
+using EsUtil.Feature.Marquee.Core.Interaction;
 
-namespace EsUtil.Feature.Marquee.Tests.Interaction;
+namespace EsUtil.Feature.Marquee.Tests.Core.Interaction;
 
 /// <summary><see cref="MarqueeFeedback"/> の単体テスト（UI 層へ要求する効果の適用）。</summary>
 /// <remarks>

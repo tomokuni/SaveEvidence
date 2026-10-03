@@ -28,9 +28,9 @@
     <!-- 共有プラットフォーム抽象（カーソル操作: ICursorService / WinCursorService） -->
     <ProjectReference Include="..\..\..\App.Platform.AvaloniaUI\src\App.Platform.AvaloniaUI.csproj" />
     <!-- UI 非依存のコア（選択幾何・状態機械） -->
-    <ProjectReference Include="..\..\..\Feature.Marquee.Core\src\Core\Feature.Marquee.Core.csproj" />
+    <ProjectReference Include="..\..\..\Feature.Marquee.Core\src\Feature.Marquee.Core.csproj" />
     <!-- コントロール化の転送規則と描画手順（層の順序と描画ポートへの写し）を単一所有する UI 非依存層 -->
-    <ProjectReference Include="..\..\..\Feature.Marquee.Presenter\src\Presenter\Feature.Marquee.Presenter.csproj" />
+    <ProjectReference Include="..\..\..\Feature.Marquee.Presenter\src\Feature.Marquee.Presenter.csproj" />
   </ItemGroup>
 
 </Project>

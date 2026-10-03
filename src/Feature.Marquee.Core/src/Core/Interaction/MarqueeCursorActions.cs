@@ -1,4 +1,4 @@
-namespace EsUtil.Feature.Marquee.Interaction;
+namespace EsUtil.Feature.Marquee.Core.Interaction;
 
 /// <summary>コア（状態層）が UI 層へ要求するカーソル操作（フラグの組み合わせ）。</summary>
 /// <remarks>
