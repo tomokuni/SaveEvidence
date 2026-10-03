@@ -39,7 +39,7 @@
 - **撮影と切り出しの排他**: 同時に実行できるのはどちらか 1 つ（規則は Core の `CaptureSessionSlot` が単一所有し、本ライブラリの Facade がその唯一の適用者になる）
 - **設定の単一所有と即時反映**: 設定（`AppearanceSettings`）は Facade が単一所有し、撮影と切り出しで同じ値を使う。 設定時は部分更新（null メンバーのみ現在値を維持）・検証・同値スキップ・適用ログを Core（`CaptureSettingsMerge.Apply`）が担い、実行中の切り出しセッションへは即時反映する
 - **ラベル描画**: サイズラベル・操作ラベル・情報ラベルを選択矩形の左上へ表示する
-- **UI 非依存のサービス注入**: キャプチャ・要素検出・ウィンドウ操作は `Platform.Core` の抽象を受け取る（本ライブラリはアプリの型を参照しない）
+- **UI 非依存のサービス注入**: キャプチャ・要素検出・ウィンドウ操作は `EsUtil.Platform.Core` の抽象を受け取る（本ライブラリはアプリの型を参照しない）
 - **切り出しビュー（`CropViewControl`）**: 画像ビューポート（拡大・パン・Fit）と外部提供矩形オーバーレイを 1 つの複合コントロールにまとめる
 - **ズーム・パン（切り出しビューの画像ビューポート）**: `CropViewControl` が内包する `ZoomViewControl` が、ズーム（⊖⊕ の 23 段階 / Ctrl+ホイール ×1.1）・パン・Fit 表示・座標変換を担う（[5.3](#53-zoomviewcontrol切り出しビューの画像ビューポート)）
 - **領域選択（`FadeMaskDragRectControl`）**: 暗転マスク + 選択矩形 + ルーペを 1 つの複合コントロールにまとめ、配線と状態同期を内側で完結させる
@@ -51,10 +51,10 @@ App.Parts.CapturePreviewControl.MewUI
     ├── App.Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則・複合コントロールの設定とモード・切り出しビューの画像ビューポートの状態と判断）
     ├── App.Parts.CaptureSessionControl.UIBase（設定 → 外観の写像。 両 UI のホストが共有）
     ├── App.Platform.MewUI（コア型 ⇔ MewUI 型の Interop / DIP 変換）
-    ├── Platform.Core（ICaptureService / IElementFinder / IWindowService / ICaptureTarget）
+    ├── EsUtil.Platform.Core（ICaptureService / IElementFinder / IWindowService / ICaptureTarget）
     ├── App.Platform.Skia（Skia 依存の閉じ込め）
-    ├── Feature.Marquee.ControlMewUI（選択矩形と、その外側に描く装飾。 描画計画と外観は Feature.Marquee.Core / Feature.Marquee.Presenter を推移参照する）
-    └── Feature.Loupe.ControlMewUI（拡大鏡。 配置計算と外観は Feature.Loupe.Core / Feature.Loupe.Presenter を推移参照する）
+    ├── EsUtil.Feature.Marquee.ControlMewUI（選択矩形と、その外側に描く装飾。 描画計画と外観は EsUtil.Feature.Marquee.Core / EsUtil.Feature.Marquee.Presenter を推移参照する）
+    └── EsUtil.Feature.Loupe.ControlMewUI（拡大鏡。 配置計算と外観は EsUtil.Feature.Loupe.Core / EsUtil.Feature.Loupe.Presenter を推移参照する）
 ```
 
 依存は一方向です（アプリから本ライブラリを参照し、逆は参照しない）。

@@ -27,7 +27,7 @@ App.Parts.CapturePreviewControl.MewUI（本プロジェクト。オーバーレ�
 App.Parts.CapturePreviewControl.Core（共通規則: 切り出し矩形・設定・状態・退避手順・複合コントロールのモード・切り出しビューの画像ビューポートの状態と判断）
         │ 参照
         ▼
-Platform.Core（Es* 型 / サービス抽象）
+EsUtil.Platform.Core（Es* 型 / サービス抽象）
 ```
 
 本プロジェクトは **上位アプリのコア（`EsUtil.SaveEvidence`）を参照しません**（参照するとアプリのコアへ依存し、ライブラリとして成立しないため）。

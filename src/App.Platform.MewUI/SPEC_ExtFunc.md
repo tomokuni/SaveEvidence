@@ -1,6 +1,6 @@
 # App.Platform.MewUI 外部機能仕様書
 
-`App.Platform.MewUI` は `Platform.Core` のコア型と MewUI（`Aprillz.MewUI`）の型を相互変換します。 名前空間は `EsUtil.SaveEvidence.Platform.MewUI` です。
+`App.Platform.MewUI` は `EsUtil.Platform.Core` のコア型と MewUI（`Aprillz.MewUI`）の型を相互変換します。 名前空間は `EsUtil.SaveEvidence.Platform.MewUI` です。
 
 ## 公開 API
 
@@ -128,7 +128,7 @@ internal sealed class ThumbnailView : SkiaImageView
 
 | 依存 | 用途 |
 | --- | --- |
-| `Platform.Core`（`EsUtil.Platform.Core.*`） | コア型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsWindowState` / `EsPlatformHandle` / `EsBitmap`） |
+| `EsUtil.Platform.Core`（`EsUtil.Platform.Core.*`） | コア型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsWindowState` / `EsPlatformHandle` / `EsBitmap`） |
 | `Aprillz.MewUI.Core`（バージョン固定） | MewUI の型（`Key` / `Point` / `Size` / `Vector` / `Rect` / `Color` / `Window` / `WindowState` / `MewProperty`） |
 | `Aprillz.MewUI.Skia`（バージョン固定） | `SkiaCanvasView`（`SkiaImageView` の基底）と `SkiaSharp` の型 |
 

@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.Platform.MewUI.Tests;
 /// <summary><see cref="SkiaImageRenderer"/> の描画テスト（塗り分け・前提条件）。</summary>
 /// <remarks>
 /// コントロールを表示せず、キャンバスと画素だけで検証する（ウィンドウを必要としない）。<br/>
-/// 配置の計算そのものは <c>ImageDrawMath</c>（Platform.Core）のテストが担うため、<br/>
+/// 配置の計算そのものは <c>ImageDrawMath</c>（EsUtil.Platform.Core）のテストが担うため、<br/>
 /// 本テストは「描画された結果」（どの画素がどの色か）を固定する。
 /// </remarks>
 public class SkiaImageRendererTests

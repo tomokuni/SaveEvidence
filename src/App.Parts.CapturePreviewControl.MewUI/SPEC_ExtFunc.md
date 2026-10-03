@@ -89,7 +89,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 **設定は含めません**: 設定は Facade（`AppearanceSettings`）が単一所有し、撮影と切り出しが同じ値を使います（ホストが設定の変換を 2 回呼ぶ・2 つの設定値が食い違う余地をなくす）。
 
-`ICaptureService` / `IElementFinder` / `IWindowService` は `Platform.Core`（名前空間 `EsUtil.Platform.Core.Native`）が提供し、Windows 実装は同 `Native.Win`（`WinCaptureService` 等）です。 ホストが生成して抽象型として注入します。
+`ICaptureService` / `IElementFinder` / `IWindowService` は `EsUtil.Platform.Core`（名前空間 `EsUtil.Platform.Core.Native`）が提供し、Windows 実装は同 `Native.Win`（`WinCaptureService` 等）です。 ホストが生成して抽象型として注入します。
 
 ## 4. 使用する設定項目
 

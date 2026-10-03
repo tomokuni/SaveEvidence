@@ -4,7 +4,7 @@
 
 ## 目的
 
-`Platform.Core` の判定基準は「**外部 PackageReference なし**（`.NET 標準ライブラリ` と Microsoft 公式パッケージは許容）」です。 SkiaSharp は外部パッケージであるため `Platform.Core` には置けません。
+`EsUtil.Platform.Core` の判定基準は「**外部 PackageReference なし**（`.NET 標準ライブラリ` と Microsoft 公式パッケージは許容）」です。 SkiaSharp は外部パッケージであるため `EsUtil.Platform.Core` には置けません。
 
 本プロジェクトは Skia に依存する処理を単一所有し、UI 非依存層が SkiaSharp を参照しない状態を保ちます。
 
@@ -26,11 +26,11 @@
 ## 依存関係
 
 ```text
-Feature.Marquee.ControlMewUI / Feature.Loupe.ControlMewUI / App.Parts.CapturePreviewControl.MewUI / App.Parts.CapturePreviewControl.MewUI / App.App.MewUI
+EsUtil.Feature.Marquee.ControlMewUI / EsUtil.Feature.Loupe.ControlMewUI / App.Parts.CapturePreviewControl.MewUI / App.Parts.CapturePreviewControl.MewUI / App.App.MewUI
 App.Platform.MewUI
   └──> App.Platform.Skia（本プロジェクト）
          ├──> SkiaSharp（外部パッケージ。本層だけが参照する）
-         └──> Platform.Core（EsBitmap / 幾何値型）
+         └──> EsUtil.Platform.Core（EsBitmap / 幾何値型）
 ```
 
 **本プロジェクトが SkiaSharp を参照する唯一の場所です。**

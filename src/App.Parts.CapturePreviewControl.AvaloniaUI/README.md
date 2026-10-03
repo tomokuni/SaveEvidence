@@ -38,14 +38,14 @@
 
 - **3 種のキャプチャモード**: `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）
 - **切出し（Crop）**: プレビュー画像上の選択矩形で元画像から切り出し範囲を取得
-- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（Marquee（外側の装飾を含む）+ Loupe を内包）と App.Platform.AvaloniaUI / Platform.Core（`Native` の Win32 実装を含む）が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
+- **Facade パターン**: 状態は複合コントロール `FadeMaskDragRectControl`（Marquee（外側の装飾を含む）+ Loupe を内包）と App.Platform.AvaloniaUI / EsUtil.Platform.Core（`Native` の Win32 実装を含む）が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
 - **Task ベース API**: 結果は `Task` で返却（`await` で直感的に利用）
 - **キャプチャ完了イベント**: `CaptureCompleted`（同期型）で画像変更 → オーナー再表示の順序を保証
 - **イベント駆動**: 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）
 - **再入禁止ガード**: 実行中の再呼び出しは `null` を返す（既存セッションを継続）
 - **部分更新設定**: `CaptureSettings` は全メンバー nullable（null = デフォルト値 or 現在値維持）で部分更新が可能
 - **共通規則の単一所有**: 設定のマージ・実行の排他・モニタ倍率・切り出し範囲・ハイライト状態・キー操作・クリック確定・画像の保持と取得の待ち方・ログ定義は `App.Parts.CapturePreviewControl.Core` が所有し、本 UI は委譲する
-- **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は Platform.Core の `Native`（抽象）と `Native.Win`（Windows 実装）を介して注入（テスト可能・プラットフォーム非依存）
+- **プラットフォーム抽象**: キャプチャ・要素検出・ウィンドウ操作は EsUtil.Platform.Core の `Native`（抽象）と `Native.Win`（Windows 実装）を介して注入（テスト可能・プラットフォーム非依存）
 - **切り出しビュー（`CropViewControl`）**: 画像ビューポート（拡大・パン・Fit）+ 領域選択オーバーレイ + 外部提供矩形を 1 つの複合コントロールにまとめる
 - **領域選択（`FadeMaskDragRectControl`）**: 暗転マスク + 選択矩形 + ルーペを 1 つの複合コントロールにまとめ、配線と状態同期を内側で完結させる
 - **ズーム・パン（切り出しビューの画像ビューポート）**: `CropViewControl` が内包する `ZoomViewControl` が、ズーム（⊖⊕ の 23 段階 / Ctrl+ホイール ×1.1）・パン（ドラッグ / ホイール / スクロールバー）・Fit 表示・座標変換を担う（[7.3](#73-zoomviewcontrol切り出しビューの画像ビューポート)）
@@ -227,12 +227,12 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 | --- | --- |
 | `App.Parts.CapturePreviewControl.Core` | 両 UI 共通の規則（`CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `FadeMaskDragRectOptionsMapper` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / `OverlayRect` / `OverlayLineStyle` / `FadeMaskDragRectMode` / `FadeMaskDragRectOptions` / ログ定義）と、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession` / `ZoomOptions` / `ZoomState` / `ZoomViewAppearance` / `ZoomLogMessage`）。 UI 非依存 |
 | `App.Parts.CaptureSessionControl.UIBase` | 設定 → 外観（`MarqueeAppearance` / `LoupeAppearance`）の写像（`CapturePaintMapper`）、設定とモードから子コントロールへ適用する値の解決（`FadeMaskDragRectChildValues`）、付加情報ラベルの描画（`FadeMaskHostLabelRenderer`） |
-| `App.Platform.AvaloniaUI` | サービス生成 / `ScreenConverter` / 色の相互変換（`ColorAvaloniaInterop`）。 抽象（`ICaptureService` / `IWindowService` / `IElementFinder`）は `Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `Platform.Core` |
-| `Feature.Marquee.ControlAvaloniaUI` | `MarqueeControl`（選択矩形と、その外側に描く装飾（暗転マスク・外枠・ハイライト）） |
-| `Feature.Loupe.ControlAvaloniaUI` | `LoupeControl`（拡大鏡）/ `LoupeRenderedEventArgs` |
-| `Feature.Marquee.Presenter` | `MarqueeAppearance`（描画にだけ必要な外観。 内包コントロール（`Feature.Marquee.ControlAvaloniaUI`）の推移的依存） |
-| `Feature.Loupe.Core` | ルーペの配置計算（内包コントロールの推移的依存） |
-| `Feature.Loupe.Presenter` | `LoupeAppearance`（描画にだけ必要な外観。 内包コントロールの推移的依存） |
+| `App.Platform.AvaloniaUI` | サービス生成 / `ScreenConverter` / 色の相互変換（`ColorAvaloniaInterop`）。 抽象（`ICaptureService` / `IWindowService` / `IElementFinder`）は `EsUtil.Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `EsUtil.Platform.Core` |
+| `EsUtil.Feature.Marquee.ControlAvaloniaUI` | `MarqueeControl`（選択矩形と、その外側に描く装飾（暗転マスク・外枠・ハイライト）） |
+| `EsUtil.Feature.Loupe.ControlAvaloniaUI` | `LoupeControl`（拡大鏡）/ `LoupeRenderedEventArgs` |
+| `EsUtil.Feature.Marquee.Presenter` | `MarqueeAppearance`（描画にだけ必要な外観。 内包コントロール（`EsUtil.Feature.Marquee.ControlAvaloniaUI`）の推移的依存） |
+| `EsUtil.Feature.Loupe.Core` | ルーペの配置計算（内包コントロールの推移的依存） |
+| `EsUtil.Feature.Loupe.Presenter` | `LoupeAppearance`（描画にだけ必要な外観。 内包コントロールの推移的依存） |
 
 `CropViewControl` / `FadeMaskDragRectControl` は本アセンブリが公開する複合コントロールです（別プロジェクトではありません）。 `ZoomViewControl` は `CropViewControl` が内包する画像ビューポートです（独立した汎用コントロールとしてではなく、切り出しビューの内部部品として収録します）。 撮影セッション（`CaptureSessionControl` / `SelectionCaptureSession` / `OverlayWindow`）は内包コントロール（`MarqueeControl` / `LoupeControl`）を直接参照しません（窓口は `FadeMaskDragRectControl` のみ。 公開型のカプセル化）。
 
@@ -259,7 +259,7 @@ App.Parts.CapturePreviewControl.AvaloniaUI/
 └── tests/                        # 単体テスト（セッション + 収録コントロール）
 ```
 
-`CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。 利用側は `using EsUtil.Platform.Core;` を追加してください。
+`CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `EsUtil.Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。 利用側は `using EsUtil.Platform.Core;` を追加してください。
 
 `CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `App.Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core`）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。 利用側は `using EsUtil.SaveEvidence.Parts.CapturePreview.Core;` を追加してください。 **色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
 

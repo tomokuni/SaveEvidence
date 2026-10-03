@@ -514,7 +514,7 @@ public readonly record struct OverlayRect(
 
 **通知**: `Notified`（`EventHandler<ZoomNotice>`）が `ZoomChanged`（`ZoomState` を運ぶ）と `ViewportChanged`（画像表示矩形を運ぶ）を送ります。 UI 層は自 UI の公開イベントへ転送するだけです。
 
-**座標系**: UI フレームワークの幾何型ではなく、`Platform.Core` の `EsPoint` / `EsVector` / `EsSize` を使います。 UI 実装は境界で 1 行の相互変換を行い、UI 内部の状態とイベント引数は UI 側の型のまま維持します。
+**座標系**: UI フレームワークの幾何型ではなく、`EsUtil.Platform.Core` の `EsPoint` / `EsVector` / `EsSize` を使います。 UI 実装は境界で 1 行の相互変換を行い、UI 内部の状態とイベント引数は UI 側の型のまま維持します。
 
 ### 10.2 `ZoomOptions`（設定値）
 

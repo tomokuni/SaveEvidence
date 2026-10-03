@@ -23,7 +23,7 @@ App.Parts.CapturePreviewControl.AvaloniaUI / App.Parts.CapturePreviewControl.Mew
 App.Parts.CapturePreviewControl.Core（本プロジェクト。撮影・切り出しの共通規則と、切り出しビューの画像ビューポートの状態と判断）
         │ 参照
         ▼
-Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
+EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 ```
 
 依存は一方向です。 Core は UI フレームワーク（Avalonia / MewUI）を参照せず、`Microsoft.Extensions.Logging.Abstractions` のみに依存します。

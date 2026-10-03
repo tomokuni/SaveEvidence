@@ -55,12 +55,12 @@
 | 依存 | 用途 |
 | --- | --- |
 | `SkiaSharp`（外部パッケージ） | `SKCanvas` / `SKBitmap` / `SKColor` / `SKRect` / 書体の解決 |
-| `Platform.Core`（`EsUtil.Platform.Core.*`） | ビットマップ（`EsBitmap`）と幾何値型 |
+| `EsUtil.Platform.Core`（`EsUtil.Platform.Core.*`） | ビットマップ（`EsBitmap`）と幾何値型 |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。
 
 ## 本プロジェクトを置く理由
 
-`Platform.Core` の判定基準は「**外部 PackageReference なし**（`.NET 標準ライブラリ` と Microsoft 公式パッケージは許容）」です。 SkiaSharp は外部パッケージであるため、Skia に依存する型を `Platform.Core` へ置けません。 本プロジェクトは Skia 依存を単一所有し、UI 非依存層が SkiaSharp を参照しない状態を保ちます。
+`EsUtil.Platform.Core` の判定基準は「**外部 PackageReference なし**（`.NET 標準ライブラリ` と Microsoft 公式パッケージは許容）」です。 SkiaSharp は外部パッケージであるため、Skia に依存する型を `EsUtil.Platform.Core` へ置けません。 本プロジェクトは Skia 依存を単一所有し、UI 非依存層が SkiaSharp を参照しない状態を保ちます。
 
 `ImageDrawMath` / `ImageDrawMode`（画像配置の矩形計算）は Skia を必要としない純粋計算であるため、本層には置かず、これを使う UI のアダプタ層（`App.Platform.MewUI`）が所有します（戻り値は `EsRect` であり、各 UI が自 UI の矩形型へ変換します）。

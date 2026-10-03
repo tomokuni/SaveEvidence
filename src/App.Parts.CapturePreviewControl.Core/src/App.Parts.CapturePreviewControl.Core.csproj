@@ -14,10 +14,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
+    <ProjectReference Include="..\..\EsUtil.Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- 内包する選択矩形・ルーペのコア（穴あけ装飾・最大サイズ・ヒットテストの規則を再利用する） -->
-    <ProjectReference Include="..\..\Feature.Marquee.Core\src\Feature.Marquee.Core.csproj" />
-    <ProjectReference Include="..\..\Feature.Loupe.Core\src\Feature.Loupe.Core.csproj" />
+    <ProjectReference Include="..\..\EsUtil.Feature.Marquee.Core\src\EsUtil.Feature.Marquee.Core.csproj" />
+    <ProjectReference Include="..\..\EsUtil.Feature.Loupe.Core\src\EsUtil.Feature.Loupe.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 /// <remarks>
 /// 「どの種別がハイライト型（クリック確定）か」「どの種別が閉区間（終点のピクセルを含む）か」「どの検出関数を使うか」は<br/>
 /// UI 実装に依存しない規則であるため本クラスへ集約する（両 UI が同じ判定を別表現で持たない）。<br/>
-/// 種別は <c>Platform.Core</c> の <see cref="CaptureType"/> が所有し、本クラスはその性質を導出するだけである。<br/>
+/// 種別は <c>EsUtil.Platform.Core</c> の <see cref="CaptureType"/> が所有し、本クラスはその性質を導出するだけである。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public static class CaptureTypeTraits

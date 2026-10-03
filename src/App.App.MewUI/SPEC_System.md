@@ -5,7 +5,7 @@
 ## システム概要
 
 `App.App.MewUI` は、SaveEvidence の UI 層のみを **MewUI**（`Aprillz.MewUI`）で実装したホストアプリです。
-業務ロジック・状態・設定・画像コンテナは UI 非依存のコア（`App.App.Core` / `Platform.Core`（Win32 実装を含む） /
+業務ロジック・状態・設定・画像コンテナは UI 非依存のコア（`App.App.Core` / `EsUtil.Platform.Core`（Win32 実装を含む） /
 `LineDetection`）が所有し、`App.App.MewUI` はそれらを組み立てて表示するだけです。
 
 Avalonia 版 `App.App.AvaloniaUI` と**同じコア**を使うため、設定ファイル・挙動・公開 API は UI 間で共通です。
@@ -42,7 +42,7 @@ Avalonia 版 `App.App.AvaloniaUI` と**同じコア**を使うため、設定フ
         ├───────────────┬────────────────┘
         ▼               ▼
 ┌────────────────┐ ┌───────────────────────┐
-│  Platform.Core │ │ Platform.Core.Native │
+│  EsUtil.Platform.Core │ │ EsUtil.Platform.Core.Native │
 │ (抽象・画像・  │ │ (Win32 実装。ホスト  │
 │  幾何・座標)   │ │  が生成して注入する)  │
 └───────┬────────┘ └───────────────────────┘
@@ -54,11 +54,11 @@ Avalonia 版 `App.App.AvaloniaUI` と**同じコア**を使うため、設定フ
 
 （別系統）
 ┌──────────────────────┐
-│  Feature.Loupe.ControlMewUI  │  MewUI 版ルーペ（描画層）
+│  EsUtil.Feature.Loupe.ControlMewUI  │  MewUI 版ルーペ（描画層）
 └──────────┬───────────┘
            ▼
 ┌──────────────────────┐
-│   Feature.Loupe.Core  │  UI 非依存のルーペロジック
+│   EsUtil.Feature.Loupe.Core  │  UI 非依存のルーペロジック
 └──────────────────────┘
 ```
 
@@ -66,7 +66,7 @@ Avalonia 版 `App.App.AvaloniaUI` と**同じコア**を使うため、設定フ
 
 `App.App.MewUI` は `Avalonia*` を参照しません。 Avalonia への依存は `App.Platform.AvaloniaUI`（アダプタ専用）と
 `App.App.AvaloniaUI`（Avalonia UI）のみに閉じています。 コアが UI 型を漏らしていないことは、
-`App.App.Core` / `Platform.Core` の依存先が SkiaSharp・OpenCvSharp・`System.Drawing.Color` 等に
+`App.App.Core` / `EsUtil.Platform.Core` の依存先が SkiaSharp・OpenCvSharp・`System.Drawing.Color` 等に
 限られることで担保しています。
 
 ### 境界の変換
@@ -226,7 +226,7 @@ classDiagram
         +NormalizeScale(double)$ double
     }
     class LoupeControl {
-        <<Feature.Loupe.ControlMewUI>>
+        <<EsUtil.Feature.Loupe.ControlMewUI>>
         +EsBitmap? Source
         +EsPoint? CenterPoint
         +int RequestedSize
@@ -667,7 +667,7 @@ sequenceDiagram
 | `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する（13 件） |
 | `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する（3 件） |
 | ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`verify-ui.ps1` と撮影）で確認する |
-| 組み込み先のコントロール | `Feature.Loupe.ControlMewUI.Tests` / `App.Parts.CapturePreviewControl.MewUI.Tests` が描画と状態を検証する |
+| 組み込み先のコントロール | `EsUtil.Feature.Loupe.ControlMewUI.Tests` / `App.Parts.CapturePreviewControl.MewUI.Tests` が描画と状態を検証する |
 | コアロジック | `App.App.Core` / `Platform.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |
 
 ### 実機検証（`verify-ui.ps1`）

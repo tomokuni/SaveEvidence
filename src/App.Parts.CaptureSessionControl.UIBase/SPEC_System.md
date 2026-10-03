@@ -31,10 +31,10 @@ graph LR
   A[App.Parts.CapturePreviewControl.AvaloniaUI] --> U[App.Parts.CaptureSessionControl.UIBase]
   B[App.Parts.CapturePreviewControl.MewUI] --> U
   U --> C[App.Parts.CapturePreviewControl.Core]
-  U --> MC[Feature.Marquee.Core / Feature.Loupe.Core]
-  U --> M[Feature.Marquee.Presenter]
-  U --> L[Feature.Loupe.Presenter]
-  U --> P[Platform.Core]
+  U --> MC[EsUtil.Feature.Marquee.Core / EsUtil.Feature.Loupe.Core]
+  U --> M[Marquee.Presenter]
+  U --> L[Loupe.Presenter]
+  U --> P[EsUtil.Platform.Core]
 ```
 
 依存の向きは **UI → UIBase（本層）→ Core / 各提示層の設定**の一方向です。 逆向きの参照はありません。
@@ -69,10 +69,10 @@ classDiagram
     <<record / App.Parts.CapturePreviewControl.Core>>
   }
   class MarqueeAppearance {
-    <<record / Feature.Marquee.Presenter>>
+    <<record / EsUtil.Feature.Marquee.Presenter>>
   }
   class LoupeAppearance {
-    <<record / Feature.Loupe.Presenter>>
+    <<record / EsUtil.Feature.Loupe.Presenter>>
   }
 
   CapturePaintMapper ..> CaptureSettings : 読み取る

@@ -26,16 +26,16 @@
 ## 1. 概要
 
 Avalonia UI 固有のアダプタ（画面座標変換・コア型との相互変換・画像／幾何アダプタ）を提供するライブラリです。
-UI フレームワーク非依存の抽象・値型・純粋ロジックと、ネイティブ（OS）の Win32 実装は `Platform.Core`（後者は `Native/` 配下） が担います。
+UI フレームワーク非依存の抽象・値型・純粋ロジックと、ネイティブ（OS）の Win32 実装は `EsUtil.Platform.Core`（後者は `Native/` 配下） が担います。
 
 ## 2. 機能一覧
 
 - **画面座標変換**: `ScreenConverter`（コントロールローカル DIP ↔ 画面物理。 Avalonia の `TopLevel` に依存するため本プロジェクトに残す）
-- **座標変換ポート**: `ICoordTransform` / `CoordTransform` は UI フレームワーク非依存のコア型として `Platform.Core` が提供
-- **ネイティブ実装**: Win32 実装（`EsUtil.Platform.Core.Native.Win`）は `Platform.Core` が提供（**実行時のプラットフォーム分岐は持たず、ホストが生成して抽象型として注入する**）
+- **座標変換ポート**: `ICoordTransform` / `CoordTransform` は UI フレームワーク非依存のコア型として `EsUtil.Platform.Core` が提供
+- **ネイティブ実装**: Win32 実装（`EsUtil.Platform.Core.Native.Win`）は `EsUtil.Platform.Core` が提供（**実行時のプラットフォーム分岐は持たず、ホストが生成して抽象型として注入する**）
 - **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPointInt`・`EsRectInt`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
 - **カーソル抑止の仲介**: `CursorOverrideGuardAvaloniaExtensions.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲）
-- **画像ユーティリティ**: `EsBitmap`（`Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
+- **画像ユーティリティ**: `EsBitmap`（`EsUtil.Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
 - **画像アダプタ**（`EsBitmapAvaloniaImage`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
 - **ブラシキャッシュ**: `SolidColorBrushCache`（`System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有する。 描画アダプタとラベル要素の配置が共用する）
 - **テキスト実寸の測定**: `AvaloniaTextMeasure`（ラベル要素の配置矩形を実寸から決めるための唯一の入口。 UI ごとに測定を書くと片方だけ実寸 0 になり、文字が切り落とされる）
@@ -55,7 +55,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 <ProjectReference Include="..\App.Platform.AvaloniaUI\src\App.Platform.AvaloniaUI.csproj" />
 ```
 
-本プロジェクトは `Platform.Core` を参照しているため、
+本プロジェクトは `EsUtil.Platform.Core` を参照しているため、
 本プロジェクトを参照すればそれらの型も利用できます。
 
 必要な名前空間:
@@ -102,7 +102,7 @@ guard.Attach(window);   // TopLevel → EsPlatformHandle の変換を仲介す�
 
 ### 座標変換ポート
 
-座標変換ポートは UI フレームワーク非依存のコア型として `Platform.Core`（`EsUtil.Platform.Core.Coord` 名前空間）が提供します。 軸は「ローカル DIP ↔ 対象座標」の 1 つだけで、DIP とデバイスピクセルの換算は `DpiScaler` が単一所有します。 座標はコア幾何型（`EsPoint` / `EsSize` / `EsVector`）で扱います。
+座標変換ポートは UI フレームワーク非依存のコア型として `EsUtil.Platform.Core`（`EsUtil.Platform.Core.Coord` 名前空間）が提供します。 軸は「ローカル DIP ↔ 対象座標」の 1 つだけで、DIP とデバイスピクセルの換算は `DpiScaler` が単一所有します。 座標はコア幾何型（`EsPoint` / `EsSize` / `EsVector`）で扱います。
 
 ```csharp
 // 等価変換（ローカル DIP = 対象座標・無制限）
@@ -135,7 +135,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt);
 
 | プロジェクト | 責務 |
 | --- | --- |
-| `Platform.Core` | UI 非依存の抽象・値型・純粋ロジック（`Native/` 配下は Win32 実装） |
+| `EsUtil.Platform.Core` | UI 非依存の抽象・値型・純粋ロジック（`Native/` 配下は Win32 実装） |
 | 本プロジェクト | Avalonia 固有のアダプタ（`TopLevel` / Avalonia 型に依存するもの）のみ |
 
 ### 公開 API の最小化
@@ -145,7 +145,7 @@ Win32 実装（`Native.Win`）はホストが生成して抽象型として注�
 
 ### 依存方向
 
-`App.Platform.AvaloniaUI`（本プロジェクト）→ `Platform.Core`（`Native/` の Win32 実装を含む） の一方向の階層構造です。 上位 AP（MarqueeControl / App.Parts.CapturePreviewControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
+`App.Platform.AvaloniaUI`（本プロジェクト）→ `EsUtil.Platform.Core`（`Native/` の Win32 実装を含む） の一方向の階層構造です。 上位 AP（MarqueeControl / App.Parts.CapturePreviewControl.AvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
 
 ## 7. サンプル
 
@@ -170,7 +170,7 @@ App.Platform.AvaloniaUI/
 └── tests/                          # 単体テスト
 ```
 
-抽象・値型・純粋ロジックと Win32 実装の全体は [`Platform.Core`](../Platform.Core/README.md) を参照してください（Win32 実装は `Native/` 配下）。
+抽象・値型・純粋ロジックと Win32 実装の全体は [`EsUtil.Platform.Core`](../EsUtil.Platform.Core/README.md) を参照してください（Win32 実装は `Native/` 配下）。
 
 ## 10. ライセンス
 

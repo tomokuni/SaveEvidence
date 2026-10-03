@@ -60,9 +60,9 @@
 
 ```text
 App.Parts.CapturePreviewControl.Core
-    ├── Platform.Core（Es* 幾何型 / EsBitmap）
-    ├─ Feature.Marquee.Core（MarqueeOptions・選択矩形の幾何）
-    ├─ Feature.Loupe.Core（LoupeOptions）
+    ├── EsUtil.Platform.Core（Es* 幾何型 / EsBitmap）
+    ├─ EsUtil.Feature.Marquee.Core（MarqueeOptions・選択矩形の幾何）
+    ├─ EsUtil.Feature.Loupe.Core（LoupeOptions）
     └── Microsoft.Extensions.Logging.Abstractions（ログ定義のソース生成）
 ```
 

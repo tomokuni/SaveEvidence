@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 /// <remarks>
 /// MewUI 版は DI コンテナを持たないため、ホストが生成したサービスを本レコードで束ねて渡す。<br/>
 /// UI 非依存のサービス（<see cref="ICaptureService"/> / <see cref="IElementFinder"/> / <see cref="IWindowService"/>）は<br/>
-/// <c>Platform.Core</c> が提供するため、本ライブラリはアプリの型を参照しない。<br/>
+/// <c>EsUtil.Platform.Core</c> が提供するため、本ライブラリはアプリの型を参照しない。<br/>
 /// <br/>
 /// <b>設定は含めない</b>: 設定は Facade（<see cref="CaptureSessionControl.AppearanceSettings"/>）が単一所有し、<br/>
 /// 撮影と切り出しが同じ値を使う（ホストが変換を 2 回呼ぶ・2 つの設定値が食い違う余地をなくす）。

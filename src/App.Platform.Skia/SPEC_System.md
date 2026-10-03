@@ -15,7 +15,7 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| 目的 | `Platform.Core` の判定基準（外部パッケージなし）を守るため、Skia 依存を本層へ隔離する |
+| 目的 | `EsUtil.Platform.Core` の判定基準（外部パッケージなし）を守るため、Skia 依存を本層へ隔離する |
 | 提供形態 | クラスライブラリ（`EsUtil.SaveEvidence.Platform.Skia.dll`）。 SkiaSharp を参照する唯一のプロジェクト |
 | 想定利用者 | `App.Platform.MewUI`、MewUI 系の各コントロール（Marquee / Loupe / FadeMaskDragRect / ZoomView）、`App.App.MewUI`、テスト |
 | ターゲット | `net10.0` |
@@ -30,16 +30,16 @@ graph LR
   MEWUI["App.Platform.MewUI / *Control.MewUI / App.Parts.CapturePreviewControl.MewUI / App.App.MewUI"]
   S[App.Platform.Skia]
   SK[SkiaSharp]
-  PC[Platform.Core]
+  PC[EsUtil.Platform.Core]
 
   MEWUI --> S
   S --> SK
   S --> PC
 ```
 
-- 依存の向きは **MewUI 系 → App.Platform.Skia →（SkiaSharp / Platform.Core）** です。
-- **`Platform.Core` は SkiaSharp を参照しません**（Skia 依存は本層で止まる）。
-- `EsBitmapSkiaExtensions` は `Platform.Core` の `EsBitmap` を拡張します。
+- 依存の向きは **MewUI 系 → App.Platform.Skia →（SkiaSharp / EsUtil.Platform.Core）** です。
+- **`EsUtil.Platform.Core` は SkiaSharp を参照しません**（Skia 依存は本層で止まる）。
+- `EsBitmapSkiaExtensions` は `EsUtil.Platform.Core` の `EsBitmap` を拡張します。
 
 ## コンポーネント構成
 
@@ -86,7 +86,7 @@ classDiagram
     +ToEsSize(size)$ EsSize
   }
   class EsBitmap {
-    <<Platform.Core>>
+    <<EsUtil.Platform.Core>>
     +int Width / Height / Stride
     +nint Address
   }
@@ -118,7 +118,7 @@ sequenceDiagram
 sequenceDiagram
   participant UI as MewUI のコントロール
   participant E as EsBitmapSkiaExtensions
-  participant Core as EsBitmap（Platform.Core）
+  participant Core as EsBitmap（EsUtil.Platform.Core）
   participant SK as SKBitmap
 
   UI->>E: skBitmap.ToEsBitmap()
@@ -139,7 +139,7 @@ sequenceDiagram
 | テキストの実寸測定・書体の解決 | `SkiaText` |
 | ラベル 1 件の描画順（背景 → 文字） | `SkiaLabel` |
 | 色・幾何の相互変換 | `SkiaColorInterop` / `SkiaGeometryInterop` |
-| コアのピクセルバッファとピクセル操作 | `EsBitmap`（`Platform.Core`） |
+| コアのピクセルバッファとピクセル操作 | `EsBitmap`（`EsUtil.Platform.Core`） |
 | 画像配置の矩形計算 | `ImageDrawMath`（`App.Platform.MewUI`。 Skia を必要としないため本層に置かない） |
 
 ## 例外処理ポリシー

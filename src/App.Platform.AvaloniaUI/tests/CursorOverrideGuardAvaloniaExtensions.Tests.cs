@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 /// <remarks>
 /// <see cref="TopLevel"/> を生成するため、Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）で直列実行する。<br/>
 /// コア側の <see cref="ICursorOverrideGuard.Attach(EsPlatformHandle)"/> のテストは
-/// <c>Platform.Core.Tests</c> が担う。
+/// <c>EsUtil.Platform.Core.Tests</c> が担う。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class CursorOverrideGuardAvaloniaExtensionsTests

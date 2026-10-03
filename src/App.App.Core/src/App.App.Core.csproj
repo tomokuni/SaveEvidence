@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\App.Parts.CapturePreviewControl.Core\src\App.Parts.CapturePreviewControl.Core.csproj" />
-    <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
+    <ProjectReference Include="..\..\EsUtil.Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- 自動切り出しの矩形検出（LineDetection は UI 非依存） -->
     <ProjectReference Include="..\..\LineDetection\src\LineDetection.csproj" />
   </ItemGroup>

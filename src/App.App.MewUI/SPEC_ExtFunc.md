@@ -47,7 +47,7 @@
 | プレビュー | 画像をズーム・パンして表示する（ドラッグでパン / Ctrl+ホイールでズーム）。 詳細は `../App.Parts.CapturePreviewControl.MewUI/SPEC_ExtFunc.md` |
 | ズーム操作 | ⊖ / ⊕ / Fit ボタンとズーム率の表示（画像未設定時は可否が false） |
 | 検出矩形 | 自動切り出しの検出結果を**水色の実線枠**（2 DIP。 Avalonia 版と同じ）でオーバーレイ表示する。 ホバー中の矩形（面積が最小のもの）は**赤色**で強調する |
-| ルーペ | 切り出し中のみカーソル位置を拡大し、カーソルの右下（設定のオフセット）へ追従する。 切り出しを確定・キャンセルすると消える。 詳細は `../Feature.Loupe.ControlMewUI/SPEC_ExtFunc.md` |
+| ルーペ | 切り出し中のみカーソル位置を拡大し、カーソルの右下（設定のオフセット）へ追従する。 切り出しを確定・キャンセルすると消える。 詳細は `../EsUtil.Feature.Loupe.ControlMewUI/SPEC_ExtFunc.md` |
 | 選択矩形の破線 | 撮影・切り出しの選択中は、ルーペ画像へ選択矩形の破線（2 色交互）を重ねる。 色は設定 `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB`。 詳細は `../App.Parts.CapturePreviewControl.MewUI/SPEC_ExtFunc.md` |
 | ステータス | 画像サイズ / 保存状態 / 通知メッセージを表示する |
 
@@ -67,7 +67,7 @@
 
 ### 選択中のラベル
 
-選択矩形の左上に行を縦に積んで表示します（背景付き）。 サイズラベルはコア（`MarqueeTextPlacement` が文言）と描画層（`Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial） が実寸からの配置）が単一所有し、コントロールがテキスト要素として表示します。 操作・情報ラベルはアプリ固有の付加情報のため、ホストが `FadeMaskDragRectOptions.Labels` の外観で描き、文言は `CaptureLabelTexts`（`App.Parts.CapturePreviewControl.Core`）が与えます。
+選択矩形の左上に行を縦に積んで表示します（背景付き）。 サイズラベルはコア（`MarqueeTextPlacement` が文言）と描画層（`EsUtil.Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial） が実寸からの配置）が単一所有し、コントロールがテキスト要素として表示します。 操作・情報ラベルはアプリ固有の付加情報のため、ホストが `FadeMaskDragRectOptions.Labels` の外観で描き、文言は `CaptureLabelTexts`（`App.Parts.CapturePreviewControl.Core`）が与えます。
 
 | 行 | 内容 | 表示条件 | 設定 |
 | --- | --- | --- | --- |
@@ -260,9 +260,9 @@
 | アセンブリ | 仕様書 |
 | --- | --- |
 | `EsUtil.SaveEvidence.dll`（App.App.Core） | `../app/SPEC_ExtFunc.md`（アプリ共通のコア仕様） |
-| `Platform.Core` | `../Platform.Core/docs/SPEC_API.md`（`Native` / `Native.Win` / `Native.Imaging` を含む） |
+| `EsUtil.Platform.Core` | `../EsUtil.Platform.Core/docs/SPEC_API.md`（`Native` / `Native.Win` / `Native.Imaging` を含む） |
 | `App.Platform.MewUI` | `../App.Platform.MewUI/SPEC_ExtFunc.md` |
-| `Feature.Loupe.ControlMewUI` | `../Feature.Loupe.ControlMewUI/SPEC_ExtFunc.md` |
+| `EsUtil.Feature.Loupe.ControlMewUI` | `../EsUtil.Feature.Loupe.ControlMewUI/SPEC_ExtFunc.md` |
 | `App.Parts.CapturePreviewControl.MewUI` | `../App.Parts.CapturePreviewControl.MewUI/SPEC_ExtFunc.md` |
 | `App.Parts.CapturePreviewControl.MewUI` | `../App.Parts.CapturePreviewControl.MewUI/SPEC_ExtFunc.md`（切り出しビュー・領域選択を含む） |
 

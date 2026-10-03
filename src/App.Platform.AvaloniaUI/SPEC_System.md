@@ -27,7 +27,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
 本プロジェクト（`App.Platform.AvaloniaUI`）は、そのうち **Avalonia UI 固有のアダプタ**を担います。
-UI フレームワーク非依存の抽象・値型・純粋ロジックと、ネイティブ（OS）の Win32 実装は `Platform.Core`（後者は `Native/` 配下） が提供します。
+UI フレームワーク非依存の抽象・値型・純粋ロジックと、ネイティブ（OS）の Win32 実装は `EsUtil.Platform.Core`（後者は `Native/` 配下） が提供します。
 
 ## 2. 技術スタック
 
@@ -40,7 +40,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 | **ターゲットフレームワーク** | net10.0 |
 | **参照パッケージ** | Avalonia / Avalonia.Skia |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | `Platform.Core`（`Native/` の Win32 実装を含む） |
+| **依存プロジェクト** | `EsUtil.Platform.Core`（`Native/` の Win32 実装を含む） |
 
 ## 3. アーキテクチャ
 
@@ -48,16 +48,16 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 
 | プロジェクト | 責務 | UI 依存 |
 | --- | --- | --- |
-| `Platform.Core` | 抽象（サービス 6 種）・コア値型・座標変換ポート・`EsBitmap` | なし |
-| `Platform.Core`（`Native/`） | サービス抽象と Win32 実装（`Native.Win`）・System.Drawing 変換（`Native.Imaging`） | なし |
+| `EsUtil.Platform.Core` | 抽象（サービス 6 種）・コア値型・座標変換ポート・`EsBitmap` | なし |
+| `EsUtil.Platform.Core`（`Native/`） | サービス抽象と Win32 実装（`Native.Win`）・System.Drawing 変換（`Native.Imaging`） | なし |
 | `App.Platform.AvaloniaUI`（本プロジェクト） | `ScreenConverter`・相互変換・画像アダプタ | Avalonia |
 
 ### 3.2 依存方向
 
-- 依存は**一方向の階層構造**（本プロジェクト → `Platform.Core`（`Native/` を含む））。
+- 依存は**一方向の階層構造**（本プロジェクト → `EsUtil.Platform.Core`（`Native/` を含む））。
 - 上位 AP（`MarqueeControl` / `App.Parts.CapturePreviewControl.AvaloniaUI` / `App.App.AvaloniaUI`）は本プロジェクトを参照すれば、
   サービス抽象・コア値型・Win32 実装・Avalonia アダプタをすべて利用できる。
-- 本プロジェクトは「Avalonia の型に依存するもの」だけを置く。 UI 非依存の型は `Platform.Core` 側に置く。
+- 本プロジェクトは「Avalonia の型に依存するもの」だけを置く。 UI 非依存の型は `EsUtil.Platform.Core` 側に置く。
 
 ## 4. 例外処理ポリシー
 
@@ -78,10 +78,10 @@ flowchart TB
         Conv["ScreenConverter"]
         Interop["Interop（Es* ⇔ Avalonia）<br/>画像アダプタ"]
     end
-    subgraph Native["Platform.Core.Native（UI 非依存）"]
+    subgraph Native["EsUtil.Platform.Core.Native（UI 非依存）"]
         WInp["Win 実装群（Win32 API・P/Invoke）"]
     end
-    subgraph Core["Platform.Core（UI 非依存）"]
+    subgraph Core["EsUtil.Platform.Core（UI 非依存）"]
         Intf["サービス抽象 / コア値型<br/>ICoordTransform / EsBitmap"]
     end
 
@@ -134,9 +134,9 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**（本プロジェクト → `Platform.Core`（`Native/` を含む））。
+- 依存方向は**一方向の階層構造**（本プロジェクト → `EsUtil.Platform.Core`（`Native/` を含む））。
 - 上位 AP は本プロジェクトのみを参照すればよい（推移的に `Native` / コアを利用できる）。
-- 本プロジェクトに UI 非依存の型を置かない（置き場所は `Platform.Core`）。
+- 本プロジェクトに UI 非依存の型を置かない（置き場所は `EsUtil.Platform.Core`）。
 
 ## 8. ライフサイクル
 
@@ -148,4 +148,4 @@ flowchart TB
 ## 9. ログ
 
 本プロジェクトはログを出力しません。
-ログ定義（`NativeLogMessage`）は `Platform.Core`（`Native/`）が所有し、Win 実装が使用します。
+ログ定義（`NativeLogMessage`）は `EsUtil.Platform.Core`（`Native/`）が所有し、Win 実装が使用します。

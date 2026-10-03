@@ -2,7 +2,7 @@
 
 ## 概要
 
-`Platform.Core` のコア型（UI フレームワーク非依存）と **MewUI**（`Aprillz.MewUI`）の型を相互変換する Interop 層です。
+`EsUtil.Platform.Core` のコア型（UI フレームワーク非依存）と **MewUI**（`Aprillz.MewUI`）の型を相互変換する Interop 層です。
 SaveEvidence のマルチ UI 対応（Avalonia UI / MewUI）における、MewUI 側の境界変換を担います。
 
 Avalonia 版の `App.Platform.AvaloniaUI`（`EsUtil.SaveEvidence.Platform.AvaloniaUI`）と対になる位置付けです。
@@ -19,7 +19,7 @@ Avalonia 版の `App.Platform.AvaloniaUI`（`EsUtil.SaveEvidence.Platform.Avalon
 graph LR
   A[App.App.MewUI（将来）] --> B[App.Platform.MewUI]
   C["各 *Control.MewUI（将来）"] --> B
-  B --> D[Platform.Core]
+  B --> D[EsUtil.Platform.Core]
   B --> E[Aprillz.MewUI.Core]
   B --> H[Aprillz.MewUI.Skia]
   F["App.Platform.AvaloniaUI（Avalonia 版）"] --> D
@@ -27,7 +27,7 @@ graph LR
 ```
 
 - コアロジックは `Es*` 型のみを扱い、UI 境界（各 UI ホスト・コントロール）でのみ本プロジェクトで変換します。
-- Avalonia 版と MewUI 版は互いに依存しません（どちらも `Platform.Core` に依存）。
+- Avalonia 版と MewUI 版は互いに依存しません（どちらも `EsUtil.Platform.Core` に依存）。
 
 ## コンポーネント構成
 

@@ -82,12 +82,12 @@ flowchart TB
 
 ## 5. 依存関係
 
-- `ILineDetector.cs` → `LineDetectionResult`（`EsPoint`）/ `EsBitmap`（Platform.Core）
+- `ILineDetector.cs` → `LineDetectionResult`（`EsPoint`）/ `EsBitmap`（EsUtil.Platform.Core）
 - `LogicLineDetector.cs` → `ILineDetector` / `LineOrientation` / `LineDetectionOptions` / `LineRectangleReconstructor` / `LineSegmentMath` / `MatHelper`
-- `LineRectangleReconstructor.cs` → `LineDetectionResult` / `EsRectInt`（Platform.Core）
-- `MatHelper.cs` → OpenCvSharp（内部のみ）・`EsBitmap`（Platform.Core）
+- `LineRectangleReconstructor.cs` → `LineDetectionResult` / `EsRectInt`（EsUtil.Platform.Core）
+- `MatHelper.cs` → OpenCvSharp（内部のみ）・`EsBitmap`（EsUtil.Platform.Core）
 
-本プロジェクトは **UI フレームワーク非依存**です（依存は `Platform.Core` と OpenCvSharp のみ。 Avalonia への依存なし）。 座標はコア型（`EsPoint` / `EsRectInt`）で公開し、UI 側は境界で各 UI の型へ変換します。
+本プロジェクトは **UI フレームワーク非依存**です（依存は `EsUtil.Platform.Core` と OpenCvSharp のみ。 Avalonia への依存なし）。 座標はコア型（`EsPoint` / `EsRectInt`）で公開し、UI 側は境界で各 UI の型へ変換します。
 
 ### ネイティブの構成（slim プロファイル）
 

@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.Platform.Skia;
 /// <summary>コアの <see cref="EsBitmap"/> と Skia の <see cref="SKBitmap"/> を相互変換する拡張メソッド。</summary>
 /// <remarks>
 /// <b>なぜ本層が持つか</b>: Skia は UI フレームワークではないが<b>外部パッケージ</b>であるため、<br/>
-/// 「外部パッケージへ依存しない」を判定基準とする <c>Platform.Core</c> には置けない。<br/>
+/// 「外部パッケージへ依存しない」を判定基準とする <c>EsUtil.Platform.Core</c> には置けない。<br/>
 /// Skia への依存は本層へ閉じ込め、コアは自前のピクセルバッファだけを所有する。<br/>
 /// <br/>
 /// <b>所有権</b>: 双方向とも<b>コアのバッファの所有権は移動しない</b>。<br/>

@@ -53,7 +53,7 @@ Native AOT で配布する場合は `<c>SettingsService(JsonSerializerContext?)<
 ```text
 App.App.AvaloniaUI（Avalonia 実装） / App.App.MewUI
   └──> App.App.Core（本プロジェクト）
-         ├──> Platform.Core（画像コンテナ・コア型）
+         ├──> EsUtil.Platform.Core（画像コンテナ・コア型）
          └──> LineDetection（窓枠検出。UI 非依存）
 ```
 

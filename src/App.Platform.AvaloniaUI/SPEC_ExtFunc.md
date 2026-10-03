@@ -39,15 +39,15 @@
 ## 2. 目的
 
 本プロジェクトは **Avalonia UI 固有のアダプタのみ**を提供します。
-UI フレームワーク非依存の抽象・値型・純粋ロジックと、ネイティブ（OS）の Win32 実装は `Platform.Core`（後者は `Native/` 配下） が担います。
+UI フレームワーク非依存の抽象・値型・純粋ロジックと、ネイティブ（OS）の Win32 実装は `EsUtil.Platform.Core`（後者は `Native/` 配下） が担います。
 
 | 機能 | 提供元 |
 | --- | --- |
-| サービス抽象（`ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>`） | `Platform.Core` |
-| コア値型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` / `EsPlatformHandle` 等） | `Platform.Core` |
-| 座標変換ポート（`ICoordTransform` / `CoordTransform`）・`ScrollMath` / `DpiScaler` | `Platform.Core` |
-| 画像コンテナ（`EsBitmap`） | `Platform.Core` |
-| 既定実装（Win32）・サービス抽象・System.Drawing 変換 | `Platform.Core`（`Native/` ・`Native/Win/`・`Native/Imaging/`） |
+| サービス抽象（`ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>`） | `EsUtil.Platform.Core` |
+| コア値型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` / `EsPlatformHandle` 等） | `EsUtil.Platform.Core` |
+| 座標変換ポート（`ICoordTransform` / `CoordTransform`）・`ScrollMath` / `DpiScaler` | `EsUtil.Platform.Core` |
+| 画像コンテナ（`EsBitmap`） | `EsUtil.Platform.Core` |
+| 既定実装（Win32）・サービス抽象・System.Drawing 変換 | `EsUtil.Platform.Core`（`Native/` ・`Native/Win/`・`Native/Imaging/`） |
 | **画面座標変換（`ScreenConverter`）・相互変換（Interop）・画像／幾何アダプタ** | **本プロジェクト** |
 
 ## 3. 外部利用条件
@@ -58,7 +58,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 <ProjectReference Include="..\App.Platform.AvaloniaUI\src\App.Platform.AvaloniaUI.csproj" />
 ```
 
-本プロジェクトは `Platform.Core` を参照しているため、
+本プロジェクトは `EsUtil.Platform.Core` を参照しているため、
 本プロジェクトを参照すればその公開型も利用できます。
 
 ### 3.2 必要な名前空間
@@ -155,7 +155,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 
 ### 5.4 EsBitmapAvaloniaExtensions / EsBitmapAvaloniaImage / CapacityLimitedCache
 
-`EsBitmap`（`Platform.Core` 提供）を Avalonia へ適合させます。
+`EsBitmap`（`EsUtil.Platform.Core` 提供）を Avalonia へ適合させます。
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
@@ -191,7 +191,7 @@ var brush = s_cache.GetOrCreate(color);
 `ColorExtensions` / `EsBitmapAvaloniaImage` / `EsBitmapAvaloniaExtensions` /
 `CapacityLimitedCache<TKey, TValue>` / `SolidColorBrushCache` です。
 
-インターフェース・コア値型・`CoordTransform`・`EsBitmap` と、その Win32 実装（`Native.Win`） ・`EsBitmapDrawingExtensions`（`Native.Imaging`）は `Platform.Core` が提供します。
+インターフェース・コア値型・`CoordTransform`・`EsBitmap` と、その Win32 実装（`Native.Win`） ・`EsBitmapDrawingExtensions`（`Native.Imaging`）は `EsUtil.Platform.Core` が提供します。
 
 ## 6. 座標系
 
@@ -201,7 +201,7 @@ var brush = s_cache.GetOrCreate(color);
 | コントロールローカル DIP | `EsPoint` / `EsSize`（描画時は Avalonia 型） | マウス入力・描画（Avalonia 論理座標） |
 | 画面物理 Pixel | `EsPointInt` / `EsRectInt` | カーソル操作・キャプチャ・画面変換 |
 
-- 対象 ↔ DIP の変換は `ICoordTransform`（`Platform.Core`）が担います。
+- 対象 ↔ DIP の変換は `ICoordTransform`（`EsUtil.Platform.Core`）が担います。
 - ローカル DIP ↔ 画面物理の変換は `ScreenConverter`（本プロジェクト）が担います。
 - 各層の境界では本プロジェクトの相互変換拡張で型を変換します。
 

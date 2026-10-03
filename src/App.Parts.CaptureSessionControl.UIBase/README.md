@@ -18,7 +18,7 @@
 
 ```text
 App.Parts.CapturePreviewControl.Core ─────────────┐（設定型・寸法・表示可否）
-Feature.Marquee.Presenter / Feature.Loupe.Presenter ─┐（描画の設定＝色）
+EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter ─┐（描画の設定＝色）
                                              ↓
                               App.Parts.CaptureSessionControl.UIBase（色の写像）
                                              ↓
@@ -44,11 +44,11 @@ Feature.Marquee.Presenter / Feature.Loupe.Presenter ─┐（描画の設定＝�
 ```text
 App.Parts.CaptureSessionControl.UIBase
     ├─ App.Parts.CapturePreviewControl.Core（CaptureSettings / FadeMaskDragRectOptions / Mode / Modes）
-    ├─ Feature.Marquee.Core（MarqueeOptions）
-    ├─ Feature.Loupe.Core（LoupeOptions）
-    ├─ Feature.Marquee.Presenter（MarqueeAppearance / MarqueeLabelPlacement）
-    ├─ Feature.Loupe.Presenter（LoupeAppearance）
-    └─ Platform.Core（Es* 幾何型）
+    ├─ EsUtil.Feature.Marquee.Core（MarqueeOptions）
+    ├─ EsUtil.Feature.Loupe.Core（LoupeOptions）
+    ├─ EsUtil.Feature.Marquee.Presenter（MarqueeAppearance / MarqueeLabelPlacement）
+    ├─ EsUtil.Feature.Loupe.Presenter（LoupeAppearance）
+    └─ EsUtil.Platform.Core（Es* 幾何型）
 ```
 
 UI フレームワークへ依存しません。 外部パッケージへの直接依存もありません。

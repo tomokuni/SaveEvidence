@@ -43,6 +43,6 @@ internal static class FadeMaskDragRectSkiaRenderer
         }
     }
 
-    // ※ 色の変換（コアの色型 → Skia）は Platform.Core の SkiaColorInterop（拡張メソッド）を共用する
+    // ※ 色の変換（コアの色型 → Skia）は EsUtil.Platform.Core の SkiaColorInterop（拡張メソッド）を共用する
 }
 

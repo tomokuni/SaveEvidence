@@ -1,6 +1,6 @@
 # App.App.MewUI（MewUI 版アプリ本体）
 
-SaveEvidence の **MewUI 版ホストアプリ**です。 UI 非依存のコア（`App.App.Core` / `Platform.Core`（Win32 実装を含む） /
+SaveEvidence の **MewUI 版ホストアプリ**です。 UI 非依存のコア（`App.App.Core` / `EsUtil.Platform.Core`（Win32 実装を含む） /
 `LineDetection`）をそのまま使い、UI 層だけを MewUI で実装します。
 
 > **現状: 全ページ実装済み**。 キャプチャ / フォルダビュー / Undo 一覧 / 設定の 4 ページと、
@@ -75,11 +75,11 @@ src/App.App.MewUI/
 ## 依存関係
 
 ```text
-App.App.MewUI ──> App.App.Core ──> Platform.Core / LineDetection
+App.App.MewUI ──> App.App.Core ──> EsUtil.Platform.Core / LineDetection
     │                              │
     ├──> App.Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
-    ├──> Platform.Core の Win32 実装（キャプチャ等。Native.Win）
-    ├──> Feature.Loupe.ControlMewUI ──> Feature.Loupe.Core（UI 非依存のルーペロジック）
+    ├──> EsUtil.Platform.Core の Win32 実装（キャプチャ等。Native.Win）
+    ├──> EsUtil.Feature.Loupe.ControlMewUI ──> EsUtil.Feature.Loupe.Core（UI 非依存のルーペロジック）
     └──> App.Parts.CapturePreviewControl.MewUI ──> App.Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則、複合コントロールの設定とモード、画像ビューポートの状態と判断）
 ```
 
@@ -306,7 +306,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 - 出力先: `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持。 Serilog）
 - 内容: アプリ起動 / 終了、撮影・切り出しの開始と確定・キャンセル、選択操作（MouseDown / MouseUp / DragStart / KeyDown 等）、ズーム操作（前後のズーム率）、ルーペの状態変更（表示中の選択オーバーレイ）、未処理の例外
 - 未処理の例外は、アプリ全体（`AppDomain`）/ UI スレッド（`Application.DispatcherUnhandledException`）/ 待機されなかったタスク（`TaskScheduler`）の 3 経路を記録します。 UI スレッドの例外は記録後に処理済みとして扱い、ウィンドウの表示を維持します（Avalonia 版と同じ）。
-- カテゴリはクラス名（`Program` / `CaptureSessionControl` / `CapturePage` 等）です。 メッセージの接頭辞（`[Feature.Marquee.Core]` / `[Feature.Loupe.Core]` / `[Feature.Marquee.Presenter]` / `[Feature.Loupe.Presenter]` / `[ZoomIn]`）は、そのログを定義しているプロジェクトを表します。
+- カテゴリはクラス名（`Program` / `CaptureSessionControl` / `CapturePage` 等）です。 メッセージの接頭辞（`[Marquee.Core]` / `[Loupe.Core]` / `[Marquee.Presenter]` / `[Loupe.Presenter]` / `[ZoomIn]`）は、そのログを定義しているプロジェクトを表します。
 
 ## 履歴（戻す / やり直し）
 

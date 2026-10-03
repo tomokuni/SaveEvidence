@@ -9,7 +9,7 @@
 flowchart TB
     APP["アプリ層<br/>App.App.AvaloniaUI / App.App.MewUI（+ App.App.Core の ViewModel・Model）<br/>App.Parts.CapturePreviewControl.*（撮影セッション + 切り出しビュー + 領域選択 + 切り出しプレビューのビューポート）"]
     CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI"]
-    PLAT["プラットフォーム層<br/>Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>App.Platform.Skia（Skia 依存を閉じ込める）<br/>App.Platform.AvaloniaUI / App.Platform.MewUI（UI アダプタ）"]
+    PLAT["プラットフォーム層<br/>EsUtil.Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>App.Platform.Skia（Skia 依存を閉じ込める）<br/>App.Platform.AvaloniaUI / App.Platform.MewUI（UI アダプタ）"]
     APP --> CTRL
     APP --> PLAT
     CTRL --> PLAT
@@ -29,7 +29,7 @@ flowchart TB
     UI --> UB
     UI --> CORE
     UB -->|幾何を受け取る| CORE
-    CORE --> PC["Platform.Core<br/>Es* 値型・ICoordTransform・ICursorService"]
+    CORE --> PC["EsUtil.Platform.Core<br/>Es* 値型・ICoordTransform・ICursorService"]
     UB --> PC
 ```
 
@@ -38,8 +38,8 @@ flowchart TB
 
 | 層 | 置くもの | 置かないもの | 依存先 | Loupe の例 |
 | --- | --- | --- | --- | --- |
-| **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・**描画の幾何（切り出し領域・描画面）**・**コアが出力するログ定義** | 色・フォントサイズ・表示可否・UI フレームワークの型・**描画 API と描画の抽象**・コントロール化を前提とした処理（組み込み先の概念） | `Platform.Core` | `LoupeCore`（`ResolveLayout` / `ResolveGeometry`）/ `LoupeGeometry` / `LoupeOptions` / `LoupeLayout` |
-| **Presenter** | **提示（`XxxPresenter`：幾何＋外観 → 描画計画（層の順序・装飾矩形・文言・配置））**・**外観（`XxxAppearance`：色・フォント・角丸・枠線の太さ・表示可否）**・**テキストを要素に写す配置計算（`XxxLabelPlan`）**・**本層が所有する設定の変更ログ** | コア単体でも成立する計算（選択・表示レイアウト）・UI フレームワークの型・**描画 API の抽象**・**コントロール化を前提とした処理**（入力の解釈・ビューポート連携・組み込み先の概念） | `Core` / `Platform.Core` | `LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupePresenter`（`DrawPlan` partial） / `LoupePresenter`（`LabelPlan` partial） |
+| **Core** | 「何を描くか」の判断・状態・設定の既定値と補正・純粋計算・**描画の幾何（切り出し領域・描画面）**・**コアが出力するログ定義** | 色・フォントサイズ・表示可否・UI フレームワークの型・**描画 API と描画の抽象**・コントロール化を前提とした処理（組み込み先の概念） | `EsUtil.Platform.Core` | `LoupeCore`（`ResolveLayout` / `ResolveGeometry`）/ `LoupeGeometry` / `LoupeOptions` / `LoupeLayout` |
+| **Presenter** | **提示（`XxxPresenter`：幾何＋外観 → 描画計画（層の順序・装飾矩形・文言・配置））**・**外観（`XxxAppearance`：色・フォント・角丸・枠線の太さ・表示可否）**・**テキストを要素に写す配置計算（`XxxLabelPlan`）**・**本層が所有する設定の変更ログ** | コア単体でも成立する計算（選択・表示レイアウト）・UI フレームワークの型・**描画 API の抽象**・**コントロール化を前提とした処理**（入力の解釈・ビューポート連携・組み込み先の概念） | `Core` / `EsUtil.Platform.Core` | `LoupePresenter` / `LoupeAppearance` / `LoupeDrawPlan` / `LoupeDrawLayer` / `LoupePresenter`（`DrawPlan` partial） / `LoupePresenter`（`LabelPlan` partial） |
 | **UI** | 入力イベントの受付とコア型への変換・効果の適用・通知の公開イベントへの転送・**描画（自 UI の描画 API で描画計画を描く）**・ラベル要素の配置・**コントロール化を前提とした処理（ホイール操作・ビューポート連携）**・**本 UI が出力するログ定義** | 判断・計算・既定値（コアが単一所有する）・層の順序（Presenter がデータとして単一所有する） | `Core` / `Presenter` / `Platform.*` | `LoupeControl` / `LoupeContextPainter` / `LoupeSkiaPainter` |
 
 ## 3. どこに置くかを決める 3 つの問い
@@ -97,23 +97,23 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 `App.Parts.CaptureSessionControl.UIBase` は**描画手順を持たない例外的な Presenter** です（設定 → 色の写像だけを持ちます）。 写像元がセッションの設定型（`CaptureSettings`）、写像先が外観（`MarqueeAppearance` / `LoupeAppearance`）という**2 つの層にまたがる**ため、コアにも（Core → Presenter の逆流になる）再利用ライブラリにも置けません。 両 UI のホストが同じ写像を使うことを保証するために本層を置いています（詳細は [`App.Parts.CaptureSessionControl.UIBase`](App.Parts.CaptureSessionControl.UIBase/README.md)）。
 
-`LineDetection` は画像処理ライブラリであり、本 3 層には含めません（`Platform.Core` のみに依存します）。
+`LineDetection` は画像処理ライブラリであり、本 3 層には含めません（`EsUtil.Platform.Core` のみに依存します）。
 
 ## 6. 各層のドキュメント
 
 | コントロール | Core | Presenter |
 | --- | --- | --- |
-| Marquee | [`Feature.Marquee.Core`](Feature.Marquee.Core/README.md) | [`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) |
-| Loupe | [`Feature.Loupe.Core`](Feature.Loupe.Core/README.md) | [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md) |
+| Marquee | [`EsUtil.Feature.Marquee.Core`](EsUtil.Feature.Marquee.Core/README.md) | [`EsUtil.Feature.Marquee.Presenter`](EsUtil.Feature.Marquee.Presenter/README.md) |
+| Loupe | [`EsUtil.Feature.Loupe.Core`](EsUtil.Feature.Loupe.Core/README.md) | [`EsUtil.Feature.Loupe.Presenter`](EsUtil.Feature.Loupe.Presenter/README.md) |
 | CaptureSession | [`App.Parts.CapturePreviewControl.Core`](App.Parts.CapturePreviewControl.Core/README.md) | [`App.Parts.CaptureSessionControl.UIBase`](App.Parts.CaptureSessionControl.UIBase/README.md) |
 | CropView | [`App.Parts.CapturePreviewControl.Core`](App.Parts.CapturePreviewControl.Core/README.md) | なし |
 | ZoomView | [`App.Parts.CapturePreviewControl.Core`](App.Parts.CapturePreviewControl.Core/README.md) | なし（UI 層が描く。 `CropViewControl` が内包） |
 | FadeMaskDragRect | [`App.Parts.CapturePreviewControl.Core`](App.Parts.CapturePreviewControl.Core/README.md) | [`App.Parts.CaptureSessionControl.UIBase`](App.Parts.CaptureSessionControl.UIBase/README.md) |
 
-FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`Feature.Marquee.Presenter`](Feature.Marquee.Presenter/README.md) / [`Feature.Loupe.Presenter`](Feature.Loupe.Presenter/README.md)）。
+FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`EsUtil.Feature.Marquee.Presenter`](EsUtil.Feature.Marquee.Presenter/README.md) / [`EsUtil.Feature.Loupe.Presenter`](EsUtil.Feature.Loupe.Presenter/README.md)）。
 
-UI 層は [`Feature.Marquee.ControlAvaloniaUI`](Feature.Marquee.ControlAvaloniaUI/README.md) / [`Feature.Marquee.ControlMewUI`](Feature.Marquee.ControlMewUI/README.md) / [`Feature.Loupe.ControlAvaloniaUI`](Feature.Loupe.ControlAvaloniaUI/README.md) / [`Feature.Loupe.ControlMewUI`](Feature.Loupe.ControlMewUI/README.md)、
-プラットフォーム層は [`Platform.Core`](Platform.Core/README.md) / [`App.Platform.Skia`](App.Platform.Skia/README.md) / [`App.Platform.AvaloniaUI`](App.Platform.AvaloniaUI/README.md) / [`App.Platform.MewUI`](App.Platform.MewUI/README.md) を参照してください。
+UI 層は [`EsUtil.Feature.Marquee.ControlAvaloniaUI`](EsUtil.Feature.Marquee.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Marquee.ControlMewUI`](EsUtil.Feature.Marquee.ControlMewUI/README.md) / [`EsUtil.Feature.Loupe.ControlAvaloniaUI`](EsUtil.Feature.Loupe.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Loupe.ControlMewUI`](EsUtil.Feature.Loupe.ControlMewUI/README.md)、
+プラットフォーム層は [`EsUtil.Platform.Core`](EsUtil.Platform.Core/README.md) / [`App.Platform.Skia`](App.Platform.Skia/README.md) / [`App.Platform.AvaloniaUI`](App.Platform.AvaloniaUI/README.md) / [`App.Platform.MewUI`](App.Platform.MewUI/README.md) を参照してください。
 
 ## 7. 名前空間とフォルダ
 
