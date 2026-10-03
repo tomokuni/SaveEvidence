@@ -30,7 +30,7 @@ pushd "%~dp0.."
 rem ターゲットランタイム（既定: win-x64）
 if "%~1"=="" (set "RID=win-x64") else (set "RID=%~1")
 
-set "APP_NAME=SaveEvidence.MewUI.exe"
+set "APP_NAME=App.MewUI.exe"
 
 rem 最終的な出力先（Avalonia UI 版と分ける）
 set "OUTDIR=%CD%\publish\mewui-%RID%-aot"
@@ -49,7 +49,7 @@ echo.
 
 if exist "%STAGE%" rd /s /q "%STAGE%"
 
-dotnet publish "src\App.App.MewUI\src\App.App.MewUI.csproj" ^
+dotnet publish "src\App.MewUI\src\App.MewUI.csproj" ^
   -c Release ^
   -r "%RID%" ^
   -p:PublishAot=true ^

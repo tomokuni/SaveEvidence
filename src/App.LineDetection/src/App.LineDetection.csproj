@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EsUtil.SaveEvidence.LineDetection</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp5" Version="[5.*,)" />
+    <!-- slim プロファイル（videoio を無効化）を使う。本ライブラリは imgproc（CvtColor / Canny / HoughLinesP）と
+         imgcodecs（ImRead）のみを使用し、動画入出力（VideoCapture / VideoWriter）は使わないため、
+         videoio と FFmpeg（opencv_videoio_ffmpeg500_64.dll 約 31 MB）を持ち込まない。 -->
+    <PackageReference Include="OpenCvSharp5.runtime.win.slim" Version="[5.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\EsUtil.Platform.Core\src\EsUtil.Platform.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="App.LineDetection.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+    <Page Remove="..\tests\**" />
+    <AvaloniaXaml Remove="..\tests\**" />
+    <EmbeddedResource Remove="..\tests\**" />
+    <!-- sample/ は独立したサンプルアプリケーションのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\sample\**" />
+    <None Remove="..\sample\**" />
+    <Page Remove="..\sample\**" />
+    <AvaloniaXaml Remove="..\sample\**" />
+    <EmbeddedResource Remove="..\sample\**" />
+  </ItemGroup>
+
+</Project>

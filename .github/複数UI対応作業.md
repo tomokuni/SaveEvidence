@@ -959,19 +959,19 @@ src/SnipCaptureUI/src/Sessions/OverlayWindow.Highlight.cs using 追加
 src/SnipCaptureUI/sample/Views/MainWindow.axaml.cs        using 追加
 src/SnipCaptureUI/tests/OverlayWindowStateTests.cs        using 追加
 src/app.AvaloniaUI/src/Views/Pages/{FolderViewPage,UndoPage}.axaml   assembly=app.Core を付与
-src/LineDetection/src/LineDetectionResult.cs              Point → EsPoint
-src/LineDetection/src/LineRectangleReconstructor.cs       PixelRect → EsPixelRect
-src/LineDetection/src/LogicLineDetector.cs                型エイリアスを EsPoint へ
-src/LineDetection/src/LineDetection.csproj               参照を EsUtil.Platform.Core へ（Avalonia パッケージ削除）
-src/LineDetection/tests/LineRectangleReconstructorTests.cs  EsPoint / EsPixelRect へ
-src/LineDetection/sample/ViewModels/LineItem.cs          境界変換（ToAvaloniaPoint）
+src/App.LineDetection/src/LineDetectionResult.cs              Point → EsPoint
+src/App.LineDetection/src/LineRectangleReconstructor.cs       PixelRect → EsPixelRect
+src/App.LineDetection/src/LogicLineDetector.cs                型エイリアスを EsPoint へ
+src/App.LineDetection/src/App.LineDetection.csproj               参照を EsUtil.Platform.Core へ（Avalonia パッケージ削除）
+src/App.LineDetection/tests/LineRectangleReconstructorTests.cs  EsPoint / EsPixelRect へ
+src/App.LineDetection/sample/ViewModels/LineItem.cs          境界変換（ToAvaloniaPoint）
 src/app.AvaloniaUI/src/ViewModels/MainViewModel.cs                  矩形を EsPixelRect 化 / using 追加
 src/app.AvaloniaUI/src/Views/Pages/CapturePage.axaml.cs             境界変換（EsPixelRect）
 src/app.AvaloniaUI/tests/MainViewModelStateTests.cs                 EsPoint へ（using 追加）
 src/app.AvaloniaUI/tests/MainViewModelAutoCropTests.cs              EsPixelRect へ（using 追加）
 src/app.AvaloniaUI/tests/AppLog.Tests.cs                            using 追加
 src/app.AvaloniaUI/src/Logging/AppLog.cs                            using 追加
-src/LineDetection/sample/Views/CreatePage.axaml.cs       using 追加
+src/App.LineDetection/sample/Views/CreatePage.axaml.cs       using 追加
 ```
 
 ### 14.5 実施結果（検証）
@@ -1019,12 +1019,12 @@ src/LineDetection/sample/Views/CreatePage.axaml.cs       using 追加
 ### 15.4 変更対象
 
 ```text
-src/LineDetection/src/*.cs                                 名前空間を Estable.LineDetection へ（7 ファイル）
-src/LineDetection/tests/*.cs                               同上（8 ファイル）+ TestAppBuilder
-src/LineDetection/sample/ViewModels/*.cs                   同上（6 ファイル）
-src/LineDetection/src/LineDetection.csproj                 RootNamespace
-src/LineDetection/tests/LineDetection.Tests.csproj         RootNamespace
-src/LineDetection/{README,SPEC_ExtFunc,SPEC_System}.md     名前空間の記載
+src/App.LineDetection/src/*.cs                                 名前空間を Estable.LineDetection へ（7 ファイル）
+src/App.LineDetection/tests/*.cs                               同上（8 ファイル）+ TestAppBuilder
+src/App.LineDetection/sample/ViewModels/*.cs                   同上（6 ファイル）
+src/App.LineDetection/src/App.LineDetection.csproj                 RootNamespace
+src/App.LineDetection/tests/App.LineDetection.Tests.csproj         RootNamespace
+src/App.LineDetection/{README,SPEC_ExtFunc,SPEC_System}.md     名前空間の記載
 src/app.Core/src/ViewModels/MainViewModel.cs               移設 + クリップボードの EsBitmap 化 + IImageWriter 必須化
 src/app.Core/src/app.Core.csproj                           LineDetection 参照を追加
 src/app.Core/tests/MainViewModel{,State,AutoCrop}*.cs       移設 + MockImageWriter 注入へ

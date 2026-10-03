@@ -1,37 +1,37 @@
 <Solution>
   <Folder Name="/src/" />
-  <Folder Name="/src/App.App.Core/">
-    <Project Path="src/App.App.Core/src/App.App.Core.csproj" />
-    <Project Path="src/App.App.Core/tests/App.App.Core.Tests.csproj" />
+  <Folder Name="/src/App.Core/">
+    <Project Path="src/App.Core/src/App.Core.csproj" />
+    <Project Path="src/App.Core/tests/App.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.App.AvaloniaUI/">
-    <Project Path="src/App.App.AvaloniaUI/src/App.App.AvaloniaUI.csproj" />
-    <Project Path="src/App.App.AvaloniaUI/tests/App.App.AvaloniaUI.Tests.csproj" />
+  <Folder Name="/src/App.AvaloniaUI/">
+    <Project Path="src/App.AvaloniaUI/src/App.AvaloniaUI.csproj" />
+    <Project Path="src/App.AvaloniaUI/tests/App.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.App.MewUI/">
-    <Project Path="src/App.App.MewUI/src/App.App.MewUI.csproj" />
-    <Project Path="src/App.App.MewUI/tests/App.App.MewUI.Tests.csproj" />
+  <Folder Name="/src/App.MewUI/">
+    <Project Path="src/App.MewUI/src/App.MewUI.csproj" />
+    <Project Path="src/App.MewUI/tests/App.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CapturePreviewControl.Core/" />
-  <Folder Name="/src/App.Parts.CapturePreviewControl.Core/src/">
-    <Project Path="src/App.Parts.CapturePreviewControl.Core/src/App.Parts.CapturePreviewControl.Core.csproj" />
+  <Folder Name="/src/Parts.CapturePreviewControl.Core/" />
+  <Folder Name="/src/Parts.CapturePreviewControl.Core/src/">
+    <Project Path="src/Parts.CapturePreviewControl.Core/src/Parts.CapturePreviewControl.Core.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CapturePreviewControl.Core/tests/">
-    <Project Path="src/App.Parts.CapturePreviewControl.Core/tests/App.Parts.CapturePreviewControl.Core.Tests.csproj" />
+  <Folder Name="/src/Parts.CapturePreviewControl.Core/tests/">
+    <Project Path="src/Parts.CapturePreviewControl.Core/tests/Parts.CapturePreviewControl.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CapturePreviewControl.MewUI/" />
-  <Folder Name="/src/App.Parts.CapturePreviewControl.MewUI/src/">
-    <Project Path="src/App.Parts.CapturePreviewControl.MewUI/src/App.Parts.CapturePreviewControl.MewUI.csproj" />
+  <Folder Name="/src/Parts.CapturePreviewControl.MewUI/" />
+  <Folder Name="/src/Parts.CapturePreviewControl.MewUI/src/">
+    <Project Path="src/Parts.CapturePreviewControl.MewUI/src/Parts.CapturePreviewControl.MewUI.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CapturePreviewControl.MewUI/tests/">
-    <Project Path="src/App.Parts.CapturePreviewControl.MewUI/tests/App.Parts.CapturePreviewControl.MewUI.Tests.csproj" />
+  <Folder Name="/src/Parts.CapturePreviewControl.MewUI/tests/">
+    <Project Path="src/Parts.CapturePreviewControl.MewUI/tests/Parts.CapturePreviewControl.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CaptureSessionControl.UIBase/" />
-  <Folder Name="/src/App.Parts.CaptureSessionControl.UIBase/src/">
-    <Project Path="src/App.Parts.CaptureSessionControl.UIBase/src/App.Parts.CaptureSessionControl.UIBase.csproj" />
+  <Folder Name="/src/Parts.CaptureSessionControl.UIBase/" />
+  <Folder Name="/src/Parts.CaptureSessionControl.UIBase/src/">
+    <Project Path="src/Parts.CaptureSessionControl.UIBase/src/Parts.CaptureSessionControl.UIBase.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CaptureSessionControl.UIBase/tests/">
-    <Project Path="src/App.Parts.CaptureSessionControl.UIBase/tests/App.Parts.CaptureSessionControl.UIBase.Tests.csproj" />
+  <Folder Name="/src/Parts.CaptureSessionControl.UIBase/tests/">
+    <Project Path="src/Parts.CaptureSessionControl.UIBase/tests/Parts.CaptureSessionControl.UIBase.Tests.csproj" />
   </Folder>
   <Folder Name="/src/ColorPickerControl.AvaloniaUI/">
     <Project Path="src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj" />
@@ -62,10 +62,10 @@
     <Project Path="src/EsUtil.Feature.Marquee.ControlAvaloniaUI/src/AvaloniaUI/EsUtil.Feature.Marquee.ControlAvaloniaUI.csproj" />
     <Project Path="src/EsUtil.Feature.Marquee.ControlAvaloniaUI/tests/AvaloniaUI/EsUtil.Feature.Marquee.ControlAvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/LineDetection/">
-    <Project Path="src/LineDetection/sample/LineDetection.Sample.csproj" />
-    <Project Path="src/LineDetection/src/LineDetection.csproj" />
-    <Project Path="src/LineDetection/tests/LineDetection.Tests.csproj" />
+  <Folder Name="/src/App.LineDetection/">
+    <Project Path="src/App.LineDetection/sample/App.LineDetection.Sample.csproj" />
+    <Project Path="src/App.LineDetection/src/App.LineDetection.csproj" />
+    <Project Path="src/App.LineDetection/tests/App.LineDetection.Tests.csproj" />
   </Folder>
   <Folder Name="/src/EsUtil.Feature.Loupe.Core/">
     <Project Path="src/EsUtil.Feature.Loupe.Core/src/EsUtil.Feature.Loupe.Core.csproj" />
@@ -87,26 +87,26 @@
     <Project Path="src/EsUtil.Platform.Core/tests/EsUtil.Platform.Core.Tests.csproj" />
   </Folder>
   <Folder Name="/src/EsUtil.Platform.Core/src/" />
-  <Folder Name="/src/App.Platform.MewUI/">
-    <Project Path="src/App.Platform.MewUI/src/App.Platform.MewUI.csproj" />
-    <Project Path="src/App.Platform.MewUI/tests/App.Platform.MewUI.Tests.csproj" />
+  <Folder Name="/src/Platform.MewUI/">
+    <Project Path="src/Platform.MewUI/src/Platform.MewUI.csproj" />
+    <Project Path="src/Platform.MewUI/tests/Platform.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Platform.MewUI/src/" />
+  <Folder Name="/src/Platform.MewUI/src/" />
   <Folder Name="/src/EsUtil.Feature.Marquee.Presenter/src/Presenter/" />
-  <Folder Name="/src/App.Platform.AvaloniaUI/">
-    <Project Path="src/App.Platform.AvaloniaUI/src/App.Platform.AvaloniaUI.csproj" />
-    <Project Path="src/App.Platform.AvaloniaUI/tests/App.Platform.AvaloniaUI.Tests.csproj" />
+  <Folder Name="/src/Platform.AvaloniaUI/">
+    <Project Path="src/Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj" />
+    <Project Path="src/Platform.AvaloniaUI/tests/Platform.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Parts.CapturePreviewControl.AvaloniaUI/">
-    <Project Path="src/App.Parts.CapturePreviewControl.AvaloniaUI/sample/App.Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj" />
-    <Project Path="src/App.Parts.CapturePreviewControl.AvaloniaUI/src/App.Parts.CapturePreviewControl.AvaloniaUI.csproj" />
-    <Project Path="src/App.Parts.CapturePreviewControl.AvaloniaUI/tests/App.Parts.CapturePreviewControl.AvaloniaUI.Tests.csproj" />
+  <Folder Name="/src/Parts.CapturePreviewControl.AvaloniaUI/">
+    <Project Path="src/Parts.CapturePreviewControl.AvaloniaUI/sample/Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj" />
+    <Project Path="src/Parts.CapturePreviewControl.AvaloniaUI/src/Parts.CapturePreviewControl.AvaloniaUI.csproj" />
+    <Project Path="src/Parts.CapturePreviewControl.AvaloniaUI/tests/Parts.CapturePreviewControl.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/App.Platform.Skia/" />
-  <Folder Name="/src/App.Platform.Skia/src/">
-    <Project Path="src/App.Platform.Skia/src/App.Platform.Skia.csproj" />
+  <Folder Name="/src/Platform.Skia/" />
+  <Folder Name="/src/Platform.Skia/src/">
+    <Project Path="src/Platform.Skia/src/Platform.Skia.csproj" />
   </Folder>
-  <Folder Name="/src/App.Platform.Skia/tests/">
-    <Project Path="src/App.Platform.Skia/tests/App.Platform.Skia.Tests.csproj" />
+  <Folder Name="/src/Platform.Skia/tests/">
+    <Project Path="src/Platform.Skia/tests/Platform.Skia.Tests.csproj" />
   </Folder>
 </Solution>

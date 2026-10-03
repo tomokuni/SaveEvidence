@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EsUtil.SaveEvidence.App.Core</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <NoWarn>$(NoWarn);MVVMTK0042</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Parts.CapturePreviewControl.Core\src\Parts.CapturePreviewControl.Core.csproj" />
+    <ProjectReference Include="..\..\EsUtil.Platform.Core\src\EsUtil.Platform.Core.csproj" />
+    <!-- 自動切り出しの矩形検出（LineDetection は UI 非依存） -->
+    <ProjectReference Include="..\..\App.LineDetection\src\App.LineDetection.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- internal 型は UI 実装とテストからのみ参照する（公開 API を増やさない） -->
+    <InternalsVisibleTo Include="App.AvaloniaUI" />
+    <InternalsVisibleTo Include="App.MewUI" />
+    <InternalsVisibleTo Include="App.AvaloniaUI.Tests" />
+    <InternalsVisibleTo Include="App.Core.Tests" />
+    <InternalsVisibleTo Include="App.MewUI.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -246,23 +246,23 @@
 
 ### プロジェクト構成
 
-- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。 独立した再利用可能なコントロール（`EsUtil.Feature.Marquee.ControlAvaloniaUI` / `EsUtil.Feature.Marquee.ControlMewUI` / `EsUtil.Feature.Loupe.ControlAvaloniaUI` / `EsUtil.Feature.Loupe.ControlMewUI` / `ColorPickerControl` / `LineDetection`）と、撮影スタック（App.Parts.CapturePreviewControl.AvaloniaUI / App.Parts.CapturePreviewControl.MewUI（撮影セッション + 切り出しビュー + 領域選択 + 切り出しビューの画像ビューポートの描画と配線）/ App.Parts.CapturePreviewControl.Core（撮影セッション + 切り出しビュー + 領域選択 + 切り出しビューの画像ビューポートの状態と判断）/ App.Parts.CaptureSessionControl.UIBase（設定 → 外観の写像））と、見た目（描画計画と外観）を単一所有する**コントロール化を前提としない UI 非依存層**（EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter）、プラットフォーム層（App.Platform.AvaloniaUI / EsUtil.Platform.Core / App.Platform.MewUI）、アプリ本体（`App.App.AvaloniaUI` / `App.App.MewUI` / `App.App.Core`）から構成される。
+- SaveEvidence は Windows デスクトップの画面キャプチャアプリ。 独立した再利用可能なコントロール（`EsUtil.Feature.Marquee.ControlAvaloniaUI` / `EsUtil.Feature.Marquee.ControlMewUI` / `EsUtil.Feature.Loupe.ControlAvaloniaUI` / `EsUtil.Feature.Loupe.ControlMewUI` / `ColorPickerControl` / `LineDetection`）と、撮影スタック（Parts.CapturePreviewControl.AvaloniaUI / Parts.CapturePreviewControl.MewUI（撮影セッション + 切り出しビュー + 領域選択 + 切り出しビューの画像ビューポートの描画と配線）/ Parts.CapturePreviewControl.Core（撮影セッション + 切り出しビュー + 領域選択 + 切り出しビューの画像ビューポートの状態と判断）/ Parts.CaptureSessionControl.UIBase（設定 → 外観の写像））と、見た目（描画計画と外観）を単一所有する**コントロール化を前提としない UI 非依存層**（EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter）、プラットフォーム層（Platform.AvaloniaUI / EsUtil.Platform.Core / Platform.MewUI）、アプリ本体（`App.AvaloniaUI` / `App.MewUI` / `App.Core`）から構成される。
 - コントロールの層は **Core（何を描くか・判断）/ Presenter（提示＝描画計画と外観）/ UI（フレームワーク固有の描画と配線）** の 3 層で、依存は `UI → Presenter → Core → EsUtil.Platform.Core` の一方向（コアは Presenter を参照しない）。 層の正典は `src/README.md`。
 - **コントロール化を前提とした処理（ホイール操作・ビューポートの変化の追従・組み込み先の概念）は UI 層が持ちます**（提示層とコアはコントロールに依存しません）。
-- プラットフォーム層は、UI 非依存の `EsUtil.Platform.Core`（ルート名前空間 `EsUtil.Platform.Core`）と、各 UI のアダプタ `App.Platform.AvaloniaUI` / `App.Platform.MewUI` / `App.Platform.Skia`（ルート名前空間 `EsUtil.SaveEvidence.Platform.*`）から構成される。 `EsUtil.Platform.Core` は `Native/` 配下にサービス抽象と Win32 実装を担う。
-- `App.App.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
+- プラットフォーム層は、UI 非依存の `EsUtil.Platform.Core`（ルート名前空間 `EsUtil.Platform.Core`）と、各 UI のアダプタ `Platform.AvaloniaUI` / `Platform.MewUI` / `Platform.Skia`（ルート名前空間 `EsUtil.SaveEvidence.Platform.*`）から構成される。 `EsUtil.Platform.Core` は `Native/` 配下にサービス抽象と Win32 実装を担う。
+- `App.AvaloniaUI` は各コントロールを一方向依存で参照する（ゾンビアプリではなく、コントロールは汎用ライブラリ）。
 - `MarqueeControl` は選択矩形に加えて「選択矩形の外側に描く装飾」（暗転マスク・穴あけ枠・ハイライト・内側の塗り）を描画する。 外観と表示ポリシーは提示層（`EsUtil.Feature.Marquee.Presenter`）の `MarqueeAppearance` が単一所有し、装飾の矩形と描画順の判断は同層の `MarqueePresenter` が持つ（コアは穴あけ矩形という幾何だけを返す）。
 - **ラベルは提示層が文言と描画順を決め、UI 層がテキスト要素を配置する**（サイズラベル・カーソル座標ラベル・Loupe 中心座標ラベル）。 提示層（`EsUtil.Feature.Marquee.Presenter` の `MarqueeLabelPlan` / `EsUtil.Feature.Loupe.Presenter` の `LoupeLabelPlan`）が「実寸 → 要素の配置矩形」の写像を単一所有し、UI は `Border` + `TextBlock` を子として置く。 **ラベルは常に最上位**（`*DrawLayer` の最後の層であり、子要素は親の描画より後に描かれる）。
 - **付加情報ラベル（操作・情報ラベル）はコントロール固有の付加情報**であり選択コントロールの概念ではない。 Core は関知せず、ホストが文言生成（`CaptureLabelTexts`）と描画を行う（体裁は `FadeMaskDragRectControl.UIBase` の `MarqueeHostLabelRenderer` が単一所有する）。
-- **ログは値を所有する主体が記録する**（コアの設定はコア、提示層の外観は提示層、拡大元画像など UI の値は各 UI）。 接頭辞は**そのログを定義しているプロジェクトの名前空間から `EsUtil.Feature.` または `EsUtil.` を除いた語**（`[Marquee.Core]` / `[Marquee.Presenter]` / `[Loupe.ControlAvaloniaUI]` / `[Platform.Core]`）とし、伝搬を追えるようにする。
+- **ログは値を所有する主体が記録する**（コアの設定はコア、提示層の外観は提示層、拡大元画像など UI の値は各 UI）。 接頭辞は**そのログを定義しているプロジェクトの名前空間から `EsUtil.Feature.` または `EsUtil.` を除いた語**（`[Marquee]` / `[Marquee]` / `[Loupe]` / `[Platform.Core]`）とし、伝搬を追えるようにする。
 - `Decoration` 系の型はコントロールではなく装飾のコアである（暗転オーバーレイの独立コントロールは `MarqueeControl` へ統合済み。 別プロジェクトは持たず、`EsUtil.Feature.Marquee.Core` に同居する）。
-- **機能単位の UI コントロールは `EsUtil.Feature.*` 配下に置く**（`EsUtil.Feature.Marquee.ControlAvaloniaUI` / `EsUtil.Feature.Marquee.ControlMewUI` / `EsUtil.Feature.Loupe.ControlAvaloniaUI` / `EsUtil.Feature.Loupe.ControlMewUI`）。 利用側は UI コントロールだけを `ProjectReference` すれば、推移参照でコア・提示層の型も解決できる（`EsUtil.Feature.*` の `ProjectReference` を直接書かなくて済む）。 コア・提示層を直接参照するのは、UI に依存しない層（`App.Parts.CapturePreviewControl.Core` / `App.Parts.CaptureSessionControl.UIBase`）に限る。
+- **機能単位の UI コントロールは `EsUtil.Feature.*` 配下に置く**（`EsUtil.Feature.Marquee.ControlAvaloniaUI` / `EsUtil.Feature.Marquee.ControlMewUI` / `EsUtil.Feature.Loupe.ControlAvaloniaUI` / `EsUtil.Feature.Loupe.ControlMewUI`）。 利用側は UI コントロールだけを `ProjectReference` すれば、推移参照でコア・提示層の型も解決できる（`EsUtil.Feature.*` の `ProjectReference` を直接書かなくて済む）。 コア・提示層を直接参照するのは、UI に依存しない層（`Parts.CapturePreviewControl.Core` / `Parts.CaptureSessionControl.UIBase`）に限る。
 
 ### ドキュメント規約
 
 - 各プロジェクトに README.md（利用仕様書）・docs/SPEC_API.md（API リファレンス）・docs/SPEC_System.md（システム仕様書）を置く。
 - README.md / docs/SPEC_API.md / docs/SPEC_System.md は、コード変更と同時に更新する（仕様と実装の乖離・反映漏れを防ぐ）。
-- `App.App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
+- `App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
 
 ### 層ごとの記載範囲（外部プロジェクトを記載しない）
 
@@ -272,8 +272,8 @@
   - `EsUtil.Feature.Loupe.Presenter` … `EsUtil.Feature.Loupe.Core` と `EsUtil.Platform.Core` 以外を記載しない。
   - `EsUtil.Feature.Marquee.Core` … `EsUtil.Platform.Core` 以外を記載しない。
   - `EsUtil.Feature.Marquee.Presenter` … `EsUtil.Feature.Marquee.Core` と `EsUtil.Platform.Core` 以外を記載しない。
-  - `App.Parts.CapturePreviewControl.Core` … `EsUtil.Platform.Core` と「`EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Loupe.Core`」以外を記載しない。
-  - `App.Parts.CaptureSessionControl.UIBase` … 上記の参照先以外を記載しない。
+  - `Parts.CapturePreviewControl.Core` … `EsUtil.Platform.Core` と「`EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Loupe.Core`」以外を記載しない。
+  - `Parts.CaptureSessionControl.UIBase` … 上記の参照先以外を記載しない。
   - `EsUtil.Feature.Marquee.ControlAvaloniaUI` / `EsUtil.Feature.Marquee.ControlMewUI` … `EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Marquee.Presenter` と自 UI のプラットフォーム層以外を記載しない。
   - `EsUtil.Feature.Loupe.ControlAvaloniaUI` / `EsUtil.Feature.Loupe.ControlMewUI` … `EsUtil.Feature.Loupe.Core` / `EsUtil.Feature.Loupe.Presenter` と自 UI のプラットフォーム層以外を記載しない。
 - 外部プロジェクトが所有する型名も記載しない（相互変換の Interop 層・描画実装・調整役・テスト等）。

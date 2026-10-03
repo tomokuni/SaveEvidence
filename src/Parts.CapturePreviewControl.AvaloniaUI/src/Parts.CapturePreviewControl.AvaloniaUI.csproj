@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <RootNamespace>EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- ドキュメントコメントを検証する（存在しないメンバーへの cref を CS1574、公開メンバーの未記載を CS1591 で検出）。
+         XML は配布物（bin / publish）へ出さない（検証だけに使う）。 -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- tests/ は独立したテストプロジェクトのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\tests\**" />
+    <None Remove="..\tests\**" />
+    <Page Remove="..\tests\**" />
+    <AvaloniaXaml Remove="..\tests\**" />
+    <EmbeddedResource Remove="..\tests\**" />
+    <!-- sample/ は独立したサンプルアプリケーションのため、本プロジェクトのコンパイル対象から除外する（src/ の外） -->
+    <Compile Remove="..\sample\**" />
+    <None Remove="..\sample\**" />
+    <Page Remove="..\sample\**" />
+    <AvaloniaXaml Remove="..\sample\**" />
+    <EmbeddedResource Remove="..\sample\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 単体テストから internal 型へアクセスできるようにする -->
+    <InternalsVisibleTo Include="Parts.CapturePreviewControl.AvaloniaUI.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Parts.CapturePreviewControl.Core\src\Parts.CapturePreviewControl.Core.csproj" />
+    <!-- 設定 → 色の写像（両 UI で同じ写像を使う） -->
+    <ProjectReference Include="..\..\Parts.CaptureSessionControl.UIBase\src\Parts.CaptureSessionControl.UIBase.csproj" />
+    <!-- 複合コントロールを構成する内包コントロール -->
+    <ProjectReference Include="..\..\EsUtil.Feature.Marquee.ControlAvaloniaUI\src\AvaloniaUI\EsUtil.Feature.Marquee.ControlAvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\EsUtil.Feature.Loupe.ControlAvaloniaUI\src\AvaloniaUI\EsUtil.Feature.Loupe.ControlAvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
+  </ItemGroup>
+
+</Project>
+
