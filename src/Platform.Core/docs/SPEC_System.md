@@ -19,7 +19,7 @@ UI フレームワーク非依存の共通基盤の型を提供するライブ�
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | UI フレームワークに依存していた型（キーと入力・幾何・座標変換・画像・OS サービス抽象）を 1 箇所へ集約し、複数の UI 実装が同じ型と計算結果を共有できるようにする |
-| 提供形態 | クラスライブラリ（`EsUtil.Platform.Core.dll`。 アセンブリ名はルート名前空間と一致する） |
+| 提供形態 | クラスライブラリ（`EsUtil.Platform.Core.dll`） |
 | 想定利用者 | UI 実装・コントロールの層・上位のアプリ（OS サービスの Windows 実装はホストが生成して注入する） |
 | 汎用性 | 特定のアプリ・UI に依存しない（このソリューション以外でもそのまま使える型だけを置く。 `Native/` 配下だけが例外） |
 
@@ -123,12 +123,9 @@ graph LR
 
 ### 7.1 コア型の命名
 
-コア型には **`Es`（`EsUtil` の略）接頭辞**を付けます（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` /
-`EsPointInt` / `EsSizeInt` / `EsRectInt` / `EsAxis` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap`）。
+コア型には **`Es`（`EsUtil` の略）接頭辞**を付けます（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsSizeInt` / `EsRectInt` / `EsAxis` / `EsPlatformHandle` / `EsWindowState` / `EsBitmap`）。 **整数版の型は `Es` + 型名 + `Int`** とします。
 
-**整数版の型は `Es` + 型名 + `Int`** とします（`EsPoint` / `EsSize` / `EsRect` の整数版が `EsPointInt` / `EsSizeInt` /
-`EsRectInt`）。 整数であることは「画面物理ピクセル」を意味しない（画像ピクセルも整数である）ため、単位が読む側に
-必要な箇所はドキュメントに明記します。
+規則（付ける理由・整数版の扱い）は [`.github/命名規約.md`](../../../.github/命名規約.md) が単一所有します。
 
 ## 8. 依存の判定基準（本プロジェクトの存在理由）
 

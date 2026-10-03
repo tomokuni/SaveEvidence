@@ -21,7 +21,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 「どう見せるか」（描画計画と外観）を 1 箇所に集約し、UI ごとの実装差から切り離す |
-| 提供形態 | クラスライブラリ（`EsUtil.Feature.Loupe.Presenter.dll`。 アセンブリ名はルート名前空間と一致する） |
+| 提供形態 | クラスライブラリ（`EsUtil.Feature.Loupe.Presenter.dll`） |
 | 想定利用者 | UI 実装と、それらを組み込むホストアプリケーション |
 | 汎用性 | 特定のアプリに依存しない（描画 API の抽象も持たないため、UI フレームワーク非依存） |
 
@@ -71,7 +71,7 @@ sequenceDiagram
 ## 4. コンポーネント構成
 
 ルート（`src/`）に置くのは**ファサード本体**（`LoupePresenter.cs`）とその partial（`LoupePresenter.DrawPlan.cs` / `LoupePresenter.LabelPlan.cs` / `LoupePresenter.LabelTexts.cs`）です。 描画計画の値・外観・ラベル要素の配置指示は用途別のフォルダへまとめます。
-**1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Loupe.Presenter`。 `Setting` / `Drawing` / `Label` / `Logging` は `EsUtil.Feature.Loupe.Presenter.<フォルダ名>`）。 コア（`Feature.Loupe.Core`）と同じ規約です。
+**1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Loupe.Presenter`。 `Setting` / `Drawing` / `Label` / `Logging` は `EsUtil.Feature.Loupe.Presenter.<フォルダ名>`）。 規則は [`.github/命名規約.md`](../../../.github/命名規約.md) が単一所有します。
 
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
@@ -121,7 +121,7 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 
 ## 9. ログ
 
-本層が出力するログの定義と書式は本層が単一所有します（`[Feature.Loupe.Presenter]` の接頭辞）。
+本層が出力するログの定義と書式は本層が単一所有します（`[Feature.Loupe.Presenter]` の接頭辞。 規則は [`.github/命名規約.md`](../../../.github/命名規約.md) が単一所有します）。
 
 **値の保持と変更の記録はコアが行います**（`Feature.Loupe.Core` の `LoupeLogMessage`）。 本層はコアへ伝搬するだけの値についても**本層を通過したことを Trace で記録**します（ホストの設定が本層を通ったかを確認できるようにするため。 既定の出力では溢れさせません）。
 
@@ -136,4 +136,4 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 
 **生成の記録は、ロガーが注入された時点（コンストラクターまたは初回の `Log` 設定）に行います**（構築時点では出力先が未設定であり、その場で出力しても記録が残らないため。 コアも同じ規則で生成を記録します）。
 
-**UI が出力するログ（拡大元画像の変更・描画の例外）の定義と書式も本層が単一所有します**（`[Feature.Loupe.Presenter]` の接頭辞）。 **UI 固有の処理に対応するログは各 UI 実装が所有します**（中間ビットマップを生成する描画パイプライン固有のログ等）。
+**UI が出力するログ（拡大元画像の変更・描画の例外）の定義と書式も本層が単一所有します**（`[Feature.Loupe.Presenter]` の接頭辞。 規則は [`.github/命名規約.md`](../../../.github/命名規約.md) が単一所有します）。 **UI 固有の処理に対応するログは各 UI 実装が所有します**（中間ビットマップを生成する描画パイプライン固有のログ等）。

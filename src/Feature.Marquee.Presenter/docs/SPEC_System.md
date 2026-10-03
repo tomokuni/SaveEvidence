@@ -22,7 +22,7 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否）を 1 箇所に集約する |
-| 提供形態 | クラスライブラリ（`EsUtil.Feature.Marquee.Presenter.dll`。 アセンブリ名はルート名前空間と一致する） |
+| 提供形態 | クラスライブラリ（`EsUtil.Feature.Marquee.Presenter.dll`） |
 | 想定利用者 | UI 実装と、それらを組み込むホストアプリケーション・独自コントロールの作者 |
 | 汎用性 | 特定のアプリ・UI・コントロールに依存しない。 寸法・対話パラメータはコアが、外観と描画計画は本層が単一所有する |
 | 前提としないもの | **コントロール化**（ホイール操作・ビューポート連携・組み込み先の概念は UI 層が持つ） |
@@ -111,7 +111,7 @@ flowchart TD
 ## 4. コンポーネント構成
 
 ルート（`src/`）に置くのは**ファサード本体**（`MarqueePresenter.cs`）とその partial（`MarqueePresenter.DrawPlan.cs` / `MarqueePresenter.LabelPlan.cs` / `MarqueePresenter.LabelTexts.cs`）です。 描画計画の値・外観・ラベル要素の配置指示は用途別のフォルダへまとめます。
-**1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Marquee.Presenter`。 `Setting` / `Drawing` / `Label` / `Logging` は `EsUtil.Feature.Marquee.Presenter.<フォルダ名>`）。 コア（`Feature.Marquee.Core`）と同じ規約です。
+**1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（ルート直下のみ `EsUtil.Feature.Marquee.Presenter`。 `Setting` / `Drawing` / `Label` / `Logging` は `EsUtil.Feature.Marquee.Presenter.<フォルダ名>`）。 規則は [`.github/命名規約.md`](../../../.github/命名規約.md) が単一所有します。
 
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
@@ -168,7 +168,7 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 | 実寸測定 | 描画 API 依存のため `Func<string, double, EsSize>` を UI 層から受け取る（本層は測定 API を持たない） |
 | 付加情報ラベルの配置 | コントロール固有の概念であるため本層に置かない（組み込み先のホストが持つ） |
 | 組み込み規則を置かない | ホイールの解釈・ビューポート連携は「組み込み先が存在して初めて意味を持つ」（コントロール化を前提とした処理）ため、本層に置かず UI 層（ホスト）が持つ |
-| 設定変更ログの所有者 | 値を所有する主体が記録する（コアの設定はコア、本層の外観は本層、UI の値は各 UI）。 接頭辞から伝搬を追える |
+| 設定変更ログの所有者 | 値を所有する主体が記録する（コアの設定はコア、本層の外観は本層、UI の値は各 UI）。 接頭辞（規則は [`.github/命名規約.md`](../../../.github/命名規約.md) が単一所有する）から伝搬を追える |
 | 外観の拡張点 | `MarqueePresenter` を `sealed` にしない（`Appearance` の差し替えと `ResolveDrawPlan` の上書きで独自の見た目を提供できることが役割） |
 
 ## 9. ログ
