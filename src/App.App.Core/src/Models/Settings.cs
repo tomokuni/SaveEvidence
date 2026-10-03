@@ -129,7 +129,7 @@ public sealed partial class Settings : ObservableObject
     /// <summary>画像外の選択を禁止するかどうか（クリップ）を取得または設定する。</summary>
     /// <remarks>デフォルトは true（設定画面の現在値）。</remarks>
     [ObservableProperty]
-    private bool _clampToDomainBounds = true;
+    private bool _clampToSourceBounds = true;
 
     /// <summary>nudge 中の十字マーカーの色を取得または設定する。</summary>
     /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: 白 100% = <c>#FFFFFFFF</c>）。</remarks>
@@ -140,7 +140,7 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private double _markerLength = 16.0;
 
-    /// <summary>カーソルの右側にカーソルのドメイン座標ラベル（"xy (x, y)"）を表示するか（Marquee）。</summary>
+    /// <summary>カーソルの右側にカーソルの対象座標ラベル（"xy (x, y)"）を表示するか（Marquee）。</summary>
     [ObservableProperty]
     private bool _showCoordLabel;
 

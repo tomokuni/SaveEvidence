@@ -24,11 +24,11 @@ Avalonia 版と同一の挙動になります。
 
 | 座標系 | 意味 |
 | --- | --- |
-| ドメイン座標 | 選択対象の座標（画像ピクセル・仮想スクリーンピクセル等）。 コアの状態機械はこの座標で動作する |
+| 対象座標 | 選択対象の座標（画像ピクセル・仮想スクリーンピクセル等）。 コアの状態機械はこの座標で動作する |
 | ローカル DIP | 本コントロールのローカル座標。 入力と描画はこの座標で行う |
 
-両者の変換は座標変換ポート（`ICoordTransform`）が担います。 入力（ToDomain = DIP → ドメイン）と
-描画（ToDip = ドメイン → DIP）の境界で適用されます。
+両者の変換は座標変換ポート（`ICoordTransform`）が担います。 入力（ToSource = DIP → 対象）と
+描画（ToDip = 対象 → DIP）の境界で適用されます。
 
 ## 4. プロパティ
 
@@ -47,16 +47,16 @@ Avalonia 版と同一の挙動になります。
 | --- | --- | --- | --- |
 | `HandleSize` | `double` | `10.0` | ドラッグハンドルの一辺サイズ（DIP。 1.0〜256.0 に補正） |
 | `HandleBorderThickness` | `double` | `1.5` | ドラッグハンドルの枠線の太さ（DIP。 0.5〜64.0 に補正） |
-| `HandleHitRadius` | `double` | `12.0` | ドラッグハンドルのヒットテスト半径（DIP。 0.0〜256.0 に補正。 ドメインへ変換して判定する） |
-| `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標。 1.0〜4096.0 に補正。 これ未満のドラッグはキャンセル扱い） |
-| `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する。 ON へ切り替えた瞬間に既存の選択矩形をクリップする |
+| `HandleHitRadius` | `double` | `12.0` | ドラッグハンドルのヒットテスト半径（DIP。 0.0〜256.0 に補正。 対象へ変換して判定する） |
+| `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（対象座標。 1.0〜4096.0 に補正。 これ未満のドラッグはキャンセル扱い） |
+| `ClampToSourceBounds` | `bool` | `true` | 対象の境界外の選択を禁止する。 ON へ切り替えた瞬間に既存の選択矩形をクリップする |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP。 2.0〜4096.0 に補正。 中心から両端までの半幅は 1/2） |
 
 安全域への補正は**コアの設定型の生成時**に適用されます（設定の経路によらず範囲内の値だけが保持され、UI 側に補正の登録は不要です）。
 
 設定の一部だけを変える場合は `MarqueeOptions.Default with { ... }` / `MarqueeAppearance.Default with { ... }` で指定します（指定しない項目は既定値を保つ）。
 同値の設定を再適用しても再描画・ログは発生しません。
-寸法・表示可否と対話パラメータ（`HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）は同じ設定値に含まれますが、
+寸法・表示可否と対話パラメータ（`HandleHitRadius` / `MinSelectionSize` / `ClampToSourceBounds`）は同じ設定値に含まれますが、
 後者だけがファサードへ伝搬します（判断と変更ログはコアが単一所有する）。 **色とフォントサイズはコアの設定に含めません**（描画にだけ必要な設定のため `Paint` が単一所有します）。
 
 `MarqueeAppearance` の項目（外観。 既定値は提示層の型が単一所有する）:
@@ -75,8 +75,8 @@ Avalonia 版と同一の挙動になります。
 
 | メソッド | 戻り値 | 説明 |
 | --- | --- | --- |
-| `SetCoordTransform(ICoordTransform?)` | - | ドメイン ↔ ローカル DIP の変換ポートを設定する。 null の場合は等価変換（1 ドメインピクセル = 1 DIP・境界なし） |
-| `SetSelection(EsRect)` | - | 選択矩形を外部状態から復元する。 `Options.ClampToDomainBounds` が有効な場合は境界内へクリップしてから設定する |
+| `SetCoordTransform(ICoordTransform?)` | - | 対象 ↔ ローカル DIP の変換ポートを設定する。 null の場合は等価変換（1 対象ピクセル = 1 DIP・境界なし） |
+| `SetSelection(EsRect)` | - | 選択矩形を外部状態から復元する。 `Options.ClampToSourceBounds` が有効な場合は境界内へクリップしてから設定する |
 | `ResetSelection()` | - | 選択状態と nudge 状態を初期化する（nudge 中だった場合はカーソルを再表示する） |
 | `RequestConfirm()` | - | 確定要求を処理する（Enter と同じ条件）。 ドラッグ中・未選択では何もしない |
 | `RequestCancel()` | - | キャンセル要求を処理する（Escape と同じ条件）。 選択を破棄した後にイベントを発火する |
@@ -87,7 +87,7 @@ Avalonia 版と同一の挙動になります。
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `CurrentSnapshot` | `MarqueeSnapshot` | 現在の状態（State / SelectionDomainRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。 `readonly record struct`） |
+| `CurrentSnapshot` | `MarqueeSnapshot` | 現在の状態（State / SelectionSourceRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。 `readonly record struct`） |
 
 ## 7. イベント
 
@@ -103,7 +103,7 @@ Avalonia 版と同一の挙動になります。
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel()` |
 | `Rendered` | `MarqueeRenderedEventArgs` | 描画完了の通知（描画のたびに発火）。 `Canvas`（DPI スケーリング済み・描画中のみ有効）と描画計画（`Content` = `MarqueeDrawPlan`）を渡す。 **サイズ・座標ラベルはコントロールがテキスト要素として表示する**ため、ホストは付加情報（操作・情報ラベル）の描画に使う |
 
-座標系はすべてドメイン座標です。
+座標系はすべて対象座標です。
 
 ### 7.1 ラベル（文字）の表示
 
@@ -129,11 +129,11 @@ marquee.Rendered += (_, e) =>
 | 操作 | 動作 |
 | --- | --- |
 | 左ドラッグ（矩形外） | 新規選択を開始する。 ハンドルヒット時は元の選択を保持したまま開始位置がハンドル点へスナップする |
-| 左ドラッグ（ハンドル上） | 8 方向のリサイズ。 ハンドル位置は 1 ドメインピクセル精度でカーソルに追従する |
+| 左ドラッグ（ハンドル上） | 8 方向のリサイズ。 ハンドル位置は 1 対象ピクセル精度でカーソルに追従する |
 | 左ドラッグ（矩形内） | 移動（サイズを維持する） |
 | ダブルクリック（矩形内） | `ConfirmRequested` を発火して選択をクリアする |
 | ダブルクリック（矩形外） | `CancelRequested` を発火する（選択は保持する） |
-| 矢印キー | nudge（1 ドメインピクセル単位）。 未選択時は始点、選択確定後・ドラッグ中は終点、ハンドル選択中はそのハンドルを動かす |
+| 矢印キー | nudge（1 対象ピクセル単位）。 未選択時は始点、選択確定後・ドラッグ中は終点、ハンドル選択中はそのハンドルを動かす |
 | Enter | `ConfirmRequested` を発火して選択をクリアする（ドラッグ中・未選択では何もしない） |
 | Escape | `CancelRequested` を発火する（選択があれば破棄する） |
 | ホイール（Ctrl 併用・なしとも） | **本コントロールは扱わない**（素通しする。 ズーム・パンの解釈と実処理はホストが行う） |
@@ -141,7 +141,7 @@ marquee.Rendered += (_, e) =>
 
 ### 制限
 
-- `Options.ClampToDomainBounds` が有効な場合、選択は `ICoordTransform.DomainBounds` で示される境界内に制限されます。
+- `Options.ClampToSourceBounds` が有効な場合、選択は `ICoordTransform.SourceArea` で示される境界内に制限されます。
   新規選択・ハンドル変形・移動・nudge のすべてに適用されます。
 - 選択矩形の幅・高さが `Options.MinSelectionSize` 未満の状態でドラッグを終了するとキャンセル扱いになります
   （`SelectionCancelled` を発火して選択を破棄します）。
@@ -165,7 +165,7 @@ marquee.Rendered += (_, e) =>
 
 | レベル | 出力内容 |
 | --- | --- |
-| Debug | `MouseDown`（位置・クリック数・選択有無）/ `MouseUp`（位置・ドラッグ有無・選択有無）/ `DoubleClick`（矩形内か）/ `DragStart`（ハンドル・位置）/ `KeyDown`（キー・処理有無）/ `ConfirmRequested`（矩形）/ `CancelRequested` / `Setting`（`Options.ClampToDomainBounds` の変更前後）/ 外観・表示スケーリングの変更（提示層の `MarqueePresenterLogMessage`） |
+| Debug | `MouseDown`（位置・クリック数・選択有無）/ `MouseUp`（位置・ドラッグ有無・選択有無）/ `DoubleClick`（矩形内か）/ `DragStart`（ハンドル・位置）/ `KeyDown`（キー・処理有無）/ `ConfirmRequested`（矩形）/ `CancelRequested` / `Setting`（`Options.ClampToSourceBounds` の変更前後）/ 外観・表示スケーリングの変更（提示層の `MarqueePresenterLogMessage`） |
 | Trace | `MouseDown 直前の位置` / `MouseUp 直後の位置` |
 
 マウス移動の高頻度ログは出力しません（押下直前・解放直後の位置のみ記録します）。
@@ -192,8 +192,8 @@ var marquee = new MarqueeControl
     },
 };
 
-// ドメイン境界（画像座標）を設定する
-marquee.SetCoordTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(width, height)));
+// 対象の境界（画像座標）を設定する
+marquee.SetCoordTransform(new CoordTransform(dip => dip, source => source, () => new EsSize(width, height)));
 
 // 確定した矩形を取得する
 marquee.SelectionCompleted += (_, e) => OnCaptured(e.Rect);
@@ -206,4 +206,4 @@ marquee.SelectionCompleted += (_, e) => OnCaptured(e.Rect);
 | カーソルサービスが null | Windows 既定実装（Win32）を使用する |
 | `SetCoordTransform(null)` | 等価変換（境界なし）を適用する |
 | `Paint.CoordLabelFontSize` に NaN / ∞ | 既定値（12）へ補正する（例外は発生しない） |
-| `SetSelection` に境界外の矩形 | `Options.ClampToDomainBounds` が有効なら境界内へクリップする（例外は発生しない） |
+| `SetSelection` に境界外の矩形 | `Options.ClampToSourceBounds` が有効なら境界内へクリップする（例外は発生しない） |

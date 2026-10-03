@@ -2,11 +2,11 @@ using Avalonia;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 
-/// <summary>選択矩形イベントの引数（ドメイン座標の選択矩形）。</summary>
+/// <summary>選択矩形イベントの引数（対象座標の選択矩形）。</summary>
 /// <remarks>
 /// 確定要求（<see cref="FadeMaskDragRectControl.ConfirmRequested"/>）のイベント引数。<br/>
 /// 内包コントロール（MarqueeControl）の型（SelectionRectEventArgs）に依存しない独自型とし、<br/>
 /// ホストは FadeMaskDragRectControl の公開 API のみで利用できる（公開型のカプセル化）。
 /// </remarks>
-/// <param name="SelectionDomainRect">選択矩形（ドメイン座標）。</param>
-public sealed record FadeMaskDragRectSelectionEventArgs(Rect SelectionDomainRect);
+/// <param name="SelectionSourceRect">選択矩形（対象座標）。</param>
+public sealed record FadeMaskDragRectSelectionEventArgs(Rect SelectionSourceRect);

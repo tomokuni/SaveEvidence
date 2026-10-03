@@ -21,7 +21,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
 /// 状態は持たない（選択矩形・ルーペ表示状態・暗転マスクは <see cref="CropViewControl"/> が保持し、本クラスはライフサイクルのみ）。<br/>
 /// - 配線（SelectionChanged → 暗転マスク同期 / LoupePositionMoved → ルーペ更新 / 確定・キャンセル）は<br/>
 ///   複合コントロール内で完結する（ホストの配線コードは不要）。<br/>
-/// - ドメイン = 元画像ピクセル（論理座標）。 座標変換は <see cref="CropViewControl"/> が内包する<br/>
+/// - 対象 = 元画像ピクセル（論理座標）。 座標変換は <see cref="CropViewControl"/> が内包する<br/>
 ///   ズーム・パン・Fit のビューポートへ委譲する（ズーム座標の単一所有）。<br/>
 /// <br/>
 /// プレビュー状態（ScrollOffset / ViewportOrigin / ZoomPercent）は保持しない。<br/>
@@ -67,18 +67,18 @@ internal sealed class CropSession(
 
     /// <summary>ビューポートDIP ↔ 元画像ピクセルの座標変換ポートを生成する。</summary>
     /// <param name="cropView">変換の基準となる複合コントロール。</param>
-    /// <returns>ToDomain = ビューポートDIP → 元画像ピクセル、ToDip = 元画像ピクセル → ビューポートDIP、DomainBounds = 現在の画像のサイズのポート。</returns>
+    /// <returns>ToSource = ビューポートDIP → 元画像ピクセル、ToDip = 元画像ピクセル → ビューポートDIP、SourceArea = 現在の画像のサイズのポート。</returns>
     /// <remarks>
-    /// <see cref="CropViewControl"/> の座標変換（<see cref="CropViewControl.ViewportToContent"/> /
-    /// <see cref="CropViewControl.ContentToViewport"/>）へ委譲する。 これにより、ズーム・パン・Fit・中央寄せの<br/>
+    /// <see cref="CropViewControl"/> の座標変換（<see cref="CropViewControl.ClientToSource"/> /
+    /// <see cref="CropViewControl.SourceToClient"/>）へ委譲する。 これにより、ズーム・パン・Fit・中央寄せの<br/>
     /// 原点補正を全て内包ビューポートが単一所有し、ホストが変換を重複実装する必要がない（DRY 原則）。<br/>
-    /// 境界は表示中の画像から都度評価する（切り出しのドメインは <see cref="CropViewImage"/> が単一所有する）。
+    /// 境界は表示中の画像から都度評価する（切り出しの対象は <see cref="CropViewImage"/> が単一所有する）。
     /// </remarks>
     private static ICoordTransform CreateCoordPort(CropViewControl cropView)
         => new CoordTransform(
-            toDomain: dip => cropView.ViewportToContent(dip.ToAvaloniaPoint()).ToEsPoint(),
-            toDip: logical => cropView.ContentToViewport(logical.ToAvaloniaPoint()).ToEsPoint(),
-            domainBounds: () => cropView.CurrentImage() is { } image ? CaptureClipMath.ImageSize(image) : null);
+            toSource: dip => cropView.ClientToSource(dip.ToAvaloniaPoint()).ToEsPoint(),
+            toDip: logical => cropView.SourceToClient(logical.ToAvaloniaPoint()).ToEsPoint(),
+            sourceArea: () => cropView.CurrentImage() is { } image ? CaptureClipMath.ImageSize(image) : null);
 
     /// <summary>切出しセッションを実行する（確定待機 → 結果返却）。 UI スレッドから呼び出すこと。</summary>
     /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う。 呼び出し側が表示中の画像から解決して渡す）。</param>
@@ -131,7 +131,7 @@ internal sealed class CropSession(
             _completion.TrySetResult(default(EsRectInt));
         }
 
-        void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionDomainRect);
+        void OnConfirmEvent(object? sender, FadeMaskDragRectSelectionEventArgs e) => OnConfirm(e.SelectionSourceRect);
 
         void OnCancelEvent(object? sender, EventArgs e) => OnCancel();
 
@@ -203,21 +203,21 @@ internal sealed class CropSession(
         cropView.SelectionOverlayMarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(s);
         cropView.SelectionOverlayLoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。 コードから動的設定）。
-        // プレビュー内 Crop はドメイン = 論理座標（元画像ピクセル）のため DIP と 1:1（基準値）にする。
-        cropView.DipToDomainScaling = DpiScaler.StandardScaling;
+        // プレビュー内 Crop は対象 = 論理座標（元画像ピクセル）のため DIP と 1:1（基準値）にする。
+        cropView.ClientToSourceScaling = DpiScaler.StandardScaling;
         cropView.LoupeClientToPixelScaling = s.LoupeClientToPixelScaling!.Value;
         // サイズラベルも描画時に最新のズーム率から生成する（ズーム率表示の追従）。
         // 書式と「未選択なら描かない」規則はコアが単一所有する。
         cropView.SizeLabelOverrideProvider = () => CropLabelTexts.ResolveSizeLabel(
             cropView.HasSelection,
             // 切り出しの対象は常にドラッグ選択（範囲選択）のため、区間の流儀をここで付ける
-            cropView.SelectionDomainRect.ToEsRect().WithInterval(CaptureTypeTraits.ResolveInterval(CaptureType.AreaSelect)),
+            cropView.SelectionSourceRect.ToEsRect().WithInterval(CaptureTypeTraits.ResolveInterval(CaptureType.AreaSelect)),
             cropView.ZoomPercent);
         // 操作ラベルの文言はホスト（切り出し文脈）が与える（汎用コアは文言を持たない）。
         // 情報ラベルは切り出しでは表示しない（CaptureLabelTexts が切り出しモードで null を返す）。
         cropView.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(cropView.SelectionMode);
         cropView.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(cropView.SelectionMode, null);
-        // 座標変換ポート: ドメイン = 論理座標（元画像ピクセル）。 ズーム・パン・Fit・中央寄せの原点補正は
+        // 座標変換ポート: 対象 = 論理座標（元画像ピクセル）。 ズーム・パン・Fit・中央寄せの原点補正は
         // 内包する ZoomViewControl が単一所有する（座標変換ポートはそれを委譲）。
         cropView.SetCoordTransform(_coordPort);
         // ルーペのソースは表示中の画像（切り出しの対象と同じ画像。 画像の差し替えに追従する）。

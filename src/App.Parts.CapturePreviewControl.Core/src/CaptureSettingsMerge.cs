@@ -39,7 +39,7 @@ public static class CaptureSettingsMerge
             HandleColor = input.HandleColor ?? baseline.HandleColor,
             HandleSize = input.HandleSize ?? baseline.HandleSize,
             HandleHitRadius = input.HandleHitRadius ?? baseline.HandleHitRadius,
-            ClampToDomainBounds = input.ClampToDomainBounds ?? baseline.ClampToDomainBounds,
+            ClampToSourceBounds = input.ClampToSourceBounds ?? baseline.ClampToSourceBounds,
             MarkerColor = input.MarkerColor ?? baseline.MarkerColor,
             MarkerLength = input.MarkerLength ?? baseline.MarkerLength,
             ShowCoordLabel = input.ShowCoordLabel ?? baseline.ShowCoordLabel,

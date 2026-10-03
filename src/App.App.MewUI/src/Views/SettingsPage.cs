@@ -171,7 +171,7 @@ internal static class SettingsPage
     private static Element BuildSelectionLimitSection(Settings settings)
         => Section(
             "矩形選択範囲の制限",
-            Row("", CheckRow(settings.ClampToDomainBounds, value => settings.ClampToDomainBounds = value, "画像外の選択を禁止（境界内にクリップ）")));
+            Row("", CheckRow(settings.ClampToSourceBounds, value => settings.ClampToSourceBounds = value, "画像外の選択を禁止（境界内にクリップ）")));
 
     /// <summary>ホットキー設定のセクションを構築する。</summary>
     /// <param name="settings">設定。</param>

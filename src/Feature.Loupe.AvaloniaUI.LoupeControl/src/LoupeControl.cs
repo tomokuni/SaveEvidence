@@ -143,7 +143,7 @@ public sealed class LoupeControl : Panel
         }
     }
 
-    /// <summary>論理座標（ドメイン）↔ 親パネル DIP の座標変換ポートを設定する。</summary>
+    /// <summary>論理座標（対象）↔ 親パネル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート（ToDip = 論理→親パネルDIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// MarqueeControl と同様に、外部から与えたポートで表示位置（<see cref="Visual.RenderTransform"/>）と<br/>

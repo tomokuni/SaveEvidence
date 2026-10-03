@@ -49,8 +49,8 @@ public sealed partial class Marquee
             focus,
             ResolveHandles(request, port),
             ResolveMarker(request, port),
-            request.MouseDomainPosition,
-            port.ToDip(request.MouseDomainPosition));
+            request.MouseSourcePosition,
+            port.ToDip(request.MouseSourcePosition));
     }
 
     /// <summary>ドラッグハンドルの幾何を解決する。</summary>
@@ -66,7 +66,7 @@ public sealed partial class Marquee
     /// </remarks>
     private static MarqueeHandles? ResolveHandles(in MarqueeRenderRequest request, ICoordTransform port)
     {
-        if (request.SelectionDomainRect is not { } rect)
+        if (request.SelectionSourceRect is not { } rect)
         {
             return null;
         }

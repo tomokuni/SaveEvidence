@@ -33,14 +33,14 @@ public sealed record PageItem(AppPage Page, string Label, Geometry Icon)
 /// <summary>dataset のエントリ（JSON 1 ファイル分）。</summary>
 /// <param name="Name">画像ファイル名（拡張子なし・表示名・ドロップダウン表示用）。</param>
 /// <param name="PngPath">PNG 画像ファイルの絶対パス。</param>
-/// <param name="Bounds">検証対象のウィンドウ境界（ドメイン座標・排他座標）。</param>
+/// <param name="Bounds">検証対象のウィンドウ境界（対象座標・排他座標）。</param>
 public sealed record DatasetEntry(string Name, string PngPath, DatasetBounds Bounds)
 {
     /// <summary>表示名を返す（ドロップダウン用）。</summary>
     public override string ToString() => Name;
 }
 
-/// <summary>dataset のウィンドウ境界（ドメイン座標・排他座標）。</summary>
+/// <summary>dataset のウィンドウ境界（対象座標・排他座標）。</summary>
 /// <param name="X">左端 X（排他座標）。</param>
 /// <param name="Y">上端 Y（排他座標）。</param>
 /// <param name="Right">右端 X（排他座標）。</param>

@@ -37,7 +37,7 @@ public partial class MainWindow : Window
     /// <remarks>
     /// Crop のための辺確定のロジック研究用に、起動時に検出の基準となる画像を表示する。<br/>
     /// 外枠 (50,40)-(850,600)・内枠 (100,90)-(800,550) の線幅 4px の矩形を描画する。<br/>
-    /// 検出線分がドメイン座標で矩形の境界（枠線の外側ピクセル: X=48 / X=852 / Y=38 / Y=602 等）と
+    /// 検出線分が対象座標で矩形の境界（枠線の外側ピクセル: X=48 / X=852 / Y=38 / Y=602 等）と
     /// 一致するかを確認できる。
     /// </remarks>
     private static Bitmap CreateInitialWindowImage()

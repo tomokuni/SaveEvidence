@@ -197,11 +197,11 @@ var brush = s_cache.GetOrCreate(color);
 
 | 座標系 | 型 | 用途 |
 | --- | --- | --- |
-| ドメイン座標 | `EsPoint` / `EsRect` | 選択状態・nudge・イベント通知（上位 AP が定義） |
+| 対象座標 | `EsPoint` / `EsRect` | 選択状態・nudge・イベント通知（上位 AP が定義） |
 | コントロールローカル DIP | `EsPoint` / `EsSize`（描画時は Avalonia 型） | マウス入力・描画（Avalonia 論理座標） |
 | 画面物理 Pixel | `EsPointInt` / `EsRectInt` | カーソル操作・キャプチャ・画面変換 |
 
-- ドメイン ↔ DIP の変換は `ICoordTransform`（`Platform.Core`）が担います。
+- 対象 ↔ DIP の変換は `ICoordTransform`（`Platform.Core`）が担います。
 - ローカル DIP ↔ 画面物理の変換は `ScreenConverter`（本プロジェクト）が担います。
 - 各層の境界では本プロジェクトの相互変換拡張で型を変換します。
 

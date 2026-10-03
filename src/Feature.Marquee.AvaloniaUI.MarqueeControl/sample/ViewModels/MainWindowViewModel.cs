@@ -6,7 +6,7 @@ namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.ViewModels;
 
 /// <summary>メインウィンドウのビューモデル。</summary>
 /// <remarks>
-/// MarqueeControl の選択矩形（ドメイン座標）と表示用の説明テキスト、操作ログ、<br/>
+/// MarqueeControl の選択矩形（対象座標）と表示用の説明テキスト、操作ログ、<br/>
 /// コントロールへ反映する外観・動作設定を保持する。<br/>
 /// イベント購読による選択状態の同期とログの追加は View（コードビハインド）が行う。<br/>
 /// </remarks>
@@ -51,8 +51,8 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private Rect _selectionRect;
 
-    /// <summary>現在の選択矩形（ドメイン座標）。</summary>
-    public Rect SelectionDomainRect
+    /// <summary>現在の選択矩形（対象座標）。</summary>
+    public Rect SelectionSourceRect
     {
         get => _selectionRect;
         set => SetProperty(ref _selectionRect, value);
@@ -112,7 +112,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private double _minSelectionSize = 4.0;
 
-    /// <summary>最小選択サイズ（ドメイン座標）。</summary>
+    /// <summary>最小選択サイズ（対象座標）。</summary>
     public double MinSelectionSize
     {
         get => _minSelectionSize;
@@ -125,13 +125,13 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
-    private bool _clampToDomainBounds;
+    private bool _clampToSourceBounds;
 
     /// <summary>画像外の選択を禁止するかどうか（ON: 領域選択・移動・nudge を画像境界内にクリップ）。</summary>
-    public bool ClampToDomainBounds
+    public bool ClampToSourceBounds
     {
-        get => _clampToDomainBounds;
-        set => SetProperty(ref _clampToDomainBounds, value);
+        get => _clampToSourceBounds;
+        set => SetProperty(ref _clampToSourceBounds, value);
     }
 
     private ColorOption _borderColorOption = ColorOptions.Blue;
@@ -224,11 +224,11 @@ public sealed class MainWindowViewModel : ObservableObject
 
     /// <summary>選択状態の説明テキストを更新する。</summary>
     /// <param name="hasSelection">選択矩形の有無。</param>
-    /// <param name="rect">選択矩形（ドメイン座標）。</param>
+    /// <param name="rect">選択矩形（対象座標）。</param>
     public void UpdateSelection(bool hasSelection, Rect rect)
     {
         HasSelection = hasSelection;
-        SelectionDomainRect = rect;
+        SelectionSourceRect = rect;
 
         if (!hasSelection)
         {
@@ -236,7 +236,7 @@ public sealed class MainWindowViewModel : ObservableObject
         }
         else
         {
-            StatusText = $"選択矩形: X={rect.X:F0}, Y={rect.Y:F0}, 幅={rect.Width:F0}, 高さ={rect.Height:F0}（ドメイン座標）";
+            StatusText = $"選択矩形: X={rect.X:F0}, Y={rect.Y:F0}, 幅={rect.Width:F0}, 高さ={rect.Height:F0}（対象座標）";
         }
     }
 }

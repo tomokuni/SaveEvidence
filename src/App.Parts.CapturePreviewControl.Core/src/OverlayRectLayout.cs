@@ -34,13 +34,13 @@ public static class OverlayRectLayout
                Math.Max(0, bottomRight.X - topLeft.X),
                Math.Max(0, bottomRight.Y - topLeft.Y));
 
-    /// <summary>矩形情報（ドメイン座標）をビューポート座標の描画入力へ解決する。</summary>
-    /// <param name="rect">矩形情報（ドメイン座標 = 元画像ピクセル座標）。</param>
+    /// <summary>矩形情報（対象座標）をビューポート座標の描画入力へ解決する。</summary>
+    /// <param name="rect">矩形情報（対象座標 = 元画像ピクセル座標）。</param>
     /// <param name="viewportTopLeft">矩形左上のビューポート座標。</param>
     /// <param name="viewportBottomRight">矩形右下のビューポート座標。</param>
     /// <returns>描画経路がそのまま使える値（配置・太さ・破線の判定と長さ）を確定した描画入力。</returns>
     /// <remarks>
-    /// 座標変換（ドメイン座標 → ビューポート座標）は UI 層が担う（ズームビューの変換を経由するため）。<br/>
+    /// 座標変換（対象座標 → ビューポート座標）は UI 層が担う（ズームビューの変換を経由するため）。<br/>
     /// 本メソッドは変換済みの 2 点を受け取り、クランプ・太さ補正・破線の判定を済ませる。
     /// </remarks>
     public static OverlayRectFrame Resolve(OverlayRect rect, EsPoint viewportTopLeft, EsPoint viewportBottomRight)

@@ -593,7 +593,7 @@ public class LoupeControlTests
         window.Show();
         control.CenterPoint = new Point(100, 100);
 
-        // ドメイン = DIP × 2（拡大）→ 中心 (100,100) は DIP (50,50) に変換される
+        // 対象 = DIP × 2（拡大）→ 中心 (100,100) は DIP (50,50) に変換される
         control.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X * 2, p.Y * 2),
             p => new EsPoint(p.X / 2, p.Y / 2),

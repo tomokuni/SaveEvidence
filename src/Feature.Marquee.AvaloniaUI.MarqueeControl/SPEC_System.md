@@ -93,7 +93,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 ### 4.2 本プロジェクト固有の例外処理
 
 - イベントハンドラ内の例外は握りつぶさず、上位 AP へ伝播する（コントロールの内部状態を不正にしない）。
-- 状態は MarqueeState に集約し、クリップ（`MarqueeOptions.ClampToDomainBounds` + `Port.Bounds`）により不正な選択矩形を防止する。
+- 状態は MarqueeState に集約し、クリップ（`MarqueeOptions.ClampToSourceBounds` + `Port.Bounds`）により不正な選択矩形を防止する。
 
 ## 5. コンポーネント図
 
@@ -172,8 +172,8 @@ flowchart TB
   - 設定（寸法・表示可否・対話パラメータ・色）・環境値（倍率）・文言プロバイダの保持とファサード（色は描画実装）への伝搬
 - **公開API**:
 - イベント 8 種: `SelectionStarted` / `SelectionChanged` / `SelectionCompleted` / `SelectionCancelled` / `LoupePositionMoved` / `ConfirmRequested` / `CancelRequested` / `Rendered`（描画完了。 描画コンテキストと描画内容を渡し、ホストは付加情報（操作・情報ラベル）を描ける。 サイズ・座標ラベルはコントロールがテキスト要素として表示する）。 **生のポインター入力（Mouse 系）は公開しない**（ホストは自 UI の入力イベントを使う。 押下状態は `CurrentSnapshot.IsMouseDown`）
-  - StyledProperty 4 種: `Options`（不変の設定値 `MarqueeOptions`。 寸法・対話パラメータを内包） / `Appearance`（外観の単一値 `MarqueeAppearance`） / `DipToDomainScaling` / `DisplayScaleScaling`（環境値。 XAML のバインディング・スタイルで設定できるよう依存関係プロパティとして公開する）。 設定はコア（ファサード）または提示層（外観）へ委譲する（MewUI 版と同じ形）
-  - プロパティ: `Log`（保持・`NullLogger` へのフォールバックはコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。 デリゲートのため設定値に含めない） / `HasSelection` / `SelectionDomainRect`
+  - StyledProperty 4 種: `Options`（不変の設定値 `MarqueeOptions`。 寸法・対話パラメータを内包） / `Appearance`（外観の単一値 `MarqueeAppearance`） / `ClientToSourceScaling` / `DisplayScaleScaling`（環境値。 XAML のバインディング・スタイルで設定できるよう依存関係プロパティとして公開する）。 設定はコア（ファサード）または提示層（外観）へ委譲する（MewUI 版と同じ形）
+  - プロパティ: `Log`（保持・`NullLogger` へのフォールバックはコアが単一所有） / `SizeLabelOverrideProvider`（外側の装飾のラベル文言。 デリゲートのため設定値に含めない） / `HasSelection` / `SelectionSourceRect`
   - メソッド: `SetCoordTransform(ICoordTransform?)` / `SetSelection` / `ResetSelection` / `RequestCancel` / `RequestConfirm` / `RefreshOverlay` / **`InvalidateRender()`**（描画に関わる変更の唯一の入口。 図形の層・ラベル・配置をまとめて無効化する）
 - **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画の起動のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・装飾の描画内容）と描画の手順はコアと描画層へ委譲する
 - **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeGeometry（Feature.Marquee.Core）/ MarqueePresenter（描画計画と配置の写像）/ MarqueeAppearance / MarqueeDrawPlan（Feature.Marquee.Presenter）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Core の `Native`）/ ScreenConverter（App.Platform.AvaloniaUI）
@@ -183,7 +183,7 @@ flowchart TB
 - **分類**: ファサードクラス（`public sealed class`・コア提供。 適用パターン: Facade）
 - **責務**: Marquee の**操作の唯一の窓口**。 UI 層とホストは本型だけを参照する
   - 操作の提供: `Press` / `Move` / `Release` / `KeyDown` / `EndNudge` / `SetSelection` / `ResetSelection` / `RequestConfirm` / `RequestCancel` / `ResolveDrawPlan`
-  - 設定・環境値の保持: `Options` / `Appearance` / `DipToDomainScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` / `Log` / `SetCoordTransform`
+  - 設定・環境値の保持: `Options` / `Appearance` / `ClientToSourceScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` / `Log` / `SetCoordTransform`
   - 効果の適用: `IMarqueeEffects`（UI が実装）へフォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換を要求する（適用順の単一所有）
   - ホイール操作はホストが行う（本コントロールは通知も要求も持たない。 コントロール化を前提とした処理は UI 層の責務である）
   - 通知: `Notified`（状態機械の通知をそのまま転送する）
@@ -197,7 +197,7 @@ flowchart TB
 - **責務**:
   - 選択矩形・ドラッグ状態・アクティブハンドル・nudge 状態（基点＋累積オフセット）の保持
   - 純粋ロジック: `HitTest` / `StartNewSelection` / `StartDrag` / `UpdateDrag` / `EndDrag` / `Nudge` / `GetInteractionState` / `CreateSnapshot`（幾何計算は `MarqueeSelection` へ委譲する）
-  - クリップ（`MarqueeOptions.ClampToDomainBounds` + `Port.Bounds` による境界内制限。 境界 Rect 生成は `GetBoundsRect` に一元化）
+  - クリップ（`MarqueeOptions.ClampToSourceBounds` + `Port.Bounds` による境界内制限。 境界 Rect 生成は `GetBoundsRect` に一元化）
   - カーソル操作（`ICursorService`）
   - nudge 終了の共通化（`EndNudge`。 `Reset` / `SetSelection` / `MarqueeSession` から共用し、カーソル再表示を委譲）
 - **可視性**: internal（本コントロールはコアの公開ファサード（`Marquee`）と公開型（`MarqueeSnapshot`）のみを使う。 `MarqueeState` / `MarqueeSession` はコアの内部実装であり参照しない）
@@ -266,7 +266,7 @@ flowchart TB
 ### 6.12 公開イベント引数
 
 - `MarqueeInteractionState` enum（public）: NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging
-- `MarqueeSnapshot` readonly record struct（public）: State / SelectionDomainRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。 座標は UI 非依存の `EsRect` / `EsPoint`（各 UI の境界で自前の型へ変換する）。 値型のため通知のたびにヒープを確保しない
+- `MarqueeSnapshot` readonly record struct（public）: State / SelectionSourceRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive / HasSelection。 座標は UI 非依存の `EsRect` / `EsPoint`（各 UI の境界で自前の型へ変換する）。 値型のため通知のたびにヒープを確保しない
 - `SelectionRectEventArgs`（public）: Rect（Avalonia）+ Snapshot
 - `MarqueePointEventArgs`（public）: Point（Avalonia）+ Snapshot
 - `MarqueeRenderedEventArgs`（public）: Context（`DrawingContext`。 描画中のみ有効）+ Content（`MarqueeDrawPlan`。 描画計画）
@@ -298,7 +298,7 @@ sequenceDiagram
     Ses->>Stt: Port 設定
 
     AP->>Ctl: マウス押下（PointerPressed）
-    Ctl->>Fac: Press(ドメイン座標, clickCount)
+    Ctl->>Fac: Press(対象座標, clickCount)
     Fac->>Ses: Press
     Ses->>Stt: HitTest / StartNewSelection / StartDrag
     Fac-->>Ctl: 効果（フォーカス・キャンセル・再描画）を IMarqueeEffects 経由で適用
@@ -306,13 +306,13 @@ sequenceDiagram
     Ctl-->>AP: SelectionStarted / SelectionChanged
 
     AP->>Ctl: マウス移動（PointerMoved）
-    Ctl->>Fac: Move(ドメイン座標)
+    Ctl->>Fac: Move(対象座標)
     Fac->>Ses: Move
     Ses->>Stt: UpdateDrag
     Ctl-->>AP: SelectionChanged / LoupePositionMoved
 
     AP->>Ctl: マウス解放（PointerReleased）
-    Ctl->>Fac: Release(ドメイン座標)
+    Ctl->>Fac: Release(対象座標)
     Fac->>Ses: Release
     Ses->>Stt: EndDrag（確定 or キャンセル判定）
     Ctl-->>AP: SelectionCompleted / SelectionCancelled

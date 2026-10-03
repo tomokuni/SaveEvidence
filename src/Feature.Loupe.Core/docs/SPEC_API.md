@@ -74,9 +74,9 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 | `Log` | property | ロガー。 null は `NullLogger` へ吸収される。 **コンストラクターで注入されていない場合、初回の設定時に生成の記録を 1 度だけ出力する** |
 | `Options` | property | 設定（表示サイズ・拡大率）。 **変化したときだけ**変更ログ（Debug）を出力する |
 | `ClientToPixelScaling` | property | 表示 DIP → 物理ピクセルのスケーリング係数（環境値。 補正は `Loupe.Limits` が単一所有する）。 **変化したときだけ**変更ログ（Debug）を出力する |
-| `CenterPoint` | property | 拡大中心（ドメイン座標 = 元画像ピクセル座標）。 未設定（null）は切り出し領域を決められないため、`LoupeGeometry` は拡大画像の幾何（`MagnifiedImage` / `CaptureTopLeft`）を持たず、配置も行わない。 **変更は最も低いレベル（Trace）で出力する**（マウス移動ごとに変わるため） |
+| `CenterPoint` | property | 拡大中心（対象座標 = 元画像ピクセル座標）。 未設定（null）は切り出し領域を決められないため、`LoupeGeometry` は拡大画像の幾何（`MagnifiedImage` / `CaptureTopLeft`）を持たず、配置も行わない。 **変更は最も低いレベル（Trace）で出力する**（マウス移動ごとに変わるため） |
 | `PositionOffset` | property | 拡大中心からの右下オフセット（DIP。 既定は 0）。 **変化したときだけ**変更ログ（Debug）を出力する |
-| `SetCoordTransform(ICoordTransform?)` | method | ドメイン ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換）。 **変化したときだけ**変更ログ（Debug）を出力する |
+| `SetCoordTransform(ICoordTransform?)` | method | 対象 ↔ 親領域 DIP の座標変換ポートの設定（null は等価変換）。 **変化したときだけ**変更ログ（Debug）を出力する |
 | `ResolveLayout(EsSize)` | method | **どこへ・どの大きさで置くか**を決める（親領域 DIP の世界）。 親領域サイズから表示レイアウト（`LoupeLayout` = 表示サイズ + 位置）を解決する（拡大中心未設定時と、親領域が収められない場合は位置が null）。 毎フレーム呼ばれるためログは出力しない |
 | `ResolveGeometry(double clientSize)` | method | **何を・何ピクセルで描くか**を決める（物理ピクセルの世界）。 描画 1 フレーム分の幾何（`LoupeGeometry`）の解決（DIP → 物理ピクセルの換算・切り出し領域の算出を含む）。 毎フレーム呼ばれるためログは出力しない |
 
@@ -144,15 +144,15 @@ UI 層とホストは本型だけを参照し、配置計算・幾何の計算�
 描画の契約は本コアにありません（**本コアは描画 API も描画の抽象も持ちません**）。 描画計画の解決は描画層（本コアを参照する上位の層）が、描画は各 UI の描画実装が担います。 層の順序は描画層が単一所有し、UI はその順に写すだけです。
 
 ```csharp
-var loupe = new Loupe(options) { CenterPoint = cursorDomain, ClientToPixelScaling = 1.25 };
+var loupe = new Loupe(options) { CenterPoint = cursorSource, ClientToPixelScaling = 1.25 };
 loupe.SetCoordTransform(port);
 
 var layout = loupe.ResolveLayout(parentSize);          // 表示サイズ（要求サイズ）+ 表示位置（配置しない場合は Position が null）
 var geometry = loupe.ResolveGeometry(layout.ClientSize); // 幾何（物理ピクセル・切り出し領域を解決済み）
 
 // 描画完了通知（ホストが描画済み画像へオーバーレイを描くための情報）は幾何から読む
-var captureTopLeft = geometry.CaptureTopLeft;   // 切り出し領域の左上（ドメイン座標。中心未設定は null）
-var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルーペ画像ピクセルの変換係数
+var captureTopLeft = geometry.CaptureTopLeft;   // 切り出し領域の左上（対象座標。中心未設定は null）
+var scale = geometry.ZoomLevel;                 // 対象座標 → ルーペ画像ピクセルの変換係数
 ```
 
 ## 3. 契約（利用者が守る・受け取る値）
@@ -165,14 +165,14 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 
 | メンバー | 型 / 値 | 説明 |
 | --- | --- | --- |
-| `Center` | `EsPoint?` | 拡大中心（ドメイン座標 = 元画像ピクセル座標）。 null の場合は拡大画像を描画しない |
+| `Center` | `EsPoint?` | 拡大中心（対象座標 = 元画像ピクセル座標）。 null の場合は拡大画像を描画しない |
 | `ClientSize` | `double` | ルーペの一辺の表示サイズ（DIP。 ラベルの位置の基準であり、物理ピクセルサイズの換算元） |
 | `ClientPixelSize` | `int` | ルーペの一辺のサイズ（物理ピクセル。 表示サイズ × `ClientToPixelScaling` を切り上げ・最低 1）。 描画先の表面は本値と同じ大きさで用意する |
 | `ClientToPixelScaling` | `double` | 表示 DIP → 物理ピクセルのスケーリング係数（描画計画の解決（枠線の太さの換算）にも使う） |
 | `ZoomLevel` | `int` | 拡大率（1〜64。 設定 `Options.ZoomLevel` の値。 描画完了通知のスケールにも使う） |
-| `CaptureSize` | `int`（導出） | 切り出し領域の一辺（ドメインピクセル）。 物理ピクセルサイズを拡大率で割った切り上げ。 位置パラメータではなく `ClientPixelSize` / `ZoomLevel` からの導出であり、切り上げの規則も本値が単一所有する |
+| `CaptureSize` | `int`（導出） | 切り出し領域の一辺（対象ピクセル）。 物理ピクセルサイズを拡大率で割った切り上げ。 位置パラメータではなく `ClientPixelSize` / `ZoomLevel` からの導出であり、切り上げの規則も本値が単一所有する |
 | `ClientPixelRect` | `EsRect` | 描画先の全領域（左上を原点とする一辺 `ClientPixelSize` の正方形・物理ピクセル）。 描画層がこの矩形へ下地を塗る（UI 層は矩形を組み立てない） |
-| `CaptureTopLeft` | `EsPoint?` | 拡大中心から切り出し領域の左上（ドメイン座標）。 中心未設定の場合は null（描画しない） |
+| `CaptureTopLeft` | `EsPoint?` | 拡大中心から切り出し領域の左上（対象座標）。 中心未設定の場合は null（描画しない） |
 | `MagnifiedImage` | `LoupeMagnifiedImage?` | 拡大画像の切り出し・描画元・描画先の矩形。 中心未設定の場合は null |
 
 | メソッド | 説明 |
@@ -187,8 +187,8 @@ var scale = geometry.ZoomLevel;                 // ドメイン座標 → ルー
 
 | メンバー | 説明 |
 | --- | --- |
-| `CaptureSize` | 切り出し領域の一辺（ドメインピクセル）。 物理ピクセルサイズを拡大率で割った切り上げ。 十字線の交点も本値を使う |
-| `CaptureTopLeft` | 拡大中心から切り出し領域の左上（ドメイン座標）。 中心未設定の場合は null（描画しない）。 **ホストが描画済み画像へオーバーレイを描くために public** |
+| `CaptureSize` | 切り出し領域の一辺（対象ピクセル）。 物理ピクセルサイズを拡大率で割った切り上げ。 十字線の交点も本値を使う |
+| `CaptureTopLeft` | 拡大中心から切り出し領域の左上（対象座標）。 中心未設定の場合は null（描画しない）。 **ホストが描画済み画像へオーバーレイを描くために public** |
 | `MagnifiedImage` | 拡大画像の切り出し・描画元・描画先の矩形（`LoupeMagnifiedImage`）。 **拡大倍率と描画先の大きさの関係を単一所有**し、両 UI が同じ拡大結果になるようにする。 中心未設定の場合は null |
 
 **切り出しの実行はありません**: 切り出しは描画実装（各 UI の painter）が `EsBitmap.Crop` を呼んで行います。 本メンバーは「どこを切り出すか」を解決する値だけを持ちます。
@@ -216,7 +216,7 @@ using EsUtil.Platform.Core.Geometry;
 var options = new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 };
 using var loupe = new Loupe(options);
 
-// 拡大中心（ドメイン座標 = 元画像ピクセル座標）と表示位置のオフセット
+// 拡大中心（対象座標 = 元画像ピクセル座標）と表示位置のオフセット
 loupe.CenterPoint = new EsPoint(1920, 1080);
 loupe.PositionOffset = 16;
 
@@ -235,7 +235,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 
 | 座標系 | 用途 |
 | --- | --- |
-| ドメイン座標 | 拡大中心・切り出し領域。 元画像ピクセル座標 |
+| 対象座標 | 拡大中心・切り出し領域。 元画像ピクセル座標 |
 | 親領域 DIP | 表示レイアウト（表示サイズ・表示位置）。 `ICoordTransform.ToDip` で得る |
 | 物理ピクセル | 描画の幾何のサイズ・寸法。 表示 DIP × `ClientToPixelScaling` |
 

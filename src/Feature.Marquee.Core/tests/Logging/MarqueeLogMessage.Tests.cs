@@ -89,7 +89,7 @@ public class MarqueeLogMessageTests
             MarqueeLogMessage.LogSettingChanged(logger, "HandleSize", 10.0, 20.0);
             MarqueeLogMessage.LogSettingChanged(logger, "HandleSize", 20.0, 20.0);
             MarqueeLogMessage.LogSettingChanged(logger, "MinSelectionSize", 6, 7);
-            MarqueeLogMessage.LogSettingChanged(logger, "ClampToDomainBounds", true, true);
+            MarqueeLogMessage.LogSettingChanged(logger, "ClampToSourceBounds", true, true);
 
             Assert.Equal(
                 [

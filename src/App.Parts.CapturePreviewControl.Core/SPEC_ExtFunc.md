@@ -11,7 +11,7 @@
 | `CaptureImageHolder` | クラス | 撮影した画像の保持と所有権（差し替え・破棄後の破棄・未取得時の範囲） |
 | `CaptureVirtualScreen` | 静的クラス | 仮想スクリーンの撮影対象の範囲（全モニタの包含矩形）と、取得の待ち方（タイムアウトで打ち切り、未使用結果を破棄する） |
 | `CaptureHighlight` | record struct | 検出結果を選択オーバーレイへ反映するための状態（ハイライト・矩形・表示名・変化） |
-| `CaptureHighlightSession` | クラス | ハイライトの状態・判断・ログの単一所有（ドメイン変換・未検出の正規化・表示名の変化） |
+| `CaptureHighlightSession` | クラス | ハイライトの状態・判断・ログの単一所有（対象変換・未検出の正規化・表示名の変化） |
 | `CaptureKeyAction` | 列挙型 | オーバーレイのキー操作で実行する内容（何もしない / 確定 / キャンセル） |
 | `CaptureKeyActions` | 静的クラス | 押下されたキーから実行すべき操作の決定（Enter・Escape） |
 | `CaptureClickSelection` | クラス | クリック確定の固定（押下で固定・解放で取り出し） |
@@ -148,7 +148,7 @@
 | `SizeLabelVisible` / `SizeLabelColor` / `SizeLabelFontSize` | `bool?` / `System.Drawing.Color?` / `double?` | サイズラベルの表示・色・サイズ |
 | `InfoLabelVisible` / `ShowSubLines` / `SubLineFontSize` | `bool?` / `bool?` / `double?` | 情報ラベル・サブライン |
 | `SizeLabelOverride` | `string?` | サイズラベルの文言明示指定（null = 自動生成） |
-| `DisplayScaleScaling` | `double?` | サイズラベル表示用のスケーリング（0 以下は `DipToDomainScaling` と同値） |
+| `DisplayScaleScaling` | `double?` | サイズラベル表示用のスケーリング（0 以下は `ClientToSourceScaling` と同値） |
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
@@ -189,7 +189,7 @@
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
 | `ResolveForRect` | `double ResolveForRect(EsRectInt target, IReadOnlyList<(EsRectInt Bounds, double Scale)> monitors, double fallback)` | 対象矩形の**中心**を含むモニタの表示倍率を返す。 どのモニタにも含まれない場合は `fallback` |
-| `ResolveForDomainRect` | `double ResolveForDomainRect(EsRect domainRect, EsPointInt origin, IReadOnlyList<(EsRectInt Bounds, double Scale)> monitors, double fallback)` | ドメイン座標（画像ピクセル）の矩形を画面物理座標へ戻してから中心を含むモニタの表示倍率を返す。 **原点の加算**も単一所有する（各 UI が書くと判定点が 1 ピクセルずれる） |
+| `ResolveForSourceRect` | `double ResolveForSourceRect(EsRect sourceRect, EsPointInt origin, IReadOnlyList<(EsRectInt Bounds, double Scale)> monitors, double fallback)` | 対象座標（画像ピクセル）の矩形を画面物理座標へ戻してから中心を含むモニタの表示倍率を返す。 **原点の加算**も単一所有する（各 UI が書くと判定点が 1 ピクセルずれる） |
 | `Collect` | `IReadOnlyList<(EsRectInt Bounds, double Scale)> Collect(IEnumerable<(EsRectInt Bounds, double Scale)> monitors)` | 判定に使うモニタ一覧を整える（**表示倍率が未確定（0 以下）のモニタを除外する**。 入力の順序は保つ） |
 | `ResolveScaling` | `double ResolveScaling(IEnumerable<double> scalings)` | 画面のスケーリング一覧から**先頭の値**を解決する（未確定は基準値へ正規化。 画面が 1 枚も無い場合は基準値） |
 
@@ -199,8 +199,8 @@
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `FormatCropSizeLabel` | `string FormatCropSizeLabel(EsRect selectionDomainRect, double zoomPercent)` | 切り出しのサイズラベル（`LT` / `RB` / `WH` / `Zoom`）。 `WH` は含まれるピクセル数であり、終点を含めるかの判断は矩形の `EsRectInterval` が持つ（`Closed` なら右端−左端＋1） |
-| `ResolveSizeLabel` | `string? ResolveSizeLabel(bool hasSelection, EsRect selectionDomainRect, double zoomPercent)` | 選択がある場合はラベル、**未選択の場合は null**（描画しない）を返す |
+| `FormatCropSizeLabel` | `string FormatCropSizeLabel(EsRect selectionSourceRect, double zoomPercent)` | 切り出しのサイズラベル（`LT` / `RB` / `WH` / `Zoom`）。 `WH` は含まれるピクセル数であり、終点を含めるかの判断は矩形の `EsRectInterval` が持つ（`Closed` なら右端−左端＋1） |
+| `ResolveSizeLabel` | `string? ResolveSizeLabel(bool hasSelection, EsRect selectionSourceRect, double zoomPercent)` | 選択がある場合はラベル、**未選択の場合は null**（描画しない）を返す |
 
 ### 7.4 ImageColorMath
 
@@ -314,17 +314,17 @@
 
 ### 7.13 CaptureHighlight / CaptureHighlightSession
 
-カーソル下の要素の検出結果から「ハイライトの有無・ハイライト矩形（ドメイン座標）・表示名」を導出する手順を単一所有します（両 UI が同じ手順・同じログになることの根拠）。
+カーソル下の要素の検出結果から「ハイライトの有無・ハイライト矩形（対象座標）・表示名」を導出する手順を単一所有します（両 UI が同じ手順・同じログになることの根拠）。
 
 | メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
-| `Update` | `CaptureHighlight Update(CaptureType captureType, ElementFinderResults detection, EsPointInt imageOrigin)` | 検出結果を反映する（ドメイン座標への変換・未検出の正規化・表示名の変化の判定・診断ログの記録） |
-| `DomainRect` | `EsRect?` | 直前に検出したハイライト矩形（ドメイン座標 = 画像ローカル物理ピクセル）。 未検出時は null（確定対象の有無の判定も兼ねる） |
+| `Update` | `CaptureHighlight Update(CaptureType captureType, ElementFinderResults detection, EsPointInt imageOrigin)` | 検出結果を反映する（対象座標への変換・未検出の正規化・表示名の変化の判定・診断ログの記録） |
+| `SourceRect` | `EsRect?` | 直前に検出したハイライト矩形（対象座標 = 画像ローカル物理ピクセル）。 未検出時は null（確定対象の有無の判定も兼ねる） |
 | `Title` | `string` | 直前に検出した要素の表示名（未検出時は空文字）。 情報ラベルの文言プロバイダが参照する |
 
 | メンバー | 型 | 内容 |
 | --- | --- | --- |
-| `DomainRect` | `EsRect?` | ハイライト矩形（ドメイン座標 = 画像ローカル物理ピクセル）。 未検出時は null（**null が「ハイライトなし」を意味する**） |
+| `SourceRect` | `EsRect?` | ハイライト矩形（対象座標 = 画像ローカル物理ピクセル）。 未検出時は null（**null が「ハイライトなし」を意味する**） |
 | `TitleChanged` | `bool` | 直前の検出と比べて表示名が変わったかどうか（情報ラベルの再描画判断） |
 
 UI 層は戻り値を選択コントロールへ設定するだけにし、座標変換・空文字への正規化・変化の判定・診断ログを書きません（直前の状態はセッションのプロパティから読みます）。
@@ -379,7 +379,7 @@ UI が発明してはいけない運用方針値を単一所有します。
 
 ## 8. 矩形オーバーレイ（`OverlayRect` 系）
 
-画像上へ実線・破線・点線の矩形を描く契約と、**「どう描くか」の判断**を単一所有します。 UI 層はドメイン座標 → ビューポート座標の変換だけを行い、確定した描画入力（`OverlayRectFrame`）を描画先の型へ写します。
+画像上へ実線・破線・点線の矩形を描く契約と、**「どう描くか」の判断**を単一所有します。 UI 層は対象座標 → ビューポート座標の変換だけを行い、確定した描画入力（`OverlayRectFrame`）を描画先の型へ写します。
 
 ### 8.1 `OverlayRect`（record struct）
 
@@ -390,7 +390,7 @@ public readonly record struct OverlayRect(
 
 | メンバー | 型 | 内容 |
 | --- | --- | --- |
-| `Bounds` | `EsRect` | 矩形（ドメイン座標 = 元画像ピクセル座標） |
+| `Bounds` | `EsRect` | 矩形（対象座標 = 元画像ピクセル座標） |
 | `Style` | `OverlayLineStyle` | 枠線スタイル |
 | `Foreground` | `System.Drawing.Color` | 前景色（遅明度を含む） |
 | `Background` | `System.Drawing.Color` | 背景色（遅明度を含む）。 破線の市松風 2 色目 |
@@ -495,7 +495,7 @@ public readonly record struct OverlayRect(
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `SetContent` | `ZoomFeedback SetContent(bool hasSource, EsSize contentSize)` | コンテンツ（画像）の設定。 Fit 表示へリセットする |
+| `SetSource` | `ZoomFeedback SetSource(bool hasSource, EsSize sourceSize)` | コンテンツ（画像）の設定。 Fit 表示へリセットする |
 | `SetViewport` | `ZoomFeedback SetViewport(EsSize viewportSize)` | ビューポートのサイズ。 Fit キャッシュを常に無効化する |
 | `SetCenterAlign` | `ZoomFeedback SetCenterAlign(bool centerAlign)` | 中央寄せ／左上寄せ（同値なら何もしない） |
 | `SetAppearance` | `ZoomFeedback SetAppearance(ZoomViewAppearance appearance)` | 外観（同値なら何もしない） |
@@ -510,7 +510,7 @@ public readonly record struct OverlayRect(
 | `TryBeginScrollBarDrag` | `bool TryBeginScrollBarDrag(EsPoint position)` | スクロールバーのドラッグ開始（トラック押下はサム移動） |
 | `UpdateScrollBarDrag` / `ReleaseScrollBarDrag` | `ZoomFeedback UpdateScrollBarDrag(EsPoint position)` ほか | ドラッグの反映と終了 |
 
-**読み取り**: `IsFit` / `InternalZoomPercent` / `ZoomPercent`（実効値）/ `Scale` / `EffectiveScale` / `Offset` / `CanZoomIn` / `CanZoomOut` / `CurrentState` / `DisplaySize` / `ImageOrigin` / `ImageRect` / `CurrentScrollBars()` / `ScrollMetrics(bool vertical)` / `ViewportToContent` / `ViewportToContentImage` / `ContentToViewportImage` / `IsPanning` / `IsDraggingScrollBar`。
+**読み取り**: `IsFit` / `InternalZoomPercent` / `ZoomPercent`（実効値）/ `Scale` / `EffectiveScale` / `Offset` / `CanZoomIn` / `CanZoomOut` / `CurrentState` / `DisplaySize` / `ImageOrigin` / `ImageRect` / `CurrentScrollBars()` / `ScrollMetrics(bool vertical)` / `ClientToSource` / `ClientToDisplayedSource` / `DisplayedSourceToClient` / `IsPanning` / `IsDraggingScrollBar`。
 
 **通知**: `Notified`（`EventHandler<ZoomNotice>`）が `ZoomChanged`（`ZoomState` を運ぶ）と `ViewportChanged`（画像表示矩形を運ぶ）を送ります。 UI 層は自 UI の公開イベントへ転送するだけです。
 
@@ -558,7 +558,7 @@ public readonly record struct OverlayRect(
 | `ComputeOffsetAfterScaleChange` | ズーム中心を維持するためのオフセットを計算する |
 | `ClampOffset` / `MaxCentered` | スクロール範囲へのクランプ・中央寄せ／左上寄せの表示サイズ |
 | `ComputeImageOrigin` | 画像の表示矩形の原点（中央寄せ補正込み）を求める |
-| `ViewportToContent` / `ContentToViewport` | ビューポート座標 ⇔ コンテンツ座標の変換（画像表示矩形の原点基準を含む版も持つ） |
+| `ClientToSource` / `SourceToClient` | ビューポート座標 ⇔ コンテンツ座標の変換（画像表示矩形の原点基準を含む版も持つ） |
 | `ScaleFromPercent` / `PercentFromScale` | % ⇔ 倍率の換算 |
 
 スケールが 0 以下の場合は 1 として扱い、例外を発生させません。
@@ -575,7 +575,7 @@ public readonly record struct OverlayRect(
 | --- | --- |
 | `ZoomScrollBar` | オーバーレイスクロールバーの矩形（`Track` / `Thumb`） |
 | `ZoomScrollBarMetrics` | 標準スクロールバー部品へ写す同期値（`MaxOffset` / `ViewportSize` / `IsScrollable`） |
-| `ZoomScrollBarGeometry`（internal） | `Compute`（トラック・サムの矩形）・`MovableThumbRange`（可動範囲）・`ContentOffsetFromThumb`（サム位置からのオフセット逆算）・`MaxContentOffset` |
+| `ZoomScrollBarGeometry`（internal） | `Compute`（トラック・サムの矩形）・`MovableThumbRange`（可動範囲）・`SourceOffsetFromThumb`（サム位置からのオフセット逆算）・`MaxSourceOffset` |
 | `ZoomAvailability`（internal） | ズーム可否（`CanZoomIn` / `CanZoomOut`）を単一に保持する値オブジェクト |
 
 ### 10.7 `ZoomLogMessage` / `ZoomLogFormat`（ログ）

@@ -21,7 +21,7 @@ public class ZoomSkiaRendererTests
     {
         var session = new ZoomViewSession();
         session.SetViewport(new EsSize(viewportSize, viewportSize));
-        session.SetContent(hasSource: true, new EsSize(image.Width, image.Height));
+        session.SetSource(hasSource: true, new EsSize(image.Width, image.Height));
         return session;
     }
 
@@ -77,7 +77,7 @@ public class ZoomSkiaRendererTests
         using var image = TestHelper.CreateBitmap(1, 1, SKColors.Red);
         var session = new ZoomViewSession();
         session.SetViewport(new EsSize(100, 100));
-        session.SetContent(hasSource: true, new EsSize(0, 0));
+        session.SetSource(hasSource: true, new EsSize(0, 0));
         using var target = TestHelper.CreateTarget(100, 100);
 
         ZoomSkiaRenderer.Render(target.Canvas, image, session);

@@ -178,15 +178,15 @@ public sealed class ZoomViewControl : Panel
     /// <param name="viewportPos">ビューポート座標（DIP）。</param>
     /// <returns>コンテンツ座標（元画像ピクセル）。</returns>
     /// <remarks>Fit 中央寄せの原点補正を含む。 変換はコアのセッションへ委譲する。</remarks>
-    public Point ViewportToContentImage(Point viewportPos)
-        => Session.ViewportToContentImage(viewportPos.ToEsPoint()).ToAvaloniaPoint();
+    public Point ClientToDisplayedSource(Point viewportPos)
+        => Session.ClientToDisplayedSource(viewportPos.ToEsPoint()).ToAvaloniaPoint();
 
     /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準）。</summary>
     /// <param name="contentPos">コンテンツ座標（元画像ピクセル）。</param>
     /// <returns>ビューポート座標（DIP）。</returns>
     /// <remarks>Fit 中央寄せの原点補正を含む。 変換はコアのセッションへ委譲する。</remarks>
-    public Point ContentToViewportImage(Point contentPos)
-        => Session.ContentToViewportImage(contentPos.ToEsPoint()).ToAvaloniaPoint();
+    public Point DisplayedSourceToClient(Point contentPos)
+        => Session.DisplayedSourceToClient(contentPos.ToEsPoint()).ToAvaloniaPoint();
 
     /// <summary>内部ビューポートが所有するセッションを取得する。</summary>
     /// <value>ズームの状態・判断・計算を単一所有するセッション。</value>

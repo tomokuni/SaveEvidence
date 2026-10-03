@@ -20,7 +20,7 @@ public class MarqueeFeedbackTests
         var feedback = new MarqueeFeedback
         {
             Cursor = MarqueeCursorActions.MoveTo | MarqueeCursorActions.Hide | MarqueeCursorActions.Show,
-            CursorDomainPosition = new EsPoint(10, 20),
+            CursorSourcePosition = new EsPoint(10, 20),
         };
 
         feedback.ApplyCursor(cursor, new EffectsSpy());

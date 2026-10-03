@@ -10,14 +10,14 @@ namespace EsUtil.Feature.Marquee.Core.Tests;
 public class MarqueeLimitsTests
 {
     // ====================================================================
-    // DipToDomainScaling（既定 1.0）
+    // ClientToSourceScaling（既定 1.0）
     // ====================================================================
 
     /// <summary>倍率の既定値が等倍であることを検証する。</summary>
     [Fact]
-    public void DipToDomainScalingDefault_等倍である()
+    public void ClientToSourceScalingDefault_等倍である()
     {
-        Assert.Equal(1.0, Marquee.Limits.DipToDomainScalingDefault);
+        Assert.Equal(1.0, Marquee.Limits.ClientToSourceScalingDefault);
     }
 
     // ====================================================================
@@ -100,8 +100,8 @@ public class MarqueeLimitsTests
     }
 
     /// <summary>選択矩形の最小サイズが安全域へ補正されることを検証する。</summary>
-    /// <param name="value">補正する値（ドメイン座標）。</param>
-    /// <param name="expected">補正後の値（ドメイン座標）。</param>
+    /// <param name="value">補正する値（対象座標）。</param>
+    /// <param name="expected">補正後の値（対象座標）。</param>
     /// <remarks>0 以下の指定は最小値（1.0）へ補正される（幅・高さが 0 の選択を残さない）。</remarks>
     [Theory]
     [InlineData(-1.0, 1.0)]
@@ -124,9 +124,9 @@ public class MarqueeLimitsTests
     [InlineData(1.25, 1.25)]
     [InlineData(10.0, 8.0)]
     [InlineData(double.NaN, 1.0)]
-    public void CoerceDipToDomainScaling_安全域へ補正する(double value, double expected)
+    public void CoerceClientToSourceScaling_安全域へ補正する(double value, double expected)
     {
-        Assert.Equal(expected, Marquee.Limits.CoerceDipToDomainScaling(value));
+        Assert.Equal(expected, Marquee.Limits.CoerceClientToSourceScaling(value));
     }
 
     // ====================================================================
@@ -155,14 +155,14 @@ public class MarqueeLimitsTests
     }
 
     /// <summary>0 以下で倍率も無効な場合は基準値（等倍）になることを検証する。</summary>
-    /// <param name="dipToDomainScaling">指定する倍率。</param>
+    /// <param name="dipToSourceScaling">指定する倍率。</param>
     [Theory]
     [InlineData(0.0)]
     [InlineData(-1.0)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
-    public void ResolveDisplayScale_倍率も無効なら等倍になる(double dipToDomainScaling)
+    public void ResolveDisplayScale_倍率も無効なら等倍になる(double dipToSourceScaling)
     {
-        Assert.Equal(1.0, Marquee.Limits.ResolveDisplayScale(displayScaling: 0.0, dipToDomainScaling));
+        Assert.Equal(1.0, Marquee.Limits.ResolveDisplayScale(displayScaling: 0.0, dipToSourceScaling));
     }
 }

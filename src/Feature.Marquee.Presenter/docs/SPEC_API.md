@@ -23,7 +23,7 @@
 
 - **描画は本層が行いません**。 本層は描画計画というデータを返し、描画は各 UI の描画実装が自 UI の API で行います（UI フレームワークごとの描画モデルの差は描画 API の抽象では吸収しきれないため、抽象を持ちません）。
 - **本層はコントロール化を前提とした処理を提供しません**（ホイール操作・ビューポート連携・入力の解釈・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるため UI 層が持ちます）。
-- 描画計画の座標は**ローカル DIP**です（原点 (0, 0)・サイズは描画領域）。 ドメイン → DIP の変換はコアが済ませています。
+- 描画計画の座標は**ローカル DIP**です（原点 (0, 0)・サイズは描画領域）。 対象 → DIP の変換はコアが済ませています。
 - 実寸測定（`measureText`）は描画 API 依存のため UI 層が関数として渡します。
 - 本層は外観（`MarqueeAppearance`）を単一所有します（描画にだけ必要な設定のため）。 寸法・対話パラメータはコア（`MarqueeOptions`）が単一所有します。
 - **本層が単一所有する設定（外観・表示スケーリング係数）の変更は本層が記録します**（`MarqueePresenterLogMessage`。 値を所有する主体が記録する）。 **コアへ伝搬するだけの値も、本層を通過したことを Trace で記録します**。
@@ -52,15 +52,15 @@
 | `MarqueePresenter(IMarqueeEffects effects, ICursorService? cursor = null, MarqueeOptions? options = null, ILogger? logger = null)` | コアのファサードを内部に生成する。 `effects` は null 不可（null なら `ArgumentNullException`）。 `cursor` は null 可（カーソル操作を行わない）。 `logger` は null 可（**注入するとその場で本層とコアの生成を記録する**。 後から `Log` でも設定できる） |
 | `Appearance` | 外観（`MarqueeAppearance`）。 既定は `MarqueeAppearance.Default`。 設定すると次の描画から反映される（`set`） |
 | `ResolveDrawPlan(EsSize clientSize, Func<string, double, EsSize> measureText)` | 1 フレーム分の描画計画を解決する（`virtual`）。 処理は「幾何の解決 → 装飾矩形の導出 → ラベルの文言と配置 → 層の順序」の順。 `measureText` が null なら `ArgumentNullException` |
-| `DisplayScaleScaling` | サイズラベルの DisplayScale 表示に使う係数（0 以下は `DipToDomainScaling` と同値） |
+| `DisplayScaleScaling` | サイズラベルの DisplayScale 表示に使う係数（0 以下は `ClientToSourceScaling` と同値） |
 | `SizeLabelOverrideProvider` | サイズラベルの文言プロバイダ（null または空文字を返す場合は自動生成） |
 | `SizeLabelDisplayScalingProvider` | 表示スケールを矩形ごとに解決するプロバイダ（null の場合は `DisplayScaleScaling`） |
 | `Options` | 選択の設定（寸法・対話パラメータ）。 コアへ委譲する |
-| `DipToDomainScaling` / `HighlightDomainRect` | 環境値・ホストが与える実行時状態。 コアへ委譲する |
+| `ClientToSourceScaling` / `HighlightSourceRect` | 環境値・ホストが与える実行時状態。 コアへ委譲する |
 | `Log` | ロガー。 null は `NullLogger` へ吸収される。 **コンストラクターで未注入の場合は初回の設定時に本層とコアの生成を 1 度だけ記録する** |
 | `Notified` | 通知（`MarqueeNotice`）。 UI 層は自 UI の公開イベントへ転送する |
-| `HasSelection` / `SelectionDomainRect` / `CreateSnapshot(EsPoint?)` | 状態の読み取り |
-| `SetCoordTransform(ICoordTransform?)` / `ToDomain(EsPoint)` / `ToDip(EsPoint)` | 座標変換（コアへ委譲） |
+| `HasSelection` / `SelectionSourceRect` / `CreateSnapshot(EsPoint?)` | 状態の読み取り |
+| `SetCoordTransform(ICoordTransform?)` / `ToSource(EsPoint)` / `ToDip(EsPoint)` | 座標変換（コアへ委譲） |
 | `Press(EsPoint, int)` / `Move(EsPoint)` / `Release(EsPoint)` / `KeyDown(EsKey, EsPoint?)` / `EndNudge()` | 入力の転送（コアへ委譲） |
 | `SetSelection(EsRect)` / `ResetSelection()` / `RequestConfirm()` / `RequestCancel()` | 外部操作の転送（コアへ委譲） |
 

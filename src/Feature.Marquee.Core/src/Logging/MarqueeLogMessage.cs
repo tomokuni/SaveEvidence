@@ -36,7 +36,7 @@ internal static partial class MarqueeLogMessage
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="handleSize">生成時のハンドルの一辺サイズ（DIP）。</param>
-    /// <param name="minSelectionSize">生成時の選択矩形の最小サイズ（ドメイン座標）。</param>
+    /// <param name="minSelectionSize">生成時の選択矩形の最小サイズ（対象座標）。</param>
     [LoggerMessage(LogLevel.Information, "[Feature.Marquee.Core] Facade created: HandleSize={HandleSize}, MinSelectionSize={MinSelectionSize}")]
     internal static partial void LogFacadeCreated(this ILogger logger, double handleSize, double minSelectionSize);
 
@@ -52,8 +52,8 @@ internal static partial class MarqueeLogMessage
     /// <summary>ポインター押下（マウス Down）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] MouseDown: pos=({X}, {Y}) clickCount={ClickCount} hasSelection={HasSelection}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="x">ドメイン座標 X。</param>
-    /// <param name="y">ドメイン座標 Y。</param>
+    /// <param name="x">対象座標 X。</param>
+    /// <param name="y">対象座標 Y。</param>
     /// <param name="clickCount">クリック数（2 = ダブルクリック）。</param>
     /// <param name="hasSelection">選択矩形の有無。</param>
     [LoggerMessage(LogLevel.Debug, "[Feature.Marquee.Core] MouseDown: pos=({X}, {Y}) clickCount={ClickCount} hasSelection={HasSelection}")]
@@ -62,8 +62,8 @@ internal static partial class MarqueeLogMessage
     /// <summary>ポインター解放（マウス Up）のログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] MouseUp: pos=({X}, {Y}) wasDragging={WasDragging} hasSelection={HasSelection}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="x">ドメイン座標 X。</param>
-    /// <param name="y">ドメイン座標 Y。</param>
+    /// <param name="x">対象座標 X。</param>
+    /// <param name="y">対象座標 Y。</param>
     /// <param name="wasDragging">ドラッグ中だったかどうか。</param>
     /// <param name="hasSelection">選択矩形の有無。</param>
     [LoggerMessage(LogLevel.Debug, "[Feature.Marquee.Core] MouseUp: pos=({X}, {Y}) wasDragging={WasDragging} hasSelection={HasSelection}")]
@@ -72,8 +72,8 @@ internal static partial class MarqueeLogMessage
     /// <summary>ダブルクリックのログ。</summary>
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] DoubleClick: pos=({X}, {Y}) inside={Inside}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="x">ドメイン座標 X。</param>
-    /// <param name="y">ドメイン座標 Y。</param>
+    /// <param name="x">対象座標 X。</param>
+    /// <param name="y">対象座標 Y。</param>
     /// <param name="inside">選択矩形の内側かどうか。</param>
     [LoggerMessage(LogLevel.Debug, "[Feature.Marquee.Core] DoubleClick: pos=({X}, {Y}) inside={Inside}")]
     internal static partial void LogDoubleClick(this ILogger logger, double x, double y, bool inside);
@@ -81,16 +81,16 @@ internal static partial class MarqueeLogMessage
     /// <summary>マウス押下直前の位置のログ（移動の高頻度ログは行わない）。</summary>
     /// <remarks>LogLevel: Trace<br/>出力書式: <c>[Feature.Marquee.Core] Position before MouseDown: pos=({X}, {Y})</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="x">ドメイン座標 X。</param>
-    /// <param name="y">ドメイン座標 Y。</param>
+    /// <param name="x">対象座標 X。</param>
+    /// <param name="y">対象座標 Y。</param>
     [LoggerMessage(LogLevel.Trace, "[Feature.Marquee.Core] Position before MouseDown: pos=({X}, {Y})")]
     internal static partial void LogPositionBeforeDown(this ILogger logger, double x, double y);
 
     /// <summary>マウス解放直後の位置のログ（移動の高頻度ログは行わない）。</summary>
     /// <remarks>LogLevel: Trace<br/>出力書式: <c>[Feature.Marquee.Core] Position after MouseUp: pos=({X}, {Y})</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="x">ドメイン座標 X。</param>
-    /// <param name="y">ドメイン座標 Y。</param>
+    /// <param name="x">対象座標 X。</param>
+    /// <param name="y">対象座標 Y。</param>
     [LoggerMessage(LogLevel.Trace, "[Feature.Marquee.Core] Position after MouseUp: pos=({X}, {Y})")]
     internal static partial void LogPositionAfterUp(this ILogger logger, double x, double y);
 
@@ -98,8 +98,8 @@ internal static partial class MarqueeLogMessage
     /// <remarks>LogLevel: Debug<br/>出力書式: <c>[Feature.Marquee.Core] DragStart: handle={Handle} pos=({X}, {Y})</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="handle">操作対象のハンドル（None = 新規選択）。</param>
-    /// <param name="x">ドメイン座標 X。</param>
-    /// <param name="y">ドメイン座標 Y。</param>
+    /// <param name="x">対象座標 X。</param>
+    /// <param name="y">対象座標 Y。</param>
     [LoggerMessage(LogLevel.Debug, "[Feature.Marquee.Core] DragStart: handle={Handle} pos=({X}, {Y})")]
     internal static partial void LogDragStart(this ILogger logger, string handle, double x, double y);
 
@@ -147,7 +147,7 @@ internal static partial class MarqueeLogMessage
 
     /// <summary>ハイライト矩形（頻度の高い設定値）の変更ログ（同値の再設定では出力しない）。</summary>
     /// <remarks>
-    /// LogLevel: Trace<br/>出力書式: <c>[Feature.Marquee.Core] Setting: HighlightDomainRect {OldValue} → {NewValue}</c><br/>
+    /// LogLevel: Trace<br/>出力書式: <c>[Feature.Marquee.Core] Setting: HighlightSourceRect {OldValue} → {NewValue}</c><br/>
     /// ハイライト矩形はホストがカーソル下の要素の検出結果として与える値であり、<b>最も頻度が高い</b>（ホバーのたびに変わりうる）ため<br/>
     /// 最も低いレベル（Trace）で記録する（既定の出力では溢れさせない。 必要時にレベルを下げて追う）。<br/>
     /// 「変化したときだけ出力する」判断を本メソッドが単一所有する（出力をコアが行うため、UI 層は同値判定を持たない）。
@@ -155,14 +155,14 @@ internal static partial class MarqueeLogMessage
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="oldValue">変更前のハイライト矩形（未指定は null）。</param>
     /// <param name="newValue">変更後のハイライト矩形（未指定は null）。</param>
-    internal static void LogHighlightDomainRectChanged(this ILogger logger, EsRect? oldValue, EsRect? newValue)
+    internal static void LogHighlightSourceRectChanged(this ILogger logger, EsRect? oldValue, EsRect? newValue)
     {
         if (oldValue == newValue)
         {
             return;
         }
 
-        logger.LogSettingChangedTrace(nameof(Marquee.HighlightDomainRect), FormatRect(oldValue), FormatRect(newValue));
+        logger.LogSettingChangedTrace(nameof(Marquee.HighlightSourceRect), FormatRect(oldValue), FormatRect(newValue));
     }
 
     /// <summary>座標変換ポートの設定変更を記録する（同値の再設定では出力しない）。</summary>
@@ -277,7 +277,7 @@ internal static partial class MarqueeLogMessage
         logger.LogSettingChanged(nameof(MarqueeOptions.MarkerLength), oldValue.MarkerLength, newValue.MarkerLength);
         logger.LogSettingChanged(nameof(MarqueeOptions.HandleHitRadius), oldValue.HandleHitRadius, newValue.HandleHitRadius);
         logger.LogSettingChanged(nameof(MarqueeOptions.MinSelectionSize), oldValue.MinSelectionSize, newValue.MinSelectionSize);
-        logger.LogSettingChanged(nameof(MarqueeOptions.ClampToDomainBounds), oldValue.ClampToDomainBounds, newValue.ClampToDomainBounds);
+        logger.LogSettingChanged(nameof(MarqueeOptions.ClampToSourceBounds), oldValue.ClampToSourceBounds, newValue.ClampToSourceBounds);
     }
 
     /// <summary>矩形を <c>(X, Y, W, H)</c> 形式の文字列へ整形する。</summary>

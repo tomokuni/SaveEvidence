@@ -21,7 +21,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
 /// 状態は持たない（選択矩形・ハイライトは複合コントロール <see cref="FadeMaskDragRectControl"/> が保持）。<br/>
 /// - AreaSelect: 複合コントロール（Marquee + Loupe）でドラッグ選択し、ルーペで拡大表示する。<br/>
 /// - ScreenSelect / WindowSelect: ウィンドウの Pointer イベントから <see cref="IElementFinder"/> で検出し、<br/>
-///   複合コントロールのハイライト状態（HighlightDomainRect / HasHighlight 等）に設定する。<br/>
+///   複合コントロールのハイライト状態（HighlightSourceRect / HasHighlight 等）に設定する。<br/>
 /// 確定フロー（非表示 → DWM 待機 → キャプチャ）は本クラスが直接行う（<see cref="ICaptureService"/> に委譲）。
 /// </remarks>
 internal sealed partial class OverlayWindow : Window
@@ -74,7 +74,7 @@ internal sealed partial class OverlayWindow : Window
     /// <summary>撮影した画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時の範囲をコアが単一所有する）。</summary>
     private readonly CaptureImageHolder _captureImage;
 
-    /// <summary>カーソル下の要素のハイライト状態（ドメイン座標への変換・表示名・ログをコアが単一所有する）。</summary>
+    /// <summary>カーソル下の要素のハイライト状態（対象座標への変換・表示名・ログをコアが単一所有する）。</summary>
     private readonly CaptureHighlightSession _highlight;
 
     /// <summary>事前切り出しの実行回数（テスト検証用アクセサ）。</summary>
@@ -162,7 +162,7 @@ internal sealed partial class OverlayWindow : Window
     /// 複合コントロール（Marquee + Loupe の配線を内包）へモード・外観・座標変換を設定する。<br/>
     /// - モード: キャプチャ種別に応じて描画モード・Marquee / Loupe の有効・無効・全面暗転を一括切替。<br/>
     /// - 設定: 設定変換（<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）で 1 値へ変換して一括適用。<br/>
-    /// - 座標変換: DipToDomain（ドメイン = ウィンドウローカル物理ピクセル = ローカル DIP × scaling。 画面物理へは Position 加算）。
+    /// - 座標変換: ClientToSource（対象 = ウィンドウローカル物理ピクセル = ローカル DIP × scaling。 画面物理へは Position 加算）。
     /// </remarks>
     private void ConfigureSelectionControls(CaptureSettings s)
     {
@@ -181,22 +181,22 @@ internal sealed partial class OverlayWindow : Window
         SelectionOverlay.MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(s);
         SelectionOverlay.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
         // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。 コードから動的設定）。
-        // ドメインはウィンドウローカル物理ピクセル（= ローカル DIP × スケーリング）のため、ウィンドウのスケーリング（_scaling）を設定する。
-        SelectionOverlay.DipToDomainScaling = _scaling;
+        // 対象はウィンドウローカル物理ピクセル（= ローカル DIP × スケーリング）のため、ウィンドウのスケーリング（_scaling）を設定する。
+        SelectionOverlay.ClientToSourceScaling = _scaling;
         SelectionOverlay.DisplayScaleScaling = _scaling;
         SelectionOverlay.LoupeClientToPixelScaling = s.LoupeClientToPixelScaling!.Value;
         // サイズラベル: 文言（書式）はコアが単一所有し、本ホストは矩形を含むモニタの実スケール（マルチモニタ補正）だけを提供する。
-        // ドメインはウィンドウローカル物理ピクセルのため、コアは DIP × スケーリングで物理ピクセルへ換算する（DIP 換算の往復誤差を排除）。
+        // 対象はウィンドウローカル物理ピクセルのため、コアは DIP × スケーリングで物理ピクセルへ換算する（DIP 換算の往復誤差を排除）。
         SelectionOverlay.SizeLabelDisplayScalingProvider = GetMonitorScalingForRect;
         // 操作ラベル・情報ラベルの文言はホスト（キャプチャ文脈）が与える（汎用コアは文言を持たない）。
         // モード別の文言と情報ラベルの表示可否は CaptureLabelTexts が単一所有し、
         // 情報ラベルに出すウィンドウタイトルはハイライト状態（コアが単一所有する）を参照する。
         SelectionOverlay.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(SelectionOverlay.Mode);
         SelectionOverlay.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(SelectionOverlay.Mode, _highlight.Title);
-        // 選択矩形・ハイライトはドメイン座標（ウィンドウローカル物理ピクセル）で設定し、描画時に DIP へ変換する（Marquee と同方式）
-        // DipToDomain: ToDomain = DIP→ドメイン（× scaling）/ ToDip = ドメイン→DIP（÷ scaling）
+        // 選択矩形・ハイライトは対象座標（ウィンドウローカル物理ピクセル）で設定し、描画時に DIP へ変換する（Marquee と同方式）
+        // ClientToSource: ToSource = DIP→対象（× scaling）/ ToDip = 対象→DIP（÷ scaling）
         // Marquee / Loupe の 2 コントロールへ同一ポートを一括分配する。
-        SelectionOverlay.SetCoordTransform(CoordTransform.DipToDomain(() => _scaling));
+        SelectionOverlay.SetCoordTransform(CoordTransform.ClientToSource(() => _scaling));
     }
 
     /// <summary>選択オーバーレイ（SelectionOverlay）の再描画を要求する。</summary>
@@ -258,7 +258,7 @@ internal sealed partial class OverlayWindow : Window
     /// どのキーがどの操作かの解釈はコアの <see cref="CaptureKeyActions"/> が単一所有する<br/>
     /// （確定対象が無い場合の Enter は何もしない。 キャンセル扱いにしない）。<br/>
     /// 確定対象の判定もコア（<see cref="CaptureTypeTraits.ResolveRect"/>）へ委譲する。<br/>
-    /// 確定はハイライト矩形（ドメイン座標）を画面物理座標へ戻して行う。
+    /// 確定はハイライト矩形（対象座標）を画面物理座標へ戻して行う。
     /// </remarks>
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
@@ -278,14 +278,14 @@ internal sealed partial class OverlayWindow : Window
 
     /// <summary>AreaSelect の確定要求（Enter キー・ダブルクリック等）を受けてキャプチャを確定する。</summary>
     /// <param name="sender">イベント送信元（FadeMaskDragRectControl）。</param>
-    /// <param name="e">選択矩形イベント（Rect はドメイン = ウィンドウローカル物理ピクセル）。</param>
+    /// <param name="e">選択矩形イベント（Rect は対象 = ウィンドウローカル物理ピクセル）。</param>
     /// <remarks>
-    /// ドメイン（ウィンドウローカル物理ピクセル）の選択矩形を画面物理座標へ変換（Position 加算）して確定する。<br/>
+    /// 対象（ウィンドウローカル物理ピクセル）の選択矩形を画面物理座標へ変換（Position 加算）して確定する。<br/>
     /// 確定要求の記録と切り出しは <see cref="CompleteSelection(EsRect)"/> が担う。
     /// </remarks>
     private void OnAreaConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
-        // ドメイン（ウィンドウローカル物理ピクセル）→ 画面物理座標の変換はコアが単一所有する
-        => CompleteSelection(CaptureClipMath.ToScreenRect(e.SelectionDomainRect.ToEsRect(), Position.ToEsPointInt()));
+        // 対象（ウィンドウローカル物理ピクセル）→ 画面物理座標の変換はコアが単一所有する
+        => CompleteSelection(CaptureClipMath.ToScreenRect(e.SelectionSourceRect.ToEsRect(), Position.ToEsPointInt()));
 
     /// <summary>AreaSelect のキャンセル要求（Esc キー・ダブルクリック外等）を受けてキャプチャをキャンセルする。</summary>
     /// <param name="sender">イベント送信元（FadeMaskDragRectControl）。</param>

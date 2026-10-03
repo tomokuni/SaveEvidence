@@ -13,7 +13,7 @@ namespace EsUtil.Feature.Loupe.Presenter.Drawing;
 /// <param name="BorderPixelRects">枠線の矩形（上・下・左・右の 4 辺。 非表示の設定の場合は空）。</param>
 /// <param name="Layers">描く層とその順序（<b>描画順は描画層が単一所有する</b>）。 先頭から順に処理する。</param>
 /// <param name="Labels">テキスト（中心座標ラベル）の配置指示。 表示しない場合は空。</param>
-/// <param name="CaptureTopLeft">切り出し領域の左上（ドメイン座標）。 中心未設定時は null（描画完了通知の組み立てに使う）。</param>
+/// <param name="CaptureTopLeft">切り出し領域の左上（対象座標）。 中心未設定時は null（描画完了通知の組み立てに使う）。</param>
 /// <param name="ZoomLevel">拡大率（描画完了通知の組み立てに使う）。</param>
 /// <param name="ClientPixelSize">描画に使う一辺の物理ピクセルサイズ（描画完了通知の組み立てに使う）。</param>
 /// <remarks>

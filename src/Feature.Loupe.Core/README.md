@@ -24,7 +24,7 @@ using EsUtil.Platform.Core.Geometry;
 var options = new LoupeOptions { RequestedSize = 160, ZoomLevel = 4 };
 using var loupe = new Loupe(options, logger);   // ロガーはコンストラクターでも後からでも注入できる
 
-// 拡大中心（ドメイン座標 = 元画像ピクセル座標）と表示位置のオフセット（DIP）
+// 拡大中心（対象座標 = 元画像ピクセル座標）と表示位置のオフセット（DIP）
 loupe.CenterPoint = new EsPoint(1920, 1080);
 loupe.PositionOffset = 16;
 

@@ -205,11 +205,11 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _zoomDisplayText = "100%";
 
-    /// <summary>マウスポインタ位置のドメイン座標（画像ピクセル）の表示テキスト。 画像外は "-"。 View 側から設定される。</summary>
+    /// <summary>マウスポインタ位置の対象座標（画像ピクセル）の表示テキスト。 画像外は "-"。 View 側から設定される。</summary>
     [ObservableProperty]
     private string _pointerDisplayText = "-";
 
-    /// <summary>画像サイズ（ドメイン座標 = 元画像ピクセル）の表示テキスト。</summary>
+    /// <summary>画像サイズ（対象座標 = 元画像ピクセル）の表示テキスト。</summary>
     /// <remarks>画像未設定時は空欄。 画像サイズはズーム状態に依存しない固定値。</remarks>
     public string ImageSizeDisplayText => PreviewImage is { } img ? $"{img.Size.Width} x {img.Size.Height}" : "";
 
@@ -374,8 +374,8 @@ public sealed partial class MainViewModel : ObservableObject
         => LineRectangleReconstructor.Reconstruct(results);
 
     /// <summary>指定座標（画像ピクセル）を含む自動切り出しの検出矩形を求める。</summary>
-    /// <param name="x">X 座標（画像ピクセル。 ドメイン座標）。</param>
-    /// <param name="y">Y 座標（画像ピクセル。 ドメイン座標）。</param>
+    /// <param name="x">X 座標（画像ピクセル。 対象座標）。</param>
+    /// <param name="y">Y 座標（画像ピクセル。 対象座標）。</param>
     /// <returns>座標を含む矩形のうち面積が最小のもの。 含む矩形がない場合は null。</returns>
     /// <remarks>
     /// 自動切り出しのホバー強調（<see cref="HoveredRect"/>）とダブルクリックの確定・キャンセル判定で共用する。<br/>

@@ -67,7 +67,7 @@ sequenceDiagram
     participant D as MarqueeDrawPlan（本層）
     participant H as ホスト
 
-    UI->>P: Press / Move / Release / KeyDown（ドメイン座標）
+    UI->>P: Press / Move / Release / KeyDown（対象座標）
     P->>M: 入力の転送
     M-->>P: 効果（IMarqueeEffects 経由）・通知
     P-->>UI: Notified を転送
@@ -181,7 +181,7 @@ dotnet test src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.
 | --- | --- | --- |
 | 生成 | コンストラクターでの注入、または `Log` の初回設定（本層とコアの生成をそれぞれ 1 度だけ） | Information |
 | 低頻度 | 本層が所有する設定の変更（外観・表示スケーリング係数。 **変化した項目だけ**） | Debug |
-| 高頻度 | コアへ伝搬した値の通過（`Options` / `DipToDomainScaling` / `HighlightDomainRect` / `SetCoordTransform`） | Trace |
+| 高頻度 | コアへ伝搬した値の通過（`Options` / `ClientToSourceScaling` / `HighlightSourceRect` / `SetCoordTransform`） | Trace |
 
 **出力しないもの**: 毎フレーム呼ばれる解決メソッド（`ResolveDrawPlan`）と、マウス移動のたびに呼ばれる入力通知（`Move`）。
 

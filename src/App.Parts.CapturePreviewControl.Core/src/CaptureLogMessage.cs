@@ -121,7 +121,7 @@ public static partial class CaptureLogMessage
 
     /// <summary>選択の確定要求（Enter・ダブルクリック等）を記録する（診断用）。</summary>
     /// <param name="logger">ロガー。</param>
-    /// <param name="rect">要求時点の選択矩形（ドメイン座標）。</param>
+    /// <param name="rect">要求時点の選択矩形（対象座標）。</param>
     /// <remarks>ログレベル: Debug。 出力書式: <c>[CaptureSession] ConfirmRequested: rect={Rect}</c></remarks>
     [LoggerMessage(EventId = 9, Level = LogLevel.Debug,
         Message = "[CaptureSession] ConfirmRequested: rect={Rect}")]
@@ -160,7 +160,7 @@ public static partial class CaptureLogMessage
     /// <param name="logger">ロガー。</param>
     /// <param name="captureType">キャプチャ種別（文字列化済み）。</param>
     /// <param name="detected">検出されたかどうか。</param>
-    /// <param name="rect">検出矩形（ドメイン座標。 未検出時は空文字）。</param>
+    /// <param name="rect">検出矩形（対象座標。 未検出時は空文字）。</param>
     /// <param name="title">検出対象のタイトル（スクリーン番号 / ウィンドウタイトル。 未検出時は空文字）。</param>
     /// <param name="className">検出対象のクラス名（ウィンドウ検出時のみ。 未検出時は空文字）。</param>
     /// <remarks>

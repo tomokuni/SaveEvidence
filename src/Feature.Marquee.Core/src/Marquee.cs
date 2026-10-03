@@ -33,7 +33,7 @@ namespace EsUtil.Feature.Marquee.Core;
 /// その描画順を表す層のデータを返すだけである）。 描画は UI 層が行い、<br/>
 /// 層の順序に従った描画手順は描画層（本コアを参照する上位の層）が単一所有する。<br/>
 /// <br/>
-/// <b>UI 層の責務</b>: 入力イベントの受付と座標変換（<see cref="ToDomain"/> / <see cref="ToDip"/>）、<br/>
+/// <b>UI 層の責務</b>: 入力イベントの受付と座標変換（<see cref="ToSource"/> / <see cref="ToDip"/>）、<br/>
 /// <see cref="IMarqueeEffects"/> の実装、通知（<see cref="Notified"/>）の公開イベントへの転送、<br/>
 /// 返された描画内容の反映（図形は描画実装へ委譲、文字はテキスト要素の配置）。<b>描画順はコアの指示に従う</b>。<br/>
 /// <br/>
@@ -52,15 +52,15 @@ public sealed partial class Marquee
     /// <summary>カーソルサービス（nudge のカーソル移動・表示切替）。 null の場合はカーソル操作を行わない。</summary>
     private readonly ICursorService? _cursor;
 
-    /// <summary>外部から指定された座標変換ポート（null = 未指定。 未指定時は <see cref="DipToDomainScaling"/> を倍率として使う）。</summary>
+    /// <summary>外部から指定された座標変換ポート（null = 未指定。 未指定時は <see cref="ClientToSourceScaling"/> を倍率として使う）。</summary>
     /// <remarks>
     /// セッションは null を等価変換に置換して保持するため、<b>指定の有無（null かどうか）は本フィールドだけが保持する</b>。<br/>
-    /// この区別が必要なのは、ポート未指定時に倍率（<see cref="DipToDomainScaling"/>）を使う規則をコアが単一所有するためである。
+    /// この区別が必要なのは、ポート未指定時に倍率（<see cref="ClientToSourceScaling"/>）を使う規則をコアが単一所有するためである。
     /// </remarks>
     private ICoordTransform? _coordPort;
 
     /// <summary>ポート未指定時に適用する倍率（0 以下・等倍は等価変換）。</summary>
-    private double _dipToDomainScaling = DipToDomainScalingDefault;
+    private double _dipToSourceScaling = ClientToSourceScalingDefault;
 
     /// <summary>生成の記録（<c>MarqueeLogMessage.LogFacadeCreated</c>）を済ませたかどうか。</summary>
     /// <remarks>出力先の設定は複数回起こりうるため、生成の記録は 1 度だけにする。</remarks>
@@ -136,26 +136,26 @@ public sealed partial class Marquee
     }
 
     /// <summary>ポート未指定時に適用する倍率を取得または設定する。</summary>
-    /// <value>ドメイン座標 / ローカル DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される（0 以下・等倍は等価変換として扱う）。</value>
+    /// <value>対象座標 / ローカル DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される（0 以下・等倍は等価変換として扱う）。</value>
     /// <remarks>
     /// 環境値（DPI・マルチスクリーン）のため <see cref="Options"/> には含めない。<br/>
     /// 座標変換ポート（<see cref="SetCoordTransform"/>）が設定されている場合は使われない（ポート優先。 規則はコアが単一所有する）。<br/>
     /// 選択矩形と十字マーカーの描画はセッションのポートのみを使うため本値の影響を受けない<br/>
     /// （本値が影響するのはサイズラベル・座標ラベルの位置と寸法）。
     /// </remarks>
-    public double DipToDomainScaling
+    public double ClientToSourceScaling
     {
-        get => _dipToDomainScaling;
+        get => _dipToSourceScaling;
         set
         {
-            if (SetIfChanged(ref _dipToDomainScaling, CoerceDipToDomainScaling(value), out var previous))
+            if (SetIfChanged(ref _dipToSourceScaling, CoerceClientToSourceScaling(value), out var previous))
             {
-                Log.LogSettingChanged(nameof(DipToDomainScaling), previous, _dipToDomainScaling);
+                Log.LogSettingChanged(nameof(ClientToSourceScaling), previous, _dipToSourceScaling);
             }
         }
     }
 
-    /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
+    /// <summary>ハイライトする矩形（対象座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
     /// <remarks>
     /// ホストが与える実行時状態である（選択矩形と異なり選択コントロールの操作では変化しない）。<br/>
@@ -165,14 +165,14 @@ public sealed partial class Marquee
     /// <b>最も頻度が高い設定</b>（ホバーのたびに変わりうる）ため、変更の記録は最も低いレベル（Trace）で行う。<br/>
     /// 変更は本コアが検出して出力する（同値判定を UI 層に置かない）。
     /// </remarks>
-    public EsRect? HighlightDomainRect
+    public EsRect? HighlightSourceRect
     {
         get;
         set
         {
             if (SetIfChanged(ref field, value, out var previous))
             {
-                Log.LogHighlightDomainRectChanged(previous, value);
+                Log.LogHighlightSourceRectChanged(previous, value);
             }
         }
     }
@@ -185,21 +185,21 @@ public sealed partial class Marquee
     /// <value>選択中の場合は true。</value>
     public bool HasSelection => _session.HasSelection;
 
-    /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
+    /// <summary>現在の選択矩形（対象座標）を取得する。</summary>
     /// <value>選択矩形。 未選択時は 0x0 の空矩形。</value>
     /// <remarks>
     /// 区間の流儀（<see cref="EsRect.Interval"/>）は選択の作成元が決める（ドラッグ由来は <see cref="EsRectInterval.Closed"/>）。<br/>
     /// 本値をそのまま他の用途へ渡せば、終点の加算の判断も付いて回る（呼び出し側で再判定しない）。
     /// </remarks>
-    public EsRect SelectionDomainRect => _session.SelectionDomainRect;
+    public EsRect SelectionSourceRect => _session.SelectionSourceRect;
 
     /// <summary>現在の選択状態のスナップショット（ポーリング不要の完全状態）を生成する。</summary>
-    /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。 null の場合は直近の位置。</param>
+    /// <param name="mousePosition">スナップショットに含めるマウス位置（対象座標）。 null の場合は直近の位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・操作フラグを含むスナップショット。</returns>
     public MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null) => _session.CreateSnapshot(mousePosition);
 
-    /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート。 null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
+    /// <summary>対象 ↔ ローカル DIP の座標変換ポートを設定する。</summary>
+    /// <param name="port">座標変換ポート。 null の場合は等価変換（1 対象ピクセル = 1 DIP・無制限）。</param>
     /// <remarks>
     /// ホストがモードに応じた変換ポートを設定する（範囲選択: 仮想スクリーンピクセル / 切出し: 元画像ピクセル）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
@@ -214,22 +214,22 @@ public sealed partial class Marquee
         Log.LogCoordTransformChanged(previous, port);
     }
 
-    /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
+    /// <summary>ローカル DIP 座標を対象座標へ変換する。</summary>
     /// <param name="localDip">ローカル DIP 座標。</param>
-    /// <returns>ドメイン座標。</returns>
-    public EsPoint ToDomain(EsPoint localDip) => _session.ToDomain(localDip);
+    /// <returns>対象座標。</returns>
+    public EsPoint ToSource(EsPoint localDip) => _session.ToSource(localDip);
 
-    /// <summary>ドメイン座標をローカル DIP 座標へ変換する。</summary>
-    /// <param name="domain">ドメイン座標。</param>
+    /// <summary>対象座標をローカル DIP 座標へ変換する。</summary>
+    /// <param name="source">対象座標。</param>
     /// <returns>ローカル DIP 座標。</returns>
-    public EsPoint ToDip(EsPoint domain) => _session.ToDip(domain);
+    public EsPoint ToDip(EsPoint source) => _session.ToDip(source);
 
     // ====================================================================
     // 入力の通知（UI 層 → コア）
     // ====================================================================
 
     /// <summary>ポインター押下（左ボタン）を通知する。</summary>
-    /// <param name="position">押下位置（ドメイン座標）。</param>
+    /// <param name="position">押下位置（対象座標）。</param>
     /// <param name="clickCount">クリック数（2 以上 = ダブルクリック）。</param>
     /// <remarks>
     /// 入力の解釈（nudge の終了・ダブルクリックの確定/キャンセル・ハンドルのヒットテストとスナップ・新規選択の開始）は<br/>
@@ -238,12 +238,12 @@ public sealed partial class Marquee
     public void Press(EsPoint position, int clickCount) => Apply(_session.Press(position, clickCount));
 
     /// <summary>ポインター移動を通知する。</summary>
-    /// <param name="position">マウス位置（ドメイン座標）。</param>
+    /// <param name="position">マウス位置（対象座標）。</param>
     /// <remarks>ドラッグの適用・nudge 中のエコー移動の抑制・カーソル形状の決定はセッションが単一所有する。</remarks>
     public void Move(EsPoint position) => Apply(_session.Move(position));
 
     /// <summary>ポインター解放（左ボタン）を通知する。</summary>
-    /// <param name="position">解放位置（ドメイン座標）。</param>
+    /// <param name="position">解放位置（対象座標）。</param>
     /// <remarks>
     /// 最小サイズによるキャンセル・確定・クリックの検出・nudge の終了はセッションが単一所有する。<br/>
     /// ドラッグの終了に伴うポインターキャプチャの解放もセッションが要求する（取得と解放が同じ経路になる）。
@@ -252,7 +252,7 @@ public sealed partial class Marquee
 
     /// <summary>キー入力を通知する（Escape のキャンセル・Enter の確定・矢印キーの微調整）。</summary>
     /// <param name="key">押下されたキー。</param>
-    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。 取得できない場合は null。</param>
+    /// <param name="cursorPosition">押下時点のカーソル位置（対象座標）。 取得できない場合は null。</param>
     /// <returns>入力が処理された場合は true（UI 層は自 UI の「処理済み」フラグへ設定する）。</returns>
     /// <remarks>
     /// キーの解釈（nudge の許可条件を含む）はセッションが単一所有し、返された効果を本クラスが UI へ適用する。<br/>
@@ -274,7 +274,7 @@ public sealed partial class Marquee
     // ====================================================================
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。</param>
+    /// <param name="rect">選択矩形（対象座標）。</param>
     /// <remarks>
     /// 境界外選択の禁止が有効な場合は、はみ出す矩形を境界内へクリップしてから設定する（判断はセッションが単一所有する）。<br/>
     /// 設定後は選択変更が通知され、再描画される。
@@ -313,13 +313,13 @@ public sealed partial class Marquee
         => MarqueeRenderRequest.Create(
             _session.Options,
             clientSize,
-            _session.HasSelection ? _session.SelectionDomainRect : null,
+            _session.HasSelection ? _session.SelectionSourceRect : null,
             _session.NudgeActive,
             _session.MarkerPosition,
             _session.LastMousePosition,
             _coordPort,
-            _dipToDomainScaling,
-            HighlightDomainRect);
+            _dipToSourceScaling,
+            HighlightSourceRect);
 
     // ====================================================================
     // 内部ヘルパー

@@ -25,7 +25,7 @@ public class FadeMaskDragRectControlTests
     private static EsUtil.Platform.Core.Imaging.EsBitmap CreateSource()
         => EsUtil.Platform.Core.Imaging.EsBitmap.Create(32, 32, DrawingColor.White);
 
-    /// <summary>等倍（1 ドメインピクセル = 1 DIP）で境界 200x200 の座標変換ポートを生成する。</summary>
+    /// <summary>等倍（1 対象ピクセル = 1 DIP）で境界 200x200 の座標変換ポートを生成する。</summary>
     /// <returns>座標変換ポート。</returns>
     private static ICoordTransform CreatePort()
         => new CoordTransform(p => p, p => p, () => new EsSize(200, 200));
@@ -41,8 +41,8 @@ public class FadeMaskDragRectControlTests
 
         Assert.Equal(FadeMaskDragRectMode.AreaSelect, control.Mode);
         Assert.False(control.HasSelection);
-        Assert.Equal(default, control.SelectionDomainRect);
-        Assert.Null(control.HighlightDomainRect);
+        Assert.Equal(default, control.SelectionSourceRect);
+        Assert.Null(control.HighlightSourceRect);
         Assert.True(control.ShowFullOverlay);
         Assert.True(control.Marquee.IsVisible);
         Assert.Null(control.LoupeCenterPoint);
@@ -151,7 +151,7 @@ public class FadeMaskDragRectControlTests
         control.SetSelection(new EsRect(10, 20, 100, 80));
 
         Assert.True(control.HasSelection);
-        Assert.Equal(new EsRect(10, 20, 100, 80), control.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 100, 80), control.SelectionSourceRect);
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class FadeMaskDragRectControlTests
         control.SetSelection(new EsRect(10, 20, 0, 80));
 
         Assert.False(control.HasSelection);
-        Assert.Equal(default, control.SelectionDomainRect);
+        Assert.Equal(default, control.SelectionSourceRect);
     }
 
     [Fact]
@@ -186,20 +186,20 @@ public class FadeMaskDragRectControlTests
         control.SetSelection(new EsRect(5, 6, 30, 40));
 
         Assert.True(control.HasSelection);
-        Assert.Equal(new EsRect(5, 6, 30, 40), control.SelectionDomainRect);
+        Assert.Equal(new EsRect(5, 6, 30, 40), control.SelectionSourceRect);
     }
 
     [Fact]
     public void ハイライト_設定と取得が委譲される()
     {
-        var control = new FadeMaskDragRectControl { HighlightDomainRect = new EsRect(1, 2, 3, 4) };
+        var control = new FadeMaskDragRectControl { HighlightSourceRect = new EsRect(1, 2, 3, 4) };
 
-        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightDomainRect);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightSourceRect);
 
         // ハイライトの有無は矩形の null が表す（null にすると注目矩形として使われない）
-        control.HighlightDomainRect = null;
+        control.HighlightSourceRect = null;
 
-        Assert.Null(control.HighlightDomainRect);
+        Assert.Null(control.HighlightSourceRect);
     }
 
     // ====================================================================
@@ -377,7 +377,7 @@ public class FadeMaskDragRectControlTests
         // ログ出力を伴う操作を実行しても例外にならない（既定は NullLogger）
         control.Options = control.Options with
         {
-            Marquee = control.Options.Marquee with { ClampToDomainBounds = false },
+            Marquee = control.Options.Marquee with { ClampToSourceBounds = false },
         };
         control.SetSelection(new EsRect(10, 10, 50, 40));
         control.RequestCancel();
@@ -652,7 +652,7 @@ public class FadeMaskDragRectControlTests
         control.RequestConfirm();
 
         Assert.NotNull(raised);
-        Assert.Equal(new EsRect(10, 20, 100, 80), raised!.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 100, 80), raised!.SelectionSourceRect);
     }
 
     [Fact]

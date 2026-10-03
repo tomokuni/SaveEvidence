@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.LineDetection.Tests;
 /// <summary>LogicLineDetector が dataset の画像を正しく検出できることを検証する。</summary>
 /// <remarks>
 /// dataset（<c>sample/dataset</c>）の各 PNG を <c>LogicLineDetector</c> で検出し、<br/>
-/// 検出結果から復元した矩形を JSON の <c>GroundTruthWindows[0].Bounds</c>（ドメイン座標・排他座標）と<br/>
+/// 検出結果から復元した矩形を JSON の <c>GroundTruthWindows[0].Bounds</c>（対象座標・排他座標）と<br/>
 /// 許容誤差 0 pixel で照合する。<br/>
 /// パブリック API（<c>LogicLineDetector.Detect</c>）経由で検証する。<br/>
 /// PNG の読み込みは <see cref="TestHelper.LoadBitmap"/>（OpenCV → <see cref="EsBitmap"/>）を使用する。<br/>
@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.LineDetection.Tests;
 /// </remarks>
 public sealed class LogicLineDetectorDatasetTests
 {
-    /// <summary>許容誤差（ドメイン座標・ピクセル）。 0 は完全一致を意味する。</summary>
+    /// <summary>許容誤差（対象座標・ピクセル）。 0 は完全一致を意味する。</summary>
     private const int Tolerance = 0;
 
     /// <summary>dataset フォルダ（テスト出力基準）。</summary>

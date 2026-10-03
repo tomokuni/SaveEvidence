@@ -27,7 +27,7 @@ public class MarqueeSessionTests
         return session;
     }
 
-    /// <summary>ドメイン境界 200x200 を持つセッションを生成する（境界クリップ検証用）。</summary>
+    /// <summary>対象の境界 200x200 を持つセッションを生成する（境界クリップ検証用）。</summary>
     /// <param name="notices">収集した通知のリスト。</param>
     /// <returns>境界 200x200 のセッション。</returns>
     private static MarqueeSession CreateBoundedSession(out List<MarqueeNotice> notices)
@@ -63,7 +63,7 @@ public class MarqueeSessionTests
 
         Assert.True(session.IsDragging);
         Assert.False(session.HasSelection);
-        Assert.Equal(new EsRect(10, 10, 0, 0), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 10, 0, 0), session.SelectionSourceRect);
         Assert.Equal([MarqueeNoticeKind.SelectionStarted], Kinds(notices));
         Assert.True(feedback.Redraw);
         Assert.True(feedback.RequestFocus);
@@ -82,13 +82,13 @@ public class MarqueeSessionTests
         // スナップ: ドラッグ基準点とマウス位置がハンドル点（150, 130）になり、カーソルもそこへ移動する
         Assert.Equal(new EsPoint(150, 130), session.LastMousePosition);
         Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.MoveTo));
-        Assert.Equal(new EsPoint(150, 130), feedback.CursorDomainPosition);
+        Assert.Equal(new EsPoint(150, 130), feedback.CursorSourcePosition);
         Assert.Equal(MarqueeNoticeKind.MarkerPositionMoved, notices[^1].Kind);
         Assert.Equal(new EsPoint(150, 130), notices[^1].Position);
 
         // 基準点がハンドル点へ揃っているため、ハンドル点への移動では矩形が変わらない
         session.Move(new EsPoint(150, 130));
-        Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionSourceRect);
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class MarqueeSessionTests
 
         // スナップしないため、押下位置からの移動量がそのまま矩形へ反映される
         session.Move(new EsPoint(80, 80));
-        Assert.Equal(new EsRect(60, 60, 100, 80), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(60, 60, 100, 80), session.SelectionSourceRect);
     }
 
     [Fact]
@@ -170,7 +170,7 @@ public class MarqueeSessionTests
         var feedback = session.Move(new EsPoint(50, 50));
 
         // ドラッグ由来の選択矩形は閉区間（始点・終点のピクセルを含む）
-        Assert.Equal(new EsRect(10, 10, 40, 40, EsRectInterval.Closed), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 10, 40, 40, EsRectInterval.Closed), session.SelectionSourceRect);
         Assert.Equal(
             [MarqueeNoticeKind.SelectionChanged, MarqueeNoticeKind.MarkerPositionMoved],
             Kinds(notices));
@@ -261,7 +261,7 @@ public class MarqueeSessionTests
         Assert.Contains(MarqueeNoticeKind.SelectionCompleted, Kinds(notices));
         Assert.Equal(
             new EsRect(10, 10, 70, 70, EsRectInterval.Closed),
-            Find(notices, MarqueeNoticeKind.SelectionCompleted).Snapshot.SelectionDomainRect);
+            Find(notices, MarqueeNoticeKind.SelectionCompleted).Snapshot.SelectionSourceRect);
         Assert.False(session.IsDragging);
     }
 
@@ -278,16 +278,16 @@ public class MarqueeSessionTests
 
         Assert.False(session.NudgeActive);
         Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.MoveTo));
-        Assert.Equal(nudgePosition, feedback.CursorDomainPosition);
+        Assert.Equal(nudgePosition, feedback.CursorSourcePosition);
         Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Show));
         Assert.True(feedback.UpdateCursorShape);
 
         // 抑制: nudge 位置へのエコー移動は矩形を上書きしない（通知も発生しない）
-        var rectBefore = session.SelectionDomainRect;
+        var rectBefore = session.SelectionSourceRect;
         notices.Clear();
         session.Move(nudgePosition);
         Assert.Empty(notices);
-        Assert.Equal(rectBefore, session.SelectionDomainRect);
+        Assert.Equal(rectBefore, session.SelectionSourceRect);
     }
 
     // ====================================================================
@@ -384,7 +384,7 @@ public class MarqueeSessionTests
     {
         var session = CreateSession(out _);
 
-        // カーソル位置 (100, 100) を基点として右へ 1 ドメインピクセル進む
+        // カーソル位置 (100, 100) を基点として右へ 1 対象ピクセル進む
         session.NudgeByKey(EsKey.Right, new EsPoint(100, 100));
 
         Assert.Equal(new EsPoint(101, 100), session.State.StartPoint);
@@ -462,7 +462,7 @@ public class MarqueeSessionTests
 
         var feedback = session.SetSelection(new EsRect(50, 50, 100, 80));
 
-        Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(50, 50, 100, 80), session.SelectionSourceRect);
         Assert.True(session.HasSelection);
         Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
@@ -472,23 +472,23 @@ public class MarqueeSessionTests
     public void SetSelection_境界内にクリップしてから設定する()
     {
         var session = CreateBoundedSession(out _);
-        session.ApplyOptions(session.Options with { ClampToDomainBounds = true });
+        session.ApplyOptions(session.Options with { ClampToSourceBounds = true });
 
         session.SetSelection(new EsRect(150, 150, 100, 100));
 
         // 境界 200x200 に収まるように切り詰められる
-        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionSourceRect);
     }
 
     [Fact]
     public void SetSelection_クリップ無効時は境界外の矩形もそのまま設定する()
     {
         var session = CreateBoundedSession(out _);
-        session.ApplyOptions(session.Options with { ClampToDomainBounds = false });
+        session.ApplyOptions(session.Options with { ClampToSourceBounds = false });
 
         session.SetSelection(new EsRect(150, 150, 100, 100));
 
-        Assert.Equal(new EsRect(150, 150, 100, 100), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(150, 150, 100, 100), session.SelectionSourceRect);
     }
 
     [Fact]
@@ -535,7 +535,7 @@ public class MarqueeSessionTests
         var feedback = session.SetSelection(new EsRect(10, 20, 30, 40));
 
         Assert.False(session.NudgeActive);
-        Assert.Equal(new EsRect(10, 20, 30, 40), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 30, 40), session.SelectionSourceRect);
         Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Show));
     }
 
@@ -580,7 +580,7 @@ public class MarqueeSessionTests
 
         var notice = Assert.Single(notices);
         Assert.Equal(MarqueeNoticeKind.ConfirmRequested, notice.Kind);
-        Assert.Equal(new EsRect(50, 50, 100, 80), notice.Snapshot.SelectionDomainRect);
+        Assert.Equal(new EsRect(50, 50, 100, 80), notice.Snapshot.SelectionSourceRect);
         Assert.False(session.HasSelection);
         Assert.True(feedback.Redraw);
     }
@@ -638,13 +638,13 @@ public class MarqueeSessionTests
     {
         var session = CreateBoundedSession(out var notices);
         // 境界外の選択を作るため、いったんクリップを無効にする（既定は有効のため SetSelection でクリップされる）
-        session.ApplyOptions(session.Options with { ClampToDomainBounds = false });
+        session.ApplyOptions(session.Options with { ClampToSourceBounds = false });
         session.SetSelection(new EsRect(150, 150, 100, 100));
         notices.Clear();
 
         var feedback = session.ApplyClampToBounds();
 
-        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionSourceRect);
         Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
     }
@@ -674,12 +674,12 @@ public class MarqueeSessionTests
         {
             MinSelectionSize = 20.0,
             HandleHitRadius = 30.0,
-            ClampToDomainBounds = false,
+            ClampToSourceBounds = false,
         });
 
         Assert.Equal(20.0, session.Options.MinSelectionSize);
         Assert.Equal(30.0, session.Options.HandleHitRadius);
-        Assert.False(session.Options.ClampToDomainBounds);
+        Assert.False(session.Options.ClampToSourceBounds);
     }
 
     [Fact]
@@ -745,31 +745,31 @@ public class MarqueeSessionTests
         var logger = new RecordingLogger();
         session.Log = logger;
         // 境界外の選択を作るため、いったんクリップを無効にする
-        session.ApplyOptions(session.Options with { ClampToDomainBounds = false });
+        session.ApplyOptions(session.Options with { ClampToSourceBounds = false });
         session.SetSelection(new EsRect(150, 150, 100, 100));
         notices.Clear();
         logger.Messages.Clear();
 
-        var feedback = session.ApplyOptions(session.Options with { ClampToDomainBounds = true });
+        var feedback = session.ApplyOptions(session.Options with { ClampToSourceBounds = true });
 
-        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionDomainRect);
+        Assert.Equal(new EsRect(150, 150, 50, 50), session.SelectionSourceRect);
         Assert.Equal([MarqueeNoticeKind.SelectionChanged], Kinds(notices));
         Assert.True(feedback.Redraw);
-        Assert.Equal("[Feature.Marquee.Core] Setting: ClampToDomainBounds False → True", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.Marquee.Core] Setting: ClampToSourceBounds False → True", Assert.Single(logger.Messages));
     }
 
     [Fact]
     public void ApplyOptions_初期設定をコンストラクタで受け取る()
     {
         var session = new MarqueeSession(
-            new MarqueeOptions { MinSelectionSize = 25.0, HandleHitRadius = 40.0, ClampToDomainBounds = false })
+            new MarqueeOptions { MinSelectionSize = 25.0, HandleHitRadius = 40.0, ClampToSourceBounds = false })
         {
             Log = NullLogger.Instance,
         };
 
         Assert.Equal(25.0, session.Options.MinSelectionSize);
         Assert.Equal(40.0, session.Options.HandleHitRadius);
-        Assert.False(session.Options.ClampToDomainBounds);
+        Assert.False(session.Options.ClampToSourceBounds);
     }
 
     [Fact]
@@ -780,7 +780,7 @@ public class MarqueeSessionTests
         Assert.Equal(MarqueeOptions.Default, session.Options);
         Assert.Equal(6.0, session.Options.MinSelectionSize);
         Assert.Equal(12.0, session.Options.HandleHitRadius);
-        Assert.True(session.Options.ClampToDomainBounds);
+        Assert.True(session.Options.ClampToSourceBounds);
     }
 
     // ====================================================================
@@ -788,38 +788,38 @@ public class MarqueeSessionTests
     // ====================================================================
 
     [Fact]
-    public void ToDomainとToDip_ポートの変換を適用する()
+    public void ToSourceとToDip_ポートの変換を適用する()
     {
         var session = CreateSession(out _);
-        // 表示スケール 2.0（1 DIP = 0.5 ドメイン）のポート
-        session.SetPort(CoordTransform.DipToDomain(() => 0.5));
+        // 表示スケール 2.0（1 DIP = 0.5 対象）のポート
+        session.SetPort(CoordTransform.ClientToSource(() => 0.5));
 
-        Assert.Equal(new EsPoint(5, 10), session.ToDomain(new EsPoint(10, 20)));
+        Assert.Equal(new EsPoint(5, 10), session.ToSource(new EsPoint(10, 20)));
         Assert.Equal(new EsPoint(20, 40), session.ToDip(new EsPoint(10, 20)));
     }
 
     [Fact]
-    public void ToDomain_ポート未設定時は等価変換になる()
+    public void ToSource_ポート未設定時は等価変換になる()
     {
         var session = CreateSession(out _);
 
-        Assert.Equal(new EsPoint(10, 20), session.ToDomain(new EsPoint(10, 20)));
+        Assert.Equal(new EsPoint(10, 20), session.ToSource(new EsPoint(10, 20)));
     }
 
     [Fact]
-    public void Press_スケール変換ではヒットテスト半径もドメイン単位へ換算する()
+    public void Press_スケール変換ではヒットテスト半径も対象単位へ換算する()
     {
         var session = CreateSession(out _);
-        // 表示スケール 2.0（1 DIP = 0.5 ドメイン）にヒット半径 12 DIP を設定する（ドメイン半径 6）
-        session.SetPort(CoordTransform.DipToDomain(() => 0.5));
+        // 表示スケール 2.0（1 DIP = 0.5 対象）にヒット半径 12 DIP を設定する（対象半径 6）
+        session.SetPort(CoordTransform.ClientToSource(() => 0.5));
         session.ApplyOptions(session.Options with { HandleHitRadius = 12.0 });
         session.SetSelection(new EsRect(50, 50, 100, 80));
 
-        // 角から 5 ドメイン離れた位置はヒットする（ドメイン半径 6 以内）
+        // 角から 5 対象離れた位置はヒットする（対象半径 6 以内）
         var hit = session.Press(new EsPoint(150 + 5, 130 + 5), clickCount: 1);
         Assert.True(hit.Cursor.HasFlag(MarqueeCursorActions.MoveTo));
 
-        // 角から 20 ドメイン離れた位置はハンドルにヒットしない（矩形外のため新規選択）
+        // 角から 20 対象離れた位置はハンドルにヒットしない（矩形外のため新規選択）
         session.Reset();
         session.SetSelection(new EsRect(50, 50, 100, 80));
         var miss = session.Press(new EsPoint(150 + 20, 130 + 20), clickCount: 1);

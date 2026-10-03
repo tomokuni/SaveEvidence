@@ -20,7 +20,7 @@ namespace EsUtil.Feature.Marquee.Core.Interaction;
 /// - UI 層: 入力イベントの受付（座標の取得）と、本クラスが返す効果の適用・通知の公開イベントへの転送・状態の描画のみ。<br/>
 /// <br/>
 /// 座標系:<br/>
-/// 選択矩形・nudge はドメイン座標で扱う。 UI 層は入力座標を <see cref="ToDomain"/> で変換し、描画座標を <see cref="ToDip"/> で得る。<br/>
+/// 選択矩形・nudge は対象座標で扱う。 UI 層は入力座標を <see cref="ToSource"/> で変換し、描画座標を <see cref="ToDip"/> で得る。<br/>
 /// <br/>
 /// 依存分離: コア型（<see cref="EsRect"/> / <see cref="EsPoint"/> / <see cref="EsKey"/>）と座標変換ポート（<see cref="ICoordTransform"/>）の<br/>
 /// 抽象にのみ依存し、UI フレームワークへ依存しない。<br/>
@@ -72,9 +72,9 @@ internal sealed class MarqueeSession
     /// <remarks>本クラスは対話パラメータのみを使用する（外観は UI 層が描画時に読む）。</remarks>
     internal MarqueeOptions Options { get; private set; } = MarqueeOptions.Default;
 
-    /// <summary>現在の選択矩形（ドメイン座標）。</summary>
+    /// <summary>現在の選択矩形（対象座標）。</summary>
     /// <value>選択矩形。 未選択時は 0x0。</value>
-    internal EsRect SelectionDomainRect => _state.SelectionDomainRect;
+    internal EsRect SelectionSourceRect => _state.SelectionSourceRect;
 
     /// <summary>選択矩形が有効かどうか（幅・高さが 0 より大きい）。</summary>
     /// <value>選択ありの場合は true。</value>
@@ -88,39 +88,39 @@ internal sealed class MarqueeSession
     /// <value>nudge 中の場合は true。</value>
     internal bool NudgeActive => _state.NudgeActive;
 
-    /// <summary>直近のマウス位置（ドメイン座標。 カーソル座標ラベルの描画に使用する）。</summary>
+    /// <summary>直近のマウス位置（対象座標。 カーソル座標ラベルの描画に使用する）。</summary>
     /// <value>直近のマウス位置。 未移動時は既定値。</value>
     internal EsPoint LastMousePosition => _state.LastMousePosition;
 
-    /// <summary>十字マーカーが追従する位置（ドメイン座標）。</summary>
+    /// <summary>十字マーカーが追従する位置（対象座標）。</summary>
     /// <value>ドラッグ中のハンドル位置・新規選択中の終点・未選択時の始点。</value>
     internal EsPoint MarkerPosition => _state.GetMarkerPosition();
 
     /// <summary>公開イベント用の状態スナップショットを生成する。</summary>
-    /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。 null の場合は直近の位置。</param>
+    /// <param name="mousePosition">スナップショットに含めるマウス位置（対象座標）。 null の場合は直近の位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・操作フラグを含むスナップショット。</returns>
     internal MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null) => _state.CreateSnapshot(mousePosition);
 
-    /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート。 null の場合は等価変換（1 ドメインピクセル = 1 DIP・無制限）。</param>
+    /// <summary>対象 ↔ ローカル DIP の座標変換ポートを設定する。</summary>
+    /// <param name="port">座標変換ポート。 null の場合は等価変換（1 対象ピクセル = 1 DIP・無制限）。</param>
     internal void SetPort(ICoordTransform? port) => _state.SetPort(port.OrIdentity());
 
-    /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
+    /// <summary>ローカル DIP 座標を対象座標へ変換する。</summary>
     /// <param name="localDip">ローカル DIP 座標。</param>
-    /// <returns>ドメイン座標。</returns>
-    internal EsPoint ToDomain(EsPoint localDip) => _state.Port.ToDomain(localDip);
+    /// <returns>対象座標。</returns>
+    internal EsPoint ToSource(EsPoint localDip) => _state.Port.ToSource(localDip);
 
-    /// <summary>ドメイン座標をローカル DIP 座標へ変換する。</summary>
-    /// <param name="domain">ドメイン座標。</param>
+    /// <summary>対象座標をローカル DIP 座標へ変換する。</summary>
+    /// <param name="source">対象座標。</param>
     /// <returns>ローカル DIP 座標。</returns>
-    internal EsPoint ToDip(EsPoint domain) => _state.Port.ToDip(domain);
+    internal EsPoint ToDip(EsPoint source) => _state.Port.ToDip(source);
 
     // ====================================================================
     // 入力の通知（UI 層 → コア）
     // ====================================================================
 
     /// <summary>ポインター押下（左ボタン）を通知する。</summary>
-    /// <param name="position">押下位置（ドメイン座標）。</param>
+    /// <param name="position">押下位置（対象座標）。</param>
     /// <param name="clickCount">クリック数（2 以上 = ダブルクリック）。</param>
     /// <returns>UI 層が適用する効果（フォーカス取得・再描画・カーソル操作）。</returns>
     /// <remarks>
@@ -152,7 +152,7 @@ internal sealed class MarqueeSession
             return DoubleClick(position, cursor);
         }
 
-        var handle = _state.HitTest(position, ToDomainRadius());
+        var handle = _state.HitTest(position, ToSourceRadius());
         Log.LogDragStart(handle.ToString(), position.X, position.Y);
         var feedback = new MarqueeFeedback
         {
@@ -172,12 +172,12 @@ internal sealed class MarqueeSession
             // 移動（Move）は掴んだ位置を維持するのが自然なためスナップしない。
             if (handle != MarqueeHitTarget.Move)
             {
-                var handlePosition = new MarqueeSelection(_state.SelectionDomainRect).Handle(handle);
+                var handlePosition = new MarqueeSelection(_state.SelectionSourceRect).Handle(handle);
                 _state.SnapToHandle(handlePosition);
                 feedback = feedback with
                 {
                     Cursor = cursor | MarqueeCursorActions.MoveTo,
-                    CursorDomainPosition = handlePosition,
+                    CursorSourcePosition = handlePosition,
                 };
                 NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, handlePosition);
             }
@@ -192,7 +192,7 @@ internal sealed class MarqueeSession
     }
 
     /// <summary>ポインター移動を通知する。</summary>
-    /// <param name="position">マウス位置（ドメイン座標）。</param>
+    /// <param name="position">マウス位置（対象座標）。</param>
     /// <returns>UI 層が適用する効果（再描画・カーソル形状）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
@@ -204,7 +204,7 @@ internal sealed class MarqueeSession
     /// </remarks>
     internal MarqueeFeedback Move(EsPoint position)
     {
-        var hitRadius = ToDomainRadius();
+        var hitRadius = ToSourceRadius();
 
         // nudge 終了（カーソル移動）に伴うエコー移動をスキップする（消費したら解除する）
         if (_state.ConsumeSuppressedEcho(position, hitRadius))
@@ -232,7 +232,7 @@ internal sealed class MarqueeSession
 
         if (_state.IsDragging)
         {
-            _state.UpdateDrag(position, Options.MinSelectionSize, Options.ClampToDomainBounds);
+            _state.UpdateDrag(position, Options.MinSelectionSize, Options.ClampToSourceBounds);
             NotifyState(MarqueeNoticeKind.SelectionChanged);
             NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, _state.GetMarkerPosition());
         }
@@ -245,7 +245,7 @@ internal sealed class MarqueeSession
     }
 
     /// <summary>ポインター解放（左ボタン）を通知する。</summary>
-    /// <param name="position">解放位置（ドメイン座標）。</param>
+    /// <param name="position">解放位置（対象座標）。</param>
     /// <returns>UI 層が適用する効果（再描画・カーソル操作）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
@@ -265,8 +265,8 @@ internal sealed class MarqueeSession
 
         if (wasDragging)
         {
-            var cancelled = _state.SelectionDomainRect.Width < Options.MinSelectionSize
-                || _state.SelectionDomainRect.Height < Options.MinSelectionSize;
+            var cancelled = _state.SelectionSourceRect.Width < Options.MinSelectionSize
+                || _state.SelectionSourceRect.Height < Options.MinSelectionSize;
             _state.EndDrag();
 
             if (cancelled)
@@ -297,9 +297,9 @@ internal sealed class MarqueeSession
             feedback = feedback with
             {
                 Cursor = feedback.Cursor | MarqueeCursorActions.MoveTo,
-                CursorDomainPosition = nudgePosition,
+                CursorSourcePosition = nudgePosition,
                 UpdateCursorShape = true,
-                CursorKind = ToCursorKind(_state.HitTest(nudgePosition, ToDomainRadius())),
+                CursorKind = ToCursorKind(_state.HitTest(nudgePosition, ToSourceRadius())),
             };
         }
 
@@ -308,7 +308,7 @@ internal sealed class MarqueeSession
 
     /// <summary>キー入力を通知する（キャンセル・確定・矢印キーの微調整）。</summary>
     /// <param name="key">押下されたキー。</param>
-    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。 取得できない場合は null。</param>
+    /// <param name="cursorPosition">押下時点のカーソル位置（対象座標）。 取得できない場合は null。</param>
     /// <returns>UI 層が適用する効果（処理済み・再描画・カーソル操作）。</returns>
     /// <remarks>
     /// Escape はキャンセル要求、Enter は確定要求として扱い、常に処理済みとする。<br/>
@@ -341,7 +341,7 @@ internal sealed class MarqueeSession
 
     /// <summary>矢印キーによる微調整（nudge）を通知する。</summary>
     /// <param name="key">押下されたキー。</param>
-    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。 取得できない場合は null。</param>
+    /// <param name="cursorPosition">押下時点のカーソル位置（対象座標）。 取得できない場合は null。</param>
     /// <returns>UI 層が適用する効果（処理済み・再描画・カーソル操作）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
@@ -350,7 +350,7 @@ internal sealed class MarqueeSession
     /// 3. 押下時点のカーソル位置を記録する（基点の精度向上。 未移動時に基点が原点になり飛ぶのを防ぐ）。<br/>
     /// 4. 未選択・未ドラッグで nudge セッション開始時のみ基点をカーソル位置へ同期する。<br/>
     /// 5. nudge セッションを開始する（カーソル非表示・十字マーカー表示）。<br/>
-    /// 6. 1 ドメインピクセル単位の整数加算で矩形を更新し、変更通知と追従位置を通知する。<br/>
+    /// 6. 1 対象ピクセル単位の整数加算で矩形を更新し、変更通知と追従位置を通知する。<br/>
     /// nudge 中（2 回目以降）は基点を再同期しない（座標変換の丸め誤差・スクロール追従で移動が相殺されるのを防ぐ）。
     /// </remarks>
     internal MarqueeFeedback NudgeByKey(EsKey key, EsPoint? cursorPosition)
@@ -384,8 +384,8 @@ internal sealed class MarqueeSession
             feedback = feedback with { Cursor = MarqueeCursorActions.Hide };
         }
 
-        // nudge 適用（ドメイン座標の整数加算のみ。 浮動小数の誤差を累積しない）
-        _state.Nudge(dx, dy, Options.MinSelectionSize, Options.ClampToDomainBounds);
+        // nudge 適用（対象座標の整数加算のみ。 浮動小数の誤差を累積しない）
+        _state.Nudge(dx, dy, Options.MinSelectionSize, Options.ClampToSourceBounds);
         NotifyState(MarqueeNoticeKind.SelectionChanged);
 
         // カーソルを動かしている側のハンドル（マーカー位置）へ合わせる
@@ -394,7 +394,7 @@ internal sealed class MarqueeSession
         return feedback with
         {
             Cursor = feedback.Cursor | MarqueeCursorActions.MoveTo,
-            CursorDomainPosition = marker,
+            CursorSourcePosition = marker,
         };
     }
 
@@ -411,18 +411,18 @@ internal sealed class MarqueeSession
     // ====================================================================
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。</param>
+    /// <param name="rect">選択矩形（対象座標）。</param>
     /// <returns>UI 層が適用する効果（再描画。 nudge 中だった場合はカーソルの再表示）。</returns>
     /// <remarks>
-    /// <see cref="MarqueeOptions.ClampToDomainBounds"/> が有効な場合は、はみ出す矩形を境界内へクリップしてから設定する<br/>
+    /// <see cref="MarqueeOptions.ClampToSourceBounds"/> が有効な場合は、はみ出す矩形を境界内へクリップしてから設定する<br/>
     /// （外部からの復元でも「画像外の選択を禁止」を尊重する）。 設定後は選択変更を通知する。
     /// </remarks>
     internal MarqueeFeedback SetSelection(EsRect rect)
     {
         // 選択の復元は nudge 状態を解除するため、解除の判定は復元より前に行う（カーソルの再表示を落とさない）
         var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
-        var selectionDomainRect = Options.ClampToDomainBounds ? _state.ClipRectToBounds(rect) : rect;
-        _state.SetSelection(selectionDomainRect);
+        var selectionSourceRect = Options.ClampToSourceBounds ? _state.ClipRectToBounds(rect) : rect;
+        _state.SetSelection(selectionSourceRect);
         NotifyState(MarqueeNoticeKind.SelectionChanged);
         return feedback;
     }
@@ -449,7 +449,7 @@ internal sealed class MarqueeSession
             return default;
         }
 
-        Log.LogConfirmRequested(_state.SelectionDomainRect);
+        Log.LogConfirmRequested(_state.SelectionSourceRect);
         NotifyState(MarqueeNoticeKind.ConfirmRequested);
         var feedback = WithNudgeEnded(new MarqueeFeedback { Redraw = true });
         _state.Reset();
@@ -473,7 +473,7 @@ internal sealed class MarqueeSession
         return feedback;
     }
 
-    /// <summary>ドメイン境界外の選択の禁止設定の変更を現在の選択矩形へ適用する。</summary>
+    /// <summary>対象の境界外の選択の禁止設定の変更を現在の選択矩形へ適用する。</summary>
     /// <returns>UI 層が適用する効果（再描画）。</returns>
     /// <remarks>
     /// 設定が ON に切り替わった瞬間に、既存の選択矩形を境界内へクリップして即時反映する（ドラッグ開始を待たない）。<br/>
@@ -511,7 +511,7 @@ internal sealed class MarqueeSession
         Log.LogOptionsChanged(previous, options);
 
         // 即時クリップは「境界外選択の禁止」が実際に変化した場合のみ行う
-        return previous.ClampToDomainBounds != options.ClampToDomainBounds ? ApplyClampToBounds() : default;
+        return previous.ClampToSourceBounds != options.ClampToSourceBounds ? ApplyClampToBounds() : default;
     }
 
     // ====================================================================
@@ -532,7 +532,7 @@ internal sealed class MarqueeSession
             : feedback;
 
     /// <summary>ダブルクリックを処理する（選択矩形の内側なら確定、外側ならキャンセル）。</summary>
-    /// <param name="position">ダブルクリック位置（ドメイン座標）。</param>
+    /// <param name="position">ダブルクリック位置（対象座標）。</param>
     /// <param name="cursor">適用済みのカーソル操作。</param>
     /// <returns>UI 層が適用する効果。</returns>
     /// <remarks>
@@ -541,12 +541,12 @@ internal sealed class MarqueeSession
     /// </remarks>
     private MarqueeFeedback DoubleClick(EsPoint position, MarqueeCursorActions cursor)
     {
-        var inside = _state.HasSelection && _state.SelectionDomainRect.Contains(position);
+        var inside = _state.HasSelection && _state.SelectionSourceRect.Contains(position);
         Log.LogDoubleClick(position.X, position.Y, inside);
 
         if (inside)
         {
-            Log.LogConfirmRequested(_state.SelectionDomainRect);
+            Log.LogConfirmRequested(_state.SelectionSourceRect);
             NotifyAt(MarqueeNoticeKind.ConfirmRequested, position);
             _state.Reset();
             return new MarqueeFeedback { Redraw = true, Cursor = cursor };
@@ -557,17 +557,17 @@ internal sealed class MarqueeSession
         return new MarqueeFeedback { Cursor = cursor };
     }
 
-    /// <summary>DIP 半径をドメイン半径へ変換する（ヒットテスト用）。</summary>
-    /// <returns>ドメイン座標系でのヒットテスト半径。</returns>
+    /// <summary>DIP 半径を対象半径へ変換する（ヒットテスト用）。</summary>
+    /// <returns>対象座標系でのヒットテスト半径。</returns>
     /// <remarks>
-    /// <see cref="ICoordTransform.ToDomain"/> の差を取ることでオフセット（レターボックス等）をキャンセルし、スケールのみを得る。<br/>
+    /// <see cref="ICoordTransform.ToSource"/> の差を取ることでオフセット（レターボックス等）をキャンセルし、スケールのみを得る。<br/>
     /// スケールがほぼ 0（等価変換）の場合は DIP 半径をそのまま使用する。
     /// </remarks>
-    private double ToDomainRadius()
+    private double ToSourceRadius()
     {
         var port = _state.Port;
-        var origin = port.ToDomain(default);
-        var offset = port.ToDomain(new EsPoint(Options.HandleHitRadius, 0));
+        var origin = port.ToSource(default);
+        var offset = port.ToSource(new EsPoint(Options.HandleHitRadius, 0));
         var radius = Math.Abs(offset.X - origin.X);
         return radius < 0.001 ? Options.HandleHitRadius : radius;
     }
@@ -591,7 +591,7 @@ internal sealed class MarqueeSession
 
     /// <summary>点座標付きの通知を発火する（スナップショットのマウス位置も指定座標とする）。</summary>
     /// <param name="kind">通知の種別。</param>
-    /// <param name="position">通知する座標（ドメイン座標）。</param>
+    /// <param name="position">通知する座標（対象座標）。</param>
     private void NotifyAt(MarqueeNoticeKind kind, EsPoint position)
         => Notified?.Invoke(this, new MarqueeNotice(kind, position, _state.CreateSnapshot(position)));
 

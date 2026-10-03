@@ -22,7 +22,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 /// <remarks>
 /// 対象: <c>CropViewControl.cs</c>（画像表示 + 領域選択 + 外部提供矩形の統合コントロール）。<br/>
 /// 公開 API: Source / Rects / SelectionMode / ZoomPercent / ZoomIn / ZoomOut / Fit /
-/// SetSelection / ClearSelection / SetCoordTransform / 座標変換（ContentToViewport / ViewportToContent）。<br/>
+/// SetSelection / ClearSelection / SetCoordTransform / 座標変換（SourceToClient / ClientToSource）。<br/>
 /// パブリック API 経由で内包コントロール（ZoomViewControl / FadeMaskDragRect）との連携を検証する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
@@ -91,7 +91,7 @@ public class CropViewTests
         Assert.Equal(1.0, foreground.StrokeThickness);
         Assert.Equal(1000.0, foreground.Width);
         Assert.Equal(800.0, foreground.Height);
-        // 左上は画像表示矩形の原点（200x200 を 400x200 へ中央寄せして X のみ 100）+ ドメイン 10 × 20 倍
+        // 左上は画像表示矩形の原点（200x200 を 400x200 へ中央寄せして X のみ 100）+ 対象 10 × 20 倍
         Assert.Equal(300.0, Canvas.GetLeft(group));
         Assert.Equal(200.0, Canvas.GetTop(group));
     }
@@ -132,26 +132,26 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void ContentToViewport_ドメイン座標をビューポート座標へ変換する()
+    public void SourceToClient_対象座標をビューポート座標へ変換する()
     {
         var view = CreateView();
 
         // 画像 10x10・ビューポート 400x200 → FitScale = min(40, 20) = 20、中央寄せ
         // 画像の表示矩形は 200x200、原点は (100, 0)（横中央）。
-        // ドメイン (5, 5) → ビューポート (100 + 5*20, 0 + 5*20) = (200, 100)
-        var result = view.ContentToViewport(new Point(5, 5));
+        // 対象 (5, 5) → ビューポート (100 + 5*20, 0 + 5*20) = (200, 100)
+        var result = view.SourceToClient(new Point(5, 5));
 
         Assert.Equal(200.0, result.X);
         Assert.Equal(100.0, result.Y);
     }
 
     [AvaloniaFact]
-    public void ViewportToContent_ビューポート座標をドメイン座標へ変換する()
+    public void ClientToSource_ビューポート座標を対象座標へ変換する()
     {
         var view = CreateView();
 
-        // ビューポート (200, 100) → ドメイン (5, 5)
-        var result = view.ViewportToContent(new Point(200, 100));
+        // ビューポート (200, 100) → 対象 (5, 5)
+        var result = view.ClientToSource(new Point(200, 100));
 
         Assert.Equal(5.0, result.X, 3);
         Assert.Equal(5.0, result.Y, 3);

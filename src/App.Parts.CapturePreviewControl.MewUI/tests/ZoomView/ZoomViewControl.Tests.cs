@@ -262,8 +262,8 @@ public class ZoomViewControlTests
         var (control, image) = CreateWithImage(100, 100, 200, 200);
         using var _ = image;
 
-        var viewport = control.ContentToViewportImage(new EsPoint(25, 30));
-        var content = control.ViewportToContentImage(viewport);
+        var viewport = control.DisplayedSourceToClient(new EsPoint(25, 30));
+        var content = control.ClientToDisplayedSource(viewport);
 
         Assert.Equal(25.0, content.X, 3);
         Assert.Equal(30.0, content.Y, 3);

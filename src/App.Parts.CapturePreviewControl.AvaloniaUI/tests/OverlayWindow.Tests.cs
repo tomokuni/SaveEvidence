@@ -24,7 +24,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 /// 過去に発生した実機バグの回帰を検出するためのテストを含む:<br/>
 /// 1. 暗転・枠・テキストが表示されない → 外側の装飾（MarqueeControl）へ反映され、再描画が要求されるか<br/>
 /// 2. 背景画像が拡大表示される → VirtualScreenImage がウィンドウ（DIP）にフィットするか<br/>
-/// 3. 選択矩形と取得画像がずれる → ドメイン座標 → 画面物理座標の変換が正しいか
+/// 3. 選択矩形と取得画像がずれる → 対象座標 → 画面物理座標の変換が正しいか
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class OverlayWindowTests
@@ -479,7 +479,7 @@ public class OverlayWindowTests
         // 未検出（MockElementFinder は常に default）→ ハイライト無効
         InvokeApplyHighlight(window, new EsPointInt(100, 100));
 
-        Assert.Null(window.SelectionOverlay.HighlightDomainRect);
+        Assert.Null(window.SelectionOverlay.HighlightSourceRect);
     }
 
     [AvaloniaFact]
@@ -495,11 +495,11 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.ScreenSelect, elementFinder: finder);
         window.Position = new PixelPoint(100, 50);
 
-        // 検出（画面物理 (200,100)-(2120,1180)）→ ドメイン（ウィンドウローカル物理）へ変換して反映
+        // 検出（画面物理 (200,100)-(2120,1180)）→ 対象（ウィンドウローカル物理）へ変換して反映
         InvokeApplyHighlight(window, new EsPointInt(500, 500));
 
-        Assert.NotNull(window.SelectionOverlay.HighlightDomainRect);
-        Assert.Equal(new Rect(100, 50, 1920, 1080), window.SelectionOverlay.HighlightDomainRect);
+        Assert.NotNull(window.SelectionOverlay.HighlightSourceRect);
+        Assert.Equal(new Rect(100, 50, 1920, 1080), window.SelectionOverlay.HighlightSourceRect);
     }
 
     [AvaloniaFact]
@@ -516,7 +516,7 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.ScreenSelect, scaling: 2.0, elementFinder: finder);
 
         // マルチモニタでカーソル位置のスクリーンのスケーリングが異なっても、
-        // サイズラベルの物理換算はドメイン（画面物理 − Position）と往復一致するよう _scaling を維持する
+        // サイズラベルの物理換算は対象（画面物理 − Position）と往復一致するよう _scaling を維持する
         InvokeApplyHighlight(window, new EsPointInt(500, 500));
 
         Assert.Equal(2.0, window.SelectionOverlay.DisplayScaleScaling);
@@ -549,11 +549,11 @@ public class OverlayWindowTests
         var window = CreateWindow(CaptureType.WindowSelect, elementFinder: finder);
         window.Position = new PixelPoint(100, 50);
 
-        // 検出（画面物理 (300,200)-(1100,800)）→ ドメインへ変換して反映
+        // 検出（画面物理 (300,200)-(1100,800)）→ 対象へ変換して反映
         InvokeApplyHighlight(window, new EsPointInt(500, 500));
 
-        Assert.NotNull(window.SelectionOverlay.HighlightDomainRect);
-        Assert.Equal(new Rect(200, 150, 800, 600), window.SelectionOverlay.HighlightDomainRect);
+        Assert.NotNull(window.SelectionOverlay.HighlightSourceRect);
+        Assert.Equal(new Rect(200, 150, 800, 600), window.SelectionOverlay.HighlightSourceRect);
         Assert.Equal("Sample Window", window.SelectionOverlay.InfoTextProvider?.Invoke());
     }
 
@@ -668,7 +668,7 @@ public class OverlayWindowTests
             new PointerPointProperties(RawInputModifiers.None, PointerUpdateKind.Other), KeyModifiers.None);
         InvokeOnClickMoved(window, e);
 
-        Assert.NotNull(window.SelectionOverlay.HighlightDomainRect);
+        Assert.NotNull(window.SelectionOverlay.HighlightSourceRect);
         window.Close();
     }
 
@@ -790,7 +790,7 @@ public class OverlayWindowTests
         // 未検出 → ハイライト無効・タイトル空
         InvokeApplyHighlight(window, new EsPointInt(100, 100));
 
-        Assert.Null(window.SelectionOverlay.HighlightDomainRect);
+        Assert.Null(window.SelectionOverlay.HighlightSourceRect);
         Assert.Equal("", window.SelectionOverlay.InfoTextProvider?.Invoke());
     }
 

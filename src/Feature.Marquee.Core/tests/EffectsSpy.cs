@@ -17,7 +17,7 @@ internal sealed class EffectsSpy : IMarqueeEffects
     /// <summary>再描画の要求回数。</summary>
     public int RedrawCount => Calls.Count(c => c == "redraw");
 
-    /// <summary>ドメイン座標 → 画面物理座標の変換倍率。</summary>
+    /// <summary>対象座標 → 画面物理座標の変換倍率。</summary>
     public int ScreenScale { get; set; } = 2;
 
     /// <inheritdoc/>
@@ -33,6 +33,6 @@ internal sealed class EffectsSpy : IMarqueeEffects
     public void SetPointerCapture(bool capture) => Calls.Add($"capture:{capture}");
 
     /// <inheritdoc/>
-    public EsPointInt ToScreenPoint(EsPoint domainPoint)
-        => new((int)domainPoint.X * ScreenScale, (int)domainPoint.Y * ScreenScale);
+    public EsPointInt ToScreenPoint(EsPoint sourcePoint)
+        => new((int)sourcePoint.X * ScreenScale, (int)sourcePoint.Y * ScreenScale);
 }

@@ -28,7 +28,7 @@ public sealed class CropViewControl : Grid
     /// <summary>外部提供矩形のオーバーレイ（透明。 入力は下のズームビューへ通す）。</summary>
     private readonly RectOverlayCanvas _rectOverlay;
 
-    /// <summary>外部提供矩形（ドメイン座標）。</summary>
+    /// <summary>外部提供矩形（対象座標）。</summary>
     private IReadOnlyList<OverlayRect> _rects = [];
 
     /// <summary>CropView コントロールを初期化する。</summary>
@@ -75,7 +75,7 @@ public sealed class CropViewControl : Grid
         set => _zoomView.Appearance = value;
     }
 
-    /// <summary>外部提供矩形（ドメイン座標）を取得または設定する。</summary>
+    /// <summary>外部提供矩形（対象座標）を取得または設定する。</summary>
     /// <value>ビューポートとルーペへ描画する矩形。 空の場合は何も描画しない。</value>
     /// <remarks>設定すると矩形オーバーレイを再描画する。</remarks>
     public IReadOnlyList<OverlayRect> Rects
@@ -145,17 +145,17 @@ public sealed class CropViewControl : Grid
     /// <summary>Fit 表示（ビューポートに収まる自動倍率）へ戻す。</summary>
     public void ZoomFit() => _zoomView.ZoomFit();
 
-    /// <summary>ビューポート座標をドメイン座標（元画像ピクセル）へ変換する。</summary>
+    /// <summary>ビューポート座標を対象座標（元画像ピクセル）へ変換する。</summary>
     /// <param name="viewportPos">ビューポート座標（DIP）。</param>
-    /// <returns>ドメイン座標（元画像ピクセル）。</returns>
+    /// <returns>対象座標（元画像ピクセル）。</returns>
     /// <remarks>画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。</remarks>
-    public EsPoint ViewportToContent(EsPoint viewportPos) => _zoomView.ViewportToContentImage(viewportPos);
+    public EsPoint ClientToSource(EsPoint viewportPos) => _zoomView.ClientToDisplayedSource(viewportPos);
 
-    /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
-    /// <param name="contentPos">ドメイン座標（元画像ピクセル）。</param>
+    /// <summary>対象座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
+    /// <param name="contentPos">対象座標（元画像ピクセル）。</param>
     /// <returns>ビューポート座標（DIP）。</returns>
     /// <remarks>画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。</remarks>
-    public EsPoint ContentToViewport(EsPoint contentPos) => _zoomView.ContentToViewportImage(contentPos);
+    public EsPoint SourceToClient(EsPoint contentPos) => _zoomView.DisplayedSourceToClient(contentPos);
 
     /// <summary>ホイールの回転量でビューポートをパンする（ホストが他のコントロールで受けたホイールの転送用）。</summary>
     /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。 1 ノッチ = 1.0）。</param>

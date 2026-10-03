@@ -100,14 +100,14 @@ public sealed class MainWindowViewModel : ObservableObject
     }
 
     // ====================================================================
-    // 選択矩形の破線オーバーレイ（SelectionDomainRect 系）
+    // 選択矩形の破線オーバーレイ（SelectionSourceRect 系）
     // ====================================================================
 
     private bool _selectionRectVisible;
 
     /// <summary>選択矩形の破線オーバーレイを表示するかどうか（SelectionRectVisible）。</summary>
     /// <remarks>
-    /// true にすると <see cref="SelectionDomainRect"/>（ドメイン座標系 = 元画像ピクセル座標）の枠線を
+    /// true にすると <see cref="SelectionSourceRect"/>（対象座標系 = 元画像ピクセル座標）の枠線を
     /// ルーペ画像上に破線で描画する（ズーム 2 倍以上で有効）。<br/>
     /// </remarks>
     public bool SelectionRectVisible
@@ -124,7 +124,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private double _selectionRectX = 100;
 
-    /// <summary>選択矩形の X 座標（ドメイン座標系 = 元画像ピクセル）。</summary>
+    /// <summary>選択矩形の X 座標（対象座標系 = 元画像ピクセル）。</summary>
     public double SelectionRectX
     {
         get => _selectionRectX;
@@ -139,7 +139,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private double _selectionRectY = 80;
 
-    /// <summary>選択矩形の Y 座標（ドメイン座標系 = 元画像ピクセル）。</summary>
+    /// <summary>選択矩形の Y 座標（対象座標系 = 元画像ピクセル）。</summary>
     public double SelectionRectY
     {
         get => _selectionRectY;
@@ -154,7 +154,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private double _selectionRectWidth = 200;
 
-    /// <summary>選択矩形の幅（ドメイン座標系 = 元画像ピクセル）。</summary>
+    /// <summary>選択矩形の幅（対象座標系 = 元画像ピクセル）。</summary>
     public double SelectionRectWidth
     {
         get => _selectionRectWidth;
@@ -169,7 +169,7 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private double _selectionRectHeight = 120;
 
-    /// <summary>選択矩形の高さ（ドメイン座標系 = 元画像ピクセル）。</summary>
+    /// <summary>選択矩形の高さ（対象座標系 = 元画像ピクセル）。</summary>
     public double SelectionRectHeight
     {
         get => _selectionRectHeight;

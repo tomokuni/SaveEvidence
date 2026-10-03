@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 /// <param name="HandleColor">ドラッグハンドルの色（MarqueeOptions.HandleColor）。</param>
 /// <param name="HandleSize">ドラッグハンドルの一辺サイズ（DIP・MarqueeOptions.HandleSize）。</param>
 /// <param name="HandleHitRadius">ハンドルヒットテスト半径（DIP・MarqueeOptions.HandleHitRadius）。</param>
-/// <param name="ClampToDomainBounds">画像外の選択を禁止するか（MarqueeOptions.ClampToDomainBounds）。</param>
+/// <param name="ClampToSourceBounds">画像外の選択を禁止するか（MarqueeOptions.ClampToSourceBounds）。</param>
 /// <param name="MarkerColor">nudge 中の十字マーカーの色（MarqueeOptions.MarkerColor）。</param>
 /// <param name="MarkerLength">nudge 中の十字マーカーの長さ（全長・DIP・MarqueeOptions.MarkerLength）。</param>
 /// <param name="LoupeSize">ルーペの一辺のサイズ（DIP）。</param>
@@ -45,7 +45,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 /// <param name="SubLineFontSize">サブラインのフォントサイズ。</param>
 /// <param name="SubLineColor">サブラインの文字色。</param>
 /// <param name="SubLineBackgroundColor">サブライン（2 行目）の背景色（不透明度は色のアルファに統合）。</param>
-/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskDragRectControl.DisplayScaleScaling・0 以下は DipToDomainScaling と同値）。</param>
+/// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskDragRectControl.DisplayScaleScaling・0 以下は ClientToSourceScaling と同値）。</param>
 /// <remarks>
 /// 全メンバーは nullable とする。<br/>
     /// - 初期設定として使用する場合: null は本クラスの既定値（<see cref="ToNonNull"/> が埋める値）として扱う。<br/>
@@ -62,7 +62,7 @@ public sealed record CaptureSettings(
     Color? HandleColor = null,
     double? HandleSize = null,
     double? HandleHitRadius = null,
-    bool? ClampToDomainBounds = null,
+    bool? ClampToSourceBounds = null,
     Color? MarkerColor = null,
     double? MarkerLength = null,
     bool? ShowCoordLabel = null,
@@ -127,7 +127,7 @@ public sealed record CaptureSettings(
             HandleColor: HandleColor ?? Color.White,
             HandleSize: HandleSize ?? 10.0,
             HandleHitRadius: HandleHitRadius ?? 12.0,
-            ClampToDomainBounds: ClampToDomainBounds ?? true,
+            ClampToSourceBounds: ClampToSourceBounds ?? true,
             MarkerColor: MarkerColor ?? Color.White,
             MarkerLength: MarkerLength ?? 16.0,
             ShowCoordLabel: ShowCoordLabel ?? false,

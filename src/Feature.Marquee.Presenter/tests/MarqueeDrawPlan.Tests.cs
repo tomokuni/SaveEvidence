@@ -189,7 +189,7 @@ public class MarqueeDrawPlanTests
     public void ResolveDrawPlan_座標変換ポートを装飾矩形へ適用する()
     {
         var presenter = CreatePresenter(MarqueeAppearance.Default with { ShowCoordLabel = false });
-        // ToDip（ドメイン → DIP）は 2 倍
+        // ToDip（対象 → DIP）は 2 倍
         presenter.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
         presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));

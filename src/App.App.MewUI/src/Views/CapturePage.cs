@@ -251,13 +251,13 @@ internal static class CapturePage
         pointerLabel.FontSize(AppStyles.StatusFontSize);
         pointerLabel.VerticalAlignment = VerticalAlignment.Center;
         pointerLabel.Bind(Label.TextProperty, viewModel, static x => x.PointerDisplayText);
-        pointerLabel.ToolTip("マウスポインタ位置（ドメイン座標 = 画像ピクセル）");
+        pointerLabel.ToolTip("マウスポインタ位置（対象座標 = 画像ピクセル）");
 
         var imageSizeLabel = new Label { Width = 80 };
         imageSizeLabel.FontSize(AppStyles.StatusFontSize);
         imageSizeLabel.VerticalAlignment = VerticalAlignment.Center;
         imageSizeLabel.Bind(Label.TextProperty, viewModel, static x => x.ImageSizeDisplayText);
-        imageSizeLabel.ToolTip("画像サイズ（ドメイン座標 = 元画像ピクセル）");
+        imageSizeLabel.ToolTip("画像サイズ（対象座標 = 元画像ピクセル）");
 
         var saveStatusLabel = new Label { VerticalAlignment = VerticalAlignment.Center };
         saveStatusLabel.FontSize(AppStyles.StatusFontSize);
@@ -642,19 +642,19 @@ internal static class CapturePage
             {
                 // ハイライトなし（外側・内側とも描かない。 サイズ・座標ラベルも表示しない）
                 autoCropHighlight.Appearance = s_autoCropIdleAppearance;
-                autoCropHighlight.HighlightDomainRect = null;
+                autoCropHighlight.HighlightSourceRect = null;
                 return;
             }
 
-            var topLeft = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.X, target.Y));
-            var bottomRight = cropView.ZoomView.ContentToViewportImage(new EsPoint(target.Right, target.Bottom));
+            var topLeft = cropView.ZoomView.DisplayedSourceToClient(new EsPoint(target.X, target.Y));
+            var bottomRight = cropView.ZoomView.DisplayedSourceToClient(new EsPoint(target.Right, target.Bottom));
 
             autoCropHighlight.Appearance = s_autoCropHighlightAppearance;
-            autoCropHighlight.HighlightDomainRect = new EsRect(
+            autoCropHighlight.HighlightSourceRect = new EsRect(
                 topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
         }
 
-        // 自動切り出しの検出矩形をオーバーレイへ変換する（画像座標 → ドメイン座標）。
+        // 自動切り出しの検出矩形をオーバーレイへ変換する（画像座標 → 対象座標）。
         // ホバー中の 1 件は CropView 側から外し、Marquee のハイライト（枠線 + 半透明の塗り）で強調する
         // （両 UI で同じ見た目にするため、塗りも描く）。
         void SyncRects()
@@ -785,14 +785,14 @@ internal static class CapturePage
         return host;
     }
 
-    /// <summary>マウスポインタ位置のドメイン座標（画像ピクセル）をステータスバーへ表示する。</summary>
+    /// <summary>マウスポインタ位置の対象座標（画像ピクセル）をステータスバーへ表示する。</summary>
     /// <param name="viewModel">アプリのメイン ViewModel（表示文字列の保持元）。</param>
     /// <param name="view">プレビュー（座標変換と画像矩形の取得元）。</param>
     /// <param name="cursorDip">カーソル位置（プレビューのローカル DIP）。 null の場合は "-" を表示する。</param>
     /// <remarks>
     /// 1. 画像が無い・カーソルが無い場合は "-" を表示する。<br/>
     /// 2. カーソルが画像の表示矩形の外にある場合は "-" を表示する（画像外の余白を座標として扱わない）。<br/>
-    /// 3. 表示座標をドメイン座標（元画像ピクセル）へ変換し、画像の範囲内へクランプして表示する。
+    /// 3. 表示座標を対象座標（元画像ピクセル）へ変換し、画像の範囲内へクランプして表示する。
     /// </remarks>
     private static void UpdatePointerText(MainViewModel viewModel, ZoomViewControl view, EsPoint? cursorDip)
     {
@@ -813,7 +813,7 @@ internal static class CapturePage
             return;
         }
 
-        var content = view.ViewportToContentImage(position);
+        var content = view.ClientToDisplayedSource(position);
         viewModel.PointerDisplayText =
             $"{(int)Math.Clamp(content.X, 0, image.Width - 1)}, {(int)Math.Clamp(content.Y, 0, image.Height - 1)}";
     }
@@ -826,7 +826,7 @@ internal static class CapturePage
     /// <remarks>
     /// 1. 画像が無い場合は null を返す。<br/>
     /// 2. カーソルが画像の表示矩形の外にある場合は null を返す（画像外の余白を座標として扱わない）。<br/>
-    /// 3. 表示座標をドメイン座標（元画像ピクセル）へ変換し、<see cref="MainViewModel.HitDetectedRect"/> へ委譲する<br/>
+    /// 3. 表示座標を対象座標（元画像ピクセル）へ変換し、<see cref="MainViewModel.HitDetectedRect"/> へ委譲する<br/>
     ///    （矩形の判定はコアが単一所有する）。
     /// </remarks>
     private static EsRectInt? FindAutoCropHit(MainViewModel viewModel, ZoomViewControl view, EsPoint cursorDip)
@@ -845,7 +845,7 @@ internal static class CapturePage
             return null;
         }
 
-        var content = view.ViewportToContentImage(cursorDip);
+        var content = view.ClientToDisplayedSource(cursorDip);
         return viewModel.HitDetectedRect(
             Math.Clamp(content.X, 0, image.Width - 1),
             Math.Clamp(content.Y, 0, image.Height - 1));

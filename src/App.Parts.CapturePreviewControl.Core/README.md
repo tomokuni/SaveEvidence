@@ -27,11 +27,11 @@
 - **キャプチャ結果**（`CaptureResult`）: `EsBitmap?`（画像）と `EsRectInt?`（仮想スクリーン座標の領域）の組
 - **複合コントロールの設定変換**（`FadeMaskDragRectOptionsMapper`）: `CaptureSettings` → `FadeMaskDragRectOptions`（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）の**寸法・表示可否**の対応を単一所有する（両 UI のホストが同じ変換を使う。 **色・枠線の太さ・表示可否は描画にだけ必要な設定のため写像せず**、提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有する）
 - **ラベル文言の単一所有**（`CaptureLabelTexts`）: キャプチャ種別→動作モードの写像と、操作ラベル（確定・キャンセル方法）・情報ラベル（ウィンドウタイトル）の文言を単一所有する（汎用コントロールは文言を持たず、ホストがプロバイダで与える）
-- **切り出し結果の適用先**（`ICaptureTarget`）: 撮影・切り出しの結果をアプリ側へ渡すポート（現在の画像・画像差し替えの通知・切り出しの適用）。 アプリのドメイン操作（Undo 退避・未保存化・ステータス通知）は実装側に残す
+- **切り出し結果の適用先**（`ICaptureTarget`）: 撮影・切り出しの結果をアプリ側へ渡すポート（現在の画像・画像差し替えの通知・切り出しの適用）。 アプリの対象操作（Undo 退避・未保存化・ステータス通知）は実装側に残す
   - **画像の平均色**（`ImageColorMath`）: 標本間引きで平均色を求める（描画の背景色の決定に使う）
   - **キャプチャ種別の性質**（`CaptureTypeTraits`）: ハイライト型（クリック確定）か・切り出しの区間の流儀（終点のピクセルを含むか）・カーソル下の検出対象（画面 / ウィンドウ）の判定を単一所有する
-- **モニタの実表示倍率**（`MonitorScalingMath`）: 対象矩形の**中心**を含むモニタの倍率を解決する（該当なしはフォールバック）。 ドメイン座標からは**原点の加算**も本クラスが行う（`ResolveForDomainRect`）。 判定に使う一覧の構築（**倍率未確定（0 以下）の除外**）も `Collect` が単一所有する（両 UI が同じ判定点・同じ対象を使う）
-- **ハイライトの状態と判断**（`CaptureHighlight` / `CaptureHighlightSession`）: カーソル下の要素の検出結果から「ハイライトの有無・矩形（ドメイン座標）・表示名」を導出する。 **未検出の正規化・ドメイン変換・表示名の変化の判定・診断ログ**を単一所有し、UI は戻り値を設定するだけにする（直前の状態はセッションのプロパティから読む）
+- **モニタの実表示倍率**（`MonitorScalingMath`）: 対象矩形の**中心**を含むモニタの倍率を解決する（該当なしはフォールバック）。 対象座標からは**原点の加算**も本クラスが行う（`ResolveForSourceRect`）。 判定に使う一覧の構築（**倍率未確定（0 以下）の除外**）も `Collect` が単一所有する（両 UI が同じ判定点・同じ対象を使う）
+- **ハイライトの状態と判断**（`CaptureHighlight` / `CaptureHighlightSession`）: カーソル下の要素の検出結果から「ハイライトの有無・矩形（対象座標）・表示名」を導出する。 **未検出の正規化・対象変換・表示名の変化の判定・診断ログ**を単一所有し、UI は戻り値を設定するだけにする（直前の状態はセッションのプロパティから読む）
 - **オーバーレイのキー操作**（`CaptureKeyActions`）: Enter（Return を含む）= 確定 / Escape = キャンセルを単一所有する。 **確定対象が無い場合の Enter は何もしない**（何も検出していない状態でキャンセル扱いにしない）。 UI はキーを `EsKey` へ変換して渡すだけにする
 - **クリック確定の状態**（`CaptureClickSelection`）: スクリーン選択 / ウィンドウ選択の「押下で固定・解放で確定」を単一所有する。 退化した検出（空の矩形）は固定せず、押下のたびに置き換え、解放で 1 回だけ取り出す（固定が無い解放では確定しない）
 - **切り出しのサイズラベル**（`CropLabelTexts`）: `LT: (l, t),  RB: (r, b),  WH: (w+1, h+1), Zoom: (pz%)` 形式。 `WH` は含まれるピクセル数であり、終点を含めるかの判断は矩形の `EsRectInterval` が持つ（切り出し範囲と同じ値を使う）。 撮影の選択（`CaptureLabelTexts.ResolveSizeLabel`）とは用途が違うため別途単一所有する。 **未選択は描かない**という判断も `ResolveSizeLabel` が持つ
@@ -88,7 +88,7 @@ if (!bounds.IsEmpty)
 
 // 切り出しビューの画像ビューポート（ズーム・パン・Fit）は ZoomViewSession が単一所有する
 var zoom = new ZoomViewSession();
-zoom.SetContent(hasSource: true, new EsSize(1920, 1080));   // 画像の設定（Fit 表示へリセット）
+zoom.SetSource(hasSource: true, new EsSize(1920, 1080));   // 画像の設定（Fit 表示へリセット）
 zoom.SetViewport(new EsSize(800, 600));                     // ビューポートのサイズ
 var feedback = zoom.ZoomIn();                               // ⊖⊕ の段階遷移
 feedback.ApplyVisual(redraw: () => { /* 再描画 */ });        // 効果の適用（適用順は ZoomFeedback が持つ）
@@ -169,7 +169,7 @@ src/
 
     ├── ImageColorMath.Tests.cs            # 平均色（標本間引き・空画像。5 件）
     ├── CaptureTypeTraits.Tests.cs         # ハイライト型・区間の流儀・検出対象・検出呼び分け・確定対象（16 件）
-    ├── MonitorScalingMath.Tests.cs        # 中心判定・境界・フォールバック・ドメイン座標・一覧の構築・代表値（19 件）
+    ├── MonitorScalingMath.Tests.cs        # 中心判定・境界・フォールバック・対象座標・一覧の構築・代表値（19 件）
     ├── CaptureClipMath.Tests.cs           # 切り出し矩形の解決（座標空間の契約・整数/浮動小数）・双方向変換・画像の共有値（34 件）
     ├── CaptureImageHolder.Tests.cs        # 保持の規則（差し替え・破棄後・フォールバック）（8 件）
     ├── CaptureVirtualScreen.Tests.cs      # タイムアウト待ちと未使用結果の破棄（6 件）

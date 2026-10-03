@@ -49,13 +49,13 @@ public sealed partial class Marquee
         /// <summary>ドラッグハンドルのヒットテスト半径の既定値（DIP）。</summary>
         public const double HandleHitRadiusDefault = 12.0;
 
-        /// <summary>選択矩形の最小サイズの最小値（ドメイン座標。 0 以下の指定を無効化する）。</summary>
+        /// <summary>選択矩形の最小サイズの最小値（対象座標。 0 以下の指定を無効化する）。</summary>
         public const double MinSelectionSizeMin = 1.0;
 
-        /// <summary>選択矩形の最小サイズの最大値（ドメイン座標）。</summary>
+        /// <summary>選択矩形の最小サイズの最大値（対象座標）。</summary>
         public const double MinSelectionSizeMax = 4096.0;
 
-        /// <summary>選択矩形の最小サイズの既定値（ドメイン座標）。</summary>
+        /// <summary>選択矩形の最小サイズの既定値（対象座標）。</summary>
         public const double MinSelectionSizeDefault = 6.0;
 
         /// <summary>枠線の太さの最小値（DIP）。</summary>
@@ -80,15 +80,15 @@ public sealed partial class Marquee
         /// <remarks>塗りの中に隠れない細さでありながら、拡大表示でも輪郭が判別できる太さである。</remarks>
         public const double HandleBorderThicknessDefault = 1.5;
 
-        /// <summary>ポート未指定時に適用する倍率（ドメイン座標 / ローカル DIP）の最小値（環境値。 他の数値より後に置く）。</summary>
-        public const double DipToDomainScalingMin = 0.1;
+        /// <summary>ポート未指定時に適用する倍率（対象座標 / ローカル DIP）の最小値（環境値。 他の数値より後に置く）。</summary>
+        public const double ClientToSourceScalingMin = 0.1;
 
-        /// <summary>ポート未指定時に適用する倍率（ドメイン座標 / ローカル DIP）の最大値（環境値）。</summary>
-        public const double DipToDomainScalingMax = 8.0;
+        /// <summary>ポート未指定時に適用する倍率（対象座標 / ローカル DIP）の最大値（環境値）。</summary>
+        public const double ClientToSourceScalingMax = 8.0;
 
-        /// <summary>ポート未指定時に適用する倍率（ドメイン座標 / ローカル DIP）の既定値（環境値。 ドメイン座標と DIP が 1:1）。</summary>
-        /// <remarks>各 UI の依存関係プロパティ（<c>DipToDomainScaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
-        public const double DipToDomainScalingDefault = 1.0;
+        /// <summary>ポート未指定時に適用する倍率（対象座標 / ローカル DIP）の既定値（環境値。 対象座標と DIP が 1:1）。</summary>
+        /// <remarks>各 UI の依存関係プロパティ（<c>ClientToSourceScaling</c>）の既定値も本値を参照する（既定値の二重所有を防ぐ）。</remarks>
+        public const double ClientToSourceScalingDefault = 1.0;
 
         /// <summary>ドラッグハンドルの一辺サイズを安全域へ補正する。</summary>
         /// <param name="value">補正する値（DIP）。</param>
@@ -109,7 +109,7 @@ public sealed partial class Marquee
             => CoerceFinite(value, HandleHitRadiusMin, HandleHitRadiusMax, HandleHitRadiusDefault);
 
         /// <summary>選択矩形の最小サイズを安全域へ補正する。</summary>
-        /// <param name="value">補正する値（ドメイン座標）。</param>
+        /// <param name="value">補正する値（対象座標）。</param>
         /// <returns>安全域に補正した値。 非有限の場合は既定値。</returns>
         /// <remarks>0 以下の指定は最小値（1.0）へ補正される（幅・高さが 0 の選択を残さない）。</remarks>
         public static double CoerceMinSelectionSize(double value)
@@ -136,19 +136,19 @@ public sealed partial class Marquee
         /// <param name="value">補正する値。</param>
         /// <returns>安全域に補正した値。 非有限の場合は既定値。</returns>
         /// <remarks>倍率は環境値（DPI・マルチスクリーン）として設定され、座標変換ポートが指定されている場合は使われない。</remarks>
-        public static double CoerceDipToDomainScaling(double value)
-            => CoerceFinite(value, DipToDomainScalingMin, DipToDomainScalingMax, DipToDomainScalingDefault);
+        public static double CoerceClientToSourceScaling(double value)
+            => CoerceFinite(value, ClientToSourceScalingMin, ClientToSourceScalingMax, ClientToSourceScalingDefault);
 
         /// <summary>表示スケールの係数を解決する（0 以下の場合は座標換算の係数を使う）。</summary>
         /// <param name="displayScaling">指定された表示スケール。 0 以下は未指定として扱う。</param>
-        /// <param name="dipToDomainScaling">座標換算の係数（1.0 未満は 1.0 として扱う）。</param>
+        /// <param name="dipToSourceScaling">座標換算の係数（1.0 未満は 1.0 として扱う）。</param>
         /// <returns>解決した表示スケール。</returns>
         /// <remarks>
         /// 「0 以下は未指定」という規則を単一所有する（UI 層に同じ三項演算を書かせない）。<br/>
         /// サイズラベルの文言（描画層が生成する）も本規則を使うため public とする。
         /// </remarks>
-        public static double ResolveDisplayScale(double displayScaling, double dipToDomainScaling)
-            => displayScaling > 0 ? displayScaling : DpiScaler.NormalizeScaling(dipToDomainScaling);
+        public static double ResolveDisplayScale(double displayScaling, double dipToSourceScaling)
+            => displayScaling > 0 ? displayScaling : DpiScaler.NormalizeScaling(dipToSourceScaling);
 
         /// <summary>実数を安全域へ補正する（非有限は既定値へ戻す）。</summary>
         /// <param name="value">補正する値。</param>

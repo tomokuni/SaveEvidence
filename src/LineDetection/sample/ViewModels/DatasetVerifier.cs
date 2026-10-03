@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.LineDetection.Sample.ViewModels;
 /// </remarks>
 internal static class DatasetVerifier
 {
-    /// <summary>検証の保守用許容誤差（ドメイン座標・px）。</summary>
+    /// <summary>検証の保守用許容誤差（対象座標・px）。</summary>
     /// <remarks>検証は 0px 誤差で一致判定する。</remarks>
     public const int Tolerance = 0;
 
@@ -21,7 +21,7 @@ internal static class DatasetVerifier
     /// <param name="detector">使用する検出器。</param>
     /// <returns>検証結果（画像名・一致/不一致・4 辺の詳細）。 矩形を復元できない場合は 4 辺が空の結果を返す。</returns>
     /// <remarks>
-    /// 検出結果から復元した矩形を <see cref="DatasetEntry.Bounds"/>（ドメイン座標・排他座標）と<br/>
+    /// 検出結果から復元した矩形を <see cref="DatasetEntry.Bounds"/>（対象座標・排他座標）と<br/>
     /// 0px 誤差で照合し、一致 / 不一致を <see cref="VerifyResultItem.IsCorrect"/> に反映する。<br/>
     /// 不一致の場合は、4 辺（左 X・上 Y・右 Right・下 Bottom）それぞれの検出値・正解値・差分を<br/>
     /// 「◯px」の形式で <see cref="VerifyResultItem.DetailLines"/> に格納する。

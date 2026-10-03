@@ -91,7 +91,7 @@
 
                     <Separator/>
 
-                    <CheckBox Content="画像外の選択を禁止（ClampToDomainBounds）" IsChecked="{Binding ClampToDomainBounds, Mode=TwoWay}"
+                    <CheckBox Content="画像外の選択を禁止（ClampToSourceBounds）" IsChecked="{Binding ClampToSourceBounds, Mode=TwoWay}"
                               FontSize="11" ToolTip.Tip="ON: 領域選択・移動・nudge を画像境界内にクリップ / OFF: 画像外も選択可能（既定）"/>
 
                     <Separator/>

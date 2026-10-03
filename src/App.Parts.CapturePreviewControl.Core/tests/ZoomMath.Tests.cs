@@ -187,39 +187,39 @@ public class ZoomMathTests
     }
 
     // ====================================================================
-    // ViewportToContent / ContentToViewport（ビューポート ↔ コンテンツ座標変換）
+    // ClientToSource / SourceToClient（ビューポート ↔ コンテンツ座標変換）
     // ====================================================================
 
     [Fact]
-    public void ViewportToContent_固定倍率でオフセットを加算して変換する()
+    public void ClientToSource_固定倍率でオフセットを加算して変換する()
     {
         // オフセット (100,50)・スケール 2.0 → (100 + 10/2, 50 + 20/2) = (105, 60)
-        var result = ZoomMath.ViewportToContent(new EsPoint(10, 20), new EsVector(100, 50), 2.0);
+        var result = ZoomMath.ClientToSource(new EsPoint(10, 20), new EsVector(100, 50), 2.0);
 
         Assert.Equal(new EsPoint(105, 60), result);
     }
 
     [Fact]
-    public void ViewportToContent_スケール0以下は1として扱う()
+    public void ClientToSource_スケール0以下は1として扱う()
     {
-        var result = ZoomMath.ViewportToContent(new EsPoint(10, 20), new EsVector(100, 50), 0);
+        var result = ZoomMath.ClientToSource(new EsPoint(10, 20), new EsVector(100, 50), 0);
 
         Assert.Equal(new EsPoint(110, 70), result);
     }
 
     [Fact]
-    public void ContentToViewport_固定倍率でオフセットを減算して変換する()
+    public void SourceToClient_固定倍率でオフセットを減算して変換する()
     {
         // オフセット (100,50)・スケール 2.0 → ((105-100)*2, (60-50)*2) = (10, 20)
-        var result = ZoomMath.ContentToViewport(new EsPoint(105, 60), new EsVector(100, 50), 2.0);
+        var result = ZoomMath.SourceToClient(new EsPoint(105, 60), new EsVector(100, 50), 2.0);
 
         Assert.Equal(new EsPoint(10, 20), result);
     }
 
     [Fact]
-    public void ContentToViewport_スケール0以下は1として扱う()
+    public void SourceToClient_スケール0以下は1として扱う()
     {
-        var result = ZoomMath.ContentToViewport(new EsPoint(110, 70), new EsVector(100, 50), 0);
+        var result = ZoomMath.SourceToClient(new EsPoint(110, 70), new EsVector(100, 50), 0);
 
         Assert.Equal(new EsPoint(10, 20), result);
     }
@@ -231,47 +231,47 @@ public class ZoomMathTests
         var offset = new EsVector(30, 40);
         var scale = 2.5;
 
-        var content = ZoomMath.ViewportToContent(viewportPos, offset, scale);
-        var back = ZoomMath.ContentToViewport(content, offset, scale);
+        var content = ZoomMath.ClientToSource(viewportPos, offset, scale);
+        var back = ZoomMath.SourceToClient(content, offset, scale);
 
         Assert.Equal(viewportPos.X, back.X, 6);
         Assert.Equal(viewportPos.Y, back.Y, 6);
     }
 
     // ====================================================================
-    // ViewportToContentImage / ContentToViewportImage（画像表示矩形原点基準の変換）
+    // ClientToDisplayedSource / DisplayedSourceToClient（画像表示矩形原点基準の変換）
     // ====================================================================
 
     [Fact]
-    public void ViewportToContentImage_画像原点を基準にビューポートからコンテンツへ変換する()
+    public void ClientToDisplayedSource_画像原点を基準にビューポートからコンテンツへ変換する()
     {
         // 画像原点 (100,50)・スケール 2.0 → ((10-100)/2, (20-50)/2) = (-45, -15)
-        var result = ZoomMath.ViewportToContentImage(new EsPoint(10, 20), new EsPoint(100, 50), 2.0);
+        var result = ZoomMath.ClientToDisplayedSource(new EsPoint(10, 20), new EsPoint(100, 50), 2.0);
 
         Assert.Equal(new EsPoint(-45, -15), result);
     }
 
     [Fact]
-    public void ViewportToContentImage_スケール0以下は1として扱う()
+    public void ClientToDisplayedSource_スケール0以下は1として扱う()
     {
-        var result = ZoomMath.ViewportToContentImage(new EsPoint(110, 70), new EsPoint(100, 50), 0);
+        var result = ZoomMath.ClientToDisplayedSource(new EsPoint(110, 70), new EsPoint(100, 50), 0);
 
         Assert.Equal(new EsPoint(10, 20), result);
     }
 
     [Fact]
-    public void ContentToViewportImage_画像原点を基準にコンテンツからビューポートへ変換する()
+    public void DisplayedSourceToClient_画像原点を基準にコンテンツからビューポートへ変換する()
     {
         // 画像原点 (100,50)・スケール 2.0 → (100 + (-45)*2, 50 + (-15)*2) = (10, 20)
-        var result = ZoomMath.ContentToViewportImage(new EsPoint(-45, -15), new EsPoint(100, 50), 2.0);
+        var result = ZoomMath.DisplayedSourceToClient(new EsPoint(-45, -15), new EsPoint(100, 50), 2.0);
 
         Assert.Equal(new EsPoint(10, 20), result);
     }
 
     [Fact]
-    public void ContentToViewportImage_スケール0以下は1として扱う()
+    public void DisplayedSourceToClient_スケール0以下は1として扱う()
     {
-        var result = ZoomMath.ContentToViewportImage(new EsPoint(10, 20), new EsPoint(100, 50), 0);
+        var result = ZoomMath.DisplayedSourceToClient(new EsPoint(10, 20), new EsPoint(100, 50), 0);
 
         Assert.Equal(new EsPoint(110, 70), result);
     }
@@ -283,8 +283,8 @@ public class ZoomMathTests
         var imageOrigin = new EsPoint(60, 80);
         var scale = 1.75;
 
-        var content = ZoomMath.ViewportToContentImage(viewportPos, imageOrigin, scale);
-        var back = ZoomMath.ContentToViewportImage(content, imageOrigin, scale);
+        var content = ZoomMath.ClientToDisplayedSource(viewportPos, imageOrigin, scale);
+        var back = ZoomMath.DisplayedSourceToClient(content, imageOrigin, scale);
 
         Assert.Equal(viewportPos.X, back.X, 6);
         Assert.Equal(viewportPos.Y, back.Y, 6);

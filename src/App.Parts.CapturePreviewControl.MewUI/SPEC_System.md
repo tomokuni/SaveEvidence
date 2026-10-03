@@ -122,8 +122,8 @@ classDiagram
         +ZoomViewAppearance Appearance
         +double ZoomPercent
         +ZoomIn() / ZoomOut() / ZoomFit()
-        +ViewportToContent(EsPoint) EsPoint
-        +ContentToViewport(EsPoint) EsPoint
+        +ClientToSource(EsPoint) EsPoint
+        +SourceToClient(EsPoint) EsPoint
     }
     class ZoomViewControl {
         <<CropViewControl が内包する画像ビューポート>>
@@ -132,7 +132,7 @@ classDiagram
         +double ZoomPercent
         +bool IsFit
         +ZoomIn() / ZoomOut() / ZoomFit()
-        +ViewportToContentImage(EsPoint) EsPoint
+        +ClientToDisplayedSource(EsPoint) EsPoint
     }
     class FadeMaskDragRectControl {
         +FadeMaskDragRectMode Mode
@@ -140,7 +140,7 @@ classDiagram
         +MarqueeAppearance MarqueeAppearance
         +LoupeAppearance LoupeAppearance
         +bool HasSelection
-        +EsRect SelectionDomainRect
+        +EsRect SelectionSourceRect
         +EsPoint? LoupeCenterPoint
         +SetSelection(EsRect)
         +ClearSelection()
@@ -191,7 +191,7 @@ sequenceDiagram
 
 ## 5. 設計判断
 
-- **共通規則は Core へ集約**: 切り出し矩形（`CaptureClipMath.ResolveCaptureRect`。 種別ごとの閉区間の `+1` と画像内へのクランプ、整数の選択矩形向けの入口を含む。 **座標空間は画面物理に統一**: 選択矩形が画像ローカル座標の場合は `ToScreenRect` で戻してから渡す）・画像の共有値（`ImageSize` / `ImageBounds`）・設定（`CaptureSettings`）・セッション状態（`CaptureSessionState`）・オーナー退避（`CaptureOwnerScope`）・種別の性質（`CaptureTypeTraits`）・ハイライトの状態（`CaptureHighlightSession`。 ドメイン変換・未検出の正規化・表示名の変化・診断ログ）・**クリック確定の固定（`CaptureClickSelection`。 押下で固定・解放で確定・退化した検出は固定しない）**・キー操作（`CaptureKeyActions`。 確定対象が無い場合の Enter は何もしない）・サイズラベルの表示倍率（`MonitorScalingMath`。 原点の加算・中心判定・倍率未確定の除外を含む）・切り出し（`CaptureClipMath`）・ログ定義（`CaptureLogMessage`。 切り出しの終了は `LogCropFinished` が退化した選択をキャンセルとして記録する）は `App.Parts.CapturePreviewControl.Core` が単一所有する。 本プロジェクトは MewUI の描画・入力だけを担う（Avalonia 版と同じ分担）。
+- **共通規則は Core へ集約**: 切り出し矩形（`CaptureClipMath.ResolveCaptureRect`。 種別ごとの閉区間の `+1` と画像内へのクランプ、整数の選択矩形向けの入口を含む。 **座標空間は画面物理に統一**: 選択矩形が画像ローカル座標の場合は `ToScreenRect` で戻してから渡す）・画像の共有値（`ImageSize` / `ImageBounds`）・設定（`CaptureSettings`）・セッション状態（`CaptureSessionState`）・オーナー退避（`CaptureOwnerScope`）・種別の性質（`CaptureTypeTraits`）・ハイライトの状態（`CaptureHighlightSession`。 対象変換・未検出の正規化・表示名の変化・診断ログ）・**クリック確定の固定（`CaptureClickSelection`。 押下で固定・解放で確定・退化した検出は固定しない）**・キー操作（`CaptureKeyActions`。 確定対象が無い場合の Enter は何もしない）・サイズラベルの表示倍率（`MonitorScalingMath`。 原点の加算・中心判定・倍率未確定の除外を含む）・切り出し（`CaptureClipMath`）・ログ定義（`CaptureLogMessage`。 切り出しの終了は `LogCropFinished` が退化した選択をキャンセルとして記録する）は `App.Parts.CapturePreviewControl.Core` が単一所有する。 本プロジェクトは MewUI の描画・入力だけを担う（Avalonia 版と同じ分担）。
 - **アプリの型を参照しない**: 設定は `CaptureSettings`、結果の適用先はアプリ側のポート（切り出しセッションで `ICaptureTarget`）で受ける。 ログは注入された `ILogger` へ出力し、ログ基盤はホストが所有する。
 - **設定は Facade が単一所有する**: 設定（`AppearanceSettings`）は撮影と切り出しで同じ値を使う（`CaptureOverlayServices` に設定を含めると、ホストが同じ変換を 2 回呼び、2 つの値が食い違う余地ができる）。 部分更新・検証・同値スキップ・適用ログはコア（`CaptureSettingsMerge.Apply`）が単一所有し、実行中の切り出しセッションへは `CropSession.ApplySettings` で即時反映する（ページは 1 度だけ生成されるため、購読しないと設定画面での変更が届かない）。
 - **記録する診断情報は Avalonia 版と同一の集合にする**: 撮影の開始（`LogCaptureStart`）・撮影範囲の原点とサイズ（`LogVirtualScreen`）・確定要求（`LogConfirmRequested`）・キャンセル要求（`LogCancelRequested`）・セッションの終了（`LogCaptureFinished`。 確定は 2 件 / キャンセルは 1 件）を、Avalonia 版と同じ順序で出力する（片方の UI だけが出す情報を作ると、同じ操作のログを比較できない）。
@@ -199,12 +199,12 @@ sequenceDiagram
 - **オーバーレイは透明で表示する**: ウィンドウは表示時に背景色（`EffectiveOpaqueBackground`）で塗られるため、そのまま表示すると画像を描くまでの数十 ms が背景色の面として見える。 透明で表示し、画像が合成されたフレームで透明を解除する。 背景色は撮影画像の平均色に合わせて差を目立たなくする。
 - **配置は物理ピクセルで指定する**: 全モニターを跨ぐウィンドウは論理座標（DIP）の配置が OS により作業領域内へ補正される。 `IWindowService.SetBounds`（`SetWindowPos`）で物理ピクセル指定にし、起動時の配置より後（透明な 1 フレーム目）に適用する。
 - **切り出し中のホイールはビューポートへ転送する**: 選択オーバーレイは切り出し中にプレビューを覆って入力を占有するため、ホイールはオーバーレイだけが受け取る。 `CropViewControl.PanByWheel` / `ZoomByWheel` へ転送し、切り出し中もパン・ズームを可能にする（換算とズーム率の決定はビューポートが単一所有する）。
-- **切り出しの座標変換はビューポートへ委譲する**: ローカル DIP ⇔ 画像ピクセルの変換（画像矩形・実効倍率・Fit / 中央寄せの原点補正）は `CropViewControl.ViewportToContent` / `ContentToViewport` が単一所有する。 `CropSession` は式を持たず、ズーム・パンのたびにポートを作り直すだけにする（撮影の `CaptureOverlay` は単一モニタ全体を敷くため倍率のみを使う）。
+- **切り出しの座標変換はビューポートへ委譲する**: ローカル DIP ⇔ 画像ピクセルの変換（画像矩形・実効倍率・Fit / 中央寄せの原点補正）は `CropViewControl.ClientToSource` / `SourceToClient` が単一所有する。 `CropSession` は式を持たず、ズーム・パンのたびにポートを作り直すだけにする（撮影の `CaptureOverlay` は単一モニタ全体を敷くため倍率のみを使う）。
 - **排他は Facade がコアのスロットで行う**: 撮影と切り出しは同時に 1 つだけ実行できる（規則は `CaptureSessionSlot` が単一所有する）。 UI ごとにフィールドの null 判定を書くと片方だけ漏れるため、本プロジェクトは Facade（`CaptureSessionControl`）が唯一の適用者になる（Avalonia 版と同じ）。
 - **1 セッション = 1 インスタンス**: 撮影（`CaptureOverlay`）も切り出し（`CropSession`）もセッションごとに生成・破棄する。 切り出しのオーバーレイは開始時に表示ツリーへ加え、終了時に取り外す（アプリはオーバーレイを事前に配置しない）。 終了時は長命のオブジェクト（ビューポート・適用先）への購読を解除する（残すとセッション数だけ呼び出しが増え、終了したセッションを参照し続ける）。
 - **外観は設定に従う（固定値を持たない）**: 切り出し（`CropSession`）の枠線・ハンドル・十字マーカー・座標ラベルは `CaptureSettings` から反映する（撮影の `CaptureOverlay` と Avalonia 版の `CropSession` に同じ対応）。 寸法・表示可否はコアの設定値（`FadeMaskDragRectOptionsMapper`）が、描画にだけ必要な外観は UI 間で共有する `App.Parts.CaptureSessionControl.UIBase` の `CapturePaintMapper`（`MarqueeAppearance` / `LoupeAppearance`）が写像する。 ただし、切り出しのルーペ・ラベルはプレビューの表示倍率（`CropViewControl` が所有）に従うため、`LoupeClientToPixelScaling` / `DisplayScaleScaling` は与えない。 UI ごとに白枠 2 DIP 等の固定値を持つと、設定を変えても反映されず UI 間で見た目がずれる。
 - **ちらつき対策の待機量は本 UI の実測値**: 透明を解除するフレーム数（`FramesUntilReveal`）は実測に基づく MewUI 固有の実装値である（外観の設定値ではない）。 画面外へ退避する座標は全 UI 共通のためコア（`CaptureTiming`）が単一所有する。
-- **選択の破棄は画像の差し替え時だけ行う**: ズーム・パンではドメイン座標（元画像ピクセル）が変わらないため、選択矩形は維持する（座標変換ポートの更新のみ）。 画像の差し替えでは座標系が変わるため選択を破棄する。
+- **選択の破棄は画像の差し替え時だけ行う**: ズーム・パンでは対象座標（元画像ピクセル）が変わらないため、選択矩形は維持する（座標変換ポートの更新のみ）。 画像の差し替えでは座標系が変わるため選択を破棄する。
 - **複合コントロールも同じアセンブリに収録する**: セッション（Facade）・切り出しビュー（`CropViewControl`）・領域選択（`FadeMaskDragRectControl`）は、同じ設定型（`CaptureSettings` → `FadeMaskDragRectOptions`）と外観写像（`App.Parts.CaptureSessionControl.UIBase`）を共有し、後 2 者は同じ内包コントロール（`ZoomViewControl` / `MarqueeControl` / `LoupeControl`）を使う。 別アセンブリに分けると参照とバージョンの整合が増えるため 1 つにまとめる。 型は `public` のまま維持し、ホストは独立したコントロールとしても利用できる。
 - **画像ビューポートは切り出しビューが内包し、状態と判断はコアが単一所有する**: `CropViewControl` は `ZoomViewControl` を内包し、ズーム操作・座標変換を委譲する。 実効ズーム率の導出・可否・遷移の適用・パン・スクロールバーは `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有し、MewUI 実装は入力の変換・効果の適用・Skia への描画・通知の転送だけを担う（Avalonia 版と同一のコアを共有するため、ズーム挙動と設定が両 UI で一致する）。
 - **切り出しビューは画像ビューポートと矩形オーバーレイを重ねる**: 画像の描画と入力は下の画像ビューポートが担い、矩形は上の透明なオーバーレイが担う。 1 つのキャンバスに統合すると、画像ビューポートの内部状態へ矩形オーバーレイが依存する。 矩形のダッシュ長・太さの下限・負サイズのクランプはコア（`OverlayLineDash` / `OverlayRectLayout`）が単一所有し、UI はコアの描画入力を描画先へ写すだけにする。

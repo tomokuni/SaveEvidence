@@ -70,7 +70,7 @@ internal static partial class LoupePresenterLogMessage
     internal static void LogForwarded(this ILogger logger, string name, double value)
         => logger.LogForwarded(name, value.ToString(format: null, CultureInfo.InvariantCulture));
 
-    /// <summary>拡大中心（ドメイン座標）をコアへ伝搬したことを記録する。</summary>
+    /// <summary>拡大中心（対象座標）をコアへ伝搬したことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="name">値の名前（項目名）。</param>
     /// <param name="value">伝搬した拡大中心（未設定は null）。</param>

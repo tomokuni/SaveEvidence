@@ -30,7 +30,7 @@ public class MarqueeGeometryResolutionTests
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
 
         Assert.Null(geometry.FocusDipRect);
-        Assert.Null(geometry.FocusDomainRect);
+        Assert.Null(geometry.FocusSourceRect);
         Assert.Null(geometry.Handles);
         Assert.Null(geometry.Marker);
     }
@@ -45,9 +45,9 @@ public class MarqueeGeometryResolutionTests
 
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
 
-        // 選択矩形は閉区間（終点 +1）として DIP へ変換される（ドメイン座標はそのまま保持する）
+        // 選択矩形は閉区間（終点 +1）として DIP へ変換される（対象座標はそのまま保持する）
         Assert.Equal(new EsRect(10, 20, 101, 51), geometry.FocusDipRect);
-        Assert.Equal(EsRectInterval.Closed, geometry.FocusDomainRect!.Value.Interval);
+        Assert.Equal(EsRectInterval.Closed, geometry.FocusSourceRect!.Value.Interval);
         Assert.NotNull(geometry.Handles);
         Assert.Equal(8, geometry.Handles!.Value.HandleDipRects.Count);
         // 左上ハンドルは注目矩形の左上を中心に置く（一辺は HandleSize）
@@ -60,7 +60,7 @@ public class MarqueeGeometryResolutionTests
     {
         var marquee = CreateMarquee();
         marquee.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
-        marquee.HighlightDomainRect = new EsRect(1, 2, 3, 4);
+        marquee.HighlightSourceRect = new EsRect(1, 2, 3, 4);
 
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
 
@@ -107,7 +107,7 @@ public class MarqueeGeometryResolutionTests
     public void ResolveGeometry_座標変換ポートを注目矩形とハンドルへ適用する()
     {
         var marquee = CreateMarquee();
-        // ToDip（ドメイン → DIP）は 2 倍
+        // ToDip（対象 → DIP）は 2 倍
         marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
         marquee.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
@@ -131,27 +131,27 @@ public class MarqueeGeometryResolutionTests
         Assert.Equal(new EsRect(0, 0, 320, 240), geometry.ClientRect);
     }
 
-    /// <summary>マウス位置がドメイン座標と DIP の両方で幾何へ引き継がれることを検証する。</summary>
+    /// <summary>マウス位置が対象座標と DIP の両方で幾何へ引き継がれることを検証する。</summary>
     /// <remarks>
-    /// カーソル座標ラベルは文言がドメイン座標・配置が DIP を必要とするため、コアが変換を 1 回だけ行って両方を返す<br/>
+    /// カーソル座標ラベルは文言が対象座標・配置が DIP を必要とするため、コアが変換を 1 回だけ行って両方を返す<br/>
     /// （描画層が座標変換ポートを持たないようにする）。
     /// </remarks>
     [Fact]
-    public void ResolveGeometry_マウス位置をドメイン座標とDIPで返す()
+    public void ResolveGeometry_マウス位置を対象座標とDIPで返す()
     {
         var marquee = CreateMarquee();
         marquee.Move(new EsPoint(30, 40));
 
         // 等価変換では両者が一致する
         var identity = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
-        Assert.Equal(new EsPoint(30, 40), identity.MouseDomainPosition);
+        Assert.Equal(new EsPoint(30, 40), identity.MouseSourcePosition);
         Assert.Equal(new EsPoint(30, 40), identity.MouseDipPosition);
 
-        // ToDip（ドメイン → DIP）が半分になるポートでは DIP だけが変わる
+        // ToDip（対象 → DIP）が半分になるポートでは DIP だけが変わる
         marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X * 2, p.Y * 2), p => new EsPoint(p.X / 2, p.Y / 2), () => null));
         var scaled = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(200, 100)));
-        Assert.Equal(new EsPoint(30, 40), scaled.MouseDomainPosition);
+        Assert.Equal(new EsPoint(30, 40), scaled.MouseSourcePosition);
         Assert.Equal(new EsPoint(15, 20), scaled.MouseDipPosition);
     }
 }

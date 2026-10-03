@@ -34,8 +34,8 @@ internal sealed class HeadlessMarqueeEffects : IMarqueeEffects
     {
     }
 
-    /// <summary>ドメイン座標を画面物理座標へ変換する（画面を持たないため既定値を返す）。</summary>
-    /// <param name="domainPoint">ドメイン座標（使用しない）。</param>
+    /// <summary>対象座標を画面物理座標へ変換する（画面を持たないため既定値を返す）。</summary>
+    /// <param name="sourcePoint">対象座標（使用しない）。</param>
     /// <returns>既定値。</returns>
-    public EsPointInt ToScreenPoint(EsPoint domainPoint) => default;
+    public EsPointInt ToScreenPoint(EsPoint sourcePoint) => default;
 }

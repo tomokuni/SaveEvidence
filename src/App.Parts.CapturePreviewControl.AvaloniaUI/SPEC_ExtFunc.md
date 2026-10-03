@@ -150,7 +150,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 ## 5. 公開API
 
 公開 API は「プロパティ / メソッド / イベント / 型」の 4 分類で構成されます。
-座標を扱う API は、ドメイン座標系 / DIP 座標系 / 画面物理 Pixel のどれであるかを明記します。
+座標を扱う API は、対象座標系 / DIP 座標系 / 画面物理 Pixel のどれであるかを明記します。
 
 ### 5.1 プロパティ
 
@@ -271,10 +271,10 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `MinSelectionSize` | `int?` | 選択矩形の最小サイズ（AreaSelect: **画面物理 px** / Crop: 論理 px = **ドメイン座標系**） |
+| `MinSelectionSize` | `int?` | 選択矩形の最小サイズ（AreaSelect: **画面物理 px** / Crop: 論理 px = **対象座標系**） |
 | `BorderColor` / `BorderThickness` | `Color?` / `double?` | 選択枠線の外観（不透明度は色のアルファに統合） |
 | `HandleColor` / `HandleSize` / `HandleHitRadius` | `Color?` / `double?` / `double?` | ドラッグハンドルの外観（色 / サイズ / ヒット半径） |
-| `ClampToDomainBounds` | `bool?` | 画像外の選択を禁止するか |
+| `ClampToSourceBounds` | `bool?` | 画像外の選択を禁止するか |
 | `MarkerColor` / `MarkerLength` | `Color?` / `double?` | nudge 中の十字マーカーの外観 |
 | `ShowCoordLabel` | `bool?` | カーソル座標ラベルの表示有無 |
 | `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | `Color?` / `Color?` / `double?` | カーソル座標ラベルの外観 |
@@ -285,14 +285,14 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 | --- | --- | --- |
 | `OverlayColor` | `Color?` | 暗転オーバーレイの外観（不透明度は色のアルファに統合） |
 | `SizeLabelVisible` / `SizeLabelColor` / `SizeLabelFontSize` | `bool?` / `Color?` / `double?` | サイズラベル（1 行目） |
-| `SizeLabelOverride` | `string?` | サイズラベルのテキスト明示指定。 未指定（null）時はドメイン矩形から自動生成（後述） |
+| `SizeLabelOverride` | `string?` | サイズラベルのテキスト明示指定。 未指定（null）時は対象矩形から自動生成（後述） |
 | `DisplayScaleScaling` | `double?` | サイズラベルの DisplayScale 表示の既定値（既定値 0.0＝未指定）。 本 UI は矩形の中心が含まれるモニタの実スケーリングを表示する（マルチモニタ対応）ため、明示指定は表示に反映されない |
 | `TextBackgroundColor` | `Color?` | サイズラベル（1 行目）の背景色 |
 | `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | `bool?` / `double?` / `Color?` / `Color?` | 操作ラベル（2 行目・背景はアルファ込み） |
 | `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | `bool?` / `Color?` / `Color?` / `double?` | 情報ラベル（3 行目・背景はアルファ込み） |
 
-**サイズラベルの自動生成（ScreenSelect / WindowSelect / AreaSelect）**: 選択中の矩形（ドメイン = 画面物理 − Position。 物理ピクセル）から直接生成する。
-座標・サイズはドメインの値そのまま（スケーリングに依存しない実際の物理ピクセル）、DisplayScale は矩形の中心が含まれるモニタの実スケーリング（例: 100% モニタなら 100%）。
+**サイズラベルの自動生成（ScreenSelect / WindowSelect / AreaSelect）**: 選択中の矩形（対象 = 画面物理 − Position。 物理ピクセル）から直接生成する。
+座標・サイズは対象の値そのまま（スケーリングに依存しない実際の物理ピクセル）、DisplayScale は矩形の中心が含まれるモニタの実スケーリング（例: 100% モニタなら 100%）。
 DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マルチモニタでサイズ・DisplayScale が一致しない問題）を排除する。
 
 **Loupe 外観（16 項目）**:
@@ -321,17 +321,17 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
 | `Source` | `IImage?` | 表示画像。 画像ビューポートとルーペへ伝搬し、変更時は Fit 表示にリセットする。 領域選択オーバーレイの可視性は `SetSelectionOverlayVisible` が専任する |
-| `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（ドメイン座標）。 ビューポートとルーペの両方へ描画する |
+| `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（対象座標）。 ビューポートとルーペの両方へ描画する |
 | `SelectionMode` | `FadeMaskDragRectMode` | 選択モード（既定 `Crop`）。 領域選択オーバーレイへ委譲する |
 | `SelectionOverlayOptions` | `FadeMaskDragRectOptions`（コア） | 領域選択オーバーレイの設定（寸法・表示可否。 色は含まない） |
 | `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 領域選択オーバーレイの外観（描画にだけ必要な設定） |
 | `Appearance` | `ZoomViewAppearance` | ズームビューの外観（下地色・市松模様等） |
 | `CenterAlign` | `bool` | 画像の中央寄せ（その軸で画像がビューポートより小さい場合に有効） |
 | `ZoomPercent` / `CanZoomIn` / `CanZoomOut` | `double` / `bool` / `bool` | ズーム率（%）と可否。 ズームの計算はコアが単一所有する |
-| `HasSelection` / `SelectionDomainRect` | `bool` / `Rect` | 選択状態と現在の選択矩形（ドメイン座標） |
+| `HasSelection` / `SelectionSourceRect` | `bool` / `Rect` | 選択状態と現在の選択矩形（対象座標） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
 | `Log` | `ILogger` | 内部ロガー（画像ビューポートへ伝搬する） |
-| `DipToDomainScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値。 コードから動的設定） |
+| `ClientToSourceScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値。 コードから動的設定） |
 
 #### 5.5.2 メソッド
 
@@ -345,7 +345,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
 | `SetLoupeSource(IImage?)` / `ClearLoupe()` | ルーペの拡大元画像の設定・クリア |
 | `NotifyViewportChanged()` | 表示（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知 |
-| `ImageRectViewport()` / `ContentToViewport(Point)` / `ViewportToContent(Point)` | 画像表示矩形の取得と、ドメイン ↔ ビューポートの座標変換 |
+| `ImageRectViewport()` / `SourceToClient(Point)` / `ClientToSource(Point)` | 画像表示矩形の取得と、対象 ↔ ビューポートの座標変換 |
 
 領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送します（上位の配線は不要）。
 
@@ -384,12 +384,12 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `Mode` | `FadeMaskDragRectMode` | 動作モード（可視性と全面暗転を一括切替。 既定 `AreaSelect`） |
 | `Options` | `FadeMaskDragRectOptions`（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 色は含まない）。 同じ値の再設定はスキップされる |
 | `MarqueeAppearance` / `LoupeAppearance` | 提示層の外観 | 描画にだけ必要な外観の単一値（内包コントロールへ委譲する） |
-| `HasSelection` / `SelectionDomainRect` | `bool` / `Rect` | 選択矩形の有無と現在値（ドメイン座標） |
-| `HighlightDomainRect` | `Rect?` | ハイライト矩形（**null はハイライトなし**） |
+| `HasSelection` / `SelectionSourceRect` | `bool` / `Rect` | 選択矩形の有無と現在値（対象座標） |
+| `HighlightSourceRect` | `Rect?` | ハイライト矩形（**null はハイライトなし**） |
 | `ShowFullOverlay` | `bool` | 全面暗転の有無（モードから導出。 読み取り専用） |
-| `LoupeCenterPoint` | `Point?` | ルーペ中心（ドメイン座標。 未設定時は null） |
+| `LoupeCenterPoint` | `Point?` | ルーペ中心（対象座標。 未設定時は null） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
-| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値） |
+| `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値） |
 | `Log` | `ILogger` | 操作ログの出力先（内包コントロールへ伝搬する） |
 
 #### 5.6.3 メソッドとイベント
@@ -406,14 +406,14 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | --- | --- | --- |
 | `ConfirmRequested` | `EventHandler<FadeMaskDragRectSelectionEventArgs>` | 確定要求（選択確定後のみ発火） |
 | `CancelRequested` | `EventHandler?` | キャンセル要求 |
-| `LoupePositionMoved` | `EventHandler<FadeMaskDragRectPointEventArgs>` | ルーペ中心の更新（ドメイン座標） |
+| `LoupePositionMoved` | `EventHandler<FadeMaskDragRectPointEventArgs>` | ルーペ中心の更新（対象座標） |
 | `LoupeRendered` | `EventHandler<LoupeRenderedEventArgs>` | ルーペ描画完了の通知（ホストがルーペ画像へ外部提供矩形を描く用） |
 
 選択領域は**閉区間**（始点・終点を含む）として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します。
 
 ### 5.7 ZoomViewControl（切り出しビューの画像ビューポート）
 
-画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールとしてではなく切り出しビューの表示を成立させるために存在します。 ホストは通常 `CropViewControl` の `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ViewportToContent` / `ContentToViewport` / `ImageRectViewport` を経由して利用します（`CropViewControl` は同じ値・操作を透過します）。
+画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールとしてではなく切り出しビューの表示を成立させるために存在します。 ホストは通常 `CropViewControl` の `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ClientToSource` / `SourceToClient` / `ImageRectViewport` を経由して利用します（`CropViewControl` は同じ値・操作を透過します）。
 
 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー・Fit 復帰）は UI 非依存コア `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有し、本コントロールは入力の変換・効果の適用・描画・通知の転送だけを担います。
 
@@ -437,11 +437,11 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 
 | 座標系 | 定義 |
 | --- | --- |
-| コンテンツ座標 | 元画像ピクセル（ズーム率に依存しない不変座標）。 切り出しのドメイン座標と一致する |
+| コンテンツ座標 | 元画像ピクセル（ズーム率に依存しない不変座標）。 切り出しの対象座標と一致する |
 | ビューポート座標 | コントロールのローカル座標（DIP） |
 
 - 描画位置は `実効スケール × (コンテンツ座標 − オフセット)` で決まる。 オフセットは「ビューポート左上に対応するコンテンツ座標」であり、スクロール範囲（`コンテンツ − ビューポート ÷ 実効スケール`）にクランプされる
-- `CropViewControl.ContentToViewport` / `ViewportToContent` は画像表示矩形の原点基準（Fit 中央寄せの原点補正込み）で双方向変換する
+- `CropViewControl.SourceToClient` / `ClientToSource` は画像表示矩形の原点基準（Fit 中央寄せの原点補正込み）で双方向変換する
 - **Fit 実効倍率**は `min(ビューポート幅 ÷ 画像幅, ビューポート高さ ÷ 画像高さ) × 100`（Uniform・アスペクト比維持）で、現在の表示状態に依存せずビューポートと画像サイズから一定に計算する。 ウィンドウのリサイズに追従する
 - 実効スケールは固定倍率中が `ズーム率 ÷ 100`、Fit 中が `FitScale`。 Fit 中の座標変換でもゼロ除算が発生しない
 - Fit 中はパン不可（画像がビューポートに収まる。 オフセット 0）
@@ -462,7 +462,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `ZoomIn()` / `ZoomOut()` / `ZoomFit()` | `void()` | 23 段階の遷移 / Fit 表示への復帰（唯一の Fit 移行経路） |
 | `PanByWheel(Vector, bool)` / `ZoomByWheel(bool, Point?)` | — | ホストが他のコントロールで受けたホイールの転送（Ctrl+ホイールのズームはコントロール内部で自己完結する） |
 | `CanZoomIn` / `CanZoomOut` | `bool` | 現在の状態でズーム可能か（初期表示時にボタン状態を設定する用途） |
-| `ViewportToContentImage(Point)` / `ContentToViewportImage(Point)` | `Point(Point)` | 画像表示矩形の原点基準の座標変換 |
+| `ClientToDisplayedSource(Point)` / `DisplayedSourceToClient(Point)` | `Point(Point)` | 画像表示矩形の原点基準の座標変換 |
 | `ImageRectViewport()` | `Rect()` | 画像の表示矩形（原点 + サイズ・ビューポート座標） |
 | `ZoomChanged` | `event EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（変更後の実効ズーム率 + Fit 状態 + 可否） |
 | `ViewportChanged` | `event EventHandler` | ビューポート（パン・ズーム・表示状態）変化の通知。 オーバーレイの追従に使用する |
@@ -527,7 +527,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
      （プレビュー表示時は非表示のため。 Crop セッション中のみ暗転マスクを表示）
    - セッション終了時（確定・キャンセル）に `cropView.SetSelectionOverlayVisible(false)` で非表示 + 選択クリアに戻す
      （キャプチャ完了後・切出し後に Crop モード（暗転）が残るのを防ぐ）
-3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、**複合コントロールの `SetCoordTransform` で Marquee / Loupe の全コントロールに一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
+3. 座標変換: `CoordTransform`（`CropViewControl` の `ClientToSource` / `SourceToClient` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、**複合コントロールの `SetCoordTransform` で Marquee / Loupe の全コントロールに一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
    - プレビュー状態（ScrollOffset / ZoomPercent）は保持しない（スクロール・ズームは内包する `CropViewControl`（`ZoomViewControl`）が所有）
    - ルーペの表示位置・サイズは LoupeControl が自己計算（カーソル右下 + オフセット + 領域内への補正）
    - ビューポート変化の通知は `NotifyCropViewportChanged` に一本化（ScrollViewer 連携の `ScrollChanged` も、ScrollViewer 以外のビューポート実装（RenderTransform ベースのパン・ズーム等）のホスト通知も、同じ経路で再描画・ルーペ位置再計算を行う）

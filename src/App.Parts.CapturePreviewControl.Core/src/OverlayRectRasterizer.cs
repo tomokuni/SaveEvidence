@@ -17,16 +17,16 @@ internal static class OverlayRectRasterizer
 {
     /// <summary>矩形の 4 辺（上・下・左・右）を描画する。</summary>
     /// <param name="bitmap">描画対象の EsBitmap。 書き込み先のサイズ（正方形）は <see cref="EsBitmap.Width"/>。</param>
-    /// <param name="rect">描画する矩形（ドメイン座標）とスタイル。</param>
-    /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
-    /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
+    /// <param name="rect">描画する矩形（対象座標）とスタイル。</param>
+    /// <param name="captureTopLeft">ルーペの切り出し領域の左上（対象座標系）。</param>
+    /// <param name="scale">対象座標 → ルーペ画像ピクセル座標の変換係数。</param>
     /// <remarks>
     /// 矩形が描画範囲外の場合は何もせずに戻る（早期リターン）。<br/>
-    /// ドメイン座標 → ルーペピクセル座標の変換は半開区間の終点を含むよう幅・高さへ +1 する。
+    /// 対象座標 → ルーペピクセル座標の変換は半開区間の終点を含むよう幅・高さへ +1 する。
     /// </remarks>
     internal static void Draw(EsBitmap bitmap, OverlayRect rect, EsPoint captureTopLeft, double scale)
     {
-        // ドメイン座標 → ルーペピクセル座標（半開区間の終点を含むよう +1 する）
+        // 対象座標 → ルーペピクセル座標（半開区間の終点を含むよう +1 する）
         double x = (rect.Bounds.X - captureTopLeft.X) * scale;
         double y = (rect.Bounds.Y - captureTopLeft.Y) * scale;
         double w = (rect.Bounds.Width + 1) * scale;

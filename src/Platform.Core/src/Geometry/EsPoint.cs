@@ -16,8 +16,8 @@ namespace EsUtil.Platform.Core.Geometry;
 /// ベクター（<see cref="EsVector"/>）を返す側に統一する（座標が必要な場合は成分を使う）。<br/>
 /// <b>Parse と ToString の上書き</b>は意図的に設けない（レコードの診断表現を丸めた表示文字列へ置き換えないため）。
 /// </remarks>
-/// <param name="X">X 座標（呼び出し側の座標系に従う。 DIP またはドメイン座標）。</param>
-/// <param name="Y">Y 座標（呼び出し側の座標系に従う。 DIP またはドメイン座標）。</param>
+/// <param name="X">X 座標（呼び出し側の座標系に従う。 DIP または対象座標）。</param>
+/// <param name="Y">Y 座標（呼び出し側の座標系に従う。 DIP または対象座標）。</param>
 public readonly record struct EsPoint(double X, double Y)
 {
     /// <summary>表示に使える小数点以下の最大桁数（<see cref="double"/> の有効桁数）。</summary>

@@ -438,7 +438,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File src/App.App.MewUI/verify-ui.
 > `PrintWindow` が古いフレームを返し、「プレビューが変わっていない」と誤判定します（実際に誤判定しました）。
 
 > **注意**: ドラッグは**画像の表示範囲内**で行ってください。 画像外から始めたドラッグは
-> クランプ（`ClampToDomainBounds`）により選択が成立せず、「切り出しが動かない」と誤判定します（実際に誤判定しました）。
+> クランプ（`ClampToSourceBounds`）により選択が成立せず、「切り出しが動かない」と誤判定します（実際に誤判定しました）。
 
 ### ウィンドウ配置の保存・復元
 

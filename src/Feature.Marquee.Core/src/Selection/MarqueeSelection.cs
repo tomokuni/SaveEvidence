@@ -3,8 +3,8 @@ using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Feature.Marquee.Core.Selection;
 
-/// <summary>選択矩形（ドメイン座標）と、その矩形だけから決まる純粋な幾何計算。</summary>
-/// <param name="Rect">選択矩形（ドメイン座標）。 未選択は幅・高さが 0。</param>
+/// <summary>選択矩形（対象座標）と、その矩形だけから決まる純粋な幾何計算。</summary>
+/// <param name="Rect">選択矩形（対象座標）。 未選択は幅・高さが 0。</param>
 /// <remarks>
 /// <b>適用パターン</b>: Value Object（不変の矩形と、その値だけから決まる計算を 1 つの型へ閉じる）。<br/>
 /// <br/>
@@ -17,8 +17,8 @@ namespace EsUtil.Feature.Marquee.Core.Selection;
 internal readonly record struct MarqueeSelection(EsRect Rect)
 {
     /// <summary>始点と終点から正規化された選択矩形を生成する。</summary>
-    /// <param name="start">始点（ドメイン座標）。</param>
-    /// <param name="end">終点（ドメイン座標）。</param>
+    /// <param name="start">始点（対象座標）。</param>
+    /// <param name="end">終点（対象座標）。</param>
     /// <returns>幅・高さが常に 0 以上の選択矩形（区間は <see cref="EsRectInterval.Closed"/>）。</returns>
     /// <remarks>
     /// 始点が終点より右下でも同じ矩形になる（ドラッグ方向に依存しない）。<br/>
@@ -55,7 +55,7 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
     };
 
     /// <summary>矩形の「始点でない方の隅」（終点）を取得する。</summary>
-    /// <param name="startPoint">選択の始点（ドメイン座標）。</param>
+    /// <param name="startPoint">選択の始点（対象座標）。</param>
     /// <returns>始点と反対側の隅の座標。</returns>
     /// <remarks>
     /// 矩形の左端が始点の X と一致する場合は右辺（<see cref="EsRect.Right"/>）、それ以外は左端を終点とする<br/>
@@ -68,7 +68,7 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
             Math.Abs(startPoint.Y - Rect.Y) < 0.001 ? Rect.Bottom : Rect.Y);
 
     /// <summary>矩形を境界内にクリップする（ハンドル種別に応じて固定角を維持）。</summary>
-    /// <param name="bounds">クリップ範囲（ドメイン座標）。</param>
+    /// <param name="bounds">クリップ範囲（対象座標）。</param>
     /// <param name="handle">アクティブなハンドル。</param>
     /// <returns>境界内に収めた選択矩形。</returns>
     /// <remarks>
@@ -104,8 +104,8 @@ internal readonly record struct MarqueeSelection(EsRect Rect)
     }
 
     /// <summary>ドラッグハンドル操作による変形を計算する。</summary>
-    /// <param name="dx">X 方向の移動量（ドメイン座標）。</param>
-    /// <param name="dy">Y 方向の移動量（ドメイン座標）。</param>
+    /// <param name="dx">X 方向の移動量（対象座標）。</param>
+    /// <param name="dy">Y 方向の移動量（対象座標）。</param>
     /// <param name="handle">アクティブなハンドル。</param>
     /// <param name="minSize">選択矩形の最小サイズ（補正済みの値を渡す。 安全域は <c>Marquee.Limits</c> が単一所有する）。</param>
     /// <returns>変形後の選択矩形（反転を正規化し、最小サイズを保証する）。</returns>

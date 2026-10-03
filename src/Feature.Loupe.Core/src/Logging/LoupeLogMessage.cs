@@ -138,7 +138,7 @@ internal static partial class LoupeLogMessage
             newValue.ToString(format: null, CultureInfo.InvariantCulture));
     }
 
-    /// <summary>拡大中心（ドメイン座標）の変更ログ（同値の再設定では出力しない）。</summary>
+    /// <summary>拡大中心（対象座標）の変更ログ（同値の再設定では出力しない）。</summary>
     /// <remarks>
     /// LogLevel: Trace<br/>出力書式: <c>[Feature.Loupe.Core] Setting: CenterPoint {OldValue} → {NewValue}</c><br/>
     /// 中心はマウス移動のたびに設定される（最も頻度が高い）ため、<b>最も低いレベル（Trace）</b>で記録する<br/>
@@ -192,11 +192,11 @@ internal static partial class LoupeLogMessage
         logger.LogSettingChanged(nameof(LoupeOptions.ZoomLevel), oldValue.ZoomLevel, newValue.ZoomLevel);
     }
 
-    /// <summary>拡大中心（ドメイン座標）を文字列化する。</summary>
+    /// <summary>拡大中心（対象座標）を文字列化する。</summary>
     /// <param name="point">拡大中心。 未設定は null。</param>
     /// <returns><c>(X, Y)</c> 形式の文字列。 未設定は <c>null</c>。</returns>
     /// <remarks>
-    /// 座標はドメイン座標（元画像ピクセル）のため、そのままの値を表示する（丸めない）。<br/>
+    /// 座標は対象座標（元画像ピクセル）のため、そのままの値を表示する（丸めない）。<br/>
     /// 数値の書式は現在のカルチャに依存しない（ログを環境非依存にする）。
     /// </remarks>
     private static string FormatPoint(EsPoint? point)

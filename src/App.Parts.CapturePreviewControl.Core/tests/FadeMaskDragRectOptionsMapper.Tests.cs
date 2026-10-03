@@ -20,7 +20,7 @@ public class FadeMaskDragRectOptionsMapperTests
             MinSelectionSize = 5,
             HandleSize = 12.0,
             HandleHitRadius = 15.0,
-            ClampToDomainBounds = false,
+            ClampToSourceBounds = false,
             MarkerLength = 20.0,
         };
 
@@ -30,7 +30,7 @@ public class FadeMaskDragRectOptionsMapperTests
         Assert.Equal(5, marquee.MinSelectionSize);
         Assert.Equal(12.0, marquee.HandleSize);
         Assert.Equal(15.0, marquee.HandleHitRadius);
-        Assert.False(marquee.ClampToDomainBounds);
+        Assert.False(marquee.ClampToSourceBounds);
         Assert.Equal(20.0, marquee.MarkerLength);
     }
 

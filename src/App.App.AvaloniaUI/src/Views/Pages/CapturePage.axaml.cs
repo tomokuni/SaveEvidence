@@ -144,7 +144,7 @@ public sealed partial class CapturePage : UserControl
         SyncZoomSlider(_viewModel.ZoomPercent);
         UpdateZoomButtonState(CropView.CanZoomIn, CropView.CanZoomOut);
 
-        // マウスポインタ移動でステータスバーの座標表示（ドメイン座標）と自動切り出しのホバーを更新する
+        // マウスポインタ移動でステータスバーの座標表示（対象座標）と自動切り出しのホバーを更新する
         // （旧実装は自動切り出し用の Canvas が入力を占有していたため、ホイールでズーム・パンができなかった）
         CropView.PointerMoved += OnImagePointerMoved;
         CropView.PointerExited += OnImagePointerExited;
@@ -883,13 +883,13 @@ public sealed partial class CapturePage : UserControl
         CropView.ZoomPercent = zoom;
     }
 
-    /// <summary>マウスポインタ移動時に、ポインタ位置のドメイン座標（画像ピクセル）をステータスバーへ表示する。</summary>
+    /// <summary>マウスポインタ移動時に、ポインタ位置の対象座標（画像ピクセル）をステータスバーへ表示する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ポインタイベント。</param>
     /// <remarks>
     /// ビューポート座標 → コンテンツ座標（元画像ピクセル）の変換は CropView が行う。<br/>
     /// 画像外（ビューポートの空き領域）では "-" を表示する。<br/>
-    /// 画像サイズ（ドメイン座標）は <see cref="MainViewModel.ImageSizeDisplayText"/> にバインディングで表示される。<br/>
+    /// 画像サイズ（対象座標）は <see cref="MainViewModel.ImageSizeDisplayText"/> にバインディングで表示される。<br/>
     /// 自動切り出し中は、同じ位置の検出矩形をホバーとして設定する（判定は <see cref="MainViewModel.HitDetectedRect"/> が単一所有する）。
     /// </remarks>
     private void OnImagePointerMoved(object? sender, PointerEventArgs e)
@@ -913,8 +913,8 @@ public sealed partial class CapturePage : UserControl
             return;
         }
 
-        // 表示座標 → ドメイン座標（元画像ピクセル）へ変換し、画像範囲内にクランプする
-        var contentPos = ViewportToContentDomain(viewportPos);
+        // 表示座標 → 対象座標（元画像ピクセル）へ変換し、画像範囲内にクランプする
+        var contentPos = ClientToSource(viewportPos);
         var x = (int)Math.Clamp(contentPos.X, 0, img.Size.Width - 1);
         var y = (int)Math.Clamp(contentPos.Y, 0, img.Size.Height - 1);
         _viewModel.PointerDisplayText = $"{x}, {y}";
@@ -996,7 +996,7 @@ public sealed partial class CapturePage : UserControl
 
     /// <summary>自動切り出しの矩形オーバーレイ（枠線とホバー強調）を現在のビューポート状態に合わせて更新する。</summary>
     /// <remarks>
-    /// 1. 検出矩形の枠線は <see cref="CropViewControl.Rects"/> へ<b>ドメイン座標</b>で渡す（座標変換は CropView が単一所有する）。<br/>
+    /// 1. 検出矩形の枠線は <see cref="CropViewControl.Rects"/> へ<b>対象座標</b>で渡す（座標変換は CropView が単一所有する）。<br/>
     /// 2. ホバー中の 1 件は <see cref="CropViewControl.Rects"/> から外し、<see cref="AutoCropHighlight"/>（Marquee）の<br/>
     ///    ハイライト矩形 + 内側の外観（<see cref="MarqueeAppearance"/>）で「枠線 + 半透明の塗り」として強調する<br/>
     ///    （ハイライト矩形は DIP 座標で渡す。 Marquee の座標変換ポートは未指定・倍率 1 のため等価変換になる）。<br/>
@@ -1019,21 +1019,21 @@ public sealed partial class CapturePage : UserControl
         {
             // ハイライトなし（外側・内側とも描かない。 サイズ・座標ラベルも表示しない）
             AutoCropHighlight.Appearance = s_autoCropIdleAppearance;
-            AutoCropHighlight.HighlightDomainRect = null;
+            AutoCropHighlight.HighlightSourceRect = null;
             return;
         }
 
         // ハイライト矩形は DIP 座標へ変換して渡す
-        var topLeft = ContentToViewportDomain(new Point(target.X, target.Y));
-        var bottomRight = ContentToViewportDomain(new Point(target.Right, target.Bottom));
+        var topLeft = SourceToClient(new Point(target.X, target.Y));
+        var bottomRight = SourceToClient(new Point(target.Right, target.Bottom));
 
         AutoCropHighlight.Appearance = s_autoCropHighlightAppearance;
-        AutoCropHighlight.HighlightDomainRect = new EsRect(
+        AutoCropHighlight.HighlightSourceRect = new EsRect(
             topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 
-    /// <summary>自動切り出し中に、ポインタ位置（ドメイン座標）の検出矩形をホバーとして設定する。</summary>
-    /// <param name="contentPos">ポインタ位置のドメイン座標（画像外の場合は null）。</param>
+    /// <summary>自動切り出し中に、ポインタ位置（対象座標）の検出矩形をホバーとして設定する。</summary>
+    /// <param name="contentPos">ポインタ位置の対象座標（画像外の場合は null）。</param>
     /// <remarks>
     /// 矩形の判定（面積が最小のものを選ぶ）は <see cref="MainViewModel.HitDetectedRect"/>（コア）が単一所有する。<br/>
     /// 値が変化した場合のみ設定する（変更通知経由の再描画を最小限にする）。
@@ -1061,7 +1061,7 @@ public sealed partial class CapturePage : UserControl
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ポインタイベント。</param>
     /// <remarks>
-    /// クリック位置（ドメイン座標）を含む矩形のうち<b>面積が最小</b>のものを確定し、
+    /// クリック位置（対象座標）を含む矩形のうち<b>面積が最小</b>のものを確定し、
     /// <see cref="MainViewModel.ConfirmAutoCropCommand"/> で切り出す。<br/>
     /// 矩形を含まない領域のダブルクリックは<b>キャンセル</b>とする<br/>
     /// （切り出しモードの「矩形外クリック: キャンセル」と同じ操作）。<br/>
@@ -1083,7 +1083,7 @@ public sealed partial class CapturePage : UserControl
         }
 
         var viewportPos = e.GetPosition(CropView);
-        var contentPos = ViewportToContentDomain(viewportPos);
+        var contentPos = ClientToSource(viewportPos);
 
         // 矩形の判定はコア（MainViewModel.HitDetectedRect）が単一所有する
         if (_viewModel.HitDetectedRect(contentPos.X, contentPos.Y) is { } hit)
@@ -1096,25 +1096,25 @@ public sealed partial class CapturePage : UserControl
         _viewModel.CancelAutoCropCommand.Execute(null);
     }
 
-    /// <summary>ビューポート座標をドメイン座標（元画像ピクセル）へ変換する。</summary>
+    /// <summary>ビューポート座標を対象座標（元画像ピクセル）へ変換する。</summary>
     /// <param name="viewportPos">ビューポート座標。</param>
-    /// <returns>ドメイン座標。</returns>
+    /// <returns>対象座標。</returns>
     /// <remarks>
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
-    /// 変換は <see cref="CropViewControl.ViewportToContent"/> に委譲する（座標変換の単一所有）。
+    /// 変換は <see cref="CropViewControl.ClientToSource"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
-    private Point ViewportToContentDomain(Point viewportPos)
-        => CropView.ViewportToContent(viewportPos);
+    private Point ClientToSource(Point viewportPos)
+        => CropView.ClientToSource(viewportPos);
 
-    /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
-    /// <param name="contentPos">ドメイン座標。</param>
+    /// <summary>対象座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
+    /// <param name="contentPos">対象座標。</param>
     /// <returns>ビューポート座標。</returns>
     /// <remarks>
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
-    /// 変換は <see cref="CropViewControl.ContentToViewport"/> に委譲する（座標変換の単一所有）。
+    /// 変換は <see cref="CropViewControl.SourceToClient"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
-    private Point ContentToViewportDomain(Point contentPos)
-        => CropView.ContentToViewport(contentPos);
+    private Point SourceToClient(Point contentPos)
+        => CropView.SourceToClient(contentPos);
 
     // ====================================================================
     // コンテキストメニュー

@@ -46,7 +46,7 @@ public sealed class ZoomViewSession
     private bool _hasSource;
 
     /// <summary>元画像のサイズ（コンテンツ座標）。</summary>
-    private EsSize _contentSize;
+    private EsSize _sourceSize;
 
     /// <summary>ビューポートのサイズ（DIP）。</summary>
     private EsSize _viewportSize;
@@ -64,7 +64,7 @@ public sealed class ZoomViewSession
     private EsPoint? _pointerPosition;
 
     /// <summary>ドラッグ開始時に掴んだコンテンツ座標（grab 原点）。</summary>
-    private EsPoint _grabContentPos;
+    private EsPoint _grabSourcePos;
 
     /// <summary>ドラッグによるパン中かどうか。</summary>
     private bool _isPanning;
@@ -109,7 +109,7 @@ public sealed class ZoomViewSession
 
     /// <summary>元画像のサイズ（コンテンツ座標）を取得する。</summary>
     /// <value>元画像のサイズ。 未設定時は 0。</value>
-    public EsSize ContentSize => _contentSize;
+    public EsSize SourceSize => _sourceSize;
 
     /// <summary>ビューポートのサイズ（DIP）を取得する。</summary>
     /// <value>ビューポートのサイズ。 未レイアウト時は 0。</value>
@@ -149,7 +149,7 @@ public sealed class ZoomViewSession
             }
 
             var value = _hasSource && _viewportSize.Width > 0 && _viewportSize.Height > 0
-                ? ZoomMath.FitZoomPercent(_contentSize, _viewportSize)
+                ? ZoomMath.FitZoomPercent(_sourceSize, _viewportSize)
                 : ZoomMath.FallbackFitZoomPercent;
             _fitZoomCache = value;
             return value;
@@ -159,7 +159,7 @@ public sealed class ZoomViewSession
     /// <summary>現在の表示に使用する実効スケールを取得する。</summary>
     /// <value>倍率（1.0 = 100%）。 固定倍率中はズーム率 / 100、Fit 中は Fit スケール、画像なしは 1。</value>
     /// <remarks>ゼロ除算を避けるため、座標変換・パン量の計算には必ず本値を使用する（Fit 中は <see cref="Scale"/> が 0 のため）。</remarks>
-    public double EffectiveScale => ZoomMath.ComputeEffectiveScale(_zoomPercent, _contentSize, _viewportSize);
+    public double EffectiveScale => ZoomMath.ComputeEffectiveScale(_zoomPercent, _sourceSize, _viewportSize);
 
     /// <summary>現在の実効ズーム率（%）を取得する。</summary>
     /// <value>Fit 中はクランプした Fit 実効倍率、固定倍率中はズーム率。 0 にはならない。</value>
@@ -185,11 +185,11 @@ public sealed class ZoomViewSession
     /// <summary>画像の表示サイズ（ビューポート座標・DIP）を取得する。</summary>
     /// <value>元画像サイズに実効スケールを掛けたサイズ。 画像未設定時は 0。</value>
     public EsSize DisplaySize
-        => new(_contentSize.Width * EffectiveScale, _contentSize.Height * EffectiveScale);
+        => new(_sourceSize.Width * EffectiveScale, _sourceSize.Height * EffectiveScale);
 
     /// <summary>画像表示矩形の原点（ビューポート座標）を取得する。</summary>
     /// <value>画像の表示矩形の左上座標。 Fit 中央寄せ・パンの補正を含む。</value>
-    /// <remarks>画像内座標への変換（<c>ViewportToContentImage</c>）の基準点を単一所有する。</remarks>
+    /// <remarks>画像内座標への変換（<c>ClientToDisplayedSource</c>）の基準点を単一所有する。</remarks>
     public EsPoint ImageOrigin
         => ZoomMath.ComputeImageOrigin(DisplaySize, _viewportSize, _zoomPercent, _offset, Scale, _centerAlign);
 
@@ -221,13 +221,13 @@ public sealed class ZoomViewSession
 
     /// <summary>コンテンツ（画像）の設定を反映する。</summary>
     /// <param name="hasSource">画像が設定されているかどうか。</param>
-    /// <param name="contentSize">元画像のサイズ（コンテンツ座標）。</param>
+    /// <param name="sourceSize">元画像のサイズ（コンテンツ座標）。</param>
     /// <returns>UI が適用する効果（再描画）。</returns>
     /// <remarks>画像の差し替えは座標系が変わるため、Fit 表示（ズーム率 0・オフセット 0）へリセットする。</remarks>
-    public ZoomFeedback SetContent(bool hasSource, EsSize contentSize)
+    public ZoomFeedback SetSource(bool hasSource, EsSize sourceSize)
     {
         _hasSource = hasSource;
-        _contentSize = contentSize;
+        _sourceSize = sourceSize;
         _zoomPercent = 0;
         _offset = default;
         Invalidate();
@@ -333,7 +333,7 @@ public sealed class ZoomViewSession
         {
             var zoomCenter = center ?? ViewportCenter();
             _offset = ZoomMath.ComputeOffsetAfterScaleChange(
-                _offset, zoomCenter, oldScale, ZoomMath.ScaleFromPercent(zoomPercent), _contentSize, _viewportSize);
+                _offset, zoomCenter, oldScale, ZoomMath.ScaleFromPercent(zoomPercent), _sourceSize, _viewportSize);
         }
 
         // 可否はズーム率に依存するため破棄して再計算する（Fit 実効倍率はコンテンツ・ビューポートにのみ依存するため保持する）
@@ -409,7 +409,7 @@ public sealed class ZoomViewSession
     public ZoomFeedback Press(EsPoint position)
     {
         _isPanning = true;
-        _grabContentPos = ViewportToContent(position);
+        _grabSourcePos = ClientToSource(position);
         return new ZoomFeedback { CapturePointer = true };
     }
 
@@ -429,8 +429,8 @@ public sealed class ZoomViewSession
 
         var scale = EffectiveScale;
         return SetOffset(new EsVector(
-            _grabContentPos.X - position.X / scale,
-            _grabContentPos.Y - position.Y / scale));
+            _grabSourcePos.X - position.X / scale,
+            _grabSourcePos.Y - position.Y / scale));
     }
 
     /// <summary>ドラッグによるパンを終了する。</summary>
@@ -492,7 +492,7 @@ public sealed class ZoomViewSession
     public (ZoomScrollBar? Horizontal, ZoomScrollBar? Vertical) CurrentScrollBars()
         => _appearance.ShowScrollBars
             ? ZoomScrollBarGeometry.Compute(
-                _contentSize, _viewportSize, EffectiveScale, _offset,
+                _sourceSize, _viewportSize, EffectiveScale, _offset,
                 _appearance.ScrollBarThickness, _appearance.ScrollBarMargin)
             : (null, null);
 
@@ -512,8 +512,8 @@ public sealed class ZoomViewSession
         }
 
         var maxOffset = vertical
-            ? ZoomScrollBarGeometry.MaxContentOffset(_contentSize.Height, _viewportSize.Height, scale)
-            : ZoomScrollBarGeometry.MaxContentOffset(_contentSize.Width, _viewportSize.Width, scale);
+            ? ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Height, _viewportSize.Height, scale)
+            : ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Width, _viewportSize.Width, scale);
         var viewportSize = ScrollMath.ViewportSize(vertical ? _viewportSize.Height : _viewportSize.Width, scale);
         return new ZoomScrollBarMetrics(maxOffset, viewportSize, IsScrollable: maxOffset > 0);
     }
@@ -595,23 +595,23 @@ public sealed class ZoomViewSession
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（オフセット基準）。</summary>
     /// <param name="viewportPos">ビューポート座標（DIP）。</param>
     /// <returns>コンテンツ座標（元画像ピクセル）。</returns>
-    /// <remarks>中央寄せの原点補正は含まない（含む場合は <see cref="ViewportToContentImage"/> を使用する）。</remarks>
-    public EsPoint ViewportToContent(EsPoint viewportPos)
-        => ZoomMath.ViewportToContent(viewportPos, _offset, EffectiveScale);
+    /// <remarks>中央寄せの原点補正は含まない（含む場合は <see cref="ClientToDisplayedSource"/> を使用する）。</remarks>
+    public EsPoint ClientToSource(EsPoint viewportPos)
+        => ZoomMath.ClientToSource(viewportPos, _offset, EffectiveScale);
 
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準）。</summary>
     /// <param name="viewportPos">ビューポート座標（DIP）。</param>
     /// <returns>コンテンツ座標（元画像ピクセル）。</returns>
     /// <remarks>Fit 中央寄せの原点補正を含む。</remarks>
-    public EsPoint ViewportToContentImage(EsPoint viewportPos)
-        => ZoomMath.ViewportToContentImage(viewportPos, ImageOrigin, EffectiveScale);
+    public EsPoint ClientToDisplayedSource(EsPoint viewportPos)
+        => ZoomMath.ClientToDisplayedSource(viewportPos, ImageOrigin, EffectiveScale);
 
     /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準）。</summary>
     /// <param name="contentPos">コンテンツ座標（元画像ピクセル）。</param>
     /// <returns>ビューポート座標（DIP）。</returns>
     /// <remarks>Fit 中央寄せの原点補正を含む。</remarks>
-    public EsPoint ContentToViewportImage(EsPoint contentPos)
-        => ZoomMath.ContentToViewportImage(contentPos, ImageOrigin, EffectiveScale);
+    public EsPoint DisplayedSourceToClient(EsPoint contentPos)
+        => ZoomMath.DisplayedSourceToClient(contentPos, ImageOrigin, EffectiveScale);
 
     /// <summary>ビューポートの変化（表示条件の更新）を通知する。</summary>
     /// <returns>UI が適用する効果（再描画）。</returns>
@@ -660,10 +660,10 @@ public sealed class ZoomViewSession
         }
 
         var maxOffset = isVertical
-            ? ZoomScrollBarGeometry.MaxContentOffset(_contentSize.Height, _viewportSize.Height, EffectiveScale)
-            : ZoomScrollBarGeometry.MaxContentOffset(_contentSize.Width, _viewportSize.Width, EffectiveScale);
+            ? ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Height, _viewportSize.Height, EffectiveScale)
+            : ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Width, _viewportSize.Width, EffectiveScale);
         var movable = ZoomScrollBarGeometry.MovableThumbRange(value, isVertical);
-        var offset = ZoomScrollBarGeometry.ContentOffsetFromThumbInRange(thumbOffset, movable, maxOffset);
+        var offset = ZoomScrollBarGeometry.SourceOffsetFromThumbInRange(thumbOffset, movable, maxOffset);
 
         return isVertical
             ? SetOffset(new EsVector(_offset.X, offset))
@@ -683,7 +683,7 @@ public sealed class ZoomViewSession
     private EsVector ClampOffsetForCurrentState(EsVector offset)
         => !_hasSource || _zoomPercent <= 0
             ? default
-            : ZoomMath.ClampOffset(offset, Scale, _contentSize, _viewportSize);
+            : ZoomMath.ClampOffset(offset, Scale, _sourceSize, _viewportSize);
 
     /// <summary>ズーム可否を取得する（未計算なら遅延計算してキャッシュする）。</summary>
     /// <returns>ズーム可否。</returns>

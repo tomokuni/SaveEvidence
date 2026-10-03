@@ -195,9 +195,9 @@ public class CaptureSessionControlTests
         var session = new CropSession(cropView, window, new CaptureSettings(), NullLogger.Instance);
 
         var task = session.RunAsync(cropView.CurrentImage()!);
-        // 実行中に設定を再適用（ClampToDomainBounds を ON に変更 → クリップ設定が更新される）
-        session.ApplySettings(new CaptureSettings(ClampToDomainBounds: true));
-        session.ApplySettings(new CaptureSettings(ClampToDomainBounds: false));
+        // 実行中に設定を再適用（ClampToSourceBounds を ON に変更 → クリップ設定が更新される）
+        session.ApplySettings(new CaptureSettings(ClampToSourceBounds: true));
+        session.ApplySettings(new CaptureSettings(ClampToSourceBounds: false));
 
         // 再適用後もセッションは正常にキャンセルできる
         session.Cancel();
@@ -238,8 +238,8 @@ public class CaptureSessionControlTests
         Assert.NotNull(task);
 
         // Crop セッション実行中に設定を変更する（ApplySettings 経由で実行中セッションへ反映）
-        capture.AppearanceSettings = new CaptureSettings(ClampToDomainBounds: true);
-        capture.AppearanceSettings = new CaptureSettings(ClampToDomainBounds: true); // 同じ値 → スキップ（無駄な更新なし）
+        capture.AppearanceSettings = new CaptureSettings(ClampToSourceBounds: true);
+        capture.AppearanceSettings = new CaptureSettings(ClampToSourceBounds: true); // 同じ値 → スキップ（無駄な更新なし）
 
         // キャンセルしてセッションを終了する
         capture.Cancel();
@@ -368,7 +368,7 @@ public class CaptureSessionControlTests
         // 差し替え前の画像（100x100）に収まる選択矩形（80x80）を設定する
         cropView.SetSelection(new Rect(0, 0, 80, 80));
 
-        // 設定後に画像を 40x40 へ差し替える（切り出しのドメインが変わる）
+        // 設定後に画像を 40x40 へ差し替える（切り出しの対象が変わる）
         cropView.Source = new EsBitmapAvaloniaImage(CreateBitmap(40, 40));
 
         cropView.RequestConfirm();

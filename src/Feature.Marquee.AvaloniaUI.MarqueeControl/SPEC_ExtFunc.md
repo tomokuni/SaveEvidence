@@ -44,7 +44,7 @@
 - ドラッグハンドル・始点マーカー・カーソル座標ラベルの描画
 - 選択矩形の**外側に描く装飾**（暗転マスク・外枠・ハイライト・内側の塗り）の描画（表示可否・太さ・色は外観（`Appearance`）が、装飾矩形と描画順は提示層（`Feature.Marquee.Presenter`）が単一所有する。 描画は本コントロールが行う）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
-- ドメイン座標系での正確な nudge（矢印キー1回 = ドメイン1Pixel）
+- 対象座標系での正確な nudge（矢印キー1回 = 対象1Pixel）
 
 ## 3. 外部利用条件
 
@@ -157,17 +157,17 @@ marquee.Rendered += (_, e) =>
 
 ### 4.3 座標ポートの設定
 
-選択状態と nudge はドメイン座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。 両者を変換する座標ポート（`ICoordTransform`）をホストが設定します。 軸は「ドメイン座標 ↔ ローカル DIP」の 1 つだけで、ポートの生成は `Platform.Core`（`EsUtil.Platform.Core.Coord`）の `CoordTransform` ファクトリ（`Identity` / `DipToDomain`）やホスト固有の実装で行います。 座標はコア幾何型（`EsPoint` / `EsSize`）で扱うため、Avalonia 型を渡す場合は相互変換（`.ToEsSize()` 等）します。
+選択状態と nudge は対象座標で動作し、マウス入力・描画はコントロールローカル DIP で動作します。 両者を変換する座標ポート（`ICoordTransform`）をホストが設定します。 軸は「対象座標 ↔ ローカル DIP」の 1 つだけで、ポートの生成は `Platform.Core`（`EsUtil.Platform.Core.Coord`）の `CoordTransform` ファクトリ（`Identity` / `ClientToSource`）やホスト固有の実装で行います。 座標はコア幾何型（`EsPoint` / `EsSize`）で扱うため、Avalonia 型を渡す場合は相互変換（`.ToEsSize()` 等）します。
 
 ```csharp
-// AreaSelect 例: ドメイン = 仮想スクリーンピクセル（= DIP × scaling・動的評価）
-control.SetCoordTransform(CoordTransform.DipToDomain(() => scaling));
+// AreaSelect 例: 対象 = 仮想スクリーンピクセル（= DIP × scaling・動的評価）
+control.SetCoordTransform(CoordTransform.ClientToSource(() => scaling));
 
-// 等価変換（1 ドメイン = 1 DIP）
+// 等価変換（1 対象 = 1 DIP）
 control.SetCoordTransform(null);
 ```
 
-未設定時は等価変換（1 ドメイン = 1 DIP）が使用されます。
+未設定時は等価変換（1 対象 = 1 DIP）が使用されます。
 
 ### 4.4 状態の操作
 
@@ -178,12 +178,12 @@ control.SetSelection(rect);         // 外部からの復元
 control.ResetSelection();           // 状態と nudge の初期化
 ```
 
-外部復元した矩形（`SetSelection`）は、**`Options.ClampToDomainBounds` が有効な場合は画像外にはみ出す矩形を境界内にクリップしてから設定**します（「画像外の選択を禁止」を外部復元でも尊重）。 また、`Options.ClampToDomainBounds` が ON に切り替わった瞬間にも、既存の選択矩形は境界内へ即時クリップされます（ドラッグ開始を待たない）。 継続的なクリップは座標ポートの `Bounds` + `Options.ClampToDomainBounds` が担います。
+外部復元した矩形（`SetSelection`）は、**`Options.ClampToSourceBounds` が有効な場合は画像外にはみ出す矩形を境界内にクリップしてから設定**します（「画像外の選択を禁止」を外部復元でも尊重）。 また、`Options.ClampToSourceBounds` が ON に切り替わった瞬間にも、既存の選択矩形は境界内へ即時クリップされます（ドラッグ開始を待たない）。 継続的なクリップは座標ポートの `Bounds` + `Options.ClampToSourceBounds` が担います。
 
 ## 5. 公開API
 
 公開 API は「プロパティ / メソッド / イベント / 型」の 4 分類で構成されます。
-座標を扱う API は、ドメイン座標系 / DIP 座標系のどちらであるかを明記します。
+座標を扱う API は、対象座標系 / DIP 座標系のどちらであるかを明記します。
 
 ### 5.1 プロパティ
 
@@ -206,8 +206,8 @@ control.ResetSelection();           // 状態と nudge の初期化
 | `HandleBorderThickness` | `double` | `1.5` | ドラッグハンドルの枠線の太さ（DIP 座標系。 0.5〜64.0 に補正。 見えている大きさを決めるため `HandleHitRadius` と揃えて設定する） |
 | `MarkerLength` | `double` | `16.0` | nudge 中の十字マーカーの長さ（**全長** = 中心から両端までの長さ・DIP 座標系。 2.0〜4096.0 に補正） |
 | `HandleHitRadius` | `double` | `12.0` | ハンドルヒットテスト半径（**DIP 座標系**。 0.0〜256.0 に補正。 ズーム・縮小表示でも画面上の大きさが一定） |
-| `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標系。 1.0〜4096.0 に補正） |
-| `ClampToDomainBounds` | `bool` | `true` | 画像外の選択を禁止するかどうか（ON: 領域選択・移動・nudge を画像境界内にクリップ / OFF: 画像外も選択可能） |
+| `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（対象座標系。 1.0〜4096.0 に補正） |
+| `ClampToSourceBounds` | `bool` | `true` | 画像外の選択を禁止するかどうか（ON: 領域選択・移動・nudge を画像境界内にクリップ / OFF: 画像外も選択可能） |
 
 安全域への補正は**コアの設定型の生成時**に適用されます（設定の経路によらず範囲内の値だけが保持され、UI 側に補正の登録は不要です）。
 
@@ -239,9 +239,9 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `CurrentSnapshot` | `MarqueeSnapshot` | - | 現在の選択状態のスナップショット（**ポーリング不要の完全状態**。 `readonly record struct`）。 `State` / `SelectionDomainRect` / `ActiveTarget` / `MousePosition` / `IsMouseDown` / `NudgeActive` / `HasSelection` を公開。 イベント引数の Snapshot と同一形式。 選択状態の判定（確定・キャンセル等の操作分岐）は `CurrentSnapshot.HasSelection` を使用 |
+| `CurrentSnapshot` | `MarqueeSnapshot` | - | 現在の選択状態のスナップショット（**ポーリング不要の完全状態**。 `readonly record struct`）。 `State` / `SelectionSourceRect` / `ActiveTarget` / `MousePosition` / `IsMouseDown` / `NudgeActive` / `HasSelection` を公開。 イベント引数の Snapshot と同一形式。 選択状態の判定（確定・キャンセル等の操作分岐）は `CurrentSnapshot.HasSelection` を使用 |
 | `HasSelection` | `bool` | `false` | 選択矩形があるかどうか（スナップショットの生成を伴わない軽量な読み取り。 描画のたびに参照する） |
-| `SelectionDomainRect` | `EsRect` | `0x0` | 現在の選択矩形（ドメイン座標。 未選択時は 0x0） |
+| `SelectionSourceRect` | `EsRect` | `0x0` | 現在の選択矩形（対象座標。 未選択時は 0x0） |
 
 #### 5.1.3 ログ
 
@@ -267,31 +267,31 @@ marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.
 
 | メソッド | 説明 |
 | --- | --- |
-| `SetSelection(Rect)` | 選択矩形をドメイン座標で復元する（`SelectionChanged` で通知。 `Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
+| `SetSelection(Rect)` | 選択矩形を対象座標で復元する（`SelectionChanged` で通知。 `Options.ClampToSourceBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
-| `SetCoordTransform(ICoordTransform?)` | ドメイン↔DIP 座標変換ポートを設定する（null = 等価変換） |
+| `SetCoordTransform(ICoordTransform?)` | 対象↔DIP 座標変換ポートを設定する（null = 等価変換） |
 | `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画とルーペ位置の再計算を要求。 選択の状態は変更しない） |
 | `InvalidateRender()` | 描画内容の再解決と、図形・ラベルの再描画を要求する（**描画に関わる変更の唯一の入口**。 図形は子の描画層が描くため、親の無効化だけでは更新されない） |
 | `RequestCancel()` | キャンセル要求を処理する（Escape キーと同じ条件。 選択破棄後に `CancelRequested` を発火） |
 | `RequestConfirm()` | 確定要求を処理する（Enter キーと同じ条件。 ドラッグ中は無視し `ConfirmRequested` を発火。 確定後に選択状態をクリアして再選択・再確定を防ぐ） |
 
-クリップ（画像境界内への制限）は座標ポートの `Bounds` + `Options.ClampToDomainBounds` が担います。
+クリップ（画像境界内への制限）は座標ポートの `Bounds` + `Options.ClampToSourceBounds` が担います。
 
 ### 5.3 イベント
 
 | イベント | 引数 | 説明 |
 | --- | --- | --- |
-| `SelectionChanged` | `SelectionRectEventArgs` | 選択矩形が変更された（`Rect` はドメイン座標） |
+| `SelectionChanged` | `SelectionRectEventArgs` | 選択矩形が変更された（`Rect` は対象座標） |
 | `SelectionStarted` | `MarqueePointEventArgs` | 新規選択のドラッグ開始（始点） |
 | `SelectionCompleted` | `SelectionRectEventArgs` | 選択矩形が確定した |
 | `SelectionCancelled` | `EventArgs` | 領域がキャンセルされた |
-| `LoupePositionMoved` | `MarqueePointEventArgs` | ルーペが表示する中心座標（ドメイン座標） |
-| `LoupePositionMoved` | `MarqueePointEventArgs` | ドラッグ・nudge 中のルーペ中心位置（ドメイン座標。 リサイズ: アクティブハンドル点 / 移動: 掴んだマウス位置 / 新規選択・nudge: 終点） |
+| `LoupePositionMoved` | `MarqueePointEventArgs` | ルーペが表示する中心座標（対象座標） |
+| `LoupePositionMoved` | `MarqueePointEventArgs` | ドラッグ・nudge 中のルーペ中心位置（対象座標。 リサイズ: アクティブハンドル点 / 移動: 掴んだマウス位置 / 新規選択・nudge: 終点） |
 | `ConfirmRequested` | `SelectionRectEventArgs` | Enter キーによる確定要求 |
 | `CancelRequested` | `EventArgs` | Escape キーによるキャンセル要求 |
 | `Rendered` | `MarqueeRenderedEventArgs` | 描画完了の通知（描画のたびに発火）。 `Context`（`DrawingContext`）と描画計画（`Content` = `MarqueeDrawPlan`）を渡す。 **サイズ・カーソル座標ラベルは本コントロールがテキスト要素として表示する**ため、ホストは付加情報（操作・情報ラベル）の描画に使う |
 
-すべての座標イベントはドメイン座標で通知されます。
+すべての座標イベントは対象座標で通知されます。
 
 ### 5.4 型
 
@@ -319,9 +319,9 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 | 型 | 説明 |
 | --- | --- |
 | `MarqueeInteractionState` enum | 操作状態（NoSelection / StartPointNudging / Dragging / DraggingNudging / Selected / SelectedNudging）。 コアが所有 |
-| `MarqueeSnapshot` readonly record struct | 状態 Snapshot（State / SelectionDomainRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive。 `HasSelection` は導出プロパティ）。 値セマンティクスで比較可能。 **`SelectionDomainRect` は `EsRect`、`MousePosition` は `EsPoint`**（UI 非依存）。 ドラッグ中かどうかは `State`（`Dragging` / `DraggingNudging`）で判定する |
-| `SelectionRectEventArgs` | 選択矩形通知（`Rect` は Avalonia 型・ドメイン座標系。 `Snapshot` を同梱） |
-| `MarqueePointEventArgs` | 座標通知（`Point` は Avalonia 型・ドメイン座標系。 `Snapshot` を同梱） |
+| `MarqueeSnapshot` readonly record struct | 状態 Snapshot（State / SelectionSourceRect / ActiveTarget / MousePosition / IsMouseDown / NudgeActive。 `HasSelection` は導出プロパティ）。 値セマンティクスで比較可能。 **`SelectionSourceRect` は `EsRect`、`MousePosition` は `EsPoint`**（UI 非依存）。 ドラッグ中かどうかは `State`（`Dragging` / `DraggingNudging`）で判定する |
+| `SelectionRectEventArgs` | 選択矩形通知（`Rect` は Avalonia 型・対象座標系。 `Snapshot` を同梱） |
+| `MarqueePointEventArgs` | 座標通知（`Point` は Avalonia 型・対象座標系。 `Snapshot` を同梱） |
 | `MarqueeRenderedEventArgs` | 描画完了通知（`Context` = `DrawingContext`（描画中のみ有効）/ `Content` = `MarqueeDrawPlan`（外観・注目矩形・装飾矩形・ハンドル・マーカー・層の順序・ラベル配置）） |
 | `MarqueeHitTarget` enum | ドラッグハンドル種別（カーソル形状マッピング用）。 コアが所有 |
 
@@ -331,26 +331,26 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 | 座標系 | 用途 |
 | --- | --- |
-| ドメイン座標 | 選択状態・nudge・イベント通知 |
+| 対象座標 | 選択状態・nudge・イベント通知 |
 | コントロールローカル DIP | マウス入力・描画 |
 | 画面物理 Pixel | カーソル操作・画面変換 |
 
 ### 6.2 座標ポート
 
-`ICoordTransform`（`Platform.Core` 提供）がドメイン↔DIP 変換とドメイン境界を提供します。
+`ICoordTransform`（`Platform.Core` 提供）が対象↔DIP 変換と対象の境界を提供します。
 
 | メンバー | 説明 |
 | --- | --- |
-| `ToDomain(Point)` | DIP → ドメイン |
-| `ToDip(Point)` | ドメイン → DIP |
-| `DomainBounds` | ドメイン座標の境界（null = 無制限） |
-| `Bounds` | ドメインのクリップ範囲（null = 無制限） |
+| `ToSource(Point)` | DIP → 対象 |
+| `ToDip(Point)` | 対象 → DIP |
+| `SourceArea` | 対象座標の境界（null = 無制限） |
+| `Bounds` | 対象のクリップ範囲（null = 無制限） |
 
 変換関数は呼び出し毎に評価されるため、ズーム・スクロールの動的変化を反映できます。
 
-### 6.3 画像外選択の可否（`Options.ClampToDomainBounds`）
+### 6.3 画像外選択の可否（`Options.ClampToSourceBounds`）
 
-`Options.ClampToDomainBounds` で、画像（ドメイン境界）の外側を矩形選択可能にするか制御します。
+`Options.ClampToSourceBounds` で、画像（対象の境界）の外側を矩形選択可能にするか制御します。
 
 | 値 | 動作 |
 | --- | --- |
@@ -365,7 +365,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 | 領域選択（ハンドル変形） | 固定角（ハンドルと反対側の角）を動かさず、動く辺のみ境界内に制限 |
 | 領域移動（Move ドラッグ・nudge） | 矩形全体が境界内に収まるようにシフト（サイズは維持） |
 
-クリップ範囲は `SetCoordTransform` のポートの `DomainBounds`（`ICoordTransform.DomainBounds`）で指定します（null = 無制限の場合はクリップされません）。
+クリップ範囲は `SetCoordTransform` のポートの `SourceArea`（`ICoordTransform.SourceArea`）で指定します（null = 無制限の場合はクリップされません）。
 
 ## 7. Nudge（キーボード微調整）
 
@@ -379,12 +379,12 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 | ドラッグ中・矩形確定後 | 終点を移動 |
 | ハンドル選択中 | ハンドル方向に矩形を変形 |
 
-### 7.2 ドメイン Pixel 保証
+### 7.2 対象 Pixel 保証
 
-nudge はドメイン座標の整数加算のみで計算します。
+nudge は対象座標の整数加算のみで計算します。
 
 ```text
-矢印キー1回 = ドメイン座標の1Pixel移動
+矢印キー1回 = 対象座標の1Pixel移動
 ```
 
 これは次の設計で保証されます。
@@ -416,7 +416,7 @@ nudge 中は十字マーカー（色は `Appearance.MarkerColor`、全長は `Op
 
 選択領域は **閉区間（始点・終点の両ピクセルを含む）** を意図する仕様です。
 
-選択矩形はドメイン座標で半開区間（`幅 = 終点 − 始点`、.NET `Rect` と同一）で保持されますが、描画では **終点（`Right` / `Bottom`）に +1 してから** `ToDip` で DIP 変換します。
+選択矩形は対象座標で半開区間（`幅 = 終点 − 始点`、.NET `Rect` と同一）で保持されますが、描画では **終点（`Right` / `Bottom`）に +1 してから** `ToDip` で DIP 変換します。
 
 ```text
 描画用 DIP 矩形 = Rect(ToDip(始点), ToDip(終点 + (1, 1)))
@@ -455,7 +455,7 @@ nudge 中は OS カーソルを非表示にし、十字マーカーを追従位�
 
 - 矢印キーによる nudge はフォーカスに依存しません（`TopLevel` のキーイベントを**トンネル**で購読し、フォーカスがどこにあっても 1 回だけ処理します。 コントロール自身のキーハンドラは持たないため、キーが二重に処理されることはありません）。
 - `Escape` / `Enter` はコントロールが自己処理し、`CancelRequested` / `ConfirmRequested` を発火します（上位はイベント購読で後始末を行う）。 プログラムからは `RequestCancel()` / `RequestConfirm()` で同一条件の要求を発行できます。
-- `Options.HandleHitRadius` の単位は **DIP 座標**、`Options.MinSelectionSize` の単位はドメイン座標です。
+- `Options.HandleHitRadius` の単位は **DIP 座標**、`Options.MinSelectionSize` の単位は対象座標です。
 - 既定のカーソルサービスは Windows 実装（`WinCursorService`）です。 他プラットフォームでは `ICursorService` を注入してください。
 - リサイズハンドル（8 方向）でマウス Down すると、ポインタ（OS カーソル）がハンドル点へスナップされます（ポインタ・矩形の角・ルーペを一体にするため）。 移動（Move）の Down ではスナップされません。
 - nudge 中のカーソル移動は OS カーソル位置を変更します。

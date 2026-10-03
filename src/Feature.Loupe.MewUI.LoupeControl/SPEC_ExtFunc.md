@@ -66,7 +66,7 @@
 | --- | --- |
 | 表示サイズ（物理ピクセル） | `Options.RequestedSize`（DIP ） × `ClientToPixelScaling`。 キャンバスより大きい場合はキャンバスに合わせる。 **描画時の `ClientToPixelScaling` は描画面と割り当て領域の比である**ため、画像の大きさは常にルーペ領域（描画面）と一致する |
 | 拡大率 | `Options.ZoomLevel` 倍（最近傍で拡大する） |
-| 切り出し領域の一辺 | `ceil(表示サイズ / Options.ZoomLevel)` ドメインピクセル |
+| 切り出し領域の一辺 | `ceil(表示サイズ / Options.ZoomLevel)` 対象ピクセル |
 | 切り出し領域の左上 | 拡大中心 − 切り出し一辺 / 2（整数化）。 画像の外へはみ出した部分（左・上・右・下）は透明パディングとなる |
 
 ### 座標ラベルの表示条件
@@ -108,12 +108,12 @@
 | --- | --- | --- |
 | `Canvas` | `SKCanvas` | ルーペを描画したキャンバス（座標系はルーペ画像のピクセル） |
 | `ClientPixelSize` | `int` | 実際に描画したルーペの一辺のサイズ（物理ピクセル。 `Options.RequestedSize` × `ClientToPixelScaling` を切り上げ・最低 1） |
-| `CaptureTopLeft` | `EsPoint?` | 切り出し領域の左上（ドメイン座標）。 中心未設定時は null（オーバーレイを描画できない） |
-| `Scale` | `double` | ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。 DPI スケーリングの影響を受けない） |
+| `CaptureTopLeft` | `EsPoint?` | 切り出し領域の左上（対象座標）。 中心未設定時は null（オーバーレイを描画できない） |
+| `Scale` | `double` | 対象座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。 DPI スケーリングの影響を受けない） |
 
 描画入力（`LoupeGeometry`）の組み立てはコアのファサード（`Loupe.ResolveGeometry`）が単一所有し、コントロールは現在の状態を渡すだけです。
 
-オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求めます（切り出し領域と倍率の計算は Avalonia 版と同じコアの計算を共有します）。
+オーバーレイの描画位置は `(対象座標 − CaptureTopLeft) × Scale` で求めます（切り出し領域と倍率の計算は Avalonia 版と同じコアの計算を共有します）。
 
 ## ログ
 
@@ -134,5 +134,5 @@ Avalonia 版の再描画パイプライン（RequestRender / RenderCore / Genera
 
 | 項目 | 状況 |
 | --- | --- |
-| 座標変換ポート（`SetCoordTransform`） | 実装済み（`ToDip` = ドメイン → 親領域 DIP。 表示位置の計算はコアのファサードが行い、コントロールは本ポートをファサードへ渡す） |
+| 座標変換ポート（`SetCoordTransform`） | 実装済み（`ToDip` = 対象 → 親領域 DIP。 表示位置の計算はコアのファサードが行い、コントロールは本ポートをファサードへ渡す） |
 | 再生成の要求メソッド（`Clear` / `RequestRender`） | 未実装（プロパティ変更で自動再描画される） |

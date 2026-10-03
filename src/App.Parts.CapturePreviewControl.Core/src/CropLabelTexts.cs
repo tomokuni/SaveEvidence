@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 public static class CropLabelTexts
 {
     /// <summary>切り出しのサイズ情報ラベルを生成する。</summary>
-    /// <param name="selectionDomainRect">選択矩形（論理座標 = 元画像ピクセル）。 区間の流儀でピクセル数を決める。</param>
+    /// <param name="selectionSourceRect">選択矩形（論理座標 = 元画像ピクセル）。 区間の流儀でピクセル数を決める。</param>
     /// <param name="zoomPercent">内包するビューポートの実効ズーム率（%）。</param>
     /// <returns><c>LT: (l, t),  RB: (r, b),  WH: (w+1, h+1), Zoom: (pz%)</c> 形式の文字列。</returns>
     /// <remarks>
@@ -24,13 +24,13 @@ public static class CropLabelTexts
     /// <br/>
     /// 書式の区切りは半角スペース 2 個とする（既存の表示と一致させる）。
     /// </remarks>
-    public static string FormatCropSizeLabel(EsRect selectionDomainRect, double zoomPercent)
+    public static string FormatCropSizeLabel(EsRect selectionSourceRect, double zoomPercent)
     {
-        var left = (int)selectionDomainRect.X;
-        var top = (int)selectionDomainRect.Y;
-        var right = (int)selectionDomainRect.Right;
-        var bottom = (int)selectionDomainRect.Bottom;
-        var extra = selectionDomainRect.IsClosedInterval ? 1 : 0;
+        var left = (int)selectionSourceRect.X;
+        var top = (int)selectionSourceRect.Y;
+        var right = (int)selectionSourceRect.Right;
+        var bottom = (int)selectionSourceRect.Bottom;
+        var extra = selectionSourceRect.IsClosedInterval ? 1 : 0;
         var width = right - left + extra;
         var height = bottom - top + extra;
         var zoom = (int)Math.Round(zoomPercent);
@@ -40,13 +40,13 @@ public static class CropLabelTexts
 
     /// <summary>切り出しのサイズ情報ラベルを解決する（未選択の場合は描画しない）。</summary>
     /// <param name="hasSelection">選択矩形があるかどうか。</param>
-    /// <param name="selectionDomainRect">選択矩形（論理座標 = 元画像ピクセル）。 選択が無い場合は参照しない。</param>
+    /// <param name="selectionSourceRect">選択矩形（論理座標 = 元画像ピクセル）。 選択が無い場合は参照しない。</param>
     /// <param name="zoomPercent">内包するビューポートの実効ズーム率（%）。</param>
     /// <returns>サイズ情報ラベル文字列。 未選択の場合は null（描画しない）。</returns>
     /// <remarks>
     /// 「未選択なら描かない」という規則を単一所有する<br/>
     /// （UI が同じ三項演算を書くと、同じ状態で表示が食い違う）。
     /// </remarks>
-    public static string? ResolveSizeLabel(bool hasSelection, EsRect selectionDomainRect, double zoomPercent)
-        => hasSelection ? FormatCropSizeLabel(selectionDomainRect, zoomPercent) : null;
+    public static string? ResolveSizeLabel(bool hasSelection, EsRect selectionSourceRect, double zoomPercent)
+        => hasSelection ? FormatCropSizeLabel(selectionSourceRect, zoomPercent) : null;
 }

@@ -15,8 +15,8 @@ namespace EsUtil.Platform.Core.Geometry;
 /// 「面積なし」を意味しないため、本型は <see cref="HasArea"/> を使う）。<br/>
 /// <b>負の値</b>: MewUI は生成時に 0 へクランプするが、本型は保持する（Avalonia・.NET 標準と同じ。 正規化は呼び出し側が行う）。
 /// </remarks>
-/// <param name="Width">幅（呼び出し側の座標系に従う。 DIP またはドメイン座標）。</param>
-/// <param name="Height">高さ（呼び出し側の座標系に従う。 DIP またはドメイン座標）。</param>
+/// <param name="Width">幅（呼び出し側の座標系に従う。 DIP または対象座標）。</param>
+/// <param name="Height">高さ（呼び出し側の座標系に従う。 DIP または対象座標）。</param>
 public readonly record struct EsSize(double Width, double Height)
 {
     /// <summary>幅・高さとも 0 のサイズを取得する。</summary>

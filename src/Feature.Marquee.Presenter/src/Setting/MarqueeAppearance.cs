@@ -159,7 +159,7 @@ public sealed record MarqueeAppearance
     public bool ShowSizeLabel { get; init; } = true;
 
     /// <summary>カーソル座標ラベルを表示するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合はマウス位置のドメイン座標をカーソルの右側に表示する。 false の場合は表示しない。</value>
+    /// <value>true（既定）の場合はマウス位置の対象座標をカーソルの右側に表示する。 false の場合は表示しない。</value>
     public bool ShowCoordLabel { get; init; } = true;
 
     /// <summary>暗転マスクを描くかどうかを取得する。</summary>

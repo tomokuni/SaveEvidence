@@ -12,7 +12,7 @@ namespace EsUtil.Feature.Marquee.Core.Tests.Interaction;
 /// </remarks>
 public class MarqueeStateTests
 {
-    /// <summary>ドメイン境界 200x200 を持つ状態を生成する（境界クリップ検証用）。</summary>
+    /// <summary>対象の境界 200x200 を持つ状態を生成する（境界クリップ検証用）。</summary>
     /// <returns>境界 200x200 の状態。</returns>
     private static MarqueeState CreateBounded()
     {
@@ -21,13 +21,13 @@ public class MarqueeStateTests
         return state;
     }
 
-    /// <summary>ドメイン境界 200x200 と指定の選択矩形を持つ状態を生成する（境界クリップ検証用）。</summary>
-    /// <param name="selectionDomainRect">初期の選択矩形（ドメイン座標）。</param>
+    /// <summary>対象の境界 200x200 と指定の選択矩形を持つ状態を生成する（境界クリップ検証用）。</summary>
+    /// <param name="selectionSourceRect">初期の選択矩形（対象座標）。</param>
     /// <returns>境界 200x200 の状態。</returns>
-    private static MarqueeState CreateBounded(EsRect selectionDomainRect)
+    private static MarqueeState CreateBounded(EsRect selectionSourceRect)
     {
         var state = CreateBounded();
-        state.SetSelection(selectionDomainRect);
+        state.SetSelection(selectionSourceRect);
         return state;
     }
 
@@ -90,7 +90,7 @@ public class MarqueeStateTests
         // nudge 中は選択がドラッグより優先される（GetInteractionState の優先順位）
         Assert.Equal(MarqueeInteractionState.SelectedNudging, snapshot.State);
         // ドラッグ由来の選択矩形は閉区間（始点・終点のピクセルを含む）
-        Assert.Equal(new EsRect(10, 10, 50, 40, EsRectInterval.Closed), snapshot.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 10, 50, 40, EsRectInterval.Closed), snapshot.SelectionSourceRect);
         Assert.Equal(MarqueeHitTarget.TopRight, snapshot.ActiveTarget);
         Assert.Equal(new EsPoint(7, 8), snapshot.MousePosition);
         Assert.True(snapshot.IsMouseDown);
@@ -165,7 +165,7 @@ public class MarqueeStateTests
         Assert.Equal(MarqueeHitTarget.None, state.ActiveTarget);
         Assert.Equal(new EsPoint(10, 20), state.StartPoint);
         Assert.Equal(new EsPoint(10, 20), state.LastMousePosition);
-        Assert.Equal(new EsRect(10, 20, 0, 0), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 0, 0), state.SelectionSourceRect);
         Assert.False(state.HasSelection);
     }
 
@@ -178,7 +178,7 @@ public class MarqueeStateTests
         state.UpdateDrag(new EsPoint(60, 80), 10.0, clampToBounds: false);
 
         // ドラッグ由来の選択矩形は閉区間（始点・終点のピクセルを含む）
-        Assert.Equal(new EsRect(10, 20, 50, 60, EsRectInterval.Closed), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 50, 60, EsRectInterval.Closed), state.SelectionSourceRect);
         Assert.Equal(new EsPoint(60, 80), state.LastMousePosition);
     }
 
@@ -191,7 +191,7 @@ public class MarqueeStateTests
 
         state.UpdateDrag(new EsPoint(130, 130), 10.0, clampToBounds: false);
 
-        Assert.Equal(new EsRect(10, 20, 120, 110), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 120, 110), state.SelectionSourceRect);
         Assert.Equal(MarqueeHitTarget.BottomRight, state.ActiveTarget);
     }
 
@@ -204,7 +204,7 @@ public class MarqueeStateTests
         state.UpdateDrag(new EsPoint(300, 300), 10.0, clampToBounds: true);
 
         // 始点・終点とも境界内へクリップされるため、矩形は画像外へはみ出さない
-        Assert.Equal(new EsRect(0, 0, 200, 200, EsRectInterval.Closed), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(0, 0, 200, 200, EsRectInterval.Closed), state.SelectionSourceRect);
     }
 
     [Fact]
@@ -216,7 +216,7 @@ public class MarqueeStateTests
         state.UpdateDrag(new EsPoint(260, 260), 10.0, clampToBounds: true);
 
         // サイズを維持したまま境界内へシフトする（Right=230 Bottom=220 → シフト量は X=-30 / Y=-20）
-        Assert.Equal(new EsRect(150, 160, 50, 40), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(150, 160, 50, 40), state.SelectionSourceRect);
     }
 
     [Fact]
@@ -231,7 +231,7 @@ public class MarqueeStateTests
         Assert.False(state.IsDragging);
         Assert.Equal(MarqueeHitTarget.None, state.ActiveTarget);
         // 矩形は維持される（ドラッグ終了は選択を破棄しない）
-        Assert.Equal(new EsRect(10, 20, 100, 80), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 100, 80), state.SelectionSourceRect);
     }
 
     // ====================================================================
@@ -262,7 +262,7 @@ public class MarqueeStateTests
         state.Nudge(5, 5, 10.0, clampToBounds: false);
 
         // 始点（左上）は固定され、終点（右下）が移動する
-        Assert.Equal(new EsRect(10, 20, 55, 45, EsRectInterval.Closed), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 55, 45, EsRectInterval.Closed), state.SelectionSourceRect);
         Assert.Equal(new EsPoint(65, 65), state.LastMousePosition);
     }
 
@@ -275,11 +275,11 @@ public class MarqueeStateTests
 
         state.Nudge(4, 6, 10.0, clampToBounds: false);
 
-        Assert.Equal(new EsRect(10, 20, 104, 86), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 104, 86), state.SelectionSourceRect);
 
         // nudge 後の UpdateDrag は nudge の結果を基準にする（基準点がハンドル位置へ更新される）
         state.UpdateDrag(new EsPoint(114, 106), 10.0, clampToBounds: false);
-        Assert.Equal(new EsRect(10, 20, 104, 86), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 20, 104, 86), state.SelectionSourceRect);
     }
 
     [Fact]
@@ -292,7 +292,7 @@ public class MarqueeStateTests
         state.Nudge(10, 10, 10.0, clampToBounds: true);
 
         // 始点は境界内へクリップされ、終点も境界内に収まる
-        Assert.Equal(new EsRect(0, 0, 200, 200, EsRectInterval.Closed), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(0, 0, 200, 200, EsRectInterval.Closed), state.SelectionSourceRect);
     }
 
     // ====================================================================
@@ -385,7 +385,7 @@ public class MarqueeStateTests
 
         state.SetSelection(new EsRect(30, 40, 50, 60));
 
-        Assert.Equal(new EsRect(30, 40, 50, 60), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(30, 40, 50, 60), state.SelectionSourceRect);
         Assert.False(state.IsDragging);
         Assert.Equal(MarqueeHitTarget.None, state.ActiveTarget);
     }
@@ -398,7 +398,7 @@ public class MarqueeStateTests
 
         state.SetSelection(new EsRect(30, 40, 50, 60));
 
-        Assert.Equal(new EsRect(30, 40, 50, 60), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(30, 40, 50, 60), state.SelectionSourceRect);
         Assert.False(state.NudgeActive);
     }
 
@@ -434,7 +434,7 @@ public class MarqueeStateTests
         var changed = state.ClampSelectionToBounds();
 
         Assert.True(changed);
-        Assert.Equal(new EsRect(0, 0, 200, 200), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(0, 0, 200, 200), state.SelectionSourceRect);
     }
 
     [Fact]
@@ -445,7 +445,7 @@ public class MarqueeStateTests
         var changed = state.ClampSelectionToBounds();
 
         Assert.False(changed);
-        Assert.Equal(new EsRect(20, 20, 100, 80), state.SelectionDomainRect);
+        Assert.Equal(new EsRect(20, 20, 100, 80), state.SelectionSourceRect);
     }
 
     [Fact]

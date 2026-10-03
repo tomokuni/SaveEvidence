@@ -58,7 +58,7 @@ public class MarqueeControlTests
     private static MarqueeOptions TestOptions
         => MarqueeOptions.Default with { HandleHitRadius = 12.0, MinSelectionSize = 10.0 };
 
-    /// <summary>ドメイン境界 200x200 を持つコントロールを生成する。</summary>
+    /// <summary>対象の境界 200x200 を持つコントロールを生成する。</summary>
     /// <param name="cursor">カーソルサービスのスパイ。</param>
     /// <returns>座標変換ポートを設定したコントロール。</returns>
     private static MarqueeControl CreateBounded(CursorServiceSpy cursor)
@@ -85,7 +85,7 @@ public class MarqueeControlTests
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(10.0, options.MinSelectionSize); // CreateControl で設定
-        Assert.True(options.ClampToDomainBounds);
+        Assert.True(options.ClampToSourceBounds);
         Assert.Equal(16.0, options.MarkerLength);
         Assert.True(control.Appearance.ShowCoordLabel);
         Assert.Equal(1.0, control.ClientToPixelScaling);
@@ -110,7 +110,7 @@ public class MarqueeControlTests
             ShowCoordLabel = false,
             OuterBorderThickness = 3.0,
         };
-        control.HighlightDomainRect = new EsRect(1, 2, 3, 4);
+        control.HighlightSourceRect = new EsRect(1, 2, 3, 4);
 
         var options = control.Options;
         Assert.Equal(3.0, control.Appearance.OuterBorderThickness);
@@ -118,7 +118,7 @@ public class MarqueeControlTests
         Assert.Equal(14.0, options.HandleSize);
         Assert.Equal(24.0, options.MarkerLength);
         Assert.False(control.Appearance.ShowCoordLabel);
-        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightDomainRect);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightSourceRect);
     }
 
     [Fact]
@@ -151,7 +151,7 @@ public class MarqueeControlTests
         var snapshot = control.CurrentSnapshot;
 
         Assert.Equal(MarqueeInteractionState.NoSelection, snapshot.State);
-        Assert.Equal(default, snapshot.SelectionDomainRect);
+        Assert.Equal(default, snapshot.SelectionSourceRect);
         Assert.Equal(MarqueeHitTarget.None, snapshot.ActiveTarget);
         Assert.False(snapshot.HasSelection);
         Assert.False(snapshot.IsMouseDown);
@@ -167,7 +167,7 @@ public class MarqueeControlTests
 
         var snapshot = control.CurrentSnapshot;
         Assert.Equal(MarqueeInteractionState.Selected, snapshot.State);
-        Assert.Equal(new EsRect(10, 10, 50, 40), snapshot.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 10, 50, 40), snapshot.SelectionSourceRect);
         Assert.True(snapshot.HasSelection);
     }
 
@@ -186,8 +186,8 @@ public class MarqueeControlTests
 
         Assert.NotNull(raised);
         Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Rect);
-        // Snapshot はイベント引数の矩形と同一の選択矩形（ドメイン座標）を保持する
-        Assert.Equal(new EsRect(10, 10, 50, 40), raised.Snapshot.SelectionDomainRect);
+        // Snapshot はイベント引数の矩形と同一の選択矩形（対象座標）を保持する
+        Assert.Equal(new EsRect(10, 10, 50, 40), raised.Snapshot.SelectionSourceRect);
         Assert.Equal(MarqueeInteractionState.Selected, raised.Snapshot.State);
     }
 
@@ -206,26 +206,26 @@ public class MarqueeControlTests
     }
 
     [Fact]
-    public void ClampToDomainBounds_ON切替時に既存の選択矩形がクリップされる()
+    public void ClampToSourceBounds_ON切替時に既存の選択矩形がクリップされる()
     {
         var control = CreateBounded(new CursorServiceSpy());
         var rects = new List<EsRect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 既定は ON のため、OFF → ON の切替シナリオを明示する
-        control.Options = control.Options with { ClampToDomainBounds = false };
+        control.Options = control.Options with { ClampToSourceBounds = false };
 
         // 画像外にはみ出す矩形（左上が負・右下が 200 超え）を選択状態にする（OFF のためクリップされない）
         control.SetSelection(new EsRect(-50, -30, 300, 260));
         Assert.Equal(new EsRect(-50, -30, 300, 260), rects[^1]);
 
         // ON に切り替えた瞬間に境界内 (0,0)-(200,200) へクリップされる
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
         Assert.Equal(new EsRect(0, 0, 200, 200), rects[^1]);
     }
 
     [Fact]
-    public void ClampToDomainBounds_ON切替時に境界内の矩形は変更されない()
+    public void ClampToSourceBounds_ON切替時に境界内の矩形は変更されない()
     {
         var control = CreateBounded(new CursorServiceSpy());
         var rects = new List<EsRect>();
@@ -235,7 +235,7 @@ public class MarqueeControlTests
         Assert.Single(rects);
 
         // 境界内の矩形なので、ON に切り替えてもクリップされない（SelectionChanged は再発火しない）
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
 
         Assert.Single(rects);
         Assert.Equal(new EsRect(20, 20, 100, 80), rects[^1]);
@@ -321,7 +321,7 @@ public class MarqueeControlTests
         var control = CreateControl(new CursorServiceSpy());
 
         // ログ出力を伴う操作を実行しても例外にならない（既定は NullLogger）
-        control.Options = control.Options with { ClampToDomainBounds = false };
+        control.Options = control.Options with { ClampToSourceBounds = false };
         control.SetSelection(new EsRect(10, 10, 50, 40));
         control.RequestCancel();
     }
@@ -344,14 +344,14 @@ public class MarqueeControlTests
         logger.Messages.Clear();
         logger.Levels.Clear();
 
-        var options = control.Options with { ClampToDomainBounds = false };
+        var options = control.Options with { ClampToSourceBounds = false };
         control.Options = options;
 
         // 「値を所有する主体が記録する」規則により、コアが Debug で記録し、提示層を通過したことを Trace で記録する
         // （どの層まで値が伝搬したかをログの接頭辞から追える）
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: ClampToDomainBounds True → False",
+                "[Feature.Marquee.Core] Setting: ClampToSourceBounds True → False",
                 $"[Feature.Marquee.Presenter] Forwarded: Options HandleSize={options.HandleSize}, MinSelectionSize={options.MinSelectionSize}",
             ],
             logger.Messages);
@@ -367,7 +367,7 @@ public class MarqueeControlTests
         logger.Messages.Clear();
 
         // 既定値（true）と同じ値を設定してもログは流れない（外観設定の再適用でログが溢れない）
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
 
         Assert.Empty(logger.Messages);
     }

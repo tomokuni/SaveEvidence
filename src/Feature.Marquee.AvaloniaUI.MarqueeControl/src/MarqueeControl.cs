@@ -126,12 +126,12 @@ public sealed partial class MarqueeControl : Panel
         _effects = new Effects(this);
         _marquee = new MarqueePresenter(_effects, _cursor, Options);
         // 現在の環境値（倍率）を提示層へ引き継ぐ（以降の変更はプロパティ変更ハンドラが伝搬する）
-        _marquee.DipToDomainScaling = GetValue(DipToDomainScalingProperty);
+        _marquee.ClientToSourceScaling = GetValue(ClientToSourceScalingProperty);
         _marquee.Notified += OnNotified;
         // 外観（色・ラベル体裁・表示可否）とハイライト矩形（ホストが与える実行時状態）は提示層が単一所有する
         // （本層は公開プロパティを委譲するだけである）
         _marquee.Appearance = GetValue(AppearanceProperty);
-        _marquee.HighlightDomainRect = GetValue(HighlightDomainRectProperty);
+        _marquee.HighlightSourceRect = GetValue(HighlightSourceRectProperty);
         _marquee.DisplayScaleScaling = GetValue(DisplayScaleScalingProperty);
 
         // 図形（装飾・ハンドル・始点マーカー）は専用の子コントロールが描く。
@@ -181,7 +181,7 @@ public sealed partial class MarqueeControl : Panel
     static MarqueeControl()
     {
         // 設定（外観・ハイライト・環境値）の変更は再描画を要求する
-        AffectsRender<MarqueeControl>(OptionsProperty, AppearanceProperty, HighlightDomainRectProperty, DipToDomainScalingProperty, DisplayScaleScalingProperty);
+        AffectsRender<MarqueeControl>(OptionsProperty, AppearanceProperty, HighlightSourceRectProperty, ClientToSourceScalingProperty, DisplayScaleScalingProperty);
 
         // 外観（色・ラベル体裁・表示可否）を提示層へ伝搬し、保持している描画計画を破棄する（描画可否の判断は提示層が単一所有する）
         AppearanceProperty.Changed.AddClassHandler<MarqueeControl>(
@@ -192,10 +192,10 @@ public sealed partial class MarqueeControl : Panel
             });
 
         // ハイライト矩形（ホストが与える実行時状態）を提示層へ伝搬する（選択矩形より優先される）
-        HighlightDomainRectProperty.Changed.AddClassHandler<MarqueeControl>(
+        HighlightSourceRectProperty.Changed.AddClassHandler<MarqueeControl>(
             static (c, e) =>
             {
-                c._marquee.HighlightDomainRect = e.GetNewValue<EsRect?>();
+                c._marquee.HighlightSourceRect = e.GetNewValue<EsRect?>();
                 c.InvalidateRender();
             });
 
@@ -208,10 +208,10 @@ public sealed partial class MarqueeControl : Panel
             });
 
         // 環境値（倍率）をファサードへ伝搬する（ポート未指定時の倍率の使い方・表示倍率の解決はコアが単一所有する）
-        DipToDomainScalingProperty.Changed.AddClassHandler<MarqueeControl>(
+        ClientToSourceScalingProperty.Changed.AddClassHandler<MarqueeControl>(
             static (c, e) =>
             {
-                c._marquee.DipToDomainScaling = e.GetNewValue<double>();
+                c._marquee.ClientToSourceScaling = e.GetNewValue<double>();
                 c.InvalidateRender();
             });
         DisplayScaleScalingProperty.Changed.AddClassHandler<MarqueeControl>(
@@ -313,7 +313,7 @@ public sealed partial class MarqueeControl : Panel
     /// <summary>領域がキャンセルされたときに発生するイベント（枠外クリック・小さすぎる矩形等）。</summary>
     public event EventHandler? SelectionCancelled;
 
-    /// <summary>ルーペが表示する中心座標を通知するイベント（ドメイン座標）。</summary>
+    /// <summary>ルーペが表示する中心座標を通知するイベント（対象座標）。</summary>
     /// <remarks>
     /// nudge 前後関係なく通知する（通常追従: <see cref="OnPointerMoved"/> / nudge 後: nudge 処理）。<br/>
     /// 上位（ホスト）は nudge 中かどうかを判断せず、この座標でルーペを更新するだけである。
@@ -394,48 +394,48 @@ public sealed partial class MarqueeControl : Panel
     // ハイライト矩形（ホストが与える実行時状態）
     // ====================================================================
 
-    /// <summary><see cref="HighlightDomainRect"/> 依存関係プロパティ（ハイライトする矩形）。</summary>
+    /// <summary><see cref="HighlightSourceRect"/> 依存関係プロパティ（ハイライトする矩形）。</summary>
     /// <remarks>
     /// <b>選択矩形ではなくホストが与える実行時状態</b>であるため、設定（<see cref="Options"/>）には含めない。<br/>
     /// <b>null が「ハイライトしない」を意味する</b>（有効フラグは持たない）。 設定値は不変（<see cref="EsRect"/> の値）であり、<br/>
     /// 同値の再設定では変更通知が発生しない（無駄な再描画を防ぐ）。
     /// </remarks>
-    public static readonly StyledProperty<EsRect?> HighlightDomainRectProperty =
-        AvaloniaProperty.Register<MarqueeControl, EsRect?>(nameof(HighlightDomainRect));
+    public static readonly StyledProperty<EsRect?> HighlightSourceRectProperty =
+        AvaloniaProperty.Register<MarqueeControl, EsRect?>(nameof(HighlightSourceRect));
 
-    /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
+    /// <summary>ハイライトする矩形（対象座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
     /// <remarks>
     /// 選択矩形と異なり選択コントロールの操作では変化しない（ホストが与える）。<br/>
     /// 値がある場合は選択矩形より優先して注目矩形になる（優先順はコアが単一所有する）。
     /// </remarks>
-    public EsRect? HighlightDomainRect
+    public EsRect? HighlightSourceRect
     {
-        get => GetValue(HighlightDomainRectProperty);
-        set => SetValue(HighlightDomainRectProperty, value);
+        get => GetValue(HighlightSourceRectProperty);
+        set => SetValue(HighlightSourceRectProperty, value);
     }
 
     // ====================================================================
     // 描画入力（環境値・ホスト結線・座標変換ポート）
     // ====================================================================
 
-    /// <summary><see cref="DipToDomainScaling"/> 依存関係プロパティ。</summary>
-    /// <remarks>既定値はコアの <see cref="DipToDomainScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。</remarks>
-    public static readonly StyledProperty<double> DipToDomainScalingProperty =
-        AvaloniaProperty.Register<MarqueeControl, double>(nameof(DipToDomainScaling), DipToDomainScalingDefault);
+    /// <summary><see cref="ClientToSourceScaling"/> 依存関係プロパティ。</summary>
+    /// <remarks>既定値はコアの <see cref="ClientToSourceScalingDefault"/> を参照する（既定値の二重所有を防ぐ）。</remarks>
+    public static readonly StyledProperty<double> ClientToSourceScalingProperty =
+        AvaloniaProperty.Register<MarqueeControl, double>(nameof(ClientToSourceScaling), ClientToSourceScalingDefault);
 
-    /// <summary>ドメイン座標 / ローカル DIP の倍率を取得または設定する。</summary>
-    /// <value>ドメイン座標 / ローカル DIP の倍率。 既定は 1.0。</value>
+    /// <summary>対象座標 / ローカル DIP の倍率を取得または設定する。</summary>
+    /// <value>対象座標 / ローカル DIP の倍率。 既定は 1.0。</value>
     /// <remarks>
     /// <see cref="SetCoordTransform"/> でポートを設定した場合は使われない（ポート優先）。<br/>
     /// ポートと倍率の使い分け（ポート優先・倍率が 0 以下や等倍なら等価変換）はコアが単一所有する。<br/>
     /// 選択矩形と十字マーカーの描画はファサードの座標変換ポートのみを使うため本値の影響を受けない
     /// （本値が影響するのは装飾のサイズラベル・ラベル位置）。
     /// </remarks>
-    public double DipToDomainScaling
+    public double ClientToSourceScaling
     {
-        get => GetValue(DipToDomainScalingProperty);
-        set => SetValue(DipToDomainScalingProperty, value);
+        get => GetValue(ClientToSourceScalingProperty);
+        set => SetValue(ClientToSourceScalingProperty, value);
     }
 
     /// <summary><see cref="DisplayScaleScaling"/> 依存関係プロパティ。</summary>
@@ -447,10 +447,10 @@ public sealed partial class MarqueeControl : Panel
         AvaloniaProperty.Register<MarqueeControl, double>(nameof(DisplayScaleScaling));
 
     /// <summary>サイズラベル表示用の DPI スケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
-    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DipToDomainScaling"/> と同じ値が使用される。</value>
+    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="ClientToSourceScaling"/> と同じ値が使用される。</value>
     /// <remarks>
     /// マルチスクリーン環境では、選択矩形が存在するスクリーンのスケーリング係数を設定する。<br/>
-    /// 0 以下を <see cref="DipToDomainScaling"/> と同値として扱う規則はコア（<see cref="MarqueePresenter.DisplayScaleScaling"/>）が単一所有する。
+    /// 0 以下を <see cref="ClientToSourceScaling"/> と同値として扱う規則はコア（<see cref="MarqueePresenter.DisplayScaleScaling"/>）が単一所有する。
     /// </remarks>
     public double DisplayScaleScaling
     {
@@ -476,7 +476,7 @@ public sealed partial class MarqueeControl : Panel
     }
 
     /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。 null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
+    /// <value>描画のたびに呼び出される関数（引数は対象座標の矩形）。 null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
     /// <remarks>
     /// マルチモニタでモニタごとに表示スケールが異なる場合、ホストは矩形からモニタを判定してそのスケールを返す。<br/>
     /// 文言（書式）はコアが単一所有するため、ホストは数値だけを与える。<br/>
@@ -498,7 +498,7 @@ public sealed partial class MarqueeControl : Panel
 
     /// <summary>現在の選択状態のスナップショット（ポーリング不要の完全状態）。</summary>
     /// <remarks>
-    /// <see cref="MarqueeSnapshot"/> の全項目（State / SelectionDomainRect / ActiveTarget / MousePosition /<br/>
+    /// <see cref="MarqueeSnapshot"/> の全項目（State / SelectionSourceRect / ActiveTarget / MousePosition /<br/>
     /// IsMouseDown / IsDragging / NudgeActive / HasSelection）を公開する。 ホスト（上位 AP）はイベント引数の<br/>
     /// Snapshot と同一形式で現在の状態を取得できる（状態のポーリングは本プロパティで完結）。<br/>
     /// 選択状態の判定（確定・キャンセル等の操作分岐）は <see cref="MarqueeSnapshot.HasSelection"/> を使用する。
@@ -510,26 +510,26 @@ public sealed partial class MarqueeControl : Panel
     /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
     public bool HasSelection => _marquee.HasSelection;
 
-    /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
-    /// <value>選択矩形（ドメイン座標）。 未選択時は 0x0 の空矩形。</value>
+    /// <summary>現在の選択矩形（対象座標）を取得する。</summary>
+    /// <value>選択矩形（対象座標）。 未選択時は 0x0 の空矩形。</value>
     /// <remarks>描画のたびに参照されるため、スナップショットの生成を伴わない軽量なプロパティとする。</remarks>
-    public EsRect SelectionDomainRect => _marquee.SelectionDomainRect;
+    public EsRect SelectionSourceRect => _marquee.SelectionSourceRect;
 
-    /// <summary>ドメイン ↔ コントロールローカル DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（ToDomain = DIP→ドメイン / ToDip = ドメイン→DIP / DomainBounds = ドメイン境界）。 null の場合は等価変換。</param>
+    /// <summary>対象 ↔ コントロールローカル DIP の座標変換ポートを設定する。</summary>
+    /// <param name="port">座標変換ポート（ToSource = DIP→対象 / ToDip = 対象→DIP / SourceArea = 対象の境界）。 null の場合は等価変換。</param>
     /// <remarks>
     /// ホスト（上位 AP）がモードに応じた変換ポートを設定する（AreaSelect: 仮想スクリーンピクセル / Crop: 元画像ピクセル）。<br/>
-    /// ポートの生成はコアの <see cref="EsUtil.Platform.Core.Coord.CoordTransform"/> のファクトリ（<c>Identity</c> / <c>DipToDomain</c> 等）で行う。<br/>
-    /// 未設定時は等価変換（1 ドメインピクセル = 1 DIP・無制限）。<br/>
+    /// ポートの生成はコアの <see cref="EsUtil.Platform.Core.Coord.CoordTransform"/> のファクトリ（<c>Identity</c> / <c>ClientToSource</c> 等）で行う。<br/>
+    /// 未設定時は等価変換（1 対象ピクセル = 1 DIP・無制限）。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化を反映できる。<br/>
     /// 座標変換の変更は描画（選択矩形・ハンドル・十字線）へ即時反映されるため、再描画を要求する。
     /// </remarks>
     public void SetCoordTransform(ICoordTransform? port) => _marquee.SetCoordTransform(port);
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。</param>
+    /// <param name="rect">選択矩形（対象座標）。</param>
     /// <remarks>
-    /// 状態の更新と通知はコア（ファサード）が担う（<see cref="MarqueeOptions.ClampToDomainBounds"/> が有効な場合は境界内へクリップしてから設定する）。<br/>
+    /// 状態の更新と通知はコア（ファサード）が担う（<see cref="MarqueeOptions.ClampToSourceBounds"/> が有効な場合は境界内へクリップしてから設定する）。<br/>
     /// 設定後は <see cref="SelectionChanged"/> が発火し、再描画される。
     /// </remarks>
     public void SetSelection(Rect rect) => _marquee.SetSelection(rect.ToEsRect());
@@ -580,11 +580,11 @@ public sealed partial class MarqueeControl : Panel
         /// <param name="kind">カーソル形状の種別（コア提供）。</param>
         public override void SetCursorShape(MarqueeCursorKind kind) => owner.ApplyCursorShape(kind);
 
-        /// <summary>ドメイン座標を画面物理座標へ変換する（カーソル移動用）。</summary>
-        /// <param name="domainPoint">ドメイン座標。</param>
+        /// <summary>対象座標を画面物理座標へ変換する（カーソル移動用）。</summary>
+        /// <param name="sourcePoint">対象座標。</param>
         /// <returns>画面物理座標（UI 非依存のコア型）。</returns>
-        public override EsPointInt ToScreenPoint(EsPoint domainPoint)
-            => ScreenConverter.LocalDipToScreen(owner, owner._marquee.ToDip(domainPoint).ToAvaloniaPoint()).ToEsPointInt();
+        public override EsPointInt ToScreenPoint(EsPoint sourcePoint)
+            => ScreenConverter.LocalDipToScreen(owner, owner._marquee.ToDip(sourcePoint).ToAvaloniaPoint()).ToEsPointInt();
     }
 
     /// <summary>コアからの通知を公開イベントへ転送する（判断はしない）。</summary>
@@ -627,7 +627,7 @@ public sealed partial class MarqueeControl : Panel
     /// <param name="snapshot">通知時点の状態スナップショット。</param>
     /// <returns>選択矩形（DIP）とスナップショットを含むイベント引数。</returns>
     private static SelectionRectEventArgs ToRectArgs(MarqueeSnapshot snapshot)
-        => new(snapshot.SelectionDomainRect.ToAvaloniaRect(), snapshot);
+        => new(snapshot.SelectionSourceRect.ToAvaloniaRect(), snapshot);
 
     /// <summary>カーソル形状をコアが示す種別に応じて更新する。</summary>
     /// <param name="kind">カーソル形状の種別（コア提供）。</param>
@@ -654,7 +654,7 @@ public sealed partial class MarqueeControl : Panel
     /// <param name="e">ポインターイベント。</param>
     /// <remarks>
     /// 左ボタン以外（右クリック・中ボタン等）は無視する。<br/>
-    /// 座標はコントロールローカル DIP で取得し、ドメイン座標へ変換してコア（ファサード）へ通知する（解釈はコアが行う）。<br/>
+    /// 座標はコントロールローカル DIP で取得し、対象座標へ変換してコア（ファサード）へ通知する（解釈はコアが行う）。<br/>
     /// ダブルクリックの確定/キャンセル判定・nudge の終了・ハンドルのスナップはコアの判断に従う。
     /// </remarks>
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -668,37 +668,37 @@ public sealed partial class MarqueeControl : Panel
         }
 
         e.Handled = true;
-        _marquee.Press(ToDomain(e), e.ClickCount);
+        _marquee.Press(ToSource(e), e.ClickCount);
     }
 
     /// <summary>ポインター移動時の処理。</summary>
     /// <param name="e">ポインターイベント。</param>
     /// <remarks>
-    /// 座標をドメイン座標へ変換してコア（ファサード）へ通知する。<br/>
+    /// 座標を対象座標へ変換してコア（ファサード）へ通知する。<br/>
     /// ドラッグの適用・nudge 中のエコー移動の抑制・カーソル形状の決定はコアの判断に従う。
     /// </remarks>
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        _marquee.Move(ToDomain(e));
+        _marquee.Move(ToSource(e));
     }
 
     /// <summary>ポインター解放時の処理。</summary>
     /// <param name="e">ポインターイベント。</param>
     /// <remarks>
-    /// 座標をドメイン座標へ変換してコア（ファサード）へ通知する。<br/>
+    /// 座標を対象座標へ変換してコア（ファサード）へ通知する。<br/>
     /// 最小サイズによるキャンセル・確定・クリック検出・nudge の終了はコアの判断に従う。
     /// </remarks>
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
-        _marquee.Release(ToDomain(e));
+        _marquee.Release(ToSource(e));
     }
 
-    /// <summary>ポインターイベントの座標をドメイン座標へ変換する。</summary>
+    /// <summary>ポインターイベントの座標を対象座標へ変換する。</summary>
     /// <param name="e">ポインターイベント。</param>
-    /// <returns>ドメイン座標。</returns>
+    /// <returns>対象座標。</returns>
     /// <remarks>コントロールローカル DIP で取得した座標を、ファサードの座標変換ポートで変換する（境界の 1 行変換）。</remarks>
-    private EsPoint ToDomain(PointerEventArgs e) => _marquee.ToDomain(e.GetPosition(this).ToEsPoint());
+    private EsPoint ToSource(PointerEventArgs e) => _marquee.ToSource(e.GetPosition(this).ToEsPoint());
 }
 

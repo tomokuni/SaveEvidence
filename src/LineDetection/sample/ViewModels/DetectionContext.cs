@@ -52,9 +52,9 @@ public sealed partial class DetectionContext : ObservableObject
     [ObservableProperty]
     private bool _isLoupeVisible;
 
-    /// <summary>マウス位置の画像ドメイン座標の表示テキスト（ステータスバー表示用）。</summary>
+    /// <summary>マウス位置の画像対象座標の表示テキスト（ステータスバー表示用）。</summary>
     [ObservableProperty]
-    private string _pointerDomainText = "";
+    private string _pointerSourceText = "";
 
     /// <summary>画像オーバーレイ表示用の線分一覧（垂直 → 水平の順）。</summary>
     public ObservableCollection<LineItem> OverlayLines { get; } = [];
@@ -94,7 +94,7 @@ public sealed partial class DetectionContext : ObservableObject
         IsLoupeVisible = false;
         LoupeOverlayLines = [];
         OnPropertyChanged(nameof(LoupeOverlayLines));
-        PointerDomainText = "";
+        PointerSourceText = "";
     }
 
     /// <summary>クリップボードから取得した画像を表示画像として設定し、選択中の方式で再検出する。</summary>
@@ -195,12 +195,12 @@ public sealed partial class DetectionContext : ObservableObject
     /// <remarks>
     /// ポインタから <see cref="HoverDistance"/> 以内にある最寄りの線分だけをホバー状態にし、<br/>
     /// それ以外の線分はホバー解除する（一覧側のホバーは <see cref="SetLineHover"/> が担当）。<br/>
-    /// マウス位置の画像ドメイン座標を <see cref="PointerDomainText"/> へ反映する。<br/>
+    /// マウス位置の画像対象座標を <see cref="PointerSourceText"/> へ反映する。<br/>
     /// ホバー対象が変化した場合のみルーペ内の表示を更新する（無変化時の再計算を避ける）。
     /// </remarks>
     public void UpdateHover(Point pos)
     {
-        PointerDomainText = $"({pos.X:0}, {pos.Y:0})";
+        PointerSourceText = $"({pos.X:0}, {pos.Y:0})";
 
         LineItem? nearest = null;
         var bestSquared = HoverDistance * HoverDistance;
@@ -234,12 +234,12 @@ public sealed partial class DetectionContext : ObservableObject
 
     /// <summary>ポインタが画像上から離れたときの表示をクリアする。</summary>
     /// <remarks>
-    /// マウス座標表示（<see cref="PointerDomainText"/>）とルーペ表示（<see cref="IsLoupeVisible"/>）を初期化する。<br/>
+    /// マウス座標表示（<see cref="PointerSourceText"/>）とルーペ表示（<see cref="IsLoupeVisible"/>）を初期化する。<br/>
     /// 画像上でのみ有効な情報のため、画像外では表示しない（座標が残らないようにする）。
     /// </remarks>
     public void ClearPointerOverlay()
     {
-        PointerDomainText = "";
+        PointerSourceText = "";
         IsLoupeVisible = false;
     }
 

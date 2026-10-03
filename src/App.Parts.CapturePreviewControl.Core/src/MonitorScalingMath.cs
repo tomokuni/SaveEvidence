@@ -90,24 +90,24 @@ public static class MonitorScalingMath
         return fallback;
     }
 
-    /// <summary>ドメイン座標（画像ピクセル）の矩形から、その中心を含むモニターの表示倍率を解決する。</summary>
-    /// <param name="domainRect">対象の矩形（ドメイン座標 = 画像ピクセル）。</param>
-    /// <param name="origin">ドメイン座標の原点（画面物理ピクセル。 ウィンドウ位置または仮想スクリーン原点）。</param>
+    /// <summary>対象座標（画像ピクセル）の矩形から、その中心を含むモニターの表示倍率を解決する。</summary>
+    /// <param name="sourceRect">対象の矩形（対象座標 = 画像ピクセル）。</param>
+    /// <param name="origin">対象座標の原点（画面物理ピクセル。 ウィンドウ位置または仮想スクリーン原点）。</param>
     /// <param name="monitors">モニターの一覧（矩形と表示倍率の組）。</param>
     /// <param name="fallback">含まれるモニターが無い場合に使う倍率。</param>
     /// <returns>対象矩形の中心を含むモニターの表示倍率。 無い場合は <paramref name="fallback"/>。</returns>
     /// <remarks>
-    /// ドメイン座標を画面物理座標へ戻す（原点の加算）前処理を本クラスが単一所有する<br/>
+    /// 対象座標を画面物理座標へ戻す（原点の加算）前処理を本クラスが単一所有する<br/>
     /// （各 UI が原点の加算と丸めを書くと、UI ごとに判定点が 1 ピクセルずれる）。
     /// </remarks>
-    public static double ResolveForDomainRect(
-        EsRect domainRect, EsPointInt origin,
+    public static double ResolveForSourceRect(
+        EsRect sourceRect, EsPointInt origin,
         IReadOnlyList<(EsRectInt Bounds, double Scale)> monitors, double fallback)
         => ResolveForRect(
             new EsRectInt(
-                (int)Math.Round(domainRect.X, MidpointRounding.AwayFromZero) + origin.X,
-                (int)Math.Round(domainRect.Y, MidpointRounding.AwayFromZero) + origin.Y,
-                (int)Math.Round(domainRect.Width, MidpointRounding.AwayFromZero),
-                (int)Math.Round(domainRect.Height, MidpointRounding.AwayFromZero)),
+                (int)Math.Round(sourceRect.X, MidpointRounding.AwayFromZero) + origin.X,
+                (int)Math.Round(sourceRect.Y, MidpointRounding.AwayFromZero) + origin.Y,
+                (int)Math.Round(sourceRect.Width, MidpointRounding.AwayFromZero),
+                (int)Math.Round(sourceRect.Height, MidpointRounding.AwayFromZero)),
             monitors, fallback);
 }

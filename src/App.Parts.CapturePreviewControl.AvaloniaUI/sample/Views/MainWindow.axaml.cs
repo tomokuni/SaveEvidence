@@ -160,7 +160,7 @@ public sealed partial class MainWindow : Window
         }
 
         var viewportPos = e.GetPosition(PreviewCropView);
-        var contentPos = PreviewCropView.ViewportToContent(viewportPos);
+        var contentPos = PreviewCropView.ClientToSource(viewportPos);
         if (contentPos.X < 0 || contentPos.Y < 0 ||
             contentPos.X >= img.Size.Width || contentPos.Y >= img.Size.Height)
         {

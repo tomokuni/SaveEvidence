@@ -77,7 +77,7 @@ public sealed record MarqueeOptions
     /// <value>ヒットテスト半径（DIP）。 既定は 12.0。 設定時は 0.0〜256.0 へ補正される。</value>
     /// <remarks>
     /// DIP 座標での半径であるため、ズーム・縮小表示を変えてもヒットテストの画面上の大きさが一定になる。<br/>
-    /// ドメイン座標系への変換はセッションが行う。
+    /// 対象座標系への変換はセッションが行う。
     /// </remarks>
     public double HandleHitRadius
     {
@@ -86,7 +86,7 @@ public sealed record MarqueeOptions
     } = HandleHitRadiusDefault;
 
     /// <summary>選択矩形の最小サイズを取得する。</summary>
-    /// <value>最小サイズ（ドメイン座標）。 既定は 6.0。 設定時は 1.0〜4096.0 へ補正される。</value>
+    /// <value>最小サイズ（対象座標）。 既定は 6.0。 設定時は 1.0〜4096.0 へ補正される。</value>
     /// <remarks>ドラッグ完了時にこれ未満の矩形はキャンセル扱いになる（判断はセッションが行う）。</remarks>
     public double MinSelectionSize
     {
@@ -94,11 +94,11 @@ public sealed record MarqueeOptions
         init => field = CoerceMinSelectionSize(value);
     } = MinSelectionSizeDefault;
 
-    /// <summary>ドメイン境界外の選択を禁止するかどうかを取得する。</summary>
-    /// <value>true（既定）の場合は選択をドメイン境界内に制限する。 false の場合は境界外も選択できる。</value>
+    /// <summary>対象の境界外の選択を禁止するかどうかを取得する。</summary>
+    /// <value>true（既定）の場合は選択を対象の境界内に制限する。 false の場合は境界外も選択できる。</value>
     /// <remarks>
     /// クリップ範囲は座標変換ポートの Bounds で指定する。<br/>
     /// true へ切り替えた場合は既存の選択矩形を即時に境界内へクリップする（セッションが判断する）。
     /// </remarks>
-    public bool ClampToDomainBounds { get; init; } = true;
+    public bool ClampToSourceBounds { get; init; } = true;
 }

@@ -41,8 +41,8 @@ internal readonly record struct MarqueeFeedback
     /// <summary>要求するカーソル操作。</summary>
     internal MarqueeCursorActions Cursor { get; init; }
 
-    /// <summary><see cref="MarqueeCursorActions.MoveTo"/> の移動先（ドメイン座標）。</summary>
-    internal EsPoint CursorDomainPosition { get; init; }
+    /// <summary><see cref="MarqueeCursorActions.MoveTo"/> の移動先（対象座標）。</summary>
+    internal EsPoint CursorSourcePosition { get; init; }
 
     /// <summary>要求されたカーソル操作を適用する。</summary>
     /// <param name="cursor">カーソルサービス。</param>
@@ -55,7 +55,7 @@ internal readonly record struct MarqueeFeedback
     {
         if (Cursor.HasFlag(MarqueeCursorActions.MoveTo))
         {
-            cursor.SetCursorScreenPoint(effects.ToScreenPoint(CursorDomainPosition));
+            cursor.SetCursorScreenPoint(effects.ToScreenPoint(CursorSourcePosition));
         }
 
         if (Cursor.HasFlag(MarqueeCursorActions.Hide))

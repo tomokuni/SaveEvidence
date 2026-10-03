@@ -19,7 +19,7 @@ public class ZoomViewSessionTests
     {
         var session = new ZoomViewSession();
         session.SetViewport(viewportSize);
-        session.SetContent(hasSource: true, imageSize);
+        session.SetSource(hasSource: true, imageSize);
         return session;
     }
 
@@ -33,7 +33,7 @@ public class ZoomViewSessionTests
 
     /// <summary>画像を設定すると Fit 表示（内部ズーム率 0・オフセット 0）になることを検証する。</summary>
     [Fact]
-    public void SetContent_Fit表示へリセットする()
+    public void SetSource_Fit表示へリセットする()
     {
         var session = CreateStandard();
 
@@ -45,14 +45,14 @@ public class ZoomViewSessionTests
 
     /// <summary>画像を設定するとズーム状態とビューポートの両方を通知することを検証する。</summary>
     [Fact]
-    public void SetContent_両方を通知する()
+    public void SetSource_両方を通知する()
     {
         var session = new ZoomViewSession();
         session.SetViewport(new EsSize(200, 200));
         var kinds = new List<ZoomNoticeKind>();
         session.Notified += (_, notice) => kinds.Add(notice.Kind);
 
-        var feedback = session.SetContent(hasSource: true, new EsSize(100, 100));
+        var feedback = session.SetSource(hasSource: true, new EsSize(100, 100));
 
         Assert.Equal([ZoomNoticeKind.ZoomChanged, ZoomNoticeKind.ViewportChanged], kinds);
         Assert.True(feedback.Redraw);
@@ -160,9 +160,9 @@ public class ZoomViewSessionTests
         session.SetOffset(new EsVector(300, 200));
 
         // ビューポート座標 (100, 100) のコンテンツ座標を求める
-        var before = session.ViewportToContent(new EsPoint(100, 100));
+        var before = session.ClientToSource(new EsPoint(100, 100));
         session.SetZoom(200, new EsPoint(100, 100));
-        var after = session.ViewportToContent(new EsPoint(100, 100));
+        var after = session.ClientToSource(new EsPoint(100, 100));
 
         Assert.Equal(before.X, after.X, 6);
         Assert.Equal(before.Y, after.Y, 6);
@@ -403,9 +403,9 @@ public class ZoomViewSessionTests
         session.SetZoom(100);
         session.SetOffset(new EsVector(300, 300));
 
-        var before = session.ViewportToContent(new EsPoint(50, 50));
+        var before = session.ClientToSource(new EsPoint(50, 50));
         session.ZoomByWheel(zoomIn: true, new EsPoint(50, 50));
-        var after = session.ViewportToContent(new EsPoint(50, 50));
+        var after = session.ClientToSource(new EsPoint(50, 50));
 
         Assert.Equal(before.X, after.X, 6);
         Assert.Equal(before.Y, after.Y, 6);
@@ -559,8 +559,8 @@ public class ZoomViewSessionTests
     {
         var session = CreateSession(new EsSize(100, 100), new EsSize(200, 200));
 
-        var viewport = session.ContentToViewportImage(new EsPoint(25, 30));
-        var content = session.ViewportToContentImage(viewport);
+        var viewport = session.DisplayedSourceToClient(new EsPoint(25, 30));
+        var content = session.ClientToDisplayedSource(viewport);
 
         Assert.Equal(25.0, content.X, 6);
         Assert.Equal(30.0, content.Y, 6);
@@ -574,8 +574,8 @@ public class ZoomViewSessionTests
         session.SetZoom(200);
         session.SetOffset(new EsVector(50, 20));
 
-        var viewport = session.ContentToViewportImage(new EsPoint(100, 100));
-        var content = session.ViewportToContentImage(viewport);
+        var viewport = session.DisplayedSourceToClient(new EsPoint(100, 100));
+        var content = session.ClientToDisplayedSource(viewport);
 
         Assert.Equal(100.0, content.X, 6);
         Assert.Equal(100.0, content.Y, 6);

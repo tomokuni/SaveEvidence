@@ -9,12 +9,12 @@ namespace EsUtil.Feature.Marquee.MewUI.MarqueeControl;
 /// 座標は UI 非依存のコア型で公開する（コアの状態機械と同一の型のため、境界変換が不要になる）。<br/>
 /// 座標変換はイベント引数では行わず、座標変換ポート（<see cref="EsUtil.Platform.Core.Coord.ICoordTransform"/>）方式が担う。
 /// </remarks>
-/// <param name="point">通知対象の座標（ドメイン座標）。</param>
+/// <param name="point">通知対象の座標（対象座標）。</param>
 /// <param name="snapshot">通知時点のスナップショット。</param>
 public sealed class MarqueePointEventArgs(EsPoint point, MarqueeSnapshot snapshot) : EventArgs
 {
-    /// <summary>通知対象の座標（ドメイン座標）を取得する。</summary>
-    /// <value>通知対象の座標（ドメイン座標）。</value>
+    /// <summary>通知対象の座標（対象座標）を取得する。</summary>
+    /// <value>通知対象の座標（対象座標）。</value>
     public EsPoint Point { get; } = point;
 
     /// <summary>通知時点のスナップショット（状態・選択矩形・アクティブハンドル・マウス位置・操作フラグ）を取得する。</summary>

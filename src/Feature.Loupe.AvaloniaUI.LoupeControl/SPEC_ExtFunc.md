@@ -164,7 +164,7 @@ public bool IsLoupeVisible { get; set; } = true;
 ## 5. 公開API
 
 公開 API は「プロパティ / メソッド / イベント / 型」の 4 分類で構成されます。
-座標を扱う API は、ドメイン座標系 / DIP 座標系のどちらであるかを明記します。
+座標を扱う API は、対象座標系 / DIP 座標系のどちらであるかを明記します。
 
 ### 5.1 プロパティ
 
@@ -187,7 +187,7 @@ public bool IsLoupeVisible { get; set; } = true;
 | 項目 | 内容 |
 | --- | --- |
 | 型 | `Point?` |
-| 単位 | **ドメイン座標系**（元画像の物理ピクセル座標） |
+| 単位 | **対象座標系**（元画像の物理ピクセル座標） |
 | 既定値 | `null` |
 | 用途 | 拡大表示の中心座標 |
 
@@ -272,7 +272,7 @@ BitmapSize = ceil(表示サイズ × ClientToPixelScaling)
 | `CoordLabelFontSize` | `double` | `12.0` | 座標ラベルのフォントサイズ（DIP。 6〜48 に補正。 非数は既定値へ補正） |
 | `CoordLabelCornerRadius` | `int` | `2` | 座標ラベルの背景の角丸半径（DIP。 0〜64 に補正。 0 は角丸なし） |
 
-座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペの左上に表示します。 実寸 → 配置矩形の写像（内側余白 4 / 1 DIP、基準点は左上）は描画層（`Feature.Loupe.Presenter` の `LoupePresenter`（`LabelPlan` partial））が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Appearance`）が単一所有します。 **表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。 実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
+座標ラベルは中心座標（対象座標）を `(x, y)` 形式でルーペの左上に表示します。 実寸 → 配置矩形の写像（内側余白 4 / 1 DIP、基準点は左上）は描画層（`Feature.Loupe.Presenter` の `LoupePresenter`（`LabelPlan` partial））が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Appearance`）が単一所有します。 **表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。 実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
 寸法項目（`Appearance.BorderThickness`）は DIP の値であり、描画計画の解決時に**物理ピクセルへ換算されます**（`Platform.Core` の `DpiScaler.ScaleToPixel`。 呼び出すのは `Feature.Loupe.Presenter` の `LoupePresenter`。 `ClientToPixelScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。 UI 層は換算式を持ちません。
 
@@ -332,7 +332,7 @@ loupe.Clear();
 void SetCoordTransform(ICoordTransform? port)
 ```
 
-論理座標（ドメイン）↔ 親パネル DIP の座標変換ポートを設定します（null = 等価変換。 MarqueeControl と同方式）。
+論理座標（対象）↔ 親パネル DIP の座標変換ポートを設定します（null = 等価変換。 MarqueeControl と同方式）。
 
 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等のレイアウト変化に追従できます。 表示位置・サイズは本ポートから自己計算されます（イベント時の DIP キャッシュは使わない）。
 
@@ -348,7 +348,7 @@ void RefreshPosition()
 
 ### 5.3 表示位置・サイズの自己計算（座標変換ポート方式）
 
-`CenterPoint`（ドメイン座標）と `SetCoordTransform` で設定したポートから、ルーペの表示位置と表示サイズを自己計算します。
+`CenterPoint`（対象座標）と `SetCoordTransform` で設定したポートから、ルーペの表示位置と表示サイズを自己計算します。
 
 | 項目 | 計算方法 |
 | --- | --- |
@@ -387,10 +387,10 @@ event EventHandler<LoupeRenderedEventArgs>? Rendered
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
 | `Bitmap` | `EsBitmap` | 描画済みのルーペ画像。 イベントハンドラ内でピクセルへオーバーレイを直接描画できる（所有権は `LoupeControl` 側） |
-| `CaptureTopLeft` | `Point?` | 切り出し領域の左上（ドメイン座標）。 中心未設定時は null |
-| `Scale` | `double` | ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。 DPI スケーリングの影響を受けない） |
+| `CaptureTopLeft` | `Point?` | 切り出し領域の左上（対象座標）。 中心未設定時は null |
+| `Scale` | `double` | 対象座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。 DPI スケーリングの影響を受けない） |
 
-オーバーレイの描画位置は `(ドメイン座標 − CaptureTopLeft) × Scale` で求められます。
+オーバーレイの描画位置は `(対象座標 − CaptureTopLeft) × Scale` で求められます。
 
 通知するのはホストがオーバーレイを描くために必要な最小限（描画済み画像・切り出し領域の左上・スケール）です。 表示位置・表示サイズ・拡大率・拡大中心は、描画に必要な値をホストが既に保持しているため通知しません（必要な場合はコントロールの公開プロパティから取得します）。
 
@@ -398,7 +398,7 @@ event EventHandler<LoupeRenderedEventArgs>? Rendered
 loupe.Rendered += (_, e) =>
 {
     if (e.CaptureTopLeft is not { } topLeft) return;
-    var local = (ドメイン座標 - topLeft) * e.Scale;
+    var local = (対象座標 - topLeft) * e.Scale;
     // local の位置へ線分等を e.Bitmap へ描画する（表示はコントロールが反映する）
 };
 ```
@@ -454,7 +454,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 `LoupeControl` は画像生成と内部Image表示に加え、**表示位置・表示サイズを自己計算**します
 （座標変換ポート方式。 Marquee と同様）。
 
-- 表示位置: `CenterPoint`（ドメイン座標）を `SetCoordTransform` で設定したポートで親パネル DIP へ変換し、カーソル右下 + `PositionOffset` + 補正した位置を `RenderTransform` で反映します。
+- 表示位置: `CenterPoint`（対象座標）を `SetCoordTransform` で設定したポートで親パネル DIP へ変換し、カーソル右下 + `PositionOffset` + 補正した位置を `RenderTransform` で反映します。
 - 表示サイズ: `Options.RequestedSize`（基本サイズ）をそのまま表示サイズとして内部管理します（ホストは基本サイズを設定するだけ）。
 - 再評価タイミング: `CenterPoint` 変更 / ポート設定 / `PositionOffset` 変更 / `Options` 変更 / レイアウト時（`ArrangeCore`）/ 外部要求（`RefreshPosition`）。
 

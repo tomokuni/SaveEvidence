@@ -28,8 +28,8 @@ public interface IMarqueeEffects
     /// <remarks>ドラッグ中にポインターがコントロール外へ出ても移動イベントを受け取りたい UI が使用する。</remarks>
     void SetPointerCapture(bool capture);
 
-    /// <summary>ドメイン座標を画面物理座標へ変換する（カーソル移動用）。</summary>
-    /// <param name="domainPoint">ドメイン座標。</param>
+    /// <summary>対象座標を画面物理座標へ変換する（カーソル移動用）。</summary>
+    /// <param name="sourcePoint">対象座標。</param>
     /// <returns>画面物理座標。 変換できない場合は既定値。</returns>
-    EsPointInt ToScreenPoint(EsPoint domainPoint);
+    EsPointInt ToScreenPoint(EsPoint sourcePoint);
 }

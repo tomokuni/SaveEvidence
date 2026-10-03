@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 namespace EsUtil.Feature.Loupe.Core.Drawing;
 
 /// <summary>ルーペの描画 1 フレーム分の幾何（コアが責任を持つ値の全量）。</summary>
-/// <param name="Center">拡大中心（ドメイン座標）。 ファサードの <c>Loupe.CenterPoint</c>（UI が設定する状態）を 1 フレーム分の幾何へ写した値である。 未設定は null（切り出し領域と中心座標ラベルの基準を持たない）。</param>
+/// <param name="Center">拡大中心（対象座標）。 ファサードの <c>Loupe.CenterPoint</c>（UI が設定する状態）を 1 フレーム分の幾何へ写した値である。 未設定は null（切り出し領域と中心座標ラベルの基準を持たない）。</param>
 /// <param name="ClientSize">ルーペの一辺の表示サイズ（DIP。 ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
 /// <param name="ClientPixelSize">ルーペの一辺のサイズ（物理ピクセル。 切り上げ・最低 1）。 描画先の表面は本値と同じ大きさで用意する（呼び出し側の責務）。</param>
 /// <param name="ClientToPixelScaling">表示 DIP → 物理ピクセルのスケーリング係数（環境値）。</param>
@@ -27,7 +27,7 @@ public readonly record struct LoupeGeometry(
     double ClientToPixelScaling,
     int ZoomLevel)
 {
-    /// <summary>切り出し領域の一辺（ドメインピクセル）を取得する。</summary>
+    /// <summary>切り出し領域の一辺（対象ピクセル）を取得する。</summary>
     /// <value>物理ピクセルサイズを拡大率で割った切り上げ（余りを 1 区画として数える）。<see cref="ClientPixelSize"/> は 1 以上のため 1 以上になる。</value>
     /// <remarks>
     /// 切り出しの実行（<c>EsBitmap.Crop</c>）と十字線の交点（切り出した領域を等倍で並べたときの中央のブロック）が同じ値を共有する。<br/>
@@ -43,8 +43,8 @@ public readonly record struct LoupeGeometry(
     /// </remarks>
     public EsRect ClientPixelRect => new(0, 0, ClientPixelSize, ClientPixelSize);
 
-    /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）を取得する。</summary>
-    /// <value>切り出し領域の左上（ドメイン座標）。<see cref="Center"/> が未設定の場合は null（切り出し領域を持たない）。</value>
+    /// <summary>拡大中心から切り出し領域の左上（対象座標）を取得する。</summary>
+    /// <value>切り出し領域の左上（対象座標）。<see cref="Center"/> が未設定の場合は null（切り出し領域を持たない）。</value>
     /// <remarks>
     /// 中心の整数化（<c>(int)</c>）は切り出し（<c>EsBitmap.Crop</c>）と同じ丸めにする<br/>
     /// （切り出しの実行は描画層が、切り出し領域の通知は描画層が本値から組み立てる）。

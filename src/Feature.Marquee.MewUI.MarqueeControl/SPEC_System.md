@@ -80,7 +80,7 @@ src/Feature.Marquee.MewUI.MarqueeControl/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `MarqueeControl` | `MewProperty` の定義、入力のドメイン変換と提示層への通知、`IMarqueeEffects` の実装（効果の適用）、マウスキャプチャの取得/解放、DPI 変更の追従、描画計画の自 UI への写し（`MarqueeSkiaPainter`）、子要素（図形キャンバス・ラベル要素）の計測と配置、付加情報の描画機会の通知（`Rendered`） |
+| `MarqueeControl` | `MewProperty` の定義、入力の対象変換と提示層への通知、`IMarqueeEffects` の実装（効果の適用）、マウスキャプチャの取得/解放、DPI 変更の追従、描画計画の自 UI への写し（`MarqueeSkiaPainter`）、子要素（図形キャンバス・ラベル要素）の計測と配置、付加情報の描画機会の通知（`Rendered`） |
 | `MarqueePresenter`（提示層） | 幾何（コア）と外観から描画計画（`MarqueeDrawPlan`）を解決する。 継承して `ResolveDrawPlan` を上書きすることで独自の見た目を提供できる |
 | `MarqueeAppearance`（提示層） | 色・ラベルの体裁・枠線の太さ・表示可否の単一所有者 |
 | `MarqueeSkiaPainter`（本プロジェクト） | 描画計画を層の順に Skia のキャンバスへ写す。 **選択枠線は描かない**（装飾の外枠が同じ矩形を描くため）。 **サイズ・座標ラベルも描かない**（コントロールがテキスト要素として表示する） |
@@ -116,7 +116,7 @@ classDiagram
         +RefreshOverlay() void
         -OnPaintSurface(canvas, info) void
         -OnNotified(sender, notice) void
-        -ToScreen(domainPos) EsPointInt
+        -ToScreen(sourcePos) EsPointInt
         -CaptureMouse(capture) void
     }
     class Marquee {
@@ -136,7 +136,7 @@ classDiagram
         <<Feature.Marquee.Core / UI が実装>>
         +RequestFocus() / RequestRedraw()
         +SetCursorShape(kind) / SetPointerCapture(capture)
-        +ToScreenPoint(domainPoint) EsPointInt
+        +ToScreenPoint(sourcePoint) EsPointInt
     }
     class MarqueeSession {
         <<internal / Feature.Marquee.Core>>
@@ -160,7 +160,7 @@ classDiagram
         <<internal / Feature.Marquee.Core>>
         +bool Handled / Redraw / RequestFocus
         +bool UpdateCursorShape / MarqueeCursorKind CursorKind
-        +MarqueeCursorActions Cursor / EsPoint CursorDomainPosition
+        +MarqueeCursorActions Cursor / EsPoint CursorSourcePosition
         +MarqueeCaptureAction Capture
     }
     class MarqueePresenter {
@@ -196,7 +196,7 @@ classDiagram
           +double HandleSize / HandleBorderThickness
         +double MarkerLength
           +double HandleHitRadius / MinSelectionSize
-          +bool ClampToDomainBounds
+          +bool ClampToSourceBounds
       }
       class MarqueeLimits {
           <<Feature.Marquee.Core / Marquee.Limits>>
@@ -204,7 +204,7 @@ classDiagram
           +CoerceMarkerLength(value)$ double
           +CoerceHandleHitRadius(value)$ double
           +CoerceMinSelectionSize(value)$ double
-          +CoerceDipToDomainScaling(value)$ double
+          +CoerceClientToSourceScaling(value)$ double
           +CoerceBorderThickness(value)$ double
       }
     class MarqueeLabelPlacement {
@@ -216,7 +216,7 @@ classDiagram
     }
     class MarqueeState {
         <<Feature.Marquee.Core>>
-        +EsRect SelectionDomainRect
+        +EsRect SelectionSourceRect
         +ICoordTransform Port
         +GetInteractionState() MarqueeInteractionState
         +CreateSnapshot(mousePosition) MarqueeSnapshot
@@ -235,7 +235,7 @@ classDiagram
         +IsNear(p1, p2, radius)$ bool
         +ComputeDragRect(...)$ EsRect
         +ClampRectToBounds(...)$ EsRect
-        +ClampRectToDomainBounds(...)$ EsRect
+        +ClampRectToSourceBounds(...)$ EsRect
     }
     class ICursorService {
         <<Platform.Core>>
@@ -274,7 +274,7 @@ sequenceDiagram
     Ctl->>Fac: SetCoordTransform(port)
     Fac->>Ses: SetPort(port)
     Note over Ctl: 左ボタン押下
-    Ctl->>Ctl: ToDomain(e.GetPosition)
+    Ctl->>Ctl: ToSource(e.GetPosition)
     Ctl->>Fac: Press(pos, clickCount)
     Fac->>Ses: Press
     Ses->>St: HitTest / StartNewSelection / StartDrag
@@ -289,7 +289,7 @@ sequenceDiagram
     loop ドラッグ中
         Ctl->>Fac: Move(pos)
         Fac->>Ses: Move
-        Ses->>St: UpdateDrag(pos, Options.MinSelectionSize, Options.ClampToDomainBounds)
+        Ses->>St: UpdateDrag(pos, Options.MinSelectionSize, Options.ClampToSourceBounds)
         Ctl->>Host: SelectionChanged / LoupePositionMoved
     end
     Note over Ctl: 左ボタン解放
@@ -317,7 +317,7 @@ sequenceDiagram
 
     Note over Ctl: 矢印キー押下（フォーカス保持時）
     Ctl->>Cur: GetCursorScreenPoint()
-    Ctl->>Ctl: ScreenToClient → ドメイン座標（基点の記録）
+    Ctl->>Ctl: ScreenToClient → 対象座標（基点の記録）
     Ctl->>Fac: KeyDown(EsKey, cursorPosition)
     Fac->>Ses: KeyDown
     alt nudge 未開始
@@ -325,7 +325,7 @@ sequenceDiagram
         Fac-->>Ctl: 効果（Hide: カーソル非表示）を IMarqueeEffects 経由で適用
         Ctl->>Cur: ShowCursor(false)
     end
-    Ses->>St: Nudge(dx, dy, Options.MinSelectionSize, Options.ClampToDomainBounds)
+    Ses->>St: Nudge(dx, dy, Options.MinSelectionSize, Options.ClampToSourceBounds)
     Fac-->>Ctl: 効果（MoveTo: マーカー位置）
     Ctl->>Host: SelectionChanged / LoupePositionMoved
     Ctl->>Cur: SetCursorScreenPoint(ToScreenPoint(marker))

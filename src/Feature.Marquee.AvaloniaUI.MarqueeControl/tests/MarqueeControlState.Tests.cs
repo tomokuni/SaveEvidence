@@ -43,7 +43,7 @@ public class MarqueeControlStateTests
         Assert.Equal(10.0, options.HandleSize);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(10.0, options.MinSelectionSize); // CreateControl で設定
-        Assert.True(options.ClampToDomainBounds);
+        Assert.True(options.ClampToSourceBounds);
         Assert.Equal(16.0, options.MarkerLength);
         Assert.True(control.Appearance.ShowCoordLabel);
         Assert.NotNull(control.Log);
@@ -62,7 +62,7 @@ public class MarqueeControlStateTests
             HandleSize = 14.0,
             HandleHitRadius = 20.0,
             MinSelectionSize = 5.0,
-            ClampToDomainBounds = true,
+            ClampToSourceBounds = true,
             MarkerLength = 24.0,
         };
         control.Appearance = control.Appearance with
@@ -72,7 +72,7 @@ public class MarqueeControlStateTests
             ShowCoordLabel = false,
             OuterBorderThickness = 3.0,
         };
-        control.HighlightDomainRect = new EsRect(1, 2, 3, 4);
+        control.HighlightSourceRect = new EsRect(1, 2, 3, 4);
 
         var options = control.Options;
         Assert.Equal(3.0, control.Appearance.OuterBorderThickness);
@@ -80,11 +80,11 @@ public class MarqueeControlStateTests
         Assert.Equal(14.0, options.HandleSize);
         Assert.Equal(20.0, options.HandleHitRadius);
         Assert.Equal(5.0, options.MinSelectionSize);
-        Assert.True(options.ClampToDomainBounds);
+        Assert.True(options.ClampToSourceBounds);
         Assert.Equal(24.0, options.MarkerLength);
         Assert.False(control.Appearance.ShowCoordLabel);
         Assert.Equal(14.0, control.Appearance.CoordLabelFontSize);
-        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightDomainRect);
+        Assert.Equal(new EsRect(1, 2, 3, 4), control.HighlightSourceRect);
     }
 
     // ====================================================================
@@ -96,20 +96,20 @@ public class MarqueeControlStateTests
     {
         var control = CreateControl();
 
-        // 未選択時: State=NoSelection / SelectionDomainRect=0x0 / HasSelection=false / NudgeActive=false
+        // 未選択時: State=NoSelection / SelectionSourceRect=0x0 / HasSelection=false / NudgeActive=false
         var snap0 = control.CurrentSnapshot;
         Assert.Equal(MarqueeInteractionState.NoSelection, snap0.State);
-        Assert.Equal(default, snap0.SelectionDomainRect);
+        Assert.Equal(default, snap0.SelectionSourceRect);
         Assert.Equal(MarqueeHitTarget.None, snap0.ActiveTarget);
         Assert.False(snap0.HasSelection);
         Assert.False(snap0.IsMouseDown);
         Assert.False(snap0.NudgeActive);
 
-        // 選択時: State=Selected / SelectionDomainRect 反映 / HasSelection=true
+        // 選択時: State=Selected / SelectionSourceRect 反映 / HasSelection=true
         control.SetSelection(new Rect(10, 10, 50, 40));
         var snap1 = control.CurrentSnapshot;
         Assert.Equal(MarqueeInteractionState.Selected, snap1.State);
-        Assert.Equal(new EsRect(10, 10, 50, 40), snap1.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 10, 50, 40), snap1.SelectionSourceRect);
         Assert.True(snap1.HasSelection);
         Assert.False(snap1.NudgeActive);
     }
@@ -200,10 +200,10 @@ public class MarqueeControlStateTests
     }
 
     [Fact]
-    public void SetSelection_ClampToDomainBounds有効時は画像外の矩形をクリップする()
+    public void SetSelection_ClampToSourceBounds有効時は画像外の矩形をクリップする()
     {
         var control = CreateControl();
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
         control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         SelectionRectEventArgs? raised = null;
         control.SelectionChanged += (_, e) => raised = e;
@@ -216,7 +216,7 @@ public class MarqueeControlStateTests
     }
 
     [Fact]
-    public void ClampToDomainBounds_ON切替時に既存の選択矩形がクリップされる()
+    public void ClampToSourceBounds_ON切替時に既存の選択矩形がクリップされる()
     {
         var control = CreateControl();
         control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
@@ -224,20 +224,20 @@ public class MarqueeControlStateTests
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
         // 既定は ON のため、OFF → ON の切替シナリオを明示する
-        control.Options = control.Options with { ClampToDomainBounds = false };
+        control.Options = control.Options with { ClampToSourceBounds = false };
 
         // 画像外にはみ出す矩形（左上が負・右下が 200 超え）を選択状態にする（OFF のためクリップされない）
         control.SetSelection(new Rect(-50, -30, 300, 260));
         Assert.Equal(new Rect(-50, -30, 300, 260), rects[^1]);
 
         // ON に切り替えた瞬間に境界内 (0,0)-(200,200) へクリップされる
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
 
         Assert.Equal(new Rect(0, 0, 200, 200), rects[^1]);
     }
 
     [Fact]
-    public void ClampToDomainBounds_ON切替時に境界内の矩形は変更されない()
+    public void ClampToSourceBounds_ON切替時に境界内の矩形は変更されない()
     {
         var control = CreateControl();
         control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
@@ -248,7 +248,7 @@ public class MarqueeControlStateTests
         Assert.Single(rects);
 
         // 境界内の矩形なので、ON に切り替えてもクリップされない（SelectionChanged は再発火しない）
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
 
         Assert.Single(rects);
         Assert.Equal(new Rect(20, 20, 100, 80), rects[^1]);
@@ -264,8 +264,8 @@ public class MarqueeControlStateTests
         control.SetSelection(new Rect(10, 10, 50, 40));
 
         Assert.NotNull(raised);
-        // Snapshot はイベント引数の Rect と同一の選択矩形（ドメイン座標）を保持する
-        Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Snapshot.SelectionDomainRect);
+        // Snapshot はイベント引数の Rect と同一の選択矩形（対象座標）を保持する
+        Assert.Equal(new EsRect(10, 10, 50, 40), raised!.Snapshot.SelectionSourceRect);
         // 選択復元後はハンドルなし（新規選択・移動・未選択時は None）
         Assert.Equal(MarqueeHitTarget.None, raised.Snapshot.ActiveTarget);
         // 選択確定後の状態は Selected

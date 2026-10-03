@@ -107,7 +107,7 @@
             <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Grid.Column="0" Text="{Binding Context.StatusText}" FontSize="12" TextWrapping="Wrap"
                            VerticalAlignment="Center"/>
-                <TextBlock Grid.Column="1" Text="{Binding Context.PointerDomainText}" FontSize="12"
+                <TextBlock Grid.Column="1" Text="{Binding Context.PointerSourceText}" FontSize="12"
                            FontFamily="Consolas" VerticalAlignment="Center"/>
             </Grid>
         </Border>

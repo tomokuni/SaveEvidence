@@ -47,7 +47,7 @@ public sealed partial class Loupe
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数（既定は 1.0）。</summary>
     private double _dipToDeviceScaling = ClientToPixelScalingDefault;
 
-    /// <summary>拡大表示する中心座標（ドメイン座標。 未設定は null）。</summary>
+    /// <summary>拡大表示する中心座標（対象座標。 未設定は null）。</summary>
     private EsPoint? _centerPoint;
 
     /// <summary>拡大中心からの右下オフセット（DIP。 既定は 0）。</summary>
@@ -138,7 +138,7 @@ public sealed partial class Loupe
         }
     }
 
-    /// <summary>拡大表示する中心座標（ドメイン座標）。</summary>
+    /// <summary>拡大表示する中心座標（対象座標）。</summary>
     /// <value>拡大中心（元画像ピクセル座標）。 未設定は null（切り出し領域を決められないため、拡大画像の幾何を持たず配置もしない）。</value>
     /// <remarks>
     /// <b>状態として保持する理由</b>: 表示位置の解決（<see cref="ResolveLayout"/>）と描画の幾何の解決（<see cref="ResolveGeometry"/>）が<br/>
@@ -176,8 +176,8 @@ public sealed partial class Loupe
         }
     }
 
-    /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（ToDip = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
+    /// <summary>対象 ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
+    /// <param name="port">座標変換ポート（ToDip = 対象 → 親領域 DIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// 変換関数は呼び出し毎に評価されるため、ウィンドウサイズ変更・ズーム・スクロール等のレイアウト変化に追従できる<br/>
     /// （イベント時の DIP キャッシュは使わない）。<br/>

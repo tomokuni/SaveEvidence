@@ -136,7 +136,7 @@ public class FadeMaskDragRectControlTests
                 MinSelectionSize = 5,
                 HandleSize = 12.0,
                 HandleHitRadius = 15.0,
-                ClampToDomainBounds = true,
+                ClampToSourceBounds = true,
                 MarkerLength = 20.0,
             },
         };
@@ -150,7 +150,7 @@ public class FadeMaskDragRectControlTests
         Assert.Equal(3.0, control.MarqueeAppearance.OuterBorderThickness);
         Assert.Equal(12.0, applied.HandleSize);
         Assert.Equal(15.0, applied.HandleHitRadius);
-        Assert.True(applied.ClampToDomainBounds);
+        Assert.True(applied.ClampToSourceBounds);
         Assert.Equal(20.0, applied.MarkerLength);
     }
 
@@ -169,10 +169,10 @@ public class FadeMaskDragRectControlTests
         control.Options = options;
 
         // DPI スケーリングは設定（Options）の対象外（環境値。 個別プロパティで設定）
-        control.DipToDomainScaling = 2.0;
+        control.ClientToSourceScaling = 2.0;
         control.DisplayScaleScaling = 1.5;
 
-        Assert.Equal(2.0, control.DipToDomainScaling);
+        Assert.Equal(2.0, control.ClientToSourceScaling);
         Assert.Equal(1.5, control.DisplayScaleScaling);
 
         // 選択の設定（寸法・対話パラメータ）はコアの MarqueeOptions へ反映される
@@ -326,7 +326,7 @@ public class FadeMaskDragRectControlTests
 
         control.SetSelection(rect);
 
-        Assert.Equal(rect, control.SelectionDomainRect);
+        Assert.Equal(rect, control.SelectionSourceRect);
         Assert.True(control.HasSelection);
     }
 
@@ -337,7 +337,7 @@ public class FadeMaskDragRectControlTests
 
         control.SetSelection(new Rect(0, 0, 0, 0));
 
-        Assert.Equal(default, control.SelectionDomainRect);
+        Assert.Equal(default, control.SelectionSourceRect);
         Assert.False(control.HasSelection);
     }
 
@@ -349,7 +349,7 @@ public class FadeMaskDragRectControlTests
 
         control.ClearSelection();
 
-        Assert.Equal(default, control.SelectionDomainRect);
+        Assert.Equal(default, control.SelectionSourceRect);
         Assert.False(control.HasSelection);
     }
 
@@ -366,7 +366,7 @@ public class FadeMaskDragRectControlTests
         // Marquee.SetSelection → SelectionChanged 発火 → 複合コントロールがレンダラーへ同期
         control.Marquee.SetSelection(rect);
 
-        Assert.Equal(rect, control.SelectionDomainRect);
+        Assert.Equal(rect, control.SelectionSourceRect);
         Assert.True(control.HasSelection);
     }
 
@@ -376,7 +376,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
         Rect? confirmed = null;
-        control.ConfirmRequested += (_, e) => confirmed = e.SelectionDomainRect;
+        control.ConfirmRequested += (_, e) => confirmed = e.SelectionSourceRect;
 
         control.RequestConfirm();
 
@@ -676,7 +676,7 @@ public class FadeMaskDragRectControlTests
     }
 
     // ====================================================================
-    // HasSelection / SelectionDomainRect / InvalidateOverlay / RefreshOverlay
+    // HasSelection / SelectionSourceRect / InvalidateOverlay / RefreshOverlay
     // ====================================================================
 
     [AvaloniaFact]
@@ -684,14 +684,14 @@ public class FadeMaskDragRectControlTests
     {
         var control = new FadeMaskDragRectControl();
 
-        // 未選択時: HasSelection = false / SelectionDomainRect は空矩形
+        // 未選択時: HasSelection = false / SelectionSourceRect は空矩形
         Assert.False(control.HasSelection);
-        Assert.Equal(default, control.SelectionDomainRect);
+        Assert.Equal(default, control.SelectionSourceRect);
 
         // 選択時: HasSelection = true かつ矩形が同期される（Marquee.SetSelection → SelectionChanged → 同期）
         control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
         Assert.True(control.HasSelection);
-        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionDomainRect);
+        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionSourceRect);
     }
 
     [AvaloniaFact]
@@ -703,8 +703,8 @@ public class FadeMaskDragRectControlTests
         control.SetSelection(new Rect(10, 10, 50, 40));
 
         Assert.True(control.HasSelection);
-        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionDomainRect);
-        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionDomainRect);
+        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionSourceRect);
+        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionSourceRect);
     }
 
     [AvaloniaFact]
@@ -727,7 +727,7 @@ public class FadeMaskDragRectControlTests
 
         // 選択状態は維持される（再描画要求のみ）
         Assert.True(control.HasSelection);
-        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionDomainRect);
+        Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionSourceRect);
     }
 
     /// <summary>ウィンドウ経由（実ヒットテスト）のドラッグでキャプチャ用の選択が成立することを検証する。</summary>
@@ -756,7 +756,7 @@ public class FadeMaskDragRectControlTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(control.HasSelection, "キャプチャ（AreaSelect）のドラッグが内包する Marquee へ届いていない");
-        Assert.Equal(new Rect(120, 120, 160, 160), control.SelectionDomainRect);
+        Assert.Equal(new Rect(120, 120, 160, 160), control.SelectionSourceRect);
         window.Close();
     }
 
@@ -850,7 +850,7 @@ public class FadeMaskDragRectControlTests
 
             Assert.False(control.HasSelection);
             // 選択矩形の位置はセッションが保持するため、選択としての有効性は HasSelection で判定する
-            Assert.Equal(0, control.SelectionDomainRect.Width);
+            Assert.Equal(0, control.SelectionSourceRect.Width);
         }
         finally
         {
@@ -882,7 +882,7 @@ public class FadeMaskDragRectControlTests
 
             Assert.False(control.HasSelection);
             // 選択矩形の位置はセッションが保持するため、選択としての有効性は HasSelection で判定する
-            Assert.Equal(0, control.SelectionDomainRect.Width);
+            Assert.Equal(0, control.SelectionSourceRect.Width);
         }
         finally
         {
@@ -971,13 +971,13 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
 
         // 未設定時: 既定値
-        Assert.Null(control.HighlightDomainRect);
+        Assert.Null(control.HighlightSourceRect);
 
         // 設定時: 外側の装飾（MarqueeControl）へ反映される
-        control.HighlightDomainRect = new Rect(100, 50, 1920, 1080);
+        control.HighlightSourceRect = new Rect(100, 50, 1920, 1080);
         control.DisplayScaleScaling = 1.5;
 
-        Assert.Equal(new Rect(100, 50, 1920, 1080), control.HighlightDomainRect);
+        Assert.Equal(new Rect(100, 50, 1920, 1080), control.HighlightSourceRect);
         Assert.Equal(1.5, control.DisplayScaleScaling);
         // コントロール経由の getter も検証する（暗転マスクへの委譲）
         Assert.Equal(1.5, control.DisplayScaleScaling);

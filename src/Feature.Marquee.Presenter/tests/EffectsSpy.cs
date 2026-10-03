@@ -26,5 +26,5 @@ internal sealed class EffectsSpy : IMarqueeEffects
     public void SetPointerCapture(bool capture) { }
 
     /// <inheritdoc/>
-    public EsPointInt ToScreenPoint(EsPoint domainPoint) => default;
+    public EsPointInt ToScreenPoint(EsPoint sourcePoint) => default;
 }

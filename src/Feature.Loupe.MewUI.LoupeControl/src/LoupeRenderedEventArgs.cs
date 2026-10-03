@@ -11,9 +11,9 @@ namespace EsUtil.Feature.Loupe.MewUI.LoupeControl;
 /// <b>中心座標ラベルは <see cref="LoupeControl"/> がテキスト要素として表示する</b>ため、本引数には含めない。<br/>
 /// 座標系は次のとおり:<br/>
 /// - <see cref="Canvas"/>: ルーペの描画先（1 ピクセル = ルーペ画像の 1 ピクセル）<br/>
-/// - <see cref="CaptureTopLeft"/>: ドメイン座標（元画像ピクセル座標）<br/>
-/// - <see cref="Scale"/>: ドメイン座標 → ルーペ画像ピクセル座標の変換係数<br/>
-/// オーバーレイの描画位置は <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で求められる。<br/>
+/// - <see cref="CaptureTopLeft"/>: 対象座標（元画像ピクセル座標）<br/>
+/// - <see cref="Scale"/>: 対象座標 → ルーペ画像ピクセル座標の変換係数<br/>
+/// オーバーレイの描画位置は <c>(対象座標 − CaptureTopLeft) × Scale</c> で求められる。<br/>
 /// 拡大率・拡大中心は、描画に必要な値をホストが既に保持しているため通知しない<br/>
 /// （必要な場合は <see cref="LoupeControl"/> の公開プロパティから取得する）。
 /// </remarks>
@@ -22,8 +22,8 @@ public sealed class LoupeRenderedEventArgs : EventArgs
     /// <summary>表示情報を初期化する。</summary>
     /// <param name="canvas">ルーペを描画したキャンバス（描画済み。 追加描画はイベントハンドラ内で行う）。</param>
     /// <param name="clientPixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
-    /// <param name="captureTopLeft">切り出し領域の左上（ドメイン座標）。 中心未設定時は null。</param>
-    /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
+    /// <param name="captureTopLeft">切り出し領域の左上（対象座標）。 中心未設定時は null。</param>
+    /// <param name="scale">対象座標 → ルーペ画像ピクセル座標の変換係数。</param>
     public LoupeRenderedEventArgs(SKCanvas canvas, int clientPixelSize, EsPoint? captureTopLeft, double scale)
     {
         Canvas = canvas;
@@ -41,11 +41,11 @@ public sealed class LoupeRenderedEventArgs : EventArgs
     /// <value>一辺の物理ピクセル数。</value>
     public int ClientPixelSize { get; }
 
-    /// <summary>切り出し領域の左上（ドメイン座標）を取得する。</summary>
+    /// <summary>切り出し領域の左上（対象座標）を取得する。</summary>
     /// <value>切り出し領域の左上。 中心が未設定の場合は null（オーバーレイを描画できない）。</value>
     public EsPoint? CaptureTopLeft { get; }
 
-    /// <summary>ドメイン座標 → ルーペ画像ピクセル座標の変換係数を取得する。</summary>
+    /// <summary>対象座標 → ルーペ画像ピクセル座標の変換係数を取得する。</summary>
     /// <value>変換係数（拡大率と同値。 DPI スケーリングの影響を受けない）。</value>
     public double Scale { get; }
 }

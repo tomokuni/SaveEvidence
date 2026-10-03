@@ -192,7 +192,7 @@ flowchart TB
 - **責務**:
   - 選択矩形のオーバーレイ（`FadeMaskDragRectControl` = Marquee（外側の装飾を含む）+ Loupe の配線を内包）を `CropViewControl.Rects` へ配置し、ライフサイクルを管理
   - 設定の適用: `CaptureSettings` → `FadeMaskDragRectOptions`（コアのマッパーで一元化）→ `Options`（同一値スキップ）
-  - 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、複合コントロールへ注入
+  - 座標変換: `CoordTransform`（`CropViewControl` の `ClientToSource` / `SourceToClient` に委譲）で論理（元画像 px）↔ ビューポート DIP を 1 段変換し、複合コントロールへ注入
   - カーソル上書き抑止（Crop 中の十字カーソル維持）
   - 確定 → 論理 Rect（`CropBoundsMath.ComputeCropBounds` で区間の流儀に従い終点のピクセルを加算） / キャンセル → 0x0 の空矩形を返却（いずれもコア型 `EsRectInt`）
   - サイズラベルの文言生成（`CropLabelTexts` に委譲）
@@ -208,18 +208,18 @@ flowchart TB
   - モード別の選択処理（AreaSelect: ドラッグ選択 + ルーペ / Screen・WindowSelect: 要素検出 + ハイライト）
   - **選択スタイル（ハイライト型 / ドラッグ型）の判定はコアの `CaptureTypeTraits.IsHighlighted` が単一所有する**（本クラスは結果を 1 度読んで、十字カーソル・ルーペ・確定操作の配線を導く。 種別を直接比較しない）
   - **完了は 1 回だけ**の規則はコアの `CaptureSessionState` が単一所有する（確定とキャンセルの競合で二重完了にしない）
-  - **確定矩形の計算はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（種別が決める区間の流儀に従った終点の加算と画像内へのクランプを組み合わせた唯一の入口。 退化した結果は確定せずキャンセルする）。 サイズラベルの表示倍率はコア（`MonitorScalingMath.ResolveForDomainRect`）へ委譲する
+  - **確定矩形の計算はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（種別が決める区間の流儀に従った終点の加算と画像内へのクランプを組み合わせた唯一の入口。 退化した結果は確定せずキャンセルする）。 サイズラベルの表示倍率はコア（`MonitorScalingMath.ResolveForSourceRect`）へ委譲する
   - **事前切り出しキャッシュ（同一判定・所有権の受け渡し・旧値の破棄）はコアの `CaptureClipCache` が単一所有する**（本クラスは切り出しをバックグラウンドで実行して `Store` するだけ）。 適用範囲はハイライト型のホバー時のみ（範囲選択はドラッグ中の連続更新でキャッシュが無駄になるため）
-  - **ドメイン⇔画面物理の変換はコアの `CaptureClipMath` が単一所有する**（本クラスはコアの矩形を Avalonia の型へ写すだけ）
+  - **対象⇔画面物理の変換はコアの `CaptureClipMath` が単一所有する**（本クラスはコアの矩形を Avalonia の型へ写すだけ）
   - **確定対象の選択（ハイライト矩形 / 選択矩形）はコアの `CaptureTypeTraits.ResolveRect` が単一所有する**（サイズラベルの文言生成もこの結果を使う）
   - **検出関数の呼び分けはコアの `CaptureTypeTraits.FindUnderCursor` が単一所有する**（ホバー・押下で同じ分岐を書かない）
-  - **ハイライトの状態（矩形のドメイン座標・表示名・表示名の変化）はコアの `CaptureHighlightSession` が単一所有する**（本クラスは検出結果を渡して戻り値を選択コントロールへ設定するだけ。 診断ログもコアが出し、確定対象・キーの確定可否はコアの状態を参照する）
+  - **ハイライトの状態（矩形の対象座標・表示名・表示名の変化）はコアの `CaptureHighlightSession` が単一所有する**（本クラスは検出結果を渡して戻り値を選択コントロールへ設定するだけ。 診断ログもコアが出し、確定対象・キーの確定可否はコアの状態を参照する）
   - **画像の共有値（サイズ・占有範囲・サイズの検証）はコアの `CaptureClipMath` が単一所有する**（`ImageSize` / `ImageBounds` / `ValidateImage`。 UI はコアの型同士の変換を書かない）
 - **撮影対象の範囲（全モニタの包含矩形）と「モニタが無ければ撮影しない」前提条件はコアの `CaptureVirtualScreen.ResolveBounds` が単一所有する**（本クラスは列挙した矩形を渡して、返った範囲をウィンドウへ配置するだけ。 物理ピクセル → DIP の換算は `Platform.Core` の `DpiScaler.ToDip` に委譲する）
   - **撮影画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時のフォールバック範囲）はコアの `CaptureImageHolder` が単一所有する**（本クラスは受け取った画像を渡して可否を見るだけ。 クローズ後の破棄漏れを防ぐ）
   - **背景取得のタイムアウトと未使用結果の破棄はコアの `CaptureVirtualScreen` が単一所有する**（本クラスは取得と UI スレッドへの反映のみを担う）
   - **確定・事前切り出しの切り出し矩形はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（ドラッグは浮動小数版・クリック確定は整数版。 UI は選択矩形の型を広げない）
-  - **選択矩形と占有範囲は同じ座標空間（画面物理座標）で渡す**（本 UI のドラッグ選択のドメインはウィンドウローカル物理ピクセルのため、確定時に `CaptureClipMath.ToScreenRect` で画面物理座標へ戻してから画面物理座標の占有範囲と組み合わせる。 切り出し矩形の求解は画面物理座標の 1 つの入口に統一されている）
+  - **選択矩形と占有範囲は同じ座標空間（画面物理座標）で渡す**（本 UI のドラッグ選択の対象はウィンドウローカル物理ピクセルのため、確定時に `CaptureClipMath.ToScreenRect` で画面物理座標へ戻してから画面物理座標の占有範囲と組み合わせる。 切り出し矩形の求解は画面物理座標の 1 つの入口に統一されている）
   - **サイズラベルの文言はコアの `CaptureLabelTexts.ResolveSizeLabel` が解決する**（確定対象が無ければ設定の明示指定を使う規則を含む）
   - **オーナーの画面スケーリングの代表値はコアの `MonitorScalingMath.ResolveScaling` が解決する**（画面が取得できない場合は基準値・0 以下は正規化）
   - **キー操作（Enter = 確定 / Escape = キャンセル）の解釈はコアの `CaptureKeyActions` が単一所有する**（確定対象が無い場合の Enter は何もしない）。
@@ -243,7 +243,7 @@ flowchart TB
 | `CaptureType` enum | `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）。 UI 非依存の共通基盤 `Platform.Core`（`EsUtil.Platform.Core`）提供 |
 | `CaptureSettings` record | キャプチャの外観・動作設定（全メンバー nullable・部分更新可・`Validate()` / `ToNonNull()`）。 共通基盤 `App.Parts.CapturePreviewControl.Core` 提供 |
 | `CaptureResult` record | キャプチャ結果（`Image` / `SourceBounds`。 キャンセル時は画像 null・矩形 0x0）。 共通基盤 `App.Parts.CapturePreviewControl.Core` 提供 |
-| `FadeMaskDragRectSelectionEventArgs` record | 確定要求のイベント引数（`SelectionDomainRect`）。 本プロジェクト提供 |
+| `FadeMaskDragRectSelectionEventArgs` record | 確定要求のイベント引数（`SelectionSourceRect`）。 本プロジェクト提供 |
 | `FadeMaskDragRectPointEventArgs` record | ルーペ位置のイベント引数（`Position`）。 本プロジェクト提供 |
 
 ### 6.6 CropViewControl
@@ -252,8 +252,8 @@ flowchart TB
 - **責務**:
   - 画像表示（画像ビューポート `ZoomViewControl`）・領域選択オーバーレイ（`FadeMaskDragRectControl`）・外部提供矩形（`Rects`）を 1 コントロールに統合する
   - 子要素の生成・重ね順・入力の転送（領域選択オーバーレイ上のホイールを画像ビューポートへ転送する）
-  - `ContentToViewport` / `ViewportToContent`（ドメイン ↔ ビューポート。 画像表示矩形の原点基準）とコア確定値の描画先への写像
-- **公開メンバー**: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionDomainRect` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `ContentToViewport` / `ViewportToContent`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`
+  - `SourceToClient` / `ClientToSource`（対象 ↔ ビューポート。 画像表示矩形の原点基準）とコア確定値の描画先への写像
+- **公開メンバー**: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionSourceRect` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `SourceToClient` / `ClientToSource`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`
 - **可視性**: public
 - **依存**: ZoomViewControl / FadeMaskDragRectControl（同一アセンブリ）/ App.Parts.CapturePreviewControl.Core（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）/ App.Platform.AvaloniaUI（色の相互変換）/ Platform.Core（`EsBitmap` / `ICoordTransform`）
 - **備考**: 画像表示・領域選択の状態と判断は内包コントロールとそのコアが単一所有し、本コントロールは配置・転送・写像のみを担う（自身は判断を持たない）
@@ -269,7 +269,7 @@ flowchart TB
   - 座標変換ポートの一括分配（`SetCoordTransform`）
   - 付加情報（操作・情報ラベル）の描画（`App.Parts.CaptureSessionControl.UIBase` の `FadeMaskHostLabelRenderer`。 文言はホストが与える）
   - ルーペ画像上の選択矩形破線の描画（`LoupeRendered` イベントで描画先を受け取り、コアの破線幾何を描く）
-- **公開メンバー**: `Mode` / `Options` / `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionDomainRect` / `HighlightDomainRect` / `ShowFullOverlay` / `LoupeCenterPoint` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `RefreshOverlay` / `InvalidateOverlay`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`
+- **公開メンバー**: `Mode` / `Options` / `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionSourceRect` / `HighlightSourceRect` / `ShowFullOverlay` / `LoupeCenterPoint` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `RefreshOverlay` / `InvalidateOverlay`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`
 - **可視性**: public（内包コントロールへの直接アクセスは internal）
 - **依存**: MarqueeControl / LoupeControl / App.Parts.CaptureSessionControl.UIBase / App.Parts.CapturePreviewControl.Core（`FadeMaskDragRectMode` / `FadeMaskDragRectModes` / `FadeMaskDragRectOptions` / `FadeMaskDragRectState` / `FadeMaskDragRectOverlay`）/ 提示層の外観（`MarqueeAppearance` / `LoupeAppearance`）/ Platform.Core
 - **備考**: ホイール操作と表示の変化の追従は本コントロールの配線ではなく、ホストが担う（コントロール化を前提とした処理）
@@ -327,7 +327,7 @@ flowchart TB
 - 上位 AP への通知は Task 返却と `CaptureCompleted` イベント（同期型）の併用（Task が完了結果、イベントが画像変更の順序保証）。
 - 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）。
 - 収録する複合コントロール（`CropViewControl` / `FadeMaskDragRectControl`）も同じ向きの依存に従う（複合コントロール → 内包コントロール / コア / 提示層）。 セッションから見た窓口は `FadeMaskDragRectControl` と `CropViewControl` であり、セッションが内包コントロール（Marquee / Loupe）を直接参照することはない。
-- 画像ビューポート（`ZoomViewControl`）は `CropViewControl` が内包し、`ZoomViewControl` → `ZoomableView` / `App.Parts.CapturePreviewControl.Core` の一方向に従う。 セッション（`CropSession`）はビューポートを直接参照せず、`CropViewControl` の公開メソッド（`ViewportToContent` / `ContentToViewport`）に委譲する。
+- 画像ビューポート（`ZoomViewControl`）は `CropViewControl` が内包し、`ZoomViewControl` → `ZoomableView` / `App.Parts.CapturePreviewControl.Core` の一方向に従う。 セッション（`CropSession`）はビューポートを直接参照せず、`CropViewControl` の公開メソッド（`ClientToSource` / `SourceToClient`）に委譲する。
 
 ## 8. ライフサイクル
 

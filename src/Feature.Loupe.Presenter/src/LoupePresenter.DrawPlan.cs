@@ -18,7 +18,7 @@ public partial class LoupePresenter
     /// <summary>十字線の 2 本の矩形を計算する。</summary>
     /// <param name="surface">描画面の全体（左上を原点とする正方形）。</param>
     /// <param name="zoomLevel">拡大率（1〜64）。</param>
-    /// <param name="captureSize">切り出し領域の一辺（ドメインピクセル。 コアが解決済みの値を渡す）。</param>
+    /// <param name="captureSize">切り出し領域の一辺（対象ピクセル。 コアが解決済みの値を渡す）。</param>
     /// <returns>十字線の縦・横 2 本の矩形。</returns>
     /// <remarks>
     /// 交点は「切り出した領域を等倍で並べたときの中央のブロック」の左上へ合わせる（<c>captureSize / 2</c> の切り捨て）。<br/>

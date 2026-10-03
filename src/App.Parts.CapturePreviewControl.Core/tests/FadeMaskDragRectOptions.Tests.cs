@@ -73,13 +73,13 @@ public class FadeMaskDragRectOptionsTests
             Marquee = MarqueeOptions.Default with
             {
                 MinSelectionSize = 12.0,
-                ClampToDomainBounds = false,
+                ClampToSourceBounds = false,
             },
         };
 
         // 本値が持つのは選択の判断に必要な設定（寸法・対話パラメータ）とルーペ・ラベル・破線の値だけである
         Assert.Equal(12.0, options.Marquee.MinSelectionSize);
-        Assert.False(options.Marquee.ClampToDomainBounds);
+        Assert.False(options.Marquee.ClampToSourceBounds);
         Assert.Equal(MarqueeOptions.Default.HandleSize, options.Marquee.HandleSize);
     }
 

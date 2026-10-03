@@ -136,7 +136,7 @@ internal sealed class ZoomableView : Panel
         set
         {
             _image.Source = value;
-            ApplyFeedback(_session.SetContent(value is not null, value is null ? default : value.Size.ToEsSize()));
+            ApplyFeedback(_session.SetSource(value is not null, value is null ? default : value.Size.ToEsSize()));
         }
     }
 

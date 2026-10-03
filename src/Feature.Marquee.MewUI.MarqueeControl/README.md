@@ -42,8 +42,8 @@ var marquee = new MarqueeControl
     Appearance = MarqueeAppearance.Default with { OuterBorderColor = System.Drawing.Color.White },
 };
 
-// 2. 座標変換ポートを設定する（ToDomain = ローカル DIP → ドメイン / DomainBounds = ドメイン境界）
-marquee.SetCoordTransform(new CoordTransform(dip => dip, domain => domain, () => new EsSize(1920, 1080)));
+// 2. 座標変換ポートを設定する（ToSource = ローカル DIP → 対象 / SourceArea = 対象の境界）
+marquee.SetCoordTransform(new CoordTransform(dip => dip, source => source, () => new EsSize(1920, 1080)));
 
 // 3. イベントを購読する
 marquee.SelectionChanged += (_, e) => Console.WriteLine($"選択: {e.Rect}");
@@ -78,7 +78,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | 左ドラッグ（矩形内） | 移動 |
 | ダブルクリック（矩形内） | 確定要求（`ConfirmRequested`） |
 | ダブルクリック（矩形外） | キャンセル要求（`CancelRequested`） |
-| 矢印キー | nudge（1 ドメインピクセル単位の微調整。 カーソルを非表示にして十字マーカーを表示） |
+| 矢印キー | nudge（1 対象ピクセル単位の微調整。 カーソルを非表示にして十字マーカーを表示） |
 | Enter | 確定要求（`ConfirmRequested`） |
 | Escape | キャンセル要求（`CancelRequested`） |
 
@@ -112,8 +112,8 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `HandleSize` | `double` | `10.0` | ハンドルの一辺サイズ（DIP） |
 | `HandleBorderThickness` | `double` | `1.5` | ハンドル枠の線の太さ（DIP。 0.5〜64.0 に補正） |
 | `HandleHitRadius` | `double` | `12.0` | ハンドルのヒットテスト半径（DIP。 0.0〜256.0 に補正） |
-| `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
-| `ClampToDomainBounds` | `bool` | `true` | ドメイン境界外の選択を禁止する |
+| `MinSelectionSize` | `double` | `6.0` | 選択矩形の最小サイズ（対象座標） |
+| `ClampToSourceBounds` | `bool` | `true` | 対象の境界外の選択を禁止する |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP） |
 
 色とラベルの体裁（フォントサイズ・内側余白）に加え、**表示可否（ハンドル・ラベル・暗転・外枠・内側の塗りと枠線）も外観の単一値 `MarqueeAppearance`（`EsUtil.Feature.Marquee.Presenter.Setting`）が単一所有します**。
@@ -138,8 +138,8 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 
 | メソッド | 説明 |
 | --- | --- |
-| `SetCoordTransform(ICoordTransform?)` | ドメイン ↔ ローカル DIP の変換ポートを設定する（null は等価変換） |
-| `SetSelection(EsRect)` | 選択矩形を復元する（`Options.ClampToDomainBounds` 有効時は境界内へクリップ） |
+| `SetCoordTransform(ICoordTransform?)` | 対象 ↔ ローカル DIP の変換ポートを設定する（null は等価変換） |
+| `SetSelection(EsRect)` | 選択矩形を復元する（`Options.ClampToSourceBounds` 有効時は境界内へクリップ） |
 | `ResetSelection()` | 選択状態と nudge 状態を初期化する |
 | `RequestConfirm()` / `RequestCancel()` | Enter / Escape と同じ条件で確定・キャンセルを要求する |
 | `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する（再描画と配置の再評価を要求。 選択の状態は変更しない） |

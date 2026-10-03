@@ -169,65 +169,65 @@ public class ZoomScrollBarGeometryTests
     }
 
     // ====================================================================
-    // MaxContentOffset / ContentOffsetFromThumb
+    // MaxSourceOffset / SourceOffsetFromThumb
     // ====================================================================
 
     [Fact]
-    public void MaxContentOffset_表示がビューポートを超えた分を返す()
+    public void MaxSourceOffset_表示がビューポートを超えた分を返す()
     {
         // 等倍・ビューポート 400 → 800 - 400 = 400
-        Assert.Equal(400, ZoomScrollBarGeometry.MaxContentOffset(800, 400, 1.0));
+        Assert.Equal(400, ZoomScrollBarGeometry.MaxSourceOffset(800, 400, 1.0));
     }
 
     [Fact]
-    public void MaxContentOffset_スケールを考慮する()
+    public void MaxSourceOffset_スケールを考慮する()
     {
         // 「コンテンツ長 − ビューポート長 / 倍率」を返す（表示の要否は呼び出し側が判定する）
-        Assert.Equal(0, ZoomScrollBarGeometry.MaxContentOffset(50, 400, 4.0));
-        Assert.Equal(100, ZoomScrollBarGeometry.MaxContentOffset(200, 400, 4.0));
+        Assert.Equal(0, ZoomScrollBarGeometry.MaxSourceOffset(50, 400, 4.0));
+        Assert.Equal(100, ZoomScrollBarGeometry.MaxSourceOffset(200, 400, 4.0));
     }
 
     [Fact]
-    public void MaxContentOffset_収まる場合は0になる()
+    public void MaxSourceOffset_収まる場合は0になる()
     {
-        Assert.Equal(0, ZoomScrollBarGeometry.MaxContentOffset(200, 400, 1.0));
+        Assert.Equal(0, ZoomScrollBarGeometry.MaxSourceOffset(200, 400, 1.0));
     }
 
     [Fact]
-    public void MaxContentOffset_スケールが0以下なら0になる()
+    public void MaxSourceOffset_スケールが0以下なら0になる()
     {
-        Assert.Equal(0, ZoomScrollBarGeometry.MaxContentOffset(800, 400, 0));
+        Assert.Equal(0, ZoomScrollBarGeometry.MaxSourceOffset(800, 400, 0));
     }
 
     [Fact]
-    public void ContentOffsetFromThumb_進捗率を最大オフセットへ写す()
+    public void SourceOffsetFromThumb_進捗率を最大オフセットへ写す()
     {
         // 可動範囲 196 の半分（98）→ 最大 400 の半分 = 200
-        Assert.Equal(200, ZoomScrollBarGeometry.ContentOffsetFromThumb(98, 392, 196, 400), 6);
+        Assert.Equal(200, ZoomScrollBarGeometry.SourceOffsetFromThumb(98, 392, 196, 400), 6);
     }
 
     [Fact]
-    public void ContentOffsetFromThumb_範囲外はクランプする()
+    public void SourceOffsetFromThumb_範囲外はクランプする()
     {
-        Assert.Equal(400, ZoomScrollBarGeometry.ContentOffsetFromThumb(9999, 392, 196, 400), 6);
-        Assert.Equal(0, ZoomScrollBarGeometry.ContentOffsetFromThumb(-9999, 392, 196, 400), 6);
+        Assert.Equal(400, ZoomScrollBarGeometry.SourceOffsetFromThumb(9999, 392, 196, 400), 6);
+        Assert.Equal(0, ZoomScrollBarGeometry.SourceOffsetFromThumb(-9999, 392, 196, 400), 6);
     }
 
     [Fact]
-    public void ContentOffsetFromThumb_可動範囲が0なら0を返す()
+    public void SourceOffsetFromThumb_可動範囲が0なら0を返す()
     {
-        Assert.Equal(0, ZoomScrollBarGeometry.ContentOffsetFromThumb(50, 196, 196, 400));
+        Assert.Equal(0, ZoomScrollBarGeometry.SourceOffsetFromThumb(50, 196, 196, 400));
     }
 
     [Fact]
-    public void ContentOffsetFromThumb_往復変換で値が保たれる()
+    public void SourceOffsetFromThumb_往復変換で値が保たれる()
     {
         var (_, vertical) = ZoomScrollBarGeometry.Compute(
             new EsSize(800, 800), new EsSize(400, 400), 1.0, new EsVector(0, 200), Thickness, Margin);
 
         var bar = vertical!.Value;
         var thumbOffset = bar.Thumb.Y - bar.Track.Y;
-        var restored = ZoomScrollBarGeometry.ContentOffsetFromThumb(thumbOffset, bar.Track.Height, bar.Thumb.Height, 400);
+        var restored = ZoomScrollBarGeometry.SourceOffsetFromThumb(thumbOffset, bar.Track.Height, bar.Thumb.Height, 400);
 
         Assert.Equal(200, restored, 6);
     }

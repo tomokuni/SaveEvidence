@@ -68,7 +68,7 @@ sequenceDiagram
     participant P as 描画層（本コアを参照する上位の層）
     participant H as ホスト
 
-    UI->>M: Press / Move / Release / KeyDown（ドメイン座標）
+    UI->>M: Press / Move / Release / KeyDown（対象座標）
     M->>S: 入力の解釈を委譲
     S->>S: 状態遷移の判断（スナップ・クリック・nudge・最小サイズ）
     S-->>M: MarqueeFeedback（効果）
@@ -113,8 +113,8 @@ stateDiagram-v2
 | `src/Interaction/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態遷移の判断。 通知と効果を返す |
 | `src/Interaction/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。 **状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
 | `src/Marquee.Geometry.cs`（ルート） | `Marquee`（**partial**） | internal | 幾何の**内部手順**（注目矩形の DIP 変換・ハンドル位置・始点マーカー。 注目矩形とポートは 1 回だけ解決する）。 公開の入口 `ResolveGeometry` は `Marquee.cs` が持つ |
-| `src/Drawing/MarqueeGeometry.cs` | `MarqueeGeometry` | public | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MouseDomainPosition` / `MouseDipPosition` ＋ `ClientRect`）。 **コアが責任を持つ値の全量**。 マウス位置は文言用のドメイン座標と配置用の DIP の両方を渡す（描画層が座標変換ポートを持たないため） |
-| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | 幾何解決の入力（設定・状態・描画時に決まる値）。 `MarqueeRenderRequest.Create` が値の組を 1 箇所に閉じ、`Marquee.CreateRequest` が状態を写して生成する。 **本値から導出する値（座標変換ポートの決定・注目矩形の決定・DIP 変換）は本値のインスタンスメンバーが単一所有する**（`ResolvedPort` / `Focus` / `ResolveFocusDipRect` / `ToDipRect` / `ToDomainRect`） |
+| `src/Drawing/MarqueeGeometry.cs` | `MarqueeGeometry` | public | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusSourceRect` / `Handles` / `Marker` / `MouseSourcePosition` / `MouseDipPosition` ＋ `ClientRect`）。 **コアが責任を持つ値の全量**。 マウス位置は文言用の対象座標と配置用の DIP の両方を渡す（描画層が座標変換ポートを持たないため） |
+| `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | 幾何解決の入力（設定・状態・描画時に決まる値）。 `MarqueeRenderRequest.Create` が値の組を 1 箇所に閉じ、`Marquee.CreateRequest` が状態を写して生成する。 **本値から導出する値（座標変換ポートの決定・注目矩形の決定・DIP 変換）は本値のインスタンスメンバーが単一所有する**（`ResolvedPort` / `Focus` / `ResolveFocusDipRect` / `ToDipRect` / `ToSourceRect`） |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。 既定値を単一所有し、生成時に安全域（`Marquee.Limits`）へ補正する（寸法・対話パラメータのみ。 体裁と表示可否は描画層の外観が単一所有する） |
 | `src/Drawing/MarqueeHandles.cs` | `MarqueeHandles` | public | ドラッグハンドルの幾何（8 方向の矩形・枠線の太さ） |
 | `src/Drawing/MarqueeMarker.cs` | `MarqueeMarker` | public | 始点マーカー（十字線）の幾何（中心・半幅。 線の太さは描画層の外観が持つ） |
@@ -139,7 +139,7 @@ stateDiagram-v2
 | `Marquee` の `effects` が null | `ArgumentNullException`（呼び出し側の実装誤り） |
 | カーソルサービス未指定 | 例外にせず、カーソル操作を効果へ載せない（UI 初期化なしの検証を可能にする） |
 | ロガー未設定 | `NullLogger` へ吸収する（呼び出し側は null を設定してよい） |
-| 座標変換ポート未設定 | 等価変換（1 ドメインピクセル = 1 DIP・境界なし）として扱う |
+| 座標変換ポート未設定 | 等価変換（1 対象ピクセル = 1 DIP・境界なし）として扱う |
 | 未定義の `EsKey` | 何もしない（`default` の効果を返す） |
 | 設定値の範囲外・非数 | 生成時に補正する（例外にしない）。 安全域は `Marquee.Limits` が単一所有し、`MarqueeOptions` の `init` アクセサが適用する（描画層の外観も同じ `Limits` を参照する） |
 | 選択もハイライトも無い | 注目矩形を null とする（判断はコアが下し、UI 層は null を描かないことで扱う） |
@@ -182,7 +182,7 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | ラベルの体裁 | 「背景 = 文字の実寸 + 内側余白 × 2」「行送り」「描画領域へのクランプ」は描画にだけ必要な規則のため、描画層が単一所有する（コアは素材（マウス位置・注目矩形）だけを渡す） |
 | 設定値の安全域の適用 | 補正は設定型の生成時に適用し（`init` アクセサ）、安全域は `Marquee.Limits` が単一所有する（設定の経路（オブジェクト初期化子・`with` 式・逆シリアル化）によらず範囲内の値だけを保持する） |
 | 設定する値・しない値 | **寸法・対話パラメータは `MarqueeOptions` として公開する**（ハンドルの一辺サイズ・枠線の太さ・十字マーカーの長さ・ヒット半径・最小サイズ・境界クリップの可否）。 **体裁（色・ラベルのフォントサイズ・十字マーカーの線の太さ・カーソル座標ラベルのオフセット）は公開しない**（描画にだけ必要な設定のため、描画層の外観が単一所有する） |
-| ドメイン境界 | 利用者が座標変換ポート（`ICoordTransform.DomainBounds`）で定義し、コアは `ClampToDomainBounds` が有効な場合だけクリップする |
+| 対象の境界 | 利用者が座標変換ポート（`ICoordTransform.SourceArea`）で定義し、コアは `ClampToSourceBounds` が有効な場合だけクリップする |
 | 描画面の原点 | コアは原点が常に (0, 0) である前提で幾何を返す（親の座標を混ぜるとハンドルがずれるため、描画領域は原点を持たない `EsSize` で受ける） |
 
 ## 9. ログ
@@ -194,12 +194,12 @@ dotnet test src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj
 | 頻度 | 契機 | レベル |
 | --- | --- | --- |
 | 生成 | コンストラクターでの注入、または `Log` の初回設定 | Information |
-| 低頻度 | ロガーの設定（`Logger attached`）・`Options` の変更（変化した項目だけ）・`DipToDomainScaling` の変更・`SetCoordTransform` の呼び出し・入力の判断 | Debug |
-| 高頻度 | `HighlightDomainRect` の変更（ホバーのたびに変わりうる） | Trace |
+| 低頻度 | ロガーの設定（`Logger attached`）・`Options` の変更（変化した項目だけ）・`ClientToSourceScaling` の変更・`SetCoordTransform` の呼び出し・入力の判断 | Debug |
+| 高頻度 | `HighlightSourceRect` の変更（ホバーのたびに変わりうる） | Trace |
 
 **出力しないもの**: 毎フレーム呼ばれる解決メソッド（`CreateRequest` / `ResolveGeometry`）と、マウス移動のたびに呼ばれる入力通知（`Move`）。
 
-`Options` の変更では `HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds` のうち**変化した項目だけ**を出力します。
+`Options` の変更では `HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToSourceBounds` のうち**変化した項目だけ**を出力します。
 
 **差分検出（変化した項目だけを出力する判断）と「同値なら出力しない」規則は本コアが単一所有します**（UI 層は前後の値を渡さず、変更を通知するだけです）。 ログ基盤（ファイル出力・レベル制御）はホストが所有し、本コアは定義だけを持ちます。 **描画にだけ必要な設定（外観・表示スケーリング係数）の変更ログは描画層が所有します**。
 

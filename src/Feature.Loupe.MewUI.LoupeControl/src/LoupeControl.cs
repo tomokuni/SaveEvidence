@@ -204,8 +204,8 @@ public sealed class LoupeControl : Panel
         }
     }
 
-    /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（ToDip = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
+    /// <summary>対象 ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
+    /// <param name="port">座標変換ポート（ToDip = 対象 → 親領域 DIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// 保持と、未設定（null）を等価変換として扱う規則はコア（ファサード）が単一所有する。<br/>
     /// 変換関数は呼び出し毎に評価されるため、ズーム・スクロール等の動的変化に追従する（設定時は再配置を要求する）。

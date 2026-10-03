@@ -19,7 +19,7 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
     /// <summary>座標変換の基準とするズームビュー。</summary>
     private readonly ZoomViewControl _zoomView;
 
-    /// <summary>描画する矩形（ドメイン座標）。</summary>
+    /// <summary>描画する矩形（対象座標）。</summary>
     private IReadOnlyList<OverlayRect> _rects = [];
 
     /// <summary>矩形オーバーレイキャンバスを初期化する。</summary>
@@ -38,7 +38,7 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
         PaintSurface += OnPaintSurface;
     }
 
-    /// <summary>描画する矩形（ドメイン座標）を設定する。</summary>
+    /// <summary>描画する矩形（対象座標）を設定する。</summary>
     /// <param name="rects">描画する矩形。 空の場合は何も描画しない。</param>
     public void SetRects(IReadOnlyList<OverlayRect> rects)
     {
@@ -67,7 +67,7 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
     /// ズームビューと同じくキャンバスを DPI スケーリングしてから DIP 座標で描画する。<br/>
-    /// 各矩形の左上・右下をドメイン座標からビューポート座標へ変換し、コア（<see cref="OverlayRectLayout"/>）が<br/>
+    /// 各矩形の左上・右下を対象座標からビューポート座標へ変換し、コア（<see cref="OverlayRectLayout"/>）が<br/>
     /// 確定した描画入力を描画層へ渡す（クランプ・太さ補正・破線の判定は本メソッドが持たない）。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
@@ -88,8 +88,8 @@ internal sealed class RectOverlayCanvas : SkiaCanvasView
         {
             foreach (var rect in _rects)
             {
-                var topLeft = _zoomView.ContentToViewportImage(new EsPoint(rect.Bounds.X, rect.Bounds.Y));
-                var bottomRight = _zoomView.ContentToViewportImage(new EsPoint(rect.Bounds.Right, rect.Bounds.Bottom));
+                var topLeft = _zoomView.DisplayedSourceToClient(new EsPoint(rect.Bounds.X, rect.Bounds.Y));
+                var bottomRight = _zoomView.DisplayedSourceToClient(new EsPoint(rect.Bounds.Right, rect.Bounds.Bottom));
 
                 CropSkiaRenderer.Render(canvas, OverlayRectLayout.Resolve(rect, topLeft, bottomRight));
             }

@@ -15,7 +15,7 @@ namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.Presentation;
 /// </remarks>
 internal sealed class GuideMarqueePreview : Control
 {
-    /// <summary>見本に固定で与える選択矩形（ドメイン座標）。</summary>
+    /// <summary>見本に固定で与える選択矩形（対象座標）。</summary>
     private static readonly EsRect PreviewSelection = new(26, 22, 176, 112);
 
     /// <summary>見本の提示層（画面を持たないため効果は空実装）。</summary>
@@ -24,7 +24,7 @@ internal sealed class GuideMarqueePreview : Control
     /// <summary>見本の選択矩形と倍率を設定する。</summary>
     public GuideMarqueePreview()
     {
-        _presenter.DipToDomainScaling = 1.0;
+        _presenter.ClientToSourceScaling = 1.0;
         _presenter.SetSelection(PreviewSelection);
     }
 

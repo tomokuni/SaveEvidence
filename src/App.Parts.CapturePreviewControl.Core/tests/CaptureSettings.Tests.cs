@@ -91,7 +91,7 @@ public class CaptureSettingsTests
         Assert.Equal(2.0, s.BorderThickness);
         Assert.Equal(10.0, s.HandleSize);
         Assert.Equal(12.0, s.HandleHitRadius);
-        Assert.True(s.ClampToDomainBounds);
+        Assert.True(s.ClampToSourceBounds);
         Assert.Equal(16.0, s.MarkerLength);
         Assert.Equal(1.0, s.LoupeClientToPixelScaling);
         Assert.Equal(Color.FromArgb(0xFF, 0x53, 0x53, 0x53), s.LoupePasteboardColor);
@@ -107,14 +107,14 @@ public class CaptureSettingsTests
     {
         var s = new CaptureSettings(
             MinSelectionSize: 25, LoupeSize: 200, BorderColor: Color.Red,
-            HandleColor: Color.Blue, HandleSize: 14.0, ClampToDomainBounds: true,
+            HandleColor: Color.Blue, HandleSize: 14.0, ClampToSourceBounds: true,
             LoupeClientToPixelScaling: 2.0, SizeLabelVisible: false, InfoLabelVisible: false).ToNonNull();
 
         Assert.Equal(25, s.MinSelectionSize);
         Assert.Equal(200, s.LoupeSize);
         Assert.Equal(Color.Red, s.BorderColor);
         Assert.Equal(14.0, s.HandleSize);
-        Assert.True(s.ClampToDomainBounds);
+        Assert.True(s.ClampToSourceBounds);
         Assert.Equal(2.0, s.LoupeClientToPixelScaling);
         Assert.False(s.SizeLabelVisible);
         Assert.False(s.InfoLabelVisible);

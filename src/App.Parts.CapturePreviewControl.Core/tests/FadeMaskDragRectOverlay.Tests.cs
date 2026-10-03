@@ -39,7 +39,7 @@ public class FadeMaskDragRectOverlayTests
         FadeMaskDragRectOverlay.DrawSelectionRect(
             bitmap, new EsRect(10, 10, 20, 20), new EsPoint(5, 5), 4.0, DrawingColor.Black, DrawingColor.Transparent);
 
-        // 上辺（ドメイン y=10 → 画像 (10-5)*4 = 20）のピクセルが描画されている
+        // 上辺（対象 y=10 → 画像 (10-5)*4 = 20）のピクセルが描画されている
         var pixel = PixelAt(bitmap, 20, 20);
         Assert.True(pixel.B < 255, $"選択矩形の辺に線が描画されていない: B={pixel.B}");
 

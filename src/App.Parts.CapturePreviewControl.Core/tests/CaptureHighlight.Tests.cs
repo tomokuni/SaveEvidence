@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 
 /// <summary><see cref="CaptureHighlightSession"/> / <see cref="CaptureHighlight"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>
-/// 「検出結果 → ハイライト状態」の決定（未検出の正規化・ドメイン座標への変換・表示名の変化）と、<br/>
+/// 「検出結果 → ハイライト状態」の決定（未検出の正規化・対象座標への変換・表示名の変化）と、<br/>
 /// 検出結果のログを固定する（両 UI が同じ手順・同じログになることの根拠）。
 /// </remarks>
 public class CaptureHighlightTests
@@ -39,17 +39,17 @@ public class CaptureHighlightTests
         => new(bounds, IsDetected: true, Title: title, ClassName: className);
 
     [Fact]
-    public void Update_検出時はドメイン座標の矩形と表示名を返す()
+    public void Update_検出時は対象座標の矩形と表示名を返す()
     {
         var session = new CaptureHighlightSession();
 
         var result = session.Update(
             CaptureType.WindowSelect, Detected(new EsRectInt(2020, 100, 800, 600)), new EsPointInt(1920, 0));
 
-        Assert.NotNull(result.DomainRect);
-        Assert.Equal(new EsRect(100, 100, 800, 600), result.DomainRect);
+        Assert.NotNull(result.SourceRect);
+        Assert.Equal(new EsRect(100, 100, 800, 600), result.SourceRect);
         Assert.Equal("Sample", session.Title);
-        Assert.Equal(new EsRect(100, 100, 800, 600), session.DomainRect);
+        Assert.Equal(new EsRect(100, 100, 800, 600), session.SourceRect);
     }
 
     [Fact]
@@ -60,9 +60,9 @@ public class CaptureHighlightTests
 
         var result = session.Update(CaptureType.WindowSelect, default, default);
 
-        Assert.Null(result.DomainRect);
+        Assert.Null(result.SourceRect);
         Assert.Equal("", session.Title);
-        Assert.Null(session.DomainRect);
+        Assert.Null(session.SourceRect);
     }
 
     [Fact]
@@ -137,9 +137,9 @@ public class CaptureHighlightTests
     }
 
     [Fact]
-    public void DomainRect_初期値はnull()
+    public void SourceRect_初期値はnull()
     {
         // 未検出の初期状態（確定対象なし・ラベルは設定の明示指定を使う）
-        Assert.Null(new CaptureHighlightSession().DomainRect);
+        Assert.Null(new CaptureHighlightSession().SourceRect);
     }
 }

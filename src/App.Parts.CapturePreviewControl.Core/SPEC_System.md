@@ -74,7 +74,7 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 │ 種別・モニタの判断（静的クラス）                        │
 │  CaptureTypeTraits: IsHighlighted / ResolveInterval│
 │                     GetElementTarget                  │
-│  MonitorScalingMath: ResolveForRect / ResolveForDomainRect（中心で判定）      │
+│  MonitorScalingMath: ResolveForRect / ResolveForSourceRect（中心で判定）      │
 │                     Collect（倍率未確定の除外） / ResolveScaling（代表値）      │
 │  ImageColorMath: AverageColor（標本間引き）                            │
 │  CaptureClipMath: ResolveCaptureRect（切り出し矩形の唯一の求解。整数/浮動小数。座標空間は画面物理）            │
@@ -82,8 +82,8 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ ハイライトの状態と判断（クラス）                          │
-│  CaptureHighlightSession: Update（検出→状態の導出） / Title / DomainRect │
-│  CaptureHighlight: DomainRect / TitleChanged                            │
+│  CaptureHighlightSession: Update（検出→状態の導出） / Title / SourceRect │
+│  CaptureHighlight: SourceRect / TitleChanged                            │
 │  CaptureClickSelection: Fix（押下で固定） / Take（解放で取り出し）    │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
@@ -119,7 +119,7 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 ┌──────────────────────────────────────────────────────┐
 │ 切り出しビューの画像ビューポート（クラス・静的クラス）    │
 │  ZoomViewSession（状態と判断を単一所有）                 │
-│    SetContent / SetViewport / SetCenterAlign / SetAppearance │
+│    SetSource / SetViewport / SetCenterAlign / SetAppearance │
 │    ApplyConfig / SetZoom / SetFixedZoom / SetOffset     │
 │    PanBy / PanByWheel / Press / Move / Release          │
 │    ZoomIn / ZoomOut / ZoomFit / ZoomByWheel             │
@@ -162,7 +162,7 @@ classDiagram
         +Extract(EsBitmap, EsPointInt, EsRectInt) EsBitmap?
     }
     class CaptureHighlightSession {
-        +EsRect? DomainRect
+        +EsRect? SourceRect
         +string Title
         +Update(CaptureType, ElementFinderResults, EsPointInt) CaptureHighlight
     }
@@ -179,12 +179,12 @@ classDiagram
         +From(EsBitmap, EsRectInt) CaptureResult
     }
     class CaptureHighlight {
-        +EsRect? DomainRect
+        +EsRect? SourceRect
         +bool TitleChanged
     }
     class MonitorScalingMath {
         +ResolveForRect(EsRectInt, IReadOnlyList, double) double
-        +ResolveForDomainRect(EsRect, EsPointInt, IReadOnlyList, double) double
+        +ResolveForSourceRect(EsRect, EsPointInt, IReadOnlyList, double) double
         +Collect(IEnumerable) IReadOnlyList
         +ResolveScaling(IEnumerable) double
     }
@@ -284,7 +284,7 @@ classDiagram
 └──────────────────────────────────────────────────────┘
 ```
 
-**矩形オーバーレイは「どう描くか」の判断（負サイズのクランプ・太さの 1 ピクセル下限・破線かどうか・背景色を使うか）を本プロジェクトが単一所有**し、UI 層はドメイン座標 → ビューポート座標の変換と、確定した描画入力の写像だけを行います（MewUI の値型は負のサイズを 0 へクランプしますが Avalonia は保持するため、本層を通して両 UI の挙動を揃えます）。
+**矩形オーバーレイは「どう描くか」の判断（負サイズのクランプ・太さの 1 ピクセル下限・破線かどうか・背景色を使うか）を本プロジェクトが単一所有**し、UI 層は対象座標 → ビューポート座標の変換と、確定した描画入力の写像だけを行います（MewUI の値型は負のサイズを 0 へクランプしますが Avalonia は保持するため、本層を通して両 UI の挙動を揃えます）。
 
 **領域選択のコアは動作モードの型・設定の単一値・モードから導出する表示可否・選択矩形の可否判定・ルーペ画像への破線描画を単一所有**します（両 UI が同じ型と判断を使うため、UI ごとに `switch` や「幅 > 0」の判定を書く余地がありません）。
 
@@ -309,15 +309,15 @@ classDiagram
 
 ```mermaid
 classDiagram
-    class ZoomViewSession { <<sealed class>> +bool IsFit  +double ZoomPercent  +EsVector Offset  +ZoomState CurrentState  +ZoomFeedback SetContent(hasSource, contentSize)  +ZoomFeedback ZoomIn()  +ZoomFeedback ZoomByWheel(zoomIn, pointer)  +ZoomFeedback PanBy(delta) }
+    class ZoomViewSession { <<sealed class>> +bool IsFit  +double ZoomPercent  +EsVector Offset  +ZoomState CurrentState  +ZoomFeedback SetSource(hasSource, sourceSize)  +ZoomFeedback ZoomIn()  +ZoomFeedback ZoomByWheel(zoomIn, pointer)  +ZoomFeedback PanBy(delta) }
     class ZoomOptions { <<sealed class>> +double MinZoom  +double MaxZoom  +double WheelFactor  +IReadOnlyList~double~ ButtonZoomLevels  +With(...) ZoomOptions }
     class ZoomState { <<readonly record struct>> +double ZoomPercent  +bool IsFit  +bool CanZoomIn  +bool CanZoomOut }
     class ZoomFeedback { <<readonly record struct>> +bool Redraw  +bool CapturePointer  +bool ReleasePointer  +ApplyVisual(redraw)$  +ApplyPointer(capture, release)$ }
     class ZoomNotice { <<sealed record>> +ZoomNoticeKind Kind  +ZoomState State  +EsRect ImageRect }
     class ZoomViewAppearance { <<sealed record>> +Color BackgroundColor  +ComputeCheckerArea(...)$  +ComputeLightTileRects(...)$ }
-    class ZoomScrollBarGeometry { <<static>> +Compute(...)$  +MovableThumbRange(...)$  +ContentOffsetFromThumb(...)$ }
+    class ZoomScrollBarGeometry { <<static>> +Compute(...)$  +MovableThumbRange(...)$  +SourceOffsetFromThumb(...)$ }
     class ZoomTransition { <<static>> +NextLevel(...)$  +PrevLevel(...)$  +WheelZoomIn(...)$  +WheelZoomOut(...)$  +BuildAvailability(...)$ }
-    class ZoomMath { <<static>> +FitScale(...)$  +ComputeOffsetAfterScaleChange(...)$  +ClampOffset(...)$  +ViewportToContent(...)$ }
+    class ZoomMath { <<static>> +FitScale(...)$  +ComputeOffsetAfterScaleChange(...)$  +ClampOffset(...)$  +ClientToSource(...)$ }
 
     ZoomViewSession ..> ZoomOptions : 保持
     ZoomViewSession ..> ZoomViewAppearance : 保持
@@ -392,7 +392,7 @@ sequenceDiagram
 | `CropBoundsMath` | 純粋関数のためヘッドレスで検証する。 四捨五入（0.5 の切り上げ）・画像外のクランプ・画像と重ならない場合の空・1 ピクセル未満の空・最小サイズ・区間の流儀に応じた終点の加算と端のクランプ・画像サイズ 0 以下・丸め規則の公開（41 件）。 Avalonia 版 / MewUI 版から移した境界値テストを 1 箇所へ集約した |
 | `CaptureSettings` / `CaptureSettingsMerge` | 既定値の解決（`ToNonNull`）・部分更新のマージ・同値スキップ・範囲外の検証 |
 | `CaptureTypeTraits` | 3 種別すべての性質（ハイライト・区間の流儀・検出対象）と未定義値のフォールバック・検出関数の呼び分け・確定対象の選択（16 件） |
-| `MonitorScalingMath` | 中心を含むモニタの選択・単一モニタ・どのモニタにも含まれない場合のフォールバック・負座標・ドメイン座標からの原点加算 |
+| `MonitorScalingMath` | 中心を含むモニタの選択・単一モニタ・どのモニタにも含まれない場合のフォールバック・負座標・対象座標からの原点加算 |
 | `CropLabelTexts` / `ImageColorMath` | ラベル書式（区間の流儀に応じた `WH`・倍率の丸め）・平均色（単色・標本間引き・null 検証） |
 | `CaptureClipMath` / `CaptureClipCache` | 画面物理⇔画像ローカル座標の双方向変換（往復一致）・座標空間の混在で切り出せなくなる機序・切り出しの未取得時 null・同一判定・所有権の移動・旧値の破棄 |
 | `CaptureTiming` / `CropSessionActions` | 方針値（タイムアウト・画面外座標）と、1 操作で実行する内容の決定（4 通りの入力） |

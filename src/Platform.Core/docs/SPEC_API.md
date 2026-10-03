@@ -108,7 +108,7 @@ public sealed record HotKeySetting(HotKeyModifiers Modifiers, EsKey Key)
 
 ### 2.6 `Coord.ScrollMath`（static class）
 
-- `MaxOffset(double contentSize, double viewportSize, double scale)`: スクロール範囲の最大オフセットを返す。
+- `MaxOffset(double sourceSize, double viewportSize, double scale)`: スクロール範囲の最大オフセットを返す。
 - `ViewportSize(double viewportSize, double scale)`: コンテンツ座標での表示範囲を返す。
 - スクロールバー計算で共用する（スクロール位置の上限を 1 箇所へ集約するため）。
 
@@ -451,23 +451,23 @@ public readonly record struct ElementFinderResults(
 
 ### 2.13 `Coord.ICoordTransform`（interface）
 
-ローカル DIP とドメイン座標の双方向変換ポート。 座標はコア幾何型で扱います。 軸はこの 1 つだけであり、DIP とデバイスピクセルの換算は `DpiScaler` が単一所有します。
+ローカル DIP と対象座標の双方向変換ポート。 座標はコア幾何型で扱います。 軸はこの 1 つだけであり、DIP とデバイスピクセルの換算は `DpiScaler` が単一所有します。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `ToDomain` | `EsPoint ToDomain(EsPoint dip)` | ローカル DIP 座標 → ドメイン座標 |
-| `ToDip` | `EsPoint ToDip(EsPoint domain)` | ドメイン座標 → ローカル DIP 座標 |
-| `DomainBounds` | `EsSize? DomainBounds { get; }` | ドメイン座標の境界（null = 無制限） |
+| `ToSource` | `EsPoint ToSource(EsPoint dip)` | ローカル DIP 座標 → 対象座標 |
+| `ToDip` | `EsPoint ToDip(EsPoint source)` | 対象座標 → ローカル DIP 座標 |
+| `SourceArea` | `EsSize? SourceArea { get; }` | 対象座標の境界（null = 無制限） |
 
 ### 2.14 `Coord.CoordTransform`（sealed class : ICoordTransform）
 
-`Func` 委譲による変換ポートを提供します。 倍率の向きは 1 通り（ドメイン座標 / ローカル DIP）だけです。
+`Func` 委譲による変換ポートを提供します。 倍率の向きは 1 通り（対象座標 / ローカル DIP）だけです。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `Identity` | `static ICoordTransform Identity { get; }` | 等価変換（ローカル DIP = ドメイン座標・境界なし）の既定ポート |
-| `DipToDomain` | `static ICoordTransform DipToDomain(Func<double> domainPerDip, Func<EsSize?>? domainBounds = null)` | ドメイン = ローカル DIP × `domainPerDip`（呼び出し毎評価。 倍率は ドメイン座標 / ローカル DIP。 0 以下は 1.0 扱い。 境界を省略すると無制限） |
-| コンストラクタ | `CoordTransform(Func<EsPoint, EsPoint> toDomain, Func<EsPoint, EsPoint> toDip, Func<EsSize?> domainBounds)` | 変換関数を直接注入（軸は利用側が定義） |
+| `Identity` | `static ICoordTransform Identity { get; }` | 等価変換（ローカル DIP = 対象座標・境界なし）の既定ポート |
+| `ClientToSource` | `static ICoordTransform ClientToSource(Func<double> sourcePerDip, Func<EsSize?>? sourceArea = null)` | 対象 = ローカル DIP × `sourcePerDip`（呼び出し毎評価。 倍率は 対象座標 / ローカル DIP。 0 以下は 1.0 扱い。 境界を省略すると無制限） |
+| コンストラクタ | `CoordTransform(Func<EsPoint, EsPoint> toSource, Func<EsPoint, EsPoint> toDip, Func<EsSize?> sourceArea)` | 変換関数を直接注入（軸は利用側が定義） |
 
 ### 2.13 `Imaging.EsBitmap`（sealed class : IDisposable）
 
@@ -526,9 +526,9 @@ var rect = EsRect.FromLTRB(10, 20, 110, 120);
 var center = rect.Center;                             // EsPoint
 var clamped = rect.ClampToArea(new EsSize(200, 100)); // 領域内へクランプ
 
-// 座標系の変換ポート（ドメイン座標 = ローカル DIP × 倍率）
-var port = CoordTransform.DipToDomain(() => 2.0);
-var domain = port.ToDomain(new EsPoint(100, 100));
+// 座標系の変換ポート（対象座標 = ローカル DIP × 倍率）
+var port = CoordTransform.ClientToSource(() => 2.0);
+var source = port.ToSource(new EsPoint(100, 100));
 ```
 
 ### 3.2 OS サービスの注入（上位のアプリ）

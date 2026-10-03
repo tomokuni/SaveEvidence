@@ -16,7 +16,7 @@ namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl;
 /// </summary>
 /// <remarks>
 /// ビジュアルツリー接続時に TopLevel のキーイベントを購読し、切断時に解除する。<br/>
-/// 描画は提示層が解決した描画計画（<see cref="MarqueeDrawPlan"/>）を自 UI の描画面へ写し、座標変換（ドメイン → DIP）は座標変換ポートに問い合わせる
+/// 描画は提示層が解決した描画計画（<see cref="MarqueeDrawPlan"/>）を自 UI の描画面へ写し、座標変換（対象 → DIP）は座標変換ポートに問い合わせる
 /// （描画は提示層が解決した計画を読むだけで、判断を持たない）。
 /// </remarks>
 public sealed partial class MarqueeControl

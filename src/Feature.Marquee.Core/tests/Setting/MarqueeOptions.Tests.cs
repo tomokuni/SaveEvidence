@@ -22,7 +22,7 @@ public class MarqueeOptionsTests
         Assert.Equal(16.0, options.MarkerLength);
         Assert.Equal(12.0, options.HandleHitRadius);
         Assert.Equal(6.0, options.MinSelectionSize);
-        Assert.True(options.ClampToDomainBounds);
+        Assert.True(options.ClampToSourceBounds);
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class MarqueeOptionsTests
 
         Assert.Equal(20.0, options.MinSelectionSize);
         Assert.Equal(MarqueeOptions.Default.HandleSize, options.HandleSize);
-        Assert.True(options.ClampToDomainBounds);
+        Assert.True(options.ClampToSourceBounds);
     }
 
     [Fact]

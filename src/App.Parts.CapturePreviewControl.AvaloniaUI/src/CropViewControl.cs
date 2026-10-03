@@ -149,12 +149,12 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.Options = value;
     }
 
-    /// <summary>DPI スケーリング係数（<see cref="FadeMaskDragRectControl.DipToDomainScaling"/> へ委譲）。</summary>
+    /// <summary>DPI スケーリング係数（<see cref="FadeMaskDragRectControl.ClientToSourceScaling"/> へ委譲）。</summary>
     /// <remarks>ユーザー設定ではなく、セッション（Crop は 1.0）がコードから動的設定する。</remarks>
-    public double DipToDomainScaling
+    public double ClientToSourceScaling
     {
-        get => _selectionOverlay.DipToDomainScaling;
-        set => _selectionOverlay.DipToDomainScaling = value;
+        get => _selectionOverlay.ClientToSourceScaling;
+        set => _selectionOverlay.ClientToSourceScaling = value;
     }
 
     /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="FadeMaskDragRectControl.LoupeClientToPixelScaling"/> へ委譲する。</summary>
@@ -214,7 +214,7 @@ public sealed partial class CropViewControl : Panel
     // 公開 API: 外部提供矩形
     // ====================================================================
 
-    /// <summary>オーバーレイとして表示する矩形の一覧（ドメイン座標）。</summary>
+    /// <summary>オーバーレイとして表示する矩形の一覧（対象座標）。</summary>
     /// <remarks>
     /// 設定すると View（ビューポート）とルーペ画像の両方へ描画される。<br/>
     /// 矩形情報（<see cref="OverlayRect"/>）には破線種類・前景色・背景色・線幅が含まれる。
@@ -314,11 +314,11 @@ public sealed partial class CropViewControl : Panel
     /// <summary>現在の選択状態（選択矩形の有無）。</summary>
     public bool HasSelection => _selectionOverlay.HasSelection;
 
-    /// <summary>現在の選択矩形（ドメイン座標）。 未選択時は 0x0 の空矩形。</summary>
-    public Rect SelectionDomainRect => _selectionOverlay.SelectionDomainRect;
+    /// <summary>現在の選択矩形（対象座標）。 未選択時は 0x0 の空矩形。</summary>
+    public Rect SelectionSourceRect => _selectionOverlay.SelectionSourceRect;
 
     /// <summary>選択状態を外部から設定する（暗転マスクとルーペへ同期）。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。 サイズ 0 以下は選択なし。</param>
+    /// <param name="rect">選択矩形（対象座標）。 サイズ 0 以下は選択なし。</param>
     public void SetSelection(Rect rect) => _selectionOverlay.SetSelection(rect);
 
     /// <summary>選択状態をクリアする（全面暗転に戻す）。</summary>
@@ -407,7 +407,7 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>矩形オーバーレイを再描画する。</summary>
     /// <remarks>
-    /// <see cref="Rects"/> の各矩形の左上・右下を <see cref="ContentToViewport"/>（画像表示矩形の原点基準）でビューポート座標へ変換し、<br/>
+    /// <see cref="Rects"/> の各矩形の左上・右下を <see cref="SourceToClient"/>（画像表示矩形の原点基準）でビューポート座標へ変換し、<br/>
     /// コア（<see cref="OverlayRectLayout.Resolve"/>）が<b>確定した描画入力</b>を図形要素へ写す。<br/>
     /// クランプ・太さ補正・破線の判定はコアが単一所有する（本メソッドは式と判断を持たない）。
     /// </remarks>
@@ -421,8 +421,8 @@ public sealed partial class CropViewControl : Panel
 
         foreach (var rect in Rects)
         {
-            var topLeft = ContentToViewport(new Point(rect.Bounds.X, rect.Bounds.Y));
-            var bottomRight = ContentToViewport(new Point(rect.Bounds.Right, rect.Bounds.Bottom));
+            var topLeft = SourceToClient(new Point(rect.Bounds.X, rect.Bounds.Y));
+            var bottomRight = SourceToClient(new Point(rect.Bounds.Right, rect.Bounds.Bottom));
 
             var frame = OverlayRectLayout.Resolve(rect, topLeft.ToEsPoint(), bottomRight.ToEsPoint());
             var rectElement = CreateRectElement(frame);
@@ -433,25 +433,25 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>ビューポート座標をドメイン座標（元画像ピクセル）へ変換する。</summary>
+    /// <summary>ビューポート座標を対象座標（元画像ピクセル）へ変換する。</summary>
     /// <param name="viewportPos">ビューポート座標。</param>
-    /// <returns>ドメイン座標。</returns>
+    /// <returns>対象座標。</returns>
     /// <remarks>
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
-    /// 変換は <see cref="ZoomViewControl.ViewportToContentImage"/> に委譲する（座標変換の単一所有）。
+    /// 変換は <see cref="ZoomViewControl.ClientToDisplayedSource"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
-    public Point ViewportToContent(Point viewportPos)
-        => _zoomView.ViewportToContentImage(viewportPos);
+    public Point ClientToSource(Point viewportPos)
+        => _zoomView.ClientToDisplayedSource(viewportPos);
 
-    /// <summary>ドメイン座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
-    /// <param name="contentPos">ドメイン座標。</param>
+    /// <summary>対象座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
+    /// <param name="contentPos">対象座標。</param>
     /// <returns>ビューポート座標。</returns>
     /// <remarks>
     /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
-    /// 変換は <see cref="ZoomViewControl.ContentToViewportImage"/> に委譲する（座標変換の単一所有）。
+    /// 変換は <see cref="ZoomViewControl.DisplayedSourceToClient"/> に委譲する（座標変換の単一所有）。
     /// </remarks>
-    public Point ContentToViewport(Point contentPos)
-        => _zoomView.ContentToViewportImage(contentPos);
+    public Point SourceToClient(Point contentPos)
+        => _zoomView.DisplayedSourceToClient(contentPos);
 
     // ====================================================================
     // 矩形オーバーレイ作成（破線スタイル・色・幅）
@@ -506,7 +506,7 @@ public sealed partial class CropViewControl : Panel
     /// <param name="sender">イベント送信元（FadeMaskDragRectControl）。</param>
     /// <param name="e">描画済み Bitmap と表示情報。</param>
     /// <remarks>
-    /// 外部提供矩形（<see cref="Rects"/>）を <c>(ドメイン座標 − CaptureTopLeft) × Scale</c> で<br/>
+    /// 外部提供矩形（<see cref="Rects"/>）を <c>(対象座標 − CaptureTopLeft) × Scale</c> で<br/>
     /// ルーペ画像ピクセル座標へ変換し、4 辺を破線（前景色 / 背景色・市松風）で描画する。<br/>
     /// 描画範囲の判定は <see cref="OverlayRectRasterizer"/> が行うため、矩形が空でも分岐を持たない。
     /// </remarks>

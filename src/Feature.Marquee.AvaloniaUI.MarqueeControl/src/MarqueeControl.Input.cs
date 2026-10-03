@@ -34,7 +34,7 @@ public sealed partial class MarqueeControl
     /// </remarks>
     private void OnTopLevelKeyDown(object? sender, KeyEventArgs e)
     {
-        e.Handled = _marquee.KeyDown(e.Key.ToEsKey(), CurrentCursorDomainPosition()) || e.Handled;
+        e.Handled = _marquee.KeyDown(e.Key.ToEsKey(), CurrentCursorSourcePosition()) || e.Handled;
     }
 
     /// <summary>フォーカスを失ったときに nudge を終了する。</summary>
@@ -52,13 +52,13 @@ public sealed partial class MarqueeControl
         _marquee.EndNudge();
     }
 
-    /// <summary>現在のカーソル位置（ドメイン座標）を取得する。</summary>
-    /// <returns>カーソル位置（ドメイン座標）。 TopLevel を特定できない場合は null。</returns>
+    /// <summary>現在のカーソル位置（対象座標）を取得する。</summary>
+    /// <returns>カーソル位置（対象座標）。 TopLevel を特定できない場合は null。</returns>
     /// <remarks>
     /// nudge の基点精度を上げるために記録する（マウス移動が未発生でも現在位置から微調整を開始でき、原点へ飛ばない）。<br/>
-    /// 画面物理座標 → ビジュアルの DIP → ドメイン座標の順に変換する（境界の 1 行変換）。
+    /// 画面物理座標 → ビジュアルの DIP → 対象座標の順に変換する（境界の 1 行変換）。
     /// </remarks>
-    private EsPoint? CurrentCursorDomainPosition()
+    private EsPoint? CurrentCursorSourcePosition()
     {
         if (TopLevel.GetTopLevel(this) is null)
         {
@@ -67,6 +67,6 @@ public sealed partial class MarqueeControl
 
         var screenPoint = _cursor.GetCursorScreenPoint();
         var localDip = ScreenConverter.ScreenToLocalDip(this, screenPoint.ToAvaloniaPixelPoint()).ToEsPoint();
-        return _marquee.ToDomain(localDip);
+        return _marquee.ToSource(localDip);
     }
 }

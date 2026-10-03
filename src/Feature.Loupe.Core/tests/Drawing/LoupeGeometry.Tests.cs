@@ -91,10 +91,10 @@ public class LoupeGeometryTests
     // 切り出し領域の導出（CaptureSize / CaptureTopLeft / MagnifiedImage）
     // ====================================================================
 
-    /// <summary>切り出し領域の一辺がドメインピクセルの切り上げで求まることを検証する。</summary>
+    /// <summary>切り出し領域の一辺が対象ピクセルの切り上げで求まることを検証する。</summary>
     /// <param name="clientPixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="zoomLevel">拡大率。</param>
-    /// <param name="expected">期待する切り出し領域の一辺（ドメインピクセル）。</param>
+    /// <param name="expected">期待する切り出し領域の一辺（対象ピクセル）。</param>
     [Theory]
     [InlineData(100, 4, 25)]
     [InlineData(100, 3, 34)]
@@ -103,13 +103,13 @@ public class LoupeGeometryTests
     [InlineData(16, 4, 4)]
     [InlineData(25, 4, 7)]
     [InlineData(1, 1, 1)]
-    public void CaptureSize_切り上げてドメインピクセルを返す(int clientPixelSize, int zoomLevel, int expected)
+    public void CaptureSize_切り上げて対象ピクセルを返す(int clientPixelSize, int zoomLevel, int expected)
         => Assert.Equal(expected, Geometry(s_center, clientPixelSize, zoomLevel).CaptureSize);
 
-    /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）が求まることを検証する。</summary>
+    /// <summary>拡大中心から切り出し領域の左上（対象座標）が求まることを検証する。</summary>
     /// <param name="centerX">拡大中心のX座標。</param>
     /// <param name="centerY">拡大中心のY座標。</param>
-    /// <param name="size">切り出し領域の一辺（ドメインピクセル）。 物理ピクセルサイズは <c>size × zoomLevel</c> で与える。</param>
+    /// <param name="size">切り出し領域の一辺（対象ピクセル）。 物理ピクセルサイズは <c>size × zoomLevel</c> で与える。</param>
     /// <param name="zoomLevel">拡大率。</param>
     /// <param name="expectedLeft">期待する左上のX座標。</param>
     /// <param name="expectedTop">期待する左上のY座標。</param>
@@ -192,7 +192,7 @@ public class LoupeGeometryTests
     }
 
     /// <summary>テスト用の描画の幾何を生成する（スケーリング 1.0・表示サイズ＝物理ピクセル）。</summary>
-    /// <param name="center">拡大中心（ドメイン座標）。 未設定は null。</param>
+    /// <param name="center">拡大中心（対象座標）。 未設定は null。</param>
     /// <param name="clientPixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="zoomLevel">拡大率。</param>
     /// <returns>描画の幾何。</returns>

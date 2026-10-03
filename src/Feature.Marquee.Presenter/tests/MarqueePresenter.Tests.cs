@@ -52,7 +52,7 @@ public class MarqueePresenterTests
     public void DisplayScaleScaling_0以下は倍率と同値になる(double displayScale)
     {
         var presenter = CreatePresenter(out _);
-        presenter.DipToDomainScaling = 1.25;
+        presenter.ClientToSourceScaling = 1.25;
 
         presenter.DisplayScaleScaling = displayScale;
 
@@ -64,7 +64,7 @@ public class MarqueePresenterTests
     public void DisplayScaleScaling_正の値はそのまま保持する()
     {
         var presenter = CreatePresenter(out _);
-        presenter.DipToDomainScaling = 1.25;
+        presenter.ClientToSourceScaling = 1.25;
 
         presenter.DisplayScaleScaling = 2.0;
 
@@ -151,12 +151,12 @@ public class MarqueePresenterTests
         var presenter = CreatePresenter(out _);
         var logger = AttachLogger(presenter);
 
-        presenter.DipToDomainScaling = 1.25;
+        presenter.ClientToSourceScaling = 1.25;
 
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: DipToDomainScaling 1 → 1.25",
-                "[Feature.Marquee.Presenter] Forwarded: DipToDomainScaling 1.25",
+                "[Feature.Marquee.Core] Setting: ClientToSourceScaling 1 → 1.25",
+                "[Feature.Marquee.Presenter] Forwarded: ClientToSourceScaling 1.25",
             ],
             logger.Messages);
         Assert.Equal([LogLevel.Debug, LogLevel.Trace], logger.Levels);
@@ -201,7 +201,7 @@ public class MarqueePresenterTests
     {
         var presenter = CreatePresenter(out _);
         presenter.SetSelection(new EsRect(10, 20, 30, 40));
-        presenter.HighlightDomainRect = new EsRect(1, 2, 3, 4);
+        presenter.HighlightSourceRect = new EsRect(1, 2, 3, 4);
 
         var plan = presenter.ResolveDrawPlan(new EsSize(200, 100), MeasureText);
 
@@ -277,7 +277,7 @@ public class MarqueePresenterTests
     public void ResolveDrawPlan_座標変換ポートを幾何へ適用する()
     {
         var presenter = CreatePresenter(out _);
-        // ToDip（ドメイン → DIP）は 2 倍
+        // ToDip（対象 → DIP）は 2 倍
         presenter.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
         presenter.SetSelection(new EsRect(10, 20, 100, 50, EsRectInterval.Closed));
@@ -409,7 +409,7 @@ public class MarqueePresenterTests
 
         Assert.True(presenter.HasSelection);
         // ドラッグ由来の選択矩形は閉区間（始点・終点のピクセルを含む）
-        Assert.Equal(new EsRect(10, 10, 40, 30, EsRectInterval.Closed), presenter.SelectionDomainRect);
+        Assert.Equal(new EsRect(10, 10, 40, 30, EsRectInterval.Closed), presenter.SelectionSourceRect);
         Assert.True(effects.RedrawCount > 0, "再描画が要求されていない");
     }
 }

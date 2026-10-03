@@ -20,7 +20,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Sessions;
 /// <br/>
 /// <b>ライフサイクル</b>: 生成時にオーバーレイを表示ツリーへ加えて表示し、確定（Enter / イベント）または<br/>
 /// キャンセル（Escape）で表示ツリーから外れて終了する（終了は <c>onEnded</c> で Facade へ通知する）。<br/>
-/// 確定時は <see cref="ICaptureTarget.ApplyCrop"/> を通すため、Undo 履歴への退避などのドメイン操作は<br/>
+/// 確定時は <see cref="ICaptureTarget.ApplyCrop"/> を通すため、Undo 履歴への退避などの対象操作は<br/>
 /// アプリ側（<see cref="ICaptureTarget"/> の実装）に委ねる。<br/>
 /// <br/>
 /// <b>座標変換</b>: プレビューはズーム・パンできるため、ローカル DIP ↔ 画像ピクセルの変換は<br/>
@@ -179,7 +179,7 @@ internal sealed class CropSession
 
         // 切り出し範囲の計算（閉区間化・画像内へのクランプ・端数の丸め）はコアが単一所有する
         var pixels = CropBoundsMath.ComputeCropBounds(
-            _selector.SelectionDomainRect, CaptureClipMath.ImageSize(image), _settings.MinSelectionSize!.Value);
+            _selector.SelectionSourceRect, CaptureClipMath.ImageSize(image), _settings.MinSelectionSize!.Value);
         // 退化した選択（切り出せない矩形）はキャンセルとして記録する（規則はコアが単一所有する）
         _log.LogCropFinished(pixels);
         EndSession();
@@ -281,16 +281,16 @@ internal sealed class CropSession
     /// ローカル DIP ⇔ 画像ピクセルの変換は、表示中の画像矩形・実効倍率・Fit / 中央寄せの原点補正を<br/>
     /// 内包する <see cref="CropViewControl"/>（ズームビューポート）へ委譲する（Avalonia 版の <c>CropSession</c> と同じ）。<br/>
     /// ズーム・パンで表示が変わるたびに呼び直す（ポートは都度生成する）。<br/>
-    /// ドメイン座標（元画像ピクセル）はズーム・パンで不変のため、選択矩形は維持される（オーバーレイの描画位置のみが追従する）。
+    /// 対象座標（元画像ピクセル）はズーム・パンで不変のため、選択矩形は維持される（オーバーレイの描画位置のみが追従する）。
     /// </remarks>
     private void UpdatePort()
     {
         var image = _target.CurrentImage;
 
         _selector.SetCoordTransform(new CoordTransform(
-            toDomain: _view.ViewportToContent,
-            toDip: _view.ContentToViewport,
-            domainBounds: () => image is null ? null : CaptureClipMath.ImageSize(image)));
+            toSource: _view.ClientToSource,
+            toDip: _view.SourceToClient,
+            sourceArea: () => image is null ? null : CaptureClipMath.ImageSize(image)));
     }
 
     /// <summary>設定を選択コントロールへ反映する。</summary>
@@ -308,11 +308,11 @@ internal sealed class CropSession
         _selector.MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(s);
         _selector.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
 
-        // サイズラベルは画像ピクセル（ドメイン座標）で表示する（表示時点の選択を持ち出す）。
+        // サイズラベルは画像ピクセル（対象座標）で表示する（表示時点の選択を持ち出す）。
         // 書式と「未選択なら描かない」規則はコアが単一所有する
         // （Avalonia 版と同じ文言・同じ表示条件になる）。
         _selector.SizeLabelOverrideProvider = () => CropLabelTexts.ResolveSizeLabel(
-            _selector.HasSelection, _selector.SelectionDomainRect, _view.ZoomPercent);
+            _selector.HasSelection, _selector.SelectionSourceRect, _view.ZoomPercent);
 
         // 操作ラベル・情報ラベルの文言はキャプチャコア（CaptureLabelTexts）が単一所有する。
         // 情報ラベルは切り出しでは表示しない（GetInfoText が切り出しモードで null を返す）。

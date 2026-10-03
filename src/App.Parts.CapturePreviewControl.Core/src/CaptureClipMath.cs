@@ -30,7 +30,7 @@ public static class CaptureClipMath
     /// <param name="localRect">画像ローカル座標の矩形。</param>
     /// <param name="origin">画像の原点（画面物理ピクセル）。</param>
     /// <returns>画面物理座標の矩形。</returns>
-    /// <remarks>ドメイン（画像ローカル）で保持している選択矩形を画面物理座標へ戻すときに使う（双方向の対称性を保つ）。<br/>
+    /// <remarks>対象（画像ローカル）で保持している選択矩形を画面物理座標へ戻すときに使う（双方向の対称性を保つ）。<br/>
     /// 寸法は変わらないため区間の流儀（<see cref="EsRect.Interval"/>）はそのまま引き継ぐ。
     /// </remarks>
     public static EsRect ToScreenRect(EsRect localRect, EsPointInt origin)

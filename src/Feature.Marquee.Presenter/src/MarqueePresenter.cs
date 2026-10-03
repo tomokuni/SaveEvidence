@@ -121,14 +121,14 @@ public partial class MarqueePresenter
     }
 
     /// <summary>サイズラベルの自動生成に使うスケーリング係数（マルチスクリーン補正）を取得または設定する。</summary>
-    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="DipToDomainScaling"/> と同じ値。</value>
+    /// <value>DisplayScale の百分率に使う係数。 未設定（0 以下）の場合は <see cref="ClientToSourceScaling"/> と同じ値。</value>
     /// <remarks>
     /// 0 以下を倍率と同値として扱う規則は <c>Marquee.Limits.ResolveDisplayScale</c> が単一所有する。<br/>
     /// 変更は本クラスが検出して出力する（UI 層に同値判定を置かない）。
     /// </remarks>
     public double DisplayScaleScaling
     {
-        get => MarqueeFacade.Limits.ResolveDisplayScale(_displayScaleScaling, _core.DipToDomainScaling);
+        get => MarqueeFacade.Limits.ResolveDisplayScale(_displayScaleScaling, _core.ClientToSourceScaling);
         set
         {
             if (SetIfChanged(ref _displayScaleScaling, value, out var previous))
@@ -144,7 +144,7 @@ public partial class MarqueePresenter
     public Func<string?>? SizeLabelOverrideProvider { get; set; }
 
     /// <summary>サイズラベルの表示スケーリングを矩形ごとに解決するプロバイダを取得または設定する。</summary>
-    /// <value>描画のたびに呼び出される関数（引数はドメイン座標の矩形）。 null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
+    /// <value>描画のたびに呼び出される関数（引数は対象座標の矩形）。 null の場合は <see cref="DisplayScaleScaling"/> を使う。</value>
     /// <remarks>デリゲート（ホスト結線）のため値の等価比較の対象外とする。</remarks>
     public Func<EsRect, double>? SizeLabelDisplayScalingProvider { get; set; }
 
@@ -195,31 +195,31 @@ public partial class MarqueePresenter
     }
 
     /// <summary>ポート未指定時に適用する倍率を取得または設定する。</summary>
-    /// <value>ドメイン座標 / ローカル DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される。</value>
+    /// <value>対象座標 / ローカル DIP の倍率。 既定は 1.0。 設定時は 0.1〜8.0 へ補正される。</value>
     /// <remarks>保持とログはコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。</remarks>
-    public double DipToDomainScaling
+    public double ClientToSourceScaling
     {
-        get => _core.DipToDomainScaling;
+        get => _core.ClientToSourceScaling;
         set
         {
-            _core.DipToDomainScaling = value;
-            Log.LogForwarded(nameof(DipToDomainScaling), value);
+            _core.ClientToSourceScaling = value;
+            Log.LogForwarded(nameof(ClientToSourceScaling), value);
         }
     }
 
-    /// <summary>ハイライトする矩形（ドメイン座標）を取得または設定する。</summary>
+    /// <summary>ハイライトする矩形（対象座標）を取得または設定する。</summary>
     /// <value>ハイライト矩形。 null（既定）の場合はハイライトしない。</value>
     /// <remarks>
     /// 保持とログ（Trace）はコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。<br/>
     /// 最も頻度が高い設定（ホバーのたびに変わりうる）のため、本層の記録も Trace とする。
     /// </remarks>
-    public EsRect? HighlightDomainRect
+    public EsRect? HighlightSourceRect
     {
-        get => _core.HighlightDomainRect;
+        get => _core.HighlightSourceRect;
         set
         {
-            _core.HighlightDomainRect = value;
-            Log.LogForwarded(nameof(HighlightDomainRect), value);
+            _core.HighlightSourceRect = value;
+            Log.LogForwarded(nameof(HighlightSourceRect), value);
         }
     }
 
@@ -227,12 +227,12 @@ public partial class MarqueePresenter
     /// <value>選択中の場合は true。</value>
     public bool HasSelection => _core.HasSelection;
 
-    /// <summary>現在の選択矩形（ドメイン座標）を取得する。</summary>
+    /// <summary>現在の選択矩形（対象座標）を取得する。</summary>
     /// <value>選択矩形。 未選択時は 0x0 の空矩形。</value>
-    public EsRect SelectionDomainRect => _core.SelectionDomainRect;
+    public EsRect SelectionSourceRect => _core.SelectionSourceRect;
 
     /// <summary>現在の選択状態のスナップショットを生成する。</summary>
-    /// <param name="mousePosition">スナップショットに含めるマウス位置（ドメイン座標）。 null の場合は直近の位置。</param>
+    /// <param name="mousePosition">スナップショットに含めるマウス位置（対象座標）。 null の場合は直近の位置。</param>
     /// <returns>状態・選択矩形・アクティブハンドル・マウス位置・操作フラグを含むスナップショット。</returns>
     public MarqueeSnapshot CreateSnapshot(EsPoint? mousePosition = null) => _core.CreateSnapshot(mousePosition);
 
@@ -240,7 +240,7 @@ public partial class MarqueePresenter
     // コアへの委譲（環境値・入力・外部操作）
     // ====================================================================
 
-    /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを設定する。</summary>
+    /// <summary>対象 ↔ ローカル DIP の座標変換ポートを設定する。</summary>
     /// <param name="port">座標変換ポート。 null の場合は等価変換。</param>
     /// <remarks>保持とログはコアが単一所有する（本層は委譲し、低頻度のメソッド呼び出しとして通過を Trace で記録する）。</remarks>
     public void SetCoordTransform(ICoordTransform? port)
@@ -249,32 +249,32 @@ public partial class MarqueePresenter
         Log.LogForwarded(nameof(SetCoordTransform), port);
     }
 
-    /// <summary>ローカル DIP 座標をドメイン座標へ変換する。</summary>
+    /// <summary>ローカル DIP 座標を対象座標へ変換する。</summary>
     /// <param name="localDip">ローカル DIP 座標。</param>
-    /// <returns>ドメイン座標。</returns>
-    public EsPoint ToDomain(EsPoint localDip) => _core.ToDomain(localDip);
+    /// <returns>対象座標。</returns>
+    public EsPoint ToSource(EsPoint localDip) => _core.ToSource(localDip);
 
-    /// <summary>ドメイン座標をローカル DIP 座標へ変換する。</summary>
-    /// <param name="domain">ドメイン座標。</param>
+    /// <summary>対象座標をローカル DIP 座標へ変換する。</summary>
+    /// <param name="source">対象座標。</param>
     /// <returns>ローカル DIP 座標。</returns>
-    public EsPoint ToDip(EsPoint domain) => _core.ToDip(domain);
+    public EsPoint ToDip(EsPoint source) => _core.ToDip(source);
 
     /// <summary>ポインター押下（左ボタン）を通知する。</summary>
-    /// <param name="position">押下位置（ドメイン座標）。</param>
+    /// <param name="position">押下位置（対象座標）。</param>
     /// <param name="clickCount">クリック数（2 以上 = ダブルクリック）。</param>
     public void Press(EsPoint position, int clickCount) => _core.Press(position, clickCount);
 
     /// <summary>ポインター移動を通知する。</summary>
-    /// <param name="position">マウス位置（ドメイン座標）。</param>
+    /// <param name="position">マウス位置（対象座標）。</param>
     public void Move(EsPoint position) => _core.Move(position);
 
     /// <summary>ポインター解放（左ボタン）を通知する。</summary>
-    /// <param name="position">解放位置（ドメイン座標）。</param>
+    /// <param name="position">解放位置（対象座標）。</param>
     public void Release(EsPoint position) => _core.Release(position);
 
     /// <summary>キー入力を通知する。</summary>
     /// <param name="key">押下されたキー。</param>
-    /// <param name="cursorPosition">押下時点のカーソル位置（ドメイン座標）。 取得できない場合は null。</param>
+    /// <param name="cursorPosition">押下時点のカーソル位置（対象座標）。 取得できない場合は null。</param>
     /// <returns>入力が処理された場合は true。</returns>
     public bool KeyDown(EsKey key, EsPoint? cursorPosition) => _core.KeyDown(key, cursorPosition);
 
@@ -282,7 +282,7 @@ public partial class MarqueePresenter
     public void EndNudge() => _core.EndNudge();
 
     /// <summary>選択矩形を外部状態から復元する。</summary>
-    /// <param name="rect">選択矩形（ドメイン座標）。</param>
+    /// <param name="rect">選択矩形（対象座標）。</param>
     public void SetSelection(EsRect rect) => _core.SetSelection(rect);
 
     /// <summary>選択状態と nudge 状態を初期化する。</summary>

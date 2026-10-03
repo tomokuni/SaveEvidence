@@ -21,20 +21,20 @@ namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.Views;
 
 /// <summary>メインウィンドウ。 MarqueeControl のイベント購読・設定反映・座標ポート設定を担う。</summary>
 /// <remarks>
-/// 座標ポートは「ドメイン = コントロールローカル DIP」の等価変換（DPI 100% 相当）で動作確認する。<br/>
+/// 座標ポートは「対象 = コントロールローカル DIP」の等価変換（DPI 100% 相当）で動作確認する。<br/>
 /// 選択状態は <see cref="MainWindowViewModel"/> へ同期し、コントロール設定は PropertyChanged を購読して反映する。<br/>
 /// </remarks>
 public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _vm = new();
 
-    /// <summary>背景に敷くダミー画像（ドメイン面のサイズ感を示す）。 Skia 直描画（EsBitmapAvaloniaImage）で表示する。</summary>
+    /// <summary>背景に敷くダミー画像（対象面のサイズ感を示す）。 Skia 直描画（EsBitmapAvaloniaImage）で表示する。</summary>
     private static readonly EsBitmapAvaloniaImage Backdrop = CreateBackdrop();
 
-    /// <summary>画像の論理幅（ドメインピクセル）。</summary>
+    /// <summary>画像の論理幅（対象ピクセル）。</summary>
     private const double ImageWidth = 1200;
 
-    /// <summary>画像の論理高さ（ドメインピクセル）。</summary>
+    /// <summary>画像の論理高さ（対象ピクセル）。</summary>
     private const double ImageHeight = 800;
 
     /// <summary>ズーム倍率（1.0 = 等倍）。</summary>
@@ -56,7 +56,7 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = _vm;
 
-        // 背景のダミー画像（ドメイン面のサイズ感）
+        // 背景のダミー画像（対象面のサイズ感）
         BackdropImage.Source = Backdrop;
 
         // コントロール内部の操作ログを画面のログ表示領域へ出力する
@@ -121,9 +121,9 @@ public partial class MainWindow : Window
         Marquee.Width = ImageWidth * _zoom;
         Marquee.Height = ImageHeight * _zoom;
 
-        // 座標ポート: ドメイン = 画像ピクセル（800x500）、DIP = 表示座標（ズーム倍率で変換）
+        // 座標ポート: 対象 = 画像ピクセル（800x500）、DIP = 表示座標（ズーム倍率で変換）
         // SetCoordTransform は内部で InvalidateVisual を呼び、ズーム時のちらつきを防ぐ
-        // ToDomain = DIP→ドメイン（_zoom で除算 = 画像ピクセルへ）、ToDip = ドメイン→DIP（_zoom で乗算）
+        // ToSource = DIP→対象（_zoom で除算 = 画像ピクセルへ）、ToDip = 対象→DIP（_zoom で乗算）
         Marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / _zoom, p.Y / _zoom),
             p => new EsPoint(p.X * _zoom, p.Y * _zoom),
@@ -184,7 +184,7 @@ public partial class MainWindow : Window
             HandleHitRadius = _vm.HandleHitRadius,
             MinSelectionSize = _vm.MinSelectionSize,
             MarkerLength = _vm.MarkerLength,
-            ClampToDomainBounds = _vm.ClampToDomainBounds,
+            ClampToSourceBounds = _vm.ClampToSourceBounds,
         };
         // マウスが描画域にない場合でも、設定変更を即時に再描画へ反映する
         Marquee.InvalidateVisual();
@@ -207,9 +207,9 @@ public partial class MainWindow : Window
             case nameof(MainWindowViewModel.MarkerLength):
                 ApplyControlSettings();
                 break;
-            case nameof(MainWindowViewModel.ClampToDomainBounds):
+            case nameof(MainWindowViewModel.ClampToSourceBounds):
                 ApplyControlSettings();
-                _vm.AddLog($"[App] ClampToDomainBounds: {(_vm.ClampToDomainBounds ? "ON（画像内にクリップ）" : "OFF（画像外も選択可能）")}");
+                _vm.AddLog($"[App] ClampToSourceBounds: {(_vm.ClampToSourceBounds ? "ON（画像内にクリップ）" : "OFF（画像外も選択可能）")}");
                 break;
             default:
                 return;
@@ -278,7 +278,7 @@ public partial class MainWindow : Window
     /// <param name="sender">イベント送信元（ScrollViewer）。</param>
     /// <param name="e">スクロール変化イベント。</param>
     /// <remarks>
-    /// 選択矩形（ドメイン座標）は表示の変化で不変であるため、再描画のみを要求する<br/>
+    /// 選択矩形（対象座標）は表示の変化で不変であるため、再描画のみを要求する<br/>
     /// （選択面は座標変換ポートを都度評価するため、再描画だけで追従する）。
     /// </remarks>
     private void OnImageScrollChanged(object? sender, ScrollChangedEventArgs e)

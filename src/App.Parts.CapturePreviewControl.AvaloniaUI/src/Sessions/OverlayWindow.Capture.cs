@@ -176,7 +176,7 @@ internal sealed partial class OverlayWindow
     /// <param name="origin">仮想スクリーンの原点（画面物理座標）。</param>
     /// <remarks>
     /// <paramref name="origin"/> は Bitmap の左上が対応する画面物理座標（= ウィンドウ Position）。<br/>
-    /// ルーペ中心はドメイン座標（仮想スクリーンピクセル）が既に Bitmap 上の座標と一致する。<br/>
+    /// ルーペ中心は対象座標（仮想スクリーンピクセル）が既に Bitmap 上の座標と一致する。<br/>
     /// 確定時の切り出し（<see cref="CompleteSelection(EsRect)"/>）では保持している原点を減算して Bitmap 上の座標に変換する。<br/>
     /// ルーペの Source も同時に設定する（AreaSelect のウィンドウ表示時は Bitmap が未取得のため、
     /// 取得完了時に改めて設定しないと市松模様のままになる）。<br/>

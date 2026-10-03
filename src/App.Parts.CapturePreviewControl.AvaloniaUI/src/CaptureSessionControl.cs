@@ -20,7 +20,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 /// 本クラスは「組み立て・配線・ライフサイクル」のみを担う。<br/>
 /// - プレビュー状態（CropPreviewState）は持たない（スクロールは Marquee イベント / TranslatePoint から取得）。<br/>
 /// - 座標変換は EsUtil.Platform.Core.Coord の <see cref="ICoordTransform"/>（<see cref="CoordTransform"/> ファクトリ:
-///   <c>DipToDomain</c> 等）に委譲する。<br/>
+///   <c>ClientToSource</c> 等）に委譲する。<br/>
 /// <br/>
 /// ログ: コンストラクタで注入された <see cref="ILogger"/> へ内部ログを転送する。<br/>
 /// ライブラリ自身はファイル出力等のログ基盤を所有しない（出力先・レベル制御はホストの責務）。<br/>

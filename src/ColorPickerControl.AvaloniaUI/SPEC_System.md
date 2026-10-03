@@ -63,13 +63,13 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 公開コントロール（ColorPickerControl: ColorPicker.axaml.cs）
   → 生成（ColorPickerFlyoutFactory）→ テーマ管理（ColorViewThemeManager）
   → 検証（ColorValidator）/ 選択解除（TextBoxSelectionHelper）
-  → ドメイン（ColorEntry / ColorSortMode / ColorString）
+  → 対象（ColorEntry / ColorSortMode / ColorString）
   → コンバーター（StringToBrushConverter / ColorDisplayConverter）
 ```
 
 ### 3.2 依存方向
 
-- 依存は**一方向の階層構造**（XAML → コントロール → 生成/検証 → ドメイン / コンバーター）。
+- 依存は**一方向の階層構造**（XAML → コントロール → 生成/検証 → 対象 / コンバーター）。
 - 公開 API（StyledProperty・公開プロパティ）は `ColorPicker.axaml.cs` に集約する。
 - 関心事ごとに専用クラスへ委譲し、単一責任（SRP）と疎結合を維持する:
   - Flyout 構築: `ColorPickerFlyoutFactory`（Simple Factory）
@@ -77,7 +77,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
   - 色の妥当性検証: `ColorValidator`
   - テキスト選択の解除: `TextBoxSelectionHelper`
 - 状態管理はすべて StyledProperty（Avalonia プロパティシステム）に集約する。
-- ドメインロジック（`ColorString` / `ColorEntry`）は UI 非依存（Avalonia.Media のみ）。
+- 対象ロジック（`ColorString` / `ColorEntry`）は UI 非依存（Avalonia.Media のみ）。
 - 上位APへは双方向バインド（StyledProperty）と PropertyChanged のみで連携。
 
 ## 4. 例外処理ポリシー
@@ -220,12 +220,12 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**（XAML → コントロール → 生成/検証 → ドメイン/コンバーター）。
+- 依存方向は**一方向の階層構造**（XAML → コントロール → 生成/検証 → 対象/コンバーター）。
 - 公開 API（StyledProperty・公開プロパティ）は `ColorPicker.axaml.cs` に集約する。
 - 関心事ごとの専用クラス（Factory / ThemeManager / Validator / Helper）は internal とし、コントロールからのみ参照する（外部へは公開しない）。
 - 依存は 1 方向のみ（コントロール → Factory/Validator/Helper → ColorString / ColorViewThemeManager）。 双方向依存・循環参照は持たない。
 - 状態管理はすべて StyledProperty（Avalonia プロパティシステム）に集約し、private フィールドは補助（`_lastValidColor`）のみ。
-- ドメインロジック（`ColorString` / `ColorEntry`）は UI 非依存（Avalonia.Media のみ）。
+- 対象ロジック（`ColorString` / `ColorEntry`）は UI 非依存（Avalonia.Media のみ）。
 - 上位APへは双方向バインド（StyledProperty）と PropertyChanged のみで連携。
 
 ## 8. バリデーション状態遷移

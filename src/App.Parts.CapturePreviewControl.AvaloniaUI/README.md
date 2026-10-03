@@ -160,7 +160,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 1. 切り出しの対象画像は `CropViewControl` が表示している画像（`CropViewControl.Source`）から解決する（画像を引数で受け取らない）。 画像が未設定・表示アダプタ（`EsBitmapAvaloniaImage`）以外の場合は開始しない（結果 null）→ 開始できた場合は `CropSession` を生成 → `RunAsync`
 2. **FadeMaskDragRectControl**（Marquee + Loupe の配線を内包する複合コントロール。 暗転マスクは Marquee の外側の装飾）を `CropViewControl.Rects` へ配置する
-3. 座標変換: `CoordTransform`（`CropViewControl` の `ViewportToContent` / `ContentToViewport` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordTransform` で内包コントロール（Marquee / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
+3. 座標変換: `CoordTransform`（`CropViewControl` の `ClientToSource` / `SourceToClient` に委譲）で論理（元画像 px）↔ ビューポート DIP を変換し、**`CropViewControl.SetCoordTransform` で内包コントロール（Marquee / Loupe）に一括注入**（描画・表示時に動的評価 → ウィンドウサイズ変更・ズーム・スクロールに追従）
 4. マウスホイール操作（Crop 中）: CropViewControl がオーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する
 5. **ビューポート変化の通知**: ホストがプレビューのパン・ズームを検知したら `NotifyCropViewportChanged()` を呼ぶ（暗転マスク・選択枠・ルーペが追従。 ScrollViewer 連携のスクロールも同じ経路で処理）
 6. 確定 → 論理 Rect（**閉区間** = 始点・終点を含む）を `EsRectInt`（コア型）で返却 / キャンセル → 0x0 の空矩形
@@ -177,9 +177,9 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 - **複合構造**: 画像ビューポート（`ZoomViewControl`）+ 領域選択オーバーレイ（`FadeMaskDragRectControl`）+ 矩形オーバーレイを内包
 - **領域選択**: `SelectionMode`（`FadeMaskDragRectMode`。 既定 `Crop`）/ `SelectionOverlayOptions`（コアの設定）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance`（描画にだけ必要な外観）を内包する `FadeMaskDragRectControl` へ委譲する。 オーバーレイの可視性とヒットテストは `SetSelectionOverlayVisible` で制御する（Crop セッションの開始・終了時にホストが切替。 初期状態は非表示・ヒットテスト不可）
 - **外部提供矩形**: `Rects`（`IReadOnlyList<OverlayRect>`）をビューポートとルーペの両方へ描画する。 矩形情報はコアの `OverlayRect`（矩形・破線種類・前景色・背景色・線幅。 色は `System.Drawing.Color`）
-- **座標変換**: `ContentToViewport` / `ViewportToContent` / `ImageRectViewport`（Fit 中央寄せの原点補正を含む）。 領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送する
+- **座標変換**: `SourceToClient` / `ClientToSource` / `ImageRectViewport`（Fit 中央寄せの原点補正を含む）。 領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送する
 
-主な公開メンバー: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionDomainRect` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `DipToDomainScaling` / `LoupeClientToPixelScaling`、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `ContentToViewport` / `ViewportToContent`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`。
+主な公開メンバー: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionSourceRect` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `ClientToSourceScaling` / `LoupeClientToPixelScaling`、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `SourceToClient` / `ClientToSource`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`。
 
 ### 7.2 FadeMaskDragRectControl（領域選択）
 
@@ -192,17 +192,17 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 | `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ） |
 | `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ） |
 
-主な公開メンバー: `Mode` / `Options`（コアの `FadeMaskDragRectOptions`）/ `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionDomainRect` / `HighlightDomainRect` / `ShowFullOverlay` / `LoupeCenterPoint` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling`、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `RefreshOverlay` / `InvalidateOverlay`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`。
+主な公開メンバー: `Mode` / `Options`（コアの `FadeMaskDragRectOptions`）/ `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionSourceRect` / `HighlightSourceRect` / `ShowFullOverlay` / `LoupeCenterPoint` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling`、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `RefreshOverlay` / `InvalidateOverlay`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`。
 
 ### 7.3 ZoomViewControl（切り出しビューの画像ビューポート）
 
-画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールではなく切り出しビューの表示を成立させるために存在します（`CropViewControl` が `Source` / `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ViewportToContent` 等を委譲し、ホストは通常 `CropViewControl` 経由で利用します）。 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー）は UI 非依存コア `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有します。
+画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールではなく切り出しビューの表示を成立させるために存在します（`CropViewControl` が `Source` / `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ClientToSource` 等を委譲し、ホストは通常 `CropViewControl` 経由で利用します）。 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー）は UI 非依存コア `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有します。
 
 - **ズーム遷移**: ⊖⊕ の 23 段階（10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500）/ Ctrl+ホイールの ×1.1・÷1.1 連続遷移（現在値を基準に四捨五入し、10〜500% へクランプ）
 - **Fit 表示**: ビューポートに収まる Uniform 倍率（アスペクト比維持）。 実効倍率は `min(ビューポート幅 ÷ 画像幅, ビューポート高さ ÷ 画像高さ) × 100` で計算し、リサイズに追従する。 段階遷移の際に Fit 実効倍率が間に挟まる場合はそれを経由する
 - **ズーム中心維持**: マウスポインタ位置（画像外はビューポート中心）を中心に拡大縮小し、中心のコンテンツ座標を不変に保つ
 - **パン**: マウスドラッグ（grab 方式）/ ホイール（縦・Shift で横）/ スクロールバー（オーバーレイ表示。 画像がビューポートより大きい軸のみ）
-- **座標系**: コンテンツ座標（元画像ピクセル。 ズーム率に依存しない不変座標）とビューポート座標（コントロールのローカル DIP）。 `CropViewControl.ContentToViewport` / `ViewportToContent` は画像表示矩形の原点基準（Fit 中央寄せ補正込み）で変換する
+- **座標系**: コンテンツ座標（元画像ピクセル。 ズーム率に依存しない不変座標）とビューポート座標（コントロールのローカル DIP）。 `CropViewControl.SourceToClient` / `ClientToSource` は画像表示矩形の原点基準（Fit 中央寄せ補正込み）で変換する
 - **市松模様**: 画像の透明部分の背景を `Appearance`（コアの `ZoomViewAppearance`）で指定する。 描くのは画像の表示矩形の内側だけで、画像の外（ペーストボード）は下地色の単色になる
 
 | 操作 | 内容 |

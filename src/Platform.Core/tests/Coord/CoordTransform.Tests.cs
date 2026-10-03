@@ -4,7 +4,7 @@ using Xunit;
 
 namespace EsUtil.Platform.Core.Tests.Coord;
 
-/// <summary><see cref="CoordTransform"/> のファクトリ（<see cref="CoordTransform.DipToDomain"/>）と、座標の純粋計算（原点基準の等方スケーリング）の単体テスト。</summary>
+/// <summary><see cref="CoordTransform"/> のファクトリ（<see cref="CoordTransform.ClientToSource"/>）と、座標の純粋計算（原点基準の等方スケーリング）の単体テスト。</summary>
 /// <remarks>
 /// コア幾何型（<see cref="EsPoint"/> / <see cref="EsSize"/>）のみを使用するため、<br/>
 /// UI フレームワークの初期化に依存せず <c>[Fact]</c> で並列実行できる。
@@ -12,87 +12,87 @@ namespace EsUtil.Platform.Core.Tests.Coord;
 public class CoordTransformTests
 {
     // ====================================================================
-    // 倍率の向き（ドメイン座標 / ローカル DIP）
+    // 倍率の向き（対象座標 / ローカル DIP）
     // ====================================================================
 
     [Fact]
-    public void DipToDomain_倍率2はDIPを2倍してドメインにする()
+    public void ClientToSource_倍率2はDIPを2倍して対象にする()
     {
-        var port = CoordTransform.DipToDomain(() => 2.0);
+        var port = CoordTransform.ClientToSource(() => 2.0);
 
-        // ドメイン = ローカル DIP × 倍率（125% DPI ならドメインは物理ピクセルで DIP の 1.25 倍）
-        Assert.Equal(new EsPoint(200, 300), port.ToDomain(new EsPoint(100, 150)));
+        // 対象 = ローカル DIP × 倍率（125% DPI なら対象は物理ピクセルで DIP の 1.25 倍）
+        Assert.Equal(new EsPoint(200, 300), port.ToSource(new EsPoint(100, 150)));
     }
 
     [Fact]
-    public void DipToDomain_ドメインを倍率で除算してDIPにする()
+    public void ClientToSource_対象を倍率で除算してDIPにする()
     {
-        var port = CoordTransform.DipToDomain(() => 2.0);
+        var port = CoordTransform.ClientToSource(() => 2.0);
 
         Assert.Equal(new EsPoint(100, 150), port.ToDip(new EsPoint(200, 300)));
     }
 
     [Fact]
-    public void DipToDomain_往復で元の座標に戻る()
+    public void ClientToSource_往復で元の座標に戻る()
     {
-        var port = CoordTransform.DipToDomain(() => 1.5);
+        var port = CoordTransform.ClientToSource(() => 1.5);
         var p = new EsPoint(123.4, 456.7);
 
-        var roundTrip = port.ToDip(port.ToDomain(p));
+        var roundTrip = port.ToDip(port.ToSource(p));
 
         Assert.Equal(p.X, roundTrip.X, 6);
         Assert.Equal(p.Y, roundTrip.Y, 6);
     }
 
     [Fact]
-    public void DipToDomain_プロバイダは呼び出し毎に評価される()
+    public void ClientToSource_プロバイダは呼び出し毎に評価される()
     {
         var factor = 1.0;
-        var port = CoordTransform.DipToDomain(() => factor);
-        Assert.Equal(new EsPoint(100, 100), port.ToDomain(new EsPoint(100, 100)));
+        var port = CoordTransform.ClientToSource(() => factor);
+        Assert.Equal(new EsPoint(100, 100), port.ToSource(new EsPoint(100, 100)));
 
         factor = 2.0;
-        Assert.Equal(new EsPoint(200, 200), port.ToDomain(new EsPoint(100, 100)));
+        Assert.Equal(new EsPoint(200, 200), port.ToSource(new EsPoint(100, 100)));
     }
 
     [Theory]
     [InlineData(0.0)]
     [InlineData(-1.0)]
     [InlineData(double.NaN)]
-    public void DipToDomain_倍率が0以下なら等倍として扱う(double domainPerDip)
+    public void ClientToSource_倍率が0以下なら等倍として扱う(double sourcePerDip)
     {
-        var port = CoordTransform.DipToDomain(() => domainPerDip);
+        var port = CoordTransform.ClientToSource(() => sourcePerDip);
 
-        Assert.Equal(new EsPoint(10, 20), port.ToDomain(new EsPoint(10, 20)));
+        Assert.Equal(new EsPoint(10, 20), port.ToSource(new EsPoint(10, 20)));
         Assert.Equal(new EsPoint(10, 20), port.ToDip(new EsPoint(10, 20)));
     }
 
     [Fact]
-    public void DipToDomain_境界を省略すると無制限になる()
+    public void ClientToSource_境界を省略すると無制限になる()
     {
-        var port = CoordTransform.DipToDomain(() => 2.0);
+        var port = CoordTransform.ClientToSource(() => 2.0);
 
-        Assert.Null(port.DomainBounds);
+        Assert.Null(port.SourceArea);
     }
 
     [Fact]
-    public void DipToDomain_境界を指定するとドメイン境界を返す()
+    public void ClientToSource_境界を指定すると対象の境界を返す()
     {
-        var port = CoordTransform.DipToDomain(() => 2.0, () => new EsSize(1920, 1080));
+        var port = CoordTransform.ClientToSource(() => 2.0, () => new EsSize(1920, 1080));
 
-        Assert.Equal(new EsSize(1920, 1080), port.DomainBounds);
+        Assert.Equal(new EsSize(1920, 1080), port.SourceArea);
     }
 
     [Fact]
-    public void DipToDomain_境界は呼び出し毎に評価される()
+    public void ClientToSource_境界は呼び出し毎に評価される()
     {
         var bounds = new EsSize(100, 100);
-        var port = CoordTransform.DipToDomain(() => 1.0, () => bounds);
+        var port = CoordTransform.ClientToSource(() => 1.0, () => bounds);
 
-        Assert.Equal(new EsSize(100, 100), port.DomainBounds);
+        Assert.Equal(new EsSize(100, 100), port.SourceArea);
 
         bounds = new EsSize(200, 200);
-        Assert.Equal(new EsSize(200, 200), port.DomainBounds);
+        Assert.Equal(new EsSize(200, 200), port.SourceArea);
     }
 
     // ====================================================================

@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 /// <summary><see cref="OverlayRectRasterizer"/> の単体テスト（4 辺のラスタライズ・破線・太さ）。</summary>
 /// <remarks>
 /// <see cref="EsBitmap"/> への書き込みのみで完結するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
-/// 座標変換（ドメイン座標 → ルーペピクセル）・切り出し左上の差し引き・スケール適用・範囲外の早期リターンを検証する。
+/// 座標変換（対象座標 → ルーペピクセル）・切り出し左上の差し引き・スケール適用・範囲外の早期リターンを検証する。
 /// </remarks>
 public class OverlayRectRasterizerTests
 {
@@ -50,7 +50,7 @@ public class OverlayRectRasterizerTests
     {
         using var bitmap = EsBitmap.Create(20, 20);
 
-        // ドメイン (0,0)-(9,9)・スケール 1・切り出し左上 (0,0) → ルーペ (0,0)-(10,10) の枠
+        // 対象 (0,0)-(9,9)・スケール 1・切り出し左上 (0,0) → ルーペ (0,0)-(10,10) の枠
         OverlayRectRasterizer.Draw(bitmap, CreateRect(), new EsPoint(0, 0), 1.0);
 
         // 4 隅と各辺の中央が前景色
@@ -73,7 +73,7 @@ public class OverlayRectRasterizerTests
         using var bitmap = EsBitmap.Create(20, 20);
         var rect = new OverlayRect(new EsRect(5, 5, 9, 9), OverlayLineStyle.Solid, Foreground, Background, 1.0);
 
-        // ドメイン (5,5) が切り出し左上 (5,5) に対応するため、ルーペ (0,0) から描画される
+        // 対象 (5,5) が切り出し左上 (5,5) に対応するため、ルーペ (0,0) から描画される
         OverlayRectRasterizer.Draw(bitmap, rect, new EsPoint(5, 5), 1.0);
 
         AssertPixelIs(bitmap, 0, 0, Foreground);

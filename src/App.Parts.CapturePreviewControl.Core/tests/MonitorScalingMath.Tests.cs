@@ -133,39 +133,39 @@ public class MonitorScalingMathTests
     }
 
     // ====================================================================
-    // ResolveForDomainRect（ドメイン座標 + 原点 → 画面物理座標）
+    // ResolveForSourceRect（対象座標 + 原点 → 画面物理座標）
     // ====================================================================
 
     [Fact]
-    public void ResolveForDomainRect_原点を加算してドメイン矩形を判定する()
+    public void ResolveForSourceRect_原点を加算して対象矩形を判定する()
     {
-        // ドメイン (100, 100) の原点が (1920, 0) のとき、画面物理 (2020, 100) は右モニターに入る
-        var domain = new EsRect(100, 100, 400, 300);
+        // 対象 (100, 100) の原点が (1920, 0) のとき、画面物理 (2020, 100) は右モニターに入る
+        var source = new EsRect(100, 100, 400, 300);
 
-        var result = MonitorScalingMath.ResolveForDomainRect(
-            domain, new EsPointInt(1920, 0), s_dualMonitors, fallback: 9.9);
+        var result = MonitorScalingMath.ResolveForSourceRect(
+            source, new EsPointInt(1920, 0), s_dualMonitors, fallback: 9.9);
 
         Assert.Equal(1.5, result);
     }
 
     [Fact]
-    public void ResolveForDomainRect_原点が原点なら画面物理と一致する()
+    public void ResolveForSourceRect_原点が原点なら画面物理と一致する()
     {
-        var domain = new EsRect(100, 100, 400, 300);
+        var source = new EsRect(100, 100, 400, 300);
 
-        var result = MonitorScalingMath.ResolveForDomainRect(
-            domain, default, s_dualMonitors, fallback: 9.9);
+        var result = MonitorScalingMath.ResolveForSourceRect(
+            source, default, s_dualMonitors, fallback: 9.9);
 
         Assert.Equal(1.0, result);
     }
 
     [Fact]
-    public void ResolveForDomainRect_どのモニターにも含まれない場合はフォールバックを返す()
+    public void ResolveForSourceRect_どのモニターにも含まれない場合はフォールバックを返す()
     {
-        var domain = new EsRect(-9000, -9000, 100, 100);
+        var source = new EsRect(-9000, -9000, 100, 100);
 
-        var result = MonitorScalingMath.ResolveForDomainRect(
-            domain, default, s_dualMonitors, fallback: 2.5);
+        var result = MonitorScalingMath.ResolveForSourceRect(
+            source, default, s_dualMonitors, fallback: 2.5);
 
         Assert.Equal(2.5, result);
     }
@@ -174,13 +174,13 @@ public class MonitorScalingMathTests
     [InlineData(100.4)]
     [InlineData(100.6)]
     [InlineData(100.5)]
-    public void ResolveForDomainRect_小数座標は四捨五入して画面物理へ戻す(double x)
+    public void ResolveForSourceRect_小数座標は四捨五入して画面物理へ戻す(double x)
     {
         // 四捨五入で整数化するため、どちらへ丸めても同じモニターの判定になる（境界から離れた位置）
-        var domain = new EsRect(x, 100, 400, 300);
+        var source = new EsRect(x, 100, 400, 300);
 
-        var result = MonitorScalingMath.ResolveForDomainRect(
-            domain, default, s_dualMonitors, fallback: 9.9);
+        var result = MonitorScalingMath.ResolveForSourceRect(
+            source, default, s_dualMonitors, fallback: 9.9);
 
         Assert.Equal(1.0, result);
     }

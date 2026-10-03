@@ -16,8 +16,8 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.CropView;
 public class CropViewControlTests
 {
     /// <summary>検証に使う矩形情報を生成する。</summary>
-    /// <param name="x">左上 X 座標（ドメイン座標）。</param>
-    /// <param name="y">左上 Y 座標（ドメイン座標）。</param>
+    /// <param name="x">左上 X 座標（対象座標）。</param>
+    /// <param name="y">左上 Y 座標（対象座標）。</param>
     /// <param name="width">幅。</param>
     /// <param name="height">高さ。</param>
     /// <returns>矩形情報。</returns>
@@ -176,8 +176,8 @@ public class CropViewControlTests
         control.Source = image;
 
         // Fit = 200%。 画像表示矩形の原点 (0,0)。
-        var viewport = control.ContentToViewport(new EsPoint(25, 30));
-        var content = control.ViewportToContent(viewport);
+        var viewport = control.SourceToClient(new EsPoint(25, 30));
+        var content = control.ClientToSource(viewport);
 
         Assert.Equal(50, viewport.X, 3);
         Assert.Equal(60, viewport.Y, 3);

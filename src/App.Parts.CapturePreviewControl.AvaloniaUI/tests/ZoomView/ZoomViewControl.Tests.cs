@@ -315,7 +315,7 @@ public class ZoomViewControlTests
 
         var after = view.ImageRectViewport();
         Assert.Equal(110, view.ZoomPercent);
-        // 中心 (0, 0) のドメイン座標が不変であることを、位置の移動量で検証する
+        // 中心 (0, 0) の対象座標が不変であることを、位置の移動量で検証する
         Assert.Equal(0.0, after.X);
         Assert.Equal(0.0, after.Y - before.Y);
     }
@@ -328,7 +328,7 @@ public class ZoomViewControlTests
 
         view.ZoomByWheel(zoomIn: true);
 
-        // ビューポート中心 (200, 100) のドメイン座標が不変に保たれる
+        // ビューポート中心 (200, 100) の対象座標が不変に保たれる
         var after = view.ImageRectViewport();
         Assert.Equal(110, view.ZoomPercent);
         Assert.Equal(before.X - 20.0, after.X, 6);

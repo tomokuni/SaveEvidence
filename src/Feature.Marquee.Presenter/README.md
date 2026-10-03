@@ -29,9 +29,9 @@ private sealed class Effects(MyControl owner) : MarqueeEffectsBase
 // 2. 生成（カーソル操作が不要なら cursor は null でよい。外観は MarqueeAppearance が持つ）
 private readonly MarqueePresenter _presenter = new(new Effects(this));
 
-// 3. 入力の転送（座標はドメイン座標へ変換して渡す）
+// 3. 入力の転送（座標は対象座標へ変換して渡す）
 protected override void OnPointerPressed(PointerPressedEventArgs e)
-    => _presenter.Press(e.GetPosition(this).ToDomain(), e.ClickCount);
+    => _presenter.Press(e.GetPosition(this).ToSource(), e.ClickCount);
 
 // 4. 描画（描画計画の解決は提示層、描画は自 UI の API）
 protected override void Render(DrawingContext context)
@@ -43,7 +43,7 @@ protected override void Render(DrawingContext context)
 ```
 
 - 外観を変える場合は `_presenter.Appearance = MarqueeAppearance.Default with { ... }` を設定します。
-- 座標変換（ドメイン ⇔ DIP）は `MarqueePresenter.SetCoordTransform` へ注入します（未指定は等倍）。
+- 座標変換（対象 ⇔ DIP）は `MarqueePresenter.SetCoordTransform` へ注入します（未指定は等倍）。
 - **ホイール操作（ズーム・パン）と表示の変化（パン・ズーム）への追従はホスト（UI 層）が扱います**（ビューポートが存在して初めて意味を持つ処理のため）。
 
 ## 3. 含まれるもの
@@ -70,7 +70,7 @@ protected override void Render(DrawingContext context)
 | 見た目（色・フォント・枠線の太さ・表示可否） | `MarqueeAppearance` を変える（UI の `Appearance` プロパティへ設定する） |
 | 描画計画の構成（層・装飾・文言の独自化） | `MarqueePresenter` を継承し `ResolveDrawPlan` を上書きする、または `MarqueePresenterXxx` を作る |
 | 描画そのもの | UI 層の描画実装を差し替える |
-| 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）を変える（コアが単一所有する） |
+| 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToSourceBounds`）を変える（コアが単一所有する） |
 | 付加情報ラベル（操作・情報）の体裁 | コントロール固有の付加情報であるため本層に置かない（組み込み先のホストが文言と描画を持つ） |
 
 ## 6. ビルド

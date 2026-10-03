@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Coord;
 /// ビジュアルツリー未接続時は等価変換（画面座標をそのまま使用）する。<br/>
 /// <br/>
 /// OS 依存の画面物理変換（<see cref="TopLevel"/> の画面上位置 / PointToScreen / PointToClient）を集約する唯一の場所である。<br/>
-/// <b>座標変換ポートは提供しない</b>: ポートの軸は「ローカル DIP ↔ ドメイン座標」であり、画面物理はその軸に含まれない（別の軸）。<br/>
+/// <b>座標変換ポートは提供しない</b>: ポートの軸は「ローカル DIP ↔ 対象座標」であり、画面物理はその軸に含まれない（別の軸）。<br/>
 /// 向きが名前で分かる <see cref="LocalDipToScreen"/> / <see cref="ScreenToLocalDip"/> だけを提供する。
 /// </remarks>
 public static class ScreenConverter

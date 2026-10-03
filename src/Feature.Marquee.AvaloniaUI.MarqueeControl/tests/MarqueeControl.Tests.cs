@@ -24,7 +24,7 @@ namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Tests;
 /// <remarks>
 /// MarqueeControl と同一の公開 API を持つことを前提に、公開 API 経由で動作を検証する。<br/>
 /// 内部実装（<see cref="MarqueeState"/>）の詳細は状態を直接参照しない（カプセル化維持）。<br/>
-/// マウスイベントは <c>RaiseEvent</c> で発火し、座標はコントロールローカル DIP をドメインへ変換して処理される。
+/// マウスイベントは <c>RaiseEvent</c> で発火し、座標はコントロールローカル DIP を対象へ変換して処理される。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class MarqueeControlTests
@@ -130,8 +130,8 @@ public class MarqueeControlTests
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftPressed(), KeyModifiers.None));
 
         Assert.NotNull(duringDrag);
-        // ドラッグ中の矩形（ドメイン座標）が Snapshot に含まれる
-        Assert.Equal(new EsRect(20, 20, 60, 60, EsRectInterval.Closed), duringDrag!.Snapshot.SelectionDomainRect);
+        // ドラッグ中の矩形（対象座標）が Snapshot に含まれる
+        Assert.Equal(new EsRect(20, 20, 60, 60, EsRectInterval.Closed), duringDrag!.Snapshot.SelectionSourceRect);
         // 新規選択ドラッグ中はハンドルなし（None）
         Assert.Equal(MarqueeHitTarget.None, duringDrag.Snapshot.ActiveTarget);
         // ドラッグ中の状態は Dragging
@@ -161,8 +161,8 @@ public class MarqueeControlTests
         Assert.NotNull(duringResize);
         // リサイズドラッグ中はアクティブハンドルが TopLeft
         Assert.Equal(MarqueeHitTarget.TopLeft, duringResize!.Snapshot.ActiveTarget);
-        // リサイズ後の矩形（ドメイン座標）が Snapshot に含まれる
-        Assert.Equal(new EsRect(30, 30, 120, 100), duringResize.Snapshot.SelectionDomainRect);
+        // リサイズ後の矩形（対象座標）が Snapshot に含まれる
+        Assert.Equal(new EsRect(30, 30, 120, 100), duringResize.Snapshot.SelectionSourceRect);
         // リサイズドラッグ中の状態は Dragging
         Assert.Equal(MarqueeInteractionState.Dragging, duringResize.Snapshot.State);
 
@@ -188,7 +188,7 @@ public class MarqueeControlTests
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftPressed(), KeyModifiers.None));
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
 
-        // 最終的な選択矩形（ドメイン座標 = 等価変換）が通知される
+        // 最終的な選択矩形（対象座標 = 等価変換）が通知される
         Assert.NotEmpty(rects);
         Assert.Equal(new Rect(20, 20, 60, 60), rects[^1]);
         window.Close();
@@ -201,7 +201,7 @@ public class MarqueeControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
         control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
@@ -224,7 +224,7 @@ public class MarqueeControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
         control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
@@ -390,10 +390,10 @@ public class MarqueeControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SetCoordTransform_カスタム変換でドメイン座標が変わる()
+    public void SetCoordTransform_カスタム変換で対象座標が変わる()
     {
         var control = CreateControl();
-        // ドメイン = DIP × 2（拡大）
+        // 対象 = DIP × 2（拡大）
         control.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X * 2, p.Y * 2),
             p => new EsPoint(p.X / 2, p.Y / 2),
@@ -403,7 +403,7 @@ public class MarqueeControlTests
         var rects = new List<Rect>();
         control.SelectionChanged += (_, e) => rects.Add(e.Rect);
 
-        // DIP (20,20) → (80,80) はドメイン (40,40) → (160,160)
+        // DIP (20,20) → (80,80) は対象 (40,40) → (160,160)
         control.RaiseEvent(new PointerPressedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(20, 20)), 0UL, LeftPressed(), KeyModifiers.None, 1));
         control.RaiseEvent(new PointerEventArgs(InputElement.PointerMovedEvent, control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftPressed(), KeyModifiers.None));
         control.RaiseEvent(new PointerReleasedEventArgs(control, pointer, window, ToScreenPoint(control, new Point(80, 80)), 0UL, LeftReleased(), KeyModifiers.None, MouseButton.Left));
@@ -438,7 +438,7 @@ public class MarqueeControlTests
     public void スケールが0の変換でもヒットテストが動作する()
     {
         var control = CreateControl();
-        // ToDomain が常に (0,0) を返す変換（スケール 0）→ ToDomainRadius は HandleHitRadius にフォールバック
+        // ToSource が常に (0,0) を返す変換（スケール 0）→ ToSourceRadius は HandleHitRadius にフォールバック
         control.SetCoordTransform(new CoordTransform(_ => new EsPoint(0, 0), p => p, () => null));
         var window = Show(control);
         var pointer = CreatePointer();
@@ -689,7 +689,7 @@ public class MarqueeControlTests
     public void 移動ドラッグで選択矩形が境界内にシフトされる()
     {
         var control = CreateControl();
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
         control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         var window = Show(control);
         var pointer = CreatePointer();
@@ -712,7 +712,7 @@ public class MarqueeControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void 矢印キーで選択矩形がドメイン1Pixel移動する()
+    public void 矢印キーで選択矩形が対象1Pixel移動する()
     {
         var control = CreateControl();
         var window = Show(control);
@@ -801,8 +801,8 @@ public class MarqueeControlTests
 
         control.RaiseEvent(new KeyEventArgs { Key = Key.Right, RoutedEvent = InputElement.KeyDownEvent });
 
-        // キー 1 回で終点が 1 ドメインピクセルだけ動く（フォーカス経由と TopLevel 購読の 2 経路で二重処理されると 2 px 動く）
-        Assert.Equal(new EsRect(20, 20, 31, 30, EsRectInterval.Closed), control.CurrentSnapshot.SelectionDomainRect);
+        // キー 1 回で終点が 1 対象ピクセルだけ動く（フォーカス経由と TopLevel 購読の 2 経路で二重処理されると 2 px 動く）
+        Assert.Equal(new EsRect(20, 20, 31, 30, EsRectInterval.Closed), control.CurrentSnapshot.SelectionSourceRect);
         Assert.Single(rects);
         window.Close();
     }
@@ -1226,7 +1226,7 @@ public class MarqueeControlTests
         var window = Show(control);
         var pointer = CreatePointer();
         // クリップ有効（境界 200x200）。 マウス位置と矩形の角がずれる状況を作る
-        control.Options = control.Options with { ClampToDomainBounds = true };
+        control.Options = control.Options with { ClampToSourceBounds = true };
         control.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(200, 200)));
         control.SetSelection(new Rect(20, 20, 60, 60));
         var positions = new List<Point>();
@@ -1512,7 +1512,7 @@ public class MarqueeControlTests
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(control.HasSelection, "ウィンドウ経由のドラッグが MarqueeControl へ届いていない（ヒットテストの欠落）");
-        Assert.Equal(new EsRect(20, 20, 160, 160, EsRectInterval.Closed), control.SelectionDomainRect);
+        Assert.Equal(new EsRect(20, 20, 160, 160, EsRectInterval.Closed), control.SelectionSourceRect);
         window.Close();
     }
 

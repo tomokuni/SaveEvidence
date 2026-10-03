@@ -19,7 +19,7 @@ public static class ScrollMath
     public const double WheelScrollUnit = 48.0;
 
     /// <summary>スクロール範囲の最大オフセット（コンテンツ座標）を計算する。</summary>
-    /// <param name="contentSize">コンテンツサイズ（コンテンツ座標）。</param>
+    /// <param name="sourceSize">コンテンツサイズ（コンテンツ座標）。</param>
     /// <param name="viewportSize">ビューポートサイズ（表示座標）。</param>
     /// <param name="scale">スケール（倍率 / 100）。</param>
     /// <returns>最大オフセット。 コンテンツがビューポート以下の場合は 0。</returns>
@@ -27,10 +27,10 @@ public static class ScrollMath
     /// 描画位置 = スケール × (コンテンツ座標 − オフセット) の定義に基づき、<br/>
     /// オフセットの最大値はコンテンツ − ビューポート / スケール。
     /// </remarks>
-    public static double MaxOffset(double contentSize, double viewportSize, double scale)
+    public static double MaxOffset(double sourceSize, double viewportSize, double scale)
     {
         scale = scale > 0 ? scale : 1;
-        return Math.Max(0, contentSize - viewportSize / scale);
+        return Math.Max(0, sourceSize - viewportSize / scale);
     }
 
     /// <summary>スクロールバーのビューポートサイズ（コンテンツ座標での表示範囲）を計算する。</summary>

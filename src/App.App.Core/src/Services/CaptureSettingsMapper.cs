@@ -29,7 +29,7 @@ internal static class CaptureSettingsMapper
             HandleColor: ParseColor(settings.HandleColor),
             HandleSize: settings.HandleSize,
             HandleHitRadius: settings.HandleHitRadius,
-            ClampToDomainBounds: settings.ClampToDomainBounds,
+            ClampToSourceBounds: settings.ClampToSourceBounds,
             MarkerColor: ParseColor(settings.MarkerColor),
             MarkerLength: settings.MarkerLength,
             // カーソル座標ラベル（Marquee）

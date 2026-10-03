@@ -19,14 +19,14 @@ public class OverlayRectLayoutTests
     private static readonly DrawingColor s_background = DrawingColor.FromArgb(255, 0, 0, 255);
 
     /// <summary>検証に使う矩形情報を生成する。</summary>
-    /// <param name="rect">矩形（ドメイン座標）。</param>
+    /// <param name="rect">矩形（対象座標）。</param>
     /// <param name="style">枠線スタイル。</param>
     /// <param name="thickness">枠線の太さ。</param>
     /// <returns>矩形情報。</returns>
     private static OverlayRect Create(EsRect rect, OverlayLineStyle style, double thickness = 2)
         => new(rect, style, s_foreground, s_background, thickness);
 
-    /// <summary>ドメイン矩形をビューポート座標（同じ値）へ解決する。</summary>
+    /// <summary>対象矩形をビューポート座標（同じ値）へ解決する。</summary>
     /// <param name="rect">矩形情報。</param>
     /// <returns>描画入力。</returns>
     private static OverlayRectFrame Resolve(OverlayRect rect)

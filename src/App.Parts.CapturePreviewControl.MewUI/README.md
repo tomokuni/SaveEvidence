@@ -94,8 +94,8 @@ session.AppearanceSettings = changed;
 
 画像の表示（拡大・パン・Fit）と、ホストから渡された矩形のオーバーレイ描画を 1 つのコントロールにまとめた複合コントロールです。 内部で画像ビューポート（`ZoomViewControl`）と透明な矩形オーバーレイを重ね、ホストへ統一インターフェースを提供します（Facade パターン）。
 
-- **矩形オーバーレイ**: `Rects`（`IReadOnlyList<OverlayRect>`。 ドメイン座標）を表示時にビューポート座標へ変換して描画する。 実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」の 2 回描画で市松風の視認性を出す（ダッシュ長はコアの `OverlayLineDash` が単一所有）
-- **座標変換**: `ViewportToContent` / `ContentToViewport` / `ImageRectViewport`（画像表示矩形の原点基準。 Fit 中央寄せの補正を含む）
+- **矩形オーバーレイ**: `Rects`（`IReadOnlyList<OverlayRect>`。 対象座標）を表示時にビューポート座標へ変換して描画する。 実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」の 2 回描画で市松風の視認性を出す（ダッシュ長はコアの `OverlayLineDash` が単一所有）
+- **座標変換**: `ClientToSource` / `SourceToClient` / `ImageRectViewport`（画像表示矩形の原点基準。 Fit 中央寄せの補正を含む）
 - **入力**: 下の画像ビューポートが受け取る（オーバーレイはヒットテスト対象外）。 ホイールの転送用に `PanByWheel` / `ZoomByWheel` を公開する
 - **領域選択は持たない**: 領域選択は `FadeMaskDragRectControl` を重ねて構成する（[5.2](#52-fademaskdragrectcontrol領域選択)）
 
@@ -104,7 +104,7 @@ session.AppearanceSettings = changed;
 | `Source` | `EsBitmap?` | 表示する画像。 設定すると Fit 表示へリセットする |
 | `CenterAlign` | `bool` | 画像がビューポートより小さい軸を中央寄せする |
 | `Appearance` | `ZoomViewAppearance` | 下地（市松模様の大きさ・2 色・背景色）の外観の単一値 |
-| `Rects` | `IReadOnlyList<OverlayRect>` | オーバーレイとして描画する矩形（ドメイン座標） |
+| `Rects` | `IReadOnlyList<OverlayRect>` | オーバーレイとして描画する矩形（対象座標） |
 | `ZoomView` | `ZoomViewControl` | 内包する画像ビューポート |
 | `ZoomPercent` | `double` | 実効ズーム率（%）。 0 より大きい値のみ設定できる |
 | `CanZoomIn` / `CanZoomOut` | `bool` | ズーム可否（画像未設定時は false） |
@@ -117,7 +117,7 @@ session.AppearanceSettings = changed;
 | `ZoomByWheel(bool, EsPoint?)` | Ctrl+ホイールのズームを適用する（位置はズーム中心） |
 | `TranslatePositionFrom(Element, EsPoint)` | 重ねた要素のローカル座標を本コントロールの座標へ変換する |
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
-| `ViewportToContent(EsPoint)` / `ContentToViewport(EsPoint)` | 画像表示矩形の原点基準の座標変換 |
+| `ClientToSource(EsPoint)` / `SourceToClient(EsPoint)` | 画像表示矩形の原点基準の座標変換 |
 
 イベントは `ZoomChanged` / `ViewportChanged`（内包する画像ビューポートから中継）です。
 
@@ -139,12 +139,12 @@ session.AppearanceSettings = changed;
 | `Mode` | 動作モード（既定は `AreaSelect`） |
 | `Options` | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 コアの `FadeMaskDragRectOptions`。 色は含まない） |
 | `MarqueeAppearance` / `LoupeAppearance` | 描画にだけ必要な外観の単一値（提示層の外観。 内包コントロールへ委譲） |
-| `HasSelection` / `SelectionDomainRect` | 現在の選択状態（ドメイン座標） |
-| `HighlightDomainRect` | ハイライト（`ScreenSelect` / `WindowSelect` の注目矩形。 null はハイライトなし） |
+| `HasSelection` / `SelectionSourceRect` | 現在の選択状態（対象座標） |
+| `HighlightSourceRect` | ハイライト（`ScreenSelect` / `WindowSelect` の注目矩形。 null はハイライトなし） |
 | `ShowFullOverlay` | 全面暗転の有無（モードから導出） |
-| `LoupeCenterPoint` | ルーペ中心（ドメイン座標） |
+| `LoupeCenterPoint` | ルーペ中心（対象座標） |
 | `OperationTextProvider` / `InfoTextProvider` / `SizeLabelOverrideProvider` | 操作ラベル（2 行目）・情報ラベル（3 行目）・サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
-| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | DPI スケーリング（設定には含めない環境値） |
+| `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | DPI スケーリング（設定には含めない環境値） |
 | `Log` | 操作ログの出力先（内包する選択コントロールとルーペへ伝搬する） |
 
 | メソッド | 説明 |
@@ -162,7 +162,7 @@ session.AppearanceSettings = changed;
 
 ### 5.3 ZoomViewControl（切り出しビューの画像ビューポート）
 
-画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールとしてではなく切り出しビューの表示を成立させるために存在します（`CropViewControl` が `Source` / `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ViewportToContent` / `ContentToViewport` を委譲し、ホストは通常 `CropViewControl` 経由で利用します。 `CropViewControl.ZoomView` で参照できるのは、重ねた要素の座標変換に必要となる場合のためです）。 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー）は UI 非依存コア `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有します。
+画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールとしてではなく切り出しビューの表示を成立させるために存在します（`CropViewControl` が `Source` / `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ClientToSource` / `SourceToClient` を委譲し、ホストは通常 `CropViewControl` 経由で利用します。 `CropViewControl.ZoomView` で参照できるのは、重ねた要素の座標変換に必要となる場合のためです）。 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー）は UI 非依存コア `App.Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有します。
 
 - **ズーム遷移**: ⊖⊕ の 23 段階（10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500）/ Ctrl+ホイールの ×1.1・÷1.1 連続遷移（現在値を基準に四捨五入し、10〜500% へクランプ）
 - **Fit 表示**: ビューポートに収まる Uniform 倍率（`min(ビューポート幅 ÷ 画像幅, ビューポート高さ ÷ 画像高さ) × 100`。 アスペクト比維持）。 リサイズに追従し、段階遷移の際に Fit 実効倍率が間に挟まる場合はそれを経由する

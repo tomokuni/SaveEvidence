@@ -158,7 +158,7 @@ dotnet run --project sample/ColorPickerControl.AvaloniaUI.Sample.csproj
 - `ColorString.cs`: 公開静的ユーティリティ（色文字列の解析・整形・正規化）
 - `ColorEntry.cs`: 色一覧データ（internal）
 
-依存方向は**一方向の階層構造**（コントロール → 生成/検証 → ドメイン（ColorString / ColorEntry / コンバーター））で、双方向依存・内部公開・具象依存を解消します。
+依存方向は**一方向の階層構造**（コントロール → 生成/検証 → 対象（ColorString / ColorEntry / コンバーター））で、双方向依存・内部公開・具象依存を解消します。
 
 ## 12. プロジェクト構成
 

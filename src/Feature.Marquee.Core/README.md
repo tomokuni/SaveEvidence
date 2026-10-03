@@ -22,7 +22,7 @@ using EsUtil.Feature.Marquee.Core.Setting;
 
 var marquee = new Marquee(effects, cursorService, new MarqueeOptions { HandleSize = 8 });
 marquee.Log = logger;                                          // null は NullLogger へ吸収される
-marquee.SetCoordTransform(CoordTransform.Identity);            // ドメイン境界（画像サイズ等）
+marquee.SetCoordTransform(CoordTransform.Identity);            // 対象の境界（画像サイズ等）
 
 // 入力の通知（効果の適用までファサードが行う）
 marquee.Press(new EsPoint(100, 100), clickCount: 1);
@@ -63,14 +63,14 @@ marquee.Notified += (_, notice) => Raise(notice);
 
 | 差し替えたいもの | 方法 |
 | --- | --- |
-| 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToDomainBounds`）を変える |
+| 寸法・対話パラメータ | `MarqueeOptions`（`HandleSize` / `HandleBorderThickness` / `MarkerLength` / `HandleHitRadius` / `MinSelectionSize` / `ClampToSourceBounds`）を変える |
 | UI への効果の適用 | `IMarqueeEffects` を実装する（不要なメンバーは `MarqueeEffectsBase` を継承して省略できる） |
 | 見た目（色・フォント・枠線の太さ・表示可否）と文言 | 描画層の外観・描画計画（上位の層）を変える（本コアは色も文言も持たない） |
-| ドメイン境界 | `SetCoordTransform` に `ICoordTransform`（`Bounds` 付き）を設定し、`ClampToDomainBounds` でクリップを有効にする |
+| 対象の境界 | `SetCoordTransform` に `ICoordTransform`（`Bounds` 付き）を設定し、`ClampToSourceBounds` でクリップを有効にする |
 
 ## 6. 座標型
 
-`EsRect` / `EsPoint` は常にドメイン座標です。 UI 論理座標（DIP）との変換は `ICoordTransform`（`Port`）が担い、各 UI のイベント引数は自前の型（例: Avalonia の `Rect`）で公開して境界で 1 行変換します。 キーは `EsKey` を介して通知します。
+`EsRect` / `EsPoint` は常に対象座標です。 UI 論理座標（DIP）との変換は `ICoordTransform`（`Port`）が担い、各 UI のイベント引数は自前の型（例: Avalonia の `Rect`）で公開して境界で 1 行変換します。 キーは `EsKey` を介して通知します。
 
 ## 7. ビルド
 

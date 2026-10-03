@@ -52,7 +52,7 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `MarqueeGeometry` | record struct | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MouseDomainPosition` / `MouseDipPosition` ＋ `ClientRect`）。 **コアが責任を持つ値の全量** |
+| `MarqueeGeometry` | record struct | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusSourceRect` / `Handles` / `Marker` / `MouseSourcePosition` / `MouseDipPosition` ＋ `ClientRect`）。 **コアが責任を持つ値の全量** |
 | `MarqueeRenderRequest` | record struct | 1 フレーム分の幾何を解決する入力（設定・状態と、描画時に決まる値）。 `Marquee.CreateRequest` が生成し、`Marquee.ResolveGeometry` へ渡す。 値の組は `MarqueeRenderRequest.Create` が 1 箇所に閉じる。 **`Create` を public にする理由**: ファサード（`Marquee.CreateRequest`）と独自 UI が入力を組み立てる唯一の入口である（描画先の領域を知るのは呼び出し側だけである） |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの幾何（位置と寸法はコアが解決済み。 **色と線の太さは描画層の外観が持つ**） |
 
@@ -80,13 +80,13 @@
 | `Notified` | event | 通知（`MarqueeNotice`） |
 | `Log` | property | ロガー。 null は `NullLogger` へ吸収される |
 | `Options` | property | 設定。 設定すると対話パラメータを反映し、**変化した項目をログ出力**し、境界外選択の禁止の変化時のみ即時クリップを行う |
-| `DipToDomainScaling` | property | 座標変換ポート未指定時に適用する倍率。 既定は `Limits.DipToDomainScalingDefault`（1.0）。 設定時は 0.1〜8.0 へ補正される |
-| `HighlightDomainRect` | property | ハイライト矩形（ドメイン座標）。 null が「ハイライトしない」。 **変更は最も低いレベル（Trace）で記録する**（ホバーのたびに変わりうる最も頻度の高い設定のため） |
-| `HasSelection` / `SelectionDomainRect` | property | 選択の有無と選択矩形（ドメイン座標） |
+| `ClientToSourceScaling` | property | 座標変換ポート未指定時に適用する倍率。 既定は `Limits.ClientToSourceScalingDefault`（1.0）。 設定時は 0.1〜8.0 へ補正される |
+| `HighlightSourceRect` | property | ハイライト矩形（対象座標）。 null が「ハイライトしない」。 **変更は最も低いレベル（Trace）で記録する**（ホバーのたびに変わりうる最も頻度の高い設定のため） |
+| `HasSelection` / `SelectionSourceRect` | property | 選択の有無と選択矩形（対象座標） |
 | `CreateSnapshot(EsPoint?)` | method | 状態スナップショットの生成 |
 | `SetCoordTransform(ICoordTransform?)` | method | 座標変換ポートの設定（null は等価変換） |
-| `ToDomain(EsPoint)` / `ToDip(EsPoint)` | method | 座標変換 |
-| `Press(EsPoint, int)` / `Move(EsPoint)` / `Release(EsPoint)` | method | ポインター入力の通知（ドメイン座標） |
+| `ToSource(EsPoint)` / `ToDip(EsPoint)` | method | 座標変換 |
+| `Press(EsPoint, int)` / `Move(EsPoint)` / `Release(EsPoint)` | method | ポインター入力の通知（対象座標） |
 | `KeyDown(EsKey, EsPoint?)` | method | キー入力の通知。 処理済みの真偽を返す（`Escape` / `Enter`（`Return` 含む）/ 矢印キー） |
 | `EndNudge()` | method | nudge の終了（フォーカス喪失で使用） |
 | `SetSelection(EsRect)` / `ResetSelection()` | method | 選択の復元・対話状態の初期化 |
@@ -104,8 +104,8 @@
 | 寸法 | `HandleBorderThickness` | 1.5（ハンドル枠の線の太さ。 見えている大きさを決めるため、`HandleHitRadius` と揃えて設定する） | 0.5〜64.0 |
 | 寸法 | `MarkerLength` | 16.0（幾何の半幅は 1/2） | 2.0〜4096.0 |
 | 対話 | `HandleHitRadius` | 12.0（DIP） | 0.0〜256.0 |
-| 対話 | `MinSelectionSize` | 6.0（ドメイン座標。 これ未満はキャンセル扱い） | 1.0〜4096.0 |
-| 対話 | `ClampToDomainBounds` | `true` | — |
+| 対話 | `MinSelectionSize` | 6.0（対象座標。 これ未満はキャンセル扱い） | 1.0〜4096.0 |
+| 対話 | `ClampToSourceBounds` | `true` | — |
 
 数値項目の補正は**本型の生成時に適用**します（`init` アクセサ。 安全域は `Marquee.Limits` が単一所有する）。 設定の経路（オブジェクト初期化子・`with` 式・逆シリアル化）によらず範囲内の値だけが保持されます。
 
@@ -122,17 +122,17 @@
 | `HandleSizeMin` / `HandleSizeMax` / `HandleSizeDefault` | `1.0` / `256.0` / `10.0` | ドラッグハンドルの一辺サイズ（DIP） |
 | `MarkerLengthMin` / `MarkerLengthMax` / `MarkerLengthDefault` | `2.0` / `4096.0` / `16.0` | 十字マーカーの全長（DIP） |
 | `HandleHitRadiusMin` / `HandleHitRadiusMax` / `HandleHitRadiusDefault` | `0.0` / `256.0` / `12.0` | ハンドルのヒットテスト半径（DIP） |
-| `MinSelectionSizeMin` / `MinSelectionSizeMax` / `MinSelectionSizeDefault` | `1.0` / `4096.0` / `6.0` | 選択矩形の最小サイズ（ドメイン座標） |
+| `MinSelectionSizeMin` / `MinSelectionSizeMax` / `MinSelectionSizeDefault` | `1.0` / `4096.0` / `6.0` | 選択矩形の最小サイズ（対象座標） |
 | `HandleBorderThicknessMin` / `HandleBorderThicknessMax` / `HandleBorderThicknessDefault` | `0.5` / `64.0` / `1.5` | ドラッグハンドルの枠線の太さ（DIP） |
 | `BorderThicknessMin` / `BorderThicknessMax` / `BorderThicknessDefault` | `0.5` / `64.0` / `2.0` | 枠線の太さ（DIP。 描画層の外観の既定値も本値を参照する） |
-| `DipToDomainScalingMin` / `DipToDomainScalingMax` / `DipToDomainScalingDefault` | `0.1` / `8.0` / `1.0` | ポート未指定時に適用する倍率（環境値。 他の数値より後に置く） |
+| `ClientToSourceScalingMin` / `ClientToSourceScalingMax` / `ClientToSourceScalingDefault` | `0.1` / `8.0` / `1.0` | ポート未指定時に適用する倍率（環境値。 他の数値より後に置く） |
 
 | メソッド | 説明 |
 | --- | --- |
 | `CoerceHandleSize(double)` / `CoerceMarkerLength(double)` / `CoerceHandleHitRadius(double)` / `CoerceMinSelectionSize(double)` | 各寸法を安全域へ補正（非有限は既定値） |
 | `CoerceHandleBorderThickness(double)` | ハンドルの枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する） |
 | `CoerceBorderThickness(double)` | 枠線の太さを 0.5〜64.0 へ補正（0 以下の指定を無効化する。 描画層の外観が使う） |
-| `CoerceDipToDomainScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
+| `CoerceClientToSourceScaling(double)` | 倍率を 0.1〜8.0 へ補正 |
 | `ResolveDisplayScale(double, double)` | 表示スケールの解決（**public**。 未設定（0 以下）は倍率を使う。 描画層のサイズラベル書式が使う） |
 
 ### 2.9 `IMarqueeEffects` のメンバー
@@ -167,10 +167,10 @@
 | --- | --- |
 | `ClientSize` / `ClientRect` | 描画領域のサイズ（DIP）と、原点（0, 0）からの描画面全体 |
 | `FocusDipRect` | 注目矩形（DIP。 選択もハイライトも無い場合は null）。 終点の `+1` は選択した矩形の `Interval` が決める（ドラッグの選択 = 閉区間、ハイライト矩形 = 半開区間）。 暗転マスクを抜く領域である |
-| `FocusDomainRect` | 注目矩形（ドメイン座標。 選択した矩形をそのまま渡すため `Interval` も保持する）。 ホストが矩形ごとの表示スケールを解決するために使う |
+| `FocusSourceRect` | 注目矩形（対象座標。 選択した矩形をそのまま渡すため `Interval` も保持する）。 ホストが矩形ごとの表示スケールを解決するために使う |
 | `Handles` | ドラッグハンドルの幾何（`HandleDipRects` 8 方向・`BorderThickness`）。 選択が無い場合は null |
 | `Marker` | 始点マーカーの幾何（`Center` / `Size`＝半幅）。 nudge 中でない場合は null。 線の太さは描画層の外観（`MarkerThickness`）が持つ |
-| `MouseDomainPosition` | 直近のマウス位置（ドメイン座標）。 カーソル座標ラベルの文言の基準 |
+| `MouseSourcePosition` | 直近のマウス位置（対象座標）。 カーソル座標ラベルの文言の基準 |
 | `MouseDipPosition` | 直近のマウス位置（DIP。 座標変換済み）。 カーソル座標ラベルの配置の基準 |
 
 **幾何は「描く値の無い項目は null / 空」で返します**（注目矩形なし・選択なし・nudge 中でない）。 **表示可否（ハンドル・ラベルを描くかどうか）は本コアの責務ではありません**（描画層の外観が単一所有します）。
@@ -193,7 +193,7 @@ using EsUtil.Feature.Marquee.Core.Setting;
 
 var marquee = new Marquee(effects, cursorService, new MarqueeOptions { HandleSize = 8 });
 marquee.Log = logger;                                          // null は NullLogger へ吸収される
-marquee.SetCoordTransform(CoordTransform.Identity);            // ドメイン境界（画像サイズ等）
+marquee.SetCoordTransform(CoordTransform.Identity);            // 対象の境界（画像サイズ等）
 
 // 入力の通知（効果の適用までファサードが行う）
 marquee.Press(new EsPoint(100, 100), clickCount: 1);
@@ -214,11 +214,11 @@ var plan = ResolveDrawPlanByHost(new EsSize(800, 600), MeasureText);
 
 | 座標系 | 用途 |
 | --- | --- |
-| ドメイン座標 | 選択矩形・入力座標・通知座標・ハイライト矩形。 利用者が座標変換ポートで定義する |
+| 対象座標 | 選択矩形・入力座標・通知座標・ハイライト矩形。 利用者が座標変換ポートで定義する |
 | ローカル DIP | 幾何の座標（`FocusDipRect` / `Handles` / `Marker`）。 `ICoordTransform.ToDip` で得る |
 
 - 選択矩形は**閉区間**（始点・終点とも含む）として扱い、DIP への変換時に終点へ +1 します。 **ハイライト矩形はホストが全ピクセルを含む閉区間として与えるため +1 しません**（優先順と閉区間の規則は `MarqueeRenderRequest` が単一所有します）。
-- ドメイン境界（`ICoordTransform.DomainBounds`）は `ClampToDomainBounds` が有効な場合のクリップ範囲です。
+- 対象の境界（`ICoordTransform.SourceArea`）は `ClampToSourceBounds` が有効な場合のクリップ範囲です。
 - **コアは描画面の原点が常に (0, 0) である前提**で幾何を返します（親の座標を混ぜるとハンドルがずれるため、描画領域は原点を持たない `EsSize` で受けます）。
 
 ## 6. 制限事項

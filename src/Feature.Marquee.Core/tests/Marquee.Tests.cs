@@ -90,7 +90,7 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out _);
 
         Assert.False(marquee.HasSelection);
-        Assert.Equal(default, marquee.SelectionDomainRect);
+        Assert.Equal(default, marquee.SelectionSourceRect);
         Assert.Equal(MarqueeHitTarget.None, marquee.CreateSnapshot().ActiveTarget);
     }
 
@@ -202,7 +202,7 @@ public class MarqueeTests
 
         var handled = marquee.KeyDown(EsKey.Right, new EsPoint(100, 100));
 
-        // 未選択の nudge は始点を 1 ドメインピクセル移動する（カーソルの非表示管理もコアが単一所有する）
+        // 未選択の nudge は始点を 1 対象ピクセル移動する（カーソルの非表示管理もコアが単一所有する）
         Assert.True(handled);
         Assert.Equal(["redraw"], effects.Calls);
         Assert.Equal(
@@ -219,14 +219,14 @@ public class MarqueeTests
     [Fact]
     public void Options_境界外選択の禁止を既存の選択矩形へ即時適用する()
     {
-        var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ClampToDomainBounds = false });
+        var marquee = CreateMarquee(null, out _, MarqueeOptions.Default with { ClampToSourceBounds = false });
         marquee.SetCoordTransform(new CoordTransform(p => p, p => p, () => new EsSize(100, 100)));
         marquee.SetSelection(new EsRect(50, 50, 200, 200));
 
         // 設定を ON へ切り替えると既存の選択矩形が境界内へクリップされる
-        marquee.Options = marquee.Options with { ClampToDomainBounds = true };
+        marquee.Options = marquee.Options with { ClampToSourceBounds = true };
 
-        Assert.Equal(new EsRect(50, 50, 50, 50), marquee.SelectionDomainRect);
+        Assert.Equal(new EsRect(50, 50, 50, 50), marquee.SelectionSourceRect);
     }
 
     [Fact]
@@ -245,10 +245,10 @@ public class MarqueeTests
     {
         var marquee = CreateMarquee(null, out var effects);
 
-        marquee.DipToDomainScaling = 2.0;
-        marquee.DipToDomainScaling = 2.0;
+        marquee.ClientToSourceScaling = 2.0;
+        marquee.ClientToSourceScaling = 2.0;
 
-        Assert.Equal(2.0, marquee.DipToDomainScaling);
+        Assert.Equal(2.0, marquee.ClientToSourceScaling);
         // 設定の変更は UI の公開プロパティから渡されるため、描画の更新は UI が観測して行う
         // （コアが効果として再描画を要求するのは入力に伴う場合だけである）
         Assert.Equal(0, effects.RedrawCount);
@@ -265,7 +265,7 @@ public class MarqueeTests
 
         marquee.SetCoordTransform(null);
 
-        Assert.Equal(new EsPoint(3, 4), marquee.ToDomain(new EsPoint(3, 4)));
+        Assert.Equal(new EsPoint(3, 4), marquee.ToSource(new EsPoint(3, 4)));
         Assert.Equal(new EsPoint(3, 4), marquee.ToDip(new EsPoint(3, 4)));
     }
 
@@ -275,11 +275,11 @@ public class MarqueeTests
         var marquee = CreateMarquee(null, out var effects);
         effects.Calls.Clear();
 
-        // ToDomain（DIP → ドメイン）は 1/2 倍、ToDip（ドメイン → DIP）は 2 倍
+        // ToSource（DIP → 対象）は 1/2 倍、ToDip（対象 → DIP）は 2 倍
         marquee.SetCoordTransform(new CoordTransform(
             p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null));
 
-        Assert.Equal(new EsPoint(5, 10), marquee.ToDomain(new EsPoint(10, 20)));
+        Assert.Equal(new EsPoint(5, 10), marquee.ToSource(new EsPoint(10, 20)));
         Assert.Equal(new EsPoint(20, 40), marquee.ToDip(new EsPoint(10, 20)));
         Assert.Contains("redraw", effects.Calls);
     }
@@ -469,7 +469,7 @@ public class MarqueeTests
 
     /// <summary>環境値（倍率）の変更が変化したときだけ記録されることを検証する。</summary>
     [Fact]
-    public void DipToDomainScaling_変更したときだけ記録する()
+    public void ClientToSourceScaling_変更したときだけ記録する()
     {
         var marquee = CreateMarquee(null, out _);
         var logger = new RecordingLogger();
@@ -477,14 +477,14 @@ public class MarqueeTests
         logger.Messages.Clear();
         logger.Levels.Clear();
 
-        marquee.DipToDomainScaling = 1.25;
-        marquee.DipToDomainScaling = 1.25;   // 同値
-        marquee.DipToDomainScaling = 2.0;
+        marquee.ClientToSourceScaling = 1.25;
+        marquee.ClientToSourceScaling = 1.25;   // 同値
+        marquee.ClientToSourceScaling = 2.0;
 
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: DipToDomainScaling 1 → 1.25",
-                "[Feature.Marquee.Core] Setting: DipToDomainScaling 1.25 → 2",
+                "[Feature.Marquee.Core] Setting: ClientToSourceScaling 1 → 1.25",
+                "[Feature.Marquee.Core] Setting: ClientToSourceScaling 1.25 → 2",
             ],
             logger.Messages);
         // 低頻度の設定変更は Debug で記録する
@@ -502,16 +502,16 @@ public class MarqueeTests
         logger.Messages.Clear();
         logger.Levels.Clear();
 
-        marquee.HighlightDomainRect = new EsRect(1, 2, 3, 4);
-        marquee.HighlightDomainRect = new EsRect(1, 2, 3, 4);   // 同値
-        marquee.HighlightDomainRect = new EsRect(5, 6, 7, 8);
-        marquee.HighlightDomainRect = null;
+        marquee.HighlightSourceRect = new EsRect(1, 2, 3, 4);
+        marquee.HighlightSourceRect = new EsRect(1, 2, 3, 4);   // 同値
+        marquee.HighlightSourceRect = new EsRect(5, 6, 7, 8);
+        marquee.HighlightSourceRect = null;
 
         Assert.Equal(
             [
-                "[Feature.Marquee.Core] Setting: HighlightDomainRect null → (1, 2, 3, 4)",
-                "[Feature.Marquee.Core] Setting: HighlightDomainRect (1, 2, 3, 4) → (5, 6, 7, 8)",
-                "[Feature.Marquee.Core] Setting: HighlightDomainRect (5, 6, 7, 8) → null",
+                "[Feature.Marquee.Core] Setting: HighlightSourceRect null → (1, 2, 3, 4)",
+                "[Feature.Marquee.Core] Setting: HighlightSourceRect (1, 2, 3, 4) → (5, 6, 7, 8)",
+                "[Feature.Marquee.Core] Setting: HighlightSourceRect (5, 6, 7, 8) → null",
             ],
             logger.Messages);
         Assert.All(logger.Levels, level => Assert.Equal(LogLevel.Trace, level));

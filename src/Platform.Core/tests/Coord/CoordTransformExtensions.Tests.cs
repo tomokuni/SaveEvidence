@@ -15,7 +15,7 @@ public class CoordTransformExtensionsTests
     [Fact]
     public void OrIdentity_ポート指定時はそのポートを返す()
     {
-        var port = CoordTransform.DipToDomain(() => 2.0);
+        var port = CoordTransform.ClientToSource(() => 2.0);
 
         Assert.Same(port, port.OrIdentity());
     }

@@ -26,9 +26,9 @@ private readonly LoupePresenter _presenter = new(logger);
 private EsBitmap? _source;   // 拡大元の画像（本 UI が解決して渡す）
 
 // 2. 状態の更新（マウス移動などで拡大中心を設定する）
-public void SetCenter(EsPoint domainPoint)
+public void SetCenter(EsPoint sourcePoint)
 {
-    _presenter.CenterPoint = domainPoint;
+    _presenter.CenterPoint = sourcePoint;
     InvalidateVisual();
 }
 

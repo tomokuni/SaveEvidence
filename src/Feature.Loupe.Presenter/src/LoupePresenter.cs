@@ -112,7 +112,7 @@ public partial class LoupePresenter
         }
     }
 
-    /// <summary>拡大表示する中心座標（ドメイン座標）を取得または設定する。</summary>
+    /// <summary>拡大表示する中心座標（対象座標）を取得または設定する。</summary>
     /// <value>拡大中心（元画像ピクセル座標）。 未設定は null。</value>
     /// <remarks>保持とログ（Trace）はコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。</remarks>
     public EsPoint? CenterPoint
@@ -176,8 +176,8 @@ public partial class LoupePresenter
         }
     }
 
-    /// <summary>ドメイン ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
-    /// <param name="port">座標変換ポート（ToDip = ドメイン → 親領域 DIP）。 null の場合は等価変換。</param>
+    /// <summary>対象 ↔ 親領域 DIP の座標変換ポートを設定する。</summary>
+    /// <param name="port">座標変換ポート（ToDip = 対象 → 親領域 DIP）。 null の場合は等価変換。</param>
     /// <remarks>
     /// 保持とログはコアが単一所有する（本層は委譲するだけである）。<br/>
     /// 低頻度のメソッド呼び出しのため、本層を通過したことを Trace で記録する。

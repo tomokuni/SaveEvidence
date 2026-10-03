@@ -163,13 +163,13 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <param name="viewportPos">ビューポート座標（DIP）。</param>
     /// <returns>コンテンツ座標（元画像ピクセル）。</returns>
     /// <remarks>Fit 中央寄せの原点補正を含む。 変換はコアのセッションへ委譲する。</remarks>
-    public EsPoint ViewportToContentImage(EsPoint viewportPos) => _session.ViewportToContentImage(viewportPos);
+    public EsPoint ClientToDisplayedSource(EsPoint viewportPos) => _session.ClientToDisplayedSource(viewportPos);
 
     /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準）。</summary>
     /// <param name="contentPos">コンテンツ座標（元画像ピクセル）。</param>
     /// <returns>ビューポート座標（DIP）。</returns>
     /// <remarks>Fit 中央寄せの原点補正を含む。 変換はコアのセッションへ委譲する。</remarks>
-    public EsPoint ContentToViewportImage(EsPoint contentPos) => _session.ContentToViewportImage(contentPos);
+    public EsPoint DisplayedSourceToClient(EsPoint contentPos) => _session.DisplayedSourceToClient(contentPos);
 
     /// <summary>ホイールの回転量でパンする（回転量から移動量への換算を単一所有する）。</summary>
     /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。 1 ノッチ = 1.0）。</param>
@@ -315,7 +315,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     }
 
     /// <summary>画像が変更されたときにセッションへ通知する。</summary>
-    private void OnSourceChanged() => Apply(_session.SetContent(Source is not null, ContentSize));
+    private void OnSourceChanged() => Apply(_session.SetSource(Source is not null, SourceSize));
 
     /// <summary>中央寄せの変更をセッションへ通知する。</summary>
     private void OnCenterAlignChanged() => Apply(_session.SetCenterAlign(CenterAlign));
@@ -323,7 +323,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <summary>元画像のサイズ（コンテンツ座標）を取得する。</summary>
     /// <returns>元画像のサイズ。 画像未設定時は default。</returns>
     /// <remarks><c>EsBitmap.Size</c> は <c>System.Drawing.Size</c> のため、コア幾何型へ変換する。</remarks>
-    private EsSize ContentSize
+    private EsSize SourceSize
     {
         get
         {

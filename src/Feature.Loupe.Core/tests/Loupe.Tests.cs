@@ -17,7 +17,7 @@ public class LoupeTests
     /// <summary>親領域のサイズ（表示サイズのクランプ基準）。</summary>
     private static readonly EsSize ParentSize = new(400, 300);
 
-    /// <summary>ドメイン → 親領域 DIP を 2 倍で返す座標変換ポートを生成する。</summary>
+    /// <summary>対象 → 親領域 DIP を 2 倍で返す座標変換ポートを生成する。</summary>
     /// <returns>ToDip が 2 倍の座標変換ポート。</returns>
     private static ICoordTransform CreateDoublingPort()
         => new CoordTransform(p => new EsPoint(p.X / 2, p.Y / 2), p => new EsPoint(p.X * 2, p.Y * 2), () => null);
@@ -280,7 +280,7 @@ public class LoupeTests
     /// <summary>拡大率が切り出しサイズの切り上げに影響されないことを検証する。</summary>
     /// <param name="clientPixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <remarks>
-    /// 実描画は切り出し領域（切り出しサイズのドメインピクセル）を <c>ZoomLevel</c> 倍で描くため、<br/>
+    /// 実描画は切り出し領域（切り出しサイズの対象ピクセル）を <c>ZoomLevel</c> 倍で描くため、<br/>
     /// 変換係数は切り出しサイズで割った値（<c>物理ピクセル / 切り出しサイズ</c>）ではなく <c>ZoomLevel</c> になる。
     /// </remarks>
     [Theory]
@@ -297,7 +297,7 @@ public class LoupeTests
     /// <summary>拡大率が DPI スケーリング係数に依存しないことを検証する。</summary>
     /// <param name="dipToDeviceScaling">表示 DIP → 物理ピクセルのスケーリング係数。</param>
     /// <remarks>
-    /// 物理ピクセル数は DIP とスケーリングに依存するが、描画の倍率（ドメイン → 描画ピクセル）は変わらない。<br/>
+    /// 物理ピクセル数は DIP とスケーリングに依存するが、描画の倍率（対象 → 描画ピクセル）は変わらない。<br/>
     /// 破線オーバーレイの位置が DPI でずれないことを保証する。
     /// </remarks>
     [Theory]

@@ -12,7 +12,7 @@ internal enum MarqueeCursorActions
     /// <summary>操作なし。</summary>
     None = 0,
 
-    /// <summary><see cref="MarqueeFeedback.CursorDomainPosition"/> へカーソルを移動する。</summary>
+    /// <summary><see cref="MarqueeFeedback.CursorSourcePosition"/> へカーソルを移動する。</summary>
     MoveTo = 1,
 
     /// <summary>カーソルを非表示にする（nudge 中）。</summary>

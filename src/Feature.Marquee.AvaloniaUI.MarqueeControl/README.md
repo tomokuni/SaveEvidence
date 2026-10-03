@@ -31,7 +31,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。 �
 - 選択矩形のドラッグ移動
 - 8方向ドラッグハンドルによるリサイズ
 - 矢印キーによる1Pixel単位のキーボード微調整（nudge）
-- ドメイン座標系で正確な nudge（矢印キー1回 = ドメイン1Pixel）
+- 対象座標系で正確な nudge（矢印キー1回 = 対象1Pixel）
 - ドラッグハンドル・始点マーカーの自己描画
 - **選択矩形の外側に描く装飾の描画**: 暗転マスク・外枠・ハイライト・内側の塗り（**表示可否と太さと色**はすべて外観（`Feature.Marquee.Presenter` の `MarqueeAppearance`）が単一所有し、装飾の矩形の導出と描画順は提示層（同層の `MarqueePresenter`）が単一所有する）。 **選択枠線はこの外枠が兼ねる**（別々に描くと線幅が二重になるため）
 - **ハンドル表示の切替**: `Appearance.ShowHandles = false` でハンドルを描かず枠線と外側の装飾だけを表示する（表示可否は描画にだけ必要な設定のため外観が単一所有する）
@@ -40,7 +40,7 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。 �
 - **文字は UI 層が要素として配置する**: サイズラベルとカーソル座標ラベルの**文言・基準点は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelTexts` partial））が、色とフォントサイズは外観（`MarqueeAppearance`）が、実寸から配置矩形を求める写像は同層の `MarqueePresenter`（`LabelPlan` partial） が単一所有**し、UI 層が `Border` + `TextBlock` を子要素として置く（子要素は親の描画より後に描かれるため常に最上位）。 サイズラベルの基準点は注目矩形の左上から**枠線の幅 + 1 DIP 内側**（枠線と背景の重なりを無くす）。 実寸測定は自 UI の API（`FormattedText`）で行う。 操作・情報ラベルはアプリ固有の付加情報のため、ホスト（`FadeMaskDragRectControl`）が `Rendered` のハンドラで自前で描く（外観は `FadeMaskDragRectOptions.Labels` が単一所有する）
 - ダブルクリックの確定/キャンセル判定（矩形内 = 確定 / 矩形外 = キャンセル）
 - Avalonia Binding 対応の StyledProperty
-- ドメイン↔DIP 座標変換ポート（`ICoordTransform` 直接注入。 型は `Platform.Core` 提供）
+- 対象↔DIP 座標変換ポート（`ICoordTransform` 直接注入。 型は `Platform.Core` 提供）
 - **閉区間描画（始点・終点を含む）**: ハンドルと外側の装飾（外枠）は終点（Right/Bottom）に +1 して DIP 変換（キャプチャの閉区間 +1 と一致。 規則はコアの描画入力（`MarqueeRenderRequest.ToDipRect`）が単一所有）
 - **ホイール操作は本コントロールが扱わない（ホストの責務）**: ホイール（ズーム・パン）はコントロール化を前提とした処理であり、**ホストが本コントロールの `PointerWheelChanged` を購読してビューポート（`ZoomViewControl` 等）へ転送**します（本コントロールは素通しし、`e.Handled` を立てません）。 表示の変化への追従もホストが `RefreshOverlay()` を呼びます
 - **薄い UI 層**: 入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）はコアの公開ファサード（`Marquee`）が担います。 本コントロールは「入力の受付」「効果の適用」「通知の転送」「描画計画の写し」のみを行います
@@ -125,9 +125,9 @@ marquee.Rendered += (_, e) =>
     // e.Context: ホスト固有の付加情報を描くための描画コンテキスト
 };
 
-// 座標ポートを設定（ドメイン = 画像ピクセル等）。ポート生成は Platform.Core の CoordTransform ファクトリを使用する。
-marquee.SetCoordTransform(CoordTransform.DipToDomain(() => 2.0)); // 例: DPI 200%（ToDomain = DIP→ドメイン × 2）
-// 第 2 引数に境界（画像サイズ等）を与えると選択をドメイン外へ出さない（省略すると無制限）
+// 座標ポートを設定（対象 = 画像ピクセル等）。ポート生成は Platform.Core の CoordTransform ファクトリを使用する。
+marquee.SetCoordTransform(CoordTransform.ClientToSource(() => 2.0)); // 例: DPI 200%（ToSource = DIP→対象 × 2）
+// 第 2 引数に境界（画像サイズ等）を与えると選択を対象外へ出さない（省略すると無制限）
 
 panel.Children.Add(marquee);
 ```
@@ -138,11 +138,11 @@ MarqueeControl は 3 つの座標系を使い分けます。
 
 | 座標系 | 用途 |
 | --- | --- |
-| ドメイン座標 | 選択状態・nudge・イベント通知 |
+| 対象座標 | 選択状態・nudge・イベント通知 |
 | コントロールローカル DIP | マウス入力・描画 |
 | 画面物理 Pixel | カーソル操作・画面変換 |
 
-ドメイン ↔ DIP の変換は `SetCoordTransform(ICoordTransform?)` で注入します（ToDomain = DIP→ドメイン / ToDip = ドメイン→DIP / DomainBounds = ドメイン境界）。
+対象 ↔ DIP の変換は `SetCoordTransform(ICoordTransform?)` で注入します（ToSource = DIP→対象 / ToDip = 対象→DIP / SourceArea = 対象の境界）。
 
 ## 7. サンプル
 

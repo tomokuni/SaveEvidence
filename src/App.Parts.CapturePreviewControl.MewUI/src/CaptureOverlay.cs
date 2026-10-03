@@ -27,7 +27,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 /// 4. 選択を確定すると、選択矩形で画像を切り出して返す（Escape はキャンセル）。<br/>
 /// 5. オーナーウィンドウを元の位置へ戻す。<br/>
 /// <br/>
-/// <b>座標系</b>: ドメイン = 画像ローカルピクセル（画像の左上が原点）。 撮影範囲の原点（仮想スクリーンの原点。<br/>
+/// <b>座標系</b>: 対象 = 画像ローカルピクセル（画像の左上が原点）。 撮影範囲の原点（仮想スクリーンの原点。<br/>
 /// 負値になりうる）が画像の (0, 0) に対応するため、画面物理ピクセルとは原点の分だけ異なる。<br/>
 /// 画像ローカルとローカル DIP の変換は <see cref="ICoordTransform"/> が担い、<br/>
 /// 選択コントロールへ注入する（コントロール側は座標系を意識しない）。 要素の検出とマウス入力は画面物理ピクセルで扱う。<br/>
@@ -87,7 +87,7 @@ internal sealed class CaptureOverlay
     /// <summary>キャプチャ種別（操作ラベル・情報ラベルの文言に影響する）。</summary>
     private readonly CaptureType _type;
 
-    /// <summary>カーソル下の要素のハイライト状態（ドメイン座標への変換・表示名・ログをコアが単一所有する）。</summary>
+    /// <summary>カーソル下の要素のハイライト状態（対象座標への変換・表示名・ログをコアが単一所有する）。</summary>
     private readonly CaptureHighlightSession _highlight;
 
     /// <summary>クリック確定の固定（押下で固定・解放で確定。 退化した検出は固定しない規則をコアが単一所有する）。</summary>
@@ -140,8 +140,8 @@ internal sealed class CaptureOverlay
     private EsRect? ResolveSelection()
         => CaptureTypeTraits.ResolveRect(
             _type,
-            _highlight.DomainRect,
-            _selector.HasSelection ? _selector.SelectionDomainRect : null);
+            _highlight.SourceRect,
+            _selector.HasSelection ? _selector.SelectionSourceRect : null);
 
     /// <summary>撮影セッションを実行し、確定した領域を返す。</summary>
     /// <param name="owner">オーナーウィンドウ（撮影中は画面外へ退避し、終了後に戻す）。</param>
@@ -443,7 +443,7 @@ internal sealed class CaptureOverlay
     /// <summary>サイズラベル・情報ラベルの文言を選択コントロールへ反映する。</summary>
     /// <param name="settings">設定。</param>
     /// <remarks>
-    /// 1. サイズラベルはドメイン座標（＝画像ピクセル）で表示するため、テキストは描画のたびに生成する。<br/>
+    /// 1. サイズラベルは対象座標（＝画像ピクセル）で表示するため、テキストは描画のたびに生成する。<br/>
     /// 2. 外観（サイズラベル・サブライン・情報ラベルの色・サイズ）は設定値の変換
     ///    （<c>FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions</c>）が単一所有するため、本メソッドでは設定しない。<br/>
     /// 3. 描画モード（操作ラベルの文言選定）は複合コントロールの <see cref="FadeMaskDragRectControl.Mode"/> が単一所有する。
@@ -529,12 +529,12 @@ internal sealed class CaptureOverlay
 
     /// <summary>選択オーバーレイの確定要求（Enter キー・ダブルクリック等）を処理する。</summary>
     /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">選択矩形イベント（矩形はドメイン座標 = 画像ピクセル）。</param>
+    /// <param name="e">選択矩形イベント（矩形は対象座標 = 画像ピクセル）。</param>
     /// <remarks>
     /// 選択矩形（画像ローカル座標）を確定の入口（画面物理座標）へ揃えて渡す（記録と解決は入口が担う）。
     /// </remarks>
     private void OnSelectorConfirmRequested(object? sender, FadeMaskDragRectSelectionEventArgs e)
-        => ConfirmScreen(CaptureClipMath.ToScreenRect(e.SelectionDomainRect, _screenBounds.TopLeft));
+        => ConfirmScreen(CaptureClipMath.ToScreenRect(e.SelectionSourceRect, _screenBounds.TopLeft));
 
     /// <summary>現在のオーバーレイウィンドウを閉じる。</summary>
     /// <remarks>
@@ -548,7 +548,7 @@ internal sealed class CaptureOverlay
     /// <remarks>
     /// 検出対象はキャプチャ種別で決まる。 スクリーン選択はカーソル下のモニター（画面全体）、<br/>
     /// ウィンドウ選択はカーソル下の最前面ウィンドウを検出し、その矩形をハイライトする。<br/>
-    /// 矩形のドメイン座標への変換・未検出の正規化・表示名の保持・ログはコア
+    /// 矩形の対象座標への変換・未検出の正規化・表示名の保持・ログはコア
     /// （<see cref="CaptureHighlightSession"/>）が単一所有する（本クラスは結果を設定するだけ）。
     /// </remarks>
     private void Highlight(EsPointInt screenPoint)
@@ -558,7 +558,7 @@ internal sealed class CaptureOverlay
         var highlight = _highlight.Update(_type, found, _screenBounds.TopLeft);
 
         // 未検出は null で表す（null が「ハイライトしない」を意味する）
-        _selector.HighlightDomainRect = highlight.DomainRect;
+        _selector.HighlightSourceRect = highlight.SourceRect;
 
         // 情報ラベル（ウィンドウタイトル）の文言は描画時に評価されるため、表示名が変わった場合だけ再描画を要求する
         if (highlight.TitleChanged)
@@ -583,23 +583,23 @@ internal sealed class CaptureOverlay
     /// <returns>ローカル DIP ⇔ 画像ピクセルを変換するポート。</returns>
     /// <remarks>
     /// 画像はウィンドウのクライアント領域全体へ等倍で描画するため、変換は倍率の乗除算だけになる。<br/>
-    /// 倍率の適用方向（ToDomain = DIP → 画像ピクセル）は Platform.Core の <see cref="CoordTransform.DipToDomain(Func{double}, Func{EsSize?})"/> が<br/>
+    /// 倍率の適用方向（ToSource = DIP → 画像ピクセル）は Platform.Core の <see cref="CoordTransform.ClientToSource(Func{double}, Func{EsSize?})"/> が<br/>
     /// 単一所有する（UI が倍率式を書かない）。 境界は画像サイズで、選択を画像外へ出さないためのクランプに使われる。
     /// </remarks>
     private ICoordTransform CreatePort()
-        => CoordTransform.DipToDomain(
+        => CoordTransform.ClientToSource(
             () => _scale,
             () => CaptureClipMath.ImageSize(Screen));
 
-    /// <summary>選択矩形（ドメイン座標）が属するモニターの表示倍率を返す。</summary>
-    /// <param name="domainRect">選択矩形（画像ピクセル = 仮想スクリーン座標から原点を引いた値）。</param>
+    /// <summary>選択矩形（対象座標）が属するモニターの表示倍率を返す。</summary>
+    /// <param name="sourceRect">選択矩形（画像ピクセル = 仮想スクリーン座標から原点を引いた値）。</param>
     /// <returns>そのモニターの DPI スケール（1.0 = 100%）。 該当が無い場合はウィンドウの倍率。</returns>
     /// <remarks>
-    /// ドメイン座標を画面物理座標（原点を加算）へ戻してからモニターを判定する。<br/>
+    /// 対象座標を画面物理座標（原点を加算）へ戻してからモニターを判定する。<br/>
     /// 「原点の加算」「判定点（矩形の中心）」「フォールバック」の規則はコア（<see cref="MonitorScalingMath"/>）が単一所有する
     /// （UI ごとに判定点がずれると、同じ矩形で表示倍率が食い違う）。
     /// </remarks>
-    private double DisplayScalingAt(EsRect domainRect)
-        => MonitorScalingMath.ResolveForDomainRect(
-            domainRect, _screenBounds.TopLeft, _monitorScales, _scale);
+    private double DisplayScalingAt(EsRect sourceRect)
+        => MonitorScalingMath.ResolveForSourceRect(
+            sourceRect, _screenBounds.TopLeft, _monitorScales, _scale);
 }
