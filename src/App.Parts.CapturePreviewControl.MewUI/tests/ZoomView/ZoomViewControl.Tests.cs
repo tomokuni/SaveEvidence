@@ -83,7 +83,7 @@ public class ZoomViewControlTests
 
         control.ZoomPercent = 100000;
 
-        Assert.Equal(ZoomConfig.Default.MaxZoom, control.ZoomPercent, 3);
+        Assert.Equal(ZoomOptions.Default.MaxZoom, control.ZoomPercent, 3);
     }
 
     /// <summary>0 以下の設定は受け付けない（Fit は <see cref="ZoomViewControl.ZoomFit"/> を使用する）ことを検証する。</summary>

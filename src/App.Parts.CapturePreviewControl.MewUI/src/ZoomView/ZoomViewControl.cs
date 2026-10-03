@@ -50,7 +50,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     private readonly ZoomViewSession _session;
 
     /// <summary>ズームビューコントロールを既定の設定で初期化する。</summary>
-    public ZoomViewControl() : this(ZoomConfig.Default) { }
+    public ZoomViewControl() : this(ZoomOptions.Default) { }
 
     /// <summary>ズームビューコントロールを指定の設定で初期化する。</summary>
     /// <param name="config">ズーム遷移の設定。 null の場合は既定値。</param>
@@ -58,7 +58,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// 画像は静止画として扱い連続再描画を無効化する。 ズーム・パンの変更時のみ再描画する。<br/>
     /// セッションの通知（ズーム状態・ビューポートの変化）を購読し、自 UI の公開イベントへ転送する。
     /// </remarks>
-    public ZoomViewControl(ZoomConfig? config)
+    public ZoomViewControl(ZoomOptions? config)
     {
         _session = new ZoomViewSession(config);
         _session.Notified += OnSessionNotified;
@@ -130,7 +130,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <value>Fit 中は実効倍率（ビューポートと元画像サイズから算出）、固定倍率中はズーム率。 0 にはならない。</value>
     /// <remarks>
     /// <b>setter</b> は 0 より大きい値のみ受け付ける（Fit へは <see cref="ZoomFit"/> を使用する）。<br/>
-    /// 設定値は <see cref="ZoomConfig"/> の範囲へクランプされ、ズーム中心を維持したまま倍率を変更する。
+    /// 設定値は <see cref="ZoomOptions"/> の範囲へクランプされ、ズーム中心を維持したまま倍率を変更する。
     /// </remarks>
     public double ZoomPercent
     {

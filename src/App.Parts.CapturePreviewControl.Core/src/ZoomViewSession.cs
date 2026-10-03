@@ -31,7 +31,7 @@ public sealed class ZoomViewSession
     private ILogger? _log;
 
     /// <summary>ズーム遷移の設定（不変値）。</summary>
-    private ZoomConfig _config = ZoomConfig.Default;
+    private ZoomOptions _config = ZoomOptions.Default;
 
     /// <summary>ズームビューの外観（下地・市松模様・スクロールバー）。</summary>
     private ZoomViewAppearance _appearance = ZoomViewAppearance.Default;
@@ -79,8 +79,8 @@ public sealed class ZoomViewSession
     private double _scrollBarDragStartThumb;
 
     /// <summary>ズームビューの状態管理クラスを初期化する。</summary>
-    /// <param name="config">ズーム遷移の設定。 null の場合は <see cref="ZoomConfig.Default"/>。</param>
-    public ZoomViewSession(ZoomConfig? config = null) => _config = config ?? ZoomConfig.Default;
+    /// <param name="config">ズーム遷移の設定。 null の場合は <see cref="ZoomOptions.Default"/>。</param>
+    public ZoomViewSession(ZoomOptions? config = null) => _config = config ?? ZoomOptions.Default;
 
     /// <summary>ズーム状態（実効ズーム率・Fit 状態・可否）が確定したときに送る通知。</summary>
     /// <remarks>UI 層は自 UI の公開イベントへ転送するだけにする（判断を持たない）。</remarks>
@@ -97,7 +97,7 @@ public sealed class ZoomViewSession
 
     /// <summary>ズーム遷移の設定を取得する。</summary>
     /// <value>現在の設定（不変値）。</value>
-    public ZoomConfig Config => _config;
+    public ZoomOptions Config => _config;
 
     /// <summary>ズームビューの外観を取得する。</summary>
     /// <value>現在の外観（下地・市松模様・スクロールバー）。</value>
@@ -301,7 +301,7 @@ public sealed class ZoomViewSession
     /// <param name="config">新しい設定（検証済み）。</param>
     /// <returns>UI が適用する効果（なし）。</returns>
     /// <remarks>ズーム範囲が変わるため、可否のキャッシュを破棄して次の参照時に再計算する。</remarks>
-    public ZoomFeedback ApplyConfig(ZoomConfig config)
+    public ZoomFeedback ApplyConfig(ZoomOptions config)
     {
         ArgumentNullException.ThrowIfNull(config);
 
@@ -349,7 +349,7 @@ public sealed class ZoomViewSession
     /// <returns>UI が適用する効果（設定した場合は再描画、0 以下は何もしない）。</returns>
     /// <remarks>
     /// <b>0 以下は無視する</b>（0 以下は Fit の意図と区別できないため受け付けず、Fit へは <see cref="ZoomFit"/> を使用する）。<br/>
-    /// 設定値は <see cref="ZoomConfig"/> の範囲へクランプし、ズーム中心を維持したまま倍率を変更する。<br/>
+    /// 設定値は <see cref="ZoomOptions"/> の範囲へクランプし、ズーム中心を維持したまま倍率を変更する。<br/>
     /// 本規則（0 以下の拒否とクランプ）を両 UI に重複させないための入口である。
     /// </remarks>
     public ZoomFeedback SetFixedZoom(double zoomPercent)

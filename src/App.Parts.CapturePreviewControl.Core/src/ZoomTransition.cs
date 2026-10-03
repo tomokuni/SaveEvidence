@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 /// ⊖⊕ ボタンの 23 段階遷移と Ctrl+ホイールの ×1.1 遷移を決定する。<br/>
 /// UI 状態（ViewModel・コントロール）に依存しないため、単体テストで遷移仕様を検証できる。<br/>
 /// UI 実装（Avalonia / MewUI のズームビュー）から呼び出される。<br/>
-/// 遷移パラメータ（ズーム範囲・倍率・レベル集合）は <see cref="ZoomConfig"/> で受け取る純粋関数であり、状態を持たない。
+/// 遷移パラメータ（ズーム範囲・倍率・レベル集合）は <see cref="ZoomOptions"/> で受け取る純粋関数であり、状態を持たない。
 /// </remarks>
 internal static class ZoomTransition
 {
@@ -33,13 +33,13 @@ internal static class ZoomTransition
     /// <b>Fit 実効倍率を挟む</b>: 次に大きいレベル <c>next</c> と Fit 実効倍率 <c>fitZoom</c> が
     /// <c>current &lt; fitZoom &lt; next</c> を満たす場合、<c>fitZoom</c> を次の倍率とする<br/>
     /// （ズームインでレベルを通過する際、Fit 実効倍率が間に挟まる場合はそれを経由する）。<br/>
-    /// <b>Fit 表示中</b>: 実効倍率より大きい最初のレベルへ移動する（実効倍率は <see cref="ZoomConfig.MinZoom"/>〜<see cref="ZoomConfig.MaxZoom"/> にクランプ）。<br/>
-    /// リスト末尾（<see cref="ZoomConfig.MaxZoom"/>）で null（移動不可）を返す。<br/>
+    /// <b>Fit 表示中</b>: 実効倍率より大きい最初のレベルへ移動する（実効倍率は <see cref="ZoomOptions.MinZoom"/>〜<see cref="ZoomOptions.MaxZoom"/> にクランプ）。<br/>
+    /// リスト末尾（<see cref="ZoomOptions.MaxZoom"/>）で null（移動不可）を返す。<br/>
     /// Fit 実効倍率がレベルの近傍（<c>fitZoom &lt;= current</c> または <c>fitZoom &gt;= next</c>）の場合は段階レベルを優先する。
     /// </remarks>
-    internal static double? NextLevel(double current, double fitZoom, ZoomConfig? config = null)
+    internal static double? NextLevel(double current, double fitZoom, ZoomOptions? config = null)
     {
-        var c = config ?? ZoomConfig.Default;
+        var c = config ?? ZoomOptions.Default;
         // レベルは整数値のため、比較・インデックス探索は整数値として扱う
         var levels = c.ButtonZoomLevels;
         var baseValue = current <= 0 ? (int)Math.Floor(fitZoom) : (int)Math.Round(current);
@@ -71,12 +71,12 @@ internal static class ZoomTransition
     /// <c>prev &lt; fitZoom &lt; current</c> を満たす場合、<c>fitZoom</c> を次の倍率とする<br/>
     /// （ズームアウトでレベルを通過する際、Fit 実効倍率が間に挟まる場合はそれを経由する）。<br/>
     /// <b>Fit 表示中</b>: 実効倍率より小さい最後のレベルへ移動する。<br/>
-    /// リスト先頭（<see cref="ZoomConfig.MinZoom"/>）で null（移動不可）を返す。<br/>
+    /// リスト先頭（<see cref="ZoomOptions.MinZoom"/>）で null（移動不可）を返す。<br/>
     /// Fit 実効倍率がレベルの近傍（<c>prev</c> 以下）の場合は段階レベルを優先する。
     /// </remarks>
-    internal static double? PrevLevel(double current, double fitZoom, ZoomConfig? config = null)
+    internal static double? PrevLevel(double current, double fitZoom, ZoomOptions? config = null)
     {
-        var c = config ?? ZoomConfig.Default;
+        var c = config ?? ZoomOptions.Default;
         // レベルは整数値のため、比較・インデックス探索は整数値として扱う
         var levels = c.ButtonZoomLevels;
         var baseValue = current <= 0 ? (int)Math.Ceiling(fitZoom) : (int)Math.Round(current);
@@ -103,12 +103,12 @@ internal static class ZoomTransition
     /// <param name="config">ズーム遷移の設定。</param>
     /// <returns>ズームイン後の倍率（Round(現在 × WheelFactor)、MinZoom〜MaxZoom にクランプ）。 移動先がなければ null。</returns>
     /// <remarks>
-    /// Fit 表示中は実効倍率 × WheelFactor へ移動する（実効倍率 ≥ <see cref="ZoomConfig.MaxZoom"/> なら null = 移動不可）。<br/>
+    /// Fit 表示中は実効倍率 × WheelFactor へ移動する（実効倍率 ≥ <see cref="ZoomOptions.MaxZoom"/> なら null = 移動不可）。<br/>
     /// Fit は遷移に含めない。
     /// </remarks>
-    internal static double? WheelZoomIn(double current, double fitZoom, ZoomConfig? config = null)
+    internal static double? WheelZoomIn(double current, double fitZoom, ZoomOptions? config = null)
     {
-        var c = config ?? ZoomConfig.Default;
+        var c = config ?? ZoomOptions.Default;
         if (current <= 0)
         {
             if (fitZoom >= c.MaxZoom) return null;
@@ -123,12 +123,12 @@ internal static class ZoomTransition
     /// <param name="config">ズーム遷移の設定。</param>
     /// <returns>ズームアウト後の倍率（Round(現在 ÷ WheelFactor)、MinZoom〜MaxZoom にクランプ）。 移動先がなければ null。</returns>
     /// <remarks>
-    /// Fit 表示中は実効倍率 ÷ WheelFactor へ移動する（実効倍率 ≤ <see cref="ZoomConfig.MinZoom"/> なら null = 移動不可）。<br/>
+    /// Fit 表示中は実効倍率 ÷ WheelFactor へ移動する（実効倍率 ≤ <see cref="ZoomOptions.MinZoom"/> なら null = 移動不可）。<br/>
     /// Fit は遷移に含めない。
     /// </remarks>
-    internal static double? WheelZoomOut(double current, double fitZoom, ZoomConfig? config = null)
+    internal static double? WheelZoomOut(double current, double fitZoom, ZoomOptions? config = null)
     {
-        var c = config ?? ZoomConfig.Default;
+        var c = config ?? ZoomOptions.Default;
         if (current <= 0)
         {
             if (fitZoom <= c.MinZoom) return null;
@@ -142,14 +142,14 @@ internal static class ZoomTransition
     /// <param name="fitZoom">Fit の実効倍率（%）。 current &lt;= 0 のときのみ使用。</param>
     /// <param name="config">ズーム遷移の設定。</param>
     /// <returns>ズームイン可能なら true。</returns>
-    internal static bool CanZoomIn(double current, double fitZoom, ZoomConfig? config = null) => NextLevel(current, fitZoom, config) is not null;
+    internal static bool CanZoomIn(double current, double fitZoom, ZoomOptions? config = null) => NextLevel(current, fitZoom, config) is not null;
 
     /// <summary>ズームアウト可能かどうかを返す。</summary>
     /// <param name="current">現在のズーム率（0 = Fit）。</param>
     /// <param name="fitZoom">Fit の実効倍率（%）。 current &lt;= 0 のときのみ使用。</param>
     /// <param name="config">ズーム遷移の設定。</param>
     /// <returns>ズームアウト可能なら true。</returns>
-    internal static bool CanZoomOut(double current, double fitZoom, ZoomConfig? config = null) => PrevLevel(current, fitZoom, config) is not null;
+    internal static bool CanZoomOut(double current, double fitZoom, ZoomOptions? config = null) => PrevLevel(current, fitZoom, config) is not null;
 
     /// <summary>ズーム操作の可否（ズームイン・ズームアウト）を導出する。</summary>
     /// <param name="current">現在のズーム率（%）。 0 = Fit。</param>
@@ -162,7 +162,7 @@ internal static class ZoomTransition
     /// 画像未設定（<paramref name="hasSource"/> = false）時は何れも不可（false）を返す。
     /// </remarks>
     internal static (bool CanZoomIn, bool CanZoomOut) BuildAvailability(
-        double current, double fitZoom, ZoomConfig config, bool hasSource)
+        double current, double fitZoom, ZoomOptions config, bool hasSource)
     {
         if (current <= 0 && !hasSource)
         {

@@ -46,7 +46,7 @@
 | `FadeMaskDragRectOptions` | record | 複合コントロールの設定の単一値（`Marquee` / `Labels` / `Loupe` / 破線の色 2 / ルーペオフセット） |
 | `FadeMaskDragRectLabelOptions` | record | 付加情報ラベル（操作・情報）の外観（表示可否・寸法・色）。 文言の生成と描画はホストが行う |
 | `ZoomViewSession` | クラス | 切り出しビューの画像ビューポートの状態（ズーム・オフセット・設定・表示条件）を保持し、入力の解釈と判断を単一所有する |
-| `ZoomConfig` | クラス | ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をまとめた検証付き不変値 |
+| `ZoomOptions` | クラス | ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をまとめた検証付き不変値 |
 | `ZoomState` | record struct | 通知する 4 値（実効ズーム率・Fit 状態・ズーム可否） |
 | `ZoomFeedback` | record struct | セッションから UI へ返す効果（再描画・ポインタキャプチャ）。 適用順を単一所有する |
 | `ZoomNotice` / `ZoomNoticeKind` | record / 列挙型 | セッションから UI への通知（種別と通知時点の値。 `ZoomChanged` / `ViewportChanged`） |
@@ -499,7 +499,7 @@ public readonly record struct OverlayRect(
 | `SetViewport` | `ZoomFeedback SetViewport(EsSize viewportSize)` | ビューポートのサイズ。 Fit キャッシュを常に無効化する |
 | `SetCenterAlign` | `ZoomFeedback SetCenterAlign(bool centerAlign)` | 中央寄せ／左上寄せ（同値なら何もしない） |
 | `SetAppearance` | `ZoomFeedback SetAppearance(ZoomViewAppearance appearance)` | 外観（同値なら何もしない） |
-| `ApplyConfig` | `ZoomFeedback ApplyConfig(ZoomConfig config)` | 設定の反映（可否のキャッシュを破棄する） |
+| `ApplyConfig` | `ZoomFeedback ApplyConfig(ZoomOptions config)` | 設定の反映（可否のキャッシュを破棄する） |
 | `SetFixedZoom` | `ZoomFeedback SetFixedZoom(double zoomPercent)` | 実効ズーム率の設定（0 以下は無視、範囲へクランプ、ズーム中心を維持） |
 | `SetZoom` | `ZoomFeedback SetZoom(double zoomPercent, EsPoint? center = null)` | 内部ズーム率の設定（0 以下は Fit。 ズーム中心を維持） |
 | `SetOffset` | `ZoomFeedback SetOffset(EsVector offset)` | パン位置の設定（クランプ。 同値なら何もしない） |
@@ -516,7 +516,7 @@ public readonly record struct OverlayRect(
 
 **座標系**: UI フレームワークの幾何型ではなく、`Platform.Core` の `EsPoint` / `EsVector` / `EsSize` を使います。 UI 実装は境界で 1 行の相互変換を行い、UI 内部の状態とイベント引数は UI 側の型のまま維持します。
 
-### 10.2 `ZoomConfig`（設定値）
+### 10.2 `ZoomOptions`（設定値）
 
 ズーム遷移のパラメータをまとめた検証付き不変値です。
 
@@ -526,10 +526,10 @@ public readonly record struct OverlayRect(
 | `MaxZoom` | `double` | ズーム率の最大値（固定倍率。 %）。 `MinZoom` 以上 |
 | `WheelFactor` | `double` | Ctrl+ホイールのズーム倍率。 1 より大きい |
 | `ButtonZoomLevels` | `IReadOnlyList<double>` | ⊖⊕ ボタンのズームレベル集合。 非空・昇順・`MinZoom`〜`MaxZoom` の範囲内 |
-| `Default` | `ZoomConfig`（static） | 既定値（`MinZoom=10` / `MaxZoom=500` / `WheelFactor=1.1` / 23 段階） |
-| `ZoomConfig()` | コンストラクタ | 既定値で生成する |
-| `ZoomConfig(double, double, double, IReadOnlyList<double>)` | コンストラクタ | 全プロパティを指定して生成する（検証付き） |
-| `With(double?, double?, double?, IReadOnlyList<double>?)` | メソッド | 一部を差し替えた検証付きの新しい `ZoomConfig` を返す（null は現在値維持） |
+| `Default` | `ZoomOptions`（static） | 既定値（`MinZoom=10` / `MaxZoom=500` / `WheelFactor=1.1` / 23 段階） |
+| `ZoomOptions()` | コンストラクタ | 既定値で生成する |
+| `ZoomOptions(double, double, double, IReadOnlyList<double>)` | コンストラクタ | 全プロパティを指定して生成する（検証付き） |
+| `With(double?, double?, double?, IReadOnlyList<double>?)` | メソッド | 一部を差し替えた検証付きの新しい `ZoomOptions` を返す（null は現在値維持） |
 
 | 条件 | 例外 |
 | --- | --- |

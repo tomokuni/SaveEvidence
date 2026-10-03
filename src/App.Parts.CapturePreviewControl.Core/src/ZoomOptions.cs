@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 /// <b>拡張点</b>: ズーム範囲・倍率・レベル集合を外部からカスタマイズするための公開値オブジェクト。<br/>
 /// コンストラクタまたは <see cref="With"/> で検証付きの部分更新を行い、不正な値はガードされる。
 /// </remarks>
-public sealed class ZoomConfig
+public sealed class ZoomOptions
 {
     /// <summary>ズーム率の最小値（固定倍率。 %）。</summary>
     /// <value>0 より大きい。</value>
@@ -27,20 +27,20 @@ public sealed class ZoomConfig
     /// <value>非空・昇順・<see cref="MinZoom"/>〜<see cref="MaxZoom"/> の範囲内。</value>
     public IReadOnlyList<double> ButtonZoomLevels { get; }
 
-    /// <summary>既定値に基づく <see cref="ZoomConfig"/> を生成する。</summary>
-    public ZoomConfig() : this(
+    /// <summary>既定値に基づく <see cref="ZoomOptions"/> を生成する。</summary>
+    public ZoomOptions() : this(
         ZoomTransition.DefaultMinZoom,
         ZoomTransition.DefaultMaxZoom,
         ZoomTransition.DefaultWheelFactor,
         ZoomTransition.DefaultButtonZoomLevels) { }
 
-    /// <summary>すべてのプロパティを指定して <see cref="ZoomConfig"/> を生成する。</summary>
+    /// <summary>すべてのプロパティを指定して <see cref="ZoomOptions"/> を生成する。</summary>
     /// <param name="minZoom">ズーム率の最小値。 0 より大きい。</param>
     /// <param name="maxZoom">ズーム率の最大値。<paramref name="minZoom"/> 以上。</param>
     /// <param name="wheelFactor">Ctrl+ホイールのズーム倍率。 1 より大きい。</param>
     /// <param name="buttonZoomLevels">⊖⊕ ボタンのズームレベル集合。 非空・昇順・範囲内。</param>
     /// <remarks>各値の妥当性を検証し、不正な場合は <see cref="ArgumentException"/> を投げる。</remarks>
-    public ZoomConfig(double minZoom, double maxZoom, double wheelFactor, IReadOnlyList<double> buttonZoomLevels)
+    public ZoomOptions(double minZoom, double maxZoom, double wheelFactor, IReadOnlyList<double> buttonZoomLevels)
     {
         MinZoom = minZoom;
         MaxZoom = maxZoom;
@@ -50,20 +50,20 @@ public sealed class ZoomConfig
     }
 
     /// <summary>従来の定数値に基づく既定の設定。</summary>
-    public static ZoomConfig Default { get; } = new(
+    public static ZoomOptions Default { get; } = new(
         ZoomTransition.DefaultMinZoom,
         ZoomTransition.DefaultMaxZoom,
         ZoomTransition.DefaultWheelFactor,
         ZoomTransition.DefaultButtonZoomLevels);
 
-    /// <summary>一部のプロパティを差し替えた、検証付きの新しい <see cref="ZoomConfig"/> を返す。</summary>
+    /// <summary>一部のプロパティを差し替えた、検証付きの新しい <see cref="ZoomOptions"/> を返す。</summary>
     /// <param name="minZoom">新しい最小値。 null の場合は現在値。</param>
     /// <param name="maxZoom">新しい最大値。 null の場合は現在値。</param>
     /// <param name="wheelFactor">新しいズーム倍率。 null の場合は現在値。</param>
     /// <param name="buttonZoomLevels">新しいレベル集合。 null の場合は現在値。</param>
-    /// <returns>検証済みの新しい <see cref="ZoomConfig"/>。</returns>
+    /// <returns>検証済みの新しい <see cref="ZoomOptions"/>。</returns>
     /// <remarks>コンストラクタ（検証付き）を経由するため、不正な値には <see cref="ArgumentException"/> が投げられる。</remarks>
-    public ZoomConfig With(
+    public ZoomOptions With(
         double? minZoom = null,
         double? maxZoom = null,
         double? wheelFactor = null,

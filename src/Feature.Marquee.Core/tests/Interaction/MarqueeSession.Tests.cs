@@ -81,7 +81,7 @@ public class MarqueeSessionTests
 
         // スナップ: ドラッグ基準点とマウス位置がハンドル点（150, 130）になり、カーソルもそこへ移動する
         Assert.Equal(new EsPoint(150, 130), session.LastMousePosition);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.MoveTo));
         Assert.Equal(new EsPoint(150, 130), feedback.CursorDomainPosition);
         Assert.Equal(MarqueeNoticeKind.MarkerPositionMoved, notices[^1].Kind);
         Assert.Equal(new EsPoint(150, 130), notices[^1].Position);
@@ -100,7 +100,7 @@ public class MarqueeSessionTests
         // 矩形内（中心からずれた位置）を押下する → 移動（Move）
         var feedback = session.Press(new EsPoint(70, 70), clickCount: 1);
 
-        Assert.False(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
+        Assert.False(feedback.Cursor.HasFlag(MarqueeCursorActions.MoveTo));
 
         // スナップしないため、押下位置からの移動量がそのまま矩形へ反映される
         session.Move(new EsPoint(80, 80));
@@ -152,7 +152,7 @@ public class MarqueeSessionTests
         var feedback = session.Press(session.State.StartPoint, clickCount: 1);
 
         Assert.False(session.NudgeActive);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Show));
         Assert.Equal([MarqueeNoticeKind.MarkerPositionMoved, MarqueeNoticeKind.SelectionStarted], Kinds(notices));
     }
 
@@ -277,9 +277,9 @@ public class MarqueeSessionTests
         var feedback = session.Release(new EsPoint(500, 500));
 
         Assert.False(session.NudgeActive);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.MoveTo));
         Assert.Equal(nudgePosition, feedback.CursorDomainPosition);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Show));
         Assert.True(feedback.UpdateCursorShape);
 
         // 抑制: nudge 位置へのエコー移動は矩形を上書きしない（通知も発生しない）
@@ -347,8 +347,8 @@ public class MarqueeSessionTests
 
         Assert.True(feedback.Handled);
         Assert.True(feedback.Redraw);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Hide));
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Hide));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.MoveTo));
         Assert.True(session.NudgeActive);
         Assert.Contains(MarqueeNoticeKind.SelectionChanged, Kinds(notices));
         Assert.Contains(MarqueeNoticeKind.MarkerPositionMoved, Kinds(notices));
@@ -437,7 +437,7 @@ public class MarqueeSessionTests
 
         Assert.False(session.NudgeActive);
         Assert.True(feedback.Redraw);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Show));
     }
 
     [Fact]
@@ -448,7 +448,7 @@ public class MarqueeSessionTests
         var feedback = session.EndNudge();
 
         Assert.False(feedback.Redraw);
-        Assert.Equal(MarqueeCursorAction.None, feedback.Cursor);
+        Assert.Equal(MarqueeCursorActions.None, feedback.Cursor);
     }
 
     // ====================================================================
@@ -521,7 +521,7 @@ public class MarqueeSessionTests
         Assert.False(session.HasSelection);
         Assert.False(session.IsDragging);
         Assert.True(feedback.Redraw);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Show));
     }
 
     [Fact]
@@ -536,7 +536,7 @@ public class MarqueeSessionTests
 
         Assert.False(session.NudgeActive);
         Assert.Equal(new EsRect(10, 20, 30, 40), session.SelectionDomainRect);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Show));
     }
 
     [Fact]
@@ -553,7 +553,7 @@ public class MarqueeSessionTests
 
         Assert.False(session.NudgeActive);
         Assert.False(session.HasSelection);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Show));
     }
 
     [Fact]
@@ -566,7 +566,7 @@ public class MarqueeSessionTests
 
         Assert.False(session.NudgeActive);
         Assert.True(feedback.Redraw);
-        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorAction.Show));
+        Assert.True(feedback.Cursor.HasFlag(MarqueeCursorActions.Show));
     }
 
     [Fact]
@@ -817,13 +817,13 @@ public class MarqueeSessionTests
 
         // 角から 5 ドメイン離れた位置はヒットする（ドメイン半径 6 以内）
         var hit = session.Press(new EsPoint(150 + 5, 130 + 5), clickCount: 1);
-        Assert.True(hit.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
+        Assert.True(hit.Cursor.HasFlag(MarqueeCursorActions.MoveTo));
 
         // 角から 20 ドメイン離れた位置はハンドルにヒットしない（矩形外のため新規選択）
         session.Reset();
         session.SetSelection(new EsRect(50, 50, 100, 80));
         var miss = session.Press(new EsPoint(150 + 20, 130 + 20), clickCount: 1);
-        Assert.False(miss.Cursor.HasFlag(MarqueeCursorAction.MoveTo));
+        Assert.False(miss.Cursor.HasFlag(MarqueeCursorActions.MoveTo));
     }
     // ====================================================================
     // ToCursorKind（ハンドル → カーソル形状の種別）

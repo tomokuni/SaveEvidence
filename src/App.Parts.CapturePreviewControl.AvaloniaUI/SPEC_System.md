@@ -118,7 +118,7 @@ flowchart TB
         Mg["CaptureSettingsMerge / FadeMaskDragRectOptionsMapper<br/>OverlayRect / OverlayLineStyle"]
         Log["CaptureLogMessage / CaptureSettingsLogMessage<br/>CaptureLogFormat"]
         ZS["ZoomViewSession<br/>public sealed class（状態と判断を単一所有）"]
-        ZC["ZoomConfig / ZoomState / ZoomViewAppearance<br/>public"]
+        ZC["ZoomOptions / ZoomState / ZoomViewAppearance<br/>public"]
         ZT["ZoomMath / ZoomTransition / ZoomScrollBarGeometry<br/>internal（純粋関数）"]
     end
     subgraph PC["Platform.Core プロジェクト（UI 非依存の基盤）"]
@@ -281,7 +281,7 @@ flowchart TB
 - **非公開メンバー**: `Session`（内部ビューポートが所有するセッションへの参照）/ `ZoomableView`（内包するビューポート）/ `CheckerboardView`（画像の透明部分の背景を描く子要素）/ `OnSessionNotified`（通知の転送）
 - **公開 API の詳細**: 外部機能仕様書（`SPEC_ExtFunc.md`）の 5.7 を参照
 - **可視性**: public（`CropViewControl` からは内部部品として扱う）
-- **依存**: `App.Parts.CapturePreviewControl.Core`（`ZoomViewSession` / `ZoomConfig` / `ZoomNotice` / `ZoomState`）/ App.Platform.AvaloniaUI（コア型の相互変換）
+- **依存**: `App.Parts.CapturePreviewControl.Core`（`ZoomViewSession` / `ZoomOptions` / `ZoomNotice` / `ZoomState`）/ App.Platform.AvaloniaUI（コア型の相互変換）
 - **状態と判断の所有者**: `ZoomViewSession`（コア）。 本コントロールは値の委譲と通知の転送のみを行う
 
 ### 6.9 ZoomableView
@@ -307,7 +307,7 @@ flowchart TB
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
 | `ZoomViewSession` | 公開 sealed class | **状態と判断を単一所有**する状態管理クラス（内部ズーム率・オフセット・設定・表示条件の保持、実効ズーム率の導出、可否、Fit 実効倍率のキャッシュと無効化、遷移の適用、パン、スクロールバーのドラッグ） |
-| `ZoomConfig` | 公開 sealed class | ズーム遷移の設定（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`。 検証付き不変値・`With` で部分更新） |
+| `ZoomOptions` | 公開 sealed class | ズーム遷移の設定（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`。 検証付き不変値・`With` で部分更新） |
 | `ZoomState` | 公開 readonly record struct | 通知する 4 値（実効ズーム率・Fit 状態・可否） |
 | `ZoomFeedback` | 公開 readonly record struct | UI が適用する効果（再描画・ポインタキャプチャ）。 適用順を単一所有する |
 | `ZoomNotice` / `ZoomNoticeKind` | 公開 enum / sealed record | セッションから UI への通知（種別と通知時点の値） |

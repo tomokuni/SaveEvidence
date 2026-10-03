@@ -426,7 +426,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | Fit 中 | 実効倍率を基準に遷移する（23 段階・×1.1 のいずれも）。 `fitZoom` は `MinZoom`〜`MaxZoom` にクランプする |
 | Fit 実効倍率の挟み込み | ズームイン / アウトで隣の段階と現在値の間に Fit 実効倍率がある場合、それを次の倍率として経由する（例: `100% → 102%（Fit 実効倍率）→ 110%`）。 近接している場合は 23 段階を優先する |
 
-23 段階のレベル集合（`ZoomConfig.ButtonZoomLevels`）:
+23 段階のレベル集合（`ZoomOptions.ButtonZoomLevels`）:
 
 ```text
 10 → 12 → 15 → 20 → 25 → 33 → 40 → 50 → 62 → 75 → 80 → 90
@@ -468,16 +468,16 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `ViewportChanged` | `event EventHandler` | ビューポート（パン・ズーム・表示状態）変化の通知。 オーバーレイの追従に使用する |
 | `Log` | `ILogger` | 内部ロガー（null は `NullLogger`。 ズーム操作の前後 % を Information で記録する） |
 
-**`ZoomConfig`（ズーム遷移の設定値。 コアの検証付き不変値）**
+**`ZoomOptions`（ズーム遷移の設定値。 コアの検証付き不変値）**
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `MinZoom` / `MaxZoom` | `double` | `10` / `500` | 固定倍率の最小値・最大値（%） |
 | `WheelFactor` | `double` | `1.1` | Ctrl+ホイールのズーム倍率 |
 | `ButtonZoomLevels` | `IReadOnlyList<double>` | 23 段階 | ⊖⊕ のズームレベル集合 |
-| `Default` | `ZoomConfig` | 既定値 | 既定の設定。 `CropViewControl` が内包する `ZoomViewControl` はこの既定値を使用する |
+| `Default` | `ZoomOptions` | 既定値 | 既定の設定。 `CropViewControl` が内包する `ZoomViewControl` はこの既定値を使用する |
 
-`ZoomConfig` は生成時に不変条件（`MinZoom` が 0 以下・`MaxZoom` が `MinZoom` 未満・`WheelFactor` が 1 以下・`ButtonZoomLevels` が範囲外 / 非昇順 / 空）を検証し、満たさない場合は `ArgumentException` を投げる。
+`ZoomOptions` は生成時に不変条件（`MinZoom` が 0 以下・`MaxZoom` が `MinZoom` 未満・`WheelFactor` が 1 以下・`ButtonZoomLevels` が範囲外 / 非昇順 / 空）を検証し、満たさない場合は `ArgumentException` を投げる。
 
 **`ZoomChangedEventArgs`（イベント引数）**
 

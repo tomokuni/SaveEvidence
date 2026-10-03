@@ -126,7 +126,7 @@ Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 │    TryBeginScrollBarDrag / UpdateScrollBarDrag / ReleaseScrollBarDrag │
 │  ZoomTransition / ZoomMath / ZoomScrollBarGeometry（純粋関数） │
 │  ZoomAvailability / ZoomViewAppearance                  │
-│  ZoomConfig / ZoomState / ZoomFeedback / ZoomNotice      │
+│  ZoomOptions / ZoomState / ZoomFeedback / ZoomNotice      │
 │  ZoomScrollBar / ZoomScrollBarMetrics                  │
 │  ZoomLogMessage / ZoomLogFormat                        │
 └──────────────────────────────────────────────────────┘
@@ -277,7 +277,7 @@ classDiagram
 │ 切り出しビューの画像ビューポート                        │
 │  ZoomViewSession: 状態（内部ズーム率・オフセット・設定・表示条件）の保持 │
 │    実効ズーム率・可否・遷移の適用・パン・スクロールバー  │
-│  ZoomViewAppearance / ZoomConfig / ZoomState / ZoomFeedback │
+│  ZoomViewAppearance / ZoomOptions / ZoomState / ZoomFeedback │
 │  ZoomNotice / ZoomScrollBar / ZoomScrollBarMetrics      │
 │  ZoomTransition / ZoomMath / ZoomAvailability          │
 │  ZoomScrollBarGeometry / ZoomLogMessage / ZoomLogFormat │
@@ -310,7 +310,7 @@ classDiagram
 ```mermaid
 classDiagram
     class ZoomViewSession { <<sealed class>> +bool IsFit  +double ZoomPercent  +EsVector Offset  +ZoomState CurrentState  +ZoomFeedback SetContent(hasSource, contentSize)  +ZoomFeedback ZoomIn()  +ZoomFeedback ZoomByWheel(zoomIn, pointer)  +ZoomFeedback PanBy(delta) }
-    class ZoomConfig { <<sealed class>> +double MinZoom  +double MaxZoom  +double WheelFactor  +IReadOnlyList~double~ ButtonZoomLevels  +With(...) ZoomConfig }
+    class ZoomOptions { <<sealed class>> +double MinZoom  +double MaxZoom  +double WheelFactor  +IReadOnlyList~double~ ButtonZoomLevels  +With(...) ZoomOptions }
     class ZoomState { <<readonly record struct>> +double ZoomPercent  +bool IsFit  +bool CanZoomIn  +bool CanZoomOut }
     class ZoomFeedback { <<readonly record struct>> +bool Redraw  +bool CapturePointer  +bool ReleasePointer  +ApplyVisual(redraw)$  +ApplyPointer(capture, release)$ }
     class ZoomNotice { <<sealed record>> +ZoomNoticeKind Kind  +ZoomState State  +EsRect ImageRect }
@@ -319,7 +319,7 @@ classDiagram
     class ZoomTransition { <<static>> +NextLevel(...)$  +PrevLevel(...)$  +WheelZoomIn(...)$  +WheelZoomOut(...)$  +BuildAvailability(...)$ }
     class ZoomMath { <<static>> +FitScale(...)$  +ComputeOffsetAfterScaleChange(...)$  +ClampOffset(...)$  +ViewportToContent(...)$ }
 
-    ZoomViewSession ..> ZoomConfig : 保持
+    ZoomViewSession ..> ZoomOptions : 保持
     ZoomViewSession ..> ZoomViewAppearance : 保持
     ZoomViewSession ..> ZoomTransition : 委譲
     ZoomViewSession ..> ZoomMath : 委譲
@@ -371,7 +371,7 @@ sequenceDiagram
 | 設定値が範囲外（`CaptureSettings.Validate`） | `ArgumentOutOfRangeException`（null メンバーは対象外） |
 | 切り出しできない入力（`CropBoundsMath`） | 例外を投げず、`IsEmpty` が true の矩形を返す（呼び出し側がキャンセル扱いにする） |
 | 画像の外側へはみ出すピクセル書き込み（`OverlayRectRasterizer` / `FadeMaskDragRectOverlay`） | `EsBitmap.TrySetPixel` が false を返すだけで、例外にしない（画像端に接する矩形は正常な入力のため） |
-| ズーム設定の不変条件違反（`ZoomConfig`） | `ArgumentNullException` / `ArgumentException` / `ArgumentOutOfRangeException` |
+| ズーム設定の不変条件違反（`ZoomOptions`） | `ArgumentNullException` / `ArgumentException` / `ArgumentOutOfRangeException` |
 | ズームの計算入力が範囲外（`ZoomMath` / `ZoomTransition`） | 例外を投げず、内部でクランプする（スケールが 0 以下の場合は 1 として扱う） |
 
 ## 6. 設計判断
@@ -406,5 +406,5 @@ sequenceDiagram
 | `FadeMaskDragRectSelection` | 選択として成立するサイズの判定（9 件） |
 | `FadeMaskDragRectOverlay` | 破線の列挙と描画の画素検証（15 件） |
 | `ZoomViewSession` | 実効ズーム率の導出・Fit の表現・可否・遷移の適用（ズーム中心の維持）・パン・Fit 復帰・スクロールバーのドラッグ（49 件） |
-| `ZoomConfig` / `ZoomTransition` / `ZoomMath` | 不変条件の検証と `With` による部分更新・ 23 段階／ホイール遷移・可否判定・Fit 実効倍率・クランプ・座標変換（101 件） |
+| `ZoomOptions` / `ZoomTransition` / `ZoomMath` | 不変条件の検証と `With` による部分更新・ 23 段階／ホイール遷移・可否判定・Fit 実効倍率・クランプ・座標変換（101 件） |
 | `ZoomViewAppearance` / `ZoomScrollBarGeometry` / `ZoomLogMessage` | 描画可否・市松模様の範囲とタイル矩形・トラック／サムの矩形と逆算・ログ書式（61 件） |

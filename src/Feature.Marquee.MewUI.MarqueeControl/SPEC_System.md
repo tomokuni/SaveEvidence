@@ -160,7 +160,7 @@ classDiagram
         <<internal / Feature.Marquee.Core>>
         +bool Handled / Redraw / RequestFocus
         +bool UpdateCursorShape / MarqueeCursorKind CursorKind
-        +MarqueeCursorAction Cursor / EsPoint CursorDomainPosition
+        +MarqueeCursorActions Cursor / EsPoint CursorDomainPosition
         +MarqueeCaptureAction Capture
     }
     class MarqueePresenter {

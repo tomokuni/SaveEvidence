@@ -122,7 +122,7 @@ stateDiagram-v2
 | `src/Interaction/MarqueeNotice.cs` | `MarqueeNotice` | public | 通知（種別・通知座標・スナップショット。 値型） |
 | `src/Interaction/MarqueeNoticeKind.cs` | `MarqueeNoticeKind` | public | 通知の種別 |
 | `src/Interaction/MarqueeFeedback.cs` | `MarqueeFeedback` | internal | 効果（適用順を単一所有。 適用先は `IMarqueeEffects`） |
-| `src/Interaction/MarqueeCursorAction.cs` | `MarqueeCursorAction` | internal | 要求するカーソル操作のフラグ |
+| `src/Interaction/MarqueeCursorActions.cs` | `MarqueeCursorActions` | internal | 要求するカーソル操作のフラグ |
 | `src/Interaction/MarqueeCaptureAction.cs` | `MarqueeCaptureAction` | internal | 要求するポインターキャプチャの操作 |
 | `src/Contract/IMarqueeEffects.cs` | `IMarqueeEffects` | public | 効果の適用先（フォーカス・再描画・カーソル操作・カーソル形状・ポインターキャプチャ・座標変換） |
 | `src/Contract/MarqueeEffectsBase.cs` | `MarqueeEffectsBase` | public abstract | 効果の既定実装（全メンバーが virtual の空実装） |

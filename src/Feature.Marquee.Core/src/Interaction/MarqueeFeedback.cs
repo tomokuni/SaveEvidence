@@ -39,9 +39,9 @@ internal readonly record struct MarqueeFeedback
     internal MarqueeCursorKind CursorKind { get; init; }
 
     /// <summary>要求するカーソル操作。</summary>
-    internal MarqueeCursorAction Cursor { get; init; }
+    internal MarqueeCursorActions Cursor { get; init; }
 
-    /// <summary><see cref="MarqueeCursorAction.MoveTo"/> の移動先（ドメイン座標）。</summary>
+    /// <summary><see cref="MarqueeCursorActions.MoveTo"/> の移動先（ドメイン座標）。</summary>
     internal EsPoint CursorDomainPosition { get; init; }
 
     /// <summary>要求されたカーソル操作を適用する。</summary>
@@ -53,17 +53,17 @@ internal readonly record struct MarqueeFeedback
     /// </remarks>
     internal void ApplyCursor(ICursorService cursor, IMarqueeEffects effects)
     {
-        if (Cursor.HasFlag(MarqueeCursorAction.MoveTo))
+        if (Cursor.HasFlag(MarqueeCursorActions.MoveTo))
         {
             cursor.SetCursorScreenPoint(effects.ToScreenPoint(CursorDomainPosition));
         }
 
-        if (Cursor.HasFlag(MarqueeCursorAction.Hide))
+        if (Cursor.HasFlag(MarqueeCursorActions.Hide))
         {
             cursor.ShowCursor(false);
         }
 
-        if (Cursor.HasFlag(MarqueeCursorAction.Show))
+        if (Cursor.HasFlag(MarqueeCursorActions.Show))
         {
             cursor.ShowCursor(true);
         }

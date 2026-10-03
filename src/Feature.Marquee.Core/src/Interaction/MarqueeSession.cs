@@ -24,7 +24,7 @@ namespace EsUtil.Feature.Marquee.Core.Interaction;
 /// <br/>
 /// 依存分離: コア型（<see cref="EsRect"/> / <see cref="EsPoint"/> / <see cref="EsKey"/>）と座標変換ポート（<see cref="ICoordTransform"/>）の<br/>
 /// 抽象にのみ依存し、UI フレームワークへ依存しない。<br/>
-/// カーソル操作（nudge 中の非表示・終了時の再表示）は効果（<see cref="MarqueeCursorAction"/>）として UI 層へ要求するだけで、本クラスはカーソル API を知らない。<br/>
+/// カーソル操作（nudge 中の非表示・終了時の再表示）は効果（<see cref="MarqueeCursorActions"/>）として UI 層へ要求するだけで、本クラスはカーソル API を知らない。<br/>
 /// UI 側の概念（マウスボタン・キー種別・コントロールへのフォーカス・画面座標）は、UI 層が本クラスの入出力へ変換する。<br/>
 /// <br/>
 /// 状態機械の保持と純粋計算は <see cref="MarqueeState"/> が担い、本クラスは入力の解釈と通知の組み立てに専念する（単一責任）。<br/>
@@ -138,12 +138,12 @@ internal sealed class MarqueeSession
         Log.LogMouseDown(position.X, position.Y, clickCount, _state.HasSelection);
 
         // nudge 中は nudge 位置を押下位置として扱い、ポインターを再表示する（nudge 位置と押下位置のずれを防ぐ）
-        var cursor = MarqueeCursorAction.None;
+        var cursor = MarqueeCursorActions.None;
         if (_state.NudgeActive)
         {
             position = _state.StartPoint;
             _state.EndNudge();
-            cursor = MarqueeCursorAction.Show;
+            cursor = MarqueeCursorActions.Show;
             NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, position);
         }
 
@@ -176,7 +176,7 @@ internal sealed class MarqueeSession
                 _state.SnapToHandle(handlePosition);
                 feedback = feedback with
                 {
-                    Cursor = cursor | MarqueeCursorAction.MoveTo,
+                    Cursor = cursor | MarqueeCursorActions.MoveTo,
                     CursorDomainPosition = handlePosition,
                 };
                 NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, handlePosition);
@@ -288,7 +288,7 @@ internal sealed class MarqueeSession
             // nudge 中にユーザーが物理マウスを動かしても、カーソルは nudge 位置へ戻してから再表示する
             // （nudge から解放までのマウス移動はキャンセルする。 SetCursorScreenPoint は再表示前に行う）
             _state.EndNudge();
-            feedback = feedback with { Cursor = MarqueeCursorAction.Show };
+            feedback = feedback with { Cursor = MarqueeCursorActions.Show };
             NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, nudgePosition);
             _state.SuppressEcho(nudgePosition);
 
@@ -296,7 +296,7 @@ internal sealed class MarqueeSession
             // （マウスを動かすまで移動イベントが発火せず、形状が更新されないため）
             feedback = feedback with
             {
-                Cursor = feedback.Cursor | MarqueeCursorAction.MoveTo,
+                Cursor = feedback.Cursor | MarqueeCursorActions.MoveTo,
                 CursorDomainPosition = nudgePosition,
                 UpdateCursorShape = true,
                 CursorKind = ToCursorKind(_state.HitTest(nudgePosition, ToDomainRadius())),
@@ -381,7 +381,7 @@ internal sealed class MarqueeSession
         var feedback = new MarqueeFeedback { Handled = true, Redraw = true };
         if (_state.BeginNudge())
         {
-            feedback = feedback with { Cursor = MarqueeCursorAction.Hide };
+            feedback = feedback with { Cursor = MarqueeCursorActions.Hide };
         }
 
         // nudge 適用（ドメイン座標の整数加算のみ。 浮動小数の誤差を累積しない）
@@ -393,7 +393,7 @@ internal sealed class MarqueeSession
         NotifyAt(MarqueeNoticeKind.MarkerPositionMoved, marker);
         return feedback with
         {
-            Cursor = feedback.Cursor | MarqueeCursorAction.MoveTo,
+            Cursor = feedback.Cursor | MarqueeCursorActions.MoveTo,
             CursorDomainPosition = marker,
         };
     }
@@ -528,7 +528,7 @@ internal sealed class MarqueeSession
     /// </remarks>
     private MarqueeFeedback WithNudgeEnded(in MarqueeFeedback feedback)
         => _state.EndNudge()
-            ? feedback with { Redraw = true, Cursor = feedback.Cursor | MarqueeCursorAction.Show }
+            ? feedback with { Redraw = true, Cursor = feedback.Cursor | MarqueeCursorActions.Show }
             : feedback;
 
     /// <summary>ダブルクリックを処理する（選択矩形の内側なら確定、外側ならキャンセル）。</summary>
@@ -539,7 +539,7 @@ internal sealed class MarqueeSession
     /// ドラッグ処理は行わない（ダブルクリックは確定/キャンセルの操作として扱う）。<br/>
     /// 確定した場合は <see cref="MarqueeState.Reset"/> により選択を破棄するため再描画を要求する。
     /// </remarks>
-    private MarqueeFeedback DoubleClick(EsPoint position, MarqueeCursorAction cursor)
+    private MarqueeFeedback DoubleClick(EsPoint position, MarqueeCursorActions cursor)
     {
         var inside = _state.HasSelection && _state.SelectionDomainRect.Contains(position);
         Log.LogDoubleClick(position.X, position.Y, inside);

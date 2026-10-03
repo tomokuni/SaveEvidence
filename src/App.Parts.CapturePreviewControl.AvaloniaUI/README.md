@@ -117,7 +117,7 @@ cropView.ZoomIn();            // 23 段階の次のレベルへ
 cropView.ZoomFit();           // Fit 表示（ビューポートに収まる Uniform 倍率）へ
 ```
 
-ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）は `App.Parts.CapturePreviewControl.Core` の `ZoomConfig`（検証付き不変値）に集約され、既定は 10〜500% の 23 段階・ホイール ×1.1 です（`CropViewControl` は既定値を使用します）。
+ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）は `App.Parts.CapturePreviewControl.Core` の `ZoomOptions`（検証付き不変値）に集約され、既定は 10〜500% の 23 段階・ホイール ×1.1 です（`CropViewControl` は既定値を使用します）。
 
 ### 設定の適用
 
@@ -213,7 +213,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 | ホイール / Shift + ホイール | 縦パン / 横パン |
 | Fit（`ZoomFit`） | ビューポートに収まる Uniform 倍率（唯一の Fit 移行経路） |
 
-| 設定（コアの `ZoomConfig`） | 型 | 既定値 | 説明 |
+| 設定（コアの `ZoomOptions`） | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `MinZoom` / `MaxZoom` | `double` | `10` / `500` | 固定倍率の下限・上限（%） |
 | `WheelFactor` | `double` | `1.1` | Ctrl+ホイールのズーム倍率 |
@@ -225,7 +225,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 | 参照先 | 利用機能 |
 | --- | --- |
-| `App.Parts.CapturePreviewControl.Core` | 両 UI 共通の規則（`CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `FadeMaskDragRectOptionsMapper` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / `OverlayRect` / `OverlayLineStyle` / `FadeMaskDragRectMode` / `FadeMaskDragRectOptions` / ログ定義）と、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession` / `ZoomConfig` / `ZoomState` / `ZoomViewAppearance` / `ZoomLogMessage`）。 UI 非依存 |
+| `App.Parts.CapturePreviewControl.Core` | 両 UI 共通の規則（`CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `FadeMaskDragRectOptionsMapper` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / `OverlayRect` / `OverlayLineStyle` / `FadeMaskDragRectMode` / `FadeMaskDragRectOptions` / ログ定義）と、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession` / `ZoomOptions` / `ZoomState` / `ZoomViewAppearance` / `ZoomLogMessage`）。 UI 非依存 |
 | `App.Parts.CaptureSessionControl.UIBase` | 設定 → 外観（`MarqueeAppearance` / `LoupeAppearance`）の写像（`CapturePaintMapper`）、設定とモードから子コントロールへ適用する値の解決（`FadeMaskDragRectChildValues`）、付加情報ラベルの描画（`FadeMaskHostLabelRenderer`） |
 | `App.Platform.AvaloniaUI` | サービス生成 / `ScreenConverter` / 色の相互変換（`ColorAvaloniaInterop`）。 抽象（`ICaptureService` / `IWindowService` / `IElementFinder`）は `Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `Platform.Core` |
 | `Feature.Marquee.AvaloniaUI.MarqueeControl` | `MarqueeControl`（選択矩形と、その外側に描く装飾（暗転マスク・外枠・ハイライト）） |

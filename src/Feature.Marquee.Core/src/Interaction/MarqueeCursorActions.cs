@@ -7,7 +7,7 @@ namespace EsUtil.Feature.Marquee.Core.Interaction;
 /// カーソルの表示残留・原点飛びを防ぐためこの順序を守る必要がある。
 /// </remarks>
 [Flags]
-internal enum MarqueeCursorAction
+internal enum MarqueeCursorActions
 {
     /// <summary>操作なし。</summary>
     None = 0,

@@ -13,10 +13,10 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class ZoomTransitionTests
 {
     /// <summary>遷移仕様のテストに使用する既定の設定。</summary>
-    private static readonly ZoomConfig Default = ZoomConfig.Default;
+    private static readonly ZoomOptions Default = ZoomOptions.Default;
 
     // ====================================================================
-    // レベル集合の完全性（ZoomConfig.Default.ButtonZoomLevels）
+    // レベル集合の完全性（ZoomOptions.Default.ButtonZoomLevels）
     // ====================================================================
 
     [Fact]
@@ -325,7 +325,7 @@ public class ZoomTransitionTests
     public void BuildAvailability_画像ありで遷移先があれば可になる()
     {
         var (canZoomIn, canZoomOut) = ZoomTransition.BuildAvailability(
-            current: 0, fitZoom: 33, ZoomConfig.Default, hasSource: true);
+            current: 0, fitZoom: 33, ZoomOptions.Default, hasSource: true);
 
         Assert.True(canZoomIn);
         Assert.True(canZoomOut);
@@ -335,7 +335,7 @@ public class ZoomTransitionTests
     public void BuildAvailability_画像なしなら何れも不可になる()
     {
         var (canZoomIn, canZoomOut) = ZoomTransition.BuildAvailability(
-            current: 0, fitZoom: 33, ZoomConfig.Default, hasSource: false);
+            current: 0, fitZoom: 33, ZoomOptions.Default, hasSource: false);
 
         Assert.False(canZoomIn);
         Assert.False(canZoomOut);
@@ -346,7 +346,7 @@ public class ZoomTransitionTests
     {
         // 固定倍率（current > 0）では画像並びに可否が決まる（ソース未設定でも固定倍率中は遷移可能）
         var (canZoomIn, canZoomOut) = ZoomTransition.BuildAvailability(
-            current: 100, fitZoom: 33, ZoomConfig.Default, hasSource: false);
+            current: 100, fitZoom: 33, ZoomOptions.Default, hasSource: false);
 
         Assert.True(canZoomIn);
         Assert.True(canZoomOut);

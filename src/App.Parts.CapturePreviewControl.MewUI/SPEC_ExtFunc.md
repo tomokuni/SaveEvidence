@@ -298,7 +298,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | Fit 中 | 実効倍率を基準に遷移する（23 段階・×1.1 のいずれも）。 `fitZoom` は `MinZoom`〜`MaxZoom` にクランプする |
 | Fit 実効倍率の挟み込み | ズームイン / アウトで隣の段階と現在値の間に Fit 実効倍率がある場合、それを次の倍率として経由する。 近接している場合は 23 段階を優先する |
 
-23 段階のレベル集合（`ZoomConfig.ButtonZoomLevels`）:
+23 段階のレベル集合（`ZoomOptions.ButtonZoomLevels`）:
 
 ```text
 10 → 12 → 15 → 20 → 25 → 33 → 40 → 50 → 62 → 75 → 80 → 90
@@ -330,7 +330,7 @@ MewUI 版はコア型（`EsBitmap` / `EsPoint` / `EsVector`）で入出力しま
 | --- | --- | --- |
 | `Source` | `EsBitmap?`（読み書き） | ズーム対象の画像。 設定すると Fit 表示にリセット |
 | `Appearance` | `ZoomViewAppearance`（読み書き） | 外観の単一値（下地色・市松模様（サイズと 2 色）・スクロールバー）。 市松模様は画像の表示矩形の内側だけに描き、画像の外は下地色の単色になる |
-| `ZoomPercent` | `double`（読み書き） | 実効ズーム率（%）。 0 より大きい値のみ設定（0 以下は無視。 Fit へは `ZoomFit`）。 設定値は `ZoomConfig` の範囲へクランプする |
+| `ZoomPercent` | `double`（読み書き） | 実効ズーム率（%）。 0 より大きい値のみ設定（0 以下は無視。 Fit へは `ZoomFit`）。 設定値は `ZoomOptions` の範囲へクランプする |
 | `IsFit` | `bool` | Fit 表示中かどうか（Fit 判定はこちら。 `ZoomPercent` は 0 にならない） |
 | `CenterAlign` | `bool`（読み書き） | 画像の中央寄せ / 左上寄せ（軸ごとに独立） |
 | `DipToDeviceScaling` | `double` | DIP → 物理ピクセルの係数（DPI 変更で自動更新される環境値） |
@@ -342,16 +342,16 @@ MewUI 版はコア型（`EsBitmap` / `EsPoint` / `EsVector`）で入出力しま
 | `ViewportChanged` | `event`（`EventArgs`） | パン・ズーム・表示サイズの変化の通知（重ねたオーバーレイの追従に使う） |
 | `Log` | `ILogger` | 内部ロガー（null は `NullLogger`。 ズーム操作の前後 % を Information で記録する） |
 
-**`ZoomConfig`（ズーム遷移の設定値。 コアの検証付き不変値）**
+**`ZoomOptions`（ズーム遷移の設定値。 コアの検証付き不変値）**
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `MinZoom` / `MaxZoom` | `double` | `10` / `500` | 固定倍率の最小値・最大値（%） |
 | `WheelFactor` | `double` | `1.1` | Ctrl+ホイールのズーム倍率 |
 | `ButtonZoomLevels` | `IReadOnlyList<double>` | 23 段階 | ⊖⊕ のズームレベル集合 |
-| `Default` | `ZoomConfig` | 既定値 | 既定の設定。 `CropViewControl` が内包する `ZoomViewControl` はこの既定値を使用する |
+| `Default` | `ZoomOptions` | 既定値 | 既定の設定。 `CropViewControl` が内包する `ZoomViewControl` はこの既定値を使用する |
 
-`ZoomConfig` は生成時に不変条件（`MinZoom` が 0 以下・`MaxZoom` が `MinZoom` 未満・`WheelFactor` が 1 以下・`ButtonZoomLevels` が範囲外 / 非昇順 / 空）を検証し、満たさない場合は例外を投げる。
+`ZoomOptions` は生成時に不変条件（`MinZoom` が 0 以下・`MaxZoom` が `MinZoom` 未満・`WheelFactor` が 1 以下・`ButtonZoomLevels` が範囲外 / 非昇順 / 空）を検証し、満たさない場合は例外を投げる。
 
 **`ZoomChangedEventArgs`（イベント引数）**
 
@@ -363,5 +363,5 @@ MewUI 版はコア型（`EsBitmap` / `EsPoint` / `EsVector`）で入出力しま
 | --- | --- |
 | `Source` が `null` | 何も描画しない（例外にしない） |
 | `ZoomPercent` へ 0 以下を設定 | 無視する（Fit へは `ZoomFit()` を使う） |
-| `ZoomPercent` が範囲外 | `ZoomConfig` の範囲へクランプする |
+| `ZoomPercent` が範囲外 | `ZoomOptions` の範囲へクランプする |
 | 画像未設定でのズーム可否 | false を返す |

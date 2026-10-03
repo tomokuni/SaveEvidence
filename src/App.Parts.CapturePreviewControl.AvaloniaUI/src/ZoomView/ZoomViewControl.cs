@@ -29,8 +29,8 @@ public sealed class ZoomViewControl : Panel
     private readonly CheckerboardView _checkerboard;
 
     /// <summary>既定の設定でズームビューコントロールを初期化する。</summary>
-    /// <remarks>ズーム遷移の設定は <see cref="ZoomConfig.Default"/> を使用する。 カスタマイズは <see cref="ZoomViewControl(ZoomConfig)"/> を使用する。</remarks>
-    public ZoomViewControl() : this(ZoomConfig.Default) { }
+    /// <remarks>ズーム遷移の設定は <see cref="ZoomOptions.Default"/> を使用する。 カスタマイズは <see cref="ZoomViewControl(ZoomOptions)"/> を使用する。</remarks>
+    public ZoomViewControl() : this(ZoomOptions.Default) { }
 
     /// <summary>指定の設定でズームビューコントロールを初期化する。</summary>
     /// <param name="config">ズーム遷移の設定（ズーム範囲・倍率・レベル集合）。</param>
@@ -38,7 +38,7 @@ public sealed class ZoomViewControl : Panel
     /// 内部ビューポートを子として追加し、セッションの通知（ズーム状態・ビューポートの変化）を購読して自 UI の公開イベントへ転送する。<br/>
     /// ホストは内部ビューポートの配線を行う必要がない。
     /// </remarks>
-    public ZoomViewControl(ZoomConfig config)
+    public ZoomViewControl(ZoomOptions config)
     {
         _zoomableView = new ZoomableView();
         _zoomableView.Session.ApplyConfig(config);
@@ -108,7 +108,7 @@ public sealed class ZoomViewControl : Panel
     /// <value>Fit 中は実効倍率（ビューポートと元画像サイズから算出）、固定倍率中はズーム率。 0 にはならない。</value>
     /// <remarks>
     /// <b>setter</b> は 0 より大きい値のみ受け付ける（Fit へは <see cref="ZoomFit"/> を使用する）。<br/>
-    /// 設定値は <see cref="ZoomConfig"/> の範囲へクランプされ、ズーム中心を維持したまま倍率を変更する。
+    /// 設定値は <see cref="ZoomOptions"/> の範囲へクランプされ、ズーム中心を維持したまま倍率を変更する。
     /// </remarks>
     public double ZoomPercent
     {

@@ -19,7 +19,7 @@ public class MarqueeFeedbackTests
         // 3 つの操作をまとめて要求する（nudge の終了と同じ組み合わせ）
         var feedback = new MarqueeFeedback
         {
-            Cursor = MarqueeCursorAction.MoveTo | MarqueeCursorAction.Hide | MarqueeCursorAction.Show,
+            Cursor = MarqueeCursorActions.MoveTo | MarqueeCursorActions.Hide | MarqueeCursorActions.Show,
             CursorDomainPosition = new EsPoint(10, 20),
         };
 

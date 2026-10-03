@@ -305,7 +305,7 @@ marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.
 
 **装飾（暗転マスク・外枠・ハイライト・内側の塗り）は提示層（`Feature.Marquee.Presenter`）が単一所有**します（`MarqueeAppearance`（表示可否・太さ・色）/ `MarqueeDrawPlan`（装飾矩形）/ `MarqueePresenter`（`DrawPlan` partial）（矩形の計算）/ `MarqueePresenter`（描画計画の解決））。 本コントロールは `Appearance` で外観を設定し、`Rendered` で描画計画を受け取ります。 **描画するラベルと描画順も提示層が、実寸 → 配置矩形の写像は同層の `MarqueePresenter`（`LabelPlan` partial） が単一所有し**、実寸測定だけを UI 層が与えます。
 
-効果（`MarqueeFeedback` / `MarqueeCursorAction`）とログ定義（`MarqueeLogMessage`）はコアの内部契約（internal）であり、本プロジェクトは参照しません（適用はファサード、記録は状態機械が行います）。
+効果（`MarqueeFeedback` / `MarqueeCursorActions`）とログ定義（`MarqueeLogMessage`）はコアの内部契約（internal）であり、本プロジェクトは参照しません（適用はファサード、記録は状態機械が行います）。
 
 描画計画（層の順序・装飾矩形・文言・配置）と外観（`MarqueeAppearance`）は UI 非依存の提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeDrawPlan` / `MarqueePresenter`（`LabelPlan` partial））が単一所有し、**描画は本コントロールが自 UI の描画 API（`DrawingContext`）で行います**。 本プロジェクトの内部実装も internal です。
 

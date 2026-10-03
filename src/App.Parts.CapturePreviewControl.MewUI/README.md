@@ -179,7 +179,7 @@ session.AppearanceSettings = changed;
 | ホイール / Shift + ホイール | 縦パン / 横パン |
 | Fit（`ZoomFit`） | ビューポートに収まる Uniform 倍率（唯一の Fit 移行経路） |
 
-| 設定（コアの `ZoomConfig`） | 型 | 既定値 | 説明 |
+| 設定（コアの `ZoomOptions`） | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `MinZoom` / `MaxZoom` | `double` | `10` / `500` | 固定倍率の下限・上限（%） |
 | `WheelFactor` | `double` | `1.1` | Ctrl+ホイールのズーム倍率 |

@@ -3,23 +3,23 @@ using Xunit;
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 
 /// <summary>
-/// ZoomConfig（ズーム遷移の設定・検証付き不変値）の仕様テスト。
+/// ZoomOptions（ズーム遷移の設定・検証付き不変値）の仕様テスト。
 /// </summary>
 /// <remarks>
 /// 不変条件（MinZoom > 0 / MaxZoom >= MinZoom / WheelFactor > 1 / レベル集合の非空・昇順・範囲内）と<br/>
 /// <c>ClampZoom</c>（ズーム範囲クランプ）を検証する。<br/>
 /// UI 初期化を必要としないため、Avalonia ヘッドレスに依存せず並列実行できる。
 /// </remarks>
-public class ZoomConfigTests
+public class ZoomOptionsTests
 {
     // ====================================================================
-    // 既定値（ZoomConfig.Default）
+    // 既定値（ZoomOptions.Default）
     // ====================================================================
 
     [Fact]
     public void Default_従来の定数値を持つ()
     {
-        var config = ZoomConfig.Default;
+        var config = ZoomOptions.Default;
         Assert.Equal(10.0, config.MinZoom);
         Assert.Equal(500.0, config.MaxZoom);
         Assert.Equal(1.1, config.WheelFactor);
@@ -29,7 +29,7 @@ public class ZoomConfigTests
     [Fact]
     public void Default_レベル集合が昇順である()
     {
-        var levels = ZoomConfig.Default.ButtonZoomLevels;
+        var levels = ZoomOptions.Default.ButtonZoomLevels;
         for (var i = 1; i < levels.Count; i++)
         {
             Assert.True(levels[i - 1] < levels[i], $"段階 {i} が昇順でない: {levels[i - 1]} -> {levels[i]}");
@@ -46,7 +46,7 @@ public class ZoomConfigTests
     public void コンストラクタ_最小値が0以下なら例外を投げる(double minZoom, double maxZoom, double wheelFactor)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ZoomConfig(minZoom, maxZoom, wheelFactor, [10, 50, 100]));
+            new ZoomOptions(minZoom, maxZoom, wheelFactor, [10, 50, 100]));
     }
 
     [Theory]
@@ -58,11 +58,11 @@ public class ZoomConfigTests
         if (maxZoom < minZoom)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                new ZoomConfig(minZoom, maxZoom, wheelFactor, [minZoom]));
+                new ZoomOptions(minZoom, maxZoom, wheelFactor, [minZoom]));
         }
         else
         {
-            var config = new ZoomConfig(minZoom, maxZoom, wheelFactor, [minZoom]);
+            var config = new ZoomOptions(minZoom, maxZoom, wheelFactor, [minZoom]);
             Assert.Equal(minZoom, config.MaxZoom);
         }
     }
@@ -73,28 +73,28 @@ public class ZoomConfigTests
     public void コンストラクタ_ズーム倍率が1以下なら例外を投げる(double minZoom, double maxZoom, double wheelFactor)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ZoomConfig(minZoom, maxZoom, wheelFactor, [10, 50, 100]));
+            new ZoomOptions(minZoom, maxZoom, wheelFactor, [10, 50, 100]));
     }
 
     [Fact]
     public void コンストラクタ_レベル集合がnullなら例外を投げる()
     {
         Assert.Throws<ArgumentNullException>(() =>
-            new ZoomConfig(10, 500, 1.1, null!));
+            new ZoomOptions(10, 500, 1.1, null!));
     }
 
     [Fact]
     public void コンストラクタ_レベル集合が空なら例外を投げる()
     {
         Assert.Throws<ArgumentException>(() =>
-            new ZoomConfig(10, 500, 1.1, []));
+            new ZoomOptions(10, 500, 1.1, []));
     }
 
     [Fact]
     public void コンストラクタ_レベル集合が昇順でないなら例外を投げる()
     {
         Assert.Throws<ArgumentException>(() =>
-            new ZoomConfig(10, 500, 1.1, [50, 10, 100]));
+            new ZoomOptions(10, 500, 1.1, [50, 10, 100]));
     }
 
     [Fact]
@@ -102,13 +102,13 @@ public class ZoomConfigTests
     {
         // レベル 5 は MinZoom(10) 未満
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new ZoomConfig(10, 500, 1.1, [10, 50, 100, 5]));
+            new ZoomOptions(10, 500, 1.1, [10, 50, 100, 5]));
     }
 
     [Fact]
     public void コンストラクタ_正しい値なら正常に生成できる()
     {
-        var config = new ZoomConfig(10, 500, 1.1, [10, 50, 100, 200, 500]);
+        var config = new ZoomOptions(10, 500, 1.1, [10, 50, 100, 200, 500]);
         Assert.Equal(10.0, config.MinZoom);
         Assert.Equal(500.0, config.MaxZoom);
         Assert.Equal(1.1, config.WheelFactor);
@@ -125,7 +125,7 @@ public class ZoomConfigTests
     [InlineData(800.0, 500.0)] // 上限超過 → MaxZoom
     public void ClampZoom_ズーム率を範囲内にクランプする(double input, double expected)
     {
-        var config = new ZoomConfig(10, 500, 1.1, [10, 50, 100]);
+        var config = new ZoomOptions(10, 500, 1.1, [10, 50, 100]);
         Assert.Equal(expected, config.ClampZoom(input));
     }
 
@@ -136,7 +136,7 @@ public class ZoomConfigTests
     [Fact]
     public void With_指定したプロパティのみ差し替える()
     {
-        var config = new ZoomConfig(10, 500, 1.1, [10, 50, 100]);
+        var config = new ZoomOptions(10, 500, 1.1, [10, 50, 100]);
 
         var updated = config.With(wheelFactor: 1.2);
 
@@ -151,7 +151,7 @@ public class ZoomConfigTests
     [Fact]
     public void With_不正な値なら例外を投げる()
     {
-        var config = new ZoomConfig(10, 500, 1.1, [10, 50, 100]);
+        var config = new ZoomOptions(10, 500, 1.1, [10, 50, 100]);
 
         // minZoom を MaxZoom 超に設定 → 検証エラー
         Assert.Throws<ArgumentOutOfRangeException>(() => config.With(minZoom: 800));

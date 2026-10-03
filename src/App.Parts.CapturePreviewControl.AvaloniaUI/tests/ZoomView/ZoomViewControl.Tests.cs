@@ -339,7 +339,7 @@ public class ZoomViewControlTests
     public void ZoomByWheel_移動できない場合はズーム率を維持する()
     {
         var view = CreatePannableView();
-        var maxZoom = EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomConfig.Default.MaxZoom;
+        var maxZoom = EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomOptions.Default.MaxZoom;
         view.ZoomPercent = maxZoom;
 
         view.ZoomByWheel(zoomIn: true);

@@ -357,7 +357,7 @@ public class ZoomViewSessionTests
         var session = CreateSession(new EsSize(100, 100), new EsSize(100, 100));
         var logger = new RecordingLogger();
         session.Log = logger;
-        session.SetZoom(ZoomConfig.Default.MaxZoom);
+        session.SetZoom(ZoomOptions.Default.MaxZoom);
 
         var feedback = session.ZoomIn();
 
@@ -447,13 +447,13 @@ public class ZoomViewSessionTests
         Assert.True(session.CanZoomOut);
         Assert.True(session.CanZoomIn);
 
-        session.SetZoom(ZoomConfig.Default.MaxZoom);
+        session.SetZoom(ZoomOptions.Default.MaxZoom);
         Assert.False(session.CanZoomIn);
         Assert.True(session.CanZoomOut);
 
         // Fit が最小レベル（10%）になる条件ではズームアウト不可
         var atMinimum = CreateSession(new EsSize(100, 100), new EsSize(10, 10));
-        Assert.Equal(ZoomConfig.Default.MinZoom, atMinimum.ZoomPercent, 6);
+        Assert.Equal(ZoomOptions.Default.MinZoom, atMinimum.ZoomPercent, 6);
         Assert.False(atMinimum.CanZoomOut);
     }
 
@@ -465,7 +465,7 @@ public class ZoomViewSessionTests
         Assert.True(session.CanZoomIn);
 
         // 上限を Fit の実効倍率（200%）へ下げる → ズームイン不可になる
-        session.ApplyConfig(ZoomConfig.Default.With(maxZoom: 200, buttonZoomLevels: [10, 50, 100, 200]));
+        session.ApplyConfig(ZoomOptions.Default.With(maxZoom: 200, buttonZoomLevels: [10, 50, 100, 200]));
 
         Assert.False(session.CanZoomIn);
     }
