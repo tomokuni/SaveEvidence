@@ -113,7 +113,7 @@ stateDiagram-v2
 | `src/Interaction/MarqueeSession.cs` | `MarqueeSession` | internal | 入力の解釈と状態遷移の判断。 通知と効果を返す |
 | `src/Interaction/MarqueeState.cs` | `MarqueeState` | internal | 選択矩形・ドラッグ・nudge の状態保持。 **状態は操作（遷移メソッド）でのみ変わり、読み取りはプロパティ**（矛盾した状態を作れない） |
 | `src/Marquee.Geometry.cs`（ルート） | `Marquee`（**partial**） | internal | 幾何の**内部手順**（注目矩形の DIP 変換・ハンドル位置・始点マーカー。 注目矩形とポートは 1 回だけ解決する）。 公開の入口 `ResolveGeometry` は `Marquee.cs` が持つ |
-| `src/Drawing/MarqueeGeometry.cs` | `MarqueeGeometry` | public | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MouseDomainPosition` / `MouseDipPosition` ＋ `SurfaceDipRect`）。 **コアが責任を持つ値の全量**。 マウス位置は文言用のドメイン座標と配置用の DIP の両方を渡す（描画層が座標変換ポートを持たないため） |
+| `src/Drawing/MarqueeGeometry.cs` | `MarqueeGeometry` | public | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MouseDomainPosition` / `MouseDipPosition` ＋ `ClientRect`）。 **コアが責任を持つ値の全量**。 マウス位置は文言用のドメイン座標と配置用の DIP の両方を渡す（描画層が座標変換ポートを持たないため） |
 | `src/Drawing/MarqueeRenderRequest.cs` | `MarqueeRenderRequest` | public | 幾何解決の入力（設定・状態・描画時に決まる値）。 `MarqueeRenderRequest.Create` が値の組を 1 箇所に閉じ、`Marquee.CreateRequest` が状態を写して生成する。 **本値から導出する値（座標変換ポートの決定・注目矩形の決定・DIP 変換）は本値のインスタンスメンバーが単一所有する**（`ResolvedPort` / `Focus` / `ResolveFocusDipRect` / `ToDipRect` / `ToDomainRect`） |
 | `src/Setting/MarqueeOptions.cs` | `MarqueeOptions` | public | 設定の値オブジェクト。 既定値を単一所有し、生成時に安全域（`Marquee.Limits`）へ補正する（寸法・対話パラメータのみ。 体裁と表示可否は描画層の外観が単一所有する） |
 | `src/Drawing/MarqueeHandles.cs` | `MarqueeHandles` | public | ドラッグハンドルの幾何（8 方向の矩形・枠線の太さ） |

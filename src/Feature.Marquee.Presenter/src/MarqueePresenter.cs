@@ -320,7 +320,7 @@ public partial class MarqueePresenter
         var appearance = Appearance;
         var request = _core.CreateRequest(clientSize);
         var geometry = _core.ResolveGeometry(in request);
-        var surface = geometry.SurfaceDipRect;
+        var surface = geometry.ClientRect;
         var focus = geometry.FocusDipRect;
 
         var overlayRegions = appearance.ShowOverlay && appearance.ShouldDrawOverlay(focus is not null)

@@ -31,5 +31,5 @@ public readonly record struct MarqueeGeometry(
     /// <summary>描画面の全体（左上を原点（0, 0）とする矩形）を取得する。</summary>
     /// <value>幅・高さが <see cref="ClientSize"/> の矩形（DIP）。</value>
     /// <remarks>描画 API のコンテキスト原点は常にコントロールの左上であるため、原点を持たない型で受ける（取り違えを防ぐ）。</remarks>
-    public EsRect SurfaceDipRect => new(0, 0, ClientSize.Width, ClientSize.Height);
+    public EsRect ClientRect => new(0, 0, ClientSize.Width, ClientSize.Height);
 }

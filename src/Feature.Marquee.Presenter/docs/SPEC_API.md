@@ -69,7 +69,7 @@
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `Appearance` | `MarqueeAppearance` | 解決に使った外観（そのまま保持する。 UI は色・フォントサイズをここから引く） |
-| `SurfaceDipRect` | `EsRect` | 描画面の全体（原点 (0, 0)・描画領域のサイズ） |
+| `ClientRect` | `EsRect` | 描画面の全体（原点 (0, 0)・描画領域のサイズ） |
 | `FocusDipRect` | `EsRect?` | 注目矩形（DIP。 選択もハイライトも無い場合は null） |
 | `LabelAnchor` | `EsPoint?` | ラベルの基準点（注目矩形の左上から**矩形の線幅 + 1 DIP** 内側へ寄せた点。 注目矩形が無い場合は null（サイズラベルと付加情報ラベルが同じ値を使う） |
 | `OverlayDipRects` | `IReadOnlyList<EsRect>` | 暗転して塗る領域。 描かない設定または注目矩形が無い場合は空 |

@@ -26,7 +26,7 @@
 - 本層は UI フレームワークに依存しません（依存は `Feature.Loupe.Core` と `Platform.Core` のみ）。 **描画 API の抽象も持ちません**（描画計画というデータを返し、描画は各 UI が自 UI の API で行います）。
 - **本層はコントロール化を前提とした処理を提供しません**（拡大元画像・再描画のスケジューリング・組み込み先の概念は、コントロール固有の値や UI の機構であるため UI 層が持ちます）。
 - 座標は `EsPoint` / `EsSize` / `EsRect`（`EsUtil.Platform.Core`）、色は UI 非依存の `System.Drawing.Color` で扱います。
-- 描画の単位は**物理ピクセル**です（`LoupeGeometry.PixelSize` が作る正方形が描画面）。 DIP → 物理ピクセルの換算（表示サイズと枠線の太さ）は本層とコアが済ませているため、UI 層は換算しません。
+- 描画の単位は**物理ピクセル**です（`LoupeGeometry.ClientPixelSize` が作る正方形が描画面）。 DIP → 物理ピクセルの換算（表示サイズと枠線の太さ）は本層とコアが済ませているため、UI 層は換算しません。
 - 中心座標ラベルは **DIP** で配置します（文言・基準点は本層が、実寸測定と要素の配置は UI 層が担います）。
 
 ## 2. 公開 API
@@ -57,7 +57,7 @@
 | --- | --- | --- |
 | `LoupePresenter(ILogger? logger = null)` | ctor | 生成。 **ロガーを注入した場合は、その場で本層とコアの生成の記録を出力する**（注入しない場合は `Log` の初回設定時に出力する） |
 | `Options` | property | コアの設定（計算に必要な値）を転送する（**本層を通過したことを Trace で記録する**） |
-| `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` | property | コアの環境値・拡大中心・オフセットを転送する（**本層を通過したことを Trace で記録する**） |
+| `ClientToPixelScaling` / `CenterPoint` / `PositionOffset` | property | コアの環境値・拡大中心・オフセットを転送する（**本層を通過したことを Trace で記録する**） |
 | `Log` | property | コアのロガーを転送する。 **コンストラクターで注入されていない場合、初回の設定時に本層の生成を 1 度だけ記録する** |
 | `Appearance` | property | 外観（本層が単一所有する）。 **変化したときだけ**変更ログ（Debug）を出力する |
 | `SetCoordTransform(ICoordTransform?)` | method | コアへ委譲する（**本層を通過したことを Trace で記録する**） |
@@ -88,12 +88,12 @@
 | メンバー | 説明 |
 | --- | --- |
 | `Appearance` | 外観（描画時に色・フォントを使うため保持する） |
-| `SurfacePixelRect` | 描画面の全体（物理ピクセルの正方形） |
+| `ClientPixelRect` | 描画面の全体（物理ピクセルの正方形） |
 | `MagnifiedImage` | 拡大画像の切り出しと描画の矩形（`LoupeMagnifiedImage`。 中心未設定は null） |
 | `CrosshairPixelRects` / `BorderPixelRects` | 十字線（縦横 2 本）/ 枠線（4 辺）の矩形 |
 | `Layers` | 描く層とその順序（先頭から処理する） |
 | `Labels` | ラベルの配置指示（`LoupeLabelPlacement` の一覧。 空は表示なし） |
-| `CaptureTopLeft` / `ZoomLevel` / `PixelSize` | 描画完了通知（`Rendered`）の組み立てに使う値 |
+| `CaptureTopLeft` / `ZoomLevel` / `ClientPixelSize` | 描画完了通知（`Rendered`）の組み立てに使う値 |
 
 ### 2.5 `LoupeDrawLayer` の値
 

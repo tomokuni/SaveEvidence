@@ -19,7 +19,7 @@ namespace EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl.Sample.Presentation;
 internal sealed class GridLoupePreview : Control
 {
     /// <summary>見本のルーペの一辺（DIP）。 プレビューの高さも同じ値にする。</summary>
-    internal const int DisplaySize = 150;
+    internal const int ClientSize = 150;
 
     /// <summary>見本の拡大率。</summary>
     private const int ZoomLevel = 6;
@@ -39,9 +39,9 @@ internal sealed class GridLoupePreview : Control
     /// <summary>見本の設定（サイズ・拡大率・中心・倍率）を設定する。</summary>
     public GridLoupePreview()
     {
-        _presenter.Options = LoupeOptions.Default with { RequestedSize = DisplaySize, ZoomLevel = ZoomLevel };
+        _presenter.Options = LoupeOptions.Default with { RequestedSize = ClientSize, ZoomLevel = ZoomLevel };
         _presenter.CenterPoint = CenterPoint;
-        _presenter.DipToDeviceScaling = 1.0;
+        _presenter.ClientToPixelScaling = 1.0;
     }
 
     /// <summary>提示層が解決した描画計画を描く。</summary>
@@ -49,7 +49,7 @@ internal sealed class GridLoupePreview : Control
     public override void Render(DrawingContext context)
     {
         var layout = _presenter.ResolveLayout(new EsSize(Bounds.Width, Bounds.Height));
-        var plan = _presenter.ResolveDrawPlan(layout.DisplaySize, MeasureText);
+        var plan = _presenter.ResolveDrawPlan(layout.ClientSize, MeasureText);
 
         LoupeContextPainter.Paint(context, Source, in plan);
     }

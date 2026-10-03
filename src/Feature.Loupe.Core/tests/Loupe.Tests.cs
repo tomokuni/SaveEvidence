@@ -32,7 +32,7 @@ public class LoupeTests
         var loupe = new Loupe();
 
         Assert.Same(LoupeOptions.Default, loupe.Options);
-        Assert.Equal(Loupe.Limits.DipToDeviceScalingDefault, loupe.DipToDeviceScaling);
+        Assert.Equal(Loupe.Limits.ClientToPixelScalingDefault, loupe.ClientToPixelScaling);
         Assert.Null(loupe.CenterPoint);
         Assert.Equal(0.0, loupe.PositionOffset);
     }
@@ -54,12 +54,12 @@ public class LoupeTests
     [InlineData(100.0, 8.0)]
     [InlineData(double.NaN, 1.0)]
     [InlineData(double.PositiveInfinity, 1.0)]
-    public void DipToDeviceScaling_安全域外の指定は補正して保持する(double input, double expected)
+    public void ClientToPixelScaling_安全域外の指定は補正して保持する(double input, double expected)
     {
         // 補正の規則は Loupe.Limits が単一所有する（UI の依存関係プロパティを経由しない代入でも範囲内になる）
-        var loupe = new Loupe() { DipToDeviceScaling = input };
+        var loupe = new Loupe() { ClientToPixelScaling = input };
 
-        Assert.Equal(expected, loupe.DipToDeviceScaling);
+        Assert.Equal(expected, loupe.ClientToPixelScaling);
     }
 
     // ====================================================================
@@ -74,7 +74,7 @@ public class LoupeTests
         var layout = loupe.ResolveLayout(new EsSize(120, 300));
 
         // 要求サイズは領域に合わせて縮小しない
-        Assert.Equal(200, layout.DisplaySize);
+        Assert.Equal(200, layout.ClientSize);
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class LoupeTests
 
         var layout = loupe.ResolveLayout(default);
 
-        Assert.Equal(200, layout.DisplaySize);
+        Assert.Equal(200, layout.ClientSize);
         Assert.Equal(new EsPoint(500, 600), layout.Position);
     }
 
@@ -95,7 +95,7 @@ public class LoupeTests
 
         loupe.Options = loupe.Options with { RequestedSize = 400 };
 
-        Assert.Equal(400, loupe.ResolveLayout(ParentSize).DisplaySize);
+        Assert.Equal(400, loupe.ResolveLayout(ParentSize).ClientSize);
     }
 
     // ====================================================================
@@ -109,7 +109,7 @@ public class LoupeTests
 
         var layout = loupe.ResolveLayout(ParentSize);
 
-        Assert.Equal(160, layout.DisplaySize);
+        Assert.Equal(160, layout.ClientSize);
         Assert.Null(layout.Position);
     }
 
@@ -191,7 +191,7 @@ public class LoupeTests
 
         var layout = loupe.ResolveLayout(new EsSize(100, 100));
 
-        Assert.Equal(300, layout.DisplaySize);
+        Assert.Equal(300, layout.ClientSize);
         Assert.Null(layout.Position);
     }
 
@@ -206,15 +206,15 @@ public class LoupeTests
         var loupe = new Loupe(options)
         {
             CenterPoint = new EsPoint(10, 20),
-            DipToDeviceScaling = 1.5,
+            ClientToPixelScaling = 1.5,
         };
 
         var geometry = loupe.ResolveGeometry(160);
 
         Assert.Equal(new EsPoint(10, 20), geometry.Center);
-        Assert.Equal(240, geometry.PixelSize);
+        Assert.Equal(240, geometry.ClientPixelSize);
         Assert.Equal(4, geometry.ZoomLevel);
-        Assert.Equal(1.5, geometry.DipToDeviceScaling);
+        Assert.Equal(1.5, geometry.ClientToPixelScaling);
     }
 
     [Fact]
@@ -224,7 +224,7 @@ public class LoupeTests
 
         var geometry = loupe.ResolveGeometry(300);
 
-        Assert.Equal(300, geometry.PixelSize);
+        Assert.Equal(300, geometry.ClientPixelSize);
     }
 
     [Fact]
@@ -233,10 +233,10 @@ public class LoupeTests
         var loupe = new Loupe(new LoupeOptions { RequestedSize = 300 });
 
         var layout = loupe.ResolveLayout(new EsSize(120, 400));
-        var geometry = loupe.ResolveGeometry(layout.DisplaySize);
+        var geometry = loupe.ResolveGeometry(layout.ClientSize);
 
         // 表示サイズ（DIP）は要求サイズのまま（縮小しない）、その値が物理ピクセルへ換算される
-        Assert.Equal(300, geometry.PixelSize);
+        Assert.Equal(300, geometry.ClientPixelSize);
     }
 
     [Fact]
@@ -278,7 +278,7 @@ public class LoupeTests
     }
 
     /// <summary>拡大率が切り出しサイズの切り上げに影響されないことを検証する。</summary>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="clientPixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <remarks>
     /// 実描画は切り出し領域（切り出しサイズのドメインピクセル）を <c>ZoomLevel</c> 倍で描くため、<br/>
     /// 変換係数は切り出しサイズで割った値（<c>物理ピクセル / 切り出しサイズ</c>）ではなく <c>ZoomLevel</c> になる。
@@ -287,11 +287,11 @@ public class LoupeTests
     [InlineData(160)]
     [InlineData(150)]
     [InlineData(200)]
-    public void ResolveGeometry_拡大率は切り出しサイズの切り上げに影響されない(int pixelSize)
+    public void ResolveGeometry_拡大率は切り出しサイズの切り上げに影響されない(int clientPixelSize)
     {
         var loupe = new Loupe(new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
 
-        Assert.Equal(4, loupe.ResolveGeometry(pixelSize).ZoomLevel);
+        Assert.Equal(4, loupe.ResolveGeometry(clientPixelSize).ZoomLevel);
     }
 
     /// <summary>拡大率が DPI スケーリング係数に依存しないことを検証する。</summary>
@@ -307,9 +307,9 @@ public class LoupeTests
     public void ResolveGeometry_拡大率はDPIスケーリングに依存しない(double dipToDeviceScaling)
     {
         var loupe = new Loupe(new LoupeOptions { ZoomLevel = 4 }) { CenterPoint = new EsPoint(50, 60) };
-        var pixelSize = DpiScaler.ScaleToPixel(160, dipToDeviceScaling);
+        var clientPixelSize = DpiScaler.ScaleToPixel(160, dipToDeviceScaling);
 
-        Assert.Equal(4, loupe.ResolveGeometry(pixelSize).ZoomLevel);
+        Assert.Equal(4, loupe.ResolveGeometry(clientPixelSize).ZoomLevel);
     }
 
     /// <summary>表示レイアウト・描画の幾何の解決がヒープを確保しないことを検証する。</summary>

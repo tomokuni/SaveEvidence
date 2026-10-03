@@ -73,13 +73,13 @@
 
 Win32 の HWND に相当するため、`IWindowService` / `ICursorOverrideGuard` などハンドルを要求するサービスへ MewUI のウィンドウを渡せます。
 
-### `Imaging.SkiaSurfaceScale`（static class）
+### `Imaging.ClientPixelScale`（static class）
 
 描画面（物理ピクセル）と表示領域（DIP）の比から、描画に使うスケーリング係数を解決します。
 
 | メンバー | 内容 |
 | --- | --- |
-| `Resolve(double surfacePixels, double dipLength, double fallback)` | 表示領域が確定していればその比（`surfacePixels / dipLength`）を、未確定（0 以下）なら `fallback` を返す（0.1〜8.0 へ補正） |
+| `Resolve(double clientPixels, double clientDip, double fallback)` | 表示領域が確定していればその比（`clientPixels / clientDip`）を、未確定（0 以下）なら `fallback` を返す（0.1〜8.0 へ補正） |
 
 **DPI の通知は追加直後のコントロールへ届きません**（実測: ウィンドウ表示後に追加したコントロールは `OnDpiChanged` が呼ばれず、登録時の既定値 1.0 のままになる）。
 その状態で保持値だけで描画すると図形が 100% で描かれ、DPI を反映済みの画像と重ねたときにずれます。

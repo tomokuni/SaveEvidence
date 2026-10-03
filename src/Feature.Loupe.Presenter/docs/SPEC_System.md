@@ -129,7 +129,7 @@ dotnet test src/Feature.Loupe.Presenter/tests/Feature.Loupe.Presenter.Tests.cspr
 | --- | --- | --- |
 | 生成（コンストラクター注入時、または `Log` の初回設定時） | `Presenter created` | Information |
 | `Log` の set | `Logger attached`（通過の記録） | Trace |
-| `Options` / `DipToDeviceScaling` / `CenterPoint` / `PositionOffset` の set | `Forwarded: {名前} {値}`（通過の記録） | Trace |
+| `Options` / `ClientToPixelScaling` / `CenterPoint` / `PositionOffset` の set | `Forwarded: {名前} {値}`（通過の記録） | Trace |
 | `SetCoordTransform` | `Forwarded: SetCoordTransform {ポート}`（通過の記録） | Trace |
 | `Appearance` の set | 変化した項目だけ（`LogAppearanceChanged`。 書式 `Setting: {Name} {OldValue} → {NewValue}`） | Debug |
 | `ResolveLayout` / `ResolveDrawPlan` | 出力しない（毎フレーム呼ばれる） | — |

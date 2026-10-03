@@ -308,10 +308,10 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <remarks>
     /// 環境値（DPI）のため設定（<see cref="Options"/>）には含めず、ホスト（<c>MainWindow.DesktopScaling</c> 等）が与える。
     /// </remarks>
-    public double LoupeDipToDeviceScaling
+    public double LoupeClientToPixelScaling
     {
-        get => _loupeControl.DipToDeviceScaling;
-        set => _loupeControl.DipToDeviceScaling = value;
+        get => _loupeControl.ClientToPixelScaling;
+        set => _loupeControl.ClientToPixelScaling = value;
     }
 
     /// <summary>内部ロガー（内包コントロール（Marquee / Loupe）へ伝搬）。 null の場合は出力なし。</summary>

@@ -17,7 +17,7 @@ public class LoupePresenterLabelTextsTests
     /// <param name="center">拡大中心（未設定は null）。</param>
     /// <returns>描画の幾何。</returns>
     private static LoupeGeometry CreateGeometry(EsPoint? center)
-        => new(center, DisplaySize: 160.0, PixelSize: 160, DipToDeviceScaling: 1.0, ZoomLevel: 4);
+        => new(center, ClientSize: 160.0, ClientPixelSize: 160, ClientToPixelScaling: 1.0, ZoomLevel: 4);
 
     /// <summary>拡大中心が未設定なら配置しないことを検証する。</summary>
     [Fact]

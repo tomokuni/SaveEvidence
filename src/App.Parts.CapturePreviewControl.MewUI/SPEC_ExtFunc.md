@@ -120,7 +120,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 | 項目 | 理由 |
 | --- | --- |
-| `LoupeDipToDeviceScaling` / `DisplayScaleScaling` | 切り出しのルーペ・ラベルはプレビューの表示倍率（`CropViewControl` が所有）に従うため、設定値を与えない |
+| `LoupeClientToPixelScaling` / `DisplayScaleScaling` | 切り出しのルーペ・ラベルはプレビューの表示倍率（`CropViewControl` が所有）に従うため、設定値を与えない |
 
 情報ラベルはキャプチャコアの `CaptureLabelTexts.GetInfoText` がウィンドウ選択に限定するため、切り出しでは表示されません。
 
@@ -226,7 +226,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `HighlightDomainRect` | `EsRect?` | `null` | ハイライト矩形（ドメイン座標。 **null はハイライトなし**。 選択矩形より優先） |
 | `ShowFullOverlay` | `bool`（取得のみ） | `true` | 全面暗転の有無（モードから導出） |
 | `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（ドメイン座標） |
-| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` | `double` | 各 `1.0` 等 | DPI スケーリング（設定には含めない環境値） |
+| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | `double` | 各 `1.0` 等 | DPI スケーリング（設定には含めない環境値） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | ラベル文言を描画時に評価するデリゲート（null または空文字は描画しない。 文言はホストが与える） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包する選択コントロールとルーペへ伝搬する） |
 
@@ -333,7 +333,7 @@ MewUI 版はコア型（`EsBitmap` / `EsPoint` / `EsVector`）で入出力しま
 | `ZoomPercent` | `double`（読み書き） | 実効ズーム率（%）。 0 より大きい値のみ設定（0 以下は無視。 Fit へは `ZoomFit`）。 設定値は `ZoomOptions` の範囲へクランプする |
 | `IsFit` | `bool` | Fit 表示中かどうか（Fit 判定はこちら。 `ZoomPercent` は 0 にならない） |
 | `CenterAlign` | `bool`（読み書き） | 画像の中央寄せ / 左上寄せ（軸ごとに独立） |
-| `DipToDeviceScaling` | `double` | DIP → 物理ピクセルの係数（DPI 変更で自動更新される環境値） |
+| `ClientToPixelScaling` | `double` | DIP → 物理ピクセルの係数（DPI 変更で自動更新される環境値） |
 | `ZoomIn()` / `ZoomOut()` / `ZoomFit()` | — | 23 段階の遷移 / Fit 表示への復帰（唯一の Fit 移行経路） |
 | `PanByWheel(EsVector, bool)` / `ZoomByWheel(bool, EsPoint?)` | — | ホイール入力の反映（コントロールが自ら使う経路。 ホストからの転送にも使える） |
 | `ImageRectViewport()` / `DisplaySize()` | — | 画像の表示矩形 / 表示サイズ（ビューポート座標・DIP） |

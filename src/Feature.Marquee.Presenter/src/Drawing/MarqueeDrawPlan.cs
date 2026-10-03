@@ -7,7 +7,7 @@ namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 
 /// <summary>選択矩形コントロールの描画 1 フレーム分の計画（描画層が解決した値を UI 層へ渡す唯一の契約）。</summary>
 /// <param name="Appearance">外観（色・ラベルの体裁・枠線の太さ・表示可否）。</param>
-/// <param name="SurfaceDipRect">描画面の全体（左上を原点とする矩形・DIP）。</param>
+/// <param name="ClientRect">描画面の全体（左上を原点とする矩形・DIP）。</param>
 /// <param name="FocusDipRect">注目矩形（DIP。 閉区間は解決済み）。 選択もハイライトも無い場合は null。</param>
 /// <param name="LabelAnchor">ラベルの基準点（注目矩形の内側へ寄せた左上・DIP）。 注目矩形が無い場合は null。</param>
 /// <param name="OverlayDipRects">暗転して塗る領域（DIP）。 暗転を描かない設定の場合は空。</param>
@@ -28,7 +28,7 @@ namespace EsUtil.Feature.Marquee.Presenter.Drawing;
 /// </remarks>
 public readonly record struct MarqueeDrawPlan(
     MarqueeAppearance Appearance,
-    EsRect SurfaceDipRect,
+    EsRect ClientRect,
     EsRect? FocusDipRect,
     EsPoint? LabelAnchor,
     IReadOnlyList<EsRect> OverlayDipRects,

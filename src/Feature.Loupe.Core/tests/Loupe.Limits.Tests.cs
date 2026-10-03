@@ -55,27 +55,27 @@ public class LoupeLimitsTests
     }
 
     // ====================================================================
-    // DipToDeviceScaling（0.1〜8.0、既定 1.0）
+    // ClientToPixelScaling（0.1〜8.0、既定 1.0）
     // ====================================================================
 
     [Fact]
-    public void CoerceDipToDeviceScaling_範囲内はそのまま返す()
+    public void CoerceClientToPixelScaling_範囲内はそのまま返す()
     {
-        Assert.Equal(2.0, Loupe.Limits.CoerceDipToDeviceScaling(2.0));
+        Assert.Equal(2.0, Loupe.Limits.CoerceClientToPixelScaling(2.0));
     }
 
     [Fact]
-    public void CoerceDipToDeviceScaling_範囲外は最小値と最大値に補正する()
+    public void CoerceClientToPixelScaling_範囲外は最小値と最大値に補正する()
     {
-        Assert.Equal(0.1, Loupe.Limits.CoerceDipToDeviceScaling(0.0));
-        Assert.Equal(8.0, Loupe.Limits.CoerceDipToDeviceScaling(10.0));
+        Assert.Equal(0.1, Loupe.Limits.CoerceClientToPixelScaling(0.0));
+        Assert.Equal(8.0, Loupe.Limits.CoerceClientToPixelScaling(10.0));
     }
 
     [Fact]
-    public void CoerceDipToDeviceScaling_非有限値は既定値に補正する()
+    public void CoerceClientToPixelScaling_非有限値は既定値に補正する()
     {
-        Assert.Equal(1.0, Loupe.Limits.CoerceDipToDeviceScaling(double.NaN));
-        Assert.Equal(1.0, Loupe.Limits.CoerceDipToDeviceScaling(double.PositiveInfinity));
+        Assert.Equal(1.0, Loupe.Limits.CoerceClientToPixelScaling(double.NaN));
+        Assert.Equal(1.0, Loupe.Limits.CoerceClientToPixelScaling(double.PositiveInfinity));
     }
 
     // ====================================================================

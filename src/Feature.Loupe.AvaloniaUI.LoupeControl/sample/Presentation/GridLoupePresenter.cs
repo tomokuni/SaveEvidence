@@ -16,7 +16,7 @@ namespace EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl.Sample.Presentation;
 /// どちらも「塗る矩形の列」として計画へ載せるため、描画実装（<c>LoupeContextPainter</c> / <c>LoupeSkiaPainter</c>）は<br/>
 /// 変更なしにそのまま描ける（層の順序は既定の計画から引き継ぐ）。<br/>
 /// <br/>
-/// <b>寸法の換算</b>: 描画面の矩形は物理ピクセルであるため、DIP の太さは <see cref="LoupePresenter.DipToDeviceScaling"/> で換算する<br/>
+/// <b>寸法の換算</b>: 描画面の矩形は物理ピクセルであるため、DIP の太さは <see cref="LoupePresenter.ClientToPixelScaling"/> で換算する<br/>
 /// （換算の所有者はコア側にあり、提示層は同じ倍率を参照して自前の装飾へ適用する）。
 /// </remarks>
 internal sealed class GridLoupePresenter : LoupePresenter
@@ -61,8 +61,8 @@ internal sealed class GridLoupePresenter : LoupePresenter
         double displaySize, Func<string, double, EsSize> measureText)
     {
         var plan = base.ResolveDrawPlan(displaySize, measureText);
-        var surface = plan.SurfacePixelRect;
-        var scaling = DipToDeviceScaling;
+        var surface = plan.ClientPixelRect;
+        var scaling = ClientToPixelScaling;
 
         return plan with
         {

@@ -102,13 +102,13 @@ public partial class LoupePresenter
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
     /// <value>スケーリング係数（0.1〜8.0）。 範囲外・非有限は補正済みの値を設定する。 既定は 1.0。</value>
     /// <remarks>保持とログはコアが単一所有する（本層は委譲し、通過したことを Trace で記録する）。</remarks>
-    public double DipToDeviceScaling
+    public double ClientToPixelScaling
     {
-        get => _core.DipToDeviceScaling;
+        get => _core.ClientToPixelScaling;
         set
         {
-            _core.DipToDeviceScaling = value;
-            Log.LogForwarded(nameof(DipToDeviceScaling), value);
+            _core.ClientToPixelScaling = value;
+            Log.LogForwarded(nameof(ClientToPixelScaling), value);
         }
     }
 
@@ -195,7 +195,7 @@ public partial class LoupePresenter
     public LoupeLayout ResolveLayout(EsSize parentSize) => _core.ResolveLayout(parentSize);
 
     /// <summary>現在の状態から描画 1 フレーム分の計画を解決する。</summary>
-    /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP。 通常は <see cref="ResolveLayout"/> の結果）。</param>
+    /// <param name="clientSize">ルーペの一辺の表示サイズ（DIP。 通常は <see cref="ResolveLayout"/> の結果）。</param>
     /// <param name="measureText">テキストの実寸を測る関数。 null 不可。</param>
     /// <returns>描画計画（幾何・外観・層の順序・ラベル配置を解決済み）。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
@@ -208,23 +208,23 @@ public partial class LoupePresenter
     /// <br/>
     /// 実寸の測定は描画 API に依存するため、UI 層が関数として渡す<br/>
     /// （配置の計算（補正）は <see cref="ResolveLabelPlacements"/> が単一所有する）。<br/>
-    /// 描画先の表面は、本メソッドが返す計画の <see cref="LoupeDrawPlan.PixelSize"/> と同じ大きさで用意する（呼び出し側の責務）。
+    /// 描画先の表面は、本メソッドが返す計画の <see cref="LoupeDrawPlan.ClientPixelSize"/> と同じ大きさで用意する（呼び出し側の責務）。
     /// </remarks>
     public virtual LoupeDrawPlan ResolveDrawPlan(
-        double displaySize, Func<string, double, EsSize> measureText)
+        double clientSize, Func<string, double, EsSize> measureText)
     {
         ArgumentNullException.ThrowIfNull(measureText);
 
         var appearance = Appearance;
-        var geometry = _core.ResolveGeometry(displaySize);
-        var surface = geometry.SurfacePixelRect;
+        var geometry = _core.ResolveGeometry(clientSize);
+        var surface = geometry.ClientPixelRect;
 
         IReadOnlyList<EsRect> crosshair = appearance.ShowCrosshair
             ? ComputeCrosshairPixelRects(surface, geometry.ZoomLevel, geometry.CaptureSize)
             : [];
         IReadOnlyList<EsRect> border = appearance.ShowBorder
             ? ComputeBorderPixelRects(
-                surface, DpiScaler.ScaleToPixel(appearance.BorderThickness, geometry.DipToDeviceScaling))
+                surface, DpiScaler.ScaleToPixel(appearance.BorderThickness, geometry.ClientToPixelScaling))
             : [];
 
         var labelText = ResolveCoordLabelText(in geometry, appearance);
@@ -239,7 +239,7 @@ public partial class LoupePresenter
             ResolveLabelPlacements(labelText, appearance, measureText),
             geometry.CaptureTopLeft,
             geometry.ZoomLevel,
-            geometry.PixelSize);
+            geometry.ClientPixelSize);
     }
 
     /// <summary>本層の生成を 1 度だけ記録する（既に記録済みの場合は何もしない）。</summary>

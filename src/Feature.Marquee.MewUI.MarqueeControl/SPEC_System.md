@@ -106,7 +106,7 @@ classDiagram
     class MarqueeControl {
         +MarqueeOptions Options
         +MarqueeAppearance Appearance
-        +double DipToDeviceScaling
+        +double ClientToPixelScaling
         +MarqueeSnapshot CurrentSnapshot
         +SetCoordTransform(port) void
         +SetSelection(rect) void

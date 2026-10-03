@@ -219,11 +219,11 @@ public class FadeMaskDragRectControlTests
         control.LoupeAppearance = control.LoupeAppearance with { CoordLabelFontSize = 13.0 };
 
         // ルーペ描画スケールは設定（Options）の対象外（環境値。 個別プロパティで設定）
-        control.LoupeDipToDeviceScaling = 2.0;
+        control.LoupeClientToPixelScaling = 2.0;
 
         Assert.Equal(150, control.Loupe.Options.RequestedSize);
         Assert.Equal(3, control.Loupe.Options.ZoomLevel);
-        Assert.Equal(2.0, control.Loupe.DipToDeviceScaling);
+        Assert.Equal(2.0, control.Loupe.ClientToPixelScaling);
         Assert.Equal(4, control.Loupe.Appearance.BorderThickness);
         Assert.Equal(Color.FromAColor(204, Colors.Red), control.Loupe.Appearance.CrossColor.ToAvaloniaColor());
         // 表示位置のオフセットはフレームワーク差（Avalonia 版は自己配置）のため、ルーペのプロパティへ渡される

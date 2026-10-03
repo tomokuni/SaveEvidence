@@ -32,8 +32,8 @@ loupe.PositionOffset = 16;
 var layout = loupe.ResolveLayout(parentSize: new EsSize(800, 600));
 
 // 描画の幾何（1 フレーム分。UI 層は本値を組み立てず、描画層へ渡す）
-// displaySize は ResolveLayout が返した値（= 要求サイズ。 領域に合わせた縮小はしない）
-var geometry = loupe.ResolveGeometry(layout.DisplaySize);
+// clientSize は ResolveLayout が返した値（= 要求サイズ。 領域に合わせた縮小はしない）
+var geometry = loupe.ResolveGeometry(layout.ClientSize);
 var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描画先
 ```
 
@@ -48,7 +48,7 @@ var capture = geometry.MagnifiedImage;   // 切り出し領域・描画元・描
 | `ResolveLayout` | 配置（どこへ・どの大きさで置くか） | 親領域のサイズ（DIP） | 表示サイズ（要求サイズをそのまま）＋表示位置（領域内へ補正） |
 | `ResolveGeometry` | 描画（何を・何ピクセルで描くか） | 表示サイズ（DIP） | 描画面（物理ピクセルへ換算）＋切り出し領域 |
 
-**表示サイズは縮小しません**。 親パネルが表示サイズを収められない場合、`ResolveLayout` は `Position` を null として返します（配置しない = その領域には描画できません）。 描画先の表面も `PixelSize` と同じ大きさで用意します（本コアは描画先を知らないため判定しません）。 拡大中心が端に寄った場合は、表示サイズを変えずに表示位置を領域内へ補正します。
+**表示サイズは縮小しません**。 親パネルが表示サイズを収められない場合、`ResolveLayout` は `Position` を null として返します（配置しない = その領域には描画できません）。 描画先の表面も `ClientPixelSize` と同じ大きさで用意します（本コアは描画先を知らないため判定しません）。 拡大中心が端に寄った場合は、表示サイズを変えずに表示位置を領域内へ補正します。
 
 ## 3. 含まれるもの
 

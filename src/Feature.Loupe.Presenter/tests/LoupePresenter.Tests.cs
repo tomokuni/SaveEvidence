@@ -144,7 +144,7 @@ public class LoupePresenterTests
         logger.Levels.Clear();
 
         presenter.Options = LoupeOptions.Default with { RequestedSize = 200, ZoomLevel = 8 };
-        presenter.DipToDeviceScaling = 1.25;
+        presenter.ClientToPixelScaling = 1.25;
         presenter.CenterPoint = new EsPoint(10, 20);
         presenter.PositionOffset = 16;
         presenter.SetCoordTransform(new CoordTransform(p => p, p => p, () => null));
@@ -159,7 +159,7 @@ public class LoupePresenterTests
         Assert.Equal(
             [
                 "[Feature.Loupe.Presenter] Forwarded: Options RequestedSize=200, ZoomLevel=8",
-                "[Feature.Loupe.Presenter] Forwarded: DipToDeviceScaling 1.25",
+                "[Feature.Loupe.Presenter] Forwarded: ClientToPixelScaling 1.25",
                 "[Feature.Loupe.Presenter] Forwarded: CenterPoint (10, 20)",
                 "[Feature.Loupe.Presenter] Forwarded: PositionOffset 16",
                 "[Feature.Loupe.Presenter] Forwarded: SetCoordTransform CoordTransform",

@@ -50,12 +50,12 @@ namespace EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl;
 /// 描画時にブラシへ変換する（色の文字列解析は行わない）。<br/>
 /// 不透明度は色のアルファに統合する（例: 十字線の赤 40% = <c>#66FF0000</c>）。<br/>
 /// 設定（<see cref="Options"/>）の数値項目はコアの型が生成時に安全域へ補正する<br/>
-/// （UI 側に補正の登録を置かない）。 環境値の <see cref="DipToDeviceScaling"/> のみ本コントロールが補正（coerce）する。<br/>
+/// （UI 側に補正の登録を置かない）。 環境値の <see cref="ClientToPixelScaling"/> のみ本コントロールが補正（coerce）する。<br/>
 /// <br/>
 /// **公開 API 一覧**:<br/>
 /// - 入力: <see cref="Source"/> / <see cref="CenterPoint"/><br/>
 /// - 設定: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有。 表示サイズ・拡大率）<br/>
-/// - 環境: <see cref="DipToDeviceScaling"/>（DPI スケーリング係数）<br/>
+/// - 環境: <see cref="ClientToPixelScaling"/>（DPI スケーリング係数）<br/>
 /// - 位置: <see cref="SetCoordTransform"/> / <see cref="PositionOffset"/> / <see cref="RefreshPosition"/><br/>
 /// - ログ: <see cref="Log"/><br/>
 /// - イベント: <see cref="Rendered"/>（描画完了時に描画済み Bitmap と表示情報を通知。 ホストが Bitmap に直接オーバーレイを描画できる）<br/>
@@ -181,8 +181,8 @@ public sealed class LoupeControl : Panel
 
         // 表示サイズは要素サイズ・描画サイズ（物理ピクセルへの換算元）で同じ値を使う
         // （別々に求めると丸めの違いで要素と描画ビットマップの大きさが食い違う）
-        Width = layout.DisplaySize;
-        Height = layout.DisplaySize;
+        Width = layout.ClientSize;
+        Height = layout.ClientSize;
 
         // 配置は親が接続され表示中の場合のみ行う（拡大中心が未設定か、親領域が表示サイズを収められない場合はコアが位置を返さない）
         if (parent is null || !IsVisible || layout.Position is not { } position)
@@ -315,10 +315,10 @@ public sealed class LoupeControl : Panel
             // 表示サイズとラベルの外観が変わるため、ラベル要素を配置し直す（サイズが同じでも必要）
             o.InvalidateArrange();
         });
-        DipToDeviceScalingProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
+        ClientToPixelScalingProperty.Changed.AddClassHandler<LoupeControl>(static (o, e) =>
         {
             // OldValue / NewValue は StyledProperty&lt;double&gt; により常に非 null（boxed double）
-            o._presenter.DipToDeviceScaling = e.GetNewValue<double>();
+            o._presenter.ClientToPixelScaling = e.GetNewValue<double>();
             o.RequestRender();
             // ラベルの配置の基準（表示サイズ）が物理ピクセル換算で変わるため、配置し直す
             o.InvalidateArrange();
@@ -351,9 +351,9 @@ public sealed class LoupeControl : Panel
     /// <remarks>
     /// 環境値（DPI）のため設定（<see cref="LoupeOptions"/>）には含めず、補正の規則はコアの <see cref="EsUtil.Feature.Loupe.Core.Loupe.Limits"/> が単一所有する。
     /// </remarks>
-    public static readonly StyledProperty<double> DipToDeviceScalingProperty =
+    public static readonly StyledProperty<double> ClientToPixelScalingProperty =
         AvaloniaProperty.Register<LoupeControl, double>(
-            nameof(DipToDeviceScaling), defaultValue: DipToDeviceScalingDefault, coerce: static (_, value) => CoerceDipToDeviceScaling(value));
+            nameof(ClientToPixelScaling), defaultValue: ClientToPixelScalingDefault, coerce: static (_, value) => CoerceClientToPixelScaling(value));
 
     /// <summary><see cref="Options"/> 依存関係プロパティ（表示サイズ・拡大率。 コアの <see cref="LoupeOptions"/> が単一所有）。</summary>
     /// <remarks>
@@ -427,10 +427,10 @@ public sealed class LoupeControl : Panel
     }
 
     /// <summary>表示DIPを物理ピクセルへ変換するスケーリング係数を取得または設定します。</summary>
-    public double DipToDeviceScaling
+    public double ClientToPixelScaling
     {
-        get => GetValue(DipToDeviceScalingProperty);
-        set => SetValue(DipToDeviceScalingProperty, value);
+        get => GetValue(ClientToPixelScalingProperty);
+        set => SetValue(ClientToPixelScalingProperty, value);
     }
 
     /// <summary>ログ用に Avalonia 座標をコア座標へ変換する。</summary>
@@ -598,7 +598,7 @@ public sealed class LoupeControl : Panel
             // 描画計画（描画層が解決した幾何・外観・層の順序）は現在のレイアウト（要求サイズ）から組み立てる
             // （値・単位・換算は描画層が単一所有する。 開始時に固定しない）
             var plan = _presenter.ResolveDrawPlan(
-                _presenter.ResolveLayout(ParentAreaSize).DisplaySize, MeasureText);
+                _presenter.ResolveLayout(ParentAreaSize).ClientSize, MeasureText);
 
             var bitmap = await LoupeRenderPipeline.RenderAsync(Source, plan);
 

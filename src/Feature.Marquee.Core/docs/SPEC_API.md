@@ -52,7 +52,7 @@
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `MarqueeGeometry` | record struct | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MouseDomainPosition` / `MouseDipPosition` ＋ `SurfaceDipRect`）。 **コアが責任を持つ値の全量** |
+| `MarqueeGeometry` | record struct | 1 フレーム分の幾何（`ClientSize` / `FocusDipRect` / `FocusDomainRect` / `Handles` / `Marker` / `MouseDomainPosition` / `MouseDipPosition` ＋ `ClientRect`）。 **コアが責任を持つ値の全量** |
 | `MarqueeRenderRequest` | record struct | 1 フレーム分の幾何を解決する入力（設定・状態と、描画時に決まる値）。 `Marquee.CreateRequest` が生成し、`Marquee.ResolveGeometry` へ渡す。 値の組は `MarqueeRenderRequest.Create` が 1 箇所に閉じる。 **`Create` を public にする理由**: ファサード（`Marquee.CreateRequest`）と独自 UI が入力を組み立てる唯一の入口である（描画先の領域を知るのは呼び出し側だけである） |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの幾何（位置と寸法はコアが解決済み。 **色と線の太さは描画層の外観が持つ**） |
 
@@ -165,7 +165,7 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| `ClientSize` / `SurfaceDipRect` | 描画領域のサイズ（DIP）と、原点（0, 0）からの描画面全体 |
+| `ClientSize` / `ClientRect` | 描画領域のサイズ（DIP）と、原点（0, 0）からの描画面全体 |
 | `FocusDipRect` | 注目矩形（DIP。 選択もハイライトも無い場合は null）。 終点の `+1` は選択した矩形の `Interval` が決める（ドラッグの選択 = 閉区間、ハイライト矩形 = 半開区間）。 暗転マスクを抜く領域である |
 | `FocusDomainRect` | 注目矩形（ドメイン座標。 選択した矩形をそのまま渡すため `Interval` も保持する）。 ホストが矩形ごとの表示スケールを解決するために使う |
 | `Handles` | ドラッグハンドルの幾何（`HandleDipRects` 8 方向・`BorderThickness`）。 選択が無い場合は null |

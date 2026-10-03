@@ -66,7 +66,7 @@ src/Feature.Loupe.MewUI.LoupeControl/
 
 | コンポーネント | 責務 |
 | --- | --- |
-| `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。 描画は提示層（`LoupePresenter.ResolveDrawPlan`）が解決した計画を `LoupeSkiaPainter` で `SKCanvas` へ写す（層の順序も描く値も計画が単一所有する）。 **描画のたびに描画面（物理ピクセル）と割り当て領域（DIP）の比を実効倍率として `DipToDeviceScaling` へ反映する**（DPI の変更通知は追加直後のコントロールへ届かないため、保持値だけに頼るとルーペ領域より小さい拡大画像を描く） |
+| `LoupeControl` | 入力プロパティ（`MewProperty`）の定義（補正と変更ログもここへ登録する）、DPI 変更の追従、子（図形キャンバス・ラベル要素）の計測と配置、ラベル要素（`Border` + `TextBlock`）の追加・更新。 描画は提示層（`LoupePresenter.ResolveDrawPlan`）が解決した計画を `LoupeSkiaPainter` で `SKCanvas` へ写す（層の順序も描く値も計画が単一所有する）。 **描画のたびに描画面（物理ピクセル）と割り当て領域（DIP）の比を実効倍率として `ClientToPixelScaling` へ反映する**（DPI の変更通知は追加直後のコントロールへ届かないため、保持値だけに頼るとルーペ領域より小さい拡大画像を描く） |
 | `LoupeSkiaPainter`（描画実装） | 描画計画（`LoupeDrawPlan`。 層の順序・矩形・拡大画像の切り出しと描画の矩形）を Skia の描画 API へ写す。 **描く層とその順序は計画が単一所有する**（`LoupeDrawLayer` を先頭から処理し、中心座標ラベルは処理しない）。 色は計画の外観（`LoupeAppearance`）を使う |
 | `LoupeRenderTarget`（テスト） | ウィンドウ不要の描画先。 `SKBitmap` と `SKCanvas` を保持し、画素を読み取る |
 
@@ -85,7 +85,7 @@ classDiagram
         +EsPoint? CenterPoint
         +LoupeOptions Options
         +LoupeAppearance Appearance
-        +double DipToDeviceScaling
+        +double ClientToPixelScaling
         +LoupeLayout ResolveLayout(parentSize)
         +SetCoordTransform(port) void
         +OnDpiChanged(oldDpi, newDpi) void
@@ -129,21 +129,21 @@ classDiagram
         <<Feature.Loupe.Core>>
         +CoerceRequestedSize(v) int$
         +CoerceZoomLevel(v) int$
-        +CoerceDipToDeviceScaling(v) double$
+        +CoerceClientToPixelScaling(v) double$
     }
     class LoupeDrawPlan {
         <<Feature.Loupe.Presenter>>
-        +EsRect SurfacePixelRect
+        +EsRect ClientPixelRect
                 +CrosshairPixelRects / BorderPixelRects
         +Layers
     }
     class LoupeGeometry {
         <<Feature.Loupe.Core>>
-        +EsRect SurfacePixelRect
+        +EsRect ClientPixelRect
         +int CaptureSize
         +EsPoint? CaptureTopLeft
         +LoupeMagnifiedImage? MagnifiedImage
-        +int PixelSize
+        +int ClientPixelSize
     }
     class LoupeLabelPlacement {
         <<Feature.Loupe.Presenter>>
@@ -155,7 +155,7 @@ classDiagram
     }
     class Loupe {
         <<Feature.Loupe.Core / 公開ファサード>>
-        +Options / DipToDeviceScaling / CenterPoint / PositionOffset
+        +Options / ClientToPixelScaling / CenterPoint / PositionOffset
         +SetCoordTransform(port) void
         +ResolveLayout(parentSize) LoupeLayout
         +ResolveGeometry(displaySize) LoupeGeometry
@@ -224,10 +224,10 @@ sequenceDiagram
    （従来は Avalonia が既定で十字線を描き MewUI は描かないという既定値のドリフトがあった）。
 5. **位置を持たない**。 表示位置は「親領域サイズ」「中心座標」「オフセット」に依存するホスト側の関心事であり、
    計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有する。 コントロールは入力と描画のみを担う。
-6. **DPI を自動追従させる**。 `OnDpiChanged` で `DipToDeviceScaling` を更新し、ホストが DPI を扱わずに済むようにした。
+6. **DPI を自動追従させる**。 `OnDpiChanged` で `ClientToPixelScaling` を更新し、ホストが DPI を扱わずに済むようにした。
 7. **`Options` はレイアウトにも影響する**。 `MeasureContent` が要求サイズを返すため、
 プロパティへ `MewPropertyOptions.AffectsLayout` を付与して再測定を促す（未付与では変更が反映されない）。
-描画サイズは `Options.RequestedSize` × `DipToDeviceScaling` を物理ピクセルへ換算する
+描画サイズは `Options.RequestedSize` × `ClientToPixelScaling` を物理ピクセルへ換算する
    （DIP → 物理ピクセルの換算はコアのファサード（`Loupe.ResolveGeometry`）が単一所有する。 本コントロールは表示サイズをキャンバスの大きさから導くため、
    キャンバスと描画サイズは常に一致し、領域に合わせた縮小は行わない）。
 8. **静的画像では連続再描画を無効化する**。 `ContinuousAnimation` を `false` にし、プロパティ変更時のみ再描画する。
@@ -235,7 +235,7 @@ sequenceDiagram
 10. **値の補正と変更ログはプロパティの登録が所有する**。 `MewProperty.Register` の `coerce` / `changed` へ渡すため、
    setter を経由しない設定（バインディング等）でも安全域が保たれ、変更が記録される
    （Avalonia 版の `coerce` コールバック + `Changed` クラスハンドラと同じ契約。 規則と書式はコアが単一所有する）。
-設定（`Options`）の数値項目はコアの型が、外観（`Appearance`）の数値項目は提示層の型が生成時に補正するため、コントロールは `coerce` を登録しない（環境値の `DipToDeviceScaling` のみ登録する）。
+設定（`Options`）の数値項目はコアの型が、外観（`Appearance`）の数値項目は提示層の型が生成時に補正するため、コントロールは `coerce` を登録しない（環境値の `ClientToPixelScaling` のみ登録する）。
 
 ## テスト方針
 
@@ -260,7 +260,7 @@ sequenceDiagram
 
 | レベル | 出力元 |
 | --- | --- |
-| Debug | `Source` / `CenterPoint` / `RequestedSize` / `DipToDeviceScaling` / `ZoomLevel` の変更（補正後の値を渡す。 変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は本プロジェクトの `LoupeUiLogMessage`、外観は提示層の `LoupePresenterLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は設定の前後を渡すだけ。 設定の変更は変化した項目だけを出力する） |
+| Debug | `Source` / `CenterPoint` / `RequestedSize` / `ClientToPixelScaling` / `ZoomLevel` の変更（補正後の値を渡す。 変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は本プロジェクトの `LoupeUiLogMessage`、外観は提示層の `LoupePresenterLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は設定の前後を渡すだけ。 設定の変更は変化した項目だけを出力する） |
 | Error | 描画処理の例外（アプリを落とさずログへ記録して描画を中止する） |
 
 Avalonia 版の Trace ログ（再描画パイプライン）は持ちません（MewUI 版は中間ビットマップを作らず同期描画するため）。  

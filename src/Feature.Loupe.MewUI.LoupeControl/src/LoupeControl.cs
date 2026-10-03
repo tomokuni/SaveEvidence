@@ -30,7 +30,7 @@ namespace EsUtil.Feature.Loupe.MewUI.LoupeControl;
 /// <br/>
 /// <b>入力</b>: <see cref="Source"/>（拡大元の 100% 画像）と <see cref="CenterPoint"/>（元画像ピクセル座標）。<br/>
 /// <b>設定</b>: <see cref="Options"/>（コアの <see cref="LoupeOptions"/> が単一所有する表示サイズ・拡大率）。<br/>
-/// <b>環境</b>: <see cref="DipToDeviceScaling"/>（DPI 追従）。<br/>
+/// <b>環境</b>: <see cref="ClientToPixelScaling"/>（DPI 追従）。<br/>
 /// <b>描画</b>: 中間ビットマップを生成せず、子の図形キャンバス（<see cref="ShapeCanvas"/>）が画面のキャンバスへ直接描画する（Avalonia 版との差）。<br/>
 /// 数値の安全域への補正は <see cref="LoupeOptions"/>（コア）が、描画サイズの決定は<br/>
 /// <see cref="LoupePresenter.ResolveDrawPlan"/>（描画層）が、寸法値（枠線の太さ）と<br/>
@@ -87,22 +87,22 @@ public sealed class LoupeControl : Panel
                 o.InvalidateArrange();
             });
 
-    /// <summary><see cref="DipToDeviceScaling"/> プロパティ（表示 DIP → 物理ピクセルのスケーリング係数）。</summary>
+    /// <summary><see cref="ClientToPixelScaling"/> プロパティ（表示 DIP → 物理ピクセルのスケーリング係数）。</summary>
     /// <remarks>
     /// 環境値（DPI）のため設定（<see cref="LoupeOptions"/>）には含めず、補正と変更ログは本プロパティへ登録する<br/>
     /// （setter を経由しない設定でも安全域が保たれ、変更が記録される）。
     /// </remarks>
-    public static readonly MewProperty<double> DipToDeviceScalingProperty =
+    public static readonly MewProperty<double> ClientToPixelScalingProperty =
         MewProperty<double>.Register<LoupeControl>(
-            nameof(DipToDeviceScaling), DipToDeviceScalingDefault, MewPropertyOptions.AffectsRender,
+            nameof(ClientToPixelScaling), ClientToPixelScalingDefault, MewPropertyOptions.AffectsRender,
             changed: static (o, oldValue, newValue) =>
             {
                 // 描画入力（物理ピクセル）の計算元はコア（ファサード）が単一所有する
-                o._presenter.DipToDeviceScaling = newValue;
+                o._presenter.ClientToPixelScaling = newValue;
                 // ラベルの配置の基準（表示サイズ）が物理ピクセル換算で変わるため、配置し直す
                 o.InvalidateArrange();
             },
-            coerce: static (_, value) => CoerceDipToDeviceScaling(value));
+            coerce: static (_, value) => CoerceClientToPixelScaling(value));
 
     /// <summary><see cref="Appearance"/> プロパティ（外観。 描画にだけ必要な設定）。</summary>
     /// <remarks>
@@ -182,10 +182,10 @@ public sealed class LoupeControl : Panel
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
     /// <value>スケーリング係数。 範囲外・非有限は 0.1〜8.0 または既定値へ補正される。</value>
-    public double DipToDeviceScaling
+    public double ClientToPixelScaling
     {
-        get => GetValue(DipToDeviceScalingProperty);
-        set => SetValue(DipToDeviceScalingProperty, value);
+        get => GetValue(ClientToPixelScalingProperty);
+        set => SetValue(ClientToPixelScalingProperty, value);
     }
 
     /// <summary>ルーペ中心からの右下オフセット（DIP）を取得または設定する。</summary>
@@ -382,7 +382,7 @@ public sealed class LoupeControl : Panel
     /// <param name="oldDpi">変更前の DPI。</param>
     /// <param name="newDpi">変更後の DPI。</param>
     /// <remarks>
-    /// モニター間の移動で DPI が変わっても物理ピクセル基準の見た目を保つため、<see cref="DipToDeviceScaling"/> を<br/>
+    /// モニター間の移動で DPI が変わっても物理ピクセル基準の見た目を保つため、<see cref="ClientToPixelScaling"/> を<br/>
     /// DPI から換算した値へ更新する（ホストが明示設定した値も DPI 変更時は上書きされる）。<br/>
     /// 換算規則は <see cref="DpiScaler.ToScaling"/>（コア）が単一所有する。<br/>
     /// ホストがスケーリングを明示する必要はない（DPI はコントロールが自動取得する）。
@@ -390,7 +390,7 @@ public sealed class LoupeControl : Panel
     protected override void OnDpiChanged(uint oldDpi, uint newDpi)
     {
         base.OnDpiChanged(oldDpi, newDpi);
-        DipToDeviceScaling = DpiScaler.ToScaling(newDpi);
+        ClientToPixelScaling = DpiScaler.ToScaling(newDpi);
     }
 
     /// <summary>描画先の表面サイズから描画に使う実効倍率を解決し、保持値へも反映する。</summary>
@@ -406,17 +406,17 @@ public sealed class LoupeControl : Panel
     /// </remarks>
     internal double ApplySurfaceScaling(SKImageInfo info)
     {
-        var resolved = SkiaSurfaceScale.Resolve(info.Width, Bounds.Size.Width, DipToDeviceScaling);
+        var resolved = ClientPixelScale.Resolve(info.Width, Bounds.Size.Width, ClientToPixelScaling);
 
-        if (resolved == DipToDeviceScaling)
+        if (resolved == ClientToPixelScaling)
         {
-            return DipToDeviceScaling;
+            return ClientToPixelScaling;
         }
 
-        DipToDeviceScaling = resolved;
+        ClientToPixelScaling = resolved;
 
         // 保持値の補正（範囲外は安全域へ）を通した値を返す（計算に使う値と保持値を一致させる）
-        return DipToDeviceScaling;
+        return ClientToPixelScaling;
     }
 
     /// <summary>ルーペを描画する。</summary>
@@ -454,6 +454,6 @@ public sealed class LoupeControl : Panel
         }
 
         Rendered?.Invoke(this, new LoupeRenderedEventArgs(
-            canvas, plan.PixelSize, plan.CaptureTopLeft, plan.ZoomLevel));
+            canvas, plan.ClientPixelSize, plan.CaptureTopLeft, plan.ZoomLevel));
     }
 }

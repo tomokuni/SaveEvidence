@@ -128,7 +128,7 @@ public class MarqueeGeometryResolutionTests
         var geometry = marquee.ResolveGeometry(marquee.CreateRequest(new EsSize(320, 240)));
 
         Assert.Equal(new EsSize(320, 240), geometry.ClientSize);
-        Assert.Equal(new EsRect(0, 0, 320, 240), geometry.SurfaceDipRect);
+        Assert.Equal(new EsRect(0, 0, 320, 240), geometry.ClientRect);
     }
 
     /// <summary>マウス位置がドメイン座標と DIP の両方で幾何へ引き継がれることを検証する。</summary>

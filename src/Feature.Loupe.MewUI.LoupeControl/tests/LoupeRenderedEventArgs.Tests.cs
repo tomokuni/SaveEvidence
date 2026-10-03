@@ -22,7 +22,7 @@ public class LoupeRenderedEventArgsTests
         var args = new LoupeRenderedEventArgs(canvas, 32, topLeft, 2.5);
 
         Assert.Same(canvas, args.Canvas);
-        Assert.Equal(32, args.PixelSize);
+        Assert.Equal(32, args.ClientPixelSize);
         Assert.Equal(topLeft, args.CaptureTopLeft);
         Assert.Equal(2.5, args.Scale);
     }

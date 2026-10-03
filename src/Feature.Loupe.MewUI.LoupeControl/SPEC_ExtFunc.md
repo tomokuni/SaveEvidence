@@ -22,7 +22,7 @@
 | `CenterPoint` | `EsPoint?` | `null` | — | 拡大中心（元画像ピクセル座標）。 null の場合は画像外の色のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 下表のとおり | 設定（基本サイズ・拡大率）。 `with` 式で部分変更する |
 | `Appearance` | `LoupeAppearance` | `LoupeAppearance.Default` | 下表のとおり | 外観（枠線の太さ・表示可否）と描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）・ラベルの体裁。 `with` 式で部分変更する。 外観はコアの計算に入らない |
-| `DipToDeviceScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。 設定には含めない）。 **描画のたびに描画面と割り当て領域の比へ合わせる**（DPI の変更通知が届かない状況でも拡大画像がルーペ領域と一致する） |
+| `ClientToPixelScaling` | `double` | 1.0 | 0.1〜8.0（非有限は既定値） | DIP → 物理ピクセルの係数（環境値。 設定には含めない）。 **描画のたびに描画面と割り当て領域の比へ合わせる**（DPI の変更通知が届かない状況でも拡大画像がルーペ領域と一致する） |
 
 `Options`（コアの `LoupeOptions`。 UI 非依存の値）の項目:
 
@@ -64,7 +64,7 @@
 
 | 項目 | 決定方法 |
 | --- | --- |
-| 表示サイズ（物理ピクセル） | `Options.RequestedSize`（DIP ） × `DipToDeviceScaling`。 キャンバスより大きい場合はキャンバスに合わせる。 **描画時の `DipToDeviceScaling` は描画面と割り当て領域の比である**ため、画像の大きさは常にルーペ領域（描画面）と一致する |
+| 表示サイズ（物理ピクセル） | `Options.RequestedSize`（DIP ） × `ClientToPixelScaling`。 キャンバスより大きい場合はキャンバスに合わせる。 **描画時の `ClientToPixelScaling` は描画面と割り当て領域の比である**ため、画像の大きさは常にルーペ領域（描画面）と一致する |
 | 拡大率 | `Options.ZoomLevel` 倍（最近傍で拡大する） |
 | 切り出し領域の一辺 | `ceil(表示サイズ / Options.ZoomLevel)` ドメインピクセル |
 | 切り出し領域の左上 | 拡大中心 − 切り出し一辺 / 2（整数化）。 画像の外へはみ出した部分（左・上・右・下）は透明パディングとなる |
@@ -82,7 +82,7 @@
 
 ## DPI
 
-モニター間の移動で DPI が変わると、`DipToDeviceScaling` は DPI から換算した値（DIP 基準 96 DPI ≠ 1.0）へ自動更新されます（換算規則は `DpiScaler.ToScaling` が単一所有します）。
+モニター間の移動で DPI が変わると、`ClientToPixelScaling` は DPI から換算した値（DIP 基準 96 DPI ≠ 1.0）へ自動更新されます（換算規則は `DpiScaler.ToScaling` が単一所有します）。
 
 **ただし DPI の変更通知は追加直後のコントロールへ届かない**ため（実測: ウィンドウ表示後に追加したコントロールは登録時の既定値 1.0 のままになる）、描画のたびに**描画面（物理ピクセル）と割り当て領域（DIP）の比**を実効倍率として使います。
 この値を保持値にも反映するため、画像の大きさは常にルーペ領域と一致します（125% の環境で 1/1.25 の画像を描く不具合を防ぐ）。
@@ -107,7 +107,7 @@
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `Canvas` | `SKCanvas` | ルーペを描画したキャンバス（座標系はルーペ画像のピクセル） |
-| `PixelSize` | `int` | 実際に描画したルーペの一辺のサイズ（物理ピクセル。 `Options.RequestedSize` × `DipToDeviceScaling` を切り上げ・最低 1） |
+| `ClientPixelSize` | `int` | 実際に描画したルーペの一辺のサイズ（物理ピクセル。 `Options.RequestedSize` × `ClientToPixelScaling` を切り上げ・最低 1） |
 | `CaptureTopLeft` | `EsPoint?` | 切り出し領域の左上（ドメイン座標）。 中心未設定時は null（オーバーレイを描画できない） |
 | `Scale` | `double` | ドメイン座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。 DPI スケーリングの影響を受けない） |
 
@@ -117,7 +117,7 @@
 
 ## ログ
 
-`Log` プロパティへ `ILogger` を設定すると、描画の例外と `Source` の変更を出力します（未設定・null の場合は `NullLogger` になり出力しません）。 設定（`Options`）・環境値（`DipToDeviceScaling`）・拡大中心（`CenterPoint`）の変更ログはコアが出力するため、本コントロールは同じロガーをコアへも渡します。
+`Log` プロパティへ `ILogger` を設定すると、描画の例外と `Source` の変更を出力します（未設定・null の場合は `NullLogger` になり出力しません）。 設定（`Options`）・環境値（`ClientToPixelScaling`）・拡大中心（`CenterPoint`）の変更ログはコアが出力するため、本コントロールは同じロガーをコアへも渡します。
 
 | レベル | 出力内容 |
 | --- | --- |

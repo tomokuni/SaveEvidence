@@ -123,12 +123,12 @@ flowchart TB
         CLog["LoupeLogMessage<br/>internal static partial class"]
     end
 
-    AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>Options / Appearance / DipToDeviceScaling /<br/>RequestRender / Clear / SetCoordTransform / PositionOffset"| Ctl
+    AP -->|"IsVisible / Source(IImage) / CenterPoint /<br/>Options / Appearance / ClientToPixelScaling /<br/>RequestRender / Clear / SetCoordTransform / PositionOffset"| Ctl
     Ctl -->|"RequestRender / CancelAndRelease / ShouldApply"| Coh
     Ctl -->|"RenderAsync(source, plan)"| Pip
     Ctl -->|"ResolveDrawPlan（実寸測定関数を渡す）/ Appearance"| Pnt
     Ctl -->|"EsPoint / EsSize（境界の 1 行変換）"| Pos
-    Ctl -->|"Coerce（DipToDeviceScaling）"| Coerce
+    Ctl -->|"Coerce（ClientToPixelScaling）"| Coerce
     Ctl -->|"LogUpdateError（描画の例外）"| ULog
     Ctl -->|"LogRenderCore（本 UI 固有）"| RLog
     Ctl -->|"Rendered（描画済み Bitmap / 切り出し左上 / スケール）"| Evt
@@ -152,7 +152,7 @@ flowchart TB
 
 - **分類**: 公開コントロール（`public sealed class LoupeControl : Panel`。 AXAML を持たずコードのみで子要素を構成する）
 - **責務**:
-  - 状態管理: 5 個の StyledProperty（`Source: IImage?` / `CenterPoint` / 設定 `Options` / 外観 `Appearance` / 環境値 `DipToDeviceScaling`）
+  - 状態管理: 5 個の StyledProperty（`Source: IImage?` / `CenterPoint` / 設定 `Options` / 外観 `Appearance` / 環境値 `ClientToPixelScaling`）
   - 座標ラベル: **コントロールがテキスト要素（`Border` + `TextBlock`）として表示する**。 文言・基準点は提示層（`Feature.Loupe.Presenter` の `LoupePresenter`（`LabelTexts` partial））が、表示可否と体裁（フォントサイズ・色・角丸）は外観（`LoupeAppearance`）が、実寸 → 配置矩形の写像は同層の `LoupePresenter`（`LabelPlan` partial） が単一所有する。 コントロールは配置フェーズ（`ArrangeOverride`）で要素を追加・更新する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
     - **実寸測定は UI が行う理由**: テキストの実寸は描画 API（`FormattedText`）でしか測れないため、UI が測って `LoupePresenter`（`LabelPlan` partial）（描画層 `Feature.Loupe.Presenter`）へ渡し、返された配置を要素へ反映する
     - ライフサイクル: 世代管理付き非同期ビットマップ生成と解放（`ReleaseBitmap`）
@@ -161,8 +161,8 @@ flowchart TB
     - 非同期生成: 切り出しと合成（`RenderTargetBitmap` / `DrawingContext`）は UI スレッドで行い（バックグラウンド抽出（`Task.Run`）は使わない。 連続再描画時にスレッドプールが競合し、移動中の追従が止まるため）、古い世代の結果は採用せず破棄する
     - 表示サイズ・位置: `UpdatePosition` がコアのファサード `Loupe.ResolveLayout` を呼び、返された `LoupeLayout`（表示サイズと表示位置）を要素（`Width` / `Height`）と `RenderTransform` へ写すだけである（表示サイズの決定・オフセット加算・親領域内への位置の補正はコアが単一所有し、`UpdatePosition` は表示サイズの唯一の反映元になる）
     - 座標単位: `Options.RequestedSize` は DIP、描画計画へ渡す表示サイズと枠線の太さも DIP（物理ピクセルへの換算は提示層が `DpiScaler.ScaleToPixel` へ委譲する）
-  - 値の補正: コアの設定値（`LoupeOptions`）は型の生成時に補正される（UI は関与しない）。 環境値の `DipToDeviceScaling` のみ `coerce` コールバックで矯正する
-- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する基本サイズ・拡大率。 UI は設定値を保持しない）/ 外観（`Appearance`（`LoupeAppearance`。 `System.Drawing.Color` で受け取り描画時にブラシへ変換する）））/ 環境（`DipToDeviceScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。 ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordTransform` / `PositionOffset` / `RefreshPosition`）
+  - 値の補正: コアの設定値（`LoupeOptions`）は型の生成時に補正される（UI は関与しない）。 環境値の `ClientToPixelScaling` のみ `coerce` コールバックで矯正する
+- **公開API**: 入力（`Source: IImage?` / `CenterPoint`）/ 設定（`Options`（コアの `LoupeOptions` が単一所有する基本サイズ・拡大率。 UI は設定値を保持しない）/ 外観（`Appearance`（`LoupeAppearance`。 `System.Drawing.Color` で受け取り描画時にブラシへ変換する）））/ 環境（`ClientToPixelScaling`）/ ログ（`Log`）/ イベント（`Rendered`・`LoupeRenderedEventArgs` で描画済み Bitmap・切り出し左上・スケールを通知。 ホストが Bitmap へオーバーレイ（線分・選択枠等）を直接描画できる）/ 操作（`Clear` / `RequestRender` / `SetCoordTransform` / `PositionOffset` / `RefreshPosition`）
 - **依存**: LoupePresenter（描画計画と配置の写像）/ LoupeAppearance（`Feature.Loupe.Presenter`） / LoupeUiLogMessage（本プロジェクト） / LoupeContextPainter / LoupeRenderCoordinator / LoupeRenderPipeline / LoupeSourceResolver（本プロジェクト） / LoupeOptions / Loupe（`Feature.Loupe.Core`） / DrawingContext（App.Platform.AvaloniaUI） / Avalonia / ILogger
 
 ### 6.2 LoupeContextPainter（描画実装）
@@ -268,10 +268,10 @@ sequenceDiagram
 | プロパティ | 範囲 | 補正の場所 |
 | --- | --- | --- |
 | `Options`（`RequestedSize` / `ZoomLevel`） | 1〜4096 / 1〜64 | **コアの `LoupeOptions`（`init` アクセサ）** |
-| `DipToDeviceScaling` | 0.1〜8.0（非有限値は 1.0） | `coerce` コールバック（プロパティのメタデータ） |
+| `ClientToPixelScaling` | 0.1〜8.0（非有限値は 1.0） | `coerce` コールバック（プロパティのメタデータ） |
 | `Appearance.BorderThickness` | 1〜64 | **提示層の `LoupeAppearance`（`init` アクセサ）** |
 | `Appearance.CoordLabelFontSize` / `Appearance.CoordLabelCornerRadius` | 6〜48 / 0〜64 | **提示層の `LoupeAppearance`（`init` アクセサ）** |
 
-環境値の `DipToDeviceScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `Loupe.Limits` が単一所有し、UI は登録するだけです）。 MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
+環境値の `ClientToPixelScaling` は `coerce` コールバックへ登録するため、バインディングなど setter を経由しない設定にも適用されます（規則はコアの `Loupe.Limits` が単一所有し、UI は登録するだけです）。 MewUI 版も `MewProperty.Register` の coerce コールバックで同じ契約を満たします。
 
 設定（`Options`）の数値項目は**コアの型が生成時に補正**し、外観（`Appearance`）の数値項目は**提示層の型が生成時に補正**するため、UI 側に補正の登録を置きません（値の設定経路（オブジェクト初期化子・`with` 式・逆シリアル化・バインディング）によらず範囲内の値だけが保持されます）。

@@ -44,7 +44,7 @@ public static class LoupeContextPainter
             {
                 case LoupeDrawLayer.Pasteboard:
                     context.DrawRectangle(
-                        SolidColorBrushCache.GetOrCreate(appearance.PasteboardColor), null, plan.SurfacePixelRect.ToAvaloniaRect());
+                        SolidColorBrushCache.GetOrCreate(appearance.PasteboardColor), null, plan.ClientPixelRect.ToAvaloniaRect());
                     break;
 
                 case LoupeDrawLayer.Image:

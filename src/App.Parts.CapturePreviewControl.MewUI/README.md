@@ -144,7 +144,7 @@ session.AppearanceSettings = changed;
 | `ShowFullOverlay` | 全面暗転の有無（モードから導出） |
 | `LoupeCenterPoint` | ルーペ中心（ドメイン座標） |
 | `OperationTextProvider` / `InfoTextProvider` / `SizeLabelOverrideProvider` | 操作ラベル（2 行目）・情報ラベル（3 行目）・サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
-| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` | DPI スケーリング（設定には含めない環境値） |
+| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | DPI スケーリング（設定には含めない環境値） |
 | `Log` | 操作ログの出力先（内包する選択コントロールとルーペへ伝搬する） |
 
 | メソッド | 説明 |

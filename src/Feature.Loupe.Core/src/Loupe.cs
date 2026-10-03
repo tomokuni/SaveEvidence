@@ -45,7 +45,7 @@ public sealed partial class Loupe
     private LoupeOptions _options = LoupeOptions.Default;
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数（既定は 1.0）。</summary>
-    private double _dipToDeviceScaling = DipToDeviceScalingDefault;
+    private double _dipToDeviceScaling = ClientToPixelScalingDefault;
 
     /// <summary>拡大表示する中心座標（ドメイン座標。 未設定は null）。</summary>
     private EsPoint? _centerPoint;
@@ -126,14 +126,14 @@ public sealed partial class Loupe
     /// どの設定経路（初期化・UI の依存関係プロパティ・直接代入）でも範囲内の値だけが保持される。<br/>
     /// 変更は本コアが検出して出力する（UI 層に同値判定を置かない）。
     /// </remarks>
-    public double DipToDeviceScaling
+    public double ClientToPixelScaling
     {
         get => _dipToDeviceScaling;
         set
         {
-            if (SetIfChanged(ref _dipToDeviceScaling, CoerceDipToDeviceScaling(value), out var previous))
+            if (SetIfChanged(ref _dipToDeviceScaling, CoerceClientToPixelScaling(value), out var previous))
             {
-                Log.LogSettingChanged(nameof(DipToDeviceScaling), previous, _dipToDeviceScaling);
+                Log.LogSettingChanged(nameof(ClientToPixelScaling), previous, _dipToDeviceScaling);
             }
         }
     }

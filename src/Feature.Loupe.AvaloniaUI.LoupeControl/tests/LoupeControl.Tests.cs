@@ -367,21 +367,21 @@ public class LoupeControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void DipToDeviceScaling_範囲外は補正される()
+    public void ClientToPixelScaling_範囲外は補正される()
     {
         var control = CreateControl();
 
-        control.DipToDeviceScaling = 0.0;
-        Assert.Equal(0.1, control.DipToDeviceScaling);
+        control.ClientToPixelScaling = 0.0;
+        Assert.Equal(0.1, control.ClientToPixelScaling);
 
-        control.DipToDeviceScaling = 10.0;
-        Assert.Equal(8.0, control.DipToDeviceScaling);
+        control.ClientToPixelScaling = 10.0;
+        Assert.Equal(8.0, control.ClientToPixelScaling);
 
-        control.DipToDeviceScaling = double.NaN;
-        Assert.Equal(1.0, control.DipToDeviceScaling);
+        control.ClientToPixelScaling = double.NaN;
+        Assert.Equal(1.0, control.ClientToPixelScaling);
 
-        control.DipToDeviceScaling = double.PositiveInfinity;
-        Assert.Equal(1.0, control.DipToDeviceScaling);
+        control.ClientToPixelScaling = double.PositiveInfinity;
+        Assert.Equal(1.0, control.ClientToPixelScaling);
     }
 
     [AvaloniaFact]
@@ -398,12 +398,12 @@ public class LoupeControlTests
             ZoomLevel = 1000,
         });
         control.SetValue(LoupeControl.AppearanceProperty, LoupeAppearance.Default with { BorderThickness = 1000 });
-        control.SetValue(LoupeControl.DipToDeviceScalingProperty, 100.0);
+        control.SetValue(LoupeControl.ClientToPixelScalingProperty, 100.0);
 
         // 環境値（DPI）の補正はプロパティのメタデータ（coerce）へ登録する
         Assert.Equal(RequestedSizeMax, control.Options.RequestedSize);
         Assert.Equal(ZoomLevelMax, control.Options.ZoomLevel);
-        Assert.Equal(DipToDeviceScalingMax, control.DipToDeviceScaling);
+        Assert.Equal(ClientToPixelScalingMax, control.ClientToPixelScaling);
         Assert.Equal(BorderThicknessMax, control.Appearance.BorderThickness);
     }
 
@@ -434,7 +434,7 @@ public class LoupeControlTests
 
         Assert.Equal(160, control.Options.RequestedSize);
         Assert.Equal(4, control.Options.ZoomLevel);
-        Assert.Equal(1.0, control.DipToDeviceScaling);
+        Assert.Equal(1.0, control.ClientToPixelScaling);
 
         // 寸法の既定値はコア（LoupeOptions）が単一所有する（両 UI で同一）
         Assert.Equal(2, control.Appearance.BorderThickness);
@@ -789,7 +789,7 @@ public class LoupeControlTests
         control.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(200, 200, Colors.Blue);
         control.CenterPoint = new Point(50, 50);
         control.Options = control.Options with { RequestedSize = 120 };
-        control.DipToDeviceScaling = 1.5;
+        control.ClientToPixelScaling = 1.5;
         control.Options = control.Options with { ZoomLevel = 8 };
 
         Assert.NotNull(control.Source);
@@ -837,7 +837,7 @@ public class LoupeControlTests
         control.CenterPoint = new Point(100, 100);
         await control.WaitForRenderedAsync();
 
-        // RequestedSize=100 / ZoomLevel=2 / DipToDeviceScaling=1.0 の場合:
+        // RequestedSize=100 / ZoomLevel=2 / ClientToPixelScaling=1.0 の場合:
         // pixelSize = ceil(100×1.0) = 100, captureSize = ceil(100/2) = 50
         // CaptureTopLeft = (100−25, 100−25) = (75, 75), Scale = ZoomLevel = 2.0
         Assert.NotNull(args);
@@ -855,7 +855,7 @@ public class LoupeControlTests
         // 描画は切り出し領域を ZoomLevel 倍で描くため、Scale は常に ZoomLevel と同値になる
         // （DIP 表示サイズを物理ピクセルで割った値ではない）。
         var control = CreateControl();
-        control.DipToDeviceScaling = 1.5;
+        control.ClientToPixelScaling = 1.5;
         LoupeRenderedEventArgs? args = null;
         control.Rendered += (_, e) => args = e;
 
@@ -864,7 +864,7 @@ public class LoupeControlTests
         await control.WaitForRenderedAsync();
 
         Assert.NotNull(args);
-        // RequestedSize=100 / ZoomLevel=2 / DipToDeviceScaling=1.5 → pixelSize=150, captureSize=75
+        // RequestedSize=100 / ZoomLevel=2 / ClientToPixelScaling=1.5 → pixelSize=150, captureSize=75
         Assert.Equal(150, args!.Bitmap!.Size.Width);
         Assert.Equal(2.0, args.Scale);
     }

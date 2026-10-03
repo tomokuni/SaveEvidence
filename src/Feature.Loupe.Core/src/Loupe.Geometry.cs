@@ -51,25 +51,25 @@ public sealed partial class Loupe
     // ====================================================================
 
     /// <summary>現在の状態から描画 1 フレーム分の幾何を解決する。</summary>
-    /// <param name="displaySize">ルーペの一辺の表示サイズ（DIP）。 通常は <see cref="ResolveLayout"/> が返した値を渡す。</param>
+    /// <param name="clientSize">ルーペの一辺の表示サイズ（DIP）。 通常は <see cref="ResolveLayout"/> が返した値を渡す。</param>
     /// <returns>描画の幾何（描画面・拡大画像の切り出しと描画の矩形・切り出し領域の一辺を解決済み）。</returns>
     /// <remarks>
     /// <b><see cref="ResolveLayout"/> との役割の違い</b>: <see cref="ResolveLayout"/> は「どこへ・どの大きさで置くか」を<br/>
     /// 親領域 DIP の世界で決め、本メソッドは「何を・何ピクセルで描くか」を物理ピクセルの世界で決める。<br/>
     /// 表示サイズは呼び出し側が決めて渡す（本コアは表示サイズを縮小しないため、通常は要求サイズと同じ値になる）。<br/>
-    /// 描画先の表面の大きさは本メソッドの関知しないところであり、本値が返す <see cref="LoupeGeometry.PixelSize"/> と<br/>
+    /// 描画先の表面の大きさは本メソッドの関知しないところであり、本値が返す <see cref="LoupeGeometry.ClientPixelSize"/> と<br/>
     /// 同じ大きさの表面を用意するのは呼び出し側の責務である（本コアは描画先を知らないため判定しない）。<br/>
     /// <b>本メソッドがコアの公開する描画の唯一の入口である</b>: 装飾（十字線・枠線）・文言・表示可否・描画順は<br/>
     /// 描画の都合として描画層（本コアを参照する上位の層）が解決するため、コアは幾何だけを返す。<br/>
     /// DIP → 物理ピクセルの換算は本メソッドが単一所有する。
     /// </remarks>
-    public LoupeGeometry ResolveGeometry(double displaySize)
+    public LoupeGeometry ResolveGeometry(double clientSize)
     {
         var zoomLevel = Options.ZoomLevel;
-        var pixelSize = DpiScaler.ScaleToPixel(displaySize, DipToDeviceScaling);
+        var pixelSize = DpiScaler.ScaleToPixel(clientSize, ClientToPixelScaling);
 
         return new LoupeGeometry(
-            CenterPoint, displaySize, pixelSize, DipToDeviceScaling, zoomLevel);
+            CenterPoint, clientSize, pixelSize, ClientToPixelScaling, zoomLevel);
     }
 
     // ====================================================================
@@ -77,7 +77,7 @@ public sealed partial class Loupe
     // ====================================================================
 
     /// <summary>ルーペの表示位置（左上）を計算する（オフセット加算・親領域内への補正）。</summary>
-    /// <param name="displaySize">ルーペの表示サイズ（DIP・一辺。 要求サイズの値）。</param>
+    /// <param name="clientSize">ルーペの表示サイズ（DIP・一辺。 要求サイズの値）。</param>
     /// <param name="parentSize">親領域のサイズ（DIP）。</param>
     /// <param name="centerDip">ルーペ中心（変換後の親領域 DIP 座標）。</param>
     /// <param name="offset">表示オフセット（カーソル右下方向）。</param>
@@ -90,7 +90,7 @@ public sealed partial class Loupe
     /// 表示サイズは縮小しないため、親領域が収められない場合は 0（左上寄せ）になる<br/>
     /// （そのような領域へ描画しない判断は <see cref="ResolveLayout"/> が行う）。
     /// </remarks>
-    private static EsPoint ComputePosition(double displaySize, EsSize parentSize, EsPoint centerDip, double offset)
+    private static EsPoint ComputePosition(double clientSize, EsSize parentSize, EsPoint centerDip, double offset)
     {
         double mx = centerDip.X + offset;
         double my = centerDip.Y + offset;
@@ -100,8 +100,8 @@ public sealed partial class Loupe
         }
 
         return new EsPoint(
-            parentSize.ClampOffset(mx, displaySize, EsAxis.X),
-            parentSize.ClampOffset(my, displaySize, EsAxis.Y));
+            parentSize.ClampOffset(mx, clientSize, EsAxis.X),
+            parentSize.ClampOffset(my, clientSize, EsAxis.Y));
     }
 
     /// <summary>領域が一辺 <paramref name="size"/> の正方形を収められるかを判定する。</summary>

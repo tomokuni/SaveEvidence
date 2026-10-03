@@ -76,7 +76,7 @@ internal static class LoupeRenderPipeline
     /// </remarks>
     private static EsBitmap Rasterize(EsBitmap? source, in LoupeDrawPlan plan)
     {
-        var bitmap = new RenderTargetBitmap(new PixelSize(plan.PixelSize, plan.PixelSize), s_dpi);
+        var bitmap = new RenderTargetBitmap(new PixelSize(plan.ClientPixelSize, plan.ClientPixelSize), s_dpi);
 
         using (var context = bitmap.CreateDrawingContext())
         {

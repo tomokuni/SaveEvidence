@@ -14,7 +14,7 @@
 | --- | --- |
 | 基底クラス | `Aprillz.MewUI.Controls.Panel`（子の `SkiaCanvasView` が Skia で直接描画する） |
 | 中間バッファ | **生成しない**。 画面のキャンバスへ直接描画する（Avalonia 版は `RenderTargetBitmap` を経由する） |
-| 描画サイズ | `Options.RequestedSize` × `DipToDeviceScaling`（物理ピクセル）。 表示サイズはキャンバスの大きさから導くため常に一致する（領域に合わせた縮小はしない） |
+| 描画サイズ | `Options.RequestedSize` × `ClientToPixelScaling`（物理ピクセル）。 表示サイズはキャンバスの大きさから導くため常に一致する（領域に合わせた縮小はしない） |
 | 拡大方式 | 最近傍（画素をそのまま拡大表示する） |
 | DPI 追従 | `OnDpiChanged` で表示スケーリング係数を DPI から換算した値へ自動更新する（換算規則は `DpiScaler.ToScaling` が単一所有。 ホストの設定は不要） |
 | 連続再描画 | **無効**。 プロパティ変更時にのみ再描画する（静止画のため） |
@@ -65,7 +65,7 @@ var loupe = new LoupeControl
 var layout = loupe.ResolveLayout(parentSize);
 if (layout.Position is { } position)
 {
-    loupe.Arrange(new Rect(x + position.X, y + position.Y, layout.DisplaySize, layout.DisplaySize));
+    loupe.Arrange(new Rect(x + position.X, y + position.Y, layout.ClientSize, layout.ClientSize));
 }
 ```
 
@@ -79,7 +79,7 @@ if (layout.Position is { } position)
 | `CenterPoint` | `EsPoint?` | `null` | 拡大中心（元画像ピクセル座標）。 null の場合は画像外の色のみ |
 | `Options` | `LoupeOptions` | `LoupeOptions.Default` | 設定（基本サイズ・拡大率）。 `with` 式で部分変更する。 数値項目はコアの型が生成時に安全域へ補正する |
 | `Appearance` | `LoupeAppearance` | `LoupeAppearance.Default` | 外観（枠線の太さ・表示可否（十字線・枠線・ラベル））と描画に使う色（ペーストボード（画像外）・枠線・十字線・中心座標ラベルの 6 色）・ラベルの体裁。 `with` 式で部分変更する。 外観はコアの計算に入らない |
-| `DipToDeviceScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。 0.1〜8.0 に補正（非有限は既定値）。 **描画のたびに描画面（物理ピクセル）と割り当て領域（DIP）の比へ合わせる**（DPI の変更通知は追加直後のコントロールへ届かないため、保持値だけに頼るとルーペ領域より小さい画像を描く） |
+| `ClientToPixelScaling` | `double` | 1.0 | DIP → 物理ピクセルの係数。 0.1〜8.0 に補正（非有限は既定値）。 **描画のたびに描画面（物理ピクセル）と割り当て領域（DIP）の比へ合わせる**（DPI の変更通知は追加直後のコントロールへ届かないため、保持値だけに頼るとルーペ領域より小さい画像を描く） |
 | `Log` | `ILogger` | `NullLogger` | 設定変更ログと描画例外の出力先（null は `NullLogger`。 Avalonia 版と同一の書式） |
 
 `Options`（コアの `LoupeOptions`）の項目:
@@ -105,7 +105,7 @@ if (layout.Position is { } position)
 
 `Options.RequestedSize` はレイアウトにも影響します（`MeasureContent` が一辺 `RequestedSize` の正方形を返します）。
 
-数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。 したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、設定値の変更ログはコアの `LoupeLogMessage` が、外観の変更ログは提示層の `LoupePresenterLogMessage` が、拡大元画像の変更と描画の例外のログは**本プロジェクトの `LoupeUiLogMessage`** が単一所有します）。 設定（`Options`）と外観（`Appearance`）の数値項目はそれぞれの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `DipToDeviceScaling` のみ `coerce` を登録します）。
+数値の安全域への補正と変更ログはプロパティの登録（`MewProperty.Register` の `coerce` / `changed`）へ渡します。 したがってバインディングなど setter を経由しない設定でも安全域が保たれ、変更が記録されます（補正の規則はコアの `Loupe.Limits`、設定値の変更ログはコアの `LoupeLogMessage` が、外観の変更ログは提示層の `LoupePresenterLogMessage` が、拡大元画像の変更と描画の例外のログは**本プロジェクトの `LoupeUiLogMessage`** が単一所有します）。 設定（`Options`）と外観（`Appearance`）の数値項目はそれぞれの型が生成時に補正するため、本コントロールは補正を登録しません（環境値の `ClientToPixelScaling` のみ `coerce` を登録します）。
 
 ## イベント
 
@@ -121,7 +121,7 @@ if (layout.Position is { } position)
 
 | レベル | 出力例 |
 | --- | --- |
-| Debug | `[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8`（コアの設定。 Source は `[Feature.Loupe.MewUI.LoupeControl] Setting: Source ...`、外観は `[Feature.Loupe.Presenter] Setting: ...`）/ `CenterPoint` / `RequestedSize` / `DipToDeviceScaling` / `ZoomLevel`。 変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は本プロジェクトの `LoupeUiLogMessage`、外観は提示層の `LoupePresenterLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は同値判定を持たない。 設定の変更は変化した項目だけを出力する） |
+| Debug | `[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8`（コアの設定。 Source は `[Feature.Loupe.MewUI.LoupeControl] Setting: Source ...`、外観は `[Feature.Loupe.Presenter] Setting: ...`）/ `CenterPoint` / `RequestedSize` / `ClientToPixelScaling` / `ZoomLevel`。 変化判定（同一値・同一インスタンスなら出力しない）は出力する主体のログ定義（Source は本プロジェクトの `LoupeUiLogMessage`、外観は提示層の `LoupePresenterLogMessage`、他はコアの `LoupeLogMessage`）が単一所有し、UI 層は同値判定を持たない。 設定の変更は変化した項目だけを出力する） |
 | Error | `[Feature.Loupe.Presenter] Update exception`（描画の例外。 アプリは継続する） |
 
 Avalonia 版の Trace ログ（再描画パイプライン）は持ちません（MewUI 版は中間ビットマップを作らず同期描画するため）。

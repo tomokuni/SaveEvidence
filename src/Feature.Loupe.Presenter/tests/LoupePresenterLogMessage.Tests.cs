@@ -121,8 +121,8 @@ public class LoupePresenterLogMessageTests
     {
         var logger = new RecordingLogger();
 
-        logger.LogSettingChanged("DipToDeviceScaling", 1.0, 1.25);
+        logger.LogSettingChanged("ClientToPixelScaling", 1.0, 1.25);
 
-        Assert.Equal("[Feature.Loupe.Presenter] Setting: DipToDeviceScaling 1 → 1.25", Assert.Single(logger.Messages));
+        Assert.Equal("[Feature.Loupe.Presenter] Setting: ClientToPixelScaling 1 → 1.25", Assert.Single(logger.Messages));
     }
 }

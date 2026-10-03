@@ -42,9 +42,9 @@ public sealed class ZoomViewControl : SkiaCanvasView
             nameof(CenterAlign), true, MewPropertyOptions.AffectsRender,
             changed: static (owner, _, _) => owner.OnCenterAlignChanged());
 
-    /// <summary><see cref="DipToDeviceScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
-    public static readonly MewProperty<double> DipToDeviceScalingProperty =
-        MewProperty<double>.Register<ZoomViewControl>(nameof(DipToDeviceScaling), 1.0, MewPropertyOptions.AffectsRender);
+    /// <summary><see cref="ClientToPixelScaling"/> プロパティ（DIP → 物理ピクセルのスケーリング係数）。</summary>
+    public static readonly MewProperty<double> ClientToPixelScalingProperty =
+        MewProperty<double>.Register<ZoomViewControl>(nameof(ClientToPixelScaling), 1.0, MewPropertyOptions.AffectsRender);
 
     /// <summary>ズームの状態・判断・計算を単一所有するセッション。</summary>
     private readonly ZoomViewSession _session;
@@ -108,10 +108,10 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>表示 DIP を物理ピクセルへ変換するスケーリング係数を取得または設定する。</summary>
     /// <value>スケーリング係数。 DPI 変更時に自動更新される。</value>
-    public double DipToDeviceScaling
+    public double ClientToPixelScaling
     {
-        get => GetValue(DipToDeviceScalingProperty);
-        set => SetValue(DipToDeviceScalingProperty, value);
+        get => GetValue(ClientToPixelScalingProperty);
+        set => SetValue(ClientToPixelScalingProperty, value);
     }
 
     /// <summary>ズームビューの外観（下地・市松模様・スクロールバー）を取得または設定する。</summary>
@@ -209,7 +209,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     protected override void OnDpiChanged(uint oldDpi, uint newDpi)
     {
         base.OnDpiChanged(oldDpi, newDpi);
-        DipToDeviceScaling = DpiScaler.ToScaling(newDpi);
+        ClientToPixelScaling = DpiScaler.ToScaling(newDpi);
     }
 
     /// <summary>ビューポートのサイズ変更をセッションへ通知する。</summary>
@@ -391,7 +391,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
         // スケーリングは描画面（物理ピクセル）と割り当て領域（DIP）の比から求める
         // （DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いてしまう）
-        var scaling = SkiaSurfaceScale.Resolve(info.Width, Bounds.Size.Width, DipToDeviceScaling);
+        var scaling = ClientPixelScale.Resolve(info.Width, Bounds.Size.Width, ClientToPixelScaling);
 
         // レイアウト前は Bounds が 0 のため、キャンバスサイズからビューポートを求める
         var viewport = CurrentViewport();

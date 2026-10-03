@@ -27,12 +27,12 @@ public class LoupeGeometryTests
     [InlineData(0.4, 1.0, 1)]
     public void ResolveGeometry_表示サイズを物理ピクセルへ換算する(
         double displaySize, double dipToDeviceScaling, int expectedPixelSize)
-        => Assert.Equal(expectedPixelSize, Resolve(displaySize, dipToDeviceScaling).PixelSize);
+        => Assert.Equal(expectedPixelSize, Resolve(displaySize, dipToDeviceScaling).ClientPixelSize);
 
     /// <summary>描画先の大きさに関わらず表示サイズを縮小しないことを検証する。</summary>
     [Fact]
     public void ResolveGeometry_描画先の大きさで縮小しない()
-        => Assert.Equal(640, Resolve(640, 1.0).PixelSize);
+        => Assert.Equal(640, Resolve(640, 1.0).ClientPixelSize);
 
     /// <summary>換算結果の下限が 1 になることを検証する。</summary>
     /// <param name="size">表示サイズ（DIP）。</param>
@@ -40,7 +40,7 @@ public class LoupeGeometryTests
     [InlineData(0)]
     [InlineData(-10)]
     public void ResolveGeometry_最低1になる(double size)
-        => Assert.Equal(1, Resolve(size, 1.0).PixelSize);
+        => Assert.Equal(1, Resolve(size, 1.0).ClientPixelSize);
 
     /// <summary>表示サイズとスケーリングから物理ピクセルを求めることを検証する。</summary>
     /// <param name="size">表示サイズ（DIP）。</param>
@@ -52,17 +52,17 @@ public class LoupeGeometryTests
     [InlineData(33, 1.1, 37)]
     [InlineData(160.4, 1.0, 161)]
     public void ResolveGeometry_表示サイズとスケーリングから物理ピクセルを求める(double size, double scaling, int expected)
-        => Assert.Equal(expected, Resolve(size, scaling).PixelSize);
+        => Assert.Equal(expected, Resolve(size, scaling).ClientPixelSize);
 
     /// <summary>描画先の全領域が原点 0 の正方形になることを検証する。</summary>
     [Fact]
-    public void SurfacePixelRect_物理ピクセルサイズの正方形を原点0で返す()
+    public void ClientPixelRect_物理ピクセルサイズの正方形を原点0で返す()
     {
         var geometry = Resolve(100, 1.25);
 
         // 描画層が下地を全面へ塗るための矩形である（UI 側で組み立てない）
-        Assert.Equal(125, geometry.PixelSize);
-        Assert.Equal(new EsRect(0, 0, 125, 125), geometry.SurfacePixelRect);
+        Assert.Equal(125, geometry.ClientPixelSize);
+        Assert.Equal(new EsRect(0, 0, 125, 125), geometry.ClientPixelRect);
     }
 
     /// <summary>中心・拡大率・スケーリングがそのまま保持されることを検証する。</summary>
@@ -72,14 +72,14 @@ public class LoupeGeometryTests
         var loupe = new Loupe(LoupeOptions.Default with { ZoomLevel = 8 })
         {
             CenterPoint = new EsPoint(3, 4),
-            DipToDeviceScaling = 1.5,
+            ClientToPixelScaling = 1.5,
         };
 
         var geometry = loupe.ResolveGeometry(100);
 
         Assert.Equal(new EsPoint(3, 4), geometry.Center);
         Assert.Equal(8, geometry.ZoomLevel);
-        Assert.Equal(1.5, geometry.DipToDeviceScaling);
+        Assert.Equal(1.5, geometry.ClientToPixelScaling);
     }
 
     /// <summary>中心が未設定（null）でも解決できることを検証する。</summary>
@@ -92,7 +92,7 @@ public class LoupeGeometryTests
     // ====================================================================
 
     /// <summary>切り出し領域の一辺がドメインピクセルの切り上げで求まることを検証する。</summary>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="clientPixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="zoomLevel">拡大率。</param>
     /// <param name="expected">期待する切り出し領域の一辺（ドメインピクセル）。</param>
     [Theory]
@@ -103,8 +103,8 @@ public class LoupeGeometryTests
     [InlineData(16, 4, 4)]
     [InlineData(25, 4, 7)]
     [InlineData(1, 1, 1)]
-    public void CaptureSize_切り上げてドメインピクセルを返す(int pixelSize, int zoomLevel, int expected)
-        => Assert.Equal(expected, Geometry(s_center, pixelSize, zoomLevel).CaptureSize);
+    public void CaptureSize_切り上げてドメインピクセルを返す(int clientPixelSize, int zoomLevel, int expected)
+        => Assert.Equal(expected, Geometry(s_center, clientPixelSize, zoomLevel).CaptureSize);
 
     /// <summary>拡大中心から切り出し領域の左上（ドメイン座標）が求まることを検証する。</summary>
     /// <param name="centerX">拡大中心のX座標。</param>
@@ -137,7 +137,7 @@ public class LoupeGeometryTests
     }
 
     /// <summary>拡大画像の切り出し・描画元・描画先の矩形が求まることを検証する。</summary>
-    /// <remarks>中心 (10, 10)・pixelSize=16・zoom=4 → 切り出し 4 px、左上 (8, 8)、描画元 4 px、描画先 16 px。</remarks>
+    /// <remarks>中心 (10, 10)・clientPixelSize=16・zoom=4 → 切り出し 4 px、左上 (8, 8)、描画元 4 px、描画先 16 px。</remarks>
     [Fact]
     public void MagnifiedImage_切り出し領域と描画元と描画先を解決する()
     {
@@ -158,7 +158,7 @@ public class LoupeGeometryTests
     }
 
     /// <summary>描画先が切り出しサイズ × 拡大率になることを検証する（切り上げ分だけ表面より大きくなりうる）。</summary>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="clientPixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="zoomLevel">拡大率。</param>
     /// <param name="expectedDestination">期待する描画先の一辺。</param>
     [Theory]
@@ -166,9 +166,9 @@ public class LoupeGeometryTests
     [InlineData(25, 4, 28)]
     [InlineData(1, 1, 1)]
     public void MagnifiedImage_描画先は切り出しサイズの拡大率倍になる(
-        int pixelSize, int zoomLevel, int expectedDestination)
+        int clientPixelSize, int zoomLevel, int expectedDestination)
     {
-        var image = Assert.NotNull(Geometry(new EsPoint(100, 100), pixelSize, zoomLevel).MagnifiedImage);
+        var image = Assert.NotNull(Geometry(new EsPoint(100, 100), clientPixelSize, zoomLevel).MagnifiedImage);
 
         Assert.Equal(new EsRect(0, 0, expectedDestination, expectedDestination), image.DestinationPixelRect);
     }
@@ -186,17 +186,17 @@ public class LoupeGeometryTests
     /// <returns>描画の幾何。</returns>
     private static LoupeGeometry Resolve(double displaySize, double dipToDeviceScaling)
     {
-        var loupe = new Loupe(LoupeOptions.Default) { DipToDeviceScaling = dipToDeviceScaling };
+        var loupe = new Loupe(LoupeOptions.Default) { ClientToPixelScaling = dipToDeviceScaling };
 
         return loupe.ResolveGeometry(displaySize);
     }
 
     /// <summary>テスト用の描画の幾何を生成する（スケーリング 1.0・表示サイズ＝物理ピクセル）。</summary>
     /// <param name="center">拡大中心（ドメイン座標）。 未設定は null。</param>
-    /// <param name="pixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
+    /// <param name="clientPixelSize">ルーペの一辺のサイズ（物理ピクセル）。</param>
     /// <param name="zoomLevel">拡大率。</param>
     /// <returns>描画の幾何。</returns>
-    private static LoupeGeometry Geometry(EsPoint? center, int pixelSize, int zoomLevel)
-        // 切り出し領域の一辺は LoupeGeometry が導出する（PixelSize >= 1 のため 1 以上になる）
-        => new(center, pixelSize, pixelSize, 1.0, zoomLevel);
+    private static LoupeGeometry Geometry(EsPoint? center, int clientPixelSize, int zoomLevel)
+        // 切り出し領域の一辺は LoupeGeometry が導出する（ClientPixelSize >= 1 のため 1 以上になる）
+        => new(center, clientPixelSize, clientPixelSize, 1.0, zoomLevel);
 }

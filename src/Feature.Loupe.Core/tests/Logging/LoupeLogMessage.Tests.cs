@@ -133,12 +133,12 @@ public class LoupeLogMessageTests
 
         logger.LogSettingChanged("ZoomLevel", 4, 8);          // 変化 → 出力
         logger.LogSettingChanged("ZoomLevel", 8, 8);          // 同値 → 出力しない
-        logger.LogSettingChanged("DipToDeviceScaling", 1.0, 1.5);  // 変化 → 出力
-        logger.LogSettingChanged("DipToDeviceScaling", 1.5, 1.5);  // 同値 → 出力しない
+        logger.LogSettingChanged("ClientToPixelScaling", 1.0, 1.5);  // 変化 → 出力
+        logger.LogSettingChanged("ClientToPixelScaling", 1.5, 1.5);  // 同値 → 出力しない
 
         Assert.Equal(2, logger.Messages.Count);
         Assert.Equal("[Feature.Loupe.Core] Setting: ZoomLevel 4 → 8", logger.Messages[0]);
-        Assert.Equal("[Feature.Loupe.Core] Setting: DipToDeviceScaling 1 → 1.5", logger.Messages[1]);
+        Assert.Equal("[Feature.Loupe.Core] Setting: ClientToPixelScaling 1 → 1.5", logger.Messages[1]);
     }
 
     /// <summary>数値のログがカルチャに依存しないことを検証する。</summary>
@@ -152,9 +152,9 @@ public class LoupeLogMessageTests
             CultureInfo.CurrentCulture = new CultureInfo("de-DE");
             var logger = new RecordingLogger();
 
-            logger.LogSettingChanged((string)"DipToDeviceScaling", 1.0, 2.5);
+            logger.LogSettingChanged((string)"ClientToPixelScaling", 1.0, 2.5);
 
-            Assert.Equal("[Feature.Loupe.Core] Setting: DipToDeviceScaling 1 → 2.5", logger.Messages[0]);
+            Assert.Equal("[Feature.Loupe.Core] Setting: ClientToPixelScaling 1 → 2.5", logger.Messages[0]);
         }
         finally
         {

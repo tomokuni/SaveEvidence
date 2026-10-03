@@ -38,7 +38,7 @@ public readonly record struct MarqueeRenderRequest(
 
     /// <summary>描画面の全体を取得する（左上を原点（0, 0）とする矩形）。</summary>
     /// <value>幅・高さが <see cref="ClientSize"/> の矩形（DIP）。</value>
-    internal EsRect SurfaceDipRect => new(0, 0, ClientSize.Width, ClientSize.Height);
+    internal EsRect ClientRect => new(0, 0, ClientSize.Width, ClientSize.Height);
 
     /// <summary>注目矩形（暗転マスクを抜く領域）を取得する。</summary>
     /// <value>注目矩形（ドメイン座標）。 ハイライトも選択も無い場合は null。</value>

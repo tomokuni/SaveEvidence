@@ -88,7 +88,7 @@ public class MarqueeControlTests
         Assert.True(options.ClampToDomainBounds);
         Assert.Equal(16.0, options.MarkerLength);
         Assert.True(control.Appearance.ShowCoordLabel);
-        Assert.Equal(1.0, control.DipToDeviceScaling);
+        Assert.Equal(1.0, control.ClientToPixelScaling);
 
         // 設定を指定しない場合の既定値はコアの MarqueeOptions.Default と一致する
         Assert.Equal(MarqueeOptions.Default, new MarqueeControl().Options);

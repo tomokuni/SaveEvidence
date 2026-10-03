@@ -39,7 +39,7 @@ graph LR
 | `EsPlatformHandleMewUIInterop.cs` | `Aprillz.MewUI.Window` → `EsPlatformHandle` |
 | `Imaging/SkiaImageView.cs` | `EsBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生） |
 | `Imaging/SkiaImageRenderer.cs`（internal） | `EsBitmap` を Skia キャンバスへ敷く描画層（画素で検証できる） |
-| `Imaging/SkiaSurfaceScale.cs` | 描画面（物理ピクセル）と表示領域（DIP）の比から描画に使う実効倍率を解決する（DPI の通知が届かないコントロールでも画像と同じ倍率で描く） |
+| `Imaging/ClientPixelScale.cs` | 描画面（物理ピクセル）と表示領域（DIP）の比から描画に使う実効倍率を解決する（DPI の通知が届かないコントロールでも画像と同じ倍率で描く） |
 | `Imaging/MewUITextMeasure.cs` | MewUI のテキスト エンジン（DirectWrite の GDI 互換レイアウト）で文字列の実寸を測る。 描画エンジンを持たない環境では Skia の実測で代用する |
 
 ## 単一所有（Single Source of Truth）
@@ -49,7 +49,7 @@ graph LR
 | `EsKey` と MewUI `Key` の別名対応（`Back` ⇔ `Backspace`） | `EsKeyMewUIInterop` の別名表（双方向を 1 つの表から導出し対称性を保つ） |
 | 未定義値のフォールバック判定 | 各 Interop（`Enum.IsDefined`） |
 | 画像の描画手順（クリア・未設定/破棄済みの判定・配置・描画） | `SkiaImageRenderer`（表示ビューは手順を持たない） |
-| 描画に使う実効倍率（描画面と表示領域の比） | `SkiaSurfaceScale`（DPI 通知の有無によらず一致させる） |
+| 描画に使う実効倍率（描画面と表示領域の比） | `ClientPixelScale`（DPI 通知の有無によらず一致させる） |
 | 画像を描画先の領域へ配置する矩形の計算 | 本プロジェクトの `ImageDrawMath`（`EsRect` を返す純粋関数） |
 
 ## 設計判断

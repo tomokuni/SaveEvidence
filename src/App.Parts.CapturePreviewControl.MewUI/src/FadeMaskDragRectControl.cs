@@ -278,10 +278,10 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <summary>ルーペの DIP → 物理ピクセル倍率を取得または設定する。</summary>
     /// <value>スケーリング係数（0.1〜8.0）。 既定は 1.0。</value>
     /// <remarks>環境値（DPI）のため設定（<see cref="Options"/>）には含めず、ホストが与える。</remarks>
-    public double LoupeDipToDeviceScaling
+    public double LoupeClientToPixelScaling
     {
-        get => _loupe.DipToDeviceScaling;
-        set => _loupe.DipToDeviceScaling = value;
+        get => _loupe.ClientToPixelScaling;
+        set => _loupe.ClientToPixelScaling = value;
     }
 
     /// <summary>ドメイン ↔ ローカル DIP の座標変換ポートを全内包コントロールへ一括設定する。</summary>
@@ -442,7 +442,7 @@ public sealed class FadeMaskDragRectControl : Panel
             return;
         }
 
-        _loupe.Arrange(new Rect(bounds.X + position.X, bounds.Y + position.Y, layout.DisplaySize, layout.DisplaySize));
+        _loupe.Arrange(new Rect(bounds.X + position.X, bounds.Y + position.Y, layout.ClientSize, layout.ClientSize));
     }
 
     /// <summary>設定とモードを内包コントロールへ分配する。</summary>
@@ -535,7 +535,7 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         if (e.CaptureTopLeft is { } topLeft)
         {
-            DrawSelectionOverlay(e.Canvas, topLeft, e.Scale, e.PixelSize);
+            DrawSelectionOverlay(e.Canvas, topLeft, e.Scale, e.ClientPixelSize);
         }
     }
 
@@ -543,13 +543,13 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <param name="canvas">描画先のキャンバス（ピクセル等倍で描画できる状態であること）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（ドメイン座標系）。</param>
     /// <param name="scale">ドメイン座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。</param>
+    /// <param name="clientPixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。</param>
     /// <remarks>
     /// 選択矩形（<see cref="SelectionDomainRect"/> = ドメイン座標）は <c>(ドメイン座標 − captureTopLeft) × scale</c> で<br/>
     /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
     /// 破線を描画しない場合（選択矩形を使わないモード・選択なし）は何もしない。
     /// </remarks>
-    internal void DrawSelectionOverlay(SKCanvas canvas, EsPoint captureTopLeft, double scale, int pixelSize)
+    internal void DrawSelectionOverlay(SKCanvas canvas, EsPoint captureTopLeft, double scale, int clientPixelSize)
     {
         // 破線を描くかどうかはモード（コアが単一所有する）と選択矩形の有無で決まる
         if (!FadeMaskDragRectModes.Resolve(_mode).ShowSelectionOverlay || !_marquee.HasSelection)
@@ -562,7 +562,7 @@ public sealed class FadeMaskDragRectControl : Panel
             _marquee.SelectionDomainRect,
             captureTopLeft,
             scale,
-            pixelSize,
+            clientPixelSize,
             _options.SelectionRectColorA,
             _options.SelectionRectColorB);
     }

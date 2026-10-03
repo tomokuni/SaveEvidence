@@ -19,7 +19,7 @@
       - [5.1.1 Source](#511-source)
       - [5.1.2 CenterPoint](#512-centerpoint)
       - [5.1.3 Options（設定の単一値）](#513-options設定の単一値)
-      - [5.1.4 DipToDeviceScaling](#514-diptodevicescaling)
+      - [5.1.4 ClientToPixelScaling](#514-clienttopixelscaling)
       - [5.1.5 寸法と外観（Appearance）](#515-寸法と外観appearance)
       - [5.1.6 IsVisible](#516-isvisible)
       - [5.1.7 Log](#517-log)
@@ -126,7 +126,7 @@ panel.Children.Add(loupe);
             Source="{Binding SourceImage}"
             CenterPoint="{Binding CenterPoint}"
             Options="{Binding Options}"
-            DipToDeviceScaling="1.0" />
+            ClientToPixelScaling="1.0" />
     </Canvas>
 </Window>
 ```
@@ -139,7 +139,7 @@ var loupe = new LoupeControl
     Source = sourceBitmap,
     CenterPoint = new Point(400, 300),
     Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 },
-    DipToDeviceScaling = 1.0,
+    ClientToPixelScaling = 1.0,
     IsHitTestVisible = false,
     IsVisible = true
 };
@@ -216,7 +216,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 
 **表示サイズ（`RequestedSize`）はコア（ファサード）がそのまま使います**: 表示サイズはコアが本値（基本サイズ）をそのまま使います（領域に合わせた縮小はしません。 ホストは基本サイズを設定するだけです）。 表示サイズは公開 API として外部へ公開しません（ホストは関与せず、コアが表示と描画で同じ値を使います）。
 
-**設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。 DPI スケーリング係数（`DipToDeviceScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
+**設定と状態（データ）の区別**: マウス移動ごとに変わる `Source` / `CenterPoint` は個別プロパティのままです（設定に含めません）。 DPI スケーリング係数（`ClientToPixelScaling`）と表示位置のオフセット（`PositionOffset`）もフレームワーク・ホスト固有のため設定に含めません。
 
 **描画の差し替え**: 描画は本コントロールの `LoupeContextPainter.Paint`（描画計画を描画 API へ写すだけの実装）が担います。  
 見た目を変える場合は 2 つの入口を使います。  
@@ -224,7 +224,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 - 色・枠線の太さ・表示可否: `Appearance`（`LoupeAppearance`）を差し替える（`LoupeAppearance.Default with { ... }`）
 - 描画計画（装飾の矩形・ラベルの文言と配置）: `LoupePresenter` を派生して `ResolveDrawPlan` を上書きしたものを提示層として使う（提示層は `sealed` ではなく `ResolveDrawPlan` が `virtual`）
 
-#### 5.1.4 DipToDeviceScaling
+#### 5.1.4 ClientToPixelScaling
 
 | 項目 | 内容 |
 | --- | --- |
@@ -236,7 +236,7 @@ loupe.Options = LoupeOptions.Default with { RequestedSize = 240, ZoomLevel = 4 }
 Bitmapの一辺は概ね次の式で決定されます。
 
 ```text
-BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
+BitmapSize = ceil(表示サイズ × ClientToPixelScaling)
 ```
 
 環境値（DPI）のためコアの `LoupeOptions` には含めず、補正（`coerce`）はプロパティが担います（安全域の定義はコアの `Loupe.Limits` が単一所有します）。
@@ -274,7 +274,7 @@ BitmapSize = ceil(表示サイズ × DipToDeviceScaling)
 
 座標ラベルは中心座標（ドメイン座標）を `(x, y)` 形式でルーペの左上に表示します。 実寸 → 配置矩形の写像（内側余白 4 / 1 DIP、基準点は左上）は描画層（`Feature.Loupe.Presenter` の `LoupePresenter`（`LabelPlan` partial））が単一所有し、体裁の値（色・フォントサイズ・角丸）は描画の設定（`Appearance`）が単一所有します。 **表示はコントロールが行います**（`Border` + `TextBlock` の子要素として配置する。 実寸測定は `FormattedText`、描画順はコアの `LoupeDrawLayer` が単一所有するため、UI は実測と要素の配置だけを行います）。
 
-寸法項目（`Appearance.BorderThickness`）は DIP の値であり、描画計画の解決時に**物理ピクセルへ換算されます**（`Platform.Core` の `DpiScaler.ScaleToPixel`。 呼び出すのは `Feature.Loupe.Presenter` の `LoupePresenter`。 `DipToDeviceScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。 UI 層は換算式を持ちません。
+寸法項目（`Appearance.BorderThickness`）は DIP の値であり、描画計画の解決時に**物理ピクセルへ換算されます**（`Platform.Core` の `DpiScaler.ScaleToPixel`。 呼び出すのは `Feature.Loupe.Presenter` の `LoupePresenter`。 `ClientToPixelScaling` に追従するため、DPI ≠ 100% でも DIP 基準の見た目になります）。 UI 層は換算式を持ちません。
 
 #### 5.1.6 IsVisible
 
@@ -430,7 +430,7 @@ StyledProperty は同ファイルに定義されます（Avalonia のバイン�
 
 描画エラー（`Source` が未対応の `IImage` 等）は `Log` へ記録され、アプリは落ちません（例外は開始側が観測し、呼び出し元へは伝播しません）。
 
-`Log` へ設定したロガーは**コアへも伝搬**します。 設定（`Options`）・環境値（`DipToDeviceScaling`）・拡大中心（`CenterPoint`）の変更ログはコアが出力し、本コントロールは `Source` の変更と描画の例外だけを出力します。
+`Log` へ設定したロガーは**コアへも伝搬**します。 設定（`Options`）・環境値（`ClientToPixelScaling`）・拡大中心（`CenterPoint`）の変更ログはコアが出力し、本コントロールは `Source` の変更と描画の例外だけを出力します。
 
 ## 7. ライフサイクルと所有権
 
@@ -527,7 +527,7 @@ dotnet run --project sample/Feature.Loupe.AvaloniaUI.LoupeControl.Sample.csproj
 - `Source` のBinding
 - `CenterPoint` のマウス追従
 - 画像端から外れた部分の画像外の色（無地）
-- `Options`（`ZoomLevel` / `RequestedSize`）と `Appearance`（色・枠線の太さ・表示可否）・`DipToDeviceScaling`
+- `Options`（`ZoomLevel` / `RequestedSize`）と `Appearance`（色・枠線の太さ・表示可否）・`ClientToPixelScaling`
 - 十字線・枠線の色変更（`Appearance`）
 - 派生提示層による見た目の差し替え（`sample/Presentation/`。 破線枠と三分割ガイドの例）
 - `IsVisible`、`Clear()`、`RequestRender()`

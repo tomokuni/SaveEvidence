@@ -179,7 +179,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 - **外部提供矩形**: `Rects`（`IReadOnlyList<OverlayRect>`）をビューポートとルーペの両方へ描画する。 矩形情報はコアの `OverlayRect`（矩形・破線種類・前景色・背景色・線幅。 色は `System.Drawing.Color`）
 - **座標変換**: `ContentToViewport` / `ViewportToContent` / `ImageRectViewport`（Fit 中央寄せの原点補正を含む）。 領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送する
 
-主な公開メンバー: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionDomainRect` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `DipToDomainScaling` / `LoupeDipToDeviceScaling`、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `ContentToViewport` / `ViewportToContent`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`。
+主な公開メンバー: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionDomainRect` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `DipToDomainScaling` / `LoupeClientToPixelScaling`、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `ContentToViewport` / `ViewportToContent`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`。
 
 ### 7.2 FadeMaskDragRectControl（領域選択）
 
@@ -192,7 +192,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 | `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ） |
 | `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ） |
 
-主な公開メンバー: `Mode` / `Options`（コアの `FadeMaskDragRectOptions`）/ `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionDomainRect` / `HighlightDomainRect` / `ShowFullOverlay` / `LoupeCenterPoint` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling`、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `RefreshOverlay` / `InvalidateOverlay`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`。
+主な公開メンバー: `Mode` / `Options`（コアの `FadeMaskDragRectOptions`）/ `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionDomainRect` / `HighlightDomainRect` / `ShowFullOverlay` / `LoupeCenterPoint` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling`、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `RefreshOverlay` / `InvalidateOverlay`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`。
 
 ### 7.3 ZoomViewControl（切り出しビューの画像ビューポート）
 

@@ -157,12 +157,12 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.DipToDomainScaling = value;
     }
 
-    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="FadeMaskDragRectControl.LoupeDipToDeviceScaling"/> へ委譲する。</summary>
+    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="FadeMaskDragRectControl.LoupeClientToPixelScaling"/> へ委譲する。</summary>
     /// <remarks>ユーザー設定ではなく、ウィンドウの DPI スケーリングから自動取得する。</remarks>
-    public double LoupeDipToDeviceScaling
+    public double LoupeClientToPixelScaling
     {
-        get => _selectionOverlay.LoupeDipToDeviceScaling;
-        set => _selectionOverlay.LoupeDipToDeviceScaling = value;
+        get => _selectionOverlay.LoupeClientToPixelScaling;
+        set => _selectionOverlay.LoupeClientToPixelScaling = value;
     }
 
     /// <summary>領域選択オーバーレイの選択矩形コントロールが使う色。<see cref="FadeMaskDragRectControl.MarqueeAppearance"/> へ委譲する。</summary>

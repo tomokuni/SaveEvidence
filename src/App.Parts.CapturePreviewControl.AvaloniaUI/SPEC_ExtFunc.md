@@ -300,7 +300,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` | `int?` / `int?` / `double?` | ルーペのサイズ（DIP 座標系）・倍率・カーソルからのオフセット（DIP 座標系） |
-| `LoupeDipToDeviceScaling` | `double?` | DIP → 物理ピクセル変換 |
+| `LoupeClientToPixelScaling` | `double?` | DIP → 物理ピクセル変換 |
 | `LoupeCrossColor` | `Color?` | ルーペの十字線（不透明度は色のアルファに統合） |
 | `LoupeFrameColor` / `LoupeFrameThickness` | `Color?` / `int?` | ルーペの枠 |
 | `LoupePasteboardColor` | `Color?` | ルーペの画像外（ペーストボード）の色 |
@@ -331,7 +331,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `HasSelection` / `SelectionDomainRect` | `bool` / `Rect` | 選択状態と現在の選択矩形（ドメイン座標） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
 | `Log` | `ILogger` | 内部ロガー（画像ビューポートへ伝搬する） |
-| `DipToDomainScaling` / `LoupeDipToDeviceScaling` | `double` | DPI スケーリング（環境値。 コードから動的設定） |
+| `DipToDomainScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値。 コードから動的設定） |
 
 #### 5.5.2 メソッド
 
@@ -389,7 +389,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `ShowFullOverlay` | `bool` | 全面暗転の有無（モードから導出。 読み取り専用） |
 | `LoupeCenterPoint` | `Point?` | ルーペ中心（ドメイン座標。 未設定時は null） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
-| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeDipToDeviceScaling` | `double` | DPI スケーリング（環境値） |
+| `DipToDomainScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値） |
 | `Log` | `ILogger` | 操作ログの出力先（内包コントロールへ伝搬する） |
 
 #### 5.6.3 メソッドとイベント

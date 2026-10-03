@@ -12,7 +12,7 @@ public sealed partial class Loupe
     /// （利用者はルーペの数値を得るのに <c>Loupe</c> だけを参照すればよい）。<br/>
     /// <b>補正は値の生成時に行う</b>: 設定型（<see cref="LoupeOptions"/>）の <c>init</c> アクセサが本値を参照するため、<br/>
     /// 設定の経路（オブジェクト初期化子・<c>with</c> 式・逆シリアル化）によらず安全域内の値だけが保持される。<br/>
-    /// <b>規則の所在</b>: 環境値（<see cref="Loupe.DipToDeviceScaling"/>）の補正も本値へ委譲する（補正の規則を二重に持たない）。<br/>
+    /// <b>規則の所在</b>: 環境値（<see cref="Loupe.ClientToPixelScaling"/>）の補正も本値へ委譲する（補正の規則を二重に持たない）。<br/>
     /// ラベルのフォントサイズの安全域は、他のコントロールと共通の規則のため描画層の外観（本コアを参照する上位の層）が単一所有する。<br/>
     /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
     /// </remarks>
@@ -46,13 +46,13 @@ public sealed partial class Loupe
         public const int BorderThicknessDefault = 2;
 
         /// <summary>スケーリング係数の最小値（環境値。 他の数値より後に置く）。</summary>
-        public const double DipToDeviceScalingMin = 0.1;
+        public const double ClientToPixelScalingMin = 0.1;
 
         /// <summary>スケーリング係数の最大値（環境値）。</summary>
-        public const double DipToDeviceScalingMax = 8.0;
+        public const double ClientToPixelScalingMax = 8.0;
 
         /// <summary>スケーリング係数の既定値（環境値。 非有限値のフォールバックも兼ねる）。</summary>
-        public const double DipToDeviceScalingDefault = 1.0;
+        public const double ClientToPixelScalingDefault = 1.0;
 
         /// <summary>表示サイズ要求値を安全域へ補正する（1〜4096）。</summary>
         /// <param name="value">補正する値（DIP）。</param>
@@ -72,8 +72,8 @@ public sealed partial class Loupe
         /// <summary>スケーリング係数を安全域へ補正する（0.1〜8.0。 非有限値は既定値）。</summary>
         /// <param name="value">補正する値。</param>
         /// <returns>安全域へ補正した値。 非有限値の場合は既定値。</returns>
-        public static double CoerceDipToDeviceScaling(double value)
-            => CoerceFinite(value, DipToDeviceScalingMin, DipToDeviceScalingMax, DipToDeviceScalingDefault);
+        public static double CoerceClientToPixelScaling(double value)
+            => CoerceFinite(value, ClientToPixelScalingMin, ClientToPixelScalingMax, ClientToPixelScalingDefault);
 
         /// <summary>実数を安全域へ補正する（非有限値は既定値）。</summary>
         /// <param name="value">補正する値。</param>

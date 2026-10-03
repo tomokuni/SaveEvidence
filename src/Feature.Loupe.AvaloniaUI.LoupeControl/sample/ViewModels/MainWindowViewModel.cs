@@ -206,14 +206,14 @@ public sealed class MainWindowViewModel : ObservableObject
     private double _dipToDeviceScaling = 1.0;
 
     /// <summary>DIP→物理ピクセル変換のスケーリング係数。</summary>
-    public double DipToDeviceScaling
+    public double ClientToPixelScaling
     {
         get => _dipToDeviceScaling;
         set
         {
             if (SetProperty(ref _dipToDeviceScaling, value))
             {
-                OnPropertyChanged(nameof(DipToDeviceScalingText));
+                OnPropertyChanged(nameof(ClientToPixelScalingText));
             }
         }
     }
@@ -314,7 +314,7 @@ public sealed class MainWindowViewModel : ObservableObject
     public string BorderThicknessText => $"{BorderThickness} px";
 
     /// <summary>描画スケールの表示文字列。</summary>
-    public string DipToDeviceScalingText => $"{DipToDeviceScaling:F2}";
+    public string ClientToPixelScalingText => $"{ClientToPixelScaling:F2}";
 
     /// <summary>中心座標の表示文字列。</summary>
     /// <remarks>選択矩形の破線オーバーレイの表示状態（SelectionRectVisible）も付加する。</remarks>

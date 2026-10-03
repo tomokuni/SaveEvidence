@@ -60,7 +60,7 @@ public class MarqueeDrawPlanTests
     {
         var plan = ResolvePlan();
 
-        Assert.Equal(new EsRect(0, 0, 200, 100), plan.SurfaceDipRect);
+        Assert.Equal(new EsRect(0, 0, 200, 100), plan.ClientRect);
     }
 
     [Fact]

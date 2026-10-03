@@ -184,7 +184,7 @@ internal sealed partial class OverlayWindow : Window
         // ドメインはウィンドウローカル物理ピクセル（= ローカル DIP × スケーリング）のため、ウィンドウのスケーリング（_scaling）を設定する。
         SelectionOverlay.DipToDomainScaling = _scaling;
         SelectionOverlay.DisplayScaleScaling = _scaling;
-        SelectionOverlay.LoupeDipToDeviceScaling = s.LoupeDipToDeviceScaling!.Value;
+        SelectionOverlay.LoupeClientToPixelScaling = s.LoupeClientToPixelScaling!.Value;
         // サイズラベル: 文言（書式）はコアが単一所有し、本ホストは矩形を含むモニタの実スケール（マルチモニタ補正）だけを提供する。
         // ドメインはウィンドウローカル物理ピクセルのため、コアは DIP × スケーリングで物理ピクセルへ換算する（DIP 換算の往復誤差を排除）。
         SelectionOverlay.SizeLabelDisplayScalingProvider = GetMonitorScalingForRect;
