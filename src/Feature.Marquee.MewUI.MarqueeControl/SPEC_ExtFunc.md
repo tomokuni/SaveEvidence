@@ -14,7 +14,7 @@ Avalonia 版と同一の挙動になります。
 
 | 参照 | 用途 |
 | --- | --- |
-| `Feature.Marquee.Core` | **公開ファサード（`Marquee`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `MarqueeRenderRequest`）。 状態管理クラス（`MarqueeSession`）・状態機械（`MarqueeState`）・選択幾何（`MarqueeSelection`）は internal（ファサードの内部実装） |
+| `Feature.Marquee.Core` | **公開ファサード（`MarqueeCore`）/ 効果の適用先（`IMarqueeEffects`）**・公開型（`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` / `MarqueeRenderRequest`）。 状態管理クラス（`MarqueeSession`）・状態機械（`MarqueeState`）・選択幾何（`MarqueeSelection`）は internal（ファサードの内部実装） |
 | `Feature.Marquee.Presenter` | 提示層（描画計画の解決・外観・ラベル計画・組み込み規則）: `MarqueePresenter`（描画計画の解決） / `MarqueeAppearance`（色・体裁・枠線の太さ・表示可否） / `MarqueeDrawPlan`（UI が見る唯一の描画値） / `MarqueePresenter`（`LabelPlan` partial）（実寸 → 配置指示）。 **描画は本 UI が自 UI の描画 API（Skia）で行う**（`MarqueeSkiaPainter`） |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect` / `EsSize`）、`ICoordTransform` / `CoordTransform`、`ICursorService` |
 | `Platform.Core`（`Native.Win`） | カーソルサービスの既定実装（Win32） |
@@ -34,12 +34,12 @@ Avalonia 版と同一の挙動になります。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の**計算に必要な設定**（寸法・対話パラメータ。 コアの `EsUtil.Feature.Marquee.Core.Setting.MarqueeOptions`。 **色・表示可否は含まない**） |
-| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（提示層の `EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）。 設定すると次の描画で提示層が新しい外観で描画計画を解決する |
+| `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の**計算に必要な設定**（寸法・対話パラメータ。 コアの `EsUtil.Feature.Marquee.Setting.MarqueeOptions`。 **色・表示可否は含まない**） |
+| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（提示層の `EsUtil.Feature.Marquee.Setting.MarqueeAppearance`）。 設定すると次の描画で提示層が新しい外観で描画計画を解決する |
 | `SizeLabelOverrideProvider` | `Func<string?>?` | `null` | サイズラベル（1 行目）の文言を描画時に評価するプロバイダ。 **文言はホストが与える**（コアは特定の文言を持たない。 文言の生成はホストの `CaptureLabelTexts` 等が担う）。 操作・情報ラベルの文言も同様にホストが与える。 設定すると保持している描画内容を破棄して再描画を要求する |
 | `ClientToPixelScaling` | `double` | `1.0` | DIP → 物理ピクセルのスケーリング係数（DPI 変更時に自動更新）。 **描画では描画面と表示領域の比（`ClientPixelScale`）を使う**ため、追加直後でこの値が未更新でも図形は画像と同じ倍率で描かれる |
 
-**見た目の拡張**: 外観（色・枠線の太さ・表示可否）で足りない場合は、提示層（`EsUtil.Feature.Marquee.Presenter.MarqueePresenter`。 `sealed` ではなく `ResolveDrawPlan` が `virtual`）を派生して描画計画（`MarqueeDrawPlan`）を差し替えられます。 差し替えは値の置き換えだけで完結するため、描画実装（本 UI の `MarqueeSkiaPainter`）は変更不要です（例は Avalonia 版サンプルの `sample/Presentation/GuideMarqueePresenter`）。
+**見た目の拡張**: 外観（色・枠線の太さ・表示可否）で足りない場合は、提示層（`EsUtil.Feature.Marquee.MarqueePresenter`。 `sealed` ではなく `ResolveDrawPlan` が `virtual`）を派生して描画計画（`MarqueeDrawPlan`）を差し替えられます。 差し替えは値の置き換えだけで完結するため、描画実装（本 UI の `MarqueeSkiaPainter`）は変更不要です（例は Avalonia 版サンプルの `sample/Presentation/GuideMarqueePresenter`）。
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。 Avalonia 版と一致）:
 
@@ -111,7 +111,7 @@ Avalonia 版と同一の挙動になります。
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます。
 
 ```csharp
-using EsUtil.Feature.Marquee.MewUI.MarqueeControl;
+using EsUtil.Feature.Marquee.MewUI;
 
 // 付加情報（操作・情報ラベル）を自前で描く。
 // サイズ・座標ラベルはコントロールがテキスト要素として表示する（図形もコントロールが描く）。

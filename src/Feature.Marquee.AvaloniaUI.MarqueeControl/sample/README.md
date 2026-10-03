@@ -22,7 +22,7 @@
 
 `MarqueeControl/sample/` にある **MarqueeControl 動作確認用の独立したサンプルアプリケーション**です。
 
-- `MarqueeControl`（`EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.MarqueeControl`）を実際に Visual Tree へ配置して動作を確認できます。
+- `MarqueeControl`（`EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl`）を実際に Visual Tree へ配置して動作を確認できます。
 - マウスドラッグによる新規選択、選択矩形の移動・リサイズ（8方向ハンドル）を確認できます。
 - 矢印キーによる nudge（対象 1Pixel 移動）を確認できます。
 - ダブルクリック検出（選択内=確定 / 外=キャンセル）を確認できます。
@@ -91,7 +91,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ Featur
 ```csharp
 // 座標ポート: 対象 = 画像ピクセル（800x500）、DIP = 表示座標（ズーム倍率で変換）
 // ToSource = DIP→対象（_zoom で除算）、ToDip = 対象→DIP（_zoom で乗算）
-Marquee.SetCoordTransform(new CoordTransform(
+MarqueeCore.SetCoordTransform(new CoordTransform(
     p => new Point(p.X / _zoom, p.Y / _zoom),
     p => new Point(p.X * _zoom, p.Y * _zoom),
     () => new Size(ImageWidth, ImageHeight)));
@@ -115,7 +115,7 @@ Marquee.SetCoordTransform(new CoordTransform(
 `MarqueeControl.Log` にサンプル用の `InMemoryLogger` を設定し、コントロール内部の操作ログを選択面の下の `ListBox` へ表示します。
 
 ```csharp
-Marquee.Log = new InMemoryLogger(line => Dispatcher.UIThread.Post(() => _vm.AddLog(line)));
+MarqueeCore.Log = new InMemoryLogger(line => Dispatcher.UIThread.Post(() => _vm.AddLog(line)));
 ```
 
 ログには時分秒ミリ秒（`HH:mm:ss.fff`）が付与されます。
@@ -142,7 +142,7 @@ Marquee.Log = new InMemoryLogger(line => Dispatcher.UIThread.Post(() => _vm.AddL
 ```csharp
 // 座標ポート: 対象 = 画像ピクセル（1200x800）、DIP = 表示座標（ズーム倍率で変換）
 // ToSource = DIP→対象（_zoom で除算 = 画像ピクセルへ）、ToDip = 対象→DIP（_zoom で乗算）
-Marquee.SetCoordTransform(new CoordTransform(
+MarqueeCore.SetCoordTransform(new CoordTransform(
     p => new Point(p.X / _zoom, p.Y / _zoom),
     p => new Point(p.X * _zoom, p.Y * _zoom),
     () => new Size(ImageWidth, ImageHeight)));
@@ -163,7 +163,7 @@ MarqueeControl/sample/
 ├── app.manifest                   # Windows DPI 設定（PerMonitorV2）
 ├── Program.cs                     # エントリポイント
 ├── App.axaml / App.axaml.cs       # アプリケーション定義（FluentTheme）
-├── Logging/
+├── AvaloniaUI/Logging/
 │   └── InMemoryLogger.cs          # MarqueeControl.Log の設定例（メモリ内ログ）
 ├── Presentation/                  # 拡張例（提示層の派生）
 │   ├── GuideMarqueePresenter.cs   # MarqueePresenter を派生し、破線枠と三分割ガイドへ装飾を差し替える

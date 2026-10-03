@@ -379,7 +379,7 @@ public class OverlayWindowTests
         window.SetVirtualScreen(virtualScreen, default);
 
         // キャンセル要求（Esc キー相当）を発行する
-        // → Marquee.RequestCancel → CancelRequested → OverlayWindow.OnAreaCancelRequested → CompleteCancelled
+        // → MarqueeCore.RequestCancel → CancelRequested → OverlayWindow.OnAreaCancelRequested → CompleteCancelled
         window.SelectionOverlay.RequestCancel();
 
         // キャンセルされた（null 結果）

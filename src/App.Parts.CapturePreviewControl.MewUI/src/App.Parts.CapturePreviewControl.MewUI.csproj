@@ -34,7 +34,7 @@
     <ProjectReference Include="..\..\Platform.Core\src\Platform.Core.csproj" />
     <ProjectReference Include="..\..\App.Platform.Skia\src\App.Platform.Skia.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->
-    <ProjectReference Include="..\..\Feature.Marquee.MewUI.MarqueeControl\src\Feature.Marquee.MewUI.MarqueeControl.csproj" />
+    <ProjectReference Include="..\..\Feature.Marquee.MewUI.MarqueeControl\src\MewUI\Feature.Marquee.MewUI.MarqueeControl.csproj" />
     <ProjectReference Include="..\..\Feature.Loupe.MewUI.LoupeControl\src\MewUI\Feature.Loupe.MewUI.LoupeControl.csproj" />
   </ItemGroup>
 

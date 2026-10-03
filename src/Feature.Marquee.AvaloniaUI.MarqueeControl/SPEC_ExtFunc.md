@@ -25,7 +25,7 @@
 | --- | --- |
 | 対象 | `MarqueeControl` |
 | プロジェクト | `MarqueeControl/MarqueeControl.csproj` |
-| 名前空間 | `EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl` |
+| 名前空間 | `EsUtil.Feature.Marquee.AvaloniaUI` |
 | 対象フレームワーク | `net10.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要基底クラス | `Avalonia.Controls.Control` |
@@ -58,11 +58,11 @@
 
 ```csharp
 using Avalonia;
-using EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl;
-using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions
-using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions
-using EsUtil.Feature.Marquee.Presenter;          // MarqueePresenter（提示のファサード）
-using EsUtil.Feature.Marquee.Presenter.Setting;  // MarqueeAppearance（描画にだけ必要な外観）
+using EsUtil.Feature.Marquee.AvaloniaUI;
+using EsUtil.Feature.Marquee.Setting; // MarqueeOptions
+using EsUtil.Feature.Marquee.Setting; // MarqueeOptions
+using EsUtil.Feature.Marquee;          // MarqueePresenter（提示のファサード）
+using EsUtil.Feature.Marquee.Setting;  // MarqueeAppearance（描画にだけ必要な外観）
 ```
 
 座標ポート（`ICoordTransform`）を使用する場合は、`Platform.Core` の名前空間も必要です。
@@ -78,7 +78,7 @@ using EsUtil.Platform.Core.Geometry;   // EsPoint / EsSize
 
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
-        xmlns:marquee="clr-namespace:EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl;assembly=Feature.Marquee.AvaloniaUI.MarqueeControl">
+        xmlns:marquee="clr-namespace:EsUtil.Feature.Marquee.AvaloniaUI;assembly=Feature.Marquee.AvaloniaUI.MarqueeControl">
     <Canvas>
         <marquee:MarqueeControl x:Name="SelectionOverlay" />
     </Canvas>
@@ -141,7 +141,7 @@ marquee.CancelRequested += (_, _) => CancelSelection();
 描画のたびに `Rendered` が発火するため、ホストはそのハンドラで追加描画できます（引数の `Content` に装飾・注目矩形・ハンドル・マーカー・サイズラベル・座標ラベル・層の順序が含まれます）。
 
 ```csharp
-using EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl;
+using EsUtil.Feature.Marquee.AvaloniaUI;
 
 // 文字は UI 層が配置したテキスト要素が表示する（図形のみコントロールが描く）
 marquee.Rendered += (_, e) =>
@@ -189,7 +189,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 #### 5.1.1 設定（`Options`）
 
-寸法・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `EsUtil.Feature.Marquee.Core.Setting.MarqueeOptions`）に、外観（色・フォントサイズ・枠線の太さ・表示可否）は不変の外観値 `MarqueeAppearance`（提示層の `EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）にまとめて公開し、`Options` / `Appearance` プロパティで設定します。
+寸法・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `EsUtil.Feature.Marquee.Setting.MarqueeOptions`）に、外観（色・フォントサイズ・枠線の太さ・表示可否）は不変の外観値 `MarqueeAppearance`（提示層の `EsUtil.Feature.Marquee.Setting.MarqueeAppearance`）にまとめて公開し、`Options` / `Appearance` プロパティで設定します。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -249,7 +249,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 | --- | --- | --- |
 | `Log` | `ILogger` | 操作ログ用ロガー（既定は `NullLogger`。 出力先・レベル制御はホストアプリケーションが所有） |
 
-操作ログの書式・レベルは MewUI 版と同一です。 ログはコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。 Debug で操作（MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested）と**設定の変更**（`[Feature.Marquee.Core] Setting: {名前} {前} → {後}`。 変化した項目だけ）を、Trace で位置の記録を出力します。
+操作ログの書式・レベルは MewUI 版と同一です。 ログはコア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）が定義し、ロガーはファサード（`MarqueeCore.Log`）が保持します。 Debug で操作（MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested）と**設定の変更**（`[Feature.Marquee.Core] Setting: {名前} {前} → {後}`。 変化した項目だけ）を、Trace で位置の記録を出力します。
 
 #### 5.1.4 描画
 
@@ -261,7 +261,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.White.ToDrawingColor() };   // 外観の差し替え
 ```
 
-**見た目の拡張**: 外観（色・枠線の太さ・表示可否）で足りない場合は、提示層（`EsUtil.Feature.Marquee.Presenter.MarqueePresenter`。 `sealed` ではなく `ResolveDrawPlan` が `virtual`）を派生して描画計画（`MarqueeDrawPlan`）を差し替えられます。 差し替えは値の置き換えだけで完結するため、描画実装（本 UI の `MarqueeContextPainter`）は変更不要です（例は `sample/Presentation/` の `GuideMarqueePresenter`）。
+**見た目の拡張**: 外観（色・枠線の太さ・表示可否）で足りない場合は、提示層（`EsUtil.Feature.Marquee.MarqueePresenter`。 `sealed` ではなく `ResolveDrawPlan` が `virtual`）を派生して描画計画（`MarqueeDrawPlan`）を差し替えられます。 差し替えは値の置き換えだけで完結するため、描画実装（本 UI の `MarqueeContextPainter`）は変更不要です（例は `sample/Presentation/` の `GuideMarqueePresenter`）。
 
 ### 5.2 メソッド
 
@@ -296,11 +296,11 @@ marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.
 ### 5.4 型
 
 公開型は `MarqueeControl` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` とイベント引数（`SelectionRectEventArgs` / `MarqueePointEventArgs`）です。
-`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.Marquee.Core`、名前空間 `EsUtil.Feature.Marquee.Core.Interaction`）が単一所有し、各 UI 実装で共有します。
+`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.Marquee.Core`、名前空間 `EsUtil.Feature.Marquee.Interaction`）が単一所有し、各 UI 実装で共有します。
 コア（`Feature.Marquee.Core`）の公開型は 2 層です（内部契約（状態機械・描画入力の組み立て・幾何）は internal）。
 
 - **ホスト設定**: `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`
-- **公開ファサード（操作の唯一の窓口）**: `Marquee`（操作・設定・効果の適用・描画内容の解決）/ `IMarqueeEffects`（効果の適用先）/ `MarqueeEffectsBase`（効果の既定実装。 必要な効果だけを override できる）
+- **公開ファサード（操作の唯一の窓口）**: `MarqueeCore`（操作・設定・効果の適用・描画内容の解決）/ `IMarqueeEffects`（効果の適用先）/ `MarqueeEffectsBase`（効果の既定実装。 必要な効果だけを override できる）
 - **UI アダプタ契約**: `MarqueeCursorKind` / `MarqueeNotice` / `MarqueeGeometry` / `MarqueeHandles` / `MarqueeMarker`
 
 **装飾（暗転マスク・外枠・ハイライト・内側の塗り）は提示層（`Feature.Marquee.Presenter`）が単一所有**します（`MarqueeAppearance`（表示可否・太さ・色）/ `MarqueeDrawPlan`（装飾矩形）/ `MarqueePresenter`（`DrawPlan` partial）（矩形の計算）/ `MarqueePresenter`（描画計画の解決））。 本コントロールは `Appearance` で外観を設定し、`Rendered` で描画計画を受け取ります。 **描画するラベルと描画順も提示層が、実寸 → 配置矩形の写像は同層の `MarqueePresenter`（`LabelPlan` partial） が単一所有し**、実寸測定だけを UI 層が与えます。
@@ -425,7 +425,7 @@ nudge 中は十字マーカー（色は `Appearance.MarkerColor`、全長は `Op
 ハンドルはこの矩形に対して描画され、**選択枠線は外側の装飾の外枠**（同じ閉区間 +1 の規則を装飾コアが単一所有する）が描きます。
 どちらも同じ規則を使うため、枠線とハンドルの位置・キャプチャ（閉区間 +1）が一致します。
 
-**注意**: 本コントロールは選択枠線を自分では描画しません（`Marquee` 側で 2 本目を描くと線幅が二重になり見た目が変わるため）。
+**注意**: 本コントロールは選択枠線を自分では描画しません（`MarqueeCore` 側で 2 本目を描くと線幅が二重になり見た目が変わるため）。
 枠線を表示するには `Appearance = MarqueeAppearance.Default with { ShowOuterBorder = true, OuterBorderThickness = 2.0 }`（太さと表示可否）と `OuterBorderColor`（色）を設定します。
 
 ### 7.6 nudge の終了

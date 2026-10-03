@@ -1,4 +1,4 @@
-using EsUtil.Feature.Marquee.MewUI.MarqueeControl;
+using EsUtil.Feature.Marquee.MewUI;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Aprillz.MewUI;
@@ -7,8 +7,7 @@ using SkiaSharp;
 using System.Reflection;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
+using EsUtil.Feature.Marquee.Setting;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.FadeMaskDragRect;
@@ -455,7 +454,7 @@ public class FadeMaskDragRectControlTests
     /// <param name="control">対象のコントロール。</param>
     /// <returns>保持している座標変換ポート。 未設定の場合は null。</returns>
     /// <remarks>
-    /// ポートは公開プロパティではなくメソッドで設定し、コアのファサード（<c>Marquee</c>）が内部で保持する（読み取り API を持たない）。<br/>
+    /// ポートは公開プロパティではなくメソッドで設定し、コアのファサード（<c>MarqueeCore</c>）が内部で保持する（読み取り API を持たない）。<br/>
     /// 提示層（Presenter）がコアを内包するため、提示層の内部フィールドを経由してコアまで辿る。<br/>
     /// 検証は Avalonia 版の複合コントロールテストと同じくリフレクションで行う。
     /// </remarks>

@@ -15,7 +15,7 @@
   - [5. コンポーネント図](#5-コンポーネント図)
   - [6. コンポーネント一覧](#6-コンポーネント一覧)
     - [6.1 MarqueeControl](#61-marqueecontrol)
-    - [6.2 Marquee（公開ファサード・コア）](#62-marquee公開ファサードコア)
+    - [6.2 MarqueeCore（公開ファサード・コア）](#62-marqueecore公開ファサードコア)
     - [6.3 MarqueeState](#63-marqueestate)
     - [6.4 MarqueeSelection](#64-marqueeselection)
     - [6.5 MarqueePresenter（Feature.Marquee.Presenter）](#65-marqueepresenterfeaturemarqueepresenter)
@@ -23,7 +23,7 @@
     - [6.7 MarqueePresenter.LabelPlan（Feature.Marquee.Presenter）](#67-marqueepresenterlabelplanfeaturemarqueepresenter)
     - [6.8 ラベル要素の配置（本コントロールの内部実装）](#68-ラベル要素の配置本コントロールの内部実装)
     - [6.9 MarqueeContextPainter（本プロジェクト）](#69-marqueecontextpainter本プロジェクト)
-    - [6.10 Marquee（コアの幾何解決）](#610-marqueeコアの幾何解決)
+    - [6.10 MarqueeCore（コアの幾何解決）](#610-marqueecoreコアの幾何解決)
     - [6.11 MarqueeHitTarget](#611-marqueehittarget)
     - [6.12 公開イベント引数](#612-公開イベント引数)
   - [7. 依存ルール](#7-依存ルール)
@@ -31,8 +31,8 @@
     - [8.1 状態の初期化と破棄（所有権）](#81-状態の初期化と破棄所有権)
   - [9. ログ](#9-ログ)
     - [9.1 ログ定義一覧](#91-ログ定義一覧)
-      - [コア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）](#コアesutilfeaturemarqueecoreloggingmarqueelogmessage)
-      - [提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）](#提示層esutilfeaturemarqueepresenterloggingmarqueepresenterlogmessage)
+      - [コア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）](#コアesutilfeaturemarqueeloggingmarqueelogmessage)
+      - [提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）](#提示層esutilfeaturemarqueeloggingmarqueepresenterlogmessage)
 
 ---
 
@@ -47,7 +47,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | 項目 | 内容 |
 | --- | --- |
 | **プロジェクト** | `MarqueeControl` |
-| **ルート名前空間** | `EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl` |
+| **ルート名前空間** | `EsUtil.Feature.Marquee.AvaloniaUI` |
 | **言語** | C# 14（.NET 10.0） |
 | **UI フレームワーク** | Avalonia UI 12.1（Control / StyledProperty / DrawingContext） |
 | **ターゲットフレームワーク** | net10.0 |
@@ -65,7 +65,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
   → 状態管理クラス（MarqueeSession）… 入力の解釈と状態遷移の判断
     → 状態（MarqueeState）… 状態保持と更新ロジック
       → コア内部の純粋幾何（MarqueeSelection）+ App.Platform.AvaloniaUI
-  → 幾何の解決（コアの Marquee.CreateRequest → Marquee.ResolveGeometry）… 選択の状態 + 設定 → 幾何 1 値（MarqueeGeometry）
+  → 幾何の解決（コアの MarqueeCore.CreateRequest → MarqueeCore.ResolveGeometry）… 選択の状態 + 設定 → 幾何 1 値（MarqueeGeometry）
   → 描画計画の解決（Feature.Marquee.Presenter の MarqueePresenter.ResolveDrawPlan）… 幾何 + 外観 → 描画計画（MarqueeDrawPlan）
   → 描画（本コントロール）… 描画計画の Layers の順に自 UI の描画 API（DrawingContext）で描く
   → ラベルの配置（本コントロール）… 描画計画の Labels（配置指示）へ `Border` + `TextBlock` を置く（ラベルは常に最上位）
@@ -75,7 +75,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - 依存は**一方向の階層構造**（MarqueeControl → MarqueeSession → MarqueeState → MarqueeSelection（これらの幾何計算はコア内部の値の振る舞い）/ App.Platform.AvaloniaUI / Platform.Core（`Native` を含む）。 描画計画は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core））。
 - MarqueeControl は上位 AP に依存しない（再利用可能）。
-- **判断はコア（`Marquee`）・反映は UI**: nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルはコアが決め、コントロールは `IMarqueeEffects` を実装して要求された効果を適用するだけにする。
+- **判断はコア（`MarqueeCore`）・反映は UI**: nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルはコアが決め、コントロールは `IMarqueeEffects` を実装して要求された効果を適用するだけにする。
 - **描画計画と外観は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan` / `MarqueePresenter`（`LabelPlan` partial））が単一所有**し、本コントロールは `Appearance` プロパティで外観を与え、`ResolveDrawPlan` が返す描画計画を自 UI の描画 API（`DrawingContext`）で写すだけです（**描画 API の抽象は持ちません**）。 装飾の**判断**も持ちません（状態（選択矩形・nudge）はコア（`MarqueeState`）に集約する）。
 - **装飾（暗転・外枠・ハイライト・内側の塗り）は選択矩形コントロール単体の概念ではない**（組み込み先の表示である）ため、提示層が単一所有します。 本コントロールは `Appearance` で外観（表示可否・太さ・色）を設定し、描画計画の装飾矩形を描きます。
 - **文字（サイズラベル・座標ラベル）は本コントロールがテキスト要素（`Border` + `TextBlock`）として配置する**。 配置するラベルの一覧と順序は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial））が単一所有し（ラベルの色とフォントサイズは外観 `MarqueeAppearance` から写す）、本コントロールは自 UI の API（`FormattedText`）で測った実寸を渡して返された配置を要素へ反映する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）
@@ -88,7 +88,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成で出力する。 操作イベントは Debug、Down 直前 / Up 直後の位置は Trace で記録する。 入力判断のログ定義はコア（名前空間 `EsUtil.Feature.Marquee.Core` の `MarqueeLogMessage`）が、提示層が単一所有する設定（外観・表示スケーリング係数）の変更ログは提示層（`Feature.Marquee.Presenter` の `MarqueePresenterLogMessage`）が単一所有し、本プロジェクトはログ定義を持たない
+- ログは LoggerMessage ソース生成で出力する。 操作イベントは Debug、Down 直前 / Up 直後の位置は Trace で記録する。 入力判断のログ定義はコア（名前空間 `EsUtil.Feature.Marquee` の `MarqueeLogMessage`）が、提示層が単一所有する設定（外観・表示スケーリング係数）の変更ログは提示層（`Feature.Marquee.Presenter` の `MarqueePresenterLogMessage`）が単一所有し、本プロジェクトはログ定義を持たない
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -114,7 +114,7 @@ flowchart TB
         Hdl["MarqueeHitTarget<br/>public enum"]
         Hdl2["MarqueeInteractionState<br/>public enum"]
         Hdl3["MarqueeSnapshot<br/>public record<br/>（EsRect / EsPoint）"]
-        Frm["Marquee（partial）<br/>public の CreateRequest / ResolveGeometry<br/>Marquee.Geometry.cs<br/>（1 フレーム分の幾何の解決）"]
+        Frm["Marquee（partial）<br/>public の CreateRequest / ResolveGeometry<br/>MarqueeCore.Geometry.cs<br/>（1 フレーム分の幾何の解決）"]
     end
     subgraph DRC2["MarqueeControl プロジェクト (MarqueeControl)"]
         direction TB
@@ -178,7 +178,7 @@ flowchart TB
 - **構成（薄い層）**: 公開 API・入力の受付・効果の適用・通知の転送・描画の起動のみを集約し、判断（状態遷移・確定/キャンセル・スナップ・クリック検出・装飾の描画内容）と描画の手順はコアと描画層へ委譲する
 - **依存**: Marquee（公開ファサード）/ IMarqueeEffects / MarqueeSession（間接） / MarqueeOptions / MarqueeNotice / MarqueeGeometry（Feature.Marquee.Core）/ MarqueePresenter（描画計画と配置の写像）/ MarqueeAppearance / MarqueeDrawPlan（Feature.Marquee.Presenter）/ ICoordTransform（Platform.Core）/ ICursorService（Platform.Core の `Native`）/ ScreenConverter（App.Platform.AvaloniaUI）
 
-### 6.2 Marquee（公開ファサード・コア）
+### 6.2 MarqueeCore（公開ファサード・コア）
 
 - **分類**: ファサードクラス（`public sealed class`・コア提供。 適用パターン: Facade）
 - **責務**: Marquee の**操作の唯一の窓口**。 UI 層とホストは本型だけを参照する
@@ -187,7 +187,7 @@ flowchart TB
   - 効果の適用: `IMarqueeEffects`（UI が実装）へフォーカス・再描画・カーソル形状・ポインターキャプチャ・座標変換を要求する（適用順の単一所有）
   - ホイール操作はホストが行う（本コントロールは通知も要求も持たない。 コントロール化を前提とした処理は UI 層の責務である）
   - 通知: `Notified`（状態機械の通知をそのまま転送する）
-- **内部実装**: 状態機械 `MarqueeSession`（`internal`）を保持・利用する（幾何の解決は同じ型の `Marquee.Geometry.cs`（partial）の公開メソッド `CreateRequest` / `ResolveGeometry` として実装する）
+- **内部実装**: 状態機械 `MarqueeSession`（`internal`）を保持・利用する（幾何の解決は同じ型の `MarqueeCore.Geometry.cs`（partial）の公開メソッド `CreateRequest` / `ResolveGeometry` として実装する）
 - **可視性**: public（ファサードのみ。 内部の状態機械は `internal` で隠す）
 - **備考**: 設定・効果の適用・通知の転送・描画内容の解決を 1 型に集約したため、UI 層は自 UI の公開プロパティ・公開イベント・描画 API へつなぐだけになる（ホイールは本コントロールも提示層も扱わず、ホスト（UI 層）がビューポートへ転送する）
 
@@ -200,7 +200,7 @@ flowchart TB
   - クリップ（`MarqueeOptions.ClampToSourceBounds` + `Port.Bounds` による境界内制限。 境界 Rect 生成は `GetBoundsRect` に一元化）
   - カーソル操作（`ICursorService`）
   - nudge 終了の共通化（`EndNudge`。 `Reset` / `SetSelection` / `MarqueeSession` から共用し、カーソル再表示を委譲）
-- **可視性**: internal（本コントロールはコアの公開ファサード（`Marquee`）と公開型（`MarqueeSnapshot`）のみを使う。 `MarqueeState` / `MarqueeSession` はコアの内部実装であり参照しない）
+- **可視性**: internal（本コントロールはコアの公開ファサード（`MarqueeCore`）と公開型（`MarqueeSnapshot`）のみを使う。 `MarqueeState` / `MarqueeSession` はコアの内部実装であり参照しない）
 - **依存**: MarqueeSelection / MarqueeHitTarget / ICoordTransform（Platform.Core）/ ICursorService（Platform.Core の `Native`）
 
 ### 6.4 MarqueeSelection
@@ -223,8 +223,8 @@ flowchart TB
 - **分類**: 公開 sealed record（所属は UI 非依存の提示層）
 - **責務**: 描画に使う色・ラベルの体裁（フォントサイズ・内側余白）・枠線の太さ・表示可否の単一所有者
 - **可視性**: public（UI 実装・ホストが参照する）
-- **特徴**: 枠線の太さの安全域への補正はコアの `Marquee.Limits.CoerceBorderThickness` へ委譲する。 表示可否の述語（`ShouldShowSizeLabel` / `ShouldShowCoordLabel` / `ShouldDrawOverlay`）を持つ
-- **依存**: Feature.Marquee.Core（`Marquee.Limits`）/ Platform.Core（`EsRect`）
+- **特徴**: 枠線の太さの安全域への補正はコアの `MarqueeCore.Limits.CoerceBorderThickness` へ委譲する。 表示可否の述語（`ShouldShowSizeLabel` / `ShouldShowCoordLabel` / `ShouldDrawOverlay`）を持つ
+- **依存**: Feature.Marquee.Core（`MarqueeCore.Limits`）/ Platform.Core（`EsRect`）
 
 ### 6.7 MarqueePresenter.LabelPlan（Feature.Marquee.Presenter）
 
@@ -250,9 +250,9 @@ flowchart TB
 - **特徴**: 描画計画の項目はすべて解決済みであるため、本クラスは図形の描画 API を呼ぶだけであり、判断も計算も持たない。 色 → ブラシ・ペンは容量制限付きのキャッシュ（`App.Platform.AvaloniaUI.Imaging`）が単一所有する
 - **依存**: Avalonia（`DrawingContext`）/ Feature.Marquee.Presenter（`MarqueeDrawPlan`）/ App.Platform.AvaloniaUI（色変換・キャッシュ）
 
-### 6.10 Marquee（コアの幾何解決）
+### 6.10 MarqueeCore（コアの幾何解決）
 
-- **分類**: 公開ファサード（`public sealed partial class`）の**幾何解決の部分**（`Marquee.Geometry.cs`。 コア提供）
+- **分類**: 公開ファサード（`public sealed partial class`）の**幾何解決の部分**（`MarqueeCore.Geometry.cs`。 コア提供）
 - **責務**: 1 フレーム分の幾何（注目矩形・ハンドル・始点マーカー・マウス位置）を解決する（`MarqueeRenderRequest` → `MarqueeGeometry`）
 - **可視性**: `ResolveGeometry` / `CreateRequest` は public（写し・ホストが使う窓口）。 内部手順（ハンドル・マーカー）は private
 - **特徴**: 選択矩形と選択の有無は**セッションが単一のソース**であり、設定値には選択の状態を持たせない。 **描く値の無い項目は null / 空で返す**（注目矩形なし・選択なし・nudge 中でない）。 **表示可否は本コアの責務ではなく、提示層の外観（`MarqueeAppearance`）が単一所有する**
@@ -275,7 +275,7 @@ flowchart TB
 
 - 依存方向は**一方向の階層構造**です（層の全体像は [`src/README.md`](../README.md)）。 コア内部は MarqueeControl → Marquee（ファサード） → MarqueeSession → MarqueeState → MarqueeSelection（幾何計算はコア内部の値の振る舞いに閉じる）、提示層は MarqueeControl → MarqueePresenter（Feature.Marquee.Presenter）→ 幾何（Feature.Marquee.Core）。
 - MarqueeControl は上位 AP に**依存しない**（再利用可能）。
-- 判断（状態遷移・確定/キャンセル・スナップ・クリック検出）はコアの `Marquee`（内部の `MarqueeSession`）に集約し、UI 層は効果（`IMarqueeEffects`）を適用するだけにする。
+- 判断（状態遷移・確定/キャンセル・スナップ・クリック検出）はコアの `MarqueeCore`（内部の `MarqueeSession`）に集約し、UI 層は効果（`IMarqueeEffects`）を適用するだけにする。
 - 描画計画（層の順序・装飾矩形・文言・配置）と外観（色・フォント・枠線の太さ・表示可否）は提示層（`Feature.Marquee.Presenter` の `MarqueePresenter` / `MarqueeAppearance` / `MarqueeDrawPlan`）が単一所有し、**描画は本コントロールが自 UI の API（`DrawingContext`）で行う**（`MarqueeContextPainter`。 描画 API の抽象は持たない）。 状態（選択矩形・nudge）は MarqueeState に集約し、装飾の**判断**は持たない。
 - **サイズ・カーソル座標ラベルはコントロールがテキスト要素として配置する**（配置矩形は提示層 `Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial） が実寸から求める）。 操作・情報ラベルはホストが `Rendered` のハンドラで描く。 `Rendered` の契約は描画計画全体であるため、ホストは付加情報以外の参照もできる。
 - 座標変換は `ICoordTransform`（`Platform.Core` 提供）が担い、コントロールは変換関数を生成しない。
@@ -330,11 +330,11 @@ sequenceDiagram
 
 - コントロール自身が保持する状態（選択矩形・nudge 状態）は `ResetSelection()` で初期化します（上位 AP は状態をポーリングせず、イベントで把握）。
 - 上位 AP はコントロールを Visual Tree から除去するだけで破棄できます（所有権は上位 AP にあり、明示的な解放 API は不要）。
-- ビジュアルツリー切断時（`OnDetachedFromVisualTree`）は TopLevel キー購読・ScrollViewer 購読を解除し、コア（`Marquee.ResetSelection`）へ対話状態の初期化を要求します（nudge 中ならポインターを再表示して選択状態を初期化。 「切断」自体は UI のライフサイクルであるため、コアに専用 API は持ちません）。
+- ビジュアルツリー切断時（`OnDetachedFromVisualTree`）は TopLevel キー購読・ScrollViewer 購読を解除し、コア（`MarqueeCore.ResetSelection`）へ対話状態の初期化を要求します（nudge 中ならポインターを再表示して選択状態を初期化。 「切断」自体は UI のライフサイクルであるため、コアに専用 API は持ちません）。
 
 ## 9. ログ
 
-ログ定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`、`Feature.Marquee.Core/src/Logging/MarqueeLogMessage.cs`）と、提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が単一所有する
+ログ定義はコア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`、`Feature.Marquee.Core/src/AvaloniaUI/Logging/MarqueeLogMessage.cs`）と、提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）が単一所有する
 （入力の判断に伴うログは UI から出せず、後から出すと行の順序が変わるため）。 UI 層に固有のログ定義は持たない
 （通常ホイールのスクロールログは、スクロールの実行をホスト（連携 `ScrollViewer` 等）へ委ねる形になり、
 本コントロール内に記録すべき判断が無くなったため削除した）。
@@ -343,7 +343,7 @@ sequenceDiagram
 
 ### 9.1 ログ定義一覧
 
-#### コア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）
+#### コア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
@@ -358,7 +358,7 @@ sequenceDiagram
 | `Trace` | `MarqueeLogMessage.LogPositionAfterUp` | Up 直後のマウス位置 |
 | `Debug` | `MarqueeLogMessage.LogSettingChanged` | 設定値変更（変更前後） |
 
-#### 提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）
+#### 提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |

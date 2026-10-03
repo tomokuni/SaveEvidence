@@ -43,7 +43,7 @@
 | `OverlayRectLayout` | 静的クラス | 矩形情報 → 描画入力（`OverlayRectFrame`）の解決（負サイズのクランプ・太さの下限・破線の判定） |
 | `OverlayRectFrame` | record struct | 矩形 1 個分の描画入力（配置・太さ・半幅・破線の判定と長さ・色・描画可否） |
 | `FadeMaskDragRectMode` | 列挙型 | 領域選択の複合コントロールの動作モード（切り出し / 範囲選択 / スクリーン選択 / ウィンドウ選択） |
-| `FadeMaskDragRectOptions` | record | 複合コントロールの設定の単一値（`Marquee` / `Labels` / `LoupeCore` / 破線の色 2 / ルーペオフセット） |
+| `FadeMaskDragRectOptions` | record | 複合コントロールの設定の単一値（`MarqueeCore` / `Labels` / `LoupeCore` / 破線の色 2 / ルーペオフセット） |
 | `FadeMaskDragRectLabelOptions` | record | 付加情報ラベル（操作・情報）の外観（表示可否・寸法・色）。 文言の生成と描画はホストが行う |
 | `ZoomViewSession` | クラス | 切り出しビューの画像ビューポートの状態（ズーム・オフセット・設定・表示条件）を保持し、入力の解釈と判断を単一所有する |
 | `ZoomOptions` | クラス | ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をまとめた検証付き不変値 |
@@ -444,7 +444,7 @@ public readonly record struct OverlayRect(
 
 | メンバー | 型 | 既定値 | 内容 |
 | --- | --- | --- | --- |
-| `Marquee` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の設定（選択の判断に使う項目のみ。 色は含まない） |
+| `MarqueeCore` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の設定（選択の判断に使う項目のみ。 色は含まない） |
 | `Labels` | `FadeMaskDragRectLabelOptions` | 既定値 | ホストが描く操作・情報ラベルの外観 |
 | `LoupeCore` | `LoupeOptions` | `LoupeOptions.Default` | ルーペの設定（拡大率・表示サイズ・寸法） |
 | `SelectionRectColorA` | `System.Drawing.Color` | 白 | ルーペ画像上の選択矩形破線の色 A（描画開始色） |

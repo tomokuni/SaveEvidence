@@ -1,13 +1,12 @@
-using EsUtil.Feature.Marquee.Core.Contract;
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter;
-using EsUtil.Feature.Marquee.Presenter.Setting;
-using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Contract;
+using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee;
+using EsUtil.Feature.Marquee.Drawing;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
-namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.Presentation;
+namespace EsUtil.Feature.Marquee.AvaloniaUI.Sample.Presentation;
 
 /// <summary>ガイド線付きの見た目を提供する派生提示層（<see cref="MarqueePresenter"/> の拡張の見本）。</summary>
 /// <remarks>

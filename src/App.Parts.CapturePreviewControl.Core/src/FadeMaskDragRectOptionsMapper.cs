@@ -1,4 +1,4 @@
-using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Setting;
 using EsUtil.Feature.Loupe.Setting;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;

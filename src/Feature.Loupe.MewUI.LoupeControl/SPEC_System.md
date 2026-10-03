@@ -223,12 +223,12 @@ sequenceDiagram
    表示可否と枠線の太さが外観に集約されているため、両 UI の見た目が一致する
    （従来は Avalonia が既定で十字線を描き MewUI は描かないという既定値のドリフトがあった）。
 5. **位置を持たない**。 表示位置は「親領域サイズ」「中心座標」「オフセット」に依存するホスト側の関心事であり、
-   計算はコアの公開ファサード（`Loupe.ResolveLayout`）が単一所有する。 コントロールは入力と描画のみを担う。
+   計算はコアの公開ファサード（`LoupeCore.ResolveLayout`）が単一所有する。 コントロールは入力と描画のみを担う。
 6. **DPI を自動追従させる**。 `OnDpiChanged` で `ClientToPixelScaling` を更新し、ホストが DPI を扱わずに済むようにした。
 7. **`Options` はレイアウトにも影響する**。 `MeasureContent` が要求サイズを返すため、
 プロパティへ `MewPropertyOptions.AffectsLayout` を付与して再測定を促す（未付与では変更が反映されない）。
 描画サイズは `Options.RequestedSize` × `ClientToPixelScaling` を物理ピクセルへ換算する
-   （DIP → 物理ピクセルの換算はコアのファサード（`Loupe.ResolveGeometry`）が単一所有する。 本コントロールは表示サイズをキャンバスの大きさから導くため、
+   （DIP → 物理ピクセルの換算はコアのファサード（`LoupeCore.ResolveGeometry`）が単一所有する。 本コントロールは表示サイズをキャンバスの大きさから導くため、
    キャンバスと描画サイズは常に一致し、領域に合わせた縮小は行わない）。
 8. **静的画像では連続再描画を無効化する**。 `ContinuousAnimation` を `false` にし、プロパティ変更時のみ再描画する。
 9. **座標ラベルはコントロールがテキスト要素として表示する**（両 UI 共通）。 文言は提示層の `LoupePresenter`（`LabelTexts` partial）、表示可否と体裁（フォントサイズ・色・角丸）は外観（`LoupeAppearance`）、実寸 → 配置の写像は同層の `LoupePresenter`（`LabelPlan` partial） が単一所有し、コントロールは自 UI の実寸（`SkiaText.Measure`）を渡して要素を配置する（ラベル要素は子の末尾に置かれ、子は親より後に描かれるため常に最上位）。 Avalonia 版も同じ契約を使い、測定 API（`FormattedText`）だけが異なる。

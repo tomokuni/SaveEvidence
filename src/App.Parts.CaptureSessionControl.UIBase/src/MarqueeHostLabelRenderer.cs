@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee.Presenter.Setting;
-using EsUtil.Feature.Marquee.Presenter.Label;
+using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Label;
 
 namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 

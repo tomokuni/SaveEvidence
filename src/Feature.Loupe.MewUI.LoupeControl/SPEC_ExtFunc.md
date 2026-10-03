@@ -111,7 +111,7 @@
 | `CaptureTopLeft` | `EsPoint?` | 切り出し領域の左上（対象座標）。 中心未設定時は null（オーバーレイを描画できない） |
 | `Scale` | `double` | 対象座標 → ルーペ画像ピクセル座標の変換係数（拡大率と同値。 DPI スケーリングの影響を受けない） |
 
-描画入力（`LoupeGeometry`）の組み立てはコアのファサード（`Loupe.ResolveGeometry`）が単一所有し、コントロールは現在の状態を渡すだけです。
+描画入力（`LoupeGeometry`）の組み立てはコアのファサード（`LoupeCore.ResolveGeometry`）が単一所有し、コントロールは現在の状態を渡すだけです。
 
 オーバーレイの描画位置は `(対象座標 − CaptureTopLeft) × Scale` で求めます（切り出し領域と倍率の計算は Avalonia 版と同じコアの計算を共有します）。
 

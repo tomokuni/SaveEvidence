@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl;
+using EsUtil.Feature.Marquee.AvaloniaUI;
 
-namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.Presentation;
+namespace EsUtil.Feature.Marquee.AvaloniaUI.Sample.Presentation;
 
 /// <summary>派生提示層（<see cref="GuideMarqueePresenter"/>）の描画計画を描く見本。</summary>
 /// <remarks>

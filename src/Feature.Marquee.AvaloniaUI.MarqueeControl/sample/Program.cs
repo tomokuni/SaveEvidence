@@ -1,6 +1,6 @@
 using Avalonia;
 
-namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample;
+namespace EsUtil.Feature.Marquee.AvaloniaUI.Sample;
 
 /// <summary>アプリケーションのエントリポイント。</summary>
 internal static class Program

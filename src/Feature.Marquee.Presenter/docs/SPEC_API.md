@@ -6,7 +6,7 @@
 
 - [1. 前提条件](#1-前提条件)
 - [2. 公開 API](#2-公開-api)
-  - [2.1 `EsUtil.Feature.Marquee.Presenter`（提示・外観）](#21-esutilfeaturemarqueepresenter提示外観)
+  - [2.1 `EsUtil.Feature.Marquee`（提示・外観）](#21-esutilfeaturemarquee提示外観)
   - [2.2 `MarqueePresenter` のメンバー](#22-marqueepresenter-のメンバー)
   - [2.3 `MarqueeDrawPlan` のメンバー](#23-marqueedrawplan-のメンバー)
   - [2.4 `MarqueeAppearance` のメンバー（外観の単一値）](#24-marqueeappearance-のメンバー外観の単一値)
@@ -30,9 +30,9 @@
 
 ## 2. 公開 API
 
-### 2.1 `EsUtil.Feature.Marquee.Presenter`（提示・外観）
+### 2.1 `EsUtil.Feature.Marquee`（提示・外観）
 
-ルート直下（`EsUtil.Feature.Marquee.Presenter`）に置くのはファサード（`MarqueePresenter`）だけです。 以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
+ルート直下（`EsUtil.Feature.Marquee`）に置くのはファサード（`MarqueePresenter`）だけです。 以降の型は用途別フォルダの名前空間（`.Setting` / `.Drawing` / `.Label` / `.Logging`）に属します（**名前空間はフォルダに追従**）。
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -106,7 +106,7 @@
 | 表示可否 | `ShowOverlay` / `ShowOuterBorder` | `bool` | `true` |
 | 表示可否 | `ShowFullOverlay` | `bool` | `false`（注目矩形が無くても全面を暗転する） |
 | 表示可否 | `ShowInnerFill` / `ShowInnerBorder` | `bool` | `false` |
-| 太さ | `OuterBorderThickness` / `InnerBorderThickness` | `double` | 2.0（0.5〜64 へ補正済み。 安全域はコアの `Marquee.Limits` が単一所有する） |
+| 太さ | `OuterBorderThickness` / `InnerBorderThickness` | `double` | 2.0（0.5〜64 へ補正済み。 安全域はコアの `MarqueeCore.Limits` が単一所有する） |
 
 色は UI 非依存の `System.Drawing.Color` です（各 UI の色型への変換は各 UI の描画境界で行う）。
 **描画の可否は色のアルファでは決まりません**（本型の明示フラグが単一所有します）。
@@ -158,8 +158,8 @@
 ## 4. 使用例
 
 ```csharp
-using EsUtil.Feature.Marquee.Core;
-using EsUtil.Feature.Marquee.Presenter.Setting;
+using EsUtil.Feature.Marquee;
+using EsUtil.Feature.Marquee.Setting;
 
 // 外観（色・フォント・枠線の太さ・表示可否）を差し替える
 var appearance = MarqueeAppearance.Default with
@@ -168,7 +168,7 @@ var appearance = MarqueeAppearance.Default with
     ShowOverlay = false,
 };
 
-var presenter = new MarqueePresenter(new Marquee(effects))
+var presenter = new MarqueePresenter(new MarqueeCore(effects))
 {
     Appearance = appearance,
     DisplayScaleScaling = 1.0,

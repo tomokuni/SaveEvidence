@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RootNamespace>EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample</RootNamespace>
+    <RootNamespace>EsUtil.Feature.Marquee.AvaloniaUI.Sample</RootNamespace>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Feature.Marquee.AvaloniaUI.MarqueeControl.csproj" />
+    <ProjectReference Include="..\src\AvaloniaUI\Feature.Marquee.AvaloniaUI.MarqueeControl.csproj" />
   </ItemGroup>
 
 </Project>

@@ -48,7 +48,7 @@ UI 非依存のコア（選択範囲を拡大表示するルーペの計算）�
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
-| `LoupeGeometry` | record struct | 1 フレーム分の描画の幾何（コア⇔UI の契約）。</br>UI 層は値の組を自分で組み立てず、`Loupe.ResolveGeometry` が返した値を受け取る |
+| `LoupeGeometry` | record struct | 1 フレーム分の描画の幾何（コア⇔UI の契約）。</br>UI 層は値の組を自分で組み立てず、`LoupeCore.ResolveGeometry` が返した値を受け取る |
 | `LoupeMagnifiedImage` | record struct | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。</br>`LoupeGeometry` の導出値 |
 
 ### 2.3 `EsUtil.Feature.Loupe.Setting`
@@ -159,7 +159,7 @@ var scale = geometry.ZoomLevel;                 // 対象座標 → ルーペ画
 
 ### 3.1 描画の幾何（`LoupeGeometry`）
 
-1 フレーム分の描画の幾何（**コア⇔UI の契約**）です。 **UI 層は本値を自分で組み立てません**（設定・環境値から描画に必要な形へ写す組み立て順は `Loupe.ResolveGeometry` が単一所有します）。 UI 層は本値を描画層（上位の層）へ渡すだけで、描画に必要な値の単位と換算（DIP → 物理ピクセル）を持ちません。
+1 フレーム分の描画の幾何（**コア⇔UI の契約**）です。 **UI 層は本値を自分で組み立てません**（設定・環境値から描画に必要な形へ写す組み立て順は `LoupeCore.ResolveGeometry` が単一所有します）。 UI 層は本値を描画層（上位の層）へ渡すだけで、描画に必要な値の単位と換算（DIP → 物理ピクセル）を持ちません。
 
 **役割の分担**: ホストが設定する入力（設定値・環境値）は UI の公開プロパティ（`Options` / `ClientToPixelScaling`）が持ち、本値はそれらから**描画 1 フレーム分に必要な形へ解決したスナップショット**です（提示層は公開プロパティを読まない）。
 
@@ -177,7 +177,7 @@ var scale = geometry.ZoomLevel;                 // 対象座標 → ルーペ画
 
 | メソッド | 説明 |
 | --- | --- |
-| （なし） | ファサードの `Loupe.ResolveGeometry` が唯一の生成元である（UI 層は本値を組み立てない） |
+| （なし） | ファサードの `LoupeCore.ResolveGeometry` が唯一の生成元である（UI 層は本値を組み立てない） |
 
 拡大元画像は UI ごとに型が異なるため本値に含めず、描画実装が解決した `EsBitmap` を別引数として渡します（複数の UI が同じ手順で本値を受け取ります）。
 

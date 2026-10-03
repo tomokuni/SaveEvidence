@@ -6,7 +6,7 @@
 
 選択矩形の幾何計算・状態機械・ **入力の解釈（判断）** を 1 箇所に集約し、UI ごとの実装差から切り離します。
 
-**操作の唯一の窓口は公開ファサード `Marquee`** です。 UI 層とホストは本型だけを参照します（状態機械と幾何の導出は内部実装です）。
+**操作の唯一の窓口は公開ファサード `MarqueeCore`** です。 UI 層とホストは本型だけを参照します（状態機械と幾何の導出は内部実装です）。
 
 **描画は本コアの関心事ではありません**。 描画 API も描画ポートも持たず、返すのは幾何（注目矩形・ハンドル・始点マーカー）だけです。 色・フォント・枠線の太さ・表示可否・文言・描画順は描画層（本コアを参照する上位の層）が単一所有します。
 
@@ -17,10 +17,10 @@ UI 非依存のためヘッドレス実行が不要で、`[Fact]` で並列実�
 ## 2. 使い方
 
 ```csharp
-using EsUtil.Feature.Marquee.Core;
-using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee;
+using EsUtil.Feature.Marquee.Setting;
 
-var marquee = new Marquee(effects, cursorService, new MarqueeOptions { HandleSize = 8 });
+var marquee = new MarqueeCore(effects, cursorService, new MarqueeOptions { HandleSize = 8 });
 marquee.Log = logger;                                          // null は NullLogger へ吸収される
 marquee.SetCoordTransform(CoordTransform.Identity);            // 対象の境界（画像サイズ等）
 
@@ -43,7 +43,7 @@ marquee.Notified += (_, notice) => Raise(notice);
 
 | グループ | 型 |
 | --- | --- |
-| ファサード | `Marquee`（操作の唯一の窓口） / `Marquee.Limits`（既定値・安全域・未設定の解決規則） |
+| ファサード | `MarqueeCore`（操作の唯一の窓口） / `MarqueeCore.Limits`（既定値・安全域・未設定の解決規則） |
 | 幾何 | `Drawing.MarqueeGeometry` / `Drawing.MarqueeHandles` / `Drawing.MarqueeMarker` / `Drawing.MarqueeRenderRequest` |
 | 効果と通知 | `Contract.IMarqueeEffects` / `Contract.MarqueeEffectsBase` / `Interaction.MarqueeNotice` / `Interaction.MarqueeNoticeKind` / `Interaction.MarqueeCursorKind` |
 | 状態の値 | `Interaction.MarqueeHitTarget` / `Interaction.MarqueeInteractionState` / `Interaction.MarqueeSnapshot` |

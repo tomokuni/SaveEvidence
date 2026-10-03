@@ -5,7 +5,7 @@
 
 ## 特徴
 
-- **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `Feature.Marquee.Core` が単一所有します（UI 層は公開ファサード `Marquee` だけを参照し、内部の状態機械・フレーム解決には触れません）。
+- **コア共有**: 選択矩形の幾何計算・状態機械・**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）**は `Feature.Marquee.Core` が単一所有します（UI 層は公開ファサード `MarqueeCore` だけを参照し、内部の状態機械・フレーム解決には触れません）。
   Avalonia 版と MewUI 版の挙動は同じ計算に基づきます。
 - **直接描画**: 中間ビットマップを経由せず、`SkiaCanvasView` のキャンバスへ直接描画します。 描画計画（層の順序・装飾矩形・文言・配置）は提示層（`Feature.Marquee.Presenter`）が単一所有し、描画は自 UI の描画 API（Skia）で行います。
 - **外観の設定（`Appearance`）**: 色・フォントサイズ・枠線の太さ・表示可否は**描画にだけ必要な設定**のためコアには含めず、外観（`Feature.Marquee.Presenter` の `MarqueeAppearance`）が単一所有します。 `Appearance` プロパティで指定し（既定は `MarqueeAppearance.Default`）、部分変更は `MarqueeAppearance.Default with { ... }` で行います。 **描くかどうかは色のアルファではなく外観の明示フラグ（`ShowOverlay` / `ShowOuterBorder` / `ShowInnerFill` / `ShowInnerBorder` / `ShowFullOverlay`）が決めます**。
@@ -25,10 +25,10 @@ MewUI は API が安定化中（0.x）のため、パッケージのバージョ
 ## 使い方
 
 ```csharp
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Core.Decoration;
-using EsUtil.Feature.Marquee.MewUI.MarqueeControl;
-using EsUtil.Feature.Marquee.Presenter.Setting;
+using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Decoration;
+using EsUtil.Feature.Marquee.MewUI;
+using EsUtil.Feature.Marquee.Setting;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 
@@ -102,7 +102,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の**計算に必要な設定**（寸法・対話パラメータ）。 変更すると再描画され、対話パラメータはコアへ伝搬する（**色・表示可否は含まない**） |
-| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（`EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）。 変更すると次の描画で提示層が新しい外観で描画計画を解決する |
+| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（`EsUtil.Feature.Marquee.Setting.MarqueeAppearance`）。 変更すると次の描画で提示層が新しい外観で描画計画を解決する |
 | `ClientToPixelScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新）。 描画は描画面と表示領域の比を使うため、追加直後で未更新でも画像と同じ倍率になる |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。 Avalonia 版と同一）:
@@ -116,7 +116,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `ClampToSourceBounds` | `bool` | `true` | 対象の境界外の選択を禁止する |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP） |
 
-色とラベルの体裁（フォントサイズ・内側余白）に加え、**表示可否（ハンドル・ラベル・暗転・外枠・内側の塗りと枠線）も外観の単一値 `MarqueeAppearance`（`EsUtil.Feature.Marquee.Presenter.Setting`）が単一所有します**。
+色とラベルの体裁（フォントサイズ・内側余白）に加え、**表示可否（ハンドル・ラベル・暗転・外枠・内側の塗りと枠線）も外観の単一値 `MarqueeAppearance`（`EsUtil.Feature.Marquee.Setting`）が単一所有します**。
 
 `MarqueeAppearance` の項目（既定値は本型が単一所有する）:
 
@@ -172,14 +172,14 @@ dotnet test src/Feature.Marquee.MewUI.MarqueeControl/tests/Feature.Marquee.MewUI
 ## 操作ログ
 
 `Log` プロパティへ `ILogger` を設定すると、操作ログを出力します（既定は出力なし）。 書式・レベルは Avalonia 版と同一です。  
-ログはコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が定義し、ロガーはファサード（`Marquee.Log`）が保持します。 本プロジェクトはログ定義を持ちません。
+ログはコア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）が定義し、ロガーはファサード（`MarqueeCore.Log`）が保持します。 本プロジェクトはログ定義を持ちません。
 
 | レベル | 出力内容 |
 | --- | --- |
 | Debug | MouseDown / MouseUp / DoubleClick / DragStart / KeyDown / ConfirmRequested / CancelRequested / 設定変更（コア）/ 外観・表示スケーリングの変更（提示層） |
 | Trace | MouseDown 直前の位置 / MouseUp 直後の位置 |
 
-定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が持ち、本プロジェクトは定義を持ちません。
+定義はコア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）と提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）が持ち、本プロジェクトは定義を持ちません。
 
 ## 未対応
 

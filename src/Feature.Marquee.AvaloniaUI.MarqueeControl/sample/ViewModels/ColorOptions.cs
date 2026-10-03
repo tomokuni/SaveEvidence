@@ -1,6 +1,6 @@
 using Avalonia.Media;
 
-namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.ViewModels;
+namespace EsUtil.Feature.Marquee.AvaloniaUI.Sample.ViewModels;
 
 /// <summary>色選択肢の一覧を提供する。</summary>
 public static class ColorOptions

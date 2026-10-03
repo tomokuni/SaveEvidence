@@ -471,7 +471,7 @@ sequenceDiagram
     participant OS as MewUI（マウス入力）
     participant CP as CapturePage
     participant OH as OverlayHost
-    participant LP as Loupe.ResolveLayout（コア）
+    participant LP as LoupeCore.ResolveLayout（コア）
     participant LV as LoupeControl
 
     OS->>CP: MouseMove（プレビューのローカル DIP）

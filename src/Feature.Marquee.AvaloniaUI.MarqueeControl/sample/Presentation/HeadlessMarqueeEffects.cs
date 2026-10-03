@@ -1,8 +1,8 @@
-using EsUtil.Feature.Marquee.Core.Contract;
-using EsUtil.Feature.Marquee.Core.Interaction;
+using EsUtil.Feature.Marquee.Contract;
+using EsUtil.Feature.Marquee.Interaction;
 using EsUtil.Platform.Core.Geometry;
 
-namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.Presentation;
+namespace EsUtil.Feature.Marquee.AvaloniaUI.Sample.Presentation;
 
 /// <summary>画面を持たない提示層（拡張の見本）に必要な効果の適用先（すべて何もしない）。</summary>
 /// <remarks>

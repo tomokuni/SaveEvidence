@@ -9,7 +9,7 @@ MarqueeControl（MewUI 版）のシステム概要・アーキテクチャ・依
 
 コアが担う範囲（選択矩形の正規化・ハンドル位置・ヒットテスト・ドラッグ変形・nudge・境界クリップ・対話状態の合成に加えて、
 nudge セッション・ダブルクリックの確定/キャンセル・ハンドルのスナップ・クリック検出・最小サイズによるキャンセルの判断）は
-両 UI で完全に共通であり、本プロジェクトは入力をコア（公開ファサード `Marquee`）へ通知し、返された効果を適用し、描画計画（提示層の `MarqueePresenter.ResolveDrawPlan`）を自 UI の描画 API（Skia）で描きます。
+両 UI で完全に共通であり、本プロジェクトは入力をコア（公開ファサード `MarqueeCore`）へ通知し、返された効果を適用し、描画計画（提示層の `MarqueePresenter.ResolveDrawPlan`）を自 UI の描画 API（Skia）で描きます。
 
 ## 技術スタック
 
@@ -43,7 +43,7 @@ UI 層（Feature.Marquee.AvaloniaUI.MarqueeControl / Feature.Marquee.MewUI.Marqu
 
 | 層 | 責務 |
 | --- | --- |
-| `Feature.Marquee.Core` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成（効果の適用順、ログの保持を含む）**。 公開ファサード `Marquee` を唯一の窓口とし、状態機械と幾何の解決は内部契約（`internal`）とする |
+| `Feature.Marquee.Core` | 選択矩形の幾何計算、ヒットテスト、ドラッグ変形、nudge、境界クリップ、対話状態の合成、スナップショット生成、**入力の解釈（nudge セッション・確定/キャンセル・スナップ・クリック検出・最小サイズ判定）と通知・効果の生成（効果の適用順、ログの保持を含む）**。 公開ファサード `MarqueeCore` を唯一の窓口とし、状態機械と幾何の解決は内部契約（`internal`）とする |
 | `Feature.Marquee.Presenter` | 描画計画（層の順序・装飾矩形・文言・配置）と外観（`MarqueeAppearance`）とラベル計画（実寸 → 配置指示）。 UI 非依存であり、UI フレームワークを参照しない |
 | `Feature.Marquee.MewUI.MarqueeControl` | 入力（マウス・キー）をコア型へ変換して提示層へ通知する、`IMarqueeEffects` を実装して要求された効果（再描画・フォーカス・マウスキャプチャ・カーソル形状/操作）を適用する、通知を公開イベントへ転送する、**描画計画を自 UI の描画 API（Skia）で描く**、DPI の追従 |
 | ホスト | 座標変換ポートの設定、選択の復元・確定・キャンセル、重ね順の管理、ビューポート変化の通知 |
@@ -53,7 +53,7 @@ UI 層（Feature.Marquee.AvaloniaUI.MarqueeControl / Feature.Marquee.MewUI.Marqu
 | 判断 | 理由 |
 | --- | --- |
 | 状態機械（`MarqueeState`）と入力の判断（`MarqueeSession`）をコアに置き、UI 側は入力の変換と効果の適用のみを行う | 本コントロールの本体は「状態遷移 + 幾何 + 入力の解釈」であり、UI に残すと MewUI 版で丸ごと書き直しになる |
-| コアの操作を公開ファサード `Marquee` に一本化し、状態機械とフレーム解決を `internal` にする | 操作の入口が 1 つになり、UI 層がコアの内部契約へ踏み込む余地がなくなる（両 UI で同じ窓口を使う） |
+| コアの操作を公開ファサード `MarqueeCore` に一本化し、状態機械とフレーム解決を `internal` にする | 操作の入口が 1 つになり、UI 層がコアの内部契約へ踏み込む余地がなくなる（両 UI で同じ窓口を使う） |
 | イベント引数をコア型（`EsPoint` / `EsRect`）で公開する | コアの状態機械と同一の型になり境界変換が不要になる。 MewUI の `Rect` は負のサイズを 0 にクランプするため、`EsRect` のほうが安全 |
 | カーソルサービスの既定実装の解決を UI 層で行う | コアは既定実装（`Native.Win`）を知らず、抽象と `null` のみを扱う（既定実装の選択は組み込み先＝UI 層の責務） |
 | `SkiaCanvasView`（`Control` 系）を基底にする | 画像の上へ重ねるオーバーレイであり、子要素を持たない。 背景を塗らないため下の画像が透ける |
@@ -119,7 +119,7 @@ classDiagram
         -ToScreen(sourcePos) EsPointInt
         -CaptureMouse(capture) void
     }
-    class Marquee {
+    class MarqueeCore {
         <<Feature.Marquee.Core / 公開ファサード>>
         +Press(pos, clickCount) void
         +Move(pos) void
@@ -199,7 +199,7 @@ classDiagram
           +bool ClampToSourceBounds
       }
       class MarqueeLimits {
-          <<Feature.Marquee.Core / Marquee.Limits>>
+          <<Feature.Marquee.Core / MarqueeCore.Limits>>
           +CoerceHandleSize(value)$ double
           +CoerceMarkerLength(value)$ double
           +CoerceHandleHitRadius(value)$ double
@@ -403,5 +403,5 @@ OnPaintSurface(canvas, info)
 | --- | --- |
 | `ScrollViewer` の自動連携 | ホストが変化を検知して `RefreshOverlay()` を呼ぶ方式で代替 |
 | フォーカス非依存の矢印キー nudge | フォーカス依存で実装（`TopLevel` のキー購読は行わない） |
-| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`EsUtil.Feature.Marquee.Core.Logging.MarqueeLogMessage`）が所有し、本層が所有する設定（外観・表示スケーリング係数）の変更ログは提示層（`EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage`）が所有する。 書式・レベルとも Avalonia 版と同じ） |
+| 通常ホイールのスクロールログ | スクロールの実処理はホストが担うため出力しない（操作ログの定義はコア（`EsUtil.Feature.Marquee.Logging.MarqueeLogMessage`）が所有し、本層が所有する設定（外観・表示スケーリング係数）の変更ログは提示層（`EsUtil.Feature.Marquee.Logging.MarqueePresenterLogMessage`）が所有する。 書式・レベルとも Avalonia 版と同じ） |
 | 実ウィンドウへの組み込み | `App.Parts.CapturePreviewControl.MewUI` を経由して配線済み（撮影・切り出しの両方） |

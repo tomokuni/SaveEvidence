@@ -39,19 +39,19 @@
     <Project Path="src/ColorPickerControl.AvaloniaUI/tests/ColorPickerControl.AvaloniaUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Feature.Marquee.Core/">
-    <Project Path="src/Feature.Marquee.Core/src/Feature.Marquee.Core.csproj" />
-    <Project Path="src/Feature.Marquee.Core/tests/Feature.Marquee.Core.Tests.csproj" />
+    <Project Path="src/Feature.Marquee.Core/src/Core/Feature.Marquee.Core.csproj" />
+    <Project Path="src/Feature.Marquee.Core/tests/Core/Feature.Marquee.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Feature.Marquee.Core/src/" />
+  <Folder Name="/src/Feature.Marquee.Core/src/Core/" />
   <Folder Name="/src/Feature.Marquee.Presenter/">
-    <Project Path="src/Feature.Marquee.Presenter/src/Feature.Marquee.Presenter.csproj" />
-    <Project Path="src/Feature.Marquee.Presenter/tests/Feature.Marquee.Presenter.Tests.csproj" />
+    <Project Path="src/Feature.Marquee.Presenter/src/Presenter/Feature.Marquee.Presenter.csproj" />
+    <Project Path="src/Feature.Marquee.Presenter/tests/Presenter/Feature.Marquee.Presenter.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Feature.Marquee.MewUI.MarqueeControl/">
-    <Project Path="src/Feature.Marquee.MewUI.MarqueeControl/src/Feature.Marquee.MewUI.MarqueeControl.csproj" />
-    <Project Path="src/Feature.Marquee.MewUI.MarqueeControl/tests/Feature.Marquee.MewUI.MarqueeControl.Tests.csproj" />
+    <Project Path="src/Feature.Marquee.MewUI.MarqueeControl/src/MewUI/Feature.Marquee.MewUI.MarqueeControl.csproj" />
+    <Project Path="src/Feature.Marquee.MewUI.MarqueeControl/tests/MewUI/Feature.Marquee.MewUI.MarqueeControl.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Feature.Marquee.MewUI.MarqueeControl/src/" />
+  <Folder Name="/src/Feature.Marquee.MewUI.MarqueeControl/src/MewUI/" />
   <Folder Name="/src/Feature.Loupe.Presenter/">
     <Project Path="src/Feature.Loupe.Presenter/src/Presenter/Feature.Loupe.Presenter.csproj" />
     <Project Path="src/Feature.Loupe.Presenter/tests/Presenter/Feature.Loupe.Presenter.Tests.csproj" />
@@ -59,8 +59,8 @@
   <Folder Name="/src/Feature.Loupe.Presenter/src/Presenter/" />
   <Folder Name="/src/Feature.Marquee.AvaloniaUI.MarqueeControl/">
     <Project Path="src/Feature.Marquee.AvaloniaUI.MarqueeControl/sample/Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.csproj" />
-    <Project Path="src/Feature.Marquee.AvaloniaUI.MarqueeControl/src/Feature.Marquee.AvaloniaUI.MarqueeControl.csproj" />
-    <Project Path="src/Feature.Marquee.AvaloniaUI.MarqueeControl/tests/Feature.Marquee.AvaloniaUI.MarqueeControl.Tests.csproj" />
+    <Project Path="src/Feature.Marquee.AvaloniaUI.MarqueeControl/src/AvaloniaUI/Feature.Marquee.AvaloniaUI.MarqueeControl.csproj" />
+    <Project Path="src/Feature.Marquee.AvaloniaUI.MarqueeControl/tests/AvaloniaUI/Feature.Marquee.AvaloniaUI.MarqueeControl.Tests.csproj" />
   </Folder>
   <Folder Name="/src/LineDetection/">
     <Project Path="src/LineDetection/sample/LineDetection.Sample.csproj" />
@@ -92,7 +92,7 @@
     <Project Path="src/App.Platform.MewUI/tests/App.Platform.MewUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/App.Platform.MewUI/src/" />
-  <Folder Name="/src/Feature.Marquee.Presenter/src/" />
+  <Folder Name="/src/Feature.Marquee.Presenter/src/Presenter/" />
   <Folder Name="/src/App.Platform.AvaloniaUI/">
     <Project Path="src/App.Platform.AvaloniaUI/src/App.Platform.AvaloniaUI.csproj" />
     <Project Path="src/App.Platform.AvaloniaUI/tests/App.Platform.AvaloniaUI.Tests.csproj" />

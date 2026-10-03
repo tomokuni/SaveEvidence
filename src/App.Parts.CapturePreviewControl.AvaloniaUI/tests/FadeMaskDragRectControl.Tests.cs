@@ -8,14 +8,13 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
-using EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl;
+using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Feature.Loupe.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
+using EsUtil.Feature.Marquee.Setting;
 using EsUtil.Platform.Core.Coord;
 using Xunit;
-using EsUtil.Feature.Marquee.Core.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
@@ -362,7 +361,7 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         var rect = new Rect(20, 30, 100, 80);
 
-        // Marquee.SetSelection → SelectionChanged 発火 → 複合コントロールがレンダラーへ同期
+        // MarqueeCore.SetSelection → SelectionChanged 発火 → 複合コントロールがレンダラーへ同期
         control.Marquee.SetSelection(rect);
 
         Assert.Equal(rect, control.SelectionSourceRect);
@@ -657,7 +656,7 @@ public class FadeMaskDragRectControlTests
     /// <param name="control">対象のコントロール。</param>
     /// <returns>設定されている座標変換ポート。 未設定の場合は null。</returns>
     /// <remarks>
-    /// ポートはコアのファサード（<c>Marquee</c> / <c>LoupeCore</c>）が単一所有し、コントロールはファサードへ委譲するだけである。<br/>
+    /// ポートはコアのファサード（<c>MarqueeCore</c> / <c>LoupeCore</c>）が単一所有し、コントロールはファサードへ委譲するだけである。<br/>
     /// 選択矩形コントロールもルーペコントロールも提示層（Presenter）を保持し、その内部にコアのファサード（<c>_core</c>）を持つため、<br/>
     /// 検証では提示層の内部フィールドを経由してコアまで辿る。
     /// </remarks>
@@ -687,7 +686,7 @@ public class FadeMaskDragRectControlTests
         Assert.False(control.HasSelection);
         Assert.Equal(default, control.SelectionSourceRect);
 
-        // 選択時: HasSelection = true かつ矩形が同期される（Marquee.SetSelection → SelectionChanged → 同期）
+        // 選択時: HasSelection = true かつ矩形が同期される（MarqueeCore.SetSelection → SelectionChanged → 同期）
         control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
         Assert.True(control.HasSelection);
         Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionSourceRect);
@@ -930,7 +929,7 @@ public class FadeMaskDragRectControlTests
 
         control.ClearLoupe();
 
-        // Loupe.Clear は非表示（+ Bitmap 解放）を担う（IsVisible のみ公開検証。 Bitmap 解放は LoupeControl の責務）
+        // LoupeCore.Clear は非表示（+ Bitmap 解放）を担う（IsVisible のみ公開検証。 Bitmap 解放は LoupeControl の責務）
         Assert.False(control.Loupe.IsVisible);
         window.Close();
     }

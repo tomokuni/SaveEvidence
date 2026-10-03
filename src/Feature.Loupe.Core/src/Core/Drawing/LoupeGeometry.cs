@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 namespace EsUtil.Feature.Loupe.Drawing;
 
 /// <summary>ルーペの描画 1 フレーム分の幾何（コアが責任を持つ値の全量）。</summary>
-/// <param name="Center">拡大中心（対象座標）。 ファサードの <c>Loupe.CenterPoint</c>（UI が設定する状態）を 1 フレーム分の幾何へ写した値である。 未設定は null（切り出し領域と中心座標ラベルの基準を持たない）。</param>
+/// <param name="Center">拡大中心（対象座標）。 ファサードの <c>LoupeCore.CenterPoint</c>（UI が設定する状態）を 1 フレーム分の幾何へ写した値である。 未設定は null（切り出し領域と中心座標ラベルの基準を持たない）。</param>
 /// <param name="ClientSize">ルーペの一辺の表示サイズ（DIP。 ラベルの位置の基準であり、物理ピクセルサイズの換算元）。</param>
 /// <param name="ClientPixelSize">ルーペの一辺のサイズ（物理ピクセル。 切り上げ・最低 1）。 描画先の表面は本値と同じ大きさで用意する（呼び出し側の責務）。</param>
 /// <param name="ClientToPixelScaling">表示 DIP → 物理ピクセルのスケーリング係数（環境値）。</param>

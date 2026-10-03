@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace EsUtil.Feature.Marquee.AvaloniaUI.MarqueeControl.Sample.ViewModels;
+namespace EsUtil.Feature.Marquee.AvaloniaUI.Sample.ViewModels;
 
 /// <summary>メインウィンドウのビューモデル。</summary>
 /// <remarks>
