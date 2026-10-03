@@ -198,7 +198,7 @@ sequenceDiagram
     LC->>R: LoupeSkiaPainter.Paint(SKCanvas, Source, plan)（層の順に写す）
     R->>SK: 画像外の色（plan.Appearance.PasteboardColor）を表面全体へ塗る
     alt Source と切り出し領域が揃っている
-        R->>R: EsBitmap.Crop(plan.MagnifiedImage.CropPixelRect)（描画実装が実行する）
+        R->>R: EsBitmap.Crop(plan.MagnifiedImage.CropSourceRect)（描画実装が実行する）
         R->>SK: DrawImage(cropped, Source, Destination)（最近傍で拡大）
     else 未設定または破棄済み
         R-->>R: 画像外の色のみを残す

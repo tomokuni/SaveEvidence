@@ -143,9 +143,9 @@ public class LoupeGeometryTests
     {
         var image = Assert.NotNull(Geometry(new EsPoint(10, 10), 16, 4).MagnifiedImage);
 
-        Assert.Equal(new EsRectInt(8, 8, 4, 4), image.CropPixelRect);
-        Assert.Equal(new EsRect(0, 0, 4, 4), image.SourcePixelRect);
-        Assert.Equal(new EsRect(0, 0, 16, 16), image.DestinationPixelRect);
+        Assert.Equal(new EsRectInt(8, 8, 4, 4), image.CropSourceRect);
+        Assert.Equal(new EsRect(0, 0, 4, 4), image.CroppedRect);
+        Assert.Equal(new EsRect(0, 0, 16, 16), image.DrawClientPixelRect);
     }
 
     /// <summary>画像端では切り出し領域が負の左上になることを検証する（透明パディングは切り出し側が担う）。</summary>
@@ -154,7 +154,7 @@ public class LoupeGeometryTests
     {
         var image = Assert.NotNull(Geometry(new EsPoint(0, 0), 16, 4).MagnifiedImage);
 
-        Assert.Equal(new EsRectInt(-2, -2, 4, 4), image.CropPixelRect);
+        Assert.Equal(new EsRectInt(-2, -2, 4, 4), image.CropSourceRect);
     }
 
     /// <summary>描画先が切り出しサイズ × 拡大率になることを検証する（切り上げ分だけ表面より大きくなりうる）。</summary>
@@ -170,7 +170,7 @@ public class LoupeGeometryTests
     {
         var image = Assert.NotNull(Geometry(new EsPoint(100, 100), clientPixelSize, zoomLevel).MagnifiedImage);
 
-        Assert.Equal(new EsRect(0, 0, expectedDestination, expectedDestination), image.DestinationPixelRect);
+        Assert.Equal(new EsRect(0, 0, expectedDestination, expectedDestination), image.DrawClientPixelRect);
     }
 
     // ====================================================================

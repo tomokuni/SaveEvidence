@@ -80,8 +80,8 @@ public static class LoupeSkiaPainter
 
         try
         {
-            using var region = source.Crop(image.CropPixelRect);
-            canvas.DrawBitmap(region.ToSKBitmap(), image.SourcePixelRect.ToSKRect(), image.DestinationPixelRect.ToSKRect());
+            using var region = source.Crop(image.CropSourceRect);
+            canvas.DrawBitmap(region.ToSKBitmap(), image.CroppedRect.ToSKRect(), image.DrawClientPixelRect.ToSKRect());
         }
         catch (ObjectDisposedException)
         {

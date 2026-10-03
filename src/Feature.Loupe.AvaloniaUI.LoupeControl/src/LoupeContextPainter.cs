@@ -104,9 +104,9 @@ public static class LoupeContextPainter
 
         try
         {
-            using var region = source.Crop(image.CropPixelRect);
+            using var region = source.Crop(image.CropSourceRect);
             using var avalonia = region.ToAvaloniaBitmap();
-            context.DrawImage(avalonia, image.SourcePixelRect.ToAvaloniaRect(), image.DestinationPixelRect.ToAvaloniaRect());
+            context.DrawImage(avalonia, image.CroppedRect.ToAvaloniaRect(), image.DrawClientPixelRect.ToAvaloniaRect());
         }
         catch (ObjectDisposedException)
         {
