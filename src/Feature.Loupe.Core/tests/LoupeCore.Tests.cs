@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
 
 namespace EsUtil.Feature.Loupe.Tests;
 

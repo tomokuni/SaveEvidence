@@ -5,10 +5,9 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using EsUtil.Feature.Marquee.Contract;
-using EsUtil.Feature.Marquee.Interaction;
+using EsUtil.Feature.Marquee.Core.Contract;
 using EsUtil.Feature.Marquee.Core.Interaction;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
 
 namespace EsUtil.Feature.Marquee.Tests;
 

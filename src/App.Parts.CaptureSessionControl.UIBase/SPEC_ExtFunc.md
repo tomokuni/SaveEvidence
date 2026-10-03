@@ -93,7 +93,7 @@
 | `App.Parts.CapturePreviewControl.Core`（`EsUtil.SaveEvidence.Parts.CapturePreview.Core`） | 写像元の設定型（`CaptureSettings`）と、複合コントロールの設定・モード・状態 |
 | `Feature.Marquee.Core` / `Feature.Loupe.Core` | 内包コントロールの設定型（`MarqueeOptions` / `LoupeOptions`） |
 | `Feature.Marquee.Presenter`（`EsUtil.Feature.Marquee.*`） | 写像先の外観（`MarqueeAppearance`）とラベル配置の値 |
-| `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Setting`） | 写像先の描画の設定（`LoupeAppearance`） |
+| `Feature.Loupe.Presenter`（`EsUtil.Feature.Loupe.Presenter.Setting`） | 写像先の描画の設定（`LoupeAppearance`） |
 | `Platform.Core` | コア幾何型（`EsPoint` / `EsRect`） |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。 外部パッケージへの直接依存もありません。

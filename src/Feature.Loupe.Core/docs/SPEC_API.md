@@ -8,9 +8,9 @@ UI 非依存のコア（選択範囲を拡大表示するルーペの計算）�
 - [1. 前提条件](#1-前提条件)
 - [2. 公開 API](#2-公開-api)
   - [2.1 `EsUtil.Feature.Loupe`](#21-esutilfeatureloupe)
-  - [2.2 `EsUtil.Feature.Loupe.Drawing`](#22-esutilfeatureloupedrawing)
-  - [2.3 `EsUtil.Feature.Loupe.Setting`](#23-esutilfeatureloupesetting)
-  - [2.4 `EsUtil.Feature.Loupe.Placement`](#24-esutilfeatureloupeplacement)
+  - [2.2 `EsUtil.Feature.Loupe.Core.Drawing`](#22-esutilfeatureloupecoredrawing)
+  - [2.3 `EsUtil.Feature.Loupe.Core.Setting`](#23-esutilfeatureloupecoresetting)
+  - [2.4 `EsUtil.Feature.Loupe.Core.Placement`](#24-esutilfeatureloupecoreplacement)
   - [2.5 `LoupeCore`（ファサード）のメンバー](#25-loupecoreファサードのメンバー)
   - [2.6 `LoupeOptions` のメンバー](#26-loupeoptions-のメンバー)
   - [2.7 `LoupeCore.Limits` のメンバー](#27-loupecorelimits-のメンバー)
@@ -35,7 +35,7 @@ UI 非依存のコア（選択範囲を拡大表示するルーペの計算）�
 ## 2. 公開 API
 
 可視性は public のみを記載します（`internal` は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照）。  
-型名の接頭辞は名前空間を表します（`Drawing.` / `Setting.` / `Placement.` を省略した型はルート名前空間）。
+型名の接頭辞は本コアの名前空間（`EsUtil.Feature.Loupe.Core`）からの相対名を表します（接頭辞のない型はファサード `EsUtil.Feature.Loupe`）。
 
 ### 2.1 `EsUtil.Feature.Loupe`
 
@@ -44,20 +44,20 @@ UI 非依存のコア（選択範囲を拡大表示するルーペの計算）�
 | `LoupeCore` | class | 操作の唯一の窓口となるファサード |
 | `LoupeCore.Limits`（`LoupeCore` の入れ子） | static class | 数値パラメータの既定値・安全域と補正 |
 
-### 2.2 `EsUtil.Feature.Loupe.Drawing`
+### 2.2 `EsUtil.Feature.Loupe.Core.Drawing`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeGeometry` | record struct | 1 フレーム分の描画の幾何（コア⇔UI の契約）。</br>UI 層は値の組を自分で組み立てず、`LoupeCore.ResolveGeometry` が返した値を受け取る |
 | `LoupeMagnifiedImage` | record struct | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先）。</br>`LoupeGeometry` の導出値 |
 
-### 2.3 `EsUtil.Feature.Loupe.Setting`
+### 2.3 `EsUtil.Feature.Loupe.Core.Setting`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupeOptions` | record | 計算に必要な設定（表示サイズ・拡大率）と既定値・補正。</br>**色・フォント・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
 
-### 2.4 `EsUtil.Feature.Loupe.Placement`
+### 2.4 `EsUtil.Feature.Loupe.Core.Placement`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -209,7 +209,7 @@ var scale = geometry.ZoomLevel;                 // 対象座標 → ルーペ画
 ## 4. 使用例
 
 ```csharp
-using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.Platform.Core.Geometry;
 
 // 設定（計算に必要な値のみ。色・フォント・表示可否は描画層の外観が持つ）

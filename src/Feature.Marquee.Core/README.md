@@ -18,7 +18,7 @@ UI 非依存のためヘッドレス実行が不要で、`[Fact]` で並列実�
 
 ```csharp
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
 
 var marquee = new MarqueeCore(effects, cursorService, new MarqueeOptions { HandleSize = 8 });
 marquee.Log = logger;                                          // null は NullLogger へ吸収される

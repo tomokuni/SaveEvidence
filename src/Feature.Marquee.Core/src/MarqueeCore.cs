@@ -3,12 +3,11 @@ using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
-using EsUtil.Feature.Marquee.Contract;
-using EsUtil.Feature.Marquee.Drawing;
-using EsUtil.Feature.Marquee.Interaction;
+using EsUtil.Feature.Marquee.Core.Contract;
+using EsUtil.Feature.Marquee.Core.Drawing;
 using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Logging;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
 using static EsUtil.Feature.Marquee.MarqueeCore.Limits;
 
 

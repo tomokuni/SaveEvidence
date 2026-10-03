@@ -65,9 +65,9 @@ Avalonia UI 用のリサイズ可能な領域選択コントロールです。 �
 using Avalonia;
 using Avalonia.Media;                        // Colors
 using EsUtil.Feature.Marquee.AvaloniaUI;
-using EsUtil.Feature.Marquee.Setting; // MarqueeOptions
+using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions（コア）
 using EsUtil.Feature.Marquee;          // MarqueePresenter（提示のファサード）
-using EsUtil.Feature.Marquee.Setting;  // MarqueeAppearance（描画にだけ必要な外観）
+using EsUtil.Feature.Marquee.Presenter.Setting;  // MarqueeAppearance（描画にだけ必要な外観）
 using EsUtil.Platform.Core.Coord;       // ICoordTransform / CoordTransform（コア提供）
 using EsUtil.Platform.Core.Geometry;         // EsPoint / EsSize（コア提供）
 ```

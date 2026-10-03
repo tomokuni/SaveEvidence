@@ -1,9 +1,10 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
-using EsUtil.Feature.Marquee.Drawing;
-using EsUtil.Feature.Marquee.Label;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Label;
+using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
@@ -16,8 +17,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using static EsUtil.Feature.Marquee.MarqueeCore.Limits;
 using EsUtil.SaveEvidence.Platform.Skia;
-using EsUtil.Feature.Marquee.Contract;
-using EsUtil.Feature.Marquee.Interaction;
+using EsUtil.Feature.Marquee.Core.Contract;
+using EsUtil.Feature.Marquee.Core.Interaction;
 
 
 

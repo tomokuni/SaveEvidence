@@ -1,6 +1,7 @@
 using EsUtil.SaveEvidence.Platform.Skia;
-using EsUtil.Feature.Marquee.Drawing;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using SkiaSharp;
 
 namespace EsUtil.Feature.Marquee.MewUI;

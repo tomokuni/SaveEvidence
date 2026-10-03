@@ -1,9 +1,11 @@
-using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Platform.Skia;
 using EsUtil.Feature.Loupe;
-using EsUtil.Feature.Loupe.Drawing;
+using EsUtil.Feature.Loupe.Core.Drawing;
+using EsUtil.Feature.Loupe.Presenter.Drawing;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;

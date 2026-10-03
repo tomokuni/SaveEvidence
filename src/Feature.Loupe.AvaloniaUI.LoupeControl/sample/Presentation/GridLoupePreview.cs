@@ -1,7 +1,8 @@
 using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Media;
-using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.Loupe.AvaloniaUI;

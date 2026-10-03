@@ -7,10 +7,10 @@
 - [1. 前提条件](#1-前提条件)
 - [2. 公開 API](#2-公開-api)
   - [2.1 `EsUtil.Feature.Marquee`](#21-esutilfeaturemarquee)
-  - [2.2 `EsUtil.Feature.Marquee.Contract`](#22-esutilfeaturemarqueecontract)
-  - [2.3 `EsUtil.Feature.Marquee.Drawing`](#23-esutilfeaturemarqueedrawing)
-  - [2.4 `EsUtil.Feature.Marquee.Interaction`](#24-esutilfeaturemarqueeinteraction)
-  - [2.5 `EsUtil.Feature.Marquee.Setting`](#25-esutilfeaturemarqueesetting)
+  - [2.2 `EsUtil.Feature.Marquee.Core.Contract`](#22-esutilfeaturemarqueecorecontract)
+  - [2.3 `EsUtil.Feature.Marquee.Core.Drawing`](#23-esutilfeaturemarqueecoredrawing)
+  - [2.4 `EsUtil.Feature.Marquee.Core.Interaction`](#24-esutilfeaturemarqueecoreinteraction)
+  - [2.5 `EsUtil.Feature.Marquee.Core.Setting`](#25-esutilfeaturemarqueecoresetting)
   - [2.6 `MarqueeCore`（ファサード）のメンバー](#26-marqueecoreファサードのメンバー)
   - [2.7 `MarqueeOptions` のメンバー](#27-marqueeoptions-のメンバー)
   - [2.8 `MarqueeCore.Limits` のメンバー](#28-marqueecorelimits-のメンバー)
@@ -33,7 +33,7 @@
 
 ## 2. 公開 API
 
-可視性は public のみを記載します（`internal` は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照）。 型名の接頭辞は名前空間を表します（`Contract.` / `Drawing.` / `Interaction.` / `Setting.` を省略した型はルート名前空間）。
+可視性は public のみを記載します（`internal` は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照）。 型名の接頭辞は本コアの名前空間（`EsUtil.Feature.Marquee.Core`）からの相対名を表します（接頭辞のない型はファサード `EsUtil.Feature.Marquee`）。
 
 ### 2.1 `EsUtil.Feature.Marquee`
 
@@ -41,14 +41,14 @@
 | --- | --- | --- |
 | `MarqueeCore` | class | 操作の唯一の窓口となるファサード |
 
-### 2.2 `EsUtil.Feature.Marquee.Contract`
+### 2.2 `EsUtil.Feature.Marquee.Core.Contract`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `IMarqueeEffects` | interface | コアが要求する効果の適用先（UI 実装が実装する） |
 | `MarqueeEffectsBase` | abstract class | `IMarqueeEffects` の全メンバーを virtual の空実装で提供する基底クラス（必要な効果だけ override する） |
 
-### 2.3 `EsUtil.Feature.Marquee.Drawing`
+### 2.3 `EsUtil.Feature.Marquee.Core.Drawing`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -56,7 +56,7 @@
 | `MarqueeRenderRequest` | record struct | 1 フレーム分の幾何を解決する入力（設定・状態と、描画時に決まる値）。 `MarqueeCore.CreateRequest` が生成し、`MarqueeCore.ResolveGeometry` へ渡す。 値の組は `MarqueeRenderRequest.Create` が 1 箇所に閉じる。 **`Create` を public にする理由**: ファサード（`MarqueeCore.CreateRequest`）と独自 UI が入力を組み立てる唯一の入口である（描画先の領域を知るのは呼び出し側だけである） |
 | `MarqueeHandles` / `MarqueeMarker` | record struct | ハンドル・始点マーカーの幾何（位置と寸法はコアが解決済み。 **色と線の太さは描画層の外観が持つ**） |
 
-### 2.4 `EsUtil.Feature.Marquee.Interaction`
+### 2.4 `EsUtil.Feature.Marquee.Core.Interaction`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -66,7 +66,7 @@
 | `MarqueeCursorKind` | enum | カーソル形状の種別（`Default` / `DiagonalNWSE` / `DiagonalNESW` / `Vertical` / `Horizontal` / `Move`） |
 | `MarqueeInteractionState` | enum | 対話状態（`NoSelection` / `StartPointNudging` / `Dragging` / `DraggingNudging` / `Selected` / `SelectedNudging`） |
 
-### 2.5 `EsUtil.Feature.Marquee.Setting`
+### 2.5 `EsUtil.Feature.Marquee.Core.Setting`
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -189,7 +189,7 @@
 
 ```csharp
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
 
 var marquee = new MarqueeCore(effects, cursorService, new MarqueeOptions { HandleSize = 8 });
 marquee.Log = logger;                                          // null は NullLogger へ吸収される

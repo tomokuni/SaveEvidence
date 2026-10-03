@@ -3,7 +3,8 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Threading;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using Xunit;
 using Rect = Avalonia.Rect;
 

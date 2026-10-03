@@ -1,7 +1,9 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.Marquee.Core.Logging;
 using EsUtil.Feature.Marquee.Presenter.Logging;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
 namespace EsUtil.Feature.Marquee.Tests.Presenter.Logging;
 

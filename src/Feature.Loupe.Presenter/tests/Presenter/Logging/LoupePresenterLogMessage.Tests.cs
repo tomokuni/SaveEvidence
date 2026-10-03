@@ -1,7 +1,9 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Feature.Loupe.Core.Logging;
 using EsUtil.Feature.Loupe.Presenter.Logging;
-using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 
 namespace EsUtil.Feature.Loupe.Tests.Presenter.Logging;
 

@@ -1,4 +1,4 @@
-using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
 
 namespace EsUtil.Feature.Loupe;
 

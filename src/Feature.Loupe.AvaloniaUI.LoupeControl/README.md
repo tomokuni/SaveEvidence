@@ -106,7 +106,8 @@ using EsUtil.Feature.Loupe.AvaloniaUI;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using EsUtil.Feature.Loupe;
-using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;       // LoupeOptions（コア）
+using EsUtil.Feature.Loupe.Presenter.Setting;  // LoupeAppearance（描画にだけ必要な外観）
 
 public sealed class MainViewModel
 {

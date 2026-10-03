@@ -2,7 +2,7 @@ using System.Globalization;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
 
 namespace EsUtil.Feature.Marquee.Core.Logging;
 

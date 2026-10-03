@@ -17,7 +17,7 @@ UI フレームワークに依存しないため、UI 初期化なしの `[Fact]
 
 ```csharp
 using EsUtil.Feature.Loupe;
-using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Core.Setting;
 using EsUtil.Platform.Core.Geometry;
 
 // 設定（計算に必要な値のみ。色・フォント・表示可否は描画層の外観が持つ）
@@ -98,7 +98,7 @@ dotnet test src/Feature.Loupe.Core/tests/Feature.Loupe.Core.Tests.csproj
 ```
 
 `tests/` が単体テストを持ちます。  
-UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行され、**ソースのフォルダを鏡映**します（`src/Drawing/` の型は `tests/Drawing/` で検証する）。
+UI 初期化が不要なため `[Fact]` / `[Theory]` で並列実行され、**ソースのフォルダを鏡映**します（`src/Core/Drawing/` の型は `tests/Drawing/` で検証する）。
 
 ## 9. ドキュメント
 

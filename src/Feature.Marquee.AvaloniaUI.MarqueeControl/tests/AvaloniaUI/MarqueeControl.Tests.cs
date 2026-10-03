@@ -1,5 +1,6 @@
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
@@ -13,7 +14,7 @@ using Avalonia.Threading;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Xunit;
-using EsUtil.Feature.Marquee.Interaction;
+using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Coord;
 

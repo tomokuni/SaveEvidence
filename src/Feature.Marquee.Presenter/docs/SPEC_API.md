@@ -32,7 +32,7 @@
 
 ### 2.1 `EsUtil.Feature.Marquee`（提示・外観）
 
-ファサード（`MarqueePresenter`）と、ファサードから推移的に参照する公開型（`.Setting` / `.Drawing` / `.Label`）は層フォルダ（`src/Presenter/`）の外へ置きます。 内部手順（ログ定義）は層フォルダ（`src/Presenter/Logging/`）に残り、名前空間に層名を挟みます（`EsUtil.Feature.Marquee.Presenter.Logging`。 **名前空間はフォルダに追従**）。
+ファサード（`MarqueePresenter`）だけが `src/` 直下（ルート名前空間 `EsUtil.Feature.Marquee`）に属します。 それ以外は層フォルダ（`src/Presenter/`）の配下へ置き、名前空間に層名を挟みます（`src/Presenter/Setting/` → `EsUtil.Feature.Marquee.Presenter.Setting`。 **名前空間はフォルダに追従**）。 以降の表の型名の接頭辞は本層の名前空間（`EsUtil.Feature.Marquee.Presenter`）からの相対名を表します（接頭辞のない型はファサード `EsUtil.Feature.Marquee`）。
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -159,7 +159,7 @@
 
 ```csharp
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
 // 外観（色・フォント・枠線の太さ・表示可否）を差し替える
 var appearance = MarqueeAppearance.Default with

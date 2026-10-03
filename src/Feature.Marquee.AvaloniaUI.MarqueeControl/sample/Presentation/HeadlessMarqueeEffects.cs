@@ -1,5 +1,5 @@
-using EsUtil.Feature.Marquee.Contract;
-using EsUtil.Feature.Marquee.Interaction;
+using EsUtil.Feature.Marquee.Core.Contract;
+using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Feature.Marquee.AvaloniaUI.Sample.Presentation;

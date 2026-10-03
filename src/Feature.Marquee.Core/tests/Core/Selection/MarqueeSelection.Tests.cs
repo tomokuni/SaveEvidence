@@ -1,4 +1,4 @@
-using EsUtil.Feature.Marquee.Interaction;
+using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Selection;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;

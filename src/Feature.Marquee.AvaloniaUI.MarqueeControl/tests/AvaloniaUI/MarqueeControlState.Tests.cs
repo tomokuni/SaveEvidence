@@ -3,8 +3,9 @@ using EsUtil.Platform.Core.Geometry;
 using Rect = Avalonia.Rect;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using EsUtil.Feature.Marquee.Interaction;
-using EsUtil.Feature.Marquee.Setting;
+using EsUtil.Feature.Marquee.Core.Interaction;
+using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee.Presenter.Setting;
 
 namespace EsUtil.Feature.Marquee.AvaloniaUI.Tests;
 

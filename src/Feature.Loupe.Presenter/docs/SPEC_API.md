@@ -33,7 +33,7 @@
 
 ### 2.1 `EsUtil.Feature.Loupe`（提示・外観）
 
-ファサード（`LoupePresenter`）と、ファサードから推移的に参照する公開型（`.Setting` / `.Drawing` / `.Label`）は層フォルダ（`src/Presenter/`）の外へ置きます。 内部手順（ログ定義）は層フォルダ（`src/Presenter/Logging/`）に残り、名前空間に層名を挟みます（`EsUtil.Feature.Loupe.Presenter.Logging`。 **名前空間はフォルダに追従**）。
+ファサード（`LoupePresenter`）だけが `src/` 直下（ルート名前空間 `EsUtil.Feature.Loupe`）に属します。 それ以外は層フォルダ（`src/Presenter/`）の配下へ置き、名前空間に層名を挟みます（`src/Presenter/Setting/` → `EsUtil.Feature.Loupe.Presenter.Setting`。 **名前空間はフォルダに追従**）。 以降の表の型名の接頭辞は本層の名前空間（`EsUtil.Feature.Loupe.Presenter`）からの相対名を表します（接頭辞のない型はファサード `EsUtil.Feature.Loupe`）。
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
@@ -133,8 +133,8 @@
 
 ```csharp
 using EsUtil.Feature.Loupe;
-using EsUtil.Feature.Loupe.Setting;
-using EsUtil.Feature.Loupe.Setting;
+using EsUtil.Feature.Loupe.Presenter.Setting;
+using EsUtil.Feature.Loupe.Presenter.Setting;
 
 // 外観（色・フォント・枠線の太さ・表示可否）を差し替える
 var appearance = LoupeAppearance.Default with

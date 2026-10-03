@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Loupe.Drawing;
-using EsUtil.Feature.Loupe.Placement;
+using EsUtil.Feature.Loupe.Core.Drawing;
+using EsUtil.Feature.Loupe.Core.Placement;
 
 namespace EsUtil.Feature.Loupe;
 

@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
-using EsUtil.Feature.Marquee.Interaction;
 using EsUtil.Feature.Marquee.Core.Interaction;
 
 namespace EsUtil.Feature.Marquee.Tests.Core.Interaction;

@@ -6,8 +6,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using EsUtil.Feature.Marquee.Drawing;
-using EsUtil.Feature.Marquee.Label;
+using EsUtil.Feature.Marquee.Presenter.Drawing;
+using EsUtil.Feature.Marquee.Presenter.Label;
 
 namespace EsUtil.Feature.Marquee.AvaloniaUI;
 
