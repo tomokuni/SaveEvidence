@@ -1,8 +1,6 @@
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Core.Drawing;
 using EsUtil.Feature.Marquee.Presenter.Drawing;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using static EsUtil.Feature.Marquee.MarqueeCore.Limits;
 
 namespace EsUtil.Feature.Marquee;

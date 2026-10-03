@@ -2,9 +2,6 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Skia.Controls;
 using EsUtil.Feature.Loupe.Presenter.Drawing;
-using EsUtil.Feature.Loupe.Presenter.Label;
-using EsUtil.Feature.Loupe.Core.Setting;
-using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
@@ -16,7 +13,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 using static EsUtil.Feature.Loupe.LoupeCore.Limits;
 using EsUtil.SaveEvidence.Platform.Skia;
-using EsUtil.Feature.Loupe.Core.Placement;
 
 
 

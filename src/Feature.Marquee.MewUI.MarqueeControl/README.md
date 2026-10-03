@@ -27,8 +27,7 @@ MewUI は API が安定化中（0.x）のため、パッケージのバージョ
 ```csharp
 using EsUtil.Feature.Marquee.Setting;
 using EsUtil.Feature.Marquee.MewUI;
-using EsUtil.Feature.Marquee.Core.Setting;       // MarqueeOptions（コア）
-using EsUtil.Feature.Marquee.Presenter.Setting;  // MarqueeAppearance（描画にだけ必要な外観）
+using EsUtil.Feature.Marquee;                     // MarqueeOptions（コア）と MarqueeAppearance（描画にだけ必要な外観）
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 
@@ -102,7 +101,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
 | `Options` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の**計算に必要な設定**（寸法・対話パラメータ）。 変更すると再描画され、対話パラメータはコアへ伝搬する（**色・表示可否は含まない**） |
-| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（`EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）。 変更すると次の描画で提示層が新しい外観で描画計画を解決する |
+| `Appearance` | `MarqueeAppearance` | `MarqueeAppearance.Default` | **外観（色・フォントサイズ・枠線の太さ・表示可否）の設定**（`EsUtil.Feature.Marquee`）。 変更すると次の描画で提示層が新しい外観で描画計画を解決する |
 | `ClientToPixelScaling` | `double` | `1.0` | DIP → 物理ピクセルの倍率（DPI 変更で自動更新）。 描画は描画面と表示領域の比を使うため、追加直後で未更新でも画像と同じ倍率になる |
 
 `MarqueeOptions` の項目（既定値はコアが単一所有。 Avalonia 版と同一）:
@@ -116,7 +115,7 @@ grid.Add(marquee);     // 選択オーバーレイ（上。入力を受け取る
 | `ClampToSourceBounds` | `bool` | `true` | 対象の境界外の選択を禁止する |
 | `MarkerLength` | `double` | `16.0` | 十字マーカーの全長（DIP） |
 
-色とラベルの体裁（フォントサイズ・内側余白）に加え、**表示可否（ハンドル・ラベル・暗転・外枠・内側の塗りと枠線）も外観の単一値 `MarqueeAppearance`（`EsUtil.Feature.Marquee.Presenter.Setting`）が単一所有します**。
+色とラベルの体裁（フォントサイズ・内側余白）に加え、**表示可否（ハンドル・ラベル・暗転・外枠・内側の塗りと枠線）も外観の単一値 `MarqueeAppearance`（`EsUtil.Feature.Marquee`）が単一所有します**。
 
 `MarqueeAppearance` の項目（既定値は本型が単一所有する）:
 

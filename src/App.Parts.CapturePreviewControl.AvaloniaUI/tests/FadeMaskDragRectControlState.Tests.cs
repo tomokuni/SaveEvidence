@@ -2,11 +2,11 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.Feature.Loupe.AvaloniaUI;
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Xunit;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.Feature.Marquee;
+using EsUtil.Feature.Loupe;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 

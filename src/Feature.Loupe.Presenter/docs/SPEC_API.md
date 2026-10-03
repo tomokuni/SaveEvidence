@@ -33,16 +33,16 @@
 
 ### 2.1 `EsUtil.Feature.Loupe`（提示・外観）
 
-ファサード（`LoupePresenter`）だけが `src/` 直下（ルート名前空間 `EsUtil.Feature.Loupe`）に属します。 それ以外は層フォルダ（`src/Presenter/`）の配下へ置き、名前空間に層名を挟みます（`src/Presenter/Setting/` → `EsUtil.Feature.Loupe.Presenter.Setting`。 **名前空間はフォルダに追従**）。 以降の表の型名の接頭辞は本層の名前空間（`EsUtil.Feature.Loupe.Presenter`）からの相対名を表します（接頭辞のない型はファサード `EsUtil.Feature.Loupe`）。
+**公開面**（ファサード `LoupePresenter` と、ファサードから返る・渡す型（`LoupeDrawPlan` / `LoupeDrawLayer` / `LoupeAppearance` / `LoupeLabelPlacement`））は `src/` 直下（ルート名前空間 `EsUtil.Feature.Loupe`）に属します。 **内部手順**（`internal`）は層フォルダ（`src/Presenter/`）へ置き、名前空間に層名を挟みます（`src/Presenter/Drawing/` → `EsUtil.Feature.Loupe.Presenter.Drawing`）。
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `LoupePresenter` | class（`partial`） | 提示のファサード（コアのラップ・外観の保持・描画計画の解決）。 `sealed` ではない（派生で見た目を差し替えられる） |
-| `Setting.LoupeAppearance` | record | 外観（色・フォント・角丸・枠線の太さ・表示可否） |
-| `Drawing.LoupeDrawPlan` | record struct | 1 フレーム分の描画計画（描画面・矩形・層の順序・ラベル配置・通知用の値） |
-| `Drawing.LoupeDrawLayer` | enum | 描画層（`Pasteboard` / `Image` / `Crosshair` / `Border` / `Label`） |
-| `Drawing.LoupeTextPlacement` | record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・描画領域） |
-| `Label.LoupeLabelPlacement` | record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
+| `LoupeAppearance` | record | 外観（色・フォント・角丸・枠線の太さ・表示可否） |
+| `LoupeDrawPlan` | record struct | 1 フレーム分の描画計画（描画面・矩形・層の順序・ラベル配置・通知用の値） |
+| `LoupeDrawLayer` | enum | 描画層（`Pasteboard` / `Image` / `Crosshair` / `Border` / `Label`） |
+| `LoupeLabelPlacement` | record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色・角丸） |
+| `EsUtil.Feature.Loupe.Presenter.Drawing.LoupeTextPlacement` | record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・描画領域）。 **`internal` の写像だけが使うため公開面ではない**（層フォルダの名前空間に残る） |
 | `EsUtil.Feature.Loupe.Presenter.Logging.LoupePresenterLogMessage` | static partial class | 本層が出力するログ定義（生成・通過の記録・外観の変更。 内部手順でありホストは参照しない） |
 
 **`LoupePresenter` は複数のファイルに分かれた `public partial class` です**（`LoupePresenter.cs` = ファサード本体、`DrawPlan` = 十字線・枠線の矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。
@@ -133,8 +133,6 @@
 
 ```csharp
 using EsUtil.Feature.Loupe;
-using EsUtil.Feature.Loupe.Presenter.Setting;
-using EsUtil.Feature.Loupe.Presenter.Setting;
 
 // 外観（色・フォント・枠線の太さ・表示可否）を差し替える
 var appearance = LoupeAppearance.Default with

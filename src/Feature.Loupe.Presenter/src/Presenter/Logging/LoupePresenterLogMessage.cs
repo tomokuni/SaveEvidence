@@ -2,8 +2,6 @@ using System.Globalization;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Feature.Loupe.Core.Setting;
-using EsUtil.Feature.Loupe.Presenter.Setting;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 

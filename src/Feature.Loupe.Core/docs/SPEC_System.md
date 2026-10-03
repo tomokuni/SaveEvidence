@@ -32,7 +32,7 @@
 | --- | --- |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `EsUtil.Feature.Loupe`（ファサードのみ）。 層フォルダ `src/Core/` の配下は `EsUtil.Feature.Loupe.Core.<カテゴリ>`（`.Drawing` / `.Placement` / `.Setting` / `.Logging`） |
+| ルート名前空間 | `EsUtil.Feature.Loupe`（**公開面はすべてここに属する**。 ファサードと、ファサードのメンバーの型（`LoupeGeometry` / `LoupeMagnifiedImage` / `LoupeOptions` / `LoupeLayout`））。 `internal` の型だけが層フォルダ `src/Core/` の配下（`EsUtil.Feature.Loupe.Core.Logging`）に残る |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
 | テスト | xUnit v3（UI 初期化不要。 `InternalsVisibleTo` で `internal` を検証する） |
 | 依存 | UI フレームワークを一切参照しない。 直接依存は `Platform.Core` と `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成）のみ（SkiaSharp は参照しない） |
@@ -92,16 +92,16 @@ sequenceDiagram
 
 ## 4. コンポーネント構成
 
-**ファサード**（`LoupeCore.cs` とその partial）だけが `src/` 直下（ルート名前空間）に属します。 それ以外は層フォルダ（`src/Core/`）の配下へ置き、名前空間に層名を挟みます（`src/Core/Setting/` → `EsUtil.Feature.Loupe.Core.Setting`）。
+**公開面**（ファサード `LoupeCore.cs` と、ファサードから返る・渡す型（`LoupeGeometry` / `LoupeMagnifiedImage` / `LoupeOptions` / `LoupeLayout`））は `src/` 直下（ルート名前空間）に属します。 **内部手順**（`internal`）は層フォルダ（`src/Core/`）の配下へ置き、名前空間に層名を挟みます（`src/Core/Logging/` → `EsUtil.Feature.Loupe.Core.Logging`）。
 
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
 | `src/LoupeCore.cs` | `LoupeCore` | public | **公開ファサード（操作の唯一の窓口）**。 設定・環境値・拡大中心・位置オフセットの保持、設定変更の検出とログ出力（`Log`）、座標変換ポートの設定（`SetCoordTransform`） |
 | `src/LoupeCore.Limits.cs` | `LoupeCore.Limits`（`LoupeCore` の入れ子） | public | 数値パラメータの既定値・安全域（最小 / 最大）の単一所有と、範囲外の値の補正。 **UI がプロパティ登録に使う**（枠線の太さの安全域は描画層の外観が参照する） |
-| `src/Core/Setting/LoupeOptions.cs` | `LoupeOptions` | public | 計算に必要な設定の値オブジェクト（表示サイズ・拡大率）。 既定値・生成時の補正（`init` アクセサ。 設定経路によらず範囲内の値だけを保持する）・`Default`。 **色・フォント・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
-| `src/Core/Drawing/LoupeGeometry.cs` | `LoupeGeometry` | public | 1 フレーム分の描画の幾何（コア⇔UI の契約）。 値の組は `LoupeCore.ResolveGeometry` が 1 箇所に閉じる（UI 層は自分で組み立てない）。 切り出し領域の幾何を導出する（`CaptureSize` / `CaptureTopLeft` / `MagnifiedImage` / `ClientPixelRect`） |
-| `src/Core/Drawing/LoupeMagnifiedImage.cs` | `LoupeMagnifiedImage` | public | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） |
-| `src/Core/Placement/LoupeLayout.cs` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズ + 表示位置。 配置しない場合は位置が null） |
+| `src/LoupeOptions.cs` | `LoupeOptions` | public | 計算に必要な設定の値オブジェクト（表示サイズ・拡大率）。 既定値・生成時の補正（`init` アクセサ。 設定経路によらず範囲内の値だけを保持する）・`Default`。 **色・フォント・枠線の太さ・表示可否は持たない**（描画層の外観が単一所有する） |
+| `src/LoupeGeometry.cs` | `LoupeGeometry` | public | 1 フレーム分の描画の幾何（コア⇔UI の契約）。 値の組は `LoupeCore.ResolveGeometry` が 1 箇所に閉じる（UI 層は自分で組み立てない）。 切り出し領域の幾何を導出する（`CaptureSize` / `CaptureTopLeft` / `MagnifiedImage` / `ClientPixelRect`） |
+| `src/LoupeMagnifiedImage.cs` | `LoupeMagnifiedImage` | public | 拡大画像の切り出しと描画の矩形（切り出し領域・描画元・描画先） |
+| `src/LoupeLayout.cs` | `LoupeLayout` | public | 表示レイアウトの値（表示サイズ + 表示位置。 配置しない場合は位置が null） |
 | （本プロジェクトには置かない） | 描画計画と外観 | — | 提示（描画計画の解決）と外観は **描画層（本コアを参照する上位の層）が所有します**（本コアは描画 API も描画の抽象も持たない） |
 | `src/Core/Logging/LoupeLogMessage.cs` | `LoupeLogMessage` | internal | コアが出力するログ定義（`LoggerMessage` ソース生成）の単一所有（**上位層が出力する定義と書式は上位層が単一所有する**） |
 | `src/LoupeCore.Geometry.cs` | `LoupeCore` の partial | public | 幾何の入口（`ResolveLayout` / `ResolveGeometry`）と内部手順（表示位置のオフセット加算と親領域内への補正、領域が正方形を収められるかの判定）。 内部手順は `private static` に閉じる |

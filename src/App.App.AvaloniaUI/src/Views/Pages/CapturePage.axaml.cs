@@ -16,13 +16,12 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 

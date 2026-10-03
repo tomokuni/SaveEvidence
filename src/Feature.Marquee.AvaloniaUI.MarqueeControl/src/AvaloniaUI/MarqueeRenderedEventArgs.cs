@@ -1,5 +1,4 @@
 using Avalonia.Media;
-using EsUtil.Feature.Marquee.Presenter.Drawing;
 
 namespace EsUtil.Feature.Marquee.AvaloniaUI;
 

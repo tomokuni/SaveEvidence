@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Core.Interaction;
 
 namespace EsUtil.Feature.Marquee.MewUI;
 

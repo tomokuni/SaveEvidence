@@ -3,8 +3,6 @@ using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Loupe.Core.Setting;
-using EsUtil.Feature.Loupe.Presenter.Setting;
 
 namespace EsUtil.Feature.Loupe.Tests;
 

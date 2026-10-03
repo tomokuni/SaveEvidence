@@ -6,8 +6,6 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Point = Avalonia.Point;
 using static EsUtil.Feature.Loupe.LoupeCore.Limits;
-using EsUtil.Feature.Loupe.Core.Setting;
-using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;

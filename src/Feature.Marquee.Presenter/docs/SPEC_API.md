@@ -32,16 +32,16 @@
 
 ### 2.1 `EsUtil.Feature.Marquee`（提示・外観）
 
-ファサード（`MarqueePresenter`）だけが `src/` 直下（ルート名前空間 `EsUtil.Feature.Marquee`）に属します。 それ以外は層フォルダ（`src/Presenter/`）の配下へ置き、名前空間に層名を挟みます（`src/Presenter/Setting/` → `EsUtil.Feature.Marquee.Presenter.Setting`。 **名前空間はフォルダに追従**）。 以降の表の型名の接頭辞は本層の名前空間（`EsUtil.Feature.Marquee.Presenter`）からの相対名を表します（接頭辞のない型はファサード `EsUtil.Feature.Marquee`）。
+**公開面**（ファサード `MarqueePresenter` と、ファサードから返る・渡す型（`MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueeAppearance` / `MarqueeLabelPlacement`））は `src/` 直下（ルート名前空間 `EsUtil.Feature.Marquee`）に属します。 **内部手順**（`internal`）は層フォルダ（`src/Presenter/`）へ置き、名前空間に層名を挟みます（`src/Presenter/Drawing/` → `EsUtil.Feature.Marquee.Presenter.Drawing`）。
 
 | 型 | 種別 | 説明 |
 | --- | --- | --- |
 | `MarqueePresenter` | class（`sealed` でない） | 提示のファサード。 コアを内部に保持し、設定・環境値・入力の転送と、外観の保持、描画計画の解決を行う。 **継承して `ResolveDrawPlan` を上書きできることが役割**（独自の見た目を提供する） |
-| `Drawing.MarqueeDrawPlan` | readonly record struct | 1 フレーム分の描画計画（外観・描画面・注目矩形・暗転領域・枠線矩形・内側の塗りと枠線・ハンドル・マーカー・層の順序・ラベル配置）。 **UI が見る唯一の描画値** |
-| `Drawing.MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。 **層にある ⇔ 描く値がある** |
-| `Setting.MarqueeAppearance` | sealed record | **外観の単一所有者**（色・ラベルの体裁・十字マーカーの線の太さ・カーソル座標ラベルのオフセット・枠線の太さ・表示可否）。 `Default` を基点に `with` 式で部分変更する |
-| `Drawing.MarqueeTextPlacement` | readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域）。 **要素として置くか canvas へ描くかは UI 層が決める** |
-| `Label.MarqueeLabelPlacement` | readonly record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
+| `MarqueeDrawPlan` | readonly record struct | 1 フレーム分の描画計画（外観・描画面・注目矩形・暗転領域・枠線矩形・内側の塗りと枠線・ハンドル・マーカー・層の順序・ラベル配置）。 **UI が見る唯一の描画値** |
+| `MarqueeDrawLayer` | enum | 描画層（`Decoration` / `Handles` / `Marker` / `Label`）。 **層にある ⇔ 描く値がある** |
+| `MarqueeAppearance` | sealed record | **外観の単一所有者**（色・ラベルの体裁・十字マーカーの線の太さ・カーソル座標ラベルのオフセット・枠線の太さ・表示可否）。 `Default` を基点に `with` 式で部分変更する |
+| `MarqueeLabelPlacement` | readonly record struct | ラベル要素の配置指示（背景矩形・内側余白・文言・フォントサイズ・色） |
+| `EsUtil.Feature.Marquee.Presenter.Drawing.MarqueeTextPlacement` | readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域）。 **`internal` の写像だけが使うため公開面ではない**（層フォルダの名前空間に残る） |
 
 **`MarqueePresenter` は複数のファイルに分かれた `public partial class` です**（`MarqueePresenter.cs` = ファサード本体、`DrawPlan` = 装飾矩形の計算、`LabelPlan` = 実寸 → 配置指示の写像、`LabelTexts` = 文言と基準点の生成）。 **`static class` ではありません**（ファサードの状態と外観を保持するため）。 partial のメンバー（`ResolveLabelPlacements` など）と `EsUtil.Feature.Marquee.Presenter.Logging.MarqueePresenterLogMessage` は `internal`（本層とテストのみが使う）であり、本リファレンスには載せません（内部手順は [`SPEC_System.md`](SPEC_System.md) の可視性ポリシーを参照してください）。
 
@@ -159,7 +159,6 @@
 
 ```csharp
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 
 // 外観（色・フォント・枠線の太さ・表示可否）を差し替える
 var appearance = MarqueeAppearance.Default with

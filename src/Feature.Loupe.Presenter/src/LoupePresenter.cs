@@ -1,10 +1,6 @@
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Loupe.Core.Drawing;
 using EsUtil.Feature.Loupe.Presenter.Drawing;
-using EsUtil.Feature.Loupe.Core.Placement;
-using EsUtil.Feature.Loupe.Core.Setting;
-using EsUtil.Feature.Loupe.Presenter.Setting;
 using EsUtil.Feature.Loupe.Presenter.Logging;
 using Microsoft.Extensions.Logging;
 

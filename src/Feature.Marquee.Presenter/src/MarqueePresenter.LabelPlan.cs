@@ -1,7 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Presenter.Label;
 using EsUtil.Feature.Marquee.Presenter.Drawing;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using DrawingColor = System.Drawing.Color;
 
 

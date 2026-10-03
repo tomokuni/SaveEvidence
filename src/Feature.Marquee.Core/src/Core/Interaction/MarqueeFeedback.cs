@@ -1,6 +1,5 @@
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Core.Contract;
 
 namespace EsUtil.Feature.Marquee.Core.Interaction;
 

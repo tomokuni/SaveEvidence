@@ -1,6 +1,6 @@
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Loupe.Core.Setting;
 
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Marquee;
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 
 /// <summary>キャプチャ設定（<see cref="CaptureSettings"/>）から複合コントロールの設定（<see cref="FadeMaskDragRectOptions"/>）への変換。</summary>

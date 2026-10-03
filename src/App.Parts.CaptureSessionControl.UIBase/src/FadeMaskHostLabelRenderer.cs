@@ -1,8 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Presenter.Label;
-using EsUtil.Feature.Marquee.Presenter.Setting;
-using EsUtil.Feature.Marquee.Presenter.Drawing;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 

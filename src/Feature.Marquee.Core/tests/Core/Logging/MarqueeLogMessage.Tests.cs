@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using EsUtil.Feature.Marquee.Core.Logging;
-using EsUtil.Feature.Marquee.Core.Setting;
 
 namespace EsUtil.Feature.Marquee.Tests.Core.Logging;
 

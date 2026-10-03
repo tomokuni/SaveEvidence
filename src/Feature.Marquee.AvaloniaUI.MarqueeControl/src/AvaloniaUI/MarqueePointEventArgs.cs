@@ -1,5 +1,4 @@
 using Avalonia;
-using EsUtil.Feature.Marquee.Core.Interaction;
 
 namespace EsUtil.Feature.Marquee.AvaloniaUI;
 

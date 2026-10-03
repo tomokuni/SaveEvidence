@@ -33,7 +33,7 @@
 | --- | --- |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効） |
-| ルート名前空間 | `EsUtil.Feature.Marquee`（ファサードのみ）。 層フォルダ `src/Presenter/` の配下は `EsUtil.Feature.Marquee.Presenter.<カテゴリ>`（`.Setting` / `.Drawing` / `.Label` / `.Logging`） |
+| ルート名前空間 | `EsUtil.Feature.Marquee`（**公開面はすべてここに属する**。 ファサードと、ファサードのメンバーの型（`MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueeAppearance` / `MarqueeLabelPlacement`））。 `internal` の型だけが層フォルダ `src/Presenter/` の配下（`EsUtil.Feature.Marquee.Presenter.Drawing` / `.Logging`）に残る |
 | ドキュメント生成 | `GenerateDocumentationFile` 有効（XML は配布物へ出さず `cref` の検証のみに使う） |
 | テスト | xUnit v3（UI 初期化不要。 `InternalsVisibleTo` で `internal` を検証する） |
 | 依存 | UI フレームワークを一切参照しない。 直接依存は `Feature.Marquee.Core`・`Platform.Core`・`Microsoft.Extensions.Logging.Abstractions` |
@@ -110,20 +110,20 @@ flowchart TD
 
 ## 4. コンポーネント構成
 
-**ファサード**（`MarqueePresenter.cs` とその partial）だけが `src/` 直下（ルート名前空間）に属します。 それ以外（描画計画の値・外観・ラベル要素の配置指示・ログ定義）は層フォルダ（`src/Presenter/`）の配下へ置き、名前空間に層名を挟みます。
+**公開面**（ファサード `MarqueePresenter.cs` とその partial、およびファサードから返る・渡す型（`MarqueeDrawPlan` / `MarqueeDrawLayer` / `MarqueeAppearance` / `MarqueeLabelPlacement`））は `src/` 直下（ルート名前空間）に属します。 **内部手順**（`internal`）は層フォルダ（`src/Presenter/`）の配下へ置き、名前空間に層名を挟みます。
 **1 ファイル 1 型**とし、**名前空間はフォルダに追従**させます（`src/` 直下は `EsUtil.Feature.Marquee`。 層フォルダ `src/Presenter/` の配下は `EsUtil.Feature.Marquee.Presenter.<フォルダ名>`）。 規則は [`.github/命名規約.md`](../../../.github/命名規約.md) が単一所有します。
 
 | ファイル | 型 | 可視性 | 責務 |
 | --- | --- | --- | --- |
 | `src/MarqueePresenter.cs` | `MarqueePresenter` | public（`sealed` でない） | 提示のファサード。 コアの保持、設定・環境値・入力の転送、外観の保持、描画計画の解決（`ResolveDrawPlan`） |
-| `src/Presenter/Setting/MarqueeAppearance.cs` | `MarqueeAppearance` | public sealed record | 外観の単一所有者（色・ラベルの体裁・十字マーカーの線の太さ・カーソル座標ラベルのオフセット・枠線の太さ・表示可否・述語） |
-| `src/Presenter/Drawing/MarqueeDrawPlan.cs` | `MarqueeDrawPlan` | public readonly record struct | 描画計画（UI が見る唯一の描画値） |
-| `src/Presenter/Drawing/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public enum | 描画層の順序 |
+| `src/MarqueeAppearance.cs` | `MarqueeAppearance` | public sealed record | 外観の単一所有者（色・ラベルの体裁・十字マーカーの線の太さ・カーソル座標ラベルのオフセット・枠線の太さ・表示可否・述語） |
+| `src/MarqueeDrawPlan.cs` | `MarqueeDrawPlan` | public readonly record struct | 描画計画（UI が見る唯一の描画値） |
+| `src/MarqueeDrawLayer.cs` | `MarqueeDrawLayer` | public enum | 描画層の順序 |
 | `src/MarqueePresenter.DrawPlan.cs` | `MarqueePresenter`（`DrawPlan` partial） | internal | 枠線 4 辺・暗転領域の矩形の計算 |
 | `src/Presenter/Drawing/MarqueeTextPlacement.cs` | `MarqueeTextPlacement` | public readonly record struct | 描画層が UI 層へ渡すテキスト（文言・基準点・クランプ領域） |
 | `src/MarqueePresenter.LabelTexts.cs` | `MarqueePresenter`（`LabelTexts` partial） | internal | サイズラベル・カーソル座標ラベルの文言と基準点 |
 | `src/MarqueePresenter.LabelPlan.cs` | `MarqueePresenter`（`LabelPlan` partial） | internal | 実寸 → ラベル要素の配置指示の写像 |
-| `src/Presenter/Label/MarqueeLabelPlacement.cs` | `MarqueeLabelPlacement` | public readonly record struct | ラベル要素の配置指示 |
+| `src/MarqueeLabelPlacement.cs` | `MarqueeLabelPlacement` | public readonly record struct | ラベル要素の配置指示 |
 | `src/Presenter/Logging/MarqueePresenterLogMessage.cs` | `MarqueePresenterLogMessage` | internal static partial | 本層のログ定義（生成・ロガー設定・本層が単一所有する設定の変更・コアへの転送） |
 
 ## 5. 例外処理ポリシー

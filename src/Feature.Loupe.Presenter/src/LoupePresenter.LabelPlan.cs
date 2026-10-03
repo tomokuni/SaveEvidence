@@ -1,7 +1,5 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Loupe.Presenter.Label;
 using EsUtil.Feature.Loupe.Presenter.Drawing;
-using EsUtil.Feature.Loupe.Presenter.Setting;
 
 
 namespace EsUtil.Feature.Loupe;

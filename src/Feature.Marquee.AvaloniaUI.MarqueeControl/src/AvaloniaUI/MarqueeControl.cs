@@ -1,6 +1,3 @@
-using EsUtil.Feature.Marquee.Presenter.Drawing;
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -14,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using static EsUtil.Feature.Marquee.MarqueeCore.Limits;
 using EsUtil.Feature.Marquee.Core.Contract;
-using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Coord;
 

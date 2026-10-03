@@ -4,9 +4,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.Feature.Loupe.AvaloniaUI;
-using EsUtil.Feature.Loupe.Presenter.Setting;
-using EsUtil.Feature.Marquee.Presenter.Label;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
@@ -16,6 +13,8 @@ using Microsoft.Extensions.Logging;
 using System.Globalization;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 

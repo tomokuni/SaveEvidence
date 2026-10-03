@@ -11,15 +11,13 @@ using Rect = Avalonia.Rect;
 using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.Feature.Loupe.Core.Setting;
-using EsUtil.Feature.Loupe.Presenter.Setting;
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.Core.Coord;
 using Xunit;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 

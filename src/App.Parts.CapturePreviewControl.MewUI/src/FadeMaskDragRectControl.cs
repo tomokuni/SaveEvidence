@@ -1,8 +1,5 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Feature.Loupe.Presenter.Setting;
-using EsUtil.Feature.Marquee.Presenter.Label;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 using EsUtil.Feature.Marquee.MewUI;
 using EsUtil.Feature.Loupe.MewUI;
@@ -15,6 +12,8 @@ using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using EsUtil.SaveEvidence.Platform.Skia;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Marquee;
 
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;

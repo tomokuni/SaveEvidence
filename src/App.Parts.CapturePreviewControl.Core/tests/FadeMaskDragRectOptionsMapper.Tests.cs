@@ -1,6 +1,6 @@
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee.Core.Setting;
+using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 

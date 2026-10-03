@@ -1,6 +1,4 @@
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;

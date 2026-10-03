@@ -1,8 +1,5 @@
 using EsUtil.Feature.Marquee.Core.Contract;
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.Core.Drawing;
 using EsUtil.Feature.Marquee.Presenter.Drawing;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;

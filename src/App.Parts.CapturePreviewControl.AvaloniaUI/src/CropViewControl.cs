@@ -5,14 +5,14 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using EsUtil.Feature.Loupe.Presenter.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Feature.Loupe.AvaloniaUI;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 

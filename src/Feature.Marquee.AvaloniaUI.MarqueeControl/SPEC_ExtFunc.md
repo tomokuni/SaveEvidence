@@ -59,10 +59,7 @@
 ```csharp
 using Avalonia;
 using EsUtil.Feature.Marquee.AvaloniaUI;
-using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions（コア）
-using EsUtil.Feature.Marquee.Core.Setting; // MarqueeOptions（コア）
-using EsUtil.Feature.Marquee;          // MarqueePresenter（提示のファサード）
-using EsUtil.Feature.Marquee.Presenter.Setting;  // MarqueeAppearance（描画にだけ必要な外観）
+using EsUtil.Feature.Marquee;          // MarqueeCore / MarqueePresenter（ファサード）・MarqueeOptions・MarqueeAppearance
 ```
 
 座標ポート（`ICoordTransform`）を使用する場合は、`Platform.Core` の名前空間も必要です。
@@ -189,7 +186,7 @@ control.ResetSelection();           // 状態と nudge の初期化
 
 #### 5.1.1 設定（`Options`）
 
-寸法・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `EsUtil.Feature.Marquee.Core.Setting.MarqueeOptions`）に、外観（色・フォントサイズ・枠線の太さ・表示可否）は不変の外観値 `MarqueeAppearance`（提示層の `EsUtil.Feature.Marquee.Presenter.Setting.MarqueeAppearance`）にまとめて公開し、`Options` / `Appearance` プロパティで設定します。
+寸法・対話パラメータは不変の設定値 `MarqueeOptions`（コアの `EsUtil.Feature.Marquee.MarqueeOptions`）に、外観（色・フォントサイズ・枠線の太さ・表示可否）は不変の外観値 `MarqueeAppearance`（提示層の `EsUtil.Feature.Marquee.MarqueeAppearance`）にまとめて公開し、`Options` / `Appearance` プロパティで設定します。
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -296,7 +293,7 @@ marquee.Appearance = MarqueeAppearance.Default with { OuterBorderColor = Colors.
 ### 5.4 型
 
 公開型は `MarqueeControl` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` とイベント引数（`SelectionRectEventArgs` / `MarqueePointEventArgs`）です。
-`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.Marquee.Core`、名前空間 `EsUtil.Feature.Marquee.Core.Interaction`）が単一所有し、各 UI 実装で共有します。
+`MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot` は UI 非依存のコア（`Feature.Marquee.Core`、名前空間 `EsUtil.Feature.Marquee`）が単一所有し、各 UI 実装で共有します。
 コア（`Feature.Marquee.Core`）の公開型は 2 層です（内部契約（状態機械・描画入力の組み立て・幾何）は internal）。
 
 - **ホスト設定**: `MarqueeOptions` / `MarqueeHitTarget` / `MarqueeInteractionState` / `MarqueeSnapshot`

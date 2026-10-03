@@ -31,9 +31,7 @@
 ## 使い方
 
 ```csharp
-using EsUtil.Feature.Loupe;
-using EsUtil.Feature.Loupe.Core.Setting;       // LoupeOptions（コア）
-using EsUtil.Feature.Loupe.Presenter.Setting;  // LoupeAppearance（描画にだけ必要な外観）
+using EsUtil.Feature.Loupe;                    // LoupeOptions（コア）と LoupeAppearance（描画にだけ必要な外観）
 using EsUtil.Feature.Loupe.MewUI;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
@@ -90,7 +88,7 @@ if (layout.Position is { } position)
 | `RequestedSize` | `int` | 160 | 一辺のサイズ（DIP）。 1〜4096 に補正 |
 | `ZoomLevel` | `int` | 4 | 拡大率。 1〜64 に補正 |
 
-`Appearance`（`LoupeAppearance`。 `EsUtil.Feature.Loupe.Presenter.Setting`）の項目:
+`Appearance`（`LoupeAppearance`。 `EsUtil.Feature.Loupe`）の項目:
 
 | 項目 | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |

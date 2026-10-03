@@ -3,8 +3,6 @@ using Aprillz.MewUI.Controls;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 using EsUtil.Feature.Marquee.MewUI;
-using EsUtil.Feature.Marquee.Core.Setting;
-using EsUtil.Feature.Marquee.Presenter.Setting;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -15,6 +13,7 @@ using EsUtil.SaveEvidence.App.MewUI.Icons;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.SaveEvidence.App.MewUI.Services;
 using MewUIColor = Aprillz.MewUI.Color;
+using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 

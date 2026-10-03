@@ -1,7 +1,5 @@
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Feature.Marquee.Core.Drawing;
-using EsUtil.Feature.Marquee.Core.Interaction;
 using EsUtil.Feature.Marquee.Core.Selection;
 
 namespace EsUtil.Feature.Marquee;
@@ -60,7 +58,7 @@ public sealed partial class MarqueeCore
     /// <remarks>
     /// 中心位置（8 方向）と一辺サイズの適用を本メソッドが解決し、描画層へは矩形の一覧として渡す<br/>
     /// （位置の式を描画層が持つと、ハンドルのヒットテストと同じ規則が 2 箇所になる）。<br/>
-    /// 枠線の太さも設定（<see cref="Core.Setting.MarqueeOptions.HandleBorderThickness"/>）から解決して渡す<br/>
+    /// 枠線の太さも設定（<see cref="MarqueeOptions.HandleBorderThickness"/>）から解決して渡す<br/>
     /// （描画層が設定を読むと、幾何と線の太さの出所が分かれる）。<br/>
     /// 表示可否は描画層（外観）が判断する。
     /// </remarks>
