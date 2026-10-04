@@ -7,6 +7,7 @@ using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Parts.LineDetection.Sample.Models;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Text.Json;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
@@ -26,6 +27,9 @@ public sealed partial class CreatePageViewModel : ObservableObject
 {
     /// <summary>保存先ディレクトリ名（実行ファイル基準）。</summary>
     private const string DataDirectoryName = "dataset";
+
+    /// <summary>正解データの JSON 出力オプション（毎回生成しない）。</summary>
+    private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 
     /// <summary>データセット保存が完了したときに発火するイベント（ファイルパスを通知）。</summary>
     public event Action<string>? DatasetSaved;
@@ -127,7 +131,7 @@ public sealed partial class CreatePageViewModel : ObservableObject
 
         var dir = Path.Combine(AppContext.BaseDirectory, DataDirectoryName);
         Directory.CreateDirectory(dir);
-        var baseName = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
+        var baseName = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture);
         var pngPath = Path.Combine(dir, $"{baseName}.png");
         var jsonPath = Path.Combine(dir, $"{baseName}.json");
 
@@ -137,7 +141,7 @@ public sealed partial class CreatePageViewModel : ObservableObject
             ClosedIntervalRect.FromPixelRect(CaptureBounds.Value),
             [.. selected.Select(w => new GroundTruthWindow(
                 ClosedIntervalRect.FromPixelRect(w.Bounds), w.Title, w.ClassName))]);
-        var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+        var json = JsonSerializer.Serialize(data, s_jsonOptions);
         File.WriteAllText(jsonPath, json, new System.Text.UTF8Encoding(false));
 
         LastSavedPath = jsonPath;

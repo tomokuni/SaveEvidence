@@ -22,27 +22,17 @@ internal sealed record ColorEntry(string Name, string Value)
     /// <summary>色相順の全色一覧。</summary>
     public static IReadOnlyList<ColorEntry> AllByHue => s_byHue;
 
-    private static readonly IReadOnlyList<ColorEntry> s_byName;
-    private static readonly IReadOnlyList<ColorEntry> s_byHue;
+    private static readonly ColorEntry[] s_all = [.. ColorString.ColorNames.Select(p => new ColorEntry(p.Key, p.Key))];
 
-    // ──────────────── 静的初期化 ────────────────
+    /// <summary>色名（英名）アルファベット順の全色一覧。</summary>
+    private static readonly IReadOnlyList<ColorEntry> s_byName = [.. s_all.OrderBy(e => e.Name)];
 
-    /// <summary>静的コンストラクタ。 全色一覧（色名順 / 色相順）を構築する。</summary>
+    /// <summary>色相順の全色一覧。</summary>
     /// <remarks>
-    /// <see cref="ColorString.ColorNames"/> の全色からエントリを生成し、配列へ一度だけ実体化する<br/>
-    /// （遅延シーケンスの二重列挙を避ける。 ソートは実体化済み配列に対して行う）。<br/>
-    /// リフレクションによる <see cref="Colors"/> 列挙は <see cref="ColorString"/> が単一所有する
-    /// （<c>DynamicDependency</c> 属性も <see cref="ColorString"/> 側にある）。
+    /// 無彩色（白・灰・黒）を先（brightness 昇順 → Black が先頭）に、有彩色を hue 昇順で並べる。<br/>
+    /// 同一キー内では <see cref="Name"/> のアルファベット順で安定ソートする。
     /// </remarks>
-    static ColorEntry()
-    {
-        var entries = ColorString.ColorNames
-            .Select(p => new ColorEntry(p.Key, p.Key))
-            .ToArray();
-
-        s_byName = entries.OrderBy(e => e.Name).ToList().AsReadOnly();
-        s_byHue = entries.OrderBy(e => GetSortKey(e.Value)).ThenBy(e => e.Name).ToList().AsReadOnly();
-    }
+    private static readonly IReadOnlyList<ColorEntry> s_byHue = [.. s_all.OrderBy(e => GetSortKey(e.Value)).ThenBy(e => e.Name)];
 
     /// <summary>色相順ソート用のキーを取得する。</summary>
     /// <remarks>無彩色（白・灰・黒）は priority=0 （brightness 昇順 → Black が先頭）、<br/>

@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 /// Skia を有効化し、ヘッドレス描画を無効化することで WriteableBitmap のピクセル操作（書き込み・読み取り）が
 /// 正しく保持される。
 /// </remarks>
-public class TestAppBuilder
+public static class TestAppBuilder
 {
     /// <summary>Avalonia アプリケーションビルダーを構成する。</summary>
     /// <returns>構成済みの AppBuilder。</returns>

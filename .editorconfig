@@ -37,6 +37,11 @@ indent_size = 2
 indent_style = space
 indent_size = 2
 
+# C# のアナライザー設定（下のブロックはこのセクションに属させる）
+# 注意: セクションを分けないと設定が直前のセクション（[*.csproj]）へ属し、
+#       **.cs ファイルには一切適用されない**（実測: 設定が無効のまま 0 警告になっていた）。
+[*.cs]
+
 # ============================================================
 # ビルドで検出するコード スタイルと品質（人・AI のレビューに頼らない）
 # ============================================================
@@ -45,6 +50,10 @@ indent_size = 2
 # 運用: 検出はビルド（全プロジェクトが EnforceCodeStyleInBuild を持つ）、
 #       修正は `dotnet format`（dotnet format whitespace / style / analyzers）。
 #       手順は .github/検証手順.md が定める。
+# 追加の指針: 規約を「人間と AI が読んで守る」ではなく「コンパイラが守らせる」形にする。
+#       有効化の候補は `dotnet build -p:AnalysisMode=All` で実測して選ぶ（実測手順は .github/検証手順.md）。
+
+# --- スタイル（IDE） ---
 
 # 不要な using をビルド時に警告として検出する（「必要のない名前空間に対する using は記載しない」方針の恒久化）
 dotnet_diagnostic.IDE0005.severity = warning
@@ -52,6 +61,19 @@ dotnet_diagnostic.IDE0005.severity = warning
 # 書式（インデント・空白・改行の位置）を .editorconfig に一致させる。
 # IDE0055 は書式の逸脱をすべて挙げるため、`dotnet format whitespace` で一括修正する。
 dotnet_diagnostic.IDE0055.severity = warning
+
+# 名前空間をフォルダに追従させる（命名規約の「名前空間はフォルダに追従させる」をコンパイラで強制する）。
+# 自作スクリプトでの照合より確実で、AI が目視する必要もなくなる。
+dotnet_diagnostic.IDE0130.severity = warning
+
+# 名前空間の宣言はファイル スコープ（`namespace X;`）にする（命名規約）。
+dotnet_diagnostic.IDE0161.severity = warning
+
+# 不要な抑止（`#pragma warning disable` / `SuppressMessage`）を検出する。
+# 「許可する抑止は理由付きの最小限」という規約の機械的な裏付け（不要になった抑止を残さない）。
+dotnet_diagnostic.IDE0079.severity = warning
+
+# --- 品質（CA） ---
 
 # 死コード（プライベート メンバー）を検出する。 規約「本番で未使用になった公開 API は削除する」の機械的な裏付け。
 dotnet_diagnostic.IDE0051.severity = warning
@@ -77,7 +99,76 @@ dotnet_diagnostic.IDE0305.severity = warning
 # オブジェクトの初期化を簡素化する（生成と同時に設定する）。
 dotnet_diagnostic.IDE0017.severity = warning
 
-# 有効化しない規則（方針と衝突するため）:
+# 到達しないコード（常に真/偽の条件・null にならない値の null 検査）を検出する。
+# 規約「到達不能な防御を書かない」の機械的な裏付け（実測: 2 ファイル 4 件）。
+dotnet_diagnostic.CA1508.severity = warning
+
+# 明示的な既定値の初期化（`= 0` / `= default` / `= null`）を検出する（冗長な初期化を残さない）。
+dotnet_diagnostic.CA1805.severity = warning
+
+# 静的フィールドを宣言時に初期化する（静的コンストラクターを不要に保つ）。
+dotnet_diagnostic.CA1810.severity = warning
+
+# 値型の等値（Equals / == / !=）を実装する（値型は値で比較できるようにする）。
+dotnet_diagnostic.CA1815.severity = warning
+
+# 戻り値の無視・引数の検証漏れ・例外の再スローを検出する。
+dotnet_diagnostic.CA1806.severity = warning
+
+# 書式（`ToString` / `string.Format`）と文字列比較に IFormatProvider / StringComparison を要求する。
+# ロケール依存の書式・比較は環境によって結果が変わる（座標ラベル・ファイル名テンプレートで実害になる）。
+dotnet_diagnostic.CA1305.severity = warning
+dotnet_diagnostic.CA1307.severity = warning
+dotnet_diagnostic.CA1308.severity = warning
+
+# 新しい例外ヘルパー（ArgumentOutOfRangeException.ThrowIf* / ObjectDisposedException.ThrowIf）を使う。
+dotnet_diagnostic.CA1512.severity = warning
+dotnet_diagnostic.CA1513.severity = warning
+
+# インデックス可能なコレクションに LINQ（First / Last 等）を使わない（性能）。
+dotnet_diagnostic.CA1826.severity = warning
+
+# `Span<T>.Fill(default)` の代わりに `Span<T>.Clear()` を使う。
+dotnet_diagnostic.CA1855.severity = warning
+
+# JsonSerializerOptions を毎回生成しない（実測: 1 ファイル 2 件）。
+dotnet_diagnostic.CA1869.severity = warning
+
+# nint / nuint への暗黙変換（オーバーフローで値が変わる）を検出する。
+dotnet_diagnostic.CA2020.severity = warning
+
+# ログが無効なときに評価が高価な引数を渡さない（ログ規約の「高頻度の出力は Trace」と対になる）。
+dotnet_diagnostic.CA1873.severity = warning
+
+# 静的ホルダー型（static メンバーだけを持つ型）を static class にする。
+dotnet_diagnostic.CA1052.severity = warning
+
+# ファイル単位の例外（機械的な判定が実装の意図と合わない箇所。 理由を必ず書く）:
+# SkiaSharp の null 許容注釈と実際の戻り値が一致しない（SKCodec.Create は失敗時に null を返すが非 null として注釈されている）ため、
+# この 2 ファイルでは CA1508 を無効にする（防御的な null 検査を残す）。
+# 注意: セクション ヘッダーを 2 行 並べると、後のセクションだけが設定を持つ（EditorConfig の仕様）。 複数は 1 行へまとめる。
+[{src/App.MewUI/src/Services/ImageThumbnailLoader.cs,src/App.MewUI/tests/TestHelper.cs}]
+dotnet_diagnostic.CA1508.severity = none
+
+# 有効化しない規則（理由を実測とともに残す。 `dotnet build -p:AnalysisMode=All` で検出件数を確認した）:
 #   IDE0008 … `var` を禁止する方向の規則であり、本リポジトリの「型が自明な場合は var」と衝突する。
-#   CA1859 … 具象型の使用を促す規則であり、「抽象（インターフェース）へ依存する」方針と衝突する。
-#   CA1002 … テスト ヘルパーの `List<T>` 公開を指摘するだけで、製品コードに影響しない。
+#   CA1859 … 具象型の使用を促す規則であり、「抽象（インターフェース）へ依存する」方針と衝突する（実測 60 件）。
+#   CA1002 … テスト ヘルパーの `List<T>` 公開を指摘するだけで、製品コードに影響しない（実測 2 件）。
+#   CA2000 … 「破棄される前にスコープ外になる」を検出するが、UI の子要素（追加した要素は親が所有する）を
+#            誤検出する（実測 762 件。 その大半が `new Border()` 等の要素生成）。
+#   CA2007 … `ConfigureAwait` の指定を要求するが、UI アプリは UI スレッドへ戻る必要があるため指定しない（実測 220 件）。
+#   CA1062 … 公開メソッドの引数検証を要求するが、`Nullable` の有効化で null 許容の誤りはコンパイル時に検出できる（実測 122 件）。
+#   CA1515 … 公開型を internal にすることを促すが、ライブラリの公開 API が対象のため衝突する（実測 146 件）。
+#   CA1812 … 未使用の internal 型を検出するが、DI・XAML・リフレクションで生成する型を誤検出する（実測 10 件）。
+#   CA1024 … メソッドをプロパティへ変えることを促すが、引数なしでも「計算する」意味を持つメソッドは残す（実測 4 件）。
+#   CA1031 … 「一般例外を捕捉しない」を検出するが、アプリ境界（設定の読み書き・クリップボード・ファイル操作）では
+#            捕捉して継続するのが正しい（実測 56 件。 境界かどうかは機械的に判定できないため人間と AI が判断する）。
+#   CA1001 / CA1063 / CA2213 … 「破棄可能なフィールドを持つ型は IDisposable を実装し、そのフィールドを破棄する」を
+#            要求する。 UI コントロールはビジュアル ツリー（親）が子の寿命を所有し、親の Dispose で子を破棄しない
+#            （実際に dotnet format が UI コントロールへ IDisposable を機械実装し、CA2213 が 2 → 24 件へ増えた。
+#            実測 16 + 4 + 2 件）。 資源の解放は各型が OnDetachedFromVisualTree 等のライフサイクルで行う（コーディング規約）。
+#   CA1003 … イベントを `EventHandler<T>` にすることを促すが、本リポジトリは `Action<T>` を使っており、
+#            変更は公開 API の破壊になる（実測 12 件。 変更するかは .github/コーディング規約.md が判断する）。
+#   CA1034 … 公開の入れ子型を避けるよう促すが、ファサードの入れ子 `Limits`（数値スキーマ）は意図した設計（実測 10 件）。
+#   CA1711 … 型名の接尾辞（`Collection` 等）を検査する。 xUnit のコレクション定義などで検出される（実測 30 件）。
+#   CA2225 … 演算子の代替メソッドの命名を要求する（実測 48 件。 算術値型の `Add` / `Subtract` が該当）。

@@ -1,5 +1,4 @@
 using Avalonia;
-using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;

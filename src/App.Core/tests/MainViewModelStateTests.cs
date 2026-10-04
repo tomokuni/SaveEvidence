@@ -54,7 +54,7 @@ public class MainViewModelStateTests
         Assert.Matches(@"^img_(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})\.png$", name);
 
         var parsed = DateTime.ParseExact(
-            name.Replace("img_", "").Replace(".png", ""),
+            name.Replace("img_", "", StringComparison.Ordinal).Replace(".png", "", StringComparison.Ordinal),
             "yyyy-MM-dd_HH-mm-ss",
             System.Globalization.CultureInfo.InvariantCulture);
 
@@ -369,7 +369,7 @@ public class MainViewModelStateTests
         Assert.False(vm.HasValidTemplate);
         Assert.True(vm.HasInvalidTemplate);
         Assert.NotNull(vm.ValidationMessage);
-        Assert.Contains("使用できない文字", vm.ValidationMessage);
+        Assert.Contains("使用できない文字", vm.ValidationMessage, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -383,7 +383,7 @@ public class MainViewModelStateTests
         Assert.False(vm.HasValidTemplate);
         Assert.True(vm.HasInvalidTemplate);
         Assert.NotNull(vm.ValidationMessage);
-        Assert.Contains("空です", vm.ValidationMessage);
+        Assert.Contains("空です", vm.ValidationMessage, StringComparison.Ordinal);
     }
 
     [Fact]

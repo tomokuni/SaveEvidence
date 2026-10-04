@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Tests;
 /// Avalonia を初期化する（<see cref="Avalonia.Headless.AvaloniaTestApplicationAttribute"/> アセンブリ属性）。<br/>
 /// Skia を有効化することで WriteableBitmap のピクセル操作（書き込み・読み取り）が利用可能になる。
 /// </remarks>
-public class TestAppBuilder
+public static class TestAppBuilder
 {
     /// <summary>Avalonia アプリケーションビルダーを構成する。</summary>
     /// <returns>構成済みの AppBuilder。</returns>

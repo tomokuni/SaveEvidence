@@ -266,10 +266,6 @@ internal static class AppStyles
     /// <summary>プルダウンの枠・区切り線の色（暗色テーマ用）。</summary>
     private static readonly MewUIColor s_menuBorderDark = MewUIColor.FromArgb(255, 90, 90, 90);
 
-    /// <summary>設定ページのカードの背景色（暗色テーマ用）。</summary>
-    private static readonly MewUIColor s_cardBackgroundDark = MewUIColor.FromArgb(255, 45, 45, 45);
-
-
     /// <summary>設定ページのカードの枠線の色（明色テーマ用）。</summary>
     /// <remarks>Avalonia 版の <c>SystemControlForegroundBaseLowBrush</c> の実測値と同じ。</remarks>
     private static readonly MewUIColor s_cardBorderLight = MewUIColor.FromArgb(255, 204, 204, 204);

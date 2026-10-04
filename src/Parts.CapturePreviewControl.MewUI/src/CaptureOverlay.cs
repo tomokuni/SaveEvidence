@@ -184,7 +184,10 @@ internal sealed class CaptureOverlay
         _screen = screen;
         // 画像の占有範囲（画面物理座標）= 撮影時の原点 + 画像サイズ（原点は負値になりうる）
         _screenBounds = CaptureClipMath.ImageBounds(screen, origin);
-        _log.LogCaptureStart(_type.ToString());
+        if (_log.IsEnabled(LogLevel.Debug))
+        {
+            _log.LogCaptureStart(_type.ToString());
+        }
         // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する。 Avalonia 版と同じ診断情報を残す）
         _log.LogVirtualScreen(origin, screen);
 
@@ -355,7 +358,7 @@ internal sealed class CaptureOverlay
             WindowPlacementMath.ToDipLength(Screen.Height, creationScale));
 
         _selector.SetLoupeSource(Screen);
-        ApplyLabels(_settings);
+        ApplyLabels();
         content.Add(_selector);
 
         // 確定・キャンセルは選択コントロールからの要求とウィンドウのキー入力の両方から受け付ける
@@ -444,7 +447,6 @@ internal sealed class CaptureOverlay
     }
 
     /// <summary>サイズラベル・情報ラベルの文言を選択コントロールへ反映する。</summary>
-    /// <param name="settings">設定。</param>
     /// <remarks>
     /// 1. サイズラベルは対象座標（＝画像ピクセル）で表示するため、テキストは描画のたびに生成する。<br/>
     /// 2. 外観（サイズラベル・サブライン・情報ラベルの色・サイズ）は設定値の変換
@@ -456,7 +458,7 @@ internal sealed class CaptureOverlay
     ///    サイズラベ ルの文言（書式）もコアが単一所有する（本ホストは表示スケールだけを与える）。
     /// 6. サイズラベルの表示可否はコア（<c>MarqueeOptions.ShowSizeLabel</c>）が単一所有するため本メソッドでは判定しない。
     /// </remarks>
-    private void ApplyLabels(CaptureSettings settings)
+    private void ApplyLabels()
     {
         // サイズラベルの文言（書式）はコアが単一所有し、本ホストは矩形を含むモニタの実表示スケール（マルチモニタ補正）だけを提供する。
         _selector.SizeLabelDisplayScalingProvider = DisplayScalingAt;
@@ -477,7 +479,11 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private void ConfirmScreen(EsRect screenRect)
     {
-        _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
+        if (_log.IsEnabled(LogLevel.Debug))
+        {
+            _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
+        }
+
         CompleteCapture(CaptureClipMath.ResolveCaptureRect(_type, screenRect, _screenBounds));
     }
 
@@ -486,7 +492,11 @@ internal sealed class CaptureOverlay
     /// <remarks>浮動小数版と同じ規則を適用する（コアに整数版の入口があり、UI は型を広げない）。</remarks>
     private void ConfirmScreen(EsRectInt screenRect)
     {
-        _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
+        if (_log.IsEnabled(LogLevel.Debug))
+        {
+            _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
+        }
+
         CompleteCapture(CaptureClipMath.ResolveCaptureRect(_type, screenRect, _screenBounds));
     }
 
@@ -544,7 +554,14 @@ internal sealed class CaptureOverlay
     /// ウィンドウはフィールドに保持しないため、表示中のウィンドウ（<c>Application.Current.AllWindows</c> の末尾）を閉じる。
     /// </remarks>
     private static void Close()
-        => Application.Current?.AllWindows.LastOrDefault()?.Close();
+    {
+        // 末尾のウィンドウが表示中のオーバーレイ（インデクサで取得し、LINQ を持ち込まない）
+        var windows = Application.Current?.AllWindows;
+        if (windows is { Count: > 0 })
+        {
+            windows[^1].Close();
+        }
+    }
 
     /// <summary>カーソル下の要素を検出してハイライトを更新する。</summary>
     /// <param name="screenPoint">カーソル位置（画面物理ピクセル）。</param>

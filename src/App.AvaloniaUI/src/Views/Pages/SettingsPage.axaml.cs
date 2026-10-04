@@ -26,7 +26,6 @@ public sealed partial class SettingsPage : UserControl
     private readonly MainViewModel _viewModel = null!;
     private readonly SettingsService _settingsService = null!;
     private TextBox? _currentHotkeyTextBox;
-    private HotkeyTarget? _currentHotkeyTarget;
 
     // 各キャプチャタイプに対応する設定プロパティ
     private enum HotkeyTarget { SelectScreen, WindowSelect, AreaSelect }
@@ -185,7 +184,6 @@ public sealed partial class SettingsPage : UserControl
         _currentHotkeyTextBox = tb;
         _currentHotkeyTextBox.Background = Brushes.LightYellow;
         _currentHotkeyTextBox.Focus();
-        _currentHotkeyTarget = GetHotkeyTarget(tb);
     }
 
     /// <summary>ホットキーキャプチャ状態を解除する（ハイライト解除 + 状態リセット）。</summary>
@@ -196,7 +194,6 @@ public sealed partial class SettingsPage : UserControl
         if (_currentHotkeyTextBox == tb)
         {
             _currentHotkeyTextBox = null;
-            _currentHotkeyTarget = null;
         }
     }
 

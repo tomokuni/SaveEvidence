@@ -40,7 +40,7 @@ public class CropLabelTextsTests
     {
         var label = CropLabelTexts.FormatCropSizeLabel(new EsRect(0, 0, 1, 1), zoomPercent);
 
-        Assert.Contains($"Zoom: ({expected}%)", label);
+        Assert.Contains($"Zoom: ({expected}%)", label, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class CropLabelTextsTests
         var label = CropLabelTexts.FormatCropSizeLabel(new EsRect(5, 5, 0, 0, EsRectInterval.Closed), zoomPercent: 100);
 
         // 閉区間では幅 0 でも 1 ピクセル（終点のみ）を切り出す
-        Assert.Contains("WH: (1, 1)", label);
+        Assert.Contains("WH: (1, 1)", label, StringComparison.Ordinal);
     }
 
     [Fact]

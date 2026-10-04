@@ -55,7 +55,7 @@ public sealed partial class FileNameTemplate
     public static string Generate(string template, DateTime? now = null)
     {
         var timestamp = now ?? DateTime.Now;
-        return ReplacePlaceholders(template, t => timestamp.ToString(t.Format));
+        return ReplacePlaceholders(template, t => timestamp.ToString(t.Format, CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public sealed partial class FileNameTemplate
             CultureInfo.InvariantCulture, out var decValue))
         {
             decValue++;
-            formattedNumber = decValue.ToString().PadLeft(width, '0');
+            formattedNumber = decValue.ToString(CultureInfo.InvariantCulture).PadLeft(width, '0');
         }
         // decimal でも扱えない桁数 → BigInteger
         else if (BigInteger.TryParse(originalDigits,
@@ -93,7 +93,7 @@ public sealed partial class FileNameTemplate
             CultureInfo.InvariantCulture, out var bigValue))
         {
             bigValue++;
-            formattedNumber = bigValue.ToString().PadLeft(width, '0');
+            formattedNumber = bigValue.ToString(CultureInfo.InvariantCulture).PadLeft(width, '0');
         }
         else
         {
@@ -157,8 +157,8 @@ public sealed partial class FileNameTemplate
     private static string ReplacePlaceholders(string template, Func<(string Token, string Format, string Sample), string> valueOf)
     {
         var result = template
-            .Replace("{{", OpenBraceToken)
-            .Replace("}}", CloseBraceToken);
+            .Replace("{{", OpenBraceToken, StringComparison.Ordinal)
+            .Replace("}}", CloseBraceToken, StringComparison.Ordinal);
 
         // { } で囲われた領域を検出し、領域内のトークンを日時値へ置換する
         result = PlaceholderPattern().Replace(result, match =>
@@ -166,14 +166,14 @@ public sealed partial class FileNameTemplate
             var content = match.Groups[1].Value;
             foreach (var token in s_tokens)
             {
-                content = content.Replace(token.Token, valueOf(token));
+                content = content.Replace(token.Token, valueOf(token), StringComparison.Ordinal);
             }
             return content;
         });
 
         return result
-            .Replace(OpenBraceToken, "{")
-            .Replace(CloseBraceToken, "}");
+            .Replace(OpenBraceToken, "{", StringComparison.Ordinal)
+            .Replace(CloseBraceToken, "}", StringComparison.Ordinal);
     }
 
     /// <summary>{ } で囲われたプレースホルダ領域を検出する正規表現（入れ子なし・最長一致）。</summary>

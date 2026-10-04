@@ -80,7 +80,7 @@ public static class EsBitmapSkiaExtensions
             if (src is null)
             {
                 // ピクセルを持たないビットマップ（表像なし）は透明で埋める（未初期化の場合は不定値が残るため）
-                new Span<uint>(dst, result.Width * result.Height).Fill(0);
+                new Span<uint>(dst, result.Width * result.Height).Clear();
                 return result;
             }
 

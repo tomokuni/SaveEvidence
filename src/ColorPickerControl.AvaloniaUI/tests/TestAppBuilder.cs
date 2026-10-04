@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 /// 注: FluentTheme 等のテーマを Application に追加するとヘッドレステストランナーの
 /// ApplicationLifetime 管理と競合するため、テーマは追加しない（ComboBox テンプレートは適用されない）。<br/>
 /// </remarks>
-public class TestAppBuilder
+public static class TestAppBuilder
 {
     /// <summary>Avalonia ヘッドレステスト用の AppBuilder を構成する。</summary>
     /// <returns>構成済みの AppBuilder。</returns>

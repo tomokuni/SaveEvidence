@@ -30,12 +30,12 @@ public static class HotKeyParser
         var modifiers = HotKeyModifiers.None;
         for (int i = 0; i < parts.Length - 1; i++)
         {
-            modifiers |= parts[i].ToLowerInvariant() switch
+            modifiers |= parts[i].ToUpperInvariant() switch
             {
-                "ctrl" or "control" => HotKeyModifiers.Control,
-                "shift" => HotKeyModifiers.Shift,
-                "alt" => HotKeyModifiers.Alt,
-                "win" or "windows" => HotKeyModifiers.Windows,
+                "CTRL" or "CONTROL" => HotKeyModifiers.Control,
+                "SHIFT" => HotKeyModifiers.Shift,
+                "ALT" => HotKeyModifiers.Alt,
+                "WIN" or "WINDOWS" => HotKeyModifiers.Windows,
                 _ => HotKeyModifiers.None
             };
         }

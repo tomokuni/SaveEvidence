@@ -42,10 +42,7 @@ public sealed class CapacityLimitedCache<TKey, TValue> where TKey : notnull
     {
         ArgumentNullException.ThrowIfNull(factory);
 
-        if (capacity < 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(capacity));
-        }
+        ArgumentOutOfRangeException.ThrowIfLessThan(capacity, 1);
 
         _factory = factory;
         _capacity = capacity;

@@ -26,13 +26,15 @@ public static class ColorString
 {
     /// <summary>色名（英名）の辞書（<see cref="Colors"/> の全色名 → 色）。</summary>
     /// <remarks><see cref="Colors"/> の公開静的プロパティをリフレクションで列挙する（140 色）。</remarks>
-    private static readonly IReadOnlyDictionary<string, Color> s_colorNames;
+    private static readonly IReadOnlyDictionary<string, Color> s_colorNames = BuildColorNames();
 
-    /// <summary>色（ARGB 完全一致）→ 色名 の逆引き辞書（<see cref="FindColorName"/> の O(1) 検索用）。</summary>
-    private static readonly IReadOnlyDictionary<Color, string> s_exactNameByColor;
-
-    /// <summary>RGB 一致（アルファ無視）→ 色名 の逆引き辞書（同 RGB は不透明 A=255 を優先登録）。</summary>
-    private static readonly IReadOnlyDictionary<(byte R, byte G, byte B), string> s_nameByRgb;
+    /// <summary>色（ARGB 完全一致）→ 色名 / RGB 一致（アルファ無視）→ 色名 の逆引き辞書。</summary>
+    /// <remarks>
+    /// <see cref="FindColorName"/> の O(1) 検索用（RGB 一致は同 RGB の場合に不透明 A=255 を優先登録する）。<br/>
+    /// 宣言時に一度だけ構築する（静的コンストラクターを持たない = beforefieldinit を保つ）。
+    /// </remarks>
+    private static readonly (Dictionary<Color, string> Exact, Dictionary<(byte R, byte G, byte B), string> Rgb) s_reverseLookups =
+        BuildReverseLookups(s_colorNames);
 
     /// <summary><see cref="TryParse"/> の解析結果キャッシュ（入力文字列 → 解析結果）。</summary>
     /// <remarks>
@@ -67,20 +69,17 @@ public static class ColorString
     /// <remarks>テスト（ColorPickerControl.AvaloniaUI.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
     internal const int NormalizedCacheCapacity = 512;
 
-    /// <summary>トリマーに <see cref="Colors"/> の静的プロパティがリフレクションで使用されることを伝える。</summary>
+    /// <summary>色名辞書を構築する（<see cref="Colors"/> の公開静的プロパティをリフレクションで列挙する）。</summary>
+    /// <returns>色名 → 色 の辞書（キーは大文字小文字を無視）。</returns>
+    /// <remarks>トリマーに <see cref="Colors"/> の静的プロパティが使用されることを伝える（<c>DynamicDependency</c>）。</remarks>
     [DynamicDependency(DynamicallyAccessedMemberTypes.PublicProperties, typeof(Colors))]
-    static ColorString()
-    {
+    private static IReadOnlyDictionary<string, Color> BuildColorNames()
         // Colors の公開静的プロパティのうち Color 型のみを列挙する
         // （`is` 判定の防御分岐を作らず、PropertyType の完全一致でフィルタする）
-        var names = typeof(Colors)
+        => typeof(Colors)
             .GetProperties(BindingFlags.Public | BindingFlags.Static)
             .Where(p => p.PropertyType == typeof(Color))
             .ToDictionary(p => p.Name, p => (Color)p.GetValue(null)!, StringComparer.OrdinalIgnoreCase);
-
-        s_colorNames = names;
-        (s_exactNameByColor, s_nameByRgb) = BuildReverseLookups(names);
-    }
 
     /// <summary>色名辞書から色 → 色名 の逆引き辞書を構築する。</summary>
     /// <param name="names">色名 → 色 の辞書。</param>
@@ -239,7 +238,7 @@ public static class ColorString
         if (!TryParse(text, out var color, out var opacity)) return text;
 
         // 不透明度が明示指定されていない場合（+{n}% なし）は、アルファ成分を不透明度として扱う
-        if (!text.Contains('+'))
+        if (!text.Contains('+', StringComparison.Ordinal))
         {
             opacity = color.A / 255.0;
         }
@@ -313,15 +312,15 @@ public static class ColorString
     /// <param name="color">色。</param>
     /// <returns>一致する色名。 未定義の場合は null。</returns>
     /// <remarks>
-    /// アルファも含めて完全一致する色名を最優先する（<see cref="s_exactNameByColor"/> の O(1) 検索）。<br/>
-    /// 完全一致が無い場合は RGB のみで一致する色名を返す（<see cref="s_nameByRgb"/>。 同 RGB で複数ある場合は
+    /// アルファも含めて完全一致する色名を最優先する（<see cref="s_reverseLookups"/> の O(1) 検索）。<br/>
+    /// 完全一致が無い場合は RGB のみで一致する色名を返す（同 RGB で複数ある場合は
     /// 不透明（A=255）の色名が優先登録されている。 例: White と Transparent は同 RGB のため、
     /// 半透明の白は "White" と表示される）。
     /// </remarks>
     private static string? FindColorName(Color color)
     {
-        if (s_exactNameByColor.TryGetValue(color, out var exact)) return exact;
-        return s_nameByRgb.TryGetValue((color.R, color.G, color.B), out var rgb) ? rgb : null;
+        if (s_reverseLookups.Exact.TryGetValue(color, out var exact)) return exact;
+        return s_reverseLookups.Rgb.TryGetValue((color.R, color.G, color.B), out var rgb) ? rgb : null;
     }
 
     /// <summary>色を <c>#RRGGBB</c>（アルファなし16進）へ変換する。</summary>

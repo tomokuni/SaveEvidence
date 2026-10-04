@@ -9,7 +9,9 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 /// 撮影と切り出しの開始・確定・キャンセルは<b>両 UI で同じ事象</b>であるため、書式とレベルを本クラスが単一所有する。<br/>
 /// 診断用のログ（検出結果・仮想スクリーン・結果サイズ・確定／キャンセル要求）も<b>本クラスが所有する</b><br/>
 /// （書式が「どの UI の実装か」に依存しないため、UI 層に定義を置く理由がない）。<br/>
-/// ログの有効・無効の判定は生成コード（<c>IsEnabled</c>）が担うため、呼び出し側でゲートしない。
+/// <b>呼び出し側でゲートしない</b>（ログ本文の出力可否は生成コードの <c>IsEnabled</c> が判定する）。<br/>
+/// <b>ただし引数の評価が高価な場合は呼び出し側で <c>IsEnabled</c> でゲートする</b>（引数は呼び出し前に評価されるため、<br/>
+/// 生成コードの <c>IsEnabled</c> では防げない。 検出結果の整形が該当する）。
 /// </remarks>
 public static partial class CaptureLogMessage
 {
@@ -91,7 +93,10 @@ public static partial class CaptureLogMessage
             return;
         }
 
-        logger.LogCropCompleted(CaptureLogFormat.Rect(bounds));
+        if (logger.IsEnabled(LogLevel.Debug))
+        {
+            logger.LogCropCompleted(CaptureLogFormat.Rect(bounds));
+        }
     }
 
     /// <summary>切り出しセッションの確定を記録する（内部用）。</summary>

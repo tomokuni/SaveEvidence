@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Parts.LineDetection.Tests;
 /// Skia を有効化することで <see cref="Avalonia.Media.Imaging.Bitmap"/> の読み込みが可能になる。<br/>
 /// テストは全て UI スレッドで実行され、画像のデコード・ピクセル取得が可能になる。
 /// </remarks>
-public class TestAppBuilder
+public static class TestAppBuilder
 {
     /// <summary>Avalonia ヘッドレステスト用の AppBuilder を構成する。</summary>
     /// <returns>構成済みの AppBuilder。</returns>

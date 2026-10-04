@@ -114,7 +114,7 @@ public class MainViewModelTests
 
         // 4. 書き込みが画像を伴って要求されたこと（モック活用検証）
         var saved = Assert.Single(writer.SavedPaths);
-        Assert.EndsWith("screenshot_001.png", saved);
+        Assert.EndsWith("screenshot_001.png", saved, StringComparison.Ordinal);
         Assert.Single(writer.SavedImages);
     }
 

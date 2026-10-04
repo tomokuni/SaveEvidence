@@ -85,7 +85,8 @@ $restoreArgs = if ($NoRestore) { @('--no-restore') } else { @() }
 # ============================================================
 if (-not $SkipBuild) {
     Write-Output '== 1. ビルド =='
-    $buildArgs = @('build', $Solution, '-c', $Configuration, '-tl:off', '-v:q', '--no-incremental') + $restoreArgs
+    # -warnaserror: 警告をエラーにして終了コードで判定する（AI がログを読んで件数を数えなくても合否が分かる）
+    $buildArgs = @('build', $Solution, '-c', $Configuration, '-tl:off', '-v:q', '--no-incremental', '-warnaserror') + $restoreArgs
     $buildText = Invoke-DotNet $buildArgs
     $buildWarnings = ([regex]::Matches($buildText, 'warning ')).Count
     $buildErrors = ([regex]::Matches($buildText, ': error ')).Count
@@ -116,6 +117,34 @@ $duplicateProps = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -Fi
 Add-Result 'ビルド設定' ($missingProps.Count -eq 0 -and $duplicateProps.Count -eq 0) "不足 $($missingProps.Count) / 重複 $($duplicateProps.Count)"
 $missingProps | ForEach-Object { "      Directory.Build.props に無い: $_" }
 $duplicateProps | ForEach-Object { "      重複指定: $($_.FullName.Substring($repoRoot.Length + 1))" }
+
+# 2b) アナライザー設定が .cs へ適用されているか
+#     `.editorconfig` の `dotnet_diagnostic.*` は「直前のセクション」に属する。 セクションを分け忘れると
+#     設定が `.cs` 以外（例: `[*.csproj]`）に属し、**設定が無効のまま「0 警告」になる**（実測で発生した）。
+$editorConfigPath = Join-Path $repoRoot '.editorconfig'
+$analyzerSectionIssues = [System.Collections.Generic.List[string]]::new()
+if (Test-Path -LiteralPath $editorConfigPath) {
+    $section = ''
+    $line = 0
+    foreach ($text in [IO.File]::ReadAllLines($editorConfigPath, $enc)) {
+        $line++
+        if ($text -match '^\s*\[(?<pattern>.+)\]\s*$') { $section = $Matches['pattern']; continue }
+        if ($text -match '^\s*dotnet_diagnostic\.[A-Za-z0-9]+\.[a-z_]+\s*=') {
+            # 対象拡張子（.cs）へ適用されるセクションか。
+            # セクションは `*.cs` / `{a.cs,b.cs}` / `**/*.cs` の形を取りうるため、カンマ区切りの全パターンが `.cs` で終わることを要求する
+            # （`*.cs-broken` のような取り違えも検出する。 `\.cs\b` の境界だけでは `-` を通してしまう）。
+            $sectionOk = $true
+            foreach ($part in $section.Replace('{', '').Replace('}', '').Split(',')) {
+                if (-not $part.Trim().EndsWith('.cs')) { $sectionOk = $false }
+            }
+            if (-not $sectionOk) {
+                $analyzerSectionIssues.Add(("{0}:{1}  {2}（セクション: [{3}]）" -f '.editorconfig', $line, $text.Trim(), $section))
+            }
+        }
+    }
+}
+Add-Result 'アナライザー設定' ($analyzerSectionIssues.Count -eq 0) "無効なセクション $($analyzerSectionIssues.Count) 件"
+$analyzerSectionIssues | Select-Object -First 8 | ForEach-Object { "      $_" }
 
 # ============================================================
 # 3. テスト（全件合格。 -Coverage でカバレッジも集計する）
@@ -252,28 +281,9 @@ $brokenLinks | Select-Object -First 10 | ForEach-Object { "      $_" }
 # ============================================================
 # 7. 名前空間（フォルダへの追従）
 # ============================================================
-Write-Output '== 7. 名前空間 =='
-$nsMismatches = [System.Collections.Generic.List[string]]::new()
-$checkedFiles = 0
-Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory | ForEach-Object {
-    $srcDir = Join-Path $_.FullName 'src'
-    $csproj = Join-Path $srcDir "$($_.Name).csproj"
-    if (-not (Test-Path -LiteralPath $csproj)) { return }
-    $t = [IO.File]::ReadAllText($csproj, $enc)
-    $rootNs = if ($t -match '<RootNamespace>([^<]+)</RootNamespace>') { $Matches[1] } else { $_.Name }
-    Get-ChildItem -Path $srcDir -Recurse -File -Filter '*.cs' |
-        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } | ForEach-Object {
-            $script:checkedFiles++
-            $rel = $_.FullName.Substring($srcDir.Length + 1)
-            $dir = [IO.Path]::GetDirectoryName($rel)
-            $expected = if ([string]::IsNullOrEmpty($dir)) { $rootNs } else { $rootNs + '.' + ($dir -replace '\\', '.') }
-            $m = [regex]::Match([IO.File]::ReadAllText($_.FullName, $enc), '(?m)^namespace\s+([^;{]+)')
-            $actual = if ($m.Success) { $m.Groups[1].Value.Trim() } else { '(宣言なし)' }
-            if ($actual -ne $expected) { $nsMismatches.Add("$rel  期待=$expected  実際=$actual") }
-        }
-}
-Add-Result '名前空間' ($nsMismatches.Count -eq 0) "$checkedFiles ファイル / 不一致 $($nsMismatches.Count)"
-$nsMismatches | Select-Object -First 10 | ForEach-Object { "      $_" }
+# 検査はビルドが担う（IDE0130: 名前空間がフォルダー構造と一致しない）。
+# 実測で IDE0130 が期待どおりに検出することを確かめてあり、自作の照合は持たない。Write-Output '== 7. 名前空間（ビルドの IDE0130 が強制する） =='
+Add-Info '名前空間' 'ビルドの IDE0130 が強制する（不一致はビルドが失敗する）'
 
 # ============================================================
 # 8. 文書が引用する名前空間・ファイル（実在の確認）

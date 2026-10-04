@@ -258,6 +258,6 @@ public sealed class CaptureSessionControl : IDisposable
     /// <summary>破棄済みなら例外を投げる。</summary>
     private void ThrowIfDisposed()
     {
-        if (_isDisposed) throw new ObjectDisposedException(nameof(CaptureSessionControl));
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
     }
 }
