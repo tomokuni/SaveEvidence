@@ -78,4 +78,49 @@
 
   </Target>
 
+  <!-- ============================================================
+       ビルド設定（実効値）の検査。
+       規則の所有者は .github/ビルド設定規約.md であり、本ファイルはその実装である。
+       規則を変えるときは .github/ビルド設定規約.md を先に更新する。
+
+       `Directory.Build.props` のテキストは MSBuild から読めないため、ここでは「実効値」を検査する
+       （テキストの重複指定は buildScript/verify.ps1 が検査する）。
+       ============================================================ -->
+  <Target Name="ValidateProjectSettings" BeforeTargets="Build" Condition="'$(MSBuildProjectName)' != ''">
+
+    <PropertyGroup>
+      <_SeIsTestOrSample>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '\.(Tests|Sample)$'))</_SeIsTestOrSample>
+      <!-- テスト プロジェクトの RootNamespace が `.Tests` で終わるか（`Condition` へ否定を直接書けないため事前計算する） -->
+      <_SeIsTestProject>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '\.Tests$'))</_SeIsTestProject>
+      <_SeTestRootNamespaceOk>$([System.Text.RegularExpressions.Regex]::IsMatch('$(RootNamespace)', '\.Tests$'))</_SeTestRootNamespaceOk>
+    </PropertyGroup>
+
+    <!-- BUILD0001: コード スタイルとドキュメントコメントの検証（4 プロパティは Directory.Build.props が単一所有する） -->
+    <Error Condition="'$(EnforceCodeStyleInBuild)' != 'true'" Code="BUILD0001"
+           Text="ビルド設定違反: EnforceCodeStyleInBuild が true ではありません（Directory.Build.props が所有します）。 規則は .github/ビルド設定規約.md §3。" />
+    <Error Condition="'$(GenerateDocumentationFile)' != 'true'" Code="BUILD0001"
+           Text="ビルド設定違反: GenerateDocumentationFile が true ではありません（Directory.Build.props が所有します）。 規則は .github/ビルド設定規約.md §3。" />
+    <Error Condition="'$(CopyDocumentationFileToOutputDirectory)' != 'false'" Code="BUILD0001"
+           Text="ビルド設定違反: CopyDocumentationFileToOutputDirectory が false ではありません（配布物へ XML を出しません）。 規則は .github/ビルド設定規約.md §3。" />
+    <Error Condition="'$(PublishDocumentationFiles)' != 'false'" Code="BUILD0001"
+           Text="ビルド設定違反: PublishDocumentationFiles が false ではありません（配布物へ XML を出しません）。 規則は .github/ビルド設定規約.md §3。" />
+
+    <!-- BUILD0002: アナライザーの解析モードと警告のエラー化（Directory.Build.props が単一所有する） -->
+    <Error Condition="'$(AnalysisLevel)' == ''" Code="BUILD0002"
+           Text="ビルド設定違反: AnalysisLevel が未指定です（Directory.Build.props が所有します）。 規則は .github/ビルド設定規約.md §3。" />
+    <Error Condition="'$(AnalysisMode)' != 'Recommended'" Code="BUILD0002"
+           Text="ビルド設定違反: AnalysisMode が Recommended ではありません（無効にする規則は .editorconfig に severity = none で書きます）。 規則は .github/ビルド設定規約.md §3。" />
+    <Error Condition="'$(TreatWarningsAsErrors)' != 'true'" Code="BUILD0002"
+           Text="ビルド設定違反: TreatWarningsAsErrors が true ではありません（dotnet build の終了コードで規約準拠を判定します）。 規則は .github/ビルド設定規約.md §3。" />
+
+    <!-- BUILD0003: クラスライブラリのアセンブリ名はプロジェクト名（= フォルダ名）と一致させる -->
+    <Error Condition="'$(_SeIsTestOrSample)' != 'true' And '$(OutputType)' != 'WinExe' And '$(AssemblyName)' != '$(MSBuildProjectName)'" Code="BUILD0003"
+           Text="命名規約違反: アセンブリ名 '$(AssemblyName)' がプロジェクト名 '$(MSBuildProjectName)' と一致しません（クラスライブラリの AssemblyName は省略します）。 規則は .github/命名規約.md「アセンブリ名」。" />
+
+    <!-- BUILD0004: テスト プロジェクトの RootNamespace は対象の名前空間 + .Tests -->
+    <Error Condition="'$(_SeIsTestProject)' == 'true' And '$(_SeTestRootNamespaceOk)' != 'true'" Code="BUILD0004"
+           Text="命名規約違反: テスト プロジェクト '$(MSBuildProjectName)' の RootNamespace '$(RootNamespace)' が .Tests で終わっていません。 規則は .github/テスト規約.md §1。" />
+
+  </Target>
+
 </Project>

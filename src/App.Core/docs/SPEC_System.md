@@ -29,8 +29,8 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `src/App.Core/src/Enum/AppPage.cs` | `public enum` | ナビゲーションページの識別子 |
-| `src/App.Core/src/Enum/ThemeMode.cs` | `public enum` | テーマモード（`Description` 属性で表示名を保持） |
+| `src/App.Core/src/Enums/AppPage.cs` | `public enum` | ナビゲーションページの識別子 |
+| `src/App.Core/src/Enums/ThemeMode.cs` | `public enum` | テーマモード（`Description` 属性で表示名を保持） |
 | `src/App.Core/src/Models/Settings.cs` | `public sealed partial class` | アプリケーション設定（変更通知付き） |
 | `src/App.Core/src/Models/FileNameTemplate.cs` | `public static partial class` | ファイル名テンプレートの解析・生成・検証 |
 | `src/App.Core/src/Models/UndoHistory.cs` | `public sealed class` | 画像の Undo / Redo スタック |

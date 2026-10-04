@@ -18,4 +18,22 @@
     <PublishDocumentationFiles>false</PublishDocumentationFiles>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- アナライザーの解析モード（全プロジェクト共通。 各 .csproj では指定しない）。
+         `Recommended` は SDK が推奨する規則をまとめて有効にする（規則の列挙を .editorconfig へ手書きしない）。
+         無効にする規則だけを .editorconfig に `severity = none` で明示する（opt-out 方式）。 -->
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <!-- 警告をエラーにする（「dotnet build が通れば規約に準拠している」を終了コードで判定できる）。
+         検証スクリプトの `-warnaserror` に依存しない（素の `dotnet build` でも検出できる）。 -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 使用を禁止する API（BannedSymbols.txt）をコンパイラで検出する。
+         規則の所有者は .github/コーディング規約.md（例: フラグ enum は HasFlag ではなくビット演算を使う）。 -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="[5.*,)" PrivateAssets="all" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+  </ItemGroup>
+
 </Project>

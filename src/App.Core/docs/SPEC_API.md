@@ -6,7 +6,7 @@
 
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
-| `Enum.AppPage` / `Enum.ThemeMode` | `public` | 任意 |
+| `Enums.AppPage` / `Enums.ThemeMode` | `public` | 任意 |
 | `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` / `Models.HotKeyParser` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
@@ -16,11 +16,11 @@
 | `ViewModels.ViewModeDisplay` | `internal` | 同上 |
 | `ViewModels.FolderViewViewModel` / `ViewModels.UndoViewModel` / `ViewModels.MainViewModel` | `public` | 任意 |
 
-## `Enum.AppPage`（列挙型）
+## `Enums.AppPage`（列挙型）
 
 ナビゲーションページの識別子（`Capture` / `FolderView` / `Undo` / `Settings`）。
 
-## `Enum.ThemeMode`（列挙型）
+## `Enums.ThemeMode`（列挙型）
 
 テーマモード。 各メンバーは `System.ComponentModel.DescriptionAttribute` で表示名を保持します。
 

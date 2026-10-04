@@ -739,9 +739,11 @@ public sealed partial class CapturePage : UserControl
         // 「切り出し中か」の真のソースは排他スロット（Facade がコアの規則を適用する）
         var active = _captureSessionControl.IsCropping;
         if (CropButton is not null)
+        {
             ToolTip.SetTip(CropButton, active
                 ? "切り出し（確定して切り抜く）"
                 : "切り出し（切出しモード開始）");
+        }
     }
 
     /// <summary>進行中の Crop セッションをキャンセルする。</summary>

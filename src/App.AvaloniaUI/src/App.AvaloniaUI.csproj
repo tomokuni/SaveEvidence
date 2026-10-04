@@ -10,9 +10,8 @@
     <!-- 実行ファイルの名前は製品名を優先する（配布物の exe 名。 命名規約の例外）。 -->
     <AssemblyName>SaveEvidence.AvaloniaUI</AssemblyName>
     <StartupObject>EsUtil.SaveEvidence.App.AvaloniaUI.Program</StartupObject>
-    <AnalysisLevel>latest</AnalysisLevel>
-    <!-- AVLN3001 はアプリの設計上解消できないため理由付きで抑止する（唯一の抑止）。
-         MainWindow は DI コンストラクターだけを持ち、XAML はコンパイル済みとして読み込む（ランタイム ローダーを使わない）。
+    <!-- 抑止は .github/ビルド設定規約.md の「付録 A 抑止の一覧」に理由付きで載せたものだけとする。
+         AVLN3001: アプリはコンパイル済み XAML を使い、ランタイム ローダーを使わない。
          公開のパラメーターなしコンストラクターを足すと DI の設計が壊れる。 -->
     <NoWarn>$(NoWarn);CA2101;SYSLIB1051;SYSLIB1054;MVVMTK0042;AVLN3001</NoWarn>
     <UseWindowsForms>false</UseWindowsForms>

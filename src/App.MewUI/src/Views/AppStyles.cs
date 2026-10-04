@@ -1,6 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.SaveEvidence.App.Core.Enum;
+using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.MewUI.Icons;
 using MewUIColor = Aprillz.MewUI.Color;
 

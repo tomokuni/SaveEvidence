@@ -1,6 +1,6 @@
 using System.Globalization;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Converters;
-using EsUtil.SaveEvidence.App.Core.Enum;
+using EsUtil.SaveEvidence.App.Core.Enums;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Tests;

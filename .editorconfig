@@ -168,6 +168,87 @@ dotnet_diagnostic.CA1003.severity = warning
 # 連続する空行を検出する（体裁をコンパイラで守らせる）。
 dotnet_diagnostic.IDE2000.severity = warning
 
+# --- 記述スタイル（コンパイラで強制する。 規則は .github/コーディング規約.md） ---
+
+# 複数行のブロックは `{ }` を必須にする（1 行のガード節（早期 return / continue / throw）は省略できる。 規約 §4）。
+csharp_prefer_braces = when_multiline
+dotnet_diagnostic.IDE0011.severity = warning
+
+# null 判定は `is null` / `is not null` に統一する（`== null` / `!= null` を混ぜない。 規約 §4）。
+dotnet_diagnostic.IDE0041.severity = warning
+
+# 公開コレクションは読み取り専用インターフェースで公開する（規約 §5）。
+dotnet_diagnostic.CA1002.severity = warning
+
+# --- 命名（コンパイラで強制する。 規則は .github/命名規約.md） ---
+# private インスタンス フィールドは `_camelCase`。
+dotnet_naming_rule.private_instance_fields.symbols = private_instance_fields
+dotnet_naming_rule.private_instance_fields.style = underscore_camel
+dotnet_naming_rule.private_instance_fields.severity = warning
+dotnet_naming_symbols.private_instance_fields.applicable_kinds = field
+dotnet_naming_symbols.private_instance_fields.applicable_accessibilities = private, private_protected
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+dotnet_naming_style.underscore_camel.required_prefix = _
+
+# private 静的フィールドは `s_camelCase`（インスタンス フィールドの規則より後に書いて優先させる。
+# `required_modifiers` は「必須」の意味であり否定が書けないため、後勝ちの順序で分ける）。
+dotnet_naming_rule.private_static_fields.symbols = private_static_fields
+dotnet_naming_rule.private_static_fields.style = s_prefix_camel
+dotnet_naming_rule.private_static_fields.severity = warning
+dotnet_naming_symbols.private_static_fields.applicable_kinds = field
+dotnet_naming_symbols.private_static_fields.applicable_accessibilities = private, private_protected
+dotnet_naming_symbols.private_static_fields.required_modifiers = static
+dotnet_naming_style.s_prefix_camel.capitalization = camel_case
+dotnet_naming_style.s_prefix_camel.required_prefix = s_
+
+# `const` フィールドは PascalCase（アクセス修飾子によらず同じ）。
+dotnet_naming_rule.constant_fields.symbols = constant_fields
+dotnet_naming_rule.constant_fields.style = pascal_case
+dotnet_naming_rule.constant_fields.severity = warning
+dotnet_naming_symbols.constant_fields.applicable_kinds = field
+dotnet_naming_symbols.constant_fields.applicable_accessibilities = *
+dotnet_naming_symbols.constant_fields.required_modifiers = const
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+
+# インターフェースは `I` + PascalCase。
+dotnet_naming_rule.interfaces.symbols = interface_symbols
+dotnet_naming_rule.interfaces.style = begins_with_i
+dotnet_naming_rule.interfaces.severity = warning
+dotnet_naming_symbols.interface_symbols.applicable_kinds = interface
+dotnet_naming_style.begins_with_i.capitalization = pascal_case
+dotnet_naming_style.begins_with_i.required_prefix = I
+
+# 有効化しない規則（`AnalysisMode=Recommended` でも有効になるため、明示的に無効化する。 理由を必ず書く）:
+# 採用の是非は `dotnet build -p:AnalysisMode=All -v:q --no-incremental` の 1 回で再測定できる。
+# 注意: `dotnet_diagnostic.*` は直前のセクションに属するため、本ブロックは `[*.cs]` の直下（他のセクションより前）に置く。
+#
+# CA1859 … 具象型の使用を促す規則。 「抽象（インターフェース）へ依存する」方針（コーディング規約 §5）と衝突する。
+dotnet_diagnostic.CA1859.severity = none
+# CA1001 / CA1063 / CA2213 … 「破棄可能なフィールドを持つ型は IDisposable を実装し、そのフィールドを破棄する」。
+#   UI コントロールはビジュアル ツリー（親）が子の寿命を所有し、親の Dispose で子を破棄しない
+#   （実際に dotnet format が UI コントロールへ IDisposable を機械実装し、CA2213 が 2 → 24 件へ増えた）。
+#   資源の解放は各型が OnDetachedFromVisualTree 等のライフサイクルで行う（コーディング規約 §7）。
+dotnet_diagnostic.CA1001.severity = none
+dotnet_diagnostic.CA1063.severity = none
+dotnet_diagnostic.CA2213.severity = none
+# CA2000 … 「破棄される前にスコープ外になる」を検出するが、UI の子要素（追加した要素は親が所有する）を
+#   誤検出する（大半が `new Border()` 等の要素生成）。
+dotnet_diagnostic.CA2000.severity = none
+# CA2007 … `ConfigureAwait` の指定を要求するが、UI アプリは UI スレッドへ戻る必要があるため指定しない。
+dotnet_diagnostic.CA2007.severity = none
+# CA1062 … 公開メソッドの引数検証を要求するが、`Nullable` の有効化で null 許容の誤りはコンパイル時に検出できる。
+dotnet_diagnostic.CA1062.severity = none
+# CA1515 … 公開型を internal にすることを促すが、ライブラリの公開 API が対象のため衝突する。
+dotnet_diagnostic.CA1515.severity = none
+# CA1812 … 未使用の internal 型を検出するが、DI・XAML・リフレクションで生成する型を誤検出する。
+dotnet_diagnostic.CA1812.severity = none
+# CA1024 … メソッドをプロパティへ変えることを促すが、引数なしでも「計算する」意味を持つメソッドは残す。
+dotnet_diagnostic.CA1024.severity = none
+# CA1034 … 公開の入れ子型を避けるよう促すが、ファサードの入れ子 `Limits`（数値スキーマ）は意図した設計。
+dotnet_diagnostic.CA1034.severity = none
+# IDE0008 … `var` を禁止する方向の規則であり、本リポジトリの「型が自明な場合は var」と衝突する。
+dotnet_diagnostic.IDE0008.severity = none
+
 # ファイル単位の例外（機械的な判定が実装の意図と合わない箇所。 理由を必ず書く）:
 # SkiaSharp の null 許容注釈と実際の戻り値が一致しない（SKCodec.Create は失敗時に null を返すが非 null として注釈されている）ため、
 # この 2 ファイルでは CA1508 を無効にする（防御的な null 検査を残す）。
@@ -175,19 +256,14 @@ dotnet_diagnostic.IDE2000.severity = warning
 [{src/App.MewUI/src/Services/ImageThumbnailLoader.cs,src/App.MewUI/tests/TestHelper.cs}]
 dotnet_diagnostic.CA1508.severity = none
 
-# 有効化しない規則（理由を実測とともに残す。 `dotnet build -p:AnalysisMode=All` で検出件数を確認した）:
-#   IDE0008 … `var` を禁止する方向の規則であり、本リポジトリの「型が自明な場合は var」と衝突する。
-#   CA1859 … 具象型の使用を促す規則であり、「抽象（インターフェース）へ依存する」方針と衝突する（実測 60 件）。
-#   CA1002 … テスト ヘルパーの `List<T>` 公開を指摘するだけで、製品コードに影響しない（実測 2 件）。
-#   CA2000 … 「破棄される前にスコープ外になる」を検出するが、UI の子要素（追加した要素は親が所有する）を
-#            誤検出する（実測 762 件。 その大半が `new Border()` 等の要素生成）。
-#   CA2007 … `ConfigureAwait` の指定を要求するが、UI アプリは UI スレッドへ戻る必要があるため指定しない（実測 220 件）。
-#   CA1062 … 公開メソッドの引数検証を要求するが、`Nullable` の有効化で null 許容の誤りはコンパイル時に検出できる（実測 122 件）。
-#   CA1515 … 公開型を internal にすることを促すが、ライブラリの公開 API が対象のため衝突する（実測 146 件）。
-#   CA1812 … 未使用の internal 型を検出するが、DI・XAML・リフレクションで生成する型を誤検出する（実測 10 件）。
-#   CA1024 … メソッドをプロパティへ変えることを促すが、引数なしでも「計算する」意味を持つメソッドは残す（実測 4 件）。
-#   CA1001 / CA1063 / CA2213 … 「破棄可能なフィールドを持つ型は IDisposable を実装し、そのフィールドを破棄する」を
-#            要求する。 UI コントロールはビジュアル ツリー（親）が子の寿命を所有し、親の Dispose で子を破棄しない
-#            （実際に dotnet format が UI コントロールへ IDisposable を機械実装し、CA2213 が 2 → 24 件へ増えた。
-#            実測 16 + 4 + 2 件）。 資源の解放は各型が OnDetachedFromVisualTree 等のライフサイクルで行う（コーディング規約）。
-#   CA1034 … 公開の入れ子型を避けるよう促すが、ファサードの入れ子 `Limits`（数値スキーマ）は意図した設計（実測 10 件）。
+# `EsKey` のメンバーは UI フレームワークのキー enum（`Avalonia.Input.Key`）と同名にする規約があるため、
+# 型名と同名のメンバー（`Decimal` 等）を許可する（.github/命名規約.md の「UI フレームワークの enum と同じ意味ならメンバー名を揃える」）。
+[src/EsUtil.Platform.Core/src/EsKey.cs]
+dotnet_diagnostic.CA1720.severity = none
+
+# `CA1848`（LoggerMessage デリゲートの使用）と `RS0030`（禁止 API。 例: `Enum.HasFlag`）は
+# 製品コードの性能規則である。 テストは「NullLogger では何も起きない」ことの検証のために直接 ILogger を呼び、
+# サンプルは見た目の確認用であるため、どちらも対象外にする。
+[{**/tests/**,**/sample/**}]
+dotnet_diagnostic.CA1848.severity = none
+dotnet_diagnostic.RS0030.severity = none

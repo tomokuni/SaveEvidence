@@ -5,7 +5,7 @@ using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native.Imaging;
-using EsUtil.SaveEvidence.App.Core.Enum;
+using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Services;

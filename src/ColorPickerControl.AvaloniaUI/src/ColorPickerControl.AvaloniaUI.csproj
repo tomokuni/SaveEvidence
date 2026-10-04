@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>EsUtil.SaveEvidence.ColorPicker.AvaloniaUI</RootNamespace>
-    <AssemblyName>EsUtil.SaveEvidence.ColorPicker.AvaloniaUI</AssemblyName>
+    <AssemblyName>ColorPickerControl.AvaloniaUI</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

@@ -85,8 +85,9 @@ $restoreArgs = if ($NoRestore) { @('--no-restore') } else { @() }
 # ============================================================
 if (-not $SkipBuild) {
     Write-Output '== 1. ビルド =='
-    # -warnaserror: 警告をエラーにして終了コードで判定する（AI がログを読んで件数を数えなくても合否が分かる）
-    $buildArgs = @('build', $Solution, '-c', $Configuration, '-tl:off', '-v:q', '--no-incremental', '-warnaserror') + $restoreArgs
+    # 警告のエラー化は Directory.Build.props の TreatWarningsAsErrors が単一所有する（-warnaserror は付けない）。
+    # これで素の `dotnet build` でも規約違反が終了コードに出る（スクリプトの引数に依存しない）。
+    $buildArgs = @('build', $Solution, '-c', $Configuration, '-tl:off', '-v:q', '--no-incremental') + $restoreArgs
     $buildText = Invoke-DotNet $buildArgs
     $buildWarnings = ([regex]::Matches($buildText, 'warning ')).Count
     $buildErrors = ([regex]::Matches($buildText, ': error ')).Count
@@ -107,13 +108,14 @@ Write-Output '== 2. ビルド設定 =='
 $propsPath = Join-Path $repoRoot 'Directory.Build.props'
 $propsText = if (Test-Path -LiteralPath $propsPath) { [IO.File]::ReadAllText($propsPath, $enc) } else { '' }
 $missingProps = [System.Collections.Generic.List[string]]::new()
-foreach ($p in 'EnforceCodeStyleInBuild', 'GenerateDocumentationFile', 'CopyDocumentationFileToOutputDirectory', 'PublishDocumentationFiles') {
+foreach ($p in 'EnforceCodeStyleInBuild', 'GenerateDocumentationFile', 'CopyDocumentationFileToOutputDirectory', 'PublishDocumentationFiles',
+    'AnalysisLevel', 'AnalysisMode', 'TreatWarningsAsErrors') {
     if ($propsText -notmatch "<$p>") { $missingProps.Add($p) }
 }
 # 各 .csproj が重複して指定していないか（単一所有の確認）
 $duplicateProps = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.csproj' |
         Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
-        Where-Object { [IO.File]::ReadAllText($_.FullName) -match '<EnforceCodeStyleInBuild>|<GenerateDocumentationFile>|PublishDocumentationFiles' })
+        Where-Object { [IO.File]::ReadAllText($_.FullName) -match '<EnforceCodeStyleInBuild>|<GenerateDocumentationFile>|PublishDocumentationFiles|<AnalysisLevel>|<AnalysisMode>|<TreatWarningsAsErrors>' })
 Add-Result 'ビルド設定' ($missingProps.Count -eq 0 -and $duplicateProps.Count -eq 0) "不足 $($missingProps.Count) / 重複 $($duplicateProps.Count)"
 $missingProps | ForEach-Object { "      Directory.Build.props に無い: $_" }
 $duplicateProps | ForEach-Object { "      重複指定: $($_.FullName.Substring($repoRoot.Length + 1))" }
@@ -162,17 +164,6 @@ foreach ($hit in @(git -c core.quotepath=false grep --untracked -n -E '\bIsEnabl
 }
 Add-Result 'ログの有効判定' ($callSiteGates.Count -eq 0) "呼び出し側の IsEnabled $($callSiteGates.Count) 件"
 $callSiteGates | Select-Object -First 8 | ForEach-Object { "      $_" }
-
-# 2d) イベントの型（`event` は EventHandler / EventHandler<T> に限る）
-#     `event Action<T>` は CA1003 が検出するが、本リポジトリは API の破壊を伴う判断（値型・record は
-#     `IDisposable Subscribe(Action<T>)` で公開する）を規約が単一所有する。 規約のとおりに書かれていることを
-#     ビルドとは別に実測する（規則の除外や無効化が入っても気付けるようにする）
-$eventDelegateSites = [System.Collections.Generic.List[string]]::new()
-foreach ($hit in @(git -c core.quotepath=false grep --untracked -n -E '\bevent\s+(Action|Func)\b' -- 'src' 2>$null)) {
-    $eventDelegateSites.Add($hit)
-}
-Add-Result 'イベントの型' ($eventDelegateSites.Count -eq 0) "event Action/Func $($eventDelegateSites.Count) 件"
-$eventDelegateSites | Select-Object -First 8 | ForEach-Object { "      $_" }
 
 # ============================================================
 # 3. テスト（全件合格。 -Coverage でカバレッジも集計する）
@@ -438,6 +429,23 @@ Add-Result '文書の引用' ($quoteIssues -eq 0) "パス $($loosePaths.Count) /
 $loosePaths | Select-Object -First 8 | ForEach-Object { "      $_" }
 $treeIssues | Select-Object -First 8 | ForEach-Object { "      $_" }
 $stale | Select-Object -First 8 | ForEach-Object { "      $_" }
+
+# 8d) 文書へ陳腐化する統計（テスト件数など）を書いていないか
+#     「（41 件）」「テストは **577 件**」のような実測値はコードを変えるたびに古くなる。
+#     .github/ドキュメント規約.md §10 が「書かない」と定めており、実測は verify.ps1 が出力する。
+#     検査を説明する本手順だけは例として引用するため対象外にする（8c と同じ扱い）。
+$rxStatistic = [regex]'（[1-9]\d* 件）|テストは \*\*[1-9]\d* 件'
+$statistic = [System.Collections.Generic.List[string]]::new()
+foreach ($f in $docs) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    if ($rel -match '検証手順\.md$') { continue }
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($rxStatistic.IsMatch($lines[$i])) { $statistic.Add(("{0}:{1}  {2}" -f $rel, ($i + 1), $lines[$i].Trim())) }
+    }
+}
+Add-Result '文書の統計値' ($statistic.Count -eq 0) "陳腐化する件数の記載 $($statistic.Count) 件"
+$statistic | Select-Object -First 10 | ForEach-Object { "      $_" }
 
 # 8e) 文書が引用する型名の接頭辞（実在しない名前空間を書かない）
 #     文書は型を「ルート名前空間の型 = 接頭辞なし」「下位名前空間の型 = 名前空間の末尾セグメントを接頭辞」で書く

@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Avalonia.Data.Converters;
-using EsUtil.SaveEvidence.App.Core.Enum;
+using EsUtil.SaveEvidence.App.Core.Enums;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Converters;
 

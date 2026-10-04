@@ -1,4 +1,4 @@
-using EsUtil.SaveEvidence.App.Core.Enum;
+using EsUtil.SaveEvidence.App.Core.Enums;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;

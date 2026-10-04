@@ -5,7 +5,6 @@
     <RootNamespace>EsUtil.SaveEvidence.App.Core</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AnalysisLevel>latest</AnalysisLevel>
     <NoWarn>$(NoWarn);MVVMTK0042</NoWarn>
   </PropertyGroup>
 

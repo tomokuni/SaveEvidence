@@ -10,8 +10,8 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 
 | 型 | 公開 | 責務 |
 | --- | --- | --- |
-| `Enum.AppPage` | `public` | ナビゲーションページの識別子 |
-| `Enum.ThemeMode` | `public` | テーマモード（`Description` 属性で表示名を保持） |
+| `Enums.AppPage` | `public` | ナビゲーションページの識別子 |
+| `Enums.ThemeMode` | `public` | テーマモード（`Description` 属性で表示名を保持） |
 | `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。 ウィンドウ位置は `EsRectInt`、状態は `EsWindowState` で保持 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。 JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
 | `Services.IImageWriter` | `public` | 画像（`EsBitmap`）のファイル書き込みの抽象。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードする |

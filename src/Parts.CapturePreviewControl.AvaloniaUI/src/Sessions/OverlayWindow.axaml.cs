@@ -147,7 +147,10 @@ internal sealed partial class OverlayWindow : Window
     {
         // 包含矩形の計算と空の判定はコアが単一所有する（空の場合は撮影する領域が無い）
         if (CaptureVirtualScreen.ResolveBounds(
-                Screens.All.Select(screen => screen.Bounds.ToEsRectInt())) is not { } bounds) return;
+                Screens.All.Select(screen => screen.Bounds.ToEsRectInt())) is not { } bounds)
+        {
+            return;
+        }
 
         // 物理ピクセル → DIP の換算は Platform 層の純粋関数（係数の正規化を含む）に委譲する
         Position = bounds.TopLeft.ToAvaloniaPixelPoint();
