@@ -241,7 +241,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
 
         RaiseZoomChanged();
         RaiseViewportChanged();
-        return new ZoomFeedback { Redraw = true };
+        return new ZoomFeedback { ShouldRedraw = true };
     }
 
     /// <summary>ビューポートのサイズを反映する。</summary>
@@ -268,7 +268,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
         }
 
         RaiseViewportChanged();
-        return new ZoomFeedback { Redraw = true };
+        return new ZoomFeedback { ShouldRedraw = true };
     }
 
     /// <summary>画像の中央寄せ／左上寄せを反映する。</summary>
@@ -284,7 +284,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
 
         _centerAlign = centerAlign;
         RaiseViewportChanged();
-        return new ZoomFeedback { Redraw = true };
+        return new ZoomFeedback { ShouldRedraw = true };
     }
 
     /// <summary>外観（下地・市松模様・スクロールバー）を反映する。</summary>
@@ -301,7 +301,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
         }
 
         _appearance = appearance;
-        return new ZoomFeedback { Redraw = true };
+        return new ZoomFeedback { ShouldRedraw = true };
     }
 
     /// <summary>ズーム遷移の設定を反映する。</summary>
@@ -348,7 +348,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
 
         RaiseZoomChanged();
         RaiseViewportChanged();
-        return new ZoomFeedback { Redraw = true };
+        return new ZoomFeedback { ShouldRedraw = true };
     }
 
     /// <summary>実効ズーム率（%）を固定倍率として設定する（UI のスライダ・拡大率メニュー用）。</summary>
@@ -383,7 +383,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
 
         _offset = clamped;
         RaiseViewportChanged();
-        return new ZoomFeedback { Redraw = true };
+        return new ZoomFeedback { ShouldRedraw = true };
     }
 
     /// <summary>パンする（コンテンツ座標の移動量）。</summary>
@@ -417,7 +417,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
     {
         _isPanning = true;
         _grabSourcePos = ClientToSource(position);
-        return new ZoomFeedback { CapturePointer = true };
+        return new ZoomFeedback { ShouldCapturePointer = true };
     }
 
     /// <summary>ドラッグ中は掴んだ位置がポインタに追従するようパンする。</summary>
@@ -450,7 +450,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
         }
 
         _isPanning = false;
-        return new ZoomFeedback { ReleasePointer = true };
+        return new ZoomFeedback { ShouldReleasePointer = true };
     }
 
     /// <summary>ズームインする（⊖⊕ ボタン）。</summary>
@@ -596,7 +596,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
         }
 
         _scrollBarDragging = null;
-        return new ZoomFeedback { ReleasePointer = true };
+        return new ZoomFeedback { ShouldReleasePointer = true };
     }
 
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（オフセット基準）。</summary>
@@ -626,7 +626,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
     public ZoomFeedback NotifyViewportChanged()
     {
         RaiseViewportChanged();
-        return new ZoomFeedback { Redraw = true };
+        return new ZoomFeedback { ShouldRedraw = true };
     }
 
     /// <summary>ズーム操作（⊖⊕ ボタン・Ctrl+ホイール）の共通処理（遷移関数の適用・ログ・反映）。</summary>

@@ -27,20 +27,20 @@ public class CursorOverrideGuardAvaloniaExtensionsTests
         // ヘッドレス環境ではネイティブハンドルを取得できない場合があるが、例外なく完了する
         guard.Attach(window);
 
-        Assert.True(guard.AttachCalled);
+        Assert.True(guard.WasAttachCalled);
     }
 
     /// <summary>Attach の呼び出しを記録するスタブ（Avalonia 拡張の委譲先を検証する）。</summary>
     private sealed class StubGuard : ICursorOverrideGuard
     {
         /// <summary>Attach が呼び出されたかどうか。</summary>
-        public bool AttachCalled { get; private set; }
+        public bool WasAttachCalled { get; private set; }
 
         /// <inheritdoc/>
         public bool IsAttached => false;
 
         /// <inheritdoc/>
-        public void Attach(EsPlatformHandle handle) => AttachCalled = true;
+        public void Attach(EsPlatformHandle handle) => WasAttachCalled = true;
 
         /// <inheritdoc/>
         public void Dispose()

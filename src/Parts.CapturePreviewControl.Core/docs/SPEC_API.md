@@ -636,5 +636,5 @@ public readonly record struct OverlayRect(
 | 型 | 内容 |
 | --- | --- |
 | `ZoomState` | 通知する 4 値（`ZoomPercent` / `IsFit` / `CanZoomIn` / `CanZoomOut`） |
-| `ZoomFeedback` | UI が適用する効果（`Redraw` / `CapturePointer` / `ReleasePointer`）。 `ApplyVisual` / `ApplyPointer` に**適用順を単一所有**する |
+| `ZoomFeedback` | UI が適用する効果（`ShouldRedraw` / `ShouldCapturePointer` / `ShouldReleasePointer`）。 `ApplyVisual` / `ApplyPointer` に**適用順を単一所有**する |
 | `ZoomNotice` / `ZoomNoticeKind` | 通知の種別（`ZoomChanged` / `ViewportChanged`）と通知時点の値（`State` / `ImageRect`）。 `ZoomChanged` は確定した 4 値、`ViewportChanged` は画像の表示矩形を運び、オーバーレイが同じ矩形を参照できるようにする |

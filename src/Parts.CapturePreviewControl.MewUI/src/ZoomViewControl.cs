@@ -238,7 +238,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
         var position = e.GetPosition(this).ToEsPoint();
         Apply(_session.TryBeginScrollBarDrag(position)
-            ? new ZoomFeedback { CapturePointer = true }
+            ? new ZoomFeedback { ShouldCapturePointer = true }
             : _session.Press(position));
         e.Handled = true;
     }

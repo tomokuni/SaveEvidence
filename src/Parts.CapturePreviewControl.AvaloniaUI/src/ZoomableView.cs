@@ -315,7 +315,7 @@ internal sealed class ZoomableView : Panel
     /// <param name="e">ポインターイベント。</param>
     /// <remarks>
     /// 掴んだ位置のコンテンツ座標をセッションが保存し、以降のドラッグでその位置をポインターへ追従させる。<br/>
-    /// ポインターのキャプチャは効果（<see cref="ZoomFeedback.CapturePointer"/>）に従って適用する。
+    /// ポインターのキャプチャは効果（<see cref="ZoomFeedback.ShouldCapturePointer"/>）に従って適用する。
     /// </remarks>
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {

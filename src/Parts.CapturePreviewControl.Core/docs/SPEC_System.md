@@ -329,7 +329,7 @@ classDiagram
     class ZoomViewSession { <<sealed class>> +bool IsFit  +double ZoomPercent  +EsVector Offset  +ZoomState CurrentState  +ZoomFeedback SetSource(hasSource, sourceSize)  +ZoomFeedback ZoomIn()  +ZoomFeedback ZoomByWheel(zoomIn, pointer)  +ZoomFeedback PanBy(delta) }
     class ZoomOptions { <<sealed class>> +double MinZoom  +double MaxZoom  +double WheelFactor  +IReadOnlyList~double~ ButtonZoomLevels  +With(...) ZoomOptions }
     class ZoomState { <<readonly record struct>> +double ZoomPercent  +bool IsFit  +bool CanZoomIn  +bool CanZoomOut }
-    class ZoomFeedback { <<readonly record struct>> +bool Redraw  +bool CapturePointer  +bool ReleasePointer  +ApplyVisual(redraw)$  +ApplyPointer(capture, release)$ }
+    class ZoomFeedback { <<readonly record struct>> +bool ShouldRedraw  +bool ShouldCapturePointer  +bool ShouldReleasePointer  +ApplyVisual(redraw)$  +ApplyPointer(capture, release)$ }
     class ZoomNotice { <<sealed record>> +ZoomNoticeKind Kind  +ZoomState State  +EsRect ImageRect }
     class ZoomViewAppearance { <<sealed record>> +Color BackgroundColor  +ComputeCheckerArea(...)$  +ComputeLightTileRects(...)$ }
     class ZoomScrollBarGeometry { <<static>> +Compute(...)$  +MovableThumbRange(...)$  +SourceOffsetFromThumb(...)$ }

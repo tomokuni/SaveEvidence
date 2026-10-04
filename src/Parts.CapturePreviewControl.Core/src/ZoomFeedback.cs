@@ -13,23 +13,23 @@ public readonly record struct ZoomFeedback
 {
     /// <summary>表示の再描画が必要かどうかを取得する。</summary>
     /// <value>状態が変化して描き直しが必要な場合は true。</value>
-    public bool Redraw { get; init; }
+    public bool ShouldRedraw { get; init; }
 
     /// <summary>ポインタをキャプチャ（ドラッグ追跡）するかどうかを取得する。</summary>
     /// <value>パン開始などでポインタを捕捉する場合は true。</value>
     /// <remarks>ポインタを暗黙にキャプチャする UI では無視してよい（使用しない場合は常に false として扱える）。</remarks>
-    public bool CapturePointer { get; init; }
+    public bool ShouldCapturePointer { get; init; }
 
     /// <summary>ポインタのキャプチャを解放するかどうかを取得する。</summary>
     /// <value>パン終了などでポインタを解放する場合は true。</value>
-    public bool ReleasePointer { get; init; }
+    public bool ShouldReleasePointer { get; init; }
 
     /// <summary>表示に関わる効果（再描画）を適用する。</summary>
     /// <param name="redraw">再描画するコールバック。</param>
     /// <remarks>再描画の要否を UI 層で判定させないための入口（本値が唯一の判断元）。</remarks>
     public void ApplyVisual(Action redraw)
     {
-        if (Redraw)
+        if (ShouldRedraw)
         {
             redraw();
         }
@@ -41,12 +41,12 @@ public readonly record struct ZoomFeedback
     /// <remarks>キャプチャと解放が同時に要求されることはない（順序の判断が不要になるよう本メソッドが一方だけを呼ぶ）。</remarks>
     public void ApplyPointer(Action capture, Action release)
     {
-        if (CapturePointer)
+        if (ShouldCapturePointer)
         {
             capture();
         }
 
-        if (ReleasePointer)
+        if (ShouldReleasePointer)
         {
             release();
         }

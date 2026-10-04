@@ -647,6 +647,104 @@ foreach ($f in $docs) {
 Add-Result '文書のパス記法' ($pathNotation.Count -eq 0) "$($pathNotation.Count) 件"
 $pathNotation | Select-Object -First 10 | ForEach-Object { "      $_" }
 
+# 8h) 文書とコメントの記載範囲（依存関係 §7 / ドキュメント規約 §11）
+#     可搬な層（EsUtil.Platform.Core / EsUtil.Feature.*）の文書とコメントには、参照先（推移を含む）以外の
+#     プロジェクトを書かない（可搬性が損なわれ、読者が「その型を直接使える」と誤解する）。
+#     - 到達可能集合は csproj の ProjectReference から求める（§3 の表と DEP0001-0006 が一致を保証する）。
+#     - テスト・サンプルは対象プロジェクトと同じ単位として扱う（`X.Tests` への言及は `X` と同じ）。
+#     - 相対リンクの URL 部は対象外（リンク先は実在のパスを指す必要がある）。
+#     - 2 つ以上のプロジェクトが同じ名前空間を持つ場合は帰属を決められないため、そのトークンは検査しない。
+function Get-CanonicalProjectKey([string]$key) {
+    $c = $key -replace '\.Tests$', ''
+    return ($c -replace '\.Sample$', '')
+}
+
+$projTokens = @{}
+$projRefs = @{}
+$projKeys = [System.Collections.Generic.List[string]]::new()
+$projKeySet = [System.Collections.Generic.HashSet[string]]::new()
+foreach ($csproj in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.csproj' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $key = [IO.Path]::GetFileNameWithoutExtension($csproj.Name)
+    if ($projKeySet.Add($key)) { $projKeys.Add($key) }
+    $csText = [IO.File]::ReadAllText($csproj.FullName, $enc)
+    $tokens = [System.Collections.Generic.List[string]]::new()
+    $tokens.Add($key)
+    $nsMatch = [regex]::Match($csText, '<RootNamespace>([^<]+)</RootNamespace>')
+    if ($nsMatch.Success -and $nsMatch.Groups[1].Value -ne $key) { $tokens.Add($nsMatch.Groups[1].Value) }
+    $projTokens[$key] = $tokens
+    $canonical = Get-CanonicalProjectKey $key
+    if (-not $projRefs.ContainsKey($canonical)) { $projRefs[$canonical] = [System.Collections.Generic.HashSet[string]]::new() }
+    foreach ($refMatch in [regex]::Matches($csText, '<ProjectReference\s+Include="(?<p>[^"]+)"')) {
+        [void]$projRefs[$canonical].Add((Get-CanonicalProjectKey ([IO.Path]::GetFileNameWithoutExtension($refMatch.Groups['p'].Value))))
+    }
+}
+$tokenUseCount = @{}
+foreach ($key in $projKeys) { foreach ($t in $projTokens[$key]) { if (-not $tokenUseCount.ContainsKey($t)) { $tokenUseCount[$t] = 0 }; $tokenUseCount[$t]++ } }
+
+$scopeIssues = [System.Collections.Generic.List[string]]::new()
+$rxMdLinkUrl = [regex]'\]\([^)]*\)'
+foreach ($target in @($projKeys | Where-Object { $_.StartsWith('EsUtil.') -and (Get-CanonicalProjectKey $_) -eq $_ })) {
+    $targetDir = Join-Path $repoRoot "src/$target"
+    if (-not (Test-Path -LiteralPath $targetDir)) { continue }
+    $reachable = [System.Collections.Generic.HashSet[string]]::new()
+    $queue = [System.Collections.Generic.Queue[string]]::new()
+    foreach ($key in $projKeys) {
+        if ((Get-CanonicalProjectKey $key) -eq $target) { [void]$reachable.Add($key); $queue.Enqueue($target) }
+    }
+    while ($queue.Count -gt 0) {
+        $current = $queue.Dequeue()
+        if (-not $projRefs.ContainsKey($current)) { continue }
+        foreach ($dep in $projRefs[$current]) { if ($reachable.Add($dep)) { $queue.Enqueue($dep) } }
+    }
+    $patterns = [System.Collections.Generic.List[string]]::new()
+    foreach ($key in $projKeys) {
+        if ($reachable.Contains((Get-CanonicalProjectKey $key))) { continue }
+        foreach ($t in $projTokens[$key]) { if ($tokenUseCount[$t] -eq 1) { $patterns.Add(('(?<![\w.-])' + [regex]::Escape($t) + '(?![\w.-])')) } }
+    }
+    if ($patterns.Count -eq 0) { continue }
+    $rxForbidden = [regex]($patterns -join '|')
+    foreach ($f in (Get-ChildItem -Path $targetDir -Recurse -File -Include '*.md', '*.cs' |
+            Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+        $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+        $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $line = $rxMdLinkUrl.Replace($lines[$i], ']()')
+            if ($rxForbidden.IsMatch($line)) { $scopeIssues.Add(("{0}:{1}  [{2}]" -f $rel, ($i + 1), $rxForbidden.Match($line).Value)) }
+        }
+    }
+}
+Add-Result '文書の記載範囲' ($scopeIssues.Count -eq 0) "可搬な層の参照外のプロジェクト $($scopeIssues.Count) 件"
+$scopeIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8i) 状態を表す真偽値の命名（命名規約: 述語の接頭辞）
+#     状態・判定の真偽値は Is / Has / Can / Should / Show / Was で始める（`Redraw` では true の意味が読めない）。
+#     設定・外観（Settings / Options / Appearance / Config）の真偽値は動作を表す動詞句でもよい（.NET の慣習）。
+$rxStateBool = [regex]'(?<![\w.])(?:public|internal|private|protected)\s+(?:static\s+)?(?:virtual\s+|override\s+|sealed\s+|new\s+|readonly\s+)*bool\s+(?<n>[A-Za-z_]\w*)\s*\{'
+$rxBoolPredicate = [regex]'^(Is|Has|Can|Should|Show|Use|Supports|Contains|Needs|Was)'
+$rxSettingsTypeName = [regex]'(Settings|Options|Appearance|Config)$'
+$boolIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.cs' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    # ファイル先頭の型をそのファイルの型とみなす（1 ファイル 1 型の規約）
+    $declaredType = ''
+    foreach ($line in $lines) {
+        $typeMatch = [regex]::Match($line, '(?:class|struct|record(?:\s+(?:class|struct))?)\s+([A-Za-z_]\w*)')
+        if ($typeMatch.Success) { $declaredType = $typeMatch.Groups[1].Value; break }
+    }
+    if ($declaredType -match $rxSettingsTypeName) { continue }
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        foreach ($m in $rxStateBool.Matches($lines[$i])) {
+            $name = $m.Groups['n'].Value
+            if (-not $rxBoolPredicate.IsMatch($name)) { $boolIssues.Add(("{0}:{1}  [{2}] {3}" -f $rel, ($i + 1), $declaredType, $name)) }
+        }
+    }
+}
+Add-Result '状態の真偽値の命名' ($boolIssues.Count -eq 0) "$($boolIssues.Count) 件"
+$boolIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
 # ============================================================
 # 9. 改行コード
 # ============================================================

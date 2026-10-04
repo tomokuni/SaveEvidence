@@ -55,7 +55,7 @@ public class ZoomViewSessionTests
         var feedback = session.SetSource(hasSource: true, new EsSize(100, 100));
 
         Assert.Equal([ZoomNoticeKind.ZoomChanged, ZoomNoticeKind.ViewportChanged], kinds);
-        Assert.True(feedback.Redraw);
+        Assert.True(feedback.ShouldRedraw);
     }
 
     /// <summary>画像未設定・ビューポート未確定時は Fit 実効倍率がフォールバック（100%）であることを検証する。</summary>
@@ -292,7 +292,7 @@ public class ZoomViewSessionTests
 
         var feedback = session.Press(new EsPoint(10, 10));
 
-        Assert.True(feedback.CapturePointer);
+        Assert.True(feedback.ShouldCapturePointer);
         Assert.True(session.IsPanning);
     }
 
@@ -306,7 +306,7 @@ public class ZoomViewSessionTests
 
         var feedback = session.Release();
 
-        Assert.True(feedback.ReleasePointer);
+        Assert.True(feedback.ShouldReleasePointer);
         Assert.False(session.IsPanning);
     }
 
@@ -687,7 +687,7 @@ public class ZoomViewSessionTests
         var feedback = session.ReleaseScrollBarDrag();
 
         Assert.True(session.Offset.Y > before);
-        Assert.True(feedback.ReleasePointer);
+        Assert.True(feedback.ShouldReleasePointer);
         Assert.False(session.IsDraggingScrollBar);
     }
 
@@ -704,7 +704,7 @@ public class ZoomViewSessionTests
         var changed = session.SetAppearance(ZoomViewAppearance.Default with { CheckerSize = 8 });
         var same = session.SetAppearance(ZoomViewAppearance.Default with { CheckerSize = 8 });
 
-        Assert.True(changed.Redraw);
+        Assert.True(changed.ShouldRedraw);
         Assert.Equal(default, same);
         Assert.Equal(8, session.Appearance.CheckerSize);
     }
@@ -721,7 +721,7 @@ public class ZoomViewSessionTests
         var same = session.SetCenterAlign(centerAlign: false);
 
         Assert.Equal(1, count);
-        Assert.True(changed.Redraw);
+        Assert.True(changed.ShouldRedraw);
         Assert.Equal(default, same);
     }
 
