@@ -6,12 +6,13 @@
 - [2. 技術スタック](#2-技術スタック)
 - [3. アーキテクチャ](#3-アーキテクチャ)
   - [3.1 本層を置く理由](#31-本層を置く理由)
-- [4. コンポーネント構成](#4-コンポーネント構成)
-- [5. クラス図](#5-クラス図)
-- [6. データフロー](#6-データフロー)
-- [7. 例外処理ポリシー](#7-例外処理ポリシー)
-- [8. 可視性ポリシー](#8-可視性ポリシー)
-- [9. テスト](#9-テスト)
+- [4. 依存関係](#4-依存関係)
+- [5. コンポーネント構成](#5-コンポーネント構成)
+- [6. クラス図](#6-クラス図)
+- [7. データフロー](#7-データフロー)
+- [8. 例外処理ポリシー](#8-例外処理ポリシー)
+- [9. 可視性ポリシー](#9-可視性ポリシー)
+- [10. テスト](#10-テスト)
 
 ## 1. 概要
 
@@ -60,7 +61,16 @@ graph LR
 | 再利用ライブラリ | 不可 | 写像元が製品の設定型（`CaptureSettings`）のため、再利用ライブラリが製品設定へ依存する |
 | `Parts.CaptureSessionControl.UIBase`（本層） | 採用 | セッションの設定と両 UI の中間にあり、両 UI のホストが同じ写像・同じ組み立てを共有できる |
 
-## 4. コンポーネント構成
+## 4. 依存関係
+
+| 種別 | 依存先 |
+| --- | --- |
+| プロジェクト | `Parts.CapturePreviewControl.Core` / `EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Marquee.Presenter` / `EsUtil.Feature.Loupe.Core` / `EsUtil.Feature.Loupe.Presenter` / `EsUtil.Platform.Core` |
+
+- **UI フレームワークを参照しません**（設定 → 外観の写像だけを担う提示層。 適用は各 UI のホストが行う）。
+- 参照の許可範囲は [依存関係.md](../../../.github/依存関係.md) が所有し、ビルドの `DEP0001`〜`DEP0006` が強制します。
+
+## 5. コンポーネント構成
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
@@ -69,7 +79,7 @@ graph LR
 | `FadeMaskHostLabelRenderer.cs` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示の解決（**唯一の所有者**。 積み上げ位置と表示可否を含む） |
 | `MarqueeHostLabelRenderer.cs` | `public static class` | ラベル 1 行の体裁（背景の寸法）の配置指示の解決（**唯一の所有者**） |
 
-## 5. クラス図
+## 6. クラス図
 
 ```mermaid
 classDiagram
@@ -94,7 +104,7 @@ classDiagram
   FadeMaskDragRectChildValues ..> FadeMaskDragRectModes : モードの判断を委譲
 ```
 
-## 6. データフロー
+## 7. データフロー
 
 ```mermaid
 sequenceDiagram
@@ -112,7 +122,7 @@ sequenceDiagram
   Note over Host,UI: 寸法と色は別の経路で渡る（所有者が違うため）
 ```
 
-## 7. 例外処理ポリシー
+## 8. 例外処理ポリシー
 
 | 状況 | 挙動 |
 | --- | --- |
@@ -121,7 +131,7 @@ sequenceDiagram
 
 本層は外部 I/O・非同期処理・リソース解放を持ちません。
 
-## 8. 可視性ポリシー
+## 9. 可視性ポリシー
 
 - **写像（`CapturePaintMapper`）は `internal`**。 両 UI のホストが使う内部処理のためです。
 - **複合コントロールの共有処理（`FadeMaskDragRectChildValues` / `FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`）は `public`**。 UIBase を参照する側（複合コントロールの UI 実装）が直接使うためです。
@@ -129,7 +139,7 @@ sequenceDiagram
   `Parts.CaptureSessionControl.UIBase.Tests`）で公開します。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。
 
-## 9. テスト
+## 10. テスト
 
 ```text
 tests/

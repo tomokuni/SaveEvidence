@@ -12,7 +12,8 @@
   - [5.3 ZoomViewControl（切り出しビューの画像ビューポート）](#53-zoomviewcontrol切り出しビューの画像ビューポート)
 - [6. ドキュメント](#6-ドキュメント)
 - [7. プロジェクト構成](#7-プロジェクト構成)
-- [8. ライセンス](#8-ライセンス)
+- [8. テスト](#8-テスト)
+- [9. ライセンス](#9-ライセンス)
 
 ---
 
@@ -214,6 +215,14 @@ src/
 
 設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `Parts.CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。
 
-## 8. ライセンス
+## 8. テスト
+
+`src/Parts.CapturePreviewControl.MewUI/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
+
+`powershell
+dotnet test src/Parts.CapturePreviewControl.MewUI/tests/Parts.CapturePreviewControl.MewUI.Tests.csproj
+`
+
+## 9. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -91,6 +91,26 @@ dotnet test src/Parts.CaptureSessionControl.UIBase/tests/Parts.CaptureSessionCon
 
 UI 依存の検証（ホストの配線・実際の描画）は各 UI のテストプロジェクトが担います。
 
-## 8. ライセンス
+## 8. ドキュメント
+
+- [docs/SPEC_API.md](docs/SPEC_API.md) — 公開 API のリファレンス
+- [docs/SPEC_System.md](docs/SPEC_System.md) — アーキテクチャ・依存・設計判断
+
+## 9. 使い方
+
+両 UI のホストが、利用者の設定（`CaptureSettings`）を写像して内包コントロールへ適用します。 **本層は公開 API を持たない**ため、写像は同一ソリューションのホストが `InternalsVisibleTo` 経由で呼びます。
+
+```csharp
+// 設定 → 色（提示層の外観）の写像
+MarqueeAppearance marqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(settings);
+LoupeAppearance loupeAppearance = CapturePaintMapper.ToLoupeAppearance(settings);
+
+// 設定とモード → 子コントロールへ適用する値（寸法・表示可否）
+FadeMaskDragRectChildValues values = FadeMaskDragRectChildValues.Resolve(options, mode, marqueeAppearance);
+```
+
+詳細は [docs/SPEC_API.md](docs/SPEC_API.md) を参照してください。
+
+## 10. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

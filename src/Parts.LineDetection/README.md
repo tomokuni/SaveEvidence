@@ -12,7 +12,8 @@
 - [6. サンプルアプリケーション](#6-サンプルアプリケーション)
 - [7. ドキュメント](#7-ドキュメント)
 - [8. プロジェクト構成](#8-プロジェクト構成)
-- [9. ライセンス](#9-ライセンス)
+- [9. テスト](#9-テスト)
+- [10. ライセンス](#10-ライセンス)
 
 ---
 
@@ -101,6 +102,14 @@ src/Parts.LineDetection/
 └── tests/        # テスト（Parts.LineDetection.Tests.csproj）
 ```
 
-## 9. ライセンス
+## 9. テスト
+
+`src/Parts.LineDetection/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
+
+`powershell
+dotnet test src/Parts.LineDetection/tests/Parts.LineDetection.Tests.csproj
+`
+
+## 10. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

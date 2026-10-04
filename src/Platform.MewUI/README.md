@@ -73,3 +73,27 @@ dotnet test src/Platform.MewUI/tests/Platform.MewUI.Tests.csproj
 
 MewUI は API が安定化中（0.x）のため、**パッケージのバージョンは固定**しています（`Aprillz.MewUI.Core` `0.21.1`）。
 アップグレード時は本プロジェクトのテスト（キー数 91 の回帰検知を含む）で破壊的変更を検出します。
+
+## 8. ドキュメント
+
+- [docs/SPEC_API.md](docs/SPEC_API.md) — 公開 API のリファレンス
+- [docs/SPEC_System.md](docs/SPEC_System.md) — アーキテクチャ・依存・設計判断
+
+## 9. 使い方
+
+コア型と MewUI の型は**名前ベースで相互変換**します（数値は互換ではないため、値による対応付けをしません）。 拡張メソッドとして呼びます。
+
+```csharp
+// キー（Back ⇔ Backspace だけ別名表で解決する。 未定義値・未対応は None）
+Aprillz.MewUI.Key key = esKey.ToMewUIKey();
+
+// 幾何・色（コア型 ⇔ MewUI の型）
+Aprillz.MewUI.Point point = esPoint.ToMewUIPoint();
+Aprillz.MewUI.Color color = drawingColor.ToMewUIColor();
+```
+
+詳細は [docs/SPEC_API.md](docs/SPEC_API.md) を参照してください。
+
+## 10. ライセンス
+
+MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -23,7 +23,8 @@
 - [14. 依存関係](#14-依存関係)
 - [15. ドキュメント](#15-ドキュメント)
 - [16. プロジェクト構成](#16-プロジェクト構成)
-- [17. ライセンス](#17-ライセンス)
+- [17. テスト](#17-テスト)
+- [18. ライセンス](#18-ライセンス)
 
 ---
 
@@ -233,6 +234,14 @@ src/App.Core/
 `App.Core` の型を AXAML から参照する場合は、名前空間が `EsUtil.SaveEvidence.App.Core.*` のため
 `xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"` のように **`assembly=` の指定が必要**です。
 
-## 17. ライセンス
+## 17. テスト
+
+`src/App.AvaloniaUI/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
+
+`powershell
+dotnet test src/App.AvaloniaUI/tests/App.AvaloniaUI.Tests.csproj
+`
+
+## 18. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -85,3 +85,34 @@ dotnet build src/App.Core/src/App.Core.csproj
 ```powershell
 dotnet test src/App.Core/tests/App.Core.Tests.csproj
 ```
+
+## 9. ドキュメント
+
+- [docs/SPEC_API.md](docs/SPEC_API.md) — 公開 API のリファレンス
+- [docs/SPEC_System.md](docs/SPEC_System.md) — アーキテクチャ・依存・設計判断
+
+## 10. 使い方
+
+アプリ（UI 実装）からは、**UI 依存の操作をコールバックで注入**して使います。
+
+```csharp
+// 1. 設定サービスを生成する（JSON ソース生成コンテキストを渡す。 トリミング / Native AOT では必須）
+var settingsService = new SettingsService(SettingsJsonContext.Default);
+
+// 2. ViewModel を生成する（画像の書き込みは UI 実装を注入する）
+var viewModel = new MainViewModel(settingsService, new AvaloniaImageWriter());
+
+// 3. UI 依存の操作（クリップボード・上書き確認・キャプチャ開始）をコールバックで設定する
+viewModel.CopyToClipboardCallback = async image => { /* UI 型へ変換してクリップボードへ書く */ return true; };
+viewModel.PasteFromClipboardCallback = async () => { /* クリップボードから読んで EsBitmap を返す */ return null; };
+viewModel.ConfirmOverwriteAsync = async path => { /* 上書き確認ダイアログを出す */ return true; };
+viewModel.StartSelectionMode = captureType => { /* キャプチャを開始する */ };
+```
+
+（`SettingsJsonContext` / `AvaloniaImageWriter` はホスト側の実装です。 各アプリが自分の UI に合わせて用意します。）
+
+詳細は [docs/SPEC_API.md](docs/SPEC_API.md) を参照してください。
+
+## 11. ライセンス
+
+MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

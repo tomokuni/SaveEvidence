@@ -18,7 +18,8 @@
 - [7. サンプル](#7-サンプル)
 - [8. ドキュメント](#8-ドキュメント)
 - [9. プロジェクト構成](#9-プロジェクト構成)
-- [10. ライセンス](#10-ライセンス)
+- [10. テスト](#10-テスト)
+- [11. ライセンス](#11-ライセンス)
 
 ---
 
@@ -171,6 +172,14 @@ Platform.AvaloniaUI/
 
 抽象・値型・純粋ロジックと Win32 実装の全体は [`EsUtil.Platform.Core`](../EsUtil.Platform.Core/README.md) を参照してください（Win32 実装は `Native/` 配下）。
 
-## 10. ライセンス
+## 10. テスト
+
+`src/Platform.AvaloniaUI/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
+
+`powershell
+dotnet test src/Platform.AvaloniaUI/tests/Platform.AvaloniaUI.Tests.csproj
+`
+
+## 11. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -18,7 +18,8 @@
 - [10. ドキュメント](#10-ドキュメント)
 - [11. アーキテクチャ](#11-アーキテクチャ)
 - [12. プロジェクト構成](#12-プロジェクト構成)
-- [13. ライセンス](#13-ライセンス)
+- [13. テスト](#13-テスト)
+- [14. ライセンス](#14-ライセンス)
 
 ---
 
@@ -182,6 +183,14 @@ ColorPickerControl.AvaloniaUI/
 └── tests/                         # 単体テスト（行・ブランチ 100%）
 ```
 
-## 13. ライセンス
+## 13. テスト
+
+`src/ColorPickerControl.AvaloniaUI/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
+
+`powershell
+dotnet test src/ColorPickerControl.AvaloniaUI/tests/ColorPickerControl.AvaloniaUI.Tests.csproj
+`
+
+## 14. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

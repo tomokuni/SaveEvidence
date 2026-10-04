@@ -8,10 +8,12 @@
   - [3.1 レイヤー構造](#31-レイヤー構造)
   - [3.2 コンポーネントの構成](#32-コンポーネントの構成)
   - [3.3 クラス図](#33-クラス図)
-- [4. 撮影の処理フロー](#4-撮影の処理フロー)
-- [5. 設計判断](#5-設計判断)
-- [6. 実測で判明した制約](#6-実測で判明した制約)
-- [7. 検証](#7-検証)
+- [4. 例外処理ポリシー](#4-例外処理ポリシー)
+- [5. 依存関係](#5-依存関係)
+- [6. 撮影の処理フロー](#6-撮影の処理フロー)
+- [7. 設計判断](#7-設計判断)
+- [8. 実測で判明した制約](#8-実測で判明した制約)
+- [9. 検証](#9-検証)
 
 ## 1. 概要
 
@@ -176,7 +178,21 @@ classDiagram
     CropSession ..> ICaptureTarget : 切り出しの適用
 ```
 
-## 4. 撮影の処理フロー
+## 4. 例外処理ポリシー
+
+本プロジェクト固有の状況はありません（`catch` も `throw` も持たず、呼び出したコア・プラットフォーム層の例外をそのまま伝播します）。 共通方針は [例外処理規約.md](../../../.github/例外処理規約.md) §1・§2 に従います。
+
+## 5. 依存関係
+
+| 種別 | 依存先 |
+| --- | --- |
+| プロジェクト | `Parts.CapturePreviewControl.Core` / `Parts.CaptureSessionControl.UIBase` / `Platform.MewUI` / `Platform.Skia` / `EsUtil.Platform.Core` / `EsUtil.Feature.Marquee.ControlMewUI` / `EsUtil.Feature.Loupe.ControlMewUI` |
+| パッケージ | `Aprillz.MewUI.*`（バージョン固定） |
+
+- **上位（アプリのコア・アプリ）を参照しません**（参照するとライブラリとして成立しないため）。
+- 参照の許可範囲は [依存関係.md](../../../.github/依存関係.md) が所有し、ビルドの `DEP0001`〜`DEP0006` が強制します。
+
+## 6. 撮影の処理フロー
 
 ```mermaid
 sequenceDiagram
@@ -202,7 +218,7 @@ sequenceDiagram
     OW->>OS: 配置を復帰 + 除外を解除
 ```
 
-## 5. 設計判断
+## 7. 設計判断
 
 - **共通規則は Core へ集約**: 切り出し矩形（`CaptureClipMath.ResolveCaptureRect`。 種別ごとの閉区間の `+1` と画像内へのクランプ、整数の選択矩形向けの入口を含む。 **座標空間は画面物理に統一**: 選択矩形が画像ローカル座標の場合は `ToScreenRect` で戻してから渡す）・画像の共有値（`ImageSize` / `ImageBounds`）・設定（`CaptureSettings`）・セッション状態（`CaptureSessionState`）・オーナー退避（`CaptureOwnerScope`）・種別の性質（`CaptureTypeTraits`）・ハイライトの状態（`CaptureHighlightSession`。 対象変換・未検出の正規化・表示名の変化・診断ログ）・**クリック確定の固定（`CaptureClickSelection`。 押下で固定・解放で確定・退化した検出は固定しない）**・キー操作（`CaptureKeyActions`。 確定対象が無い場合の Enter は何もしない）・サイズラベルの表示倍率（`MonitorScalingMath`。 原点の加算・中心判定・倍率未確定の除外を含む）・切り出し（`CaptureClipMath`）・ログ定義（`CaptureLogMessage`。 切り出しの終了は `LogCropFinished` が退化した選択をキャンセルとして記録する）は `Parts.CapturePreviewControl.Core` が単一所有する。 本プロジェクトは MewUI の描画・入力だけを担う（Avalonia 版と同じ分担）。
 - **アプリの型を参照しない**: 設定は `CaptureSettings`、結果の適用先はアプリ側のポート（切り出しセッションで `ICaptureTarget`）で受ける。 ログは注入された `ILogger` へ出力し、ログ基盤はホストが所有する。
@@ -223,7 +239,7 @@ sequenceDiagram
 - **切り出しビューは画像ビューポートと矩形オーバーレイを重ねる**: 画像の描画と入力は下の画像ビューポートが担い、矩形は上の透明なオーバーレイが担う。 1 つのキャンバスに統合すると、画像ビューポートの内部状態へ矩形オーバーレイが依存する。 矩形のダッシュ長・太さの下限・負サイズのクランプはコア（`OverlayLineDash` / `OverlayRectLayout`）が単一所有し、UI はコアの描画入力を描画先へ写すだけにする。
 - **領域選択は配線を内側で完結させる**: 選択の変更・開始・キャンセルを暗転マスクへ同期し、ルーペの中心を更新する配線は `FadeMaskDragRectControl` が持つ（ホストは `Mode` と座標変換ポートを設定し、確定・キャンセルを購読するだけ）。 ホイール操作と表示の変化の追従はコントロール化を前提とした処理のため、ホストが `MouseWheel` の購読と `RefreshOverlay()` の呼び出しを担う。
 
-## 6. 実測で判明した制約
+## 8. 実測で判明した制約
 
 | 事象 | 対処 |
 | --- | --- |
@@ -233,7 +249,7 @@ sequenceDiagram
 | **`Hide` と `Show` の往復はウィンドウを再作成させる** | 退避は位置の変更にし、復帰は位置を戻すだけにする |
 | **`MarqueeTextPlacement` は `EsUtil.Feature.Marquee.Presenter.Drawing`、`MarqueePresenter` は `EsUtil.Feature.Marquee` で `public`** | 汎用コアと描画層として公開する（`InternalsVisibleTo` は不要） |
 
-## 7. 検証
+## 9. 検証
 
 | 対象 | 方法 |
 | --- | --- |

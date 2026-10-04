@@ -22,7 +22,8 @@
 - [8. 依存関係](#8-依存関係)
 - [9. ドキュメント](#9-ドキュメント)
 - [10. プロジェクト構成](#10-プロジェクト構成)
-- [11. ライセンス](#11-ライセンス)
+- [11. テスト](#11-テスト)
+- [12. ライセンス](#12-ライセンス)
 
 ---
 
@@ -265,6 +266,14 @@ Parts.CapturePreviewControl.AvaloniaUI/
 
 **撮影オーバーレイ（`StartCaptureAsync`）も同じ写像で外観（色）を適用します**（切り出しと同じ見た目になる。 適用しないと設定した色が反映されない）。
 
-## 11. ライセンス
+## 11. テスト
+
+`src/Parts.CapturePreviewControl.AvaloniaUI/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
+
+`powershell
+dotnet test src/Parts.CapturePreviewControl.AvaloniaUI/tests/Parts.CapturePreviewControl.AvaloniaUI.Tests.csproj
+`
+
+## 12. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -8,7 +8,8 @@
 - [4. クイックスタート](#4-クイックスタート)
 - [5. ドキュメント](#5-ドキュメント)
 - [6. プロジェクト構成](#6-プロジェクト構成)
-- [7. ライセンス](#7-ライセンス)
+- [7. テスト](#7-テスト)
+- [8. ライセンス](#8-ライセンス)
 
 ---
 
@@ -207,6 +208,14 @@ src/
     └── ZoomLogMessage.Tests.cs            # ログ書式と丸め
 ```
 
-## 7. ライセンス
+## 7. テスト
+
+`src/Parts.CapturePreviewControl.Core/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
+
+`powershell
+dotnet test src/Parts.CapturePreviewControl.Core/tests/Parts.CapturePreviewControl.Core.Tests.csproj
+`
+
+## 8. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

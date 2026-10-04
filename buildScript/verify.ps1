@@ -979,6 +979,130 @@ foreach ($projDir in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory
 Add-Result 'ハンドラーの配線' ($wiringIssues.Count -eq 0) "$($wiringIssues.Count) 件"
 $wiringIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
+# 8r) README の必須節（ドキュメント規約 §3。 番号は spec の体裁検査が担保する）
+#     必須: 概要（または目的）/ 使い方（クイックスタート・実行・インストール）/ テスト（または検証）/
+#           ドキュメント（または関連ドキュメント）/ ライセンス（末尾）
+$readmeRequired = @(
+    [pscustomobject]@{ Name = '概要または目的'; Pattern = '^(概要|目的)$' },
+    [pscustomobject]@{ Name = '使い方'; Pattern = '(クイックスタート|実行|インストール|使い方|主な API|使用例)' },
+    [pscustomobject]@{ Name = 'テストまたは検証'; Pattern = '(テスト|検証)' },
+    [pscustomobject]@{ Name = 'ドキュメント'; Pattern = '(ドキュメント|SPEC_)' },
+    [pscustomobject]@{ Name = 'ライセンス'; Pattern = 'ライセンス' }
+)
+$readmeIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter 'README.md' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin|sample)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    # `src/README.md` は層構成の文書（ドキュメント規約 §2 の例外）
+    if ($rel -eq 'src/README.md') { continue }
+    $headings = @([IO.File]::ReadAllLines($f.FullName, $enc) |
+        Where-Object { $_ -match '^#{2,3} ' } |
+        ForEach-Object { ($_ -replace '^#{2,3}\s*', '') -replace '^\d+(\.\d+)*\.?\s*', '' })
+    foreach ($req in $readmeRequired) {
+        if (@($headings | Where-Object { $_ -match $req.Pattern }).Count -eq 0) {
+            $readmeIssues.Add(("{0}  「{1}」の節がない（ドキュメント規約 §3）" -f $rel, $req.Name))
+        }
+    }
+    # ライセンスは末尾に置く
+    if ($headings.Count -gt 0 -and $headings[$headings.Count - 1] -notmatch 'ライセンス') {
+        $readmeIssues.Add(("{0}  ライセンスの節が末尾でない（末尾は「{1}」）" -f $rel, $headings[$headings.Count - 1]))
+    }
+}
+Add-Result 'README の必須節' ($readmeIssues.Count -eq 0) "$($readmeIssues.Count) 件"
+$readmeIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8s) SPEC_System の必須節（ドキュメント規約 §6。 節の名前は同義語を許す）
+$sysRequired = @(
+    [pscustomobject]@{ Name = '概要'; Pattern = '(概要|目的)' },
+    [pscustomobject]@{ Name = '技術スタック'; Pattern = '(技術スタック|依存パッケージ)' },
+    [pscustomobject]@{ Name = 'アーキテクチャ'; Pattern = '(アーキテクチャ|構成図)' },
+    [pscustomobject]@{ Name = 'コンポーネント'; Pattern = '(コンポーネント|クラス図|モジュール)' },
+    [pscustomobject]@{ Name = '依存関係'; Pattern = '(依存|参照)' },
+    [pscustomobject]@{ Name = '例外処理ポリシー'; Pattern = '(例外|エラー)' }
+)
+$sysIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter 'SPEC_System.md' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $headings = @([IO.File]::ReadAllLines($f.FullName, $enc) |
+        Where-Object { $_ -match '^#{2,3} ' } |
+        ForEach-Object { ($_ -replace '^#{2,3}\s*', '') -replace '^\d+(\.\d+)*\.?\s*', '' })
+    foreach ($req in $sysRequired) {
+        if (@($headings | Where-Object { $_ -match $req.Pattern }).Count -eq 0) {
+            $sysIssues.Add(("{0}  「{1}」の節がない（ドキュメント規約 §6）" -f $rel, $req.Name))
+        }
+    }
+}
+Add-Result 'SPEC_System の必須節' ($sysIssues.Count -eq 0) "$($sysIssues.Count) 件"
+$sysIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8t) テストの `{対象}` の実在（テスト規約 §2。 削除・改名した対象のテストを残さない）
+#     `{対象}` は実在のソース（ファイル名または型名）と一致するか、その名前で始まる（`<対象><観点>` を許す）。
+$rxTestFileName = [regex]'(?<target>.+)\.Tests\.cs$'
+$testTargetIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($projDir in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory)) {
+    $srcDir = Join-Path $projDir.FullName 'src'
+    if (-not (Test-Path -LiteralPath $srcDir)) { continue }
+    # ソースの型名・ファイル名の集合
+    $srcNames = [System.Collections.Generic.HashSet[string]]::new()
+    foreach ($cs in (Get-ChildItem -Path $srcDir -Recurse -File -Filter '*.cs' | Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+        $name = [IO.Path]::GetFileNameWithoutExtension($cs.Name)
+        foreach ($part in $name.Split('.')) { [void]$srcNames.Add($part) }
+        foreach ($m in [regex]::Matches([IO.File]::ReadAllText($cs.FullName, $enc), '(?m)^\s*(?:(?:public|internal|private|protected|file)\s+)*(?:static\s+|sealed\s+|abstract\s+|partial\s+|readonly\s+|ref\s+)*(?:class|struct|interface|enum|record(?:\s+(?:class|struct))?)\s+([A-Za-z_]\w*)')) {
+            [void]$srcNames.Add($m.Groups[1].Value)
+        }
+    }
+    foreach ($t in (Get-ChildItem -Path (Join-Path $projDir.FullName 'tests') -Recurse -File -Filter '*.Tests.cs' -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+        $rel = $t.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+        $m = $rxTestFileName.Match($t.Name)
+        if (-not $m.Success) { continue }
+        $target = $m.Groups['target'].Value
+        # 対象の先頭の語（`CaptureTargetContract` → `Capture`）。 `<対象><観点>` と、複数の型をまたぐ検証を許す。
+        $first = ([regex]::Match($target, '^([A-Z][a-z0-9]*|[A-Z]+)')).Value
+        $matched = $false
+        foreach ($n in $srcNames) {
+            if ($target -eq $n -or
+                $target.StartsWith($n, [StringComparison]::Ordinal) -or
+                $n.StartsWith($target, [StringComparison]::Ordinal) -or
+                ($first.Length -gt 0 -and $n.StartsWith($first, [StringComparison]::Ordinal))) { $matched = $true; break }
+        }
+        if (-not $matched) { $testTargetIssues.Add(("{0}  `{{対象}}` [{1}] に対応するソースがない" -f $rel, $target)) }
+    }
+}
+Add-Result 'テストの対象の実在' ($testTargetIssues.Count -eq 0) "$($testTargetIssues.Count) 件"
+$testTargetIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8u) SPEC_API の internal 型には印を付ける（ドキュメント規約 §4）
+#     型の節（`## N. `Type`` / `### N.M `Type``）の型がソースで `internal` なら、見出しに「（内部」が要る。
+$rxTypeHeading = [regex]'^#{2,3} \d+(?:\.\d+)*\.?\s*(?:`(?<t>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)`|(?<t2>[A-Za-z_]\w*))'
+$internalIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter 'SPEC_API.md' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $projectDir = (Get-Item $f.FullName).Directory.Parent.FullName
+    $srcDir = Join-Path $projectDir 'src'
+    if (-not (Test-Path -LiteralPath $srcDir)) { continue }
+    # そのプロジェクトの internal 型の集合
+    $internalTypes = [System.Collections.Generic.HashSet[string]]::new()
+    foreach ($cs in (Get-ChildItem -Path $srcDir -Recurse -File -Filter '*.cs' | Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+        foreach ($m in [regex]::Matches([IO.File]::ReadAllText($cs.FullName, $enc), '(?m)^\s*internal\s+(?:static\s+|sealed\s+|abstract\s+|partial\s+|readonly\s+|ref\s+)*(?:class|struct|interface|enum|record(?:\s+(?:class|struct))?)\s+([A-Za-z_]\w*)')) {
+            [void]$internalTypes.Add($m.Groups[1].Value)
+        }
+    }
+    foreach ($line in [IO.File]::ReadAllLines($f.FullName, $enc)) {
+        $m = $rxTypeHeading.Match($line)
+        if (-not $m.Success) { continue }
+        $name = if ($m.Groups['t'].Success) { $m.Groups['t'].Value } else { $m.Groups['t2'].Value }
+        $last = ($name -split '\.')[-1]
+        if (-not $internalTypes.Contains($last)) { continue }
+        # 印は「（内部」または「`internal`」のいずれか（公開面と取り違えないための明示）
+        if ($line -notmatch '（内部' -and $line -notmatch '`internal`') { $internalIssues.Add(("{0}  internal 型 `{1}` の節に「（内部）」の印がない" -f $rel, $last)) }
+    }
+}
+Add-Result 'SPEC_API の internal 印' ($internalIssues.Count -eq 0) "$($internalIssues.Count) 件"
+$internalIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
 # ============================================================
 # 9. 改行コード
 # ============================================================

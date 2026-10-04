@@ -87,6 +87,11 @@ UI 初期化（ウィンドウ）が不要なため、すべて `[Fact]` / `[The
 dotnet test src/Platform.Skia/tests/Platform.Skia.Tests.csproj
 ```
 
-## 7. ライセンス
+## 7. ドキュメント
+
+- [docs/SPEC_API.md](docs/SPEC_API.md) — 公開 API のリファレンス
+- [docs/SPEC_System.md](docs/SPEC_System.md) — アーキテクチャ・依存・設計判断
+
+## 8. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。
