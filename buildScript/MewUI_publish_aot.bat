@@ -10,10 +10,11 @@ rem
 rem  前提:
 rem    Native AOT のリンクには Visual Studio の C++ ビルドツール（link.exe）が必要です。
 rem
-rem  構成（実測）:
-rem    - マネージドコードは全て SaveEvidence.MewUI.exe（約 11.3 MB）へコンパイルされます。
+rem  構成:
+rem    - マネージドコードは全て exe（SaveEvidence.MewUI.exe）へコンパイルされます。
 rem    - SkiaSharp / OpenCvSharp のネイティブライブラリは exe へ同梱できないため、
 rem      同じフォルダーへ並べて配布します（libSkiaSharp.dll / OpenCvSharpExtern.dll）。
+rem      サイズ・ファイル数はコードの変更で変わるため、ここには書きません（publish の出力で確認します）。
 rem
 rem  設定 JSON（重要）:
 rem    Native AOT ではリフレクションベースの System.Text.Json が動作しません
@@ -29,8 +30,6 @@ pushd "%~dp0.."
 
 rem ターゲットランタイム（既定: win-x64）
 if "%~1"=="" (set "RID=win-x64") else (set "RID=%~1")
-
-set "APP_NAME=SaveEvidence.MewUI.exe"
 
 rem 最終的な出力先（Avalonia UI 版と分ける）
 set "OUTDIR=%CD%\publish\mewui-%RID%-aot"
@@ -64,9 +63,12 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if not exist "%STAGE%\%APP_NAME%" (
+rem 発行された exe 名を取得する（名前は csproj の AssemblyName が単一所有するため、ここでは決めない）
+set "APP_NAME="
+for %%f in ("%STAGE%\*.exe") do set "APP_NAME=%%~nxf"
+if not defined APP_NAME (
   echo.
-  echo [ERROR] Executable not found: %STAGE%\%APP_NAME%
+  echo [ERROR] Executable not found in: %STAGE%
   if exist "%STAGE%" rd /s /q "%STAGE%"
   popd
   exit /b 1

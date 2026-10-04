@@ -364,6 +364,7 @@ $stalePatterns = @(
     'MarqueeCore\.ResolveContent',
     'MarqueePresenter\.ResolveContent',
     'App\.(AvaloniaUI|MewUI)\.exe',
+    'SaveEvidence\.exe',
     'app\.(Core|AvaloniaUI|MewUI)'
 )
 $stale = [System.Collections.Generic.List[string]]::new()

@@ -142,9 +142,14 @@ try {
             continue
         }
 
-        # exe が 1 つだけあり、名前が配布名（release-config.json の asset）と一致することを確認する
+        # exe が 1 つだけあり、名前が配布設定（release-config.json の exe）と一致することを確認する
+        $expectedExeName = $target.exe
+        if ([string]::IsNullOrEmpty($expectedExeName)) {
+            Add-Result "$($target.name) 配布物" $false '.github/release-config.json に exe がありません'
+            continue
+        }
+
         $exes = @(Get-ChildItem -LiteralPath $outputDir -File -Filter '*.exe')
-        $expectedExeName = [IO.Path]::GetFileNameWithoutExtension($target.asset) + '.exe'
         Add-Result "$($target.name) 配布物" ($exes.Count -eq 1 -and $exes[0].Name -eq $expectedExeName) "$($target.output) の exe $($exes.Count) 個 / 期待 $expectedExeName"
         if ($exes.Count -ne 1) {
             $exes | ForEach-Object { "      $($_.Name)" }
@@ -152,6 +157,13 @@ try {
         }
 
         $exe = $exes[0]
+
+        # 構成とサイズを実測して出力する（文書には書かない。 コードの変更で変わるため）
+        $distFiles = @(Get-ChildItem -LiteralPath $outputDir -File)
+        $distBytes = 0.0
+        foreach ($distFile in $distFiles) { $distBytes += $distFile.Length }
+        $distDlls = @($distFiles | Where-Object { $_.Extension -eq '.dll' })
+        Write-Output ("      構成: exe 1 個（{0:N1} MB）+ ネイティブ DLL {1} 個 / 合計 {2:N1} MB / {3} ファイル" -f ($exe.Length / 1MB), $distDlls.Count, ($distBytes / 1MB), $distFiles.Count)
 
         # 2. 起動中のプロセスがあると設定ファイルが競合する（検証結果が不定になる）
         $running = @(Get-Process -Name ([IO.Path]::GetFileNameWithoutExtension($exe.Name)) -ErrorAction SilentlyContinue)

@@ -72,11 +72,7 @@ dotnet test src/App.AvaloniaUI/tests/App.AvaloniaUI.Tests.csproj
 buildScript\AvaloniaUI_publish_aot.bat
 ```
 
-- 出力: `publish/avaloniaui-win-x64-aot`（`SaveEvidence.exe` + ネイティブ DLL）
-
-| 方式 | 構成 | サイズ（実測） |
-| --- | --- | --- |
-| Native AOT | exe 1 個（27.9 MB）+ ネイティブ DLL 4 個 | 107.7 MB / 5 ファイル |
+- 出力: `publish/avaloniaui-win-x64-aot`（`SaveEvidence.AvaloniaUI.exe` + ネイティブ DLL）
 
 - ネイティブ DLL は `libSkiaSharp.dll` / `av_libglesv2.dll` / `libHarfBuzzSharp.dll` / `OpenCvSharpExtern.dll` です。
 - OpenCV のネイティブは縮小構成（`OpenCvSharp5.runtime.win.slim`）のため、動画入出力（`videoio`）と FFmpeg（`opencv_videoio_ffmpeg500_64.dll` 約 31 MB）を同梱しません（本アプリは動画を扱わない）。

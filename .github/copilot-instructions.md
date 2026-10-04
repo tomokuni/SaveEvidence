@@ -62,7 +62,7 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 ### 3.2 このリポジトリ固有の事実
 
 - **実行ファイルは 2 つ**（`App.AvaloniaUI` / `App.MewUI`）で、**設定ファイルとログを共有する**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
-- **実行ファイルの名前はプロジェクト名と一致しない**（`App.AvaloniaUI` → `SaveEvidence.exe` / `App.MewUI` → `SaveEvidence.MewUI.exe`。 `<AssemblyName>` で製品名を明示する。 配布名は [`.github/release-config.json`](release-config.json) が単一所有する）。
+- **実行ファイルの名前はプロジェクト名と一致しない**（`App.AvaloniaUI` → `SaveEvidence.AvaloniaUI.exe` / `App.MewUI` → `SaveEvidence.MewUI.exe`。 `<AssemblyName>` で製品名を明示する。 配布名は [`.github/release-config.json`](release-config.json) が単一所有する）。
 - **文字コードは UTF-8（BOM なし）**で統一する（[`.editorconfig`](../.editorconfig) の `charset = utf-8`。 既存の `.cs` / `.md` / `.ps1` はすべて BOM なし）。
 - **作業ツリーの改行コードは CRLF**（[`.editorconfig`](../.editorconfig) の `end_of_line = crlf`。 リポジトリのブロブは [`.gitattributes`](../.gitattributes) が LF へ正規化する）。
 - **`App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する**（切り出しビューが内包する `ZoomViewControl` へ委譲される）。

@@ -314,12 +314,8 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 
 ## 配布形態（Native AOT）
 
-配布物は **Native AOT**（`buildScript/MewUI_publish_aot.bat`）です。 マネージドコードは全て exe へ
+配布物は **Native AOT**（`buildScript/MewUI_publish_aot.bat`）です。 マネージドコードは全て exe（`SaveEvidence.MewUI.exe`）へ
 コンパイルされ、ネイティブライブラリ（SkiaSharp / OpenCvSharp）だけが隣に並びます。
-
-| 方式 | 構成 | サイズ（実測） |
-| --- | --- | --- |
-| Native AOT（既定） | exe 1 個（11.3 MB）+ ネイティブ DLL 2 個 | 84.2 MB / 3 ファイル |
 
 - AOT のリンクには Visual Studio の C++ ビルドツール（`link.exe`）が必要です。
 - ネイティブ DLL は `OpenCvSharpExtern.dll` / `libSkiaSharp.dll` の 2 個です。 OpenCV は縮小構成

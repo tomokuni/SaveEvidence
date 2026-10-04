@@ -257,7 +257,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 - **Native AOT コンパイル**（マネージドコードを exe へネイティブコンパイル。 `buildScript/AvaloniaUI_publish_aot.bat`）
 - **自己完結型配置**（ランタイム同梱・x64）
 - ネイティブライブラリ（SkiaSharp / OpenCvSharp 等）は exe の隣へ並べて配布
-- 単一ファイル実行（`PublishSingleFile`）は exe が約 229 MB になるため採用していません
+- 単一ファイル実行（`PublishSingleFile`）は自己完結ランタイムを丸ごと含むため配布物が大きくなります（AOT の方が小さくなります）
 
 ---
 
@@ -271,7 +271,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
  dotnet publish src/App.AvaloniaUI/src/App.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishAot=true -p:SelfContained=true -o publish/avaloniaui-win-x64-aot
 ```
 
-`publish/avaloniaui-win-x64-aot` の `SaveEvidence.exe` を実行してください（隣のネイティブ DLL も必要です）。
+`publish/avaloniaui-win-x64-aot` の `SaveEvidence.AvaloniaUI.exe` を実行してください（隣のネイティブ DLL も必要です）。
 
 配布物（ネイティブ DLL の配置まで含む）は `buildScript/AvaloniaUI_publish_aot.bat` が作ります。 リポジトリ外の一時領域へ発行してから必要なファイルだけを出力先へ配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。
 
@@ -288,7 +288,7 @@ pwsh -NoProfile -File buildScript/verify.ps1
 
 ### 4.3 配布物の実行
 
-配布物は `SaveEvidence.exe` とネイティブ DLL のセットです（フォルダーごと配置してください）。
+配布物は `SaveEvidence.AvaloniaUI.exe` とネイティブ DLL のセットです（フォルダーごと配置してください）。
 
 ## 5. 操作方法
 
@@ -296,7 +296,7 @@ pwsh -NoProfile -File buildScript/verify.ps1
 
 ```text
 1. アプリケーション起動
-   └── SaveEvidence.exe を実行
+   └── SaveEvidence.AvaloniaUI.exe を実行
    └── 前回終了時のウィンドウ位置・サイズが復元
 
 2. 画面キャプチャ

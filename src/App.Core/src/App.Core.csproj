@@ -28,8 +28,8 @@
 
   <ItemGroup>
     <!-- internal 型は UI 実装（アプリ）とテストからのみ参照する（公開 API を増やさない）。
-         アプリのアセンブリ名は製品名（SaveEvidence / SaveEvidence.MewUI）のため、プロジェクト名ではなくその名前で許可する。 -->
-    <InternalsVisibleTo Include="SaveEvidence" />
+         アプリのアセンブリ名は製品名（SaveEvidence.AvaloniaUI / SaveEvidence.MewUI）のため、プロジェクト名ではなくその名前で許可する。 -->
+    <InternalsVisibleTo Include="SaveEvidence.AvaloniaUI" />
     <InternalsVisibleTo Include="SaveEvidence.MewUI" />
     <InternalsVisibleTo Include="App.AvaloniaUI.Tests" />
     <InternalsVisibleTo Include="App.Core.Tests" />

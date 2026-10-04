@@ -10,15 +10,16 @@ rem
 rem  前提:
 rem    Native AOT のリンクには Visual Studio の C++ ビルドツール（link.exe）が必要です。
 rem
-rem  構成（実測）:
-rem    - マネージドコードは全て SaveEvidence.exe（約 27.9 MB）へコンパイルされます。
+rem  構成:
+rem    - マネージドコードは全て exe（SaveEvidence.AvaloniaUI.exe）へコンパイルされます。
 rem    - Avalonia / SkiaSharp / OpenCvSharp のネイティブライブラリは exe へ同梱できないため、
 rem      同じフォルダーへ並べて配布します（libSkiaSharp.dll / av_libglesv2.dll /
 rem      libHarfBuzzSharp.dll / OpenCvSharpExtern.dll）。
 rem
 rem  方式の選定理由:
-rem    - 単一 exe（PublishSingleFile + 自己完結）は exe が約 229 MB になるため採用していません。
-rem    - AOT はマネージドコードのみをネイティブへコンパイルするため約 27.9 MB になります。
+rem    - 単一 exe（PublishSingleFile + 自己完結）は自己完結ランタイムを丸ごと含むため、
+rem      AOT（マネージドコードのみをネイティブへコンパイル）より配布物が大きくなります。
+rem    - サイズ・ファイル数はコードの変更で変わるため、ここには書きません（publish の出力で確認します）。
 rem
 rem  AOT で動作しない実装（実測）:
 rem    - 実行時の XAML 解決（AvaloniaXamlLoader.Load(Uri)）は
@@ -42,7 +43,6 @@ pushd "%~dp0.."
 rem ターゲットランタイム（既定: win-x64）
 if "%~1"=="" (set "RID=win-x64") else (set "RID=%~1")
 
-set "APP_NAME=SaveEvidence.exe"
 
 rem 最終的な出力先（MewUI 版と分ける）
 set "OUTDIR=%CD%\publish\avaloniaui-%RID%-aot"
@@ -75,9 +75,12 @@ if errorlevel 1 (
   exit /b 1
 )
 
-if not exist "%STAGE%\%APP_NAME%" (
+rem 発行された exe 名を取得する（名前は csproj の AssemblyName が単一所有するため、ここでは決めない）
+set "APP_NAME="
+for %%f in ("%STAGE%\*.exe") do set "APP_NAME=%%~nxf"
+if not defined APP_NAME (
   echo.
-  echo [ERROR] Executable not found: %STAGE%\%APP_NAME%
+  echo [ERROR] Executable not found in: %STAGE%
   if exist "%STAGE%" rd /s /q "%STAGE%"
   popd
   exit /b 1

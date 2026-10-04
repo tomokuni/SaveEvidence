@@ -14,6 +14,7 @@
       "name": "MewUI",
       "script": "buildScript/MewUI_publish_aot.bat",
       "output": "publish/mewui-win-x64-aot",
+      "exe": "SaveEvidence.MewUI.exe",
       "asset": "SaveEvidence.MewUI.zip",
       "zip": true
     },
@@ -21,6 +22,7 @@
       "name": "AvaloniaUI",
       "script": "buildScript/AvaloniaUI_publish_aot.bat",
       "output": "publish/avaloniaui-win-x64-aot",
+      "exe": "SaveEvidence.AvaloniaUI.exe",
       "asset": "SaveEvidence.zip",
       "zip": true
     }
