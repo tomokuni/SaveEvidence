@@ -73,12 +73,12 @@ SkiaLabel.Draw(canvas, background, bgColor, text, origin, fontSize, textColor, c
 ```text
 tests/
 ├── Platform.Skia.Tests.csproj
-├── EsBitmapSkiaExtensions.Tests.cs    # 非所有ビュー・複製・所有権・ストライドの一致（8 件）
-├── SkiaColorInterop.Tests.cs          # 色の相互変換（8 件）
-├── SkiaFill.Tests.cs                  # 矩形・角丸矩形の塗り（9 件）
-├── SkiaGeometryInterop.Tests.cs       # 幾何の相互変換（5 件）
-├── SkiaLabel.Tests.cs                 # ラベル 1 件の描画順（5 件）
-└── SkiaText.Tests.cs                  # 実寸測定・書体解決・描画（10 件）
+├── EsBitmapSkiaExtensions.Tests.cs    # 非所有ビュー・複製・所有権・ストライドの一致
+├── SkiaColorInterop.Tests.cs          # 色の相互変換
+├── SkiaFill.Tests.cs                  # 矩形・角丸矩形の塗り
+├── SkiaGeometryInterop.Tests.cs       # 幾何の相互変換
+├── SkiaLabel.Tests.cs                 # ラベル 1 件の描画順
+└── SkiaText.Tests.cs                  # 実寸測定・書体解決・描画
 ```
 
 UI 初期化（ウィンドウ）が不要なため、すべて `[Fact]` / `[Theory]` で並列実行されます（`SKBitmap` / `SKCanvas` をメモリ上で直接使う）。

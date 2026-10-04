@@ -114,10 +114,10 @@ src/App.MewUI/src/
 tests/
 ├── App.MewUI.Tests.csproj      xUnit v3（net10.0-windows）
 ├── TestHelper.cs               テスト共通ユーティリティ
-├── MewUIImageWriter.Tests.cs   保存形式・画素数・引数検証（13 件）
-├── ImageThumbnailLoader.Tests.cs 縮小デコード・キャッシュ・失敗時の扱い（13 件）
-├── SettingsColorMath.Tests.cs  色文字列の解析と整形（22 件）
-├── AppLog.Tests.cs             ログ定義の書式と IsEnabled 分岐（3 件）
+├── MewUIImageWriter.Tests.cs   保存形式・画素数・引数検証
+├── ImageThumbnailLoader.Tests.cs 縮小デコード・キャッシュ・失敗時の扱い
+├── SettingsColorMath.Tests.cs  色文字列の解析と整形
+├── AppLog.Tests.cs             ログ定義の書式と IsEnabled 分岐
 ```
 
 | コンポーネント | 責務 |
@@ -659,13 +659,13 @@ sequenceDiagram
 
 | 対象 | 方針 |
 | --- | --- |
-| `MewUIImageWriter` | 実ファイルへ書き出し、`SKCodec` で保存形式を判定して検証する（13 件） |
-| `WindowPlacementMath` | 純粋関数のためヘッドレスで検証する。 スケール 0・負値・NaN、画面外判定、四捨五入の境界を含む（19 件） |
+| `MewUIImageWriter` | 実ファイルへ書き出し、`SKCodec` で保存形式を判定して検証する |
+| `WindowPlacementMath` | 純粋関数のためヘッドレスで検証する。 スケール 0・負値・NaN、画面外判定、四捨五入の境界を含む |
 | `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。 Uniform / Fill・余白の中央寄せ・空の入力（`Platform.MewUI.Tests` が担う） |
-| `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。 6 / 8 桁・大文字小文字・不正入力・往復変換（22 件） |
-| `SettingsService` | ソース生成と反射の書式の一致（既存の設定ファイルとの互換性）を `App.Core.Tests` で検証する（4 件） |
-| `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する（13 件） |
-| `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する（3 件） |
+| `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。 6 / 8 桁・大文字小文字・不正入力・往復変換 |
+| `SettingsService` | ソース生成と反射の書式の一致（既存の設定ファイルとの互換性）を `App.Core.Tests` で検証する |
+| `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する |
+| `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する |
 | ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`PrintWindow` による撮影と画素の実測）で確認する |
 | 組み込み先のコントロール | `EsUtil.Feature.Loupe.ControlMewUI.Tests` / `Parts.CapturePreviewControl.MewUI.Tests` が描画と状態を検証する |
 | コアロジック | `App.Core` / `Platform.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |

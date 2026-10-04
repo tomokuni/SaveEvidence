@@ -389,9 +389,9 @@ sequenceDiagram
 
 | 対象 | 内容 |
 | --- | --- |
-| `CropBoundsMath` | 純粋関数のためヘッドレスで検証する。 四捨五入（0.5 の切り上げ）・画像外のクランプ・画像と重ならない場合の空・1 ピクセル未満の空・最小サイズ・区間の流儀に応じた終点の加算と端のクランプ・画像サイズ 0 以下・丸め規則の公開（41 件）。 Avalonia 版 / MewUI 版から移した境界値テストを 1 箇所へ集約した |
+| `CropBoundsMath` | 純粋関数のためヘッドレスで検証する。 四捨五入（0.5 の切り上げ）・画像外のクランプ・画像と重ならない場合の空・1 ピクセル未満の空・最小サイズ・区間の流儀に応じた終点の加算と端のクランプ・画像サイズ 0 以下・丸め規則の公開。 Avalonia 版 / MewUI 版から移した境界値テストを 1 箇所へ集約した |
 | `CaptureSettings` / `CaptureSettingsMerge` | 既定値の解決（`ToNonNull`）・部分更新のマージ・同値スキップ・範囲外の検証 |
-| `CaptureTypeTraits` | 3 種別すべての性質（ハイライト・区間の流儀・検出対象）と未定義値のフォールバック・検出関数の呼び分け・確定対象の選択（16 件） |
+| `CaptureTypeTraits` | 3 種別すべての性質（ハイライト・区間の流儀・検出対象）と未定義値のフォールバック・検出関数の呼び分け・確定対象の選択 |
 | `MonitorScalingMath` | 中心を含むモニタの選択・単一モニタ・どのモニタにも含まれない場合のフォールバック・負座標・対象座標からの原点加算 |
 | `CropLabelTexts` / `ImageColorMath` | ラベル書式（区間の流儀に応じた `WH`・倍率の丸め）・平均色（単色・標本間引き・null 検証） |
 | `CaptureClipMath` / `CaptureClipCache` | 画面物理⇔画像ローカル座標の双方向変換（往復一致）・座標空間の混在で切り出せなくなる機序・切り出しの未取得時 null・同一判定・所有権の移動・旧値の破棄 |
@@ -401,10 +401,10 @@ sequenceDiagram
 | `CaptureLogMessage` | 全定義の本文書式とイベント ID（記録ロガーで検証） |
 | `OverlayRectLayout` / `OverlayLineDash` | 負サイズのクランプ・太さの下限・破線の判定とダッシュ長の引き継ぎ（ベクター経路とラスタ経路が同じ数値を使う） |
 | `OverlayRectRasterizer` | ルーペ画像へのラスタライズ（画素検証） |
-| `FadeMaskDragRectModes` / `State` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否（12 件） |
-| `FadeMaskDragRectOptions` / `LabelOptions` | 既定値・部分変更・（6 件） |
-| `FadeMaskDragRectSelection` | 選択として成立するサイズの判定（9 件） |
-| `FadeMaskDragRectOverlay` | 破線の列挙と描画の画素検証（15 件） |
-| `ZoomViewSession` | 実効ズーム率の導出・Fit の表現・可否・遷移の適用（ズーム中心の維持）・パン・Fit 復帰・スクロールバーのドラッグ（49 件） |
-| `ZoomOptions` / `ZoomTransition` / `ZoomMath` | 不変条件の検証と `With` による部分更新・ 23 段階／ホイール遷移・可否判定・Fit 実効倍率・クランプ・座標変換（101 件） |
-| `ZoomViewAppearance` / `ZoomScrollBarGeometry` / `ZoomLogMessage` | 描画可否・市松模様の範囲とタイル矩形・トラック／サムの矩形と逆算・ログ書式（61 件） |
+| `FadeMaskDragRectModes` / `State` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否 |
+| `FadeMaskDragRectOptions` / `LabelOptions` | 既定値・部分変更・ |
+| `FadeMaskDragRectSelection` | 選択として成立するサイズの判定 |
+| `FadeMaskDragRectOverlay` | 破線の列挙と描画の画素検証 |
+| `ZoomViewSession` | 実効ズーム率の導出・Fit の表現・可否・遷移の適用（ズーム中心の維持）・パン・Fit 復帰・スクロールバーのドラッグ |
+| `ZoomOptions` / `ZoomTransition` / `ZoomMath` | 不変条件の検証と `With` による部分更新・ 23 段階／ホイール遷移・可否判定・Fit 実効倍率・クランプ・座標変換 |
+| `ZoomViewAppearance` / `ZoomScrollBarGeometry` / `ZoomLogMessage` | 描画可否・市松模様の範囲とタイル矩形・トラック／サムの矩形と逆算・ログ書式 |

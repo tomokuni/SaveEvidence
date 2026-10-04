@@ -65,9 +65,9 @@ src/App.MewUI/
 └── tests/
     ├── App.MewUI.Tests.csproj           # xUnit v3（net10.0-windows）
     ├── TestHelper.cs                    # テスト共通ユーティリティ
-    ├── MewUIImageWriter.Tests.cs        # 保存形式・画素数・引数検証（13 件）
-    ├── ImageThumbnailLoader.Tests.cs    # 縮小デコード・キャッシュ・失敗時の扱い（13 件）
-    └── SettingsColorMath.Tests.cs       # 色文字列の解析と整形（22 件）
+    ├── MewUIImageWriter.Tests.cs        # 保存形式・画素数・引数検証
+    ├── ImageThumbnailLoader.Tests.cs    # 縮小デコード・キャッシュ・失敗時の扱い
+    └── SettingsColorMath.Tests.cs       # 色文字列の解析と整形
 ```
 
 ## 依存関係

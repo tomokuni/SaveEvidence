@@ -79,10 +79,10 @@ LoupeAppearance loupe = CapturePaintMapper.ToLoupeAppearance(settings, backgroun
 
 ```text
 tests/
-├── CapturePaintMapper.Tests.cs         # 写像の網羅・枠線の共有・画像外の色・引数の検証（8 件）
-├── FadeMaskDragRectChildValues.Tests.cs # モードから導出する値の上書き（9 件）
-├── FadeMaskHostLabelRenderer.Tests.cs  # 付加情報ラベルの縦積みと表示可否（12 件）
-└── MarqueeHostLabelRenderer.Tests.cs   # ラベル 1 行の体裁（背景の寸法の検証）（6 件）
+├── CapturePaintMapper.Tests.cs         # 写像の網羅・枠線の共有・画像外の色・引数の検証
+├── FadeMaskDragRectChildValues.Tests.cs # モードから導出する値の上書き
+├── FadeMaskHostLabelRenderer.Tests.cs  # 付加情報ラベルの縦積みと表示可否
+└── MarqueeHostLabelRenderer.Tests.cs   # ラベル 1 行の体裁（背景の寸法の検証）
 ```
 
 ```powershell

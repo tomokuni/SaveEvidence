@@ -166,49 +166,47 @@ src/
 │   └── ZoomLogFormat.cs                   # ログに載せる値の文字列化・丸め
 └── tests/
     ├── Parts.CapturePreviewControl.Core.Tests.csproj
-    ├── CropBoundsMath.Tests.cs            # クランプ・丸め・区間の流儀・丸め規則（41 件）
-    ├── CropLabelTexts.Tests.cs            # 含まれるピクセル数・ズーム率の丸め・未選択時の表示可否（10 件）
+    ├── CropBoundsMath.Tests.cs            # クランプ・丸め・区間の流儀・丸め規則
+    ├── CropLabelTexts.Tests.cs            # 含まれるピクセル数・ズーム率の丸め・未選択時の表示可否
 
-    ├── ImageColorMath.Tests.cs            # 平均色（標本間引き・空画像。5 件）
-    ├── CaptureTypeTraits.Tests.cs         # ハイライト型・区間の流儀・検出対象・検出呼び分け・確定対象（16 件）
-    ├── MonitorScalingMath.Tests.cs        # 中心判定・境界・フォールバック・対象座標・一覧の構築・代表値（19 件）
-    ├── CaptureClipMath.Tests.cs           # 切り出し矩形の解決（座標空間の契約・整数/浮動小数）・双方向変換・画像の共有値（34 件）
-    ├── CaptureImageHolder.Tests.cs        # 保持の規則（差し替え・破棄後・フォールバック）（8 件）
-    ├── CaptureVirtualScreen.Tests.cs      # タイムアウト待ちと未使用結果の破棄（6 件）
-    ├── CaptureVirtualScreenBounds.Tests.cs  # 撮影対象の範囲（包含矩形・負の原点・モニタ無し）（5 件）
-    ├── CaptureSettings.Tests.cs           # 設定の検証と既定値・非数値の許容（16 件）
-    ├── CaptureClipCache.Tests.cs          # 同一判定・所有権の移動・旧値の破棄（12 件）
-    ├── CaptureTiming.Tests.cs             # 方針値と切り出しの操作内容の決定（6 件）
-    ├── CaptureSessionState.Tests.cs       # 実行中・完了の排他（6 件）
-    ├── CaptureSessionSlot.Tests.cs        # 撮影・切り出しの排他と既定値（13 件）
-    ├── CaptureCompletion.Tests.cs         # 結果の単一確定（3 件）
-    ├── CaptureOwnerScope.Tests.cs         # 退避・除外の順序（5 件）
-    ├── CaptureSettingsMerge.Tests.cs      # 部分更新マージと同値スキップ・入力なし（10 件）
-    ├── CaptureLabelTexts.Tests.cs         # モード写像・文言の選定・サイズラベル解決（10 件）
-    ├── CaptureLogMessage.Tests.cs         # ログ書式（全定義）と終了ログの組・無効ロガーの安全性（19 件）
-    ├── CaptureHighlight.Tests.cs          # 検出→ハイライト状態の導出・変化の判定・ログ（9 件）
-    ├── CaptureKeyActions.Tests.cs         # Enter / Return / Escape の解釈と確定対象の有無（10 件）
-    ├── CaptureClickSelection.Tests.cs     # 固定と取り出しの規則（8 件）
-    ├── CaptureResult.Tests.cs             # キャンセル結果の正規化（4 件）
-    ├── FadeMaskDragRectOptionsMapper.Tests.cs  # 設定項目と寸法・表示可否の対応（6 件）
-    ├── FadeMaskDragRectModes.Tests.cs       # モードの解決・ルーペ表示可否（12 件）
-    ├── FadeMaskDragRectOptions.Tests.cs     # 既定値・部分変更・外側の装飾の単一所有（6 件）
-    ├── FadeMaskDragRectOverlay.Tests.cs     # 破線の列挙と描画の画素検証（15 件）
-    ├── FadeMaskDragRectSelection.Tests.cs   # 選択矩形の可否判定（9 件）
-    ├── OverlayLineDash.Tests.cs            # スタイルごとのダッシュ長（8 件）
-    ├── OverlayRectLayout.Tests.cs          # クランプ・太さの下限・破線の判定（21 件）
-    ├── OverlayRectRasterizer.Tests.cs      # ルーペ画像へのラスタライズ（画素検証。11 件）
-    ├── CaptureTargetContract.Tests.cs      # ICaptureTarget の契約（3 件）
-    ├── ZoomViewSession.Tests.cs           # 状態と判断・Fit・遷移・パン・スクロールバー（49 件）
-    ├── ZoomOptions.Tests.cs                # 不変条件の検証と With による部分更新（18 件）
-    ├── ZoomTransition.Tests.cs            # 段階遷移・ホイール遷移・可否判定（46 件）
-    ├── ZoomMath.Tests.cs                  # Fit 実効倍率・中心維持・クランプ・座標変換（37 件）
-    ├── ZoomScrollBarGeometry.Tests.cs     # トラック・サムの矩形とオフセット逆算（23 件）
-    ├── ZoomViewAppearance.Tests.cs        # 描画可否・市松模様の範囲・タイル矩形（30 件）
-    └── ZoomLogMessage.Tests.cs            # ログ書式と丸め（8 件）
+    ├── ImageColorMath.Tests.cs            # 平均色（標本間引き・空画像）
+    ├── CaptureTypeTraits.Tests.cs         # ハイライト型・区間の流儀・検出対象・検出呼び分け・確定対象
+    ├── MonitorScalingMath.Tests.cs        # 中心判定・境界・フォールバック・対象座標・一覧の構築・代表値
+    ├── CaptureClipMath.Tests.cs           # 切り出し矩形の解決（座標空間の契約・整数/浮動小数）・双方向変換・画像の共有値
+    ├── CaptureImageHolder.Tests.cs        # 保持の規則（差し替え・破棄後・フォールバック）
+    ├── CaptureVirtualScreen.Tests.cs      # タイムアウト待ちと未使用結果の破棄
+    ├── CaptureVirtualScreenBounds.Tests.cs  # 撮影対象の範囲（包含矩形・負の原点・モニタ無し）
+    ├── CaptureSettings.Tests.cs           # 設定の検証と既定値・非数値の許容
+    ├── CaptureClipCache.Tests.cs          # 同一判定・所有権の移動・旧値の破棄
+    ├── CaptureTiming.Tests.cs             # 方針値と切り出しの操作内容の決定
+    ├── CaptureSessionState.Tests.cs       # 実行中・完了の排他
+    ├── CaptureSessionSlot.Tests.cs        # 撮影・切り出しの排他と既定値
+    ├── CaptureCompletion.Tests.cs         # 結果の単一確定
+    ├── CaptureOwnerScope.Tests.cs         # 退避・除外の順序
+    ├── CaptureSettingsMerge.Tests.cs      # 部分更新マージと同値スキップ・入力なし
+    ├── CaptureLabelTexts.Tests.cs         # モード写像・文言の選定・サイズラベル解決
+    ├── CaptureLogMessage.Tests.cs         # ログ書式（全定義）と終了ログの組・無効ロガーの安全性
+    ├── CaptureHighlight.Tests.cs          # 検出→ハイライト状態の導出・変化の判定・ログ
+    ├── CaptureKeyActions.Tests.cs         # Enter / Return / Escape の解釈と確定対象の有無
+    ├── CaptureClickSelection.Tests.cs     # 固定と取り出しの規則
+    ├── CaptureResult.Tests.cs             # キャンセル結果の正規化
+    ├── FadeMaskDragRectOptionsMapper.Tests.cs  # 設定項目と寸法・表示可否の対応
+    ├── FadeMaskDragRectModes.Tests.cs       # モードの解決・ルーペ表示可否
+    ├── FadeMaskDragRectOptions.Tests.cs     # 既定値・部分変更・外側の装飾の単一所有
+    ├── FadeMaskDragRectOverlay.Tests.cs     # 破線の列挙と描画の画素検証
+    ├── FadeMaskDragRectSelection.Tests.cs   # 選択矩形の可否判定
+    ├── OverlayLineDash.Tests.cs            # スタイルごとのダッシュ長
+    ├── OverlayRectLayout.Tests.cs          # クランプ・太さの下限・破線の判定
+    ├── OverlayRectRasterizer.Tests.cs      # ルーペ画像へのラスタライズ（画素検証）
+    ├── CaptureTargetContract.Tests.cs      # ICaptureTarget の契約
+    ├── ZoomViewSession.Tests.cs           # 状態と判断・Fit・遷移・パン・スクロールバー
+    ├── ZoomOptions.Tests.cs                # 不変条件の検証と With による部分更新
+    ├── ZoomTransition.Tests.cs            # 段階遷移・ホイール遷移・可否判定
+    ├── ZoomMath.Tests.cs                  # Fit 実効倍率・中心維持・クランプ・座標変換
+    ├── ZoomScrollBarGeometry.Tests.cs     # トラック・サムの矩形とオフセット逆算
+    ├── ZoomViewAppearance.Tests.cs        # 描画可否・市松模様の範囲・タイル矩形
+    └── ZoomLogMessage.Tests.cs            # ログ書式と丸め
 ```
-
-テストは **577 件**（撮影・切り出し 366 件 ＋ 切り出しビューの画像ビューポート 211 件）。
 
 ## 7. ライセンス
 
