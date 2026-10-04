@@ -5,19 +5,33 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 
 /// <summary>UI フレームワーク非依存の <see cref="EsKey"/> と Avalonia の <see cref="AvaloniaKey"/> を相互変換する。</summary>
 /// <remarks>
-/// 両者はメンバー名が一致するように設計されているため、数値の一致には依存せず名前ベースで変換する。<br/>
+/// 両者は<b>メンバー名が完全に一致</b>するように設計されているため（実測: 両者とも 223 メンバー）、<br/>
+/// 数値の一致には依存せず<b>名前ベース</b>で変換する（数値の順序はフレームワーク間で保証されない）。<br/>
+/// <br/>
+/// <b>別名（同じ値を持つ名前）</b>: Avalonia の <see cref="AvaloniaKey"/> には同じ値を持つ別名が 30 組ある<br/>
+/// （例: <c>Return</c> / <c>Enter</c>、<c>CapsLock</c> / <c>Capital</c>、<c>OemTilde</c> / <c>Oem3</c>）。<br/>
+/// 値が同一のため<b>別名の同一性は保てない</b>（<c>EsKey.Enter</c> は <c>AvaloniaKey.Enter</c> へ変換できるが、<br/>
+/// 逆向きの変換は代表名 <c>EsKey.Return</c> を返す）。 <b>キーそのもの（値）は保たれる</b>ため実用上の問題はない。<br/>
+/// <br/>
+/// <b>未定義値</b>: <see cref="Enum.TryParse{T}(string, out T)"/> は数値文字列を受け付けてしまうため、<br/>
+/// 名前解決の成否だけでは未定義値を検出できない。 <see cref="Enum.IsDefined{T}(T)"/> で検査し <c>None</c> を返す<br/>
+/// （実測: 検査が無いと <c>(EsKey)9999</c> が <c>(AvaloniaKey)9999</c> へ変換され、キー入力の解釈が未定義になる）。
 /// </remarks>
 public static class EsKeyAvaloniaInterop
 {
     /// <summary><see cref="EsKey"/> を Avalonia の <see cref="AvaloniaKey"/> へ変換する。</summary>
     /// <param name="key">変換対象のキー。</param>
-    /// <returns>対応する Avalonia のキー。 名前が一致しない場合は <see cref="AvaloniaKey.None"/>。</returns>
+    /// <returns>対応する Avalonia のキー。 名前が一致しない場合と未定義値は <see cref="AvaloniaKey.None"/>。</returns>
     public static AvaloniaKey ToAvaloniaKey(this EsKey key) =>
-        System.Enum.TryParse<AvaloniaKey>(key.ToString(), out var result) ? result : AvaloniaKey.None;
+        Enum.IsDefined(key) && System.Enum.TryParse<AvaloniaKey>(key.ToString(), out var result)
+            ? result
+            : AvaloniaKey.None;
 
     /// <summary>Avalonia の <see cref="AvaloniaKey"/> を <see cref="EsKey"/> へ変換する。</summary>
     /// <param name="key">変換対象のキー。</param>
-    /// <returns>対応する <see cref="EsKey"/>。 名前が一致しない場合は <see cref="EsKey.None"/>。</returns>
+    /// <returns>対応する <see cref="EsKey"/>。 名前が一致しない場合と未定義値は <see cref="EsKey.None"/>。</returns>
     public static EsKey ToEsKey(this AvaloniaKey key) =>
-        System.Enum.TryParse<EsKey>(key.ToString(), out var result) ? result : EsKey.None;
+        Enum.IsDefined(key) && System.Enum.TryParse<EsKey>(key.ToString(), out var result)
+            ? result
+            : EsKey.None;
 }

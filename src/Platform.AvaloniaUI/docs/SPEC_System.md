@@ -110,7 +110,7 @@ flowchart TB
 
 | コンポーネント | 説明 |
 | --- | --- |
-| `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（名前ベース変換。 Avalonia の `Key` は `PageUp` / `Prior` 等の別名で同値を持つため数値変換しない） |
+| `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（名前ベース変換。 Avalonia の `Key` は `PageUp` / `Prior` 等の別名で同値を持つため数値変換しない。 **30 組の別名があるため変換の契約は「キーの値が保たれる」**。 未定義値は `None`。 双方向の名前集合一致は `EsKeyAvaloniaInterop.Tests` が強制する） |
 | `EsWindowStateAvaloniaInterop` | `EsWindowState` ⇔ `Avalonia.Controls.WindowState`（名前ベース変換。 メンバー数が 4 と少ないため `Enum.IsDefined` で未定義値を検出し `Normal` へフォールバックする） |
 | `EsGeometryAvaloniaInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` ⇔ Avalonia の対応型 |
 | `EsPlatformHandleAvaloniaInterop` | `Avalonia.Platform.IPlatformHandle` ⇔ `EsPlatformHandle` |

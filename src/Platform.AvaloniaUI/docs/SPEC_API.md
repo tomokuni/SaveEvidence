@@ -140,7 +140,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 
 | 型 | 説明 |
 | --- | --- |
-| `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（`ToAvaloniaKey()` / `ToEsKey()`。 数値ではなく名前で変換） |
+| `EsKeyAvaloniaInterop` | `EsKey` ⇔ `Avalonia.Input.Key`（`ToAvaloniaKey()` / `ToEsKey()`。 数値ではなく名前で変換。 未定義値は `None`） |
 | `EsWindowStateAvaloniaInterop` | `EsWindowState` ⇔ `Avalonia.Controls.WindowState`（名前で変換。 未定義値は `Normal` へフォールバック） |
 | `EsGeometryAvaloniaInterop` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` ⇔ Avalonia の対応型 |
 | `EsPlatformHandleAvaloniaInterop` | `Avalonia.Platform.IPlatformHandle` ⇔ `EsPlatformHandle`（null はハンドル値 0 に変換） |
