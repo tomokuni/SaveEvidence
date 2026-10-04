@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class CaptureOwnerScopeTests
 {
     [Fact]
-    public void Enter_除外を設定してから退避する()
+    internal void Enter_除外を設定してから退避する()
     {
         var log = new List<string>();
         var service = new FakeWindowService(log);
@@ -26,7 +26,7 @@ public class CaptureOwnerScopeTests
     }
 
     [Fact]
-    public void Enter_設定が偽の場合は退避しない()
+    internal void Enter_設定が偽の場合は退避しない()
     {
         var log = new List<string>();
         var service = new FakeWindowService(log);
@@ -41,7 +41,7 @@ public class CaptureOwnerScopeTests
     }
 
     [Fact]
-    public void Enter_オーナーが非表示の場合は退避しない()
+    internal void Enter_オーナーが非表示の場合は退避しない()
     {
         var log = new List<string>();
         var service = new FakeWindowService(log);
@@ -56,7 +56,7 @@ public class CaptureOwnerScopeTests
     }
 
     [Fact]
-    public void Dispose_除外の設定に失敗した場合は解除しない()
+    internal void Dispose_除外の設定に失敗した場合は解除しない()
     {
         var log = new List<string>();
         var service = new FakeWindowService(log) { CanExclude = false };
@@ -72,7 +72,7 @@ public class CaptureOwnerScopeTests
     }
 
     [Fact]
-    public void Dispose_二重に呼んでも復帰は1回だけ()
+    internal void Dispose_二重に呼んでも復帰は1回だけ()
     {
         var log = new List<string>();
         var service = new FakeWindowService(log);

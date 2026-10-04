@@ -16,7 +16,7 @@ public class MonitorScalingMathTests
     ];
 
     [Fact]
-    public void ResolveForRect_中心を含むモニターの倍率を返す()
+    internal void ResolveForRect_中心を含むモニターの倍率を返す()
     {
         var target = new EsRectInt(100, 100, 400, 300);
 
@@ -28,13 +28,13 @@ public class MonitorScalingMathTests
     // ====================================================================
 
     [Fact]
-    public void ResolveScaling_先頭の画面のスケーリングを返す()
+    internal void ResolveScaling_先頭の画面のスケーリングを返す()
     {
         Assert.Equal(1.5, MonitorScalingMath.ResolveScaling([1.5, 1.0]));
     }
 
     [Fact]
-    public void ResolveScaling_画面が無い場合は基準値を返す()
+    internal void ResolveScaling_画面が無い場合は基準値を返す()
     {
         // ヘッドレステストやモニター未接続では画面情報を取得できない（基準値で描画を続ける）
         Assert.Equal(DpiScaler.StandardScaling, MonitorScalingMath.ResolveScaling([]));
@@ -43,7 +43,7 @@ public class MonitorScalingMathTests
     [Theory]
     [InlineData(0.0)]
     [InlineData(-1.0)]
-    public void ResolveScaling_未確定のスケーリングは基準値へ正規化する(double scaling)
+    internal void ResolveScaling_未確定のスケーリングは基準値へ正規化する(double scaling)
     {
         Assert.Equal(DpiScaler.StandardScaling, MonitorScalingMath.ResolveScaling([scaling]));
     }
@@ -53,7 +53,7 @@ public class MonitorScalingMathTests
     // ====================================================================
 
     [Fact]
-    public void Collect_倍率が未確定のモニターを除外する()
+    internal void Collect_倍率が未確定のモニターを除外する()
     {
         // 倍率 0 以下は未確定として扱い、判定に使うと表示倍率が 0 倍になるため除外する
         var monitors = new (EsRectInt Bounds, double Scale)[]
@@ -70,7 +70,7 @@ public class MonitorScalingMathTests
     }
 
     [Fact]
-    public void Collect_入力の順序を保つ()
+    internal void Collect_入力の順序を保つ()
     {
         var monitors = new (EsRectInt Bounds, double Scale)[]
         {
@@ -85,13 +85,13 @@ public class MonitorScalingMathTests
     }
 
     [Fact]
-    public void Collect_空の一覧は空を返す()
+    internal void Collect_空の一覧は空を返す()
     {
         Assert.Empty(MonitorScalingMath.Collect([]));
     }
 
     [Fact]
-    public void ResolveForRect_右側のモニターに中心がある場合はその倍率を返す()
+    internal void ResolveForRect_右側のモニターに中心がある場合はその倍率を返す()
     {
         var target = new EsRectInt(2400, 100, 400, 300);
 
@@ -99,7 +99,7 @@ public class MonitorScalingMathTests
     }
 
     [Fact]
-    public void ResolveForRect_境界を跨ぐ矩形は中心のモニターで決まる()
+    internal void ResolveForRect_境界を跨ぐ矩形は中心のモニターで決まる()
     {
         // 左上が左モニター・右下が右モニター。 中心が右モニターに入る
         var target = new EsRectInt(1900, 0, 100, 100);
@@ -108,7 +108,7 @@ public class MonitorScalingMathTests
     }
 
     [Fact]
-    public void ResolveForRect_どのモニターにも含まれない場合はフォールバックを返す()
+    internal void ResolveForRect_どのモニターにも含まれない場合はフォールバックを返す()
     {
         var target = new EsRectInt(-5000, -5000, 100, 100);
 
@@ -116,7 +116,7 @@ public class MonitorScalingMathTests
     }
 
     [Fact]
-    public void ResolveForRect_モニターが空の場合はフォールバックを返す()
+    internal void ResolveForRect_モニターが空の場合はフォールバックを返す()
     {
         var target = new EsRectInt(0, 0, 100, 100);
 
@@ -124,7 +124,7 @@ public class MonitorScalingMathTests
     }
 
     [Fact]
-    public void ResolveForRect_幅と高さが0でも中心で判定する()
+    internal void ResolveForRect_幅と高さが0でも中心で判定する()
     {
         // 幅・高さ 0 の矩形（点）でも判定できる
         var target = new EsRectInt(2000, 500, 0, 0);
@@ -137,7 +137,7 @@ public class MonitorScalingMathTests
     // ====================================================================
 
     [Fact]
-    public void ResolveForSourceRect_原点を加算して対象矩形を判定する()
+    internal void ResolveForSourceRect_原点を加算して対象矩形を判定する()
     {
         // 対象 (100, 100) の原点が (1920, 0) のとき、画面物理 (2020, 100) は右モニターに入る
         var source = new EsRect(100, 100, 400, 300);
@@ -149,7 +149,7 @@ public class MonitorScalingMathTests
     }
 
     [Fact]
-    public void ResolveForSourceRect_原点が原点なら画面物理と一致する()
+    internal void ResolveForSourceRect_原点が原点なら画面物理と一致する()
     {
         var source = new EsRect(100, 100, 400, 300);
 
@@ -160,7 +160,7 @@ public class MonitorScalingMathTests
     }
 
     [Fact]
-    public void ResolveForSourceRect_どのモニターにも含まれない場合はフォールバックを返す()
+    internal void ResolveForSourceRect_どのモニターにも含まれない場合はフォールバックを返す()
     {
         var source = new EsRect(-9000, -9000, 100, 100);
 
@@ -174,7 +174,7 @@ public class MonitorScalingMathTests
     [InlineData(100.4)]
     [InlineData(100.6)]
     [InlineData(100.5)]
-    public void ResolveForSourceRect_小数座標は四捨五入して画面物理へ戻す(double x)
+    internal void ResolveForSourceRect_小数座標は四捨五入して画面物理へ戻す(double x)
     {
         // 四捨五入で整数化するため、どちらへ丸めても同じモニターの判定になる（境界から離れた位置）
         var source = new EsRect(x, 100, 400, 300);

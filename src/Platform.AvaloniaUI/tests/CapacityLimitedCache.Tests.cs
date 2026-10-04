@@ -22,7 +22,7 @@ public class CapacityLimitedCacheTests
         => new(static key => key * 10, capacity);
 
     [Fact]
-    public void GetOrCreate_同じキーは同じインスタンスを返す()
+    internal void GetOrCreate_同じキーは同じインスタンスを返す()
     {
         var cache = new CapacityLimitedCache<Color, SolidColorBrush>(static color => new SolidColorBrush(color));
 
@@ -34,7 +34,7 @@ public class CapacityLimitedCacheTests
     }
 
     [Fact]
-    public void GetOrCreate_異なるキーは別インスタンスを返す()
+    internal void GetOrCreate_異なるキーは別インスタンスを返す()
     {
         var cache = new CapacityLimitedCache<Color, SolidColorBrush>(static color => new SolidColorBrush(color));
 
@@ -46,7 +46,7 @@ public class CapacityLimitedCacheTests
     }
 
     [Fact]
-    public void GetOrCreate_未登録のキーはファクトリで生成する()
+    internal void GetOrCreate_未登録のキーはファクトリで生成する()
     {
         var cache = CreateCache(2);
 
@@ -54,7 +54,7 @@ public class CapacityLimitedCacheTests
     }
 
     [Fact]
-    public void GetOrCreate_容量超過時はクリアしてから登録する()
+    internal void GetOrCreate_容量超過時はクリアしてから登録する()
     {
         var cache = CreateCache(Capacity);
 
@@ -69,19 +69,19 @@ public class CapacityLimitedCacheTests
     }
 
     [Fact]
-    public void DefaultCapacity_は描画リソースの共有に使う既定値である()
+    internal void DefaultCapacity_は描画リソースの共有に使う既定値である()
     {
         Assert.Equal(128, CapacityLimitedCache<Color, SolidColorBrush>.DefaultCapacity);
     }
 
     [Fact]
-    public void コンストラクタ_ファクトリがnullなら例外を投げる()
+    internal void コンストラクタ_ファクトリがnullなら例外を投げる()
     {
         Assert.Throws<ArgumentNullException>(() => new CapacityLimitedCache<int, int>(null!, 1));
     }
 
     [Fact]
-    public void コンストラクタ_容量が1未満なら例外を投げる()
+    internal void コンストラクタ_容量が1未満なら例外を投げる()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new CapacityLimitedCache<int, int>(static key => key, 0));
     }

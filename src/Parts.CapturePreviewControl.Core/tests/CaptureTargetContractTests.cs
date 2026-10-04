@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class CaptureTargetContractTests
 {
     [Fact]
-    public void ApplyCrop_画像の差し替えを通知する()
+    internal void ApplyCrop_画像の差し替えを通知する()
     {
         var target = new FakeCaptureTarget();
         var notifications = 0;
@@ -26,7 +26,7 @@ public class CaptureTargetContractTests
     }
 
     [Fact]
-    public void CurrentImage_未設定の場合はnullを返す()
+    internal void CurrentImage_未設定の場合はnullを返す()
     {
         var target = new FakeCaptureTarget();
 
@@ -34,7 +34,7 @@ public class CaptureTargetContractTests
     }
 
     [Fact]
-    public void CurrentImage_設定後は画像を返す()
+    internal void CurrentImage_設定後は画像を返す()
     {
         using var image = EsBitmap.Create(4, 4);
         var target = new FakeCaptureTarget { Image = image };

@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Platform.MewUI.Tests;
 public class EsWindowStateMewUIInteropTests
 {
     [Fact]
-    public void EsWindowState_往復変換で値が一致する()
+    internal void EsWindowState_往復変換で値が一致する()
     {
         foreach (var state in Enum.GetValues<EsWindowState>())
         {
@@ -22,7 +22,7 @@ public class EsWindowStateMewUIInteropTests
     }
 
     [Fact]
-    public void MewUIWindowState_往復変換で値が一致する()
+    internal void MewUIWindowState_往復変換で値が一致する()
     {
         foreach (var state in Enum.GetValues<MewUIWindowState>())
         {
@@ -31,7 +31,7 @@ public class EsWindowStateMewUIInteropTests
     }
 
     [Fact]
-    public void メンバー名がコアと完全に一致する()
+    internal void メンバー名がコアと完全に一致する()
     {
         // JsonStringEnumConverter で名前シリアライズするため、メンバー名の一致が必須
         var esNames = Enum.GetNames<EsWindowState>().OrderBy(static n => n, StringComparer.Ordinal);
@@ -45,7 +45,7 @@ public class EsWindowStateMewUIInteropTests
     [InlineData(EsWindowState.Minimized, MewUIWindowState.Minimized)]
     [InlineData(EsWindowState.Maximized, MewUIWindowState.Maximized)]
     [InlineData(EsWindowState.FullScreen, MewUIWindowState.FullScreen)]
-    public void ToMewUIWindowState_対応する値を返す(EsWindowState source, MewUIWindowState expected)
+    internal void ToMewUIWindowState_対応する値を返す(EsWindowState source, MewUIWindowState expected)
     {
         Assert.Equal(expected, source.ToMewUIWindowState());
     }
@@ -55,13 +55,13 @@ public class EsWindowStateMewUIInteropTests
     [InlineData(MewUIWindowState.Minimized, EsWindowState.Minimized)]
     [InlineData(MewUIWindowState.Maximized, EsWindowState.Maximized)]
     [InlineData(MewUIWindowState.FullScreen, EsWindowState.FullScreen)]
-    public void ToEsWindowState_対応する値を返す(MewUIWindowState source, EsWindowState expected)
+    internal void ToEsWindowState_対応する値を返す(MewUIWindowState source, EsWindowState expected)
     {
         Assert.Equal(expected, source.ToEsWindowState());
     }
 
     [Fact]
-    public void ToMewUIWindowState_未定義値はNormalへフォールバックする()
+    internal void ToMewUIWindowState_未定義値はNormalへフォールバックする()
     {
         var undefined = (EsWindowState)999;
 
@@ -69,7 +69,7 @@ public class EsWindowStateMewUIInteropTests
     }
 
     [Fact]
-    public void ToEsWindowState_未定義値はNormalへフォールバックする()
+    internal void ToEsWindowState_未定義値はNormalへフォールバックする()
     {
         var undefined = (MewUIWindowState)999;
 

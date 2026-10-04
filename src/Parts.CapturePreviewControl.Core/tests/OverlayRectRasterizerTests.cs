@@ -46,7 +46,7 @@ public class OverlayRectRasterizerTests
     // ====================================================================
 
     [Fact]
-    public void Draw_実線は4辺を描画し内側は残す()
+    internal void Draw_実線は4辺を描画し内側は残す()
     {
         using var bitmap = EsBitmap.Create(20, 20);
 
@@ -68,7 +68,7 @@ public class OverlayRectRasterizerTests
     }
 
     [Fact]
-    public void Draw_切り出し左上を差し引いた位置へ描画する()
+    internal void Draw_切り出し左上を差し引いた位置へ描画する()
     {
         using var bitmap = EsBitmap.Create(20, 20);
         var rect = new OverlayRect(new EsRect(5, 5, 9, 9), OverlayLineStyle.Solid, Foreground, Background, 1.0);
@@ -82,7 +82,7 @@ public class OverlayRectRasterizerTests
     }
 
     [Fact]
-    public void Draw_スケールを掛けたピクセル位置へ描画する()
+    internal void Draw_スケールを掛けたピクセル位置へ描画する()
     {
         using var bitmap = EsBitmap.Create(20, 20);
         var rect = new OverlayRect(new EsRect(0, 0, 4, 4), OverlayLineStyle.Solid, Foreground, Background, 1.0);
@@ -97,7 +97,7 @@ public class OverlayRectRasterizerTests
     }
 
     [Fact]
-    public void Draw_描画範囲外の矩形は何も描画しない()
+    internal void Draw_描画範囲外の矩形は何も描画しない()
     {
         using var bitmap = EsBitmap.Create(20, 20);
         var rect = new OverlayRect(new EsRect(100, 100, 9, 9), OverlayLineStyle.Solid, Foreground, Background, 1.0);
@@ -114,7 +114,7 @@ public class OverlayRectRasterizerTests
     }
 
     [Fact]
-    public void Draw_矩形が描画範囲の右外へはみ出しても描画を開始する()
+    internal void Draw_矩形が描画範囲の右外へはみ出しても描画を開始する()
     {
         using var bitmap = EsBitmap.Create(20, 20);
         var rect = new OverlayRect(new EsRect(15, 0, 9, 9), OverlayLineStyle.Solid, Foreground, Background, 1.0);
@@ -130,7 +130,7 @@ public class OverlayRectRasterizerTests
     // ====================================================================
 
     [Fact]
-    public void Draw_破線はダッシュごとに前景色と背景色を交互に描画する()
+    internal void Draw_破線はダッシュごとに前景色と背景色を交互に描画する()
     {
         using var bitmap = EsBitmap.Create(40, 40);
         var rect = new OverlayRect(new EsRect(0, 0, 29, 29), OverlayLineStyle.Dashed, Foreground, Background, 1.0);
@@ -149,7 +149,7 @@ public class OverlayRectRasterizerTests
     }
 
     [Fact]
-    public void Draw_点線は破線より短いダッシュで描画する()
+    internal void Draw_点線は破線より短いダッシュで描画する()
     {
         using var bitmap = EsBitmap.Create(40, 40);
         var rect = new OverlayRect(new EsRect(0, 0, 29, 29), OverlayLineStyle.Dotted, Foreground, Background, 1.0);
@@ -164,7 +164,7 @@ public class OverlayRectRasterizerTests
     }
 
     [Fact]
-    public void Draw_実線は背景色を使用しない()
+    internal void Draw_実線は背景色を使用しない()
     {
         using var bitmap = EsBitmap.Create(20, 20);
 
@@ -182,7 +182,7 @@ public class OverlayRectRasterizerTests
     // ====================================================================
 
     [Fact]
-    public void Draw_太さ3は中心の両側へ広げて描画する()
+    internal void Draw_太さ3は中心の両側へ広げて描画する()
     {
         using var bitmap = EsBitmap.Create(20, 20);
 
@@ -200,7 +200,7 @@ public class OverlayRectRasterizerTests
     }
 
     [Fact]
-    public void Draw_太さ0でも最低1ピクセルの線を描画する()
+    internal void Draw_太さ0でも最低1ピクセルの線を描画する()
     {
         using var bitmap = EsBitmap.Create(20, 20);
 
@@ -211,7 +211,7 @@ public class OverlayRectRasterizerTests
     }
 
     [Fact]
-    public void Draw_太さは四捨五入して整数化する()
+    internal void Draw_太さは四捨五入して整数化する()
     {
         using var bitmap = EsBitmap.Create(20, 20);
 

@@ -20,7 +20,7 @@ public class CaptureSessionControlStateTests
     // ====================================================================
 
     [Fact]
-    public void コンストラクタ_デフォルト設定を適用する()
+    internal void コンストラクタ_デフォルト設定を適用する()
     {
         var capture = new CaptureSessionControl();
 
@@ -30,7 +30,7 @@ public class CaptureSessionControlStateTests
     }
 
     [Fact]
-    public void AppearanceSettings_部分更新でnull以外を反映する()
+    internal void AppearanceSettings_部分更新でnull以外を反映する()
     {
         var capture = new CaptureSessionControl();
         var original = capture.AppearanceSettings;
@@ -42,7 +42,7 @@ public class CaptureSessionControlStateTests
     }
 
     [Fact]
-    public void AppearanceSettings_同じ値の再設定では更新をスキップする()
+    internal void AppearanceSettings_同じ値の再設定では更新をスキップする()
     {
         var capture = new CaptureSessionControl();
         var current = capture.AppearanceSettings;
@@ -60,7 +60,7 @@ public class CaptureSessionControlStateTests
     }
 
     [Fact]
-    public void AppearanceSettings_範囲外の値で例外を投げる()
+    internal void AppearanceSettings_範囲外の値で例外を投げる()
     {
         var capture = new CaptureSessionControl();
 
@@ -68,7 +68,7 @@ public class CaptureSessionControlStateTests
     }
 
     [Fact]
-    public void AppearanceSettings_破棄後は例外を投げる()
+    internal void AppearanceSettings_破棄後は例外を投げる()
     {
         var capture = new CaptureSessionControl();
         capture.Dispose();
@@ -78,7 +78,7 @@ public class CaptureSessionControlStateTests
     }
 
     [Fact]
-    public void Confirm_セッションなしでは例外なく実行される()
+    internal void Confirm_セッションなしでは例外なく実行される()
     {
         var capture = new CaptureSessionControl();
 
@@ -87,7 +87,7 @@ public class CaptureSessionControlStateTests
     }
 
     [Fact]
-    public void Cancel_セッションなしでは例外なく実行される()
+    internal void Cancel_セッションなしでは例外なく実行される()
     {
         var capture = new CaptureSessionControl();
 
@@ -96,7 +96,7 @@ public class CaptureSessionControlStateTests
     }
 
     [Fact]
-    public void Confirm_破棄後は例外を投げる()
+    internal void Confirm_破棄後は例外を投げる()
     {
         var capture = new CaptureSessionControl();
         capture.Dispose();
@@ -105,7 +105,7 @@ public class CaptureSessionControlStateTests
     }
 
     [Fact]
-    public void Cancel_破棄後は例外を投げる()
+    internal void Cancel_破棄後は例外を投げる()
     {
         var capture = new CaptureSessionControl();
         capture.Dispose();
@@ -114,7 +114,7 @@ public class CaptureSessionControlStateTests
     }
 
     [Fact]
-    public void Dispose_複数回呼んでも安全()
+    internal void Dispose_複数回呼んでも安全()
     {
         var capture = new CaptureSessionControl();
 

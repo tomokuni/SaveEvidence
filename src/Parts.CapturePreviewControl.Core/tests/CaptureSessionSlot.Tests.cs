@@ -14,7 +14,7 @@ public class CaptureSessionSlotTests
     private static CaptureSessionSlot<TestSession, TestSession> CreateSlot() => new();
 
     [Fact]
-    public void TryBeginCapture_空なら受け付ける()
+    internal void TryBeginCapture_空なら受け付ける()
     {
         var slot = CreateSlot();
         var session = new TestSession();
@@ -25,7 +25,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void TryBeginCapture_撮影が実行中なら拒否する()
+    internal void TryBeginCapture_撮影が実行中なら拒否する()
     {
         var slot = CreateSlot();
         slot.TryBeginCapture(new TestSession());
@@ -34,7 +34,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void TryBeginCapture_切り出しが実行中なら拒否する()
+    internal void TryBeginCapture_切り出しが実行中なら拒否する()
     {
         var slot = CreateSlot();
         slot.TryBeginCrop(new TestSession());
@@ -44,7 +44,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void TryBeginCrop_空なら受け付ける()
+    internal void TryBeginCrop_空なら受け付ける()
     {
         var slot = CreateSlot();
         var session = new TestSession();
@@ -55,7 +55,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void TryBeginCrop_撮影が実行中なら拒否する()
+    internal void TryBeginCrop_撮影が実行中なら拒否する()
     {
         var slot = CreateSlot();
         slot.TryBeginCapture(new TestSession());
@@ -65,7 +65,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void EndCapture_保持を解放して次の開始を受け付ける()
+    internal void EndCapture_保持を解放して次の開始を受け付ける()
     {
         var slot = CreateSlot();
         var first = new TestSession();
@@ -79,7 +79,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void EndCapture_別のセッションなら保持を消さない()
+    internal void EndCapture_別のセッションなら保持を消さない()
     {
         var slot = CreateSlot();
         var current = new TestSession();
@@ -91,7 +91,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void EndCrop_別のセッションなら保持を消さない()
+    internal void EndCrop_別のセッションなら保持を消さない()
     {
         var slot = CreateSlot();
         var current = new TestSession();
@@ -103,7 +103,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void HasCropSelection_未実行ならfalseを返し関数を呼ばない()
+    internal void HasCropSelection_未実行ならfalseを返し関数を呼ばない()
     {
         var slot = CreateSlot();
         var called = false;
@@ -119,7 +119,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void HasCropSelection_実行中は関数の結果を返す()
+    internal void HasCropSelection_実行中は関数の結果を返す()
     {
         var slot = CreateSlot();
         slot.TryBeginCrop(new TestSession());
@@ -129,7 +129,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void HasCropSelection_関数がnullなら例外()
+    internal void HasCropSelection_関数がnullなら例外()
     {
         var slot = CreateSlot();
 
@@ -137,7 +137,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void CancelAll_実行中のものだけキャンセルする()
+    internal void CancelAll_実行中のものだけキャンセルする()
     {
         var slot = CreateSlot();
         var capture = new TestSession();
@@ -152,7 +152,7 @@ public class CaptureSessionSlotTests
     }
 
     [Fact]
-    public void CancelAll_未実行でも例外にならない()
+    internal void CancelAll_未実行でも例外にならない()
     {
         var slot = CreateSlot();
 

@@ -14,7 +14,7 @@ public class CapturePageShortcutTests
     [Theory]
     [InlineData(KeyModifiers.Control)]
     [InlineData(KeyModifiers.Control | KeyModifiers.Meta)] // Meta（Windows キー）は許可（Alt / Shift 以外の併用）
-    public void IsCtrlShortcut_CtrlのみまたはMeta併用はtrue(KeyModifiers modifiers)
+    internal void IsCtrlShortcut_CtrlのみまたはMeta併用はtrue(KeyModifiers modifiers)
     {
         Assert.True(CapturePage.IsCtrlShortcut(modifiers));
     }
@@ -27,7 +27,7 @@ public class CapturePageShortcutTests
     [InlineData(KeyModifiers.Alt | KeyModifiers.Control)]
     [InlineData(KeyModifiers.Shift | KeyModifiers.Control)]
     [InlineData(KeyModifiers.Alt | KeyModifiers.Shift | KeyModifiers.Control)]
-    public void IsCtrlShortcut_CtrlなしまたはAltShift併用はfalse(KeyModifiers modifiers)
+    internal void IsCtrlShortcut_CtrlなしまたはAltShift併用はfalse(KeyModifiers modifiers)
     {
         Assert.False(CapturePage.IsCtrlShortcut(modifiers));
     }

@@ -38,7 +38,7 @@ public class EsBitmapAvaloniaTests
         => new(new PixelSize(width, height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
 
     [AvaloniaFact]
-    public void ToAvaloniaWriteableBitmap_サイズが一致する()
+    internal void ToAvaloniaWriteableBitmap_サイズが一致する()
     {
         using var bmp = EsBitmap.Create(8, 8);
 
@@ -48,7 +48,7 @@ public class EsBitmapAvaloniaTests
     }
 
     [AvaloniaFact]
-    public void ToEsBitmap_サイズが一致する()
+    internal void ToEsBitmap_サイズが一致する()
     {
         var src = CreateBitmap(8, 8);
 
@@ -59,7 +59,7 @@ public class EsBitmapAvaloniaTests
     }
 
     [AvaloniaFact]
-    public void Avalonia_往復変換でサイズが一致する()
+    internal void Avalonia_往復変換でサイズが一致する()
     {
         // Bitmap → EsBitmap → Bitmap の往復でサイズが保持される。
         var src = CreateBitmap(12, 10);
@@ -71,7 +71,7 @@ public class EsBitmapAvaloniaTests
     }
 
     [AvaloniaFact]
-    public void ToEsBitmap_元Bitmapは変更されない()
+    internal void ToEsBitmap_元Bitmapは変更されない()
     {
         var src = CreateBitmap(8, 8);
 
@@ -82,7 +82,7 @@ public class EsBitmapAvaloniaTests
     }
 
     [AvaloniaFact]
-    public void ToEsBitmap_内部ストライドが幅4倍以上になる()
+    internal void ToEsBitmap_内部ストライドが幅4倍以上になる()
     {
         // Avalonia の WriteableBitmap.RowBytes はプラットフォーム依存で幅の4バイト以上になり得る。
         // EsBitmap は幅の4バイト以上を保持し、以降のピクセル演算で正しく扱う。
@@ -118,7 +118,7 @@ public class EsBitmapAvaloniaTests
     }
 
     [AvaloniaFact]
-    public void Benchmark_ToAvaloniaWriteableBitmap_vs_ToAvaloniaBitmap_ルーペサイズ()
+    internal void Benchmark_ToAvaloniaWriteableBitmap_vs_ToAvaloniaBitmap_ルーペサイズ()
     {
         // ルーペサンプルの既定サイズ（240x240）とテスト画像（800x600）で計測する。
         // ウォームアップ後、各 n 回の平均を測る。
@@ -139,7 +139,7 @@ public class EsBitmapAvaloniaTests
     }
 
     [AvaloniaFact]
-    public void Benchmark_ToAvaloniaWriteableBitmap_vs_ToAvaloniaBitmap_4K画像()
+    internal void Benchmark_ToAvaloniaWriteableBitmap_vs_ToAvaloniaBitmap_4K画像()
     {
         // 4K（3840x2160）。 メモリ使用が大きいため繰り返し回数を減らす。
         using var bmp = EsBitmap.Create(3840, 2160);

@@ -18,7 +18,7 @@ public class CapturePaintMapperTests
     private static CaptureSettings CreateSettings() => new CaptureSettings().ToNonNull();
 
     [Fact]
-    public void 変換_選択矩形の色が設定から写像される()
+    internal void 変換_選択矩形の色が設定から写像される()
     {
         var settings = CreateSettings() with
         {
@@ -47,7 +47,7 @@ public class CapturePaintMapperTests
     /// <summary>選択枠線（ハンドルの枠線）と暗転マスクの外枠が同じ色になることを検証する。</summary>
     /// <remarks>両者は同じ矩形に重なって描画されるため、片方だけ別の色にすると見た目が崩れる。</remarks>
     [Fact]
-    public void 変換_外枠とハンドル枠は同じ枠線色になる()
+    internal void 変換_外枠とハンドル枠は同じ枠線色になる()
     {
         var settings = CreateSettings() with { BorderColor = DrawingColor.Red };
 
@@ -60,7 +60,7 @@ public class CapturePaintMapperTests
     /// <summary>写像しない色が既定値を保つことを検証する。</summary>
     /// <remarks>内側の塗り・内側の枠線の描画可否は <see cref="MarqueeAppearance"/> のフラグが単一所有するため、色は既定の透明のままとする。</remarks>
     [Fact]
-    public void 変換_写像しない色は既定値を保つ()
+    internal void 変換_写像しない色は既定値を保つ()
     {
         var paint = CapturePaintMapper.ToMarqueeAppearance(CreateSettings());
 
@@ -74,7 +74,7 @@ public class CapturePaintMapperTests
     /// 本写像が外観（<see cref="MarqueeAppearance"/>）へ写す。
     /// </remarks>
     [Fact]
-    public void 変換_枠線の太さと表示可否が設定から写像される()
+    internal void 変換_枠線の太さと表示可否が設定から写像される()
     {
         var settings = CreateSettings() with
         {
@@ -96,7 +96,7 @@ public class CapturePaintMapperTests
     /// <summary>透明な色は描画しない扱いになることを検証する。</summary>
     /// <remarks>従来の「アルファ 0 = 描かない」を明示フラグ（表示可否）で表現する。</remarks>
     [Fact]
-    public void 変換_透明な色は描画しない()
+    internal void 変換_透明な色は描画しない()
     {
         var settings = CreateSettings() with
         {
@@ -111,7 +111,7 @@ public class CapturePaintMapperTests
     }
 
     [Fact]
-    public void 変換_ルーペの色が設定から写像される()
+    internal void 変換_ルーペの色が設定から写像される()
     {
         var settings = CreateSettings() with
         {
@@ -134,7 +134,7 @@ public class CapturePaintMapperTests
     /// <summary>画像外（ペーストボード）の色が設定から与えられることを検証する。</summary>
     /// <remarks>画像外の色は設定（<c>LoupePasteboardColor</c>）が単一所有する（透明を指定すると背後の要素が見える）。</remarks>
     [Fact]
-    public void 変換_ルーペの画像外の色は設定から与えられる()
+    internal void 変換_ルーペの画像外の色は設定から与えられる()
     {
         var settings = CreateSettings() with { LoupePasteboardColor = DrawingColor.FromArgb(255, 12, 34, 56) };
 
@@ -142,7 +142,7 @@ public class CapturePaintMapperTests
     }
 
     [Fact]
-    public void 変換_設定がnullなら例外()
+    internal void 変換_設定がnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToMarqueeAppearance(null!));
         Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToLoupeAppearance(null!));

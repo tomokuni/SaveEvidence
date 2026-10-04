@@ -29,7 +29,7 @@ public class SkiaTextTests
 
     /// <summary>空文字は ASCII のみとみなし、既定のフォントを使うことを検証する。</summary>
     [Fact]
-    public void ResolveTypeface_空文字なら既定のフォントを使う()
+    internal void ResolveTypeface_空文字なら既定のフォントを使う()
     {
         Assert.Same(SKTypeface.Default, SkiaText.ResolveTypeface(""));
     }
@@ -39,14 +39,14 @@ public class SkiaTextTests
     [Theory]
     [InlineData("ABC 123 (100%)")]
     [InlineData("ABC\u007F")]
-    public void ResolveTypeface_ASCIIのみなら既定のフォントを使う(string text)
+    internal void ResolveTypeface_ASCIIのみなら既定のフォントを使う(string text)
     {
         Assert.Same(SKTypeface.Default, SkiaText.ResolveTypeface(text));
     }
 
     /// <summary>非 ASCII を含む文字列は字形を持つフォントへフォールバックすることを検証する。</summary>
     [Fact]
-    public void ResolveTypeface_日本語なら字形を持つフォントへフォールバックする()
+    internal void ResolveTypeface_日本語なら字形を持つフォントへフォールバックする()
     {
         // CJK のフォントが無い環境では既定のフォントへ戻る（描画結果は豆腐になる）
         Assert.SkipUnless(
@@ -61,7 +61,7 @@ public class SkiaTextTests
 
     /// <summary>非 ASCII を含む文字列（全角記号）もフォールバックの対象になることを検証する。</summary>
     [Fact]
-    public void ResolveTypeface_全角記号でもフォールバックする()
+    internal void ResolveTypeface_全角記号でもフォールバックする()
     {
         // U+FF08（全角括弧）は 0x7F 超のため ASCII のみの判定から外れる
         Assert.SkipUnless(
@@ -80,7 +80,7 @@ public class SkiaTextTests
     [InlineData("ABC")]
     [InlineData("(123, 456)")]
     [InlineData("確定: Enter")]
-    public void Measure_正の実寸を返す(string text)
+    internal void Measure_正の実寸を返す(string text)
     {
         var size = SkiaText.Measure(text, fontSize: 14);
 
@@ -90,7 +90,7 @@ public class SkiaTextTests
 
     /// <summary>長い文字列ほど幅が大きくなることを検証する。</summary>
     [Fact]
-    public void Measure_長い文字列ほど幅が大きい()
+    internal void Measure_長い文字列ほど幅が大きい()
     {
         var shortSize = SkiaText.Measure("ABC", fontSize: 14);
         var longSize = SkiaText.Measure("ABCABCABC", fontSize: 14);
@@ -100,7 +100,7 @@ public class SkiaTextTests
 
     /// <summary>フォントサイズに比例して行高が大きくなることを検証する。</summary>
     [Fact]
-    public void Measure_フォントサイズが大きいほど行高が大きい()
+    internal void Measure_フォントサイズが大きいほど行高が大きい()
     {
         var small = SkiaText.Measure("ABC", fontSize: 12);
         var large = SkiaText.Measure("ABC", fontSize: 24);
@@ -115,7 +115,7 @@ public class SkiaTextTests
 
     /// <summary>指定した左上原点の位置へ文字が描画されることを検証する。</summary>
     [Fact]
-    public void Draw_左上原点へ文字を描画する()
+    internal void Draw_左上原点へ文字を描画する()
     {
         var (bitmap, canvas) = CreateTarget(80, 40);
         using (bitmap)
@@ -133,7 +133,7 @@ public class SkiaTextTests
     /// <summary>日本語の文字列も例外なく描画することを検証する。</summary>
     /// <remarks>フォントにグリフが無い環境では豆腐になる（描画自体は完了する）。</remarks>
     [Fact]
-    public void Draw_日本語を描画する()
+    internal void Draw_日本語を描画する()
     {
         var (bitmap, canvas) = CreateTarget(120, 40);
         using (bitmap)
@@ -147,7 +147,7 @@ public class SkiaTextTests
 
     /// <summary>キャンバスが null の場合は例外になることを検証する。</summary>
     [Fact]
-    public void Draw_キャンバスがnullなら例外()
+    internal void Draw_キャンバスがnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(() => SkiaText.Draw(null!, "ABC", 0, 0, 14, DrawingColor.White));
     }

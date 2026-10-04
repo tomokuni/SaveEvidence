@@ -20,7 +20,7 @@ public class CaptureClipMathTests
     // ====================================================================
 
     [Fact]
-    public void ResolveCaptureRect_範囲選択は閉区間化して終点のピクセルを含める()
+    internal void ResolveCaptureRect_範囲選択は閉区間化して終点のピクセルを含める()
     {
         // ドラッグ (10,10)→(50,50) の矩形は幅 40（半開区間）→ 閉区間では 41 ピクセル
         var result = CaptureClipMath.ResolveCaptureRect(
@@ -30,7 +30,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ResolveCaptureRect_ハイライト型は閉区間化しない()
+    internal void ResolveCaptureRect_ハイライト型は閉区間化しない()
     {
         // 検出矩形は最初から全ピクセルを含むため加算しない（+1 すると 1 ピクセルはみ出す）
         var result = CaptureClipMath.ResolveCaptureRect(
@@ -40,7 +40,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ResolveCaptureRect_画像の右端と下端でクランプする()
+    internal void ResolveCaptureRect_画像の右端と下端でクランプする()
     {
         // クランプしないと画像外を切り出すことになり、結果の端に透明な余白が付く
         var result = CaptureClipMath.ResolveCaptureRect(
@@ -50,7 +50,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ResolveCaptureRect_原点が負値でも画面物理座標で返す()
+    internal void ResolveCaptureRect_原点が負値でも画面物理座標で返す()
     {
         // セカンダリが左・上にある構成（原点が負値）。 ローカル (0,0) から切り出す = 画面物理 (-1920,-200) から
         var result = CaptureClipMath.ResolveCaptureRect(
@@ -62,7 +62,7 @@ public class CaptureClipMathTests
     [Theory]
     [InlineData(10.4, 20.6, 39.8, 29.2, 10, 21, 41, 30)]
     [InlineData(10.5, 20.5, 10.0, 10.0, 11, 21, 11, 11)]
-    public void ResolveCaptureRect_端数は四捨五入する(
+    internal void ResolveCaptureRect_端数は四捨五入する(
         double x, double y, double width, double height,
         int expectedX, int expectedY, int expectedWidth, int expectedHeight)
     {
@@ -75,7 +75,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ResolveCaptureRect_画像サイズが0の場合は空を返す()
+    internal void ResolveCaptureRect_画像サイズが0の場合は空を返す()
     {
         var result = CaptureClipMath.ResolveCaptureRect(
             CaptureType.AreaSelect, new EsRect(0, 0, 10, 10), default);
@@ -88,7 +88,7 @@ public class CaptureClipMathTests
     // ====================================================================
 
     [Fact]
-    public void ResolveCaptureRect_整数版も浮動小数版と同じ規則を適用する()
+    internal void ResolveCaptureRect_整数版も浮動小数版と同じ規則を適用する()
     {
         // 検出矩形（整数）でも範囲選択は閉区間化して終点のピクセルを含める
         var result = CaptureClipMath.ResolveCaptureRect(
@@ -98,7 +98,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ResolveCaptureRect_整数版は画像の右端でクランプする()
+    internal void ResolveCaptureRect_整数版は画像の右端でクランプする()
     {
         var result = CaptureClipMath.ResolveCaptureRect(
             CaptureType.AreaSelect, new EsRectInt(90, 90, 10, 10), new EsRectInt(0, 0, 100, 100));
@@ -109,7 +109,7 @@ public class CaptureClipMathTests
     [Theory]
     [InlineData(CaptureType.AreaSelect)]
     [InlineData(CaptureType.WindowSelect)]
-    public void ResolveCaptureRect_整数版と浮動小数版は同じ結果になる(CaptureType captureType)
+    internal void ResolveCaptureRect_整数版と浮動小数版は同じ結果になる(CaptureType captureType)
     {
         // 同じ選択を 2 つの入口（整数 / 浮動小数）で解決しても一致する（入口による差を作らない）
         var screenRect = new EsRectInt(30, 20, 50, 40);
@@ -129,7 +129,7 @@ public class CaptureClipMathTests
     // ====================================================================
 
     [Fact]
-    public void ResolveCaptureRect_負の原点でも結果は画面物理座標のまま()
+    internal void ResolveCaptureRect_負の原点でも結果は画面物理座標のまま()
     {
         // マルチモニタで仮想スクリーンの原点が負値（セカンダリが左・上）でも、
         // 入口（選択矩形）と占有範囲が同じ座標空間（画面物理座標）なら結果も画面物理座標になる
@@ -144,7 +144,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ResolveCaptureRect_画像ローカル座標を渡すと切り出せなくなる()
+    internal void ResolveCaptureRect_画像ローカル座標を渡すと切り出せなくなる()
     {
         // 座標空間を混ぜる（画面物理の占有範囲に画像ローカル座標の選択矩形を渡す）と、
         // 原点の分だけずれて画像外になり、画像の右端側では幅が 0 になる。
@@ -166,7 +166,7 @@ public class CaptureClipMathTests
     // ====================================================================
 
     [Fact]
-    public void ImageSize_画像のピクセルサイズを返す()
+    internal void ImageSize_画像のピクセルサイズを返す()
     {
         using var image = CreateImage(320, 180);
 
@@ -174,7 +174,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ImageBounds_原点とサイズから占有範囲を返す()
+    internal void ImageBounds_原点とサイズから占有範囲を返す()
     {
         using var image = CreateImage(320, 180);
 
@@ -184,7 +184,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ValidateImage_サイズが正なら例外を投げない()
+    internal void ValidateImage_サイズが正なら例外を投げない()
     {
         using var image = CreateImage(1, 1);
 
@@ -192,7 +192,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ValidateImage_サイズが0なら引数名付きで例外を投げる()
+    internal void ValidateImage_サイズが0なら引数名付きで例外を投げる()
     {
         // 「サイズが 0 の画像は切り出せない」規則をコアが単一所有する
         using var image = CreateImage(0, 0);
@@ -202,7 +202,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ResolveCaptureRect_画像外の選択は空を返す()
+    internal void ResolveCaptureRect_画像外の選択は空を返す()
     {
         var result = CaptureClipMath.ResolveCaptureRect(
             CaptureType.WindowSelect, new EsRect(200, 200, 10, 10), new EsRectInt(0, 0, 100, 100));
@@ -211,7 +211,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ResolveCaptureRect_最小サイズを適用しない()
+    internal void ResolveCaptureRect_最小サイズを適用しない()
     {
         // 最小サイズは選択操作（Marquee）が所有する。 検出矩形は要素の大きさであり小さい要素も対象にする
         var result = CaptureClipMath.ResolveCaptureRect(
@@ -224,7 +224,7 @@ public class CaptureClipMathTests
     // ToLocalRect / ToScreenRect（画面物理座標 ⇔ 画像ローカル座標）
     // ====================================================================
     [Fact]
-    public void ToLocalRect_原点を減算する()
+    internal void ToLocalRect_原点を減算する()
     {
         // 画像ローカル = 画面物理 − 原点
         var result = CaptureClipMath.ToLocalRect(new EsRectInt(200, 150, 40, 30), new EsPointInt(100, 50));
@@ -233,7 +233,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ToLocalRect_原点が負値でも減算で一致する()
+    internal void ToLocalRect_原点が負値でも減算で一致する()
     {
         // セカンダリが左・上にある構成（原点が負値）
         var result = CaptureClipMath.ToLocalRect(new EsRectInt(-1800, -100, 40, 30), new EsPointInt(-1920, -200));
@@ -245,7 +245,7 @@ public class CaptureClipMathTests
     [InlineData(0, 0)]
     [InlineData(1920, 0)]
     [InlineData(-1920, -1080)]
-    public void ToLocalRect_幅と高さは変更しない(int originX, int originY)
+    internal void ToLocalRect_幅と高さは変更しない(int originX, int originY)
     {
         var capture = new EsRectInt(originX + 7, originY + 9, 41, 31);
 
@@ -255,7 +255,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void Extract_切り出し矩形のサイズの画像を返す()
+    internal void Extract_切り出し矩形のサイズの画像を返す()
     {
         using var screen = CreateImage(200, 100);
         using var result = CaptureClipMath.Extract(screen, new EsPointInt(0, 0), new EsRectInt(10, 20, 41, 31));
@@ -266,7 +266,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void Extract_原点を考慮して切り出す()
+    internal void Extract_原点を考慮して切り出す()
     {
         // 原点 (100, 50) の画像で画面物理 (100, 50) から切り出す = 画像の (0, 0) から
         using var screen = CreateImage(200, 100);
@@ -278,7 +278,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void Extract_仮想スクリーン未取得の場合はnullを返す()
+    internal void Extract_仮想スクリーン未取得の場合はnullを返す()
     {
         // 切り取り元が無い場合は呼び出し側が領域指定のキャプチャへフォールバックする
         var result = CaptureClipMath.Extract(null, default, new EsRectInt(0, 0, 10, 10));
@@ -287,7 +287,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void Extract_破棄済みの画像の場合はnullを返す()
+    internal void Extract_破棄済みの画像の場合はnullを返す()
     {
         // ウィンドウクローズと背景の切り出しが競合するため、破棄済みは切り出せない（例外にしない）
         var screen = CreateImage(100, 100);
@@ -299,7 +299,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ToScreenRect_原点を加算する()
+    internal void ToScreenRect_原点を加算する()
     {
         // ToLocalRect の逆変換
         var result = CaptureClipMath.ToScreenRect(new EsRect(100, 100, 40, 30), new EsPointInt(1920, 0));
@@ -308,7 +308,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ToScreenRect_原点が原点なら変更しない()
+    internal void ToScreenRect_原点が原点なら変更しない()
     {
         var result = CaptureClipMath.ToScreenRect(new EsRect(10, 20, 30, 40), default);
 
@@ -319,7 +319,7 @@ public class CaptureClipMathTests
     [InlineData(0, 0, 10.5, 20.25, 40, 30)]
     [InlineData(1920, 0, 100, 200, 41, 31)]
     [InlineData(-1920, -1080, -1800, -900, 40, 30)]
-    public void ToScreenRect_ToLocalRectの逆変換として往復一致する(
+    internal void ToScreenRect_ToLocalRectの逆変換として往復一致する(
         int originX, int originY, double x, double y, double width, double height)
     {
         // 双方向の変換が対称であることを固定する（片方向だけのマッピングを残さない）
@@ -333,7 +333,7 @@ public class CaptureClipMathTests
     }
 
     [Fact]
-    public void ToLocalRect_浮動小数の矩形も同じ式で変換する()
+    internal void ToLocalRect_浮動小数の矩形も同じ式で変換する()
     {
         var result = CaptureClipMath.ToLocalRect(new EsRect(2020.5, 200.25, 40, 30), new EsPointInt(1920, 0));
 

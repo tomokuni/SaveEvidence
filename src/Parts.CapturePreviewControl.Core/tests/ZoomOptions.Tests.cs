@@ -17,7 +17,7 @@ public class ZoomOptionsTests
     // ====================================================================
 
     [Fact]
-    public void Default_従来の定数値を持つ()
+    internal void Default_従来の定数値を持つ()
     {
         var config = ZoomOptions.Default;
         Assert.Equal(10.0, config.MinZoom);
@@ -27,7 +27,7 @@ public class ZoomOptionsTests
     }
 
     [Fact]
-    public void Default_レベル集合が昇順である()
+    internal void Default_レベル集合が昇順である()
     {
         var levels = ZoomOptions.Default.ButtonZoomLevels;
         for (var i = 1; i < levels.Count; i++)
@@ -43,7 +43,7 @@ public class ZoomOptionsTests
     [Theory]
     [InlineData(0.0, 500.0, 1.1)]   // MinZoom <= 0
     [InlineData(-1.0, 500.0, 1.1)]  // MinZoom < 0
-    public void コンストラクタ_最小値が0以下なら例外を投げる(double minZoom, double maxZoom, double wheelFactor)
+    internal void コンストラクタ_最小値が0以下なら例外を投げる(double minZoom, double maxZoom, double wheelFactor)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ZoomOptions(minZoom, maxZoom, wheelFactor, [10, 50, 100]));
@@ -52,7 +52,7 @@ public class ZoomOptionsTests
     [Theory]
     [InlineData(500.0, 10.0, 1.1)]  // MaxZoom < MinZoom
     [InlineData(100.0, 100.0, 1.1)] // MaxZoom == MinZoom（範囲内なら許容）
-    public void コンストラクタ_最大値が最小値未満なら例外を投げる(double minZoom, double maxZoom, double wheelFactor)
+    internal void コンストラクタ_最大値が最小値未満なら例外を投げる(double minZoom, double maxZoom, double wheelFactor)
     {
         // MaxZoom < MinZoom のみ例外。 MaxZoom == MinZoom は許容（レベルの範囲が点になる）
         if (maxZoom < minZoom)
@@ -70,35 +70,35 @@ public class ZoomOptionsTests
     [Theory]
     [InlineData(10.0, 500.0, 1.0)]  // WheelFactor == 1
     [InlineData(10.0, 500.0, 0.9)]  // WheelFactor < 1
-    public void コンストラクタ_ズーム倍率が1以下なら例外を投げる(double minZoom, double maxZoom, double wheelFactor)
+    internal void コンストラクタ_ズーム倍率が1以下なら例外を投げる(double minZoom, double maxZoom, double wheelFactor)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ZoomOptions(minZoom, maxZoom, wheelFactor, [10, 50, 100]));
     }
 
     [Fact]
-    public void コンストラクタ_レベル集合がnullなら例外を投げる()
+    internal void コンストラクタ_レベル集合がnullなら例外を投げる()
     {
         Assert.Throws<ArgumentNullException>(() =>
             new ZoomOptions(10, 500, 1.1, null!));
     }
 
     [Fact]
-    public void コンストラクタ_レベル集合が空なら例外を投げる()
+    internal void コンストラクタ_レベル集合が空なら例外を投げる()
     {
         Assert.Throws<ArgumentException>(() =>
             new ZoomOptions(10, 500, 1.1, []));
     }
 
     [Fact]
-    public void コンストラクタ_レベル集合が昇順でないなら例外を投げる()
+    internal void コンストラクタ_レベル集合が昇順でないなら例外を投げる()
     {
         Assert.Throws<ArgumentException>(() =>
             new ZoomOptions(10, 500, 1.1, [50, 10, 100]));
     }
 
     [Fact]
-    public void コンストラクタ_レベル集合がズーム範囲外なら例外を投げる()
+    internal void コンストラクタ_レベル集合がズーム範囲外なら例外を投げる()
     {
         // レベル 5 は MinZoom(10) 未満
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -106,7 +106,7 @@ public class ZoomOptionsTests
     }
 
     [Fact]
-    public void コンストラクタ_正しい値なら正常に生成できる()
+    internal void コンストラクタ_正しい値なら正常に生成できる()
     {
         var config = new ZoomOptions(10, 500, 1.1, [10, 50, 100, 200, 500]);
         Assert.Equal(10.0, config.MinZoom);
@@ -123,7 +123,7 @@ public class ZoomOptionsTests
     [InlineData(5.0, 10.0)]   // 下限未満 → MinZoom
     [InlineData(300.0, 300.0)] // 範囲内 → そのまま
     [InlineData(800.0, 500.0)] // 上限超過 → MaxZoom
-    public void ClampZoom_ズーム率を範囲内にクランプする(double input, double expected)
+    internal void ClampZoom_ズーム率を範囲内にクランプする(double input, double expected)
     {
         var config = new ZoomOptions(10, 500, 1.1, [10, 50, 100]);
         Assert.Equal(expected, config.ClampZoom(input));
@@ -134,7 +134,7 @@ public class ZoomOptionsTests
     // ====================================================================
 
     [Fact]
-    public void With_指定したプロパティのみ差し替える()
+    internal void With_指定したプロパティのみ差し替える()
     {
         var config = new ZoomOptions(10, 500, 1.1, [10, 50, 100]);
 
@@ -149,7 +149,7 @@ public class ZoomOptionsTests
     }
 
     [Fact]
-    public void With_不正な値なら例外を投げる()
+    internal void With_不正な値なら例外を投げる()
     {
         var config = new ZoomOptions(10, 500, 1.1, [10, 50, 100]);
 

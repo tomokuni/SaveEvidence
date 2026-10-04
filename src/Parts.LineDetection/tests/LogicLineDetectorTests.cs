@@ -51,7 +51,7 @@ public sealed class LogicLineDetectorTests
     /// 3. 垂直 2 本・水平 2 本（外側の境界）が検出されることを検証する
     /// </remarks>
     [Fact]
-    public void Detect_白背景の矩形枠を検出する()
+    internal void Detect_白背景の矩形枠を検出する()
     {
         using var image = CreateRectImage(200, 200);
         var detector = new LogicLineDetector();

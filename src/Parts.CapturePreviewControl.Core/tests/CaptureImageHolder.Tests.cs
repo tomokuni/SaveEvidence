@@ -21,7 +21,7 @@ public class CaptureImageHolderTests
     private static EsBitmap CreateImage(int width, int height) => EsBitmap.Create(width, height);
 
     [Fact]
-    public void Set_画像と原点を保持する()
+    internal void Set_画像と原点を保持する()
     {
         using var holder = new CaptureImageHolder(s_fallback);
         using var image = CreateImage(10, 20);
@@ -34,7 +34,7 @@ public class CaptureImageHolderTests
     }
 
     [Fact]
-    public void Bounds_未取得の場合はフォールバック範囲を返す()
+    internal void Bounds_未取得の場合はフォールバック範囲を返す()
     {
         // 背景撮影が完了する前に確定されても切り出し範囲をクランプできる
         using var holder = new CaptureImageHolder(s_fallback);
@@ -44,7 +44,7 @@ public class CaptureImageHolderTests
     }
 
     [Fact]
-    public void Set_nullは未取得として扱う()
+    internal void Set_nullは未取得として扱う()
     {
         using var holder = new CaptureImageHolder(s_fallback);
         using var image = CreateImage(10, 20);
@@ -58,7 +58,7 @@ public class CaptureImageHolderTests
     }
 
     [Fact]
-    public void Set_差し替え時は旧い画像を破棄する()
+    internal void Set_差し替え時は旧い画像を破棄する()
     {
         using var holder = new CaptureImageHolder(s_fallback);
         var first = CreateImage(10, 20);
@@ -74,7 +74,7 @@ public class CaptureImageHolderTests
     }
 
     [Fact]
-    public void Dispose_保持している画像を破棄する()
+    internal void Dispose_保持している画像を破棄する()
     {
         var holder = new CaptureImageHolder(s_fallback);
         var image = CreateImage(10, 20);
@@ -88,7 +88,7 @@ public class CaptureImageHolderTests
     }
 
     [Fact]
-    public void Set_破棄後は受け付けず渡された画像をその場で破棄する()
+    internal void Set_破棄後は受け付けず渡された画像をその場で破棄する()
     {
         // 背景撮影の完了がウィンドウの後片付けより遅れた場合の破棄漏れを防ぐ
         using var holder = new CaptureImageHolder(s_fallback);
@@ -102,7 +102,7 @@ public class CaptureImageHolderTests
     }
 
     [Fact]
-    public void Dispose_複数回呼んでも安全である()
+    internal void Dispose_複数回呼んでも安全である()
     {
         var holder = new CaptureImageHolder(s_fallback);
 
@@ -111,7 +111,7 @@ public class CaptureImageHolderTests
     }
 
     [Fact]
-    public void Dispose_未取得でも安全である()
+    internal void Dispose_未取得でも安全である()
     {
         using var holder = new CaptureImageHolder(s_fallback);
 

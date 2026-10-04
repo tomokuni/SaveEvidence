@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 public class ColorExtensionsTests
 {
     [Fact]
-    public void FromAColor_アルファと名前付き色から生成できる()
+    internal void FromAColor_アルファと名前付き色から生成できる()
     {
         var color = Color.FromAColor(128, Colors.Black);
 
@@ -18,7 +18,7 @@ public class ColorExtensionsTests
     }
 
     [Fact]
-    public void FromAColor_アルファ255で不透明になる()
+    internal void FromAColor_アルファ255で不透明になる()
     {
         var color = Color.FromAColor(255, Colors.Red);
 

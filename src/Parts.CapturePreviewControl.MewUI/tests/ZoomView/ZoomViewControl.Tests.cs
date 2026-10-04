@@ -49,7 +49,7 @@ public class ZoomViewControlTests
 
     /// <summary>既定値が想定どおりであることを検証する。</summary>
     [Fact]
-    public void 既定値が想定どおりである()
+    internal void 既定値が想定どおりである()
     {
         var control = new ZoomViewControl();
 
@@ -64,7 +64,7 @@ public class ZoomViewControlTests
 
     /// <summary>画像を設定すると Fit 表示になることを検証する。</summary>
     [Fact]
-    public void 画像設定でFit表示になる()
+    internal void 画像設定でFit表示になる()
     {
         var (control, image) = CreateWithImage();
         using var _ = image;
@@ -76,7 +76,7 @@ public class ZoomViewControlTests
 
     /// <summary>実効ズーム率の設定値が設定範囲へクランプされることを検証する。</summary>
     [Fact]
-    public void ZoomPercent_設定範囲へクランプする()
+    internal void ZoomPercent_設定範囲へクランプする()
     {
         var (control, image) = CreateWithImage();
         using var _ = image;
@@ -88,7 +88,7 @@ public class ZoomViewControlTests
 
     /// <summary>0 以下の設定は受け付けない（Fit は <see cref="ZoomViewControl.ZoomFit"/> を使用する）ことを検証する。</summary>
     [Fact]
-    public void ZoomPercent_0以下は無視する()
+    internal void ZoomPercent_0以下は無視する()
     {
         var (control, image) = CreateWithImage();
         using var _ = image;
@@ -106,7 +106,7 @@ public class ZoomViewControlTests
 
     /// <summary>ズームイン・アウトが段階レベルへ移動することを検証する。</summary>
     [Fact]
-    public void ZoomIn_ZoomOut_段階レベルへ移動する()
+    internal void ZoomIn_ZoomOut_段階レベルへ移動する()
     {
         // 200x200 の画像を 100x100 のビューポートへ Fit → 50%
         var (control, image) = CreateWithImage(200, 200, 100, 100);
@@ -123,7 +123,7 @@ public class ZoomViewControlTests
 
     /// <summary>ズーム操作が <c>ZoomChanged</c> を発火し、4 値が通知されることを検証する。</summary>
     [Fact]
-    public void ZoomIn_ZoomChangedを発火する()
+    internal void ZoomIn_ZoomChangedを発火する()
     {
         var (control, image) = CreateWithImage(200, 200, 100, 100);
         using var _ = image;
@@ -145,7 +145,7 @@ public class ZoomViewControlTests
     /// 内部ズーム率の 0 ではなく、実際に表示されている実効倍率を記録する（コアが単一所有する書式）。
     /// </remarks>
     [Fact]
-    public void ZoomIn_ログに実効ズーム率を記録する()
+    internal void ZoomIn_ログに実効ズーム率を記録する()
     {
         var logger = new RecordingLogger();
         var (control, image) = CreateWithImage(200, 200, 100, 100);
@@ -159,7 +159,7 @@ public class ZoomViewControlTests
 
     /// <summary>Fit へ戻すとオフセットがリセットされることを検証する。</summary>
     [Fact]
-    public void ZoomFit_オフセットをリセットする()
+    internal void ZoomFit_オフセットをリセットする()
     {
         var (control, image) = CreateWithImage(400, 400, 200, 200);
         using var _ = image;
@@ -181,7 +181,7 @@ public class ZoomViewControlTests
 
     /// <summary>通常ホイールが 1 ノッチ = 48 DIP を実効倍率で除した量だけパンすることを検証する。</summary>
     [Fact]
-    public void PanByWheel_1ノッチは48DIPを実効倍率で除す()
+    internal void PanByWheel_1ノッチは48DIPを実効倍率で除す()
     {
         var (control, image) = CreateWithImage(400, 400, 200, 200);
         using var _ = image;
@@ -196,7 +196,7 @@ public class ZoomViewControlTests
 
     /// <summary>Shift 併用のホイールが縦回転を横パンとして扱うことを検証する。</summary>
     [Fact]
-    public void PanByWheel_Shift併用は横パンになる()
+    internal void PanByWheel_Shift併用は横パンになる()
     {
         var (control, image) = CreateWithImage(400, 400, 200, 200);
         using var _ = image;
@@ -211,7 +211,7 @@ public class ZoomViewControlTests
 
     /// <summary>Fit 表示中はパンしても移動しないことを検証する。</summary>
     [Fact]
-    public void PanByWheel_Fit中は移動しない()
+    internal void PanByWheel_Fit中は移動しない()
     {
         var (control, image) = CreateWithImage(400, 400, 200, 200);
         using var _ = image;
@@ -224,7 +224,7 @@ public class ZoomViewControlTests
 
     /// <summary>パンが <c>ViewportChanged</c> を発火することを検証する。</summary>
     [Fact]
-    public void PanByWheel_ViewportChangedを発火する()
+    internal void PanByWheel_ViewportChangedを発火する()
     {
         var (control, image) = CreateWithImage(400, 400, 200, 200);
         using var _ = image;
@@ -244,7 +244,7 @@ public class ZoomViewControlTests
 
     /// <summary>Fit の表示サイズがビューポートへ収まることを検証する。</summary>
     [Fact]
-    public void DisplaySize_Fitでビューポートに収まる()
+    internal void DisplaySize_Fitでビューポートに収まる()
     {
         var (control, image) = CreateWithImage(400, 200, 200, 200);
         using var _ = image;
@@ -257,7 +257,7 @@ public class ZoomViewControlTests
 
     /// <summary>座標変換（画像表示矩形の原点基準）が往復することを検証する。</summary>
     [Fact]
-    public void 座標変換が往復する()
+    internal void 座標変換が往復する()
     {
         var (control, image) = CreateWithImage(100, 100, 200, 200);
         using var _ = image;
@@ -271,7 +271,7 @@ public class ZoomViewControlTests
 
     /// <summary>画像未設定時の表示矩形が空であることを検証する。</summary>
     [Fact]
-    public void ImageRectViewport_画像なしは空になる()
+    internal void ImageRectViewport_画像なしは空になる()
     {
         var control = CreateLaidOut();
 
@@ -287,7 +287,7 @@ public class ZoomViewControlTests
 
     /// <summary>外観の設定がセッションへ反映されることを検証する。</summary>
     [Fact]
-    public void Appearance_セッションへ反映される()
+    internal void Appearance_セッションへ反映される()
     {
         var control = CreateLaidOut();
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 8, ShowScrollBars = false };
@@ -300,7 +300,7 @@ public class ZoomViewControlTests
 
     /// <summary>外観の市松模様の明色タイル矩形がコアで計算されることを検証する。</summary>
     [Fact]
-    public void Appearance_市松模様の明色タイルを列挙する()
+    internal void Appearance_市松模様の明色タイルを列挙する()
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 10 };
 
@@ -317,7 +317,7 @@ public class ZoomViewControlTests
 
     /// <summary>市松模様を無効にすると明色タイルが空になることを検証する。</summary>
     [Fact]
-    public void Appearance_市松模様なしは明色タイルが空になる()
+    internal void Appearance_市松模様なしは明色タイルが空になる()
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 0 };
 
@@ -330,7 +330,7 @@ public class ZoomViewControlTests
 
     /// <summary>画像がビューポートより大きい場合にスクロール可能として同期されることを検証する。</summary>
     [Fact]
-    public void ScrollMetrics_拡大時はスクロール可能になる()
+    internal void ScrollMetrics_拡大時はスクロール可能になる()
     {
         var (control, image) = CreateWithImage(400, 400, 200, 200);
         using var _ = image;
@@ -346,7 +346,7 @@ public class ZoomViewControlTests
 
     /// <summary>Fit 表示ではスクロール不要（スクロールバー非表示）であることを検証する。</summary>
     [Fact]
-    public void ScrollMetrics_Fit中はスクロール不可になる()
+    internal void ScrollMetrics_Fit中はスクロール不可になる()
     {
         var (control, image) = CreateWithImage(400, 400, 200, 200);
         using var _ = image;

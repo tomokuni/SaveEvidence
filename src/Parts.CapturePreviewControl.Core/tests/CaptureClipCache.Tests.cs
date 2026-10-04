@@ -13,7 +13,7 @@ public class CaptureClipCacheTests
     private static EsBitmap CreateImage() => EsBitmap.Create(4, 3);
 
     [Fact]
-    public void Store_格納した矩形と画像を保持する()
+    internal void Store_格納した矩形と画像を保持する()
     {
         using var cache = new CaptureClipCache();
         cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
@@ -23,7 +23,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void HasCached_矩形が異なる場合はfalseを返す()
+    internal void HasCached_矩形が異なる場合はfalseを返す()
     {
         using var cache = new CaptureClipCache();
         cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
@@ -34,7 +34,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void HasCached_未格納の場合はfalseを返す()
+    internal void HasCached_未格納の場合はfalseを返す()
     {
         using var cache = new CaptureClipCache();
 
@@ -43,7 +43,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void Take_一致する画像を返して以降のDisposeで破棄しない()
+    internal void Take_一致する画像を返して以降のDisposeで破棄しない()
     {
         using var cache = new CaptureClipCache();
         cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
@@ -60,7 +60,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void Take_矩形が異なる場合はnullを返してキャッシュを維持する()
+    internal void Take_矩形が異なる場合はnullを返してキャッシュを維持する()
     {
         using var cache = new CaptureClipCache();
         cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
@@ -70,7 +70,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void Take_2回目はnullを返す()
+    internal void Take_2回目はnullを返す()
     {
         using var cache = new CaptureClipCache();
         cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
@@ -81,7 +81,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void Store_置き換え時に旧い画像を破棄する()
+    internal void Store_置き換え時に旧い画像を破棄する()
     {
         using var cache = new CaptureClipCache();
         var old = CreateImage();
@@ -94,7 +94,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void Store_nullは無視して現在のキャッシュを維持する()
+    internal void Store_nullは無視して現在のキャッシュを維持する()
     {
         using var cache = new CaptureClipCache();
         cache.Store(new EsRectInt(10, 20, 41, 31), CreateImage());
@@ -105,7 +105,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void StoreCount_格納した回数を数える()
+    internal void StoreCount_格納した回数を数える()
     {
         using var cache = new CaptureClipCache();
 
@@ -116,7 +116,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void Store_破棄後は渡された画像をその場で破棄する()
+    internal void Store_破棄後は渡された画像をその場で破棄する()
     {
         var cache = new CaptureClipCache();
         cache.Dispose();
@@ -130,7 +130,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void Dispose_複数回呼んでも安全である()
+    internal void Dispose_複数回呼んでも安全である()
     {
         var cache = new CaptureClipCache();
         cache.Store(new EsRectInt(0, 0, 1, 1), CreateImage());
@@ -142,7 +142,7 @@ public class CaptureClipCacheTests
     }
 
     [Fact]
-    public void Dispose_保持している画像を破棄する()
+    internal void Dispose_保持している画像を破棄する()
     {
         var cache = new CaptureClipCache();
         var bitmap = CreateImage();

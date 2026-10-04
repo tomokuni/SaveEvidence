@@ -15,7 +15,6 @@ using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
-using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 
@@ -40,7 +39,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void Source_設定した画像が取得できる()
+    internal void Source_設定した画像が取得できる()
     {
         using var bitmap = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Blue);
         var view = new CropViewControl { Source = bitmap };
@@ -49,7 +48,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void SelectionMode_既定値はCropである()
+    internal void SelectionMode_既定値はCropである()
     {
         var view = new CropViewControl();
 
@@ -61,7 +60,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void Rects_設定した矩形の一覧が取得できる()
+    internal void Rects_設定した矩形の一覧が取得できる()
     {
         var view = new CropViewControl();
         var rects = new[]
@@ -76,7 +75,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void Rects_破線は背景色の下地とダッシュ配列を持ち太さの下限を適用する()
+    internal void Rects_破線は背景色の下地とダッシュ配列を持ち太さの下限を適用する()
     {
         var view = CreateView();
 
@@ -98,7 +97,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void Rects_実線は背景を塗らずダッシュ配列を持たない()
+    internal void Rects_実線は背景を塗らずダッシュ配列を持たない()
     {
         var view = CreateView();
         view.Rects = [new OverlayRect(new EsRect(0, 0, 10, 10), OverlayLineStyle.Solid, DrawingColor.Red, DrawingColor.Transparent, 2.0)];
@@ -114,7 +113,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void Rects_画像未設定なら矩形オーバーレイを描画しない()
+    internal void Rects_画像未設定なら矩形オーバーレイを描画しない()
     {
         var view = new CropViewControl();
         view.Rects = [new OverlayRect(new EsRect(0, 0, 10, 10), OverlayLineStyle.Solid, DrawingColor.Red, DrawingColor.Transparent, 2.0)];
@@ -123,7 +122,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void ZoomPercent_設定した値が取得できる()
+    internal void ZoomPercent_設定した値が取得できる()
     {
         var view = CreateView();
 
@@ -133,7 +132,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void SourceToClient_対象座標をビューポート座標へ変換する()
+    internal void SourceToClient_対象座標をビューポート座標へ変換する()
     {
         var view = CreateView();
 
@@ -147,7 +146,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void ClientToSource_ビューポート座標を対象座標へ変換する()
+    internal void ClientToSource_ビューポート座標を対象座標へ変換する()
     {
         var view = CreateView();
 
@@ -163,7 +162,7 @@ public class CropViewTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void Source_未設定の場合は領域選択オーバーレイが不可視でヒットテスト不可になる()
+    internal void Source_未設定の場合は領域選択オーバーレイが不可視でヒットテスト不可になる()
     {
         var view = new CropViewControl();
 
@@ -175,7 +174,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void Source_画像を設定しても領域選択オーバーレイは自動では可視にならない()
+    internal void Source_画像を設定しても領域選択オーバーレイは自動では可視にならない()
     {
         var view = CreateView();
 
@@ -187,7 +186,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void SetSelectionOverlayVisible_trueでオーバーレイが可視でヒットテスト可能になる()
+    internal void SetSelectionOverlayVisible_trueでオーバーレイが可視でヒットテスト可能になる()
     {
         var view = CreateView();
 
@@ -199,7 +198,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void SetSelectionOverlayVisible_falseで不可視になり選択がクリアされる()
+    internal void SetSelectionOverlayVisible_falseで不可視になり選択がクリアされる()
     {
         var view = CreateView();
         view.SetSelectionOverlayVisible(true);
@@ -215,7 +214,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void Source_画像をnullへ戻すと選択がクリアされるがオーバーレイの表示状態は維持される()
+    internal void Source_画像をnullへ戻すと選択がクリアされるがオーバーレイの表示状態は維持される()
     {
         var view = CreateView();
         view.SetSelectionOverlayVisible(true);
@@ -234,7 +233,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void Source_画像をnullへ戻した後にSetSelectionOverlayVisible_falseで不可視になる()
+    internal void Source_画像をnullへ戻した後にSetSelectionOverlayVisible_falseで不可視になる()
     {
         var view = CreateView();
 
@@ -295,7 +294,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void オーバーレイ上の実ホイールでCrop中もズームする()
+    internal void オーバーレイ上の実ホイールでCrop中もズームする()
     {
         var view = new CropViewControl
         {
@@ -317,7 +316,7 @@ public class CropViewTests
     }
 
     [AvaloniaFact]
-    public void オーバーレイ上の通常ホイールでCrop中もパンする()
+    internal void オーバーレイ上の通常ホイールでCrop中もパンする()
     {
         var view = new CropViewControl
         {
@@ -347,7 +346,7 @@ public class CropViewTests
     /// 切り出しの選択は可視化したオーバーレイが入力を受けて成立するため、実入力の経路で検証する。
     /// </remarks>
     [AvaloniaFact]
-    public void ウィンドウ経由のドラッグで切り出しの選択矩形が作成される()
+    internal void ウィンドウ経由のドラッグで切り出しの選択矩形が作成される()
     {
         var view = new CropViewControl
         {

@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class CaptureClickSelectionTests
 {
     [Fact]
-    public void Fix_押下で固定して解放で取り出す()
+    internal void Fix_押下で固定して解放で取り出す()
     {
         var selection = new CaptureClickSelection();
 
@@ -22,7 +22,7 @@ public class CaptureClickSelectionTests
     [InlineData(0, 0, 0, 40)]
     [InlineData(0, 0, 30, 0)]
     [InlineData(0, 0, -30, -40)]
-    public void Fix_退化した矩形は固定しない(int x, int y, int width, int height)
+    internal void Fix_退化した矩形は固定しない(int x, int y, int width, int height)
     {
         // 退化した矩形を固定すると、解放時に空の切り出しを確定することになる
         var selection = new CaptureClickSelection();
@@ -32,7 +32,7 @@ public class CaptureClickSelectionTests
     }
 
     [Fact]
-    public void Take_固定が無ければnullを返す()
+    internal void Take_固定が無ければnullを返す()
     {
         var selection = new CaptureClickSelection();
 
@@ -40,7 +40,7 @@ public class CaptureClickSelectionTests
     }
 
     [Fact]
-    public void Take_2回目はnullを返す()
+    internal void Take_2回目はnullを返す()
     {
         // 取り出しは 1 回限り（同じ押下で 2 回確定しない）
         var selection = new CaptureClickSelection();
@@ -51,7 +51,7 @@ public class CaptureClickSelectionTests
     }
 
     [Fact]
-    public void Fix_再押下では前回の固定を置き換える()
+    internal void Fix_再押下では前回の固定を置き換える()
     {
         var selection = new CaptureClickSelection();
         selection.Fix(new EsRectInt(1, 2, 3, 4));
@@ -61,7 +61,7 @@ public class CaptureClickSelectionTests
     }
 
     [Fact]
-    public void Fix_退化した矩形は固定せず前回の固定も破棄する()
+    internal void Fix_退化した矩形は固定せず前回の固定も破棄する()
     {
         // 古い固定が解放時に確定されるのを防ぐ（固定は常に最後の押下の結果になる）
         var selection = new CaptureClickSelection();

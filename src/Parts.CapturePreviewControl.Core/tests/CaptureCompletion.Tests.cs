@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class CaptureCompletionTests
 {
     [Fact]
-    public async Task TrySetResult_最初の結果だけが採用される()
+    internal async Task TrySetResult_最初の結果だけが採用される()
     {
         var completion = new CaptureCompletion<int>();
 
@@ -17,7 +17,7 @@ public class CaptureCompletionTests
     }
 
     [Fact]
-    public async Task Task_結果が設定されるまで完了しない()
+    internal async Task Task_結果が設定されるまで完了しない()
     {
         var completion = new CaptureCompletion<string>();
 
@@ -29,7 +29,7 @@ public class CaptureCompletionTests
     }
 
     [Fact]
-    public async Task TrySetResult_参照型のnullも結果として扱える()
+    internal async Task TrySetResult_参照型のnullも結果として扱える()
     {
         var completion = new CaptureCompletion<string?>();
 

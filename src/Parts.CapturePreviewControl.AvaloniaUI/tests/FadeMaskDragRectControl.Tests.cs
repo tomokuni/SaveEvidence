@@ -35,7 +35,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void コンストラクタ_子コントロールが配置される()
+    internal void コンストラクタ_子コントロールが配置される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -50,7 +50,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void Mode_既定値はAreaSelectである()
+    internal void Mode_既定値はAreaSelectである()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -62,7 +62,7 @@ public class FadeMaskDragRectControlTests
     [InlineData(FadeMaskDragRectMode.AreaSelect, true, true)]
     [InlineData(FadeMaskDragRectMode.ScreenSelect, false, false)]
     [InlineData(FadeMaskDragRectMode.WindowSelect, false, false)]
-    public void Mode_入力の可否と全面暗転が切り替わる(
+    internal void Mode_入力の可否と全面暗転が切り替わる(
         FadeMaskDragRectMode mode, bool expectedMarqueeInteractive, bool expectedShowFullOverlay)
     {
         var control = new FadeMaskDragRectControl { Mode = mode };
@@ -80,7 +80,7 @@ public class FadeMaskDragRectControlTests
     /// （実際にキャプチャと切り出しで表示されない不具合として発生した）。
     /// </remarks>
     [AvaloniaFact]
-    public void MarqueeAppearance_代入後もモード由来の表示可否が保たれる()
+    internal void MarqueeAppearance_代入後もモード由来の表示可否が保たれる()
     {
         var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.Crop };
 
@@ -116,7 +116,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void Options_既定はコアの既定値である()
+    internal void Options_既定はコアの既定値である()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -124,7 +124,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void Options_選択矩形の設定が反映される()
+    internal void Options_選択矩形の設定が反映される()
     {
         var control = new FadeMaskDragRectControl();
         var options = FadeMaskDragRectOptions.Default with
@@ -153,7 +153,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void Options_装飾とサイズラベルの外観が反映される()
+    internal void Options_装飾とサイズラベルの外観が反映される()
     {
         var control = new FadeMaskDragRectControl();
         var options = FadeMaskDragRectOptions.Default with
@@ -184,7 +184,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void Options_ルーペの設定が反映される()
+    internal void Options_ルーペの設定が反映される()
     {
         var control = new FadeMaskDragRectControl();
         var options = FadeMaskDragRectOptions.Default with
@@ -235,7 +235,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void Options_選択矩形破線の色は設定から読まれる()
+    internal void Options_選択矩形破線の色は設定から読まれる()
     {
         var control = new FadeMaskDragRectControl();
         var colorA = Color.FromAColor(204, Colors.Red).ToDrawingColor();
@@ -252,7 +252,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void Options_同じ値の再設定では子へ再適用しない()
+    internal void Options_同じ値の再設定では子へ再適用しない()
     {
         var control = new FadeMaskDragRectControl();
         var options = FadeMaskDragRectOptions.Default with
@@ -269,7 +269,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void Options_指定しない項目は現在値を維持する()
+    internal void Options_指定しない項目は現在値を維持する()
     {
         var control = new FadeMaskDragRectControl();
         control.Options = FadeMaskDragRectOptions.Default with
@@ -301,7 +301,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SetCoordTransform_内包コントロールへ同一ポートが分配される()
+    internal void SetCoordTransform_内包コントロールへ同一ポートが分配される()
     {
         var control = new FadeMaskDragRectControl();
         var port = CoordTransform.Identity;
@@ -317,7 +317,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SetSelection_選択状態がレンダラーとルーペへ反映される()
+    internal void SetSelection_選択状態がレンダラーとルーペへ反映される()
     {
         var control = new FadeMaskDragRectControl();
         var rect = new Rect(100, 200, 400, 300);
@@ -329,7 +329,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void SetSelection_サイズ0の矩形は未選択として反映される()
+    internal void SetSelection_サイズ0の矩形は未選択として反映される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -340,7 +340,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void ClearSelection_選択状態がクリアされる()
+    internal void ClearSelection_選択状態がクリアされる()
     {
         var control = new FadeMaskDragRectControl();
         control.SetSelection(new Rect(10, 10, 50, 40));
@@ -356,7 +356,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SelectionChanged_選択矩形がレンダラーへ同期される()
+    internal void SelectionChanged_選択矩形がレンダラーへ同期される()
     {
         var control = new FadeMaskDragRectControl();
         var rect = new Rect(20, 30, 100, 80);
@@ -369,7 +369,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void ConfirmRequested_Marqueeの確定要求が中継される()
+    internal void ConfirmRequested_Marqueeの確定要求が中継される()
     {
         var control = new FadeMaskDragRectControl();
         control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
@@ -382,7 +382,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void ConfirmRequested_購読者がいない場合は中継されない()
+    internal void ConfirmRequested_購読者がいない場合は中継されない()
     {
         var control = new FadeMaskDragRectControl();
         control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
@@ -399,7 +399,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void CancelRequested_Marqueeのキャンセル要求が中継される()
+    internal void CancelRequested_Marqueeのキャンセル要求が中継される()
     {
         var control = new FadeMaskDragRectControl();
         int cancelled = 0;
@@ -411,7 +411,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void CancelRequested_購読者がいない場合は中継されない()
+    internal void CancelRequested_購読者がいない場合は中継されない()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -430,7 +430,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SetLoupePosition_ルーペ中心が設定され表示される()
+    internal void SetLoupePosition_ルーペ中心が設定され表示される()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
@@ -453,7 +453,7 @@ public class FadeMaskDragRectControlTests
     /// <summary>複合コントロール経由でもルーペの中心座標ラベルがテキスト要素として配置されることを検証する。</summary>
     /// <remarks>文言・表示可否・配置はコアが単一所有し、ルーペコントロールが要素を置く（統合経路の検証）。</remarks>
     [AvaloniaFact]
-    public void ルーペ_中心座標ラベルの要素を配置する()
+    internal void ルーペ_中心座標ラベルの要素を配置する()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
@@ -488,7 +488,7 @@ public class FadeMaskDragRectControlTests
     /// ルーペのプロパティ通知が発生せず、明示的な再生成要求が無いと Bitmap が古い色のまま残る。
     /// </remarks>
     [AvaloniaFact]
-    public async Task Options_破線色のみの変更でもルーペが再描画される()
+    internal async Task Options_破線色のみの変更でもルーペが再描画される()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
@@ -534,7 +534,7 @@ public class FadeMaskDragRectControlTests
     /// ルーペ自体を表示しない（コアが単一所有する判断）。
     /// </remarks>
     [AvaloniaFact]
-    public async Task Mode_選択矩形を使わないモードへ変更するとルーペが非表示になる()
+    internal async Task Mode_選択矩形を使わないモードへ変更するとルーペが非表示になる()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
@@ -570,7 +570,7 @@ public class FadeMaskDragRectControlTests
     /// 選択矩形が変わった場合は中心（ルーペのプロパティ）が変わらなくても再生成が必要になる。
     /// </remarks>
     [AvaloniaFact]
-    public async Task SetSelection_選択矩形のみの変更でもルーペが再描画される()
+    internal async Task SetSelection_選択矩形のみの変更でもルーペが再描画される()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
@@ -606,7 +606,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SizeLabelOverrideProvider_レンダラーへ伝搬される()
+    internal void SizeLabelOverrideProvider_レンダラーへ伝搬される()
     {
         var control = new FadeMaskDragRectControl();
         Func<string?>? provider = () => "LT: (10, 20)";
@@ -678,7 +678,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void HasSelection_選択状態を反映する()
+    internal void HasSelection_選択状態を反映する()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -693,7 +693,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void SetSelection_Marqueeの選択状態を設定して同期される()
+    internal void SetSelection_Marqueeの選択状態を設定して同期される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -706,7 +706,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void InvalidateOverlay_オーバーレイの再描画を要求する()
+    internal void InvalidateOverlay_オーバーレイの再描画を要求する()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -715,7 +715,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void RefreshOverlay_選択状態を維持したまま再描画を要求する()
+    internal void RefreshOverlay_選択状態を維持したまま再描画を要求する()
     {
         var control = new FadeMaskDragRectControl();
         control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
@@ -734,7 +734,7 @@ public class FadeMaskDragRectControlTests
     /// （AreaSelect / Crop の選択は内包する Marquee が入力を受けて成立するため、実経路で検証する必要がある）。
     /// </remarks>
     [AvaloniaFact]
-    public void ウィンドウ経由のドラッグでキャプチャの選択矩形が作成される()
+    internal void ウィンドウ経由のドラッグでキャプチャの選択矩形が作成される()
     {
         var control = new FadeMaskDragRectControl
         {
@@ -763,7 +763,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void LoupePositionMoved_Marqueeのルーペ位置更新が中継される()
+    internal void LoupePositionMoved_Marqueeのルーペ位置更新が中継される()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = new Panel { Children = { control } } };
@@ -790,7 +790,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void LoupePositionMoved_購読者がいない場合は中継されない()
+    internal void LoupePositionMoved_購読者がいない場合は中継されない()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -829,7 +829,7 @@ public class FadeMaskDragRectControlTests
         => new(1, PointerType.Mouse, true);
 
     [AvaloniaFact]
-    public void 矩形外クリックでSelectionStartedにより選択状態がクリアされる()
+    internal void 矩形外クリックでSelectionStartedにより選択状態がクリアされる()
     {
         var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.Crop };
         var window = new Window { Content = control, Width = 400, Height = 300 };
@@ -857,7 +857,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void 小さすぎるドラッグでSelectionCancelledにより選択状態がクリアされる()
+    internal void 小さすぎるドラッグでSelectionCancelledにより選択状態がクリアされる()
     {
         var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.Crop };
         var window = new Window { Content = control };
@@ -893,7 +893,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SetLoupeSource_ルーペのSourceが設定される()
+    internal void SetLoupeSource_ルーペのSourceが設定される()
     {
         var control = new FadeMaskDragRectControl();
         var bitmap = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
@@ -904,7 +904,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void SetLoupeSource_解除すると非表示になる()
+    internal void SetLoupeSource_解除すると非表示になる()
     {
         var control = new FadeMaskDragRectControl();
         control.SetLoupeSource(EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent));
@@ -918,7 +918,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void ClearLoupe_ルーペが非表示になる()
+    internal void ClearLoupe_ルーペが非表示になる()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = control };
@@ -935,7 +935,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void LoupeCenterPoint_設定済みの中心を返す()
+    internal void LoupeCenterPoint_設定済みの中心を返す()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = control };
@@ -948,7 +948,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void FocusMarquee_Marqueeへフォーカスを設定する()
+    internal void FocusMarquee_Marqueeへフォーカスを設定する()
     {
         var control = new FadeMaskDragRectControl();
         var window = new Window { Content = control };
@@ -964,7 +964,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void ハイライトプロパティ_暗転マスクの状態へ反映される()
+    internal void ハイライトプロパティ_暗転マスクの状態へ反映される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -982,7 +982,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void 文言プロバイダ_ホストが保持する()
+    internal void 文言プロバイダ_ホストが保持する()
     {
         var control = new FadeMaskDragRectControl();
         Func<string?> operation = () => "確定: Enter";
@@ -998,7 +998,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [AvaloniaFact]
-    public void ShowFullOverlay_モードに応じた全面暗転状態を返す()
+    internal void ShowFullOverlay_モードに応じた全面暗転状態を返す()
     {
         // Crop / AreaSelect は全面暗転あり、ScreenSelect / WindowSelect はなし
         Assert.True(new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.Crop }.ShowFullOverlay);

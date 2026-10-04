@@ -17,7 +17,7 @@ public class ColorPickerLogicTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void UpdateValidationStatus_空文字はエラーにならない()
+    internal void UpdateValidationStatus_空文字はエラーにならない()
     {
         var control = new ColorPickerControl();
 
@@ -28,7 +28,7 @@ public class ColorPickerLogicTests
     }
 
     [AvaloniaFact]
-    public void UpdateValidationStatus_無効な値はエラーになる()
+    internal void UpdateValidationStatus_無効な値はエラーになる()
     {
         var control = new ColorPickerControl();
 
@@ -39,7 +39,7 @@ public class ColorPickerLogicTests
     }
 
     [AvaloniaFact]
-    public void UpdateValidationStatus_有効な値はエラーにならない()
+    internal void UpdateValidationStatus_有効な値はエラーにならない()
     {
         var control = new ColorPickerControl();
 

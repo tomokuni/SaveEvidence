@@ -34,7 +34,7 @@ public class OverlayRectLayoutTests
             rect, new EsPoint(rect.Bounds.X, rect.Bounds.Y), new EsPoint(rect.Bounds.Right, rect.Bounds.Bottom));
 
     [Fact]
-    public void EffectiveThickness_1以上はそのまま返す()
+    internal void EffectiveThickness_1以上はそのまま返す()
     {
         Assert.Equal(2.5, OverlayRectLayout.EffectiveThickness(2.5));
         Assert.Equal(OverlayRectLayout.MinimumThickness, OverlayRectLayout.EffectiveThickness(OverlayRectLayout.MinimumThickness));
@@ -44,20 +44,20 @@ public class OverlayRectLayoutTests
     [InlineData(0.0)]
     [InlineData(-3.0)]
     [InlineData(0.4)]
-    public void EffectiveThickness_下限未満は最小値へ補正する(double thickness)
+    internal void EffectiveThickness_下限未満は最小値へ補正する(double thickness)
     {
         // 太さ 0 以下や下限未満を要求されても枠線が消えないよう、最小値を保証する
         Assert.Equal(OverlayRectLayout.MinimumThickness, OverlayRectLayout.EffectiveThickness(thickness));
     }
 
     [Fact]
-    public void EffectiveThickness_最小値は1である()
+    internal void EffectiveThickness_最小値は1である()
     {
         Assert.Equal(1.0, OverlayRectLayout.MinimumThickness);
     }
 
     [Fact]
-    public void ViewportRectFromCorners_正のサイズはそのまま返す()
+    internal void ViewportRectFromCorners_正のサイズはそのまま返す()
     {
         var rect = OverlayRectLayout.ViewportRectFromCorners(new EsPoint(10, 20), new EsPoint(40, 50));
 
@@ -71,7 +71,7 @@ public class OverlayRectLayoutTests
     [InlineData(40, 30)]
     [InlineData(10, 50)]
     [InlineData(40, 50)]
-    public void ViewportRectFromCorners_逆転した右下は幅高さ0へクランプする(double x, double y)
+    internal void ViewportRectFromCorners_逆転した右下は幅高さ0へクランプする(double x, double y)
     {
         // 縮小・中央寄せで右下が左上を逆転しても負のサイズを返さない（描画先によっては例外になる）
         var rect = OverlayRectLayout.ViewportRectFromCorners(new EsPoint(10, 20), new EsPoint(x, y));
@@ -81,7 +81,7 @@ public class OverlayRectLayoutTests
     }
 
     [Fact]
-    public void Resolve_配置と色をそのまま引き継ぐ()
+    internal void Resolve_配置と色をそのまま引き継ぐ()
     {
         var frame = Resolve(Create(new EsRect(10, 20, 30, 40), OverlayLineStyle.Solid));
 
@@ -94,7 +94,7 @@ public class OverlayRectLayoutTests
     }
 
     [Fact]
-    public void Resolve_実線は破線でなく背景を描かない()
+    internal void Resolve_実線は破線でなく背景を描かない()
     {
         var frame = Resolve(Create(new EsRect(0, 0, 10, 10), OverlayLineStyle.Solid));
 
@@ -107,7 +107,7 @@ public class OverlayRectLayoutTests
     [Theory]
     [InlineData(OverlayLineStyle.Dashed, 8.0, 4.0)]
     [InlineData(OverlayLineStyle.Dotted, 2.0, 2.0)]
-    public void Resolve_破線はダッシュ長をコアの値から引き継ぎ背景を描く(OverlayLineStyle style, double dashLength, double gapLength)
+    internal void Resolve_破線はダッシュ長をコアの値から引き継ぎ背景を描く(OverlayLineStyle style, double dashLength, double gapLength)
     {
         var frame = Resolve(Create(new EsRect(0, 0, 10, 10), style));
 
@@ -118,7 +118,7 @@ public class OverlayRectLayoutTests
     }
 
     [Fact]
-    public void Resolve_太さの下限を適用する()
+    internal void Resolve_太さの下限を適用する()
     {
         var frame = Resolve(Create(new EsRect(0, 0, 10, 10), OverlayLineStyle.Solid, thickness: 0));
 
@@ -131,7 +131,7 @@ public class OverlayRectLayoutTests
     [InlineData(10, 0)]
     [InlineData(-5, 10)]
     [InlineData(0, 0)]
-    public void HasDrawableSize_幅または高さが0以下ならfalse(double width, double height)
+    internal void HasDrawableSize_幅または高さが0以下ならfalse(double width, double height)
     {
         var frame = Resolve(Create(new EsRect(5, 5, width, height), OverlayLineStyle.Solid));
 
@@ -139,7 +139,7 @@ public class OverlayRectLayoutTests
     }
 
     [Fact]
-    public void HasDrawableSize_幅と高さが正ならtrue()
+    internal void HasDrawableSize_幅と高さが正ならtrue()
     {
         var frame = Resolve(Create(new EsRect(5, 5, 1, 1), OverlayLineStyle.Solid));
 
@@ -147,7 +147,7 @@ public class OverlayRectLayoutTests
     }
 
     [Fact]
-    public void HalfThickness_は太さの半分である()
+    internal void HalfThickness_は太さの半分である()
     {
         var frame = Resolve(Create(new EsRect(0, 0, 10, 10), OverlayLineStyle.Solid, thickness: 3));
 
@@ -156,7 +156,7 @@ public class OverlayRectLayoutTests
     }
 
     [Fact]
-    public void Resolve_2点の逆転で負のサイズにならない()
+    internal void Resolve_2点の逆転で負のサイズにならない()
     {
         var rect = Create(new EsRect(10, 10, 10, 10), OverlayLineStyle.Solid);
         var frame = OverlayRectLayout.Resolve(rect, new EsPoint(50, 50), new EsPoint(20, 20));

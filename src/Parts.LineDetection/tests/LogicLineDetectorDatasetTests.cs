@@ -33,7 +33,7 @@ public sealed class LogicLineDetectorDatasetTests
     /// <see cref="EsUtil.Platform.Core.Imaging.EsBitmap"/> はヘッドレスでもピクセルを安定保持するため、<c>[Fact]</c> で並列実行できる。
     /// </remarks>
     [Fact]
-    public void Detect_全画像が正解と一致する()
+    internal void Detect_全画像が正解と一致する()
     {
         Assert.True(Directory.Exists(s_datasetDir), $"dataset フォルダがありません: {s_datasetDir}");
 

@@ -29,7 +29,7 @@ public class ColorPickerTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void Log_デフォルトはNullLoggerインスタンス()
+    internal void Log_デフォルトはNullLoggerインスタンス()
     {
         var control = CreateControl();
 
@@ -37,7 +37,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void Log_設定したロガーを返す()
+    internal void Log_設定したロガーを返す()
     {
         var control = CreateControl();
         var logger = NullLogger.Instance;
@@ -48,7 +48,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void Log_nullを設定するとNullLoggerにフォールバックする()
+    internal void Log_nullを設定するとNullLoggerにフォールバックする()
     {
         var control = CreateControl();
 
@@ -62,7 +62,7 @@ public class ColorPickerTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void 依存プロパティのデフォルト値が正しい()
+    internal void 依存プロパティのデフォルト値が正しい()
     {
         var control = CreateControl();
 
@@ -80,7 +80,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void コンストラクタ_デザインモードでは初期化をスキップする()
+    internal void コンストラクタ_デザインモードでは初期化をスキップする()
     {
         // Design.IsDesignMode を true にすると、コンストラクタの _lastValidColor 初期化と
         // バリデーション更新がスキップされる（分岐カバレッジ向上のため）
@@ -105,7 +105,7 @@ public class ColorPickerTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SelectedColor_有効な色を設定するとエラーにならない()
+    internal void SelectedColor_有効な色を設定するとエラーにならない()
     {
         var control = CreateControl();
 
@@ -118,7 +118,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void SelectedColor_16進コードを設定するとエラーにならない()
+    internal void SelectedColor_16進コードを設定するとエラーにならない()
     {
         var control = CreateControl();
 
@@ -130,7 +130,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void SelectedColor_無効な色を設定するとエラーになる()
+    internal void SelectedColor_無効な色を設定するとエラーになる()
     {
         var control = CreateControl();
 
@@ -141,7 +141,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void SelectedColor_空文字を設定するとエラーにならない()
+    internal void SelectedColor_空文字を設定するとエラーにならない()
     {
         var control = CreateControl();
 
@@ -152,7 +152,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void SelectedColor_無効後_有効な値を設定するとエラーが解除される()
+    internal void SelectedColor_無効後_有効な値を設定するとエラーが解除される()
     {
         var control = CreateControl();
 
@@ -165,7 +165,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void SelectedColor_nullを設定すると例外にならない()
+    internal void SelectedColor_nullを設定すると例外にならない()
     {
         var control = CreateControl();
         control.SelectedColor = "Red";
@@ -188,7 +188,7 @@ public class ColorPickerTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void ColorSortMode_変更でItemsSourceが切り替わる()
+    internal void ColorSortMode_変更でItemsSourceが切り替わる()
     {
         var control = CreateControl();
 
@@ -206,7 +206,7 @@ public class ColorPickerTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void ComboBoxサイズプロパティを設定すると反映される()
+    internal void ComboBoxサイズプロパティを設定すると反映される()
     {
         var control = CreateControl();
 
@@ -224,7 +224,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void HighlightBorderOnError_切り替えが反映される()
+    internal void HighlightBorderOnError_切り替えが反映される()
     {
         var control = CreateControl();
 
@@ -240,7 +240,7 @@ public class ColorPickerTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void ComboBoxPadding変更でComboBoxのPaddingにスウォッチ分が加算される()
+    internal void ComboBoxPadding変更でComboBoxのPaddingにスウォッチ分が加算される()
     {
         var control = CreateControl();
         var combo = control._comboBox;
@@ -255,7 +255,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void ComboBoxMargin変更でComboBoxのMarginが設定される()
+    internal void ComboBoxMargin変更でComboBoxのMarginが設定される()
     {
         var control = CreateControl();
         var combo = control._comboBox;
@@ -266,7 +266,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void ComboBoxMargin_nullでMarginがクリアされる()
+    internal void ComboBoxMargin_nullでMarginがクリアされる()
     {
         var control = CreateControl();
         var combo = control._comboBox;
@@ -282,7 +282,7 @@ public class ColorPickerTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void LostFocus_無効な色が最終有効値に戻る()
+    internal void LostFocus_無効な色が最終有効値に戻る()
     {
         var control = CreateControl();
         control.SelectedColor = "Red";
@@ -300,7 +300,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void LostFocus_有効な色の場合はそのまま維持される()
+    internal void LostFocus_有効な色の場合はそのまま維持される()
     {
         var control = CreateControl();
         control.SelectedColor = "Green";
@@ -313,7 +313,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void LostFocus_最終有効値がnullでも例外にならない()
+    internal void LostFocus_最終有効値がnullでも例外にならない()
     {
         var control = CreateControl();
         control.SelectedColor = "Red";
@@ -331,7 +331,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void カラーピッカーボタンクリック_senderがButton以外なら何もしない()
+    internal void カラーピッカーボタンクリック_senderがButton以外なら何もしない()
     {
         var control = CreateControl();
         var window = new Window { Content = control };
@@ -353,7 +353,7 @@ public class ColorPickerTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SelectionChanged_ドロップダウン選択後にテキスト選択が解除される()
+    internal void SelectionChanged_ドロップダウン選択後にテキスト選択が解除される()
     {
         var control = CreateControl();
 
@@ -369,7 +369,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void SelectionChanged_senderがComboBox以外では何もしない()
+    internal void SelectionChanged_senderがComboBox以外では何もしない()
     {
         var control = CreateControl();
 
@@ -384,7 +384,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void カラーピッカーボタンクリックでFlyoutが構築される()
+    internal void カラーピッカーボタンクリックでFlyoutが構築される()
     {
         var control = CreateControl();
         var window = new Window { Content = control };
@@ -410,7 +410,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void カラーピッカーボタンクリック_SelectedColorが空でもFlyoutが構築される()
+    internal void カラーピッカーボタンクリック_SelectedColorが空でもFlyoutが構築される()
     {
         var control = CreateControl();
         var window = new Window { Content = control };
@@ -434,7 +434,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void TemplateApplied_適用後にPaddingが調整される()
+    internal void TemplateApplied_適用後にPaddingが調整される()
     {
         var control = CreateControl();
         var combo = control._comboBox;
@@ -449,7 +449,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void HighlightBorderOnError_エラー時にvalidationErrorクラスが設定される()
+    internal void HighlightBorderOnError_エラー時にvalidationErrorクラスが設定される()
     {
         var control = CreateControl();
         control.HighlightBorderOnError = true;
@@ -461,7 +461,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void HighlightBorderOnError_エラーでなければvalidationErrorクラスは設定されない()
+    internal void HighlightBorderOnError_エラーでなければvalidationErrorクラスは設定されない()
     {
         var control = CreateControl();
         control.HighlightBorderOnError = true;
@@ -473,7 +473,7 @@ public class ColorPickerTests
     }
 
     [AvaloniaFact]
-    public void HighlightBorderOnError_falseではエラーでもvalidationErrorクラスは設定されない()
+    internal void HighlightBorderOnError_falseではエラーでもvalidationErrorクラスは設定されない()
     {
         var control = CreateControl();
         control.HighlightBorderOnError = false;
@@ -489,7 +489,7 @@ public class ColorPickerTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SelectedColor_ComboBox未構築時の書き戻しでも例外にならない()
+    internal void SelectedColor_ComboBox未構築時の書き戻しでも例外にならない()
     {
         var control = CreateControl();
         var combo = control._comboBox;

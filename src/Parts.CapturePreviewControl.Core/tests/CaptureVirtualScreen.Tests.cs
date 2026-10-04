@@ -17,7 +17,7 @@ public class CaptureVirtualScreenTests
     private static EsBitmap CreateImage(int width, int height) => EsBitmap.Create(width, height);
 
     [Fact]
-    public async Task AwaitAsync_取得が先に完了した場合はその結果を返す()
+    internal async Task AwaitAsync_取得が先に完了した場合はその結果を返す()
     {
         using var image = CreateImage(4, 3);
         var captureTask = Task.FromResult<EsBitmap?>(image);
@@ -28,7 +28,7 @@ public class CaptureVirtualScreenTests
     }
 
     [Fact]
-    public async Task AwaitAsync_取得に失敗した場合はnullを返す()
+    internal async Task AwaitAsync_取得に失敗した場合はnullを返す()
     {
         // 取得失敗（null）とタイムアウトは呼び出し側で同じ扱い（代替の取得経路へ委ねる）
         var captureTask = Task.FromResult<EsBitmap?>(null);
@@ -39,7 +39,7 @@ public class CaptureVirtualScreenTests
     }
 
     [Fact]
-    public async Task AwaitAsync_タイムアウトした場合はnullを返す()
+    internal async Task AwaitAsync_タイムアウトした場合はnullを返す()
     {
         var pending = new TaskCompletionSource<EsBitmap?>();
 
@@ -51,7 +51,7 @@ public class CaptureVirtualScreenTests
     }
 
     [Fact]
-    public async Task AwaitAsync_タイムアウト後に完了した結果は破棄する()
+    internal async Task AwaitAsync_タイムアウト後に完了した結果は破棄する()
     {
         // 遅れて取得できても表示しないため、保持せず破棄する（メモリを占有しない）
         var pending = new TaskCompletionSource<EsBitmap?>();
@@ -68,7 +68,7 @@ public class CaptureVirtualScreenTests
     }
 
     [Fact]
-    public async Task AwaitAsync_タイムアウト後の取得失敗は破棄しない()
+    internal async Task AwaitAsync_タイムアウト後の取得失敗は破棄しない()
     {
         // null（取得失敗）には破棄する対象がない（例外にならずに完了する）
         var pending = new TaskCompletionSource<EsBitmap?>();
@@ -79,7 +79,7 @@ public class CaptureVirtualScreenTests
     }
 
     [Fact]
-    public async Task AwaitAsync_タスクがnullの場合は例外を投げる()
+    internal async Task AwaitAsync_タスクがnullの場合は例外を投げる()
     {
         await Assert.ThrowsAsync<ArgumentNullException>(() => CaptureVirtualScreen.AwaitAsync(null!));
     }

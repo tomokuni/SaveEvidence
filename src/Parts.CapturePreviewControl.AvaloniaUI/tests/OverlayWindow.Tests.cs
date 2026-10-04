@@ -94,7 +94,7 @@ public class OverlayWindowTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void コンストラクタ_モード別に複合コントロールのモードが設定される()
+    internal void コンストラクタ_モード別に複合コントロールのモードが設定される()
     {
         Assert.Equal(FadeMaskDragRectMode.AreaSelect, CreateWindow(CaptureType.AreaSelect).SelectionOverlay.Mode);
         Assert.Equal(FadeMaskDragRectMode.ScreenSelect, CreateWindow(CaptureType.ScreenSelect).SelectionOverlay.Mode);
@@ -102,7 +102,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void コンストラクタ_AreaSelectではドラッグ前から全面暗転を表示する()
+    internal void コンストラクタ_AreaSelectではドラッグ前から全面暗転を表示する()
     {
         var window = CreateWindow(CaptureType.AreaSelect);
 
@@ -111,7 +111,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void コンストラクタ_ScreenSelectとWindowSelectでは全面暗転を表示しない()
+    internal void コンストラクタ_ScreenSelectとWindowSelectでは全面暗転を表示しない()
     {
         // ScreenSelect / WindowSelect はカーソル位置の要素をハイライトするため、全面暗転は不要
         Assert.False(CreateWindow(CaptureType.ScreenSelect).SelectionOverlay.ShowFullOverlay);
@@ -119,7 +119,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void RequestOverlayRender_例外なく再描画を要求する()
+    internal void RequestOverlayRender_例外なく再描画を要求する()
     {
         var window = CreateWindow();
 
@@ -132,7 +132,7 @@ public class OverlayWindowTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void コンストラクタ_背景画像がウィンドウにフィットするStretchになる()
+    internal void コンストラクタ_背景画像がウィンドウにフィットするStretchになる()
     {
         var window = CreateWindow();
 
@@ -147,7 +147,7 @@ public class OverlayWindowTests
     // ====================================================================
 
     [AvaloniaFact]
-    public async Task CompleteSelection_仮想スクリーンから切り出しCaptureAreaを呼ばない()
+    internal async Task CompleteSelection_仮想スクリーンから切り出しCaptureAreaを呼ばない()
     {
         var captureService = new MockCaptureService();
         EsBitmap? captured = null;
@@ -177,7 +177,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task CompleteSelection_仮想スクリーン未設定ならCaptureAreaでフォールバックする()
+    internal async Task CompleteSelection_仮想スクリーン未設定ならCaptureAreaでフォールバックする()
     {
         var captureService = new MockCaptureService();
         EsBitmap? captured = null;
@@ -203,7 +203,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task CompleteSelection_マルチモニタの負の原点でも画面物理座標で切り出す()
+    internal async Task CompleteSelection_マルチモニタの負の原点でも画面物理座標で切り出す()
     {
         // 回帰テスト: 選択矩形（画面物理座標）と切り出し元画像の占有範囲（画面物理座標）は同じ座標空間で
         // 渡す（画像ローカル座標と混ぜると原点の分だけずれて切り出せなくなる）。
@@ -228,7 +228,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task ホバー_事前切り出しが実行される()
+    internal async Task ホバー_事前切り出しが実行される()
     {
         var finder = new MockElementFinder
         {
@@ -249,7 +249,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task ホバー_同じ矩形なら事前切り出しをスキップする()
+    internal async Task ホバー_同じ矩形なら事前切り出しをスキップする()
     {
         var finder = new MockElementFinder
         {
@@ -271,7 +271,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task ホバー_矩形が変われば事前切り出しが再実行される()
+    internal async Task ホバー_矩形が変われば事前切り出しが再実行される()
     {
         var finder = new MockElementFinder
         {
@@ -295,7 +295,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task CompleteSelection_事前切り出しキャッシュを再利用する()
+    internal async Task CompleteSelection_事前切り出しキャッシュを再利用する()
     {
         var captureService = new MockCaptureService();
         EsBitmap? captured = null;
@@ -337,7 +337,7 @@ public class OverlayWindowTests
     // ====================================================================
 
     [AvaloniaFact]
-    public async Task AreaSelect_確定要求でキャプチャが確定する()
+    internal async Task AreaSelect_確定要求でキャプチャが確定する()
     {
         EsBitmap? captured = null;
         EsRectInt? capturedBounds = null;
@@ -365,7 +365,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void AreaSelect_キャンセル要求でキャンセルされる()
+    internal void AreaSelect_キャンセル要求でキャンセルされる()
     {
         EsBitmap? captured = null;
         EsRectInt? capturedBounds = null;
@@ -393,7 +393,7 @@ public class OverlayWindowTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void SetVirtualScreen_背景とルーペのソースが破棄されず有効に保持される()
+    internal void SetVirtualScreen_背景とルーペのソースが破棄されず有効に保持される()
     {
         // 回帰テスト: SetVirtualScreen が using で即座に破棄した WriteableBitmap を Image.Source に
         // 設定すると、レイアウトパス（Image.MeasureOverride → Bitmap.get_Size）で ObjectDisposedException が
@@ -413,7 +413,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void SetVirtualScreen_Close後に背景とルーペのソースが解放される()
+    internal void SetVirtualScreen_Close後に背景とルーペのソースが解放される()
     {
         var window = CreateWindow(CaptureType.AreaSelect);
         window.Show();
@@ -430,7 +430,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void SetVirtualScreen_Close後に届いた画像はその場で破棄される()
+    internal void SetVirtualScreen_Close後に届いた画像はその場で破棄される()
     {
         // 回帰テスト: 背景撮影の完了がキャンセル（Close）より遅れた場合の破棄漏れを防ぐ
         // （差し替え時の旧値の破棄・クローズ後の破棄はコアの保持クラスが単一所有する）。
@@ -472,7 +472,7 @@ public class OverlayWindowTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void 検出_画面_未検出時はハイライトをクリアする()
+    internal void 検出_画面_未検出時はハイライトをクリアする()
     {
         var window = CreateWindow(CaptureType.ScreenSelect);
 
@@ -483,7 +483,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void 検出_画面_検出時はハイライトを反映する()
+    internal void 検出_画面_検出時はハイライトを反映する()
     {
         var finder = new MockElementFinder
         {
@@ -503,7 +503,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void 検出_画面_サイズラベル換算はオーバーレイのスケーリングを維持する()
+    internal void 検出_画面_サイズラベル換算はオーバーレイのスケーリングを維持する()
     {
         var finder = new MockElementFinder
         {
@@ -524,7 +524,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void 検出_画面_未検出時もサイズラベル換算を維持する()
+    internal void 検出_画面_未検出時もサイズラベル換算を維持する()
     {
         // 未検出（MockElementFinder は常に default）
         var window = CreateWindow(CaptureType.ScreenSelect, scaling: 2.0);
@@ -537,7 +537,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void 検出_ウィンドウ_検出時はハイライトを反映する()
+    internal void 検出_ウィンドウ_検出時はハイライトを反映する()
     {
         var finder = new MockElementFinder
         {
@@ -558,7 +558,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void 検出_ウィンドウ_サイズラベル換算はオーバーレイのスケーリングを維持する()
+    internal void 検出_ウィンドウ_サイズラベル換算はオーバーレイのスケーリングを維持する()
     {
         var finder = new MockElementFinder
         {
@@ -577,7 +577,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task クリック確定_左押下で固定した矩形で解放時に確定する()
+    internal async Task クリック確定_左押下で固定した矩形で解放時に確定する()
     {
         var finder = new MockElementFinder
         {
@@ -606,7 +606,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task クリック確定_右ボタンの押下では固定されない()
+    internal async Task クリック確定_右ボタンの押下では固定されない()
     {
         var finder = new MockElementFinder
         {
@@ -631,7 +631,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task クリック確定_退化した検出結果は固定されない()
+    internal async Task クリック確定_退化した検出結果は固定されない()
     {
         // 未検出（矩形が空）→ 固定しない → 解放しても切り出しを行わない（0 サイズの画像を作らない）
         var completed = new List<EsRectInt?>();
@@ -649,7 +649,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void OnClickMoved_ハイライトを更新して再描画を要求する()
+    internal void OnClickMoved_ハイライトを更新して再描画を要求する()
     {
         var finder = new MockElementFinder
         {
@@ -673,7 +673,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task OnClickReleased_固定矩形があれば確定する()
+    internal async Task OnClickReleased_固定矩形があれば確定する()
     {
         var finder = new MockElementFinder
         {
@@ -701,7 +701,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void OnClickReleased_固定矩形がなければ確定しない()
+    internal void OnClickReleased_固定矩形がなければ確定しない()
     {
         var completed = new List<EsRectInt?>();
         var window = CreateWindow(
@@ -721,7 +721,7 @@ public class OverlayWindowTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void ハイライト型_Escapeでキャンセルされる()
+    internal void ハイライト型_Escapeでキャンセルされる()
     {
         // 回帰: 内包する選択オーバーレイ（Marquee）も TopLevel のキーを購読して処理済みにするため、
         // ウィンドウが受け取れず Escape でキャンセルできなかった（Tunnel + handledEventsToo で受ける）。
@@ -739,7 +739,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task ハイライト型_確定対象が無いEnterは何もしない()
+    internal async Task ハイライト型_確定対象が無いEnterは何もしない()
     {
         // 何も検出していない状態の Enter はキャンセル扱いにしない（コアのキー解釈が単一所有する）
         var completed = new List<EsRectInt?>();
@@ -756,7 +756,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public async Task ハイライト型_確定対象があるEnterは確定する()
+    internal async Task ハイライト型_確定対象があるEnterは確定する()
     {
         var finder = new MockElementFinder
         {
@@ -783,7 +783,7 @@ public class OverlayWindowTests
     }
 
     [AvaloniaFact]
-    public void 検出_ウィンドウ_未検出時はハイライトをクリアする()
+    internal void 検出_ウィンドウ_未検出時はハイライトをクリアする()
     {
         var window = CreateWindow(CaptureType.WindowSelect);
 

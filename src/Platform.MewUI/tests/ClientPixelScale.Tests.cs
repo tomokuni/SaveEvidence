@@ -24,7 +24,7 @@ public sealed class ClientPixelScaleTests
     [InlineData(774.4, 774.4, 1.0)]
     [InlineData(2, 1, 2.0)]
     [InlineData(48, 96, 0.5)]
-    public void Resolve_描画面と表示領域の比を返す(double clientPixels, double clientDip, double expected)
+    internal void Resolve_描画面と表示領域の比を返す(double clientPixels, double clientDip, double expected)
         => Assert.Equal(expected, ClientPixelScale.Resolve(clientPixels, clientDip, fallback: 1.0), 3);
 
     /// <summary>表示領域が未確定（0 以下）の場合は保持値（DPI から与えられる係数）を使うことを検証する。</summary>
@@ -33,7 +33,7 @@ public sealed class ClientPixelScaleTests
     [InlineData(0.0)]
     [InlineData(-1.0)]
     [InlineData(double.NaN)]
-    public void Resolve_表示領域が未確定なら保持値を使う(double clientDip)
+    internal void Resolve_表示領域が未確定なら保持値を使う(double clientDip)
         => Assert.Equal(1.25, ClientPixelScale.Resolve(968, clientDip, fallback: 1.25), 3);
 
     /// <summary>非数・範囲外の値が基準値へ補正されることを検証する。</summary>
@@ -42,7 +42,7 @@ public sealed class ClientPixelScaleTests
     /// 表示領域が確定している場合はその比を補正して使う（保持値へは戻らない）。
     /// </remarks>
     [Fact]
-    public void Resolve_異常値は基準値へ補正される()
+    internal void Resolve_異常値は基準値へ補正される()
     {
         // 描画面が非数（表面が未生成）の場合は補正の基準値（1.0）になる
         Assert.Equal(1.0, ClientPixelScale.Resolve(double.NaN, 100, fallback: 1.25), 3);

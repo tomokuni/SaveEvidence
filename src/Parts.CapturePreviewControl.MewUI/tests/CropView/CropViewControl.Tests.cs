@@ -1,5 +1,4 @@
 using Aprillz.MewUI;
-using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
@@ -40,7 +39,7 @@ public class CropViewControlTests
 
     /// <summary>既定値が想定どおりであることを検証する。</summary>
     [Fact]
-    public void 既定値が想定どおりである()
+    internal void 既定値が想定どおりである()
     {
         var control = new CropViewControl();
 
@@ -57,7 +56,7 @@ public class CropViewControlTests
 
     /// <summary>Rects の設定が保持されることを検証する。</summary>
     [Fact]
-    public void Rectsを設定すると保持される()
+    internal void Rectsを設定すると保持される()
     {
         var control = CreateLaidOut();
 
@@ -68,7 +67,7 @@ public class CropViewControlTests
 
     /// <summary>Rects に null を設定すると例外になることを検証する。</summary>
     [Fact]
-    public void Rectsにnullを設定すると例外になる()
+    internal void Rectsにnullを設定すると例外になる()
     {
         var control = CreateLaidOut();
 
@@ -77,7 +76,7 @@ public class CropViewControlTests
 
     /// <summary>Rects が空でも例外にならないことを検証する。</summary>
     [Fact]
-    public void Rectsが空でも例外にしない()
+    internal void Rectsが空でも例外にしない()
     {
         var control = CreateLaidOut();
         control.Rects = [];
@@ -87,7 +86,7 @@ public class CropViewControlTests
 
     /// <summary>Source の設定が内包するズームビューへ委譲されることを検証する。</summary>
     [Fact]
-    public void Sourceの設定がズームビューへ委譲される()
+    internal void Sourceの設定がズームビューへ委譲される()
     {
         using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
         var control = CreateLaidOut();
@@ -101,7 +100,7 @@ public class CropViewControlTests
 
     /// <summary>ズーム操作が内包するズームビューへ委譲されることを検証する。</summary>
     [Fact]
-    public void ズーム操作がズームビューへ委譲される()
+    internal void ズーム操作がズームビューへ委譲される()
     {
         using var image = TestHelper.CreateBitmap(200, 200, SKColors.Red);
         var control = CreateLaidOut(100, 100);
@@ -122,7 +121,7 @@ public class CropViewControlTests
 
     /// <summary>ズーム可否が内包するズームビューから取得されることを検証する。</summary>
     [Fact]
-    public void ズーム可否がズームビューから取得される()
+    internal void ズーム可否がズームビューから取得される()
     {
         using var image = TestHelper.CreateBitmap(200, 200, SKColors.Red);
         var control = CreateLaidOut(100, 100);
@@ -134,7 +133,7 @@ public class CropViewControlTests
 
     /// <summary>ズームイベントが中継されることを検証する。</summary>
     [Fact]
-    public void ズームイベントが中継される()
+    internal void ズームイベントが中継される()
     {
         using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
         var control = CreateLaidOut();
@@ -151,7 +150,7 @@ public class CropViewControlTests
 
     /// <summary>ビューポート変化イベントが中継されることを検証する。</summary>
     [Fact]
-    public void ビューポート変化イベントが中継される()
+    internal void ビューポート変化イベントが中継される()
     {
         // パンできるよう、ビューポートより大きい画像を 100% で表示する
         using var image = TestHelper.CreateBitmap(400, 400, SKColors.Red);
@@ -169,7 +168,7 @@ public class CropViewControlTests
 
     /// <summary>座標変換が画像表示矩形の原点基準で往復することを検証する。</summary>
     [Fact]
-    public void 座標変換が往復する()
+    internal void 座標変換が往復する()
     {
         using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
         var control = CreateLaidOut();
@@ -187,7 +186,7 @@ public class CropViewControlTests
 
     /// <summary>画像未設定では表示矩形が空になることを検証する。</summary>
     [Fact]
-    public void 画像未設定なら表示矩形が空になる()
+    internal void 画像未設定なら表示矩形が空になる()
     {
         var control = CreateLaidOut();
 
@@ -196,7 +195,7 @@ public class CropViewControlTests
 
     /// <summary>外観の設定が内包するズームビューへ委譲されることを検証する。</summary>
     [Fact]
-    public void Appearanceの設定がズームビューへ委譲される()
+    internal void Appearanceの設定がズームビューへ委譲される()
     {
         var control = CreateLaidOut();
         var appearance = ZoomViewAppearance.Default with
@@ -213,7 +212,7 @@ public class CropViewControlTests
 
     /// <summary>CenterAlign の設定が内包するズームビューへ委譲されることを検証する。</summary>
     [Fact]
-    public void CenterAlignの設定がズームビューへ委譲される()
+    internal void CenterAlignの設定がズームビューへ委譲される()
     {
         var control = CreateLaidOut();
 
@@ -225,7 +224,7 @@ public class CropViewControlTests
 
     /// <summary>子要素（ズームビューとオーバーレイ）が 2 つ配置されることを検証する。</summary>
     [Fact]
-    public void 子要素がズームビューとオーバーレイの2つである()
+    internal void 子要素がズームビューとオーバーレイの2つである()
     {
         var control = CreateLaidOut();
 
@@ -234,7 +233,7 @@ public class CropViewControlTests
 
     /// <summary>ログの設定が内包するズームビューへ伝搬されることを検証する。</summary>
     [Fact]
-    public void Logの設定がズームビューへ伝搬される()
+    internal void Logの設定がズームビューへ伝搬される()
     {
         var control = CreateLaidOut();
 

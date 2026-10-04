@@ -23,7 +23,7 @@ public class HotKeyParserTests
     [InlineData("Win + S", HotKeyModifiers.Windows, EsKey.S)]
     [InlineData("Windows + Space", HotKeyModifiers.Windows, EsKey.Space)]
     [InlineData("Alt + F4", HotKeyModifiers.Alt, EsKey.F4)]
-    public void TryParse_標準形式を解釈する(string text, HotKeyModifiers expectedModifiers, EsKey expectedKey)
+    internal void TryParse_標準形式を解釈する(string text, HotKeyModifiers expectedModifiers, EsKey expectedKey)
     {
         var ok = HotKeyParser.TryParse(text, out var setting);
 
@@ -40,7 +40,7 @@ public class HotKeyParserTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void TryParse_空文字はfalse(string? text)
+    internal void TryParse_空文字はfalse(string? text)
     {
         Assert.False(HotKeyParser.TryParse(text!, out _));
     }
@@ -49,19 +49,19 @@ public class HotKeyParserTests
     [InlineData("Q")]          // 修飾キーなし
     [InlineData("Ctrl")]       // キーなし
     [InlineData("Ctrl +")]     // キーなし
-    public void TryParse_不十分な形式はfalse(string text)
+    internal void TryParse_不十分な形式はfalse(string text)
     {
         Assert.False(HotKeyParser.TryParse(text, out _));
     }
 
     [Fact]
-    public void TryParse_未知のキーはfalse()
+    internal void TryParse_未知のキーはfalse()
     {
         Assert.False(HotKeyParser.TryParse("Ctrl + UnknownKey", out _));
     }
 
     [Fact]
-    public void TryParse_未知の修飾キーは無視される()
+    internal void TryParse_未知の修飾キーは無視される()
     {
         // "Meta" は修飾キーとして解釈されない（None 扱い）→ 修飾キーなしとして失敗する
         // ここでは既知の修飾キー + 未知の修飾キーの組み合わせではなく、未知の修飾キーのみを検証する
@@ -69,7 +69,7 @@ public class HotKeyParserTests
     }
 
     [Fact]
-    public void TryParse_成功時にKeyへ正しく設定される()
+    internal void TryParse_成功時にKeyへ正しく設定される()
     {
         var ok = HotKeyParser.TryParse("Ctrl + P", out var setting);
 

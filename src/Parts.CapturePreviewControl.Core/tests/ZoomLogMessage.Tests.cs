@@ -18,17 +18,17 @@ public class ZoomLogMessageTests
     [InlineData(61.4, 61)]
     [InlineData(109.5, 110)]
     [InlineData(0.4, 0)]
-    public void Percent_四捨五入する(double value, int expected)
+    internal void Percent_四捨五入する(double value, int expected)
         => Assert.Equal(expected, ZoomLogFormat.Percent(value));
 
     /// <summary>倍率の文字列化が不変カルチャで行われることを検証する。</summary>
     [Fact]
-    public void Scale_不変カルチャで整形する()
+    internal void Scale_不変カルチャで整形する()
         => Assert.Equal("1.25", ZoomLogFormat.Scale(1.25));
 
     /// <summary>ズームイン・ズームアウトの書式が両 UI 共通の形式であることを検証する。</summary>
     [Fact]
-    public void ズーム操作の書式が期待どおりである()
+    internal void ズーム操作の書式が期待どおりである()
     {
         var logger = new RecordingLogger();
 
@@ -45,7 +45,7 @@ public class ZoomLogMessageTests
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
     [Fact]
-    public void 無効ロガーでも安全に実行される()
+    internal void 無効ロガーでも安全に実行される()
     {
         var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
 

@@ -14,19 +14,19 @@ public class CaptureTypeTraitsTests
     [Theory]
     [InlineData(CaptureType.ScreenSelect)]
     [InlineData(CaptureType.WindowSelect)]
-    public void IsHighlighted_ハイライト型はtrue(CaptureType type)
+    internal void IsHighlighted_ハイライト型はtrue(CaptureType type)
     {
         Assert.True(CaptureTypeTraits.IsHighlighted(type));
     }
 
     [Fact]
-    public void IsHighlighted_範囲選択はfalse()
+    internal void IsHighlighted_範囲選択はfalse()
     {
         Assert.False(CaptureTypeTraits.IsHighlighted(CaptureType.AreaSelect));
     }
 
     [Fact]
-    public void ResolveInterval_範囲選択のみ閉区間になる()
+    internal void ResolveInterval_範囲選択のみ閉区間になる()
     {
         Assert.Equal(EsRectInterval.Closed, CaptureTypeTraits.ResolveInterval(CaptureType.AreaSelect));
         Assert.Equal(EsRectInterval.HalfOpen, CaptureTypeTraits.ResolveInterval(CaptureType.ScreenSelect));
@@ -34,7 +34,7 @@ public class CaptureTypeTraitsTests
     }
 
     [Fact]
-    public void GetElementTarget_スクリーン選択は画面を検出する()
+    internal void GetElementTarget_スクリーン選択は画面を検出する()
     {
         Assert.Equal(CaptureElementTarget.Screen, CaptureTypeTraits.GetElementTarget(CaptureType.ScreenSelect));
     }
@@ -42,13 +42,13 @@ public class CaptureTypeTraitsTests
     [Theory]
     [InlineData(CaptureType.WindowSelect)]
     [InlineData(CaptureType.AreaSelect)]
-    public void GetElementTarget_それ以外はウィンドウを検出する(CaptureType type)
+    internal void GetElementTarget_それ以外はウィンドウを検出する(CaptureType type)
     {
         Assert.Equal(CaptureElementTarget.Window, CaptureTypeTraits.GetElementTarget(type));
     }
 
     [Fact]
-    public void IsHighlighted_とResolveInterval_は排他である()
+    internal void IsHighlighted_とResolveInterval_は排他である()
     {
         // ハイライト型は検出矩形（全ピクセルを含む）を使うため +1 しない
         foreach (var type in Enum.GetValues<CaptureType>())
@@ -64,7 +64,7 @@ public class CaptureTypeTraitsTests
     // ====================================================================
 
     [Fact]
-    public void FindUnderCursor_スクリーン選択は画面検出を呼ぶ()
+    internal void FindUnderCursor_スクリーン選択は画面検出を呼ぶ()
     {
         var finder = new RecordingElementFinder();
 
@@ -77,7 +77,7 @@ public class CaptureTypeTraitsTests
     [Theory]
     [InlineData(CaptureType.WindowSelect)]
     [InlineData(CaptureType.AreaSelect)]
-    public void FindUnderCursor_それ以外はウィンドウ検出を呼ぶ(CaptureType type)
+    internal void FindUnderCursor_それ以外はウィンドウ検出を呼ぶ(CaptureType type)
     {
         var finder = new RecordingElementFinder();
 
@@ -88,7 +88,7 @@ public class CaptureTypeTraitsTests
     }
 
     [Fact]
-    public void FindUnderCursor_検出サービスが無い場合は未検出を返す()
+    internal void FindUnderCursor_検出サービスが無い場合は未検出を返す()
     {
         var result = CaptureTypeTraits.FindUnderCursor(null, CaptureType.ScreenSelect, new EsPointInt(10, 20));
 
@@ -97,7 +97,7 @@ public class CaptureTypeTraitsTests
     }
 
     [Fact]
-    public void FindUnderCursor_検出結果をそのまま返す()
+    internal void FindUnderCursor_検出結果をそのまま返す()
     {
         var finder = new RecordingElementFinder
         {
@@ -117,7 +117,7 @@ public class CaptureTypeTraitsTests
     // ====================================================================
 
     [Fact]
-    public void ResolveRect_ハイライト型はハイライト矩形を選ぶ()
+    internal void ResolveRect_ハイライト型はハイライト矩形を選ぶ()
     {
         var highlight = new EsRect(1, 2, 3, 4);
         var selection = new EsRect(9, 9, 9, 9);
@@ -127,7 +127,7 @@ public class CaptureTypeTraitsTests
     }
 
     [Fact]
-    public void ResolveRect_範囲選択は選択矩形を選ぶ()
+    internal void ResolveRect_範囲選択は選択矩形を選ぶ()
     {
         var highlight = new EsRect(1, 2, 3, 4);
         var selection = new EsRect(9, 9, 9, 9);
@@ -136,7 +136,7 @@ public class CaptureTypeTraitsTests
     }
 
     [Fact]
-    public void ResolveRect_対象が無い場合はnullを返す()
+    internal void ResolveRect_対象が無い場合はnullを返す()
     {
         Assert.Null(CaptureTypeTraits.ResolveRect(CaptureType.ScreenSelect, null, new EsRect(1, 2, 3, 4)));
         Assert.Null(CaptureTypeTraits.ResolveRect(CaptureType.AreaSelect, new EsRect(1, 2, 3, 4), null));

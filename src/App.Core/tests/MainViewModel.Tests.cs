@@ -83,7 +83,7 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public async Task SaveImageAsync_現在のテンプレートで保存し保存後にインクリメントする()
+    internal async Task SaveImageAsync_現在のテンプレートで保存し保存後にインクリメントする()
     {
         using var tempDir = new TempDir();
         var writer = new MockImageWriter();
@@ -119,7 +119,7 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public async Task SaveImageAsync_プレビュー画像がnullの場合は保存せずインクリメントしない()
+    internal async Task SaveImageAsync_プレビュー画像がnullの場合は保存せずインクリメントしない()
     {
         using var tempDir = new TempDir();
         var writer = new MockImageWriter();
@@ -142,7 +142,7 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public async Task SaveImageAsync_同名ファイル存在時に上書きを拒否するとインクリメントしない()
+    internal async Task SaveImageAsync_同名ファイル存在時に上書きを拒否するとインクリメントしない()
     {
         using var tempDir = new TempDir();
         var writer = new MockImageWriter();
@@ -169,7 +169,7 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public async Task SaveImageAsync_同名ファイル存在時に上書き許可すると保存後にインクリメントする()
+    internal async Task SaveImageAsync_同名ファイル存在時に上書き許可すると保存後にインクリメントする()
     {
         using var tempDir = new TempDir();
         var writer = new MockImageWriter();
@@ -200,7 +200,7 @@ public class MainViewModelTests
     // ====================================================================
 
     [Fact]
-    public async Task CanSave_保存済みの場合はfalseになる()
+    internal async Task CanSave_保存済みの場合はfalseになる()
     {
         using var tempDir = new TempDir();
         var writer = new MockImageWriter();
@@ -220,7 +220,7 @@ public class MainViewModelTests
     }
 
     [Fact]
-    public async Task CanSave_画像を変更すると保存済みが解除されtrueに戻る()
+    internal async Task CanSave_画像を変更すると保存済みが解除されtrueに戻る()
     {
         using var tempDir = new TempDir();
         var writer = new MockImageWriter();
@@ -250,7 +250,7 @@ public class MainViewModelTests
     /// （UI 型をそのまま渡すと切り出しが例外で失敗する）。
     /// </remarks>
     [Fact]
-    public void CropPreviewCommand_引数はコア型の矩形のみ受け付ける()
+    internal void CropPreviewCommand_引数はコア型の矩形のみ受け付ける()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 

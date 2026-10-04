@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.Parts.LineDetection.Tests;
 public sealed class LineDetectionOptionsTests
 {
     [Fact]
-    public void Default_従来の定数値を持つ()
+    internal void Default_従来の定数値を持つ()
     {
         var options = LineDetectionOptions.Default;
 
@@ -28,14 +28,14 @@ public sealed class LineDetectionOptionsTests
     }
 
     [Fact]
-    public void Validate_既定値は不変条件を満たす()
+    internal void Validate_既定値は不変条件を満たす()
     {
         // 既定値は例外なく検証できる
         LineDetectionOptions.Default.Validate();
     }
 
     [Fact]
-    public void Validate_不正な値は例外を投げる()
+    internal void Validate_不正な値は例外を投げる()
     {
         var options = LineDetectionOptions.Default with { CannyThreshold1 = 0 };
         Assert.Throws<ArgumentException>(() => options.Validate());
@@ -51,7 +51,7 @@ public sealed class LineDetectionOptionsTests
     }
 
     [Fact]
-    public void with_で一部のパラメータを差し替えられる()
+    internal void with_で一部のパラメータを差し替えられる()
     {
         var options = LineDetectionOptions.Default with { MinLineLength = 100 };
 

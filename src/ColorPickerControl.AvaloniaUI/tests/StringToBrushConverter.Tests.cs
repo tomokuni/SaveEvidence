@@ -15,7 +15,7 @@ public class StringToBrushConverterTests
     private static readonly StringToBrushConverter s_converter = new();
 
     [Fact]
-    public void Convert_色名はSolidColorBrushを返す()
+    internal void Convert_色名はSolidColorBrushを返す()
     {
         var result = s_converter.Convert("Red", typeof(IBrush), null, CultureInfo.InvariantCulture);
 
@@ -24,7 +24,7 @@ public class StringToBrushConverterTests
     }
 
     [Fact]
-    public void Convert_同一入力はキャッシュされた同一インスタンスを返す()
+    internal void Convert_同一入力はキャッシュされた同一インスタンスを返す()
     {
         // Flyweight キャッシュにより、同一入力は生成済みブラシを共有する（無駄な生成の排除）
         var first = s_converter.Convert("Red", typeof(IBrush), null, CultureInfo.InvariantCulture);
@@ -34,7 +34,7 @@ public class StringToBrushConverterTests
     }
 
     [Fact]
-    public void Convert_キャッシュ容量超過後も正しく変換される()
+    internal void Convert_キャッシュ容量超過後も正しく変換される()
     {
         // 容量（BrushCacheCapacity）を超える個別の入力でキャッシュを溢れさせ、
         // 全クリア後も正しく変換できることを検証する（無制限増加の防止と正しさの両立）
@@ -50,7 +50,7 @@ public class StringToBrushConverterTests
     }
 
     [Fact]
-    public void Convert_16進コードはSolidColorBrushを返す()
+    internal void Convert_16進コードはSolidColorBrushを返す()
     {
         var result = s_converter.Convert("#00FF00", typeof(IBrush), null, CultureInfo.InvariantCulture);
 
@@ -59,7 +59,7 @@ public class StringToBrushConverterTests
     }
 
     [Fact]
-    public void Convert_無効な値はTransparentを返す()
+    internal void Convert_無効な値はTransparentを返す()
     {
         var result = s_converter.Convert("NotAColor", typeof(IBrush), null, CultureInfo.InvariantCulture);
 
@@ -67,7 +67,7 @@ public class StringToBrushConverterTests
     }
 
     [Fact]
-    public void Convert_nullはTransparentを返す()
+    internal void Convert_nullはTransparentを返す()
     {
         var result = s_converter.Convert(null, typeof(IBrush), null, CultureInfo.InvariantCulture);
 
@@ -75,7 +75,7 @@ public class StringToBrushConverterTests
     }
 
     [Fact]
-    public void Convert_空文字はTransparentを返す()
+    internal void Convert_空文字はTransparentを返す()
     {
         var result = s_converter.Convert("", typeof(IBrush), null, CultureInfo.InvariantCulture);
 
@@ -83,7 +83,7 @@ public class StringToBrushConverterTests
     }
 
     [Fact]
-    public void ConvertBack_NotSupportedExceptionを投げる()
+    internal void ConvertBack_NotSupportedExceptionを投げる()
     {
         Assert.Throws<NotSupportedException>(() =>
             s_converter.ConvertBack("Red", typeof(IBrush), null, CultureInfo.InvariantCulture));

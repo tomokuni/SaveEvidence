@@ -20,7 +20,7 @@ public class CaptureSettingsMergeTests
     }.ToNonNull();
 
     [Fact]
-    public void Merge_nullの項目は現在値を維持する()
+    internal void Merge_nullの項目は現在値を維持する()
     {
         var current = Current();
 
@@ -30,7 +30,7 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
-    public void Merge_非nullの項目は上書きする()
+    internal void Merge_非nullの項目は上書きする()
     {
         var current = Current();
 
@@ -43,7 +43,7 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
-    public void Merge_現在値未指定なら既定値へマージする()
+    internal void Merge_現在値未指定なら既定値へマージする()
     {
         // 現在値が無い場合は ToNonNull の既定値を基点にする
         var expected = new CaptureSettings().ToNonNull();
@@ -54,7 +54,7 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
-    public void Merge_入力がnullなら既定値の設定を返す()
+    internal void Merge_入力がnullなら既定値の設定を返す()
     {
         // 「入力が無い（null）は既定の設定」という規則をコアが単一所有する（UI が ?? を書かない）
         var expected = new CaptureSettings().ToNonNull();
@@ -65,7 +65,7 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
-    public void Merge_入力がnullでも現在値があれば現在値を維持する()
+    internal void Merge_入力がnullでも現在値があれば現在値を維持する()
     {
         // 部分更新の入力が無い場合は現在値をそのまま使う（既定値へ戻さない）
         var current = Current();
@@ -77,7 +77,7 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
-    public void Apply_同一値の再設定はfalseを返し参照を差し替えない()
+    internal void Apply_同一値の再設定はfalseを返し参照を差し替えない()
     {
         var current = Current();
         var before = current;
@@ -91,7 +91,7 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
-    public void Apply_変更があればtrueを返し参照を差し替える()
+    internal void Apply_変更があればtrueを返し参照を差し替える()
     {
         var current = Current();
         var before = current;
@@ -105,7 +105,7 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
-    public void Apply_範囲外の値は例外を投げる()
+    internal void Apply_範囲外の値は例外を投げる()
     {
         var current = Current();
 
@@ -114,7 +114,7 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
-    public void Apply_ロガー未指定でも適用できる()
+    internal void Apply_ロガー未指定でも適用できる()
     {
         var current = Current();
 
@@ -124,7 +124,7 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
-    public void Apply_全項目が現在値と一致する場合は更新しない()
+    internal void Apply_全項目が現在値と一致する場合は更新しない()
     {
         var current = Current();
         var all = new CaptureSettings { MinSelectionSize = current.MinSelectionSize, BorderThickness = current.BorderThickness, BorderColor = current.BorderColor };

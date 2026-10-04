@@ -54,7 +54,7 @@ public class SkiaLabelTests
 
     /// <summary>文字が背景の上に描かれる（順序が入れ替わると背景色のみになる）ことを検証する。</summary>
     [Fact]
-    public void Draw_文字を背景の上に描く()
+    internal void Draw_文字を背景の上に描く()
     {
         var (bitmap, canvas) = CreateTarget(80, 40);
         using (bitmap)
@@ -74,7 +74,7 @@ public class SkiaLabelTests
 
     /// <summary>角丸半径 0 は四角形として背景を塗ることを検証する。</summary>
     [Fact]
-    public void Draw_角丸なしは四角形として塗る()
+    internal void Draw_角丸なしは四角形として塗る()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -92,7 +92,7 @@ public class SkiaLabelTests
 
     /// <summary>角丸半径を指定すると四隅が塗られない（角が丸い）ことを検証する。</summary>
     [Fact]
-    public void Draw_角丸ありは四隅を塗らない()
+    internal void Draw_角丸ありは四隅を塗らない()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -110,7 +110,7 @@ public class SkiaLabelTests
 
     /// <summary>半透明の背景色がそのまま塗られることを検証する。</summary>
     [Fact]
-    public void Draw_半透明の背景色をそのまま塗る()
+    internal void Draw_半透明の背景色をそのまま塗る()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -128,7 +128,7 @@ public class SkiaLabelTests
 
     /// <summary>キャンバスが null の場合は例外になることを検証する。</summary>
     [Fact]
-    public void Draw_キャンバスがnullなら例外()
+    internal void Draw_キャンバスがnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(() => SkiaLabel.Draw(
             null!, new EsRect(0, 0, 10, 10), s_background, "A", new EsPoint(0, 0), fontSize: 12, DrawingColor.White));

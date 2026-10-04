@@ -25,7 +25,7 @@ public class SkiaFillTests
 
     /// <summary>矩形を指定色で塗ることを検証する。</summary>
     [Fact]
-    public void Rect_矩形を塗る()
+    internal void Rect_矩形を塗る()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -42,7 +42,7 @@ public class SkiaFillTests
 
     /// <summary>半透明の色がそのまま塗られることを検証する。</summary>
     [Fact]
-    public void Rect_半透明の色をそのまま塗る()
+    internal void Rect_半透明の色をそのまま塗る()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -56,7 +56,7 @@ public class SkiaFillTests
 
     /// <summary>複数の矩形を同じ色でまとめて塗ることを検証する。</summary>
     [Fact]
-    public void Rects_複数の矩形を塗る()
+    internal void Rects_複数の矩形を塗る()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -73,7 +73,7 @@ public class SkiaFillTests
 
     /// <summary>空の一覧では何も塗らないことを検証する。</summary>
     [Fact]
-    public void Rects_空の一覧なら何も塗らない()
+    internal void Rects_空の一覧なら何も塗らない()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -87,7 +87,7 @@ public class SkiaFillTests
 
     /// <summary>角丸半径 0 は四角形として塗ることを検証する。</summary>
     [Fact]
-    public void RoundRect_半径0なら四角形として塗る()
+    internal void RoundRect_半径0なら四角形として塗る()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -103,7 +103,7 @@ public class SkiaFillTests
 
     /// <summary>角丸半径を指定すると四隅が塗られないことを検証する。</summary>
     [Fact]
-    public void RoundRect_半径ありなら四隅を塗らない()
+    internal void RoundRect_半径ありなら四隅を塗らない()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -120,7 +120,7 @@ public class SkiaFillTests
 
     /// <summary>負の半径は四角形として扱うことを検証する（補正済みの値だけが来るが、防御として固定する）。</summary>
     [Fact]
-    public void RoundRect_負の半径は四角形として塗る()
+    internal void RoundRect_負の半径は四角形として塗る()
     {
         var (bitmap, canvas) = CreateTarget(40, 40);
         using (bitmap)
@@ -138,7 +138,7 @@ public class SkiaFillTests
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(2)]
-    public void Fill_キャンバスがnullなら例外(int kind)
+    internal void Fill_キャンバスがnullなら例外(int kind)
     {
         var rect = new EsRect(0, 0, 10, 10);
 
@@ -155,7 +155,7 @@ public class SkiaFillTests
 
     /// <summary>一覧が null の場合は例外になることを検証する。</summary>
     [Fact]
-    public void Rects_一覧がnullなら例外()
+    internal void Rects_一覧がnullなら例外()
     {
         var (bitmap, canvas) = CreateTarget(10, 10);
         using (bitmap)

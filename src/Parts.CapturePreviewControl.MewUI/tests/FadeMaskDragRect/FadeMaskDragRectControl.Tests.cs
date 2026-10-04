@@ -34,7 +34,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void 既定値_範囲選択モードで選択なし全面暗転になる()
+    internal void 既定値_範囲選択モードで選択なし全面暗転になる()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -56,7 +56,7 @@ public class FadeMaskDragRectControlTests
     [InlineData(FadeMaskDragRectMode.AreaSelect, true, true)]
     [InlineData(FadeMaskDragRectMode.ScreenSelect, false, false)]
     [InlineData(FadeMaskDragRectMode.WindowSelect, false, false)]
-    public void モード切替_選択矩形の可視性と全面暗転を切り替える(
+    internal void モード切替_選択矩形の可視性と全面暗転を切り替える(
         FadeMaskDragRectMode mode, bool expectedShowFullOverlay, bool expectedMarqueeVisible)
     {
         var control = new FadeMaskDragRectControl { Mode = mode };
@@ -74,7 +74,7 @@ public class FadeMaskDragRectControlTests
     /// （実際にキャプチャと切り出しで表示されない不具合として発生した）。
     /// </remarks>
     [Fact]
-    public void MarqueeAppearance_代入後もモード由来の表示可否が保たれる()
+    internal void MarqueeAppearance_代入後もモード由来の表示可否が保たれる()
     {
         var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.Crop };
 
@@ -113,7 +113,7 @@ public class FadeMaskDragRectControlTests
     [InlineData(FadeMaskDragRectMode.AreaSelect, true)]
     [InlineData(FadeMaskDragRectMode.ScreenSelect, false)]
     [InlineData(FadeMaskDragRectMode.WindowSelect, false)]
-    public void モード切替_ルーペの表示可否を切り替える(FadeMaskDragRectMode mode, bool expected)
+    internal void モード切替_ルーペの表示可否を切り替える(FadeMaskDragRectMode mode, bool expected)
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -127,7 +127,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void モード切替_同じ値を設定しても状態は変わらない()
+    internal void モード切替_同じ値を設定しても状態は変わらない()
     {
         var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.AreaSelect };
 
@@ -143,7 +143,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void SetSelection_選択矩形を暗転マスクへ同期する()
+    internal void SetSelection_選択矩形を暗転マスクへ同期する()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -154,7 +154,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void SetSelection_サイズ0以下は選択なしとして扱う()
+    internal void SetSelection_サイズ0以下は選択なしとして扱う()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -165,7 +165,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ClearSelection_選択状態をクリアする()
+    internal void ClearSelection_選択状態をクリアする()
     {
         var control = new FadeMaskDragRectControl();
         control.SetSelection(new EsRect(10, 20, 100, 80));
@@ -177,7 +177,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void SetSelection_ドラッグ選択から選択矩形へ反映される()
+    internal void SetSelection_ドラッグ選択から選択矩形へ反映される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -189,7 +189,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ハイライト_設定と取得が委譲される()
+    internal void ハイライト_設定と取得が委譲される()
     {
         var control = new FadeMaskDragRectControl { HighlightSourceRect = new EsRect(1, 2, 3, 4) };
 
@@ -206,7 +206,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void 外観は選択矩形の外観へ委譲される()
+    internal void 外観は選択矩形の外観へ委譲される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -236,7 +236,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void 文言プロバイダ_ホストが保持する()
+    internal void 文言プロバイダ_ホストが保持する()
     {
         var control = new FadeMaskDragRectControl();
         Func<string?> operation = () => "確定: Enter";
@@ -252,7 +252,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ラベル文言は暗転マスクへ反映される()
+    internal void ラベル文言は暗転マスクへ反映される()
     {
         var control = new FadeMaskDragRectControl();
         Func<string?> provider = () => "(10, 20) - (30, 40)";
@@ -265,7 +265,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ラベルの既定値_サイズラベルは表示でプロバイダ未設定なら自動生成になる()
+    internal void ラベルの既定値_サイズラベルは表示でプロバイダ未設定なら自動生成になる()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -281,7 +281,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void 選択矩形破線の色_既定は白と黒()
+    internal void 選択矩形破線の色_既定は白と黒()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -290,7 +290,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void 選択矩形破線の色_設定が反映される()
+    internal void 選択矩形破線の色_設定が反映される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -305,7 +305,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void DrawSelectionOverlay_選択がある場合は破線を描画する()
+    internal void DrawSelectionOverlay_選択がある場合は破線を描画する()
     {
         using var target = TestHelper.CreateTarget(64, 64);
         var control = new FadeMaskDragRectControl();
@@ -322,7 +322,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void DrawSelectionOverlay_選択がない場合は描画しない()
+    internal void DrawSelectionOverlay_選択がない場合は描画しない()
     {
         using var target = TestHelper.CreateTarget(64, 64);
         var control = new FadeMaskDragRectControl();
@@ -333,7 +333,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void DrawSelectionOverlay_選択矩形を使わないモードでは描画しない()
+    internal void DrawSelectionOverlay_選択矩形を使わないモードでは描画しない()
     {
         using var target = TestHelper.CreateTarget(64, 64);
         var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.WindowSelect };
@@ -345,7 +345,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void DrawSelectionOverlay_設定した色で破線を描画する()
+    internal void DrawSelectionOverlay_設定した色で破線を描画する()
     {
         using var target = TestHelper.CreateTarget(64, 64);
         var control = new FadeMaskDragRectControl
@@ -369,7 +369,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void Log_既定はNullLoggerで例外にならない()
+    internal void Log_既定はNullLoggerで例外にならない()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -383,7 +383,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void Log_内包するドラッグ選択コントロールと同一のロガーになる()
+    internal void Log_内包するドラッグ選択コントロールと同一のロガーになる()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -397,7 +397,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void Log_内包するドラッグ選択コントロールとルーペへ伝搬される()
+    internal void Log_内包するドラッグ選択コントロールとルーペへ伝搬される()
     {
         var control = new FadeMaskDragRectControl();
         var logger = new RecordingLogger();
@@ -411,7 +411,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void Log_選択矩形コントロールへ伝搬する()
+    internal void Log_選択矩形コントロールへ伝搬する()
     {
         var control = new FadeMaskDragRectControl();
         var logger = new RecordingLogger();
@@ -427,7 +427,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void SetCoordTransform_選択矩形コントロールへ伝搬する()
+    internal void SetCoordTransform_選択矩形コントロールへ伝搬する()
     {
         var control = new FadeMaskDragRectControl();
         var port = CreatePort();
@@ -439,7 +439,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void SetCoordTransform_nullは未設定として渡される()
+    internal void SetCoordTransform_nullは未設定として渡される()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -471,7 +471,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void ルーペ_画像未設定では表示しない()
+    internal void ルーペ_画像未設定では表示しない()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -483,7 +483,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ルーペ_画像設定後は表示する()
+    internal void ルーペ_画像設定後は表示する()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -498,7 +498,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void SetLoupeSource_解除すると非表示になる()
+    internal void SetLoupeSource_解除すると非表示になる()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -514,7 +514,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ClearLoupe_画像と中心を破棄する()
+    internal void ClearLoupe_画像と中心を破棄する()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -530,7 +530,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ルーペ_中心とオフセットの位置へ配置する()
+    internal void ルーペ_中心とオフセットの位置へ配置する()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -557,7 +557,7 @@ public class FadeMaskDragRectControlTests
     /// <summary>複合コントロール経由でもルーペの中心座標ラベルがテキスト要素として配置されることを検証する。</summary>
     /// <remarks>文言・表示可否・配置はコアが単一所有し、ルーペコントロールが要素を置く（統合経路の検証）。</remarks>
     [Fact]
-    public void ルーペ_中心座標ラベルの要素を配置する()
+    internal void ルーペ_中心座標ラベルの要素を配置する()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -586,7 +586,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ルーペ_親領域の右端を超える場合は内側へクランプする()
+    internal void ルーペ_親領域の右端を超える場合は内側へクランプする()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -609,7 +609,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ルーペ_画像未設定では配置しない()
+    internal void ルーペ_画像未設定では配置しない()
     {
         var control = new FadeMaskDragRectControl();
         control.Options = control.Options with { Loupe = control.Options.Loupe with { RequestedSize = 100 } };
@@ -621,7 +621,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void ルーペ_表示しないモードでは配置しない()
+    internal void ルーペ_表示しないモードでは配置しない()
     {
         var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.ScreenSelect };
         control.Options = control.Options with { Loupe = control.Options.Loupe with { RequestedSize = 100 } };
@@ -641,7 +641,7 @@ public class FadeMaskDragRectControlTests
     // ====================================================================
 
     [Fact]
-    public void ConfirmRequested_確定時に選択矩形を通知する()
+    internal void ConfirmRequested_確定時に選択矩形を通知する()
     {
         var control = new FadeMaskDragRectControl();
         FadeMaskDragRectSelectionEventArgs? raised = null;
@@ -655,7 +655,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void CancelRequested_選択なしでも通知する()
+    internal void CancelRequested_選択なしでも通知する()
     {
         var control = new FadeMaskDragRectControl();
         var raised = false;
@@ -667,7 +667,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void LoupePositionMoved_選択変更では通知しない()
+    internal void LoupePositionMoved_選択変更では通知しない()
     {
         var control = new FadeMaskDragRectControl();
         var raised = false;
@@ -681,7 +681,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void RefreshOverlay_例外なく完了する()
+    internal void RefreshOverlay_例外なく完了する()
     {
         var control = new FadeMaskDragRectControl();
         control.SetCoordTransform(CreatePort());
@@ -694,7 +694,7 @@ public class FadeMaskDragRectControlTests
     }
 
     [Fact]
-    public void InvalidateOverlay_例外なく完了する()
+    internal void InvalidateOverlay_例外なく完了する()
     {
         var control = new FadeMaskDragRectControl();
 

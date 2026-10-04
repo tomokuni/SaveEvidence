@@ -20,7 +20,7 @@ public class EsGeometryMewUIInteropTests
     // ====================================================================
 
     [Fact]
-    public void EsPoint_往復変換で値が一致する()
+    internal void EsPoint_往復変換で値が一致する()
     {
         var es = new EsPoint(1.5, -2.5);
 
@@ -29,7 +29,7 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
-    public void EsPointInt_物理ピクセルの座標をそのまま写す()
+    internal void EsPointInt_物理ピクセルの座標をそのまま写す()
     {
         // MewUI は DIP と物理ピクセルを同じ型（Point）で表すため、値の変換は行わない
         // （Avalonia 版の ToAvaloniaPixelPoint と対称）
@@ -39,7 +39,7 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
-    public void EsSize_往復変換で値が一致する()
+    internal void EsSize_往復変換で値が一致する()
     {
         var es = new EsSize(100, 50);
 
@@ -48,7 +48,7 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
-    public void EsVector_往復変換で値が一致する()
+    internal void EsVector_往復変換で値が一致する()
     {
         var es = new EsVector(-3, 7.25);
 
@@ -57,7 +57,7 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
-    public void EsRect_往復変換で値が一致する()
+    internal void EsRect_往復変換で値が一致する()
     {
         var es = new EsRect(10, 20, 300, 400);
 
@@ -66,7 +66,7 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
-    public void EsRect_負のサイズはMewUI側で0にクランプされる()
+    internal void EsRect_負のサイズはMewUI側で0にクランプされる()
     {
         // MewUI の Rect / Size は負のサイズを 0 にクランプする（Avalonia は保持する）ため、往復で値は変わらない。
         // 座標（X / Y）は保持される。
@@ -84,7 +84,7 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
-    public void EsSize_負のサイズはMewUI側で0にクランプされる()
+    internal void EsSize_負のサイズはMewUI側で0にクランプされる()
     {
         var clamped = new EsSize(-20, -30).ToMewUISize();
 
@@ -93,7 +93,7 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
-    public void EsRect_正のサイズは値のまま往復する()
+    internal void EsRect_正のサイズは値のまま往復する()
     {
         var es = new EsRect(10, 20, 300, 400);
 
@@ -105,7 +105,7 @@ public class EsGeometryMewUIInteropTests
     // ====================================================================
 
     [Fact]
-    public void 色_往復変換でARGBが一致する()
+    internal void 色_往復変換でARGBが一致する()
     {
         var color = DrawingColor.FromArgb(128, 30, 144, 255);
 
@@ -119,7 +119,7 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
-    public void 色_アルファ0と255も保持される()
+    internal void 色_アルファ0と255も保持される()
     {
         var transparent = DrawingColor.FromArgb(0, 1, 2, 3).ToMewUIColor().ToDrawingColor();
         var opaque = DrawingColor.FromArgb(255, 4, 5, 6).ToMewUIColor().ToDrawingColor();
@@ -129,7 +129,7 @@ public class EsGeometryMewUIInteropTests
     }
 
     [Fact]
-    public void 色_MewUIの全成分が保持される()
+    internal void 色_MewUIの全成分が保持される()
     {
         var mew = MewUIColor.FromArgb(200, 10, 20, 30);
 

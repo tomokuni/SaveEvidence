@@ -39,7 +39,7 @@ public class CaptureHighlightTests
         => new(bounds, IsDetected: true, Title: title, ClassName: className);
 
     [Fact]
-    public void Update_検出時は対象座標の矩形と表示名を返す()
+    internal void Update_検出時は対象座標の矩形と表示名を返す()
     {
         var session = new CaptureHighlightSession();
 
@@ -53,7 +53,7 @@ public class CaptureHighlightTests
     }
 
     [Fact]
-    public void Update_未検出は矩形nullと空文字へ正規化する()
+    internal void Update_未検出は矩形nullと空文字へ正規化する()
     {
         // 「未検出は矩形なし・空文字」という正規化をコアが単一所有する
         var session = new CaptureHighlightSession();
@@ -66,7 +66,7 @@ public class CaptureHighlightTests
     }
 
     [Fact]
-    public void Update_タイトルの変化を返す()
+    internal void Update_タイトルの変化を返す()
     {
         var session = new CaptureHighlightSession();
 
@@ -80,7 +80,7 @@ public class CaptureHighlightTests
     }
 
     [Fact]
-    public void Update_未検出でタイトルが空へ戻る変化を返す()
+    internal void Update_未検出でタイトルが空へ戻る変化を返す()
     {
         var session = new CaptureHighlightSession();
         session.Update(CaptureType.WindowSelect, Detected(new EsRectInt(0, 0, 10, 10), "A"), default);
@@ -92,7 +92,7 @@ public class CaptureHighlightTests
     }
 
     [Fact]
-    public void Update_表示名が同じ未検出の連続は変化なしを返す()
+    internal void Update_表示名が同じ未検出の連続は変化なしを返す()
     {
         var session = new CaptureHighlightSession();
 
@@ -103,7 +103,7 @@ public class CaptureHighlightTests
     }
 
     [Fact]
-    public void Update_検出結果をログへ記録する()
+    internal void Update_検出結果をログへ記録する()
     {
         var logger = new RecordingLogger();
         var session = new CaptureHighlightSession(logger);
@@ -116,7 +116,7 @@ public class CaptureHighlightTests
     }
 
     [Fact]
-    public void Update_未検出もログへ記録する()
+    internal void Update_未検出もログへ記録する()
     {
         // 未検出は矩形が空文字になる（書式はコアが単一所有する）
         var logger = new RecordingLogger();
@@ -130,14 +130,14 @@ public class CaptureHighlightTests
     }
 
     [Fact]
-    public void Title_初期値は空文字()
+    internal void Title_初期値は空文字()
     {
         // 情報ラベルの文言プロバイダが未検出時に空文字を読む（null を描画側へ渡さない）
         Assert.Equal("", new CaptureHighlightSession().Title);
     }
 
     [Fact]
-    public void SourceRect_初期値はnull()
+    internal void SourceRect_初期値はnull()
     {
         // 未検出の初期状態（確定対象なし・ラベルは設定の明示指定を使う）
         Assert.Null(new CaptureHighlightSession().SourceRect);

@@ -15,7 +15,7 @@ public class ColorValidationTests
     // ====================================================================
 
     [Fact]
-    public void Determine_空文字はエラーなしになる()
+    internal void Determine_空文字はエラーなしになる()
     {
         var state = ColorValidation.Determine("", isValid: false);
 
@@ -24,7 +24,7 @@ public class ColorValidationTests
     }
 
     [Fact]
-    public void Determine_nullはエラーなしになる()
+    internal void Determine_nullはエラーなしになる()
     {
         var state = ColorValidation.Determine(null!, isValid: false);
 
@@ -33,7 +33,7 @@ public class ColorValidationTests
     }
 
     [Fact]
-    public void Determine_有効な色はエラーなしになる()
+    internal void Determine_有効な色はエラーなしになる()
     {
         var state = ColorValidation.Determine("#FF0000", isValid: true);
 
@@ -46,7 +46,7 @@ public class ColorValidationTests
     // ====================================================================
 
     [Fact]
-    public void Determine_無効な色はエラーありになる()
+    internal void Determine_無効な色はエラーありになる()
     {
         var state = ColorValidation.Determine("NotAColor", isValid: false);
 
@@ -55,7 +55,7 @@ public class ColorValidationTests
     }
 
     [Fact]
-    public void Determine_エラーメッセージは無効な色コードを示す()
+    internal void Determine_エラーメッセージは無効な色コードを示す()
     {
         var state = ColorValidation.Determine("NotAColor", isValid: false);
 
@@ -67,25 +67,25 @@ public class ColorValidationTests
     // ====================================================================
 
     [Fact]
-    public void ShouldRecover_無効な色で最終有効値があればtrueになる()
+    internal void ShouldRecover_無効な色で最終有効値があればtrueになる()
     {
         Assert.True(ColorValidation.ShouldRecover(isValid: false, hasLastValid: true));
     }
 
     [Fact]
-    public void ShouldRecover_有効な色ではfalseになる()
+    internal void ShouldRecover_有効な色ではfalseになる()
     {
         Assert.False(ColorValidation.ShouldRecover(isValid: true, hasLastValid: true));
     }
 
     [Fact]
-    public void ShouldRecover_最終有効値がなければfalseになる()
+    internal void ShouldRecover_最終有効値がなければfalseになる()
     {
         Assert.False(ColorValidation.ShouldRecover(isValid: false, hasLastValid: false));
     }
 
     [Fact]
-    public void ShouldRecover_有効かつ最終有効値がなければfalseになる()
+    internal void ShouldRecover_有効かつ最終有効値がなければfalseになる()
     {
         Assert.False(ColorValidation.ShouldRecover(isValid: true, hasLastValid: false));
     }

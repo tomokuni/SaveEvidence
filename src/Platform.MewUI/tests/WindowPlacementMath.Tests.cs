@@ -26,7 +26,7 @@ public sealed class WindowPlacementMathTests
     [InlineData(100, 200, 1.5, 150, 300)]
     [InlineData(100, 200, 2.0, 200, 400)]
     [InlineData(-40, -20, 1.25, -50, -25)]
-    public void ToPhysicalPixelPoint_スケールを掛けて四捨五入する(
+    internal void ToPhysicalPixelPoint_スケールを掛けて四捨五入する(
         double x, double y, double scale, int expectedX, int expectedY)
     {
         var result = WindowPlacementMath.ToPhysicalPixelPoint(new EsPoint(x, y), scale);
@@ -36,7 +36,7 @@ public sealed class WindowPlacementMathTests
     }
 
     [Fact]
-    public void ToPhysicalPixelPoint_端数は四捨五入する()
+    internal void ToPhysicalPixelPoint_端数は四捨五入する()
     {
         // 101.6 * 1.25 = 127.0 / 100.4 * 1.25 = 125.5 → 126（MidpointRounding.AwayFromZero ではなく ToEven だが 125.5 は偶数へ）
         var result = WindowPlacementMath.ToPhysicalPixelPoint(new EsPoint(101.6, 100.4), 1.25);
@@ -52,7 +52,7 @@ public sealed class WindowPlacementMathTests
     [InlineData(-1.0)]
     [InlineData(double.NaN)]
     [InlineData(double.PositiveInfinity)]
-    public void ToPhysicalPixelPoint_無効なスケールは1として扱う(double scale)
+    internal void ToPhysicalPixelPoint_無効なスケールは1として扱う(double scale)
     {
         var result = WindowPlacementMath.ToPhysicalPixelPoint(new EsPoint(100, 200), scale);
 
@@ -70,7 +70,7 @@ public sealed class WindowPlacementMathTests
     [InlineData(1200, 800, 1.0, 1200, 800)]
     [InlineData(1200, 800, 1.25, 1500, 1000)]
     [InlineData(1200, 800, 1.5, 1800, 1200)]
-    public void ToPhysicalPixelSize_スケールを掛けて四捨五入する(
+    internal void ToPhysicalPixelSize_スケールを掛けて四捨五入する(
         double width, double height, double scale, int expectedWidth, int expectedHeight)
     {
         var result = WindowPlacementMath.ToPhysicalPixelSize(new EsSize(width, height), scale);
@@ -85,7 +85,7 @@ public sealed class WindowPlacementMathTests
     [InlineData(0, 0)]
     [InlineData(0.1, 0.1)]
     [InlineData(-100, -50)]
-    public void ToPhysicalPixelSize_最小1へクランプする(double width, double height)
+    internal void ToPhysicalPixelSize_最小1へクランプする(double width, double height)
     {
         var result = WindowPlacementMath.ToPhysicalPixelSize(new EsSize(width, height), 1.0);
 
@@ -107,7 +107,7 @@ public sealed class WindowPlacementMathTests
     [InlineData(100, 200, 1.0, 100, 200)]
     [InlineData(125, 250, 1.25, 100, 200)]
     [InlineData(-50, -25, 1.25, -40, -20)]
-    public void ToDipPoint_スケールで割る(
+    internal void ToDipPoint_スケールで割る(
         int x, int y, double scale, double expectedX, double expectedY)
     {
         var result = WindowPlacementMath.ToDipPoint(new EsPointInt(x, y), scale);
@@ -117,7 +117,7 @@ public sealed class WindowPlacementMathTests
     }
 
     [Fact]
-    public void ToDipPoint_無効なスケールは1として扱う()
+    internal void ToDipPoint_無効なスケールは1として扱う()
     {
         var result = WindowPlacementMath.ToDipPoint(new EsPointInt(100, 200), 0);
 
@@ -132,7 +132,7 @@ public sealed class WindowPlacementMathTests
     [InlineData(1.25)]
     [InlineData(1.5)]
     [InlineData(2.0)]
-    public void 往復_DIPから物理を経て元へ戻る(double scale)
+    internal void 往復_DIPから物理を経て元へ戻る(double scale)
     {
         var original = new EsPoint(1234, 567);
 
@@ -149,14 +149,14 @@ public sealed class WindowPlacementMathTests
     // ====================================================================
 
     [Fact]
-    public void IsUsable_幅と高さが正ならtrueを返す()
+    internal void IsUsable_幅と高さが正ならtrueを返す()
     {
         Assert.True(WindowPlacementMath.IsUsable(new EsRectInt(10, 20, 1200, 800)));
     }
 
     /// <summary>幅または高さが 0 以下の場合は復元しないことを検証する。</summary>
     [Fact]
-    public void IsUsable_幅か高さが0以下ならfalseを返す()
+    internal void IsUsable_幅か高さが0以下ならfalseを返す()
     {
         Assert.False(WindowPlacementMath.IsUsable(new EsRectInt(10, 20, 0, 800)));
         Assert.False(WindowPlacementMath.IsUsable(new EsRectInt(10, 20, 1200, 0)));
@@ -164,7 +164,7 @@ public sealed class WindowPlacementMathTests
     }
 
     [Fact]
-    public void IsUsable_nullはfalseを返す()
+    internal void IsUsable_nullはfalseを返す()
     {
         Assert.False(WindowPlacementMath.IsUsable(null));
     }

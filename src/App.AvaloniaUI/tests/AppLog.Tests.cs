@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Tests;
 public class AppLogTests
 {
     [Fact]
-    public void 実ロガー設定時に全ログメソッドが実行される()
+    internal void 実ロガー設定時に全ログメソッドが実行される()
     {
         var logger = new RecordingLogger();
         InvokeAll(logger);
@@ -25,7 +25,7 @@ public class AppLogTests
     }
 
     [Fact]
-    public void 無効ロガーでも全ログメソッドが安全に実行される()
+    internal void 無効ロガーでも全ログメソッドが安全に実行される()
     {
         // IsEnabled=false（NullLogger）でも生成コードの IsEnabled 分岐（false パス）が実行される
         InvokeAll(NullLogger.Instance);

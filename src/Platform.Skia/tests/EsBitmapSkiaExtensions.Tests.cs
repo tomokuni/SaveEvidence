@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.Platform.Skia.Tests;
 public class EsBitmapSkiaExtensionsTests
 {
     [Fact]
-    public void ToSKBitmap_同じピクセルを指す非所有ビューを返す()
+    internal void ToSKBitmap_同じピクセルを指す非所有ビューを返す()
     {
         using var bmp = EsBitmap.Create(6, 8);
 
@@ -29,7 +29,7 @@ public class EsBitmapSkiaExtensionsTests
     /// <summary>ビューがコアのピクセルを共有していることを検証する（コピーしていない）。</summary>
     /// <remarks>非所有ビューであるため、コア側の書き込みがビューへ即座に反映される。</remarks>
     [Fact]
-    public void ToSKBitmap_はコアのピクセルを共有する()
+    internal void ToSKBitmap_はコアのピクセルを共有する()
     {
         using var bmp = EsBitmap.Create(2, 2);
         using var view = bmp.ToSKBitmap();
@@ -41,7 +41,7 @@ public class EsBitmapSkiaExtensionsTests
 
     /// <summary>ビューを破棄してもコアのバッファが解放されないことを検証する。</summary>
     [Fact]
-    public void ToSKBitmap_ビューを破棄してもコアは使用できる()
+    internal void ToSKBitmap_ビューを破棄してもコアは使用できる()
     {
         using var bmp = EsBitmap.Create(2, 2);
         bmp.SetPixel(0, 0, b: 1, g: 2, r: 3, a: 255);
@@ -58,7 +58,7 @@ public class EsBitmapSkiaExtensionsTests
     }
 
     [Fact]
-    public void ToSKBitmap_破棄済みなら例外()
+    internal void ToSKBitmap_破棄済みなら例外()
     {
         var bmp = EsBitmap.Create(2, 2);
         bmp.Dispose();
@@ -67,7 +67,7 @@ public class EsBitmapSkiaExtensionsTests
     }
 
     [Fact]
-    public void ToEsBitmap_複製を生成し引数の所有権は残る()
+    internal void ToEsBitmap_複製を生成し引数の所有権は残る()
     {
         using var sk = new SKBitmap(new SKImageInfo(4, 4, SKColorType.Bgra8888, SKAlphaType.Premul));
 
@@ -81,7 +81,7 @@ public class EsBitmapSkiaExtensionsTests
     }
 
     [Fact]
-    public void ToEsBitmap_部分透明アルファを保持する()
+    internal void ToEsBitmap_部分透明アルファを保持する()
     {
         using var sk = new SKBitmap(new SKImageInfo(4, 4, SKColorType.Bgra8888, SKAlphaType.Premul));
         unsafe
@@ -104,7 +104,7 @@ public class EsBitmapSkiaExtensionsTests
 
     /// <summary>画素を持たない（未確保の）ビットマップを変換しても例外にならず、透明を返すことを検証する。</summary>
     [Fact]
-    public void ToEsBitmap_画素を持たないビットマップは透明を返す()
+    internal void ToEsBitmap_画素を持たないビットマップは透明を返す()
     {
         using var sk = new SKBitmap();
 
@@ -117,7 +117,7 @@ public class EsBitmapSkiaExtensionsTests
     /// <summary>コアと Skia の間で往復してもピクセルが保たれることを検証する。</summary>
     /// <remarks>Avalonia ヘッドレス初期化に依存せず、アルファ付きピクセルが往復できることを固定する。</remarks>
     [Fact]
-    public void 往復でアルファ付きピクセルを保持する()
+    internal void 往復でアルファ付きピクセルを保持する()
     {
         using var bmp = EsBitmap.Create(3, 3);
         bmp.SetPixel(2, 1, b: 10, g: 20, r: 30, a: 64);

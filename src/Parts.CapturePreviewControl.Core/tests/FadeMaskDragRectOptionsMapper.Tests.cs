@@ -13,7 +13,7 @@ public class FadeMaskDragRectOptionsMapperTests
     private static CaptureSettings CreateSettings() => new CaptureSettings().ToNonNull();
 
     [Fact]
-    public void 変換_選択矩形の設定が反映される()
+    internal void 変換_選択矩形の設定が反映される()
     {
         var settings = CreateSettings() with
         {
@@ -40,7 +40,7 @@ public class FadeMaskDragRectOptionsMapperTests
     /// （本変換はコアの設定だけを組み立て、Core → UIBase の逆流を作らない）。
     /// </remarks>
     [Fact]
-    public void 変換_枠線と表示可否は本変換の対象外である()
+    internal void 変換_枠線と表示可否は本変換の対象外である()
     {
         var settings = CreateSettings() with
         {
@@ -58,7 +58,7 @@ public class FadeMaskDragRectOptionsMapperTests
     }
 
     [Fact]
-    public void 変換_操作ラベルと情報ラベルの外観がホストの描画設定へ反映される()
+    internal void 変換_操作ラベルと情報ラベルの外観がホストの描画設定へ反映される()
     {
         var settings = CreateSettings() with
         {
@@ -86,7 +86,7 @@ public class FadeMaskDragRectOptionsMapperTests
     }
 
     [Fact]
-    public void 変換_ルーペの設定が反映される()
+    internal void 変換_ルーペの設定が反映される()
     {
         var settings = CreateSettings() with
         {
@@ -111,7 +111,7 @@ public class FadeMaskDragRectOptionsMapperTests
     }
 
     [Fact]
-    public void 変換_破線の色とルーペのオフセットが反映される()
+    internal void 変換_破線の色とルーペのオフセットが反映される()
     {
         var settings = CreateSettings() with
         {
@@ -128,6 +128,6 @@ public class FadeMaskDragRectOptionsMapperTests
     }
 
     [Fact]
-    public void 変換_設定がnullの場合は例外になる()
+    internal void 変換_設定がnullの場合は例外になる()
         => Assert.Throws<ArgumentNullException>(() => FadeMaskDragRectOptionsMapper.ToFadeMaskDragRectOptions(null!));
 }

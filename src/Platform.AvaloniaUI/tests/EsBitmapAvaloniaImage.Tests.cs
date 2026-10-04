@@ -23,7 +23,7 @@ public class EsBitmapAvaloniaImageTests
     // ====================================================================
 
     [Fact]
-    public void Size_内包するEsBitmapのサイズと一致する()
+    internal void Size_内包するEsBitmapのサイズと一致する()
     {
         using var bmp = EsBitmap.Create(8, 6);
         using var image = new EsBitmapAvaloniaImage(bmp);
@@ -32,7 +32,7 @@ public class EsBitmapAvaloniaImageTests
     }
 
     [Fact]
-    public void Bitmap_内包する元と一致する()
+    internal void Bitmap_内包する元と一致する()
     {
         using var bmp = EsBitmap.Create(8, 6);
         using var image = new EsBitmapAvaloniaImage(bmp);
@@ -45,7 +45,7 @@ public class EsBitmapAvaloniaImageTests
     // ====================================================================
 
     [Fact]
-    public void Dispose後にBitmapがnullになる()
+    internal void Dispose後にBitmapがnullになる()
     {
         using var bmp = EsBitmap.Create(8, 6);
         var image = new EsBitmapAvaloniaImage(bmp);
@@ -56,7 +56,7 @@ public class EsBitmapAvaloniaImageTests
     }
 
     [Fact]
-    public void Dispose後にSizeでObjectDisposedExceptionを投げる()
+    internal void Dispose後にSizeでObjectDisposedExceptionを投げる()
     {
         using var bmp = EsBitmap.Create(8, 6);
         using var image = new EsBitmapAvaloniaImage(bmp);
@@ -67,7 +67,7 @@ public class EsBitmapAvaloniaImageTests
     }
 
     [Fact]
-    public void Dispose後にBitmapプロパティはnullを返す()
+    internal void Dispose後にBitmapプロパティはnullを返す()
     {
         using var bmp = EsBitmap.Create(8, 6);
         var image = new EsBitmapAvaloniaImage(bmp);
@@ -83,7 +83,7 @@ public class EsBitmapAvaloniaImageTests
     // ====================================================================
 
     [Fact]
-    public void ToAvaloniaImage拡張がEsBitmapAvaloniaImageを返す()
+    internal void ToAvaloniaImage拡張がEsBitmapAvaloniaImageを返す()
     {
         using var bmp = EsBitmap.Create(8, 6);
         using var image = (EsBitmapAvaloniaImage)bmp.ToAvaloniaImage();
@@ -92,7 +92,7 @@ public class EsBitmapAvaloniaImageTests
     }
 
     [Fact]
-    public void ToImage拡張がIImageとして扱える()
+    internal void ToImage拡張がIImageとして扱える()
     {
         using var bmp = EsBitmap.Create(8, 6);
         IImage image = bmp.ToAvaloniaImage();

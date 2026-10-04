@@ -22,7 +22,7 @@ public class ImageFileExtensionsTests
     [InlineData("a.JpEg")]
     [InlineData("name.with.dots.jpg")]
     [InlineData(".png")]
-    public void IsImageFile_画像の拡張子はtrue(string path)
+    internal void IsImageFile_画像の拡張子はtrue(string path)
         => Assert.True(ImageFileExtensions.IsImageFile(path));
 
     [Theory]
@@ -33,11 +33,11 @@ public class ImageFileExtensionsTests
     [InlineData("a.png.txt")]
     [InlineData("")]
     [InlineData(@"C:\folder\")]
-    public void IsImageFile_画像以外の拡張子はfalse(string path)
+    internal void IsImageFile_画像以外の拡張子はfalse(string path)
         => Assert.False(ImageFileExtensions.IsImageFile(path));
 
     [Fact]
-    public void All_共有された集合を書き換えられない()
+    internal void All_共有された集合を書き換えられない()
     {
         // IReadOnlyCollection で公開するため、要素を追加する API は公開されない
         Assert.Equal(8, ImageFileExtensions.All.Count);

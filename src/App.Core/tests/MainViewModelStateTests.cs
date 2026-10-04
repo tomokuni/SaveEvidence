@@ -36,7 +36,7 @@ public class MainViewModelStateTests
     private static readonly DateTime s_now = new(2026, 3, 4, 5, 6, 7, DateTimeKind.Local);
 
     [Fact]
-    public void Generate_日時個別プレースホルダを指定日時に置換する()
+    internal void Generate_日時個別プレースホルダを指定日時に置換する()
     {
         var name = FileNameTemplate.Generate("img_{yyyy}-{MM}-{dd}_{HH}-{mm}-{ss}.png", s_now);
 
@@ -44,7 +44,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void Generate_日時を省略すると現在日時を使う()
+    internal void Generate_日時を省略すると現在日時を使う()
     {
         var before = DateTime.Now;
         var name = FileNameTemplate.Generate("img_{yyyy}-{MM}-{dd}_{HH}-{mm}-{ss}.png");
@@ -62,7 +62,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void Generate_従来のdateとtimeプレースホルダと併用できる()
+    internal void Generate_従来のdateとtimeプレースホルダと併用できる()
     {
         var name = FileNameTemplate.Generate("s_{date}_{yyyy}_{time}_{HH}_{mm}_{ss}.png", s_now);
 
@@ -70,14 +70,14 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void IsValidTemplate_日時個別プレースホルダは有効と判定される()
+    internal void IsValidTemplate_日時個別プレースホルダは有効と判定される()
     {
         Assert.True(FileNameTemplate.IsValidTemplate("img_{yyyy}_{MM}_{dd}_{HH}_{mm}_{ss}.png", out var message));
         Assert.Null(message);
     }
 
     [Fact]
-    public void Generate_エスケープの中括弧はリテラルとして解決される()
+    internal void Generate_エスケープの中括弧はリテラルとして解決される()
     {
         // {{ は {、}} は } に解決される（プレースホルダとして誤置換されない）
         var name = FileNameTemplate.Generate("{{date}}_{time}.png", s_now);
@@ -86,7 +86,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void Generate_エスケープ中のプレースホルダは置換されない()
+    internal void Generate_エスケープ中のプレースホルダは置換されない()
     {
         // {{date}} は {date} というリテラル文字列になる（date は置換されない）
         var name = FileNameTemplate.Generate("img_{{date}}.png");
@@ -95,7 +95,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void Generate_中括弧内のトークンは組み合わせて置換される()
+    internal void Generate_中括弧内のトークンは組み合わせて置換される()
     {
         // { } 内で複数のトークンを自由に組み合わせられる（yyyyMMdd / HHmm 等）
         Assert.Equal("abcd{e}f20260304-0506", FileNameTemplate.Generate("abcd{{e}}f{yyyyMMdd}-{HHmm}", s_now));
@@ -103,14 +103,14 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void Generate_未定義トークンはそのまま残る()
+    internal void Generate_未定義トークンはそのまま残る()
     {
         // 定義外のトークン（example 等）は置換されず、中括弧が外れてそのまま出力される
         Assert.Equal("example20260304", FileNameTemplate.Generate("{example}{yyyyMMdd}", s_now));
     }
 
     [Fact]
-    public void IsValidTemplate_エスケープが解決されて検証される()
+    internal void IsValidTemplate_エスケープが解決されて検証される()
     {
         // {{ / }} はリテラル { / } に解決される（{ } は Windows のファイル名で使用可能なため有効と判定）
         Assert.True(FileNameTemplate.IsValidTemplate("img_{{date}}.png", out var message));
@@ -118,7 +118,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void IsValidTemplate_複合トークンは解決されて検証される()
+    internal void IsValidTemplate_複合トークンは解決されて検証される()
     {
         // {yyyyMMdd} は数字へ解決されるため有効
         Assert.True(FileNameTemplate.IsValidTemplate("img_{yyyyMMdd}-{HHmm}.png", out var message));
@@ -130,7 +130,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void ResolveSaveFolderPath_MyPicturesプレースホルダを展開する()
+    internal void ResolveSaveFolderPath_MyPicturesプレースホルダを展開する()
     {
         var expected = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
@@ -138,7 +138,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void ResolveSaveFolderPath_大文字小文字を区別しない()
+    internal void ResolveSaveFolderPath_大文字小文字を区別しない()
     {
         var expected = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
@@ -147,13 +147,13 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void ResolveSaveFolderPath_プレースホルダなしは入力をそのまま返す()
+    internal void ResolveSaveFolderPath_プレースホルダなしは入力をそのまま返す()
     {
         Assert.Equal(@"C:\temp\images", MainViewModel.ResolveSaveFolderPath(@"C:\temp\images"));
     }
 
     [Fact]
-    public void ResolveSaveFolderPath_パスの一部に含まれるプレースホルダも展開する()
+    internal void ResolveSaveFolderPath_パスの一部に含まれるプレースホルダも展開する()
     {
         var expected = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "SaveEvidence");
@@ -162,7 +162,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void ResolveSaveFolderPath_nullや空文字はそのまま返す()
+    internal void ResolveSaveFolderPath_nullや空文字はそのまま返す()
     {
         Assert.Equal(string.Empty, MainViewModel.ResolveSaveFolderPath(""));
         // 空白のみの文字列は null/空判定に掛からず、そのまま返る
@@ -170,7 +170,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void SaveFolderPathResolved_設定値のプレースホルダを展開する()
+    internal void SaveFolderPathResolved_設定値のプレースホルダを展開する()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var expected = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
@@ -186,7 +186,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void HasInvalidSaveFolder_存在するフォルダはfalseを返す()
+    internal void HasInvalidSaveFolder_存在するフォルダはfalseを返す()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var dir = Directory.CreateTempSubdirectory();
@@ -204,7 +204,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void HasInvalidSaveFolder_存在しないフォルダはtrueを返す()
+    internal void HasInvalidSaveFolder_存在しないフォルダはtrueを返す()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var missing = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -231,7 +231,7 @@ public class MainViewModelStateTests
         => new(new EsPoint(0, y), new EsPoint(1000, y), LineOrientation.Horizontal, 1000);
 
     [Fact]
-    public void TryReconstructRects_垂直2本と水平2本から外側の境界を復元する()
+    internal void TryReconstructRects_垂直2本と水平2本から外側の境界を復元する()
     {
         // 垂直 X=100, 300 / 水平 Y=50, 200 の矩形
         IReadOnlyList<LineDetectionResult> results =
@@ -250,7 +250,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void TryReconstructRects_垂直または水平が2本未満は空を返す()
+    internal void TryReconstructRects_垂直または水平が2本未満は空を返す()
     {
         // 垂直のみ 2 本（水平なし）は復元できない
         Assert.Empty(MainViewModel.TryReconstructRects([VerticalLine(100), VerticalLine(300), HorizontalLine(50)]));
@@ -263,7 +263,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void TryReconstructRects_重複座標は統合して外側の境界を復元する()
+    internal void TryReconstructRects_重複座標は統合して外側の境界を復元する()
     {
         // 同じ X/Y に複数の線分があっても Distinct で統合される
         IReadOnlyList<LineDetectionResult> results =
@@ -279,7 +279,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void HasInvalidSaveFolder_空文字はtrueを返す()
+    internal void HasInvalidSaveFolder_空文字はtrueを返す()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -289,7 +289,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void HasInvalidSaveFolder_プレースホルダ解決後に判定する()
+    internal void HasInvalidSaveFolder_プレースホルダ解決後に判定する()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -307,7 +307,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void CanSave_画像と有効なテンプレートがあればtrue()
+    internal void CanSave_画像と有効なテンプレートがあればtrue()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -323,7 +323,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void IncrementRightmostNumber_右端の数値がインクリメントされ桁数が維持される()
+    internal void IncrementRightmostNumber_右端の数値がインクリメントされ桁数が維持される()
     {
         // テンプレートの数値インクリメント（ファイル名テンプレートの純粋関数の動作確認）
         Assert.Equal("screenshot_002.png", FileNameTemplate.IncrementRightmostNumber("screenshot_001.png"));
@@ -333,7 +333,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void IncrementRightmostNumber_数値がない場合は元の文字列を返す()
+    internal void IncrementRightmostNumber_数値がない場合は元の文字列を返す()
     {
         Assert.Equal("screenshot.png", FileNameTemplate.IncrementRightmostNumber("screenshot.png"));
         Assert.Equal("abc", FileNameTemplate.IncrementRightmostNumber("abc"));
@@ -344,7 +344,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void HasInvalidTemplate_有効なテンプレートでfalseになる()
+    internal void HasInvalidTemplate_有効なテンプレートでfalseになる()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -357,7 +357,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void HasInvalidTemplate_無効文字を含むテンプレートでtrueになる()
+    internal void HasInvalidTemplate_無効文字を含むテンプレートでtrueになる()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -371,7 +371,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void HasInvalidTemplate_空テンプレートでtrueになる()
+    internal void HasInvalidTemplate_空テンプレートでtrueになる()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -385,7 +385,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void HasInvalidTemplate_テンプレート変更でPropertyChangedが通知される()
+    internal void HasInvalidTemplate_テンプレート変更でPropertyChangedが通知される()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var notified = new List<string?>();
@@ -404,7 +404,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void ThemeMode_既定値はSystemである()
+    internal void ThemeMode_既定値はSystemである()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -412,7 +412,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void ThemeModes_3つの選択肢が定義される()
+    internal void ThemeModes_3つの選択肢が定義される()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -423,7 +423,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void ThemeMode_変更するとPropertyChangedが通知される()
+    internal void ThemeMode_変更するとPropertyChangedが通知される()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var notified = new List<string?>();
@@ -440,7 +440,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void FolderViewModeIndex_既定値は大である()
+    internal void FolderViewModeIndex_既定値は大である()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -448,7 +448,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void FolderViewSortAscending_既定値は昇順である()
+    internal void FolderViewSortAscending_既定値は昇順である()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -456,7 +456,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void FolderViewSettings_設定を変更するとPropertyChangedが通知される()
+    internal void FolderViewSettings_設定を変更するとPropertyChangedが通知される()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var notified = new List<string?>();
@@ -476,7 +476,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void ラベル背景色の既定値は黒60パーセントである()
+    internal void ラベル背景色の既定値は黒60パーセントである()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -487,7 +487,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void ラベル背景色を変更するとPropertyChangedが通知される()
+    internal void ラベル背景色を変更するとPropertyChangedが通知される()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var notified = new List<string?>();
@@ -510,7 +510,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void 座標ラベルの既定値が正しい()
+    internal void 座標ラベルの既定値が正しい()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -527,7 +527,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void 座標ラベル設定を変更するとPropertyChangedが通知される()
+    internal void 座標ラベル設定を変更するとPropertyChangedが通知される()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var notified = new List<string?>();
@@ -554,7 +554,7 @@ public class MainViewModelStateTests
     // ====================================================================
 
     [Fact]
-    public void ResetAppearanceToDefaults_外観設定がデフォルト値へ戻る()
+    internal void ResetAppearanceToDefaults_外観設定がデフォルト値へ戻る()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var s = vm.Settings;
@@ -637,7 +637,7 @@ public class MainViewModelStateTests
     }
 
     [Fact]
-    public void ResetAppearanceToDefaults_外観設定以外は変更されない()
+    internal void ResetAppearanceToDefaults_外観設定以外は変更されない()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
         var s = vm.Settings;

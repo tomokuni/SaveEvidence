@@ -20,7 +20,7 @@ public class SettingsColorMathTests
     [InlineData("  #ff102030  ", 255, 16, 32, 48)]
     [InlineData("#102030", 255, 16, 32, 48)]
     [InlineData("#00000000", 0, 0, 0, 0)]
-    public void ToMewUIColor_有効な色文字列を解析する(
+    internal void ToMewUIColor_有効な色文字列を解析する(
         string argb, byte expectedA, byte expectedR, byte expectedG, byte expectedB)
     {
         var color = SettingsColorMath.ToMewUIColor(argb, Fallback);
@@ -42,7 +42,7 @@ public class SettingsColorMathTests
     [InlineData("#GGGGGGGG")]
     [InlineData("transparent")]
     [InlineData("#FF10203Z")]
-    public void ToMewUIColor_解析できない文字列は既定色を返す(string? argb)
+    internal void ToMewUIColor_解析できない文字列は既定色を返す(string? argb)
     {
         var color = SettingsColorMath.ToMewUIColor(argb, Fallback);
 
@@ -53,7 +53,7 @@ public class SettingsColorMathTests
     [InlineData("#FF102030", 255, 16, 32, 48)]
     [InlineData("#80102030", 128, 16, 32, 48)]
     [InlineData("#102030", 255, 16, 32, 48)]
-    public void ToDrawingColor_有効な色文字列を解析する(
+    internal void ToDrawingColor_有効な色文字列を解析する(
         string argb, byte expectedA, byte expectedR, byte expectedG, byte expectedB)
     {
         var color = SettingsColorMath.ToDrawingColor(argb, DrawingColor.Red);
@@ -65,7 +65,7 @@ public class SettingsColorMathTests
     }
 
     [Fact]
-    public void ToDrawingColor_解析できない文字列は既定色を返す()
+    internal void ToDrawingColor_解析できない文字列は既定色を返す()
     {
         Assert.Equal(DrawingColor.Red, SettingsColorMath.ToDrawingColor("not-a-color", DrawingColor.Red));
     }
@@ -74,17 +74,17 @@ public class SettingsColorMathTests
     [InlineData(255, 16, 32, 48, "#FF102030")]
     [InlineData(128, 16, 32, 48, "#80102030")]
     [InlineData(0, 0, 0, 0, "#00000000")]
-    public void ToMewUIColor_色文字列へ整形する(byte a, byte r, byte g, byte b, string expected)
+    internal void ToMewUIColor_色文字列へ整形する(byte a, byte r, byte g, byte b, string expected)
         => Assert.Equal(expected, SettingsColorMath.ToArgbString(MewUIColor.FromArgb(a, r, g, b)));
 
     [Theory]
     [InlineData(255, 16, 32, 48, "#FF102030")]
     [InlineData(128, 16, 32, 48, "#80102030")]
-    public void ToArgbString_DrawingColorを色文字列へ整形する(byte a, byte r, byte g, byte b, string expected)
+    internal void ToArgbString_DrawingColorを色文字列へ整形する(byte a, byte r, byte g, byte b, string expected)
         => Assert.Equal(expected, SettingsColorMath.ToArgbString(DrawingColor.FromArgb(a, r, g, b)));
 
     [Fact]
-    public void 変換_色文字列と色の相互変換で値が一致する()
+    internal void 変換_色文字列と色の相互変換で値が一致する()
     {
         const string source = "#4C808080";
 

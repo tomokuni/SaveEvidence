@@ -11,7 +11,7 @@ public class FadeMaskDragRectOptionsTests
 {
     /// <summary>既定値が内包コントロールの既定値と一致することを検証する。</summary>
     [Fact]
-    public void 既定値_内包コントロールの既定値を用いる()
+    internal void 既定値_内包コントロールの既定値を用いる()
     {
         var options = FadeMaskDragRectOptions.Default;
 
@@ -27,7 +27,7 @@ public class FadeMaskDragRectOptionsTests
 
     /// <summary>付加情報ラベルの既定値が要件（表示し、ホストの配色を使う）を満たすことを検証する。</summary>
     [Fact]
-    public void 既定値_付加情報ラベルは表示して配色と寸法を持つ()
+    internal void 既定値_付加情報ラベルは表示して配色と寸法を持つ()
     {
         var labels = FadeMaskDragRectLabelOptions.Default;
 
@@ -43,12 +43,12 @@ public class FadeMaskDragRectOptionsTests
 
     /// <summary>新しいインスタンスも既定値に一致することを検証する。</summary>
     [Fact]
-    public void 既定値_新規生成はDefaultと等しい()
+    internal void 既定値_新規生成はDefaultと等しい()
         => Assert.Equal(FadeMaskDragRectOptions.Default, new FadeMaskDragRectOptions());
 
     /// <summary>部分変更が他の項目を維持することを検証する。</summary>
     [Fact]
-    public void 部分変更_with式は指定した項目だけを差し替える()
+    internal void 部分変更_with式は指定した項目だけを差し替える()
     {
         var changed = FadeMaskDragRectOptions.Default with
         {
@@ -66,7 +66,7 @@ public class FadeMaskDragRectOptionsTests
     /// <summary>装飾の設定である項目が本値に含まれないことを検証する。</summary>
     /// <remarks>暗転マスク・外枠の外観と表示可否は、提示層の <c>MarqueeAppearance</c> が単一所有する。</remarks>
     [Fact]
-    public void 装飾_選択矩形の設定とは別の値が単一所有する()
+    internal void 装飾_選択矩形の設定とは別の値が単一所有する()
     {
         var options = FadeMaskDragRectOptions.Default with
         {
@@ -85,7 +85,7 @@ public class FadeMaskDragRectOptionsTests
 
     /// <summary>等価性が値で判定されることを検証する。</summary>
     [Fact]
-    public void 等価性_同じ値の設定は等しい()
+    internal void 等価性_同じ値の設定は等しい()
     {
         var a = FadeMaskDragRectOptions.Default with { LoupeOffset = 24.0 };
         var b = FadeMaskDragRectOptions.Default with { LoupeOffset = 24.0 };

@@ -21,13 +21,13 @@ public class CaptureLabelTextsTests
     [InlineData(CaptureType.ScreenSelect, FadeMaskDragRectMode.ScreenSelect)]
     [InlineData(CaptureType.WindowSelect, FadeMaskDragRectMode.WindowSelect)]
     [InlineData(CaptureType.AreaSelect, FadeMaskDragRectMode.AreaSelect)]
-    public void ToSelectionMode_キャプチャ種別に対応するモードを返す(
+    internal void ToSelectionMode_キャプチャ種別に対応するモードを返す(
         CaptureType captureType, FadeMaskDragRectMode expected)
         => Assert.Equal(expected, CaptureLabelTexts.ToSelectionMode(captureType));
 
     /// <summary>未定義の種別は範囲選択として扱うことを検証する。</summary>
     [Fact]
-    public void ToSelectionMode_未定義の種別は範囲選択として扱う()
+    internal void ToSelectionMode_未定義の種別は範囲選択として扱う()
         => Assert.Equal(
             FadeMaskDragRectMode.AreaSelect, CaptureLabelTexts.ToSelectionMode((CaptureType)999));
 
@@ -37,7 +37,7 @@ public class CaptureLabelTextsTests
 
     /// <summary>スクリーン選択・ウィンドウ選択は Enter 系の操作ラベルを返すことを検証する。</summary>
     [Fact]
-    public void GetOperationText_ScreenSelectとWindowSelectはEnter系を返す()
+    internal void GetOperationText_ScreenSelectとWindowSelectはEnter系を返す()
     {
         Assert.Equal(
             "Enter / クリック: 確定  Esc: キャンセル",
@@ -49,7 +49,7 @@ public class CaptureLabelTextsTests
 
     /// <summary>範囲選択・切出しはダブルクリック系の操作ラベルを返すことを検証する。</summary>
     [Fact]
-    public void GetOperationText_AreaSelectとCropはダブルクリック系を返す()
+    internal void GetOperationText_AreaSelectとCropはダブルクリック系を返す()
     {
         Assert.Equal(
             "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル",
@@ -65,7 +65,7 @@ public class CaptureLabelTextsTests
 
     /// <summary>ウィンドウ選択ではウィンドウタイトルをそのまま返すことを検証する。</summary>
     [Fact]
-    public void GetInfoText_WindowSelectはウィンドウタイトルを返す()
+    internal void GetInfoText_WindowSelectはウィンドウタイトルを返す()
         => Assert.Equal(
             "メモ帳", CaptureLabelTexts.GetInfoText(FadeMaskDragRectMode.WindowSelect, "メモ帳"));
 
@@ -75,7 +75,7 @@ public class CaptureLabelTextsTests
     [InlineData(FadeMaskDragRectMode.Crop)]
     [InlineData(FadeMaskDragRectMode.AreaSelect)]
     [InlineData(FadeMaskDragRectMode.ScreenSelect)]
-    public void GetInfoText_WindowSelect以外はnullを返す(FadeMaskDragRectMode mode)
+    internal void GetInfoText_WindowSelect以外はnullを返す(FadeMaskDragRectMode mode)
         => Assert.Null(CaptureLabelTexts.GetInfoText(mode, "メモ帳"));
 
 }

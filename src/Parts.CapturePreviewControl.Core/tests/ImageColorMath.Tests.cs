@@ -17,7 +17,7 @@ public class ImageColorMathTests
         => EsBitmap.Create(width, height, color);
 
     [Fact]
-    public void AverageColor_単色画像はその色を返す()
+    internal void AverageColor_単色画像はその色を返す()
     {
         using var image = CreateFilled(40, 30, DrawingColor.FromArgb(255, 10, 20, 30));
 
@@ -30,7 +30,7 @@ public class ImageColorMathTests
     }
 
     [Fact]
-    public void AverageColor_2色の画像は平均を返す()
+    internal void AverageColor_2色の画像は平均を返す()
     {
         // 左半分を黒・右半分を白にする（標本間引きで概ね中間になる）
         using var image = EsBitmap.Create(80, 80);
@@ -51,7 +51,7 @@ public class ImageColorMathTests
     }
 
     [Fact]
-    public void AverageColor_アルファは不透明で返す()
+    internal void AverageColor_アルファは不透明で返す()
     {
         using var image = CreateFilled(10, 10, DrawingColor.FromArgb(128, 1, 2, 3));
 
@@ -61,13 +61,13 @@ public class ImageColorMathTests
     }
 
     [Fact]
-    public void AverageColor_画像がnullなら例外()
+    internal void AverageColor_画像がnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(() => ImageColorMath.AverageColor(null!));
     }
 
     [Fact]
-    public void SampleDivisor_は40である()
+    internal void SampleDivisor_は40である()
     {
         Assert.Equal(40, ImageColorMath.SampleDivisor);
     }

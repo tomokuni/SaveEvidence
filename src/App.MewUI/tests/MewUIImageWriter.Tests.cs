@@ -20,7 +20,7 @@ public sealed class MewUIImageWriterTests
     [InlineData(".bmp", SKEncodedImageFormat.Png)]
     [InlineData(".unknown", SKEncodedImageFormat.Png)]
     [InlineData("", SKEncodedImageFormat.Png)]
-    public void Save_拡張子に応じた形式で保存する(string extension, SKEncodedImageFormat expected)
+    internal void Save_拡張子に応じた形式で保存する(string extension, SKEncodedImageFormat expected)
     {
         var path = TestHelper.CreateTempPath(extension);
 
@@ -39,7 +39,7 @@ public sealed class MewUIImageWriterTests
 
     /// <summary>保存した画像が元の画素数を保持することを検証する。</summary>
     [Fact]
-    public void Save_画素数を保持する()
+    internal void Save_画素数を保持する()
     {
         var path = TestHelper.CreateTempPath(".png");
 
@@ -61,7 +61,7 @@ public sealed class MewUIImageWriterTests
 
     /// <summary>既存ファイルを上書きできることを検証する。</summary>
     [Fact]
-    public void Save_既存ファイルを上書きする()
+    internal void Save_既存ファイルを上書きする()
     {
         var path = TestHelper.CreateTempPath(".png");
 
@@ -81,7 +81,7 @@ public sealed class MewUIImageWriterTests
 
     /// <summary>null 引数を拒否することを検証する。</summary>
     [Fact]
-    public void Save_画像がnullなら例外()
+    internal void Save_画像がnullなら例外()
     {
         var path = TestHelper.CreateTempPath(".png");
 
@@ -97,7 +97,7 @@ public sealed class MewUIImageWriterTests
 
     /// <summary>null のパスを拒否することを検証する。</summary>
     [Fact]
-    public void Save_パスがnullなら例外()
+    internal void Save_パスがnullなら例外()
     {
         Assert.Throws<ArgumentNullException>(() => new MewUIImageWriter().Save(TestHelper.CreateBitmap(), null!));
     }

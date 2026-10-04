@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class CaptureVirtualScreenBoundsTests
 {
     [Fact]
-    public void ResolveBounds_単一モニタは自身の矩形を返す()
+    internal void ResolveBounds_単一モニタは自身の矩形を返す()
     {
         var result = CaptureVirtualScreen.ResolveBounds([new EsRectInt(0, 0, 1920, 1080)]);
 
@@ -19,7 +19,7 @@ public class CaptureVirtualScreenBoundsTests
     }
 
     [Fact]
-    public void ResolveBounds_複数モニタを包含する最小の矩形を返す()
+    internal void ResolveBounds_複数モニタを包含する最小の矩形を返す()
     {
         // 左（負座標）と右下にモニタがある構成
         var result = CaptureVirtualScreen.ResolveBounds(
@@ -33,7 +33,7 @@ public class CaptureVirtualScreenBoundsTests
     }
 
     [Fact]
-    public void ResolveBounds_負の原点でも包含矩形を返す()
+    internal void ResolveBounds_負の原点でも包含矩形を返す()
     {
         // セカンダリが上（負の Y）にある構成
         var result = CaptureVirtualScreen.ResolveBounds(
@@ -46,7 +46,7 @@ public class CaptureVirtualScreenBoundsTests
     }
 
     [Fact]
-    public void ResolveBounds_モニタが無い場合はnullを返す()
+    internal void ResolveBounds_モニタが無い場合はnullを返す()
     {
         // 撮影する領域が無い（オーバーレイを表示する意味もない）
         Assert.Null(CaptureVirtualScreen.ResolveBounds([]));
@@ -54,7 +54,7 @@ public class CaptureVirtualScreenBoundsTests
     }
 
     [Fact]
-    public void ResolveBounds_入力を変更しない()
+    internal void ResolveBounds_入力を変更しない()
     {
         // 引数の列挙を 1 度だけ辿る（複数回の列挙で結果が変わらない実装にする）
         var screens = new List<EsRectInt>

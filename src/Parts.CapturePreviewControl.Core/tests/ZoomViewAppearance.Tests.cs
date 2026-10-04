@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class ZoomViewAppearanceTests
 {
     [Fact]
-    public void Default_は市松模様を描かない()
+    internal void Default_は市松模様を描かない()
     {
         var appearance = ZoomViewAppearance.Default;
 
@@ -24,7 +24,7 @@ public class ZoomViewAppearanceTests
     }
 
     [Fact]
-    public void MinimumCheckerTileSize_は2である()
+    internal void MinimumCheckerTileSize_は2である()
     {
         Assert.Equal(2, ZoomViewAppearance.MinimumCheckerTileSize);
     }
@@ -33,13 +33,13 @@ public class ZoomViewAppearanceTests
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(-100)]
-    public void ResolveCheckerTileSize_0以下は描かない0を返す(int checkerSize)
+    internal void ResolveCheckerTileSize_0以下は描かない0を返す(int checkerSize)
     {
         Assert.Equal(0, ZoomViewAppearance.ResolveCheckerTileSize(checkerSize));
     }
 
     [Fact]
-    public void ResolveCheckerTileSize_1は下限の2へ切り上げる()
+    internal void ResolveCheckerTileSize_1は下限の2へ切り上げる()
     {
         Assert.Equal(ZoomViewAppearance.MinimumCheckerTileSize, ZoomViewAppearance.ResolveCheckerTileSize(1));
     }
@@ -49,7 +49,7 @@ public class ZoomViewAppearanceTests
     [InlineData(6)]
     [InlineData(20)]
     [InlineData(int.MaxValue)]
-    public void ResolveCheckerTileSize_下限以上はそのまま返す(int checkerSize)
+    internal void ResolveCheckerTileSize_下限以上はそのまま返す(int checkerSize)
     {
         Assert.Equal(checkerSize, ZoomViewAppearance.ResolveCheckerTileSize(checkerSize));
     }
@@ -57,7 +57,7 @@ public class ZoomViewAppearanceTests
     [Theory]
     [InlineData(-3)]
     [InlineData(0)]
-    public void HasCheckerboard_実効タイルサイズが0なら描かない(int checkerSize)
+    internal void HasCheckerboard_実効タイルサイズが0なら描かない(int checkerSize)
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = checkerSize };
 
@@ -66,7 +66,7 @@ public class ZoomViewAppearanceTests
     }
 
     [Fact]
-    public void HasCheckerboard_1は実効値2として描く()
+    internal void HasCheckerboard_1は実効値2として描く()
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 1 };
 
@@ -79,7 +79,7 @@ public class ZoomViewAppearanceTests
     }
 
     [Fact]
-    public void ComputeLightTileRects_明暗の配置規則を単一所有する()
+    internal void ComputeLightTileRects_明暗の配置規則を単一所有する()
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 10 };
 
@@ -99,7 +99,7 @@ public class ZoomViewAppearanceTests
     [InlineData(50, 0)]
     [InlineData(0, 0)]
     [InlineData(-1, 50)]
-    public void ComputeLightTileRects_領域が空なら空になる(double width, double height)
+    internal void ComputeLightTileRects_領域が空なら空になる(double width, double height)
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 8 };
 
@@ -108,7 +108,7 @@ public class ZoomViewAppearanceTests
 
     /// <summary>タイルが領域で切り取られ、領域の外へはみ出さないことを検証する。</summary>
     [Fact]
-    public void ComputeLightTileRects_領域の外へはみ出さない()
+    internal void ComputeLightTileRects_領域の外へはみ出さない()
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 10 };
 
@@ -128,7 +128,7 @@ public class ZoomViewAppearanceTests
 
     /// <summary>格子の原点がビューポートの原点であることを検証する（領域が動いても模様が這わない）。</summary>
     [Fact]
-    public void ComputeLightTileRects_格子はビューポート原点を基準にする()
+    internal void ComputeLightTileRects_格子はビューポート原点を基準にする()
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 10 };
 
@@ -154,7 +154,7 @@ public class ZoomViewAppearanceTests
     [InlineData(-20, -10, 100, 100, 0, 0, 80, 90)]
     [InlineData(80, 80, 100, 100, 80, 80, 20, 20)]
     [InlineData(20, 30, 100, 100, 20, 30, 80, 70)]
-    public void ComputeCheckerArea_画像の表示矩形とビューポートの交差を返す(
+    internal void ComputeCheckerArea_画像の表示矩形とビューポートの交差を返す(
         double x, double y, double width, double height,
         double expectedX, double expectedY, double expectedWidth, double expectedHeight)
     {
@@ -172,7 +172,7 @@ public class ZoomViewAppearanceTests
     [InlineData(200, 0)]
     [InlineData(0, 200)]
     [InlineData(-200, -200)]
-    public void ComputeCheckerArea_可視部分が無ければ空になる(double x, double y)
+    internal void ComputeCheckerArea_可視部分が無ければ空になる(double x, double y)
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 8 };
 
@@ -183,7 +183,7 @@ public class ZoomViewAppearanceTests
 
     /// <summary>市松模様を描かない設定では範囲が空になることを検証する。</summary>
     [Fact]
-    public void ComputeCheckerArea_市松模様を描かない設定なら空()
+    internal void ComputeCheckerArea_市松模様を描かない設定なら空()
     {
         var appearance = ZoomViewAppearance.Default with { CheckerSize = 0 };
 
@@ -191,7 +191,7 @@ public class ZoomViewAppearanceTests
     }
 
     [Fact]
-    public void HasScrollBarTrack_アルファ0なら描かない()
+    internal void HasScrollBarTrack_アルファ0なら描かない()
     {
         var appearance = ZoomViewAppearance.Default with
         {
@@ -202,7 +202,7 @@ public class ZoomViewAppearanceTests
     }
 
     [Fact]
-    public void HasScrollBarTrack_アルファが0より大きければ描く()
+    internal void HasScrollBarTrack_アルファが0より大きければ描く()
     {
         var appearance = ZoomViewAppearance.Default with
         {

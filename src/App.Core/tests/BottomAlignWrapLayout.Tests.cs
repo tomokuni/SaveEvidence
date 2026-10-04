@@ -20,7 +20,7 @@ public class BottomAlignWrapLayoutTests
     // ====================================================================
 
     [Fact]
-    public void Measure_単一の行では行の高さが最大アイテム高さになる()
+    internal void Measure_単一の行では行の高さが最大アイテム高さになる()
     {
         var sizes = new[] { S(60, 100), S(60, 50), S(60, 80) };
 
@@ -32,7 +32,7 @@ public class BottomAlignWrapLayoutTests
     }
 
     [Fact]
-    public void Measure_複数行では高さが各行の高さの合計になる()
+    internal void Measure_複数行では高さが各行の高さの合計になる()
     {
         var sizes = new[] { S(60, 100), S(60, 50), S(60, 80), S(60, 40) };
 
@@ -44,7 +44,7 @@ public class BottomAlignWrapLayoutTests
     }
 
     [Fact]
-    public void Measure_利用可能幅が無限の場合は折り返さない()
+    internal void Measure_利用可能幅が無限の場合は折り返さない()
     {
         var sizes = new[] { S(60, 100), S(60, 50) };
 
@@ -56,7 +56,7 @@ public class BottomAlignWrapLayoutTests
     }
 
     [Fact]
-    public void Measure_子要素がない場合は空のサイズを返す()
+    internal void Measure_子要素がない場合は空のサイズを返す()
     {
         var result = BottomAlignWrapLayout.Measure([], availableWidth: 100, wrap: true);
 
@@ -65,7 +65,7 @@ public class BottomAlignWrapLayoutTests
     }
 
     [Fact]
-    public void Measure_間隔を指定すると幅に間隔が加算される()
+    internal void Measure_間隔を指定すると幅に間隔が加算される()
     {
         var sizes = new[] { S(60, 100), S(60, 50), S(60, 80) };
 
@@ -77,7 +77,7 @@ public class BottomAlignWrapLayoutTests
     }
 
     [Fact]
-    public void Measure_間隔を含めて幅を超える場合は折り返す()
+    internal void Measure_間隔を含めて幅を超える場合は折り返す()
     {
         var sizes = new[] { S(60, 100), S(60, 50) };
 
@@ -93,7 +93,7 @@ public class BottomAlignWrapLayoutTests
     // ====================================================================
 
     [Fact]
-    public void Arrange_行内でアイテムが下端揃えされる()
+    internal void Arrange_行内でアイテムが下端揃えされる()
     {
         var sizes = new[] { S(60, 100), S(60, 50), S(60, 80) };
 
@@ -109,7 +109,7 @@ public class BottomAlignWrapLayoutTests
     }
 
     [Fact]
-    public void Arrange_幅超過で次の行に折り返される()
+    internal void Arrange_幅超過で次の行に折り返される()
     {
         var sizes = new[] { S(60, 100), S(60, 50), S(60, 80), S(60, 40) };
 
@@ -123,7 +123,7 @@ public class BottomAlignWrapLayoutTests
     }
 
     [Fact]
-    public void Arrange_アイテムが幅を超える場合は単独行に置かれる()
+    internal void Arrange_アイテムが幅を超える場合は単独行に置かれる()
     {
         var sizes = new[] { S(150, 100), S(60, 50) };
 
@@ -135,7 +135,7 @@ public class BottomAlignWrapLayoutTests
     }
 
     [Fact]
-    public void Arrange_間隔を指定するとX座標に間隔が加算される()
+    internal void Arrange_間隔を指定するとX座標に間隔が加算される()
     {
         var sizes = new[] { S(60, 100), S(60, 50) };
 
@@ -146,7 +146,7 @@ public class BottomAlignWrapLayoutTests
     }
 
     [Fact]
-    public void Arrange_子要素がない場合は空の配置を返す()
+    internal void Arrange_子要素がない場合は空の配置を返す()
     {
         var rects = BottomAlignWrapLayout.Arrange([], finalWidth: 100);
 

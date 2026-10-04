@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 public class AppPageTests
 {
     [Fact]
-    public void AppPage_全ページが定義されている()
+    internal void AppPage_全ページが定義されている()
     {
         var pages = System.Enum.GetValues<AppPage>();
 
@@ -22,7 +22,7 @@ public class AppPageTests
     }
 
     [Fact]
-    public void AppPage_定義順がナビゲーション順と一致する()
+    internal void AppPage_定義順がナビゲーション順と一致する()
     {
         // ナビパネルの並び順（キャプチャ → フォルダビュー → Undo 一覧 → 設定）と一致させる
         Assert.Equal(0, (int)AppPage.Capture);

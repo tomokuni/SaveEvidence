@@ -38,7 +38,7 @@ public class ZoomViewControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void 初期状態ではFit表示で実効ズーム率が0にならない()
+    internal void 初期状態ではFit表示で実効ズーム率が0にならない()
     {
         var view = CreateView();
 
@@ -48,7 +48,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void 画像がWriteableBitmapではなくIImageでもFit実効倍率が計算される()
+    internal void 画像がWriteableBitmapではなくIImageでもFit実効倍率が計算される()
     {
         // 回帰: ComputeRawFitZoomPercent が Source を Bitmap 型へキャストしていたため、
         // EsBitmapAvaloniaImage（WriteableBitmap を生成しない IImage）では常に 100 を返していた。
@@ -64,7 +64,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomFitでFit表示に戻ると実効ズーム率が0にならない()
+    internal void ZoomFitでFit表示に戻ると実効ズーム率が0にならない()
     {
         var view = CreateView();
         view.ZoomPercent = 200;
@@ -76,7 +76,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomPercentSetterで固定倍率を設定するとIsFitがfalseになる()
+    internal void ZoomPercentSetterで固定倍率を設定するとIsFitがfalseになる()
     {
         var view = CreateView();
 
@@ -87,7 +87,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomPercentSetterで0以下は無視されFitのままである()
+    internal void ZoomPercentSetterで0以下は無視されFitのままである()
     {
         var view = CreateView();
 
@@ -99,7 +99,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomPercentSetterで0以下は固定倍率に移行しない()
+    internal void ZoomPercentSetterで0以下は固定倍率に移行しない()
     {
         var view = CreateView();
         view.ZoomPercent = 200;
@@ -111,7 +111,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void 固定倍率中は実効ズーム率がズーム率と一致する()
+    internal void 固定倍率中は実効ズーム率がズーム率と一致する()
     {
         var view = CreateView();
 
@@ -121,7 +121,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomFitでZoomChangedがIsFitと実効ズーム率を通知する()
+    internal void ZoomFitでZoomChangedがIsFitと実効ズーム率を通知する()
     {
         var view = CreateView();
         view.ZoomPercent = 200;
@@ -138,7 +138,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomPercentSetterでZoomChangedがIsFitと実効ズーム率を通知する()
+    internal void ZoomPercentSetterでZoomChangedがIsFitと実効ズーム率を通知する()
     {
         var view = CreateView();
         view.ZoomFit();
@@ -158,7 +158,7 @@ public class ZoomViewControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void CenterAlign_固定倍率でズームアウトし画像が小さい場合は中央寄せされる()
+    internal void CenterAlign_固定倍率でズームアウトし画像が小さい場合は中央寄せされる()
     {
         // 画像 1000x500・ビューポート 400x200・ズームアウト 20% → 表示 200x100（ビューポートより小さい）
         var view = new ZoomViewControl();
@@ -178,7 +178,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void CenterAlign_左上寄せに戻すと固定倍率で画像が左上に配置される()
+    internal void CenterAlign_左上寄せに戻すと固定倍率で画像が左上に配置される()
     {
         // 画像 1000x500・ビューポート 400x200・ズームアウト 20% → 表示 200x100
         var view = new ZoomViewControl();
@@ -196,7 +196,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void CenterAlign_横方向が大きく縦方向が小さい場合は縦のみ中央寄せされる()
+    internal void CenterAlign_横方向が大きく縦方向が小さい場合は縦のみ中央寄せされる()
     {
         // 画像 2000x100・ビューポート 400x200・固定倍率 100% → 表示 2000x100
         // 横方向 2000 > 400（スクロール可能）、縦方向 100 < 200（スクロール不能）
@@ -228,7 +228,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void PanByWheel_縦の回転量で表示位置を移動する()
+    internal void PanByWheel_縦の回転量で表示位置を移動する()
     {
         var view = CreatePannableView();
         var before = view.ImageRectViewport();
@@ -242,7 +242,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void PanByWheel_ズーム中は実効倍率で換算する()
+    internal void PanByWheel_ズーム中は実効倍率で換算する()
     {
         var view = CreatePannableView();
         view.ZoomPercent = 200;
@@ -256,7 +256,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void PanByWheel_Shift併用は横へ移動する()
+    internal void PanByWheel_Shift併用は横へ移動する()
     {
         var view = CreatePannableView();
         var before = view.ImageRectViewport();
@@ -269,7 +269,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void PanByWheel_Shiftなしの横回転も横へ移動する()
+    internal void PanByWheel_Shiftなしの横回転も横へ移動する()
     {
         var view = CreatePannableView();
         var before = view.ImageRectViewport();
@@ -283,7 +283,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomByWheel_ズームインはWheelFactor倍へ移動する()
+    internal void ZoomByWheel_ズームインはWheelFactor倍へ移動する()
     {
         var view = CreatePannableView();
 
@@ -294,7 +294,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomByWheel_ズームアウトはWheelFactor分の1へ移動する()
+    internal void ZoomByWheel_ズームアウトはWheelFactor分の1へ移動する()
     {
         var view = CreatePannableView();
 
@@ -305,7 +305,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomByWheel_指定した位置をズーム中心にする()
+    internal void ZoomByWheel_指定した位置をズーム中心にする()
     {
         var view = CreatePannableView();
         var before = view.ImageRectViewport();
@@ -321,7 +321,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomByWheel_位置を省略するとビューポート中心をズーム中心にする()
+    internal void ZoomByWheel_位置を省略するとビューポート中心をズーム中心にする()
     {
         var view = CreatePannableView();
         var before = view.ImageRectViewport();
@@ -336,7 +336,7 @@ public class ZoomViewControlTests
     }
 
     [AvaloniaFact]
-    public void ZoomByWheel_移動できない場合はズーム率を維持する()
+    internal void ZoomByWheel_移動できない場合はズーム率を維持する()
     {
         var view = CreatePannableView();
         var maxZoom = EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomOptions.Default.MaxZoom;

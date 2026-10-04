@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee.Presenter.Drawing;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.Feature.Marquee;
 
@@ -87,7 +86,7 @@ public class FadeMaskHostLabelRendererTests
     private static EsSize Measure(string text, double fontSize) => MeasuredSize;
 
     [Fact]
-    public void 解決_注目矩形が無ければ空を返す()
+    internal void 解決_注目矩形が無ければ空を返す()
     {
         var placements = FadeMaskHostLabelRenderer.Resolve(
             CreateContent(null), CreateLabels(), CreateAppearance(), "確定: Enter", "メモ帳", Measure);
@@ -96,7 +95,7 @@ public class FadeMaskHostLabelRendererTests
     }
 
     [Fact]
-    public void 解決_操作ラベルと情報ラベルを縦に積む()
+    internal void 解決_操作ラベルと情報ラベルを縦に積む()
     {
         var placements = FadeMaskHostLabelRenderer.Resolve(
             CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
@@ -118,7 +117,7 @@ public class FadeMaskHostLabelRendererTests
     }
 
     [Fact]
-    public void 解決_サイズラベルを描く設定ではその下へ積む()
+    internal void 解決_サイズラベルを描く設定ではその下へ積む()
     {
         var appearance = CreateAppearance() with { ShowSizeLabel = true };
 
@@ -137,7 +136,7 @@ public class FadeMaskHostLabelRendererTests
 
     /// <summary>サイズラベルを描かない設定では付加情報が先頭へ繰り上がることを検証する。</summary>
     [Fact]
-    public void 解決_サイズラベルを描かない設定なら先頭へ繰り上がる()
+    internal void 解決_サイズラベルを描かない設定なら先頭へ繰り上がる()
     {
         var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
             CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
@@ -154,7 +153,7 @@ public class FadeMaskHostLabelRendererTests
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(false, false)]
-    public void 解決_表示スイッチが無効ならその行を返さない(bool showOperation, bool showInfo)
+    internal void 解決_表示スイッチが無効ならその行を返さない(bool showOperation, bool showInfo)
     {
         var placements = FadeMaskHostLabelRenderer.Resolve(
             CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
@@ -185,7 +184,7 @@ public class FadeMaskHostLabelRendererTests
     /// <summary>基準点が注目矩形の左上と異なる場合は基準点から積むことを検証する。</summary>
     /// <remarks>基準点は背景が選択矩形の枠線に重ならないよう内側へ寄せた値であり、積み上げはその値を基準にする。</remarks>
     [Fact]
-    public void 解決_基準点から積む()
+    internal void 解決_基準点から積む()
     {
         var focus = new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80);
         var anchor = new EsPoint(FocusTopLeft.X + 2, FocusTopLeft.Y + 2);
@@ -207,7 +206,7 @@ public class FadeMaskHostLabelRendererTests
     /// 描かない行の分だけ後続の行が繰り上がる（注目矩形の左上から積み直す）。
     /// </remarks>
     [Fact]
-    public void 解決_文言が空ならその行を返さない()
+    internal void 解決_文言が空ならその行を返さない()
     {
         var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
             CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
@@ -224,7 +223,7 @@ public class FadeMaskHostLabelRendererTests
     /// <summary>空白のみの文言を空として扱わないことを検証する。</summary>
     /// <remarks>「空」の判定は文字数 0 である（空白文字を描くかどうかはホストの文言生成の責務）。</remarks>
     [Fact]
-    public void 解決_空白のみの文言は返す()
+    internal void 解決_空白のみの文言は返す()
     {
         var placement = Assert.Single(FadeMaskHostLabelRenderer.Resolve(
             CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
@@ -238,12 +237,12 @@ public class FadeMaskHostLabelRendererTests
     }
 
     [Fact]
-    public void 解決_外観がnullなら例外()
+    internal void 解決_外観がnullなら例外()
         => Assert.Throws<ArgumentNullException>(() => FadeMaskHostLabelRenderer.Resolve(
             CreateContent(new EsRect(0, 0, 10, 10)), CreateLabels(), null!, "操作", "情報", Measure));
 
     [Fact]
-    public void 解決_測定関数がnullなら例外()
+    internal void 解決_測定関数がnullなら例外()
         => Assert.Throws<ArgumentNullException>(() => FadeMaskHostLabelRenderer.Resolve(
             CreateContent(new EsRect(0, 0, 10, 10)), CreateLabels(), CreateAppearance(), "操作", "情報", null!));
 }

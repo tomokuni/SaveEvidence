@@ -29,7 +29,7 @@ public class MarqueeHostLabelRendererTests
     private static EsSize Measure(string text, double fontSize) => s_measured;
 
     [Fact]
-    public void Resolve_基準点を背景の左上に置く()
+    internal void Resolve_基準点を背景の左上に置く()
     {
         var anchor = new EsPoint(10, 20);
 
@@ -40,7 +40,7 @@ public class MarqueeHostLabelRendererTests
     }
 
     [Fact]
-    public void Resolve_背景を実寸と内側余白から求める()
+    internal void Resolve_背景を実寸と内側余白から求める()
     {
         var placement = MarqueeHostLabelRenderer.Resolve(
             new EsPoint(10, 20), "W", 14.0, s_text, s_background, padding: 4, Measure);
@@ -53,7 +53,7 @@ public class MarqueeHostLabelRendererTests
     }
 
     [Fact]
-    public void Resolve_余白が大きいほど背景が広がる()
+    internal void Resolve_余白が大きいほど背景が広がる()
     {
         var narrow = MarqueeHostLabelRenderer.Resolve(
             new EsPoint(10, 10), "W", 14.0, s_text, s_background, padding: 1, Measure);
@@ -65,7 +65,7 @@ public class MarqueeHostLabelRendererTests
     }
 
     [Fact]
-    public void Resolve_文言と体裁を配置指示へ写す()
+    internal void Resolve_文言と体裁を配置指示へ写す()
     {
         var placement = MarqueeHostLabelRenderer.Resolve(
             new EsPoint(0, 0), "確定: Enter", 12.0, s_text, s_background, 4, Measure);
@@ -77,12 +77,12 @@ public class MarqueeHostLabelRendererTests
     }
 
     [Fact]
-    public void Resolve_文言がnullなら例外()
+    internal void Resolve_文言がnullなら例外()
         => Assert.Throws<ArgumentNullException>(
             () => MarqueeHostLabelRenderer.Resolve(new EsPoint(0, 0), null!, 14.0, s_text, s_background, 4, Measure));
 
     [Fact]
-    public void Resolve_測定関数がnullなら例外()
+    internal void Resolve_測定関数がnullなら例外()
         => Assert.Throws<ArgumentNullException>(
             () => MarqueeHostLabelRenderer.Resolve(new EsPoint(0, 0), "W", 14.0, s_text, s_background, 4, null!));
 }

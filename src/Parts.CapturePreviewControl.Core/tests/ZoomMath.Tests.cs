@@ -17,7 +17,7 @@ public class ZoomMathTests
     // ====================================================================
 
     [Fact]
-    public void FitScale_幅と高さのスケールの小さい方を返す()
+    internal void FitScale_幅と高さのスケールの小さい方を返す()
     {
         // 画像 1000x2000、ビューポート 500x400 → X=0.5, Y=0.2 → 0.2
         var result = ZoomMath.FitScale(new EsSize(1000, 2000), new EsSize(500, 400));
@@ -25,7 +25,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void FitScale_幅が基準になる場合()
+    internal void FitScale_幅が基準になる場合()
     {
         // 画像 2000x1000、ビューポート 500x400 → X=0.25, Y=0.4 → 0.25
         var result = ZoomMath.FitScale(new EsSize(2000, 1000), new EsSize(500, 400));
@@ -33,21 +33,21 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void FitScale_画像サイズが0なら1を返す()
+    internal void FitScale_画像サイズが0なら1を返す()
     {
         Assert.Equal(1.0, ZoomMath.FitScale(new EsSize(0, 100), new EsSize(500, 400)));
         Assert.Equal(1.0, ZoomMath.FitScale(new EsSize(100, 0), new EsSize(500, 400)));
     }
 
     [Fact]
-    public void FitScale_スケールが0以下なら1を返す()
+    internal void FitScale_スケールが0以下なら1を返す()
     {
         // ビューポート 0x0 → スケール 0 → 1 にフォールバック
         Assert.Equal(1.0, ZoomMath.FitScale(new EsSize(1000, 500), new EsSize(0, 0)));
     }
 
     [Fact]
-    public void FitZoomPercent_FitScaleの100倍を返す()
+    internal void FitZoomPercent_FitScaleの100倍を返す()
     {
         // 画像 1000x2000、ビューポート 500x400 → FitScale 0.2 → 20%
         var percent = ZoomMath.FitZoomPercent(new EsSize(1000, 2000), new EsSize(500, 400));
@@ -59,7 +59,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void FitZoomPercent_幅と高さのスケールの小さい方を返す()
+    internal void FitZoomPercent_幅と高さのスケールの小さい方を返す()
     {
         // 画像 1000x2000、ビューポート 500x400 → X=50%, Y=20% → 20%
         var result = ZoomMath.FitZoomPercent(new EsSize(1000, 2000), new EsSize(500, 400));
@@ -67,7 +67,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void FitZoomPercent_幅が基準になる場合()
+    internal void FitZoomPercent_幅が基準になる場合()
     {
         // 画像 2000x1000、ビューポート 500x400 → X=25%, Y=40% → 25%
         var result = ZoomMath.FitZoomPercent(new EsSize(2000, 1000), new EsSize(500, 400));
@@ -75,7 +75,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void FitZoomPercent_画像サイズが0なら100を返す()
+    internal void FitZoomPercent_画像サイズが0なら100を返す()
     {
         Assert.Equal(100.0, ZoomMath.FitZoomPercent(new EsSize(0, 100), new EsSize(500, 400)));
         Assert.Equal(100.0, ZoomMath.FitZoomPercent(new EsSize(100, 0), new EsSize(500, 400)));
@@ -86,7 +86,7 @@ public class ZoomMathTests
     // ====================================================================
 
     [Fact]
-    public void ComputeOffsetAfterScaleChange_ズーム中心のコンテンツ座標を維持する()
+    internal void ComputeOffsetAfterScaleChange_ズーム中心のコンテンツ座標を維持する()
     {
         // ビューポート 800x600、コンテンツ 2000x1000、ズーム 100%→200%（scale 1→2）
         // ズーム中心 = ビューポート中心 (400, 300)
@@ -99,7 +99,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ComputeOffsetAfterScaleChange_スクロール中のズームで中心を維持する()
+    internal void ComputeOffsetAfterScaleChange_スクロール中のズームで中心を維持する()
     {
         // ズーム前: offset=(500, 300)、ズーム 100%→200%
         // 中心のコンテンツ座標 = (500 + 400/1, 300 + 300/1) = (900, 600)
@@ -111,7 +111,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ComputeOffsetAfterScaleChange_ズームアウトでオフセットが戻る()
+    internal void ComputeOffsetAfterScaleChange_ズームアウトでオフセットが戻る()
     {
         // ズーム 200%→100%: 上記の逆
         // ズーム前: offset=(700, 450)、中心のコンテンツ座標 = (700 + 400/2, 450 + 300/2) = (900, 600)
@@ -123,7 +123,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ComputeOffsetAfterScaleChange_スクロール範囲を超えないようクランプする()
+    internal void ComputeOffsetAfterScaleChange_スクロール範囲を超えないようクランプする()
     {
         // ズーム 100%→200%: ズーム前 offset=(1590, 690)
         // 中心のコンテンツ座標 = (1590+400, 690+300) = (1990, 990)
@@ -137,7 +137,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ComputeOffsetAfterScaleChange_スケールが0でもゼロ除算しない()
+    internal void ComputeOffsetAfterScaleChange_スケールが0でもゼロ除算しない()
     {
         // ゼロ除算を防ぎ、スケール 1 として扱われる
         // oldScale=0→1: 中心のコンテンツ座標 = (0+400, 0+300) = (400, 300)
@@ -154,7 +154,7 @@ public class ZoomMathTests
     // ====================================================================
 
     [Fact]
-    public void ClampOffset_スクロール範囲内はそのまま()
+    internal void ClampOffset_スクロール範囲内はそのまま()
     {
         var result = ZoomMath.ClampOffset(new EsVector(500, 300), 1.0,
             new EsSize(2000, 1000), new EsSize(800, 600));
@@ -162,7 +162,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ClampOffset_範囲外はクランプされる()
+    internal void ClampOffset_範囲外はクランプされる()
     {
         // 最大 = 2000-800=1200, 1000-600=400
         var result = ZoomMath.ClampOffset(new EsVector(2000, 500), 1.0,
@@ -171,7 +171,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ClampOffset_負の値は0にクランプされる()
+    internal void ClampOffset_負の値は0にクランプされる()
     {
         var result = ZoomMath.ClampOffset(new EsVector(-100, -50), 1.0,
             new EsSize(2000, 1000), new EsSize(800, 600));
@@ -179,7 +179,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ClampOffset_コンテンツがビューポート以下なら0になる()
+    internal void ClampOffset_コンテンツがビューポート以下なら0になる()
     {
         var result = ZoomMath.ClampOffset(new EsVector(100, 50), 1.0,
             new EsSize(500, 300), new EsSize(800, 600));
@@ -191,7 +191,7 @@ public class ZoomMathTests
     // ====================================================================
 
     [Fact]
-    public void ClientToSource_固定倍率でオフセットを加算して変換する()
+    internal void ClientToSource_固定倍率でオフセットを加算して変換する()
     {
         // オフセット (100,50)・スケール 2.0 → (100 + 10/2, 50 + 20/2) = (105, 60)
         var result = ZoomMath.ClientToSource(new EsPoint(10, 20), new EsVector(100, 50), 2.0);
@@ -200,7 +200,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ClientToSource_スケール0以下は1として扱う()
+    internal void ClientToSource_スケール0以下は1として扱う()
     {
         var result = ZoomMath.ClientToSource(new EsPoint(10, 20), new EsVector(100, 50), 0);
 
@@ -208,7 +208,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void SourceToClient_固定倍率でオフセットを減算して変換する()
+    internal void SourceToClient_固定倍率でオフセットを減算して変換する()
     {
         // オフセット (100,50)・スケール 2.0 → ((105-100)*2, (60-50)*2) = (10, 20)
         var result = ZoomMath.SourceToClient(new EsPoint(105, 60), new EsVector(100, 50), 2.0);
@@ -217,7 +217,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void SourceToClient_スケール0以下は1として扱う()
+    internal void SourceToClient_スケール0以下は1として扱う()
     {
         var result = ZoomMath.SourceToClient(new EsPoint(110, 70), new EsVector(100, 50), 0);
 
@@ -225,7 +225,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void 往復変換で元のビューポート座標に戻る()
+    internal void 往復変換で元のビューポート座標に戻る()
     {
         var viewportPos = new EsPoint(123, 456);
         var offset = new EsVector(30, 40);
@@ -243,7 +243,7 @@ public class ZoomMathTests
     // ====================================================================
 
     [Fact]
-    public void ClientToDisplayedSource_画像原点を基準にビューポートからコンテンツへ変換する()
+    internal void ClientToDisplayedSource_画像原点を基準にビューポートからコンテンツへ変換する()
     {
         // 画像原点 (100,50)・スケール 2.0 → ((10-100)/2, (20-50)/2) = (-45, -15)
         var result = ZoomMath.ClientToDisplayedSource(new EsPoint(10, 20), new EsPoint(100, 50), 2.0);
@@ -252,7 +252,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ClientToDisplayedSource_スケール0以下は1として扱う()
+    internal void ClientToDisplayedSource_スケール0以下は1として扱う()
     {
         var result = ZoomMath.ClientToDisplayedSource(new EsPoint(110, 70), new EsPoint(100, 50), 0);
 
@@ -260,7 +260,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void DisplayedSourceToClient_画像原点を基準にコンテンツからビューポートへ変換する()
+    internal void DisplayedSourceToClient_画像原点を基準にコンテンツからビューポートへ変換する()
     {
         // 画像原点 (100,50)・スケール 2.0 → (100 + (-45)*2, 50 + (-15)*2) = (10, 20)
         var result = ZoomMath.DisplayedSourceToClient(new EsPoint(-45, -15), new EsPoint(100, 50), 2.0);
@@ -269,7 +269,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void DisplayedSourceToClient_スケール0以下は1として扱う()
+    internal void DisplayedSourceToClient_スケール0以下は1として扱う()
     {
         var result = ZoomMath.DisplayedSourceToClient(new EsPoint(10, 20), new EsPoint(100, 50), 0);
 
@@ -277,7 +277,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void 画像基準の往復変換で元のビューポート座標に戻る()
+    internal void 画像基準の往復変換で元のビューポート座標に戻る()
     {
         var viewportPos = new EsPoint(150, 260);
         var imageOrigin = new EsPoint(60, 80);
@@ -295,7 +295,7 @@ public class ZoomMathTests
     // ====================================================================
 
     [Fact]
-    public void ComputeEffectiveScale_固定倍率中はズーム率を100で割った値を返す()
+    internal void ComputeEffectiveScale_固定倍率中はズーム率を100で割った値を返す()
     {
         // zoomPercent = 200 → scale = 2
         var scale = ZoomMath.ComputeEffectiveScale(200, new EsSize(1000, 500), new EsSize(400, 200));
@@ -304,7 +304,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ComputeEffectiveScale_Fit中はFitScaleを返す()
+    internal void ComputeEffectiveScale_Fit中はFitScaleを返す()
     {
         // zoomPercent = 0（Fit）。 画像 1000x500、ビューポート 400x200
         // scaleX = 400/1000 = 0.4、scaleY = 200/500 = 0.4（min = 0.4）
@@ -314,7 +314,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ComputeEffectiveScale_Fit中で画像サイズが0なら1を返す()
+    internal void ComputeEffectiveScale_Fit中で画像サイズが0なら1を返す()
     {
         var scale = ZoomMath.ComputeEffectiveScale(0, new EsSize(0, 0), new EsSize(400, 200));
 
@@ -326,20 +326,20 @@ public class ZoomMathTests
     // ====================================================================
 
     [Fact]
-    public void MaxCentered_中央寄せならビューポート差分の半分を返す()
+    internal void MaxCentered_中央寄せならビューポート差分の半分を返す()
     {
         // 表示 100、ビューポート 400 → (400 - 100) / 2 = 150
         Assert.Equal(150.0, ZoomMath.MaxCentered(100, 400, centerAlign: true), 6);
     }
 
     [Fact]
-    public void MaxCentered_CenterAlignがfalseなら0を返す()
+    internal void MaxCentered_CenterAlignがfalseなら0を返す()
     {
         Assert.Equal(0.0, ZoomMath.MaxCentered(100, 400, centerAlign: false), 6);
     }
 
     [Fact]
-    public void MaxCentered_表示サイズがビューポートより大きい場合は0を返す()
+    internal void MaxCentered_表示サイズがビューポートより大きい場合は0を返す()
     {
         // 表示 500、ビューポート 400 → スクロール対象のため補正しない
         Assert.Equal(0.0, ZoomMath.MaxCentered(500, 400, centerAlign: true), 6);
@@ -350,7 +350,7 @@ public class ZoomMathTests
     // ====================================================================
 
     [Fact]
-    public void ComputeImageOrigin_Fitで中央寄せならビューポート中央を原点にする()
+    internal void ComputeImageOrigin_Fitで中央寄せならビューポート中央を原点にする()
     {
         // 表示 100x100、ビューポート 400x300 → 中央寄せ (150, 100)
         var origin = ZoomMath.ComputeImageOrigin(
@@ -361,7 +361,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ComputeImageOrigin_Fitで左上寄せなら原点は0になる()
+    internal void ComputeImageOrigin_Fitで左上寄せなら原点は0になる()
     {
         var origin = ZoomMath.ComputeImageOrigin(
             new EsSize(100, 100), new EsSize(400, 300), zoomPercent: 0,
@@ -371,7 +371,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ComputeImageOrigin_固定倍率でスクロール可能な軸はパン位置になる()
+    internal void ComputeImageOrigin_固定倍率でスクロール可能な軸はパン位置になる()
     {
         // 表示 600x500、ビューポート 400x300（両軸ともスクロール可能）
         // offset=(100,50), scale=2 → x=-200, y=-100
@@ -383,7 +383,7 @@ public class ZoomMathTests
     }
 
     [Fact]
-    public void ComputeImageOrigin_固定倍率で中央寄せの軸はビューポート中央を原点にする()
+    internal void ComputeImageOrigin_固定倍率で中央寄せの軸はビューポート中央を原点にする()
     {
         // 表示 100x80、ビューポート 400x300（両軸ともスクロール不能）
         // offset は 0 にクランプされ中央寄せ → x=(400-100)/2=150, y=(300-80)/2=110

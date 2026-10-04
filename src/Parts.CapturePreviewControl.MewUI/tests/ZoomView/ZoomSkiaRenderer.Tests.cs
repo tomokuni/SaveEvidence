@@ -27,7 +27,7 @@ public class ZoomSkiaRendererTests
 
     /// <summary>Fit 表示で画像がビューポート全体へ描画されることを検証する。</summary>
     [Fact]
-    public void Render_Fitで画像が描画される()
+    internal void Render_Fitで画像が描画される()
     {
         using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
         var session = CreateSession(image, 200);
@@ -40,7 +40,7 @@ public class ZoomSkiaRendererTests
 
     /// <summary>画像が未設定の場合は何も描画しないことを検証する。</summary>
     [Fact]
-    public void Render_画像なしは何も描画しない()
+    internal void Render_画像なしは何も描画しない()
     {
         var session = new ZoomViewSession();
         session.SetViewport(new EsSize(100, 100));
@@ -54,7 +54,7 @@ public class ZoomSkiaRendererTests
     /// <summary>パン後の表示矩形へ画像が描画されることを検証する。</summary>
     /// <remarks>表示矩形はコアが確定するため、描画層は矩形どおりに描くだけでよい。</remarks>
     [Fact]
-    public void Render_パン後の位置へ描画される()
+    internal void Render_パン後の位置へ描画される()
     {
         using var image = TestHelper.CreateBitmap(400, 400, SKColors.Red);
         var session = CreateSession(image, 200);
@@ -72,7 +72,7 @@ public class ZoomSkiaRendererTests
 
     /// <summary>表示矩形が空（画像サイズ 0）の場合は描画しないことを検証する。</summary>
     [Fact]
-    public void Render_退化した画像は描画しない()
+    internal void Render_退化した画像は描画しない()
     {
         using var image = TestHelper.CreateBitmap(1, 1, SKColors.Red);
         var session = new ZoomViewSession();

@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 public class ColorEntryTests
 {
     [Fact]
-    public void All_色名のアルファベット順に並ぶ()
+    internal void All_色名のアルファベット順に並ぶ()
     {
         var all = ColorEntry.All;
 
@@ -27,7 +27,7 @@ public class ColorEntryTests
     }
 
     [Fact]
-    public void All_Colorsの全色を含む()
+    internal void All_Colorsの全色を含む()
     {
         var all = ColorEntry.All;
         var colorNames = typeof(Colors)
@@ -44,7 +44,7 @@ public class ColorEntryTests
     }
 
     [Fact]
-    public void AllByHue_無彩色が先頭で輝度昇順になる()
+    internal void AllByHue_無彩色が先頭で輝度昇順になる()
     {
         var all = ColorEntry.AllByHue;
 
@@ -63,7 +63,7 @@ public class ColorEntryTests
     }
 
     [Fact]
-    public void ToString_常に英語名を返す()
+    internal void ToString_常に英語名を返す()
     {
         var entry = new ColorEntry("Red", "#FF0000");
 
@@ -71,7 +71,7 @@ public class ColorEntryTests
     }
 
     [Fact]
-    public void All_全エントリのHexがColorとして解析可能()
+    internal void All_全エントリのHexがColorとして解析可能()
     {
         foreach (var e in ColorEntry.All)
         {
@@ -84,7 +84,7 @@ public class ColorEntryTests
     // ====================================================================
 
     [Fact]
-    public void GetSortKey_無彩色は輝度昇順になる()
+    internal void GetSortKey_無彩色は輝度昇順になる()
     {
         Assert.Equal((0, 0f), ColorEntry.GetSortKey("Black"));
         Assert.Equal((0, 1f), ColorEntry.GetSortKey("White"));
@@ -96,7 +96,7 @@ public class ColorEntryTests
     }
 
     [Fact]
-    public void GetSortKey_有彩色は色相順になる()
+    internal void GetSortKey_有彩色は色相順になる()
     {
         var red = ColorEntry.GetSortKey("Red");
         var lime = ColorEntry.GetSortKey("Lime");
@@ -108,7 +108,7 @@ public class ColorEntryTests
     }
 
     [Fact]
-    public void GetSortKey_解析できない色名は無彩色の先頭に来る()
+    internal void GetSortKey_解析できない色名は無彩色の先頭に来る()
     {
         // Color.TryParse が失敗する場合の防御分岐（priority=0, key=0）
         var result = ColorEntry.GetSortKey("NotAColor");

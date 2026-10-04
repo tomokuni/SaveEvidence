@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 public class ScreenConverterTests
 {
     [AvaloniaFact]
-    public void ScreenToLocalDip_ウィンドウ内のコントロールで逆変換できる()
+    internal void ScreenToLocalDip_ウィンドウ内のコントロールで逆変換できる()
     {
         var window = new Window { Width = 300, Height = 300 };
         var panel = new Panel { Width = 200, Height = 200 };
@@ -40,7 +40,7 @@ public class ScreenConverterTests
 public class ScreenConverterUnconnectedTests
 {
     [Fact]
-    public void ScreenToLocalDip_ビジュアルツリー未接続時は等価変換する()
+    internal void ScreenToLocalDip_ビジュアルツリー未接続時は等価変換する()
     {
         var control = new Panel();
 

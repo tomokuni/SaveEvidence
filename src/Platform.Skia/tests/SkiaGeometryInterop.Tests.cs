@@ -12,7 +12,7 @@ public class SkiaGeometryInteropTests
 {
     /// <summary>矩形が左上と右下で同じ値へ変換されることを検証する。</summary>
     [Fact]
-    public void ToSKRect_左上と右下を保持して変換する()
+    internal void ToSKRect_左上と右下を保持して変換する()
     {
         var result = new EsRect(10, 20, 30, 40).ToSKRect();
 
@@ -24,7 +24,7 @@ public class SkiaGeometryInteropTests
 
     /// <summary>負のサイズ（退化した矩形）も保持することを検証する。</summary>
     [Fact]
-    public void ToSKRect_負のサイズも保持する()
+    internal void ToSKRect_負のサイズも保持する()
     {
         var result = new EsRect(5, 5, -10, -20).ToSKRect();
 
@@ -36,7 +36,7 @@ public class SkiaGeometryInteropTests
 
     /// <summary>小数値を保持して変換することを検証する。</summary>
     [Fact]
-    public void ToSKRect_小数値を保持する()
+    internal void ToSKRect_小数値を保持する()
     {
         var result = new EsRect(1.5, 2.25, 3.75, 4.5).ToSKRect();
 
@@ -48,7 +48,7 @@ public class SkiaGeometryInteropTests
 
     /// <summary>Skia の整数サイズが幅・高さを保持して変換されることを検証する。</summary>
     [Fact]
-    public void ToEsSize_幅と高さを保持して変換する()
+    internal void ToEsSize_幅と高さを保持して変換する()
     {
         var result = new SKSizeI(1920, 1080).ToEsSize();
 
@@ -58,7 +58,7 @@ public class SkiaGeometryInteropTests
 
     /// <summary>0 サイズもそのまま変換されることを検証する（描画前の表面サイズ）。</summary>
     [Fact]
-    public void ToEsSize_0サイズもそのまま変換する()
+    internal void ToEsSize_0サイズもそのまま変換する()
     {
         var result = new SKSizeI(0, 0).ToEsSize();
 

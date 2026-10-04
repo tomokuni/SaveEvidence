@@ -12,20 +12,20 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 public class ColorValidatorTests
 {
     [Fact]
-    public void IsValid_nullはfalseを返す()
+    internal void IsValid_nullはfalseを返す()
     {
         Assert.False(ColorValidator.IsValid(null));
     }
 
     [Fact]
-    public void IsValid_有効な色はtrueを返す()
+    internal void IsValid_有効な色はtrueを返す()
     {
         Assert.True(ColorValidator.IsValid("Red"));
         Assert.True(ColorValidator.IsValid("#00FF00"));
     }
 
     [Fact]
-    public void IsValid_無効な色はfalseを返す()
+    internal void IsValid_無効な色はfalseを返す()
     {
         Assert.False(ColorValidator.IsValid("NotAColor"));
     }

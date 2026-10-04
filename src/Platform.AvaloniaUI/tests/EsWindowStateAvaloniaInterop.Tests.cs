@@ -18,7 +18,7 @@ public class EsWindowStateAvaloniaInteropTests
     // ====================================================================
 
     [Fact]
-    public void EsWindowState_往復変換で値が一致する()
+    internal void EsWindowState_往復変換で値が一致する()
     {
         foreach (var state in Enum.GetValues<EsWindowState>())
         {
@@ -27,7 +27,7 @@ public class EsWindowStateAvaloniaInteropTests
     }
 
     [Fact]
-    public void AvaloniaWindowState_往復変換で値が一致する()
+    internal void AvaloniaWindowState_往復変換で値が一致する()
     {
         foreach (var state in Enum.GetValues<WindowState>())
         {
@@ -40,7 +40,7 @@ public class EsWindowStateAvaloniaInteropTests
     // ====================================================================
 
     [Fact]
-    public void メンバー名がAvaloniaと完全に一致する()
+    internal void メンバー名がAvaloniaと完全に一致する()
     {
         // JsonStringEnumConverter で名前シリアライズするため、メンバー名の一致が必須
         var esNames = Enum.GetNames<EsWindowState>().OrderBy(static n => n, StringComparer.Ordinal);
@@ -54,7 +54,7 @@ public class EsWindowStateAvaloniaInteropTests
     [InlineData(EsWindowState.Minimized, WindowState.Minimized)]
     [InlineData(EsWindowState.Maximized, WindowState.Maximized)]
     [InlineData(EsWindowState.FullScreen, WindowState.FullScreen)]
-    public void ToAvaloniaWindowState_対応する値を返す(EsWindowState source, WindowState expected)
+    internal void ToAvaloniaWindowState_対応する値を返す(EsWindowState source, WindowState expected)
     {
         Assert.Equal(expected, source.ToAvaloniaWindowState());
     }
@@ -64,13 +64,13 @@ public class EsWindowStateAvaloniaInteropTests
     [InlineData(WindowState.Minimized, EsWindowState.Minimized)]
     [InlineData(WindowState.Maximized, EsWindowState.Maximized)]
     [InlineData(WindowState.FullScreen, EsWindowState.FullScreen)]
-    public void ToEsWindowState_対応する値を返す(WindowState source, EsWindowState expected)
+    internal void ToEsWindowState_対応する値を返す(WindowState source, EsWindowState expected)
     {
         Assert.Equal(expected, source.ToEsWindowState());
     }
 
     [Fact]
-    public void ToAvaloniaWindowState_名前が一致しない値はNormalへフォールバックする()
+    internal void ToAvaloniaWindowState_名前が一致しない値はNormalへフォールバックする()
     {
         // 未定義値（名前が解決できない）は Normal へフォールバックする
         var undefined = (EsWindowState)999;
@@ -79,7 +79,7 @@ public class EsWindowStateAvaloniaInteropTests
     }
 
     [Fact]
-    public void ToEsWindowState_名前が一致しない値はNormalへフォールバックする()
+    internal void ToEsWindowState_名前が一致しない値はNormalへフォールバックする()
     {
         var undefined = (WindowState)999;
 

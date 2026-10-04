@@ -21,7 +21,7 @@ public class EsRectIntJsonConverterTests
     };
 
     [Fact]
-    public void Write_XYWidthHeightのみを書き出す()
+    internal void Write_XYWidthHeightのみを書き出す()
     {
         var rect = new EsRectInt(444, 230, 1284, 1032);
 
@@ -31,7 +31,7 @@ public class EsRectIntJsonConverterTests
     }
 
     [Fact]
-    public void Read_XYWidthHeightを読み取る()
+    internal void Read_XYWidthHeightを読み取る()
     {
         var rect = JsonSerializer.Deserialize<EsRectInt>(
             """{"X":444,"Y":230,"Width":1284,"Height":1032}""", s_options);
@@ -40,7 +40,7 @@ public class EsRectIntJsonConverterTests
     }
 
     [Fact]
-    public void 往復変換で値が一致する()
+    internal void 往復変換で値が一致する()
     {
         var rect = new EsRectInt(-100, -50, 1920, 1080);
 
@@ -51,7 +51,7 @@ public class EsRectIntJsonConverterTests
     }
 
     [Fact]
-    public void Read_欠落したプロパティは0になる()
+    internal void Read_欠落したプロパティは0になる()
     {
         var rect = JsonSerializer.Deserialize<EsRectInt>("""{"X":10,"Width":20}""", s_options);
 
@@ -59,7 +59,7 @@ public class EsRectIntJsonConverterTests
     }
 
     [Fact]
-    public void Read_未知のプロパティは無視する()
+    internal void Read_未知のプロパティは無視する()
     {
         var rect = JsonSerializer.Deserialize<EsRectInt>(
             """{"X":1,"Y":2,"Width":3,"Height":4,"Right":4,"Unknown":99}""", s_options);
@@ -68,7 +68,7 @@ public class EsRectIntJsonConverterTests
     }
 
     [Fact]
-    public void Read_順序が異なっても読み取る()
+    internal void Read_順序が異なっても読み取る()
     {
         var rect = JsonSerializer.Deserialize<EsRectInt>(
             """{"Height":40,"Width":30,"Y":20,"X":10}""", s_options);
@@ -77,7 +77,7 @@ public class EsRectIntJsonConverterTests
     }
 
     [Fact]
-    public void 設定モデル_複合型のプロパティとして往復変換できる()
+    internal void 設定モデル_複合型のプロパティとして往復変換できる()
     {
         // 実際の利用形態（Settings.MainWindowBounds）と同じくプロパティ内で往復する
         var source = new Settings { MainWindowBounds = new EsRectInt(1, 2, 3, 4) };
@@ -89,7 +89,7 @@ public class EsRectIntJsonConverterTests
     }
 
     [Fact]
-    public void 設定モデル_MainWindowBounds未設定はnullのまま往復する()
+    internal void 設定モデル_MainWindowBounds未設定はnullのまま往復する()
     {
         var source = new Settings { MainWindowBounds = null };
 

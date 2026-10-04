@@ -19,11 +19,11 @@ public class FadeMaskDragRectSelectionTests
     [InlineData(-1, 10, false)]
     [InlineData(10, -1, false)]
     [InlineData(-10, -20, false)]
-    public void 判定_幅と高さがともに正の場合のみ選択として成立する(double width, double height, bool expected)
+    internal void 判定_幅と高さがともに正の場合のみ選択として成立する(double width, double height, bool expected)
         => Assert.Equal(expected, FadeMaskDragRectSelection.IsUsable(width, height));
 
     /// <summary>端数のある正の寸法が選択として成立することを検証する。</summary>
     [Fact]
-    public void 判定_端数のある正の寸法は選択として成立する()
+    internal void 判定_端数のある正の寸法は選択として成立する()
         => Assert.True(FadeMaskDragRectSelection.IsUsable(0.5, 0.5));
 }

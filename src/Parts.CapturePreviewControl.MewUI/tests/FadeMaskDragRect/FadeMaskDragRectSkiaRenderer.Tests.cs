@@ -15,7 +15,7 @@ public class FadeMaskDragRectSkiaRendererTests
 {
     /// <summary>選択矩形の辺に破線が描画されることを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_選択矩形の辺に破線を描画する()
+    internal void DrawSelectionRect_選択矩形の辺に破線を描画する()
     {
         using var target = TestHelper.CreateTarget(64, 64);
 
@@ -33,7 +33,7 @@ public class FadeMaskDragRectSkiaRendererTests
 
     /// <summary>2 色の破線が交互に描画されることを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_2色の破線を交互に描画する()
+    internal void DrawSelectionRect_2色の破線を交互に描画する()
     {
         using var target = TestHelper.CreateTarget(64, 64);
 
@@ -53,7 +53,7 @@ public class FadeMaskDragRectSkiaRendererTests
     [InlineData(0.5)]
     [InlineData(1.0)]
     [InlineData(1.99)]
-    public void DrawSelectionRect_倍率2未満では描画しない(double scale)
+    internal void DrawSelectionRect_倍率2未満では描画しない(double scale)
     {
         using var target = TestHelper.CreateTarget(64, 64);
 
@@ -66,7 +66,7 @@ public class FadeMaskDragRectSkiaRendererTests
 
     /// <summary>切り出し領域と交差しない場合は描画しないことを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_切り出し領域と交差しない場合は描画しない()
+    internal void DrawSelectionRect_切り出し領域と交差しない場合は描画しない()
     {
         using var target = TestHelper.CreateTarget(16, 16);
 
@@ -79,7 +79,7 @@ public class FadeMaskDragRectSkiaRendererTests
 
     /// <summary>画像の範囲外へはみ出す矩形でも例外にならず、画像内の辺のみ描画されることを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_画像外へはみ出しても例外にならない()
+    internal void DrawSelectionRect_画像外へはみ出しても例外にならない()
     {
         using var target = TestHelper.CreateTarget(16, 16);
 
@@ -93,7 +93,7 @@ public class FadeMaskDragRectSkiaRendererTests
 
     /// <summary>キャンバスが null の場合は例外になることを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_キャンバスがnullの場合は例外になる()
+    internal void DrawSelectionRect_キャンバスがnullの場合は例外になる()
     {
         Assert.Throws<ArgumentNullException>(() => FadeMaskDragRectSkiaRenderer.DrawSelectionRect(
             null!, new EsRect(0, 0, 10, 10), new EsPoint(0, 0), 4.0, 64, DrawingColor.Red, DrawingColor.Blue));

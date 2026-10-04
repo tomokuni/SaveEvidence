@@ -7,13 +7,13 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class CaptureTimingTests
 {
     [Fact]
-    public void ScreenCaptureTimeout_は5秒である()
+    internal void ScreenCaptureTimeout_は5秒である()
     {
         Assert.Equal(TimeSpan.FromMilliseconds(5000), CaptureTiming.ScreenCaptureTimeout);
     }
 
     [Fact]
-    public void OwnerOffScreenCoord_は画面外の負座標である()
+    internal void OwnerOffScreenCoord_は画面外の負座標である()
     {
         // ヒットテスト・要素検出の対象外になる画面外配置
         Assert.Equal(-32000, CaptureTiming.OwnerOffScreenCoord);
@@ -21,27 +21,27 @@ public class CaptureTimingTests
     }
 
     [Fact]
-    public void Resolve_未実行なら開始する()
+    internal void Resolve_未実行なら開始する()
     {
         Assert.Equal(CropSessionAction.Start, CropSessionActions.Resolve(isRunning: false, hasSelection: false));
         Assert.Equal(CropSessionAction.Start, CropSessionActions.Resolve(isRunning: false, hasSelection: true));
     }
 
     [Fact]
-    public void Resolve_実行中かつ選択ありなら確定する()
+    internal void Resolve_実行中かつ選択ありなら確定する()
     {
         Assert.Equal(CropSessionAction.Confirm, CropSessionActions.Resolve(isRunning: true, hasSelection: true));
     }
 
     [Fact]
-    public void Resolve_実行中かつ選択なしならキャンセルする()
+    internal void Resolve_実行中かつ選択なしならキャンセルする()
     {
         // 空の切り出しを作らない
         Assert.Equal(CropSessionAction.Cancel, CropSessionActions.Resolve(isRunning: true, hasSelection: false));
     }
 
     [Fact]
-    public void Resolve_実行状態と選択有無の組み合わせを全て扱う()
+    internal void Resolve_実行状態と選択有無の組み合わせを全て扱う()
     {
         // 4 通りの入力すべてが定義済みの操作へ解決される（未定義値や例外を返さない）
         foreach (var isRunning in new[] { true, false })

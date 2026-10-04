@@ -75,6 +75,7 @@ public sealed partial class CapturePage : UserControl
     // 構築
     // ====================================================================
 
+    /// <summary>CapturePage を初期化する。</summary>
     public CapturePage()
     {
         InitializeComponent();

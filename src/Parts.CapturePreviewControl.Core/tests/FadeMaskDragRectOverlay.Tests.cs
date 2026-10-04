@@ -31,7 +31,7 @@ public class FadeMaskDragRectOverlayTests
 
     /// <summary>選択矩形の辺に破線が描画されることを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_選択矩形の辺に破線が描画される()
+    internal void DrawSelectionRect_選択矩形の辺に破線が描画される()
     {
         // 白の 40x40 画像へ選択矩形 (10,10,20,20) を倍率 4 で描画する
         using var bitmap = CreateSolidBitmap(40, 40);
@@ -49,7 +49,7 @@ public class FadeMaskDragRectOverlayTests
 
     /// <summary>2 色の破線が交互に描画されることを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_2色の破線が交互に描画される()
+    internal void DrawSelectionRect_2色の破線が交互に描画される()
     {
         using var bitmap = CreateSolidBitmap(64, 64);
 
@@ -70,7 +70,7 @@ public class FadeMaskDragRectOverlayTests
     [InlineData(0.5)]
     [InlineData(1.0)]
     [InlineData(1.99)]
-    public void DrawSelectionRect_倍率2未満では描画しない(double scale)
+    internal void DrawSelectionRect_倍率2未満では描画しない(double scale)
     {
         using var bitmap = CreateSolidBitmap(40, 40);
 
@@ -83,7 +83,7 @@ public class FadeMaskDragRectOverlayTests
 
     /// <summary>切り出し領域と交差しない場合は描画しないことを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_切り出し領域と交差しない場合は描画しない()
+    internal void DrawSelectionRect_切り出し領域と交差しない場合は描画しない()
     {
         using var bitmap = CreateSolidBitmap(16, 16);
 
@@ -96,7 +96,7 @@ public class FadeMaskDragRectOverlayTests
 
     /// <summary>画像の範囲外へはみ出す矩形でも例外にならず、画像内の辺のみ描画されることを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_画像外へはみ出しても例外にならない()
+    internal void DrawSelectionRect_画像外へはみ出しても例外にならない()
     {
         using var bitmap = CreateSolidBitmap(16, 16);
 
@@ -109,7 +109,7 @@ public class FadeMaskDragRectOverlayTests
 
     /// <summary>画像が null の場合は例外になることを検証する。</summary>
     [Fact]
-    public void DrawSelectionRect_画像がnullの場合は例外になる()
+    internal void DrawSelectionRect_画像がnullの場合は例外になる()
     {
         Assert.Throws<ArgumentNullException>(() => FadeMaskDragRectOverlay.DrawSelectionRect(
             null!, new EsRect(0, 0, 10, 10), new EsPoint(0, 0), 4.0, DrawingColor.Black, DrawingColor.White));
@@ -121,7 +121,7 @@ public class FadeMaskDragRectOverlayTests
 
     /// <summary>4 辺の破線が上辺 → 下辺 → 左辺 → 右辺の順に列挙されることを検証する。</summary>
     [Fact]
-    public void EnumerateDashes_4辺の破線を上から順に列挙する()
+    internal void EnumerateDashes_4辺の破線を上から順に列挙する()
     {
         // 切り出し左上 (0,0)・倍率 4・選択矩形 (10,10,20,20) → 画像座標は (40,40)-(124,124)
         var dashes = FadeMaskDragRectOverlay.EnumerateDashes(
@@ -141,7 +141,7 @@ public class FadeMaskDragRectOverlayTests
 
     /// <summary>色の種別が辺ごとに色 A から始まり交互に切り替わることを検証する。</summary>
     [Fact]
-    public void EnumerateDashes_色の種別が辺ごとに色Aから交互になる()
+    internal void EnumerateDashes_色の種別が辺ごとに色Aから交互になる()
     {
         var dashes = FadeMaskDragRectOverlay.EnumerateDashes(
             new EsRect(10, 10, 20, 20), new EsPoint(0, 0), 4.0, pixelSize: 200);
@@ -163,7 +163,7 @@ public class FadeMaskDragRectOverlayTests
     [InlineData(0.5)]
     [InlineData(1.0)]
     [InlineData(1.99)]
-    public void EnumerateDashes_倍率2未満では列挙しない(double scale)
+    internal void EnumerateDashes_倍率2未満では列挙しない(double scale)
     {
         var dashes = FadeMaskDragRectOverlay.EnumerateDashes(
             new EsRect(10, 10, 20, 20), new EsPoint(0, 0), scale, pixelSize: 200);
@@ -173,7 +173,7 @@ public class FadeMaskDragRectOverlayTests
 
     /// <summary>切り出し領域と交差しない場合は列挙しないことを検証する。</summary>
     [Fact]
-    public void EnumerateDashes_切り出し領域と交差しない場合は列挙しない()
+    internal void EnumerateDashes_切り出し領域と交差しない場合は列挙しない()
     {
         var dashes = FadeMaskDragRectOverlay.EnumerateDashes(
             new EsRect(-100, -100, 10, 10), new EsPoint(0, 0), 4.0, pixelSize: 16);
@@ -184,7 +184,7 @@ public class FadeMaskDragRectOverlayTests
     /// <summary>列挙した破線が <see cref="EsBitmap"/> への描画結果と一致することを検証する。</summary>
     /// <remarks>列挙（MewUI の描画経路）と <c>DrawSelectionRect</c>（Avalonia の描画経路）が同じ幾何を使うことを担保する。</remarks>
     [Fact]
-    public void EnumerateDashes_列挙と画像への描画が一致する()
+    internal void EnumerateDashes_列挙と画像への描画が一致する()
     {
         using var bitmap = CreateSolidBitmap(64, 64);
         var selection = new EsRect(2, 3, 8, 9);

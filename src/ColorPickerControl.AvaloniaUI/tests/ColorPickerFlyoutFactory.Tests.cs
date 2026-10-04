@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 public class ColorPickerFlyoutFactoryTests
 {
     [AvaloniaFact]
-    public void Create_OKボタンで色が16進に変換されて反映される()
+    internal void Create_OKボタンで色が16進に変換されて反映される()
     {
         string? applied = null;
         var flyout = ColorPickerFlyoutFactory.Create("#FF8800", NullLogger.Instance, c => applied = c);
@@ -44,7 +44,7 @@ public class ColorPickerFlyoutFactoryTests
     }
 
     [AvaloniaFact]
-    public void Create_アルファ付き色は8桁の16進に変換される()
+    internal void Create_アルファ付き色は8桁の16進に変換される()
     {
         string? applied = null;
         var flyout = ColorPickerFlyoutFactory.Create("White", NullLogger.Instance, c => applied = c);
@@ -69,7 +69,7 @@ public class ColorPickerFlyoutFactoryTests
     }
 
     [AvaloniaFact]
-    public void Create_キャンセルボタンでは色が変わらない()
+    internal void Create_キャンセルボタンでは色が変わらない()
     {
         string? applied = null;
         var flyout = ColorPickerFlyoutFactory.Create("#FFFF0000", NullLogger.Instance, c => applied = c);
@@ -84,7 +84,7 @@ public class ColorPickerFlyoutFactoryTests
     }
 
     [AvaloniaFact]
-    public void Create_SelectedColorが空でも初期色が白になる()
+    internal void Create_SelectedColorが空でも初期色が白になる()
     {
         var flyout = ColorPickerFlyoutFactory.Create("", NullLogger.Instance, _ => { });
         var colorView = FindColorView(flyout.Content);
@@ -94,7 +94,7 @@ public class ColorPickerFlyoutFactoryTests
     }
 
     [AvaloniaFact]
-    public void Create_SelectedColorが無効な場合は初期色が白になる()
+    internal void Create_SelectedColorが無効な場合は初期色が白になる()
     {
         var flyout = ColorPickerFlyoutFactory.Create("NotAColor", NullLogger.Instance, _ => { });
         var colorView = FindColorView(flyout.Content);
@@ -104,7 +104,7 @@ public class ColorPickerFlyoutFactoryTests
     }
 
     [AvaloniaFact]
-    public void Create_SelectedColorが非空で解析不能な場合も白になる()
+    internal void Create_SelectedColorが非空で解析不能な場合も白になる()
     {
         // 非空だが Color.TryParse に失敗する値（!IsNullOrWhiteSpace=true && TryParse=false の分岐）
         var flyout = ColorPickerFlyoutFactory.Create("#GGGGGG", NullLogger.Instance, _ => { });

@@ -14,7 +14,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 public class TextBoxSelectionHelperTests
 {
     [AvaloniaFact]
-    public void FindTextBox_TextBoxを含むツリーから検索できる()
+    internal void FindTextBox_TextBoxを含むツリーから検索できる()
     {
         var textBox = new TextBox { Name = "Target" };
         var stack = new StackPanel
@@ -32,7 +32,7 @@ public class TextBoxSelectionHelperTests
     }
 
     [AvaloniaFact]
-    public void FindTextBox_TextBoxが無ければnullを返す()
+    internal void FindTextBox_TextBoxが無ければnullを返す()
     {
         var stack = new StackPanel
         {
@@ -45,7 +45,7 @@ public class TextBoxSelectionHelperTests
     }
 
     [AvaloniaFact]
-    public void FindTextBox_自身がTextBoxなら自身を返す()
+    internal void FindTextBox_自身がTextBoxなら自身を返す()
     {
         var textBox = new TextBox();
 
@@ -55,7 +55,7 @@ public class TextBoxSelectionHelperTests
     }
 
     [AvaloniaFact]
-    public void ResetSelection_TextBoxがあれば選択が末尾に移動する()
+    internal void ResetSelection_TextBoxがあれば選択が末尾に移動する()
     {
         var textBox = new TextBox { Text = "Hello" };
         textBox.SelectionStart = 0;
@@ -69,7 +69,7 @@ public class TextBoxSelectionHelperTests
     }
 
     [AvaloniaFact]
-    public void ResetSelection_TextBoxが無ければ何もしない()
+    internal void ResetSelection_TextBoxが無ければ何もしない()
     {
         var stack = new StackPanel { Children = { new TextBlock { Text = "x" } } };
 
@@ -78,7 +78,7 @@ public class TextBoxSelectionHelperTests
     }
 
     [AvaloniaFact]
-    public void ResetSelection_TextBoxのTextがnullでも例外にならない()
+    internal void ResetSelection_TextBoxのTextがnullでも例外にならない()
     {
         var textBox = new TextBox(); // Text = null
         var stack = new StackPanel { Children = { textBox } };

@@ -48,7 +48,7 @@ public class CaptureSessionControlTests
     }
 
     [AvaloniaFact]
-    public async Task StartCropAsync_引数nullで例外を投げる()
+    internal async Task StartCropAsync_引数nullで例外を投げる()
     {
         var capture = new CaptureSessionControl();
 
@@ -57,7 +57,7 @@ public class CaptureSessionControlTests
     }
 
     [AvaloniaFact]
-    public async Task StartCropAsync_破棄後は例外を投げる()
+    internal async Task StartCropAsync_破棄後は例外を投げる()
     {
         var capture = new CaptureSessionControl();
         capture.Dispose();
@@ -67,7 +67,7 @@ public class CaptureSessionControlTests
 
     /// <summary>切り出しの対象は「表示中の画像」（CropViewControl.Source）であり、画像が無い場合は開始しない。</summary>
     [AvaloniaFact]
-    public async Task StartCropAsync_画像が未設定なら開始せずnullを返す()
+    internal async Task StartCropAsync_画像が未設定なら開始せずnullを返す()
     {
         var capture = new CaptureSessionControl(null, NullLogger.Instance);
         var window = new Window();
@@ -85,7 +85,7 @@ public class CaptureSessionControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public async Task CaptureSession_HideOwnerWindowがtrueでオーナーが透明化され完了後に復元される()
+    internal async Task CaptureSession_HideOwnerWindowがtrueでオーナーが透明化され完了後に復元される()
     {
         var owner = new Window { Width = 100, Height = 100 };
         owner.Show();
@@ -120,7 +120,7 @@ public class CaptureSessionControlTests
     }
 
     [AvaloniaFact]
-    public async Task CaptureSession_HideOwnerWindowがfalseならオーナーは非表示にならない()
+    internal async Task CaptureSession_HideOwnerWindowがfalseならオーナーは非表示にならない()
     {
         var owner = new Window { Width = 100, Height = 100 };
         owner.Show();
@@ -148,7 +148,7 @@ public class CaptureSessionControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public async Task CaptureSession_キャプチャ完了イベントの完了後にオーナーが復元される()
+    internal async Task CaptureSession_キャプチャ完了イベントの完了後にオーナーが復元される()
     {
         var owner = new Window { Width = 100, Height = 100 };
         owner.Show();
@@ -186,7 +186,7 @@ public class CaptureSessionControlTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void CropSession_ApplySettings_実行中に設定を再適用して例外なく動作する()
+    internal void CropSession_ApplySettings_実行中に設定を再適用して例外なく動作する()
     {
         var panel = new Panel();
         var cropView = CreateCropView();
@@ -205,7 +205,7 @@ public class CaptureSessionControlTests
     }
 
     [AvaloniaFact]
-    public void CropSession_NotifyViewportChanged_実行中に再描画を要求して例外なく動作する()
+    internal void CropSession_NotifyViewportChanged_実行中に再描画を要求して例外なく動作する()
     {
         var panel = new Panel();
         var cropView = CreateCropView();
@@ -224,7 +224,7 @@ public class CaptureSessionControlTests
     }
 
     [AvaloniaFact]
-    public async Task CaptureSessionControl_設定変更で実行中のCropセッションへ反映する()
+    internal async Task CaptureSessionControl_設定変更で実行中のCropセッションへ反映する()
     {
         var capture = new CaptureSessionControl(null, NullLogger.Instance);
         var panel = new Panel();
@@ -251,7 +251,7 @@ public class CaptureSessionControlTests
     }
 
     [AvaloniaFact]
-    public async Task CaptureSessionControl_NotifyCropViewportChanged_実行中のCropセッションへ通知する()
+    internal async Task CaptureSessionControl_NotifyCropViewportChanged_実行中のCropセッションへ通知する()
     {
         var capture = new CaptureSessionControl(null, NullLogger.Instance);
         var panel = new Panel();
@@ -296,7 +296,7 @@ public class CaptureSessionControlTests
     /// 境界（UI 層）では UI 型へ変換するだけで、<b>境界より内側はコア型で引き回す</b>契約をここで固定する。
     /// </remarks>
     [AvaloniaFact]
-    public async Task StartCropAsync_確定はコア型の矩形で返る()
+    internal async Task StartCropAsync_確定はコア型の矩形で返る()
     {
         var capture = new CaptureSessionControl(null, NullLogger.Instance);
         var panel = new Panel();
@@ -324,7 +324,7 @@ public class CaptureSessionControlTests
 
     /// <summary>切り出しのキャンセルが空のコア型矩形（0x0）で返ることを検証する。</summary>
     [AvaloniaFact]
-    public async Task StartCropAsync_キャンセルは空のコア型矩形で返る()
+    internal async Task StartCropAsync_キャンセルは空のコア型矩形で返る()
     {
         var capture = new CaptureSessionControl(null, NullLogger.Instance);
         var panel = new Panel();
@@ -352,7 +352,7 @@ public class CaptureSessionControlTests
     /// （100x100 → 40x40 の差し替え後も 81x81 の矩形が返る）。 現在の画像（40x40）でクランプされることを固定する。
     /// </remarks>
     [AvaloniaFact]
-    public async Task StartCropAsync_画像差し替え後は新しい画像のサイズで切り出す()
+    internal async Task StartCropAsync_画像差し替え後は新しい画像のサイズで切り出す()
     {
         var capture = new CaptureSessionControl(null, NullLogger.Instance);
         var panel = new Panel();

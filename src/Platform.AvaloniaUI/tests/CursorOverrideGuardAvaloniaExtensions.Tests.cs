@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 public class CursorOverrideGuardAvaloniaExtensionsTests
 {
     [AvaloniaFact]
-    public void Attach_ウィンドウ指定で例外なく完了する()
+    internal void Attach_ウィンドウ指定で例外なく完了する()
     {
         var guard = new StubGuard();
         var window = new Window();

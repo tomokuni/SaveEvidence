@@ -19,7 +19,7 @@ public sealed class LineRectangleReconstructorTests
         => new(new EsPoint(0, y), new EsPoint(1000, y), LineOrientation.Horizontal, 1000);
 
     [Fact]
-    public void Reconstruct_垂直2本と水平2本から外側の境界を復元する()
+    internal void Reconstruct_垂直2本と水平2本から外側の境界を復元する()
     {
         var results = new[]
         {
@@ -34,7 +34,7 @@ public sealed class LineRectangleReconstructorTests
     }
 
     [Fact]
-    public void Reconstruct_垂直または水平が2本未満は空を返す()
+    internal void Reconstruct_垂直または水平が2本未満は空を返す()
     {
         Assert.Empty(LineRectangleReconstructor.Reconstruct([VerticalLine(100), VerticalLine(300), HorizontalLine(50)]));
         Assert.Empty(LineRectangleReconstructor.Reconstruct([VerticalLine(100), HorizontalLine(50), HorizontalLine(200)]));
@@ -42,7 +42,7 @@ public sealed class LineRectangleReconstructorTests
     }
 
     [Fact]
-    public void Reconstruct_重複座標は統合して外側の境界を復元する()
+    internal void Reconstruct_重複座標は統合して外側の境界を復元する()
     {
         // 重複した垂直・水平線を統合して 1 つの矩形（外側の境界）を復元する
         var results = new[]
@@ -58,7 +58,7 @@ public sealed class LineRectangleReconstructorTests
     }
 
     [Fact]
-    public void Reconstruct_複数の矩形候補を面積昇順で返す()
+    internal void Reconstruct_複数の矩形候補を面積昇順で返す()
     {
         // 垂直 3 本 × 水平 3 本 → 複数の矩形候補（面積昇順）
         var results = new[]
@@ -78,7 +78,7 @@ public sealed class LineRectangleReconstructorTests
     }
 
     [Fact]
-    public void Reconstruct_幅または高さが1未満の矩形は除外する()
+    internal void Reconstruct_幅または高さが1未満の矩形は除外する()
     {
         // 同一座標のペア（幅・高さ 0）は除外される
         var results = new[]
@@ -101,7 +101,7 @@ public sealed class LineRectangleReconstructorTests
         => new(new EsPoint(x1, y), new EsPoint(x2, y), LineOrientation.Horizontal, Math.Abs(x2 - x1));
 
     [Fact]
-    public void Reconstruct_上下の垂直線が重ならない組み合わせは候補にしない()
+    internal void Reconstruct_上下の垂直線が重ならない組み合わせは候補にしない()
     {
         // 左辺（Y 0〜100）と右辺（Y 500〜900）は共通の Y 範囲を持たないため矩形を構成しない
         var results = new[]
@@ -114,7 +114,7 @@ public sealed class LineRectangleReconstructorTests
     }
 
     [Fact]
-    public void Reconstruct_左右の範囲を覆わない水平線は辺に使わない()
+    internal void Reconstruct_左右の範囲を覆わない水平線は辺に使わない()
     {
         // 左辺・右辺は揃っているが、上辺（Y=50）が右端（X=300）まで届かず矩形を構成できない。
         // 届いている下辺（Y=200）だけでは辺が 1 本しかないため候補は空になる
@@ -128,7 +128,7 @@ public sealed class LineRectangleReconstructorTests
     }
 
     [Fact]
-    public void Reconstruct_分断された辺は範囲を合併して矩形を構成する()
+    internal void Reconstruct_分断された辺は範囲を合併して矩形を構成する()
     {
         // 左辺（X=100）が Y 0〜400 と Y 600〜1000 に分断されていても、範囲を合併して 1 本の辺として扱う
         var results = new[]
@@ -142,7 +142,7 @@ public sealed class LineRectangleReconstructorTests
     }
 
     [Fact]
-    public void Reconstruct_候補数は上限を超えず面積の小さい順に返す()
+    internal void Reconstruct_候補数は上限を超えず面積の小さい順に返す()
     {
         // 縦横とも全域を覆う線分（40 本ずつ）は組み合わせが 608,400 通りになるが、上限で抑えられる
         var results = new List<LineDetectionResult>();
@@ -168,7 +168,7 @@ public sealed class LineRectangleReconstructorTests
     }
 
     [Fact]
-    public void Reconstruct_線分が多い画像でも上限内で完了する()
+    internal void Reconstruct_線分が多い画像でも上限内で完了する()
     {
         // 実画面の検出結果に相当する規模（水平 200 本・垂直 60 本）。
         // 全組み合わせを候補にすると 3,500 万件（実測 7 秒・3.5 GB）になる規模だが、上限内で完了する

@@ -18,7 +18,7 @@ public class ZoomScrollBarGeometryTests
     // ====================================================================
 
     [Fact]
-    public void Compute_画像がビューポートに収まる軸には生成しない()
+    internal void Compute_画像がビューポートに収まる軸には生成しない()
     {
         // 200x100 の画像を 400x400 のビューポートへ等倍表示（どちらの軸も収まる）
         var (horizontal, vertical) = ZoomScrollBarGeometry.Compute(
@@ -29,7 +29,7 @@ public class ZoomScrollBarGeometryTests
     }
 
     [Fact]
-    public void Compute_画像が大きい軸のみ生成する()
+    internal void Compute_画像が大きい軸のみ生成する()
     {
         // 800x100 の画像（横のみはみ出す）
         var (horizontal, vertical) = ZoomScrollBarGeometry.Compute(
@@ -40,7 +40,7 @@ public class ZoomScrollBarGeometryTests
     }
 
     [Fact]
-    public void Compute_スケールを考慮して表示の要否を決める()
+    internal void Compute_スケールを考慮して表示の要否を決める()
     {
         // 200x200 の画像を倍率 4 で表示 = 800x800（両軸ともはみ出す）
         var (horizontal, vertical) = ZoomScrollBarGeometry.Compute(
@@ -60,7 +60,7 @@ public class ZoomScrollBarGeometryTests
     [InlineData(100, 0, 1.0, 8.0)]
     [InlineData(100, 100, 0.0, 8.0)]
     [InlineData(100, 100, 1.0, 0.0)]
-    public void Compute_不正な入力では生成しない(double width, double height, double scale, double thickness)
+    internal void Compute_不正な入力では生成しない(double width, double height, double scale, double thickness)
     {
         var (horizontal, vertical) = ZoomScrollBarGeometry.Compute(
             new EsSize(width, height), new EsSize(10, 10), scale, default, thickness, Margin);
@@ -74,7 +74,7 @@ public class ZoomScrollBarGeometryTests
     // ====================================================================
 
     [Fact]
-    public void Compute_垂直トラックは右端の余白分内側に配置する()
+    internal void Compute_垂直トラックは右端の余白分内側に配置する()
     {
         var (_, vertical) = ZoomScrollBarGeometry.Compute(
             new EsSize(800, 800), new EsSize(400, 400), 1.0, default, Thickness, Margin);
@@ -88,7 +88,7 @@ public class ZoomScrollBarGeometryTests
     }
 
     [Fact]
-    public void Compute_水平トラックは下端の余白分内側に配置する()
+    internal void Compute_水平トラックは下端の余白分内側に配置する()
     {
         var (horizontal, _) = ZoomScrollBarGeometry.Compute(
             new EsSize(800, 800), new EsSize(400, 400), 1.0, default, Thickness, Margin);
@@ -105,7 +105,7 @@ public class ZoomScrollBarGeometryTests
     // ====================================================================
 
     [Fact]
-    public void Compute_サム長はビューポートと表示サイズの比になる()
+    internal void Compute_サム長はビューポートと表示サイズの比になる()
     {
         // 表示 800 / ビューポート 400 = 1/2 → トラック 392 の半分 = 196
         var (_, vertical) = ZoomScrollBarGeometry.Compute(
@@ -115,7 +115,7 @@ public class ZoomScrollBarGeometryTests
     }
 
     [Fact]
-    public void Compute_サム長は最小長で下限を設ける()
+    internal void Compute_サム長は最小長で下限を設ける()
     {
         // 表示 8000 / ビューポート 400 → 比 0.05（トラック 392 の 5% = 19.6）は最小長 24 へ引き上げられる
         var (_, vertical) = ZoomScrollBarGeometry.Compute(
@@ -125,7 +125,7 @@ public class ZoomScrollBarGeometryTests
     }
 
     [Fact]
-    public void Compute_オフセット0ではサムがトラック先頭に位置する()
+    internal void Compute_オフセット0ではサムがトラック先頭に位置する()
     {
         var (_, vertical) = ZoomScrollBarGeometry.Compute(
             new EsSize(800, 800), new EsSize(400, 400), 1.0, default, Thickness, Margin);
@@ -135,7 +135,7 @@ public class ZoomScrollBarGeometryTests
     }
 
     [Fact]
-    public void Compute_最大オフセットではサムがトラック末尾に位置する()
+    internal void Compute_最大オフセットではサムがトラック末尾に位置する()
     {
         // 表示 800 / ビューポート 400 / 等倍 → 最大オフセット = 800 - 400 = 400
         var (_, vertical) = ZoomScrollBarGeometry.Compute(
@@ -147,7 +147,7 @@ public class ZoomScrollBarGeometryTests
     }
 
     [Fact]
-    public void Compute_中間オフセットではサムが可動範囲の中間に位置する()
+    internal void Compute_中間オフセットではサムが可動範囲の中間に位置する()
     {
         // 最大オフセット 400 の半数（200）→ 可動範囲（392 - 196 = 196）の半分 = 98
         var (_, vertical) = ZoomScrollBarGeometry.Compute(
@@ -157,7 +157,7 @@ public class ZoomScrollBarGeometryTests
     }
 
     [Fact]
-    public void Compute_範囲外のオフセットは両端へクランプする()
+    internal void Compute_範囲外のオフセットは両端へクランプする()
     {
         var (_, over) = ZoomScrollBarGeometry.Compute(
             new EsSize(800, 800), new EsSize(400, 400), 1.0, new EsVector(0, 9999), Thickness, Margin);
@@ -173,14 +173,14 @@ public class ZoomScrollBarGeometryTests
     // ====================================================================
 
     [Fact]
-    public void MaxSourceOffset_表示がビューポートを超えた分を返す()
+    internal void MaxSourceOffset_表示がビューポートを超えた分を返す()
     {
         // 等倍・ビューポート 400 → 800 - 400 = 400
         Assert.Equal(400, ZoomScrollBarGeometry.MaxSourceOffset(800, 400, 1.0));
     }
 
     [Fact]
-    public void MaxSourceOffset_スケールを考慮する()
+    internal void MaxSourceOffset_スケールを考慮する()
     {
         // 「コンテンツ長 − ビューポート長 / 倍率」を返す（表示の要否は呼び出し側が判定する）
         Assert.Equal(0, ZoomScrollBarGeometry.MaxSourceOffset(50, 400, 4.0));
@@ -188,39 +188,39 @@ public class ZoomScrollBarGeometryTests
     }
 
     [Fact]
-    public void MaxSourceOffset_収まる場合は0になる()
+    internal void MaxSourceOffset_収まる場合は0になる()
     {
         Assert.Equal(0, ZoomScrollBarGeometry.MaxSourceOffset(200, 400, 1.0));
     }
 
     [Fact]
-    public void MaxSourceOffset_スケールが0以下なら0になる()
+    internal void MaxSourceOffset_スケールが0以下なら0になる()
     {
         Assert.Equal(0, ZoomScrollBarGeometry.MaxSourceOffset(800, 400, 0));
     }
 
     [Fact]
-    public void SourceOffsetFromThumb_進捗率を最大オフセットへ写す()
+    internal void SourceOffsetFromThumb_進捗率を最大オフセットへ写す()
     {
         // 可動範囲 196 の半分（98）→ 最大 400 の半分 = 200
         Assert.Equal(200, ZoomScrollBarGeometry.SourceOffsetFromThumb(98, 392, 196, 400), 6);
     }
 
     [Fact]
-    public void SourceOffsetFromThumb_範囲外はクランプする()
+    internal void SourceOffsetFromThumb_範囲外はクランプする()
     {
         Assert.Equal(400, ZoomScrollBarGeometry.SourceOffsetFromThumb(9999, 392, 196, 400), 6);
         Assert.Equal(0, ZoomScrollBarGeometry.SourceOffsetFromThumb(-9999, 392, 196, 400), 6);
     }
 
     [Fact]
-    public void SourceOffsetFromThumb_可動範囲が0なら0を返す()
+    internal void SourceOffsetFromThumb_可動範囲が0なら0を返す()
     {
         Assert.Equal(0, ZoomScrollBarGeometry.SourceOffsetFromThumb(50, 196, 196, 400));
     }
 
     [Fact]
-    public void SourceOffsetFromThumb_往復変換で値が保たれる()
+    internal void SourceOffsetFromThumb_往復変換で値が保たれる()
     {
         var (_, vertical) = ZoomScrollBarGeometry.Compute(
             new EsSize(800, 800), new EsSize(400, 400), 1.0, new EsVector(0, 200), Thickness, Margin);

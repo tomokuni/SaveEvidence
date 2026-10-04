@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 public class EsBitmapAvaloniaExtensionsTests
 {
     [Fact]
-    public void Size_ピクセルサイズを返す()
+    internal void Size_ピクセルサイズを返す()
     {
         using var bmp = EsBitmap.Create(6, 8);
 
@@ -25,7 +25,7 @@ public class EsBitmapAvaloniaExtensionsTests
     }
 
     [Fact]
-    public void Clear_AvaloniaColorで塗りつぶす()
+    internal void Clear_AvaloniaColorで塗りつぶす()
     {
         using var bmp = EsBitmap.Create(4, 4);
 
@@ -38,7 +38,7 @@ public class EsBitmapAvaloniaExtensionsTests
     }
 
     [Fact]
-    public void Clear_部分透明アルファを保持する()
+    internal void Clear_部分透明アルファを保持する()
     {
         using var bmp = EsBitmap.Create(4, 4);
 

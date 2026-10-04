@@ -28,7 +28,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogCaptureStart_種別を含む書式で出力する()
+    internal void LogCaptureStart_種別を含む書式で出力する()
     {
         var logger = new RecordingLogger();
 
@@ -38,7 +38,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogCaptureFinished_確定時は完了と結果の2件を出力する()
+    internal void LogCaptureFinished_確定時は完了と結果の2件を出力する()
     {
         // 「結果が確定したときにどのログをどの順序で出すか」をコアが単一所有する
         var logger = new RecordingLogger();
@@ -52,7 +52,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogCaptureFinished_キャンセル時はキャンセル1件を出力する()
+    internal void LogCaptureFinished_キャンセル時はキャンセル1件を出力する()
     {
         var logger = new RecordingLogger();
 
@@ -62,7 +62,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogCaptureFinished_画像が無い結果もキャンセルとして扱う()
+    internal void LogCaptureFinished_画像が無い結果もキャンセルとして扱う()
     {
         // 確定とキャンセルの区別は画像の有無で行う（0x0 の空結果を確定として記録しない）
         var logger = new RecordingLogger();
@@ -73,7 +73,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogCropStart_元画像のサイズを書式で出力する()
+    internal void LogCropStart_元画像のサイズを書式で出力する()
     {
         var logger = new RecordingLogger();
         using var image = EsBitmap.Create(1920, 1080);
@@ -84,7 +84,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogCropFinished_切り出せた場合は確定を1件出力する()
+    internal void LogCropFinished_切り出せた場合は確定を1件出力する()
     {
         var logger = new RecordingLogger();
 
@@ -94,7 +94,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogCropFinished_切り出せない場合はキャンセルとして出力する()
+    internal void LogCropFinished_切り出せない場合はキャンセルとして出力する()
     {
         // 「退化した選択はキャンセルとして記録する」規則をコアが単一所有する
         // （UI が空判定とログの呼び分けを書くと、同じ操作で UI ごとに異なるログになる）
@@ -106,7 +106,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogCropCancelled_プレフィックスのみ出力する()
+    internal void LogCropCancelled_プレフィックスのみ出力する()
     {
         var logger = new RecordingLogger();
 
@@ -116,7 +116,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogSettingApplied_プレフィックスのみ出力する()
+    internal void LogSettingApplied_プレフィックスのみ出力する()
     {
         var logger = new RecordingLogger();
 
@@ -126,7 +126,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void 全ログメソッドが無効ロガーでも安全に実行できる()
+    internal void 全ログメソッドが無効ロガーでも安全に実行できる()
     {
         var logger = NullLogger.Instance;
         using var image = EsBitmap.Create(1, 1);
@@ -147,7 +147,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogVirtualScreen_原点とサイズを含む書式で出力する()
+    internal void LogVirtualScreen_原点とサイズを含む書式で出力する()
     {
         var logger = new RecordingLogger();
         using var bitmap = EsBitmap.Create(3840, 2160);
@@ -158,7 +158,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogVirtualScreen_画像未取得はサイズ0として出力する()
+    internal void LogVirtualScreen_画像未取得はサイズ0として出力する()
     {
         // 「未取得は 0」という正規化をコアが単一所有する（呼び出し側で null 判定を書かない）
         var logger = new RecordingLogger();
@@ -169,7 +169,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogConfirmRequested_矩形を含む書式で出力する()
+    internal void LogConfirmRequested_矩形を含む書式で出力する()
     {
         var logger = new RecordingLogger();
 
@@ -179,7 +179,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogCancelRequested_プレフィックスのみ出力する()
+    internal void LogCancelRequested_プレフィックスのみ出力する()
     {
         var logger = new RecordingLogger();
 
@@ -189,7 +189,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void LogHighlight_種別と検出結果を含む書式で出力する()
+    internal void LogHighlight_種別と検出結果を含む書式で出力する()
     {
         var logger = new RecordingLogger();
 
@@ -201,19 +201,19 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void CaptureLogFormat_Rect_論理矩形をx_y_w_hで整形する()
+    internal void CaptureLogFormat_Rect_論理矩形をx_y_w_hで整形する()
     {
         Assert.Equal("10,20,30,40", CaptureLogFormat.Rect(new EsRect(10, 20, 30, 40)));
     }
 
     [Fact]
-    public void CaptureLogFormat_Rect_PixelRectをx_y_w_hで整形する()
+    internal void CaptureLogFormat_Rect_PixelRectをx_y_w_hで整形する()
     {
         Assert.Equal("10,20,30,40", CaptureLogFormat.Rect(new EsRectInt(10, 20, 30, 40)));
     }
 
     [Fact]
-    public void CaptureLogFormat_RectOrEmpty_未検出のPixelRectは空文字にする()
+    internal void CaptureLogFormat_RectOrEmpty_未検出のPixelRectは空文字にする()
     {
         // 「未検出は空文字」という正規化を単一所有する
         Assert.Equal("", CaptureLogFormat.RectOrEmpty(null));
@@ -221,7 +221,7 @@ public class CaptureLogMessageTests
     }
 
     [Fact]
-    public void CaptureLogFormat_Text_nullは空文字にする()
+    internal void CaptureLogFormat_Text_nullは空文字にする()
     {
         Assert.Equal("", CaptureLogFormat.Text(null));
         Assert.Equal("Sample", CaptureLogFormat.Text("Sample"));

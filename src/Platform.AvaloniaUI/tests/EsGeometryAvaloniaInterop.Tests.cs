@@ -19,7 +19,7 @@ public class EsGeometryAvaloniaInteropTests
     // ====================================================================
 
     [Fact]
-    public void EsPoint_往復変換で値が一致する()
+    internal void EsPoint_往復変換で値が一致する()
     {
         var es = new EsPoint(1.5, -2.5);
 
@@ -28,7 +28,7 @@ public class EsGeometryAvaloniaInteropTests
     }
 
     [Fact]
-    public void EsSize_往復変換で値が一致する()
+    internal void EsSize_往復変換で値が一致する()
     {
         var es = new EsSize(100, 50);
 
@@ -37,7 +37,7 @@ public class EsGeometryAvaloniaInteropTests
     }
 
     [Fact]
-    public void EsVector_往復変換で値が一致する()
+    internal void EsVector_往復変換で値が一致する()
     {
         var es = new EsVector(-3, 4);
 
@@ -46,7 +46,7 @@ public class EsGeometryAvaloniaInteropTests
     }
 
     [Fact]
-    public void EsRect_往復変換で値が一致する()
+    internal void EsRect_往復変換で値が一致する()
     {
         var es = new EsRect(10, 20, 100, 50);
 
@@ -59,7 +59,7 @@ public class EsGeometryAvaloniaInteropTests
     // ====================================================================
 
     [Fact]
-    public void EsPointInt_往復変換で値が一致する()
+    internal void EsPointInt_往復変換で値が一致する()
     {
         var es = new EsPointInt(123, 456);
 
@@ -68,7 +68,7 @@ public class EsGeometryAvaloniaInteropTests
     }
 
     [Fact]
-    public void EsPointInt_負の座標も変換できる()
+    internal void EsPointInt_負の座標も変換できる()
     {
         // プライマリモニタが (0,0) にないマルチモニタ構成を模擬する
         var es = new EsPointInt(-1920, -100);
@@ -78,7 +78,7 @@ public class EsGeometryAvaloniaInteropTests
     }
 
     [Fact]
-    public void EsRectInt_往復変換で値が一致する()
+    internal void EsRectInt_往復変換で値が一致する()
     {
         var es = new EsRectInt(10, 20, 1920, 1080);
 
@@ -91,7 +91,7 @@ public class EsGeometryAvaloniaInteropTests
     // ====================================================================
 
     [Fact]
-    public void EsPlatformHandle_nullはハンドル値0に変換する()
+    internal void EsPlatformHandle_nullはハンドル値0に変換する()
     {
         IPlatformHandle? handle = null;
 
@@ -103,7 +103,7 @@ public class EsGeometryAvaloniaInteropTests
     }
 
     [Fact]
-    public void EsPlatformHandle_Avaloniaハンドルから変換する()
+    internal void EsPlatformHandle_Avaloniaハンドルから変換する()
     {
         IPlatformHandle handle = new PlatformHandle(new IntPtr(0x1234), "HWND");
 
@@ -115,7 +115,7 @@ public class EsGeometryAvaloniaInteropTests
     }
 
     [Fact]
-    public void EsPlatformHandle_Avaloniaハンドルへ変換する()
+    internal void EsPlatformHandle_Avaloniaハンドルへ変換する()
     {
         var es = new EsPlatformHandle(0x1234, "HWND");
 
@@ -126,7 +126,7 @@ public class EsGeometryAvaloniaInteropTests
     }
 
     [Fact]
-    public void EsPlatformHandle_記述子nullは空文字として変換する()
+    internal void EsPlatformHandle_記述子nullは空文字として変換する()
     {
         var es = new EsPlatformHandle(0x1234);
 

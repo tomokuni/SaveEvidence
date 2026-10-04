@@ -18,7 +18,7 @@ public class ViewModeDisplayTests
     [InlineData(3, "")]
     [InlineData(int.MaxValue, "")]
     [InlineData(int.MinValue, "")]
-    public void GetText_表示モードの名前を返す(int index, string expected)
+    internal void GetText_表示モードの名前を返す(int index, string expected)
         => Assert.Equal(expected, ViewModeDisplay.GetText(index));
 
     [Theory]
@@ -29,18 +29,18 @@ public class ViewModeDisplayTests
     [InlineData(2, 2)]
     [InlineData(3, 1)]
     [InlineData(int.MaxValue, 1)]
-    public void ClampIndex_有効範囲外は既定の大へフォールバックする(int index, int expected)
+    internal void ClampIndex_有効範囲外は既定の大へフォールバックする(int index, int expected)
         => Assert.Equal(expected, ViewModeDisplay.ClampIndex(index));
 
     [Theory]
     [InlineData(0, "0 個のアイテム")]
     [InlineData(1, "1 個のアイテム")]
     [InlineData(10, "10 個のアイテム")]
-    public void GetItemCountText_アイテム数テキストを生成する(int count, string expected)
+    internal void GetItemCountText_アイテム数テキストを生成する(int count, string expected)
         => Assert.Equal(expected, ViewModeDisplay.GetItemCountText(count));
 
     [Fact]
-    public void Count_有効なインデックスの個数と一致する()
+    internal void Count_有効なインデックスの個数と一致する()
     {
         Assert.Equal(3, ViewModeDisplay.Count);
 

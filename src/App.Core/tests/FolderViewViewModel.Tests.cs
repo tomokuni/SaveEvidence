@@ -14,7 +14,7 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 public class FolderViewViewModelTests
 {
     [Fact]
-    public void 初期値_表示モードは大でソートは昇順である()
+    internal void 初期値_表示モードは大でソートは昇順である()
     {
         var vm = new FolderViewViewModel();
 
@@ -26,7 +26,7 @@ public class FolderViewViewModelTests
     }
 
     [Fact]
-    public void 表示モード変更でViewModeTextとPropertyChangedが通知される()
+    internal void 表示モード変更でViewModeTextとPropertyChangedが通知される()
     {
         var vm = new FolderViewViewModel();
         var notified = new List<string?>();
@@ -41,7 +41,7 @@ public class FolderViewViewModelTests
     }
 
     [Fact]
-    public void 表示モード不正値のViewModeTextは空文字になる()
+    internal void 表示モード不正値のViewModeTextは空文字になる()
     {
         var vm = new FolderViewViewModel();
 
@@ -52,7 +52,7 @@ public class FolderViewViewModelTests
     }
 
     [Fact]
-    public void ソート変更でSortStatusTextとPropertyChangedが通知される()
+    internal void ソート変更でSortStatusTextとPropertyChangedが通知される()
     {
         var vm = new FolderViewViewModel();
         var notified = new List<string?>();
@@ -67,7 +67,7 @@ public class FolderViewViewModelTests
     }
 
     [Fact]
-    public void アイテム数変更でItemCountTextとPropertyChangedが通知される()
+    internal void アイテム数変更でItemCountTextとPropertyChangedが通知される()
     {
         var vm = new FolderViewViewModel();
         var notified = new List<string?>();

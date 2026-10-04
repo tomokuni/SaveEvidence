@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class CaptureResultTests
 {
     [Fact]
-    public void From_画像と領域があればそのまま保持する()
+    internal void From_画像と領域があればそのまま保持する()
     {
         using var image = EsBitmap.Create(10, 20);
 
@@ -20,7 +20,7 @@ public class CaptureResultTests
     }
 
     [Fact]
-    public void From_画像が無ければ領域0x0の空結果にする()
+    internal void From_画像が無ければ領域0x0の空結果にする()
     {
         // キャンセルは「画像 null・領域 0x0」で表す（null ではなく 0x0 の空矩形を与える）
         var result = CaptureResult.From(null, new EsRectInt(1, 2, 10, 20));
@@ -30,7 +30,7 @@ public class CaptureResultTests
     }
 
     [Fact]
-    public void From_領域が無ければキャンセルの空結果にする()
+    internal void From_領域が無ければキャンセルの空結果にする()
     {
         using var image = EsBitmap.Create(10, 20);
 
@@ -41,7 +41,7 @@ public class CaptureResultTests
     }
 
     [Fact]
-    public void From_両方無ければキャンセルの空結果にする()
+    internal void From_両方無ければキャンセルの空結果にする()
     {
         var result = CaptureResult.From(null, null);
 

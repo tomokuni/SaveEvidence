@@ -16,7 +16,7 @@ public class EsKeyMewUIInteropTests
     // ====================================================================
 
     [Fact]
-    public void MewUIの全キーはコアへ変換して往復できる()
+    internal void MewUIの全キーはコアへ変換して往復できる()
     {
         // Backspace は EsKey.Back へ対応するため、往復で MewUI の Backspace に戻る
         foreach (var key in Enum.GetValues<MewUIKey>())
@@ -26,7 +26,7 @@ public class EsKeyMewUIInteropTests
     }
 
     [Fact]
-    public void コアの全キーは未定義値を含め例外を出さない()
+    internal void コアの全キーは未定義値を含め例外を出さない()
     {
         // 対応先がないキーは None になる（例外を出さないことの保証）
         foreach (var key in Enum.GetValues<EsKey>())
@@ -40,25 +40,25 @@ public class EsKeyMewUIInteropTests
     // ====================================================================
 
     [Fact]
-    public void BackはBackspaceへ変換される()
+    internal void BackはBackspaceへ変換される()
     {
         Assert.Equal(MewUIKey.Backspace, EsKey.Back.ToMewUIKey());
     }
 
     [Fact]
-    public void BackspaceはBackへ変換される()
+    internal void BackspaceはBackへ変換される()
     {
         Assert.Equal(EsKey.Back, MewUIKey.Backspace.ToEsKey());
     }
 
     [Fact]
-    public void Backは往復変換で値が保たれる()
+    internal void Backは往復変換で値が保たれる()
     {
         Assert.Equal(EsKey.Back, EsKey.Back.ToMewUIKey().ToEsKey());
     }
 
     [Fact]
-    public void Backspaceは往復変換で値が保たれる()
+    internal void Backspaceは往復変換で値が保たれる()
     {
         Assert.Equal(MewUIKey.Backspace, MewUIKey.Backspace.ToEsKey().ToMewUIKey());
     }
@@ -68,7 +68,7 @@ public class EsKeyMewUIInteropTests
     // ====================================================================
 
     [Fact]
-    public void MewUIが表現できないキーはNoneへフォールバックする()
+    internal void MewUIが表現できないキーはNoneへフォールバックする()
     {
         // MewUI の Key は抽象化された小さな集合（独自採番）のため、ブラウザ系キーは対応先がない
         Assert.Equal(MewUIKey.None, EsKey.BrowserBack.ToMewUIKey());
@@ -76,7 +76,7 @@ public class EsKeyMewUIInteropTests
     }
 
     [Fact]
-    public void IsRepresentableは対応可否を返す()
+    internal void IsRepresentableは対応可否を返す()
     {
         Assert.True(EsKey.Back.IsRepresentable());
         Assert.True(EsKey.A.IsRepresentable());
@@ -86,7 +86,7 @@ public class EsKeyMewUIInteropTests
     }
 
     [Fact]
-    public void Noneは互いに変換される()
+    internal void Noneは互いに変換される()
     {
         Assert.Equal(MewUIKey.None, EsKey.None.ToMewUIKey());
         Assert.Equal(EsKey.None, MewUIKey.None.ToEsKey());
@@ -97,7 +97,7 @@ public class EsKeyMewUIInteropTests
     // ====================================================================
 
     [Fact]
-    public void 未定義のコア値はNoneへフォールバックする()
+    internal void 未定義のコア値はNoneへフォールバックする()
     {
         // Enum.TryParse<MewUIKey>("999") は成功して (MewUIKey)999 を返すため、IsDefined による防御が必要
         var undefined = (EsKey)999;
@@ -106,7 +106,7 @@ public class EsKeyMewUIInteropTests
     }
 
     [Fact]
-    public void 未定義のMewUI値はNoneへフォールバックする()
+    internal void 未定義のMewUI値はNoneへフォールバックする()
     {
         var undefined = (MewUIKey)999;
 
@@ -118,7 +118,7 @@ public class EsKeyMewUIInteropTests
     // ====================================================================
 
     [Fact]
-    public void 名前が一致しないMewUIのキーはBackspaceのみである()
+    internal void 名前が一致しないMewUIのキーはBackspaceのみである()
     {
         // MewUI 側のキーは 1 件（Backspace）を除き、すべてコアと同名（別名表の追加漏れを検知する）
         var esNames = Enum.GetNames<EsKey>().ToHashSet(StringComparer.Ordinal);
@@ -131,7 +131,7 @@ public class EsKeyMewUIInteropTests
     }
 
     [Fact]
-    public void MewUIのキー数は91である()
+    internal void MewUIのキー数は91である()
     {
         // MewUI 側のキー集合が変わった場合は別名表・ドキュメントの見直しが必要（0.x の破壊的変更の検知）
         Assert.Equal(91, Enum.GetNames<MewUIKey>().Length);

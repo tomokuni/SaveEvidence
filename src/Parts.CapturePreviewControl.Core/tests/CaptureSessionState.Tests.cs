@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class CaptureSessionStateTests
 {
     [Fact]
-    public void TryBegin_最初の開始は成功する()
+    internal void TryBegin_最初の開始は成功する()
     {
         var state = new CaptureSessionState();
 
@@ -16,7 +16,7 @@ public class CaptureSessionStateTests
     }
 
     [Fact]
-    public void TryBegin_実行中は再入を拒否する()
+    internal void TryBegin_実行中は再入を拒否する()
     {
         var state = new CaptureSessionState();
         state.TryBegin();
@@ -26,7 +26,7 @@ public class CaptureSessionStateTests
     }
 
     [Fact]
-    public void TryComplete_最初の完了だけを受け付ける()
+    internal void TryComplete_最初の完了だけを受け付ける()
     {
         var state = new CaptureSessionState();
         state.TryBegin();
@@ -39,7 +39,7 @@ public class CaptureSessionStateTests
     }
 
     [Fact]
-    public void TryComplete_開始していない場合は受け付けない()
+    internal void TryComplete_開始していない場合は受け付けない()
     {
         var state = new CaptureSessionState();
 
@@ -48,7 +48,7 @@ public class CaptureSessionStateTests
     }
 
     [Fact]
-    public void End_実行中フラグを落として次のセッションを開始できる()
+    internal void End_実行中フラグを落として次のセッションを開始できる()
     {
         var state = new CaptureSessionState();
         state.TryBegin();
@@ -62,7 +62,7 @@ public class CaptureSessionStateTests
     }
 
     [Fact]
-    public void End_完了していなくても呼べる()
+    internal void End_完了していなくても呼べる()
     {
         var state = new CaptureSessionState();
         state.TryBegin();

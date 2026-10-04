@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 public class CropLabelTextsTests
 {
     [Fact]
-    public void ResolveSizeLabel_選択があれば閉区間のピクセル数を表示する()
+    internal void ResolveSizeLabel_選択があれば閉区間のピクセル数を表示する()
     {
         var label = CropLabelTexts.ResolveSizeLabel(hasSelection: true, new EsRect(10, 20, 30, 40, EsRectInterval.Closed), zoomPercent: 100);
 
@@ -16,14 +16,14 @@ public class CropLabelTextsTests
     }
 
     [Fact]
-    public void ResolveSizeLabel_未選択の場合はnullを返す()
+    internal void ResolveSizeLabel_未選択の場合はnullを返す()
     {
         // 「未選択なら描かない」規則をコアが単一所有する
         Assert.Null(CropLabelTexts.ResolveSizeLabel(hasSelection: false, new EsRect(10, 20, 30, 40, EsRectInterval.Closed), zoomPercent: 100));
     }
 
     [Fact]
-    public void FormatCropSizeLabel_閉区間のピクセル数を表示する()
+    internal void FormatCropSizeLabel_閉区間のピクセル数を表示する()
     {
         var label = CropLabelTexts.FormatCropSizeLabel(new EsRect(10, 20, 30, 40, EsRectInterval.Closed), zoomPercent: 100);
 
@@ -36,7 +36,7 @@ public class CropLabelTextsTests
     [InlineData(99.5, 100)]
     [InlineData(110.6, 111)]
     [InlineData(0.0, 0)]
-    public void FormatCropSizeLabel_ズーム率は四捨五入して整数表示する(double zoomPercent, int expected)
+    internal void FormatCropSizeLabel_ズーム率は四捨五入して整数表示する(double zoomPercent, int expected)
     {
         var label = CropLabelTexts.FormatCropSizeLabel(new EsRect(0, 0, 1, 1), zoomPercent);
 
@@ -44,7 +44,7 @@ public class CropLabelTextsTests
     }
 
     [Fact]
-    public void FormatCropSizeLabel_小数座標は切り捨てる()
+    internal void FormatCropSizeLabel_小数座標は切り捨てる()
     {
         var label = CropLabelTexts.FormatCropSizeLabel(new EsRect(10.9, 20.9, 30.9, 40.9, EsRectInterval.Closed), zoomPercent: 50);
 
@@ -53,7 +53,7 @@ public class CropLabelTextsTests
     }
 
     [Fact]
-    public void FormatCropSizeLabel_幅高さ0は1ピクセルになる()
+    internal void FormatCropSizeLabel_幅高さ0は1ピクセルになる()
     {
         var label = CropLabelTexts.FormatCropSizeLabel(new EsRect(5, 5, 0, 0, EsRectInterval.Closed), zoomPercent: 100);
 
@@ -62,7 +62,7 @@ public class CropLabelTextsTests
     }
 
     [Fact]
-    public void FormatCropSizeLabel_半開区間の矩形では終点のピクセルを加えない()
+    internal void FormatCropSizeLabel_半開区間の矩形では終点のピクセルを加えない()
     {
         // 検出矩形（ハイライト型）は全ピクセルを含むため、ピクセル数は幅そのものになる
         var label = CropLabelTexts.FormatCropSizeLabel(new EsRect(10, 20, 30, 40), zoomPercent: 100);

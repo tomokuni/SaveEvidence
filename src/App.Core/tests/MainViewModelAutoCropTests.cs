@@ -49,7 +49,7 @@ public sealed class MainViewModelAutoCropTests
 
     /// <summary>自動切り出しを実行すると検出矩形が設定されることを検証する。</summary>
     [Fact]
-    public void AutoCropWindow_矩形画像で検出矩形が設定される()
+    internal void AutoCropWindow_矩形画像で検出矩形が設定される()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -119,7 +119,7 @@ public sealed class MainViewModelAutoCropTests
     /// 修正後は矩形を構成する組み合わせのみを対象とし、候補数と時間が上限内に収まる。
     /// </remarks>
     [Fact]
-    public void AutoCropWindow_矩形を構成できない画像でも候補が上限内に収まる()
+    internal void AutoCropWindow_矩形を構成できない画像でも候補が上限内に収まる()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -140,7 +140,7 @@ public sealed class MainViewModelAutoCropTests
 
     /// <summary>画像が無い場合は自動切り出しを実行しても検出矩形が設定されないことを検証する。</summary>
     [Fact]
-    public void AutoCropWindow_画像が無い場合は何もしない()
+    internal void AutoCropWindow_画像が無い場合は何もしない()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -152,7 +152,7 @@ public sealed class MainViewModelAutoCropTests
 
     /// <summary>画像変更時に自動切り出しの検出矩形がクリアされることを検証する。</summary>
     [Fact]
-    public void AutoCropWindow_画像変更で検出矩形がクリアされる()
+    internal void AutoCropWindow_画像変更で検出矩形がクリアされる()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -170,7 +170,7 @@ public sealed class MainViewModelAutoCropTests
 
     /// <summary>キャンセルすると自動切り出しモードと検出矩形がクリアされることを検証する。</summary>
     [Fact]
-    public void CancelAutoCrop_モードと検出矩形がクリアされる()
+    internal void CancelAutoCrop_モードと検出矩形がクリアされる()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -194,7 +194,7 @@ public sealed class MainViewModelAutoCropTests
     /// 矩形は閉区間（右端・下端のピクセルも含む）として扱う。
     /// </remarks>
     [Fact]
-    public void HitDetectedRect_面積が最小の矩形を返す()
+    internal void HitDetectedRect_面積が最小の矩形を返す()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -216,7 +216,7 @@ public sealed class MainViewModelAutoCropTests
     /// <summary>検出矩形のヒット判定が矩形の外側では null を返すことを検証する。</summary>
     /// <remarks>領域外のダブルクリックをキャンセルとして扱うための判定（両 UI が共用する）。</remarks>
     [Fact]
-    public void HitDetectedRect_矩形の外側はnullを返す()
+    internal void HitDetectedRect_矩形の外側はnullを返す()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {
@@ -235,7 +235,7 @@ public sealed class MainViewModelAutoCropTests
 
     /// <summary>検出矩形が無い場合はヒット判定が null を返すことを検証する。</summary>
     [Fact]
-    public void HitDetectedRect_矩形が無い場合はnullを返す()
+    internal void HitDetectedRect_矩形が無い場合はnullを返す()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
 
@@ -244,7 +244,7 @@ public sealed class MainViewModelAutoCropTests
 
     /// <summary>矩形を確定すると切り出しが実行され、モードが終了することを検証する。</summary>
     [Fact]
-    public void ConfirmAutoCrop_確定した矩形で切り出してモードが終了する()
+    internal void ConfirmAutoCrop_確定した矩形で切り出してモードが終了する()
     {
         var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
         {

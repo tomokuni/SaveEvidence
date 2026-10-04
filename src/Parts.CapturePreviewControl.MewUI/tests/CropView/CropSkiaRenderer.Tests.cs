@@ -48,7 +48,7 @@ public class CropSkiaRendererTests
         => CropSkiaRenderer.Render(target.Canvas, CreateFrame(rect));
     /// <summary>実線は枠のみを描画し、内側は塗らないことを検証する。</summary>
     [Fact]
-    public void Render_実線は枠のみを描画する()
+    internal void Render_実線は枠のみを描画する()
     {
         using var target = TestHelper.CreateTarget(100, 100);
         var info = Create(new EsRect(10, 10, 40, 30), OverlayLineStyle.Solid);
@@ -67,7 +67,7 @@ public class CropSkiaRendererTests
 
     /// <summary>実線では背景色が描画されないことを検証する。</summary>
     [Fact]
-    public void Render_実線では背景色を使わない()
+    internal void Render_実線では背景色を使わない()
     {
         using var target = TestHelper.CreateTarget(100, 100);
         var info = Create(new EsRect(10, 10, 40, 30), OverlayLineStyle.Solid);
@@ -79,7 +79,7 @@ public class CropSkiaRendererTests
 
     /// <summary>破線は前景色と背景色を交互に描画することを検証する（市松風）。</summary>
     [Fact]
-    public void Render_破線は前景色と背景色を交互に描画する()
+    internal void Render_破線は前景色と背景色を交互に描画する()
     {
         const int size = 100;
         using var target = TestHelper.CreateTarget(size, size);
@@ -96,7 +96,7 @@ public class CropSkiaRendererTests
 
     /// <summary>破線のダッシュ長がコアの単一所有値（破線 8 / 間隔 4）と一致することを検証する。</summary>
     [Fact]
-    public void Render_破線のダッシュ長がコアの値と一致する()
+    internal void Render_破線のダッシュ長がコアの値と一致する()
     {
         const int size = 100;
         using var target = TestHelper.CreateTarget(size, size);
@@ -131,7 +131,7 @@ public class CropSkiaRendererTests
 
     /// <summary>点線のダッシュ長がコアの単一所有値（点線 2 / 間隔 2）と一致することを検証する。</summary>
     [Fact]
-    public void Render_点線のダッシュ長がコアの値と一致する()
+    internal void Render_点線のダッシュ長がコアの値と一致する()
     {
         const int size = 100;
         using var target = TestHelper.CreateTarget(size, size);
@@ -169,7 +169,7 @@ public class CropSkiaRendererTests
     [InlineData(0, 10)]
     [InlineData(10, 0)]
     [InlineData(-5, 10)]
-    public void Render_サイズ0以下は描画しない(double width, double height)
+    internal void Render_サイズ0以下は描画しない(double width, double height)
     {
         using var target = TestHelper.CreateTarget(50, 50);
         var info = Create(new EsRect(5, 5, width, height), OverlayLineStyle.Solid);
@@ -181,7 +181,7 @@ public class CropSkiaRendererTests
 
     /// <summary>太さが 0 以下でも 1 ピクセルで描画されることを検証する。</summary>
     [Fact]
-    public void Render_太さが0以下でも1ピクセルで描画する()
+    internal void Render_太さが0以下でも1ピクセルで描画する()
     {
         using var target = TestHelper.CreateTarget(50, 50);
         var info = Create(new EsRect(10, 10, 20, 20), OverlayLineStyle.Solid, thickness: 0);
@@ -193,7 +193,7 @@ public class CropSkiaRendererTests
 
     /// <summary>半透明の色がアルファ込みで描画されることを検証する。</summary>
     [Fact]
-    public void Render_半透明の色をアルファ込みで描画する()
+    internal void Render_半透明の色をアルファ込みで描画する()
     {
         using var target = TestHelper.CreateTarget(50, 50);
         var info = new OverlayRect(
@@ -211,7 +211,7 @@ public class CropSkiaRendererTests
 
     /// <summary>キャンバスが null の場合は例外になることを検証する。</summary>
     [Fact]
-    public void Render_キャンバスがnullなら例外()
+    internal void Render_キャンバスがnullなら例外()
     {
         var info = Create(new EsRect(10, 10, 20, 20), OverlayLineStyle.Solid);
 

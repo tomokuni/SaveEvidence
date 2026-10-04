@@ -6,7 +6,6 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Xunit;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Loupe;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 
@@ -24,7 +23,7 @@ public class FadeMaskDragRectControlStateTests
     private static IImage CreateSource() => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
 
     [AvaloniaFact]
-    public void コンストラクタ_内包コントロールが2つ配置される()
+    internal void コンストラクタ_内包コントロールが2つ配置される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -46,7 +45,7 @@ public class FadeMaskDragRectControlStateTests
     [InlineData(FadeMaskDragRectMode.AreaSelect, true)]
     [InlineData(FadeMaskDragRectMode.ScreenSelect, false)]
     [InlineData(FadeMaskDragRectMode.WindowSelect, false)]
-    public void モード_ルーペの表示可否を切り替える(FadeMaskDragRectMode mode, bool expected)
+    internal void モード_ルーペの表示可否を切り替える(FadeMaskDragRectMode mode, bool expected)
     {
         var control = new FadeMaskDragRectControl();
         control.SetLoupeSource(CreateSource());
@@ -63,7 +62,7 @@ public class FadeMaskDragRectControlStateTests
     [AvaloniaTheory]
     [InlineData(FadeMaskDragRectMode.Crop)]
     [InlineData(FadeMaskDragRectMode.AreaSelect)]
-    public void モード_画像未設定ではルーペを表示しない(FadeMaskDragRectMode mode)
+    internal void モード_画像未設定ではルーペを表示しない(FadeMaskDragRectMode mode)
     {
         var control = new FadeMaskDragRectControl();
 
@@ -74,7 +73,7 @@ public class FadeMaskDragRectControlStateTests
 
     /// <summary>モードを切り替えてもルーペ中心は維持されることを検証する（再表示で同じ位置を使える）。</summary>
     [AvaloniaFact]
-    public void モード_切り替えてもルーペ中心は維持される()
+    internal void モード_切り替えてもルーペ中心は維持される()
     {
         var control = new FadeMaskDragRectControl();
         control.SetLoupeSource(CreateSource());
@@ -92,7 +91,7 @@ public class FadeMaskDragRectControlStateTests
     // ====================================================================
 
     [AvaloniaFact]
-    public void 設定_既定値が暗転マスクと選択矩形へ分配される()
+    internal void 設定_既定値が暗転マスクと選択矩形へ分配される()
     {
         var control = new FadeMaskDragRectControl();
 
@@ -106,7 +105,7 @@ public class FadeMaskDragRectControlStateTests
     }
 
     [AvaloniaFact]
-    public void 設定_枠線はハンドル枠と暗転マスクで共用される()
+    internal void 設定_枠線はハンドル枠と暗転マスクで共用される()
     {
         var control = new FadeMaskDragRectControl();
 

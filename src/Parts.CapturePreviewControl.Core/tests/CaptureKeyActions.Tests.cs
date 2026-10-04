@@ -13,7 +13,7 @@ public class CaptureKeyActionsTests
     [Theory]
     [InlineData(EsKey.Enter)]
     [InlineData(EsKey.Return)]
-    public void Resolve_確定対象があれば確定する(EsKey key)
+    internal void Resolve_確定対象があれば確定する(EsKey key)
     {
         Assert.Equal(CaptureKeyAction.Confirm, CaptureKeyActions.Resolve(key, hasConfirmTarget: true));
     }
@@ -21,14 +21,14 @@ public class CaptureKeyActionsTests
     [Theory]
     [InlineData(EsKey.Enter)]
     [InlineData(EsKey.Return)]
-    public void Resolve_確定対象が無ければ何もしない(EsKey key)
+    internal void Resolve_確定対象が無ければ何もしない(EsKey key)
     {
         // 何も検出していない状態の Enter をキャンセル扱いにしない
         Assert.Equal(CaptureKeyAction.None, CaptureKeyActions.Resolve(key, hasConfirmTarget: false));
     }
 
     [Fact]
-    public void Resolve_Escapeは確定対象の有無に関わらずキャンセルする()
+    internal void Resolve_Escapeは確定対象の有無に関わらずキャンセルする()
     {
         Assert.Equal(CaptureKeyAction.Cancel, CaptureKeyActions.Resolve(EsKey.Escape, hasConfirmTarget: true));
         Assert.Equal(CaptureKeyAction.Cancel, CaptureKeyActions.Resolve(EsKey.Escape, hasConfirmTarget: false));
@@ -39,13 +39,13 @@ public class CaptureKeyActionsTests
     [InlineData(EsKey.Tab)]
     [InlineData(EsKey.Left)]
     [InlineData(EsKey.None)]
-    public void Resolve_対象外のキーは何もしない(EsKey key)
+    internal void Resolve_対象外のキーは何もしない(EsKey key)
     {
         Assert.Equal(CaptureKeyAction.None, CaptureKeyActions.Resolve(key, hasConfirmTarget: true));
     }
 
     [Fact]
-    public void CaptureKeyAction_値の意味が固定されている()
+    internal void CaptureKeyAction_値の意味が固定されている()
     {
         // 0 は「何もしない」（default が副作用を持たない）
         Assert.Equal(CaptureKeyAction.None, default);

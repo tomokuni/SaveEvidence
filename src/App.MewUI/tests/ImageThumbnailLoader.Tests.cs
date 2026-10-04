@@ -38,6 +38,7 @@ public class ImageThumbnailLoaderTests : IDisposable
         return path;
     }
 
+    /// <summary>テストで作成した一時ファイルを削除する。</summary>
     public void Dispose()
     {
         foreach (var path in _files)
@@ -59,7 +60,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     [InlineData(400, 200, 100, 100, 50)]
     [InlineData(200, 400, 100, 50, 100)]
     [InlineData(1000, 1000, 320, 320, 320)]
-    public void Load_長辺が指定サイズへ縮小される(
+    internal void Load_長辺が指定サイズへ縮小される(
         int sourceWidth, int sourceHeight, int maxSize, int expectedWidth, int expectedHeight)
     {
         var path = WriteImage(sourceWidth, sourceHeight, SKColors.Red);
@@ -72,7 +73,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_指定サイズ以下の画像は拡大しない()
+    internal void Load_指定サイズ以下の画像は拡大しない()
     {
         var path = WriteImage(40, 20, SKColors.Red);
 
@@ -84,7 +85,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_半透明PNGのアルファが保持される()
+    internal void Load_半透明PNGのアルファが保持される()
     {
         // 半透明（アルファ 128）の赤を 1x1 で書き出し、デコード後もアルファが残ることを確認する
         var path = TestHelper.CreateTempPath(".png");
@@ -107,7 +108,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_Jpegのサムネイルも読み込める()
+    internal void Load_Jpegのサムネイルも読み込める()
     {
         var path = WriteImage(300, 150, SKColors.Green, ".jpg");
 
@@ -119,7 +120,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_同じ条件では同一のインスタンスを共有する()
+    internal void Load_同じ条件では同一のインスタンスを共有する()
     {
         var path = WriteImage(400, 200, SKColors.Red);
 
@@ -131,7 +132,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_サイズが異なれば別のインスタンスを返す()
+    internal void Load_サイズが異なれば別のインスタンスを返す()
     {
         var path = WriteImage(400, 200, SKColors.Red);
 
@@ -146,7 +147,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_存在しないファイルはnullを返す()
+    internal void Load_存在しないファイルはnullを返す()
     {
         var path = TestHelper.CreateTempPath(".png");
 
@@ -154,7 +155,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_画像でないファイルはnullを返す()
+    internal void Load_画像でないファイルはnullを返す()
     {
         var path = TestHelper.CreateTempPath(".txt");
         File.WriteAllText(path, "これは画像ではありません");
@@ -164,7 +165,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_壊れた画像データはnullを返す()
+    internal void Load_壊れた画像データはnullを返す()
     {
         var path = TestHelper.CreateTempPath(".png");
         File.WriteAllBytes(path, [1, 2, 3, 4, 5, 6, 7, 8]);
@@ -174,7 +175,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_サイズ0以下は1ピクセルとして扱う()
+    internal void Load_サイズ0以下は1ピクセルとして扱う()
     {
         var path = WriteImage(400, 200, SKColors.Red);
 
@@ -186,7 +187,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     }
 
     [Fact]
-    public void Load_拡張子が大文字でも読み込める()
+    internal void Load_拡張子が大文字でも読み込める()
     {
         var path = WriteImage(80, 40, SKColors.Red, ".PNG");
 

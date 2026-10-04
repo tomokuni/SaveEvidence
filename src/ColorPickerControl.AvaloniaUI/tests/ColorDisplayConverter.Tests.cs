@@ -16,7 +16,7 @@ public class ColorDisplayConverterTests
     // ====================================================================
 
     [Fact]
-    public void Convert_アルファ付き16進は色名とパーセントに変換される()
+    internal void Convert_アルファ付き16進は色名とパーセントに変換される()
     {
         var result = s_converter.Convert("#80FF0000", typeof(string), null, CultureInfo.InvariantCulture);
 
@@ -24,7 +24,7 @@ public class ColorDisplayConverterTests
     }
 
     [Fact]
-    public void Convert_不透明な16進は色名のみに変換される()
+    internal void Convert_不透明な16進は色名のみに変換される()
     {
         var result = s_converter.Convert("#FFFF0000", typeof(string), null, CultureInfo.InvariantCulture);
 
@@ -32,13 +32,13 @@ public class ColorDisplayConverterTests
     }
 
     [Fact]
-    public void Convert_nullはnullを返す()
+    internal void Convert_nullはnullを返す()
     {
         Assert.Null(s_converter.Convert(null, typeof(string), null, CultureInfo.InvariantCulture));
     }
 
     [Fact]
-    public void Convert_文字列以外の値はそのまま返す()
+    internal void Convert_文字列以外の値はそのまま返す()
     {
         object value = 123;
         Assert.Same(value, s_converter.Convert(value, typeof(string), null, CultureInfo.InvariantCulture));
@@ -49,7 +49,7 @@ public class ColorDisplayConverterTests
     // ====================================================================
 
     [Fact]
-    public void ConvertBack_色名とパーセントはアルファ付き16進に変換される()
+    internal void ConvertBack_色名とパーセントはアルファ付き16進に変換される()
     {
         var result = s_converter.ConvertBack("Red+50%", typeof(string), null, CultureInfo.InvariantCulture);
 
@@ -57,7 +57,7 @@ public class ColorDisplayConverterTests
     }
 
     [Fact]
-    public void ConvertBack_色名はアルファ255の8桁に変換される()
+    internal void ConvertBack_色名はアルファ255の8桁に変換される()
     {
         var result = s_converter.ConvertBack("Red", typeof(string), null, CultureInfo.InvariantCulture);
 
@@ -65,7 +65,7 @@ public class ColorDisplayConverterTests
     }
 
     [Fact]
-    public void ConvertBack_16進6桁はアルファ255に変換される()
+    internal void ConvertBack_16進6桁はアルファ255に変換される()
     {
         var result = s_converter.ConvertBack("#336699", typeof(string), null, CultureInfo.InvariantCulture);
 
@@ -73,13 +73,13 @@ public class ColorDisplayConverterTests
     }
 
     [Fact]
-    public void ConvertBack_nullはnullを返す()
+    internal void ConvertBack_nullはnullを返す()
     {
         Assert.Null(s_converter.ConvertBack(null, typeof(string), null, CultureInfo.InvariantCulture));
     }
 
     [Fact]
-    public void ConvertBack_文字列以外の値はそのまま返す()
+    internal void ConvertBack_文字列以外の値はそのまま返す()
     {
         object value = 456;
         Assert.Same(value, s_converter.ConvertBack(value, typeof(string), null, CultureInfo.InvariantCulture));

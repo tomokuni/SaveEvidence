@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.Platform.Skia.Tests;
 public class SkiaColorInteropTests
 {
     [Fact]
-    public void ToSKColor_ARGBを保持して変換する()
+    internal void ToSKColor_ARGBを保持して変換する()
     {
         var source = DrawingColor.FromArgb(0x80, 0x12, 0x34, 0x56);
 
@@ -25,7 +25,7 @@ public class SkiaColorInteropTests
     }
 
     [Fact]
-    public void ToSKColor_透明も保持する()
+    internal void ToSKColor_透明も保持する()
     {
         // アルファ 0 は「描画しない」の判定（コア）に使うため、0 のまま渡す
         // （System.Drawing.Color.Transparent は透明な白。 成分をそのまま保持することを確かめる）
@@ -40,7 +40,7 @@ public class SkiaColorInteropTests
     }
 
     [Fact]
-    public void ToSKColor_不透明は既知の色と一致する()
+    internal void ToSKColor_不透明は既知の色と一致する()
     {
         Assert.Equal(SKColors.Red, DrawingColor.Red.ToSKColor());
         Assert.Equal(SKColors.White, DrawingColor.White.ToSKColor());
@@ -48,7 +48,7 @@ public class SkiaColorInteropTests
     }
 
     [Fact]
-    public void ToSKColor_成分ごとの最大値でも桁溢れしない()
+    internal void ToSKColor_成分ごとの最大値でも桁溢れしない()
     {
         var result = DrawingColor.FromArgb(255, 255, 255, 255).ToSKColor();
 
@@ -56,14 +56,14 @@ public class SkiaColorInteropTests
     }
 
     [Fact]
-    public void ToSKColor_既定値は透明な黒である()
+    internal void ToSKColor_既定値は透明な黒である()
     {
         // default(System.Drawing.Color) は RGB も 0 の透明な黒（Color.Transparent の透明な白とは異なる）
         Assert.Equal(new SKColor(0, 0, 0, 0), default(DrawingColor).ToSKColor());
     }
 
     [Fact]
-    public void ToDrawingColor_ARGBを保持して変換する()
+    internal void ToDrawingColor_ARGBを保持して変換する()
     {
         var source = new SKColor(0x12, 0x34, 0x56, 0x80);
 
@@ -76,7 +76,7 @@ public class SkiaColorInteropTests
     }
 
     [Fact]
-    public void ToDrawingColor_往復しても同じ色になる()
+    internal void ToDrawingColor_往復しても同じ色になる()
     {
         // 境界変換を 2 回通しても成分が欠落しないことを確かめる（Skia ⇔ コアの双方向）。
         // System.Drawing.Color の等価は名前付き色と ARGB 生成で異なるため、成分で比較する。
@@ -92,7 +92,7 @@ public class SkiaColorInteropTests
     }
 
     [Fact]
-    public void ToDrawingColor_既定値は透明な黒である()
+    internal void ToDrawingColor_既定値は透明な黒である()
     {
         var result = default(SKColor).ToDrawingColor();
 

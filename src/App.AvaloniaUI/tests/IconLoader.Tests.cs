@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Tests;
 public class IconLoaderTests
 {
     [AvaloniaFact]
-    public void LoadGeometry_保存アイコンが読み込める()
+    internal void LoadGeometry_保存アイコンが読み込める()
     {
         var geometry = IconLoader.LoadGeometry("ic_fluent_save_24_regular.svg");
         Assert.NotNull(geometry);
@@ -23,7 +23,7 @@ public class IconLoaderTests
     }
 
     [AvaloniaFact]
-    public void LoadGeometry_ウィンドウアイコンが読み込める()
+    internal void LoadGeometry_ウィンドウアイコンが読み込める()
     {
         var geometry = IconLoader.LoadGeometry("ic_fluent_window_24_regular.svg");
         Assert.NotNull(geometry);
@@ -31,7 +31,7 @@ public class IconLoaderTests
     }
 
     [AvaloniaFact]
-    public void LoadGeometry_スキャンテーブルアイコンが読み込める()
+    internal void LoadGeometry_スキャンテーブルアイコンが読み込める()
     {
         var geometry = IconLoader.LoadGeometry("ic_fluent_scan_table_24_regular.svg");
         Assert.NotNull(geometry);
@@ -39,7 +39,7 @@ public class IconLoaderTests
     }
 
     [AvaloniaFact]
-    public void LoadGeometry_存在しないファイルは空ジオメトリを返す()
+    internal void LoadGeometry_存在しないファイルは空ジオメトリを返す()
     {
         // フェールセーフ: 存在しない SVG は空ジオメトリ（M0,0）を返し例外を投げない
         var geometry = IconLoader.LoadGeometry("ic_fluent_not_exist_24_regular.svg");
@@ -49,7 +49,7 @@ public class IconLoaderTests
     }
 
     [AvaloniaFact]
-    public void LoadWindowIcon_ウィンドウアイコンを生成できる()
+    internal void LoadWindowIcon_ウィンドウアイコンを生成できる()
     {
         var icon = IconLoader.LoadWindowIcon("ic_fluent_scan_table_24_regular.svg", 32);
         Assert.NotNull(icon);

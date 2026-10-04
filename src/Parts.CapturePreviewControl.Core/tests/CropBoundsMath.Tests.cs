@@ -21,7 +21,7 @@ public class CropBoundsMathTests
     [InlineData(0.4, 0.6, 10.4, 10.6, 0, 1, 11, 10)]
     [InlineData(10.5, 10.5, 4, 4, 11, 11, 4, 4)]
     [InlineData(10.4, 10.4, 4, 4, 10, 10, 4, 4)]
-    public void ToPixelRect_画像内の矩形は四捨五入して変換する(
+    internal void ToPixelRect_画像内の矩形は四捨五入して変換する(
         double x, double y, double width, double height,
         int expectedX, int expectedY, int expectedWidth, int expectedHeight)
     {
@@ -34,7 +34,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ToPixelRect_画像の外へはみ出す矩形は画像内へクランプする()
+    internal void ToPixelRect_画像の外へはみ出す矩形は画像内へクランプする()
     {
         var result = CropBoundsMath.ToPixelRect(new EsRect(-50, -30, 500, 400), new EsSize(200, 150));
 
@@ -45,7 +45,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ToPixelRect_一部が画像の外にある矩形は重なる範囲だけを返す()
+    internal void ToPixelRect_一部が画像の外にある矩形は重なる範囲だけを返す()
     {
         var result = CropBoundsMath.ToPixelRect(new EsRect(150, 100, 200, 200), new EsSize(200, 150));
 
@@ -59,7 +59,7 @@ public class CropBoundsMathTests
     [InlineData(500, 500, 10, 10)]
     [InlineData(-100, 0, 50, 50)]
     [InlineData(0, -100, 50, 50)]
-    public void ToPixelRect_画像と重ならない矩形は空を返す(
+    internal void ToPixelRect_画像と重ならない矩形は空を返す(
         double x, double y, double width, double height)
     {
         Assert.True(CropBoundsMath.ToPixelRect(new EsRect(x, y, width, height), new EsSize(200, 150)).IsEmpty);
@@ -70,7 +70,7 @@ public class CropBoundsMathTests
     [InlineData(10, 10, 0.4, 50)]
     [InlineData(10, 10, 50, 0)]
     [InlineData(10, 10, -20, -20)]
-    public void ToPixelRect_1ピクセル未満の矩形は空を返す(
+    internal void ToPixelRect_1ピクセル未満の矩形は空を返す(
         double x, double y, double width, double height)
     {
         Assert.True(CropBoundsMath.ToPixelRect(new EsRect(x, y, width, height), new EsSize(200, 150)).IsEmpty);
@@ -80,13 +80,13 @@ public class CropBoundsMathTests
     [InlineData(0, 150)]
     [InlineData(200, 0)]
     [InlineData(-10, -10)]
-    public void ToPixelRect_画像サイズが0以下なら空を返す(int imageWidth, int imageHeight)
+    internal void ToPixelRect_画像サイズが0以下なら空を返す(int imageWidth, int imageHeight)
     {
         Assert.True(CropBoundsMath.ToPixelRect(new EsRect(0, 0, 50, 50), new EsSize(imageWidth, imageHeight)).IsEmpty);
     }
 
     [Fact]
-    public void ToPixelRect_画像全体の選択は全画素を返す()
+    internal void ToPixelRect_画像全体の選択は全画素を返す()
     {
         var result = CropBoundsMath.ToPixelRect(new EsRect(0.2, 0.2, 199.7, 149.7), new EsSize(200, 150));
 
@@ -101,7 +101,7 @@ public class CropBoundsMathTests
     // ====================================================================
 
     [Fact]
-    public void ToClosedInterval_終点の1ピクセルを加える()
+    internal void ToClosedInterval_終点の1ピクセルを加える()
     {
         var result = CropBoundsMath.ToClosedInterval(new EsRectInt(10, 20, 40, 30), new EsSize(400, 300));
 
@@ -112,7 +112,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ToClosedInterval_右端下端の1ピクセルは画像サイズを超えない()
+    internal void ToClosedInterval_右端下端の1ピクセルは画像サイズを超えない()
     {
         var result = CropBoundsMath.ToClosedInterval(new EsRectInt(199, 149, 1, 1), new EsSize(200, 150));
 
@@ -123,7 +123,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ToClosedInterval_画像全体の選択は画像サイズを維持する()
+    internal void ToClosedInterval_画像全体の選択は画像サイズを維持する()
     {
         var result = CropBoundsMath.ToClosedInterval(new EsRectInt(0, 0, 200, 150), new EsSize(200, 150));
 
@@ -134,7 +134,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ToClosedInterval_画像サイズ無しはクランプしない()
+    internal void ToClosedInterval_画像サイズ無しはクランプしない()
     {
         // 画像サイズを知らない呼び出し（画面全体が切り出し対象と一致する場合等）は +1 のみ行う
         var result = CropBoundsMath.ToClosedInterval(new EsRectInt(10, 20, 40, 30));
@@ -155,7 +155,7 @@ public class CropBoundsMathTests
     [InlineData(10.6, 11)]
     [InlineData(-0.5, -1)]
     [InlineData(0.0, 0)]
-    public void RoundToPixel_0_5は切り上げる(double value, int expected)
+    internal void RoundToPixel_0_5は切り上げる(double value, int expected)
     {
         // 銀行丸め（0.5 を偶数へ）にならないこと（ピクセル座標の慣例）
         Assert.Equal(expected, CropBoundsMath.RoundToPixel(value));
@@ -165,7 +165,7 @@ public class CropBoundsMathTests
     [InlineData(2.5, 3)]
     [InlineData(3.5, 4)]
     [InlineData(4.5, 5)]
-    public void RoundToPixel_偶数へ丸めない(double value, int expected)
+    internal void RoundToPixel_偶数へ丸めない(double value, int expected)
     {
         // Math.Round の既定（銀行丸め）なら 2.5→2 / 3.5→4 / 4.5→4 になる。 AwayFromZero は常に切り上げる
         Assert.Equal(expected, CropBoundsMath.RoundToPixel(value));
@@ -175,7 +175,7 @@ public class CropBoundsMathTests
     [InlineData(199, 149, 1, 1)]
     [InlineData(0, 0, 200, 150)]
     [InlineData(10, 20, 40, 30)]
-    public void ToClosedInterval_画像サイズ付きは幅高さの上限だけを変える(int x, int y, int width, int height)
+    internal void ToClosedInterval_画像サイズ付きは幅高さの上限だけを変える(int x, int y, int width, int height)
     {
         // 画像サイズ付きは、画像サイズ無しの結果を画像の端でクランプした値になる（規則を共有している）
         var size = new EsSize(200, 150);
@@ -193,7 +193,7 @@ public class CropBoundsMathTests
     // ====================================================================
 
     [Fact]
-    public void ComputeCropBounds_閉区間で始点終点のピクセルを含む()
+    internal void ComputeCropBounds_閉区間で始点終点のピクセルを含む()
     {
         // 選択矩形 (10,10,40,40) = 半開区間 [10,50)。 閉区間では [10,50] = 41×41 ピクセル
         var result = CropBoundsMath.ComputeCropBounds(
@@ -203,7 +203,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ComputeCropBounds_画像右端では幅が画像サイズにクランプされる()
+    internal void ComputeCropBounds_画像右端では幅が画像サイズにクランプされる()
     {
         // 選択矩形が画像右端 (80,80,20,20) = [80,100)。 閉区間では [80,100] = 21 ピクセルだが、
         // 画像サイズ 100 を超えないよう 20 ピクセルにクランプする
@@ -214,7 +214,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ComputeCropBounds_最小サイズ未満は空を返す()
+    internal void ComputeCropBounds_最小サイズ未満は空を返す()
     {
         // 幅・高さが 1 未満（MinSelectionSize の既定値 1.0 未満）→ 空を返す
         var result = CropBoundsMath.ComputeCropBounds(new EsRect(10, 10, 0.5, 0.5), new EsSize(100, 100), 1.0);
@@ -223,7 +223,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ComputeCropBounds_負座標は0にクランプする()
+    internal void ComputeCropBounds_負座標は0にクランプする()
     {
         // 選択矩形が画像外（負座標）→ 0 にクランプして閉区間で切り出す
         var result = CropBoundsMath.ComputeCropBounds(
@@ -233,7 +233,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ComputeCropBounds_完全に範囲外なら空を返す()
+    internal void ComputeCropBounds_完全に範囲外なら空を返す()
     {
         var result = CropBoundsMath.ComputeCropBounds(new EsRect(150, 150, 20, 20), new EsSize(100, 100), 1.0);
 
@@ -241,7 +241,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ComputeCropBounds_最小サイズを指定するとそれ未満を空とみなす()
+    internal void ComputeCropBounds_最小サイズを指定するとそれ未満を空とみなす()
     {
         // MinSelectionSize = 10 の場合、幅 5 は空を返す
         var result = CropBoundsMath.ComputeCropBounds(new EsRect(10, 10, 5, 20), new EsSize(100, 100), 10.0);
@@ -250,7 +250,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ComputeCropBounds_半開区間の矩形では終点のピクセルを加えない()
+    internal void ComputeCropBounds_半開区間の矩形では終点のピクセルを加えない()
     {
         // スクリーン選択・ウィンドウ選択のハイライト矩形は全ピクセルを含むため加算しない
         var result = CropBoundsMath.ComputeCropBounds(
@@ -260,7 +260,7 @@ public class CropBoundsMathTests
     }
 
     [Fact]
-    public void ComputeCropBounds_画像サイズが0以下なら空を返す()
+    internal void ComputeCropBounds_画像サイズが0以下なら空を返す()
     {
         Assert.True(CropBoundsMath.ComputeCropBounds(new EsRect(0, 0, 10, 10), new EsSize(0, 100), 1.0).IsEmpty);
         Assert.True(CropBoundsMath.ComputeCropBounds(new EsRect(0, 0, 10, 10), new EsSize(100, 0), 1.0).IsEmpty);

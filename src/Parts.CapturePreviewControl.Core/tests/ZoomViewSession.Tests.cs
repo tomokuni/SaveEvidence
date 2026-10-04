@@ -33,7 +33,7 @@ public class ZoomViewSessionTests
 
     /// <summary>画像を設定すると Fit 表示（内部ズーム率 0・オフセット 0）になることを検証する。</summary>
     [Fact]
-    public void SetSource_Fit表示へリセットする()
+    internal void SetSource_Fit表示へリセットする()
     {
         var session = CreateStandard();
 
@@ -45,7 +45,7 @@ public class ZoomViewSessionTests
 
     /// <summary>画像を設定するとズーム状態とビューポートの両方を通知することを検証する。</summary>
     [Fact]
-    public void SetSource_両方を通知する()
+    internal void SetSource_両方を通知する()
     {
         var session = new ZoomViewSession();
         session.SetViewport(new EsSize(200, 200));
@@ -60,7 +60,7 @@ public class ZoomViewSessionTests
 
     /// <summary>画像未設定・ビューポート未確定時は Fit 実効倍率がフォールバック（100%）であることを検証する。</summary>
     [Fact]
-    public void FitZoomPercent_未確定はフォールバックを使う()
+    internal void FitZoomPercent_未確定はフォールバックを使う()
     {
         var session = new ZoomViewSession();
 
@@ -78,7 +78,7 @@ public class ZoomViewSessionTests
     /// 固定倍率中にリサイズすると以降の Fit 値が古いままになる不具合があった）。
     /// </remarks>
     [Fact]
-    public void SetViewport_固定倍率中でもFit実効倍率を更新する()
+    internal void SetViewport_固定倍率中でもFit実効倍率を更新する()
     {
         var session = CreateStandard();
         Assert.Equal(200.0, session.FitZoomPercent, 6);
@@ -92,7 +92,7 @@ public class ZoomViewSessionTests
 
     /// <summary>同じビューポートの再設定では何もしないことを検証する。</summary>
     [Fact]
-    public void SetViewport_同値なら何もしない()
+    internal void SetViewport_同値なら何もしない()
     {
         var session = CreateStandard();
         var count = 0;
@@ -106,7 +106,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Fit 中のビューポート変更が実効ズーム率の通知を伴うことを検証する。</summary>
     [Fact]
-    public void SetViewport_Fit中は実効ズーム率を通知する()
+    internal void SetViewport_Fit中は実効ズーム率を通知する()
     {
         var session = CreateStandard();
         ZoomState? captured = null;
@@ -130,7 +130,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Fit 中の実効ズーム率がクランプされた実効倍率であることを検証する。</summary>
     [Fact]
-    public void ZoomPercent_Fit中はクランプされた実効倍率を返す()
+    internal void ZoomPercent_Fit中はクランプされた実効倍率を返す()
     {
         // 100x100 の画像を 1000x1000 のビューポートへ Fit → 1000%（上限 500% でクランプ）
         var session = CreateSession(new EsSize(100, 100), new EsSize(1000, 1000));
@@ -140,7 +140,7 @@ public class ZoomViewSessionTests
 
     /// <summary>固定倍率の設定がオフセットをクランプすることを検証する。</summary>
     [Fact]
-    public void SetZoom_固定倍率では実効ズーム率をそのまま返す()
+    internal void SetZoom_固定倍率では実効ズーム率をそのまま返す()
     {
         var session = CreateStandard();
 
@@ -153,7 +153,7 @@ public class ZoomViewSessionTests
 
     /// <summary>ズーム中心（コンテンツ座標）がスケール変更後も不変であることを検証する。</summary>
     [Fact]
-    public void SetZoom_ズーム中心のコンテンツ座標を維持する()
+    internal void SetZoom_ズーム中心のコンテンツ座標を維持する()
     {
         var session = CreateSession(new EsSize(1000, 1000), new EsSize(200, 200));
         session.SetZoom(100);
@@ -170,7 +170,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Fit へ移行するとオフセットがリセットされることを検証する。</summary>
     [Fact]
-    public void SetZoom_Fitへ移行するとオフセットをリセットする()
+    internal void SetZoom_Fitへ移行するとオフセットをリセットする()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(200);
@@ -187,7 +187,7 @@ public class ZoomViewSessionTests
 
     /// <summary>画像未設定時はパンできない（原点のまま）ことを検証する。</summary>
     [Fact]
-    public void SetOffset_画像なしは原点のまま()
+    internal void SetOffset_画像なしは原点のまま()
     {
         var session = new ZoomViewSession();
 
@@ -199,7 +199,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Fit 中はパンできない（原点のまま）ことを検証する。</summary>
     [Fact]
-    public void SetOffset_Fit中は原点のまま()
+    internal void SetOffset_Fit中は原点のまま()
     {
         var session = CreateStandard();
 
@@ -210,7 +210,7 @@ public class ZoomViewSessionTests
 
     /// <summary>パンがスクロール範囲へクランプされることを検証する。</summary>
     [Fact]
-    public void SetOffset_スクロール範囲へクランプする()
+    internal void SetOffset_スクロール範囲へクランプする()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(100);
@@ -223,7 +223,7 @@ public class ZoomViewSessionTests
 
     /// <summary>同じオフセットの再設定では何もしないことを検証する。</summary>
     [Fact]
-    public void SetOffset_同値なら何もしない()
+    internal void SetOffset_同値なら何もしない()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(100);
@@ -239,7 +239,7 @@ public class ZoomViewSessionTests
 
     /// <summary>通常ホイールが 1 ノッチ = 48 DIP を実効倍率で除した量をパンすることを検証する。</summary>
     [Fact]
-    public void PanByWheel_48DIPを実効倍率で除す()
+    internal void PanByWheel_48DIPを実効倍率で除す()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(200); // 実効倍率 2.0
@@ -252,7 +252,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Shift 併用のホイールが縦回転を横パンとして扱うことを検証する。</summary>
     [Fact]
-    public void PanByWheel_Shift併用は横パンになる()
+    internal void PanByWheel_Shift併用は横パンになる()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(100);
@@ -269,7 +269,7 @@ public class ZoomViewSessionTests
 
     /// <summary>ドラッグ中は掴んだ位置がポインターに追従することを検証する。</summary>
     [Fact]
-    public void Move_掴んだ位置がポインターに追従する()
+    internal void Move_掴んだ位置がポインターに追従する()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(100);
@@ -285,7 +285,7 @@ public class ZoomViewSessionTests
 
     /// <summary>パン開始がポインターのキャプチャを要求することを検証する。</summary>
     [Fact]
-    public void Press_ポインタキャプチャを要求する()
+    internal void Press_ポインタキャプチャを要求する()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(100);
@@ -298,7 +298,7 @@ public class ZoomViewSessionTests
 
     /// <summary>解放がポインターの解放を要求することを検証する。</summary>
     [Fact]
-    public void Release_ポインタ解放を要求する()
+    internal void Release_ポインタ解放を要求する()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(100);
@@ -312,7 +312,7 @@ public class ZoomViewSessionTests
 
     /// <summary>パン中でない移動は何もしないことを検証する。</summary>
     [Fact]
-    public void Move_パン中でなければ何もしない()
+    internal void Move_パン中でなければ何もしない()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(100);
@@ -325,7 +325,7 @@ public class ZoomViewSessionTests
 
     /// <summary>解放を二重に呼んでも何もしないことを検証する。</summary>
     [Fact]
-    public void Release_パン中でなければ何もしない()
+    internal void Release_パン中でなければ何もしない()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
 
@@ -338,7 +338,7 @@ public class ZoomViewSessionTests
 
     /// <summary>ズームイン・アウトが段階レベルへ移動することを検証する。</summary>
     [Fact]
-    public void ZoomIn_ZoomOut_段階レベルへ移動する()
+    internal void ZoomIn_ZoomOut_段階レベルへ移動する()
     {
         var session = CreateSession(new EsSize(200, 200), new EsSize(100, 100)); // Fit = 50%
         Assert.Equal(50.0, session.ZoomPercent, 6);
@@ -352,7 +352,7 @@ public class ZoomViewSessionTests
 
     /// <summary>移動できない場合は何もしない（ログも出力しない）ことを検証する。</summary>
     [Fact]
-    public void ZoomIn_移動できない場合は何もしない()
+    internal void ZoomIn_移動できない場合は何もしない()
     {
         var session = CreateSession(new EsSize(100, 100), new EsSize(100, 100));
         var logger = new RecordingLogger();
@@ -368,7 +368,7 @@ public class ZoomViewSessionTests
     /// <summary>ズーム操作のログが実効ズーム率（Fit 中は実効倍率）を記録することを検証する。</summary>
     /// <remarks>内部ズーム率の 0 ではなく、実際に表示されている実効倍率を記録する（両 UI で一致させる）。</remarks>
     [Fact]
-    public void ZoomIn_Fit中は実効ズーム率をログに記録する()
+    internal void ZoomIn_Fit中は実効ズーム率をログに記録する()
     {
         var session = CreateSession(new EsSize(200, 200), new EsSize(100, 100)); // Fit = 50%
         var logger = new RecordingLogger();
@@ -381,7 +381,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Ctrl+ホイールのズームが WheelFactor 倍へ移動し実効ズーム率を記録することを検証する。</summary>
     [Fact]
-    public void ZoomByWheel_WheelFactor倍へ移動する()
+    internal void ZoomByWheel_WheelFactor倍へ移動する()
     {
         var session = CreateSession(new EsSize(1000, 1000), new EsSize(200, 200));
         var logger = new RecordingLogger();
@@ -397,7 +397,7 @@ public class ZoomViewSessionTests
 
     /// <summary>指輪のズーム中心が呼び出しの間だけ保持されることを検証する。</summary>
     [Fact]
-    public void ZoomByWheel_指定した中心をズーム中心にする()
+    internal void ZoomByWheel_指定した中心をズーム中心にする()
     {
         var session = CreateSession(new EsSize(1000, 1000), new EsSize(200, 200));
         session.SetZoom(100);
@@ -413,7 +413,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Fit へ戻すと Fit 表示になることを検証する。</summary>
     [Fact]
-    public void ZoomFit_Fit表示へ戻す()
+    internal void ZoomFit_Fit表示へ戻す()
     {
         var session = CreateStandard();
         session.SetZoom(300);
@@ -430,7 +430,7 @@ public class ZoomViewSessionTests
 
     /// <summary>画像未設定時は可否が何れも不可であることを検証する。</summary>
     [Fact]
-    public void CanZoom_画像なしは不可()
+    internal void CanZoom_画像なしは不可()
     {
         var session = new ZoomViewSession();
 
@@ -440,7 +440,7 @@ public class ZoomViewSessionTests
 
     /// <summary>上限ではズームイン不可・最小ではズームアウト不可であることを検証する。</summary>
     [Fact]
-    public void CanZoom_上限と下限で不可になる()
+    internal void CanZoom_上限と下限で不可になる()
     {
         var session = CreateStandard();
         // Fit（50%）でも下位レベル（40%）があるためズームアウト可能
@@ -459,7 +459,7 @@ public class ZoomViewSessionTests
 
     /// <summary>設定変更で可否のキャッシュが破棄されることを検証する。</summary>
     [Fact]
-    public void ApplyConfig_可否を再計算する()
+    internal void ApplyConfig_可否を再計算する()
     {
         var session = CreateStandard();
         Assert.True(session.CanZoomIn);
@@ -472,7 +472,7 @@ public class ZoomViewSessionTests
 
     /// <summary>現在状態（通知値）が 4 値を同時に確定することを検証する。</summary>
     [Fact]
-    public void CurrentState_4値を返す()
+    internal void CurrentState_4値を返す()
     {
         var session = CreateSession(new EsSize(200, 200), new EsSize(100, 100));
 
@@ -490,7 +490,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Fit の表示サイズがビューポートへ収まることを検証する。</summary>
     [Fact]
-    public void DisplaySize_Fitはビューポートへ収まる()
+    internal void DisplaySize_Fitはビューポートへ収まる()
     {
         var session = CreateSession(new EsSize(400, 200), new EsSize(200, 200));
 
@@ -502,7 +502,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Fit の原点が中央寄せ補正されることを検証する。</summary>
     [Fact]
-    public void ImageOrigin_Fitは中央寄せする()
+    internal void ImageOrigin_Fitは中央寄せする()
     {
         var session = CreateSession(new EsSize(400, 200), new EsSize(200, 200));
 
@@ -514,7 +514,7 @@ public class ZoomViewSessionTests
 
     /// <summary>中央寄せを無効にすると原点が 0 になることを検証する。</summary>
     [Fact]
-    public void ImageOrigin_左上寄せは原点が0になる()
+    internal void ImageOrigin_左上寄せは原点が0になる()
     {
         var session = CreateSession(new EsSize(400, 200), new EsSize(200, 200));
         session.SetCenterAlign(centerAlign: false);
@@ -527,7 +527,7 @@ public class ZoomViewSessionTests
 
     /// <summary>画像未設定時の表示矩形が空であることを検証する。</summary>
     [Fact]
-    public void ImageRect_画像なしは空になる()
+    internal void ImageRect_画像なしは空になる()
     {
         var session = new ZoomViewSession();
 
@@ -537,7 +537,7 @@ public class ZoomViewSessionTests
 
     /// <summary>固定倍率のパンで原点がオフセットに追従することを検証する。</summary>
     [Fact]
-    public void ImageOrigin_固定倍率のパンに追従する()
+    internal void ImageOrigin_固定倍率のパンに追従する()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(100);
@@ -555,7 +555,7 @@ public class ZoomViewSessionTests
 
     /// <summary>画像表示矩形の原点基準の座標変換が往復することを検証する。</summary>
     [Fact]
-    public void 座標変換が往復する()
+    internal void 座標変換が往復する()
     {
         var session = CreateSession(new EsSize(100, 100), new EsSize(200, 200));
 
@@ -568,7 +568,7 @@ public class ZoomViewSessionTests
 
     /// <summary>オフセット基準の座標変換が往復することを検証する。</summary>
     [Fact]
-    public void オフセット基準の座標変換が往復する()
+    internal void オフセット基準の座標変換が往復する()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(200);
@@ -587,7 +587,7 @@ public class ZoomViewSessionTests
 
     /// <summary>拡大時にスクロール可能になり、同期値が確定することを検証する。</summary>
     [Fact]
-    public void ScrollMetrics_拡大時はスクロール可能になる()
+    internal void ScrollMetrics_拡大時はスクロール可能になる()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(200);
@@ -601,7 +601,7 @@ public class ZoomViewSessionTests
 
     /// <summary>Fit 表示ではスクロール不要であることを検証する。</summary>
     [Fact]
-    public void ScrollMetrics_Fitはスクロール不可になる()
+    internal void ScrollMetrics_Fitはスクロール不可になる()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
 
@@ -610,7 +610,7 @@ public class ZoomViewSessionTests
 
     /// <summary>画像未設定時はスクロール不可であることを検証する。</summary>
     [Fact]
-    public void ScrollMetrics_画像なしはスクロール不可になる()
+    internal void ScrollMetrics_画像なしはスクロール不可になる()
     {
         var session = new ZoomViewSession();
 
@@ -619,7 +619,7 @@ public class ZoomViewSessionTests
 
     /// <summary>スクロールバーがスクロール可能な軸にのみ生成されることを検証する。</summary>
     [Fact]
-    public void CurrentScrollBars_スクロール可能な軸にのみ生成する()
+    internal void CurrentScrollBars_スクロール可能な軸にのみ生成する()
     {
         // 横長の画像を 100% で表示 → 横のみスクロール可能
         var session = CreateSession(new EsSize(400, 100), new EsSize(200, 200));
@@ -633,7 +633,7 @@ public class ZoomViewSessionTests
 
     /// <summary>スクロールバーを無効にすると生成されないことを検証する。</summary>
     [Fact]
-    public void CurrentScrollBars_無効時は生成しない()
+    internal void CurrentScrollBars_無効時は生成しない()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(100);
@@ -647,7 +647,7 @@ public class ZoomViewSessionTests
 
     /// <summary>トラック押下でサムがその位置へ移動し、オフセットが更新されることを検証する。</summary>
     [Fact]
-    public void TryBeginScrollBarDrag_トラック押下でサムを移動する()
+    internal void TryBeginScrollBarDrag_トラック押下でサムを移動する()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(200);
@@ -663,7 +663,7 @@ public class ZoomViewSessionTests
 
     /// <summary>スクロールバーを無効にするとトラック押下を受理しないことを検証する。</summary>
     [Fact]
-    public void TryBeginScrollBarDrag_無効時は受理しない()
+    internal void TryBeginScrollBarDrag_無効時は受理しない()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(200);
@@ -674,7 +674,7 @@ public class ZoomViewSessionTests
 
     /// <summary>ドラッグの更新と終了がオフセットを更新し、ポインタ解放を要求することを検証する。</summary>
     [Fact]
-    public void UpdateScrollBarDrag_オフセットを更新して解放を要求する()
+    internal void UpdateScrollBarDrag_オフセットを更新して解放を要求する()
     {
         var session = CreateSession(new EsSize(400, 400), new EsSize(200, 200));
         session.SetZoom(200);
@@ -697,7 +697,7 @@ public class ZoomViewSessionTests
 
     /// <summary>外観の設定が再描画を要求し、同値の再設定では何もしないことを検証する。</summary>
     [Fact]
-    public void SetAppearance_変化時のみ再描画する()
+    internal void SetAppearance_変化時のみ再描画する()
     {
         var session = new ZoomViewSession();
 
@@ -711,7 +711,7 @@ public class ZoomViewSessionTests
 
     /// <summary>中央寄せの設定がビューポートの通知を伴い、同値では何もしないことを検証する。</summary>
     [Fact]
-    public void SetCenterAlign_変化時のみ通知する()
+    internal void SetCenterAlign_変化時のみ通知する()
     {
         var session = new ZoomViewSession();
         var count = 0;
@@ -727,7 +727,7 @@ public class ZoomViewSessionTests
 
     /// <summary>ロガー未設定でもログ出力が安全であることを検証する。</summary>
     [Fact]
-    public void Log_未設定でも例外にならない()
+    internal void Log_未設定でも例外にならない()
     {
         var session = CreateStandard();
 

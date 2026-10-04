@@ -23,7 +23,7 @@ public partial class SettingsServiceJsonTests
     /// 両経路の出力が一致しなければ、AOT 版と通常版で設定ファイルの互換性が崩れる。
     /// </remarks>
     [Fact]
-    public void 直列化_ソース生成と反射で同一のJSONになる()
+    internal void 直列化_ソース生成と反射で同一のJSONになる()
     {
         var settings = CreateSettings();
 
@@ -36,7 +36,7 @@ public partial class SettingsServiceJsonTests
     /// <summary>enum は数値ではなく名前で保存されることを検証する。</summary>
     /// <remarks>数値で保存されると、enum の並びを変えた場合に既存の設定ファイルが別の意味になる。</remarks>
     [Fact]
-    public void 直列化_enumは名前で保存される()
+    internal void 直列化_enumは名前で保存される()
     {
         var settings = CreateSettings();
         settings.ThemeMode = ThemeMode.Dark;
@@ -54,7 +54,7 @@ public partial class SettingsServiceJsonTests
     /// ファイルが冗長になる（専用の変換器が単一所有する書式）。
     /// </remarks>
     [Fact]
-    public void 直列化_ウィンドウ矩形は4項目のみで保存される()
+    internal void 直列化_ウィンドウ矩形は4項目のみで保存される()
     {
         var settings = CreateSettings();
         settings.MainWindowBounds = new EsRectInt(150, 180, 900, 600);
@@ -71,7 +71,7 @@ public partial class SettingsServiceJsonTests
 
     /// <summary>ソース生成経路の往復で値が保持されることを検証する。</summary>
     [Fact]
-    public void 直列化_ソース生成経路の往復で値が保持される()
+    internal void 直列化_ソース生成経路の往復で値が保持される()
     {
         var settings = CreateSettings();
         var json = Serialize(settings, TestSettingsJsonContext.Default);

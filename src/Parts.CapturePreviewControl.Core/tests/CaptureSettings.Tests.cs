@@ -13,28 +13,28 @@ public class CaptureSettingsTests
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public void Validate_MinSelectionSizeが1未満で例外を投げる(int value)
+    internal void Validate_MinSelectionSizeが1未満で例外を投げる(int value)
         => Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(MinSelectionSize: value).Validate());
 
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public void Validate_ルーペのサイズが1未満で例外を投げる(int value)
+    internal void Validate_ルーペのサイズが1未満で例外を投げる(int value)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeSize: value).Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeFrameThickness: value).Validate());
     }
 
     [Fact]
-    public void Validate_ルーペの倍率が1未満で例外を投げる()
+    internal void Validate_ルーペの倍率が1未満で例外を投げる()
         => Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeZoomLevel: 0).Validate());
 
     [Fact]
-    public void Validate_ルーペのオフセットが負で例外を投げる()
+    internal void Validate_ルーペのオフセットが負で例外を投げる()
         => Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeOffset: -1).Validate());
 
     [Fact]
-    public void Validate_操作部品のサイズが1未満で例外を投げる()
+    internal void Validate_操作部品のサイズが1未満で例外を投げる()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(HandleSize: 0).Validate());
         Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(HandleHitRadius: 0).Validate());
@@ -44,22 +44,22 @@ public class CaptureSettingsTests
     [Theory]
     [InlineData(0.05)]
     [InlineData(9.0)]
-    public void Validate_ルーペの描画倍率が許容範囲外で例外を投げる(double value)
+    internal void Validate_ルーペの描画倍率が許容範囲外で例外を投げる(double value)
         => Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(LoupeClientToPixelScaling: value).Validate());
 
     [Fact]
-    public void Validate_枠線の太さが負で例外を投げる()
+    internal void Validate_枠線の太さが負で例外を投げる()
         => Assert.Throws<ArgumentOutOfRangeException>(() => new CaptureSettings(BorderThickness: -1).Validate());
 
     [Fact]
-    public void Validate_nullの項目は検証しない()
+    internal void Validate_nullの項目は検証しない()
     {
         // null は「現在値の維持」を表すため検証対象外（部分更新の入力として使える）
         new CaptureSettings().Validate();
     }
 
     [Fact]
-    public void Validate_境界値は例外を投げない()
+    internal void Validate_境界値は例外を投げない()
     {
         // 1 は下限ちょうど・0 は下限ちょうど（0 以上が許容される項目）
         new CaptureSettings(
@@ -69,7 +69,7 @@ public class CaptureSettingsTests
     }
 
     [Fact]
-    public void ToNonNull_未指定の項目をデフォルトで埋める()
+    internal void ToNonNull_未指定の項目をデフォルトで埋める()
     {
         var s = new CaptureSettings().ToNonNull();
 
@@ -82,7 +82,7 @@ public class CaptureSettingsTests
     }
 
     [Fact]
-    public void ToNonNull_外観の既定値は設定画面の現在値と一致する()
+    internal void ToNonNull_外観の既定値は設定画面の現在値と一致する()
     {
         // 既定値は設定画面（app）の現在値に合わせる（UI ごとに変わらない）
         var s = new CaptureSettings().ToNonNull();
@@ -103,7 +103,7 @@ public class CaptureSettingsTests
     }
 
     [Fact]
-    public void ToNonNull_指定した値は維持する()
+    internal void ToNonNull_指定した値は維持する()
     {
         var s = new CaptureSettings(
             MinSelectionSize: 25, LoupeSize: 200, BorderColor: Color.Red,
@@ -123,7 +123,7 @@ public class CaptureSettingsTests
     }
 
     [Fact]
-    public void ToNonNull_複数回呼んでも同じ既定値になる()
+    internal void ToNonNull_複数回呼んでも同じ既定値になる()
     {
         // 既定値は単一の所有者（ToNonNull）が持ち、呼び出しごとに変わらない
         Assert.Equal(new CaptureSettings().ToNonNull(), new CaptureSettings().ToNonNull());

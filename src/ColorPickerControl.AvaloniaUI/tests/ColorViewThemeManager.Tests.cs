@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 public class ColorViewThemeManagerTests
 {
     [AvaloniaFact]
-    public void EnsureApplied_未指定時は内包テーマを追加する()
+    internal void EnsureApplied_未指定時は内包テーマを追加する()
     {
         var app = Application.Current;
         Assert.NotNull(app);
@@ -33,7 +33,7 @@ public class ColorViewThemeManagerTests
     }
 
     [AvaloniaFact]
-    public void EnsureApplied_複数回呼んでも重複追加されない()
+    internal void EnsureApplied_複数回呼んでも重複追加されない()
     {
         var app = Application.Current;
         Assert.NotNull(app);
@@ -49,7 +49,7 @@ public class ColorViewThemeManagerTests
     }
 
     [AvaloniaFact]
-    public void EnsureApplied_ホストが明示指定済みなら追加しない()
+    internal void EnsureApplied_ホストが明示指定済みなら追加しない()
     {
         var app = Application.Current;
         Assert.NotNull(app);
@@ -67,7 +67,7 @@ public class ColorViewThemeManagerTests
     }
 
     [AvaloniaFact]
-    public void ApplyOnceCore_適用済みなら何もしない()
+    internal void ApplyOnceCore_適用済みなら何もしない()
     {
         var app = Application.Current;
         Assert.NotNull(app);
@@ -85,7 +85,7 @@ public class ColorViewThemeManagerTests
     }
 
     [AvaloniaFact]
-    public void EnsureApplied_Application未初期化なら何もしない()
+    internal void EnsureApplied_Application未初期化なら何もしない()
     {
         // Core へ null を渡すことで、Application.Current が null の未初期化状態を再現する。
         // Avalonia 12 の Application.Current は getter のみ（AvaloniaLocator 経由）のため、
@@ -94,7 +94,7 @@ public class ColorViewThemeManagerTests
     }
 
     [AvaloniaFact]
-    public void EnsureApplied_デザインモードでは何もしない()
+    internal void EnsureApplied_デザインモードでは何もしない()
     {
         var app = Application.Current;
         Assert.NotNull(app);
@@ -118,7 +118,7 @@ public class ColorViewThemeManagerTests
     }
 
     [AvaloniaFact]
-    public void IsColorViewTheme_ColorPickerテーマはtrueを返す()
+    internal void IsColorViewTheme_ColorPickerテーマはtrueを返す()
     {
         var include = CreateColorViewStyleInclude();
 
@@ -126,7 +126,7 @@ public class ColorViewThemeManagerTests
     }
 
     [AvaloniaFact]
-    public void IsColorViewTheme_Sourceがnullならfalseを返す()
+    internal void IsColorViewTheme_Sourceがnullならfalseを返す()
     {
         var type = typeof(StyleInclude);
         var uriCtor = type.GetConstructors()
@@ -142,7 +142,7 @@ public class ColorViewThemeManagerTests
     }
 
     [AvaloniaFact]
-    public void IsColorViewTheme_無関係なテーマはfalseを返す()
+    internal void IsColorViewTheme_無関係なテーマはfalseを返す()
     {
         var include = CreateColorViewStyleInclude();
         // Source を無関係な URI に差し替える（リフレクションで設定）

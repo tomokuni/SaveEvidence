@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 using SkiaSharp;
 using Xunit;
@@ -15,7 +14,7 @@ namespace EsUtil.SaveEvidence.Platform.MewUI.Tests;
 public class SkiaImageRendererTests
 {
     [Fact]
-    public void Render_Fillは縦横比を無視して領域全体へ画像で埋める()
+    internal void Render_Fillは縦横比を無視して領域全体へ画像で埋める()
     {
         using var source = TestHelper.CreateBitmap(4, 2, DrawingColor.Red);
         using var target = TestHelper.CreateTarget(4, 4);
@@ -27,7 +26,7 @@ public class SkiaImageRendererTests
     }
 
     [Fact]
-    public void Render_Uniformは縦横比を保ち余白を透明のまま残す()
+    internal void Render_Uniformは縦横比を保ち余白を透明のまま残す()
     {
         using var source = TestHelper.CreateBitmap(4, 2, DrawingColor.Red);
         using var target = TestHelper.CreateTarget(8, 8);
@@ -43,7 +42,7 @@ public class SkiaImageRendererTests
     }
 
     [Fact]
-    public void Render_画像が無い場合は何も描画しない()
+    internal void Render_画像が無い場合は何も描画しない()
     {
         using var target = TestHelper.CreateTarget(4, 4);
 
@@ -54,7 +53,7 @@ public class SkiaImageRendererTests
     }
 
     [Fact]
-    public void Render_破棄済みの画像は何も描画しない()
+    internal void Render_破棄済みの画像は何も描画しない()
     {
         var source = TestHelper.CreateBitmap(4, 4, DrawingColor.Red);
         source.Dispose();
@@ -67,7 +66,7 @@ public class SkiaImageRendererTests
     }
 
     [Fact]
-    public void Render_描画先が空の場合は何も描画しない()
+    internal void Render_描画先が空の場合は何も描画しない()
     {
         using var source = TestHelper.CreateBitmap(4, 4, DrawingColor.Red);
         using var target = TestHelper.CreateTarget(4, 4);
@@ -80,7 +79,7 @@ public class SkiaImageRendererTests
     }
 
     [Fact]
-    public void Render_前回の描画内容を透明へクリアする()
+    internal void Render_前回の描画内容を透明へクリアする()
     {
         using var source = TestHelper.CreateBitmap(4, 4, DrawingColor.Red);
         using var target = TestHelper.CreateTarget(4, 4);

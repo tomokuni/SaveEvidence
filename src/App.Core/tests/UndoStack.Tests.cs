@@ -18,7 +18,7 @@ public class UndoStackTests
         => EsBitmap.Create(size, size);
 
     [Fact]
-    public void Undo_現在の画像をRedoスタックへ退避して復元する()
+    internal void Undo_現在の画像をRedoスタックへ退避して復元する()
     {
         var stack = new UndoStack();
         var img1 = CreateBitmap();
@@ -45,7 +45,7 @@ public class UndoStackTests
     }
 
     [Fact]
-    public void Redo_スタックが空ならnullを返す()
+    internal void Redo_スタックが空ならnullを返す()
     {
         var stack = new UndoStack();
 
@@ -53,7 +53,7 @@ public class UndoStackTests
     }
 
     [Fact]
-    public void Undo_スタックが空ならnullを返しRedoへ退避しない()
+    internal void Undo_スタックが空ならnullを返しRedoへ退避しない()
     {
         var stack = new UndoStack();
         var img = CreateBitmap();
@@ -65,7 +65,7 @@ public class UndoStackTests
     }
 
     [Fact]
-    public void Push_新しい操作でRedo履歴がクリアされる()
+    internal void Push_新しい操作でRedo履歴がクリアされる()
     {
         var stack = new UndoStack();
         var img1 = CreateBitmap();
@@ -92,7 +92,7 @@ public class UndoStackTests
     }
 
     [Fact]
-    public void Clear_UndoとRedoの両方が破棄される()
+    internal void Clear_UndoとRedoの両方が破棄される()
     {
         var stack = new UndoStack();
         var img1 = CreateBitmap();
@@ -117,7 +117,7 @@ public class UndoStackTests
     }
 
     [Fact]
-    public void GetUndoHistory_Pushした順で古い順に取得できる()
+    internal void GetUndoHistory_Pushした順で古い順に取得できる()
     {
         var stack = new UndoStack();
         var img1 = CreateBitmap(10);
@@ -140,7 +140,7 @@ public class UndoStackTests
     }
 
     [Fact]
-    public void GetRedoHistory_Undoで退避された順に取得できる()
+    internal void GetRedoHistory_Undoで退避された順に取得できる()
     {
         var stack = new UndoStack();
         var img1 = CreateBitmap(10);
@@ -176,7 +176,7 @@ public class UndoStackTests
     }
 
     [Fact]
-    public void GetUndoHistory_スタックが空なら空リストを返す()
+    internal void GetUndoHistory_スタックが空なら空リストを返す()
     {
         var stack = new UndoStack();
 

@@ -40,7 +40,7 @@ public class BottomAlignWrapPanelTests
 
     /// <summary>Measure が <see cref="EsUtil.SaveEvidence.App.Core.Layout.BottomAlignWrapLayout"/> の計算結果を子要素の計測から委譲することを確認する。</summary>
     [AvaloniaFact]
-    public void Measure_折り返しと行高さの計算が委譲される()
+    internal void Measure_折り返しと行高さの計算が委譲される()
     {
         // 4 アイテムを幅 120 で折り返す（1 行目 100 + 2 行目 80 = 180）
         var panel = Layout(120, CreateChild(60, 100), CreateChild(60, 50), CreateChild(60, 80), CreateChild(60, 40));
@@ -51,7 +51,7 @@ public class BottomAlignWrapPanelTests
 
     /// <summary>Arrange が <see cref="EsUtil.SaveEvidence.App.Core.Layout.BottomAlignWrapLayout"/> の計算結果を子要素へ委譲することを確認する。</summary>
     [AvaloniaFact]
-    public void Arrange_下端揃えの配置が委譲される()
+    internal void Arrange_下端揃えの配置が委譲される()
     {
         var tall = CreateChild(60, 100);
         var short1 = CreateChild(60, 50);

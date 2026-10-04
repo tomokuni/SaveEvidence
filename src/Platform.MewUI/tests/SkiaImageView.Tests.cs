@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.Platform.MewUI.Tests;
 public class SkiaImageViewTests
 {
     [Fact]
-    public void Source_既定はnull()
+    internal void Source_既定はnull()
     {
         var view = new SkiaImageView();
 
@@ -20,7 +20,7 @@ public class SkiaImageViewTests
     }
 
     [Fact]
-    public void Source_設定した値をそのまま返す()
+    internal void Source_設定した値をそのまま返す()
     {
         var view = new SkiaImageView();
         using var bitmap = TestHelper.CreateBitmap(2, 2, DrawingColor.Red);
@@ -31,7 +31,7 @@ public class SkiaImageViewTests
     }
 
     [Fact]
-    public void Source_派生クラスでも基底へ登録したプロパティを共有する()
+    internal void Source_派生クラスでも基底へ登録したプロパティを共有する()
     {
         // MewProperty を基底で登録するため、派生クラスのインスタンスでも同じプロパティとして扱えることを固定する
         var view = new UniformView();
@@ -44,7 +44,7 @@ public class SkiaImageViewTests
     }
 
     [Fact]
-    public void Source_nullへ戻せる()
+    internal void Source_nullへ戻せる()
     {
         var view = new SkiaImageView();
         using var bitmap = TestHelper.CreateBitmap(2, 2, DrawingColor.Red);

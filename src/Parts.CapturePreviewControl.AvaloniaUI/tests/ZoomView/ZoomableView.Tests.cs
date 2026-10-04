@@ -81,7 +81,7 @@ public class ZoomableViewTests
 
     /// <summary>Fit 表示では画像が Uniform・RenderTransform なしで配置されることを検証する。</summary>
     [AvaloniaFact]
-    public void Fit表示では画像をUniformで配置する()
+    internal void Fit表示では画像をUniformで配置する()
     {
         var view = CreateView(CreateBitmap(400, 200));
 
@@ -92,7 +92,7 @@ public class ZoomableViewTests
 
     /// <summary>固定倍率では元サイズのまま RenderTransform が設定されることを検証する。</summary>
     [AvaloniaFact]
-    public void 固定倍率ではRenderTransformを設定する()
+    internal void 固定倍率ではRenderTransformを設定する()
     {
         var view = CreateView(CreateBitmap(400, 200));
         view.Session.SetZoom(100);
@@ -104,7 +104,7 @@ public class ZoomableViewTests
 
     /// <summary>固定倍率の Transform がセッションのオフセットとスケールを反映することを検証する。</summary>
     [AvaloniaFact]
-    public void 固定倍率のTransformがオフセットとスケールを反映する()
+    internal void 固定倍率のTransformがオフセットとスケールを反映する()
     {
         var view = CreateView(CreateBitmap(400, 400));
         view.Session.SetZoom(200);
@@ -126,7 +126,7 @@ public class ZoomableViewTests
 
     /// <summary>Fit 表示ではスクロールバーが非表示であることを検証する。</summary>
     [AvaloniaFact]
-    public void Fit表示ではスクロールバーを非表示にする()
+    internal void Fit表示ではスクロールバーを非表示にする()
     {
         var view = CreateView(CreateBitmap(400, 400));
 
@@ -136,7 +136,7 @@ public class ZoomableViewTests
 
     /// <summary>拡大時にスクロールバーが表示され、コアの同期値が反映されることを検証する。</summary>
     [AvaloniaFact]
-    public void 拡大時はスクロールバーを表示して同期する()
+    internal void 拡大時はスクロールバーを表示して同期する()
     {
         var view = CreateView(CreateBitmap(400, 400));
         view.Session.SetZoom(200);
@@ -150,7 +150,7 @@ public class ZoomableViewTests
 
     /// <summary>パンでスクロールバーの値が同期されることを検証する。</summary>
     [AvaloniaFact]
-    public void パンでスクロールバーの値が同期される()
+    internal void パンでスクロールバーの値が同期される()
     {
         var view = CreateView(CreateBitmap(400, 400));
         view.Session.SetZoom(100);
@@ -167,7 +167,7 @@ public class ZoomableViewTests
     /// <summary>ポインター押下と移動でパンすることを検証する。</summary>
     /// <remarks>入力イベントを実際に発火し、UI 層の変換とセッションへの伝達を検証する。</remarks>
     [AvaloniaFact]
-    public void ポインター押下と移動でパンする()
+    internal void ポインター押下と移動でパンする()
     {
         var view = CreateView(CreateBitmap(400, 400));
         var window = Show(view);
@@ -191,7 +191,7 @@ public class ZoomableViewTests
 
     /// <summary>Ctrl+ホイールでズームすることを検証する。</summary>
     [AvaloniaFact]
-    public void Ctrlホイールでズームする()
+    internal void Ctrlホイールでズームする()
     {
         var view = CreateView(CreateBitmap(1000, 1000));
         var window = Show(view);
@@ -209,7 +209,7 @@ public class ZoomableViewTests
 
     /// <summary>通常ホイールでパンすることを検証する。</summary>
     [AvaloniaFact]
-    public void 通常ホイールでパンする()
+    internal void 通常ホイールでパンする()
     {
         var view = CreateView(CreateBitmap(400, 400));
         var window = Show(view);

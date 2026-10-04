@@ -2,7 +2,6 @@ using System.Text.Json;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Services;
 using EsUtil.SaveEvidence.App.Core.Enum;
 using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.App.Core.Services;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Tests;
@@ -30,7 +29,7 @@ public class SettingsJsonContextTests
     /// 生成されたメタデータはコンパイル時に埋め込まれるため、AOT 実行時も同じ件数になる。
     /// </remarks>
     [Fact]
-    public void メタデータ_設定のプロパティが生成されている()
+    internal void メタデータ_設定のプロパティが生成されている()
     {
         var typeInfo = SettingsJsonContext.Default.GetTypeInfo(typeof(Settings));
 
@@ -48,7 +47,7 @@ public class SettingsJsonContextTests
 
     /// <summary>コンテキスト経由の往復で値が保持されることを検証する。</summary>
     [Fact]
-    public void 直列化_往復で値が保持される()
+    internal void 直列化_往復で値が保持される()
     {
         var settings = new Settings
         {
