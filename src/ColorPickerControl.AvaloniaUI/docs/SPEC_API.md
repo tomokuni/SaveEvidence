@@ -33,7 +33,7 @@
     - [6.2 ドロップダウン選択](#62-ドロップダウン選択)
     - [6.3 無効な入力の扱い](#63-無効な入力の扱い)
     - [6.4 カラーピッカー](#64-カラーピッカー)
-    - [6.5 ColorView テーマ（内包）](#65-colorview-テーマ内包)
+    - [6.5 ColorView テーマ（ホストが取り込む）](#65-colorview-テーマホストが取り込む)
   - [7. 制限事項](#7-制限事項)
 
 ---
@@ -265,15 +265,17 @@ ComboBox の `Text` プロパティとのバインドに使用する（`Selected
 - 3 つ目のタブ（Hex 入力）の表示形式は `#AARRGGBB`（アルファ先頭）で、Avalonia 標準の `Color.Parse` と整合します。
 - 不透明度は ColorView のアルファスライダーで設定でき、保存値のアルファ成分として統合されます（画面表示では `+{不透明度%}`）。
 
-### 6.5 ColorView テーマ（内包）
+### 6.5 ColorView テーマ（ホストが取り込む）
 
-`ColorView`（カラーピッカー）のテーマは**コントロールに内包**されています。 ホスト側で
-`<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />` を
-指定しなくても、Flyout 内の ColorView が正しく描画されます。
+**ホストは `ColorView`（カラーピッカー）のテーマを `Application.Styles` へ `StyleInclude` で取り込んでください**。
 
-- ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます。
-- 未指定の場合のみ、内包テーマ（Fluent.xaml）がデフォルトとして適用されます。
-- **Native AOT のホストは `StyleInclude` をアプリの XAML に書いてください**（内包テーマは実行時の XAML 解決に依存するため AOT では適用できません。 ロードに失敗した場合はテーマ適用を行わず、ホストの取り込みに任せます）。
+```xml
+<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+```
+
+- Flyout はオーバーレイ レイヤーへ表示されるため、コントロールのローカル Styles では ColorView へ伝播しません。
+- 取り込みを忘れるとカラーピッカーがテーマ未適用（既定の見た目）で表示されます（例外にはなりません）。
+- 本コントロールは実行時の XAML 解決を行いません（トリミング / Native AOT では失敗するため、自動適用はしません）。
 
 ## 7. 制限事項
 

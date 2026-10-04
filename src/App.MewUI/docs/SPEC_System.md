@@ -337,7 +337,7 @@ sequenceDiagram
     P->>MW: Direct2DBackend.Register()
     P->>MW: Win32Platform.Register()
     P->>MW: SkiaDirect2DInterop.Register()
-    P->>C: new SettingsService()
+    P->>C: new SettingsService(SettingsJsonContext.Default)
     P->>C: new MainViewModel(settings, MewUIImageWriter)
     P->>C: SetPreviewImage(placeholder)
     P->>W: Create(viewModel, settings)

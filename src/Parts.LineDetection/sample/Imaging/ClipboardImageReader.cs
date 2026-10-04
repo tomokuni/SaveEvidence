@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.Imaging;
 /// スクリーンショットツール（Snipping Tool / PrintScreen 等）は主に CF_DIB を提供するため、<br/>
 /// PNG 文字列フォーマットが無い場合のフォールバックとして使用する（Windows 専用）。
 /// </remarks>
-internal static class ClipboardImageReader
+internal static partial class ClipboardImageReader
 {
     /// <summary>CF_DIB フォーマット識別子。</summary>
     private const uint CF_DIB = 8;
@@ -213,21 +213,21 @@ internal static class ClipboardImageReader
     /// <summary>BI_BITFIELDS 圧縮（16bpp のカラーマスク）。</summary>
     private const int BI_BITFIELDS = 3;
 
-    [DllImport("user32.dll")]
+    [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool OpenClipboard(IntPtr hWndNewOwner);
+    private static partial bool OpenClipboard(IntPtr hWndNewOwner);
 
-    [DllImport("user32.dll")]
+    [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool CloseClipboard();
+    private static partial bool CloseClipboard();
 
-    [DllImport("user32.dll")]
-    private static extern IntPtr GetClipboardData(uint uFormat);
+    [LibraryImport("user32.dll")]
+    private static partial IntPtr GetClipboardData(uint uFormat);
 
-    [DllImport("kernel32.dll")]
-    private static extern IntPtr GlobalLock(IntPtr hMem);
+    [LibraryImport("kernel32.dll")]
+    private static partial IntPtr GlobalLock(IntPtr hMem);
 
-    [DllImport("kernel32.dll")]
+    [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GlobalUnlock(IntPtr hMem);
+    private static partial bool GlobalUnlock(IntPtr hMem);
 }

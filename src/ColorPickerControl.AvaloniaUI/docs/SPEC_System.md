@@ -23,8 +23,7 @@
     - [6.7 ColorDisplayConverter](#67-colordisplayconverter)
     - [6.8 ColorValidator](#68-colorvalidator)
     - [6.9 TextBoxSelectionHelper](#69-textboxselectionhelper)
-    - [6.10 ColorViewThemeManager](#610-colorviewthememanager)
-    - [6.11 ColorPickerFlyoutFactory](#611-colorpickerflyoutfactory)
+    - [6.10 ColorPickerFlyoutFactory](#610-colorpickerflyoutfactory)
   - [7. 依存ルール](#7-依存ルール)
   - [8. バリデーション状態遷移](#8-バリデーション状態遷移)
   - [9. ライフサイクル](#9-ライフサイクル)
@@ -61,7 +60,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 ```text
 公開コントロール（ColorPickerControl: ColorPicker.axaml.cs）
-  → 生成（ColorPickerFlyoutFactory）→ テーマ管理（ColorViewThemeManager）
+  → 生成（ColorPickerFlyoutFactory）
   → 検証（ColorValidator）/ 選択解除（TextBoxSelectionHelper）
   → 対象（ColorEntry / ColorSortMode / ColorString）
   → コンバーター（StringToBrushConverter / ColorDisplayConverter）
@@ -73,7 +72,6 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 - 公開 API（StyledProperty・公開プロパティ）は `ColorPicker.axaml.cs` に集約する。
 - 関心事ごとに専用クラスへ委譲し、単一責任（SRP）と疎結合を維持する:
   - Flyout 構築: `ColorPickerFlyoutFactory`（Simple Factory）
-  - テーマ適用: `ColorViewThemeManager`
   - 色の妥当性検証: `ColorValidator`
   - テキスト選択の解除: `TextBoxSelectionHelper`
 - 状態管理はすべて StyledProperty（Avalonia プロパティシステム）に集約する。
@@ -106,7 +104,7 @@ flowchart TB
         Ctl["ColorPickerControl<br/>public sealed partial : UserControl<br/>（公開 API ＋ イベント処理 ＋ バリデーション状態）"]
         Xaml["ColorPicker.axaml<br/>ComboBox + スウォッチ + Button"]
         Fac["ColorPickerFlyoutFactory<br/>Simple Factory（色ドロップダウン構築）"]
-        Impl["内部実装<br/>ColorValidator / ColorEntry / ColorString<br/>ColorViewThemeManager / TextBoxSelectionHelper<br/>StringToBrushConverter / ColorDisplayConverter / ColorSortMode"]
+        Impl["内部実装<br/>ColorValidator / ColorEntry / ColorString<br/>TextBoxSelectionHelper<br/>StringToBrushConverter / ColorDisplayConverter / ColorSortMode"]
     end
     AP -->|"SelectedColor (TwoWay)"| Ctl
     AP -->|"ColorSortMode / HighlightBorderOnError"| Ctl
@@ -134,7 +132,7 @@ flowchart TB
 - **公開API**: `SelectedColor` / `ColorSortMode` / `HighlightBorderOnError` / `HasValidationError` / `ValidationErrorMessage` / `ComboBoxMinWidth` / `ComboBoxMaxWidth` / `ComboBoxWidth` / `ComboBoxPadding` / `ComboBoxMargin` / `Log`（StyledProperty も同ファイルに定義）
 - **構成**: 公開 API（StyledProperty・公開プロパティ）とイベント処理・バリデーション状態を保持し、関心事ごとに専用クラスへ委譲（単一責任・疎結合）
 - **内部メソッド（internal）**: `UpdateValidationStatus`（テストからの検証用に公開）
-- **依存**: ColorPickerFlyoutFactory / ColorValidator / TextBoxSelectionHelper / ColorViewThemeManager / ColorEntry / ColorSortMode / ColorString
+- **依存**: ColorPickerFlyoutFactory / ColorValidator / TextBoxSelectionHelper / ColorEntry / ColorSortMode / ColorString
 
 ### 6.2 ColorPicker.axaml
 
@@ -204,26 +202,19 @@ flowchart TB
 - **特徴**: ドロップダウン選択後のテキスト全選択解除を担当。 `ColorPickerControl` から独立しており、ComboBox 等の他のコントロールでも流用可能
 - **依存**: Avalonia ビジュアルツリー
 
-### 6.10 ColorViewThemeManager
-
-- **分類**: 内部静的ユーティリティ（`internal static class`）
-- **責務**: ColorView（カラーピッカー）テーマのアプリケーションへの自動適用（`EnsureApplied` / `EnsureAppliedCore` / `IsColorViewTheme`）
-- **特徴**: ホストの明示指定（StyleInclude）を優先し、未指定時のみ内包テーマを一度だけ適用する。 **Native AOT では実行時の XAML 解決ができないためロードに失敗するが、例外にはせずホストの XAML 取り込みに任せる**
-- **依存**: Avalonia.Application / AvaloniaXamlLoader
-
-### 6.11 ColorPickerFlyoutFactory
+### 6.10 ColorPickerFlyoutFactory
 
 - **分類**: 内部静的ファクトリ（`internal static class`。 Simple Factory パターン）
 - **責務**: カラーピッカー（ColorView）を格納した Flyout の構築（`Create`）と OK / キャンセルイベントの配線
-- **特徴**: 初期色は `SelectedColor` を `ColorString.TryParse` で解析（失敗時は白）。 OK は `ColorString.ToArgbHex` で `#AARRGGBB` へ変換し、コールバック（`Action<string>`）経由で `SelectedColor` へ反映。 OK / キャンセルボタンの共通外観は生成ヘルパー（`CreateActionButton`）に集約し、重複を排除。 テーマ適用は `ColorViewThemeManager` に委譲
-- **依存**: ColorViewThemeManager / ColorString / ColorPickerLog / Avalonia.Controls.ColorPicker（ColorView）
+- **特徴**: 初期色は `SelectedColor` を `ColorString.TryParse` で解析（失敗時は白）。 OK は `ColorString.ToArgbHex` で `#AARRGGBB` へ変換し、コールバック（`Action<string>`）経由で `SelectedColor` へ反映。 OK / キャンセルボタンの共通外観は生成ヘルパー（`CreateActionButton`）に集約し、重複を排除
+- **依存**: ColorString / ColorPickerLog / Avalonia.Controls.ColorPicker（ColorView）
 
 ## 7. 依存ルール
 
 - 依存方向は**一方向の階層構造**（XAML → コントロール → 生成/検証 → 対象/コンバーター）。
 - 公開 API（StyledProperty・公開プロパティ）は `ColorPicker.axaml.cs` に集約する。
 - 関心事ごとの専用クラス（Factory / ThemeManager / Validator / Helper）は internal とし、コントロールからのみ参照する（外部へは公開しない）。
-- 依存は 1 方向のみ（コントロール → Factory/Validator/Helper → ColorString / ColorViewThemeManager）。 双方向依存・循環参照は持たない。
+- 依存は 1 方向のみ（コントロール → Factory/Validator/Helper → ColorString）。 双方向依存・循環参照は持たない。
 - 状態管理はすべて StyledProperty（Avalonia プロパティシステム）に集約し、private フィールドは補助（`_lastValidColor`）のみ。
 - 対象ロジック（`ColorString` / `ColorEntry`）は UI 非依存（Avalonia.Media のみ）。
 - 上位APへは双方向バインド（StyledProperty）と PropertyChanged のみで連携。

@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorPickerFlyoutFactory"/> の単体テスト（OK / キャンセル動作・初期色）。</summary>
 /// <remarks>
-/// ColorView の生成とテーマ適用（<see cref="ColorViewThemeManager"/>）を含むため、<br/>
+/// ColorView の生成を含むため、<br/>
 /// Avalonia ヘッドレス実行（<c>[AvaloniaFact]</c>）で直列検証する。<br/>
 /// OK 確定時の色反映はファクトリへ渡したコールバック（applyColor）の呼び出しで検証する。
 /// </remarks>

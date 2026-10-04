@@ -40,7 +40,6 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 /// 依存関係プロパティ（StyledProperty）・公開プロパティ・入力イベント処理・バリデーション状態を保持する。<br/>
 /// 関心事ごとに以下のクラスへ委譲し、単一責任と一方向依存を維持する:<br/>
 /// - カラーピッカー Flyout 構築: <see cref="ColorPickerFlyoutFactory"/>（Simple Factory パターン）<br/>
-/// - ColorView テーマ適用: <see cref="ColorViewThemeManager"/><br/>
 /// - 色文字列の妥当性検証: <see cref="ColorValidator"/><br/>
 /// - ComboBox テキスト選択の解除: <see cref="TextBoxSelectionHelper"/><br/>
 /// - 色文字列の解析・整形・正規化: <see cref="ColorString"/> / <see cref="ColorEntry"/> / 各コンバーター<br/>

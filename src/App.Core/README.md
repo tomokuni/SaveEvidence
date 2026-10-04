@@ -39,14 +39,13 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 ### トリミング / Native AOT 対応
 
 反射ベースのシリアル化はトリミングで `Settings` の公開プロパティが削除され、設定が空（`{}`）になります。
-Native AOT で配布する場合は `<c>SettingsService(JsonSerializerContext?)</c>` へソース生成コンテキストを注入してください。
+`SettingsService` は **ソース生成コンテキストを必須**とし、反射経路を持ちません（`new SettingsService(SettingsJsonContext.Default)` のように注入します）。
 
 - コンテキストは **`Settings` を参照する側のアセンブリ**に置く必要があります（同一コンパイル内では MVVM の
   ソース生成結果を JSON のソース生成が見られないため）。
 - 書式（インデント・enum の名前保存・矩形の 4 項目）はソース生成の有無にかかわらず共通で、設定ファイルの
   互換性は保たれます（`SettingsServiceJsonTests` が両経路の一致を検証します）。
-- 反射ベースのフォールバックは意図的に残しており、トリミング / AOT の警告は
-  `UnconditionalSuppressMessage` で理由付きで抑制しています。
+- 反射リゾルバーを使った等価性の検証（`SettingsServiceJsonTests`）は**テスト側**でリゾルバーを用意します（本体にテスト専用の経路を置かない。 [`.github/テスト規約.md`](../../.github/テスト規約.md) §5）。
 
 ## 依存方向
 

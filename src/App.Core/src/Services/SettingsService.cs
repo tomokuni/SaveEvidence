@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -14,10 +13,9 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// スレッドセーフな読み書きを保証するため <c>Lock</c> による排他制御を行う。<br/>
 /// <see cref="Save"/> を明示的に呼び出すまでファイルへの書き込みは行われない。<br/>
 /// <br/>
-/// <b>トリミング / Native AOT 対応</b>: 既定は反射ベースのシリアル化で、トリミング・AOT では<br/>
-/// プロパティが削除されて設定が空になる（実測）。 JSON ソース生成コンテキストを注入すると、<br/>
-/// 生成されたメタデータで読み書きするため AOT でも動作する。<br/>
-/// コンテキストは <c>Settings</c> を参照する側のアセンブリ（例: アプリ本体）で定義する必要がある<br/>
+/// <b>トリミング / Native AOT 対応</b>: シリアル化は<b>必ず JSON ソース生成コンテキストを使う</b>（反射ベースでは
+/// トリミング・AOT でプロパティが削除されて設定が空になる）。 コンテキストは <see cref="Settings"/> を
+/// 参照する側のアセンブリ（例: アプリ本体）で定義する必要がある<br/>
 /// （同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
 /// </remarks>
 public sealed class SettingsService : ISettingsService
@@ -26,21 +24,13 @@ public sealed class SettingsService : ISettingsService
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "SaveEvidence", "settings.json");
 
-    /// <summary>JSON の書式と変換器（ソース生成を使わない場合の既定オプション）。</summary>
-    /// <remarks>
-    /// enum は数値ではなく文字列（例: <c>"ThemeMode": "Dark"</c>）で保存する（設定ファイルの可読性向上）。<br/>
-    /// 変換器は AOT 対応のジェネリック版を使う（非ジェネリック版は動的コード生成を要求するため）。
-    /// </remarks>
-    private static readonly JsonSerializerOptions s_reflectionOptions = CreateJsonOptions(context: null);
-
     private readonly Lock _lock = new();
 
-    /// <summary>使用する JSON オプション（ソース生成の有無で異なる）。</summary>
+    /// <summary>使用する JSON オプション（書式・変換器はソース生成の有無によらず共通）。</summary>
     private readonly JsonSerializerOptions _jsonOptions;
 
     /// <summary>ソース生成された <see cref="Settings"/> の型情報。</summary>
     /// <remarks>
-    /// コンテキストが注入された場合はソース生成のメタデータ、注入されない場合は反射ベースの型情報となる。<br/>
     /// 読み書きは常に本型情報を経由するため、書式・変換器の適用経路は 1 つになる。
     /// </remarks>
     private readonly JsonTypeInfo<Settings> _settingsTypeInfo;
@@ -48,24 +38,21 @@ public sealed class SettingsService : ISettingsService
     private readonly Settings _current;
     private string? _lastSavedJson;
 
-    /// <summary>反射ベースのシリアル化で設定管理を初期化する。</summary>
-    public SettingsService()
-        : this(context: null)
-    {
-    }
-
     /// <summary>JSON ソース生成コンテキストを指定して設定管理を初期化する。</summary>
-    /// <param name="context">ソース生成コンテキスト（<c>Settings</c> を含むもの）。 null の場合は反射ベース。</param>
+    /// <param name="context">ソース生成コンテキスト（<c>Settings</c> を含むもの）。 null 不可。</param>
     /// <remarks>
-    /// トリミング / Native AOT で配布する場合は、必ずコンテキストを渡すこと（反射では設定が空になる）。<br/>
+    /// トリミング / Native AOT で配布する場合は必須である（反射では設定が空になる）。<br/>
     /// 型情報はコンテキストから直接取り出さず、本クラスのオプション（書式・変換器）を経由して取得する。<br/>
     /// コンテキストが持つ型情報はコンテキスト自身のオプションで構築されるため、<br/>
     /// 直接取り出すと書式（インデント）と独自の変換器（色・矩形・enum の名前保存）が適用されない。<br/>
     /// オプションは型情報の取得前に読み取り専用化する（取得後の変更を防ぐ）。
     /// </remarks>
-    public SettingsService(JsonSerializerContext? context)
+    /// <exception cref="ArgumentNullException"><paramref name="context"/> が null の場合。</exception>
+    public SettingsService(JsonSerializerContext context)
     {
-        _jsonOptions = context is null ? s_reflectionOptions : CreateJsonOptions(context);
+        ArgumentNullException.ThrowIfNull(context);
+
+        _jsonOptions = CreateJsonOptions(context);
         _jsonOptions.MakeReadOnly();
         _settingsTypeInfo = (JsonTypeInfo<Settings>)_jsonOptions.GetTypeInfo(typeof(Settings));
         _current = LoadInternal();
@@ -112,28 +99,22 @@ public sealed class SettingsService : ISettingsService
     }
 
     /// <summary>JSON の書式と変換器を設定したオプションを生成する。</summary>
-    /// <param name="context">ソース生成コンテキスト。 null の場合は反射ベース。</param>
+    /// <param name="resolver">型情報リゾルバー（ソース生成コンテキスト、またはテスト用の反射リゾルバー）。</param>
     /// <returns>生成したオプション。</returns>
     /// <remarks>
-    /// 書式（インデント・コメント許容・末尾カンマ許容）と変換器は、ソース生成の有無にかかわらず共通とする<br/>
-    /// （同一の設定ファイルを両方の実装で読み書きできる）。<br/>
-    /// テストがソース生成経路の書式を検証できるよう、内部 API として公開する。<br/>
-    /// <b>警告の抑制</b>: コンテキスト未指定時の反射リゾルバーは意図的なフォールバックである<br/>
-    /// （トリミング / AOT で配布する場合は必ずコンテキストを注入する）。
+    /// enum は数値ではなく文字列（例: <c>"ThemeMode": "Dark"</c>）で保存する（設定ファイルの可読性向上）。<br/>
+    /// 変換器は AOT 対応のジェネリック版を使う（非ジェネリック版は動的コード生成を要求するため）。<br/>
+    /// 書式と変換器はソース生成の有無にかかわらず共通とする<br/>
+    /// （同一の設定ファイルをソース生成経路と反射経路のどちらでも読み書きできる。 テストが両経路の同一性を検証する）。
     /// </remarks>
-    [UnconditionalSuppressMessage(
-        "Trimming", "IL2026",
-        Justification = "コンテキスト未指定時の反射ベースのフォールバック。AOT 配布時は必ずコンテキストを注入する。")]
-    [UnconditionalSuppressMessage(
-        "AOT", "IL3050",
-        Justification = "コンテキスト未指定時の反射ベースのフォールバック。AOT 配布時は必ずコンテキストを注入する。")]
-    internal static JsonSerializerOptions CreateJsonOptions(JsonSerializerContext? context)
+    internal static JsonSerializerOptions CreateJsonOptions(IJsonTypeInfoResolver resolver)
     {
         var options = new JsonSerializerOptions
         {
             WriteIndented = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
+            TypeInfoResolver = resolver,
             // enum は名前で保存する。 AOT 対応のためジェネリック版を使う（型ごとに指定する）。
             Converters =
             {
@@ -144,16 +125,6 @@ public sealed class SettingsService : ISettingsService
                 new JsonStringEnumConverter<ThemeMode>(),
             },
         };
-
-        if (context is not null)
-        {
-            options.TypeInfoResolver = context;
-        }
-        else
-        {
-            // 反射ベースでも型情報リゾルバーを明示する（未指定のままだと読み取り専用化できない）
-            options.TypeInfoResolver = new DefaultJsonTypeInfoResolver();
-        }
 
         return options;
     }

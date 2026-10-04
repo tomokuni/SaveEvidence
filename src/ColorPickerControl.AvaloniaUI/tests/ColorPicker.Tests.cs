@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
 /// <summary><see cref="ColorPickerControl"/> の単体テスト（公開プロパティ・バリデーション・ソート・イベント）。</summary>
 /// <remarks>
-/// Flyout 構築（<see cref="ColorPickerFlyoutFactory"/>）とテーマ管理（<see cref="ColorViewThemeManager"/>）は
+/// Flyout 構築（<see cref="ColorPickerFlyoutFactory"/>）は
 /// 各クラスのテストファイルで検証する。<br/>
 /// 純粋演算テストは <c>[Fact]</c> で並列実行し、ヘッドレス必須のテストのみ <c>[AvaloniaFact]</c> で直列実行する。
 /// </remarks>

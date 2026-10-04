@@ -20,8 +20,12 @@ namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 ///   （失敗時は白）。 Hex 入力タブは <c>#AARRGGBB</c>（アルファ先頭）形式で表示する。<br/>
 /// - OK ボタンは <see cref="ColorString.ToArgbHex(Color)"/> で保存値へ変換し、
 ///   <see cref="Action{T}"/>（applyColor）経由で <see cref="ColorPickerControl.SelectedColor"/> へ反映する。<br/>
-/// - テーマ適用は <see cref="ColorViewThemeManager"/> に委譲する（依存は一方向）。<br/>
-/// - ログ出力は <c>ColorPickerLog</c> の LoggerMessage 定義を使用する。
+/// - ログ出力は <c>ColorPickerLog</c> の LoggerMessage 定義を使用する。<br/>
+/// <br/>
+/// <b>ColorView テーマはホストが取り込む</b>: <c>ColorView</c> は独自のテーマ（Avalonia.Controls.ColorPicker の
+/// <c>Fluent.xaml</c>）を必要とする。 Flyout はオーバーレイ レイヤーへ表示されるためコントロールのローカル Styles では
+/// 伝播せず、アプリの <c>Application.Styles</c> へ <c>StyleInclude</c> で取り込む必要がある
+/// （実行時の XAML 解決はトリミング / Native AOT で失敗するため、本クラスは自動適用しない）。
 /// </remarks>
 internal static class ColorPickerFlyoutFactory
 {
@@ -32,16 +36,12 @@ internal static class ColorPickerFlyoutFactory
     /// <returns>OK / キャンセル ボタンを含む Flyout。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
-    /// 1. <see cref="ColorViewThemeManager.EnsureApplied"/> で ColorView テーマを確保する。<br/>
-    /// 2. 初期色を解析して ColorView を構築する（固定サイズは設定しない。 タブを収めるためテーマの自然なサイズに任せる）。<br/>
-    /// 3. OK / キャンセル ボタンを構築し、クリックイベントを配線する。<br/>
-    /// 4. Flyout を構築して返す（表示は呼び出し側が行う）。
+    /// 1. 初期色を解析して ColorView を構築する（固定サイズは設定しない。 タブを収めるためテーマの自然なサイズに任せる）。<br/>
+    /// 2. OK / キャンセル ボタンを構築し、クリックイベントを配線する。<br/>
+    /// 3. Flyout を構築して返す（表示は呼び出し側が行う）。
     /// </remarks>
     internal static Flyout Create(string currentColor, ILogger log, Action<string> applyColor)
     {
-        // ColorView テーマを確保する（ホストが明示指定していればそれに従い、未指定なら内包テーマを適用）
-        ColorViewThemeManager.EnsureApplied();
-
         // 初期色をパース（色 + 不透明度の統合形式に対応。 失敗時は白）
         var initColor = Colors.White;
         if (!string.IsNullOrWhiteSpace(currentColor) && ColorString.TryParse(currentColor, out var parsed, out _))

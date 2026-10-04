@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Enums;
@@ -20,14 +21,15 @@ public partial class SettingsServiceJsonTests
 {
     /// <summary>ソース生成の有無にかかわらず同一の JSON を生成することを検証する。</summary>
     /// <remarks>
-    /// 両経路の出力が一致しなければ、AOT 版と通常版で設定ファイルの互換性が崩れる。
+    /// 両経路の出力が一致しなければ、AOT 版と通常版で設定ファイルの互換性が崩れる。<br/>
+    /// 反射リゾルバーはテスト側で用意する（本体はソース生成コンテキストを必須とし、反射ベースを持たない）。
     /// </remarks>
     [Fact]
     internal void 直列化_ソース生成と反射で同一のJSONになる()
     {
         var settings = CreateSettings();
 
-        var reflection = Serialize(settings, context: null);
+        var reflection = Serialize(settings, new DefaultJsonTypeInfoResolver());
         var generated = Serialize(settings, TestSettingsJsonContext.Default);
 
         Assert.Equal(reflection, generated);
@@ -103,11 +105,11 @@ public partial class SettingsServiceJsonTests
 
     /// <summary>指定された経路で設定を JSON へ直列化する。</summary>
     /// <param name="settings">対象の設定。</param>
-    /// <param name="context">ソース生成コンテキスト。 null の場合は反射ベース。</param>
+    /// <param name="resolver">型情報リゾルバー（ソース生成コンテキスト、または反射リゾルバー）。</param>
     /// <returns>生成した JSON。</returns>
-    private static string Serialize(Settings settings, JsonSerializerContext? context)
+    private static string Serialize(Settings settings, IJsonTypeInfoResolver resolver)
     {
-        var options = SettingsService.CreateJsonOptions(context);
+        var options = SettingsService.CreateJsonOptions(resolver);
         options.MakeReadOnly();
 
         var typeInfo = (System.Text.Json.Serialization.Metadata.JsonTypeInfo<Settings>)options.GetTypeInfo(typeof(Settings));

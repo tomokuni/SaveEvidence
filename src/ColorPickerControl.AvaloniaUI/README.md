@@ -14,7 +14,7 @@
     - [AXAML](#axaml)
     - [Code-behind](#code-behind)
   - [6. 入力動作](#6-入力動作)
-  - [7. ColorView テーマ（内包テーマ）](#7-colorview-テーマ内包テーマ)
+  - [7. ColorView テーマ（ホストが取り込む）](#7-colorview-テーマホストが取り込む)
   - [8. プラットフォーム](#8-プラットフォーム)
   - [9. サンプル](#9-サンプル)
   - [10. ドキュメント](#10-ドキュメント)
@@ -106,16 +106,20 @@ panel.Children.Add(colorPicker);
 - **無効な入力**: フォーカス喪失時に最終有効値へ自動復帰します。
 - **カラーピッカー**: 右端の「…」ボタンで Flyout 形式の ColorView を開きます。 OK で適用、キャンセルで破棄。
 
-## 7. ColorView テーマ（内包テーマ）
+## 7. ColorView テーマ（ホストが取り込む）
 
-カラーピッカー（`ColorView`）のテーマは**コントロールに内包**されています。 ホスト側で `<StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />` を指定しなくても、Flyout 内の ColorView が正しく描画されます。
+**ホストは ColorView テーマをアプリの XAML へ `StyleInclude` で取り込んでください**。
 
-- ホストが明示的に ColorView テーマ（`StyleInclude`）を指定している場合は、**その指定が優先**されます。
-- 未指定の場合のみ、内包テーマがデフォルトとして自動適用されます（重複追加なし）。
+```xml
+<Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+</Application.Styles>
+```
 
-> **Native AOT のホストは `StyleInclude` をアプリの XAML に書いてください。**
-> 内包テーマは実行時に XAML を解決するため、AOT ではロードできません（`No precompiled XAML found`）。
-> その場合、本コントロールはテーマ適用を諦めてホストの取り込みに任せます（例外にはなりません）。
+- Flyout はオーバーレイ レイヤーへ表示されるため、コントロールのローカル Styles では ColorView へ伝播しません。 アプリの `Application.Styles` へ取り込む必要があります。
+- 取り込みを忘れるとカラーピッカーがテーマ未適用（既定の見た目）で表示されます（例外にはなりません）。
+- **本コントロールは実行時の XAML 解決を行いません**（トリミング / Native AOT では失敗するため、自動適用はしません）。
 
 ## 8. プラットフォーム
 
@@ -149,7 +153,6 @@ dotnet run --project sample/ColorPickerControl.AvaloniaUI.Sample.csproj
 - `ColorPicker.axaml.cs`: 公開 API（StyledProperty・公開プロパティ）＋ イベント処理 ＋ バリデーション状態
 - `ColorPicker.axaml`: UI レイアウト（ComboBox + スウォッチ + Button）
 - `ColorPickerFlyoutFactory.cs`: カラーピッカー Flyout の構築（Simple Factory パターン）
-- `ColorViewThemeManager.cs`: ColorView テーマの自動適用（ホスト明示指定を優先）
 - `ColorValidator.cs`: 色文字列の妥当性検証
 - `TextBoxSelectionHelper.cs`: ビジュアルツリー内の TextBox 検索と選択解除
 - `ColorSortMode.cs`: 公開 enum（並び順）
@@ -169,7 +172,6 @@ ColorPickerControl.AvaloniaUI/
 │   ├── ColorPicker.axaml          # 公開コントロール（UIレイアウト）
 │   ├── ColorPicker.axaml.cs       # コードビハインド（公開 API・StyledProperty・イベント処理・バリデーション状態）
 │   ├── ColorPickerFlyoutFactory.cs# カラーピッカー Flyout 構築（Simple Factory）
-│   ├── ColorViewThemeManager.cs   # ColorView テーマの自動適用
 │   ├── ColorValidator.cs          # 色文字列の妥当性検証
 │   ├── TextBoxSelectionHelper.cs  # TextBox 検索とテキスト選択解除
 │   ├── ColorSortMode.cs           # 並び順 enum（公開）

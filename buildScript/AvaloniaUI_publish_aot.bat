@@ -24,7 +24,7 @@ rem
 rem  AOT で動作しない実装（実測）:
 rem    - 実行時の XAML 解決（AvaloniaXamlLoader.Load(Uri)）は
 rem      「No precompiled XAML found」で失敗します。XAML はコンパイル時に取り込む形
-rem      （x:Class 付きの Styles）にしてください（ColorViewThemeManager が該当しました）。
+rem      （x:Class 付きの Styles）にしてください。
 rem
 rem  設定 JSON（重要）:
 rem    Native AOT ではリフレクションベースの System.Text.Json が動作しません
