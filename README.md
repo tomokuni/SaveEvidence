@@ -267,14 +267,16 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 ```powershell
  git clone https://github.com/tomokuni/SaveEvidence.git
  cd SaveEvidence
- dotnet publish src/app.AvaloniaUI/src/app.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishAot=true -o Publish
+ dotnet publish src/App.AvaloniaUI/src/App.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishAot=true -p:SelfContained=true -o publish/avaloniaui-win-x64-aot
 ```
 
-`Publish/SaveEvidence.exe` を実行してください（隣のネイティブ DLL も必要です）。
+`publish/avaloniaui-win-x64-aot` の `App.AvaloniaUI.exe` を実行してください（隣のネイティブ DLL も必要です）。
+
+配布物（ネイティブ DLL の配置まで含む）は `buildScript/AvaloniaUI_publish_aot.bat` が作ります。 リポジトリ外の一時領域へ発行してから必要なファイルだけを出力先へ配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。
 
 ### 4.2 配布物の実行
 
-配布物は `SaveEvidence.exe` とネイティブ DLL のセットです（フォルダーごと配置してください）。
+配布物は `App.AvaloniaUI.exe` とネイティブ DLL のセットです（フォルダーごと配置してください）。
 
 ## 5. 操作方法
 
@@ -282,7 +284,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 ```text
 1. アプリケーション起動
-   └── SaveEvidence.exe を実行
+   └── App.AvaloniaUI.exe を実行
    └── 前回終了時のウィンドウ位置・サイズが復元
 
 2. 画面キャプチャ

@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// 各アイテムの下端領域（ファイル名・ラベル）の高さ位置を揃えて表示する。<br/>
 /// MewUI の <c>WrapPanel</c> は行内で上端揃えのため、高さが異なるアイテムでは下端のラベル位置が揃わない。<br/>
 /// <br/>
-/// <b>計算の委譲</b>: 行高さと下端揃えの計算は UI 非依存の <see cref="BottomAlignWrapLayout"/>（<c>app.Core</c>）が単一所有し、<br/>
+/// <b>計算の委譲</b>: 行高さと下端揃えの計算は UI 非依存の <see cref="BottomAlignWrapLayout"/>（<c>App.Core</c>）が単一所有し、<br/>
 /// 本パネルは寸法の変換と委譲のみを担う（Avalonia 版の同名パネルと計算を共有する）。<br/>
 /// <br/>
 /// <b>適用パターン</b>: カスタム Panel（子の配置を自前で決める）。<br/>

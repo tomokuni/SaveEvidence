@@ -84,7 +84,7 @@ internal static partial class IconLoader
     /// <param name="fileName">SVG ファイル名。</param>
     /// <returns>SVG の XML テキスト。</returns>
     /// <remarks>
-    /// アセンブリ名は本クラスが属するアセンブリ（<c>app.AvaloniaUI.csproj</c> の <c>AssemblyName</c> = SaveEvidence）から<br/>
+    /// アセンブリ名は本クラスが属するアセンブリ（<c>App.AvaloniaUI.csproj</c>）の実際の名前から<br/>
     /// 動的に解決する（<see cref="Assembly.GetName()"/>）。 アセンブリ名変更時も追従する。
     /// </remarks>
     private static string ReadSvg(string fileName)

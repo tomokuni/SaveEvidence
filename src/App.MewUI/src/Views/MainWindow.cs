@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <b>構成</b>: 左のナビパネル（アイコン + ページ名）と右のページ内容。<br/>
 /// Avalonia 版と同じ見た目にするため、<c>NavigationView</c> は使わず<b>自前の合成</b>で組む<br/>
 /// （ナビパネルの余白・区切り線・アイコンの有無を Avalonia 版と同じに制御するため）。<br/>
-/// <b>VM 連携</b>: <c>app.Core</c> の <see cref="MainViewModel"/>（<c>INotifyPropertyChanged</c>）を<br/>
+/// <b>VM 連携</b>: <c>App.Core</c> の <see cref="MainViewModel"/>（<c>INotifyPropertyChanged</c>）を<br/>
 /// そのままバインドする（ラッパー不要）。<br/>
 /// <b>タイトルバー</b>: 非クライアント領域をクライアント領域へ拡張し（<c>ExtendClientAreaTitleBarHeight</c>）、<br/>
 /// ナビパネル上部をドラッグ領域として使う（Avalonia 版の <c>ExtendClientAreaToDecorationsHint</c> と同じ）。<br/>

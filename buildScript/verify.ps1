@@ -187,9 +187,15 @@ if (-not $SkipPackage) {
     $pkgDetails | ForEach-Object { $_ }
 }
 
-# 以降のドキュメント検査で使う文書一覧
-$docs = @(Get-ChildItem -Path (Join-Path $repoRoot 'src'), (Join-Path $repoRoot '.github') -Recurse -File -Filter '*.md' |
-        Where-Object { $_.FullName -notmatch '\\(obj|bin|archive)\\' })
+# 以降のドキュメント検査で使う文書一覧（リポジトリ直下の文書も対象にする）
+$docs = @(
+    Get-ChildItem -Path $repoRoot -File -Filter '*.md'
+    Get-ChildItem -Path (Join-Path $repoRoot 'src'), (Join-Path $repoRoot '.github') -Recurse -File -Filter '*.md'
+) | Where-Object { $_.FullName -notmatch '\\(obj|bin|archive)\\' }
+
+# パスの照合（8a）はビルドスクリプトのコメントも対象にする（実測: 削除済みの検証スクリプトを
+# 指す参照が buildScript/*.bat のコメントに残っていた）
+$scriptDocs = @(Get-ChildItem -Path (Join-Path $repoRoot 'buildScript') -Recurse -File -Include '*.bat', '*.ps1')
 
 # ============================================================
 # 5. ドキュメント（markdownlint）
@@ -268,10 +274,10 @@ $projectNames = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory | S
 # プロジェクト内のフォルダ（部分的な構成図のルートとして許可する）
 $intraFolders = @('src', 'tests', 'sample', 'docs')
 
-# 7a) 文書の裸の相対パス（プロジェクト名から始まっていないもの）
+# 8a) 文書の裸の相対パス（プロジェクト名から始まっていないもの）
 $rxQuotedPath = [regex]'(?<![\w./\\-])((?:[A-Za-z0-9_.\-]+[\\/])+[A-Za-z0-9_.\-]+\.(?:csproj|axaml|props|slnx|json|yaml|yml|ps1|bat|cs))(?![\w])'
 $loosePaths = [System.Collections.Generic.List[string]]::new()
-foreach ($f in $docs) {
+foreach ($f in ($docs + $scriptDocs)) {
     $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
     $docDir = ([IO.Path]::GetDirectoryName($rel) + '/').Replace('\', '/')
     $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
@@ -295,7 +301,7 @@ foreach ($f in $docs) {
     }
 }
 
-# 7b) プロジェクト構成図のルートとファイル名
+# 8b) プロジェクト構成図のルートとファイル名
 $treeIssues = [System.Collections.Generic.List[string]]::new()
 $rxTreeFile = [regex]'(?<![\w./\\-])([A-Za-z0-9_.\-]+\.(?:csproj|axaml|cs))(?![\w])'
 foreach ($f in $docs) {
@@ -329,25 +335,30 @@ foreach ($f in $docs) {
     }
 }
 
-# 7c) 陳腐化した識別子（改名・削除の残骸。 対象を追加して育てる）
+# 8c) 陳腐化した識別子（改名・削除の残骸。 対象を追加して育てる）
+#     全追跡ファイルを対象にする（文書だけでなくビルドスクリプト・設定ファイルのコメントも含める）
 $stalePatterns = @(
     'App\.LineDetection',
     'EsUtil\.SaveEvidence\.LineDetection',
     'verify-ui',
     'MarqueeCore\.ResolveContent',
-    'MarqueePresenter\.ResolveContent'
+    'MarqueePresenter\.ResolveContent',
+    'SaveEvidence\.exe',
+    'SaveEvidence\.MewUI\.exe',
+    'app\.(Core|AvaloniaUI|MewUI)'
 )
 $stale = [System.Collections.Generic.List[string]]::new()
 foreach ($p in $stalePatterns) {
-    foreach ($hit in @(git -c core.quotepath=false grep -n -E -- $p 'src' '.github' 2>$null)) {
+    foreach ($hit in @(git -c core.quotepath=false grep -n -E -- $p 2>$null)) {
         if ($hit -match 'archive/') { continue }
-        # 検証手順は本検査の説明にこれらの名前を引用するため対象外にする
+        # 検証手順と本スクリプトは、この検査の説明としてこれらの名前を引用するため対象外にする
         if ($hit -match '検証手順\.md') { continue }
+        if ($hit -match 'buildScript/verify\.ps1') { continue }
         $stale.Add("$p : $hit")
     }
 }
 
-# 7d) 節参照の破損（文書.md の直後に「§」が無い数字が続く形。 一括置換で § が消えた残骸）
+# 8d) 節参照の破損（文書.md の直後に「§」が無い数字が続く形。 一括置換で § が消えた残骸）
 $rxSectionRef = [regex]'\]\([^)]*\.md\)\s*\d'
 foreach ($f in $docs) {
     $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')

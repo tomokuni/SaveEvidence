@@ -18,7 +18,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 /// - <see cref="RectOverlayCanvas"/>: ホストから渡された <see cref="Rects"/> をビューポート座標へ変換して描画する透明オーバーレイ。<br/>
 /// <br/>
 /// <b>領域選択オーバーレイ</b>: 本コントロールは含まない。 ホストが <c>FadeMaskDragRectControl.MewUI</c> を重ねて構成する<br/>
-/// （ドラッグ選択・暗転マスク・ルーペ。 `app.MewUI` の切り出しはこの構成）。
+/// （ドラッグ選択・暗転マスク・ルーペ。 `App.MewUI` の切り出しはこの構成）。
 /// </remarks>
 public sealed class CropViewControl : Grid
 {

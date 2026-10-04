@@ -33,7 +33,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- ヘッドレステスト（app.AvaloniaUI.Tests）から internal メンバーへアクセスできるようにする -->
+    <!-- ヘッドレステスト（App.AvaloniaUI.Tests）から internal メンバーへアクセスできるようにする -->
     <InternalsVisibleTo Include="App.AvaloniaUI.Tests" />
   </ItemGroup>
 

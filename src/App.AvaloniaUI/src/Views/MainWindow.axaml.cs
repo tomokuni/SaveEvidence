@@ -167,7 +167,7 @@ public sealed partial class MainWindow : Window
 
     /// <summary>ViewModel に UI 操作用のコールバックを設定する。</summary>
     /// <remarks>
-    /// ViewModel（<c>app.Core</c>）は UI 非依存のため、クリップボード操作（Avalonia 依存）は<br/>
+    /// ViewModel（<c>App.Core</c>）は UI 非依存のため、クリップボード操作（Avalonia 依存）は<br/>
     /// 本メソッドで境界変換して委譲する（コア型 <see cref="EsBitmap"/> ⇔ Avalonia <see cref="Bitmap"/>）。
     /// </remarks>
     private void SetupViewModelCallbacks()

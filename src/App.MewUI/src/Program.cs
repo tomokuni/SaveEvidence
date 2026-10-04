@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.App.MewUI;
 
 /// <summary>SaveEvidence の MewUI 版ホスト。</summary>
 /// <remarks>
-/// <b>構成</b>: UI 非依存の <c>app.Core</c>（設定・ViewModel）と <c>Platform.MewUI</c>（Interop）を使い、<br/>
+/// <b>構成</b>: UI 非依存の <c>App.Core</c>（設定・ViewModel）と <c>Platform.MewUI</c>（Interop）を使い、<br/>
 /// UI 層だけを MewUI で実装する。 Avalonia 版 <c>app</c> と同じコアロジックを共有する。<br/>
 /// <br/>
 /// <b>必須の初期化</b>:<br/>

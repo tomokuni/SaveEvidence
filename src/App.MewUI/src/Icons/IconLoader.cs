@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Icons;
 
 /// <summary>Icons フォルダの Fluent アイコン（SVG）からパス形状と画像を生成するヘルパー（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版 <c>IconLoader</c> と同じ SVG を共有する（<c>app.AvaloniaUI/src/Icons/*.svg</c> を埋め込みリソースとして参照する）。<br/>
+/// Avalonia 版 <c>IconLoader</c> と同じ SVG を共有する（<c>App.AvaloniaUI/src/Icons/*.svg</c> を埋め込みリソースとして参照する）。<br/>
 /// 各 SVG は Fluent System Icons 形式の単一 <c>&lt;path d="..."&gt;</c> で構成され、viewBox は 24x24。<br/>
 /// <br/>
 /// <b>Avalonia 版との違い</b>: MewUI には <c>PathIcon</c>（ジオメトリを色付きで描く要素）が無いため、<br/>

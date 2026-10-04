@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Controls;
 /// - アイテムは各行内で下端揃えで配置する（ファイル名の 1 文字目の高さ位置が行内で揃う）。<br/>
 /// - 行の折り返しは利用可能幅に対して行う（1 アイテムが幅を超える場合は単独行に置く）。<br/>
 /// <br/>
-/// <b>計算の所有</b>: 行高さと下端揃えの計算は UI 非依存の <see cref="BottomAlignWrapLayout"/>（<c>app.Core</c>）が単一所有し、<br/>
+/// <b>計算の所有</b>: 行高さと下端揃えの計算は UI 非依存の <see cref="BottomAlignWrapLayout"/>（<c>App.Core</c>）が単一所有し、<br/>
 /// 本パネルは寸法の変換と委譲のみを担う（MewUI 版の同名パネルと計算を共有する）。
 /// </remarks>
 public sealed class BottomAlignWrapPanel : Panel

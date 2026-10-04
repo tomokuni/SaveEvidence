@@ -5,7 +5,7 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Logging;
 
-/// <summary>app.MewUI プロジェクトのトレースログ定義（LoggerMessage ソース生成・拡張メソッド）。</summary>
+/// <summary>App.MewUI プロジェクトのトレースログ定義（LoggerMessage ソース生成・拡張メソッド）。</summary>
 /// <remarks>
 /// <see cref="LoggerMessageAttribute"/> による事前コンパイル済みログで、<br/>
 /// 文字列補間による不要なアロケーションを回避しつつ、一貫したフォーマットで出力する。<br/>

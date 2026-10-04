@@ -124,7 +124,7 @@ internal static class Program
         services.AddSingleton<IGlobalHotKeyService<CaptureType>>(
             _ => new WinGlobalHotKeyService<CaptureType>(AppLog.CreateLogger("WinGlobalHotKeyService")));
 
-        // 画像の書き込み（UI 依存の実装。 MainViewModel（app.Core）へ注入する）
+        // 画像の書き込み（UI 依存の実装。 MainViewModel（App.Core）へ注入する）
         services.AddSingleton<IImageWriter, AvaloniaImageWriter>();
 
         // ViewModels

@@ -11,7 +11,7 @@ rem  前提:
 rem    Native AOT のリンクには Visual Studio の C++ ビルドツール（link.exe）が必要です。
 rem
 rem  構成（実測）:
-rem    - マネージドコードは全て SaveEvidence.MewUI.exe（約 11.6 MB）へコンパイルされます。
+rem    - マネージドコードは全て App.MewUI.exe（約 11.3 MB）へコンパイルされます。
 rem    - SkiaSharp / OpenCvSharp のネイティブライブラリは exe へ同梱できないため、
 rem      同じフォルダーへ並べて配布します（libSkiaSharp.dll / OpenCvSharpExtern.dll）。
 rem

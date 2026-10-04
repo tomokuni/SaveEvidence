@@ -5,13 +5,13 @@
             "name": "Avalonia: SaveEvidence",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/app.AvaloniaUI/src/app.AvaloniaUI.csproj"
+            "projectPath": "${workspaceFolder}/src/App.AvaloniaUI/src/App.AvaloniaUI.csproj"
         },
         {
             "name": "MewUI: SaveEvidence",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/app.MewUI/src/app.MewUI.csproj"
+            "projectPath": "${workspaceFolder}/src/App.MewUI/src/App.MewUI.csproj"
         }
     ]
 }

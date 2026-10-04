@@ -11,14 +11,14 @@ rem  前提:
 rem    Native AOT のリンクには Visual Studio の C++ ビルドツール（link.exe）が必要です。
 rem
 rem  構成（実測）:
-rem    - マネージドコードは全て SaveEvidence.exe（約 29 MB）へコンパイルされます。
+rem    - マネージドコードは全て App.AvaloniaUI.exe（約 27.9 MB）へコンパイルされます。
 rem    - Avalonia / SkiaSharp / OpenCvSharp のネイティブライブラリは exe へ同梱できないため、
 rem      同じフォルダーへ並べて配布します（libSkiaSharp.dll / av_libglesv2.dll /
 rem      libHarfBuzzSharp.dll / OpenCvSharpExtern.dll）。
 rem
 rem  方式の選定理由:
 rem    - 単一 exe（PublishSingleFile + 自己完結）は exe が約 229 MB になるため採用していません。
-rem    - AOT はマネージドコードのみをネイティブへコンパイルするため約 29 MB になります。
+rem    - AOT はマネージドコードのみをネイティブへコンパイルするため約 27.9 MB になります。
 rem
 rem  AOT で動作しない実装（実測）:
 rem    - 実行時の XAML 解決（AvaloniaXamlLoader.Load(Uri)）は
@@ -32,7 +32,8 @@ rem    そのためアプリ本体は JSON ソース生成コンテキスト（S
 rem    SettingsService へ注入しています。コンテキストは Settings を参照する側の
 rem    アセンブリに置く必要があります（同一コンパイル内では MVVM のソース生成結果を
 rem    JSON のソース生成が見られないため）。
-rem    検証は .work/check-settings-roundtrip.ps1（設定の往復）で行えます。
+rem    設定の往復は回帰テスト（src/App.AvaloniaUI/tests/SettingsJsonContext.Tests.cs）が
+rem    検証します（buildScript/verify.ps1 のテスト実行に含まれます）。
 rem ============================================================
 
 rem スクリプトの場所（buildScript）からリポジトリルートへ移動する
