@@ -6,7 +6,8 @@
 #   release/** への push         … 系列ブランチ（release/<major>.<minor>）のゲートとして実行する
 #   手動実行（workflow_dispatch）  … dev など他のブランチで確認する場合に使用する
 #
-# 復元・Release ビルド・全テストを実行する（配布物の作成と公開は行わない）。
+# 復元・検証（Release）を実行する（配布物の作成と公開は行わない）。
+# 検証の内容は buildScript/verify.ps1 が単一所有し、合否基準は .github/検証手順.md が定める。
 #
 # 本ワークフローは「検証」だけを行い、配布物の作成は release.yml が publish.yml を通じて行う。
 # この実行結果はリリースの前提（ゲート）になる。Release ワークフローは、リリース対象コミットに対する
@@ -22,6 +23,8 @@
 #
 # テストは xunit.v3 + Microsoft.NET.Test.Sdk（VSTest）で実行するため、`dotnet test <ソリューション>` で
 # 全テストプロジェクトを実行できる（Microsoft.Testing.Platform の --solution は不要）。
+#
+# 以降の検証ステップは verify.ps1 が実行する（復元だけを先に行い、キャッシュと --no-restore を効かせる）。
 #
 # Windows 専用（Win32 API の P/Invoke を含む）のため windows-latest で実行する。
 #
@@ -75,15 +78,14 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-
 
-      # 以降は --no-restore / --no-build で工程を分け、失敗箇所を切り分けやすくする
+      # 復元は検証の前に 1 回だけ行う（NuGet キャッシュを効かせ、以降を --no-restore にするため）
       # パスは設定（release-config.json）が持つため、空白を含んでいても壊れないよう引用符で囲む
       - name: 復元
         run: dotnet restore '${{ steps.config.outputs.solution_file }}'
 
-      - name: ビルド（Release）
-        run: dotnet build '${{ steps.config.outputs.solution_file }}' -c Release --no-restore
-
-      # 2 つの UI（Avalonia UI / MewUI）のテストを含む全テストプロジェクトを実行する
-      # xunit.v3 + Microsoft.NET.Test.Sdk（VSTest）のため `dotnet test <ソリューション>` で全件を実行できる
-      - name: テスト（Release）
-        run: dotnet test '${{ steps.config.outputs.solution_file }}' -c Release --no-build
+      # 検証は buildScript/verify.ps1 が単一所有する（合否基準は .github/検証手順.md が所有者）。
+      # ローカルと同じ判定を CI でも使う（手順の二重実装を作らない）。
+      # -NoRestore は直前の復元を再利用するため（Release のビルド結果をテストでも使う）。
+      - name: 検証（Release）
+        shell: pwsh
+        run: pwsh -NoProfile -File buildScript/verify.ps1 -Solution '${{ steps.config.outputs.solution_file }}' -Configuration Release -NoRestore

@@ -33,11 +33,13 @@
 - **実測してから書く**（推測でドキュメント・規約を書かない）。
 - **検証は `pwsh -NoProfile -File buildScript/verify.ps1` を 1 回実行する**（合否基準は [`.github/検証手順.md`](検証手順.md) が所有する。 手順を手作業で書き起こさない）。
 
-## 3. このワークスペース/ソリューションに固有の指示
+## 3. このワークスペース/ソリューションに固有の事項
 
-### ソリューションの構成
+**本節は「このリポジトリの事実（〜である）」だけを持つ**。 規範（〜する）は各規約が所有する（分担は [`ドキュメント規約.md`](ドキュメント規約.md) が定める）。
 
-SaveEvidence は Windows デスクトップの画面キャプチャ アプリである。 構成の正典は [`../src/README.md`](../src/README.md) とし、本節は全体像だけを示す。
+### 3.1 ソリューションの構成
+
+SaveEvidence は Windows デスクトップの画面キャプチャ アプリである（実行ファイルは Avalonia UI 版と MewUI 版の 2 つ）。
 
 | 区分 | プロジェクト |
 | --- | --- |
@@ -48,14 +50,20 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 | 撮影スタック（製品固有） | `Parts.CapturePreviewControl.Core` / `.AvaloniaUI` / `.MewUI`、`Parts.CaptureSessionControl.UIBase` |
 | アプリ | `App.Core` / `App.AvaloniaUI` / `App.MewUI` |
 
-- コントロールの層は **Core（何を描くか・判断）/ Presenter（提示＝描画計画と外観）/ UI（フレームワーク固有の描画と配線）** の 3 層で、依存は `UI → Presenter → Core → EsUtil.Platform.Core` の一方向である。
-- **機能単位の UI コントロールは `EsUtil.Feature.*` 配下**に置く。 利用側は UI コントロールだけを `ProjectReference` すれば、推移参照でコア・提示層の型も解決できる。
-- **コントロール化を前提とした処理**（ホイール操作・ビューポートの変化の追従・組み込み先の概念）は **UI 層**が持つ（提示層とコアはコントロールに依存しない）。
+**層の帰属（Core / Presenter / UI のどれに置くか）・ラベルと装飾の分担・名前空間とフォルダの関係は [`../src/README.md`](../src/README.md) が所有する**（本節は要約しない）。
 
-### このソリューション固有の事項
+| 知りたいこと | 所有者 |
+| --- | --- |
+| プロジェクト間の参照の許可 | [`依存関係.md`](依存関係.md) |
+| 名前空間・フォルダ・アセンブリ名の対応 | [`命名規約.md`](命名規約.md) |
+| ログの接頭辞 | [`ログ規約.md`](ログ規約.md) |
+| 対象フレームワークの割り当て | [`ビルド設定規約.md`](ビルド設定規約.md) |
 
-- **ラベルは提示層が文言と描画順を決め、UI 層がテキスト要素を配置する**（サイズ ラベル・カーソル座標ラベル・ルーペ中心座標ラベル）。 ラベルは常に最上位である。
-- **付加情報ラベル（操作・情報ラベル）はコントロール固有の付加情報**であり、選択コントロールの概念ではない。 コアは関知せず、ホストが文言生成と描画を行う。
-- `Decoration` 系の型はコントロールではなく**装飾のコア**である（`EsUtil.Feature.Marquee.Core` に同居する）。
+### 3.2 このリポジトリ固有の事実
+
+- **実行ファイルは 2 つ**（`App.AvaloniaUI` / `App.MewUI`）で、**設定ファイルとログを共有する**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
+- **文字コードは UTF-8（BOM なし）**で統一する（[`.editorconfig`](../.editorconfig) の `charset = utf-8`。 既存の `.cs` / `.md` / `.ps1` はすべて BOM なし）。
+- **作業ツリーの改行コードは CRLF**（[`.editorconfig`](../.editorconfig) の `end_of_line = crlf`。 リポジトリのブロブは [`.gitattributes`](../.gitattributes) が LF へ正規化する）。
 - **`App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する**（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
-- **規約の分割単位の境界**: 「規則」は `.github/` の各規約が所有し、**「このリポジトリの事実（構成・固有の仕様）」は `src/README.md` と各プロジェクトのドキュメント**が所有する。 本ドキュメントはその索引である。
+- **`AVLN3001` は `App.AvaloniaUI` だけが抑止する**（理由は csproj のコメントに記載。 [`検証手順.md`](検証手順.md) §1）。
+- **CI は本リポジトリにリモートが無いため未実行**である（[`workflows/build.yml`](workflows/build.yml) はローカルで `buildScript/verify.ps1` を Release 構成で実行するのと等価）。

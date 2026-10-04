@@ -1,3 +1,6 @@
+# 進捗の表示は Write-Host を使う（標準出力は JSON として ConvertFrom-Json に渡すため、
+# Write-Output を混ぜると JSON の解析が壊れる）。
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = '標準出力を JSON として ConvertFrom-Json に渡すため、人の目に出す進捗は Write-Host を使う')]
 <#
 .SYNOPSIS
 リリースしようとしているバージョンの妥当性を検証し、リリース情報を返す。

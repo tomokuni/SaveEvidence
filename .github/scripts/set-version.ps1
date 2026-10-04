@@ -1,3 +1,6 @@
+# 進捗の表示は Write-Host を使う（呼び出し側が標準出力を Out-Null で捨てるため、
+# Write-Output では表示されない。 結果は終了コードで返す）。
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = '呼び出し側が標準出力を Out-Null で捨てるため、人の目に出す進捗は Write-Host を使う')]
 <#
 .SYNOPSIS
 指定されたバージョン番号をバージョンファイルへ設定する。

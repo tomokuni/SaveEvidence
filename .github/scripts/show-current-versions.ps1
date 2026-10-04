@@ -121,6 +121,9 @@ System.String[]
 添付されているファイル名の一覧。
 #>
 function Get-LatestReleaseAssets {
+    # 関数名が複数形なのは、コレクションを返すためである
+    # （命名規約は名詞の単数形を求めるが、返す値が複数であることを名前に出す方を優先する）。
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification = 'コレクションを返す関数のため複数形にする')]
     param([string]$Tag)
 
     if ([string]::IsNullOrWhiteSpace($Tag)) {
