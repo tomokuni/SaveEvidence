@@ -11,7 +11,7 @@ rem  前提:
 rem    Native AOT のリンクには Visual Studio の C++ ビルドツール（link.exe）が必要です。
 rem
 rem  構成（実測）:
-rem    - マネージドコードは全て App.AvaloniaUI.exe（約 27.9 MB）へコンパイルされます。
+rem    - マネージドコードは全て SaveEvidence.exe（約 27.9 MB）へコンパイルされます。
 rem    - Avalonia / SkiaSharp / OpenCvSharp のネイティブライブラリは exe へ同梱できないため、
 rem      同じフォルダーへ並べて配布します（libSkiaSharp.dll / av_libglesv2.dll /
 rem      libHarfBuzzSharp.dll / OpenCvSharpExtern.dll）。
@@ -42,7 +42,7 @@ pushd "%~dp0.."
 rem ターゲットランタイム（既定: win-x64）
 if "%~1"=="" (set "RID=win-x64") else (set "RID=%~1")
 
-set "APP_NAME=App.AvaloniaUI.exe"
+set "APP_NAME=SaveEvidence.exe"
 
 rem 最終的な出力先（MewUI 版と分ける）
 set "OUTDIR=%CD%\publish\avaloniaui-%RID%-aot"

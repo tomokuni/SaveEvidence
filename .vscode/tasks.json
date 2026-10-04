@@ -18,6 +18,18 @@
       "problemMatcher": []
     },
     {
+      "label": "検証（ビルド省略）",
+      "type": "shell",
+      "command": "pwsh -NoProfile -File buildScript/verify.ps1 -SkipBuild -SkipFormat -SkipPackage",
+      "problemMatcher": []
+    },
+    {
+      "label": "検証（配布物）",
+      "type": "shell",
+      "command": "pwsh -NoProfile -File buildScript/verifyPublish.ps1",
+      "problemMatcher": []
+    },
+    {
       "label": "テスト実行（全プロジェクト）",
       "type": "shell",
       "command": "dotnet test SaveEvidence.slnx",

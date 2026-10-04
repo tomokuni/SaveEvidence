@@ -18,6 +18,10 @@ Copilot・CI・開発者が同じ手順を 1 コマンドで再現できるよ�
 .PARAMETER SkipTests
 テストの実行を省略する（ビルドだけを素早く確かめるとき）。
 
+.PARAMETER SkipBuild
+ビルドを省略し、直前にビルドした出力を使う（文書だけを直したときの往復を短くする）。
+テストは `--no-build` で実行するため、**一度もビルドしていないと失敗する**（先にビルドを 1 回実行する）。
+
 .PARAMETER SkipFormat
 dotnet format による検査を省略する（時間を短縮するとき）。
 
@@ -42,6 +46,7 @@ param(
     [string]$Solution = 'SaveEvidence.slnx',
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
     [switch]$Fix,
+    [switch]$SkipBuild,
     [switch]$SkipTests,
     [switch]$SkipFormat,
     [switch]$SkipPackage,
@@ -78,14 +83,20 @@ $restoreArgs = if ($NoRestore) { @('--no-restore') } else { @() }
 # ============================================================
 # 1. ビルド（0 エラー / 0 警告。 IDE0005・書式・アナライザー・ドキュメントコメントを同時に検証する）
 # ============================================================
-Write-Output '== 1. ビルド =='
-$buildArgs = @('build', $Solution, '-c', $Configuration, '-tl:off', '-v:q', '--no-incremental') + $restoreArgs
-$buildText = Invoke-DotNet $buildArgs
-$buildWarnings = ([regex]::Matches($buildText, 'warning ')).Count
-$buildErrors = ([regex]::Matches($buildText, ': error ')).Count
-Add-Result 'ビルド' ($buildWarnings -eq 0 -and $buildErrors -eq 0) "警告 $buildWarnings / エラー $buildErrors"
-if ($buildWarnings -gt 0 -or $buildErrors -gt 0) {
-    $buildText -split "`r?`n" | Where-Object { $_ -match 'warning |: error ' } | Select-Object -First 20 | ForEach-Object { "      $($_.Trim())" }
+if (-not $SkipBuild) {
+    Write-Output '== 1. ビルド =='
+    $buildArgs = @('build', $Solution, '-c', $Configuration, '-tl:off', '-v:q', '--no-incremental') + $restoreArgs
+    $buildText = Invoke-DotNet $buildArgs
+    $buildWarnings = ([regex]::Matches($buildText, 'warning ')).Count
+    $buildErrors = ([regex]::Matches($buildText, ': error ')).Count
+    Add-Result 'ビルド' ($buildWarnings -eq 0 -and $buildErrors -eq 0) "警告 $buildWarnings / エラー $buildErrors"
+    if ($buildWarnings -gt 0 -or $buildErrors -gt 0) {
+        $buildText -split "`r?`n" | Where-Object { $_ -match 'warning |: error ' } | Select-Object -First 20 | ForEach-Object { "      $($_.Trim())" }
+    }
+}
+else {
+    # 省略した検査は合否に含めない（-SkipBuild は文書だけを直したときの往復を短くする用途）
+    Add-Info 'ビルド' '省略（-SkipBuild。 直前にビルドした出力を使う）'
 }
 
 # ============================================================
@@ -121,6 +132,10 @@ if (-not $SkipTests) {
     foreach ($m in [regex]::Matches($testText, '失敗:\s*(\d+)')) { $failed += [int]$m.Groups[1].Value }
     $projects = [regex]::Matches($testText, '\.dll \(net10\.0[^)]*\)').Count
     Add-Result 'テスト' ($failed -eq 0 -and $passed -gt 0) "合格 $passed / 失敗 $failed / $projects プロジェクト"
+    if ($failed -gt 0) {
+        # 失敗したテスト名を出す（合計だけでは原因を特定できない）
+        $testText -split "`r?`n" | Where-Object { $_ -match '^\s*(失敗|Failed)\s+\S' } | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" }
+    }
 
     if ($Coverage) {
         $files = @(Get-ChildItem -Path $coverageDir -Recurse -File -Filter 'coverage.cobertura.xml' -ErrorAction SilentlyContinue)
@@ -282,13 +297,18 @@ foreach ($f in ($docs + $scriptDocs)) {
     $docDir = ([IO.Path]::GetDirectoryName($rel) + '/').Replace('\', '/')
     $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
     for ($i = 0; $i -lt $lines.Count; $i++) {
+        # 環境変数を含む行のパスはリポジトリ外（%LOCALAPPDATA%\~ 等）を指すため対象外にする
+        if ($lines[$i] -match '%[A-Za-z_]+%|\$env:') { continue }
         $line = $rxLink.Replace($lines[$i], ']()')
         foreach ($m in $rxQuotedPath.Matches($line)) {
             $tok = $m.Groups[1].Value
             if ($tok -match '^https?') { continue }
             if ($tok.StartsWith('..')) { continue }
             $norm = $tok.Replace('\', '/')
+            # 実在の判定は追跡ファイルと作業ツリーの両方で行う（未追跡の新規ファイルを「解決不能」としない）
             if ($tracked.ContainsKey($norm) -or $tracked.ContainsKey($docDir + $norm)) { continue }
+            if (Test-Path -LiteralPath (Join-Path $repoRoot $norm)) { continue }
+            if (Test-Path -LiteralPath (Join-Path $f.DirectoryName $norm)) { continue }
             $cands = @()
             foreach ($p in $projectNames) {
                 foreach ($pre in @('', 'src/', 'tests/', 'sample/')) {
@@ -343,8 +363,7 @@ $stalePatterns = @(
     'verify-ui',
     'MarqueeCore\.ResolveContent',
     'MarqueePresenter\.ResolveContent',
-    'SaveEvidence\.exe',
-    'SaveEvidence\.MewUI\.exe',
+    'App\.(AvaloniaUI|MewUI)\.exe',
     'app\.(Core|AvaloniaUI|MewUI)'
 )
 $stale = [System.Collections.Generic.List[string]]::new()

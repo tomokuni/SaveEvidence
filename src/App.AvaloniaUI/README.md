@@ -72,7 +72,7 @@ dotnet test src/App.AvaloniaUI/tests/App.AvaloniaUI.Tests.csproj
 buildScript\AvaloniaUI_publish_aot.bat
 ```
 
-- 出力: `publish/avaloniaui-win-x64-aot`（`App.AvaloniaUI.exe` + ネイティブ DLL）
+- 出力: `publish/avaloniaui-win-x64-aot`（`SaveEvidence.exe` + ネイティブ DLL）
 
 | 方式 | 構成 | サイズ（実測） |
 | --- | --- | --- |

@@ -6,7 +6,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>EsUtil.SaveEvidence.App.MewUI</RootNamespace>
-    <!-- MewUI は API が安定化中（0.x）。破壊的変更を避けるためバージョンを固定する。 -->
+    <!-- 実行ファイルの名前は製品名を優先する（配布物 SaveEvidence.MewUI.zip の中身。 命名規約の例外）。 -->
+    <AssemblyName>SaveEvidence.MewUI</AssemblyName>
+    <!-- MewUI は API が安定化中（0.x）。 破壊的変更を避けるためバージョンを固定する。 -->
     <MewUIVersion>0.21.1</MewUIVersion>
   </PropertyGroup>
 

@@ -40,7 +40,8 @@
     - [3.1 リリースビルド](#31-リリースビルド)
   - [4. インストール方法](#4-インストール方法)
     - [4.1 ソースからのビルド](#41-ソースからのビルド)
-    - [4.2 配布物の実行](#42-配布物の実行)
+    - [4.2 検証（変更をコミットする前）](#42-検証変更をコミットする前)
+    - [4.3 配布物の実行](#43-配布物の実行)
   - [5. 操作方法](#5-操作方法)
     - [5.1 基本操作フロー](#51-基本操作フロー)
     - [5.2 画面構成](#52-画面構成)
@@ -270,13 +271,24 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
  dotnet publish src/App.AvaloniaUI/src/App.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishAot=true -p:SelfContained=true -o publish/avaloniaui-win-x64-aot
 ```
 
-`publish/avaloniaui-win-x64-aot` の `App.AvaloniaUI.exe` を実行してください（隣のネイティブ DLL も必要です）。
+`publish/avaloniaui-win-x64-aot` の `SaveEvidence.exe` を実行してください（隣のネイティブ DLL も必要です）。
 
 配布物（ネイティブ DLL の配置まで含む）は `buildScript/AvaloniaUI_publish_aot.bat` が作ります。 リポジトリ外の一時領域へ発行してから必要なファイルだけを出力先へ配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。
 
-### 4.2 配布物の実行
+### 4.2 検証（変更をコミットする前）
 
-配布物は `App.AvaloniaUI.exe` とネイティブ DLL のセットです（フォルダーごと配置してください）。
+**検証は 1 コマンドで実行できます**（ビルド・テスト・ドキュメント・配布物の起動をまとめて確かめます）。
+
+```powershell
+pwsh -NoProfile -File buildScript/verify.ps1
+```
+
+- 合否基準と手順は [`.github/検証手順.md`](.github/検証手順.md) が単一所有します（CI も同じスクリプトを Release 構成で実行します）。
+- 配布物（Native AOT）の起動と設定の往復は `buildScript/verifyPublish.ps1` が検証します（`publish` を含むため数分かかります）。
+
+### 4.3 配布物の実行
+
+配布物は `SaveEvidence.exe` とネイティブ DLL のセットです（フォルダーごと配置してください）。
 
 ## 5. 操作方法
 
@@ -284,7 +296,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 ```text
 1. アプリケーション起動
-   └── App.AvaloniaUI.exe を実行
+   └── SaveEvidence.exe を実行
    └── 前回終了時のウィンドウ位置・サイズが復元
 
 2. 画面キャプチャ

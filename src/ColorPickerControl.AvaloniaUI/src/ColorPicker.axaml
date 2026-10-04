@@ -3,7 +3,8 @@
              xmlns:local="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI"
              x:Class="EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.ColorPickerControl"
              x:Name="PART_Root"
-             x:CompileBindings="False">
+             x:DataType="local:ColorPickerControl"
+             x:CompileBindings="True">
     <UserControl.Resources>
         <local:StringToBrushConverter x:Key="StringToBrushConverter"/>
         <local:ColorDisplayConverter x:Key="ColorDisplayConverter"/>
@@ -28,11 +29,11 @@
                       LostFocus="OnLostFocus"
                       ToolTip.Tip="色名または16進カラーコードを入力、または▼から選択">
                 <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="local:ColorEntry" x:CompileBindings="False">
+                    <DataTemplate x:DataType="local:ColorEntry">
                         <StackPanel Orientation="Horizontal" Spacing="5">
                             <Border Width="14" Height="14" CornerRadius="2"
                                     BorderBrush="Gray" BorderThickness="1"
-                                    Background="{Binding Value}"/>
+                                    Background="{Binding Value, Converter={StaticResource StringToBrushConverter}}"/>
                             <TextBlock Text="{Binding Name}"/>
                         </StackPanel>
                     </DataTemplate>
