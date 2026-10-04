@@ -35,15 +35,15 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views;
 /// </remarks>
 public sealed partial class MainWindow : Window
 {
-    private MainViewModel _viewModel = null!;
-    private SettingsService _settingsService = null!;
-    private IGlobalHotKeyService<CaptureType> _hotKeyService = null!;
+    private readonly MainViewModel _viewModel = null!;
+    private readonly SettingsService _settingsService = null!;
+    private readonly IGlobalHotKeyService<CaptureType> _hotKeyService = null!;
 
     /// <summary>CaptureSessionControl.AvaloniaUI の公開 Facade（キャプチャセッションの窓口）。</summary>
-    private CaptureSessionControl _captureSessionControl = null!;
+    private readonly CaptureSessionControl _captureSessionControl = null!;
 
     /// <summary>CaptureSessionControl.AvaloniaUI へ注入するロガー（Serilog 経由でファイル出力）。</summary>
-    private ILogger _captureSessionControlLogger = null!;
+    private readonly ILogger _captureSessionControlLogger = null!;
 
     /// <summary>アプリケーションロガー。</summary>
     private static readonly ILogger _logger = AppLog.CreateLogger("MainWindow");

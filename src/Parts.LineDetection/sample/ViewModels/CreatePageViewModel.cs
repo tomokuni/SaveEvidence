@@ -135,8 +135,8 @@ public sealed partial class CreatePageViewModel : ObservableObject
 
         var data = new GroundTruthData(
             ClosedIntervalRect.FromPixelRect(CaptureBounds.Value),
-            selected.Select(w => new GroundTruthWindow(
-                ClosedIntervalRect.FromPixelRect(w.Bounds), w.Title, w.ClassName)).ToList());
+            [.. selected.Select(w => new GroundTruthWindow(
+                ClosedIntervalRect.FromPixelRect(w.Bounds), w.Title, w.ClassName))]);
         var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(jsonPath, json, new System.Text.UTF8Encoding(false));
 

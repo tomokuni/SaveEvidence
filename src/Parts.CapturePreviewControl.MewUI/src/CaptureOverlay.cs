@@ -116,13 +116,16 @@ internal sealed class CaptureOverlay
         _settings = settings;
         _log = log.OrNullLogger();
 
-        _selector = new FadeMaskDragRectControl { Mode = CaptureLabelTexts.ToSelectionMode(type), Log = _log };
-        // 設定はコアのマッパーで 1 値に変換して一括適用する（変換はコアが単一所有する）。
-        // 色は描画にだけ必要な設定のため、描画の設定として与える
-        // （ルーペの市松模様の下地色は透明にし、背後の撮影画像を透かす。 Avalonia 版と同じ扱いにする）
-        _selector.Options = settings.ToFadeMaskDragRectOptions();
-        _selector.MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(settings);
-        _selector.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(settings);
+        _selector = new FadeMaskDragRectControl
+        {
+            Mode = CaptureLabelTexts.ToSelectionMode(type),
+            Log = _log,         // 設定はコアのマッパーで 1 値に変換して一括適用する（変換はコアが単一所有する）。
+                                // 色は描画にだけ必要な設定のため、描画の設定として与える
+                                // （ルーペの市松模様の下地色は透明にし、背後の撮影画像を透かす。 Avalonia 版と同じ扱いにする）
+            Options = settings.ToFadeMaskDragRectOptions(),
+            MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(settings),
+            LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(settings)
+        };
         _highlight = new CaptureHighlightSession(_log);
         // 検出サービスはハイライト型のみ使う（それ以外はドラッグで選択矩形を作るため検出が不要）。
         // 「どちらの種別か」の判定は利用時にコア（CaptureTypeTraits）へ問い合わせる（導出値を null 性で保持しない）
@@ -540,7 +543,7 @@ internal sealed class CaptureOverlay
     /// <remarks>
     /// ウィンドウはフィールドに保持しないため、表示中のウィンドウ（<c>Application.Current.AllWindows</c> の末尾）を閉じる。
     /// </remarks>
-    private void Close()
+    private static void Close()
         => Application.Current?.AllWindows.LastOrDefault()?.Close();
 
     /// <summary>カーソル下の要素を検出してハイライトを更新する。</summary>

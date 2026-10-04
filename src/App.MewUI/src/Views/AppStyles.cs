@@ -266,9 +266,6 @@ internal static class AppStyles
     /// <summary>プルダウンの枠・区切り線の色（暗色テーマ用）。</summary>
     private static readonly MewUIColor s_menuBorderDark = MewUIColor.FromArgb(255, 90, 90, 90);
 
-    /// <summary>設定ページのカードの背景色（明色テーマ用）。</summary>
-    private static readonly MewUIColor s_cardBackgroundLight = MewUIColor.FromArgb(255, 252, 252, 252);
-
     /// <summary>設定ページのカードの背景色（暗色テーマ用）。</summary>
     private static readonly MewUIColor s_cardBackgroundDark = MewUIColor.FromArgb(255, 45, 45, 45);
 
@@ -279,9 +276,6 @@ internal static class AppStyles
 
     /// <summary>設定ページのカードの枠線の色（暗色テーマ用）。</summary>
     private static readonly MewUIColor s_cardBorderDark = MewUIColor.FromArgb(255, 90, 90, 90);
-
-    /// <summary>設定ページのカードの角丸（DIP）。</summary>
-    private const double SettingsCardCornerRadius = 6;
 
     /// <summary>サムネイルの枠線の太さ（DIP。 通常時）。</summary>
     private const double ThumbnailFrameThickness = 1;

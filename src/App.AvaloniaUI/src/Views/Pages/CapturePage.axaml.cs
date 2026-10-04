@@ -387,13 +387,13 @@ public sealed partial class CapturePage : UserControl
         });
         panel.Children.Add(new TextBlock
         {
-            Text =$"{{date}} → 日付（例: {now:yyyyMMdd} = yyyyMMdd）",
+            Text = $"{{date}} → 日付（例: {now:yyyyMMdd} = yyyyMMdd）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 1),
         });
         panel.Children.Add(new TextBlock
         {
-            Text =$"{{time}} → 時刻（例: {now:HHmmss} = HHmmss）",
+            Text = $"{{time}} → 時刻（例: {now:HHmmss} = HHmmss）",
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(8, 0, 0, 1),
         });
@@ -647,7 +647,7 @@ public sealed partial class CapturePage : UserControl
     /// テキストが短い場合は MinWidth（220）、長い場合は MaxWidth（260）に固定され、<br/>
     /// 中間の長さではテキスト全体が収まる幅になる（超過時は TextBox 内部でスクロール）。
     /// </remarks>
-    private void UpdateFileNameTemplateWidth(TextBox box)
+    private static void UpdateFileNameTemplateWidth(TextBox box)
     {
         // TextBox の実際のフォント情報を使用してテキスト幅を計測する
         var typeface = new Typeface(box.FontFamily, box.FontStyle, box.FontWeight);

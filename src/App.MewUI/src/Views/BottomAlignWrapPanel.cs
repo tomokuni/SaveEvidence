@@ -19,15 +19,14 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <b>適用パターン</b>: カスタム Panel（子の配置を自前で決める）。<br/>
 /// <b>再測定</b>: <see cref="Spacing"/> は生成時に確定させ、変更時は呼び出し側が再配置を要求する。
 /// </remarks>
-internal sealed class BottomAlignWrapPanel : Panel
+/// <remarks>パネルを初期化する。</remarks>
+/// <param name="spacing">アイテム間の間隔（DIP）。 0 以上の値。</param>
+internal sealed class BottomAlignWrapPanel(double spacing = 0) : Panel
 {
-    /// <summary>パネルを初期化する。</summary>
-    /// <param name="spacing">アイテム間の間隔（DIP）。 0 以上の値。</param>
-    public BottomAlignWrapPanel(double spacing = 0) => Spacing = spacing;
 
     /// <summary>アイテム間の間隔（DIP）を取得する。</summary>
     /// <value>0 以上の値。</value>
-    public double Spacing { get; }
+    public double Spacing { get; } = spacing;
 
     /// <summary>子要素を幅で折り返しながら各行の高さを計算する。</summary>
     /// <param name="availableSize">親から提示された利用可能サイズ。</param>

@@ -115,8 +115,10 @@ public class CropViewTests
     [AvaloniaFact]
     internal void Rects_画像未設定なら矩形オーバーレイを描画しない()
     {
-        var view = new CropViewControl();
-        view.Rects = [new OverlayRect(new EsRect(0, 0, 10, 10), OverlayLineStyle.Solid, DrawingColor.Red, DrawingColor.Transparent, 2.0)];
+        var view = new CropViewControl
+        {
+            Rects = [new OverlayRect(new EsRect(0, 0, 10, 10), OverlayLineStyle.Solid, DrawingColor.Red, DrawingColor.Transparent, 2.0)]
+        };
 
         Assert.Empty(view.RectOverlayChildren);
     }
@@ -245,25 +247,6 @@ public class CropViewTests
 
         Assert.False(view.SelectionOverlay.IsVisible);
         Assert.False(view.SelectionOverlay.IsHitTestVisible);
-    }
-
-    // ====================================================================
-    // 選択オーバーレイ上のホイール（Crop 中のパン・ズーム）
-    // ====================================================================
-
-    /// <summary>パン可能な大きさの画像を持つコントロールを生成する（表示 800x400・ビューポート 400x200）。</summary>
-    /// <returns>画像 400x200 を設定し、200% 表示にしたコントロール。</returns>
-    /// <remarks>小さい画像では Fit 表示でスクロール範囲が 0 になりパンを検証できないため、専用の大きさを使う。</remarks>
-    private static CropViewControl CreatePannableView()
-    {
-        var view = new CropViewControl
-        {
-            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(400, 200, Colors.Blue),
-        };
-        view.Measure(new Size(400, 200));
-        view.Arrange(new Rect(0, 0, 400, 200));
-        view.ZoomPercent = 200; // 表示 800x400（スクロール範囲あり）
-        return view;
     }
 
     // ====================================================================

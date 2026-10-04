@@ -190,7 +190,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>テーマモードの選択肢（Light / Dark / System）を取得する。</summary>
     /// <remarks>設定画面の ComboBox の ItemsSource に使用する。</remarks>
-    public IReadOnlyList<ThemeMode> ThemeModes => s_themeModes;
+    public static IReadOnlyList<ThemeMode> ThemeModes => s_themeModes;
 
     private static readonly ThemeMode[] s_themeModes = System.Enum.GetValues<ThemeMode>();
 

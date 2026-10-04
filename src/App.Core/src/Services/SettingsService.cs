@@ -45,7 +45,7 @@ public sealed class SettingsService : ISettingsService
     /// </remarks>
     private readonly JsonTypeInfo<Settings> _settingsTypeInfo;
 
-    private Settings _current;
+    private readonly Settings _current;
     private string? _lastSavedJson;
 
     /// <summary>反射ベースのシリアル化で設定管理を初期化する。</summary>

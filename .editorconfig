@@ -6,7 +6,9 @@ root = true
 # All files
 [*]
 charset = utf-8
-end_of_line = lf
+# 作業ツリーの改行コードは CRLF（リポジトリへ格納するブロブは .gitattributes の `* text=auto` が LF へ正規化する）。
+# ここを `lf` にすると `dotnet format` やエディタが作業ツリーを LF へ書き換え、検証（改行コード）に違反する。
+end_of_line = crlf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
@@ -14,9 +16,6 @@ trim_trailing_whitespace = true
 [*.cs]
 indent_style = space
 indent_size = 4
-
-# 不要な using をビルド時に警告として検出する（「必要のない名前空間に対する using は記載しない」方針の恒久化）
-dotnet_diagnostic.IDE0005.severity = warning
 
 # XAML files
 [*.xaml]
@@ -37,3 +36,48 @@ indent_size = 2
 [*.csproj]
 indent_style = space
 indent_size = 2
+
+# ============================================================
+# ビルドで検出するコード スタイルと品質（人・AI のレビューに頼らない）
+# ============================================================
+# 目的: 機械的に判定できる規約をビルドの警告（0 件の合否対象）にし、
+#       レビューと AI の調査を「機械が判定できない事項」に絞る。
+# 運用: 検出はビルド（全プロジェクトが EnforceCodeStyleInBuild を持つ）、
+#       修正は `dotnet format`（dotnet format whitespace / style / analyzers）。
+#       手順は .github/検証手順.md が定める。
+
+# 不要な using をビルド時に警告として検出する（「必要のない名前空間に対する using は記載しない」方針の恒久化）
+dotnet_diagnostic.IDE0005.severity = warning
+
+# 書式（インデント・空白・改行の位置）を .editorconfig に一致させる。
+# IDE0055 は書式の逸脱をすべて挙げるため、`dotnet format whitespace` で一括修正する。
+dotnet_diagnostic.IDE0055.severity = warning
+
+# 死コード（プライベート メンバー）を検出する。 規約「本番で未使用になった公開 API は削除する」の機械的な裏付け。
+dotnet_diagnostic.IDE0051.severity = warning
+dotnet_diagnostic.IDE0052.severity = warning
+dotnet_diagnostic.CA1823.severity = warning
+
+# 変更しないフィールドを readonly にする（規約「readonly フィールドを積極的に使う」）。
+dotnet_diagnostic.IDE0044.severity = warning
+
+# 不要なコードを検出する（冗長なキャスト・不要な代入・未使用のパラメーター・冗長な default）。
+dotnet_diagnostic.IDE0004.severity = warning
+dotnet_diagnostic.IDE0059.severity = warning
+dotnet_diagnostic.IDE0060.severity = warning
+dotnet_diagnostic.IDE0034.severity = warning
+
+# インスタンス データを使わないメンバーを static にする。
+dotnet_diagnostic.CA1822.severity = warning
+
+# C# 14 / コレクション式を活用する（規約「C# 14 の機能をフル活用する」）。
+dotnet_diagnostic.IDE0290.severity = warning
+dotnet_diagnostic.IDE0305.severity = warning
+
+# オブジェクトの初期化を簡素化する（生成と同時に設定する）。
+dotnet_diagnostic.IDE0017.severity = warning
+
+# 有効化しない規則（方針と衝突するため）:
+#   IDE0008 … `var` を禁止する方向の規則であり、本リポジトリの「型が自明な場合は var」と衝突する。
+#   CA1859 … 具象型の使用を促す規則であり、「抽象（インターフェース）へ依存する」方針と衝突する。
+#   CA1002 … テスト ヘルパーの `List<T>` 公開を指摘するだけで、製品コードに影響しない。

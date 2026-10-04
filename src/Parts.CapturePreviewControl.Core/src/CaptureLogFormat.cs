@@ -23,7 +23,7 @@ public static class CaptureLogFormat
     /// <param name="rect">整形する矩形（未検出の場合は null）。</param>
     /// <returns>矩形がある場合は <c>x,y,w,h</c> 形式、null の場合は空文字。</returns>
     /// <remarks>「未検出は空文字」という検出結果の正規化を単一所有する（呼び出し側で <c>?? ""</c> を書かない）。</remarks>
-    public static string RectOrEmpty(EsRectInt? rect) => rect is { } value ? Rect((EsRectInt)value) : "";
+    public static string RectOrEmpty(EsRectInt? rect) => rect is { } value ? Rect(value) : "";
 
     /// <summary>未検出・null の文字列を空文字へ正規化する。</summary>
     /// <param name="value">対象の文字列（null 許容）。</param>

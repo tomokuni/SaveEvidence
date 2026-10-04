@@ -56,7 +56,7 @@ public class BottomAlignWrapPanelTests
         var tall = CreateChild(60, 100);
         var short1 = CreateChild(60, 50);
         var short2 = CreateChild(60, 80);
-        var panel = Layout(1000, tall, short1, short2);
+        _ = Layout(1000, tall, short1, short2);
 
         // 行の高さ = 100。 各アイテムの下端（Y + Height）が行の下端（100）で揃う
         Assert.Equal(0.0, tall.Bounds.Y);

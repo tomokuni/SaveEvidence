@@ -43,10 +43,11 @@ public class FolderViewViewModelTests
     [Fact]
     internal void 表示モード不正値のViewModeTextは空文字になる()
     {
-        var vm = new FolderViewViewModel();
-
-        // 範囲外のインデックス（表示名が存在しない）→ 空文字
-        vm.SelectedViewModeIndex = 5;
+        var vm = new FolderViewViewModel
+        {
+            // 範囲外のインデックス（表示名が存在しない）→ 空文字
+            SelectedViewModeIndex = 5
+        };
 
         Assert.Equal("", vm.ViewModeText);
     }

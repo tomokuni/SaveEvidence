@@ -96,7 +96,7 @@ public sealed class LogicLineDetector : ILineDetector
         var rectangles = BuildRectangles(mergedH, mergedV, image.Width, image.Height, gray, edges);
         if (rectangles.Count > 0)
         {
-            return rectangles.OrderByDescending(r => r.Score).ToList();
+            return [.. rectangles.OrderByDescending(r => r.Score)];
         }
 
         // 矩形を構成できない場合は、従来どおりフィルタして出力する
@@ -104,7 +104,7 @@ public sealed class LogicLineDetector : ILineDetector
         results.AddRange(FilterAndScore(mergedH, isHorizontal: true, edges));
         results.AddRange(FilterAndScore(mergedV, isHorizontal: false, edges));
 
-        return results.OrderByDescending(r => r.Score).ToList();
+        return [.. results.OrderByDescending(r => r.Score)];
     }
 
     /// <summary>マージ後の線分をフィルタしてスコア付きの線分結果を生成する。</summary>
@@ -178,18 +178,14 @@ public sealed class LogicLineDetector : ILineDetector
         // 透明度による背景混合で 1 本の枠線が複数の近接平行線として検出されるため、
         // 近接する平行線を 1 本に統合してから、文字列の断片（エッジ支持率が低い）を除外する
         var hs = MergeParallelLines(
-                MergeCollinearAll(horizontals, isHorizontal: true, gap: RectMergeGap, options.ClusterTolerance)
-                    .Select(s => SnapToEdgeByGradient(s, isHorizontal: true, imageHeight / 2.0, gray))
-                    .ToList(),
-                isHorizontal: true, options.ParallelMergeTolerance, imageHeight / 2.0, edges)
+                [.. MergeCollinearAll(horizontals, isHorizontal: true, gap: RectMergeGap, options.ClusterTolerance).Select(s => SnapToEdgeByGradient(s, isHorizontal: true, imageHeight / 2.0, gray))],
+                isHorizontal: true, options.ParallelMergeTolerance, edges)
             .Where(s => Length(s) >= options.MinLineLength && EdgeSupportRatio(s, edges, isHorizontal: true) >= options.MinEdgeSupportRatio)
             .ToList();
 
         var vs = MergeParallelLines(
-                MergeCollinearAll(verticals, isHorizontal: false, gap: RectMergeGap, options.ClusterTolerance)
-                    .Select(s => SnapToEdgeByGradient(s, isHorizontal: false, imageWidth / 2.0, gray))
-                    .ToList(),
-                isHorizontal: false, options.ParallelMergeTolerance, imageWidth / 2.0, edges)
+                [.. MergeCollinearAll(verticals, isHorizontal: false, gap: RectMergeGap, options.ClusterTolerance).Select(s => SnapToEdgeByGradient(s, isHorizontal: false, imageWidth / 2.0, gray))],
+                isHorizontal: false, options.ParallelMergeTolerance, edges)
             .Where(s => Length(s) >= options.MinLineLength && EdgeSupportRatio(s, edges, isHorizontal: false) >= options.MinEdgeSupportRatio)
             .ToList();
 
@@ -403,7 +399,7 @@ public sealed class LogicLineDetector : ILineDetector
     /// <param name="segments">同一向きの線分群。</param>
     /// <param name="isHorizontal">水平線分の場合は true。</param>
     /// <param name="tolerance">統合する平行線の最大距離（ピクセル）。</param>
-    /// <param name="imageCenter">画像中心の垂直方向座標（水平線分は Y・垂直線分は X）。 代表座標の決定に使用。</param>
+
     /// <param name="edges">Canny エッジ画像（エッジ支持率の判定に使用）。</param>
     /// <returns>統合後の線分一覧（垂直座標は代表線分・水平範囲はマージ）。</returns>
     /// <remarks>
@@ -411,10 +407,10 @@ public sealed class LogicLineDetector : ILineDetector
     /// <paramref name="tolerance"/> 以内の平行線を 1 本に統合する。<br/>
     /// 代表座標は「エッジ支持率（<see cref="EdgeSupportRatio"/>）が最も高い線分」を採用する。<br/>
     /// 透過枠や別ウィンドウの重なりで複数の平行線に分裂しても、連続エッジ（= 実際の枠線）を優先する。<br/>
-    /// 同点（どちらも連続エッジ）の場合は画像中心に近い側（ウィンドウ内側の枠線）を採用する。
+    /// 同点（どちらも連続エッジ）の場合は平行方向の長さ（スパン）が最も長い線分を採用する（枠線は全長に達し、罫線や別ウィンドウの線は短い）。
     /// </remarks>
-    private List<LineSeg> MergeParallelLines(
-        List<LineSeg> segments, bool isHorizontal, double tolerance, double imageCenter, Mat edges)
+    private static List<LineSeg> MergeParallelLines(
+        List<LineSeg> segments, bool isHorizontal, double tolerance, Mat edges)
     {
         var clusters = new List<List<LineSeg>>();
         var anchors = new List<double>();
@@ -696,8 +692,6 @@ public sealed class LogicLineDetector : ILineDetector
                 // 背景に戻った
                 return outward > 0 ? baseCoord + i : baseCoord + firstCoreIndex;
             }
-
-            coreIndex = i;
         }
 
         // 帯の端まで非背景が続く（影・壁紙）: 枠線コアを境界とする

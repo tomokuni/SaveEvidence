@@ -57,9 +57,12 @@ public class TextBoxSelectionHelperTests
     [AvaloniaFact]
     internal void ResetSelection_TextBoxがあれば選択が末尾に移動する()
     {
-        var textBox = new TextBox { Text = "Hello" };
-        textBox.SelectionStart = 0;
-        textBox.SelectionEnd = 5;
+        var textBox = new TextBox
+        {
+            Text = "Hello",
+            SelectionStart = 0,
+            SelectionEnd = 5
+        };
         var stack = new StackPanel { Children = { textBox } };
 
         TextBoxSelectionHelper.ResetSelection(stack);

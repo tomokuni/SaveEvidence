@@ -281,9 +281,10 @@ public class MainViewModelStateTests
     [Fact]
     internal void HasInvalidSaveFolder_空文字はtrueを返す()
     {
-        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
-
-        vm.SaveFolderPath = string.Empty;
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
+        {
+            SaveFolderPath = string.Empty
+        };
 
         Assert.True(vm.HasInvalidSaveFolder);
     }
@@ -291,10 +292,11 @@ public class MainViewModelStateTests
     [Fact]
     internal void HasInvalidSaveFolder_プレースホルダ解決後に判定する()
     {
-        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
-
-        // {MyPictures} は実在するフォルダへ展開されるため false
-        vm.SaveFolderPath = "{MyPictures}";
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
+        {
+            // {MyPictures} は実在するフォルダへ展開されるため false
+            SaveFolderPath = "{MyPictures}"
+        };
         Assert.False(vm.HasInvalidSaveFolder);
 
         // {MyPictures} の下に存在しないサブフォルダを指定すると true
@@ -414,12 +416,10 @@ public class MainViewModelStateTests
     [Fact]
     internal void ThemeModes_3つの選択肢が定義される()
     {
-        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter());
-
         // Light / Dark / System の 3 択
         Assert.Equal(
             [ThemeMode.Light, ThemeMode.Dark, ThemeMode.System],
-            vm.ThemeModes);
+            MainViewModel.ThemeModes);
     }
 
     [Fact]

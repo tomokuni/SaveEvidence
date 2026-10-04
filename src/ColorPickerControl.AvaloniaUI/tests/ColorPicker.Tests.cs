@@ -377,7 +377,8 @@ public class ColorPickerTests
         control.RaiseEvent(new SelectionChangedEventArgs(
             ComboBox.SelectionChangedEvent,
             new AvaloniaList<object?>(),
-            new AvaloniaList<object?>()) { Source = control });
+            new AvaloniaList<object?>())
+        { Source = control });
         Dispatcher.UIThread.RunJobs();
 
         Assert.True(true);

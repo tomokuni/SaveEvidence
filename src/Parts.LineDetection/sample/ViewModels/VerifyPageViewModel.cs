@@ -16,11 +16,11 @@ public sealed partial class VerifyPageViewModel : ObservableObject
     public DetectionContext Context { get; }
 
     /// <summary>検証レポート（一致/不一致・差分）の表示状態。</summary>
-    public bool IsDatasetReportVisible => true;
+    public static bool IsDatasetReportVisible => true;
 
     /// <summary>検出結果（検出結果・選択中・垂直線分・水平線分）の表示状態。</summary>
     /// <remarks>単一検証では常に表示する。</remarks>
-    public bool IsDetectionResultVisible => true;
+    public static bool IsDetectionResultVisible => true;
 
     /// <summary>dataset の画像一覧（ドロップダウン用）。</summary>
     public IReadOnlyList<DatasetEntry> DatasetItems { get; private set; } = [];
@@ -35,8 +35,10 @@ public sealed partial class VerifyPageViewModel : ObservableObject
     /// <summary>VerifyPageViewModel を初期化する。</summary>
     public VerifyPageViewModel()
     {
-        Context = new DetectionContext();
-        Context.SelectedDetector = new LineDetectorOption(new LogicLineDetector());
+        Context = new DetectionContext
+        {
+            SelectedDetector = new LineDetectorOption(new LogicLineDetector())
+        };
         DatasetItems = DatasetVerifier.LoadDatasetItems();
 
         // 初期選択を Initial_window とする（大文字小文字を無視して照合。 見つからない場合は未選択のまま）

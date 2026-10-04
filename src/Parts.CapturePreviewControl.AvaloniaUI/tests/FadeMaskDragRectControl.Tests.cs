@@ -82,13 +82,14 @@ public class FadeMaskDragRectControlTests
     [AvaloniaFact]
     internal void MarqueeAppearance_代入後もモード由来の表示可否が保たれる()
     {
-        var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.Crop };
-
-        // ホストは色だけを与える（表示可否は指定しない）
-        control.Options = FadeMaskDragRectOptions.Default;
-        control.MarqueeAppearance = MarqueeAppearance.Default with
+        var control = new FadeMaskDragRectControl
         {
-            OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+            Mode = FadeMaskDragRectMode.Crop,         // ホストは色だけを与える（表示可否は指定しない）
+            Options = FadeMaskDragRectOptions.Default,
+            MarqueeAppearance = MarqueeAppearance.Default with
+            {
+                OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+            }
         };
 
         // 色は与えた値のまま、モード由来の表示可否（選択を使うモード = 全面暗転 + ハンドル）になる
@@ -271,12 +272,14 @@ public class FadeMaskDragRectControlTests
     [AvaloniaFact]
     internal void Options_指定しない項目は現在値を維持する()
     {
-        var control = new FadeMaskDragRectControl();
-        control.Options = FadeMaskDragRectOptions.Default with
+        var control = new FadeMaskDragRectControl
         {
-            Marquee = MarqueeOptions.Default with { MinSelectionSize = 5 },
-            Loupe = LoupeOptions.Default with { RequestedSize = 150 },
-            LoupeOffset = 30.0,
+            Options = FadeMaskDragRectOptions.Default with
+            {
+                Marquee = MarqueeOptions.Default with { MinSelectionSize = 5 },
+                Loupe = LoupeOptions.Default with { RequestedSize = 150 },
+                LoupeOffset = 30.0,
+            }
         };
 
         // with 式で一部だけを差し替える（指定しない項目は現在値＝既定値を維持する）

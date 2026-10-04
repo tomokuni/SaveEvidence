@@ -29,7 +29,8 @@ public static class ConfirmDialog
         var dialog = new Window
         {
             Title = title,
-            Width = 420, Height = 180,
+            Width = 420,
+            Height = 180,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             CanResize = false,
             WindowDecorations = WindowDecorations.None,

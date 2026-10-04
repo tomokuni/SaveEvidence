@@ -76,13 +76,14 @@ public class FadeMaskDragRectControlTests
     [Fact]
     internal void MarqueeAppearance_代入後もモード由来の表示可否が保たれる()
     {
-        var control = new FadeMaskDragRectControl { Mode = FadeMaskDragRectMode.Crop };
-
-        // ホストは色だけを与える（表示可否は指定しない）
-        control.Options = FadeMaskDragRectOptions.Default;
-        control.MarqueeAppearance = MarqueeAppearance.Default with
+        var control = new FadeMaskDragRectControl
         {
-            OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+            Mode = FadeMaskDragRectMode.Crop,         // ホストは色だけを与える（表示可否は指定しない）
+            Options = FadeMaskDragRectOptions.Default,
+            MarqueeAppearance = MarqueeAppearance.Default with
+            {
+                OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+            }
         };
 
         // 色は与えた値のまま、モード由来の表示可否（選択を使うモード = 全面暗転 + ハンドル）になる
@@ -208,21 +209,22 @@ public class FadeMaskDragRectControlTests
     [Fact]
     internal void 外観は選択矩形の外観へ委譲される()
     {
-        var control = new FadeMaskDragRectControl();
-
-        control.Options = FadeMaskDragRectOptions.Default with
+        var control = new FadeMaskDragRectControl
         {
-            Marquee = MarqueeOptions.Default with
+            Options = FadeMaskDragRectOptions.Default with
             {
-                HandleSize = 12.0,
+                Marquee = MarqueeOptions.Default with
+                {
+                    HandleSize = 12.0,
+                },
             },
-        };
-        // 枠線の太さ・表示可否は描画にだけ必要な設定のため、外観として与える
-        control.MarqueeAppearance = MarqueeAppearance.Default with
-        {
-            ShowOuterBorder = true,
-            OuterBorderThickness = 3.0,
-            ShowSizeLabel = false,
+            // 枠線の太さ・表示可否は描画にだけ必要な設定のため、外観として与える
+            MarqueeAppearance = MarqueeAppearance.Default with
+            {
+                ShowOuterBorder = true,
+                OuterBorderThickness = 3.0,
+                ShowSizeLabel = false,
+            }
         };
 
         Assert.True(control.MarqueeAppearance.ShowOuterBorder);

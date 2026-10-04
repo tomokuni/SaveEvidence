@@ -70,9 +70,6 @@ internal static class CapturePage
         }
     }
 
-    /// <summary>カーソルがプレビュー外にあるときのルーペとプレビューの余白（DIP）。</summary>
-    private const double DefaultMargin = 16;
-
     /// <summary>拡大率メニューの選択肢（%。 0 = 自動は別途追加する）。</summary>
     /// <remarks>Avalonia 版のフライアウトと同じ段階を使う。</remarks>
     private static readonly double[] s_zoomMenuLevels = [10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
@@ -307,8 +304,8 @@ internal static class CapturePage
             Width = 120,
             Height = AppStyles.StatusSliderHeight,
             VerticalAlignment = VerticalAlignment.Center,
+            Value = crop.ZoomPercent
         };
-        zoomSlider.Value = crop.ZoomPercent;
         zoomSlider.ValueChanged += value =>
         {
             // スライダ → ズームの同期中はループを防ぐため無視する
@@ -490,9 +487,12 @@ internal static class CapturePage
     /// <returns>アイコンだけを表示するボタン。</returns>
     private static Button IconButton(string icon, string toolTip, Action onClick, List<IconImage> icons)
     {
-        var image = new Image { Source = IconLoader.LoadImage(icon, IconRasterSize, IconLoader.ForegroundColor()) };
-        image.Width = IconSize;
-        image.Height = IconSize;
+        var image = new Image
+        {
+            Source = IconLoader.LoadImage(icon, IconRasterSize, IconLoader.ForegroundColor()),
+            Width = IconSize,
+            Height = IconSize
+        };
         icons.Add(new IconImage(image, icon));
 
         var button = new Button
@@ -522,9 +522,12 @@ internal static class CapturePage
     /// </remarks>
     private static Button StatusIconButton(string icon, string toolTip, Action onClick, List<IconImage> icons)
     {
-        var image = new Image { Source = IconLoader.LoadImage(icon, IconRasterSize, IconLoader.ForegroundColor()) };
-        image.Width = AppStyles.StatusIconSize;
-        image.Height = AppStyles.StatusIconSize;
+        var image = new Image
+        {
+            Source = IconLoader.LoadImage(icon, IconRasterSize, IconLoader.ForegroundColor()),
+            Width = AppStyles.StatusIconSize,
+            Height = AppStyles.StatusIconSize
+        };
         icons.Add(new IconImage(image, icon));
 
         var button = new Button

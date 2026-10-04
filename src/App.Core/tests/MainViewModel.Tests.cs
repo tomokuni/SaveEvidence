@@ -27,7 +27,7 @@ public class MainViewModelTests
 
         public void Save() { }
 
-        public void Reload() { }
+        public static void Reload() { }
     }
 
     /// <summary>テスト用の IImageWriter モック（要求された画像をダミーデータでファイルへ書き出す）。</summary>

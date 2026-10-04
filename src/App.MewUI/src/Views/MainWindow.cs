@@ -129,9 +129,12 @@ internal sealed class MainWindow
         var navItemTexts = new TextBlock[entries.Length];
         var navItemImages = new Image[entries.Length];
         var navItemButtons = new Button[entries.Length];
-        var navToggleIcon = new Image { Source = LoadNavIcon("ic_fluent_arrow_autofit_width_dotted_24_regular.svg") };
-        navToggleIcon.Width = NavIconSize;
-        navToggleIcon.Height = NavIconSize;
+        var navToggleIcon = new Image
+        {
+            Source = LoadNavIcon("ic_fluent_arrow_autofit_width_dotted_24_regular.svg"),
+            Width = NavIconSize,
+            Height = NavIconSize
+        };
 
         var toggle = new Button
         {
@@ -152,9 +155,12 @@ internal sealed class MainWindow
         for (var i = 0; i < entries.Length; i++)
         {
             var entry = entries[i];
-            var icon = new Image { Source = LoadNavIcon(entry.Icon) };
-            icon.Width = NavIconSize;
-            icon.Height = NavIconSize;
+            var icon = new Image
+            {
+                Source = LoadNavIcon(entry.Icon),
+                Width = NavIconSize,
+                Height = NavIconSize
+            };
             navItemImages[i] = icon;
 
             var text = new TextBlock().Text(entry.Title);

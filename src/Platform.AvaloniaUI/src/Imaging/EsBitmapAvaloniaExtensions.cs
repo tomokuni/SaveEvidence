@@ -29,8 +29,6 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// </remarks>
 public static class EsBitmapAvaloniaExtensions
 {
-    /// <summary>1 ピクセルあたりのバイト数（BGRA8888）。</summary>
-    private const int BytesPerPixel = 4;
 
     // ====================================================================
     // 生成・変換 (Avalonia)

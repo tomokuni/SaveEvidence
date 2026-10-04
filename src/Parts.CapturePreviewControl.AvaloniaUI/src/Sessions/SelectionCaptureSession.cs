@@ -53,7 +53,7 @@ internal sealed class SelectionCaptureSession(
         var hideOwner = settings.HideOwnerWindow!.Value;
         var ownerHandle = owner.TryGetPlatformHandle() is { } handle
             ? handle.ToEsPlatformHandle()
-            : default(EsPlatformHandle);
+            : default;
         using var ownerScope = CaptureOwnerScope.Enter(
             windowService, ownerHandle, new OwnerWindowAdapter(owner), hideOwner);
 

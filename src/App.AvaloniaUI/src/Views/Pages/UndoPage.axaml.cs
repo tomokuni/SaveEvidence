@@ -25,10 +25,10 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// </remarks>
 public sealed partial class UndoPage : ViewModePageBase
 {
-    private UndoViewModel _viewModel = null!;
+    private readonly UndoViewModel _viewModel = null!;
 
     /// <summary>Undo / Redo スタック（DI から取得するシングルトン。 CapturePage と共有）。</summary>
-    private UndoStack _undoStack = null!;
+    private readonly UndoStack _undoStack = null!;
 
     /// <summary>UndoPage を初期化する。</summary>
     public UndoPage()

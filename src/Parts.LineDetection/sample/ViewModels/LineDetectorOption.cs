@@ -2,14 +2,13 @@
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 
 /// <summary>検出方式の選択肢（表示名 + 検出器インスタンス）。</summary>
-public sealed class LineDetectorOption
+/// <remarks>検出器を初期化する。</remarks>
+/// <param name="detector">検出器インスタンス。</param>
+public sealed class LineDetectorOption(ILineDetector detector)
 {
-    /// <summary>検出器を初期化する。</summary>
-    /// <param name="detector">検出器インスタンス。</param>
-    public LineDetectorOption(ILineDetector detector) => Detector = detector;
 
     /// <summary>検出器インスタンス。</summary>
-    public ILineDetector Detector { get; }
+    public ILineDetector Detector { get; } = detector;
 
     /// <summary>検出方式の表示名。</summary>
     public string Name => Detector.Name;

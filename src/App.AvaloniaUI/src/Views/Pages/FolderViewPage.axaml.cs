@@ -22,7 +22,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// </remarks>
 public sealed partial class FolderViewPage : ViewModePageBase
 {
-    private FolderViewViewModel _viewModel = null!;
+    private readonly FolderViewViewModel _viewModel = null!;
 
     /// <summary>アプリケーションロガー。</summary>
     private static readonly ILogger _logger = AppLog.CreateLogger("FolderViewPage");

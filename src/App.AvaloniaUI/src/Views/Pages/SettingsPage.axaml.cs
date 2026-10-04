@@ -23,8 +23,8 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// </remarks>
 public sealed partial class SettingsPage : UserControl
 {
-    private MainViewModel _viewModel = null!;
-    private SettingsService _settingsService = null!;
+    private readonly MainViewModel _viewModel = null!;
+    private readonly SettingsService _settingsService = null!;
     private TextBox? _currentHotkeyTextBox;
     private HotkeyTarget? _currentHotkeyTarget;
 

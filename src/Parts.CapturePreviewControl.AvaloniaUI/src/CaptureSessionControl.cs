@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 /// IDisposable を実装する。 Dispose 後は全ての公開操作が ObjectDisposedException を投げる。<br/>
 /// StartCaptureAsync / StartCropAsync 実行中に同一インスタンスへ再呼び出しされた場合は無視する（既存のセッションを継続）。<br/>
 /// <br/>
-    /// <b>薄い統括者</b>: 状態は MarqueeControl / LoupeControl が保持し、<br/>
+/// <b>薄い統括者</b>: 状態は MarqueeControl / LoupeControl が保持し、<br/>
 /// 本クラスは「組み立て・配線・ライフサイクル」のみを担う。<br/>
 /// - プレビュー状態（CropPreviewState）は持たない（スクロールは Marquee イベント / TranslatePoint から取得）。<br/>
 /// - 座標変換は EsUtil.Platform.Core.Coord の <see cref="ICoordTransform"/>（<see cref="CoordTransform"/> ファクトリ:

@@ -2,13 +2,26 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "テスト実行（全プロジェクト）",
+      "label": "検証（全体）",
       "type": "shell",
-      "command": "dotnet test SaveEvidence.slnx",
+      "command": "pwsh -NoProfile -File buildScript/verify.ps1",
       "group": {
         "kind": "test",
         "isDefault": true
       },
+      "problemMatcher": []
+    },
+    {
+      "label": "検証（全体・自動修正）",
+      "type": "shell",
+      "command": "pwsh -NoProfile -File buildScript/verify.ps1 -Fix",
+      "problemMatcher": []
+    },
+    {
+      "label": "テスト実行（全プロジェクト）",
+      "type": "shell",
+      "command": "dotnet test SaveEvidence.slnx",
+      "group": "test",
       "problemMatcher": []
     },
     {

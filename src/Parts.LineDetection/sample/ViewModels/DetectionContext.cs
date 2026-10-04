@@ -30,12 +30,6 @@ public sealed partial class DetectionContext : ObservableObject
     /// <summary>オレンジ強調（選択）できる線分の上限（垂直・水平それぞれ）。</summary>
     private const int MaxSelectionPerOrientation = 2;
 
-    /// <summary>ホバー中の線分のルーペ内表示色（赤）。</summary>
-    private static readonly IBrush s_hoverOverlayBrush = new SolidColorBrush(Color.Parse("#FF3B30"));
-
-    /// <summary>選択中の線分のルーペ内表示色（オレンジ）。</summary>
-    private static readonly IBrush s_selectedOverlayBrush = new SolidColorBrush(Color.Parse("#FF8C00"));
-
     /// <summary>表示中の画像（クリップボードから貼り付け）。</summary>
     [ObservableProperty]
     private Bitmap? _image;
@@ -172,12 +166,8 @@ public sealed partial class DetectionContext : ObservableObject
         }
 
         // グループは入力の並び（垂直 → 水平）を保ったまま一括で参照する（追加の Where 反復を避ける）
-        VerticalLines = lines
-            .Where(l => l.Orientation == LineOrientation.Vertical)
-            .ToList();
-        HorizontalLines = lines
-            .Where(l => l.Orientation == LineOrientation.Horizontal)
-            .ToList();
+        VerticalLines = [.. lines.Where(l => l.Orientation == LineOrientation.Vertical)];
+        HorizontalLines = [.. lines.Where(l => l.Orientation == LineOrientation.Horizontal)];
 
         OnPropertyChanged(nameof(VerticalLines));
         OnPropertyChanged(nameof(HorizontalLines));
@@ -342,7 +332,7 @@ public sealed partial class DetectionContext : ObservableObject
         }
         else
         {
-            LoupeOverlayLines = OverlayLines.Where(l => l.IsHovered).ToList();
+            LoupeOverlayLines = [.. OverlayLines.Where(l => l.IsHovered)];
         }
 
         OnPropertyChanged(nameof(LoupeOverlayLines));

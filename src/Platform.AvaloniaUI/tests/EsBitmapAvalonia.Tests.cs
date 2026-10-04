@@ -20,18 +20,13 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 /// <c>EsBitmapTests</c> で並列実行）。<br/>
 /// サイズ・ストライドを主に検証する（ピクセル値はヘッドレス環境で不安定なため検証しない）。
 /// </remarks>
+/// <remarks>コンストラクタ（xUnit が <see cref="ITestOutputHelper"/> を注入する）。</remarks>
+/// <param name="output">テスト出力ヘルパー。</param>
 [Collection("AvaloniaHeadless")]
-public class EsBitmapAvaloniaTests
+public class EsBitmapAvaloniaTests(ITestOutputHelper output)
 {
     /// <summary>テスト出力（xUnit v3 でコンソール出力をキャプチャする）。</summary>
-    private readonly ITestOutputHelper _output;
-
-    /// <summary>コンストラクタ（xUnit が <see cref="ITestOutputHelper"/> を注入する）。</summary>
-    /// <param name="output">テスト出力ヘルパー。</param>
-    public EsBitmapAvaloniaTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
+    private readonly ITestOutputHelper _output = output;
 
     /// <summary>テスト用の WriteableBitmap を生成する。</summary>
     private static WriteableBitmap CreateBitmap(int width, int height)
@@ -172,7 +167,8 @@ public class EsBitmapAvaloniaTests
             sink += result.PixelSize.Width + result.PixelSize.Height;
         }
         var end = Stopwatch.GetTimestamp();
-        KeptSink += sink;
+        // 累算値は使わないが、最適化でループごと除去されないように生存させる
+        GC.KeepAlive(sink);
         return (end - start) * 1000.0 / Stopwatch.Frequency;
     }
 
@@ -193,12 +189,10 @@ public class EsBitmapAvaloniaTests
             sink += result.PixelSize.Width + result.PixelSize.Height;
         }
         var end = Stopwatch.GetTimestamp();
-        KeptSink += sink;
+        // 累算値は使わないが、最適化でループごと除去されないように生存させる
+        GC.KeepAlive(sink);
         return (end - start) * 1000.0 / Stopwatch.Frequency;
     }
-
-    /// <summary>デッドコード除去防止用の残留値（最適化を防ぐためのシンク）。</summary>
-    private static int KeptSink;
 
     /// <summary>両メソッドを指定回数実行し、書き込み版の累計ミリ秒を返す（スキップ用のダミー計測）。</summary>
     /// <param name="bmp">計測対象のビットマップ。</param>

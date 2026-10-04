@@ -32,7 +32,8 @@ public sealed class ZoomOptions
         ZoomTransition.DefaultMinZoom,
         ZoomTransition.DefaultMaxZoom,
         ZoomTransition.DefaultWheelFactor,
-        ZoomTransition.DefaultButtonZoomLevels) { }
+        ZoomTransition.DefaultButtonZoomLevels)
+    { }
 
     /// <summary>すべてのプロパティを指定して <see cref="ZoomOptions"/> を生成する。</summary>
     /// <param name="minZoom">ズーム率の最小値。 0 より大きい。</param>

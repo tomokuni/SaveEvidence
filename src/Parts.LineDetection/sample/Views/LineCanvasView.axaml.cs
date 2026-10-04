@@ -24,7 +24,7 @@ namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.Views;
 /// マウス位置（= ルーペ中心）の右下に表示する。<br/>
 /// ルーペ内の線分オーバーレイ（選択中/ホバー中の線分の破線）は、LoupeControl の <see cref="LoupeControl.Rendered"/> イベントの<br/>
 /// 引数で受け取った Bitmap（WriteableBitmap）に直接破線を描画する（LoupeControl の内部計算を複製しない）。<br/>
-    /// ホバー/選択の変化（<see cref="DetectionContext.LoupeOverlayLines"/>）では <see cref="LoupeControl.RequestRender"/> で<br/>
+/// ホバー/選択の変化（<see cref="DetectionContext.LoupeOverlayLines"/>）では <see cref="LoupeControl.RequestRender"/> で<br/>
 /// ルーペを再生成し、新しい Bitmap に破線を再描画する。
 /// </remarks>
 public partial class LineCanvasView : UserControl

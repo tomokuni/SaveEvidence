@@ -110,7 +110,7 @@ public class CaptureSessionControlTests
 
         // Cancel() でキャンセル → 0x0 の空結果で完了
         session.Cancel();
-        var result = await task;
+        _ = await task;
 
         // 完了後は元の位置と Opacity が即時復元される（async の待機は不要）
         Assert.True(owner.IsVisible);
@@ -193,8 +193,7 @@ public class CaptureSessionControlTests
         panel.Children.Add(cropView);
         var window = new Window();
         var session = new CropSession(cropView, window, new CaptureSettings(), NullLogger.Instance);
-
-        var task = session.RunAsync(cropView.CurrentImage()!);
+        _ = session.RunAsync(cropView.CurrentImage()!);
         // 実行中に設定を再適用（ClampToSourceBounds を ON に変更 → クリップ設定が更新される）
         session.ApplySettings(new CaptureSettings(ClampToSourceBounds: true));
         session.ApplySettings(new CaptureSettings(ClampToSourceBounds: false));
@@ -212,8 +211,7 @@ public class CaptureSessionControlTests
         panel.Children.Add(cropView);
         var window = new Window();
         var session = new CropSession(cropView, window, new CaptureSettings(), NullLogger.Instance);
-
-        var task = session.RunAsync(cropView.CurrentImage()!);
+        _ = session.RunAsync(cropView.CurrentImage()!);
         // ビューポート変化（パン・ズーム）の通知 → 例外なく再描画・再計算を要求する
         session.NotifyViewportChanged();
         session.NotifyViewportChanged();
@@ -230,8 +228,10 @@ public class CaptureSessionControlTests
         var panel = new Panel();
         var cropView = CreateCropView();
         panel.Children.Add(cropView);
-        var window = new Window();
-        window.Content = panel;
+        var window = new Window
+        {
+            Content = panel
+        };
         window.Show();
 
         var task = capture.StartCropAsync(cropView, window);
@@ -257,8 +257,10 @@ public class CaptureSessionControlTests
         var panel = new Panel();
         var cropView = CreateCropView();
         panel.Children.Add(cropView);
-        var window = new Window();
-        window.Content = panel;
+        var window = new Window
+        {
+            Content = panel
+        };
         window.Show();
 
         var task = capture.StartCropAsync(cropView, window);
@@ -302,8 +304,10 @@ public class CaptureSessionControlTests
         var panel = new Panel();
         var cropView = CreateCropView();
         panel.Children.Add(cropView);
-        var window = new Window();
-        window.Content = panel;
+        var window = new Window
+        {
+            Content = panel
+        };
         window.Show();
 
         var task = capture.StartCropAsync(cropView, window);
@@ -330,8 +334,10 @@ public class CaptureSessionControlTests
         var panel = new Panel();
         var cropView = CreateCropView();
         panel.Children.Add(cropView);
-        var window = new Window();
-        window.Content = panel;
+        var window = new Window
+        {
+            Content = panel
+        };
         window.Show();
 
         var task = capture.StartCropAsync(cropView, window);
@@ -358,8 +364,10 @@ public class CaptureSessionControlTests
         var panel = new Panel();
         var cropView = CreateCropView();
         panel.Children.Add(cropView);
-        var window = new Window();
-        window.Content = panel;
+        var window = new Window
+        {
+            Content = panel
+        };
         window.Show();
 
         var task = capture.StartCropAsync(cropView, window);

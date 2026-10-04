@@ -64,9 +64,10 @@ public class FadeMaskDragRectControlStateTests
     [InlineData(FadeMaskDragRectMode.AreaSelect)]
     internal void モード_画像未設定ではルーペを表示しない(FadeMaskDragRectMode mode)
     {
-        var control = new FadeMaskDragRectControl();
-
-        control.Mode = mode;
+        var control = new FadeMaskDragRectControl
+        {
+            Mode = mode
+        };
 
         Assert.False(control.Loupe.IsVisible);
     }
@@ -107,9 +108,10 @@ public class FadeMaskDragRectControlStateTests
     [AvaloniaFact]
     internal void 設定_枠線はハンドル枠と暗転マスクで共用される()
     {
-        var control = new FadeMaskDragRectControl();
-
-        control.Options = FadeMaskDragRectOptions.Default;
+        var control = new FadeMaskDragRectControl
+        {
+            Options = FadeMaskDragRectOptions.Default
+        };
         // 選択枠線（装飾の外枠）とハンドルの枠線は同じ矩形に重なるため、ホストが同じ色・太さを与える
         control.MarqueeAppearance = control.MarqueeAppearance with
         {

@@ -102,7 +102,7 @@ public sealed class MainWindowViewModel : ObservableObject
     /// </remarks>
     public void UpdateResultText(CaptureResult? result)
     {
-        if (result?.Image is { } image && result.SourceBounds is { } bounds)
+        if (result?.Image is { } && result.SourceBounds is { } bounds)
         {
             ResultText = $"領域: X={bounds.X}, Y={bounds.Y}, 幅={bounds.Width}, 高さ={bounds.Height}（仮想画面座標）";
             StatusText = "キャプチャが完了しました。";

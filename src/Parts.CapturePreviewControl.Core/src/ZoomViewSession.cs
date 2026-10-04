@@ -25,13 +25,15 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 /// <b>コア型のみに依存</b>: <see cref="EsPoint"/> / <see cref="EsVector"/> / <see cref="EsSize"/> / <see cref="EsRect"/> を使い、<br/>
 /// UI フレームワークへ依存しない（UI 初期化なしの <c>[Fact]</c> で並列検証できる）。
 /// </remarks>
-public sealed class ZoomViewSession
+/// <remarks>ズームビューの状態管理クラスを初期化する。</remarks>
+/// <param name="config">ズーム遷移の設定。 null の場合は <see cref="ZoomOptions.Default"/>。</param>
+public sealed class ZoomViewSession(ZoomOptions? config = null)
 {
     /// <summary>ロガー（null の場合は出力なし）。</summary>
     private ILogger? _log;
 
     /// <summary>ズーム遷移の設定（不変値）。</summary>
-    private ZoomOptions _config = ZoomOptions.Default;
+    private ZoomOptions _config = config ?? ZoomOptions.Default;
 
     /// <summary>ズームビューの外観（下地・市松模様・スクロールバー）。</summary>
     private ZoomViewAppearance _appearance = ZoomViewAppearance.Default;
@@ -77,10 +79,6 @@ public sealed class ZoomViewSession
 
     /// <summary>スクロールバーのドラッグ開始時のサム位置（トラック内の相対位置・DIP）。</summary>
     private double _scrollBarDragStartThumb;
-
-    /// <summary>ズームビューの状態管理クラスを初期化する。</summary>
-    /// <param name="config">ズーム遷移の設定。 null の場合は <see cref="ZoomOptions.Default"/>。</param>
-    public ZoomViewSession(ZoomOptions? config = null) => _config = config ?? ZoomOptions.Default;
 
     /// <summary>ズーム状態（実効ズーム率・Fit 状態・可否）が確定したときに送る通知。</summary>
     /// <remarks>UI 層は自 UI の公開イベントへ転送するだけにする（判断を持たない）。</remarks>

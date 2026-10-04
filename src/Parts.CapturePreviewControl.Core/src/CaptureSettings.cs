@@ -48,7 +48,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 /// <param name="DisplayScaleScaling">サイズラベル表示用のスケーリング（FadeMaskDragRectControl.DisplayScaleScaling・0 以下は ClientToSourceScaling と同値）。</param>
 /// <remarks>
 /// 全メンバーは nullable とする。<br/>
-    /// - 初期設定として使用する場合: null は本クラスの既定値（<see cref="ToNonNull"/> が埋める値）として扱う。<br/>
+/// - 初期設定として使用する場合: null は本クラスの既定値（<see cref="ToNonNull"/> が埋める値）として扱う。<br/>
 /// - 既存インスタンスへの設定適用（Settings プロパティの setter）の場合: null は現在の設定値を維持する（部分更新）。<br/>
 /// 内包コンポーネント（MarqueeControl / LoupeControl）が公開する外観設定を網羅する。<br/>
 /// 実行時状態（選択矩形・ハイライト矩形等）と Source / CenterPoint 等の入力は本型の対象外（セッションが管理）。
