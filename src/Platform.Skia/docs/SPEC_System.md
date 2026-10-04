@@ -1,6 +1,19 @@
 # Platform.Skia システム仕様書
 
-## 概要
+## 目次
+
+- [1. 概要](#1-概要)
+- [2. 技術スタック](#2-技術スタック)
+- [3. アーキテクチャ](#3-アーキテクチャ)
+- [4. コンポーネント構成](#4-コンポーネント構成)
+- [5. クラス図](#5-クラス図)
+- [6. データフロー（画像の描画）](#6-データフロー画像の描画)
+- [7. データフロー（コアのビットマップ生成）](#7-データフローコアのビットマップ生成)
+- [8. 例外処理ポリシー](#8-例外処理ポリシー)
+- [9. 可視性ポリシー](#9-可視性ポリシー)
+- [10. テスト](#10-テスト)
+
+## 1. 概要
 
 `Platform.Skia` は、**SkiaSharp への依存を 1 箇所へ閉じ込める**プラットフォーム層です。
 
@@ -11,7 +24,7 @@
 
 外部機能と公開 API は [SPEC_API](SPEC_API.md)、利用手順は [README](../README.md) を参照してください。
 
-## 技術スタック
+## 2. 技術スタック
 
 | 項目 | 内容 |
 | --- | --- |
@@ -23,7 +36,7 @@
 | ルート名前空間 | `EsUtil.SaveEvidence.Platform.Skia` |
 | 汎用性 | UI フレームワーク非依存（SkiaSharp には依存する） |
 
-## アーキテクチャ
+## 3. アーキテクチャ
 
 ```mermaid
 graph LR
@@ -41,7 +54,7 @@ graph LR
 - **`EsUtil.Platform.Core` は SkiaSharp を参照しません**（Skia 依存は本層で止まる）。
 - `EsBitmapSkiaExtensions` は `EsUtil.Platform.Core` の `EsBitmap` を拡張します。
 
-## コンポーネント構成
+## 4. コンポーネント構成
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
@@ -52,7 +65,7 @@ graph LR
 | `SkiaColorInterop.cs` | `public static class` | 色の相互変換 |
 | `SkiaGeometryInterop.cs` | `public static class` | 幾何の相互変換 |
 
-## クラス図
+## 5. クラス図
 
 ```mermaid
 classDiagram
@@ -98,7 +111,7 @@ classDiagram
   EsBitmapSkiaExtensions ..> SKBitmap : 生成・複製
 ```
 
-## データフロー（画像の描画）
+## 6. データフロー（画像の描画）
 
 ```mermaid
 sequenceDiagram
@@ -112,7 +125,7 @@ sequenceDiagram
   Note over E,SK: ビューはコピーしない（EsBitmap の生存中のみ有効）
 ```
 
-## データフロー（コアのビットマップ生成）
+## 7. データフロー（コアのビットマップ生成）
 
 ```mermaid
 sequenceDiagram
@@ -129,20 +142,7 @@ sequenceDiagram
   Note over SK: 引数の所有権は呼び出し側に残る（破棄しない）
 ```
 
-## 単一所有（Single Source of Truth）
-
-| 内容 | 所有者 |
-| --- | --- |
-| SkiaSharp への依存 | `Platform.Skia`（本プロジェクトだけが参照する） |
-| `EsBitmap` ⇔ `SKBitmap` の変換（所有権・寿命） | `EsBitmapSkiaExtensions` |
-| 矩形・角丸矩形の塗り | `SkiaFill` |
-| テキストの実寸測定・書体の解決 | `SkiaText` |
-| ラベル 1 件の描画順（背景 → 文字） | `SkiaLabel` |
-| 色・幾何の相互変換 | `SkiaColorInterop` / `SkiaGeometryInterop` |
-| コアのピクセルバッファとピクセル操作 | `EsBitmap`（`EsUtil.Platform.Core`） |
-| 画像配置の矩形計算 | `ImageDrawMath`（`Platform.MewUI`。 Skia を必要としないため本層に置かない） |
-
-## 例外処理ポリシー
+## 8. 例外処理ポリシー
 
 | 状況 | 挙動 |
 | --- | --- |
@@ -152,13 +152,13 @@ sequenceDiagram
 | `ToEsBitmap` の引数が null | `ArgumentNullException` |
 | `ToEsBitmap` のピクセルポインタが null | 複製せずに空のビットマップを返す（描画可能な状態を保つ） |
 
-## 可視性ポリシー
+## 9. 可視性ポリシー
 
 - 全型が `public` です。 MewUI 系の複数プロジェクトが同じ変換と描画の部品を使うためです。
 - `Platform.Skia.Tests` からのみ `internal` 型へアクセスできます（現在 `internal` 型はありません）。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。
 
-## テスト
+## 10. テスト
 
 ```text
 tests/

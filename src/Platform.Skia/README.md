@@ -2,7 +2,7 @@
 
 **SkiaSharp への依存を 1 箇所へ閉じ込める**プラットフォーム層です。
 
-## 目的
+## 1. 目的
 
 `EsUtil.Platform.Core` の判定基準は「**外部 PackageReference なし**（`.NET 標準ライブラリ` と Microsoft 公式パッケージは許容）」です。 SkiaSharp は外部パッケージであるため `EsUtil.Platform.Core` には置けません。
 
@@ -12,7 +12,7 @@
 - 色・幾何の相互変換（`DrawingColor` ⇔ `SKColor`、`EsRect` ⇔ `SKRect`）を単一所有する。
 - **描画の部品**（`SkiaFill` / `SkiaText` / `SkiaLabel`）を提供する。 描画の呼び出し（層の順序）は各 UI が行う（**描画 API の抽象は持たない**。 UI フレームワークごとの描画モデルの差は抽象では吸収しきれないため）。
 
-## 収録する型
+## 2. 収録する型
 
 | 型 | 内容 |
 | --- | --- |
@@ -23,7 +23,7 @@
 | `SkiaColorInterop` | `System.Drawing.Color` ⇔ `SKColor` の変換 |
 | `SkiaGeometryInterop` | `EsRect` ⇔ `SKRect`、`SKSizeI` ⇔ `EsSize` の変換 |
 
-## 依存関係
+## 3. 依存関係
 
 ```text
 EsUtil.Feature.Marquee.ControlMewUI / EsUtil.Feature.Loupe.ControlMewUI / Parts.CapturePreviewControl.MewUI / Parts.CapturePreviewControl.MewUI / App.MewUI
@@ -35,7 +35,7 @@ Platform.MewUI
 
 **本プロジェクトが SkiaSharp を参照する唯一の場所です。**
 
-## 主な API
+## 4. 主な API
 
 ```csharp
 // EsBitmap ⇔ SKBitmap（所有権はコア側に残る）
@@ -60,7 +60,7 @@ SkiaLabel.Draw(canvas, background, bgColor, text, origin, fontSize, textColor, c
 | `SkiaColorInterop.ToSKColor` / `ToDrawingColor` | 色の相互変換 |
 | `SkiaGeometryInterop.ToSKRect` / `ToEsSize` | 幾何の相互変換 |
 
-## 設計上の約束
+## 5. 設計上の約束
 
 1. **所有権は移動しない**: `ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製である。 コアのピクセルバッファの所有権は常に `EsBitmap` に残る（`EsBitmap` を破棄した後のビューは無効）。
 2. **ビューの寿命は `EsBitmap` の生存期間と一致する**: ピクセルをコピーしないため、`EsBitmap` 破棄後にビューを使うと解放済みメモリを読む。 コピーが必要な場合はビューへ `Copy()` を適用する。
@@ -68,7 +68,7 @@ SkiaLabel.Draw(canvas, background, bgColor, text, origin, fontSize, textColor, c
 4. **`SKBitmap` を確保先として使わない**: コアのビットマップは自前のバッファ（`NativeMemory.AlignedAlloc`）を持つ。 Skia は描画・変換の相手としてのみ関与する。
 5. **`ImageDrawMath` は本層に置かない**: 画像配置の矩形計算は純粋計算であり Skia を必要としないため本層に置かず、使う UI のアダプタ層（`Platform.MewUI`）が所有する（戻り値は `EsRect`）。
 
-## テスト
+## 6. テスト
 
 ```text
 tests/
@@ -87,6 +87,6 @@ UI 初期化（ウィンドウ）が不要なため、すべて `[Fact]` / `[The
 dotnet test src/Platform.Skia/tests/Platform.Skia.Tests.csproj
 ```
 
-## ライセンス
+## 7. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

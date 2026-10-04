@@ -2,29 +2,27 @@
 
 ## 目次
 
-- [Parts.CapturePreviewControl.AvaloniaUI](#partscapturepreviewcontrolavaloniaui)
-  - [目次](#目次)
-  - [1. 概要](#1-概要)
-  - [2. 機能一覧](#2-機能一覧)
-  - [3. システム要件](#3-システム要件)
-  - [4. インストール](#4-インストール)
-  - [5. クイックスタート](#5-クイックスタート)
-    - [キャプチャ（ScreenSelect / WindowSelect / AreaSelect）](#キャプチャscreenselect--windowselect--areaselect)
-    - [切出し（Crop）](#切出しcrop)
-    - [ズーム（切り出しビューの内部ビューポート）](#ズーム切り出しビューの内部ビューポート)
-    - [設定の適用](#設定の適用)
-    - [キャンセル / 確定](#キャンセル--確定)
-  - [6. 動作フロー](#6-動作フロー)
-    - [StartCaptureAsync](#startcaptureasync)
-    - [StartCropAsync](#startcropasync)
-  - [7. 収録コントロール](#7-収録コントロール)
-    - [7.1 CropViewControl（切り出しビュー）](#71-cropviewcontrol切り出しビュー)
-    - [7.2 FadeMaskDragRectControl（領域選択）](#72-fademaskdragrectcontrol領域選択)
-    - [7.3 ZoomViewControl（切り出しビューの画像ビューポート）](#73-zoomviewcontrol切り出しビューの画像ビューポート)
-  - [8. 依存関係](#8-依存関係)
-  - [9. ドキュメント](#9-ドキュメント)
-  - [10. プロジェクト構成](#10-プロジェクト構成)
-  - [11. ライセンス](#11-ライセンス)
+- [1. 概要](#1-概要)
+- [2. 機能一覧](#2-機能一覧)
+- [3. システム要件](#3-システム要件)
+- [4. インストール](#4-インストール)
+- [5. クイックスタート](#5-クイックスタート)
+  - [5.1 キャプチャ（ScreenSelect / WindowSelect / AreaSelect）](#51-キャプチャscreenselect--windowselect--areaselect)
+  - [5.2 切出し（Crop）](#52-切出しcrop)
+  - [5.3 ズーム（切り出しビューの内部ビューポート）](#53-ズーム切り出しビューの内部ビューポート)
+  - [5.4 設定の適用](#54-設定の適用)
+  - [5.5 キャンセル / 確定](#55-キャンセル--確定)
+- [6. 動作フロー](#6-動作フロー)
+  - [6.1 StartCaptureAsync](#61-startcaptureasync)
+  - [6.2 StartCropAsync](#62-startcropasync)
+- [7. 収録コントロール](#7-収録コントロール)
+  - [7.1 CropViewControl（切り出しビュー）](#71-cropviewcontrol切り出しビュー)
+  - [7.2 FadeMaskDragRectControl（領域選択）](#72-fademaskdragrectcontrol領域選択)
+  - [7.3 ZoomViewControl（切り出しビューの画像ビューポート）](#73-zoomviewcontrol切り出しビューの画像ビューポート)
+- [8. 依存関係](#8-依存関係)
+- [9. ドキュメント](#9-ドキュメント)
+- [10. プロジェクト構成](#10-プロジェクト構成)
+- [11. ライセンス](#11-ライセンス)
 
 ---
 
@@ -72,7 +70,7 @@ using ${S}AvaloniaUI;
 
 ## 5. クイックスタート
 
-### キャプチャ（ScreenSelect / WindowSelect / AreaSelect）
+### 5.1 キャプチャ（ScreenSelect / WindowSelect / AreaSelect）
 
 ```csharp
 var capture = new CaptureSessionControl(); // 既定設定
@@ -85,7 +83,7 @@ if (result?.Image is { } image)
 }
 ```
 
-### 切出し（Crop）
+### 5.2 切出し（Crop）
 
 ```csharp
 // 切り出しの対象画像は、プレビューが表示している画像（previewControl.Source）から解決される
@@ -98,7 +96,7 @@ if (cropRect is { } rect && rect.Width > 0 && rect.Height > 0)
 }
 ```
 
-### ズーム（切り出しビューの内部ビューポート）
+### 5.3 ズーム（切り出しビューの内部ビューポート）
 
 切り出しビュー（`CropViewControl`）は画像ビューポート（`ZoomViewControl`）を内包し、ズーム操作を委譲します。 ホストは `CropViewControl` の `Source` を設定し、`ZoomChanged` / `ViewportChanged` を購読します。
 
@@ -119,7 +117,7 @@ cropView.ZoomFit();           // Fit 表示（ビューポートに収まる Uni
 
 ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）は `Parts.CapturePreviewControl.Core` の `ZoomOptions`（検証付き不変値）に集約され、既定は 10〜500% の 23 段階・ホイール ×1.1 です（`CropViewControl` は既定値を使用します）。
 
-### 設定の適用
+### 5.4 設定の適用
 
 ```csharp
 var capture = new CaptureSessionControl(new CaptureSettings
@@ -133,7 +131,7 @@ var capture = new CaptureSessionControl(new CaptureSettings
 capture.AppearanceSettings = capture.AppearanceSettings with { LoupeOffset = 24.0 };
 ```
 
-### キャンセル / 確定
+### 5.5 キャンセル / 確定
 
 ```csharp
 capture.Cancel();   // 進行中セッションをキャンセル（0x0 の空結果で完了）
@@ -143,7 +141,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 ## 6. 動作フロー
 
-### StartCaptureAsync
+### 6.1 StartCaptureAsync
 
 1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出（0 以下は 1.0 へ正規化）
 2. `SelectionCaptureSession` を生成（Platform.AvaloniaUI からサービスを注入）
@@ -156,7 +154,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 7. **確定時: 事前切り出しキャッシュを再利用**（不一致時のみ切り出し）
 8. 結果を `CaptureResult` で返却 → `CaptureCompleted`（画像変更） → オーナー再表示 → 除外解除
 
-### StartCropAsync
+### 6.2 StartCropAsync
 
 1. 切り出しの対象画像は `CropViewControl` が表示している画像（`CropViewControl.Source`）から解決する（画像を引数で受け取らない）。 画像が未設定・表示アダプタ（`EsBitmapAvaloniaImage`）以外の場合は開始しない（結果 null）→ 開始できた場合は `CropSession` を生成 → `RunAsync`
 2. **FadeMaskDragRectControl**（Marquee + Loupe の配線を内包する複合コントロール。 暗転マスクは Marquee の外側の装飾）を `CropViewControl.Rects` へ配置する

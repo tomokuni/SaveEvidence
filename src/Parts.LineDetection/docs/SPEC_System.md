@@ -4,17 +4,17 @@
 
 ## 目次
 
-- [Parts.LineDetection システム仕様書](#partslinedetection-システム仕様書)
-  - [目次](#目次)
-  - [1. システム概要](#1-システム概要)
-  - [2. 技術スタック](#2-技術スタック)
-  - [3. アーキテクチャ](#3-アーキテクチャ)
-  - [4. コンポーネント構成](#4-コンポーネント構成)
-  - [5. 依存関係](#5-依存関係)
-  - [6. 検出アルゴリズム](#6-検出アルゴリズム)
-    - [6.1. ロジック方式（LogicLineDetector）](#61-ロジック方式logiclinedetector)
-      - [主な内部処理](#主な内部処理)
-  - [7. 例外処理ポリシー](#7-例外処理ポリシー)
+- [1. システム概要](#1-システム概要)
+- [2. 技術スタック](#2-技術スタック)
+- [3. アーキテクチャ](#3-アーキテクチャ)
+- [4. コンポーネント構成](#4-コンポーネント構成)
+- [5. 依存関係](#5-依存関係)
+  - [5.1 ネイティブの構成（slim プロファイル）](#51-ネイティブの構成slim-プロファイル)
+  - [5.2 名前空間](#52-名前空間)
+- [6. 検出アルゴリズム](#6-検出アルゴリズム)
+  - [6.1 ロジック方式（LogicLineDetector）](#61-ロジック方式logiclinedetector)
+    - [6.1.1 主な内部処理](#611-主な内部処理)
+- [7. 例外処理ポリシー](#7-例外処理ポリシー)
 
 ---
 
@@ -89,7 +89,7 @@ flowchart TB
 
 本プロジェクトは **UI フレームワーク非依存**です（依存は `EsUtil.Platform.Core` と OpenCvSharp のみ。 Avalonia への依存なし）。 座標はコア型（`EsPoint` / `EsRectInt`）で公開し、UI 側は境界で各 UI の型へ変換します。
 
-### ネイティブの構成（slim プロファイル）
+### 5.1 ネイティブの構成（slim プロファイル）
 
 使用する OpenCV API は `imgproc`（`CvtColor` / `Canny` / `HoughLinesP`）と `imgcodecs`（テストの `ImRead`）だけで、動画入出力（`videoio` の `VideoCapture` / `VideoWriter`）を使いません。 そのためネイティブは `OpenCvSharp5.runtime.win.slim` を参照します。
 
@@ -100,7 +100,7 @@ flowchart TB
 
 slim が無効化するモジュール（`videoio` / `video` / `dnn` / `ml` / `highgui` / `contrib` / `stitching` / `barcode`）は本プロジェクトでは使用しません。
 
-### 名前空間
+### 5.2 名前空間
 
 UI 非依存のアセンブリは `EsUtil.*`（`EsUtil.Platform.Core.*` 等）に置く方針のため、名前空間は `EsUtil.SaveEvidence.Parts.LineDetection` とし、プロジェクトとアセンブリは `Parts.LineDetection` とする（アセンブリ名はフォルダ名と一致させる規則による）。
 
@@ -108,7 +108,7 @@ UI 非依存のアセンブリは `EsUtil.*`（`EsUtil.Platform.Core.*` 等）�
 
 ## 6. 検出アルゴリズム
 
-### 6.1. ロジック方式（LogicLineDetector）
+### 6.1 ロジック方式（LogicLineDetector）
 
 ```text
 EsBitmap (BGRA8888)
@@ -124,7 +124,7 @@ EsBitmap (BGRA8888)
   → 矩形を構成できない場合は、フィルタ済みの線分リストを出力
 ```
 
-#### 主な内部処理
+#### 6.1.1 主な内部処理
 
 - **クラスタリング**（`MergeCollinearAll`）: 同一垂直座標の断片を広いギャップ（`RectMergeGap=200`）で連結します。
 - **枠の外側の境界への補正**（`SnapToEdgeByGradient`）: 元画像の輝度プロファイルから枠線コアを求め、外側の境界（排他座標）を返します。

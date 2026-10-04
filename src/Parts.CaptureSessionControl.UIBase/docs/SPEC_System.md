@@ -1,6 +1,19 @@
 # Parts.CaptureSessionControl.UIBase システム仕様書
 
-## 概要
+## 目次
+
+- [1. 概要](#1-概要)
+- [2. 技術スタック](#2-技術スタック)
+- [3. アーキテクチャ](#3-アーキテクチャ)
+  - [3.1 本層を置く理由](#31-本層を置く理由)
+- [4. コンポーネント構成](#4-コンポーネント構成)
+- [5. クラス図](#5-クラス図)
+- [6. データフロー](#6-データフロー)
+- [7. 例外処理ポリシー](#7-例外処理ポリシー)
+- [8. 可視性ポリシー](#8-可視性ポリシー)
+- [9. テスト](#9-テスト)
+
+## 1. 概要
 
 `Parts.CaptureSessionControl.UIBase` は、拠影・切り出しのセッションを実装する両 UI が共有する**設定写像と複合コントロールの共有処理**を提供します。 対象は次の 3 つです。
 
@@ -12,7 +25,7 @@
 
 外部機能と公開 API は [SPEC_API](SPEC_API.md)、利用手順は [README](../README.md) を参照してください。
 
-## 技術スタック
+## 2. 技術スタック
 
 | 項目 | 内容 |
 | --- | --- |
@@ -24,7 +37,7 @@
 | ルート名前空間 | `EsUtil.SaveEvidence.Parts.CaptureSession.UIBase` |
 | 汎用性 | 特定の UI に依存しない。 UI フレームワークを参照しない |
 
-## アーキテクチャ
+## 3. アーキテクチャ
 
 ```mermaid
 graph LR
@@ -39,7 +52,7 @@ graph LR
 
 依存の向きは **UI → UIBase（本層）→ Core / 各提示層の設定**の一方向です。 逆向きの参照はありません。
 
-### 本層を置く理由
+### 3.1 本層を置く理由
 
 | 置き場所の候補 | 可否 | 理由 |
 | --- | --- | --- |
@@ -47,16 +60,16 @@ graph LR
 | 再利用ライブラリ | 不可 | 写像元が製品の設定型（`CaptureSettings`）のため、再利用ライブラリが製品設定へ依存する |
 | `Parts.CaptureSessionControl.UIBase`（本層） | 採用 | セッションの設定と両 UI の中間にあり、両 UI のホストが同じ写像・同じ組み立てを共有できる |
 
-## コンポーネント構成
+## 4. コンポーネント構成
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `CapturePaintMapper.cs` | `internal static class` | `CaptureSettings` → `MarqueeAppearance` / `LoupeAppearance` の写像 |
-| `FadeMaskDragRectChildValues.cs` | `public readonly record struct` | 設定とモードから内包コントロールへ適用する値の解決 |
-| `FadeMaskHostLabelRenderer.cs` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示の解決 |
-| `MarqueeHostLabelRenderer.cs` | `public static class` | ラベル 1 行の体裁（背景の寸法）の配置指示の解決 |
+| `CapturePaintMapper.cs` | `internal static class` | `CaptureSettings` → `MarqueeAppearance` / `LoupeAppearance` の**色**の写像（**唯一の所有者**。 写像が 1 箇所に閉じるため、両 UI のホストが同じ写像を使うことが構造的に保証される） |
+| `FadeMaskDragRectChildValues.cs` | `public readonly record struct` | 設定とモードから内包コントロールへ適用する**寸法・表示可否**の解決（**唯一の所有者**。 モードの判断はコアが持つ） |
+| `FadeMaskHostLabelRenderer.cs` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示の解決（**唯一の所有者**。 積み上げ位置と表示可否を含む） |
+| `MarqueeHostLabelRenderer.cs` | `public static class` | ラベル 1 行の体裁（背景の寸法）の配置指示の解決（**唯一の所有者**） |
 
-## クラス図
+## 5. クラス図
 
 ```mermaid
 classDiagram
@@ -81,7 +94,7 @@ classDiagram
   FadeMaskDragRectChildValues ..> FadeMaskDragRectModes : モードの判断を委譲
 ```
 
-## データフロー
+## 6. データフロー
 
 ```mermaid
 sequenceDiagram
@@ -99,23 +112,7 @@ sequenceDiagram
   Note over Host,UI: 寸法と色は別の経路で渡る（所有者が違うため）
 ```
 
-## 単一所有（Single Source of Truth）
-
-| 内容 | 所有者 |
-| --- | --- |
-| 設定から**寸法・表示可否**への写像 | `FadeMaskDragRectOptionsMapper`（`Parts.CapturePreviewControl.Core`） |
-| 設定から**色**への写像 | `CapturePaintMapper`（本層） |
-| 設定とモードから子コントロールへ適用する値 | `FadeMaskDragRectChildValues`（本層） / モードの判断は `FadeMaskDragRectModes`（コア） |
-| 付加情報ラベルの積み上げ位置と表示可否 | `FadeMaskHostLabelRenderer`（本層） |
-| ラベル 1 行の体裁（背景の寸法） | `MarqueeHostLabelRenderer`（本層） / 内側余白の値は `MarqueeAppearance`（提示層） |
-| 色の値と既定値 | `MarqueeAppearance` / `LoupeAppearance`（各提示層） |
-| 描画の可否 | `MarqueeAppearance` の明示フラグ（提示層） |
-| 枠線の色（選択枠線と外枠で共通） | 設定の `BorderColor` 1 項目 |
-
-**写像漏れの防止**: 写像は 1 箇所（`CapturePaintMapper`）に集約されています。 両 UI のホストが同じ写像を使うことが
-構造的に保証されます。
-
-## 例外処理ポリシー
+## 7. 例外処理ポリシー
 
 | 状況 | 挙動 |
 | --- | --- |
@@ -124,7 +121,7 @@ sequenceDiagram
 
 本層は外部 I/O・非同期処理・リソース解放を持ちません。
 
-## 可視性ポリシー
+## 8. 可視性ポリシー
 
 - **写像（`CapturePaintMapper`）は `internal`**。 両 UI のホストが使う内部処理のためです。
 - **複合コントロールの共有処理（`FadeMaskDragRectChildValues` / `FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`）は `public`**。 UIBase を参照する側（複合コントロールの UI 実装）が直接使うためです。
@@ -132,7 +129,7 @@ sequenceDiagram
   `Parts.CaptureSessionControl.UIBase.Tests`）で公開します。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。
 
-## テスト
+## 9. テスト
 
 ```text
 tests/

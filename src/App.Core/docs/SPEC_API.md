@@ -2,7 +2,32 @@
 
 `App.Core` は UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供します。 名前空間は `App.AvaloniaUI` と同一の `EsUtil.SaveEvidence.*` です。
 
-## 公開 API の可視性
+## 目次
+
+- [1. 公開 API の可視性](#1-公開-api-の可視性)
+- [2. `Enums.AppPage`（列挙型）](#2-enumsapppage列挙型)
+- [3. `Enums.ThemeMode`（列挙型）](#3-enumsthememode列挙型)
+- [4. `Models.Settings`（クラス）](#4-modelssettingsクラス)
+- [5. `Services.ISettingsService` / `Services.SettingsService`（クラス）](#5-servicesisettingsservice--servicessettingsserviceクラス)
+- [6. `Services.EsRectIntJsonConverter`（内部・クラス）](#6-servicesesrectintjsonconverter内部クラス)
+- [7. `Services.IImageWriter`（インターフェース）](#7-servicesiimagewriterインターフェース)
+- [8. `Models.FileNameTemplate`（静的クラス）](#8-modelsfilenametemplate静的クラス)
+  - [8.1 テンプレートの書式](#81-テンプレートの書式)
+- [9. `Models.UndoHistory`（クラス）](#9-modelsundohistoryクラス)
+- [10. `Models.HotKeyParser`（静的クラス）](#10-modelshotkeyparser静的クラス)
+- [11. `Models.CapacityLimitedCache`（内部・静的クラス）](#11-modelscapacitylimitedcache内部静的クラス)
+- [12. `Models.ImageFileExtensions`（内部・静的クラス）](#12-modelsimagefileextensions内部静的クラス)
+- [13. `ViewModels.ViewModeDisplay`（内部・静的クラス）](#13-viewmodelsviewmodedisplay内部静的クラス)
+- [14. `ViewModels.FolderViewViewModel`（クラス）](#14-viewmodelsfolderviewviewmodelクラス)
+- [15. `ViewModels.UndoViewModel`（クラス）](#15-viewmodelsundoviewmodelクラス)
+- [16. `ViewModels.MainViewModel`（クラス）](#16-viewmodelsmainviewmodelクラス)
+  - [16.1 コンストラクター](#161-コンストラクター)
+  - [16.2 主なプロパティ](#162-主なプロパティ)
+  - [16.3 主な操作](#163-主な操作)
+  - [16.4 UI 依存の注入点](#164-ui-依存の注入点)
+- [17. 依存関係](#17-依存関係)
+
+## 1. 公開 API の可視性
 
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
@@ -16,15 +41,15 @@
 | `ViewModels.ViewModeDisplay` | `internal` | 同上 |
 | `ViewModels.FolderViewViewModel` / `ViewModels.UndoViewModel` / `ViewModels.MainViewModel` | `public` | 任意 |
 
-## `Enums.AppPage`（列挙型）
+## 2. `Enums.AppPage`（列挙型）
 
 ナビゲーションページの識別子（`Capture` / `FolderView` / `Undo` / `Settings`）。
 
-## `Enums.ThemeMode`（列挙型）
+## 3. `Enums.ThemeMode`（列挙型）
 
 テーマモード。 各メンバーは `System.ComponentModel.DescriptionAttribute` で表示名を保持します。
 
-## `Models.Settings`（クラス）
+## 4. `Models.Settings`（クラス）
 
 アプリケーションの設定を表すデータモデルです（`ObservableObject` を継承し、`[ObservableProperty]` で変更通知を発行）。
 
@@ -40,7 +65,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `IsNavigationExpanded` | `bool` | ナビゲーションパネルの展開状態 |
 | `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | フォルダビューのアイコンサイズ |
 
-## `Services.ISettingsService` / `Services.SettingsService`（クラス）
+## 5. `Services.ISettingsService` / `Services.SettingsService`（クラス）
 
 設定の読み書きを提供します。 保存先は `%LOCALAPPDATA%\SaveEvidence\settings.json` です。
 
@@ -58,14 +83,14 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 > **トリミング / Native AOT**: コンテキストを注入しないと設定が空（`{}`）になります。 コンテキストは `Settings` を参照する側のアセンブリに置いてください（同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
 
-## `Services.EsRectIntJsonConverter`（内部・クラス）
+## 6. `Services.EsRectIntJsonConverter`（内部・クラス）
 
 `EsRectInt` は読み取り専用プロパティ（`Right` 等）を持つため、専用コンバーターで `X` / `Y` / `Width` / `Height` のみを読み書きします。
 
 - 読み込み時に欠落したプロパティは 0、未知のプロパティは無視します。
 - 既存の設定ファイルをそのまま読み込めます。
 
-## `Services.IImageWriter`（インターフェース）
+## 7. `Services.IImageWriter`（インターフェース）
 
 画像（`EsBitmap`）をファイルへ書き込むサービスの抽象です。
 
@@ -76,7 +101,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 - UI フレームワーク非依存（`EsBitmap` のみに依存）です。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードします。
 - テストではモックに差し替え、ヘッドレス不要で検証できます。
 
-## `Models.FileNameTemplate`（静的クラス）
+## 8. `Models.FileNameTemplate`（静的クラス）
 
 | メソッド | 説明 |
 | --- | --- |
@@ -86,7 +111,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 日時を引数（`now`）で受け取るのは、呼び出し側が時刻を固定して結果を再現できるようにするためです（本番の呼び出しは現在日時を使います）。
 
-### テンプレートの書式
+### 8.1 テンプレートの書式
 
 | 記法 | 意味 |
 | --- | --- |
@@ -94,7 +119,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `{yyyy}` `{MM}` `{dd}` `{HH}` `{mm}` `{ss}` | 個別の日時トークン |
 | `{{` / `}}` | リテラルの `{` / `}` |
 
-## `Models.UndoHistory`（クラス）
+## 9. `Models.UndoHistory`（クラス）
 
 | メンバー | 説明 |
 | --- | --- |
@@ -109,7 +134,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 - スレッドセーフではありません（UI スレッドからのみ操作します）。
 
-## `Models.HotKeyParser`（静的クラス）
+## 10. `Models.HotKeyParser`（静的クラス）
 
 | メソッド | 説明 |
 | --- | --- |
@@ -119,13 +144,13 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 - 最低 1 つの修飾キーが必要です。 キー名が解釈できない場合は false を返します。
 - **キーは正規化してから採用します**（`EsKeyExtensions.Normalize`）。 文字列からの解釈は `Enum.TryParse` を使うため**数値文字列を受理してしまい**、列挙に無い値（例: `"999"`）がキーとして通ります。 正規化で未定義値を拒否します。
 
-## `Models.CapacityLimitedCache`（内部・静的クラス）
+## 11. `Models.CapacityLimitedCache`（内部・静的クラス）
 
 | メソッド | 説明 |
 | --- | --- |
 | `GetOrAdd<TKey, TValue>(ConcurrentDictionary<TKey, TValue> cache, int capacity, TKey key, Func<TKey, TValue> factory)` | キャッシュに値を取得または追加する。 容量超過時はキャッシュ全体をクリアして肥大化を防ぐ |
 
-## `Models.ImageFileExtensions`（内部・静的クラス）
+## 12. `Models.ImageFileExtensions`（内部・静的クラス）
 
 フォルダビューの一覧に含める画像ファイルの拡張子判定。 判定は拡張子のみで行い、大文字・小文字は区別しません。
 
@@ -136,7 +161,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 - 拡張子の抽出には `Path.GetExtension` を使用するため、`.png` のようにドットで始まる名前も画像として扱われます（末尾のドット `a.` は空文字のため対象外）。
 
-## `ViewModels.ViewModeDisplay`（内部・静的クラス）
+## 13. `ViewModels.ViewModeDisplay`（内部・静的クラス）
 
 | メンバー | 説明 |
 | --- | --- |
@@ -145,7 +170,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `ClampIndex(int index)` | 表示モードのインデックスを有効範囲へクランプする |
 | `GetItemCountText(int count)` | 件数の表示文字列を返す |
 
-## `ViewModels.FolderViewViewModel`（クラス）
+## 14. `ViewModels.FolderViewViewModel`（クラス）
 
 フォルダビューの表示モード・ソート順の状態を保持し、変更を通知します（`ObservableObject`）。
 
@@ -156,7 +181,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `IsSortAscending` / `SortStatusText` | ソート順（昇順 / 降順）と表示文字列 |
 | `FolderPathText` | フォルダパスの表示文字列 |
 
-## `ViewModels.UndoViewModel`（クラス）
+## 15. `ViewModels.UndoViewModel`（クラス）
 
 Undo 一覧の表示モード状態を保持し、変更を通知します（`ObservableObject`）。
 
@@ -165,11 +190,11 @@ Undo 一覧の表示モード状態を保持し、変更を通知します（`Ob
 | `ItemCount` / `ItemCountText` | 項目数と表示文字列 |
 | `SelectedViewModeIndex` / `ViewModeText` | 表示モードのインデックスと表示文字列 |
 
-## `ViewModels.MainViewModel`（クラス）
+## 16. `ViewModels.MainViewModel`（クラス）
 
 メイン画面の状態を保持し、コマンドと変更通知を提供します（`ObservableObject` + `[RelayCommand]` / `[ObservableProperty]`）。
 
-### コンストラクター
+### 16.1 コンストラクター
 
 ```csharp
 public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
@@ -177,7 +202,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 `IImageWriter` は UI 実装を注入します（Avalonia 版は `App.AvaloniaUI` の `AvaloniaImageWriter`。 `Program.cs` の DI で登録）。 既定実装の自動生成は行いません（UI 非依存を保つため）。
 
-### 主なプロパティ
+### 16.2 主なプロパティ
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
@@ -196,7 +221,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `NavPanelWidth` / `IsNavigationExpanded` | `double` / `bool` | ナビパネル |
 | `ThemeModes` | `IReadOnlyList<ThemeMode>` | テーマモードの選択肢 |
 
-### 主な操作
+### 16.3 主な操作
 
 | メンバー | 説明 |
 | --- | --- |
@@ -207,7 +232,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。 両 UI のホバー強調と確定・キャンセル判定が共用する |
 | `CopyToClipboard()` / `PasteFromClipboard()` | クリップボード操作（実体はコールバックへ委譲） |
 
-### UI 依存の注入点
+### 16.4 UI 依存の注入点
 
 | メンバー | 型 | 既定 |
 | --- | --- | --- |
@@ -217,7 +242,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `BeforeEditAction` | `Action?` | null |
 | `StartSelectionMode` | `Action<CaptureType>?` | null |
 
-## 依存関係
+## 17. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

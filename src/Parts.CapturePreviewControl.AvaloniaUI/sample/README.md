@@ -2,14 +2,13 @@
 
 ## 目次
 
-- [Parts.CapturePreviewControl.AvaloniaUI サンプルアプリケーション](#partscapturepreviewcontrolavaloniaui-サンプルアプリケーション)
-  - [目次](#目次)
-  - [1. 概要](#1-概要)
-  - [2. 実行方法](#2-実行方法)
-  - [3. 操作方法](#3-操作方法)
-  - [4. キャプチャ操作の流れ](#4-キャプチャ操作の流れ)
-  - [5. プロジェクト構成](#5-プロジェクト構成)
-  - [6. 検証項目（動作確認チェックリスト）](#6-検証項目動作確認チェックリスト)
+- [1. 概要](#1-概要)
+- [2. 実行方法](#2-実行方法)
+  - [2.1 バッチファイル（リリースビルド＆起動）](#21-バッチファイルリリースビルド起動)
+- [3. 操作方法](#3-操作方法)
+- [4. キャプチャ操作の流れ](#4-キャプチャ操作の流れ)
+- [5. プロジェクト構成](#5-プロジェクト構成)
+- [6. 検証項目（動作確認チェックリスト）](#6-検証項目動作確認チェックリスト)
 
 ---
 
@@ -41,7 +40,7 @@ dotnet run --project src/Parts.CapturePreviewControl.AvaloniaUI/sample/Parts.Cap
 dotnet run -c Release --project src/Parts.CapturePreviewControl.AvaloniaUI/sample/Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj
 ```
 
-### バッチファイル（リリースビルド＆起動）
+### 2.1 バッチファイル（リリースビルド＆起動）
 
 `src/Parts.CapturePreviewControl.AvaloniaUI/sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
 
@@ -99,7 +98,7 @@ Parts.CapturePreviewControl.AvaloniaUI/sample/
     └── MainWindow.axaml.cs     # CaptureSessionControl の呼び出し・結果反映・ダミー画像生成
 ```
 
-プレビューのズーム・パンは `Views/MainWindow.axaml(.cs)`（⊖ / ⊕ / Fit・拡大率スライダ・中央寄せ・ポインタ座標）と `ViewModels/MainWindowViewModel.cs`（`ZoomPercent` / `ZoomDisplayText` / `CenterAlign`）が担い、実体は `CropViewControl` が内包する画像ビューポート（`Parts.CapturePreviewControl.Core` の設定）に委譲します。
+プレビューのズーム・パンは `src/Parts.CapturePreviewControl.AvaloniaUI/sample/Views/MainWindow.axaml`（とコードビハインドの `.axaml.cs`。 ⊖ / ⊕ / Fit・拡大率スライダ・中央寄せ・ポインタ座標）と `src/Parts.CapturePreviewControl.AvaloniaUI/sample/ViewModels/MainWindowViewModel.cs`（`ZoomPercent` / `ZoomDisplayText` / `CenterAlign`）が担い、実体は `CropViewControl` が内包する画像ビューポート（`Parts.CapturePreviewControl.Core` の設定）に委譲します。
 
 ## 6. 検証項目（動作確認チェックリスト）
 

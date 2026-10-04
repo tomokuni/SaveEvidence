@@ -4,23 +4,21 @@
 
 ## 目次
 
-- [ColorPickerControl.AvaloniaUI](#colorpickercontrolavaloniaui)
-  - [目次](#目次)
-  - [1. 概要](#1-概要)
-  - [2. 機能一覧](#2-機能一覧)
-  - [3. システム要件](#3-システム要件)
-  - [4. インストール](#4-インストール)
-  - [5. クイックスタート](#5-クイックスタート)
-    - [AXAML](#axaml)
-    - [Code-behind](#code-behind)
-  - [6. 入力動作](#6-入力動作)
-  - [7. ColorView テーマ（ホストが取り込む）](#7-colorview-テーマホストが取り込む)
-  - [8. プラットフォーム](#8-プラットフォーム)
-  - [9. サンプル](#9-サンプル)
-  - [10. ドキュメント](#10-ドキュメント)
-  - [11. アーキテクチャ](#11-アーキテクチャ)
-  - [12. プロジェクト構成](#12-プロジェクト構成)
-  - [13. ライセンス](#13-ライセンス)
+- [1. 概要](#1-概要)
+- [2. 機能一覧](#2-機能一覧)
+- [3. システム要件](#3-システム要件)
+- [4. インストール](#4-インストール)
+- [5. クイックスタート](#5-クイックスタート)
+  - [5.1 AXAML](#51-axaml)
+  - [5.2 Code-behind](#52-code-behind)
+- [6. 入力動作](#6-入力動作)
+- [7. ColorView テーマ（ホストが取り込む）](#7-colorview-テーマホストが取り込む)
+- [8. プラットフォーム](#8-プラットフォーム)
+- [9. サンプル](#9-サンプル)
+- [10. ドキュメント](#10-ドキュメント)
+- [11. アーキテクチャ](#11-アーキテクチャ)
+- [12. プロジェクト構成](#12-プロジェクト構成)
+- [13. ライセンス](#13-ライセンス)
 
 ---
 
@@ -61,7 +59,7 @@ using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
 ## 5. クイックスタート
 
-### AXAML
+### 5.1 AXAML
 
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
@@ -74,7 +72,7 @@ using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 </Window>
 ```
 
-### Code-behind
+### 5.2 Code-behind
 
 ```csharp
 using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;

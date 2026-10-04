@@ -506,6 +506,147 @@ foreach ($f in $docs) {
 Add-Result '文書の型参照' ($typeRefIssues.Count -eq 0) "$($typeRefIssues.Count) 件"
 $typeRefIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
+# 8f) 文書の体裁（規約 §6・§7）
+#     - `docs/SPEC_*.md` は見出しへ番号を付け、冒頭へ `## 目次` を置く（README は番号のみ。 目次は任意）。
+#     - 番号は階層を表す（`##` = `<連番>` + ピリオド / `###` = `<親>.<連番>` / `####` = `<親>.<連番>.<連番>`）。
+#     - 目次は `##` 以下の見出しだけを、**番号付きの文言**と一致するアンカーで列挙する
+#       （見出しを足したのに目次を直していない状態は、markdownlint の MD051 では見つからない）。
+#     - `SPEC_System.md` へ「単一所有」「移行の経緯」等の独立した章を設けない（規約 §6）。
+function Get-MdHeadings([string]$Path) {
+    $lines = [IO.File]::ReadAllLines($Path, $enc)
+    $result = [System.Collections.Generic.List[object]]::new()
+    $inFence = $false
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i].StartsWith('```')) { $inFence = -not $inFence; continue }
+        if ($inFence) { continue }
+        if ($lines[$i] -match '^(#{1,6}) (.+)$') {
+            $result.Add([pscustomobject]@{ Line = $i + 1; Level = $Matches[1].Length; Text = $Matches[2] })
+        }
+    }
+    return ,$result
+}
+
+function Get-MdSlug([string]$Text) {
+    $s = [regex]::Replace($Text, '[^\p{L}\p{M}\p{Nd}\p{Pc}\- ]', '')
+    return ($s.ToLowerInvariant() -replace '\s', '-')
+}
+
+$rxHeadingNumber = [regex]'^(\d+(?:\.\d+)*)(\.?)\s+(.+)$'
+$rxForbiddenChapter = [regex]'移行|経緯|変更履歴|最適化|単一所有|以前は|旧仕様|旧名'
+$rxTocItem = [regex]'^\s*- '
+$styleIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in $docs) {
+    $name = [IO.Path]::GetFileName($f.FullName)
+    $isSpec = $f.FullName -match '[\\/]docs[\\/]SPEC_[^\\/]+\.md$'
+    if (-not $isSpec -and $name -ne 'README.md') { continue }
+    $isSystem = $f.FullName -match '[\\/]docs[\\/]SPEC_System\.md$'
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $headings = Get-MdHeadings $f.FullName
+    if (@($headings | Where-Object { $_.Level -eq 1 }).Count -ne 1) { $styleIssues.Add(("{0}  H1 が 1 件でない" -f $rel)); continue }
+
+    $expectedToc = [System.Collections.Generic.List[string]]::new()
+    $counters = @{}
+    foreach ($h in $headings) {
+        if ($h.Level -eq 1) { continue }
+        if ($h.Level -eq 2 -and $h.Text -eq '目次') { continue }
+        if ($isSystem -and $rxForbiddenChapter.IsMatch($h.Text)) {
+            $styleIssues.Add(("{0}:{1}  規約 §6 が禁じる章（独立性の高い章を設けない）: {2}" -f $rel, $h.Line, $h.Text))
+        }
+        if ($h.Level -gt 4) { $styleIssues.Add(("{0}:{1}  見出しの階層が 4 より深い: {2}" -f $rel, $h.Line, $h.Text)); continue }
+        $m = $rxHeadingNumber.Match($h.Text)
+        if (-not $m.Success) { $styleIssues.Add(("{0}:{1}  見出しに番号が無い: {2}" -f $rel, $h.Line, $h.Text)); continue }
+        $numText = $m.Groups[1].Value
+        $dot = $m.Groups[2].Value
+        $rest = $m.Groups[3].Value
+        $parts = $numText.Split('.')
+        if ($parts.Count -ne ($h.Level - 1)) {
+            $styleIssues.Add(("{0}:{1}  番号の階層が見出しと一致しない: {2}" -f $rel, $h.Line, $h.Text))
+            continue
+        }
+        if ($h.Level -eq 2 -and $dot -ne '.') { $styleIssues.Add(("{0}:{1}  `##` の番号にピリオドが無い: {2}" -f $rel, $h.Line, $h.Text)) }
+        if ($h.Level -ne 2 -and $dot -eq '.') { $styleIssues.Add(("{0}:{1}  番号に余分なピリオドがある: {2}" -f $rel, $h.Line, $h.Text)) }
+
+        $sequential = $true
+        for ($lv = 0; $lv -lt $parts.Count; $lv++) {
+            $key = $lv + 2
+            if ($lv -eq ($parts.Count - 1)) { $counters[$key] = [int]$counters[$key] + 1 }
+            elseif (-not $counters.ContainsKey($key)) { $counters[$key] = 1 }
+            if ($counters[$key] -ne [int]$parts[$lv]) { $sequential = $false }
+        }
+        for ($lv = ($h.Level + 1); $lv -le 6; $lv++) { [void]$counters.Remove($lv) }
+        if (-not $sequential) { $styleIssues.Add(("{0}:{1}  番号が連番でない: {2}" -f $rel, $h.Line, $h.Text)) }
+
+        $display = if ($h.Level -eq 2) { "$numText." } else { $numText }
+        $full = "$display $rest"
+        $indent = ' ' * (($h.Level - 2) * 2)
+        $expectedToc.Add(("{0}- [{1}](#{2})" -f $indent, $full, (Get-MdSlug $full)))
+    }
+
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    $tocIdx = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -eq '## 目次') { $tocIdx = $i; break } }
+    if ($isSpec) {
+        if ($tocIdx -lt 0) { $styleIssues.Add(("{0}  目次が無い（規約 §7）" -f $rel)) }
+        else {
+            $firstH2 = @($headings | Where-Object { $_.Level -eq 2 } | Select-Object -First 1)
+            if ($firstH2 -and $firstH2.Text -ne '目次') { $styleIssues.Add(("{0}  目次が最初の ## 見出しでない（最初は「{1}」）" -f $rel, $firstH2.Text)) }
+        }
+    }
+    if ($tocIdx -ge 0) {
+        $actualToc = [System.Collections.Generic.List[string]]::new()
+        for ($i = $tocIdx + 1; $i -lt $lines.Count; $i++) {
+            if ($rxTocItem.IsMatch($lines[$i])) { $actualToc.Add($lines[$i]); continue }
+            if ($lines[$i].Trim() -eq '' -and $actualToc.Count -eq 0) { continue }
+            break
+        }
+        if ($actualToc.Count -ne $expectedToc.Count) {
+            $styleIssues.Add(("{0}  目次の件数が一致しない: 実測 {1} / 期待 {2}（見出しを変えたら目次を直す）" -f $rel, $actualToc.Count, $expectedToc.Count))
+        }
+        else {
+            for ($i = 0; $i -lt $actualToc.Count; $i++) {
+                if ($actualToc[$i] -ne $expectedToc[$i]) {
+                    $styleIssues.Add(("{0}  目次が一致しない: 実測 [{1}] / 期待 [{2}]" -f $rel, $actualToc[$i], $expectedToc[$i]))
+                    break
+                }
+            }
+        }
+    }
+}
+Add-Result '文書の体裁' ($styleIssues.Count -eq 0) "番号・目次・禁止章 $($styleIssues.Count) 件"
+$styleIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8g) パス記法（規約 §8: プロジェクト内のパスは `src/<プロジェクト名>/…` から書く）
+#     プロジェクト内のフォルダ名（`src/<プロジェクト>/src|tests|sample` の直下）で始まる `` `A/B` `` 形式の
+#     引用は、どのプロジェクトのものか読めない（実測: `Native/Win` のような記述が残っていた）。
+#     リポジトリ ルートのフォルダ（`publish/` / `.work/` 等）、リンクの表示文、コードフェンス内は対象外にする。
+$innerFolders = [System.Collections.Generic.HashSet[string]]::new()
+foreach ($p in (git ls-files 'src/*/src/*' 'src/*/tests/*' 'src/*/sample/*')) {
+    $segments = $p.Split('/')
+    if ($segments.Count -ge 5) { [void]$innerFolders.Add($segments[3]) }
+}
+$rxAllowedRoot = [regex]'^(?:src|tests|sample|docs|buildScript|publish|artifacts|\.github|\.work|\.vscode|obj|bin)/'
+$rxPathLike = [regex]'^[A-Za-z][\w.\-]*/[\w.\-]+$'
+$rxBacktick = [regex]'`([^`]+)`'
+$pathNotation = [System.Collections.Generic.List[string]]::new()
+foreach ($f in $docs) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    # 本検査の説明（規則が反例を引用する）は対象外にする（8c / 8e と同じ扱い）
+    if ($rel -match '(検証手順|ドキュメント規約)\.md$') { continue }
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i].StartsWith('```')) { continue }
+        foreach ($m in $rxBacktick.Matches($lines[$i])) {
+            $token = $m.Groups[1].Value
+            if (-not $rxPathLike.IsMatch($token)) { continue }
+            if ($rxAllowedRoot.IsMatch($token)) { continue }
+            if ($lines[$i].Substring($m.Index + $m.Length) -like '](*') { continue }
+            if ($innerFolders.Contains($token.Split('/')[0])) { $pathNotation.Add(("{0}:{1}  {2}" -f $rel, ($i + 1), $token)) }
+        }
+    }
+}
+Add-Result '文書のパス記法' ($pathNotation.Count -eq 0) "$($pathNotation.Count) 件"
+$pathNotation | Select-Object -First 10 | ForEach-Object { "      $_" }
+
 # ============================================================
 # 9. 改行コード
 # ============================================================

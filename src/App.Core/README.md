@@ -2,11 +2,11 @@
 
 SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の MewUI ホストが共有する、**UI フレームワーク非依存のモデル・ユーティリティ・ViewModel** を提供するプロジェクトです。
 
-## 目的
+## 1. 目的
 
 アプリ本体のうち、UI フレームワークの型（`Avalonia.Point` / `PixelRect` / `Bitmap` 等）を使わない部分を本プロジェクトへ切り出すことで、同じロジックを MewUI ホストからも再利用できます。
 
-## 収録する型
+## 2. 収録する型
 
 | 型 | 公開 | 責務 |
 | --- | --- | --- |
@@ -28,15 +28,15 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 
 `internal` の型は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests`）で UI 実装とテストからのみ参照できます。
 
-## 名前空間
+## 3. 名前空間
 
 本プロジェクトは UI 非依存（Avalonia に依存しません）です。 **名前空間は `EsUtil.SaveEvidence.App.Core`、アセンブリ名は `App.Core`** です（ホストの `App.AvaloniaUI` とは名前空間もアセンブリも別）。
 
-## 設定ファイルの互換性
+## 4. 設定ファイルの互換性
 
 `EsRectInt` は専用の JSON コンバーター（`EsRectIntJsonConverter`）が `X` / `Y` / `Width` / `Height` のみを読み書きし、`EsWindowState` は enum の名前で書き出すため、**既存の `settings.json` はそのまま読み込めます**。
 
-### トリミング / Native AOT 対応
+### 4.1 トリミング / Native AOT 対応
 
 反射ベースのシリアル化はトリミングで `Settings` の公開プロパティが削除され、設定が空（`{}`）になります。
 `SettingsService` は **ソース生成コンテキストを必須**とし、反射経路を持ちません（`new SettingsService(SettingsJsonContext.Default)` のように注入します）。
@@ -47,7 +47,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
   互換性は保たれます（`SettingsServiceJsonTests` が両経路の一致を検証します）。
 - 反射リゾルバーを使った等価性の検証（`SettingsServiceJsonTests`）は**テスト側**でリゾルバーを用意します（本体にテスト専用の経路を置かない。 [`.github/テスト規約.md`](../../.github/テスト規約.md) §5）。
 
-## 依存方向
+## 5. 依存方向
 
 ```text
 App.AvaloniaUI（Avalonia 実装） / App.MewUI
@@ -58,7 +58,7 @@ App.AvaloniaUI（Avalonia 実装） / App.MewUI
 
 UI フレームワークへ依存しません。 外部依存は MVVM の `CommunityToolkit.Mvvm`（UI フレームワーク非依存）のみです。
 
-## UI 依存の注入（依存性逆転）
+## 6. UI 依存の注入（依存性逆転）
 
 `MainViewModel` は UI 操作が必要な箇所をコールバックとして受け取り、UI 型を直接持たないようにします。
 
@@ -72,13 +72,13 @@ UI フレームワークへ依存しません。 外部依存は MVVM の `Commu
 
 画像の書き込み（`IImageWriter`）はコンストラクターで注入します（UI 実装は `App.AvaloniaUI` 側の `AvaloniaImageWriter`）。
 
-## ビルド
+## 7. ビルド
 
 ```powershell
 dotnet build src/App.Core/src/App.Core.csproj
 ```
 
-## テスト
+## 8. テスト
 
 `tests/` が本プロジェクトの単体テストを持ちます。 UI 初期化が不要なため、すべて `[Fact]` で並列実行されます。
 

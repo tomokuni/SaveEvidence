@@ -1,5 +1,34 @@
 # App.AvaloniaUI 設定項目と反映先の対応表
 
+## 目次
+
+- [1. 文書概要](#1-文書概要)
+- [2. コントロール階層と外観プロパティの公開](#2-コントロール階層と外観プロパティの公開)
+  - [2.1 コントロール階層（内包・使用関係）](#21-コントロール階層内包使用関係)
+  - [2.2 各コントロールが公開する外観プロパティ](#22-各コントロールが公開する外観プロパティ)
+  - [2.3 反映経路](#23-反映経路)
+- [3. 下位コントロールが公開する外観プロパティと上位での公開有無](#3-下位コントロールが公開する外観プロパティと上位での公開有無)
+  - [3.1 MarqueeControl の公開外観プロパティと FadeMaskDragRectControl での公開有無](#31-marqueecontrol-の公開外観プロパティと-fademaskdragrectcontrol-での公開有無)
+  - [3.2 装飾・ラベル（`MarqueeAppearance` / `LoupeAppearance` / `FadeMaskDragRectLabelOptions`）の外観項目と FadeMaskDragRectControl での公開有無](#32-装飾ラベルmarqueeappearance--loupeappearance--fademaskdragrectlabeloptionsの外観項目と-fademaskdragrectcontrol-での公開有無)
+  - [3.3 LoupeControl の公開外観と FadeMaskDragRectControl での公開有無](#33-loupecontrol-の公開外観と-fademaskdragrectcontrol-での公開有無)
+  - [3.4 FadeMaskDragRectControl の公開外観プロパティと CropViewControl での公開有無](#34-fademaskdragrectcontrol-の公開外観プロパティと-cropviewcontrol-での公開有無)
+  - [3.5 CropViewControl の公開外観プロパティと Parts.CapturePreviewControl.AvaloniaUI での公開有無](#35-cropviewcontrol-の公開外観プロパティと-partscapturepreviewcontrolavaloniaui-での公開有無)
+- [4. 外観設定](#4-外観設定)
+  - [4.1 外観設定（詳細・折り畳みなし）](#41-外観設定詳細折り畳みなし)
+- [5. 保存設定](#5-保存設定)
+- [6. 画像設定](#6-画像設定)
+- [7. キャプチャ設定](#7-キャプチャ設定)
+- [8. ドラッグハンドル設定](#8-ドラッグハンドル設定)
+- [9. ルーペ設定](#9-ルーペ設定)
+  - [9.1 描画スケール（自動設定・設定項目なし）](#91-描画スケール自動設定設定項目なし)
+- [10. ラベル設定](#10-ラベル設定)
+  - [10.1 1 行目: サイズラベル](#101-1-行目-サイズラベル)
+  - [10.2 2 行目: 操作ラベル](#102-2-行目-操作ラベル)
+  - [10.3 3 行目: 情報ラベル](#103-3-行目-情報ラベル)
+- [11. ホットキー設定](#11-ホットキー設定)
+- [12. 設定外・自動保存（フォルダビュー / Undo 一覧 / ウィンドウ状態）](#12-設定外自動保存フォルダビュー--undo-一覧--ウィンドウ状態)
+- [13. 外観設定のデフォルト値への復元](#13-外観設定のデフォルト値への復元)
+
 ## 1. 文書概要
 
 | 項目 | 内容 |
@@ -200,7 +229,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 
 - `ThemeMode.System` は OS の設定に追従（`ThemeVariant.Default`）。
 
-### 外観設定（詳細・折り畳みなし）
+### 4.1 外観設定（詳細・折り畳みなし）
 
 下記の項目は設定画面下部の「外観設定」セクションに配置される（キャプチャ設定 / ルーペ設定から移動）。
 
@@ -283,7 +312,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 - 市松模様は「画像設定」（§6 ）で管理するため、ルーペ設定には含めない（ルーペは画像外を無地の色で示す）。
 - 座標ラベルの外観は詳細設定（Expander）内に配置。
 
-### 描画スケール（自動設定・設定項目なし）
+### 9.1 描画スケール（自動設定・設定項目なし）
 
 ルーペの描画スケール（`LoupeControl.ClientToPixelScaling`・DIP→物理ピクセル倍率）は、**ユーザー設定ではなくウィンドウの DPI スケーリングから自動取得**して反映する。
 

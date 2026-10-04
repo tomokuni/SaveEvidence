@@ -3,7 +3,7 @@
 `CaptureSessionControl`（撮影・切り出しのセッション）の **UI 間で共有する処理**です。 Avalonia 版と MewUI 版が
 同じ設定写像を使うことを保証します。
 
-## 目的
+## 1. 目的
 
 - **設定から描画の設定（色）への写像を 1 箇所へ集約**する。 色は描画にだけ必要な設定であり、描画層（UIBase）の
   `MarqueeAppearance` / `LoupeAppearance` が単一所有するため、写像も 1 つでなければならない（写像漏れはビルドが通り、
@@ -14,7 +14,7 @@
   付加情報ラベル（操作・情報）の配置指示（`FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`）は
   同じ「UI 間で共有する処理」であり、本層に集約して両 UI の配線が同じ規則を使うことを保証する。
 
-## 層の位置付け
+## 2. 層の位置付け
 
 ```text
 Parts.CapturePreviewControl.Core ─────────────┐（設定型・寸法・表示可否）
@@ -30,7 +30,7 @@ EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter ─┐（描�
 - 製品の設定型（`CaptureSettings`）に依存する写像は、再利用ライブラリではなく本層（セッション側の共有層）に置く。
 - **寸法・表示可否は本層が写像しない**（`FadeMaskDragRectOptionsMapper`（コア） が単一所有する）。 写像は色だけを扱う。
 
-## 構成
+## 3. 構成
 
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
@@ -39,7 +39,7 @@ EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter ─┐（描�
 | `FadeMaskHostLabelRenderer` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示を解決する |
 | `MarqueeHostLabelRenderer` | `public static class` | ラベル 1 行の体裁（背景 = 文字の実寸 + 内側余白 × 2）の配置指示を解決する |
 
-## 依存関係
+## 4. 依存関係
 
 ```text
 Parts.CaptureSessionControl.UIBase
@@ -56,7 +56,7 @@ UI フレームワークへ依存しません。 外部パッケージへの直�
 `internal` は `InternalsVisibleTo`（`Parts.CapturePreviewControl.AvaloniaUI` / `Parts.CapturePreviewControl.MewUI` /
 `Parts.CaptureSessionControl.UIBase.Tests`）で公開します。
 
-## 主な API
+## 5. 主な API
 
 ```csharp
 MarqueeAppearance marquee = CapturePaintMapper.ToMarqueeAppearance(settings);  // 設定 → 選択矩形の外観
@@ -66,7 +66,7 @@ LoupeAppearance loupe = CapturePaintMapper.ToLoupeAppearance(settings, backgroun
 画像外（ペーストボード）の色は**設定（`LoupePasteboardColor`）が単一所有**します（描画層は本色で描画面全体を塗ってから拡大画像を重ねるため、画像の無い部分が本色の無地になります）。
 透かすため透明、プレビューの切り出しはテーマ背景色）。
 
-## 設計上の約束
+## 6. 設計上の約束
 
 1. **色だけを写像する**。 寸法・表示可否はコアの設定マッパーが単一所有する。
 2. **枠線の色は 1 つ**: 選択枠線（ハンドルの枠線）と暗転マスクの外枠は同じ矩形に重なるため、同じ設定値
@@ -75,7 +75,7 @@ LoupeAppearance loupe = CapturePaintMapper.ToLoupeAppearance(settings, backgroun
 4. **画像外の色は設定**（`LoupePasteboardColor`。 ホストは色を引数で渡さない）。
 5. 引数の `settings` は `ToNonNull` 済みを前提とする（null は例外）。
 
-## テスト
+## 7. テスト
 
 ```text
 tests/
@@ -91,6 +91,6 @@ dotnet test src/Parts.CaptureSessionControl.UIBase/tests/Parts.CaptureSessionCon
 
 UI 依存の検証（ホストの配線・実際の描画）は各 UI のテストプロジェクトが担います。
 
-## ライセンス
+## 8. ライセンス
 
 MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。

@@ -16,7 +16,8 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 /// どれを返すかを保証しない）ため、特定の名前を前提にした実装をしない。<br/>
 /// <br/>
 /// <b>未定義値</b>: <see cref="Enum.TryParse{T}(string, out T)"/> は数値文字列を受け付けてしまうため、<br/>
-/// 名前解決の成否だけでは未定義値を検出できない。 <see cref="Enum.IsDefined{T}(T)"/> で検査し <c>None</c> を返す<br/>
+/// 名前解決の成否だけでは未定義値を検出できない。 検査は <see cref="EsUtil.Platform.Core.EnumCanonical"/> が単一所有し、<br/>
+/// 本変換はそれを用いて未定義値を <c>None</c> へフォールバックする<br/>
 /// （実測: 検査が無いと <c>(EsKey)9999</c> が <c>(AvaloniaKey)9999</c> へ変換され、キー入力の解釈が未定義になる）。
 /// </remarks>
 public static class EsKeyAvaloniaInterop

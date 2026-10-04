@@ -2,19 +2,17 @@
 
 ## 目次
 
-- [Parts.CapturePreviewControl.MewUI](#partscapturepreviewcontrolmewui)
-  - [目次](#目次)
-  - [1. 概要](#1-概要)
-  - [2. 機能一覧](#2-機能一覧)
-  - [3. 依存関係](#3-依存関係)
-  - [4. クイックスタート](#4-クイックスタート)
-  - [5. 収録コントロール](#5-収録コントロール)
-    - [5.1 CropViewControl（切り出しビュー）](#51-cropviewcontrol切り出しビュー)
-    - [5.2 FadeMaskDragRectControl（領域選択）](#52-fademaskdragrectcontrol領域選択)
-    - [5.3 ZoomViewControl（切り出しビューの画像ビューポート）](#53-zoomviewcontrol切り出しビューの画像ビューポート)
-  - [6. ドキュメント](#6-ドキュメント)
-  - [7. プロジェクト構成](#7-プロジェクト構成)
-  - [8. ライセンス](#8-ライセンス)
+- [1. 概要](#1-概要)
+- [2. 機能一覧](#2-機能一覧)
+- [3. 依存関係](#3-依存関係)
+- [4. クイックスタート](#4-クイックスタート)
+- [5. 収録コントロール](#5-収録コントロール)
+  - [5.1 CropViewControl（切り出しビュー）](#51-cropviewcontrol切り出しビュー)
+  - [5.2 FadeMaskDragRectControl（領域選択）](#52-fademaskdragrectcontrol領域選択)
+  - [5.3 ZoomViewControl（切り出しビューの画像ビューポート）](#53-zoomviewcontrol切り出しビューの画像ビューポート)
+- [6. ドキュメント](#6-ドキュメント)
+- [7. プロジェクト構成](#7-プロジェクト構成)
+- [8. ライセンス](#8-ライセンス)
 
 ---
 

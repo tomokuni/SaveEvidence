@@ -14,11 +14,11 @@ public static class EsWindowStateMewUIInterop
     /// <param name="state">変換対象のウィンドウ状態。</param>
     /// <returns>対応する MewUI のウィンドウ状態。 未定義値は <see cref="MewUIWindowState.Normal"/>。</returns>
     /// <remarks>
-    /// 未定義値（<c>(EsWindowState)999</c> 等）は <see cref="Enum.IsDefined{T}(T)"/> で検出する
+    /// 未定義値（<c>(EsWindowState)999</c> 等）は <see cref="EnumCanonical"/> が検出する
     /// （<see cref="Enum.TryParse{T}(string, out T)"/> は数値文字列を受け付けてしまうため）。
     /// </remarks>
     public static MewUIWindowState ToMewUIWindowState(this EsWindowState state)
-        => Enum.IsDefined(state) && Enum.TryParse<MewUIWindowState>(state.ToString(), out var result)
+        => EnumCanonical.TryParse<EsWindowState, MewUIWindowState>(state, out var result)
             ? result
             : MewUIWindowState.Normal;
 
@@ -26,7 +26,7 @@ public static class EsWindowStateMewUIInterop
     /// <param name="state">変換対象のウィンドウ状態。</param>
     /// <returns>対応する <see cref="EsWindowState"/>。 未定義値は <see cref="EsWindowState.Normal"/>。</returns>
     public static EsWindowState ToEsWindowState(this MewUIWindowState state)
-        => Enum.IsDefined(state) && Enum.TryParse<EsWindowState>(state.ToString(), out var result)
+        => EnumCanonical.TryParse<MewUIWindowState, EsWindowState>(state, out var result)
             ? result
             : EsWindowState.Normal;
 }

@@ -2,15 +2,14 @@
 
 ## 目次
 
-- [ColorPickerControl.AvaloniaUI サンプルアプリケーション](#colorpickercontrolavaloniaui-サンプルアプリケーション)
-  - [目次](#目次)
-  - [1. 概要](#1-概要)
-  - [2. 実行方法](#2-実行方法)
-  - [3. 画面構成と操作](#3-画面構成と操作)
-  - [4. 使い方（初めての方向け）](#4-使い方初めての方向け)
-  - [5. バリデーション動作の確認](#5-バリデーション動作の確認)
-  - [6. AXAML での利用パターン](#6-axaml-での利用パターン)
-  - [7. 検証項目（動作確認チェックリスト）](#7-検証項目動作確認チェックリスト)
+- [1. 概要](#1-概要)
+- [2. 実行方法](#2-実行方法)
+  - [2.1 バッチファイル（リリースビルド＆起動）](#21-バッチファイルリリースビルド起動)
+- [3. 画面構成と操作](#3-画面構成と操作)
+- [4. 使い方（初めての方向け）](#4-使い方初めての方向け)
+- [5. バリデーション動作の確認](#5-バリデーション動作の確認)
+- [6. AXAML での利用パターン](#6-axaml-での利用パターン)
+- [7. 検証項目（動作確認チェックリスト）](#7-検証項目動作確認チェックリスト)
 
 ---
 
@@ -35,7 +34,7 @@ dotnet run --project src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl
 dotnet run -c Release --project src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj
 ```
 
-### バッチファイル（リリースビルド＆起動）
+### 2.1 バッチファイル（リリースビルド＆起動）
 
 `src/ColorPickerControl.AvaloniaUI/sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
 

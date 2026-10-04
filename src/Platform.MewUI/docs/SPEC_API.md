@@ -2,11 +2,27 @@
 
 `Platform.MewUI` は `EsUtil.Platform.Core` のコア型と MewUI（`Aprillz.MewUI`）の型を相互変換します。 名前空間は `EsUtil.SaveEvidence.Platform.MewUI` です。
 
-## 公開 API
+## 目次
+
+- [1. 公開 API](#1-公開-api)
+  - [1.1 `EsKeyMewUIInterop`](#11-eskeymewuiinterop)
+    - [1.1.1 変換規則](#111-変換規則)
+    - [1.1.2 対応関係](#112-対応関係)
+  - [1.2 `EsGeometryMewUIInterop`](#12-esgeometrymewuiinterop)
+    - [1.2.1 負のサイズの扱い（挙動の差）](#121-負のサイズの扱い挙動の差)
+  - [1.3 `EsWindowStateMewUIInterop`](#13-eswindowstatemewuiinterop)
+  - [1.4 `EsPlatformHandleMewUIInterop`](#14-esplatformhandlemewuiinterop)
+  - [1.5 `Imaging.ClientPixelScale`（static class）](#15-imagingclientpixelscalestatic-class)
+  - [1.6 `Imaging.MewUITextMeasure`（static class）](#16-imagingmewuitextmeasurestatic-class)
+  - [1.7 `Imaging.SkiaImageView`（class : `SkiaCanvasView`）](#17-imagingskiaimageviewclass--skiacanvasview)
+- [2. 依存関係](#2-依存関係)
+- [3. バージョン依存](#3-バージョン依存)
+
+## 1. 公開 API
 
 すべて静的クラスの拡張メソッドです。 `using EsUtil.SaveEvidence.Platform.MewUI;` のみで利用できます。
 
-### `EsKeyMewUIInterop`
+### 1.1 `EsKeyMewUIInterop`
 
 | メソッド | 説明 |
 | --- | --- |
@@ -14,14 +30,14 @@
 | `ToEsKey(this Aprillz.MewUI.Key key)` → `EsKey` | MewUI のキーをコアのキーへ変換する。 未定義値は `EsKey.None` |
 | `IsRepresentable(this EsKey key)` → `bool` | MewUI に対応するキーがあるかを判定する（`None` は true） |
 
-#### 変換規則
+#### 1.1.1 変換規則
 
 1. **名前が異なるキー**（`EsKey.Back` ⇔ `Key.Backspace`）を別名表で解決する
-2. **未定義値**（`(EsKey)999` 等）を `Enum.IsDefined` で検出し `None` へフォールバックする
+2. **未定義値**（`(EsKey)999` 等）を `EnumCanonical.TryParse`（`EsUtil.Platform.Core`）で検出し `None` へフォールバックする
    （`Enum.TryParse` は数値文字列を受け付けてしまうため、名前解決の成否だけでは検出できない）
 3. **名前が一致するメンバー**へ変換する
 
-#### 対応関係
+#### 1.1.2 対応関係
 
 | 項目 | 値 |
 | --- | --- |
@@ -33,7 +49,7 @@
 
 `EsKey` が Avalonia / Win32 のキー体系（223）に合わせているのに対し、MewUI `Key` は抽象化された小さな集合（91・独自採番）であるため、値による対応付けはできません。
 
-### `EsGeometryMewUIInterop`
+### 1.2 `EsGeometryMewUIInterop`
 
 | メソッド | 説明 |
 | --- | --- |
@@ -45,7 +61,7 @@
 | `ToMewUIRect(this EsRect)` / `ToEsRect(this Aprillz.MewUI.Rect)` | 矩形 |
 | `ToMewUIColor(this System.Drawing.Color)` / `ToDrawingColor(this Aprillz.MewUI.Color)` | 色（ARGB をそのまま保持） |
 
-#### 負のサイズの扱い（挙動の差）
+#### 1.2.1 負のサイズの扱い（挙動の差）
 
 **MewUI の `Rect` / `Size` は負のサイズを 0 にクランプします**（Avalonia は負の値を保持します）。
 
@@ -56,7 +72,7 @@
 
 コアで「空の矩形」（負のサイズ）を表現している場合、MewUI へ渡すと 0 サイズになります。 判定（`Width <= 0`）には影響しませんが、値そのものを保持したい場合は MewUI へ変換しないでください。
 
-### `EsWindowStateMewUIInterop`
+### 1.3 `EsWindowStateMewUIInterop`
 
 | メソッド | 説明 |
 | --- | --- |
@@ -65,7 +81,7 @@
 
 メンバー名は完全に一致します（`Normal` / `Minimized` / `Maximized` / `FullScreen`）。 設定ファイルの互換性のため名前ベースで変換します。
 
-### `EsPlatformHandleMewUIInterop`
+### 1.4 `EsPlatformHandleMewUIInterop`
 
 | メソッド | 説明 |
 | --- | --- |
@@ -73,7 +89,7 @@
 
 Win32 の HWND に相当するため、`IWindowService` / `ICursorOverrideGuard` などハンドルを要求するサービスへ MewUI のウィンドウを渡せます。
 
-### `Imaging.ClientPixelScale`（static class）
+### 1.5 `Imaging.ClientPixelScale`（static class）
 
 描画面（物理ピクセル）と表示領域（DIP）の比から、描画に使うスケーリング係数を解決します。
 
@@ -85,7 +101,7 @@ Win32 の HWND に相当するため、`IWindowService` / `ICursorOverrideGuard`
 その状態で保持値だけで描画すると図形が 100% で描かれ、DPI を反映済みの画像と重ねたときにずれます。
 描画面から求めた倍率を使えば、通知の有無によらず画像と同じ倍率で描けます。
 
-### `Imaging.MewUITextMeasure`（static class）
+### 1.6 `Imaging.MewUITextMeasure`（static class）
 
 MewUI のテキスト エンジンで文字列の実寸を測ります（ラベルの配置の唯一の入口）。
 
@@ -98,7 +114,7 @@ MewUI のテキスト エンジンで文字列の実寸を測ります（ラベ�
 
 グラフィックス バックエンドが登録されていない環境（ウィンドウを生成しない単体テスト）では測定できないため、Skia の実測で代用します（実アプリでは常にエンジンで測ります）。
 
-### `Imaging.SkiaImageView`（class : `SkiaCanvasView`）
+### 1.7 `Imaging.SkiaImageView`（class : `SkiaCanvasView`）
 
 `EsBitmap` を親が割り当てた領域へ描画する表示ビュー。 撮影画像のオーバーレイ（領域全体へ引き伸ばす）や
 サムネイル（縦横比を保って収める）のように、「1 枚の画像を領域へ敷く」表示を共通化します。
@@ -124,7 +140,7 @@ internal sealed class ThumbnailView : SkiaImageView
 `SkiaImageRenderer`（internal）が単一所有し、配置の矩形は本プロジェクトの `ImageDrawMath` が単一所有します。  
 静止画のため連続再描画は無効化し、`Source` の変更時のみ描画します。
 
-## 依存関係
+## 2. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |
@@ -134,7 +150,7 @@ internal sealed class ThumbnailView : SkiaImageView
 
 プラットフォームホスト（`Aprillz.MewUI.Windows` 等）やバックエンドには依存しません（`Skia` パッケージは描画型のみを提供し、ホストを含まないため）。
 
-## バージョン依存
+## 3. バージョン依存
 
 `Aprillz.MewUI.Core` は **0.21.1 に固定**しています。 MewUI は 0.x で API が安定化中のため、
 アップグレード時はテスト（キー数 91 の回帰検知・別名表の一致・負サイズのクランプ）で破壊的変更を検出してください。

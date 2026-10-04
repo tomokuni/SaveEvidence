@@ -4,22 +4,20 @@
 
 ## 目次
 
-- [Parts.LineDetection API リファレンス](#partslinedetection-api-リファレンス)
-  - [目次](#目次)
-  - [1. 概要](#1-概要)
-  - [2. 公開 API](#2-公開-api)
-    - [2.1. LineOrientation 列挙型](#21-lineorientation-列挙型)
-    - [2.2. LineDetectionResult 構造体](#22-linedetectionresult-構造体)
-    - [2.3. ILineDetector インターフェース](#23-ilinedetector-インターフェース)
-    - [2.4. LogicLineDetector クラス](#24-logiclinedetector-クラス)
-      - [2.4.1. プロパティ](#241-プロパティ)
-    - [2.5. LineRectangleReconstructor クラス](#25-linerectanglereconstructor-クラス)
-  - [3. 入力・出力](#3-入力出力)
-    - [3.1. 入力画像](#31-入力画像)
-    - [3.2. 検出結果](#32-検出結果)
-  - [4. 座標系](#4-座標系)
-  - [5. エラー処理](#5-エラー処理)
-  - [6. スレッド安全性](#6-スレッド安全性)
+- [1. 概要](#1-概要)
+- [2. 公開 API](#2-公開-api)
+  - [2.1 LineOrientation 列挙型](#21-lineorientation-列挙型)
+  - [2.2 LineDetectionResult 構造体](#22-linedetectionresult-構造体)
+  - [2.3 ILineDetector インターフェース](#23-ilinedetector-インターフェース)
+  - [2.4 LogicLineDetector クラス](#24-logiclinedetector-クラス)
+    - [2.4.1 プロパティ](#241-プロパティ)
+  - [2.5 LineRectangleReconstructor クラス](#25-linerectanglereconstructor-クラス)
+- [3. 入力・出力](#3-入力出力)
+  - [3.1 入力画像](#31-入力画像)
+  - [3.2 検出結果](#32-検出結果)
+- [4. 座標系](#4-座標系)
+- [5. エラー処理](#5-エラー処理)
+- [6. スレッド安全性](#6-スレッド安全性)
 
 ---
 
@@ -35,7 +33,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 名前空間: `EsUtil.SaveEvidence.Parts.LineDetection`（UI 非依存）
 
-### 2.1. LineOrientation 列挙型
+### 2.1 LineOrientation 列挙型
 
 線分（辺）の向き。
 
@@ -44,7 +42,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | `Horizontal` | 水平（左右方向）の辺。 |
 | `Vertical` | 垂直（上下方向）の辺。 |
 
-### 2.2. LineDetectionResult 構造体
+### 2.2 LineDetectionResult 構造体
 
 検出された辺（線分）の結果（不変のレコード構造体）。
 
@@ -57,7 +55,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 座標は UI フレームワーク非依存のコア型（`EsPoint`）で公開します。 UI 側で描画する場合は、各 UI の相互変換（Avalonia 版は `EsGeometryAvaloniaInterop.ToAvaloniaPoint`）で境界変換します。
 
-### 2.3. ILineDetector インターフェース
+### 2.3 ILineDetector インターフェース
 
 辺（線分）検出器の共通インターフェース。
 
@@ -68,11 +66,11 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | `string? ErrorMessage { get; }` | モデル読込・実行エラーのメッセージ。 正常時は null。 |
 | `IReadOnlyList<LineDetectionResult> Detect(EsBitmap image)` | 画像から水平・垂直の辺（線分）を検出する。 スコア降順。 |
 
-### 2.4. LogicLineDetector クラス
+### 2.4 LogicLineDetector クラス
 
 ロジック方式（Canny エッジ + HoughLinesP）による検出器。 `ILineDetector` を実装します。
 
-#### 2.4.1. プロパティ
+#### 2.4.1 プロパティ
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
@@ -91,7 +89,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | `CornerToleranceRatio` | `double` | `0.2` | コーナー判定の許容差（辺の長さに対する比率）。 |
 | `OppositeSpanRatio` | `double` | `0.13` | 対辺の長さの差の許容比率。 |
 
-### 2.5. LineRectangleReconstructor クラス
+### 2.5 LineRectangleReconstructor クラス
 
 検出された線分（`LineDetectionResult`）から矩形（ウィンドウの 4 辺）を復元する純粋ロジック（`public static class`）。
 
@@ -106,13 +104,13 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 ## 3. 入力・出力
 
-### 3.1. 入力画像
+### 3.1 入力画像
 
 - 型: `EsBitmap`（BGRA8888）
 - フォーマット: BGRA（1 ピクセル 4 バイト）
 - 検出器は入力画像をグレースケール化して解析します（`Detect` 実行時に内部で変換）。
 
-### 3.2. 検出結果
+### 3.2 検出結果
 
 - 型: `IReadOnlyList<LineDetectionResult>`
 - 並び順: スコア降順（ロジック方式は長さ）。

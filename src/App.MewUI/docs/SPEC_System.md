@@ -2,7 +2,36 @@
 
 `App.MewUI`（MewUI 版アプリ本体）のシステム概要・アーキテクチャ・依存関係・設計判断を記載します。
 
-## システム概要
+## 目次
+
+- [1. システム概要](#1-システム概要)
+- [2. 技術スタック](#2-技術スタック)
+- [3. アーキテクチャ](#3-アーキテクチャ)
+  - [3.1 依存方向](#31-依存方向)
+  - [3.2 UI 非依存の担保](#32-ui-非依存の担保)
+  - [3.3 境界の変換](#33-境界の変換)
+- [4. コンポーネント構成](#4-コンポーネント構成)
+- [5. クラス図](#5-クラス図)
+- [6. シーケンス図（起動）](#6-シーケンス図起動)
+- [7. シーケンス図（キャプチャ）](#7-シーケンス図キャプチャ)
+- [8. シーケンス図（プレビューの切り出し）](#8-シーケンス図プレビューの切り出し)
+- [9. シーケンス図（フォルダビューページ）](#9-シーケンス図フォルダビューページ)
+- [10. シーケンス図（サムネイルの縮小デコード）](#10-シーケンス図サムネイルの縮小デコード)
+- [11. シーケンス図（編集履歴の移動）](#11-シーケンス図編集履歴の移動)
+- [12. シーケンス図（ルーペのカーソル追従）](#12-シーケンス図ルーペのカーソル追従)
+- [13. シーケンス図（Undo 一覧ページ）](#13-シーケンス図undo-一覧ページ)
+- [14. シーケンス図（ウィンドウ配置の保存）](#14-シーケンス図ウィンドウ配置の保存)
+- [15. シーケンス図（プレビュー描画）](#15-シーケンス図プレビュー描画)
+- [16. シーケンス図（画像差し替え）](#16-シーケンス図画像差し替え)
+- [17. 例外処理ポリシー](#17-例外処理ポリシー)
+- [18. 設計判断](#18-設計判断)
+- [19. 未実装・今後の対応](#19-未実装今後の対応)
+- [20. テスト方針](#20-テスト方針)
+  - [20.1 実機検証（手順）](#201-実機検証手順)
+  - [20.2 端に接する UI の当たり判定（`WM_NCHITTEST` の実測）](#202-端に接する-ui-の当たり判定wm_nchittest-の実測)
+  - [20.3 実測知見（MewUI 0.21.1）](#203-実測知見mewui-0211)
+
+## 1. システム概要
 
 `App.MewUI` は、SaveEvidence の UI 層のみを **MewUI**（`Aprillz.MewUI`）で実装したホストアプリです。
 業務ロジック・状態・設定・画像コンテナは UI 非依存のコア（`App.Core` / `EsUtil.Platform.Core`（Win32 実装を含む） /
@@ -10,7 +39,7 @@
 
 Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファイル・挙動・公開 API は UI 間で共通です。
 
-## 技術スタック
+## 2. 技術スタック
 
 | 区分 | 採用技術 |
 | --- | --- |
@@ -22,9 +51,9 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 | MVVM | `CommunityToolkit.Mvvm`（コアの `MainViewModel` をそのまま使用） |
 | ログ | Serilog 4.x（`Serilog.Sinks.File` + `Serilog.Extensions.Logging`。 Avalonia 版と同じファイルへ出力） |
 
-## アーキテクチャ
+## 3. アーキテクチャ
 
-### 依存方向
+### 3.1 依存方向
 
 ```text
 ┌────────────────┐
@@ -62,14 +91,14 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 └──────────────────────┘
 ```
 
-### UI 非依存の担保
+### 3.2 UI 非依存の担保
 
 `App.MewUI` は `Avalonia*` を参照しません。 Avalonia への依存は `Platform.AvaloniaUI`（アダプタ専用）と
 `App.AvaloniaUI`（Avalonia UI）のみに閉じています。 コアが UI 型を漏らしていないことは、
 `App.Core` / `EsUtil.Platform.Core` の依存先が SkiaSharp・OpenCvSharp・`System.Drawing.Color` 等に
 限られることで担保しています。
 
-### 境界の変換
+### 3.3 境界の変換
 
 コアの型（`EsBitmap` / `EsKey` / `EsRect` 等）と MewUI の型は、境界で **1 行の変換**を行います。
 
@@ -80,7 +109,7 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 - 画像は変換不要（`EsBitmap.ToSKBitmap()` をそのまま描画）。
 - キー・ウィンドウ状態・幾何・プラットフォームハンドルは `Es*MewUIInterop` を介して変換します。
 
-## コンポーネント構成
+## 4. コンポーネント構成
 
 ```text
 src/App.MewUI/src/
@@ -151,7 +180,7 @@ tests/
 | `AppLog` | ログ定義と Serilog のファクトリ（Avalonia 版と同一のファイル・書式。 `src/App.MewUI/src/Logging/AppLog.cs`） |
 | `IconLoader` | Avalonia 版と共有する SVG アイコンを Skia でラスタライズし、画像・ウィンドウアイコン（ICO）を生成する（`src/App.MewUI/src/Icons/IconLoader.cs`） |
 
-## クラス図
+## 5. クラス図
 
 ```mermaid
 classDiagram
@@ -323,7 +352,7 @@ classDiagram
     MewUIImageWriter ..|> IImageWriter
 ```
 
-## シーケンス図（起動）
+## 6. シーケンス図（起動）
 
 ```mermaid
 sequenceDiagram
@@ -358,7 +387,7 @@ sequenceDiagram
     MW-->>OS: メッセージループ
 ```
 
-## シーケンス図（キャプチャ）
+## 7. シーケンス図（キャプチャ）
 
 ```mermaid
 sequenceDiagram
@@ -382,7 +411,7 @@ sequenceDiagram
     CF->>CF: Undo へ退避 → 未保存化 → SetPreviewImage → ステータス通知
 ```
 
-## シーケンス図（プレビューの切り出し）
+## 8. シーケンス図（プレビューの切り出し）
 
 ```mermaid
 sequenceDiagram
@@ -407,7 +436,7 @@ sequenceDiagram
     CS->>VM: ICaptureTarget.ApplyCrop（Undo 退避 → 切り出し → 画像差し替え）
 ```
 
-## シーケンス図（フォルダビューページ）
+## 9. シーケンス図（フォルダビューページ）
 
 ```mermaid
 sequenceDiagram
@@ -427,7 +456,7 @@ sequenceDiagram
     FW->>ST: トグル操作時に Save()
 ```
 
-## シーケンス図（サムネイルの縮小デコード）
+## 10. シーケンス図（サムネイルの縮小デコード）
 
 ```mermaid
 sequenceDiagram
@@ -445,7 +474,7 @@ sequenceDiagram
     IL-->>IL: EsBitmap.FromSKBitmap（所有権を移す）
 ```
 
-## シーケンス図（編集履歴の移動）
+## 11. シーケンス図（編集履歴の移動）
 
 ```mermaid
 sequenceDiagram
@@ -464,7 +493,7 @@ sequenceDiagram
     Note over VM: 画像がない・履歴が空の場合は何もしない
 ```
 
-## シーケンス図（ルーペのカーソル追従）
+## 12. シーケンス図（ルーペのカーソル追従）
 
 ```mermaid
 sequenceDiagram
@@ -484,7 +513,7 @@ sequenceDiagram
     OS->>CP: MouseLeave → 画像の中央を右下へ表示する
 ```
 
-## シーケンス図（Undo 一覧ページ）
+## 13. シーケンス図（Undo 一覧ページ）
 
 ```mermaid
 sequenceDiagram
@@ -506,7 +535,7 @@ sequenceDiagram
     VM-->>UP: PropertyChanged(PreviewImage) → Rebuild()
 ```
 
-## シーケンス図（ウィンドウ配置の保存）
+## 14. シーケンス図（ウィンドウ配置の保存）
 
 ```mermaid
 sequenceDiagram
@@ -527,7 +556,7 @@ sequenceDiagram
     W->>C: settings.Save()
 ```
 
-## シーケンス図（プレビュー描画）
+## 15. シーケンス図（プレビュー描画）
 
 ```mermaid
 sequenceDiagram
@@ -550,7 +579,7 @@ sequenceDiagram
     CV->>SK: 矩形オーバーレイ（前景色の実線 / 背景色 + 前景色の破線）
 ```
 
-## シーケンス図（画像差し替え）
+## 16. シーケンス図（画像差し替え）
 
 ```mermaid
 sequenceDiagram
@@ -567,7 +596,7 @@ sequenceDiagram
     CV->>CV: 画像と矩形オーバーレイを再描画
 ```
 
-## 例外処理ポリシー
+## 17. 例外処理ポリシー
 
 | 状況 | 方針 |
 | --- | --- |
@@ -592,7 +621,7 @@ sequenceDiagram
 | 未処理の例外（アプリ全体 / UI スレッド / 未観測タスク） | Critical で記録する。 UI スレッドの例外は記録後に処理済みとし、ウィンドウの表示を維持する（`Program.RegisterExceptionLogging`） |
 | アプリ終了中（オーナーがクローズ済み）にホットキーが届いた | オーナーの再表示を試みず、キャプチャを中止する（終了処理を妨げない） |
 
-## 設計判断
+## 18. 設計判断
 
 1. **UI 層のみを実装する**。 状態・設定・画像コンテナはコアが単一所有し、`App.MewUI` は保持しない。
 2. **ViewModel をラップしない**。 `App.Core` の `MainViewModel`（`INotifyPropertyChanged`）を
@@ -645,7 +674,7 @@ sequenceDiagram
    アセンブリに置く必要がある（同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
    書式はソース生成の有無にかかわらず共通とし、設定ファイルの互換性を保つ（実測でバイト単位の一致を確認）。
 
-## 未実装・今後の対応
+## 19. 未実装・今後の対応
 
 | 項目 | 内容 |
 | --- | --- |
@@ -655,7 +684,7 @@ sequenceDiagram
 | ルーペの追従の実機検証 | 手動検証（切り出しを開始してカーソルを移動し、撮影した画素で判定する）が枠色（設定由来）の画素数で存在を判定する（カーソル追従のため位置に依存しない走査にした） |
 | 設定変更のログ | 設定ページの変更はログ出力しない（Avalonia 版と同じく操作と起動・終了のみを記録する） |
 
-## テスト方針
+## 20. テスト方針
 
 | 対象 | 方針 |
 | --- | --- |
@@ -670,7 +699,7 @@ sequenceDiagram
 | 組み込み先のコントロール | `EsUtil.Feature.Loupe.ControlMewUI.Tests` / `Parts.CapturePreviewControl.MewUI.Tests` が描画と状態を検証する |
 | コアロジック | `App.Core` / `Platform.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |
 
-### 実機検証（手順）
+### 20.1 実機検証（手順）
 
 起動 → `PrintWindow`（`PW_RENDERFULLCONTENT`）で撮影 → 画素実測 → リサイズ後の再撮影 → 設定の復元、を手動で行う。
 
@@ -683,7 +712,7 @@ sequenceDiagram
 3. **`-VerifyLoupe` 指定時**: `Ctrl+R` で切り出しを開始し、カーソルをプレビュー上へ移動してルーペを表示させ、
    枠色の画素数（存在）とルーペ左上の帯の文字色・暗色背景の画素数（中心座標ラベル）を判定する。
 
-### 端に接する UI の当たり判定（`WM_NCHITTEST` の実測）
+### 20.2 端に接する UI の当たり判定（`WM_NCHITTEST` の実測）
 
 MewUI のウィンドウは**端から 6 DIP をサイズ変更の判定領域**にします（`Win32WindowBackend` が `WM_NCHITTEST` へ
 `HTRIGHT` / `HTBOTTOM` 等を返す）。 そのため、ビューポート端へ密着するオーバーレイ（ズームビューのスクロールバー等）は
@@ -696,7 +725,7 @@ MewUI のウィンドウは**端から 6 DIP をサイズ変更の判定領域**
 未対応だと座標と撮影が `96/dpi` に仮想化され、ウィンドウの下端・右端が切れた画像になり、
 レイアウトの誤判定（実際に発生）を招く。
 
-### 実測知見（MewUI 0.21.1）
+### 20.3 実測知見（MewUI 0.21.1）
 
 ウィンドウ配置の復元を実装する過程で実測した API の挙動。 同じ症状に再遭遇したときの判断材料とする。
 
