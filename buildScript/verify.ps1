@@ -89,10 +89,28 @@ if ($buildWarnings -gt 0 -or $buildErrors -gt 0) {
 }
 
 # ============================================================
-# 2. テスト（全件合格。 -Coverage でカバレッジも集計する）
+# 2. ビルド設定（単一所有と配布物へ XML を出さないこと）
+# ============================================================
+Write-Output '== 2. ビルド設定 =='
+$propsPath = Join-Path $repoRoot 'Directory.Build.props'
+$propsText = if (Test-Path -LiteralPath $propsPath) { [IO.File]::ReadAllText($propsPath, $enc) } else { '' }
+$missingProps = [System.Collections.Generic.List[string]]::new()
+foreach ($p in 'EnforceCodeStyleInBuild', 'GenerateDocumentationFile', 'CopyDocumentationFileToOutputDirectory', 'PublishDocumentationFiles') {
+    if ($propsText -notmatch "<$p>") { $missingProps.Add($p) }
+}
+# 各 .csproj が重複して指定していないか（単一所有の確認）
+$duplicateProps = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.csproj' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
+        Where-Object { [IO.File]::ReadAllText($_.FullName) -match '<EnforceCodeStyleInBuild>|<GenerateDocumentationFile>|PublishDocumentationFiles' })
+Add-Result 'ビルド設定' ($missingProps.Count -eq 0 -and $duplicateProps.Count -eq 0) "不足 $($missingProps.Count) / 重複 $($duplicateProps.Count)"
+$missingProps | ForEach-Object { "      Directory.Build.props に無い: $_" }
+$duplicateProps | ForEach-Object { "      重複指定: $($_.FullName.Substring($repoRoot.Length + 1))" }
+
+# ============================================================
+# 3. テスト（全件合格。 -Coverage でカバレッジも集計する）
 # ============================================================
 if (-not $SkipTests) {
-    Write-Output '== 2. テスト =='
+    Write-Output '== 3. テスト =='
     $testArgs = @('test', $Solution, '-c', $Configuration, '-tl:off', '--no-build')
     $coverageDir = Join-Path ([IO.Path]::GetTempPath()) ("se_cov_" + [Guid]::NewGuid().ToString('N'))
     if ($Coverage) { $testArgs += @('--collect:XPlat Code Coverage', "--results-directory:$coverageDir") }
@@ -148,10 +166,10 @@ if (-not $SkipTests) {
 }
 
 # ============================================================
-# 3. NuGet の健全性（脆弱性・非推奨。 推移的依存も含む）
+# 4. NuGet の健全性（脆弱性・非推奨。 推移的依存も含む）
 # ============================================================
 if (-not $SkipPackage) {
-    Write-Output '== 3. NuGet の健全性 =='
+    Write-Output '== 4. NuGet の健全性 =='
     $pkgIssues = 0
     $pkgDetails = [System.Collections.Generic.List[string]]::new()
     foreach ($kind in @('--vulnerable', '--deprecated')) {
@@ -174,9 +192,9 @@ $docs = @(Get-ChildItem -Path (Join-Path $repoRoot 'src'), (Join-Path $repoRoot 
         Where-Object { $_.FullName -notmatch '\\(obj|bin|archive)\\' })
 
 # ============================================================
-# 4. ドキュメント（markdownlint）
+# 5. ドキュメント（markdownlint）
 # ============================================================
-Write-Output '== 4. ドキュメント（markdownlint） =='
+Write-Output '== 5. ドキュメント（markdownlint） =='
 $mdArgs = @('--yes', 'markdownlint-cli2', '--config', '.markdownlint.json')
 if ($Fix) { $mdArgs += '--fix' }
 $mdArgs += @('src/**/*.md', '.github/**/*.md', '*.md', '!**/obj/**', '!**/bin/**')
@@ -187,9 +205,9 @@ Add-Result 'markdownlint' ($mdIssues -eq 0) "$mdIssues 件"
 if ($mdIssues -gt 0) { $mdText -split "`r?`n" | Where-Object { $_ -match 'error|warning' } | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" } }
 
 # ============================================================
-# 5. 相対リンク（存在しないファイルへの参照）
+# 6. 相対リンク（存在しないファイルへの参照）
 # ============================================================
-Write-Output '== 5. 相対リンク =='
+Write-Output '== 6. 相対リンク =='
 $brokenLinks = [System.Collections.Generic.List[string]]::new()
 $rxLink = [regex]'\]\((?<t>[^)\s]+)\)'
 $rxCode = [regex]'`[^`]*`'
@@ -211,9 +229,9 @@ Add-Result '相対リンク' ($brokenLinks.Count -eq 0) "$($brokenLinks.Count) �
 $brokenLinks | Select-Object -First 10 | ForEach-Object { "      $_" }
 
 # ============================================================
-# 6. 名前空間（フォルダへの追従）
+# 7. 名前空間（フォルダへの追従）
 # ============================================================
-Write-Output '== 6. 名前空間 =='
+Write-Output '== 7. 名前空間 =='
 $nsMismatches = [System.Collections.Generic.List[string]]::new()
 $checkedFiles = 0
 Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory | ForEach-Object {
@@ -237,9 +255,9 @@ Add-Result '名前空間' ($nsMismatches.Count -eq 0) "$checkedFiles ファイ�
 $nsMismatches | Select-Object -First 10 | ForEach-Object { "      $_" }
 
 # ============================================================
-# 7. 文書が引用する名前空間・ファイル（実在の確認）
+# 8. 文書が引用する名前空間・ファイル（実在の確認）
 # ============================================================
-Write-Output '== 7. 文書の引用（実在の確認） =='
+Write-Output '== 8. 文書の引用（実在の確認） =='
 $tracked = @{}
 $trackedNames = @{}
 foreach ($f in (git ls-files)) {
@@ -346,17 +364,17 @@ $treeIssues | Select-Object -First 8 | ForEach-Object { "      $_" }
 $stale | Select-Object -First 8 | ForEach-Object { "      $_" }
 
 # ============================================================
-# 8. 改行コード
+# 9. 改行コード
 # ============================================================
-Write-Output '== 8. 改行コード =='
+Write-Output '== 9. 改行コード =='
 $eolIssues = @(git ls-files --eol | Select-String 'w/mixed|w/lf')
 Add-Result '改行コード' (@($eolIssues).Count -eq 0) "$(@($eolIssues).Count) 件"
 $eolIssues | Select-Object -First 5 | ForEach-Object { "      $($_.Line)" }
 
 # ============================================================
-# 9. フォルダ（空フォルダ / 孤立した bin・obj）
+# 10. フォルダ（空フォルダ / 孤立した bin・obj）
 # ============================================================
-Write-Output '== 9. フォルダ =='
+Write-Output '== 10. フォルダ =='
 $emptyDirs = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -Directory |
         Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
         Where-Object { @(Get-ChildItem -LiteralPath $_.FullName -Force).Count -eq 0 })
@@ -368,10 +386,10 @@ $emptyDirs | Select-Object -First 5 | ForEach-Object { "      $($_.FullName.Subs
 $orphanBins | Select-Object -First 5 | ForEach-Object { "      $($_.FullName.Substring($repoRoot.Length + 1))" }
 
 # ============================================================
-# 10. コードスタイル（dotnet format。 情報レベルまで含めて 0 件にする）
+# 11. コードスタイル（dotnet format。 情報レベルまで含めて 0 件にする）
 # ============================================================
 if (-not $SkipFormat) {
-    Write-Output '== 10. コードスタイル（dotnet format） =='
+    Write-Output '== 11. コードスタイル（dotnet format） =='
     if ($Fix) {
         & dotnet format whitespace $Solution --no-restore 2>&1 | Out-Null
         & dotnet format style $Solution --severity warn --no-restore 2>&1 | Out-Null

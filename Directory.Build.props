@@ -6,4 +6,16 @@
     <Version>0.1.0</Version>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- コード スタイルとドキュメントコメントの検証（全プロジェクト共通。 各 .csproj では指定しない）。
+         目的は「機械的に判定できる規約をビルドの警告にする」こと（0 件が合否。 .github/検証手順.md）。 -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- XML は検証だけに使う（bin へも publish へも出さない）。
+         CopyDocumentationFileToOutputDirectory だけでは publish が MSB3030（XML が見つからない）で
+         失敗するため、PublishDocumentationFiles も false にする（対で指定する）。 -->
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+    <PublishDocumentationFiles>false</PublishDocumentationFiles>
+  </PropertyGroup>
+
 </Project>

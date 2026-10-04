@@ -6,11 +6,6 @@
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- ドキュメントコメントを検証する（存在しない cref を CS1574、引数の対応違いを CS1572 / CS1573 で検出）。
-         XML は配布物（bin / publish）へ出さない（検証だけに使う）。 -->
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
     <RootNamespace>EsUtil.SaveEvidence.App.AvaloniaUI</RootNamespace>
     <StartupObject>EsUtil.SaveEvidence.App.AvaloniaUI.Program</StartupObject>
     <AnalysisLevel>latest</AnalysisLevel>
