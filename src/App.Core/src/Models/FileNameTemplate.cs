@@ -107,7 +107,7 @@ public sealed partial class FileNameTemplate
     /// <summary>
     /// テンプレート内の数値の塊を検出する正規表現
     /// </summary>
-    [GeneratedRegex("\\d+")]
+    [GeneratedRegex("\\d+", RegexOptions.None, 100)]
     private static partial Regex NumberPattern();
 
     /// <summary>
@@ -163,7 +163,7 @@ public sealed partial class FileNameTemplate
         // { } で囲われた領域を検出し、領域内のトークンを日時値へ置換する
         result = PlaceholderPattern().Replace(result, match =>
         {
-            var content = match.Groups[1].Value;
+            var content = match.Groups["content"].Value;
             foreach (var token in s_tokens)
             {
                 content = content.Replace(token.Token, valueOf(token), StringComparison.Ordinal);
@@ -177,6 +177,6 @@ public sealed partial class FileNameTemplate
     }
 
     /// <summary>{ } で囲われたプレースホルダ領域を検出する正規表現（入れ子なし・最長一致）。</summary>
-    [GeneratedRegex("\\{([^{}]*)\\}")]
+    [GeneratedRegex("\\{(?<content>[^{}]*)\\}", RegexOptions.None, 100)]
     private static partial Regex PlaceholderPattern();
 }

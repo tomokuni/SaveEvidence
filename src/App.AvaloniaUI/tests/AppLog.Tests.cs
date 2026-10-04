@@ -45,6 +45,7 @@ public class AppLogTests
         logger.LogDeactivated();
         logger.LogStartSelectionMode(CaptureType.ScreenSelect);
         logger.LogSessionReturned("1920x1080", "0,0,1920,1080");
+        logger.LogCaptureStartError(new InvalidOperationException("test"), CaptureType.ScreenSelect);
     }
 
     /// <summary>LoggerMessage 生成コードの state 走査（Count・インデクサ・IEnumerable・範囲外）を網羅するテスト用ロガー。</summary>

@@ -28,7 +28,7 @@ public sealed class StringToBrushConverter : IValueConverter
     /// キャッシュは静的であるため、複数インスタンス・複数バインディングで共有される。<br/>
     /// 容量超過時は <see cref="BrushCacheCapacity"/> を上限に全クリアする（<see cref="ColorString.AddWithCapacityLimit{T}"/> に委譲）。
     /// </remarks>
-    private static readonly ConcurrentDictionary<string, SolidColorBrush> s_brushCache = new();
+    private static readonly ConcurrentDictionary<string, SolidColorBrush> s_brushCache = new(StringComparer.Ordinal);
 
     /// <summary>ブラシキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
     /// <remarks>テスト（ColorPickerControl.AvaloniaUI.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>

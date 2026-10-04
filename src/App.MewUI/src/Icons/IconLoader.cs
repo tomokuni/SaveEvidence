@@ -66,7 +66,7 @@ internal static partial class IconLoader
         {
             var svg = ReadSvg(fileName);
             var match = PathDataRegex().Match(svg);
-            return match.Success ? SKPath.ParseSvgPathData(match.Groups[1].Value) ?? new SKPath() : new SKPath();
+            return match.Success ? SKPath.ParseSvgPathData(match.Groups["path"].Value) ?? new SKPath() : new SKPath();
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
@@ -231,6 +231,6 @@ internal static partial class IconLoader
     }
 
     /// <summary>SVG の path 要素から d 属性（パスデータ）を抽出する正規表現。</summary>
-    [GeneratedRegex("d=\"([^\"]*)\"")]
+    [GeneratedRegex("d=\"(?<path>[^\"]*)\"", RegexOptions.None, 100)]
     private static partial Regex PathDataRegex();
 }

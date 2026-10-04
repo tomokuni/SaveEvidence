@@ -22,7 +22,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
 {
     /// <summary>状態を保護するゲート。</summary>
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
 
     /// <summary>保持している画像（未取得の場合は null）。</summary>
     private EsBitmap? _image;
@@ -94,7 +94,6 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
             {
                 // 破棄後は保持しない（その場で破棄して破棄漏れを防ぐ）
                 replaced = image;
-                image = null;
             }
             else
             {

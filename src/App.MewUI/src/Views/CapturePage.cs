@@ -456,8 +456,8 @@ internal static class CapturePage
 
         Add("File - 画像を保存", () => _ = viewModel.SaveImageAsync(), viewModel.CanSave, "Ctrl+S");
         AddSeparator();
-        Add("Clipboard - コピー", () => _ = viewModel.CopyToClipboard(), viewModel.CanCopy, "Ctrl+C");
-        Add("Clipboard - 貼り付け", () => _ = viewModel.PasteFromClipboard(), viewModel.CanPaste, "Ctrl+V");
+        Add("Clipboard - コピー", () => _ = viewModel.CopyToClipboardAsync(), viewModel.CanCopy, "Ctrl+C");
+        Add("Clipboard - 貼り付け", () => _ = viewModel.PasteFromClipboardAsync(), viewModel.CanPaste, "Ctrl+V");
         AddSeparator();
         Add("Image - 元に戻す", () => EditHistory.Undo(services), viewModel.HasPreviewImage, "Ctrl+Z");
         Add("Image - 元に戻すを取り消す", () => EditHistory.Redo(services), viewModel.HasPreviewImage, "Ctrl+Y");
@@ -754,7 +754,7 @@ internal static class CapturePage
             {
                 ApplyCheckerboard(cropView, settings);
             }
-            else if (e.PropertyName == nameof(Settings.CenterAlign))
+            else if (string.Equals(e.PropertyName, nameof(Settings.CenterAlign), StringComparison.Ordinal))
             {
                 cropView.CenterAlign = settings.CenterAlign;
             }

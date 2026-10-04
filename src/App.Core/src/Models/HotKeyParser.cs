@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core;
-using SystemEnum = System.Enum;
 
 namespace EsUtil.SaveEvidence.App.Core.Models;
 
@@ -45,16 +44,12 @@ public static class HotKeyParser
 
         var keyName = parts[^1];
 
-        // 正規化する: Enum.TryParse は数値文字列（"999" 等）を受理するため、列挙に無い値がキーとして通る
-        // （実測: 修正前は "Ctrl + 999" が true になっていた）。 Normalize で未定義値を None へ寄せて拒否する。
-        if (SystemEnum.TryParse<EsKey>(keyName, true, out var parsed))
+        // 文字列の解釈は EnumCanonical へ集約する（Enum.TryParse は数値文字列（"999" 等）を受理するため、
+        // 列挙に無い値がキーとして通る。 実測: 修正前は "Ctrl + 999" が true になっていた）。
+        if (EnumCanonical.TryParse<EsKey>(keyName, out var key) && key != EsKey.None)
         {
-            var key = parsed.Normalize();
-            if (key != EsKey.None)
-            {
-                setting = new HotKeySetting(modifiers, key);
-                return true;
-            }
+            setting = new HotKeySetting(modifiers, key);
+            return true;
         }
 
         return false;

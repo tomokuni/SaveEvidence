@@ -67,7 +67,7 @@ public sealed partial class App : Application
     /// <summary>設定プロパティ変更時のハンドラ。 テーマモード変更のみテーマへ反映する。</summary>
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(Settings.ThemeMode) && sender is Settings settings)
+        if (string.Equals(e.PropertyName, nameof(Settings.ThemeMode), StringComparison.Ordinal) && sender is Settings settings)
         {
             UpdateRequestedTheme(settings.ThemeMode);
         }

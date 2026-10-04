@@ -20,7 +20,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 public sealed class CaptureClipCache : IDisposable
 {
     /// <summary>状態を保護するゲート。</summary>
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
 
     /// <summary>キャッシュ済みの切り出し矩形（未キャッシュの場合は null）。</summary>
     private EsRectInt? _rect;
@@ -105,7 +105,7 @@ public sealed class CaptureClipCache : IDisposable
             {
                 // 破棄後に届いた結果は保持しない（破棄漏れを防ぐためここで破棄する）
                 replaced = bitmap;
-                bitmap = null!;
+
             }
             else
             {

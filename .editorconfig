@@ -168,6 +168,25 @@ dotnet_diagnostic.CA1003.severity = warning
 # 連続する空行を検出する（体裁をコンパイラで守らせる）。
 dotnet_diagnostic.IDE2000.severity = warning
 
+# --- 追加のアナライザーで強制する規則（Directory.Build.props がパッケージを参照する） ---
+
+# `async void` を使わない（UI のイベント ハンドラー以外。 例外が呼び出し元へ伝わらない。 規約 §7）。
+dotnet_diagnostic.VSTHRD100.severity = warning
+
+# `Task` / `ValueTask` を返すメソッドは `Async` で終える（規則は .github/命名規約.md）。
+dotnet_diagnostic.VSTHRD200.severity = warning
+
+# 1 ファイル 1 型・ファイル名は型名と一致させる（規則は .github/命名規約.md「ファイル」）。
+# 入れ子型・付随型の同居は MA0048 の対象外である（実測してから採用した）。
+dotnet_diagnostic.MA0048.severity = warning
+
+# 名前空間のセグメントと型名を一致させない（一致すると配下から CS0118 で参照できない。 規則は .github/命名規約.md）。
+dotnet_diagnostic.MA0049.severity = warning
+
+# 文字列の比較は `string.Equals` + `StringComparison` を使う（`==` では比較規則を指定できない。
+# 規約 §4「文字列比較は StringComparison を明示する」と対になる。 実測で 1 件を修正）。
+dotnet_diagnostic.MA0006.severity = warning
+
 # --- 記述スタイル（コンパイラで強制する。 規則は .github/コーディング規約.md） ---
 
 # 複数行のブロックは `{ }` を必須にする（1 行のガード節（早期 return / continue / throw）は省略できる。 規約 §4）。
@@ -249,6 +268,37 @@ dotnet_diagnostic.CA1034.severity = none
 # IDE0008 … `var` を禁止する方向の規則であり、本リポジトリの「型が自明な場合は var」と衝突する。
 dotnet_diagnostic.IDE0008.severity = none
 
+# --- 追加のアナライザー（Meziantou.Analyzer）で有効にしない規則 ---
+# MA0008 … struct へ `[StructLayout]` を要求する。 本リポジトリは P/Invoke の構造体に必要な箇所だけ明示する
+#   （レイアウトが自明な値型の組へ一律に付ける規則とは方針が違う）。 実測 18 件。
+dotnet_diagnostic.MA0008.severity = none
+# MA0051 … メソッドの行数上限（60 行）。 本規約は行数で分割を強制しない
+#   （実測 4 件はいずれも写像表の `switch` 式であり、分割すると対応関係が読みにくくなる）。
+dotnet_diagnostic.MA0051.severity = none
+# MA0099 … enum のメンバーへ明示的な数値を要求する。 規約（命名規約）は「数値は明示しない
+#   （順序に意味がある場合は明示し、理由を doc コメントに書く）」であるため衝突する。 実測 8 件。
+dotnet_diagnostic.MA0099.severity = none
+# MA0015 … `ArgumentException` へ渡す名前が「メソッドの引数」であることを要求する。 本リポジトリの検証は
+#   **オブジェクトの状態（設定値）** が対象であり、引数ではないため `nameof(プロパティ)` を渡す
+#   （実測 56 件はすべて設定値の検証。 引数の取り違えではない）。 規則は .github/例外処理規約.md §2。
+dotnet_diagnostic.MA0015.severity = none
+# VSTHRD003 … 「外部で生成された Task を await しない」を要求する。 本リポジトリは UI スレッドへ戻るため
+#   `ConfigureAwait` を使わず（CA2007 も無効）、タイムアウト付きで await する（実測 4 件）。
+dotnet_diagnostic.VSTHRD003.severity = none
+# MA0004 … `ConfigureAwait(false)` を要求する（CA2007 と同じ）。 UI アプリは UI スレッドへ戻る必要があるため指定しない。
+dotnet_diagnostic.MA0004.severity = none
+# VSTHRD100 / VSTHRD101 … `async void` と void デリゲートへの async ラムダを禁止するが、本規約は
+#   **UI のイベント ハンドラーでの `async void`** を許す（コーディング規約 §7）。 VSTHRD100 は XAML で配線した
+#   ハンドラーを識別できず、正しいシグネチャのハンドラーを報告する（実測 7 件はすべて
+#   `(object?, RoutedEventArgs)`のハンドラー）。 VSTHRD101 のイベント購読（`Opened += async (_, _) => …`）も同類。
+#   製品コードの非ハンドラー（`StartSelectionMode`）は本規約に従って `async Task` + 失敗のログへ是正済み。
+dotnet_diagnostic.VSTHRD100.severity = none
+dotnet_diagnostic.VSTHRD101.severity = none
+# VSTHRD002 … 「Task を同期的に待たない」を要求するが、本リポジトリの同期読み取りは
+#   `IsCompletedSuccessfully`（または `ContinueWith` の継続）を確認した後だけ行うためデッドロックしない。
+#   このガードをアナライザーが区別できない（実測 2 件はいずれもガード付き）。 規則は .github/コード規約ではない。
+dotnet_diagnostic.VSTHRD002.severity = none
+
 # ファイル単位の例外（機械的な判定が実装の意図と合わない箇所。 理由を必ず書く）:
 # SkiaSharp の null 許容注釈と実際の戻り値が一致しない（SKCodec.Create は失敗時に null を返すが非 null として注釈されている）ため、
 # この 2 ファイルでは CA1508 を無効にする（防御的な null 検査を残す）。
@@ -261,6 +311,22 @@ dotnet_diagnostic.CA1508.severity = none
 [src/EsUtil.Platform.Core/src/EsKey.cs]
 dotnet_diagnostic.CA1720.severity = none
 
+# 禁止 API（RS0030）の所有者。 BannedSymbols.txt が禁止する API を「使う場所」はここだけである
+# （EnumCanonical は Enum.TryParse、LoggerFallback は NullLogger.Instance を使う）。
+[{src/EsUtil.Platform.Core/src/EnumCanonical.cs,src/EsUtil.Platform.Core/src/LoggerFallback.cs}]
+dotnet_diagnostic.RS0030.severity = none
+
+# 規約が認める付随型（型と一体の enum・操作クラス）を同居させるファイルは、ファイル名（主たる型）と
+# 2 番目の型名が一致しない（.github/命名規約.md「型と一体の付随型」）。 MA0048 を無効にする
+# （実測 7 ファイル。 主たる型＋付随型の組である）。
+[{src/Parts.CapturePreviewControl.Core/src/CaptureHighlight.cs,src/Parts.CapturePreviewControl.Core/src/CaptureKeyAction.cs,src/Parts.CapturePreviewControl.Core/src/CropSessionAction.cs,src/Parts.CapturePreviewControl.Core/src/ZoomNotice.cs,src/Parts.CapturePreviewControl.Core/src/ZoomScrollBarGeometry.cs,src/Parts.LineDetection/src/LineDetectionResult.cs,src/Parts.LineDetection/src/LineSegmentMath.cs}]
+dotnet_diagnostic.MA0048.severity = none
+
+# Avalonia のコードビハインドは `.axaml.cs` にコントロールの型を置くため、ファイル名と型名が一致しない
+# （.github/命名規約.md「Avalonia のコードビハインド（`ColorPicker.axaml.cs` に `ColorPickerControl`）」）。
+[**/*.axaml.cs]
+dotnet_diagnostic.MA0048.severity = none
+
 # 同じ値を持つ別名（重複値）の解決を検証するテストは、検証データとして意図的に重複値を持つ
 # （実測: CA1069 は「意図的な重複」を区別できないため、本ファイルだけ無効にする）。
 [src/EsUtil.Platform.Core/tests/EnumCanonical.Tests.cs]
@@ -272,3 +338,13 @@ dotnet_diagnostic.CA1069.severity = none
 [{**/tests/**,**/sample/**}]
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.RS0030.severity = none
+
+# テスト ファイル名は `{対象}.Tests.cs`・クラス名は `{対象}Tests`（`.` を除去する）ため、
+# ファイル名とクラス名が一致しない（.github/命名規約.md「テスト」）。 MA0048 を無効にする。
+# MA0002 … テストのアサーション（`Assert.Contains` / `Assert.Equal`）は xUnit の既定の比較を使う API であり、
+#   比較子を引数で渡すと検証の意図が読みにくくなる。
+dotnet_diagnostic.MA0048.severity = none
+dotnet_diagnostic.MA0002.severity = none
+
+# MA0006 … テストの照合は固定のリテラル（検証データ）との比較であり、文化依存の差異が生じない。
+dotnet_diagnostic.MA0006.severity = none

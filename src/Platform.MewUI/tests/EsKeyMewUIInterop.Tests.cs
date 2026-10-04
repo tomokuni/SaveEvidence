@@ -123,7 +123,7 @@ public class EsKeyMewUIInteropTests
         // MewUI 側のキーは 1 件（Backspace）を除き、すべてコアと同名（別名表の追加漏れを検知する）
         var esNames = Enum.GetNames<EsKey>().ToHashSet(StringComparer.Ordinal);
         var mewuiOnly = Enum.GetNames<MewUIKey>()
-            .Where(static n => n != nameof(MewUIKey.Backspace))
+            .Where(static n => !string.Equals(n, nameof(MewUIKey.Backspace), StringComparison.Ordinal))
             .Where(n => !esNames.Contains(n))
             .ToList();
 

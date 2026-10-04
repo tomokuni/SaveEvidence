@@ -83,6 +83,8 @@ internal static partial class AppLog
     /// <remarks>
     /// アプリがクラッシュする直前の例外を確実に記録する（クラッシュ原因の特定用）。<br/>
     /// <c>Fatal</c> レベルで記録し、スタックトレースを含む。
+    /// LogLevel: Critical<br/>
+    /// 出力書式: <c>未処理の例外: {source}</c>
     /// </remarks>
     [LoggerMessage(LogLevel.Critical, "未処理の例外: {source}")]
     internal static partial void LogUnhandledException(this ILogger logger, Exception ex, string source);
@@ -94,6 +96,8 @@ internal static partial class AppLog
     /// <remarks>
     /// <b>注意</b>: すべての例外（握りつぶされるものも含む）が対象のため、ログ量が非常に多くなる。<br/>
     /// 次回の不具合調査時にのみ有効化することを推奨する（既定では「記録しない」フラグで制御する）。
+    /// LogLevel: Trace<br/>
+    /// 出力書式: <c>FirstChanceException: {message}</c>
     /// </remarks>
     [LoggerMessage(LogLevel.Trace, "FirstChanceException: {message}")]
     internal static partial void LogFirstChanceException(this ILogger logger, Exception ex, string message);
@@ -101,12 +105,14 @@ internal static partial class AppLog
     /// <summary>アプリケーションの起動を記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="version">アプリのバージョン。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>アプリケーション起動 (version={version})</c></remarks>
     [LoggerMessage(LogLevel.Information, "アプリケーション起動 (version={version})")]
     internal static partial void LogAppStartup(this ILogger logger, string version);
 
     /// <summary>アプリケーションの終了を記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="exitCode">終了コード。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>アプリケーション終了 (exitCode={exitCode})</c></remarks>
     [LoggerMessage(LogLevel.Information, "アプリケーション終了 (exitCode={exitCode})")]
     internal static partial void LogAppExit(this ILogger logger, int exitCode);
 
@@ -116,16 +122,19 @@ internal static partial class AppLog
 
     /// <summary>キャプチャメニュー「全画面」のクリックを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>メニュー「全画面」クリック</c></remarks>
     [LoggerMessage(LogLevel.Information, "メニュー「全画面」クリック")]
     internal static partial void LogCaptureMenuScreen(this ILogger logger);
 
     /// <summary>キャプチャメニュー「ウィンドウ」のクリックを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>メニュー「ウィンドウ」クリック</c></remarks>
     [LoggerMessage(LogLevel.Information, "メニュー「ウィンドウ」クリック")]
     internal static partial void LogCaptureMenuWindow(this ILogger logger);
 
     /// <summary>キャプチャメニュー「範囲選択」のクリックを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>メニュー「範囲選択」クリック</c></remarks>
     [LoggerMessage(LogLevel.Information, "メニュー「範囲選択」クリック")]
     internal static partial void LogCaptureMenuArea(this ILogger logger);
 
@@ -133,6 +142,7 @@ internal static partial class AppLog
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="isRight">右ボタンかどうか。</param>
     /// <param name="hasCropTask">切出しセッション実行中かどうか。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>プレビューでポインタ押下: 右ボタン={isRight}, 切出し中={hasCropTask}</c></remarks>
     [LoggerMessage(LogLevel.Information, "プレビューでポインタ押下: 右ボタン={isRight}, 切出し中={hasCropTask}")]
     internal static partial void LogPreviewPointerPressed(this ILogger logger, bool isRight, bool hasCropTask);
 
@@ -140,6 +150,8 @@ internal static partial class AppLog
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="folderPath">対象のフォルダパス。</param>
+    /// LogLevel: Error<br/>
+    /// 出力書式: <c>フォルダビュー一覧の読み込みで例外が発生: {folderPath}</c>
     /// <remarks>ナビゲーション中断（クラッシュ）を防ぐため、一覧は空にして継続する。</remarks>
     [LoggerMessage(LogLevel.Error, "フォルダビュー一覧の読み込みで例外が発生: {folderPath}")]
     internal static partial void LogFolderViewLoadError(this ILogger logger, Exception ex, string folderPath);
@@ -152,33 +164,39 @@ internal static partial class AppLog
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="propertyName">変更された設定プロパティ名。</param>
+    /// <remarks>LogLevel: Error<br/>出力書式: <c>設定変更の CaptureSessionControl 反映で例外が発生: {propertyName}</c></remarks>
     [LoggerMessage(LogLevel.Error, "設定変更の CaptureSessionControl 反映で例外が発生: {propertyName}")]
     internal static partial void LogSettingsApplyError(this ILogger logger, Exception ex, string propertyName);
 
     /// <summary>WM_HOTKEY メッセージを受信したことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>WndProc: WM_HOTKEY received</c></remarks>
     [LoggerMessage(LogLevel.Information, "WndProc: WM_HOTKEY received")]
     internal static partial void LogHotKeyReceived(this ILogger logger);
 
     /// <summary>ホットキーに対応するキャプチャ種別が決定されたことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="captureType">決定されたキャプチャ種別。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>WndProc: hotkey -> {captureType}</c></remarks>
     [LoggerMessage(LogLevel.Information, "WndProc: hotkey -> {captureType}")]
     internal static partial void LogHotKeyTriggered(this ILogger logger, CaptureType captureType);
 
     /// <summary>ウィンドウがアクティブ化されたことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>Activated</c></remarks>
     [LoggerMessage(LogLevel.Information, "Activated")]
     internal static partial void LogActivated(this ILogger logger);
 
     /// <summary>ウィンドウが非アクティブ化されたことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>Deactivated</c></remarks>
     [LoggerMessage(LogLevel.Information, "Deactivated")]
     internal static partial void LogDeactivated(this ILogger logger);
 
     /// <summary>選択モード（キャプチャ）の開始を記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="captureType">開始するキャプチャ種別。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>StartSelectionMode: {captureType}</c></remarks>
     [LoggerMessage(LogLevel.Information, "StartSelectionMode: {captureType}")]
     internal static partial void LogStartSelectionMode(this ILogger logger, CaptureType captureType);
 
@@ -186,6 +204,15 @@ internal static partial class AppLog
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="imageInfo">キャプチャ画像サイズ（null の場合は "null"）。</param>
     /// <param name="bounds">キャプチャ元矩形（null の場合は "null"）。</param>
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>StartSelectionMode session returned bitmap={imageInfo}, bounds={bounds}</c></remarks>
     [LoggerMessage(LogLevel.Information, "StartSelectionMode session returned bitmap={imageInfo}, bounds={bounds}")]
     internal static partial void LogSessionReturned(this ILogger logger, string imageInfo, string bounds);
+
+    /// <summary>キャプチャ開始で例外が発生したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="captureType">開始しようとしたキャプチャ種別。</param>
+    /// <remarks>LogLevel: Error<br/>出力書式: <c>StartSelectionMode で例外が発生: {captureType}</c></remarks>
+    [LoggerMessage(LogLevel.Error, "StartSelectionMode で例外が発生: {captureType}")]
+    internal static partial void LogCaptureStartError(this ILogger logger, Exception ex, CaptureType captureType);
 }

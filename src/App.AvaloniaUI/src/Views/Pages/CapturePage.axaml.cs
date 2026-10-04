@@ -33,7 +33,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// CaptureSessionControl による領域選択・切出し、CropViewControl（ズーム + 領域選択 + ルーペを内包）
 /// によるズーム制御、ルーペ表示を統一的に管理する。<br/>
 /// MainWindow とは <see cref="CapturePage.Initialize"/>（初期化）と
-/// <see cref="Views.MainWindow.StartSelectionMode"/>（キャプチャ開始）で連携する。<br/>
+/// <see cref="Views.MainWindow.StartSelectionModeAsync"/>（キャプチャ開始）で連携する。<br/>
 /// Ctrl ショートカット（保存 / コピー / 貼り付け / Undo / Redo / 切り出し / ズーム）は
 /// <see cref="OnGlobalKeyDown"/> で一括処理する。<br/>
 /// Undo / Redo スタックは DI シングルトン（<see cref="UndoHistory"/>）から取得し、UndoPage と共有する。
@@ -275,11 +275,11 @@ public sealed partial class CapturePage : UserControl
                 break;
             case Key.C: // Clipboard - コピー
                 e.Handled = true;
-                _ = _viewModel.CopyToClipboard();
+                _ = _viewModel.CopyToClipboardAsync();
                 break;
             case Key.V: // Clipboard - 貼り付け
                 e.Handled = true;
-                _ = PasteFromClipboard();
+                _ = PasteFromClipboardAsync();
                 break;
             case Key.Z: // Image - 元に戻す
                 e.Handled = true;
@@ -489,7 +489,7 @@ public sealed partial class CapturePage : UserControl
         _viewModel.StartSelectionMode = captureType =>
         {
             if (_parentWindow is MainWindow mw)
-                mw.StartSelectionMode(captureType);
+                _ = mw.StartSelectionModeAsync(captureType);
         };
     }
 
@@ -538,7 +538,7 @@ public sealed partial class CapturePage : UserControl
     {
         _viewModel.Settings.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(Settings.CenterAlign))
+            if (string.Equals(e.PropertyName, nameof(Settings.CenterAlign), StringComparison.Ordinal))
                 CropView.CenterAlign = _viewModel.CenterAlign;
         };
     }
@@ -623,8 +623,8 @@ public sealed partial class CapturePage : UserControl
     // ====================================================================
 
     private void OnSaveButtonClick(object? sender, RoutedEventArgs e) => _ = _viewModel.SaveImageAsync();
-    private void OnCopyButtonClick(object? sender, RoutedEventArgs e) => _ = _viewModel.CopyToClipboard();
-    private async void OnPasteButtonClick(object? sender, RoutedEventArgs e) => await PasteFromClipboard();
+    private void OnCopyButtonClick(object? sender, RoutedEventArgs e) => _ = _viewModel.CopyToClipboardAsync();
+    private async void OnPasteButtonClick(object? sender, RoutedEventArgs e) => await PasteFromClipboardAsync();
     private void OnUndoButtonClick(object? sender, RoutedEventArgs e) => RestoreUndo();
 
     /// <summary>Redo ボタンのクリック時に画像を Redo スタックから復元する。</summary>
@@ -662,8 +662,8 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>クリップボードから貼り付けを行う。</summary>
-    public async Task PasteFromClipboard()
-        => await _viewModel.PasteFromClipboard();
+    public async Task PasteFromClipboardAsync()
+        => await _viewModel.PasteFromClipboardAsync();
 
     // ====================================================================
     // 切出し (Crop)
@@ -763,7 +763,7 @@ public sealed partial class CapturePage : UserControl
 
     private async void OnPasteMenuClick(object? sender, RoutedEventArgs e)
     {
-        try { await PasteFromClipboard(); }
+        try { await PasteFromClipboardAsync(); }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // 貼り付け失敗（クリップボードに画像がない等）は何もしない
@@ -791,7 +791,7 @@ public sealed partial class CapturePage : UserControl
     {
         log();
         if (_parentWindow is MainWindow mw)
-            mw.StartSelectionMode(captureType);
+            _ = mw.StartSelectionModeAsync(captureType);
     }
 
     private void OnCropMenuClick(object? sender, RoutedEventArgs e)
@@ -881,7 +881,7 @@ public sealed partial class CapturePage : UserControl
     private void OnZoomFlyoutItemClick(object? sender, RoutedEventArgs e)
     {
         if (sender is not MenuItem { Tag: { } tag }) return;
-        if (!int.TryParse(tag.ToString(), out var zoom)) return;
+        if (!int.TryParse(tag.ToString(), CultureInfo.InvariantCulture, out var zoom)) return;
         // ズーム率は CropViewControl が適用し、ZoomChanged でスライダ・ViewModel へ同期される
         CropView.ZoomPercent = zoom;
     }

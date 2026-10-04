@@ -209,7 +209,7 @@ internal sealed class MainWindow
         // 開閉の変更でナビパネルの幅・文字の表示を更新する
         viewModel.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(MainViewModel.IsNavigationExpanded))
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.IsNavigationExpanded), StringComparison.Ordinal))
             {
                 settingsService.Current.IsNavigationExpanded = viewModel.IsNavigationExpanded;
                 settingsService.Save();

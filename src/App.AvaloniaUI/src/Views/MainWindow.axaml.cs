@@ -113,7 +113,7 @@ public sealed partial class MainWindow : Window
         // ナビゲーション開閉状態の変更を設定ファイルへ即時保存する（次回起動時に復元）
         _viewModel.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(MainViewModel.IsNavigationExpanded))
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.IsNavigationExpanded), StringComparison.Ordinal))
             {
                 _settingsService.Current.IsNavigationExpanded = _viewModel.IsNavigationExpanded;
                 _settingsService.Save();
@@ -174,7 +174,7 @@ public sealed partial class MainWindow : Window
     /// </remarks>
     private void SetupViewModelCallbacks()
     {
-        _viewModel.CopyToClipboardAsync = async (EsBitmap image) =>
+        _viewModel.CopyToClipboardCallback = async (EsBitmap image) =>
         {
             if (Clipboard is null)
             {
@@ -186,7 +186,7 @@ public sealed partial class MainWindow : Window
             await Clipboard.SetBitmapAsync(bitmap);
             return true;
         };
-        _viewModel.PasteFromClipboardAsync = async () =>
+        _viewModel.PasteFromClipboardCallback = async () =>
         {
             if (Clipboard is null)
             {
@@ -235,7 +235,7 @@ public sealed partial class MainWindow : Window
     {
         _logger.LogHotKeyReceived();
         _logger.LogHotKeyTriggered(captureType);
-        StartSelectionMode(captureType);
+        _ = StartSelectionModeAsync(captureType);
     }
 
     private void OnMainWindowClosing(object? sender, WindowClosingEventArgs e)
@@ -377,7 +377,7 @@ public sealed partial class MainWindow : Window
 
     /// <summary>現在の設定（<see cref="ISettingsService.Current"/>）を CaptureSessionControl へ反映する。</summary>
     /// <remarks>
-    /// キャプチャ（<see cref="StartSelectionMode"/>）・切出し（CapturePage）のセッション開始前に呼び出し、<br/>
+    /// キャプチャ（<see cref="StartSelectionModeAsync"/>）・切出し（CapturePage）のセッション開始前に呼び出し、<br/>
     /// 設定画面での変更（画像外の選択を禁止 等）をセッションへ即時反映する（起動時設定のままにならないようにする）。<br/>
     /// Settings → CaptureSettings の変換は <see cref="CaptureSettingsMapper"/> に委譲する。
     /// </remarks>
@@ -405,21 +405,35 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>選択モードを開始する。</summary>
-    internal async void StartSelectionMode(CaptureType captureType)
+    /// <param name="captureType">開始するキャプチャ種別。</param>
+    /// <remarks>
+    /// 呼び出し側は完了を待たない（ホットキー・メニューのハンドラーは同期のため）。<br/>
+    /// セッション開始の失敗はアプリを継続し、原因をログへ記録する（非同期の完了を待たないため
+    /// 例外を呼び出し側へ返せない。 `async void` にすると例外がプロセスを落とす）。
+    /// </remarks>
+    internal async Task StartSelectionModeAsync(CaptureType captureType)
     {
         _logger.LogStartSelectionMode(captureType);
 
-        // キャプチャ開始直前に設定を反映する（PropertyChanged 購読に加えて確実に最新の設定を使う。
+        // キャプチャ開始直前に設定を反映する（PropertyChanged 購読に加えて確実 に最新の設定を使う。
         // 設定画面での変更が購読で反映されないケース（起動直後・Reload 後など）を防ぐ）。
         ApplyCaptureSessionSettings();
 
-        // キャプチャセッションを開始（HideOwnerWindow=true の場合は CaptureSessionControl が自動非表示する）。
-        // 画像変更は CaptureCompleted イベント（同期）で行い、完了後に CaptureSessionControl が APP を再表示する。
-        // フロー: APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）
-        var result = await _captureSessionControl.StartCaptureAsync(captureType, this);
+        try
+        {
+            // キャプチャセッションを開始（HideOwnerWindow=true の場合は CaptureSessionControl が自動非表示する）。
+            // 画像変更は CaptureCompleted イベント（同期）で行い、完了後に CaptureSessionControl が APP を再表示する。
+            // フロー: APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）
+            var result = await _captureSessionControl.StartCaptureAsync(captureType, this);
 
-        var imgInfo = result?.Image is not null ? $"{result.Image.Size.Width}x{result.Image.Size.Height}" : "null";
-        _logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
+            var imgInfo = result?.Image is not null ? $"{result.Image.Size.Width}x{result.Image.Size.Height}" : "null";
+            _logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // セッション開始の失敗（画面取得不可等）はアプリを継続する
+            _logger.LogCaptureStartError(ex, captureType);
+        }
     }
 
     /// <summary>キャプチャ完了イベントの受信処理（同期実行。 画像変更を行う）。</summary>

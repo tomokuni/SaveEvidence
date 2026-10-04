@@ -1,5 +1,6 @@
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -78,7 +79,7 @@ public abstract class ViewModePageBase : UserControl
     /// <summary>表示モードボタンの共通クリックハンドラ。 対応する表示モードに切り替え、一覧を再構築する。</summary>
     protected void OnViewModeClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is ToggleButton { Tag: string tag } && int.TryParse(tag, out var index))
+        if (sender is ToggleButton { Tag: string tag } && int.TryParse(tag, CultureInfo.InvariantCulture, out var index))
         {
             SelectedViewModeIndex = index;
             SaveViewModeSettings();

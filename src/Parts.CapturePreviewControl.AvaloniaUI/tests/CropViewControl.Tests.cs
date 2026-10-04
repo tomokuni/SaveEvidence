@@ -26,7 +26,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 /// パブリック API 経由で内包コントロール（ZoomViewControl / FadeMaskDragRect）との連携を検証する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
-public class CropViewTests
+public class CropViewControlTests
 {
     /// <summary>テスト用の CropViewControl（画像を設定済み）を生成する。</summary>
     private static CropViewControl CreateView()

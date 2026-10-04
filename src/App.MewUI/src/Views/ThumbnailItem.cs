@@ -40,7 +40,7 @@ internal static class ThumbnailItem
             Child = frame,
             BlurRadius = AppStyles.ThumbnailShadowBlur,
             OffsetY = AppStyles.ThumbnailShadowOffsetY,
-            ShadowColor = frame.StyleName == AppStyles.ThumbnailFrameCurrent
+            ShadowColor = string.Equals(frame.StyleName, AppStyles.ThumbnailFrameCurrent, StringComparison.Ordinal)
                 ? MewUIColor.Transparent
                 : AppStyles.ThumbnailShadowColor,
             CornerRadius = AppStyles.ThumbnailCornerRadius,
@@ -57,7 +57,7 @@ internal static class ThumbnailItem
 
         // ホバー中は枠をハイライトし、影を消し、項目全体へ薄い帯を表示する
         // （現在表示中の枠は常に青のため、枠色と影は変えない）
-        var highlightBorder = frame.StyleName == AppStyles.ThumbnailFrame;
+        var highlightBorder = string.Equals(frame.StyleName, AppStyles.ThumbnailFrame, StringComparison.Ordinal);
         host.MouseEnter += () =>
         {
             host.Background = AppStyles.CurrentThumbnailHoverBackground;

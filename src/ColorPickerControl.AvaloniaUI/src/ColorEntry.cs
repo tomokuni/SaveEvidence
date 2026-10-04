@@ -25,14 +25,14 @@ internal sealed record ColorEntry(string Name, string Value)
     private static readonly ColorEntry[] s_all = [.. ColorString.ColorNames.Select(p => new ColorEntry(p.Key, p.Key))];
 
     /// <summary>色名（英名）アルファベット順の全色一覧。</summary>
-    private static readonly IReadOnlyList<ColorEntry> s_byName = [.. s_all.OrderBy(e => e.Name)];
+    private static readonly IReadOnlyList<ColorEntry> s_byName = [.. s_all.OrderBy(e => e.Name, StringComparer.Ordinal)];
 
     /// <summary>色相順の全色一覧。</summary>
     /// <remarks>
     /// 無彩色（白・灰・黒）を先（brightness 昇順 → Black が先頭）に、有彩色を hue 昇順で並べる。<br/>
     /// 同一キー内では <see cref="Name"/> のアルファベット順で安定ソートする。
     /// </remarks>
-    private static readonly IReadOnlyList<ColorEntry> s_byHue = [.. s_all.OrderBy(e => GetSortKey(e.Value)).ThenBy(e => e.Name)];
+    private static readonly IReadOnlyList<ColorEntry> s_byHue = [.. s_all.OrderBy(e => GetSortKey(e.Value)).ThenBy(e => e.Name, StringComparer.Ordinal)];
 
     /// <summary>色相順ソート用のキーを取得する。</summary>
     /// <remarks>無彩色（白・灰・黒）は priority=0 （brightness 昇順 → Black が先頭）、<br/>

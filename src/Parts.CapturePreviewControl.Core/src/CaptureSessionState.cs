@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 public sealed class CaptureSessionState
 {
     /// <summary>状態を保護するゲート。</summary>
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
 
     /// <summary>実行中かどうかを取得する。</summary>
     /// <value>実行中の場合は true。</value>

@@ -15,7 +15,7 @@ public static class EsWindowStateMewUIInterop
     /// <returns>対応する MewUI のウィンドウ状態。 未定義値は <see cref="MewUIWindowState.Normal"/>。</returns>
     /// <remarks>
     /// 未定義値（<c>(EsWindowState)999</c> 等）は <see cref="EnumCanonical"/> が検出する
-    /// （<see cref="Enum.TryParse{T}(string, out T)"/> は数値文字列を受け付けてしまうため）。
+    /// （<c>Enum.TryParse</c> は数値文字列を受け付けてしまうため）。
     /// </remarks>
     public static MewUIWindowState ToMewUIWindowState(this EsWindowState state)
         => EnumCanonical.TryParse<EsWindowState, MewUIWindowState>(state, out var result)

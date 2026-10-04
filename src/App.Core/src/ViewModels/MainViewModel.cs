@@ -52,11 +52,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>画像クリップボード操作のコールバック（View 側から設定）。</summary>
     /// <remarks>コピーは <see cref="EsBitmap"/> を渡し、UI 型への変換は UI 実装側（View）が行う。</remarks>
-    public Func<EsBitmap, Task<bool>>? CopyToClipboardAsync { get; set; }
+    public Func<EsBitmap, Task<bool>>? CopyToClipboardCallback { get; set; }
 
     /// <summary>画像貼り付け操作のコールバック（View 側から設定）。</summary>
     /// <remarks>貼り付けは <see cref="EsBitmap"/> を受け取り、UI 型からの変換は UI 実装側（View）が行う。</remarks>
-    public Func<Task<EsBitmap?>>? PasteFromClipboardAsync { get; set; }
+    public Func<Task<EsBitmap?>>? PasteFromClipboardCallback { get; set; }
 
     /// <summary>上書き確認ダイアログのコールバック（View 側から設定）。</summary>
     public Func<string, Task<bool>>? ConfirmOverwriteAsync { get; set; }
@@ -186,7 +186,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool CanSave => PreviewImage is not null && HasValidTemplate && !IsSaved;
 
     /// <summary>貼り付け可能かどうかを取得する。</summary>
-    public bool CanPaste => PasteFromClipboardAsync is not null;
+    public bool CanPaste => PasteFromClipboardCallback is not null;
 
     /// <summary>テーマモードの選択肢（Light / Dark / System）を取得する。</summary>
     /// <remarks>設定画面の ComboBox の ItemsSource に使用する。</remarks>
@@ -299,25 +299,25 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>画像をクリップボードにコピーする。</summary>
     [RelayCommand]
-    public async Task CopyToClipboard()
+    public async Task CopyToClipboardAsync()
     {
-        if (PreviewImage is not null && CopyToClipboardAsync is not null)
+        if (PreviewImage is not null && CopyToClipboardCallback is not null)
         {
             // クリップボードは UI 型を要求するため、変換は UI 実装側（View）が行う
-            await CopyToClipboardAsync(PreviewImage);
+            await CopyToClipboardCallback(PreviewImage);
         }
     }
 
     /// <summary>クリップボードから画像を貼り付ける。</summary>
     /// <returns>貼り付けに成功したかどうか</returns>
-    public async Task<bool> PasteFromClipboard()
+    public async Task<bool> PasteFromClipboardAsync()
     {
-        if (PasteFromClipboardAsync is null)
+        if (PasteFromClipboardCallback is null)
         {
             return false;
         }
 
-        var image = await PasteFromClipboardAsync();
+        var image = await PasteFromClipboardCallback();
         if (image is not null)
         {
             PreviewImage = image;

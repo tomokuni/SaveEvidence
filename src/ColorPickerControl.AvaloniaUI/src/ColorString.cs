@@ -41,7 +41,7 @@ public static class ColorString
     /// ComboBox のテキスト入力はキーストローク毎に <see cref="TryParse"/> が複数回呼ばれるため、<br/>
     /// 同一文字列の解析結果を共有して再解析を排除する（スレッドセーフ）。
     /// </remarks>
-    private static readonly ConcurrentDictionary<string, (bool Success, Color Color, double Opacity)> s_parseCache = new();
+    private static readonly ConcurrentDictionary<string, (bool Success, Color Color, double Opacity)> s_parseCache = new(StringComparer.Ordinal);
 
     /// <summary>解析結果キャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
     /// <remarks>テスト（ColorPickerControl.AvaloniaUI.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
@@ -52,7 +52,7 @@ public static class ColorString
     /// ComboBox の表示バインドはキーストローク毎に <see cref="ToDisplayText"/> を呼ぶため、<br/>
     /// 整形結果（色名検索＋文字列補間）を共有して毎回の文字列生成を排除する（スレッドセーフ）。
     /// </remarks>
-    private static readonly ConcurrentDictionary<string, string> s_displayTextCache = new();
+    private static readonly ConcurrentDictionary<string, string> s_displayTextCache = new(StringComparer.Ordinal);
 
     /// <summary>表示テキストキャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
     /// <remarks>テスト（ColorPickerControl.AvaloniaUI.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>
@@ -63,7 +63,7 @@ public static class ColorString
     /// ComboBox の ConvertBack（キーストローク毎のバインド更新）が <see cref="ToArgbHex(string?)"/> を呼ぶため、<br/>
     /// 正規化結果（16進補間）を共有して毎回の文字列生成を排除する（スレッドセーフ）。
     /// </remarks>
-    private static readonly ConcurrentDictionary<string, string> s_normalizedCache = new();
+    private static readonly ConcurrentDictionary<string, string> s_normalizedCache = new(StringComparer.Ordinal);
 
     /// <summary>正規化文字列キャッシュの最大容量（超過時は全クリアして無制限の増加を防ぐ）。</summary>
     /// <remarks>テスト（ColorPickerControl.AvaloniaUI.Tests）が容量超過の分岐を検証するため internal 公開する。</remarks>

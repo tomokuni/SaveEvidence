@@ -70,7 +70,7 @@ public sealed class SettingsService : ISettingsService
         lock (_lock)
         {
             var json = JsonSerializer.Serialize(_current, _settingsTypeInfo);
-            if (json == _lastSavedJson) return;
+            if (string.Equals(json, _lastSavedJson, StringComparison.Ordinal)) return;
 
             SaveInternal(json);
             _lastSavedJson = json;

@@ -48,7 +48,7 @@ internal sealed class MainViewModelCaptureTarget : ICaptureTarget
     /// <param name="e">変更されたプロパティ。</param>
     private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MainViewModel.PreviewImage))
+        if (string.Equals(e.PropertyName, nameof(MainViewModel.PreviewImage), StringComparison.Ordinal))
         {
             ImageChanged?.Invoke(this, EventArgs.Empty);
         }

@@ -139,7 +139,7 @@ internal static class UndoPage
         // 現在の画像の差し替えで青枠とサムネイルを追従させる
         viewModel.PropertyChanged += (_, e) =>
         {
-            if (e.PropertyName == nameof(MainViewModel.PreviewImage))
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.PreviewImage), StringComparison.Ordinal))
             {
                 Rebuild();
             }

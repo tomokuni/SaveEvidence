@@ -34,6 +34,14 @@
          規則の所有者は .github/コーディング規約.md（例: フラグ enum は HasFlag ではなくビット演算を使う）。 -->
     <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="[5.*,)" PrivateAssets="all" />
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" />
+
+    <!-- 規約のうち、SDK のアナライザー（AnalysisMode=Recommended）が検出しない項目を補うアナライザー。
+         有効にする規則は .editorconfig が単一所有する（既定の重要度のまま使わない）。 -->
+    <!-- 非同期の書き方（`async void` の禁止・`Async` 接尾辞）。 規則は .github/コーディング規約.md §7 / .github/命名規約.md。 -->
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="[17.*,)" PrivateAssets="all" />
+    <!-- ファイル名と型名の一致（MA0048）/ 名前空間セグメントと型名の一致の禁止（MA0049）。
+         規則は .github/命名規約.md（「1 ファイル 1 型」「ファイル名は型名と一致」「名前空間セグメントと型名を一致させない」）。 -->
+    <PackageReference Include="Meziantou.Analyzer" Version="[3.*,)" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

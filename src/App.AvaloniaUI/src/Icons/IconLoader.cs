@@ -30,7 +30,7 @@ internal static partial class IconLoader
     /// <summary>ジオメトリキャッシュの最大保持数。</summary>
     private const int GeometryCacheCapacity = 32;
 
-    private static readonly ConcurrentDictionary<string, Geometry> s_geometryCache = new();
+    private static readonly ConcurrentDictionary<string, Geometry> s_geometryCache = new(StringComparer.Ordinal);
 
     /// <summary>指定 SVG ファイルからアイコン描画用のジオメトリを読み込む。</summary>
     /// <param name="fileName">SVG ファイル名（例: "ic_fluent_scan_table_24_regular.svg"）。</param>
@@ -46,7 +46,7 @@ internal static partial class IconLoader
             {
                 var svg = ReadSvg(f);
                 var match = PathDataRegex().Match(svg);
-                return match.Success ? StreamGeometry.Parse(match.Groups[1].Value) : StreamGeometry.Parse("M0,0");
+                return match.Success ? StreamGeometry.Parse(match.Groups["path"].Value) : StreamGeometry.Parse("M0,0");
             }
             catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
             {
@@ -98,6 +98,6 @@ internal static partial class IconLoader
     }
 
     /// <summary>SVG の path 要素から d 属性（パスデータ）を抽出する正規表現。</summary>
-    [GeneratedRegex("d=\"([^\"]*)\"")]
+    [GeneratedRegex("d=\"(?<path>[^\"]*)\"", RegexOptions.None, 100)]
     private static partial Regex PathDataRegex();
 }

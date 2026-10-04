@@ -718,10 +718,11 @@ Add-Result '文書の記載範囲' ($scopeIssues.Count -eq 0) "可搬な層の�
 $scopeIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
 # 8i) 状態を表す真偽値の命名（命名規約: 述語の接頭辞）
-#     状態・判定の真偽値は Is / Has / Can / Should / Show / Was で始める（`Redraw` では true の意味が読めない）。
+#     状態・判定の真偽値は Is / Has / Can / Should / Show で始める（`Redraw` では true の意味が読めない）。
+#     過去形（`Was`）は使わない（真偽値の種類を増やさない）。
 #     設定・外観（Settings / Options / Appearance / Config）の真偽値は動作を表す動詞句でもよい（.NET の慣習）。
 $rxStateBool = [regex]'(?<![\w.])(?:public|internal|private|protected)\s+(?:static\s+)?(?:virtual\s+|override\s+|sealed\s+|new\s+|readonly\s+)*bool\s+(?<n>[A-Za-z_]\w*)\s*\{'
-$rxBoolPredicate = [regex]'^(Is|Has|Can|Should|Show|Use|Supports|Contains|Needs|Was)'
+$rxBoolPredicate = [regex]'^(Is|Has|Can|Should|Show|Use|Supports|Contains|Needs)'
 $rxSettingsTypeName = [regex]'(Settings|Options|Appearance|Config)$'
 $boolIssues = [System.Collections.Generic.List[string]]::new()
 foreach ($f in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.cs' |
@@ -744,6 +745,148 @@ foreach ($f in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -
 }
 Add-Result '状態の真偽値の命名' ($boolIssues.Count -eq 0) "$($boolIssues.Count) 件"
 $boolIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8j) 命名と構造（規約が手作業に委ねていた項目を機械検査へ移したもの）
+#     - テスト メソッドは internal（テスト規約。 インターフェースを実装するクラスは除外する）
+#     - テスト クラス名はファイル名から `.Tests` を除き `.` を除去した名前（命名規約）
+#     - 可搬な層のカテゴリ フォルダは単数形（命名規約）
+#     - `async void` はイベント ハンドラーだけ（コーディング規約 §7）
+$codeIssues = [System.Collections.Generic.List[string]]::new()
+$allCs = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.cs' |
+    Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
+foreach ($f in @($allCs | Where-Object { $_.FullName -match '\\tests\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    # インターフェースを実装するクラスの行範囲（モック・スパイの public 実装を許すため）
+    $ifaceClassStarts = [System.Collections.Generic.List[int]]::new()
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $classMatch = [regex]::Match($lines[$i], '(?<![\w.])class\s+[A-Za-z_]\w*\s*(?<rest>.*)$')
+        if (-not $classMatch.Success) { continue }
+        $decl = $classMatch.Groups['rest'].Value
+        $j = $i
+        while ($decl -notmatch '\{' -and $j + 1 -lt $lines.Count) { $j++; $decl += ' ' + $lines[$j] }
+        if ($decl -match ':\s*[^[{]*\bI[A-Z]\w*') { $ifaceClassStarts.Add($i) }
+    }
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -notmatch '^\s{4,}public\s+(?:async\s+)?(?:void|Task|ValueTask)\s+(?<n>[A-Za-z_]\w*)\s*\(') { continue }
+        $inIfaceClass = $false
+        foreach ($start in $ifaceClassStarts) { if ($i -gt $start) { $inIfaceClass = $true } }
+        if (-not $inIfaceClass) { $codeIssues.Add(("{0}:{1}  テスト メソッドが public（internal にする）: {2}" -f $rel, ($i + 1), $Lines[$i].Trim())) }
+    }
+    $base = [IO.Path]::GetFileNameWithoutExtension($f.Name)
+    if ($base -match '\.Tests$') {
+        $expectedClass = (($base -replace '\.Tests$', '') -replace '\.', '') + 'Tests'
+        $classNames = @([regex]::Matches([IO.File]::ReadAllText($f.FullName, $enc), '(?m)^\s*(?:public|internal)\s+(?:sealed\s+)?class\s+([A-Za-z_]\w*)') | ForEach-Object { $_.Groups[1].Value })
+        if ($classNames.Count -gt 0 -and $classNames -notcontains $expectedClass) {
+            $codeIssues.Add(("{0}  テスト クラス名 [{1}] がファイル名から決まる [{2}] と一致しない" -f $rel, ($classNames -join ', '), $expectedClass))
+        }
+    }
+}
+foreach ($f in @($allCs | Where-Object { $_.FullName -notmatch '\\(tests|sample)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $m = [regex]::Match($lines[$i], 'async\s+void\s+[A-Za-z_]\w*\s*\((?<p>[^)]*)\)')
+        if (-not $m.Success) { continue }
+        # イベント ハンドラーは `(object?, EventArgs 派生)` の 2 引数
+        if ($m.Groups['p'].Value -match '^\s*object\??\s+\w+\s*,\s*\w+EventArgs\??\s+\w+\s*$') { continue }
+        $codeIssues.Add(("{0}:{1}  イベント ハンドラー以外の `async void`（`async Task` にして失敗をログへ記録する）: {2}" -f $rel, ($i + 1), $lines[$i].Trim()))
+    }
+}
+# 可搬な層のカテゴリ フォルダは単数形（型の集合を表すカテゴリは複数形でよい）
+$allowedPluralFolders = @('Models', 'Services', 'Views', 'Enums', 'Controls', 'Extensions', 'Properties', 'Interop')
+foreach ($projDir in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory -Filter 'EsUtil.*')) {
+    foreach ($d in (Get-ChildItem -Path (Join-Path $projDir.FullName 'src') -Recurse -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+        if ($d.Name -cin $allowedPluralFolders) { continue }
+        if ($d.Name -cmatch 's$' -and $d.Name -notmatch '(ss|us|is|as|ics|ous)$') {
+            $codeIssues.Add(("{0}  カテゴリ フォルダが複数形（単数形にする。 型の集合を表すカテゴリは除く）" -f $d.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')))
+        }
+    }
+}
+Add-Result '命名と構造' ($codeIssues.Count -eq 0) "テストの可視性・クラス名・フォルダ・async void $($codeIssues.Count) 件"
+$codeIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8k) イベントの発火は Raise ヘルパーへ集約する（`event` へ `?.Invoke` を書かない。 コーディング規約 §7）
+$rxEventDecl = [regex]'(?<![\w.])(?:public|internal|private|protected)\s+(?:static\s+)?event\s+(?:EventHandler(?:<[^>]+>)?|\w+(?:<\w+>)?)\s+(?<n>[A-Za-z_]\w*)'
+$invokeIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in @($allCs | Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $text = [IO.File]::ReadAllText($f.FullName, $enc)
+    $eventNames = @($rxEventDecl.Matches($text) | ForEach-Object { $_.Groups['n'].Value })
+    if ($eventNames.Count -eq 0) { continue }
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        foreach ($n in $eventNames) {
+            if ($lines[$i] -match ("(?<![\w.])" + [regex]::Escape($n) + "\?\.Invoke\(")) { $invokeIssues.Add(("{0}:{1}  {2}" -f $rel, ($i + 1), $lines[$i].Trim())) }
+        }
+    }
+}
+Add-Result 'イベントの発火' ($invokeIssues.Count -eq 0) "event への ?.Invoke $($invokeIssues.Count) 件（Raise ヘルパーへ集約する）"
+$invokeIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8l) ログ定義のドキュメントコメントへレベルと出力書式を書く（ログ規約 §5）
+$logDocIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in @($allCs | Where-Object { $_.FullName -notmatch '\\(obj|bin|tests|sample)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -notmatch '\[LoggerMessage\(') { continue }
+        $doc = [System.Collections.Generic.List[string]]::new()
+        for ($j = $i - 1; $j -ge 0 -and $lines[$j].TrimStart().StartsWith('///'); $j--) { $doc.Insert(0, $lines[$j]) }
+        $text = $doc -join "`n"
+        if ($text -notmatch '(LogLevel|ログレベル):') { $logDocIssues.Add(("{0}:{1}  ログレベルが doc にない" -f $rel, ($i + 1))) }
+        if ($text -notmatch '出力書式:') { $logDocIssues.Add(("{0}:{1}  出力書式が doc にない" -f $rel, ($i + 1))) }
+    }
+}
+Add-Result 'ログ定義の doc' ($logDocIssues.Count -eq 0) "レベル・出力書式の記載漏れ $($logDocIssues.Count) 件"
+$logDocIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8m) コードの抑止は ビルド設定規約.md の「付録 A 抑止の一覧」にあるものだけ（規約が例外の所有者）
+$buildRulesPath = Join-Path $repoRoot '.github/ビルド設定規約.md'
+$buildRules = [IO.File]::ReadAllText($buildRulesPath, $enc)
+$suppressSites = [System.Collections.Generic.List[object]]::new()
+foreach ($f in @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Include '*.cs', '*.csproj' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $m = [regex]::Match($lines[$i], '#pragma\s+warning\s+disable\s+(?<c>[A-Z]+\d+)')
+        if ($m.Success) { $suppressSites.Add([pscustomobject]@{ File = $rel; Line = $i + 1; Code = $m.Groups['c'].Value }) }
+        $m = [regex]::Match($lines[$i], 'SuppressMessage\([^)]*"(?<c>[A-Z]+\d+)"')
+        if ($m.Success) { $suppressSites.Add([pscustomobject]@{ File = $rel; Line = $i + 1; Code = $m.Groups['c'].Value }) }
+        $m = [regex]::Match($lines[$i], '<NoWarn>(?<c>[^<]+)</NoWarn>')
+        if ($m.Success) { foreach ($c in ($m.Groups['c'].Value -split '[;,]')) { if ($c.Trim() -match '^[A-Z]+\d+$') { $suppressSites.Add([pscustomobject]@{ File = $rel; Line = $i + 1; Code = $c.Trim() }) } } }
+    }
+}
+$unlisted = @($suppressSites | Where-Object { $buildRules -notmatch [regex]::Escape($_.Code) -or $buildRules -notmatch [regex]::Escape($_.File) })
+Add-Result '抑止の一覧' ($unlisted.Count -eq 0) "付録 A にない抑止 $($unlisted.Count) 件 / 抑止 $($suppressSites.Count) 件"
+$unlisted | Select-Object -First 10 | ForEach-Object { "      {0}:{1}  {2}（付録 A へ理由付きで追加する）" -f $_.File, $_.Line, $_.Code }
+
+# 8n) 文書の H1（ドキュメント規約 §2。 対象はリポジトリ直下と src/ 配下の文書）
+$h1Issues = [System.Collections.Generic.List[string]]::new()
+$docFiles = @(@(Get-ChildItem -Path $repoRoot -File -Filter '*.md') + @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.md'))
+foreach ($f in @($docFiles | Where-Object { $_.FullName -notmatch '\\(obj|bin|archive)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    if ($rel -eq 'src/README.md') { continue }
+    $h1 = $null
+    foreach ($l in [IO.File]::ReadAllLines($f.FullName, $enc)) { if ($l.StartsWith('# ')) { $h1 = $l.Substring(2).Trim(); break } }
+    $expected = $null
+    if ($rel -eq 'README.md') { $expected = 'SaveEvidence' }
+    elseif ($rel -match '^src/(?<p>[^/]+)/docs/SPEC_(?<k>[A-Za-z]+)\.md$') {
+        $kind = @{ 'API' = 'API リファレンス'; 'System' = 'システム仕様書'; 'ExtFunc' = '外部機能仕様書' }[$Matches['k']]
+        if ($kind) { $expected = "$($Matches['p']) $kind" }
+        elseif ($h1 -notlike "$($Matches['p']) *") { $h1Issues.Add(("{0}  H1 [{1}] が「{2} <用途名>」の形でない" -f $rel, $h1, $Matches['p'])) }
+        continue
+    }
+    elseif ($rel -match '^src/(?<p>[^/]+)/sample/README\.md$') { $expected = "$($Matches['p']) サンプルアプリケーション" }
+    elseif ($rel -match '^src/(?<p>[^/]+)/README\.md$') { $expected = $Matches['p'] }
+    if ($null -eq $expected) { continue }
+    if ($null -eq $h1) { $h1Issues.Add(("{0}  H1 がない" -f $rel)) }
+    elseif ($h1 -ne $expected) { $h1Issues.Add(("{0}  H1 [{1}] / 期待 [{2}]" -f $rel, $h1, $expected)) }
+}
+Add-Result '文書の H1' ($h1Issues.Count -eq 0) "$($h1Issues.Count) 件"
+$h1Issues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
 # ============================================================
 # 9. 改行コード

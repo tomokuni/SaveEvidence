@@ -240,7 +240,7 @@ public sealed partial class SettingsPage : UserControl
 
         var target = GetHotkeyTarget(tb);
         var text = tb.Text;
-        if (string.IsNullOrWhiteSpace(text) || text == "(未設定)")
+        if (string.IsNullOrWhiteSpace(text) || string.Equals(text, "(未設定)", StringComparison.Ordinal))
         {
             if (target.HasValue && GetCurrentHotkey(target.Value).Key != EsKey.None)
             {
