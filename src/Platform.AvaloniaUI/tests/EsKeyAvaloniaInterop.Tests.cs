@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 /// <b>本テストは「<see cref="EsKey"/> が <see cref="AvaloniaKey"/> の名前を鏡映している」という契約を固定する</b>:<br/>
 /// 集合がずれた場合（Avalonia の更新・<see cref="EsKey"/> の改名）に失敗し、ビルドで気付ける。<br/>
 /// 集合の一致は実行時の型情報（<see cref="Enum.GetNames{T}"/>）で比較するため、件数の写し間違いが起きない。<br/>
-/// <b>別名</b>: Avalonia 側には同じ値を持つ別名が 30 組あるため、<c>EsKey</c> → Avalonia → <c>EsKey</c> は<br/>
+/// <b>別名</b>: Avalonia 側には同じ値を持つ別名が 29 組ある（実測: 223 名に対し異なる値は 194）ため、<c>EsKey</c> → Avalonia → <c>EsKey</c> は<br/>
 /// 代表名（例: <c>Enter</c> → <c>Return</c>）へ正規化される。 <b>キーの値は保たれる</b>ため、これを契約として検証する。
 /// </remarks>
 public class EsKeyAvaloniaInteropTests
@@ -76,7 +76,7 @@ public class EsKeyAvaloniaInteropTests
     }
 
     // ====================================================================
-    // 別名（同じ値を持つ組。 実測 30 組）
+    // 別名（同じ値を持つ組。 実測 29 組）
     // ====================================================================
 
     [Theory]

@@ -8,10 +8,12 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 /// 両者は<b>メンバー名が完全に一致</b>するように設計されているため（実測: 両者とも 223 メンバー）、<br/>
 /// 数値の一致には依存せず<b>名前ベース</b>で変換する（数値の順序はフレームワーク間で保証されない）。<br/>
 /// <br/>
-/// <b>別名（同じ値を持つ名前）</b>: Avalonia の <see cref="AvaloniaKey"/> には同じ値を持つ別名が 30 組ある<br/>
-/// （例: <c>Return</c> / <c>Enter</c>、<c>CapsLock</c> / <c>Capital</c>、<c>OemTilde</c> / <c>Oem3</c>）。<br/>
+/// <b>別名（同じ値を持つ名前）</b>: Avalonia の <see cref="AvaloniaKey"/> には同じ値を持つ別名が 29 組ある<br/>
+/// （実測: 223 名に対し異なる値は 194。 例: <c>Return</c> / <c>Enter</c>、<c>CapsLock</c> / <c>Capital</c>、<c>OemTilde</c> / <c>Oem3</c>）。<br/>
 /// 値が同一のため<b>別名の同一性は保てない</b>（<c>EsKey.Enter</c> は <c>AvaloniaKey.Enter</c> へ変換できるが、<br/>
 /// 逆向きの変換は代表名 <c>EsKey.Return</c> を返す）。 <b>キーそのもの（値）は保たれる</b>ため実用上の問題はない。<br/>
+/// <b>代表名は宣言順では決まらない</b>（実測: 29 組中 10 組が宣言順の先頭と異なる。 .NET は同じ値の複数名のうち<br/>
+/// どれを返すかを保証しない）ため、特定の名前を前提にした実装をしない。<br/>
 /// <br/>
 /// <b>未定義値</b>: <see cref="Enum.TryParse{T}(string, out T)"/> は数値文字列を受け付けてしまうため、<br/>
 /// 名前解決の成否だけでは未定義値を検出できない。 <see cref="Enum.IsDefined{T}(T)"/> で検査し <c>None</c> を返す<br/>
