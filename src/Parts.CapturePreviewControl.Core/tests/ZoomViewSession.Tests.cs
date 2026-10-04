@@ -50,7 +50,7 @@ public class ZoomViewSessionTests
         var session = new ZoomViewSession();
         session.SetViewport(new EsSize(200, 200));
         var kinds = new List<ZoomNoticeKind>();
-        session.Notified += (_, notice) => kinds.Add(notice.Kind);
+        session.Notified += notice => kinds.Add(notice.Kind);
 
         var feedback = session.SetSource(hasSource: true, new EsSize(100, 100));
 
@@ -96,7 +96,7 @@ public class ZoomViewSessionTests
     {
         var session = CreateStandard();
         var count = 0;
-        session.Notified += (_, _) => count++;
+        session.Notified += _ => count++;
 
         var feedback = session.SetViewport(new EsSize(200, 200));
 
@@ -110,7 +110,7 @@ public class ZoomViewSessionTests
     {
         var session = CreateStandard();
         ZoomState? captured = null;
-        session.Notified += (_, notice) =>
+        session.Notified += notice =>
         {
             if (notice.Kind == ZoomNoticeKind.ZoomChanged)
             {
@@ -229,7 +229,7 @@ public class ZoomViewSessionTests
         session.SetZoom(100);
         session.SetOffset(new EsVector(50, 50));
         var count = 0;
-        session.Notified += (_, _) => count++;
+        session.Notified += _ => count++;
 
         var feedback = session.SetOffset(new EsVector(50, 50));
 
@@ -715,7 +715,7 @@ public class ZoomViewSessionTests
     {
         var session = new ZoomViewSession();
         var count = 0;
-        session.Notified += (_, _) => count++;
+        session.Notified += _ => count++;
 
         var changed = session.SetCenterAlign(centerAlign: false);
         var same = session.SetCenterAlign(centerAlign: false);

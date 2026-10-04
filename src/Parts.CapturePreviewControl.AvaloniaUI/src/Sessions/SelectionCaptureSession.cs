@@ -45,10 +45,7 @@ internal sealed class SelectionCaptureSession(
     {
         // 結果の単一確定（最初の 1 件だけを採用する）はコアの完了通知が単一所有する
         var completion = new CaptureCompletion<CaptureResult?>();
-        if (_log.IsEnabled(LogLevel.Debug))
-        {
-            _log.LogCaptureStart(captureType.ToString());
-        }
+        _log.LogCaptureStart(captureType);
 
         // オーナーの退避とキャプチャ除外の設定・解除は CaptureOwnerScope（コア）が単一所有する
         // （手順: 除外の設定 → 画面外へ退避 → 撮影 → 配置の復帰 → 除外の解除）

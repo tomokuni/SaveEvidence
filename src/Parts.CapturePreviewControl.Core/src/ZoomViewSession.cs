@@ -82,7 +82,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
 
     /// <summary>ズーム状態（実効ズーム率・Fit 状態・可否）が確定したときに送る通知。</summary>
     /// <remarks>UI 層は自 UI の公開イベントへ転送するだけにする（判断を持たない）。</remarks>
-    public event EventHandler<ZoomNotice>? Notified;
+    public event Action<ZoomNotice>? Notified;
 
     /// <summary>ロガーを取得または設定する。</summary>
     /// <value>ロガー。 null を設定した場合は出力なしとして扱う。</value>
@@ -709,9 +709,9 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
 
     /// <summary>ズーム状態の変化を通知する。</summary>
     private void RaiseZoomChanged()
-        => Notified?.Invoke(this, new ZoomNotice(ZoomNoticeKind.ZoomChanged, CurrentState, ImageRect));
+        => Notified?.Invoke(new ZoomNotice(ZoomNoticeKind.ZoomChanged, CurrentState, ImageRect));
 
     /// <summary>ビューポートの変化を通知する。</summary>
     private void RaiseViewportChanged()
-        => Notified?.Invoke(this, new ZoomNotice(ZoomNoticeKind.ViewportChanged, CurrentState, ImageRect));
+        => Notified?.Invoke(new ZoomNotice(ZoomNoticeKind.ViewportChanged, CurrentState, ImageRect));
 }

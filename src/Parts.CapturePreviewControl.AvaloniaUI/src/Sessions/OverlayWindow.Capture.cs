@@ -5,7 +5,6 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
-using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
 
@@ -44,11 +43,7 @@ internal sealed partial class OverlayWindow
     /// </remarks>
     internal void CompleteSelection(EsRect screenRect)
     {
-        if (_log.IsEnabled(LogLevel.Debug))
-        {
-            _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
-        }
-
+        _log.LogConfirmRequested(screenRect);
         CompleteSelectionCore(CaptureClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds));
     }
 
@@ -57,11 +52,7 @@ internal sealed partial class OverlayWindow
     /// <remarks>浮動小数版と同じ規則を適用する（コアに整数版の入口があり、 UI は型を広げない）。</remarks>
     private void CompleteSelection(EsRectInt screenRect)
     {
-        if (_log.IsEnabled(LogLevel.Debug))
-        {
-            _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
-        }
-
+        _log.LogConfirmRequested(screenRect);
         CompleteSelectionCore(CaptureClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds));
     }
 

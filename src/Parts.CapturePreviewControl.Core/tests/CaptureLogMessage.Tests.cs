@@ -3,6 +3,7 @@ using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 
@@ -32,7 +33,7 @@ public class CaptureLogMessageTests
     {
         var logger = new RecordingLogger();
 
-        logger.LogCaptureStart("AreaSelect");
+        logger.LogCaptureStart(CaptureType.AreaSelect);
 
         Assert.Equal("[CaptureSession] CaptureStart: type=AreaSelect", Assert.Single(logger.Messages));
     }
@@ -131,7 +132,7 @@ public class CaptureLogMessageTests
         var logger = NullLogger.Instance;
         using var image = EsBitmap.Create(1, 1);
 
-        logger.LogCaptureStart("AreaSelect");
+        logger.LogCaptureStart(CaptureType.AreaSelect);
         logger.LogCaptureFinished(new CaptureResult(image, new EsRectInt(0, 0, 1, 1)));
         logger.LogCaptureFinished(null);
         logger.LogCropStart(image);
@@ -139,11 +140,11 @@ public class CaptureLogMessageTests
         logger.LogCropFinished(default);
         logger.LogCropCancelled();
         logger.LogSettingApplied();
-        logger.LogConfirmRequested("0,0,1,1");
+        logger.LogConfirmRequested(new EsRect(0, 0, 1, 1));
         logger.LogCancelRequested();
         logger.LogVirtualScreen(new EsPointInt(0, 0), image);
         logger.LogVirtualScreen(new EsPointInt(1, 1), null);
-        logger.LogHighlight("AreaSelect", true, "0,0,1,1", "t", "c");
+        logger.LogHighlight(CaptureType.AreaSelect, true, new EsRectInt(0, 0, 1, 1), "t", "c");
     }
 
     [Fact]
@@ -173,7 +174,7 @@ public class CaptureLogMessageTests
     {
         var logger = new RecordingLogger();
 
-        logger.LogConfirmRequested("10,10,50,40");
+        logger.LogConfirmRequested(new EsRectInt(10, 10, 50, 40));
 
         Assert.Equal("[CaptureSession] ConfirmRequested: rect=10,10,50,40", Assert.Single(logger.Messages));
     }
@@ -193,7 +194,7 @@ public class CaptureLogMessageTests
     {
         var logger = new RecordingLogger();
 
-        logger.LogHighlight("WindowSelect", true, "100,50,800,600", "Sample", "Notepad");
+        logger.LogHighlight(CaptureType.WindowSelect, true, new EsRectInt(100, 50, 800, 600), "Sample", "Notepad");
 
         Assert.Equal(
             "[CaptureSession] Highlight: type=WindowSelect detected=True rect=100,50,800,600 title=Sample class=Notepad",
@@ -227,3 +228,4 @@ public class CaptureLogMessageTests
         Assert.Equal("Sample", CaptureLogFormat.Text("Sample"));
     }
 }
+

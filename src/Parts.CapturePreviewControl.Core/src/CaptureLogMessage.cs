@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
@@ -17,11 +18,14 @@ public static partial class CaptureLogMessage
 {
     /// <summary>撮影セッションの開始を記録する。</summary>
     /// <param name="logger">ロガー。</param>
-    /// <param name="captureType">キャプチャ種別（文字列化済み）。</param>
-    /// <remarks>ログレベル: Debug。 出力書式: <c>[CaptureSession] CaptureStart: type={CaptureType}</c></remarks>
+    /// <param name="captureType">キャプチャ種別。</param>
+    /// <remarks>
+    /// ログレベル: Debug。 出力書式: <c>[CaptureSession] CaptureStart: type={CaptureType}</c><br/>
+    /// <b>呼び出し側で <c>IsEnabled</c> を書かない</b>（値の文字列化は生成コードが有効時だけ行う）。
+    /// </remarks>
     [LoggerMessage(EventId = 1, Level = LogLevel.Debug,
         Message = "[CaptureSession] CaptureStart: type={CaptureType}")]
-    public static partial void LogCaptureStart(this ILogger logger, string captureType);
+    public static partial void LogCaptureStart(this ILogger logger, CaptureType captureType);
 
     /// <summary>撮影セッションの終了を記録する（確定は 2 件、キャンセルは 1 件）。</summary>
     /// <param name="logger">ロガー。</param>
@@ -30,10 +34,16 @@ public static partial class CaptureLogMessage
     /// 「結果が確定した場合にどのログをどの順序で出すか」を単一所有する<br/>
     /// （UI が結果の有無を分岐して個別のログを呼ぶと、UI ごとに出力の組が違って比較できない）。<br/>
     /// 確定: <c>[CaptureSession] CaptureCompleted: bounds=…</c> → <c>[CaptureSession] Result: bitmap=…x… bounds=…</c><br/>
-    /// キャンセル: <c>[CaptureSession] CaptureCancelled</c>
+    /// キャンセル: <c>[CaptureSession] CaptureCancelled</c><br/>
+    /// <b>整形は本メソッドで行う</b>（呼び出し側は値を渡すだけ。 無効時の整形を避けるゲートも本メソッドが持つ）。
     /// </remarks>
     public static void LogCaptureFinished(this ILogger logger, CaptureResult? result)
     {
+        if (!logger.IsEnabled(LogLevel.Debug))
+        {
+            return;
+        }
+
         if (result is { Image: { } image, SourceBounds: { } bounds })
         {
             var rect = CaptureLogFormat.Rect(bounds);
@@ -127,10 +137,41 @@ public static partial class CaptureLogMessage
     /// <summary>選択の確定要求（Enter・ダブルクリック等）を記録する（診断用）。</summary>
     /// <param name="logger">ロガー。</param>
     /// <param name="rect">要求時点の選択矩形（対象座標）。</param>
+    /// <remarks>
+    /// ログレベル: Debug。 出力書式: <c>[CaptureSession] ConfirmRequested: rect={Rect}</c><br/>
+    /// <b>整形は本メソッドで行う</b>（呼び出し側は矩形を渡すだけ。 UI は浮動小数と整数の両方の矩形を渡すためオーバーロードを 2 つ持つ）。
+    /// </remarks>
+    public static void LogConfirmRequested(this ILogger logger, EsRect rect)
+    {
+        if (!logger.IsEnabled(LogLevel.Debug))
+        {
+            return;
+        }
+
+        logger.LogConfirmRequestedCore(CaptureLogFormat.Rect(rect));
+    }
+
+    /// <summary>選択の確定要求（Enter・ダブルクリック等）を記録する（診断用。 整数矩形版）。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="rect">要求時点の選択矩形（対象座標）。</param>
+    /// <remarks>ログレベル: Debug。 出力書式: <c>[CaptureSession] ConfirmRequested: rect={Rect}</c></remarks>
+    public static void LogConfirmRequested(this ILogger logger, EsRectInt rect)
+    {
+        if (!logger.IsEnabled(LogLevel.Debug))
+        {
+            return;
+        }
+
+        logger.LogConfirmRequestedCore(CaptureLogFormat.Rect(rect));
+    }
+
+    /// <summary>選択の確定要求（Enter・ダブルクリック等）を記録する（内部用）。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="rect">整形済みの選択矩形。</param>
     /// <remarks>ログレベル: Debug。 出力書式: <c>[CaptureSession] ConfirmRequested: rect={Rect}</c></remarks>
     [LoggerMessage(EventId = 9, Level = LogLevel.Debug,
         Message = "[CaptureSession] ConfirmRequested: rect={Rect}")]
-    public static partial void LogConfirmRequested(this ILogger logger, string rect);
+    private static partial void LogConfirmRequestedCore(this ILogger logger, string rect);
 
     /// <summary>選択のキャンセル要求（Esc・非アクティブ化等）を記録する（診断用）。</summary>
     /// <param name="logger">ロガー。</param>
@@ -163,18 +204,42 @@ public static partial class CaptureLogMessage
 
     /// <summary>ハイライトの検出結果（スクリーン選択 / ウィンドウ選択）を記録する（診断用）。</summary>
     /// <param name="logger">ロガー。</param>
-    /// <param name="captureType">キャプチャ種別（文字列化済み）。</param>
+    /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="detected">検出されたかどうか。</param>
-    /// <param name="rect">検出矩形（対象座標。 未検出時は空文字）。</param>
-    /// <param name="title">検出対象のタイトル（スクリーン番号 / ウィンドウタイトル。 未検出時は空文字）。</param>
-    /// <param name="className">検出対象のクラス名（ウィンドウ検出時のみ。 未検出時は空文字）。</param>
+    /// <param name="rect">検出矩形（対象座標。 未検出時は null）。</param>
+    /// <param name="title">検出対象のタイトル（スクリーン番号 / ウィンドウタイトル。 未検出時は null）。</param>
+    /// <param name="className">検出対象のクラス名（ウィンドウ検出時のみ。 未検出時は null）。</param>
     /// <remarks>
     /// ログレベル: Trace <br/>
     /// 出力書式: <c>[CaptureSession] Highlight: type={CaptureType} detected={Detected} rect={Rect} title={Title} class={ClassName}</c><br/>
     /// 検出矩形と対象（タイトル・クラス名）を記録し、マルチモニタ・最大化ウィンドウの矩形検証と<br/>
-    /// デスクトップウィンドウの特定に使用する（高頻度のため Trace）。
+    /// デスクトップウィンドウの特定に使用する（高頻度のため Trace）。<br/>
+    /// <b>整形は本メソッドで行う</b>（呼び出し側は検出結果を渡すだけ。 高頻度のため呼び出し側でゲートしない）。
     /// </remarks>
+    public static void LogHighlight(this ILogger logger, CaptureType captureType, bool detected, EsRectInt? rect, string? title, string? className)
+    {
+        if (!logger.IsEnabled(LogLevel.Trace))
+        {
+            return;
+        }
+
+        logger.LogHighlightCore(
+            captureType,
+            detected,
+            CaptureLogFormat.RectOrEmpty(rect),
+            CaptureLogFormat.Text(title),
+            CaptureLogFormat.Text(className));
+    }
+
+    /// <summary>ハイライトの検出結果を記録する（内部用）。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="captureType">キャプチャ種別。</param>
+    /// <param name="detected">検出されたかどうか。</param>
+    /// <param name="rect">整形済みの検出矩形（未検出時は空文字）。</param>
+    /// <param name="title">整形済みのタイトル（未検出時は空文字）。</param>
+    /// <param name="className">整形済みのクラス名（未検出時は空文字）。</param>
+    /// <remarks>ログレベル: Trace。 出力書式: <c>[CaptureSession] Highlight: type={CaptureType} detected={Detected} rect={Rect} title={Title} class={ClassName}</c></remarks>
     [LoggerMessage(EventId = 12, Level = LogLevel.Trace,
         Message = "[CaptureSession] Highlight: type={CaptureType} detected={Detected} rect={Rect} title={Title} class={ClassName}")]
-    public static partial void LogHighlight(this ILogger logger, string captureType, bool detected, string rect, string title, string className);
+    private static partial void LogHighlightCore(this ILogger logger, CaptureType captureType, bool detected, string rect, string title, string className);
 }

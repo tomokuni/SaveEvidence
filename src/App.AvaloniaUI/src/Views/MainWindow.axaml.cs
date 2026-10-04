@@ -227,13 +227,12 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>WM_HOTKEY 受信時（ホットキーサービスから対応するアクションが配信される）。</summary>
-    /// <param name="sender">イベントの発信元（使用しない）。</param>
-    /// <param name="e">押下されたホットキーに対応するアクション。</param>
-    private void OnHotKeyPressed(object? sender, HotKeyPressedEventArgs<CaptureType> e)
+    /// <param name="captureType">押下されたホットキーに対応するアクション。</param>
+    private void OnHotKeyPressed(CaptureType captureType)
     {
         _logger.LogHotKeyReceived();
-        _logger.LogHotKeyTriggered(e.Action);
-        StartSelectionMode(e.Action);
+        _logger.LogHotKeyTriggered(captureType);
+        StartSelectionMode(captureType);
     }
 
     private void OnMainWindowClosing(object? sender, WindowClosingEventArgs e)

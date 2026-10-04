@@ -184,10 +184,7 @@ internal sealed class CaptureOverlay
         _screen = screen;
         // 画像の占有範囲（画面物理座標）= 撮影時の原点 + 画像サイズ（原点は負値になりうる）
         _screenBounds = CaptureClipMath.ImageBounds(screen, origin);
-        if (_log.IsEnabled(LogLevel.Debug))
-        {
-            _log.LogCaptureStart(_type.ToString());
-        }
+        _log.LogCaptureStart(_type);
         // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する。 Avalonia 版と同じ診断情報を残す）
         _log.LogVirtualScreen(origin, screen);
 
@@ -479,11 +476,7 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private void ConfirmScreen(EsRect screenRect)
     {
-        if (_log.IsEnabled(LogLevel.Debug))
-        {
-            _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
-        }
-
+        _log.LogConfirmRequested(screenRect);
         CompleteCapture(CaptureClipMath.ResolveCaptureRect(_type, screenRect, _screenBounds));
     }
 
@@ -492,11 +485,7 @@ internal sealed class CaptureOverlay
     /// <remarks>浮動小数版と同じ規則を適用する（コアに整数版の入口があり、UI は型を広げない）。</remarks>
     private void ConfirmScreen(EsRectInt screenRect)
     {
-        if (_log.IsEnabled(LogLevel.Debug))
-        {
-            _log.LogConfirmRequested(CaptureLogFormat.Rect(screenRect));
-        }
-
+        _log.LogConfirmRequested(screenRect);
         CompleteCapture(CaptureClipMath.ResolveCaptureRect(_type, screenRect, _screenBounds));
     }
 

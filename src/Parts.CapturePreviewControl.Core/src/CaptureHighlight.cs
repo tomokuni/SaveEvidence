@@ -69,14 +69,13 @@ public sealed class CaptureHighlightSession(ILogger? logger = null)
         Title = title;
         SourceRect = detection.IsDetected ? new EsRect(local.X, local.Y, local.Width, local.Height) : null;
 
-        // 引数は呼び出し前に評価される（生成コードの IsEnabled では防げない）ため、整形はメッセージと同じレベルでゲートする
-        if (_log.IsEnabled(LogLevel.Trace))
-        {
-            _log.LogHighlight(
-                captureType.ToString(), detection.IsDetected,
-                CaptureLogFormat.RectOrEmpty(detection.IsDetected ? local : null),
-                title, CaptureLogFormat.Text(detection.ClassName));
-        }
+        // 整形（文字列化）と有効判定はログ定義（LogHighlight）が単一所有する（本クラスは検出結果を渡すだけ）
+        _log.LogHighlight(
+            captureType,
+            detection.IsDetected,
+            detection.IsDetected ? local : null,
+            title,
+            detection.ClassName);
 
         return new CaptureHighlight(SourceRect, titleChanged);
     }

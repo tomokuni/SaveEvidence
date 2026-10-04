@@ -130,12 +130,15 @@ if (Test-Path -LiteralPath $editorConfigPath) {
         $line++
         if ($text -match '^\s*\[(?<pattern>.+)\]\s*$') { $section = $Matches['pattern']; continue }
         if ($text -match '^\s*dotnet_diagnostic\.[A-Za-z0-9]+\.[a-z_]+\s*=') {
-            # 対象拡張子（.cs）へ適用されるセクションか。
-            # セクションは `*.cs` / `{a.cs,b.cs}` / `**/*.cs` の形を取りうるため、カンマ区切りの全パターンが `.cs` で終わることを要求する
-            # （`*.cs-broken` のような取り違えも検出する。 `\.cs\b` の境界だけでは `-` を通してしまう）。
+            # 対象に .cs を含むセクションか。 次のいずれかなら `.cs` へ適用される:
+            #   `*.cs`（ファイル パターン） / `src/X/src/**`（ディレクトリ配下） / `*` や `**`（全ファイル）
+            # `*.csproj` や `*.cs-broken` のような取り違えは、いずれにも当たらず検出される（実測で確認）。
             $sectionOk = $true
             foreach ($part in $section.Replace('{', '').Replace('}', '').Split(',')) {
-                if (-not $part.Trim().EndsWith('.cs')) { $sectionOk = $false }
+                $p = $part.Trim()
+                if ($p -eq '*' -or $p -eq '**') { continue }
+                if ($p.EndsWith('.cs') -or $p.EndsWith('/**') -or $p.EndsWith('**')) { continue }
+                $sectionOk = $false
             }
             if (-not $sectionOk) {
                 $analyzerSectionIssues.Add(("{0}:{1}  {2}（セクション: [{3}]）" -f '.editorconfig', $line, $text.Trim(), $section))
@@ -145,6 +148,19 @@ if (Test-Path -LiteralPath $editorConfigPath) {
 }
 Add-Result 'アナライザー設定' ($analyzerSectionIssues.Count -eq 0) "無効なセクション $($analyzerSectionIssues.Count) 件"
 $analyzerSectionIssues | Select-Object -First 8 | ForEach-Object { "      $_" }
+
+# 2c) ログの有効判定を定義側で行っているか（呼び出し側で IsEnabled を書かない）
+#     判定はログ定義（<対象>LogMessage / AppLog）が単一所有する。 呼び出し側に書くと、レベルを変えるたびに
+#     全呼び出し元を直すことになり、雑音にもなる（実測: 7 箇所のゲートを定義側へ移した）。
+$callSiteGates = [System.Collections.Generic.List[string]]::new()
+foreach ($hit in @(git -c core.quotepath=false grep -n -E '\bIsEnabled\s*\(\s*LogLevel\.' -- 'src' 2>$null)) {
+    if ($hit -match '\\tests\\' -or $hit -match '/(tests)/') { continue }
+    # ログ定義（*LogMessage.cs / AppLog.cs）と、記録用ロガーの実装は対象外
+    if ($hit -match '(LogMessage|AppLog)\.cs:') { continue }
+    $callSiteGates.Add($hit)
+}
+Add-Result 'ログの有効判定' ($callSiteGates.Count -eq 0) "呼び出し側の IsEnabled $($callSiteGates.Count) 件"
+$callSiteGates | Select-Object -First 8 | ForEach-Object { "      $_" }
 
 # ============================================================
 # 3. テスト（全件合格。 -Coverage でカバレッジも集計する）

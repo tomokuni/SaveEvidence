@@ -154,7 +154,7 @@ internal static class Program
         ISettingsService settingsService, AppServices services)
     {
         var settings = settingsService.Current;
-        hotKeys.HotKeyPressed += (_, e) => services.Main.StartSelectionMode?.Invoke(e.Action);
+        hotKeys.HotKeyPressed += type => services.Main.StartSelectionMode?.Invoke(type);
         hotKeys.Initialize(window.Handle);
         hotKeys.RegisterAll(
         [

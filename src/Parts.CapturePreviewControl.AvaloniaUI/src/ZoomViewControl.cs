@@ -193,10 +193,9 @@ public sealed class ZoomViewControl : Panel
     private ZoomViewSession Session => _zoomableView.Session;
 
     /// <summary>セッションの通知を自 UI の公開イベントへ転送する。</summary>
-    /// <param name="sender">送信元（セッション）。</param>
     /// <param name="notice">通知（種別と通知時点の値）。</param>
     /// <remarks>判断を含まない種別 → イベントの対応表とする（通知値はコアが確定済み）。</remarks>
-    private void OnSessionNotified(object? sender, ZoomNotice notice)
+    private void OnSessionNotified(ZoomNotice notice)
     {
         switch (notice.Kind)
         {
