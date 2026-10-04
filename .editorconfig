@@ -160,10 +160,13 @@ dotnet_diagnostic.CA1711.severity = warning
 # 実測で追加した対象: `EsPoint` / `EsVector` / `EsSize` / `EsPointInt` / `EsSizeInt` の `Add` / `Subtract` / `Negate` / `Multiply` / `Divide`。
 dotnet_diagnostic.CA2225.severity = warning
 
-# 公開イベントの型を EventHandler<T>（T は EventArgs 派生）に統一する（UI 層の規則）。
-# **UI を持たない層（Core / Presenter / Platform）は例外**とする: これらは素のデリゲート（Action<T>）で通知を公開し、
-# UI 層が自分の EventHandler<T> イベントへ変換して公開する（選択の理由は .github/コーディング規約.md §7）。
+# 公開イベントの型は EventHandler / EventHandler<T>（T は EventArgs 派生）に限る。
+# 値型・record の通知（ヒープ確保 0 を守る）は event を使わず IDisposable Subscribe(Action<T>) で公開する
+# （仕組みは EsUtil.Platform.Core.CallbackList<T> が単一所有する。 規則は .github/コーディング規約.md §7）。
 dotnet_diagnostic.CA1003.severity = warning
+
+# 連続する空行を検出する（体裁をコンパイラで守らせる）。
+dotnet_diagnostic.IDE2000.severity = warning
 
 # ファイル単位の例外（機械的な判定が実装の意図と合わない箇所。 理由を必ず書く）:
 # SkiaSharp の null 許容注釈と実際の戻り値が一致しない（SKCodec.Create は失敗時に null を返すが非 null として注釈されている）ため、
@@ -171,15 +174,6 @@ dotnet_diagnostic.CA1003.severity = warning
 # 注意: セクション ヘッダーを 2 行 並べると、後のセクションだけが設定を持つ（EditorConfig の仕様）。 複数は 1 行へまとめる。
 [{src/App.MewUI/src/Services/ImageThumbnailLoader.cs,src/App.MewUI/tests/TestHelper.cs}]
 dotnet_diagnostic.CA1508.severity = none
-
-# UI を持たない層（Core / Presenter / UIBase / Platform.Core）の CA1003 例外。
-# これらは UI 非依存の通知を素のデリゲート（Action<T>）で公開する（sender と EventArgs の規約を強制しない）。
-# 理由: (1) record / 値型の通知を使いたい（EventArgs はクラス派生を要求する）、(2) 通知は UI が自分の
-# EventHandler<T> イベントへ変換して公開する内部配線であり、公開型を増やす利点が無い、(3) 汎用の通知型
-# （MarqueeNotice / ZoomNotice）に「イベント引数」という UI の役割を持ち込まない。
-# 規則は .github/コーディング規約.md §7 が所有する（UI 層は EventHandler<T> を使う）。
-[{src/EsUtil.Platform.Core/src/**,src/EsUtil.Feature.*.Core/src/**,src/EsUtil.Feature.*.Presenter/src/**,src/Parts.*.Core/src/**,src/Parts.*.UIBase/src/**}]
-dotnet_diagnostic.CA1003.severity = none
 
 # 有効化しない規則（理由を実測とともに残す。 `dotnet build -p:AnalysisMode=All` で検出件数を確認した）:
 #   IDE0008 … `var` を禁止する方向の規則であり、本リポジトリの「型が自明な場合は var」と衝突する。
@@ -196,8 +190,4 @@ dotnet_diagnostic.CA1003.severity = none
 #            要求する。 UI コントロールはビジュアル ツリー（親）が子の寿命を所有し、親の Dispose で子を破棄しない
 #            （実際に dotnet format が UI コントロールへ IDisposable を機械実装し、CA2213 が 2 → 24 件へ増えた。
 #            実測 16 + 4 + 2 件）。 資源の解放は各型が OnDetachedFromVisualTree 等のライフサイクルで行う（コーディング規約）。
-#   CA1003 … イベントを `EventHandler<T>` にすることを促すが、本リポジトリは `Action<T>` を使っており、
-#            変更は公開 API の破壊になる（実測 12 件。 変更するかは .github/コーディング規約.md が判断する）。
 #   CA1034 … 公開の入れ子型を避けるよう促すが、ファサードの入れ子 `Limits`（数値スキーマ）は意図した設計（実測 10 件）。
-#   CA1711 … 型名の接尾辞（`Collection` 等）を検査する。 xUnit のコレクション定義などで検出される（実測 30 件）。
-#   CA2225 … 演算子の代替メソッドの命名を要求する（実測 48 件。 算術値型の `Add` / `Subtract` が該当）。

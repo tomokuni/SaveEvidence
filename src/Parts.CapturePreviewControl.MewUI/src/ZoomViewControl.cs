@@ -61,7 +61,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     public ZoomViewControl(ZoomOptions? config)
     {
         _session = new ZoomViewSession(config);
-        _session.Notified += OnSessionNotified;
+        _session.Subscribe(OnSessionNotified);
 
         ContinuousAnimation = false;
         PaintSurface += OnPaintSurface;

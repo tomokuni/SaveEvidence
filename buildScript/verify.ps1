@@ -152,8 +152,9 @@ $analyzerSectionIssues | Select-Object -First 8 | ForEach-Object { "      $_" }
 # 2c) ログの有効判定を定義側で行っているか（呼び出し側で IsEnabled を書かない）
 #     判定はログ定義（<対象>LogMessage / AppLog）が単一所有する。 呼び出し側に書くと、レベルを変えるたびに
 #     全呼び出し元を直すことになり、雑音にもなる（実測: 7 箇所のゲートを定義側へ移した）。
+#     --untracked: 新規ファイル（未コミット）も対象にする（無視対象の obj / bin は走査されない）。
 $callSiteGates = [System.Collections.Generic.List[string]]::new()
-foreach ($hit in @(git -c core.quotepath=false grep -n -E '\bIsEnabled\s*\(\s*LogLevel\.' -- 'src' 2>$null)) {
+foreach ($hit in @(git -c core.quotepath=false grep --untracked -n -E '\bIsEnabled\s*\(\s*LogLevel\.' -- 'src' 2>$null)) {
     if ($hit -match '\\tests\\' -or $hit -match '/(tests)/') { continue }
     # ログ定義（*LogMessage.cs / AppLog.cs）と、記録用ロガーの実装は対象外
     if ($hit -match '(LogMessage|AppLog)\.cs:') { continue }
@@ -161,6 +162,17 @@ foreach ($hit in @(git -c core.quotepath=false grep -n -E '\bIsEnabled\s*\(\s*Lo
 }
 Add-Result 'ログの有効判定' ($callSiteGates.Count -eq 0) "呼び出し側の IsEnabled $($callSiteGates.Count) 件"
 $callSiteGates | Select-Object -First 8 | ForEach-Object { "      $_" }
+
+# 2d) イベントの型（`event` は EventHandler / EventHandler<T> に限る）
+#     `event Action<T>` は CA1003 が検出するが、本リポジトリは API の破壊を伴う判断（値型・record は
+#     `IDisposable Subscribe(Action<T>)` で公開する）を規約が単一所有する。 規約のとおりに書かれていることを
+#     ビルドとは別に実測する（規則の除外や無効化が入っても気付けるようにする）
+$eventDelegateSites = [System.Collections.Generic.List[string]]::new()
+foreach ($hit in @(git -c core.quotepath=false grep --untracked -n -E '\bevent\s+(Action|Func)\b' -- 'src' 2>$null)) {
+    $eventDelegateSites.Add($hit)
+}
+Add-Result 'イベントの型' ($eventDelegateSites.Count -eq 0) "event Action/Func $($eventDelegateSites.Count) 件"
+$eventDelegateSites | Select-Object -First 8 | ForEach-Object { "      $_" }
 
 # ============================================================
 # 3. テスト（全件合格。 -Coverage でカバレッジも集計する）
@@ -304,7 +316,8 @@ $brokenLinks | Select-Object -First 10 | ForEach-Object { "      $_" }
 # 7. 名前空間（フォルダへの追従）
 # ============================================================
 # 検査はビルドが担う（IDE0130: 名前空間がフォルダー構造と一致しない）。
-# 実測で IDE0130 が期待どおりに検出することを確かめてあり、自作の照合は持たない。Write-Output '== 7. 名前空間（ビルドの IDE0130 が強制する） =='
+# 実測で IDE0130 が期待どおりに検出することを確かめてあり、自作の照合は持たない。
+Write-Output '== 7. 名前空間（ビルドの IDE0130 が強制する） =='
 Add-Info '名前空間' 'ビルドの IDE0130 が強制する（不一致はビルドが失敗する）'
 
 # ============================================================
@@ -401,7 +414,7 @@ $stalePatterns = @(
 )
 $stale = [System.Collections.Generic.List[string]]::new()
 foreach ($p in $stalePatterns) {
-    foreach ($hit in @(git -c core.quotepath=false grep -n -E -- $p 2>$null)) {
+    foreach ($hit in @(git -c core.quotepath=false grep --untracked -n -E -- $p 2>$null)) {
         if ($hit -match 'archive/') { continue }
         # 検証手順と本スクリプトは、この検査の説明としてこれらの名前を引用するため対象外にする
         if ($hit -match '検証手順\.md') { continue }
@@ -426,6 +439,65 @@ $loosePaths | Select-Object -First 8 | ForEach-Object { "      $_" }
 $treeIssues | Select-Object -First 8 | ForEach-Object { "      $_" }
 $stale | Select-Object -First 8 | ForEach-Object { "      $_" }
 
+# 8e) 文書が引用する型名の接頭辞（実在しない名前空間を書かない）
+#     文書は型を「ルート名前空間の型 = 接頭辞なし」「下位名前空間の型 = 名前空間の末尾セグメントを接頭辞」で書く
+#     （`Logging.MarqueeLogMessage`）。 フォルダ名を名前空間として書いた `Drawing.MarqueeGeometry` のような
+#     陳腐化は、名前の実在検査（8a / 8b）では見つからない（型名は実在するため。 実測: 4 文書 24 箇所が該当した）。
+#     - 判定は「点で修飾された名前の**末尾が実在の型名**」のものだけを対象にする（`MarqueeNotice.Kind` 等は対象外）。
+#     - 修飾子が「名前空間の接尾辞（セグメント単位）」または「外側の型名（入れ子型）」なら適合とする。
+#     - 修飾子が小文字始まり（`e.Rect` のようなローカル変数・引数のメンバー参照）は対象外にする。
+#     - 外部フレームワーク（`System.` / `Aprillz.` 等）はリポジトリの型名と同名の型を持つため対象外にする。
+$rxTypeDecl = [regex]'(?m)^\s*(?:(?:public|internal|private|protected|static|sealed|abstract|partial|readonly|ref|file|unsafe|new|required)\s+)*(?:class|struct|interface|enum|delegate|record(?:\s+(?:class|struct))?)\s+([A-Za-z_]\w*)'
+$typeQualifiers = @{}
+foreach ($f in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.cs' | Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $text = [IO.File]::ReadAllText($f.FullName, $enc)
+    $nsMatch = [regex]::Match($text, '(?m)^namespace\s+([\w.]+)\s*;')
+    $suffixes = @()
+    if ($nsMatch.Success) {
+        $segments = $nsMatch.Groups[1].Value.Split('.')
+        for ($k = 0; $k -lt $segments.Count; $k++) { $suffixes += ($segments[$k..($segments.Count - 1)] -join '.') }
+    }
+    foreach ($tm in $rxTypeDecl.Matches($text)) {
+        $name = $tm.Groups[1].Value
+        if (-not $typeQualifiers.ContainsKey($name)) { $typeQualifiers[$name] = [System.Collections.Generic.HashSet[string]]::new() }
+        foreach ($s in $suffixes) { [void]$typeQualifiers[$name].Add($s) }
+    }
+}
+$rxTypeRef = [regex]'(?<![\w.])((?:[A-Za-z_]\w*\.)+[A-Za-z_]\w*)(?![\w./\\-])'
+$rxExternalRoot = [regex]'^(System|Microsoft|Avalonia|SkiaSharp|Serilog|Xunit|Newtonsoft|Windows|Moq|NSubstitute|Aprillz|ShimSkiaSharp|HarfBuzz|CommunityToolkit)\b'
+$typeRefIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in $docs) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    # 本検査の説明（不合格の例を引用する）は対象外にする（8c と同じ扱い）
+    if ($rel -match '検証手順\.md$') { continue }
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        foreach ($m in $rxTypeRef.Matches($lines[$i])) {
+            $token = $m.Groups[1].Value
+            $segments = $token.Split('.')
+            $last = $segments[-1]
+            if (-not $typeQualifiers.ContainsKey($last)) { continue }
+            if ($rxExternalRoot.IsMatch($token)) { continue }
+            $isVariable = $false
+            for ($k = 0; $k -lt $segments.Count - 1; $k++) { if ($segments[$k] -cmatch '^[a-z]') { $isVariable = $true } }
+            if ($isVariable) { continue }
+            $qualifier = ($segments[0..($segments.Count - 2)] -join '.')
+            $ok = $typeQualifiers[$last].Contains($qualifier)
+            if (-not $ok -and $typeQualifiers.ContainsKey($segments[-2])) { $ok = $true }
+            if (-not $ok) {
+                # 修飾子の途中に型名がある場合（`X.Y.Type.Member` の型部分）は判定しない
+                $middleIsType = $false
+                if ($segments.Count -ge 3) {
+                    for ($k = 0; $k -lt $segments.Count - 2; $k++) { if ($typeQualifiers.ContainsKey($segments[$k])) { $middleIsType = $true } }
+                }
+                if (-not $middleIsType) { $typeRefIssues.Add(("{0}:{1}  {2}" -f $rel, ($i + 1), $token)) }
+            }
+        }
+    }
+}
+Add-Result '文書の型参照' ($typeRefIssues.Count -eq 0) "$($typeRefIssues.Count) 件"
+$typeRefIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
 # ============================================================
 # 9. 改行コード
 # ============================================================
@@ -447,6 +519,41 @@ $orphanBins = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -Direct
 Add-Result 'フォルダ' ($emptyDirs.Count -eq 0 -and $orphanBins.Count -eq 0) "空 $($emptyDirs.Count) / 孤立 bin・obj $($orphanBins.Count)"
 $emptyDirs | Select-Object -First 5 | ForEach-Object { "      $($_.FullName.Substring($repoRoot.Length + 1))" }
 $orphanBins | Select-Object -First 5 | ForEach-Object { "      $($_.FullName.Substring($repoRoot.Length + 1))" }
+
+# 10b) テスト ファイル名（`.` を挟まない `{対象}Tests.cs` を使わない）
+#      ファイル名は `{対象}.Tests.cs`、クラス名は `{対象}Tests` とする（命名規約）。 クラス名だけから
+#      作った `{対象}Tests.cs` は、ファイル名とクラス名の対応が崩れる（実測: 17 ファイルを統一した）
+$testNameIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in @(git -c core.quotepath=false ls-files 2>$null)) {
+    if ($f -notmatch '/tests/' -or $f -notmatch '\.cs$') { continue }
+    $name = [IO.Path]::GetFileName($f)
+    if (-not $name.EndsWith('Tests.cs')) { continue }
+    if ($name.EndsWith('.Tests.cs')) { continue }
+    $testNameIssues.Add($f)
+}
+Add-Result 'テストの命名' ($testNameIssues.Count -eq 0) "`{対象}Tests.cs $($testNameIssues.Count) 件"
+$testNameIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 10c) ソースとテストの対応（参考値。 合否に含めない）
+#      テストはソースのフォルダを鏡映し、専用ファイルの名前を `{ソース名}.Tests.cs` とする。 ただし
+#      専用ファイルを持つかは検証の単位で決めるため（公開 API 経由で網羅する型は持たなくてよい）、
+#      合否にはせず件数だけを表示する
+$testPairs = 0
+$testTotal = 0
+foreach ($proj in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory)) {
+    $srcDir = Join-Path $proj.FullName 'src'
+    $testDir = Join-Path $proj.FullName 'tests'
+    if (-not (Test-Path -LiteralPath $srcDir) -or -not (Test-Path -LiteralPath $testDir)) { continue }
+    foreach ($f in (Get-ChildItem -Path $srcDir -Recurse -File -Filter '*.cs' | Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+        $testTotal++
+        $rel = $f.FullName.Substring($srcDir.Length + 1)
+        $fileName = [IO.Path]::GetFileNameWithoutExtension($rel) + '.Tests.cs'
+        $dir = [IO.Path]::GetDirectoryName($rel)
+        $expected = if ([string]::IsNullOrEmpty($dir)) { Join-Path $testDir $fileName } else { Join-Path (Join-Path $testDir $dir) $fileName }
+        if (Test-Path -LiteralPath $expected) { $testPairs++ }
+    }
+}
+Add-Info 'ソースとテストの対応' "専用ファイルあり $testPairs / ソース $testTotal（参考値。 公開 API 経由で検証する型は専用ファイルを持たない）"
 
 # ============================================================
 # 11. コードスタイル（dotnet format。 情報レベルまで含めて 0 件にする）

@@ -80,9 +80,18 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
     /// <summary>スクロールバーのドラッグ開始時のサム位置（トラック内の相対位置・DIP）。</summary>
     private double _scrollBarDragStartThumb;
 
-    /// <summary>ズーム状態（実効ズーム率・Fit 状態・可否）が確定したときに送る通知。</summary>
-    /// <remarks>UI 層は自 UI の公開イベントへ転送するだけにする（判断を持たない）。</remarks>
-    public event Action<ZoomNotice>? Notified;
+    /// <summary>ズーム状態（実効ズーム率・Fit 状態・可否）が確定したときに送る通知の購読。</summary>
+    private readonly CallbackList<ZoomNotice> _notified = new();
+
+    /// <summary>ズームとビューポートの通知を購読する。</summary>
+    /// <param name="notify">通知を受け取る処理。</param>
+    /// <returns>購読を解除する <see cref="IDisposable"/>。</returns>
+    /// <remarks>
+    /// UI 層は自 UI の公開イベントへ転送するだけにする（判断を持たない）。<br/>
+    /// <b><c>event</c> を使わない理由</b>: <see cref="ZoomNotice"/> は <c>record</c> であり
+    /// <see cref="EventArgs"/> を継承できないため（CA1003 の規則を満たす形で公開する）。
+    /// </remarks>
+    public IDisposable Subscribe(Action<ZoomNotice> notify) => _notified.Add(notify);
 
     /// <summary>ロガーを取得または設定する。</summary>
     /// <value>ロガー。 null を設定した場合は出力なしとして扱う。</value>
@@ -709,9 +718,9 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
 
     /// <summary>ズーム状態の変化を通知する。</summary>
     private void RaiseZoomChanged()
-        => Notified?.Invoke(new ZoomNotice(ZoomNoticeKind.ZoomChanged, CurrentState, ImageRect));
+        => _notified.Raise(new ZoomNotice(ZoomNoticeKind.ZoomChanged, CurrentState, ImageRect));
 
     /// <summary>ビューポートの変化を通知する。</summary>
     private void RaiseViewportChanged()
-        => Notified?.Invoke(new ZoomNotice(ZoomNoticeKind.ViewportChanged, CurrentState, ImageRect));
+        => _notified.Raise(new ZoomNotice(ZoomNoticeKind.ViewportChanged, CurrentState, ImageRect));
 }

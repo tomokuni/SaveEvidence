@@ -150,7 +150,8 @@ src/
 │   ├── FadeMaskDragRectModes.cs           # モード → 状態の解決
 │   ├── FadeMaskDragRectState.cs           # モードから導出する表示可否
 │   ├── FadeMaskDragRectSelection.cs       # 選択矩形の可否判定
-│   └── FadeMaskDragRectOverlay.cs         # ルーペ画像への選択矩形破線の描画│   ├── ZoomViewSession.cs                 # 画像ビューポートの状態と判断（唯一の所有者）
+│   └── FadeMaskDragRectOverlay.cs          # ルーペ画像への選択矩形破線の描画
+│   ├── ZoomViewSession.cs                 # 画像ビューポートの状態と判断（唯一の所有者）
 │   ├── ZoomOptions.cs                      # ズーム遷移の設定（検証付き不変値）
 │   ├── ZoomState.cs                       # 通知する 4 値（実効ズーム率・Fit 状態・可否）
 │   ├── ZoomFeedback.cs                    # UI が適用する効果（再描画・ポインタキャプチャ）
@@ -162,7 +163,8 @@ src/
 │   ├── ZoomMath.cs                        # Fit 実効倍率・ズーム中心維持・クランプ・座標変換（純粋関数）
 │   ├── ZoomAvailability.cs                # ズーム可否を単一に保持する値オブジェクト
 │   ├── ZoomLogMessage.cs                  # 画像ビューポートの操作ログの定義
-│   └── ZoomLogFormat.cs                   # ログに載せる値の文字列化・丸め└── tests/
+│   └── ZoomLogFormat.cs                   # ログに載せる値の文字列化・丸め
+└── tests/
     ├── Parts.CapturePreviewControl.Core.Tests.csproj
     ├── CropBoundsMath.Tests.cs            # クランプ・丸め・区間の流儀・丸め規則（41 件）
     ├── CropLabelTexts.Tests.cs            # 含まれるピクセル数・ズーム率の丸め・未選択時の表示可否（10 件）
@@ -173,7 +175,7 @@ src/
     ├── CaptureClipMath.Tests.cs           # 切り出し矩形の解決（座標空間の契約・整数/浮動小数）・双方向変換・画像の共有値（34 件）
     ├── CaptureImageHolder.Tests.cs        # 保持の規則（差し替え・破棄後・フォールバック）（8 件）
     ├── CaptureVirtualScreen.Tests.cs      # タイムアウト待ちと未使用結果の破棄（6 件）
-├── CaptureVirtualScreenBoundsTests.cs  # 撮影対象の範囲（包含矩形・負の原点・モニタ無し）（5 件）
+    ├── CaptureVirtualScreenBounds.Tests.cs  # 撮影対象の範囲（包含矩形・負の原点・モニタ無し）（5 件）
     ├── CaptureSettings.Tests.cs           # 設定の検証と既定値・非数値の許容（16 件）
     ├── CaptureClipCache.Tests.cs          # 同一判定・所有権の移動・旧値の破棄（12 件）
     ├── CaptureTiming.Tests.cs             # 方針値と切り出しの操作内容の決定（6 件）
@@ -193,10 +195,10 @@ src/
     ├── FadeMaskDragRectOptions.Tests.cs     # 既定値・部分変更・外側の装飾の単一所有（6 件）
     ├── FadeMaskDragRectOverlay.Tests.cs     # 破線の列挙と描画の画素検証（15 件）
     ├── FadeMaskDragRectSelection.Tests.cs   # 選択矩形の可否判定（9 件）
-    ├── OverlayLineDashTests.cs            # スタイルごとのダッシュ長（8 件）
-    ├── OverlayRectLayoutTests.cs          # クランプ・太さの下限・破線の判定（21 件）
-    ├── OverlayRectRasterizerTests.cs      # ルーペ画像へのラスタライズ（画素検証。11 件）
-    ├── CaptureTargetContractTests.cs      # ICaptureTarget の契約（3 件）
+    ├── OverlayLineDash.Tests.cs            # スタイルごとのダッシュ長（8 件）
+    ├── OverlayRectLayout.Tests.cs          # クランプ・太さの下限・破線の判定（21 件）
+    ├── OverlayRectRasterizer.Tests.cs      # ルーペ画像へのラスタライズ（画素検証。11 件）
+    ├── CaptureTargetContract.Tests.cs      # ICaptureTarget の契約（3 件）
     ├── ZoomViewSession.Tests.cs           # 状態と判断・Fit・遷移・パン・スクロールバー（49 件）
     ├── ZoomOptions.Tests.cs                # 不変条件の検証と With による部分更新（18 件）
     ├── ZoomTransition.Tests.cs            # 段階遷移・ホイール遷移・可否判定（46 件）

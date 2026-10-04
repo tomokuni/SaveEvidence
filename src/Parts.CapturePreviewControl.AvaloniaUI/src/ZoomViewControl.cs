@@ -45,7 +45,7 @@ public sealed class ZoomViewControl : Panel
         _checkerboard = new CheckerboardView(_zoomableView.Session);
         Children.Add(_checkerboard);
         Children.Add(_zoomableView);
-        _zoomableView.Session.Notified += OnSessionNotified;
+        _zoomableView.Session.Subscribe(OnSessionNotified);
     }
 
     /// <summary>内部ロガー（横断的関心事）を取得または設定する。</summary>

@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 /// 既定はすべて false（何もしない）であり、UI は <see cref="ApplyVisual"/> / <see cref="ApplyPointer"/> を呼ぶだけでよい<br/>
 /// （呼び出し側で「どの順に何を適用するか」を判断しない）。<br/>
 /// ホットパス（ポインタ移動）で確保を避けるため <c>readonly record struct</c> とし、<c>with</c> 式で組み立てる。<br/>
-/// <b>通知（イベント）は本値に含めない</b>: 通知はセッションの <c>Notified</c>（<see cref="ZoomNotice"/>）が担い、<br/>
+/// <b>通知（イベント）は本値に含めない</b>: 通知はセッションの <see cref="ZoomViewSession.Subscribe"/>（<see cref="ZoomNotice"/>）が担い、<br/>
 /// 本値は UI 側の操作（再描画・ポインタキャプチャ）に限定する（MarqueeControl と同じ分担）。
 /// </remarks>
 public readonly record struct ZoomFeedback

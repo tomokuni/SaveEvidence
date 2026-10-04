@@ -98,7 +98,7 @@ internal sealed class ZoomableView : Panel
         _transformGroup.Children.Add(_scaleTransform);
 
         // セッションの通知を表示更新へ写す（通知はコアが発火し、UI は描き直すだけ）
-        _session.Notified += _ => UpdateVisual();
+        _session.Subscribe(_ => UpdateVisual());
 
         PointerPressed += OnPointerPressed;
         PointerMoved += OnPointerMoved;

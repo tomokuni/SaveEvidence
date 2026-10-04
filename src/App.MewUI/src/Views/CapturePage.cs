@@ -382,7 +382,7 @@ internal static class CapturePage
 
         // テーマが変わったらスタイルで表せない値（アイコンの色）を描き直す
         // （市松模様の背景色はプレビューの生成側で再適用する）
-        AppStyles.ThemeChanged += () => RefreshIcons(iconImages);
+        AppStyles.ThemeChanged += (_, _) => RefreshIcons(iconImages);
 
         return new PageContent(root, OnKeyDown: e =>
         {
@@ -698,7 +698,7 @@ internal static class CapturePage
         cropView.ViewportChanged += (_, _) => UpdateAutoCropHighlight();
 
         // テーマが変わったら市松模様の下地色（テーマの背景色）を描き直す
-        AppStyles.ThemeChanged += () => ApplyCheckerboard(cropView, settings);
+        AppStyles.ThemeChanged += (_, _) => ApplyCheckerboard(cropView, settings);
 
         // マウス移動はヒットテスト対象の要素（ズームビュー）だけが受け取るため、ズームビューへ購読する
         // （祖先の CropViewControl へは移動イベントが届かない）。 ズームビューはプレビュー領域全体を占めるため、

@@ -357,7 +357,7 @@ sequenceDiagram
 
   UI->>Core: Press / Move / Release / ZoomIn / ZoomByWheel
   Core-->>UI: ZoomFeedback（再描画・ポインタキャプチャ）
-  Core-->>UI: Notified（ZoomChanged / ViewportChanged）
+  Core-->>UI: Subscribe の購読者へ通知（ZoomChanged / ViewportChanged）
   UI->>UI: 効果の適用（再描画・キャプチャ）と通知の転送
   UI->>Core: ImageRect / DisplaySize / ScrollMetrics（描画に使う値を問い合わせる）
   Core->>Core: ZoomMath / ZoomTransition / ZoomScrollBarGeometry（純粋関数）

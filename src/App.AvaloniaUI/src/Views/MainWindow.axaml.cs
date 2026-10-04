@@ -38,6 +38,9 @@ public sealed partial class MainWindow : Window
     private readonly SettingsService _settingsService = null!;
     private readonly IGlobalHotKeyService<CaptureType> _hotKeyService = null!;
 
+    /// <summary>ホットキー押下の購読（クローズ時に解除する。 解除しないと本ウィンドウが通知先に残る）。</summary>
+    private readonly IDisposable? _hotKeySubscription;
+
     /// <summary>CaptureSessionControl.AvaloniaUI の公開 Facade（キャプチャセッションの窓口）。</summary>
     private readonly CaptureSessionControl _captureSessionControl = null!;
 
@@ -98,7 +101,7 @@ public sealed partial class MainWindow : Window
         if (platformHandle is not null)
         {
             _hotKeyService.Initialize(platformHandle.Handle);
-            _hotKeyService.HotKeyPressed += OnHotKeyPressed;
+            _hotKeySubscription = _hotKeyService.Subscribe(OnHotKeyPressed);
         }
 
         // ウィンドウ位置・サイズの復元
@@ -240,7 +243,7 @@ public sealed partial class MainWindow : Window
         SaveWindowBounds();
         if (_hotKeyService is not null)
         {
-            _hotKeyService.HotKeyPressed -= OnHotKeyPressed;
+            _hotKeySubscription?.Dispose();
             _hotKeyService.Dispose();
         }
         CaptureContent.CleanupCaptureResources();

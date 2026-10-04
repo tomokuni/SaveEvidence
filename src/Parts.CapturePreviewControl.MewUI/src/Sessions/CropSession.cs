@@ -155,7 +155,7 @@ internal sealed class CropSession
 
     /// <summary>切り出しセッションの終了を通知する（Facade が排他の受付を解放する）。</summary>
     /// <remarks>確定・キャンセルの両方で 1 回だけ通知する（セッションの破棄前に届く）。</remarks>
-    internal event Action? Ended;
+    internal event EventHandler? Ended;
 
     /// <summary>進行中の切り出しを現在の選択矩形で確定する（Enter キー相当）。</summary>
     /// <remarks>
@@ -273,7 +273,7 @@ internal sealed class CropSession
         _selector.IsVisible = false;
         _host.Remove(_selector);
         _state.End();
-        Ended?.Invoke();
+        Ended?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>表示中のズーム・パンに合わせて座標変換ポートを更新する。</summary>

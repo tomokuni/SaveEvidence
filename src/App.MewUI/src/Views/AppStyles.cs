@@ -26,11 +26,11 @@ internal static class AppStyles
     /// テーマに追従するプロパティはスタイル（<c>Func&lt;Theme, Color&gt;</c>）で与えるのが原則。<br/>
     /// スタイルで表せない値（画像として描くアイコンの色・コントロールへ直接設定する色）だけが本イベントで更新する。
     /// </remarks>
-    public static event Action? ThemeChanged;
+    public static event EventHandler? ThemeChanged;
 
     /// <summary>テーマの変更を購読者へ通知する。</summary>
     /// <remarks>ウィンドウが受け取ったテーマ変更から呼ぶ（アプリ内のウィンドウは 1 つ）。</remarks>
-    public static void NotifyThemeChanged() => ThemeChanged?.Invoke();
+    public static void NotifyThemeChanged() => ThemeChanged?.Invoke(null, EventArgs.Empty);
 
     // ====================================================================
     // レイアウト値（Avalonia 版と同一）

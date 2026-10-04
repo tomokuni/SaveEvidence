@@ -173,7 +173,7 @@ public sealed class CaptureSessionControl
         }
 
         // 終了の通知で受付を解放する（確定・キャンセルのどちらでも 1 回届く）
-        session.Ended += () => _slot.EndCrop(session);
+        session.Ended += (_, _) => _slot.EndCrop(session);
         session.Start(image);
     }
 }
