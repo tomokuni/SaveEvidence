@@ -117,6 +117,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 - "Ctrl + Shift + Q" / "Ctrl+Shift+Q" 形式に対応します。 大文字小文字は区別しません。
 - 最低 1 つの修飾キーが必要です。 キー名が解釈できない場合は false を返します。
+- **キーは正規化してから採用します**（`EsKeyExtensions.Normalize`）。 文字列からの解釈は `Enum.TryParse` を使うため**数値文字列を受理してしまい**、列挙に無い値（例: `"999"`）がキーとして通ります。 正規化で未定義値を拒否します。
 
 ## `Models.CapacityLimitedCache`（内部・静的クラス）
 

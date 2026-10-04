@@ -77,4 +77,16 @@ public class HotKeyParserTests
         Assert.Equal(HotKeyModifiers.Control, setting.Modifiers);
         Assert.Equal(EsKey.P, setting.Key);
     }
+
+    [Theory]
+    [InlineData("Ctrl + 999")]      // 列挙に無い数値（`Enum.TryParse` は数値文字列を受け付ける）
+    [InlineData("Ctrl + -1")]
+    [InlineData("Ctrl + 0")]        // None（キーとして無効）
+    internal void TryParse_未定義の数値キーはfalse(string text)
+    {
+        // `Enum.TryParse<T>` は数値文字列を受理してしまうため、列挙に無い値が
+        // そのままキーとして通る（実測: 修正前は "Ctrl + 999" が true になっていた）。
+        // キーの正規化（`Canonical()`）で未定義値を拒否する。
+        Assert.False(HotKeyParser.TryParse(text, out _));
+    }
 }

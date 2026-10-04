@@ -43,17 +43,12 @@ public static class EsKeyMewUIInterop
     /// </remarks>
     public static MewUIKey ToMewUIKey(this EsKey key)
     {
-        if (!Enum.IsDefined(key))
-        {
-            return MewUIKey.None;
-        }
-
         if (s_esToMew.TryGetValue(key, out var aliased))
         {
             return aliased;
         }
 
-        return Enum.TryParse<MewUIKey>(key.ToString(), out var result) ? result : MewUIKey.None;
+        return EnumCanonical.TryParse<EsKey, MewUIKey>(key, out var result) ? result : MewUIKey.None;
     }
 
     /// <summary>MewUI の <see cref="MewUIKey"/> を <see cref="EsKey"/> へ変換する。</summary>
@@ -66,17 +61,12 @@ public static class EsKeyMewUIInterop
     /// </remarks>
     public static EsKey ToEsKey(this MewUIKey key)
     {
-        if (!Enum.IsDefined(key))
-        {
-            return EsKey.None;
-        }
-
         if (s_mewToEs.TryGetValue(key, out var aliased))
         {
             return aliased;
         }
 
-        return Enum.TryParse<EsKey>(key.ToString(), out var result) ? result : EsKey.None;
+        return EnumCanonical.TryParse<MewUIKey, EsKey>(key, out var result) ? result : EsKey.None;
     }
 
     /// <summary>MewUI が表現できる <see cref="EsKey"/> かどうかを判定する。</summary>

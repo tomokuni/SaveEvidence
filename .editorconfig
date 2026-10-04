@@ -261,6 +261,11 @@ dotnet_diagnostic.CA1508.severity = none
 [src/EsUtil.Platform.Core/src/EsKey.cs]
 dotnet_diagnostic.CA1720.severity = none
 
+# 同じ値を持つ別名（重複値）の解決を検証するテストは、検証データとして意図的に重複値を持つ
+# （実測: CA1069 は「意図的な重複」を区別できないため、本ファイルだけ無効にする）。
+[src/EsUtil.Platform.Core/tests/EnumCanonical.Tests.cs]
+dotnet_diagnostic.CA1069.severity = none
+
 # `CA1848`（LoggerMessage デリゲートの使用）と `RS0030`（禁止 API。 例: `Enum.HasFlag`）は
 # 製品コードの性能規則である。 テストは「NullLogger では何も起きない」ことの検証のために直接 ILogger を呼び、
 # サンプルは見た目の確認用であるため、どちらも対象外にする。

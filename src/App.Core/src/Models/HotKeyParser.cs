@@ -44,10 +44,17 @@ public static class HotKeyParser
         if (modifiers == HotKeyModifiers.None) return false;
 
         var keyName = parts[^1];
-        if (SystemEnum.TryParse<EsKey>(keyName, true, out var key) && key != EsKey.None)
+
+        // 正規化する: Enum.TryParse は数値文字列（"999" 等）を受理するため、列挙に無い値がキーとして通る
+        // （実測: 修正前は "Ctrl + 999" が true になっていた）。 Normalize で未定義値を None へ寄せて拒否する。
+        if (SystemEnum.TryParse<EsKey>(keyName, true, out var parsed))
         {
-            setting = new HotKeySetting(modifiers, key);
-            return true;
+            var key = parsed.Normalize();
+            if (key != EsKey.None)
+            {
+                setting = new HotKeySetting(modifiers, key);
+                return true;
+            }
         }
 
         return false;

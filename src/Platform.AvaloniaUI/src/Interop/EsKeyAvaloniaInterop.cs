@@ -25,15 +25,11 @@ public static class EsKeyAvaloniaInterop
     /// <param name="key">変換対象のキー。</param>
     /// <returns>対応する Avalonia のキー。 名前が一致しない場合と未定義値は <see cref="AvaloniaKey.None"/>。</returns>
     public static AvaloniaKey ToAvaloniaKey(this EsKey key) =>
-        Enum.IsDefined(key) && System.Enum.TryParse<AvaloniaKey>(key.ToString(), out var result)
-            ? result
-            : AvaloniaKey.None;
+        EnumCanonical.TryParse<EsKey, AvaloniaKey>(key, out var result) ? result : AvaloniaKey.None;
 
     /// <summary>Avalonia の <see cref="AvaloniaKey"/> を <see cref="EsKey"/> へ変換する。</summary>
     /// <param name="key">変換対象のキー。</param>
     /// <returns>対応する <see cref="EsKey"/>。 名前が一致しない場合と未定義値は <see cref="EsKey.None"/>。</returns>
     public static EsKey ToEsKey(this AvaloniaKey key) =>
-        Enum.IsDefined(key) && System.Enum.TryParse<EsKey>(key.ToString(), out var result)
-            ? result
-            : EsKey.None;
+        EnumCanonical.TryParse<AvaloniaKey, EsKey>(key, out var result) ? result : EsKey.None;
 }
