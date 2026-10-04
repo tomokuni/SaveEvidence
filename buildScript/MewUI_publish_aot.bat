@@ -51,6 +51,7 @@ if exist "%STAGE%" rd /s /q "%STAGE%"
 dotnet publish "src\App.MewUI\src\App.MewUI.csproj" ^
   -c Release ^
   -r "%RID%" ^
+  -warnaserror ^
   -p:PublishAot=true ^
   -p:SelfContained=true ^
   -o "%STAGE%"

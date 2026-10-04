@@ -205,7 +205,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 
 | イベント | シグネチャ | 説明 |
 | --- | --- | --- |
-| `CaptureCompleted` | `event Action<CaptureResult?>? CaptureCompleted` | キャプチャ完了（同期実行。 UI スレッドで発行） |
+| `CaptureCompleted` | `event EventHandler<CaptureCompletedEventArgs>? CaptureCompleted` | キャプチャ完了（同期実行。 UI スレッドで発行。 結果は `e.Result`） |
 
 #### 5.3.2 キャプチャ完了イベント（画像変更 → APP 表示の順序保証）
 

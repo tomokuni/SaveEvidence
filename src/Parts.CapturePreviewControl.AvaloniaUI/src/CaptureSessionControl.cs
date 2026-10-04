@@ -34,7 +34,7 @@ public sealed class CaptureSessionControl : IDisposable
     /// 「APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）」の順序を保証できる。<br/>
     /// 引数はキャプチャ結果（キャンセル時は 0x0 の空結果）。 UI スレッドで発行される。
     /// </remarks>
-    public event Action<CaptureResult?>? CaptureCompleted;
+    public event EventHandler<CaptureCompletedEventArgs>? CaptureCompleted;
 
     /// <summary>現在有効な設定（全メンバー non-null）。</summary>
     private CaptureSettings _currentSettings;
@@ -114,7 +114,7 @@ public sealed class CaptureSessionControl : IDisposable
             new WinElementFinder(_log),
             type, _currentSettings, scaling,
             // キャプチャ完了イベントを公開イベントへ中継する（同期実行 → ホストの画像変更後に再表示）
-            onCaptured: result => CaptureCompleted?.Invoke(result),
+            onCaptured: result => CaptureCompleted?.Invoke(this, new CaptureCompletedEventArgs(result)),
             _log);
 
         if (!_slot.TryBeginCapture(session))

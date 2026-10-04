@@ -6,6 +6,7 @@ using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.MewUI.Services;
 using System.Diagnostics;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 
@@ -18,7 +19,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <see cref="ViewModeDisplay"/>（コア）が単一所有する。<br/>
 /// <b>サムネイル</b>: <see cref="ThumbnailView"/> が画像を正方形へ収めて描画する。<br/>
 /// <b>ダブルクリック</b>: 画像を一時ファイルへ書き出し、OS の既定アプリで開く。<br/>
-/// <b>画像の所有権</b>: 一覧は <see cref="UndoStack"/> と <see cref="MainViewModel"/> が保持する画像を参照するだけで、破棄しない。
+/// <b>画像の所有権</b>: 一覧は <see cref="UndoHistory"/> と <see cref="MainViewModel"/> が保持する画像を参照するだけで、破棄しない。
 /// </remarks>
 internal static class UndoPage
 {
@@ -47,7 +48,7 @@ internal static class UndoPage
     /// 4. 表示のたびに保存済みの表示モードを復元し、一覧を再構築する。<br/>
     /// 5. 現在の画像が変わった時も一覧を再構築する（青枠の位置が追従する）。
     /// </remarks>
-    public static PageContent Build(MainViewModel viewModel, ISettingsService settingsService, UndoStack undoStack)
+    public static PageContent Build(MainViewModel viewModel, ISettingsService settingsService, UndoHistory undoStack)
     {
         // 表示モードはラムダ間で共有するためローカルに保持する（設定が単一所有元）
         var selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.UndoViewModeIndex);
@@ -247,7 +248,7 @@ internal static class UndoPage
                 UseShellExecute = true,
             });
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // 外部ツールで開けない場合でも操作を妨げない（拡張子の関連付けが無い環境など）
         }

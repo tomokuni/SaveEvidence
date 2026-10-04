@@ -110,7 +110,7 @@
 - **現在の画像の強調**: 現在のキャプチャページに表示中の画像は青枠（`BorderBrush #0078D4`・`BorderThickness 3`）で強調表示する
 - **表示モード**: ツールバーの特大 / 大 / 中 ボタンで切替可能。 選択状態は `Settings.UndoViewModeIndex`（0=特大, 1=大, 2=中、既定 1=大）に保存・復元される。 アイコンサイズはフォルダビューと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する
 - **外部ツール表示**: サムネイルのダブルクリックで一時フォルダへ PNG として保存し、OS の既定アプリ（外部ツール）で開く（Undo / Redo スタックの画像はファイルではなく Bitmap のため）
-- **更新タイミング**: ナビゲーションで Undo 一覧を表示するたびに最新の履歴を読み込む（`UndoPage` が `IsVisible` 変更を監視し、保存済み設定の復元と一覧の再構築を行う。 UndoStack / MainViewModel は DI シングルトンから取得）
+- **更新タイミング**: ナビゲーションで Undo 一覧を表示するたびに最新の履歴を読み込む（`UndoPage` が `IsVisible` 変更を監視し、保存済み設定の復元と一覧の再構築を行う。 UndoHistory / MainViewModel は DI シングルトンから取得）
 - **表示モードの保存・復元**: 表示モード切替操作のたびに保存（`SaveViewModeSettings`）。 復元はページ表示時（範囲チェック付き・`ViewModeDisplay.ClampIndex`）
 
 ### 4.4 ラベル設定（キャプチャ・切出し時の左上ラベル）

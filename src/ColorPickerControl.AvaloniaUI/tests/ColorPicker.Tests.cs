@@ -9,6 +9,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 
@@ -402,7 +403,7 @@ public class ColorPickerTests
             button!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Dispatcher.UIThread.RunJobs();
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // ヘッドレスではポップアップを表示できないため、構築までで検証する
         }
@@ -426,7 +427,7 @@ public class ColorPickerTests
             button!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Dispatcher.UIThread.RunJobs();
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // ヘッドレスではポップアップを表示できないため、構築までで検証する
         }

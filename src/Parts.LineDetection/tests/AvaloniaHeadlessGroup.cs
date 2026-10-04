@@ -10,4 +10,4 @@ namespace EsUtil.SaveEvidence.Parts.LineDetection.Tests;
 /// 純粋ロジックテスト（<c>[Fact]</c>）はコレクションに属さず並列実行される。
 /// </remarks>
 [CollectionDefinition("AvaloniaHeadless", DisableParallelization = true)]
-public sealed class AvaloniaHeadlessCollection;
+public sealed class AvaloniaHeadlessGroup;

@@ -422,7 +422,7 @@ SaveEvidence は、Avalonia UI 上で CommunityToolkit.Mvvm を使用した MVVM
                  │
 ┌────────────────▼─────────────────────────┐
 │          Model ＆ Service                 │
-│  UndoStack / Settings / SettingsService  │
+│  UndoHistory / Settings / SettingsService  │
 │  FileNameTemplate / CaptureSessionControl（外部）   │
 └──────────────────────────────────────────┘
 ```

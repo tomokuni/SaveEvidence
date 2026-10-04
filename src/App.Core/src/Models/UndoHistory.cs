@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.App.Core.Models;
 /// スレッドセーフではないので、UI スレッドからのみ操作すること。<br/>
 /// Undo 実行時は現在の画像を Redo スタックへ退避し、新しい操作（<see cref="Push"/>）で Redo 履歴をクリアする。
 /// </remarks>
-public sealed class UndoStack
+public sealed class UndoHistory
 {
     /// <summary>Undo の最大保存段数。</summary>
     public const int MaxCount = 5;

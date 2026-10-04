@@ -7,7 +7,7 @@
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
 | `Enum.AppPage` / `Enum.ThemeMode` | `public` | 任意 |
-| `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoStack` / `Models.HotKeyParser` | `public` | 任意 |
+| `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` / `Models.HotKeyParser` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
 | `Services.EsRectIntJsonConverter` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
@@ -94,7 +94,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `{yyyy}` `{MM}` `{dd}` `{HH}` `{mm}` `{ss}` | 個別の日時トークン |
 | `{{` / `}}` | リテラルの `{` / `}` |
 
-## `Models.UndoStack`（クラス）
+## `Models.UndoHistory`（クラス）
 
 | メンバー | 説明 |
 | --- | --- |

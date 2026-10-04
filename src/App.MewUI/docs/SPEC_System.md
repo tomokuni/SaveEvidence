@@ -165,7 +165,7 @@ classDiagram
     class AppServices {
         +MainViewModel Main
         +ISettingsService Settings
-        +UndoStack UndoStack
+        +UndoHistory UndoHistory
         +FolderViewViewModel FolderView
     }
     class PageContent {
@@ -211,7 +211,7 @@ classDiagram
         +bool IsSortAscending
         +string FolderPathText
     }
-    class UndoStack {
+    class UndoHistory {
         <<App.Core>>
         +Push(image) void
         +GetUndoHistory() IReadOnlyList~EsBitmap~
@@ -271,7 +271,7 @@ classDiagram
     Program ..> AppServices : 組み立て
     Program ..> MainViewModel : 生成
     Program ..> MewUIImageWriter : 注入
-    Program ..> UndoStack : 生成・BeforeEditAction で共有
+    Program ..> UndoHistory : 生成・BeforeEditAction で共有
     Program ..> FolderViewViewModel : 生成
     MainWindow ..> AppServices : ページの生成
     MainWindow ..> WindowPlacementMath : 座標変換
@@ -312,7 +312,7 @@ classDiagram
     FolderViewPage ..> FolderViewViewModel : 束縛
     FolderViewPage ..> ISettingsService : 表示モード・ソート順
     UndoPage ..> ThumbnailView : 配置
-    UndoPage ..> UndoStack : 履歴の参照
+    UndoPage ..> UndoHistory : 履歴の参照
     UndoPage ..> ISettingsService : 表示モードの読み書き
     UndoPage ..> MainViewModel : 現在の画像を参照
     ImageThumbnailLoader ..> EsBitmap : 縮小デコードの結果
@@ -451,7 +451,7 @@ sequenceDiagram
 sequenceDiagram
     participant BTN as 戻す / やり直しボタン
     participant EH as EditHistory
-    participant US as UndoStack
+    participant US as UndoHistory
     participant VM as MainViewModel
     participant CV as CropViewControl
 
@@ -490,7 +490,7 @@ sequenceDiagram
 sequenceDiagram
     participant MW as MewUI（NavigationView）
     participant UP as UndoPage
-    participant US as UndoStack
+    participant US as UndoHistory
     participant VM as MainViewModel
     participant TV as ThumbnailView
 

@@ -32,7 +32,7 @@ public sealed partial class CreatePageViewModel : ObservableObject
     private static readonly JsonSerializerOptions s_jsonOptions = new() { WriteIndented = true };
 
     /// <summary>データセット保存が完了したときに発火するイベント（ファイルパスを通知）。</summary>
-    public event Action<string>? DatasetSaved;
+    public event EventHandler<DatasetSavedEventArgs>? DatasetSaved;
 
     /// <summary>表示中のキャプチャ画像。</summary>
     [ObservableProperty]
@@ -148,7 +148,7 @@ public sealed partial class CreatePageViewModel : ObservableObject
         StatusText = $"保存しました: {jsonPath}（正解 {selected.Count} 件）";
 
         // 保存完了を親へ通知し、検証ページのドロップダウン一覧を再読み込みさせる
-        DatasetSaved?.Invoke(jsonPath);
+        DatasetSaved?.Invoke(this, new DatasetSavedEventArgs(jsonPath));
     }
 
     /// <summary>2 つの矩形が交差するかどうかを判定する。</summary>

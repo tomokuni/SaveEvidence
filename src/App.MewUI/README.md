@@ -41,7 +41,7 @@ src/App.MewUI/
 └── src/
     ├── App.MewUI.csproj     # WinExe / net10.0-windows / MewUI 0.21.1 固定
     ├── Program.cs           # 登録 → コアの組み立て（AppServices） → ホットキー登録 → ウィンドウ表示
-    ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoStack / FolderView）
+    ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoHistory / FolderView）
     ├── Services/
     │   ├── MewUIImageWriter.cs        # IImageWriter の MewUI 実装（SkiaSharp でエンコード）
     │   ├── ImageThumbnailLoader.cs    # 画像ファイルの縮小デコードとキャッシュ
@@ -310,7 +310,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 
 ツールバーの ☰ メニューの「元に戻す」「元に戻すを取り消す」で編集履歴を移動します（画像がある場合のみ有効）。
 撮影と切り出しの直前に現在の画像が履歴へ退避されるため、撮影前・切り出し前へ戻せます。
-履歴の実体は `UndoStack`（コア、最大 5 段）が保持し、復元した画像の所有権はプレビューへ移ります。
+履歴の実体は `UndoHistory`（コア、最大 5 段）が保持し、復元した画像の所有権はプレビューへ移ります。
 
 ## 配布形態（Native AOT）
 

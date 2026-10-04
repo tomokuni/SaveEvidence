@@ -243,8 +243,8 @@ flowchart TB
 | `CaptureType` enum | `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）。 UI 非依存の共通基盤 `EsUtil.Platform.Core`（`EsUtil.Platform.Core`）提供 |
 | `CaptureSettings` record | キャプチャの外観・動作設定（全メンバー nullable・部分更新可・`Validate()` / `ToNonNull()`）。 共通基盤 `Parts.CapturePreviewControl.Core` 提供 |
 | `CaptureResult` record | キャプチャ結果（`Image` / `SourceBounds`。 キャンセル時は画像 null・矩形 0x0）。 共通基盤 `Parts.CapturePreviewControl.Core` 提供 |
-| `FadeMaskDragRectSelectionEventArgs` record | 確定要求のイベント引数（`SelectionSourceRect`）。 本プロジェクト提供 |
-| `FadeMaskDragRectPointEventArgs` record | ルーペ位置のイベント引数（`Position`）。 本プロジェクト提供 |
+| `FadeMaskDragRectSelectionEventArgs` class（`EventArgs` 派生） | 確定要求のイベント引数（`SelectionSourceRect`）。 本プロジェクト提供 |
+| `FadeMaskDragRectPointEventArgs` class（`EventArgs` 派生） | ルーペ位置のイベント引数（`Position`）。 本プロジェクト提供 |
 
 ### 6.6 CropViewControl
 

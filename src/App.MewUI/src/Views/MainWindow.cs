@@ -97,7 +97,7 @@ internal sealed class MainWindow
         [
             new(AppPage.Capture, "キャプチャ", "ic_fluent_scan_table_24_regular.svg", () => CapturePage.Build(services)),
             new(AppPage.FolderView, "フォルダビュー", "ic_fluent_folder_search_24_regular.svg", () => FolderViewPage.Build(services)),
-            new(AppPage.Undo, "Undo 一覧", "ic_fluent_arrow_undo_24_regular.svg", () => UndoPage.Build(services.Main, settingsService, services.UndoStack)),
+            new(AppPage.Undo, "Undo 一覧", "ic_fluent_arrow_undo_24_regular.svg", () => UndoPage.Build(services.Main, settingsService, services.UndoHistory)),
             new(AppPage.Settings, "設定", "ic_fluent_settings_24_regular.svg", () => SettingsPage.Build(services)),
         ];
 

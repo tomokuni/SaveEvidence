@@ -104,7 +104,7 @@ public sealed class SettingsService : ISettingsService
                 return loaded ?? new Settings();
             }
         }
-        catch
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // 読込失敗時は既定値で続行
         }
@@ -166,7 +166,7 @@ public sealed class SettingsService : ISettingsService
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
             File.WriteAllText(s_settingsFilePath, json);
         }
-        catch
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // 保存失敗時は続行
         }

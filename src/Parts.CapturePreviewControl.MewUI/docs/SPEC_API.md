@@ -10,8 +10,8 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `CaptureOverlayServices` | sealed record | 撮影が必要とするサービスの束（設定は含まない） |
 | `CropViewControl` | sealed クラス（複合コントロール） | 画像ビューポート（拡大・パン・Fit）+ 外部提供矩形オーバーレイ |
 | `FadeMaskDragRectControl` | sealed クラス（複合コントロール） | 暗転マスク + 選択矩形 + ルーペ。 モードで可視性を切替 |
-| `FadeMaskDragRectSelectionEventArgs` | sealed record | 確定要求のイベント引数（`SelectionSourceRect: EsRect`） |
-| `FadeMaskDragRectPointEventArgs` | sealed record | ルーペ位置のイベント引数（`Position: EsPoint`） |
+| `FadeMaskDragRectSelectionEventArgs` | sealed class（`EventArgs` 派生） | 確定要求のイベント引数（`SelectionSourceRect: EsRect`） |
+| `FadeMaskDragRectPointEventArgs` | sealed class（`EventArgs` 派生） | ルーペ位置のイベント引数（`Position: EsPoint`） |
 
 `OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）は `Parts.CapturePreviewControl.Core`（名前空間 ${S}Core）が提供します。
 

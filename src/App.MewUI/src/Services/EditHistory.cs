@@ -4,7 +4,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
 /// <summary>プレビュー画像の編集履歴（Undo / Redo）の操作を担う窓口。</summary>
 /// <remarks>
-/// <b>役割</b>: <see cref="EsUtil.SaveEvidence.App.Core.Models.UndoStack"/>（コア）と <see cref="EsUtil.SaveEvidence.App.Core.ViewModels.MainViewModel"/> の間で<br/>
+/// <b>役割</b>: <see cref="EsUtil.SaveEvidence.App.Core.Models.UndoHistory"/>（コア）と <see cref="EsUtil.SaveEvidence.App.Core.ViewModels.MainViewModel"/> の間で<br/>
 /// 「履歴から画像を取り出してプレビューへ差し替える」操作を 1 箇所に集約する。<br/>
 /// 撮影（<see cref="CaptureFlow"/>）と切り出し（<c>CaptureSessionControl</c>。 CaptureSessionControl.MewUI）は履歴の退避のみを担う。<br/>
 /// <br/>
@@ -26,7 +26,7 @@ internal static class EditHistory
     public static void Undo(AppServices services, Action? restore = null)
     {
         var viewModel = services.Main;
-        var previous = services.UndoStack.Undo(viewModel.PreviewImage);
+        var previous = services.UndoHistory.Undo(viewModel.PreviewImage);
         if (previous is null)
         {
             return;
@@ -45,7 +45,7 @@ internal static class EditHistory
     /// </remarks>
     public static void Redo(AppServices services, Action? restore = null)
     {
-        var restored = services.UndoStack.Redo();
+        var restored = services.UndoHistory.Redo();
         if (restored is null)
         {
             return;

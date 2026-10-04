@@ -509,7 +509,7 @@ public sealed partial class MainViewModel : ObservableObject
 
             return true;
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // 保存失敗時は false を返す
             return false;

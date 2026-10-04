@@ -30,24 +30,34 @@ public sealed class EnumToDisplayNameConverter : IValueConverter
     /// <param name="parameter">変換パラメーター（未使用）。</param>
     /// <param name="culture">カルチャ情報（未使用）。</param>
     /// <returns>表示名（Description 属性の値。 未定義ならメンバー名）。</returns>
+    /// <remarks>
+    /// <b>enum のパターン照合（<c>switch</c> 式）を使わない</b>: コンパイラが生成する照合コードが
+    /// <c>Enum.GetValues(Type)</c>（AOT 非対応。 IL3050）を要求するため、型判定（<c>is</c>）で分岐する。<br/>
+    /// 表示名を持つ enum はここへ登録する（対象型を静的に確定させ、トリミングでメタデータが残るようにする）。
+    /// </remarks>
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is null) return "";
 
-        return value switch
+        if (value is ThemeMode themeMode)
         {
-            // 表示名（Description 属性）を持つ enum はここへ登録する（対象型を静的に確定させるため）
-            ThemeMode => ResolveDisplayName(typeof(ThemeMode), value.ToString()!),
+            return ResolveDisplayName(typeof(ThemeMode), themeMode.ToString());
+        }
 
-            // 表示名を持たない enum はメンバー名をそのまま返す
-            _ => value.ToString() ?? "",
-        };
+        // 表示名を持たない値はメンバー名をそのまま返す
+        return value.ToString() ?? "";
     }
 
     /// <summary>enum メンバー名から表示名を解決する（Description 属性 → 未定義はメンバー名）。</summary>
     /// <param name="type">対象の enum 型（<c>typeof</c> で静的に渡す）。</param>
     /// <param name="name">enum メンバー名。</param>
     /// <returns>表示名。</returns>
+    /// <remarks>
+    /// <b><see cref="Type.GetField(string)"/> を使う</b>（<see cref="Type.GetMember(string)"/> ではなく）。<br/>
+    /// enum のメンバーは public の静的フィールドであり、<c>GetField</c> が要求するのは
+    /// <see cref="DynamicallyAccessedMemberTypes.PublicFields"/> だけである（<c>GetMember</c> は 5 種類を要求し、
+    /// <see cref="DynamicallyAccessedMemberTypes.All"/> で満たすと AOT で動的コード（<c>Enum.GetValues(Type)</c>）を要求してしまう）。
+    /// </remarks>
     private static string ResolveDisplayName(
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)] Type type,
         string name)
@@ -58,8 +68,7 @@ public sealed class EnumToDisplayNameConverter : IValueConverter
             return cached;
         }
 
-        var description = type.GetMember(name)
-            .FirstOrDefault()?
+        var description = type.GetField(name)?
             .GetCustomAttributes(typeof(DescriptionAttribute), false)
             .OfType<DescriptionAttribute>()
             .FirstOrDefault()?

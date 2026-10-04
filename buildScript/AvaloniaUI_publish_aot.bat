@@ -63,6 +63,7 @@ if exist "%STAGE%" rd /s /q "%STAGE%"
 dotnet publish "src\App.AvaloniaUI\src\App.AvaloniaUI.csproj" ^
   -c Release ^
   -r "%RID%" ^
+  -warnaserror ^
   -p:PublishAot=true ^
   -p:SelfContained=true ^
   -o "%STAGE%"

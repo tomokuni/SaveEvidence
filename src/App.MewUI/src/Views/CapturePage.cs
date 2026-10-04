@@ -781,7 +781,7 @@ internal static class CapturePage
                 session.AppearanceSettings = CaptureSettingsMapper.From(
                     settings, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
             {
                 s_logger.LogSettingsApplyError(ex, e.PropertyName ?? string.Empty);
             }

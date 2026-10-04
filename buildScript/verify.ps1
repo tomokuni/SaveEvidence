@@ -229,6 +229,12 @@ if (-not $SkipPackage) {
     }
     Add-Result 'NuGet の健全性' ($pkgIssues -eq 0) "脆弱性・非推奨 $pkgIssues 件"
     $pkgDetails | ForEach-Object { $_ }
+
+    # 更新候補（参考値。 合否に含めない）。 ネットワークを使うため -SkipPackage で省略できる
+    $outdatedText = Invoke-DotNet @('package', 'list', '--outdated') + $restoreArgs
+    $outdatedRows = @($outdatedText -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
+    Add-Info 'NuGet の更新候補' "$($outdatedRows.Count) 件（参考値。 合否に含めない）"
+    $outdatedRows | Select-Object -First 8 | ForEach-Object { "      $($_.Trim())" }
 }
 
 # 以降のドキュメント検査で使う文書一覧（リポジトリ直下の文書も対象にする）

@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Aprillz.MewUI;
 using EsUtil.SaveEvidence.App.Core.Models;
 using SkiaSharp;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Icons;
 
@@ -44,7 +45,7 @@ internal static partial class IconLoader
         {
             return Application.Current?.Theme?.IsDark ?? false;
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // テーマ未確定（起動前）は明色として扱う
             return false;
@@ -67,7 +68,7 @@ internal static partial class IconLoader
             var match = PathDataRegex().Match(svg);
             return match.Success ? SKPath.ParseSvgPathData(match.Groups[1].Value) ?? new SKPath() : new SKPath();
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // リソース読み込み失敗（欠落等）は空の形状で代替する
             return new SKPath();

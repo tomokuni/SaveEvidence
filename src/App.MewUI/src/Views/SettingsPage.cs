@@ -638,7 +638,7 @@ internal static class SettingsPage
                 box.Text = selected;
             }
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // ダイアログを開けない環境（サービス未登録等）では設定を変更しない
         }

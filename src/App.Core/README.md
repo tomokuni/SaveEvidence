@@ -17,7 +17,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `Services.IImageWriter` | `public` | 画像（`EsBitmap`）のファイル書き込みの抽象。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードする |
 | `Services.EsRectIntJsonConverter` | `internal` | `EsRectInt` の JSON コンバーター（`X` / `Y` / `Width` / `Height` のみを読み書き） |
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
-| `Models.UndoStack` | `public` | 画像の Undo / Redo スタック（`EsBitmap` のクローンを保持。 最大 5 段） |
+| `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsBitmap` のクローンを保持。 最大 5 段） |
 | `Models.HotKeyParser` | `public` | ホットキー文字列（"Ctrl + Shift + Q" 等）の解析 |
 | `Models.CapacityLimitedCache` | `internal` | 容量制限付きの静的キャッシュ（超過分は破棄） |
 | `Models.ImageFileExtensions` | `internal` | 画像ファイルの拡張子判定（フォルダビューの一覧抽出） |

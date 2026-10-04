@@ -251,8 +251,8 @@ Parts.CapturePreviewControl.AvaloniaUI/
 │   ├── CropViewControl.cs                  # 切り出しビュー（公開。画像ビューポート + 領域選択 + 矩形オーバーレイ）
 │   ├── CropViewImage.cs                    # 画像の表示アダプタ（internal）
 │   ├── FadeMaskDragRectControl.cs          # 領域選択（公開。暗転マスク + 選択矩形 + ルーペ）
-│   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開 record）
-│   ├── FadeMaskDragRectPointEventArgs.cs   # ルーペ位置のイベント引数（公開 record）
+│   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開クラス）
+│   ├── FadeMaskDragRectPointEventArgs.cs   # ルーペ位置のイベント引数（公開クラス）
 │   ├── ZoomView/                 # 切り出しビューの画像ビューポート（ZoomViewControl / ZoomableView / CheckerboardView / ZoomChangedEventArgs）
 │   └── Sessions/                 # 内部実装（SelectionCaptureSession / CropSession / OverlayWindow）
 ├── sample/                       # サンプルアプリ（sample/README.md 参照）

@@ -71,7 +71,7 @@ internal static class CaptureFlow
             var viewModel = services.Main;
 
             // 撮影前の画像へ戻せるように履歴へ積む（現在の画像が null の場合は何も積まれない）
-            services.UndoStack.Push(viewModel.PreviewImage);
+            services.UndoHistory.Push(viewModel.PreviewImage);
 
             // 差し替え前の画像の破棄と未保存化は MainViewModel（PreviewImage の所有者）が行う
             viewModel.SetPreviewImage(image);

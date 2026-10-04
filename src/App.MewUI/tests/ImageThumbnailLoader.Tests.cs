@@ -1,6 +1,7 @@
 using EsUtil.SaveEvidence.App.MewUI.Services;
 using SkiaSharp;
 using Xunit;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Tests;
 
@@ -47,7 +48,7 @@ public class ImageThumbnailLoaderTests : IDisposable
             {
                 File.Delete(path);
             }
-            catch (Exception)
+            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
             {
                 // 一時ファイルの削除失敗はテスト結果に影響しない
             }

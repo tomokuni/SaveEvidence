@@ -9,6 +9,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
@@ -94,7 +95,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         {
             LoadFilesCore();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             _logger.LogFolderViewLoadError(ex, MainViewModel.SaveFolderPathResolved);
             _viewModel.ItemCount = 0;
@@ -150,7 +151,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
                     return Bitmap.DecodeToWidth(stream, k.Size);
                 });
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             return null;
         }
@@ -203,7 +204,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
             };
             process.Start();
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // ファイルを開けなくてもユーザー操作を妨げない
         }

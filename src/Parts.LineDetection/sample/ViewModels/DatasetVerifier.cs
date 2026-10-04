@@ -2,6 +2,7 @@ using Avalonia.Media.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Native.Imaging;
 using System.Text.Json;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 
@@ -61,7 +62,7 @@ internal static class DatasetVerifier
 
             return new VerifyResultItem(entry.Name, correct, detailLines);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             return new VerifyResultItem(entry.Name, false, [$"エラー（{ex.Message}）"]);
         }
@@ -143,7 +144,7 @@ internal static class DatasetVerifier
 
                 items.Add(new DatasetEntry(name, png, new DatasetBounds(b.X, b.Y, b.Right, b.Bottom)));
             }
-            catch (Exception ex)
+            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
             {
                 System.Diagnostics.Debug.WriteLine($"dataset 読み込み失敗: {name}（{ex.Message}）");
             }

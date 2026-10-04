@@ -8,5 +8,14 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 /// 内包コントロール（MarqueeControl）の型（SelectionRectEventArgs）に依存しない独自型とし、<br/>
 /// ホストは FadeMaskDragRectControl の公開 API のみで利用できる（公開型のカプセル化）。
 /// </remarks>
-/// <param name="SelectionSourceRect">選択矩形（対象座標）。</param>
-public sealed record FadeMaskDragRectSelectionEventArgs(Rect SelectionSourceRect);
+/// <param name="selectionSourceRect">選択矩形（対象座標）。</param>
+/// <remarks>
+/// <b>record ではなく class</b>: イベント引数は <see cref="EventArgs"/> 派生にする（CA1711・CA1003。<br/>
+/// C# の <c>record</c> は <see cref="EventArgs"/> を継承できないため class とする）。
+/// </remarks>
+public sealed class FadeMaskDragRectSelectionEventArgs(Rect selectionSourceRect) : EventArgs
+{
+    /// <summary>選択矩形（対象座標）を取得する。</summary>
+    /// <value>ドラッグ選択中の矩形。</value>
+    public Rect SelectionSourceRect { get; } = selectionSourceRect;
+}

@@ -12,11 +12,6 @@ end_of_line = crlf
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# C# files
-[*.cs]
-indent_style = space
-indent_size = 4
-
 # XAML files
 [*.xaml]
 indent_style = space
@@ -40,7 +35,10 @@ indent_size = 2
 # C# のアナライザー設定（下のブロックはこのセクションに属させる）
 # 注意: セクションを分けないと設定が直前のセクション（[*.csproj]）へ属し、
 #       **.cs ファイルには一切適用されない**（実測: 設定が無効のまま 0 警告になっていた）。
+# C# files
 [*.cs]
+indent_style = space
+indent_size = 4
 
 # ============================================================
 # ビルドで検出するコード スタイルと品質（人・AI のレビューに頼らない）
@@ -74,6 +72,11 @@ dotnet_diagnostic.IDE0161.severity = warning
 dotnet_diagnostic.IDE0079.severity = warning
 
 # --- 品質（CA） ---
+
+# 一般例外（Exception）の捕捉は境界に限る（例外処理規約 §4）。
+# 境界での捕捉は catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex)) の形にし、when フィルターで本規則を満たす。
+# これで「境界かどうか」がコード上に現れ（git grep BoundaryCatch で一覧できる）、境界以外の包括捕捉がビルドで検出される。
+dotnet_diagnostic.CA1031.severity = warning
 
 # 死コード（プライベート メンバー）を検出する。 規約「本番で未使用になった公開 API は削除する」の機械的な裏付け。
 dotnet_diagnostic.IDE0051.severity = warning
@@ -143,6 +146,26 @@ dotnet_diagnostic.CA1873.severity = warning
 # 静的ホルダー型（static メンバーだけを持つ型）を static class にする。
 dotnet_diagnostic.CA1052.severity = warning
 
+# P/Invoke の DLL 探索順序を固定する（カレント ディレクトリの偽 DLL を読み込ませない）。
+# 対象は kernel32 / user32 / dwmapi / gdi32 / shcore などのシステム DLL のみ（実測）。
+# `DefaultDllImportSearchPaths(DllImportSearchPath.System32)` はアセンブリ単位で指定する（メソッド単位も可能だが、P/Invoke を集約する 2 プロジェクトで 1 回だけ書く）。
+dotnet_diagnostic.CA5392.severity = warning
+
+# 型名の接尾辞（`Collection` / `Stack` 等）が実際の基底型と矛盾しないようにする。
+# 実測で修正した対象: テストの直列化コレクション定義（`...Group` へ改名）、`UndoStack`（`Stack` を連想させるため `UndoHistory` へ改名）、
+# `EventArgs` 接尾辞を持つ 6 型（`EventArgs` 派生にする）。
+dotnet_diagnostic.CA1711.severity = warning
+
+# 演算子には同名の代替メソッドを用意する（演算子を持たない言語・式木・リフレクションからも呼べるようにする）。
+# 実測で追加した対象: `EsPoint` / `EsVector` / `EsSize` / `EsPointInt` / `EsSizeInt` の `Add` / `Subtract` / `Negate` / `Multiply` / `Divide`。
+dotnet_diagnostic.CA2225.severity = warning
+
+# 公開イベントの型を EventHandler<T>（T は EventArgs 派生）に統一する。
+# 実測で変更した対象: HotKeyPressed / CaptureCompleted / DatasetSaved（Action<T> から変更）と、
+# Notified（MarqueeNotice / ZoomNotice を EventArgs 派生のクラスへ変更）。 通知の値型（ヒープ確保なし）との
+# トレードオフは各型の remarks に記載する。
+dotnet_diagnostic.CA1003.severity = warning
+
 # ファイル単位の例外（機械的な判定が実装の意図と合わない箇所。 理由を必ず書く）:
 # SkiaSharp の null 許容注釈と実際の戻り値が一致しない（SKCodec.Create は失敗時に null を返すが非 null として注釈されている）ため、
 # この 2 ファイルでは CA1508 を無効にする（防御的な null 検査を残す）。
@@ -161,8 +184,6 @@ dotnet_diagnostic.CA1508.severity = none
 #   CA1515 … 公開型を internal にすることを促すが、ライブラリの公開 API が対象のため衝突する（実測 146 件）。
 #   CA1812 … 未使用の internal 型を検出するが、DI・XAML・リフレクションで生成する型を誤検出する（実測 10 件）。
 #   CA1024 … メソッドをプロパティへ変えることを促すが、引数なしでも「計算する」意味を持つメソッドは残す（実測 4 件）。
-#   CA1031 … 「一般例外を捕捉しない」を検出するが、アプリ境界（設定の読み書き・クリップボード・ファイル操作）では
-#            捕捉して継続するのが正しい（実測 56 件。 境界かどうかは機械的に判定できないため人間と AI が判断する）。
 #   CA1001 / CA1063 / CA2213 … 「破棄可能なフィールドを持つ型は IDisposable を実装し、そのフィールドを破棄する」を
 #            要求する。 UI コントロールはビジュアル ツリー（親）が子の寿命を所有し、親の Dispose で子を破棄しない
 #            （実際に dotnet format が UI コントロールへ IDisposable を機械実装し、CA2213 が 2 → 24 件へ増えた。

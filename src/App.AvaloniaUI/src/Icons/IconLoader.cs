@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 
@@ -47,7 +48,7 @@ internal static partial class IconLoader
                 var match = PathDataRegex().Match(svg);
                 return match.Success ? StreamGeometry.Parse(match.Groups[1].Value) : StreamGeometry.Parse("M0,0");
             }
-            catch (Exception)
+            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
             {
                 // リソース読み込み失敗（FileNotFoundException 等）は空ジオメトリで代替する（UI を壊さない）
                 return StreamGeometry.Parse("M0,0");

@@ -11,9 +11,17 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 /// <b>Fit 判定</b>: <see cref="ZoomPercent"/> が 0 にならないため、<see cref="IsFit"/> で Fit 状態を判定する。<br/>
 /// <b>表示文字列の生成</b>: 表示形式（"%" 表記等）はホストの都合で決まるため、ライブラリは <see cref="ZoomPercent"/>（数値）のみを通知し、文字列化はホストが行う。
 /// </remarks>
-/// <param name="State">通知時点のズーム状態（実効ズーム率・Fit 状態・可否）。</param>
-public sealed record ZoomChangedEventArgs(ZoomState State)
+/// <param name="state">通知時点のズーム状態（実効ズーム率・Fit 状態・可否）。</param>
+/// <remarks>
+/// <b>record ではなく class</b>: イベント引数は <see cref="EventArgs"/> 派生にする（CA1711・CA1003。<br/>
+/// C# の <c>record</c> は <see cref="EventArgs"/> を継承できないため class とする）。
+/// </remarks>
+public sealed class ZoomChangedEventArgs(ZoomState state) : EventArgs
 {
+    /// <summary>通知時点のズーム状態を取得する。</summary>
+    /// <value>実効ズーム率・Fit 状態・可否を含む値オブジェクト。</value>
+    public ZoomState State { get; } = state;
+
     /// <summary>現在の実効ズーム率（%）を取得する。</summary>
     /// <value>Fit 中は実効倍率、固定倍率中はズーム率。 0 にはならない（Fit 中でも実効倍率を返す）。</value>
     public double ZoomPercent => State.ZoomPercent;

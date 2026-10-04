@@ -60,7 +60,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 ```text
 View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage）
   → ViewModel Layer（MainViewModel / FolderViewViewModel / UndoViewModel）
-    → Model / Service Layer（UndoStack / SettingsService 等）
+    → Model / Service Layer（UndoHistory / SettingsService 等）
       → 外部ライブラリ（Parts.CapturePreviewControl.AvaloniaUI / ColorPickerControl / Platform.AvaloniaUI / LineDetection）
 ```
 
@@ -137,7 +137,7 @@ flowchart TB
   - ステータスバーへのポインタ座標・画像サイズ表示
   - Ctrl ショートカット（保存 / コピー / 貼り付け / Undo / Redo / 切り出し / ズーム）の一括処理（`OnGlobalKeyDown`）
 - **公開メンバー**: `Initialize(...)` / `ExitCropMode()` / `CleanupCaptureResources()` 等
-- **依存**: MainViewModel / CropViewControl（Parts.CapturePreviewControl.AvaloniaUI 経由の推移的依存）/ CaptureSessionControl / UndoStack / AppLog
+- **依存**: MainViewModel / CropViewControl（Parts.CapturePreviewControl.AvaloniaUI 経由の推移的依存）/ CaptureSessionControl / UndoHistory / AppLog
 
 ### 6.3 FolderViewPage
 
@@ -162,7 +162,7 @@ flowchart TB
   - サムネイルのダブルクリックで一時ファイル（PNG）に保存し、OS の既定アプリ（外部ツール）で開く
 - **表示順**: Redo（新しい）→ 現在 → Undo（古い）の固定（時系列順で新しい → 古い）
 - **更新タイミング**: `IsVisible` 変更時（ナビゲーション再表示）に自身で最新の履歴を読み込む（保存済み設定の復元と一覧の再構築。 `ViewModePageBase` に共通化）
-- **依存**: UndoViewModel / MainViewModel（PreviewImage・DI シングルトン）/ UndoStack（DI シングルトン・CapturePage と共有）
+- **依存**: UndoViewModel / MainViewModel（PreviewImage・DI シングルトン）/ UndoHistory（DI シングルトン・CapturePage と共有）
 
 ### 6.5 SettingsPage
 
@@ -236,7 +236,7 @@ sequenceDiagram
     participant SS as SettingsService
     participant SN as CaptureSessionControl
 
-    Prg->>Prg: DI コンテナ構築（SettingsService / MainViewModel / UndoStack / MainWindow）
+    Prg->>Prg: DI コンテナ構築（SettingsService / MainViewModel / UndoHistory / MainWindow）
     Prg->>MW: ウィンドウ生成・表示
     MW->>VM: DataContext 設定
     MW->>SS: 設定読み込み・ウィンドウ位置復元

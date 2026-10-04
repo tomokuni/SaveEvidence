@@ -6,7 +6,6 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.ViewModels;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
@@ -206,7 +205,7 @@ public sealed partial class MainWindow : Window
             SetPreviewBitmap(new EsBitmapAvaloniaImage(bitmap.ToEsBitmap()));
             _vm.AddLog($"[App] 画像を読み込みました: {files[0].Name}");
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // 画像を読み込めない場合は何もしない（現在の画像を維持する）
             _vm.AddLog("[App] 画像を読み込めませんでした（現在の画像を維持します）。");
@@ -214,14 +213,15 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>キャプチャ完了イベント（同期実行）。 画像変更をここで行い、完了後にオーナーが再表示される。</summary>
-    /// <param name="result">キャプチャ結果（null = キャンセル・エラー）。</param>
+    /// <param name="sender">イベントの発信元（使用しない）。</param>
+    /// <param name="e">キャプチャ結果（null = キャンセル・エラー）。</param>
     /// <remarks>
     /// 同期型イベントのため、このハンドラ（画像変更）の完了後に、キャプチャセッションの後続処理（オーナー再表示）が実行される。<br/>
     /// ハンドラを非同期（<c>async void</c>）にすると順序保証が失われるため、同期ハンドラで画像変更を行う。<br/>
     /// </remarks>
-    private void OnCaptureCompleted(CaptureResult? result)
+    private void OnCaptureCompleted(object? sender, CaptureCompletedEventArgs e)
     {
-        if (result?.Image is { } image)
+        if (e.Result?.Image is { } image)
         {
             // 画像変更（同期実行。 このハンドラの完了後に APP が再表示される）。 キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換。
             _vm.CapturedImage = image.ToAvaloniaBitmap();

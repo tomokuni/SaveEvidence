@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
+using System.Diagnostics.CodeAnalysis;
 
 namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 
@@ -103,16 +104,30 @@ internal static class ColorViewThemeManager
         try
         {
             // 未指定の場合のみ、内包テーマをデフォルトとして一度だけ追加する
-            app.Styles.Add((IStyle)AvaloniaXamlLoader.Load(ColorViewThemeUri, ColorViewThemeUri)!);
+            app.Styles.Add(LoadColorViewTheme());
         }
         catch (XamlLoadException)
         {
             // Native AOT では実行時の XAML 解決ができない（No precompiled XAML found）。
-            // ホスト（アプリの XAML）が ColorView テーマを取り込んでいる前提に任せ、再試行しない。
+            // ホスト（アプリの XAML）が ColorView テーマを取り込んでいる 前提に任せ、再試行しない。
         }
 
         s_applied = true;
     }
+
+    /// <summary>内包する ColorView テーマを読み込む。</summary>
+    /// <returns>読み込んだスタイル。</returns>
+    /// <remarks>
+    /// <see cref="AvaloniaXamlLoader.Load(Uri, Uri?)"/> はトリミングで除去されうる（IL2026。<see cref="RequiresUnreferencedCodeAttribute"/>）。<br/>
+    /// 本クラスは<b>読み込み失敗を許容する</b>設計（呼び出し側が <see cref="XamlLoadException"/> を捕捉し、
+    /// ホストの XAML 取り込みに任せる）ため、トリミング後も機能は維持される。 よって警告を理由付きで抑止する。
+    /// </remarks>
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2026",
+        Justification = "読み込みに失敗した場合はホスト（アプリの XAML）の取り込みに任せるため、トリミングで除去されても機能は維持される")]
+    private static IStyle LoadColorViewTheme()
+        => (IStyle)AvaloniaXamlLoader.Load(ColorViewThemeUri, ColorViewThemeUri)!;
 
     /// <summary>指定スタイルが ColorView テーマ（ColorPicker の StyleInclude）であるか判定する。</summary>
     /// <param name="style">判定対象のスタイル。</param>

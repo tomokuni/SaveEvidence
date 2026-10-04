@@ -33,7 +33,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 | `src/App.Core/src/Enum/ThemeMode.cs` | `public enum` | テーマモード（`Description` 属性で表示名を保持） |
 | `src/App.Core/src/Models/Settings.cs` | `public sealed partial class` | アプリケーション設定（変更通知付き） |
 | `src/App.Core/src/Models/FileNameTemplate.cs` | `public static partial class` | ファイル名テンプレートの解析・生成・検証 |
-| `src/App.Core/src/Models/UndoStack.cs` | `public sealed class` | 画像の Undo / Redo スタック |
+| `src/App.Core/src/Models/UndoHistory.cs` | `public sealed class` | 画像の Undo / Redo スタック |
 | `src/App.Core/src/Models/HotKeyParser.cs` | `public static class` | ホットキー文字列の解析 |
 | `src/App.Core/src/Models/CapacityLimitedCache.cs` | `internal static class` | 容量制限付きの静的キャッシュ操作 |
 | `src/App.Core/src/Models/ImageFileExtensions.cs` | `internal static class` | 画像ファイルの拡張子判定（フォルダビューの一覧抽出） |
@@ -86,11 +86,11 @@ sequenceDiagram
 
 例外を送出しません。 入力の不正（解釈できないホットキー文字列・無効なテンプレート）は `bool` の戻り値（`TryParse` / `IsValidTemplate`）またはクランプ（`ClampIndex`）で表現します。
 
-`UndoStack` が保持する `EsBitmap` の破棄は所有者（`UndoStack`）が行います。 `Undo` / `Redo` の戻り値の所有権は呼び出し側へ移ります。
+`UndoHistory` が保持する `EsBitmap` の破棄は所有者（`UndoHistory`）が行います。 `Undo` / `Redo` の戻り値の所有権は呼び出し側へ移ります。
 
 ## 可視性ポリシー
 
-- `AppPage` / `ThemeMode` / `Settings` / `FileNameTemplate` / `UndoStack` / `HotKeyParser` / `ISettingsService` / `SettingsService` / `FolderViewViewModel` / `UndoViewModel` は `public`（`App.AvaloniaUI` と MewUI ホストが共有する契約）。
+- `AppPage` / `ThemeMode` / `Settings` / `FileNameTemplate` / `UndoHistory` / `HotKeyParser` / `ISettingsService` / `SettingsService` / `FolderViewViewModel` / `UndoViewModel` は `public`（`App.AvaloniaUI` と MewUI ホストが共有する契約）。
 - `CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay` / `EsRectIntJsonConverter` は `internal`。 `internal` → `public` の変更は破壊的な設計変更として扱います。
 
 ## 設定ファイルの互換性

@@ -135,8 +135,8 @@ internal static class Program
         services.AddTransient<UndoViewModel>();
 
         // Models
-        // UndoStack はシングルトン（CapturePage と UndoPage が同一の Undo / Redo 履歴を共有するため）
-        services.AddSingleton<UndoStack>();
+        // UndoHistory はシングルトン（CapturePage と UndoPage が同一の Undo / Redo 履歴を共有するため）
+        services.AddSingleton<UndoHistory>();
 
         // Views（ウィンドウ）
         services.AddTransient<MainWindow>();

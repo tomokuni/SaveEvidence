@@ -36,7 +36,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// <see cref="Views.MainWindow.StartSelectionMode"/>（キャプチャ開始）で連携する。<br/>
 /// Ctrl ショートカット（保存 / コピー / 貼り付け / Undo / Redo / 切り出し / ズーム）は
 /// <see cref="OnGlobalKeyDown"/> で一括処理する。<br/>
-/// Undo / Redo スタックは DI シングルトン（<see cref="UndoStack"/>）から取得し、UndoPage と共有する。
+/// Undo / Redo スタックは DI シングルトン（<see cref="UndoHistory"/>）から取得し、UndoPage と共有する。
 /// </remarks>
 public sealed partial class CapturePage : UserControl
 {
@@ -54,7 +54,7 @@ public sealed partial class CapturePage : UserControl
     private Task<EsRectInt?>? _cropTask;
 
     // Undo スタック（DI から取得するシングルトン。 UndoPage と共有）
-    private readonly UndoStack _undoStack = null!;
+    private readonly UndoHistory _undoHistory = null!;
 
     // 親Window参照（Loaded まで待たずに Initialize で確保）
     private Window? _parentWindow;
@@ -83,7 +83,7 @@ public sealed partial class CapturePage : UserControl
         if (Design.IsDesignMode) return;
 
         // Undo / Redo スタックは DI から取得する（UndoPage と同一インスタンスを共有するため）
-        _undoStack = Program.ServiceProvider.GetRequiredService<UndoStack>();
+        _undoHistory = Program.ServiceProvider.GetRequiredService<UndoHistory>();
     }
 
     /// <summary>MainWindow から初期化される。</summary>
@@ -588,7 +588,7 @@ public sealed partial class CapturePage : UserControl
     public void PushUndo()
     {
         if (_viewModel.PreviewImage is { } image)
-            _undoStack.Push(image);
+            _undoHistory.Push(image);
     }
 
     /// <summary>Undo スタックから画像を復元する（現在の画像は Redo スタックへ退避される）。</summary>
@@ -596,14 +596,14 @@ public sealed partial class CapturePage : UserControl
     {
         // 現在のプレビュー画像（EsBitmap）を Undo へ渡す（Undo スタックは EsBitmap を保持）。
         var current = _viewModel.PreviewImage;
-        using var prev = _undoStack.Undo(current);
+        using var prev = _undoHistory.Undo(current);
         if (prev is not null) RestoreImage(prev);
     }
 
     /// <summary>Redo スタックから画像を復元する。</summary>
     public void RestoreRedo()
     {
-        using var redo = _undoStack.Redo();
+        using var redo = _undoHistory.Redo();
         if (redo is not null) RestoreImage(redo);
     }
 
@@ -729,7 +729,7 @@ public sealed partial class CapturePage : UserControl
         var srcBmp = _viewModel.PreviewImage;
         if (srcBmp is null) return;
 
-        _undoStack.Push(srcBmp);
+        _undoHistory.Push(srcBmp);
         _viewModel.CropPreviewCommand.Execute(bounds);
         UpdateCropButtonText();
     }
@@ -762,7 +762,7 @@ public sealed partial class CapturePage : UserControl
     private async void OnPasteMenuClick(object? sender, RoutedEventArgs e)
     {
         try { await PasteFromClipboard(); }
-        catch
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // 貼り付け失敗（クリップボードに画像がない等）は何もしない
         }
@@ -1152,7 +1152,7 @@ public sealed partial class CapturePage : UserControl
     public void CleanupCaptureResources()
     {
         CancelCropSession();
-        _undoStack.Clear();
+        _undoHistory.Clear();
         // 元画像 Bitmap は ViewModel（PreviewImage）が管理するため、ここでは破棄しない
     }
 }

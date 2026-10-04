@@ -206,8 +206,8 @@ src/
 │   ├── CropSkiaRenderer.cs                 # コアの描画入力を Skia へ写す（internal）
 │   ├── FadeMaskDragRectControl.cs          # 領域選択（公開。暗転マスク + 選択矩形 + ルーペ）
 │   ├── FadeMaskDragRectSkiaRenderer.cs     # 選択矩形破線の描画（internal）
-│   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開 record）
-│   ├── FadeMaskDragRectPointEventArgs.cs   # ルーペ位置のイベント引数（公開 record）
+│   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開クラス）
+│   ├── FadeMaskDragRectPointEventArgs.cs   # ルーペ位置のイベント引数（公開クラス）
 │   ├── ZoomView/                           # 切り出しビューの画像ビューポート（ZoomViewControl / ZoomSkiaRenderer / ZoomChangedEventArgs）
 │   └── （撮影画像の描画は Platform.MewUI の SkiaImageView を使う）
 ```

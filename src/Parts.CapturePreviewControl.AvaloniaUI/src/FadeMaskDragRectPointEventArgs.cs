@@ -8,5 +8,14 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 /// 内包コントロール（MarqueeControl）の型（MarqueePointEventArgs）に依存しない独自型とし、<br/>
 /// ホストは FadeMaskDragRectControl の公開 API のみで利用できる（公開型のカプセル化）。
 /// </remarks>
-/// <param name="Position">ルーペ中心（対象座標）。</param>
-public sealed record FadeMaskDragRectPointEventArgs(Point Position);
+/// <param name="position">ルーペ中心（対象座標）。</param>
+/// <remarks>
+/// <b>record ではなく class</b>: イベント引数は <see cref="EventArgs"/> 派生にする（CA1711・CA1003。<br/>
+/// C# の <c>record</c> は <see cref="EventArgs"/> を継承できないため class とする）。
+/// </remarks>
+public sealed class FadeMaskDragRectPointEventArgs(Point position) : EventArgs
+{
+    /// <summary>ルーペ中心（対象座標）を取得する。</summary>
+    /// <value>ドラッグ中のポインター位置。</value>
+    public Point Position { get; } = position;
+}

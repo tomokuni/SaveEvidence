@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Microsoft.Extensions.DependencyInjection;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
@@ -14,7 +15,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// Undo / Redo スタックの画像履歴を一覧表示するページ。
 /// </summary>
 /// <remarks>
-/// Undo / Redo スタック（<see cref="UndoStack"/>・DI シングルトン）と現在のプレビュー画像
+/// Undo / Redo スタック（<see cref="UndoHistory"/>・DI シングルトン）と現在のプレビュー画像
 /// （<see cref="MainViewModel.PreviewImage"/>・DI シングルトン）を
 /// 時系列順（新しい → 古い）にサムネイル表示する。<br/>
 /// 表示順は「Redo（新しい）→ 現在 → Undo（古い）」の固定。<br/>
@@ -28,7 +29,7 @@ public sealed partial class UndoPage : ViewModePageBase
     private readonly UndoViewModel _viewModel = null!;
 
     /// <summary>Undo / Redo スタック（DI から取得するシングルトン。 CapturePage と共有）。</summary>
-    private readonly UndoStack _undoStack = null!;
+    private readonly UndoHistory _undoHistory = null!;
 
     /// <summary>UndoPage を初期化する。</summary>
     public UndoPage()
@@ -38,7 +39,7 @@ public sealed partial class UndoPage : ViewModePageBase
         if (Design.IsDesignMode) return;
 
         _viewModel = Program.ServiceProvider.GetRequiredService<UndoViewModel>();
-        _undoStack = Program.ServiceProvider.GetRequiredService<UndoStack>();
+        _undoHistory = Program.ServiceProvider.GetRequiredService<UndoHistory>();
         DataContext = _viewModel;
 
         InitializeViewModePage(
@@ -79,7 +80,7 @@ public sealed partial class UndoPage : ViewModePageBase
     /// <summary>一覧を再構築する（表示モード変更時・ページ表示時に呼び出し）。</summary>
     private void RebuildList()
     {
-        if (_undoStack is null) return;
+        if (_undoHistory is null) return;
 
         var size = GetIconSize();
         var items = new List<UndoListItem>();
@@ -93,9 +94,9 @@ public sealed partial class UndoPage : ViewModePageBase
             });
 
         // 1. Redo スタック（新しい順。 _redoStack[0] が現在に最も近い未来）
-        // UndoStack は EsBitmap を保持し、表示境界で EsBitmapAvaloniaImage（IImage）へ変換する。
-        // 変換した IImage は UndoListItem が参照する（所有権は UndoStack / ViewModel が保持）。
-        var redo = _undoStack.GetRedoHistory();
+        // UndoHistory は EsBitmap を保持し、表示境界で EsBitmapAvaloniaImage（IImage）へ変換する。
+        // 変換した IImage は UndoListItem が参照する（所有権は UndoHistory / ViewModel が保持）。
+        var redo = _undoHistory.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
             AddItem(new EsBitmapAvaloniaImage(redo[i]), $"Redo {i + 1}", isCurrent: false);
@@ -110,7 +111,7 @@ public sealed partial class UndoPage : ViewModePageBase
         }
 
         // 3. Undo スタック（新しい順。 _stack[^1] が現在の直前）
-        var undo = _undoStack.GetUndoHistory();
+        var undo = _undoHistory.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
             AddItem(new EsBitmapAvaloniaImage(undo[i]), $"Undo {undo.Count - i}", isCurrent: false);
@@ -156,7 +157,7 @@ public sealed partial class UndoPage : ViewModePageBase
             };
             process.Start();
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // 外部ツールで開けなくてもユーザー操作を妨げない
         }

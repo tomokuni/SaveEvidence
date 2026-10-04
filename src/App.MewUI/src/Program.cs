@@ -62,7 +62,7 @@ internal static class Program
         var viewModel = new MainViewModel(settings, new MewUIImageWriter());
 
         // Undo / Redo 履歴はキャプチャページと Undo 一覧で共有する（画像編集の直前に現在の画像を積む）
-        var undoStack = new UndoStack();
+        var undoStack = new UndoHistory();
         viewModel.BeforeEditAction = () => undoStack.Push(viewModel.PreviewImage);
 
         // フォルダビューの表示状態（表示モード・ソート順）もコアが保持し、設定へ保存する
@@ -154,7 +154,7 @@ internal static class Program
         ISettingsService settingsService, AppServices services)
     {
         var settings = settingsService.Current;
-        hotKeys.HotKeyPressed += type => services.Main.StartSelectionMode?.Invoke(type);
+        hotKeys.HotKeyPressed += (_, e) => services.Main.StartSelectionMode?.Invoke(e.Action);
         hotKeys.Initialize(window.Handle);
         hotKeys.RegisterAll(
         [

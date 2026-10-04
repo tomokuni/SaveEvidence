@@ -9,9 +9,17 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 /// 利用側の利便性のため、各値は個別プロパティでも参照できる（Avalonia 版と同じ情報を通知し、UI 間でホストの結線を揃える）。<br/>
 /// <see cref="ZoomPercent"/> は実効値のため Fit 中でも 0 にならない。 Fit 判定は <see cref="IsFit"/> を使用する。
 /// </remarks>
-/// <param name="State">通知時点のズーム状態（実効ズーム率・Fit 状態・可否）。</param>
-public sealed record ZoomChangedEventArgs(ZoomState State)
+/// <param name="state">通知時点のズーム状態（実効ズーム率・Fit 状態・可否）。</param>
+/// <remarks>
+/// <b>record ではなく class</b>: イベント引数は <see cref="EventArgs"/> 派生にする（CA1711・CA1003。<br/>
+/// C# の <c>record</c> は <see cref="EventArgs"/> を継承できないため class とする）。
+/// </remarks>
+public sealed class ZoomChangedEventArgs(ZoomState state) : EventArgs
 {
+    /// <summary>通知時点のズーム状態を取得する。</summary>
+    /// <value>実効ズーム率・Fit 状態・可否を含む値オブジェクト。</value>
+    public ZoomState State { get; } = state;
+
     /// <summary>現在の実効ズーム率（%）を取得する。</summary>
     /// <value>Fit 中は実効倍率、固定倍率中はズーム率。 0 にはならない。</value>
     public double ZoomPercent => State.ZoomPercent;

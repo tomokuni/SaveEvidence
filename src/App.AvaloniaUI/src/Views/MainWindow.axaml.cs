@@ -19,7 +19,6 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views;
@@ -200,7 +199,7 @@ public sealed partial class MainWindow : Window
                     return bitmap?.ToEsBitmap();
                 }
             }
-            catch
+            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
             {
                 // クリップボードに画像がない場合は無視
                 return null;
@@ -228,11 +227,13 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>WM_HOTKEY 受信時（ホットキーサービスから対応するアクションが配信される）。</summary>
-    private void OnHotKeyPressed(CaptureType captureType)
+    /// <param name="sender">イベントの発信元（使用しない）。</param>
+    /// <param name="e">押下されたホットキーに対応するアクション。</param>
+    private void OnHotKeyPressed(object? sender, HotKeyPressedEventArgs<CaptureType> e)
     {
         _logger.LogHotKeyReceived();
-        _logger.LogHotKeyTriggered(captureType);
-        StartSelectionMode(captureType);
+        _logger.LogHotKeyTriggered(e.Action);
+        StartSelectionMode(e.Action);
     }
 
     private void OnMainWindowClosing(object? sender, WindowClosingEventArgs e)
@@ -395,7 +396,7 @@ public sealed partial class MainWindow : Window
         {
             ApplyCaptureSessionSettings();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             _logger.LogSettingsApplyError(ex, propertyName);
         }
@@ -420,16 +421,17 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>キャプチャ完了イベントの受信処理（同期実行。 画像変更を行う）。</summary>
-    /// <param name="result">キャプチャ結果。 キャンセル時は 0x0 の空結果。</param>
+    /// <param name="sender">イベントの発信元（使用しない）。</param>
+    /// <param name="e">キャプチャ結果。 キャンセル時は 0x0 の空結果。</param>
     /// <remarks>
     /// イベントは同期型のため、本ハンドラ（画像変更）の完了後に<br/>
     /// CaptureSessionControl のキャプチャセッションがオーナー（本ウィンドウ）を再表示する。<br/>
     /// 既に UI スレッドで発行されるため、UI 更新をそのまま実行できる。
     /// </remarks>
-    private void OnCaptureCompleted(CaptureResult? result)
+    private void OnCaptureCompleted(object? sender, CaptureCompletedEventArgs e)
     {
         // キャプチャ結果の処理（画像変更）
-        if (result?.Image is { } captured)
+        if (e.Result?.Image is { } captured)
         {
             CaptureContent.PushUndo();
             CaptureContent.SetIsCaptureInProgress(true);

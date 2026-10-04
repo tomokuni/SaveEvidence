@@ -1,0 +1,81 @@
+<Project>
+
+  <!-- ============================================================
+       依存関係（ProjectReference）の検査。
+       規則の所有者は .github/依存関係.md であり、本ファイルはその実装である。
+       規則を変えるときは .github/依存関係.md を先に更新する。
+
+       検査の対象は src/ の本体プロジェクトだけとする（テスト・サンプルは対象プロジェクトと
+       検証用の追加参照を持つため、規則の対象外）。
+       双方向の参照（循環）は MSBuild が MSB4006 で検出する。
+       ============================================================ -->
+  <Target Name="ValidateProjectReferences" BeforeTargets="Build" Condition="'$(MSBuildProjectName)' != ''">
+
+    <ItemGroup>
+      <_SeRef Include="@(ProjectReference)">
+        <Name>%(Filename)</Name>
+      </_SeRef>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <_SeIsTestOrSample>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '\.(Tests|Sample)$'))</_SeIsTestOrSample>
+
+      <!-- 層の判定（プロジェクト名から導出する。 規則の表は .github/依存関係.md §2・§4） -->
+      <_SeIsFeatureCore>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^EsUtil\.Feature\.[A-Za-z]+\.Core$'))</_SeIsFeatureCore>
+      <_SeIsFeaturePresenter>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^EsUtil\.Feature\.[A-Za-z]+\.Presenter$'))</_SeIsFeaturePresenter>
+      <_SeIsUiLayer>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(EsUtil\.Feature\.[A-Za-z]+\.Control|Platform\.[A-Za-z]+|Parts\.[A-Za-z]+\.(AvaloniaUI|MewUI)|ColorPickerControl\.[A-Za-z]+)$'))</_SeIsUiLayer>
+      <_SeIsUiIndependentCore>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(Parts\.[A-Za-z]+\.Core|Parts\.[A-Za-z]+\.UIBase|App\.Core)$'))</_SeIsUiIndependentCore>
+
+      <!-- 提示層が参照してよい同一機能のコア名（例: EsUtil.Feature.Loupe.Presenter → EsUtil.Feature.Loupe.Core） -->
+      <_SeFeatureCoreName Condition="'$(_SeIsFeaturePresenter)' == 'true'">$([System.Text.RegularExpressions.Regex]::Replace('$(MSBuildProjectName)', '\.Presenter$', '.Core'))</_SeFeatureCoreName>
+    </PropertyGroup>
+
+    <!-- R1: 最下層（EsUtil.Platform.Core）は参照を持たない -->
+    <Error Condition="'$(_SeIsTestOrSample)' != 'true' And '$(MSBuildProjectName)' == 'EsUtil.Platform.Core' And '@(_SeRef)' != ''"
+           Code="DEP0001"
+           Text="依存関係違反: EsUtil.Platform.Core は最下層のため ProjectReference を持てません（参照: @(_SeRef->'%(Name)', ', ')）。 規則は .github/依存関係.md §4。" />
+
+    <!-- R2: 機能コアは EsUtil.Platform.Core だけを参照する -->
+    <ItemGroup Condition="'$(_SeIsTestOrSample)' != 'true' And '$(_SeIsFeatureCore)' == 'true'">
+      <_SeBad2 Include="@(_SeRef)" Exclude="@(_SeRef->WithMetadataValue('Name', 'EsUtil.Platform.Core'))" />
+    </ItemGroup>
+    <Error Condition="'@(_SeBad2)' != ''"
+           Code="DEP0002"
+           Text="依存関係違反: 機能コア（EsUtil.Feature.*.Core）は EsUtil.Platform.Core だけを参照できます（違反: @(_SeBad2->'%(Name)', ', ')）。 規則は .github/依存関係.md §5。" />
+
+    <!-- R3: 提示層は EsUtil.Platform.Core と同一機能の機能コアだけを参照する -->
+    <ItemGroup Condition="'$(_SeIsTestOrSample)' != 'true' And '$(_SeIsFeaturePresenter)' == 'true'">
+      <_SeAllowed3 Include="@(_SeRef)" Condition="'%(Name)' == 'EsUtil.Platform.Core' Or '%(Name)' == '$(_SeFeatureCoreName)'" />
+      <_SeBad3 Include="@(_SeRef)" Exclude="@(_SeAllowed3)" />
+    </ItemGroup>
+    <Error Condition="'@(_SeBad3)' != ''"
+           Code="DEP0003"
+           Text="依存関係違反: 提示層（EsUtil.Feature.*.Presenter）は EsUtil.Platform.Core と同一機能の Core だけを参照できます（違反: @(_SeBad3->'%(Name)', ', ')）。 規則は .github/依存関係.md §5。" />
+
+    <!-- R4: UI 層はアプリを参照しない -->
+    <ItemGroup Condition="'$(_SeIsTestOrSample)' != 'true' And '$(_SeIsUiLayer)' == 'true'">
+      <_SeBad4 Include="@(_SeRef)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Name)', '^App\.'))" />
+    </ItemGroup>
+    <Error Condition="'@(_SeBad4)' != ''"
+           Code="DEP0004"
+           Text="依存関係違反: UI 層はアプリ（App.*）を参照できません（違反: @(_SeBad4->'%(Name)', ', ')）。 規則は .github/依存関係.md §4・§5。" />
+
+    <!-- R5: UI 非依存の層は UI 層を参照しない -->
+    <ItemGroup Condition="'$(_SeIsTestOrSample)' != 'true' And '$(_SeIsUiIndependentCore)' == 'true'">
+      <_SeBad5 Include="@(_SeRef)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Name)', '^(Platform\.(AvaloniaUI|MewUI)|Parts\.[A-Za-z]+\.(AvaloniaUI|MewUI)|App\.(AvaloniaUI|MewUI)|EsUtil\.Feature\.[A-Za-z]+\.Control|ColorPickerControl\.[A-Za-z]+)$'))" />
+    </ItemGroup>
+    <Error Condition="'@(_SeBad5)' != ''"
+           Code="DEP0005"
+           Text="依存関係違反: UI 非依存の層（Core / UIBase）は UI 層を参照できません（違反: @(_SeBad5->'%(Name)', ', ')）。 規則は .github/依存関係.md §4・§5。" />
+
+    <!-- R6: プラットフォーム層は上位（アプリ・Parts・Feature）を参照しない -->
+    <ItemGroup Condition="'$(_SeIsTestOrSample)' != 'true' And $([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^Platform\.[A-Za-z]+$'))">
+      <_SeBad6 Include="@(_SeRef)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Name)', '^(App\.|Parts\.|EsUtil\.Feature\.|ColorPickerControl\.)'))" />
+    </ItemGroup>
+    <Error Condition="'@(_SeBad6)' != ''"
+           Code="DEP0006"
+           Text="依存関係違反: プラットフォーム層は上位（アプリ・Parts・Feature）を参照できません（違反: @(_SeBad6->'%(Name)', ', ')）。 規則は .github/依存関係.md §4。" />
+
+  </Target>
+
+</Project>

@@ -4,12 +4,12 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
 
-/// <summary><see cref="UndoStack"/> の単体テスト（Undo / Redo の動作確認）。</summary>
+/// <summary><see cref="UndoHistory"/> の単体テスト（Undo / Redo の動作確認）。</summary>
 /// <remarks>
 /// Undo 実行時に現在の画像が Redo スタックへ退避され、Redo で戻せることを検証する。<br/>
-/// 新しい操作（<see cref="UndoStack.Push"/>）で Redo 履歴がクリアされることも検証する。
+/// 新しい操作（<see cref="UndoHistory.Push"/>）で Redo 履歴がクリアされることも検証する。
 /// </remarks>
-public class UndoStackTests
+public class UndoHistoryTests
 {
     /// <summary>テスト用の EsBitmap（size x size）を生成する。</summary>
     /// <param name="size">一辺のピクセル数（既定 10）。</param>
@@ -20,7 +20,7 @@ public class UndoStackTests
     [Fact]
     internal void Undo_現在の画像をRedoスタックへ退避して復元する()
     {
-        var stack = new UndoStack();
+        var stack = new UndoHistory();
         var img1 = CreateBitmap();
         var img2 = CreateBitmap();
 
@@ -47,7 +47,7 @@ public class UndoStackTests
     [Fact]
     internal void Redo_スタックが空ならnullを返す()
     {
-        var stack = new UndoStack();
+        var stack = new UndoHistory();
 
         Assert.Null(stack.Redo());
     }
@@ -55,7 +55,7 @@ public class UndoStackTests
     [Fact]
     internal void Undo_スタックが空ならnullを返しRedoへ退避しない()
     {
-        var stack = new UndoStack();
+        var stack = new UndoHistory();
         var img = CreateBitmap();
 
         Assert.Null(stack.Undo(img));
@@ -67,7 +67,7 @@ public class UndoStackTests
     [Fact]
     internal void Push_新しい操作でRedo履歴がクリアされる()
     {
-        var stack = new UndoStack();
+        var stack = new UndoHistory();
         var img1 = CreateBitmap();
         var img2 = CreateBitmap();
         var img3 = CreateBitmap();
@@ -94,7 +94,7 @@ public class UndoStackTests
     [Fact]
     internal void Clear_UndoとRedoの両方が破棄される()
     {
-        var stack = new UndoStack();
+        var stack = new UndoHistory();
         var img1 = CreateBitmap();
         var img2 = CreateBitmap();
 
@@ -119,7 +119,7 @@ public class UndoStackTests
     [Fact]
     internal void GetUndoHistory_Pushした順で古い順に取得できる()
     {
-        var stack = new UndoStack();
+        var stack = new UndoHistory();
         var img1 = CreateBitmap(10);
         var img2 = CreateBitmap(11);
 
@@ -142,7 +142,7 @@ public class UndoStackTests
     [Fact]
     internal void GetRedoHistory_Undoで退避された順に取得できる()
     {
-        var stack = new UndoStack();
+        var stack = new UndoHistory();
         var img1 = CreateBitmap(10);
         var img2 = CreateBitmap(11);
         var img3 = CreateBitmap(12);
@@ -178,7 +178,7 @@ public class UndoStackTests
     [Fact]
     internal void GetUndoHistory_スタックが空なら空リストを返す()
     {
-        var stack = new UndoStack();
+        var stack = new UndoHistory();
 
         Assert.Empty(stack.GetUndoHistory());
         Assert.Empty(stack.GetRedoHistory());

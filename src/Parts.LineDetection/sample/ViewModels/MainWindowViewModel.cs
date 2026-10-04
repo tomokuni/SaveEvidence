@@ -174,7 +174,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _selectedPageItem = Pages[0];
 
         // データ作成ページで保存されたら、データ検証・データ全検証ページの一覧を再読み込みする
-        CreatePage.DatasetSaved += _ =>
+        CreatePage.DatasetSaved += (_, _) =>
         {
             VerifyPage.ReloadDatasetItems();
             VerifyAllPage.ReloadDatasetItems();

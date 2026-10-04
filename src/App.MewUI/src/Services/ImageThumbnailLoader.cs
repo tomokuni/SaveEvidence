@@ -3,6 +3,7 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using SkiaSharp;
 using EsUtil.SaveEvidence.Platform.Skia;
+using EsUtil.Platform.Core;
 
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
@@ -48,7 +49,7 @@ internal static class ImageThumbnailLoader
             var key = (Path: filePath, Size: size, LastWrite: File.GetLastWriteTimeUtc(filePath));
             return CapacityLimitedCache.GetOrAdd(s_cache, CacheCapacity, key, static k => Decode(k.Path, k.Size));
         }
-        catch (Exception)
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // アクセス拒否・削除競合など、ファイルの状態による失敗は「表示できない」として扱う
             return null;
