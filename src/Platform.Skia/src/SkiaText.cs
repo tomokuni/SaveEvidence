@@ -28,6 +28,8 @@ public static class SkiaText
     /// </remarks>
     public static SKTypeface ResolveTypeface(string text)
     {
+        ArgumentNullException.ThrowIfNull(text);
+
         if (IsAsciiOnly(text))
         {
             return SKTypeface.Default;

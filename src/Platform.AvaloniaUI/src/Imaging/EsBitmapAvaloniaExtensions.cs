@@ -107,6 +107,8 @@ public static class EsBitmapAvaloniaExtensions
     /// </remarks>
     public static unsafe WriteableBitmap ToAvaloniaWriteableBitmap(this EsBitmap bitmap)
     {
+        ArgumentNullException.ThrowIfNull(bitmap);
+
         bitmap.ThrowIfDisposed();
         // Width / Height を一度だけ取得し、PixelSize 生成と行ループの両方で共有する（Size 値生成を削減）
         var size = bitmap.Size;
@@ -148,6 +150,8 @@ public static class EsBitmapAvaloniaExtensions
     /// </remarks>
     public static Bitmap ToAvaloniaBitmap(this EsBitmap bitmap)
     {
+        ArgumentNullException.ThrowIfNull(bitmap);
+
         bitmap.ThrowIfDisposed();
         var size = bitmap.Size;
         return new Bitmap(
@@ -193,6 +197,8 @@ public static class EsBitmapAvaloniaExtensions
     /// <returns>取得した Avalonia Color。 範囲外は IndexOutOfRangeException。</returns>
     public static AvaloniaColor GetPixel(this EsBitmap bitmap, PixelPoint point)
     {
+        ArgumentNullException.ThrowIfNull(bitmap);
+
         var color = bitmap.GetPixel(new EsPointInt(point.X, point.Y));
         return AvaloniaColor.FromArgb(color.A, color.R, color.G, color.B);
     }
@@ -222,6 +228,10 @@ public static class EsBitmapAvaloniaExtensions
     /// <param name="color">塗りつぶし色。 アルファ乗算して書き込む。</param>
     public static void Clear(this EsBitmap bitmap, AvaloniaColor color)
     {
+        ArgumentNullException.ThrowIfNull(bitmap);
+
+        ArgumentNullException.ThrowIfNull(bitmap);
+
         var premult = Premultiply(color);
         // EsBitmap.Clear(byte b, byte g, byte r, byte a) は BGRA 順のため、SKColor(RGB) から BGRA へ並べ替えて委譲する。
         bitmap.Clear(premult.Blue, premult.Green, premult.Red, premult.Alpha);

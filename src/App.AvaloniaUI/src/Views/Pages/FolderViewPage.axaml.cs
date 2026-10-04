@@ -153,6 +153,8 @@ public sealed partial class FolderViewPage : ViewModePageBase
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
+            // 復号できない画像はサムネイルを出さない（一覧は継続する）
+            _logger.LogThumbnailLoadError(ex, filePath);
             return null;
         }
     }

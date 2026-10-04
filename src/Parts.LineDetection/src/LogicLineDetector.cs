@@ -39,6 +39,8 @@ public sealed class LogicLineDetector : ILineDetector
     /// <exception cref="ArgumentException">オプションが不変条件を満たさない場合。</exception>
     public LogicLineDetector(LineDetectionOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         options.Validate();
         Options = options;
     }
@@ -62,6 +64,8 @@ public sealed class LogicLineDetector : ILineDetector
     /// </remarks>
     public IReadOnlyList<LineDetectionResult> Detect(EsBitmap image)
     {
+        ArgumentNullException.ThrowIfNull(image);
+
         var options = Options;
         using var mat = MatHelper.ToMat(image);
         using var gray = new Mat();

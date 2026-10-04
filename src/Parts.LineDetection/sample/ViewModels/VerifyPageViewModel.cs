@@ -81,6 +81,8 @@ public sealed partial class VerifyPageViewModel : ObservableObject
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
+            // ステータスへ理由を出し、診断用に記録する（アプリを止めない）
+            System.Diagnostics.Debug.WriteLine($"dataset 読み込み失敗: {value.Name}（{ex.Message}）");
             Context.StatusText = $"dataset 読み込みエラー: {value.Name}（{ex.Message}）";
         }
     }

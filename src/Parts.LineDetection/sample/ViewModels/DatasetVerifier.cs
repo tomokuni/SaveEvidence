@@ -64,6 +64,8 @@ internal static class DatasetVerifier
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
+            // 検証結果として失敗を返す（判定を止めない）
+            System.Diagnostics.Debug.WriteLine($"検証失敗: {entry.Name}（{ex.Message}）");
             return new VerifyResultItem(entry.Name, false, [$"エラー（{ex.Message}）"]);
         }
     }

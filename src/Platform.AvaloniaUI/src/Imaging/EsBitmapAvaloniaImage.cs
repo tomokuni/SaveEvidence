@@ -57,6 +57,8 @@ public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
     /// </remarks>
     public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
     {
+        ArgumentNullException.ThrowIfNull(context);
+
         var b = _bitmap;
         if (b is null)
         {

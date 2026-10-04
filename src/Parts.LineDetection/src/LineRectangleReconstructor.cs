@@ -51,6 +51,8 @@ public static class LineRectangleReconstructor
     /// </remarks>
     public static IReadOnlyList<EsRectInt> Reconstruct(IReadOnlyList<LineDetectionResult> results)
     {
+        ArgumentNullException.ThrowIfNull(results);
+
         var verticals = BuildSpans(results, LineOrientation.Vertical);
         var horizontals = BuildSpans(results, LineOrientation.Horizontal);
 

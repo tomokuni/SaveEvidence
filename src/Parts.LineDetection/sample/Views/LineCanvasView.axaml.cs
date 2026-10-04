@@ -32,8 +32,8 @@ public partial class LineCanvasView : UserControl
     /// <summary>ルーペをカーソルの右下へ配置するオフセット量（DIP）。</summary>
     private const double LoupePositionOffset = 24;
 
-    /// <summary>Shared ViewModel（線分検出・データ検証ページ共通の検出コンテキスト）。</summary>
-    private DetectionContext? _ctx;
+    /// <summary>Shared ViewModel（線分検出・データ検証ページ 共通の検出コンテキスト）。</summary>
+    private DetectionContext? _detectionContext;
 
     /// <summary>LineCanvasView を初期化する。</summary>
     public LineCanvasView()
@@ -52,7 +52,7 @@ public partial class LineCanvasView : UserControl
             return;
         }
 
-        _ctx = ctx;
+        _detectionContext = ctx;
 
         // ルーペの表示位置・サイズを自己計算させる（ImageHost ローカル DIP → 画像ピクセル座標の倍率ポート）
         Loupe.SetCoordTransform(CoordTransform.ClientToSource(() => 1.0 / ImageDisplayScale));
@@ -97,7 +97,7 @@ public partial class LineCanvasView : UserControl
     {
         get
         {
-            if (_ctx?.Image is not { } image)
+            if (_detectionContext?.Image is not { } image)
             {
                 return 1.0;
             }
@@ -159,7 +159,7 @@ public partial class LineCanvasView : UserControl
             return;
         }
 
-        if (_ctx?.LoupeOverlayLines is not { Count: > 0 } lines)
+        if (_detectionContext?.LoupeOverlayLines is not { Count: > 0 } lines)
         {
             return;
         }
@@ -284,15 +284,15 @@ public partial class LineCanvasView : UserControl
     /// </remarks>
     private void OnOverlayPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_ctx is null)
+        if (_detectionContext is null)
         {
             return;
         }
 
         var pos = ToImagePixel(e.GetPosition(ImageHost));
-        _ctx.UpdateHover(pos);
-        _ctx.LoupeCenter = pos;
-        _ctx.IsLoupeVisible = true;
+        _detectionContext.UpdateHover(pos);
+        _detectionContext.LoupeCenter = pos;
+        _detectionContext.IsLoupeVisible = true;
     }
 
     /// <summary>画像上にマウスが入ったらルーペを表示する。</summary>
@@ -300,9 +300,9 @@ public partial class LineCanvasView : UserControl
     /// <param name="e">ポインタイベント。</param>
     private void OnImageHostPointerEntered(object? sender, PointerEventArgs e)
     {
-        if (_ctx is not null)
+        if (_detectionContext is not null)
         {
-            _ctx.IsLoupeVisible = true;
+            _detectionContext.IsLoupeVisible = true;
         }
     }
 
@@ -310,16 +310,16 @@ public partial class LineCanvasView : UserControl
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ポインタイベント。</param>
     private void OnImageHostPointerExited(object? sender, PointerEventArgs e)
-        => _ctx?.ClearPointerOverlay();
+        => _detectionContext?.ClearPointerOverlay();
 
     /// <summary>画像上のクリックで線分の選択状態をトグルする。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ポインタイベント。</param>
     private void OnOverlayPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (_ctx is not null)
+        if (_detectionContext is not null)
         {
-            _ctx.ToggleSelectAt(ToImagePixel(e.GetPosition(ImageHost)));
+            _detectionContext.ToggleSelectAt(ToImagePixel(e.GetPosition(ImageHost)));
         }
     }
 }

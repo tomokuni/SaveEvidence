@@ -888,6 +888,97 @@ foreach ($f in @($docFiles | Where-Object { $_.FullName -notmatch '\\(obj|bin|ar
 Add-Result '文書の H1' ($h1Issues.Count -eq 0) "$($h1Issues.Count) 件"
 $h1Issues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
+# 8o) 禁止した識別子（命名規約: 略語・短縮語 / 座標系の禁止語）
+#     宣言された名前（型・メンバー）のセグメントが禁止語と一致しないことを見る。
+#     フレームワークが定める名前（MewUI の OnPaintSurface 等）は許容する。
+$forbiddenSegments = @('Msg', 'Btn', 'Ctx', 'Svc', 'Impl', 'Mgr', 'Tmp', 'Legacy', 'Deprecated', 'Domain', 'Surface')
+$frameworkNames = @('OnPaintSurface')
+$rxSplit = [regex]'(?<=[a-z0-9])(?=[A-Z])|_'
+$rxDeclPatterns = @(
+    [regex]'(?<![\w.])(?:class|struct|interface|enum)\s+(?<n>[A-Za-z_]\w*)',
+    [regex]'(?<![\w.])(?:record(?:\s+(?:class|struct))?)\s+(?<n>[A-Za-z_]\w*)',
+    [regex]'(?m)^\s{4}(?:public|internal|private|protected)\s+(?:static\s+|readonly\s+|sealed\s+|override\s+|virtual\s+|async\s+|partial\s+|unsafe\s+|new\s+|required\s+|volatile\s+)*[\w<>,\[\]\?\.]+\s+(?<n>[A-Za-z_]\w*)\s*(?:\(|\{|=>|;|=)'
+)
+$identIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in $allCs) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '^\s*(//|///|\*)') { continue }
+        foreach ($rx in $rxDeclPatterns) {
+            foreach ($m in $rx.Matches($lines[$i])) {
+                $name = $m.Groups['n'].Value
+                if ($frameworkNames -contains $name) { continue }
+                foreach ($seg in ($rxSplit.Split($name))) {
+                    if ($forbiddenSegments -contains $seg) {
+                        $identIssues.Add(("{0}:{1}  [{2} in {3}]（略語・座標系の禁止語。 命名規約）" -f $rel, ($i + 1), $seg, $name))
+                    }
+                }
+            }
+        }
+    }
+}
+Add-Result '禁止した識別子' ($identIssues.Count -eq 0) "略語・禁止語 $($identIssues.Count) 件"
+$identIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8p) 例外の扱い（例外処理規約 §4: 捕捉したら記録する / 空の catch を作らない）
+#     記録とは「ログ・Debug/Trace 出力・理由コメント」のいずれかである。
+$catchIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in $allCs) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '^\s*(//|///|\*)') { continue }
+        if ($lines[$i] -notmatch '\bcatch\b') { continue }
+        # catch のブロックを集める
+        $depth = 0
+        $start = $i
+        $j = $i
+        while ($j -lt $lines.Count -and $lines[$j] -notmatch '\{') { $j++ }
+        $block = [System.Collections.Generic.List[string]]::new()
+        for ($k = $j; $k -lt $lines.Count; $k++) {
+            $block.Add($lines[$k])
+            $depth += ([regex]::Matches($lines[$k], '\{')).Count - ([regex]::Matches($lines[$k], '\}')).Count
+            if ($depth -le 0) { break }
+        }
+        $body = $block -join "`n"
+        # 波かっこの中身（`{}` の中が空かどうか）
+        $inner = [regex]::Match($body, '\{(?<inner>.*)\}', [Text.RegularExpressions.RegexOptions]::Singleline).Groups['inner'].Value
+        $inner = [regex]::Replace($inner, '(?m)^\s*//.*$', '')   # コメント行を除く
+        if ($inner.Trim().Length -eq 0 -and $body -notmatch '//') {
+            $catchIssues.Add(("{0}:{1}  空の catch（理由コメントを書くか、記録する）" -f $rel, ($start + 1)))
+            continue
+        }
+        if ($body -notmatch '\.Log[A-Z]|Log[A-Z]\w*\(|Debug\.WriteLine|Trace\.WriteLine|Console\.' -and $body -notmatch '//') {
+            $catchIssues.Add(("{0}:{1}  捕捉した例外を記録していない（ログ・Debug 出力・理由コメントのいずれかを書く）" -f $rel, ($start + 1)))
+        }
+    }
+}
+Add-Result '例外の記録' ($catchIssues.Count -eq 0) "記録のない catch $($catchIssues.Count) 件"
+$catchIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 8q) イベント ハンドラーの登録は XAML とコードのどちらか一方（コーディング規約 §7）
+$wiringIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($projDir in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory)) {
+    $axamlFiles = @(Get-ChildItem -Path $projDir.FullName -Recurse -File -Filter '*.axaml' -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
+    if ($axamlFiles.Count -eq 0) { continue }
+    $csFiles = @(Get-ChildItem -Path $projDir.FullName -Recurse -File -Filter '*.cs' -ErrorAction SilentlyContinue |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
+    $csText = ($csFiles | ForEach-Object { [IO.File]::ReadAllText($_.FullName, $enc) }) -join "`n"
+    $handlerNames = [System.Collections.Generic.HashSet[string]]::new()
+    foreach ($x in $axamlFiles) {
+        foreach ($m in [regex]::Matches([IO.File]::ReadAllText($x.FullName, $enc), '="(?<n>On[A-Z]\w+)"')) { [void]$handlerNames.Add($m.Groups['n'].Value) }
+    }
+    foreach ($n in $handlerNames) {
+        if ($csText -match ('\+=\s*' + [regex]::Escape($n) + '\b')) {
+            $wiringIssues.Add(("{0}  {1} を XAML とコードの両方で登録している（どちらか一方に統一する）" -f $projDir.Name, $n))
+        }
+    }
+}
+Add-Result 'ハンドラーの配線' ($wiringIssues.Count -eq 0) "$($wiringIssues.Count) 件"
+$wiringIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
 # ============================================================
 # 9. 改行コード
 # ============================================================

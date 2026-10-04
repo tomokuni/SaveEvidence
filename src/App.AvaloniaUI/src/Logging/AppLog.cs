@@ -156,6 +156,14 @@ internal static partial class AppLog
     [LoggerMessage(LogLevel.Error, "フォルダビュー一覧の読み込みで例外が発生: {folderPath}")]
     internal static partial void LogFolderViewLoadError(this ILogger logger, Exception ex, string folderPath);
 
+    /// <summary>サムネイルの復号で例外が発生したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="filePath">対象のファイルパス。</param>
+    /// <remarks>LogLevel: Debug<br/>出力書式: <c>サムネイルの復号で例外が発生: {filePath}</c><br/>復号できない画像はサムネイルを出さないが、一覧は継続する（握りつぶさず記録する）。</remarks>
+    [LoggerMessage(LogLevel.Debug, "サムネイルの復号で例外が発生: {filePath}")]
+    internal static partial void LogThumbnailLoadError(this ILogger logger, Exception ex, string filePath);
+
     // ====================================================================
     // MainWindow（設定・ホットキー・キャプチャ開始）
     // ====================================================================
