@@ -123,6 +123,62 @@ public class CropViewControlTests
         Assert.Empty(view.RectOverlayChildren);
     }
 
+    // ====================================================================
+    // 強調（ハイライト）
+    // ====================================================================
+
+    [AvaloniaFact]
+    internal void HighlightSourceRect_対象座標をビューポート座標へ写像して強調する()
+    {
+        var view = CreateView();
+
+        // 画像 10x10 を 400x200 へ Fit した倍率は 20 倍（中央寄せで X のみ 100 ずれる）
+        view.HighlightSourceRect = new EsRect(2, 3, 4, 5);
+
+        var mapped = view.HighlightMarquee.HighlightSourceRect;
+        Assert.NotNull(mapped);
+        Assert.Equal(140.0, mapped!.Value.X);
+        Assert.Equal(60.0, mapped.Value.Y);
+        Assert.Equal(80.0, mapped.Value.Width);
+        Assert.Equal(100.0, mapped.Value.Height);
+    }
+
+    [AvaloniaFact]
+    internal void HighlightSourceRect_画像未設定なら強調しない()
+    {
+        var view = new CropViewControl { HighlightSourceRect = new EsRect(1, 1, 2, 2) };
+
+        Assert.Null(view.HighlightMarquee.HighlightSourceRect);
+    }
+
+    [AvaloniaFact]
+    internal void HighlightSourceRect_ビューポート変化で写像を更新する()
+    {
+        var view = CreateView();
+        view.HighlightSourceRect = new EsRect(0, 0, 10, 10);
+
+        view.ZoomPercent = 100;
+
+        var mapped = view.HighlightMarquee.HighlightSourceRect;
+        Assert.NotNull(mapped);
+        Assert.Equal(10.0, mapped!.Value.Width);
+        Assert.Equal(10.0, mapped.Value.Height);
+    }
+
+    [AvaloniaFact]
+    internal void HighlightAppearance_既定は内側の塗りと枠線だけを描く()
+    {
+        var view = new CropViewControl();
+
+        Assert.Equal(CropViewControl.HighlightDefaultAppearance, view.HighlightAppearance);
+        Assert.Equal(CropViewControl.HighlightDefaultAppearance, view.HighlightMarquee.Appearance);
+        Assert.True(view.HighlightAppearance.ShowInnerFill);
+        Assert.True(view.HighlightAppearance.ShowInnerBorder);
+        Assert.False(view.HighlightAppearance.ShowHandles);
+        Assert.False(view.HighlightAppearance.ShowOverlay);
+        Assert.False(view.HighlightAppearance.ShowOuterBorder);
+    }
+
     [AvaloniaFact]
     internal void ZoomPercent_設定した値が取得できる()
     {

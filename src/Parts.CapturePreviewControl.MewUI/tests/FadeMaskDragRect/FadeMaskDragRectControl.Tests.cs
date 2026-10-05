@@ -15,8 +15,10 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.FadeMaskDragRect;
 /// <summary><see cref="FadeMaskDragRectControl"/>（MewUI 版の複合コントロール）の単体テスト。</summary>
 /// <remarks>
 /// ウィンドウを必要としない範囲（モード切替・状態同期・配線・配置計算）を検証する。<br/>
-/// マウス・キー入力はウィンドウを必要とするため、内包コントロールのテスト（<c>EsUtil.Feature.Marquee.ControlMewUI.Tests</c>）に委ねる。
+/// マウス・キー入力はウィンドウを必要とするため、内包コントロールのテスト（<c>EsUtil.Feature.Marquee.ControlMewUI.Tests</c>）に委ねる。<br/>
+/// <b>要素を生成するテストはコレクションで直列化する</b>（MewUI のビジュアル ツリーはスレッドセーフでない）。
 /// </remarks>
+[Collection("MewUI")]
 public class FadeMaskDragRectControlTests
 {
     /// <summary>テスト用の拡大元画像を生成する。</summary>

@@ -81,15 +81,21 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 │  LineDetection │  線検出（UI 非依存）
 └────────────────┘
 
-（別系統）
-┌──────────────────────┐
-│  EsUtil.Feature.Loupe.ControlMewUI  │  MewUI 版ルーペ（描画層）
-└──────────┬───────────┘
-           ▼
-┌──────────────────────┐
-│   EsUtil.Feature.Loupe.Core  │  UI 非依存のルーペロジック
-└──────────────────────┘
+（撮影・切り出しは Parts が担う）
+┌──────────────────────────────────────┐
+│  Parts.CapturePreviewControl.MewUI   │  撮影セッション・切り出しビュー・複合コントロール
+└──────────┬───────────────────────────┘
+           ├─────────────────────────────┐
+           ▼                             ▼
+┌──────────────────────────┐  ┌──────────────────────────────────┐
+│ Parts.CapturePreviewControl.Core │  │ EsUtil.Feature.Marquee.ControlMewUI │
+│ （撮影・切り出しの共通規則）  │  │ EsUtil.Feature.Loupe.ControlMewUI   │
+└──────────────────────────┘  └──────────────────────────────────┘
 ```
+
+- **プレビュー／切り出しに対する操作（外部提供矩形の表示・ホバー強調など）は `Parts.CapturePreviewControl` が担い、
+  `App.MewUI` はその公開 API（`CropViewControl.Rects` / `HighlightSourceRect` 等）を操作します**。
+  アプリが UI コントロール（Marquee / Loupe）を直接生成したり重ねたりすることはありません。
 
 ### 3.2 UI 非依存の担保
 
@@ -137,8 +143,7 @@ src/App.MewUI/src/
     ├── ThumbnailItem.cs              一覧アイテム（枠 + 影 + ラベル。ホバーの枠色と影を担う）
     ├── UndoPage.cs                   Undo 一覧ページ（サムネイル一覧・表示モード・外部表示）
     ├── SettingsPage.cs               設定ページ（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観）
-    ├── ThumbnailView.cs              画像を正方形へ収めるサムネイル表示ビュー
-    └── OverlayHost.cs                子を親領域の任意位置へ重ねる領域（ルーペの配置）
+    └── ThumbnailView.cs              画像を正方形へ収めるサムネイル表示ビュー
 
 tests/
 ├── App.MewUI.Tests.csproj      xUnit v3（net10.0-windows）
@@ -155,7 +160,7 @@ tests/
 | `AppServices` | 共有するコアオブジェクトの束（DI コンテナを持たないため起動時に生成して渡す） |
 | `MainWindow` | ナビパネル（自前の合成。 アイコン + ページ名・選択背景）とページ内容の切り替え、タイトルバー（拡張クライアント領域 + ウィンドウボタン）、配置の復元と保存、自動切り出し中の Escape（キャンセル）の処理 |
 | `PageContent` | ページの要素と、表示のたびに実行する処理（設定の再読込・一覧の再構築）の組 |
-| `CapturePage` | ツールバー・クロップビュー・ルーペ・切り出しオーバーレイ・ステータスの配置とコマンド接続。 自動切り出しの検出矩形（水色の実線・ホバーで「赤枠 + 半透明の赤塗り」）を `CropViewControl.Rects` と装飾専用の `MarqueeControl`（内側の装飾 = `InnerDeco`）で表示し、矩形内のダブルクリックで確定、矩形外のダブルクリックでキャンセルする（Escape は `MainWindow` が処理する） |
+| `CapturePage` | ツールバー・クロップビュー・切り出しオーバーレイ・ステータスの配置とコマンド接続。 自動切り出しの検出矩形（水色の実線・ホバーで「赤枠 + 半透明の赤塗り」）を `CropViewControl.Rects`（枠線）と `CropViewControl.HighlightSourceRect` / `HighlightAppearance`（ホバー強調）で表示し、矩形内のダブルクリックで確定、矩形外のダブルクリックでキャンセルする（Escape は `MainWindow` が処理する） |
 | `CaptureSessionControl`（`Parts.CapturePreviewControl.MewUI`） | 撮影と切り出しの Facade。 排他（同時に 1 つだけ）とセッションの寿命を単一所有する。 撮影はオーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し、切り出しはプレビュー上の領域選択 → `ICaptureTarget` への適用を行う |
 | `ConfirmDialog` | 簡易確認ダイアログ（はい / いいえ）を表示して選択を返す。 `MainWindow` が `MainViewModel.ConfirmOverwriteAsync` へ配線する |
 | `ClickableToolTip` | クリックできるボタンへツールチップとクリック処理をまとめて登録する。 MewUI の不具合でツールチップ表示中の押下が取り消されるため、`Click` が発生しなかった押下を `MouseUp` で補完する |
@@ -166,7 +171,6 @@ tests/
 | `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし） |
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。 変更の即時保存・テーマの即時適用・ホットキー入力を担う |
 | `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `SkiaImageView` が単一所有し、計測と Uniform 指定だけを与える） |
-| `OverlayHost` | 子を親領域の任意位置へ重ねる Panel（位置は配置フェーズで関数から評価する） |
 | `MewUIImageWriter` | `IImageWriter` の実装。 拡張子から保存形式を決めて SkiaSharp でエンコードする |
 | `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ |
 | `ImageDrawMath`（`Platform.MewUI`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
@@ -213,10 +217,6 @@ classDiagram
     class ImageThumbnailLoader {
         +Load(filePath, maxSize)$ EsBitmap?
     }
-    class OverlayHost {
-        <<Panel>>
-        +Place(childSize, position) void
-    }
     class EditHistory {
         +Undo(services)$ void
         +Redo(services)$ void
@@ -254,13 +254,6 @@ classDiagram
         +IsUsable(EsRectInt?)$ bool
         +NormalizeScale(double)$ double
     }
-    class LoupeControl {
-        <<EsUtil.Feature.Loupe.ControlMewUI>>
-        +EsBitmap? Source
-        +EsPoint? CenterPoint
-        +int RequestedSize
-        +int ZoomLevel
-    }
     class ZoomViewControl {
         <<Parts.CapturePreviewControl.MewUI>>
         +EsBitmap? Source
@@ -275,6 +268,8 @@ classDiagram
         +EsBitmap? Source
         +ZoomViewAppearance Appearance
         +IReadOnlyList~OverlayRect~ Rects
+        +EsRect? HighlightSourceRect
+        +MarqueeAppearance HighlightAppearance
         +bool CenterAlign
         +ZoomIn() void
         +ZoomOut() void
@@ -312,12 +307,10 @@ classDiagram
     MainWindow ..> SettingsPage : 内容
     MainWindow ..> MainViewModel : 束縛
     MainWindow ..> ConfirmDialog : 上書き確認の配線
-    CapturePage ..> CropViewControl : 配置
+    CapturePage ..> CropViewControl : 配置と矩形・強調の設定
     CapturePage ..> CaptureSessionControl : 撮影と切り出し（Parts.CapturePreviewControl.MewUI）
     CapturePage ..> CaptureFlow : 撮影の開始
     CapturePage ..> EditHistory : 履歴の移動
-    CapturePage ..> OverlayHost : ルーペの絶対配置
-    OverlayHost ..> LoupeControl : 配置
     CaptureSessionControl ..> CropSession : 切り出しセッション
     CaptureSessionControl ..> CaptureOverlay : 撮影セッション
     CaptureSessionControl ..> CaptureSessionSlot : 排他の受付
@@ -348,7 +341,6 @@ classDiagram
     ThumbnailView --|> SkiaImageView : 計測と Uniform 指定を与える
     SkiaImageView ..> ImageDrawMath : 配置計算
     CropViewControl ..> MainViewModel : 参照（Source / DetectedRects）
-    LoupeControl ..> MainViewModel : 参照（Source / CenterPoint）
     MewUIImageWriter ..|> IImageWriter
 ```
 
@@ -495,23 +487,31 @@ sequenceDiagram
 
 ## 12. シーケンス図（ルーペのカーソル追従）
 
+ルーペは切り出しセッション（`Parts.CapturePreviewControl`）が所有し、**`App.MewUI` は配置に関与しません**
+（アプリはセッションを開始するだけ）。 追従の詳細は `Parts.CapturePreviewControl.MewUI` の仕様が単一所有します。
+
 ```mermaid
 sequenceDiagram
     participant OS as MewUI（マウス入力）
     participant CP as CapturePage
-    participant OH as OverlayHost
+    participant CS as CaptureSessionControl（Parts）
+    participant FM as FadeMaskDragRectControl（Parts 複合コントロール）
     participant LP as LoupeCore.ResolveLayout（コア）
-    participant LV as LoupeControl
+    participant LV as LoupeControl（Parts）
 
-    OS->>CP: MouseMove（プレビューのローカル DIP）
-    CP->>CP: 画像ピクセルへ変換し、画像内へクランプして CenterPoint にする
-    CP->>OH: Place(サイズ, 位置を求める関数)
-    OH->>LP: ResolveLayout(親サイズ)
-    LP-->>OH: 位置（オフセット適用・親領域内へクランプ）
-    OH->>LV: Arrange（親の絶対座標 + 位置）
-    Note over OH: 位置は配置フェーズで評価するため、最新のカーソル位置が反映される
-    OS->>CP: MouseLeave → 画像の中央を右下へ表示する
+    OS->>CP: 切り出し開始（ボタン / ショートカット）
+    CP->>CS: Crop セッション開始
+    CS->>FM: オーバーレイを最上層へ配置（ルーペを内包する）
+    OS->>FM: ポインタ移動（プレビューのローカル DIP）
+    FM->>FM: 対象座標へ変換し、画像内へクランプして中心にする
+    FM->>LP: ResolveLayout(親サイズ, 中心)
+    LP-->>FM: 位置（オフセット適用・親領域内へクランプ）
+    FM->>LV: 中心と位置を設定して表示を更新
+    OS->>FM: ポインタ退出 → ルーペを非表示にする
 ```
+
+**アプリが担うのは、セッションの開始と（自動切り出しの）検出矩形・強調の設定までです**。 ルーペの生成・位置決め・
+カーソル追従・後片付けはすべて `Parts.CapturePreviewControl` が担います。
 
 ## 13. シーケンス図（Undo 一覧ページ）
 
@@ -660,7 +660,8 @@ sequenceDiagram
    `SettingsColorMath` が単一所有し、不正な値は既定色へフォールバックする。
 17. **絶対配置が必要な子は自前の Panel で配置する**。 MewUI の `Grid` は整列で位置を決め、`Margin` と
    `Canvas` の絶対配置は反映されない（実測）。 また `ActualWidth` / `ActualHeight` は測定結果（残余を埋める
-   要素では 0）であり実サイズは配置引数からしか得られないため、位置の決定は配置フェーズで行う（`OverlayHost`）。
+   要素では 0）であり実サイズは配置引数からしか得られない。
+   ※ 本アプリでは絶対配置を必要とする利用者（旧 `OverlayHost`。 ルーペの配置）を `Parts.CapturePreviewControl` へ移したため、現在は使っていない。
 18. **ルーペの外観の反映を 1 箇所に集約する**。 ルーペはプレビュー・撮影・切り出しの 3 箇所に登場し、
    同じ設定を同じ対応で反映する必要がある（`LoupeOptions`）。
 19. **履歴の移動を専用クラスへ分離する**。 `EditHistory` が「履歴から取り出してプレビューへ差し替える」
@@ -741,7 +742,7 @@ MewUI のウィンドウは**端から 6 DIP をサイズ変更の判定領域**
 | **ウィンドウの端から 6 DIP はサイズ変更の判定領域**（`Win32WindowBackend` の `WM_NCHITTEST` が `HTRIGHT` / `HTBOTTOM` 等を返す）。 端へ密着して描くオーバーレイはポインタがリサイズになる | 端に接するオーバーレイ（ズームビューのスクロールバー）は余白を空けて描く（`ScrollBarMargin` の既定 8 DIP。 6 DIP より外へ出す） |
 | `PopupManager.PreferNativePopups` を `false` にするとポップアップを別 HWND ではなくウィンドウ内に描画できるが、`internal` のためアプリからは変更できない（Native AOT のため反射も不可） | 上記の補完で対処する（修正版のリリース後に削除する） |
 | **`Window.WindowSize`（DIP）→ 物理ピクセルの換算はプライマリモニターのスケール固定**。 倍率の違うモニターでは物理サイズがモニターと一致せず（100% のモニターで 1.25 倍になる）、余白が太い枠として見える。 描画側はウィンドウの DPI を使うため両者は一致しない | 撮影オーバーレイは表示後に `WindowState = Maximized` を設定して **OS にモニター全面を決めさせる**。 座標変換の倍率は `DpiHelper.GetDpiForWindow` から得る |
-| **マウス移動はヒットテスト対象の要素にしか届かない**（親の `Grid` へ購読しても子がヒットすると届かない）。 また領域全体を占める重ね要素はヒットテストを奪う | 移動の購読は最も下の要素（`ZoomViewControl` 等）へ行い、表示専用の重ね要素（`OverlayHost`）は `IsHitTestVisible = false` にする |
+| **マウス移動はヒットテスト対象の要素にしか届かない**（親の `Grid` へ購読しても子がヒットすると届かない）。 また領域全体を占める重ね要素はヒットテストを奪う | 移動の購読は最も下の要素（`ZoomViewControl` 等）へ行い、表示専用の重ね要素（`CropViewControl` の強調オーバーレイ等）は `IsHitTestVisible = false` にする |
 | **ローカル値が設定されたプロパティには `StateTrigger`（ホバー・押下）が効かない**（ローカル値が優先される） | ホバーで変わるプロパティはローカル値で設定せず、`StyleName` のスタイル（`AppStyles`）で与える |
 | **テーマは `Application.Run` の後でしか変更できない**（それより前は `Application.Current` が未初期化で例外。 `Application not initialized`） | 保存済みのテーマは起動時コールバックで適用する（`AppStyles.ApplyTheme`）。 生成時に色を決めるコードはテーマ切替に追従しない点に注意する |
 | **`Button` は内容を左上へ置く**（`Width` や `MinWidth` で広げるとアイコンが左寄りになり、文字はフォントの代替字形のメタデータで上下にも寄る） | アイコンは MewUI のベクターグリフ（`GlyphElement` の `Hamburger` / `WindowMinimize` / `WindowMaximize` / `WindowRestore` / `Cross`）へ寄せ、内容は `Center()` で中央へ置く |

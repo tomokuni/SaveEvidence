@@ -320,6 +320,8 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | --- | --- | --- |
 | `Source` | `IImage?` | 表示画像。 画像ビューポートとルーペへ伝搬し、変更時は Fit 表示にリセットする。 領域選択オーバーレイの可視性は `SetSelectionOverlayVisible` が専任する |
 | `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（対象座標）。 ビューポートとルーペの両方へ描画する |
+| `HighlightSourceRect` | `EsRect?` | 強調する矩形（対象座標）。 `null` は強調なし。 対象座標 → ビューポート座標の写像は本コントロールが単一所有する（ホストは座標変換を持たない） |
+| `HighlightAppearance` | `MarqueeAppearance`（提示層） | 強調の外観（色・枠線の太さ・表示可否）。 既定は `HighlightDefaultAppearance`（内側の塗りと枠線だけを描く） |
 | `SelectionMode` | `FadeMaskDragRectMode` | 選択モード（既定 `Crop`）。 領域選択オーバーレイへ委譲する |
 | `SelectionOverlayOptions` | `FadeMaskDragRectOptions`（コア） | 領域選択オーバーレイの設定（寸法・表示可否。 色は含まない） |
 | `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 領域選択オーバーレイの外観（描画にだけ必要な設定） |

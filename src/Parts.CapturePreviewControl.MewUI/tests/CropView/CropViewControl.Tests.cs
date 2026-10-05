@@ -10,8 +10,11 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.CropView;
 /// <summary><see cref="CropViewControl"/> の Facade としてのテスト。</summary>
 /// <remarks>
 /// MewUI の要素生成とレイアウトはホスト登録を必要としないため、UI を表示せずに検証できる。<br/>
-/// 矩形オーバーレイの描画結果は <see cref="CropSkiaRendererTests"/> が担う。
+/// 矩形オーバーレイの描画結果は <see cref="CropSkiaRendererTests"/> が担う。<br/>
+/// <b>要素を生成するテストはコレクションで直列化する</b>（MewUI のビジュアル ツリーはスレッドセーフでなく、<br/>
+/// 並列に要素を生成すると <c>Panel.Add</c> が共有の走査バッファを壊す。 実測で再現した）。
 /// </remarks>
+[Collection("MewUI")]
 public class CropViewControlTests
 {
     /// <summary>検証に使う矩形情報を生成する。</summary>
@@ -82,6 +85,50 @@ public class CropViewControlTests
         control.Rects = [];
 
         Assert.Empty(control.Rects);
+    }
+
+    // ====================================================================
+    // 強調（ハイライト）
+    // ====================================================================
+
+    /// <summary>強調矩形が対象座標からビューポート座標へ写像されることを検証する。</summary>
+    [Fact]
+    internal void HighlightSourceRect_対象座標をビューポート座標へ写像する()
+    {
+        using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
+        var control = CreateLaidOut();
+        control.Source = image;
+
+        // 100x100 を 200x200 へ Fit した倍率は 2 倍（中央寄せの余りなし）
+        control.HighlightSourceRect = new EsRect(10, 10, 20, 20);
+
+        Assert.Equal(new EsRect(20, 20, 40, 40), control.HighlightMarquee.HighlightSourceRect);
+    }
+
+    /// <summary>画像未設定の間は強調しないことを検証する（写像の基準が無いため）。</summary>
+    [Fact]
+    internal void HighlightSourceRect_画像未設定なら強調しない()
+    {
+        var control = CreateLaidOut();
+
+        control.HighlightSourceRect = new EsRect(10, 10, 20, 20);
+
+        Assert.Null(control.HighlightMarquee.HighlightSourceRect);
+    }
+
+    /// <summary>強調の既定の外観が内側の塗りと枠線だけを描くことを検証する。</summary>
+    [Fact]
+    internal void HighlightAppearance_既定は内側の塗りと枠線だけを描く()
+    {
+        var control = CreateLaidOut();
+
+        Assert.Equal(CropViewControl.HighlightDefaultAppearance, control.HighlightAppearance);
+        Assert.Equal(CropViewControl.HighlightDefaultAppearance, control.HighlightMarquee.Appearance);
+        Assert.True(control.HighlightAppearance.ShowInnerFill);
+        Assert.True(control.HighlightAppearance.ShowInnerBorder);
+        Assert.False(control.HighlightAppearance.ShowHandles);
+        Assert.False(control.HighlightAppearance.ShowOverlay);
+        Assert.False(control.HighlightAppearance.ShowOuterBorder);
     }
 
     /// <summary>Source の設定が内包するズームビューへ委譲されることを検証する。</summary>
@@ -222,13 +269,13 @@ public class CropViewControlTests
         Assert.False(control.ZoomView.CenterAlign);
     }
 
-    /// <summary>子要素（ズームビューとオーバーレイ）が 2 つ配置されることを検証する。</summary>
+    /// <summary>子要素（ズームビュー・矩形オーバーレイ・強調オーバーレイ）が 3 つ配置されることを検証する。</summary>
     [Fact]
-    internal void 子要素がズームビューとオーバーレイの2つである()
+    internal void 子要素がズームビューとオーバーレイの3つである()
     {
         var control = CreateLaidOut();
 
-        Assert.Equal(2, control.Count);
+        Assert.Equal(3, control.Count);
     }
 
     /// <summary>ログの設定が内包するズームビューへ伝搬されることを検証する。</summary>

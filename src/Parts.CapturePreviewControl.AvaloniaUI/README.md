@@ -173,12 +173,13 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 画像の表示（拡大・パン・Fit）・領域選択オーバーレイ・外部提供矩形の描画を 1 つのコントロールにまとめた複合コントロールです（Facade / Composite パターン）。 ホストは画像ソースの設定・選択の受け渡し・ズーム操作に専念できます。
 
-- **複合構造**: 画像ビューポート（`ZoomViewControl`）+ 領域選択オーバーレイ（`FadeMaskDragRectControl`）+ 矩形オーバーレイを内包
+- **複合構造**: 画像ビューポート（`ZoomViewControl`）+ 領域選択オーバーレイ（`FadeMaskDragRectControl`）+ 矩形オーバーレイ + 強調オーバーレイを内包
 - **領域選択**: `SelectionMode`（`FadeMaskDragRectMode`。 既定 `Crop`）/ `SelectionOverlayOptions`（コアの設定）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance`（描画にだけ必要な外観）を内包する `FadeMaskDragRectControl` へ委譲する。 オーバーレイの可視性とヒットテストは `SetSelectionOverlayVisible` で制御する（Crop セッションの開始・終了時にホストが切替。 初期状態は非表示・ヒットテスト不可）
 - **外部提供矩形**: `Rects`（`IReadOnlyList<OverlayRect>`）をビューポートとルーペの両方へ描画する。 矩形情報はコアの `OverlayRect`（矩形・破線種類・前景色・背景色・線幅。 色は `System.Drawing.Color`）
+- **強調（ハイライト）**: `HighlightSourceRect`（対象座標）+ `HighlightAppearance`（外観）で「対象矩形を目立たせる」描画をホストが行える（自動切り出しのホバー強調等）。 対象座標 → ビューポート座標の写像とビューポート変化の追従は本コントロールが単一所有する（ホストは座標変換を持たない）
 - **座標変換**: `SourceToClient` / `ClientToSource` / `ImageRectViewport`（Fit 中央寄せの原点補正を含む）。 領域選択オーバーレイ上のホイールは本コントロールがビューポート（ズーム・パン）へ転送する
 
-主な公開メンバー: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionSourceRect` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `ClientToSourceScaling` / `LoupeClientToPixelScaling`、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `SourceToClient` / `ClientToSource`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`。
+主な公開メンバー: `Source` / `Rects` / `HighlightSourceRect` / `HighlightAppearance` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionSourceRect` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `ClientToSourceScaling` / `LoupeClientToPixelScaling`、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `SourceToClient` / `ClientToSource`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`。
 
 ### 7.2 FadeMaskDragRectControl（領域選択）
 
@@ -247,7 +248,7 @@ Parts.CapturePreviewControl.AvaloniaUI/
 ├── src/
 │   ├── Parts.CapturePreviewControl.AvaloniaUI.csproj      # ライブラリプロジェクト（Avalonia.Desktop / Logging.Abstractions）
 │   ├── CaptureSessionControl.cs            # 公開 Facade（統括者。組み立て・配線・ライフサイクル）
-│   ├── CropViewControl.cs                  # 切り出しビュー（公開。画像ビューポート + 領域選択 + 矩形オーバーレイ）
+│   ├── CropViewControl.cs                  # 切り出しビュー（公開。画像ビューポート + 領域選択 + 矩形オーバーレイ + 強調オーバーレイ）
 │   ├── CropViewImage.cs                    # 画像の表示アダプタ（internal）
 │   ├── FadeMaskDragRectControl.cs          # 領域選択（公開。暗転マスク + 選択矩形 + ルーペ）
 │   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開クラス）

@@ -2,7 +2,6 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
-using EsUtil.Feature.Marquee.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -13,7 +12,6 @@ using EsUtil.SaveEvidence.App.MewUI.Icons;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.SaveEvidence.App.MewUI.Services;
 using MewUIColor = Aprillz.MewUI.Color;
-using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 
@@ -82,30 +80,6 @@ internal static class CapturePage
 
     /// <summary>自動切り出しの検出矩形の塗り色（ホバー中・赤 16%。 Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropHoverFill = System.Drawing.Color.FromArgb(40, 255, 59, 48);
-
-    /// <summary>自動切り出しのホバー強調に使う外観（内側の塗りと枠線）。</summary>
-    /// <remarks>色・枠線の太さ・表示可否は描画にだけ必要な設定であるため、外観（<see cref="MarqueeAppearance"/>）が単一所有する。</remarks>
-    private static readonly MarqueeAppearance s_autoCropHighlightAppearance = MarqueeAppearance.Default with
-    {
-        ShowSizeLabel = false,
-        ShowCoordLabel = false,
-        ShowOverlay = false,
-        ShowOuterBorder = false,
-        ShowInnerFill = true,
-        ShowInnerBorder = true,
-        InnerFillColor = s_autoCropHoverFill,
-        InnerBorderColor = s_autoCropHoverBorder,
-        InnerBorderThickness = AutoCropBorderThickness,
-    };
-
-    /// <summary>自動切り出しで強調しないときの外観（枠線も内側の塗りもラベルも描かない）。</summary>
-    private static readonly MarqueeAppearance s_autoCropIdleAppearance = MarqueeAppearance.Default with
-    {
-        ShowSizeLabel = false,
-        ShowCoordLabel = false,
-        ShowOverlay = false,
-        ShowOuterBorder = false,
-    };
 
     /// <summary>ページの内容を生成する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
@@ -633,34 +607,18 @@ internal static class CapturePage
             .Columns("*")
             .Rows("*");
 
-        // 自動切り出しのホバー強調（枠線 + 半透明の塗り）を描く装飾専用の Marquee。
-        // 入力を奪わない（IsHitTestVisible = false）ため、ズームビューのホイール・ドラッグ・ホバーはそのまま働く。
-        var autoCropHighlight = new MarqueeControl { IsHitTestVisible = false };
-
-        // ホバー中の検出矩形の強調を更新する（矩形は DIP 座標へ変換して渡す。 パン・ズームのたびに位置が変わる）。
-        // 強調の描画は Marquee の外観（内側の塗り・枠線）とハイライト矩形が単一所有する。
-        void UpdateAutoCropHighlight()
+        // 自動切り出しのホバー強調の外観（内側の塗りと枠線）を CropView へ与える。
+        // 色・枠線の太さ・表示可否は描画にだけ必要な設定であり、強調の描画手順は CropViewControl（Parts）が単一所有する。
+        cropView.HighlightAppearance = CropViewControl.HighlightDefaultAppearance with
         {
-            var hovered = viewModel.IsAutoCropActive ? viewModel.HoveredRect : null;
-            if (hovered is not { } target)
-            {
-                // ハイライトなし（外側・内側とも描かない。 サイズ・座標ラベルも表示しない）
-                autoCropHighlight.Appearance = s_autoCropIdleAppearance;
-                autoCropHighlight.HighlightSourceRect = null;
-                return;
-            }
-
-            var topLeft = cropView.ZoomView.DisplayedSourceToClient(new EsPoint(target.X, target.Y));
-            var bottomRight = cropView.ZoomView.DisplayedSourceToClient(new EsPoint(target.Right, target.Bottom));
-
-            autoCropHighlight.Appearance = s_autoCropHighlightAppearance;
-            autoCropHighlight.HighlightSourceRect = new EsRect(
-                topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
-        }
+            InnerFillColor = s_autoCropHoverFill,
+            InnerBorderColor = s_autoCropHoverBorder,
+            InnerBorderThickness = AutoCropBorderThickness,
+        };
 
         // 自動切り出しの検出矩形をオーバーレイへ変換する（画像座標 → 対象座標）。
-        // ホバー中の 1 件は CropView 側から外し、Marquee のハイライト（枠線 + 半透明の塗り）で強調する
-        // （両 UI で同じ見た目にするため、塗りも描く）。
+        // ホバー中の 1 件は CropView 側から外し、CropView の強調（枠線 + 半透明の塗り）で強調する
+        // （両 UI で同じ見た目にするため、塗りも描く）。 DIP 座標への変換は CropView が単一所有する。
         void SyncRects()
         {
             var hovered = viewModel.IsAutoCropActive ? viewModel.HoveredRect : null;
@@ -670,7 +628,7 @@ internal static class CapturePage
                     new EsRect(r.X, r.Y, r.Width, r.Height), OverlayLineStyle.Solid,
                     s_autoCropBorder, System.Drawing.Color.Transparent, AutoCropBorderThickness))];
 
-            UpdateAutoCropHighlight();
+            cropView.HighlightSourceRect = hovered?.ToEsRect();
         }
 
         viewModel.PropertyChanged += (_, e) =>
@@ -692,10 +650,7 @@ internal static class CapturePage
         SyncRects();
         ApplyCheckerboard(cropView, settings);
         cropView.CenterAlign = settings.CenterAlign;
-        host.Children(cropView, autoCropHighlight);
-
-        // パン・ズームでハイライト矩形のビューポート座標が変わるため、ビューポート変化で強調を更新する
-        cropView.ViewportChanged += (_, _) => UpdateAutoCropHighlight();
+        host.Children(cropView);
 
         // テーマが変わったら市松模様の下地色（テーマの背景色）を描き直す
         AppStyles.ThemeChanged += (_, _) => ApplyCheckerboard(cropView, settings);

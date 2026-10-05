@@ -35,8 +35,6 @@
     <ProjectReference Include="..\..\Parts.CapturePreviewControl.MewUI\src\Parts.CapturePreviewControl.MewUI.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型） -->
     <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
-    <!-- MewUI 版コントロール（コアロジックを共有する） -->
-    <ProjectReference Include="..\..\EsUtil.Feature.Loupe.ControlMewUI\src\MewUI\EsUtil.Feature.Loupe.ControlMewUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

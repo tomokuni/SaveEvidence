@@ -21,7 +21,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
-using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
@@ -99,6 +98,15 @@ public sealed partial class CapturePage : UserControl
         // CropViewControl（自己完結型複合コントロール）にロガーを注入する
         CropView.Log = _logger;
 
+        // 自動切り出しのホバー強調の外観（内側の塗りと枠線）を CropViewControl へ与える。
+        // 色・枠線の太さ・表示可否は描画にだけ必要な設定であり、強調の描画手順は CropViewControl（Parts）が単一所有する。
+        CropView.HighlightAppearance = CropViewControl.HighlightDefaultAppearance with
+        {
+            InnerFillColor = s_autoCropHoverFillColor,
+            InnerBorderColor = s_autoCropHoverBorderColor,
+            InnerBorderThickness = AutoCropStrokeThickness,
+        };
+
         // ズーム率の変化をスライダ・⊕⊖ ボタン・ViewModel へ反映する
         // （CropViewControl は特定コントロールに依存しないため、ホスト側で同期する）
         CropView.ZoomChanged += (_, e) =>
@@ -157,7 +165,6 @@ public sealed partial class CapturePage : UserControl
         CropView.ViewportChanged += (_, _) =>
         {
             _captureSessionControl.NotifyCropViewportChanged();
-            UpdateAutoCropOverlay();
         };
 
         // 初期の市松模様背景を設定
@@ -973,43 +980,18 @@ public sealed partial class CapturePage : UserControl
     /// <summary>自動切り出しの矩形枠線の太さ（DIP）。</summary>
     private const double AutoCropStrokeThickness = 2.0;
 
-    /// <summary>自動切り出しのホバー強調に使う外観（内側の塗りと枠線）。</summary>
-    /// <remarks>色・枠線の太さ・表示可否は描画にだけ必要な設定であるため、外観（<see cref="MarqueeAppearance"/>）が単一所有する。</remarks>
-    private static readonly MarqueeAppearance s_autoCropHighlightAppearance = MarqueeAppearance.Default with
-    {
-        ShowSizeLabel = false,
-        ShowCoordLabel = false,
-        ShowOverlay = false,
-        ShowOuterBorder = false,
-        ShowInnerFill = true,
-        ShowInnerBorder = true,
-        InnerFillColor = s_autoCropHoverFillColor,
-        InnerBorderColor = s_autoCropHoverBorderColor,
-        InnerBorderThickness = AutoCropStrokeThickness,
-    };
-
-    /// <summary>自動切り出しで強調しないときの外観（枠線も内側の塗りもラベルも描かない）。</summary>
-    private static readonly MarqueeAppearance s_autoCropIdleAppearance = MarqueeAppearance.Default with
-    {
-        ShowSizeLabel = false,
-        ShowCoordLabel = false,
-        ShowOverlay = false,
-        ShowOuterBorder = false,
-    };
-
-    /// <summary>自動切り出しの矩形オーバーレイ（枠線とホバー強調）を現在のビューポート状態に合わせて更新する。</summary>
+    /// <summary>自動切り出しの矩形オーバーレイ（検出矩形の枠線とホバー強調）を更新する。</summary>
     /// <remarks>
     /// 1. 検出矩形の枠線は <see cref="CropViewControl.Rects"/> へ<b>対象座標</b>で渡す（座標変換は CropView が単一所有する）。<br/>
-    /// 2. ホバー中の 1 件は <see cref="CropViewControl.Rects"/> から外し、<see cref="AutoCropHighlight"/>（Marquee）の<br/>
-    ///    ハイライト矩形 + 内側の外観（<see cref="MarqueeAppearance"/>）で「枠線 + 半透明の塗り」として強調する<br/>
-    ///    （ハイライト矩形は DIP 座標で渡す。 Marquee の座標変換ポートは未指定・倍率 1 のため等価変換になる）。<br/>
-    /// 3. 自動切り出しが無効な場合はハイライトを消し、矩形の一覧も空にする。
+    /// 2. ホバー中の 1 件は <see cref="CropViewControl.Rects"/> から外し、<see cref="CropViewControl.HighlightSourceRect"/> へ<br/>
+    ///    対象座標で渡す（強調の描画と座標変換は CropView が単一所有する。 外観は <see cref="CropViewControl.HighlightAppearance"/>）。<br/>
+    /// 3. 自動切り出しが無効な場合は強調を消し、矩形の一覧も空にする。
     /// </remarks>
     private void UpdateAutoCropOverlay()
     {
         var hovered = _viewModel.IsAutoCropActive ? _viewModel.HoveredRect : null;
 
-        // 検出矩形の枠線（ホバー中の 1 件を除く。 ホバー分は Marquee のハイライトが描く）
+        // 検出矩形の枠線（ホバー中の 1 件を除く。 ホバー分は CropView の強調が描く）
         CropView.Rects = _viewModel.IsAutoCropActive
             ? [.. _viewModel.DetectedRects
                 .Where(rect => rect != hovered)
@@ -1018,21 +1000,8 @@ public sealed partial class CapturePage : UserControl
                     s_autoCropBorderColor, DrawingColor.Transparent, AutoCropStrokeThickness))]
             : [];
 
-        if (hovered is not { } target)
-        {
-            // ハイライトなし（外側・内側とも描かない。 サイズ・座標ラベルも表示しない）
-            AutoCropHighlight.Appearance = s_autoCropIdleAppearance;
-            AutoCropHighlight.HighlightSourceRect = null;
-            return;
-        }
-
-        // ハイライト矩形は DIP 座標へ変換して渡す
-        var topLeft = SourceToClient(new Point(target.X, target.Y));
-        var bottomRight = SourceToClient(new Point(target.Right, target.Bottom));
-
-        AutoCropHighlight.Appearance = s_autoCropHighlightAppearance;
-        AutoCropHighlight.HighlightSourceRect = new EsRect(
-            topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
+        // ホバー中の 1 件を強調する（DIP 座標への変換は CropView が単一所有する）
+        CropView.HighlightSourceRect = hovered?.ToEsRect();
     }
 
     /// <summary>自動切り出し中に、ポインタ位置（対象座標）の検出矩形をホバーとして設定する。</summary>
@@ -1108,16 +1077,6 @@ public sealed partial class CapturePage : UserControl
     /// </remarks>
     private Point ClientToSource(Point viewportPos)
         => CropView.ClientToSource(viewportPos);
-
-    /// <summary>対象座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
-    /// <param name="contentPos">対象座標。</param>
-    /// <returns>ビューポート座標。</returns>
-    /// <remarks>
-    /// 画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。<br/>
-    /// 変換は <see cref="CropViewControl.SourceToClient"/> に委譲する（座標変換の単一所有）。
-    /// </remarks>
-    private Point SourceToClient(Point contentPos)
-        => CropView.SourceToClient(contentPos);
 
     // ====================================================================
     // コンテキストメニュー

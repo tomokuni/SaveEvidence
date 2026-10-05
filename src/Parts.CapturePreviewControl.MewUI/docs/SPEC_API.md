@@ -184,6 +184,8 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
 | `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。 コアが単一所有する |
 | `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（対象座標 = 元画像ピクセル座標）。 null は設定できない |
+| `HighlightSourceRect` | `EsRect?` | `null` | 強調する矩形（対象座標 = 元画像ピクセル座標）。 `null` は強調なし。 対象座標 → ビューポート座標の写像は本コントロールが単一所有する（ホストは座標変換を持たない） |
+| `HighlightAppearance` | `MarqueeAppearance`（提示層） | 内側の塗りと枠線だけ | 強調の外観（色・枠線の太さ・表示可否）の**単一値**。 既定は `CropViewControl.HighlightDefaultAppearance` |
 | `ZoomView` | `ZoomViewControl` | — | 内包する画像ビューポート |
 | `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。 **0 より大きい値のみ設定可能**（0 以下は無視） |
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
@@ -228,6 +230,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `Source` が `null` | 何も描画しない（例外にしない） |
 | `Rects` が空 | 何も描画しない（例外にしない） |
 | `ZoomPercent` へ 0 以下を設定 | 無視する（Fit へは `ZoomFit()` を使う） |
+| `Source` が `null` で `HighlightSourceRect` を設定 | 何も描画しない（写像の基準が無いため。 例外にしない） |
 
 領域選択は本コントロールの対象外です。 領域選択は `FadeMaskDragRectControl` を重ねて構成します。
 

@@ -1,5 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
+using EsUtil.Feature.Marquee;
+using EsUtil.Feature.Marquee.MewUI;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -16,6 +18,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 /// <b>内部構造</b>:<br/>
 /// - <see cref="ZoomViewControl"/>: 画像ビューポート（拡大・パン・Fit）。<br/>
 /// - <see cref="RectOverlayCanvas"/>: ホストから渡された <see cref="Rects"/> をビューポート座標へ変換して描画する透明オーバーレイ。<br/>
+/// - 強調オーバーレイ: ホストから渡された <see cref="HighlightSourceRect"/>（対象座標）を強調表示する（描画のみ・入力なし）。<br/>
 /// <br/>
 /// <b>領域選択オーバーレイ</b>: 本コントロールは含まない。 ホストが <c>FadeMaskDragRectControl.MewUI</c> を重ねて構成する<br/>
 /// （ドラッグ選択・暗転マスク・ルーペ。 `App.MewUI` の切り出しはこの構成）。
@@ -28,23 +31,33 @@ public sealed class CropViewControl : Grid
     /// <summary>外部提供矩形のオーバーレイ（透明。 入力は下のズームビューへ通す）。</summary>
     private readonly RectOverlayCanvas _rectOverlay;
 
+    /// <summary>強調オーバーレイ（ホストが与える強調矩形を描く装飾専用の選択矩形コントロール）。</summary>
+    /// <remarks>入力は受けず（<c>IsHitTestVisible = false</c>）描画のみを担う（ズーム・ドラッグは下のレイヤが受ける）。</remarks>
+    private readonly MarqueeControl _highlight = new() { IsHitTestVisible = false };
+
     /// <summary>外部提供矩形（対象座標）。</summary>
     private IReadOnlyList<OverlayRect> _rects = [];
 
     /// <summary>CropView コントロールを初期化する。</summary>
     /// <remarks>
-    /// ズームビューと矩形オーバーレイを重ねて配置し、ビューポートの変化をオーバーレイへ中継する。
+    /// ズームビューと矩形オーバーレイと強調オーバーレイを重ねて配置し、ビューポートの変化をオーバーレイへ中継する。
     /// </remarks>
     public CropViewControl()
     {
         _rectOverlay = new RectOverlayCanvas(_zoomView);
+        _highlight.Appearance = HighlightDefaultAppearance;
 
-        // パン・ズーム・リサイズで矩形オーバーレイを追従させる
-        _zoomView.ViewportChanged += (_, _) => _rectOverlay.InvalidateVisual();
+        // パン・ズーム・リサイズで矩形オーバーレイと強調オーバーレイを追従させる
+        _zoomView.ViewportChanged += (_, _) =>
+        {
+            _rectOverlay.InvalidateVisual();
+            UpdateHighlight();
+        };
 
         // 後から追加した子が上へ描画される（ズームビューの上にオーバーレイを重ねる）
         Add(_zoomView);
         Add(_rectOverlay);
+        Add(_highlight);
     }
 
     /// <summary>表示する画像（ズーム・パンの対象）を取得または設定する。</summary>
@@ -52,7 +65,12 @@ public sealed class CropViewControl : Grid
     public EsBitmap? Source
     {
         get => _zoomView.Source;
-        set => _zoomView.Source = value;
+        set
+        {
+            _zoomView.Source = value;
+            // 画像の表示矩形が変わるため、強調矩形の写像も更新する
+            UpdateHighlight();
+        }
     }
 
     /// <summary>画像の中央寄せ / 左上寄せを取得または設定する。</summary>
@@ -88,6 +106,76 @@ public sealed class CropViewControl : Grid
             _rects = value;
             _rectOverlay.SetRects(value);
         }
+    }
+
+    // ====================================================================
+    // 公開 API: 強調（ハイライト）
+    // ====================================================================
+
+    /// <summary>強調の既定の外観（内側の塗りと枠線だけを描く）。</summary>
+    /// <value>ラベル・ハンドル・始点マーカー・暗転・外枠を描かない外観（色はホストが与える）。</value>
+    /// <remarks>
+    /// 強調は「対象矩形を目立たせる」用途であり、選択の対話（ハンドル・始点マーカー）や<br/>
+    /// 全面暗転は意味を持たないため、内側の装飾だけを既定とする。<br/>
+    /// 色（<see cref="MarqueeAppearance.InnerFillColor"/> / <see cref="MarqueeAppearance.InnerBorderColor"/>）は<br/>
+    /// ホストの用途で決まるため、既定は透明のまま（ホストが <see cref="HighlightAppearance"/> で与える）。
+    /// </remarks>
+    public static readonly MarqueeAppearance HighlightDefaultAppearance = MarqueeAppearance.Default with
+    {
+        ShowHandles = false,
+        ShowMarker = false,
+        ShowSizeLabel = false,
+        ShowCoordLabel = false,
+        ShowOverlay = false,
+        ShowOuterBorder = false,
+        ShowInnerFill = true,
+        ShowInnerBorder = true,
+    };
+
+    /// <summary>強調する矩形（対象座標）を取得または設定する。</summary>
+    /// <value>強調する矩形。 未設定（null）の場合は強調しない。</value>
+    /// <remarks>
+    /// 本コントロールが対象座標 → ビューポート座標の写像を担う（ホストは座標変換を持たない）。<br/>
+    /// 描画は <see cref="HighlightAppearance"/> に従う（既定は内側の塗りと枠線だけ）。<br/>
+    /// <b>画像（<see cref="Source"/>）が未設定の間は描画しない</b>（写像の基準が無いため）。
+    /// </remarks>
+    public EsRect? HighlightSourceRect
+    {
+        get => _highlightSourceRect;
+        set
+        {
+            _highlightSourceRect = value;
+            UpdateHighlight();
+        }
+    }
+
+    private EsRect? _highlightSourceRect;
+
+    /// <summary>強調の外観（色・枠線の太さ・表示可否）を取得または設定する。</summary>
+    /// <value>外観の単一値。 既定は <see cref="HighlightDefaultAppearance"/>。</value>
+    public MarqueeAppearance HighlightAppearance
+    {
+        get => _highlight.Appearance;
+        set => _highlight.Appearance = value;
+    }
+
+    /// <summary>強調矩形を内包する強調オーバーレイへ反映する。</summary>
+    /// <remarks>
+    /// 対象座標 → ビューポート座標の写像は <see cref="SourceToClient"/> が単一所有する（Fit の中央寄せ補正を含む）。<br/>
+    /// 負サイズのクランプはコア（<see cref="OverlayRectLayout.ViewportRectFromCorners"/>）が単一所有する。<br/>
+    /// 写像の結果は強調コントロールの <c>HighlightSourceRect</c>（等価変換）へ渡すため、座標系は一貫する。
+    /// </remarks>
+    private void UpdateHighlight()
+    {
+        if (_highlightSourceRect is not { } rect || Source is null)
+        {
+            _highlight.HighlightSourceRect = null;
+            return;
+        }
+
+        var topLeft = SourceToClient(new EsPoint(rect.X, rect.Y));
+        var bottomRight = SourceToClient(new EsPoint(rect.Right, rect.Bottom));
+        _highlight.HighlightSourceRect = OverlayRectLayout.ViewportRectFromCorners(topLeft, bottomRight);
     }
 
     /// <summary>内包するズームビューポートを取得する（座標変換・Fit 状態の利用に使う）。</summary>
@@ -177,5 +265,8 @@ public sealed class CropViewControl : Grid
     /// <remarks>ホストが重ねたオーバーレイ上のホイール位置をズーム中心として渡すために使用する。</remarks>
     public EsPoint TranslatePositionFrom(Element element, EsPoint position)
         => element.TranslatePoint(new Point(position.X, position.Y), this).ToEsPoint();
+
+    /// <summary>強調オーバーレイ（テスト用アクセサ。 強調矩形の写像と外観の反映を検証する）。</summary>
+    internal MarqueeControl HighlightMarquee => _highlight;
 }
 

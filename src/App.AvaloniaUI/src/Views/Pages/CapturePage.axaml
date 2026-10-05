@@ -2,7 +2,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
              xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;assembly=Parts.CapturePreviewControl.AvaloniaUI"
-             xmlns:marquee="clr-namespace:EsUtil.Feature.Marquee.AvaloniaUI;assembly=EsUtil.Feature.Marquee.ControlAvaloniaUI"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
@@ -127,16 +126,12 @@
         <Grid Grid.Row="1" x:Name="ImageAreaGrid"
               PointerPressed="OnImageAreaPointerPressed">
             <!-- 高レベル複合コントロール（ズーム・パン・Fit + 領域選択 + ルーペを内包。ScrollViewer 不使用。
-                 ズーム率・座標変換・オーバーレイの配線を一本化した CropViewControl） -->
+                 ズーム率・座標変換・オーバーレイの配線を一本化した CropViewControl）
+                 自動切り出し（LineDetection 検出）のホバー強調も `HighlightSourceRect` / `HighlightAppearance` で
+                 本コントロールへ委譲する（ホストはコントロールを重ねない）。 -->
 <crop:CropViewControl x:Name="CropView"
                            Background="Transparent"/>
 
-            <!-- 自動切り出し（LineDetection 検出）のホバー強調。
-                 CropView と同一セルに重ね、ホバー中の検出矩形だけを「枠線 + 半透明の塗り」で強調する
-                 （強調の描画は Marquee の内側の装飾 = InnerDeco が単一所有する。矩形の生成はコードビハインド）。
-                 入力を奪わない（IsHitTestVisible=False）ため、ホイールでのズーム・パンとドラッグでのパンは CropView が受ける。 -->
-            <marquee:MarqueeControl x:Name="AutoCropHighlight"
-                                    IsHitTestVisible="False"/>
         </Grid>
 
         <!-- ステータスバー（左: 保存済み/未 | 保存ファイル名 / 右: 拡大率（スライダ + % + フライアウト）） -->

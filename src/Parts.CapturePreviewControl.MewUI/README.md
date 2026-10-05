@@ -39,7 +39,7 @@
 - **設定の単一所有と即時反映**: 設定（`AppearanceSettings`）は Facade が単一所有し、撮影と切り出しで同じ値を使う。 設定時は部分更新（null メンバーのみ現在値を維持）・検証・同値スキップ・適用ログを Core（`CaptureSettingsMerge.Apply`）が担い、実行中の切り出しセッションへは即時反映する
 - **ラベル描画**: サイズラベル・操作ラベル・情報ラベルを選択矩形の左上へ表示する
 - **UI 非依存のサービス注入**: キャプチャ・要素検出・ウィンドウ操作は `EsUtil.Platform.Core` の抽象を受け取る（本ライブラリはアプリの型を参照しない）
-- **切り出しビュー（`CropViewControl`）**: 画像ビューポート（拡大・パン・Fit）と外部提供矩形オーバーレイを 1 つの複合コントロールにまとめる
+- **切り出しビュー（`CropViewControl`）**: 画像ビューポート（拡大・パン・Fit）と外部提供矩形オーバーレイ・強調オーバーレイを 1 つの複合コントロールにまとめる
 - **ズーム・パン（切り出しビューの画像ビューポート）**: `CropViewControl` が内包する `ZoomViewControl` が、ズーム（⊖⊕ の 23 段階 / Ctrl+ホイール ×1.1）・パン・Fit 表示・座標変換を担う（[5.3](#53-zoomviewcontrol切り出しビューの画像ビューポート)）
 - **領域選択（`FadeMaskDragRectControl`）**: 暗転マスク + 選択矩形 + ルーペを 1 つの複合コントロールにまとめ、配線と状態同期を内側で完結させる
 
@@ -94,6 +94,7 @@ session.AppearanceSettings = changed;
 画像の表示（拡大・パン・Fit）と、ホストから渡された矩形のオーバーレイ描画を 1 つのコントロールにまとめた複合コントロールです。 内部で画像ビューポート（`ZoomViewControl`）と透明な矩形オーバーレイを重ね、ホストへ統一インターフェースを提供します（Facade パターン）。
 
 - **矩形オーバーレイ**: `Rects`（`IReadOnlyList<OverlayRect>`。 対象座標）を表示時にビューポート座標へ変換して描画する。 実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」の 2 回描画で市松風の視認性を出す（ダッシュ長はコアの `OverlayLineDash` が単一所有）
+- **強調（ハイライト）**: `HighlightSourceRect`（対象座標）+ `HighlightAppearance`（外観）で「対象矩形を目立たせる」描画をホストが行える（自動切り出しのホバー強調等。 既定は内側の塗りと枠線だけを描く）。 対象座標 → ビューポート座標の写像とビューポート変化の追従は本コントロールが単一所有する
 - **座標変換**: `ClientToSource` / `SourceToClient` / `ImageRectViewport`（画像表示矩形の原点基準。 Fit 中央寄せの補正を含む）
 - **入力**: 下の画像ビューポートが受け取る（オーバーレイはヒットテスト対象外）。 ホイールの転送用に `PanByWheel` / `ZoomByWheel` を公開する
 - **領域選択は持たない**: 領域選択は `FadeMaskDragRectControl` を重ねて構成する（[5.2](#52-fademaskdragrectcontrol領域選択)）
@@ -104,6 +105,8 @@ session.AppearanceSettings = changed;
 | `CenterAlign` | `bool` | 画像がビューポートより小さい軸を中央寄せする |
 | `Appearance` | `ZoomViewAppearance` | 下地（市松模様の大きさ・2 色・背景色）の外観の単一値 |
 | `Rects` | `IReadOnlyList<OverlayRect>` | オーバーレイとして描画する矩形（対象座標） |
+| `HighlightSourceRect` | `EsRect?` | 強調する矩形（対象座標）。 `null` は強調なし |
+| `HighlightAppearance` | `MarqueeAppearance` | 強調の外観（色・枠線の太さ・表示可否）の単一値。 既定は内側の塗りと枠線だけ |
 | `ZoomView` | `ZoomViewControl` | 内包する画像ビューポート |
 | `ZoomPercent` | `double` | 実効ズーム率（%）。 0 より大きい値のみ設定できる |
 | `CanZoomIn` / `CanZoomOut` | `bool` | ズーム可否（画像未設定時は false） |
@@ -200,7 +203,7 @@ src/
 │   ├── CaptureOverlay.cs                   # 撮影セッション（internal。1 セッション = 1 インスタンス）
 │   ├── CaptureOverlayServices.cs           # サービス（キャプチャ・検出・ウィンドウ・ロガー）の束（公開 record）
 │   ├── src/Parts.CapturePreviewControl.MewUI/src/Sessions/CropSession.cs             # 切り出しセッション（internal。1 セッション = 1 インスタンス）
-│   ├── CropViewControl.cs                  # 切り出しビュー（公開。画像ビューポート + 矩形オーバーレイ）
+│   ├── CropViewControl.cs                  # 切り出しビュー（公開。画像ビューポート + 矩形オーバーレイ + 強調オーバーレイ）
 │   ├── RectOverlayCanvas.cs                # 透明な矩形オーバーレイ（internal）
 │   ├── CropSkiaRenderer.cs                 # コアの描画入力を Skia へ写す（internal）
 │   ├── FadeMaskDragRectControl.cs          # 領域選択（公開。暗転マスク + 選択矩形 + ルーペ）

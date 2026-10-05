@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
+using EsUtil.Feature.Marquee.AvaloniaUI;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 
@@ -27,11 +28,12 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 /// - <see cref="ZoomViewControl"/>: 画像ビューポート（拡大・パン・Fit・原寸）。<br/>
 /// - <see cref="FadeMaskDragRectControl"/>: 領域選択オーバーレイ（ドラッグ選択・暗転マスク・ルーペ）。<br/>
 /// - 矩形オーバーレイ: ホストから渡された <see cref="OverlayRect"/> をビューポート座標へ変換して表示する。<br/>
+/// - 強調オーバーレイ: ホストから渡された <see cref="HighlightSourceRect"/>（対象座標）を強調表示する（描画のみ・入力なし）。<br/>
 /// <br/>
 /// <b>責務分離</b>:<br/>
 /// - 画像表示（ズーム・パン）は <see cref="ZoomViewControl"/> が担う（ズーム率管理は本コントロール）。<br/>
 /// - 領域選択（ドラッグ・暗転・ルーペ）は <see cref="FadeMaskDragRectControl"/> が担う。<br/>
-/// - 外部提供矩形（<see cref="Rects"/>）の描画は本コントロールが担う（View / ルーペの両方へ描画）。<br/>
+/// - 外部提供矩形（<see cref="Rects"/>）と強調（<see cref="HighlightSourceRect"/>）の描画は本コントロールが担う。<br/>
 /// <br/>
 /// <b>ライフサイクル</b>:<br/>
 /// - 画像（<see cref="Source"/>）はホストが設定する。<br/>
@@ -58,11 +60,15 @@ public sealed partial class CropViewControl : Panel
     /// <summary>外部提供矩形オーバーレイ（ビューポート座標で描画）。</summary>
     private readonly Canvas _rectOverlay = new() { ZIndex = 20, IsHitTestVisible = false };
 
+    /// <summary>強調オーバーレイ（ホストが与える強調矩形を描く装飾専用の選択矩形コントロール）。</summary>
+    /// <remarks>入力は受けず（<c>IsHitTestVisible = false</c>）描画のみを担う（ズーム・ドラッグは下のレイヤが受ける）。</remarks>
+    private readonly MarqueeControl _highlight = new() { ZIndex = 30, IsHitTestVisible = false };
+
     /// <summary>
     /// <see cref="CropViewControl"/> の新しいインスタンスを初期化する。
     /// </summary>
     /// <remarks>
-    /// 子コントロール（<see cref="ZoomViewControl"/> / <see cref="FadeMaskDragRectControl"/> / 矩形オーバーレイ）を生成して配置し、<br/>
+    /// 子コントロール（<see cref="ZoomViewControl"/> / <see cref="FadeMaskDragRectControl"/> / 矩形オーバーレイ / 強調オーバーレイ）を生成して配置し、<br/>
     /// ビューポート変化（パン・ズーム）を配線する。<br/>
     /// ズーム要求（Ctrl+ホイール）・ズーム率の遷移は <see cref="ZoomViewControl"/> が自己完結する。<br/>
     /// 領域選択オーバーレイ上のホイールは本コントロールがビューポートへ転送する（Crop 中もパン・ズームを有効にする）。
@@ -71,15 +77,18 @@ public sealed partial class CropViewControl : Panel
     {
         _zoomView.HorizontalAlignment = HorizontalAlignment.Stretch;
         _zoomView.VerticalAlignment = VerticalAlignment.Stretch;
+        _highlight.Appearance = HighlightDefaultAppearance;
         Children.Add(_zoomView);
         Children.Add(_selectionOverlay);
         Children.Add(_rectOverlay);
+        Children.Add(_highlight);
 
         // ビューポート変化（パン・ズーム）を領域選択オーバーレイと矩形オーバーレイへ中継する
         _zoomView.ViewportChanged += (_, _) =>
         {
             _selectionOverlay.RefreshOverlay();
             UpdateRectOverlay();
+            UpdateHighlight();
         };
 
         // 領域選択オーバーレイ上のホイールをビューポートへ転送する。
@@ -203,6 +212,9 @@ public sealed partial class CropViewControl : Panel
             {
                 ClearSelection();
             }
+
+            // 画像の表示矩形が変わるため、強調矩形の写像も更新する
+            UpdateHighlight();
         }
     }
 
@@ -232,6 +244,77 @@ public sealed partial class CropViewControl : Panel
     }
 
     private IReadOnlyList<OverlayRect> _rects = [];
+
+    // ====================================================================
+    // 公開 API: 強調（ハイライト）
+    // ====================================================================
+
+    /// <summary>強調の既定の外観（内側の塗りと枠線だけを描く）。</summary>
+    /// <value>ラベル・ハンドル・始点マーカー・暗転・外枠を描かない外観（色はホストが与える）。</value>
+    /// <remarks>
+    /// 強調は「対象矩形を目立たせる」用途であり、選択の対話（ハンドル・始点マーカー）や<br/>
+    /// 全面暗転は意味を持たないため、内側の装飾だけを既定とする。<br/>
+    /// 色（<see cref="MarqueeAppearance.InnerFillColor"/> / <see cref="MarqueeAppearance.InnerBorderColor"/>）は<br/>
+    /// ホストの用途で決まるため、既定は透明のまま（ホストが <see cref="HighlightAppearance"/> で与える）。
+    /// </remarks>
+    public static readonly MarqueeAppearance HighlightDefaultAppearance = MarqueeAppearance.Default with
+    {
+        ShowHandles = false,
+        ShowMarker = false,
+        ShowSizeLabel = false,
+        ShowCoordLabel = false,
+        ShowOverlay = false,
+        ShowOuterBorder = false,
+        ShowInnerFill = true,
+        ShowInnerBorder = true,
+    };
+
+    /// <summary>強調する矩形（対象座標）を取得または設定する。</summary>
+    /// <value>強調する矩形。 未設定（null）の場合は強調しない。</value>
+    /// <remarks>
+    /// 本コントロールが対象座標 → ビューポート座標の写像を担う（ホストは座標変換を持たない）。<br/>
+    /// 描画は<see cref="HighlightAppearance"/> に従う（既定は内側の塗りと枠線だけ）。<br/>
+    /// <b>画像（<see cref="Source"/>）が未設定の間は描画しない</b>（写像の基準が無いため）。
+    /// </remarks>
+    public EsRect? HighlightSourceRect
+    {
+        get => _highlightSourceRect;
+        set
+        {
+            _highlightSourceRect = value;
+            UpdateHighlight();
+        }
+    }
+
+    private EsRect? _highlightSourceRect;
+
+    /// <summary>強調の外観（色・枠線の太さ・表示可否）を取得または設定する。</summary>
+    /// <value>外観の単一値。 既定は <see cref="HighlightDefaultAppearance"/>。</value>
+    public MarqueeAppearance HighlightAppearance
+    {
+        get => _highlight.Appearance;
+        set => _highlight.Appearance = value;
+    }
+
+    /// <summary>強調矩形を内包する強調オーバーレイへ反映する。</summary>
+    /// <remarks>
+    /// 対象座標 → ビューポート座標の写像は <see cref="SourceToClient"/> が単一所有する（Fit の中央寄せ補正を含む）。<br/>
+    /// 負サイズのクランプはコア（<see cref="OverlayRectLayout.ViewportRectFromCorners"/>）が単一所有する。<br/>
+    /// 写像の結果は強調コントロールの<c>HighlightSourceRect</c>（等価変換）へ渡すため、座標系は一貫する。
+    /// </remarks>
+    private void UpdateHighlight()
+    {
+        if (_highlightSourceRect is not { } rect || Source is null)
+        {
+            _highlight.HighlightSourceRect = null;
+            return;
+        }
+
+        var topLeft = SourceToClient(new Point(rect.X, rect.Y));
+        var bottomRight = SourceToClient(new Point(rect.Right, rect.Bottom));
+        _highlight.HighlightSourceRect = OverlayRectLayout.ViewportRectFromCorners(
+            topLeft.ToEsPoint(), bottomRight.ToEsPoint());
+    }
 
     // ====================================================================
     // 公開 API: ズーム
@@ -310,6 +393,9 @@ public sealed partial class CropViewControl : Panel
     /// <summary>矩形オーバーレイの子要素（テスト用アクセサ。 コア確定値の写像を検証する）。</summary>
     /// <value>矩形 1 件につき 1 つの Panel（破線の場合は背景の下層と前景の上層を含む）。</value>
     internal IReadOnlyList<Control> RectOverlayChildren => [.. _rectOverlay.Children];
+
+    /// <summary>強調オーバーレイ（テスト用アクセサ。 強調矩形の写像と外観の反映を検証する）。</summary>
+    internal MarqueeControl HighlightMarquee => _highlight;
 
     /// <summary>現在の選択状態（選択矩形の有無）。</summary>
     public bool HasSelection => _selectionOverlay.HasSelection;

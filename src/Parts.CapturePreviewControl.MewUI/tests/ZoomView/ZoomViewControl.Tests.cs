@@ -12,8 +12,10 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.ZoomView;
 /// 判断・値・計算はコア（<see cref="ZoomViewSession"/>。 Core.Tests が全網羅する）が単一所有するため、<br/>
 /// 本テストは <b>UI 層の責務（入力の反映・通知の転送・描画内容）</b>のみを検証する。<br/>
 /// MewUI の要素生成とレイアウト（<c>Measure</c> / <c>Arrange</c>）はホスト登録を必要としないため、UI を表示せずに検証できる。<br/>
-/// 描画結果の検証は <c>ZoomSkiaRenderer.Tests.cs</c> が担う。
+/// 描画結果の検証は <c>ZoomSkiaRenderer.Tests.cs</c> が担う。<br/>
+/// <b>要素を生成するテストはコレクションで直列化する</b>（MewUI のビジュアル ツリーはスレッドセーフでない）。
 /// </remarks>
+[Collection("MewUI")]
 public class ZoomViewControlTests
 {
     /// <summary>ビューポートを確定させたコントロールを生成する。</summary>

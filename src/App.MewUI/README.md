@@ -64,8 +64,7 @@ src/App.MewUI/
         ├── FolderViewPage.cs     # フォルダビューページ（サムネイル一覧・表示モード・ソート・更新）
         ├── UndoPage.cs           # Undo 一覧ページ（サムネイル一覧・表示モード・ダブルクリックで外部表示）
         ├── SettingsPage.cs       # 設定ページ（テーマ / 保存 / キャプチャ / ホットキー / 一覧 / 外観）
-        ├── ThumbnailView.cs      # 画像を正方形へ収めるサムネイル表示ビュー
-        └── OverlayHost.cs        # 子を親領域の任意位置へ重ねる領域（ルーペの配置）
+        └── ThumbnailView.cs      # 画像を正方形へ収めるサムネイル表示ビュー
 └── tests/
     ├── App.MewUI.Tests.csproj           # xUnit v3（net10.0-windows）
     ├── TestHelper.cs                    # テスト共通ユーティリティ
@@ -81,7 +80,6 @@ App.MewUI ──> App.Core ──> EsUtil.Platform.Core / LineDetection
     │                              │
     ├──> Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
     ├──> EsUtil.Platform.Core の Win32 実装（キャプチャ等。Native.Win）
-    ├──> EsUtil.Feature.Loupe.ControlMewUI ──> EsUtil.Feature.Loupe.Core（UI 非依存のルーペロジック）
     └──> Parts.CapturePreviewControl.MewUI ──> Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則、複合コントロールの設定とモード、画像ビューポートの状態と判断）
 ```
 
