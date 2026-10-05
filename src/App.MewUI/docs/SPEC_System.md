@@ -82,15 +82,10 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 └────────────────┘
 
 （撮影・切り出しは Parts が担う）
-┌──────────────────────────────────────┐
-│  Parts.CapturePreviewControl.MewUI   │  撮影セッション・切り出しビュー・複合コントロール
-└──────────┬───────────────────────────┘
-           ├─────────────────────────────┐
-           ▼                             ▼
-┌──────────────────────────┐  ┌──────────────────────────────────┐
-│ Parts.CapturePreviewControl.Core │  │ EsUtil.Feature.Marquee.ControlMewUI │
-│ （撮影・切り出しの共通規則）  │  │ EsUtil.Feature.Loupe.ControlMewUI   │
-└──────────────────────────┘  └──────────────────────────────────┘
+
+App.MewUI ──> Parts.CapturePreviewControl.MewUI ──> Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則）
+                                                 ├──> EsUtil.Feature.Marquee.ControlMewUI（領域選択）
+                                                 └──> EsUtil.Feature.Loupe.ControlMewUI（ルーペ）
 ```
 
 - **プレビュー／切り出しに対する操作（外部提供矩形の表示・ホバー強調など）は `Parts.CapturePreviewControl` が担い、
