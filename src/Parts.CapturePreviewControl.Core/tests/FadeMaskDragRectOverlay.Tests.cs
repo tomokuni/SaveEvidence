@@ -39,8 +39,8 @@ public class FadeMaskDragRectOverlayTests
         FadeMaskDragRectOverlay.DrawSelectionRect(
             bitmap, new EsRect(10, 10, 20, 20), new EsPoint(5, 5), 4.0, DrawingColor.Black, DrawingColor.Transparent);
 
-        // 上辺（対象 y=10 → 画像 (10-5)*4 = 20）のピクセルが描画されている
-        var pixel = PixelAt(bitmap, 20, 20);
+        // 上辺・左辺は覆う画素の 1 画素外側（対象 (9,9) → 画像 19）に描画される
+        var pixel = PixelAt(bitmap, 19, 19);
         Assert.True(pixel.B < 255, $"選択矩形の辺に線が描画されていない: B={pixel.B}");
 
         // 選択矩形の内側は描画されない
@@ -53,15 +53,16 @@ public class FadeMaskDragRectOverlayTests
     {
         using var bitmap = CreateSolidBitmap(64, 64);
 
-        // 上辺の y は 0。 破線は 1 ピクセル描画 + 1 ピクセル空白の 2 ピクセル周期で、色は A → B → A … と切り替わる
+        // 選択矩形 (1,1,10,10)・倍率 4 → 覆う画素は 4 から。 枠はその 1 画素外側（y = 3）
+        // 破線は 2 ピクセル描画 + 2 ピクセル空白の周期で、色は A → B → A … と切り替わる
         FadeMaskDragRectOverlay.DrawSelectionRect(
-            bitmap, new EsRect(0, 0, 10, 10), new EsPoint(0, 0), 4.0, DrawingColor.Red, DrawingColor.Blue);
+            bitmap, new EsRect(1, 1, 10, 10), new EsPoint(0, 0), 4.0, DrawingColor.Red, DrawingColor.Blue);
 
         // 破線の先頭 2 ピクセルは色 A（赤）、次の 2 ピクセルは色 B（青）
-        Assert.Equal((byte)0, PixelAt(bitmap, 0, 0).B);
-        Assert.Equal((byte)255, PixelAt(bitmap, 0, 0).R);
-        Assert.Equal((byte)0, PixelAt(bitmap, 3, 0).R);
-        Assert.Equal((byte)255, PixelAt(bitmap, 3, 0).B);
+        Assert.Equal((byte)0, PixelAt(bitmap, 3, 3).B);
+        Assert.Equal((byte)255, PixelAt(bitmap, 3, 3).R);
+        Assert.Equal((byte)0, PixelAt(bitmap, 5, 3).R);
+        Assert.Equal((byte)255, PixelAt(bitmap, 5, 3).B);
     }
 
     /// <summary>倍率が 2 未満の場合は描画しないことを検証する。</summary>
@@ -100,11 +101,11 @@ public class FadeMaskDragRectOverlayTests
     {
         using var bitmap = CreateSolidBitmap(16, 16);
 
-        // 画像より大きい矩形（倍率 4 で 84x84）。 画像内に入る上辺・左辺のみが描画される
+        // 左上が画像外、右下が画像内に入る矩形（倍率 4） → 右辺・下辺（画像 8）だけが描画される
         FadeMaskDragRectOverlay.DrawSelectionRect(
-            bitmap, new EsRect(0, 0, 20, 20), new EsPoint(0, 0), 4.0, DrawingColor.Black, DrawingColor.Transparent);
+            bitmap, new EsRect(-2, -2, 4, 4), new EsPoint(0, 0), 4.0, DrawingColor.Black, DrawingColor.Transparent);
 
-        Assert.Equal((byte)0, PixelAt(bitmap, 0, 0).B);
+        Assert.Equal((byte)0, PixelAt(bitmap, 8, 8).B);
     }
 
     /// <summary>画像が null の場合は例外になることを検証する。</summary>
@@ -123,20 +124,22 @@ public class FadeMaskDragRectOverlayTests
     [Fact]
     internal void EnumerateDashes_4辺の破線を上から順に列挙する()
     {
-        // 切り出し左上 (0,0)・倍率 4・選択矩形 (10,10,20,20) → 画像座標は (40,40)-(124,124)
+        // 切り出し左上 (0,0)・倍率 4・選択矩形 (10,10,20,20)（半開区間） → 覆う画素は (40,40)-(119,119)、枠はその 1 画素外側
         var dashes = FadeMaskDragRectOverlay.EnumerateDashes(
             new EsRect(10, 10, 20, 20), new EsPoint(0, 0), 4.0, pixelSize: 200);
 
         Assert.NotEmpty(dashes);
 
-        // 最初のグループは上辺（Y = 40 で高さ 1）、次のグループは下辺（Y = 124 で高さ 1）
-        Assert.All(dashes.TakeWhile(d => d.Y == 40), d => Assert.Equal(1, d.Height));
-        Assert.Contains(dashes, d => d.Y == 124 && d.Height == 1);
-        // 左辺・右辺は幅 1（X = 40 / 124）
-        Assert.Contains(dashes, d => d.X == 40 && d.Width == 1);
-        Assert.Contains(dashes, d => d.X == 124 && d.Width == 1);
-        // 上辺は 40 から始まる
-        Assert.Equal(40, dashes[0].X);
+        // 上辺（Y = 39 = 覆う画素の 1 画素上）は 39 から始まり、右辺（X = 120 = 覆う画素の終端）で終わる
+        var top = dashes.TakeWhile(d => d.Y == 39).ToList();
+        Assert.All(top, d => Assert.Equal(1, d.Height));
+        Assert.Equal(39, top[0].X);
+        Assert.Equal(120, top[^1].X + top[^1].Width - 1);
+        // 下辺は覆う画素の終端（Y = 120）
+        Assert.Contains(dashes, d => d.Y == 120 && d.Height == 1);
+        // 左辺・右辺は幅 1（X = 39 / 120）
+        Assert.Contains(dashes, d => d.X == 39 && d.Width == 1);
+        Assert.Contains(dashes, d => d.X == 120 && d.Width == 1);
     }
 
     /// <summary>色の種別が辺ごとに色 A から始まり交互に切り替わることを検証する。</summary>
@@ -146,15 +149,67 @@ public class FadeMaskDragRectOverlayTests
         var dashes = FadeMaskDragRectOverlay.EnumerateDashes(
             new EsRect(10, 10, 20, 20), new EsPoint(0, 0), 4.0, pixelSize: 200);
 
-        // 上辺（Y = 40）の色は A → B → A … の順
-        var top = dashes.Where(d => d.Y == 40).ToList();
+        // 上辺（Y = 39）の色は A → B → A … の順
+        var top = dashes.Where(d => d.Y == 39).ToList();
         Assert.True(top.Count >= 2);
         Assert.True(top[0].IsColorA);
         Assert.False(top[1].IsColorA);
 
         // 辺が変わると色 A から数え直す（下辺の最初も色 A）
-        var bottom = dashes.Where(d => d.Y == 124).ToList();
+        var bottom = dashes.Where(d => d.Y == 120).ToList();
         Assert.True(bottom[0].IsColorA);
+    }
+
+    /// <summary>覆う画素数が区間の流儀（閉区間は終点を含む）で決まることを検証する。</summary>
+    /// <param name="interval">区間の流儀。</param>
+    /// <param name="width">矩形の幅（対象座標）。</param>
+    /// <param name="expectedRight">期待する右辺の X 座標（画像ピクセル）。</param>
+    /// <remarks>倍率 4・左上 (0,0) のため、覆う画素は 0 から始まり、右辺は 覆う画素数 × 4 になる（半開区間は 幅、閉区間は 幅 + 1 画素）。</remarks>
+    [Theory]
+    [InlineData(EsRectInterval.HalfOpen, 3, 12)]
+    [InlineData(EsRectInterval.Closed, 3, 16)]
+    internal void EnumerateDashes_区間の流儀で覆う画素数が変わる(EsRectInterval interval, int width, int expectedRight)
+    {
+        var dashes = FadeMaskDragRectOverlay.EnumerateDashes(
+            new EsRect(0, 0, width, 1, interval), new EsPoint(0, 0), 4.0, pixelSize: 64);
+
+        // 左辺は覆う画素の先頭（0）の 1 画素外側、右辺は覆う画素の終端
+        Assert.Contains(dashes, d => d.X == -1 && d.Width == 1);
+        Assert.Contains(dashes, d => d.X == expectedRight && d.Width == 1);
+    }
+
+    /// <summary>破線が十字線の中心点（ドラッグ中の画素の帯）と重ならないことを検証する。</summary>
+    /// <param name="endX">ドラッグの終点 X（対象座標。 ルーペの中心になる）。</param>
+    /// <param name="endY">ドラッグの終点 Y（対象座標）。</param>
+    /// <remarks>
+    /// ルーペの十字線はドラッグ中の点（＝選択の角）の画素から拡大率ぶんの幅を持つ。<br/>
+    /// 破線を選択が覆う画素の内側へ引くと、その角の辺が十字線の中心点に重なる（終点が左上のときに「少しかぶって」見える）。<br/>
+    /// 外側へ引けば、<b>ドラッグの向き（終点が右下 / 左上）に関係なく中心点の外側に接する</b>。<br/>
+    /// 本テストは 4 辺のどのダッシュも十字線の中心点（中心の画素の正方形）と交差しないことを固定する。
+    /// </remarks>
+    [Theory]
+    [InlineData(30, 20)]   // 終点が右下（始点 (10,10) → 終点 (30,20)）
+    [InlineData(10, 10)]   // 終点が左上（始点 (30,20) → 終点 (10,10)）
+    internal void EnumerateDashes_破線が十字線の中心点と重ならない(int endX, int endY)
+    {
+        const double scale = 4.0;
+        var selection = new EsRect(10, 10, 20, 10, EsRectInterval.Closed);
+        var dashes = FadeMaskDragRectOverlay.EnumerateDashes(selection, new EsPoint(0, 0), scale, pixelSize: 200);
+
+        // 十字線の中心点（ドラッグ中の画素。 拡大率ぶんの正方形）
+        var centerX = CropBoundsMath.RoundToPixel(endX * scale);
+        var centerY = CropBoundsMath.RoundToPixel(endY * scale);
+        var zoomLevel = (int)scale;
+
+        Assert.NotEmpty(dashes);
+        foreach (var dash in dashes)
+        {
+            var overlaps = dash.X < centerX + zoomLevel && dash.X + dash.Width > centerX
+                && dash.Y < centerY + zoomLevel && dash.Y + dash.Height > centerY;
+            Assert.False(
+                overlaps,
+                $"破線が十字線の中心点と重なる: dash=({dash.X},{dash.Y},{dash.Width},{dash.Height}) / 中心点=({centerX},{centerY})");
+        }
     }
 
     /// <summary>倍率が 2 未満の場合は列挙しないことを検証する。</summary>

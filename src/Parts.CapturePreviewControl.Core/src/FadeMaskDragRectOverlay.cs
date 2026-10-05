@@ -55,16 +55,21 @@ internal static class FadeMaskDragRectOverlay
     }
 
     /// <summary>選択矩形の 4 辺の破線を 1 ピクセル厚の矩形として列挙する。</summary>
-    /// <param name="selectionSourceRect">選択矩形（対象座標系・半開区間）。</param>
+    /// <param name="selectionSourceRect">選択矩形（対象座標系。 区間の流儀（<see cref="EsRect.Interval"/>）で覆う画素数が決まる）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（対象座標系）。</param>
     /// <param name="scale">対象座標 → ルーペ画像ピクセル座標の変換係数。</param>
     /// <param name="pixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。 0 以下の場合は交差判定しない。</param>
     /// <returns>破線の一覧（上辺 → 下辺 → 左辺 → 右辺の順。 色は辺ごとに色 A から始まり交互に切り替わる）。</returns>
     /// <remarks>
     /// 1. 倍率が <see cref="MinimumScale"/> 未満の場合は空を返す（破線が潰れるため）。<br/>
-    /// 2. 選択矩形（対象座標）をルーペ画像ピクセル座標へ変換する（終点は半開区間のため +1 して閉区間化する）。<br/>
+    /// 2. 選択矩形（対象座標）をルーペ画像ピクセル座標へ変換する。 覆う画素数は区間の流儀が単一所有する<br/>
+    /// （閉区間は終点を含むため 1 画素多い。 本メソッドは再判定しない）。<br/>
     /// 3. 切り出し領域と交差しない場合は空を返す。<br/>
-    /// 4. 各辺を 1 ピクセル描画 → 1 ピクセル空白の周期で列挙する（色は 1 ダッシュごとに交互に切り替える）。
+    /// 4. <b>破線は選択が覆う画素の外側（+1 画素）へ引く</b>。<br/>
+    /// ルーペの十字線はドラッグ中の点（＝選択の角）を指し、その画素から拡大率ぶんの幅を持つため、<br/>
+    /// 破線を覆う画素の内側へ引くと十字線の帯に重なる（終点が左上のときに重なって見える）。<br/>
+    /// 外側へ引けば<b>ドラッグの向きで見え方が変わらない</b>（常に十字線の帯の外側に接する）。<br/>
+    /// 5. 各辺を 1 ピクセル描画 → 1 ピクセル空白の周期で列挙する（色は 1 ダッシュごとに交互に切り替える）。
     /// </remarks>
     public static IReadOnlyList<Dash> EnumerateDashes(
         EsRect selectionSourceRect, EsPoint captureTopLeft, double scale, int pixelSize)
@@ -74,25 +79,42 @@ internal static class FadeMaskDragRectOverlay
             return [];
         }
 
-        // 対象座標 → ルーペ画像ピクセル座標（半開区間の終点を含むよう +1 する）
+        // 対象座標 → ルーペ画像ピクセル座標（覆う画素数に直す際の +1 は区間の流儀が単一所有する）
         double x = (selectionSourceRect.X - captureTopLeft.X) * scale;
         double y = (selectionSourceRect.Y - captureTopLeft.Y) * scale;
-        double w = (selectionSourceRect.Width + 1) * scale;
-        double h = (selectionSourceRect.Height + 1) * scale;
+        double coveredWidth = PixelCount(selectionSourceRect.Width, selectionSourceRect.Interval) * scale;
+        double coveredHeight = PixelCount(selectionSourceRect.Height, selectionSourceRect.Interval) * scale;
+
+        // 選択が覆う画素の外側（左上は 1 画素外側、右下は覆う画素の終端 = どちらも 1 画素外側）
+        double left = x - 1;
+        double top = y - 1;
+        double right = x + coveredWidth;
+        double bottom = y + coveredHeight;
 
         // ルーペの切り出し領域（正方形）と交差しない場合は描画しない
-        if (x + w < 0 || y + h < 0 || x > pixelSize || y > pixelSize)
+        if (right < 0 || bottom < 0 || left > pixelSize || top > pixelSize)
         {
             return [];
         }
 
         var dashes = new List<Dash>(8);
-        AppendEdge(dashes, new EsPoint(x, y), new EsPoint(x + w, y));
-        AppendEdge(dashes, new EsPoint(x, y + h), new EsPoint(x + w, y + h));
-        AppendEdge(dashes, new EsPoint(x, y), new EsPoint(x, y + h));
-        AppendEdge(dashes, new EsPoint(x + w, y), new EsPoint(x + w, y + h));
+        AppendEdge(dashes, new EsPoint(left, top), new EsPoint(right, top));
+        AppendEdge(dashes, new EsPoint(left, bottom), new EsPoint(right, bottom));
+        AppendEdge(dashes, new EsPoint(left, top), new EsPoint(left, bottom));
+        AppendEdge(dashes, new EsPoint(right, top), new EsPoint(right, bottom));
         return dashes;
     }
+
+    /// <summary>矩形の幅が覆う画素数を取得する。</summary>
+    /// <param name="width">矩形の幅（対象座標）。</param>
+    /// <param name="interval">区間の流儀。</param>
+    /// <returns>覆う画素数。</returns>
+    /// <remarks>
+    /// <c>+1</c> の判断は区間の流儀が単一所有する（<see cref="EsRectInterval.Closed"/> は終点を含むため 1 画素多い）。<br/>
+    /// 下流の層が再判定しないよう、本メソッドが唯一の入口になる。
+    /// </remarks>
+    private static double PixelCount(double width, EsRectInterval interval)
+        => interval == EsRectInterval.Closed ? width + 1 : width;
 
     /// <summary>1 辺分の破線を列挙して追加する。</summary>
     /// <param name="dashes">追加先の一覧。</param>
@@ -117,8 +139,9 @@ internal static class FadeMaskDragRectOverlay
         {
             double segmentStart = start + sign * pos;
             double segmentEnd = start + sign * Math.Min(pos + DashLength, distance);
-            int first = (int)Math.Round(segmentStart);
-            int last = (int)Math.Round(segmentEnd);
+            // 画素座標の丸めは CropBoundsMath.RoundToPixel が単一所有する（0.5 は切り上げ。 十字線と同じ規則）
+            int first = CropBoundsMath.RoundToPixel(segmentStart);
+            int last = CropBoundsMath.RoundToPixel(segmentEnd);
 
             // 負の方向へ向かう辺はダッシュを生成しない（元のループ条件 px <= segmentEnd と同じ挙動）
             if (last < first)
@@ -129,7 +152,7 @@ internal static class FadeMaskDragRectOverlay
             var isColorA = dashIndex % 2 == 0;
             dashIndex++;
 
-            int thicknessStart = (int)Math.Round(fixedCoord);
+            int thicknessStart = CropBoundsMath.RoundToPixel(fixedCoord);
             dashes.Add(horizontal
                 ? new Dash(first, thicknessStart, last - first + 1, 1, isColorA)
                 : new Dash(thicknessStart, first, 1, last - first + 1, isColorA));

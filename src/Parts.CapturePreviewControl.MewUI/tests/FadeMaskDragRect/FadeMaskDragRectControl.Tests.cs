@@ -313,12 +313,12 @@ public class FadeMaskDragRectControlTests
         var control = new FadeMaskDragRectControl();
         control.SetSelection(new EsRect(10, 10, 20, 20));
 
-        // 切り出し左上 (0,0)・倍率 4 → 画像座標 (40,40)-(124,124)
+        // 切り出し左上 (0,0)・倍率 4 → 覆う画素は (40,40)-(119,119)、枠はその 1 画素外側（(39,39)-(120,120)）
         control.DrawSelectionOverlay(target.Canvas, new EsPoint(0, 0), 4.0, 64);
 
         // 1 色目（白）で上辺が描画される
-        Assert.Equal(new SKColor(255, 255, 255), target.GetPixel(40, 40));
-        Assert.NotEqual(new SKColor(0, 0, 0, 0), target.GetPixel(40, 41));
+        Assert.Equal(new SKColor(255, 255, 255), target.GetPixel(39, 39));
+        Assert.NotEqual(new SKColor(0, 0, 0, 0), target.GetPixel(39, 40));
         // 選択矩形の内側は描画されない
         Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(50, 50));
     }
@@ -362,8 +362,9 @@ public class FadeMaskDragRectControlTests
 
         control.DrawSelectionOverlay(target.Canvas, new EsPoint(0, 0), 4.0, 64);
 
-        Assert.Equal(new SKColor(255, 0, 0), target.GetPixel(40, 40));
-        Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(43, 40));
+        // 上辺は y = 39 から。 破線は 2 ピクセル描画 + 2 ピクセル空白の周期で色が切り替わる
+        Assert.Equal(new SKColor(255, 0, 0), target.GetPixel(39, 39));
+        Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(41, 39));
     }
 
     // ====================================================================

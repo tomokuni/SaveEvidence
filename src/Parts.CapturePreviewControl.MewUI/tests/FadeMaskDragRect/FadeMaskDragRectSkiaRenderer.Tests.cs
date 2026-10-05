@@ -19,14 +19,14 @@ public class FadeMaskDragRectSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(64, 64);
 
-        // 切り出し左上 (0,0)・倍率 4・選択矩形 (10,10,20,20) → 画像座標は (40,40)-(124,124)
+        // 切り出し左上 (0,0)・倍率 4・選択矩形 (10,10,20,20) → 覆う画素は (40,40)-(119,119)、枠はその 1 画素外側
         FadeMaskDragRectSkiaRenderer.DrawSelectionRect(
             target.Canvas, new EsRect(10, 10, 20, 20), new EsPoint(0, 0), 4.0, 200,
             DrawingColor.Red, DrawingColor.Blue);
 
-        // 上辺（y = 40）と左辺（x = 40）が描画される
-        Assert.Equal(new SKColor(255, 0, 0), target.GetPixel(40, 40));
-        Assert.NotEqual(new SKColor(0, 0, 0, 0), target.GetPixel(40, 41));
+        // 上辺（y = 39）と左辺（x = 39）が描画される
+        Assert.Equal(new SKColor(255, 0, 0), target.GetPixel(39, 39));
+        Assert.NotEqual(new SKColor(0, 0, 0, 0), target.GetPixel(39, 40));
         // 選択矩形の内側は描画されない
         Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(50, 50));
     }
@@ -37,14 +37,15 @@ public class FadeMaskDragRectSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(64, 64);
 
-        // 上辺の y は 0。 破線は 1 ピクセル描画 + 1 ピクセル空白の 2 ピクセル周期で、色は A → B → A … と切り替わる
+        // 選択矩形 (1,1,10,10)・倍率 4 → 覆う画素は 4 から。 枠はその 1 画素外側（y = 3）
+        // 破線は 2 ピクセル描画 + 2 ピクセル空白の周期で、色は A → B → A … と切り替わる
         FadeMaskDragRectSkiaRenderer.DrawSelectionRect(
-            target.Canvas, new EsRect(0, 0, 10, 10), new EsPoint(0, 0), 4.0, 64,
+            target.Canvas, new EsRect(1, 1, 10, 10), new EsPoint(0, 0), 4.0, 64,
             DrawingColor.Red, DrawingColor.Blue);
 
         // 破線の先頭 2 ピクセルは色 A（赤）、次の 2 ピクセルは色 B（青）
-        Assert.Equal(new SKColor(255, 0, 0), target.GetPixel(0, 0));
-        Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(3, 0));
+        Assert.Equal(new SKColor(255, 0, 0), target.GetPixel(3, 3));
+        Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(5, 3));
     }
 
     /// <summary>倍率が 2 未満の場合は描画しないことを検証する。</summary>
@@ -83,12 +84,12 @@ public class FadeMaskDragRectSkiaRendererTests
     {
         using var target = TestHelper.CreateTarget(16, 16);
 
-        // 画像より大きい矩形（倍率 4 で 84x84）。 画像内に入る上辺（y = 0）が描画される
+        // 左上が画像外、右下が画像内に入る矩形（倍率 4） → 右辺・下辺（画像 8）だけが描画される
         FadeMaskDragRectSkiaRenderer.DrawSelectionRect(
-            target.Canvas, new EsRect(0, 0, 20, 20), new EsPoint(0, 0), 4.0, 16,
+            target.Canvas, new EsRect(-2, -2, 4, 4), new EsPoint(0, 0), 4.0, 16,
             DrawingColor.Red, DrawingColor.Blue);
 
-        Assert.Equal(new SKColor(255, 0, 0), target.GetPixel(0, 0));
+        Assert.Equal(new SKColor(255, 0, 0), target.GetPixel(8, 8));
     }
 
     /// <summary>キャンバスが null の場合は例外になることを検証する。</summary>
