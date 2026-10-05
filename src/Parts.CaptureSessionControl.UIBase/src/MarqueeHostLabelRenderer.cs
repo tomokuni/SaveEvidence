@@ -48,6 +48,7 @@ public static class MarqueeHostLabelRenderer
         var textSize = measureText(text, fontSize);
         var dipRect = new EsRect(anchor.X, anchor.Y, textSize.Width + padding * 2, textSize.Height + padding * 2);
 
-        return new MarqueeLabelPlacement(dipRect, padding, padding, text, fontSize, textColor, backgroundColor);
+        // ホストが描く付加情報ラベルは常に表示する（表示可否はコントロールの外観が持つ値であり、本ラベルには無い）
+        return new MarqueeLabelPlacement(dipRect, padding, padding, text, fontSize, textColor, backgroundColor, IsVisible: true);
     }
 }
