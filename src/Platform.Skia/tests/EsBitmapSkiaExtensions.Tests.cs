@@ -1,6 +1,6 @@
+using EsUtil.Platform.Core.Imaging;
 using SkiaSharp;
 using Xunit;
-using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.Platform.Skia.Tests;
 

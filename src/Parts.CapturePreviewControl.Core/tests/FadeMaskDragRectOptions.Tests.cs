@@ -1,7 +1,7 @@
+using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Marquee;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Loupe;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 

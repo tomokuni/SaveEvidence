@@ -129,9 +129,8 @@ src/
 │   ├── CaptureCompletion.cs               # 結果の単一確定（TCS のラップ）
 │   ├── CaptureOwnerScope.cs               # オーナー退避とキャプチャ除外の手順
 │   ├── CaptureSettingsMerge.cs            # 設定の部分更新マージ
-│   ├── CaptureSettingsLogMessage.cs       # 設定適用のログ定義
-│   ├── CaptureLogMessage.cs               # 共通ログ定義（開始・確定・キャンセル）
-│   ├── CaptureLogFormat.cs                # ログに載せる値の文字列化
+│   ├── CapturePreviewLogMessage.cs        # 共通ログ定義（開始・確定・キャンセル・設定・ズーム）
+│   ├── CapturePreviewLogFormat.cs         # ログに載せる値の文字列化・丸め
 │   ├── ICaptureTarget.cs                  # 切り出し結果の適用先（ポート）
 │   ├── ICaptureOwnerWindow.cs             # 退避対象のポート
 │   ├── CaptureSettings.cs                 # 外観・動作設定（record）
@@ -162,8 +161,6 @@ src/
 │   ├── ZoomTransition.cs                  # 段階遷移・ホイール遷移・可否判定（純粋関数）
 │   ├── ZoomMath.cs                        # Fit 実効倍率・ズーム中心維持・クランプ・座標変換（純粋関数）
 │   ├── ZoomAvailability.cs                # ズーム可否を単一に保持する値オブジェクト
-│   ├── ZoomLogMessage.cs                  # 画像ビューポートの操作ログの定義
-│   └── ZoomLogFormat.cs                   # ログに載せる値の文字列化・丸め
 └── tests/
     ├── Parts.CapturePreviewControl.Core.Tests.csproj
     ├── CropBoundsMath.Tests.cs            # クランプ・丸め・区間の流儀・丸め規則
@@ -185,7 +182,7 @@ src/
     ├── CaptureOwnerScope.Tests.cs         # 退避・除外の順序
     ├── CaptureSettingsMerge.Tests.cs      # 部分更新マージと同値スキップ・入力なし
     ├── CaptureLabelTexts.Tests.cs         # モード写像・文言の選定・サイズラベル解決
-    ├── CaptureLogMessage.Tests.cs         # ログ書式（全定義）と終了ログの組・無効ロガーの安全性
+    ├── CapturePreviewLogMessage.Tests.cs  # ログ書式（全定義）と終了ログの組・無効ロガーの安全性
     ├── CaptureHighlight.Tests.cs          # 検出→ハイライト状態の導出・変化の判定・ログ
     ├── CaptureKeyActions.Tests.cs         # Enter / Return / Escape の解釈と確定対象の有無
     ├── CaptureClickSelection.Tests.cs     # 固定と取り出しの規則

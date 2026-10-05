@@ -1,4 +1,3 @@
-using BindingFlags = System.Reflection.BindingFlags;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -6,18 +5,19 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Point = Avalonia.Point;
-using Rect = Avalonia.Rect;
-using EsUtil.Feature.Marquee.AvaloniaUI;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Core.Coord;
-using Xunit;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
-using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
+using EsUtil.Feature.Marquee.AvaloniaUI;
+using EsUtil.Platform.Core.Coord;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using Xunit;
+using BindingFlags = System.Reflection.BindingFlags;
+using DrawingColor = System.Drawing.Color;
+using Point = Avalonia.Point;
+using Rect = Avalonia.Rect;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 

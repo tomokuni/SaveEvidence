@@ -1,7 +1,7 @@
-using Xunit;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
-using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Loupe;
+using EsUtil.Feature.Marquee;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase.Tests;
 

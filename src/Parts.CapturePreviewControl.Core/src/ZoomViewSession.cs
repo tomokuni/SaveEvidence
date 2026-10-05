@@ -649,7 +649,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
             return default;
         }
 
-        log(ZoomLogFormat.Percent(ZoomPercent), ZoomLogFormat.Percent(target));
+        log(CapturePreviewLogFormat.Percent(ZoomPercent), CapturePreviewLogFormat.Percent(target));
         return SetZoom(_config.ClampZoom(target), _pointerPosition);
     }
 

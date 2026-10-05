@@ -1,8 +1,8 @@
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;

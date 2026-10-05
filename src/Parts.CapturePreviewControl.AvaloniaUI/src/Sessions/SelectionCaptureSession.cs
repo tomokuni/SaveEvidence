@@ -2,12 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
 

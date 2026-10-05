@@ -1,16 +1,16 @@
+using System.ComponentModel;
+using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Loupe.AvaloniaUI;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
-using System.ComponentModel;
-using System.Reactive.Linq;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Loupe;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.Views;
 

@@ -1,7 +1,7 @@
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using System.Runtime.InteropServices;
 
 // 本アセンブリ（サンプル）の P/Invoke はシステム ディレクトリ（System32）だけを探索する（CA5392。 理由は WinNative.cs と同じ）。
 [assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]

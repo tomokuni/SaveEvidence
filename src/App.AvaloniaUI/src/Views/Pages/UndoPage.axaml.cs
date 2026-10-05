@@ -1,13 +1,13 @@
 using System.Diagnostics;
-using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.App.Core.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using EsUtil.Platform.Core;
+using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Microsoft.Extensions.DependencyInjection;
-using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 

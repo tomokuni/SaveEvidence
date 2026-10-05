@@ -1,15 +1,15 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.SaveEvidence.Parts.LineDetection.Sample.Models;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Text.Json;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Parts.LineDetection.Sample.Models;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;

@@ -1,6 +1,6 @@
-using BindingFlags = System.Reflection.BindingFlags;
 using Avalonia.Media;
 using Xunit;
+using BindingFlags = System.Reflection.BindingFlags;
 
 namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;
 

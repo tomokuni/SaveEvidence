@@ -1,11 +1,11 @@
 using System.ComponentModel;
-using EsUtil.SaveEvidence.App.Core.Enums;
-using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.App.AvaloniaUI.Views;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Views;
+using EsUtil.SaveEvidence.App.Core.Enums;
+using EsUtil.SaveEvidence.App.Core.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI;

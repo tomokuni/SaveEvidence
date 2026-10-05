@@ -1,10 +1,10 @@
-using EsUtil.SaveEvidence.App.Core.Services;
-using EsUtil.SaveEvidence.App.Core.ViewModels;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using EsUtil.SaveEvidence.App.Core.Services;
+using EsUtil.SaveEvidence.App.Core.ViewModels;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 

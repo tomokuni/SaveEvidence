@@ -4,10 +4,10 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;
 

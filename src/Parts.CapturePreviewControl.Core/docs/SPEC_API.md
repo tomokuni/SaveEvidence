@@ -306,9 +306,9 @@
 
 | メソッド | 内容 |
 | --- | --- |
-| `CaptureLogFormat.Rect(EsRectInt)` / `CaptureLogFormat.Rect(EsRect)` | 矩形を `"X,Y,Width,Height"` の 1 行へ整形する |
-| `CaptureLogFormat.RectOrEmpty(EsRectInt?)` | 未検出（null）を空文字へ正規化する |
-| `CaptureLogFormat.Text(string?)` | 未取得（null）の文字列を空文字へ正規化する（タイトル・クラス名） |
+| `CapturePreviewLogFormat.Rect(EsRectInt)` / `CapturePreviewLogFormat.Rect(EsRect)` | 矩形を `"X,Y,Width,Height"` の 1 行へ整形する |
+| `CapturePreviewLogFormat.RectOrEmpty(EsRectInt?)` | 未検出（null）を空文字へ正規化する |
+| `CapturePreviewLogFormat.Text(string?)` | 未取得（null）の文字列を空文字へ正規化する （タイトル・クラス名） |
 
 ### 7.9 CaptureClipMath
 

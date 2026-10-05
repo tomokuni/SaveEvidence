@@ -1,25 +1,25 @@
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
-using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Native;
-using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Core.Native.Imaging;
-using EsUtil.SaveEvidence.App.Core.Enums;
-using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
-using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
-using EsUtil.SaveEvidence.App.Core.Services;
-using EsUtil.SaveEvidence.App.Core.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
-using Avalonia.Layout;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Media.Imaging;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Imaging;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
+using EsUtil.SaveEvidence.App.Core.Enums;
+using EsUtil.SaveEvidence.App.Core.Services;
+using EsUtil.SaveEvidence.App.Core.ViewModels;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views;
 
@@ -48,7 +48,7 @@ public sealed partial class MainWindow : Window
     private readonly ILogger _captureSessionControlLogger = null!;
 
     /// <summary>アプリケーションロガー。</summary>
-    private static readonly ILogger _logger = AppLog.CreateLogger("MainWindow");
+    private static readonly ILogger s_logger = AppLog.CreateLogger("MainWindow");
 
     // ナビゲーション状態（AppPage 型。 初期値 null: コンストラクタの NavigateTo(AppPage.Capture) が
     // 早期 return せず、初期ページの選択状態が設定されるようにする）
@@ -233,8 +233,8 @@ public sealed partial class MainWindow : Window
     /// <param name="captureType">押下されたホットキーに対応するアクション。</param>
     private void OnHotKeyPressed(CaptureType captureType)
     {
-        _logger.LogHotKeyReceived();
-        _logger.LogHotKeyTriggered(captureType);
+        s_logger.LogHotKeyReceived();
+        s_logger.LogHotKeyTriggered(captureType);
         _ = StartSelectionModeAsync(captureType);
     }
 
@@ -253,13 +253,13 @@ public sealed partial class MainWindow : Window
     /// <summary>ウィンドウのアクティブ化を記録する。</summary>
     private void OnMainWindowActivated(object? sender, EventArgs e)
     {
-        _logger.LogActivated();
+        s_logger.LogActivated();
     }
 
     /// <summary>ウィンドウの非アクティブ化を記録する。</summary>
     private void OnMainWindowDeactivated(object? sender, EventArgs e)
     {
-        _logger.LogDeactivated();
+        s_logger.LogDeactivated();
     }
 
     /// <summary>ウィンドウ位置・サイズを復元する。</summary>
@@ -400,7 +400,7 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
-            _logger.LogSettingsApplyError(ex, propertyName);
+            s_logger.LogSettingsApplyError(ex, propertyName);
         }
     }
 
@@ -413,7 +413,7 @@ public sealed partial class MainWindow : Window
     /// </remarks>
     internal async Task StartSelectionModeAsync(CaptureType captureType)
     {
-        _logger.LogStartSelectionMode(captureType);
+        s_logger.LogStartSelectionMode(captureType);
 
         // キャプチャ開始直前に設定を反映する（PropertyChanged 購読に加えて確実 に最新の設定を使う。
         // 設定画面での変更が購読で反映されないケース（起動直後・Reload 後など）を防ぐ）。
@@ -427,12 +427,12 @@ public sealed partial class MainWindow : Window
             var result = await _captureSessionControl.StartCaptureAsync(captureType, this);
 
             var imgInfo = result?.Image is not null ? $"{result.Image.Size.Width}x{result.Image.Size.Height}" : "null";
-            _logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
+            s_logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // セッション開始の失敗（画面取得不可等）はアプリを継続する
-            _logger.LogCaptureStartError(ex, captureType);
+            s_logger.LogCaptureStartError(ex, captureType);
         }
     }
 

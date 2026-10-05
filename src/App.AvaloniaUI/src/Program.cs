@@ -1,15 +1,15 @@
 using System.Reflection;
-using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
-using EsUtil.SaveEvidence.App.AvaloniaUI.Services;
-using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.App.Core.Services;
-using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.App.AvaloniaUI.Views;
 using Avalonia;
 using Avalonia.Threading;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Services;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Views;
+using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
+using EsUtil.SaveEvidence.App.Core.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 

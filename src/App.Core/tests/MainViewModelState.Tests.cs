@@ -1,12 +1,12 @@
-using EsUtil.SaveEvidence.Parts.LineDetection;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
+using EsUtil.SaveEvidence.Parts.LineDetection;
 using Xunit;
-using MockSettingsService = EsUtil.SaveEvidence.App.Core.Tests.MainViewModelTests.MockSettingsService;
 using MockImageWriter = EsUtil.SaveEvidence.App.Core.Tests.MainViewModelTests.MockImageWriter;
+using MockSettingsService = EsUtil.SaveEvidence.App.Core.Tests.MainViewModelTests.MockSettingsService;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
 

@@ -1,9 +1,9 @@
-using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using MockSettingsService = EsUtil.SaveEvidence.App.Core.Tests.MainViewModelTests.MockSettingsService;
-using MockImageWriter = EsUtil.SaveEvidence.App.Core.Tests.MainViewModelTests.MockImageWriter;
+using EsUtil.SaveEvidence.App.Core.ViewModels;
 using Xunit;
+using MockImageWriter = EsUtil.SaveEvidence.App.Core.Tests.MainViewModelTests.MockImageWriter;
+using MockSettingsService = EsUtil.SaveEvidence.App.Core.Tests.MainViewModelTests.MockSettingsService;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
 

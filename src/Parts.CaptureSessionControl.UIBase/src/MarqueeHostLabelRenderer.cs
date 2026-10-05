@@ -1,6 +1,6 @@
+using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Feature.Marquee;
 
 namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 

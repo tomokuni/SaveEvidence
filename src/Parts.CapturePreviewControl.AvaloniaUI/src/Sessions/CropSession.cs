@@ -1,16 +1,16 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Native;
-using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
 

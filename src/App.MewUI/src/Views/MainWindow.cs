@@ -1,11 +1,11 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.SaveEvidence.Platform.MewUI;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.MewUI.Icons;
+using EsUtil.SaveEvidence.Platform.MewUI;
 using MewUIColor = Aprillz.MewUI.Color;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
@@ -29,11 +29,11 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 internal sealed class MainWindow
 {
     /// <summary>復元するサイズが設定されていない場合の既定ウィンドウサイズ（DIP）。</summary>
-    private static readonly Size DefaultWindowSize = new(1200, 800);
+    private static readonly Size s_defaultWindowSize = new(1200, 800);
 
     /// <summary>ウィンドウの最小サイズ（DIP）。</summary>
     /// <remarks>Avalonia 版 <c>MainWindow.axaml</c> の <c>MinWidth</c> / <c>MinHeight</c> と同じ値。</remarks>
-    private static readonly Size MinWindowSize = new(800, 400);
+    private static readonly Size s_minWindowSize = new(800, 400);
 
     /// <summary>タイトルバー領域の高さ（DIP）。 非クライアント領域をこの高さでクライアント領域へ拡張する。</summary>
     private const double TitleBarHeight = 32;
@@ -114,8 +114,8 @@ internal sealed class MainWindow
         // ページ内容は後から設定する。
         var window = new Window()
             .Resizable(
-                DefaultWindowSize.Width, DefaultWindowSize.Height,
-                minWidth: MinWindowSize.Width, minHeight: MinWindowSize.Height);
+                s_defaultWindowSize.Width, s_defaultWindowSize.Height,
+                minWidth: s_minWindowSize.Width, minHeight: s_minWindowSize.Height);
 
         // ホバー・押下で変化する見た目はスタイルで与える（ローカル値で背景を設定すると状態変化が効かなくなる）
         window.StyleSheet = AppStyles.Create();
@@ -448,9 +448,9 @@ internal sealed class MainWindow
         var scale = DpiHelper.GetDpiForPoint(new Point(bounds.X, bounds.Y)) / 96.0;
 
         window.WindowSize = WindowSize.Resizable(
-            Math.Max(MinWindowSize.Width, WindowPlacementMath.ToDipLength(bounds.Width, scale)),
-            Math.Max(MinWindowSize.Height, WindowPlacementMath.ToDipLength(bounds.Height, scale)),
-            MinWindowSize.Width, MinWindowSize.Height);
+            Math.Max(s_minWindowSize.Width, WindowPlacementMath.ToDipLength(bounds.Width, scale)),
+            Math.Max(s_minWindowSize.Height, WindowPlacementMath.ToDipLength(bounds.Height, scale)),
+            s_minWindowSize.Width, s_minWindowSize.Height);
 
         var position = WindowPlacementMath.ToDipPoint(new EsPointInt(bounds.X, bounds.Y), scale);
         window.StartManualPosition(position.X, position.Y);

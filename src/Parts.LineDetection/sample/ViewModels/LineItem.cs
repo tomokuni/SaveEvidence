@@ -1,7 +1,7 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Point = Avalonia.Point;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using Point = Avalonia.Point;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 

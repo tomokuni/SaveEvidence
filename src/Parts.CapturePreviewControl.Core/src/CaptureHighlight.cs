@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Native;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core;
@@ -25,7 +25,7 @@ public readonly record struct CaptureHighlight(EsRect? SourceRect, bool TitleCha
 /// 1. 未検出時の正規化（矩形は null・表示名は空文字。 検出矩形を使わない）。<br/>
 /// 2. 画面物理座標 → 対象座標の変換（画像の原点を減算する。<see cref="CaptureClipMath.ToLocalRect(EsRectInt, EsPointInt)"/> へ委譲）。<br/>
 /// 3. 表示名の変化の判定（情報ラベルの再描画に必要な最小限の判断。 UI ごとの文字列比較を書かせない）。<br/>
-/// 4. 検出結果のログ（<see cref="CaptureLogMessage.LogHighlight"/>。 両 UI で同じ事象を同じ書式で記録する）。<br/>
+/// 4. 検出結果のログ（<see cref="CapturePreviewLogMessage.LogHighlight"/>。 両 UI で同じ事象を同じ書式で記録する）。<br/>
 /// <br/>
 /// <b>ハイライトの有無は <see cref="SourceRect"/> の null が表す</b>（有効フラグを別に持たない）。<br/>
 /// <b>状態</b>は「直前の表示名」とハイライト矩形を持ち、矩形の複製を選択コントロールへ渡す。
@@ -39,7 +39,7 @@ public sealed class CaptureHighlightSession(ILogger? logger = null)
     /// <summary>直前に検出した要素の表示名（未検出・未取得の場合は空文字）を取得する。</summary>
     /// <value>情報ラベル（ウィンドウタイトル）に表示する文言。 未検出の場合は空文字。</value>
     /// <remarks>情報ラベルの文言プロバイダが参照する（表示時のみ評価される）。</remarks>
-    public string Title { get; private set; } = CaptureLogFormat.Text(null);
+    public string Title { get; private set; } = CapturePreviewLogFormat.Text(null);
 
     /// <summary>直前に検出した要素のハイライト矩形（対象座標）を取得する。</summary>
     /// <value>ハイライト矩形（画像ローカル物理ピクセル）。 未検出の場合は null。</value>
@@ -63,7 +63,7 @@ public sealed class CaptureHighlightSession(ILogger? logger = null)
         var local = detection.IsDetected
             ? CaptureClipMath.ToLocalRect(detection.Bounds, imageOrigin)
             : default;
-        var title = CaptureLogFormat.Text(detection.IsDetected ? detection.Title : null);
+        var title = CapturePreviewLogFormat.Text(detection.IsDetected ? detection.Title : null);
         var titleChanged = !string.Equals(title, Title, StringComparison.Ordinal);
 
         Title = title;

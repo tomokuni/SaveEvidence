@@ -1,7 +1,7 @@
 using Avalonia.Media.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Services;
 

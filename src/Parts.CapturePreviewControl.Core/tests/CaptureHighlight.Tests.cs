@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Native;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
@@ -111,7 +111,7 @@ public class CaptureHighlightTests
         session.Update(CaptureType.WindowSelect, Detected(new EsRectInt(2020, 100, 800, 600)), new EsPointInt(1920, 0));
 
         Assert.Equal(
-            "[CaptureSession] Highlight: type=WindowSelect detected=True rect=100,100,800,600 title=Sample class=Notepad",
+            "[CapturePreviewControl] Highlight: type=WindowSelect detected=True rect=100,100,800,600 title=Sample class=Notepad",
             Assert.Single(logger.Messages));
     }
 
@@ -125,7 +125,7 @@ public class CaptureHighlightTests
         session.Update(CaptureType.ScreenSelect, default, default);
 
         Assert.Equal(
-            "[CaptureSession] Highlight: type=ScreenSelect detected=False rect= title= class=",
+            "[CapturePreviewControl] Highlight: type=ScreenSelect detected=False rect= title= class=",
             Assert.Single(logger.Messages));
     }
 

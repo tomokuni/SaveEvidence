@@ -1,21 +1,21 @@
 using System.Diagnostics;
 using Avalonia;
+using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
-using Point = Avalonia.Point;
-using Rect = Avalonia.Rect;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
-using Avalonia.Headless.XUnit;
-using BindingFlags = System.Reflection.BindingFlags;
+using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Xunit;
+using BindingFlags = System.Reflection.BindingFlags;
+using Point = Avalonia.Point;
+using Rect = Avalonia.Rect;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 

@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using Avalonia;
+using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Xunit;
-using Avalonia.Headless.XUnit;
 
 namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 

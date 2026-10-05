@@ -28,7 +28,7 @@ internal static partial class AppLog
     /// グローバル例外ハンドラ（<c>Log.Fatal</c>）と <c>ILoggerFactory</c>（MEL ブリッジ）の両方が<br/>
     /// 同一の Serilog パイプラインを共有するため、静的ロガーを初期化してからファクトリを構築する。
     /// </remarks>
-    private static readonly ILoggerFactory Factory = CreateFactory();
+    private static readonly ILoggerFactory s_factory = CreateFactory();
 
     /// <summary>Serilog ロガーを初期化し、MEL (Microsoft.Extensions.Logging) ブリッジのファクトリを構築する。</summary>
     /// <returns>Serilog へ転送する <see cref="ILoggerFactory"/>。</returns>
@@ -70,7 +70,7 @@ internal static partial class AppLog
     /// <summary>指定カテゴリ名のロガーを生成する。</summary>
     /// <param name="categoryName">ロガーカテゴリ名（例: "CapturePage"）。</param>
     /// <returns>生成したロガー。</returns>
-    internal static ILogger CreateLogger(string categoryName) => Factory.CreateLogger(categoryName);
+    internal static ILogger CreateLogger(string categoryName) => s_factory.CreateLogger(categoryName);
 
     // ====================================================================
     // グローバル例外補足（ルート）・アプリライフサイクル

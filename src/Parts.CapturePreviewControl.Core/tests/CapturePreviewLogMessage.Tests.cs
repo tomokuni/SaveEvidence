@@ -1,15 +1,15 @@
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 
-/// <summary><see cref="CaptureLogMessage"/> / <see cref="CaptureLogFormat"/> の仕様テスト（UI 非依存・並列実行）。</summary>
+/// <summary><see cref="CapturePreviewLogMessage"/> / <see cref="CapturePreviewLogFormat"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>ログの書式（プレフィックス・項目名）と、ロガー未設定でも安全に呼べることを固定する。</remarks>
-public class CaptureLogMessageTests
+public class CapturePreviewLogMessageTests
 {
     /// <summary>ログを収集するロガー。</summary>
     private sealed class RecordingLogger : ILogger
@@ -35,7 +35,7 @@ public class CaptureLogMessageTests
 
         logger.LogCaptureStart(CaptureType.AreaSelect);
 
-        Assert.Equal("[CaptureSession] CaptureStart: type=AreaSelect", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] CaptureStart: type=AreaSelect", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -48,8 +48,8 @@ public class CaptureLogMessageTests
         logger.LogCaptureFinished(new CaptureResult(image, new EsRectInt(1, 2, 20, 10)));
 
         Assert.Equal(2, logger.Messages.Count);
-        Assert.Equal("[CaptureSession] CaptureCompleted: bounds=1,2,20,10", logger.Messages[0]);
-        Assert.Equal("[CaptureSession] Result: bitmap=20x10 bounds=1,2,20,10", logger.Messages[1]);
+        Assert.Equal("[CapturePreviewControl] CaptureCompleted: bounds=1,2,20,10", logger.Messages[0]);
+        Assert.Equal("[CapturePreviewControl] Result: bitmap=20x10 bounds=1,2,20,10", logger.Messages[1]);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class CaptureLogMessageTests
 
         logger.LogCaptureFinished(null);
 
-        Assert.Equal("[CaptureSession] CaptureCancelled", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] CaptureCancelled", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class CaptureLogMessageTests
 
         logger.LogCaptureFinished(new CaptureResult(null, default));
 
-        Assert.Equal("[CaptureSession] CaptureCancelled", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] CaptureCancelled", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class CaptureLogMessageTests
 
         logger.LogCropStart(image);
 
-        Assert.Equal("[CaptureSession] CropStart: source=1920x1080", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] CropStart: source=1920x1080", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class CaptureLogMessageTests
 
         logger.LogCropFinished(new EsRectInt(10, 20, 30, 40));
 
-        Assert.Equal("[CaptureSession] CropCompleted: bounds=10,20,30,40", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] CropCompleted: bounds=10,20,30,40", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class CaptureLogMessageTests
 
         logger.LogCropFinished(default);
 
-        Assert.Equal("[CaptureSession] CropCancelled", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] CropCancelled", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class CaptureLogMessageTests
 
         logger.LogCropCancelled();
 
-        Assert.Equal("[CaptureSession] CropCancelled", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] CropCancelled", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class CaptureLogMessageTests
 
         logger.LogSettingApplied();
 
-        Assert.Equal("[CaptureSession] SettingApplied", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] SettingApplied", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class CaptureLogMessageTests
 
         logger.LogVirtualScreen(new EsPointInt(-1920, -200), bitmap);
 
-        Assert.Equal("[CaptureSession] VirtualScreen: origin=(-1920, -200) size=3840x2160", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] VirtualScreen: origin=(-1920, -200) size=3840x2160", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -166,7 +166,7 @@ public class CaptureLogMessageTests
 
         logger.LogVirtualScreen(new EsPointInt(10, 20), null);
 
-        Assert.Equal("[CaptureSession] VirtualScreen: origin=(10, 20) size=0x0", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] VirtualScreen: origin=(10, 20) size=0x0", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -176,7 +176,7 @@ public class CaptureLogMessageTests
 
         logger.LogConfirmRequested(new EsRectInt(10, 10, 50, 40));
 
-        Assert.Equal("[CaptureSession] ConfirmRequested: rect=10,10,50,40", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] ConfirmRequested: rect=10,10,50,40", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public class CaptureLogMessageTests
 
         logger.LogCancelRequested();
 
-        Assert.Equal("[CaptureSession] CancelRequested", Assert.Single(logger.Messages));
+        Assert.Equal("[CapturePreviewControl] CancelRequested", Assert.Single(logger.Messages));
     }
 
     [Fact]
@@ -197,35 +197,86 @@ public class CaptureLogMessageTests
         logger.LogHighlight(CaptureType.WindowSelect, true, new EsRectInt(100, 50, 800, 600), "Sample", "Notepad");
 
         Assert.Equal(
-            "[CaptureSession] Highlight: type=WindowSelect detected=True rect=100,50,800,600 title=Sample class=Notepad",
+            "[CapturePreviewControl] Highlight: type=WindowSelect detected=True rect=100,50,800,600 title=Sample class=Notepad",
             Assert.Single(logger.Messages));
     }
 
     [Fact]
-    internal void CaptureLogFormat_Rect_論理矩形をx_y_w_hで整形する()
+    internal void CapturePreviewLogFormat_Rect_論理矩形をx_y_w_hで整形する()
     {
-        Assert.Equal("10,20,30,40", CaptureLogFormat.Rect(new EsRect(10, 20, 30, 40)));
+        Assert.Equal("10,20,30,40", CapturePreviewLogFormat.Rect(new EsRect(10, 20, 30, 40)));
     }
 
     [Fact]
-    internal void CaptureLogFormat_Rect_PixelRectをx_y_w_hで整形する()
+    internal void CapturePreviewLogFormat_Rect_PixelRectをx_y_w_hで整形する()
     {
-        Assert.Equal("10,20,30,40", CaptureLogFormat.Rect(new EsRectInt(10, 20, 30, 40)));
+        Assert.Equal("10,20,30,40", CapturePreviewLogFormat.Rect(new EsRectInt(10, 20, 30, 40)));
     }
 
     [Fact]
-    internal void CaptureLogFormat_RectOrEmpty_未検出のPixelRectは空文字にする()
+    internal void CapturePreviewLogFormat_RectOrEmpty_未検出のPixelRectは空文字にする()
     {
         // 「未検出は空文字」という正規化を単一所有する
-        Assert.Equal("", CaptureLogFormat.RectOrEmpty(null));
-        Assert.Equal("10,20,30,40", CaptureLogFormat.RectOrEmpty(new EsRectInt(10, 20, 30, 40)));
+        Assert.Equal("", CapturePreviewLogFormat.RectOrEmpty(null));
+        Assert.Equal("10,20,30,40", CapturePreviewLogFormat.RectOrEmpty(new EsRectInt(10, 20, 30, 40)));
     }
 
     [Fact]
-    internal void CaptureLogFormat_Text_nullは空文字にする()
+    internal void CapturePreviewLogFormat_Text_nullは空文字にする()
     {
-        Assert.Equal("", CaptureLogFormat.Text(null));
-        Assert.Equal("Sample", CaptureLogFormat.Text("Sample"));
+        Assert.Equal("", CapturePreviewLogFormat.Text(null));
+        Assert.Equal("Sample", CapturePreviewLogFormat.Text("Sample"));
     }
 }
 
+/// <summary>
+/// <see cref="CapturePreviewLogMessage"/> / <see cref="CapturePreviewLogFormat"/> のテスト（書式・レベル・丸め）。
+/// </summary>
+public class CapturePreviewLogFormatTests
+{
+    /// <summary>ズーム率のログ用の丸めが四捨五入であることを検証する。</summary>
+    /// <param name="value">丸める前の値。</param>
+    /// <param name="expected">期待する整数。</param>
+    [Theory]
+    [InlineData(50.0, 50)]
+    [InlineData(61.6, 62)]
+    [InlineData(61.4, 61)]
+    [InlineData(109.5, 110)]
+    [InlineData(0.4, 0)]
+    internal void Percent_四捨五入する(double value, int expected)
+        => Assert.Equal(expected, CapturePreviewLogFormat.Percent(value));
+
+    /// <summary>倍率の文字列化が不変カルチャで行われることを検証する。</summary>
+    [Fact]
+    internal void Scale_不変カルチャで整形する()
+        => Assert.Equal("1.25", CapturePreviewLogFormat.Scale(1.25));
+
+    /// <summary>ズームイン・ズームアウトの書式が両 UI 共通の形式であることを検証する。</summary>
+    [Fact]
+    internal void ズーム操作の書式が期待どおりである()
+    {
+        var logger = new RecordingLogger();
+
+        logger.LogZoomIn(current: 50, target: 62);
+        logger.LogZoomOut(current: 62, target: 50);
+        logger.LogZoomInWheel(current: 100, target: 110);
+        logger.LogZoomOutWheel(current: 110, target: 100);
+
+        Assert.Equal("[CapturePreviewControl] ZoomIn: 50% -> 62%", logger.Messages[0]);
+        Assert.Equal("[CapturePreviewControl] ZoomOut: 62% -> 50%", logger.Messages[1]);
+        Assert.Equal("[CapturePreviewControl] ZoomInWheel: 100% -> 110%", logger.Messages[2]);
+        Assert.Equal("[CapturePreviewControl] ZoomOutWheel: 110% -> 100%", logger.Messages[3]);
+    }
+
+    /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
+    [Fact]
+    internal void 無効ロガーでも安全に実行される()
+    {
+        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+
+        logger.LogZoomIn(50, 62);
+        logger.LogZoomOut(62, 50);
+        logger.LogZoomInWheel(100, 110);
+        logger.LogZoomOutWheel(110, 100);
+    }
+}

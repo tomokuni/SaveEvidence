@@ -1,26 +1,26 @@
 using System.ComponentModel;
 using System.Globalization;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
-using EsUtil.Platform.Core;
-using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
-using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
-using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.App.Core.Services;
-using EsUtil.SaveEvidence.App.Core.ViewModels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
+using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
+using EsUtil.SaveEvidence.App.Core.ViewModels;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
@@ -62,7 +62,7 @@ public sealed partial class CapturePage : UserControl
     private bool _isCaptureInProgress;
 
     // アプリケーションロガー
-    private static readonly ILogger _logger = AppLog.CreateLogger("CapturePage");
+    private static readonly ILogger s_logger = AppLog.CreateLogger("CapturePage");
 
     /// <summary>市松模様の明色（色 A）の既定色（設定の色文字列が不正な場合に使う）。</summary>
     private static readonly System.Drawing.Color s_defaultCheckerColorA = System.Drawing.Color.FromArgb(255, 255, 255, 255);
@@ -96,7 +96,7 @@ public sealed partial class CapturePage : UserControl
         SetupViewModelCallbacks();
 
         // CropViewControl（自己完結型複合コントロール）にロガーを注入する
-        CropView.Log = _logger;
+        CropView.Log = s_logger;
 
         // 自動切り出しのホバー強調の外観（内側の塗りと枠線）を CropViewControl へ与える。
         // 色・枠線の太さ・表示可否は描画にだけ必要な設定であり、強調の描画手順は CropViewControl（Parts）が単一所有する。
@@ -783,13 +783,13 @@ public sealed partial class CapturePage : UserControl
     private void OnRedoMenuClick(object? sender, RoutedEventArgs e) => RestoreRedo();
 
     private void OnCaptureScreenClick(object? sender, RoutedEventArgs e)
-        => StartCapture(CaptureType.ScreenSelect, _logger.LogCaptureMenuScreen);
+        => StartCapture(CaptureType.ScreenSelect, s_logger.LogCaptureMenuScreen);
 
     private void OnCaptureWindowClick(object? sender, RoutedEventArgs e)
-        => StartCapture(CaptureType.WindowSelect, _logger.LogCaptureMenuWindow);
+        => StartCapture(CaptureType.WindowSelect, s_logger.LogCaptureMenuWindow);
 
     private void OnCaptureAreaClick(object? sender, RoutedEventArgs e)
-        => StartCapture(CaptureType.AreaSelect, _logger.LogCaptureMenuArea);
+        => StartCapture(CaptureType.AreaSelect, s_logger.LogCaptureMenuArea);
 
     /// <summary>メニューからのキャプチャ開始を共通処理する（ログ記録 + MainWindow への委譲）。</summary>
     /// <param name="captureType">開始するキャプチャ種別。</param>
@@ -950,7 +950,7 @@ public sealed partial class CapturePage : UserControl
         var point = e.GetCurrentPoint(CropView);
         var isRight = point.Properties.IsRightButtonPressed;
         var hasCropTask = _cropTask is not null;
-        _logger.LogPreviewPointerPressed(isRight, hasCropTask);
+        s_logger.LogPreviewPointerPressed(isRight, hasCropTask);
         if (isRight && hasCropTask)
         {
             ShowCropContextMenu();

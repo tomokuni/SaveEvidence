@@ -1,15 +1,15 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
-using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.App.Core.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
+using EsUtil.Platform.Core;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
+using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
@@ -26,7 +26,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
     private readonly FolderViewViewModel _viewModel = null!;
 
     /// <summary>アプリケーションロガー。</summary>
-    private static readonly ILogger _logger = AppLog.CreateLogger("FolderViewPage");
+    private static readonly ILogger s_logger = AppLog.CreateLogger("FolderViewPage");
 
     /// <summary>サムネイルキャッシュの最大保持数。</summary>
     private const int ThumbnailCacheCapacity = 100;
@@ -97,7 +97,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
-            _logger.LogFolderViewLoadError(ex, MainViewModel.SaveFolderPathResolved);
+            s_logger.LogFolderViewLoadError(ex, MainViewModel.SaveFolderPathResolved);
             _viewModel.ItemCount = 0;
             FileListBox.ItemsSource = null;
         }
@@ -154,7 +154,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
             // 復号できない画像はサムネイルを出さない（一覧は継続する）
-            _logger.LogThumbnailLoadError(ex, filePath);
+            s_logger.LogThumbnailLoadError(ex, filePath);
             return null;
         }
     }

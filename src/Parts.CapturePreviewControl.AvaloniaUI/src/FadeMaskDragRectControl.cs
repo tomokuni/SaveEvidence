@@ -1,20 +1,20 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using EsUtil.Feature.Marquee.AvaloniaUI;
+using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Loupe.AvaloniaUI;
-using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Feature.Marquee;
+using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
-using Microsoft.Extensions.Logging;
-using System.Globalization;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
-using EsUtil.Feature.Loupe;
-using EsUtil.Feature.Marquee;
+using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
 

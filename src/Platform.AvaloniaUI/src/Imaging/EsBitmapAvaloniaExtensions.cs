@@ -5,10 +5,10 @@ using Avalonia.Platform;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native.Imaging;
-using SkiaSharp;
-using Color = System.Drawing.Color;
-using AvaloniaColor = Avalonia.Media.Color;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using SkiaSharp;
+using AvaloniaColor = Avalonia.Media.Color;
+using Color = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 
