@@ -247,7 +247,7 @@ sequenceDiagram
 | **`WindowState.Maximized` は 1 モニターへ寄せる**（全モニターを覆えない） | 最大化は使わず、物理ピクセルで仮想スクリーン全面を指定する |
 | **ウィンドウは表示時に背景色で塗られる**（画像を描くまで数十 ms の空白） | 透明で表示し、2 フレーム目で解除する（背景は画像の平均色） |
 | **`Hide` と `Show` の往復はウィンドウを再作成させる** | 退避は位置の変更にし、復帰は位置を戻すだけにする |
-| **`MarqueeTextPlacement` は `EsUtil.Feature.Marquee.Presenter.Drawing`、`MarqueePresenter` は `EsUtil.Feature.Marquee` で `public`** | 汎用コアと描画層として公開する（`InternalsVisibleTo` は不要） |
+| **描画層が UI 層へ渡す値（`EsUtil.Feature.Marquee.Presenter` の `MarqueeDrawPlan` 等）は `EsUtil.Feature.Marquee` で `public`** | 汎用コアと描画層として公開する（ `InternalsVisibleTo` は不要） |
 
 ## 9. 検証
 

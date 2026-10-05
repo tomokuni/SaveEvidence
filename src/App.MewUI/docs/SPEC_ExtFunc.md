@@ -89,7 +89,7 @@
 
 ### 3.3 選択中のラベル
 
-選択矩形の左上に行を縦に積んで表示します（背景付き）。 サイズラベルはコア（`MarqueeTextPlacement` が文言）と描画層（`EsUtil.Feature.Marquee.Presenter` の `MarqueePresenter`（`LabelPlan` partial） が実寸からの配置）が単一所有し、コントロールがテキスト要素として表示します。 操作・情報ラベルはアプリ固有の付加情報のため、ホストが `FadeMaskDragRectOptions.Labels` の外観で描き、文言は `CaptureLabelTexts`（`Parts.CapturePreviewControl.Core`）が与えます。
+選択矩形の左上に行を縦に積んで表示します（背景付き）。 サイズラベルは提示層（`EsUtil.Feature.Marquee.Presenter` の `MarqueePresenter`）が文言と実寸からの配置を単一所有し、コントロールがテキスト要素として表示します。 操作・情報ラベルはアプリ固有の付加情報のため、ホストが `FadeMaskDragRectOptions.Labels` の外観で描き、文言は `CaptureLabelTexts`（`Parts.CapturePreviewControl.Core`）が与えます。
 
 | 行 | 内容 | 表示条件 | 設定 |
 | --- | --- | --- | --- |
