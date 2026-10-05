@@ -146,7 +146,7 @@ public partial class LineCanvasView : UserControl
     }
 
     /// <summary>ルーペの Bitmap に線分オーバーレイ（選択中/ホバー中の線分の破線）を描画する。</summary>
-    /// <param name="e">ルーペの表示情報（描画済み Bitmap・切り出し左上・スケール）。</param>
+    /// <param name="e">ルーペの表示情報（描画済み Bitmap・描画計画）。</param>
     /// <remarks>
     /// 対象の線分一覧（<see cref="DetectionContext.LoupeOverlayLines"/>）を対象座標 → ルーペ画像ピクセル座標へ変換し、<br/>
     /// 選択中 = オレンジ / ホバー中 = 赤の破線を Bitmap（WriteableBitmap）のピクセルバッファへ直接描画する。<br/>
@@ -154,7 +154,7 @@ public partial class LineCanvasView : UserControl
     /// </remarks>
     private void DrawLoupeOverlay(LoupeRenderedEventArgs e)
     {
-        if (e.CaptureTopLeft is not { } topLeft)
+        if (e.Content.CaptureTopLeft is not { } topLeft)
         {
             return;
         }
@@ -167,13 +167,13 @@ public partial class LineCanvasView : UserControl
         // 選択中 = オレンジ / ホバー中 = 赤。 色は事前に選んでから描画する（ループ内のキャストを避ける）
         foreach (var line in lines)
         {
-            var start = new Point((line.Start.X - topLeft.X) * e.Scale, (line.Start.Y - topLeft.Y) * e.Scale);
-            var end = new Point((line.End.X - topLeft.X) * e.Scale, (line.End.Y - topLeft.Y) * e.Scale);
+            var start = new Point((line.Start.X - topLeft.X) * e.Content.ZoomLevel, (line.Start.Y - topLeft.Y) * e.Content.ZoomLevel);
+            var end = new Point((line.End.X - topLeft.X) * e.Content.ZoomLevel, (line.End.Y - topLeft.Y) * e.Content.ZoomLevel);
 
             // 検出された線分の座標をそのまま使って破線を描画する。
             // 線分の座標は LogicLineDetector がウィンドウ枠の境界（外縁）に補正済みのため、
             // ルーペ内でも枠の線上に表示される（見た目だけのスナップは行わない）
-            DrawDashedLine(e.Bitmap, start, end, line.IsSelected ? s_selectedOverlayColor : s_hoverOverlayColor, DashPattern, e.Scale);
+            DrawDashedLine(e.Bitmap, start, end, line.IsSelected ? s_selectedOverlayColor : s_hoverOverlayColor, DashPattern, e.Content.ZoomLevel);
         }
     }
 
@@ -192,7 +192,7 @@ public partial class LineCanvasView : UserControl
     /// <param name="end">線分の終点（Bitmap ピクセル座標）。</param>
     /// <param name="color">描画色（不透明）。</param>
     /// <param name="dash">破線パターン（描画長・間隔長の交互リスト・ルーピクセル）。</param>
-    /// <param name="thickness">線の太さ（ルーピクセル）。 1 対象ピクセル = ズーム倍率（<see cref="LoupeRenderedEventArgs.Scale"/>）分。</param>
+    /// <param name="thickness">線の太さ（ルーピクセル）。 1 対象ピクセル = ズーム倍率（<see cref="LoupeDrawPlan.ZoomLevel"/>）分。</param>
     /// <remarks>
     /// 既存ピクセルを保持したまま、<paramref name="dash"/> のパターンで線分上のピクセルを塗る。<br/>
     /// 線の太さは <paramref name="thickness"/> の分だけ線分の両側へ広げて塗る（中心線の法線方向）。<br/>

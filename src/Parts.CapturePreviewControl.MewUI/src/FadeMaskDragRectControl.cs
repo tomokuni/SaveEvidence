@@ -491,7 +491,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <b>操作ラベル・情報ラベルは選択コントロールの概念ではない</b>（アプリ固有の付加情報）ため、<br/>
     /// 本クラス（ホスト）が文言の生成と描画を行い、<see cref="FadeMaskHostLabelRenderer"/>（本層）が配置指示（積み上げの位置と表示可否）を単一所有する。<br/>
     /// <b>描画は本クラスが行う</b>（描画 API は UI フレームワーク固有のため、提示層は配置指示までを返す）。<br/>
-    /// 本ハンドラはコントロールの子要素（ラベル）より後に呼ばれるため、付加情報はラベルより前面に置かれる。
+    /// 本ハンドラは図形（コントロールの子の描画キャンバス）の描画中に呼ばれるため、付加情報は<br/>
+    /// <b>図形の上・ラベル要素（子の末尾側）の下</b>に置かれる（付加情報はラベルと重ならない位置に置くことが前提）。
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
     {
@@ -532,9 +533,9 @@ public sealed class FadeMaskDragRectControl : Panel
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {
-        if (e.CaptureTopLeft is { } topLeft)
+        if (e.Content.CaptureTopLeft is { } topLeft)
         {
-            DrawSelectionOverlay(e.Canvas, topLeft, e.Scale, e.ClientPixelSize);
+            DrawSelectionOverlay(e.Canvas, topLeft, e.Content.ZoomLevel, e.Content.ClientPixelSize);
         }
     }
 

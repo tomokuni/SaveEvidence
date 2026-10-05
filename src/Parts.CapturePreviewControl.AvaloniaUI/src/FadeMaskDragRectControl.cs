@@ -515,7 +515,8 @@ public sealed class FadeMaskDragRectControl : Panel
     /// <b>操作ラベル・情報ラベルは選択コントロールの概念ではない</b>（アプリ固有の付加情報）ため、<br/>
     /// 本クラス（ホスト）が文言の生成を行い、<see cref="FadeMaskHostLabelRenderer"/>（本層）が配置指示（積み上げの位置と表示可否）を単一所有する。<br/>
     /// <b>描画は本クラスが行う</b>（描画 API は UI フレームワーク固有のため、提示層は配置指示までを返す）。<br/>
-    /// 本ハンドラはコントロールの子要素（ラベル）より後に呼ばれるため、付加情報はラベルより前面に置かれる。
+    /// 本ハンドラは図形（コントロールの子の描画キャンバス）の描画中に呼ばれるため、付加情報は<br/>
+    /// <b>図形の上・ラベル要素（子の末尾側）の下</b>に置かれる（付加情報はラベルと重ならない位置に置くことが前提）。
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
     {
@@ -576,15 +577,15 @@ public sealed class FadeMaskDragRectControl : Panel
     {
         // 破線を描くかどうかはモード（コアが単一所有する）と切り出し領域・選択矩形の有無で決まる
         if (FadeMaskDragRectModes.Resolve(_mode).ShowSelectionOverlay
-            && e.CaptureTopLeft is { } topLeft
+            && e.Content.CaptureTopLeft is { } topLeft
             && _marquee.HasSelection)
         {
             // 破線色（色A / 色B）を 2 つ用意し、交互に塗る（描画はコアが単一所有する）
             FadeMaskDragRectOverlay.DrawSelectionRect(
                 e.Bitmap,
                 _marquee.SelectionSourceRect,
-                topLeft.ToEsPoint(),
-                e.Scale,
+                topLeft,
+                e.Content.ZoomLevel,
                 _options.SelectionRectColorA,
                 _options.SelectionRectColorB);
         }

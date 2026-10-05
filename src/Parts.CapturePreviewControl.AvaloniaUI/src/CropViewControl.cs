@@ -512,14 +512,14 @@ public sealed partial class CropViewControl : Panel
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {
-        if (e.CaptureTopLeft is not { } topLeft)
+        if (e.Content.CaptureTopLeft is not { } topLeft)
         {
             return;
         }
 
         foreach (var rect in Rects)
         {
-            OverlayRectRasterizer.Draw(e.Bitmap, rect, topLeft.ToEsPoint(), e.Scale);
+            OverlayRectRasterizer.Draw(e.Bitmap, rect, topLeft, e.Content.ZoomLevel);
         }
     }
 }
