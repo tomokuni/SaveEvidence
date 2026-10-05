@@ -173,7 +173,7 @@ public partial class LineCanvasView : UserControl
             // 検出された線分の座標をそのまま使って破線を描画する。
             // 線分の座標は LogicLineDetector がウィンドウ枠の境界（外縁）に補正済みのため、
             // ルーペ内でも枠の線上に表示される（見た目だけのスナップは行わない）
-            DrawDashedLine(e.Bitmap, start, end, line.IsSelected ? s_selectedOverlayColor : s_hoverOverlayColor, DashPattern, e.Content.ZoomLevel);
+            DrawDashedLine(e.Bitmap, start, end, line.IsSelected ? s_selectedOverlayColor : s_hoverOverlayColor, s_dashPattern, e.Content.ZoomLevel);
         }
     }
 
@@ -184,7 +184,7 @@ public partial class LineCanvasView : UserControl
     private static readonly Color s_selectedOverlayColor = Color.Parse("#FF8C00");
 
     /// <summary>ルーペ内の線分オーバーレイの破線パターン（描画 4px・間隔 3px・ルーピクセル）。</summary>
-    private static readonly double[] DashPattern = [4.0, 3.0];
+    private static readonly double[] s_dashPattern = [4.0, 3.0];
 
     /// <summary>EsBitmap 上に破線の線分を描画する。</summary>
     /// <param name="bitmap">描画対象の EsBitmap。</param>
