@@ -159,7 +159,10 @@ src/
 │   │   ├── CaptureSettings.cs              # 外観・動作設定（record）
 │   │   └── CaptureSettingsMerge.cs         # 設定の部分更新マージ
 │   └── ZoomView/                           # 切り出しビューの画像ビューポート
-│       ├── ZoomViewSession.cs              # 画像ビューポートの状態と判断（唯一の所有者）
+│       ├── ZoomViewSession.cs              # 状態・読み取り・設定の反映（唯一の所有者）
+│       ├── ZoomViewSession.Zoom.cs         # ズーム遷移（⊖⊕・ホイール・Fit 復帰）
+│       ├── ZoomViewSession.Pan.cs          # パン（grab・ホイール換算）と座標変換
+│       ├── ZoomViewSession.ScrollBar.cs    # スクロールバー（配置・同期値・ドラッグ）
 │       ├── ZoomOptions.cs                  # ズーム遷移の設定（検証付き不変値）
 │       ├── ZoomState.cs                    # 通知する 4 値（実効ズーム率・Fit 状態・可否）
 │       ├── ZoomFeedback.cs                 # UI が適用する効果（再描画・ポインタキャプチャ）

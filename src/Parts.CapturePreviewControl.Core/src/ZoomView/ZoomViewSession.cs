@@ -1,7 +1,5 @@
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
@@ -16,7 +14,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 /// 2. Fit 実効倍率の算出・キャッシュと無効化（コンテンツ・ビューポートの変更時のみ）。<br/>
 /// 3. ズーム可否（<see cref="CanZoomIn"/> / <see cref="CanZoomOut"/>）と通知値 <see cref="ZoomState"/> の確定。<br/>
 /// 4. ズーム遷移の適用（<see cref="ZoomTransition"/> の呼び出しとログ）と、ズーム中心を維持したオフセット再計算。<br/>
-/// 5. パンの適用（grab 方式）・スクロール範囲へのクランプ・ホイール回転量からの換算（<see cref="ScrollMath.WheelScrollUnit"/>）。<br/>
+/// 5. パンの適用（grab 方式）・スクロール範囲へのクランプ・ホイール回転量からの換算。<br/>
 /// 6. 画像変更時の Fit 復帰、ビューポート変更時のキャッシュ無効化。<br/>
 /// 7. スクロールバーのドラッグ（サムのヒット判定・トラック押下のサム移動・サム位置からのオフセット逆算）。<br/>
 /// <br/>
@@ -24,11 +22,14 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 /// DPI の取得・ポインタキャプチャ・レイアウト。<br/>
 /// <br/>
 /// <b>コア型のみに依存</b>: <see cref="EsPoint"/> / <see cref="EsVector"/> / <see cref="EsSize"/> / <see cref="EsRect"/> を使い、<br/>
-/// UI フレームワークへ依存しない（UI 初期化なしの <c>[Fact]</c> で並列検証できる）。
+/// UI フレームワークへ依存しない（UI 初期化なしの <c>[Fact]</c> で並列検証できる）。<br/>
+/// <br/>
+/// <b>ファイル分割</b>: 本ファイルは状態・読み取り・設定の反映を担い、ズーム遷移は <c>ZoomViewSession.Zoom.cs</c>、<br/>
+/// パンと座標変換は <c>ZoomViewSession.Pan.cs</c>、スクロールバーは <c>ZoomViewSession.ScrollBar.cs</c> が担う。
 /// </remarks>
 /// <remarks>ズームビューの状態管理クラスを初期化する。</remarks>
 /// <param name="config">ズーム遷移の設定。 null の場合は <see cref="ZoomOptions.Default"/>。</param>
-public sealed class ZoomViewSession(ZoomOptions? config = null)
+public sealed partial class ZoomViewSession(ZoomOptions? config = null)
 {
     /// <summary>ロガー（null の場合は出力なし）。</summary>
     private ILogger? _log;
@@ -318,380 +319,11 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
         return default;
     }
 
-    /// <summary>ズーム率を設定する（ズーム中心を維持する）。</summary>
-    /// <param name="zoomPercent">新しいズーム率（%）。 0 以下は Fit。</param>
-    /// <param name="center">ズーム中心（ビューポート座標）。 null の場合はビューポート中心。</param>
-    /// <returns>UI が適用する効果（再描画）。</returns>
-    /// <remarks>
-    /// ズーム中心のコンテンツ座標を不変に保つようオフセットを再計算する（<see cref="ZoomMath.ComputeOffsetAfterScaleChange"/>）。<br/>
-    /// Fit へ移行する場合はオフセットをリセットする。<br/>
-    /// Fit 中からの固定倍率への移行はオフセット 0 から開始する（内部スケールが 0 のため中心維持できない）。
-    /// </remarks>
-    public ZoomFeedback SetZoom(double zoomPercent, EsPoint? center = null)
-    {
-        var oldScale = Scale;
-        _zoomPercent = zoomPercent;
-
-        if (zoomPercent <= 0)
-        {
-            // Fit: オフセットをリセットする（Fit スケールで描画する。 ズーム中心は不要）
-            _offset = default;
-        }
-        else if (oldScale > 0 && _hasSource)
-        {
-            var zoomCenter = center ?? ViewportCenter();
-            _offset = ZoomMath.ComputeOffsetAfterScaleChange(
-                _offset, zoomCenter, oldScale, ZoomMath.ScaleFromPercent(zoomPercent), _sourceSize, _viewportSize);
-        }
-
-        // 可否はズーム率に依存するため破棄して再計算する（Fit 実効倍率はコンテンツ・ビューポートにのみ依存するため保持する）
-        _availability = null;
-
-        RaiseZoomChanged();
-        RaiseViewportChanged();
-        return new ZoomFeedback { ShouldRedraw = true };
-    }
-
-    /// <summary>実効ズーム率（%）を固定倍率として設定する（UI のスライダ・拡大率メニュー用）。</summary>
-    /// <param name="zoomPercent">設定するズーム率（%）。</param>
-    /// <returns>UI が適用する効果（設定した場合は再描画、0 以下は何もしない）。</returns>
-    /// <remarks>
-    /// <b>0 以下は無視する</b>（0 以下は Fit の意図と区別できないため受け付けず、Fit へは <see cref="ZoomFit"/> を使用する）。<br/>
-    /// 設定値は <see cref="ZoomOptions"/> の範囲へクランプし、ズーム中心を維持したまま倍率を変更する。<br/>
-    /// 本規則（0 以下の拒否とクランプ）を両 UI に重複させないための入口である。
-    /// </remarks>
-    public ZoomFeedback SetFixedZoom(double zoomPercent)
-    {
-        if (zoomPercent <= 0)
-        {
-            return default;
-        }
-
-        return SetZoom(_config.ClampZoom(zoomPercent), _pointerPosition);
-    }
-
-    /// <summary>パン位置を設定する（コンテンツ座標）。</summary>
-    /// <param name="offset">パン位置（コンテンツ座標）。</param>
-    /// <returns>UI が適用する効果（変化した場合のみ再描画）。</returns>
-    /// <remarks>スクロール範囲へクランプされる。 クランプ結果が現在値と同じ場合は何もしない（不要な再描画・通知を避ける）。</remarks>
-    public ZoomFeedback SetOffset(EsVector offset)
-    {
-        var clamped = ClampOffsetForCurrentState(offset);
-        if (clamped == _offset)
-        {
-            return default;
-        }
-
-        _offset = clamped;
-        RaiseViewportChanged();
-        return new ZoomFeedback { ShouldRedraw = true };
-    }
-
-    /// <summary>パンする（コンテンツ座標の移動量）。</summary>
-    /// <param name="delta">コンテンツ座標の移動量。</param>
-    /// <returns>UI が適用する効果（変化した場合のみ再描画）。</returns>
-    public ZoomFeedback PanBy(EsVector delta)
-        => SetOffset(new EsVector(_offset.X + delta.X, _offset.Y + delta.Y));
-
-    /// <summary>ホイールの回転量でパンする（回転量から移動量への換算を単一所有する）。</summary>
-    /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。 1 ノッチ = 1.0）。</param>
-    /// <param name="shift">Shift 併用かどうか（縦回転を横パンとして扱う）。</param>
-    /// <returns>UI が適用する効果（変化した場合のみ再描画）。</returns>
-    /// <remarks>
-    /// 移動量は DIP で計算し、実効倍率で除してコンテンツ座標へ変換する（ズーム中も画面上の移動量が一定になる）。<br/>
-    /// 本コントロール上でホイールが発生した場合と、ホストが他のコントロール（選択オーバーレイ等）で受けた<br/>
-    /// ホイールを転送する場合の双方が本メソッドを使用する（換算則の二重所有を作らない）。
-    /// </remarks>
-    public ZoomFeedback PanByWheel(EsVector delta, bool shift)
-    {
-        var dx = shift ? delta.Y * ScrollMath.WheelScrollUnit : delta.X * ScrollMath.WheelScrollUnit;
-        var dy = shift ? 0 : delta.Y * ScrollMath.WheelScrollUnit;
-        var scale = EffectiveScale;
-        return PanBy(new EsVector(dx / scale, dy / scale));
-    }
-
-    /// <summary>ドラッグによるパンを開始する（grab 方式）。</summary>
-    /// <param name="position">ポインタ位置（ビューポート座標）。</param>
-    /// <returns>UI が適用する効果（ポインタのキャプチャ）。</returns>
-    /// <remarks>掴んだ位置のコンテンツ座標を保存し、以降の <see cref="Move"/> でその位置をポインタへ追従させる。</remarks>
-    public ZoomFeedback Press(EsPoint position)
-    {
-        _isPanning = true;
-        _grabSourcePos = ClientToSource(position);
-        return new ZoomFeedback { ShouldCapturePointer = true };
-    }
-
-    /// <summary>ドラッグ中は掴んだ位置がポインタに追従するようパンする。</summary>
-    /// <param name="position">ポインタ位置（ビューポート座標）。</param>
-    /// <returns>UI が適用する効果（変化した場合のみ再描画）。</returns>
-    /// <remarks>
-    /// 描画位置 = スケール × (コンテンツ − オフセット) がポインタ位置と一致するため、<br/>
-    /// <c>オフセット = 掴んだコンテンツ座標 − ポインタ位置 / 実効スケール</c> となる（クランプは <see cref="SetOffset"/> が行う）。
-    /// </remarks>
-    public ZoomFeedback Move(EsPoint position)
-    {
-        if (!_isPanning)
-        {
-            return default;
-        }
-
-        var scale = EffectiveScale;
-        return SetOffset(new EsVector(
-            _grabSourcePos.X - position.X / scale,
-            _grabSourcePos.Y - position.Y / scale));
-    }
-
-    /// <summary>ドラッグによるパンを終了する。</summary>
-    /// <returns>UI が適用する効果（ポインタの解放）。</returns>
-    public ZoomFeedback Release()
-    {
-        if (!_isPanning)
-        {
-            return default;
-        }
-
-        _isPanning = false;
-        return new ZoomFeedback { ShouldReleasePointer = true };
-    }
-
-    /// <summary>ズームインする（⊖⊕ ボタン）。</summary>
-    /// <returns>UI が適用する効果（移動先がある場合のみ再描画）。</returns>
-    /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。 ログも出力しない。</remarks>
-    public ZoomFeedback ZoomIn()
-        => ApplyZoomStep((current, fitZoom) => ZoomTransition.NextLevel(current, fitZoom, _config), Log.LogZoomIn);
-
-    /// <summary>ズームアウトする（⊖⊕ ボタン）。</summary>
-    /// <returns>UI が適用する効果（移動先がある場合のみ再描画）。</returns>
-    /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。 ログも出力しない。</remarks>
-    public ZoomFeedback ZoomOut()
-        => ApplyZoomStep((current, fitZoom) => ZoomTransition.PrevLevel(current, fitZoom, _config), Log.LogZoomOut);
-
-    /// <summary>Fit 表示（ビューポートに収まる自動倍率）へ戻す。</summary>
-    /// <returns>UI が適用する効果（再描画）。</returns>
-    /// <remarks>Fit へ移行する唯一の経路（<see cref="ZoomPercent"/> 相当の設定は 0 以下を受け付けない）。</remarks>
-    public ZoomFeedback ZoomFit() => SetZoom(0, _pointerPosition);
-
-    /// <summary>Ctrl+ホイールのズームを適用する。</summary>
-    /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
-    /// <param name="pointerPosition">ズーム中心とする位置（ビューポート座標）。 null の場合はビューポート中心。</param>
-    /// <returns>UI が適用する効果（移動先がある場合のみ再描画）。</returns>
-    /// <remarks>
-    /// 本コントロール上でホイールが発生した場合と、ホストが他のコントロールで受けたホイールを転送する場合の双方が使用する。<br/>
-    /// ズーム中心は呼び出しの間だけ保持する（次回のボタン・スライダ操作はビューポート中心でズームする）。
-    /// </remarks>
-    public ZoomFeedback ZoomByWheel(bool zoomIn, EsPoint? pointerPosition = null)
-    {
-        _pointerPosition = pointerPosition;
-        try
-        {
-            return zoomIn
-                ? ApplyZoomStep((current, fitZoom) => ZoomTransition.WheelZoomIn(current, fitZoom, _config), Log.LogZoomInWheel)
-                : ApplyZoomStep((current, fitZoom) => ZoomTransition.WheelZoomOut(current, fitZoom, _config), Log.LogZoomOutWheel);
-        }
-        finally
-        {
-            _pointerPosition = null;
-        }
-    }
-
-    /// <summary>現在のスクロールバーの配置を計算する。</summary>
-    /// <returns>水平・垂直のスクロールバー。 スクロール不要な軸・非表示の場合は null。</returns>
-    /// <remarks>描画とヒット判定が同じ配置を参照するよう、UI 層は本メソッドの結果のみを使う。</remarks>
-    public (ZoomScrollBar? Horizontal, ZoomScrollBar? Vertical) CurrentScrollBars()
-        => _appearance.ShowScrollBars
-            ? ZoomScrollBarGeometry.Compute(
-                _sourceSize, _viewportSize, EffectiveScale, _offset,
-                _appearance.ScrollBarThickness, _appearance.ScrollBarMargin)
-            : (null, null);
-
-    /// <summary>指定軸のスクロールバー同期値（最大オフセット・表示範囲・可否）を計算する。</summary>
-    /// <param name="vertical">垂直軸の場合は true（水平軸は false）。</param>
-    /// <returns>スクロールバー同期値。 画像未設定・スケール未確定時はスクロール不可。</returns>
-    /// <remarks>
-    /// 標準のスクロールバー部品を持つ UI が <c>Maximum</c> / <c>ViewportSize</c> / <c>IsVisible</c> へ写すための値である。<br/>
-    /// 算出式（<c>ScrollMath</c>）を UI 層へ漏らさないための入口として本メソッドが単一所有する。
-    /// </remarks>
-    public ZoomScrollBarMetrics ScrollMetrics(bool vertical)
-    {
-        var scale = EffectiveScale;
-        if (!_hasSource || scale <= 0)
-        {
-            return new ZoomScrollBarMetrics(0, 0, IsScrollable: false);
-        }
-
-        var maxOffset = vertical
-            ? ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Height, _viewportSize.Height, scale)
-            : ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Width, _viewportSize.Width, scale);
-        var viewportSize = ScrollMath.ViewportSize(vertical ? _viewportSize.Height : _viewportSize.Width, scale);
-        return new ZoomScrollBarMetrics(maxOffset, viewportSize, IsScrollable: maxOffset > 0);
-    }
-
-    /// <summary>指定位置がスクロールバーのトラック上ならドラッグを開始する。</summary>
-    /// <param name="position">判定するビューポート座標（DIP）。</param>
-    /// <returns>ドラッグを開始した場合は true（UI はポインタをキャプチャする）。</returns>
-    /// <remarks>
-    /// 垂直・水平の順に判定し、先にヒットした軸のドラッグを開始する。<br/>
-    /// トラック上（サム以外）を押した場合はサムをその位置へ移動する（ページジャンプではなく直接移動）。
-    /// </remarks>
-    public bool TryBeginScrollBarDrag(EsPoint position)
-    {
-        var (horizontal, vertical) = CurrentScrollBars();
-
-        foreach (var (bar, isVertical) in new[] { (vertical, true), (horizontal, false) })
-        {
-            if (bar is not { } value || !value.Track.Contains(position))
-            {
-                continue;
-            }
-
-            _scrollBarDragging = isVertical;
-            _scrollBarDragStart = position;
-            _scrollBarDragStartThumb = isVertical
-                ? value.Thumb.Y - value.Track.Y
-                : value.Thumb.X - value.Track.X;
-
-            // トラック上（サム以外）を押した場合は、サムをその位置へ移動する
-            if (!value.Thumb.Contains(position))
-            {
-                var delta = isVertical ? position.Y - value.Thumb.Y : position.X - value.Thumb.X;
-                _scrollBarDragStartThumb = Math.Clamp(
-                    _scrollBarDragStartThumb + delta, 0, ZoomScrollBarGeometry.MovableThumbRange(value, isVertical));
-                ApplyScrollBarThumb(_scrollBarDragStartThumb, isVertical);
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>スクロールバーのドラッグを反映する。</summary>
-    /// <param name="position">現在のポインタ位置（ビューポート座標）。</param>
-    /// <returns>UI が適用する効果（変化した場合のみ再描画）。</returns>
-    public ZoomFeedback UpdateScrollBarDrag(EsPoint position)
-    {
-        if (_scrollBarDragging is not { } isVertical)
-        {
-            return default;
-        }
-
-        var (horizontal, vertical) = CurrentScrollBars();
-        var bar = isVertical ? vertical : horizontal;
-        if (bar is not { } value)
-        {
-            return default;
-        }
-
-        var movable = ZoomScrollBarGeometry.MovableThumbRange(value, isVertical);
-        var delta = isVertical ? position.Y - _scrollBarDragStart.Y : position.X - _scrollBarDragStart.X;
-        return ApplyScrollBarThumb(Math.Clamp(_scrollBarDragStartThumb + delta, 0, movable), isVertical);
-    }
-
-    /// <summary>スクロールバーのドラッグを終了する。</summary>
-    /// <returns>UI が適用する効果（ポインタの解放）。</returns>
-    public ZoomFeedback ReleaseScrollBarDrag()
-    {
-        if (_scrollBarDragging is null)
-        {
-            return default;
-        }
-
-        _scrollBarDragging = null;
-        return new ZoomFeedback { ShouldReleasePointer = true };
-    }
-
-    /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（オフセット基準）。</summary>
-    /// <param name="viewportPos">ビューポート座標（DIP）。</param>
-    /// <returns>コンテンツ座標（元画像ピクセル）。</returns>
-    /// <remarks>中央寄せの原点補正は含まない（含む場合は <see cref="ClientToDisplayedSource"/> を使用する）。</remarks>
-    public EsPoint ClientToSource(EsPoint viewportPos)
-        => ZoomMath.ClientToSource(viewportPos, _offset, EffectiveScale);
-
-    /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準）。</summary>
-    /// <param name="viewportPos">ビューポート座標（DIP）。</param>
-    /// <returns>コンテンツ座標（元画像ピクセル）。</returns>
-    /// <remarks>Fit 中央寄せの原点補正を含む。</remarks>
-    public EsPoint ClientToDisplayedSource(EsPoint viewportPos)
-        => ZoomMath.ClientToDisplayedSource(viewportPos, ImageOrigin, EffectiveScale);
-
-    /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準）。</summary>
-    /// <param name="contentPos">コンテンツ座標（元画像ピクセル）。</param>
-    /// <returns>ビューポート座標（DIP）。</returns>
-    /// <remarks>Fit 中央寄せの原点補正を含む。</remarks>
-    public EsPoint DisplayedSourceToClient(EsPoint contentPos)
-        => ZoomMath.DisplayedSourceToClient(contentPos, ImageOrigin, EffectiveScale);
-
-    /// <summary>ビューポートの変化（表示条件の更新）を通知する。</summary>
-    /// <returns>UI が適用する効果（再描画）。</returns>
-    /// <remarks>UI 固有の理由（レイアウト確定など）でビューポートの再通知が必要な場合に使用する。</remarks>
-    public ZoomFeedback NotifyViewportChanged()
-    {
-        RaiseViewportChanged();
-        return new ZoomFeedback { ShouldRedraw = true };
-    }
-
-    /// <summary>ズーム操作（⊖⊕ ボタン・Ctrl+ホイール）の共通処理（遷移関数の適用・ログ・反映）。</summary>
-    /// <param name="transition">現在のズーム率と Fit 実効倍率から遷移先を求める関数。</param>
-    /// <param name="log">変更前後の実効ズーム率（%）を記録するログメソッド（丸めはログ定義が単一所有する）。</param>
-    /// <returns>UI が適用する効果（移動先がある場合のみ再描画）。</returns>
-    /// <remarks>
-    /// 遷移関数は内部ズーム率（0 = Fit / 0 より大きい値 = 固定倍率）を期待するため、<see cref="InternalZoomPercent"/> を渡す。<br/>
-    /// <b>ログの変更前は実効ズーム率</b>（Fit 中は Fit 実効倍率）を記録する（丸めはログ定義側が行う）。<br/>
-    /// 遷移先が null（移動不可）の場合は何もしない。
-    /// </remarks>
-    private ZoomFeedback ApplyZoomStep(Func<double, double, double?> transition, Action<double, double> log)
-    {
-        var zoom = _zoomPercent;
-        // 遷移関数は Fit 中（current <= 0）のみ fitZoom を使うため、固定倍率中は計算しない
-        var fitZoom = zoom <= 0 ? FitZoomPercent : 0;
-
-        if (transition(zoom, fitZoom) is not { } target)
-        {
-            return default;
-        }
-
-        log(ZoomPercent, target);
-        return SetZoom(_config.ClampZoom(target), _pointerPosition);
-    }
-
-    /// <summary>サムの位置からスクロールオフセットを算出して適用する。</summary>
-    /// <param name="thumbOffset">サムの左上位置（トラック内の相対位置・DIP）。</param>
-    /// <param name="isVertical">垂直軸の場合は true。</param>
-    /// <returns>UI が適用する効果（変化した場合のみ再描画）。</returns>
-    private ZoomFeedback ApplyScrollBarThumb(double thumbOffset, bool isVertical)
-    {
-        var (horizontal, vertical) = CurrentScrollBars();
-        var bar = isVertical ? vertical : horizontal;
-        if (bar is not { } value)
-        {
-            return default;
-        }
-
-        var maxOffset = isVertical
-            ? ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Height, _viewportSize.Height, EffectiveScale)
-            : ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Width, _viewportSize.Width, EffectiveScale);
-        var movable = ZoomScrollBarGeometry.MovableThumbRange(value, isVertical);
-        var offset = ZoomScrollBarGeometry.SourceOffsetFromThumbInRange(thumbOffset, movable, maxOffset);
-
-        return isVertical
-            ? SetOffset(new EsVector(_offset.X, offset))
-            : SetOffset(new EsVector(offset, _offset.Y));
-    }
-
     /// <summary>実効ズーム率（%）を導出する（Fit 中はクランプした実効倍率・固定倍率中は内部ズーム率）。</summary>
     /// <param name="internalZoom">内部ズーム率（%）。 0 = Fit。</param>
     /// <returns>実効ズーム率（%）。 0 にはならない（Fit 中も実効倍率を返す）。</returns>
     private double ComputeEffectiveZoomPercent(double internalZoom)
         => internalZoom <= 0 ? _config.ClampZoom(FitZoomPercent) : internalZoom;
-
-    /// <summary>現在の状態に応じてオフセットをスクロール範囲内へクランプする。</summary>
-    /// <param name="offset">クランプするオフセット（コンテンツ座標）。</param>
-    /// <returns>クランプ後のオフセット。 Fit 中または画像未設定時は原点。</returns>
-    /// <remarks>Fit 中（内部スケールが 0）と画像未設定時はパンできないため原点を返す（ゼロ除算も避ける）。</remarks>
-    private EsVector ClampOffsetForCurrentState(EsVector offset)
-        => !_hasSource || _zoomPercent <= 0
-            ? default
-            : ZoomMath.ClampOffset(offset, Scale, _sourceSize, _viewportSize);
 
     /// <summary>ズーム可否を取得する（未計算なら遅延計算してキャッシュする）。</summary>
     /// <returns>ズーム可否。</returns>
@@ -725,4 +357,3 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
     private void RaiseViewportChanged()
         => _notified.Raise(new ZoomNotice(ZoomNoticeKind.ViewportChanged, CurrentState, ImageRect));
 }
-
