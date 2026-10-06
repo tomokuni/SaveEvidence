@@ -18,12 +18,15 @@ namespace EsUtil.SaveEvidence.App.MewUI.Logging;
 /// </remarks>
 internal static partial class AppLog
 {
+    /// <summary>接頭辞（固定。 アプリのログは DLL 名で読み分けるため、ホストからの設定対象外）。</summary>
+    private const string Prefix = "[App.MewUI]";
+
     /// <summary>アプリケーション共有の Serilog ロガー（静的 <see cref="Log.Logger"/>）。</summary>
     /// <remarks>
     /// グローバル例外ハンドラ（<c>Log.Fatal</c>）と <c>ILoggerFactory</c>（MEL ブリッジ）の両方が<br/>
     /// 同一の Serilog パイプラインを共有するため、静的ロガーを初期化してからファクトリを構築する。
     /// </remarks>
-    private static readonly ILoggerFactory Factory = CreateFactory();
+    private static readonly ILoggerFactory s_factory = CreateFactory();
 
     /// <summary>Serilog ロガーを初期化し、MEL (Microsoft.Extensions.Logging) ブリッジのファクトリを構築する。</summary>
     /// <returns>Serilog へ転送する <see cref="ILoggerFactory"/>。</returns>
@@ -66,7 +69,7 @@ internal static partial class AppLog
     /// <summary>指定カテゴリ名のロガーを生成する。</summary>
     /// <param name="categoryName">ロガーカテゴリ名（例: "CaptureOverlayWindow"）。</param>
     /// <returns>生成したロガー。</returns>
-    internal static ILogger CreateLogger(string categoryName) => Factory.CreateLogger(categoryName);
+    internal static ILogger CreateLogger(string categoryName) => s_factory.CreateLogger(categoryName);
 
     // ====================================================================
     // アプリライフサイクル
@@ -78,9 +81,13 @@ internal static partial class AppLog
     /// 出力書式: <c>アプリケーション起動 (version={Version})</c>
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="version">アプリケーションのバージョン。</param>
-    [LoggerMessage(LogLevel.Information, "アプリケーション起動 (version={Version})")]
-    public static partial void LogAppStart(this ILogger logger, string version);
+    [LoggerMessage(LogLevel.Information, "{Prefix} アプリケーション起動 (version={Version})")]
+    private static partial void LogAppStartCore(this ILogger logger, string prefix, string version);
+
+    public static void LogAppStart(this ILogger logger, string version)
+        => logger.LogAppStartCore(Prefix, version);
 
     /// <summary>アプリケーション終了のログ。</summary>
     /// <remarks>
@@ -88,9 +95,13 @@ internal static partial class AppLog
     /// 出力書式: <c>アプリケーション終了 (exitCode={ExitCode})</c>
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="exitCode">終了コード。</param>
-    [LoggerMessage(LogLevel.Information, "アプリケーション終了 (exitCode={ExitCode})")]
-    public static partial void LogAppExit(this ILogger logger, int exitCode);
+    [LoggerMessage(LogLevel.Information, "{Prefix} アプリケーション終了 (exitCode={ExitCode})")]
+    private static partial void LogAppExitCore(this ILogger logger, string prefix, int exitCode);
+
+    public static void LogAppExit(this ILogger logger, int exitCode)
+        => logger.LogAppExitCore(Prefix, exitCode);
 
     // ====================================================================
     // 撮影セッション
@@ -102,9 +113,13 @@ internal static partial class AppLog
     /// 出力書式: <c>撮影開始: type={Type}</c>
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="type">撮影種別。</param>
-    [LoggerMessage(LogLevel.Debug, "撮影開始: type={Type}")]
-    public static partial void LogCaptureStart(this ILogger logger, string type);
+    [LoggerMessage(LogLevel.Debug, "{Prefix} 撮影開始: type={Type}")]
+    private static partial void LogCaptureStartCore(this ILogger logger, string prefix, string type);
+
+    public static void LogCaptureStart(this ILogger logger, string type)
+        => logger.LogCaptureStartCore(Prefix, type);
 
     /// <summary>撮影確定のログ。</summary>
     /// <remarks>
@@ -112,9 +127,13 @@ internal static partial class AppLog
     /// 出力書式: <c>撮影確定: rect={Rect}</c>
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="rect">確定した矩形（画面物理ピクセル）。</param>
-    [LoggerMessage(LogLevel.Debug, "撮影確定: rect={Rect}")]
-    public static partial void LogCaptureCompleted(this ILogger logger, string rect);
+    [LoggerMessage(LogLevel.Debug, "{Prefix} 撮影確定: rect={Rect}")]
+    private static partial void LogCaptureCompletedCore(this ILogger logger, string prefix, string rect);
+
+    public static void LogCaptureCompleted(this ILogger logger, string rect)
+        => logger.LogCaptureCompletedCore(Prefix, rect);
 
     /// <summary>撮影キャンセルのログ。</summary>
     /// <remarks>
@@ -122,8 +141,12 @@ internal static partial class AppLog
     /// 出力書式: <c>撮影キャンセル</c>
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    [LoggerMessage(LogLevel.Debug, "撮影キャンセル")]
-    public static partial void LogCaptureCancelled(this ILogger logger);
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    [LoggerMessage(LogLevel.Debug, "{Prefix} 撮影キャンセル")]
+    private static partial void LogCaptureCancelledCore(this ILogger logger, string prefix);
+
+    public static void LogCaptureCancelled(this ILogger logger)
+        => logger.LogCaptureCancelledCore(Prefix);
 
     // ====================================================================
     // 切出しセッション
@@ -135,10 +158,14 @@ internal static partial class AppLog
     /// 出力書式: <c>切出し開始: image={Width}x{Height}</c>
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="width">元画像の幅（ピクセル）。</param>
     /// <param name="height">元画像の高さ（ピクセル）。</param>
-    [LoggerMessage(LogLevel.Debug, "切出し開始: image={Width}x{Height}")]
-    public static partial void LogCropStart(this ILogger logger, int width, int height);
+    [LoggerMessage(LogLevel.Debug, "{Prefix} 切出し開始: image={Width}x{Height}")]
+    private static partial void LogCropStartCore(this ILogger logger, string prefix, int width, int height);
+
+    public static void LogCropStart(this ILogger logger, int width, int height)
+        => logger.LogCropStartCore(Prefix, width, height);
 
     /// <summary>切出し確定のログ。</summary>
     /// <remarks>
@@ -146,9 +173,13 @@ internal static partial class AppLog
     /// 出力書式: <c>切出し確定: rect={Rect}</c>
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="rect">切り出す矩形（画像ピクセル）。</param>
-    [LoggerMessage(LogLevel.Debug, "切出し確定: rect={Rect}")]
-    public static partial void LogCropCompleted(this ILogger logger, string rect);
+    [LoggerMessage(LogLevel.Debug, "{Prefix} 切出し確定: rect={Rect}")]
+    private static partial void LogCropCompletedCore(this ILogger logger, string prefix, string rect);
+
+    public static void LogCropCompleted(this ILogger logger, string rect)
+        => logger.LogCropCompletedCore(Prefix, rect);
 
     /// <summary>切出しキャンセルのログ。</summary>
     /// <remarks>
@@ -156,8 +187,12 @@ internal static partial class AppLog
     /// 出力書式: <c>切出しキャンセル</c>
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    [LoggerMessage(LogLevel.Debug, "切出しキャンセル")]
-    public static partial void LogCropCancelled(this ILogger logger);
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    [LoggerMessage(LogLevel.Debug, "{Prefix} 切出しキャンセル")]
+    private static partial void LogCropCancelledCore(this ILogger logger, string prefix);
+
+    public static void LogCropCancelled(this ILogger logger)
+        => logger.LogCropCancelledCore(Prefix);
 
     /// <summary>設定変更の CaptureSessionControl 反映で例外が発生したことを記録する。</summary>
     /// <remarks>
@@ -166,10 +201,14 @@ internal static partial class AppLog
     /// 設定の検証（範囲外の値）で例外になっても UI を壊さないため、反映は例外保護付きで行う（Avalonia 版と同じ書式）。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="propertyName">変更された設定プロパティ名。</param>
-    [LoggerMessage(LogLevel.Error, "設定変更の CaptureSessionControl 反映で例外が発生: {PropertyName}")]
-    public static partial void LogSettingsApplyError(this ILogger logger, Exception ex, string propertyName);
+    [LoggerMessage(LogLevel.Error, "{Prefix} 設定変更の CaptureSessionControl 反映で例外が発生: {PropertyName}")]
+    private static partial void LogSettingsApplyErrorCore(this ILogger logger, string prefix, Exception ex, string propertyName);
+
+    public static void LogSettingsApplyError(this ILogger logger, Exception ex, string propertyName)
+        => logger.LogSettingsApplyErrorCore(Prefix, ex, propertyName);
 
     // ====================================================================
     // フォルダビュー
@@ -182,10 +221,14 @@ internal static partial class AppLog
     /// 一覧が空になる原因（未解決のパス・アクセス拒否等）を追跡できるようにする。 Avalonia 版と同じ書式にする。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="folderPath">対象のフォルダパス。</param>
-    [LoggerMessage(LogLevel.Error, "フォルダビュー一覧の読み込みで例外が発生: {FolderPath}")]
-    public static partial void LogFolderLoadError(this ILogger logger, Exception ex, string folderPath);
+    [LoggerMessage(LogLevel.Error, "{Prefix} フォルダビュー一覧の読み込みで例外が発生: {FolderPath}")]
+    private static partial void LogFolderLoadErrorCore(this ILogger logger, string prefix, Exception ex, string folderPath);
+
+    public static void LogFolderLoadError(this ILogger logger, Exception ex, string folderPath)
+        => logger.LogFolderLoadErrorCore(Prefix, ex, folderPath);
 
     // ====================================================================
     // 未処理の例外
@@ -198,8 +241,12 @@ internal static partial class AppLog
     /// アプリがクラッシュする直前の例外を確実に記録する（原因特定用）。 Avalonia 版と同じ書式にする。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="source">例外の発生源（例: "AppDomain.UnhandledException"）。</param>
-    [LoggerMessage(LogLevel.Critical, "未処理の例外: {Source}")]
-    public static partial void LogUnhandledException(this ILogger logger, Exception ex, string source);
+    [LoggerMessage(LogLevel.Critical, "{Prefix} 未処理の例外: {Source}")]
+    private static partial void LogUnhandledExceptionCore(this ILogger logger, string prefix, Exception ex, string source);
+
+    public static void LogUnhandledException(this ILogger logger, Exception ex, string source)
+        => logger.LogUnhandledExceptionCore(Prefix, ex, source);
 }

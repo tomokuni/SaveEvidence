@@ -147,6 +147,7 @@ if (colorPicker.HasValidationError)
 | `ColorSortMode` | `ColorSortMode` | `ByHue` | ドロップダウンの色の並び順（`ByHue` / `ByName`） |
 | `HighlightBorderOnError` | `bool` | `false` | バリデーション失敗時に ComboBox の枠線を赤くするか |
 | `Log` | `ILogger` | `NullLogger` | 内部ロガー（null 設定時は `NullLogger` へフォールバック）。 診断ログの出力先 |
+| `LogPrefix` | `string?` | `null` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値 `[ColorPicker]` へ戻す） |
 
 #### 5.1.3 バリデーション状態（読み取り専用）
 

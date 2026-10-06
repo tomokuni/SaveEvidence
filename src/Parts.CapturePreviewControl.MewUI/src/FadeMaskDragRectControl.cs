@@ -311,15 +311,66 @@ public sealed class FadeMaskDragRectControl : Panel
             _loupe.Log = logger;
         }
     }
+    /// <summary>ログの接頭辞を取得または設定する（ロガーと一緒に設定する）。</summary>
+    /// <value>接頭辞（例: <c>[CapturePreviewControl]</c>）。 null または空白を設定すると既定値へ戻す。</value>
+    /// <remarks>本アセンブリのログ定義（<see cref="CapturePreviewLogMessage"/>）の接頭辞を設定する。</remarks>
+    public string? LogPrefix
+    {
+        get => _logPrefix;
+        set
+        {
+            _logPrefix = value;
+            CapturePreviewLogMessage.Prefix =
+                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+        }
+    }
 
+    /// <summary>ログの接頭辞（未設定は null。 既定値は定義クラスが持つ）。</summary>
+    private string? _logPrefix;
     /// <summary>選択確定要求をドラッグ選択コントロールへ委譲する（Enter キー相当）。</summary>
-    public void RequestConfirm() => _marquee.RequestConfirm();
+    public void RequestConfirm()
+    {
+        try
+        {
+            _marquee.RequestConfirm();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(RequestConfirm));
+            throw;
+        }
+    }
 
     /// <summary>選択キャンセル要求をドラッグ選択コントロールへ委譲する（Escape キー相当）。</summary>
-    public void RequestCancel() => _marquee.RequestCancel();
+    public void RequestCancel()
+    {
+        try
+        {
+            _marquee.RequestCancel();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(RequestCancel));
+            throw;
+        }
+    }
 
     /// <summary>ドラッグ選択コントロールへフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
-    public void FocusMarquee() => _marquee.Focus();
+    public void FocusMarquee()
+    {
+        try
+        {
+            _marquee.Focus();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(FocusMarquee));
+            throw;
+        }
+    }
 
     /// <summary>選択矩形をプログラム的に設定する（外部復元・テスト用）。</summary>
     /// <param name="rect">選択矩形（対象座標）。</param>
@@ -343,7 +394,19 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>選択状態をクリアして全面暗転（注目なし）に戻す。</summary>
     /// <remarks>セッションの選択状態と nudge をまとめて初期化する（状態の初期化はセッションが単一所有する）。</remarks>
-    public void ClearSelection() => _marquee.ResetSelection();
+    public void ClearSelection()
+    {
+        try
+        {
+            _marquee.ResetSelection();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ClearSelection));
+            throw;
+        }
+    }
 
     /// <summary>ルーペの中心位置（対象座標）を設定して表示を開始する。</summary>
     /// <param name="sourcePos">ルーペ中心（対象座標）。</param>
@@ -351,7 +414,19 @@ public sealed class FadeMaskDragRectControl : Panel
     /// 表示位置・サイズは座標変換ポート（<see cref="SetCoordTransform"/>）とコアの計算から求める。<br/>
     /// <b>拡大元画像が未設定の間は表示しない</b>（未設定の市松模様を防ぐ。<see cref="SetLoupeSource"/> の後に呼び出す）。
     /// </remarks>
-    public void SetLoupePosition(EsPoint sourcePos) => UpdateLoupePosition(sourcePos);
+    public void SetLoupePosition(EsPoint sourcePos)
+    {
+        try
+        {
+            UpdateLoupePosition(sourcePos);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(SetLoupePosition));
+            throw;
+        }
+    }
 
     /// <summary>ルーペの中心位置（対象座標）を設定して表示可否を更新する。</summary>
     /// <param name="sourcePos">ルーペ中心（対象座標）。</param>
@@ -396,7 +471,19 @@ public sealed class FadeMaskDragRectControl : Panel
 
     /// <summary>選択オーバーレイ（暗転マスク・ハイライト・選択矩形）の再描画を要求する。</summary>
     /// <remarks>ハイライト等の状態を変更した後に呼び出す。</remarks>
-    public void InvalidateOverlay() => _marquee.InvalidateRender();
+    public void InvalidateOverlay()
+    {
+        try
+        {
+            _marquee.InvalidateRender();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(InvalidateOverlay));
+            throw;
+        }
+    }
 
     /// <summary>表示の変化（パン・ズーム・表示サイズ）へ内包コントロールを追従させる。</summary>
     /// <remarks>

@@ -189,6 +189,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 | `HasSelection` | — | **削除済み**（操作の判断は `ResolveCropAction` へ一本化した。 個別の判定が必要になった場合は `ResolveCropAction` を使う） |
 | `AppearanceSettings` | `CaptureSettings` | 現在の外観・動作設定。 設定時は null メンバーのみ現在値を維持する部分更新。 **同一値の再設定はスキップ**。 実行中の Crop セッションへは即時反映（`CropSession.ApplySettings`） |
 | `Dispose` | `void Dispose()` | リソースを解放 |
+| `LogPrefix` | `string?` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値 `[CapturePreviewControl]` へ戻す。 内包コントロールと同じ定義クラスを共有する） |
 
 #### 5.2.2 CaptureSettings
 
@@ -331,6 +332,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `HasSelection` / `SelectionSourceRect` | `bool` / `Rect` | 選択状態と現在の選択矩形（対象座標） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
 | `Log` | `ILogger` | 内部ロガー（画像ビューポートへ伝搬する） |
+| `LogPrefix` | `string?` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値 `[CapturePreviewControl]` へ戻す） |
 | `ClientToSourceScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値。 コードから動的設定） |
 
 #### 5.5.2 メソッド
@@ -391,6 +393,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
 | `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値） |
 | `Log` | `ILogger` | 操作ログの出力先（内包コントロールへ伝搬する） |
+| `LogPrefix` | `string?` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値へ戻す） |
 
 #### 5.6.3 メソッドとイベント
 
@@ -467,6 +470,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `ZoomChanged` | `event EventHandler<ZoomChangedEventArgs>` | ズーム率変更の通知（変更後の実効ズーム率 + Fit 状態 + 可否） |
 | `ViewportChanged` | `event EventHandler` | ビューポート（パン・ズーム・表示状態）変化の通知。 オーバーレイの追従に使用する |
 | `Log` | `ILogger` | 内部ロガー（null は `NullLogger`。 ズーム操作の前後 % を Information で記録する） |
+| `LogPrefix` | `string?` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値へ戻す） |
 
 **`ZoomOptions`（ズーム遷移の設定値。 コアの検証付き不変値）**
 

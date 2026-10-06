@@ -9,6 +9,7 @@ using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Loupe.AvaloniaUI;
 using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.AvaloniaUI;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
@@ -56,6 +57,26 @@ public sealed partial class CropViewControl : Panel
         get => _zoomView.Log;
         set => _zoomView.Log = value;
     }
+
+    /// <summary>ログの接頭辞を取得または設定する（ロガーと一緒に設定する）。</summary>
+    /// <value>接頭辞（例: <c>[CapturePreviewControl]</c>）。 null または空白を設定すると既定値へ戻す。</value>
+    /// <remarks>
+    /// 本アセンブリのログ定義（<see cref="CapturePreviewLogMessage"/>）の接頭辞を設定する。<br/>
+    /// 同じ定義クラスを共有するため、本スタック全体のログ接頭辞が揃う。
+    /// </remarks>
+    public string? LogPrefix
+    {
+        get => _logPrefix;
+        set
+        {
+            _logPrefix = value;
+            CapturePreviewLogMessage.Prefix =
+                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+        }
+    }
+
+    /// <summary>ログの接頭辞（未設定は null。 既定値は定義クラスが持つ）。</summary>
+    private string? _logPrefix;
 
     /// <summary>外部提供矩形オーバーレイ（ビューポート座標で描画）。</summary>
     private readonly Canvas _rectOverlay = new() { ZIndex = 20, IsHitTestVisible = false };
@@ -332,14 +353,50 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>ズームインする（⊖⊕ボタン相当。 段階遷移）。</summary>
-    public void ZoomIn() => _zoomView.ZoomIn();
+    public void ZoomIn()
+    {
+        try
+        {
+            _zoomView.ZoomIn();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomIn));
+            throw;
+        }
+    }
 
     /// <summary>ズームアウトする（⊖⊕ボタン相当。 段階遷移）。</summary>
-    public void ZoomOut() => _zoomView.ZoomOut();
+    public void ZoomOut()
+    {
+        try
+        {
+            _zoomView.ZoomOut();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomOut));
+            throw;
+        }
+    }
 
     /// <summary>Fit 表示（ウィンドウに合わせて画像を表示）に戻す。</summary>
     /// <remarks><see cref="ZoomViewControl.ZoomFit"/> へ委譲する（ズーム率の単一所有）。<see cref="ZoomIn"/> / <see cref="ZoomOut"/> と対になるズーム操作。</remarks>
-    public void ZoomFit() => _zoomView.ZoomFit();
+    public void ZoomFit()
+    {
+        try
+        {
+            _zoomView.ZoomFit();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomFit));
+            throw;
+        }
+    }
 
     /// <summary>ズーム率が変更されたときに発火するイベント（<see cref="ZoomViewControl.ZoomChanged"/> へ委譲）。</summary>
     public event EventHandler<ZoomChangedEventArgs>? ZoomChanged
@@ -369,7 +426,19 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>画像の表示矩形（ビューポート座標）を取得する（<see cref="ZoomViewControl.ImageRectViewport"/> へ委譲）。</summary>
-    public Rect ImageRectViewport() => _zoomView.ImageRectViewport();
+    public Rect ImageRectViewport()
+    {
+        try
+        {
+            return _zoomView.ImageRectViewport();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ImageRectViewport));
+            throw;
+        }
+    }
 
     /// <summary>ズームビューの外観（下地・市松模様・スクロールバーの色）を取得または設定する（<see cref="ZoomViewControl.Appearance"/> へ委譲）。</summary>
     /// <value>外観の単一値。 既定は <see cref="ZoomViewAppearance.Default"/>。</value>
@@ -405,10 +474,34 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>選択状態を外部から設定する（暗転マスクとルーペへ同期）。</summary>
     /// <param name="rect">選択矩形（対象座標）。 サイズ 0 以下は選択なし。</param>
-    public void SetSelection(Rect rect) => _selectionOverlay.SetSelection(rect);
+    public void SetSelection(Rect rect)
+    {
+        try
+        {
+            _selectionOverlay.SetSelection(rect);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(SetSelection));
+            throw;
+        }
+    }
 
     /// <summary>選択状態をクリアする（全面暗転に戻す）。</summary>
-    public void ClearSelection() => _selectionOverlay.ClearSelection();
+    public void ClearSelection()
+    {
+        try
+        {
+            _selectionOverlay.ClearSelection();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ClearSelection));
+            throw;
+        }
+    }
 
     /// <summary>領域選択オーバーレイの可視性とヒットテストを設定する（Crop セッションの開始・終了時に制御）。</summary>
     /// <param name="visible">true でオーバーレイを可視化しヒットテストを有効化する。 false で非表示かつヒットテストを無効化する。</param>
@@ -429,18 +522,66 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>座標変換ポートを設定する（内包コントロールへ分配）。</summary>
     /// <param name="port">座標変換ポート。 null で等価変換。</param>
-    public void SetCoordTransform(ICoordTransform? port) => _selectionOverlay.SetCoordTransform(port);
+    public void SetCoordTransform(ICoordTransform? port)
+    {
+        try
+        {
+            _selectionOverlay.SetCoordTransform(port);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(SetCoordTransform));
+            throw;
+        }
+    }
 
     /// <summary>内包 Marquee へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
     /// <remarks><see cref="FadeMaskDragRectControl.FocusMarquee"/> へ委譲する。</remarks>
-    public void FocusMarquee() => _selectionOverlay.FocusMarquee();
+    public void FocusMarquee()
+    {
+        try
+        {
+            _selectionOverlay.FocusMarquee();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(FocusMarquee));
+            throw;
+        }
+    }
 
     /// <summary>ルーペの拡大元画像を設定する（<see cref="FadeMaskDragRectControl.SetLoupeSource"/> へ委譲）。</summary>
     /// <param name="source">ルーペの拡大元画像。 null でルーペをクリア。</param>
-    public void SetLoupeSource(IImage? source) => _selectionOverlay.SetLoupeSource(source);
+    public void SetLoupeSource(IImage? source)
+    {
+        try
+        {
+            _selectionOverlay.SetLoupeSource(source);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(SetLoupeSource));
+            throw;
+        }
+    }
 
     /// <summary>ルーペのソースをクリアする（<see cref="FadeMaskDragRectControl.ClearLoupe"/> へ委譲）。</summary>
-    public void ClearLoupe() => _selectionOverlay.ClearLoupe();
+    public void ClearLoupe()
+    {
+        try
+        {
+            _selectionOverlay.ClearLoupe();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ClearLoupe));
+            throw;
+        }
+    }
 
     /// <summary>サイズラベルを描画時に評価するプロバイダ（<see cref="FadeMaskDragRectControl.SizeLabelOverrideProvider"/> へ委譲）。</summary>
     public Func<string?>? SizeLabelOverrideProvider
@@ -465,13 +606,49 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知する。</summary>
     /// <remarks><see cref="FadeMaskDragRectControl.RefreshOverlay"/> へ委譲する（暗転マスク・選択枠・ルーペの追従）。</remarks>
-    public void NotifyViewportChanged() => _selectionOverlay.RefreshOverlay();
+    public void NotifyViewportChanged()
+    {
+        try
+        {
+            _selectionOverlay.RefreshOverlay();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(NotifyViewportChanged));
+            throw;
+        }
+    }
 
     /// <summary>選択確定要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Enter キー相当）。</summary>
-    public void RequestConfirm() => _selectionOverlay.RequestConfirm();
+    public void RequestConfirm()
+    {
+        try
+        {
+            _selectionOverlay.RequestConfirm();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(RequestConfirm));
+            throw;
+        }
+    }
 
     /// <summary>選択キャンセル要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Escape キー相当）。</summary>
-    public void RequestCancel() => _selectionOverlay.RequestCancel();
+    public void RequestCancel()
+    {
+        try
+        {
+            _selectionOverlay.RequestCancel();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(RequestCancel));
+            throw;
+        }
+    }
 
     /// <summary>選択確定要求イベント（<see cref="FadeMaskDragRectControl.ConfirmRequested"/> へ委譲）。</summary>
     public event EventHandler<FadeMaskDragRectSelectionEventArgs>? ConfirmRequested

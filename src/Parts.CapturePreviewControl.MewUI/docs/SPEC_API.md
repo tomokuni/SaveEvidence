@@ -61,6 +61,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `Capture` | `EsBitmap? Capture(Window owner, CaptureType type, CaptureOverlayServices services)` | オーバーレイを表示し、確定した領域を切り出して返す。 キャンセル・取得失敗・退化した選択の場合は null。 **実行中のセッションがある場合は何もせず null を返す** |
 | `ToggleCrop` | `void ToggleCrop()` | 切り出しの開始・確定・キャンセルを切り替える。 どの操作を行うかの判断はコアの `CropSessionActions.Resolve` が単一所有する（未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）。 **撮影中は開始しない** |
 | `AppearanceSettings` | `CaptureSettings` | 現在の設定（getter は全メンバー non-null）。 設定時は null メンバーのみ現在値を維持する部分更新。 **同一値の再設定はスキップ**。 検証・適用ログはコア（`CaptureSettingsMerge.Apply`）が単一所有する。 実行中の切り出しセッションへは即時反映する |
+| `LogPrefix` | `string?` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値 `[CapturePreviewControl]` へ戻す） |
 
 ### 2.1 排他の規則
 
@@ -100,7 +101,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 対象座標とローカル DIP の変換は `ICoordTransform` を選択コントロールへ注入して行います（コントロールは座標系を意識しません）。  
 確定時の切り出し矩形は**画面物理座標の入口**（`CaptureClipMath.ResolveCaptureRect`）で解決します。 選択矩形は画像ローカル座標（画像の左上が原点）のため、**境界で `CaptureClipMath.ToScreenRect` により画面物理座標へ戻してから**渡します（１つの座標空間に揃えることで、原点が負値のマルチモニタでも切り出し位置・幅が正しくなる）。
 
-確定要求（キー・クリック・アダプタ要求）は、すべて同じ入口（画面物理座標）で `CaptureLogMessage.LogConfirmRequested` に記録します（記録する矩形の座標空間を UI 間で揃える）。 完了の領域（`CaptureResult.SourceBounds`）も契約どおり仮想画面座標（画面物理）で返します。
+確定要求（キー・クリック・アダプタ要求）は、すべて同じ入口（画面物理座標）で `CapturePreviewLogMessage.LogConfirmRequested` に記録します（記録する矩形の座標空間を UI  間で揃える）。 完了の領域（`CaptureResult.SourceBounds`）も契約どおり仮想画面座 標（画面物理）で返します。
 
 ### 2.5 切り出し規則
 
@@ -190,6 +191,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `ZoomPercent` | `double` | Fit の実効倍率 | 実効ズーム率（%）。 **0 より大きい値のみ設定可能**（0 以下は無視） |
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
 | `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（内包する画像ビューポートへ伝搬する） |
+| `LogPrefix` | `string?` | `null` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値 `[CapturePreviewControl]` へ戻す） |
 
 ### 5.2 メソッド
 
@@ -265,6 +267,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | `double` | 各 `1.0` 等 | DPI スケーリング（設定には含めない環境値） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | ラベル文言を描画時に評価するデリゲート（null または空文字は描画しない。 文言はホストが与える） |
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包する選択コントロールとルーペへ伝搬する） |
+| `LogPrefix` | `string?` | `null` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値へ戻す） |
 
 `Options`（コアの `FadeMaskDragRectOptions`）の主な項目は、`MarqueeCore`（`MarqueeOptions`。 寸法・表示可否。 色は含まない）/ `LoupeCore`（`LoupeOptions`）/ `SelectionRectColorA` / `SelectionRectColorB`（ルーペ画像上の選択矩形破線の 2 色）/ `LoupeOffset`（中心からの右下オフセット。 DIP）です。
 
@@ -377,6 +380,7 @@ MewUI 版はコア型（`EsBitmap` / `EsPoint` / `EsVector`）で入出力しま
 | `ZoomChanged` | `event`（`ZoomChangedEventArgs`） | ズーム率・Fit 状態・ズーム可否の通知 |
 | `ViewportChanged` | `event`（`EventArgs`） | パン・ズーム・表示サイズの変化の通知（重ねたオーバーレイの追従に使う） |
 | `Log` | `ILogger` | 内部ロガー（null は `NullLogger`。 ズーム操作の前後 % を Information で記録する） |
+| `LogPrefix` | `string?` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値へ戻す） |
 
 **`ZoomOptions`（ズーム遷移の設定値。 コアの検証付き不変値）**
 

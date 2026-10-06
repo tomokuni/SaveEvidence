@@ -80,6 +80,23 @@ public sealed class ZoomViewControl : SkiaCanvasView
         set => _session.Log = value;
     }
 
+    /// <summary>ログの接頭辞を取得または設定する（ロガーと一緒に設定する）。</summary>
+    /// <value>接頭辞（例: <c>[CapturePreviewControl]</c>）。 null または空白を設定すると既定値へ戻す。</value>
+    /// <remarks>本アセンブリのログ定義（<see cref="CapturePreviewLogMessage"/>）の接頭辞を設定する。</remarks>
+    public string? LogPrefix
+    {
+        get => _logPrefix;
+        set
+        {
+            _logPrefix = value;
+            CapturePreviewLogMessage.Prefix =
+                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+        }
+    }
+
+    /// <summary>ログの接頭辞（未設定は null。 既定値は定義クラスが持つ）。</summary>
+    private string? _logPrefix;
+
     /// <summary>ズーム率が変更されたときに発火する（実効ズーム率・Fit 状態・ズーム可否を通知する）。</summary>
     public event EventHandler<ZoomChangedEventArgs>? ZoomChanged;
 
@@ -153,29 +170,89 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>画像の表示サイズ（ビューポート座標・DIP）を取得する。</summary>
     /// <returns>表示サイズ。 画像未設定時は default。</returns>
-    public EsSize DisplaySize() => _session.DisplaySize;
+    public EsSize DisplaySize()
+    {
+        try
+        {
+            return _session.DisplaySize;
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(DisplaySize));
+            throw;
+        }
+    }
 
     /// <summary>画像の表示矩形（ビューポート座標・DIP）を取得する。</summary>
     /// <returns>画像の表示矩形。 画像未設定時は default。</returns>
-    public EsRect ImageRectViewport() => _session.ImageRect;
+    public EsRect ImageRectViewport()
+    {
+        try
+        {
+            return _session.ImageRect;
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ImageRectViewport));
+            throw;
+        }
+    }
 
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準）。</summary>
     /// <param name="viewportPos">ビューポート座標（DIP）。</param>
     /// <returns>コンテンツ座標（元画像ピクセル）。</returns>
     /// <remarks>Fit 中央寄せの原点補正を含む。 変換はコアのセッションへ委譲する。</remarks>
-    public EsPoint ClientToDisplayedSource(EsPoint viewportPos) => _session.ClientToDisplayedSource(viewportPos);
+    public EsPoint ClientToDisplayedSource(EsPoint viewportPos)
+    {
+        try
+        {
+            return _session.ClientToDisplayedSource(viewportPos);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ClientToDisplayedSource));
+            throw;
+        }
+    }
 
     /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（画像表示矩形の原点基準）。</summary>
     /// <param name="contentPos">コンテンツ座標（元画像ピクセル）。</param>
     /// <returns>ビューポート座標（DIP）。</returns>
     /// <remarks>Fit 中央寄せの原点補正を含む。 変換はコアのセッションへ委譲する。</remarks>
-    public EsPoint DisplayedSourceToClient(EsPoint contentPos) => _session.DisplayedSourceToClient(contentPos);
+    public EsPoint DisplayedSourceToClient(EsPoint contentPos)
+    {
+        try
+        {
+            return _session.DisplayedSourceToClient(contentPos);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(DisplayedSourceToClient));
+            throw;
+        }
+    }
 
     /// <summary>ホイールの回転量でパンする（回転量から移動量への換算を単一所有する）。</summary>
     /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。 1 ノッチ = 1.0）。</param>
     /// <param name="shift">Shift 併用かどうか（縦回転を横パンとして扱う）。</param>
     /// <remarks>ホストが他のコントロール（選択オーバーレイ等）で受けたホイールを転送する場合にも使用する。</remarks>
-    public void PanByWheel(EsVector delta, bool shift) => Apply(_session.PanByWheel(delta, shift));
+    public void PanByWheel(EsVector delta, bool shift)
+    {
+        try
+        {
+            Apply(_session.PanByWheel(delta, shift));
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(PanByWheel));
+            throw;
+        }
+    }
 
     /// <summary>Ctrl+ホイールのズームを適用する（ホイール操作の公開 API）。</summary>
     /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>
@@ -186,15 +263,51 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>ズームインする（⊖⊕ ボタン。 次のレベルへ移動する）。</summary>
     /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。</remarks>
-    public void ZoomIn() => Apply(_session.ZoomIn());
+    public void ZoomIn()
+    {
+        try
+        {
+            Apply(_session.ZoomIn());
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomIn));
+            throw;
+        }
+    }
 
     /// <summary>ズームアウトする（⊖⊕ ボタン。 前のレベルへ移動する）。</summary>
     /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。</remarks>
-    public void ZoomOut() => Apply(_session.ZoomOut());
+    public void ZoomOut()
+    {
+        try
+        {
+            Apply(_session.ZoomOut());
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomOut));
+            throw;
+        }
+    }
 
     /// <summary>Fit 表示（ビューポートに収まる自動倍率）へ戻す。</summary>
     /// <remarks>Fit へ移行する唯一の経路（<see cref="ZoomPercent"/> の setter は 0 を受け付けない）。</remarks>
-    public void ZoomFit() => Apply(_session.ZoomFit());
+    public void ZoomFit()
+    {
+        try
+        {
+            Apply(_session.ZoomFit());
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomFit));
+            throw;
+        }
+    }
 
     /// <summary>要求サイズを返す。</summary>
     /// <param name="availableSize">親から提示された利用可能サイズ（使用しない）。</param>

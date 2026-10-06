@@ -39,7 +39,7 @@ public sealed class CaptureHighlightSession(ILogger? logger = null)
     /// <summary>直前に検出した要素の表示名（未検出・未取得の場合は空文字）を取得する。</summary>
     /// <value>情報ラベル（ウィンドウタイトル）に表示する文言。 未検出の場合は空文字。</value>
     /// <remarks>情報ラベルの文言プロバイダが参照する（表示時のみ評価される）。</remarks>
-    public string Title { get; private set; } = CapturePreviewLogFormat.Text(null);
+    public string Title { get; private set; } = CaptureText.Normalize(null);
 
     /// <summary>直前に検出した要素のハイライト矩形（対象座標）を取得する。</summary>
     /// <value>ハイライト矩形（画像ローカル物理ピクセル）。 未検出の場合は null。</value>
@@ -63,7 +63,7 @@ public sealed class CaptureHighlightSession(ILogger? logger = null)
         var local = detection.IsDetected
             ? CaptureClipMath.ToLocalRect(detection.Bounds, imageOrigin)
             : default;
-        var title = CapturePreviewLogFormat.Text(detection.IsDetected ? detection.Title : null);
+        var title = CaptureText.Normalize(detection.IsDetected ? detection.Title : null);
         var titleChanged = !string.Equals(title, Title, StringComparison.Ordinal);
 
         Title = title;

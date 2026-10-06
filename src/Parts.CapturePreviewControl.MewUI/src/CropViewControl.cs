@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Marquee;
@@ -190,6 +191,23 @@ public sealed class CropViewControl : Grid
         set => _zoomView.Log = value;
     }
 
+    /// <summary>ログの接頭辞を取得または設定する（ロガーと一緒に設定する）。</summary>
+    /// <value>接頭辞（例: <c>[CapturePreviewControl]</c>）。 null または空白を設定すると既定値へ戻す。</value>
+    /// <remarks>本アセンブリのログ定義（<see cref="CapturePreviewLogMessage"/>）の接頭辞を設定する。</remarks>
+    public string? LogPrefix
+    {
+        get => _logPrefix;
+        set
+        {
+            _logPrefix = value;
+            CapturePreviewLogMessage.Prefix =
+                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+        }
+    }
+
+    /// <summary>ログの接頭辞（未設定は null。 既定値は定義クラスが持つ）。</summary>
+    private string? _logPrefix;
+
     /// <summary>現在のズーム率（%）を取得または設定する。</summary>
     /// <value>Fit 中は実効倍率、固定倍率中はズーム率。 0 より大きい値のみ設定できる。</value>
     public double ZoomPercent
@@ -222,34 +240,118 @@ public sealed class CropViewControl : Grid
 
     /// <summary>画像の表示矩形（ビューポート座標・DIP）を取得する。</summary>
     /// <returns>画像の表示矩形。 画像未設定時は空の矩形。</returns>
-    public EsRect ImageRectViewport() => _zoomView.ImageRectViewport();
+    public EsRect ImageRectViewport()
+    {
+        try
+        {
+            return _zoomView.ImageRectViewport();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ImageRectViewport));
+            throw;
+        }
+    }
 
     /// <summary>ズームインする（段階遷移）。</summary>
-    public void ZoomIn() => _zoomView.ZoomIn();
+    public void ZoomIn()
+    {
+        try
+        {
+            _zoomView.ZoomIn();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomIn));
+            throw;
+        }
+    }
 
     /// <summary>ズームアウトする（段階遷移）。</summary>
-    public void ZoomOut() => _zoomView.ZoomOut();
+    public void ZoomOut()
+    {
+        try
+        {
+            _zoomView.ZoomOut();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomOut));
+            throw;
+        }
+    }
 
     /// <summary>Fit 表示（ビューポートに収まる自動倍率）へ戻す。</summary>
-    public void ZoomFit() => _zoomView.ZoomFit();
+    public void ZoomFit()
+    {
+        try
+        {
+            _zoomView.ZoomFit();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomFit));
+            throw;
+        }
+    }
 
     /// <summary>ビューポート座標を対象座標（元画像ピクセル）へ変換する。</summary>
     /// <param name="viewportPos">ビューポート座標（DIP）。</param>
     /// <returns>対象座標（元画像ピクセル）。</returns>
     /// <remarks>画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。</remarks>
-    public EsPoint ClientToSource(EsPoint viewportPos) => _zoomView.ClientToDisplayedSource(viewportPos);
+    public EsPoint ClientToSource(EsPoint viewportPos)
+    {
+        try
+        {
+            return _zoomView.ClientToDisplayedSource(viewportPos);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ClientToSource));
+            throw;
+        }
+    }
 
     /// <summary>対象座標（元画像ピクセル）をビューポート座標へ変換する。</summary>
     /// <param name="contentPos">対象座標（元画像ピクセル）。</param>
     /// <returns>ビューポート座標（DIP）。</returns>
     /// <remarks>画像表示矩形の原点を基準に変換する（Fit 中央寄せの原点補正を含む）。</remarks>
-    public EsPoint SourceToClient(EsPoint contentPos) => _zoomView.DisplayedSourceToClient(contentPos);
+    public EsPoint SourceToClient(EsPoint contentPos)
+    {
+        try
+        {
+            return _zoomView.DisplayedSourceToClient(contentPos);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(SourceToClient));
+            throw;
+        }
+    }
 
     /// <summary>ホイールの回転量でビューポートをパンする（ホストが他のコントロールで受けたホイールの転送用）。</summary>
     /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。 1 ノッチ = 1.0）。</param>
     /// <param name="shift">Shift 併用かどうか（縦回転を横パンとして扱う）。</param>
     /// <remarks>回転量から移動量への換算とクランプはズームビューポートが単一所有する。</remarks>
-    public void PanByWheel(EsVector delta, bool shift) => _zoomView.PanByWheel(delta, shift);
+    public void PanByWheel(EsVector delta, bool shift)
+    {
+        try
+        {
+            _zoomView.PanByWheel(delta, shift);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(PanByWheel));
+            throw;
+        }
+    }
 
     /// <summary>Ctrl+ホイールのズームを適用する（ホストが他のコントロールで受けたホイールの転送用）。</summary>
     /// <param name="zoomIn">true = ズームイン / false = ズームアウト。</param>

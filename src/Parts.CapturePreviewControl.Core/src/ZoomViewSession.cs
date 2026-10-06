@@ -631,14 +631,14 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
 
     /// <summary>ズーム操作（⊖⊕ ボタン・Ctrl+ホイール）の共通処理（遷移関数の適用・ログ・反映）。</summary>
     /// <param name="transition">現在のズーム率と Fit 実効倍率から遷移先を求める関数。</param>
-    /// <param name="log">変更前後のズーム率（%）を記録するログメソッド。</param>
+    /// <param name="log">変更前後の実効ズーム率（%）を記録するログメソッド（丸めはログ定義が単一所有する）。</param>
     /// <returns>UI が適用する効果（移動先がある場合のみ再描画）。</returns>
     /// <remarks>
     /// 遷移関数は内部ズーム率（0 = Fit / 0 より大きい値 = 固定倍率）を期待するため、<see cref="InternalZoomPercent"/> を渡す。<br/>
-    /// <b>ログの変更前は実効ズーム率</b>（Fit 中は Fit 実効倍率）を記録する。<br/>
+    /// <b>ログの変更前は実効ズーム率</b>（Fit 中は Fit 実効倍率）を記録する（丸めはログ定義側が行う）。<br/>
     /// 遷移先が null（移動不可）の場合は何もしない。
     /// </remarks>
-    private ZoomFeedback ApplyZoomStep(Func<double, double, double?> transition, Action<int, int> log)
+    private ZoomFeedback ApplyZoomStep(Func<double, double, double?> transition, Action<double, double> log)
     {
         var zoom = _zoomPercent;
         // 遷移関数は Fit 中（current <= 0）のみ fitZoom を使うため、固定倍率中は計算しない
@@ -649,7 +649,7 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
             return default;
         }
 
-        log(CapturePreviewLogFormat.Percent(ZoomPercent), CapturePreviewLogFormat.Percent(target));
+        log(ZoomPercent, target);
         return SetZoom(_config.ClampZoom(target), _pointerPosition);
     }
 

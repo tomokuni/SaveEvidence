@@ -21,7 +21,7 @@
   - [7.5 CaptureSettingsMerge](#75-capturesettingsmerge)
   - [7.6 CaptureSessionState / CaptureSessionSlot](#76-capturesessionstate--capturesessionslot)
   - [7.7 CaptureOwnerScope](#77-captureownerscope)
-  - [7.8 CaptureLogMessage / CaptureLogFormat / CaptureSettingsLogMessage](#78-capturelogmessage--capturelogformat--capturesettingslogmessage)
+  - [7.8 CapturePreviewLogMessage](#78-capturepreviewlogmessage)
   - [7.9 CaptureClipMath](#79-captureclipmath)
   - [7.10 CaptureImageHolder](#710-captureimageholder)
   - [7.11 CaptureVirtualScreen](#711-capturevirtualscreen)
@@ -32,6 +32,7 @@
   - [7.16 CaptureTiming](#716-capturetiming)
   - [7.17 CropBoundsMath.RoundToPixel](#717-cropboundsmathroundtopixel)
   - [7.18 FadeMaskDragRectOptionsMapper](#718-fademaskdragrectoptionsmapper)
+  - [7.19 CaptureText](#719-capturetext)
 - [8. 矩形オーバーレイ（`OverlayRect` 系）](#8-矩形オーバーレイoverlayrect-系)
   - [8.1 `OverlayRect`（record struct）](#81-overlayrectrecord-struct)
   - [8.2 `OverlayRectLayout`（描画入力の解決）](#82-overlayrectlayout描画入力の解決)
@@ -48,7 +49,7 @@
   - [10.4 `ZoomMath`（内部・純粋関数）](#104-zoommath内部純粋関数)
   - [10.5 `ZoomViewAppearance`（外観）](#105-zoomviewappearance外観)
   - [10.6 `ZoomScrollBar` / `ZoomScrollBarMetrics` / `ZoomScrollBarGeometry` / `ZoomAvailability`](#106-zoomscrollbar--zoomscrollbarmetrics--zoomscrollbargeometry--zoomavailability)
-  - [10.7 `ZoomLogMessage` / `ZoomLogFormat`（ログ）](#107-zoomlogmessage--zoomlogformatログ)
+  - [10.7 `CapturePreviewLogMessage`（ズーム操作のログ）](#107-capturepreviewlogmessageズーム操作のログ)
   - [10.8 `ZoomState` / `ZoomFeedback` / `ZoomNotice`（契約）](#108-zoomstate--zoomfeedback--zoomnotice契約)
 
 ## 1. 公開型の構成
@@ -80,9 +81,8 @@
 | `CaptureOwnerScope` | クラス | 撮影中のオーナー退避とキャプチャ除外の手順（`IDisposable` で復帰） |
 | `CaptureSettings` | record | 外観・動作設定（全メンバー nullable） |
 | `CaptureSettingsMerge` | 静的クラス | 設定の部分更新マージと同値スキップ |
-| `CaptureLogMessage` | 静的クラス | 共通ログ定義（撮影・切り出しの開始／確定／キャンセル） |
-| `CaptureLogFormat` | 静的クラス | ログに載せる値の文字列化 |
-| `CaptureSettingsLogMessage` | 静的クラス | 設定適用のログ定義 |
+| `CapturePreviewLogMessage` | 静的クラス | ログ定義（撮影・切り出し・設定・ズーム）。 接頭辞・整形・レベルの単一所有 |
+| `CaptureText` | 静的クラス | ログ以外でも使う文字列の正規化（未取得の null を空文字へ） |
 | `CaptureResult` | record | キャプチャ結果（画像と領域） |
 | `ICaptureTarget` | インターフェイス | 切り出し結果の適用先（アプリ側が実装するポート） |
 | `ICaptureOwnerWindow` | インターフェイス | 撮影時に退避するオーナーウィンドウ（各 UI が実装するポート） |
@@ -105,7 +105,7 @@
 | `ZoomTransition` | 静的クラス | ⊖⊕ の段階遷移・Ctrl+ホイールの遷移・ズーム可否の判定（純粋関数） |
 | `ZoomMath` | 静的クラス | Fit 実効倍率・ズーム中心維持・スクロール範囲クランプ・座標変換・% ⇔ 倍率の換算（純粋関数） |
 | `ZoomAvailability` | record struct | ズーム可否（ズームイン・ズームアウト）を単一に保持する値オブジェクト |
-| `ZoomLogMessage` / `ZoomLogFormat` | 静的クラス | 画像ビューポートの操作ログの定義（両 UI 共通の書式）と値の文字列化・丸め |
+| `CapturePreviewLogMessage`（ズーム） | 静的クラス | 画像ビューポートの操作ログの定義（両 UI 共通の書式・丸め） |
 
 `ZoomTransition` / `ZoomMath` / `ZoomAvailability` / `ZoomScrollBarGeometry` は `internal` です（UI 実装とテストへ `InternalsVisibleTo` で公開し、ホストは `ZoomViewSession` 経由で間接利用します）。
 
@@ -120,8 +120,8 @@
 | 状態 | セッションの実行中・完了（`CaptureSessionState`）、受付スロット（`CaptureSessionSlot`）、結果の確定（`CaptureCompletion`）、ハイライトとクリック確定（`CaptureHighlightSession` / `CaptureClickSelection`）、撮影画像（`CaptureImageHolder`） |
 | 判断 | 切り出し範囲（`CropBoundsMath` / `CaptureClipMath`）、ハイライトの反映（`CaptureHighlightSession`）、キー操作（`CaptureKeyActions`）、クリック確定（`CaptureClickSelection`）、種別の性質（`CaptureTypeTraits`）、モニタ倍率（`MonitorScalingMath`）、設定のマージ（`CaptureSettingsMerge`）、退避と除外の順序（`CaptureOwnerScope`）、平均色（`ImageColorMath`）、切り出しと事前キャッシュ（`CaptureClipMath` / `CaptureClipCache`）、取得の打ち切り（`CaptureVirtualScreen`）、切り出しの操作内容（`CropSessionActions`）、方針値（`CaptureTiming`）、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession`） |
 | 契約 | `ICaptureTarget`（結果の適用先）、`ICaptureOwnerWindow`（退避対象）、`CaptureSessionSlot`（排他）、`CaptureCompletion`（単一確定）、`CaptureClipCache`（事前切り出しの受け渡し）、`CaptureImageHolder`（画像の保持）、`CaptureHighlight` / `CaptureHighlightSession`（ハイライト状態）、`CaptureResult.From`（結果の正規化）、`ZoomFeedback` / `ZoomNotice`（画像ビューポートのコア⇔UI の契約） |
-| ログ定義 | `CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`（書式・レベル・完了時の出力の組を含む。 呼び出しは UI）、`ZoomLogMessage` / `ZoomLogFormat`（画像ビューポートの操作ログ） |
-| ログ定義 | `CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`（書式とレベルのみ。 呼び出しは UI） |
+| ログ定義 | `CapturePreviewLogMessage`（接頭辞・書式・レベル・値の整形・完了時の出力の組・設定適用・ズーム操作を含む。 呼び出しは UI） |
+| ログ以外の正規化 | `CaptureText`（未取得の文字列を空文字へ。 ログ定義の外に置く） |
 | UI 層に残すもの | Window の生成と表示、`Screens` / DPI の取得、ポインタ・キーの購読、`Dispatcher`、カーソル、レイアウト、Bitmap のライフサイクル |
 
 ## 3. CaptureLabelTexts
@@ -285,30 +285,35 @@
 
 撮影が例外で終わっても復帰するため、必ず `using` で使います。
 
-### 7.8 CaptureLogMessage / CaptureLogFormat / CaptureSettingsLogMessage
+### 7.8 CapturePreviewLogMessage
 
-ログの定義（イベント ID・本文書式・完了時の出力の組）を単一所有します。 カテゴリは各 UI が与えます。
+ログの定義（接頭辞・イベント ID・本文書式・整形・完了時の出力の組）を単一所有します。 カテゴリは各 UI が与えます。 接頭辞はホストが `Prefix` へ設定します（未設定は `DefaultPrefix`）。
 
 | メソッド | 内容 |
 | --- | --- |
-| `LogCaptureStart(string captureType)` | 撮影の開始 |
+| `LogOperationError(Exception exception, string operation)` | 公開ファサードの操作で例外が発生したことを記録する（Error。 記録して再スローするための入口） |
+| `LogCaptureStart(CaptureType captureType)` | 撮影の開始 |
 | `LogCaptureFinished(CaptureResult? result)` | 撮影セッションの終了。 確定は `CaptureCompleted` → `Result` の 2 件（順序を含めて単一所有）、キャンセル（`result` が null または画像が null）は `CaptureCancelled` の 1 件 |
-| `LogConfirmRequested(string rect)` | 選択の確定要求（Enter・ダブルクリック等。 診断用） |
-| `LogCancelRequested()` | 選択のキャンセル要求（Esc・非アクティブ化等。 診断用） |
-| `LogVirtualScreen(EsPointInt origin, EsBitmap? bitmap)` | 仮想スクリーンの原点とサイズ（診断用）。 **画像未取得はサイズ 0** へ正規化する |
-| `LogHighlight(string captureType, bool detected, string rect, string title, string className)` | ハイライトの検出結果（Trace。 診断用。 `CaptureHighlightSession` が呼ぶ） |
 | `LogCropStart(EsBitmap image)` | 切り出しの開始（元画像サイズ） |
 | `LogCropFinished(EsRectInt bounds)` | 切り出しセッションの終了。 **退化した選択（空の矩形）はキャンセルとして記録する**（UI が空判定とログの呼び分けを書かない） |
 | `LogCropCancelled()` | 切り出しのキャンセル（Esc・非アクティブ化・ウィンドウクローズ等） |
+| `LogConfirmRequested(EsRect rect)` / `LogConfirmRequested(EsRectInt rect)` | 選択の確定要求（Enter・ダブルクリック等。 診断用） |
+| `LogCancelRequested()` | 選択のキャンセル要求（Esc・非アクティブ化等。 診断用） |
+| `LogVirtualScreen(EsPointInt origin, EsBitmap? bitmap)` | 仮想スクリーンの原点とサイズ（診断用）。 **画像未取得はサイズ 0** へ正規化する |
+| `LogHighlight(CaptureType captureType, bool detected, EsRectInt? rect, string? title, string? className)` | ハイライトの検出結果（Trace。 診断用。 `CaptureHighlightSession` が呼ぶ） |
 | `LogSettingApplied()` | 設定の適用（変化時の 1 回のみ。 同値の適用はログを出さない） |
+
+矩形・文字列の受け取りはコアの値型（`EsRectInt` / `EsRect`）とし、**整形（`"X,Y,Width,Height"`・未取得の空文字化）は本クラスが内部で行います**（呼び出し側は生の値を渡すだけ。 未取得の文字列の正規化は `CaptureText.Normalize` が単一所有する）。
 
 `CropCompleted` / `CaptureCompleted` / `CaptureCancelled` / `Result` は `LogCropFinished` / `LogCaptureFinished` の内部実装です（UI からは終了 1 回で呼びます）。
 
+ログに載せる値の整形（`internal`。 別クラスは持たず本クラスが単一所有する）:
+
 | メソッド | 内容 |
 | --- | --- |
-| `CapturePreviewLogFormat.Rect(EsRectInt)` / `CapturePreviewLogFormat.Rect(EsRect)` | 矩形を `"X,Y,Width,Height"` の 1 行へ整形する |
-| `CapturePreviewLogFormat.RectOrEmpty(EsRectInt?)` | 未検出（null）を空文字へ正規化する |
-| `CapturePreviewLogFormat.Text(string?)` | 未取得（null）の文字列を空文字へ正規化する （タイトル・クラス名） |
+| `Rect(EsRectInt)` / `Rect(EsRect)` | 矩形を `"X,Y,Width,Height"` の 1 行へ整形する |
+| `RectOrEmpty(EsRectInt?)` | 未検出（null）を空文字へ正規化する |
+| `Percent(double)` | ズーム率（%）を四捨五入した整数へ丸める |
 
 ### 7.9 CaptureClipMath
 
@@ -425,6 +430,16 @@ UI が発明してはいけない運用方針値を単一所有します。
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
 | `ToFadeMaskDragRectOptions` | `FadeMaskDragRectOptions ToFadeMaskDragRectOptions(this CaptureSettings settings)` | 設定（全メンバー non-null）から複合コントロールの設定（**寸法・表示可否**）を組み立てる。 **色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる） |
+
+### 7.19 CaptureText
+
+**ログに限らない**文字列の正規化を単一所有します。 ログ定義（`CapturePreviewLogMessage`）の中へ置くとログ以外の利用者を呼び込み、名前と責務が食い違うため独立した型にしています。
+
+| メソッド | シグネチャ | 内容 |
+| --- | --- | --- |
+| `Normalize` | `string Normalize(string? value)` | 未取得（null）の文字列を空文字へ正規化する。 **値は変えない**（空白の除去・トリムを行わない） |
+
+**対象はログではない**ため、`CapturePreviewLogMessage` の整形（`Rect` / `RectOrEmpty` / `Percent`）とは別の型です。 ハイライトの表示名（`CaptureHighlightSession.Title`）と、ログ本文の未取得の正規化（`LogHighlight` の内部）が同じ規則を共有します。
 
 ## 8. 矩形オーバーレイ（`OverlayRect` 系）
 
@@ -627,9 +642,18 @@ public readonly record struct OverlayRect(
 | `ZoomScrollBarGeometry`（internal） | `Compute`（トラック・サムの矩形）・`MovableThumbRange`（可動範囲）・`SourceOffsetFromThumb`（サム位置からのオフセット逆算）・`MaxSourceOffset` |
 | `ZoomAvailability`（internal） | ズーム可否（`CanZoomIn` / `CanZoomOut`）を単一に保持する値オブジェクト |
 
-### 10.7 `ZoomLogMessage` / `ZoomLogFormat`（ログ）
+### 10.7 `CapturePreviewLogMessage`（ズーム操作のログ）
 
-ズーム操作の実行前後を Information で記録します。 書式は両 UI で同一です（例: `[CapturePreviewControl] ZoomIn: 50% -> 62%`）。 **変更前の値は実効ズーム率**（Fit 中は実効倍率）を記録し、丸めは `ZoomLogFormat.Percent` が単一所有します。 カテゴリは各 UI が与えます。
+ズーム操作の実行前後を Information で記録します。 書式は両 UI で同一です（例: `[CapturePreviewControl] ZoomIn: 50% -> 62%`）。 **変更前の値は実効ズーム率**（Fit 中は実効倍率）を記録し、丸め（四捨五入）は `CapturePreviewLogMessage.Percent` が単一所有します。 カテゴリは各 UI が与えます。
+
+| メソッド | 内容 |
+| --- | --- |
+| `LogZoomIn(double current, double target)` | ボタン・キーによるズームイン |
+| `LogZoomOut(double current, double target)` | ボタン・キーによるズームアウト |
+| `LogZoomInWheel(double current, double target)` | ホイールによるズームイン |
+| `LogZoomOutWheel(double current, double target)` | ホイールによるズームアウト |
+
+引数は実効ズーム率（%）です。 **丸めは `Percent` が 1 箇所で行う**ため、呼び出し側は丸めを書かず、Information が無効な場合は `IsEnabled` で早期に戻します。
 
 ### 10.8 `ZoomState` / `ZoomFeedback` / `ZoomNotice`（契約）
 

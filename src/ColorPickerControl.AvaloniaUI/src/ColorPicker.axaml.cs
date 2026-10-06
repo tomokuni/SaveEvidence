@@ -201,6 +201,20 @@ public sealed partial class ColorPickerControl : UserControl
         set => field = value.OrNullLogger();
     }
 
+    /// <summary>ログの接頭辞を取得または設定する（ロガーと一緒に設定する）。</summary>
+    /// <value>接頭辞（例: <c>[ColorPicker]</c>）。 null または空白を設定すると既定値へ戻す。</value>
+    /// <remarks>本アセンブリのログ定義（<see cref="ColorPickerLogMessage"/>）の接頭辞を設定する。</remarks>
+    public string? LogPrefix
+    {
+        get => field;
+        set
+        {
+            field = value;
+            ColorPickerLogMessage.Prefix =
+                string.IsNullOrWhiteSpace(value) ? ColorPickerLogMessage.DefaultPrefix : value;
+        }
+    }
+
     // ====================================================================
     // 定数
     // ====================================================================

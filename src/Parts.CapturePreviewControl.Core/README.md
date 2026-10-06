@@ -45,7 +45,8 @@
 - **事前切り出しキャッシュ**（`CaptureClipCache`）: 撮影確定前の切り出し結果を保持し、**同じ矩形なら再切り出しをスキップ**、確定時は**所有権ごと**渡す、置き換え時は**旧値を破棄**するという規則を単一所有する
 - **撮影セッションの方針値**（`CaptureTiming`）: 画面キャプチャのタイムアウトと、オーナーウィンドウの画面外退避座標（両 UI で同じ値を使う）
 - **切り出しの操作内容**（`CropSessionActions`）: 1 つのボタン（キー）で「開始・確定・キャンセル」を切り替える判断を単一所有する（未実行→開始 / 選択あり→確定 / 選択なし→キャンセル）
-- **ログ定義**（`CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`）: 書式・レベル・イベント ID・**完了時の出力の組**（確定は `CaptureCompleted` → `Result` の 2 件、キャンセルは `CaptureCancelled` の 1 件 = `LogCaptureFinished`）を単一所有する（UI 層は呼ぶだけ。 未検出・未取得の空文字化・未取得のサイズ 0 化も含む）
+- **ログ定義**（`CapturePreviewLogMessage`）: 接頭辞・書式・レベル・イベント ID・**完了時の出力の組**（確定は `CaptureCompleted` → `Result` の 2 件、キャンセルは `CaptureCancelled` の 1 件 = `LogCaptureFinished`）を単一所有する（UI 層は呼ぶだけ。 未検出・未取得の空文字化・未取得のサ イズ 0 化も含む）
+- **文字列の正規化**（`CaptureText`）: ログに限らず使う「未取得（null）は空文字」の規則を単一所有する（ログ定義の整形とは別の型。 ハイライトの表示名にも使う）
 - **矩形オーバーレイ**（`OverlayRect` / `OverlayRectLayout` 他）: 画像上へ実線・破線・点線の矩形を描く契約と、**「どう描くか」の判断**（負サイズのクランプ・太さの 1 ピクセル下限・破線の判定とダッシュ長・背景色を使うか）を単一所有する（切り出しビューと外部提供矩形が共有する）
 - **領域選択の複合コントロールのコア**（`FadeMaskDragRectMode` / `FadeMaskDragRectOptions` 他）: 動作モードの型・設定の単一値・モードから導出する表示可否・選択矩形の可否判定・ルーペ画像への破線描画を単一所有する（両 UI の複合コントロールが同じ型と判断を使う）
 - **切り出しビューの画像ビューポートの状態と判断**（`ZoomViewSession`）: 内部ズーム率（0 = Fit）・オフセット・設定・表示条件を保持し、Fit の表現（内部ズーム率 0 = 自動）・実効ズーム率の導出・ズーム可否・遷移の適用（ズーム中心の維持）・パン（grab 方式）・スクロールバーのドラッグ・画像変更時の Fit 復帰を単一所有する（UI は入力の変換・効果の適用・描画だけを担う）
@@ -53,7 +54,7 @@
 - **画像ビューポートの幾何**（`ZoomMath` / `ZoomScrollBarGeometry`）: Fit 実効倍率・ズーム中心を維持するオフセット・スクロール範囲のクランプ・ビューポート ⇔ コンテンツ座標の変換・% ⇔ 倍率の換算と、オーバーレイスクロールバーのトラック・サムの矩形と可動範囲・サム位置からのオフセット逆算を単一所有する
 - **画像ビューポートの外観**（`ZoomViewAppearance`）: 下地・市松模様（タイルサイズと 2 色）・スクロールバーの外観を単一値で保持し、描画可否と、市松模様を描く範囲（画像の表示矩形の内側）・明色タイル矩形・タイルサイズの実効値を単一所有する
 - **画像ビューポートの通知と効果**（`ZoomState` / `ZoomFeedback` / `ZoomNotice`）: 通知する 4 値（実効ズーム率・Fit 状態・可否）・UI が適用する効果（再描画・ポインタキャプチャ。 適用順）・通知の種別を単一所有する
-- **画像ビューポートのログ定義**（`ZoomLogMessage` / `ZoomLogFormat`）: ズーム操作の実行前後（例: `[CapturePreviewControl] ZoomIn: 50% -> 62%`）と、変更前の実効ズーム率の丸めを単一所有する
+- **画像ビューポートのズーム操作ログ**（`CapturePreviewLogMessage` の `LogZoomIn` / `LogZoomOut` / `LogZoomInWheel` / `LogZoomOutWheel`）: ズーム操作の実行前後（例: `[CapturePreviewControl] ZoomIn: 50% -> 62%`）と、変更前の実効ズーム率の丸め（`Percent`）を単一所有する
 - **UI 非依存**: Avalonia / MewUI のどちらの型も参照しない（色は `System.Drawing.Color`、座標は `Es*` 型）
 
 ## 3. 依存関係
@@ -129,8 +130,8 @@ src/
 │   ├── CaptureCompletion.cs               # 結果の単一確定（TCS のラップ）
 │   ├── CaptureOwnerScope.cs               # オーナー退避とキャプチャ除外の手順
 │   ├── CaptureSettingsMerge.cs            # 設定の部分更新マージ
-│   ├── CapturePreviewLogMessage.cs        # 共通ログ定義（開始・確定・キャンセル・設定・ズーム）
-│   ├── CapturePreviewLogFormat.cs         # ログに載せる値の文字列化・丸め
+│   ├── CapturePreviewLogMessage.cs        # ログ定義（接頭辞・本文書式・イベント ID・値の整形。別の LogFormat クラスは持たない）
+│   ├── CaptureText.cs                     # ログに載せる文字列の正規化（未取得の null を空文字へ）
 │   ├── ICaptureTarget.cs                  # 切り出し結果の適用先（ポート）
 │   ├── ICaptureOwnerWindow.cs             # 退避対象のポート
 │   ├── CaptureSettings.cs                 # 外観・動作設定（record）
@@ -165,7 +166,6 @@ src/
     ├── Parts.CapturePreviewControl.Core.Tests.csproj
     ├── CropBoundsMath.Tests.cs            # クランプ・丸め・区間の流儀・丸め規則
     ├── CropLabelTexts.Tests.cs            # 含まれるピクセル数・ズーム率の丸め・未選択時の表示可否
-
     ├── ImageColorMath.Tests.cs            # 平均色（標本間引き・空画像）
     ├── CaptureTypeTraits.Tests.cs         # ハイライト型・区間の流儀・検出対象・検出呼び分け・確定対象
     ├── MonitorScalingMath.Tests.cs        # 中心判定・境界・フォールバック・対象座標・一覧の構築・代表値
@@ -201,8 +201,7 @@ src/
     ├── ZoomTransition.Tests.cs            # 段階遷移・ホイール遷移・可否判定
     ├── ZoomMath.Tests.cs                  # Fit 実効倍率・中心維持・クランプ・座標変換
     ├── ZoomScrollBarGeometry.Tests.cs     # トラック・サムの矩形とオフセット逆算
-    ├── ZoomViewAppearance.Tests.cs        # 描画可否・市松模様の範囲・タイル矩形
-    └── ZoomLogMessage.Tests.cs            # ログ書式と丸め
+    └── ZoomViewAppearance.Tests.cs        # 描画可否・市松模様の範囲・タイル矩形
 ```
 
 ## 7. テスト

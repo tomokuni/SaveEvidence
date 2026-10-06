@@ -84,7 +84,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 - ライブラリは例外を原則伝播し、上位 AP（app）で処理する。
 - UI レイヤー（app）ではユーザー操作起因の例外を各ハンドラで catch し、UI の応答性を維持する。
-- ログは LoggerMessage ソース生成で出力する。 定義はすべて `Parts.CapturePreviewControl.Core`（`CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage`）が単一所有し、本 UI は定義を持たない（`_log.LogXxx` を呼ぶだけ）。 現在の定義は Debug / Trace のみで、Error / Warning は定義していない（例外は上位 AP が処理する）。
+- ログは LoggerMessage ソース生成で出力する。 定義はすべて `Parts.CapturePreviewControl.Core`（`CapturePreviewLogMessage`）が単一所有し、本 UI は定義を持たない（`_log.LogXxx` を呼ぶだけ）。 定義しているレベルは Debug（操作イベント） / Trace（ハイライトの検出結果） / Information（ズーム操作） / Error（例外の記録）で、Warning は定義していない（例外は上位アプリが処理する）。
 
 ### 4.2 本プロジェクト固有の例外処理
 
@@ -114,7 +114,7 @@ flowchart TB
         Sl["CaptureSessionSlot / CaptureSessionState<br/>CaptureCompletion / CaptureOwnerScope"]
         Math["CropBoundsMath / CaptureClipMath / CaptureTypeTraits<br/>MonitorScalingMath / ImageColorMath<br/>CaptureLabelTexts / CropLabelTexts"]
         Mg["CaptureSettingsMerge / FadeMaskDragRectOptionsMapper<br/>OverlayRect / OverlayLineStyle"]
-        Log["CaptureLogMessage / CaptureSettingsLogMessage<br/>CaptureLogFormat"]
+        Log["CapturePreviewLogMessage"]
         ZS["ZoomViewSession<br/>public sealed class（状態と判断を単一所有）"]
         ZC["ZoomOptions / ZoomState / ZoomViewAppearance<br/>public"]
         ZT["ZoomMath / ZoomTransition / ZoomScrollBarGeometry<br/>internal（純粋関数）"]
@@ -182,7 +182,7 @@ flowchart TB
   - `OverlayWindow` の生成・表示と、コアの完了通知（`CaptureCompletion`）での結果待機
   - 結果の返却（キャンセル時は画像 null / 矩形 0x0）
 - **可視性**: internal
-- **依存**: OverlayWindow / IWindowService / ICaptureService / IElementFinder（注入）/ CaptureType / CaptureSettings / CaptureOwnerScope / CaptureCompletion / CaptureLogMessage / CaptureLogFormat
+- **依存**: OverlayWindow / IWindowService / ICaptureService / IElementFinder（ 注入）/ CaptureType / CaptureSettings / CaptureOwnerScope / CaptureCompletion / CapturePreviewLogMessage
 
 ### 6.3 CropSession
 
@@ -227,12 +227,12 @@ flowchart TB
   - **モニタ一覧の構築（倍率未確定の除外）はコアの `MonitorScalingMath.Collect` が単一所有する**（`Screens.All` の取得のみ UI 固有）
   - **座標の整数化はコアの `CropBoundsMath.RoundToPixel` が単一所有する**（切り捨てで書くと UI ごとに 1 ピクセルずれる）
   - **タイムアウト・画面外退避座標はコアの `CaptureTiming` が単一所有する**（両 UI で同じ値を使う）
-  - **ラベル文言の正規化（未検出・null は空文字）はコアの `CaptureLogFormat` が単一所有する**
-  - ログ定義はコア（`CaptureLogMessage` / `CaptureLogFormat`）が単一所有する（本クラスは `_log.LogXxx` を呼ぶだけ）
+  - **ラベル文言の正規化（未検出・null は空文字）はコアの `CaptureText` が単一所有する**
+  - ログ定義はコア（`CapturePreviewLogMessage`）が単一所有する（本クラスは `_log.LogXxx` を呼ぶだけ）
   - クリック確定 → キャプチャ実行 → 結果コールバック
   - 非アクティブ化 / Close → キャンセル
 - **可視性**: internal（クラス。 コンストラクタ等のシグネチャは public）
-- **依存**: FadeMaskDragRectControl（同一アセンブリ。 `FadeMaskDragRectControl` / `FadeMaskDragRectMode`）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CaptureClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CaptureLogMessage / CaptureResult
+- **依存**: FadeMaskDragRectControl（同一アセンブリ。 `FadeMaskDragRectControl` / `FadeMaskDragRectMode`）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CaptureClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CapturePreviewLogMessage / CaptureResult
 
 ### 6.5 公開データ型
 
@@ -311,7 +311,7 @@ flowchart TB
 | `ZoomNotice` / `ZoomNoticeKind` | 公開 enum / sealed record | セッションから UI への通知（種別と通知時点の値） |
 | `ZoomViewAppearance` | 公開 sealed record | 外観（下地・市松模様・スクロールバー）の単一値。 描画可否と市松模様を描く範囲（画像の表示矩形の内側）・タイル矩形も持つ |
 | `ZoomScrollBar` / `ZoomScrollBarMetrics` | 公開 record struct | スクロールバーの矩形、および標準スクロールバー部品へ写す同期値 |
-| `ZoomLogMessage` / `ZoomLogFormat` | 公開静的クラス | ログ定義（両 UI 共通の書式）と値の文字列化・丸め |
+| `CapturePreviewLogMessage` | 公開静的クラス | ログ定義（接頭辞・書式・レベル・丸め）の単一所有 |
 | `ZoomMath` / `ZoomTransition` / `ZoomAvailability` / `ZoomScrollBarGeometry` | internal（純粋関数） | ズーム中心維持・Fit 実効倍率・座標変換・オフセットクランプ・段階遷移・可否判定・スクロールバーの幾何 |
 
 計算（`ZoomMath` / `ZoomTransition` / `ZoomAvailability` / `ZoomScrollBarGeometry`）は `InternalsVisibleTo` で UI 実装とテストへ公開し、UI 層はセッション経由で間接利用する。 UI 非依存のため、ヘッドレス不要の `[Fact]` で並列テスト可能である（ズームの状態と判断は UI 非依存コアのテストで検証する）。
@@ -348,7 +348,7 @@ sequenceDiagram
 
 ## 9. ログ
 
-ログ定義は `Parts.CapturePreviewControl.Core`（`CaptureLogMessage` / `CaptureSettingsLogMessage`）が単一所有する（LoggerMessage ソース生成）。 本 UI はログ定義を持たない。
+ログ定義は `Parts.CapturePreviewControl.Core`（`CapturePreviewLogMessage`）が単一所有する（LoggerMessage ソース生成）。 本 UI はログ定義 を持たない。
 各メソッドは `this ILogger` 第一引数で定義し、呼び出し側では logger 引数を省略する（例: `_log.LogCaptureStart(type)`）。
 `CaptureSessionControl` コンストラクタの `logger` 引数で注入し、null の場合は出力しない（app では NLog へ転送）。
 出力先・レベル制御はホストアプリケーションが所有する（本クラスは定義のみ）。
@@ -375,24 +375,24 @@ sequenceDiagram
 
 ### 9.2 ログ定義一覧
 
-全ログ（`CaptureLogMessage` / `CaptureSettingsLogMessage`。 `Parts.CapturePreviewControl.Core`）:
+全ログ（`CapturePreviewLogMessage`。 `Parts.CapturePreviewControl.Core`）:
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Debug` | `CaptureLogMessage.LogCaptureStart` | キャプチャセッション開始（種別） |
-| `Debug` | `CaptureLogMessage.LogCaptureFinished` | キャプチャセッションの終了（確定は `CaptureCompleted`（矩形）→ `Result`（画像サイズ / 矩形）の 2 件、キャンセルは `CaptureCancelled` の 1 件。 出力の組はコアが単一所有する） |
-| `Debug` | `CaptureLogMessage.LogConfirmRequested` | 選択の確定要求（Enter / ダブルクリック等） |
-| `Debug` | `CaptureLogMessage.LogCancelRequested` | 選択のキャンセル要求（Esc / 非アクティブ化等） |
-| `Debug` | `CaptureLogMessage.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ。 画像未取得はサイズ 0） |
-| `Trace` | `CaptureLogMessage.LogHighlight` | ハイライト検出結果（検出矩形 / タイトル / クラス名。 マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用。 `CaptureHighlightSession` が出す） |
-| `Debug` | `CaptureLogMessage.LogCropStart` | Crop セッション開始（元画像サイズ） |
-| `Debug` | `CaptureLogMessage.LogCropFinished` | Crop セッションの終了（切り出せた場合は `CropCompleted`（矩形）、退化した選択は `CropCancelled`。 出力の組はコアが単一所有する） |
-| `Debug` | `CaptureLogMessage.LogCropCancelled` | Crop キャンセル（Esc・非アクティブ化・ウィンドウクローズ等） |
-| `Debug` | `CaptureSettingsLogMessage.LogSettingApplied` | 設定の適用（変化時の 1 回のみ） |
+| `Debug` | `CapturePreviewLogMessage.LogCaptureStart` | キャプチャセッション開始（種別） |
+| `Debug` | `CapturePreviewLogMessage.LogCaptureFinished` | キャプチャセッションの終了（確定は `CaptureCompleted`（矩形）→ `Result`（画像サイズ / 矩形）の 2 件、キャンセルは `CaptureCancelled` の 1 件。 出力の組はコアが単一所有する） |
+| `Debug` | `CapturePreviewLogMessage.LogConfirmRequested` | 選択の確定要求（Enter / ダブルクリック等） |
+| `Debug` | `CapturePreviewLogMessage.LogCancelRequested` | 選択のキャンセル要求（Esc / 非アクティブ化等） |
+| `Debug` | `CapturePreviewLogMessage.LogVirtualScreen` | 仮想スクリーン設定（原点 / サイズ。 画像未取得はサイズ 0） |
+| `Trace` | `CapturePreviewLogMessage.LogHighlight` | ハイライト検出結果（検出矩形 / タイトル / クラス名。 マルチモニタ・最大化ウィンドウの矩形検証とデスクトップウィンドウの特定用。 `CaptureHighlightSession` が出す） |
+| `Debug` | `CapturePreviewLogMessage.LogCropStart` | Crop セッション開始（元画像サイズ） |
+| `Debug` | `CapturePreviewLogMessage.LogCropFinished` | Crop セッションの終了（切り出せた場合は `CropCompleted`（矩形）、退化した選択は `CropCancelled`。 出力の組はコアが単一所有する） |
+| `Debug` | `CapturePreviewLogMessage.LogCropCancelled` | Crop キャンセル（Esc・非アクティブ化・ウィンドウクローズ等） |
+| `Debug` | `CapturePreviewLogMessage.LogSettingApplied` | 設定の適用（変化時の 1 回のみ） |
 
-切り出しビューの画像ビューポート（`ZoomViewControl`）の操作ログは UI 非依存コア `Parts.CapturePreviewControl.Core`（`ZoomLogMessage`）が単一所有する（書式を両 UI で揃え、本 UI は定義を持たない）。 `ZoomViewControl.Log` へ注入された `ILogger` へ出力する（未設定時は `NullLogger`）。
+切り出しビューの画像ビューポート（`ZoomViewControl`）の操作ログは UI 非依存コア `Parts.CapturePreviewControl.Core`（`CapturePreviewLogMessage`）が単一所有する（書式を両 UI で揃え、本 UI は定義を持たない）。 `ZoomViewControl.Log` へ注入された `ILogger` へ出力する（未設定時は `NullLogger`）。
 
 | レベル | メソッド | 出力内容 |
 | --- | --- | --- |
-| `Information` | `ZoomLogMessage.LogZoomIn` / `LogZoomOut` | ⊖⊕ のズームイン / アウトの変更前後 %（実効ズーム率。 Fit 中は実効倍率） |
-| `Information` | `ZoomLogMessage.LogZoomInWheel` / `LogZoomOutWheel` | Ctrl+ホイールのズームイン / アウトの変更前後 % |
+| `Information` | `CapturePreviewLogMessage.LogZoomIn` / `LogZoomOut` | ⊖⊕ のズームイン / アウトの変更前後 %（実効ズーム率。 Fit 中は実効倍率） |
+| `Information` | `CapturePreviewLogMessage.LogZoomInWheel` / `LogZoomOutWheel` | Ctrl+ホイールのズームイン / アウトの変更前後 % |

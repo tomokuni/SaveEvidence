@@ -49,6 +49,27 @@ public sealed class CaptureSessionControl : IDisposable
     /// <summary>内部ロガー（インスタンス単位。 複数インスタンスで混線しない）。</summary>
     private readonly ILogger _log;
 
+    /// <summary>ログの接頭辞を取得または設定する（ロガーと一緒に設定する）。</summary>
+    /// <value>接頭辞（例: <c>[CapturePreviewControl]</c>）。 null または空白を設定すると既定値へ戻す。</value>
+    /// <remarks>
+    /// 本スタックのログ定義（<see cref="CapturePreviewLogMessage"/>）の接頭辞を設定する。<br/>
+    /// 内包する複合コントロール（<see cref="CropViewControl"/> 等）は同じ定義クラスを使うため、<br/>
+    /// 本スタック全体のログ接頭辞が揃う。
+    /// </remarks>
+    public string? LogPrefix
+    {
+        get => _logPrefix;
+        set
+        {
+            _logPrefix = value;
+            CapturePreviewLogMessage.Prefix =
+                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+        }
+    }
+
+    /// <summary>ログの接頭辞（未設定は null。 既定値は定義クラスが持つ）。</summary>
+    private string? _logPrefix;
+
     /// <summary>ネイティブウィンドウ操作サービス（キャプチャ除外・退避等）。</summary>
     private readonly IWindowService _windowService;
 
@@ -105,30 +126,39 @@ public sealed class CaptureSessionControl : IDisposable
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
 
-        // 画面の取得は UI 固有、代表スケーリングの解決（未取得は基準値・0 以下の正規化）はコアが単一所有する
-        var scaling = MonitorScalingMath.ResolveScaling(owner.Screens.All.Select(screen => screen.Scaling));
-
-        var session = new SelectionCaptureSession(
-            _windowService,
-            new WinCaptureService(_log),
-            new WinElementFinder(_log),
-            type, _currentSettings, scaling,
-            // キャプチャ完了イベントを公開イベントへ中継する（同期実行 → ホストの画像変更後に再表示）
-            onCaptured: result => CaptureCompleted?.Invoke(this, new CaptureCompletedEventArgs(result)),
-            _log);
-
-        if (!_slot.TryBeginCapture(session))
-        {
-            return null; // 再入禁止（他のセッションが実行中）
-        }
-
         try
         {
-            return await session.RunAsync(owner);
+            // 画面の取得は UI 固有、代表スケーリングの解決（未取得は基準値・0 以下の正規化）はコアが単一所有する
+            var scaling = MonitorScalingMath.ResolveScaling(owner.Screens.All.Select(screen => screen.Scaling));
+
+            var session = new SelectionCaptureSession(
+                _windowService,
+                new WinCaptureService(_log),
+                new WinElementFinder(_log),
+                type, _currentSettings, scaling,
+                // キャプチャ完了イベントを公開イベントへ中継する（同期実行 → ホストの画像変更後に再表示）
+                onCaptured: result => CaptureCompleted?.Invoke(this, new CaptureCompletedEventArgs(result)),
+                _log);
+
+            if (!_slot.TryBeginCapture(session))
+            {
+                return null; // 再入禁止（他のセッションが実行中）
+            }
+
+            try
+            {
+                return await session.RunAsync(owner);
+            }
+            finally
+            {
+                _slot.EndCapture(session);
+            }
         }
-        finally
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
-            _slot.EndCapture(session);
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            _log.LogOperationError(ex, nameof(StartCaptureAsync));
+            throw;
         }
     }
 
@@ -156,23 +186,32 @@ public sealed class CaptureSessionControl : IDisposable
         ArgumentNullException.ThrowIfNull(cropView);
         ArgumentNullException.ThrowIfNull(hostWindow);
 
-        // 切り出しの対象は表示中の画像（CropViewControl.Source が単一所有する）
-        if (cropView.CurrentImage() is not { } sourceImage)
+        try
         {
-            return Task.FromResult<EsRectInt?>(null); // 対象が無い: 開始できなかったことを null で表す
+            // 切り出しの対象は表示中の画像（CropViewControl.Source が単一所有する）
+            if (cropView.CurrentImage() is not { } sourceImage)
+            {
+                return Task.FromResult<EsRectInt?>(null); // 対象が無い: 開始できなかったことを null で表す
+            }
+
+            // 「サイズが 0 の画像は切り出せない」という前提条件はコアが単一所有する
+            CaptureClipMath.ValidateImage(sourceImage, nameof(cropView));
+
+            var session = new CropSession(cropView, hostWindow, _currentSettings, _log);
+            if (!_slot.TryBeginCrop(session))
+            {
+                // 再入禁止（他のセッションが実行中）: 何も起きなかったことを null の結果で表す
+                return Task.FromResult<EsRectInt?>(null);
+            }
+
+            return AwaitCropAsync(session, sourceImage);
         }
-
-        // 「サイズが 0 の画像は切り出せない」という前提条件はコアが単一所有する
-        CaptureClipMath.ValidateImage(sourceImage, nameof(cropView));
-
-        var session = new CropSession(cropView, hostWindow, _currentSettings, _log);
-        if (!_slot.TryBeginCrop(session))
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
-            // 再入禁止（他のセッションが実行中）: 何も起きなかったことを null の結果で表す
-            return Task.FromResult<EsRectInt?>(null);
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            _log.LogOperationError(ex, nameof(StartCropAsync));
+            throw;
         }
-
-        return AwaitCropAsync(session, sourceImage);
     }
 
     /// <summary>Crop セッションを待機し、完了後に保持を解除する。</summary>
@@ -209,7 +248,16 @@ public sealed class CaptureSessionControl : IDisposable
     public CropSessionAction ResolveCropAction()
     {
         ThrowIfDisposed();
-        return CropSessionActions.Resolve(_slot.HasCrop, _slot.HasCropSelection(static crop => crop.HasSelection));
+
+        try
+        {
+            return CropSessionActions.Resolve(_slot.HasCrop, _slot.HasCropSelection(static crop => crop.HasSelection));
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            _log.LogOperationError(ex, nameof(ResolveCropAction));
+            throw;
+        }
     }
 
     /// <summary>進行中の操作（StartCaptureAsync / StartCropAsync）をキャンセルする。</summary>
@@ -221,7 +269,16 @@ public sealed class CaptureSessionControl : IDisposable
     public void Cancel()
     {
         ThrowIfDisposed();
-        _slot.CancelAll(static s => s.Cancel(), static s => s.Cancel());
+
+        try
+        {
+            _slot.CancelAll(static s => s.Cancel(), static s => s.Cancel());
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            _log.LogOperationError(ex, nameof(Cancel));
+            throw;
+        }
     }
 
     /// <summary>進行中の切出し（Crop）を現在の選択矩形で確定する（Enter キー相当）。</summary>
@@ -232,7 +289,16 @@ public sealed class CaptureSessionControl : IDisposable
     public void Confirm()
     {
         ThrowIfDisposed();
-        _slot.Crop?.Confirm();
+
+        try
+        {
+            _slot.Crop?.Confirm();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            _log.LogOperationError(ex, nameof(Confirm));
+            throw;
+        }
     }
 
     /// <summary>実行中の Crop セッションへビューポート（パン・ズーム・表示サイズ）の変化を通知する。</summary>
@@ -244,7 +310,16 @@ public sealed class CaptureSessionControl : IDisposable
     public void NotifyCropViewportChanged()
     {
         ThrowIfDisposed();
-        _slot.Crop?.NotifyViewportChanged();
+
+        try
+        {
+            _slot.Crop?.NotifyViewportChanged();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            _log.LogOperationError(ex, nameof(NotifyCropViewportChanged));
+            throw;
+        }
     }
 
     /// <summary>リソースを解放する。</summary>

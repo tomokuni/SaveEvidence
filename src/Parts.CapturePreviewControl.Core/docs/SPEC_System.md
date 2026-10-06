@@ -53,7 +53,8 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 | 状態 | Core | セッションの実行中・完了（`CaptureSessionState`）、受付スロット（`CaptureSessionSlot`）、結果の確定（`CaptureCompletion`）、ハイライトとクリック確定（`CaptureHighlightSession` / `CaptureClickSelection`）、撮影画像（`CaptureImageHolder`）、切り出しビューの画像ビューポート（`ZoomViewSession`） |
 | 判断 | Core | 切り出し範囲・ハイライトの反映・キー操作・クリック確定・種別の性質・モニタ倍率・設定のマージ・退避と除外の順序・画像配置・平均色・取得の打ち切り（`CaptureVirtualScreen`）・画像ビューポートの状態と判断（Fit の表現・実効ズーム率・可否・遷移の適用・パン・スクロールバー） |
 | 契約 | Core | `ICaptureTarget` / `ICaptureOwnerWindow` / `CaptureSessionSlot` / `CaptureCompletion` / `ZoomFeedback` / `ZoomNotice` |
-| ログ定義 | Core | `CaptureLogMessage` / `CaptureLogFormat` / `CaptureSettingsLogMessage` / `ZoomLogMessage` / `ZoomLogFormat` |
+| ログ定義 | Core | `CapturePreviewLogMessage`（撮影・切り出し・設定・ズーム・例外） |
+| ログ以外の正規化 | Core | `CaptureText`（未取得の文字列を空文字へ。 ログ定義とは別の型） |
 | 入力ブリッジ | UI | ポインタ・キー・ホイールの購読とコア型への変換、返された効果の適用 |
 | 描画 | UI | 外観値を持たず、設定とコア共有値を読んで描く |
 | ホスト結線 | UI | Window の生成と表示、`Screens` / DPI の取得、`Dispatcher`、カーソル、レイアウト、Bitmap のライフサイクル |
@@ -122,8 +123,8 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ ログ定義（静的クラス）                                 │
-│  CaptureLogMessage / CaptureSettingsLogMessage        │
-│  CaptureLogFormat: Rect（X,Y,Width,Height）            │
+│  CapturePreviewLogMessage                              │
+│  Rect / RectOrEmpty / Percent（内部）                  │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ オーバーレイのキー操作（静的クラス）                    │
@@ -146,7 +147,7 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 │  ZoomAvailability / ZoomViewAppearance                  │
 │  ZoomOptions / ZoomState / ZoomFeedback / ZoomNotice      │
 │  ZoomScrollBar / ZoomScrollBarMetrics                  │
-│  ZoomLogMessage / ZoomLogFormat                        │
+│  CapturePreviewLogMessage（ズーム操作のログ）          │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -298,7 +299,7 @@ classDiagram
 │  ZoomViewAppearance / ZoomOptions / ZoomState / ZoomFeedback │
 │  ZoomNotice / ZoomScrollBar / ZoomScrollBarMetrics      │
 │  ZoomTransition / ZoomMath / ZoomAvailability          │
-│  ZoomScrollBarGeometry / ZoomLogMessage / ZoomLogFormat │
+│  ZoomScrollBarGeometry / CapturePreviewLogMessage       │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -428,7 +429,7 @@ sequenceDiagram
 | `CaptureTiming` / `CropSessionActions` | 方針値（タイムアウト・画面外座標）と、1 操作で実行する内容の決定（4 通りの入力） |
 | `CaptureVirtualScreen` | 撮影対象の範囲（単一・複数モニタ・負の原点・モニタが無い場合）と、タイムアウト待ち・未使用結果の破棄 |
 | `CaptureSessionState` / `CaptureSessionSlot` | 再入の禁止・単一完了・撮影と切り出しの相互排他・選択有無の委譲・一括キャンセル |
-| `CaptureLogMessage` | 全定義の本文書式とイベント ID（記録ロガーで検証） |
+| `CapturePreviewLogMessage` | 全定義の本文書式とイベント ID（記録ロガーで検証） |
 | `OverlayRectLayout` / `OverlayLineDash` | 負サイズのクランプ・太さの下限・破線の判定とダッシュ長の引き継ぎ（ベクター経路とラスタ経路が同じ数値を使う） |
 | `OverlayRectRasterizer` | ルーペ画像へのラスタライズ（画素検証） |
 | `FadeMaskDragRectModes` / `State` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否 |
@@ -437,4 +438,4 @@ sequenceDiagram
 | `FadeMaskDragRectOverlay` | 破線の列挙と描画の画素検証 |
 | `ZoomViewSession` | 実効ズーム率の導出・Fit の表現・可否・遷移の適用（ズーム中心の維持）・パン・Fit 復帰・スクロールバーのドラッグ |
 | `ZoomOptions` / `ZoomTransition` / `ZoomMath` | 不変条件の検証と `With` による部分更新・ 23 段階／ホイール遷移・可否判定・Fit 実効倍率・クランプ・座標変換 |
-| `ZoomViewAppearance` / `ZoomScrollBarGeometry` / `ZoomLogMessage` | 描画可否・市松模様の範囲とタイル矩形・トラック／サムの矩形と逆算・ログ書式 |
+| `ZoomViewAppearance` / `ZoomScrollBarGeometry` / `CapturePreviewLogMessage` | 描画可否・市松模様の範囲とタイル矩形・トラック／サムの矩形と逆算・ログ書式 |

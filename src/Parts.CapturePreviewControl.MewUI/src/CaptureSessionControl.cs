@@ -45,6 +45,23 @@ public sealed class CaptureSessionControl
     /// <summary>内部ロガー（インスタンス単位。 複数インスタンスで混線しない）。</summary>
     private readonly ILogger _log;
 
+    /// <summary>ログの接頭辞を取得または設定する（ロガーと一緒に設定する）。</summary>
+    /// <value>接頭辞（例: <c>[CapturePreviewControl]</c>）。 null または空白を設定すると既定値へ戻す。</value>
+    /// <remarks>本スタックのログ定義（<see cref="CapturePreviewLogMessage"/>）の接頭辞を設定する。</remarks>
+    public string? LogPrefix
+    {
+        get => _logPrefix;
+        set
+        {
+            _logPrefix = value;
+            CapturePreviewLogMessage.Prefix =
+                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+        }
+    }
+
+    /// <summary>ログの接頭辞（未設定は null。 既定値は定義クラスが持つ）。</summary>
+    private string? _logPrefix;
+
     /// <summary>設定（全メンバー non-null）。 撮影と切り出しが同じ値を使う（本クラスが単一所有する）。</summary>
     private CaptureSettings _settings;
 
@@ -110,20 +127,29 @@ public sealed class CaptureSessionControl
         ArgumentNullException.ThrowIfNull(owner);
         ArgumentNullException.ThrowIfNull(services);
 
-        // 受付は撮影（オーナーの退避）より先に行う（退避してから拒否すると、無駄な退避・復帰が発生する）
-        var session = new CaptureOverlay(type, _settings, services.Finder, services.Logger);
-        if (!_slot.TryBeginCapture(session))
-        {
-            return null; // 再入禁止（切り出し中・撮影中）
-        }
-
         try
         {
-            return session.Run(owner, services);
+            // 受付は撮影（オーナーの退避）より先に行う（退避してから拒否すると、無駄な退避・復帰が発生する）
+            var session = new CaptureOverlay(type, _settings, services.Finder, services.Logger);
+            if (!_slot.TryBeginCapture(session))
+            {
+                return null; // 再入禁止（切り出し中・撮影中）
+            }
+
+            try
+            {
+                return session.Run(owner, services);
+            }
+            finally
+            {
+                _slot.EndCapture(session);
+            }
         }
-        finally
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
-            _slot.EndCapture(session);
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            _log.LogOperationError(ex, nameof(Capture));
+            throw;
         }
     }
 
@@ -136,18 +162,26 @@ public sealed class CaptureSessionControl
     /// </remarks>
     public void ToggleCrop()
     {
-        // 戻り値（実行すべき操作）を効果へ写すだけにする
-        switch (CropSessionActions.Resolve(_slot.HasCrop, _slot.HasCropSelection(static crop => crop.HasSelection)))
+        try
         {
-            case CropSessionAction.Start:
-                StartCrop();
-                break;
-            case CropSessionAction.Confirm:
-                _slot.Crop?.Confirm();
-                break;
-            default:
-                _slot.Crop?.Cancel();
-                break;
+            // 戻り値（実行すべき操作）を効果へ写すだけにする
+            switch (CropSessionActions.Resolve(_slot.HasCrop, _slot.HasCropSelection(static crop => crop.HasSelection)))
+            {
+                case CropSessionAction.Start:
+                    StartCrop();
+                    break;
+                case CropSessionAction.Confirm:
+                    _slot.Crop?.Confirm();
+                    break;
+                default:
+                    _slot.Crop?.Cancel();
+                    break;
+            }
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            _log.LogOperationError(ex, nameof(ToggleCrop));
+            throw;
         }
     }
 

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
@@ -56,6 +57,23 @@ public sealed class ZoomViewControl : Panel
         get => Session.Log;
         set => Session.Log = value;
     }
+
+    /// <summary>ログの接頭辞を取得または設定する（ロガーと一緒に設定する）。</summary>
+    /// <value>接頭辞（例: <c>[CapturePreviewControl]</c>）。 null または空白を設定すると既定値へ戻す。</value>
+    /// <remarks>本アセンブリのログ定義（<see cref="CapturePreviewLogMessage"/>）の接頭辞を設定する。</remarks>
+    public string? LogPrefix
+    {
+        get => _logPrefix;
+        set
+        {
+            _logPrefix = value;
+            CapturePreviewLogMessage.Prefix =
+                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+        }
+    }
+
+    /// <summary>ログの接頭辞（未設定は null。 既定値は定義クラスが持つ）。</summary>
+    private string? _logPrefix;
 
     /// <summary>ズーム率が変更されたときに発火する（実効ズーム率・Fit 状態・ズーム可否を通知する）。</summary>
     /// <remarks>
@@ -136,15 +154,51 @@ public sealed class ZoomViewControl : Panel
 
     /// <summary>ズームインする（⊖⊕ ボタン。 設定されたレベル集合の次のレベルへ移動する）。</summary>
     /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。 Fit は遷移に含めない。</remarks>
-    public void ZoomIn() => _zoomableView.ApplyFeedback(Session.ZoomIn());
+    public void ZoomIn()
+    {
+        try
+        {
+            _zoomableView.ApplyFeedback(Session.ZoomIn());
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomIn));
+            throw;
+        }
+    }
 
     /// <summary>ズームアウトする（⊖⊕ ボタン。 設定されたレベル集合の前のレベルへ移動する）。</summary>
     /// <remarks>移動先がなければ何もしない（現在のズーム率を維持する）。</remarks>
-    public void ZoomOut() => _zoomableView.ApplyFeedback(Session.ZoomOut());
+    public void ZoomOut()
+    {
+        try
+        {
+            _zoomableView.ApplyFeedback(Session.ZoomOut());
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomOut));
+            throw;
+        }
+    }
 
     /// <summary>Fit 表示（ビューポートに収まる自動倍率）へ戻す。</summary>
     /// <remarks>Fit へ移行する唯一の経路（<see cref="ZoomPercent"/> の setter は 0 を受け付けない）。</remarks>
-    public void ZoomFit() => _zoomableView.ApplyFeedback(Session.ZoomFit());
+    public void ZoomFit()
+    {
+        try
+        {
+            _zoomableView.ApplyFeedback(Session.ZoomFit());
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ZoomFit));
+            throw;
+        }
+    }
 
     /// <summary>ホイールの回転量でパンする（回転量から移動量への換算を単一所有する）。</summary>
     /// <param name="delta">ホイールの回転量（X = 横 / Y = 縦。 1 ノッチ = 1.0）。</param>

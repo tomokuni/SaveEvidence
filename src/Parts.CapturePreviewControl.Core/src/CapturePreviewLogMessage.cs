@@ -22,6 +22,31 @@ public static partial class CapturePreviewLogMessage
     /// <summary>適用する接頭辞（ホストが <c>LogPrefix</c> で設定する）。</summary>
     public static string Prefix { get; set; } = DefaultPrefix;
 
+    // ====================================================================
+    // ログに載せる値の整形（ログ用途のみ。 別クラスは作らない）
+    // ====================================================================
+
+    /// <summary>矩形を <c>x,y,w,h</c> 形式の文字列へ整形する。</summary>
+    /// <param name="rect">整形する矩形。</param>
+    /// <returns><c>{X},{Y},{Width},{Height}</c> 形式の文字列。</returns>
+    internal static string Rect(EsRectInt rect) => $"{rect.X},{rect.Y},{rect.Width},{rect.Height}";
+
+    /// <summary>論理座標の矩形を <c>x,y,w,h</c> 形式の文字列へ整形する。</summary>
+    /// <param name="rect">整形する矩形（論理座標）。</param>
+    /// <returns><c>{X},{Y},{Width},{Height}</c> 形式の文字列。</returns>
+    internal static string Rect(EsRect rect) => $"{rect.X},{rect.Y},{rect.Width},{rect.Height}";
+
+    /// <summary>未検出の場合に空文字へ正規化した矩形の文字列を返す。</summary>
+    /// <param name="rect">整形する矩形（未検出の場合は null）。</param>
+    /// <returns>矩形がある場合は <c>x,y,w,h</c> 形式、null の場合は空文字。</returns>
+    internal static string RectOrEmpty(EsRectInt? rect) => rect is { } value ? Rect(value) : "";
+
+    /// <summary>ズーム率（%）をログ用の整数へ丸める。</summary>
+    /// <param name="zoomPercent">ズーム率（%）。</param>
+    /// <returns>四捨五入した整数（%）。</returns>
+    /// <remarks>ログは人が読む値のため、小数を持つズーム率（Fit 実効倍率・ホイール倍率の結果）は整数へ丸める。</remarks>
+    internal static int Percent(double zoomPercent) => (int)Math.Round(zoomPercent);
+
     /// <summary>公開ファサードの操作で例外が発生したことを記録する（生成メソッド）。</summary>
     /// <remarks>ログレベル: Error。 出力書式: <c>[CapturePreviewControl] {Operation} で例外が発生</c>（例外スタックトレース付き）</remarks>
     /// <param name="logger">ロガー。</param>
@@ -77,7 +102,7 @@ public static partial class CapturePreviewLogMessage
 
         if (result is { Image: { } image, SourceBounds: { } bounds })
         {
-            var rect = CapturePreviewLogFormat.Rect(bounds);
+            var rect = Rect(bounds);
             logger.LogCaptureCompleted(rect);
             logger.LogResult(image.Size.Width, image.Size.Height, rect);
             return;
@@ -89,7 +114,7 @@ public static partial class CapturePreviewLogMessage
     /// <summary>撮影セッションの確定を記録する。</summary>
     /// <param name="logger">ロガー。</param>
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="bounds">確定した領域（<see cref="CapturePreviewLogFormat.Rect(EsRectInt)"/> の出力）。</param>
+    /// <param name="bounds">確定した領域（<see cref="Rect(EsRectInt)"/> の出力）。</param>
     /// <remarks>ログレベル: Debug。 出力書式: <c>[CapturePreviewControl] CaptureCompleted: bounds={Bounds}</c></remarks>
     [LoggerMessage(EventId = 2, Level = LogLevel.Debug,
         Message = "{Prefix} CaptureCompleted: bounds={Bounds}")]
@@ -145,7 +170,7 @@ public static partial class CapturePreviewLogMessage
 
         if (logger.IsEnabled(LogLevel.Debug))
         {
-            logger.LogCropCompleted(CapturePreviewLogFormat.Rect(bounds));
+            logger.LogCropCompleted(Rect(bounds));
         }
     }
 
@@ -179,7 +204,7 @@ public static partial class CapturePreviewLogMessage
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="width">画像の幅（ピクセル）。</param>
     /// <param name="height">画像の高さ（ピクセル）。</param>
-    /// <param name="bounds">撮影領域（<see cref="CapturePreviewLogFormat.Rect(EsRectInt)"/> の出力）。</param>
+    /// <param name="bounds">撮影領域（<see cref="Rect(EsRectInt)"/> の出力）。</param>
     /// <remarks>ログレベル: Debug。 出力書式: <c>[CapturePreviewControl] Result: bitmap={Width}x{Height} bounds={Bounds}</c></remarks>
     [LoggerMessage(EventId = 8, Level = LogLevel.Debug,
         Message = "{Prefix} Result: bitmap={Width}x{Height} bounds={Bounds}")]
@@ -202,7 +227,7 @@ public static partial class CapturePreviewLogMessage
             return;
         }
 
-        logger.LogConfirmRequestedCore(Prefix, CapturePreviewLogFormat.Rect(rect));
+        logger.LogConfirmRequestedCore(Prefix, Rect(rect));
     }
 
     /// <summary>選択の確定要求（Enter・ダブルクリック等）を記録する（診断用。 整数矩形版）。</summary>
@@ -216,7 +241,7 @@ public static partial class CapturePreviewLogMessage
             return;
         }
 
-        logger.LogConfirmRequestedCore(Prefix, CapturePreviewLogFormat.Rect(rect));
+        logger.LogConfirmRequestedCore(Prefix, Rect(rect));
     }
 
     /// <summary>選択の確定要求（Enter・ダブルクリック等）を記録する（内部用）。</summary>
@@ -289,9 +314,9 @@ public static partial class CapturePreviewLogMessage
             Prefix,
             captureType,
             detected,
-            CapturePreviewLogFormat.RectOrEmpty(rect),
-            CapturePreviewLogFormat.Text(title),
-            CapturePreviewLogFormat.Text(className));
+            RectOrEmpty(rect),
+            CaptureText.Normalize(title),
+            CaptureText.Normalize(className));
     }
 
     /// <summary>ハイライトの検出結果を記録する（内部用）。</summary>
@@ -331,68 +356,101 @@ public static partial class CapturePreviewLogMessage
     /// <summary>ズームイン（⊖⊕ ボタン）の実行前後を記録する。</summary>
     /// <remarks>ログレベル: Information。 出力書式: <c>[CapturePreviewControl] ZoomIn: {Current}% -&gt; {Target}%</c></remarks>
     /// <param name="logger">ロガー。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="current">変更前の実効ズーム率（%）。</param>
     /// <param name="target">変更後のズーム率（%）。</param>
+    /// <remarks>丸め（四捨五入）は本メソッド（前段階）が単一所有する（呼び出し側は生値を渡す）。</remarks>
+    public static void LogZoomIn(this ILogger logger, double current, double target)
+    {
+        if (!logger.IsEnabled(LogLevel.Information))
+        {
+            return;
+        }
+
+        logger.LogZoomInCore(Prefix, Percent(current), Percent(target));
+    }
+
+    /// <summary>ズームイン（⊖⊕ ボタン）の実行前後を記録する（生成メソッド）。</summary>
+    /// <remarks>ログレベル: Information。 出力書式: <c>[CapturePreviewControl] ZoomIn: {Current}% -&gt; {Target}%</c></remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="current">変更前の実効ズーム率（%。 丸め済み）。</param>
+    /// <param name="target">変更後のズーム率（%。 丸め済み）。</param>
     [LoggerMessage(EventId = 14, Level = LogLevel.Information,
         Message = "{Prefix} ZoomIn: {Current}% -> {Target}%")]
     private static partial void LogZoomInCore(this ILogger logger, string prefix, int current, int target);
 
-    /// <summary>ズームイン（⊖⊕ ボタン）の実行前後を記録する。</summary>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="current">変更前の実効ズーム率（%）。</param>
-    /// <param name="target">変更後のズーム率（%）。</param>
-    public static void LogZoomIn(this ILogger logger, int current, int target)
-        => logger.LogZoomInCore(Prefix, current, target);
-
     /// <summary>ズームアウト（⊖⊕ ボタン）の実行前後を記録する。</summary>
     /// <remarks>ログレベル: Information。 出力書式: <c>[CapturePreviewControl] ZoomOut: {Current}% -&gt; {Target}%</c></remarks>
     /// <param name="logger">ロガー。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="current">変更前の実効ズーム率（%）。</param>
     /// <param name="target">変更後のズーム率（%）。</param>
+    public static void LogZoomOut(this ILogger logger, double current, double target)
+    {
+        if (!logger.IsEnabled(LogLevel.Information))
+        {
+            return;
+        }
+
+        logger.LogZoomOutCore(Prefix, Percent(current), Percent(target));
+    }
+
+    /// <summary>ズームアウト（⊖⊕ ボタン）の実行前後を記録する（生成メソッド）。</summary>
+    /// <remarks>ログレベル: Information。 出力書式: <c>[CapturePreviewControl] ZoomOut: {Current}% -&gt; {Target}%</c></remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="current">変更前の実効ズーム率（%。 丸め済み）。</param>
+    /// <param name="target">変更後のズーム率（%。 丸め済み）。</param>
     [LoggerMessage(EventId = 15, Level = LogLevel.Information,
         Message = "{Prefix} ZoomOut: {Current}% -> {Target}%")]
     private static partial void LogZoomOutCore(this ILogger logger, string prefix, int current, int target);
 
-    /// <summary>ズームアウト（⊖⊕ ボタン）の実行前後を記録する。</summary>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="current">変更前の実効ズーム率（%）。</param>
-    /// <param name="target">変更後のズーム率（%）。</param>
-    public static void LogZoomOut(this ILogger logger, int current, int target)
-        => logger.LogZoomOutCore(Prefix, current, target);
-
     /// <summary>Ctrl+ホイールのズームインの実行前後を記録する。</summary>
     /// <remarks>ログレベル: Information。 出力書式: <c>[CapturePreviewControl] ZoomInWheel: {Current}% -&gt; {Target}%</c></remarks>
     /// <param name="logger">ロガー。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="current">変更前の実効ズーム率（%）。</param>
     /// <param name="target">変更後のズーム率（%）。</param>
+    public static void LogZoomInWheel(this ILogger logger, double current, double target)
+    {
+        if (!logger.IsEnabled(LogLevel.Information))
+        {
+            return;
+        }
+
+        logger.LogZoomInWheelCore(Prefix, Percent(current), Percent(target));
+    }
+
+    /// <summary>Ctrl+ホイールのズームインの実行前後を記録する（生成メソッド）。</summary>
+    /// <remarks>ログレベル: Information。 出力書式: <c>[CapturePreviewControl] ZoomInWheel: {Current}% -&gt; {Target}%</c></remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="current">変更前の実効ズーム率（%。 丸め済み）。</param>
+    /// <param name="target">変更後のズーム率（%。 丸め済み）。</param>
     [LoggerMessage(EventId = 16, Level = LogLevel.Information,
         Message = "{Prefix} ZoomInWheel: {Current}% -> {Target}%")]
     private static partial void LogZoomInWheelCore(this ILogger logger, string prefix, int current, int target);
 
-    /// <summary>Ctrl+ホイールのズームインの実行前後を記録する。</summary>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="current">変更前の実効ズーム率（%）。</param>
-    /// <param name="target">変更後のズーム率（%）。</param>
-    public static void LogZoomInWheel(this ILogger logger, int current, int target)
-        => logger.LogZoomInWheelCore(Prefix, current, target);
-
     /// <summary>Ctrl+ホイールのズームアウトの実行前後を記録する。</summary>
     /// <remarks>ログレベル: Information。 出力書式: <c>[CapturePreviewControl] ZoomOutWheel: {Current}% -&gt; {Target}%</c></remarks>
     /// <param name="logger">ロガー。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="current">変更前の実効ズーム率（%）。</param>
     /// <param name="target">変更後のズーム率（%）。</param>
+    public static void LogZoomOutWheel(this ILogger logger, double current, double target)
+    {
+        if (!logger.IsEnabled(LogLevel.Information))
+        {
+            return;
+        }
+
+        logger.LogZoomOutWheelCore(Prefix, Percent(current), Percent(target));
+    }
+
+    /// <summary>Ctrl+ホイールのズームアウトの実行前後を記録する（生成メソッド）。</summary>
+    /// <remarks>ログレベル: Information。 出力書式: <c>[CapturePreviewControl] ZoomOutWheel: {Current}% -&gt; {Target}%</c></remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="current">変更前の実効ズーム率（%。 丸め済み）。</param>
+    /// <param name="target">変更後のズーム率（%。 丸め済み）。</param>
     [LoggerMessage(EventId = 17, Level = LogLevel.Information,
         Message = "{Prefix} ZoomOutWheel: {Current}% -> {Target}%")]
     private static partial void LogZoomOutWheelCore(this ILogger logger, string prefix, int current, int target);
-
-    /// <summary>Ctrl+ホイールのズームアウトの実行前後を記録する。</summary>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="current">変更前の実効ズーム率（%）。</param>
-    /// <param name="target">変更後のズーム率（%）。</param>
-    public static void LogZoomOutWheel(this ILogger logger, int current, int target)
-        => logger.LogZoomOutWheelCore(Prefix, current, target);
 }

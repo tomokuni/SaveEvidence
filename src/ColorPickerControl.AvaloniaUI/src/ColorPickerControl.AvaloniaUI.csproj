@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
+    <!-- ログの接頭辞（logPrefix プロパティ）と null 吸収（LoggerFallback） -->
+    <ProjectReference Include="..\..\EsUtil.Platform.Core\src\EsUtil.Platform.Core.csproj" />
   </ItemGroup>
 
 

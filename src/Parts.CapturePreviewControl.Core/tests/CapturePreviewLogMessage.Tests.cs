@@ -7,7 +7,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests;
 
-/// <summary><see cref="CapturePreviewLogMessage"/> / <see cref="CapturePreviewLogFormat"/> の仕様テスト（UI 非依存・並列実行）。</summary>
+/// <summary><see cref="CapturePreviewLogMessage"/> の仕様テスト（UI 非依存・並列実行）。</summary>
 /// <remarks>ログの書式（プレフィックス・項目名）と、ロガー未設定でも安全に呼べることを固定する。</remarks>
 public class CapturePreviewLogMessageTests
 {
@@ -202,38 +202,25 @@ public class CapturePreviewLogMessageTests
     }
 
     [Fact]
-    internal void CapturePreviewLogFormat_Rect_論理矩形をx_y_w_hで整形する()
+    internal void CapturePreviewLogMessage_Rect_論理矩形をx_y_w_hで整形する()
     {
-        Assert.Equal("10,20,30,40", CapturePreviewLogFormat.Rect(new EsRect(10, 20, 30, 40)));
+        Assert.Equal("10,20,30,40", CapturePreviewLogMessage.Rect(new EsRect(10, 20, 30, 40)));
     }
 
     [Fact]
-    internal void CapturePreviewLogFormat_Rect_PixelRectをx_y_w_hで整形する()
+    internal void CapturePreviewLogMessage_Rect_PixelRectをx_y_w_hで整形する()
     {
-        Assert.Equal("10,20,30,40", CapturePreviewLogFormat.Rect(new EsRectInt(10, 20, 30, 40)));
+        Assert.Equal("10,20,30,40", CapturePreviewLogMessage.Rect(new EsRectInt(10, 20, 30, 40)));
     }
 
     [Fact]
-    internal void CapturePreviewLogFormat_RectOrEmpty_未検出のPixelRectは空文字にする()
+    internal void CapturePreviewLogMessage_RectOrEmpty_未検出のPixelRectは空文字にする()
     {
         // 「未検出は空文字」という正規化を単一所有する
-        Assert.Equal("", CapturePreviewLogFormat.RectOrEmpty(null));
-        Assert.Equal("10,20,30,40", CapturePreviewLogFormat.RectOrEmpty(new EsRectInt(10, 20, 30, 40)));
+        Assert.Equal("", CapturePreviewLogMessage.RectOrEmpty(null));
+        Assert.Equal("10,20,30,40", CapturePreviewLogMessage.RectOrEmpty(new EsRectInt(10, 20, 30, 40)));
     }
 
-    [Fact]
-    internal void CapturePreviewLogFormat_Text_nullは空文字にする()
-    {
-        Assert.Equal("", CapturePreviewLogFormat.Text(null));
-        Assert.Equal("Sample", CapturePreviewLogFormat.Text("Sample"));
-    }
-}
-
-/// <summary>
-/// <see cref="CapturePreviewLogMessage"/> / <see cref="CapturePreviewLogFormat"/> のテスト（書式・レベル・丸め）。
-/// </summary>
-public class CapturePreviewLogFormatTests
-{
     /// <summary>ズーム率のログ用の丸めが四捨五入であることを検証する。</summary>
     /// <param name="value">丸める前の値。</param>
     /// <param name="expected">期待する整数。</param>
@@ -244,12 +231,7 @@ public class CapturePreviewLogFormatTests
     [InlineData(109.5, 110)]
     [InlineData(0.4, 0)]
     internal void Percent_四捨五入する(double value, int expected)
-        => Assert.Equal(expected, CapturePreviewLogFormat.Percent(value));
-
-    /// <summary>倍率の文字列化が不変カルチャで行われることを検証する。</summary>
-    [Fact]
-    internal void Scale_不変カルチャで整形する()
-        => Assert.Equal("1.25", CapturePreviewLogFormat.Scale(1.25));
+        => Assert.Equal(expected, CapturePreviewLogMessage.Percent(value));
 
     /// <summary>ズームイン・ズームアウトの書式が両 UI 共通の形式であることを検証する。</summary>
     [Fact]
