@@ -14,13 +14,17 @@ using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
@@ -1117,4 +1121,3 @@ public sealed partial class CapturePage : UserControl
         // 元画像 Bitmap は ViewModel（PreviewImage）が管理するため、ここでは破棄しない
     }
 }
-

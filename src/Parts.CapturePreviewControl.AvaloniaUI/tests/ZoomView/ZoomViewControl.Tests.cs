@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Xunit;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.ZoomView;
 
@@ -12,7 +13,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.ZoomView;
 /// <remarks>
 /// 実効ズーム率（<see cref="ZoomViewControl.ZoomPercent"/>）・<see cref="ZoomViewControl.ZoomFit"/>・
 /// <see cref="ZoomViewControl.IsFit"/>・setter の 0 拒否などの仕様を検証する。<br/>
-/// 計算の本体（<see cref="EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomMath"/> / <see cref="EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomTransition"/>）は純粋関数として別途テスト済みで、
+/// 計算の本体（<see cref="EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView.ZoomMath"/> / <see cref="EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView.ZoomTransition"/>）は純粋関数として別途テスト済みで、
 /// 本テストは ZoomViewControl への適用（実効ズーム率の導出・Fit 移行）を検証する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
@@ -349,7 +350,7 @@ public class ZoomViewControlTests
     internal void ZoomByWheel_移動できない場合はズーム率を維持する()
     {
         var view = CreatePannableView();
-        var maxZoom = EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomOptions.Default.MaxZoom;
+        var maxZoom = EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView.ZoomOptions.Default.MaxZoom;
         view.ZoomPercent = maxZoom;
 
         view.ZoomByWheel(zoomIn: true);

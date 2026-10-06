@@ -6,12 +6,13 @@ using Avalonia.Media;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Xunit;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.ZoomView;
 
 /// <summary><see cref="ZoomableView"/>（内部ビューポート）のテスト。</summary>
 /// <remarks>
-/// 判断・値・計算はコア（<see cref="EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomViewSession"/>。 Core.Tests が全網羅する）が単一所有するため、<br/>
+/// 判断・値・計算はコア（<see cref="EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView.ZoomViewSession"/>。 Core.Tests が全網羅する）が単一所有するため、<br/>
 /// 本テストは <b>Avalonia 固有の UI 層の責務</b>のみを検証する。<br/>
 /// - 画像のレイアウト（Fit = Uniform / 固定倍率 = RenderTransform）<br/>
 /// - 標準スクロールバーへの同期（範囲・表示範囲・表示可否）<br/>

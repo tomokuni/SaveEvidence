@@ -66,7 +66,7 @@
 必要な名前空間:
 
 ```csharp
-using ${S}AvaloniaUI;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Capture;
 ```
 
 ## 5. クイックスタート
@@ -247,23 +247,32 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 Parts.CapturePreviewControl.AvaloniaUI/
 ├── src/
 │   ├── Parts.CapturePreviewControl.AvaloniaUI.csproj      # ライブラリプロジェクト（Avalonia.Desktop / Logging.Abstractions）
-│   ├── CaptureSessionControl.cs            # 公開 Facade（統括者。組み立て・配線・ライフサイクル）
-│   ├── CropViewControl.cs                  # 切り出しビュー（公開。画像ビューポート + 領域選択 + 矩形オーバーレイ + 強調オーバーレイ）
-│   ├── CropViewImage.cs                    # 画像の表示アダプタ（internal）
-│   ├── FadeMaskDragRectControl.cs          # 領域選択（公開。暗転マスク + 選択矩形 + ルーペ）
-│   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開クラス）
-│   ├── FadeMaskDragRectPointEventArgs.cs   # ルーペ位置のイベント引数（公開クラス）
-│   ├── ZoomView/                 # 切り出しビューの画像ビューポート（ZoomViewControl / ZoomableView / CheckerboardView / ZoomChangedEventArgs）
-│   └── Sessions/                 # 内部実装（SelectionCaptureSession / CropSession / OverlayWindow）
+│   ├── Capture/                    # 公開 Facade（統括者。組み立て・配線・ライフサイクル）
+│   │   ├── CaptureSessionControl.cs
+│   │   └── CaptureCompletedEventArgs.cs
+│   ├── Crop/                       # 切り出しビュー（画像ビューポート + 矩形オーバーレイ + 強調オーバーレイ）
+│   │   ├── CropViewControl.cs
+│   │   └── CropViewImage.cs        # 画像の表示アダプタ（internal）
+│   ├── FadeMaskDragRect/           # 領域選択（暗転マスク + 選択矩形 + ルーペ）
+│   │   ├── FadeMaskDragRectControl.cs
+│   │   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開クラス）
+│   │   └── FadeMaskDragRectPointEventArgs.cs      # ルーペ位置のイベント引数（公開クラス）
+│   ├── ZoomView/                   # 切り出しビューの画像ビューポート
+│   │   ├── ZoomViewControl.cs / ZoomableView.cs / CheckerboardView.cs / ZoomChangedEventArgs.cs
+│   └── Sessions/                   # 内部実装
+│       ├── SelectionCaptureSession.cs / CropSession.cs
+│       └── OverlayWindow.axaml / OverlayWindow.axaml.cs / OverlayWindow.Capture.cs / OverlayWindow.Highlight.cs
 ├── sample/                       # サンプルアプリ（sample/README.md 参照）
 └── tests/                        # 単体テスト（セッション + 収録コントロール）
+    ├── Capture/ / Crop/ / FadeMaskDragRect/ / Sessions/ / ZoomView/
+    └── AvaloniaHeadlessGroup.cs / TestAppBuilder.cs
 ```
 
 `CaptureType`（キャプチャ種別）は UI 非依存の共通基盤 `EsUtil.Platform.Core`（名前空間 `EsUtil.Platform.Core`）が提供します。 利用側は `using EsUtil.Platform.Core;` を追加してください。
 
-`CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `Parts.CapturePreviewControl.Core`（名前空間 ${S}Core）が提供します（切り出し矩形の計算 `CropBoundsMath` も同プロジェクト）。 利用側は `using ${S}Core;` を追加してください。 **色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
+`CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture`）が提供します（切り出し矩形の計算 `CropBoundsMath` は同プロジェクトの `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop`）。 利用側はカテゴリごとの名前空間（`Capture` / `Crop` / `Overlay` / `FadeMaskDragRect` / `ZoomView`）を `using` してください。 **色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
 
-設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `Parts.CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。 利用側は `using $SB;` を追加してください。
+設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `Parts.CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。 利用側は `using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;` を追加してください。
 
 **撮影オーバーレイ（`StartCaptureAsync`）も同じ写像で外観（色）を適用します**（切り出しと同じ見た目になる。 適用しないと設定した色が反映されない）。
 

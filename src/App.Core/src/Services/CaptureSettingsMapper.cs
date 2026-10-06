@@ -1,5 +1,5 @@
 using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 
 namespace EsUtil.SaveEvidence.App.Core.Services;
 

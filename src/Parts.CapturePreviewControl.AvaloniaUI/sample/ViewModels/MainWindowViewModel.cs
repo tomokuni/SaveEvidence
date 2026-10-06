@@ -1,8 +1,9 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.ViewModels;
 

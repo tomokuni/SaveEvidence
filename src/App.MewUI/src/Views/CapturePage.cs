@@ -8,10 +8,13 @@ using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.MewUI.Icons;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.SaveEvidence.App.MewUI.Services;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
-using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI;
 using Microsoft.Extensions.Logging;
 using MewUIColor = Aprillz.MewUI.Color;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 

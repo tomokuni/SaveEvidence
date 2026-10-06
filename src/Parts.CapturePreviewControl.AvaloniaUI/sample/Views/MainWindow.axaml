@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.ViewModels"
-        xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;assembly=Parts.CapturePreviewControl.AvaloniaUI"
+        xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;assembly=Parts.CapturePreviewControl.AvaloniaUI"
         x:Class="EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="CapturePreviewControl.AvaloniaUI 動作確認サンプル"

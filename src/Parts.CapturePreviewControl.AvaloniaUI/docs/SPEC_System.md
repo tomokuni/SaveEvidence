@@ -300,7 +300,7 @@ flowchart TB
 
 ### 6.11 Parts.CapturePreviewControl.Core の画像ビューポートの型（UI 非依存）
 
-すべて UI 非依存プロジェクト（名前空間 ${S}Core）が提供する。
+すべて UI 非依存プロジェクト（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView`）が提供する。
 
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |

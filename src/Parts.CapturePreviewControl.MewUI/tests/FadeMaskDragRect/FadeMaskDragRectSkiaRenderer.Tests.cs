@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.FadeMaskDragRect;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.FadeMaskDragRect;
 
@@ -100,4 +101,3 @@ public class FadeMaskDragRectSkiaRendererTests
             null!, new EsRect(0, 0, 10, 10), new EsPoint(0, 0), 4.0, 64, DrawingColor.Red, DrawingColor.Blue));
     }
 }
-

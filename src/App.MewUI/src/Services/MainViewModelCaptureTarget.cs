@@ -2,7 +2,7 @@ using System.ComponentModel;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
 

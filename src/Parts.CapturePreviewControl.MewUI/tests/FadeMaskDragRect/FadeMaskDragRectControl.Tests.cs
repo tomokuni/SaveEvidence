@@ -5,10 +5,11 @@ using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.MewUI;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.FadeMaskDragRect;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.FadeMaskDragRect;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.FadeMaskDragRect;
 
@@ -708,4 +709,3 @@ public class FadeMaskDragRectControlTests
         Assert.True(control.ShowFullOverlay);
     }
 }
-

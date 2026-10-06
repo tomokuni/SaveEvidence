@@ -12,6 +12,9 @@ using EsUtil.Platform.Core.Native.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.ViewModels;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.Views;
 

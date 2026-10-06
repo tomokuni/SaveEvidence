@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
-             xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI;assembly=Parts.CapturePreviewControl.AvaloniaUI"
+             xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;assembly=Parts.CapturePreviewControl.AvaloniaUI"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>

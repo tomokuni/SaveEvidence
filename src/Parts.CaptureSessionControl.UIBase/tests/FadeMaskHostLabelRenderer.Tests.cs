@@ -1,8 +1,8 @@
 using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.FadeMaskDragRect;
 
 namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase.Tests;
 
@@ -246,4 +246,3 @@ public class FadeMaskHostLabelRendererTests
         => Assert.Throws<ArgumentNullException>(() => FadeMaskHostLabelRenderer.Resolve(
             CreateContent(new EsRect(0, 0, 10, 10)), CreateLabels(), CreateAppearance(), "操作", "情報", null!));
 }
-

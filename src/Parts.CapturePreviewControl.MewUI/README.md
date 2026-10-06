@@ -62,7 +62,7 @@ Parts.CapturePreviewControl.MewUI
 
 ```csharp
 using Aprillz.MewUI;
-using ${S}MewUI;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Capture;
 using EsUtil.Platform.Core;
 
 // 撮影・切り出しの Facade を生成する（切り出しの対象とオーバーレイを重ねる領域はホストが用意する）
@@ -83,7 +83,7 @@ session.ToggleCrop();
 session.AppearanceSettings = changed;
 ```
 
-`CaptureSettings` は `Parts.CapturePreviewControl.Core`（名前空間 ${S}Core）が提供します。 ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。 ホストの設定型 → `CaptureSettings` の変換は上位のアプリが担います）。
+`CaptureSettings` は `Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture`）が提供します。 ホストは設定画面の値からこれを作り、**Facade（コンストラクタまたは `AppearanceSettings`）へ渡します**（撮影と切り出しが同じ値を使う。 ホストの設定型 → `CaptureSettings` の変換は上位のアプリが担います）。
 
 ## 5. 収録コントロール
 
@@ -199,18 +199,21 @@ session.AppearanceSettings = changed;
 ```text
 src/
 │   ├── Parts.CapturePreviewControl.MewUI.csproj  # ライブラリ（net10.0-windows）
-│   ├── CaptureSessionControl.cs            # Facade（公開 API。撮影と切り出しの窓口）
-│   ├── CaptureOverlay.cs                   # 撮影セッション（internal。1 セッション = 1 インスタンス）
-│   ├── CaptureOverlayServices.cs           # サービス（キャプチャ・検出・ウィンドウ・ロガー）の束（公開 record）
-│   ├── src/Parts.CapturePreviewControl.MewUI/src/Sessions/CropSession.cs             # 切り出しセッション（internal。1 セッション = 1 インスタンス）
-│   ├── CropViewControl.cs                  # 切り出しビュー（公開。画像ビューポート + 矩形オーバーレイ + 強調オーバーレイ）
-│   ├── RectOverlayCanvas.cs                # 透明な矩形オーバーレイ（internal）
-│   ├── CropSkiaRenderer.cs                 # コアの描画入力を Skia へ写す（internal）
-│   ├── FadeMaskDragRectControl.cs          # 領域選択（公開。暗転マスク + 選択矩形 + ルーペ）
-│   ├── FadeMaskDragRectSkiaRenderer.cs     # 選択矩形破線の描画（internal）
-│   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開クラス）
-│   ├── FadeMaskDragRectPointEventArgs.cs   # ルーペ位置のイベント引数（公開クラス）
+│   ├── Capture/                            # Facade と撮影セッション（公開 API と 1 セッション = 1 インスタンスの内部実装）
+│   │   ├── CaptureSessionControl.cs        # Facade（公開 API。撮影と切り出しの窓口）
+│   │   ├── CaptureOverlay.cs               # 撮影セッション（internal。1 セッション = 1 インスタンス）
+│   │   └── CaptureOverlayServices.cs       # サービス（キャプチャ・検出・ウィンドウ・ロガー）の束（公開 record）
+│   ├── Crop/                               # 切り出しビュー（画像ビューポート + 矩形オーバーレイ + 強調オーバーレイ）
+│   │   ├── CropViewControl.cs              # 切り出しビュー（公開）
+│   │   ├── RectOverlayCanvas.cs            # 透明な矩形オーバーレイ（internal）
+│   │   └── CropSkiaRenderer.cs             # コアの描画入力を Skia へ写す（internal）
+│   ├── FadeMaskDragRect/                   # 領域選択（暗転マスク + 選択矩形 + ルーペ）
+│   │   ├── FadeMaskDragRectControl.cs
+│   │   ├── FadeMaskDragRectSkiaRenderer.cs # 選択矩形破線の描画（internal）
+│   │   ├── FadeMaskDragRectSelectionEventArgs.cs  # 確定要求のイベント引数（公開クラス）
+│   │   └── FadeMaskDragRectPointEventArgs.cs      # ルーペ位置のイベント引数（公開クラス）
 │   ├── ZoomView/                           # 切り出しビューの画像ビューポート（ZoomViewControl / ZoomSkiaRenderer / ZoomChangedEventArgs）
+│   ├── Sessions/                           # 内部実装（CropSession）
 │   └── （撮影画像の描画は Platform.MewUI の SkiaImageView を使う）
 ```
 

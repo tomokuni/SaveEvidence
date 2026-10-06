@@ -1,6 +1,6 @@
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.FadeMaskDragRect;
 
 namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 
@@ -57,4 +57,3 @@ public readonly record struct FadeMaskDragRectChildValues(
             state.UsesSelection);
     }
 }
-

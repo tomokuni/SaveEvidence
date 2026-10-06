@@ -6,10 +6,12 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.FadeMaskDragRect;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.FadeMaskDragRect;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
 
@@ -295,4 +297,3 @@ internal sealed partial class OverlayWindow : Window
     /// <param name="e">イベント引数。</param>
     private void OnAreaCancelRequested(object? sender, EventArgs e) => CompleteCancelled();
 }
-

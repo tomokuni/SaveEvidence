@@ -2,9 +2,9 @@ using Avalonia;
 using Avalonia.Threading;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sessions;
 

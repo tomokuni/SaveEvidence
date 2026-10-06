@@ -92,7 +92,7 @@ Parts.CapturePreviewControl.AvaloniaUI は内包コントロール（MarqueeCont
 ### 3.2 必要な名前空間
 
 ```csharp
-using ${S}AvaloniaUI;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Capture;
 ```
 
 ### 3.3 スレッド要件
@@ -362,7 +362,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 
 #### 5.5.4 外部提供矩形
 
-`Rects` の要素（`OverlayRect`）は UI 非依存の `Parts.CapturePreviewControl.Core`（名前空間 ${S}Core）が提供します。 矩形（`EsRect`）・枠線スタイル（`OverlayLineStyle`）・前景色・背景色・線幅を持ち、実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」で描画します（ダッシュ長はコアの `OverlayLineDash` が単一所有）。
+`Rects` の要素（`OverlayRect`）は UI 非依存の `Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay`）が提供します。 矩形（`EsRect`）・枠線スタイル（`OverlayLineStyle`）・前景色・背景色・線幅を持ち、実線は前景色の枠のみ、破線（`Dashed` / `Dotted`）は「背景色の実線 + 前景色の破線」で描画します（ダッシュ長はコアの `OverlayLineDash` が単一所有）。
 
 ### 5.6 FadeMaskDragRectControl（領域選択）
 

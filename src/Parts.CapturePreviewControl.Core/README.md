@@ -72,7 +72,7 @@ Parts.CapturePreviewControl.Core
 ## 4. クイックスタート
 
 ```csharp
-using ${S}Core;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.Platform.Core.Geometry;
 
 // 選択矩形（画像ピクセル）から切り出し範囲を求める
@@ -110,98 +110,109 @@ if (zoom.CurrentState is { IsFit: false, CanZoomOut: true })
 ```text
 src/
 │   ├── Parts.CapturePreviewControl.Core.csproj  # ライブラリ（net10.0）
-│   ├── CropBoundsMath.cs                  # 切り出し矩形の計算
-│   ├── CropLabelTexts.cs                  # 切り出しのサイズラベル書式
-│   ├── ImageColorMath.cs                  # 画像の平均色（標本間引き）
-│   ├── CaptureTypeTraits.cs               # キャプチャ種別の性質（ハイライト型・区間の流儀・検出対象）
-│   ├── CaptureElementTarget.cs            # カーソル下の検出対象（画面 / ウィンドウ）
-│   ├── MonitorScalingMath.cs              # モニタの実表示倍率（矩形中心で判定・倍率未確定の除外）
-│   ├── CaptureHighlight.cs                # ハイライトの状態・判断・ログ（検出→ハイライト）
-│   ├── CaptureKeyAction.cs                # オーバーレイのキー操作（確定 / キャンセル）の解釈
-│   ├── CaptureClickSelection.cs           # クリック確定の固定（押下で固定・解放で取り出し）
-│   ├── CaptureClipMath.cs                 # 切り出し矩形の解決と画像ローカル座標との相互変換
-│   ├── CaptureImageHolder.cs              # 撮影画像の保持（所有権・差し替え・破棄後）
-│   ├── CaptureVirtualScreen.cs            # 仮想スクリーン取得の待ち方（タイムアウト・未使用結果の破棄・撮影対象の範囲）
-│   ├── CaptureClipCache.cs                # 事前切り出しキャッシュ（同一判定・所有権・破棄）
-│   ├── CaptureTiming.cs                   # タイムアウト・画面外退避座標
-│   ├── CropSessionAction.cs               # 切り出しの操作内容（開始 / 確定 / キャンセル）
-│   ├── CaptureSessionState.cs             # セッションの実行中・完了の排他
-│   ├── CaptureSessionSlot.cs              # 撮影・切り出しの排他スロット
-│   ├── CaptureCompletion.cs               # 結果の単一確定（TCS のラップ）
-│   ├── CaptureOwnerScope.cs               # オーナー退避とキャプチャ除外の手順
-│   ├── CaptureSettingsMerge.cs            # 設定の部分更新マージ
-│   ├── CapturePreviewLogMessage.cs        # ログ定義（接頭辞・本文書式・イベント ID・値の整形。別の LogFormat クラスは持たない）
-│   ├── CaptureText.cs                     # ログに載せる文字列の正規化（未取得の null を空文字へ）
-│   ├── ICaptureTarget.cs                  # 切り出し結果の適用先（ポート）
-│   ├── ICaptureOwnerWindow.cs             # 退避対象のポート
-│   ├── CaptureSettings.cs                 # 外観・動作設定（record）
-│   ├── FadeMaskDragRectOptionsMapper.cs   # 設定 → 複合コントロールの設定値への変換
-│   ├── CaptureLabelTexts.cs               # 撮影の操作・情報ラベル文言とモード写像
-│   ├── CaptureResult.cs                   # キャプチャ結果（record）
-│   ├── OverlayRect.cs                     # 外部提供矩形の描画情報（矩形・スタイル・色・太さ）
-│   ├── OverlayLineStyle.cs                # 枠線スタイル（実線 / 破線 / 点線）
-│   ├── OverlayRectLayout.cs               # 描画入力の解決（クランプ・太さの下限・破線の判定）
-│   ├── OverlayRectFrame.cs                # 矩形 1 個分の描画入力
-│   ├── OverlayLineDash.cs                 # スタイルごとのダッシュ長の単一所有
-│   ├── OverlayRectRasterizer.cs           # 矩形の 4 辺を EsBitmap へラスタライズする
-│   ├── FadeMaskDragRectMode.cs            # 領域選択の動作モード
-│   ├── FadeMaskDragRectOptions.cs         # 複合コントロールの設定の単一値
-│   ├── FadeMaskDragRectLabelOptions.cs    # 付加情報ラベル（操作・情報）の外観
-│   ├── FadeMaskDragRectModes.cs           # モード → 状態の解決
-│   ├── FadeMaskDragRectState.cs           # モードから導出する表示可否
-│   ├── FadeMaskDragRectSelection.cs       # 選択矩形の可否判定
-│   └── FadeMaskDragRectOverlay.cs          # ルーペ画像への選択矩形破線の描画
-│   ├── ZoomViewSession.cs                 # 画像ビューポートの状態と判断（唯一の所有者）
-│   ├── ZoomOptions.cs                      # ズーム遷移の設定（検証付き不変値）
-│   ├── ZoomState.cs                       # 通知する 4 値（実効ズーム率・Fit 状態・可否）
-│   ├── ZoomFeedback.cs                    # UI が適用する効果（再描画・ポインタキャプチャ）
-│   ├── ZoomNotice.cs                      # 通知の種別と通知時点の値
-│   ├── ZoomViewAppearance.cs              # 画像ビューポートの外観（下地・市松模様・スクロールバー）
-│   ├── ZoomScrollBarGeometry.cs           # スクロールバーの幾何（トラック・サム・逆算。ZoomScrollBar も定義）
-│   ├── ZoomScrollBarMetrics.cs            # 標準スクロールバー部品へ写す同期値
-│   ├── ZoomTransition.cs                  # 段階遷移・ホイール遷移・可否判定（純粋関数）
-│   ├── ZoomMath.cs                        # Fit 実効倍率・ズーム中心維持・クランプ・座標変換（純粋関数）
-│   ├── ZoomAvailability.cs                # ズーム可否を単一に保持する値オブジェクト
+│   ├── Capture/                            # 撮影セッション（状態・判断・契約・設定・ログ）
+│   │   ├── CaptureTypeTraits.cs            # キャプチャ種別の性質（ハイライト型・区間の流儀・検出対象）
+│   │   ├── CaptureElementTarget.cs         # カーソル下の検出対象（画面 / ウィンドウ）
+│   │   ├── MonitorScalingMath.cs           # モニタの実表示倍率（矩形中心で判定・倍率未確定の除外）
+│   │   ├── CaptureHighlight.cs             # ハイライトの状態・判断・ログ（検出→ハイライト）
+│   │   ├── CaptureKeyAction.cs             # オーバーレイのキー操作（確定 / キャンセル）の解釈
+│   │   ├── CaptureClickSelection.cs        # クリック確定の固定（押下で固定・解放で取り出し）
+│   │   ├── CaptureClipMath.cs              # 切り出し矩形の解決と画像ローカル座標との相互変換
+│   │   ├── CaptureImageHolder.cs           # 撮影画像の保持（所有権・差し替え・破棄後）
+│   │   ├── CaptureVirtualScreen.cs         # 仮想スクリーン取得の待ち方（タイムアウト・未使用結果の破棄・撮影対象の範囲）
+│   │   ├── CaptureClipCache.cs             # 事前切り出しキャッシュ（同一判定・所有権・破棄）
+│   │   ├── CaptureTiming.cs                # タイムアウト・画面外退避座標
+│   │   ├── CaptureSessionState.cs          # セッションの実行中・完了の排他
+│   │   ├── CaptureSessionSlot.cs           # 撮影・切り出しの排他スロット
+│   │   ├── CaptureCompletion.cs            # 結果の単一確定（TCS のラップ）
+│   │   ├── CaptureOwnerScope.cs            # オーナー退避とキャプチャ除外の手順
+│   │   ├── CaptureSettingsMerge.cs         # 設定の部分更新マージ
+│   │   ├── CaptureSettings.cs              # 外観・動作設定（record）
+│   │   ├── CaptureLabelTexts.cs            # 撮影の操作・情報ラベル文言とモード写像
+│   │   ├── CaptureResult.cs                # キャプチャ結果（record）
+│   │   ├── ImageColorMath.cs               # 画像の平均色（標本間引き）
+│   │   ├── CapturePreviewLogMessage.cs     # ログ定義（接頭辞・本文書式・イベント ID・値の整形。別の LogFormat クラスは持たない）
+│   │   ├── CaptureText.cs                  # ログに載せる文字列の正規化（未取得の null を空文字へ）
+│   │   ├── ICaptureTarget.cs               # 切り出し結果の適用先（ポート）
+│   │   └── ICaptureOwnerWindow.cs          # 退避対象のポート
+│   ├── Crop/                               # 切り出し
+│   │   ├── CropBoundsMath.cs               # 切り出し矩形の計算
+│   │   ├── CropLabelTexts.cs               # 切り出しのサイズラベル書式
+│   │   └── CropSessionAction.cs            # 切り出しの操作内容（開始 / 確定 / キャンセル）
+│   ├── Overlay/                            # 矩形オーバーレイ
+│   │   ├── OverlayRect.cs                  # 外部提供矩形の描画情報（矩形・スタイル・色・太さ）
+│   │   ├── OverlayLineStyle.cs             # 枠線スタイル（実線 / 破線 / 点線）
+│   │   ├── OverlayRectLayout.cs            # 描画入力の解決（クランプ・太さの下限・破線の判定）
+│   │   ├── OverlayRectFrame.cs             # 矩形 1 個分の描画入力
+│   │   ├── OverlayLineDash.cs              # スタイルごとのダッシュ長の単一所有
+│   │   └── OverlayRectRasterizer.cs        # 矩形の 4 辺を EsBitmap へラスタライズする
+│   ├── FadeMaskDragRect/                   # 領域選択の複合コントロールのコア
+│   │   ├── FadeMaskDragRectMode.cs         # 領域選択の動作モード
+│   │   ├── FadeMaskDragRectOptions.cs      # 複合コントロールの設定の単一値
+│   │   ├── FadeMaskDragRectLabelOptions.cs # 付加情報ラベル（操作・情報）の外観
+│   │   ├── FadeMaskDragRectModes.cs        # モード → 状態の解決
+│   │   ├── FadeMaskDragRectState.cs        # モードから導出する表示可否
+│   │   ├── FadeMaskDragRectSelection.cs    # 選択矩形の可否判定
+│   │   ├── FadeMaskDragRectOverlay.cs      # ルーペ画像への選択矩形破線の描画
+│   │   └── FadeMaskDragRectOptionsMapper.cs # 設定 → 複合コントロールの設定値への変換
+│   └── ZoomView/                           # 切り出しビューの画像ビューポート
+│       ├── ZoomViewSession.cs              # 画像ビューポートの状態と判断（唯一の所有者）
+│       ├── ZoomOptions.cs                  # ズーム遷移の設定（検証付き不変値）
+│       ├── ZoomState.cs                    # 通知する 4 値（実効ズーム率・Fit 状態・可否）
+│       ├── ZoomFeedback.cs                 # UI が適用する効果（再描画・ポインタキャプチャ）
+│       ├── ZoomNotice.cs                   # 通知の種別と通知時点の値
+│       ├── ZoomViewAppearance.cs           # 画像ビューポートの外観（下地・市松模様・スクロールバー）
+│       ├── ZoomScrollBarGeometry.cs        # スクロールバーの幾何（トラック・サム・逆算。ZoomScrollBar も定義）
+│       ├── ZoomScrollBarMetrics.cs         # 標準スクロールバー部品へ写す同期値
+│       ├── ZoomTransition.cs               # 段階遷移・ホイール遷移・可否判定（純粋関数）
+│       ├── ZoomMath.cs                     # Fit 実効倍率・ズーム中心維持・クランプ・座標変換（純粋関数）
+│       └── ZoomAvailability.cs             # ズーム可否を単一に保持する値オブジェクト
 └── tests/
     ├── Parts.CapturePreviewControl.Core.Tests.csproj
-    ├── CropBoundsMath.Tests.cs            # クランプ・丸め・区間の流儀・丸め規則
-    ├── CropLabelTexts.Tests.cs            # 含まれるピクセル数・ズーム率の丸め・未選択時の表示可否
-    ├── ImageColorMath.Tests.cs            # 平均色（標本間引き・空画像）
-    ├── CaptureTypeTraits.Tests.cs         # ハイライト型・区間の流儀・検出対象・検出呼び分け・確定対象
-    ├── MonitorScalingMath.Tests.cs        # 中心判定・境界・フォールバック・対象座標・一覧の構築・代表値
-    ├── CaptureClipMath.Tests.cs           # 切り出し矩形の解決（座標空間の契約・整数/浮動小数）・双方向変換・画像の共有値
-    ├── CaptureImageHolder.Tests.cs        # 保持の規則（差し替え・破棄後・フォールバック）
-    ├── CaptureVirtualScreen.Tests.cs      # タイムアウト待ちと未使用結果の破棄
-    ├── CaptureVirtualScreenBounds.Tests.cs  # 撮影対象の範囲（包含矩形・負の原点・モニタ無し）
-    ├── CaptureSettings.Tests.cs           # 設定の検証と既定値・非数値の許容
-    ├── CaptureClipCache.Tests.cs          # 同一判定・所有権の移動・旧値の破棄
-    ├── CaptureTiming.Tests.cs             # 方針値と切り出しの操作内容の決定
-    ├── CaptureSessionState.Tests.cs       # 実行中・完了の排他
-    ├── CaptureSessionSlot.Tests.cs        # 撮影・切り出しの排他と既定値
-    ├── CaptureCompletion.Tests.cs         # 結果の単一確定
-    ├── CaptureOwnerScope.Tests.cs         # 退避・除外の順序
-    ├── CaptureSettingsMerge.Tests.cs      # 部分更新マージと同値スキップ・入力なし
-    ├── CaptureLabelTexts.Tests.cs         # モード写像・文言の選定・サイズラベル解決
-    ├── CapturePreviewLogMessage.Tests.cs  # ログ書式（全定義）と終了ログの組・無効ロガーの安全性
-    ├── CaptureHighlight.Tests.cs          # 検出→ハイライト状態の導出・変化の判定・ログ
-    ├── CaptureKeyActions.Tests.cs         # Enter / Return / Escape の解釈と確定対象の有無
-    ├── CaptureClickSelection.Tests.cs     # 固定と取り出しの規則
-    ├── CaptureResult.Tests.cs             # キャンセル結果の正規化
-    ├── FadeMaskDragRectOptionsMapper.Tests.cs  # 設定項目と寸法・表示可否の対応
-    ├── FadeMaskDragRectModes.Tests.cs       # モードの解決・ルーペ表示可否
-    ├── FadeMaskDragRectOptions.Tests.cs     # 既定値・部分変更・外側の装飾の単一所有
-    ├── FadeMaskDragRectOverlay.Tests.cs     # 破線の列挙と描画の画素検証
-    ├── FadeMaskDragRectSelection.Tests.cs   # 選択矩形の可否判定
-    ├── OverlayLineDash.Tests.cs            # スタイルごとのダッシュ長
-    ├── OverlayRectLayout.Tests.cs          # クランプ・太さの下限・破線の判定
-    ├── OverlayRectRasterizer.Tests.cs      # ルーペ画像へのラスタライズ（画素検証）
-    ├── CaptureTargetContract.Tests.cs      # ICaptureTarget の契約
-    ├── ZoomViewSession.Tests.cs           # 状態と判断・Fit・遷移・パン・スクロールバー
-    ├── ZoomOptions.Tests.cs                # 不変条件の検証と With による部分更新
-    ├── ZoomTransition.Tests.cs            # 段階遷移・ホイール遷移・可否判定
-    ├── ZoomMath.Tests.cs                  # Fit 実効倍率・中心維持・クランプ・座標変換
-    ├── ZoomScrollBarGeometry.Tests.cs     # トラック・サムの矩形とオフセット逆算
-    └── ZoomViewAppearance.Tests.cs        # 描画可否・市松模様の範囲・タイル矩形
+    ├── RecordingLogger.cs                 # ログを収集するテスト用ロガー（共通）
+    ├── Capture/                           # 撮影セッションの検証
+    │   ├── ImageColorMath.Tests.cs        # 平均色（標本間引き・空画像）
+    │   ├── CaptureTypeTraits.Tests.cs     # ハイライト型・区間の流儀・検出対象・検出呼び分け・確定対象
+    │   ├── MonitorScalingMath.Tests.cs    # 中心判定・境界・フォールバック・対象座標・一覧の構築・代表値
+    │   ├── CaptureClipMath.Tests.cs       # 切り出し矩形の解決（座標空間の契約・整数/浮動小数）・双方向変換・画像の共有値
+    │   ├── CaptureImageHolder.Tests.cs    # 保持の規則（差し替え・破棄後・フォールバック）
+    │   ├── CaptureVirtualScreen.Tests.cs  # タイムアウト待ちと未使用結果の破棄
+    │   ├── CaptureVirtualScreenBounds.Tests.cs  # 撮影対象の範囲（包含矩形・負の原点・モニタ無し）
+    │   ├── CaptureSettings.Tests.cs       # 設定の検証と既定値・非数値の許容
+    │   ├── CaptureClipCache.Tests.cs      # 同一判定・所有権の移動・旧値の破棄
+    │   ├── CaptureTiming.Tests.cs         # 方針値と切り出しの操作内容の決定
+    │   ├── CaptureSessionState.Tests.cs   # 実行中・完了の排他
+    │   ├── CaptureSessionSlot.Tests.cs    # 撮影・切り出しの排他と既定値
+    │   ├── CaptureCompletion.Tests.cs     # 結果の単一確定
+    │   ├── CaptureOwnerScope.Tests.cs     # 退避・除外の順序
+    │   ├── CaptureSettingsMerge.Tests.cs  # 部分更新マージと同値スキップ・入力なし
+    │   ├── CaptureLabelTexts.Tests.cs     # モード写像・文言の選定・サイズラベル解決
+    │   ├── CapturePreviewLogMessage.Tests.cs  # ログ書式（全定義）と終了ログの組・無効ロガーの安全性
+    │   ├── CaptureHighlight.Tests.cs      # 検出→ハイライト状態の導出・変化の判定・ログ
+    │   ├── CaptureKeyActions.Tests.cs     # Enter / Return / Escape の解釈と確定対象の有無
+    │   ├── CaptureClickSelection.Tests.cs # 固定と取り出しの規則
+    │   ├── CaptureResult.Tests.cs         # キャンセル結果の正規化
+    │   └── CaptureTargetContract.Tests.cs # ICaptureTarget の契約
+    ├── Crop/                              # 切り出しの検証
+    │   ├── CropBoundsMath.Tests.cs        # クランプ・丸め・区間の流儀・丸め規則
+    │   └── CropLabelTexts.Tests.cs        # 含まれるピクセル数・ズーム率の丸め・未選択時の表示可否
+    ├── Overlay/                           # 矩形オーバーレイの検証
+    │   ├── OverlayLineDash.Tests.cs       # スタイルごとのダッシュ長
+    │   ├── OverlayRectLayout.Tests.cs     # クランプ・太さの下限・破線の判定
+    │   └── OverlayRectRasterizer.Tests.cs # ルーペ画像へのラスタライズ（画素検証）
+    ├── FadeMaskDragRect/                  # 領域選択の複合コントロールの検証
+    │   ├── FadeMaskDragRectOptionsMapper.Tests.cs  # 設定項目と寸法・表示可否の対応
+    │   ├── FadeMaskDragRectModes.Tests.cs       # モードの解決・ルーペ表示可否
+    │   ├── FadeMaskDragRectOptions.Tests.cs     # 既定値・部分変更・外側の装飾の単一所有
+    │   ├── FadeMaskDragRectOverlay.Tests.cs     # 破線の列挙と描画の画素検証
+    │   └── FadeMaskDragRectSelection.Tests.cs   # 選択矩形の可否判定
+    └── ZoomView/                          # 画像ビューポートの検証
+        ├── ZoomViewSession.Tests.cs       # 状態と判断・Fit・遷移・パン・スクロールバー
+        ├── ZoomOptions.Tests.cs           # 不変条件の検証と With による部分更新
+        ├── ZoomTransition.Tests.cs        # 段階遷移・ホイール遷移・可否判定
+        ├── ZoomMath.Tests.cs              # Fit 実効倍率・中心維持・クランプ・座標変換
+        ├── ZoomScrollBarGeometry.Tests.cs # トラック・サムの矩形とオフセット逆算
+        └── ZoomViewAppearance.Tests.cs    # 描画可否・市松模様の範囲・タイル矩形
 ```
 
 ## 7. テスト
