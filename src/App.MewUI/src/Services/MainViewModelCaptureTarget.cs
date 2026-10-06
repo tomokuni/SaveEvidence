@@ -2,7 +2,7 @@ using System.ComponentModel;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
@@ -54,3 +54,4 @@ internal sealed class MainViewModelCaptureTarget : ICaptureTarget
         }
     }
 }
+

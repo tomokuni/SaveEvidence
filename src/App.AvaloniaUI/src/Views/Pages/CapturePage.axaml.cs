@@ -14,7 +14,7 @@ using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
@@ -168,7 +168,7 @@ public sealed partial class CapturePage : UserControl
         // Crop 未実行時は CaptureSessionControl 側で無視されるため、常時購読で問題ない。
         CropView.ViewportChanged += (_, _) =>
         {
-            _captureSessionControl.NotifyCropViewportChanged();
+            _captureSessionControl.NotifyViewportChanged();
         };
 
         // 初期の市松模様背景を設定

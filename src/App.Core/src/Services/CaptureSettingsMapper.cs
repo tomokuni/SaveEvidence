@@ -1,5 +1,5 @@
 using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 
 namespace EsUtil.SaveEvidence.App.Core.Services;
 
@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// CaptureSessionControl へ反映するキャプチャ設定の変換を一元化する（MainWindow から委譲）。<br/>
 ///
 /// <c>DisplayScaleScaling</c> はコードから動的に設定されるため、<br/>
-/// 設定画面の固定値は使用しない（CropSession が Provider を動的設定 / OverlayWindow.Highlight が
+/// 設定画面の固定値は使用しない（CropSession が Provider を動的設定 / CaptureOverlayWindow.Highlight が
 /// DisplayScaleScaling を動的設定）。 ここでは null（自動生成）と 0（自動 = Scaling と同値）を渡す。
 /// </remarks>
 internal static class CaptureSettingsMapper
@@ -94,3 +94,4 @@ internal static class CaptureSettingsMapper
             : System.Drawing.Color.FromArgb((byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value);
     }
 }
+

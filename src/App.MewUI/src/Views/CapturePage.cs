@@ -10,7 +10,7 @@ using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.SaveEvidence.App.MewUI.Services;
 using Microsoft.Extensions.Logging;
 using MewUIColor = Aprillz.MewUI.Color;
-using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;

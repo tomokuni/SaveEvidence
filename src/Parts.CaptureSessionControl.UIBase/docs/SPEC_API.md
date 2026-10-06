@@ -11,8 +11,8 @@
 - [3. `CapturePaintMapper`（内部・設定から色への写像）](#3-capturepaintmapper内部設定から色への写像)
   - [3.1 `ToMarqueeAppearance(CaptureSettings settings)`](#31-tomarqueeappearancecapturesettings-settings)
   - [3.2 `ToLoupeAppearance(CaptureSettings settings)`](#32-toloupeappearancecapturesettings-settings)
-- [4. `FadeMaskDragRectChildValues`（子コントロールへ適用する値）](#4-fademaskdragrectchildvalues子コントロールへ適用する値)
-- [5. `FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`（付加情報ラベル）](#5-fademaskhostlabelrenderer--marqueehostlabelrenderer付加情報ラベル)
+- [4. `SelectionOverlayChildValues`（子コントロールへ適用する値）](#4-selectionoverlaychildvalues子コントロールへ適用する値)
+- [5. `SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`（付加情報ラベル）](#5-selectionoverlaylabelrenderer--marqueehostlabelrenderer付加情報ラベル)
 - [6. 引数と例外](#6-引数と例外)
 - [7. 依存関係](#7-依存関係)
 - [8. 本層を置く理由（設計上の位置付け）](#8-本層を置く理由設計上の位置付け)
@@ -68,7 +68,7 @@
 画像外の色を設定にするのは、**描画層が描画面全体を塗ってから拡大画像を重ねる**ためです（画像の無い部分が本色の無地になる）。
 透明を設定すると背後の要素がそのまま見えます（既定は不透明の中性グレー）。
 
-## 4. `FadeMaskDragRectChildValues`（子コントロールへ適用する値）
+## 4. `SelectionOverlayChildValues`（子コントロールへ適用する値）
 
 | メンバー | 型 | 内容 |
 | --- | --- | --- |
@@ -77,15 +77,15 @@
 | `LoupeCore` | `LoupeOptions` | ルーペの設定 |
 | `LoupeOffset` | `double` | ルーペのカーソル中心からの右下オフセット（DIP） |
 | `IsHitTestVisible` | `bool` | 選択矩形コントロールが入力を受け取るか（選択矩形を使うモードのみ true） |
-| `Resolve(options, mode, marqueeAppearance)` | static | 設定とモードから上記の値を解決する。 モードの判断はコアの `FadeMaskDragRectModes.Resolve` に委譲する |
+| `Resolve(options, mode, marqueeAppearance)` | static | 設定とモードから上記の値を解決する。 モードの判断はコアの `SelectionOverlayState.Resolve` に委譲する |
 
 **「設定とモードから子コントロールの値を決める」手順を本型が単一所有**します（結果を代入するには子コントロール（UI 固有型）が必要なため、UI 層には代入だけを残します）。 **ハイライト矩形は実行時状態**のため本値に含めず、子コントロールが保持します。
 
-## 5. `FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`（付加情報ラベル）
+## 5. `SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`（付加情報ラベル）
 
 | 型 | メンバー | 内容 |
 | --- | --- | --- |
-| `FadeMaskHostLabelRenderer` | `Resolve(content, labels, marqueeAppearance, operationText, infoText, measureText)` | 操作ラベル・情報ラベルの縦積みの配置指示を返す（設定スイッチと文言の有無の両方が成立したときだけ含める） |
+| `SelectionOverlayLabelRenderer` | `Resolve(content, labels, marqueeAppearance, operationText, infoText, measureText)` | 操作ラベル・情報ラベルの縦積みの配置指示を返す（設定スイッチと文言の有無の両方が成立したときだけ含める） |
 | `MarqueeHostLabelRenderer` | `Resolve(...)` | ラベル 1 行の体裁（背景 = 文字の実寸 + 内側余白 × 2）の配置指示を返す |
 
 **文言の生成はホストが担う**（付加情報ラベルは選択矩形コントロールの概念ではないため）。 ただし**描画位置（注目矩形の左上から縦に積む）と表示可否は両 UI で同じ**であるため、本層が単一所有します。 体裁の値（内側余白）は提示層の外観（`MarqueeAppearance`）が単一所有します。

@@ -16,7 +16,7 @@ using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.FadeMaskDragRect;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.Crop;
 
@@ -25,7 +25,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.Crop;
 /// 対象: <c>CropViewControl.cs</c>（画像表示 + 領域選択 + 外部提供矩形の統合コントロール）。<br/>
 /// 公開 API: Source / Rects / SelectionMode / ZoomPercent / ZoomIn / ZoomOut / Fit /
 /// SetSelection / ClearSelection / SetCoordTransform / 座標変換（SourceToClient / ClientToSource）。<br/>
-/// パブリック API 経由で内包コントロール（ZoomViewControl / FadeMaskDragRect）との連携を検証する。
+/// パブリック API 経由で内包コントロール（ZoomViewControl / SelectionOverlay）との連携を検証する。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class CropViewControlTests
@@ -54,11 +54,11 @@ public class CropViewControlTests
     {
         var view = new CropViewControl();
 
-        Assert.Equal(FadeMaskDragRectMode.Crop, view.SelectionMode);
+        Assert.Equal(SelectionOverlayMode.Crop, view.SelectionMode);
 
         // AreaSelect へ変更できる
-        view.SelectionMode = FadeMaskDragRectMode.AreaSelect;
-        Assert.Equal(FadeMaskDragRectMode.AreaSelect, view.SelectionMode);
+        view.SelectionMode = SelectionOverlayMode.AreaSelect;
+        Assert.Equal(SelectionOverlayMode.AreaSelect, view.SelectionMode);
     }
 
     [AvaloniaFact]

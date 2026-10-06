@@ -61,7 +61,7 @@ EsUtil.Platform.Core（Es* 型 / サービス抽象）
 │  Run(owner, services)                                   │
 │    ├─ CaptureOwnerScope.Enter(...)   … 除外 + 退避      │
 │    ├─ ICaptureService.CaptureVirtualScreen … 全モニター │
-│    ├─ FadeMaskDragRectControl（暗転 + 選択 + ルーペ）    │
+│    ├─ SelectionOverlayControl（暗転 + 選択 + ルーペ）    │
 │    ├─ SkiaImageView（撮影画像の描画。Platform.MewUI）    │
 │    ├─ CaptureSessionState（再入禁止・単一完了）           │
 │    └─ CaptureClipMath（切り出し矩形の解決と切り出し）      │
@@ -70,7 +70,7 @@ EsUtil.Platform.Core（Es* 型 / サービス抽象）
 │ CropSession（切り出しセッション。internal）              │
 │  Start(image) / Ended（終了の通知）                      │
 │  ├─ CropViewControl（ズームビュー + 矩形オーバーレイ）    │
-│  ├─ FadeMaskDragRectControl（暗転 + 選択 + ルーペ）       │
+│  ├─ SelectionOverlayControl（暗転 + 選択 + ルーペ）       │
 │  ├─ CaptureSessionState（再入禁止・単一完了）             │
 │  ├─ CropLabelTexts（サイズラベルの書式）                  │
 │  └─ ICaptureTarget（切り出しの適用先。アプリが実装）      │
@@ -78,7 +78,7 @@ EsUtil.Platform.Core（Es* 型 / サービス抽象）
 ┌────────────────────────────────────────────────────────┐
 │ 収録する複合コントロール（公開。独立しても利用できる）      │
 │  ├─ CropViewControl（ZoomViewControl + 矩形オーバーレイ） │
-│  └─ FadeMaskDragRectControl（暗転 + 選択 + ルーペ）        │
+│  └─ SelectionOverlayControl（暗転 + 選択 + ルーペ）        │
 └────────────────────────────────────────────────────────┘
 ┌────────────────────────────────────────────────────────┐
 │ 切り出しビューが内包する画像ビューポート（内部部品）        │
@@ -149,9 +149,9 @@ classDiagram
         +ZoomIn() / ZoomOut() / ZoomFit()
         +ClientToDisplayedSource(EsPoint) EsPoint
     }
-    class FadeMaskDragRectControl {
-        +FadeMaskDragRectMode Mode
-        +FadeMaskDragRectOptions Options
+    class SelectionOverlayControl {
+        +SelectionOverlayMode Mode
+        +SelectionOverlayOptions Options
         +MarqueeAppearance MarqueeAppearance
         +LoupeAppearance LoupeAppearance
         +bool HasSelection
@@ -161,7 +161,7 @@ classDiagram
         +ClearSelection()
         +SetCoordTransform(ICoordTransform?)
         +RequestConfirm() / RequestCancel()
-        +RefreshOverlay()
+        +NotifyViewportChanged()
     }
     CaptureSessionControl *-- CaptureOverlay : 1 セッション = 1 インスタンス
     CaptureSessionControl *-- CropSession : 1 セッション = 1 インスタンス
@@ -172,9 +172,9 @@ classDiagram
     CaptureOverlay *-- CaptureSessionState
     CaptureOverlay *-- CaptureCompletion~TResult~
     CaptureOverlay *-- SkiaImageView
-    CaptureOverlay ..> FadeMaskDragRectControl : オーバーレイとして配置
+    CaptureOverlay ..> SelectionOverlayControl : オーバーレイとして配置
     CropSession *-- CaptureSessionState
-    CropSession ..> FadeMaskDragRectControl : オーバーレイとして配置
+    CropSession ..> SelectionOverlayControl : オーバーレイとして配置
     CropSession ..> ICaptureTarget : 切り出しの適用
 ```
 
@@ -200,7 +200,7 @@ sequenceDiagram
     participant OW as CaptureOverlay
     participant OS as オーナーウィンドウ
     participant CS as ICaptureService
-    participant UI as FadeMaskDragRectControl
+    participant UI as SelectionOverlayControl
 
     App->>OW: Capture(owner, type, services)
     OW->>OW: CaptureSessionSlot.TryBeginCapture（排他の受付）
@@ -231,13 +231,13 @@ sequenceDiagram
 - **切り出しの座標変換はビューポートへ委譲する**: ローカル DIP ⇔ 画像ピクセルの変換（画像矩形・実効倍率・Fit / 中央寄せの原点補正）は `CropViewControl.ClientToSource` / `SourceToClient` が単一所有する。 `CropSession` は式を持たず、ズーム・パンのたびにポートを作り直すだけにする（撮影の `CaptureOverlay` は単一モニタ全体を敷くため倍率のみを使う）。
 - **排他は Facade がコアのスロットで行う**: 撮影と切り出しは同時に 1 つだけ実行できる（規則は `CaptureSessionSlot` が単一所有する）。 UI ごとにフィールドの null 判定を書くと片方だけ漏れるため、本プロジェクトは Facade（`CaptureSessionControl`）が唯一の適用者になる（Avalonia 版と同じ）。
 - **1 セッション = 1 インスタンス**: 撮影（`CaptureOverlay`）も切り出し（`CropSession`）もセッションごとに生成・破棄する。 切り出しのオーバーレイは開始時に表示ツリーへ加え、終了時に取り外す（アプリはオーバーレイを事前に配置しない）。 終了時は長命のオブジェクト（ビューポート・適用先）への購読を解除する（残すとセッション数だけ呼び出しが増え、終了したセッションを参照し続ける）。
-- **外観は設定に従う（固定値を持たない）**: 切り出し（`CropSession`）の枠線・ハンドル・十字マーカー・座標ラベルは `CaptureSettings` から反映する（撮影の `CaptureOverlay` と Avalonia 版の `CropSession` に同じ対応）。 寸法・表示可否はコアの設定値（`FadeMaskDragRectOptionsMapper`）が、描画にだけ必要な外観は UI 間で共有する `Parts.CaptureSessionControl.UIBase` の `CapturePaintMapper`（`MarqueeAppearance` / `LoupeAppearance`）が写像する。 ただし、切り出しのルーペ・ラベルはプレビューの表示倍率（`CropViewControl` が所有）に従うため、`LoupeClientToPixelScaling` / `DisplayScaleScaling` は与えない。 UI ごとに白枠 2 DIP 等の固定値を持つと、設定を変えても反映されず UI 間で見た目がずれる。
+- **外観は設定に従う（固定値を持たない）**: 切り出し（`CropSession`）の枠線・ハンドル・十字マーカー・座標ラベルは `CaptureSettings` から反映する（撮影の `CaptureOverlay` と Avalonia 版の `CropSession` に同じ対応）。 寸法・表示可否はコアの設定値（`SelectionOverlayOptionsMapper`）が、描画にだけ必要な外観は UI 間で共有する `Parts.CaptureSessionControl.UIBase` の `CapturePaintMapper`（`MarqueeAppearance` / `LoupeAppearance`）が写像する。 ただし、切り出しのルーペ・ラベルはプレビューの表示倍率（`CropViewControl` が所有）に従うため、`LoupeClientToPixelScaling` / `DisplayScaleScaling` は与えない。 UI ごとに白枠 2 DIP 等の固定値を持つと、設定を変えても反映されず UI 間で見た目がずれる。
 - **ちらつき対策の待機量は本 UI の実測値**: 透明を解除するフレーム数（`FramesUntilReveal`）は実測に基づく MewUI 固有の実装値である（外観の設定値ではない）。 画面外へ退避する座標は全 UI 共通のためコア（`CaptureTiming`）が単一所有する。
 - **選択の破棄は画像の差し替え時だけ行う**: ズーム・パンでは対象座標（元画像ピクセル）が変わらないため、選択矩形は維持する（座標変換ポートの更新のみ）。 画像の差し替えでは座標系が変わるため選択を破棄する。
-- **複合コントロールも同じアセンブリに収録する**: セッション（Facade）・切り出しビュー（`CropViewControl`）・領域選択（`FadeMaskDragRectControl`）は、同じ設定型（`CaptureSettings` → `FadeMaskDragRectOptions`）と外観写像（`Parts.CaptureSessionControl.UIBase`）を共有し、後 2 者は同じ内包コントロール（`ZoomViewControl` / `MarqueeControl` / `LoupeControl`）を使う。 別アセンブリに分けると参照とバージョンの整合が増えるため 1 つにまとめる。 型は `public` のまま維持し、ホストは独立したコントロールとしても利用できる。
+- **複合コントロールも同じアセンブリに収録する**: セッション（Facade）・切り出しビュー（`CropViewControl`）・領域選択（`SelectionOverlayControl`）は、同じ設定型（`CaptureSettings` → `SelectionOverlayOptions`）と外観写像（`Parts.CaptureSessionControl.UIBase`）を共有し、後 2 者は同じ内包コントロール（`ZoomViewControl` / `MarqueeControl` / `LoupeControl`）を使う。 別アセンブリに分けると参照とバージョンの整合が増えるため 1 つにまとめる。 型は `public` のまま維持し、ホストは独立したコントロールとしても利用できる。
 - **画像ビューポートは切り出しビューが内包し、状態と判断はコアが単一所有する**: `CropViewControl` は `ZoomViewControl` を内包し、ズーム操作・座標変換を委譲する。 実効ズーム率の導出・可否・遷移の適用・パン・スクロールバーは `Parts.CapturePreviewControl.Core` の `ZoomViewSession` が単一所有し、MewUI 実装は入力の変換・効果の適用・Skia への描画・通知の転送だけを担う（Avalonia 版と同一のコアを共有するため、ズーム挙動と設定が両 UI で一致する）。
 - **切り出しビューは画像ビューポートと矩形オーバーレイを重ねる**: 画像の描画と入力は下の画像ビューポートが担い、矩形は上の透明なオーバーレイが担う。 1 つのキャンバスに統合すると、画像ビューポートの内部状態へ矩形オーバーレイが依存する。 矩形のダッシュ長・太さの下限・負サイズのクランプはコア（`OverlayLineDash` / `OverlayRectLayout`）が単一所有し、UI はコアの描画入力を描画先へ写すだけにする。
-- **領域選択は配線を内側で完結させる**: 選択の変更・開始・キャンセルを暗転マスクへ同期し、ルーペの中心を更新する配線は `FadeMaskDragRectControl` が持つ（ホストは `Mode` と座標変換ポートを設定し、確定・キャンセルを購読するだけ）。 ホイール操作と表示の変化の追従はコントロール化を前提とした処理のため、ホストが `MouseWheel` の購読と `RefreshOverlay()` の呼び出しを担う。
+- **領域選択は配線を内側で完結させる**: 選択の変更・開始・キャンセルを暗転マスクへ同期し、ルーペの中心を更新する配線は `SelectionOverlayControl` が持つ（ホストは `Mode` と座標変換ポートを設定し、確定・キャンセルを購読するだけ）。 ホイール操作と表示の変化の追従はコントロール化を前提とした処理のため、ホストが `MouseWheel` の購読と `NotifyViewportChanged()` の呼び出しを担う。
 
 ## 8. 実測で判明した制約
 

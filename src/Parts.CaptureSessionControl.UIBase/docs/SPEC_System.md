@@ -19,10 +19,10 @@
 `Parts.CaptureSessionControl.UIBase` は、拠影・切り出しのセッションを実装する両 UI が共有する**設定写像と複合コントロールの共有処理**を提供します。 対象は次の 3 つです。
 
 - **キャプチャ設定（`CaptureSettings`）→ 外観（`MarqueeAppearance` / `LoupeAppearance`）の写像**
-- **設定とモードから内包コントロールへ適用する値の解決**（`FadeMaskDragRectChildValues`）
-- **付加情報ラベル（操作・情報）の配置指示の解決**（`FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`）
+- **設定とモードから内包コントロールへ適用する値の解決**（`SelectionOverlayChildValues`）
+- **付加情報ラベル（操作・情報）の配置指示の解決**（`SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）
 
-寸法・表示可否はコアの設定マッパー（`FadeMaskDragRectOptionsMapper`）が単一所有するため、本層は色だけを扱います。
+寸法・表示可否はコアの設定マッパー（`SelectionOverlayOptionsMapper`）が単一所有するため、本層は色だけを扱います。
 
 外部機能と公開 API は [SPEC_API](SPEC_API.md)、利用手順は [README](../README.md) を参照してください。
 
@@ -75,8 +75,8 @@ graph LR
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
 | `CapturePaintMapper.cs` | `internal static class` | `CaptureSettings` → `MarqueeAppearance` / `LoupeAppearance` の**色**の写像（**唯一の所有者**。 写像が 1 箇所に閉じるため、両 UI のホストが同じ写像を使うことが構造的に保証される） |
-| `FadeMaskDragRectChildValues.cs` | `public readonly record struct` | 設定とモードから内包コントロールへ適用する**寸法・表示可否**の解決（**唯一の所有者**。 モードの判断はコアが持つ） |
-| `FadeMaskHostLabelRenderer.cs` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示の解決（**唯一の所有者**。 積み上げ位置と表示可否を含む） |
+| `SelectionOverlayChildValues.cs` | `public readonly record struct` | 設定とモードから内包コントロールへ適用する**寸法・表示可否**の解決（**唯一の所有者**。 モードの判断はコアが持つ） |
+| `SelectionOverlayLabelRenderer.cs` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示の解決（**唯一の所有者**。 積み上げ位置と表示可否を含む） |
 | `MarqueeHostLabelRenderer.cs` | `public static class` | ラベル 1 行の体裁（背景の寸法）の配置指示の解決（**唯一の所有者**） |
 
 ## 6. クラス図
@@ -101,7 +101,7 @@ classDiagram
   CapturePaintMapper ..> CaptureSettings : 読み取る
   CapturePaintMapper ..> MarqueeAppearance : 生成
   CapturePaintMapper ..> LoupeAppearance : 生成
-  FadeMaskDragRectChildValues ..> FadeMaskDragRectModes : モードの判断を委譲
+  SelectionOverlayChildValues ..> SelectionOverlayState : モードの判断を委譲
 ```
 
 ## 7. データフロー
@@ -109,12 +109,12 @@ classDiagram
 ```mermaid
 sequenceDiagram
   participant Host as ホスト（CropSession / CaptureOverlay）
-  participant Core as FadeMaskDragRectOptionsMapper（コア）
+  participant Core as SelectionOverlayOptionsMapper（コア）
   participant Mapper as CapturePaintMapper（本層）
   participant UI as コントロール（Marquee / Loupe）
 
-  Host->>Core: settings.ToFadeMaskDragRectOptions()
-  Core-->>Host: FadeMaskDragRectOptions（寸法・表示可否）
+  Host->>Core: settings.ToSelectionOverlayOptions()
+  Core-->>Host: SelectionOverlayOptions（寸法・表示可否）
   Host->>Mapper: ToMarqueeAppearance(settings) / ToLoupeAppearance(settings, background)
   Mapper-->>Host: MarqueeAppearance / LoupeAppearance（外観）
   Host->>UI: Options = ...（寸法・表示可否）
@@ -134,7 +134,7 @@ sequenceDiagram
 ## 9. 可視性ポリシー
 
 - **写像（`CapturePaintMapper`）は `internal`**。 両 UI のホストが使う内部処理のためです。
-- **複合コントロールの共有処理（`FadeMaskDragRectChildValues` / `FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`）は `public`**。 UIBase を参照する側（複合コントロールの UI 実装）が直接使うためです。
+- **複合コントロールの共有処理（`SelectionOverlayChildValues` / `SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）は `public`**。 UIBase を参照する側（複合コントロールの UI 実装）が直接使うためです。
 - `internal` は `InternalsVisibleTo`（`Parts.CapturePreviewControl.AvaloniaUI` / `Parts.CapturePreviewControl.MewUI` /
   `Parts.CaptureSessionControl.UIBase.Tests`）で公開します。
 - **`internal` → `public` の変更は破壊的な設計変更として扱います**。
@@ -144,8 +144,8 @@ sequenceDiagram
 ```text
 tests/
 ├── CapturePaintMapper.Tests.cs          # 写像の網羅
-├── FadeMaskDragRectChildValues.Tests.cs # モードから導出する値の上書き
-├── FadeMaskHostLabelRenderer.Tests.cs   # 付加情報ラベルの縦積みと表示可否
+├── SelectionOverlayChildValues.Tests.cs # モードから導出する値の上書き
+├── SelectionOverlayLabelRenderer.Tests.cs   # 付加情報ラベルの縦積みと表示可否
 └── MarqueeHostLabelRenderer.Tests.cs    # ラベル 1 行の体裁（背景の寸法の検証）
 ```
 

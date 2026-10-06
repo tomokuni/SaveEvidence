@@ -83,7 +83,7 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ CaptureLabelTexts（静的クラス）                        │
-│  ToSelectionMode(CaptureType) FadeMaskDragRectMode    │
+│  ToSelectionMode(CaptureType) SelectionOverlayMode    │
 │  GetOperationText(mode) string                        │
 │  GetInfoText(mode, windowTitle) string?               │
 │ CropLabelTexts（静的クラス）                           │
@@ -284,13 +284,13 @@ classDiagram
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ 領域選択の複合コントロールのコア                        │
-│  FadeMaskDragRectMode: Crop / AreaSelect / ScreenSelect / WindowSelect │
-│  FadeMaskDragRectOptions（record）: Marquee / Labels / Loupe / 破線色 2 / LoupeOffset │
-│  FadeMaskDragRectLabelOptions（record）: 操作・情報ラベルの外観 │
-│  FadeMaskDragRectModes: Resolve（モード → 状態）        │
-│  FadeMaskDragRectState: UsesSelection / ShowFullOverlay / ShowSelectionOverlay │
-│  FadeMaskDragRectSelection: IsUsable（選択の可否）       │
-│  FadeMaskDragRectOverlay: DrawSelectionRect（2 色の破線。 選択が覆う画素の外側へ引く） │
+│  SelectionOverlayMode: Crop / AreaSelect / ScreenSelect / WindowSelect │
+│  SelectionOverlayOptions（record）: Marquee / Labels / Loupe / 破線色 2 / LoupeOffset │
+│  SelectionOverlayLabelOptions（record）: 操作・情報ラベルの外観 │
+│  SelectionOverlayState: Resolve（モード → 状態）        │
+│  SelectionOverlayState: UsesSelection / ShowFullOverlay / ShowSelectionOverlay │
+│  SelectionUsability: IsUsable（選択の可否）       │
+│  SelectionOutlineRasterizer: DrawSelectionRect（2 色の破線。 選択が覆う画素の外側へ引く） │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ 切り出しビューの画像ビューポート                        │
@@ -315,17 +315,17 @@ classDiagram
     class OverlayRect { <<readonly record struct>> +EsRect Bounds  +OverlayLineStyle Style  +Color Foreground  +Color Background  +double Thickness }
     class OverlayRectFrame { <<readonly record struct>> +EsRect Bounds  +double Thickness  +double HalfThickness  +bool IsDashed  +bool DrawsBackground  +bool HasDrawableSize }
     class OverlayRectLayout { <<static>> +Resolve(rect, topLeft, bottomRight)$ OverlayRectFrame  +EffectiveThickness(thickness)$ double }
-    class FadeMaskDragRectMode { <<enum>> Crop  AreaSelect  ScreenSelect  WindowSelect }
-    class FadeMaskDragRectOptions { <<record>> +MarqueeOptions Marquee  +LoupeOptions Loupe  +FadeMaskDragRectLabelOptions Labels  +double LoupeOffset }
-    class FadeMaskDragRectState { <<readonly record struct>> +bool UsesSelection  +bool ShowFullOverlay  +bool ShowSelectionOverlay }
-    class FadeMaskDragRectModes { <<static>> +Resolve(mode)$ FadeMaskDragRectState }
+    class SelectionOverlayMode { <<enum>> Crop  AreaSelect  ScreenSelect  WindowSelect }
+    class SelectionOverlayOptions { <<record>> +MarqueeOptions Marquee  +LoupeOptions Loupe  +SelectionOverlayLabelOptions Labels  +double LoupeOffset }
+    class SelectionOverlayState { <<readonly record struct>> +bool UsesSelection  +bool ShowFullOverlay  +bool ShowSelectionOverlay }
+    class SelectionOverlayState { <<static>> +Resolve(mode)$ SelectionOverlayState }
 
     OverlayRectLayout ..> OverlayRect : 入力
     OverlayRectLayout ..> OverlayRectFrame : 生成
     OverlayRect ..> OverlayLineStyle : 参照
-    FadeMaskDragRectOptions *-- FadeMaskDragRectLabelOptions : Labels
-    FadeMaskDragRectModes ..> FadeMaskDragRectState : 生成
-    FadeMaskDragRectModes ..> FadeMaskDragRectMode : 参照
+    SelectionOverlayOptions *-- SelectionOverlayLabelOptions : Labels
+    SelectionOverlayState ..> SelectionOverlayState : 生成
+    SelectionOverlayState ..> SelectionOverlayMode : 参照
 ```
 
 ```mermaid
@@ -401,18 +401,18 @@ sequenceDiagram
 | --- | --- |
 | 設定値が範囲外（`CaptureSettings.Validate`） | `ArgumentOutOfRangeException`（null メンバーは対象外） |
 | 切り出しできない入力（`CropBoundsMath`） | 例外を投げず、`IsEmpty` が true の矩形を返す（呼び出し側がキャンセル扱いにする） |
-| 画像の外側へはみ出すピクセル書き込み（`OverlayRectRasterizer` / `FadeMaskDragRectOverlay`） | `EsBitmap.TrySetPixel` が false を返すだけで、例外にしない（画像端に接する矩形は正常な入力のため） |
+| 画像の外側へはみ出すピクセル書き込み（`OverlayRectRasterizer` / `SelectionOutlineRasterizer`） | `EsBitmap.TrySetPixel` が false を返すだけで、例外にしない（画像端に接する矩形は正常な入力のため） |
 | ズーム設定の不変条件違反（`ZoomOptions`） | `ArgumentNullException` / `ArgumentException` / `ArgumentOutOfRangeException` |
 | ズームの計算入力が範囲外（`ZoomMath` / `ZoomTransition`） | 例外を投げず、内部でクランプする（スケールが 0 以下の場合は 1 として扱う） |
 
 ## 7. 設計判断
 
 - **切り出し規則を 1 箇所に置く**: 終点のピクセルを含めるか（矩形の `EsRectInterval`）と端のクランプという切り出しの規則は `CropBoundsMath` が単一所有し、撮影の確定（`CaptureClipMath`）と切り出し（`CropSession`）が委譲する。 規則が複数箇所にあると、同じドラッグでも 1 px 異なる矩形になる。
-- **色は `System.Drawing.Color`**: UI 非依存のプリミティブ（`System.Drawing.Primitives`）で、MewUI のコントロールがそのまま受け取れる。 設定から複合コントロールの設定値（`FadeMaskDragRectOptions`）への変換は本プロジェクトの `FadeMaskDragRectOptionsMapper` が単一所有する（両 UI で同じ変換を使う）。 ただし**色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる）。
+- **色は `System.Drawing.Color`**: UI 非依存のプリミティブ（`System.Drawing.Primitives`）で、MewUI のコントロールがそのまま受け取れる。 設定から複合コントロールの設定値（`SelectionOverlayOptions`）への変換は本プロジェクトの `SelectionOverlayOptionsMapper` が単一所有する（両 UI で同じ変換を使う）。 ただし**色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる）。
 - **判定を「クランプ前の値」で行う**: 画像外へ出た選択矩形を「大きい」と誤判定しないため、最小サイズの判定は画像内へクランプする前の値で行う。
 - **丸めは 0.5 を切り上げ**: `Math.Round` の既定（銀行丸め）はピクセル座標の直感に反するため `MidpointRounding.AwayFromZero` を使う。
 - **矩形の描画判断を 1 箇所に置く**: 負サイズのクランプ・太さの 1 ピクセル下限・破線かどうか・背景色を使うかは `OverlayRectLayout` が単一所有する。 経路（ベクターの図形要素 / ラスタライズ）ごとに判断すると見た目がずれる。
-- **モードの解釈を 1 箇所に置く**: モードと表示可否（選択矩形・破線・全面暗転・ルーペ）の対応は `FadeMaskDragRectModes` / `FadeMaskDragRectState` が単一所有する。 UI が `switch` を書くと片方の UI だけ挙動がずれる。
+- **モードの解釈を 1 箇所に置く**: モードと表示可否（選択矩形・破線・全面暗転・ルーペ）の対応は `SelectionOverlayState` / `SelectionOverlayState` が単一所有する。 UI が `switch` を書くと片方の UI だけ挙動がずれる。
 - **画像ビューポートの状態と判断を 1 箇所に置く**: 実効ズーム率の導出・可否・遷移の適用・パン・スクロールバーは `ZoomViewSession` が単一所有し、純粋計算（`ZoomTransition` / `ZoomMath` / `ZoomScrollBarGeometry`）へ委譲する。 UI が判断を持つと、ズーム挙動と設定が両 UI でずれる。
 - **市松模様は画像の表示矩形の内側に限る**: 透明部分の背景は画像の内側だけに描き、画像の外（ペーストボード）は下地色の単色にする。 タイルの格子をビューポート原点基準に固定することで、パンしても模様が這わない。
 
@@ -432,10 +432,10 @@ sequenceDiagram
 | `CapturePreviewLogMessage` | 全定義の本文書式とイベント ID（記録ロガーで検証） |
 | `OverlayRectLayout` / `OverlayLineDash` | 負サイズのクランプ・太さの下限・破線の判定とダッシュ長の引き継ぎ（ベクター経路とラスタ経路が同じ数値を使う） |
 | `OverlayRectRasterizer` | ルーペ画像へのラスタライズ（画素検証） |
-| `FadeMaskDragRectModes` / `State` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否 |
-| `FadeMaskDragRectOptions` / `LabelOptions` | 既定値・部分変更・ |
-| `FadeMaskDragRectSelection` | 選択として成立するサイズの判定 |
-| `FadeMaskDragRectOverlay` | 破線の列挙と描画の画素検証 |
+| `SelectionOverlayState` / `State` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否 |
+| `SelectionOverlayOptions` / `LabelOptions` | 既定値・部分変更・ |
+| `SelectionUsability` | 選択として成立するサイズの判定 |
+| `SelectionOutlineRasterizer` | 破線の列挙と描画の画素検証 |
 | `ZoomViewSession` | 実効ズーム率の導出・Fit の表現・可否・遷移の適用（ズーム中心の維持）・パン・Fit 復帰・スクロールバーのドラッグ |
 | `ZoomOptions` / `ZoomTransition` / `ZoomMath` | 不変条件の検証と `With` による部分更新・ 23 段階／ホイール遷移・可否判定・Fit 実効倍率・クランプ・座標変換 |
 | `ZoomViewAppearance` / `ZoomScrollBarGeometry` / `CapturePreviewLogMessage` | 描画可否・市松模様の範囲とタイル矩形・トラック／サムの矩形と逆算・ログ書式 |

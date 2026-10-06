@@ -173,7 +173,7 @@ flowchart TB
 
 ### 6.6 CropViewControl（ズーム・パン表示と領域選択）
 
-ズーム・パン・Fit 表示は **`CropViewControl`**（内部に `ZoomViewControl` と `FadeMaskDragRectControl` を内包する複合コントロール。 `Parts.CapturePreviewControl.AvaloniaUI` 経由の推移的依存）が提供する。 CapturePage が `CropViewControl` の `Source` を設定し、`ZoomChanged`（ズーム率・可否）・`ViewportChanged`（パン・ズーム）を購読して操作を指示する。 `CaptureSessionControl.StartCropAsync` は `CropViewControl` を受け取り、切出しセッション（座標変換・確定・キャンセル）を管理する。 切り出しの対象画像は `CropViewControl.Source` から解決する（画像を別引数で渡さない）。 詳細は `CropViewControl` の `SPEC_System.md` を参照。
+ズーム・パン・Fit 表示は **`CropViewControl`**（内部に `ZoomViewControl` と `SelectionOverlayControl` を内包する複合コントロール。 `Parts.CapturePreviewControl.AvaloniaUI` 経由の推移的依存）が提供する。 CapturePage が `CropViewControl` の `Source` を設定し、`ZoomChanged`（ズーム率・可否）・`ViewportChanged`（パン・ズーム）を購読して操作を指示する。 `CaptureSessionControl.StartCropAsync` は `CropViewControl` を受け取り、切出しセッション（座標変換・確定・キャンセル）を管理する。 切り出しの対象画像は `CropViewControl.Source` から解決する（画像を別引数で渡さない）。 詳細は `CropViewControl` の `SPEC_System.md` を参照。
 
 ### 6.7 ViewModel 群
 

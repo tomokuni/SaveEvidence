@@ -10,8 +10,8 @@
   色が無言で効かなくなる）。
 - **製品の設定型を再利用ライブラリへ持ち込まない**。 写像元がセッションの設定型（`CaptureSettings`）であるため、
   本層は `CaptureSessionControl` 側の共有層として置く。
-- **複合コントロールの共有処理も本層が持つ**。 設定とモードから子コントロールの値を決める手順（`FadeMaskDragRectChildValues`）と、
-  付加情報ラベル（操作・情報）の配置指示（`FadeMaskHostLabelRenderer` / `MarqueeHostLabelRenderer`）は
+- **複合コントロールの共有処理も本層が持つ**。 設定とモードから子コントロールの値を決める手順（`SelectionOverlayChildValues`）と、
+  付加情報ラベル（操作・情報）の配置指示（`SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）は
   同じ「UI 間で共有する処理」であり、本層に集約して両 UI の配線が同じ規則を使うことを保証する。
 
 ## 2. 層の位置付け
@@ -28,22 +28,22 @@ EsUtil.Feature.Marquee.Presenter / EsUtil.Feature.Loupe.Presenter ─┐（描�
 - `Parts.CapturePreviewControl.Core` は描画層を参照できない（Core → UIBase の逆流になる）。 したがって**色の写像は
   コアに置けない**。
 - 製品の設定型（`CaptureSettings`）に依存する写像は、再利用ライブラリではなく本層（セッション側の共有層）に置く。
-- **寸法・表示可否は本層が写像しない**（`FadeMaskDragRectOptionsMapper`（コア） が単一所有する）。 写像は色だけを扱う。
+- **寸法・表示可否は本層が写像しない**（`SelectionOverlayOptionsMapper`（コア） が単一所有する）。 写像は色だけを扱う。
 
 ## 3. 構成
 
 | 型 | 可視性 | 責務 |
 | --- | --- | --- |
 | `CapturePaintMapper` | `internal static` | `CaptureSettings` → `MarqueeAppearance` / `LoupeAppearance` の写像 |
-| `FadeMaskDragRectChildValues` | `public readonly record struct` | 設定とモードから内包コントロールへ適用する値を解決する |
-| `FadeMaskHostLabelRenderer` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示を解決する |
+| `SelectionOverlayChildValues` | `public readonly record struct` | 設定とモードから内包コントロールへ適用する値を解決する |
+| `SelectionOverlayLabelRenderer` | `public static class` | 付加情報ラベル（操作・情報）の縦積みの配置指示を解決する |
 | `MarqueeHostLabelRenderer` | `public static class` | ラベル 1 行の体裁（背景 = 文字の実寸 + 内側余白 × 2）の配置指示を解決する |
 
 ## 4. 依存関係
 
 ```text
 Parts.CaptureSessionControl.UIBase
-    ├─ Parts.CapturePreviewControl.Core（CaptureSettings / FadeMaskDragRectOptions / Mode / Modes）
+    ├─ Parts.CapturePreviewControl.Core（CaptureSettings / SelectionOverlayOptions / Mode / Modes）
     ├─ EsUtil.Feature.Marquee.Core（MarqueeOptions）
     ├─ EsUtil.Feature.Loupe.Core（LoupeOptions）
     ├─ EsUtil.Feature.Marquee.Presenter（MarqueeAppearance / MarqueeLabelPlacement）
@@ -80,8 +80,8 @@ LoupeAppearance loupe = CapturePaintMapper.ToLoupeAppearance(settings, backgroun
 ```text
 tests/
 ├── CapturePaintMapper.Tests.cs         # 写像の網羅・枠線の共有・画像外の色・引数の検証
-├── FadeMaskDragRectChildValues.Tests.cs # モードから導出する値の上書き
-├── FadeMaskHostLabelRenderer.Tests.cs  # 付加情報ラベルの縦積みと表示可否
+├── SelectionOverlayChildValues.Tests.cs # モードから導出する値の上書き
+├── SelectionOverlayLabelRenderer.Tests.cs  # 付加情報ラベルの縦積みと表示可否
 └── MarqueeHostLabelRenderer.Tests.cs   # ラベル 1 行の体裁（背景の寸法の検証）
 ```
 
@@ -106,7 +106,7 @@ MarqueeAppearance marqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(set
 LoupeAppearance loupeAppearance = CapturePaintMapper.ToLoupeAppearance(settings);
 
 // 設定とモード → 子コントロールへ適用する値（寸法・表示可否）
-FadeMaskDragRectChildValues values = FadeMaskDragRectChildValues.Resolve(options, mode, marqueeAppearance);
+SelectionOverlayChildValues values = SelectionOverlayChildValues.Resolve(options, mode, marqueeAppearance);
 ```
 
 詳細は [docs/SPEC_API.md](docs/SPEC_API.md) を参照してください。

@@ -21,7 +21,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
   - [5.3 イベント](#53-イベント)
   - [5.4 矩形オーバーレイの仕様](#54-矩形オーバーレイの仕様)
   - [5.5 エラー時の挙動](#55-エラー時の挙動)
-- [6. FadeMaskDragRectControl（領域選択）](#6-fademaskdragrectcontrol領域選択)
+- [6. SelectionOverlayControl（領域選択）](#6-selectionoverlaycontrol領域選択)
   - [6.1 動作モード](#61-動作モード)
   - [6.2 プロパティ](#62-プロパティ)
   - [6.3 メソッド](#63-メソッド)
@@ -42,9 +42,9 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `CaptureSessionControl` | sealed クラス（Facade） | 撮影と切り出しの窓口。 排他（同時に 1 つだけ）とセッションの寿命を単一所有する |
 | `CaptureOverlayServices` | sealed record | 撮影が必要とするサービスの束（設定は含まない） |
 | `CropViewControl` | sealed クラス（複合コントロール） | 画像ビューポート（拡大・パン・Fit）+ 外部提供矩形オーバーレイ |
-| `FadeMaskDragRectControl` | sealed クラス（複合コントロール） | 暗転マスク + 選択矩形 + ルーペ。 モードで可視性を切替 |
-| `FadeMaskDragRectSelectionEventArgs` | sealed class（`EventArgs` 派生） | 確定要求のイベント引数（`SelectionSourceRect: EsRect`） |
-| `FadeMaskDragRectPointEventArgs` | sealed class（`EventArgs` 派生） | ルーペ位置のイベント引数（`Position: EsPoint`） |
+| `SelectionOverlayControl` | sealed クラス（複合コントロール） | 暗転マスク + 選択矩形 + ルーペ。 モードで可視性を切替 |
+| `SelectionConfirmedEventArgs` | sealed class（`EventArgs` 派生） | 確定要求のイベント引数（`SelectionSourceRect: EsRect`） |
+| `LoupePositionEventArgs` | sealed class（`EventArgs` 派生） | ルーペ位置のイベント引数（`Position: EsPoint`） |
 
 `OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）は `Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay`）が提供します。
 
@@ -140,16 +140,16 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | （ホイール操作） | 選択オーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する。 ズーム率・パン量の決定は `CropViewControl` が単一所有する |
 | `ShowCoordLabel` / `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | カーソル位置の座標ラベル（表示可否・フォントサイズ・色は提示層の `MarqueeAppearance` へ反映） |
 | `SizeLabelVisible` / `SizeLabelColor` / `TextBackgroundColor` / `SizeLabelFontSize` | サイズラベル（表示可否・フォントサイズ・色は提示層の `MarqueeAppearance` へ反映。 **文言はホストが単一所有する**） |
-| `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル。 `FadeMaskDragRectLabelOptions`（ホストが描く付加情報ラベルの外観）へ反映） |
-| `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | 操作ラベル（サブライン。 `FadeMaskDragRectLabelOptions` へ反映） |
+| `InfoLabelVisible` / `InfoLabelColor` / `InfoLabelBackgroundColor` / `InfoLabelFontSize` | 情報ラベル（ウィンドウタイトル。 `SelectionOverlayLabelOptions`（ホストが描く付加情報ラベルの外観）へ反映） |
+| `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | 操作ラベル（サブライン。 `SelectionOverlayLabelOptions` へ反映） |
 | `LoupeSize` / `LoupeZoomLevel` / `LoupeOffset` / `LoupeCrossColor` / `LoupeFrameColor` / `LoupeFrameThickness` | ルーペ（サイズ・倍率・オフセットは `LoupeOptions`、枠線の太さは `LoupeAppearance.BorderThickness`、色は外観 `LoupeAppearance` へ反映） |
 | `LoupePasteboardColor` | ルーペの画像外（ペーストボード）の色（外観 `LoupeAppearance.PasteboardColor` へ反映） |
-| `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | ルーペ画像上の選択矩形破線（選択矩形破線の色（`FadeMaskDragRectOptions`）へ反映） |
+| `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB` | ルーペ画像上の選択矩形破線（選択矩形破線の色（`SelectionOverlayOptions`）へ反映） |
 | `LoupeShowCoordLabel` / `LoupeCoordLabelColor` / `LoupeCoordLabelBackgroundColor` / `LoupeCoordLabelFontSize` | ルーペの中心座標ラベル（表示可否・フォントサイズ・色は外観 `LoupeAppearance` へ反映） |
 
 ### 4.1 適用先
 
-上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropSession`）が同じマッピングで反映します。 **計算に必要な寸法・対話パラメータ**はコアの `FadeMaskDragRectOptionsMapper` が単一所有し、**描画にだけ必要な外観（色・枠線の太さ・表示可否）**は UI 間で共有する `Parts.CaptureSessionControl.UIBase` の `CapturePaintMapper`（`MarqueeAppearance` / `LoupeAppearance` を組み立ててコントロールのプロパティへ設定する）が担います。
+上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropSession`）が同じマッピングで反映します。 **計算に必要な寸法・対話パラメータ**はコアの `SelectionOverlayOptionsMapper` が単一所有し、**描画にだけ必要な外観（色・枠線の太さ・表示可否）**は UI 間で共有する `Parts.CaptureSessionControl.UIBase` の `CapturePaintMapper`（`MarqueeAppearance` / `LoupeAppearance` を組み立ててコントロールのプロパティへ設定する）が担います。
 ただし、切り出しはプレビューの表示に合わせる必要があるため、次の項目は撮影専用です。
 
 | 項目 | 理由 |
@@ -234,13 +234,13 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `ZoomPercent` へ 0 以下を設定 | 無視する（Fit へは `ZoomFit()` を使う） |
 | `Source` が `null` で `HighlightSourceRect` を設定 | 何も描画しない（写像の基準が無いため。 例外にしない） |
 
-領域選択は本コントロールの対象外です。 領域選択は `FadeMaskDragRectControl` を重ねて構成します。
+領域選択は本コントロールの対象外です。 領域選択は `SelectionOverlayControl` を重ねて構成します。
 
-## 6. FadeMaskDragRectControl（領域選択）
+## 6. SelectionOverlayControl（領域選択）
 
 選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、配線と状態同期を内側で完結させる複合コントロールです（Facade / Composite パターン）。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。 動作モードとモードから描画設定への写像は UI 非依存コア（`Parts.CapturePreviewControl.Core`）が単一所有します。
 
-名前空間は `Parts.CapturePreviewControl.MewUI`、クラスは `FadeMaskDragRectControl`（`public sealed`、`Panel` 派生）です。
+名前空間は `Parts.CapturePreviewControl.MewUI`、クラスは `SelectionOverlayControl`（`public sealed`、`Panel` 派生）です。
 
 ### 6.1 動作モード
 
@@ -257,8 +257,8 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Mode` | `FadeMaskDragRectMode` | `AreaSelect` | 動作モード（可視性と全面暗転を一括切替） |
-| `Options` | `FadeMaskDragRectOptions`（コア） | `Default` | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 色は含まない）。 同じ値の再設定はスキップされる |
+| `Mode` | `SelectionOverlayMode` | `AreaSelect` | 動作モード（可視性と全面暗転を一括切替） |
+| `Options` | `SelectionOverlayOptions`（コア） | `Default` | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 色は含まない）。 同じ値の再設定はスキップされる |
 | `MarqueeAppearance` / `LoupeAppearance` | 提示層の外観 | 各 `Default` | 描画にだけ必要な外観の単一値（コアの設定値には含まれない）。 `MarqueeAppearance` の設定時はモードから導出する表示可否を上書きし直す |
 | `HasSelection` / `SelectionSourceRect` | `bool` / `EsRect` | `false` / 空矩形 | 選択矩形の有無と現在値（対象座標） |
 | `HighlightSourceRect` | `EsRect?` | `null` | ハイライト矩形（対象座標。 **null はハイライトなし**。 選択矩形より優先） |
@@ -269,7 +269,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包する選択コントロールとルーペへ伝搬する） |
 | `LogPrefix` | `string?` | `null` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値へ戻す） |
 
-`Options`（コアの `FadeMaskDragRectOptions`）の主な項目は、`MarqueeCore`（`MarqueeOptions`。 寸法・表示可否。 色は含まない）/ `LoupeCore`（`LoupeOptions`）/ `SelectionRectColorA` / `SelectionRectColorB`（ルーペ画像上の選択矩形破線の 2 色）/ `LoupeOffset`（中心からの右下オフセット。 DIP）です。
+`Options`（コアの `SelectionOverlayOptions`）の主な項目は、`MarqueeCore`（`MarqueeOptions`。 寸法・表示可否。 色は含まない）/ `LoupeCore`（`LoupeOptions`）/ `SelectionRectColorA` / `SelectionRectColorB`（ルーペ画像上の選択矩形破線の 2 色）/ `LoupeOffset`（中心からの右下オフセット。 DIP）です。
 
 ### 6.3 メソッド
 
@@ -280,16 +280,16 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe()` | ルーペの制御 |
 | `RequestConfirm()` / `RequestCancel()` | 確定要求・キャンセル要求（Enter / Escape 相当） |
 | `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
-| `RefreshOverlay()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する |
-| `InvalidateOverlay()` | 暗転マスクの再描画を要求する |
+| `NotifyViewportChanged()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する |
+| `RequestRedraw()` | 暗転マスクの再描画を要求する |
 
 ### 6.4 イベント
 
 | イベント | 引数 | 発火条件 |
 | --- | --- | --- |
-| `ConfirmRequested` | `FadeMaskDragRectSelectionEventArgs` | 矩形内ダブルクリック・Enter・`RequestConfirm`（選択確定後のみ） |
+| `ConfirmRequested` | `SelectionConfirmedEventArgs` | 矩形内ダブルクリック・Enter・`RequestConfirm`（選択確定後のみ） |
 | `CancelRequested` | `EventArgs` | 矩形外ダブルクリック・Escape・`RequestCancel` |
-| `LoupePositionMoved` | `FadeMaskDragRectPointEventArgs` | ルーペ中心の更新（対象座標） |
+| `LoupePositionMoved` | `LoupePositionEventArgs` | ルーペ中心の更新（対象座標） |
 
 座標はすべて対象座標です。
 
@@ -309,7 +309,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | Enter / Escape | 確定・キャンセル要求を発火する |
 | マウス移動 | ルーペ中心を更新し、表示位置を再計算する |
 
-ホイール操作（ズーム・パン）と表示の変化の追従は本コントロールの配線ではありません（コントロール化を前提とした処理）。 ホイールはホストが `MouseWheel` を購読してビューポートへ転送し、表示の変化はホストが検知して `RefreshOverlay()` を呼びます。
+ホイール操作（ズーム・パン）と表示の変化の追従は本コントロールの配線ではありません（コントロール化を前提とした処理）。 ホイールはホストが `MouseWheel` を購読してビューポートへ転送し、表示の変化はホストが検知して `NotifyViewportChanged()` を呼びます。
 
 ### 6.6 エラー時の挙動
 

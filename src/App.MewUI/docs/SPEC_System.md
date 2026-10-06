@@ -309,17 +309,17 @@ classDiagram
     CaptureSessionControl ..> CropSession : 切り出しセッション
     CaptureSessionControl ..> CaptureOverlay : 撮影セッション
     CaptureSessionControl ..> CaptureSessionSlot : 排他の受付
-    CropSession ..> FadeMaskDragRectControl : 配置（Crop）
+    CropSession ..> SelectionOverlayControl : 配置（Crop）
     CropSession ..> ICaptureTarget : 切り出しの適用
     MainViewModelCaptureTarget ..> MainViewModel : CropPreviewCommand
     MainViewModelCaptureTarget ..> ICaptureTarget : 実装
-    CropSession ..> FadeMaskDragRectControl : 設定の変換（コアの FadeMaskDragRectOptionsMapper）
+    CropSession ..> SelectionOverlayControl : 設定の変換（コアの SelectionOverlayOptionsMapper）
     CapturePage ..> LoupeOptions : ルーペの設定（プレビューの常時表示）
     Program ..> SettingsJsonContext : 設定のソース生成
     SettingsService ..> SettingsJsonContext : 型情報の取得
     CaptureFlow ..> CaptureSessionControl : 撮影の実行
     CaptureOverlay ..> SkiaImageView : 下敷きの画像
-    CaptureOverlay ..> FadeMaskDragRectControl : 配置（Area / Screen / Window）
+    CaptureOverlay ..> SelectionOverlayControl : 配置（Area / Screen / Window）
     CaptureOverlay ..> IElementFinder : 要素の検出
     CaptureOverlay ..> ICaptureService : 画面の取得
     SettingsPage ..> SettingsColorMath : 色の変換
@@ -406,7 +406,7 @@ sequenceDiagram
     participant PS as CaptureSessionControl
     participant CS as CropSession
     participant CV as CropViewControl
-    participant FM as FadeMaskDragRectControl
+    participant FM as SelectionOverlayControl
     participant VM as MainViewModel
 
     BTN->>PS: ToggleCrop()（未開始なら開始）
@@ -490,7 +490,7 @@ sequenceDiagram
     participant OS as MewUI（マウス入力）
     participant CP as CapturePage
     participant CS as CaptureSessionControl（Parts）
-    participant FM as FadeMaskDragRectControl（Parts 複合コントロール）
+    participant FM as SelectionOverlayControl（Parts 複合コントロール）
     participant LP as LoupeCore.ResolveLayout（コア）
     participant LV as LoupeControl（Parts）
 

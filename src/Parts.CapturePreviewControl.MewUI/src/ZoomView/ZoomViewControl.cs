@@ -10,7 +10,7 @@ using EsUtil.SaveEvidence.Platform.Skia;
 using Microsoft.Extensions.Logging;
 using SkiaSharp;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
@@ -610,3 +610,4 @@ public sealed class ZoomViewControl : SkiaCanvasView
     private static SKRect ToSKRect(EsRect rect)
         => new((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
 }
+

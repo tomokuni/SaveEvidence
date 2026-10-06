@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 
@@ -24,7 +24,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 /// - <see cref="RectOverlayCanvas"/>: ホストから渡された <see cref="Rects"/> をビューポート座標へ変換して描画する透明オーバーレイ。<br/>
 /// - 強調オーバーレイ: ホストから渡された <see cref="HighlightSourceRect"/>（対象座標）を強調表示する（描画のみ・入力なし）。<br/>
 /// <br/>
-/// <b>領域選択オーバーレイ</b>: 本コントロールは含まない。 ホストが <c>FadeMaskDragRectControl.MewUI</c> を重ねて構成する<br/>
+/// <b>領域選択オーバーレイ</b>: 本コントロールは含まない。 ホストが <c>SelectionOverlayControl.MewUI</c> を重ねて構成する<br/>
 /// （ドラッグ選択・暗転マスク・ルーペ。 `App.MewUI` の切り出しはこの構成）。
 /// </remarks>
 public sealed class CropViewControl : Grid
@@ -374,3 +374,4 @@ public sealed class CropViewControl : Grid
     /// <summary>強調オーバーレイ（テスト用アクセサ。 強調矩形の写像と外観の反映を検証する）。</summary>
     internal MarqueeControl HighlightMarquee => _highlight;
 }
+

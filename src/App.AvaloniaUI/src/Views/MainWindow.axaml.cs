@@ -19,7 +19,7 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views;
 

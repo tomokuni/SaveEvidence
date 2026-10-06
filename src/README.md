@@ -87,10 +87,10 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | `ZoomViewControl` | あり（`Parts.CapturePreviewControl.Core`） | なし（UI 層が描く） | `CapturePreviewControl.*` に収録 |
 | `CropViewControl` | あり（`Parts.CapturePreviewControl.Core`） | なし | AvaloniaUI / MewUI |
 | `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。 描画手順は持たない） | AvaloniaUI / MewUI |
-| `FadeMaskDragRectControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。 内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI |
+| `SelectionOverlayControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。 内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI |
 | `ColorPickerControl` | なし（UI のみ） | なし | AvaloniaUI |
 
-`CropViewControl` と `FadeMaskDragRectControl` は `Parts.CapturePreviewControl.AvaloniaUI` / `Parts.CapturePreviewControl.MewUI` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。 `ZoomViewControl` も同じアセンブリに収録され、`CropViewControl` が内包する画像ビューポートです（ZoomView の UI 層も独立したプロジェクトではありません。 ズーム・パンの状態と判断は UI 非依存コアの `Parts.CapturePreviewControl.Core` が単一所有します）。
+`CropViewControl` と `SelectionOverlayControl` は `Parts.CapturePreviewControl.AvaloniaUI` / `Parts.CapturePreviewControl.MewUI` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。 `ZoomViewControl` も同じアセンブリに収録され、`CropViewControl` が内包する画像ビューポートです（ZoomView の UI 層も独立したプロジェクトではありません。 ズーム・パンの状態と判断は UI 非依存コアの `Parts.CapturePreviewControl.Core` が単一所有します）。
 
 **コントロール化を前提とした処理は UI が持ちます**: ホイール操作（どの入力がズーム・パンかを決める）・ビューポートの変化の追従・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるためです。
 `LoupeControl` の中間ビットマップの再描画スケジューリング（`LoupeRenderCoordinator`。 Avalonia 版が所有する）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。 同じ必要が生じた時点で実装できます。
@@ -105,12 +105,12 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | --- | --- | --- |
 | Marquee | [`EsUtil.Feature.Marquee.Core`](EsUtil.Feature.Marquee.Core/README.md) | [`EsUtil.Feature.Marquee.Presenter`](EsUtil.Feature.Marquee.Presenter/README.md) |
 | Loupe | [`EsUtil.Feature.Loupe.Core`](EsUtil.Feature.Loupe.Core/README.md) | [`EsUtil.Feature.Loupe.Presenter`](EsUtil.Feature.Loupe.Presenter/README.md) |
-| CaptureSession | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | [`Parts.CaptureSessionControl.UIBase`](Parts.CaptureSessionControl.UIBase/README.md) |
+| CaptureOverlaySession | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | [`Parts.CaptureSessionControl.UIBase`](Parts.CaptureSessionControl.UIBase/README.md) |
 | CropView | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | なし |
 | ZoomView | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | なし（UI 層が描く。 `CropViewControl` が内包） |
-| FadeMaskDragRect | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | [`Parts.CaptureSessionControl.UIBase`](Parts.CaptureSessionControl.UIBase/README.md) |
+| SelectionOverlay | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | [`Parts.CaptureSessionControl.UIBase`](Parts.CaptureSessionControl.UIBase/README.md) |
 
-FadeMaskDragRect は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`EsUtil.Feature.Marquee.Presenter`](EsUtil.Feature.Marquee.Presenter/README.md) / [`EsUtil.Feature.Loupe.Presenter`](EsUtil.Feature.Loupe.Presenter/README.md)）。
+SelectionOverlay は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`EsUtil.Feature.Marquee.Presenter`](EsUtil.Feature.Marquee.Presenter/README.md) / [`EsUtil.Feature.Loupe.Presenter`](EsUtil.Feature.Loupe.Presenter/README.md)）。
 
 UI 層は [`EsUtil.Feature.Marquee.ControlAvaloniaUI`](EsUtil.Feature.Marquee.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Marquee.ControlMewUI`](EsUtil.Feature.Marquee.ControlMewUI/README.md) / [`EsUtil.Feature.Loupe.ControlAvaloniaUI`](EsUtil.Feature.Loupe.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Loupe.ControlMewUI`](EsUtil.Feature.Loupe.ControlMewUI/README.md)、
 プラットフォーム層は [`EsUtil.Platform.Core`](EsUtil.Platform.Core/README.md) / [`Platform.Skia`](Platform.Skia/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) を参照してください。

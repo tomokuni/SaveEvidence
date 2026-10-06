@@ -16,7 +16,7 @@
 
 `Parts.CapturePreviewControl.AvaloniaUI/sample/` にある **Parts.CapturePreviewControl.AvaloniaUI 動作確認用の独立したサンプルアプリケーション**です。
 
-- `CaptureSessionControl`（`EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Capture.CaptureSessionControl`）を実際に利用して、画面キャプチャと切出し（Crop）の動作を確認できます。
+- `CaptureSessionControl`（`EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session.CaptureSessionControl`）を実際に利用して、画面キャプチャと切出し（Crop）の動作を確認できます。
 - **全画面キャプチャ**（`ScreenSelect`）: カーソル位置のスクリーンをハイライトしてクリックで確定
 - **ウィンドウ選択キャプチャ**（`WindowSelect`）: カーソル位置の最前面ウィンドウをハイライトしてクリックで確定
 - **範囲選択キャプチャ**（`AreaSelect`）: ドラッグで範囲選択（ルーペ付き）してクリックで確定

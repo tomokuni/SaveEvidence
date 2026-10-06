@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core;
 using Xunit;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.FadeMaskDragRect;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Capture;
@@ -20,18 +20,18 @@ public class CaptureLabelTextsTests
     /// <param name="captureType">キャプチャ種別。</param>
     /// <param name="expected">期待する動作モード。</param>
     [Theory]
-    [InlineData(CaptureType.ScreenSelect, FadeMaskDragRectMode.ScreenSelect)]
-    [InlineData(CaptureType.WindowSelect, FadeMaskDragRectMode.WindowSelect)]
-    [InlineData(CaptureType.AreaSelect, FadeMaskDragRectMode.AreaSelect)]
+    [InlineData(CaptureType.ScreenSelect, SelectionOverlayMode.ScreenSelect)]
+    [InlineData(CaptureType.WindowSelect, SelectionOverlayMode.WindowSelect)]
+    [InlineData(CaptureType.AreaSelect, SelectionOverlayMode.AreaSelect)]
     internal void ToSelectionMode_キャプチャ種別に対応するモードを返す(
-        CaptureType captureType, FadeMaskDragRectMode expected)
+        CaptureType captureType, SelectionOverlayMode expected)
         => Assert.Equal(expected, CaptureLabelTexts.ToSelectionMode(captureType));
 
     /// <summary>未定義の種別は範囲選択として扱うことを検証する。</summary>
     [Fact]
     internal void ToSelectionMode_未定義の種別は範囲選択として扱う()
         => Assert.Equal(
-            FadeMaskDragRectMode.AreaSelect, CaptureLabelTexts.ToSelectionMode((CaptureType)999));
+            SelectionOverlayMode.AreaSelect, CaptureLabelTexts.ToSelectionMode((CaptureType)999));
 
     // ====================================================================
     // 操作ラベル
@@ -43,10 +43,10 @@ public class CaptureLabelTextsTests
     {
         Assert.Equal(
             "Enter / クリック: 確定  Esc: キャンセル",
-            CaptureLabelTexts.GetOperationText(FadeMaskDragRectMode.ScreenSelect));
+            CaptureLabelTexts.GetOperationText(SelectionOverlayMode.ScreenSelect));
         Assert.Equal(
             "Enter / クリック: 確定  Esc: キャンセル",
-            CaptureLabelTexts.GetOperationText(FadeMaskDragRectMode.WindowSelect));
+            CaptureLabelTexts.GetOperationText(SelectionOverlayMode.WindowSelect));
     }
 
     /// <summary>範囲選択・切出しはダブルクリック系の操作ラベルを返すことを検証する。</summary>
@@ -55,10 +55,10 @@ public class CaptureLabelTextsTests
     {
         Assert.Equal(
             "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル",
-            CaptureLabelTexts.GetOperationText(FadeMaskDragRectMode.AreaSelect));
+            CaptureLabelTexts.GetOperationText(SelectionOverlayMode.AreaSelect));
         Assert.Equal(
             "ダブルクリック: 確定  Esc / 矩形外クリック: キャンセル",
-            CaptureLabelTexts.GetOperationText(FadeMaskDragRectMode.Crop));
+            CaptureLabelTexts.GetOperationText(SelectionOverlayMode.Crop));
     }
 
     // ====================================================================
@@ -69,15 +69,15 @@ public class CaptureLabelTextsTests
     [Fact]
     internal void GetInfoText_WindowSelectはウィンドウタイトルを返す()
         => Assert.Equal(
-            "メモ帳", CaptureLabelTexts.GetInfoText(FadeMaskDragRectMode.WindowSelect, "メモ帳"));
+            "メモ帳", CaptureLabelTexts.GetInfoText(SelectionOverlayMode.WindowSelect, "メモ帳"));
 
     /// <summary>ウィンドウ選択以外では情報ラベルを返さないことを検証する。</summary>
     /// <param name="mode">動作モード。</param>
     [Theory]
-    [InlineData(FadeMaskDragRectMode.Crop)]
-    [InlineData(FadeMaskDragRectMode.AreaSelect)]
-    [InlineData(FadeMaskDragRectMode.ScreenSelect)]
-    internal void GetInfoText_WindowSelect以外はnullを返す(FadeMaskDragRectMode mode)
+    [InlineData(SelectionOverlayMode.Crop)]
+    [InlineData(SelectionOverlayMode.AreaSelect)]
+    [InlineData(SelectionOverlayMode.ScreenSelect)]
+    internal void GetInfoText_WindowSelect以外はnullを返す(SelectionOverlayMode mode)
         => Assert.Null(CaptureLabelTexts.GetInfoText(mode, "メモ帳"));
 
 }

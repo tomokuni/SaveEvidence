@@ -1,7 +1,7 @@
 using EsUtil.Feature.Marquee;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 
 namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase.Tests;
 
@@ -148,3 +148,4 @@ public class CapturePaintMapperTests
         Assert.Throws<ArgumentNullException>(() => CapturePaintMapper.ToLoupeAppearance(null!));
     }
 }
+

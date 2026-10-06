@@ -1,22 +1,22 @@
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 
 namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
 
 /// <summary>キャプチャ設定（<see cref="CaptureSettings"/>）から描画の設定（色）を組み立てる。</summary>
 /// <remarks>
 /// <b>なぜ本層が持つか</b>: 色は描画にだけ必要な設定であり、描画の設定（<c>MarqueePaint</c> / <c>LoupeAppearance</c>）が<br/>
-/// 単一所有する。 コアの設定マッパー（<c>FadeMaskDragRectOptionsMapper</c>）は <c>CaptureSessionControl.Core</c> にあり<br/>
+/// 単一所有する。 コアの設定マッパー（<c>SelectionOverlayOptionsMapper</c>）は <c>CaptureSessionControl.Core</c> にあり<br/>
 /// 描画の設定を参照できない（Core → UIBase の逆流になる）ため、色の写像は本層が担う。<br/>
 /// <br/>
 /// <b>なぜセッション側の共有層か</b>: 写像元がセッションの設定型（<see cref="CaptureSettings"/>）であるため、<br/>
-/// 再利用ライブラリ（<c>FadeMaskDragRectControl.UIBase</c>）に置くと後者が製品の設定型へ依存する。<br/>
+/// 再利用ライブラリ（<c>SelectionOverlayControl.UIBase</c>）に置くと後者が製品の設定型へ依存する。<br/>
 /// 本層はセッションの設定と両 UI の中間にあり、両 UI のホストが同じ写像を共有できる。<br/>
 /// <br/>
-/// <b>寸法・表示可否は写像しない</b>: それらはコアの設定値（<c>FadeMaskDragRectOptions</c>）が持ち、<br/>
-/// <c>FadeMaskDragRectOptionsMapper</c>（コア）が単一所有する（本層は色だけを扱う）。
+/// <b>寸法・表示可否は写像しない</b>: それらはコアの設定値（<c>SelectionOverlayOptions</c>）が持ち、<br/>
+/// <c>SelectionOverlayOptionsMapper</c>（コア）が単一所有する（本層は色だけを扱う）。
 /// </remarks>
 internal static class CapturePaintMapper
 {
@@ -83,3 +83,4 @@ internal static class CapturePaintMapper
         };
     }
 }
+

@@ -31,17 +31,17 @@
   - [7.15 CropSessionActions](#715-cropsessionactions)
   - [7.16 CaptureTiming](#716-capturetiming)
   - [7.17 CropBoundsMath.RoundToPixel](#717-cropboundsmathroundtopixel)
-  - [7.18 FadeMaskDragRectOptionsMapper](#718-fademaskdragrectoptionsmapper)
+  - [7.18 SelectionOverlayOptionsMapper](#718-selectionoverlayoptionsmapper)
   - [7.19 CaptureText](#719-capturetext)
 - [8. 矩形オーバーレイ（`OverlayRect` 系）](#8-矩形オーバーレイoverlayrect-系)
   - [8.1 `OverlayRect`（record struct）](#81-overlayrectrecord-struct)
   - [8.2 `OverlayRectLayout`（描画入力の解決）](#82-overlayrectlayout描画入力の解決)
   - [8.3 `OverlayRectFrame`（描画入力）](#83-overlayrectframe描画入力)
   - [8.4 `OverlayLineStyle`（列挙型）](#84-overlaylinestyle列挙型)
-- [9. 領域選択の複合コントロール（`FadeMaskDragRect` 系）](#9-領域選択の複合コントロールfademaskdragrect-系)
-  - [9.1 `FadeMaskDragRectMode`（列挙型）](#91-fademaskdragrectmode列挙型)
-  - [9.2 `FadeMaskDragRectOptions`（設定の単一値）](#92-fademaskdragrectoptions設定の単一値)
-  - [9.3 `FadeMaskDragRectLabelOptions`（付加情報ラベルの外観）](#93-fademaskdragrectlabeloptions付加情報ラベルの外観)
+- [9. 領域選択の複合コントロール（`SelectionOverlay` 系）](#9-領域選択の複合コントロールselectionoverlay-系)
+  - [9.1 `SelectionOverlayMode`（列挙型）](#91-selectionoverlaymode列挙型)
+  - [9.2 `SelectionOverlayOptions`（設定の単一値）](#92-selectionoverlayoptions設定の単一値)
+  - [9.3 `SelectionOverlayLabelOptions`（付加情報ラベルの外観）](#93-selectionoverlaylabeloptions付加情報ラベルの外観)
 - [10. 切り出しビューの画像ビューポート（`ZoomView` 系）](#10-切り出しビューの画像ビューポートzoomview-系)
   - [10.1 `ZoomViewSession`（状態と判断）](#101-zoomviewsession状態と判断)
   - [10.2 `ZoomOptions`（設定値）](#102-zoomoptions設定値)
@@ -91,9 +91,9 @@
 | `OverlayLineStyle` | 列挙型 | 枠線スタイル（実線 / 破線 / 点線） |
 | `OverlayRectLayout` | 静的クラス | 矩形情報 → 描画入力（`OverlayRectFrame`）の解決（負サイズのクランプ・太さの下限・破線の判定） |
 | `OverlayRectFrame` | record struct | 矩形 1 個分の描画入力（配置・太さ・半幅・破線の判定と長さ・色・描画可否） |
-| `FadeMaskDragRectMode` | 列挙型 | 領域選択の複合コントロールの動作モード（切り出し / 範囲選択 / スクリーン選択 / ウィンドウ選択） |
-| `FadeMaskDragRectOptions` | record | 複合コントロールの設定の単一値（`MarqueeCore` / `Labels` / `LoupeCore` / 破線の色 2 / ルーペオフセット） |
-| `FadeMaskDragRectLabelOptions` | record | 付加情報ラベル（操作・情報）の外観（表示可否・寸法・色）。 文言の生成と描画はホストが行う |
+| `SelectionOverlayMode` | 列挙型 | 領域選択の複合コントロールの動作モード（切り出し / 範囲選択 / スクリーン選択 / ウィンドウ選択） |
+| `SelectionOverlayOptions` | record | 複合コントロールの設定の単一値（`MarqueeCore` / `Labels` / `LoupeCore` / 破線の色 2 / ルーペオフセット） |
+| `SelectionOverlayLabelOptions` | record | 付加情報ラベル（操作・情報）の外観（表示可否・寸法・色）。 文言の生成と描画はホストが行う |
 | `ZoomViewSession` | クラス | 切り出しビューの画像ビューポートの状態（ズーム・オフセット・設定・表示条件）を保持し、入力の解釈と判断を単一所有する |
 | `ZoomOptions` | クラス | ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をまとめた検証付き不変値 |
 | `ZoomState` | record struct | 通知する 4 値（実効ズーム率・Fit 状態・ズーム可否） |
@@ -130,9 +130,9 @@
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `ToSelectionMode` | `FadeMaskDragRectMode ToSelectionMode(CaptureType captureType)` | キャプチャ種別（全画面 / ウィンドウ / 範囲）→ 動作モード。 未定義の種別は範囲選択として扱う（切出しは対象外） |
-| `GetOperationText` | `string GetOperationText(FadeMaskDragRectMode mode)` | 操作ラベル（確定・キャンセル方法）。 スクリーン選択・ウィンドウ選択は Enter 系、範囲選択・切出しはダブルクリック系（常に非空） |
-| `GetInfoText` | `string? GetInfoText(FadeMaskDragRectMode mode, string? windowTitle)` | 情報ラベルの文言。 ウィンドウ選択のみウィンドウタイトルを返し、他モードは null（描画しない） |
+| `ToSelectionMode` | `SelectionOverlayMode ToSelectionMode(CaptureType captureType)` | キャプチャ種別（全画面 / ウィンドウ / 範囲）→ 動作モード。 未定義の種別は範囲選択として扱う（切出しは対象外） |
+| `GetOperationText` | `string GetOperationText(SelectionOverlayMode mode)` | 操作ラベル（確定・キャンセル方法）。 スクリーン選択・ウィンドウ選択は Enter 系、範囲選択・切出しはダブルクリック系（常に非空） |
+| `GetInfoText` | `string? GetInfoText(SelectionOverlayMode mode, string? windowTitle)` | 情報ラベルの文言。 ウィンドウ選択のみウィンドウタイトルを返し、他モードは null（描画しない） |
 | `ResolveSizeLabel` | `string? ResolveSizeLabel(EsRect? target, string? overrideText, Func<EsRect, double> displayScaling)` | サイズラベルの文言。 **確定対象があれば矩形から生成し、無ければホスト指定の文言**を返す（表示倍率のデリゲートは描画時のみ評価する） |
 
 ### 3.1 規則
@@ -425,11 +425,11 @@ UI が発明してはいけない運用方針値を単一所有します。
 
 同じ丸めを UI が `(int)` 切り捨てや既定の `Math.Round` で書くと、同じ座標が UI ごとに 1 ピクセルずれるため公開します。
 
-### 7.18 FadeMaskDragRectOptionsMapper
+### 7.18 SelectionOverlayOptionsMapper
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `ToFadeMaskDragRectOptions` | `FadeMaskDragRectOptions ToFadeMaskDragRectOptions(this CaptureSettings settings)` | 設定（全メンバー non-null）から複合コントロールの設定（**寸法・表示可否**）を組み立てる。 **色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる） |
+| `ToSelectionOverlayOptions` | `SelectionOverlayOptions ToSelectionOverlayOptions(this CaptureSettings settings)` | 設定（全メンバー non-null）から複合コントロールの設定（**寸法・表示可否**）を組み立てる。 **色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる） |
 
 ### 7.19 CaptureText
 
@@ -489,11 +489,11 @@ public readonly record struct OverlayRect(
 | `Dashed` | 破線（長いダッシュ。 ダッシュ長 8 / 間隔 4） |
 | `Dotted` | 点線（短いダッシュ。 ダッシュ長 2 / 間隔 2） |
 
-## 9. 領域選択の複合コントロール（`FadeMaskDragRect` 系）
+## 9. 領域選択の複合コントロール（`SelectionOverlay` 系）
 
 領域選択の複合コントロール（Avalonia 版 / MewUI 版）が共有する型と設定を提供します。 **動作モードの型・設定の単一値・モードから導出する表示可否・選択矩形の可否判定・ルーペ画像への破線描画**を単一所有します。
 
-### 9.1 `FadeMaskDragRectMode`（列挙型）
+### 9.1 `SelectionOverlayMode`（列挙型）
 
 | メンバー | 内容 |
 | --- | --- |
@@ -504,23 +504,23 @@ public readonly record struct OverlayRect(
 
 `Crop` / `AreaSelect` は選択矩形を使うモード、`ScreenSelect` / `WindowSelect` は使わないモードです。 この区別は本プロジェクトのモード解釈が単一所有し、UI 実装は `switch` を持ちません。
 
-### 9.2 `FadeMaskDragRectOptions`（設定の単一値）
+### 9.2 `SelectionOverlayOptions`（設定の単一値）
 
 | メンバー | 型 | 既定値 | 内容 |
 | --- | --- | --- | --- |
 | `MarqueeCore` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の設定（選択の判断に使う項目のみ。 色は含まない） |
-| `Labels` | `FadeMaskDragRectLabelOptions` | 既定値 | ホストが描く操作・情報ラベルの外観 |
+| `Labels` | `SelectionOverlayLabelOptions` | 既定値 | ホストが描く操作・情報ラベルの外観 |
 | `LoupeCore` | `LoupeOptions` | `LoupeOptions.Default` | ルーペの設定（拡大率・表示サイズ・寸法） |
 | `SelectionRectColorA` | `System.Drawing.Color` | 白 | ルーペ画像上の選択矩形破線の色 A（描画開始色） |
 | `SelectionRectColorB` | `System.Drawing.Color` | 黒 | 同 色 B（色 A と交互に使用する） |
 | `LoupeOffset` | `double` | `20.0` | ルーペのカーソル中心からの右下オフセット（DIP） |
-| `Default`（static） | `FadeMaskDragRectOptions` | — | 部分変更の基点（`Default with { ... }`） |
+| `Default`（static） | `SelectionOverlayOptions` | — | 部分変更の基点（`Default with { ... }`） |
 
 **色は描画にだけ必要な設定のため本値に含みません**（提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有する）。 例外はルーペ画像へ直接書き込む破線の色（`SelectionRectColorA` / `SelectionRectColorB`）で、これは描画 API ではなくピクセル書き込みに使うため本値が持ちます。
 
 **実行時状態**（選択矩形・ハイライト矩形・ルーペ中心・拡大元画像）と**環境値**（DPI スケーリング）は本値に含みません。
 
-### 9.3 `FadeMaskDragRectLabelOptions`（付加情報ラベルの外観）
+### 9.3 `SelectionOverlayLabelOptions`（付加情報ラベルの外観）
 
 | メンバー | 型 | 既定値 | 内容 |
 | --- | --- | --- | --- |
@@ -532,7 +532,7 @@ public readonly record struct OverlayRect(
 | `InfoFontSize` | `double` | `14.0` | 情報ラベルのフォントサイズ（DIP） |
 | `InfoColor` | `System.Drawing.Color` | 白 | 情報ラベルの文字色 |
 | `InfoBackgroundColor` | `System.Drawing.Color` | `#99000000` | 情報ラベルの背景色（黒 60%） |
-| `Default`（static） | `FadeMaskDragRectLabelOptions` | — | 部分変更の基点 |
+| `Default`（static） | `SelectionOverlayLabelOptions` | — | 部分変更の基点 |
 
 **表示可否は 2 つの条件がともに成立したときだけ真**です。 本値のスイッチに加え、ホストが返す文言が空でないことが必要です（対象外のモードでは文言が空になるため、スイッチだけでは判定できません）。
 

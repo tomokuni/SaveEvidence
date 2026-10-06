@@ -1,8 +1,8 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 
@@ -725,3 +725,4 @@ public sealed class ZoomViewSession(ZoomOptions? config = null)
     private void RaiseViewportChanged()
         => _notified.Raise(new ZoomNotice(ZoomNoticeKind.ViewportChanged, CurrentState, ImageRect));
 }
+

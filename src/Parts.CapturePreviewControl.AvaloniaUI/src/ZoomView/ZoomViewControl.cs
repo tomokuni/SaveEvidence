@@ -6,7 +6,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 
@@ -265,3 +265,4 @@ public sealed class ZoomViewControl : Panel
         }
     }
 }
+

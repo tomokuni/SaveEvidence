@@ -31,7 +31,7 @@
 | --- | --- |
 | 目的 | `EsUtil.Platform.Core` の判定基準（外部パッケージなし）を守るため、Skia 依存を本層へ隔離する |
 | 提供形態 | クラスライブラリ（`EsUtil.SaveEvidence.Platform.Skia.dll`）。 SkiaSharp を参照する唯一のプロジェクト |
-| 想定利用者 | `Platform.MewUI`、MewUI 系の各コントロール（Marquee / Loupe / FadeMaskDragRect / ZoomView）、`App.MewUI`、テスト |
+| 想定利用者 | `Platform.MewUI`、MewUI 系の各コントロール（Marquee / Loupe / SelectionOverlay / ZoomView）、`App.MewUI`、テスト |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効・`AllowUnsafeBlocks` 有効＝ピクセルポインタのため） |
 | ルート名前空間 | `EsUtil.SaveEvidence.Platform.Skia` |

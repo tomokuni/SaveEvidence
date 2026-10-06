@@ -16,10 +16,10 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.FadeMaskDragRect;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.FadeMaskDragRect;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 
@@ -27,24 +27,24 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 /// 画像表示（拡大・パン・Fit）と領域選択（ドラッグ・暗転・ルーペ）を統合した高レベル複合コントロール。
 /// </summary>
 /// <remarks>
-/// <b>適用パターン</b>: Facade / Composite（<see cref="ZoomViewControl"/> と <see cref="FadeMaskDragRectControl"/> を内包し、
+/// <b>適用パターン</b>: Facade / Composite（<see cref="ZoomViewControl"/> と <see cref="SelectionOverlayControl"/> を内包し、
 /// ホストへ統一インターフェースを提供）。<br/>
 /// <br/>
 /// <b>内部構造</b>:<br/>
 /// - <see cref="ZoomViewControl"/>: 画像ビューポート（拡大・パン・Fit・原寸）。<br/>
-/// - <see cref="FadeMaskDragRectControl"/>: 領域選択オーバーレイ（ドラッグ選択・暗転マスク・ルーペ）。<br/>
+/// - <see cref="SelectionOverlayControl"/>: 領域選択オーバーレイ（ドラッグ選択・暗転マスク・ルーペ）。<br/>
 /// - 矩形オーバーレイ: ホストから渡された <see cref="OverlayRect"/> をビューポート座標へ変換して表示する。<br/>
 /// - 強調オーバーレイ: ホストから渡された <see cref="HighlightSourceRect"/>（対象座標）を強調表示する（描画のみ・入力なし）。<br/>
 /// <br/>
 /// <b>責務分離</b>:<br/>
 /// - 画像表示（ズーム・パン）は <see cref="ZoomViewControl"/> が担う（ズーム率管理は本コントロール）。<br/>
-/// - 領域選択（ドラッグ・暗転・ルーペ）は <see cref="FadeMaskDragRectControl"/> が担う。<br/>
+/// - 領域選択（ドラッグ・暗転・ルーペ）は <see cref="SelectionOverlayControl"/> が担う。<br/>
 /// - 外部提供矩形（<see cref="Rects"/>）と強調（<see cref="HighlightSourceRect"/>）の描画は本コントロールが担う。<br/>
 /// <br/>
 /// <b>ライフサイクル</b>:<br/>
 /// - 画像（<see cref="Source"/>）はホストが設定する。<br/>
 /// - ズーム操作（<see cref="ZoomIn"/> / <see cref="ZoomOut"/> / Fit）は本コントロールが提供する。<br/>
-/// - 選択状態の外部設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）は <see cref="FadeMaskDragRectControl"/> へ委譲する。
+/// - 選択状態の外部設定（<see cref="SetSelection"/> / <see cref="ClearSelection"/>）は <see cref="SelectionOverlayControl"/> へ委譲する。
 /// </remarks>
 public sealed partial class CropViewControl : Panel
 {
@@ -53,7 +53,7 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>領域選択オーバーレイ（ドラッグ選択・暗転マスク・ルーペ）。</summary>
     /// <remarks>画像がない間は <see cref="Source"/> に応じてヒットテストを切るとともに非表示にする（画像なしでの選択矩形作成と全面暗転を防止）。</remarks>
-    private readonly FadeMaskDragRectControl _selectionOverlay = new() { ZIndex = 10, IsHitTestVisible = false, IsVisible = false };
+    private readonly SelectionOverlayControl _selectionOverlay = new() { ZIndex = 10, IsHitTestVisible = false, IsVisible = false };
 
     /// <summary>内部ロガー（ズームビューポートへ伝搬）。 null の場合は <see cref="Microsoft.Extensions.Logging.Abstractions.NullLogger"/>。</summary>
     /// <remarks><see cref="ZoomViewControl.Log"/> へ委譲する（ズーム操作・座標変換の詳細ログをホストのログ基盤へ転送）。</remarks>
@@ -94,7 +94,7 @@ public sealed partial class CropViewControl : Panel
     /// <see cref="CropViewControl"/> の新しいインスタンスを初期化する。
     /// </summary>
     /// <remarks>
-    /// 子コントロール（<see cref="ZoomViewControl"/> / <see cref="FadeMaskDragRectControl"/> / 矩形オーバーレイ / 強調オーバーレイ）を生成して配置し、<br/>
+    /// 子コントロール（<see cref="ZoomViewControl"/> / <see cref="SelectionOverlayControl"/> / 矩形オーバーレイ / 強調オーバーレイ）を生成して配置し、<br/>
     /// ビューポート変化（パン・ズーム）を配線する。<br/>
     /// ズーム要求（Ctrl+ホイール）・ズーム率の遷移は <see cref="ZoomViewControl"/> が自己完結する。<br/>
     /// 領域選択オーバーレイ上のホイールは本コントロールがビューポートへ転送する（Crop 中もパン・ズームを有効にする）。
@@ -112,7 +112,7 @@ public sealed partial class CropViewControl : Panel
         // ビューポート変化（パン・ズーム）を領域選択オーバーレイと矩形オーバーレイへ中継する
         _zoomView.ViewportChanged += (_, _) =>
         {
-            _selectionOverlay.RefreshOverlay();
+            _selectionOverlay.NotifyViewportChanged();
             UpdateRectOverlay();
             UpdateHighlight();
         };
@@ -127,7 +127,7 @@ public sealed partial class CropViewControl : Panel
         _selectionOverlay.LoupeRendered += OnLoupeRendered;
 
         // 既定は Crop（プレビュー内の切出し）。 ホストが SelectionMode で変更できる
-        _selectionOverlay.Mode = FadeMaskDragRectMode.Crop;
+        _selectionOverlay.Mode = SelectionOverlayMode.Crop;
     }
 
     /// <summary>領域選択オーバーレイのホイールをビューポート（ズーム・パン）へ転送する。</summary>
@@ -166,25 +166,25 @@ public sealed partial class CropViewControl : Panel
     // 公開 API: 選択モード
     // ====================================================================
 
-    /// <summary>選択モード（既定は <see cref="FadeMaskDragRectMode.Crop"/>）。</summary>
+    /// <summary>選択モード（既定は <see cref="SelectionOverlayMode.Crop"/>）。</summary>
     /// <remarks>
-    /// <see cref="FadeMaskDragRectControl.Mode"/> へ委譲する（内包コントロールの有効・無効と描画モードを一括切替）。
+    /// <see cref="SelectionOverlayControl.Mode"/> へ委譲する（内包コントロールの有効・無効と描画モードを一括切替）。
     /// </remarks>
-    public FadeMaskDragRectMode SelectionMode
+    public SelectionOverlayMode SelectionMode
     {
         get => _selectionOverlay.Mode;
         set => _selectionOverlay.Mode = value;
     }
 
-    /// <summary>領域選択オーバーレイの設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）。<see cref="FadeMaskDragRectControl.Options"/> へ委譲する。</summary>
-    /// <value>設定の単一値。 既定は <see cref="FadeMaskDragRectOptions.Default"/>。</value>
-    public FadeMaskDragRectOptions SelectionOverlayOptions
+    /// <summary>領域選択オーバーレイの設定（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）。<see cref="SelectionOverlayControl.Options"/> へ委譲する。</summary>
+    /// <value>設定の単一値。 既定は <see cref="SelectionOverlayOptions.Default"/>。</value>
+    public SelectionOverlayOptions SelectionOverlayOptions
     {
         get => _selectionOverlay.Options;
         set => _selectionOverlay.Options = value;
     }
 
-    /// <summary>DPI スケーリング係数（<see cref="FadeMaskDragRectControl.ClientToSourceScaling"/> へ委譲）。</summary>
+    /// <summary>DPI スケーリング係数（<see cref="SelectionOverlayControl.ClientToSourceScaling"/> へ委譲）。</summary>
     /// <remarks>ユーザー設定ではなく、セッション（Crop は 1.0）がコードから動的設定する。</remarks>
     public double ClientToSourceScaling
     {
@@ -192,7 +192,7 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.ClientToSourceScaling = value;
     }
 
-    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="FadeMaskDragRectControl.LoupeClientToPixelScaling"/> へ委譲する。</summary>
+    /// <summary>ルーペの DIP → 物理ピクセル倍率（0.1〜8.0）。<see cref="SelectionOverlayControl.LoupeClientToPixelScaling"/> へ委譲する。</summary>
     /// <remarks>ユーザー設定ではなく、ウィンドウの DPI スケーリングから自動取得する。</remarks>
     public double LoupeClientToPixelScaling
     {
@@ -200,7 +200,7 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.LoupeClientToPixelScaling = value;
     }
 
-    /// <summary>領域選択オーバーレイの選択矩形コントロールが使う色。<see cref="FadeMaskDragRectControl.MarqueeAppearance"/> へ委譲する。</summary>
+    /// <summary>領域選択オーバーレイの選択矩形コントロールが使う色。<see cref="SelectionOverlayControl.MarqueeAppearance"/> へ委譲する。</summary>
     /// <value>外観の単一値。 既定は <see cref="MarqueeAppearance.Default"/>。</value>
     /// <remarks>色は描画にだけ必要な設定のため、コアの設定ではない（セッションが設定する）。</remarks>
     public MarqueeAppearance SelectionOverlayMarqueeAppearance
@@ -209,7 +209,7 @@ public sealed partial class CropViewControl : Panel
         set => _selectionOverlay.MarqueeAppearance = value;
     }
 
-    /// <summary>領域選択オーバーレイのルーペが使う色。<see cref="FadeMaskDragRectControl.LoupeAppearance"/> へ委譲する。</summary>
+    /// <summary>領域選択オーバーレイのルーペが使う色。<see cref="SelectionOverlayControl.LoupeAppearance"/> へ委譲する。</summary>
     /// <value>色の単一値。 既定は <see cref="LoupeAppearance.Default"/>。</value>
     /// <remarks>色は描画にだけ必要な設定のため、コアの設定ではない（セッションが設定する）。</remarks>
     public LoupeAppearance SelectionOverlayLoupeAppearance
@@ -244,7 +244,7 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>ルーペの拡大元画像を <see cref="FadeMaskDragRectControl"/> へ設定する。</summary>
+    /// <summary>ルーペの拡大元画像を <see cref="SelectionOverlayControl"/> へ設定する。</summary>
     /// <remarks>真のソースはズームビューポートが持つため、本コントロールはフィールドへ複製せず参照する。</remarks>
     private void UpdateLoupeSource() => _selectionOverlay.SetLoupeSource(_zoomView.Source);
 
@@ -458,11 +458,11 @@ public sealed partial class CropViewControl : Panel
     }
 
     // ====================================================================
-    // 公開 API: 選択状態（FadeMaskDragRectControl へ委譲）
+    // 公開 API: 選択状態（SelectionOverlayControl へ委譲）
     // ====================================================================
 
     /// <summary>領域選択オーバーレイ（テスト用アクセサ。 画像なし時のドラッグ無効化の検証用）。</summary>
-    internal FadeMaskDragRectControl SelectionOverlay => _selectionOverlay;
+    internal SelectionOverlayControl SelectionOverlay => _selectionOverlay;
 
     /// <summary>矩形オーバーレイの子要素（テスト用アクセサ。 コア確定値の写像を検証する）。</summary>
     /// <value>矩形 1 件につき 1 つの Panel（破線の場合は背景の下層と前景の上層を含む）。</value>
@@ -542,7 +542,7 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>内包 Marquee へフォーカスを設定する（矢印キー nudge の受付開始）。</summary>
-    /// <remarks><see cref="FadeMaskDragRectControl.FocusMarquee"/> へ委譲する。</remarks>
+    /// <remarks><see cref="SelectionOverlayControl.FocusMarquee"/> へ委譲する。</remarks>
     public void FocusMarquee()
     {
         try
@@ -557,7 +557,7 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>ルーペの拡大元画像を設定する（<see cref="FadeMaskDragRectControl.SetLoupeSource"/> へ委譲）。</summary>
+    /// <summary>ルーペの拡大元画像を設定する（<see cref="SelectionOverlayControl.SetLoupeSource"/> へ委譲）。</summary>
     /// <param name="source">ルーペの拡大元画像。 null でルーペをクリア。</param>
     public void SetLoupeSource(IImage? source)
     {
@@ -573,7 +573,7 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>ルーペのソースをクリアする（<see cref="FadeMaskDragRectControl.ClearLoupe"/> へ委譲）。</summary>
+    /// <summary>ルーペのソースをクリアする（<see cref="SelectionOverlayControl.ClearLoupe"/> へ委譲）。</summary>
     public void ClearLoupe()
     {
         try
@@ -588,21 +588,21 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>サイズラベルを描画時に評価するプロバイダ（<see cref="FadeMaskDragRectControl.SizeLabelOverrideProvider"/> へ委譲）。</summary>
+    /// <summary>サイズラベルを描画時に評価するプロバイダ（<see cref="SelectionOverlayControl.SizeLabelOverrideProvider"/> へ委譲）。</summary>
     public Func<string?>? SizeLabelOverrideProvider
     {
         get => _selectionOverlay.SizeLabelOverrideProvider;
         set => _selectionOverlay.SizeLabelOverrideProvider = value;
     }
 
-    /// <summary>操作ラベル（2 行目）の文言を描画時に評価するプロバイダ（<see cref="FadeMaskDragRectControl.OperationTextProvider"/> へ委譲）。</summary>
+    /// <summary>操作ラベル（2 行目）の文言を描画時に評価するプロバイダ（<see cref="SelectionOverlayControl.OperationTextProvider"/> へ委譲）。</summary>
     public Func<string?>? OperationTextProvider
     {
         get => _selectionOverlay.OperationTextProvider;
         set => _selectionOverlay.OperationTextProvider = value;
     }
 
-    /// <summary>情報ラベル（3 行目）の文言を描画時に評価するプロバイダ（<see cref="FadeMaskDragRectControl.InfoTextProvider"/> へ委譲）。</summary>
+    /// <summary>情報ラベル（3 行目）の文言を描画時に評価するプロバイダ（<see cref="SelectionOverlayControl.InfoTextProvider"/> へ委譲）。</summary>
     public Func<string?>? InfoTextProvider
     {
         get => _selectionOverlay.InfoTextProvider;
@@ -610,12 +610,12 @@ public sealed partial class CropViewControl : Panel
     }
 
     /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知する。</summary>
-    /// <remarks><see cref="FadeMaskDragRectControl.RefreshOverlay"/> へ委譲する（暗転マスク・選択枠・ルーペの追従）。</remarks>
+    /// <remarks><see cref="SelectionOverlayControl.NotifyViewportChanged"/> へ委譲する（暗転マスク・選択枠・ルーペの追従）。</remarks>
     public void NotifyViewportChanged()
     {
         try
         {
-            _selectionOverlay.RefreshOverlay();
+            _selectionOverlay.NotifyViewportChanged();
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
@@ -625,7 +625,7 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>選択確定要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Enter キー相当）。</summary>
+    /// <summary>選択確定要求を <see cref="SelectionOverlayControl"/> へ委譲する（Enter キー相当）。</summary>
     public void RequestConfirm()
     {
         try
@@ -640,7 +640,7 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>選択キャンセル要求を <see cref="FadeMaskDragRectControl"/> へ委譲する（Escape キー相当）。</summary>
+    /// <summary>選択キャンセル要求を <see cref="SelectionOverlayControl"/> へ委譲する（Escape キー相当）。</summary>
     public void RequestCancel()
     {
         try
@@ -655,14 +655,14 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>選択確定要求イベント（<see cref="FadeMaskDragRectControl.ConfirmRequested"/> へ委譲）。</summary>
-    public event EventHandler<FadeMaskDragRectSelectionEventArgs>? ConfirmRequested
+    /// <summary>選択確定要求イベント（<see cref="SelectionOverlayControl.ConfirmRequested"/> へ委譲）。</summary>
+    public event EventHandler<SelectionConfirmedEventArgs>? ConfirmRequested
     {
         add => _selectionOverlay.ConfirmRequested += value;
         remove => _selectionOverlay.ConfirmRequested -= value;
     }
 
-    /// <summary>選択キャンセル要求イベント（<see cref="FadeMaskDragRectControl.CancelRequested"/> へ委譲）。</summary>
+    /// <summary>選択キャンセル要求イベント（<see cref="SelectionOverlayControl.CancelRequested"/> へ委譲）。</summary>
     public event EventHandler? CancelRequested
     {
         add => _selectionOverlay.CancelRequested += value;
@@ -771,7 +771,7 @@ public sealed partial class CropViewControl : Panel
     // ====================================================================
 
     /// <summary>ルーペの描画完了時に、外部提供矩形を描画済み Bitmap へ描く。</summary>
-    /// <param name="sender">イベント送信元（FadeMaskDragRectControl）。</param>
+    /// <param name="sender">イベント送信元（SelectionOverlayControl）。</param>
     /// <param name="e">描画済み Bitmap と表示情報。</param>
     /// <remarks>
     /// 外部提供矩形（<see cref="Rects"/>）を <c>(対象座標 − CaptureTopLeft) × Scale</c> で<br/>
@@ -791,3 +791,4 @@ public sealed partial class CropViewControl : Panel
         }
     }
 }
+

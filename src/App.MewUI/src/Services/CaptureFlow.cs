@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
