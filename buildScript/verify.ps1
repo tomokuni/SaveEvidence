@@ -1139,6 +1139,34 @@ foreach ($f in @(git -c core.quotepath=false ls-files 2>$null)) {
 Add-Result 'テストの命名' ($testNameIssues.Count -eq 0) "`{対象}Tests.cs $($testNameIssues.Count) 件"
 $testNameIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
+# 10d) XAML の名前空間宣言（宣言した `xmlns:接頭辞` が使われているか）
+#      XAML の名前空間宣言は、その接頭辞を書かなくなった時点で不要になる（エディタは
+#      「名前空間宣言が不要」と指摘するが、ビルドは通るため機械検査が要る）。
+#      宣言そのもの（`xmlns:接頭辞="..."`）を取り除いた残りで `接頭辞:` が使われているかを見る。
+$xamlNamespaceIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.axaml' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
+    $prefixes = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in $lines) {
+        foreach ($m in [regex]::Matches($line, 'xmlns:([A-Za-z_]\w*)\s*=')) {
+            if (-not $prefixes.Contains($m.Groups[1].Value)) { $prefixes.Add($m.Groups[1].Value) }
+        }
+    }
+    foreach ($prefix in $prefixes) {
+        $rxDeclaration = [regex]("xmlns:$([regex]::Escape($prefix))\s*=\s*""[^""]*""")
+        $rxUse = [regex]("(?<![\w:])$([regex]::Escape($prefix)):")
+        $used = $false
+        foreach ($line in $lines) {
+            if ($rxUse.IsMatch($rxDeclaration.Replace($line, ''))) { $used = $true; break }
+        }
+        if (-not $used) { $xamlNamespaceIssues.Add(("{0}  未使用の名前空間宣言: {1}" -f $rel, $prefix)) }
+    }
+}
+Add-Result 'XAML の名前空間' ($xamlNamespaceIssues.Count -eq 0) "未使用の宣言 $($xamlNamespaceIssues.Count) 件"
+$xamlNamespaceIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
 # 10c) ソースとテストの対応（参考値。 合否に含めない）
 #      テストはソースのフォルダを鏡映し、専用ファイルの名前を `{ソース名}.Tests.cs` とする。 ただし
 #      専用ファイルを持つかは検証の単位で決めるため（公開 API 経由で網羅する型は持たなくてよい）、
