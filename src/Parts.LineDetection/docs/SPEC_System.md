@@ -31,7 +31,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | 項目 | 内容 |
 | --- | --- |
 | 言語 | C#（.NET 10） |
-| UI フレームワーク | Avalonia 12.1 |
+| UI フレームワーク | なし（UI 非依存。 依存は `EsUtil.Platform.Core` と OpenCvSharp5 のみ） |
 | 画像処理 | OpenCvSharp5（OpenCV・内部利用。 ネイティブは `OpenCvSharp5.runtime.win.slim`） |
 
 ## 3. アーキテクチャ
