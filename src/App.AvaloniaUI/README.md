@@ -196,7 +196,7 @@ buildScript\AvaloniaUI_publish_aot.bat
 | プロジェクト | 役割 |
 | --- | --- |
 | `App.Core` | UI 非依存のモデル・設定・ユーティリティ・表示用 ViewModel（設定モデル / 設定サービス / ファイル名テンプレート / Undo スタック / ホットキー解析 / 表示文字列） |
-| `Parts.CapturePreviewControl.AvaloniaUI` | キャプチャ / 切出しセッション（Facade `CaptureSessionControl`）。 `CropViewControl` / `ZoomViewControl` は本プロジェクト経由の推移的依存 |
+| `Parts.CapturePreview.ControlAvaloniaUI` | キャプチャ / 切出しセッション（Facade `CaptureSessionControl`）。 `CropViewControl` / `ZoomViewControl` は本プロジェクト経由の推移的依存 |
 | `ColorPickerControl` | 色選択コントロール（設定画面の色入力） |
 | `Platform.AvaloniaUI` | プラットフォーム抽象（キャプチャ・要素検出・ウィンドウ操作・ホットキー） |
 | `LineDetection` | ウィンドウ矩形検出（`LogicLineDetector`。 自動切り出し用） |

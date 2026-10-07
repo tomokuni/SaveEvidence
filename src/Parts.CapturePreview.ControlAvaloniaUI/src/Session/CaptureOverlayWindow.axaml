@@ -1,0 +1,19 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:fdr="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;assembly=Parts.CapturePreview.ControlAvaloniaUI"
+        x:Class="EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session.CaptureOverlayWindow"
+        Title="選択"
+        WindowStartupLocation="Manual"
+        WindowDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Focusable="True">
+    <Grid>
+        <!-- 固定背景画像。Bitmap は物理ピクセルサイズのため、ウィンドウ（DIP サイズ）にフィットさせる（Fill は縦横比一致のため歪まない） -->
+        <Image x:Name="VirtualScreenImage" Stretch="Fill" />
+        <!-- 選択オーバーレイ複合コントロール（Marquee + FadeMask + Loupe の配線を内包） -->
+        <fdr:SelectionOverlayControl x:Name="SelectionOverlay" />
+    </Grid>
+</Window>

@@ -12,7 +12,7 @@
   - [3.2 装飾・ラベル（`MarqueeAppearance` / `LoupeAppearance` / `SelectionOverlayLabelOptions`）の外観項目と SelectionOverlayControl での公開有無](#32-装飾ラベルmarqueeappearance--loupeappearance--selectionoverlaylabeloptionsの外観項目と-selectionoverlaycontrol-での公開有無)
   - [3.3 LoupeControl の公開外観と SelectionOverlayControl での公開有無](#33-loupecontrol-の公開外観と-selectionoverlaycontrol-での公開有無)
   - [3.4 SelectionOverlayControl の公開外観プロパティと CropViewControl での公開有無](#34-selectionoverlaycontrol-の公開外観プロパティと-cropviewcontrol-での公開有無)
-  - [3.5 CropViewControl の公開外観プロパティと Parts.CapturePreviewControl.AvaloniaUI での公開有無](#35-cropviewcontrol-の公開外観プロパティと-partscapturepreviewcontrolavaloniaui-での公開有無)
+  - [3.5 CropViewControl の公開外観プロパティと Parts.CapturePreview.ControlAvaloniaUI での公開有無](#35-cropviewcontrol-の公開外観プロパティと-partscapturepreviewcontrolavaloniaui-での公開有無)
 - [4. 外観設定](#4-外観設定)
   - [4.1 外観設定（詳細・折り畳みなし）](#41-外観設定詳細折り畳みなし)
 - [5. 保存設定](#5-保存設定)
@@ -46,7 +46,7 @@
 
 ```text
 app
- ├─ Parts.CapturePreviewControl.AvaloniaUI（CaptureSessionControl：キャプチャセッション統括の Facade）
+ ├─ Parts.CapturePreview.ControlAvaloniaUI（CaptureSessionControl：キャプチャセッション統括の Facade）
  │    ├─ 画面キャプチャ（ScreenSelect / WindowSelect / AreaSelect）
  │    │    └─ CaptureOverlayWindow（全画面オーバーレイ）
  │    │         └─ SelectionOverlayControl（SelectionOverlay）
@@ -64,7 +64,7 @@ SelectionOverlayControl（_selectionOverlay）
   └─ Platform.AvaloniaUI（Avalonia アダプタ）／EsUtil.Platform.Core（抽象・値型。Win32 実装は Native 配下）
 ```
 
-- **`Parts.CapturePreviewControl.AvaloniaUI` は `CropViewControl` を内包しません**。 `StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。
+- **`Parts.CapturePreview.ControlAvaloniaUI` は `CropViewControl` を内包しません**。 `StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。
 - **切り出しの対象画像は `CropViewControl.Source`（app が設定するプレビュー画像）から解決**します（画像を引数で渡さない。 確定時の範囲は現在の画像へクランプするため、実行中の差し替えにも追従する）。
 - **`CropViewControl` のインスタンスは `App.AvaloniaUI` が所有**します（`CapturePage.axaml` の `crop:CropViewControl x:Name="CropView"`）。 プレビュー表示（`Source` / `CenterAlign` / `Appearance`）は app の責務です。
 - `SelectionOverlayControl` は**2 つの場所**で再利用されます（資源分離・再利用）：
@@ -75,12 +75,12 @@ SelectionOverlayControl（_selectionOverlay）
 ### 2.2 各コントロールが公開する外観プロパティ
 
 外観設定は、階層の各コントロールが**公開 API（`Options` / `Appearance` / `AppearanceSettings` / 個別プロパティ）**として提供する。
-下位コントロールの設定は、`SelectionOverlayControl`（→ `SelectionOverlayOptions`（寸法・表示可否）+ `MarqueeAppearance` / `LoupeAppearance`（色））→ `CropViewControl` → `Parts.CapturePreviewControl.AvaloniaUI`（→ `CaptureSettings`）→ `App.AvaloniaUI` の順に委譲して公開される。
+下位コントロールの設定は、`SelectionOverlayControl`（→ `SelectionOverlayOptions`（寸法・表示可否）+ `MarqueeAppearance` / `LoupeAppearance`（色））→ `CropViewControl` → `Parts.CapturePreview.ControlAvaloniaUI`（→ `CaptureSettings`）→ `App.AvaloniaUI` の順に委譲して公開される。
 
 | コントロール | 公開する外観プロパティ | 備考 |
 | --- | --- | --- |
-| `App.AvaloniaUI` | — | `Parts.CapturePreviewControl.AvaloniaUI` の `AppearanceSettings`（`CaptureSettings`）へ `CaptureSettingsMapper` で変換して渡す |
-| `Parts.CapturePreviewControl.AvaloniaUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。 実行中の Crop セッションへ即時反映 |
+| `App.AvaloniaUI` | — | `Parts.CapturePreview.ControlAvaloniaUI` の `AppearanceSettings`（`CaptureSettings`）へ `CaptureSettingsMapper` で変換して渡す |
+| `Parts.CapturePreview.ControlAvaloniaUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。 実行中の Crop セッションへ即時反映 |
 | `CropViewControl` | `SelectionOverlayOptions`（`SelectionOverlayOptions`）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `ClientToSourceScaling` / `LoupeClientToPixelScaling` / `Appearance` / `CenterAlign` | 設定は `SelectionOverlayControl` へ委譲。 DPI スケーリング・プレビューの市松模様は個別プロパティ（コードから動的設定） |
 | `ZoomViewControl` | `Appearance` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観（市松模様のサイズと 2 色・スクロールバー） |
 | `SelectionOverlayControl` | `Options`（`SelectionOverlayOptions`）/ `MarqueeAppearance`（外観）/ `LoupeAppearance`（`LoupeAppearance`）/ `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` / `Mode` / `ShowFullOverlay` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | 下位（Marquee（選択の設定） / 装飾 / Loupe）の設定を一括公開（コアの設定値 1 つ）+ 外観（提示層の単一値 2 つ: `MarqueeAppearance` / `LoupeAppearance`）+ DPI スケーリングとラベル文言プロバイダを個別公開 |
@@ -95,22 +95,22 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
   → Settings（ObservableProperty・変更通知）
   → MainWindow.ApplyCaptureSessionSettings（CaptureSettingsMapper.From で CaptureSettings 生成）
   → CaptureSessionControl.AppearanceSettings（CaptureSettings・部分更新マージ）
-  → CropViewControl.SelectionOverlayOptions（ToSelectionOverlayOptions で変換した SelectionOverlayOptions）+ SelectionOverlayMarqueeAppearance / SelectionOverlayLoupeAppearance（`Parts.CapturePreviewControl.Core` の CapturePaintMapper で組み立てた外観）
+  → CropViewControl.SelectionOverlayOptions（ToSelectionOverlayOptions で変換した SelectionOverlayOptions）+ SelectionOverlayMarqueeAppearance / SelectionOverlayLoupeAppearance（`Parts.CapturePreview.Core` の CapturePaintMapper で組み立てた外観）
   → SelectionOverlayControl.Options（設定値の分配）/ .MarqueeAppearance / .LoupeAppearance
   → Options.Marquee / Options.Loupe / Options.Labels と外観（MarqueeAppearance）→ 内包コントロールの各設定値
   → MarqueeControl.Appearance / LoupeControl.Appearance（外観）
 ```
 
 - 設定画面の変更は `Settings` の `PropertyChanged` で **即時反映** される。
-- Parts.CapturePreviewControl.AvaloniaUI への反映は `CaptureSettings`（nullable record・部分更新）を介して行い、`null` のメンバーは現在値を維持する。
-- **色はコアの設定値（`SelectionOverlayOptions`）に含まれない**。 UI 間で共有する `Parts.CapturePreviewControl.Core`（`CapturePaintMapper`）が `CaptureSettings` から `MarqueeAppearance` / `LoupeAppearance` を組み立て、ホスト（`CropSession` / `CaptureOverlay`）がコントロールの `MarqueeAppearance` / `LoupeAppearance` プロパティへ設定する（写像は UI 非依存層が単一所有する）。
+- Parts.CapturePreview.ControlAvaloniaUI への反映は `CaptureSettings`（nullable record・部分更新）を介して行い、`null` のメンバーは現在値を維持する。
+- **色はコアの設定値（`SelectionOverlayOptions`）に含まれない**。 UI 間で共有する `Parts.CapturePreview.Core`（`CapturePaintMapper`）が `CaptureSettings` から `MarqueeAppearance` / `LoupeAppearance` を組み立て、ホスト（`CropSession` / `CaptureOverlay`）がコントロールの `MarqueeAppearance` / `LoupeAppearance` プロパティへ設定する（写像は UI 非依存層が単一所有する）。
 - テーマ・画像配置・市松模様等、app 内で直接処理する項目は個別の購読で反映される。
 - `Platform.AvaloniaUI` は共通基盤のため、外観設定の公開対象ではない（参考として記載）。
 
 ## 3. 下位コントロールが公開する外観プロパティと上位での公開有無
 
 本節は、**各コントロールが公開する外観プロパティが、直接上位コントロールで公開されているか**を一覧化する。
-下位コントロールの設定は、`SelectionOverlayControl`（→ `SelectionOverlayOptions`）→ `CropViewControl` → `Parts.CapturePreviewControl.AvaloniaUI`（→ `CaptureSettings`）→ `App.AvaloniaUI` の順に委譲して公開される。
+下位コントロールの設定は、`SelectionOverlayControl`（→ `SelectionOverlayOptions`）→ `CropViewControl` → `Parts.CapturePreview.ControlAvaloniaUI`（→ `CaptureSettings`）→ `App.AvaloniaUI` の順に委譲して公開される。
 各上位コントロールで「直接公開（個別プロパティ）」または「`Options` 経由で公開」かを示す。
 
 ### 3.1 MarqueeControl の公開外観プロパティと SelectionOverlayControl での公開有無
@@ -200,16 +200,16 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 - `CropViewControl` は `SelectionOverlayControl` の `Options` / `MarqueeAppearance` / `LoupeAppearance` と DPI スケーリング個別プロパティをそのまま公開する（型を透過）。
 - `ClientToSourceScaling` / `LoupeClientToPixelScaling` は `Options` には**含まれず**、個別プロパティで公開される（**コードから動的設定**のため設定画面では設定不可）。
 
-### 3.5 CropViewControl の公開外観プロパティと Parts.CapturePreviewControl.AvaloniaUI での公開有無
+### 3.5 CropViewControl の公開外観プロパティと Parts.CapturePreview.ControlAvaloniaUI での公開有無
 
 `CropViewControl` は自身の公開設定として `SelectionOverlayOptions`（`SelectionOverlayOptions`）、`ClientToSourceScaling` / `LoupeClientToPixelScaling`、`Appearance`、`CenterAlign` 等を公開する。
-`Parts.CapturePreviewControl.AvaloniaUI` は**`CaptureSettings`（`CaptureSessionControl.AppearanceSettings`）**を公開しており、Crop セッション開始時に `CaptureSettings` → `SelectionOverlayOptions`（`ToSelectionOverlayOptions`。 コアのマッパー。 **寸法・表示可否のみ**）と `MarqueeAppearance` / `LoupeAppearance`（`Parts.CapturePreviewControl.Core` の `CapturePaintMapper`。 **外観（色・枠線の太さ・表示可否）**）へ変換して `CropViewControl.SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` へ設定する。
+`Parts.CapturePreview.ControlAvaloniaUI` は**`CaptureSettings`（`CaptureSessionControl.AppearanceSettings`）**を公開しており、Crop セッション開始時に `CaptureSettings` → `SelectionOverlayOptions`（`ToSelectionOverlayOptions`。 コアのマッパー。 **寸法・表示可否のみ**）と `MarqueeAppearance` / `LoupeAppearance`（`Parts.CapturePreview.Core` の `CapturePaintMapper`。 **外観（色・枠線の太さ・表示可否）**）へ変換して `CropViewControl.SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` へ設定する。
 DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`）は `CaptureSettings` に含まれず、セッションが個別プロパティ （`cropView.ClientToSourceScaling` 等）で設定する。
 
-| CropViewControl の公開プロパティ | Parts.CapturePreviewControl.AvaloniaUI での公開有無 | 設定画面で設定 | 備考 |
+| CropViewControl の公開プロパティ | Parts.CapturePreview.ControlAvaloniaUI での公開有無 | 設定画面で設定 | 備考 |
 | --- | --- | --- | --- |
 | `SelectionOverlayOptions`（`SelectionOverlayOptions`） | ✅ `CaptureSettings`（コアのマッパーで変換） | ✅ | `CaptureSettings` → `SelectionOverlayOptions`（寸法・表示可否。 全て設定画面で設定可能） |
-| `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` （`MarqueeAppearance` / `LoupeAppearance`） | ✅ `CaptureSettings`（`Parts.CapturePreviewControl.Core` の `CapturePaintMapper` で組み立て） | ✅ | **色・枠線の太さ・表示可否はコアの設定マッパーでは写像しない**（写像は UI 非依存層が単一所有し、UI 層のホストが組み立てた外観を設定する） |
+| `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` （`MarqueeAppearance` / `LoupeAppearance`） | ✅ `CaptureSettings`（`Parts.CapturePreview.Core` の `CapturePaintMapper` で組み立て） | ✅ | **色・枠線の太さ・表示可否はコアの設定マッパーでは写像しない**（写像は UI 非依存層が単一所有し、UI 層のホストが組み立てた外観を設定する） |
 | `ClientToSourceScaling` | ✅ `cropView.ClientToSourceScaling`（セッションが設定） | —（コードから動的設定） | DPI スケーリング（Crop は 1.0 固 定） |
 | `LoupeClientToPixelScaling` | ✅ `cropView.LoupeClientToPixelScaling`（セッションが設定） | —（DPI から自動取得） | ルーペ描画スケール（`CaptureSettings.LoupeClientToPixelScaling` 由来） |
 | `Appearance`（`ZoomViewAppearance`） | — | ✅（`Settings.PreviewCheckerColorA/B` / `PreviewCheckerSize`） | プレビューの市松模様（画像の透明部分の背景）。 `App.AvaloniaUI` 側（`CapturePage`）で直接設定する。 描く範囲は画像の表示矩形の内側だけであり、画像の外（ペーストボード）は背景の単色になる |

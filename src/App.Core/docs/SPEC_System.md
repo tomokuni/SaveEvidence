@@ -29,7 +29,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
   C["App.MewUI（将来）"] --> B
   B --> D[EsUtil.Platform.Core]
   B --> F[LineDetection]
-  A --> E[Parts.CapturePreviewControl.AvaloniaUI / ColorPickerControl / Platform.AvaloniaUI]
+  A --> E[Parts.CapturePreview.ControlAvaloniaUI / ColorPickerControl / Platform.AvaloniaUI]
   A -->|コールバック注入（クリップボード / 上書き確認）| B
 ```
 

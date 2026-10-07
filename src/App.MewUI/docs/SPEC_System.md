@@ -83,12 +83,12 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 
 （撮影・切り出しは Parts が担う）
 
-App.MewUI ──> Parts.CapturePreviewControl.MewUI ──> Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則）
+App.MewUI ──> Parts.CapturePreview.ControlMewUI ──> Parts.CapturePreview.Core（撮影・切り出しの共通規則）
                                                  ├──> EsUtil.Feature.Marquee.ControlMewUI（領域選択）
                                                  └──> EsUtil.Feature.Loupe.ControlMewUI（ルーペ）
 ```
 
-- **プレビュー／切り出しに対する操作（外部提供矩形の表示・ホバー強調など）は `Parts.CapturePreviewControl` が担い、
+- **プレビュー／切り出しに対する操作（外部提供矩形の表示・ホバー強調など）は `Parts.CapturePreview` が担い、
   `App.MewUI` はその公開 API（`CropViewControl.Rects` / `HighlightSourceRect` 等）を操作します**。
   アプリが UI コントロール（Marquee / Loupe）を直接生成したり重ねたりすることはありません。
 
@@ -156,7 +156,7 @@ tests/
 | `MainWindow` | ナビパネル（自前の合成。 アイコン + ページ名・選択背景）とページ内容の切り替え、タイトルバー（拡張クライアント領域 + ウィンドウボタン）、配置の復元と保存、自動切り出し中の Escape（キャンセル）の処理 |
 | `PageContent` | ページの要素と、表示のたびに実行する処理（設定の再読込・一覧の再構築）の組 |
 | `CapturePage` | ツールバー・クロップビュー・切り出しオーバーレイ・ステータスの配置とコマンド接続。 自動切り出しの検出矩形（水色の実線・ホバーで「赤枠 + 半透明の赤塗り」）を `CropViewControl.Rects`（枠線）と `CropViewControl.HighlightSourceRect` / `HighlightAppearance`（ホバー強調）で表示し、矩形内のダブルクリックで確定、矩形外のダブルクリックでキャンセルする（Escape は `MainWindow` が処理する） |
-| `CaptureSessionControl`（`Parts.CapturePreviewControl.MewUI`） | 撮影と切り出しの Facade。 排他（同時に 1 つだけ）とセッションの寿命を単一所有する。 撮影はオーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し、切り出しはプレビュー上の領域選択 → `ICaptureTarget` への適用を行う |
+| `CaptureSessionControl`（`Parts.CapturePreview.ControlMewUI`） | 撮影と切り出しの Facade。 排他（同時に 1 つだけ）とセッションの寿命を単一所有する。 撮影はオーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し、切り出しはプレビュー上の領域選択 → `ICaptureTarget` への適用を行う |
 | `ConfirmDialog` | 簡易確認ダイアログ（はい / いいえ）を表示して選択を返す。 `MainWindow` が `MainViewModel.ConfirmOverwriteAsync` へ配線する |
 | `ClickableToolTip` | クリックできるボタンへツールチップとクリック処理をまとめて登録する。 MewUI の不具合でツールチップ表示中の押下が取り消されるため、`Click` が発生しなかった押下を `MouseUp` で補完する |
 | `AppStyles` | ナビ・ツールバー・ウィンドウ操作ボタン・サムネイル枠・面（ナビパネル / ステータスバー / プルダウン / 設定カード）の共通スタイル（`StyleName` で適用する `StyleSheet`）とレイアウト値（Avalonia 版と同一）を単一所有する。 状態で変化するプロパティとテーマに追従する面の色はローカル値で設定せず本スタイルで与える。 テーマの適用（`ApplyTheme`）と、スタイルで表せない値の更新通知（`ThemeChanged`）も本クラスが担う |
@@ -172,7 +172,7 @@ tests/
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |
 | `LoupeOptions` | 設定のルーペ項目をルーペコントロールへ反映（プレビュー / 撮影 / 切り出しで共用） |
-| `CropBoundsMath`（`Parts.CapturePreviewControl.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。 Avalonia 版と共用する（`CropSession` が使用） |
+| `CropBoundsMath`（`Parts.CapturePreview.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。 Avalonia 版と共用する（`CropSession` が使用） |
 | `CaptureFlow` | キャプチャの開始（ホットキーの連打の防止）と結果の反映（Undo 退避 → プレビュー設定）。 排他は Facade（`CaptureSessionControl`）が担う |
 | `EditHistory` | 編集履歴の移動（履歴からの画像の取り出しとプレビューへの差し替え） |
 | `WindowPlacementMath`（`Platform.MewUI`） | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
@@ -250,7 +250,7 @@ classDiagram
         +NormalizeScale(double)$ double
     }
     class ZoomViewControl {
-        <<Parts.CapturePreviewControl.MewUI>>
+        <<Parts.CapturePreview.ControlMewUI>>
         +EsBitmap? Source
         +double ZoomPercent
         +ZoomIn() void
@@ -259,7 +259,7 @@ classDiagram
         +event ZoomChanged
     }
     class CropViewControl {
-        <<Parts.CapturePreviewControl.MewUI>>
+        <<Parts.CapturePreview.ControlMewUI>>
         +EsBitmap? Source
         +ZoomViewAppearance Appearance
         +IReadOnlyList~OverlayRect~ Rects
@@ -303,7 +303,7 @@ classDiagram
     MainWindow ..> MainViewModel : 束縛
     MainWindow ..> ConfirmDialog : 上書き確認の配線
     CapturePage ..> CropViewControl : 配置と矩形・強調の設定
-    CapturePage ..> CaptureSessionControl : 撮影と切り出し（Parts.CapturePreviewControl.MewUI）
+    CapturePage ..> CaptureSessionControl : 撮影と切り出し（Parts.CapturePreview.ControlMewUI）
     CapturePage ..> CaptureFlow : 撮影の開始
     CapturePage ..> EditHistory : 履歴の移動
     CaptureSessionControl ..> CropSession : 切り出しセッション
@@ -482,8 +482,8 @@ sequenceDiagram
 
 ## 12. シーケンス図（ルーペのカーソル追従）
 
-ルーペは切り出しセッション（`Parts.CapturePreviewControl`）が所有し、**`App.MewUI` は配置に関与しません**
-（アプリはセッションを開始するだけ）。 追従の詳細は `Parts.CapturePreviewControl.MewUI` の仕様が単一所有します。
+ルーペは切り出しセッション（`Parts.CapturePreview`）が所有し、**`App.MewUI` は配置に関与しません**
+（アプリはセッションを開始するだけ）。 追従の詳細は `Parts.CapturePreview.ControlMewUI` の仕様が単一所有します。
 
 ```mermaid
 sequenceDiagram
@@ -506,7 +506,7 @@ sequenceDiagram
 ```
 
 **アプリが担うのは、セッションの開始と（自動切り出しの）検出矩形・強調の設定までです**。 ルーペの生成・位置決め・
-カーソル追従・後片付けはすべて `Parts.CapturePreviewControl` が担います。
+カーソル追従・後片付けはすべて `Parts.CapturePreview` が担います。
 
 ## 13. シーケンス図（Undo 一覧ページ）
 
@@ -648,7 +648,7 @@ sequenceDiagram
 14. **撮影の対象は全モニター（仮想スクリーン）**。 1 モニターに限定するとカーソルのある
     モニターでしか選択できないため、仮想スクリーンを 1 枚の画像とし、オーバーレイで全面を覆う
     （フレームワークの論理座標による配置は OS に補正されるため、物理ピクセルで置き直す）。
-15. **表示状態と画像の配置を別のビューへ分ける**。 撮影のオーバーレイ（`Parts.CapturePreviewControl.MewUI`）と
+15. **表示状態と画像の配置を別のビューへ分ける**。 撮影のオーバーレイ（`Parts.CapturePreview.ControlMewUI`）と
     サムネイル（`ThumbnailView`）は大きさの要求が異なるが、描画は `Platform.MewUI` の `SkiaImageView` が、
     配置の計算は `ImageDrawMath`（`Platform.MewUI`）が単一所有する（サムネイルは計測と Uniform 指定だけを加える）。
 16. **色の変換を専用クラスへ分離する**。 設定は色を文字列で保持するため、境界の変換は
@@ -656,7 +656,7 @@ sequenceDiagram
 17. **絶対配置が必要な子は自前の Panel で配置する**。 MewUI の `Grid` は整列で位置を決め、`Margin` と
    `Canvas` の絶対配置は反映されない（実測）。 また `ActualWidth` / `ActualHeight` は測定結果（残余を埋める
    要素では 0）であり実サイズは配置引数からしか得られない。
-   ※ 本アプリでは絶対配置を必要とする利用者（旧 `OverlayHost`。 ルーペの配置）を `Parts.CapturePreviewControl` へ移したため、現在は使っていない。
+   ※ 本アプリでは絶対配置を必要とする利用者（旧 `OverlayHost`。 ルーペの配置）を `Parts.CapturePreview` へ移したため、現在は使っていない。
 18. **ルーペの外観の反映を 1 箇所に集約する**。 ルーペはプレビュー・撮影・切り出しの 3 箇所に登場し、
    同じ設定を同じ対応で反映する必要がある（`LoupeOptions`）。
 19. **履歴の移動を専用クラスへ分離する**。 `EditHistory` が「履歴から取り出してプレビューへ差し替える」
@@ -692,7 +692,7 @@ sequenceDiagram
 | `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する |
 | `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する |
 | ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`PrintWindow` による撮影と画素の実測）で確認する |
-| 組み込み先のコントロール | `EsUtil.Feature.Loupe.ControlMewUI.Tests` / `Parts.CapturePreviewControl.MewUI.Tests` が描画と状態を検証する |
+| 組み込み先のコントロール | `EsUtil.Feature.Loupe.ControlMewUI.Tests` / `Parts.CapturePreview.ControlMewUI.Tests` が描画と状態を検証する |
 | コアロジック | `App.Core` / `Platform.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |
 
 ### 20.1 実機検証（手順）

@@ -9,7 +9,7 @@ SaveEvidence の **MewUI 版ホストアプリ**です。 UI 非依存のコア�
 
 ## 1. 概要
 
-SaveEvidence の **MewUI 版アプリ**（実行ファイル `SaveEvidence.MewUI.exe`）です。 Avalonia 版（`App.AvaloniaUI`）と同じ `App.Core` のモデル・ViewModel と撮影スタック（`Parts.CapturePreviewControl.*`）を共有し、**画面の構築だけを MewUI**（`Aprillz.MewUI`・Skia 描画）で実装します。
+SaveEvidence の **MewUI 版アプリ**（実行ファイル `SaveEvidence.MewUI.exe`）です。 Avalonia 版（`App.AvaloniaUI`）と同じ `App.Core` のモデル・ViewModel と撮影スタック（`Parts.CapturePreview.*`）を共有し、**画面の構築だけを MewUI**（`Aprillz.MewUI`・Skia 描画）で実装します。
 
 ## 2. 前提
 
@@ -80,7 +80,7 @@ App.MewUI ──> App.Core ──> EsUtil.Platform.Core / LineDetection
     │                              │
     ├──> Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
     ├──> EsUtil.Platform.Core の Win32 実装（キャプチャ等。Native.Win）
-    └──> Parts.CapturePreviewControl.MewUI ──> Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則、複合コントロールの設定とモード、画像ビューポートの状態と判断）
+    └──> Parts.CapturePreview.ControlMewUI ──> Parts.CapturePreview.Core（撮影・切り出しの共通規則、複合コントロールの設定とモード、画像ビューポートの状態と判断）
 ```
 
 Avalonia 版 `App.AvaloniaUI` とはコアを共有し、UI 層のみが異なります。
@@ -306,7 +306,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 - 出力先: `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持。 Serilog）
 - 内容: アプリ起動 / 終了、撮影・切り出しの開始と確定・キャンセル、選択操作（MouseDown / MouseUp / DragStart / KeyDown 等）、ズーム操作（前後のズーム率）、ルーペの状態変更（表示中の選択オーバーレイ）、未処理の例外
 - 未処理の例外は、アプリ全体（`AppDomain`）/ UI スレッド（`Application.DispatcherUnhandledException`）/ 待機されなかったタスク（`TaskScheduler`）の 3 経路を記録します。 UI スレッドの例外は記録後に処理済みとして扱い、ウィンドウの表示を維持します（Avalonia 版と同じ）。
-- カテゴリはクラス名（`Program` / `CaptureSessionControl` / `CapturePage` 等）です。 メッセージの接頭辞（`[Marquee]` / `[Loupe]` / `[Marquee]` / `[Loupe]` / `[CapturePreviewControl] ZoomIn:`）は、そのログを定義しているプロジェクトを表します。
+- カテゴリはクラス名（`Program` / `CaptureSessionControl` / `CapturePage` 等）です。 メッセージの接頭辞（`[Marquee]` / `[Loupe]` / `[Marquee]` / `[Loupe]` / `[CapturePreview] ZoomIn:`）は、そのログを定義しているプロジェクトを表します。
 
 ## 24. 履歴（戻す / やり直し）
 
@@ -330,7 +330,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 ## 26. レイアウト（実測済み）
 
 キャプチャページは **3 行の `Grid`（`Rows("Auto,*,Auto")`）** で組み、プレビューを Star 行に置きます。
-プレビューは `Parts.CapturePreviewControl.MewUI`（ドラッグでパン・Ctrl+ホイールでズーム・検出矩形のオーバーレイ）で、
+プレビューは `Parts.CapturePreview.ControlMewUI`（ドラッグでパン・Ctrl+ホイールでズーム・検出矩形のオーバーレイ）で、
 その上へ `OverlayHost`（絶対配置の領域）でルーペを重ねます。
 ウィンドウを縮めるとナビがコンパクト表示になり、プレビューも追従します（`mewui-resized.png` 参照）。
 

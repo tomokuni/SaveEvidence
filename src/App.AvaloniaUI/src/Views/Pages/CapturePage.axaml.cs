@@ -50,7 +50,7 @@ public sealed partial class CapturePage : UserControl
 
     private ISettingsService _settingsService = null!;
 
-    /// <summary>CaptureSessionControl.AvaloniaUI の公開 Facade（Crop セッションの窓口）。</summary>
+    /// <summary>Parts.CapturePreview.ControlAvaloniaUI の公開 Facade（Crop セッションの窓口）。</summary>
     private CaptureSessionControl _captureSessionControl = null!;
 
     /// <summary>進行中の Crop セッションの Task。</summary>
@@ -711,7 +711,7 @@ public sealed partial class CapturePage : UserControl
     private async Task StartCropSessionAsync()
     {
         // 設定は MainWindow の Settings.PropertyChanged 購読で常に最新のため、ここでは同期しない
-        // プレビュー状態（ScrollOffset / ZoomPercent）は CaptureSessionControl.AvaloniaUI が Marquee イベント / 表示状態から導出する
+        // プレビュー状態（ScrollOffset / ZoomPercent）は Parts.CapturePreview.ControlAvaloniaUI が Marquee イベント / 表示状態から導出する
         // 切出し中のホイール操作（Ctrl+ホイールのズーム・通常ホイールのパン）は CropViewControl が内部で完結する
         // 切り出しの対象画像は表示中の画像（CropView.Source）から解決されるため、画像を別引数で渡さない
         _cropTask = _captureSessionControl.StartCropAsync(CropView, _parentWindow!);

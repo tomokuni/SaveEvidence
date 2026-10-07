@@ -41,10 +41,10 @@ public sealed partial class MainWindow : Window
     /// <summary>ホットキー押下の購読（クローズ時に解除する。 解除しないと本ウィンドウが通知先に残る）。</summary>
     private readonly IDisposable? _hotKeySubscription;
 
-    /// <summary>CaptureSessionControl.AvaloniaUI の公開 Facade（キャプチャセッションの窓口）。</summary>
+    /// <summary>Parts.CapturePreview.ControlAvaloniaUI の公開 Facade（キャプチャセッションの窓口）。</summary>
     private readonly CaptureSessionControl _captureSessionControl = null!;
 
-    /// <summary>CaptureSessionControl.AvaloniaUI へ注入するロガー（Serilog 経由でファイル出力）。</summary>
+    /// <summary>Parts.CapturePreview.ControlAvaloniaUI へ注入するロガー（Serilog 経由でファイル出力）。</summary>
     private readonly ILogger _captureSessionControlLogger = null!;
 
     /// <summary>アプリケーションロガー。</summary>
@@ -70,10 +70,10 @@ public sealed partial class MainWindow : Window
         _viewModel = viewModel;
         _settingsService = (SettingsService)settingsService;
 
-        // CaptureSessionControl.AvaloniaUI 公開 Facade を生成
+        // Parts.CapturePreview.ControlAvaloniaUI 公開 Facade を生成
         // ロガーは Serilog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、日次ローテーション・7日で自動削除）へ転送する。
         // AppLog.CreateLogger が Serilog のファイル出力を構成するため、コード内の設定は不要。
-        _captureSessionControlLogger = AppLog.CreateLogger("CaptureSessionControl.AvaloniaUI");
+        _captureSessionControlLogger = AppLog.CreateLogger("Parts.CapturePreview.ControlAvaloniaUI");
         _captureSessionControl = new CaptureSessionControl(logger: _captureSessionControlLogger);
         // キャプチャ完了イベントを購読する（同期実行: 画像変更 → 完了後に APP が再表示される）
         _captureSessionControl.CaptureCompleted += OnCaptureCompleted;

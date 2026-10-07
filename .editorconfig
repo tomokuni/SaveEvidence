@@ -334,7 +334,7 @@ dotnet_diagnostic.RS0030.severity = none
 # 規約が認める付随型（型と一体の enum・操作クラス）を同居させるファイルは、ファイル名（主たる型）と
 # 2 番目の型名が一致しない（.github/命名規約.md「型と一体の付随型」）。 MA0048 を無効にする
 # （実測 7 ファイル。 主たる型＋付随型の組である）。
-[{src/Parts.CapturePreviewControl.Core/src/Capture/CaptureHighlight.cs,src/Parts.CapturePreviewControl.Core/src/Capture/CaptureKeyAction.cs,src/Parts.CapturePreviewControl.Core/src/Crop/CropSessionAction.cs,src/Parts.CapturePreviewControl.Core/src/ZoomView/ZoomNotice.cs,src/Parts.CapturePreviewControl.Core/src/ZoomView/ZoomScrollBarGeometry.cs,src/Parts.LineDetection/src/LineDetectionResult.cs,src/Parts.LineDetection/src/LineSegmentMath.cs}]
+[{src/Parts.CapturePreview.Core/src/Capture/CaptureHighlight.cs,src/Parts.CapturePreview.Core/src/Capture/CaptureKeyAction.cs,src/Parts.CapturePreview.Core/src/Crop/CropSessionAction.cs,src/Parts.CapturePreview.Core/src/ZoomView/ZoomNotice.cs,src/Parts.CapturePreview.Core/src/ZoomView/ZoomScrollBarGeometry.cs,src/Parts.LineDetection/src/LineDetectionResult.cs,src/Parts.LineDetection/src/LineSegmentMath.cs}]
 dotnet_diagnostic.MA0048.severity = none
 
 # Avalonia のコードビハインドは `.axaml.cs` にコントロールの型を置くため、ファイル名と型名が一致しない

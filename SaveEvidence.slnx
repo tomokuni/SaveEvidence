@@ -12,19 +12,19 @@
     <Project Path="src/App.MewUI/src/App.MewUI.csproj" />
     <Project Path="src/App.MewUI/tests/App.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Parts.CapturePreviewControl.Core/" />
-  <Folder Name="/src/Parts.CapturePreviewControl.Core/src/">
-    <Project Path="src/Parts.CapturePreviewControl.Core/src/Parts.CapturePreviewControl.Core.csproj" />
+  <Folder Name="/src/Parts.CapturePreview.Core/" />
+  <Folder Name="/src/Parts.CapturePreview.Core/src/">
+    <Project Path="src/Parts.CapturePreview.Core/src/Parts.CapturePreview.Core.csproj" />
   </Folder>
-  <Folder Name="/src/Parts.CapturePreviewControl.Core/tests/">
-    <Project Path="src/Parts.CapturePreviewControl.Core/tests/Parts.CapturePreviewControl.Core.Tests.csproj" />
+  <Folder Name="/src/Parts.CapturePreview.Core/tests/">
+    <Project Path="src/Parts.CapturePreview.Core/tests/Parts.CapturePreview.Core.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Parts.CapturePreviewControl.MewUI/" />
-  <Folder Name="/src/Parts.CapturePreviewControl.MewUI/src/">
-    <Project Path="src/Parts.CapturePreviewControl.MewUI/src/Parts.CapturePreviewControl.MewUI.csproj" />
+  <Folder Name="/src/Parts.CapturePreview.ControlMewUI/" />
+  <Folder Name="/src/Parts.CapturePreview.ControlMewUI/src/">
+    <Project Path="src/Parts.CapturePreview.ControlMewUI/src/Parts.CapturePreview.ControlMewUI.csproj" />
   </Folder>
-  <Folder Name="/src/Parts.CapturePreviewControl.MewUI/tests/">
-    <Project Path="src/Parts.CapturePreviewControl.MewUI/tests/Parts.CapturePreviewControl.MewUI.Tests.csproj" />
+  <Folder Name="/src/Parts.CapturePreview.ControlMewUI/tests/">
+    <Project Path="src/Parts.CapturePreview.ControlMewUI/tests/Parts.CapturePreview.ControlMewUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/ColorPickerControl.AvaloniaUI/">
     <Project Path="src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj" />
@@ -90,10 +90,10 @@
     <Project Path="src/Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj" />
     <Project Path="src/Platform.AvaloniaUI/tests/Platform.AvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Parts.CapturePreviewControl.AvaloniaUI/">
-    <Project Path="src/Parts.CapturePreviewControl.AvaloniaUI/sample/Parts.CapturePreviewControl.AvaloniaUI.Sample.csproj" />
-    <Project Path="src/Parts.CapturePreviewControl.AvaloniaUI/src/Parts.CapturePreviewControl.AvaloniaUI.csproj" />
-    <Project Path="src/Parts.CapturePreviewControl.AvaloniaUI/tests/Parts.CapturePreviewControl.AvaloniaUI.Tests.csproj" />
+  <Folder Name="/src/Parts.CapturePreview.ControlAvaloniaUI/">
+    <Project Path="src/Parts.CapturePreview.ControlAvaloniaUI/sample/Parts.CapturePreview.ControlAvaloniaUI.Sample.csproj" />
+    <Project Path="src/Parts.CapturePreview.ControlAvaloniaUI/src/Parts.CapturePreview.ControlAvaloniaUI.csproj" />
+    <Project Path="src/Parts.CapturePreview.ControlAvaloniaUI/tests/Parts.CapturePreview.ControlAvaloniaUI.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Platform.Skia/" />
   <Folder Name="/src/Platform.Skia/src/">

@@ -30,9 +30,9 @@
     <!-- UI 非依存のコア（設定・ViewModel・画像コンテナ） -->
     <ProjectReference Include="..\..\App.Core\src\App.Core.csproj" />
     <!-- 撮影・切り出しの共通規則（切り出し矩形の計算） -->
-    <ProjectReference Include="..\..\Parts.CapturePreviewControl.Core\src\Parts.CapturePreviewControl.Core.csproj" />
+    <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <!-- MewUI 版の撮影セッション（オーバーレイ・切り出しビュー） -->
-    <ProjectReference Include="..\..\Parts.CapturePreviewControl.MewUI\src\Parts.CapturePreviewControl.MewUI.csproj" />
+    <ProjectReference Include="..\..\Parts.CapturePreview.ControlMewUI\src\Parts.CapturePreview.ControlMewUI.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型） -->
     <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
   </ItemGroup>

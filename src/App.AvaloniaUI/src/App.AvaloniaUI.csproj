@@ -53,7 +53,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\App.Core\src\App.Core.csproj" />
-    <ProjectReference Include="..\..\Parts.CapturePreviewControl.AvaloniaUI\src\Parts.CapturePreviewControl.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\Parts.CapturePreview.ControlAvaloniaUI\src\Parts.CapturePreview.ControlAvaloniaUI.csproj" />
     <ProjectReference Include="..\..\ColorPickerControl.AvaloniaUI\src\ColorPickerControl.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>

@@ -28,8 +28,8 @@
     <!-- マウス位置の拡大表示（ルーペ）に使用する -->
     <ProjectReference Include="..\..\EsUtil.Feature.Loupe.ControlAvaloniaUI\src\AvaloniaUI\EsUtil.Feature.Loupe.ControlAvaloniaUI.csproj" />
     <!-- データセット作成ページの Marquee キャプチャ（スクリーン領域選択 + ウィンドウ列挙）に使用する -->
-    <ProjectReference Include="..\..\Parts.CapturePreviewControl.AvaloniaUI\src\Parts.CapturePreviewControl.AvaloniaUI.csproj" />
-    <!-- CaptureSessionControl.AvaloniaUI が内部で使用する要素検出（ウィンドウ列挙）機能 -->
+    <ProjectReference Include="..\..\Parts.CapturePreview.ControlAvaloniaUI\src\Parts.CapturePreview.ControlAvaloniaUI.csproj" />
+    <!-- Parts.CapturePreview.ControlAvaloniaUI が内部で使用する要素検出（ウィンドウ列挙）機能 -->
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
   </ItemGroup>
 
