@@ -56,4 +56,17 @@ public class SelectionOverlayStateTests
         Assert.False(state.UsesSelection);
         Assert.False(state.ShowFullOverlay);
     }
+
+    /// <summary>破線を描くかの合成判断（モードと選択の有無の両方が必要）を検証する。</summary>
+    /// <param name="mode">動作モード。</param>
+    /// <param name="hasSelection">選択矩形があるかどうか。</param>
+    /// <param name="expected">描く場合は true。</param>
+    [Theory]
+    [InlineData(SelectionOverlayMode.Crop, true, true)]
+    [InlineData(SelectionOverlayMode.Crop, false, false)]
+    [InlineData(SelectionOverlayMode.AreaSelect, true, true)]
+    [InlineData(SelectionOverlayMode.ScreenSelect, true, false)]
+    [InlineData(SelectionOverlayMode.WindowSelect, true, false)]
+    internal void 破線描画_モードと選択の有無の両方が成立したときだけ描く(SelectionOverlayMode mode, bool hasSelection, bool expected)
+        => Assert.Equal(expected, SelectionOverlayState.Resolve(mode).ShouldDrawSelectionOverlay(hasSelection));
 }

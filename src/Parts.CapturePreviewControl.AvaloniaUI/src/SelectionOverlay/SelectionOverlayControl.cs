@@ -655,10 +655,9 @@ public sealed class SelectionOverlayControl : Panel
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {
-        // 破線を描くかどうかはモード（コアが単一所有する）と切り出し領域・選択矩形の有無で決まる
-        if (SelectionOverlayState.Resolve(_mode).ShowSelectionOverlay
-            && e.Content.CaptureTopLeft is { } topLeft
-            && _marquee.HasSelection)
+        // 破線を描くかどうかはモードと選択矩形の有無（コアが単一所有する判断）と、切り出し領域の左上の有無で決まる
+        if (SelectionOverlayState.Resolve(_mode).ShouldDrawSelectionOverlay(_marquee.HasSelection)
+            && e.Content.CaptureTopLeft is { } topLeft)
         {
             // 破線色（色A / 色B）を 2 つ用意し、交互に塗る（描画はコアが単一所有する）
             SelectionOutlineRasterizer.DrawSelectionRect(

@@ -638,8 +638,8 @@ public sealed class SelectionOverlayControl : Panel
     /// </remarks>
     internal void DrawSelectionOverlay(SKCanvas canvas, EsPoint captureTopLeft, double scale, int clientPixelSize)
     {
-        // 破線を描くかどうかはモード（コアが単一所有する）と選択矩形の有無で決まる
-        if (!SelectionOverlayState.Resolve(_mode).ShowSelectionOverlay || !_marquee.HasSelection)
+        // 破線を描くかどうかはモードと選択矩形の有無（コアが単一所有する判断）で決まる
+        if (!SelectionOverlayState.Resolve(_mode).ShouldDrawSelectionOverlay(_marquee.HasSelection))
         {
             return;
         }

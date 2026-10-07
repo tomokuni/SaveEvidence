@@ -299,6 +299,7 @@ classDiagram
 │  SelectionOverlayLabelOptions（record）: 操作・情報ラベルの外観 │
 │  SelectionOverlayState: Resolve（モード → 状態）        │
 │  SelectionOverlayState: UsesSelection / ShowFullOverlay / ShowSelectionOverlay │
+│  SelectionOverlayState: ShouldDrawSelectionOverlay（モードと選択の合成判断） │
 │  SelectionUsability: IsUsable（選択の可否）       │
 │  SelectionOutlineRasterizer: DrawSelectionRect（2 色の破線。 選択が覆う画素の外側へ引く） │
 └──────────────────────────────────────────────────────┘
@@ -327,7 +328,7 @@ classDiagram
     class OverlayRectLayout { <<static>> +Resolve(rect, topLeft, bottomRight)$ OverlayRectFrame  +EffectiveThickness(thickness)$ double }
     class SelectionOverlayMode { <<enum>> Crop  AreaSelect  ScreenSelect  WindowSelect }
     class SelectionOverlayOptions { <<record>> +MarqueeOptions Marquee  +LoupeOptions Loupe  +SelectionOverlayLabelOptions Labels  +double LoupeOffset }
-    class SelectionOverlayState { <<readonly record struct>> +bool UsesSelection  +bool ShowFullOverlay  +bool ShowSelectionOverlay  +Resolve(mode)$ SelectionOverlayState }
+    class SelectionOverlayState { <<readonly record struct>> +bool UsesSelection  +bool ShowFullOverlay  +bool ShowSelectionOverlay  +ShouldDrawSelectionOverlay(hasSelection)$ bool  +Resolve(mode)$ SelectionOverlayState }
 
     OverlayRectLayout ..> OverlayRect : 入力
     OverlayRectLayout ..> OverlayRectFrame : 生成
@@ -445,7 +446,7 @@ sequenceDiagram
 | `CapturePreviewLogMessage` | 全定義の本文書式とイベント ID（記録ロガーで検証） |
 | `OverlayRectLayout` / `OverlayLineDash` | 負サイズのクランプ・太さの下限・破線の判定とダッシュ長の引き継ぎ（ベクター経路とラスタ経路が同じ数値を使う） |
 | `OverlayRectRasterizer` | ルーペ画像へのラスタライズ（画素検証） |
-| `SelectionOverlayState` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否 |
+| `SelectionOverlayState` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否・破線描画の合成判断（モードと選択の有無） |
 | `SelectionOverlayOptions` / `LabelOptions` | 既定値・部分変更・ |
 | `SelectionUsability` | 選択として成立するサイズの判定 |
 | `SelectionOutlineRasterizer` | 破線の列挙と描画の画素検証 |

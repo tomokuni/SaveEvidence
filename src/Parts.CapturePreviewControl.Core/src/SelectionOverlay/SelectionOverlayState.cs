@@ -29,6 +29,15 @@ internal readonly record struct SelectionOverlayState(bool UsesSelection)
     /// <value>選択矩形を使うモードでは true。</value>
     public bool ShowSelectionOverlay => UsesSelection;
 
+    /// <summary>ルーペ画像上の選択矩形の破線を描くかどうかを判定する。</summary>
+    /// <param name="hasSelection">選択矩形があるかどうか。</param>
+    /// <returns>描く場合は true。</returns>
+    /// <remarks>
+    /// 「モードが破線を許し、かつ選択矩形がある」という合成判断を単一所有する<br/>
+    /// （UI ごとに論理式を書くと、片方だけ否定形で書かれて条件の順序や抜けがずれる）。
+    /// </remarks>
+    public bool ShouldDrawSelectionOverlay(bool hasSelection) => ShowSelectionOverlay && hasSelection;
+
     /// <summary>ルーペを表示するかどうかを判定する。</summary>
     /// <param name="hasSource">拡大元画像が設定されているかどうか。</param>
     /// <param name="hasCenter">ルーペ中心（拡大中心）が設定されているかどうか。</param>
