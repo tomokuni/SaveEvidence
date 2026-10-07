@@ -69,7 +69,7 @@ graph LR
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `EsBitmapSkiaExtensions.cs` | `public static class` | `ToSKBitmap`（非所有ビュー）/ `ToEsBitmap`（複製） |
+| `EsBitmapSkiaExtensions.cs` | `public static class` | `ToSKBitmap`（非所有ビュー。 呼び出し側が破棄する）/ `ToEsBitmap`（複製） |
 | `SkiaFill.cs` | `public static class` | 矩形・角丸矩形の塗り |
 | `SkiaLabel.cs` | `public static class` | ラベル 1 件（背景 + 文字）の描画順 |
 | `SkiaText.cs` | `public static class` | 実寸測定・描画・書体の解決 |

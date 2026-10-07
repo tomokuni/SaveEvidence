@@ -25,7 +25,7 @@
 
 | メソッド | 戻り値 | 所有権 | 有効期間 |
 | --- | --- | --- | --- |
-| `ToSKBitmap(this EsBitmap bitmap)` | `SKBitmap` | **非所有ビュー**（`InstallPixels`。 破棄してもコアのバッファは解放されない） | 対応する `EsBitmap` の生存中のみ |
+| `ToSKBitmap(this EsBitmap bitmap)` | `SKBitmap` | **非所有ビュー**（`InstallPixels`。 破棄してもコアのバッファは解放されない）。 **呼び出し側が破棄する**（呼び出しごとに新しいインスタンス） | 対応する `EsBitmap` の生存中のみ |
 | `ToEsBitmap(this SKBitmap bitmap)` | `EsBitmap` | **複製**（引数の所有権は呼び出し側に残る） | 通常の `EsBitmap` と同じ |
 
 ### 2.1 契約と不変条件

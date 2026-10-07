@@ -99,6 +99,10 @@ graph LR
 | --- | --- | --- |
 | 負のサイズ（`Rect` / `Size`） | そのまま保持する | **0 にクランプ**する（座標 X / Y は保持） |
 | キー体系 | `EsKey` と同じ 223 メンバー（Win32 相当） | 抽象化された 91 メンバー（独自採番） |
+| 表示境界の画像型 | `IImage`（Avalonia 固有のため、コア型とのアダプタ `EsBitmapAvaloniaImage` / `EsImageSourceAdapter` が要る） | **`EsBitmap`（コア型そのもの）**。 アダプタは不要（`EsBitmap` が `IEsImageSource` を実装している） |
+| 表示のコピー | `Bitmap` への変換がピクセルを複製する（実測: 4K で約 6 ms。 初回の 1 回に固定する） | `ToSKBitmap()` が**非所有ビュー**を返すため複製しない（実測: 0.3〜2 µs） |
+
+**画像を扱う設計が非対称な理由**: MewUI の描画は Skia 直結（`SKCanvas`）であり、コアの `EsBitmap` がそのまま描画元になるため、表示境界に UI 固有の画像型を持ち込みません（`ToSKBitmap()` は `SKBitmap.InstallPixels` による非所有ビュー）。 したがって Avalonia 側で必要だった「表示アダプタ」と「変換の 1 回化」は、MewUI では**原理的に不要**です（`EsBitmap` が `IEsImageSource` を実装するため、コアの処理からの取り出しも1 型で済みます）。
 
 ソースコードが UI 非依存のまま両 UI を扱うには、**UI 固有の値を UI 内部に閉じ込め**、境界ではコア型へ変換して渡す設計が必要です。
 

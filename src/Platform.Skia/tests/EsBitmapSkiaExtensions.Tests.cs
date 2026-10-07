@@ -57,6 +57,23 @@ public class EsBitmapSkiaExtensionsTests
         Assert.Equal((byte)3, px.R);
     }
 
+    /// <summary>呼び出しごとに新しいビューを返すことを検証する（呼び出し側が破棄する契約）。</summary>
+    /// <remarks>
+    /// ビューは <see cref="SKBitmap"/> のインスタンスでありファイナライザを持つため、
+    /// 呼び出し側が破棄しないと毎回ファイナライザ キューへ積まれる（描画のたびに作る用途では必須）。<br/>
+    /// 内部で使い回していると本契約が崩れるため、同一インスタンスでないことを固定する。
+    /// </remarks>
+    [Fact]
+    internal void ToSKBitmap_呼び出しごとに新しいビューを返す()
+    {
+        using var bmp = EsBitmap.Create(2, 2);
+
+        using var first = bmp.ToSKBitmap();
+        using var second = bmp.ToSKBitmap();
+
+        Assert.NotSame(first, second);
+    }
+
     [Fact]
     internal void ToSKBitmap_破棄済みなら例外()
     {

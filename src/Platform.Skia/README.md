@@ -39,7 +39,7 @@ Platform.MewUI
 
 ```csharp
 // EsBitmap ⇔ SKBitmap（所有権はコア側に残る）
-using var view = bitmap.ToSKBitmap();       // 非所有ビュー（EsBitmap の生存中のみ有効）
+using var view = bitmap.ToSKBitmap();       // 非所有ビュー（EsBitmap の生存中のみ有効。 呼び出し側が破棄する）
 canvas.DrawBitmap(view, destination);
 
 using var copied = skBitmap.ToEsBitmap();   // 複製（引数の所有権は呼び出し側に残る）
@@ -51,7 +51,7 @@ SkiaLabel.Draw(canvas, background, bgColor, text, origin, fontSize, textColor, c
 
 | メソッド | 用途 |
 | --- | --- |
-| `EsBitmapSkiaExtensions.ToSKBitmap(this EsBitmap)` | コアのバッファを指す**非所有ビュー**を返す（描画 API へ渡すため） |
+| `EsBitmapSkiaExtensions.ToSKBitmap(this EsBitmap)` | コアのバッファを指す**非所有ビュー**を返す（描画 API へ渡すため）。 **呼び出し側が破棄する**（呼び出しごとに新しい `SKBitmap` を作る） |
 | `EsBitmapSkiaExtensions.ToEsBitmap(this SKBitmap)` | Skia のビットマップを**複製**してコアのビットマップを生成する |
 | `SkiaFill.Rect` / `Rects` / `RoundRect` | 矩形の塗り |
 | `SkiaLabel.Draw(...)` | ラベル 1 件（背景 → 文字の順）を描く |
@@ -62,7 +62,7 @@ SkiaLabel.Draw(canvas, background, bgColor, text, origin, fontSize, textColor, c
 
 ## 5. 設計上の約束
 
-1. **所有権は移動しない**: `ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製である。 コアのピクセルバッファの所有権は常に `EsBitmap` に残る（`EsBitmap` を破棄した後のビューは無効）。
+1. **所有権は移動しない**: `ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製である。 コアのピクセルバッファの所有権は常に `EsBitmap` に残る（`EsBitmap` を破棄した後のビューは無効）。 ビュー自体（`SKBitmap` のインスタンス）は**呼び出し側が破棄する**（ファイナライザを持つため、描画のたびに作る用途では `using` が必須）。
 2. **ビューの寿命は `EsBitmap` の生存期間と一致する**: ピクセルをコピーしないため、`EsBitmap` 破棄後にビューを使うと解放済みメモリを読む。 コピーが必要な場合はビューへ `Copy()` を適用する。
 3. **ストライドは幅×4**: コアの `EsBitmap.Stride` は `幅 × 4`（パディングなし）で固定であり、Skia の `RowBytes` と一致する（コピー手順とピクセル配置の期待値が両者で揃う）。
 4. **`SKBitmap` を確保先として使わない**: コアのビットマップは自前のバッファ（`NativeMemory.AlignedAlloc`）を持つ。 Skia は描画・変換の相手としてのみ関与する。

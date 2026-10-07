@@ -17,8 +17,9 @@ namespace EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 /// 3. 配置の矩形（<see cref="ImageDrawMath"/>）が空の場合は描画しない。<br/>
 /// 4. 矩形へ画像を 1 回の <c>DrawBitmap</c> で描く。<br/>
 /// <br/>
-/// <b>所有権</b>: 描画に使う Skia ビットマップは <see cref="EsBitmap"/> が保持するインスタンスの共有参照であり、<br/>
-/// 本クラスは破棄しない（破棄は <see cref="EsBitmap"/> の所有者が行う）。
+/// <b>所有権</b>: 描画に使う Skia ビットマップは <see cref="EsBitmap"/> のピクセルを指す<b>非所有ビュー</b>である。
+/// ビュー自体は本クラスが作り、描画の直後に破棄する（コアのピクセルは破棄されない。 ビューは <see cref="SKBitmap"/> の
+/// ファイナライザ対象のため、毎描画で残すと不要な GC 負荷になる）。
 /// </remarks>
 internal static class SkiaImageRenderer
 {
@@ -48,8 +49,11 @@ internal static class SkiaImageRenderer
             return;
         }
 
-        // ToSKBitmap は内部インスタンスの共有参照を返すため破棄しない
-        canvas.DrawBitmap(bitmap.ToSKBitmap(), destination.ToSKRect());
+        // ToSKBitmap は呼び出しごとに新しい非所有ビューを作る（ピクセルは複製しないが、SKBitmap は
+        // ファイナライザを持つため、破棄しないと毎描画でファイナライザ キューへ積まれる）。
+        // 描画は即時（DrawBitmap の呼び出しで完結する）ため、直後に破棄して構わない。
+        using var view = bitmap.ToSKBitmap();
+        canvas.DrawBitmap(view, destination.ToSKRect());
     }
 }
 

@@ -29,6 +29,8 @@ internal static class ZoomSkiaRenderer
 
         var src = new SKRect(0, 0, source.Width, source.Height);
         var dst = rect.ToSKRect();
-        canvas.DrawBitmap(source.ToSKBitmap(), src, dst);
+        // ToSKBitmap は非所有ビュー（ピクセルは複製しない）だがファイナライザを持つため、描画の直後に破棄する
+        using var view = source.ToSKBitmap();
+        canvas.DrawBitmap(view, src, dst);
     }
 }

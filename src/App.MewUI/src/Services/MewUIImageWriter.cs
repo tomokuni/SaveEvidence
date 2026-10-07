@@ -39,8 +39,10 @@ internal sealed class MewUIImageWriter : EsUtil.SaveEvidence.App.Core.Services.I
 
         var format = ResolveFormat(filePath);
 
-        // ToSKBitmap() は内部インスタンスの共有参照を返すため、破棄してはならない
-        using var skImage = SKImage.FromBitmap(image.ToSKBitmap());
+        // ToSKBitmap() は呼び出しごとに新しい非所有ビューを作る（ファイナライザを持つため破棄する）。
+        // ビューはエンコード完了まで生存させる（using の解放は逆順のため、data → skImage → view の順になる）
+        using var view = image.ToSKBitmap();
+        using var skImage = SKImage.FromBitmap(view);
         using var data = skImage.Encode(format, EncodeQuality);
 
         if (data is null)
