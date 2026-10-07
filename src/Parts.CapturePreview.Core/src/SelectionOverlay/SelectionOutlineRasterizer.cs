@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using DrawingColor = System.Drawing.Color;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
@@ -122,42 +123,19 @@ internal static class SelectionOutlineRasterizer
     /// <param name="from">始点（画像ピクセル座標）。</param>
     /// <param name="to">終点（画像ピクセル座標）。</param>
     /// <remarks>
-    /// 水平または垂直の辺を想定する。 色はダッシュごとに色 A → 色 B → 色 A … と交互に切り替える（辺ごとに色 A から始まる）。<br/>
-    /// 座標が負の方向へ向かう辺（終点が始点より小さい）は破線を生成しない（矩形の幅・高さは常に 0 以上のため通常は発生しない）。
+    /// 辺の軸の判定・ダッシュの刻み・端のクランプ・丸めは <see cref="OverlayDashWalk"/> が単一所有する。<br/>
+    /// 色はダッシュごとに色 A → 色 B → 色 A … と交互に切り替える（辺ごとに色 A から始まる）。
     /// </remarks>
     private static void AppendEdge(List<Dash> dashes, EsPoint from, EsPoint to)
     {
-        bool horizontal = Math.Abs(to.Y - from.Y) < Math.Abs(to.X - from.X);
-        double length = horizontal ? to.X - from.X : to.Y - from.Y;
-        double start = horizontal ? from.X : from.Y;
-        double fixedCoord = horizontal ? from.Y : from.X;
-        double sign = length >= 0 ? 1 : -1;
-        double distance = Math.Abs(length);
-        const int step = DashLength + GapLength;
-
-        int dashIndex = 0;
-        for (double pos = 0; pos < distance; pos += step)
+        OverlayDashWalk.ForEach(from, to, dashed: true, DashLength, GapLength, span =>
         {
-            double segmentStart = start + sign * pos;
-            double segmentEnd = start + sign * Math.Min(pos + DashLength, distance);
-            // 画素座標の丸めは CropBoundsMath.RoundToPixel が単一所有する（0.5 は切り上げ。 十字線と同じ規則）
-            int first = CropBoundsMath.RoundToPixel(segmentStart);
-            int last = CropBoundsMath.RoundToPixel(segmentEnd);
-
-            // 負の方向へ向かう辺はダッシュを生成しない（元のループ条件 px <= segmentEnd と同じ挙動）
-            if (last < first)
-            {
-                continue;
-            }
-
-            var isColorA = dashIndex % 2 == 0;
-            dashIndex++;
-
-            int thicknessStart = CropBoundsMath.RoundToPixel(fixedCoord);
-            dashes.Add(horizontal
-                ? new Dash(first, thicknessStart, last - first + 1, 1, isColorA)
-                : new Dash(thicknessStart, first, 1, last - first + 1, isColorA));
-        }
+            var thicknessStart = CropBoundsMath.RoundToPixel(span.FixedCoord);
+            var isColorA = span.Index % 2 == 0;
+            dashes.Add(span.Horizontal
+                ? new Dash(span.From, thicknessStart, span.To - span.From + 1, 1, isColorA)
+                : new Dash(thicknessStart, span.From, 1, span.To - span.From + 1, isColorA));
+        });
     }
 
     /// <summary>破線の 1 ダッシュ（1 ピクセル厚の矩形と色の種別）。</summary>

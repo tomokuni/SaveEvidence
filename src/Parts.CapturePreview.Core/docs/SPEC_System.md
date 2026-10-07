@@ -291,6 +291,7 @@ classDiagram
 │  OverlayRectLayout: Resolve（クランプ・太さの下限・破線の判定） / EffectiveThickness │
 │  OverlayRectFrame（record struct）: 描画入力（配置・太さ・半幅・破線・色・可否） │
 │  OverlayLineDash: Get / IsDashed（ダッシュ長の単一所有） │
+│  OverlayDashWalk: ForEach（1 辺 → 破線の区間。 両ラスタライザが共用） │
 │  OverlayRectRasterizer: Draw（4 辺を EsBitmap へラスタライズ） │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
@@ -445,7 +446,7 @@ sequenceDiagram
 | `CaptureVirtualScreen` | 撮影対象の範囲（単一・複数モニタ・負の原点・モニタが無い場合）と、タイムアウト待ち・未使用結果の破棄 |
 | `CaptureSessionState` / `CaptureSessionSlot` | 再入の禁止・単一完了・撮影と切り出しの相互排他・選択有無の委譲・一括キャンセル |
 | `CapturePreviewLogMessage` | 全定義の本文書式とイベント ID（記録ロガーで検証） |
-| `OverlayRectLayout` / `OverlayLineDash` | 負サイズのクランプ・太さの下限・破線の判定とダッシュ長の引き継ぎ（ベクター経路とラスタ経路が同じ数値を使う） |
+| `OverlayRectLayout` / `OverlayLineDash` / `OverlayDashWalk` | 負サイズのクランプ・太さの下限・破線の判定とダッシュ長の引き継ぎ（ベクター経路とラスタ経路が同じ数値を使う）・1 辺の破線分割（両ラスタライザが同じ刻み・端のクランプ・丸めを使う） |
 | `OverlayRectRasterizer` | ルーペ画像へのラスタライズ（画素検証） |
 | `SelectionOverlayState` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否・破線描画の合成判断（モードと選択の有無） |
 | `SelectionOverlayOptions` / `LabelOptions` | 既定値・部分変更・ |

@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
@@ -51,55 +52,38 @@ internal static class OverlayRectRasterizer
     /// <param name="to">終点（ルーペピクセル座標）。</param>
     /// <param name="rect">描画スタイル（破線種類・前景色・背景色・幅）。</param>
     /// <remarks>
-    /// 水平辺か垂直辺かは X と Y の差分の大きい方で判定する。<br/>
+    /// 辺の軸の判定・ダッシュの刻み・端のクランプ・丸めは <see cref="OverlayDashWalk"/> が単一所有する。<br/>
     /// 破線はダッシュごとに前景色と背景色を交互に切り替える（インデックスの偶奇）。
     /// </remarks>
     private static void DrawEdge(EsBitmap bitmap, EsPoint from, EsPoint to, OverlayRect rect)
     {
-        bool horizontal = Math.Abs(to.Y - from.Y) < Math.Abs(to.X - from.X);
-        double length = horizontal ? to.X - from.X : to.Y - from.Y;
-        double start = horizontal ? from.X : from.Y;
-        double fixedCoord = horizontal ? from.Y : from.X;
-        double sign = length >= 0 ? 1 : -1;
-        double distance = Math.Abs(length);
-
         // 線の太さ（1 ピクセル以上。 偶数幅は中心から片側へ寄る）
         // 下限の規則は OverlayRectLayout.EffectiveThickness が単一所有する（両 UI のベクター描画と共有）
-        var thickness = (int)Math.Round(OverlayRectLayout.EffectiveThickness(rect.Thickness));
+        var thickness = CropBoundsMath.RoundToPixel(OverlayRectLayout.EffectiveThickness(rect.Thickness));
         var half = Math.Max(0, thickness / 2);
 
         var isDashed = OverlayLineDash.IsDashed(rect.Style);
         var (dashLength, gapLength) = OverlayLineDash.Get(rect.Style);
-        int dashLen = (int)Math.Round(dashLength);
-        int gapLen = (int)Math.Round(gapLength);
-        int step = dashLen + gapLen;
 
-        int dashIndex = 0;
-        for (double pos = 0; pos < distance; pos += isDashed ? step : 1)
-        {
-            double segEnd = isDashed
-                ? start + sign * Math.Min(pos + dashLen, distance)
-                : start + sign * (pos + 1);
-            double segStartC = start + sign * pos;
-            // 破線はダッシュごとに色を交互（前景色 / 背景色・市松風）
-            var color = isDashed && dashIndex % 2 == 1 ? rect.Background : rect.Foreground;
-            dashIndex++;
-
-            var segFrom = (int)Math.Round(segStartC);
-            var segTo = (int)Math.Round(segEnd);
-            var fixedPixel = (int)Math.Round(fixedCoord);
-            for (var pixel = segFrom; pixel <= segTo; pixel++)
+        OverlayDashWalk.ForEach(
+            from, to, isDashed, CropBoundsMath.RoundToPixel(dashLength), CropBoundsMath.RoundToPixel(gapLength),
+            span =>
             {
-                if (horizontal)
+                // 破線はダッシュごとに色を交互（前景色 / 背景色・市松風）
+                var color = isDashed && span.Index % 2 == 1 ? rect.Background : rect.Foreground;
+                var fixedPixel = CropBoundsMath.RoundToPixel(span.FixedCoord);
+                for (var pixel = span.From; pixel <= span.To; pixel++)
                 {
-                    StampPixel(bitmap, pixel, fixedPixel, color, half, horizontal: true);
+                    if (span.Horizontal)
+                    {
+                        StampPixel(bitmap, pixel, fixedPixel, color, half, horizontal: true);
+                    }
+                    else
+                    {
+                        StampPixel(bitmap, fixedPixel, pixel, color, half, horizontal: false);
+                    }
                 }
-                else
-                {
-                    StampPixel(bitmap, fixedPixel, pixel, color, half, horizontal: false);
-                }
-            }
-        }
+            });
     }
 
     /// <summary>線の太さを考慮して EsBitmap へ色を打ち込む。</summary>

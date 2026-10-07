@@ -137,6 +137,7 @@ src/
 │   │   ├── OverlayRectLayout.cs            # 描画入力の解決（クランプ・太さの下限・破線の判定）
 │   │   ├── OverlayRectFrame.cs             # 矩形 1 個分の描画入力
 │   │   ├── OverlayLineDash.cs              # スタイルごとのダッシュ長の単一所有
+│   │   ├── OverlayDashWalk.cs              # 矩形の 1 辺を破線の区間へ分割する（両ラスタライザが共用）
 │   │   └── OverlayRectRasterizer.cs        # 矩形の 4 辺を EsBitmap へラスタライズする
 │   ├── Presentation/                       # 提示の写像（設定 → 外観・ラベル配置）
 │   │   ├── CapturePaintMapper.cs           # CaptureSettings → MarqueeAppearance / LoupeAppearance
@@ -201,6 +202,7 @@ src/
     │   └── CapturePreviewLogMessage.Tests.cs
     ├── Overlay/                           # 矩形オーバーレイの検証
     │   ├── OverlayLineDash.Tests.cs
+    │   ├── OverlayDashWalk.Tests.cs
     │   ├── OverlayRectLayout.Tests.cs
     │   └── OverlayRectRasterizer.Tests.cs
     ├── Presentation/                      # 提示の写像の検証

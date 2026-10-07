@@ -38,6 +38,7 @@
   - [8.2 `OverlayRectLayout`（描画入力の解決）](#82-overlayrectlayout描画入力の解決)
   - [8.3 `OverlayRectFrame`（描画入力）](#83-overlayrectframe描画入力)
   - [8.4 `OverlayLineStyle`（列挙型）](#84-overlaylinestyle列挙型)
+  - [8.5 `OverlayDashWalk`（内部・破線の分割）](#85-overlaydashwalk内部破線の分割)
 - [9. 領域選択の複合コントロール（`SelectionOverlay` 系）](#9-領域選択の複合コントロールselectionoverlay-系)
   - [9.1 `SelectionOverlayMode`（列挙型）](#91-selectionoverlaymode列挙型)
   - [9.2 `SelectionOverlayOptions`（設定の単一値）](#92-selectionoverlayoptions設定の単一値)
@@ -497,6 +498,16 @@ public readonly record struct OverlayRect(
 | `Solid` | 実線 |
 | `Dashed` | 破線（長いダッシュ。 ダッシュ長 8 / 間隔 4） |
 | `Dotted` | 点線（短いダッシュ。 ダッシュ長 2 / 間隔 2） |
+
+### 8.5 `OverlayDashWalk`（内部・破線の分割）
+
+矩形の 1 辺を破線の区間（画像ピクセル座標）へ分割する唯一の規則です（`internal`。 テストへ `InternalsVisibleTo` で公開）。
+**破線を描く 2 つの経路（外部提供矩形のラスタライズと選択矩形の破線オーバーレイ）が同じ幾何を使います**（経路ごとに刻みや端の扱いがずれると、同じスタイルでも破線の見た目が変わる）。
+
+| 型 / メンバー | 内容 |
+| --- | --- |
+| `OverlayDashWalk.Span` | 1 ダッシュ分の区間（`Horizontal` / `From` / `To` / `FixedCoord` / `Index`） |
+| `ForEach(from, to, dashed, dashLength, gapLength, sink)` | 1 辺を区間へ分割して `sink` へ通知する。 軸の判定（差分の大きい方）・ダッシュの刻み・端のクランプ・丸め（`CropBoundsMath.RoundToPixel`。 0.5 は切り上げ）を単一所有する。 実線は 1 画素刻みで、退化した辺（終点が始点より小さい）は通知しない |
 
 ## 9. 領域選択の複合コントロール（`SelectionOverlay` 系）
 
