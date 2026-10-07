@@ -163,9 +163,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 | 生成 | `ToAvaloniaImage` | `IImage ToAvaloniaImage(this EsBitmap bitmap)` | `IImage` アダプタ（`EsBitmapAvaloniaImage`）を生成（所有権が移る） |
 | 生成 | `CreateAvaloniaWriteableBitmap` | `static WriteableBitmap CreateAvaloniaWriteableBitmap(int width, int height, AvaloniaColor color)` | 単色の `WriteableBitmap` を生成 |
 | 生成 | `CreateAvaloniaImage` | `static EsBitmapAvaloniaImage CreateAvaloniaImage(int width, int height, AvaloniaColor color)` | 単色の `EsBitmapAvaloniaImage` を生成 |
-| 変換 | `Size` | `PixelSize Size(this EsBitmap bitmap)` | 画像サイズ（Avalonia `PixelSize`） |
-| 変換 | `Crop` | `EsBitmap Crop(this EsBitmap bitmap, PixelRect rect)` | Avalonia `PixelRect` で切り出し |
-| ピクセル | `GetPixel` / `SetPixel` / `TrySetPixel` / `Clear` | Avalonia Color / PixelPoint 版 | Avalonia 型でのピクセル操作 |
+| ピクセル | `SetPixel` | `void SetPixel(this EsBitmap bitmap, PixelPoint point, AvaloniaColor color)` | Avalonia 型でのピクセル書き込み（範囲外の無視が必要な場合はコアの `TrySetPixel` を `System.Drawing.Color` で使う） |
 
 | 型 | 説明 |
 | --- | --- |

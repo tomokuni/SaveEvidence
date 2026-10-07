@@ -9,7 +9,6 @@ using EsUtil.Feature.Loupe.AvaloniaUI;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.Views;
@@ -264,12 +263,12 @@ public partial class LineCanvasView : UserControl
                 continue;
             }
 
-            // 中心点 + 法線方向へ太さ分のピクセルを塗る（範囲外は EsBitmapAvaloniaExtensions.TrySetPixel が無視）
+            // 中心点 + 法線方向へ太さ分のピクセルを塗る（範囲外は EsBitmap.TrySetPixel が無視）
             for (int n = -half; n <= half; n++)
             {
                 int ox = (int)Math.Round(px + ux * n);
                 int oy = (int)Math.Round(py + uy * n);
-                bitmap.TrySetPixel(ox, oy, color);
+                bitmap.TrySetPixel(ox, oy, DrawingColor.FromArgb(color.A, color.R, color.G, color.B));
             }
         }
     }

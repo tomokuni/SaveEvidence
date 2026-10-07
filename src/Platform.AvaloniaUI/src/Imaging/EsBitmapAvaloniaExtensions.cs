@@ -5,8 +5,6 @@ using Avalonia.Platform;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native.Imaging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
-using SkiaSharp;
 using AvaloniaColor = Avalonia.Media.Color;
 using Color = System.Drawing.Color;
 
@@ -40,7 +38,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <param name="color">塗りつぶし色（Avalonia Color。 アルファ乗算して書き込む）。</param>
     /// <returns>単色の <see cref="WriteableBitmap"/>（所有権は呼び出し側）。</returns>
     /// <remarks>
-    /// 各テスト・サンプルで重複していた <c>new WriteableBitmap(...)</c> + 色塗りループを一元化する。<br/>
+    /// テスト・サンプルで重複していた <c>new WriteableBitmap(...)</c> + 色塗りループを一元化する。<br/>
     /// <see cref="EsBitmap.Create(int, int, System.Drawing.Color)"/> + <see cref="ToAvaloniaWriteableBitmap"/> で構築する。
     /// 生成に Skia（Avalonia ヘッドレス）が必要。<br/>
     /// <b>命名の理由</b>: <see cref="EsBitmap"/> の <c>Create</c>（<see cref="EsBitmap"/> を返すコア）と区別するため、
@@ -174,82 +172,10 @@ public static class EsBitmapAvaloniaExtensions
     public static IImage ToAvaloniaImage(this EsBitmap bitmap)
         => new EsBitmapAvaloniaImage(bitmap);
 
-    /// <summary>画像サイズ（Avalonia PixelSize）。</summary>
-    /// <param name="bitmap">対象のビットマップ。</param>
-    /// <returns>Avalonia PixelSize。</returns>
-    public static PixelSize Size(this EsBitmap bitmap)
-        => new(bitmap.Size.Width, bitmap.Size.Height);
-
-    /// <summary>Avalonia PixelRect で指定された矩形領域を切り出す。</summary>
-    /// <param name="bitmap">対象のビットマップ。</param>
-    /// <param name="rect">切り出し領域（画像ローカルピクセル）。</param>
-    /// <returns>切り出された新しいビットマップ（要求サイズ。 ソース範囲外は透明パディング）。</returns>
-    /// <remarks>
-    /// コアの <c>Crop(int, int, int, int)</c> へ委譲する。<br/>
-    /// 幅・高さが 0 以下の場合は <see cref="ArgumentOutOfRangeException"/>。
-    /// </remarks>
-    public static EsBitmap Crop(this EsBitmap bitmap, PixelRect rect)
-        => bitmap.Crop(rect.X, rect.Y, rect.Width, rect.Height);
-
-    /// <summary>指定座標（Avalonia PixelPoint）のピクセルを Avalonia Color で取得する。</summary>
-    /// <param name="bitmap">対象のビットマップ。</param>
-    /// <param name="point">座標（ピクセル）。</param>
-    /// <returns>取得した Avalonia Color。 範囲外は IndexOutOfRangeException。</returns>
-    public static AvaloniaColor GetPixel(this EsBitmap bitmap, PixelPoint point)
-    {
-        ArgumentNullException.ThrowIfNull(bitmap);
-
-        var color = bitmap.GetPixel(new EsPointInt(point.X, point.Y));
-        return AvaloniaColor.FromArgb(color.A, color.R, color.G, color.B);
-    }
-
     /// <summary>指定座標（Avalonia PixelPoint）へ Avalonia Color を書き込む。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <param name="point">座標（ピクセル）。</param>
     /// <param name="color">設定する Avalonia Color。 アルファ乗算して書き込む。</param>
     public static void SetPixel(this EsBitmap bitmap, PixelPoint point, AvaloniaColor color)
         => bitmap.SetPixel(new EsPointInt(point.X, point.Y), Color.FromArgb(color.A, color.R, color.G, color.B));
-
-    /// <summary>指定座標（ピクセル）へ Avalonia Color を書き込む（範囲外は無視）。</summary>
-    /// <param name="bitmap">対象のビットマップ。</param>
-    /// <param name="x">X 座標（ピクセル）。</param>
-    /// <param name="y">Y 座標（ピクセル）。</param>
-    /// <param name="color">設定する Avalonia Color。</param>
-    /// <returns>書き込めたかどうか。 範囲外の場合は false。</returns>
-    /// <remarks>
-    /// <see cref="EsBitmap.TrySetPixel"/> へ委譲する（Avalonia Color → System.Drawing Color へ変換）。<br/>
-    /// 範囲外チェックはコア側で行う。
-    /// </remarks>
-    public static bool TrySetPixel(this EsBitmap bitmap, int x, int y, AvaloniaColor color)
-        => bitmap.TrySetPixel(x, y, color.ToDrawingColor());
-
-    /// <summary>全ピクセルを指定色（Avalonia Color）で塗りつぶす。</summary>
-    /// <param name="bitmap">対象のビットマップ。</param>
-    /// <param name="color">塗りつぶし色。 アルファ乗算して書き込む。</param>
-    public static void Clear(this EsBitmap bitmap, AvaloniaColor color)
-    {
-        ArgumentNullException.ThrowIfNull(bitmap);
-
-        ArgumentNullException.ThrowIfNull(bitmap);
-
-        var premult = Premultiply(color);
-        // EsBitmap.Clear(byte b, byte g, byte r, byte a) は BGRA 順のため、SKColor(RGB) から BGRA へ並べ替えて委譲する。
-        bitmap.Clear(premult.Blue, premult.Green, premult.Red, premult.Alpha);
-    }
-
-    // 内部ヘルパー
-
-    /// <summary>Avalonia Color をアルファ乗算済み SKColor へ変換する。</summary>
-    /// <param name="color">変換対象の色。</param>
-    /// <returns>アルファ乗算済みの SKColor。</returns>
-    private static SKColor Premultiply(AvaloniaColor color)
-    {
-        var a = color.A;
-        if (a == 255) return new SKColor(color.R, color.G, color.B, a);
-        return new SKColor(
-            (byte)(color.R * a / 255),
-            (byte)(color.G * a / 255),
-            (byte)(color.B * a / 255),
-            a);
-    }
 }
