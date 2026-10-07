@@ -225,7 +225,7 @@ public sealed class ZoomViewControl : Panel
     public Rect ImageRectViewport()
     {
         var rect = Session.ImageRect;
-        return new Rect(rect.X, rect.Y, rect.Width, rect.Height);
+        return rect.ToAvaloniaRect();
     }
 
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準）。</summary>

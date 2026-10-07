@@ -39,7 +39,7 @@ internal static class SelectionOverlaySkiaRenderer
         foreach (var dash in SelectionOutlineRasterizer.EnumerateDashes(selectionSourceRect, captureTopLeft, scale, pixelSize))
         {
             paint.Color = (dash.IsColorA ? colorA : colorB).ToSKColor();
-            canvas.DrawRect(new SKRect(dash.X, dash.Y, dash.X + dash.Width, dash.Y + dash.Height), paint);
+            canvas.DrawRect(dash.Bounds.ToSKRect(), paint);
         }
     }
 

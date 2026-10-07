@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core;
-using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.MewUI;
@@ -354,7 +353,7 @@ public sealed class CropViewControl : Grid
     /// <returns>このコントロールのローカル座標（DIP）。</returns>
     /// <remarks>ホストが重ねたオーバーレイ上のホイール位置をズーム中心として渡すために使用する。</remarks>
     public EsPoint TranslatePositionFrom(Element element, EsPoint position)
-        => element.TranslatePoint(new Point(position.X, position.Y), this).ToEsPoint();
+        => element.TranslatePoint(position.ToMewUIPoint(), this).ToEsPoint();
 
     /// <summary>強調オーバーレイ（テスト用アクセサ。 強調矩形の写像と外観の反映を検証する）。</summary>
     internal MarqueeControl HighlightMarquee => _highlight;

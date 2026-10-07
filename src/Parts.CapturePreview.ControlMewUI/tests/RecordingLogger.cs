@@ -1,11 +1,12 @@
 using Microsoft.Extensions.Logging;
 
-namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.SelectionOverlay;
+namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests;
 
 /// <summary>ログ出力を収集するテスト用 <see cref="ILogger"/> 実装。</summary>
 /// <remarks>
 /// LoggerMessage ソース生成コードの state 走査（Count・インデクサ・列挙・範囲外アクセス）を実行させつつ、<br/>
-/// 整形済みのメッセージを収集して内容を検証できるようにする。
+/// 整形済みのメッセージを収集して内容を検証できるようにする。<br/>
+/// カテゴリごとのテスト（<c>Tests.*</c>）は親名前空間（<c>Tests</c>）の本型をそのまま参照できる。
 /// </remarks>
 internal sealed class RecordingLogger : ILogger
 {

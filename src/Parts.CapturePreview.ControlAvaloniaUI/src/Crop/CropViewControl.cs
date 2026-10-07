@@ -322,8 +322,8 @@ public sealed partial class CropViewControl : Panel
             return;
         }
 
-        var topLeft = SourceToClient(new Point(rect.X, rect.Y));
-        var bottomRight = SourceToClient(new Point(rect.Right, rect.Bottom));
+        var topLeft = SourceToClient(rect.TopLeft.ToAvaloniaPoint());
+        var bottomRight = SourceToClient(rect.BottomRight.ToAvaloniaPoint());
         _highlight.HighlightSourceRect = OverlayRectLayout.ViewportRectFromCorners(
             topLeft.ToEsPoint(), bottomRight.ToEsPoint());
     }
@@ -675,8 +675,8 @@ public sealed partial class CropViewControl : Panel
 
         foreach (var rect in Rects)
         {
-            var topLeft = SourceToClient(new Point(rect.Bounds.X, rect.Bounds.Y));
-            var bottomRight = SourceToClient(new Point(rect.Bounds.Right, rect.Bounds.Bottom));
+            var topLeft = SourceToClient(rect.Bounds.TopLeft.ToAvaloniaPoint());
+            var bottomRight = SourceToClient(rect.Bounds.BottomRight.ToAvaloniaPoint());
 
             var frame = OverlayRectLayout.Resolve(rect, topLeft.ToEsPoint(), bottomRight.ToEsPoint());
             var rectElement = CreateRectElement(frame);

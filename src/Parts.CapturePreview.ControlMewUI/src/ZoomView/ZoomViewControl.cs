@@ -548,19 +548,13 @@ public sealed class ZoomViewControl : SkiaCanvasView
         using var dark = new SKPaint { IsAntialias = false, Color = appearance.CheckerColorB.ToSKColor() };
 
         // 暗色で範囲を塗る（明色タイルの下地）
-        canvas.DrawRect(ToSkRect(area), dark);
+        canvas.DrawRect(area.ToSKRect(), dark);
 
         foreach (var tile in appearance.ComputeLightTileRects(area))
         {
-            canvas.DrawRect(ToSkRect(tile), light);
+            canvas.DrawRect(tile.ToSKRect(), light);
         }
     }
-
-    /// <summary>矩形を Skia の矩形へ変換する。</summary>
-    /// <param name="rect">変換する矩形（DIP）。</param>
-    /// <returns>Skia の矩形。</returns>
-    private static SKRect ToSkRect(EsRect rect)
-        => new((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
 
     /// <summary>オーバーレイスクロールバーを描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
@@ -600,16 +594,10 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
         if (drawTrack)
         {
-            canvas.DrawRect(ToSKRect(value.Track), trackPaint);
+            canvas.DrawRect(value.Track.ToSKRect(), trackPaint);
         }
 
-        canvas.DrawRect(ToSKRect(value.Thumb), thumbPaint);
+        canvas.DrawRect(value.Thumb.ToSKRect(), thumbPaint);
     }
-
-    /// <summary>ビューポート座標を Skia の矩形へ変換する。</summary>
-    /// <param name="rect">変換元の矩形（DIP）。</param>
-    /// <returns>Skia の矩形。</returns>
-    private static SKRect ToSKRect(EsRect rect)
-        => new((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
 }
 

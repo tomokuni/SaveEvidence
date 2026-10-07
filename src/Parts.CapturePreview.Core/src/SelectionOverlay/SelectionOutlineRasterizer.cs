@@ -167,5 +167,11 @@ internal static class SelectionOutlineRasterizer
     /// <param name="Height">高さ（ピクセル。 最低 1）。</param>
     /// <param name="IsColorA">true の場合は色 A、false の場合は色 B で描画する。</param>
     /// <remarks>水平な辺は高さ 1、垂直な辺は幅 1 になる。 画像の外側へはみ出す場合は描画側が無視する。</remarks>
-    internal readonly record struct Dash(int X, int Y, int Width, int Height, bool IsColorA);
+    internal readonly record struct Dash(int X, int Y, int Width, int Height, bool IsColorA)
+    {
+        /// <summary>破線 1 個分の矩形（左上と寸法）を取得する。</summary>
+        /// <value>破線の矩形（ピクセル座標）。</value>
+        /// <remarks>描画層が Skia / Avalonia の矩形へ写すための入口（座標を 1 つずつ取り出さない）。</remarks>
+        internal EsRect Bounds => new(X, Y, Width, Height);
+    }
 }

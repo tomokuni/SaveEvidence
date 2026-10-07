@@ -33,7 +33,7 @@ internal static class CropSkiaRenderer
 
         var bounds = frame.Bounds;
         var strokeWidth = (float)frame.Thickness;
-        var skRect = new SKRect((float)bounds.X, (float)bounds.Y, (float)bounds.Right, (float)bounds.Bottom);
+        var skRect = bounds.ToSKRect();
 
         // 枠線は矩形の内側に描く（Avalonia の Rectangle.Stroke と同じ見た目にする）
         var half = (float)frame.HalfThickness;

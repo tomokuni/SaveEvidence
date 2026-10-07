@@ -2,10 +2,13 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Platform.Skia;
 using SkiaSharp;
 
-
-namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.Crop;
+namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests;
 
 /// <summary>テストで共用するユーティリティ。</summary>
+/// <remarks>
+/// カテゴリごとのテスト（<c>Tests.Crop</c> / <c>Tests.SelectionOverlay</c> / <c>Tests.ZoomView</c>）は<br/>
+/// 親名前空間（<c>Tests</c>）の本型をそのまま参照できる（同名クラスの複製を作らない）。
+/// </remarks>
 internal static class TestHelper
 {
     /// <summary>指定サイズの単色画像を生成する。</summary>
@@ -32,6 +35,7 @@ internal static class TestHelper
 /// <summary>テスト用の描画先（キャンバスと画素読み取り）。</summary>
 /// <remarks>
 /// ウィンドウを必要としないため UI 初期化なしで検証できる。<br/>
+/// 初期状態は透明（ルーペのキャンバスと同じ前提）。<br/>
 /// 内部は乗算済みアルファで保持されるが、<c>SKBitmap.GetPixel</c> は非乗算の色を返す。
 /// </remarks>
 internal sealed class RenderTarget : IDisposable
@@ -60,6 +64,26 @@ internal sealed class RenderTarget : IDisposable
     /// <param name="y">Y 座標。</param>
     /// <returns>画素色（非乗算）。</returns>
     public SKColor GetPixel(int x, int y) => _bitmap.GetPixel(x, y);
+
+    /// <summary>指定色の画素が何個あるかを数える（画像全体）。</summary>
+    /// <param name="color">数える色。</param>
+    /// <returns>一致する画素数。</returns>
+    public int CountColor(SKColor color)
+    {
+        var count = 0;
+        for (var y = 0; y < _bitmap.Height; y++)
+        {
+            for (var x = 0; x < _bitmap.Width; x++)
+            {
+                if (GetPixel(x, y) == color)
+                {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
 
     /// <summary>指定領域に指定色の画素が何個あるかを数える。</summary>
     /// <param name="x0">左上 X 座標。</param>

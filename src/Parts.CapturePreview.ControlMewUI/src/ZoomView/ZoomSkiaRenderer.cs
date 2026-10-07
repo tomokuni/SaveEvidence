@@ -28,7 +28,7 @@ internal static class ZoomSkiaRenderer
         }
 
         var src = new SKRect(0, 0, source.Width, source.Height);
-        var dst = new SKRect((float)rect.X, (float)rect.Y, (float)rect.Right, (float)rect.Bottom);
+        var dst = rect.ToSKRect();
         canvas.DrawBitmap(source.ToSKBitmap(), src, dst);
     }
 }

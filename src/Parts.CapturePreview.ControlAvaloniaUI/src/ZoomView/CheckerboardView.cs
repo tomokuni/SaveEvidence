@@ -1,7 +1,7 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
@@ -48,12 +48,12 @@ internal sealed class CheckerboardView : Control
 
         context.FillRectangle(
             SolidColorBrushCache.GetOrCreate(appearance.CheckerColorB),
-            new Rect(area.X, area.Y, area.Width, area.Height));
+            area.ToAvaloniaRect());
 
         var lightBrush = SolidColorBrushCache.GetOrCreate(appearance.CheckerColorA);
         foreach (var tile in appearance.ComputeLightTileRects(area))
         {
-            context.FillRectangle(lightBrush, new Rect(tile.X, tile.Y, tile.Width, tile.Height));
+            context.FillRectangle(lightBrush, tile.ToAvaloniaRect());
         }
     }
 }
