@@ -94,30 +94,41 @@ public sealed partial class UndoPage : ViewModePageBase
             });
 
         // 1. Redo スタック（新しい順。 _redoStack[0] が現在に最も近い未来）
-        // UndoHistory は EsBitmap を保持し、表示境界で EsBitmapAvaloniaImage（IImage）へ変換する。
-        // 変換した IImage は UndoListItem が参照する（所有権は UndoHistory / ViewModel が保持）。
+        // UndoHistory は EsBitmap を保持し、表示境界で非所有アダプタ（IImage）へ変換する。
+        // 変換した IImage は UndoListItem が参照する（画像の所有は UndoHistory / ViewModel が保持し、
+        // アダプタは本ページが一覧の差し替え時に破棄する）。
         var redo = _undoHistory.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
-            AddItem(new EsBitmapAvaloniaImage(redo[i]), $"Redo {i + 1}", isCurrent: false);
+            AddItem(new EsImageSourceAdapter(redo[i]), $"Redo {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
         var currentImage = MainViewModel.PreviewImage;
         if (currentImage is not null)
         {
-            // 表示境界で IImage（EsBitmapAvaloniaImage）へ変換してサムネイルへ設定する。
-            AddItem(new EsBitmapAvaloniaImage(currentImage), "現在", isCurrent: true);
+            // 表示境界で IImage へ変換してサムネイルへ設定する。
+            AddItem(new EsImageSourceAdapter(currentImage), "現在", isCurrent: true);
         }
 
         // 3. Undo スタック（新しい順。 _stack[^1] が現在の直前）
         var undo = _undoHistory.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
-            AddItem(new EsBitmapAvaloniaImage(undo[i]), $"Undo {undo.Count - i}", isCurrent: false);
+            AddItem(new EsImageSourceAdapter(undo[i]), $"Undo {undo.Count - i}", isCurrent: false);
         }
 
         _viewModel.ItemCount = items.Count;
+
+        // 旧一覧のサムネイル（IImage は非所有のため、保持する本ページが破棄する）を解放してから差し替える
+        if (UndoListBox.ItemsSource is IEnumerable<UndoListItem> previous)
+        {
+            foreach (var old in previous)
+            {
+                (old.Thumbnail as IDisposable)?.Dispose();
+            }
+        }
+
         UndoListBox.ItemsSource = items;
     }
 
@@ -138,11 +149,10 @@ public sealed partial class UndoPage : ViewModePageBase
         {
             var tempFile = Path.Combine(Path.GetTempPath(), $"SaveEvidence_undo_{Guid.NewGuid():N}.png");
 
-            // サムネイルは IImage（EsBitmapAvaloniaImage）のため、保存用に Avalonia Bitmap へ一時変換する。
-            if (item.Thumbnail is EsBitmapAvaloniaImage unifiedImage && unifiedImage.Bitmap is { } bitmap)
+            // サムネイルは画像源アダプタ（IImage）のため、保存用に Avalonia Bitmap を借りる（破棄はアダプタの所有者）。
+            if (item.Thumbnail is EsImageSourceAdapter adapter)
             {
-                using var av = bitmap.ToAvaloniaBitmap();
-                av.Save(tempFile, PngBitmapEncoderOptions.Default);
+                adapter.GetAvaloniaBitmap().Save(tempFile, PngBitmapEncoderOptions.Default);
             }
             else
             {

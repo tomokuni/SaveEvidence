@@ -15,6 +15,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
@@ -78,6 +79,13 @@ internal sealed partial class CaptureOverlayWindow : Window
 
     /// <summary>撮影した画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時の範囲をコアが単一所有する）。</summary>
     private readonly CaptureImageHolder _captureImage;
+
+    /// <summary>表示境界の画像（<see cref="VirtualScreenImage"/>・ルーペの Source が共有する）。 本ウィンドウが破棄する。</summary>
+    /// <remarks>
+    /// <c>IImage</c>（Avalonia の表示用画像）は非所有の契約のため、設定しただけでは破棄されない。 <see cref="SetVirtualScreen"/> の差し替え時と
+    /// クローズ時に本ウィンドウが <see cref="EsImageSourceAdapter.Dispose"/> を呼ぶ（元画像は <see cref="_captureImage"/> が所有する）。
+    /// </remarks>
+    private EsImageSourceAdapter? _displayImage;
 
     /// <summary>カーソル下の要素のハイライト状態（対象座標への変換・表示名・ログをコアが単一所有する）。</summary>
     private readonly CaptureHighlightSession _highlight;

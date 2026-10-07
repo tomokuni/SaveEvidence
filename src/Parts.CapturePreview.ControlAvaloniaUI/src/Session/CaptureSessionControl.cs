@@ -173,7 +173,7 @@ public sealed class CaptureSessionControl : IDisposable
     /// <remarks>
     /// 切り出しの対象画像は <paramref name="cropView"/> が表示している画像（<see cref="CropViewControl.Source"/>）から解決する<br/>
     /// （画像を別引数で受け取らない。 表示している画像と切り出す画像を二重所有しない）。<br/>
-    /// 画像が設定されていない場合と表示アダプタ（<c>EsBitmapAvaloniaImage</c>）以外が設定されている場合は、<br/>
+    /// 画像が設定されていない場合と画像源（<c>IEsImageSource</c>）以外が設定されている場合は、<br/>
     /// 開始できなかったことを null の結果で表す（実行中の再呼び出しと同じ表現）。<br/>
     /// 切り出しの境界（元画像の範囲）は開始時に固定せず、確定時に<b>現在の画像</b>から都度解決する<br/>
     /// （実行中に画像が差し替わっても、差し替え後の画像の範囲で切り出せる）。<br/>

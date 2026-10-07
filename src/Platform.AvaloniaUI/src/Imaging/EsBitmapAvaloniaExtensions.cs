@@ -23,7 +23,8 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// <b>C# 拡張メソッド</b>: ファイル種別からの生成（<c>bitmap.ToEsBitmap()</c>）とインスタンス変換（<c>bmp.ToAvaloniaWriteableBitmap()</c> 等）は
 /// <c>this EsBitmap</c> / <c>this Bitmap</c> の拡張メソッドとして実装する。<br/>
 /// <br/>
-/// <b>所有権</b>: <c>ToAvaloniaWriteableBitmap()</c> / <c>ToAvaloniaImage()</c> は複製またはラップを返す（呼び出し側が所有）。
+/// <b>所有権</b>: <c>ToAvaloniaWriteableBitmap()</c> は複製を返す（呼び出し側が所有）。 <c>CreateAvaloniaImage</c> は
+/// 生成した画像を内包する <see cref="EsImageSourceAdapter"/>（非所有）を返す。
 /// </remarks>
 public static class EsBitmapAvaloniaExtensions
 {
@@ -52,22 +53,22 @@ public static class EsBitmapAvaloniaExtensions
         return bitmap.ToAvaloniaWriteableBitmap();
     }
 
-    /// <summary>単色の <see cref="EsBitmapAvaloniaImage"/> を生成する（Avalonia 表示境界の <see cref="IImage"/>）。</summary>
+    /// <summary>単色の Avalonia 画像（<see cref="IImage"/>）を生成する。</summary>
     /// <param name="width">幅（ピクセル）。 正の値。</param>
     /// <param name="height">高さ（ピクセル）。 正の値。</param>
     /// <param name="color">塗りつぶし色（Avalonia Color。 アルファ乗算して書き込む）。</param>
-    /// <returns>単色の <see cref="EsBitmapAvaloniaImage"/>（破棄は呼び出し側）。</returns>
+    /// <returns>単色の画像を所有する <see cref="EsImageSourceAdapter"/>（<b>破棄は呼び出し側</b>。 画像も併せて解放される）。</returns>
     /// <remarks>
-    /// <c>WriteableBitmap</c> を生成せず、<see cref="EsBitmap"/> を内包する <see cref="EsBitmapAvaloniaImage"/> を返す<br/>
-    /// （テスト・サンプルで多用する単色画像を、表示境界の <see cref="IImage"/> として簡便に生成する）。<br/>
-    /// <b>変換の回数</b>: 表示用の射影（<see cref="Bitmap"/>）は初回の描画で 1 回だけ作られ、以降の再描画では再利用される
-    /// （ピクセルの複製は 1 枚につき 1 回）。
+    /// テスト・サンプルで多用する単色画像を、表示境界の <see cref="IImage"/> として簡便に生成する。<br/>
+    /// 画像はコアの <see cref="EsBitmap"/> で作り、アダプタが所有する（<see cref="EsImageSourceAdapter.Adopt"/>。
+    /// Avalonia の描画バックエンドを必要としないため、初期化前のテストでも使える）。<br/>
+    /// 表示用の変換は<b>初回の描画で 1 回だけ</b>行う（ピクセルの複製は 1 枚につき 1 回）。
     /// </remarks>
-    public static EsBitmapAvaloniaImage CreateAvaloniaImage(int width, int height, AvaloniaColor color)
+    public static EsImageSourceAdapter CreateAvaloniaImage(int width, int height, AvaloniaColor color)
     {
         var colorArgb = Color.FromArgb(color.A, color.R, color.G, color.B);
-        var bitmap = EsBitmap.Create(width, height, colorArgb);
-        return new EsBitmapAvaloniaImage(bitmap);
+        // 新しく生成した画像を解放する人がいないため、所有する入口（Adopt）で包む
+        return EsImageSourceAdapter.Adopt(EsBitmap.Create(width, height, colorArgb));
     }
 
     /// <summary>Avalonia Bitmap からラッパーを生成する（複製するため元は変更されない）。</summary>
@@ -160,17 +161,6 @@ public static class EsBitmapAvaloniaExtensions
             new Vector(96, 96),
             bitmap.Stride);
     }
-
-    /// <summary>Avalonia の画像入力（<see cref="IImage"/>）として公開するアダプタを生成する（所有権が移る）。</summary>
-    /// <param name="bitmap">対象のビットマップ。</param>
-    /// <returns><see cref="EsBitmapAvaloniaImage"/>（所有権は <see cref="EsBitmapAvaloniaImage.Dispose"/> で解放する）。</returns>
-    /// <remarks>
-    /// 内包する <see cref="EsBitmap"/> の所有権は生成した <see cref="EsBitmapAvaloniaImage"/> へ移るため、
-    /// 呼び出し側は元の <paramref name="bitmap"/> を破棄しないこと（破棄漏れ・二重破棄防止）。<br/>
-    /// 表示用の射影（<see cref="Bitmap"/>）は初回の描画で 1 回だけ作られる（以降の再描画では再利用される）。
-    /// </remarks>
-    public static IImage ToAvaloniaImage(this EsBitmap bitmap)
-        => new EsBitmapAvaloniaImage(bitmap);
 
     /// <summary>指定座標（Avalonia PixelPoint）へ Avalonia Color を書き込む。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>

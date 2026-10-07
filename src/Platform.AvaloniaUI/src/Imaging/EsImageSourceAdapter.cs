@@ -17,7 +17,13 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// <b>不変条件</b>: 真実の内容は<b>本クラスを生成した後は書き換えないこと</b>（射影は初回で固定されるため、
 /// 書き換えても表示・コアの処理へ反映されない）。 内容を変える場合は新しい画像と新しい本クラスを生成する。<br/>
 /// <b>所有権</b>: 真実（どちらで受け取っても）は所有しない（破棄はホスト）。 射影だけが本クラスの所有物で、
-/// <see cref="Dispose"/> が解放する。<br/>
+/// <see cref="Dispose"/> が解放する。<b>例外は <see cref="Adopt"/> で生成した場合</b>で、このときだけ内包するコア画像も
+/// <see cref="Dispose"/> が解放する（新しく生成した画像を解放する人がいないため）。<br/>
+/// <b>破棄済みの扱い</b>: 真実の <see cref="EsBitmap"/> が破棄済みの場合、寸法や画像の取得は
+/// <see cref="ObjectDisposedException"/> を投げる（無効な画像の値を正常値として渡さない。 <see cref="Draw"/> だけは no-op）。<br/>
+/// <b>本クラス自体の破棄</b>: <see cref="IImage"/> は非所有の契約（<see cref="IImage"/> は <see cref="IDisposable"/> を継承せず、
+/// <c>Image.Source</c> の設定では破棄されない）のため、<b>本クラスを保持するホストが差し替え時に <see cref="Dispose"/> する</b>。
+/// 破棄しないと射影（Avalonia の <see cref="Bitmap"/>）が残る（4K で 33 MB/枚）。<br/>
 /// <b>変更操作は提供しない</b>: ピクセル操作・切り出しは提供しない（<see cref="EsBitmap"/> の API を使う）。
 /// </remarks>
 public sealed class EsImageSourceAdapter : IImage, IEsImageSource, IDisposable
@@ -34,6 +40,9 @@ public sealed class EsImageSourceAdapter : IImage, IEsImageSource, IDisposable
     /// <summary>Avalonia 側の射影（<see cref="EsBitmap"/> を真実とした場合に初回だけ作る）。 所有権は本クラス。</summary>
     private Bitmap? _avaloniaProjection;
 
+    /// <summary>内包するコア画像を所有するかどうか（<see cref="Adopt"/> で生成した場合のみ true）。</summary>
+    private readonly bool _ownsSource;
+
     /// <summary>Avalonia の画像からアダプタを生成する（表示はそのまま、コアへは初回に複製する）。</summary>
     /// <param name="source">真実となる Avalonia の画像。 破棄はホストが行う。</param>
     /// <remarks><see cref="Bitmap"/> の派生（<c>WriteableBitmap</c> 等）も受け付ける。</remarks>
@@ -45,24 +54,93 @@ public sealed class EsImageSourceAdapter : IImage, IEsImageSource, IDisposable
     public EsImageSourceAdapter(EsBitmap source)
         => _es = source ?? throw new ArgumentNullException(nameof(source));
 
-    /// <inheritdoc/>
-    public int Width => _es?.Width ?? _avalonia!.PixelSize.Width;
+    /// <summary>画像を引き取って所有するアダプタを生成する（<see cref="Dispose"/> で画像も解放する）。</summary>
+    /// <param name="source">所有するコアの画像。</param>
+    /// <returns>画像を所有するアダプタ。</returns>
+    /// <remarks>
+    /// <b>生成した画像を解放する人がいない場合に限る</b>（借用して包む場合はコンストラクタを使う）。<br/>
+    /// 所有の有無を生成の入口で分けることで、コンストラクタ（非所有）の意味を変えない
+    /// （アダプタは「表示の適合」と「自分の射影の解放」だけを担い、元画像は生成した側が解放するのが原則）。
+    /// </remarks>
+    public static EsImageSourceAdapter Adopt(EsBitmap source) => new(source, ownsSource: true);
+
+    /// <summary>画像を所有するかどうかを指定して生成する（所有の入口は <see cref="Adopt"/> だけに集約する）。</summary>
+    /// <param name="source">真実となるコアの画像。</param>
+    /// <param name="ownsSource">true の場合は本クラスが <paramref name="source"/> も解放する。</param>
+    private EsImageSourceAdapter(EsBitmap source, bool ownsSource)
+    {
+        _es = source ?? throw new ArgumentNullException(nameof(source));
+        _ownsSource = ownsSource;
+    }
 
     /// <inheritdoc/>
-    public int Height => _es?.Height ?? _avalonia!.PixelSize.Height;
+    /// <exception cref="ObjectDisposedException">真実の <see cref="EsBitmap"/> が破棄済みの場合。</exception>
+    public int Width
+    {
+        get
+        {
+            if (_es is { } es)
+            {
+                es.ThrowIfDisposed();
+                return es.Width;
+            }
+
+            return _avalonia!.PixelSize.Width;
+        }
+    }
+
+    /// <inheritdoc/>
+    /// <exception cref="ObjectDisposedException">真実の <see cref="EsBitmap"/> が破棄済みの場合。</exception>
+    public int Height
+    {
+        get
+        {
+            if (_es is { } es)
+            {
+                es.ThrowIfDisposed();
+                return es.Height;
+            }
+
+            return _avalonia!.PixelSize.Height;
+        }
+    }
 
     /// <summary>表示サイズ（DIP）。</summary>
     /// <value>真実の画像から得られる <see cref="Size"/>。</value>
-    public Size Size => _es is { } es ? new Size(es.Width, es.Height) : _avalonia!.Size;
+    /// <exception cref="ObjectDisposedException">真実の <see cref="EsBitmap"/> が破棄済みの場合。</exception>
+    public Size Size
+    {
+        get
+        {
+            if (_es is { } es)
+            {
+                es.ThrowIfDisposed();
+                return new Size(es.Width, es.Height);
+            }
+
+            return _avalonia!.Size;
+        }
+    }
 
     /// <summary>コアの画像を取得する。</summary>
     /// <returns>コアの画像。<b>借用</b>（破棄・書き換えを行わない）。</returns>
     /// <remarks>
     /// <see cref="EsBitmap"/> を真実とした場合はそれをそのまま返す（恒等）。<br/>
-    /// <see cref="Bitmap"/> を真実とした場合は初回だけ <c>ToEsBitmap()</c> で複製し、以降は同じ結果を再利用する。
+    /// <see cref="Bitmap"/> を真実とした場合は初回だけ <c>ToEsBitmap()</c> で複製し、以降は同じ結果を再利用する。<br/>
+    /// <b>真実が破棄済みの場合は <see cref="ObjectDisposedException"/></b>（無効な画像を渡さない。 null を返して
+    /// 呼び出し側へ判定を強いない）。
     /// </remarks>
+    /// <exception cref="ObjectDisposedException">真実の <see cref="EsBitmap"/> が破棄済みの場合。</exception>
     public EsBitmap GetEsBitmap()
-        => _es ?? (_esProjection ??= _avalonia!.ToEsBitmap());
+    {
+        if (_es is { } es)
+        {
+            es.ThrowIfDisposed();
+            return es;
+        }
+
+        return _esProjection ??= _avalonia!.ToEsBitmap();
+    }
 
     /// <summary>Avalonia の画像を取得する。</summary>
     /// <returns>Avalonia の画像。<b>借用</b>（破棄しない）。</returns>
@@ -71,8 +149,18 @@ public sealed class EsImageSourceAdapter : IImage, IEsImageSource, IDisposable
     /// <see cref="EsBitmap"/> を真実とした場合は初回だけ <c>ToAvaloniaBitmap()</c> で複製し、以降は同じ結果を再利用する。<br/>
     /// 保存（<c>Save</c>）・クリップボード（<c>SetBitmapAsync</c>）のように具体型 <see cref="Bitmap"/> を要求する API へ渡す用途。
     /// </remarks>
+    /// <exception cref="ObjectDisposedException">真実の <see cref="EsBitmap"/> が破棄済みの場合。</exception>
     public Bitmap GetAvaloniaBitmap()
-        => _avalonia ?? (_avaloniaProjection ??= _es!.ToAvaloniaBitmap());
+    {
+        if (_avalonia is { } avalonia)
+        {
+            return avalonia;
+        }
+
+        var es = _es!;
+        es.ThrowIfDisposed();
+        return _avaloniaProjection ??= es.ToAvaloniaBitmap();
+    }
 
     /// <summary>画像を描画する（<see cref="IImage"/>）。</summary>
     /// <param name="context">描画コンテキスト。</param>
@@ -108,7 +196,7 @@ public sealed class EsImageSourceAdapter : IImage, IEsImageSource, IDisposable
 
     /// <summary>射影を解放する（冪等）。</summary>
     /// <remarks>
-    /// 真実は所有しないため破棄しない（ホストが破棄する）。 解放するのは射影のみ。<br/>
+    /// <see cref="Adopt"/> で生成した場合は内包する画像も解放する（それ以外は所有しないため破棄しない）。<br/>
     /// 破棄後に <see cref="GetEsBitmap"/> / <see cref="GetAvaloniaBitmap"/> / <see cref="Draw"/> を呼ぶと
     /// 真実が生存していれば再び射影が作られる（真実が破棄済みの場合は <see cref="GetEsBitmap"/> が例外、
     /// <see cref="Draw"/> が no-op）。
@@ -119,5 +207,10 @@ public sealed class EsImageSourceAdapter : IImage, IEsImageSource, IDisposable
         _esProjection = null;
         _avaloniaProjection?.Dispose();
         _avaloniaProjection = null;
+
+        if (_ownsSource)
+        {
+            _es!.Dispose();
+        }
     }
 }

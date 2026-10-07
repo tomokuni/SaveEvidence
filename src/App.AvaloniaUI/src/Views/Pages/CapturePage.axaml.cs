@@ -56,6 +56,10 @@ public sealed partial class CapturePage : UserControl
     /// <summary>進行中の Crop セッションの Task。</summary>
     private Task<EsRectInt?>? _cropTask;
 
+    /// <summary>プレビューの表示用画像（ViewModel の画像を借りて包む非所有アダプタ）。 差し替え時に本ページが破棄する。</summary>
+    /// <remarks><see cref="IImage"/> は非所有の契約のため、設定しただけでは破棄されない（射影が残る）。</remarks>
+    private EsImageSourceAdapter? _cropViewSource;
+
     // Undo スタック（DI から取得するシングルトン。 UndoPage と共有）
     private readonly UndoHistory _undoHistory = null!;
 
@@ -130,9 +134,11 @@ public sealed partial class CapturePage : UserControl
                 case nameof(MainViewModel.PreviewImage):
                     OnPreviewImageChanged();
                     // PreviewImage（EsBitmap）を表示境界で Avalonia 画像（IImage）へ変換して CropView へ設定する。
-                    // WriteableBitmap を生成せず、EsBitmap を内包した EsBitmapAvaloniaImage を設定する（Skia 直描画）。
-                    // 所有権は ViewModel（PreviewImage）が保持し、本コントロールは共有参照のみ（Dispose しない）。
-                    CropView.Source = _viewModel.PreviewImage is { } bmp ? new EsBitmapAvaloniaImage(bmp) : null;
+                    // 画像の所有は ViewModel（PreviewImage）が保持し、本ページは非所有アダプタで包むだけ。
+                    // IImage は非所有のため、差し替え時に本ページが旧アダプタを破棄する（射影の解放）。
+                    _cropViewSource?.Dispose();
+                    _cropViewSource = _viewModel.PreviewImage is { } bmp ? new EsImageSourceAdapter(bmp) : null;
+                    CropView.Source = _cropViewSource;
                     break;
                 case nameof(MainViewModel.SaveFolderPath):
                     // 保存先フォルダの変更を保存ボタンの ToolTip に反映する

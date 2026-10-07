@@ -145,6 +145,61 @@ public class EsImageSourceAdapterTests
     }
 
     [AvaloniaFact]
+    internal void 幅と高さが真実の画像と一致する()
+    {
+        using var bmp = EsBitmap.Create(12, 7);
+        using var adapter = new EsImageSourceAdapter(bmp);
+
+        Assert.Equal(12, adapter.Width);
+        Assert.Equal(7, adapter.Height);
+    }
+
+    [AvaloniaFact]
+    internal void 真実が破棄済みの場合は取得で例外を投げる()
+    {
+        var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
+        using var adapter = new EsImageSourceAdapter(bmp);
+        bmp.Dispose();
+
+        // 破棄済みの真実は渡さない（null を返して呼び出し側へ判定を強いない）
+        Assert.Throws<ObjectDisposedException>(() => adapter.GetEsBitmap());
+        Assert.Throws<ObjectDisposedException>(() => adapter.GetAvaloniaBitmap());
+    }
+
+    [AvaloniaFact]
+    internal void 真実が破棄済みの場合は寸法の取得でも例外を投げる()
+    {
+        var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
+        using var adapter = new EsImageSourceAdapter(bmp);
+        bmp.Dispose();
+
+        // 寸法も「無効な画像の値」を返さない（破棄済みを正常値として扱う誤りを防ぐ）
+        Assert.Throws<ObjectDisposedException>(() => adapter.Width);
+        Assert.Throws<ObjectDisposedException>(() => adapter.Height);
+        Assert.Throws<ObjectDisposedException>(() => adapter.Size);
+    }
+
+    // ====================================================================
+    // 画像を所有する生成（Adopt）
+    // ====================================================================
+
+    [AvaloniaFact]
+    internal void Adoptで生成するとDisposeで真実も破棄する()
+    {
+        var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
+        var adapter = EsImageSourceAdapter.Adopt(bmp);
+
+        adapter.Dispose();
+
+        // 生成した画像を解放する人がいないため、アダプタが引き取る
+        Assert.True(bmp.IsDisposed);
+    }
+
+    [AvaloniaFact]
+    internal void Adoptの引数nullはArgumentNullExceptionを投げる()
+        => Assert.Throws<ArgumentNullException>(() => EsImageSourceAdapter.Adopt(null!));
+
+    [AvaloniaFact]
     internal void コンストラクタ_nullはArgumentNullExceptionを投げる()
     {
         Assert.Throws<ArgumentNullException>(() => new EsImageSourceAdapter((EsBitmap)null!));

@@ -522,7 +522,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 ### 7.2 StartCropAsync
 
 1. 切り出しの対象画像は `CropViewControl` が表示している画像（`CropViewControl.Source`）から解決する（画像を引数で受け取らない）。
-   - 画像が未設定、または表示アダプタ（`EsBitmapAvaloniaImage`）以外の場合は開始しない（結果 null。 実行中の再呼び出しと同じ表現）
+   - 画像が未設定、または表示アダプタ（`EsImageSourceAdapter`）以外の場合は開始しない（結果 null。 実行中の再呼び出しと同じ表現）
    - 画像サイズが 0 の場合は `ArgumentException`（「サイズが 0 の画像は切り出せない」規則はコアの `CropClipMath.ValidateImage` が単一所有する）
    - 開始できた場合は `CropSession` を生成 → `RunAsync`
 2. **複合コントロール `SelectionOverlayControl`（Marquee（外側の装飾を含む）+ Loupe の配線を内包）を `CropViewControl.Rects` へ配置**（1 コントロールで完結）
@@ -549,7 +549,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 - `StartCaptureAsync` / `StartCropAsync` は **UI スレッドから呼び出す**こと。
 - 実行中の再呼び出しは `null` を返します（既存セッションを継続）。 呼び出し側は null を「進行中のため開始できない」と解釈してください。
 - `Dispose()` 後の公開操作は `ObjectDisposedException` を投げます。
-- `StartCropAsync` の `cropView` は `CropViewControl`（ズーム + 領域選択 + ルーペを内包した複合コントロール）です。 選択矩形のオーバーレイ（Marquee / Loupe）はセッションが `CropViewControl.Rects` へ配置するため、利用側での配置は不要です（ズーム・パン・Fit・座標変換は内包する `ZoomViewControl` が単一所有）。 切り出しの対象画像は `cropView.Source` に `EsBitmapAvaloniaImage` として設定しておく必要があります（未設定・非対応の場合は開始せず結果 null）。
+- `StartCropAsync` の `cropView` は `CropViewControl`（ズーム + 領域選択 + ルーペを内包した複合コントロール）です。 選択矩形のオーバーレイ（Marquee / Loupe）はセッションが `CropViewControl.Rects` へ配置するため、利用側での配置は不要です（ズーム・パン・Fit・座標変換は内包する `ZoomViewControl` が単一所有）。 切り出しの対象画像は `cropView.Source` に `EsImageSourceAdapter` として設定しておく必要があります（未設定・非対応の場合は開始せず結果 null。 `EsImageSourceAdapter` は `IImage` の非所有契約のため、差し替え時に旧アダプタを破棄するのは画像を設定する側です）。
 - `CropViewControl` / `SelectionOverlayControl` は本アセンブリが公開する複合コントロールです（別プロジェクトではありません）。
 - `CaptureSettings` の数値メンバーは `Validate()` で範囲チェックされ、範囲外は `ArgumentOutOfRangeException` を投げます。
 - キャプチャ画像へのオーバーレイ写り込みは `IWindowService.SetCaptureExclusion`（Windows 10 2004+）で防止します。 それ以前の Windows では写り込みが発生する可能性があります。

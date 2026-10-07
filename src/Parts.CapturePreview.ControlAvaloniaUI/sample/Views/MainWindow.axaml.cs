@@ -43,8 +43,11 @@ public sealed partial class MainWindow : Window
     /// <summary>ビューモデル。</summary>
     private readonly MainWindowViewModel _vm = new();
 
-    /// <summary>Crop プレビュー用のダミー画像（EsBitmapAvaloniaImage。 表示用の変換は初回のみ）。</summary>
-    private EsBitmapAvaloniaImage? _previewBitmap;
+    /// <summary>Crop プレビュー用の画像の元（本ウィンドウが所有する。 差し替え・クローズで破棄する）。</summary>
+    private EsBitmap? _previewEs;
+
+    /// <summary>Crop プレビュー用の表示画像（<see cref="_previewEs"/> を借りて包む非所有アダプタ）。</summary>
+    private EsImageSourceAdapter? _previewImage;
 
     /// <summary>スライダ同期中の再入防止フラグ（プログラム側の同期による ValueChanged を無視する）。</summary>
     private bool _isSyncingZoomSlider;
@@ -77,19 +80,23 @@ public sealed partial class MainWindow : Window
         // ウィンドウクローズ時に CaptureSessionControl を破棄する
         Closed += (_, _) =>
         {
-            _previewBitmap?.Dispose();
+            _previewImage?.Dispose();
+            _previewEs?.Dispose();
             _capture.Dispose();
         };
     }
 
     /// <summary>プレビュー画像を差し替える（旧画像は破棄し、ViewModel の表示も更新する）。</summary>
     /// <param name="bitmap">新しいプレビュー画像。 所有権は本ウィンドウへ移る。</param>
-    private void SetPreviewBitmap(EsBitmapAvaloniaImage bitmap)
+    private void SetPreviewBitmap(EsBitmap bitmap)
     {
-        _previewBitmap?.Dispose();
-        _previewBitmap = bitmap;
-        PreviewCropView.Source = bitmap;
-        _vm.PreviewImageSizeText = $"プレビュー: {bitmap.Size.Width} x {bitmap.Size.Height}";
+        // 旧のアダプタと画像を破棄してから差し替える（IImage は非所有のため、保持するホストが破棄する）
+        _previewImage?.Dispose();
+        _previewEs?.Dispose();
+        _previewEs = bitmap;
+        _previewImage = new EsImageSourceAdapter(bitmap);
+        PreviewCropView.Source = _previewImage;
+        _vm.PreviewImageSizeText = $"プレビュー: {bitmap.Width} x {bitmap.Height}";
     }
 
     /// <summary>プレビューのズーム状態が変化したときに、ボタンの可否・スライダ・表示テキストを同期する。</summary>
@@ -156,7 +163,7 @@ public sealed partial class MainWindow : Window
     /// <param name="e">ポインタイベント。</param>
     private void OnPreviewPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_previewBitmap is not { } img)
+        if (_previewEs is not { } img)
         {
             PointerPositionText.Text = "ポインタ: -";
             return;
@@ -206,7 +213,7 @@ public sealed partial class MainWindow : Window
         {
             using var stream = File.OpenRead(files[0].Path.LocalPath);
             using var bitmap = new Bitmap(stream);
-            SetPreviewBitmap(new EsBitmapAvaloniaImage(bitmap.ToEsBitmap()));
+            SetPreviewBitmap(bitmap.ToEsBitmap());
             _vm.AddLog($"[App] 画像を読み込みました: {files[0].Name}");
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
@@ -284,7 +291,7 @@ public sealed partial class MainWindow : Window
     /// <param name="e">イベント引数。</param>
     private async void OnCropClicked(object? sender, RoutedEventArgs e)
     {
-        if (_previewBitmap is null)
+        if (_previewEs is null)
         {
             _vm.AddLog("[App] プレビュー画像がありません。");
             return;
@@ -337,13 +344,12 @@ public sealed partial class MainWindow : Window
     /// <summary>グリッド付きのダミー画像を生成する（Crop プレビュー用）。</summary>
     /// <param name="width">画像の幅。</param>
     /// <param name="height">画像の高さ。</param>
-    /// <returns>生成した <see cref="EsBitmapAvaloniaImage"/>（<see cref="Avalonia.Media.IImage"/> として表示できる）。</returns>
+    /// <returns>生成した画像（<see cref="EsBitmap"/>。 呼び出し側（<see cref="SetPreviewBitmap"/>）が所有する）。</returns>
     /// <remarks>
     /// 白地に 100px 間隔の薄いグリッドと、中央に色付きの矩形を描画する（サイズ感・座標の確認用）。<br/>
-    /// <b>EsBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、
-    /// <see cref="EsBitmapAvaloniaImage"/>（表示用の変換は初回のみ）として表示できる。
+    /// <b>EsBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、ピクセル操作が安定する。
     /// </remarks>
-    private static EsBitmapAvaloniaImage CreateDummyBitmap(int width, int height)
+    private static EsBitmap CreateDummyBitmap(int width, int height)
     {
         var bitmap = EsBitmap.Create(width, height);
 
@@ -375,6 +381,6 @@ public sealed partial class MainWindow : Window
             }
         }
 
-        return new EsBitmapAvaloniaImage(bitmap);
+        return bitmap;
     }
 }

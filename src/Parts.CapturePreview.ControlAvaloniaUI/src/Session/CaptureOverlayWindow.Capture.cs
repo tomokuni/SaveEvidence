@@ -168,6 +168,8 @@ internal sealed partial class CaptureOverlayWindow
         SelectionOverlay.ClearLoupe();
         // 表示境界の画像（VirtualScreenImage・ルーペ Source は EsBitmap を共有）を解除する
         VirtualScreenImage.Source = null;
+        _displayImage?.Dispose();
+        _displayImage = null;
         // 保持している画像を破棄する（以降に届いた画像はコアがその場で破棄する）
         _captureImage.Dispose();
         // 事前切り出しキャッシュも解放する（保持中の画像の破棄はコアが担う）
@@ -192,18 +194,18 @@ internal sealed partial class CaptureOverlayWindow
         if (!_captureImage.Set(bitmap, origin.ToEsPointInt())) return;
 
         _log.LogVirtualScreen(origin.ToEsPointInt(), bitmap);
-        // 固定背景画像（VirtualScreenImage）とルーペの拡大元画像（Source）へ同一の EsBitmapAvaloniaImage を設定する。
-        // WriteableBitmap を生成せず、EsBitmap を内包した IImage（EsBitmapAvaloniaImage）を Source に設定する
-        // （表示用の変換は初回のみ。 破棄はコアの保持クラスの Dispose が一元管理する）。
-        EsBitmapAvaloniaImage? displayImage = bitmap is null ? null : new EsBitmapAvaloniaImage(bitmap);
-        VirtualScreenImage.Source = displayImage;
+        // 旧のアダプタを破棄してから差し替える（IImage は非所有のため、保持するホストが Dispose する）。
+        // 元画像（EsBitmap）はコアの保持クラスが所有し、このアダプタは借用して包むだけ。
+        _displayImage?.Dispose();
+        _displayImage = bitmap is null ? null : new EsImageSourceAdapter(bitmap);
+        VirtualScreenImage.Source = _displayImage;
 
-        // ルーペの Source を設定する（同一の EsBitmapAvaloniaImage を共有する）。
+        // ルーペの Source を設定する（固定背景画像と同一のアダプタを共有する）。
         // Source 未設定の間はルーペが表示されない（市松模様防止）ため、ここで Source を設定し、
         // 既にドラッグ中（CenterPoint 設定済み）なら SetLoupePosition を再呼び出しして表示を開始する。
-        if (displayImage is not null && !CaptureTypeTraits.IsHighlighted(_captureType))
+        if (_displayImage is not null && !CaptureTypeTraits.IsHighlighted(_captureType))
         {
-            SelectionOverlay.SetLoupeSource(displayImage);
+            SelectionOverlay.SetLoupeSource(_displayImage);
             if (SelectionOverlay.LoupeCenterPoint is { } center)
             {
                 SelectionOverlay.SetLoupePosition(center);
