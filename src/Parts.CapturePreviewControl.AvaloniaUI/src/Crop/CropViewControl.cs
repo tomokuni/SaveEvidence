@@ -135,19 +135,20 @@ public sealed partial class CropViewControl : Panel
     /// <param name="e">ホイールイベント。</param>
     /// <remarks>
     /// Ctrl 併用はズーム（発生位置をズーム中心にする）、それ以外はパンとする。<br/>
-    /// 解釈（どちらを選ぶか）と回転量 → 移動量の換算はビューポート（<c>ZoomViewControl</c>）が単一所有する<br/>
+    /// 解釈（どちらを選ぶか）はコアの <see cref="ZoomWheelIntent"/>、回転量 → 移動量の換算はビューポート（<c>ZoomViewControl</c>）が単一所有する<br/>
     /// （オーバーレイは入力を受けるだけであり、ビューの状態を変更しない）。
     /// </remarks>
     private void OnSelectionOverlayWheelChanged(object? sender, PointerWheelEventArgs e)
     {
-        if ((e.KeyModifiers & KeyModifiers.Control) != 0)
+        var intent = ZoomWheelIntent.Resolve(
+            (e.KeyModifiers & KeyModifiers.Control) != 0, (e.KeyModifiers & KeyModifiers.Shift) != 0, e.Delta.Y);
+        if (intent.IsZoom)
         {
-            _zoomView.ZoomByWheel(e.Delta.Y > 0, ToViewportPosition(e.GetPosition(_selectionOverlay).ToEsPoint()));
+            _zoomView.ZoomByWheel(intent.ZoomIn, ToViewportPosition(e.GetPosition(_selectionOverlay).ToEsPoint()));
         }
         else
         {
-            _zoomView.PanByWheel(
-                new EsVector(e.Delta.X, e.Delta.Y).ToAvaloniaVector(), (e.KeyModifiers & KeyModifiers.Shift) != 0);
+            _zoomView.PanByWheel(new EsVector(e.Delta.X, e.Delta.Y).ToAvaloniaVector(), intent.ScrollHorizontal);
         }
 
         e.Handled = true;

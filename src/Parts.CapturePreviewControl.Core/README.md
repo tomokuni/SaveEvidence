@@ -50,6 +50,7 @@
 - **切り出しビューの画像ビューポートの状態と判断**（`ZoomViewSession`）: 内部ズーム率（0 = Fit）・オフセット・設定・表示条件を保持し、Fit の表現（内部ズーム率 0 = 自動）・実効ズーム率の導出・ズーム可否・遷移の適用（ズーム中心の維持）・パン（grab 方式）・スクロールバーのドラッグ・画像変更時の Fit 復帰を単一所有する（UI は入力の変換・効果の適用・描画だけを担う）
 - **ズーム遷移の規則**（`ZoomTransition` / `ZoomOptions`）: ⊖⊕ の 23 段階遷移・Ctrl+ホイールの ×1.1 遷移・可否判定を単一所有する。 設定は `ZoomOptions`（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels` の検証付き不変値）が持ち、既定は 10〜500%・ 23 段階・×1.1
 - **画像ビューポートの幾何**（`ZoomMath` / `ZoomScrollBarGeometry`）: Fit 実効倍率・ズーム中心を維持するオフセット・スクロール範囲のクランプ・ビューポート ⇔ コンテンツ座標の変換・% ⇔ 倍率の換算と、オーバーレイスクロールバーのトラック・サムの矩形と可動範囲・サム位置からのオフセット逆算を単一所有する
+- **ホイール入力の解釈**（`ZoomWheelIntent`）: 「Ctrl 併用 = ズーム（前方向 = 拡大）/ それ以外 = パン（Shift 併用 = 横方向）」を単一所有する（UI ごとに論理式を書かない）。 回転量 → 移動量の換算と適用は `ZoomViewSession.ZoomByWheel` / `PanByWheel` が担う
 - **画像ビューポートの外観**（`ZoomViewAppearance`）: 下地・市松模様（タイルサイズと 2 色）・スクロールバーの外観を単一値で保持し、描画可否と、市松模様を描く範囲（画像の表示矩形の内側）・明色タイル矩形・タイルサイズの実効値を単一所有する
 - **画像ビューポートの通知と効果**（`ZoomState` / `ZoomFeedback` / `ZoomNotice`）: 通知する 4 値（実効ズーム率・Fit 状態・可否）・UI が適用する効果（再描画・ポインタキャプチャ。 適用順）・通知の種別を単一所有する
 - **画像ビューポートのズーム操作ログ**（`CapturePreviewLogMessage` の `LogZoomIn` / `LogZoomOut` / `LogZoomInWheel` / `LogZoomOutWheel`）: ズーム操作の実行前後（例: `[CapturePreviewControl] ZoomIn: 50% -> 62%`）と、変更前の実効ズーム率の丸め（`Percent`）を単一所有する

@@ -51,6 +51,7 @@
   - [10.6 `ZoomScrollBar` / `ZoomScrollBarMetrics` / `ZoomScrollBarGeometry` / `ZoomAvailability`](#106-zoomscrollbar--zoomscrollbarmetrics--zoomscrollbargeometry--zoomavailability)
   - [10.7 `CapturePreviewLogMessage`（ズーム操作のログ）](#107-capturepreviewlogmessageズーム操作のログ)
   - [10.8 `ZoomState` / `ZoomFeedback` / `ZoomNotice`（契約）](#108-zoomstate--zoomfeedback--zoomnotice契約)
+  - [10.9 `ZoomWheelIntent`（ホイールの解釈）](#109-zoomwheelintentホイールの解釈)
 - [11. 提示の写像（`Presentation` 系）](#11-提示の写像presentation-系)
   - [11.1 CapturePaintMapper（内部）](#111-capturepaintmapper内部)
   - [11.2 SelectionOverlayChildValues](#112-selectionoverlaychildvalues)
@@ -670,6 +671,14 @@ public readonly record struct OverlayRect(
 | `ZoomState` | 通知する 4 値（`ZoomPercent` / `IsFit` / `CanZoomIn` / `CanZoomOut`） |
 | `ZoomFeedback` | UI が適用する効果（`ShouldRedraw` / `ShouldCapturePointer` / `ShouldReleasePointer`）。 `ApplyVisual` / `ApplyPointer` に**適用順を単一所有**する |
 | `ZoomNotice` / `ZoomNoticeKind` | 通知の種別（`ZoomChanged` / `ViewportChanged`）と通知時点の値（`State` / `ImageRect`）。 `ZoomChanged` は確定した 4 値、`ViewportChanged` は画像の表示矩形を運び、オーバーレイが同じ矩形を参照できるようにする |
+
+### 10.9 `ZoomWheelIntent`（ホイールの解釈）
+
+| 型 | 内容 |
+| --- | --- |
+| `ZoomWheelIntent` | ホイール入力をどの操作へ割り当てるか（`IsZoom` / `ZoomIn` / `ScrollHorizontal`） |
+
+`ZoomWheelIntent.Resolve(isControlPressed, isShiftPressed, deltaY)` は「Ctrl 併用 = ズーム（前方向 = 拡大）/ それ以外 = パン（Shift 併用 = 横方向。 Ctrl が優先）」という**ホイール入力の解釈**を単一所有します。 UI は本値を得て `ZoomViewSession.ZoomByWheel` / `PanByWheel` のどちらを呼ぶかを決めるだけで、修飾キーの組み合わせを自前で判定しません。 拡大の中心（ポインタ位置）は UI が渡します（位置の決め方は入力経路に属するため）。
 
 ## 11. 提示の写像（`Presentation` 系）
 

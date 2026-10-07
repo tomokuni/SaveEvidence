@@ -398,13 +398,14 @@ public sealed class ZoomViewControl : SkiaCanvasView
     {
         base.OnMouseWheel(e);
 
-        if (e.ControlKey)
+        var intent = ZoomWheelIntent.Resolve(e.ControlKey, e.ShiftKey, e.Delta.Y);
+        if (intent.IsZoom)
         {
-            ZoomByWheel(e.Delta.Y > 0, e.GetPosition(this).ToEsPoint());
+            ZoomByWheel(intent.ZoomIn, e.GetPosition(this).ToEsPoint());
         }
         else
         {
-            PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), e.ShiftKey);
+            PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), intent.ScrollHorizontal);
         }
 
         e.Handled = true;

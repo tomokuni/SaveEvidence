@@ -370,13 +370,15 @@ internal sealed class ZoomableView : Panel
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         var position = e.GetPosition(this).ToEsPoint();
-        if ((e.KeyModifiers & KeyModifiers.Control) != 0)
+        var intent = ZoomWheelIntent.Resolve(
+            (e.KeyModifiers & KeyModifiers.Control) != 0, (e.KeyModifiers & KeyModifiers.Shift) != 0, e.Delta.Y);
+        if (intent.IsZoom)
         {
-            ApplyFeedback(_session.ZoomByWheel(e.Delta.Y > 0, position));
+            ApplyFeedback(_session.ZoomByWheel(intent.ZoomIn, position));
         }
         else
         {
-            ApplyFeedback(_session.PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), (e.KeyModifiers & KeyModifiers.Shift) != 0));
+            ApplyFeedback(_session.PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), intent.ScrollHorizontal));
         }
 
         e.Handled = true;

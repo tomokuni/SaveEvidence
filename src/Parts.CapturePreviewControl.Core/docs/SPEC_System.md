@@ -146,6 +146,7 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 │    ZoomIn / ZoomOut / ZoomFit / ZoomByWheel             │
 │    TryBeginScrollBarDrag / UpdateScrollBarDrag / ReleaseScrollBarDrag │
 │  ZoomTransition / ZoomMath / ZoomScrollBarGeometry（純粋関数） │
+│  ZoomWheelIntent（ホイールの解釈: Ctrl = ズーム / それ以外 = パン） │
 │  ZoomAvailability / ZoomViewAppearance                  │
 │  ZoomOptions / ZoomState / ZoomFeedback / ZoomNotice      │
 │  ZoomScrollBar / ZoomScrollBarMetrics                  │
@@ -453,3 +454,4 @@ sequenceDiagram
 | `ZoomViewSession` | 実効ズーム率の導出・Fit の表現・可否・遷移の適用（ズーム中心の維持）・パン・Fit 復帰・スクロールバーのドラッグ |
 | `ZoomOptions` / `ZoomTransition` / `ZoomMath` | 不変条件の検証と `With` による部分更新・ 23 段階／ホイール遷移・可否判定・Fit 実効倍率・クランプ・座標変換 |
 | `ZoomViewAppearance` / `ZoomScrollBarGeometry` / `CapturePreviewLogMessage` | 描画可否・市松模様の範囲とタイル矩形・トラック／サムの矩形と逆算・ログ書式 |
+| `ZoomWheelIntent` | ホイールの解釈（Ctrl = ズーム / それ以外 = パン、Shift = 横方向、Ctrl 優先） |

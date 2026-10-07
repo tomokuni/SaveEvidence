@@ -16,6 +16,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 
@@ -144,18 +145,19 @@ internal sealed class CropSession
     /// <param name="e">ホイールの情報。</param>
     /// <remarks>
     /// Ctrl 併用はズーム（発生位置をズーム中心にする）、それ以外はパンとする。<br/>
-    /// 解釈（どちらを選ぶか）と回転量 → 移動量の換算はビューポート（<c>ZoomViewControl</c>）が単一所有する<br/>
+    /// 解釈（どちらを選ぶか）はコアの <see cref="ZoomWheelIntent"/>、回転量 → 移動量の換算はビューポート（<c>ZoomViewControl</c>）が単一所有する<br/>
     /// （オーバーレイは入力を受けるだけであり、ビューの状態を変更しない）。
     /// </remarks>
     private void OnSelectorWheel(MouseWheelEventArgs e)
     {
-        if (e.ControlKey)
+        var intent = ZoomWheelIntent.Resolve(e.ControlKey, e.ShiftKey, e.Delta.Y);
+        if (intent.IsZoom)
         {
-            _view.ZoomByWheel(e.Delta.Y > 0, ToViewportPosition(e.GetPosition(_selector).ToEsPoint()));
+            _view.ZoomByWheel(intent.ZoomIn, ToViewportPosition(e.GetPosition(_selector).ToEsPoint()));
         }
         else
         {
-            _view.PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), e.ShiftKey);
+            _view.PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), intent.ScrollHorizontal);
         }
 
         e.Handled = true;
