@@ -219,7 +219,7 @@ internal sealed partial class CaptureOverlayWindow : Window
     /// <summary>切り出し元画像の占有範囲（画面物理ピクセル）を取得する。</summary>
     /// <value>仮想スクリーン画像があればその範囲、未取得（背景撮影中）ならウィンドウが覆う仮想スクリーンの範囲。</value>
     /// <remarks>
-    /// 切り出し矩形の決定（閉区間化・画像内へのクランプ）はコア（<see cref="CaptureClipMath.ResolveCaptureRect(CaptureType, EsRectInt, EsRectInt)"/>）が単一所有する。<br/>
+    /// 切り出し矩形の決定（閉区間化・画像内へのクランプ）はコア（<see cref="CropClipMath.ResolveCaptureRect(CaptureType, EsRectInt, EsRectInt)"/>）が単一所有する。<br/>
     /// 未取得時のフォールバック（どちらの取得経路を使うか）もコアの保持クラスが単一所有する。
     /// </remarks>
     private EsRectInt CaptureImageBounds => _captureImage.Bounds;
@@ -274,7 +274,7 @@ internal sealed partial class CaptureOverlayWindow : Window
         switch (CaptureKeyActions.Resolve(e.Key.ToEsKey(), target is not null))
         {
             case CaptureKeyAction.Confirm when target is { } rect:
-                CompleteSelection(CaptureClipMath.ToScreenRect(rect, Position.ToEsPointInt()));
+                CompleteSelection(CropClipMath.ToScreenRect(rect, Position.ToEsPointInt()));
                 e.Handled = true;
                 break;
             case CaptureKeyAction.Cancel:
@@ -293,7 +293,7 @@ internal sealed partial class CaptureOverlayWindow : Window
     /// </remarks>
     private void OnAreaConfirmRequested(object? sender, SelectionConfirmedEventArgs e)
         // 対象（ウィンドウローカル物理ピクセル）→ 画面物理座標の変換はコアが単一所有する
-        => CompleteSelection(CaptureClipMath.ToScreenRect(e.SelectionSourceRect.ToEsRect(), Position.ToEsPointInt()));
+        => CompleteSelection(CropClipMath.ToScreenRect(e.SelectionSourceRect.ToEsRect(), Position.ToEsPointInt()));
 
     /// <summary>AreaSelect のキャンセル要求（Esc キー・ダブルクリック外等）を受けてキャプチャをキャンセルする。</summary>
     /// <param name="sender">イベント送信元（SelectionOverlayControl）。</param>

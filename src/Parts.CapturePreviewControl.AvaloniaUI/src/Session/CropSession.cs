@@ -85,7 +85,7 @@ internal sealed class CropSession(
         => new CoordTransform(
             toSource: dip => cropView.ClientToSource(dip.ToAvaloniaPoint()).ToEsPoint(),
             toDip: logical => cropView.SourceToClient(logical.ToAvaloniaPoint()).ToEsPoint(),
-            sourceArea: () => cropView.CurrentImage() is { } image ? CaptureClipMath.ImageSize(image) : null);
+            sourceArea: () => cropView.CurrentImage() is { } image ? CropClipMath.ImageSize(image) : null);
 
     /// <summary>切出しセッションを実行する（確定待機 → 結果返却）。 UI スレッドから呼び出すこと。</summary>
     /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う。 呼び出し側が表示中の画像から解決して渡す）。</param>
@@ -121,7 +121,7 @@ internal sealed class CropSession(
             var selection = logicalRect.ToEsRect().WithInterval(CaptureTypeTraits.ResolveInterval(CaptureType.AreaSelect));
             // 切り出し範囲の計算（画像内へのクランプ・端数の丸め・終点の加算）はコアが単一所有する
             var bounds = CropBoundsMath.ComputeCropBounds(
-                selection, CaptureClipMath.ImageSize(currentImage), _settings.MinSelectionSize!.Value);
+                selection, CropClipMath.ImageSize(currentImage), _settings.MinSelectionSize!.Value);
             // 退化した選択（切り出せない矩形）はキャンセルとして記録する（規則はコアが単一所有する）
             _log.LogCropFinished(bounds);
             Cleanup();

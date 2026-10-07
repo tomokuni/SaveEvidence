@@ -73,7 +73,7 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
             lock (_gate)
             {
                 return _image is { } image
-                    ? CaptureClipMath.ImageBounds(image, _origin)
+                    ? CropClipMath.ImageBounds(image, _origin)
                     : fallbackBounds;
             }
         }

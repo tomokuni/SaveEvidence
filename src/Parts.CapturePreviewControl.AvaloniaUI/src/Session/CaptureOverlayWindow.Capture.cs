@@ -38,7 +38,7 @@ internal sealed partial class CaptureOverlayWindow
     /// <param name="screenRect">選択矩形（画面物理座標 = 仮想スクリーン原点基準）。</param>
     /// <remarks>
     /// 切り出し矩形の決定（種別ごとの閉区間化・画像内へのクランプ・端数の丸め）は<br/>
-    /// コアの <see cref="CaptureClipMath.ResolveCaptureRect(EsUtil.Platform.Core.CaptureType, EsRect, EsRectInt)"/> が単一所有する。
+    /// コアの <see cref="CropClipMath.ResolveCaptureRect(EsUtil.Platform.Core.CaptureType, EsRect, EsRectInt)"/> が単一所有する。
     /// 切り出せる矩形が無い場合（退化した選択）はキャンセルとして完了する。<br/>
     /// <b>確定要求の記録はこの入口が担う</b>（キー・クリック・アダプタ要求のすべてがここを通るため、<br/>
     /// 経路ごとにログを書くと抜けや重複が生じる）。 記録する矩形は画面物理座標（両 UI で同じ意味になる）。<br/>
@@ -47,7 +47,7 @@ internal sealed partial class CaptureOverlayWindow
     internal void CompleteSelection(EsRect screenRect)
     {
         _log.LogConfirmRequested(screenRect);
-        CompleteSelectionCore(CaptureClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds));
+        CompleteSelectionCore(CropClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds));
     }
 
     /// <summary>選択を確定してキャプチャする（選択矩形が整数 = クリック確定の検出矩形）。</summary>
@@ -56,7 +56,7 @@ internal sealed partial class CaptureOverlayWindow
     private void CompleteSelection(EsRectInt screenRect)
     {
         _log.LogConfirmRequested(screenRect);
-        CompleteSelectionCore(CaptureClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds));
+        CompleteSelectionCore(CropClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds));
     }
 
     /// <summary>解決済みの切り出し矩形でキャプチャを確定する。</summary>
@@ -103,7 +103,7 @@ internal sealed partial class CaptureOverlayWindow
         else
         {
             var origin = _captureImage.Origin;
-            clipTask = Task.Run(() => CaptureClipMath.Extract(vBitmap, origin, captureRect));
+            clipTask = Task.Run(() => CropClipMath.Extract(vBitmap, origin, captureRect));
         }
         _ = clipTask.ContinueWith(
             t => Dispatcher.UIThread.Post(() =>
@@ -127,7 +127,7 @@ internal sealed partial class CaptureOverlayWindow
     private void PreExtractClip(EsRectInt screenRect)
     {
         // 切り出し矩形（画面物理座標）: 種別に応じた閉区間化・画像内へのクランプはコアが単一所有する
-        var captureRect = CaptureClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds);
+        var captureRect = CropClipMath.ResolveCaptureRect(_captureType, screenRect, CaptureImageBounds);
         // 切り出せない矩形・同じ矩形はスキップ（矩形の変更がない場合は同じ画像になる。 判断はコアが担う）
         if (captureRect.IsEmpty || _clipCache.HasCached(captureRect)) return;
 
@@ -136,7 +136,7 @@ internal sealed partial class CaptureOverlayWindow
         var origin = _captureImage.Origin;
         _ = Task.Run(() =>
         {
-            var clipped = CaptureClipMath.Extract(vBitmap, origin, captureRect);
+            var clipped = CropClipMath.Extract(vBitmap, origin, captureRect);
             if (clipped is null) return;
             Dispatcher.UIThread.Post(() => _clipCache.Store(captureRect, clipped));
         });

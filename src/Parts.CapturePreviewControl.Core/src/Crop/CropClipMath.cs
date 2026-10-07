@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 /// <c>EsBitmap.Crop(int, int, int, int)</c> はピクセル読み取りのみで、バックグラウンドスレッドから安全に呼び出せる。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
-public static class CaptureClipMath
+public static class CropClipMath
 {
     /// <summary>画面物理座標の切り出し矩形を画像ローカル座標へ変換する。</summary>
     /// <param name="captureRect">切り出し矩形（画面物理ピクセル・閉区間）。</param>

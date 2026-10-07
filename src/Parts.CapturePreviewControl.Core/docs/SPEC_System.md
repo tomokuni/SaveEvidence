@@ -98,7 +98,7 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 │  MonitorScalingMath: ResolveForRect / ResolveForSourceRect（中心で判定）      │
 │                     Collect（倍率未確定の除外） / ResolveScaling（代表値）      │
 │  ImageColorMath: AverageColor（標本間引き）                            │
-│  CaptureClipMath: ResolveCaptureRect（切り出し矩形の唯一の求解。整数/浮動小数。座標空間は画面物理）            │
+│  CropClipMath: ResolveCaptureRect（切り出し矩形の唯一の求解。整数/浮動小数。座標空間は画面物理）            │
 │                   画面物理⇔画像ローカル矩形の相互変換 / 画像の共有値 / 切り出し         │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
@@ -179,7 +179,7 @@ classDiagram
         +FindUnderCursor(IElementFinder, CaptureType, EsPointInt) ElementFinderResults
         +ResolveRect(CaptureType, EsRect, EsRect) EsRect?
     }
-    class CaptureClipMath {
+    class CropClipMath {
         +ResolveCaptureRect(CaptureType, EsRect, EsRectInt) EsRectInt
         +ResolveCaptureRect(CaptureType, EsRectInt, EsRectInt) EsRectInt
         +ImageSize(EsBitmap) EsSize
@@ -270,7 +270,7 @@ classDiagram
     }
     CaptureHighlightSession ..> CaptureHighlight : 導出
     CaptureKeyActions ..> CaptureKeyAction : 返す
-    CaptureClipMath ..> CropBoundsMath : 規則の合成
+    CropClipMath ..> CropBoundsMath : 規則の合成
     CaptureSettingsMerge ..> CaptureSettings : マージ
     CaptureSessionState ..> CaptureSessionSlot : 状態を担う
     CaptureOwnerScope ..> ICaptureOwnerWindow : 退避と復帰
@@ -415,7 +415,7 @@ sequenceDiagram
 
 ## 7. 設計判断
 
-- **切り出し規則を 1 箇所に置く**: 終点のピクセルを含めるか（矩形の `EsRectInterval`）と端のクランプという切り出しの規則は `CropBoundsMath` が単一所有し、撮影の確定（`CaptureClipMath`）と切り出し（`CropSession`）が委譲する。 規則が複数箇所にあると、同じドラッグでも 1 px 異なる矩形になる。
+- **切り出し規則を 1 箇所に置く**: 終点のピクセルを含めるか（矩形の `EsRectInterval`）と端のクランプという切り出しの規則は `CropBoundsMath` が単一所有し、撮影の確定（`CropClipMath`）と切り出し（`CropSession`）が委譲する。 規則が複数箇所にあると、同じドラッグでも 1 px 異なる矩形になる。
 - **色は `System.Drawing.Color`**: UI 非依存のプリミティブ（`System.Drawing.Primitives`）で、MewUI のコントロールがそのまま受け取れる。 設定から複合コントロールの設定値（`SelectionOverlayOptions`）への変換は本プロジェクトの `SelectionOverlayOptionsMapper` が単一所有する（両 UI で同じ変換を使う）。 ただし**色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる）。
 - **判定を「クランプ前の値」で行う**: 画像外へ出た選択矩形を「大きい」と誤判定しないため、最小サイズの判定は画像内へクランプする前の値で行う。
 - **丸めは 0.5 を切り上げ**: `Math.Round` の既定（銀行丸め）はピクセル座標の直感に反するため `MidpointRounding.AwayFromZero` を使う。
@@ -423,6 +423,11 @@ sequenceDiagram
 - **モードの解釈を 1 箇所に置く**: モードと表示可否（選択矩形・破線・全面暗転・ルーペ）の対応は `SelectionOverlayState` が単一所有する。 UI が `switch` を書くと片方の UI だけ挙動がずれる。
 - **画像ビューポートの状態と判断を 1 箇所に置く**: 実効ズーム率の導出・可否・遷移の適用・パン・スクロールバーは `ZoomViewSession` が単一所有し、純粋計算（`ZoomTransition` / `ZoomMath` / `ZoomScrollBarGeometry`）へ委譲する。 UI が判断を持つと、ズーム挙動と設定が両 UI でずれる。
 - **市松模様は画像の表示矩形の内側に限る**: 透明部分の背景は画像の内側だけに描き、画像の外（ペーストボード）は下地色の単色にする。 タイルの格子をビューポート原点基準に固定することで、パンしても模様が這わない。
+- **設定 → 選択オーバーレイの写像は写像先のカテゴリ（`SelectionOverlay/`）が持つ**: `SelectionOverlayOptionsMapper` は写像元が `Setting/` の `CaptureSettings` だが、組み立てるのは選択オーバーレイの設定値であり、「どの設定が自分の設定値になるか」は**写像先が所有する規則**である（写像元へ置くと、写像先を増やすたびに設定側のカテゴリが膨らむ）。 `Setting/` が持つのは「設定値そのもののマージ・検証」（`CaptureSettingsMerge`）に限る。
+- **一方の UI だけが使うコア型もコアに置く**: `ImageColorMath`（撮影の下地色の決定。 現在は MewUI が使用）と `OverlayRectRasterizer`（ルーペ画像への矩形ラスタライズ。 現在は Avalonia が使用）は、**UI フレームワークに依存しない規則**であり、コアに置く（UI 側へ移すと、もう一方の UI が同じ必要を持った時点で再びコピーになる。 「どちらの UI が使うか」は配置の基準にしない）。
+- **ズームの表示規則（中央寄せ・スクロールバー値の範囲）はコアが単一所有する**: 中央寄せ補正は `ZoomMath.MaxCentered`（Fit 中は `ComputeImageOrigin`）、スクロールバー値の [0, 最大オフセット] へのクランプは `ZoomScrollBarMetrics.ClampOffset` が持ち、UI は自前の式を書かない（UI ごとに条件を書くと、画像がビューポートに収まる軸の扱いがずれる）。
+- **ログ定義は本アセンブリで 1 つ**: 撮影・切り出し・ズーム・設定のログは `CapturePreviewLogMessage` が同居する（[`.github/ログ規約.md`](../../../.github/ログ規約.md) の「定義クラスはアセンブリごとに 1 つ」に従う）。 カテゴリ別に分割しない。
+- **依存の宣言は推移参照で省略する**: 本プロジェクトは機能コア（`EsUtil.Feature.*.Core`）を**宣言せず**、提示層（`EsUtil.Feature.*.Presenter`）の推移参照で解決する（[`.github/依存関係.md`](../../../.github/依存関係.md) §1）。 提示層の公開面にコアの型（`MarqueeOptions` / `LoupeOptions`）が現れるため、宣言を分ける意味がない（宣言を消してもアセンブリ依存は残る）。
 
 ## 8. 検証
 
@@ -433,7 +438,7 @@ sequenceDiagram
 | `CaptureTypeTraits` | 3 種別すべての性質（ハイライト・区間の流儀・検出対象）と未定義値のフォールバック・検出関数の呼び分け・確定対象の選択 |
 | `MonitorScalingMath` | 中心を含むモニタの選択・単一モニタ・どのモニタにも含まれない場合のフォールバック・負座標・対象座標からの原点加算 |
 | `CropLabelTexts` / `ImageColorMath` | ラベル書式（区間の流儀に応じた `WH`・倍率の丸め）・平均色（単色・標本間引き・null 検証） |
-| `CaptureClipMath` / `CaptureClipCache` | 画面物理⇔画像ローカル座標の双方向変換（往復一致）・座標空間の混在で切り出せなくなる機序・切り出しの未取得時 null・同一判定・所有権の移動・旧値の破棄 |
+| `CropClipMath` / `CaptureClipCache` | 画面物理⇔画像ローカル座標の双方向変換（往復一致）・座標空間の混在で切り出せなくなる機序・切り出しの未取得時 null・同一判定・所有権の移動・旧値の破棄 |
 | `CaptureTiming` / `CropSessionActions` | 方針値（タイムアウト・画面外座標）と、1 操作で実行する内容の決定（4 通りの入力） |
 | `CaptureVirtualScreen` | 撮影対象の範囲（単一・複数モニタ・負の原点・モニタが無い場合）と、タイムアウト待ち・未使用結果の破棄 |
 | `CaptureSessionState` / `CaptureSessionSlot` | 再入の禁止・単一完了・撮影と切り出しの相互排他・選択有無の委譲・一括キャンセル |

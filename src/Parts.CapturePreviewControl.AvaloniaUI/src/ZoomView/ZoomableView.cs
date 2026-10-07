@@ -246,14 +246,12 @@ internal sealed class ZoomableView : Panel
 
         var bounds = Bounds;
         var display = _session.DisplaySize;
-        if (display.Width <= bounds.Width && scale > 0)
+        if (scale > 0)
         {
-            _translateTransform.X += (bounds.Width - display.Width) / 2 / scale;
-        }
-
-        if (display.Height <= bounds.Height && scale > 0)
-        {
-            _translateTransform.Y += (bounds.Height - display.Height) / 2 / scale;
+            // 中央寄せ補正はビューポート座標の値（コアの ZoomMath.MaxCentered が単一所有）。
+            // pre-scale の translate へはスケールで除して渡す（画像がビューポートより大きい軸は 0 になる）。
+            _translateTransform.X += ZoomMath.MaxCentered(display.Width, bounds.Width, centerAlign: true) / scale;
+            _translateTransform.Y += ZoomMath.MaxCentered(display.Height, bounds.Height, centerAlign: true) / scale;
         }
     }
 
@@ -289,7 +287,7 @@ internal sealed class ZoomableView : Panel
     {
         bar.Maximum = metrics.MaxOffset;
         bar.ViewportSize = metrics.ViewportSize;
-        bar.Value = Math.Clamp(offset, 0, metrics.MaxOffset);
+        bar.Value = metrics.ClampOffset(offset);
         bar.IsVisible = metrics.IsScrollable;
     }
 

@@ -187,7 +187,7 @@ internal sealed class CropSession
 
         // 切り出し範囲の計算（閉区間化・画像内へのクランプ・端数の丸め）はコアが単一所有する
         var pixels = CropBoundsMath.ComputeCropBounds(
-            _selector.SelectionSourceRect, CaptureClipMath.ImageSize(image), _settings.MinSelectionSize!.Value);
+            _selector.SelectionSourceRect, CropClipMath.ImageSize(image), _settings.MinSelectionSize!.Value);
         // 退化した選択（切り出せない矩形）はキャンセルとして記録する（規則はコアが単一所有する）
         _log.LogCropFinished(pixels);
         EndSession();
@@ -298,7 +298,7 @@ internal sealed class CropSession
         _selector.SetCoordTransform(new CoordTransform(
             toSource: _view.ClientToSource,
             toDip: _view.SourceToClient,
-            sourceArea: () => image is null ? null : CaptureClipMath.ImageSize(image)));
+            sourceArea: () => image is null ? null : CropClipMath.ImageSize(image)));
     }
 
     /// <summary>設定を選択コントロールへ反映する。</summary>

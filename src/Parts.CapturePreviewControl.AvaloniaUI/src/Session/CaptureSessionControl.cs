@@ -198,7 +198,7 @@ public sealed class CaptureSessionControl : IDisposable
             }
 
             // 「サイズが 0 の画像は切り出せない」という前提条件はコアが単一所有する
-            CaptureClipMath.ValidateImage(sourceImage, nameof(cropView));
+            CropClipMath.ValidateImage(sourceImage, nameof(cropView));
 
             var session = new CropSession(cropView, hostWindow, _currentSettings, _log);
             if (!_slot.TryBeginCrop(session))

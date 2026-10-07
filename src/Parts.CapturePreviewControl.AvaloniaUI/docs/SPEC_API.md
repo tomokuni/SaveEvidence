@@ -497,7 +497,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 | AreaSelect | `+1`（`Closed`） | 半開区間の選択矩形を始点・終点を含む形（終点のピクセルを加算）へ変換する |
 | ScreenSelect / WindowSelect | 変換なし | 検出した画面・ウィンドウの矩形は全ピクセルを含む。 `+1` すると画面外・ウィンドウ外へ 1 px はみ出す |
 | Crop | `+1`（`Closed`、画像の端でクランプ） | `CropBoundsMath.ComputeCropBounds` が単一所有する |
-| 撮影（全種別） | 上表の変換 + 画像内へのクランプ | 確定時の切り出し矩形は `CaptureClipMath.ResolveCaptureRect` が単一所有する（種別の性質とクランプ・丸めを組み合わせた唯一の入口。 画像の右端・下端で透明な余白が付かない） |
+| 撮影（全種別） | 上表の変換 + 画像内へのクランプ | 確定時の切り出し矩形は `CropClipMath.ResolveCaptureRect` が単一所有する（種別の性質とクランプ・丸めを組み合わせた唯一の入口。 画像の右端・下端で透明な余白が付かない） |
 | Crop のサイズラベル | `WH: (右端 − 左端 + 1, 下端 − 上端 + 1)` | 閉区間のピクセル数で表示（`CropLabelTexts` が単一所有する） |
 
 種別ごとの適用有無はコアの `CaptureTypeTraits.ResolveInterval` が単一所有します（AreaSelect のみ `Closed`）。
@@ -523,7 +523,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 
 1. 切り出しの対象画像は `CropViewControl` が表示している画像（`CropViewControl.Source`）から解決する（画像を引数で受け取らない）。
    - 画像が未設定、または表示アダプタ（`EsBitmapAvaloniaImage`）以外の場合は開始しない（結果 null。 実行中の再呼び出しと同じ表現）
-   - 画像サイズが 0 の場合は `ArgumentException`（「サイズが 0 の画像は切り出せない」規則はコアの `CaptureClipMath.ValidateImage` が単一所有する）
+   - 画像サイズが 0 の場合は `ArgumentException`（「サイズが 0 の画像は切り出せない」規則はコアの `CropClipMath.ValidateImage` が単一所有する）
    - 開始できた場合は `CropSession` を生成 → `RunAsync`
 2. **複合コントロール `SelectionOverlayControl`（Marquee（外側の装飾を含む）+ Loupe の配線を内包）を `CropViewControl.Rects` へ配置**（1 コントロールで完結）
    - セッション開始時に `cropView.SetSelectionOverlayVisible(true)` を呼び、領域選択オーバーレイを可視化する

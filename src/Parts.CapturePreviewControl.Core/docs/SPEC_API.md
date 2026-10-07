@@ -22,7 +22,7 @@
   - [7.6 CaptureSessionState / CaptureSessionSlot](#76-capturesessionstate--capturesessionslot)
   - [7.7 CaptureOwnerScope](#77-captureownerscope)
   - [7.8 CapturePreviewLogMessage](#78-capturepreviewlogmessage)
-  - [7.9 CaptureClipMath](#79-captureclipmath)
+  - [7.9 CropClipMath](#79-cropclipmath)
   - [7.10 CaptureImageHolder](#710-captureimageholder)
   - [7.11 CaptureVirtualScreen](#711-capturevirtualscreen)
   - [7.12 CaptureClipCache](#712-captureclipcache)
@@ -62,7 +62,7 @@
 | 型 | 種別 | 役割 |
 | --- | --- | --- |
 | `CropBoundsMath` | 静的クラス | 切り出し矩形の計算（純粋関数） |
-| `CaptureClipMath` | 静的クラス | 選択矩形→切り出し矩形の解決（座標空間は画面物理）と、画像ローカル座標との相互変換 |
+| `CropClipMath` | 静的クラス | 選択矩形→切り出し矩形の解決（座標空間は画面物理）と、画像ローカル座標との相互変換 |
 | `CaptureImageHolder` | クラス | 撮影した画像の保持と所有権（差し替え・破棄後の破棄・未取得時の範囲） |
 | `CaptureVirtualScreen` | 静的クラス | 仮想スクリーンの撮影対象の範囲（全モニタの包含矩形）と、取得の待ち方（タイムアウトで打ち切り、未使用結果を破棄する） |
 | `CaptureHighlight` | record struct | 検出結果を選択オーバーレイへ反映するための状態（ハイライト・矩形・表示名・変化） |
@@ -75,7 +75,7 @@
 | `CaptureTypeTraits` | 静的クラス | キャプチャ種別の性質（ハイライト型・区間の流儀・検出対象）の単一所有 |
 | `CaptureElementTarget` | 列挙型 | カーソル下の検出対象（画面 / ウィンドウ） |
 | `MonitorScalingMath` | 静的クラス | 対象矩形の中心を含むモニタの実表示倍率の解決（純粋関数） |
-| `CaptureClipMath` | 静的クラス | 仮想スクリーン画像からの切り出し（画像ローカル座標への変換） |
+| `CropClipMath` | 静的クラス | 仮想スクリーン画像からの切り出し（画像ローカル座標への変換） |
 | `CaptureClipCache` | クラス | 事前切り出しキャッシュ（同一判定・所有権の受け渡し・旧値の破棄） |
 | `CaptureTiming` | 静的クラス | 撮影セッションの方針値（キャプチャのタイムアウト・画面外退避座標） |
 | `CropSessionAction` | 列挙型 | 切り出しの 1 操作で実行する内容（開始 / 確定 / キャンセル） |
@@ -127,7 +127,7 @@
 | 区分 | 内容 |
 | --- | --- |
 | 状態 | セッションの実行中・完了（`CaptureSessionState`）、受付スロット（`CaptureSessionSlot`）、結果の確定（`CaptureCompletion`）、ハイライトとクリック確定（`CaptureHighlightSession` / `CaptureClickSelection`）、撮影画像（`CaptureImageHolder`） |
-| 判断 | 切り出し範囲（`CropBoundsMath` / `CaptureClipMath`）、ハイライトの反映（`CaptureHighlightSession`）、キー操作（`CaptureKeyActions`）、クリック確定（`CaptureClickSelection`）、種別の性質（`CaptureTypeTraits`）、モニタ倍率（`MonitorScalingMath`）、設定のマージ（`CaptureSettingsMerge`）、退避と除外の順序（`CaptureOwnerScope`）、平均色（`ImageColorMath`）、切り出しと事前キャッシュ（`CaptureClipMath` / `CaptureClipCache`）、取得の打ち切り（`CaptureVirtualScreen`）、切り出しの操作内容（`CropSessionActions`）、方針値（`CaptureTiming`）、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession`） |
+| 判断 | 切り出し範囲（`CropBoundsMath` / `CropClipMath`）、ハイライトの反映（`CaptureHighlightSession`）、キー操作（`CaptureKeyActions`）、クリック確定（`CaptureClickSelection`）、種別の性質（`CaptureTypeTraits`）、モニタ倍率（`MonitorScalingMath`）、設定のマージ（`CaptureSettingsMerge`）、退避と除外の順序（`CaptureOwnerScope`）、平均色（`ImageColorMath`）、切り出しと事前キャッシュ（`CropClipMath` / `CaptureClipCache`）、取得の打ち切り（`CaptureVirtualScreen`）、切り出しの操作内容（`CropSessionActions`）、方針値（`CaptureTiming`）、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession`） |
 | 契約 | `ICaptureTarget`（結果の適用先）、`ICaptureOwnerWindow`（退避対象）、`CaptureSessionSlot`（排他）、`CaptureCompletion`（単一確定）、`CaptureClipCache`（事前切り出しの受け渡し）、`CaptureImageHolder`（画像の保持）、`CaptureHighlight` / `CaptureHighlightSession`（ハイライト状態）、`CaptureResult.From`（結果の正規化）、`ZoomFeedback` / `ZoomNotice`（画像ビューポートのコア⇔UI の契約） |
 | ログ定義 | `CapturePreviewLogMessage`（接頭辞・書式・レベル・値の整形・完了時の出力の組・設定適用・ズーム操作を含む。 呼び出しは UI） |
 | ログ以外の正規化 | `CaptureText`（未取得の文字列を空文字へ。 ログ定義の外に置く） |
@@ -181,7 +181,7 @@
 
 終点の 1 ピクセルを加えるかの判断は**矩形の** **`EsRectInterval`** が持つため、本クラスは受け取った値に従うだけで判定を持ちません（判定を各所へ散らさない）。 種別から矩形の流儀を導くのは `CaptureTypeTraits.ResolveInterval` です。
 
-確定時の切り出し矩形は、本クラスと種別の性質を組み合わせた `CaptureClipMath.ResolveCaptureRect` が求めます（両 UI が同じ規則を使う唯一の入口。 種別ごとの分岐を UI に書かない）。
+確定時の切り出し矩形は、本クラスと種別の性質を組み合わせた `CropClipMath.ResolveCaptureRect` が求めます（両 UI が同じ規則を使う唯一の入口。 種別ごとの分岐を UI に書かない）。
 
 ## 5. CaptureSettings
 
@@ -323,7 +323,7 @@
 | `RectOrEmpty(EsRectInt?)` | 未検出（null）を空文字へ正規化する |
 | `Percent(double)` | ズーム率（%）を四捨五入した整数へ丸める |
 
-### 7.9 CaptureClipMath
+### 7.9 CropClipMath
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |

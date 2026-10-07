@@ -190,7 +190,7 @@ internal sealed class CaptureOverlay
 
         _screen = screen;
         // 画像の占有範囲（画面物理座標）= 撮影時の原点 + 画像サイズ（原点は負値になりうる）
-        _screenBounds = CaptureClipMath.ImageBounds(screen, origin);
+        _screenBounds = CropClipMath.ImageBounds(screen, origin);
         _log.LogCaptureStart(_type);
         // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する。 Avalonia 版と同じ診断情報を残す）
         _log.LogVirtualScreen(origin, screen);
@@ -402,7 +402,7 @@ internal sealed class CaptureOverlay
             {
                 case CaptureKeyAction.Confirm when target is { } localRect:
                     // 選択矩形は画像ローカル座標のため、確定の入口（画面物理座標）へ揃えてから渡す
-                    ConfirmScreen(CaptureClipMath.ToScreenRect(localRect, _screenBounds.TopLeft));
+                    ConfirmScreen(CropClipMath.ToScreenRect(localRect, _screenBounds.TopLeft));
                     e.Handled = true;
                     break;
                 case CaptureKeyAction.Cancel:
@@ -477,14 +477,14 @@ internal sealed class CaptureOverlay
     /// <remarks>
     /// 切り出し矩形の決定（種別ごとの閉区間化・画像内へのクランプ・端数の丸め）はコアが単一所有する。<br/>
     /// <b>入口は画面物理座標に統一する</b>: 選択矩形（画像ローカル座標）は呼び出し側で
-    /// <see cref="CaptureClipMath.ToScreenRect(EsRect, EsPointInt)"/> により戻してから渡す（占有範囲と同じ座標空間にする。
+    /// <see cref="CropClipMath.ToScreenRect(EsRect, EsPointInt)"/> により戻してから渡す（占有範囲と同じ座標空間にする。
     /// 混ぜると原点が負値のマルチモニタで切り出し位置がずれ・幅が 0 になる）。<br/>
     /// 結果の領域は<see cref="CaptureResult.SourceBounds"/>（仮想画面座標）と同じ座標空間になる。
     /// </remarks>
     private void ConfirmScreen(EsRect screenRect)
     {
         _log.LogConfirmRequested(screenRect);
-        CompleteCapture(CaptureClipMath.ResolveCaptureRect(_type, screenRect, _screenBounds));
+        CompleteCapture(CropClipMath.ResolveCaptureRect(_type, screenRect, _screenBounds));
     }
 
     /// <summary>選択領域を切り出す（選択矩形は画面物理座標の整数 = クリック確定の検出矩形）。</summary>
@@ -493,7 +493,7 @@ internal sealed class CaptureOverlay
     private void ConfirmScreen(EsRectInt screenRect)
     {
         _log.LogConfirmRequested(screenRect);
-        CompleteCapture(CaptureClipMath.ResolveCaptureRect(_type, screenRect, _screenBounds));
+        CompleteCapture(CropClipMath.ResolveCaptureRect(_type, screenRect, _screenBounds));
     }
 
     /// <summary>解決済みの切り出し矩形でキャプチャを完了する。</summary>
@@ -514,7 +514,7 @@ internal sealed class CaptureOverlay
         }
 
         // 切り出し矩形は画面物理座標のため、画像の原点を渡して取り出す（座標変換はコアが単一所有する）
-        var image = CaptureClipMath.Extract(Screen, _screenBounds.TopLeft, pixels);
+        var image = CropClipMath.Extract(Screen, _screenBounds.TopLeft, pixels);
         // 完了の記録（確定は 2 件）はコアが単一所有する。 領域は契約どおり仮想画面座標（画面物理）で渡す
         _log.LogCaptureFinished(CaptureResult.From(image, pixels));
         _result.TrySetResult(image);
@@ -543,7 +543,7 @@ internal sealed class CaptureOverlay
     /// 選択矩形（画像ローカル座標）を確定の入口（画面物理座標）へ揃えて渡す（記録と解決は入口が担う）。
     /// </remarks>
     private void OnSelectorConfirmRequested(object? sender, SelectionConfirmedEventArgs e)
-        => ConfirmScreen(CaptureClipMath.ToScreenRect(e.SelectionSourceRect, _screenBounds.TopLeft));
+        => ConfirmScreen(CropClipMath.ToScreenRect(e.SelectionSourceRect, _screenBounds.TopLeft));
 
     /// <summary>現在のオーバーレイウィンドウを閉じる。</summary>
     /// <remarks>
@@ -605,7 +605,7 @@ internal sealed class CaptureOverlay
     private ICoordTransform CreatePort()
         => CoordTransform.ClientToSource(
             () => _scale,
-            () => CaptureClipMath.ImageSize(Screen));
+            () => CropClipMath.ImageSize(Screen));
 
     /// <summary>選択矩形（対象座標）が属するモニターの表示倍率を返す。</summary>
     /// <param name="sourceRect">選択矩形（画像ピクセル = 仮想スクリーン座標から原点を引いた値）。</param>

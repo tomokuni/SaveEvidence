@@ -22,7 +22,7 @@
 ## 2. 機能一覧
 
 - **切り出し矩形の計算**（`CropBoundsMath`）: 選択矩形 → 画像内のピクセル矩形。 画像内へのクランプ・端数の丸め（0.5 は切り上げ）・終点のピクセルの加算（始点・終点を含むかは矩形の `EsRectInterval` が持ち、**加算の判断をここが単一所有する**）・最小サイズ判定を単一所有する
-- **選択矩形→切り出し矩形の解決**（`CaptureClipMath.ResolveCaptureRect`）: 確定時の切り出し矩形を決める**唯一の入口**（選択矩形も占有範囲も**画面物理座標**で渡す）。 種別ごとの区間の流儀（`CaptureTypeTraits.ResolveInterval`）とクランプ・丸め（`CropBoundsMath`）を組み合わせ、画像の右端・下端で透明な余白が付かないようにする（両 UI が同じ 1 行を呼ぶ）。 UI の選択矩形が画像ローカル座標の場合は、境界で `ToScreenRect` により画面物理座標へ戻してから渡す（１つの座標空間に揃えることで取り違えの余地をなくす）
+- **選択矩形→切り出し矩形の解決**（`CropClipMath.ResolveCaptureRect`）: 確定時の切り出し矩形を決める**唯一の入口**（選択矩形も占有範囲も**画面物理座標**で渡す）。 種別ごとの区間の流儀（`CaptureTypeTraits.ResolveInterval`）とクランプ・丸め（`CropBoundsMath`）を組み合わせ、画像の右端・下端で透明な余白が付かないようにする（両 UI が同じ 1 行を呼ぶ）。 UI の選択矩形が画像ローカル座標の場合は、境界で `ToScreenRect` により画面物理座標へ戻してから渡す（１つの座標空間に揃えることで取り違えの余地をなくす）
 - **外観・動作設定**（`CaptureSettings`）: 全メンバー nullable の record。 null は「デフォルト値」または「現在値維持（部分更新）」を表し、`Validate` / `ToNonNull` を提供する
 - **キャプチャ結果**（`CaptureResult`）: `EsBitmap?`（画像）と `EsRectInt?`（仮想スクリーン座標の領域）の組
 - **複合コントロールの設定変換**（`SelectionOverlayOptionsMapper`）: `CaptureSettings` → `SelectionOverlayOptions`（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）の**寸法・表示可否**の対応を単一所有する（両 UI のホストが同じ変換を使う。 **色・枠線の太さ・表示可否は描画にだけ必要な設定のため写像せず**、提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有する）
@@ -37,7 +37,7 @@
 - **切り出しのサイズラベル**（`CropLabelTexts`）: `LT: (l, t),  RB: (r, b),  WH: (w+1, h+1), Zoom: (pz%)` 形式。 `WH` は含まれるピクセル数であり、終点を含めるかの判断は矩形の `EsRectInterval` が持つ（切り出し範囲と同じ値を使う）。 撮影側のサイズラベルとは用途が違うため別途単一所有する。 **未選択は描かない**という判断も `ResolveSizeLabel` が持つ
 - **設定の部分更新マージ**（`CaptureSettingsMerge`）: 全 42 項目の「null は現在値維持・非 null は上書き」と、同値再設定のスキップ（参照を差し替えない）を単一所有する
 - **セッションの排他スロット**（`CaptureSessionSlot{TCapture, TCrop}`）: 撮影と切り出しで同時に 1 つだけ実行できる規則と、「未実行なら false」の既定値解決を単一所有する
-- **仮想スクリーンからの切り出し**（`CaptureClipMath`）: 選択矩形→切り出し矩形の解決（浮動小数版と整数版の 2 入口）と、画面物理座標 ⇔ 画像ローカル座標の**双方向変換**（原点の加減算）・切り出し・画像の共有値（`ImageSize` / `ImageBounds` / `ValidateImage`）を単一所有する。 **破棄済みの画像は切り出さず null**を返す（ウィンドウクローズとの競合で例外にしない）。 マルチモニタ（原点が負値）でも同じ式で扱える
+- **仮想スクリーンからの切り出し**（`CropClipMath`）: 選択矩形→切り出し矩形の解決（浮動小数版と整数版の 2 入口）と、画面物理座標 ⇔ 画像ローカル座標の**双方向変換**（原点の加減算）・切り出し・画像の共有値（`ImageSize` / `ImageBounds` / `ValidateImage`）を単一所有する。 **破棄済みの画像は切り出さず null**を返す（ウィンドウクローズとの競合で例外にしない）。 マルチモニタ（原点が負値）でも同じ式で扱える
 - **撮影画像の保持**（`CaptureImageHolder`）: 「差し替え時の旧値の破棄」「破棄後に届いた画像のその場での破棄」「未取得時の占有範囲のフォールバック」を単一所有する（背景撮影の完了がウィンドウの後片付けより遅れた場合の破棄漏れを防ぐ）
 - **仮想スクリーンの取得**（`CaptureVirtualScreen`）: 取得をタイムアウト付きで待ち、**間に合わなかった場合は遅れて完了した結果を破棄する**（UI は待ち方と破棄を持たない）。 **撮影対象の範囲（全モニタの包含矩形）と「モニタが無ければ撮影しない」前提条件**も `ResolveBounds` が単一所有する（UI がループを書かない）
 - **事前切り出しキャッシュ**（`CaptureClipCache`）: 撮影確定前の切り出し結果を保持し、**同じ矩形なら再切り出しをスキップ**、確定時は**所有権ごと**渡す、置き換え時は**旧値を破棄**するという規則を単一所有する
@@ -61,14 +61,12 @@
 ```text
 Parts.CapturePreviewControl.Core
     ├── EsUtil.Platform.Core（Es* 幾何型 / EsBitmap）
-    ├─ EsUtil.Feature.Marquee.Core（MarqueeOptions・選択矩形の幾何）
-    ├─ EsUtil.Feature.Loupe.Core（LoupeOptions）
-    ├─ EsUtil.Feature.Marquee.Presenter（MarqueeAppearance・MarqueeLabelPlacement）
-    ├─ EsUtil.Feature.Loupe.Presenter（LoupeAppearance）
+    ├─ EsUtil.Feature.Marquee.Presenter（MarqueeAppearance・MarqueeLabelPlacement、および推移参照の Marquee.Core = MarqueeOptions）
+    ├─ EsUtil.Feature.Loupe.Presenter（LoupeAppearance、および推移参照の Loupe.Core = LoupeOptions）
     └── Microsoft.Extensions.Logging.Abstractions（ログ定義のソース生成）
 ```
 
-依存は一方向です（UI プロジェクトから本プロジェクトを参照し、逆は参照しない）。 提示層（`EsUtil.Feature.*.Presenter`）への参照は、製品の設定型と提示層の外観を橋渡しする写像（`Presentation/`）を持つために限ります。
+依存は一方向です（UI プロジェクトから本プロジェクトを参照し、逆は参照しません）。 提示層（`EsUtil.Feature.*.Presenter`）への参照は、製品の設定型と提示層の外観を橋渡しする写像（`Presentation/`）を持つために限ります。 機能コア（`EsUtil.Feature.*.Core`）の型（`MarqueeOptions` / `LoupeOptions`）は提示層の公開面に現れるため、参照の宣言は提示層だけにします。
 
 ## 4. クイックスタート
 
@@ -127,7 +125,7 @@ src/
 │   │   └── ICaptureOwnerWindow.cs          # 撮影時に退避するオーナーウィンドウ
 │   ├── Crop/                               # 切り出し
 │   │   ├── CropBoundsMath.cs               # 選択矩形 → 切り出し範囲（区間・クランプ・丸め・最小サイズ）
-│   │   ├── CaptureClipMath.cs              # 切り出し範囲と画像ローカル座標の変換・画像からの抽出
+│   │   ├── CropClipMath.cs              # 切り出し範囲と画像ローカル座標の変換・画像からの抽出
 │   │   ├── CropLabelTexts.cs               # 切り出しのサイズラベル書式
 │   │   └── CropSessionAction.cs            # 切り出しの操作内容（開始 / 確定 / キャンセル）
 │   ├── Logging/                            # ログ定義
@@ -196,7 +194,7 @@ src/
     │   └── CaptureTargetContract.Tests.cs
     ├── Crop/                              # 切り出しの検証
     │   ├── CropBoundsMath.Tests.cs
-    │   ├── CaptureClipMath.Tests.cs
+    │   ├── CropClipMath.Tests.cs
     │   └── CropLabelTexts.Tests.cs
     ├── Logging/                           # ログ書式の検証
     │   └── CapturePreviewLogMessage.Tests.cs

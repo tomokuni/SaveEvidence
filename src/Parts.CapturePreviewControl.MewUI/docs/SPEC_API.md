@@ -100,7 +100,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | 画面物理ピクセル | 検出結果・入力（マウス）の座標系 |
 
 対象座標とローカル DIP の変換は `ICoordTransform` を選択コントロールへ注入して行います（コントロールは座標系を意識しません）。  
-確定時の切り出し矩形は**画面物理座標の入口**（`CaptureClipMath.ResolveCaptureRect`）で解決します。 選択矩形は画像ローカル座標（画像の左上が原点）のため、**境界で `CaptureClipMath.ToScreenRect` により画面物理座標へ戻してから**渡します（１つの座標空間に揃えることで、原点が負値のマルチモニタでも切り出し位置・幅が正しくなる）。
+確定時の切り出し矩形は**画面物理座標の入口**（`CropClipMath.ResolveCaptureRect`）で解決します。 選択矩形は画像ローカル座標（画像の左上が原点）のため、**境界で `CropClipMath.ToScreenRect` により画面物理座標へ戻してから**渡します（１つの座標空間に揃えることで、原点が負値のマルチモニタでも切り出し位置・幅が正しくなる）。
 
 確定要求（キー・クリック・アダプタ要求）は、すべて同じ入口（画面物理座標）で `CapturePreviewLogMessage.LogConfirmRequested` に記録します（記録する矩形の座標空間を UI  間で揃える）。 完了の領域（`CaptureResult.SourceBounds`）も契約どおり仮想画面座 標（画面物理）で返します。
 
@@ -110,7 +110,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 - スクリーン選択・ウィンドウ選択は検出結果が全ピクセルを含むため、終点の 1 ピクセルを加算しません。
 - 切り出し矩形は画像の範囲へクランプします（画像の右端・下端で透明な余白が付かないようにするため）。
 - 切り出せる矩形が無い（退化した選択）場合はキャンセル扱い（null）になります。
-- 計算は `Parts.CapturePreviewControl.Core` の `CaptureClipMath.ResolveCaptureRect` が単一所有します（種別の性質とクランプ・丸めを組み合わせた唯一の入口）。
+- 計算は `Parts.CapturePreviewControl.Core` の `CropClipMath.ResolveCaptureRect` が単一所有します（種別の性質とクランプ・丸めを組み合わせた唯一の入口）。
 - 最小サイズは選択操作（Marquee）が判定します（検出矩形は要素の大きさであり、小さい要素も切り出し対象とする）。
 
 ## 3. CaptureOverlayServices

@@ -25,7 +25,7 @@ public readonly record struct CaptureHighlight(EsRect? SourceRect, bool TitleCha
 /// <br/>
 /// <b>所有する判断</b>:<br/>
 /// 1. 未検出時の正規化（矩形は null・表示名は空文字。 検出矩形を使わない）。<br/>
-/// 2. 画面物理座標 → 対象座標の変換（画像の原点を減算する。<see cref="CaptureClipMath.ToLocalRect(EsRectInt, EsPointInt)"/> へ委譲）。<br/>
+/// 2. 画面物理座標 → 対象座標の変換（画像の原点を減算する。<see cref="CropClipMath.ToLocalRect(EsRectInt, EsPointInt)"/> へ委譲）。<br/>
 /// 3. 表示名の変化の判定（情報ラベルの再描画に必要な最小限の判断。 UI ごとの文字列比較を書かせない）。<br/>
 /// 4. 検出結果のログ（<see cref="CapturePreviewLogMessage.LogHighlight"/>。 両 UI で同じ事象を同じ書式で記録する）。<br/>
 /// <br/>
@@ -63,7 +63,7 @@ public sealed class CaptureHighlightSession(ILogger? logger = null)
     public CaptureHighlight Update(CaptureType captureType, ElementFinderResults detection, EsPointInt imageOrigin)
     {
         var local = detection.IsDetected
-            ? CaptureClipMath.ToLocalRect(detection.Bounds, imageOrigin)
+            ? CropClipMath.ToLocalRect(detection.Bounds, imageOrigin)
             : default;
         var title = CaptureText.Normalize(detection.IsDetected ? detection.Title : null);
         var titleChanged = !string.Equals(title, Title, StringComparison.Ordinal);

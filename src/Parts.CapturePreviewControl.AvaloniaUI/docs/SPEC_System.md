@@ -112,7 +112,7 @@ flowchart TB
     subgraph Core["Parts.CapturePreviewControl.Core プロジェクト（両 UI 共通の規則。UI 非依存）"]
         CS2["CaptureSettings / CaptureResult<br/>public sealed record"]
         Sl["CaptureSessionSlot / CaptureSessionState<br/>CaptureCompletion / CaptureOwnerScope"]
-        Math["CropBoundsMath / CaptureClipMath / CaptureTypeTraits<br/>MonitorScalingMath / ImageColorMath<br/>CaptureLabelTexts / CropLabelTexts"]
+        Math["CropBoundsMath / CropClipMath / CaptureTypeTraits<br/>MonitorScalingMath / ImageColorMath<br/>CaptureLabelTexts / CropLabelTexts"]
         Mg["CaptureSettingsMerge / SelectionOverlayOptionsMapper<br/>OverlayRect / OverlayLineStyle"]
         Log["CapturePreviewLogMessage"]
         ZS["ZoomViewSession<br/>public sealed class（状態と判断を単一所有）"]
@@ -206,18 +206,18 @@ flowchart TB
   - モード別の選択処理（AreaSelect: ドラッグ選択 + ルーペ / Screen・WindowSelect: 要素検出 + ハイライト）
   - **選択スタイル（ハイライト型 / ドラッグ型）の判定はコアの `CaptureTypeTraits.IsHighlighted` が単一所有する**（本クラスは結果を 1 度読んで、十字カーソル・ルーペ・確定操作の配線を導く。 種別を直接比較しない）
   - **完了は 1 回だけ**の規則はコアの `CaptureSessionState` が単一所有する（確定とキャンセルの競合で二重完了にしない）
-  - **確定矩形の計算はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（種別が決める区間の流儀に従った終点の加算と画像内へのクランプを組み合わせた唯一の入口。 退化した結果は確定せずキャンセルする）。 サイズラベルの表示倍率はコア（`MonitorScalingMath.ResolveForSourceRect`）へ委譲する
+  - **確定矩形の計算はコアの `CropClipMath.ResolveCaptureRect` が単一所有する**（種別が決める区間の流儀に従った終点の加算と画像内へのクランプを組み合わせた唯一の入口。 退化した結果は確定せずキャンセルする）。 サイズラベルの表示倍率はコア（`MonitorScalingMath.ResolveForSourceRect`）へ委譲する
   - **事前切り出しキャッシュ（同一判定・所有権の受け渡し・旧値の破棄）はコアの `CaptureClipCache` が単一所有する**（本クラスは切り出しをバックグラウンドで実行して `Store` するだけ）。 適用範囲はハイライト型のホバー時のみ（範囲選択はドラッグ中の連続更新でキャッシュが無駄になるため）
-  - **対象⇔画面物理の変換はコアの `CaptureClipMath` が単一所有する**（本クラスはコアの矩形を Avalonia の型へ写すだけ）
+  - **対象⇔画面物理の変換はコアの `CropClipMath` が単一所有する**（本クラスはコアの矩形を Avalonia の型へ写すだけ）
   - **確定対象の選択（ハイライト矩形 / 選択矩形）はコアの `CaptureTypeTraits.ResolveRect` が単一所有する**（サイズラベルの文言生成もこの結果を使う）
   - **検出関数の呼び分けはコアの `CaptureTypeTraits.FindUnderCursor` が単一所有する**（ホバー・押下で同じ分岐を書かない）
   - **ハイライトの状態（矩形の対象座標・表示名・表示名の変化）はコアの `CaptureHighlightSession` が単一所有する**（本クラスは検出結果を渡して戻り値を選択コントロールへ設定するだけ。 診断ログもコアが出し、確定対象・キーの確定可否はコアの状態を参照する）
-  - **画像の共有値（サイズ・占有範囲・サイズの検証）はコアの `CaptureClipMath` が単一所有する**（`ImageSize` / `ImageBounds` / `ValidateImage`。 UI はコアの型同士の変換を書かない）
+  - **画像の共有値（サイズ・占有範囲・サイズの検証）はコアの `CropClipMath` が単一所有する**（`ImageSize` / `ImageBounds` / `ValidateImage`。 UI はコアの型同士の変換を書かない）
 - **撮影対象の範囲（全モニタの包含矩形）と「モニタが無ければ撮影しない」前提条件はコアの `CaptureVirtualScreen.ResolveBounds` が単一所有する**（本クラスは列挙した矩形を渡して、返った範囲をウィンドウへ配置するだけ。 物理ピクセル → DIP の換算は `EsUtil.Platform.Core` の `DpiScaler.ToDip` に委譲する）
   - **撮影画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時のフォールバック範囲）はコアの `CaptureImageHolder` が単一所有する**（本クラスは受け取った画像を渡して可否を見るだけ。 クローズ後の破棄漏れを防ぐ）
   - **背景取得のタイムアウトと未使用結果の破棄はコアの `CaptureVirtualScreen` が単一所有する**（本クラスは取得と UI スレッドへの反映のみを担う）
-  - **確定・事前切り出しの切り出し矩形はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（ドラッグは浮動小数版・クリック確定は整数版。 UI は選択矩形の型を広げない）
-  - **選択矩形と占有範囲は同じ座標空間（画面物理座標）で渡す**（本 UI のドラッグ選択の対象はウィンドウローカル物理ピクセルのため、確定時に `CaptureClipMath.ToScreenRect` で画面物理座標へ戻してから画面物理座標の占有範囲と組み合わせる。 切り出し矩形の求解は画面物理座標の 1 つの入口に統一されている）
+  - **確定・事前切り出しの切り出し矩形はコアの `CropClipMath.ResolveCaptureRect` が単一所有する**（ドラッグは浮動小数版・クリック確定は整数版。 UI は選択矩形の型を広げない）
+  - **選択矩形と占有範囲は同じ座標空間（画面物理座標）で渡す**（本 UI のドラッグ選択の対象はウィンドウローカル物理ピクセルのため、確定時に `CropClipMath.ToScreenRect` で画面物理座標へ戻してから画面物理座標の占有範囲と組み合わせる。 切り出し矩形の求解は画面物理座標の 1 つの入口に統一されている）
   - **サイズラベルの文言はコアの `CropLabelTexts.ResolveSizeLabel` が解決する**（未選択なら描かない。 ホスト指定の文言は `SizeLabelOverrideProvider` が与える）
   - **オーナーの画面スケーリングの代表値はコアの `MonitorScalingMath.ResolveScaling` が解決する**（画面が取得できない場合は基準値・0 以下は正規化）
   - **キー操作（Enter = 確定 / Escape = キャンセル）の解釈はコアの `CaptureKeyActions` が単一所有する**（確定対象が無い場合の Enter は何もしない）。
@@ -232,7 +232,7 @@ flowchart TB
   - クリック確定 → キャプチャ実行 → 結果コールバック
   - 非アクティブ化 / Close → キャンセル
 - **可視性**: internal（クラス。 コンストラクタ等のシグネチャは public）
-- **依存**: SelectionOverlayControl（同一アセンブリ。 `SelectionOverlayControl` / `SelectionOverlayMode`）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CaptureClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CapturePreviewLogMessage / CaptureResult
+- **依存**: SelectionOverlayControl（同一アセンブリ。 `SelectionOverlayControl` / `SelectionOverlayMode`）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CropClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CapturePreviewLogMessage / CaptureResult
 
 ### 6.5 公開データ型
 
