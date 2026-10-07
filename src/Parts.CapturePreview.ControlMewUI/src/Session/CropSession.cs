@@ -1,345 +1,236 @@
 using Aprillz.MewUI;
-using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
-using EsUtil.SaveEvidence.Platform.MewUI;
 using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 
-/// <summary>プレビュー画像の切り出し（Crop）セッション（MewUI 版）。</summary>
+/// <summary>切り出し（Crop）セッション（CropViewControl のライフサイクル管理と確定・キャンセル処理。 MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版の <c>CropSession</c>（<c>Parts.CapturePreview.ControlAvaloniaUI</c>）に相当する。 プレビューの上へ領域選択の<br/>
-/// オーバーレイを重ね、ドラッグで指定した領域で現在の画像を切り出す。<br/>
-/// <b>1 セッション = 1 インスタンス</b>であり、生成・実行・破棄は Facade（<see cref="CaptureSessionControl"/>）が担う<br/>
-/// （本クラスは公開しない。 排他の受付は Facade がコアの <c>CaptureSessionSlot</c> で行う）。<br/>
+/// 内部実装であり、公開 API は <see cref="CaptureSessionControl.StartCropAsync"/> を使用する（Avalonia 版と同じ形）。<br/>
 /// <br/>
-/// <b>ライフサイクル</b>: 生成時にオーバーレイを表示ツリーへ加えて表示し、確定（Enter / イベント）または<br/>
-/// キャンセル（Escape）で表示ツリーから外れて終了する（終了は <c>onEnded</c> で Facade へ通知する）。<br/>
-/// 確定時は <see cref="ICaptureTarget.ApplyCrop"/> を通すため、Undo 履歴への退避などの対象操作は<br/>
-/// アプリ側（<see cref="ICaptureTarget"/> の実装）に委ねる。<br/>
+/// 状態は持たない（選択矩形・ルーペ表示状態・暗転マスクは <see cref="CropViewControl"/> が保持し、本クラスはライフサイクルのみ）。<br/>
+/// - 配線（確定・キャンセル・ホストの無効化）は複合コントロール内で完結する（ホストの配線コードは不要）。<br/>
+/// - 対象 = 元画像ピクセル（論理座標）。 座標変換は <see cref="CropViewControl"/> が内包する<br/>
+///   ズーム・パン・Fit のビューポートへ委譲する（ズーム座標の単一所有）。<br/>
 /// <br/>
-/// <b>座標変換</b>: プレビューはズーム・パンできるため、ローカル DIP ↔ 画像ピクセルの変換は<br/>
-/// 内包する <see cref="CropViewControl"/>（ズームビューポート）へ委譲する（画像矩形・実効倍率・Fit / 中央寄せの<br/>
-/// 原点補正を単一所有する）。 ズーム・パンで表示が変わった時は<br/>
-/// <see cref="CropViewControl.ViewportChanged"/> でポートを作り直す。<br/>
+/// <b>確定の適用</b>: 結果はコア型（<see cref="EsRectInt"/>）で返し、<b>適用はホスト（アプリ）が行う</b><br/>
+/// （Undo 退避・画像差し替えはアプリ側の責務。 Avalonia 版と同じ契約）。<br/>
 /// <br/>
-/// <b>テーマ</b>: 市松模様の下地色はテーマに依存するため、Facade が <see cref="ApplySettings"/> で更新する<br/>
-/// （テーマ変更の購読はホストが行う。 本クラスはテーマの通知元を知らない）。<br/>
-/// <br/>
-/// <b>外観</b>: 枠線・ハンドル・十字マーカー・座標ラベルは <see cref="CaptureSettings"/> に従う（Avalonia 版の<br/>
-/// <c>CropSession</c> と同じマッピング）。 白枠などの固定値は持たない（設定を変えると反映されなくなるため）。<br/>
-/// <br/>
-/// <b>ズーム・パン</b>: 切り出し中もホイール（Ctrl = ズーム / 通常 = パン）でプレビューを操作できる<br/>
-/// （オーバーレイ上のホイールを <see cref="CropViewControl.PanByWheel"/> / <see cref="CropViewControl.ZoomByWheel"/> へ転送する）。
+/// <b>Avalonia 版との差</b>: カーソル上書き抑止（<c>ICursorOverrideGuard</c>）は Win32 の WM_SETCURSOR を<br/>
+/// 差し替える Avalonia 版固有の機構であり、MewUI 版は持たない（MewUI では要素の <c>Cursor</c> で表現する）。
 /// </remarks>
-internal sealed class CropSession
+internal sealed class CropSession(
+    CropViewControl cropView,
+    Window hostWindow,
+    CaptureSettings settings,
+    ILogger? logger = null)
 {
-    /// <summary>ロガー（ホストが注入する。 null の場合は出力しない）。</summary>
-    private readonly ILogger _log;
+    /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
+    private readonly ILogger _log = logger.OrNullLogger();
 
-    /// <summary>対象のプレビューコントロール。</summary>
-    private readonly CropViewControl _view;
+    /// <summary>座標変換ポート（ビューポートDIP ↔ 元画像ピクセル）。</summary>
+    /// <remarks>
+    /// 境界（元画像の範囲）は現在の画像から都度評価するため、生成は 1 度で足りる<br/>
+    /// （ズーム・パン・画像の差し替えのいずれにも追従する）。
+    /// </remarks>
+    private readonly ICoordTransform _coordPort = CreateCoordPort(cropView);
 
-    /// <summary>切り出しの適用先（アプリ側が実装する）。</summary>
-    private readonly ICaptureTarget _target;
+    /// <summary>設定（全メンバー non-null）。 実行中に <see cref="ApplySettings"/> で更新できる。</summary>
+    private CaptureSettings _settings = settings.ToNonNull();
 
-    /// <summary>設定（全メンバー non-null）。<see cref="ApplySettings"/> で実行中に更新する。</summary>
-    private CaptureSettings _settings;
-
-    /// <summary>選択オーバーレイ（暗転マスク + 選択矩形 + ルーペ）。</summary>
-    private readonly SelectionOverlayControl _selector;
-
-    /// <summary>オーバーレイを重ねる領域（終了時に取り外すため保持する）。</summary>
-    private readonly Grid _host;
-
-    /// <summary>セッションの状態（切り出し中かどうか・完了は 1 回だけ）。</summary>
+    /// <summary>セッションの状態（再入禁止・完了は 1 回だけ）。</summary>
     private readonly CaptureSessionState _state = new();
 
-    /// <summary>長命のオブジェクト（ビュー・適用先）への購読を解除する処理（終了時に 1 回だけ実行する）。</summary>
+    /// <summary>セッション結果の完了通知（確定・キャンセルの最初の 1 件を採用する）。</summary>
     /// <remarks>
-    /// ビューポートと適用先はアプリと同じ寿命を持つため、終了したセッションのハンドラを残すと<br/>
-    /// セッションの数だけ呼び出しが増え、終了したセッションを参照し続ける（リークになる）。
+    /// 結果はコア型（<see cref="EsRectInt"/>）で返す（UI 型は境界より外へ出さない）。<br/>
+    /// ホストは切り出しの適用先（アプリのコマンド）へそのまま渡せる。
     /// </remarks>
-    private readonly List<Action> _unsubscribe = [];
+    private readonly CaptureCompletion<EsRectInt?> _completion = new();
 
-    /// <summary>選択矩形が有効かどうかを取得する。</summary>
-    /// <value>選択矩形がある場合は true。</value>
-    /// <remarks>選択状態の真のソースは選択コントロール（<c>HasSelection</c>）に集約する（Facade の操作分岐用）。</remarks>
-    internal bool HasSelection => _selector.HasSelection;
+    /// <summary>選択矩形が有効かどうか（複合コントロールの選択状態）。 ホスト（CaptureSessionControl）の操作分岐用。</summary>
+    /// <remarks>選択状態の真のソースは選択矩形コントロール（<see cref="CropViewControl.HasSelection"/>）に集約する。</remarks>
+    public bool HasSelection => cropView.HasSelection;
 
-    /// <summary>切り出しセッションを生成する（表示は <see cref="Start"/> が行う）。</summary>
-    /// <param name="view">対象のプレビューコントロール。</param>
-    /// <param name="target">切り出しの適用先（アプリ側の実装）。</param>
-    /// <param name="settings">キャプチャ設定（null メンバーは既定値で埋める）。</param>
-    /// <param name="host">オーバーレイを重ねる領域（プレビューと同じセル）。</param>
-    /// <param name="logger">ロガー（null の場合は出力しない）。</param>
+    /// <summary>ビューポートDIP ↔ 元画像ピクセルの座標変換ポートを生成する。</summary>
+    /// <param name="cropView">変換の基準となる複合コントロール。</param>
+    /// <returns>ToSource = ビューポートDIP → 元画像ピクセル、ToDip = 元画像ピクセル → ビューポートDIP、SourceArea = 現在の画像のサイズのポート。</returns>
     /// <remarks>
-    /// 1. 選択オーバーレイを生成してイベントを配線する（確定・キャンセル・ビューポート変化・画像差し替え・ホイール）。<br/>
-    /// 2. 表示とセッションの開始は <see cref="Start"/> が行う（Facade が排他の受付を試みてから呼ぶため）。
+    /// <see cref="CropViewControl"/> の座標変換（<see cref="CropViewControl.ClientToSource"/> /
+    /// <see cref="CropViewControl.SourceToClient"/>）へ委譲する。 これにより、ズーム・パン・Fit・中央寄せの<br/>
+    /// 原点補正を全て内包ビューポートが単一所有し、ホストが変換を重複実装する必要がない（DRY 原則）。<br/>
+    /// 境界は表示中の画像から都度評価する（切り出しの対象は <see cref="CropViewControl.Source"/> が単一所有する）。
     /// </remarks>
-    internal CropSession(
-        CropViewControl view, ICaptureTarget target, CaptureSettings settings, Grid host,
-        ILogger? logger = null)
+    private static ICoordTransform CreateCoordPort(CropViewControl cropView)
+        => new CoordTransform(
+            toSource: dip => cropView.ClientToSource(dip),
+            toDip: logical => cropView.SourceToClient(logical),
+            sourceArea: () => cropView.Source is { } image ? CropClipMath.ImageSize(image) : null);
+
+    /// <summary>切り出しセッションを実行する（確定待機 → 結果返却）。 UI スレッドから呼び出すこと。</summary>
+    /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う。 呼び出し側が表示中の画像から解決して渡す）。</param>
+    /// <returns>確定時は元画像上の切り出し範囲（コア型）、キャンセル時は 0x0 の空矩形。</returns>
+    /// <remarks>切り出しの境界（元画像の範囲）は開始時のサイズへ固定せず、現在の画像から都度取り出す（表示中の画像が単一所有する）。</remarks>
+    public Task<EsRectInt?> RunAsync(EsBitmap sourceImage)
     {
-        ArgumentNullException.ThrowIfNull(view);
-        ArgumentNullException.ThrowIfNull(target);
-        ArgumentNullException.ThrowIfNull(host);
-
-        _view = view;
-        _target = target;
-        _settings = settings.ToNonNull();
-        _host = host;
-        _log = logger.OrNullLogger();
-
-        _selector = new SelectionOverlayControl
-        {
-            Mode = SelectionOverlayMode.Crop,
-            IsVisible = false,
-            Log = _log,
-        };
-
-        _selector.ConfirmRequested += (_, _) => Confirm();
-        _selector.CancelRequested += (_, _) => Cancel();
-
-        // ビューポートと適用先はアプリと同じ寿命を持つため、終了時に解除できるようハンドラを保持する
-        EventHandler onViewportChanged = (_, _) => UpdatePort();
-        _view.ViewportChanged += onViewportChanged;
-        _unsubscribe.Add(() => _view.ViewportChanged -= onViewportChanged);
-
-        EventHandler onImageChanged = (_, _) =>
-        {
-            _selector.SetLoupeSource(_target.CurrentImage);
-            UpdatePort();
-
-            // 画像の差し替えで座標系（元画像ピクセル）が変わるため、選択を破棄して残留を防ぐ。
-            // ズーム・パン（ビューポートの変化）では座標系が変わらないため、選択は維持する。
-            if (_state.IsRunning)
-            {
-                _selector.ClearSelection();
-            }
-        };
-        _target.ImageChanged += onImageChanged;
-        _unsubscribe.Add(() => _target.ImageChanged -= onImageChanged);
-
-        // 選択オーバーレイ上のホイールをビューポート（ズーム・パン）へ転送する。
-        // オーバーレイは切り出し中にプレビューを覆って入力を占有するため、ホイールはオーバーレイだけが受け取る。
-        // 回転量から移動量への換算とズーム率の決定は、ズームビューポートが単一所有する。
-        _selector.MouseWheel += OnSelectorWheel;
-    }
-
-    /// <summary>選択オーバーレイのホイールをビューポート（ズーム・パン）へ転送する。</summary>
-    /// <param name="e">ホイールの情報。</param>
-    /// <remarks>
-    /// Ctrl 併用はズーム（発生位置をズーム中心にする）、それ以外はパンとする。<br/>
-    /// 解釈（どちらを選ぶか）はコアの <see cref="ZoomWheelIntent"/>、回転量 → 移動量の換算はビューポート（<c>ZoomViewControl</c>）が単一所有する<br/>
-    /// （オーバーレイは入力を受けるだけであり、ビューの状態を変更しない）。
-    /// </remarks>
-    private void OnSelectorWheel(MouseWheelEventArgs e)
-    {
-        var intent = ZoomWheelIntent.Resolve(e.ControlKey, e.ShiftKey, e.Delta.Y);
-        if (intent.IsZoom)
-        {
-            _view.ZoomByWheel(intent.ZoomIn, ToViewportPosition(e.GetPosition(_selector).ToEsPoint()));
-        }
-        else
-        {
-            _view.PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), intent.ScrollHorizontal);
-        }
-
-        e.Handled = true;
-    }
-
-    /// <summary>切り出しセッションの終了を通知する（Facade が排他の受付を解放する）。</summary>
-    /// <remarks>確定・キャンセルの両方で 1 回だけ通知する（セッションの破棄前に届く）。</remarks>
-    internal event EventHandler? Ended;
-
-    /// <summary>進行中の切り出しを現在の選択矩形で確定する（Enter キー相当）。</summary>
-    /// <remarks>
-    /// 切り出しの適用先（<see cref="ICaptureTarget.ApplyCrop"/>）へ委譲する（Undo 退避と画像差し替えはアプリ側の責務）。<br/>
-    /// 実行中でない場合は何もしない（確定後に届いた要求を無視する）。
-    /// </remarks>
-    internal void Confirm()
-    {
-        if (_target.CurrentImage is not { } image)
-        {
-            // 切り出す対象が無い（画像が差し替えられた等）→ キャンセル扱い
-            Cancel();
-            return;
-        }
-
-        // 完了は 1 回だけ受け付ける（実行中でない場合も false になる。 規則はコアが単一所有する）
-        if (!_state.TryComplete())
-        {
-            return;
-        }
-
-        // 切り出し範囲の計算（閉区間化・画像内へのクランプ・端数の丸め）はコアが単一所有する
-        var pixels = CropBoundsMath.ComputeCropBounds(
-            _selector.SelectionSourceRect, CropClipMath.ImageSize(image), _settings.MinSelectionSize!.Value);
-        // 退化した選択（切り出せない矩形）はキャンセルとして記録する（規則はコアが単一所有する）
-        _log.LogCropFinished(pixels);
-        EndSession();
-
-        // 切り出せない場合は画像を差し替えない（0 サイズの画像を作らない）
-        if (!pixels.IsEmpty)
-        {
-            _target.ApplyCrop(pixels);
-        }
-    }
-
-    /// <summary>進行中の切り出しをキャンセルする（Escape キー相当）。</summary>
-    /// <remarks>選択を破棄してオーバーレイを取り外す（画像は差し替えない）。</remarks>
-    internal void Cancel()
-    {
-        // 完了は 1 回だけ受け付ける（確定とキャンセルの競合で二重終了にしない。 規則はコアが単一所有する）
-        if (!_state.TryComplete())
-        {
-            return;
-        }
-
-        _log.LogCropCancelled();
-        EndSession();
-    }
-
-    /// <summary>セッション実行中に最新の設定を再適用する（切り出し中の設定変更の即時反映）。</summary>
-    /// <param name="newSettings">最新の設定（null メンバーは現在値を維持）。</param>
-    /// <remarks>
-    /// Facade（<c>AppearanceSettings</c>）の変更時に呼ばれる。 外観・クリップ設定を再適用する。<br/>
-    /// セッションの選択状態・ルーペの表示位置は維持される（座標変換ポートは再設定されるが、動的評価のため追従）。
-    /// </remarks>
-    internal void ApplySettings(CaptureSettings newSettings)
-    {
-        if (!_state.IsRunning)
-        {
-            return;
-        }
-
-        _settings = newSettings.ToNonNull();
-        ApplyAppearance();
-    }
-
-    /// <summary>切り出しを開始する（オーバーレイを表示し、入力を選択コントロールへ移す）。</summary>
-    /// <param name="image">切り出す対象の元画像。</param>
-    /// <remarks>
-    /// 外観の反映（<see cref="ApplyAppearance"/>）と表示の準備を行い、選択コントロールへフォーカスを移す。<br/>
-    /// Facade が排他の受付（コアの <c>CaptureSessionSlot</c>）を済ませてから呼ぶため、呼び出し時点で実行中にはならない。<br/>
-    /// 開始状態は <see cref="CaptureSessionState"/> が単一所有する（確定・キャンセルの二重完了を防ぐ規則と同じ所有者に置く）。
-    /// </remarks>
-    internal void Start(EsBitmap image)
-    {
-        ArgumentNullException.ThrowIfNull(image);
-
         if (!_state.TryBegin())
         {
-            return;
+            return Task.FromResult<EsRectInt?>(null); // 再入禁止
         }
 
+        // 外観・座標変換・ルーペソースを設定する（CropViewControl は既に配置済み。 追加・除去はしない）
+        ConfigureControls();
+        // 領域選択オーバーレイを可視化する（プレビュー表示時は非表示。 Crop セッション中のみ表示して暗転を出す）
+        cropView.SetSelectionOverlayVisible(true);
         // 開始ログのサイズは元画像からコアが取り出す（UI は整数へ丸めない）
-        _log.LogCropStart(image);
-        UpdatePort();
-        _selector.SetLoupeSource(image);
-        _selector.ClearSelection();
-        ApplyAppearance();
-        _host.Add(_selector);
-        _selector.IsVisible = true;
+        _log.LogCropStart(sourceImage);
 
-        // 非表示の間に描画済みのキャンバスは再描画されないため、表示後に明示的に無効化する
-        _selector.RequestRedraw();
-        _selector.NotifyViewportChanged();
+        void OnConfirm(EsRect logicalRect)
+        {
+            // 切り出しの対象は表示中の画像（差し替え後は差し替え後の画像の範囲で切り出す）。
+            // 対象が無い場合は画像が差し替えられた（または破棄された）ため、キャンセルとして扱う
+            if (cropView.Source is not { } currentImage)
+            {
+                OnCancel();
+                return;
+            }
+
+            if (!_state.TryComplete()) return; // 二重完了を防ぐ
+            // 切り出しの手前で区間の流儀を付ける
+            // （切り出しの対象は常にドラッグ選択 = 範囲選択であり、規則はキャプチャ種別が単一所有する）
+            var selection = logicalRect.WithInterval(CaptureTypeTraits.ResolveInterval(CaptureType.AreaSelect));
+            // 切り出し範囲の計算（画像内へのクランプ・端数の丸め・終点の加算）はコアが単一所有する
+            var bounds = CropBoundsMath.ComputeCropBounds(
+                selection, CropClipMath.ImageSize(currentImage), _settings.MinSelectionSize!.Value);
+            // 退化した選択（切り出せない矩形）はキャンセルとして記録する（規則はコアが単一所有する）
+            _log.LogCropFinished(bounds);
+            Cleanup();
+            // 退化した選択は空の矩形（0x0）のまま返す（キャンセルと同じ表現）
+            _completion.TrySetResult(bounds);
+        }
+
+        void OnCancel()
+        {
+            if (!_state.TryComplete()) return; // 二重完了を防ぐ
+            _log.LogCropCancelled();
+            Cleanup();
+            // キャンセルは 0x0 の空矩形で表す（公開契約。 null は「開始できなかった」の意味に限定する）
+            _completion.TrySetResult(default(EsRectInt));
+        }
+
+        void OnConfirmEvent(object? sender, SelectionConfirmedEventArgs e) => OnConfirm(e.SelectionSourceRect);
+
+        void OnCancelEvent(object? sender, EventArgs e) => OnCancel();
+
+        void OnDeactivated() => OnCancel();
+
+        void Cleanup()
+        {
+            hostWindow.Deactivated -= OnDeactivated;
+            cropView.ConfirmRequested -= OnConfirmEvent;
+            cropView.CancelRequested -= OnCancelEvent;
+            cropView.ClearLoupe();
+            // 確定・キャンセル後は領域選択オーバーレイを非表示に戻す（プレビュー表示時は非表示のため）。
+            // 選択状態のクリアとオーバーレイの非表示化を一括で行う（暗転マスクの残留を防ぐ）
+            cropView.SetSelectionOverlayVisible(false);
+            _state.End();
+        }
+
+        // イベント配線（配線は複合コントロール内で完結。 ホストは確定・キャンセルのみ購読）
+        cropView.ConfirmRequested += OnConfirmEvent;
+        cropView.CancelRequested += OnCancelEvent;
+        hostWindow.Deactivated += OnDeactivated;
 
         // 矢印キーの微調整と Escape を受け取れるよう、選択コントロールへフォーカスを移す
-        _selector.FocusMarquee();
+        cropView.FocusMarquee();
+
+        return _completion.Task;
     }
 
-    /// <summary>セッションの後片付け（選択の破棄・ルーペの解除・オーバーレイの取り外し）を行う。</summary>
-    /// <remarks>
-    /// 終了の記録は行わない（確定時はコアの <c>LogCropFinished</c> が既に記録済みのため、キャンセルの記録を重ねない）。<br/>
-    /// 状態を終了してから Facade へ通知する（排他の受付の解放を状態と矛盾させない）。
-    /// </remarks>
-    private void EndSession()
+    /// <summary>進行中の切り出しセッションをプログラム的にキャンセルする。</summary>
+    /// <remarks>複合コントロールにキャンセル要求を委譲する（選択破棄 + CancelRequested 発火 → OnCancelEvent 経由で完了）。</remarks>
+    public void Cancel()
     {
-        foreach (var unsubscribe in _unsubscribe)
-        {
-            unsubscribe();
-        }
-
-        _unsubscribe.Clear();
-        _selector.ClearSelection();
-        _selector.ClearLoupe();
-        _selector.IsVisible = false;
-        _host.Remove(_selector);
-        _state.End();
-        Ended?.Invoke(this, EventArgs.Empty);
+        if (!_state.IsRunning) return;
+        cropView.RequestCancel();
     }
 
-    /// <summary>表示中のズーム・パンに合わせて座標変換ポートを更新する。</summary>
-    /// <remarks>
-    /// ローカル DIP ⇔ 画像ピクセルの変換は、表示中の画像矩形・実効倍率・Fit / 中央寄せの原点補正を<br/>
-    /// 内包する <see cref="CropViewControl"/>（ズームビューポート）へ委譲する（Avalonia 版の <c>CropSession</c> と同じ）。<br/>
-    /// ズーム・パンで表示が変わるたびに呼び直す（ポートは都度生成する）。<br/>
-    /// 対象座標（元画像ピクセル）はズーム・パンで不変のため、選択矩形は維持される（オーバーレイの描画位置のみが追従する）。
-    /// </remarks>
-    private void UpdatePort()
+    /// <summary>進行中の切り出しセッションを現在の選択矩形で確定する（Enter キー相当）。</summary>
+    /// <remarks>複合コントロールに確定要求を委譲する（選択確定時のみ ConfirmRequested 発火 → OnConfirmEvent 経由で完了）。</remarks>
+    public void Confirm()
     {
-        var image = _target.CurrentImage;
-
-        _selector.SetCoordTransform(new CoordTransform(
-            toSource: _view.ClientToSource,
-            toDip: _view.SourceToClient,
-            sourceArea: () => image is null ? null : CropClipMath.ImageSize(image)));
+        if (!_state.IsRunning) return;
+        cropView.RequestConfirm();
     }
 
-    /// <summary>設定を選択コントロールへ反映する。</summary>
+    /// <summary>ビューポート（パン・ズーム・表示サイズ）の変化をオーバーレイへ通知する（ホストからの呼び出し）。</summary>
     /// <remarks>
-    /// 設定項目と外観の対応はコアのマッパー（<c>SelectionOverlayOptionsMapper.ToSelectionOverlayOptions</c>）が単一所有する<br/>
-    /// （Avalonia 版の <c>CropSession</c> も同じ変換を使うため、UI ごとに見た目がずれない）。
+    /// ホスト（上位 AP）がビューポート変化を検知した際に本メソッドで中継する。<br/>
+    /// 暗転マスク・選択枠・ルーペの再描画・再計算を要求する。 座標変換ポートは動的評価のため再描画だけで追従する。
     /// </remarks>
-    private void ApplyAppearance()
+    public void NotifyViewportChanged()
+    {
+        if (!_state.IsRunning) return;
+        cropView.NotifyViewportChanged();
+    }
+
+    /// <summary>コントロール（外観・座標変換・ルーペソース）を設定する。</summary>
+    /// <remarks>セッション開始時（<see cref="RunAsync"/>）と、実行中の設定変更（<see cref="ApplySettings"/>）で呼ばれる。</remarks>
+    private void ConfigureControls()
     {
         var s = _settings;
-
-        // 設定を 1 値に変換して一括適用する（ラベル文言は描画時に評価するため別途設定する）
-        _selector.Options = s.ToSelectionOverlayOptions();
+        // 設定を複合コントロールの設定値（1 値）へ変換して一括適用する（変換はコアのマッパーが単一所有する）
+        cropView.SelectionOverlayOptions = s.ToSelectionOverlayOptions();
         // 色は描画にだけ必要な設定のため、コアの設定ではなく描画の設定として与える
-        _selector.MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(s);
-        _selector.LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
-
-        // サイズラベルは画像ピクセル（対象座標）で表示する（表示時点の選択を持ち出す）。
-        // 書式と「未選択なら描かない」規則はコアが単一所有する
-        // （Avalonia 版と同じ文言・同じ表示条件になる）。
-        _selector.SizeLabelOverrideProvider = () => CropLabelTexts.ResolveSizeLabel(
-            _selector.HasSelection, _selector.SelectionSourceRect, _view.ZoomPercent);
-
-        // 操作ラベル・情報ラベルの文言はキャプチャコア（CaptureLabelTexts）が単一所有する。
-        // 情報ラベルは切り出しでは表示しない（GetInfoText が切り出しモードで null を返す）。
-        _selector.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(_selector.Mode);
-        _selector.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(_selector.Mode, null);
+        // （プレビューの切り出しは背後の要素を透かすため、ルーペの下地は透明にする）
+        cropView.SelectionOverlayMarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(s);
+        cropView.SelectionOverlayLoupeAppearance = CapturePaintMapper.ToLoupeAppearance(s);
+        // DPI スケーリング・ルーペ描画スケールは設定（Options）の対象外（環境値。 コードから動的設定）。
+        // プレビュー内 Crop は対象 = 論理座標（元画像ピクセル）のため DIP と 1:1（基準値）にする。
+        cropView.ClientToSourceScaling = DpiScaler.StandardScaling;
+        cropView.LoupeClientToPixelScaling = s.LoupeClientToPixelScaling!.Value;
+        // サイズラベルも描画時に最新のズーム率から生成する（ズーム率表示の追従）。
+        // 書式と「未選択なら描かない」規則はコアが単一所有する。
+        cropView.SizeLabelOverrideProvider = () => CropLabelTexts.ResolveSizeLabel(
+            cropView.HasSelection,
+            // 切り出しの対象は常にドラッグ選択（範囲選択）のため、区間の流儀をここで付ける
+            cropView.SelectionSourceRect.WithInterval(CaptureTypeTraits.ResolveInterval(CaptureType.AreaSelect)),
+            cropView.ZoomPercent);
+        // 操作ラベルの文言はホスト（切り出し文脈）が与える（汎用コアは文言を持たない）。
+        // 情報ラベルは切り出しでは表示しない（CaptureLabelTexts が切り出しモードで null を返す）。
+        cropView.OperationTextProvider = () => CaptureLabelTexts.GetOperationText(cropView.SelectionMode);
+        cropView.InfoTextProvider = () => CaptureLabelTexts.GetInfoText(cropView.SelectionMode, null);
+        // 座標変換ポート: 対象 = 論理座標（元画像ピクセル）。 ズーム・パン・Fit・中央寄せの原点補正は
+        // 内包する ZoomViewControl が単一所有する（座標変換ポートはそれを委譲）。
+        cropView.SetCoordTransform(_coordPort);
+        // ルーペのソースは表示中の画像（切り出しの対象と同じ画像。 画像の差し替えに追従する）。
+        // 終了時にルーペを解除するため、開始と設定変更のたびに表示中の画像へ結び直す。
+        cropView.SetLoupeSource(cropView.Source);
     }
 
-    /// <summary>選択オーバーレイのローカル座標をビューポート（ズームビュー）のローカル座標へ変換する。</summary>
-    /// <param name="overlayPosition">オーバーレイのローカル座標（DIP）。</param>
-    /// <returns>ビューポートのローカル座標（DIP）。</returns>
+    /// <summary>セッション実行中に最新の設定を再適用する（Crop 中の設定変更の即時反映）。</summary>
+    /// <param name="newSettings">最新の設定（null メンバーは現在値を維持）。</param>
     /// <remarks>
-    /// 両者は通常同一領域を占める（重ね合わせ）が、レイアウトの差に依存しないようビジュアルツリーの変換に委譲する。
+    /// <see cref="CaptureSessionControl.AppearanceSettings"/> の変更時に CaptureSessionControl から呼ばれる。<br/>
+    /// 外観・切り出し設定（<see cref="ConfigureControls"/>）を再適用し、オーバーレイを再描画する。<br/>
+    /// セッションの選択状態・ルーペの表示位置は維持される（座標変換ポートは再設定されるが、動的評価のため追従）。
     /// </remarks>
-    private EsPoint ToViewportPosition(EsPoint overlayPosition)
-        => _view.TranslatePositionFrom(_selector, overlayPosition);
+    public void ApplySettings(CaptureSettings newSettings)
+    {
+        if (!_state.IsRunning) return;
+        _settings = newSettings.ToNonNull();
+        ConfigureControls();
+    }
 }
-
-
-
-

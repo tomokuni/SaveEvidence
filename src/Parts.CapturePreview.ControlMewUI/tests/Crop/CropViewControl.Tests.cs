@@ -272,13 +272,52 @@ public class CropViewControlTests
         Assert.False(control.ZoomView.CenterAlign);
     }
 
-    /// <summary>子要素（ズームビュー・矩形オーバーレイ・強調オーバーレイ）が 3 つ配置されることを検証する。</summary>
+    /// <summary>子要素（ズームビュー・領域選択オーバーレイ・矩形オーバーレイ・強調オーバーレイ）が 4 つ配置されることを検証する。</summary>
+    /// <remarks>
+    /// 領域選択オーバーレイは切り出しセッションが可視化する（普段は非表示）。<br/>
+    /// 順序は「ズームビュー（最下層）→ 領域選択 → 矩形 → 強調（最上層）」で、切り出し中も
+    /// 自動切り出しの強調が暗転より上に残る（Avalonia 版と同じ重なり順）。
+    /// </remarks>
     [Fact]
-    internal void 子要素がズームビューとオーバーレイの3つである()
+    internal void 子要素がズームビューとオーバーレイの4つである()
     {
         var control = CreateLaidOut();
 
-        Assert.Equal(3, control.Count);
+        Assert.Equal(4, control.Count);
+    }
+
+    /// <summary>領域選択オーバーレイの既定が非表示・入力不可であることを検証する。</summary>
+    /// <remarks>
+    /// Crop モードは全面暗転を描くため、プレビュー表示時に可視だと「切り出し中」のような暗転が残る。
+    /// </remarks>
+    [Fact]
+    internal void 領域選択オーバーレイの既定は非表示で入力不可である()
+    {
+        var control = CreateLaidOut();
+
+        Assert.False(control.SelectionOverlay.IsVisible);
+        Assert.False(control.SelectionOverlay.IsHitTestVisible);
+    }
+
+    /// <summary>切り出しセッションの開始・終了で可視性と入力の可否が切り替わることを検証する。</summary>
+    /// <remarks>非表示へ戻すときは選択も破棄する（暗転マスク・選択枠の残留を防ぐ。 Avalonia 版と同じ）。</remarks>
+    [Fact]
+    internal void SetSelectionOverlayVisible_可視性と入力の可否を切り替え非表示で選択を破棄する()
+    {
+        var control = CreateLaidOut();
+
+        control.SetSelectionOverlayVisible(true);
+        control.SetSelection(new EsRect(10, 10, 50, 40));
+
+        Assert.True(control.SelectionOverlay.IsVisible);
+        Assert.True(control.SelectionOverlay.IsHitTestVisible);
+        Assert.True(control.HasSelection);
+
+        control.SetSelectionOverlayVisible(false);
+
+        Assert.False(control.SelectionOverlay.IsVisible);
+        Assert.False(control.SelectionOverlay.IsHitTestVisible);
+        Assert.False(control.HasSelection);
     }
 
     /// <summary>ログの設定が内包するズームビューへ伝搬されることを検証する。</summary>

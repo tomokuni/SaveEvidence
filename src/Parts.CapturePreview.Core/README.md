@@ -27,7 +27,7 @@
 - **キャプチャ結果**（`CaptureResult`）: `EsBitmap?`（画像）と `EsRectInt?`（仮想スクリーン座標の領域）の組
 - **複合コントロールの設定変換**（`SelectionOverlayOptionsMapper`）: `CaptureSettings` → `SelectionOverlayOptions`（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）の**寸法・表示可否**の対応を単一所有する（両 UI のホストが同じ変換を使う。 **色・枠線の太さ・表示可否は描画にだけ必要な設定のため写像せず**、提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有する）
 - **ラベル文言の単一所有**（`CaptureLabelTexts`）: キャプチャ種別→動作モードの写像と、操作ラベル（確定・キャンセル方法）・情報ラベル（ウィンドウタイトル）の文言を単一所有する（汎用コントロールは文言を持たず、ホストがプロバイダで与える）
-- **切り出し結果の適用先**（`ICaptureTarget`）: 撮影・切り出しの結果をアプリ側へ渡すポート（現在の画像・画像差し替えの通知・切り出しの適用）。 アプリの対象操作（Undo 退避・未保存化・ステータス通知）は実装側に残す
+- **キャプチャ完了の通知**（`CaptureCompletedEventArgs`）: 両 UI の Facade（`CaptureSessionControl`）が公開する `CaptureCompleted` イベントの引数（`CaptureResult` を運ぶ）。 **コア層に置く**ことで、UI ごとに別の引数型を公開しない（ホストが UI を跨いだ共通のハンドラを書ける）
   - **画像の平均色**（`ImageColorMath`）: 標本間引きで平均色を求める（描画の背景色の決定に使う）
   - **キャプチャ種別の性質**（`CaptureTypeTraits`）: ハイライト型（クリック確定）か・切り出しの区間の流儀（終点のピクセルを含むか）・カーソル下の検出対象（画面 / ウィンドウ）の判定を単一所有する
 - **モニタの実表示倍率**（`MonitorScalingMath`）: 対象矩形の**中心**を含むモニタの倍率を解決する（該当なしはフォールバック）。 対象座標からは**原点の加算**も本クラスが行う（`ResolveForSourceRect`）。 判定に使う一覧の構築（**倍率未確定（0 以下）の除外**）も `Collect` が単一所有する（両 UI が同じ判定点・同じ対象を使う）
@@ -122,7 +122,6 @@ src/
 │   │   ├── ImageColorMath.cs               # 画像の平均色（標本間引き）
 │   │   └── MonitorScalingMath.cs           # モニタの実表示倍率（矩形中心で判定・倍率未確定の除外）
 │   ├── Contract/                           # ホストが実装するポート
-│   │   ├── ICaptureTarget.cs               # 切り出し結果の適用先
 │   │   └── ICaptureOwnerWindow.cs          # 撮影時に退避するオーナーウィンドウ
 │   ├── Crop/                               # 切り出し
 │   │   ├── CropBoundsMath.cs               # 選択矩形 → 切り出し範囲（区間・クランプ・丸め・最小サイズ）
@@ -192,8 +191,6 @@ src/
     │   ├── CaptureTypeTraits.Tests.cs
     │   ├── ImageColorMath.Tests.cs
     │   └── MonitorScalingMath.Tests.cs
-    ├── Contract/                          # ポートの契約の検証
-    │   └── CaptureTargetContract.Tests.cs
     ├── Crop/                              # 切り出しの検証
     │   ├── CropBoundsMath.Tests.cs
     │   ├── CropClipMath.Tests.cs

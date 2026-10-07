@@ -53,7 +53,7 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 | --- | --- | --- |
 | 状態 | Core | セッションの実行中・完了（`CaptureSessionState`）、受付スロット（`CaptureSessionSlot`）、結果の確定（`CaptureCompletion`）、ハイライトとクリック確定（`CaptureHighlightSession` / `CaptureClickSelection`）、撮影画像（`CaptureImageHolder`）、切り出しビューの画像ビューポート（`ZoomViewSession`） |
 | 判断 | Core | 切り出し範囲・ハイライトの反映・キー操作・クリック確定・種別の性質・モニタ倍率・設定のマージ・退避と除外の順序・画像配置・平均色・取得の打ち切り（`CaptureVirtualScreen`）・画像ビューポートの状態と判断（Fit の表現・実効ズーム率・可否・遷移の適用・パン・スクロールバー） |
-| 契約 | Core | `ICaptureTarget` / `ICaptureOwnerWindow` / `CaptureSessionSlot` / `CaptureCompletion` / `ZoomFeedback` / `ZoomNotice` |
+| 契約 | Core | `ICaptureOwnerWindow` / `CaptureSessionSlot` / `CaptureCompletion` / `CaptureCompletedEventArgs` / `ZoomFeedback` / `ZoomNotice` |
 | ログ定義 | Core | `CapturePreviewLogMessage`（撮影・切り出し・設定・ズーム・例外） |
 | ログ以外の正規化 | Core | `CaptureText`（未取得の文字列を空文字へ。 ログ定義とは別の型） |
 | 提示の写像 | Core | 設定 → 外観の写像（`CapturePaintMapper`）、子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）、付加情報ラベルの配置指示（`SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）。 製品の設定型と提示層の外観型を橋渡しする |
@@ -119,9 +119,9 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ ホスト連携のポートと手順                               │
-│  ICaptureTarget: 切り出し結果の適用先                  │
 │  ICaptureOwnerWindow: 撮影時の退避対象                 │
 │  CaptureOwnerScope: Enter（除外→退避） / Dispose（復帰）│
+│  CaptureCompletedEventArgs: 完了通知の引数             │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ ログ定義（静的クラス）                                 │

@@ -1,45 +1,38 @@
 using Aprillz.MewUI;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Native.Win;
-using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
-/// <summary>キャプチャ（スクリーン / ウィンドウ / 範囲選択）の開始と結果の反映を担う窓口。</summary>
+/// <summary>キャプチャ（スクリーン選択 / ウィンドウ選択 / 範囲選択）の開始を担う窓口。</summary>
 /// <remarks>
-/// <b>役割</b>: 撮影の実行を Facade（<see cref="CaptureSessionControl"/>。 CaptureSessionControl.MewUI）へ委ね、<br/>
-/// 確定した画像をプレビューへ反映する。<br/>
-/// 呼び出し経路（ツールバーのボタン / グローバルホットキー）は複数あるが、処理は本クラスへ集約する（DRY）。<br/>
+/// <b>役割</b>: 撮影の実行を Facade（<see cref="CaptureSessionControl"/>。 Parts.CapturePreview.ControlMewUI）へ委ね、<br/>
+/// 実行中の多重起動を防ぐ。 確定した画像の反映（Undo 退避・プレビュー差し替え・ステータス通知）は<br/>
+/// ホスト（<c>CapturePage</c>）が <see cref="CaptureSessionControl.CaptureCompleted"/> の購読で行う<br/>
+/// （Facade の公開イベントが画像変更の唯一の経路。 Avalonia 版と同じ分担）。<br/>
 /// <br/>
-/// <b>結果の反映順序</b>:<br/>
-/// 1. 撮影前に表示していた画像を Undo 履歴へ積む（撮影前の状態へ戻せるようにする）。<br/>
-/// 2. 保存状態を未保存へ戻す（新しい画像はまだ保存されていない）。<br/>
-/// 3. 撮影結果をプレビューへ設定する（所有権は ViewModel へ移る）。<br/>
-/// 4. ステータスへ結果（サイズ）を通知する。<br/>
+/// <b>呼び出し経路</b>: ツールバーのボタン / メニュー / グローバルホットキーの 3 経路があるが、処理は本クラスへ集約する（DRY）。<br/>
 /// <br/>
-/// <b>キャンセル時</b>: 何もしない（プレビュー・Undo・ステータスとも変更しない）。<br/>
 /// <b>多重起動</b>: 撮影中は <see cref="IsCapturing"/> が true になり、以降の要求を無視する<br/>
-/// （ホットキーの連打でオーバーレイが重なるのを防ぐ）。
+/// （ホットキーの連打でオーバーレイが重なるのを防ぐ）。 切り出し中は Facade が受付を拒否する（コアの排他規則）。
 /// </remarks>
 internal static class CaptureFlow
 {
     /// <summary>撮影中かどうかを取得する。</summary>
     /// <value>撮影セッションが進行中の場合は true。</value>
+    /// <remarks>撮影はオーバーレイが閉じるまで完了しないため、待機タスクの完了で false へ戻す。</remarks>
     public static bool IsCapturing { get; private set; }
 
-    /// <summary>指定された種別のキャプチャを開始し、結果をプレビューへ反映する。</summary>
-    /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
+    /// <summary>指定された種別のキャプチャを開始する。</summary>
     /// <param name="type">キャプチャ種別。</param>
     /// <param name="captureSession">撮影・切り出しの Facade（排他とセッション寿命の窓口）。</param>
     /// <remarks>
-    /// 1. 撮影中・オーナーウィンドウ未取得の場合は何もしない。<br/>
-    /// 2. オーバーレイを表示して選択を待つ（確定した領域が返る。 キャンセル時は null）。<br/>
-    /// 3. 画像が返った場合のみ、Undo への退避 → 未保存化 → プレビュー設定 → ステータス通知を行う。<br/>
-    /// 4. 例外が発生しても撮影中フラグを必ず戻す（以降のキャプチャが起動できなくなるのを防ぐ）。<br/>
+    /// <b>完了を待たない</b>: 呼び出し経路（ホットキー・メニュー・ボタン）は同期のため、撮影の完了は待たない。<br/>
+    /// 撮影中の判定（<see cref="IsCapturing"/>）は待機タスクの完了で戻す（撮影中に再要求されても何もしない）。<br/>
+    /// 撮影の失敗（画面取得不可等）はアプリを継続する（原因は Facade が既にログへ記録している）。<br/>
     /// <b>切り出し中</b>は Facade が受付を拒否する（コアの排他規則。 画像は変更されない）。
     /// </remarks>
-    public static void Start(AppServices services, CaptureType type, CaptureSessionControl captureSession)
+    public static void Start(CaptureType type, CaptureSessionControl captureSession)
     {
         ArgumentNullException.ThrowIfNull(captureSession);
 
@@ -49,33 +42,25 @@ internal static class CaptureFlow
         }
 
         IsCapturing = true;
+        _ = RunAsync(type, owner, captureSession);
+    }
+
+    /// <summary>撮影セッションを実行し、完了時に撮影中フラグを戻す。</summary>
+    /// <param name="type">キャプチャ種別。</param>
+    /// <param name="owner">オーナーウィンドウ。</param>
+    /// <param name="captureSession">撮影・切り出しの Facade。</param>
+    /// <returns>待機タスク。</returns>
+    private static async Task RunAsync(CaptureType type, Window owner, CaptureSessionControl captureSession)
+    {
         try
         {
-            // 撮影セッション（UI 非依存のライブラリ）へ、UI 非依存のサービスを渡す。
-            // 設定は Facade（CaptureSessionControl）が単一所有するため、ここでは組み立てない。
-            // ログはアプリのログ基盤（AppLog）のロガーを渡し、撮影の開始・確定・キャンセルを同じファイルへ記録する。
-            // OS 操作の失敗（キャプチャ・列挙・ウィンドウ操作）も同じロガーへ記録される。
-            var logger = AppLog.CreateLogger(nameof(CaptureSessionControl));
-            var overlayServices = new CaptureOverlayServices(
-                new WinCaptureService(logger),
-                new WinElementFinder(logger),
-                new WinWindowService(logger),
-                logger);
-
-            var image = captureSession.Capture(owner, type, overlayServices);
-            if (image is null)
-            {
-                return;
-            }
-
-            var viewModel = services.Main;
-
-            // 撮影前の画像へ戻せるように履歴へ積む（現在の画像が null の場合は何も積まれない）
-            services.UndoHistory.Push(viewModel.PreviewImage);
-
-            // 差し替え前の画像の破棄と未保存化は MainViewModel（PreviewImage の所有者）が行う
-            viewModel.SetPreviewImage(image);
-            viewModel.StatusMessage = $"キャプチャしました（{image.Width} x {image.Height}）";
+            await captureSession.StartCaptureAsync(type, owner).ConfigureAwait(true);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 撮影の開始・実行の失敗（画面取得不可・要素検出の失敗等）ではアプリを継続する。
+            // 原因は Facade（公開 API）が公開操作の境界で既に記録しているため、ここでは再記録しない
+            // （同じ例外を 2 回記録すると、原因の特定に不要な重複行が増える）
         }
         finally
         {

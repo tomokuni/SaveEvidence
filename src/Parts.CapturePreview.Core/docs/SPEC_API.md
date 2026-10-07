@@ -91,7 +91,7 @@
 | `CapturePreviewLogMessage` | 静的クラス | ログ定義（撮影・切り出し・設定・ズーム）。 接頭辞・整形・レベルの単一所有 |
 | `TextNormalize` | 静的クラス | ログ以外でも使う文字列の正規化（未取得の null を空文字へ） |
 | `CaptureResult` | record | キャプチャ結果（画像と領域） |
-| `ICaptureTarget` | インターフェイス | 切り出し結果の適用先（アプリ側が実装するポート） |
+| `CaptureCompletedEventArgs` | クラス | キャプチャ完了イベント（`CaptureSessionControl.CaptureCompleted`）の引数。 `CaptureResult` を運ぶ（両 UI で同じ型を使う） |
 | `ICaptureOwnerWindow` | インターフェイス | 撮影時に退避するオーナーウィンドウ（各 UI が実装するポート） |
 | `ImageColorMath` | 静的クラス | 画像の平均色（標本間引き）。 描画の背景色の決定に使う |
 | `OverlayRect` | record struct | 外部提供矩形の描画情報（矩形・枠線スタイル・前景色・背景色・太さ） |
@@ -130,7 +130,7 @@
 | --- | --- |
 | 状態 | セッションの実行中・完了（`CaptureSessionState`）、受付スロット（`CaptureSessionSlot`）、結果の確定（`CaptureCompletion`）、ハイライトとクリック確定（`CaptureHighlightSession` / `CaptureClickSelection`）、撮影画像（`CaptureImageHolder`） |
 | 判断 | 切り出し範囲（`CropBoundsMath` / `CropClipMath`）、ハイライトの反映（`CaptureHighlightSession`）、キー操作（`CaptureKeyActions`）、クリック確定（`CaptureClickSelection`）、種別の性質（`CaptureTypeTraits`）、モニタ倍率（`MonitorScalingMath`）、設定のマージ（`CaptureSettingsMerge`）、退避と除外の順序（`CaptureOwnerScope`）、平均色（`ImageColorMath`）、切り出しと事前キャッシュ（`CropClipMath` / `CaptureClipCache`）、取得の打ち切り（`CaptureVirtualScreen`）、切り出しの操作内容（`CropSessionActions`）、方針値（`CaptureTiming`）、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession`） |
-| 契約 | `ICaptureTarget`（結果の適用先）、`ICaptureOwnerWindow`（退避対象）、`CaptureSessionSlot`（排他）、`CaptureCompletion`（単一確定）、`CaptureClipCache`（事前切り出しの受け渡し）、`CaptureImageHolder`（画像の保持）、`CaptureHighlight` / `CaptureHighlightSession`（ハイライト状態）、`CaptureResult.From`（結果の正規化）、`ZoomFeedback` / `ZoomNotice`（画像ビューポートのコア⇔UI の契約） |
+| 契約 | `ICaptureOwnerWindow`（退避対象）、`CaptureSessionSlot`（排他）、`CaptureCompletion`（単一確定）、`CaptureClipCache`（事前切り出しの受け渡し）、`CaptureImageHolder`（画像の保持）、`CaptureHighlight` / `CaptureHighlightSession`（ハイライト状態）、`CaptureResult.From`（結果の正規化）、`CaptureCompletedEventArgs`（完了通知の引数）、`ZoomFeedback` / `ZoomNotice`（画像ビューポートのコア⇔UI の契約） |
 | ログ定義 | `CapturePreviewLogMessage`（接頭辞・書式・レベル・値の整形・完了時の出力の組・設定適用・ズーム操作を含む。 呼び出しは UI） |
 | ログ以外の正規化 | `TextNormalize`（未取得の文字列を空文字へ。 ログ定義の外に置く） |
 | 提示の写像 | 設定 → 外観の写像（`CapturePaintMapper`）、子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）、付加情報ラベルの配置指示（`SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）。 製品の設定型と提示層の外観型を橋渡しする（UI は同じ写像を共有する） |

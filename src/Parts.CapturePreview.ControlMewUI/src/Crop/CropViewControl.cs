@@ -1,13 +1,18 @@
 using EsUtil.Platform.Core;
+using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
+using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.MewUI;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
@@ -22,10 +27,8 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 /// <b>内部構造</b>:<br/>
 /// - <see cref="ZoomViewControl"/>: 画像ビューポート（拡大・パン・Fit）。<br/>
 /// - <see cref="RectOverlayCanvas"/>: ホストから渡された <see cref="Rects"/> をビューポート座標へ変換して描画する透明オーバーレイ。<br/>
-/// - 強調オーバーレイ: ホストから渡された <see cref="HighlightSourceRect"/>（対象座標）を強調表示する（描画のみ・入力なし）。<br/>
-/// <br/>
-/// <b>領域選択オーバーレイ</b>: 本コントロールは含まない。 ホストが <c>SelectionOverlayControl.MewUI</c> を重ねて構成する<br/>
-/// （ドラッグ選択・暗転マスク・ルーペ。 `App.MewUI` の切り出しはこの構成）。
+/// - <see cref="SelectionOverlayControl"/>: 領域選択の複合コントロール（暗転マスク + 選択矩形 + ルーペ）。 切り出し中のみ表示する。<br/>
+/// - 強調オーバーレイ: ホストから渡された <see cref="HighlightSourceRect"/>（対象座標）を強調表示する（描画のみ・入力なし）。
 /// </remarks>
 public sealed class CropViewControl : Grid
 {
@@ -34,6 +37,13 @@ public sealed class CropViewControl : Grid
 
     /// <summary>外部提供矩形のオーバーレイ（透明。 入力は下のズームビューへ通す）。</summary>
     private readonly RectOverlayCanvas _rectOverlay;
+
+    /// <summary>領域選択の複合コントロール（暗転マスク + 選択矩形 + ルーペ）。</summary>
+    /// <remarks>
+    /// 切り出し中のみ表示する（初期状態は非表示・入力なし）。 表示の切替は <see cref="SetSelectionOverlayVisible"/> が担う。<br/>
+    /// 暗転マスク・選択矩形・ルーペの状態は本コントロールが保持する（Avalonia 版と同じ構成）。
+    /// </remarks>
+    private readonly SelectionOverlayControl _selectionOverlay = new() { IsVisible = false, IsHitTestVisible = false };
 
     /// <summary>強調オーバーレイ（ホストが与える強調矩形を描く装飾専用の選択矩形コントロール）。</summary>
     /// <remarks>入力は受けず（<c>IsHitTestVisible = false</c>）描画のみを担う（ズーム・ドラッグは下のレイヤが受ける）。</remarks>
@@ -44,24 +54,54 @@ public sealed class CropViewControl : Grid
 
     /// <summary>CropView コントロールを初期化する。</summary>
     /// <remarks>
-    /// ズームビューと矩形オーバーレイと強調オーバーレイを重ねて配置し、ビューポートの変化をオーバーレイへ中継する。
+    /// ズームビュー・矩形オーバーレイ・領域選択オーバーレイ・強調オーバーレイを重ねて配置し、<br/>
+    /// ビューポートの変化をオーバーレイへ中継する。
     /// </remarks>
     public CropViewControl()
     {
         _rectOverlay = new RectOverlayCanvas(_zoomView);
         _highlight.Appearance = HighlightDefaultAppearance;
 
-        // パン・ズーム・リサイズで矩形オーバーレイと強調オーバーレイを追従させる
+        // パン・ズーム・リサイズで各オーバーレイを追従させる
         _zoomView.ViewportChanged += (_, _) =>
         {
             _rectOverlay.InvalidateVisual();
+            _selectionOverlay.NotifyViewportChanged();
             UpdateHighlight();
         };
 
+        // 領域選択オーバーレイ上のホイールをビューポートへ転送する
+        // （オーバーレイは切り出し中に画像の上を覆って入力を占有するため、ホイールはオーバーレイだけが受け取る）
+        _selectionOverlay.MouseWheel += OnSelectionOverlayWheel;
+
+        // 既定は切り出し（プレビュー内の切出し）。 ホストが SelectionMode で変更できる
+        _selectionOverlay.Mode = SelectionOverlayMode.Crop;
+
         // 後から追加した子が上へ描画される（ズームビューの上にオーバーレイを重ねる）
         Add(_zoomView);
+        Add(_selectionOverlay);
         Add(_rectOverlay);
         Add(_highlight);
+    }
+
+    /// <summary>領域選択オーバーレイのホイールをビューポート（ズーム・パン）へ転送する。</summary>
+    /// <param name="e">ホイールの情報。</param>
+    /// <remarks>
+    /// 解釈（どちらを選ぶか）はコアの <see cref="ZoomWheelIntent"/>、回転量 → 移動量の換算はビューポートが単一所有する。
+    /// </remarks>
+    private void OnSelectionOverlayWheel(MouseWheelEventArgs e)
+    {
+        var intent = ZoomWheelIntent.Resolve(e.ControlKey, e.ShiftKey, e.Delta.Y);
+        if (intent.IsZoom)
+        {
+            _zoomView.ZoomByWheel(intent.ZoomIn, TranslatePositionFrom(_selectionOverlay, e.GetPosition(_selectionOverlay).ToEsPoint()));
+        }
+        else
+        {
+            _zoomView.PanByWheel(new EsVector(e.Delta.X, e.Delta.Y), intent.ScrollHorizontal);
+        }
+
+        e.Handled = true;
     }
 
     /// <summary>表示する画像（ズーム・パンの対象）を取得または設定する。</summary>
@@ -72,6 +112,8 @@ public sealed class CropViewControl : Grid
         set
         {
             _zoomView.Source = value;
+            // ルーペの拡大元を表示中の画像へ合わせる（画像差し替えに追従する）
+            _selectionOverlay.SetLoupeSource(value);
             // 画像の表示矩形が変わるため、強調矩形の写像も更新する
             UpdateHighlight();
         }
@@ -354,6 +396,243 @@ public sealed class CropViewControl : Grid
     /// <remarks>ホストが重ねたオーバーレイ上のホイール位置をズーム中心として渡すために使用する。</remarks>
     public EsPoint TranslatePositionFrom(Element element, EsPoint position)
         => element.TranslatePoint(position.ToMewUIPoint(), this).ToEsPoint();
+
+    // ====================================================================
+    // 公開 API: 領域選択（暗転マスク + 選択矩形 + ルーペ）
+    // ====================================================================
+
+    /// <summary>領域選択オーバーレイの動作モードを取得または設定する。</summary>
+    /// <value>動作モード。 既定は <see cref="SelectionOverlayMode.Crop"/>。</value>
+    public SelectionOverlayMode SelectionMode
+    {
+        get => _selectionOverlay.Mode;
+        set => _selectionOverlay.Mode = value;
+    }
+
+    /// <summary>領域選択オーバーレイの設定（単一値）を取得または設定する。</summary>
+    /// <value>設定の単一値。 既定は <see cref="SelectionOverlayOptions.Default"/>。</value>
+    public SelectionOverlayOptions SelectionOverlayOptions
+    {
+        get => _selectionOverlay.Options;
+        set => _selectionOverlay.Options = value;
+    }
+
+    /// <summary>ビューポートDIP → 対象座標の倍率を取得または設定する。</summary>
+    /// <value>倍率（1.0 = 等倍）。</value>
+    public double ClientToSourceScaling
+    {
+        get => _selectionOverlay.ClientToSourceScaling;
+        set => _selectionOverlay.ClientToSourceScaling = value;
+    }
+
+    /// <summary>ルーペ画像の描画倍率を取得または設定する。</summary>
+    /// <value>描画倍率（1.0 = 等倍）。</value>
+    public double LoupeClientToPixelScaling
+    {
+        get => _selectionOverlay.LoupeClientToPixelScaling;
+        set => _selectionOverlay.LoupeClientToPixelScaling = value;
+    }
+
+    /// <summary>領域選択オーバーレイの選択矩形の外観を取得または設定する。</summary>
+    /// <value>外観の単一値（色・枠線の太さ・表示可否）。</value>
+    public MarqueeAppearance SelectionOverlayMarqueeAppearance
+    {
+        get => _selectionOverlay.MarqueeAppearance;
+        set => _selectionOverlay.MarqueeAppearance = value;
+    }
+
+    /// <summary>領域選択オーバーレイのルーペの外観を取得または設定する。</summary>
+    /// <value>外観の単一値（色・枠線の太さ・表示可否）。</value>
+    public LoupeAppearance SelectionOverlayLoupeAppearance
+    {
+        get => _selectionOverlay.LoupeAppearance;
+        set => _selectionOverlay.LoupeAppearance = value;
+    }
+
+    /// <summary>領域選択オーバーレイ（テスト用アクセサ）。</summary>
+    internal SelectionOverlayControl SelectionOverlay => _selectionOverlay;
+
+    /// <summary>選択矩形があるかどうかを取得する。</summary>
+    /// <value>選択矩形がある場合は true。</value>
+    public bool HasSelection => _selectionOverlay.HasSelection;
+
+    /// <summary>選択矩形（対象座標 = 元画像ピクセル）を取得する。</summary>
+    /// <value>選択矩形。 未選択の場合は空の矩形。</value>
+    public EsRect SelectionSourceRect => _selectionOverlay.SelectionSourceRect;
+
+    /// <summary>選択矩形を設定する（対象座標 = 元画像ピクセル）。</summary>
+    /// <param name="rect">設定する矩形（対象座標）。</param>
+    public void SetSelection(EsRect rect)
+    {
+        try
+        {
+            _selectionOverlay.SetSelection(rect);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(SetSelection));
+            throw;
+        }
+    }
+
+    /// <summary>選択矩形を消す。</summary>
+    public void ClearSelection()
+    {
+        try
+        {
+            _selectionOverlay.ClearSelection();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(ClearSelection));
+            throw;
+        }
+    }
+
+    /// <summary>領域選択オーバーレイの表示と入力の可否を切り替える。</summary>
+    /// <param name="visible">表示する場合は true。</param>
+    /// <remarks>
+    /// 切り出し中のみ表示する（非表示中は入力も受けない。 暗転マスク・選択枠・ルーペが一括で切り替わる）。<br/>
+    /// 非表示へ戻すときは選択を破棄する（暗転マスク・選択枠がプレビューへ残留するのを防ぐ。 Avalonia 版と同じ）。<br/>
+    /// 切り替えのたびに描画を要求する（非表示の間に描画済みのキャンバスは表示後に再描画されないため。
+    /// 切り出しセッションが表示の直後に再描画を要求していた処理をここへ集約する）。
+    /// </remarks>
+    public void SetSelectionOverlayVisible(bool visible)
+    {
+        _selectionOverlay.IsVisible = visible;
+        _selectionOverlay.IsHitTestVisible = visible;
+
+        if (!visible)
+        {
+            ClearSelection();
+        }
+
+        _selectionOverlay.RequestRedraw();
+    }
+
+    /// <summary>領域選択オーバーレイへ座標変換ポートを設定する。</summary>
+    /// <param name="port">座標変換ポート。 null の場合は恒等変換。</param>
+    public void SetCoordTransform(ICoordTransform? port)
+    {
+        try
+        {
+            _selectionOverlay.SetCoordTransform(port);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(SetCoordTransform));
+            throw;
+        }
+    }
+
+    /// <summary>選択矩形コントロールへフォーカスを移す（キー操作の受け口にする）。</summary>
+    public void FocusMarquee()
+    {
+        try
+        {
+            _selectionOverlay.FocusMarquee();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(FocusMarquee));
+            throw;
+        }
+    }
+
+    /// <summary>ルーペの拡大元画像を設定する。</summary>
+    /// <param name="source">拡大元画像。</param>
+    public void SetLoupeSource(EsBitmap? source) => _selectionOverlay.SetLoupeSource(source);
+
+    /// <summary>ルーペを非表示にして拡大元画像を解放する。</summary>
+    public void ClearLoupe() => _selectionOverlay.ClearLoupe();
+
+    /// <summary>サイズラベルの文言プロバイダを取得または設定する（文言はホストが与える）。</summary>
+    /// <value>サイズラベルの文言を返す関数。 null の場合は自動生成を使う。</value>
+    public Func<string?>? SizeLabelOverrideProvider
+    {
+        get => _selectionOverlay.SizeLabelOverrideProvider;
+        set => _selectionOverlay.SizeLabelOverrideProvider = value;
+    }
+
+    /// <summary>操作ラベルの文言プロバイダを取得または設定する（文言はホストが与える）。</summary>
+    /// <value>操作ラベルの文言を返す関数。</value>
+    public Func<string?>? OperationTextProvider
+    {
+        get => _selectionOverlay.OperationTextProvider;
+        set => _selectionOverlay.OperationTextProvider = value;
+    }
+
+    /// <summary>情報ラベルの文言プロバイダを取得または設定する（文言はホストが与える）。</summary>
+    /// <value>情報ラベルの文言を返す関数。</value>
+    public Func<string?>? InfoTextProvider
+    {
+        get => _selectionOverlay.InfoTextProvider;
+        set => _selectionOverlay.InfoTextProvider = value;
+    }
+
+    /// <summary>ビューポートの変化を領域選択オーバーレイへ通知する。</summary>
+    /// <remarks>暗転マスク・選択枠・ルーペがビューポート変化に追従する。</remarks>
+    public void NotifyViewportChanged()
+    {
+        try
+        {
+            _selectionOverlay.NotifyViewportChanged();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(NotifyViewportChanged));
+            throw;
+        }
+    }
+
+    /// <summary>選択の確定を要求する（キー操作と同じ経路）。</summary>
+    public void RequestConfirm()
+    {
+        try
+        {
+            _selectionOverlay.RequestConfirm();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(RequestConfirm));
+            throw;
+        }
+    }
+
+    /// <summary>選択のキャンセルを要求する（キー操作と同じ経路）。</summary>
+    public void RequestCancel()
+    {
+        try
+        {
+            _selectionOverlay.RequestCancel();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
+            Log.LogOperationError(ex, nameof(RequestCancel));
+            throw;
+        }
+    }
+
+    /// <summary>選択の確定が要求されたときに発火する（内包する領域選択オーバーレイから中継する）。</summary>
+    public event EventHandler<SelectionConfirmedEventArgs>? ConfirmRequested
+    {
+        add => _selectionOverlay.ConfirmRequested += value;
+        remove => _selectionOverlay.ConfirmRequested -= value;
+    }
+
+    /// <summary>選択のキャンセルが要求されたときに発火する（内包する領域選択オーバーレイから中継する）。</summary>
+    public event EventHandler? CancelRequested
+    {
+        add => _selectionOverlay.CancelRequested += value;
+        remove => _selectionOverlay.CancelRequested -= value;
+    }
 
     /// <summary>強調オーバーレイ（テスト用アクセサ。 強調矩形の写像と外観の反映を検証する）。</summary>
     internal MarqueeControl HighlightMarquee => _highlight;

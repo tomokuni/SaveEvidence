@@ -54,25 +54,26 @@ internal sealed class CaptureOverlay
     /// <summary>選択確定の結果（キャンセル時は null）。</summary>
     /// <remarks>
     /// 結果の単一確定（確定とキャンセルの競合で二重完了にしない）はコアの <see cref="CaptureCompletion{TResult}"/> が単一所有する<br/>
-    /// （UI 側でフィールドと null 判定を書かない）。
+    /// （UI 側でフィールドと null 判定を書かない）。<br/>
+    /// 結果の型はコア型（<see cref="CaptureResult"/>）とし、UI 型は境界より外へ出さない（Avalonia 版と同じ契約）。
     /// </remarks>
-    private readonly CaptureCompletion<EsBitmap?> _result = new();
+    private readonly CaptureCompletion<CaptureResult?> _result = new();
 
     /// <summary>取得したスクリーン画像（セッション中のみ保持し、終了時に破棄する）。</summary>
-    /// <remarks><see cref="Run"/> の冒頭で設定する（それ以外では null）。</remarks>
+    /// <remarks><see cref="RunAsync"/> の冒頭で設定する（それ以外では null）。</remarks>
     private EsBitmap? _screen;
 
-    /// <summary>取得対象のスクリーンの矩形（画面物理ピクセル）。<see cref="Run"/> の冒頭で設定する。</summary>
+    /// <summary>取得対象のスクリーンの矩形（画面物理ピクセル）。<see cref="RunAsync"/> の冒頭で設定する。</summary>
     private EsRectInt _screenBounds;
 
     /// <summary>取得したスクリーン画像を取得する。</summary>
     /// <value>撮影した仮想スクリーンの画像。</value>
-    /// <remarks>参照は <see cref="Run"/> が設定した後に限られる（撮影はセッションの実行の一部である）。</remarks>
+    /// <remarks>参照は <see cref="RunAsync"/> が設定した後に限られる（撮影はセッションの実行の一部である）。</remarks>
     private EsBitmap Screen => _screen!;
 
     /// <summary>ローカル DIP → 画像ピクセルの倍率。</summary>
     /// <remarks>
-    /// 表示に使うウィンドウの DPI で決まるため、ウィンドウの生成後に <see cref="Show"/> で確定する。<br/>
+    /// 表示に使うウィンドウの DPI で決まるため、ウィンドウの生成後に <see cref="ShowAsync"/> で確定する。<br/>
     /// 確定するまでは基準値（DIP と画像ピクセルが 1:1）を使う。
     /// </remarks>
     private double _scale = DpiScaler.StandardScaling;
@@ -81,7 +82,7 @@ internal sealed class CaptureOverlay
     /// <remarks>
     /// サイズラベルの表示倍率（DisplayScale）に使う。 仮想スクリーン全体を 1 枚のウィンドウで覆うと<br/>
     /// ウィンドウの倍率は 1 つに定まるため、モニターごとの実倍率は位置から解決する必要がある。<br/>
-    /// セッション中はモニター構成が変わらないため、<see cref="Show"/> で一度だけ解決する。
+    /// セッション中はモニター構成が変わらないため、<see cref="ShowAsync"/> で一度だけ解決する。
     /// </remarks>
     private IReadOnlyList<(EsRectInt Bounds, double Scale)> _monitorScales = [];
 
@@ -107,18 +108,29 @@ internal sealed class CaptureOverlay
     /// <summary>設定（ラベルの再組み立てに使用する）。</summary>
     private readonly CaptureSettings _settings;
 
-    /// <summary>オーバーレイを初期化する（内部用。<see cref="CaptureSessionControl.Capture(Window, CaptureType, CaptureOverlayServices)"/> から生成する）。</summary>
+    /// <summary>キャプチャ完了の通知先（結果をホストへ中継する）。</summary>
+    /// <remarks>
+    /// 完了の通知はオーナーの再表示より<b>前</b>に行う（ホストが画像を差し替えてから再表示する順序を保証する。<br/>
+    /// Avalonia 版の <c>CaptureOverlaySession</c> が同じ順序を <c>onCaptured</c> で保証している）。<br/>
+    /// 未指定（null）の場合は通知しない。
+    /// </remarks>
+    private readonly Action<CaptureResult?>? _onCaptured;
+
+    /// <summary>オーバーレイを初期化する（内部用。<see cref="CaptureSessionControl.StartCaptureAsync"/> から生成する）。</summary>
     /// <param name="type">キャプチャ種別。</param>
     /// <param name="settings">設定（選択枠・暗転・ルーペ・ラベルの外観）。</param>
     /// <param name="finder">要素検出サービス（スクリーン選択 / ウィンドウ選択で使用）。</param>
     /// <param name="log">ロガー（null の場合は出力しない）。</param>
+    /// <param name="onCaptured">キャプチャ完了（確定・キャンセル）の通知先。 未指定の場合は通知しない。</param>
     /// <remarks>
     /// 撮影（画像の取得）は行わない（排他の受付を撮影より先に済ませるため、生成と実行を分ける）。<br/>
-    /// 画像は <see cref="Run"/> の冒頭で取得して設定する。
+    /// 画像は <see cref="RunAsync"/> の冒頭で取得して設定する。
     /// </remarks>
     internal CaptureOverlay(
-        CaptureType type, CaptureSettings settings, IElementFinder finder, ILogger? log)
+        CaptureType type, CaptureSettings settings, IElementFinder finder, ILogger? log,
+        Action<CaptureResult?>? onCaptured = null)
     {
+        _onCaptured = onCaptured;
         _type = type;
         _settings = settings;
         _log = log.OrNullLogger();
@@ -156,7 +168,7 @@ internal sealed class CaptureOverlay
     /// <summary>撮影セッションを実行し、確定した領域を返す。</summary>
     /// <param name="owner">オーナーウィンドウ（撮影中は画面外へ退避し、終了後に戻す）。</param>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
-    /// <returns>切り出した画像。 キャンセル・取得失敗・退化した選択の場合は null。</returns>
+    /// <returns>撮影結果（切り出した画像と領域）。 キャンセル・取得失敗・退化した選択の場合は null。</returns>
     /// <remarks>
     /// 1. 設定に従ってオーナーをキャプチャ除外に設定し、画面外へ退避する（設定: メインウィンドウを隠す）。<br/>
     /// 2. 仮想スクリーン（全モニターを包含する領域）を 1 枚の画像として取得する。<br/>
@@ -171,7 +183,7 @@ internal sealed class CaptureOverlay
     /// <b>対象範囲</b>: 全モニター（仮想スクリーン）を対象にする。 1 モニターに限定すると、<br/>
     /// カーソルのあるモニターでしか選択できないため（Avalonia 版と同じ挙動）。
     /// </remarks>
-    internal EsBitmap? Run(Window owner, CaptureOverlayServices services)
+    internal async Task<CaptureResult?> RunAsync(Window owner, CaptureOverlayServices services)
     {
         // オーナーの退避とキャプチャ除外の設定・解除は CaptureOwnerScope（コア）が単一所有する
         // （手順: 除外の設定 → 画面外へ退避 → 撮影 → 配置の復帰 → 除外の解除。 Avalonia 版と同じ）
@@ -197,8 +209,20 @@ internal sealed class CaptureOverlay
 
         try
         {
-            Show(owner, services);
-            return Result;
+            // 確定・キャンセルまで待つ（入れ子ループを作らない非同期の待機。 ホストの継続は呼び出し側へ戻る）
+            await ShowAsync(owner, services).ConfigureAwait(true);
+            // 確定・キャンセルは必ず結果を確定させてからウィンドウを閉じるため、待機は即座に返る
+            // （ウィンドウのクローズ経路は CompleteCapture / Cancel に限られる）。
+            // 結果の読み出しは待機で行う（完了済みのタスクを同期的に読むと、UI スレッドをブロックしうる）
+            var result = await _result.Task.ConfigureAwait(true);
+            // 完了の記録（確定は 2 件・キャンセルは 1 件）はコアが単一所有する
+            _log.LogCaptureFinished(result);
+            // キャプチャ完了イベントを発行する（同期実行）。
+            // C# のイベントは同期型のため、ホストのハンドラ（画像変更）が完了してから
+            // 以下の finally（オーナー再表示）が実行される。
+            // フロー: APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）
+            _onCaptured?.Invoke(result);
+            return result;
         }
         finally
         {
@@ -266,19 +290,18 @@ internal sealed class CaptureOverlay
     private static Color AverageColor(EsBitmap image)
         => ImageColorMath.AverageColor(image).ToMewUIColor();
 
-    /// <summary>確定した結果を取得する（未確定の場合は null）。</summary>
-    /// <value>切り出した画像。 キャンセル・未確定の場合は null。</value>
-    /// <remarks>完了通知（コアの <see cref="CaptureCompletion{TResult}"/>）のタスクから読む（UI 側で結果を保持しない）。</remarks>
-    private EsBitmap? Result => _result.Task.IsCompletedSuccessfully ? _result.Task.Result : null;
-
     /// <summary>オーバーレイを表示し、確定またはキャンセルまで待つ。</summary>
     /// <param name="owner">オーナーウィンドウ。</param>
     /// <param name="services">オーバーレイの実行に必要なサービス（撮影サービス・ウィンドウ操作）。</param>
+    /// <returns>ウィンドウが閉じるまで待機するタスク。</returns>
     /// <remarks>
     /// ウィンドウは仮想スクリーンの位置・サイズでボーダーレス・最前面に表示する。<br/>
-    /// 確定・キャンセルのいずれでもウィンドウを閉じ、<c>ShowDialog</c> の入れ子ループを終わらせる。
+    /// 確定・キャンセルのいずれでもウィンドウを閉じ、待機タスクが完了する。<br/>
+    /// 待機は <c>ShowDialogAsync</c>（入れ子ループを作らない）を使う。 入れ子ループ（<c>ShowDialog</c>）では<br/>
+    /// セッションの開始から終了までの間、呼び出し側のコードが進まない（Facade がセッションの生成・破棄と<br/>
+    /// 排他の解放を担えないため、Avalonia 版と契約が食い違う）。
     /// </remarks>
-    private void Show(Window owner, CaptureOverlayServices services)
+    private async Task ShowAsync(Window owner, CaptureOverlayServices services)
     {
         ArgumentNullException.ThrowIfNull(owner);
 
@@ -447,7 +470,7 @@ internal sealed class CaptureOverlay
             };
         }
 
-        window.ShowDialog(owner);
+        await window.ShowDialogAsync(owner).ConfigureAwait(true);
     }
 
     /// <summary>サイズラベル・情報ラベルの文言を選択コントロールへ反映する。</summary>
@@ -515,23 +538,29 @@ internal sealed class CaptureOverlay
 
         // 切り出し矩形は画面物理座標のため、画像の原点を渡して取り出す（座標変換はコアが単一所有する）
         var image = CropClipMath.Extract(Screen, _screenBounds.TopLeft, pixels);
-        // 完了の記録（確定は 2 件）はコアが単一所有する。 領域は契約どおり仮想画面座標（画面物理）で渡す
-        _log.LogCaptureFinished(CaptureResult.From(image, pixels));
-        _result.TrySetResult(image);
+        // 結果の確定（最初の 1 件だけを採用する）はコアが単一所有する。 領域は契約どおり仮想画面座標（画面物理）で渡す。
+        // 完了の記録とホストへの通知は RunAsync（待機側）が行う（ウィンドウは結果を確定させて閉じるだけ。
+        // Avalonia 版の CaptureOverlayWindow と同じ分担）
+        _result.TrySetResult(CaptureResult.From(image, pixels));
         Close();
     }
 
     /// <summary>キャンセルする（切り出しを行わずに閉じる）。</summary>
-    private void Cancel()
+    /// <remarks>
+    /// Facade（<see cref="CaptureSessionControl"/>）が進行中のセッションを取り消す際にも呼ぶ<br/>
+    /// （公開操作 <see cref="CaptureSessionControl.Cancel"/> と <see cref="CaptureSessionControl.Dispose"/> の効果。
+    /// Avalonia 版の <c>CaptureOverlaySession.Cancel</c> と同じ）。
+    /// </remarks>
+    internal void Cancel()
     {
         if (!_state.TryComplete())
         {
             return;
         }
 
-        // 選択のキャンセル要求とセッションの完了（キャンセル 1 件）はコアが単一所有する
+        // 選択のキャンセル要求とセッションの完了（キャンセル 1 件）はコアが単一所有する。
+        // 完了の記録とホストへの通知は RunAsync（待機側）が行う
         _log.LogCancelRequested();
-        _log.LogCaptureFinished(null);
         _result.TrySetResult(null);
         Close();
     }

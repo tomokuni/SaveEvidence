@@ -11,7 +11,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
   - [2.3 操作](#23-操作)
   - [2.4 座標系](#24-座標系)
   - [2.5 切り出し規則](#25-切り出し規則)
-- [3. CaptureOverlayServices](#3-captureoverlayservices)
+- [3. 内部で生成するサービス](#3-内部で生成するサービス)
 - [4. 使用する設定項目](#4-使用する設定項目)
   - [4.1 適用先](#41-適用先)
   - [4.2 切り出し（CropSession）](#42-切り出しcropsession)
@@ -39,34 +39,43 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 | 型 | 種別 | 役割 |
 | --- | --- | --- |
-| `CaptureSessionControl` | sealed クラス（Facade） | 撮影と切り出しの窓口。 排他（同時に 1 つだけ）とセッションの寿命を単一所有する |
-| `CaptureOverlayServices` | sealed record | 撮影が必要とするサービスの束（設定は含まない） |
-| `CropViewControl` | sealed クラス（複合コントロール） | 画像ビューポート（拡大・パン・Fit）+ 外部提供矩形オーバーレイ |
+| `CaptureSessionControl` | sealed クラス（Facade、`IDisposable`） | 撮影と切り出しの窓口。 排他（同時に 1 つだけ）とセッションの寿命、および撮影サービスの生成を単一所有する |
+| `CropViewControl` | sealed クラス（複合コントロール） | 画像ビューポート（拡大・パン・Fit）+ 領域選択 + 矩形オーバーレイ + 強調オーバーレイ |
 | `SelectionOverlayControl` | sealed クラス（複合コントロール） | 暗転マスク + 選択矩形 + ルーペ。 モードで可視性を切替 |
 | `SelectionConfirmedEventArgs` | sealed class（`EventArgs` 派生） | 確定要求のイベント引数（`SelectionSourceRect: EsRect`） |
 | `LoupePositionEventArgs` | sealed class（`EventArgs` 派生） | ルーペ位置のイベント引数（`Position: EsPoint`） |
 | `ZoomChangedEventArgs` | sealed class（`EventArgs` 派生） | ズーム状態の変更通知（`ZoomState` の 4 値） |
 
-`OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）は `Parts.CapturePreview.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay`）が提供します。
+`OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）と `CaptureResult` / `CaptureCompletedEventArgs`（撮影結果と完了通知の引数）は `Parts.CapturePreview.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay` / `...Core.Capture` / `...Core.Session`）が提供します。
 
 名前空間は `Parts.CapturePreview.ControlMewUI` です。
 
-`CaptureOverlay`（撮影セッション）と `CropSession`（切り出しセッション）は `internal` です
-（1 セッション = 1 インスタンスであり、生成・実行・破棄・排他の受付は Facade が担います）。
+`CaptureOverlay`（撮影セッション） / `CropSession`（切り出しセッション） / `CaptureOverlayServices`（撮影サービスの束）は `internal` です
+（1 セッション = 1 インスタンスであり、生成・実行・破棄・排他の受付・サービスの生成は Facade が担います）。
 
 ## 2. CaptureSessionControl
 
-| メソッド | シグネチャ | 内容 |
+| メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
-| コンストラクタ | `CaptureSessionControl(CropViewControl cropView, ICaptureTarget cropTarget, Grid cropHost, CaptureSettings? initialSettings = null, ILogger? logger = null)` | Facade を生成する。 切り出しの対象（`cropView`）とオーバーレイを重ねる領域（`cropHost`）はホストが用意する。 `initialSettings` の null メンバーは既定値で埋める |
-| `Capture` | `EsBitmap? Capture(Window owner, CaptureType type, CaptureOverlayServices services)` | オーバーレイを表示し、確定した領域を切り出して返す。 キャンセル・取得失敗・退化した選択の場合は null。 **実行中のセッションがある場合は何もせず null を返す** |
-| `ToggleCrop` | `void ToggleCrop()` | 切り出しの開始・確定・キャンセルを切り替える。 どの操作を行うかの判断はコアの `CropSessionActions.Resolve` が単一所有する（未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）。 **撮影中は開始しない** |
+| コンストラクタ | `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)` | Facade を生成する。 `initialSettings` の null メンバーは既定値で埋める。 撮影サービス（キャプチャ・要素検出・ウィンドウ操作）は本クラスが生成・保持する |
+| `StartCaptureAsync` | `Task<CaptureResult?> StartCaptureAsync(CaptureType type, Window owner)` | オーバーレイを表示し、確定するまで待つ。 キャンセル・取得失敗・退化した選択の場合は null。 **実行中のセッションがある場合は何もせず null を返す** |
+| `StartCropAsync` | `Task<EsRectInt?> StartCropAsync(CropViewControl cropView, Window hostWindow)` | 切り出しを開始し、確定・キャンセルまで待つ。 確定は元画像上の切り出し範囲（コア型）、キャンセルは 0x0 の空矩形、開始できなかった場合は null。 対象画像は `cropView.Source` から解決する（画像を引数で渡さない） |
+| `ResolveCropAction` | `CropSessionAction ResolveCropAction()` | 切り出しの開始・確定・キャンセルのうち、いま行うべき操作を返す。 判断はコアの `CropSessionActions.Resolve` が単一所有する（未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）。 **ホストは戻り値を効果へ写すだけ**にする |
+| `Confirm` | `void Confirm()` | 進行中の切り出しを現在の選択矩形で確定する（Enter キー相当） |
+| `Cancel` | `void Cancel()` | 進行中の操作をキャンセルする（切り出しは 0x0 の空結果で完了、撮影はオーバーレイを閉じる） |
+| `IsCropping` | `bool` | 切り出し中かどうか（真のソースは排他スロット。 ホストが自前のフラグで判定しない） |
+| `NotifyViewportChanged` | `void NotifyViewportChanged()` | 実行中の切り出しセッションへビューポート（パン・ズーム・表示サイズ）の変化を通知する（暗転マスク・選択枠・ルーペの追従）。 未実行時は何もしない |
 | `AppearanceSettings` | `CaptureSettings` | 現在の設定（getter は全メンバー non-null）。 設定時は null メンバーのみ現在値を維持する部分更新。 **同一値の再設定はスキップ**。 検証・適用ログはコア（`CaptureSettingsMerge.Apply`）が単一所有する。 実行中の切り出しセッションへは即時反映する |
+| `Dispose` | `void Dispose()` | リソースを解放する（進行中のセッションはキャンセルする）。 以降の公開操作は `ObjectDisposedException` |
 | `LogPrefix` | `string?` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値 `[CapturePreview]` へ戻す） |
+
+| イベント | シグネチャ | 内容 |
+| --- | --- | --- |
+| `CaptureCompleted` | `event EventHandler<CaptureCompletedEventArgs>? CaptureCompleted` | キャプチャ完了（同期実行。 UI スレッドで発行。 結果は `e.Result`）。 **オーナーの再表示より前に発行される**ため、ホストは本ハンドラで画像を差し替えてから再表示される（フロー: APP 非表示 → 撮影 → 画像変更 → APP 表示） |
 
 ### 2.1 排他の規則
 
-撮影（`Capture`）と切り出し（`ToggleCrop`）は**同時に 1 つだけ**実行できます。  
+撮影（`StartCaptureAsync`）と切り出し（`StartCropAsync`）は**同時に 1 つだけ**実行できます。  
 この規則は `Parts.CapturePreview.Core` の `CaptureSessionSlot` が単一所有し、本 Facade がその唯一の適用者です。  
 実行中の要求は無視し、**実行中のセッションを中断しません**（撮影中に切り出しを開始できない・切り出し中に撮影を開始できない）。
 
@@ -74,7 +83,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 1. 設定（Facade の `AppearanceSettings`）に従ってオーナーウィンドウをキャプチャ除外に設定し、画面外へ退避します（`CaptureOwnerScope` が担う）。
 2. 仮想スクリーン（全モニターを包含する領域）を 1 枚の画像として取得します（`ICaptureService.CaptureVirtualScreen`）。
-3. 画像を敷いたボーダーレス・最前面のウィンドウを仮想スクリーン全面へ表示し、確定またはキャンセルまで待ちます（`ShowDialog` の入れ子ループ）。
+3. 画像を敷いたボーダーレス・最前面のウィンドウを仮想スクリーン全面へ表示し、確定またはキャンセルまで待ちます（`ShowDialogAsync`。 **入れ子ループを作らない非同期の待機**）。
 4. 確定した領域を切り出して返し、オーナーの配置を復帰して例外を解除します（例外時も `finally` で復帰）。
 
 ### 2.3 操作
@@ -113,18 +122,19 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 - 計算は `Parts.CapturePreview.Core` の `CropClipMath.ResolveCaptureRect` が単一所有します（種別の性質とクランプ・丸めを組み合わせた唯一の入口）。
 - 最小サイズは選択操作（Marquee）が判定します（検出矩形は要素の大きさであり、小さい要素も切り出し対象とする）。
 
-## 3. CaptureOverlayServices
+## 3. 内部で生成するサービス
 
-| メンバー | 型 | 内容 |
+Facade は次のサービスをコンストラクタで生成し、撮影セッションへ渡します（公開 API ではありません）。
+
+| 役割 | 抽象（`EsUtil.Platform.Core`） | Windows 実装 |
 | --- | --- | --- |
-| `Capture` | `ICaptureService` | 画面キャプチャ（仮想スクリーンの取得） |
-| `Finder` | `IElementFinder` | 要素検出（カーソル下のモニター・ウィンドウ） |
-| `Window` | `IWindowService` | ネイティブウィンドウ操作（キャプチャ除外・退避・物理ピクセルでの配置） |
-| `Logger` | `ILogger?` | ロガー（null の場合は出力しない） |
+| 画面キャプチャ（仮想スクリーンの取得） | `ICaptureService` | `WinCaptureService` |
+| 要素検出（カーソル下のモニター・ウィンドウ） | `IElementFinder` | `WinElementFinder` |
+| ネイティブウィンドウ操作（キャプチャ除外・退避・物理ピクセルでの配置） | `IWindowService` | `WinWindowService` |
+
+**ホストはサービスを組み立てない**: サービスの生成・保持は Facade が担う（Avalonia 版と同じ分担）。 ライブラリはアプリの型を参照せず、UI 非依存の抽象だけをコアから受け取ります。
 
 **設定は含めません**: 設定は Facade（`AppearanceSettings`）が単一所有し、撮影と切り出しが同じ値を使います（ホストが設定の変換を 2 回呼ぶ・2 つの設定値が食い違う余地をなくす）。
-
-`ICaptureService` / `IElementFinder` / `IWindowService` は `EsUtil.Platform.Core`（名前空間 `EsUtil.Platform.Core.Native`）が提供し、Windows 実装は同 `Native.Win`（`WinCaptureService` 等）です。 ホストが生成して抽象型として注入します。
 
 ## 4. 使用する設定項目
 
@@ -161,20 +171,20 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 ### 4.2 切り出し（CropSession）
 
-切り出しは Facade の `ToggleCrop` からのみ操作します（`CropSession` は internal のため、ホストが直接操作することはありません）。  
-切り出しセッションは開始時にオーバーレイを表示ツリーへ加え、確定・キャンセルで取り外します（ホストが事前に表示ツリーへ入れる必要はありません）。
+切り出しは Facade の `StartCropAsync` / `ResolveCropAction` / `Confirm` / `Cancel` からのみ操作します（`CropSession` は internal のため、ホストが直接操作することはありません）。  
+切り出しセッションは開始時に `CropViewControl` の領域選択オーバーレイを可視化し、確定・キャンセルで非表示に戻します（ホストが表示ツリーへ加える必要はありません）。
 
 | 操作 | 内容 |
 | --- | --- |
-| 開始 | オーバーレイを表示し、入力を選択コントロールへ移す（画像が未設定の場合は何もしない） |
-| 確定（Enter 相当） | 現在の選択矩形を切り出す（退化した選択はキャンセルとして記録し、画像を差し替えない） |
-| キャンセル（Escape 相当） | 選択を破棄してオーバーレイを取り外す（画像は差し替えない） |
+| 開始 | 領域選択オーバーレイを可視化し、入力を選択コントロールへ移す（画像が未設定の場合は開始せず null を返す） |
+| 確定（Enter 相当） | 現在の選択矩形を切り出す（退化した選択はキャンセルとして記録し、0x0 の空矩形を返す） |
+| キャンセル（Escape 相当） | 選択を破棄してオーバーレイを非表示に戻す（0x0 の空矩形を返す） |
 
-切り出しの適用先は `ICaptureTarget`（アプリ側が実装するポート）です。 切り出し結果の適用（Undo 退避・画像差し替え）はアプリ側の責務です。
+切り出しの適用先はホスト（アプリ）です。 切り出し結果（`EsRectInt`）をアプリのコマンドへ渡し、Undo 退避・画像差し替えを行うのはホストの責務です（Avalonia 版と同じ契約。 ライブラリはアプリの型を参照しません）。
 
 ## 5. CropViewControl（切り出しビュー）
 
-画像の表示（拡大・パン・Fit）と、ホストから渡された矩形のオーバーレイ描画を 1 つのコントロールにまとめた複合コントロールです（Facade パターン）。 画像ビューポートは `Parts.CapturePreview.ControlMewUI` を内包し、その上に透明な矩形オーバーレイを重ねます。
+画像の表示（拡大・パン・Fit）・領域選択・ホストから渡された矩形のオーバーレイ描画を 1 つのコントロールにまとめた複合コントロールです（Facade / Composite パターン）。 画像ビューポート（`ZoomViewControl`）と領域選択オーバーレイ（`SelectionOverlayControl`）を内包し、その上に透明な矩形オーバーレイと強調オーバーレイを重ねます（重なり順は「ズームビュー → 領域選択 → 矩形 → 強調」）。 領域選択オーバーレイは初期状態で非表示・ヒットテスト不可であり、切り出しセッションが `SetSelectionOverlayVisible` で切り替えます。
 
 名前空間は `Parts.CapturePreview.ControlMewUI`、クラスは `CropViewControl`（`public sealed`、`Grid` 派生）です。
 
@@ -193,6 +203,12 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `CanZoomIn` / `CanZoomOut` | `bool` | `false` | ズーム可否（画像未設定時は false） |
 | `Log` | `ILogger` | `NullLogger` | ズーム操作ログの出力先（内包する画像ビューポートへ伝搬する） |
 | `LogPrefix` | `string?` | `null` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値 `[CapturePreview]` へ戻す） |
+| `SelectionMode` | `SelectionOverlayMode`（コア） | `Crop` | 内包する領域選択オーバーレイの動作モード |
+| `SelectionOverlayOptions` | `SelectionOverlayOptions`（コア） | `Default` | 領域選択の設定の単一値（内包する `SelectionOverlayControl` へ委譲する） |
+| `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` | 提示層の外観 | 各 `Default` | 領域選択の描画にだけ必要な外観（選択矩形・ルーペ） |
+| `HasSelection` / `SelectionSourceRect` | `bool` / `EsRect` | `false` / 空矩形 | 領域選択の有無と現在値（対象座標 = 元画像ピクセル座標） |
+| `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | デリゲート | `null` | 領域選択の付加情報ラベルの文言（描画時に評価する。 文言はホストが単一所有する） |
+| `ClientToSourceScaling` / `LoupeClientToPixelScaling` | `double` | 基準値 | DPI スケーリング（設定には含めない環境値） |
 
 ### 5.2 メソッド
 
@@ -206,6 +222,13 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `ImageRectViewport()` | 画像の表示矩形（ビューポート座標・DIP） |
 | `ClientToSource(EsPoint)` | ビューポート座標 → 対象座標（画像表示矩形の原点基準） |
 | `SourceToClient(EsPoint)` | 対象座標 → ビューポート座標（画像表示矩形の原点基準） |
+| `SetSelection(EsRect)` / `ClearSelection()` | 領域選択の外部設定・クリア |
+| `SetSelectionOverlayVisible(bool)` | 領域選択オーバーレイの可視性とヒットテストを切り替える（切り出しセッションが使用する。 非表示へ戻すときは選択も破棄し、描画を要求する） |
+| `SetCoordTransform(ICoordTransform?)` | 領域選択の座標変換ポートを設定する（null の場合は倍率からコアが解決する） |
+| `SetLoupeSource(EsBitmap?)` / `ClearLoupe()` | ルーペのソース画像の設定・解除 |
+| `RequestConfirm()` / `RequestCancel()` | Enter / Escape 相当の確定・キャンセル要求（領域選択へ委譲する） |
+| `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
+| `NotifyViewportChanged()` | ビューポートの変化（パン・ズーム・リサイズ）を領域選択オーバーレイへ通知する |
 
 ### 5.3 イベント
 
@@ -213,6 +236,8 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | --- | --- | --- |
 | `ZoomChanged` | `ZoomChangedEventArgs` | ズーム率・Fit 状態・ズーム可否（内包する画像ビューポートから中継） |
 | `ViewportChanged` | `EventArgs` | パン・ズーム・リサイズ（内包する画像ビューポートから中継） |
+| `ConfirmRequested` | `SelectionConfirmedEventArgs` | 領域選択の確定要求（内包する `SelectionOverlayControl` から中継。 切り出しセッションが購読する） |
+| `CancelRequested` | `EventArgs` | 領域選択のキャンセル要求（内包する `SelectionOverlayControl` から中継） |
 
 ### 5.4 矩形オーバーレイの仕様
 
@@ -235,7 +260,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `ZoomPercent` へ 0 以下を設定 | 無視する（Fit へは `ZoomFit()` を使う） |
 | `Source` が `null` で `HighlightSourceRect` を設定 | 何も描画しない（写像の基準が無いため。 例外にしない） |
 
-領域選択は本コントロールの対象外です。 領域選択は `SelectionOverlayControl` を重ねて構成します。
+領域選択は本コントロールが内包する `SelectionOverlayControl` が担います（[6. SelectionOverlayControl](#6-selectionoverlaycontrol領域選択)）。
 
 ## 6. SelectionOverlayControl（領域選択）
 

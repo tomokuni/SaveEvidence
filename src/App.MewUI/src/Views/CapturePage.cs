@@ -15,6 +15,8 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 
@@ -102,7 +104,16 @@ internal static class CapturePage
         var preview = BuildPreview(viewModel, settings, out var crop, out var captureSession);
 
         // グローバルホットキーからの開始経路も同じ Facade を通す（撮影と切り出しの排他を 1 箇所で効かせる）
-        viewModel.StartSelectionMode = type => CaptureFlow.Start(services, type, captureSession);
+        viewModel.StartSelectionMode = type => CaptureFlow.Start(type, captureSession);
+
+        // 切り出しの開始・確定・キャンセルの判断は 1 つの窓口へ集約する
+        // （ボタン・キー・メニューの 3 経路で同じ規則を使う。 Avalonia 版と同じ）
+        void ToggleCrop() => ToggleCropSession(captureSession, crop, viewModel, services);
+
+        // 撮影結果の反映（Undo 退避・プレビュー差し替え・ステータス通知）は CaptureCompleted（同期）で行う。
+        // イベントはオーナーの再表示より前に発行されるため、画像を差し替えてからアプリが再表示される
+        // （フロー: APP 非表示 → 撮影 → 画像変更（イベント受信） → APP 表示。 Avalonia 版と同じ）
+        captureSession.CaptureCompleted += (_, e) => ApplyCaptureResult(services, viewModel, e);
 
         // ズーム率の表示はホストの都合（書式）で決まるため、コントロールのイベントから文字列化する
         var zoomText = new ObservableValue<string>(viewModel.ZoomDisplayText);
@@ -149,7 +160,7 @@ internal static class CapturePage
         };
 
         // ── メニュー（☰ の下へ出すプルダウン。 Avalonia 版の MenuFlyout に相当）──
-        var menuPanel = BuildMenu(viewModel, services, captureSession);
+        var menuPanel = BuildMenu(viewModel, services, captureSession, ToggleCrop);
 
         // ── 拡大率メニュー（% 表示のクリックで出す。 Avalonia 版のフライアウトに相当）──
         var zoomMenu = BuildZoomMenu(crop);
@@ -193,15 +204,15 @@ internal static class CapturePage
 
         var screenSelect = IconButton(
             "ic_fluent_rectangle_landscape_24_regular.svg", "スクリーン選択キャプチャ",
-            () => CaptureFlow.Start(services, CaptureType.ScreenSelect, captureSession), iconImages);
+            () => CaptureFlow.Start(CaptureType.ScreenSelect, captureSession), iconImages);
         var windowSelect = IconButton(
             "ic_fluent_window_24_regular.svg", "ウィンドウ選択キャプチャ",
-            () => CaptureFlow.Start(services, CaptureType.WindowSelect, captureSession), iconImages);
+            () => CaptureFlow.Start(CaptureType.WindowSelect, captureSession), iconImages);
         var areaSelect = IconButton(
             "ic_fluent_select_object_24_regular.svg", "領域選択キャプチャ",
-            () => CaptureFlow.Start(services, CaptureType.AreaSelect, captureSession), iconImages);
+            () => CaptureFlow.Start(CaptureType.AreaSelect, captureSession), iconImages);
 
-        var cropButton = IconButton("ic_fluent_crop_24_regular.svg", "切り出し（切出しモード開始/終了）", captureSession.ToggleCrop, iconImages);
+        var cropButton = IconButton("ic_fluent_crop_24_regular.svg", "切り出し（切出しモード開始/終了）", ToggleCrop, iconImages);
         cropButton.BindIsEnabled(hasImage);
 
         var toolbar = new WrapPanel()
@@ -367,7 +378,7 @@ internal static class CapturePage
             // （Avalonia 版はメニュー項目の InputGesture が同じ役割を担う）
             if (e.ControlKey && e.Key == Key.R)
             {
-                captureSession.ToggleCrop();
+                ToggleCrop();
                 e.Handled = true;
             }
         });
@@ -377,12 +388,14 @@ internal static class CapturePage
     /// <param name="viewModel">アプリのメイン ViewModel（各コマンドの接続先）。</param>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <param name="captureSession">撮影・切り出しの Facade（切り出しメニューの接続先）。</param>
+    /// <param name="toggleCrop">切り出しの開始・確定・キャンセルを行う窓口（ツールバー・キーと同じもの）。</param>
     /// <returns>初期状態で非表示のプルダウン。</returns>
     /// <remarks>
     /// Avalonia 版の <c>MenuFlyout</c> と同じ項目・同じ区切り・同じショートカット表記で並べる。<br/>
     /// ショートカットは表示のみ（Avalonia 版も <c>MenuItem.InputGesture</c> の表示であり、キー操作は受け付けない）。
     /// </remarks>
-    private static Border BuildMenu(MainViewModel viewModel, AppServices services, CaptureSessionControl captureSession)
+    private static Border BuildMenu(
+        MainViewModel viewModel, AppServices services, CaptureSessionControl captureSession, Action toggleCrop)
     {
         var panel = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
         Border? menu = null;
@@ -439,11 +452,11 @@ internal static class CapturePage
         Add("Image - 元に戻す", () => EditHistory.Undo(services), viewModel.HasPreviewImage, "Ctrl+Z");
         Add("Image - 元に戻すを取り消す", () => EditHistory.Redo(services), viewModel.HasPreviewImage, "Ctrl+Y");
         AddSeparator();
-        Add("Capture - スクリーン選択", () => CaptureFlow.Start(services, CaptureType.ScreenSelect, captureSession));
-        Add("Capture - ウィンドウ選択", () => CaptureFlow.Start(services, CaptureType.WindowSelect, captureSession));
-        Add("Capture - 範囲選択", () => CaptureFlow.Start(services, CaptureType.AreaSelect, captureSession));
+        Add("Capture - スクリーン選択", () => CaptureFlow.Start(CaptureType.ScreenSelect, captureSession));
+        Add("Capture - ウィンドウ選択", () => CaptureFlow.Start(CaptureType.WindowSelect, captureSession));
+        Add("Capture - 範囲選択", () => CaptureFlow.Start(CaptureType.AreaSelect, captureSession));
         AddSeparator();
-        Add("Crop - 切り出し", captureSession.ToggleCrop, viewModel.CanCopy, "Ctrl+R");
+        Add("Crop - 切り出し", toggleCrop, viewModel.CanCopy, "Ctrl+R");
         Add("Crop - 自動切り出し", () => viewModel.AutoCropWindowCommand.Execute(null), viewModel.CanCopy);
 
         menu = new Border
@@ -719,11 +732,9 @@ internal static class CapturePage
         };
 
         // 撮影・切り出しの Facade。 撮影と切り出しの排他（同時に 1 つだけ）とセッションの寿命を単一所有する。
+        // 撮影に必要なサービス（キャプチャ・要素検出・ウィンドウ操作）の生成は Facade が担う（ホストは組み立てない）。
         // ログは Facade 自身のカテゴリで記録する（ページのログと混ざらないようにする）
         captureSession = new CaptureSessionControl(
-            cropView,
-            new MainViewModelCaptureTarget(viewModel),
-            host,
             CaptureSettingsMapper.From(settings, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0),
             AppLog.CreateLogger(nameof(CaptureSessionControl)));
 
@@ -745,6 +756,97 @@ internal static class CapturePage
             }
         };
         return host;
+    }
+
+    /// <summary>撮影結果をプレビューへ反映する（CaptureCompleted イベントのハンドラ）。</summary>
+    /// <param name="services">アプリ全体で共有するコアオブジェクト（履歴の所有者）。</param>
+    /// <param name="viewModel">アプリのメイン ViewModel（画像の所有者）。</param>
+    /// <param name="e">撮影結果。 キャンセル時は結果が空。</param>
+    /// <remarks>
+    /// 1. 撮影前に表示していた画像を Undo 履歴へ積む（撮影前の状態へ戻せるようにする）。<br/>
+    /// 2. 撮影結果をプレビューへ設定する（所有権は ViewModel へ移る）。<br/>
+    /// 3. 結果（サイズ）をステータスへ通知する。<br/>
+    /// キャンセル時は何もしない（プレビュー・Undo・ステータスとも変更しない）。
+    /// </remarks>
+    private static void ApplyCaptureResult(AppServices services, MainViewModel viewModel, CaptureCompletedEventArgs e)
+    {
+        if (e.Result?.Image is not { } captured)
+        {
+            return;
+        }
+
+        services.UndoHistory.Push(viewModel.PreviewImage);
+        viewModel.SetPreviewImage(captured);
+        viewModel.StatusMessage = $"キャプチャしました（{captured.Width} x {captured.Height}）";
+    }
+
+    /// <summary>切り出しの開始・確定・キャンセルを 1 つの操作で切り替える（ボタン・キー・メニュー共通）。</summary>
+    /// <param name="captureSession">撮影・切り出しの Facade。</param>
+    /// <param name="cropView">切り出しを行う複合コントロール（表示中の画像が切り出しの対象）。</param>
+    /// <param name="viewModel">アプリのメイン ViewModel（切り出しの適用先）。</param>
+    /// <param name="services">アプリ全体で共有するコアオブジェクト（履歴の所有者）。</param>
+    /// <remarks>
+    /// どの操作を行うかの判断はコア（<c>CropSessionActions.Resolve</c>）が単一所有する<br/>
+    /// （未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）。 Avalonia 版の切り出しボタンと同じ規則を使う。
+    /// </remarks>
+    private static void ToggleCropSession(
+        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services)
+    {
+        switch (captureSession.ResolveCropAction())
+        {
+            case CropSessionAction.Start:
+                _ = StartCropSessionAsync(captureSession, cropView, viewModel, services);
+                break;
+            case CropSessionAction.Confirm:
+                // 開始済み・矩形あり → 現在の選択矩形で確定（既に待機しているタスクが完了する）
+                captureSession.Confirm();
+                break;
+            default:
+                // 開始済み・矩形なし → キャンセル（矩形選択前に操作した場合の抜け道）
+                if (captureSession.IsCropping)
+                {
+                    captureSession.Cancel();
+                }
+
+                break;
+        }
+    }
+
+    /// <summary>切り出しセッションを開始し、確定した範囲で画像を切り出す。</summary>
+    /// <param name="captureSession">撮影・切り出しの Facade。</param>
+    /// <param name="cropView">切り出しを行う複合コントロール（表示中の画像が切り出しの対象）。</param>
+    /// <param name="viewModel">アプリのメイン ViewModel（切り出しの適用先）。</param>
+    /// <param name="services">アプリ全体で共有するコアオブジェクト（履歴の所有者）。</param>
+    /// <returns>待機タスク。</returns>
+    /// <remarks>
+    /// 切り出しの対象画像は表示中の画像（<see cref="CropViewControl.Source"/>）から解決されるため、画像を別引数で渡さない。<br/>
+    /// 確定（Enter / ダブルクリック / 確定操作）で切り出し範囲（コア型）、キャンセルで 0x0 の空矩形が返る。<br/>
+    /// 開始できなかった場合（他のセッションが実行中）は結果 null が即時返る（無駄な待機をしない）。
+    /// </remarks>
+    private static async Task StartCropSessionAsync(
+        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services)
+    {
+        if (Application.Current?.MainWindow is not { } hostWindow)
+        {
+            return;
+        }
+
+        var bounds = await captureSession.StartCropAsync(cropView, hostWindow).ConfigureAwait(true);
+
+        // 確定時のみ切り出す（開始できなかった場合は null、キャンセルは空の矩形。
+        // 空の判定はコアの契約（EsRectInt.IsEmpty）が単一所有する）
+        if (bounds is not { } rect || rect.IsEmpty)
+        {
+            return;
+        }
+
+        // 切り出し前の画像へ戻せるように履歴へ積む（画像の差し替えは ViewModel が単一所有する）
+        if (viewModel.PreviewImage is { } source)
+        {
+            services.UndoHistory.Push(source);
+        }
+
+        viewModel.CropPreviewCommand.Execute(rect);
     }
 
     /// <summary>マウスポインタ位置の対象座標（画像ピクセル）をステータスバーへ表示する。</summary>

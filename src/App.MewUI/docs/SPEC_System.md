@@ -121,9 +121,8 @@ src/App.MewUI/src/
 │   ├── ImageThumbnailLoader.cs       画像ファイルの縮小デコードとキャッシュ
 │   ├── SettingsColorMath.cs          設定の色文字列 ⇔ 色の変換
 │   ├── SettingsJsonContext.cs        設定の JSON ソース生成（Native AOT 対応）
-│   ├── CaptureFlow.cs                キャプチャの開始と結果の反映
+│   ├── CaptureFlow.cs                キャプチャの開始（多重起動の防止。 画像の反映は CaptureCompleted）
 │   ├── EditHistory.cs                編集履歴（戻す / やり直し）の実行
-│   └── MainViewModelCaptureTarget.cs 切り出しの適用先（ICaptureTarget の実装）
 ├── Logging/
 │   └── AppLog.cs                     ログ定義（LoggerMessage）と Serilog のファクトリ
 └── Views/
@@ -156,7 +155,7 @@ tests/
 | `MainWindow` | ナビパネル（自前の合成。 アイコン + ページ名・選択背景）とページ内容の切り替え、タイトルバー（拡張クライアント領域 + ウィンドウボタン）、配置の復元と保存、自動切り出し中の Escape（キャンセル）の処理 |
 | `PageContent` | ページの要素と、表示のたびに実行する処理（設定の再読込・一覧の再構築）の組 |
 | `CapturePage` | ツールバー・クロップビュー・切り出しオーバーレイ・ステータスの配置とコマンド接続。 自動切り出しの検出矩形（水色の実線・ホバーで「赤枠 + 半透明の赤塗り」）を `CropViewControl.Rects`（枠線）と `CropViewControl.HighlightSourceRect` / `HighlightAppearance`（ホバー強調）で表示し、矩形内のダブルクリックで確定、矩形外のダブルクリックでキャンセルする（Escape は `MainWindow` が処理する） |
-| `CaptureSessionControl`（`Parts.CapturePreview.ControlMewUI`） | 撮影と切り出しの Facade。 排他（同時に 1 つだけ）とセッションの寿命を単一所有する。 撮影はオーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し、切り出しはプレビュー上の領域選択 → `ICaptureTarget` への適用を行う |
+| `CaptureSessionControl`（`Parts.CapturePreview.ControlMewUI`） | 撮影と切り出しの Facade。 排他（同時に 1 つだけ）とセッションの寿命、および撮影サービスの生成を単一所有する。 撮影はオーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し、切り出しは `CropViewControl` の領域選択 → 結果（`EsRectInt`）の返却を行う（結果の適用はページが担う） |
 | `ConfirmDialog` | 簡易確認ダイアログ（はい / いいえ）を表示して選択を返す。 `MainWindow` が `MainViewModel.ConfirmOverwriteAsync` へ配線する |
 | `ClickableToolTip` | クリックできるボタンへツールチップとクリック処理をまとめて登録する。 MewUI の不具合でツールチップ表示中の押下が取り消されるため、`Click` が発生しなかった押下を `MouseUp` で補完する |
 | `AppStyles` | ナビ・ツールバー・ウィンドウ操作ボタン・サムネイル枠・面（ナビパネル / ステータスバー / プルダウン / 設定カード）の共通スタイル（`StyleName` で適用する `StyleSheet`）とレイアウト値（Avalonia 版と同一）を単一所有する。 状態で変化するプロパティとテーマに追従する面の色はローカル値で設定せず本スタイルで与える。 テーマの適用（`ApplyTheme`）と、スタイルで表せない値の更新通知（`ThemeChanged`）も本クラスが担う |
@@ -173,7 +172,7 @@ tests/
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |
 | `LoupeOptions` | 設定のルーペ項目をルーペコントロールへ反映（プレビュー / 撮影 / 切り出しで共用） |
 | `CropBoundsMath`（`Parts.CapturePreview.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。 Avalonia 版と共用する（`CropSession` が使用） |
-| `CaptureFlow` | キャプチャの開始（ホットキーの連打の防止）と結果の反映（Undo 退避 → プレビュー設定）。 排他は Facade（`CaptureSessionControl`）が担う |
+| `CaptureFlow` | キャプチャの開始（ホットキーの連打の防止）のみを担う。 撮影の完了を待たず、画像の反映は `CaptureSessionControl.CaptureCompleted` の購読（`CapturePage`）が行う（Undo 退避 → プレビュー設定 → ステータス通知）。 排他は Facade（`CaptureSessionControl`）が担う |
 | `EditHistory` | 編集履歴の移動（履歴からの画像の取り出しとプレビューへの差し替え） |
 | `WindowPlacementMath`（`Platform.MewUI`） | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
 | `AppLog` | ログ定義と Serilog のファクトリ（Avalonia 版と同一のファイル・書式。 `src/App.MewUI/src/Logging/AppLog.cs`） |
@@ -309,15 +308,13 @@ classDiagram
     CaptureSessionControl ..> CropSession : 切り出しセッション
     CaptureSessionControl ..> CaptureOverlay : 撮影セッション
     CaptureSessionControl ..> CaptureSessionSlot : 排他の受付
-    CropSession ..> SelectionOverlayControl : 配置（Crop）
-    CropSession ..> ICaptureTarget : 切り出しの適用
-    MainViewModelCaptureTarget ..> MainViewModel : CropPreviewCommand
-    MainViewModelCaptureTarget ..> ICaptureTarget : 実装
+    CropSession ..> CropViewControl : 領域選択の制御（切り出しの対象）
     CropSession ..> SelectionOverlayControl : 設定の変換（コアの SelectionOverlayOptionsMapper）
     CapturePage ..> LoupeOptions : ルーペの設定（プレビューの常時表示）
     Program ..> SettingsJsonContext : 設定のソース生成
     SettingsService ..> SettingsJsonContext : 型情報の取得
-    CaptureFlow ..> CaptureSessionControl : 撮影の実行
+    CaptureFlow ..> CaptureSessionControl : 撮影の実行（StartCaptureAsync）
+    CapturePage ..> MainViewModel : 切り出しの適用（CropPreviewCommand）
     CaptureOverlay ..> SkiaImageView : 下敷きの画像
     CaptureOverlay ..> SelectionOverlayControl : 配置（Area / Screen / Window）
     CaptureOverlay ..> IElementFinder : 要素の検出
@@ -384,8 +381,8 @@ sequenceDiagram
     participant CS as ICaptureService
     participant OS as オーナーウィンドウ
 
-    HK->>CF: Start(services, type, captureSession)
-    CF->>OW: Capture(owner, type, services)
+    HK->>CF: Start(type, captureSession)
+    CF->>OW: StartCaptureAsync(owner, type)
     OW->>OW: CaptureSessionSlot.TryBeginCapture（排他の受付。切り出し中は null を返す）
 
     OW->>OS: キャプチャ除外 + 画面外へ退避（設定時）
@@ -393,9 +390,11 @@ sequenceDiagram
     CS-->>OW: EsBitmap / 失敗時 null
     OW->>OW: ボーダーレス・最前面のウィンドウを仮想スクリーン全面へ表示（透明 → 画像合成後に解除）
     Note over OW: 範囲選択はドラッグ、スクリーンはカーソル下のモニター、ウィンドウはカーソル下のウィンドウをハイライト
+    OW->>OW: 確定時は CropClipMath で切り出し（キャンセル時は null）
+    OW->>CF: CaptureCompleted（同期。 ホストの画像変更が先に走る）
+    CF->>CF: Undo へ退避 → SetPreviewImage → ステータス通知（CapturePage のハンドラ）
     OW->>OS: 元の位置へ戻す + Activate()（元の表示状態へ戻す）
-    OW-->>CF: 切り出した EsBitmap / キャンセル時 null
-    CF->>CF: Undo へ退避 → 未保存化 → SetPreviewImage → ステータス通知
+    OW-->>CF: CaptureResult（画像と領域） / キャンセル時 null
 ```
 
 ## 8. シーケンス図（プレビューの切り出し）
@@ -405,22 +404,22 @@ sequenceDiagram
     participant BTN as 切り出しボタン / Enter
     participant PS as CaptureSessionControl
     participant CS as CropSession
-    participant CV as CropViewControl
-    participant FM as SelectionOverlayControl
+    participant CV as CropViewControl（領域選択を内包）
     participant VM as MainViewModel
 
-    BTN->>PS: ToggleCrop()（未開始なら開始）
+    BTN->>PS: ResolveCropAction()（未開始なら Start）
     PS->>PS: CaptureSessionSlot.TryBeginCrop（排他の受付。撮影中は開始しない）
-    PS->>CS: 生成 + Start(image)（オーバーレイを表示ツリーへ加える）
+    PS->>CS: 生成 + RunAsync（領域選択オーバーレイを可視化する）
     CS->>CV: ClientToSource / SourceToClient（座標変換ポート）
-    CS->>FM: SetCoordTransform（ローカル DIP ⇔ 画像ピクセル）
-    CS->>FM: SetLoupeSource(PreviewImage)
-    Note over FM: ドラッグで選択（座標ラベル・ハンドル・ルーペはコントロールが描画）
-    BTN->>PS: ToggleCrop()（選択があれば確定）
+    CS->>CV: SetCoordTransform / SetLoupeSource
+    Note over CV: ドラッグで選択（座標ラベル・ハンドル・ルーペは内包コントロールが描画）
+    BTN->>PS: ResolveCropAction()（選択があれば Confirm）
     PS->>CS: Confirm()
     CS->>CS: CropBoundsMath.ComputeCropBounds（画像内へクランプ + 閉区間化）
-    CS->>PS: Ended（終了の通知）→ 排他の受付を解放
-    CS->>VM: ICaptureTarget.ApplyCrop（Undo 退避 → 切り出し → 画像差し替え）
+    CS->>CV: SetSelectionOverlayVisible(false)（選択を破棄して非表示へ戻す）
+    CS-->>PS: Task 完了（EsRectInt）→ 排他の受付を解放
+    PS-->>BTN: EsRectInt（確定時） / 0x0（キャンセル） / null（開始不可）
+    BTN->>VM: Undo へ退避 → CropPreviewCommand（画像差し替え。 CapturePage）
 ```
 
 ## 9. シーケンス図（フォルダビューページ）

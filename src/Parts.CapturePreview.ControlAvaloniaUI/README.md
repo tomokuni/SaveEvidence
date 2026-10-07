@@ -255,7 +255,6 @@ Parts.CapturePreview.ControlAvaloniaUI/
 │   │   └── LoupePositionEventArgs.cs              # ルーペ位置のイベント引数（公開クラス）
 │   ├── Session/                    # セッション（Facade と撮影・切り出しの実装）
 │   │   ├── CaptureSessionControl.cs               # 公開 Facade（統括者。組み立て・配線・ライフサイクル）
-│   │   ├── CaptureCompletedEventArgs.cs           # 完了通知のイベント引数（公開クラス）
 │   │   ├── CaptureOverlaySession.cs               # 撮影セッション（internal。1 セッション = 1 インスタンス）
 │   │   ├── CaptureOverlayWindow.axaml             # 撮影オーバーレイのウィンドウ（internal）
 │   │   ├── CaptureOverlayWindow.axaml.cs

@@ -104,95 +104,10 @@ internal static partial class AppLog
         => logger.LogAppExitCore(Prefix, exitCode);
 
     // ====================================================================
-    // 撮影セッション
+    // 撮影セッション / 切出しセッションのログは撮影スタック（Parts.CapturePreview）が単一所有する
+    // （CapturePreviewLogMessage。 接頭辞は [CapturePreview]）。
+    // アプリ側で同じ操作を二重に記録しない（同じ操作のログに 2 つの所有者を作らない）。
     // ====================================================================
-
-    /// <summary>撮影セッション開始のログ。</summary>
-    /// <remarks>
-    /// LogLevel: Debug <br/>
-    /// 出力書式: <c>撮影開始: type={Type}</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="type">撮影種別。</param>
-    [LoggerMessage(LogLevel.Debug, "{Prefix} 撮影開始: type={Type}")]
-    private static partial void LogCaptureStartCore(this ILogger logger, string prefix, string type);
-
-    public static void LogCaptureStart(this ILogger logger, string type)
-        => logger.LogCaptureStartCore(Prefix, type);
-
-    /// <summary>撮影確定のログ。</summary>
-    /// <remarks>
-    /// LogLevel: Debug <br/>
-    /// 出力書式: <c>撮影確定: rect={Rect}</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="rect">確定した矩形（画面物理ピクセル）。</param>
-    [LoggerMessage(LogLevel.Debug, "{Prefix} 撮影確定: rect={Rect}")]
-    private static partial void LogCaptureCompletedCore(this ILogger logger, string prefix, string rect);
-
-    public static void LogCaptureCompleted(this ILogger logger, string rect)
-        => logger.LogCaptureCompletedCore(Prefix, rect);
-
-    /// <summary>撮影キャンセルのログ。</summary>
-    /// <remarks>
-    /// LogLevel: Debug <br/>
-    /// 出力書式: <c>撮影キャンセル</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    [LoggerMessage(LogLevel.Debug, "{Prefix} 撮影キャンセル")]
-    private static partial void LogCaptureCancelledCore(this ILogger logger, string prefix);
-
-    public static void LogCaptureCancelled(this ILogger logger)
-        => logger.LogCaptureCancelledCore(Prefix);
-
-    // ====================================================================
-    // 切出しセッション
-    // ====================================================================
-
-    /// <summary>切出しセッション開始のログ。</summary>
-    /// <remarks>
-    /// LogLevel: Debug <br/>
-    /// 出力書式: <c>切出し開始: image={Width}x{Height}</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="width">元画像の幅（ピクセル）。</param>
-    /// <param name="height">元画像の高さ（ピクセル）。</param>
-    [LoggerMessage(LogLevel.Debug, "{Prefix} 切出し開始: image={Width}x{Height}")]
-    private static partial void LogCropStartCore(this ILogger logger, string prefix, int width, int height);
-
-    public static void LogCropStart(this ILogger logger, int width, int height)
-        => logger.LogCropStartCore(Prefix, width, height);
-
-    /// <summary>切出し確定のログ。</summary>
-    /// <remarks>
-    /// LogLevel: Debug <br/>
-    /// 出力書式: <c>切出し確定: rect={Rect}</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="rect">切り出す矩形（画像ピクセル）。</param>
-    [LoggerMessage(LogLevel.Debug, "{Prefix} 切出し確定: rect={Rect}")]
-    private static partial void LogCropCompletedCore(this ILogger logger, string prefix, string rect);
-
-    public static void LogCropCompleted(this ILogger logger, string rect)
-        => logger.LogCropCompletedCore(Prefix, rect);
-
-    /// <summary>切出しキャンセルのログ。</summary>
-    /// <remarks>
-    /// LogLevel: Debug <br/>
-    /// 出力書式: <c>切出しキャンセル</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    [LoggerMessage(LogLevel.Debug, "{Prefix} 切出しキャンセル")]
-    private static partial void LogCropCancelledCore(this ILogger logger, string prefix);
-
-    public static void LogCropCancelled(this ILogger logger)
-        => logger.LogCropCancelledCore(Prefix);
 
     /// <summary>設定変更の CaptureSessionControl 反映で例外が発生したことを記録する。</summary>
     /// <remarks>
