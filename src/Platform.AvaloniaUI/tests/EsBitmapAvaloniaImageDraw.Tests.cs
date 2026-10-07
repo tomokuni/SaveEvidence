@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 
@@ -14,8 +15,10 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 /// その生成には Avalonia の描画バックエンド（<c>DrawingContext</c>）が必要なため、<c>[AvaloniaFact]</c> で検証する。<br/>
 /// <see cref="EsBitmapAvaloniaImage"/> のそれ以外（<c>Size</c> / <c>Bitmap</c> / <c>Dispose</c>）は
 /// <see cref="EsBitmapAvaloniaImageTests"/> が <c>[Fact]</c> で検証する（描画を伴うクラスと分離し、
-/// Avalonia 初期化の有無を混在させない）。
+/// Avalonia 初期化の有無を混在させない）。<br/>
+/// 実 Skia の描画は共有状態を持つため <see cref="AvaloniaSkiaGroup"/> で直列化する。
 /// </remarks>
+[Collection("AvaloniaSkia")]
 public class EsBitmapAvaloniaImageDrawTests
 {
     /// <summary>真実が破棄されたら描画は no-op になり、例外にもならないことを検証する。</summary>

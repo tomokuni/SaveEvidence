@@ -27,7 +27,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// <br/>
 /// <b>公開 API</b>: <see cref="Size"/>（<see cref="IImage"/>）・ <see cref="Draw"/>（<see cref="IImage"/>）・ <see cref="Dispose"/>。
 /// </remarks>
-public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
+public sealed class EsBitmapAvaloniaImage : IImage, IEsImageSource, IDisposable
 {
     /// <summary>内部の EsBitmap（コア。 所有権は本クラスが保持）。</summary>
     private EsBitmap? _bitmap;
@@ -44,6 +44,16 @@ public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
         ArgumentNullException.ThrowIfNull(bitmap);
         _bitmap = bitmap;
     }
+
+    /// <summary>公開している画像の幅（ピクセル）。</summary>
+    /// <value>内包する <see cref="EsBitmap"/> の幅。</value>
+    /// <exception cref="ObjectDisposedException">本クラスが破棄済みの場合。</exception>
+    public int Width => (_bitmap ?? throw new ObjectDisposedException(nameof(EsBitmapAvaloniaImage))).Width;
+
+    /// <summary>公開している画像の高さ（ピクセル）。</summary>
+    /// <value>内包する <see cref="EsBitmap"/> の高さ。</value>
+    /// <exception cref="ObjectDisposedException">本クラスが破棄済みの場合。</exception>
+    public int Height => (_bitmap ?? throw new ObjectDisposedException(nameof(EsBitmapAvaloniaImage))).Height;
 
     /// <summary>公開している画像のサイズ（DIP）。</summary>
     /// <value><see cref="EsBitmap"/> の幅・高さから得られる <see cref="Avalonia.Size"/>。</value>
@@ -101,6 +111,16 @@ public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
     /// 参照のみに使用し、<see cref="Dispose"/> は本クラスに委ねること。
     /// </remarks>
     public EsBitmap? Bitmap => _bitmap;
+
+    /// <summary>コアの画像を取得する（借用）。</summary>
+    /// <returns>内包する EsBitmap。<b>借用</b>（破棄しない）。</returns>
+    /// <exception cref="ObjectDisposedException">本クラスが破棄済みの場合。</exception>
+    /// <remarks>
+    /// <see cref="Bitmap"/> と同じ参照を返す（<see cref="IEsImageSource"/> の面で公開する）。<br/>
+    /// <b>明示的実装</b>にして公開面を増やさない（本型を直接使う呼び出し側は <see cref="Bitmap"/> を使う）。
+    /// </remarks>
+    EsBitmap IEsImageSource.GetEsBitmap()
+        => _bitmap ?? throw new ObjectDisposedException(nameof(EsBitmapAvaloniaImage));
 
     /// <summary>内包する EsBitmap を解放する（冪等）。</summary>
     /// <remarks>

@@ -122,7 +122,8 @@ flowchart TB
 | コンポーネント | 説明 |
 | --- | --- |
 | `EsBitmapAvaloniaExtensions` | `EsBitmap`（Core）の Avalonia 向け生成・変換・ピクセル操作拡張 |
-| `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ（所有権を保持。 射影 `<see cref="Bitmap"/>` は初回の `Draw` で生成し、以降は再利用する） |
+| `EsBitmapAvaloniaImage` | `EsBitmap` を内包して `IImage` として公開するアダプタ（**所有権を保持**。 射影 `Bitmap` は初回の `Draw` で生成し、以降は再利用する） |
+| `EsImageSourceAdapter` | Avalonia の `Bitmap` またはコアの `EsBitmap` を包み、`IImage` と `IEsImageSource` の両面で公開するアダプタ（**真実は所有しない**。 反対側の射影だけを初回に生成して `Dispose` で解放する） |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（スレッド安全。 容量超過時は全体をクリア） |
 | `SolidColorBrushCache` | `System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有するキャッシュ（描画アダプタとラベル要素の配置が共用する） |
 | `AvaloniaTextMeasure` | テキストの実寸測定を単一所有する（ラベルの配置矩形は実寸から決まるため、UI ごとの測定の食い違いを防ぐ） |
