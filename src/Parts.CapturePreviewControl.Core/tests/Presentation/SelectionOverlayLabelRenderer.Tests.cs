@@ -2,9 +2,10 @@ using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
-namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase.Tests;
+namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Presentation;
 
 /// <summary><see cref="SelectionOverlayLabelRenderer"/> の単体テスト（付加情報ラベルの配置指示の解決）。</summary>
 /// <remarks>

@@ -51,6 +51,10 @@
   - [10.6 `ZoomScrollBar` / `ZoomScrollBarMetrics` / `ZoomScrollBarGeometry` / `ZoomAvailability`](#106-zoomscrollbar--zoomscrollbarmetrics--zoomscrollbargeometry--zoomavailability)
   - [10.7 `CapturePreviewLogMessage`（ズーム操作のログ）](#107-capturepreviewlogmessageズーム操作のログ)
   - [10.8 `ZoomState` / `ZoomFeedback` / `ZoomNotice`（契約）](#108-zoomstate--zoomfeedback--zoomnotice契約)
+- [11. 提示の写像（`Presentation` 系）](#11-提示の写像presentation-系)
+  - [11.1 CapturePaintMapper（内部）](#111-capturepaintmapper内部)
+  - [11.2 SelectionOverlayChildValues](#112-selectionoverlaychildvalues)
+  - [11.3 SelectionOverlayLabelRenderer / MarqueeHostLabelRenderer](#113-selectionoverlaylabelrenderer--marqueehostlabelrenderer)
 
 ## 1. 公開型の構成
 
@@ -92,8 +96,12 @@
 | `OverlayRectLayout` | 静的クラス | 矩形情報 → 描画入力（`OverlayRectFrame`）の解決（負サイズのクランプ・太さの下限・破線の判定） |
 | `OverlayRectFrame` | record struct | 矩形 1 個分の描画入力（配置・太さ・半幅・破線の判定と長さ・色・描画可否） |
 | `SelectionOverlayMode` | 列挙型 | 領域選択の複合コントロールの動作モード（切り出し / 範囲選択 / スクリーン選択 / ウィンドウ選択） |
-| `SelectionOverlayOptions` | record | 複合コントロールの設定の単一値（`MarqueeCore` / `Labels` / `LoupeCore` / 破線の色 2 / ルーペオフセット） |
+| `SelectionOverlayOptions` | record | 複合コントロールの設定の単一値（`Marquee` / `Labels` / `Loupe` / 破線の色 2 / ルーペオフセット） |
 | `SelectionOverlayLabelOptions` | record | 付加情報ラベル（操作・情報）の外観（表示可否・寸法・色）。 文言の生成と描画はホストが行う |
+| `CapturePaintMapper` | 静的クラス（内部） | 設定 → 外観の写像（`CaptureSettings` → `MarqueeAppearance` / `LoupeAppearance`）。 色と枠線の太さ・表示可否を写す |
+| `SelectionOverlayChildValues` | record struct | 設定とモードから内包コントロールへ適用する値（設定・外観・オフセット・入力の可否）の解決 |
+| `SelectionOverlayLabelRenderer` | 静的クラス | 付加情報ラベル（操作・情報）の縦積みの配置指示の解決（表示可否の判定を含む） |
+| `MarqueeHostLabelRenderer` | 静的クラス | ラベル 1 行の体裁（背景 = 文字の実寸 + 内側余白 × 2）の配置指示の解決 |
 | `ZoomViewSession` | クラス | 切り出しビューの画像ビューポートの状態（ズーム・オフセット・設定・表示条件）を保持し、入力の解釈と判断を単一所有する |
 | `ZoomOptions` | クラス | ズーム遷移のパラメータ（`MinZoom` / `MaxZoom` / `WheelFactor` / `ButtonZoomLevels`）をまとめた検証付き不変値 |
 | `ZoomState` | record struct | 通知する 4 値（実効ズーム率・Fit 状態・ズーム可否） |
@@ -107,7 +115,7 @@
 | `ZoomAvailability` | record struct | ズーム可否（ズームイン・ズームアウト）を単一に保持する値オブジェクト |
 | `CapturePreviewLogMessage`（ズーム） | 静的クラス | 画像ビューポートの操作ログの定義（両 UI 共通の書式・丸め） |
 
-`ZoomTransition` / `ZoomMath` / `ZoomAvailability` / `ZoomScrollBarGeometry` は `internal` です（UI 実装とテストへ `InternalsVisibleTo` で公開し、ホストは `ZoomViewSession` 経由で間接利用します）。
+`ZoomTransition` / `ZoomMath` / `ZoomAvailability` / `ZoomScrollBarGeometry` / `CapturePaintMapper` は `internal` です（UI 実装とテストへ `InternalsVisibleTo` で公開し、ホストは `ZoomViewSession` 経由で間接利用します）。
 
 名前空間は `Parts.CapturePreviewControl.Core` です。
 
@@ -122,6 +130,7 @@
 | 契約 | `ICaptureTarget`（結果の適用先）、`ICaptureOwnerWindow`（退避対象）、`CaptureSessionSlot`（排他）、`CaptureCompletion`（単一確定）、`CaptureClipCache`（事前切り出しの受け渡し）、`CaptureImageHolder`（画像の保持）、`CaptureHighlight` / `CaptureHighlightSession`（ハイライト状態）、`CaptureResult.From`（結果の正規化）、`ZoomFeedback` / `ZoomNotice`（画像ビューポートのコア⇔UI の契約） |
 | ログ定義 | `CapturePreviewLogMessage`（接頭辞・書式・レベル・値の整形・完了時の出力の組・設定適用・ズーム操作を含む。 呼び出しは UI） |
 | ログ以外の正規化 | `CaptureText`（未取得の文字列を空文字へ。 ログ定義の外に置く） |
+| 提示の写像 | 設定 → 外観の写像（`CapturePaintMapper`）、子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）、付加情報ラベルの配置指示（`SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）。 製品の設定型と提示層の外観型を橋渡しする（UI は同じ写像を共有する） |
 | UI 層に残すもの | Window の生成と表示、`Screens` / DPI の取得、ポインタ・キーの購読、`Dispatcher`、カーソル、レイアウト、Bitmap のライフサイクル |
 
 ## 3. CaptureLabelTexts
@@ -639,7 +648,7 @@ public readonly record struct OverlayRect(
 | --- | --- |
 | `ZoomScrollBar` | オーバーレイスクロールバーの矩形（`Track` / `Thumb`） |
 | `ZoomScrollBarMetrics` | 標準スクロールバー部品へ写す同期値（`MaxOffset` / `ViewportSize` / `IsScrollable`） |
-| `ZoomScrollBarGeometry`（internal） | `Compute`（トラック・サムの矩形）・`MovableThumbRange`（可動範囲）・`SourceOffsetFromThumb`（サム位置からのオフセット逆算）・`MaxSourceOffset` |
+| `ZoomScrollBarGeometry`（internal） | `Compute`（トラック・サムの矩形）・`MovableThumbRange`（可動範囲）・`SourceOffsetFromThumbInRange`（サム位置からのオフセット逆算）。 最大スクロール量は `EsUtil.Platform.Core.Coord.ScrollMath.MaxOffset` を使う |
 | `ZoomAvailability`（internal） | ズーム可否（`CanZoomIn` / `CanZoomOut`）を単一に保持する値オブジェクト |
 
 ### 10.7 `CapturePreviewLogMessage`（ズーム操作のログ）
@@ -662,3 +671,33 @@ public readonly record struct OverlayRect(
 | `ZoomState` | 通知する 4 値（`ZoomPercent` / `IsFit` / `CanZoomIn` / `CanZoomOut`） |
 | `ZoomFeedback` | UI が適用する効果（`ShouldRedraw` / `ShouldCapturePointer` / `ShouldReleasePointer`）。 `ApplyVisual` / `ApplyPointer` に**適用順を単一所有**する |
 | `ZoomNotice` / `ZoomNoticeKind` | 通知の種別（`ZoomChanged` / `ViewportChanged`）と通知時点の値（`State` / `ImageRect`）。 `ZoomChanged` は確定した 4 値、`ViewportChanged` は画像の表示矩形を運び、オーバーレイが同じ矩形を参照できるようにする |
+
+## 11. 提示の写像（`Presentation` 系）
+
+製品の設定（`CaptureSettings`）と、提示層（`EsUtil.Feature.*.Presenter`）の外観型を橋渡しする写像です。 **UI フレームワークに依存しません**（実寸測定はデリゲートで受け取ります）。 製品の設定型と提示層の外観型の両方を必要とするため、両者を参照できる本プロジェクトが単一所有します（UI ごとに書くと写像漏れが片方だけに生じます）。
+
+### 11.1 CapturePaintMapper（内部）
+
+`CaptureSettings` → 外観の写像を単一所有します（`internal`。 両 UI のホストとテストへ `InternalsVisibleTo` で公開）。
+
+| メソッド | 内容 |
+| --- | --- |
+| `ToMarqueeAppearance(CaptureSettings settings)` | 選択矩形コントロールの外観（色 9 項目 + 枠線の太さ + 表示可否 4 項目）を組み立てる。 枠線の色はハンドルの枠線と暗転マスクの外枠の両方へ同じ値を割り当てる（同じ矩形に重なるため） |
+| `ToLoupeAppearance(CaptureSettings settings)` | ルーペの外観（色 5 項目 + 枠線の太さ + 座標ラベルの表示可否）を組み立てる |
+
+引数の `settings` は `ToNonNull` 済みを前提とします（null は `ArgumentNullException`）。 **寸法・対話パラメータは写像しません**（コアの設定値（`SelectionOverlayOptions`）が持ち、`SelectionOverlayOptionsMapper` が単一所有します）。 内側の塗り・内側の枠線は写像せず既定の透明を保ちます（描画の可否は外観の明示フラグが単一所有します）。
+
+### 11.2 SelectionOverlayChildValues
+
+設定（`SelectionOverlayOptions`）とモード（`SelectionOverlayMode`）から、内包コントロール（選択矩形・ルーペ）へ適用する値を解決します。 モードの解釈はコアの `SelectionOverlayState.Resolve` が単一所有し、本型は「設定の値を写し、モードから導出する項目（ハンドルの表示可否・全面暗転の可否・入力の可否）だけを上書きする」手順を単一所有します。 **ハイライト矩形は実行時状態**のため本値に含めません（子コントロールが現在値を持ち続けます）。
+
+### 11.3 SelectionOverlayLabelRenderer / MarqueeHostLabelRenderer
+
+付加情報ラベル（操作・情報）の配置指示を解決します（**描画は行いません**。 実寸測定はデリゲートで受け取ります）。
+
+| 型 | 内容 |
+| --- | --- |
+| `SelectionOverlayLabelRenderer` | 注目矩形の基準点から、操作ラベル → 情報ラベルの順に**縦積み**の配置指示を返す。 サイズラベルが描かれている場合はその下から始める（行送り = 行の高さ + 内側余白 × 2）。 表示スイッチと文言（空文字を除く）の両方が成立した行だけを返す |
+| `MarqueeHostLabelRenderer` | ラベル 1 行の体裁（背景 = 文字の実寸 + 内側余白 × 2）と、基準点を背景の左上とする配置指示を返す。 体裁の値（内側余白）は提示層の外観（`MarqueeAppearance`）が単一所有する |
+
+文言の生成はホストが担います（付加情報は複合コントロールの概念ではないため）。

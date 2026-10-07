@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
@@ -49,34 +50,15 @@ internal static class ZoomScrollBarGeometry
         var displayHeight = sourceSize.Height * scale;
 
         var horizontal = displayWidth > viewportSize.Width
-            ? Build(viewportSize.Width, displayWidth, offset.X, MaxSourceOffset(sourceSize.Width, viewportSize.Width, scale), thickness, margin, minThumb, isVertical: false, viewportSize)
+            ? Build(viewportSize.Width, displayWidth, offset.X, ScrollMath.MaxOffset(sourceSize.Width, viewportSize.Width, scale), thickness, margin, minThumb, isVertical: false, viewportSize)
             : (ZoomScrollBar?)null;
 
         var vertical = displayHeight > viewportSize.Height
-            ? Build(viewportSize.Height, displayHeight, offset.Y, MaxSourceOffset(sourceSize.Height, viewportSize.Height, scale), thickness, margin, minThumb, isVertical: true, viewportSize)
+            ? Build(viewportSize.Height, displayHeight, offset.Y, ScrollMath.MaxOffset(sourceSize.Height, viewportSize.Height, scale), thickness, margin, minThumb, isVertical: true, viewportSize)
             : (ZoomScrollBar?)null;
 
         return (horizontal, vertical);
     }
-
-    /// <summary>指定軸の最大スクロール量（コンテンツ座標）を計算する。</summary>
-    /// <param name="contentLength">元画像の当該軸の長さ（コンテンツ座標）。</param>
-    /// <param name="viewportLength">ビューポートの当該軸の長さ（DIP）。</param>
-    /// <param name="scale">コンテンツ座標 → ビューポート DIP の実効スケール。</param>
-    /// <returns>最大スクロール量（コンテンツ座標）。 0 未満にはならない。</returns>
-    public static double MaxSourceOffset(double contentLength, double viewportLength, double scale)
-        => scale <= 0 ? 0 : Math.Max(0, contentLength - viewportLength / scale);
-
-    /// <summary>サムの位置（トラック内のオフセット）からコンテンツ座標のオフセットを逆算する。</summary>
-    /// <param name="thumbOffset">サムの左上位置（トラック内の相対位置・DIP）。</param>
-    /// <param name="trackLength">トラックの長さ（DIP）。</param>
-    /// <param name="thumbLength">サムの長さ（DIP）。</param>
-    /// <param name="maxSourceOffset">最大スクロール量（コンテンツ座標）。</param>
-    /// <returns>コンテンツ座標のオフセット。 可動範囲を超える場合は両端へクランプする。</returns>
-    /// <remarks>サムのドラッグ中に、ポインタ位置から新しいオフセットを求めるために使用する。</remarks>
-    public static double SourceOffsetFromThumb(
-        double thumbOffset, double trackLength, double thumbLength, double maxSourceOffset)
-        => SourceOffsetFromThumbInRange(thumbOffset, trackLength - thumbLength, maxSourceOffset);
 
     /// <summary>サムの可動範囲（トラック長 − サム長）を計算する。</summary>
     /// <param name="bar">対象のスクロールバー。</param>

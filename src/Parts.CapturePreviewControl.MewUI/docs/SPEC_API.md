@@ -149,7 +149,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 ### 4.1 適用先
 
-上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropSession`）が同じマッピングで反映します。 **計算に必要な寸法・対話パラメータ**はコアの `SelectionOverlayOptionsMapper` が単一所有し、**描画にだけ必要な外観（色・枠線の太さ・表示可否）**は UI 間で共有する `Parts.CaptureSessionControl.UIBase` の `CapturePaintMapper`（`MarqueeAppearance` / `LoupeAppearance` を組み立ててコントロールのプロパティへ設定する）が担います。
+上表の項目は撮影（`CaptureOverlay`）と切り出し（`CropSession`）が同じマッピングで反映します。 **計算に必要な寸法・対話パラメータ**はコアの `SelectionOverlayOptionsMapper` が単一所有し、**描画にだけ必要な外観（色・枠線の太さ・表示可否）**は `Parts.CapturePreviewControl.Core` の `CapturePaintMapper`（`MarqueeAppearance` / `LoupeAppearance` を組み立ててコントロールのプロパティへ設定する）が担います。
 ただし、切り出しはプレビューの表示に合わせる必要があるため、次の項目は撮影専用です。
 
 | 項目 | 理由 |

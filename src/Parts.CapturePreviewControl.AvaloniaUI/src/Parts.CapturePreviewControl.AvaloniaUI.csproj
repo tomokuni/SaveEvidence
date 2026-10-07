@@ -21,8 +21,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Parts.CapturePreviewControl.Core\src\Parts.CapturePreviewControl.Core.csproj" />
-    <!-- 設定 → 色の写像（両 UI で同じ写像を使う） -->
-    <ProjectReference Include="..\..\Parts.CaptureSessionControl.UIBase\src\Parts.CaptureSessionControl.UIBase.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->
     <ProjectReference Include="..\..\EsUtil.Feature.Marquee.ControlAvaloniaUI\src\AvaloniaUI\EsUtil.Feature.Marquee.ControlAvaloniaUI.csproj" />
     <ProjectReference Include="..\..\EsUtil.Feature.Loupe.ControlAvaloniaUI\src\AvaloniaUI\EsUtil.Feature.Loupe.ControlAvaloniaUI.csproj" />

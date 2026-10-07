@@ -18,10 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 撮影・切り出しの共通規則（切り出し矩形・設定・セッション状態・退避手順） -->
+    <!-- 撮影・切り出しの共通規則と提示の写像（切り出し矩形・設定・セッション状態・色の写像） -->
     <ProjectReference Include="..\..\Parts.CapturePreviewControl.Core\src\Parts.CapturePreviewControl.Core.csproj" />
-    <!-- 設定 → 色の写像（両 UI で同じ写像を使う） -->
-    <ProjectReference Include="..\..\Parts.CaptureSessionControl.UIBase\src\Parts.CaptureSessionControl.UIBase.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型）と DIP 変換 -->
     <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
     <!-- コア幾何型と Skia の描画プリミティブ -->

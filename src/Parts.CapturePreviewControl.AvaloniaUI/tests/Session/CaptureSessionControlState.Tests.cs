@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.Session;
 /// 生成するため、<c>[AvaloniaFact]</c>（ヘッドレス）を必要とせず <c>[Fact]</c> で並列実行できる。<br/>
 /// ヘッドレス必須のテスト（ウィンドウ生成・セッション実行）は <see cref="CaptureSessionControlTests"/> が直列コレクションで検証する。<br/>
 /// 切り出し範囲の計算（閉区間化・クランプ・丸め・最小サイズ）は UI 非依存の純粋関数
-/// <see cref="CropBoundsMath"/> としてコアへ集約したため、<c>CaptureSessionControl.Core.Tests</c> が検証する。
+/// <see cref="CropBoundsMath"/> としてコアへ集約したため、<c>Parts.CapturePreviewControl.Core.Tests</c> が検証する。
 /// </remarks>
 public class CaptureSessionControlStateTests
 {

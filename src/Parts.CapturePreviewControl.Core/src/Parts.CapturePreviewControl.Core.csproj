@@ -12,6 +12,9 @@
     <!-- 内包する選択矩形・ルーペのコア（穴あけ装飾・最大サイズ・ヒットテストの規則を再利用する） -->
     <ProjectReference Include="..\..\EsUtil.Feature.Marquee.Core\src\EsUtil.Feature.Marquee.Core.csproj" />
     <ProjectReference Include="..\..\EsUtil.Feature.Loupe.Core\src\EsUtil.Feature.Loupe.Core.csproj" />
+    <!-- 提示層の外観（設定 → 色の写像の写像先。 UI 非依存の型のため本層から参照できる） -->
+    <ProjectReference Include="..\..\EsUtil.Feature.Marquee.Presenter\src\EsUtil.Feature.Marquee.Presenter.csproj" />
+    <ProjectReference Include="..\..\EsUtil.Feature.Loupe.Presenter\src\EsUtil.Feature.Loupe.Presenter.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,11 +26,9 @@
     <!-- 内部手順（切り出し矩形の解決・状態機械・幾何計算）は UI 実装とテストからのみ参照する -->
     <InternalsVisibleTo Include="Parts.CapturePreviewControl.AvaloniaUI" />
     <InternalsVisibleTo Include="Parts.CapturePreviewControl.MewUI" />
-    <InternalsVisibleTo Include="Parts.CaptureSessionControl.UIBase" />
     <InternalsVisibleTo Include="Parts.CapturePreviewControl.Core.Tests" />
     <InternalsVisibleTo Include="Parts.CapturePreviewControl.AvaloniaUI.Tests" />
     <InternalsVisibleTo Include="Parts.CapturePreviewControl.MewUI.Tests" />
-    <InternalsVisibleTo Include="Parts.CaptureSessionControl.UIBase.Tests" />
   </ItemGroup>
 
 </Project>

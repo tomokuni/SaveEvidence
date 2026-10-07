@@ -4,7 +4,7 @@ using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;

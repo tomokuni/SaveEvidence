@@ -2,7 +2,7 @@ using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
-namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
+namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 
 /// <summary>ホストが描く付加情報ラベル（操作ラベル・情報ラベル）の配置指示を解決する。</summary>
 /// <remarks>

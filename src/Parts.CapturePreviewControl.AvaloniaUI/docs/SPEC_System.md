@@ -51,7 +51,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | Parts.CapturePreviewControl.Core（撮影セッション・切り出しビュー・領域選択・画像ビューポートの状態と判断）/ Parts.CaptureSessionControl.UIBase（設定 → 外観の写像）/ EsUtil.Feature.Marquee.ControlAvaloniaUI / EsUtil.Feature.Loupe.ControlAvaloniaUI（内包コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
+| **依存プロジェクト** | Parts.CapturePreviewControl.Core（撮影セッション・切り出しビュー・領域選択・画像ビューポートの状態と判断、設定 → 外観の写像）/ EsUtil.Feature.Marquee.ControlAvaloniaUI / EsUtil.Feature.Loupe.ControlAvaloniaUI（内包コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
 
 撮影セッション（`CaptureSessionControl` / `CaptureOverlaySession` / `CaptureOverlayWindow`）は内包コントロール（MarqueeControl / LoupeControl）を直接参照しません（窓口は `SelectionOverlayControl` のみ。 公開型のカプセル化）。 内包コントロールを参照するのは同一アセンブリ内の複合コントロールだけです。
 
@@ -263,13 +263,13 @@ flowchart TB
   - 選択矩形（`MarqueeControl`。 選択矩形の外側に描く装飾も同コントロールが描画する）・拡大鏡（`LoupeControl`）の生成・配置・配線・状態同期を 1 箇所に集約する
   - `Mode` による可視性・全面暗転の一括切替（解釈はコアの `SelectionOverlayState`）
   - `Options`（コアの設定値）と `MarqueeAppearance` / `LoupeAppearance`（提示層の外観）の一括適用
-  - 設定とモードから子コントロールへ適用する値の解決は `Parts.CaptureSessionControl.UIBase` の `SelectionOverlayChildValues` が単一所有し、本コントロールは代入するだけ
+  - 設定とモードから子コントロールへ適用する値の解決は `SelectionOverlayChildValues` が単一所有し、本コントロールは代入するだけ
   - 座標変換ポートの一括分配（`SetCoordTransform`）
-  - 付加情報（操作・情報ラベル）の描画（`Parts.CaptureSessionControl.UIBase` の `SelectionOverlayLabelRenderer`。 文言はホストが与える）
+  - 付加情報（操作・情報ラベル）の描画（`SelectionOverlayLabelRenderer`。 文言はホストが与える）
   - ルーペ画像上の選択矩形破線の描画（`LoupeRendered` イベントで描画先を受け取り、コアの破線幾何を描く）
 - **公開メンバー**: `Mode` / `Options` / `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionSourceRect` / `HighlightSourceRect` / `ShowFullOverlay` / `LoupeCenterPoint` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `NotifyViewportChanged` / `RequestRedraw`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`
 - **可視性**: public（内包コントロールへの直接アクセスは internal）
-- **依存**: MarqueeControl / LoupeControl / Parts.CaptureSessionControl.UIBase / Parts.CapturePreviewControl.Core（`SelectionOverlayMode` / `SelectionOverlayState` / `SelectionOverlayOptions` / `SelectionOverlayState` / `SelectionOutlineRasterizer`）/ 提示層の外観（`MarqueeAppearance` / `LoupeAppearance`）/ EsUtil.Platform.Core
+- **依存**: MarqueeControl / LoupeControl / Parts.CapturePreviewControl.Core（`SelectionOverlayMode` / `SelectionOverlayState` / `SelectionOverlayOptions` / `SelectionOverlayState` / `SelectionOutlineRasterizer`）/ 提示層の外観（`MarqueeAppearance` / `LoupeAppearance`）/ EsUtil.Platform.Core
 - **備考**: ホイール操作と表示の変化の追従は本コントロールの配線ではなく、ホストが担う（コントロール化を前提とした処理）
 
 ### 6.8 ZoomViewControl（切り出しビューの画像ビューポート）

@@ -34,11 +34,6 @@ internal static class ZoomMath
     /// </remarks>
     public static double ScaleFromPercent(double zoomPercent) => zoomPercent / 100.0;
 
-    /// <summary>倍率をズーム率（%）へ換算する。</summary>
-    /// <param name="scale">倍率（1.0 = 100%）。</param>
-    /// <returns>ズーム率（%）。</returns>
-    public static double PercentFromScale(double scale) => scale * 100.0;
-
     /// <summary>Fit 表示時の実効スケール（Uniform）を計算する。</summary>
     /// <param name="imageSize">元画像サイズ（ピクセル）。</param>
     /// <param name="viewportSize">ビューポートサイズ（DIP）。</param>

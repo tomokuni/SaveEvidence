@@ -2,7 +2,7 @@ using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
-namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;
+namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 
 /// <summary>複合コントロールが内包コントロールへ適用する値（設定とモードから解決した結果）。</summary>
 /// <param name="Marquee">選択矩形コントロールの設定（モードから導出するハンドルの表示可否を反映済み）。</param>

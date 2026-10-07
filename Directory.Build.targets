@@ -24,7 +24,7 @@
       <_SeIsFeatureCore>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^EsUtil\.Feature\.[A-Za-z]+\.Core$'))</_SeIsFeatureCore>
       <_SeIsFeaturePresenter>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^EsUtil\.Feature\.[A-Za-z]+\.Presenter$'))</_SeIsFeaturePresenter>
       <_SeIsUiLayer>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(EsUtil\.Feature\.[A-Za-z]+\.Control|Platform\.[A-Za-z]+|Parts\.[A-Za-z]+\.(AvaloniaUI|MewUI)|ColorPickerControl\.[A-Za-z]+)$'))</_SeIsUiLayer>
-      <_SeIsUiIndependentCore>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(Parts\.[A-Za-z]+\.Core|Parts\.[A-Za-z]+\.UIBase|App\.Core)$'))</_SeIsUiIndependentCore>
+      <_SeIsUiIndependentCore>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(Parts\.[A-Za-z]+\.Core|App\.Core)$'))</_SeIsUiIndependentCore>
 
       <!-- 提示層が参照してよい同一機能のコア名（例: EsUtil.Feature.Loupe.Presenter → EsUtil.Feature.Loupe.Core） -->
       <_SeFeatureCoreName Condition="'$(_SeIsFeaturePresenter)' == 'true'">$([System.Text.RegularExpressions.Regex]::Replace('$(MSBuildProjectName)', '\.Presenter$', '.Core'))</_SeFeatureCoreName>
@@ -66,7 +66,7 @@
     </ItemGroup>
     <Error Condition="'@(_SeBad5)' != ''"
            Code="DEP0005"
-           Text="依存関係違反: UI 非依存の層（Core / UIBase）は UI 層を参照できません（違反: @(_SeBad5->'%(Name)', ', ')）。 規則は .github/依存関係.md §4・§5。" />
+           Text="依存関係違反: UI 非依存の層（Parts.*.Core / App.Core）は UI 層を参照できません（違反: @(_SeBad5->'%(Name)', ', ')）。 規則は .github/依存関係.md §4・§5。" />
 
     <!-- R6: プラットフォーム層は上位（アプリ・Parts・Feature）を参照しない -->
     <ItemGroup Condition="'$(_SeIsTestOrSample)' != 'true' And $([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^Platform\.[A-Za-z]+$'))">

@@ -20,7 +20,7 @@
 
 ## 1. 概要
 
-撮影（スクリーン / ウィンドウ / 範囲選択）・切り出し（Crop）・切り出しビューの画像ビューポート（ズーム・パン・Fit）の**共通規則**を単一所有する UI 非依存ライブラリです。
+撮影（スクリーン / ウィンドウ / 範囲選択）・切り出し（Crop）・切り出しビューの画像ビューポート（ズーム・パン・Fit）の**共通規則**と、製品の設定型（`CaptureSettings`）と提示層の外観型（`MarqueeAppearance` / `LoupeAppearance`）を橋渡しする**提示の写像**を単一所有する UI 非依存ライブラリです。
 
 ## 2. 技術スタック
 
@@ -38,13 +38,14 @@
 Parts.CapturePreviewControl.AvaloniaUI / Parts.CapturePreviewControl.MewUI（UI 実装）
         │ 参照
         ▼
-Parts.CapturePreviewControl.Core（本プロジェクト。撮影・切り出しの共通規則と、切り出しビューの画像ビューポートの状態と判断）
+Parts.CapturePreviewControl.Core（本プロジェクト。撮影・切り出しの共通規則と、切り出しビューの画像ビューポートの状態と判断、提示の写像）
         │ 参照
+        ├─> EsUtil.Feature.Marquee.Core / .Presenter、EsUtil.Feature.Loupe.Core / .Presenter
         ▼
 EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
 ```
 
-依存は一方向です。 Core は UI フレームワーク（Avalonia / MewUI）を参照せず、`Microsoft.Extensions.Logging.Abstractions` のみに依存します。
+依存は一方向です。 Core は UI フレームワーク（Avalonia / MewUI）を参照せず、提示層（`EsUtil.Feature.*.Presenter`）へは外観型（色・枠線の太さ・表示可否）の写像のためにのみ参照します（機能コアの「Core → Presenter 禁止」は同じ機能のコアが自身の提示層へ依存することを禁じる規則であり、本プロジェクトは製品の設定型と提示層の外観型を橋渡しする別の層です）。
 
 ### 3.2 層の責務の境界
 
@@ -55,6 +56,7 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 | 契約 | Core | `ICaptureTarget` / `ICaptureOwnerWindow` / `CaptureSessionSlot` / `CaptureCompletion` / `ZoomFeedback` / `ZoomNotice` |
 | ログ定義 | Core | `CapturePreviewLogMessage`（撮影・切り出し・設定・ズーム・例外） |
 | ログ以外の正規化 | Core | `CaptureText`（未取得の文字列を空文字へ。 ログ定義とは別の型） |
+| 提示の写像 | Core | 設定 → 外観の写像（`CapturePaintMapper`）、子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）、付加情報ラベルの配置指示（`SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）。 製品の設定型と提示層の外観型を橋渡しする |
 | 入力ブリッジ | UI | ポインタ・キー・ホイールの購読とコア型への変換、返された効果の適用 |
 | 描画 | UI | 外観値を持たず、設定とコア共有値を読んで描く |
 | ホスト結線 | UI | Window の生成と表示、`Screens` / DPI の取得、`Dispatcher`、カーソル、レイアウト、Bitmap のライフサイクル |
@@ -148,6 +150,13 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 │  ZoomOptions / ZoomState / ZoomFeedback / ZoomNotice      │
 │  ZoomScrollBar / ZoomScrollBarMetrics                  │
 │  CapturePreviewLogMessage（ズーム操作のログ）          │
+└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ 提示の写像（静的クラス・record struct）                 │
+│  CapturePaintMapper: ToMarqueeAppearance / ToLoupeAppearance │
+│  SelectionOverlayChildValues: Resolve（設定とモード）  │
+│  SelectionOverlayLabelRenderer: Resolve（縦積みの配置指示） │
+│  MarqueeHostLabelRenderer: Resolve（1 行の体裁）       │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -354,7 +363,7 @@ classDiagram
 
 | 種別 | 依存先 |
 | --- | --- |
-| プロジェクト | `EsUtil.Platform.Core` / `EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Loupe.Core` |
+| プロジェクト | `EsUtil.Platform.Core` / `EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Loupe.Core` / `EsUtil.Feature.Marquee.Presenter` / `EsUtil.Feature.Loupe.Presenter` |
 | パッケージ | `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成） |
 
 - **依存は一方向**です（UI 非依存の本コア → 各機能コア → `EsUtil.Platform.Core`）。 **UI フレームワーク（Avalonia / MewUI）を参照しません**。

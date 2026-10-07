@@ -39,8 +39,8 @@ public sealed partial class ZoomViewSession
         }
 
         var maxOffset = vertical
-            ? ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Height, _viewportSize.Height, scale)
-            : ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Width, _viewportSize.Width, scale);
+            ? ScrollMath.MaxOffset(_sourceSize.Height, _viewportSize.Height, scale)
+            : ScrollMath.MaxOffset(_sourceSize.Width, _viewportSize.Width, scale);
         var viewportSize = ScrollMath.ViewportSize(vertical ? _viewportSize.Height : _viewportSize.Width, scale);
         return new ZoomScrollBarMetrics(maxOffset, viewportSize, IsScrollable: maxOffset > 0);
     }
@@ -133,8 +133,8 @@ public sealed partial class ZoomViewSession
         }
 
         var maxOffset = isVertical
-            ? ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Height, _viewportSize.Height, EffectiveScale)
-            : ZoomScrollBarGeometry.MaxSourceOffset(_sourceSize.Width, _viewportSize.Width, EffectiveScale);
+            ? ScrollMath.MaxOffset(_sourceSize.Height, _viewportSize.Height, EffectiveScale)
+            : ScrollMath.MaxOffset(_sourceSize.Width, _viewportSize.Width, EffectiveScale);
         var movable = ZoomScrollBarGeometry.MovableThumbRange(value, isVertical);
         var offset = ZoomScrollBarGeometry.SourceOffsetFromThumbInRange(thumbOffset, movable, maxOffset);
 

@@ -225,8 +225,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 | 参照先 | 利用機能 |
 | --- | --- |
-| `Parts.CapturePreviewControl.Core` | 両 UI 共通の規則（`CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `SelectionOverlayOptionsMapper` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / `OverlayRect` / `OverlayLineStyle` / `SelectionOverlayMode` / `SelectionOverlayOptions` / ログ定義）と、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession` / `ZoomOptions` / `ZoomState` / `ZoomViewAppearance` / `CapturePreviewLogMessage`）。 UI 非依存 |
-| `Parts.CaptureSessionControl.UIBase` | 設定 → 外観（`MarqueeAppearance` / `LoupeAppearance`）の写像（`CapturePaintMapper`）、設定とモードから子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）、付加情報ラベルの描画（`SelectionOverlayLabelRenderer`） |
+| `Parts.CapturePreviewControl.Core` | 両 UI 共通の規則（`CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `SelectionOverlayOptionsMapper` / `CropBoundsMath` / `CaptureClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / `OverlayRect` / `OverlayLineStyle` / `SelectionOverlayMode` / `SelectionOverlayOptions` / ログ定義）と、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession` / `ZoomOptions` / `ZoomState` / `ZoomViewAppearance` / `CapturePreviewLogMessage`）。 さらに `Presentation/` に設定 → 外観の写像（`CapturePaintMapper`）・子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）・付加情報ラベルの配置（`SelectionOverlayLabelRenderer`）を持つ。 UI 非依存 |
 | `Platform.AvaloniaUI` | サービス生成 / `ScreenConverter` / 色の相互変換（`ColorAvaloniaInterop`）。 抽象（`ICaptureService` / `IWindowService` / `IElementFinder`）は `EsUtil.Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `EsUtil.Platform.Core` |
 | `EsUtil.Feature.Marquee.ControlAvaloniaUI` | `MarqueeControl`（選択矩形と、その外側に描く装飾（暗転マスク・外枠・ハイライト）） |
 | `EsUtil.Feature.Loupe.ControlAvaloniaUI` | `LoupeControl`（拡大鏡）/ `LoupeRenderedEventArgs` |
@@ -275,7 +274,7 @@ Parts.CapturePreviewControl.AvaloniaUI/
 
 `CaptureSettings`（設定）と `CaptureResult`（結果）は UI 非依存の共通基盤 `Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture`）が提供します（切り出し矩形の計算 `CropBoundsMath` は同プロジェクトの `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop`）。 利用側はカテゴリごとの名前空間（`Capture` / `Crop` / `Overlay` / `SelectionOverlay` / `ZoomView`）を `using` してください。 **色は `System.Drawing.Color`** で指定します（従来の Avalonia の色型から変更）。
 
-設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `Parts.CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。 利用側は `using EsUtil.SaveEvidence.Parts.CaptureSession.UIBase;` を追加してください。
+設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `Parts.CapturePreviewControl.Core`（`CapturePaintMapper`）が提供します。 利用側は `using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;` を追加してください。
 
 **撮影オーバーレイ（`StartCaptureAsync`）も同じ写像で外観（色）を適用します**（切り出しと同じ見た目になる。 適用しないと設定した色が反映されない）。
 

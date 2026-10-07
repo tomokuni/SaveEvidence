@@ -47,8 +47,6 @@ updates:
       - "/src/Parts.CapturePreviewControl.Core/tests"
       - "/src/Parts.CapturePreviewControl.MewUI/src"
       - "/src/Parts.CapturePreviewControl.MewUI/tests"
-      - "/src/Parts.CaptureSessionControl.UIBase/src"
-      - "/src/Parts.CaptureSessionControl.UIBase/tests"
       - "/src/Platform.AvaloniaUI/src"
       - "/src/Platform.AvaloniaUI/tests"
       - "/src/Platform.MewUI/src"

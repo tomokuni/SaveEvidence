@@ -26,13 +26,6 @@
   <Folder Name="/src/Parts.CapturePreviewControl.MewUI/tests/">
     <Project Path="src/Parts.CapturePreviewControl.MewUI/tests/Parts.CapturePreviewControl.MewUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Parts.CaptureSessionControl.UIBase/" />
-  <Folder Name="/src/Parts.CaptureSessionControl.UIBase/src/">
-    <Project Path="src/Parts.CaptureSessionControl.UIBase/src/Parts.CaptureSessionControl.UIBase.csproj" />
-  </Folder>
-  <Folder Name="/src/Parts.CaptureSessionControl.UIBase/tests/">
-    <Project Path="src/Parts.CaptureSessionControl.UIBase/tests/Parts.CaptureSessionControl.UIBase.Tests.csproj" />
-  </Folder>
   <Folder Name="/src/ColorPickerControl.AvaloniaUI/">
     <Project Path="src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj" />
     <Project Path="src/ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj" />

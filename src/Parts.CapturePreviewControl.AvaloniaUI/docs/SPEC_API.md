@@ -258,7 +258,7 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 - 初期設定（コンストラクタ）: null = Parts.CapturePreviewControl.AvaloniaUI のデフォルト値として扱う。
 - 設定適用（Settings の setter）: null = 現在の設定値を維持する（部分更新）。
 
-**反映先**: **計算に必要な寸法・対話パラメータ**はコアの設定型（`MarqueeOptions` / `LoupeOptions`。 `SelectionOverlayOptionsMapper` が写像）へ、**描画にだけ必要な外観（色・枠線の太さ・表示可否）**は両 UI が共有する `Parts.CaptureSessionControl.UIBase` の写像（`CapturePaintMapper` が `MarqueeAppearance` / `LoupeAppearance` を組み立てる）へ反映します。
+**反映先**: **計算に必要な寸法・対話パラメータ**はコアの設定型（`MarqueeOptions` / `LoupeOptions`。 `SelectionOverlayOptionsMapper` が写像）へ、**描画にだけ必要な外観（色・枠線の太さ・表示可否）**は `Parts.CapturePreviewControl.Core` の写像（`CapturePaintMapper` が `MarqueeAppearance` / `LoupeAppearance` を組み立てる）へ反映します。
 
 **キャプチャ動作（3 項目）**:
 

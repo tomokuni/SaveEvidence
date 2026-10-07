@@ -1,9 +1,10 @@
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
 using Xunit;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
-namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase.Tests;
+namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Presentation;
 
 /// <summary><see cref="SelectionOverlayChildValues"/> の単体テスト（設定とモードから子の値への解決）。</summary>
 /// <remarks>UI 非依存の値の解決のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>

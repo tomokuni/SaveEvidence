@@ -47,8 +47,7 @@
 
 ```text
 Parts.CapturePreviewControl.MewUI
-    ├── Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則・複合コントロールの設定とモード・切り出しビューの画像ビューポートの状態と判断）
-    ├── Parts.CaptureSessionControl.UIBase（設定 → 外観の写像。 両 UI のホストが共有）
+    ├── Parts.CapturePreviewControl.Core（撮影・切り出しの共通規則・複合コントロールの設定とモード・切り出しビューの画像ビューポートの状態と判断・設定 → 外観の写像・付加情報ラベルの配置）
     ├── Platform.MewUI（コア型 ⇔ MewUI 型の Interop / DIP 変換）
     ├── EsUtil.Platform.Core（ICaptureService / IElementFinder / IWindowService / ICaptureTarget）
     ├── Platform.Skia（Skia 依存の閉じ込め）
@@ -219,7 +218,7 @@ src/
 
 本プロジェクトは UI 操作（描画・入力・ウィンドウ）のみを持ち、共通規則は `Parts.CapturePreviewControl.Core` が単一所有します。 画面を伴うセッションは実機検証で確認し、複合コントロールは本プロジェクトのテスト（`tests/` 配下。 切り出しビューと領域選択のサブフォルダに分ける）で検証します。
 
-設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `Parts.CaptureSessionControl.UIBase`（`CapturePaintMapper`）が提供します。
+設定から描画にだけ必要な外観（`MarqueeAppearance` / `LoupeAppearance`）への写像は、両 UI が共有する `Parts.CapturePreviewControl.Core`（`CapturePaintMapper`）が提供します。
 
 ## 8. テスト
 

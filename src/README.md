@@ -95,7 +95,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 **コントロール化を前提とした処理は UI が持ちます**: ホイール操作（どの入力がズーム・パンかを決める）・ビューポートの変化の追従・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるためです。
 `LoupeControl` の中間ビットマップの再描画スケジューリング（`LoupeRenderCoordinator`。 Avalonia 版が所有する）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。 同じ必要が生じた時点で実装できます。
 
-`Parts.CaptureSessionControl.UIBase` は**描画手順を持たない例外的な Presenter** です（設定 → 色の写像だけを持ちます）。 写像元がセッションの設定型（`CaptureSettings`）、写像先が外観（`MarqueeAppearance` / `LoupeAppearance`）という**2 つの層にまたがる**ため、コアにも（Core → Presenter の逆流になる）再利用ライブラリにも置けません。 両 UI のホストが同じ写像を使うことを保証するために本層を置いています（詳細は [`Parts.CaptureSessionControl.UIBase`](Parts.CaptureSessionControl.UIBase/README.md)）。
+`Parts.CapturePreviewControl.Core` は**撮影スタックの UI 非依存層**です。 撮影・切り出し・画像ビューポート・領域選択の規則に加え、製品の設定型（`CaptureSettings`）と提示層の外観（`MarqueeAppearance` / `LoupeAppearance`）を橋渡しする写像（`Presentation/`。 `CapturePaintMapper` / `SelectionOverlayChildValues` / 付加情報ラベルの配置指示）を持ちます。 写像は**製品の設定型と提示層の外観型の両方を参照できる唯一の層**（両 UI から参照できる UI 非依存層）に置くことで、UI ごとに写像が分かれて**片方だけ漏れる事態**を防ぎます（詳細は [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md)）。
 
 `LineDetection` は画像処理ライブラリであり、本 3 層には含めません（`EsUtil.Platform.Core` のみに依存します）。
 
@@ -105,10 +105,10 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | --- | --- | --- |
 | Marquee | [`EsUtil.Feature.Marquee.Core`](EsUtil.Feature.Marquee.Core/README.md) | [`EsUtil.Feature.Marquee.Presenter`](EsUtil.Feature.Marquee.Presenter/README.md) |
 | Loupe | [`EsUtil.Feature.Loupe.Core`](EsUtil.Feature.Loupe.Core/README.md) | [`EsUtil.Feature.Loupe.Presenter`](EsUtil.Feature.Loupe.Presenter/README.md) |
-| CaptureOverlaySession | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | [`Parts.CaptureSessionControl.UIBase`](Parts.CaptureSessionControl.UIBase/README.md) |
+| CaptureOverlaySession | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md)（`Presentation/`） |
 | CropView | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | なし |
 | ZoomView | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | なし（UI 層が描く。 `CropViewControl` が内包） |
-| SelectionOverlay | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | [`Parts.CaptureSessionControl.UIBase`](Parts.CaptureSessionControl.UIBase/README.md) |
+| SelectionOverlay | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md) | [`Parts.CapturePreviewControl.Core`](Parts.CapturePreviewControl.Core/README.md)（`Presentation/`） |
 
 SelectionOverlay は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`EsUtil.Feature.Marquee.Presenter`](EsUtil.Feature.Marquee.Presenter/README.md) / [`EsUtil.Feature.Loupe.Presenter`](EsUtil.Feature.Loupe.Presenter/README.md)）。
 

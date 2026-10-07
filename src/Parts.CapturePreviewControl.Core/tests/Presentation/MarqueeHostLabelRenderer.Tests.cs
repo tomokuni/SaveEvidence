@@ -1,8 +1,9 @@
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 
-namespace EsUtil.SaveEvidence.Parts.CaptureSession.UIBase.Tests;
+namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Presentation;
 
 /// <summary><see cref="MarqueeHostLabelRenderer"/> の単体テスト（体裁の適用 = 配置指示の解決）。</summary>
 /// <remarks>

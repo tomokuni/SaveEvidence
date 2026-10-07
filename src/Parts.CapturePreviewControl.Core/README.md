@@ -55,6 +55,7 @@
 - **画像ビューポートの外観**（`ZoomViewAppearance`）: 下地・市松模様（タイルサイズと 2 色）・スクロールバーの外観を単一値で保持し、描画可否と、市松模様を描く範囲（画像の表示矩形の内側）・明色タイル矩形・タイルサイズの実効値を単一所有する
 - **画像ビューポートの通知と効果**（`ZoomState` / `ZoomFeedback` / `ZoomNotice`）: 通知する 4 値（実効ズーム率・Fit 状態・可否）・UI が適用する効果（再描画・ポインタキャプチャ。 適用順）・通知の種別を単一所有する
 - **画像ビューポートのズーム操作ログ**（`CapturePreviewLogMessage` の `LogZoomIn` / `LogZoomOut` / `LogZoomInWheel` / `LogZoomOutWheel`）: ズーム操作の実行前後（例: `[CapturePreviewControl] ZoomIn: 50% -> 62%`）と、変更前の実効ズーム率の丸め（`Percent`）を単一所有する
+- **提示の写像**（`CapturePaintMapper` / `SelectionOverlayChildValues` / `SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）: 製品の設定型（`CaptureSettings`）から提示層の外観（`MarqueeAppearance` / `LoupeAppearance`）への写像、設定とモードから内包コントロールへ適用する値の解決、付加情報ラベル（操作・情報）の配置指示を単一所有する。 製品の設定型と提示層の外観型の両方を必要とするため、両者を参照できる唯一の層（本プロジェクト）に置く（UI ごとに書くと写像漏れが片方だけに生じ、ビルドが通るため無言で色が効かなくなる）
 - **UI 非依存**: Avalonia / MewUI のどちらの型も参照しない（色は `System.Drawing.Color`、座標は `Es*` 型）
 
 ## 3. 依存関係
@@ -64,10 +65,12 @@ Parts.CapturePreviewControl.Core
     ├── EsUtil.Platform.Core（Es* 幾何型 / EsBitmap）
     ├─ EsUtil.Feature.Marquee.Core（MarqueeOptions・選択矩形の幾何）
     ├─ EsUtil.Feature.Loupe.Core（LoupeOptions）
+    ├─ EsUtil.Feature.Marquee.Presenter（MarqueeAppearance・MarqueeLabelPlacement）
+    ├─ EsUtil.Feature.Loupe.Presenter（LoupeAppearance）
     └── Microsoft.Extensions.Logging.Abstractions（ログ定義のソース生成）
 ```
 
-依存は一方向です（UI プロジェクトから本プロジェクトを参照し、逆は参照しない）。
+依存は一方向です（UI プロジェクトから本プロジェクトを参照し、逆は参照しない）。 提示層（`EsUtil.Feature.*.Presenter`）への参照は、製品の設定型と提示層の外観を橋渡しする写像（`Presentation/`）を持つために限ります。
 
 ## 4. クイックスタート
 
@@ -102,8 +105,8 @@ if (zoom.CurrentState is { IsFit: false, CanZoomOut: true })
 
 ## 5. ドキュメント
 
-- `SPEC_ExtFunc.md` — 公開 API の外部仕様
-- `SPEC_System.md` — 設計・依存・検証方針
+- [SPEC_API.md](docs/SPEC_API.md) — 公開 API のリファレンス
+- [SPEC_System.md](docs/SPEC_System.md) — 設計・依存・検証方針
 
 ## 6. プロジェクト構成
 
@@ -138,6 +141,11 @@ src/
 │   │   ├── OverlayRectFrame.cs             # 矩形 1 個分の描画入力
 │   │   ├── OverlayLineDash.cs              # スタイルごとのダッシュ長の単一所有
 │   │   └── OverlayRectRasterizer.cs        # 矩形の 4 辺を EsBitmap へラスタライズする
+│   ├── Presentation/                       # 提示の写像（設定 → 外観・ラベル配置）
+│   │   ├── CapturePaintMapper.cs           # CaptureSettings → MarqueeAppearance / LoupeAppearance
+│   │   ├── SelectionOverlayChildValues.cs  # 設定とモード → 内包コントロールへ適用する値の解決
+│   │   ├── SelectionOverlayLabelRenderer.cs # 付加情報ラベル（操作・情報）の縦積みの配置指示
+│   │   └── MarqueeHostLabelRenderer.cs     # ラベル 1 行の体裁（背景 = 実寸 + 内側余白 × 2）
 │   ├── SelectionOverlay/                   # 選択オーバーレイ（暗転マスク + 選択矩形 + ルーペ）のコア
 │   │   ├── SelectionOverlayMode.cs         # 動作モード（Crop / AreaSelect / ScreenSelect / WindowSelect）
 │   │   ├── SelectionOverlayState.cs        # モードから導出する状態（表示可否）
@@ -197,6 +205,11 @@ src/
     │   ├── OverlayLineDash.Tests.cs
     │   ├── OverlayRectLayout.Tests.cs
     │   └── OverlayRectRasterizer.Tests.cs
+    ├── Presentation/                      # 提示の写像の検証
+    │   ├── CapturePaintMapper.Tests.cs
+    │   ├── MarqueeHostLabelRenderer.Tests.cs
+    │   ├── SelectionOverlayChildValues.Tests.cs
+    │   └── SelectionOverlayLabelRenderer.Tests.cs
     ├── SelectionOverlay/                  # 選択オーバーレイのコアの検証
     │   ├── SelectionOverlayState.Tests.cs
     │   ├── SelectionOverlayOptions.Tests.cs
