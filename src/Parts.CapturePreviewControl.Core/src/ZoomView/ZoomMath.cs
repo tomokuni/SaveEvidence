@@ -192,21 +192,6 @@ internal static class ZoomMath
         return new EsPoint(offset.X + viewportPos.X / s, offset.Y + viewportPos.Y / s);
     }
 
-    /// <summary>コンテンツ座標（元画像ピクセル）をビューポート座標へ変換する（純粋関数）。</summary>
-    /// <param name="contentPos">コンテンツ座標。</param>
-    /// <param name="offset">スクロールオフセット（コンテンツ座標）。</param>
-    /// <param name="effectiveScale">実効スケール（倍率 / 100。 Fit 中は FitScale）。 0 以下の場合は 1 として扱う。</param>
-    /// <returns>ビューポート座標。</returns>
-    /// <remarks>
-    /// UI 非依存の純粋計算のため、ヘッドレス不要の <c>[Fact]</c> で並列テスト可能。<br/>
-    /// 変換式: <c>ビューポート座標 = (コンテンツ座標 − オフセット) × スケール</c>。
-    /// </remarks>
-    public static EsPoint SourceToClient(EsPoint contentPos, EsVector offset, double effectiveScale)
-    {
-        var s = effectiveScale > 0 ? effectiveScale : 1;
-        return new EsPoint((contentPos.X - offset.X) * s, (contentPos.Y - offset.Y) * s);
-    }
-
     /// <summary>ビューポート座標をコンテンツ座標（元画像ピクセル）へ変換する（画像表示矩形の原点基準・純粋関数）。</summary>
     /// <param name="viewportPos">ビューポート座標。</param>
     /// <param name="imageOrigin">画像表示矩形の原点（ビューポート座標）。 Fit 中央寄せ等の原点補正を含む。</param>
@@ -229,7 +214,7 @@ internal static class ZoomMath
     /// <param name="effectiveScale">実効スケール（倍率 / 100。 Fit 中は FitScale）。 0 以下の場合は 1 として扱う。</param>
     /// <returns>ビューポート座標。</returns>
     /// <remarks>
-    /// <see cref="SourceToClient"/>（オフセット基準）とは異なり、<b>画像表示矩形の原点</b>（<c>imageOrigin</c>）を基準に変換する。<br/>
+    /// オフセット基準の変換（<see cref="ClientToSource"/>）とは異なり、<b>画像表示矩形の原点</b>（<c>imageOrigin</c>）を基準に変換する。<br/>
     /// これにより Fit 中央寄せの原点補正を考慮した、画像内の正確な座標変換ができる。<br/>
     /// 変換式: <c>ビューポート座標 = 画像原点 + コンテンツ座標 × スケール</c>。
     /// </remarks>

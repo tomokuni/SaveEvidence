@@ -169,7 +169,7 @@ flowchart TB
   - コンストラクタ: `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)`
   - プロパティ: `AppearanceSettings`（`CaptureSettings`。 getter は全メンバー non-null / setter は部分更新 + 検証）/ `IsCropping`（切り出し中かどうか）
   - メソッド: `StartCaptureAsync(CaptureType, Window)` / `StartCropAsync(CropViewControl, Window)` / `ResolveCropAction()` / `Cancel()` / `Confirm()` / `NotifyViewportChanged()` / `Dispose()`
-  - イベント: `CaptureCompleted`（`Action<CaptureResult?>?`。 同期実行・UI スレッド）
+  - イベント: `CaptureCompleted`（`event EventHandler<CaptureCompletedEventArgs>?`。 同期実行・UI スレッド）
 - **可視性**: public
 - **依存**: CaptureOverlaySession / CropSession / CaptureSettings / CaptureResult / CaptureType / CaptureSessionSlot / CaptureSettingsMerge / Platform.AvaloniaUI
 
@@ -218,7 +218,7 @@ flowchart TB
   - **背景取得のタイムアウトと未使用結果の破棄はコアの `CaptureVirtualScreen` が単一所有する**（本クラスは取得と UI スレッドへの反映のみを担う）
   - **確定・事前切り出しの切り出し矩形はコアの `CaptureClipMath.ResolveCaptureRect` が単一所有する**（ドラッグは浮動小数版・クリック確定は整数版。 UI は選択矩形の型を広げない）
   - **選択矩形と占有範囲は同じ座標空間（画面物理座標）で渡す**（本 UI のドラッグ選択の対象はウィンドウローカル物理ピクセルのため、確定時に `CaptureClipMath.ToScreenRect` で画面物理座標へ戻してから画面物理座標の占有範囲と組み合わせる。 切り出し矩形の求解は画面物理座標の 1 つの入口に統一されている）
-  - **サイズラベルの文言はコアの `CaptureLabelTexts.ResolveSizeLabel` が解決する**（確定対象が無ければ設定の明示指定を使う規則を含む）
+  - **サイズラベルの文言はコアの `CropLabelTexts.ResolveSizeLabel` が解決する**（未選択なら描かない。 ホスト指定の文言は `SizeLabelOverrideProvider` が与える）
   - **オーナーの画面スケーリングの代表値はコアの `MonitorScalingMath.ResolveScaling` が解決する**（画面が取得できない場合は基準値・0 以下は正規化）
   - **キー操作（Enter = 確定 / Escape = キャンセル）の解釈はコアの `CaptureKeyActions` が単一所有する**（確定対象が無い場合の Enter は何もしない）。
     キーは **Tunnel + handledEventsToo** で受ける: 内包する選択オーバーレイ（Marquee）も TopLevel のキーを購読して

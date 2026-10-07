@@ -34,11 +34,9 @@
 - **ハイライトの状態と判断**（`CaptureHighlight` / `CaptureHighlightSession`）: カーソル下の要素の検出結果から「ハイライトの有無・矩形（対象座標）・表示名」を導出する。 **未検出の正規化・対象変換・表示名の変化の判定・診断ログ**を単一所有し、UI は戻り値を設定するだけにする（直前の状態はセッションのプロパティから読む）
 - **オーバーレイのキー操作**（`CaptureKeyActions`）: Enter（Return を含む）= 確定 / Escape = キャンセルを単一所有する。 **確定対象が無い場合の Enter は何もしない**（何も検出していない状態でキャンセル扱いにしない）。 UI はキーを `EsKey` へ変換して渡すだけにする
 - **クリック確定の状態**（`CaptureClickSelection`）: スクリーン選択 / ウィンドウ選択の「押下で固定・解放で確定」を単一所有する。 退化した検出（空の矩形）は固定せず、押下のたびに置き換え、解放で 1 回だけ取り出す（固定が無い解放では確定しない）
-- **切り出しのサイズラベル**（`CropLabelTexts`）: `LT: (l, t),  RB: (r, b),  WH: (w+1, h+1), Zoom: (pz%)` 形式。 `WH` は含まれるピクセル数であり、終点を含めるかの判断は矩形の `EsRectInterval` が持つ（切り出し範囲と同じ値を使う）。 撮影の選択（`CaptureLabelTexts.ResolveSizeLabel`）とは用途が違うため別途単一所有する。 **未選択は描かない**という判断も `ResolveSizeLabel` が持つ
-- **サイズラベルの文言解決**（`CaptureLabelTexts.ResolveSizeLabel`）: 「確定対象があれば矩形から生成・無ければホスト指定の文言」という規則を単一所有する（UI が同じ三項演算を書かない。 表示倍率のデリゲートは表示時のみ評価する）
-- **設定の部分更新マージ**（`CaptureSettingsMerge`）: 全 45 項目の「null は現在値維持・非 null は上書き」と、同値再設定のスキップ（参照を差し替えない）を単一所有する
+- **切り出しのサイズラベル**（`CropLabelTexts`）: `LT: (l, t),  RB: (r, b),  WH: (w+1, h+1), Zoom: (pz%)` 形式。 `WH` は含まれるピクセル数であり、終点を含めるかの判断は矩形の `EsRectInterval` が持つ（切り出し範囲と同じ値を使う）。 撮影側のサイズラベルとは用途が違うため別途単一所有する。 **未選択は描かない**という判断も `ResolveSizeLabel` が持つ
+- **設定の部分更新マージ**（`CaptureSettingsMerge`）: 全 42 項目の「null は現在値維持・非 null は上書き」と、同値再設定のスキップ（参照を差し替えない）を単一所有する
 - **セッションの排他スロット**（`CaptureSessionSlot{TCapture, TCrop}`）: 撮影と切り出しで同時に 1 つだけ実行できる規則と、「未実行なら false」の既定値解決を単一所有する
-- **画像の平均色**（`ImageColorMath`）: 標本間引きの間隔と空画像のフォールバックを単一所有する
 - **仮想スクリーンからの切り出し**（`CaptureClipMath`）: 選択矩形→切り出し矩形の解決（浮動小数版と整数版の 2 入口）と、画面物理座標 ⇔ 画像ローカル座標の**双方向変換**（原点の加減算）・切り出し・画像の共有値（`ImageSize` / `ImageBounds` / `ValidateImage`）を単一所有する。 **破棄済みの画像は切り出さず null**を返す（ウィンドウクローズとの競合で例外にしない）。 マルチモニタ（原点が負値）でも同じ式で扱える
 - **撮影画像の保持**（`CaptureImageHolder`）: 「差し替え時の旧値の破棄」「破棄後に届いた画像のその場での破棄」「未取得時の占有範囲のフォールバック」を単一所有する（背景撮影の完了がウィンドウの後片付けより遅れた場合の破棄漏れを防ぐ）
 - **仮想スクリーンの取得**（`CaptureVirtualScreen`）: 取得をタイムアウト付きで待ち、**間に合わなかった場合は遅れて完了した結果を破棄する**（UI は待ち方と破棄を持たない）。 **撮影対象の範囲（全モニタの包含矩形）と「モニタが無ければ撮影しない」前提条件**も `ResolveBounds` が単一所有する（UI がループを書かない）
@@ -145,7 +143,8 @@ src/
 │   │   ├── CapturePaintMapper.cs           # CaptureSettings → MarqueeAppearance / LoupeAppearance
 │   │   ├── SelectionOverlayChildValues.cs  # 設定とモード → 内包コントロールへ適用する値の解決
 │   │   ├── SelectionOverlayLabelRenderer.cs # 付加情報ラベル（操作・情報）の縦積みの配置指示
-│   │   └── MarqueeHostLabelRenderer.cs     # ラベル 1 行の体裁（背景 = 実寸 + 内側余白 × 2）
+│   │   ├── MarqueeHostLabelRenderer.cs     # ラベル 1 行の体裁（背景 = 実寸 + 内側余白 × 2）
+│   │   └── HighlightAppearanceDefaults.cs  # 強調（ハイライト）の既定の外観
 │   ├── SelectionOverlay/                   # 選択オーバーレイ（暗転マスク + 選択矩形 + ルーペ）のコア
 │   │   ├── SelectionOverlayMode.cs         # 動作モード（Crop / AreaSelect / ScreenSelect / WindowSelect）
 │   │   ├── SelectionOverlayState.cs        # モードから導出する状態（表示可否）

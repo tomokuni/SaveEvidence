@@ -15,7 +15,7 @@ public class CaptureClickSelectionTests
     {
         var selection = new CaptureClickSelection();
 
-        Assert.True(selection.Fix(new EsRectInt(10, 20, 30, 40)));
+        selection.Fix(new EsRectInt(10, 20, 30, 40));
         Assert.Equal(new EsRectInt(10, 20, 30, 40), selection.Take());
     }
 
@@ -28,7 +28,7 @@ public class CaptureClickSelectionTests
         // 退化した矩形を固定すると、解放時に空の切り出しを確定することになる
         var selection = new CaptureClickSelection();
 
-        Assert.False(selection.Fix(new EsRectInt(x, y, width, height)));
+        selection.Fix(new EsRectInt(x, y, width, height));
         Assert.Null(selection.Take());
     }
 
@@ -68,7 +68,7 @@ public class CaptureClickSelectionTests
         var selection = new CaptureClickSelection();
         selection.Fix(new EsRectInt(1, 2, 3, 4));
 
-        Assert.False(selection.Fix(default));
+        selection.Fix(default);
         Assert.Null(selection.Take());
     }
 }

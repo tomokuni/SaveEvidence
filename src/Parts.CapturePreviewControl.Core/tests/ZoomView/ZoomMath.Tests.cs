@@ -188,7 +188,7 @@ public class ZoomMathTests
     }
 
     // ====================================================================
-    // ClientToSource / SourceToClient（ビューポート ↔ コンテンツ座標変換）
+    // ClientToSource（ビューポート → コンテンツ座標変換）
     // ====================================================================
 
     [Fact]
@@ -206,37 +206,6 @@ public class ZoomMathTests
         var result = ZoomMath.ClientToSource(new EsPoint(10, 20), new EsVector(100, 50), 0);
 
         Assert.Equal(new EsPoint(110, 70), result);
-    }
-
-    [Fact]
-    internal void SourceToClient_固定倍率でオフセットを減算して変換する()
-    {
-        // オフセット (100,50)・スケール 2.0 → ((105-100)*2, (60-50)*2) = (10, 20)
-        var result = ZoomMath.SourceToClient(new EsPoint(105, 60), new EsVector(100, 50), 2.0);
-
-        Assert.Equal(new EsPoint(10, 20), result);
-    }
-
-    [Fact]
-    internal void SourceToClient_スケール0以下は1として扱う()
-    {
-        var result = ZoomMath.SourceToClient(new EsPoint(110, 70), new EsVector(100, 50), 0);
-
-        Assert.Equal(new EsPoint(10, 20), result);
-    }
-
-    [Fact]
-    internal void 往復変換で元のビューポート座標に戻る()
-    {
-        var viewportPos = new EsPoint(123, 456);
-        var offset = new EsVector(30, 40);
-        var scale = 2.5;
-
-        var content = ZoomMath.ClientToSource(viewportPos, offset, scale);
-        var back = ZoomMath.SourceToClient(content, offset, scale);
-
-        Assert.Equal(viewportPos.X, back.X, 6);
-        Assert.Equal(viewportPos.Y, back.Y, 6);
     }
 
     // ====================================================================

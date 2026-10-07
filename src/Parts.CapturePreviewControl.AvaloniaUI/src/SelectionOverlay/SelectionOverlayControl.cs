@@ -309,7 +309,7 @@ public sealed class SelectionOverlayControl : Panel
     /// <remarks>
     /// ホストは最新の選択状態（<see cref="SelectionSourceRect"/> / <see cref="HasSelection"/> 等）からサイズラベル文字列を生成するクロージャを設定する。<br/>
     /// - Crop: 論理座標（元画像ピクセル）+ 実表示ズーム率で生成（レイアウト変化に追従）。<br/>
-    /// - 範囲選択（AreaSelect）等: 設定値（<c>CaptureSettings.SizeLabelOverride</c>）を返す。<br/>
+    /// - 範囲選択（AreaSelect）等: 設定しない（null。 提示層の自動生成の文言を使う）。<br/>
     /// 設定時は選択矩形コントロールへ伝搬し、再描画を要求する。
     /// </remarks>
     public Func<string?>? SizeLabelOverrideProvider
@@ -390,8 +390,7 @@ public sealed class SelectionOverlayControl : Panel
         set
         {
             _logPrefix = value;
-            CapturePreviewLogMessage.Prefix =
-                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+            CapturePreviewLogMessage.SetPrefix(value);
         }
     }
 

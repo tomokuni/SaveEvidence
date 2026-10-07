@@ -45,6 +45,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `SelectionOverlayControl` | sealed クラス（複合コントロール） | 暗転マスク + 選択矩形 + ルーペ。 モードで可視性を切替 |
 | `SelectionConfirmedEventArgs` | sealed class（`EventArgs` 派生） | 確定要求のイベント引数（`SelectionSourceRect: EsRect`） |
 | `LoupePositionEventArgs` | sealed class（`EventArgs` 派生） | ルーペ位置のイベント引数（`Position: EsPoint`） |
+| `ZoomChangedEventArgs` | sealed class（`EventArgs` 派生） | ズーム状態の変更通知（`ZoomState` の 4 値） |
 
 `OverlayRect` / `OverlayLineStyle`（矩形オーバーレイの描画情報）は `Parts.CapturePreviewControl.Core`（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay`）が提供します。
 
@@ -269,7 +270,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 | `Log` | `ILogger` | `NullLogger` | 操作ログの出力先（内包する選択コントロールとルーペへ伝搬する） |
 | `LogPrefix` | `string?` | `null` | ログの接頭辞（ロガーと一緒に設定する。 null・空白で既定値へ戻す） |
 
-`Options`（コアの `SelectionOverlayOptions`）の主な項目は、`MarqueeCore`（`MarqueeOptions`。 寸法・表示可否。 色は含まない）/ `LoupeCore`（`LoupeOptions`）/ `SelectionRectColorA` / `SelectionRectColorB`（ルーペ画像上の選択矩形破線の 2 色）/ `LoupeOffset`（中心からの右下オフセット。 DIP）です。
+`Options`（コアの `SelectionOverlayOptions`）の主な項目は、`Marquee`（`MarqueeOptions`。 寸法・表示可否。 色は含まない）/ `Loupe`（`LoupeOptions`）/ `SelectionRectColorA` / `SelectionRectColorB`（ルーペ画像上の選択矩形破線の 2 色）/ `LoupeOffset`（中心からの右下オフセット。 DIP）です。
 
 ### 6.3 メソッド
 

@@ -157,6 +157,7 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 │  SelectionOverlayChildValues: Resolve（設定とモード）  │
 │  SelectionOverlayLabelRenderer: Resolve（縦積みの配置指示） │
 │  MarqueeHostLabelRenderer: Resolve（1 行の体裁）       │
+│  HighlightAppearanceDefaults: Default（強調の既定の外観）│
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -326,14 +327,12 @@ classDiagram
     class OverlayRectLayout { <<static>> +Resolve(rect, topLeft, bottomRight)$ OverlayRectFrame  +EffectiveThickness(thickness)$ double }
     class SelectionOverlayMode { <<enum>> Crop  AreaSelect  ScreenSelect  WindowSelect }
     class SelectionOverlayOptions { <<record>> +MarqueeOptions Marquee  +LoupeOptions Loupe  +SelectionOverlayLabelOptions Labels  +double LoupeOffset }
-    class SelectionOverlayState { <<readonly record struct>> +bool UsesSelection  +bool ShowFullOverlay  +bool ShowSelectionOverlay }
-    class SelectionOverlayState { <<static>> +Resolve(mode)$ SelectionOverlayState }
+    class SelectionOverlayState { <<readonly record struct>> +bool UsesSelection  +bool ShowFullOverlay  +bool ShowSelectionOverlay  +Resolve(mode)$ SelectionOverlayState }
 
     OverlayRectLayout ..> OverlayRect : 入力
     OverlayRectLayout ..> OverlayRectFrame : 生成
     OverlayRect ..> OverlayLineStyle : 参照
     SelectionOverlayOptions *-- SelectionOverlayLabelOptions : Labels
-    SelectionOverlayState ..> SelectionOverlayState : 生成
     SelectionOverlayState ..> SelectionOverlayMode : 参照
 ```
 
@@ -421,7 +420,7 @@ sequenceDiagram
 - **判定を「クランプ前の値」で行う**: 画像外へ出た選択矩形を「大きい」と誤判定しないため、最小サイズの判定は画像内へクランプする前の値で行う。
 - **丸めは 0.5 を切り上げ**: `Math.Round` の既定（銀行丸め）はピクセル座標の直感に反するため `MidpointRounding.AwayFromZero` を使う。
 - **矩形の描画判断を 1 箇所に置く**: 負サイズのクランプ・太さの 1 ピクセル下限・破線かどうか・背景色を使うかは `OverlayRectLayout` が単一所有する。 経路（ベクターの図形要素 / ラスタライズ）ごとに判断すると見た目がずれる。
-- **モードの解釈を 1 箇所に置く**: モードと表示可否（選択矩形・破線・全面暗転・ルーペ）の対応は `SelectionOverlayState` / `SelectionOverlayState` が単一所有する。 UI が `switch` を書くと片方の UI だけ挙動がずれる。
+- **モードの解釈を 1 箇所に置く**: モードと表示可否（選択矩形・破線・全面暗転・ルーペ）の対応は `SelectionOverlayState` が単一所有する。 UI が `switch` を書くと片方の UI だけ挙動がずれる。
 - **画像ビューポートの状態と判断を 1 箇所に置く**: 実効ズーム率の導出・可否・遷移の適用・パン・スクロールバーは `ZoomViewSession` が単一所有し、純粋計算（`ZoomTransition` / `ZoomMath` / `ZoomScrollBarGeometry`）へ委譲する。 UI が判断を持つと、ズーム挙動と設定が両 UI でずれる。
 - **市松模様は画像の表示矩形の内側に限る**: 透明部分の背景は画像の内側だけに描き、画像の外（ペーストボード）は下地色の単色にする。 タイルの格子をビューポート原点基準に固定することで、パンしても模様が這わない。
 
@@ -441,7 +440,7 @@ sequenceDiagram
 | `CapturePreviewLogMessage` | 全定義の本文書式とイベント ID（記録ロガーで検証） |
 | `OverlayRectLayout` / `OverlayLineDash` | 負サイズのクランプ・太さの下限・破線の判定とダッシュ長の引き継ぎ（ベクター経路とラスタ経路が同じ数値を使う） |
 | `OverlayRectRasterizer` | ルーペ画像へのラスタライズ（画素検証） |
-| `SelectionOverlayState` / `State` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否 |
+| `SelectionOverlayState` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否 |
 | `SelectionOverlayOptions` / `LabelOptions` | 既定値・部分変更・ |
 | `SelectionUsability` | 選択として成立するサイズの判定 |
 | `SelectionOutlineRasterizer` | 破線の列挙と描画の画素検証 |

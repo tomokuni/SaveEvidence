@@ -23,13 +23,8 @@ public sealed class CaptureClickSelection
 
     /// <summary>押下時に確定対象を固定する。</summary>
     /// <param name="target">固定する矩形（画面物理ピクセル）。</param>
-    /// <returns>固定した場合は true。 退化した矩形（幅・高さが 0 以下）の場合は false（固定しない）。</returns>
-    /// <remarks>退化した矩形を固定すると、解放時に空の切り出しを確定することになるため受け付けない。</remarks>
-    public bool Fix(EsRectInt target)
-    {
-        _fixed = target.IsEmpty ? null : target;
-        return _fixed is not null;
-    }
+    /// <remarks>退化した矩形を固定すると、解放時に空の切り出しを確定することになるため受け付けない（<see cref="Take"/> が null を返す）。</remarks>
+    public void Fix(EsRectInt target) => _fixed = target.IsEmpty ? null : target;
 
     /// <summary>解放時に固定した矩形を取り出す（取り出し後は未固定に戻る）。</summary>
     /// <returns>固定した矩形（画面物理ピクセル）。 固定が無い場合は null。</returns>

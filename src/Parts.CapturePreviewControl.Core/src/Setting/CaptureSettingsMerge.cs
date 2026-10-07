@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 /// <remarks>
 /// <see cref="CaptureSettings"/> は全メンバーが nullable であり、null は「現在値の維持」を意味する。<br/>
 /// マージ規則（null は現在値・非 null は上書き）は UI 非依存であるため本クラスが単一所有する<br/>
-/// （UI ごとに 45 項目の <c>??</c> 連鎖を書くと、項目の追加時に片方だけ漏れる）。<br/>
+/// （UI ごとに 42 項目の <c>??</c> 連鎖を書くと、項目の追加時に片方だけ漏れる）。<br/>
 /// <b>実装</b>: <c>with</c> 式で「現在値」を基点に「入力の非 null 項目」だけを上書きする（項目の列挙を 1 箇所に閉じる）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>

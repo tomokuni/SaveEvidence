@@ -66,8 +66,7 @@ public sealed class CaptureSessionControl : IDisposable
         set
         {
             _logPrefix = value;
-            CapturePreviewLogMessage.Prefix =
-                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+            CapturePreviewLogMessage.SetPrefix(value);
         }
     }
 
@@ -108,7 +107,7 @@ public sealed class CaptureSessionControl : IDisposable
         set
         {
             ThrowIfDisposed();
-            // 部分更新のマージ・検証・同値スキップはコアが単一所有する（UI は 45 項目の ?? 連鎖を持たない）
+            // 部分更新のマージ・検証・同値スキップはコアが単一所有する（UI は 42 項目の ?? 連鎖を持たない）
             if (!CaptureSettingsMerge.Apply(value, ref _currentSettings, _log)) return;
 
             // 実行中の Crop セッションへ最新設定を再適用する（Crop 中の設定変更の即時反映）。

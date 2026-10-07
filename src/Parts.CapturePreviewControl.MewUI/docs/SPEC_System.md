@@ -53,7 +53,6 @@ EsUtil.Platform.Core（Es* 型 / サービス抽象）
 ┌────────────────────────────────────────────────────────┐
 │ CaptureSessionControl（Facade。公開 API はここだけ）     │
 │  Capture(owner, type, services) / ToggleCrop()         │
-│  UpdateCropThemeColor(color)                           │
 │    └─ CaptureSessionSlot（排他。撮影と切り出しで 1 つまで）│
 └────────────────────────────────────────────────────────┘
 ┌────────────────────────────────────────────────────────┐
@@ -83,7 +82,7 @@ EsUtil.Platform.Core（Es* 型 / サービス抽象）
 ┌────────────────────────────────────────────────────────┐
 │ 切り出しビューが内包する画像ビューポート（内部部品）        │
 │  └─ ZoomViewControl（拡大・パン・Fit。Skia キャンバスへ描画）│
-│       └─ ZoomViewSession（状態と判断。ZoomViewControl.Core）│
+│       └─ ZoomViewSession（状態と判断。Parts.CapturePreviewControl.Core）│
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -95,7 +94,6 @@ classDiagram
         +Capture(Window, CaptureType, CaptureOverlayServices) EsBitmap?
         +ToggleCrop()
         +AppearanceSettings CaptureSettings
-        +UpdateCropThemeColor(DrawingColor)
     }
     class CaptureOverlay {
         +Run(Window, CaptureOverlayServices) EsBitmap?
@@ -106,7 +104,6 @@ classDiagram
         +Confirm()
         +Cancel()
         +ApplySettings(CaptureSettings)
-        +UpdateThemeColor(DrawingColor)
     }
     class CaptureOverlayServices {
         +ICaptureService Capture

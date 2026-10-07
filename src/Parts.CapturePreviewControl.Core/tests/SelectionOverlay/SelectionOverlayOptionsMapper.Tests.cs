@@ -39,7 +39,7 @@ public class SelectionOverlayOptionsMapperTests
     /// <summary>枠線の太さ・表示可否は本変換の対象外であることを検証する。</summary>
     /// <remarks>
     /// 描画にだけ必要な設定（色・枠線の太さ・表示可否）は、提示層の <c>MarqueeAppearance</c> が単一所有する<br/>
-    /// （本変換はコアの設定だけを組み立て、Core → UIBase の逆流を作らない）。
+    /// （本変換はコアの設定だけを組み立て、色は共有層の提示の写像（<c>Presentation/CapturePaintMapper</c>）が単一所有する）。
     /// </remarks>
     [Fact]
     internal void 変換_枠線と表示可否は本変換の対象外である()

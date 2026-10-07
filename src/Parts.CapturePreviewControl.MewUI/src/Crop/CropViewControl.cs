@@ -8,6 +8,7 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Platform.MewUI;
 using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
@@ -118,23 +119,8 @@ public sealed class CropViewControl : Grid
 
     /// <summary>強調の既定の外観（内側の塗りと枠線だけを描く）。</summary>
     /// <value>ラベル・ハンドル・始点マーカー・暗転・外枠を描かない外観（色はホストが与える）。</value>
-    /// <remarks>
-    /// 強調は「対象矩形を目立たせる」用途であり、選択の対話（ハンドル・始点マーカー）や<br/>
-    /// 全面暗転は意味を持たないため、内側の装飾だけを既定とする。<br/>
-    /// 色（<see cref="MarqueeAppearance.InnerFillColor"/> / <see cref="MarqueeAppearance.InnerBorderColor"/>）は<br/>
-    /// ホストの用途で決まるため、既定は透明のまま（ホストが <see cref="HighlightAppearance"/> で与える）。
-    /// </remarks>
-    public static readonly MarqueeAppearance HighlightDefaultAppearance = MarqueeAppearance.Default with
-    {
-        ShowHandles = false,
-        ShowMarker = false,
-        ShowSizeLabel = false,
-        ShowCoordLabel = false,
-        ShowOverlay = false,
-        ShowOuterBorder = false,
-        ShowInnerFill = true,
-        ShowInnerBorder = true,
-    };
+    /// <remarks>既定値は共有層（<see cref="HighlightAppearanceDefaults.Default"/>）が単一所有する。</remarks>
+    public static MarqueeAppearance HighlightDefaultAppearance => HighlightAppearanceDefaults.Default;
 
     /// <summary>強調する矩形（対象座標）を取得または設定する。</summary>
     /// <value>強調する矩形。 未設定（null）の場合は強調しない。</value>
@@ -203,8 +189,7 @@ public sealed class CropViewControl : Grid
         set
         {
             _logPrefix = value;
-            CapturePreviewLogMessage.Prefix =
-                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+            CapturePreviewLogMessage.SetPrefix(value);
         }
     }
 

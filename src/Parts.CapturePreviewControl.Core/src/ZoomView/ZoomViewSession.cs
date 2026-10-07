@@ -104,21 +104,9 @@ public sealed partial class ZoomViewSession(ZoomOptions? config = null)
         set => _log = value;
     }
 
-    /// <summary>ズーム遷移の設定を取得する。</summary>
-    /// <value>現在の設定（不変値）。</value>
-    public ZoomOptions Config => _config;
-
     /// <summary>ズームビューの外観を取得する。</summary>
     /// <value>現在の外観（下地・市松模様・スクロールバー）。</value>
     public ZoomViewAppearance Appearance => _appearance;
-
-    /// <summary>画像が設定されているかどうかを取得する。</summary>
-    /// <value>画像が設定されている場合は true。</value>
-    public bool HasSource => _hasSource;
-
-    /// <summary>元画像のサイズ（コンテンツ座標）を取得する。</summary>
-    /// <value>元画像のサイズ。 未設定時は 0。</value>
-    public EsSize SourceSize => _sourceSize;
 
     /// <summary>ビューポートのサイズ（DIP）を取得する。</summary>
     /// <value>ビューポートのサイズ。 未レイアウト時は 0。</value>

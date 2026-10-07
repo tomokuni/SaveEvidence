@@ -321,8 +321,7 @@ public sealed class SelectionOverlayControl : Panel
         set
         {
             _logPrefix = value;
-            CapturePreviewLogMessage.Prefix =
-                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+            CapturePreviewLogMessage.SetPrefix(value);
         }
     }
 

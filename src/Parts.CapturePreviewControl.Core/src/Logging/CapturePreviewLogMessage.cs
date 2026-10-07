@@ -21,7 +21,17 @@ public static partial class CapturePreviewLogMessage
     public const string DefaultPrefix = "[CapturePreviewControl]";
 
     /// <summary>適用する接頭辞（ホストが <c>LogPrefix</c> で設定する）。</summary>
-    public static string Prefix { get; set; } = DefaultPrefix;
+    /// <value>設定された接頭辞。 変更は <see cref="SetPrefix"/> を通す。</value>
+    public static string Prefix { get; private set; } = DefaultPrefix;
+
+    /// <summary>接頭辞を設定する（null または空白は既定値へ戻す）。</summary>
+    /// <param name="value">設定する接頭辞。 null または空白の場合は <see cref="DefaultPrefix"/>。</param>
+    /// <remarks>
+    /// 「null または空白は既定値へ戻す」という規則を単一所有する<br/>
+    /// （UI の <c>LogPrefix</c> プロパティごとに同じ三項演算を書くと、規則が UI ごとにずれる）。
+    /// </remarks>
+    public static void SetPrefix(string? value)
+        => Prefix = string.IsNullOrWhiteSpace(value) ? DefaultPrefix : value;
 
     // ====================================================================
     // ログに載せる値の整形（ログ用途のみ。 別クラスは作らない）

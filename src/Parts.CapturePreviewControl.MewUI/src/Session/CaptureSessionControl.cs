@@ -58,8 +58,7 @@ public sealed class CaptureSessionControl
         set
         {
             _logPrefix = value;
-            CapturePreviewLogMessage.Prefix =
-                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+            CapturePreviewLogMessage.SetPrefix(value);
         }
     }
 

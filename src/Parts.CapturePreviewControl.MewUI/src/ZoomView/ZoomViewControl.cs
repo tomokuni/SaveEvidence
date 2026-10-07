@@ -90,8 +90,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
         set
         {
             _logPrefix = value;
-            CapturePreviewLogMessage.Prefix =
-                string.IsNullOrWhiteSpace(value) ? CapturePreviewLogMessage.DefaultPrefix : value;
+            CapturePreviewLogMessage.SetPrefix(value);
         }
     }
 
@@ -567,7 +566,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <param name="appearance">外観（スクロールバーの太さ・余白・色）。</param>
     /// <remarks>
     /// スクロール不要な軸（画像がビューポートに収まる軸）には描画しない（セッションが null を返す）。<br/>
-    /// トラックはアルファ 0 の場合に描画しない（サムのみの表示を要求するホスト向け）。
+    /// トラックの表示可否はコア（<see cref="ZoomViewAppearance.HasScrollBarTrack"/>）が単一所有する。
     /// </remarks>
     private void DrawScrollBars(SKCanvas canvas, ZoomViewAppearance appearance)
     {
@@ -580,8 +579,9 @@ public sealed class ZoomViewControl : SkiaCanvasView
         using var trackPaint = new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill, Color = appearance.ScrollBarTrackColor.ToSKColor() };
         using var thumbPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill, Color = appearance.ScrollBarColor.ToSKColor() };
 
-        DrawScrollBar(canvas, horizontal, trackPaint, thumbPaint);
-        DrawScrollBar(canvas, vertical, trackPaint, thumbPaint);
+        var drawTrack = appearance.HasScrollBarTrack;
+        DrawScrollBar(canvas, horizontal, trackPaint, thumbPaint, drawTrack);
+        DrawScrollBar(canvas, vertical, trackPaint, thumbPaint, drawTrack);
     }
 
     /// <summary>スクロールバー 1 本を描画する。</summary>
@@ -589,14 +589,15 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <param name="bar">描画するスクロールバー。 null の場合は何もしない。</param>
     /// <param name="trackPaint">トラックの描画設定。</param>
     /// <param name="thumbPaint">サムの描画設定。</param>
-    private static void DrawScrollBar(SKCanvas canvas, ZoomScrollBar? bar, SKPaint trackPaint, SKPaint thumbPaint)
+    /// <param name="drawTrack">トラックを描くかどうか（<see cref="ZoomViewAppearance.HasScrollBarTrack"/> の値）。</param>
+    private static void DrawScrollBar(SKCanvas canvas, ZoomScrollBar? bar, SKPaint trackPaint, SKPaint thumbPaint, bool drawTrack)
     {
         if (bar is not { } value)
         {
             return;
         }
 
-        if (trackPaint.Color.Alpha > 0)
+        if (drawTrack)
         {
             canvas.DrawRect(ToSKRect(value.Track), trackPaint);
         }

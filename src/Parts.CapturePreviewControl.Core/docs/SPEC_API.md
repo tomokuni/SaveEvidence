@@ -55,6 +55,7 @@
   - [11.1 CapturePaintMapper（内部）](#111-capturepaintmapper内部)
   - [11.2 SelectionOverlayChildValues](#112-selectionoverlaychildvalues)
   - [11.3 SelectionOverlayLabelRenderer / MarqueeHostLabelRenderer](#113-selectionoverlaylabelrenderer--marqueehostlabelrenderer)
+  - [11.4 HighlightAppearanceDefaults](#114-highlightappearancedefaults)
 
 ## 1. 公開型の構成
 
@@ -142,7 +143,6 @@
 | `ToSelectionMode` | `SelectionOverlayMode ToSelectionMode(CaptureType captureType)` | キャプチャ種別（全画面 / ウィンドウ / 範囲）→ 動作モード。 未定義の種別は範囲選択として扱う（切出しは対象外） |
 | `GetOperationText` | `string GetOperationText(SelectionOverlayMode mode)` | 操作ラベル（確定・キャンセル方法）。 スクリーン選択・ウィンドウ選択は Enter 系、範囲選択・切出しはダブルクリック系（常に非空） |
 | `GetInfoText` | `string? GetInfoText(SelectionOverlayMode mode, string? windowTitle)` | 情報ラベルの文言。 ウィンドウ選択のみウィンドウタイトルを返し、他モードは null（描画しない） |
-| `ResolveSizeLabel` | `string? ResolveSizeLabel(EsRect? target, string? overrideText, Func<EsRect, double> displayScaling)` | サイズラベルの文言。 **確定対象があれば矩形から生成し、無ければホスト指定の文言**を返す（表示倍率のデリゲートは描画時のみ評価する） |
 
 ### 3.1 規則
 
@@ -151,7 +151,6 @@
 | 1 | モード写像は `CaptureType` の 3 種別を全て扱い、未定義値は範囲選択へフォールバックする |
 | 2 | 操作ラベルの文言は 2 系統（Enter 系 / ダブルクリック系）に集約する |
 | 3 | 情報ラベルはウィンドウ選択でのみ意味を持つため、他モードでは null を返す（表示可否の最終判定（設定）は描画側） |
-| 4 | サイズラベルの文言は「確定対象があれば矩形から生成・無ければホスト指定」の 1 経路に集約する（両 UI が同じ三項演算を書かない） |
 
 ## 4. CropBoundsMath
 
@@ -205,7 +204,6 @@
 | `LoupeClientToPixelScaling` | `double?` | ルーペの描画倍率（0.1〜8.0） |
 | `SizeLabelVisible` / `SizeLabelColor` / `SizeLabelFontSize` | `bool?` / `System.Drawing.Color?` / `double?` | サイズラベルの表示・色・サイズ |
 | `InfoLabelVisible` / `ShowSubLines` / `SubLineFontSize` | `bool?` / `bool?` / `double?` | 情報ラベル・サブライン |
-| `SizeLabelOverride` | `string?` | サイズラベルの文言明示指定（null = 自動生成） |
 | `DisplayScaleScaling` | `double?` | サイズラベル表示用のスケーリング（0 以下は `ClientToSourceScaling` と同値） |
 
 | メソッド | シグネチャ | 内容 |
@@ -296,10 +294,11 @@
 
 ### 7.8 CapturePreviewLogMessage
 
-ログの定義（接頭辞・イベント ID・本文書式・整形・完了時の出力の組）を単一所有します。 カテゴリは各 UI が与えます。 接頭辞はホストが `Prefix` へ設定します（未設定は `DefaultPrefix`）。
+ログの定義（接頭辞・イベント ID・本文書式・整形・完了時の出力の組）を単一所有します。 カテゴリは各 UI が与えます。 接頭辞はホストが `SetPrefix` で設定します（読み取りは `Prefix`。 null または空白は `DefaultPrefix` へ戻す）。
 
 | メソッド | 内容 |
 | --- | --- |
+| `SetPrefix(string? value)` | 接頭辞を設定する（null または空白は `DefaultPrefix` へ戻す規則を単一所有する） |
 | `LogOperationError(Exception exception, string operation)` | 公開ファサードの操作で例外が発生したことを記録する（Error。 記録して再スローするための入口） |
 | `LogCaptureStart(CaptureType captureType)` | 撮影の開始 |
 | `LogCaptureFinished(CaptureResult? result)` | 撮影セッションの終了。 確定は `CaptureCompleted` → `Result` の 2 件（順序を含めて単一所有）、キャンセル（`result` が null または画像が null）は `CaptureCancelled` の 1 件 |
@@ -517,9 +516,9 @@ public readonly record struct OverlayRect(
 
 | メンバー | 型 | 既定値 | 内容 |
 | --- | --- | --- | --- |
-| `MarqueeCore` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の設定（選択の判断に使う項目のみ。 色は含まない） |
+| `Marquee` | `MarqueeOptions` | `MarqueeOptions.Default` | 選択矩形の設定（選択の判断に使う項目のみ。 色は含まない） |
 | `Labels` | `SelectionOverlayLabelOptions` | 既定値 | ホストが描く操作・情報ラベルの外観 |
-| `LoupeCore` | `LoupeOptions` | `LoupeOptions.Default` | ルーペの設定（拡大率・表示サイズ・寸法） |
+| `Loupe` | `LoupeOptions` | `LoupeOptions.Default` | ルーペの設定（拡大率・表示サイズ・寸法） |
 | `SelectionRectColorA` | `System.Drawing.Color` | 白 | ルーペ画像上の選択矩形破線の色 A（描画開始色） |
 | `SelectionRectColorB` | `System.Drawing.Color` | 黒 | 同 色 B（色 A と交互に使用する） |
 | `LoupeOffset` | `double` | `20.0` | ルーペのカーソル中心からの右下オフセット（DIP） |
@@ -631,8 +630,8 @@ public readonly record struct OverlayRect(
 | `ComputeOffsetAfterScaleChange` | ズーム中心を維持するためのオフセットを計算する |
 | `ClampOffset` / `MaxCentered` | スクロール範囲へのクランプ・中央寄せ／左上寄せの表示サイズ |
 | `ComputeImageOrigin` | 画像の表示矩形の原点（中央寄せ補正込み）を求める |
-| `ClientToSource` / `SourceToClient` | ビューポート座標 ⇔ コンテンツ座標の変換（画像表示矩形の原点基準を含む版も持つ） |
-| `ScaleFromPercent` / `PercentFromScale` | % ⇔ 倍率の換算 |
+| `ClientToSource` | ビューポート座標 → コンテンツ座標の変換（画像表示矩形の原点基準の版も持つ） |
+| `ScaleFromPercent` | % → 倍率の換算 |
 
 スケールが 0 以下の場合は 1 として扱い、例外を発生させません。
 
@@ -701,3 +700,7 @@ public readonly record struct OverlayRect(
 | `MarqueeHostLabelRenderer` | ラベル 1 行の体裁（背景 = 文字の実寸 + 内側余白 × 2）と、基準点を背景の左上とする配置指示を返す。 体裁の値（内側余白）は提示層の外観（`MarqueeAppearance`）が単一所有する |
 
 文言の生成はホストが担います（付加情報は複合コントロールの概念ではないため）。
+
+### 11.4 HighlightAppearanceDefaults
+
+切り出しビューの「強調（ハイライト）」の既定の外観（`MarqueeAppearance`）を単一所有します。 内側の塗りと枠線だけを描き、ラベル・ハンドル・始点マーカー・暗転・外枠は描きません（色はホストが与えるため透明のまま）。 両 UI の `CropViewControl` とアプリが同じ既定を使います。

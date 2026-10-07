@@ -117,15 +117,6 @@ public sealed partial class ZoomViewSession
     public EsPoint DisplayedSourceToClient(EsPoint contentPos)
         => ZoomMath.DisplayedSourceToClient(contentPos, ImageOrigin, EffectiveScale);
 
-    /// <summary>ビューポートの変化（表示条件の更新）を通知する。</summary>
-    /// <returns>UI が適用する効果（再描画）。</returns>
-    /// <remarks>UI 固有の理由（レイアウト確定など）でビューポートの再通知が必要な場合に使用する。</remarks>
-    public ZoomFeedback NotifyViewportChanged()
-    {
-        RaiseViewportChanged();
-        return new ZoomFeedback { ShouldRedraw = true };
-    }
-
     /// <summary>現在の状態に応じてオフセットをスクロール範囲内へクランプする。</summary>
     /// <param name="offset">クランプするオフセット（コンテンツ座標）。</param>
     /// <returns>クランプ後のオフセット。 Fit 中または画像未設定時は原点。</returns>

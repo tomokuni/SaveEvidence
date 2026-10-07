@@ -253,14 +253,14 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 
 #### 5.4.3 CaptureSettings
 
-全メンバー nullable の位置パラメータレコード（47 個）。 null の意味は利用方法で異なります。
+全メンバー nullable の位置パラメータレコード（42 個）。 null の意味は利用方法で異なります。
 
 - 初期設定（コンストラクタ）: null = Parts.CapturePreviewControl.AvaloniaUI のデフォルト値として扱う。
 - 設定適用（Settings の setter）: null = 現在の設定値を維持する（部分更新）。
 
 **反映先**: **計算に必要な寸法・対話パラメータ**はコアの設定型（`MarqueeOptions` / `LoupeOptions`。 `SelectionOverlayOptionsMapper` が写像）へ、**描画にだけ必要な外観（色・枠線の太さ・表示可否）**は `Parts.CapturePreviewControl.Core` の写像（`CapturePaintMapper` が `MarqueeAppearance` / `LoupeAppearance` を組み立てる）へ反映します。
 
-**キャプチャ動作（3 項目）**:
+**キャプチャ動作（1 項目）**:
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
@@ -278,13 +278,12 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 | `ShowCoordLabel` | `bool?` | カーソル座標ラベルの表示有無 |
 | `CoordLabelColor` / `CoordLabelBackgroundColor` / `CoordLabelFontSize` | `Color?` / `Color?` / `double?` | カーソル座標ラベルの外観 |
 
-**外側の装飾の外観（15 項目）**:
+**外側の装飾の外観（14 項目）**:
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
 | `OverlayColor` | `Color?` | 暗転オーバーレイの外観（不透明度は色のアルファに統合） |
 | `SizeLabelVisible` / `SizeLabelColor` / `SizeLabelFontSize` | `bool?` / `Color?` / `double?` | サイズラベル（1 行目） |
-| `SizeLabelOverride` | `string?` | サイズラベルのテキスト明示指定。 未指定（null）時は対象矩形から自動生成（後述） |
 | `DisplayScaleScaling` | `double?` | サイズラベルの DisplayScale 表示の既定値（既定値 0.0＝未指定）。 本 UI は矩形の中心が含まれるモニタの実スケーリングを表示する（マルチモニタ対応）ため、明示指定は表示に反映されない |
 | `TextBackgroundColor` | `Color?` | サイズラベル（1 行目）の背景色 |
 | `ShowSubLines` / `SubLineFontSize` / `SubLineColor` / `SubLineBackgroundColor` | `bool?` / `double?` / `Color?` / `Color?` | 操作ラベル（2 行目・背景はアルファ込み） |
@@ -294,7 +293,7 @@ var result = await _captureSessionControl.StartCaptureAsync(CaptureType.AreaSele
 座標・サイズは対象の値そのまま（スケーリングに依存しない実際の物理ピクセル）、DisplayScale は矩形の中心が含まれるモニタの実スケーリング（例: 100% モニタなら 100%）。
 DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マルチモニタでサイズ・DisplayScale が一致しない問題）を排除する。
 
-**Loupe 外観（16 項目）**:
+**Loupe 外観（14 項目）**:
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
