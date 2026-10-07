@@ -62,8 +62,8 @@ public static class EsBitmapAvaloniaExtensions
     /// <remarks>
     /// <c>WriteableBitmap</c> を生成せず、<see cref="EsBitmap"/> を内包する <see cref="EsBitmapAvaloniaImage"/> を返す<br/>
     /// （テスト・サンプルで多用する単色画像を、表示境界の <see cref="IImage"/> として簡便に生成する）。<br/>
-    /// <see cref="CreateAvaloniaWriteableBitmap"/>（<see cref="WriteableBitmap"/> を返す）とは異なり、<br/>
-    /// Skia 直アクセス（ゼロコピー）で描画されるため画像生成が高速。
+    /// <b>変換の回数</b>: 表示用の射影（<see cref="Bitmap"/>）は初回の描画で 1 回だけ作られ、以降の再描画では再利用される
+    /// （ピクセルの複製は 1 枚につき 1 回）。
     /// </remarks>
     public static EsBitmapAvaloniaImage CreateAvaloniaImage(int width, int height, AvaloniaColor color)
     {
@@ -163,13 +163,13 @@ public static class EsBitmapAvaloniaExtensions
             bitmap.Stride);
     }
 
-    /// <summary>Avalonia の画像入力（<see cref="IImage"/>）として公開するアダプタを生成する（ゼロコピー・複製なし）。</summary>
+    /// <summary>Avalonia の画像入力（<see cref="IImage"/>）として公開するアダプタを生成する（所有権が移る）。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <returns><see cref="EsBitmapAvaloniaImage"/>（所有権は <see cref="EsBitmapAvaloniaImage.Dispose"/> で解放する）。</returns>
     /// <remarks>
-    /// <c>WriteableBitmap</c> / <c>Bitmap</c> を生成せず、内部 SKBitmap を Skia へ直接描画する（ゼロコピー）。<br/>
     /// 内包する <see cref="EsBitmap"/> の所有権は生成した <see cref="EsBitmapAvaloniaImage"/> へ移るため、
-    /// 呼び出し側は元の <paramref name="bitmap"/> を破棄しないこと（破棄漏れ・二重破棄防止）。
+    /// 呼び出し側は元の <paramref name="bitmap"/> を破棄しないこと（破棄漏れ・二重破棄防止）。<br/>
+    /// 表示用の射影（<see cref="Bitmap"/>）は初回の描画で 1 回だけ作られる（以降の再描画では再利用される）。
     /// </remarks>
     public static IImage ToAvaloniaImage(this EsBitmap bitmap)
         => new EsBitmapAvaloniaImage(bitmap);

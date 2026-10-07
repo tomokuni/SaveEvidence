@@ -43,7 +43,7 @@ public sealed partial class MainWindow : Window
     /// <summary>ビューモデル。</summary>
     private readonly MainWindowViewModel _vm = new();
 
-    /// <summary>Crop プレビュー用のダミー画像（EsBitmapAvaloniaImage。 Skia 直描画・ゼロコピー表示）。</summary>
+    /// <summary>Crop プレビュー用のダミー画像（EsBitmapAvaloniaImage。 表示用の変換は初回のみ）。</summary>
     private EsBitmapAvaloniaImage? _previewBitmap;
 
     /// <summary>スライダ同期中の再入防止フラグ（プログラム側の同期による ValueChanged を無視する）。</summary>
@@ -341,7 +341,7 @@ public sealed partial class MainWindow : Window
     /// <remarks>
     /// 白地に 100px 間隔の薄いグリッドと、中央に色付きの矩形を描画する（サイズ感・座標の確認用）。<br/>
     /// <b>EsBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、
-    /// <see cref="EsBitmapAvaloniaImage"/>（Skia 直描画・ゼロコピー）として表示できる。
+    /// <see cref="EsBitmapAvaloniaImage"/>（表示用の変換は初回のみ）として表示できる。
     /// </remarks>
     private static EsBitmapAvaloniaImage CreateDummyBitmap(int width, int height)
     {

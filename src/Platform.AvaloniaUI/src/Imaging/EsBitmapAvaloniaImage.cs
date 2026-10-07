@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
@@ -14,6 +15,13 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// へ変換して <c>DrawImage</c> で標準描画する。 Skia の標準描画（<c>IDrawableBitmapImpl.Draw</c>）を経由するため、
 /// カスタム描画オペレーション（<c>DrawingContext.Custom</c>）と異なり確実に再描画される。<br/>
 /// <br/>
+/// <b>変換の回数</b>: <see cref="Bitmap"/> への変換はピクセルを複製するため（実測: 4K で約 6.1 ms）、
+/// <b>初回の 1 回だけ</b>行い、以降はその <see cref="Bitmap"/> を再利用する（<see cref="Draw"/> は再描画のたびに呼ばれ、
+/// パンも再描画を起こすため、毎回変換すると 1 再描画ごとに全域コピーが発生する。 実測: 4K で 8.3 ms → 1.9 ms）。<br/>
+/// <b>不変条件</b>: 内包する <see cref="EsBitmap"/> の内容は<b>本クラスを生成した後は書き換えないこと</b>
+/// （変換は初回で固定されるため、書き換えても表示へ反映されない）。 内容を変える場合は新しい
+/// <see cref="EsBitmap"/> と新しい本クラスを生成する（<see cref="EsBitmapAvaloniaExtensions.CreateAvaloniaImage"/> 等）。<br/>
+/// <br/>
 /// <b>所有権</b>: 内包する <see cref="EsBitmap"/> の所有権は本クラスが保持し、<see cref="Dispose"/> で解放する。<br/>
 /// 呼び出し側（ホスト）は本クラスの <see cref="Dispose"/> を適切なタイミングで呼ぶこと（破棄漏れ防止）。<br/>
 /// <br/>
@@ -23,6 +31,10 @@ public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
 {
     /// <summary>内部の EsBitmap（コア。 所有権は本クラスが保持）。</summary>
     private EsBitmap? _bitmap;
+
+    /// <summary>表示用の射影（<see cref="EsBitmap"/> の変換結果。 初回の <see cref="Draw"/> で生成し、以降は再利用する）。</summary>
+    /// <remarks>所有権は本クラスが保持し、<see cref="Dispose"/> で解放する（内包する <see cref="EsBitmap"/> が先に破棄された場合はその時点で破棄する）。</remarks>
+    private Bitmap? _projection;
 
     /// <summary><see cref="EsBitmap"/> を内包して初期化する（所有権を譲り受ける）。</summary>
     /// <param name="bitmap">内包する EsBitmap。 所有権が本クラスへ移る。</param>
@@ -52,7 +64,8 @@ public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
     /// <b>標準描画</b>: <see cref="EsBitmap"/> を <see cref="Bitmap"/>（内部実装 <c>ImmutableBitmap</c>）へ変換し、
     /// <c>SplitDrawImage</c> / <c>DrawImage</c> の標準経路で描画する。 カスタム描画オペレーション（<c>Custom</c>）ではなく
     /// 標準の <c>DrawBitmap</c> 経路を辿るため、マウス移動中の再描画でも確実に表示される。<br/>
-    /// <b>注意</b>: <see cref="Bitmap"/> へ変換する際にピクセルを複製する（毎回スナップショット）。<br/>
+    /// <b>変換は初回の 1 回だけ</b>行い、以降の再描画では同じ <see cref="Bitmap"/> を再利用する（パンも再描画を起こすため、
+    /// 毎回変換すると 1 再描画ごとに全域コピーが発生する）。<br/>
     /// 破棄済みの場合は何も描画しない（safe no-op）。
     /// </remarks>
     public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
@@ -70,13 +83,14 @@ public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
         // EsBitmapAvaloniaImage がまだ参照している間に、共有 EsBitmap が破棄される経路（プレビュー画像の置き換え等）があるため。
         if (b.IsDisposed)
         {
+            // 射影が残っていれば破棄する（真実の破棄に追随する。 残すと射影の分だけ解放が遅れる）
+            _projection?.Dispose();
+            _projection = null;
             return;
         }
 
-        // 標準 Bitmap（内部実装 ImmutableBitmap）へ変換して標準描画する。
-        // ToAvaloniaBitmap はピクセルを複製する（スナップショット）ため、その後本 EsBitmap を書き換えても安全。
-        using var av = b.ToAvaloniaBitmap();
-        context.DrawImage(av, sourceRect, destRect);
+        // 射影は初回だけ生成し、以降の再描画では再利用する（毎回変換すると 1 再描画ごとに全域コピーが発生する）
+        context.DrawImage(_projection ??= b.ToAvaloniaBitmap(), sourceRect, destRect);
     }
 
     /// <summary>内包する EsBitmap（参照アクセサ。 破棄は <see cref="Dispose"/> が担う）。</summary>
@@ -90,11 +104,14 @@ public sealed class EsBitmapAvaloniaImage : IImage, IDisposable
 
     /// <summary>内包する EsBitmap を解放する（冪等）。</summary>
     /// <remarks>
-    /// <see cref="EsBitmap"/> のピクセルバッファを解放する。<br/>
+    /// <see cref="EsBitmap"/> のピクセルバッファを解放し、併せて表示用の射影（<see cref="Bitmap"/>）も解放する。<br/>
     /// 破棄後に <see cref="Size"/> / <see cref="Draw"/> を呼ぶと <see cref="ObjectDisposedException"/>。
     /// </remarks>
     public void Dispose()
     {
+        // 射影（Avalonia の Bitmap）を先に解放し、次に真実（EsBitmap）を解放する
+        _projection?.Dispose();
+        _projection = null;
         _bitmap?.Dispose();
         _bitmap = null;
     }

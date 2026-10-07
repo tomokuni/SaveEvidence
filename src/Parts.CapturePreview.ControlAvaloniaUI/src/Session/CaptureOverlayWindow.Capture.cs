@@ -194,7 +194,7 @@ internal sealed partial class CaptureOverlayWindow
         _log.LogVirtualScreen(origin.ToEsPointInt(), bitmap);
         // 固定背景画像（VirtualScreenImage）とルーペの拡大元画像（Source）へ同一の EsBitmapAvaloniaImage を設定する。
         // WriteableBitmap を生成せず、EsBitmap を内包した IImage（EsBitmapAvaloniaImage）を Source に設定する
-        // （Skia 直描画・ゼロコピー。 破棄はコアの保持クラスの Dispose が一元管理する）。
+        // （表示用の変換は初回のみ。 破棄はコアの保持クラスの Dispose が一元管理する）。
         EsBitmapAvaloniaImage? displayImage = bitmap is null ? null : new EsBitmapAvaloniaImage(bitmap);
         VirtualScreenImage.Source = displayImage;
 

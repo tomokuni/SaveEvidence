@@ -14,7 +14,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 /// <see cref="EsBitmapAvaloniaImage.Dispose"/> は <see cref="EsBitmap"/>（Skia のみ）と <see cref="Avalonia.Size"/> に依存し、
 /// <c>WriteableBitmap</c> を生成しないため、Avalonia ヘッドレス初期化（<c>[AvaloniaFact]</c>）は不要。<br/>
 /// <c>[Fact]</c> で並列実行する（テスト全体の高速化）。<br/>
-/// <c>Draw</c>（Skia 直描画）はヘッドレスでは no-op のため、ここでは検証しない（描画は実機依存）。
+/// 描画（<c>Draw</c>）を伴う検証は <see cref="EsBitmapAvaloniaImageDrawTests"/> が担う。
 /// </remarks>
 public class EsBitmapAvaloniaImageTests
 {
