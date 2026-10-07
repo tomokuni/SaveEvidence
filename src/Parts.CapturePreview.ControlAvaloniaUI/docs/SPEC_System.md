@@ -1,6 +1,6 @@
 # Parts.CapturePreview.ControlAvaloniaUI システム仕様書
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. システム概要](#1-システム概要)
 - [2. 技術スタック](#2-技術スタック)
@@ -227,7 +227,7 @@ flowchart TB
   - **モニタ一覧の構築（倍率未確定の除外）はコアの `MonitorScalingMath.Collect` が単一所有する**（`Screens.All` の取得のみ UI 固有）
   - **座標の整数化はコアの `CropBoundsMath.RoundToPixel` が単一所有する**（切り捨てで書くと UI ごとに 1 ピクセルずれる）
   - **タイムアウト・画面外退避座標はコアの `CaptureTiming` が単一所有する**（両 UI で同じ値を使う）
-  - **ラベル文言の正規化（未検出・null は空文字）はコアの `CaptureText` が単一所有する**
+  - **ラベル文言の正規化（未検出・null は空文字）はコアの `TextNormalize` が単一所有する**
   - ログ定義はコア（`CapturePreviewLogMessage`）が単一所有する（本クラスは `_log.LogXxx` を呼ぶだけ）
   - クリック確定 → キャプチャ実行 → 結果コールバック
   - 非アクティブ化 / Close → キャンセル

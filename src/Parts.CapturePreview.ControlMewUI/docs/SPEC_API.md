@@ -2,7 +2,7 @@
 
 MewUI 版の撮影セッションが提供する**公開 API** を記載します。 内部実装（描画手順・キャッシュ等）は記載しません。
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 公開型の構成](#1-公開型の構成)
 - [2. CaptureSessionControl](#2-capturesessioncontrol)

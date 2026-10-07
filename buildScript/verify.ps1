@@ -511,6 +511,8 @@ $typeRefIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 #     - 番号は階層を表す（`##` = `<連番>` + ピリオド / `###` = `<親>.<連番>` / `####` = `<親>.<連番>.<連番>`）。
 #     - 目次は `##` 以下の見出しだけを、**番号付きの文言**と一致するアンカーで列挙する
 #       （見出しを足したのに目次を直していない状態は、markdownlint の MD051 では見つからない）。
+#     - 目次見出しは `## 目次 <!-- omit from toc -->` と書く（エディタの目次整形拡張が
+#       目次自身を目次へ載せないためのマーカー。 マーカー無しも受け付ける）。
 #     - `SPEC_System.md` へ「単一所有」「移行の経緯」等の独立した章を設けない（規約 §6）。
 function Get-MdHeadings([string]$Path) {
     $lines = [IO.File]::ReadAllLines($Path, $enc)
@@ -532,6 +534,7 @@ function Get-MdSlug([string]$Text) {
 }
 
 $rxHeadingNumber = [regex]'^(\d+(?:\.\d+)*)(\.?)\s+(.+)$'
+$rxTocHeading = [regex]'^目次( <!-- omit from toc -->)?$'
 $rxForbiddenChapter = [regex]'移行|経緯|変更履歴|最適化|単一所有|以前は|旧仕様|旧名'
 $rxTocItem = [regex]'^\s*- '
 $styleIssues = [System.Collections.Generic.List[string]]::new()
@@ -548,7 +551,7 @@ foreach ($f in $docs) {
     $counters = @{}
     foreach ($h in $headings) {
         if ($h.Level -eq 1) { continue }
-        if ($h.Level -eq 2 -and $h.Text -eq '目次') { continue }
+        if ($h.Level -eq 2 -and $rxTocHeading.IsMatch($h.Text)) { continue }
         if ($isSystem -and $rxForbiddenChapter.IsMatch($h.Text)) {
             $styleIssues.Add(("{0}:{1}  規約 §6 が禁じる章（独立性の高い章を設けない）: {2}" -f $rel, $h.Line, $h.Text))
         }
@@ -584,12 +587,12 @@ foreach ($f in $docs) {
 
     $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
     $tocIdx = -1
-    for ($i = 0; $i -lt $lines.Count; $i++) { if ($lines[$i] -eq '## 目次') { $tocIdx = $i; break } }
+    for ($i = 0; $i -lt $lines.Count; $i++) { if ($rxTocHeading.IsMatch(($lines[$i] -replace '^## ', ''))) { $tocIdx = $i; break } }
     if ($isSpec) {
         if ($tocIdx -lt 0) { $styleIssues.Add(("{0}  目次が無い（規約 §7）" -f $rel)) }
         else {
             $firstH2 = @($headings | Where-Object { $_.Level -eq 2 } | Select-Object -First 1)
-            if ($firstH2 -and $firstH2.Text -ne '目次') { $styleIssues.Add(("{0}  目次が最初の ## 見出しでない（最初は「{1}」）" -f $rel, $firstH2.Text)) }
+            if ($firstH2 -and -not ($rxTocHeading.IsMatch($firstH2.Text))) { $styleIssues.Add(("{0}  目次が最初の ## 見出しでない（最初は「{1}」）" -f $rel, $firstH2.Text)) }
         }
     }
     if ($tocIdx -ge 0) {

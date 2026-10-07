@@ -1,6 +1,6 @@
 # Platform.AvaloniaUI
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 概要](#1-概要)
 - [2. 機能一覧](#2-機能一覧)

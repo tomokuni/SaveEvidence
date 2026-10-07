@@ -1,6 +1,6 @@
 # ColorPickerControl.AvaloniaUI サンプルアプリケーション
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 概要](#1-概要)
 - [2. 実行方法](#2-実行方法)

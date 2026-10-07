@@ -2,7 +2,7 @@
 
 本仕様書は、`EsUtil.SaveEvidence.Parts.LineDetection`（LineDetection ライブラリ）の**外部機能仕様・公開 API 仕様**を定義します。
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 概要](#1-概要)
 - [2. 公開 API](#2-公開-api)

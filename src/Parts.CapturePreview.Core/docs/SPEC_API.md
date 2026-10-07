@@ -2,7 +2,7 @@
 
 撮影・切り出しの共通規則が提供する**公開 API** を記載します。 内部実装（呼び出し手順・キャッシュ等）は記載しません。
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 公開型の構成](#1-公開型の構成)
 - [2. 層の責務の境界](#2-層の責務の境界)
@@ -32,7 +32,7 @@
   - [7.16 CaptureTiming](#716-capturetiming)
   - [7.17 CropBoundsMath.RoundToPixel](#717-cropboundsmathroundtopixel)
   - [7.18 SelectionOverlayOptionsMapper](#718-selectionoverlayoptionsmapper)
-  - [7.19 CaptureText](#719-capturetext)
+  - [7.19 TextNormalize](#719-textnormalize)
 - [8. 矩形オーバーレイ（`OverlayRect` 系）](#8-矩形オーバーレイoverlayrect-系)
   - [8.1 `OverlayRect`（record struct）](#81-overlayrectrecord-struct)
   - [8.2 `OverlayRectLayout`（描画入力の解決）](#82-overlayrectlayout描画入力の解決)
@@ -89,7 +89,7 @@
 | `CaptureSettings` | record | 外観・動作設定（全メンバー nullable） |
 | `CaptureSettingsMerge` | 静的クラス | 設定の部分更新マージと同値スキップ |
 | `CapturePreviewLogMessage` | 静的クラス | ログ定義（撮影・切り出し・設定・ズーム）。 接頭辞・整形・レベルの単一所有 |
-| `CaptureText` | 静的クラス | ログ以外でも使う文字列の正規化（未取得の null を空文字へ） |
+| `TextNormalize` | 静的クラス | ログ以外でも使う文字列の正規化（未取得の null を空文字へ） |
 | `CaptureResult` | record | キャプチャ結果（画像と領域） |
 | `ICaptureTarget` | インターフェイス | 切り出し結果の適用先（アプリ側が実装するポート） |
 | `ICaptureOwnerWindow` | インターフェイス | 撮影時に退避するオーナーウィンドウ（各 UI が実装するポート） |
@@ -132,7 +132,7 @@
 | 判断 | 切り出し範囲（`CropBoundsMath` / `CropClipMath`）、ハイライトの反映（`CaptureHighlightSession`）、キー操作（`CaptureKeyActions`）、クリック確定（`CaptureClickSelection`）、種別の性質（`CaptureTypeTraits`）、モニタ倍率（`MonitorScalingMath`）、設定のマージ（`CaptureSettingsMerge`）、退避と除外の順序（`CaptureOwnerScope`）、平均色（`ImageColorMath`）、切り出しと事前キャッシュ（`CropClipMath` / `CaptureClipCache`）、取得の打ち切り（`CaptureVirtualScreen`）、切り出しの操作内容（`CropSessionActions`）、方針値（`CaptureTiming`）、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession`） |
 | 契約 | `ICaptureTarget`（結果の適用先）、`ICaptureOwnerWindow`（退避対象）、`CaptureSessionSlot`（排他）、`CaptureCompletion`（単一確定）、`CaptureClipCache`（事前切り出しの受け渡し）、`CaptureImageHolder`（画像の保持）、`CaptureHighlight` / `CaptureHighlightSession`（ハイライト状態）、`CaptureResult.From`（結果の正規化）、`ZoomFeedback` / `ZoomNotice`（画像ビューポートのコア⇔UI の契約） |
 | ログ定義 | `CapturePreviewLogMessage`（接頭辞・書式・レベル・値の整形・完了時の出力の組・設定適用・ズーム操作を含む。 呼び出しは UI） |
-| ログ以外の正規化 | `CaptureText`（未取得の文字列を空文字へ。 ログ定義の外に置く） |
+| ログ以外の正規化 | `TextNormalize`（未取得の文字列を空文字へ。 ログ定義の外に置く） |
 | 提示の写像 | 設定 → 外観の写像（`CapturePaintMapper`）、子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）、付加情報ラベルの配置指示（`SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）。 製品の設定型と提示層の外観型を橋渡しする（UI は同じ写像を共有する） |
 | UI 層に残すもの | Window の生成と表示、`Screens` / DPI の取得、ポインタ・キーの購読、`Dispatcher`、カーソル、レイアウト、Bitmap のライフサイクル |
 
@@ -313,7 +313,7 @@
 | `LogHighlight(CaptureType captureType, bool detected, EsRectInt? rect, string? title, string? className)` | ハイライトの検出結果（Trace。 診断用。 `CaptureHighlightSession` が呼ぶ） |
 | `LogSettingApplied()` | 設定の適用（変化時の 1 回のみ。 同値の適用はログを出さない） |
 
-矩形・文字列の受け取りはコアの値型（`EsRectInt` / `EsRect`）とし、**整形（`"X,Y,Width,Height"`・未取得の空文字化）は本クラスが内部で行います**（呼び出し側は生の値を渡すだけ。 未取得の文字列の正規化は `CaptureText.Normalize` が単一所有する）。
+矩形・文字列の受け取りはコアの値型（`EsRectInt` / `EsRect`）とし、**整形（`"X,Y,Width,Height"`・未取得の空文字化）は本クラスが内部で行います**（呼び出し側は生の値を渡すだけ。 未取得の文字列の正規化は `TextNormalize.Normalize` が単一所有する）。
 
 `CropCompleted` / `CaptureCompleted` / `CaptureCancelled` / `Result` は `LogCropFinished` / `LogCaptureFinished` の内部実装です（UI からは終了 1 回で呼びます）。
 
@@ -441,7 +441,7 @@ UI が発明してはいけない運用方針値を単一所有します。
 | --- | --- | --- |
 | `ToSelectionOverlayOptions` | `SelectionOverlayOptions ToSelectionOverlayOptions(this CaptureSettings settings)` | 設定（全メンバー non-null）から複合コントロールの設定（**寸法・表示可否**）を組み立てる。 **色・枠線の太さ・表示可否は写像しない**（描画にだけ必要な設定のため、UI 層のホストが提示層の `MarqueeAppearance` / `LoupeAppearance` を組み立てる） |
 
-### 7.19 CaptureText
+### 7.19 TextNormalize
 
 **ログに限らない**文字列の正規化を単一所有します。 ログ定義（`CapturePreviewLogMessage`）の中へ置くとログ以外の利用者を呼び込み、名前と責務が食い違うため独立した型にしています。
 

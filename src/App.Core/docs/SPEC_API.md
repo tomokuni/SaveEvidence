@@ -2,7 +2,7 @@
 
 `App.Core` は UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供します。 名前空間は `App.AvaloniaUI` と同一の `EsUtil.SaveEvidence.*` です。
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 公開 API の可視性](#1-公開-api-の可視性)
 - [2. `Enums.AppPage`（列挙型）](#2-enumsapppage列挙型)

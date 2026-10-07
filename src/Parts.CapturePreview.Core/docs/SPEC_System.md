@@ -1,6 +1,6 @@
 # Parts.CapturePreview.Core システム仕様書
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 概要](#1-概要)
 - [2. 技術スタック](#2-技術スタック)

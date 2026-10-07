@@ -1,6 +1,6 @@
 # App.AvaloniaUI 設定項目と反映先の対応表
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 文書概要](#1-文書概要)
 - [2. コントロール階層と外観プロパティの公開](#2-コントロール階層と外観プロパティの公開)
@@ -330,7 +330,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
 | 選択矩形のサイズを表示 | `SizeLabelVisible` | `MarqueeAppearance.ShowSizeLabel`（外観が単一所有する） |
-| テキスト色 | `CaptureTextColor` | `MarqueeControl.Appearance.SizeLabelColor`（キャプチャのテキスト色と共用） |
+| テキスト色 | `TextNormalizeColor` | `MarqueeControl.Appearance.SizeLabelColor`（キャプチャのテキスト色と共用） |
 | 背景色（不透明度含む） | `SizeLabelBackgroundColor` | `MarqueeControl.Appearance.SizeLabelBackgroundColor`（アルファ込み） |
 | フォントサイズ | `SizeLabelFontSize` | `MarqueeAppearance.SizeLabelFontSize` |
 

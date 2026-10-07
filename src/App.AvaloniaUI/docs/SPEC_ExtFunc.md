@@ -1,6 +1,6 @@
 # App.AvaloniaUI 外部機能仕様書
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 文書概要](#1-文書概要)
 - [2. 目的](#2-目的)
@@ -117,12 +117,12 @@
 
 | 行 | ラベル | 文字色の設定キー | 背景色の設定キー（不透明度は色に統合） | フォントサイズ |
 | --- | --- | --- | --- | --- |
-| 1 行目 | サイズラベル | `CaptureTextColor`（ラベル設定の 1 行目に一本化） | `SizeLabelBackgroundColor` | `SizeLabelFontSize` |
+| 1 行目 | サイズラベル | `TextNormalizeColor`（ラベル設定の 1 行目に一本化） | `SizeLabelBackgroundColor` | `SizeLabelFontSize` |
 | 2 行目 | 操作ラベル | `SubLineColor` | `SubLineBackgroundColor` | `SubLineFontSize` |
 | 3 行目 | 情報ラベル | `InfoLabelColor` | `InfoLabelBackgroundColor` | `InfoLabelFontSize` |
 
 - **背景色**: 色と不透明度を統合した `#AARRGGBB` 形式（例: 黒 60% = `#99000000`）。 カラーピッカー（ColorPickerControl）の Flyout で不透明度（アルファ）も設定できる
-- **キャプチャテキストの色の一本化**: キャプチャテキストの色は 1 行目（サイズラベル）の文字色に一本化する（設定キー `CaptureTextColor` は「ラベル設定」の 1 行目へマップ）
+- **キャプチャテキストの色の一本化**: キャプチャテキストの色は 1 行目（サイズラベル）の文字色に一本化する（設定キー `TextNormalizeColor` は「ラベル設定」の 1 行目へマップ）
 
 ### 4.5 キーボードショートカット（Ctrl キー）
 

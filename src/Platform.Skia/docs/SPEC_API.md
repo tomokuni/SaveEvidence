@@ -2,7 +2,7 @@
 
 `Platform.Skia` は、SkiaSharp への依存を閉じ込めたプラットフォーム層です。 名前空間は `EsUtil.SaveEvidence.Platform.Skia`、アセンブリ名は `EsUtil.SaveEvidence.Platform.Skia` です。
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 公開 API の可視性](#1-公開-api-の可視性)
 - [2. `EsBitmapSkiaExtensions`（相互変換）](#2-esbitmapskiaextensions相互変換)

@@ -2,7 +2,7 @@
 
 `Platform.MewUI` は `EsUtil.Platform.Core` のコア型と MewUI（`Aprillz.MewUI`）の型を相互変換します。 名前空間は `EsUtil.SaveEvidence.Platform.MewUI` です。
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 公開 API](#1-公開-api)
   - [1.1 `EsKeyMewUIInterop`](#11-eskeymewuiinterop)

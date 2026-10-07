@@ -326,8 +326,8 @@ public static partial class CapturePreviewLogMessage
             captureType,
             detected,
             RectOrEmpty(rect),
-            CaptureText.Normalize(title),
-            CaptureText.Normalize(className));
+            TextNormalize.Normalize(title),
+            TextNormalize.Normalize(className));
     }
 
     /// <summary>ハイライトの検出結果を記録する（内部用）。</summary>

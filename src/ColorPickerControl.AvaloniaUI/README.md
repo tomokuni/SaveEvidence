@@ -2,7 +2,7 @@
 
 > プロジェクト名: `ColorPickerControl.AvaloniaUI`（Avalonia UI 版）。 MewUI 側は標準の `ColorPicker` を使うため移植していません（`XxxControl.Core` / `XxxControl.MewUI` は作成しません）。
 
-## 目次
+## 目次 <!-- omit from toc -->
 
 - [1. 概要](#1-概要)
 - [2. 機能一覧](#2-機能一覧)
