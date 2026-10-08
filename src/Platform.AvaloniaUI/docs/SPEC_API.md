@@ -44,7 +44,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 | サービス抽象（`ICaptureService` / `ICursorService` / `IWindowService` / `IElementFinder` / `ICursorOverrideGuard` / `IGlobalHotKeyService<T>`） | `EsUtil.Platform.Core` |
 | コア値型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` / `EsPlatformHandle` 等） | `EsUtil.Platform.Core` |
 | 座標変換ポート（`ICoordTransform` / `CoordTransform`）・`ScrollMath` / `DpiScaler` | `EsUtil.Platform.Core` |
-| 画像コンテナ（`EsBitmap`） | `EsUtil.Platform.Core` |
+| 画像コンテナ（`IEsBitmap` / `IEsWritableBitmap` / `EsBitmap` / `EsWritableBitmap`） | `EsUtil.Platform.Core` |
 | 既定実装（Win32）・サービス抽象・System.Drawing 変換 | `EsUtil.Platform.Core`（`Native/` ・`Native/Win/`・`Native/Imaging/`） |
 | **画面座標変換（`ScreenConverter`）・相互変換（Interop）・画像／幾何アダプタ** | **本プロジェクト** |
 
@@ -153,20 +153,20 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 
 ### 5.4 EsBitmapAvaloniaExtensions / EsImageSourceAdapter / CapacityLimitedCache
 
-`EsBitmap`（`EsUtil.Platform.Core` 提供）を Avalonia へ適合させます。
+コアの画像（`EsUtil.Platform.Core` 提供）を Avalonia へ適合させます。
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 生成 | `ToEsBitmap` | `EsBitmap ToEsBitmap(this Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製） |
-| 生成 | `ToAvaloniaWriteableBitmap` | `WriteableBitmap ToAvaloniaWriteableBitmap(this EsBitmap bitmap)` | Avalonia `WriteableBitmap` へ変換（複製を所有） |
-| 生成 | `ToAvaloniaBitmap` | `Bitmap ToAvaloniaBitmap(this EsBitmap bitmap)` | Avalonia `Bitmap` へ変換（複製を所有） |
+| 生成 | `ToEsBitmap` | `EsWritableBitmap ToEsBitmap(this Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。 **書き換え可能な型で返す**） |
+| 生成 | `ToAvaloniaWriteableBitmap` | `WriteableBitmap ToAvaloniaWriteableBitmap(this IEsBitmap bitmap)` | Avalonia `WriteableBitmap` へ変換（複製を所有） |
+| 生成 | `ToAvaloniaBitmap` | `Bitmap ToAvaloniaBitmap(this IEsBitmap bitmap)` | Avalonia `Bitmap` へ変換（複製を所有） |
 | 生成 | `CreateAvaloniaWriteableBitmap` | `static WriteableBitmap CreateAvaloniaWriteableBitmap(int width, int height, AvaloniaColor color)` | 単色の `WriteableBitmap` を生成 |
-| 生成 | `CreateAvaloniaImage` | `static EsImageSourceAdapter CreateAvaloniaImage(int width, int height, AvaloniaColor color)` | 単色の画像を所有するアダプタを生成（コアの `EsBitmap` を作り `Adopt` で包む。 **破棄は呼び出し側**） |
-| ピクセル | `SetPixel` | `void SetPixel(this EsBitmap bitmap, PixelPoint point, AvaloniaColor color)` | Avalonia 型でのピクセル書き込み（範囲外の無視が必要な場合はコアの `TrySetPixel` を `System.Drawing.Color` で使う） |
+| 生成 | `CreateAvaloniaImage` | `static EsImageSourceAdapter CreateAvaloniaImage(int width, int height, AvaloniaColor color)` | 単色の画像を所有するアダプタを生成（コアの `EsWritableBitmap` を作り `Adopt` で包む。 **破棄は呼び出し側**） |
+| ピクセル | `SetPixel` | `void SetPixel(this IEsWritableBitmap bitmap, PixelPoint point, AvaloniaColor color)` | Avalonia 型でのピクセル書き込み（範囲外の無視が必要な場合はコアの `TrySetPixel` を `System.Drawing.Color` で使う） |
 
 | 型 | 説明 |
 | --- | --- |
-| `EsImageSourceAdapter` | Avalonia の `Bitmap` またはコアの `EsBitmap` を包み、**`IImage`（表示）と `IEsBitmap`（コアの画像源）の両面**で公開するアダプタ。 真実は生成時に受け取った側の 1 つで、反対側は**初回に一度だけ**作る射影。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（`EsBitmap` の API を使う） |
+| `EsImageSourceAdapter` | Avalonia の `Bitmap` またはコアの画像（`IEsBitmap`）を包み、**`IImage`（表示）と `IEsBitmap`（コアの画像源）の両面**で公開するアダプタ。 真実は生成時に受け取った側の 1 つで、反対側は**初回に一度だけ**作る射影。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（コアの `EsBitmapExtensions` / `EsWritableBitmap` を使う） |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。 スレッド安全。 値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
 | `AvaloniaTextMeasure` | テキストの実寸を測る（`Measure(text, fontSize)`。 ラベルの配置矩形の計算に使う。 測定に色は影響しないためブラシは固定で共有する） |
 
@@ -175,15 +175,15 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
 | 生成 | コンストラクタ | `EsImageSourceAdapter(Bitmap source)` | Avalonia の画像を真実とする（コアへは初回に複製） |
-| 生成 | コンストラクタ | `EsImageSourceAdapter(EsBitmap source)` | コアの画像を真実とする（表示は初回に複製） |
-| 生成 | `Adopt` | `static EsImageSourceAdapter Adopt(EsBitmap source)` | コアの画像を**引き取って所有**するアダプタを生成（`Dispose` で画像も解放。 生成した画像を解放する人がいない場合に限る） |
+| 生成 | コンストラクタ | `EsImageSourceAdapter(IEsBitmap source)` | コアの画像を真実とする（表示は初回に複製。 **借用であり破棄しない**） |
+| 生成 | `Adopt` | `static EsImageSourceAdapter Adopt(EsWritableBitmap source)` | コアの画像を**引き取って所有**するアダプタを生成（`Dispose` で画像も解放。 生成した画像を解放する人がいない場合に限る。 **解放できる型だけを引き取る**） |
 | プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（ピクセル。 真実が破棄済みの場合は `ObjectDisposedException`） |
 | プロパティ | `Size` | `Size` | 表示サイズ（`IImage`。 真実が破棄済みの場合は `ObjectDisposedException`） |
-| メソッド | `GetEsBitmap` | `EsBitmap GetEsBitmap()` | コアの画像を**借用**で取得する |
+| メソッド | `GetEsBitmap` | `IEsBitmap GetEsBitmap()` | コアの画像を**借用**で取得する |
 | メソッド | `GetAvaloniaBitmap` | `Bitmap GetAvaloniaBitmap()` | Avalonia の画像を**借用**で取得する（保存・クリップボード用） |
 | メソッド | `Draw` / `Dispose` | `IImage` / 冪等 | 描画（真実が破棄済みの場合は no-op）・射影（と `Adopt` した画像）の解放 |
 
-**破棄済みの扱い**: 真実の `EsBitmap` が破棄済みの場合、寸法（`Width` / `Height` / `Size`）と `GetEsBitmap` / `GetAvaloniaBitmap` は `ObjectDisposedException` を投げます。 `Draw` だけは何も描画しません（表示は例外で止めない）。 無効な画像の寸法を正常値として渡さないための規則です。
+**破棄済みの扱い**: 真実のコア画像（`EsBitmapBase` の実体）が破棄済みの場合、寸法（`Width` / `Height` / `Size`）と `GetEsBitmap` / `GetAvaloniaBitmap` は `ObjectDisposedException` を投げます。 `Draw` だけは何も描画しません（表示は例外で止めない）。 無効な画像の寸法を正常値として渡さないための規則です。
 
 **命名の規約（所有権で分ける）**: **`Get*` は借用**（破棄・書き換え禁止。 所有権は相手）、**`To*` は新規生成**（所有権が呼び出し側へ移る。 拡張メソッド）です。 同じ画像を扱っても、どちらが新しいかが名前で判別できます。
 
@@ -203,7 +203,7 @@ var brush = s_cache.GetOrCreate(color);
 `ColorExtensions` / `EsImageSourceAdapter` / `EsBitmapAvaloniaExtensions` /
 `CapacityLimitedCache<TKey, TValue>` / `SolidColorBrushCache` です。
 
-インターフェース・コア値型・`CoordTransform`・`EsBitmap` と、その Win32 実装（`Native.Win`） ・`EsBitmapDrawingExtensions`（`Native.Imaging`）は `EsUtil.Platform.Core` が提供します。
+インターフェース・コア値型・`CoordTransform`・画像型（`IEsBitmap` / `IEsWritableBitmap` / `EsBitmap` / `EsWritableBitmap` / `EsBitmapBase`）と、その Win32 実装（`Native.Win`） ・`EsBitmapDrawingExtensions`（`Native.Imaging`）は `EsUtil.Platform.Core` が提供します。
 
 ## 6. 座標系
 

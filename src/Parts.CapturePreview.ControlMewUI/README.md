@@ -119,7 +119,7 @@ session.Dispose();
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Source` | `EsBitmap?` | 表示する画像。 設定すると Fit 表示へリセットする |
+| `Source` | `IEsBitmap?` | 表示する画像。 設定すると Fit 表示へリセットする |
 | `CenterAlign` | `bool` | 画像がビューポートより小さい軸を中央寄せする |
 | `Appearance` | `ZoomViewAppearance` | 下地（市松模様の大きさ・2 色・背景色）の外観の単一値 |
 | `Rects` | `IReadOnlyList<OverlayRect>` | オーバーレイとして描画する矩形（対象座標） |
@@ -145,7 +145,7 @@ session.Dispose();
 | `SetSelection(EsRect)` / `ClearSelection()` | 領域選択の外部設定・クリア |
 | `SetSelectionOverlayVisible(bool)` | 領域選択オーバーレイの可視性とヒットテストの切り替え（切り出しセッションが使う。 非表示へ戻すときは選択も破棄する） |
 | `SetCoordTransform(ICoordTransform?)` | 領域選択の座標変換ポートを設定する |
-| `SetLoupeSource(EsBitmap?)` / `ClearLoupe()` | ルーペのソース画像の設定・解除 |
+| `SetLoupeSource(IEsBitmap?)` / `ClearLoupe()` | ルーペのソース画像の設定・解除 |
 | `RequestConfirm()` / `RequestCancel()` / `FocusMarquee()` | 確定・キャンセル要求と選択矩形へのフォーカス |
 | `NotifyViewportChanged()` | ビューポートの変化を領域選択オーバーレイへ通知する |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | 領域選択の付加情報ラベルの文言（描画時に評価する） |
@@ -183,7 +183,7 @@ session.Dispose();
 | --- | --- |
 | `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを一括設定（選択矩形・暗転マスク・ルーペの配置で共用。 null の場合は倍率からコアが解決する） |
 | `SetSelection(EsRect)` / `ClearSelection()` | 選択状態の外部設定・クリア |
-| `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe()` | ルーペの制御 |
+| `SetLoupeSource(IEsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe()` | ルーペの制御 |
 | `RequestConfirm()` / `RequestCancel()` | Enter / Escape 相当の確定・キャンセル要求 |
 | `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
 | `NotifyViewportChanged()` / `RequestRedraw()` | 表示の変化への追従・暗転マスクの再描画要求 |

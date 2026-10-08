@@ -192,7 +192,7 @@ Facade は次のサービスをコンストラクタで生成し、撮影セッ�
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Source` | `EsBitmap?` | `null` | 表示する画像。 設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする |
+| `Source` | `IEsBitmap?` | `null` | 表示する画像。 設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
 | `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。 コアが単一所有する |
 | `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（対象座標 = 元画像ピクセル座標）。 null は設定できない |
@@ -225,7 +225,7 @@ Facade は次のサービスをコンストラクタで生成し、撮影セッ�
 | `SetSelection(EsRect)` / `ClearSelection()` | 領域選択の外部設定・クリア |
 | `SetSelectionOverlayVisible(bool)` | 領域選択オーバーレイの可視性とヒットテストを切り替える（切り出しセッションが使用する。 非表示へ戻すときは選択も破棄し、描画を要求する） |
 | `SetCoordTransform(ICoordTransform?)` | 領域選択の座標変換ポートを設定する（null の場合は倍率からコアが解決する） |
-| `SetLoupeSource(EsBitmap?)` / `ClearLoupe()` | ルーペのソース画像の設定・解除 |
+| `SetLoupeSource(IEsBitmap?)` / `ClearLoupe()` | ルーペのソース画像の設定・解除 |
 | `RequestConfirm()` / `RequestCancel()` | Enter / Escape 相当の確定・キャンセル要求（領域選択へ委譲する） |
 | `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
 | `NotifyViewportChanged()` | ビューポートの変化（パン・ズーム・リサイズ）を領域選択オーバーレイへ通知する |
@@ -303,7 +303,7 @@ Facade は次のサービスをコンストラクタで生成し、撮影セッ�
 | --- | --- |
 | `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを一括設定する（選択矩形・暗転マスク・ルーペの配置で共用。 null は倍率からコアが解決する） |
 | `SetSelection(EsRect)` / `ClearSelection()` | 選択状態の外部設定・クリア |
-| `SetLoupeSource(EsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe()` | ルーペの制御 |
+| `SetLoupeSource(IEsBitmap?)` / `SetLoupePosition(EsPoint)` / `ClearLoupe()` | ルーペの制御 |
 | `RequestConfirm()` / `RequestCancel()` | 確定要求・キャンセル要求（Enter / Escape 相当） |
 | `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
 | `NotifyViewportChanged()` | 表示（パン・ズーム・表示サイズ）の変化へ追従する |
@@ -389,11 +389,11 @@ Facade は次のサービスをコンストラクタで生成し、撮影セッ�
 
 ### 7.4 公開 API
 
-MewUI 版はコア型（`EsBitmap` / `EsPoint` / `EsVector`）で入出力します。
+MewUI 版はコア型（`IEsBitmap` / `EsPoint` / `EsVector`）で入出力します。
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `Source` | `EsBitmap?`（読み書き） | ズーム対象の画像。 設定すると Fit 表示にリセット |
+| `Source` | `IEsBitmap?`（読み書き） | ズーム対象の画像。 設定すると Fit 表示にリセット |
 | `Appearance` | `ZoomViewAppearance`（読み書き） | 外観の単一値（下地色・市松模様（サイズと 2 色）・スクロールバー）。 市松模様は画像の表示矩形の内側だけに描き、画像の外は下地色の単色になる |
 | `ZoomPercent` | `double`（読み書き） | 実効ズーム率（%）。 0 より大きい値のみ設定（0 以下は無視。 Fit へは `ZoomFit`）。 設定値は `ZoomOptions` の範囲へクランプする |
 | `IsFit` | `bool` | Fit 表示中かどうか（Fit 判定はこちら。 `ZoomPercent` は 0 にならない） |

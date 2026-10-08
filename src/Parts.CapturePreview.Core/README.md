@@ -24,7 +24,7 @@
 - **切り出し矩形の計算**（`CropBoundsMath`）: 選択矩形 → 画像内のピクセル矩形。 画像内へのクランプ・端数の丸め（0.5 は切り上げ）・終点のピクセルの加算（始点・終点を含むかは矩形の `EsRectInterval` が持ち、**加算の判断をここが単一所有する**）・最小サイズ判定を単一所有する
 - **選択矩形→切り出し矩形の解決**（`CropClipMath.ResolveCaptureRect`）: 確定時の切り出し矩形を決める**唯一の入口**（選択矩形も占有範囲も**画面物理座標**で渡す）。 種別ごとの区間の流儀（`CaptureTypeTraits.ResolveInterval`）とクランプ・丸め（`CropBoundsMath`）を組み合わせ、画像の右端・下端で透明な余白が付かないようにする（両 UI が同じ 1 行を呼ぶ）。 UI の選択矩形が画像ローカル座標の場合は、境界で `ToScreenRect` により画面物理座標へ戻してから渡す（１つの座標空間に揃えることで取り違えの余地をなくす）
 - **外観・動作設定**（`CaptureSettings`）: 全メンバー nullable の record。 null は「デフォルト値」または「現在値維持（部分更新）」を表し、`Validate` / `ToNonNull` を提供する
-- **キャプチャ結果**（`CaptureResult`）: `EsBitmap?`（画像）と `EsRectInt?`（仮想スクリーン座標の領域）の組
+- **キャプチャ結果**（`CaptureResult`）: `EsWritableBitmap?`（画像）と `EsRectInt?`（仮想スクリーン座標の領域）の組
 - **複合コントロールの設定変換**（`SelectionOverlayOptionsMapper`）: `CaptureSettings` → `SelectionOverlayOptions`（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線）の**寸法・表示可否**の対応を単一所有する（両 UI のホストが同じ変換を使う。 **色・枠線の太さ・表示可否は描画にだけ必要な設定のため写像せず**、提示層の `MarqueeAppearance` / `LoupeAppearance` が単一所有する）
 - **ラベル文言の単一所有**（`CaptureLabelTexts`）: キャプチャ種別→動作モードの写像と、操作ラベル（確定・キャンセル方法）・情報ラベル（ウィンドウタイトル）の文言を単一所有する（汎用コントロールは文言を持たず、ホストがプロバイダで与える）
 - **キャプチャ完了の通知**（`CaptureCompletedEventArgs`）: 両 UI の Facade（`CaptureSessionControl`）が公開する `CaptureCompleted` イベントの引数（`CaptureResult` を運ぶ）。 **コア層に置く**ことで、UI ごとに別の引数型を公開しない（ホストが UI を跨いだ共通のハンドラを書ける）
@@ -61,7 +61,7 @@
 
 ```text
 Parts.CapturePreview.Core
-    ├── EsUtil.Platform.Core（Es* 幾何型 / EsBitmap）
+    ├── EsUtil.Platform.Core（Es* 幾何型 / 画像型）
     ├─ EsUtil.Feature.Marquee.Presenter（MarqueeAppearance・MarqueeLabelPlacement、および推移参照の Marquee.Core = MarqueeOptions）
     ├─ EsUtil.Feature.Loupe.Presenter（LoupeAppearance、および推移参照の Loupe.Core = LoupeOptions）
     └── Microsoft.Extensions.Logging.Abstractions（ログ定義のソース生成）
@@ -137,7 +137,7 @@ src/
 │   │   ├── OverlayRectFrame.cs             # 矩形 1 個分の描画入力
 │   │   ├── OverlayLineDash.cs              # スタイルごとのダッシュ長の単一所有
 │   │   ├── OverlayDashWalk.cs              # 矩形の 1 辺を破線の区間へ分割する（両ラスタライザが共用）
-│   │   └── OverlayRectRasterizer.cs        # 矩形の 4 辺を EsBitmap へラスタライズする
+│   │   └── OverlayRectRasterizer.cs        # 矩形の 4 辺をコアの画像（EsWritableBitmap）へラスタライズする
 │   ├── Presentation/                       # 提示の写像（設定 → 外観・ラベル配置）
 │   │   ├── CapturePaintMapper.cs           # CaptureSettings → MarqueeAppearance / LoupeAppearance
 │   │   ├── SelectionOverlayChildValues.cs  # 設定とモード → 内包コントロールへ適用する値の解決

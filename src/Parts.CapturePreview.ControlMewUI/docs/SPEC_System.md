@@ -107,7 +107,7 @@ classDiagram
     }
     class CropSession {
         +bool HasSelection
-        +RunAsync(EsBitmap) Task~EsRectInt?~
+        +RunAsync(IEsBitmap) Task~EsRectInt?~
         +Confirm()
         +Cancel()
         +NotifyViewportChanged()
@@ -128,10 +128,10 @@ classDiagram
         +TrySetResult(TResult) bool
     }
     class SkiaImageView {
-        +EsBitmap? Source
+        +IEsBitmap? Source
     }
     class CropViewControl {
-        +EsBitmap? Source
+        +IEsBitmap? Source
         +IReadOnlyList~OverlayRect~ Rects
         +SelectionOverlayMode SelectionMode
         +SelectionOverlayOptions SelectionOverlayOptions
@@ -147,7 +147,7 @@ classDiagram
     }
     class ZoomViewControl {
         <<CropViewControl が内包する画像ビューポート>>
-        +EsBitmap? Source
+        +IEsBitmap? Source
         +ZoomViewAppearance Appearance
         +double ZoomPercent
         +bool IsFit
@@ -212,7 +212,7 @@ sequenceDiagram
     OW->>OW: CaptureSessionSlot.TryBeginCapture（排他の受付。 Facade が行う）
     OW->>OS: キャプチャ除外 + 画面外へ退避（CaptureOwnerScope）
     OW->>CS: CaptureVirtualScreen（全モニター）
-    CS-->>OW: EsBitmap / null
+    CS-->>OW: EsWritableBitmap / null
     OW->>UI: 仮想スクリーンの画像を敷き、透明な状態でウィンドウを表示
     OW->>OW: 1 フレーム目で物理ピクセル配置（SetBounds）
     OW->>OW: 2 フレーム目で透明を解除（背景は画像の平均色）

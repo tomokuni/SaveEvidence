@@ -71,7 +71,7 @@ sequenceDiagram
   UI->>UI: ToAvaloniaBitmap() で変換
   UI->>UI: Clipboard.SetBitmapAsync
   UI->>VM: PasteFromClipboardAsync() → EsWritableBitmap?
-  VM->>VM: PreviewImage = EsBitmap
+  VM->>VM: PreviewImage = EsWritableBitmap
 ```
 
 | 注入点 | 種類 | 内容 |

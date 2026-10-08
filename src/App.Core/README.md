@@ -64,8 +64,8 @@ UI フレームワークへ依存しません。 外部依存は MVVM の `Commu
 
 | コールバック | 型 | 注入元（Avalonia 実装） |
 | --- | --- | --- |
-| `CopyToClipboardAsync` | `Func<IEsBitmap, Task<bool>>` | `MainWindow`（`EsBitmap` → `Bitmap` 変換 + `Clipboard.SetBitmapAsync`） |
-| `PasteFromClipboardAsync` | `Func<Task<EsWritableBitmap?>>` | `MainWindow`（`Clipboard.TryGetBitmapAsync` + `Bitmap` → `EsBitmap` 変換） |
+| `CopyToClipboardAsync` | `Func<IEsBitmap, Task<bool>>` | `MainWindow`（`IEsBitmap` → `Bitmap` 変換 + `Clipboard.SetBitmapAsync`） |
+| `PasteFromClipboardAsync` | `Func<Task<EsWritableBitmap?>>` | `MainWindow`（`Clipboard.TryGetBitmapAsync` + `Bitmap` → `EsWritableBitmap` 変換） |
 | `ConfirmOverwriteAsync` | `Func<string, Task<bool>>` | `MainWindow`（`ConfirmDialog`） |
 | `BeforeEditAction` | `Action` | `CapturePage`（Undo スタックへのプッシュ） |
 | `StartSelectionMode` | `Action<CaptureType>` | `CapturePage`（キャプチャの開始） |

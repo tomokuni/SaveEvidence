@@ -42,7 +42,7 @@ Parts.CapturePreview.Core（本プロジェクト。撮影・切り出しの共�
         │ 参照
         ├─> EsUtil.Feature.Marquee.Core / .Presenter、EsUtil.Feature.Loupe.Core / .Presenter
         ▼
-EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowService）
+EsUtil.Platform.Core（Es* 幾何型 / 画像型 / ICaptureService / IWindowService）
 ```
 
 依存は一方向です。 Core は UI フレームワーク（Avalonia / MewUI）を参照せず、提示層（`EsUtil.Feature.*.Presenter`）へは外観型（色・枠線の太さ・表示可否）の写像のためにのみ参照します（機能コアの「Core → Presenter 禁止」は同じ機能のコアが自身の提示層へ依存することを禁じる規則であり、本プロジェクトは製品の設定型と提示層の外観型を橋渡しする別の層です）。
@@ -135,7 +135,7 @@ EsUtil.Platform.Core（Es* 幾何型 / EsBitmap / ICaptureService / IWindowServi
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ CaptureResult（record）                               │
-│  Image: EsBitmap? / SourceBounds: EsRectInt?        │
+│ Image: EsWritableBitmap? / SourceBounds: EsRectInt? │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ 切り出しビューの画像ビューポート（クラス・静的クラス）    │
@@ -183,13 +183,13 @@ classDiagram
     class CropClipMath {
         +ResolveCaptureRect(CaptureType, EsRect, EsRectInt) EsRectInt
         +ResolveCaptureRect(CaptureType, EsRectInt, EsRectInt) EsRectInt
-        +ImageSize(EsBitmap) EsSize
-        +ImageBounds(EsBitmap, EsPointInt) EsRectInt
-        +ValidateImage(EsBitmap, string)
+        +ImageSize(IEsBitmap) EsSize
+        +ImageBounds(IEsBitmap, EsPointInt) EsRectInt
+        +ValidateImage(IEsBitmap, string)
         +ToLocalRect(EsRectInt, EsPointInt) EsRectInt
         +ToScreenRect(EsRect, EsPointInt) EsRect
         +ToScreenRect(EsRectInt, EsPointInt) EsRectInt
-        +Extract(EsBitmap, EsPointInt, EsRectInt) EsBitmap?
+        +Extract(IEsBitmap, EsPointInt, EsRectInt) EsWritableBitmap?
     }
     class CaptureHighlightSession {
         +EsRect? SourceRect
@@ -204,9 +204,9 @@ classDiagram
         +Take() EsRectInt?
     }
     class CaptureResult {
-        +EsBitmap? Image
+        +EsWritableBitmap? Image
         +EsRectInt? SourceBounds
-        +From(EsBitmap, EsRectInt) CaptureResult
+        +From(EsWritableBitmap, EsRectInt) CaptureResult
     }
     class CaptureHighlight {
         +EsRect? SourceRect
@@ -220,19 +220,19 @@ classDiagram
     }
     class CaptureClipCache {
         +HasCached(EsRectInt) bool
-        +Take(EsRectInt) EsBitmap?
-        +Store(EsRectInt, EsBitmap)
+        +Take(EsRectInt) EsWritableBitmap?
+        +Store(EsRectInt, EsWritableBitmap)
         +Dispose()
     }
     class CaptureImageHolder {
-        +EsBitmap? Image
+        +EsWritableBitmap? Image
         +EsPointInt Origin
         +EsRectInt Bounds
-        +Set(EsBitmap, EsPointInt) bool
+        +Set(EsWritableBitmap, EsPointInt) bool
         +Dispose()
     }
     class CaptureVirtualScreen {
-        +AwaitAsync(Task, TimeSpan) Task
+        +AwaitAsync(Task, TimeSpan) Task~EsWritableBitmap?~
     }
     class CropSessionActions {
         +Resolve(bool, bool) CropSessionAction
@@ -292,7 +292,7 @@ classDiagram
 │  OverlayRectFrame（record struct）: 描画入力（配置・太さ・半幅・破線・色・可否） │
 │  OverlayLineDash: Get / IsDashed（ダッシュ長の単一所有） │
 │  OverlayDashWalk: ForEach（1 辺 → 破線の区間。 両ラスタライザが共用） │
-│  OverlayRectRasterizer: Draw（4 辺を EsBitmap へラスタライズ） │
+│  OverlayRectRasterizer: Draw（4 辺をコアの画像へラスタライズ）    │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ 領域選択の複合コントロールのコア                        │
@@ -412,7 +412,7 @@ sequenceDiagram
 | --- | --- |
 | 設定値が範囲外（`CaptureSettings.Validate`） | `ArgumentOutOfRangeException`（null メンバーは対象外） |
 | 切り出しできない入力（`CropBoundsMath`） | 例外を投げず、`IsEmpty` が true の矩形を返す（呼び出し側がキャンセル扱いにする） |
-| 画像の外側へはみ出すピクセル書き込み（`OverlayRectRasterizer` / `SelectionOutlineRasterizer`） | `EsBitmap.TrySetPixel` が false を返すだけで、例外にしない（画像端に接する矩形は正常な入力のため） |
+| 画像の外側へはみ出すピクセル書き込み（`OverlayRectRasterizer` / `SelectionOutlineRasterizer`） | `TrySetPixel` が false を返すだけで、例外にしない（画像端に接する矩形は正常な入力のため） |
 | ズーム設定の不変条件違反（`ZoomOptions`） | `ArgumentNullException` / `ArgumentException` / `ArgumentOutOfRangeException` |
 | ズームの計算入力が範囲外（`ZoomMath` / `ZoomTransition`） | 例外を投げず、内部でクランプする（スケールが 0 以下の場合は 1 として扱う） |
 

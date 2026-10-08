@@ -26,7 +26,7 @@
 LineDetection は、キャプチャ画像から Windows のウィンドウ枠となる水平・垂直の辺（線分）を検出するライブラリです。
 
 - 検出方式は `ILineDetector` を通して抽象化され、ロジック方式を同一のインターフェースで利用できます。
-- 入力は `EsBitmap`（BGRA・1 ピクセル 4 バイト）で、出力は線分リストです。
+- 入力は `IEsBitmap`（BGRA・1 ピクセル 4 バイト）で、出力は線分リストです。
 - OpenCvSharp は内部利用に閉じており、公開 API には露出しません。 ネイティブは `OpenCvSharp5.runtime.win.slim`（`videoio` を除く縮小構成）を参照します。
 
 ## 2. 公開 API
@@ -64,7 +64,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 | `string Name { get; }` | 検出方式の表示名。 |
 | `string ModelInfo { get; }` | モデルサイズの表示。 モデルを使わない方式は空文字。 |
 | `string? ErrorMessage { get; }` | モデル読込・実行エラーのメッセージ。 正常時は null。 |
-| `IReadOnlyList<LineDetectionResult> Detect(EsBitmap image)` | 画像から水平・垂直の辺（線分）を検出する。 スコア降順。 |
+| `IReadOnlyList<LineDetectionResult> Detect(IEsBitmap image)` | 画像から水平・垂直の辺（線分）を検出する。 スコア降順。 画像は**借用であり破棄しない**。 |
 
 ### 2.4 LogicLineDetector クラス
 
@@ -106,7 +106,7 @@ LineDetection は、キャプチャ画像から Windows のウィンドウ枠と
 
 ### 3.1 入力画像
 
-- 型: `EsBitmap`（BGRA8888）
+- 型: `IEsBitmap`（BGRA8888。 借用であり破棄しない）
 - フォーマット: BGRA（1 ピクセル 4 バイト）
 - 検出器は入力画像をグレースケール化して解析します（`Detect` 実行時に内部で変換）。
 

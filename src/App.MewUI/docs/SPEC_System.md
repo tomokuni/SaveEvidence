@@ -46,7 +46,7 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 | 対象フレームワーク | .NET 10（`net10.0-windows`） |
 | 言語 | C# 14 |
 | UI フレームワーク | MewUI（`Aprillz.MewUI` 0.21.1 固定） |
-| グラフィックス | SkiaSharp（`SkiaCanvasView` で `EsBitmap` を直接描画） |
+| グラフィックス | SkiaSharp（`SkiaCanvasView` でコアの画像を直接描画） |
 | 描画バックエンド | Direct2D + Win32 プラットフォームホスト + `Aprillz.MewUI.Skia.Interop.Direct2D`（GPU ブリッジ） |
 | MVVM | `CommunityToolkit.Mvvm`（コアの `MainViewModel` をそのまま使用） |
 | ログ | Serilog 4.x（`Serilog.Sinks.File` + `Serilog.Extensions.Logging`。 Avalonia 版と同じファイルへ出力） |
@@ -101,13 +101,13 @@ App.MewUI ──> Parts.CapturePreview.ControlMewUI ──> Parts.CapturePreview
 
 ### 3.3 境界の変換
 
-コアの型（`EsBitmap` / `EsKey` / `EsRect` 等）と MewUI の型は、境界で **1 行の変換**を行います。
+コアの型（画像型 / `EsKey` / `EsRect` 等）と MewUI の型は、境界で **1 行の変換**を行います。
 
 ```text
 コア型 ──[Platform.MewUI の Interop]──> MewUI 型
 ```
 
-- 画像は変換不要（`EsBitmap.ToSKBitmap()` をそのまま描画）。
+- 画像は変換不要（`ToSKBitmap()` の非所有ビューをそのまま描画）。
 - キー・ウィンドウ状態・幾何・プラットフォームハンドルは `Es*MewUIInterop` を介して変換します。
 
 ## 4. コンポーネント構成
@@ -209,7 +209,7 @@ classDiagram
         +Build(vm, settings, undoStack)$ PageContent
     }
     class ImageThumbnailLoader {
-        +Load(filePath, maxSize)$ EsBitmap?
+        +Load(filePath, maxSize)$ EsWritableBitmap?
     }
     class EditHistory {
         +Undo(services)$ void
@@ -329,7 +329,7 @@ classDiagram
     UndoPage ..> UndoHistory : 履歴の参照
     UndoPage ..> ISettingsService : 表示モードの読み書き
     UndoPage ..> MainViewModel : 現在の画像を参照
-    ImageThumbnailLoader ..> EsBitmap : 縮小デコードの結果
+    ImageThumbnailLoader ..> EsWritableBitmap : 縮小デコードの結果
     ThumbnailView --|> SkiaImageView : 計測と Uniform 指定を与える
     SkiaImageView ..> ImageDrawMath : 配置計算
     CropViewControl ..> MainViewModel : 参照（Source / DetectedRects）
@@ -387,7 +387,7 @@ sequenceDiagram
 
     OW->>OS: キャプチャ除外 + 画面外へ退避（設定時）
     OW->>CS: CaptureVirtualScreen(全モニター)
-    CS-->>OW: EsBitmap / 失敗時 null
+    CS-->>OW: EsWritableBitmap / 失敗時 null
     OW->>OW: ボーダーレス・最前面のウィンドウを仮想スクリーン全面へ表示（透明 → 画像合成後に解除）
     Note over OW: 範囲選択はドラッグ、スクリーンはカーソル下のモニター、ウィンドウはカーソル下のウィンドウをハイライト
     OW->>OW: 確定時は CropClipMath で切り出し（キャンセル時は null）
@@ -437,7 +437,7 @@ sequenceDiagram
     FW->>FW: Restore()（設定の復元 → 一覧の再構築）
     FW->>IL: 各ファイルを Load(path, iconSize)
     IL->>IL: キャッシュを確認 → 縮小デコード
-    IL-->>FW: EsBitmap?
+    IL-->>FW: EsWritableBitmap?
     Note over MW,FW: 以降の選択でも SelectionChanged → OnActivated → Restore()
     FW->>ST: トグル操作時に Save()
 ```
@@ -457,7 +457,7 @@ sequenceDiagram
     alt 縮小されなかった
         IL->>SK: SKBitmap.Resize(目標寸法)
     end
-    IL-->>IL: EsBitmap.FromSKBitmap（所有権を移す）
+    IL-->>IL: skBitmap.ToEsBitmap（複製してコアの画像を作る）
 ```
 
 ## 11. シーケンス図（編集履歴の移動）
@@ -472,7 +472,7 @@ sequenceDiagram
 
     BTN->>EH: Undo(services) / Redo(services)
     EH->>US: Undo(PreviewImage) / Redo()
-    US-->>EH: 復元する EsBitmap（クローン保持のため安全）
+    US-->>EH: 復元する EsWritableBitmap（クローン保持のため安全）
     EH->>VM: SetPreviewImage(image)
     VM-->>VM: 差し替え前の画像を破棄し、保存状態を未保存へ
     VM-->>CV: PropertyChanged(PreviewImage) → Source を設定
@@ -521,7 +521,7 @@ sequenceDiagram
     UP->>UP: Restore()（ClampIndex → トグル同期 → Rebuild）
     UP->>US: GetRedoHistory() → GetUndoHistory()
     UP->>VM: PreviewImage
-    VM-->>UP: EsBitmap?
+    VM-->>UP: EsWritableBitmap?
     UP->>TV: 項目ごとに生成（RequestedSize / Source）
     TV->>TV: DrawBitmap（幅・高さの小さい方のスケールで中央寄せ）
     Note over UP: 表示モード変更時は settings へ保存して Rebuild()
@@ -565,7 +565,7 @@ sequenceDiagram
     ZV->>SK: canvas.Clear(暗色) + canvas.Scale(DPI)
     ZV->>VM: PreviewImage
     alt 画像あり
-        VM-->>ZV: EsBitmap
+        VM-->>ZV: EsWritableBitmap
         ZV->>SK: DrawBitmap(ToSKBitmap(), 表示矩形)
     else 画像なし
         ZV-->>MW: 描画せず終了
@@ -620,7 +620,7 @@ sequenceDiagram
 1. **UI 層のみを実装する**。 状態・設定・画像コンテナはコアが単一所有し、`App.MewUI` は保持しない。
 2. **ViewModel をラップしない**。 `App.Core` の `MainViewModel`（`INotifyPropertyChanged`）を
    `Bind` へ直接渡す。 UI ごとの ViewModel を増やすと二重管理になるため。
-3. **画像アダプタを作らない**。 MewUI は SkiaSharp を直接扱えるため、`EsBitmap` を変換せず描画できる。
+3. **画像アダプタを作らない**。 MewUI は SkiaSharp を直接扱えるため、コアの画像を変換せず描画できる。
 4. **パッケージバージョンを固定する**。 MewUI は 0.x で API が安定化中であり、
    破壊的変更を検知できるよう `MewUIVersion` をプロパティで単一管理する。
 5. **プレビューは Star 行に置く**。 `SkiaCanvasView` の `MeasureContent` は `Size.Empty` を返し、

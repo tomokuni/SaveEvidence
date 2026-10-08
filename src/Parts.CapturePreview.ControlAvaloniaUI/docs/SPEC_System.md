@@ -253,7 +253,7 @@ flowchart TB
   - `SourceToClient` / `ClientToSource`（対象 ↔ ビューポート。 画像表示矩形の原点基準）とコア確定値の描画先への写像
 - **公開メンバー**: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionSourceRect` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `SourceToClient` / `ClientToSource`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`
 - **可視性**: public
-- **依存**: ZoomViewControl / SelectionOverlayControl（同一アセンブリ）/ Parts.CapturePreview.Core（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）/ Platform.AvaloniaUI（色の相互変換）/ EsUtil.Platform.Core（`EsBitmap` / `ICoordTransform`）
+- **依存**: ZoomViewControl / SelectionOverlayControl（同一アセンブリ）/ Parts.CapturePreview.Core（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）/ Platform.AvaloniaUI（色の相互変換）/ EsUtil.Platform.Core（画像型 / `ICoordTransform`）
 - **備考**: 画像表示・領域選択の状態と判断は内包コントロールとそのコアが単一所有し、本コントロールは配置・転送・写像のみを担う（自身は判断を持たない）
 
 ### 6.7 SelectionOverlayControl

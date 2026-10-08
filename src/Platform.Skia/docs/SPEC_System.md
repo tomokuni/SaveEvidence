@@ -18,7 +18,7 @@
 
 `Platform.Skia` は、**SkiaSharp への依存を 1 箇所へ閉じ込める**プラットフォーム層です。
 
-1. **ビットマップの相互変換**（`EsBitmapSkiaExtensions`）— コアの `EsBitmap` と `SKBitmap` を変換する（非所有ビュー／複製）
+1. **ビットマップの相互変換**（`EsBitmapSkiaExtensions`）— コアの画像と `SKBitmap` を変換する（非所有ビュー／複製）
 2. **描画の部品**（`SkiaFill` / `SkiaLabel` / `SkiaText`）と**変換**（`SkiaColorInterop` / `SkiaGeometryInterop`）
 
 **描画 API の抽象は持ちません**（UI フレームワークごとの描画モデルの差は抽象では吸収しきれないため）。 描画の呼び出し（層の順序）は各 UI が行います。
@@ -53,7 +53,7 @@ graph LR
 
 - 依存の向きは **MewUI 系 → Platform.Skia →（SkiaSharp / EsUtil.Platform.Core）** です。
 - **`EsUtil.Platform.Core` は SkiaSharp を参照しません**（Skia 依存は本層で止まる）。
-- `EsBitmapSkiaExtensions` は `EsUtil.Platform.Core` の `EsBitmap` を拡張します。
+- `EsBitmapSkiaExtensions` は `EsUtil.Platform.Core` の `IEsBitmap` を拡張します。
 
 ## 4. 依存関係
 
@@ -83,7 +83,7 @@ classDiagram
   class EsBitmapSkiaExtensions {
     <<static>>
     +ToSKBitmap(bitmap)$ SKBitmap
-    +ToEsBitmap(bitmap)$ EsBitmap
+    +ToEsBitmap(bitmap)$ EsWritableBitmap
   }
   class SkiaFill {
     <<static>>
@@ -109,16 +109,16 @@ classDiagram
     +ToSKRect(rect)$ SKRect
     +ToEsSize(size)$ EsSize
   }
-  class EsBitmap {
+  class IEsBitmap {
     <<EsUtil.Platform.Core>>
     +int Width / Height / Stride
-    +nint Address
+    +ReadOnlySpan~byte~ Pixels
   }
   class SKBitmap {
     <<SkiaSharp>>
   }
 
-  EsBitmapSkiaExtensions ..> EsBitmap : 参照（非所有ビュー / 複製元）
+  EsBitmapSkiaExtensions ..> IEsBitmap : 参照（非所有ビュー / 複製元）
   EsBitmapSkiaExtensions ..> SKBitmap : 生成・複製
 ```
 
@@ -133,7 +133,7 @@ sequenceDiagram
   UI->>E: image.ToSKBitmap()（非所有ビュー）
   E-->>UI: コアのバッファを指す SKBitmap
   UI->>SK: DrawBitmap(view, sourceRect, destRect)
-  Note over E,SK: ビューはコピーしない（EsBitmap の生存中のみ有効）
+  Note over E,SK: ビューはコピーしない（元画像の生存中のみ有効）
 ```
 
 ## 8. データフロー（コアのビットマップ生成）
@@ -142,14 +142,14 @@ sequenceDiagram
 sequenceDiagram
   participant UI as MewUI のコントロール
   participant E as EsBitmapSkiaExtensions
-  participant Core as EsBitmap（EsUtil.Platform.Core）
+  participant Core as EsWritableBitmap（EsUtil.Platform.Core）
   participant SK as SKBitmap
 
   UI->>E: skBitmap.ToEsBitmap()
   E->>Core: CreateUninitialized(width, height)（全行をコピーする場合は 0 初期化を省く）
   E->>SK: GetPixels()
   E->>Core: 行単位で NativeMemory.Copy（コピー）
-  E-->>UI: EsBitmap（所有権は呼び出し側）
+  E-->>UI: EsWritableBitmap（所有権は呼び出し側）
   Note over SK: 引数の所有権は呼び出し側に残る（破棄しない）
 ```
 

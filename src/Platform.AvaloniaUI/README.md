@@ -35,7 +35,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 - **ネイティブ実装**: Win32 実装（`EsUtil.Platform.Core.Native.Win`）は `EsUtil.Platform.Core` が提供（**実行時のプラットフォーム分岐は持たず、ホストが生成して抽象型として注入する**）
 - **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPointInt`・`EsRectInt`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
 - **カーソル抑止の仲介**: `CursorOverrideGuardAvaloniaExtensions.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲）
-- **画像ユーティリティ**: `EsBitmap`（`EsUtil.Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
+- **画像ユーティリティ**: コアの画像（`EsUtil.Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
 - **画像アダプタ**（`EsImageSourceAdapter`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
 - **ブラシキャッシュ**: `SolidColorBrushCache`（`System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有する。 描画アダプタとラベル要素の配置が共用する）
 - **テキスト実寸の測定**: `AvaloniaTextMeasure`（ラベル要素の配置矩形を実寸から決めるための唯一の入口。 UI ごとに測定を書くと片方だけ実寸 0 になり、文字が切り落とされる）
