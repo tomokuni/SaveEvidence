@@ -179,11 +179,13 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 | 生成 | `Adopt` | `static EsImageSourceAdapter Adopt(EsWritableBitmap source)` | コアの画像を**引き取って所有**するアダプタを生成（`Dispose` で画像も解放。 生成した画像を解放する人がいない場合に限る。 **解放できる型だけを引き取る**） |
 | プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（ピクセル。 真実が破棄済みの場合は `ObjectDisposedException`） |
 | プロパティ | `Size` | `Size` | 表示サイズ（`IImage`。 真実が破棄済みの場合は `ObjectDisposedException`） |
+| プロパティ | `IsDisposed` | `bool` | 真実の破棄状態（本クラスの `Dispose` では真にならない。 `Bitmap` を真実とした場合は常に `false`） |
+| メソッド | `GetPixel` | `(byte B, byte G, byte R, byte A) GetPixel(int x, int y)` / `Color GetPixel(EsPointInt point)` | ピクセルの取得（真実へ委譲。 破棄済みは `ObjectDisposedException`） |
 | メソッド | `GetEsBitmap` | `IEsBitmap GetEsBitmap()` | コアの画像を**借用**で取得する |
 | メソッド | `GetAvaloniaBitmap` | `Bitmap GetAvaloniaBitmap()` | Avalonia の画像を**借用**で取得する（保存・クリップボード用） |
 | メソッド | `Draw` / `Dispose` | `IImage` / 冪等 | 描画（真実が破棄済みの場合は no-op）・射影（と `Adopt` した画像）の解放 |
 
-**破棄済みの扱い**: 真実のコア画像（`EsBitmapBase` の実体）が破棄済みの場合、寸法（`Width` / `Height` / `Size`）と `GetEsBitmap` / `GetAvaloniaBitmap` は `ObjectDisposedException` を投げます。 `Draw` だけは何も描画しません（表示は例外で止めない）。 無効な画像の寸法を正常値として渡さないための規則です。
+**破棄済みの扱い**: 真実のコア画像が破棄済みの場合（`IsDisposed` が `true`）、寸法（`Width` / `Height` / `Size`）と `GetEsBitmap` / `GetAvaloniaBitmap` / `GetPixel` は `ObjectDisposedException` を投げます。 `Draw` だけは何も描画しません（表示は例外で止めない）。 無効な画像の寸法を正常値として渡さないための規則です。
 
 **命名の規約（所有権で分ける）**: **`Get*` は借用**（破棄・書き換え禁止。 所有権は相手）、**`To*` は新規生成**（所有権が呼び出し側へ移る。 拡張メソッド）です。 同じ画像を扱っても、どちらが新しいかが名前で判別できます。
 

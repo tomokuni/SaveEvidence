@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Xunit;
@@ -177,6 +178,64 @@ public class EsImageSourceAdapterTests
         Assert.Throws<ObjectDisposedException>(() => adapter.Width);
         Assert.Throws<ObjectDisposedException>(() => adapter.Height);
         Assert.Throws<ObjectDisposedException>(() => adapter.Size);
+    }
+
+    [AvaloniaFact]
+    internal void IsDisposedは真実の破棄状態を返す()
+    {
+        var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Red);
+        var adapter = new EsImageSourceAdapter(bmp);
+        IEsBitmap read = adapter;
+
+        Assert.False(read.IsDisposed);
+
+        bmp.Dispose();
+
+        // 真実の破棄が面から見える（描画側が破棄済みを描かない判定に使う）
+        Assert.True(read.IsDisposed);
+        adapter.Dispose();
+    }
+
+    [AvaloniaFact]
+    internal void IsDisposedは本クラスのDisposeでは真にならない()
+    {
+        using var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Red);
+        var adapter = new EsImageSourceAdapter(bmp);
+        IEsBitmap read = adapter;
+
+        adapter.Dispose();
+
+        // 本クラスの Dispose は射影だけを解放する（真実は生存し、再び射影を作れる）
+        Assert.False(read.IsDisposed);
+        Assert.Equal(8, read.Width);
+    }
+
+    [AvaloniaFact]
+    internal void ビットマップを真実とした場合のIsDisposedは偽になる()
+    {
+        using var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Red);
+        using var avalonia = bmp.ToAvaloniaBitmap();
+        using var adapter = new EsImageSourceAdapter(avalonia);
+        IEsBitmap read = adapter;
+
+        // Avalonia の Bitmap は破棄状態を公開しないため判定できない（偽に倒す。 取得は参照先が例外を投げる）
+        Assert.False(read.IsDisposed);
+    }
+
+    [AvaloniaFact]
+    internal void GetPixelは座標型のオーバーロードを面として公開する()
+    {
+        using var bmp = EsWritableBitmap.Create(4, 4, System.Drawing.Color.FromArgb(255, 30, 20, 10));
+        using var adapter = new EsImageSourceAdapter(bmp);
+        IEsBitmap read = adapter;
+
+        var (b, g, r, a) = read.GetPixel(1, 2);
+        var color = read.GetPixel(new EsPointInt(1, 2));
+
+        Assert.Equal(b, color.B);
+        Assert.Equal(g, color.G);
+        Assert.Equal(r, color.R);
+        Assert.Equal(a, color.A);
     }
 
     // ====================================================================

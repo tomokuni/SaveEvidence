@@ -54,8 +54,8 @@ internal sealed class ThumbnailView : SkiaImageView
     /// </remarks>
     protected override Size MeasureContent(Size availableSize)
     {
-        // 破棄済みの検出はコアの実体（EsBitmapBase）だけが持つ（読み取りの面は破棄状態を公開しない）
-        if (Source is not { } source || source is EsBitmapBase { IsDisposed: true } || source.Width <= 0 || RequestedSize <= 0)
+        // 破棄済みの判定は読み取りの面（IEsBitmap.IsDisposed）が公開する
+        if (Source is not { } source || source.IsDisposed || source.Width <= 0 || RequestedSize <= 0)
         {
             return new Size(RequestedSize, RequestedSize);
         }

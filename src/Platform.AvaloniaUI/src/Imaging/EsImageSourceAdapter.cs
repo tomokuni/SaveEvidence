@@ -3,6 +3,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using Color = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 
@@ -150,8 +151,19 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
     public ReadOnlySpan<byte> Pixels => GetEsBitmap().Pixels;
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// <b>本クラス自身の <see cref="Dispose"/> では真にならない</b>（射影だけを解放し、本クラスは生存して再び射影を作れる）。
+    /// 真実の破棄状態を返す（<see cref="Bitmap"/> を真実とした場合は破棄状態を公開しないため常に false）。
+    /// </remarks>
+    public bool IsDisposed => _es?.IsDisposed ?? false;
+
+    /// <inheritdoc/>
     /// <exception cref="ObjectDisposedException">真実が破棄済みの場合。</exception>
     public (byte B, byte G, byte R, byte A) GetPixel(int x, int y) => GetEsBitmap().GetPixel(x, y);
+
+    /// <inheritdoc/>
+    /// <exception cref="ObjectDisposedException">真実が破棄済みの場合。</exception>
+    public Color GetPixel(EsPointInt point) => GetEsBitmap().GetPixel(point);
 
     /// <summary>表示サイズ（DIP）。</summary>
     /// <value>真実の画像から得られる <see cref="Size"/>。</value>
@@ -229,7 +241,7 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
         }
 
         var es = _es!;
-        if (es is EsBitmapBase core && core.IsDisposed)
+        if (es.IsDisposed)
         {
             // 真実が破棄済み: 射影が残っていれば破棄して何も描画しない
             _avaloniaProjection?.Dispose();
@@ -262,15 +274,10 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
     /// <summary>真実が破棄済みなら例外を投げる。</summary>
     /// <param name="source">真実の画像。</param>
     /// <remarks>
-    /// 破棄状態を公開するのはコアの実体（<see cref="EsBitmapBase"/>）だけである（読み取りの面は破棄状態を公開しない）。<br/>
-    /// したがって本クラスが受け取る画像のうち、コアの実体に対してだけ破棄済みを検出できる<br/>
-    /// （UI 側の画像は参照先が例外を投げるため、ここでは判定しない）。
+    /// 破棄状態は読み取りの面（<see cref="IEsBitmap.IsDisposed"/>）が公開するため、真実の型に依らず判定できる
+    /// （以前はコアの実体（<see cref="EsBitmapBase"/>）へのダウンキャストで調べており、本インターフェイスを
+    /// 直接実装する画像を取りこぼしていた）。
     /// </remarks>
     private static void ThrowIfTruthDisposed(IEsBitmap source)
-    {
-        if (source is EsBitmapBase core)
-        {
-            core.ThrowIfDisposed();
-        }
-    }
+        => ObjectDisposedException.ThrowIf(source.IsDisposed, source);
 }

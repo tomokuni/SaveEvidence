@@ -36,9 +36,8 @@ internal static class SkiaImageRenderer
     {
         canvas.Clear(SKColors.Transparent);
 
-        // 未設定・破棄済みの場合は描画しない（破棄済みの検出はコアの実体だけが持つ。
-        // 読み取りの面は破棄状態を公開しないため、破棄済みは実体の型で判定する）
-        if (source is not { } bitmap || bitmap is EsBitmapBase { IsDisposed: true })
+        // 未設定・破棄済みの場合は描画しない（破棄状態は読み取りの面（IEsBitmap.IsDisposed）が公開する）
+        if (source is not { } bitmap || bitmap.IsDisposed)
         {
             return;
         }
