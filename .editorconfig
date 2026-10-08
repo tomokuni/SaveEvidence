@@ -187,6 +187,14 @@ dotnet_diagnostic.MA0049.severity = warning
 # 規約 §4「文字列比較は StringComparison を明示する」と対になる。 実測で 1 件を修正）。
 dotnet_diagnostic.MA0006.severity = warning
 
+# アンマネージド資源は `SafeHandle` に包み、**手書きのファイナライザを使わない**（規則は .github/ビルド設定規約.md §3）。
+# ファイナライザは解放順序が保証されず（GC が任意のタイミング・スレッドで呼び、他のマネージド オブジェクトは
+# 既に回収済みかもしれない）、正しく書くには `Dispose(bool)` / `SuppressFinalize` / 二重解放の防止が必要で
+# **解放の経路が 2 本になる**（「解放の実装は 1 つ」に反する）。 `SafeHandle` 自身がファイナライザを持ち、
+# 解放の実装は `ReleaseHandle` 1 か所へ集約できる（Microsoft 公式「Implement a Dispose method」も同じ推奨）。
+# `SafeHandle` を使えない場合は付録 A に理由付きで載せる（一覧に無い抑止は使わない）。
+dotnet_diagnostic.MA0055.severity = warning
+
 # --- 記述スタイル（コンパイラで強制する。 規則は .github/コーディング規約.md） ---
 
 # 複数行のブロックは `{ }` を必須にする（1 行のガード節（早期 return / continue / throw）は省略できる。 規約 §4）。

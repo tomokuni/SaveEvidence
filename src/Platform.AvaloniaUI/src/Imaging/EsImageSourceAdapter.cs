@@ -24,7 +24,10 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// （無効な画像の値を正常値として渡さない。 <see cref="Draw"/> だけは no-op）。<br/>
 /// <b>本クラス自体の破棄</b>: <see cref="IImage"/> は非所有の契約（<see cref="IImage"/> は <see cref="IDisposable"/> を継承せず、
 /// <c>Image.Source</c> の設定では破棄されない）のため、<b>本クラスを保持するホストが差し替え時に <see cref="Dispose"/> する</b>。
-/// 破棄しないと射影（Avalonia の <see cref="Bitmap"/>）が残る（4K で 33 MB/枚）。
+/// 破棄しないと射影（Avalonia の <see cref="Bitmap"/>）が残る（4K で 33 MB/枚）。<br/>
+/// <b>差し替えの順序</b>: 差し替えるときは<b>新しいアダプタを先に表示（<c>Image.Source</c> 等）へ設定し、
+/// 旧アダプタは後から <see cref="Dispose"/> する</b>。 逆順にすると、表示が旧アダプタの射影を参照している間に
+/// 破棄され、描画が破棄済みバッファへ触れる（例外・チラつき）。
 /// </remarks>
 public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
 {

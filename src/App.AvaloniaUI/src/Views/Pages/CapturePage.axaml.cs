@@ -129,6 +129,7 @@ public sealed partial class CapturePage : UserControl
         // ViewModel のプロパティ変更時にズーム設定を適用する
         _viewModel.PropertyChanged += (_, e) =>
         {
+            EsImageSourceAdapter? previousSource = null;
             switch (e.PropertyName)
             {
                 case nameof(MainViewModel.PreviewImage):
@@ -136,9 +137,12 @@ public sealed partial class CapturePage : UserControl
                     // PreviewImage（EsWritableBitmap）を表示境界で Avalonia 画像（IImage）へ変換して CropView へ設定する。
                     // 画像の所有は ViewModel（PreviewImage）が保持し、本ページは非所有アダプタで包むだけ。
                     // IImage は非所有のため、差し替え時に本ページが旧アダプタを破棄する（射影の解放）。
-                    _cropViewSource?.Dispose();
+                    // 新しいアダプタを先に Source へ設定し、旧アダプタは後から破棄する
+                    // （描画が旧アダプタを参照している間に破棄すると、破棄済みバッファへ触れて例外になる）。
+                    previousSource = _cropViewSource;
                     _cropViewSource = _viewModel.PreviewImage is { } bmp ? new EsImageSourceAdapter(bmp) : null;
                     CropView.Source = _cropViewSource;
+                    previousSource?.Dispose();
                     break;
                 case nameof(MainViewModel.SaveFolderPath):
                     // 保存先フォルダの変更を保存ボタンの ToolTip に反映する

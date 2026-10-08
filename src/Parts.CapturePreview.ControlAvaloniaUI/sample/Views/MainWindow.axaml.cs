@@ -90,12 +90,15 @@ public sealed partial class MainWindow : Window
     /// <param name="bitmap">新しいプレビュー画像。 所有権は本ウィンドウへ移る。</param>
     private void SetPreviewBitmap(EsWritableBitmap bitmap)
     {
-        // 旧のアダプタと画像を破棄してから差し替える（IImage は非所有のため、保持するホストが破棄する）
-        _previewImage?.Dispose();
-        _previewEs?.Dispose();
+        // 新しいアダプタを先に Source へ設定し、旧アダプタと旧画像は後から破棄する
+        // （IImage は非所有のため、保持するホストが破棄する。 破棄の順序の理由は EsImageSourceAdapter の doc を参照）。
+        var previousImage = _previewImage;
+        var previousEs = _previewEs;
         _previewEs = bitmap;
         _previewImage = new EsImageSourceAdapter(bitmap);
         PreviewCropView.Source = _previewImage;
+        previousImage?.Dispose();
+        previousEs?.Dispose();
         _vm.PreviewImageSizeText = $"プレビュー: {bitmap.Width} x {bitmap.Height}";
     }
 

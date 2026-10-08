@@ -120,16 +120,18 @@ public sealed partial class UndoPage : ViewModePageBase
 
         _viewModel.ItemCount = items.Count;
 
-        // 旧一覧のサムネイル（IImage は非所有のため、保持する本ページが破棄する）を解放してから差し替える
-        if (UndoListBox.ItemsSource is IEnumerable<UndoListItem> previous)
+        // 新しい一覧を先に設定し、旧一覧のサムネイルは後から解放する
+        // （IImage は非所有のため、保持する本ページが破棄する。 表示が旧サムネイルを参照している間に
+        //  破棄すると、描画が破棄済みバッファへ触れて例外になる）。
+        var previousItems = UndoListBox.ItemsSource as IEnumerable<UndoListItem>;
+        UndoListBox.ItemsSource = items;
+        if (previousItems is not null)
         {
-            foreach (var old in previous)
+            foreach (var old in previousItems)
             {
                 (old.Thumbnail as IDisposable)?.Dispose();
             }
         }
-
-        UndoListBox.ItemsSource = items;
     }
 
     /// <summary>

@@ -194,11 +194,14 @@ internal sealed partial class CaptureOverlayWindow
         if (!_captureImage.Set(bitmap, origin.ToEsPointInt())) return;
 
         _log.LogVirtualScreen(origin.ToEsPointInt(), bitmap);
-        // 旧のアダプタを破棄してから差し替える（IImage は非所有のため、保持するホストが Dispose する）。
+        // 新しいアダプタを先に Source へ設定し、旧アダプタは後から破棄する。
+        // Image.Source が旧アダプタを参照し続ける間に破棄すると、描画が破棄済みの射影へ触れて例外・チラつきになる
+        // （順序の理由は LoupeControl.SetLoupeBitmap と同じ。 IImage は非所有のため、保持するホストが Dispose する）。
         // 元画像はコアの保持クラスが所有し、このアダプタは借用して包むだけ。
-        _displayImage?.Dispose();
+        var previousImage = _displayImage;
         _displayImage = bitmap is null ? null : new EsImageSourceAdapter(bitmap);
         VirtualScreenImage.Source = _displayImage;
+        previousImage?.Dispose();
 
         // ルーペの Source を設定する（固定背景画像と同一のアダプタを共有する）。
         // Source 未設定の間はルーペが表示されない（市松模様防止）ため、ここで Source を設定し、
