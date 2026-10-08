@@ -52,9 +52,9 @@ public class EsBitmapSkiaExtensionsTests
         }
 
         // ビューの破棄後もコアのピクセルは有効（所有権はコアにあるため）
-        var px = bmp.GetPixel(0, 0);
-        Assert.Equal((byte)1, px.B);
-        Assert.Equal((byte)3, px.R);
+        var (B, G, R, A) = bmp.GetPixel(0, 0);
+        Assert.Equal((byte)1, B);
+        Assert.Equal((byte)3, R);
     }
 
     /// <summary>呼び出しごとに新しいビューを返すことを検証する（呼び出し側が破棄する契約）。</summary>
@@ -112,11 +112,11 @@ public class EsBitmapSkiaExtensionsTests
 
         using var bmp = sk.ToEsBitmap();
 
-        var px = bmp.GetPixel(0, 0);
-        Assert.Equal((byte)255, px.B);
-        Assert.Equal((byte)0, px.G);
-        Assert.Equal((byte)0, px.R);
-        Assert.Equal((byte)128, px.A);
+        var (B, G, R, A) = bmp.GetPixel(0, 0);
+        Assert.Equal((byte)255, B);
+        Assert.Equal((byte)0, G);
+        Assert.Equal((byte)0, R);
+        Assert.Equal((byte)128, A);
     }
 
     /// <summary>画素を持たない（未確保の）ビットマップを変換しても例外にならず、透明を返すことを検証する。</summary>
@@ -142,10 +142,10 @@ public class EsBitmapSkiaExtensionsTests
         using var view = bmp.ToSKBitmap();
         using var copied = view.Copy().ToEsBitmap();
 
-        var px = copied.GetPixel(2, 1);
-        Assert.Equal((byte)10, px.B);
-        Assert.Equal((byte)20, px.G);
-        Assert.Equal((byte)30, px.R);
-        Assert.Equal((byte)64, px.A);
+        var (B, G, R, A) = copied.GetPixel(2, 1);
+        Assert.Equal((byte)10, B);
+        Assert.Equal((byte)20, G);
+        Assert.Equal((byte)30, R);
+        Assert.Equal((byte)64, A);
     }
 }

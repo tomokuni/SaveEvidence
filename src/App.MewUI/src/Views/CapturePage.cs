@@ -562,10 +562,7 @@ internal static class CapturePage
             button.Cursor(CursorType.Hand);
             button.OnClick(() =>
             {
-                if (menu is not null)
-                {
-                    menu.IsVisible = false;
-                }
+                menu?.IsVisible = false;
 
                 apply();
             });

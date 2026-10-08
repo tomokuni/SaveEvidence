@@ -175,7 +175,7 @@ public sealed partial class MainWindow : Window
     /// </remarks>
     private void SetupViewModelCallbacks()
     {
-        _viewModel.CopyToClipboardCallback = async (IEsBitmap image) =>
+        _viewModel.CopyToClipboardCallback = async image =>
         {
             if (Clipboard is null)
             {

@@ -299,10 +299,7 @@ public partial class LineCanvasView : UserControl
     /// <param name="e">ポインタイベント。</param>
     private void OnImageHostPointerEntered(object? sender, PointerEventArgs e)
     {
-        if (_detectionContext is not null)
-        {
-            _detectionContext.IsLoupeVisible = true;
-        }
+        _detectionContext?.IsLoupeVisible = true;
     }
 
     /// <summary>画像上からマウスが出たらルーペと座標表示を非表示にする。</summary>
@@ -316,9 +313,6 @@ public partial class LineCanvasView : UserControl
     /// <param name="e">ポインタイベント。</param>
     private void OnOverlayPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (_detectionContext is not null)
-        {
-            _detectionContext.ToggleSelectAt(ToImagePixel(e.GetPosition(ImageHost)));
-        }
+        _detectionContext?.ToggleSelectAt(ToImagePixel(e.GetPosition(ImageHost)));
     }
 }

@@ -30,6 +30,18 @@
       "problemMatcher": []
     },
     {
+      "label": "情報レベル（検出）",
+      "type": "shell",
+      "command": "pwsh -NoProfile -File buildScript/verifyInfoStyle.ps1",
+      "problemMatcher": []
+    },
+    {
+      "label": "情報レベル（修正）",
+      "type": "shell",
+      "command": "pwsh -NoProfile -File buildScript/verifyInfoStyle.ps1 -Fix",
+      "problemMatcher": []
+    },
+    {
       "label": "テスト実行（全プロジェクト）",
       "type": "shell",
       "command": "dotnet test SaveEvidence.slnx",

@@ -14,7 +14,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.ZoomView;
 public class ZoomTransitionTests
 {
     /// <summary>遷移仕様のテストに使用する既定の設定。</summary>
-    private static readonly ZoomOptions Default = ZoomOptions.Default;
+    private static readonly ZoomOptions s_default = ZoomOptions.Default;
 
     // ====================================================================
     // レベル集合の完全性（ZoomOptions.Default.ButtonZoomLevels）
@@ -24,15 +24,15 @@ public class ZoomTransitionTests
     internal void ButtonZoomLevels_仕様の23段階が昇順で定義されている()
     {
         double[] expected = [10, 12, 15, 20, 25, 33, 40, 50, 62, 75, 80, 90, 100, 110, 125, 150, 200, 250, 300, 350, 400, 450, 500];
-        Assert.Equal(expected, Default.ButtonZoomLevels);
+        Assert.Equal(expected, s_default.ButtonZoomLevels);
     }
 
     [Fact]
     internal void ButtonZoomLevels_10から500の範囲で昇順に並んでいる()
     {
-        var levels = Default.ButtonZoomLevels;
-        Assert.Equal(Default.MinZoom, levels[0]);
-        Assert.Equal(Default.MaxZoom, levels[^1]);
+        var levels = s_default.ButtonZoomLevels;
+        Assert.Equal(s_default.MinZoom, levels[0]);
+        Assert.Equal(s_default.MaxZoom, levels[^1]);
         for (int i = 1; i < levels.Count; i++)
         {
             Assert.True(levels[i - 1] < levels[i], $"段階 {i} が昇順でない: {levels[i - 1]} -> {levels[i]}");

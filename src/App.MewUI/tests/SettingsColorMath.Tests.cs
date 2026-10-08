@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Tests;
 /// </remarks>
 public class SettingsColorMathTests
 {
-    private static readonly MewUIColor Fallback = MewUIColor.FromArgb(255, 1, 2, 3);
+    private static readonly MewUIColor s_fallback = MewUIColor.FromArgb(255, 1, 2, 3);
 
     [Theory]
     [InlineData("#FF102030", 255, 16, 32, 48)]
@@ -23,7 +23,7 @@ public class SettingsColorMathTests
     internal void ToMewUIColor_有効な色文字列を解析する(
         string argb, byte expectedA, byte expectedR, byte expectedG, byte expectedB)
     {
-        var color = SettingsColorMath.ToMewUIColor(argb, Fallback);
+        var color = SettingsColorMath.ToMewUIColor(argb, s_fallback);
 
         Assert.Equal(expectedA, color.A);
         Assert.Equal(expectedR, color.R);
@@ -44,9 +44,9 @@ public class SettingsColorMathTests
     [InlineData("#FF10203Z")]
     internal void ToMewUIColor_解析できない文字列は既定色を返す(string? argb)
     {
-        var color = SettingsColorMath.ToMewUIColor(argb, Fallback);
+        var color = SettingsColorMath.ToMewUIColor(argb, s_fallback);
 
-        Assert.Equal(Fallback, color);
+        Assert.Equal(s_fallback, color);
     }
 
     [Theory]
@@ -88,7 +88,7 @@ public class SettingsColorMathTests
     {
         const string source = "#4C808080";
 
-        var color = SettingsColorMath.ToMewUIColor(source, Fallback);
+        var color = SettingsColorMath.ToMewUIColor(source, s_fallback);
         var roundTrip = SettingsColorMath.ToArgbString(color);
 
         Assert.Equal(source, roundTrip);

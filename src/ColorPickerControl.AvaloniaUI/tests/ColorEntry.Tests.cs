@@ -89,22 +89,22 @@ public class ColorEntryTests
         Assert.Equal((0, 0f), ColorEntry.GetSortKey("Black"));
         Assert.Equal((0, 1f), ColorEntry.GetSortKey("White"));
         // Black < White（priority は同じで key が異なる）
-        var black = ColorEntry.GetSortKey("Black");
+        var (priority, key) = ColorEntry.GetSortKey("Black");
         var white = ColorEntry.GetSortKey("White");
-        Assert.Equal(black.priority, white.priority);
-        Assert.True(black.key < white.key);
+        Assert.Equal(priority, white.priority);
+        Assert.True(key < white.key);
     }
 
     [Fact]
     internal void GetSortKey_有彩色は色相順になる()
     {
-        var red = ColorEntry.GetSortKey("Red");
+        var (priority, key) = ColorEntry.GetSortKey("Red");
         var lime = ColorEntry.GetSortKey("Lime");
 
         // どちらも有彩色（priority=1）
-        Assert.Equal(1, red.priority);
+        Assert.Equal(1, priority);
         Assert.Equal(1, lime.priority);
-        Assert.True(red.key < lime.key); // 赤(0°) < 緑(120°)
+        Assert.True(key < lime.key); // 赤(0°) < 緑(120°)
     }
 
     [Fact]

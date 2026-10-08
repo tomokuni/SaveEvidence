@@ -23,7 +23,7 @@ Copilot・CI・開発者が同じ手順を 1 コマンドで再現できるよ�
 テストは `--no-build` で実行するため、**一度もビルドしていないと失敗する**（先にビルドを 1 回実行する）。
 
 .PARAMETER SkipFormat
-dotnet format による検査を省略する（時間を短縮するとき）。
+dotnet format による検査（警告以上のコード スタイル。 命名規則を含む）を省略する（時間を短縮するとき）。
 
 .PARAMETER SkipPackage
 NuGet の健全性（既知の脆弱性。 推移的依存を含む）の検査を省略する（ネットワークを使いたくないとき）。
@@ -122,8 +122,10 @@ else {
 }
 
 # `dotnet format`（MSBuild の評価。 実測 20 秒）は待ち時間が長いため、ここで背景へ投入し、
-# テスト・ドキュメント検査と重ねる（-Fix のときは修正が先に要るため投入しない）
-$backgroundFormat = if ($SkipFormat -or $Fix) { $null } else { Start-BackgroundDotNet @('format', 'style', $Solution, '--verify-no-changes', '--severity', 'info', '--no-restore') }
+# テスト・ドキュメント検査と重ねる（-Fix のときは修正が先に要るため投入しない）。
+# `--severity warn` にするのは「警告以上を 0 件にする」合否基準を引数で表すためである
+# （情報レベルの提案（IDE0350 等。 実測 63 件）はビルドが強制する範囲ではなく、合否に含めない）。
+$backgroundFormat = if ($SkipFormat -or $Fix) { $null } else { Start-BackgroundDotNet @('format', 'style', $Solution, '--verify-no-changes', '--severity', 'warn', '--no-restore') }
 
 # ============================================================
 # 2. ビルド設定（単一所有と配布物へ XML を出さないこと）
@@ -1227,7 +1229,7 @@ foreach ($proj in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory)) 
 Add-Info 'ソースとテストの対応' "専用ファイルあり $testPairs / ソース $testTotal（参考値。 公開 API 経由で検証する型は専用ファイルを持たない）"
 
 # ============================================================
-# 11. コードスタイル（dotnet format。 情報レベルまで含めて 0 件にする）
+# 11. コードスタイル（dotnet format。 エラー・警告を 0 件にする）
 # ============================================================
 if (-not $SkipFormat) {
     Write-Output '== 11. コードスタイル（dotnet format） =='
@@ -1244,16 +1246,19 @@ if (-not $SkipFormat) {
         $fmtExit = $received.ExitCode
     }
     else {
-        $fmtText = & dotnet format style $Solution --verify-no-changes --severity info --no-restore 2>&1 | Out-String
+        $fmtText = & dotnet format style $Solution --verify-no-changes --severity warn --no-restore 2>&1 | Out-String
         $fmtExit = $LASTEXITCODE
     }
-    $fmtIssues = ([regex]::Matches($fmtText, 'warning (IDE|CA)\d+')).Count
-    # 合否は警告の件数で判定する（`--severity info` は情報レベルの提案も報告するため、改善が必要なときに
-    # 終了コード 2 を返す。 情報レベルはビルドが強制する範囲ではない）。 実行自体の失敗（引数の誤り・
-    # 復元の失敗等）は 2 以外の終了コードになるため、それだけを不合格にする（0 件の誤判定を防ぐ）。
+    $fmtIssues = ([regex]::Matches($fmtText, ': (error|warning) (IDE|CA)\d+')).Count
+    # 合否は「警告以上」の件数で判定する（引数の `--severity warn` と同じ基準。 情報レベルの提案は
+    # ビルドが強制する範囲ではなく、改善の必要がない状態でも返るため合否に含めない）。
+    # error も数えるのは**命名規則（IDE1006）がビルドでは報告されない**ためである
+    # （実測: `private static readonly` を PascalCase で書いた 12 件が error IDE1006 で出ており、
+    #   ビルドは 0 警告だった。 命名規則の実効的な強制はこの検査だけが担う）。
+    # 実行自体の失敗（引数の誤り・復元の失敗等）は 2 以外の終了コードになるため、それだけを不合格にする。
     $fmtRunFailed = $fmtExit -gt 2
-    Add-Result 'dotnet format' ($fmtIssues -eq 0 -and -not $fmtRunFailed) "$fmtIssues 件"
-    if ($fmtIssues -gt 0) { $fmtText -split "`r?`n" | Where-Object { $_ -match 'warning ' } | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" } }
+    Add-Result 'dotnet format' ($fmtIssues -eq 0 -and -not $fmtRunFailed) "警告以上 $fmtIssues 件"
+    if ($fmtIssues -gt 0) { $fmtText -split "`r?`n" | Where-Object { $_ -match ': (error|warning) (IDE|CA)\d+' } | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" } }
     if ($fmtRunFailed) {
         "      実行に失敗した（終了コード $fmtExit）"
         $fmtText -split "`r?`n" | Where-Object { $_.Trim().Length -gt 0 } | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" }

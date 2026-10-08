@@ -27,10 +27,10 @@ public class SelectionOverlayLabelRendererTests
     private const double InfoFontSize = 14.0;
 
     /// <summary>注目矩形の左上（DIP）。</summary>
-    private static readonly EsPoint FocusTopLeft = new(20, 30);
+    private static readonly EsPoint s_focusTopLeft = new(20, 30);
 
     /// <summary>測定に使う固定の実寸（テキストの実測値を模した値）。</summary>
-    private static readonly EsSize MeasuredSize = new(40.0, 14.0);
+    private static readonly EsSize s_measuredSize = new(40.0, 14.0);
 
     /// <summary>検証用の付加情報ラベルの外観を生成する（既定を検証用の色・寸法に差し替える）。</summary>
     /// <param name="showOperation">操作ラベルを表示するか。</param>
@@ -84,7 +84,7 @@ public class SelectionOverlayLabelRendererTests
     /// <param name="text">測定する文言。</param>
     /// <param name="fontSize">フォントサイズ。</param>
     /// <returns>固定の実寸。</returns>
-    private static EsSize Measure(string text, double fontSize) => MeasuredSize;
+    private static EsSize Measure(string text, double fontSize) => s_measuredSize;
 
     [Fact]
     internal void 解決_注目矩形が無ければ空を返す()
@@ -99,7 +99,7 @@ public class SelectionOverlayLabelRendererTests
     internal void 解決_操作ラベルと情報ラベルを縦に積む()
     {
         var placements = SelectionOverlayLabelRenderer.Resolve(
-            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(s_focusTopLeft.X, s_focusTopLeft.Y, 100, 80)),
             CreateLabels(),
             CreateAppearance(),
             "確定: Enter",
@@ -108,12 +108,12 @@ public class SelectionOverlayLabelRendererTests
 
         Assert.Equal(2, placements.Count);
         // 操作ラベルは注目矩形の左上に置かれる（左端は注目矩形の左端に揃える）
-        Assert.Equal(FocusTopLeft, placements[0].DipRect.TopLeft);
+        Assert.Equal(s_focusTopLeft, placements[0].DipRect.TopLeft);
         Assert.Equal("確定: Enter", placements[0].Text);
         // 情報ラベルは操作ラベルの下（行送り = 行の高さ + 内側余白 × 2）
-        var infoTop = FocusTopLeft.Y + OperationFontSize + CreateAppearance().LabelPadding * 2;
+        var infoTop = s_focusTopLeft.Y + OperationFontSize + CreateAppearance().LabelPadding * 2;
         Assert.Equal(infoTop, placements[1].DipRect.Y);
-        Assert.Equal(FocusTopLeft.X, placements[1].DipRect.X);
+        Assert.Equal(s_focusTopLeft.X, placements[1].DipRect.X);
         Assert.Equal("メモ帳", placements[1].Text);
     }
 
@@ -123,7 +123,7 @@ public class SelectionOverlayLabelRendererTests
         var appearance = CreateAppearance() with { ShowSizeLabel = true };
 
         var placement = Assert.Single(SelectionOverlayLabelRenderer.Resolve(
-            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(s_focusTopLeft.X, s_focusTopLeft.Y, 100, 80)),
             CreateLabels(showInfo: false),
             appearance,
             "確定: Enter",
@@ -131,7 +131,7 @@ public class SelectionOverlayLabelRendererTests
             Measure));
 
         // サイズラベルの行送り分だけ下へずれる（行の高さは外観のフォントサイズを使う）
-        var expectedTop = FocusTopLeft.Y + appearance.SizeLabelFontSize + appearance.LabelPadding * 2;
+        var expectedTop = s_focusTopLeft.Y + appearance.SizeLabelFontSize + appearance.LabelPadding * 2;
         Assert.Equal(expectedTop, placement.DipRect.Y);
     }
 
@@ -140,14 +140,14 @@ public class SelectionOverlayLabelRendererTests
     internal void 解決_サイズラベルを描かない設定なら先頭へ繰り上がる()
     {
         var placement = Assert.Single(SelectionOverlayLabelRenderer.Resolve(
-            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(s_focusTopLeft.X, s_focusTopLeft.Y, 100, 80)),
             CreateLabels(showInfo: false),
             CreateAppearance(),
             "確定: Enter",
             null,
             Measure));
 
-        Assert.Equal(FocusTopLeft.Y, placement.DipRect.Y);
+        Assert.Equal(s_focusTopLeft.Y, placement.DipRect.Y);
     }
 
     [Theory]
@@ -157,7 +157,7 @@ public class SelectionOverlayLabelRendererTests
     internal void 解決_表示スイッチが無効ならその行を返さない(bool showOperation, bool showInfo)
     {
         var placements = SelectionOverlayLabelRenderer.Resolve(
-            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(s_focusTopLeft.X, s_focusTopLeft.Y, 100, 80)),
             CreateLabels(showOperation, showInfo),
             CreateAppearance(),
             "確定: Enter",
@@ -168,13 +168,13 @@ public class SelectionOverlayLabelRendererTests
         {
             // 操作ラベルが先頭（注目矩形の左上）に置かれる
             Assert.Equal("確定: Enter", placements[0].Text);
-            Assert.Equal(FocusTopLeft, placements[0].DipRect.TopLeft);
+            Assert.Equal(s_focusTopLeft, placements[0].DipRect.TopLeft);
         }
         else if (showInfo)
         {
             // 操作ラベルを描かない場合は情報ラベルが先頭（注目矩形の左上）へ繰り上がる
             Assert.Equal("メモ帳", Assert.Single(placements).Text);
-            Assert.Equal(FocusTopLeft, placements[0].DipRect.TopLeft);
+            Assert.Equal(s_focusTopLeft, placements[0].DipRect.TopLeft);
         }
         else
         {
@@ -187,8 +187,8 @@ public class SelectionOverlayLabelRendererTests
     [Fact]
     internal void 解決_基準点から積む()
     {
-        var focus = new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80);
-        var anchor = new EsPoint(FocusTopLeft.X + 2, FocusTopLeft.Y + 2);
+        var focus = new EsRect(s_focusTopLeft.X, s_focusTopLeft.Y, 100, 80);
+        var anchor = new EsPoint(s_focusTopLeft.X + 2, s_focusTopLeft.Y + 2);
 
         var placement = Assert.Single(SelectionOverlayLabelRenderer.Resolve(
             CreateContent(focus, anchor),
@@ -210,7 +210,7 @@ public class SelectionOverlayLabelRendererTests
     internal void 解決_文言が空ならその行を返さない()
     {
         var placement = Assert.Single(SelectionOverlayLabelRenderer.Resolve(
-            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(s_focusTopLeft.X, s_focusTopLeft.Y, 100, 80)),
             CreateLabels(),
             CreateAppearance(),
             string.Empty,
@@ -218,7 +218,7 @@ public class SelectionOverlayLabelRendererTests
             Measure));
 
         Assert.Equal("メモ帳", placement.Text);
-        Assert.Equal(FocusTopLeft, placement.DipRect.TopLeft);
+        Assert.Equal(s_focusTopLeft, placement.DipRect.TopLeft);
     }
 
     /// <summary>空白のみの文言を空として扱わないことを検証する。</summary>
@@ -227,7 +227,7 @@ public class SelectionOverlayLabelRendererTests
     internal void 解決_空白のみの文言は返す()
     {
         var placement = Assert.Single(SelectionOverlayLabelRenderer.Resolve(
-            CreateContent(new EsRect(FocusTopLeft.X, FocusTopLeft.Y, 100, 80)),
+            CreateContent(new EsRect(s_focusTopLeft.X, s_focusTopLeft.Y, 100, 80)),
             CreateLabels(showInfo: false),
             CreateAppearance(),
             "   ",

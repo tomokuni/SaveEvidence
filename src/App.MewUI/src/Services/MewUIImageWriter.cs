@@ -43,13 +43,7 @@ internal sealed class MewUIImageWriter : EsUtil.SaveEvidence.App.Core.Services.I
         // ビューはエンコード完了まで生存させる（using の解放は逆順のため、data → skImage → view の順になる）
         using var view = image.ToSKBitmap();
         using var skImage = SKImage.FromBitmap(view);
-        using var data = skImage.Encode(format, EncodeQuality);
-
-        if (data is null)
-        {
-            throw new InvalidOperationException($"画像を {format} 形式へエンコードできませんでした。");
-        }
-
+        using var data = skImage.Encode(format, EncodeQuality) ?? throw new InvalidOperationException($"画像を {format} 形式へエンコードできませんでした。");
         using var stream = File.Create(filePath);
         data.SaveTo(stream);
     }

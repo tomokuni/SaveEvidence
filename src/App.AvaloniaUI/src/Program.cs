@@ -48,8 +48,7 @@ internal static class Program
         // ① AppDomain レベルの未処理例外（アプリ全体。 スタックトレースを含む Critical で記録）
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
-            var ex = e.ExceptionObject as Exception;
-            if (ex is null)
+            if (e.ExceptionObject is not Exception ex)
             {
                 Log.Fatal("AppDomain.UnhandledException (例外オブジェクトを取得できません)");
             }

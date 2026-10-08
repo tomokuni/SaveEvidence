@@ -42,8 +42,8 @@ public class SelectionOutlineRasterizerTests
             bitmap, new EsRect(10, 10, 20, 20), new EsPoint(5, 5), 4.0, DrawingColor.Black, DrawingColor.Transparent);
 
         // 上辺・左辺は覆う画素の 1 画素外側（対象 (9,9) → 画像 19）に描画される
-        var pixel = PixelAt(bitmap, 19, 19);
-        Assert.True(pixel.B < 255, $"選択矩形の辺に線が描画されていない: B={pixel.B}");
+        var (B, G, R, A) = PixelAt(bitmap, 19, 19);
+        Assert.True(B < 255, $"選択矩形の辺に線が描画されていない: B={B}");
 
         // 選択矩形の内側は描画されない
         Assert.Equal(s_white, PixelAt(bitmap, 30, 30));

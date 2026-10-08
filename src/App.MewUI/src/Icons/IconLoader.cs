@@ -31,10 +31,10 @@ internal static partial class IconLoader
     private static readonly ConcurrentDictionary<(string File, int Size, uint Argb), ImageSource> s_cache = new();
 
     /// <summary>アイコン色（明色テーマ用）。</summary>
-    private static readonly Color s_foregroundLight = new Color(255, 26, 26, 26);
+    private static readonly Color s_foregroundLight = new(255, 26, 26, 26);
 
     /// <summary>アイコン色（暗色テーマ用）。</summary>
-    private static readonly Color s_foregroundDark = new Color(255, 238, 238, 238);
+    private static readonly Color s_foregroundDark = new(255, 238, 238, 238);
 
     /// <summary>現在のテーマが暗色かどうかを取得する。</summary>
     /// <returns>暗色テーマの場合は true。</returns>

@@ -314,9 +314,8 @@ internal static class AppStyles
         var sheet = new StyleSheet();
 
         sheet.Define(NavToggle, () => Flat(s_hoverLight, s_hoverDark));
-        sheet.Define(NavItem, () => NavItemStyle(s_navHoverLight, s_navHoverDark, (Theme _) => MewUIColor.Transparent));
-        sheet.Define(NavItemSelected, () => NavItemStyle(s_navSelectedLight, s_navSelectedDark, (Theme t) =>
-            t.IsDark ? s_navSelectedDark : s_navSelectedLight));
+        sheet.Define(NavItem, () => NavItemStyle(s_navHoverLight, s_navHoverDark, _ => MewUIColor.Transparent));
+        sheet.Define(NavItemSelected, () => NavItemStyle(s_navSelectedLight, s_navSelectedDark, t => t.IsDark ? s_navSelectedDark : s_navSelectedLight));
         sheet.Define(ToolbarButton, () => Flat(s_hoverLight, s_hoverDark));
         sheet.Define(StatusButton, () => StatusButtonStyle());
         sheet.Define(FlatButton, () => Flat(s_hoverLight, s_hoverDark));
@@ -325,7 +324,7 @@ internal static class AppStyles
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, (Theme _) => MewUIColor.Transparent),
+                Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent),
                 Setter.Create(Control.BorderThicknessProperty, 0.0),
             ],
             Triggers =
@@ -335,8 +334,8 @@ internal static class AppStyles
                     Match = VisualStateFlags.Hot,
                     Setters =
                     [
-                        Setter.Create(Control.BackgroundProperty, (Theme _) => s_closeHover),
-                        Setter.Create(TextElement.ForegroundProperty, (Theme _) => s_closeHoverForeground),
+                        Setter.Create(Control.BackgroundProperty, _ => s_closeHover),
+                        Setter.Create(TextElement.ForegroundProperty, _ => s_closeHoverForeground),
                     ],
                 },
             ],
@@ -349,8 +348,8 @@ internal static class AppStyles
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, (Theme t) => ListBackground(t)),
-                Setter.Create(Control.BorderBrushProperty, (Theme _) => s_thumbnailBorder),
+                Setter.Create(Control.BackgroundProperty, t => ListBackground(t)),
+                Setter.Create(Control.BorderBrushProperty, _ => s_thumbnailBorder),
                 Setter.Create(Control.BorderThicknessProperty, ThumbnailFrameThickness),
                 Setter.Create(Control.CornerRadiusProperty, ThumbnailCornerRadius),
             ],
@@ -361,8 +360,8 @@ internal static class AppStyles
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, (Theme t) => ListBackground(t)),
-                Setter.Create(Control.BorderBrushProperty, (Theme _) => s_thumbnailCurrentBorder),
+                Setter.Create(Control.BackgroundProperty, t => ListBackground(t)),
+                Setter.Create(Control.BorderBrushProperty, _ => s_thumbnailCurrentBorder),
                 Setter.Create(Control.BorderThicknessProperty, CurrentFrameThickness),
                 Setter.Create(Control.CornerRadiusProperty, ThumbnailCornerRadius),
             ],
@@ -372,39 +371,39 @@ internal static class AppStyles
         // 生成時に色を決めると、実行中にテーマを切り替えても変わらない（スタイルは変更時に自動で再解決される）
         sheet.Define(NavPanel, () => new Style(typeof(Border))
         {
-            Setters = [Setter.Create(Control.BackgroundProperty, (Theme t) => NavPanelBackground(t))],
+            Setters = [Setter.Create(Control.BackgroundProperty, t => NavPanelBackground(t))],
         });
 
         // ステータスバーはページ背景をそのまま見せる（Avalonia 版は背景を指定しない）
         sheet.Define(StatusBar, () => new Style(typeof(Border))
         {
-            Setters = [Setter.Create(Control.BackgroundProperty, (Theme _) => MewUIColor.Transparent)],
+            Setters = [Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent)],
         });
 
         // 一覧（フォルダビュー / Undo 一覧）の背景（Avalonia 版の ListBox 背景相当）
         sheet.Define(ListSurface, () => new Style(typeof(Border))
         {
-            Setters = [Setter.Create(Control.BackgroundProperty, (Theme t) => ListBackground(t))],
+            Setters = [Setter.Create(Control.BackgroundProperty, t => ListBackground(t))],
         });
         sheet.Define(MenuSurface, () => new Style(typeof(Border))
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, (Theme t) => MenuBackground(t)),
-                Setter.Create(Control.BorderBrushProperty, (Theme t) => MenuBorder(t)),
+                Setter.Create(Control.BackgroundProperty, t => MenuBackground(t)),
+                Setter.Create(Control.BorderBrushProperty, t => MenuBorder(t)),
                 Setter.Create(Control.BorderThicknessProperty, 1.0),
             ],
         });
         sheet.Define(Divider, () => new Style(typeof(Border))
         {
-            Setters = [Setter.Create(Control.BackgroundProperty, (Theme t) => MenuBorder(t))],
+            Setters = [Setter.Create(Control.BackgroundProperty, t => MenuBorder(t))],
         });
         sheet.Define(SettingsCard, () => new Style(typeof(Border))
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, (Theme _) => MewUIColor.Transparent),
-                Setter.Create(Control.BorderBrushProperty, (Theme t) => SettingsCardBorder(t)),
+                Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent),
+                Setter.Create(Control.BorderBrushProperty, t => SettingsCardBorder(t)),
                 Setter.Create(Control.BorderThicknessProperty, 1.0),
             ],
         });
@@ -490,7 +489,7 @@ internal static class AppStyles
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, (Theme _) => MewUIColor.Transparent),
+                Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent),
                 Setter.Create(Control.BorderThicknessProperty, 0.0),
             ],
             Triggers =
@@ -498,12 +497,12 @@ internal static class AppStyles
                 new StateTrigger
                 {
                     Match = VisualStateFlags.Hot,
-                    Setters = [Setter.Create(Control.BackgroundProperty, (Theme t) => t.IsDark ? hoverDark : hoverLight)],
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? hoverDark : hoverLight)],
                 },
                 new StateTrigger
                 {
                     Match = VisualStateFlags.Pressed,
-                    Setters = [Setter.Create(Control.BackgroundProperty, (Theme t) => t.IsDark ? s_pressedDark : s_pressedLight)],
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_pressedDark : s_pressedLight)],
                 },
             ],
         };
@@ -519,7 +518,7 @@ internal static class AppStyles
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, (Theme _) => MewUIColor.Transparent),
+                Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent),
                 Setter.Create(Control.BorderThicknessProperty, 0.0),
             ],
             Triggers =
@@ -527,12 +526,12 @@ internal static class AppStyles
                 new StateTrigger
                 {
                     Match = VisualStateFlags.Hot,
-                    Setters = [Setter.Create(Control.BackgroundProperty, (Theme _) => s_windowButtonHover)],
+                    Setters = [Setter.Create(Control.BackgroundProperty, _ => s_windowButtonHover)],
                 },
                 new StateTrigger
                 {
                     Match = VisualStateFlags.Pressed,
-                    Setters = [Setter.Create(Control.BackgroundProperty, (Theme _) => s_windowButtonPressed)],
+                    Setters = [Setter.Create(Control.BackgroundProperty, _ => s_windowButtonPressed)],
                 },
             ],
         };
@@ -550,7 +549,7 @@ internal static class AppStyles
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, (Theme _) => MewUIColor.Transparent),
+                Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent),
                 Setter.Create(Control.BorderThicknessProperty, 0.0),
                 Setter.Create(FrameworkElement.MinHeightProperty, 0.0),
                 Setter.Create(FrameworkElement.MinWidthProperty, 0.0),
@@ -560,12 +559,12 @@ internal static class AppStyles
                 new StateTrigger
                 {
                     Match = VisualStateFlags.Hot,
-                    Setters = [Setter.Create(Control.BackgroundProperty, (Theme t) => t.IsDark ? s_hoverDark : s_hoverLight)],
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_hoverDark : s_hoverLight)],
                 },
                 new StateTrigger
                 {
                     Match = VisualStateFlags.Pressed,
-                    Setters = [Setter.Create(Control.BackgroundProperty, (Theme t) => t.IsDark ? s_pressedDark : s_pressedLight)],
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_pressedDark : s_pressedLight)],
                 },
             ],
         };
@@ -588,7 +587,7 @@ internal static class AppStyles
                 new StateTrigger
                 {
                     Match = VisualStateFlags.Hot,
-                    Setters = [Setter.Create(Control.BackgroundProperty, (Theme t) => t.IsDark ? hoverDark : hoverLight)],
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? hoverDark : hoverLight)],
                 },
             ],
         };

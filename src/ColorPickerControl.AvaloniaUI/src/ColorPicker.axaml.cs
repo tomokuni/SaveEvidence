@@ -206,7 +206,7 @@ public sealed partial class ColorPickerControl : UserControl
     /// <remarks>本アセンブリのログ定義（<see cref="ColorPickerLogMessage"/>）の接頭辞を設定する。</remarks>
     public string? LogPrefix
     {
-        get => field;
+        get;
         set
         {
             field = value;
