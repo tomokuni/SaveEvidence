@@ -181,6 +181,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 | プロパティ | `Size` | `Size` | 表示サイズ（`IImage`。 真実が破棄済みの場合は `ObjectDisposedException`） |
 | プロパティ | `IsDisposed` | `bool` | 真実の破棄状態（本クラスの `Dispose` では真にならない。 `Bitmap` を真実とした場合は常に `false`） |
 | メソッド | `GetPixel` | `(byte B, byte G, byte R, byte A) GetPixel(int x, int y)` / `Color GetPixel(EsPointInt point)` | ピクセルの取得（真実へ委譲。 破棄済みは `ObjectDisposedException`） |
+| メソッド | `ToSizeText` | `string ToSizeText()` | 寸法を `<c>幅x高さ</c>` 形式で返す（真実へ委譲。 破棄済みは `ObjectDisposedException`） |
 | メソッド | `GetEsBitmap` | `IEsBitmap GetEsBitmap()` | コアの画像を**借用**で取得する |
 | メソッド | `GetAvaloniaBitmap` | `Bitmap GetAvaloniaBitmap()` | Avalonia の画像を**借用**で取得する（保存・クリップボード用） |
 | メソッド | `Draw` / `Dispose` | `IImage` / 冪等 | 描画（真実が破棄済みの場合は no-op）・射影（と `Adopt` した画像）の解放 |

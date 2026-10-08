@@ -165,6 +165,10 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
     /// <exception cref="ObjectDisposedException">真実が破棄済みの場合。</exception>
     public Color GetPixel(EsPointInt point) => GetEsBitmap().GetPixel(point);
 
+    /// <inheritdoc/>
+    /// <exception cref="ObjectDisposedException">真実が破棄済みの場合。</exception>
+    public string ToSizeText() => GetEsBitmap().ToSizeText();
+
     /// <summary>表示サイズ（DIP）。</summary>
     /// <value>真実の画像から得られる <see cref="Size"/>。</value>
     /// <exception cref="ObjectDisposedException">真実が破棄済みの場合。</exception>

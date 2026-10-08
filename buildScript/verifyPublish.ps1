@@ -24,6 +24,10 @@
 .PARAMETER SkipPublish
 publish を省略し、既存の出力フォルダを検証する（CI は publish 済みの成果物を検証する）。
 
+.PARAMETER ForcePublish
+publish の入力が前回と同一でも publish する（入力が同一のときは既定で省略する。 基準は
+[`.github/検証手順.md`](../.github/検証手順.md) §18）。
+
 .PARAMETER WindowTimeoutSeconds
 メイン ウィンドウが現れるまでの待ち時間（既定 60 秒）。
 
@@ -40,6 +44,7 @@ pwsh -NoProfile -File buildScript/verifyPublish.ps1 -Ui MewUI -SkipPublish
 param(
     [ValidateSet('All', 'AvaloniaUI', 'MewUI')][string]$Ui = 'All',
     [switch]$SkipPublish,
+    [switch]$ForcePublish,
     [int]$WindowTimeoutSeconds = 60,
     [int]$ExitTimeoutSeconds = 60
 )
@@ -55,6 +60,12 @@ function Add-Result([string]$Name, [bool]$Ok, [string]$Detail) {
     $script:Results.Add([pscustomobject]@{ Name = $Name; Ok = $Ok; Detail = $Detail })
     $mark = if ($Ok) { 'OK  ' } else { 'FAIL' }
     Write-Output "$mark  $Name`t$Detail"
+}
+
+# 合否に含めない参考値（省略した publish など。 検査そのものは実行する）
+function Add-InfoResult([string]$Name, [string]$Detail) {
+    $script:Results.Add([pscustomobject]@{ Name = $Name; Ok = $true; Info = $true; Detail = $Detail })
+    Write-Output "INFO  $Name`t$Detail"
 }
 
 # メイン ウィンドウへ WM_CLOSE を送るためだけの Win32 呼び出し（強制終了させない）
@@ -117,6 +128,32 @@ if ($targets.Count -eq 0) {
     exit 1
 }
 
+# publish の入力の指紋（追跡・未追跡のソース、ビルド設定、SDK のバージョン、publish スクリプト）。
+# 前回と同一で出力フォルダが残っていれば publish を省略する（検証手順 §18。 実測: 直前のビルドで
+# AOT の無効化が起きると同じ入力でも 35 秒/UI かかるのに対し、検証そのものは 1.4 秒）。
+# 復元結果（各プロジェクトの `project.assets.json`）は毎回書き換わるため指紋に含めない（含めると常に「変化」になる）。
+function Get-PublishFingerprint([string]$ScriptPath) {
+    $sb = [Text.StringBuilder]::new()
+    $paths = [System.Collections.Generic.List[string]]::new()
+    foreach ($rel in @(git -c core.quotepath=false ls-files -- 'src' 'Directory.Build.props' 'Directory.Build.targets' 'global.json' 'buildScript' '.github/release-config.json' 2>$null)) { $paths.Add($rel) }
+    # 未追跡（コミット前）のソースも入力である
+    foreach ($rel in @(git -c core.quotepath=false ls-files --others --exclude-standard -- 'src' 2>$null)) { $paths.Add($rel) }
+    foreach ($rel in ($paths | Sort-Object -Unique)) {
+        $full = Join-Path $repoRoot $rel
+        if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
+        $info = [IO.FileInfo]::new($full)
+        [void]$sb.Append($rel).Append('|').Append($info.Length).Append('|').Append($info.LastWriteTimeUtc.Ticks).Append("`n")
+    }
+    # リポジトリの場所（別の複製と指紋を共有しない）と SDK のバージョン
+    [void]$sb.Append('root:').Append($repoRoot).Append("`n")
+    [void]$sb.Append('sdk:').Append($script:SdkVersion).Append("`n")
+    [void]$sb.Append('script:').Append($ScriptPath).Append("`n")
+    return [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($sb.ToString())))
+}
+
+$script:SdkVersion = (& dotnet --version 2>$null | Out-String).Trim()
+$fingerprintDir = Join-Path ([IO.Path]::GetTempPath()) 'saveevidence-verify-publish'
+
 $settingsBackedUp = $false
 $settingsBackupPath = Join-Path ([IO.Path]::GetTempPath()) ("se_settings_" + [Guid]::NewGuid().ToString('N') + '.json')
 
@@ -125,15 +162,25 @@ try {
         Write-Output "== $($target.name) =="
         $outputDir = Join-Path $repoRoot (($target.output) -replace '/', '\')
 
-        # 1. publish（-SkipPublish のときは既存の出力を使う）
+        # 1. publish（-SkipPublish のときは既存の出力を使う。 入力が同一なら省略する）
         if (-not $SkipPublish) {
             $scriptPath = ($target.script) -replace '/', '\'
-            Write-Output "      publish: $scriptPath"
-            $publishText = (& cmd.exe /c "`"$scriptPath`"" 2>&1 | Out-String)
-            if ($LASTEXITCODE -ne 0) {
-                Add-Result "$($target.name) publish" $false "終了コード $LASTEXITCODE"
-                $publishText -split "`r?`n" | Where-Object { $_ -match 'error|ERROR' } | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" }
-                continue
+            $fingerprint = Get-PublishFingerprint $target.script
+            $fingerprintPath = Join-Path $fingerprintDir "$($target.name).txt"
+            $previous = if (Test-Path -LiteralPath $fingerprintPath) { [IO.File]::ReadAllText($fingerprintPath, $enc).Trim() } else { '' }
+            if (-not $ForcePublish -and $previous -eq $fingerprint -and (Test-Path -LiteralPath $outputDir -PathType Container)) {
+                Add-InfoResult "$($target.name) publish" '省略（入力が前回と同一。 -ForcePublish で強制）'
+            }
+            else {
+                Write-Output "      publish: $scriptPath"
+                $publishText = (& cmd.exe /c "`"$scriptPath`"" 2>&1 | Out-String)
+                if ($LASTEXITCODE -ne 0) {
+                    Add-Result "$($target.name) publish" $false "終了コード $LASTEXITCODE"
+                    $publishText -split "`r?`n" | Where-Object { $_ -match 'error|ERROR' } | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" }
+                    continue
+                }
+                New-Item -ItemType Directory -Path $fingerprintDir -Force | Out-Null
+                [IO.File]::WriteAllText($fingerprintPath, $fingerprint, $enc)
             }
         }
 
@@ -212,11 +259,11 @@ finally {
 Write-Output ''
 Write-Output '===== 配布物の検証の要約 ====='
 foreach ($result in $script:Results) {
-    $mark = if ($result.Ok) { 'OK  ' } else { 'FAIL' }
+    $mark = if ($result.Info) { 'INFO' } elseif ($result.Ok) { 'OK  ' } else { 'FAIL' }
     Write-Output "$mark  $($result.Name)`t$($result.Detail)"
 }
 
-$failed = @($script:Results | Where-Object { -not $_.Ok })
+$failed = @($script:Results | Where-Object { -not $_.Info -and -not $_.Ok })
 if ($failed.Count -gt 0) {
     Write-Output ''
     Write-Output "不合格 $($failed.Count) 項目: $(($failed | ForEach-Object { $_.Name }) -join ', ')"
@@ -224,4 +271,4 @@ if ($failed.Count -gt 0) {
 }
 
 Write-Output ''
-Write-Output "すべて合格（合否 $($script:Results.Count) 項目）"
+Write-Output "すべて合格（合否 $(@($script:Results | Where-Object { -not $_.Info }).Count) 項目）"

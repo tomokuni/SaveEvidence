@@ -233,25 +233,38 @@ if (-not $SkipTests) {
 # ============================================================
 if (-not $SkipPackage) {
     Write-Output '== 4. NuGet の健全性 =='
-    $pkgIssues = 0
-    $pkgDetails = [System.Collections.Generic.List[string]]::new()
-    foreach ($kind in @('--vulnerable', '--deprecated')) {
-        $pkgArgs = @('package', 'list', $kind, '--include-transitive') + $restoreArgs
-        $pkgText = Invoke-DotNet $pkgArgs
-        # 指摘がある場合だけ表（`> ` で始まる行）が出る
-        $rows = @($pkgText -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
-        if ($rows.Count -gt 0) {
-            $pkgIssues += $rows.Count
-            $pkgDetails.Add(("{0}:" -f $kind))
-            $rows | Select-Object -First 10 | ForEach-Object { $pkgDetails.Add("      $($_.Trim())") }
-        }
-    }
-    Add-Result 'NuGet の健全性' ($pkgIssues -eq 0) "脆弱性・非推奨 $pkgIssues 件"
-    $pkgDetails | ForEach-Object { $_ }
+    # 脆弱性は復元の NuGet 監査で検出する（推移的依存も対象。 実測 2.7 秒。 同じ結果を
+    # `dotnet package list --vulnerable --include-transitive` で取ると 35 秒かかる）。
+    # `--force-evaluate` は「復元は最新」と判定されたときにも監査を走らせるために付ける
+    # （付けないと監査が省略され、0 件と誤判定する）。 監査は検査そのものなので、-NoRestore は適用しない。
+    $auditText = Invoke-DotNet @('restore', $Solution, '-p:NuGetAuditMode=all', '--force-evaluate')
+    $auditHits = @($auditText -split "`r?`n" | Where-Object { $_ -match 'NU19\d\d' })
 
-    # 更新候補（参考値。 合否に含めない）。 ネットワークを使うため -SkipPackage で省略できる
-    $outdatedText = Invoke-DotNet @('package', 'list', '--outdated') + $restoreArgs
-    $outdatedRows = @($outdatedText -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
+    # 非推奨は照会が要る（`dotnet package list --deprecated`。 実測 35 秒）ため、参考値の更新候補（実測 15 秒）と
+    # 並列で実行する（直列 50 秒 → 並列 35 秒）。 PowerShell 7 未満では直列へ落とす（合否は変わらない）。
+    $pkgJobs = @(
+        [pscustomobject]@{ Marker = 'deprecated'; Args = @('package', 'list', '--deprecated', '--include-transitive', '--no-restore') },
+        [pscustomobject]@{ Marker = 'outdated'; Args = @('package', 'list', '--outdated', '--no-restore') }
+    )
+    if ($PSVersionTable.PSVersion.Major -ge 7) {
+        $pkgTexts = @($pkgJobs | ForEach-Object -Parallel {
+                [pscustomobject]@{ Marker = $_.Marker; Text = (& dotnet @($_.Args) 2>&1 | Out-String) }
+            } -ThrottleLimit 2)
+    }
+    else {
+        $pkgTexts = @(foreach ($job in $pkgJobs) {
+                [pscustomobject]@{ Marker = $job.Marker; Text = (& dotnet @($job.Args) 2>&1 | Out-String) }
+            })
+    }
+
+    # 指摘がある場合だけ表（`> ` で始まる行）が出る
+    $deprecatedRows = @(($pkgTexts | Where-Object { $_.Marker -eq 'deprecated' }).Text -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
+    Add-Result 'NuGet の健全性' ($auditHits.Count -eq 0 -and $deprecatedRows.Count -eq 0) "脆弱性 $($auditHits.Count) / 非推奨 $($deprecatedRows.Count) 件（推移的依存を含む）"
+    $auditHits | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" }
+    $deprecatedRows | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" }
+
+    # 更新候補（参考値。 合否に含めない）。 ネットワーク照会のため -SkipPackage で省略できる
+    $outdatedRows = @(($pkgTexts | Where-Object { $_.Marker -eq 'outdated' }).Text -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
     Add-Info 'NuGet の更新候補' "$($outdatedRows.Count) 件（参考値。 合否に含めない）"
     $outdatedRows | Select-Object -First 8 | ForEach-Object { "      $($_.Trim())" }
 }
@@ -265,6 +278,13 @@ $docs = @(
 # パスの照合（8a）はビルドスクリプトのコメントも対象にする（実測: 削除済みの検証スクリプトを
 # 指す参照が buildScript/*.bat のコメントに残っていた）
 $scriptDocs = @(Get-ChildItem -Path (Join-Path $repoRoot 'buildScript') -Recurse -File -Include '*.bat', '*.ps1')
+
+# ソースの一覧（複数の検査が同じ列挙を繰り返さないよう 1 回だけ作る。
+# `-Include` は obj/bin まで全ファイルを走査してから絞るため遅い。 `-Filter` を使う）
+$allCs = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.cs' |
+    Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
+$allCsproj = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.csproj' |
+    Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
 
 # ============================================================
 # 5. ドキュメント（markdownlint）
@@ -707,12 +727,16 @@ foreach ($target in @($projKeys | Where-Object { $_.StartsWith('EsUtil.') -and (
     }
     if ($patterns.Count -eq 0) { continue }
     $rxForbidden = [regex]($patterns -join '|')
-    foreach ($f in (Get-ChildItem -Path $targetDir -Recurse -File -Include '*.md', '*.cs' |
-            Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    # 列挙は早期に作った一覧から対象プロジェクト配下だけを選ぶ（`-Include` の全走査を繰り返さない）
+    $scopeFiles = @(@($allCs | Where-Object { $_.FullName.StartsWith($targetDir, [StringComparison]::OrdinalIgnoreCase) }) +
+        @($docs | Where-Object { $_.FullName.StartsWith($targetDir, [StringComparison]::OrdinalIgnoreCase) }))
+    foreach ($f in $scopeFiles) {
         $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
         $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
         for ($i = 0; $i -lt $lines.Count; $i++) {
-            $line = $rxMdLinkUrl.Replace($lines[$i], ']()')
+            $line = $lines[$i]
+            # リンクの URL 部だけを除外する（`](` を含む行でなければ置換の必要が無い）
+            if ($line.IndexOf('](') -ge 0) { $line = $rxMdLinkUrl.Replace($line, ']()') }
             if ($rxForbidden.IsMatch($line)) { $scopeIssues.Add(("{0}:{1}  [{2}]" -f $rel, ($i + 1), $rxForbidden.Match($line).Value)) }
         }
     }
@@ -755,8 +779,6 @@ $boolIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 #     - 可搬な層のカテゴリ フォルダは単数形（命名規約）
 #     - `async void` はイベント ハンドラーだけ（コーディング規約 §7）
 $codeIssues = [System.Collections.Generic.List[string]]::new()
-$allCs = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.cs' |
-    Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
 foreach ($f in @($allCs | Where-Object { $_.FullName -match '\\tests\\' })) {
     $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
     $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
@@ -849,11 +871,13 @@ $logDocIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 $buildRulesPath = Join-Path $repoRoot '.github/ビルド設定規約.md'
 $buildRules = [IO.File]::ReadAllText($buildRulesPath, $enc)
 $suppressSites = [System.Collections.Generic.List[object]]::new()
-foreach ($f in @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Include '*.cs', '*.csproj' |
-        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+# 列挙は 8j で作った一覧を再利用する（`-Include` は obj/bin まで全ファイルを走査してから絞るため遅い。 実測 6 秒 → 0.5 秒）
+foreach ($f in @($allCs + $allCsproj)) {
     $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
     $lines = [IO.File]::ReadAllLines($f.FullName, $enc)
     for ($i = 0; $i -lt $lines.Count; $i++) {
+        # 抑止の記述が無い行は正規表現を走らせない（実測: 2.5 秒 → 1 秒未満）
+        if ($lines[$i].IndexOf('pragma') -lt 0 -and $lines[$i].IndexOf('SuppressMessage') -lt 0 -and $lines[$i].IndexOf('NoWarn') -lt 0) { continue }
         $m = [regex]::Match($lines[$i], '#pragma\s+warning\s+disable\s+(?<c>[A-Z]+\d+)')
         if ($m.Success) { $suppressSites.Add([pscustomobject]@{ File = $rel; Line = $i + 1; Code = $m.Groups['c'].Value }) }
         $m = [regex]::Match($lines[$i], 'SuppressMessage\([^)]*"(?<c>[A-Z]+\d+)"')
@@ -1121,9 +1145,12 @@ Write-Output '== 10. フォルダ =='
 $emptyDirs = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -Directory |
         Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
         Where-Object { @(Get-ChildItem -LiteralPath $_.FullName -Force).Count -eq 0 })
+# 孤立した bin/obj は「親に csproj が無い」ことで判定する（親を毎回列挙せず、csproj を持つフォルダーの集合と照合する）
+$csprojDirs = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+foreach ($csproj in $allCsproj) { [void]$csprojDirs.Add([IO.Path]::GetDirectoryName($csproj.FullName)) }
 $orphanBins = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -Directory |
         Where-Object { $_.Name -in @('bin', 'obj') } |
-        Where-Object { @(Get-ChildItem -LiteralPath (Split-Path -Parent $_.FullName) -Filter '*.csproj').Count -eq 0 })
+        Where-Object { -not $csprojDirs.Contains([IO.Path]::GetDirectoryName($_.FullName)) })
 Add-Result 'フォルダ' ($emptyDirs.Count -eq 0 -and $orphanBins.Count -eq 0) "空 $($emptyDirs.Count) / 孤立 bin・obj $($orphanBins.Count)"
 $emptyDirs | Select-Object -First 5 | ForEach-Object { "      $($_.FullName.Substring($repoRoot.Length + 1))" }
 $orphanBins | Select-Object -First 5 | ForEach-Object { "      $($_.FullName.Substring($repoRoot.Length + 1))" }
