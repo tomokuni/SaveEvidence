@@ -14,10 +14,10 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `Enums.ThemeMode` | `public` | テーマモード（`Description` 属性で表示名を保持） |
 | `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。 ウィンドウ位置は `EsRectInt`、状態は `EsWindowState` で保持 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。 JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
-| `Services.IImageWriter` | `public` | 画像（`EsBitmap`）のファイル書き込みの抽象。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードする |
+| `Services.IImageWriter` | `public` | 画像（`IEsBitmap`）のファイル書き込みの抽象。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードする |
 | `Services.EsRectIntJsonConverter` | `internal` | `EsRectInt` の JSON コンバーター（`X` / `Y` / `Width` / `Height` のみを読み書き） |
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
-| `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsBitmap` のクローンを保持。 最大 5 段） |
+| `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsWritableBitmap` のクローンを保持。 最大 5 段） |
 | `Models.HotKeyParser` | `public` | ホットキー文字列（"Ctrl + Shift + Q" 等）の解析 |
 | `Models.CapacityLimitedCache` | `internal` | 容量制限付きの静的キャッシュ（超過分は破棄） |
 | `Models.ImageFileExtensions` | `internal` | 画像ファイルの拡張子判定（フォルダビューの一覧抽出） |
@@ -64,8 +64,8 @@ UI フレームワークへ依存しません。 外部依存は MVVM の `Commu
 
 | コールバック | 型 | 注入元（Avalonia 実装） |
 | --- | --- | --- |
-| `CopyToClipboardAsync` | `Func<EsBitmap, Task<bool>>` | `MainWindow`（`EsBitmap` → `Bitmap` 変換 + `Clipboard.SetBitmapAsync`） |
-| `PasteFromClipboardAsync` | `Func<Task<EsBitmap?>>` | `MainWindow`（`Clipboard.TryGetBitmapAsync` + `Bitmap` → `EsBitmap` 変換） |
+| `CopyToClipboardAsync` | `Func<IEsBitmap, Task<bool>>` | `MainWindow`（`EsBitmap` → `Bitmap` 変換 + `Clipboard.SetBitmapAsync`） |
+| `PasteFromClipboardAsync` | `Func<Task<EsWritableBitmap?>>` | `MainWindow`（`Clipboard.TryGetBitmapAsync` + `Bitmap` → `EsBitmap` 変換） |
 | `ConfirmOverwriteAsync` | `Func<string, Task<bool>>` | `MainWindow`（`ConfirmDialog`） |
 | `BeforeEditAction` | `Action` | `CapturePage`（Undo スタックへのプッシュ） |
 | `StartSelectionMode` | `Action<CaptureType>` | `CapturePage`（キャプチャの開始） |
@@ -104,7 +104,7 @@ var viewModel = new MainViewModel(settingsService, new AvaloniaImageWriter());
 
 // 3. UI 依存の操作（クリップボード・上書き確認・キャプチャ開始）をコールバックで設定する
 viewModel.CopyToClipboardCallback = async image => { /* UI 型へ変換してクリップボードへ書く */ return true; };
-viewModel.PasteFromClipboardCallback = async () => { /* クリップボードから読んで EsBitmap を返す */ return null; };
+viewModel.PasteFromClipboardCallback = async () => { /* クリップボードから読んで EsWritableBitmap を返す */ return null; };
 viewModel.ConfirmOverwriteAsync = async path => { /* 上書き確認ダイアログを出す */ return true; };
 viewModel.StartSelectionMode = captureType => { /* キャプチャを開始する */ };
 ```

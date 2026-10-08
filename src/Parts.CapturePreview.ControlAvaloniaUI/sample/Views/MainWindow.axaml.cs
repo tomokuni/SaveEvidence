@@ -44,7 +44,7 @@ public sealed partial class MainWindow : Window
     private readonly MainWindowViewModel _vm = new();
 
     /// <summary>Crop プレビュー用の画像の元（本ウィンドウが所有する。 差し替え・クローズで破棄する）。</summary>
-    private EsBitmap? _previewEs;
+    private EsWritableBitmap? _previewEs;
 
     /// <summary>Crop プレビュー用の表示画像（<see cref="_previewEs"/> を借りて包む非所有アダプタ）。</summary>
     private EsImageSourceAdapter? _previewImage;
@@ -88,7 +88,7 @@ public sealed partial class MainWindow : Window
 
     /// <summary>プレビュー画像を差し替える（旧画像は破棄し、ViewModel の表示も更新する）。</summary>
     /// <param name="bitmap">新しいプレビュー画像。 所有権は本ウィンドウへ移る。</param>
-    private void SetPreviewBitmap(EsBitmap bitmap)
+    private void SetPreviewBitmap(EsWritableBitmap bitmap)
     {
         // 旧のアダプタと画像を破棄してから差し替える（IImage は非所有のため、保持するホストが破棄する）
         _previewImage?.Dispose();
@@ -234,7 +234,7 @@ public sealed partial class MainWindow : Window
     {
         if (e.Result?.Image is { } image)
         {
-            // 画像変更（同期実行。 このハンドラの完了後に APP が再表示される）。 キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換。
+            // 画像変更（同期実行。 このハンドラの完了後に APP が再表示される）。 キャプチャ結果（EsWritableBitmap）を表示用 Bitmap へ変換。
             _vm.CapturedImage = image.ToAvaloniaBitmap();
             _vm.AddLog("[Event] CaptureCompleted（同期）：キャプチャ画像を更新しました。");
         }
@@ -344,14 +344,14 @@ public sealed partial class MainWindow : Window
     /// <summary>グリッド付きのダミー画像を生成する（Crop プレビュー用）。</summary>
     /// <param name="width">画像の幅。</param>
     /// <param name="height">画像の高さ。</param>
-    /// <returns>生成した画像（<see cref="EsBitmap"/>。 呼び出し側（<see cref="SetPreviewBitmap"/>）が所有する）。</returns>
+    /// <returns>生成した画像（<see cref="EsWritableBitmap"/>。 呼び出し側（<see cref="SetPreviewBitmap"/>）が所有する）。</returns>
     /// <remarks>
     /// 白地に 100px 間隔の薄いグリッドと、中央に色付きの矩形を描画する（サイズ感・座標の確認用）。<br/>
-    /// <b>EsBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、ピクセル操作が安定する。
+    /// <b>EsWritableBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、ピクセル操作が安定する。
     /// </remarks>
-    private static EsBitmap CreateDummyBitmap(int width, int height)
+    private static EsWritableBitmap CreateDummyBitmap(int width, int height)
     {
-        var bitmap = EsBitmap.Create(width, height);
+        var bitmap = EsWritableBitmap.Create(width, height);
 
         for (int y = 0; y < height; y++)
         {

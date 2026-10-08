@@ -167,7 +167,7 @@ internal static class Program
     /// <summary>骨格確認用のプレビュー画像を生成する。</summary>
     /// <returns>生成した画像。 所有権は呼び出し側（<c>MainViewModel</c> へ渡す）。</returns>
     /// <remarks>キャプチャ実装までの暫定。 グラデーションにすることで描画の成否を目視で判定できる。</remarks>
-    private static EsBitmap CreatePlaceholderImage()
+    private static EsWritableBitmap CreatePlaceholderImage()
     {
         // 所有権は FromSKBitmap へ移るため using を付けない（付けると戻り値が破棄済みになる）
         var bitmap = new SKBitmap(320, 180);

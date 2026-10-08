@@ -32,8 +32,8 @@ public sealed class ZoomViewControl : SkiaCanvasView
 {
     /// <summary><see cref="Source"/> プロパティ（ズーム対象の画像）。</summary>
     /// <remarks>設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする。</remarks>
-    public static readonly MewProperty<EsBitmap?> SourceProperty =
-        MewProperty<EsBitmap?>.Register<ZoomViewControl>(
+    public static readonly MewProperty<IEsBitmap?> SourceProperty =
+        MewProperty<IEsBitmap?>.Register<ZoomViewControl>(
             nameof(Source), null, MewPropertyOptions.AffectsRender,
             changed: static (owner, _, _) => owner.OnSourceChanged());
 
@@ -109,7 +109,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>表示する画像（ズーム対象）を取得または設定する。</summary>
     /// <value>ズーム対象の画像。 null の場合は何も表示しない。 設定すると Fit 表示へリセットする。</value>
-    public EsBitmap? Source
+    public IEsBitmap? Source
     {
         get => GetValue(SourceProperty);
         set => SetValue(SourceProperty, value);
@@ -435,7 +435,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>元画像のサイズ（コンテンツ座標）を取得する。</summary>
     /// <returns>元画像のサイズ。 画像未設定時は default。</returns>
-    /// <remarks><c>EsBitmap.Size</c> は <c>System.Drawing.Size</c> のため、コア幾何型へ変換する。</remarks>
+    /// <remarks><c>IEsBitmap.Size</c> は <c>System.Drawing.Size</c> のため、コア幾何型へ変換する。</remarks>
     private EsSize SourceSize
     {
         get

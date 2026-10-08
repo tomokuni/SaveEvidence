@@ -133,7 +133,7 @@ public sealed partial class CapturePage : UserControl
             {
                 case nameof(MainViewModel.PreviewImage):
                     OnPreviewImageChanged();
-                    // PreviewImage（EsBitmap）を表示境界で Avalonia 画像（IImage）へ変換して CropView へ設定する。
+                    // PreviewImage（EsWritableBitmap）を表示境界で Avalonia 画像（IImage）へ変換して CropView へ設定する。
                     // 画像の所有は ViewModel（PreviewImage）が保持し、本ページは非所有アダプタで包むだけ。
                     // IImage は非所有のため、差し替え時に本ページが旧アダプタを破棄する（射影の解放）。
                     _cropViewSource?.Dispose();
@@ -611,7 +611,7 @@ public sealed partial class CapturePage : UserControl
     /// <summary>Undo スタックから画像を復元する（現在の画像は Redo スタックへ退避される）。</summary>
     public void RestoreUndo()
     {
-        // 現在のプレビュー画像（EsBitmap）を Undo へ渡す（Undo スタックは EsBitmap を保持）。
+        // 現在のプレビュー画像（EsWritableBitmap）を Undo へ渡す（Undo スタックは EsWritableBitmap を保持）。
         var current = _viewModel.PreviewImage;
         using var prev = _undoHistory.Undo(current);
         if (prev is not null) RestoreImage(prev);
@@ -625,8 +625,8 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>復元した画像へプレビューを差し替える。</summary>
-    /// <param name="image">復元する画像（EsBitmap）。 所有権は ViewModel へ移る。</param>
-    private void RestoreImage(EsBitmap image)
+    /// <param name="image">復元する画像（EsWritableBitmap）。 所有権は ViewModel へ移る。</param>
+    private void RestoreImage(EsWritableBitmap image)
     {
         _viewModel.PreviewImage?.Dispose();
         _viewModel.SetPreviewImage(image);

@@ -45,7 +45,7 @@ public class CapturePreviewLogMessageTests
     {
         // 「結果が確定したときにどのログをどの順序で出すか」をコアが単一所有する
         var logger = new RecordingLogger();
-        using var image = EsBitmap.Create(20, 10);
+        using var image = EsWritableBitmap.Create(20, 10);
 
         logger.LogCaptureFinished(new CaptureResult(image, new EsRectInt(1, 2, 20, 10)));
 
@@ -79,7 +79,7 @@ public class CapturePreviewLogMessageTests
     internal void LogCropStart_元画像のサイズを書式で出力する()
     {
         var logger = new RecordingLogger();
-        using var image = EsBitmap.Create(1920, 1080);
+        using var image = EsWritableBitmap.Create(1920, 1080);
 
         logger.LogCropStart(image);
 
@@ -132,7 +132,7 @@ public class CapturePreviewLogMessageTests
     internal void 全ログメソッドが無効ロガーでも安全に実行できる()
     {
         var logger = NullLogger.Instance;
-        using var image = EsBitmap.Create(1, 1);
+        using var image = EsWritableBitmap.Create(1, 1);
 
         logger.LogCaptureStart(CaptureType.AreaSelect);
         logger.LogCaptureFinished(new CaptureResult(image, new EsRectInt(0, 0, 1, 1)));
@@ -153,7 +153,7 @@ public class CapturePreviewLogMessageTests
     internal void LogVirtualScreen_原点とサイズを含む書式で出力する()
     {
         var logger = new RecordingLogger();
-        using var bitmap = EsBitmap.Create(3840, 2160);
+        using var bitmap = EsWritableBitmap.Create(3840, 2160);
 
         logger.LogVirtualScreen(new EsPointInt(-1920, -200), bitmap);
 

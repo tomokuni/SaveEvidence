@@ -14,7 +14,7 @@ public class CropClipMathTests
     /// <param name="width">幅。</param>
     /// <param name="height">高さ。</param>
     /// <returns>指定サイズの画像。</returns>
-    private static EsBitmap CreateImage(int width, int height) => EsBitmap.Create(width, height);
+    private static EsWritableBitmap CreateImage(int width, int height) => EsWritableBitmap.Create(width, height);
 
     // ====================================================================
     // ResolveCaptureRect（選択矩形 → 切り出し矩形）

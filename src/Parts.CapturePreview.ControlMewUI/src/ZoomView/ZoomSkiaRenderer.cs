@@ -19,7 +19,7 @@ internal static class ZoomSkiaRenderer
     /// <param name="source">ズーム対象の画像。 null の場合は何もしない。</param>
     /// <param name="session">表示矩形（配置・倍率）を単一所有するセッション。</param>
     /// <remarks>画像の全面を表示矩形へ 1 回で描画する（コアが配置を確定済みのため、Skia 側の計算は不要）。</remarks>
-    public static void Render(SKCanvas canvas, EsBitmap? source, ZoomViewSession session)
+    public static void Render(SKCanvas canvas, IEsBitmap? source, ZoomViewSession session)
     {
         var rect = session.ImageRect;
         if (source is null || rect.Width <= 0 || rect.Height <= 0)

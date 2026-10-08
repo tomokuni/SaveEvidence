@@ -22,7 +22,7 @@ public static class ImageColorMath
     /// 長辺を <see cref="SampleDivisor"/> で割った間隔（最低 1 ピクセル）でサンプルする。<br/>
     /// アルファは平均せず不透明として返す（下地色として使うため）。
     /// </remarks>
-    public static DrawingColor AverageColor(EsBitmap image)
+    public static DrawingColor AverageColor(IEsBitmap image)
     {
         ArgumentNullException.ThrowIfNull(image);
 

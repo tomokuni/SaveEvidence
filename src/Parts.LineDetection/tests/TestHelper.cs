@@ -5,24 +5,22 @@ namespace EsUtil.SaveEvidence.Parts.LineDetection.Tests;
 
 /// <summary>テスト用の共通ヘルパー。</summary>
 /// <remarks>
-/// 検出器本体（<see cref="LogicLineDetector"/>）は <see cref="EsBitmap"/> を入力に取る。<br/>
-/// テストでは PNG を OpenCV（<see cref="Cv2"/>）で読み込み、BGRA の <see cref="EsBitmap"/> を構築する。<br/>
+/// 検出器本体（<see cref="LogicLineDetector"/>）は <see cref="IEsBitmap"/>（読み取りの面）を入力に取る。<br/>
+/// テストでは PNG を OpenCV（<see cref="Cv2"/>）で読み込み、BGRA の <see cref="EsWritableBitmap"/> を構築する。<br/>
 /// （Avalonia の <c>new Bitmap(path)</c> はヘッドレスで 1x1 になるため、OpenCV でデコードする）<br/>
-/// OpenCV はテスト専用のユーティリティで、検出器の public API には露出しない。<br/>
-/// <b>EsBitmap 採用理由</b>: ヘッドレスでは <c>WriteableBitmap</c> のピクセル保持が不完全なため、
-/// 検出器の入力を <see cref="EsBitmap"/>（SkiaHub 内部・安定）にして厳密検証をヘッドレスで成立させる。
+/// OpenCV はテスト専用のユーティリティで、検出器の public API には露出しない。
 /// </remarks>
 internal static class TestHelper
 {
-    /// <summary>PNG 画像を読み込んで BGRA の EsBitmap を構築する。</summary>
+    /// <summary>PNG 画像を読み込んで BGRA の画像を構築する。</summary>
     /// <param name="path">PNG ファイルのパス。</param>
-    /// <returns>構築した EsBitmap（BGRA8888）。</returns>
+    /// <returns>構築した画像（BGRA8888。 書き換え可能）。</returns>
     /// <remarks>
     /// 1. <c>Cv2.ImRead</c> で BGR 画像を読み込む<br/>
     /// 2. <see cref="ColorConversionCodes.BGR2BGRA"/> で BGRA へ変換する<br/>
-    /// 3. <c>Mat.Data</c> から <see cref="EsBitmap"/> のピクセルバッファへ直接コピーする（中間バッファなし）
+    /// 3. <c>Mat.Data</c> からコアのピクセル バッファへ直接コピーする（中間バッファなし）
     /// </remarks>
-    public static EsBitmap LoadBitmap(string path)
+    public static EsWritableBitmap LoadBitmap(string path)
     {
         using var mat = Cv2.ImRead(path);
         using var bgra = new Mat();
@@ -31,21 +29,18 @@ internal static class TestHelper
         var height = bgra.Height;
         var width = bgra.Width;
         var srcStride = (int)bgra.Step();
-        var result = EsBitmap.Create(width, height);
+        var result = EsWritableBitmap.Create(width, height);
         var dstStride = result.Stride;
+        var rowBytes = Math.Min(srcStride, dstStride);
+        var dst = result.WritablePixels;
         unsafe
         {
-            // Mat のピクセルバッファから EsBitmap のピクセルバッファへ行単位で直接コピーする
-            // （WriteableBitmap の中間バッファ・Lock を介さず、安定かつ低アロケーション）。
+            // Mat のピクセル バッファからコアのピクセル バッファへ行単位で直接コピーする
+            // （中間バッファ・Lock を介さず、安定かつ低アロケーション）。
             var src = (byte*)bgra.Data;
-            var dst = (byte*)result.Address;
             for (var y = 0; y < height; y++)
             {
-                Buffer.MemoryCopy(
-                    src + y * srcStride,
-                    dst + y * dstStride,
-                    dstStride,
-                    Math.Min(srcStride, dstStride));
+                new ReadOnlySpan<byte>(src + y * srcStride, rowBytes).CopyTo(dst.Slice(y * dstStride, rowBytes));
             }
         }
         return result;

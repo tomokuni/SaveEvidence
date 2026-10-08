@@ -23,7 +23,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 /// <summary>画面全体を覆うキャプチャ選択オーバーレイ（MewUI 版）。</summary>
 /// <remarks>
 /// Avalonia 版 <c>Parts.CapturePreview.ControlAvaloniaUI</c> の <c>CaptureOverlayWindow</c> に相当する。 撮影から選択・確定までの<br/>
-/// 1 セッションを担い、確定した領域を <see cref="EsBitmap"/> として返す。<br/>
+/// 1 セッションを担い、確定した領域を <see cref="EsWritableBitmap"/> として返す。<br/>
 /// <b>1 セッション = 1 インスタンス</b>であり、生成・実行・破棄は Facade（<see cref="CaptureSessionControl"/>）が担う<br/>
 /// （本クラスは公開しない。 排他の受付は Facade がコアの <c>CaptureSessionSlot</c> で行う）。<br/>
 /// <br/>
@@ -61,7 +61,7 @@ internal sealed class CaptureOverlay
 
     /// <summary>取得したスクリーン画像（セッション中のみ保持し、終了時に破棄する）。</summary>
     /// <remarks><see cref="RunAsync"/> の冒頭で設定する（それ以外では null）。</remarks>
-    private EsBitmap? _screen;
+    private EsWritableBitmap? _screen;
 
     /// <summary>取得対象のスクリーンの矩形（画面物理ピクセル）。<see cref="RunAsync"/> の冒頭で設定する。</summary>
     private EsRectInt _screenBounds;
@@ -69,7 +69,7 @@ internal sealed class CaptureOverlay
     /// <summary>取得したスクリーン画像を取得する。</summary>
     /// <value>撮影した仮想スクリーンの画像。</value>
     /// <remarks>参照は <see cref="RunAsync"/> が設定した後に限られる（撮影はセッションの実行の一部である）。</remarks>
-    private EsBitmap Screen => _screen!;
+    private EsWritableBitmap Screen => _screen!;
 
     /// <summary>ローカル DIP → 画像ピクセルの倍率。</summary>
     /// <remarks>
@@ -287,7 +287,7 @@ internal sealed class CaptureOverlay
     /// （本メソッドはコアの色型を MewUI の色型へ写すだけ。 変換は Platform 層の
     /// <c>ToMewUIColor</c> が単一所有する）。
     /// </remarks>
-    private static Color AverageColor(EsBitmap image)
+    private static Color AverageColor(IEsBitmap image)
         => ImageColorMath.AverageColor(image).ToMewUIColor();
 
     /// <summary>オーバーレイを表示し、確定またはキャンセルまで待つ。</summary>

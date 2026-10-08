@@ -166,7 +166,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 
 | 型 | 説明 |
 | --- | --- |
-| `EsImageSourceAdapter` | Avalonia の `Bitmap` またはコアの `EsBitmap` を包み、**`IImage`（表示）と `IEsImageSource`（コアの画像源）の両面**で公開するアダプタ。 真実は生成時に受け取った側の 1 つで、反対側は**初回に一度だけ**作る射影。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（`EsBitmap` の API を使う） |
+| `EsImageSourceAdapter` | Avalonia の `Bitmap` またはコアの `EsBitmap` を包み、**`IImage`（表示）と `IEsBitmap`（コアの画像源）の両面**で公開するアダプタ。 真実は生成時に受け取った側の 1 つで、反対側は**初回に一度だけ**作る射影。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（`EsBitmap` の API を使う） |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。 スレッド安全。 値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
 | `AvaloniaTextMeasure` | テキストの実寸を測る（`Measure(text, fontSize)`。 ラベルの配置矩形の計算に使う。 測定に色は影響しないためブラシは固定で共有する） |
 

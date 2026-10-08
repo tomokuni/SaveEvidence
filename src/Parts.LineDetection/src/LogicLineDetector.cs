@@ -50,7 +50,7 @@ public sealed class LogicLineDetector : ILineDetector
     private const double MinCornerTolerance = 5.0;
 
     /// <summary>画像から水平・垂直の辺（線分）を検出する。</summary>
-    /// <param name="image">解析対象の画像（EsBitmap・BGRA8888）。</param>
+    /// <param name="image">解析対象の画像（読み取りの面。 BGRA8888）。</param>
     /// <returns>検出した線分のリスト（スコア = 長さ・降順）。</returns>
     /// <remarks>
     /// 処理フロー:<br/>
@@ -62,7 +62,7 @@ public sealed class LogicLineDetector : ILineDetector
     ///    4 辺をコーナー近傍で交差する閉区間として出力する（<see cref="BuildRectangles"/>）<br/>
     /// 6. 矩形を構成できない場合は、最小長・暗いピクセル割合でフィルタしてスコア（長さ）降順で返す
     /// </remarks>
-    public IReadOnlyList<LineDetectionResult> Detect(EsBitmap image)
+    public IReadOnlyList<LineDetectionResult> Detect(IEsBitmap image)
     {
         ArgumentNullException.ThrowIfNull(image);
 

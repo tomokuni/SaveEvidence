@@ -26,7 +26,7 @@ internal static class SelectionOutlineRasterizer
     private const double MinimumScale = 2.0;
 
     /// <summary>選択矩形の 4 辺を 2 色の破線でルーペ画像へ描画する。</summary>
-    /// <param name="bitmap">描画対象の画像（ルーペの表示画像）。</param>
+    /// <param name="bitmap">描画対象の画像（ルーペの表示画像）。 <b>書き換えるため <see cref="IEsWritableBitmap"/> を受ける</b>。</param>
     /// <param name="selectionSourceRect">選択矩形（対象座標系・半開区間）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（対象座標系）。</param>
     /// <param name="scale">対象座標 → ルーペ画像ピクセル座標の変換係数。</param>
@@ -37,7 +37,7 @@ internal static class SelectionOutlineRasterizer
     /// 2. 画像外へはみ出す画素は無視する（例外にしない）。
     /// </remarks>
     public static void DrawSelectionRect(
-        EsBitmap bitmap, EsRect selectionSourceRect, EsPoint captureTopLeft, double scale, DrawingColor colorA, DrawingColor colorB)
+        IEsWritableBitmap bitmap, EsRect selectionSourceRect, EsPoint captureTopLeft, double scale, DrawingColor colorA, DrawingColor colorB)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
 
@@ -45,7 +45,7 @@ internal static class SelectionOutlineRasterizer
         {
             var color = dash.IsColorA ? colorA : colorB;
 
-            // 範囲外は EsBitmap.TrySetPixel が無視する（画像端をはみ出す矩形でも例外にしない）
+            // 範囲外は TrySetPixel が無視する（画像端をはみ出す矩形でも例外にしない）
             for (var offset = 0; offset < dash.Width; offset++)
             {
                 for (var row = 0; row < dash.Height; row++)

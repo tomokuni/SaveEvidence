@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.App.Core.ViewModels;
 /// <c>[RelayCommand]</c> 属性によるソースジェネレーターを活用する。<br/>
 /// 設定管理は <see cref="Services.SettingsService"/> を介して行い、疎結合な設計を実現する。<br/>
 /// 画像のライフサイクル管理（Dispose）は <c>OnPreviewImageChanging</c> で行う。<br/>
-/// ピクセル操作（切出し）は UI 非依存の <see cref="EsBitmap"/> に委譲し、
+/// ピクセル操作（切出し）は UI 非依存の <see cref="IEsBitmap"/> 拡張に委譲し、
 /// 画面キャプチャは <see cref="CaptureType"/> に委譲する（プラットフォーム抽象。 DIP）。<br/>
 /// クリップボードと上書き確認は UI が必要なため、コールバックとして UI 実装側から注入する（依存性逆転）。
 /// </remarks>
@@ -45,18 +45,19 @@ public sealed partial class MainViewModel : ObservableObject
     public bool CenterAlign => Settings.CenterAlign;
 
     /// <summary>プレビュー画像変更前の旧画像（新しい画像が Image.Source へ反映された後に破棄する）。</summary>
-    private EsBitmap? _previousPreviewImage;
+    private EsWritableBitmap? _previousPreviewImage;
 
     /// <summary>選択モード開始デリゲート（View 側から設定されるコールバック）。</summary>
     public Action<CaptureType>? StartSelectionMode { get; set; }
 
     /// <summary>画像クリップボード操作のコールバック（View 側から設定）。</summary>
-    /// <remarks>コピーは <see cref="EsBitmap"/> を渡し、UI 型への変換は UI 実装側（View）が行う。</remarks>
-    public Func<EsBitmap, Task<bool>>? CopyToClipboardCallback { get; set; }
+    /// <remarks>コピーは <see cref="IEsBitmap"/>（読み取りの面）を渡し、UI 型への変換は UI 実装側（View）が行う。</remarks>
+    public Func<IEsBitmap, Task<bool>>? CopyToClipboardCallback { get; set; }
 
     /// <summary>画像貼り付け操作のコールバック（View 側から設定）。</summary>
-    /// <remarks>貼り付けは <see cref="EsBitmap"/> を受け取り、UI 型からの変換は UI 実装側（View）が行う。</remarks>
-    public Func<Task<EsBitmap?>>? PasteFromClipboardCallback { get; set; }
+    /// <remarks>貼り付けは書き換え可能な画像（<see cref="EsWritableBitmap"/>）を受け取り（所有権も移る）、
+    /// UI 型からの変換は UI 実装側（View）が行う。</remarks>
+    public Func<Task<EsWritableBitmap?>>? PasteFromClipboardCallback { get; set; }
 
     /// <summary>上書き確認ダイアログのコールバック（View 側から設定）。</summary>
     public Func<string, Task<bool>>? ConfirmOverwriteAsync { get; set; }
@@ -84,7 +85,7 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateSaveFolderResolution();
     }
 
-    /// <summary>プレビュー画像（EsBitmap。 表示は表示境界で Avalonia WriteableBitmap へ変換する）</summary>
+    /// <summary>プレビュー画像（書き換え可能な画像。 表示は表示境界で Avalonia WriteableBitmap へ変換する）</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasPreviewImage))]
     [NotifyPropertyChangedFor(nameof(CanCopy))]
@@ -92,7 +93,7 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SaveStatusText))]
     [NotifyPropertyChangedFor(nameof(SavedFileName))]
     [NotifyPropertyChangedFor(nameof(ImageSizeDisplayText))]
-    private EsBitmap? _previewImage;
+    private EsWritableBitmap? _previewImage;
 
     /// <summary>画像が保存済みかどうか</summary>
     [ObservableProperty]
@@ -237,7 +238,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// ウィンドウ再表示時にプレビューエリアがチラつく（破棄済み Bitmap の描画）。<br/>
     /// 破棄は <c>OnPreviewImageChanged</c>（新しい画像が設定された後）で行う。
     /// </remarks>
-    partial void OnPreviewImageChanging(EsBitmap? value)
+    partial void OnPreviewImageChanging(EsWritableBitmap? value)
     {
         // 前回の画像を保持（OnPreviewImageChanged で破棄。 Image.Source 更新前に破棄しない）
         _previousPreviewImage = _previewImage;
@@ -251,7 +252,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// 新しい画像が <c>Image.Source</c> へ反映された後に前回の画像を破棄することで、<br/>
     /// 破棄済み Bitmap が描画されるチラつきを防止する。
     /// </remarks>
-    partial void OnPreviewImageChanged(EsBitmap? value)
+    partial void OnPreviewImageChanged(EsWritableBitmap? value)
     {
         _previousPreviewImage?.Dispose();
         _previousPreviewImage = null;
@@ -293,9 +294,9 @@ public sealed partial class MainViewModel : ObservableObject
         _hasInvalidSaveFolder = string.IsNullOrEmpty(_saveFolderPathResolved) || !Directory.Exists(_saveFolderPathResolved);
     }
 
-    /// <summary>指定された画像（EsBitmap）をプレビューとして設定する。</summary>
-    /// <param name="image">設定する画像。 所有権が本型へ移る。</param>
-    public void SetPreviewImage(EsBitmap image) => PreviewImage = image;
+    /// <summary>指定された画像をプレビューとして設定する。</summary>
+    /// <param name="image">設定する画像（書き換え可能）。 所有権が本型へ移る。</param>
+    public void SetPreviewImage(EsWritableBitmap image) => PreviewImage = image;
 
     /// <summary>画像をクリップボードにコピーする。</summary>
     [RelayCommand]
@@ -436,9 +437,9 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>ピクセル編集（切出し等）を適用する（BeforeEditAction → 変換 → 画像差し替え）。</summary>
-    /// <param name="edit">EsBitmap を受け取り、編集後の EsBitmap を返す処理。</param>
-    /// <remarks>ピクセル操作は共通基盤（<see cref="EsBitmap"/>）に委譲する。</remarks>
-    private void ApplyPixelEdit(Func<EsBitmap, EsBitmap?> edit)
+    /// <param name="edit">読み取りの面（<see cref="IEsBitmap"/>）を受け取り、編集後の画像（書き換え可能）を返す処理。</param>
+    /// <remarks>ピクセル操作は共通基盤（<see cref="EsBitmapExtensions"/>）に委譲する。</remarks>
+    private void ApplyPixelEdit(Func<IEsBitmap, EsWritableBitmap?> edit)
     {
         if (PreviewImage is null)
         {

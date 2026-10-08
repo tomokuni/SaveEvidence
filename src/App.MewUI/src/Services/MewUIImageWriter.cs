@@ -32,7 +32,7 @@ internal sealed class MewUIImageWriter : EsUtil.SaveEvidence.App.Core.Services.I
     /// <exception cref="ArgumentNullException"><paramref name="image"/> または <paramref name="filePath"/> が null。</exception>
     /// <exception cref="IOException">ファイルを作成できない。</exception>
     /// <exception cref="InvalidOperationException">エンコード結果が得られない。</exception>
-    public void Save(EsBitmap image, string filePath)
+    public void Save(IEsBitmap image, string filePath)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(filePath);

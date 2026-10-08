@@ -8,13 +8,13 @@ using SkiaSharp;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
-/// <summary>画像ファイルを縮小してサムネイル用の <see cref="EsBitmap"/> として読み込むローダー。</summary>
+/// <summary>画像ファイルを縮小してサムネイル用の <see cref="EsWritableBitmap"/> として読み込むローダー。</summary>
 /// <remarks>
 /// <b>縮小デコード</b>: <see cref="SKCodec.GetPixels(SKImageInfo, out byte[])"/> へ縮小後の寸法を渡し、原寸のバッファを確保せずにデコードする<br/>
 /// （4K のスクリーンショットを多数並べるときのメモリと時間を抑える）。<br/>
 /// <b>キャッシュ</b>: 同一ファイル・同一サイズのデコード結果を共有する。 ファイルの更新日時をキーに含めるため、<br/>
 /// 内容が変われば再デコードされる。 容量管理は <see cref="CapacityLimitedCache"/> へ委譲し、<br/>
-/// 上限超過時は <see cref="EsBitmap"/>（<see cref="IDisposable"/>）が破棄されてから破棄される。<br/>
+/// 上限超過時は <see cref="EsWritableBitmap"/>（<see cref="IDisposable"/>）が破棄されてから破棄される。<br/>
 /// <b>失敗時</b>: 存在しない・非画像・破損などの場合は null を返す（例外にしない）。<br/>
 /// <b>スレッド</b>: キャッシュは並行辞書のため同時アクセスできるが、UI からの呼び出しを前提とする。
 /// </remarks>
@@ -24,7 +24,7 @@ internal static class ImageThumbnailLoader
     private const int CacheCapacity = 100;
 
     /// <summary>デコード結果のキャッシュ（キー: パス・要求サイズ・更新日時）。</summary>
-    private static readonly ConcurrentDictionary<(string Path, int Size, DateTime LastWrite), EsBitmap?> s_cache = new();
+    private static readonly ConcurrentDictionary<(string Path, int Size, DateTime LastWrite), EsWritableBitmap?> s_cache = new();
 
     /// <summary>画像ファイルを読み込み、長辺が指定サイズを超えないサムネイルを返す。</summary>
     /// <param name="filePath">対象のファイルパス。</param>
@@ -35,7 +35,7 @@ internal static class ImageThumbnailLoader
     /// 2. キャッシュにあればそれを返す（キャッシュの値は本クラスが所有し、呼び出し側は破棄しない）。<br/>
     /// 3. 無ければ縮小デコードしてキャッシュへ登録する。
     /// </remarks>
-    public static EsBitmap? Load(string filePath, int maxSize)
+    public static EsWritableBitmap? Load(string filePath, int maxSize)
     {
         if (!ImageFileExtensions.IsImageFile(filePath))
         {
@@ -66,7 +66,7 @@ internal static class ImageThumbnailLoader
     /// 3. 縮小されなかった場合は、デコード後に目標寸法へ縮小する。<br/>
     /// 4. 不完全なデータ（<c>IncompleteInput</c>）はデコードできた範囲を表示する。
     /// </remarks>
-    private static EsBitmap? Decode(string filePath, int maxSize)
+    private static EsWritableBitmap? Decode(string filePath, int maxSize)
     {
         using var stream = File.OpenRead(filePath);
         using var codec = SKCodec.Create(stream);
@@ -88,7 +88,7 @@ internal static class ImageThumbnailLoader
         // コーデックが対応していれば縮小した寸法でデコードする（対応可否は形式により異なる）
         var decodeSize = scale < 1.0 ? codec.GetScaledDimensions((float)scale) : target;
 
-        // 内部表現（EsBitmap）と同じ BGRA8888・Premul を指定し、拡張子に依らず同じ形式へ揃える
+        // 内部表現（EsWritableBitmap）と同じ BGRA8888・Premul を指定し、拡張子に依らず同じ形式へ揃える
         var bitmap = DecodePixels(codec, decodeSize);
         if (bitmap is null)
         {

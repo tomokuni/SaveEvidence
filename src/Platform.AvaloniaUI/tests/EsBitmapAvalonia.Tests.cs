@@ -150,11 +150,11 @@ public class EsBitmapAvaloniaTests(ITestOutputHelper output)
         LogBenchmark("4K 3840x2160", 3840, 2160, wbTime, bmpTime, n);
     }
 
-    /// <summary>指定回数だけ <see cref="EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging.EsBitmapAvaloniaExtensions.ToAvaloniaWriteableBitmap(EsUtil.Platform.Core.Imaging.EsBitmap)"/> を実行し、累計ミリ秒を返す。</summary>
+    /// <summary>指定回数だけ <see cref="EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging.EsBitmapAvaloniaExtensions.ToAvaloniaWriteableBitmap(EsUtil.Platform.Core.Imaging.IEsBitmap)"/> を実行し、累計ミリ秒を返す。</summary>
     /// <param name="bmp">計測対象のビットマップ。</param>
     /// <param name="iterations">繰り返し回数。</param>
     /// <returns>累計実行時間（ミリ秒）。</returns>
-    private static double RunWriteableMeasurement(EsBitmap bmp, int iterations)
+    private static double RunWriteableMeasurement(IEsBitmap bmp, int iterations)
     {
         // 生成結果を蓄積してデッドコード除去（JIT 最適化）を防ぐ。
         int sink = 0;
@@ -172,7 +172,7 @@ public class EsBitmapAvaloniaTests(ITestOutputHelper output)
         return (end - start) * 1000.0 / Stopwatch.Frequency;
     }
 
-    /// <summary>指定回数だけ <see cref="EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging.EsBitmapAvaloniaExtensions.ToAvaloniaBitmap(EsUtil.Platform.Core.Imaging.EsBitmap)"/> を実行し、累計ミリ秒を返す。</summary>
+    /// <summary>指定回数だけ <see cref="EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging.EsBitmapAvaloniaExtensions.ToAvaloniaBitmap(EsUtil.Platform.Core.Imaging.IEsBitmap)"/> を実行し、累計ミリ秒を返す。</summary>
     /// <param name="bmp">計測対象のビットマップ。</param>
     /// <param name="iterations">繰り返し回数。</param>
     /// <returns>累計実行時間（ミリ秒）。</returns>

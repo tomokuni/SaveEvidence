@@ -12,7 +12,7 @@ public class CaptureResultTests
     [Fact]
     internal void From_画像と領域があればそのまま保持する()
     {
-        using var image = EsBitmap.Create(10, 20);
+        using var image = EsWritableBitmap.Create(10, 20);
 
         var result = CaptureResult.From(image, new EsRectInt(1, 2, 10, 20));
 
@@ -33,7 +33,7 @@ public class CaptureResultTests
     [Fact]
     internal void From_領域が無ければキャンセルの空結果にする()
     {
-        using var image = EsBitmap.Create(10, 20);
+        using var image = EsWritableBitmap.Create(10, 20);
 
         var result = CaptureResult.From(image, null);
 

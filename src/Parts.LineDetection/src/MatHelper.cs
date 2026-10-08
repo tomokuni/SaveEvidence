@@ -4,39 +4,39 @@ using OpenCvSharp;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection;
 
-/// <summary>EsBitmap ↔ Mat 変換のヘルパー。</summary>
+/// <summary>コアの画像 ↔ Mat 変換のヘルパー。</summary>
 /// <remarks>OpenCV 依存を内部に閉じ込める（本クラスだけが <c>OpenCvSharp</c> を参照する）。</remarks>
 internal static class MatHelper
 {
-    /// <summary>EsBitmap（BGRA8888）を Mat（CV_8UC4）へ変換する。</summary>
-    /// <param name="bitmap">変換元の EsBitmap。</param>
+    /// <summary>画像（BGRA8888）を Mat（CV_8UC4）へ変換する。</summary>
+    /// <param name="bitmap">変換元の画像。 借用であり破棄しない（読み取るだけのため <see cref="IEsBitmap"/> を受ける）。</param>
     /// <returns>変換された Mat（呼び出し元で破棄する）。</returns>
     /// <remarks>
-    /// ピクセルバッファ（<see cref="EsBitmap.Address"/>）を直接読み取り、<see cref="Mat"/> へコピーする。<br/>
+    /// ピクセル バッファ（<see cref="IEsBitmap.Pixels"/>）を直接読み取り、<see cref="Mat"/> へコピーする。<br/>
     /// ストライドが幅×4 と異なる場合は行単位でコピーする。
     /// </remarks>
-    public static Mat ToMat(EsBitmap bitmap)
+    public static Mat ToMat(IEsBitmap bitmap)
     {
         var width = bitmap.Width;
         var height = bitmap.Height;
-        var stride = width * 4;
+        var stride = width * IEsBitmap.BytesPerPixel;
         var pixels = new byte[height * stride];
         var srcStride = bitmap.Stride;
 
         unsafe
         {
-            fixed (byte* p = pixels)
+            fixed (byte* src = bitmap.Pixels)
+            fixed (byte* dst = pixels)
             {
-                var src = (byte*)bitmap.Address;
                 if (srcStride == stride)
                 {
-                    Buffer.MemoryCopy(src, p, pixels.Length, pixels.Length);
+                    Buffer.MemoryCopy(src, dst, pixels.Length, pixels.Length);
                 }
                 else
                 {
                     for (var y = 0; y < height; y++)
                     {
-                        Buffer.MemoryCopy(src + y * srcStride, p + y * stride, stride, stride);
+                        Buffer.MemoryCopy(src + y * srcStride, dst + y * stride, stride, stride);
                     }
                 }
             }

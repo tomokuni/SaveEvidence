@@ -11,7 +11,7 @@ public class CaptureClipCacheTests
 {
     /// <summary>検証用の画像を生成する。</summary>
     /// <returns>4x3 の画像。</returns>
-    private static EsBitmap CreateImage() => EsBitmap.Create(4, 3);
+    private static EsWritableBitmap CreateImage() => EsWritableBitmap.Create(4, 3);
 
     [Fact]
     internal void Store_格納した矩形と画像を保持する()

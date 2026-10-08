@@ -73,7 +73,7 @@ public static class CropClipMath
     /// <param name="image">対象の画像。</param>
     /// <returns>画像のピクセルサイズ（コアの値型）。</returns>
     /// <remarks>コアの型同士の変換はコアが単一所有する（UI が <c>new EsSize(image.Width, image.Height)</c> を書かない）。</remarks>
-    public static EsSize ImageSize(EsBitmap image) => new(image.Width, image.Height);
+    public static EsSize ImageSize(IEsBitmap image) => new(image.Width, image.Height);
 
     /// <summary>画像の占有範囲（原点とサイズ）を求める。</summary>
     /// <param name="image">対象の画像。</param>
@@ -83,7 +83,7 @@ public static class CropClipMath
     /// 原点が負値（仮想スクリーンの左上がプライマリより外側）でも同じ式で扱える。<br/>
     /// 占有範囲は切り出しのクランプ境界になるため、UI が幅・高さを組み立てないよう本メソッドが単一所有する。
     /// </remarks>
-    public static EsRectInt ImageBounds(EsBitmap image, EsPointInt origin)
+    public static EsRectInt ImageBounds(IEsBitmap image, EsPointInt origin)
         => new(origin.X, origin.Y, image.Width, image.Height);
 
     /// <summary>切り出し元の画像が切り出せる（サイズが正）であることを検証する。</summary>
@@ -94,7 +94,7 @@ public static class CropClipMath
     /// 「サイズが 0 の画像は切り出せない」という規則を単一所有する（公開 API の前提条件として検証する）。<br/>
     /// イベントハンドラから呼ばれる経路では例外を投げずに何もしない（呼び出し側が可否を判断する）。
     /// </remarks>
-    public static void ValidateImage(EsBitmap image, string paramName)
+    public static void ValidateImage(IEsBitmap image, string paramName)
     {
         if (image.Width <= 0 || image.Height <= 0)
         {
@@ -149,7 +149,7 @@ public static class CropClipMath
     /// <param name="virtualScreen">仮想スクリーン画像。 null の場合は切り出さない。</param>
     /// <param name="origin">仮想スクリーン画像の原点（画面物理ピクセル）。</param>
     /// <param name="captureRect">切り出し矩形（画面物理ピクセル・閉区間）。</param>
-    /// <returns>切り出した画像。 切り出せない場合（未取得・破棄済み）は null。</returns>
+    /// <returns>切り出した画像（書き換え可能）。 切り出せない場合（未取得・破棄済み）は null。</returns>
     /// <remarks>
     /// 仮想スクリーン未取得（切り取り元が無い）場合は null を返し、呼び出し側が代替の取得経路<br/>
     /// （領域指定の画面キャプチャ）へフォールバックできるようにする。<br/>
@@ -157,9 +157,9 @@ public static class CropClipMath
     /// 「破棄済みは切り出せない」規則を本クラスが単一所有し、UI が例外を捕まえない）。<br/>
     /// 取り出した画像の所有権は呼び出し側へ移る。
     /// </remarks>
-    public static EsBitmap? Extract(EsBitmap? virtualScreen, EsPointInt origin, EsRectInt captureRect)
+    public static EsWritableBitmap? Extract(IEsBitmap? virtualScreen, EsPointInt origin, EsRectInt captureRect)
     {
-        if (virtualScreen is not { } source || source.IsDisposed)
+        if (virtualScreen is not { } source)
         {
             return null;
         }
@@ -171,7 +171,7 @@ public static class CropClipMath
         }
         catch (ObjectDisposedException)
         {
-            // 切り出しの途中で破棄された（ウィンドウクローズとの競合）: 切り出せないため null
+            // 破棄済み（ウィンドウクローズとの競合）: 切り出せないため null
             return null;
         }
     }

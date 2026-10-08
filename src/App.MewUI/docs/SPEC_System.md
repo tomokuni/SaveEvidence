@@ -224,7 +224,7 @@ classDiagram
     }
     class ThumbnailView {
         <<SkiaCanvasView>>
-        +EsBitmap? Source
+        +IEsBitmap? Source
         +int RequestedSize
     }
     class FolderViewViewModel {
@@ -237,8 +237,8 @@ classDiagram
     class UndoHistory {
         <<App.Core>>
         +Push(image) void
-        +GetUndoHistory() IReadOnlyList~EsBitmap~
-        +GetRedoHistory() IReadOnlyList~EsBitmap~
+        +GetUndoHistory() IReadOnlyList~EsWritableBitmap~
+        +GetRedoHistory() IReadOnlyList~EsWritableBitmap~
     }
     class WindowPlacementMath {
         +ToPhysicalPixelPoint(EsPoint, scale)$ EsPointInt
@@ -250,7 +250,7 @@ classDiagram
     }
     class ZoomViewControl {
         <<Parts.CapturePreview.ControlMewUI>>
-        +EsBitmap? Source
+        +IEsBitmap? Source
         +double ZoomPercent
         +ZoomIn() void
         +ZoomOut() void
@@ -259,7 +259,7 @@ classDiagram
     }
     class CropViewControl {
         <<Parts.CapturePreview.ControlMewUI>>
-        +EsBitmap? Source
+        +IEsBitmap? Source
         +ZoomViewAppearance Appearance
         +IReadOnlyList~OverlayRect~ Rects
         +EsRect? HighlightSourceRect
@@ -273,7 +273,7 @@ classDiagram
         +Save(image, filePath) void
     }
     class MainViewModel {
-        +EsBitmap PreviewImage
+        +EsWritableBitmap PreviewImage
         +string ImageSizeDisplayText
         +string SaveStatusText
         +SaveImageAsync() Task
@@ -282,7 +282,7 @@ classDiagram
     }
     class IImageWriter {
         <<interface>>
-        +Save(EsBitmap, string) void
+        +Save(IEsBitmap, string) void
     }
 
     Program ..> MainWindow : 生成・配置復元

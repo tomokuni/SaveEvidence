@@ -36,7 +36,7 @@ internal sealed partial class CaptureOverlayWindow : Window
     private readonly CaptureType _captureType;
 
     /// <summary>キャプチャ完了コールバック（確定・キャンセル・エラー時に呼ばれる）。 切り出し矩形は画面物理座標。</summary>
-    private readonly Action<EsBitmap?, EsRectInt?> _onComplete;
+    private readonly Action<EsWritableBitmap?, EsRectInt?> _onComplete;
 
     /// <summary>DPI スケーリング係数（プライマリスクリーン基準）。</summary>
     private readonly double _scaling;
@@ -64,9 +64,9 @@ internal sealed partial class CaptureOverlayWindow : Window
     /// <summary>クリック確定型の押下時に固定したハイライト矩形（固定なしの解放では確定しない）。 コアの状態が単一所有する。</summary>
     private readonly CaptureClickSelection _clickSelection = new();
 
-    /// <summary>仮想スクリーン全体の EsBitmap（全モード共通のキャプチャソース・切り出し元）を取得する。</summary>
+    /// <summary>仮想スクリーン全体の画像（全モード共通のキャプチャソース・切り出し元）を取得する。</summary>
     /// <value>撮影した画像。 未取得（背景撮影中・取得失敗）の場合は null。</value>
-    private EsBitmap? VirtualScreenBitmap => _captureImage.Image;
+    private EsWritableBitmap? VirtualScreenBitmap => _captureImage.Image;
 
     /// <summary>事前切り出し済みのキャッシュ（同一判定・所有権の受け渡し・旧値の破棄をコアが単一所有する）。</summary>
     private readonly CaptureClipCache _clipCache = new();
@@ -110,7 +110,7 @@ internal sealed partial class CaptureOverlayWindow : Window
         CaptureType captureType,
         CaptureSettings settings,
         double scaling,
-        Action<EsBitmap?, EsRectInt?> onComplete,
+        Action<EsWritableBitmap?, EsRectInt?> onComplete,
         ILogger? logger = null)
     {
         InitializeComponent();

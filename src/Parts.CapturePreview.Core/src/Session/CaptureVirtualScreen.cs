@@ -52,8 +52,8 @@ public static class CaptureVirtualScreen
     /// <br/>
     /// 呼び出し側は null を「取得できなかった」として扱い、代替の取得経路（領域指定のキャプチャ）へ委ねる。
     /// </remarks>
-    public static async Task<EsBitmap?> AwaitAsync(
-        Task<EsBitmap?> captureTask, TimeSpan? timeout = null)
+    public static async Task<EsWritableBitmap?> AwaitAsync(
+        Task<EsWritableBitmap?> captureTask, TimeSpan? timeout = null)
     {
         ArgumentNullException.ThrowIfNull(captureTask);
         var limit = timeout ?? CaptureTiming.ScreenCaptureTimeout;

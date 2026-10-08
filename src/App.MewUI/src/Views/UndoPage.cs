@@ -208,7 +208,7 @@ internal static class UndoPage
     /// <remarks>
     /// ダブルクリックで <paramref name="image"/> を一時ファイルへ書き出し、OS の既定アプリで開く。
     /// </remarks>
-    private static Element CreateItem(EsBitmap image, string label, bool isCurrent, int iconSize)
+    private static Element CreateItem(EsWritableBitmap image, string label, bool isCurrent, int iconSize)
     {
         // 枠（背景色・枠線・角丸）はスタイルが与え、ホバーのハイライトはアイテム側が切り替える
         var frame = new Border()
@@ -235,7 +235,7 @@ internal static class UndoPage
     /// 一覧の画像はファイルではなくビットマップのため、一時フォルダへ PNG として書き出してから開く。<br/>
     /// 一時ファイルは OS の一時領域に残す（既定アプリが読み終える時刻を確定できないため、ここでは削除しない）。
     /// </remarks>
-    private static void OpenInDefaultApp(EsBitmap image)
+    private static void OpenInDefaultApp(EsWritableBitmap image)
     {
         try
         {

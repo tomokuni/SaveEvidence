@@ -11,23 +11,23 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// <remarks>
 /// <c>[Fact]</c> で <see cref="MainViewModel.AutoCropWindowCommand"/> を実行し、<br/>
 /// 検出結果（<see cref="MainViewModel.DetectedRects"/>）が設定されることを検証する。<br/>
-/// 単純な矩形パターン（白背景・黒枠線）の <see cref="EsBitmap"/> をプレビューに設定する。<br/>
+/// 単純な矩形パターン（白背景・黒枠線）の <see cref="EsWritableBitmap"/> をプレビューに設定する。<br/>
 /// LineDetection の <see cref="EsUtil.SaveEvidence.Parts.LineDetection.LogicLineDetector"/> は純粋なピクセル検出のため、Avalonia ヘッドレスは不要。
 /// </remarks>
 public sealed class MainViewModelAutoCropTests
 {
-    /// <summary>白背景に黒枠線の矩形を描画した EsBitmap を生成する。</summary>
-    /// <returns>生成した EsBitmap。</returns>
+    /// <summary>白背景に黒枠線の矩形を描画した EsWritableBitmap を生成する。</summary>
+    /// <returns>生成した EsWritableBitmap。</returns>
     /// <remarks>
     /// ヘッドレスでは <c>WriteableBitmap.Lock()</c> 書き込みが読み出しに反映されないため、<br/>
-    /// ピクセル保持が確実な <see cref="EsBitmap"/>（SkiaSharp 内部）で構築する。
+    /// ピクセル保持が確実な <see cref="EsWritableBitmap"/>（SkiaSharp 内部）で構築する。
     /// </remarks>
-    private static EsBitmap CreateRectBitmap()
+    private static EsWritableBitmap CreateRectBitmap()
     {
         const int size = 200;
         const int border = 3;
 
-        var unified = EsBitmap.Create(size, size);
+        var unified = EsWritableBitmap.Create(size, size);
         unified.Clear(b: 255, g: 255, r: 255, a: 255); // 白
 
         // 外周に黒枠線を描く
@@ -62,18 +62,18 @@ public sealed class MainViewModelAutoCropTests
         Assert.NotEmpty(vm.DetectedRects);
     }
 
-    /// <summary>白背景に罫線を多数描いた EsBitmap（矩形を構成できない画像）を生成する。</summary>
+    /// <summary>白背景に罫線を多数描いた EsWritableBitmap（矩形を構成できない画像）を生成する。</summary>
     /// <param name="width">画像の幅（ピクセル）。</param>
     /// <param name="height">画像の高さ（ピクセル）。</param>
-    /// <returns>生成した EsBitmap。</returns>
+    /// <returns>生成した EsWritableBitmap。</returns>
     /// <remarks>
     /// 重なり合うウィンドウ風の枠（コーナーがずれて 1 つの矩形を構成しない）と、<br/>
     /// 表・テキスト相当の短い罫線を描く。 検出器は矩形を構成できないため、<br/>
     /// 検出した線分をそのまま返す経路（多数の線分）を通る。
     /// </remarks>
-    private static EsBitmap CreateLineHeavyBitmap(int width, int height)
+    private static EsWritableBitmap CreateLineHeavyBitmap(int width, int height)
     {
-        var image = EsBitmap.Create(width, height);
+        var image = EsWritableBitmap.Create(width, height);
         image.Clear(b: 255, g: 255, r: 255, a: 255); // 白
 
         void Horizontal(int x1, int x2, int y)

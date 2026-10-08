@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 /// <b>規則</b>:<br/>
 /// 1. <see cref="HasCached(EsRectInt)"/> は「同じ矩形なら同じ画像になる」ため再切り出しをスキップする判断を与える。<br/>
 /// 2. <see cref="Take(EsRectInt)"/> は一致するキャッシュを<b>所有権ごと</b>返す（以降の <see cref="Dispose"/> で破棄されない）。<br/>
-/// 3. <see cref="Store(EsRectInt, EsBitmap)"/> は<b>新しい画像を入れてから旧値を破棄する</b>（同一インスタンスの取り違えを避ける）。<br/>
+/// 3. <see cref="Store(EsRectInt, EsWritableBitmap)"/> は<b>新しい画像を入れてから旧値を破棄する</b>（同一インスタンスの取り違えを避ける）。<br/>
 /// 4. <see cref="Dispose"/> で保持中の画像を破棄する（複数回呼んでも安全）。<br/>
 /// <br/>
 /// <b>スレッド</b>: 切り出しはバックグラウンドで行い、結果の反映は UI スレッドで行う想定のため、内部で排他する。
@@ -26,7 +26,7 @@ public sealed class CaptureClipCache : IDisposable
     private EsRectInt? _rect;
 
     /// <summary>キャッシュ済みの切り出し画像（未キャッシュの場合は null）。</summary>
-    private EsBitmap? _bitmap;
+    private EsWritableBitmap? _bitmap;
 
     /// <summary>破棄済みかどうか。</summary>
     private bool _disposed;
@@ -68,7 +68,7 @@ public sealed class CaptureClipCache : IDisposable
     /// 取り出した画像は以降 <see cref="Dispose"/> では破棄されない（呼び出し側が所有する）。<br/>
     /// 同じ矩形で <see cref="Take"/> を 2 回呼ぶと 2 回目は null になる（二重破棄を防ぐ）。
     /// </remarks>
-    public EsBitmap? Take(EsRectInt captureRect)
+    public EsWritableBitmap? Take(EsRectInt captureRect)
     {
         lock (_gate)
         {
@@ -91,14 +91,14 @@ public sealed class CaptureClipCache : IDisposable
     /// 破棄済みの場合は渡された画像を破棄する（呼び出し側の後片付けを不要にする）。<br/>
     /// 格納できるのは 1 件のみで、置き換え時に旧値を破棄する。
     /// </remarks>
-    public void Store(EsRectInt captureRect, EsBitmap? bitmap)
+    public void Store(EsRectInt captureRect, EsWritableBitmap? bitmap)
     {
         if (bitmap is null)
         {
             return;
         }
 
-        EsBitmap? replaced;
+        EsWritableBitmap? replaced;
         lock (_gate)
         {
             if (_disposed)
@@ -124,7 +124,7 @@ public sealed class CaptureClipCache : IDisposable
     /// <remarks>複数回呼んでも安全である。 以降の <see cref="Store"/> は渡された画像をその場で破棄する。</remarks>
     public void Dispose()
     {
-        EsBitmap? cached;
+        EsWritableBitmap? cached;
         lock (_gate)
         {
             if (_disposed)

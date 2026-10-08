@@ -26,7 +26,7 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
     private readonly Lock _gate = new();
 
     /// <summary>保持している画像（未取得の場合は null）。</summary>
-    private EsBitmap? _image;
+    private EsWritableBitmap? _image;
 
     /// <summary>画像の原点（画面物理ピクセル）。</summary>
     private EsPointInt _origin;
@@ -36,7 +36,7 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
 
     /// <summary>保持している画像を取得する。</summary>
     /// <value>撮影した画像。 未取得（背景撮影中・取得失敗・破棄済み）の場合は null。</value>
-    public EsBitmap? Image
+    public EsWritableBitmap? Image
     {
         get
         {
@@ -84,9 +84,9 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
     /// <param name="origin">画像の原点（画面物理ピクセル）。</param>
     /// <returns>保持した場合は true。 破棄済みのため受け付けなかった場合は false（渡された画像はその場で破棄する）。</returns>
     /// <remarks>破棄済みの場合に画像をその場で破棄するのは、背景撮影の完了がウィンドウの後片付けより遅れた場合の破棄漏れを防ぐためである。</remarks>
-    public bool Set(EsBitmap? image, EsPointInt origin)
+    public bool Set(EsWritableBitmap? image, EsPointInt origin)
     {
-        EsBitmap? replaced;
+        EsWritableBitmap? replaced;
         bool accepted;
         lock (_gate)
         {
@@ -113,7 +113,7 @@ public sealed class CaptureImageHolder(EsRectInt fallbackBounds) : IDisposable
     /// <remarks>複数回呼んでも安全である。 以降の <see cref="Set"/> は渡された画像をその場で破棄する。</remarks>
     public void Dispose()
     {
-        EsBitmap? held;
+        EsWritableBitmap? held;
         lock (_gate)
         {
             if (_disposed)

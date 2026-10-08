@@ -11,11 +11,11 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// </remarks>
 public class UndoHistoryTests
 {
-    /// <summary>テスト用の EsBitmap（size x size）を生成する。</summary>
+    /// <summary>テスト用の EsWritableBitmap（size x size）を生成する。</summary>
     /// <param name="size">一辺のピクセル数（既定 10）。</param>
-    /// <returns>生成した EsBitmap。</returns>
-    private static EsBitmap CreateBitmap(int size = 10)
-        => EsBitmap.Create(size, size);
+    /// <returns>生成した EsWritableBitmap。</returns>
+    private static EsWritableBitmap CreateBitmap(int size = 10)
+        => EsWritableBitmap.Create(size, size);
 
     [Fact]
     internal void Undo_現在の画像をRedoスタックへ退避して復元する()

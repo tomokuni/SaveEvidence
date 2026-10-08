@@ -92,13 +92,13 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 ## 7. `Services.IImageWriter`（インターフェース）
 
-画像（`EsBitmap`）をファイルへ書き込むサービスの抽象です。
+画像（`IEsBitmap`）をファイルへ書き込むサービスの抽象です。
 
 | メソッド | 説明 |
 | --- | --- |
-| `Save(EsBitmap image, string filePath)` | 画像を指定パスへ書き込む（拡張子から形式を自動判別） |
+| `Save(IEsBitmap image, string filePath)` | 画像を指定パスへ書き込む（拡張子から形式を自動判別） |
 
-- UI フレームワーク非依存（`EsBitmap` のみに依存）です。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードします。
+- UI フレームワーク非依存（コアの画像のみに依存）です。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードします。
 - テストではモックに差し替え、ヘッドレス不要で検証できます。
 
 ## 8. `Models.FileNameTemplate`（静的クラス）
@@ -127,8 +127,8 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `Count` / `RedoCount` | 現在の Undo / Redo スタック深度 |
 | `IsRestoring` | Undo 復元中かどうか（復元中の `Push` を無視するために使用） |
 | `GetUndoHistory()` / `GetRedoHistory()` | スタック内の画像を古い順に取得する（読み取り専用。 変更・破棄してはならない） |
-| `Push(EsBitmap? currentImage)` | 現在の画像を Undo スタックへプッシュする（画素コピーで複製。 Redo 履歴はクリア） |
-| `Undo(EsBitmap? currentImage)` | 現在の画像を Redo スタックへ退避し、Undo スタックの最新画像を返す（所有権は呼び出し側） |
+| `Push(EsWritableBitmap? currentImage)` | 現在の画像を Undo スタックへプッシュする（画素コピーで複製。 Redo 履歴はクリア） |
+| `Undo(EsWritableBitmap? currentImage)` | 現在の画像を Redo スタックへ退避し、Undo スタックの最新画像を返す（所有権は呼び出し側） |
 | `Redo()` | Redo スタックから最新の画像を返す（所有権は呼び出し側） |
 | `Clear()` | 全画像を破棄して両スタックを空にする |
 
@@ -206,7 +206,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `PreviewImage` | `EsBitmap?` | プレビュー画像（所有権は本 ViewModel。 差し替え時に旧画像を破棄） |
+| `PreviewImage` | `EsWritableBitmap?` | プレビュー画像（所有権は本 ViewModel。 差し替え時に旧画像を破棄） |
 | `Settings` | `Settings` | 設定オブジェクト（`ISettingsService.Current`） |
 | `HasPreviewImage` / `CanCopy` / `CanSave` / `CanPaste` | `bool` | 各操作の可否（コマンドの `CanExecute`） |
 | `DetectedRects` | `IReadOnlyList<EsRectInt>` | 自動切り出しで検出した矩形候補群（画像座標・面積昇順・最大 256 件） |
@@ -225,7 +225,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 | メンバー | 説明 |
 | --- | --- |
-| `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る） |
+| `SetPreviewImage(EsWritableBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る） |
 | `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`） |
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`） |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`） |
@@ -236,8 +236,8 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 | メンバー | 型 | 既定 |
 | --- | --- | --- |
-| `CopyToClipboardAsync` | `Func<EsBitmap, Task<bool>>?` | null（未設定時は何もしない） |
-| `PasteFromClipboardAsync` | `Func<Task<EsBitmap?>>?` | null |
+| `CopyToClipboardAsync` | `Func<IEsBitmap, Task<bool>>?` | null（未設定時は何もしない） |
+| `PasteFromClipboardAsync` | `Func<Task<EsWritableBitmap?>>?` | null |
 | `ConfirmOverwriteAsync` | `Func<string, Task<bool>>?` | null（未設定時は上書きしない） |
 | `BeforeEditAction` | `Action?` | null |
 | `StartSelectionMode` | `Action<CaptureType>?` | null |
@@ -246,7 +246,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 | 依存 | 用途 |
 | --- | --- |
-| `EsUtil.Platform.Core`（`EsUtil.Platform.Core.*`） | `EsBitmap`（画像の保持・切出し）・`EsRectInt` / `EsPoint`（座標）・`HotKeySetting` / `HotKeyModifiers` / `EsKey`（ホットキー解析）・`EsWindowState`（設定モデル）・`CaptureType`（キャプチャ種別） |
+| `EsUtil.Platform.Core`（`EsUtil.Platform.Core.*`） | コアの画像（保持・切出し）・`EsRectInt` / `EsPoint`（座標）・`HotKeySetting` / `HotKeyModifiers` / `EsKey`（ホットキー解析）・`EsWindowState`（設定モデル）・`CaptureType`（キャプチャ種別） |
 | `LineDetection`（`EsUtil.SaveEvidence.Parts.LineDetection`） | 窓枠の自動検出（`LogicLineDetector`）と矩形復元（`LineRectangleReconstructor`） |
 | `CommunityToolkit.Mvvm` | `ObservableObject` / `[RelayCommand]` / `[ObservableProperty]` |
 

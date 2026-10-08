@@ -26,7 +26,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void EsBitmapを真実とするとGetEsBitmapは恒等で返す()
     {
-        using var bmp = EsBitmap.Create(8, 6);
+        using var bmp = EsWritableBitmap.Create(8, 6);
         using var adapter = new EsImageSourceAdapter(bmp);
 
         // 恒等（コピーなし。 借用）
@@ -36,7 +36,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void EsBitmapを真実とするとGetAvaloniaBitmapは初回のみ生成して以降は同じものを返す()
     {
-        using var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
+        using var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Red);
         using var adapter = new EsImageSourceAdapter(bmp);
 
         var first = adapter.GetAvaloniaBitmap();
@@ -51,7 +51,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void EsBitmapを真実とした場合はDisposeで真実を破棄しない()
     {
-        var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
+        var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Red);
         var adapter = new EsImageSourceAdapter(bmp);
         _ = adapter.GetAvaloniaBitmap();
 
@@ -69,7 +69,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void Bitmapを真実とするとGetAvaloniaBitmapは恒等で返す()
     {
-        using var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Blue);
+        using var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Blue);
         var avalonia = bmp.ToAvaloniaBitmap();
         using var adapter = new EsImageSourceAdapter(avalonia);
 
@@ -83,7 +83,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void Bitmapを真実とするとGetEsBitmapは初回のみ生成して以降は同じものを返す()
     {
-        using var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Blue);
+        using var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Blue);
         var avalonia = bmp.ToAvaloniaBitmap();
         using var adapter = new EsImageSourceAdapter(avalonia);
 
@@ -102,7 +102,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void Bitmapを真実とした場合はDisposeで真実を破棄しない()
     {
-        using var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Blue);
+        using var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Blue);
         var avalonia = bmp.ToAvaloniaBitmap();
         var adapter = new EsImageSourceAdapter(avalonia);
         _ = adapter.GetEsBitmap();
@@ -121,13 +121,13 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void サイズが真実の画像と一致する()
     {
-        using var bmp = EsBitmap.Create(12, 7);
+        using var bmp = EsWritableBitmap.Create(12, 7);
         using var esAdapter = new EsImageSourceAdapter(bmp);
         Assert.Equal(new Size(12, 7), esAdapter.Size);
         Assert.Equal(12, esAdapter.Width);
         Assert.Equal(7, esAdapter.Height);
 
-        using var avalonia = EsBitmap.Create(12, 7).ToAvaloniaBitmap();
+        using var avalonia = EsWritableBitmap.Create(12, 7).ToAvaloniaBitmap();
         using var avaloniaAdapter = new EsImageSourceAdapter(avalonia);
         Assert.Equal(new Size(12, 7), avaloniaAdapter.Size);
         Assert.Equal(12, avaloniaAdapter.Width);
@@ -137,7 +137,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void Disposeを複数回呼んでも安全である()
     {
-        using var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
+        using var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Red);
         var adapter = new EsImageSourceAdapter(bmp);
 
         adapter.Dispose();
@@ -147,7 +147,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void 幅と高さが真実の画像と一致する()
     {
-        using var bmp = EsBitmap.Create(12, 7);
+        using var bmp = EsWritableBitmap.Create(12, 7);
         using var adapter = new EsImageSourceAdapter(bmp);
 
         Assert.Equal(12, adapter.Width);
@@ -157,7 +157,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void 真実が破棄済みの場合は取得で例外を投げる()
     {
-        var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
+        var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Red);
         using var adapter = new EsImageSourceAdapter(bmp);
         bmp.Dispose();
 
@@ -169,7 +169,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void 真実が破棄済みの場合は寸法の取得でも例外を投げる()
     {
-        var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
+        var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Red);
         using var adapter = new EsImageSourceAdapter(bmp);
         bmp.Dispose();
 
@@ -186,7 +186,7 @@ public class EsImageSourceAdapterTests
     [AvaloniaFact]
     internal void Adoptで生成するとDisposeで真実も破棄する()
     {
-        var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
+        var bmp = EsWritableBitmap.Create(8, 6, System.Drawing.Color.Red);
         var adapter = EsImageSourceAdapter.Adopt(bmp);
 
         adapter.Dispose();
@@ -204,7 +204,7 @@ public class EsImageSourceAdapterTests
     {
         Assert.Throws<ArgumentNullException>(() => new EsImageSourceAdapter((EsBitmap)null!));
 
-        using var avalonia = EsBitmap.Create(4, 4).ToAvaloniaBitmap();
+        using var avalonia = EsWritableBitmap.Create(4, 4).ToAvaloniaBitmap();
         Assert.Throws<ArgumentNullException>(() => new EsImageSourceAdapter((Bitmap)null!));
         avalonia.Dispose();
     }

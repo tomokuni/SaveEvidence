@@ -51,7 +51,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 | `src/App.Core/src/Models/ImageFileExtensions.cs` | `internal static class` | 画像ファイルの拡張子判定（フォルダビューの一覧に含める拡張子の**唯一の所有者**。 両 UI が委譲する） |
 | `src/App.Core/src/Layout/BottomAlignWrapLayout.cs` | `internal static class` | 折り返しパネルの行高さ・下端揃えの配置計算（Avalonia / MewUI 両版のパネルが委譲する単一所有） |
 | `src/App.Core/src/Services/ISettingsService.cs` | `public interface` | 設定管理サービスの抽象 |
-| `src/App.Core/src/Services/IImageWriter.cs` | `public interface` | 画像（`EsBitmap`）のファイル書き込みの抽象 |
+| `src/App.Core/src/Services/IImageWriter.cs` | `public interface` | 画像（`IEsBitmap`）のファイル書き込みの抽象 |
 | `src/App.Core/src/Services/SettingsService.cs` | `public sealed class` | JSON ファイルによる設定管理（**設定の永続化形式 = JSON の構造・enum の文字列表現の唯一の所有者**）。 ソース生成コンテキストを必須とする |
 | `src/App.Core/src/Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
 | `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モード（特大 / 大 / 中）の名称・件数表示（**唯一の所有者**。 `FolderViewViewModel` / `UndoViewModel` が委譲する） |
@@ -67,18 +67,18 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 sequenceDiagram
   participant UI as MainWindow（Avalonia 実装）
   participant VM as MainViewModel（App.Core）
-  VM->>UI: CopyToClipboardAsync(EsBitmap)
+  VM->>UI: CopyToClipboardAsync(IEsBitmap)
   UI->>UI: ToAvaloniaBitmap() で変換
   UI->>UI: Clipboard.SetBitmapAsync
-  UI->>VM: PasteFromClipboardAsync() → EsBitmap?
+  UI->>VM: PasteFromClipboardAsync() → EsWritableBitmap?
   VM->>VM: PreviewImage = EsBitmap
 ```
 
 | 注入点 | 種類 | 内容 |
 | --- | --- | --- |
 | `IImageWriter` | コンストラクター引数 | 画像のエンコード・保存（Avalonia 版は `AvaloniaImageWriter`。 `Program.cs` で DI 登録） |
-| `CopyToClipboardAsync` | コールバック | `EsBitmap` を受け取り、UI 型へ変換してクリップボードへ書く |
-| `PasteFromClipboardAsync` | コールバック | クリップボードから読み、UI 型から `EsBitmap` へ変換して返す |
+| `CopyToClipboardAsync` | コールバック | `IEsBitmap` を受け取り、UI 型へ変換してクリップボードへ書く |
+| `PasteFromClipboardAsync` | コールバック | クリップボードから読み、UI 型から `EsWritableBitmap` へ変換して返す |
 | `ConfirmOverwriteAsync` | コールバック | 上書き確認ダイアログ |
 | `BeforeEditAction` | コールバック | 画像編集前の Undo プッシュ |
 | `StartSelectionMode` | コールバック | キャプチャの開始（`CaptureType`） |
@@ -87,7 +87,7 @@ sequenceDiagram
 
 例外を送出しません。 入力の不正（解釈できないホットキー文字列・無効なテンプレート）は `bool` の戻り値（`TryParse` / `IsValidTemplate`）またはクランプ（`ClampIndex`）で表現します。
 
-`UndoHistory` が保持する `EsBitmap` の破棄は所有者（`UndoHistory`）が行います。 `Undo` / `Redo` の戻り値の所有権は呼び出し側へ移ります。
+`UndoHistory` が保持する `EsWritableBitmap` の破棄は所有者（`UndoHistory`）が行います。 `Undo` / `Redo` の戻り値の所有権は呼び出し側へ移ります。
 
 ## 7. 可視性ポリシー
 

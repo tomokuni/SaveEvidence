@@ -14,7 +14,7 @@ public class EsBitmapSkiaExtensionsTests
     [Fact]
     internal void ToSKBitmap_同じピクセルを指す非所有ビューを返す()
     {
-        using var bmp = EsBitmap.Create(6, 8);
+        using var bmp = EsWritableBitmap.Create(6, 8);
 
         using var view = bmp.ToSKBitmap();
 
@@ -31,7 +31,7 @@ public class EsBitmapSkiaExtensionsTests
     [Fact]
     internal void ToSKBitmap_はコアのピクセルを共有する()
     {
-        using var bmp = EsBitmap.Create(2, 2);
+        using var bmp = EsWritableBitmap.Create(2, 2);
         using var view = bmp.ToSKBitmap();
 
         bmp.SetPixel(1, 1, b: 10, g: 20, r: 30, a: 255);
@@ -43,7 +43,7 @@ public class EsBitmapSkiaExtensionsTests
     [Fact]
     internal void ToSKBitmap_ビューを破棄してもコアは使用できる()
     {
-        using var bmp = EsBitmap.Create(2, 2);
+        using var bmp = EsWritableBitmap.Create(2, 2);
         bmp.SetPixel(0, 0, b: 1, g: 2, r: 3, a: 255);
 
         using (var view = bmp.ToSKBitmap())
@@ -66,7 +66,7 @@ public class EsBitmapSkiaExtensionsTests
     [Fact]
     internal void ToSKBitmap_呼び出しごとに新しいビューを返す()
     {
-        using var bmp = EsBitmap.Create(2, 2);
+        using var bmp = EsWritableBitmap.Create(2, 2);
 
         using var first = bmp.ToSKBitmap();
         using var second = bmp.ToSKBitmap();
@@ -77,7 +77,7 @@ public class EsBitmapSkiaExtensionsTests
     [Fact]
     internal void ToSKBitmap_破棄済みなら例外()
     {
-        var bmp = EsBitmap.Create(2, 2);
+        var bmp = EsWritableBitmap.Create(2, 2);
         bmp.Dispose();
 
         Assert.Throws<ObjectDisposedException>(() => bmp.ToSKBitmap());
@@ -128,7 +128,7 @@ public class EsBitmapSkiaExtensionsTests
         using var bmp = sk.ToEsBitmap();
 
         Assert.True(bmp.Size.IsEmpty);
-        Assert.Equal(0, bmp.Address);
+        Assert.True(bmp.Pixels.IsEmpty);
     }
 
     /// <summary>コアと Skia の間で往復してもピクセルが保たれることを検証する。</summary>
@@ -136,7 +136,7 @@ public class EsBitmapSkiaExtensionsTests
     [Fact]
     internal void 往復でアルファ付きピクセルを保持する()
     {
-        using var bmp = EsBitmap.Create(3, 3);
+        using var bmp = EsWritableBitmap.Create(3, 3);
         bmp.SetPixel(2, 1, b: 10, g: 20, r: 30, a: 64);
 
         using var view = bmp.ToSKBitmap();

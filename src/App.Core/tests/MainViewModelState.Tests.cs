@@ -19,11 +19,11 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// </remarks>
 public class MainViewModelStateTests
 {
-    /// <summary>テスト用の EsBitmap（10x10）を生成する。</summary>
-    /// <returns>生成した EsBitmap。</returns>
-    private static EsBitmap CreateBitmap()
+    /// <summary>テスト用の EsWritableBitmap（10x10）を生成する。</summary>
+    /// <returns>生成した EsWritableBitmap。</returns>
+    private static EsWritableBitmap CreateBitmap()
     {
-        var bmp = EsBitmap.Create(10, 10);
+        var bmp = EsWritableBitmap.Create(10, 10);
         bmp.Clear(b: 255, g: 255, r: 255, a: 255);
         return bmp;
     }

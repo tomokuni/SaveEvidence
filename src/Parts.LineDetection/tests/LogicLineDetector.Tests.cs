@@ -23,9 +23,9 @@ public sealed class LogicLineDetectorTests
     /// 枠線は矩形の外周（上・下・左・右）に黒（BGR=0, A=255）で描画し、内部は白のままにする。<br/>
     /// 検出器の最小長（<c>MinLineLength=50</c>）を満たすよう、十分なサイズの矩形を描画する。
     /// </remarks>
-    private static EsBitmap CreateRectImage(int width, int height, int borderThickness = 3)
+    private static EsWritableBitmap CreateRectImage(int width, int height, int borderThickness = 3)
     {
-        var bmp = EsBitmap.Create(width, height);
+        var bmp = EsWritableBitmap.Create(width, height);
         bmp.Clear(b: 255, g: 255, r: 255, a: 255); // 白
 
         // 外周に黒い枠線を描く

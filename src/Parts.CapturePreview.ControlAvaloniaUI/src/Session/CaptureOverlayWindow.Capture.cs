@@ -93,7 +93,7 @@ internal sealed partial class CaptureOverlayWindow
         // 切り出し（ピクセルコピー）は UI スレッドをブロックするため Task.Run で実行し、
         // 完了後に UI スレッドで確定する（確定→画像表示までの待ち時間を短縮）。
         var vBitmap = VirtualScreenBitmap;
-        Task<EsBitmap?> clipTask;
+        Task<EsWritableBitmap?> clipTask;
         if (vBitmap is null)
         {
             // キャプチャ未完了（オーバーレイを先に表示した直後）: 確定矩形を直接キャプチャする
@@ -166,7 +166,7 @@ internal sealed partial class CaptureOverlayWindow
         // 未完了ならキャンセルとして完了する（Close() 経由のキャンセルを確実にする）
         CompleteCancelled();
         SelectionOverlay.ClearLoupe();
-        // 表示境界の画像（VirtualScreenImage・ルーペ Source は EsBitmap を共有）を解除する
+        // 表示境界の画像（VirtualScreenImage・ルーペ Source は同じ画像を共有）を解除する
         VirtualScreenImage.Source = null;
         _displayImage?.Dispose();
         _displayImage = null;
@@ -188,14 +188,14 @@ internal sealed partial class CaptureOverlayWindow
     /// <b>クローズ後</b>: ウィンドウの後片付けが済んでおり、渡された Bitmap は保持せずその場で破棄される<br/>
     /// （背景撮影の完了がキャンセルより遅れた場合の破棄漏れを防ぐ。 規則はコアの保持クラスが単一所有する）。
     /// </remarks>
-    public void SetVirtualScreen(EsBitmap? bitmap, PixelPoint origin)
+    public void SetVirtualScreen(EsWritableBitmap? bitmap, PixelPoint origin)
     {
         // 差し替え時の旧値の破棄・クローズ後の破棄はコアが単一所有する
         if (!_captureImage.Set(bitmap, origin.ToEsPointInt())) return;
 
         _log.LogVirtualScreen(origin.ToEsPointInt(), bitmap);
         // 旧のアダプタを破棄してから差し替える（IImage は非所有のため、保持するホストが Dispose する）。
-        // 元画像（EsBitmap）はコアの保持クラスが所有し、このアダプタは借用して包むだけ。
+        // 元画像はコアの保持クラスが所有し、このアダプタは借用して包むだけ。
         _displayImage?.Dispose();
         _displayImage = bitmap is null ? null : new EsImageSourceAdapter(bitmap);
         VirtualScreenImage.Source = _displayImage;

@@ -15,13 +15,13 @@ public class CaptureVirtualScreenTests
     /// <param name="width">幅。</param>
     /// <param name="height">高さ。</param>
     /// <returns>指定サイズの画像。</returns>
-    private static EsBitmap CreateImage(int width, int height) => EsBitmap.Create(width, height);
+    private static EsWritableBitmap CreateImage(int width, int height) => EsWritableBitmap.Create(width, height);
 
     [Fact]
     internal async Task AwaitAsync_取得が先に完了した場合はその結果を返す()
     {
         using var image = CreateImage(4, 3);
-        var captureTask = Task.FromResult<EsBitmap?>(image);
+        var captureTask = Task.FromResult<EsWritableBitmap?>(image);
 
         var result = await CaptureVirtualScreen.AwaitAsync(captureTask, TimeSpan.FromSeconds(5));
 
@@ -32,7 +32,7 @@ public class CaptureVirtualScreenTests
     internal async Task AwaitAsync_取得に失敗した場合はnullを返す()
     {
         // 取得失敗（null）とタイムアウトは呼び出し側で同じ扱い（代替の取得経路へ委ねる）
-        var captureTask = Task.FromResult<EsBitmap?>(null);
+        var captureTask = Task.FromResult<EsWritableBitmap?>(null);
 
         var result = await CaptureVirtualScreen.AwaitAsync(captureTask, TimeSpan.FromSeconds(5));
 
@@ -42,7 +42,7 @@ public class CaptureVirtualScreenTests
     [Fact]
     internal async Task AwaitAsync_タイムアウトした場合はnullを返す()
     {
-        var pending = new TaskCompletionSource<EsBitmap?>();
+        var pending = new TaskCompletionSource<EsWritableBitmap?>();
 
         var result = await CaptureVirtualScreen.AwaitAsync(pending.Task, TimeSpan.FromMilliseconds(20));
 
@@ -55,7 +55,7 @@ public class CaptureVirtualScreenTests
     internal async Task AwaitAsync_タイムアウト後に完了した結果は破棄する()
     {
         // 遅れて取得できても表示しないため、保持せず破棄する（メモリを占有しない）
-        var pending = new TaskCompletionSource<EsBitmap?>();
+        var pending = new TaskCompletionSource<EsWritableBitmap?>();
         var image = CreateImage(8, 6);
 
         var result = await CaptureVirtualScreen.AwaitAsync(pending.Task, TimeSpan.FromMilliseconds(20));
@@ -72,7 +72,7 @@ public class CaptureVirtualScreenTests
     internal async Task AwaitAsync_タイムアウト後の取得失敗は破棄しない()
     {
         // null（取得失敗）には破棄する対象がない（例外にならずに完了する）
-        var pending = new TaskCompletionSource<EsBitmap?>();
+        var pending = new TaskCompletionSource<EsWritableBitmap?>();
 
         _ = await CaptureVirtualScreen.AwaitAsync(pending.Task, TimeSpan.FromMilliseconds(20));
         pending.SetResult(null);

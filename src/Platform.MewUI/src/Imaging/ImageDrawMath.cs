@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 /// <summary>画像を描画先の領域へ配置する矩形計算（拡大・縮小の倍率は 1 箇所で決める）。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: 純粋関数（配置方法の判断を 1 つの関数へ集約する）。<br/>
-/// <b>依存分離</b>: 画像（<see cref="EsBitmap"/>）を描く側は UI ごとに異なるため、本クラスは矩形の計算だけを担う。<br/>
+/// <b>依存分離</b>: 画像（<see cref="IEsBitmap"/>）を描く側は UI ごとに異なるため、本クラスは矩形の計算だけを担う。<br/>
 /// <b>配置方法</b>: <see cref="ImageDrawMode.Uniform"/>（縦横比を保って中央）/ <see cref="ImageDrawMode.Fill"/>（領域全体へ引き伸ばし）。<br/>
 /// <b>空の入力</b>: 元画像・描画先のいずれかが 0 以下なら空の矩形を返す（描画しない）。<br/>
 /// <b>純粋関数</b>: UI ホストを必要としないため、倍率・中央寄せ・空の扱いをヘッドレスで検証できる。
