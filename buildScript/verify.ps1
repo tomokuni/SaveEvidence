@@ -77,6 +77,26 @@ function Invoke-DotNet([string[]]$Arguments) {
     return (& dotnet @Arguments 2>&1 | Out-String)
 }
 
+# ネットワーク照会や MSBuild の評価は待ち時間が長い（実測: NuGet の照会 35 秒 / dotnet format 20 秒）ため、
+# 背景へ投入して他の検査と重ねる。 `Start-Job`（PowerShell をもう 1 つ立ち上げる）より軽く、出力は一時ファイルへ書き出す。
+function Start-BackgroundDotNet([string[]]$Arguments) {
+    $base = Join-Path ([IO.Path]::GetTempPath()) ("se_verify_" + [Guid]::NewGuid().ToString('N'))
+    $process = Start-Process -FilePath 'dotnet' -ArgumentList $Arguments -WorkingDirectory $repoRoot -NoNewWindow -PassThru `
+        -RedirectStandardOutput ($base + '.out') -RedirectStandardError ($base + '.err')
+    return [pscustomobject]@{ Process = $process; OutFile = $base + '.out'; ErrFile = $base + '.err' }
+}
+
+# 背景実行の完了を待ち、出力（標準出力 + 標準エラー）と終了コードを返す（一時ファイルは消す）
+function Receive-BackgroundDotNet($Background) {
+    $Background.Process.WaitForExit()
+    $text = ''
+    foreach ($file in @($Background.OutFile, $Background.ErrFile)) {
+        if (Test-Path -LiteralPath $file) { $text += [IO.File]::ReadAllText($file, $enc) }
+        Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue
+    }
+    return [pscustomobject]@{ Text = $text; ExitCode = $Background.Process.ExitCode }
+}
+
 # 設定に応じた共通引数（復元の有無は呼び出し側が決める）
 $restoreArgs = if ($NoRestore) { @('--no-restore') } else { @() }
 
@@ -100,6 +120,19 @@ else {
     # 省略した検査は合否に含めない（-SkipBuild は文書だけを直したときの往復を短くする用途）
     Add-Info 'ビルド' '省略（-SkipBuild。 直前にビルドした出力を使う）'
 }
+
+# NuGet のネットワーク照会（非推奨・更新候補。 実測 35 秒）は復元結果を読むだけなので、
+# ここで背景へ投入し、テスト・ドキュメント検査と重ねて待つ（検査の内容と合否は変わらない）。
+$backgroundPackages = @()
+if (-not $SkipPackage) {
+    $backgroundPackages = @(
+        [pscustomobject]@{ Marker = 'deprecated'; Background = (Start-BackgroundDotNet @('package', 'list', '--deprecated', '--include-transitive', '--no-restore')) },
+        [pscustomobject]@{ Marker = 'outdated'; Background = (Start-BackgroundDotNet @('package', 'list', '--outdated', '--no-restore')) }
+    )
+}
+
+# `dotnet format`（MSBuild の評価。 実測 20 秒）も同じく背景へ投入する（-Fix のときは修正が先に要るため投入しない）
+$backgroundFormat = if ($SkipFormat -or $Fix) { $null } else { Start-BackgroundDotNet @('format', 'style', $Solution, '--verify-no-changes', '--severity', 'info', '--no-restore') }
 
 # ============================================================
 # 2. ビルド設定（単一所有と配布物へ XML を出さないこと）
@@ -240,32 +273,30 @@ if (-not $SkipPackage) {
     $auditText = Invoke-DotNet @('restore', $Solution, '-p:NuGetAuditMode=all', '--force-evaluate')
     $auditHits = @($auditText -split "`r?`n" | Where-Object { $_ -match 'NU19\d\d' })
 
-    # 非推奨は照会が要る（`dotnet package list --deprecated`。 実測 35 秒）ため、参考値の更新候補（実測 15 秒）と
-    # 並列で実行する（直列 50 秒 → 並列 35 秒）。 PowerShell 7 未満では直列へ落とす（合否は変わらない）。
-    $pkgJobs = @(
-        [pscustomobject]@{ Marker = 'deprecated'; Args = @('package', 'list', '--deprecated', '--include-transitive', '--no-restore') },
-        [pscustomobject]@{ Marker = 'outdated'; Args = @('package', 'list', '--outdated', '--no-restore') }
-    )
-    if ($PSVersionTable.PSVersion.Major -ge 7) {
-        $pkgTexts = @($pkgJobs | ForEach-Object -Parallel {
-                [pscustomobject]@{ Marker = $_.Marker; Text = (& dotnet @($_.Args) 2>&1 | Out-String) }
-            } -ThrottleLimit 2)
-    }
-    else {
-        $pkgTexts = @(foreach ($job in $pkgJobs) {
-                [pscustomobject]@{ Marker = $job.Marker; Text = (& dotnet @($job.Args) 2>&1 | Out-String) }
-            })
-    }
+    # 非推奨と更新候補の照会はビルドの直後に背景へ投入済み（ここで回収する）。
+    $pkgResults = @($backgroundPackages | ForEach-Object {
+            $received = Receive-BackgroundDotNet $_.Background
+            [pscustomobject]@{ Marker = $_.Marker; Text = $received.Text; ExitCode = $received.ExitCode }
+        })
+    $deprecated = $pkgResults | Where-Object { $_.Marker -eq 'deprecated' }
+    $outdated = $pkgResults | Where-Object { $_.Marker -eq 'outdated' }
 
     # 指摘がある場合だけ表（`> ` で始まる行）が出る
-    $deprecatedRows = @(($pkgTexts | Where-Object { $_.Marker -eq 'deprecated' }).Text -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
-    Add-Result 'NuGet の健全性' ($auditHits.Count -eq 0 -and $deprecatedRows.Count -eq 0) "脆弱性 $($auditHits.Count) / 非推奨 $($deprecatedRows.Count) 件（推移的依存を含む）"
+    $deprecatedRows = @($deprecated.Text -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
+    # 終了コードも見る（照会自体が失敗した場合に 0 件と誤判定しない）
+    $deprecatedFailed = $deprecated.ExitCode -ne 0
+    Add-Result 'NuGet の健全性' ($auditHits.Count -eq 0 -and $deprecatedRows.Count -eq 0 -and -not $deprecatedFailed) "脆弱性 $($auditHits.Count) / 非推奨 $($deprecatedRows.Count) 件（推移的依存を含む）"
     $auditHits | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" }
     $deprecatedRows | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" }
+    if ($deprecatedFailed) {
+        "      非推奨の照会が失敗した（終了コード $($deprecated.ExitCode)）"
+        $deprecated.Text -split "`r?`n" | Where-Object { $_.Trim().Length -gt 0 } | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" }
+    }
 
     # 更新候補（参考値。 合否に含めない）。 ネットワーク照会のため -SkipPackage で省略できる
-    $outdatedRows = @(($pkgTexts | Where-Object { $_.Marker -eq 'outdated' }).Text -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
-    Add-Info 'NuGet の更新候補' "$($outdatedRows.Count) 件（参考値。 合否に含めない）"
+    $outdatedRows = @($outdated.Text -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
+    $outdatedNote = if ($outdated.ExitCode -ne 0) { "（照会の終了コード $($outdated.ExitCode)）" } else { '' }
+    Add-Info 'NuGet の更新候補' "$($outdatedRows.Count) 件（参考値。 合否に含めない）$outdatedNote"
     $outdatedRows | Select-Object -First 8 | ForEach-Object { "      $($_.Trim())" }
 }
 
@@ -1228,10 +1259,28 @@ if (-not $SkipFormat) {
         & dotnet format style $Solution --severity warn --no-restore 2>&1 | Out-Null
         & dotnet format analyzers $Solution --severity warn --no-restore 2>&1 | Out-Null
     }
-    $fmtText = & dotnet format style $Solution --verify-no-changes --severity info --no-restore 2>&1 | Out-String
+
+    # 検査はビルドの直後に背景へ投入済み（-Fix のときは修正の後で実行する）
+    if ($backgroundFormat) {
+        $received = Receive-BackgroundDotNet $backgroundFormat
+        $fmtText = $received.Text
+        $fmtExit = $received.ExitCode
+    }
+    else {
+        $fmtText = & dotnet format style $Solution --verify-no-changes --severity info --no-restore 2>&1 | Out-String
+        $fmtExit = $LASTEXITCODE
+    }
     $fmtIssues = ([regex]::Matches($fmtText, 'warning (IDE|CA)\d+')).Count
-    Add-Result 'dotnet format' ($fmtIssues -eq 0) "$fmtIssues 件"
+    # 合否は警告の件数で判定する（`--severity info` は情報レベルの提案も報告するため、改善が必要なときに
+    # 終了コード 2 を返す。 情報レベルはビルドが強制する範囲ではない）。 実行自体の失敗（引数の誤り・
+    # 復元の失敗等）は 2 以外の終了コードになるため、それだけを不合格にする（0 件の誤判定を防ぐ）。
+    $fmtRunFailed = $fmtExit -gt 2
+    Add-Result 'dotnet format' ($fmtIssues -eq 0 -and -not $fmtRunFailed) "$fmtIssues 件"
     if ($fmtIssues -gt 0) { $fmtText -split "`r?`n" | Where-Object { $_ -match 'warning ' } | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" } }
+    if ($fmtRunFailed) {
+        "      実行に失敗した（終了コード $fmtExit）"
+        $fmtText -split "`r?`n" | Where-Object { $_.Trim().Length -gt 0 } | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" }
+    }
 }
 
 # ============================================================
