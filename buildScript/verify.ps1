@@ -26,7 +26,7 @@ Copilot・CI・開発者が同じ手順を 1 コマンドで再現できるよ�
 dotnet format による検査を省略する（時間を短縮するとき）。
 
 .PARAMETER SkipPackage
-NuGet の健全性（脆弱性・非推奨）の検査を省略する（ネットワークを使いたくないとき）。
+NuGet の健全性（既知の脆弱性。 推移的依存を含む）の検査を省略する（ネットワークを使いたくないとき）。
 
 .PARAMETER Coverage
 テスト時にカバレッジを取得し、対象ファイルごとの被覆率を集計する（テスト規約の「カバレッジ 100% を目指す」の数値確認用）。
@@ -121,17 +121,8 @@ else {
     Add-Info 'ビルド' '省略（-SkipBuild。 直前にビルドした出力を使う）'
 }
 
-# NuGet のネットワーク照会（非推奨・更新候補。 実測 35 秒）は復元結果を読むだけなので、
-# ここで背景へ投入し、テスト・ドキュメント検査と重ねて待つ（検査の内容と合否は変わらない）。
-$backgroundPackages = @()
-if (-not $SkipPackage) {
-    $backgroundPackages = @(
-        [pscustomobject]@{ Marker = 'deprecated'; Background = (Start-BackgroundDotNet @('package', 'list', '--deprecated', '--include-transitive', '--no-restore')) },
-        [pscustomobject]@{ Marker = 'outdated'; Background = (Start-BackgroundDotNet @('package', 'list', '--outdated', '--no-restore')) }
-    )
-}
-
-# `dotnet format`（MSBuild の評価。 実測 20 秒）も同じく背景へ投入する（-Fix のときは修正が先に要るため投入しない）
+# `dotnet format`（MSBuild の評価。 実測 20 秒）は待ち時間が長いため、ここで背景へ投入し、
+# テスト・ドキュメント検査と重ねる（-Fix のときは修正が先に要るため投入しない）
 $backgroundFormat = if ($SkipFormat -or $Fix) { $null } else { Start-BackgroundDotNet @('format', 'style', $Solution, '--verify-no-changes', '--severity', 'info', '--no-restore') }
 
 # ============================================================
@@ -262,7 +253,7 @@ if (-not $SkipTests) {
 }
 
 # ============================================================
-# 4. NuGet の健全性（脆弱性・非推奨。 推移的依存も含む）
+# 4. NuGet の健全性（既知の脆弱性。 推移的依存も含む）
 # ============================================================
 if (-not $SkipPackage) {
     Write-Output '== 4. NuGet の健全性 =='
@@ -270,34 +261,20 @@ if (-not $SkipPackage) {
     # `dotnet package list --vulnerable --include-transitive` で取ると 35 秒かかる）。
     # `--force-evaluate` は「復元は最新」と判定されたときにも監査を走らせるために付ける
     # （付けないと監査が省略され、0 件と誤判定する）。 監査は検査そのものなので、-NoRestore は適用しない。
+    # 直接参照の脆弱性はビルドの復元でも検出される（`NuGetAuditMode` の既定は direct であり、
+    # 警告は Directory.Build.props の TreatWarningsAsErrors でエラーになる）。 本節は推移的依存まで広げる。
     $auditText = Invoke-DotNet @('restore', $Solution, '-p:NuGetAuditMode=all', '--force-evaluate')
     $auditHits = @($auditText -split "`r?`n" | Where-Object { $_ -match 'NU19\d\d' })
 
-    # 非推奨と更新候補の照会はビルドの直後に背景へ投入済み（ここで回収する）。
-    $pkgResults = @($backgroundPackages | ForEach-Object {
-            $received = Receive-BackgroundDotNet $_.Background
-            [pscustomobject]@{ Marker = $_.Marker; Text = $received.Text; ExitCode = $received.ExitCode }
-        })
-    $deprecated = $pkgResults | Where-Object { $_.Marker -eq 'deprecated' }
-    $outdated = $pkgResults | Where-Object { $_.Marker -eq 'outdated' }
-
-    # 指摘がある場合だけ表（`> ` で始まる行）が出る
-    $deprecatedRows = @($deprecated.Text -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
-    # 終了コードも見る（照会自体が失敗した場合に 0 件と誤判定しない）
-    $deprecatedFailed = $deprecated.ExitCode -ne 0
-    Add-Result 'NuGet の健全性' ($auditHits.Count -eq 0 -and $deprecatedRows.Count -eq 0 -and -not $deprecatedFailed) "脆弱性 $($auditHits.Count) / 非推奨 $($deprecatedRows.Count) 件（推移的依存を含む）"
+    # 監査自体が失敗した場合（復元の失敗）に 0 件と誤判定しない（終了コードは Invoke-DotNet が取れないため、
+    # 警告に加えて「監査の結果が出たか」ではなく NuGet のエラー（NU1xxx）の有無も見る）
+    $auditFailed = $auditText -match 'error NU1(?!9)\d\d'
+    Add-Result 'NuGet の健全性' ($auditHits.Count -eq 0 -and -not $auditFailed) "脆弱性 $($auditHits.Count) 件（推移的依存を含む）"
     $auditHits | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" }
-    $deprecatedRows | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" }
-    if ($deprecatedFailed) {
-        "      非推奨の照会が失敗した（終了コード $($deprecated.ExitCode)）"
-        $deprecated.Text -split "`r?`n" | Where-Object { $_.Trim().Length -gt 0 } | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" }
+    if ($auditFailed) {
+        "      監査（復元）が失敗した"
+        $auditText -split "`r?`n" | Where-Object { $_ -match 'error NU1' } | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" }
     }
-
-    # 更新候補（参考値。 合否に含めない）。 ネットワーク照会のため -SkipPackage で省略できる
-    $outdatedRows = @($outdated.Text -split "`r?`n" | Where-Object { $_ -match '^\s*>\s+\S' })
-    $outdatedNote = if ($outdated.ExitCode -ne 0) { "（照会の終了コード $($outdated.ExitCode)）" } else { '' }
-    Add-Info 'NuGet の更新候補' "$($outdatedRows.Count) 件（参考値。 合否に含めない）$outdatedNote"
-    $outdatedRows | Select-Object -First 8 | ForEach-Object { "      $($_.Trim())" }
 }
 
 # 以降のドキュメント検査で使う文書一覧（リポジトリ直下の文書も対象にする）

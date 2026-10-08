@@ -135,7 +135,9 @@ if ($targets.Count -eq 0) {
 function Get-PublishFingerprint([string]$ScriptPath) {
     $sb = [Text.StringBuilder]::new()
     $paths = [System.Collections.Generic.List[string]]::new()
-    foreach ($rel in @(git -c core.quotepath=false ls-files -- 'src' 'Directory.Build.props' 'Directory.Build.targets' 'global.json' 'buildScript' '.github/release-config.json' 2>$null)) { $paths.Add($rel) }
+    # `buildScript` 全体は含めない（本スクリプトや verify.ps1 の編集で publish が無効化されてしまう）。
+    # publish スクリプトの内容は下で個別に指紋へ入れる。
+    foreach ($rel in @(git -c core.quotepath=false ls-files -- 'src' 'Directory.Build.props' 'Directory.Build.targets' 'global.json' '.github/release-config.json' 2>$null)) { $paths.Add($rel) }
     # 未追跡（コミット前）のソースも入力である
     foreach ($rel in @(git -c core.quotepath=false ls-files --others --exclude-standard -- 'src' 2>$null)) { $paths.Add($rel) }
     foreach ($rel in ($paths | Sort-Object -Unique)) {
@@ -144,10 +146,14 @@ function Get-PublishFingerprint([string]$ScriptPath) {
         $info = [IO.FileInfo]::new($full)
         [void]$sb.Append($rel).Append('|').Append($info.Length).Append('|').Append($info.LastWriteTimeUtc.Ticks).Append("`n")
     }
-    # リポジトリの場所（別の複製と指紋を共有しない）と SDK のバージョン
+    # リポジトリの場所（別の複製と指紋を共有しない）・SDK のバージョン・publish スクリプト自身
     [void]$sb.Append('root:').Append($repoRoot).Append("`n")
     [void]$sb.Append('sdk:').Append($script:SdkVersion).Append("`n")
-    [void]$sb.Append('script:').Append($ScriptPath).Append("`n")
+    $scriptFull = Join-Path $repoRoot ($ScriptPath -replace '/', '\')
+    if (Test-Path -LiteralPath $scriptFull -PathType Leaf) {
+        $scriptInfo = [IO.FileInfo]::new($scriptFull)
+        [void]$sb.Append('script:').Append($ScriptPath).Append('|').Append($scriptInfo.Length).Append('|').Append($scriptInfo.LastWriteTimeUtc.Ticks).Append("`n")
+    }
     return [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($sb.ToString())))
 }
 
