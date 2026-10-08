@@ -30,7 +30,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// 旧アダプタは後から <see cref="Dispose"/> する</b>。 逆順にすると、表示が旧アダプタの射影を参照している間に
 /// 破棄され、描画が破棄済みバッファへ触れる（例外・チラつき）。
 /// </remarks>
-public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
+public sealed class EsBitmapAdapter : IImage, IEsBitmap, IDisposable
 {
     /// <summary>真実の Avalonia 画像（非所有。 コアの画像を真実とした場合は null）。</summary>
     private readonly Bitmap? _avalonia;
@@ -44,19 +44,41 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
     /// <summary>Avalonia 側の射影（コアの画像を真実とした場合に初回だけ作る）。 所有権は本クラス。</summary>
     private Bitmap? _avaloniaProjection;
 
+    /// <summary>表示に使う縮小射影（<see cref="DisplayMaxSize"/> が正のときだけ作る）。 所有権は本クラス。</summary>
+    private Bitmap? _displayProjection;
+
     /// <summary>内包するコア画像を所有するかどうか（<see cref="Adopt"/> で生成した場合のみ true）。</summary>
     private readonly bool _ownsSource;
+
+    /// <summary>表示に使う長辺の上限（ピクセル。 0 は上限なし = 等倍で表示する）。</summary>
+    /// <remarks>
+    /// <b>大きな画像を小さく表示する場面（一覧のサムネイル等）で、表示用の射影を縮小する</b>。
+    /// 等倍の射影は画像 1 枚につき元の寸法の複製を保持するため（実測: 4K で 32 MB / 7.8 ms）、
+    /// 96px のサムネイルを 5 枚並べると 160 MB を超える。 縮小版は同じ 4K から 20 KB で済む。<br/>
+    /// <b>保存・クリップボード用の <see cref="GetAvaloniaBitmap"/> は等倍のまま</b>である（表示と保存で射影を分ける）。<br/>
+    /// 上限を設定すると <see cref="IImage.Size"/> は縮小後の寸法を返す（Avalonia のレイアウトと描画がその寸法を基準にする）。
+    /// <b>コアの読み取り面（<see cref="IEsBitmap.Size"/> / <see cref="IEsBitmap.Width"/> 等）は真実の寸法のまま</b>である。
+    /// </remarks>
+    public int DisplayMaxSize { get; }
 
     /// <summary>Avalonia の画像からアダプタを生成する（表示はそのまま、コアへは初回に複製する）。</summary>
     /// <param name="source">真実となる Avalonia の画像。 破棄はホストが行う。</param>
     /// <remarks><see cref="Bitmap"/> の派生（<c>WriteableBitmap</c> 等）も受け付ける。</remarks>
-    public EsImageSourceAdapter(Bitmap source)
+    public EsBitmapAdapter(Bitmap source)
         => _avalonia = source ?? throw new ArgumentNullException(nameof(source));
 
     /// <summary>コアの画像からアダプタを生成する（表示は初回に複製、コアへは恒等で渡す）。</summary>
     /// <param name="source">真実となるコアの画像。 破棄はホストが行う。</param>
-    public EsImageSourceAdapter(IEsBitmap source)
-        => _es = source ?? throw new ArgumentNullException(nameof(source));
+    /// <param name="displayMaxSize">表示に使う長辺の上限（ピクセル）。 0 は上限なし（等倍。 既定）。</param>
+    /// <remarks><paramref name="displayMaxSize"/> は<b>表示用の射影だけ</b>を縮小する（<see cref="DisplayMaxSize"/>）。</remarks>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="displayMaxSize"/> が負の場合。</exception>
+    public EsBitmapAdapter(IEsBitmap source, int displayMaxSize = 0)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentOutOfRangeException.ThrowIfNegative(displayMaxSize);
+        _es = source;
+        DisplayMaxSize = displayMaxSize;
+    }
 
     /// <summary>画像を引き取って所有するアダプタを生成する（<see cref="Dispose"/> で画像も解放する）。</summary>
     /// <param name="source">所有するコアの画像。</param>
@@ -67,12 +89,12 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
     /// （アダプタは「表示の適合」と「自分の射影の解放」だけを担い、元画像は生成した側が解放するのが原則）。<br/>
     /// <paramref name="source"/> は <see cref="EsWritableBitmap"/> に限る（解放できる型だけを引き取れるようにする）。
     /// </remarks>
-    public static EsImageSourceAdapter Adopt(EsWritableBitmap source) => new(source, ownsSource: true);
+    public static EsBitmapAdapter Adopt(EsWritableBitmap source) => new(source, ownsSource: true);
 
     /// <summary>画像を所有するかどうかを指定して生成する（所有の入口は <see cref="Adopt"/> だけに集約する）。</summary>
     /// <param name="source">真実となるコアの画像。</param>
     /// <param name="ownsSource">true の場合は本クラスが <paramref name="source"/> も解放する。</param>
-    private EsImageSourceAdapter(IEsBitmap source, bool ownsSource)
+    private EsBitmapAdapter(IEsBitmap source, bool ownsSource)
     {
         _es = source ?? throw new ArgumentNullException(nameof(source));
         _ownsSource = ownsSource;
@@ -170,7 +192,7 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
     public string ToSizeText() => GetEsBitmap().ToSizeText();
 
     /// <summary>表示サイズ（DIP）。</summary>
-    /// <value>真実の画像から得られる <see cref="Size"/>。</value>
+    /// <value>真実の画像から得られる <see cref="Size"/>（<see cref="DisplayMaxSize"/> が正の場合は縮小後の寸法）。</value>
     /// <exception cref="ObjectDisposedException">真実が破棄済みの場合。</exception>
     public Size Size
     {
@@ -179,6 +201,12 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
             if (_es is { } es)
             {
                 ThrowIfTruthDisposed(es);
+                if (DisplayMaxSize > 0)
+                {
+                    // 表示用の縮小射影を作り、その寸法を返す（Avalonia はこの寸法でレイアウトと描画を行う）
+                    return EnsureDisplayProjection(es).Size;
+                }
+
                 return new Size(es.Width, es.Height);
             }
 
@@ -230,6 +258,7 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
     /// <param name="destRect">描画先の矩形。</param>
     /// <remarks>
     /// <see cref="Bitmap"/> を真実とした場合は変換なしでそのまま描画する（実測: 4K で約 6 ms の複製が 1 枚につき 1 回）。<br/>
+    /// コアの画像を真実とし <see cref="DisplayMaxSize"/> が正の場合は<b>縮小した射影</b>を描画する（表示用。 実測: 4K から 96x54 で数十 µs）。<br/>
     /// 破棄済みのコア画像を真実とした場合は何も描画しない（safe no-op）。
     /// </remarks>
     public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
@@ -248,12 +277,35 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
         if (es.IsDisposed)
         {
             // 真実が破棄済み: 射影が残っていれば破棄して何も描画しない
-            _avaloniaProjection?.Dispose();
-            _avaloniaProjection = null;
+            DisposeProjections();
+            return;
+        }
+
+        if (DisplayMaxSize > 0)
+        {
+            // 表示用の縮小射影（寸法は Size が返す値と一致する）
+            context.DrawImage(EnsureDisplayProjection(es), sourceRect, destRect);
             return;
         }
 
         context.DrawImage(_avaloniaProjection ??= es.ToAvaloniaBitmap(), sourceRect, destRect);
+    }
+
+    /// <summary>表示用の縮小射影を取得する（初回だけ作る）。</summary>
+    /// <param name="source">真実のコア画像。</param>
+    /// <returns>縮小した Avalonia の画像（本クラスが所有する）。</returns>
+    private Bitmap EnsureDisplayProjection(IEsBitmap source)
+        => _displayProjection ??= source.ToAvaloniaBitmap(DisplayMaxSize);
+
+    /// <summary>射影（等倍・縮小）を解放する。</summary>
+    private void DisposeProjections()
+    {
+        _esProjection?.Dispose();
+        _esProjection = null;
+        _avaloniaProjection?.Dispose();
+        _avaloniaProjection = null;
+        _displayProjection?.Dispose();
+        _displayProjection = null;
     }
 
     /// <summary>射影を解放する（冪等）。</summary>
@@ -264,10 +316,7 @@ public sealed class EsImageSourceAdapter : IImage, IEsBitmap, IDisposable
     /// </remarks>
     public void Dispose()
     {
-        _esProjection?.Dispose();
-        _esProjection = null;
-        _avaloniaProjection?.Dispose();
-        _avaloniaProjection = null;
+        DisposeProjections();
 
         if (_ownsSource)
         {

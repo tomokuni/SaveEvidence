@@ -36,7 +36,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 - **コア型との相互変換**: `EsKeyAvaloniaInterop`（キー）/ `EsWindowStateAvaloniaInterop`（ウィンドウ状態）/ `EsGeometryAvaloniaInterop`（`EsPoint`・`EsSize`・`EsVector`・`EsRect`・`EsPointInt`・`EsRectInt`）/ `EsPlatformHandleAvaloniaInterop`（`IPlatformHandle`）/ `ColorAvaloniaInterop`（`System.Drawing.Color`）
 - **カーソル抑止の仲介**: `CursorOverrideGuardAvaloniaExtensions.Attach(this ICursorOverrideGuard, TopLevel)`（`TopLevel` からハンドルを取得して Core の `Attach` へ委譲）
 - **画像ユーティリティ**: コアの画像（`EsUtil.Platform.Core` 提供）の Avalonia 向け拡張（`EsBitmapAvaloniaExtensions`）と `IImage`
-- **画像アダプタ**（`EsImageSourceAdapter`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
+- **画像アダプタ**（`EsBitmapAdapter`）、容量制限付きキャッシュ（`CapacityLimitedCache<TKey, TValue>`）
 - **ブラシキャッシュ**: `SolidColorBrushCache`（`System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有する。 描画アダプタとラベル要素の配置が共用する）
 - **テキスト実寸の測定**: `AvaloniaTextMeasure`（ラベル要素の配置矩形を実寸から決めるための唯一の入口。 UI ごとに測定を書くと片方だけ実寸 0 になり、文字が切り落とされる）
 - **色生成拡張**: `ColorExtensions.FromAColor`（C# 14 静的拡張メンバー。 名前付き色とアルファ値から `Color` を生成し、RGB 直指定の可読性問題を解消）
@@ -62,7 +62,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 
 ```csharp
 using EsUtil.SaveEvidence.Platform.AvaloniaUI;               // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;       // EsBitmapAvaloniaExtensions / EsImageSourceAdapter / CapacityLimitedCache / AvaloniaTextMeasure
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;       // EsBitmapAvaloniaExtensions / EsBitmapAdapter / CapacityLimitedCache / AvaloniaTextMeasure
 using EsUtil.Platform.Core;                     // EsKey / EsWindowState / EsPlatformHandle 等
 using EsUtil.Platform.Core.Native;              // サービス抽象（ICaptureService 等）
 using EsUtil.Platform.Core.Native.Win;          // 既定実装を直接生成する場合のみ（ホスト）
@@ -165,7 +165,7 @@ Platform.AvaloniaUI/
 │   └── Platform/
 │       ├── ColorExtensions.cs      # 色生成拡張（C# 14 静的拡張メンバー）
 │       ├── Coord/             # ScreenConverter（Avalonia の TopLevel に依存するため本プロジェクトに残す）
-│       ├── Imaging/                # 画像アダプタ（EsBitmapAvaloniaExtensions / EsImageSourceAdapter / CapacityLimitedCache / AvaloniaTextMeasure）
+│       ├── Imaging/                # 画像アダプタ（EsBitmapAvaloniaExtensions / EsBitmapAdapter / CapacityLimitedCache / AvaloniaTextMeasure）
 │       └── Interop/                # コア型との相互変換（EsKeyAvaloniaInterop / EsWindowStateAvaloniaInterop / EsGeometryAvaloniaInterop / EsPlatformHandleAvaloniaInterop / ColorAvaloniaInterop / CursorOverrideGuardAvaloniaExtensions）
 └── tests/                          # 単体テスト
 ```

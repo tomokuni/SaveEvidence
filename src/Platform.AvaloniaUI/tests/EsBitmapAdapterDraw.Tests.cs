@@ -8,16 +8,16 @@ using Xunit;
 namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 
 /// <summary>
-/// <see cref="EsImageSourceAdapter"/> の描画（<see cref="EsImageSourceAdapter.Draw"/>）のテスト。
+/// <see cref="EsBitmapAdapter"/> の描画（<see cref="EsBitmapAdapter.Draw"/>）のテスト。
 /// </summary>
 /// <remarks>
-/// <see cref="EsImageSourceAdapter.Draw"/> は <see cref="Avalonia.Media.Imaging.Bitmap"/> への射影（変換）を行い、
+/// <see cref="EsBitmapAdapter.Draw"/> は <see cref="Avalonia.Media.Imaging.Bitmap"/> への射影（変換）を行い、
 /// その生成には Avalonia の描画バックエンド（<c>DrawingContext</c>）が必要なため、<c>[AvaloniaFact]</c> で検証する。<br/>
-/// <see cref="EsImageSourceAdapter"/> のそれ以外（取得・サイズ・破棄）は <see cref="EsImageSourceAdapterTests"/> が検証する。<br/>
+/// <see cref="EsBitmapAdapter"/> のそれ以外（取得・サイズ・破棄）は <see cref="EsBitmapAdapterTests"/> が検証する。<br/>
 /// 実 Skia の描画は共有状態を持つため <see cref="AvaloniaSkiaGroup"/> で直列化する。
 /// </remarks>
 [Collection("AvaloniaSkia")]
-public class EsImageSourceAdapterDrawTests
+public class EsBitmapAdapterDrawTests
 {
     /// <summary>真実が破棄されたら描画は no-op になり、例外にもならないことを検証する。</summary>
     /// <remarks>
@@ -28,7 +28,7 @@ public class EsImageSourceAdapterDrawTests
     internal void Draw_真実が破棄されたらnoOpになり例外にならない()
     {
         using var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Red);
-        var adapter = new EsImageSourceAdapter(bmp);
+        var adapter = new EsBitmapAdapter(bmp);
 
         // 真実を先に破棄する（アダプタは非所有のため、所有者が先に破棄する経路がある）
         bmp.Dispose();
@@ -54,7 +54,7 @@ public class EsImageSourceAdapterDrawTests
     internal void Draw_繰り返し描画しても例外にならない()
     {
         using var bmp = EsBitmap.Create(8, 6, System.Drawing.Color.Blue);
-        using var adapter = new EsImageSourceAdapter(bmp);
+        using var adapter = new EsBitmapAdapter(bmp);
 
         using var target = new RenderTargetBitmap(new PixelSize(8, 6), new Vector(96, 96));
         for (var i = 0; i < 3; i++)

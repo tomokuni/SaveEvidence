@@ -15,7 +15,7 @@
   - [5.1 ScreenConverter](#51-screenconverter)
   - [5.2 相互変換（Interop）](#52-相互変換interop)
   - [5.3 ColorExtensions（C# 14 静的拡張メンバー）](#53-colorextensionsc-14-静的拡張メンバー)
-  - [5.4 EsBitmapAvaloniaExtensions / EsImageSourceAdapter / CapacityLimitedCache](#54-esbitmapavaloniaextensions--esimagesourceadapter--capacitylimitedcache)
+  - [5.4 EsBitmapAvaloniaExtensions / EsBitmapAdapter / CapacityLimitedCache](#54-esbitmapavaloniaextensions--esbitmapadapter--capacitylimitedcache)
   - [5.5 型一覧](#55-型一覧)
 - [6. 座標系](#6-座標系)
 - [7. 制約事項](#7-制約事項)
@@ -63,7 +63,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 
 ```csharp
 using EsUtil.SaveEvidence.Platform.AvaloniaUI;               // ScreenConverter / 相互変換 / 幾何アダプタ / ColorExtensions
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;       // EsBitmapAvaloniaExtensions / EsImageSourceAdapter / CapacityLimitedCache / AvaloniaTextMeasure
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;       // EsBitmapAvaloniaExtensions / EsBitmapAdapter / CapacityLimitedCache / AvaloniaTextMeasure
 using EsUtil.Platform.Core;                     // EsKey / EsWindowState / EsPlatformHandle 等
 using EsUtil.Platform.Core.Native;              // サービス抽象（ICaptureService 等）
 using EsUtil.Platform.Core.Native.Win;          // 既定実装を直接生成する場合のみ（ホスト）
@@ -151,7 +151,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 | --- | --- | --- |
 | `FromAColor` | `static Color FromAColor(byte alpha, Color baseColor)` | 基準色（名前付き色等）と不透明度から色を生成する（例: `Color.FromAColor(128, Colors.Black)` = 黒 50%）。 RGB 直指定より可読性が高い |
 
-### 5.4 EsBitmapAvaloniaExtensions / EsImageSourceAdapter / CapacityLimitedCache
+### 5.4 EsBitmapAvaloniaExtensions / EsBitmapAdapter / CapacityLimitedCache
 
 コアの画像（`EsUtil.Platform.Core` 提供）を Avalonia へ適合させます。
 
@@ -160,31 +160,33 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 | 生成 | `ToEsBitmap` | `EsWritableBitmap ToEsBitmap(this Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。 **書き換え可能な型で返す**） |
 | 生成 | `ToAvaloniaWriteableBitmap` | `WriteableBitmap ToAvaloniaWriteableBitmap(this IEsBitmap bitmap)` | Avalonia `WriteableBitmap` へ変換（複製を所有） |
 | 生成 | `ToAvaloniaBitmap` | `Bitmap ToAvaloniaBitmap(this IEsBitmap bitmap)` | Avalonia `Bitmap` へ変換（複製を所有） |
+| 生成 | `ToAvaloniaBitmap` | `Bitmap ToAvaloniaBitmap(this IEsBitmap bitmap, int maxSize)` | **縮小した** Avalonia `Bitmap` へ変換（**表示用**。 長辺を `maxSize` へ収める。 既に収まっていれば等倍。 最近傍で標本化するため**保存・座標対応付けには使わない**） |
 | 生成 | `CreateAvaloniaWriteableBitmap` | `static WriteableBitmap CreateAvaloniaWriteableBitmap(int width, int height, AvaloniaColor color)` | 単色の `WriteableBitmap` を生成 |
-| 生成 | `CreateAvaloniaImage` | `static EsImageSourceAdapter CreateAvaloniaImage(int width, int height, AvaloniaColor color)` | 単色の画像を所有するアダプタを生成（コアの `EsWritableBitmap` を作り `Adopt` で包む。 **破棄は呼び出し側**） |
+| 生成 | `CreateAvaloniaImage` | `static EsBitmapAdapter CreateAvaloniaImage(int width, int height, AvaloniaColor color)` | 単色の画像を所有するアダプタを生成（コアの `EsWritableBitmap` を作り `Adopt` で包む。 **破棄は呼び出し側**） |
 | ピクセル | `SetPixel` | `void SetPixel(this IEsWritableBitmap bitmap, PixelPoint point, AvaloniaColor color)` | Avalonia 型でのピクセル書き込み（範囲外の無視が必要な場合はコアの `TrySetPixel` を `System.Drawing.Color` で使う） |
 
 | 型 | 説明 |
 | --- | --- |
-| `EsImageSourceAdapter` | Avalonia の `Bitmap` またはコアの画像（`IEsBitmap`）を包み、**`IImage`（表示）と `IEsBitmap`（コアの画像源）の両面**で公開するアダプタ。 真実は生成時に受け取った側の 1 つで、反対側は**初回に一度だけ**作る射影。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（コアの `EsBitmapExtensions` / `EsWritableBitmap` を使う） |
+| `EsBitmapAdapter` | Avalonia の `Bitmap` またはコアの画像（`IEsBitmap`）を包み、**`IImage`（表示）と `IEsBitmap`（コアの画像源）の両面**で公開するアダプタ。 真実は生成時に受け取った側の 1 つで、反対側は**初回に一度だけ**作る射影。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（コアの `EsBitmapExtensions` / `EsWritableBitmap` を使う）。 **一覧のサムネイルのように小さく表示する場合は `displayMaxSize` を渡す**（等倍の射影は画像 1 枚につき元寸法の複製を保持する。 実測: 4K で 32 MB / 7.8 ms に対し、96x54 の縮小版は 17 µs / 20 KB） |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。 スレッド安全。 値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
 | `AvaloniaTextMeasure` | テキストの実寸を測る（`Measure(text, fontSize)`。 ラベルの配置矩形の計算に使う。 測定に色は影響しないためブラシは固定で共有する） |
 
-**`EsImageSourceAdapter` のメンバー**:
+**`EsBitmapAdapter` のメンバー**:
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 生成 | コンストラクタ | `EsImageSourceAdapter(Bitmap source)` | Avalonia の画像を真実とする（コアへは初回に複製） |
-| 生成 | コンストラクタ | `EsImageSourceAdapter(IEsBitmap source)` | コアの画像を真実とする（表示は初回に複製。 **借用であり破棄しない**） |
-| 生成 | `Adopt` | `static EsImageSourceAdapter Adopt(EsWritableBitmap source)` | コアの画像を**引き取って所有**するアダプタを生成（`Dispose` で画像も解放。 生成した画像を解放する人がいない場合に限る。 **解放できる型だけを引き取る**） |
-| プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（ピクセル。 真実が破棄済みの場合は `ObjectDisposedException`） |
-| プロパティ | `Size` | `Size` | 表示サイズ（`IImage`。 真実が破棄済みの場合は `ObjectDisposedException`） |
+| 生成 | コンストラクタ | `EsBitmapAdapter(Bitmap source)` | Avalonia の画像を真実とする（コアへは初回に複製） |
+| 生成 | コンストラクタ | `EsBitmapAdapter(IEsBitmap source, int displayMaxSize = 0)` | コアの画像を真実とする（表示は初回に複製。 **借用であり破棄しない**）。 `displayMaxSize` が正なら**表示用の射影だけ**を縮小する |
+| 生成 | `Adopt` | `static EsBitmapAdapter Adopt(EsWritableBitmap source)` | コアの画像を**引き取って所有**するアダプタを生成（`Dispose` で画像も解放。 生成した画像を解放する人がいない場合に限る。 **解放できる型だけを引き取る**） |
+| プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（ピクセル。 **真実の寸法**。 真実が破棄済みの場合は `ObjectDisposedException`） |
+| プロパティ | `Size` | `Size` | 表示サイズ（`IImage`。 `DisplayMaxSize` が正の場合は**縮小後の寸法**。 真実が破棄済みの場合は `ObjectDisposedException`） |
+| プロパティ | `DisplayMaxSize` | `int` | 表示に使う長辺の上限（0 は上限なし = 等倍）。 **表示用の射影だけ**を縮小し、保存用の `GetAvaloniaBitmap` は等倍のまま（表示と保存で射影を分ける）。 **コアの読み取り面（`Width` / `Height` / `GetEsBitmap`）は真実の寸法のまま**（ピクセルと矛盾しない） |
 | プロパティ | `IsDisposed` | `bool` | 真実の破棄状態（本クラスの `Dispose` では真にならない。 `Bitmap` を真実とした場合は常に `false`） |
 | メソッド | `GetPixel` | `(byte B, byte G, byte R, byte A) GetPixel(int x, int y)` / `Color GetPixel(EsPointInt point)` | ピクセルの取得（真実へ委譲。 破棄済みは `ObjectDisposedException`） |
 | メソッド | `ToSizeText` | `string ToSizeText()` | 寸法を `<c>幅x高さ</c>` 形式で返す（真実へ委譲。 破棄済みは `ObjectDisposedException`） |
 | メソッド | `GetEsBitmap` | `IEsBitmap GetEsBitmap()` | コアの画像を**借用**で取得する |
-| メソッド | `GetAvaloniaBitmap` | `Bitmap GetAvaloniaBitmap()` | Avalonia の画像を**借用**で取得する（保存・クリップボード用） |
-| メソッド | `Draw` / `Dispose` | `IImage` / 冪等 | 描画（真実が破棄済みの場合は no-op）・射影（と `Adopt` した画像）の解放 |
+| メソッド | `GetAvaloniaBitmap` | `Bitmap GetAvaloniaBitmap()` | Avalonia の画像を**借用**で取得する（保存・クリップボード用。 **等倍**） |
+| メソッド | `Draw` / `Dispose` | `IImage` / 冪等 | 描画（`DisplayMaxSize` が正なら縮小した射影を描く。 真実が破棄済みの場合は no-op）・射影（等倍・縮小。 と `Adopt` した画像）の解放 |
 
 **破棄済みの扱い**: 真実のコア画像が破棄済みの場合（`IsDisposed` が `true`）、寸法（`Width` / `Height` / `Size`）と `GetEsBitmap` / `GetAvaloniaBitmap` / `GetPixel` は `ObjectDisposedException` を投げます。 `Draw` だけは何も描画しません（表示は例外で止めない）。 無効な画像の寸法を正常値として渡さないための規則です。
 
@@ -203,7 +205,7 @@ var brush = s_cache.GetOrCreate(color);
 
 公開型は `ScreenConverter` / `EsKeyAvaloniaInterop` / `EsWindowStateAvaloniaInterop` /
 `EsGeometryAvaloniaInterop` / `EsPlatformHandleAvaloniaInterop` / `ColorAvaloniaInterop` / `CursorOverrideGuardAvaloniaExtensions` /
-`ColorExtensions` / `EsImageSourceAdapter` / `EsBitmapAvaloniaExtensions` /
+`ColorExtensions` / `EsBitmapAdapter` / `EsBitmapAvaloniaExtensions` /
 `CapacityLimitedCache<TKey, TValue>` / `SolidColorBrushCache` です。
 
 インターフェース・コア値型・`CoordTransform`・画像型（`IEsBitmap` / `IEsWritableBitmap` / `EsBitmap` / `EsWritableBitmap` / `EsBitmapBase`）と、その Win32 実装（`Native.Win`） ・`EsBitmapDrawingExtensions`（`Native.Imaging`）は `EsUtil.Platform.Core` が提供します。

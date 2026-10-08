@@ -94,13 +94,15 @@ public sealed partial class UndoPage : ViewModePageBase
             });
 
         // 1. Redo スタック（新しい順。 _redoStack[0] が現在に最も近い未来）
-        // UndoHistory は EsBitmap を保持し、表示境界で非所有アダプタ（IImage）へ変換する。
+        // UndoHistory はコアの画像を保持し、表示境界で非所有アダプタ（IImage）へ変換する。
         // 変換した IImage は UndoListItem が参照する（画像の所有は UndoHistory / ViewModel が保持し、
         // アダプタは本ページが一覧の差し替え時に破棄する）。
+        // 一覧は小さく表示するため、表示用の射影をアイコンサイズへ縮小させる
+        // （等倍のままだと画像 1 枚につき元寸法の複製が残る。 実測: 4K で 32 MB/枚）。
         var redo = _undoHistory.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
-            AddItem(new EsImageSourceAdapter(redo[i]), $"Redo {i + 1}", isCurrent: false);
+            AddItem(new EsBitmapAdapter(redo[i], size), $"Redo {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
@@ -108,14 +110,14 @@ public sealed partial class UndoPage : ViewModePageBase
         if (currentImage is not null)
         {
             // 表示境界で IImage へ変換してサムネイルへ設定する。
-            AddItem(new EsImageSourceAdapter(currentImage), "現在", isCurrent: true);
+            AddItem(new EsBitmapAdapter(currentImage, size), "現在", isCurrent: true);
         }
 
         // 3. Undo スタック（新しい順。 _stack[^1] が現在の直前）
         var undo = _undoHistory.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
-            AddItem(new EsImageSourceAdapter(undo[i]), $"Undo {undo.Count - i}", isCurrent: false);
+            AddItem(new EsBitmapAdapter(undo[i], size), $"Undo {undo.Count - i}", isCurrent: false);
         }
 
         _viewModel.ItemCount = items.Count;
@@ -151,10 +153,13 @@ public sealed partial class UndoPage : ViewModePageBase
         {
             var tempFile = Path.Combine(Path.GetTempPath(), $"SaveEvidence_undo_{Guid.NewGuid():N}.png");
 
-            // サムネイルは画像源アダプタ（IImage）のため、保存用に Avalonia Bitmap を借りる（破棄はアダプタの所有者）。
-            if (item.Thumbnail is EsImageSourceAdapter adapter)
+            // サムネイルは画像源アダプタ（IImage）のため、保存用にコアの画像を借りて変換する。
+            // GetAvaloniaBitmap() は等倍の射影をアダプタへ保持させる（4K で 32 MB/枚）ため使わない
+            // （保存は 1 回だけであり、変換を使い捨てにすれば保持されない）。
+            if (item.Thumbnail is EsBitmapAdapter adapter)
             {
-                adapter.GetAvaloniaBitmap().Save(tempFile, PngBitmapEncoderOptions.Default);
+                using var avalonia = adapter.GetEsBitmap().ToAvaloniaBitmap();
+                avalonia.Save(tempFile, PngBitmapEncoderOptions.Default);
             }
             else
             {

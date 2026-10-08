@@ -47,7 +47,7 @@ public sealed partial class MainWindow : Window
     private EsWritableBitmap? _previewEs;
 
     /// <summary>Crop プレビュー用の表示画像（<see cref="_previewEs"/> を借りて包む非所有アダプタ）。</summary>
-    private EsImageSourceAdapter? _previewImage;
+    private EsBitmapAdapter? _previewImage;
 
     /// <summary>スライダ同期中の再入防止フラグ（プログラム側の同期による ValueChanged を無視する）。</summary>
     private bool _isSyncingZoomSlider;
@@ -91,11 +91,11 @@ public sealed partial class MainWindow : Window
     private void SetPreviewBitmap(EsWritableBitmap bitmap)
     {
         // 新しいアダプタを先に Source へ設定し、旧アダプタと旧画像は後から破棄する
-        // （IImage は非所有のため、保持するホストが破棄する。 破棄の順序の理由は EsImageSourceAdapter の doc を参照）。
+        // （IImage は非所有のため、保持するホストが破棄する。 破棄の順序の理由は EsBitmapAdapter の doc を参照）。
         var previousImage = _previewImage;
         var previousEs = _previewEs;
         _previewEs = bitmap;
-        _previewImage = new EsImageSourceAdapter(bitmap);
+        _previewImage = new EsBitmapAdapter(bitmap);
         PreviewCropView.Source = _previewImage;
         previousImage?.Dispose();
         previousEs?.Dispose();
