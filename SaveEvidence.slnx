@@ -41,6 +41,7 @@
     <Project Path="src/EsUtil.Feature.Marquee.Presenter/tests/EsUtil.Feature.Marquee.Presenter.Tests.csproj" />
   </Folder>
   <Folder Name="/src/EsUtil.Feature.Marquee.ControlMewUI/">
+    <Project Path="src/EsUtil.Feature.Marquee.ControlMewUI/sample/EsUtil.Feature.Marquee.ControlMewUI.Sample.csproj" />
     <Project Path="src/EsUtil.Feature.Marquee.ControlMewUI/src/MewUI/EsUtil.Feature.Marquee.ControlMewUI.csproj" />
     <Project Path="src/EsUtil.Feature.Marquee.ControlMewUI/tests/MewUI/EsUtil.Feature.Marquee.ControlMewUI.Tests.csproj" />
   </Folder>
@@ -66,6 +67,7 @@
   </Folder>
   <Folder Name="/src/EsUtil.Feature.Loupe.Core/src/Core/" />
   <Folder Name="/src/EsUtil.Feature.Loupe.ControlMewUI/">
+    <Project Path="src/EsUtil.Feature.Loupe.ControlMewUI/sample/EsUtil.Feature.Loupe.ControlMewUI.Sample.csproj" />
     <Project Path="src/EsUtil.Feature.Loupe.ControlMewUI/src/MewUI/EsUtil.Feature.Loupe.ControlMewUI.csproj" />
     <Project Path="src/EsUtil.Feature.Loupe.ControlMewUI/tests/MewUI/EsUtil.Feature.Loupe.ControlMewUI.Tests.csproj" />
   </Folder>
