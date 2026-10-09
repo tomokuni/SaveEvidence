@@ -47,7 +47,6 @@ src/App.MewUI/
     ├── Program.cs           # 登録 → コアの組み立て（AppServices） → ホットキー登録 → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoHistory / FolderView）
     ├── Services/
-
     │   ├── ImageThumbnailLoader.cs    # 画像ファイルの縮小デコード（縮小はコアの面積平均）とキャッシュ
     │   ├── SettingsColorMath.cs       # 設定の色文字列 ⇔ 色の変換
     │   ├── SettingsJsonContext.cs     # 設定の JSON ソース生成（Native AOT 対応）
