@@ -27,17 +27,6 @@ internal static class TestHelper
     /// <returns>一時ディレクトリ配下の一意なパス。</returns>
     public static string CreateTempPath(string extension)
         => Path.Combine(Path.GetTempPath(), $"saveevidence-test-{Guid.NewGuid():N}{extension}");
-
-    /// <summary>ファイルの実際の保存形式を読み取る。</summary>
-    /// <param name="filePath">対象のファイルパス。</param>
-    /// <returns>判別した保存形式。 判別できない場合は null。</returns>
-    public static SKEncodedImageFormat? ReadFormat(string filePath)
-    {
-        using var stream = File.OpenRead(filePath);
-        using var codec = SKCodec.Create(stream);
-
-        return codec?.EncodedFormat;
-    }
 }
 
 /// <summary>ログ出力を収集するテスト用 <see cref="ILogger"/> 実装。</summary>

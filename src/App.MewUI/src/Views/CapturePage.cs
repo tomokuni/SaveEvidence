@@ -24,7 +24,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <remarks>
 /// Avalonia 版 <c>CapturePage.axaml</c> に相当する。<br/>
 /// プレビュー（ズーム・パン・矩形オーバーレイ）・ルーペ（カーソル追従）・切り出し・撮影・履歴操作を担う。<br/>
-/// 書き出し形式の判定は <see cref="MewUIImageWriter"/>、撮影は <see cref="CaptureFlow"/>、
+/// 書き出し形式の判定は <see cref="IImageWriter"/>（<see cref="EsBitmapImageWriter"/>。 コアの保存）が担い、撮影は <see cref="CaptureFlow"/>、
 /// 切り出しは <see cref="CaptureSessionControl"/>（Facade）、履歴は <see cref="EditHistory"/> へ委譲する。
 /// </remarks>
 internal static class CapturePage

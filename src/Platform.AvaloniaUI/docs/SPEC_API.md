@@ -166,7 +166,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 
 | 型 | 説明 |
 | --- | --- |
-| `EsBitmapAvaloniaAdapter` | コアの画像（`IEsBitmap`）を包み、**`IImage`（表示）と `IEsBitmap`（コアの読み取り面）の両面**で公開するアダプタ。 **射影元はコアの画像に限る**（Avalonia の `Bitmap` を真実とする入口は持たない。 Avalonia の画像をコアで扱う場合は `ToEsBitmap()` で変換してから包む）。 コアへの射影は恒等で、Avalonia 側の射影は**初回に一度だけ**作る。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（コアの `EsBitmapExtensions` / `EsWritableBitmap` を使う）。 **一覧のサムネイルのように小さく表示する場合は `displayMaxSize` を渡す**（等倍の射影は画像 1 枚につき元寸法の複製を保持する。 実測: 4K で 32 MB / 7.8 ms に対し、96x54 の縮小版は 17 µs / 20 KB） |
+| `EsBitmapAvaloniaAdapter` | コア の画像（`IEsBitmap`）を包み、**`IImage`（表示）と `IEsBitmap`（コアの読み取り面 ）の両面**で公開するアダプタ。 **射影元はコアの画像に限る**（Avalonia の `Bitmap` を真実とする入口は持たない。 Avalonia の画像をコアで扱う場合は `ToEsBitmap()` で変換してから包む）。 コアへの射影は恒等で、Avalonia 側の射影は**初回に一度だけ**作る。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（コアの `EsBitmapExtensions` / `EsWritableBitmap` を使 う）。 **一覧のサムネイルのように小さく表示する場合は `displayMaxSize` を渡す** （等倍の射影は画像 1 枚につき元寸法の複製を保持する。 実測: 4K で 32 MB / 7.8 ms に対し、96x54 の双線形の縮小版は 110 µs / 20 KB） |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。 スレッド安全。 値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
 | `AvaloniaTextMeasure` | テキストの実寸を測る（`Measure(text, fontSize)`。 ラベルの配置矩形の計算に使う。 測定に色は影響しないためブラシは固定で共有する） |
 
@@ -174,7 +174,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 生成 | コンストラクタ | `EsBitmapAvaloniaAdapter(IEsBitmap source, int displayMaxSize = 0)` | コアの画像を真実とする（表示は初回に複製。 **借用であり破棄しない**）。 `displayMaxSize` が正なら**表示用の射影だけ**を縮小する |
+| 生成 | コンストラクタ | `EsBitmapAvaloniaAdapter(IEsBitmap source, int displayMaxSize = 0)` | コアの画像を真実と する（表示は初回に複製。 **借用であり破棄しない**）。 `displayMaxSize` が正で**画像が上限より大きいときだけ**表示用の射影を縮小する |
 | 生成 | `Adopt` | `static EsBitmapAvaloniaAdapter Adopt(EsWritableBitmap source)` | コアの画像を**引き取って所有**するアダプタを生成（`Dispose` で画像も解放。 生成した画像を解放する人がいない場合に限る。 **解放できる型だけを引き取る**） |
 | プロパティ | `Width` / `Height` | `int` | 幅 / 高さ（ピクセル。 **真実の寸法**。 真実が破棄済みの場合は `ObjectDisposedException`） |
 | プロパティ | `Size` | `Size` | 表示サイズ（`IImage`。 `DisplayMaxSize` が正の場合は**縮小後の寸法**。 真実が破棄済みの場合は `ObjectDisposedException`） |
@@ -225,5 +225,6 @@ var brush = s_cache.GetOrCreate(color);
 - `ScreenConverter` は Avalonia の `TopLevel` を解決するため、Avalonia 版専用です（他 UI では各 UI の実装が必要）。
 - ビジュアルツリー未接続時、`ScreenConverter` は等価変換（画面座標 = ローカル DIP）として動作します。
 - `EsBitmapAvaloniaExtensions` の `To*` は新しい画像を生成するため、呼び出し側が所有・破棄します（`CreateAvaloniaImage` は `Adopt` でアダプタに所有させます）。
-- **表示用の縮小はコアの `EsBitmapExtensions.Resize` が単一所有します**（本プロジェクトに縮小の実装は置きません。 両 UI で同じ結果にするためです）。 アダプタは `DisplayMaxSize` を渡されたときにこの拡張メソッドを使い、**表示用の射影だけ**を縮小します（保存・クリップボード用の `GetAvaloniaBitmap` は等倍のまま）。
+- **表示用の縮小はコアの `EsBitmapExtensions.DownscaleBilinear` が単一所有します**（本プロジェクトに縮小の実装は置きません）。 アダプタは `DisplayMaxSize` を渡され、かつ**画像が上限より大きいときに限り**表示用の射影を縮小します（上限に収まっている画像は等倍の射影を共用し、同じ寸法の複製を 2 つ作りません）。
+- **表示に双線形を選ぶ理由は速度です**: 一覧は表示のたびにアダプタを作り直すため、1 枚あたりのコストが体感に乗ります。 実測 4K 1 枚で双線形 0.3〜1.2 ms / 面積平均 25〜30 ms（面積平均だと 11 枚で 0.3 秒の停止）。 画質を優先する場合は `DownscaleBox` へ切り替えます（実測: 4K → 320x180 で幅 1 px の細線は面積平均 21 / 双線形 127 / 最近傍 255（位置一致時のみ））。
 - **ファイルの保存・読み込みはコアの `EsBitmapFileExtensions`（`Native.Imaging`）が単一所有します**（本プロジェクトに保存・読み込みの実装は置きません）。

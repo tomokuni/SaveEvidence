@@ -215,7 +215,7 @@ UI 非依存のモデル・ユーティリティ・ViewModel は `App.Core` へ�
 src/App.AvaloniaUI/
 ├── src/               # アプリ本体（Avalonia 実装）
 │   ├── Views/         # ウィンドウ・ページ（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage）
-│   ├── Services/      # AvaloniaImageWriter / CaptureSettingsMapper 等（Avalonia 依存の実装）
+│   ├── Services/      # CaptureSettingsMapper 等（Avalonia 依存の実装。 画像の保存は App.Core の EsBitmapImageWriter を使う）
 │   ├── Controls/      # BottomAlignWrapPanel
 │   ├── Converters/    # EnumToDisplayNameConverter 等
 │   ├── Icons/         # SVG アイコンの読み込み（IconLoader）

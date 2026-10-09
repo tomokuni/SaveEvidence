@@ -47,7 +47,7 @@ src/App.MewUI/
     ├── Program.cs           # 登録 → コアの組み立て（AppServices） → ホットキー登録 → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoHistory / FolderView）
     ├── Services/
-    │   ├── MewUIImageWriter.cs        # IImageWriter の MewUI 実装（保存はコアの EsBitmapFileExtensions へ委譲）
+
     │   ├── ImageThumbnailLoader.cs    # 画像ファイルの縮小デコードとキャッシュ
     │   ├── SettingsColorMath.cs       # 設定の色文字列 ⇔ 色の変換
     │   ├── SettingsJsonContext.cs     # 設定の JSON ソース生成（Native AOT 対応）
@@ -67,10 +67,11 @@ src/App.MewUI/
 └── tests/
     ├── App.MewUI.Tests.csproj           # xUnit v3（net10.0-windows）
     ├── TestHelper.cs                    # テスト共通ユーティリティ
-    ├── MewUIImageWriter.Tests.cs        # 拡張子ごとの保存形式・引数検証
-    ├── ImageThumbnailLoader.Tests.cs    # 縮小デコード・キャッシュ・失敗時の扱い
+    ├── ImageThumbnailLoader.Tests.cs    # 縮小デコード・キャッシュ・失敗時の扱 い
     └── SettingsColorMath.Tests.cs       # 色文字列の解析と整形
 ```
+
+画像の保存（`IImageWriter`）は `App.Core` の `EsBitmapImageWriter`（両 UI 共通）を使います。
 
 ## 6. 依存関係
 

@@ -14,7 +14,8 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `Enums.ThemeMode` | `public` | テーマモード（`Description` 属性で表示名を保持） |
 | `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。 ウィンドウ位置は `EsRectInt`、状態は `EsWindowState` で保持 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。 JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
-| `Services.IImageWriter` | `public` | 画像（`IEsBitmap`）のファイル書き込みの抽象。 具象実装（Avalonia 版は `AvaloniaImageWriter`）は各 UI プロジェクト側に置き、**コアの `EsBitmapFileExtensions.Save` へ委譲する**（実装は薄い適合） |
+| `Services.IImageWriter` | `public` | 画像（`IEsBitmap`）のファイル書き込みの抽象 |
+| `Services.EsBitmapImageWriter` | `public` | `IImageWriter` の**唯一の本番実装**（Windows 専用）。 コアの `EsBitmapFileExtensions.Save` へ委譲する。 両 UI が同じ実装を使う（保存結果が UI で食い違わない） |
 | `Services.EsRectIntJsonConverter` | `internal` | `EsRectInt` の JSON コンバーター（`X` / `Y` / `Width` / `Height` のみを読み書き） |
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
 | `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsWritableBitmap` のクローンを保持。 最大 5 段） |
@@ -70,7 +71,7 @@ UI フレームワークへ依存しません。 外部依存は MVVM の `Commu
 | `BeforeEditAction` | `Action` | `CapturePage`（Undo スタックへのプッシュ） |
 | `StartSelectionMode` | `Action<CaptureType>` | `CapturePage`（キャプチャの開始） |
 
-画像の書き込み（`IImageWriter`）はコンストラクターで注入します（UI 実装は `App.AvaloniaUI` 側の `AvaloniaImageWriter`。 保存の実体はコアの `EsBitmapFileExtensions.Save`）。
+画像の書き込み（`IImageWriter`）はコンストラクターで注入します（本番は本プロジェクトの `EsBitmapImageWriter`。 保存の実体はコアの `EsBitmapFileExtensions.Save`）。
 
 ## 7. ビルド
 
@@ -99,8 +100,8 @@ dotnet test src/App.Core/tests/App.Core.Tests.csproj
 // 1. 設定サービスを生成する（JSON ソース生成コンテキストを渡す。 トリミング / Native AOT では必須）
 var settingsService = new SettingsService(SettingsJsonContext.Default);
 
-// 2. ViewModel を生成する（画像の書き込みは UI 実装を注入する）
-var viewModel = new MainViewModel(settingsService, new AvaloniaImageWriter());
+// 2. ViewModel を生成する（画像の書き込みは本プロジェクトの実装を注入する）
+var viewModel = new MainViewModel(settingsService, new EsBitmapImageWriter());
 
 // 3. UI 依存の操作（クリップボード・上書き確認・キャプチャ開始）をコールバックで設定する
 viewModel.CopyToClipboardCallback = async image => { /* UI 型へ変換してクリップボードへ書く */ return true; };
@@ -109,7 +110,7 @@ viewModel.ConfirmOverwriteAsync = async path => { /* 上書き確認ダイアロ
 viewModel.StartSelectionMode = captureType => { /* キャプチャを開始する */ };
 ```
 
-（`SettingsJsonContext` / `AvaloniaImageWriter` はホスト側の実装です。 各アプリが自分の UI に合わせて用意します。）
+（`SettingsJsonContext` はホスト側の実装です。 画像の書き込みは本プロジェクトの `EsBitmapImageWriter`（Windows 専用）を使います。）
 
 詳細は [docs/SPEC_API.md](docs/SPEC_API.md) を参照してください。
 

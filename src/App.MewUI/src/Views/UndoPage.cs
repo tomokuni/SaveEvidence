@@ -6,7 +6,6 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.App.MewUI.Services;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 
@@ -34,7 +33,7 @@ internal static class UndoPage
     private const double LabelHeight = 30;
 
     /// <summary>画像を一時ファイルへ書き出すライター（ダブルクリックで外部ツールを使う場合に限る）。</summary>
-    private static readonly IImageWriter s_writer = new MewUIImageWriter();
+    private static readonly IImageWriter s_writer = new EsBitmapImageWriter();
 
     /// <summary>ページの内容を生成する。</summary>
     /// <param name="viewModel">アプリのメイン ViewModel（現在の画像の取得元）。</param>

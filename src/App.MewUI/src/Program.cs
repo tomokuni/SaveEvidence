@@ -59,7 +59,7 @@ internal static class Program
         // 設定は UI 非依存の共通実装を使う（%LOCALAPPDATA%\SaveEvidence\settings.json）
         // JSON ソース生成コンテキストを渡すことで、トリミング / Native AOT でも設定を読み書きできる
         var settings = new SettingsService(SettingsJsonContext.Default);
-        var viewModel = new MainViewModel(settings, new MewUIImageWriter());
+        var viewModel = new MainViewModel(settings, new EsBitmapImageWriter());
 
         // Undo / Redo 履歴はキャプチャページと Undo 一覧で共有する（画像編集の直前に現在の画像を積む）
         var undoStack = new UndoHistory();

@@ -22,8 +22,10 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// <b>射影は初回に一度だけ</b>: 表示用の射影（Avalonia の <see cref="Bitmap"/>）は初回の描画（または寸法取得）で
 /// 1 回だけ作り、以降は作り直さない（ピクセルを複製するため。 実測: 4K で 7.8 ms / 32 MB）。<br/>
 /// <b>表示用の射影だけを縮小できる</b>: <see cref="DisplayMaxSize"/> を指定すると、表示用の射影は
-/// コアの <see cref="EsBitmapExtensions.Resize"/> で縮小される（実測: 4K から 96x54 で 17 µs / 20 KB）。
+/// コアの <see cref="EsBitmapExtensions.DownscaleBilinear"/> で縮小される（実測: 4K から 96x54 で 110 µs・
+/// 320x180 で 1.2 ms。 等倍の射影は 7.8 ms / 32 MB）。
 /// 一覧のサムネイルのように小さく表示する場面で、元の寸法の複製を保持しないための入口である。
+/// <b>画像が上限に収まっている場合は縮小しない</b>（等倍の射影を共用する）。<br/>
 /// <b>保存・クリップボード用の <see cref="GetAvaloniaBitmap"/> は等倍のまま</b>である（表示と保存で射影を分ける）。<br/>
 /// <b>不変条件</b>: 真実の内容は<b>本クラスを生成した後は書き換えないこと</b>（射影は初回で固定されるため、
 /// 書き換えても表示へ反映されない）。 内容を変える場合は新しい画像と新しい本クラスを生成する。<br/>
@@ -44,7 +46,7 @@ public sealed class EsBitmapAvaloniaAdapter : IImage, IEsBitmap, IDisposable
     /// <summary>Avalonia 側の射影（初回だけ作る）。 所有権は本クラス。</summary>
     private Bitmap? _avaloniaProjection;
 
-    /// <summary>表示用の縮小射影（<see cref="DisplayMaxSize"/> が正のときだけ作る）。 所有権は本クラス。</summary>
+    /// <summary>表示用の縮小射影（<see cref="DisplayMaxSize"/> で実際に縮小したときだけ作る）。 所有権は本クラス。</summary>
     private Bitmap? _displayProjection;
 
     /// <summary>内包するコア画像を所有するかどうか（<see cref="Adopt"/> で生成した場合のみ true）。</summary>
@@ -54,8 +56,16 @@ public sealed class EsBitmapAvaloniaAdapter : IImage, IEsBitmap, IDisposable
     /// <remarks>
     /// <b>大きな画像を小さく表示する場面（一覧のサムネイル等）で、表示用の射影を縮小する</b>。
     /// 等倍の射影は画像 1 枚につき元の寸法の複製を保持するため（実測: 4K で 32 MB / 7.8 ms）、
-    /// 96px のサムネイルを 5 枚並べると 160 MB を超える。 縮小版は同じ 4K から 20 KB で済む（実測 17 µs）。<br/>
-    /// 縮小のアルゴリズムはコアの <see cref="EsBitmapExtensions.Resize"/> が単一所有する（両 UI で同じ結果にする）。<br/>
+    /// 96px のサムネイルを 5 枚並べると 160 MB を超える。<br/>
+    /// <b>アルゴリズムは双線形補間</b>（コアの <see cref="EsBitmapExtensions.DownscaleBilinear"/> が単一所有する）。
+    /// <b>速度を優先する理由</b>: 一覧は表示のたびにアダプタを作り直すため、1 枚あたりのコストがそのまま体感に乗る。
+    /// 双線形は 4K 1 枚で 0.3〜1.2 ms（320x180）に対し、面積平均（<see cref="EsBitmapExtensions.DownscaleBox"/>）は
+    /// 25〜30 ms で、11 枚では<b>0.3 秒の停止</b>になる（実測。 Avalonia の同じ寸法の縮小は約 6 ms。 本実装は SIMD を
+    /// 使わないため遅い）。<br/>
+    /// <b>画質</b>: 面積平均（＝フォルダビューの <c>Bitmap.DecodeToWidth</c> と同じ平均）は細線を薄く残すが、
+    /// 双線形は細線を薄めに残すか（比例位置の画素と半分ずつ）落とす（実測: 4K → 320x180 で幅 1 px の細線は
+    /// 面積平均 21 / 双線形 127 / 最近傍 255（位置が合ったときのみ））。 文字を読ませたい場合は面積平均へ切り替える。<br/>
+    /// <b>画像が上限に収まっている場合は縮小しない</b>（等倍の射影を共用し、同じ寸法の複製を 2 つ作らない）。<br/>
     /// 上限を設定すると <see cref="IImage.Size"/> は縮小後の寸法を返す（Avalonia のレイアウトと描画がその寸法を基準にする）。
     /// <b>コアの読み取り面（<see cref="IEsBitmap.Size"/> / <see cref="IEsBitmap.Width"/> 等）は真実の寸法のまま</b>である。
     /// </remarks>
@@ -166,20 +176,17 @@ public sealed class EsBitmapAvaloniaAdapter : IImage, IEsBitmap, IDisposable
     public string ToSizeText() => GetEsBitmap().ToSizeText();
 
     /// <summary>表示サイズ（DIP）。</summary>
-    /// <value>真実の画像から得られる <see cref="Size"/>（<see cref="DisplayMaxSize"/> が正の場合は縮小後の寸法）。</value>
+    /// <value>真実の画像から得られる <see cref="Size"/>（<see cref="DisplayMaxSize"/> で縮小した場合は縮小後の寸法）。</value>
+    /// <remarks>縮小が必要な場合（画像が上限より大きい場合のときだけ）に表示用の射影を作る。 上限に収まっている場合は真実の寸法を返す。</remarks>
     /// <exception cref="ObjectDisposedException">真実が破棄済みの場合。</exception>
     public Size Size
     {
         get
         {
             ThrowIfTruthDisposed(_es);
-            if (DisplayMaxSize > 0)
-            {
-                // 表示用の縮小射影を作り、その寸法を返す（Avalonia はこの寸法でレイアウトと描画を行う）
-                return EnsureDisplayProjection(_es).Size;
-            }
-
-            return new Size(_es.Width, _es.Height);
+            return NeedsScaledProjection(_es)
+                ? EnsureDisplayProjection(_es).Size
+                : new Size(_es.Width, _es.Height);
         }
     }
 
@@ -216,7 +223,7 @@ public sealed class EsBitmapAvaloniaAdapter : IImage, IEsBitmap, IDisposable
     /// <param name="sourceRect">画像内の描画元矩形。</param>
     /// <param name="destRect">描画先の矩形。</param>
     /// <remarks>
-    /// <see cref="DisplayMaxSize"/> が正の場合は<b>縮小した射影</b>を描画する（<see cref="Size"/> が返す寸法と一致する）。<br/>
+    /// 縮小が必要な場合は<b>縮小した射影</b>を描画する（<see cref="Size"/> が返す寸法と一致する）。<br/>
     /// 破棄済みの真実の場合は何も描画しない（safe no-op）。
     /// </remarks>
     public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
@@ -230,21 +237,24 @@ public sealed class EsBitmapAvaloniaAdapter : IImage, IEsBitmap, IDisposable
             return;
         }
 
-        if (DisplayMaxSize > 0)
-        {
-            // 表示用の縮小射影（寸法は Size が返す値と一致する）
-            context.DrawImage(EnsureDisplayProjection(_es), sourceRect, destRect);
-            return;
-        }
-
-        context.DrawImage(_avaloniaProjection ??= _es.ToAvaloniaBitmap(), sourceRect, destRect);
+        context.DrawImage(EnsureDisplayProjection(_es), sourceRect, destRect);
     }
 
-    /// <summary>表示用の縮小射影を取得する（初回だけ作る）。</summary>
+    /// <summary>表示用の射影を縮小する必要があるか（表示の上限より画像が大きいか）を返す。</summary>
     /// <param name="source">真実のコア画像。</param>
-    /// <returns>縮小した Avalonia の画像（本クラスが所有する）。</returns>
-    /// <remarks>縮小のアルゴリズムはコアの <see cref="EsBitmapExtensions.Resize"/> が単一所有する
-    /// （縮小した中間画像は小さく、変換（表示用）のコピーは無視できる。 実測: 96x54 で 20 KB）。</remarks>
+    /// <returns>縮小が必要な場合は true。</returns>
+    /// <remarks>
+    /// 上限に収まっている画像は縮小しない（同じ寸法の複製を 2 つ作らない。 等倍の射影を共用する）。<br/>
+    /// 上限と長辺が等しい場合も縮小しない（コアの縮小は「長辺が上限と一致するときは等倍の複製」を返す）。
+    /// </remarks>
+    private bool NeedsScaledProjection(IEsBitmap source)
+        => DisplayMaxSize > 0 && Math.Max(source.Width, source.Height) > DisplayMaxSize;
+
+    /// <summary>表示用の射影を取得する（初回だけ作る）。</summary>
+    /// <param name="source">真実のコア画像。</param>
+    /// <returns>表示に使う Avalonia の画像（本クラスが所有する。 縮小が不要な場合は等倍の射影）。</returns>
+    /// <remarks>縮小のアルゴリズムはコアの <see cref="EsBitmapExtensions.DownscaleBilinear"/> が単一所有する
+    /// （縮小した中間画像は小さく、変換（表示用）のコピーは無視できる。 実測: 320x180 で 230 KB）。</remarks>
     private Bitmap EnsureDisplayProjection(IEsBitmap source)
     {
         if (_displayProjection is { } cached)
@@ -252,7 +262,13 @@ public sealed class EsBitmapAvaloniaAdapter : IImage, IEsBitmap, IDisposable
             return cached;
         }
 
-        using var scaled = source.Resize(DisplayMaxSize);
+        if (!NeedsScaledProjection(source))
+        {
+            // 縮小が不要（画像が上限に収まっている）: 等倍の射影を共用する
+            return _avaloniaProjection ??= source.ToAvaloniaBitmap();
+        }
+
+        using var scaled = source.DownscaleBilinear(DisplayMaxSize);
         return _displayProjection = scaled.ToAvaloniaBitmap();
     }
 

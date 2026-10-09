@@ -69,7 +69,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// MainViewModel の新しいインスタンスを初期化する。
     /// </summary>
     /// <param name="settingsService">設定サービス</param>
-    /// <param name="imageWriter">画像書き込みサービス。 UI 実装（Avalonia 版は <c>AvaloniaImageWriter</c>）を注入する。</param>
+    /// <param name="imageWriter">画像書き込みサービス。 本番は <see cref="EsBitmapImageWriter"/>（コアの保存へ委譲する）を注入する。</param>
     public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
     {
         _settingsService = settingsService;

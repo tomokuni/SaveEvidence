@@ -271,9 +271,28 @@ public class EsBitmapAvaloniaAdapterTests
     [AvaloniaFact]
     internal void 表示上限が上限以内なら等倍で扱う()
     {
-        using var bmp = EsWritableBitmap.Create(40, 20);
+        using var bmp = EsWritableBitmap.Create(40, 20, System.Drawing.Color.Red);
         using var adapter = new EsBitmapAvaloniaAdapter(bmp, displayMaxSize: 50);
+        using var target = new RenderTargetBitmap(new PixelSize(40, 20), new Vector(96, 96));
 
+        Assert.Equal(new Size(40, 20), adapter.Size);
+
+        using (var context = target.CreateDrawingContext())
+        {
+            // 縮小が不要な場合も描画できる（等倍の射影を共用し、同じ寸法の複製を 2 つ作らない）
+            adapter.Draw(context, new Rect(0, 0, 40, 20), new Rect(0, 0, 40, 20));
+        }
+
+        Assert.Equal(new Size(40, 20), adapter.Size);
+    }
+
+    [AvaloniaFact]
+    internal void 表示上限と長辺が等しい場合は縮小しない()
+    {
+        using var bmp = EsWritableBitmap.Create(40, 20);
+        using var adapter = new EsBitmapAvaloniaAdapter(bmp, displayMaxSize: 40);
+
+        // 長辺 = 上限（縮小の必要なし。 コアの縮小も等倍の複製を返す）
         Assert.Equal(new Size(40, 20), adapter.Size);
     }
 }

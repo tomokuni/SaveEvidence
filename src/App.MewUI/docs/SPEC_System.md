@@ -117,7 +117,6 @@ src/App.MewUI/src/
 ├── Program.cs                        起動（バックエンド登録 → コアの組み立て → ホットキー登録 → ウィンドウ表示）
 ├── AppServices.cs                    共有するコアオブジェクトの束
 ├── Services/
-│   ├── MewUIImageWriter.cs           IImageWriter の実装（保存はコアの `EsBitmapFileExtensions.Save` へ委譲）
 │   ├── ImageThumbnailLoader.cs       画像ファイルの縮小デコードとキャッシュ
 │   ├── SettingsColorMath.cs          設定の色文字列 ⇔ 色の変換
 │   ├── SettingsJsonContext.cs        設定の JSON ソース生成（Native AOT 対応）
@@ -142,7 +141,6 @@ src/App.MewUI/src/
 tests/
 ├── App.MewUI.Tests.csproj      xUnit v3（net10.0-windows）
 ├── TestHelper.cs               テスト共通ユーティリティ
-├── MewUIImageWriter.Tests.cs   拡張子ごとの保存形式・引数検証
 ├── ImageThumbnailLoader.Tests.cs 縮小デコード・キャッシュ・失敗時の扱い
 ├── SettingsColorMath.Tests.cs  色文字列の解析と整形
 ├── AppLog.Tests.cs             ログ定義の書式と IsEnabled 分岐
@@ -165,7 +163,7 @@ tests/
 | `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし） |
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。 変更の即時保存・テーマの即時適用・ホットキー入力を担う |
 | `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `SkiaImageView` が単一所有し、計測と Uniform 指定だけを与える） |
-| `MewUIImageWriter` | `IImageWriter` の実装。 保存はコアの `EsBitmapFileExtensions.Save`（拡張子が形式を決める）へ委譲する |
+| `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsBitmapFileExtensions.Save`（拡張子が形式を決める）へ委譲する |
 | `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ |
 | `ImageDrawMath`（`Platform.MewUI`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
@@ -269,9 +267,6 @@ classDiagram
         +ZoomOut() void
         +ZoomFit() void
     }
-    class MewUIImageWriter {
-        +Save(image, filePath) void
-    }
     class MainViewModel {
         +EsWritableBitmap PreviewImage
         +string ImageSizeDisplayText
@@ -279,6 +274,9 @@ classDiagram
         +SaveImageAsync() Task
         +CopyToClipboard() Task
         +PasteFromClipboard() Task
+    }
+    class EsBitmapImageWriter {
+        +Save(image, filePath) void
     }
     class IImageWriter {
         <<interface>>
@@ -288,7 +286,7 @@ classDiagram
     Program ..> MainWindow : 生成・配置復元
     Program ..> AppServices : 組み立て
     Program ..> MainViewModel : 生成
-    Program ..> MewUIImageWriter : 注入
+    Program ..> EsBitmapImageWriter : 注入（App.Core の共通実装）
     Program ..> UndoHistory : 生成・BeforeEditAction で共有
     Program ..> FolderViewViewModel : 生成
     MainWindow ..> AppServices : ページの生成
@@ -333,7 +331,7 @@ classDiagram
     ThumbnailView --|> SkiaImageView : 計測と Uniform 指定を与える
     SkiaImageView ..> ImageDrawMath : 配置計算
     CropViewControl ..> MainViewModel : 参照（Source / DetectedRects）
-    MewUIImageWriter ..|> IImageWriter
+    EsBitmapImageWriter ..|> IImageWriter
 ```
 
 ## 6. シーケンス図（起動）
@@ -351,7 +349,7 @@ sequenceDiagram
     P->>MW: Win32Platform.Register()
     P->>MW: SkiaDirect2DInterop.Register()
     P->>C: new SettingsService(SettingsJsonContext.Default)
-    P->>C: new MainViewModel(settings, MewUIImageWriter)
+    P->>C: new MainViewModel(settings, EsBitmapImageWriter)
     P->>C: SetPreviewImage(placeholder)
     P->>W: Create(viewModel, settings)
     W->>MW: new NavigationView()
@@ -683,7 +681,7 @@ sequenceDiagram
 
 | 対象 | 方針 |
 | --- | --- |
-| `MewUIImageWriter` | 実ファイルへ書き出し、`SKCodec` でデコードして画素数を検証する（保存形式の判別はコアの `EsBitmapFileExtensions` のテストが担う） |
+| `EsBitmapImageWriter`（`App.Core` の共通実装） | 実ファイルへ書き出し、コアの `EsBitmapFileExtensions.Load` で読み戻して画素数を検証する（保存形式の判別はコアのテストが担う） |
 | `WindowPlacementMath` | 純粋関数のためヘッドレスで検証する。 スケール 0・負値・NaN、画面外判定、四捨五入の境界を含む |
 | `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。 Uniform / Fill・余白の中央寄せ・空の入力（`Platform.MewUI.Tests` が担う） |
 | `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。 6 / 8 桁・大文字小文字・不正入力・往復変換 |
