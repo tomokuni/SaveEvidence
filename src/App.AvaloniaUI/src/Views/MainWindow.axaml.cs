@@ -5,6 +5,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -140,6 +141,31 @@ public sealed partial class MainWindow : Window
         Closing += OnMainWindowClosing;
         Activated += OnMainWindowActivated;
         Deactivated += OnMainWindowDeactivated;
+
+        // 一覧ページのサムネイルを先に生成しておく（最初の切り替えを待たせない）
+        // ウィンドウを表示した後（Opened）のディスパッチャ ターンで開始し、描画のジョブより後に回す（起動の描画を遅らせない）。
+        // 生成は低負荷で進み、キャプチャページの操作を妨げない。
+        Opened += (_, _) => Dispatcher.UIThread.Post(WarmUpThumbnails, DispatcherPriority.Background);
+    }
+
+    /// <summary>一覧ページ（フォルダビュー / Undo 一覧）のサムネイルを低負荷で先に生成しておく。</summary>
+    /// <remarks>
+    /// 各ページはウィンドウの内容として生成済みであり（<c>IsVisible=False</c>）、本メソッドは
+    /// ページを表示せずに一覧を構築して生成要求を積む。 一覧を構築しておくと、最初の切り替えでは
+    /// 生成済みのサムネイルがそのまま並ぶ。
+    /// </remarks>
+    private void WarmUpThumbnails()
+    {
+        try
+        {
+            FolderViewContent.WarmUp();
+            UndoContent.WarmUp();
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 先読みの失敗はアプリの動作を妨げない（ページを開いたときに改めて構築される）
+            s_logger.LogThumbnailGenerateError(ex);
+        }
     }
 
     /// <summary>ナビパネルの高さを開閉状態に応じて調整する。</summary>

@@ -160,6 +160,23 @@ internal static partial class AppLog
     public static void LogThumbnailGenerateError(this ILogger logger, Exception ex)
         => logger.LogThumbnailGenerateErrorCore(Prefix, ex);
 
+    /// <summary>起動後のサムネイルの先読みを開始したことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Debug <br/>
+    /// 出力書式: <c>サムネイルの先読みを開始: {Target} 対象={Count} 件</c><br/>
+    /// 起動後の 1 回だけ出力する（ページを開く前に低負荷で生成しておき、切り替えを待たせない）。
+    /// 起動が遅くなっていないことは、この記録の時刻が起動ログより後であることで確認できる。 Avalonia 版と同じ書式にする。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="target">先読みの対象（ページ名）。</param>
+    /// <param name="count">先読みする件数。</param>
+    [LoggerMessage(LogLevel.Debug, "{Prefix} サムネイルの先読みを開始: {Target} 対象={Count} 件")]
+    private static partial void LogThumbnailWarmUpCore(this ILogger logger, string prefix, string target, int count);
+
+    public static void LogThumbnailWarmUp(this ILogger logger, string target, int count)
+        => logger.LogThumbnailWarmUpCore(Prefix, target, count);
+
     // ====================================================================
     // 未処理の例外
     // ====================================================================

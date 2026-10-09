@@ -1,11 +1,14 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.MewUI.Icons;
+using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.SaveEvidence.Platform.MewUI;
+using Microsoft.Extensions.Logging;
 using MewUIColor = Aprillz.MewUI.Color;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
@@ -28,6 +31,9 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// </remarks>
 internal sealed class MainWindow
 {
+    /// <summary>ロガー（先読みの失敗を記録する）。</summary>
+    private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(MainWindow));
+
     /// <summary>復元するサイズが設定されていない場合の既定ウィンドウサイズ（DIP）。</summary>
     private static readonly Size s_defaultWindowSize = new(1200, 800);
 
@@ -103,6 +109,7 @@ internal sealed class MainWindow
 
         var pages = new PageContent?[entries.Length];
         var activators = new Action?[entries.Length];
+        var warmUps = new Action?[entries.Length];
 
         // 現在選択中のページ（テーマ変更時の再適用で使う）
         var selectedIndex = 0;
@@ -321,9 +328,38 @@ internal sealed class MainWindow
             var built = entries[index].Content();
             pages[index] = built;
             activators[index] = built.OnActivated;
+            warmUps[index] = built.OnWarmUp;
             contentHost.Add(built.Content);
             built.Content.IsVisible = false;
         }
+
+        // 一覧ページのサムネイルを先に生成しておく（最初の切り替えを待たせない）
+        // 初回描画の後（ウィンドウの表示が終わった後）に開始するため、起動は遅くならない。
+        // ページを表示せずに一覧を構築し、生成は低負荷（1 件ずつ）で進むため、キャプチャページの操作を妨げない。
+        void WarmUpPages()
+        {
+            try
+            {
+                foreach (var page in new[] { AppPage.FolderView, AppPage.Undo })
+                {
+                    var index = Array.FindIndex(entries, entry => entry.Page == page);
+                    if (index < 0)
+                    {
+                        continue;
+                    }
+
+                    EnsurePage(index);
+                    warmUps[index]?.Invoke();
+                }
+            }
+            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            {
+                // 先読みの失敗はアプリの動作を妨げない（ページを開いたときに改めて構築される）
+                s_logger.LogThumbnailGenerateError(ex);
+            }
+        }
+
+        window.FirstFrameRendered += WarmUpPages;
 
         void ApplyNavigationLayout()
         {

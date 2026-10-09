@@ -28,6 +28,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// 表示モードの復元・保存、ToggleButton 同期、ページ表示時の再構築は <see cref="ViewModePageBase"/> に共通化する。<br/>
 /// <b>表示用の射影（アイコンサイズへの縮小）は背景で生成する</b>（<see cref="ThumbnailScheduler"/>。
 /// ページが表示されている間は並列、隠れている間は 1 件ずつ）。 生成が終わるまでの行は代替画像を表示する。<br/>
+/// <b>履歴が変わったら隠れていても再構築する</b>（低負荷で生成し、ページへ切り替えるときに備える）。<br/>
 /// サムネイルのダブルクリックで一時ファイルに保存し、OS の既定アプリで開く。
 /// </remarks>
 public sealed partial class UndoPage : ViewModePageBase
@@ -56,6 +57,16 @@ public sealed partial class UndoPage : ViewModePageBase
     /// <summary>最後に優先度を付けた可視領域の下端。</summary>
     private double _lastViewportBottom = double.NaN;
 
+    /// <summary>最後に一覧を構築したときの履歴の状態（同じなら再構築しない）。</summary>
+    /// <param name="Size">表示モードから決まる長辺の上限（ピクセル）。</param>
+    /// <param name="RedoCount">Redo スタックの段数。</param>
+    /// <param name="UndoCount">Undo スタックの段数。</param>
+    /// <param name="Current">現在のプレビュー画像（<b>参照で比べる</b>）。</param>
+    private readonly record struct BuiltState(int Size, int RedoCount, int UndoCount, IEsBitmap? Current);
+
+    /// <summary>最後に一覧を構築したときの履歴の状態（未構築は null）。</summary>
+    private BuiltState? _built;
+
     /// <summary>UndoPage を初期化する。</summary>
     public UndoPage()
     {
@@ -76,12 +87,36 @@ public sealed partial class UndoPage : ViewModePageBase
             Program.SettingsService,
             Program.ServiceProvider.GetRequiredService<MainViewModel>(),
             ExtraLargeButton, LargeButton, MediumButton);
+
+        // 履歴が変わったら（キャプチャ・貼り付け・戻す / やり直し）隠れていても一覧を追従させる
+        // （表示されていない間は低負荷で生成するため、キャプチャページの動作に影響しない）
+        MainViewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.PreviewImage), StringComparison.Ordinal))
+            {
+                RebuildList();
+            }
+        };
     }
 
     /// <summary>ページの表示状態に合わせて表示用の射影の生成の負荷を切り替える。</summary>
     /// <param name="isVisible">表示された場合は true、隠された場合は false。</param>
     /// <inheritdoc/>
     protected override void OnPageVisibilityChanged(bool isVisible) => _thumbnailScheduler.IsActive = isVisible;
+
+    /// <summary>起動後にページを表示する前に一覧を構築し、サムネイルを低負荷で生成しておく。</summary>
+    /// <remarks>
+    /// <b>起動を遅くしない</b>: 呼ぶのはウィンドウの表示と最初の描画が終わった後（<see cref="MainWindow"/>）。<br/>
+    /// <b>キャプチャページの動作に影響しない</b>: ページは表示されていないため、生成の負荷は 1 件ずつ（低負荷）になる
+    /// （負荷の判断は <see cref="OnPageVisibilityChanged"/> が持つ）。<br/>
+    /// 起動直後の履歴は空の場合が多いが、以降は履歴の変化を購読して追従するため、最初の切り替えでは
+    /// 生成済みのサムネイルがそのまま並ぶ（<see cref="RebuildList"/> の再構築の省略）。
+    /// </remarks>
+    internal void WarmUp()
+    {
+        RebuildList();
+        s_logger.LogThumbnailWarmUp("履歴", _thumbnailRequests.Count);
+    }
 
     /// <summary>現在の表示モードのインデックス（0=特大, 1=大, 2=中）。</summary>
     protected override int SelectedViewModeIndex
@@ -112,18 +147,35 @@ public sealed partial class UndoPage : ViewModePageBase
     /// <summary>Undo / Redo 履歴と現在の画像を読み込んで一覧を再構築する。</summary>
     protected override void ReloadItems() => RebuildList();
 
-    /// <summary>一覧を再構築する（表示モード変更時・ページ表示時に呼び出し）。</summary>
+    /// <summary>一覧を再構築する（表示モード変更時・ページ表示時・履歴変更時に呼び出し）。</summary>
     /// <remarks>
     /// <b>表示用の射影は背景で生成する</b>: 一覧の構築では縮小せず、全行を代替画像で表示してから
     /// <see cref="ThumbnailScheduler"/> へ依頼し、生成が終わった 1 行から差し替える<br/>
     /// （一覧の表示を縮小の時間で待たせない。 生成中でも生成済みのサムネイルは表示される）。<br/>
-    /// <b>見えている行を先に生成する</b>（その中では上方の行が先。 <see cref="ThumbnailPriority"/>）。
+    /// <b>見えている行を先に生成する</b>（その中では上方の行が先。 <see cref="ThumbnailPriority"/>）。<br/>
+    /// <b>履歴が変わっていなければ何もしない</b>（前回の構築で作った 1 行をそのまま使う。
+    /// ページを表示するたびに生成し直すと、先読みした結果が無駄になる）。
     /// </remarks>
     private void RebuildList()
     {
         if (_undoHistory is null) return;
 
         var size = GetIconSize();
+        var redo = _undoHistory.GetRedoHistory();
+        var undo = _undoHistory.GetUndoHistory();
+        var current = MainViewModel.PreviewImage;
+
+        // 前回と同じ履歴なら再構築しない（生成済みのサムネイルをそのまま表示する）
+        if (_built is { } built
+            && built.Size == size
+            && built.RedoCount == redo.Count
+            && built.UndoCount == undo.Count
+            && ReferenceEquals(built.Current, current))
+        {
+            return;
+        }
+
+        _built = new BuiltState(size, redo.Count, undo.Count, current);
 
         // 前回の生成要求を破棄する（別の寸法・別の一覧向けの生成を残さない）
         _thumbnailScheduler.Clear();
@@ -154,21 +206,18 @@ public sealed partial class UndoPage : ViewModePageBase
         // UndoHistory はコアの画像を保持し、表示境界で非所有アダプタ（IImage）へ変換する。
         // 一覧は小さく表示するため、表示用の射影（面積平均の縮小）を作る（等倍のままだと画像 1 枚につき元寸法の複製が
         // 残る。 実測: 4K で 32 MB/枚）。 射影の生成は背景へ回し、ここでは生成元の画像だけを控える。
-        var redo = _undoHistory.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
             AddItem(redo[i], $"Redo {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
-        var currentImage = MainViewModel.PreviewImage;
-        if (currentImage is not null)
+        if (current is not null)
         {
-            AddItem(currentImage, "現在", isCurrent: true);
+            AddItem(current, "現在", isCurrent: true);
         }
 
         // 3. Undo スタック（新しい順。 _stack[^1] が現在の直前）
-        var undo = _undoHistory.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
             AddItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false);
@@ -196,7 +245,6 @@ public sealed partial class UndoPage : ViewModePageBase
         // 生成の負荷はページの表示状態に従う（表示中は並列・非表示では 1 件ずつ）
         for (var i = 0; i < items.Count; i++)
         {
-            // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
             _thumbnailRequests.Add(_thumbnailScheduler.Enqueue(
                 ThumbnailPriority.Background(i), MakeThumbnailWork(items[i], sources[i], size)));
         }
@@ -237,7 +285,6 @@ public sealed partial class UndoPage : ViewModePageBase
         {
             if (_thumbnailRequests[i] is not { } request) continue;
             if (UndoListBox.ContainerFromIndex(i) is not { } container) continue;
-
             var bounds = container.Bounds;
             _thumbnailScheduler.Reprioritize(
                 request, ThumbnailPriority.FromRange(bounds.Y, bounds.Bottom, top, bottom, i));

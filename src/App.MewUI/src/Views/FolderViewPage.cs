@@ -253,17 +253,30 @@ internal static class FolderViewPage
         };
 
         // 設定から表示モード・ソート順を復元し、トグルと一覧を追従させる（ページ表示のたびに呼ぶ）
+        // 生成の負荷（表示中は並列 / 非表示では 1 件ずつ）は本メソッドでは決めない（OnActivated / OnDeactivated が持つ）
         void Restore()
         {
-            // 表示中は生成を全力にする（隠れた時は MainWindow から OnDeactivated が呼ばれて下げる）
-            thumbnails.IsActive = true;
-
             viewModel.SelectedViewModeIndex = ViewModeDisplay.ClampIndex(settingsService.Current.FolderViewModeIndex);
             viewModel.IsSortAscending = settingsService.Current.FolderViewSortAscending;
             SyncToggles(modeButtons, viewModel.SelectedViewModeIndex);
             SyncToggles(sortButtons, viewModel.IsSortAscending ? 0 : 1);
             Rebuild();
             UpdatePriorities(scroll);
+        }
+
+        // 表示されるたび: 生成を全力にする（隠れている間は 1 件ずつ）
+        void Activate()
+        {
+            thumbnails.IsActive = true;
+            Restore();
+        }
+
+        // 起動後に一度だけ: ページを表示せずに一覧を構築し、サムネイルを低負荷で生成しておく
+        // （最初の切り替えで生成済みのサムネイルが並ぶ。 キャプチャページの操作は妨げない）
+        void WarmUp()
+        {
+            Restore();
+            s_logger.LogThumbnailWarmUp("フォルダビュー", viewModel.ItemCount);
         }
 
         // ツールバー（上端 6 DIP。 タイトルバー領域の下） / 一覧（残余） / ステータスの 3 段。
@@ -288,7 +301,7 @@ internal static class FolderViewPage
                     .Child(new Grid().Rows("Auto").Columns("*").Children(statusGrid)));
 
         Restore();
-        return new PageContent(content, Restore, OnDeactivated: () => thumbnails.IsActive = false);
+        return new PageContent(content, Activate, OnDeactivated: () => thumbnails.IsActive = false, OnWarmUp: WarmUp);
     }
 
     /// <summary>1 件分のサムネイル生成の処理を生成する。</summary>

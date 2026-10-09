@@ -6,6 +6,8 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
+using EsUtil.SaveEvidence.App.MewUI.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 
@@ -22,6 +24,9 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// </remarks>
 internal static class UndoPage
 {
+    /// <summary>ロガー（一覧の準備を記録する）。</summary>
+    private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(UndoPage));
+
     /// <summary>サムネイルとラベルの間隔（DIP）。</summary>
     private const double ItemSpacing = 2;
 
@@ -72,6 +77,9 @@ internal static class UndoPage
         // 最後に優先度を付けた可視領域（変わっていなければ付け直さない）
         var lastViewportTop = double.NaN;
         var lastViewportBottom = double.NaN;
+
+        // 最後に一覧を構築したときの履歴の状態（未構築は null）
+        BuiltState? built = null;
 
         // 表示モードの切り替え（解除は許さない。 常に 1 つを選択状態に保つ）
         void OnModeChanged(int index, bool isChecked)
@@ -124,9 +132,26 @@ internal static class UndoPage
         // 表示用の縮小は背景で行う: 一覧の構築では縮小せず、全行を代替画像で表示してから
         // ThumbnailScheduler へ依頼し、生成が終わった 1 行から差し替える
         // （一覧の表示を縮小の時間で待たせない。 生成中でも生成済みのサムネイルは表示される）。
+        // 履歴が変わっていなければ何もしない（先読みした縮小画像をそのまま表示するため）。
         void Rebuild()
         {
             var iconSize = settingsService.Current.GetIconSize(selectedIndex);
+            var redo = undoStack.GetRedoHistory();
+            var undo = undoStack.GetUndoHistory();
+            var current = viewModel.PreviewImage;
+
+            // 前回と同じ履歴なら再構築しない（表示するたびに縮小し直すと、先読みした結果が無駄になる）
+            if (built is { } state
+                && state.Size == iconSize
+                && state.RedoCount == redo.Count
+                && state.UndoCount == undo.Count
+                && ReferenceEquals(state.Current, current))
+            {
+                return;
+            }
+
+            built = new BuiltState(iconSize, redo.Count, undo.Count, current);
+
             var previous = thumbnails;
             var created = new List<EsWritableBitmap>();
 
@@ -152,18 +177,16 @@ internal static class UndoPage
             }
 
             // 表示順を固定する: Redo（現在に近い未来から）→ 現在 → Undo（現在の直前から過去へ）
-            var redo = undoStack.GetRedoHistory();
             for (var i = 0; i < redo.Count; i++)
             {
                 AddItem(redo[i], $"Redo {i + 1}", isCurrent: false);
             }
 
-            if (viewModel.PreviewImage is { } current)
+            if (current is not null)
             {
                 AddItem(current, "現在", isCurrent: true);
             }
 
-            var undo = undoStack.GetUndoHistory();
             for (var i = undo.Count - 1; i >= 0; i--)
             {
                 AddItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false);
@@ -244,15 +267,28 @@ internal static class UndoPage
         }
 
         // 設定から表示モードを復元し、トグルと一覧を追従させる（ページ表示のたびに呼ぶ）
+        // 生成の負荷（表示中は並列 / 非表示では 1 件ずつ）は本メソッドでは決めない（OnActivated / OnDeactivated が持つ）
         void Restore()
         {
-            // 表示中は生成を全力にする（隠れた時は MainWindow から OnDeactivated が呼ばれて下げる）
-            scheduler.IsActive = true;
-
             selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.UndoViewModeIndex);
             SyncModeButtons();
             Rebuild();
             UpdatePriorities();
+        }
+
+        // 表示されるたび: 生成を全力にする（隠れている間は 1 件ずつ）
+        void Activate()
+        {
+            scheduler.IsActive = true;
+            Restore();
+        }
+
+        // 起動後に一度だけ: ページを表示せずに一覧を構築し、サムネイルを低負荷で生成しておく
+        // （最初の切り替えで生成済みのサムネイルが並ぶ。 キャプチャページの操作は妨げない）
+        void WarmUp()
+        {
+            Restore();
+            s_logger.LogThumbnailWarmUp("履歴", requested.Count);
         }
 
         // ツールバー（上端 6 DIP。 タイトルバー領域の下） / 一覧（残余） / ステータスの 3 段。
@@ -271,8 +307,15 @@ internal static class UndoPage
                     .Child(new Grid().Rows("Auto").Columns("*").Children(statusGrid)));
 
         Restore();
-        return new PageContent(content, Restore, OnDeactivated: () => scheduler.IsActive = false);
+        return new PageContent(content, Activate, OnDeactivated: () => scheduler.IsActive = false, OnWarmUp: WarmUp);
     }
+
+    /// <summary>最後に一覧を構築したときの履歴の状態（同じなら再構築しない）。</summary>
+    /// <param name="Size">表示モードから決まる長辺の上限（ピクセル）。</param>
+    /// <param name="RedoCount">Redo スタックの段数。</param>
+    /// <param name="UndoCount">Undo スタックの段数。</param>
+    /// <param name="Current">現在のプレビュー画像（<b>参照で比べる</b>）。</param>
+    private readonly record struct BuiltState(int Size, int RedoCount, int UndoCount, EsWritableBitmap? Current);
 
     /// <summary>1 行分の表示用の縮小（面積平均）の生成処理を生成する。</summary>
     /// <param name="owned">本ページが所有する縮小画像の登録先（一覧の再構築のたびに破棄する）。</param>

@@ -85,6 +85,7 @@ View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage
 - クリップボードからの画像取得に失敗した場合は無視し、既存のプレビューを維持する。
 - サムネイル読み込み（FolderViewPage）の失敗は null を返し、アイテム一覧に影響させない（代替画像のまま表示する）。
 - 背景のサムネイル生成で想定外の例外が発生した場合は Warning で記録して次の生成へ進む（1 件の失敗で一覧の生成を止めない。 `ThumbnailScheduler` の `onError`）。
+- 起動後の先読み（`MainWindow.WarmUpThumbnails`）の失敗も Warning で記録して続行する（ページを開いたときに改めて構築される）。
 
 ## 5. コンポーネント図
 
@@ -153,7 +154,10 @@ flowchart TB
 - **特徴**: 一覧の ItemsPanel は `BottomAlignWrapPanel`（行内下端揃え）。 行の高さは各行の最大アイテム高さに応じ、ファイル名 1 文字目の高さ位置が行内で揃う
 - **テーマ対応**: リスト背景・ファイル名ラベル・サムネイル枠線/影はテーマ（ライト/ダーク）に応じて切り替わる。 背景・枠線・文字色は Fluent テーマの標準リソース（`DynamicResource`）を参照し、影のみ App リソース（`ThumbnailShadow`）で定義する
 - **復元タイミング**: `IsVisible` 変更時（ナビゲーション再表示）に保存済み設定を復元し、ToggleButton の選択状態へ同期して一覧を再構築する（`ViewModePageBase` に共通化）
-- **起動への影響**: ページの生成時に用意するのはスケジューラ（`ThumbnailScheduler`）だけで、**生成要求は一覧を構築してから積む**。 起動時に表示されるのはキャプチャページのため、フォルダビューを開くまで列挙・復号・縮小は一切行わない。 スケジューラの背景ループは要求が無い間は信号待ちであり、CPU を使わない
+- **起動への影響**: ページの生成時に用意するのはスケジューラ（`ThumbnailScheduler`）だけである。 一覧の構築と生成要求は
+  **（1）起動直後**（`MainWindow` がウィンドウの `Opened` の後に `WarmUp` を呼ぶ）と **（2）ページを表示したとき**に行い、
+  起動（ウィンドウ表示まで）はサムネイルの作業を待たない。 先読みの生成は表示されていないページの負荷（1 件ずつ）で進むため、
+  表示中のキャプチャページの操作を妨げない。 先読みの件数と時刻はログ（`サムネイルの先読みを開始`）で確認できる
 - **依存**: FolderViewViewModel / MainViewModel / SettingsService / `ThumbnailScheduler`（`App.Core`）/ `ThumbnailPlaceholder`
 
 ### 6.4 UndoPage
@@ -167,6 +171,10 @@ flowchart TB
 - **表示順**: Redo（新しい）→ 現在 → Undo（古い）の固定（時系列順で新しい → 古い）
 - **サムネイルの生成**: 縮小（表示用の射影）を背景で行う（`ThumbnailScheduler`）。 一覧の構築では全行を代替画像（`ThumbnailPlaceholder`）で表示し、生成が終わった 1 行から差し替える。 生成はページの表示状態に従い、**表示中は並列（全力）・非表示では 1 件ずつ**。 一覧の差し替え時は `Clear()` で未実行の要求を捨て、古い結果は作った射影を解放して捨てる
 - **生成の順序**: **見えている行を先に、その中では上方の行を先**に生成する（`ThumbnailPriority`）。 可視領域と行の配置から未実行の要求の優先度を付け直す（`LayoutUpdated` と `ScrollChanged`）。 見え方が変わっていなければ何もしない
+- **履歴の変化への追従**: プレビュー画像の変更（キャプチャ・貼り付け・戻す / やり直し）を購読し、**ページを表示していなくても**
+  一覧を再構築する（低負荷で生成するため、キャプチャページの操作を妨げない）。 これにより、ページへ切り替えた時点で生成済みのサムネイルが並ぶ
+- **再構築の省略**: 履歴の状態（表示モードのサイズ・Redo 段数・Undo 段数・現在の画像の参照）が前回と同じ場合は再構築しない
+  （先読みした縮小画像をそのまま使い、表示のたびに縮小し直さない）
 - **更新タイミング**: `IsVisible` 変更時（ナビゲーション再表示）に自身で最新の履歴を読み込む（保存済み設定の復元と一覧の再構築。 `ViewModePageBase` に共通化）
 - **依存**: UndoViewModel / MainViewModel（PreviewImage・DI シングルトン）/ UndoHistory（DI シングルトン・CapturePage と共有）/ `ThumbnailScheduler`（`App.Core`）/ `ThumbnailPlaceholder`
 

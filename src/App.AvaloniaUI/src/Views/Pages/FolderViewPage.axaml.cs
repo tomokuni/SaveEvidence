@@ -26,7 +26,9 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// <b>サムネイルは背景で生成する</b>（<see cref="ThumbnailScheduler"/>。 ページが表示されている間は並列、
 /// 隠れている間は 1 件ずつ）。 生成が終わるまでの行は代替画像を表示する。<br/>
 /// <b>見えている行を先に生成する</b>（その中では上方の行が先。 <see cref="ThumbnailPriority"/>）。
-/// スクロールで見え方が変わったら未実行の要求の優先度を付け直す。
+/// スクロールで見え方が変わったら未実行の要求の優先度を付け直す。<br/>
+/// <b>起動後に一度だけ先読みする</b>（<see cref="WarmUp"/>。 キャプチャページの動作に影響しない低負荷で、
+/// ページへ切り替える前にサムネイルを生成しておく）。
 /// </remarks>
 public sealed partial class FolderViewPage : ViewModePageBase
 {
@@ -82,6 +84,19 @@ public sealed partial class FolderViewPage : ViewModePageBase
     /// <param name="isVisible">表示された場合は true、隠された場合は false。</param>
     /// <inheritdoc/>
     protected override void OnPageVisibilityChanged(bool isVisible) => _thumbnailScheduler.IsActive = isVisible;
+
+    /// <summary>起動後にページを表示する前に一覧を構築し、サムネイルを低負荷で生成しておく。</summary>
+    /// <remarks>
+    /// <b>起動を遅くしない</b>: 呼ぶのはウィンドウの表示と最初の描画が終わった後（<see cref="MainWindow"/>）。<br/>
+    /// <b>キャプチャページの動作に影響しない</b>: ページは表示されていないため、生成の負荷は 1 件ずつ（低負荷）になる
+    /// （負荷の判断は <see cref="OnPageVisibilityChanged"/> が持つ）。<br/>
+    /// 一覧を構築しておくことで、最初の切り替えでは生成済みのサムネイルがそのまま並ぶ（列挙と復号を待たない）。
+    /// </remarks>
+    internal void WarmUp()
+    {
+        LoadFiles();
+        s_logger.LogThumbnailWarmUp("フォルダビュー", _viewModel.ItemCount);
+    }
 
     /// <summary>現在の表示モードのインデックス（0=特大, 1=大, 2=中）。</summary>
     protected override int SelectedViewModeIndex
