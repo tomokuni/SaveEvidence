@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 public sealed class UndoListItem
 {
     /// <summary>表示する画像（Undo / Redo スタックの画像または現在のプレビュー画像）。</summary>
-    /// <remarks><see cref="IImage"/> として公開する（<see cref="EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging.EsBitmapAdapter"/> など。 画像の所有は生成側が保持し、アダプタの破棄は一覧を保持する側が行う）。</remarks>
+    /// <remarks><see cref="IImage"/> として公開する（<see cref="EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging.EsBitmapAvaloniaAdapter"/> など。 画像の所有は生成側が保持し、アダプタの破棄は一覧を保持する側が行う）。</remarks>
     public required IImage Thumbnail { get; init; }
 
     /// <summary>ラベル（例: "現在" / "Undo 1" / "Redo 1"）。</summary>

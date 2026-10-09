@@ -1,8 +1,6 @@
 using System.Text.Json;
-using Avalonia.Media.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native.Imaging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 
@@ -31,8 +29,8 @@ internal static class DatasetVerifier
     {
         try
         {
-            using var bitmap = new Bitmap(entry.PngPath);
-            using var unified = bitmap.ToEsBitmap();
+            // ファイルの読み込みはコアの拡張が単一所有する（形式は内容から判別される）
+            using var unified = EsBitmapFileExtensions.Load(entry.PngPath);
             var results = detector.Detect(unified);
 
             if (TryReconstructBounds(results) is not { } bound)

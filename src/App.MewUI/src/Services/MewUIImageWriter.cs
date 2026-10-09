@@ -1,61 +1,25 @@
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Platform.Skia;
-using SkiaSharp;
-
+using EsUtil.Platform.Core.Native.Imaging;
+using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
-/// <summary>MewUI 版の画像書き込みサービス。</summary>
+/// <summary><see cref="IImageWriter"/> の本番実装（コアの保存（Windows 専用のエンコード）へ委譲する）。</summary>
 /// <remarks>
-/// <see cref="EsUtil.SaveEvidence.App.Core.Services.IImageWriter"/> は UI 実装側がエンコードを担う契約。<br/>
-/// MewUI は <c>SkiaCanvasView</c> で SkiaSharp を直接扱えるため、エンコードも SkiaSharp で行う。<br/>
-/// 保存形式は拡張子から判別する（判別できない場合は PNG）。<br/>
-/// 画質は形式が対応する場合に適用する（PNG では無視される）。
+/// <b>保存形式（拡張子からの判別）とエンコード（BMP / PNG / JPEG / GIF / TIFF）は
+/// <see cref="EsBitmapFileExtensions.Save"/> が単一所有する</b>（両 UI で同じ結果にする）。<br/>
+/// 本クラスは「ホスト（MewUI アプリ）が契約を満たす」ことを示す薄い実装である。<br/>
+/// <b>注意</b>: 以前は SkiaSharp でエンコードしていたため WebP も保存できたが、単一所有へ寄せた結果
+/// <b>WebP は保存できなくなった</b>（必要になった場合はコアの対応形式へ追加する）。
 /// </remarks>
-internal sealed class MewUIImageWriter : EsUtil.SaveEvidence.App.Core.Services.IImageWriter
+internal sealed class MewUIImageWriter : IImageWriter
 {
-    /// <summary>エンコード品質（0〜100）。 非可逆形式に適用する。</summary>
-    private const int EncodeQuality = 100;
-
-    /// <summary>拡張子ごとの保存形式（判別できない拡張子は PNG とする）。</summary>
-    /// <remarks>BMP は Skia のエンコーダが対応しないため対象外とする（PNG として保存される）。</remarks>
-    private static readonly IReadOnlyDictionary<string, SKEncodedImageFormat> s_formats =
-        new Dictionary<string, SKEncodedImageFormat>(StringComparer.OrdinalIgnoreCase)
-        {
-            [".png"] = SKEncodedImageFormat.Png,
-            [".jpg"] = SKEncodedImageFormat.Jpeg,
-            [".jpeg"] = SKEncodedImageFormat.Jpeg,
-            [".webp"] = SKEncodedImageFormat.Webp,
-        };
-
     /// <inheritdoc/>
-    /// <exception cref="ArgumentNullException"><paramref name="image"/> または <paramref name="filePath"/> が null。</exception>
-    /// <exception cref="IOException">ファイルを作成できない。</exception>
-    /// <exception cref="InvalidOperationException">エンコード結果が得られない。</exception>
     public void Save(IEsBitmap image, string filePath)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(filePath);
 
-        var format = ResolveFormat(filePath);
-
-        // ToSKBitmap() は呼び出しごとに新しい非所有ビューを作る（ファイナライザを持つため破棄する）。
-        // ビューはエンコード完了まで生存させる（using の解放は逆順のため、data → skImage → view の順になる）
-        using var view = image.ToSKBitmap();
-        using var skImage = SKImage.FromBitmap(view);
-        using var data = skImage.Encode(format, EncodeQuality) ?? throw new InvalidOperationException($"画像を {format} 形式へエンコードできませんでした。");
-        using var stream = File.Create(filePath);
-        data.SaveTo(stream);
-    }
-
-    /// <summary>ファイルパスの拡張子から保存形式を決める。</summary>
-    /// <param name="filePath">保存先のファイルパス。</param>
-    /// <returns>保存形式。 未知の拡張子の場合は PNG。</returns>
-    private static SKEncodedImageFormat ResolveFormat(string filePath)
-    {
-        var extension = Path.GetExtension(filePath);
-
-        return s_formats.TryGetValue(extension, out var format) ? format : SKEncodedImageFormat.Png;
+        image.Save(filePath);
     }
 }
-

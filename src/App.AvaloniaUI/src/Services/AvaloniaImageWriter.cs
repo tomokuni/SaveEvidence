@@ -1,29 +1,23 @@
-using Avalonia.Media.Imaging;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core.Native.Imaging;
 using EsUtil.SaveEvidence.App.Core.Services;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Services;
 
-/// <summary><see cref="IImageWriter"/> の本番実装（Avalonia Skia で画像をエンコードして保存する）。</summary>
+/// <summary><see cref="IImageWriter"/> の本番実装（コアの保存（Windows 専用のエンコード）へ委譲する）。</summary>
 /// <remarks>
-/// <see cref="IEsBitmap"/> を <see cref="WriteableBitmap"/> へ変換し、ファイル拡張子から自動判別した形式で保存する。<br/>
-/// Avalonia Skia（<c>RenderTargetBitmap</c> / <c>WriteableBitmap</c>）を必要とするため、ヘッドレス初期化が必要になる。<br/>
-/// テストでは <see cref="IImageWriter"/> をモックに差し替え、ヘッドレス不要で検証する。
+/// <b>保存形式（拡張子からの判別）とエンコード（BMP / PNG / JPEG / GIF / TIFF）は
+/// <see cref="EsBitmapFileExtensions.Save"/> が単一所有する</b>（両 UI で同じ結果にする）。<br/>
+/// 本クラスは「ホスト（Avalonia アプリ）が契約を満たす」ことを示す薄い実装である。
 /// </remarks>
 public sealed class AvaloniaImageWriter : IImageWriter
 {
-    /// <summary>既定の PNG エンコードオプション。</summary>
-    private static readonly PngBitmapEncoderOptions s_pngOptions = PngBitmapEncoderOptions.Default;
-
     /// <inheritdoc/>
     public void Save(IEsBitmap image, string filePath)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(filePath);
 
-        // IEsBitmap を表示境界で Avalonia Bitmap へ変換して保存（ファイル拡張子から自動判別）
-        using var av = image.ToAvaloniaBitmap();
-        av.Save(filePath, s_pngOptions);
+        image.Save(filePath);
     }
 }

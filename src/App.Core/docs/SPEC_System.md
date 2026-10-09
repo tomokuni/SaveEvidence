@@ -76,7 +76,7 @@ sequenceDiagram
 
 | 注入点 | 種類 | 内容 |
 | --- | --- | --- |
-| `IImageWriter` | コンストラクター引数 | 画像のエンコード・保存（Avalonia 版は `AvaloniaImageWriter`。 `Program.cs` で DI 登録） |
+| `IImageWriter` | コンストラクター引数 | 画像の保存（Avalonia 版は `AvaloniaImageWriter`。 `Program.cs` で DI 登録）。 **保存形式の判別とエンコードはコアの `EsBitmapFileExtensions` が単一所有する** |
 | `CopyToClipboardAsync` | コールバック | `IEsBitmap` を受け取り、UI 型へ変換してクリップボードへ書く |
 | `PasteFromClipboardAsync` | コールバック | クリップボードから読み、UI 型から `EsWritableBitmap` へ変換して返す |
 | `ConfirmOverwriteAsync` | コールバック | 上書き確認ダイアログ |

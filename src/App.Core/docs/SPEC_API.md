@@ -96,7 +96,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 | メソッド | 説明 |
 | --- | --- |
-| `Save(IEsBitmap image, string filePath)` | 画像を指定パスへ書き込む（拡張子から形式を自動判別） |
+| `Save(IEsBitmap image, string filePath)` | 画像を指定パスへ書き込む（**拡張子が形式を決める**。 実体はコアの `EsBitmapFileExtensions.Save` へ委譲し、未対応の拡張子は `NotSupportedException`） |
 
 - UI フレームワーク非依存（コアの画像のみに依存）です。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードします。
 - テストではモックに差し替え、ヘッドレス不要で検証できます。
@@ -200,7 +200,7 @@ Undo 一覧の表示モード状態を保持し、変更を通知します（`Ob
 public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 ```
 
-`IImageWriter` は UI 実装を注入します（Avalonia 版は `App.AvaloniaUI` の `AvaloniaImageWriter`。 `Program.cs` の DI で登録）。 既定実装の自動生成は行いません（UI 非依存を保つため）。
+`IImageWriter` は UI 実装を注入します（Avalonia 版は `App.AvaloniaUI` の `AvaloniaImageWriter`。 `Program.cs` の DI で登録）。 既定実装の自動生成は行いません（UI 非依存を保つため）。 **エンコードの実体はコアの `EsBitmapFileExtensions.Save` が単一所有します**（UI の実装は委譲するだけの薄い適合で、保存形式は両 UI で同じ）。
 
 ### 16.2 主なプロパティ
 

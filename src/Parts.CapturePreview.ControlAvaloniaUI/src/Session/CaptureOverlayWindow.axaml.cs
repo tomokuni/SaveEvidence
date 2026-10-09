@@ -83,9 +83,9 @@ internal sealed partial class CaptureOverlayWindow : Window
     /// <summary>表示境界の画像（<see cref="VirtualScreenImage"/>・ルーペの Source が共有する）。 本ウィンドウが破棄する。</summary>
     /// <remarks>
     /// <c>IImage</c>（Avalonia の表示用画像）は非所有の契約のため、設定しただけでは破棄されない。 <see cref="SetVirtualScreen"/> の差し替え時と
-    /// クローズ時に本ウィンドウが <see cref="EsBitmapAdapter.Dispose"/> を呼ぶ（元画像は <see cref="_captureImage"/> が所有する）。
+    /// クローズ時に本ウィンドウが <see cref="EsBitmapAvaloniaAdapter.Dispose"/> を呼ぶ（元画像は <see cref="_captureImage"/> が所有する）。
     /// </remarks>
-    private EsBitmapAdapter? _displayImage;
+    private EsBitmapAvaloniaAdapter? _displayImage;
 
     /// <summary>カーソル下の要素のハイライト状態（対象座標への変換・表示名・ログをコアが単一所有する）。</summary>
     private readonly CaptureHighlightSession _highlight;

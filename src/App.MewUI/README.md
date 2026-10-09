@@ -47,7 +47,7 @@ src/App.MewUI/
     ├── Program.cs           # 登録 → コアの組み立て（AppServices） → ホットキー登録 → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoHistory / FolderView）
     ├── Services/
-    │   ├── MewUIImageWriter.cs        # IImageWriter の MewUI 実装（SkiaSharp でエンコード）
+    │   ├── MewUIImageWriter.cs        # IImageWriter の MewUI 実装（保存はコアの EsBitmapFileExtensions へ委譲）
     │   ├── ImageThumbnailLoader.cs    # 画像ファイルの縮小デコードとキャッシュ
     │   ├── SettingsColorMath.cs       # 設定の色文字列 ⇔ 色の変換
     │   ├── SettingsJsonContext.cs     # 設定の JSON ソース生成（Native AOT 対応）
@@ -67,7 +67,7 @@ src/App.MewUI/
 └── tests/
     ├── App.MewUI.Tests.csproj           # xUnit v3（net10.0-windows）
     ├── TestHelper.cs                    # テスト共通ユーティリティ
-    ├── MewUIImageWriter.Tests.cs        # 保存形式・画素数・引数検証
+    ├── MewUIImageWriter.Tests.cs        # 拡張子ごとの保存形式・引数検証
     ├── ImageThumbnailLoader.Tests.cs    # 縮小デコード・キャッシュ・失敗時の扱い
     └── SettingsColorMath.Tests.cs       # 色文字列の解析と整形
 ```

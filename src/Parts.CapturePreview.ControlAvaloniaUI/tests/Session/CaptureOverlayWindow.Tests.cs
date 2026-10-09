@@ -409,7 +409,7 @@ public class CaptureOverlayWindowTests
 
         // 固定背景画像（VirtualScreenImage）の Source が破棄済みでないこと（Size 参照で例外なし）
         Assert.NotNull(window.VirtualScreenImageControl.Source);
-        Assert.True(window.VirtualScreenImageControl.Source is EsBitmapAdapter img
+        Assert.True(window.VirtualScreenImageControl.Source is EsBitmapAvaloniaAdapter img
             && img.GetEsBitmap() is { } bmp && bmp.Size.Width > 0);
         window.Close();
     }

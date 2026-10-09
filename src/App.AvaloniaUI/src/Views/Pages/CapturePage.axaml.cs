@@ -58,7 +58,7 @@ public sealed partial class CapturePage : UserControl
 
     /// <summary>プレビューの表示用画像（ViewModel の画像を借りて包む非所有アダプタ）。 差し替え時に本ページが破棄する。</summary>
     /// <remarks><see cref="IImage"/> は非所有の契約のため、設定しただけでは破棄されない（射影が残る）。</remarks>
-    private EsBitmapAdapter? _cropViewSource;
+    private EsBitmapAvaloniaAdapter? _cropViewSource;
 
     // Undo スタック（DI から取得するシングルトン。 UndoPage と共有）
     private readonly UndoHistory _undoHistory = null!;
@@ -129,7 +129,7 @@ public sealed partial class CapturePage : UserControl
         // ViewModel のプロパティ変更時にズーム設定を適用する
         _viewModel.PropertyChanged += (_, e) =>
         {
-            EsBitmapAdapter? previousSource = null;
+            EsBitmapAvaloniaAdapter? previousSource = null;
             switch (e.PropertyName)
             {
                 case nameof(MainViewModel.PreviewImage):
@@ -140,7 +140,7 @@ public sealed partial class CapturePage : UserControl
                     // 新しいアダプタを先に Source へ設定し、旧アダプタは後から破棄する
                     // （描画が旧アダプタを参照している間に破棄すると、破棄済みバッファへ触れて例外になる）。
                     previousSource = _cropViewSource;
-                    _cropViewSource = _viewModel.PreviewImage is { } bmp ? new EsBitmapAdapter(bmp) : null;
+                    _cropViewSource = _viewModel.PreviewImage is { } bmp ? new EsBitmapAvaloniaAdapter(bmp) : null;
                     CropView.Source = _cropViewSource;
                     previousSource?.Dispose();
                     break;

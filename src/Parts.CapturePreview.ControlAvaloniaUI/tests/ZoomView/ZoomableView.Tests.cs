@@ -25,7 +25,7 @@ public class ZoomableViewTests
     /// <param name="width">幅（ピクセル）。</param>
     /// <param name="height">高さ（ピクセル）。</param>
     /// <returns>生成した画像。</returns>
-    private static EsBitmapAdapter CreateBitmap(int width, int height)
+    private static EsBitmapAvaloniaAdapter CreateBitmap(int width, int height)
         => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(width, height, Colors.White);
 
     /// <summary>ビューポートを確定させたビューポートを生成する。</summary>

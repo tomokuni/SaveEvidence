@@ -199,7 +199,7 @@ internal sealed partial class CaptureOverlayWindow
         // （順序の理由は LoupeControl.SetLoupeBitmap と同じ。 IImage は非所有のため、保持するホストが Dispose する）。
         // 元画像はコアの保持クラスが所有し、このアダプタは借用して包むだけ。
         var previousImage = _displayImage;
-        _displayImage = bitmap is null ? null : new EsBitmapAdapter(bitmap);
+        _displayImage = bitmap is null ? null : new EsBitmapAvaloniaAdapter(bitmap);
         VirtualScreenImage.Source = _displayImage;
         previousImage?.Dispose();
 

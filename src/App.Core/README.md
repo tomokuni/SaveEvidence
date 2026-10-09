@@ -14,7 +14,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `Enums.ThemeMode` | `public` | テーマモード（`Description` 属性で表示名を保持） |
 | `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。 ウィンドウ位置は `EsRectInt`、状態は `EsWindowState` で保持 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。 JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
-| `Services.IImageWriter` | `public` | 画像（`IEsBitmap`）のファイル書き込みの抽象。 具象実装（Avalonia 版は `AvaloniaImageWriter`）が各 UI プロジェクト側でエンコードする |
+| `Services.IImageWriter` | `public` | 画像（`IEsBitmap`）のファイル書き込みの抽象。 具象実装（Avalonia 版は `AvaloniaImageWriter`）は各 UI プロジェクト側に置き、**コアの `EsBitmapFileExtensions.Save` へ委譲する**（実装は薄い適合） |
 | `Services.EsRectIntJsonConverter` | `internal` | `EsRectInt` の JSON コンバーター（`X` / `Y` / `Width` / `Height` のみを読み書き） |
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
 | `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsWritableBitmap` のクローンを保持。 最大 5 段） |
@@ -70,7 +70,7 @@ UI フレームワークへ依存しません。 外部依存は MVVM の `Commu
 | `BeforeEditAction` | `Action` | `CapturePage`（Undo スタックへのプッシュ） |
 | `StartSelectionMode` | `Action<CaptureType>` | `CapturePage`（キャプチャの開始） |
 
-画像の書き込み（`IImageWriter`）はコンストラクターで注入します（UI 実装は `App.AvaloniaUI` 側の `AvaloniaImageWriter`）。
+画像の書き込み（`IImageWriter`）はコンストラクターで注入します（UI 実装は `App.AvaloniaUI` 側の `AvaloniaImageWriter`。 保存の実体はコアの `EsBitmapFileExtensions.Save`）。
 
 ## 7. ビルド
 

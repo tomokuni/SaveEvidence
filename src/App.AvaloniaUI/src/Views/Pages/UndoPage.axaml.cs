@@ -2,8 +2,8 @@ using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Native.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
@@ -102,7 +102,7 @@ public sealed partial class UndoPage : ViewModePageBase
         var redo = _undoHistory.GetRedoHistory();
         for (var i = 0; i < redo.Count; i++)
         {
-            AddItem(new EsBitmapAdapter(redo[i], size), $"Redo {i + 1}", isCurrent: false);
+            AddItem(new EsBitmapAvaloniaAdapter(redo[i], size), $"Redo {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
@@ -110,14 +110,14 @@ public sealed partial class UndoPage : ViewModePageBase
         if (currentImage is not null)
         {
             // 表示境界で IImage へ変換してサムネイルへ設定する。
-            AddItem(new EsBitmapAdapter(currentImage, size), "現在", isCurrent: true);
+            AddItem(new EsBitmapAvaloniaAdapter(currentImage, size), "現在", isCurrent: true);
         }
 
         // 3. Undo スタック（新しい順。 _stack[^1] が現在の直前）
         var undo = _undoHistory.GetUndoHistory();
         for (var i = undo.Count - 1; i >= 0; i--)
         {
-            AddItem(new EsBitmapAdapter(undo[i], size), $"Undo {undo.Count - i}", isCurrent: false);
+            AddItem(new EsBitmapAvaloniaAdapter(undo[i], size), $"Undo {undo.Count - i}", isCurrent: false);
         }
 
         _viewModel.ItemCount = items.Count;
@@ -153,13 +153,11 @@ public sealed partial class UndoPage : ViewModePageBase
         {
             var tempFile = Path.Combine(Path.GetTempPath(), $"SaveEvidence_undo_{Guid.NewGuid():N}.png");
 
-            // サムネイルは画像源アダプタ（IImage）のため、保存用にコアの画像を借りて変換する。
-            // GetAvaloniaBitmap() は等倍の射影をアダプタへ保持させる（4K で 32 MB/枚）ため使わない
-            // （保存は 1 回だけであり、変換を使い捨てにすれば保持されない）。
-            if (item.Thumbnail is EsBitmapAdapter adapter)
+            // サムネイルは画像源アダプタ（IImage）のため、コアの画像を取り出して保存する。
+            // 保存形式（拡張子からの判別）とエンコードはコアの拡張が単一所有する。
+            if (item.Thumbnail is EsBitmapAvaloniaAdapter adapter)
             {
-                using var avalonia = adapter.GetEsBitmap().ToAvaloniaBitmap();
-                avalonia.Save(tempFile, PngBitmapEncoderOptions.Default);
+                adapter.GetEsBitmap().Save(tempFile);
             }
             else
             {

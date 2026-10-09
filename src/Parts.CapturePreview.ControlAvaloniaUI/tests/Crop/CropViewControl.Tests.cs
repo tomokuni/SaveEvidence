@@ -33,7 +33,7 @@ public class CropViewControlTests
     /// <summary>テスト用の CropViewControl（画像を設定済み）を生成する。</summary>
     private static CropViewControl CreateView()
     {
-        // Source は IImage のため、WriteableBitmap を生成しない EsBitmapAdapter（表示用の変換は初回のみ）で高速に生成する。
+        // Source は IImage のため、WriteableBitmap を生成しない EsBitmapAvaloniaAdapter（表示用の変換は初回のみ）で高速に生成する。
         var view = new CropViewControl { Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Blue) };
         view.Measure(new Size(400, 200));
         view.Arrange(new Rect(0, 0, 400, 200));

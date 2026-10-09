@@ -99,7 +99,7 @@ graph LR
 | --- | --- | --- |
 | 負のサイズ（`Rect` / `Size`） | そのまま保持する | **0 にクランプ**する（座標 X / Y は保持） |
 | キー体系 | `EsKey` と同じ 223 メンバー（Win32 相当） | 抽象化された 91 メンバー（独自採番） |
-| 表示境界の画像型 | `IImage`（Avalonia 固有のため、コア型とのアダプタ `EsBitmapAdapter` が要る） | **`IEsBitmap`（コアの画像の面）**。 アダプタは不要（コアの画像がそのまま `IEsBitmap` を実装している） |
+| 表示境界の画像型 | `IImage`（Avalonia 固有のため、コア型とのアダプタ `EsBitmapAvaloniaAdapter` が要る） | **`IEsBitmap`（コアの画像の面）**。 アダプタは不要（コアの画像がそのまま `IEsBitmap` を実装している） |
 | 表示のコピー | `Bitmap` への変換がピクセルを複製する（実測: 4K で約 6 ms。 初回の 1 回に固定する） | `ToSKBitmap()` が**非所有ビュー**を返すため複製しない（実測: 0.3〜2 µs） |
 
 **画像を扱う設計が非対称な理由**: MewUI の描画は Skia 直結（`SKCanvas`）であり、コアの画像がそのまま描画元になるため、表示境界に UI 固有の画像型を持ち込みません（`ToSKBitmap()` は `SKBitmap.InstallPixels` による非所有ビュー）。 したがって Avalonia 側で必要だった「表示アダプタ」と「変換の 1 回化」は、MewUI では**原理的に不要**です（コアの画像が `IEsBitmap` を実装するため、コアの処理からの取り出しも1 型で済みます）。
@@ -125,4 +125,4 @@ Avalonia 版の `Platform.AvaloniaUI` にある以下は、MewUI 側では**未�
 | --- | --- |
 | `ScreenConverter`（`TopLevel` / `Visual` 依存の画面座標変換） | MewUI 側の対応型（`Window` の座標・DPI 取得 API）を調査してから実装する |
 | `CursorOverrideGuardAttach`（`ICursorOverrideGuard.Attach(TopLevel)` 相当） | MewUI 側のカーソル抑止 API の有無を調査する必要がある |
-| 画像アダプタ（`EsBitmapAvaloniaExtensions` / `EsBitmapAdapter` 相当） | **不要**。 MewUI は `SkiaCanvasView` で `ToSKBitmap()`（非所有ビュー）を直接描画できる（PoC で実証済み） |
+| 画像アダプタ（`EsBitmapAvaloniaExtensions` / `EsBitmapAvaloniaAdapter` 相当） | **不要**。 MewUI は `SkiaCanvasView` で `ToSKBitmap()`（非所有ビュー）を直接描画できる（PoC で実証済み） |
