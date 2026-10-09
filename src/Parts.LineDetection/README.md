@@ -63,7 +63,7 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 ILineDetector detector = new LogicLineDetector();
 
 // 検出器はコアの画像（IEsBitmap）を入力とする（BGRA8888）。Bitmap → EsWritableBitmap 変換して渡す
-using var unified = bitmap.ToEsBitmap();
+using var unified = bitmap.ToEsWritableBitmap();
 var lines = detector.Detect(unified);
 ```
 

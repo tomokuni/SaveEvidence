@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// <b>依存分離</b>: 本クラスは Avalonia との変換を担い、<see cref="EsBitmap"/> 本体（コア）の依存を閉じる。<br/>
 /// System.Drawing 向けの生成・変換は <see cref="EsUtil.Platform.Core.Native.Imaging.EsBitmapDrawingExtensions"/> が担う。<br/>
 /// <br/>
-/// <b>権利の向き</b>: 生成（<c>ToEsBitmap</c> / <c>CreateAvaloniaWriteableBitmap</c>）は書き換え可能な画像を作る。
+/// <b>権利の向き</b>: 生成（<c>ToEsWritableBitmap</c> / <c>CreateAvaloniaWriteableBitmap</c>）は書き換え可能な画像を作る。
 /// 変換（<c>ToAvaloniaBitmap</c> / <c>ToAvaloniaWriteableBitmap</c>）は読み取り専用の面（<see cref="IEsBitmap"/>）を受け取る
 /// （複製を返すため入力の書き換え権限は要らない）。<br/>
 /// <b>所有権</b>: 返された Avalonia の画像は呼び出し側が所有する（破棄する）。
@@ -70,7 +70,7 @@ public static class EsBitmapAvaloniaExtensions
     /// <c>Bitmap.CopyPixels</c>（ネイティブ memcpy 相当）で、コアのピクセル バッファへ直接コピーする。<br/>
     /// 中間バッファ（byte[]）を介さないため高速・低アロケーション。 PNG エンコード/デコードや System.Drawing を経由しない（可逆）。
     /// </remarks>
-    public static unsafe EsWritableBitmap ToEsBitmap(this Bitmap bitmap)
+    public static unsafe EsWritableBitmap ToEsWritableBitmap(this Bitmap bitmap)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
 

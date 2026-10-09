@@ -22,7 +22,7 @@ internal static class TestHelper
         var bitmap = new SKBitmap(width, height);
         bitmap.Erase(color);
 
-        return bitmap.ToEsBitmap();
+        return bitmap.ToEsWritableBitmap();
     }
 
     /// <summary>描画先（キャンバスとその画素を読む手段）を生成する。</summary>

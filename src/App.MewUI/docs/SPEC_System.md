@@ -455,7 +455,7 @@ sequenceDiagram
     alt 縮小されなかった
         IL->>SK: SKBitmap.Resize(目標寸法)
     end
-    IL-->>IL: skBitmap.ToEsBitmap（複製してコアの画像を作る）
+    IL-->>IL: skBitmap.ToEsWritableBitmap（複製してコアの画像を作る）
 ```
 
 ## 11. シーケンス図（編集履歴の移動）

@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.Platform.Skia;
 /// <br/>
 /// <b>所有権</b>: 双方向とも<b>コアのバッファの所有権は移動しない</b>。<br/>
 /// - <see cref="ToSKBitmap"/> は<b>非所有ビュー</b>を返す（コアのバッファを指すだけ。 破棄してもコアのバッファは解放されない）。<br/>
-/// - <see cref="ToEsBitmap(SKBitmap)"/> は<b>複製</b>を作る（引数の <see cref="SKBitmap"/> の所有権は呼び出し側に残る）。<br/>
+/// - <see cref="ToEsWritableBitmap(SKBitmap)"/> は<b>複製</b>を作る（引数の <see cref="SKBitmap"/> の所有権は呼び出し側に残る）。<br/>
 /// <br/>
 /// <b>ビューの寿命</b>: <see cref="ToSKBitmap"/> が返す <see cref="SKBitmap"/> は、対応する画像が<br/>
 /// 生存している間だけ有効である（コアのバッファを指すため）。 画像を破棄した後にビューを使うと<br/>
@@ -66,7 +66,7 @@ public static class EsBitmapSkiaExtensions
     /// 成分順が一致しない（呼び出し側で形式を保証する）。<br/>
     /// 全行をコピーできる場合は 0 埋めを省く（大きな画像の書き込み量を減らす）。
     /// </remarks>
-    public static EsWritableBitmap ToEsBitmap(this SKBitmap bitmap)
+    public static EsWritableBitmap ToEsWritableBitmap(this SKBitmap bitmap)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
 

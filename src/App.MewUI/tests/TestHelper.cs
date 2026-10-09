@@ -19,7 +19,7 @@ internal static class TestHelper
         var bitmap = new SKBitmap(width, height);
         bitmap.Erase(SKColors.CornflowerBlue);
 
-        return bitmap.ToEsBitmap();
+        return bitmap.ToEsWritableBitmap();
     }
 
     /// <summary>一時ファイルのパスを作る（ファイルは作成しない）。</summary>

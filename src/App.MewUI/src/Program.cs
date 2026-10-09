@@ -180,7 +180,7 @@ internal static class Program
             null, SKShaderTileMode.Clamp);
         canvas.DrawRect(new SKRect(0, 0, 320, 180), paint);
 
-        return bitmap.ToEsBitmap();
+        return bitmap.ToEsWritableBitmap();
     }
 }
 

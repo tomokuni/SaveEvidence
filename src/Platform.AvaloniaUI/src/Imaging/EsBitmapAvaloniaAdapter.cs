@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// <b>射影元はコアの画像に限る</b>: Avalonia の <see cref="Bitmap"/> を真実とする入口は持たない。 本クラスは
 /// 「コアの画像 → 表示（Avalonia）」の<b>一方向</b>の適合であり、その向きを名前に持つ
 /// （<c>IEsBitmap</c> → <c>IImage</c>）。 Avalonia の画像をコアで扱う場合は
-/// <c>ToEsBitmap()</c> でコアの画像へ変換してから本クラスで包む（変換の責務が呼び出し側に現れる）。<br/>
+/// <c>ToEsWritableBitmap()</c> でコアの画像へ変換してから本クラスで包む（変換の責務が呼び出し側に現れる）。<br/>
 /// <b>読み取りの面しか公開しない</b>: 本クラスは <see cref="IEsBitmap"/> だけを実装する（<see cref="IEsWritableBitmap"/> を
 /// 実装しない）。 これは<b>表示境界の画像を書き換えられないようにする</b>ためであり、破棄の権利も公開しない
 /// （<see cref="IImage"/> は非所有の契約であり、真実の画像を破棄するのは保持するホストである）。<br/>

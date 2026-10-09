@@ -84,11 +84,11 @@ public class EsBitmapSkiaExtensionsTests
     }
 
     [Fact]
-    internal void ToEsBitmap_複製を生成し引数の所有権は残る()
+    internal void ToEsWritableBitmap_複製を生成し引数の所有権は残る()
     {
         using var sk = new SKBitmap(new SKImageInfo(4, 4, SKColorType.Bgra8888, SKAlphaType.Premul));
 
-        using var bmp = sk.ToEsBitmap();
+        using var bmp = sk.ToEsWritableBitmap();
 
         Assert.Equal(4, bmp.Size.Width);
         Assert.Equal(4, bmp.Size.Height);
@@ -98,7 +98,7 @@ public class EsBitmapSkiaExtensionsTests
     }
 
     [Fact]
-    internal void ToEsBitmap_部分透明アルファを保持する()
+    internal void ToEsWritableBitmap_部分透明アルファを保持する()
     {
         using var sk = new SKBitmap(new SKImageInfo(4, 4, SKColorType.Bgra8888, SKAlphaType.Premul));
         unsafe
@@ -110,7 +110,7 @@ public class EsBitmapSkiaExtensionsTests
             ptr[3] = 128; // A
         }
 
-        using var bmp = sk.ToEsBitmap();
+        using var bmp = sk.ToEsWritableBitmap();
 
         var (B, G, R, A) = bmp.GetPixel(0, 0);
         Assert.Equal((byte)255, B);
@@ -121,11 +121,11 @@ public class EsBitmapSkiaExtensionsTests
 
     /// <summary>画素を持たない（未確保の）ビットマップを変換しても例外にならず、透明を返すことを検証する。</summary>
     [Fact]
-    internal void ToEsBitmap_画素を持たないビットマップは透明を返す()
+    internal void ToEsWritableBitmap_画素を持たないビットマップは透明を返す()
     {
         using var sk = new SKBitmap();
 
-        using var bmp = sk.ToEsBitmap();
+        using var bmp = sk.ToEsWritableBitmap();
 
         Assert.True(bmp.Size.IsEmpty);
         Assert.True(bmp.Pixels.IsEmpty);
@@ -140,7 +140,7 @@ public class EsBitmapSkiaExtensionsTests
         bmp.SetPixel(2, 1, b: 10, g: 20, r: 30, a: 64);
 
         using var view = bmp.ToSKBitmap();
-        using var copied = view.Copy().ToEsBitmap();
+        using var copied = view.Copy().ToEsWritableBitmap();
 
         var (B, G, R, A) = copied.GetPixel(2, 1);
         Assert.Equal((byte)10, B);

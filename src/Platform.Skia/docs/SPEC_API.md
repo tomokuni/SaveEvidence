@@ -26,14 +26,14 @@
 | メソッド | 戻り値 | 所有権 | 有効期間 |
 | --- | --- | --- | --- |
 | `ToSKBitmap(this IEsBitmap bitmap)` | `SKBitmap` | **非所有ビュー**（`InstallPixels`。 破棄してもコアのバッファは解放されない）。 **呼び出し側が破棄する**（呼び出しごとに新しいインスタンス） | 元の画像の生存中のみ |
-| `ToEsBitmap(this SKBitmap bitmap)` | `EsWritableBitmap` | **複製**（引数の所有権は呼び出し側に残る） | 通常の `EsWritableBitmap` と同じ |
+| `ToEsWritableBitmap(this SKBitmap bitmap)` | `EsWritableBitmap` | **複製**（引数の所有権は呼び出し側に残る） | 通常の `EsWritableBitmap` と同じ |
 
 ### 2.1 契約と不変条件
 
 - `ToSKBitmap` が返すビューの `Width` / `Height` / `ColorType`（BGRA8888）/ `AlphaType`（Premul）/ `RowBytes` は、元画像（`IEsBitmap`）の値と一致する（`Stride` は `幅 × 4` でパディングがないため `RowBytes` と一致する）。
 - ビューはピクセルをコピーしないため、コア側の書き込みが即座に反映される（逆も同様）。
 - `ToSKBitmap` は破棄済みの画像に対して `ObjectDisposedException` を投げる。
-- `ToEsBitmap` は元のビットマップが BGRA8888・アルファ乗算済みでない場合に成分順を変換しない（呼び出し側で形式を保証する）。
+- `ToEsWritableBitmap` は元のビットマップが BGRA8888・アルファ乗算済みでない場合に成分順を変換しない（呼び出し側で形式を保証する）。
 
 ## 3. `SkiaFill`（塗りの部品）
 

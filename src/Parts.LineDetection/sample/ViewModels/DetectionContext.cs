@@ -122,7 +122,7 @@ public sealed partial class DetectionContext : ObservableObject
         }
 
         // 検出器は EsWritableBitmap を入力として受け取る（Bitmap → EsWritableBitmap 変換）
-        using var unified = Image.ToEsBitmap();
+        using var unified = Image.ToEsWritableBitmap();
         var results = detector.Detector.Detect(unified);
 
         // モデル依存方式のエラー（モデル未配置等）をステータスへ反映する

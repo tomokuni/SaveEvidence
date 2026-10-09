@@ -157,7 +157,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| 生成 | `ToEsBitmap` | `EsWritableBitmap ToEsBitmap(this Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。 **書き換え可能な型で返す**） |
+| 生成 | `ToEsWritableBitmap` | `EsWritableBitmap ToEsWritableBitmap(this Bitmap bitmap)` | Avalonia `Bitmap` から生成（複製。 **書き換え可能な型で返す**） |
 | 生成 | `ToAvaloniaWriteableBitmap` | `WriteableBitmap ToAvaloniaWriteableBitmap(this IEsBitmap bitmap)` | Avalonia `WriteableBitmap` へ変換（複製を所有） |
 | 生成 | `ToAvaloniaBitmap` | `Bitmap ToAvaloniaBitmap(this IEsBitmap bitmap)` | Avalonia `Bitmap` へ変換（複製を所有） |
 | 生成 | `CreateAvaloniaWriteableBitmap` | `static WriteableBitmap CreateAvaloniaWriteableBitmap(int width, int height, AvaloniaColor color)` | 単色の `WriteableBitmap` を生成 |
@@ -166,7 +166,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 
 | 型 | 説明 |
 | --- | --- |
-| `EsBitmapAvaloniaAdapter` | コア の画像（`IEsBitmap`）を包み、**`IImage`（表示）と `IEsBitmap`（コアの読み取り面 ）の両面**で公開するアダプタ。 **射影元はコアの画像に限る**（Avalonia の `Bitmap` を真実とする入口は持たない。 Avalonia の画像をコアで扱う場合は `ToEsBitmap()` で変換してから包む）。 コアへの射影は恒等で、Avalonia 側の射影は**初回に一度だけ**作る。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（コアの `EsBitmapExtensions` / `EsWritableBitmap` を使 う）。 **一覧のサムネイルのように小さく表示する場合は `displayMaxSize` を渡す** （等倍の射影は画像 1 枚につき元寸法の複製を保持する。 実測: 4K で 32 MB / 7.8 ms に対し、96x54 の双線形の縮小版は 110 µs / 20 KB） |
+| `EsBitmapAvaloniaAdapter` | コア の画像（`IEsBitmap`）を包み、**`IImage`（表示）と `IEsBitmap`（コアの読み取り面 ）の両面**で公開するアダプタ。 **射影元はコアの画像に限る**（Avalonia の `Bitmap` を真実とする入口は持たない。 Avalonia の画像をコアで扱う場合は `ToEsWritableBitmap()` で変換してから包む）。 コアへの射影は恒等で、Avalonia 側の射影は**初回に一度だけ**作る。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（コアの `EsBitmapExtensions` / `EsWritableBitmap` を使 う）。 **一覧のサムネイルのように小さく表示する場合は `displayMaxSize` を渡す** （等倍の射影は画像 1 枚につき元寸法の複製を保持する。 実測: 4K で 32 MB / 7.8 ms に対し、96x54 の双線形の縮小版は 110 µs / 20 KB） |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。 スレッド安全。 値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
 | `AvaloniaTextMeasure` | テキストの実寸を測る（`Measure(text, fontSize)`。 ラベルの配置矩形の計算に使う。 測定に色は影響しないためブラシは固定で共有する） |
 

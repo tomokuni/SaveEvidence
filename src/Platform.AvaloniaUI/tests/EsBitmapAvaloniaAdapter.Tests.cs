@@ -74,7 +74,7 @@ public class EsBitmapAvaloniaAdapterTests
         using var avalonia = bmp.ToAvaloniaBitmap();
 
         // 射影元はコアの画像に限るため、Avalonia の画像はコアへ変換してから包む（変換の責務が呼び出し側に現れる）
-        using var es = avalonia.ToEsBitmap();
+        using var es = avalonia.ToEsWritableBitmap();
         using var adapter = new EsBitmapAvaloniaAdapter(es);
 
         Assert.Equal(8, adapter.Width);

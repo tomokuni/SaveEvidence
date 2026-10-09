@@ -200,7 +200,7 @@ public sealed partial class MainWindow : Window
                 // 貼り付け結果（Avalonia Bitmap）をコア型へ変換して返す（変換後は不要になるため破棄する）
                 using (bitmap)
                 {
-                    return bitmap?.ToEsBitmap();
+                    return bitmap?.ToEsWritableBitmap();
                 }
             }
             catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))

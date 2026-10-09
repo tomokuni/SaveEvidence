@@ -104,10 +104,10 @@ internal static class ImageThumbnailLoader
         // コーデック側で縮小されなかった（または目標に届かなかった）場合は、コアの面積平均で目標へ縮小する
         if (bitmap.Width == target.Width && bitmap.Height == target.Height)
         {
-            return bitmap.ToEsBitmap();
+            return bitmap.ToEsWritableBitmap();
         }
 
-        using var decoded = bitmap.ToEsBitmap();
+        using var decoded = bitmap.ToEsWritableBitmap();
         return decoded.Resize(maxSize, DownscaleAlgorithm.Box);
     }
 
