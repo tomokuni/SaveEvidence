@@ -3,10 +3,10 @@ using Avalonia.Media;
 using EsUtil.Feature.Loupe.AvaloniaUI;
 using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.AvaloniaUI;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Xunit;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.SelectionOverlay;
 

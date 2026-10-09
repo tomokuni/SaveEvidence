@@ -9,6 +9,8 @@ using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.Platform.Core.Coord;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
@@ -17,8 +19,6 @@ using BindingFlags = System.Reflection.BindingFlags;
 using DrawingColor = System.Drawing.Color;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.SelectionOverlay;
 

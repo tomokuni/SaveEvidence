@@ -16,12 +16,12 @@ using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views;
 

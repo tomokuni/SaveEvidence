@@ -4,9 +4,9 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Media;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Xunit;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.ZoomView;
 

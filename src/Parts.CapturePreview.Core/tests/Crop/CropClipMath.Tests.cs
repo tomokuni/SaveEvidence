@@ -1,8 +1,8 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
-using Xunit;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Crop;
 

@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core;
-using Xunit;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Capture;
 

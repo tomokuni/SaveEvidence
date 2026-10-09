@@ -5,14 +5,14 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
-using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 

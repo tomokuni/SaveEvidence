@@ -1,7 +1,7 @@
-using Xunit;
-using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.Session;
 

@@ -1,7 +1,7 @@
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Setting;
 

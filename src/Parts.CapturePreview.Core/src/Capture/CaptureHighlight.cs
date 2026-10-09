@@ -1,9 +1,9 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native;
-using Microsoft.Extensions.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 

@@ -1,8 +1,8 @@
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.SelectionOverlay;
 

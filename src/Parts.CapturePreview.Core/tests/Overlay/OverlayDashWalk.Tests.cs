@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
-using Xunit;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Overlay;
 

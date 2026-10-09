@@ -1,11 +1,11 @@
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Logging;
 

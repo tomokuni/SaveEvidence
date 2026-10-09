@@ -1,8 +1,8 @@
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
-using Xunit;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Presentation;
 

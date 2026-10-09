@@ -6,16 +6,16 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 

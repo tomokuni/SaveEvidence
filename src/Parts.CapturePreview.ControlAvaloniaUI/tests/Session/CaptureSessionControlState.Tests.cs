@@ -1,7 +1,7 @@
-using Xunit;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.Session;
 

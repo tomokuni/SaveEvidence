@@ -1,8 +1,8 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Overlay;
 

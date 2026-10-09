@@ -2,12 +2,12 @@ using Avalonia;
 using Avalonia.Threading;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 

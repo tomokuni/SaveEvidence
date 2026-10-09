@@ -1,5 +1,5 @@
-using Xunit;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Session;
 

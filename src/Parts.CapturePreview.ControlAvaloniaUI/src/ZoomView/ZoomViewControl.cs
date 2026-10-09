@@ -3,10 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 

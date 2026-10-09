@@ -1,6 +1,6 @@
 using System.Drawing;
-using Xunit;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
+using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Setting;
 

@@ -12,15 +12,15 @@ using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
-using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 

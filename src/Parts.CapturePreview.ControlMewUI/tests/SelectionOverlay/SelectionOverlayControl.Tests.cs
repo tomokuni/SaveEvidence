@@ -5,11 +5,11 @@ using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.MewUI;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.SelectionOverlay;
 

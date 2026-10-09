@@ -5,18 +5,18 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
+using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.MewUI;
 using EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 using Microsoft.Extensions.Logging;
-using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 

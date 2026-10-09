@@ -8,15 +8,15 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using Point = Avalonia.Point;
 using Rect = Avalonia.Rect;
 using Size = Avalonia.Size;
-using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.Crop;
 
