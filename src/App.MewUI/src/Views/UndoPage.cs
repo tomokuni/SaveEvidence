@@ -63,6 +63,16 @@ internal static class UndoPage
         // （一覧を組み立てるローカル関数（CreateModeButton → OnModeChanged → Rebuild）から参照するため、 最初に宣言する）
         var thumbnails = new List<EsWritableBitmap>();
 
+        // 表示用の縮小（面積平均）は背景で行う（表示中は並列・非表示では 1 件ずつ）
+        var scheduler = ThumbnailBackground.CreateScheduler();
+
+        // 生成中の要求と、その行の要素（一覧の位置は上方が小さい）
+        var requested = new List<(ThumbnailScheduler.ThumbnailRequest Request, Element Element)>();
+
+        // 最後に優先度を付けた可視領域（変わっていなければ付け直さない）
+        var lastViewportTop = double.NaN;
+        var lastViewportBottom = double.NaN;
+
         // 表示モードの切り替え（解除は許さない。 常に 1 つを選択状態に保つ）
         void OnModeChanged(int index, bool isChecked)
         {
@@ -111,30 +121,52 @@ internal static class UndoPage
         }
 
         // 一覧を組み立て直す（表示モード変更時・現在の画像の変更時・ページ表示時に呼ぶ）
+        // 表示用の縮小は背景で行う: 一覧の構築では縮小せず、全行を代替画像で表示してから
+        // ThumbnailScheduler へ依頼し、生成が終わった 1 行から差し替える
+        // （一覧の表示を縮小の時間で待たせない。 生成中でも生成済みのサムネイルは表示される）。
         void Rebuild()
         {
             var iconSize = settingsService.Current.GetIconSize(selectedIndex);
             var previous = thumbnails;
             var created = new List<EsWritableBitmap>();
 
+            // 前回の生成要求を破棄する（別の寸法・別の一覧向けの生成を残さない）
+            // （後から届く結果が破棄済みの一覧へ登録されないようにするため、先に破棄する）
+            scheduler.Clear();
+            requested.Clear();
+            lastViewportTop = double.NaN;
+            lastViewportBottom = double.NaN;
+
             list.Clear();
+
+            var placeholder = ThumbnailBackground.Placeholder(iconSize);
+            void AddItem(EsWritableBitmap image, string label, bool isCurrent)
+            {
+                var view = new ThumbnailView { RequestedSize = iconSize, Source = placeholder };
+                var element = CreateItem(view, image, label, isCurrent, iconSize);
+                list.Add(element);
+
+                // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
+                requested.Add((scheduler.Enqueue(
+                    ThumbnailPriority.Background(list.Count - 1), MakeThumbnailWork(created, view, image, iconSize)), element));
+            }
 
             // 表示順を固定する: Redo（現在に近い未来から）→ 現在 → Undo（現在の直前から過去へ）
             var redo = undoStack.GetRedoHistory();
             for (var i = 0; i < redo.Count; i++)
             {
-                list.Add(CreateItem(redo[i], $"Redo {i + 1}", isCurrent: false, iconSize, created));
+                AddItem(redo[i], $"Redo {i + 1}", isCurrent: false);
             }
 
             if (viewModel.PreviewImage is { } current)
             {
-                list.Add(CreateItem(current, "現在", isCurrent: true, iconSize, created));
+                AddItem(current, "現在", isCurrent: true);
             }
 
             var undo = undoStack.GetUndoHistory();
             for (var i = undo.Count - 1; i >= 0; i--)
             {
-                list.Add(CreateItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false, iconSize, created));
+                AddItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false);
             }
 
             thumbnails = created;
@@ -185,12 +217,42 @@ internal static class UndoPage
 
         var scroll = new ScrollViewer().Content(list);
 
+        // 見え方が変わったら優先度を付け直す（スクロールと、ウィンドウの大きさの変化）
+        // 可視領域はスクロールの位置と高さから求め、行の位置は要素の配置から取る
+        // （一覧は折り返しパネルで全件を実体化するため、行の配置がそのまま内容の座標になる）。
+        scroll.ScrollChanged += UpdatePriorities;
+        scroll.SizeChanged += _ => UpdatePriorities();
+
+        void UpdatePriorities()
+        {
+            if (requested.Count == 0) return;
+
+            var top = scroll.VerticalOffset;
+            var bottom = top + scroll.ViewportHeight;
+            if (top == lastViewportTop && bottom == lastViewportBottom) return;
+
+            lastViewportTop = top;
+            lastViewportBottom = bottom;
+
+            for (var i = 0; i < requested.Count; i++)
+            {
+                var (request, element) = requested[i];
+                var bounds = element.Bounds;
+                scheduler.Reprioritize(
+                    request, ThumbnailPriority.FromRange(bounds.Top, bounds.Bottom, top, bottom, i));
+            }
+        }
+
         // 設定から表示モードを復元し、トグルと一覧を追従させる（ページ表示のたびに呼ぶ）
         void Restore()
         {
+            // 表示中は生成を全力にする（隠れた時は MainWindow から OnDeactivated が呼ばれて下げる）
+            scheduler.IsActive = true;
+
             selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.UndoViewModeIndex);
             SyncModeButtons();
             Rebuild();
+            UpdatePriorities();
         }
 
         // ツールバー（上端 6 DIP。 タイトルバー領域の下） / 一覧（残余） / ステータスの 3 段。
@@ -209,34 +271,67 @@ internal static class UndoPage
                     .Child(new Grid().Rows("Auto").Columns("*").Children(statusGrid)));
 
         Restore();
-        return new PageContent(content, Restore);
+        return new PageContent(content, Restore, OnDeactivated: () => scheduler.IsActive = false);
     }
 
+    /// <summary>1 行分の表示用の縮小（面積平均）の生成処理を生成する。</summary>
+    /// <param name="owned">本ページが所有する縮小画像の登録先（一覧の再構築のたびに破棄する）。</param>
+    /// <param name="view">結果を設定する要素（UI スレッドでのみ書き換える）。</param>
+    /// <param name="image">縮小元の画像（所有権はスタック側が保持する。 本ページは破棄しない）。</param>
+    /// <param name="iconSize">表示する一辺のサイズ（DIP）。</param>
+    /// <returns>生成処理。</returns>
+    /// <remarks>
+    /// 縮小は背景スレッドで行い、<c>Source</c> への設定だけを UI スレッドで行う。<br/>
+    /// 一覧が差し替わった後（<see cref="ThumbnailScheduler.Clear"/> の後）の結果は、
+    /// 作った縮小画像を解放して捨てる（表示されない画像を保持しない）。
+    /// </remarks>
+    private static Func<CancellationToken, ValueTask> MakeThumbnailWork(
+        List<EsWritableBitmap> owned, ThumbnailView view, EsWritableBitmap image, int iconSize)
+        => token =>
+        {
+            token.ThrowIfCancellationRequested();
+
+            // 縮小後の寸法は元画像を超えない（コアの縮小は拡大を未サポートとする）
+            var longSide = Math.Max(image.Width, image.Height);
+            var thumbnail = image.Resize(Math.Min(iconSize, longSide), DownscaleAlgorithm.Box);
+
+            ThumbnailBackground.Post(() =>
+            {
+                if (token.IsCancellationRequested)
+                {
+                    // 一覧が差し替わった後の結果は捨てる（作った縮小画像を解放する）
+                    thumbnail.Dispose();
+                    return;
+                }
+
+                owned.Add(thumbnail);
+                view.Source = thumbnail;
+            });
+
+            return ValueTask.CompletedTask;
+        };
+
     /// <summary>サムネイル 1 件分の要素を生成する。</summary>
+    /// <param name="view">サムネイルを表示する要素（生成の結果は後から本要素へ設定する）。</param>
     /// <param name="image">サムネイルの元画像（所有権はスタック側が保持する。 本ページは破棄しない）。</param>
     /// <param name="label">サムネイル下のラベル。</param>
     /// <param name="isCurrent">現在プレビューに表示中の画像かどうか（true の場合は青枠で強調する）。</param>
     /// <param name="iconSize">サムネイルの一辺のサイズ（DIP）。</param>
-    /// <param name="owned">本ページが所有する縮小画像の登録先（一覧の再構築のたびに破棄する）。</param>
     /// <returns>サムネイルとラベルを縦に並べた要素。</returns>
     /// <remarks>
     /// ダブルクリックで <paramref name="image"/>（<b>元の寸法のまま</b>）を一時ファイルへ書き出し、OS の既定アプリで開く。<br/>
     /// <b>表示は縮小した画像を使う</b>: コアの面積平均（<see cref="DownscaleAlgorithm.Box"/>）で <paramref name="iconSize"/> へ縮小してから描画する。<br/>
     /// 描画時に Skia へ縮小させるとサンプリング（既定は最近傍）によって<b>同じ寸法でも画質が変わる</b>（実測: 4K → 320x180 で
-    /// 細線の輝度は既定 255 / 面積平均 21） ため、Avalonia 版（表示用の射影を縮小する）と同じ手順に揃える。
+    /// 細線の輝度は既定 255 / 面積平均 21） ため、Avalonia 版（表示用の射影を縮小する）と同じ手順に揃える。<br/>
+    /// 縮小そのものは背景（<see cref="MakeThumbnailWork"/>）が行う。
     /// </remarks>
     private static Element CreateItem(
-        EsWritableBitmap image, string label, bool isCurrent, int iconSize, List<EsWritableBitmap> owned)
+        ThumbnailView view, EsWritableBitmap image, string label, bool isCurrent, int iconSize)
     {
-        // 縮小後の寸法は元画像を超えない（コアの縮小は拡大を未サポートとする）
-        var longSide = Math.Max(image.Width, image.Height);
-        var thumbnail = image.Resize(Math.Min(iconSize, longSide), DownscaleAlgorithm.Box);
-        owned.Add(thumbnail);
-
         // 枠（背景色・枠線・角丸）はスタイルが与え、ホバーのハイライトはアイテム側が切り替える
         var frame = new Border()
             .StyleName(isCurrent ? AppStyles.ThumbnailFrameCurrent : AppStyles.ThumbnailFrame)
-            .Child(new ThumbnailView { RequestedSize = iconSize, Source = thumbnail });
+            .Child(view);
 
         // ラベルは枠（画像 + 影の余白）と同じ幅にし、文字を画像の中央へ揃える
         // （文字は Avalonia 版と同じく領域の上端へ寄せる）

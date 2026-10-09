@@ -83,7 +83,8 @@ View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage
 
 - キャプチャセッションの例外は Parts.CapturePreview.ControlAvaloniaUI がオーバーレイを閉じて通常状態に復帰する（app は結果を Task で受ける）。
 - クリップボードからの画像取得に失敗した場合は無視し、既存のプレビューを維持する。
-- サムネイル読み込み（FolderViewPage）の失敗は null を返し、アイテム一覧に影響させない。
+- サムネイル読み込み（FolderViewPage）の失敗は null を返し、アイテム一覧に影響させない（代替画像のまま表示する）。
+- 背景のサムネイル生成で想定外の例外が発生した場合は Warning で記録して次の生成へ進む（1 件の失敗で一覧の生成を止めない。 `ThumbnailScheduler` の `onError`）。
 
 ## 5. コンポーネント図
 
@@ -145,10 +146,15 @@ flowchart TB
   - 表示モード（特大 / 大 / 中）・ソート（昇順 / 降順）の切替
   - 表示モード・ソート順の設定保存（`Settings.FolderViewModeIndex` / `Settings.FolderViewSortAscending`）とページ表示時復元
   - ダブルクリックで既定アプリによりファイルを開く
+- **保持する画像**: **表示用のサムネイル（`Bitmap`）だけ**を保持する。 原寸の画像は保持せず、原寸が必要な操作（ダブルクリックで開く）は `FilePath` からファイルを読み込む
+- **サムネイルの生成**: 背景で行う（`ThumbnailScheduler`）。 一覧の構築では生成せず、**生成済み（キャッシュ済み）の分だけをその場で表示**し、未生成の行は代替画像（`ThumbnailPlaceholder`）を表示して生成が終わった 1 件から差し替える。 生成はページの表示状態に従い、**表示中は並列（全力）・非表示では 1 件ずつ**（`ViewModePageBase.OnPageVisibilityChanged` が `IsActive` を切り替える）。 一覧の差し 替え時は `Clear()` で未実行の要求を捨て、古い結果を反映しない
+- **生成の順序**: **見えている行を先に、その中では上方の行を先**に生成する（`ThumbnailPriority`）。 一覧のスクロール位置と高さから可視領域を求め、行の配置（コンテナの Bounds）が重なるかを判定して未実行の要求の優先度を付け直す（`LayoutUpdated` と `ScrollChanged`）。 見え方が変わっていなければ何もしない。 スクロールが未解決の間は全件を見えている扱いにし、上方から順に生成する
+- **キャッシュ**: キーはパス・要求サイズ・更新日時（内容が変われば再生成）。 上限は**表示件数以上**を渡す（上限超過時に保持中の値が破棄され、描画が破棄済みバッファへ触れるのを防ぐ）
 - **特徴**: 一覧の ItemsPanel は `BottomAlignWrapPanel`（行内下端揃え）。 行の高さは各行の最大アイテム高さに応じ、ファイル名 1 文字目の高さ位置が行内で揃う
 - **テーマ対応**: リスト背景・ファイル名ラベル・サムネイル枠線/影はテーマ（ライト/ダーク）に応じて切り替わる。 背景・枠線・文字色は Fluent テーマの標準リソース（`DynamicResource`）を参照し、影のみ App リソース（`ThumbnailShadow`）で定義する
 - **復元タイミング**: `IsVisible` 変更時（ナビゲーション再表示）に保存済み設定を復元し、ToggleButton の選択状態へ同期して一覧を再構築する（`ViewModePageBase` に共通化）
-- **依存**: FolderViewViewModel / MainViewModel / SettingsService
+- **起動への影響**: ページの生成時に用意するのはスケジューラ（`ThumbnailScheduler`）だけで、**生成要求は一覧を構築してから積む**。 起動時に表示されるのはキャプチャページのため、フォルダビューを開くまで列挙・復号・縮小は一切行わない。 スケジューラの背景ループは要求が無い間は信号待ちであり、CPU を使わない
+- **依存**: FolderViewViewModel / MainViewModel / SettingsService / `ThumbnailScheduler`（`App.Core`）/ `ThumbnailPlaceholder`
 
 ### 6.4 UndoPage
 
@@ -159,8 +165,10 @@ flowchart TB
   - 表示モード（特大 / 大 / 中）の切替と設定保存（`Settings.UndoViewModeIndex`）・ページ表示時復元
   - サムネイルのダブルクリックで一時ファイル（PNG）に保存し、OS の既定アプリ（外部ツール）で開く
 - **表示順**: Redo（新しい）→ 現在 → Undo（古い）の固定（時系列順で新しい → 古い）
+- **サムネイルの生成**: 縮小（表示用の射影）を背景で行う（`ThumbnailScheduler`）。 一覧の構築では全行を代替画像（`ThumbnailPlaceholder`）で表示し、生成が終わった 1 行から差し替える。 生成はページの表示状態に従い、**表示中は並列（全力）・非表示では 1 件ずつ**。 一覧の差し替え時は `Clear()` で未実行の要求を捨て、古い結果は作った射影を解放して捨てる
+- **生成の順序**: **見えている行を先に、その中では上方の行を先**に生成する（`ThumbnailPriority`）。 可視領域と行の配置から未実行の要求の優先度を付け直す（`LayoutUpdated` と `ScrollChanged`）。 見え方が変わっていなければ何もしない
 - **更新タイミング**: `IsVisible` 変更時（ナビゲーション再表示）に自身で最新の履歴を読み込む（保存済み設定の復元と一覧の再構築。 `ViewModePageBase` に共通化）
-- **依存**: UndoViewModel / MainViewModel（PreviewImage・DI シングルトン）/ UndoHistory（DI シングルトン・CapturePage と共有）
+- **依存**: UndoViewModel / MainViewModel（PreviewImage・DI シングルトン）/ UndoHistory（DI シングルトン・CapturePage と共有）/ `ThumbnailScheduler`（`App.Core`）/ `ThumbnailPlaceholder`
 
 ### 6.5 SettingsPage
 
@@ -195,7 +203,8 @@ flowchart TB
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
 | `BottomAlignWrapPanel` | 公開パネル（`public sealed class : Panel`） | 横方向折り返し + 行内下端揃え。 各行の高さは最大アイテム高さで決定（FolderViewPage の一覧用） |
-| `ViewModePageBase` | 公開基底ページ（`public abstract class : UserControl`） | 表示モードを持つ一覧ページ（FolderViewPage / UndoPage）の共通基盤。 設定復元・保存、ToggleButton 同期、ページ表示時の一覧再構築を共通化 |
+| `ViewModePageBase` | 公開基底ページ（`public abstract class : UserControl`） | 表示モードを持つ一覧ページ（FolderViewPage / UndoPage）の共通基盤。 設定復元・保存、ToggleButton 同期、ページ表示時の一覧再構築、表示状態の通知（サムネイル生成の負荷切替）を共通化 |
+| `ThumbnailPlaceholder` | 内部ユーティリティ（`internal static class`） | サムネイルの生成が終わるまで一覧に表示する代替画像（透明な正方形）の提供。 寸法ごとに 1 枚を共有し、**破棄しない**（借用して表示するだけ） |
 | `FileNameTemplate` | 公開ユーティリティ（`public sealed partial class`） | ファイル名テンプレートの解析・生成・検証。 日時プレースホルダ（`{date}` / `{time}` 等）とエスケープ（`{{` / `}}`）の解決、右端数値のオートインクリメント。 外部仕様は SPEC_ExtFunc.md（5. ファイル名テンプレート）を参照 |
 
 ### 6.10 App（テーマ適用）

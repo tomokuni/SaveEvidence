@@ -35,7 +35,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 
 - `App.Core` は UI フレームワークへ依存しません。
 - 名前空間は `EsUtil.SaveEvidence.App.Core`、アセンブリ名は `App.Core` です（ホストの `EsUtil.SaveEvidence.App.AvaloniaUI` とは名前空間もアセンブリも別）。
-- `internal` 型（`CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay`）は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests`）で UI 実装とテストへ公開します。
+- `internal` 型（`CapacityLimitedCache` / `ThumbnailScheduler` / `ThumbnailPriority` / `ImageFileExtensions` / `ViewModeDisplay`）は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests`）で UI 実装とテストへ公開します。
 
 ## 4. コンポーネント構成
 
@@ -47,7 +47,9 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 | `src/App.Core/src/Models/FileNameTemplate.cs` | `public static partial class` | ファイル名テンプレートの書式と使用不可文字の検証・解析・生成（**唯一の所有者**） |
 | `src/App.Core/src/Models/UndoHistory.cs` | `public sealed class` | 画像の Undo / Redo スタック |
 | `src/App.Core/src/Models/HotKeyParser.cs` | `public static class` | ホットキー文字列の解析 |
-| `src/App.Core/src/Models/CapacityLimitedCache.cs` | `internal static class` | 容量制限付きの静的キャッシュ操作（上限超過時の全クリアと `IDisposable` の破棄まで含めた**唯一の所有者**） |
+| `src/App.Core/src/Models/CapacityLimitedCache.cs` | `internal static class` | 容量制限付きの静的キャッシュ操作（上限超過時の全クリアと `IDisposable` の破棄まで含めた**唯一の所有者**。 上限判定と登録の直列化も担う） |
+| `src/App.Core/src/Models/ThumbnailScheduler.cs` | `internal sealed class` | 背景の処理（サムネイルの生成）をページの表示状態に応じた負荷で実行するスケジューラ（非表示では 1 件ずつ、表示中は並列。 優先度順に実行し、見えている項目を先に回す。 両 UI のフォルダビュー / Undo 一覧が使う**唯一の所有者**） |
+| `src/App.Core/src/Models/ThumbnailPriority.cs` | `internal readonly record struct` | サムネイル生成の優先度（見えている帯 / 見えていない帯と、帯の中の位置。 可視判定は純粋関数） |
 | `src/App.Core/src/Models/ImageFileExtensions.cs` | `internal static class` | 画像ファイルの拡張子判定（フォルダビューの一覧に含める拡張子の**唯一の所有者**。 両 UI が委譲する） |
 | `src/App.Core/src/Layout/BottomAlignWrapLayout.cs` | `internal static class` | 折り返しパネルの行高さ・下端揃えの配置計算（Avalonia / MewUI 両版のパネルが委譲する単一所有） |
 | `src/App.Core/src/Services/ISettingsService.cs` | `public interface` | 設定管理サービスの抽象 |
@@ -92,7 +94,7 @@ sequenceDiagram
 ## 7. 可視性ポリシー
 
 - `AppPage` / `ThemeMode` / `Settings` / `FileNameTemplate` / `UndoHistory` / `HotKeyParser` / `ISettingsService` / `SettingsService` / `FolderViewViewModel` / `UndoViewModel` は `public`（`App.AvaloniaUI` と MewUI ホストが共有する契約）。
-- `CapacityLimitedCache` / `ImageFileExtensions` / `ViewModeDisplay` / `EsRectIntJsonConverter` は `internal`。 `internal` → `public` の変更は破壊的な設計変更として扱います。
+- `CapacityLimitedCache` / `ThumbnailScheduler` / `ThumbnailPriority` / `ImageFileExtensions` / `ViewModeDisplay` / `EsRectIntJsonConverter` は `internal`。 `internal` → `public` の変更は壊的な設計変更として扱います。
 
 ## 8. 設定ファイルの互換性
 

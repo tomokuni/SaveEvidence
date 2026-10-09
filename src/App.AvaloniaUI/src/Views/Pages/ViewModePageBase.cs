@@ -36,6 +36,14 @@ public abstract class ViewModePageBase : UserControl
     /// <summary>表示モード変更・ページ表示時に一覧を再構築する。</summary>
     protected abstract void ReloadItems();
 
+    /// <summary>ページの表示状態が変化したときに呼び出される。</summary>
+    /// <param name="isVisible">表示された場合は true、隠された場合は false。</param>
+    /// <remarks>
+    /// 派生ページはサムネイル生成の負荷を切り替える（表示中は全力、非表示では 1 件ずつ）。<br/>
+    /// 表示された場合は本メソッドの後に <see cref="ReloadItems"/> を呼ぶ ため、最初の一覧構築は表示中の負荷で始まる。
+    /// </remarks>
+    protected abstract void OnPageVisibilityChanged(bool isVisible);
+
     /// <summary>設定から表示モードを復元して ViewModel へ反映する。</summary>
     protected abstract void RestoreViewModeSettings();
 
@@ -68,12 +76,16 @@ public abstract class ViewModePageBase : UserControl
     /// <summary>ページの表示状態変更時のハンドラ。 表示されるたびに設定を復元して一覧を更新する。</summary>
     private void OnIsVisiblePropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
-        if (e.Property == IsVisibleProperty && IsVisible)
-        {
-            RestoreViewModeSettings();
-            SyncViewModeToggleStates();
-            ReloadItems();
-        }
+        if (e.Property != IsVisibleProperty) return;
+
+        // 表示状態は生成の負荷（表示中は全力 / 非表示では 1 件ずつ）の切り替えにも使う
+        OnPageVisibilityChanged(IsVisible);
+
+        if (!IsVisible) return;
+
+        RestoreViewModeSettings();
+        SyncViewModeToggleStates();
+        ReloadItems();
     }
 
     /// <summary>表示モードボタンの共通クリックハンドラ。 対応する表示モードに切り替え、一覧を再構築する。</summary>

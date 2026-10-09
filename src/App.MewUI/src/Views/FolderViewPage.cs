@@ -37,6 +37,10 @@ internal static class FolderViewPage
     /// <remarks>行内でサムネイルの下端を揃えるため、ファイル名は 2 行分の固定高とする（Avalonia 版と同じ）。</remarks>
     private const double LabelHeight = 30;
 
+    /// <summary>サムネイルのキャッシュの最小保持数。</summary>
+    /// <remarks>一覧が表示する件数がこれより少ない場合でも、この数までは保持する（一覧間の行き来で再デコードしない）。</remarks>
+    private const int CacheCapacity = 100;
+
     /// <summary>ページの内容を生成する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <returns>ページの内容と、表示のたびに実行する処理。</returns>
@@ -56,20 +60,74 @@ internal static class FolderViewPage
 
         var list = new BottomAlignWrapPanel(ItemSpacing) { Padding = new Thickness(ListPadding) };
 
+        // サムネイルの生成は背景で行う（表示中は並列・非表示では 1 件ずつ）
+        var thumbnails = ThumbnailBackground.CreateScheduler();
+
+        // 生成中の要求と、その項目の要素（一覧の位置は上方が小さい）
+        var requested = new List<(ThumbnailScheduler.ThumbnailRequest Request, Element Element)>();
+
+        // 最後に優先度を付けた可視領域（変わっていなければ付け直さない）
+        var lastViewportTop = double.NaN;
+        var lastViewportBottom = double.NaN;
+
+        // 見え方が変わったら（スクロール・サイズ変更・行数の変化）優先度を付け直す
+        // 可視領域はスクロールの位置と高さから求め、行の位置は要素の配置から取る
+        // （一覧は折り返しパネルで全件を実体化するため、行の配置がそのまま内容の座標になる）。
+        void UpdatePriorities(ScrollViewer scroll)
+        {
+            if (requested.Count == 0) return;
+
+            var top = scroll.VerticalOffset;
+            var bottom = top + scroll.ViewportHeight;
+            if (top == lastViewportTop && bottom == lastViewportBottom) return;
+
+            lastViewportTop = top;
+            lastViewportBottom = bottom;
+
+            for (var i = 0; i < requested.Count; i++)
+            {
+                var (request, element) = requested[i];
+                var bounds = element.Bounds;
+                thumbnails.Reprioritize(
+                    request, ThumbnailPriority.FromRange(bounds.Top, bounds.Bottom, top, bottom, i));
+            }
+        }
+
         // 一覧を再構築する（表示モード・ソート変更時、更新ボタン、ページ表示時に呼ぶ）
         void Rebuild()
         {
             var folderPath = main.SaveFolderPathResolved;
             viewModel.FolderPathText = folderPath;
 
+            // 前回の生成要求を破棄する（別のフォルダ・別の寸法向けの生成を残さない）
+            thumbnails.Clear();
+            requested.Clear();
+
             list.Clear();
 
             var files = LoadFiles(folderPath, viewModel.IsSortAscending);
             var iconSize = settingsService.Current.GetIconSize(viewModel.SelectedViewModeIndex);
 
-            foreach (var file in files)
+            // 保持数は表示する件数以上にする（生成の途中で表示中のサムネイルが破棄されないようにする）
+            var capacity = Math.Max(CacheCapacity, files.Count);
+
+            for (var i = 0; i < files.Count; i++)
             {
-                list.Add(CreateItem(file, iconSize));
+                var file = files[i];
+
+                // 生成が終わるまでは代替画像を表示し、生成は背景へ依頼する
+                var view = new ThumbnailView
+                {
+                    RequestedSize = iconSize,
+                    Source = ThumbnailBackground.Placeholder(iconSize),
+                };
+
+                var element = CreateItem(view, file, iconSize);
+                list.Add(element);
+
+                // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
+                requested.Add((thumbnails.Enqueue(
+                    ThumbnailPriority.Background(i), MakeThumbnailWork(view, file, iconSize, capacity)), element));
             }
 
             viewModel.ItemCount = files.Count;
@@ -180,6 +238,10 @@ internal static class FolderViewPage
 
         var scroll = new ScrollViewer().Content(list);
 
+        // 見え方が変わったら優先度を付け直す（スクロールと、ウィンドウの大きさの変化）
+        scroll.ScrollChanged += () => UpdatePriorities(scroll);
+        scroll.SizeChanged += _ => UpdatePriorities(scroll);
+
         // 保存先フォルダの解決結果が変わったら一覧を追従させる
         main.PropertyChanged += (_, e) =>
         {
@@ -193,11 +255,15 @@ internal static class FolderViewPage
         // 設定から表示モード・ソート順を復元し、トグルと一覧を追従させる（ページ表示のたびに呼ぶ）
         void Restore()
         {
+            // 表示中は生成を全力にする（隠れた時は MainWindow から OnDeactivated が呼ばれて下げる）
+            thumbnails.IsActive = true;
+
             viewModel.SelectedViewModeIndex = ViewModeDisplay.ClampIndex(settingsService.Current.FolderViewModeIndex);
             viewModel.IsSortAscending = settingsService.Current.FolderViewSortAscending;
             SyncToggles(modeButtons, viewModel.SelectedViewModeIndex);
             SyncToggles(sortButtons, viewModel.IsSortAscending ? 0 : 1);
             Rebuild();
+            UpdatePriorities(scroll);
         }
 
         // ツールバー（上端 6 DIP。 タイトルバー領域の下） / 一覧（残余） / ステータスの 3 段。
@@ -222,8 +288,40 @@ internal static class FolderViewPage
                     .Child(new Grid().Rows("Auto").Columns("*").Children(statusGrid)));
 
         Restore();
-        return new PageContent(content, Restore);
+        return new PageContent(content, Restore, OnDeactivated: () => thumbnails.IsActive = false);
     }
+
+    /// <summary>1 件分のサムネイル生成の処理を生成する。</summary>
+    /// <param name="view">結果を設定する要素（UI スレッドでのみ書き換える）。</param>
+    /// <param name="filePath">対象のファイルパス。</param>
+    /// <param name="iconSize">サムネイルの一辺のサイズ（DIP）。</param>
+    /// <param name="capacity">サムネイルのキャッシュの最大保持数（一覧が表示する件数）。</param>
+    /// <returns>生成処理。</returns>
+    /// <remarks>
+    /// 縮小デコード（ファイル読み込み）は背景スレッドで行い、<c>Source</c> への設定だけを
+    /// UI スレッドで行う。<br/>
+    /// 一覧が差し替わった後（<see cref="ThumbnailScheduler.Clear"/> の後）の結果は反映しない
+    /// （消えた行へ画像を入れない）。
+    /// </remarks>
+    private static Func<CancellationToken, ValueTask> MakeThumbnailWork(
+        ThumbnailView view, string filePath, int iconSize, int capacity)
+        => token =>
+        {
+            token.ThrowIfCancellationRequested();
+
+            // 読み込めない画像は null で返る（その場合は代替画像のまま表示する）
+            var thumbnail = ImageThumbnailLoader.Load(filePath, iconSize, capacity);
+            var fallback = ThumbnailBackground.Placeholder(iconSize);
+
+            ThumbnailBackground.Post(() =>
+            {
+                if (token.IsCancellationRequested) return;
+
+                view.Source = thumbnail ?? fallback;
+            });
+
+            return ValueTask.CompletedTask;
+        };
 
     /// <summary>表示モード・ソート順を設定へ保存する。</summary>
     /// <param name="settingsService">設定サービス。</param>
@@ -283,23 +381,20 @@ internal static class FolderViewPage
     }
 
     /// <summary>一覧の 1 件分の要素を生成する。</summary>
+    /// <param name="view">サムネイルを表示する要素（生成の結果は後から本要素へ設定する）。</param>
     /// <param name="filePath">対象のファイルパス。</param>
     /// <param name="iconSize">サムネイルの一辺のサイズ（DIP）。</param>
     /// <returns>サムネイルとファイル名を縦に並べた要素。</returns>
     /// <remarks>
-    /// ダブルクリックで <paramref name="filePath"/> を OS の既定アプリで開く。<br/>
-    /// サムネイルを読み込めない場合は背景のみを表示する（項目自体は残す）。
+    /// ダブルクリックで <paramref name="filePath"/> を OS の既定アプリで開く（原寸が必要な操作はファイルから読み込む。
+    /// 一覧はサムネイルだけを保持する）。
     /// </remarks>
-    private static Element CreateItem(string filePath, int iconSize)
+    private static Element CreateItem(ThumbnailView view, string filePath, int iconSize)
     {
-        // 枠（背景色・枠線・角丸）はスタイルが与え、ホバーのハイライトはアイテム側が切り替える
+        // 枠（背景色・枠線・角丸）はスタイルが与え、ホバーのハイライトは アイテム側が切り替える
         var frame = new Border()
             .StyleName(AppStyles.ThumbnailFrame)
-            .Child(new ThumbnailView
-            {
-                RequestedSize = iconSize,
-                Source = ImageThumbnailLoader.Load(filePath, iconSize),
-            });
+            .Child(view);
 
         // ラベルは枠（画像 + 影の余白）と同じ幅にし、ファイル名を画像の中央へ揃える
         // （文字は Avalonia 版と同じく領域の上端へ寄せる）

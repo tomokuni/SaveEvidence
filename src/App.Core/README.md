@@ -20,7 +20,9 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
 | `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsWritableBitmap` のクローンを保持。 最大 5 段） |
 | `Models.HotKeyParser` | `public` | ホットキー文字列（"Ctrl + Shift + Q" 等）の解析 |
-| `Models.CapacityLimitedCache` | `internal` | 容量制限付きの静的キャッシュ（超過分は破棄） |
+| `Models.CapacityLimitedCache` | `internal` | 容量制限付きの静的キャッシュ（超過分は破棄。 上限判定と登録の直列化も担う） |
+| `Models.ThumbnailScheduler` | `internal` | 背景の処理（サムネイルの生成）をページの表示状態に応じた負荷で実行するスケジューラ（非表示では 1 件ずつ、表示中は並列。 優先度順に実行する） |
+| `Models.ThumbnailPriority` | `internal` | サムネイル生成の優先度（見えている項目を先に、その中では上方を先に。 可視判定は純粋関数） |
 | `Models.ImageFileExtensions` | `internal` | 画像ファイルの拡張子判定（フォルダビューの一覧抽出） |
 | `ViewModels.ViewModeDisplay` | `internal` | 表示モード（特大 / 大 / 中）の表示文字列変換 |
 | `ViewModels.FolderViewViewModel` | `public` | フォルダビューの表示モード・ソート状態 |

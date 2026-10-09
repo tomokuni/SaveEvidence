@@ -56,10 +56,11 @@ src/App.MewUI/
         ├── MainWindow.cs         # ナビパネル（自前の合成）・配置の復元と保存・ウィンドウボタン
         ├── AppStyles.cs          # 共通スタイル（ナビ・ツールバー・ウィンドウ操作・サムネイル枠・テーマ追従の面）
         ├── ClickableToolTip.cs   # ツールヒント付きボタンのクリック登録（MewUI の不具合回避）
-        ├── PageContent.cs        # ページの内容と「表示のたびに実行する処理」
+        ├── PageContent.cs        # ページの内容と「表示のたびに実行する処理」（表示から外れるたびの処理も持つ）
         ├── CapturePage.cs        # キャプチャページ（撮影 / 切り出し / ズーム / ルーペ / 履歴）
         ├── ConfirmDialog.cs       # 簡易確認ダイアログ（はい / いいえ。保存の上書き確認）
         ├── FolderViewPage.cs     # フォルダビューページ（サムネイル一覧・表示モード・ソート・更新）
+        ├── ThumbnailBackground.cs # サムネイルの背景生成（スケジューラ・代替画像・UI スレッドへの反映）
         ├── UndoPage.cs           # Undo 一覧ページ（サムネイル一覧・表示モード・ダブルクリックで外部表示）
         ├── SettingsPage.cs       # 設定ページ（テーマ / 保存 / キャプチャ / ホットキー / 一覧 / 外観）
         └── ThumbnailView.cs      # 画像を正方形へ収めるサムネイル表示ビュー

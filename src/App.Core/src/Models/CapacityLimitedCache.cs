@@ -9,6 +9,9 @@ namespace EsUtil.SaveEvidence.App.Core.Models;
 /// </remarks>
 internal static class CapacityLimitedCache
 {
+    /// <summary>上限判定・破棄・登録を直列化するロック。</summary>
+    private static readonly Lock s_trimLock = new();
+
     /// <summary>キャッシュから値を取得し、無ければ生成して登録する。</summary>
     /// <typeparam name="TKey">キー型。</typeparam>
     /// <typeparam name="TValue">値型。</typeparam>
@@ -24,19 +27,38 @@ internal static class CapacityLimitedCache
         if (cache.TryGetValue(key, out var value)) return value;
 
         value = factory(key);
-        if (cache.Count >= capacity)
+
+        // 上限判定と破棄・登録は 1 つのロックで行う
+        // （背景のサムネイル生成のように複数スレッドから呼ぶと、2 つのスレッドが同時に上限超過を検出し、
+        //  同じ値を 2 回破棄する・先に入れた値を上書きして漏らす。 ファクトリの実行はロックの外に置くので、
+        //  生成（復号など）は並列のままである）
+        lock (s_trimLock)
         {
-            // IDisposable 値（Bitmap 等）は破棄してからクリアする（リソースリーク防止）
-            foreach (var cached in cache.Values)
+            // 待っている間に別のスレッドが同じキーを登録していた場合は、その値を返す（作った値は破棄する）
+            if (cache.TryGetValue(key, out var registered))
             {
-                if (cached is IDisposable disposable)
+                if (value is IDisposable created)
                 {
-                    disposable.Dispose();
+                    created.Dispose();
                 }
+
+                return registered;
             }
-            cache.Clear();
+
+            if (cache.Count >= capacity)
+            {
+                // IDisposable 値（Bitmap 等）は破棄してからクリアする（リソースリーク防止）
+                foreach (var cached in cache.Values)
+                {
+                    if (cached is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                }
+                cache.Clear();
+            }
+            cache[key] = value;
+            return value;
         }
-        cache[key] = value;
-        return value;
     }
 }

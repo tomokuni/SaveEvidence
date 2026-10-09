@@ -134,6 +134,7 @@ src/App.MewUI/src/
     ├── BottomAlignWrapPanel.cs      折り返し + 行内下端揃えのパネル（コアの計算へ委譲）
     ├── FolderViewPage.cs             フォルダビューページ（サムネイル一覧・表示モード・ソート）
     ├── ThumbnailItem.cs              一覧アイテム（枠 + 影 + ラベル。ホバーの枠色と影を担う）
+    ├── ThumbnailBackground.cs       サムネイルの背景生成（スケジューラ・代替画像・UI スレッドへの反映）
     ├── UndoPage.cs                   Undo 一覧ページ（サムネイル一覧・表示モード・外部表示）
     ├── SettingsPage.cs               設定ページ（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観）
     └── ThumbnailView.cs              画像を正方形へ収めるサムネイル表示ビュー
@@ -151,7 +152,7 @@ tests/
 | `Program` | バックエンド / プラットフォームホストの登録、コアの組み立て、ホットキーの登録、`Application.Run`（起動時コールバックで配置を復元） |
 | `AppServices` | 共有するコアオブジェクトの束（DI コンテナを持たないため起動時に生成して渡す） |
 | `MainWindow` | ナビパネル（自前の合成。 アイコン + ページ名・選択背景）とページ内容の切り替え、タイトルバー（拡張クライアント領域 + ウィンドウボタン）、配置の復元と保存、自動切り出し中の Escape（キャンセル）の処理 |
-| `PageContent` | ページの要素と、表示のたびに実行する処理（設定の再読込・一覧の再構築）の組 |
+| `PageContent` | ページの要素と、表示のたびに実行する処理（設定の再読込・一覧の再構築）／**表示から外れるたびに実行する処理**の組。 後者はサムネイルの背景生成を非表示へ切り替えるために使う（要素は `IsVisible` を切り替えるだけで再利用されるため、要素側では「隠れた」ことを検知できない） |
 | `CapturePage` | ツールバー・クロップビュー・切り出しオーバーレイ・ステータスの配置とコマンド接続。 自動切り出しの検出矩形（水色の実線・ホバーで「赤枠 + 半透明の赤塗り」）を `CropViewControl.Rects`（枠線）と `CropViewControl.HighlightSourceRect` / `HighlightAppearance`（ホバー強調）で表示し、矩形内のダブルクリックで確定、矩形外のダブルクリックでキャンセルする（Escape は `MainWindow` が処理する） |
 | `CaptureSessionControl`（`Parts.CapturePreview.ControlMewUI`） | 撮影と切り出しの Facade。 排他（同時に 1 つだけ）とセッションの寿命、および撮影サービスの生成を単一所有する。 撮影はオーナーのキャプチャ除外 + 退避 → キャプチャ → 選択オーバーレイ → 切り出し、切り出しは `CropViewControl` の領域選択 → 結果（`EsRectInt`）の返却を行う（結果の適用はページが担う） |
 | `ConfirmDialog` | 簡易確認ダイアログ（はい / いいえ）を表示して選択を返す。 `MainWindow` が `MainViewModel.ConfirmOverwriteAsync` へ配線する |
@@ -159,12 +160,13 @@ tests/
 | `AppStyles` | ナビ・ツールバー・ウィンドウ操作ボタン・サムネイル枠・面（ナビパネル / ステータスバー / プルダウン / 設定カード）の共通スタイル（`StyleName` で適用する `StyleSheet`）とレイアウト値（Avalonia 版と同一）を単一所有する。 状態で変化するプロパティとテーマに追従する面の色はローカル値で設定せず本スタイルで与える。 テーマの適用（`ApplyTheme`）と、スタイルで表せない値の更新通知（`ThemeChanged`）も本クラスが担う |
 | `BottomAlignWrapPanel` | 横方向に折り返し、各行内で子要素を下端揃えするパネル。 行高さと配置の計算はコアの `BottomAlignWrapLayout` が所有し、本クラスは寸法の変換と委譲のみを担う（Avalonia 版の同名パネルと計算を共有する） |
 | `ThumbnailItem` | 一覧アイテム 1 件（枠 + 影 + ラベル）を組み立てる。 影（`ShadowDecorator`）の配下では `StateTrigger`（ホバー）が効かないため、ホバー時の枠色と影の有無を `MouseEnter` / `MouseLeave` で直接切り替える（現在表示中の枠は影なし） |
-| `FolderViewPage` | フォルダ一覧のツールバー・サムネイル一覧・ステータスバー（保存先フォルダを右端へ寄せる） |
-| `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし）。 **サムネイルはコアの面積平均で DIP サイズへ縮小してから描画する**（Skia の描画時サンプリングは既定が最近傍のため、同じ寸法でも画質が変わる。 縮小画像は本ページが所有し、一覧の再構築のたびに破棄する） |
+| `FolderViewPage` | フォルダ一覧のツールバー・サムネイル一覧・ステータスバー（保存先フォルダを右端へ寄せる）。 **保持する画像はサムネイルだけ**（原寸が必要な操作はファイルパスから読み込む）。 **生成は背景で行う**（`ThumbnailScheduler`。 表示中は並列・非表示では 1 件ずつ）。 未生成の行は代替画像を表示し、生成が終わった 1 件から差し替える（キャッシュの上限は表示件数以上を渡す） |
+| `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし）。 **サムネイルはコアの面積平均で DIP サイズへ縮小してから描画する**（Skia の描画時サンプリングは既定が最近傍のため、同じ寸法でも画質が変わる）。 **縮小は背景で行う**（`ThumbnailScheduler`。 表示中は並列・非表示では 1 件ずつ）ため、本ページが所有する縮小画像は生成の完了時に登録し、一覧の再構築のたびに破棄する |
+| `ThumbnailBackground` | 一覧のサムネイルを背景で生成するための共通処理（スケジューラの生成・代替画像の提供・UI スレッドへの反映）。 代替画像は寸法ごとに 1 枚を共有し、**破棄しない**（借用して表示するだけ） |
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。 変更の即時保存・テーマの即時適用・ホットキー入力を担う |
 | `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `SkiaImageView` が単一所有し、計測と Uniform 指定だけを与える） |
 | `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsBitmapFileExtensions.Save`（拡張子が形式を決める）へ委譲する |
-| `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ。 **縮小はコアの面積平均（`EsBitmapExtensions.Resize`）へ委譲する**（Skia の `Resize(Linear)` は大きな縮小率で細線を実際より濃く残すため使わない。 コーデックの縮小デコードはデコードの高速化としてのみ使う） |
+| `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ。 **縮小はコアの面積平均（`EsBitmapExtensions.Resize`）へ委譲する**（Skia の `Resize(Linear)` は大きな縮小率で細線を実際より濃く残すため使わない。 コーデックの縮小デコードはデコードの高速化としてのみ使う）。 **背景の生成からも呼べる**（キャッシュの上限判定と登録は直列化される）。 キャッシュの上限は**一覧が表示する件数以上**を呼び出し側が渡す（上限超過時に保持中の値が破棄され、描画が破棄済みのバッファへ触れるのを防ぐ） |
 | `ImageDrawMath`（`Platform.MewUI`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |
@@ -427,16 +429,24 @@ sequenceDiagram
     participant MW as MewUI（NavigationView）
     participant FW as FolderViewPage
     participant ST as 設定（ISettingsService）
+    participant TS as ThumbnailScheduler（App.Core）
     participant IL as ImageThumbnailLoader
 
     MW->>FW: Build(services)（初回のみ・要素は保持）
     FW->>ST: FolderViewModeIndex / FolderViewSortAscending
     FW->>FW: ツールバーとトグルの生成
-    FW->>FW: Restore()（設定の復元 → 一覧の再構築）
-    FW->>IL: 各ファイルを Load(path, iconSize)
+    MW->>FW: OnActivated → Restore()（設定の復元 → 一覧の再構築）
+    FW->>FW: IsActive = true（表示中は並列）
+    FW->>TS: Clear() → Enqueue（ファイルごと。 位置は一覧の並び）
+    FW-->>FW: 一覧は代替画像で即座に表示（構築を待たせない）
+    FW->>TS: Reprioritize（可視領域と行の配置から見えている行を先に）
+    TS->>IL: 背景スレッドで Load(path, iconSize, capacity)
     IL->>IL: キャッシュを確認 → 縮小デコード
-    IL-->>FW: EsWritableBitmap?
-    Note over MW,FW: 以降の選択でも SelectionChanged → OnActivated → Restore()
+    IL-->>TS: EsWritableBitmap?
+    TS->>FW: UI スレッドへ反映（生成が終わった 1 件から差し替え）
+    MW->>FW: 別のページへ切替 → OnDeactivated
+    FW->>FW: IsActive = false（非表示では 1 件ずつ）
+    Note over MW,FW: 以降の選択でも OnActivated → Restore()
     FW->>ST: トグル操作時に Save()
 ```
 
@@ -513,17 +523,24 @@ sequenceDiagram
     participant UP as UndoPage
     participant US as UndoHistory
     participant VM as MainViewModel
+    participant TS as ThumbnailScheduler（App.Core）
     participant TV as ThumbnailView
 
     MW->>UP: Build(vm, settings, undoStack)（初回のみ・要素は保持）
-    UP->>UP: Restore()（ClampIndex → トグル同期 → Rebuild）
+    MW->>UP: OnActivated → Restore()（ClampIndex → トグル同期 → Rebuild）
+    UP->>UP: IsActive = true（表示中は並列）
     UP->>US: GetRedoHistory() → GetUndoHistory()
     UP->>VM: PreviewImage
     VM-->>UP: EsWritableBitmap?
-    UP->>TV: 項目ごとに生成（RequestedSize / Source）
+    UP->>TV: 項目ごとに生成（RequestedSize / 代替画像の Source）
+    UP->>TS: Clear() → Enqueue（項目ごと。 位置は一覧の並び）
+    UP->>TS: Reprioritize（可視領域と行の配置から見えている行を先に）
+    TS->>TS: 背景スレッドで面積平均の縮小
+    TS-->>UP: UI スレッドへ反映（生成が終わった 1 行から差し替え、縮小画像を登録）
     TV->>TV: DrawBitmap（幅・高さの小さい方のスケールで中央寄せ）
+    MW->>UP: 別のページへ切替 → OnDeactivated → IsActive = false
     Note over UP: 表示モード変更時は settings へ保存して Rebuild()
-    Note over MW,UP: 以降の選択でも SelectionChanged → OnActivated → Restore()
+    Note over MW,UP: 以降の選択でも OnActivated → Restore()
     VM-->>UP: PropertyChanged(PreviewImage) → Rebuild()
 ```
 
@@ -666,6 +683,27 @@ sequenceDiagram
    シリアル化が成立せず設定が空（`{}`）になる（実測）。 コンテキストは `Settings` を参照する側の
    アセンブリに置く必要がある（同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
    書式はソース生成の有無にかかわらず共通とし、設定ファイルの互換性を保つ（実測でバイト単位の一致を確認）。
+22. **サムネイルの生成は背景で行い、負荷をページの表示状態で切り替える**。 生成（縮小デコード・縮小）を
+   UI スレッドで行うと、写真の多いフォルダを開いた瞬間に数秒間 UI が止まる。 生成を `ThumbnailScheduler`
+   （`App.Core`。 UI 非依存）へ渡し、**表示中は並列（全力）・非表示では 1 件ずつ**にする（普段使わない
+   非表示のページが CPU とストレージを占有しない）。 一覧の構築は生成を待たず、**生成済みの分をその場で
+   表示し、未生成の行は代替画像を表示して生成が終わった 1 件から差し替える**（要件: 生成中でも生成済みの
+   サムネイルを表示し、未生成には代替画像を表示する。 負荷は小さく保ち、ページが表示されたら全力にする）。
+   表示から外れたことの検知だけは要素側ではできない（要素は `IsVisible` を切り替えて再利用される）ため、
+   `PageContent.OnDeactivated` を `MainWindow` の選択処理から呼ぶ。
+23. **見えている部分を先に生成する**。 実行の順序は `ThumbnailPriority`
+   （`App.Core`）が帯と位置で表し、**見えている行が先、その中では上方の行が先**になる。 可視領域は
+   スクロールの位置と高さ（`ScrollViewer.VerticalOffset` / `ViewportHeight`）から求め、行の位置は要素の
+   配置（`Element.Bounds`）から取る（一覧は折り返しパネルで全件を実体化するため、配置がそのまま内容の
+   座標になる）。 スクロールとサイズの変化で未実行の要求の優先度を付け直し、
+   **見え方が変わっていなければ何もしない**（配置のたびに全件を走査しない）。
+24. **一覧はサムネイルのみを保持する**。 原寸の画像を保持すると、写真の多いフォルダで 1 枚あたり数 MB を
+   余分に保つことになる。 原寸が必要な操作（ダブルクリックで外部アプリを開く）はファイルパスから読み込む
+   （フォルダビューの `OpenInDefaultApp(filePath)`。 Undo 一覧はファイルを持たないため、コアの画像を参照する）。
+25. **起動時にサムネイルの仕事をしない**。 ページ要素は選択時に初めて生成し（`EnsurePage`）、生成要求も
+   一覧を構築してから積む。 起動時に表示されるのはキャプチャページであり、フォルダビュー / Undo 一覧を
+   開くまで列挙・復号・縮小は行わない。 スケジューラの背景ループは要求が無い間は信号待ちで CPU を使わない
+   （実測: 起動〜ウィンドウ表示は約 0.9 秒、起動ログにサムネイルの記録なし）。
 
 ## 19. 未実装・今後の対応
 
@@ -687,6 +725,8 @@ sequenceDiagram
 | `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。 6 / 8 桁・大文字小文字・不正入力・往復変換 |
 | `SettingsService` | ソース生成と反射の書式の一致（既存の設定ファイルとの互換性）を `App.Core.Tests` で検証する |
 | `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する |
+| `ThumbnailScheduler`（`App.Core`） | 表示状態による負荷の切替（非表示では 1 件ずつ・表示中は上限まで並列）、優先度（見えている帯が先・同帯は位置順）、`Clear()` での未実行要求の破棄と実行中への中断伝搬、失敗の通知と継続を検証する（時間の経過ではなく「開始した件数」とトークンの状態で判定する） |
+| `ThumbnailPriority`（`App.Core`） | 表示範囲と可視領域の重なりによる可視判定の境界（内側・外側・端が一致する場合）と、帯・位置の順序を検証する |
 | `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する |
 | ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`PrintWindow` による撮影と画素の実測）で確認する |
 | 組み込み先のコントロール | `EsUtil.Feature.Loupe.ControlMewUI.Tests` / `Parts.CapturePreview.ControlMewUI.Tests` が描画と状態を検証する |

@@ -16,16 +16,18 @@
 - [9. `Models.UndoHistory`（クラス）](#9-modelsundohistoryクラス)
 - [10. `Models.HotKeyParser`（静的クラス）](#10-modelshotkeyparser静的クラス)
 - [11. `Models.CapacityLimitedCache`（内部・静的クラス）](#11-modelscapacitylimitedcache内部静的クラス)
-- [12. `Models.ImageFileExtensions`（内部・静的クラス）](#12-modelsimagefileextensions内部静的クラス)
-- [13. `ViewModels.ViewModeDisplay`（内部・静的クラス）](#13-viewmodelsviewmodedisplay内部静的クラス)
-- [14. `ViewModels.FolderViewViewModel`（クラス）](#14-viewmodelsfolderviewviewmodelクラス)
-- [15. `ViewModels.UndoViewModel`（クラス）](#15-viewmodelsundoviewmodelクラス)
-- [16. `ViewModels.MainViewModel`（クラス）](#16-viewmodelsmainviewmodelクラス)
-  - [16.1 コンストラクター](#161-コンストラクター)
-  - [16.2 主なプロパティ](#162-主なプロパティ)
-  - [16.3 主な操作](#163-主な操作)
-  - [16.4 UI 依存の注入点](#164-ui-依存の注入点)
-- [17. 依存関係](#17-依存関係)
+- [12. `Models.ThumbnailScheduler`（内部・クラス）](#12-modelsthumbnailscheduler内部クラス)
+- [13. `Models.ThumbnailPriority`（内部・構造体）](#13-modelsthumbnailpriority内部構造体)
+- [14. `Models.ImageFileExtensions`（内部・静的クラス）](#14-modelsimagefileextensions内部静的クラス)
+- [15. `ViewModels.ViewModeDisplay`（内部・静的クラス）](#15-viewmodelsviewmodedisplay内部静的クラス)
+- [16. `ViewModels.FolderViewViewModel`（クラス）](#16-viewmodelsfolderviewviewmodelクラス)
+- [17. `ViewModels.UndoViewModel`（クラス）](#17-viewmodelsundoviewmodelクラス)
+- [18. `ViewModels.MainViewModel`（クラス）](#18-viewmodelsmainviewmodelクラス)
+  - [18.1 コンストラクター](#181-コンストラクター)
+  - [18.2 主なプロパティ](#182-主なプロパティ)
+  - [18.3 主な操作](#183-主な操作)
+  - [18.4 UI 依存の注入点](#184-ui-依存の注入点)
+- [19. 依存関係](#19-依存関係)
 
 ## 1. 公開 API の可視性
 
@@ -37,6 +39,8 @@
 | `Services.IImageWriter` | `public` | 任意 |
 | `Services.EsRectIntJsonConverter` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
 | `Models.CapacityLimitedCache` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
+| `Models.ThumbnailScheduler` | `internal` | 同上 |
+| `Models.ThumbnailPriority` | `internal` | 同上 |
 | `Models.ImageFileExtensions` | `internal` | `SaveEvidence` / `EsUtil.SaveEvidence.App.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests` |
 | `ViewModels.ViewModeDisplay` | `internal` | 同上 |
 | `ViewModels.FolderViewViewModel` / `ViewModels.UndoViewModel` / `ViewModels.MainViewModel` | `public` | 任意 |
@@ -159,7 +163,49 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | --- | --- |
 | `GetOrAdd<TKey, TValue>(ConcurrentDictionary<TKey, TValue> cache, int capacity, TKey key, Func<TKey, TValue> factory)` | キャッシュに値を取得または追加する。 容量超過時はキャッシュ全体をクリアして肥大化を防ぐ |
 
-## 12. `Models.ImageFileExtensions`（内部・静的クラス）
+- **容量の判定・破棄・登録はロックで直列化します**（ファクトリの実行はロックの外）。 複数スレッドから呼んでも、同じ値を 2 回破棄したり、先に入れた値を上書きして漏らしたりしません。 生成（復号など）は並列のままです。
+- **ファクトリの実行中に同じキーが登録された場合は、先に登録された値を返し、後から作った値は破棄します**（同じキーに 2 つの値を持たない）。
+- **`capacity` は呼び出し側が渡します**。 一覧が表示する件数より小さい上限を渡すと、表示中の値が破棄されます（例: サムネイルの生成中に表示中の画像が破棄される）。
+
+## 12. `Models.ThumbnailScheduler`（内部・クラス）
+
+背景の処理（サムネイルの生成）を、ページの表示状態に応じた負荷で実行するスケジューラ。 UI フレームワークに依存しません。
+
+| メンバー | 説明 |
+| --- | --- |
+| `ThumbnailScheduler(Action<Exception> onError, int maxParallelism = 0, TimeSpan? idleInterval = null)` | 生成する。 `maxParallelism` が 0 以下なら `Environment.ProcessorCount`、`idleInterval` を省略すると 100 ms |
+| `IsActive` | 表示中かどうか。 true = 同時実行の上限まで並列、false = 1 件ずつ + 待機（`idleInterval` 分を分割して待つ） |
+| `PendingCount` | 引き受け済みでまだ実行を開始していない要求の数（実行中は数えない） |
+| `Enqueue(Func<CancellationToken, ValueTask> work)` | 要求を追加する（見えていない項目として積む。 結果の反映（UI スレッドへの転送）は呼び出し側が行う） |
+| `Enqueue(ThumbnailPriority priority, Func<CancellationToken, ValueTask> work)` | 優先度を指定して要求を追加する |
+| `Reprioritize(ThumbnailRequest request, ThumbnailPriority priority)` | 未実行の要求の優先度を変える（実行が始まった要求・同じ優先度の場合は何もしない） |
+| `Clear()` | 未実行の要求を捨て、実行中の要求へ中断を伝える（世代番号を進める）。 古い世代の要求は実行しない |
+| `Dispose()` | 要求の受付を終了し、待機中のループを止める（冪等） |
+
+- **優先度の小さい順に実行します**（見えている項目が先、その中では上方の項目が先。 `ThumbnailPriority`）。
+- **非表示では 1 件ずつ、表示中は並列**に実行します。 非表示の待機は 100 ms を 10 ms ずつに分けて待つため、表示へ切り替わると待機の残りを待たずに次の要求を開始します。
+- **表示中は同時実行の空きを先に確保してから取り出します**（取り出してから空きを待つと、待っている間の要求は実行前にもかかわらず `Reprioritize` を受け付けない）。
+- **起動時は仕事をしません**: 生成は要求（`Enqueue`）が積まれて初めて動きます。 生成ループは要求が無い間は信号待ちであり、ページを表示するまで負荷をかけません（起動を遅くしない）。
+- **失敗は `onError` へ渡して次の要求へ進みます**（1 件の失敗でループを止めません）。
+- **`Clear()` は実行中の要求のトークンをキャンセルしますが、CTS を破棄しません**（実行側がトークンを参照しているため。 世代番号で古い結果を無効化する）。 `Dispose()` も同様です。
+- 用途はフォルダビュー / Undo 一覧のサムネイル生成（両 UI で共用）です。 `Enqueue` が返す `ThumbnailRequest`（入れ子型）は `Reprioritize` の識別子として呼び出し側が保持します。
+
+## 13. `Models.ThumbnailPriority`（内部・構造体）
+
+サムネイル生成の優先度（値が小さいほど先に実行する）。
+
+| メンバー | 説明 |
+| --- | --- |
+| `VisibleBand` / `BackgroundBand` | 見えている項目の帯（0）/ 見えていない項目の帯（1） |
+| `Visible(int index)` / `Background(int index)` | 優先度を生成する（`index` は一覧内の位置。 0 が最上部） |
+| `FromRange(itemTop, itemBottom, viewportTop, viewportBottom, index)` | 項目の表示範囲と可視領域から優先度を求める（一部でも重なれば見えている扱い） |
+| `Compare(left, right)` | 2 つの優先度を比べる（`PriorityQueue` へ渡す） |
+
+- **2 つの帯で並べます**: 見えている項目を先に、見えていない項目を後に実行し、**同じ帯では位置の小さい順（上方優先）**です。
+- **可視判定は純粋関数**（表示範囲の重なりだけ）のため、画面なしで境界まで検証できます。 端が一致するだけの場合は重なりとみなしません。
+- `IComparable<T>` は実装しません（比較演算子の実装を避け、`Compare` へ一本化する）。
+
+## 14. `Models.ImageFileExtensions`（内部・静的クラス）
 
 フォルダビューの一覧に含める画像ファイルの拡張子判定。 判定は拡張子のみで行い、大文字・小文字は区別しません。
 
@@ -170,7 +216,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 - 拡張子の抽出には `Path.GetExtension` を使用するため、`.png` のようにドットで始まる名前も画像として扱われます（末尾のドット `a.` は空文字のため対象外）。
 
-## 13. `ViewModels.ViewModeDisplay`（内部・静的クラス）
+## 15. `ViewModels.ViewModeDisplay`（内部・静的クラス）
 
 | メンバー | 説明 |
 | --- | --- |
@@ -179,7 +225,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `ClampIndex(int index)` | 表示モードのインデックスを有効範囲へクランプする |
 | `GetItemCountText(int count)` | 件数の表示文字列を返す |
 
-## 14. `ViewModels.FolderViewViewModel`（クラス）
+## 16. `ViewModels.FolderViewViewModel`（クラス）
 
 フォルダビューの表示モード・ソート順の状態を保持し、変更を通知します（`ObservableObject`）。
 
@@ -190,7 +236,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `IsSortAscending` / `SortStatusText` | ソート順（昇順 / 降順）と表示文字列 |
 | `FolderPathText` | フォルダパスの表示文字列 |
 
-## 15. `ViewModels.UndoViewModel`（クラス）
+## 17. `ViewModels.UndoViewModel`（クラス）
 
 Undo 一覧の表示モード状態を保持し、変更を通知します（`ObservableObject`）。
 
@@ -199,11 +245,11 @@ Undo 一覧の表示モード状態を保持し、変更を通知します（`Ob
 | `ItemCount` / `ItemCountText` | 項目数と表示文字列 |
 | `SelectedViewModeIndex` / `ViewModeText` | 表示モードのインデックスと表示文字列 |
 
-## 16. `ViewModels.MainViewModel`（クラス）
+## 18. `ViewModels.MainViewModel`（クラス）
 
 メイン画面の状態を保持し、コマンドと変更通知を提供します（`ObservableObject` + `[RelayCommand]` / `[ObservableProperty]`）。
 
-### 16.1 コンストラクター
+### 18.1 コンストラクター
 
 ```csharp
 public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
@@ -211,7 +257,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 `IImageWriter` には本番の実装（本プロジェクトの `EsBitmapImageWriter`）を注入します（Avalonia 版は `Program.cs` の DI で登録、MewUI 版は `Program.cs` で直接生成）。 **保存形式の判別とエンコードはコアの `EsBitmapFileExtensions.Save` が単一所有します**（本プロジェクトの実装は委譲するだけの薄い適合で、保存形式は両 UI で同じ ）。
 
-### 16.2 主なプロパティ
+### 18.2 主なプロパティ
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
@@ -230,7 +276,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `NavPanelWidth` / `IsNavigationExpanded` | `double` / `bool` | ナビパネル |
 | `ThemeModes` | `IReadOnlyList<ThemeMode>` | テーマモードの選択肢 |
 
-### 16.3 主な操作
+### 18.3 主な操作
 
 | メンバー | 説明 |
 | --- | --- |
@@ -241,7 +287,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。 両 UI のホバー強調と確定・キャンセル判定が共用する |
 | `CopyToClipboard()` / `PasteFromClipboard()` | クリップボード操作（実体はコールバックへ委譲） |
 
-### 16.4 UI 依存の注入点
+### 18.4 UI 依存の注入点
 
 | メンバー | 型 | 既定 |
 | --- | --- | --- |
@@ -251,7 +297,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `BeforeEditAction` | `Action?` | null |
 | `StartSelectionMode` | `Action<CaptureType>?` | null |
 
-## 17. 依存関係
+## 19. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

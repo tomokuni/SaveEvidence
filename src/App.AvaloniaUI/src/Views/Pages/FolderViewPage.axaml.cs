@@ -4,6 +4,8 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -19,7 +21,12 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// <remarks>
 /// 画像ファイルのサムネイル一覧を表示し、クリックでメイン画面のプレビューに読み込む。<br/>
 /// 表示モード（特大/大/中）、ソート切替、更新機能を提供する。<br/>
-/// 表示モードの復元・保存、ToggleButton 同期、ページ表示時の再構築は <see cref="ViewModePageBase"/> に共通化する。
+/// 表示モードの復元・保存、ToggleButton 同期、ページ表示時の再構築は <see cref="ViewModePageBase"/> に共通化する。<br/>
+/// <b>保持する画像はサムネイルだけ</b>である（原寸は保持せず、必要な操作はファイルから読み込む）。<br/>
+/// <b>サムネイルは背景で生成する</b>（<see cref="ThumbnailScheduler"/>。 ページが表示されている間は並列、
+/// 隠れている間は 1 件ずつ）。 生成が終わるまでの行は代替画像を表示する。<br/>
+/// <b>見えている行を先に生成する</b>（その中では上方の行が先。 <see cref="ThumbnailPriority"/>）。
+/// スクロールで見え方が変わったら未実行の要求の優先度を付け直す。
 /// </remarks>
 public sealed partial class FolderViewPage : ViewModePageBase
 {
@@ -28,10 +35,27 @@ public sealed partial class FolderViewPage : ViewModePageBase
     /// <summary>アプリケーションロガー。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger("FolderViewPage");
 
-    /// <summary>サムネイルキャッシュの最大保持数。</summary>
+    /// <summary>サムネイルのキャッシュの最小保持数。</summary>
+    /// <remarks>一覧が表示する件数がこれより少ない場合でも、この数までは保持する（一覧間の行き来で再復号しない）。</remarks>
     private const int ThumbnailCacheCapacity = 100;
 
     private static readonly ConcurrentDictionary<(string Path, int Size, DateTime LastWrite), Bitmap> s_thumbnailCache = new();
+
+    /// <summary>背景のサムネイル生成（非表示では 1 件ずつ、表示中は並列）。</summary>
+    /// <remarks>ページはアプリの生存期間で 1 つ生成されるため、明示的に破棄しない（終了時にプロセスごと解放される）。</remarks>
+    private readonly ThumbnailScheduler _thumbnailScheduler = null!;
+
+    /// <summary>生成中の要求（一覧の位置と対応する。 生成済みの位置は null）。</summary>
+    private readonly List<ThumbnailScheduler.ThumbnailRequest?> _thumbnailRequests = [];
+
+    /// <summary>一覧のスクロール（可視領域の取得元。 レイアウト後に解決する）。</summary>
+    private ScrollViewer? _thumbnailScroll;
+
+    /// <summary>最後に優先度を付けた可視領域の上端（変わっていなければ付け直さない）。</summary>
+    private double _lastViewportTop = double.NaN;
+
+    /// <summary>最後に優先度を付けた可視領域の下端。</summary>
+    private double _lastViewportBottom = double.NaN;
 
     /// <summary>FolderViewPage を初期化する。</summary>
     public FolderViewPage()
@@ -43,11 +67,21 @@ public sealed partial class FolderViewPage : ViewModePageBase
         _viewModel = Program.ServiceProvider.GetRequiredService<FolderViewViewModel>();
         DataContext = _viewModel;
 
+        _thumbnailScheduler = new ThumbnailScheduler(OnThumbnailGenerateError);
+
+        // 見え方が変わったら（スクロール・サイズ変更・行数の変化）優先度を付け直す
+        FileListBox.LayoutUpdated += (_, _) => UpdateThumbnailPriorities();
+
         InitializeViewModePage(
             Program.SettingsService,
             Program.ServiceProvider.GetRequiredService<MainViewModel>(),
             ExtraLargeButton, LargeButton, MediumButton);
     }
+
+    /// <summary>ページの表示状態に合わせてサムネイル生成の負荷を切り替える。</summary>
+    /// <param name="isVisible">表示された場合は true、隠された場合は false。</param>
+    /// <inheritdoc/>
+    protected override void OnPageVisibilityChanged(bool isVisible) => _thumbnailScheduler.IsActive = isVisible;
 
     /// <summary>現在の表示モードのインデックス（0=特大, 1=大, 2=中）。</summary>
     protected override int SelectedViewModeIndex
@@ -104,10 +138,22 @@ public sealed partial class FolderViewPage : ViewModePageBase
     }
 
     /// <summary>ファイル一覧を読み込む（本体）。</summary>
+    /// <remarks>
+    /// <b>サムネイルは背景で生成する</b>: 一覧の構築では生成せず、生成済み（キャッシュ済 み）の分だけをその場で表示する。<br/>
+    /// 生成が必要な分は代替画像を表示して <see cref="ThumbnailScheduler"/> へ依頼し、生成が終わった 1 件から差し替える<br/>
+    /// （一覧の表示を生成時間で待たせない。 生成中でも生成済みのサムネイルは表示される）。
+    /// </remarks>
     private void LoadFilesCore()
     {
         var folderPath = MainViewModel.SaveFolderPathResolved;
         _viewModel.FolderPathText = folderPath;
+
+        // 前回の生成要求を破棄する（別のフォルダ・別の寸法向けの生成を残さない）
+        _thumbnailScheduler.Clear();
+        _thumbnailRequests.Clear();
+        _lastViewportTop = double.NaN;
+        _lastViewportBottom = double.NaN;
+
         if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
         {
             _viewModel.ItemCount = 0;
@@ -125,27 +171,163 @@ public sealed partial class FolderViewPage : ViewModePageBase
             : Comparer<string>.Create((a, b) => StringComparer.OrdinalIgnoreCase.Compare(b, a)));
 
         var iconSize = GetIconSize();
-        var items = files.Select(f => new FileListItem
+        var placeholder = ThumbnailPlaceholder.Get(iconSize);
+
+        // 保持数は表示する件数以上にする（生成の途中で表示中のサムネイルが破棄されないようにする）
+        var capacity = Math.Max(ThumbnailCacheCapacity, files.Count);
+
+        var items = new List<FileListItem>(files.Count);
+
+        // 生成の負荷はページの表示状態に従う（表示中は並列・非表示では 1 件ずつ）
+        _thumbnailScheduler.IsActive = IsVisible;
+
+        for (var i = 0; i < files.Count; i++)
         {
-            FilePath = f,
-            FileName = Path.GetFileName(f),
-            Thumbnail = LoadThumbnail(f, iconSize),
-            ThumbnailWidth = iconSize
-        }).ToList();
+            var file = files[i];
+            var item = new FileListItem
+            {
+                FilePath = file,
+                FileName = Path.GetFileName(file),
+                ThumbnailWidth = iconSize
+            };
+
+            // 生成済みはその場で表示し、未生成は代替画像を表示して背景へ回す
+            if (GetCachedThumbnail(file, iconSize) is { } cached)
+            {
+                item.Thumbnail = cached;
+                _thumbnailRequests.Add(null);
+            }
+            else
+            {
+                item.Thumbnail = placeholder;
+
+                // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
+                _thumbnailRequests.Add(_thumbnailScheduler.Enqueue(
+                    ThumbnailPriority.Background(i), MakeThumbnailWork(item, file, iconSize, capacity)));
+            }
+
+            items.Add(item);
+        }
 
         _viewModel.ItemCount = items.Count;
         FileListBox.ItemsSource = items;
+
+        // レイアウト済みなら直ちに、未なら LayoutUpdated が可視領域の確定後に呼ぶ
+        UpdateThumbnailPriorities();
     }
 
-    /// <summary>画像ファイルのサムネイルを読み込む。</summary>
-    private static Bitmap? LoadThumbnail(string filePath, int size)
+    /// <summary>見えている行を先に生成するよう、未実行の要求の優先度を付け直す。</summary>
+    /// <remarks>
+    /// 可視領域はスクロールの位置と高さから求め、行の位置は一覧のコンテナの配置から取る
+    /// （一覧は折り返しパネルで全件を実体化するため、行の配置がそのまま内容の座標になる）。<br/>
+    /// <b>見え方が変わっていない場合は何もしない</b>（レイアウトのたびに全件を走査しない）。
+    /// </remarks>
+    private void UpdateThumbnailPriorities()
+    {
+        if (_thumbnailRequests.Count == 0) return;
+
+        // スクロールはテンプレートが作るため、最初に見つけたものを覚える
+        if (_thumbnailScroll is null)
+        {
+            _thumbnailScroll = FileListBox.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+            if (_thumbnailScroll is { } scroll)
+            {
+                scroll.ScrollChanged += (_, _) => UpdateThumbnailPriorities();
+            }
+        }
+
+        // スクロールが見つからない間は全件を見えている扱いにする（上方から順に生成される）
+        var top = _thumbnailScroll?.Offset.Y ?? 0;
+        var bottom = top + (_thumbnailScroll?.Viewport.Height ?? double.PositiveInfinity);
+        if (top == _lastViewportTop && bottom == _lastViewportBottom) return;
+
+        _lastViewportTop = top;
+        _lastViewportBottom = bottom;
+
+        for (var i = 0; i < _thumbnailRequests.Count; i++)
+        {
+            if (_thumbnailRequests[i] is not { } request) continue;
+            if (FileListBox.ContainerFromIndex(i) is not { } container) continue;
+
+            var bounds = container.Bounds;
+            _thumbnailScheduler.Reprioritize(
+                request, ThumbnailPriority.FromRange(bounds.Y, bounds.Bottom, top, bottom, i));
+        }
+    }
+
+    /// <summary>生成済みのサムネイルをキャッシュから取得する（生成はしない）。</summary>
+    /// <param name="filePath">対象のファイルパス。</param>
+    /// <param name="size">サムネイルの幅（ピクセル）。</param>
+    /// <returns>キャッシュにあるサムネイル。 無い場合は null。</returns>
+    /// <remarks>キーに更新日時を含めるため、ファイルの内容が変われば再生成される。</remarks>
+    private static Bitmap? GetCachedThumbnail(string filePath, int size)
+    {
+        try
+        {
+            (string Path, int Size, DateTime LastWrite) key = (filePath, size, File.GetLastWriteTimeUtc(filePath));
+            return s_thumbnailCache.TryGetValue(key, out var cached) ? cached : null;
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 更新日時を取得できないファイルは未生成として扱う（一覧は継続する）
+            s_logger.LogThumbnailLoadError(ex, filePath);
+            return null;
+        }
+    }
+
+    /// <summary>1 件分のサムネイル生成の処理を生成する。</summary>
+    /// <param name="item">結果を設定するアイテム。</param>
+    /// <param name="filePath">対象のファイルパス。</param>
+    /// <param name="iconSize">サムネイルの幅（ピクセル）。</param>
+    /// <param name="capacity">サムネイルのキャッシュの最大保持数（一覧が表示する件数）。</param>
+    /// <returns>生成処理。</returns>
+    /// <remarks>
+    /// 復号は背景スレッドで行い、<see cref="FileListItem.Thumbnail"/> への設定だけを UI スレッドで行う。<br/>
+    /// 一覧が差し替わった後（<see cref="ThumbnailScheduler.Clear"/> の後）の結果は反映しない
+    /// （消えた行へ画像を入れない。 破棄済みの行への代入を避ける）。
+    /// </remarks>
+    private static Func<CancellationToken, ValueTask> MakeThumbnailWork(
+        FileListItem item, string filePath, int iconSize, int capacity)
+        => token =>
+        {
+            token.ThrowIfCancellationRequested();
+
+            // 復号できない画像は null で返る（記録は LoadThumbnail が行う）
+            var thumbnail = LoadThumbnail(filePath, iconSize, capacity);
+            var fallback = ThumbnailPlaceholder.Get(iconSize);
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (token.IsCancellationRequested) return;
+
+                item.Thumbnail = thumbnail ?? fallback;
+            });
+
+            return ValueTask.CompletedTask;
+        };
+
+    /// <summary>背景の生成で想定外の例外が発生したときに記録する（一覧は継続する）。</summary>
+    /// <param name="ex">発生した例外。</param>
+    private static void OnThumbnailGenerateError(Exception ex) => s_logger.LogThumbnailGenerateError(ex);
+
+    /// <summary>画像ファイルのサムネイルを読み込む（背景スレッドから呼ぶ）。</summary>
+    /// <param name="filePath">対象のファイルパス。</param>
+    /// <param name="size">サムネイルの幅（ピクセル）。</param>
+    /// <param name="capacity">サムネイルのキャッシュの最大保持数（一覧が表示する件数）。</param>
+    /// <returns>サムネイル。 復号できない場合は null。</returns>
+    /// <remarks>
+    /// <b>保持数を呼び出し側が渡す理由</b>: 一覧が表示する件数より小さい上限だと、生成の途中で表示中の
+    /// サムネイルが破棄される（上限超過時はキャッシュが保持する値を破棄するため、描画が破棄済みの
+    /// バッファへ触れる）。
+    /// </remarks>
+    private static Bitmap? LoadThumbnail(string filePath, int size, int capacity)
     {
         try
         {
             var lastWrite = File.GetLastWriteTimeUtc(filePath);
             (string Path, int Size, DateTime LastWrite) key = (filePath, size, lastWrite);
             return CapacityLimitedCache.GetOrAdd(
-                s_thumbnailCache, ThumbnailCacheCapacity, key, static k =>
+                s_thumbnailCache, Math.Max(1, capacity), key, static k =>
                 {
                     using var stream = File.OpenRead(k.Path);
                     return Bitmap.DecodeToWidth(stream, k.Size);

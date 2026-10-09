@@ -12,6 +12,9 @@ namespace EsUtil.SaveEvidence.App.MewUI.Tests;
 /// </remarks>
 public class ImageThumbnailLoaderTests : IDisposable
 {
+    /// <summary>キャッシュの最大保持数（一覧が表示する件数を渡す想定。 テストでは十分に大きい値を使う）。</summary>
+    private const int Capacity = 100;
+
     /// <summary>テストで作成したファイルのパス（終了時に削除する）。</summary>
     private readonly List<string> _files = [];
 
@@ -66,7 +69,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     {
         var path = WriteImage(sourceWidth, sourceHeight, SKColors.Red);
 
-        var thumbnail = ImageThumbnailLoader.Load(path, maxSize);
+        var thumbnail = ImageThumbnailLoader.Load(path, maxSize, Capacity);
 
         Assert.NotNull(thumbnail);
         Assert.Equal(expectedWidth, thumbnail!.Width);
@@ -78,7 +81,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     {
         var path = WriteImage(40, 20, SKColors.Red);
 
-        var thumbnail = ImageThumbnailLoader.Load(path, 320);
+        var thumbnail = ImageThumbnailLoader.Load(path, 320, Capacity);
 
         Assert.NotNull(thumbnail);
         Assert.Equal(40, thumbnail!.Width);
@@ -101,7 +104,7 @@ public class ImageThumbnailLoaderTests : IDisposable
 
         _files.Add(path);
 
-        var thumbnail = ImageThumbnailLoader.Load(path, 32);
+        var thumbnail = ImageThumbnailLoader.Load(path, 32, Capacity);
 
         Assert.NotNull(thumbnail);
         var (_, _, _, alpha) = thumbnail!.GetPixel(0, 0);
@@ -113,7 +116,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     {
         var path = WriteImage(300, 150, SKColors.Green, ".jpg");
 
-        var thumbnail = ImageThumbnailLoader.Load(path, 150);
+        var thumbnail = ImageThumbnailLoader.Load(path, 150, Capacity);
 
         Assert.NotNull(thumbnail);
         Assert.Equal(150, thumbnail!.Width);
@@ -125,8 +128,8 @@ public class ImageThumbnailLoaderTests : IDisposable
     {
         var path = WriteImage(400, 200, SKColors.Red);
 
-        var first = ImageThumbnailLoader.Load(path, 100);
-        var second = ImageThumbnailLoader.Load(path, 100);
+        var first = ImageThumbnailLoader.Load(path, 100, Capacity);
+        var second = ImageThumbnailLoader.Load(path, 100, Capacity);
 
         Assert.NotNull(first);
         Assert.Same(first, second);
@@ -137,8 +140,8 @@ public class ImageThumbnailLoaderTests : IDisposable
     {
         var path = WriteImage(400, 200, SKColors.Red);
 
-        var small = ImageThumbnailLoader.Load(path, 100);
-        var large = ImageThumbnailLoader.Load(path, 200);
+        var small = ImageThumbnailLoader.Load(path, 100, Capacity);
+        var large = ImageThumbnailLoader.Load(path, 200, Capacity);
 
         Assert.NotNull(small);
         Assert.NotNull(large);
@@ -152,7 +155,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     {
         var path = TestHelper.CreateTempPath(".png");
 
-        Assert.Null(ImageThumbnailLoader.Load(path, 100));
+        Assert.Null(ImageThumbnailLoader.Load(path, 100, Capacity));
     }
 
     [Fact]
@@ -162,7 +165,7 @@ public class ImageThumbnailLoaderTests : IDisposable
         File.WriteAllText(path, "これは画像ではありません");
         _files.Add(path);
 
-        Assert.Null(ImageThumbnailLoader.Load(path, 100));
+        Assert.Null(ImageThumbnailLoader.Load(path, 100, Capacity));
     }
 
     [Fact]
@@ -172,7 +175,7 @@ public class ImageThumbnailLoaderTests : IDisposable
         File.WriteAllBytes(path, [1, 2, 3, 4, 5, 6, 7, 8]);
         _files.Add(path);
 
-        Assert.Null(ImageThumbnailLoader.Load(path, 100));
+        Assert.Null(ImageThumbnailLoader.Load(path, 100, Capacity));
     }
 
     [Fact]
@@ -180,7 +183,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     {
         var path = WriteImage(400, 200, SKColors.Red);
 
-        var thumbnail = ImageThumbnailLoader.Load(path, 0);
+        var thumbnail = ImageThumbnailLoader.Load(path, 0, Capacity);
 
         Assert.NotNull(thumbnail);
         Assert.Equal(1, thumbnail!.Width);
@@ -192,7 +195,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     {
         var path = WriteImage(80, 40, SKColors.Red, ".PNG");
 
-        var thumbnail = ImageThumbnailLoader.Load(path, 40);
+        var thumbnail = ImageThumbnailLoader.Load(path, 40, Capacity);
 
         Assert.NotNull(thumbnail);
         Assert.Equal(40, thumbnail!.Width);

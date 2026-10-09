@@ -225,7 +225,7 @@ src/App.AvaloniaUI/
 src/App.Core/
 ├── src/
 │   ├── Enum/          # AppPage / ThemeMode
-│   ├── Models/        # Settings / FileNameTemplate / UndoHistory / HotKeyParser / CapacityLimitedCache
+│   ├── Models/        # Settings / FileNameTemplate / UndoHistory / HotKeyParser / CapacityLimitedCache / ThumbnailScheduler / ThumbnailPriority
 │   ├── Services/      # ISettingsService / SettingsService / IImageWriter / EsRectIntJsonConverter
 │   └── ViewModels/    # MainViewModel / FolderViewViewModel / UndoViewModel / ViewModeDisplay
 └── tests/             # UI 初期化不要の単体テスト（App.Core.Tests・並列実行）

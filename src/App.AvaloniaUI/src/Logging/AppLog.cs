@@ -207,6 +207,19 @@ internal static partial class AppLog
     internal static void LogThumbnailLoadError(this ILogger logger, Exception ex, string filePath)
         => logger.LogThumbnailLoadErrorCore(Prefix, ex, filePath);
 
+    /// <summary>背景のサムネイル生成で想定外の例外が発生したことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <remarks>LogLevel: Warning<br/>出力書式: <c>サムネイルの生成で例外が発生</c><br/>
+    /// 生成は背景で行うため、失敗しても一覧の表示は継続する（握りつぶさず記録する。 対象のファイルは
+    /// 個別の復号失敗として <see cref="LogThumbnailLoadError"/> が記録する）。</remarks>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} サムネイルの生成で例外が発生")]
+    private static partial void LogThumbnailGenerateErrorCore(this ILogger logger, string prefix, Exception ex);
+
+    internal static void LogThumbnailGenerateError(this ILogger logger, Exception ex)
+        => logger.LogThumbnailGenerateErrorCore(Prefix, ex);
+
     // ====================================================================
     // MainWindow（設定・ホットキー・キャプチャ開始）
     // ====================================================================

@@ -285,6 +285,13 @@ internal sealed class MainWindow
         {
             EnsurePage(index);
 
+            // 表示から外れるページへ通知する（表示中だけの処理＝サムネイルの背景生成を下げる）
+            // ページの要素は IsVisible を切り替えるだけで再利用されるため、要素側では「隠れた」ことを検知できない
+            if (index != selectedIndex && pages[selectedIndex] is { } leaving)
+            {
+                leaving.OnDeactivated?.Invoke();
+            }
+
             for (var i = 0; i < pages.Length; i++)
             {
                 if (pages[i] is { } page)

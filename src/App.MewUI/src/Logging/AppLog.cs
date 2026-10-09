@@ -145,6 +145,21 @@ internal static partial class AppLog
     public static void LogFolderLoadError(this ILogger logger, Exception ex, string folderPath)
         => logger.LogFolderLoadErrorCore(Prefix, ex, folderPath);
 
+    /// <summary>背景のサムネイル生成で想定外の例外が発生したことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Warning <br/>
+    /// 出力書式: <c>サムネイルの生成で例外が発生</c>（例外はスタックトレース込み）<br/>
+    /// 生成は背景で行うため、失敗しても一覧の表示は継続する（握りつぶさず記録する）。 Avalonia 版と同じ書式にする。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="ex">発生した例外。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} サムネイルの生成で例外が発生")]
+    private static partial void LogThumbnailGenerateErrorCore(this ILogger logger, string prefix, Exception ex);
+
+    public static void LogThumbnailGenerateError(this ILogger logger, Exception ex)
+        => logger.LogThumbnailGenerateErrorCore(Prefix, ex);
+
     // ====================================================================
     // 未処理の例外
     // ====================================================================
