@@ -117,7 +117,7 @@ src/App.MewUI/src/
 ├── Program.cs                        起動（バックエンド登録 → コアの組み立て → ホットキー登録 → ウィンドウ表示）
 ├── AppServices.cs                    共有するコアオブジェクトの束
 ├── Services/
-│   ├── ImageThumbnailLoader.cs       画像ファイルの縮小デコードとキャッシュ
+│   ├── ImageThumbnailLoader.cs       画像ファイルの縮小デコード（縮小はコアの面積平均）とキャッシュ
 │   ├── SettingsColorMath.cs          設定の色文字列 ⇔ 色の変換
 │   ├── SettingsJsonContext.cs        設定の JSON ソース生成（Native AOT 対応）
 │   ├── CaptureFlow.cs                キャプチャの開始（多重起動の防止。 画像の反映は CaptureCompleted）
@@ -160,11 +160,11 @@ tests/
 | `BottomAlignWrapPanel` | 横方向に折り返し、各行内で子要素を下端揃えするパネル。 行高さと配置の計算はコアの `BottomAlignWrapLayout` が所有し、本クラスは寸法の変換と委譲のみを担う（Avalonia 版の同名パネルと計算を共有する） |
 | `ThumbnailItem` | 一覧アイテム 1 件（枠 + 影 + ラベル）を組み立てる。 影（`ShadowDecorator`）の配下では `StateTrigger`（ホバー）が効かないため、ホバー時の枠色と影の有無を `MouseEnter` / `MouseLeave` で直接切り替える（現在表示中の枠は影なし） |
 | `FolderViewPage` | フォルダ一覧のツールバー・サムネイル一覧・ステータスバー（保存先フォルダを右端へ寄せる） |
-| `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし） |
+| `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし）。 **サムネイルはコアの面積平均で DIP サイズへ縮小してから描画する**（Skia の描画時サンプリングは既定が最近傍のため、同じ寸法でも画質が変わる。 縮小画像は本ページが所有し、一覧の再構築のたびに破棄する） |
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。 変更の即時保存・テーマの即時適用・ホットキー入力を担う |
 | `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `SkiaImageView` が単一所有し、計測と Uniform 指定だけを与える） |
 | `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsBitmapFileExtensions.Save`（拡張子が形式を決める）へ委譲する |
-| `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ |
+| `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ。 **縮小はコアの面積平均（`EsBitmapExtensions.Resize`）へ委譲する**（Skia の `Resize(Linear)` は大きな縮小率で細線を実際より濃く残すため使わない。 コーデックの縮小デコードはデコードの高速化としてのみ使う） |
 | `ImageDrawMath`（`Platform.MewUI`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |

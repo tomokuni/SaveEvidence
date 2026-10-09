@@ -59,6 +59,10 @@ internal static class UndoPage
 
         var modeButtons = new ToggleButton[ViewModeDisplay.Count];
 
+        // サムネイル用に縮小した画像（本ページが所有し、一覧の再構築のたびに破棄する）
+        // （一覧を組み立てるローカル関数（CreateModeButton → OnModeChanged → Rebuild）から参照するため、 最初に宣言する）
+        var thumbnails = new List<EsWritableBitmap>();
+
         // 表示モードの切り替え（解除は許さない。 常に 1 つを選択状態に保つ）
         void OnModeChanged(int index, bool isChecked)
         {
@@ -110,6 +114,8 @@ internal static class UndoPage
         void Rebuild()
         {
             var iconSize = settingsService.Current.GetIconSize(selectedIndex);
+            var previous = thumbnails;
+            var created = new List<EsWritableBitmap>();
 
             list.Clear();
 
@@ -117,18 +123,26 @@ internal static class UndoPage
             var redo = undoStack.GetRedoHistory();
             for (var i = 0; i < redo.Count; i++)
             {
-                list.Add(CreateItem(redo[i], $"Redo {i + 1}", isCurrent: false, iconSize));
+                list.Add(CreateItem(redo[i], $"Redo {i + 1}", isCurrent: false, iconSize, created));
             }
 
             if (viewModel.PreviewImage is { } current)
             {
-                list.Add(CreateItem(current, "現在", isCurrent: true, iconSize));
+                list.Add(CreateItem(current, "現在", isCurrent: true, iconSize, created));
             }
 
             var undo = undoStack.GetUndoHistory();
             for (var i = undo.Count - 1; i >= 0; i--)
             {
-                list.Add(CreateItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false, iconSize));
+                list.Add(CreateItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false, iconSize, created));
+            }
+
+            thumbnails = created;
+
+            // 新しい一覧を先に設定し、旧サムネイルは後から破棄する（表示が参照中の破棄を避ける）
+            foreach (var thumbnail in previous)
+            {
+                thumbnail.Dispose();
             }
 
             countText.Value = ViewModeDisplay.GetItemCountText(list.Count);
@@ -203,16 +217,26 @@ internal static class UndoPage
     /// <param name="label">サムネイル下のラベル。</param>
     /// <param name="isCurrent">現在プレビューに表示中の画像かどうか（true の場合は青枠で強調する）。</param>
     /// <param name="iconSize">サムネイルの一辺のサイズ（DIP）。</param>
+    /// <param name="owned">本ページが所有する縮小画像の登録先（一覧の再構築のたびに破棄する）。</param>
     /// <returns>サムネイルとラベルを縦に並べた要素。</returns>
     /// <remarks>
-    /// ダブルクリックで <paramref name="image"/> を一時ファイルへ書き出し、OS の既定アプリで開く。
+    /// ダブルクリックで <paramref name="image"/>（<b>元の寸法のまま</b>）を一時ファイルへ書き出し、OS の既定アプリで開く。<br/>
+    /// <b>表示は縮小した画像を使う</b>: コアの面積平均（<see cref="DownscaleAlgorithm.Box"/>）で <paramref name="iconSize"/> へ縮小してから描画する。<br/>
+    /// 描画時に Skia へ縮小させるとサンプリング（既定は最近傍）によって<b>同じ寸法でも画質が変わる</b>（実測: 4K → 320x180 で
+    /// 細線の輝度は既定 255 / 面積平均 21） ため、Avalonia 版（表示用の射影を縮小する）と同じ手順に揃える。
     /// </remarks>
-    private static Element CreateItem(EsWritableBitmap image, string label, bool isCurrent, int iconSize)
+    private static Element CreateItem(
+        EsWritableBitmap image, string label, bool isCurrent, int iconSize, List<EsWritableBitmap> owned)
     {
+        // 縮小後の寸法は元画像を超えない（コアの縮小は拡大を未サポートとする）
+        var longSide = Math.Max(image.Width, image.Height);
+        var thumbnail = image.Resize(Math.Min(iconSize, longSide), DownscaleAlgorithm.Box);
+        owned.Add(thumbnail);
+
         // 枠（背景色・枠線・角丸）はスタイルが与え、ホバーのハイライトはアイテム側が切り替える
         var frame = new Border()
             .StyleName(isCurrent ? AppStyles.ThumbnailFrameCurrent : AppStyles.ThumbnailFrame)
-            .Child(new ThumbnailView { RequestedSize = iconSize, Source = image });
+            .Child(new ThumbnailView { RequestedSize = iconSize, Source = thumbnail });
 
         // ラベルは枠（画像 + 影の余白）と同じ幅にし、文字を画像の中央へ揃える
         // （文字は Avalonia 版と同じく領域の上端へ寄せる）

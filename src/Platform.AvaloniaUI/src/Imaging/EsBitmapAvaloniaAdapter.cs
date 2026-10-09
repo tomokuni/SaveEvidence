@@ -22,8 +22,8 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 /// <b>射影は初回に一度だけ</b>: 表示用の射影（Avalonia の <see cref="Bitmap"/>）は初回の描画（または寸法取得）で
 /// 1 回だけ作り、以降は作り直さない（ピクセルを複製するため。 実測: 4K で 7.8 ms / 32 MB）。<br/>
 /// <b>表示用の射影だけを縮小できる</b>: <see cref="DisplayMaxSize"/> を指定すると、表示用の射影は
-/// コアの <see cref="EsBitmapExtensions.DownscaleBilinear"/> で縮小される（実測: 4K から 96x54 で 110 µs・
-/// 320x180 で 1.2 ms。 等倍の射影は 7.8 ms / 32 MB）。
+/// コアの面積平均（<see cref="EsBitmapExtensions.Resize"/> の <see cref="DownscaleAlgorithm.Box"/>）で縮小される
+/// （実測: 4K から 320x180 で 1.8 ms / 230 KB。 等倍の射影は 7.8 ms / 32 MB）。
 /// 一覧のサムネイルのように小さく表示する場面で、元の寸法の複製を保持しないための入口である。
 /// <b>画像が上限に収まっている場合は縮小しない</b>（等倍の射影を共用する）。<br/>
 /// <b>保存・クリップボード用の <see cref="GetAvaloniaBitmap"/> は等倍のまま</b>である（表示と保存で射影を分ける）。<br/>
@@ -57,14 +57,11 @@ public sealed class EsBitmapAvaloniaAdapter : IImage, IEsBitmap, IDisposable
     /// <b>大きな画像を小さく表示する場面（一覧のサムネイル等）で、表示用の射影を縮小する</b>。
     /// 等倍の射影は画像 1 枚につき元の寸法の複製を保持するため（実測: 4K で 32 MB / 7.8 ms）、
     /// 96px のサムネイルを 5 枚並べると 160 MB を超える。<br/>
-    /// <b>アルゴリズムは双線形補間</b>（コアの <see cref="EsBitmapExtensions.DownscaleBilinear"/> が単一所有する）。
-    /// <b>速度を優先する理由</b>: 一覧は表示のたびにアダプタを作り直すため、1 枚あたりのコストがそのまま体感に乗る。
-    /// 双線形は 4K 1 枚で 0.3〜1.2 ms（320x180）に対し、面積平均（<see cref="EsBitmapExtensions.DownscaleBox"/>）は
-    /// 25〜30 ms で、11 枚では<b>0.3 秒の停止</b>になる（実測。 Avalonia の同じ寸法の縮小は約 6 ms。 本実装は SIMD を
-    /// 使わないため遅い）。<br/>
-    /// <b>画質</b>: 面積平均（＝フォルダビューの <c>Bitmap.DecodeToWidth</c> と同じ平均）は細線を薄く残すが、
-    /// 双線形は細線を薄めに残すか（比例位置の画素と半分ずつ）落とす（実測: 4K → 320x180 で幅 1 px の細線は
-    /// 面積平均 21 / 双線形 127 / 最近傍 255（位置が合ったときのみ））。 文字を読ませたい場合は面積平均へ切り替える。<br/>
+    /// <b>アルゴリズムは面積平均</b>（コアの <see cref="EsBitmapExtensions.Resize"/> へ <see cref="DownscaleAlgorithm.Box"/> を渡す）。
+    /// <b>画質を優先する理由</b>: 同じ寸法のサムネイルを出すフォルダビュー（ファイル → <c>Bitmap.DecodeToWidth</c>）は
+    /// <b>面積平均相当</b>の画質であり、双線形だと<b>同じサイズなのに一覧ごとに見え方が変わる</b>（実測: 4K → 320x180 で
+    /// 幅 1 px の細線の輝度は面積平均 21 / 双線形 127 で、どちらが残るかが逆になる）。
+    /// 面積平均は内部で並列化されるため 4K 1 枚が 1.8 ms で済む（並列化前は 27 ms で、11 枚なら 0.3 秒の停止だった）。<br/>
     /// <b>画像が上限に収まっている場合は縮小しない</b>（等倍の射影を共用し、同じ寸法の複製を 2 つ作らない）。<br/>
     /// 上限を設定すると <see cref="IImage.Size"/> は縮小後の寸法を返す（Avalonia のレイアウトと描画がその寸法を基準にする）。
     /// <b>コアの読み取り面（<see cref="IEsBitmap.Size"/> / <see cref="IEsBitmap.Width"/> 等）は真実の寸法のまま</b>である。
@@ -253,7 +250,7 @@ public sealed class EsBitmapAvaloniaAdapter : IImage, IEsBitmap, IDisposable
     /// <summary>表示用の射影を取得する（初回だけ作る）。</summary>
     /// <param name="source">真実のコア画像。</param>
     /// <returns>表示に使う Avalonia の画像（本クラスが所有する。 縮小が不要な場合は等倍の射影）。</returns>
-    /// <remarks>縮小のアルゴリズムはコアの <see cref="EsBitmapExtensions.DownscaleBilinear"/> が単一所有する
+    /// <remarks>縮小のアルゴリズムはコアの面積平均（<see cref="DownscaleAlgorithm.Box"/>）が単一所有する
     /// （縮小した中間画像は小さく、変換（表示用）のコピーは無視できる。 実測: 320x180 で 230 KB）。</remarks>
     private Bitmap EnsureDisplayProjection(IEsBitmap source)
     {
@@ -268,7 +265,7 @@ public sealed class EsBitmapAvaloniaAdapter : IImage, IEsBitmap, IDisposable
             return _avaloniaProjection ??= source.ToAvaloniaBitmap();
         }
 
-        using var scaled = source.DownscaleBilinear(DisplayMaxSize);
+        using var scaled = source.Resize(DisplayMaxSize, DownscaleAlgorithm.Box);
         return _displayProjection = scaled.ToAvaloniaBitmap();
     }
 
