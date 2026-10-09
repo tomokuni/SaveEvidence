@@ -76,21 +76,21 @@ public static class EsBitmapAvaloniaExtensions
 
         var w = bitmap.PixelSize.Width;
         var h = bitmap.PixelSize.Height;
+
         // CopyPixels は矩形の全行を埋めるため、0 埋めは行わない
-        var result = EsWritableBitmap.CreateUninitialized(w, h);
-        var dstStride = result.Stride;
-
-        fixed (byte* dst = result.WritablePixels)
+        return EsWritableBitmap.CreateFilled(w, h, dst =>
         {
-            // CopyPixels は宛先バッファを stride のピッチで埋める。 コアのバッファを直接宛先にし、中間 byte[] を排除する
-            bitmap.CopyPixels(
-                new PixelRect(0, 0, w, h),
-                (nint)dst,
-                checked(dstStride * h),
-                dstStride);
-        }
-
-        return result;
+            var dstStride = w * IEsBitmap.BytesPerPixel;
+            fixed (byte* p = dst)
+            {
+                // CopyPixels は宛先バッファを stride のピッチで埋める。 コアのバッファを直接宛先にし、中間 byte[] を排除する
+                bitmap.CopyPixels(
+                    new PixelRect(0, 0, w, h),
+                    (nint)p,
+                    checked(dstStride * h),
+                    dstStride);
+            }
+        });
     }
 
     /// <summary>Avalonia WriteableBitmap を返す（複製を所有するため安全に使用できる）。</summary>

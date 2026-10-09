@@ -72,30 +72,32 @@ public static class EsBitmapSkiaExtensions
 
         var srcStride = bitmap.RowBytes;
         var dstStride = bitmap.Width * IEsBitmap.BytesPerPixel;
-
-        // コピー元のストライドがデスティネーション以上なら全行が覆われるため、0 埋めを省く
-        var result = srcStride >= dstStride
-            ? EsWritableBitmap.CreateUninitialized(bitmap.Width, bitmap.Height)
-            : EsWritableBitmap.Create(bitmap.Width, bitmap.Height);
-
         var rowBytes = Math.Min(srcStride, dstStride);
-        var dst = result.WritablePixels;
-        unsafe
+        var height = bitmap.Height;
+
+        return EsWritableBitmap.CreateFilled(bitmap.Width, height, dst =>
         {
-            var src = (byte*)bitmap.GetPixels();
-            if (src is null)
+            unsafe
             {
-                // ピクセルを持たないビットマップ（表像なし）は透明で埋める（未初期化の場合は不定値が残るため）
-                dst.Clear();
-                return result;
-            }
+                var src = (byte*)bitmap.GetPixels();
+                if (src is null)
+                {
+                    // ピクセルを持たないビットマップ（表像なし）は透明で埋める（不定値が残るのを避ける）
+                    dst.Clear();
+                    return;
+                }
 
-            for (var y = 0; y < bitmap.Height; y++)
-            {
-                new ReadOnlySpan<byte>(src + y * srcStride, rowBytes).CopyTo(dst.Slice(y * dstStride, rowBytes));
-            }
-        }
+                if (srcStride < dstStride)
+                {
+                    // 行幅がコピー先より小さい形式では、覆われない右端を透明にする
+                    dst.Clear();
+                }
 
-        return result;
+                for (var y = 0; y < height; y++)
+                {
+                    new ReadOnlySpan<byte>(src + (y * srcStride), rowBytes).CopyTo(dst.Slice(y * dstStride, rowBytes));
+                }
+            }
+        });
     }
 }
