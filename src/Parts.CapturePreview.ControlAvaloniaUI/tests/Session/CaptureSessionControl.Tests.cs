@@ -22,7 +22,7 @@ public class CaptureSessionControlTests
     /// <summary>キャプチャサービスのモック。</summary>
     private sealed class MockCaptureService : ICaptureService
     {
-        public EsWritableBitmap? CaptureArea(EsRectInt bounds) => null;
+        public EsWritableBitmap CaptureArea(EsRectInt bounds) => EsWritableBitmap.Create(bounds.Width, bounds.Height);
         public EsWritableBitmap? CaptureVirtualScreen(out EsPointInt origin)
         {
             origin = default;
@@ -35,7 +35,7 @@ public class CaptureSessionControlTests
     {
         public void HideFromTaskSwitcher(EsPlatformHandle handle) { }
         public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude) => true;
-        public bool SetBounds(EsPlatformHandle handle, EsRectInt bounds) => true;
+        public void SetBounds(EsPlatformHandle handle, EsRectInt bounds) { }
         public void EvacuateWindow(EsPlatformHandle handle) { }
     }
 

@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Threading;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
@@ -28,7 +29,16 @@ internal sealed partial class CaptureOverlayWindow
         Focus();
         if (TryGetPlatformHandle() is { } selfHandle)
         {
-            _windowService.HideFromTaskSwitcher(selfHandle.ToEsPlatformHandle());
+            try
+            {
+                _windowService.HideFromTaskSwitcher(selfHandle.ToEsPlatformHandle());
+            }
+            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            {
+                // 除外できなくても選択操作は成立する（Alt+Tab の一覧に残るだけ）。
+                // ウィンドウ イベントのハンドラーを例外で抜けないよう、境界で記録して続行する
+                _log.LogOperationError(ex, nameof(OnWindowOpened));
+            }
         }
         // ルーペの表示はマウス移動（Marquee の LoupePositionMoved）が行う。
         // ここで中央に表示するとポインタから遠くに描画され、Source 未設定の市松模様も見えるため表示しない。
@@ -98,7 +108,7 @@ internal sealed partial class CaptureOverlayWindow
         {
             // キャプチャ未完了（オーバーレイを先に表示した直後）: 確定矩形を直接キャプチャする
             // （GDI キャプチャはスレッドセーフのためバックグラウンドで実行可能）
-            clipTask = Task.Run(() => _captureService.CaptureArea(captureRect));
+            clipTask = Task.Run<EsWritableBitmap?>(() => _captureService.CaptureArea(captureRect));
         }
         else
         {

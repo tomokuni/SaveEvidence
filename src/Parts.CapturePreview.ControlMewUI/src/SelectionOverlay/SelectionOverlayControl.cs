@@ -14,6 +14,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.MewUI;
 using EsUtil.SaveEvidence.Platform.Skia;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using SkiaSharp;
 
 
@@ -307,7 +308,7 @@ public sealed class SelectionOverlayControl : Panel
         get => _marquee.Log;
         set
         {
-            var logger = value.OrNullLogger();
+            var logger = value ?? NullLogger.Instance;
             _marquee.Log = logger;
             _loupe.Log = logger;
         }

@@ -37,10 +37,11 @@ public class CaptureOverlayWindowTests
         /// <summary>CaptureArea の呼び出し回数（確定時の再キャプチャが廃止されたことの検証用）。</summary>
         public int CaptureAreaCallCount { get; private set; }
 
-        public EsWritableBitmap? CaptureArea(EsRectInt bounds)
+        public EsWritableBitmap CaptureArea(EsRectInt bounds)
         {
+            // 呼び出し回数の検証だけが目的のモック。 実際の取得は仮想スクリーンのモックが担う
             CaptureAreaCallCount++;
-            return null;
+            return EsWritableBitmap.Create(bounds.Width, bounds.Height);
         }
 
         public EsWritableBitmap? CaptureVirtualScreen(out EsPointInt origin)
@@ -55,7 +56,7 @@ public class CaptureOverlayWindowTests
     {
         public void HideFromTaskSwitcher(EsPlatformHandle handle) { }
         public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude) => true;
-        public bool SetBounds(EsPlatformHandle handle, EsRectInt bounds) => true;
+        public void SetBounds(EsPlatformHandle handle, EsRectInt bounds) { }
         public void EvacuateWindow(EsPlatformHandle handle) { }
     }
 

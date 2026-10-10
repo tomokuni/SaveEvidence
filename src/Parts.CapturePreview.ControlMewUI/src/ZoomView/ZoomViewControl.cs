@@ -74,7 +74,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
     /// <summary>ズーム操作ログの出力先を取得または設定する。</summary>
     /// <value>ロガー。 null を設定した場合は出力なしとして扱う。</value>
-    /// <remarks>null の吸収はコア（<see cref="LoggerFallback.OrNullLogger"/>）が単一所有する（呼び出し側で null 判定しない）。</remarks>
+    /// <remarks>null の吸収（<c>?? NullLogger.Instance</c>）は呼び出し側で行う（規則は .github/ログ規約.md が所有する）。</remarks>
     public ILogger Log
     {
         get => _session.Log;

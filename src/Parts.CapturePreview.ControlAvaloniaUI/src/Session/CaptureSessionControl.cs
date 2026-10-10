@@ -13,6 +13,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
@@ -86,8 +87,8 @@ public sealed class CaptureSessionControl : IDisposable
         initialSettings?.Validate();
         // 入力なし（null）は既定値で埋める（規則はコアが単一所有する）
         _currentSettings = CaptureSettingsMerge.Merge(initialSettings);
-        _log = logger.OrNullLogger();
-        _windowService = new WinWindowService(_log);
+        _log = logger ?? NullLogger.Instance;
+        _windowService = new WinWindowService();
     }
 
     /// <summary>現在の外観・動作設定を取得する（getter は現在有効な値、すなわち全メンバー non-null の CaptureSettings を返す）。</summary>
@@ -137,8 +138,8 @@ public sealed class CaptureSessionControl : IDisposable
 
             var session = new CaptureOverlaySession(
                 _windowService,
-                new WinCaptureService(_log),
-                new WinElementFinder(_log),
+                new WinCaptureService(),
+                new WinElementFinder(),
                 type, _currentSettings, scaling,
                 // キャプチャ完了イベントを公開イベントへ中継する（同期実行 → ホストの画像変更後に再表示）
                 onCaptured: result => CaptureCompleted?.Invoke(this, new CaptureCompletedEventArgs(result)),

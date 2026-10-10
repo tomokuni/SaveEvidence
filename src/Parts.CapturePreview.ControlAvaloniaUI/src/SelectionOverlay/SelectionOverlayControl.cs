@@ -16,6 +16,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 
@@ -372,7 +373,7 @@ public sealed class SelectionOverlayControl : Panel
         get => _marquee.Log;
         set
         {
-            var logger = value.OrNullLogger();
+            var logger = value ?? NullLogger.Instance;
             _loupeControl.Log = logger;
             _marquee.Log = logger;
         }

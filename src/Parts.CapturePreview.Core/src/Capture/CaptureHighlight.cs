@@ -4,6 +4,7 @@ using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 
@@ -36,7 +37,7 @@ public readonly record struct CaptureHighlight(EsRect? SourceRect, bool TitleCha
 public sealed class CaptureHighlightSession(ILogger? logger = null)
 {
     /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
-    private readonly ILogger _log = logger.OrNullLogger();
+    private readonly ILogger _log = logger ?? NullLogger.Instance;
 
     /// <summary>直前に検出した要素の表示名（未検出・未取得の場合は空文字）を取得する。</summary>
     /// <value>情報ラベル（ウィンドウタイトル）に表示する文言。 未検出の場合は空文字。</value>

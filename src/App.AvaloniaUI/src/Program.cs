@@ -121,7 +121,7 @@ internal static class Program
         // OS 依存サービスの登録（実装はホストが直接生成する。 アクション識別子は CaptureType）
         // ホットキーの登録・解除の失敗は OS 操作の失敗としてアプリのログ基盤へ記録する
         services.AddSingleton<IGlobalHotKeyService<CaptureType>>(
-            _ => new WinGlobalHotKeyService<CaptureType>(AppLog.CreateLogger("WinGlobalHotKeyService")));
+            _ => new WinGlobalHotKeyService<CaptureType>());
 
         // 画像の書き込み（両 UI 共通の実装を MainViewModel（App.Core）へ注入する）
         services.AddSingleton<IImageWriter, EsBitmapImageWriter>();

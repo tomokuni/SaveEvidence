@@ -244,15 +244,24 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>ホットキーを登録する。</summary>
+    /// <remarks>
+    /// <b>登録できなかった組み合わせを記録する</b>: 他のアプリが同じ組み合わせを使用している場合にも起こるため、
+    /// 1 件の競合でアプリを止めず、失敗した組み合わせだけを Warning で残す（規則は <c>ILogger</c> の呼び出し側が持つ）。
+    /// </remarks>
     private void RegisterHotKeys()
     {
         var s = _settingsService.Current;
-        _hotKeyService.RegisterAll(
+        var failed = _hotKeyService.RegisterAll(
         [
             (CaptureType.ScreenSelect, s.SelectScreenHotKey),
             (CaptureType.WindowSelect, s.WindowSelectHotKey),
             (CaptureType.AreaSelect, s.AreaSelectHotKey),
         ]);
+
+        foreach (var (action, setting) in failed)
+        {
+            s_logger.LogHotKeyRegisterFailed(action, setting.Key);
+        }
     }
 
     /// <summary>WM_HOTKEY 受信時（ホットキーサービスから対応するアクションが配信される）。</summary>

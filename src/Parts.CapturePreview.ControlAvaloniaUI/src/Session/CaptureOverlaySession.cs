@@ -12,6 +12,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
@@ -33,7 +34,7 @@ internal sealed class CaptureOverlaySession(
     ILogger? logger = null)
 {
     /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
-    private readonly ILogger _log = logger.OrNullLogger();
+    private readonly ILogger _log = logger ?? NullLogger.Instance;
 
     /// <summary>表示中の選択オーバーレイウィンドウ（キャンセル用）。</summary>
     private CaptureOverlayWindow? _window;

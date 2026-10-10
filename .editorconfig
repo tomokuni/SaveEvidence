@@ -335,8 +335,8 @@ dotnet_diagnostic.CA1508.severity = none
 dotnet_diagnostic.CA1720.severity = none
 
 # 禁止 API（RS0030）の所有者。 BannedSymbols.txt が禁止する API を「使う場所」はここだけである
-# （EnumCanonical は Enum.TryParse、LoggerFallback は NullLogger.Instance を使う）。
-[{src/EsUtil.Platform.Core/src/EnumCanonical.cs,src/EsUtil.Platform.Core/src/LoggerFallback.cs}]
+# （EnumCanonical は Enum.TryParse を使う）。
+[src/EsUtil.Platform.Core/src/EnumCanonical.cs]
 dotnet_diagnostic.RS0030.severity = none
 
 # 規約が認める付随型（型と一体の enum・操作クラス）を同居させるファイルは、ファイル名（主たる型）と

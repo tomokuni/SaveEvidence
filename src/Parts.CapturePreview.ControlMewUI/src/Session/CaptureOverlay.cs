@@ -17,6 +17,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.MewUI;
 using EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 
@@ -133,7 +134,7 @@ internal sealed class CaptureOverlay
         _onCaptured = onCaptured;
         _type = type;
         _settings = settings;
-        _log = log.OrNullLogger();
+        _log = log ?? NullLogger.Instance;
 
         _selector = new SelectionOverlayControl
         {
@@ -349,7 +350,16 @@ internal sealed class CaptureOverlay
                 // OS により作業領域内へ補正される（実測: 仮想スクリーン原点 -1200 が 0 になる）。
                 // そのため表示直後（透明なうち）に物理ピクセルで仮想スクリーン全面へ置き直す。
                 placed = true;
-                services.Window.SetBounds(window.ToEsPlatformHandle(), _screenBounds);
+                try
+                {
+                    services.Window.SetBounds(window.ToEsPlatformHandle(), _screenBounds);
+                }
+                catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+                {
+                    // 配置できないと全モニターの選択ができないが、描画フレームのコールバックを
+                    // 例外で抜けると以降のフレーム処理が止まるため、境界で記録して続行する
+                    _log.LogOperationError(ex, nameof(RunAsync));
+                }
             }
 
             if (revealed || frames < FramesUntilReveal)

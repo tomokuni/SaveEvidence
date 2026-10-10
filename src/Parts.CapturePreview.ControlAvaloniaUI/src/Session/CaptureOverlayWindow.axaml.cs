@@ -16,6 +16,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
@@ -118,7 +119,7 @@ internal sealed partial class CaptureOverlayWindow : Window
         _state.TryBegin();
         _captureType = captureType;
         _onComplete = onComplete;
-        _log = logger.OrNullLogger();
+        _log = logger ?? NullLogger.Instance;
         _windowService = windowService;
         _captureService = captureService;
         _detector = detector;

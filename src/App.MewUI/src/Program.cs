@@ -80,7 +80,7 @@ internal static class Program
 
         // グローバルホットキーはウィンドウハンドルとメッセージフックを必要とするため、初回描画後に登録する
         // （登録・解除の失敗は OS 操作の失敗として同じログ基盤へ記録する）
-        var hotKeys = new WinGlobalHotKeyService<CaptureType>(s_logger);
+        var hotKeys = new WinGlobalHotKeyService<CaptureType>();
         window.Closed += hotKeys.Dispose;
         window.FirstFrameRendered += () => RegisterHotKeys(hotKeys, window, settings, services);
 
@@ -147,7 +147,9 @@ internal static class Program
     ///    （ツールバーのボタンと同じ経路に一本化し、開始処理を二重所有しない）。<br/>
     /// <b>呼び出し時期</b>: ウィンドウのハンドルとウィンドウプロシージャは表示時に確定するため、<br/>
     /// 起動時コールバックではなく初回描画後（<c>FirstFrameRendered</c>）に呼ぶ。<br/>
-    /// それより早いとサブクラス化が MewUI 側の設定で上書きされ、<c>WM_HOTKEY</c> を受け取れない。
+    /// それより早いとサブクラス化が MewUI 側の設定で上書きされ、<c>WM_HOTKEY</c> を受け取れない。<br/>
+    /// <b>登録できなかった組み合わせを記録する</b>: 他のアプリが同じ組み合わせを使用している場合にも起こるため、
+    /// 1 件の競合でアプリを止めず、失敗した組み合わせだけを Warning で残す。
     /// </remarks>
     private static void RegisterHotKeys(
         IGlobalHotKeyService<CaptureType> hotKeys, Window window,
@@ -156,12 +158,17 @@ internal static class Program
         var settings = settingsService.Current;
         hotKeys.Subscribe(type => services.Main.StartSelectionMode?.Invoke(type));
         hotKeys.Initialize(window.Handle);
-        hotKeys.RegisterAll(
+        var failed = hotKeys.RegisterAll(
         [
             (CaptureType.ScreenSelect, settings.SelectScreenHotKey),
             (CaptureType.WindowSelect, settings.WindowSelectHotKey),
             (CaptureType.AreaSelect, settings.AreaSelectHotKey),
         ]);
+
+        foreach (var (action, setting) in failed)
+        {
+            s_logger.LogHotKeyRegisterFailed(action, setting.Key);
+        }
     }
 
     /// <summary>骨格確認用のプレビュー画像を生成する。</summary>

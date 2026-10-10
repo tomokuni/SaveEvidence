@@ -11,6 +11,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 
@@ -100,10 +101,10 @@ public sealed class CaptureSessionControl : IDisposable
         initialSettings?.Validate();
         // 入力なし（null）は既定値で埋める（規則はコアが単一所有する）
         _settings = CaptureSettingsMerge.Merge(initialSettings);
-        _log = logger.OrNullLogger();
-        _captureService = new WinCaptureService(_log);
-        _finder = new WinElementFinder(_log);
-        _windowService = new WinWindowService(_log);
+        _log = logger ?? NullLogger.Instance;
+        _captureService = new WinCaptureService();
+        _finder = new WinElementFinder();
+        _windowService = new WinWindowService();
     }
 
     /// <summary>現在の設定（全メンバー non-null）を取得または設定する。</summary>

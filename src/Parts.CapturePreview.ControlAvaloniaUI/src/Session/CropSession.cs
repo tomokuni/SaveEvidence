@@ -18,6 +18,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
@@ -42,11 +43,11 @@ internal sealed class CropSession(
     ILogger? logger = null)
 {
     /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
-    private readonly ILogger _log = logger.OrNullLogger();
+    private readonly ILogger _log = logger ?? NullLogger.Instance;
 
     /// <summary>カーソル上書き抑止（Crop 中の十字カーソル維持）。</summary>
     /// <remarks>WndProc の差し替えに失敗した場合（OS 操作の失敗）は共通のロガーへ記録される（null の場合は出力なし）。</remarks>
-    private readonly ICursorOverrideGuard _cursorGuard = new WinCursorOverrideGuard(logger);
+    private readonly ICursorOverrideGuard _cursorGuard = new WinCursorOverrideGuard();
 
     /// <summary>座標変換ポート（ビューポートDIP ↔ 元画像ピクセル）。</summary>
     /// <remarks>

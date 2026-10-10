@@ -325,4 +325,20 @@ internal static partial class AppLog
 
     internal static void LogCaptureStartError(this ILogger logger, Exception ex, CaptureType captureType)
         => logger.LogCaptureStartErrorCore(Prefix, ex, captureType);
+
+    /// <summary>ホットキーを登録できなかったことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="captureType">登録しようとしたキャプチャ種別。</param>
+    /// <param name="key">登録しようとしたキー。</param>
+    /// <remarks>
+    /// LogLevel: Warning<br/>
+    /// 出力書式: <c>ホットキーを登録できませんでした: {captureType}, key={key}</c><br/>
+    /// 他のアプリが同じ組み合わせを使用している場合にも起こる（そのホットキーが機能しないだけでアプリは継続する）。
+    /// </remarks>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} ホットキーを登録できませんでした: {captureType}, key={key}")]
+    private static partial void LogHotKeyRegisterFailedCore(this ILogger logger, string prefix, CaptureType captureType, EsKey key);
+
+    internal static void LogHotKeyRegisterFailed(this ILogger logger, CaptureType captureType, EsKey key)
+        => logger.LogHotKeyRegisterFailedCore(Prefix, captureType, key);
 }

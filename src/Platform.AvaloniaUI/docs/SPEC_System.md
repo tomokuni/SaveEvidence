@@ -150,4 +150,4 @@ flowchart TB
 ## 9. ログ
 
 本プロジェクトはログを出力しません。
-ログ定義（`Native.Logging.NativeLogMessage`）は `EsUtil.Platform.Core`（`Native/Logging/`）が所有し、Win 実装が使用します。
+ログ定義は `EsUtil.Platform.Core` が持ちません（外部パッケージを参照しないため）。 ログの取得と記録は本プロジェクトと上位の層が所有します。

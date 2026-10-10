@@ -13,6 +13,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 
@@ -38,7 +39,7 @@ internal sealed class CropSession(
     ILogger? logger = null)
 {
     /// <summary>内部ロガー（null の場合は出力なしに正規化）。</summary>
-    private readonly ILogger _log = logger.OrNullLogger();
+    private readonly ILogger _log = logger ?? NullLogger.Instance;
 
     /// <summary>座標変換ポート（ビューポートDIP ↔ 元画像ピクセル）。</summary>
     /// <remarks>

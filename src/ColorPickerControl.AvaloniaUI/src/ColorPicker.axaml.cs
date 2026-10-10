@@ -4,7 +4,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -197,8 +196,8 @@ public sealed partial class ColorPickerControl : UserControl
     /// </remarks>
     public ILogger Log
     {
-        get => field.OrNullLogger();
-        set => field = value.OrNullLogger();
+        get => field ?? NullLogger.Instance;
+        set => field = value ?? NullLogger.Instance;
     }
 
     /// <summary>ログの接頭辞を取得または設定する（ロガーと一緒に設定する）。</summary>
