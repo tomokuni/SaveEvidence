@@ -255,9 +255,9 @@ src/
 
 `src/Parts.CapturePreview.ControlMewUI/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
 
-`powershell
+```powershell
 dotnet test src/Parts.CapturePreview.ControlMewUI/tests/Parts.CapturePreview.ControlMewUI.Tests.csproj
-`
+```
 
 ## 9. ライセンス
 

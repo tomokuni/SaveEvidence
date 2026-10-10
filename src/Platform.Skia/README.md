@@ -1,6 +1,6 @@
 # Platform.Skia
 
-**SkiaSharp への依存を 1 箇所へ閉じ込める**プラットフォーム層です。
+**SkiaSharp の `PackageReference` を 1 箇所（本プロジェクト）だけが持つ**プラットフォーム層です（MewUI 系の UI は `Aprillz.MewUI.Skia` の `SkiaCanvasView` 経由で SkiaSharp の型を使います）。
 
 ## 1. 目的
 
@@ -33,7 +33,7 @@ Platform.MewUI
          └──> EsUtil.Platform.Core（画像型 / 幾何値型）
 ```
 
-**本プロジェクトが SkiaSharp を参照する唯一の場所です。**
+**`SkiaSharp` の `PackageReference` を宣言するのは本プロジェクトだけです**（UI 非依存層（Core / Presenter）は SkiaSharp を参照しません）。
 
 ## 4. 主な API
 

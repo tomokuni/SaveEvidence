@@ -112,7 +112,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `Save` | `void Save(IEsBitmap image, string filePath)` | 画像を指定パスへ書き込む（コアの `EsBitmapFileExtensions.Save` へ委譲） |
 
 - **Windows 専用です**（`SupportedOSPlatform("windows")`）。 保存の実体（`System.Drawing.Common`）が Windows 専用のためです。 利用側の両アプリは `net10.0-windows` です。
-- **1 型に集約した理由**: 以前は UI ごとに実装（`AvaloniaImageWriter` / `MewUIImageWriter`）があり、どちらも同じコアの保存へ委譲するだけの重複でした（実装が 2 つあると保存結果が食い違いうる）。
+- **1 型に集約する理由**: 実装を UI ごとに分けると保存結果が食い違いうるため、`IImageWriter` の実装は 1 型（`EsBitmapImageWriter`）が担い、保存はコアへ委譲する。
 
 ## 8. `Models.FileNameTemplate`（静的クラス）
 
@@ -285,7 +285,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`） |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`） |
 | `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。 両 UI のホバー強調と確定・キャンセル判定が共用する |
-| `CopyToClipboard()` / `PasteFromClipboard()` | クリップボード操作（実体はコールバックへ委譲） |
+| `CopyToClipboardAsync` / `PasteFromClipboardAsync` | クリップボード操作（実体はコールバックへ委譲） |
 
 ### 18.4 UI 依存の注入点
 

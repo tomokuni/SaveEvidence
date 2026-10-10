@@ -88,7 +88,7 @@
 | 表示モード | `Settings.FolderViewModeIndex`（0=特大, 1=大, 2=中） | 1（大） |
 | ソート順 | `Settings.FolderViewSortAscending`（true=昇順, false=降順） | true（昇順） |
 
-- **保存タイミング**: 表示モード・ソート切替操作のたびに保存（`SaveViewSettings`）
+- **保存タイミング**: 表示モード・ソート切替操作のたびに保存（`SaveViewModeSettings`）
 - **復元タイミング**: ページ初期化 / `Loaded` / ナビゲーションで表示されるたび（`IsVisible` 変更時）
 - **復元時の同期**: 復元した表示モード・ソート順を ToggleButton の選択状態（チェック）へ同期する。 同期対象は対応するボタン群のみ（表示モードボタンは Tag=0〜2、ソートボタンは Tag=asc/desc。 他グループには触れない）
 
@@ -118,7 +118,7 @@
 - **現在の画像の強調**: 現在のキャプチャページに表示中の画像は青枠（`BorderBrush #0078D4`・`BorderThickness 3`）で強調表示する
 - **表示モード**: ツールバーの特大 / 大 / 中 ボタンで切替可能。 選択状態は `Settings.UndoViewModeIndex`（0=特大, 1=大, 2=中、既定 1=大）に保存・復元される。 アイコンサイズはフォルダビューと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する
 - **外部ツール表示**: サムネイルのダブルクリックで一時フォルダへ PNG として保存し、OS の既定アプリ（外部ツール）で開く（Undo / Redo スタックの画像はファイルではなく Bitmap のため）
-- **サムネイルの縮小**: コアの `EsBitmapExtensions.DownscaleBilinear` を使う（フォルダビューがコーデックの縮小デコードを使う理由と実測の比較は §4.2 を参照）
+- **サムネイルの縮小**: コアの `EsBitmapExtensions.Resize`（`DownscaleAlgorithm.Box` = 面積平均）を使う（フォルダビューがコーデックの縮小デコードを使う理由と実測の比較は §4.2 を参照）
 - **更新タイミング**: ナビゲーションで Undo 一覧を表示するたびに最新の履歴を読み込む（`UndoPage` が `IsVisible` 変更を監視し、保存済み設定の復元と一覧の再構築を行う。 UndoHistory / MainViewModel は DI シングルトンから取得）
 - **表示モードの保存・復元**: 表示モード切替操作のたびに保存（`SaveViewModeSettings`）。 復元はページ表示時（範囲チェック付き・`ViewModeDisplay.ClampIndex`）
 
@@ -128,12 +128,12 @@
 
 | 行 | ラベル | 文字色の設定キー | 背景色の設定キー（不透明度は色に統合） | フォントサイズ |
 | --- | --- | --- | --- | --- |
-| 1 行目 | サイズラベル | `TextNormalizeColor`（ラベル設定の 1 行目に一本化） | `SizeLabelBackgroundColor` | `SizeLabelFontSize` |
+| 1 行目 | サイズラベル | `CaptureTextColor`（ラベル設定の 1 行目に一本化） | `SizeLabelBackgroundColor` | `SizeLabelFontSize` |
 | 2 行目 | 操作ラベル | `SubLineColor` | `SubLineBackgroundColor` | `SubLineFontSize` |
 | 3 行目 | 情報ラベル | `InfoLabelColor` | `InfoLabelBackgroundColor` | `InfoLabelFontSize` |
 
 - **背景色**: 色と不透明度を統合した `#AARRGGBB` 形式（例: 黒 60% = `#99000000`）。 カラーピッカー（ColorPickerControl）の Flyout で不透明度（アルファ）も設定できる
-- **キャプチャテキストの色の一本化**: キャプチャテキストの色は 1 行目（サイズラベル）の文字色に一本化する（設定キー `TextNormalizeColor` は「ラベル設定」の 1 行目へマップ）
+- **キャプチャテキストの色の一本化**: キャプチャテキストの色は 1 行目（サイズラベル）の文字色に一本化する（設定キー `CaptureTextColor` は「ラベル設定」の 1 行目へマップ）
 
 ### 4.5 キーボードショートカット（Ctrl キー）
 

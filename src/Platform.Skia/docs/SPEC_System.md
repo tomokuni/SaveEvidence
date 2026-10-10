@@ -16,7 +16,7 @@
 
 ## 1. 概要
 
-`Platform.Skia` は、**SkiaSharp への依存を 1 箇所へ閉じ込める**プラットフォーム層です。
+`Platform.Skia` は、**SkiaSharp の `PackageReference` を 1 箇所だけが持つ**プラットフォーム層です（UI 非依存層（Core / Presenter）は SkiaSharp を参照しません。 MewUI 系の UI は `Aprillz.MewUI.Skia` 経由で SkiaSharp の型を使います）。
 
 1. **ビットマップの相互変換**（`EsBitmapSkiaExtensions`）— コアの画像と `SKBitmap` を変換する（非所有ビュー／複製）
 2. **描画の部品**（`SkiaFill` / `SkiaLabel` / `SkiaText`）と**変換**（`SkiaColorInterop` / `SkiaGeometryInterop`）
@@ -30,8 +30,8 @@
 | 項目 | 内容 |
 | --- | --- |
 | 目的 | `EsUtil.Platform.Core` の判定基準（外部パッケージなし）を守るため、Skia 依存を本層へ隔離する |
-| 提供形態 | クラスライブラリ（`EsUtil.SaveEvidence.Platform.Skia.dll`）。 SkiaSharp を参照する唯一のプロジェクト |
-| 想定利用者 | `Platform.MewUI`、MewUI 系の各コントロール（Marquee / Loupe / SelectionOverlay / ZoomView）、`App.MewUI`、テスト |
+| 提供形態 | クラスライブラリ（`EsUtil.SaveEvidence.Platform.Skia.dll`）。 `SkiaSharp` の `PackageReference` を宣言する唯一のプロジェクト |
+| 想定利用者 | `Platform.MewUI`、`Parts.CapturePreview.ControlMewUI`（選択オーバーレイ / ズームビュー）、`App.MewUI`、テスト |
 | ターゲット | `net10.0` |
 | 言語 | C# 14（`Nullable` 有効・`ImplicitUsings` 有効・`AllowUnsafeBlocks` 有効＝ピクセルポインタのため） |
 | ルート名前空間 | `EsUtil.SaveEvidence.Platform.Skia` |
@@ -41,7 +41,7 @@
 
 ```mermaid
 graph LR
-  MEWUI["Platform.MewUI / *Control.MewUI / Parts.CapturePreview.ControlMewUI / App.MewUI"]
+  MEWUI["Platform.MewUI / Parts.CapturePreview.ControlMewUI / App.MewUI"]
   S[Platform.Skia]
   SK[SkiaSharp]
   PC[EsUtil.Platform.Core]
@@ -60,7 +60,7 @@ graph LR
 | 種別 | 依存先 |
 | --- | --- |
 | プロジェクト | `EsUtil.Platform.Core` |
-| パッケージ | `SkiaSharp`（**Skia 依存を本層へ閉じ込める唯一のプロジェクト**） |
+| パッケージ | `SkiaSharp`（**この `PackageReference` を宣言する唯一のプロジェクト**） |
 
 - `EsUtil.Platform.Core` は SkiaSharp を参照しません（Skia 依存は本層で止まります）。
 - 参照の許可範囲は [依存関係.md](../../../.github/依存関係.md) が所有し、ビルドの `DEP0001`〜`DEP0006` が強制します。

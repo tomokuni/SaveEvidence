@@ -145,7 +145,7 @@ Win32 実装（`Native.Win`）はホストが生成して抽象型として注�
 
 ### 6.3 依存方向
 
-`Platform.AvaloniaUI`（本プロジェクト）→ `EsUtil.Platform.Core`（`Native/` の Win32 実装を含む） の一方向の階層構造です。 上位 AP（MarqueeControl / Parts.CapturePreview.ControlAvaloniaUI 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
+`Platform.AvaloniaUI`（本プロジェクト）→ `EsUtil.Platform.Core`（`Native/` の Win32 実装を含む） の一方向の階層構造です。 上位 AP（`Parts.CapturePreview.ControlAvaloniaUI` / `App.AvaloniaUI` 等）は本プロジェクトを参照すれば、必要な抽象と実装をすべて利用できます。
 
 ## 7. サンプル
 
@@ -176,9 +176,9 @@ Platform.AvaloniaUI/
 
 `src/Platform.AvaloniaUI/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
 
-`powershell
+```powershell
 dotnet test src/Platform.AvaloniaUI/tests/Platform.AvaloniaUI.Tests.csproj
-`
+```
 
 ## 11. ライセンス
 

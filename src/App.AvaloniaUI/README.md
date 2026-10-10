@@ -238,9 +238,9 @@ src/App.Core/
 
 `src/App.AvaloniaUI/tests` が本プロジェクトのテストを持ちます（xUnit v3）。 実行手順と合否基準は [検証手順.md](../../.github/検証手順.md) が定めます。
 
-`powershell
+```powershell
 dotnet test src/App.AvaloniaUI/tests/App.AvaloniaUI.Tests.csproj
-`
+```
 
 ## 18. ライセンス
 

@@ -55,7 +55,7 @@ EsUtil.Platform.Core（Es* 幾何型 / 画像型 / ICaptureService / IWindowServ
 | 判断 | Core | 切り出し範囲・ハイライトの反映・キー操作・クリック確定・種別の性質・モニタ倍率・設定のマージ・退避と除外の順序・画像配置・平均色・取得の打ち切り（`CaptureVirtualScreen`）・画像ビューポートの状態と判断（Fit の表現・実効ズーム率・可否・遷移の適用・パン・スクロールバー） |
 | 契約 | Core | `ICaptureOwnerWindow` / `CaptureSessionSlot` / `CaptureCompletion` / `CaptureCompletedEventArgs` / `ZoomFeedback` / `ZoomNotice` |
 | ログ定義 | Core | `CapturePreviewLogMessage`（撮影・切り出し・設定・ズーム・例外） |
-| ログ以外の正規化 | Core | `CaptureText`（未取得の文字列を空文字へ。 ログ定義とは別の型） |
+| ログ以外の正規化 | Core | `TextNormalize`（未取得の文字列を空文字へ。 ログ定義とは別の型） |
 | 提示の写像 | Core | 設定 → 外観の写像（`CapturePaintMapper`）、子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）、付加情報ラベルの配置指示（`SelectionOverlayLabelRenderer` / `MarqueeHostLabelRenderer`）。 製品の設定型と提示層の外観型を橋渡しする |
 | 入力ブリッジ | UI | ポインタ・キー・ホイールの購読とコア型への変換、返された効果の適用 |
 | 描画 | UI | 外観値を持たず、設定とコア共有値を読んで描く |
@@ -449,7 +449,7 @@ sequenceDiagram
 | `OverlayRectLayout` / `OverlayLineDash` / `OverlayDashWalk` | 負サイズのクランプ・太さの下限・破線の判定とダッシュ長の引き継ぎ（ベクター経路とラスタ経路が同じ数値を使う）・1 辺の破線分割（両ラスタライザが同じ刻み・端のクランプ・丸めを使う） |
 | `OverlayRectRasterizer` | ルーペ画像へのラスタライズ（画素検証） |
 | `SelectionOverlayState` | 4 モードの解決・未定義値のフォールバック・ルーペの表示可否・破線描画の合成判断（モードと選択の有無） |
-| `SelectionOverlayOptions` / `LabelOptions` | 既定値・部分変更・ |
+| `SelectionOverlayOptions` / `SelectionOverlayLabelOptions` | 既定値・部分変更・ |
 | `SelectionUsability` | 選択として成立するサイズの判定 |
 | `SelectionOutlineRasterizer` | 破線の列挙と描画の画素検証 |
 | `ZoomViewSession` | 実効ズーム率の導出・Fit の表現・可否・遷移の適用（ズーム中心の維持）・パン・Fit 復帰・スクロールバーのドラッグ |

@@ -214,7 +214,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | `LoupeClientToPixelScaling` | ✅ `cropView.LoupeClientToPixelScaling`（セッションが設定） | —（DPI から自動取得） | ルーペ描画スケール（`CaptureSettings.LoupeClientToPixelScaling` 由来） |
 | `Appearance`（`ZoomViewAppearance`） | — | ✅（`Settings.PreviewCheckerColorA/B` / `PreviewCheckerSize`） | プレビューの市松模様（画像の透明部分の背景）。 `App.AvaloniaUI` 側（`CapturePage`）で直接設定する。 描く範囲は画像の表示矩形の内側だけであり、画像の外（ペーストボード）は背景の単色になる |
 | `CenterAlign` | — | ✅（`Settings.CenterAlign`） | `App.AvaloniaUI` 側（`CapturePage`）で直接設定 |
-| `SelectionMode`（`SelectionOverlayMode`） | — | — | 選択モード。 `CaptureSettings` に含まれず、`CropViewControl` の既定（`Crop`）を使う（`CropSession` は読み取りのみ）。 `fadeMaskDragRect` 以外の値（自動切り出しの矩形は `Rects` で描く）へ切り替えるホストは無い |
+| `SelectionMode`（`SelectionOverlayMode`） | — | — | 選択モード。 `CaptureSettings` に含まれず、`CropViewControl` の既定（`Crop`）を使う（`CropSession` は読み取りのみ）。 他のモード（`AreaSelect` / `ScreenSelect` / `WindowSelect`）へ切り替えるホストは無い |
 
 - `App.AvaloniaUI` の `Settings` → `CaptureSettingsMapper.From` → `CaptureSessionControl.AppearanceSettings`（`CaptureSettings`）が設定される。
 - Capture セッション開始時に、`CaptureSettings` → `ToSelectionOverlayOptions` → `CropViewControl.SelectionOverlayOptions`（`SelectionOverlayOptions`）と、`CapturePaintMapper` → `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance`（外観）へ**変換**して設定する（`CaptureSettings` は 1 つの型だが、 反映先はコアの設定値と外観の 2 つに分かれる）。
@@ -330,7 +330,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
 | 選択矩形のサイズを表示 | `SizeLabelVisible` | `MarqueeAppearance.ShowSizeLabel`（外観が単一所有する） |
-| テキスト色 | `TextNormalizeColor` | `MarqueeControl.Appearance.SizeLabelColor`（キャプチャのテキスト色と共用） |
+| テキスト色 | `CaptureTextColor` | `MarqueeControl.Appearance.SizeLabelColor`（キャプチャのテキスト色と共用） |
 | 背景色（不透明度含む） | `SizeLabelBackgroundColor` | `MarqueeControl.Appearance.SizeLabelBackgroundColor`（アルファ込み） |
 | フォントサイズ | `SizeLabelFontSize` | `MarqueeAppearance.SizeLabelFontSize` |
 

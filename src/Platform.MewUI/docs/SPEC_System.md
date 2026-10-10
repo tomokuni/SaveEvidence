@@ -33,8 +33,8 @@ Avalonia 版の `Platform.AvaloniaUI`（`EsUtil.SaveEvidence.Platform.AvaloniaUI
 
 ```mermaid
 graph LR
-  A[App.MewUI（将来）] --> B[Platform.MewUI]
-  C["各 *Control.MewUI（将来）"] --> B
+  A[App.MewUI] --> B[Platform.MewUI]
+  C[Parts.CapturePreview.ControlMewUI] --> B
   B --> D[EsUtil.Platform.Core]
   B --> E[Aprillz.MewUI.Core]
   B --> H[Aprillz.MewUI.Skia]
@@ -124,5 +124,5 @@ Avalonia 版の `Platform.AvaloniaUI` にある以下は、MewUI 側では**未�
 | 項目 | 状況 |
 | --- | --- |
 | `ScreenConverter`（`TopLevel` / `Visual` 依存の画面座標変換） | MewUI 側の対応型（`Window` の座標・DPI 取得 API）を調査してから実装する |
-| `CursorOverrideGuardAttach`（`ICursorOverrideGuard.Attach(TopLevel)` 相当） | MewUI 側のカーソル抑止 API の有無を調査する必要がある |
+| `CursorOverrideGuardAvaloniaExtensions`（`ICursorOverrideGuard` の Avalonia 向け拡張） | MewUI 側のカーソル抑止 API の有無を調査する必要がある |
 | 画像アダプタ（`EsBitmapAvaloniaExtensions` / `EsBitmapAvaloniaAdapter` 相当） | **不要**。 MewUI は `SkiaCanvasView` で `ToSKBitmap()`（非所有ビュー）を直接描画できる（PoC で実証済み） |
