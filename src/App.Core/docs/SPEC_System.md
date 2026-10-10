@@ -53,7 +53,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 | `src/App.Core/src/Models/ImageFileExtensions.cs` | `internal static class` | 画像ファイルの拡張子判定（フォルダビューの一覧に含める拡張子の**唯一の所有者**。 両 UI が委譲する） |
 | `src/App.Core/src/Layout/BottomAlignWrapLayout.cs` | `internal static class` | 折り返しパネルの行高さ・下端揃えの配置計算（Avalonia / MewUI 両版のパネルが委譲する単一所有） |
 | `src/App.Core/src/Services/ISettingsService.cs` | `public interface` | 設定管理サービスの抽象 |
-| `src/App.Core/src/Services/IImageWriter.cs` | `public interface` | 画像（`IEsBitmap`）のファイル書き込みの抽象 |
+| `src/App.Core/src/Services/IImageWriter.cs` | `public interface` | 画像（`EsBitmapBase`）のファイル書き込みの抽象 |
 | `src/App.Core/src/Services/SettingsService.cs` | `public sealed class` | JSON ファイルによる設定管理（**設定の永続化形式 = JSON の構造・enum の文字列表現の唯一の所有者**）。 ソース生成コンテキストを必須とする |
 | `src/App.Core/src/Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
 | `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モード（特大 / 大 / 中）の名称・件数表示（**唯一の所有者**。 `FolderViewViewModel` / `UndoViewModel` が委譲する） |
@@ -78,7 +78,7 @@ sequenceDiagram
 
 | 注入点 | 種類 | 内容 |
 | --- | --- | --- |
-| `IImageWriter` | コンストラクター引数 | 画像の保存（本番は `EsBitmapImageWriter`。 Avalonia 版は `Program.cs` の DI、MewUI 版は直接生成）。 **保存形式の判別とエンコードはコアの `EsBitmapFileExtensions` が単一所有する** |
+| `IImageWriter` | コンストラクター引数 | 画像の保存（本番は `EsBitmapImageWriter`。 Avalonia 版は `Program.cs` の DI、MewUI 版は直接生成）。 **保存形式の判別とエンコードはコアの `EsBitmapBase.Save` が単一所有する** |
 | `CopyToClipboardAsync` | コールバック | `IEsBitmap` を受け取り、UI 型へ変換してクリップボードへ書く |
 | `PasteFromClipboardAsync` | コールバック | クリップボードから読み、UI 型から `EsWritableBitmap` へ変換して返す |
 | `ConfirmOverwriteAsync` | コールバック | 上書き確認ダイアログ |

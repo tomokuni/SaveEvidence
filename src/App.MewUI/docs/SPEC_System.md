@@ -165,7 +165,7 @@ tests/
 | `ThumbnailBackground` | 一覧のサムネイルを背景で生成するための共通処理（スケジューラの生成・代替画像の提供・UI スレッドへの反映）。 代替画像は寸法ごとに 1 枚を共有し、**破棄しない**（借用して表示するだけ） |
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。 変更の即時保存・テーマの即時適用・ホットキー入力を担う |
 | `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `SkiaImageView` が単一所有し、計測と Uniform 指定だけを与える） |
-| `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsBitmapFileExtensions.Save`（拡張子が形式を決める）へ委譲する |
+| `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsBitmapBase.Save`（拡張子が形式を決める）へ委譲する |
 | `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ。 **縮小はコアの面積平均（`EsBitmapExtensions.Resize`）へ委譲する**（Skia の `Resize(Linear)` は大きな縮小率で細線を実際より濃く残すため使わない。 コーデックの縮小デコードはデコードの高速化としてのみ使う）。 **背景の生成からも呼べる**（キャッシュの上限判定と登録は直列化される）。 キャッシュの上限は**一覧が表示する件数以上**を呼び出し側が渡す（上限超過時に保持中の値が破棄され、描画が破棄済みのバッファへ触れるのを防ぐ） |
 | `ImageDrawMath`（`Platform.MewUI`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
@@ -723,7 +723,7 @@ sequenceDiagram
 
 | 対象 | 方針 |
 | --- | --- |
-| `EsBitmapImageWriter`（`App.Core` の共通実装） | 実ファイルへ書き出し、コアの `EsBitmapFileExtensions.Load` で読み戻して画素数を検証する（保存形式の判別はコアのテストが担う） |
+| `EsBitmapImageWriter`（`App.Core` の共通実装） | 実ファイルへ書き出し、コアの `EsBitmap.Load` で読み戻して画素数を検証する（保存形式の判別はコアのテストが担う） |
 | `WindowPlacementMath` | 純粋関数のためヘッドレスで検証する。 スケール 0・負値・NaN、画面外判定、四捨五入の境界を含む |
 | `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。 Uniform / Fill・余白の中央寄せ・空の入力（`Platform.MewUI.Tests` が担う） |
 | `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。 6 / 8 桁・大文字小文字・不正入力・往復変換 |

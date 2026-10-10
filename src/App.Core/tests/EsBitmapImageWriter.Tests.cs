@@ -1,6 +1,5 @@
 using System.Runtime.Versioning;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Core.Native.Imaging;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Xunit;
 
@@ -11,9 +10,9 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// </summary>
 /// <remarks>
 /// <b>保存形式ごとの細かい検証はコアが単一所有する</b>: 形式の判別とエンコードは
-/// <see cref="EsBitmapFileExtensions"/>（<c>EsUtil.Platform.Core.Tests</c>）が検証済みである。<br/>
+/// <see cref="EsBitmapBase.Save(string)"/> / <see cref="EsBitmap.Load(string)"/>（<c>EsUtil.Platform.Core.Tests</c>）が検証済みである。<br/>
 /// 本テストは<b>アプリ側の契約</b>だけを検証する（コアの保存へ委譲されること・引数の検証・上書き）。<br/>
-/// 保存は Windows 専用の <c>System.Drawing.Common</c> を使うため、本クラスは
+/// 保存は Windows 専用の GDI+ を呼ぶため、本クラスは
 /// <see cref="SupportedOSPlatformAttribute"/> で Windows に限定する（コアの保存テストと同じ方針）。
 /// </remarks>
 [SupportedOSPlatform("windows")]
@@ -36,7 +35,7 @@ public class EsBitmapImageWriterTests
     internal void Save_コアの保存へ委譲する()
     {
         // 拡張子が形式を決める（コアの対応形式は .bmp / .png / .jpg / .jpeg / .gif / .tif / .tiff）
-        foreach (var extension in EsBitmapFileExtensions.SupportedExtensions)
+        foreach (var extension in EsBitmapBase.SupportedFileExtensions)
         {
             var path = CreateTempPath(extension);
             try
@@ -46,7 +45,7 @@ public class EsBitmapImageWriterTests
                 Assert.True(File.Exists(path), $"{extension} へ保存されていない");
 
                 // コアの読み込みで往復でき、画素数が保たれる
-                using var loaded = EsBitmapFileExtensions.Load(path);
+                using var loaded = EsBitmap.Load(path);
                 Assert.Equal(8, loaded.Width);
                 Assert.Equal(6, loaded.Height);
             }
@@ -80,7 +79,7 @@ public class EsBitmapImageWriterTests
 
             new EsBitmapImageWriter().Save(CreateBitmap(10, 5), path);
 
-            using var loaded = EsBitmapFileExtensions.Load(path);
+            using var loaded = EsBitmap.Load(path);
             Assert.Equal(10, loaded.Width);
             Assert.Equal(5, loaded.Height);
         }
@@ -99,7 +98,7 @@ public class EsBitmapImageWriterTests
         {
             new EsBitmapImageWriter().Save(CreateBitmap(10, 5), path);
 
-            using var loaded = EsBitmapFileExtensions.Load(path);
+            using var loaded = EsBitmap.Load(path);
             Assert.Equal(10, loaded.Width);
             Assert.Equal(5, loaded.Height);
         }

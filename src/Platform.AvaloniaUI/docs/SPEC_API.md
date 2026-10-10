@@ -45,7 +45,7 @@ UI フレームワーク非依存の抽象・値型・純粋ロジックと、�
 | コア値型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsPointInt` / `EsRectInt` / `EsPlatformHandle` 等） | `EsUtil.Platform.Core` |
 | 座標変換ポート（`ICoordTransform` / `CoordTransform`）・`ScrollMath` / `DpiScaler` | `EsUtil.Platform.Core` |
 | 画像コンテナ（`IEsBitmap` / `IEsWritableBitmap` / `EsBitmap` / `EsWritableBitmap`） | `EsUtil.Platform.Core` |
-| 既定実装（Win32）・サービス抽象・System.Drawing 変換 | `EsUtil.Platform.Core`（`Native/` ・`Native/Win/`・`Native/Imaging/`） |
+| 既定実装（Win32）・サービス抽象 | `EsUtil.Platform.Core`（`Native/` ・`Native/Win/`） |
 | **画面座標変換（`ScreenConverter`）・相互変換（Interop）・画像／幾何アダプタ** | **本プロジェクト** |
 
 ## 3. 外部利用条件
@@ -67,7 +67,6 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;       // EsBitmapAvalonia
 using EsUtil.Platform.Core;                     // EsKey / EsWindowState / EsPlatformHandle 等
 using EsUtil.Platform.Core.Native;              // サービス抽象（ICaptureService 等）
 using EsUtil.Platform.Core.Native.Win;          // 既定実装を直接生成する場合のみ（ホスト）
-using EsUtil.Platform.Core.Native.Imaging;      // EsBitmapDrawingExtensions（Windows 専用）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap
 using EsUtil.Platform.Core.Coord;               // ICoordTransform / CoordTransform
 using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt
@@ -227,4 +226,4 @@ var brush = s_cache.GetOrCreate(color);
 - `EsBitmapAvaloniaExtensions` の `To*` は新しい画像を生成するため、呼び出し側が所有・破棄します（`CreateAvaloniaImage` は `Adopt` でアダプタに所有させます）。
 - **表示用の縮小はコアの `EsBitmapExtensions.Resize`（`DownscaleAlgorithm.Box` = 面積平均）が単一所有します**（本プロジェクトに縮小の実装は置きません）。 アダプタは `DisplayMaxSize` を渡され、かつ**画像が上限より大きいときに限り**表示用の射影を縮小します（上限に収まっている画像は等倍の射影を共用し、同じ寸法の複製を 2 つ作りません）。
 - **表示に面積平均を選ぶ理由は画質の一貫性です**: 同じ寸法のサムネイルを出すフォルダビュー（ファイル → `Bitmap.DecodeToWidth`）は面積平均相当の画質です。 双線形だと**同じサイズなのに一覧ごとに見え方が変わる**ためです（実測: 4K → 320x180 で幅 1 px の細線の輝度は面積平均 21 / 双線形 127 / 最近傍 255）。 面積平均は並列化されるため 4K 1 枚で 1.9〜2.4 ms です。
-- **ファイルの保存・読み込みはコアの `EsBitmapFileExtensions`（`Native.Imaging`）が単一所有します**（本プロジェクトに保存・読み込みの実装は置きません）。
+- **ファイルの保存・読み込みはコアの画像型（`EsBitmapBase.Save` / `EsBitmap.Load` / `EsWritableBitmap.Load`）が単一所有します**（本プロジェクトに保存・読み込みの実装は置きません）。

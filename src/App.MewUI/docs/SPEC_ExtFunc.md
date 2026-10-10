@@ -237,7 +237,7 @@
 
 ## 6. 画像の保存仕様
 
-保存形式（拡張子からの判別）とエンコードはコアの `EsBitmapFileExtensions`（`EsUtil.Platform.Core.Native.Imaging`）が**単一所有**します（両 UI で同じ結果にする）。
+保存形式（拡張子からの判別）とエンコードはコアの画像型（`EsBitmapBase.Save` / `EsBitmap.Load` / `EsWritableBitmap.Load`）が**単一所有**します（両 UI で同じ結果にする）。
 
 | 拡張子 | 保存形式 |
 | --- | --- |
@@ -286,7 +286,7 @@
 | アセンブリ | 仕様書 |
 | --- | --- |
 | `EsUtil.SaveEvidence.dll`（App.Core） | `../app/SPEC_ExtFunc.md`（アプリ共通のコア仕様） |
-| `EsUtil.Platform.Core` | `../EsUtil.Platform.Core/docs/SPEC_API.md`（`Native` / `Native.Win` / `Native.Imaging` を含む） |
+| `EsUtil.Platform.Core` | `../EsUtil.Platform.Core/docs/SPEC_API.md`（`Native` / `Native.Win` を含む） |
 | `Platform.MewUI` | `../Platform.MewUI/SPEC_ExtFunc.md` |
 | `EsUtil.Feature.Loupe.ControlMewUI` | `../EsUtil.Feature.Loupe.ControlMewUI/SPEC_ExtFunc.md` |
 | `Parts.CapturePreview.ControlMewUI` | `../Parts.CapturePreview.ControlMewUI/SPEC_ExtFunc.md` |

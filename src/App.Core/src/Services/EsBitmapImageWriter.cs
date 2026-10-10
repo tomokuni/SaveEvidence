@@ -1,13 +1,12 @@
 using System.Runtime.Versioning;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Core.Native.Imaging;
 
 namespace EsUtil.SaveEvidence.App.Core.Services;
 
 /// <summary><see cref="IImageWriter"/> の実装（コアのファイル保存へ委譲する）。</summary>
 /// <remarks>
-/// <b>保存形式とエンコードは <see cref="EsBitmapFileExtensions.Save"/> が単一所有する</b>（拡張子が形式を決め、
-/// 未対応の拡張子は <see cref="NotSupportedException"/>。 実装は Windows 専用の <c>System.Drawing.Common</c> を使う）。<br/>
+/// <b>保存形式とエンコードは <see cref="EsBitmapBase.Save(string)"/> が単一所有する</b>（拡張子が形式を決め、
+/// 未対応の拡張子は <see cref="NotSupportedException"/>。 実装は OS の GDI+ を直接呼ぶ）。<br/>
 /// <b>なぜ本プロジェクト（UI 非依存）に置けるのか</b>: 呼び出し元の UI 実装を必要としないため、両 UI で同じ実装を
 /// 使える（実装が 1 つになり、保存結果が UI で食い違わない）。 本クラスは Windows 専用の API を呼ぶため
 /// <see cref="SupportedOSPlatformAttribute"/> で限定し、利用側（両アプリは <c>net10.0-windows</c>）へ前提を明示する。<br/>
@@ -22,7 +21,7 @@ public sealed class EsBitmapImageWriter : IImageWriter
     /// <exception cref="ArgumentException">ファイルパスが空白の場合。</exception>
     /// <exception cref="NotSupportedException">拡張子が対応形式でない場合。</exception>
     /// <exception cref="System.Runtime.InteropServices.ExternalException">エンコード（GDI+）が失敗した場合。</exception>
-    public void Save(IEsBitmap image, string filePath)
+    public void Save(EsBitmapBase image, string filePath)
     {
         ArgumentNullException.ThrowIfNull(image);
         ArgumentNullException.ThrowIfNull(filePath);

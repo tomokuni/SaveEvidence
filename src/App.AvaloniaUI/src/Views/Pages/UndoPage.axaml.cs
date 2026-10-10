@@ -5,7 +5,6 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Core.Native.Imaging;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -347,16 +346,15 @@ public sealed partial class UndoPage : ViewModePageBase
         {
             var tempFile = Path.Combine(Path.GetTempPath(), $"SaveEvidence_undo_{Guid.NewGuid():N}.png");
 
-            // サムネイルは画像源アダプタ（IImage）のため、コアの画像を取り出して保存する。
-            // 保存形式（拡張子からの判別）とエンコードはコアの拡張が単一 所有する。
-            if (item.Thumbnail is EsBitmapAvaloniaAdapter adapter)
-            {
-                adapter.GetEsBitmap().Save(tempFile);
-            }
-            else
+            // サムネイルは表示用のアダプタ（IImage）のため、コアの画像（所有する型）を真実から取り出して保存する。
+            // 保存形式（拡張子からの判別）とエンコードはコアの画像型が単一所有する。
+            if (item.Thumbnail is not EsBitmapAvaloniaAdapter adapter
+                || adapter.GetEsBitmap() is not EsBitmapBase image)
             {
                 return;
             }
+
+            image.Save(tempFile);
 
             using var process = new Process();
             process.StartInfo = new ProcessStartInfo

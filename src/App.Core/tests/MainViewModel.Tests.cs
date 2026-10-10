@@ -48,7 +48,7 @@ public class MainViewModelTests
         private static readonly byte[] s_dummy = [1, 2, 3, 4];
 
         /// <inheritdoc/>
-        public void Save(IEsBitmap image, string filePath)
+        public void Save(EsBitmapBase image, string filePath)
         {
             SavedPaths.Add(filePath);
             SavedImages.Add(image);

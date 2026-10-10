@@ -66,7 +66,6 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;       // EsBitmapAvalonia
 using EsUtil.Platform.Core;                     // EsKey / EsWindowState / EsPlatformHandle 等
 using EsUtil.Platform.Core.Native;              // サービス抽象（ICaptureService 等）
 using EsUtil.Platform.Core.Native.Win;          // 既定実装を直接生成する場合のみ（ホスト）
-using EsUtil.Platform.Core.Native.Imaging;      // 画像のファイル保存・読み込み（Windows 専用）
 using EsUtil.Platform.Core.Imaging;             // EsBitmap
 using EsUtil.Platform.Core.Coord;               // ICoordTransform / CoordTransform
 using EsUtil.Platform.Core.Geometry;            // EsPoint / EsSize / EsVector / EsRect / EsPointInt / EsRectInt

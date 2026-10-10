@@ -1,6 +1,6 @@
 using System.Text.Json;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Native.Imaging;
+using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 
@@ -29,8 +29,8 @@ internal static class DatasetVerifier
     {
         try
         {
-            // ファイルの読み込みはコアの拡張が単一所有する（形式は内容から判別される）
-            using var unified = EsBitmapFileExtensions.Load(entry.PngPath);
+            // ファイルの読み込みはコアの画像型が単一所有する（形式は内容から判別される）
+            using var unified = EsBitmap.Load(entry.PngPath);
             var results = detector.Detect(unified);
 
             if (TryReconstructBounds(results) is not { } bound)

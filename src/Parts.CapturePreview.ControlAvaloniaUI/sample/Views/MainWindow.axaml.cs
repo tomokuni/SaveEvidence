@@ -7,7 +7,6 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Platform.Core.Native.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.ViewModels;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
@@ -213,8 +212,8 @@ public sealed partial class MainWindow : Window
 
         try
         {
-            // ファイルの読み込みはコアの拡張が単一所有する（形式は内容から判別される）
-            using var loaded = EsBitmapFileExtensions.Load(files[0].Path.LocalPath);
+            // ファイルの読み込みはコアの画像型が単一所有する（形式は内容から判別される）
+            using var loaded = EsBitmap.Load(files[0].Path.LocalPath);
             SetPreviewBitmap(EsWritableBitmap.Create(loaded));
             _vm.AddLog($"[App] 画像を読み込みました: {files[0].Name}");
         }

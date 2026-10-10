@@ -100,7 +100,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 | メソッド | 説明 |
 | --- | --- |
-| `Save(IEsBitmap image, string filePath)` | 画像を指定パスへ書き込む（**拡張子が形式を決める**。 実体はコアの `EsBitmapFileExtensions.Save` へ委譲し、未対応の拡張子は `NotSupportedException`） |
+| `Save(EsBitmapBase image, string filePath)` | 画像を指定パスへ書き込む（**拡張子が形式を決める**。 実体はコアの `EsBitmapBase.Save` へ委譲し、未対応の拡張子は `NotSupportedException`） |
 
 - UI フレームワーク非依存（コアの画像のみに依存）です。 本番の実装は **`EsBitmapImageWriter`（本プロジェクトの 1 型）だけ**で、コアの保存へ委譲します（UI ごとの実装を持たないため、保存結果が UI で食い違わない）。
 - テストではモックに差し替え、ヘッドレス不要で検証できます。
@@ -109,7 +109,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
-| `Save` | `void Save(IEsBitmap image, string filePath)` | 画像を指定パスへ書き込む（コアの `EsBitmapFileExtensions.Save` へ委譲） |
+| `Save` | `void Save(EsBitmapBase image, string filePath)` | 画像を指定パスへ書き込む（コアの `EsBitmapBase.Save` へ委譲） |
 
 - **Windows 専用です**（`SupportedOSPlatform("windows")`）。 保存の実体（`System.Drawing.Common`）が Windows 専用のためです。 利用側の両アプリは `net10.0-windows` です。
 - **1 型に集約する理由**: 実装を UI ごとに分けると保存結果が食い違いうるため、`IImageWriter` の実装は 1 型（`EsBitmapImageWriter`）が担い、保存はコアへ委譲する。
@@ -255,7 +255,7 @@ Undo 一覧の表示モード状態を保持し、変更を通知します（`Ob
 public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 ```
 
-`IImageWriter` には本番の実装（本プロジェクトの `EsBitmapImageWriter`）を注入します（Avalonia 版は `Program.cs` の DI で登録、MewUI 版は `Program.cs` で直接生成）。 **保存形式の判別とエンコードはコアの `EsBitmapFileExtensions.Save` が単一所有します**（本プロジェクトの実装は委譲するだけの薄い適合で、保存形式は両 UI で同じ ）。
+`IImageWriter` には本番の実装（本プロジェクトの `EsBitmapImageWriter`）を注入します（Avalonia 版は `Program.cs` の DI で登録、MewUI 版は `Program.cs` で直接生成）。 **保存形式の判別とエンコードはコアの `EsBitmapBase.Save` が単一所有します**（本プロジェクトの実装は委譲するだけの薄い適合で、保存形式は両 UI で同じ ）。
 
 ### 18.2 主なプロパティ
 
