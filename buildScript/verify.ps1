@@ -738,8 +738,11 @@ foreach ($target in @($projKeys | Where-Object { $_.StartsWith('EsUtil.') -and (
     if ($patterns.Count -eq 0) { continue }
     $rxForbidden = [regex]($patterns -join '|')
     # 列挙は早期に作った一覧から対象プロジェクト配下だけを選ぶ（`-Include` の全走査を繰り返さない）
-    $scopeFiles = @(@($allCs | Where-Object { $_.FullName.StartsWith($targetDir, [StringComparison]::OrdinalIgnoreCase) }) +
-        @($docs | Where-Object { $_.FullName.StartsWith($targetDir, [StringComparison]::OrdinalIgnoreCase) }))
+    # 対象プロジェクト配下だけを選ぶ（パスの区切りまで含めて一致させる。 前方一致だけでは
+    # `EsUtil.Platform.Core` が `EsUtil.Platform.Core.Windows` を巻き込む）
+    $targetPrefix = $targetDir + [IO.Path]::DirectorySeparatorChar
+    $scopeFiles = @(@($allCs | Where-Object { $_.FullName.StartsWith($targetPrefix, [StringComparison]::OrdinalIgnoreCase) }) +
+        @($docs | Where-Object { $_.FullName.StartsWith($targetPrefix, [StringComparison]::OrdinalIgnoreCase) }))
     foreach ($f in $scopeFiles) {
         $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
         $lines = [IO.File]::ReadAllLines($f.FullName, $enc)

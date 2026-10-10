@@ -82,6 +82,11 @@
     <Project Path="src/EsUtil.Platform.Core/tests/EsUtil.Platform.Core.Tests.csproj" />
   </Folder>
   <Folder Name="/src/EsUtil.Platform.Core/src/" />
+  <Folder Name="/src/EsUtil.Platform.Core.Windows/">
+    <Project Path="src/EsUtil.Platform.Core.Windows/src/EsUtil.Platform.Core.Windows.csproj" />
+    <Project Path="src/EsUtil.Platform.Core.Windows/tests/EsUtil.Platform.Core.Windows.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/EsUtil.Platform.Core.Windows/src/" />
   <Folder Name="/src/Platform.MewUI/">
     <Project Path="src/Platform.MewUI/src/Platform.MewUI.csproj" />
     <Project Path="src/Platform.MewUI/tests/Platform.MewUI.Tests.csproj" />

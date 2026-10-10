@@ -206,7 +206,7 @@ var brush = s_cache.GetOrCreate(color);
 `ColorExtensions` / `EsBitmapAvaloniaAdapter` / `EsBitmapAvaloniaExtensions` /
 `CapacityLimitedCache<TKey, TValue>` / `SolidColorBrushCache` です。
 
-インターフェース・コア値型・`CoordTransform`・画像型（`IEsBitmap` / `IEsWritableBitmap` / `EsBitmap` / `EsWritableBitmap` / `EsBitmapBase`）と、その Win32 実装（`Native.Win`） ・`EsBitmapDrawingExtensions`（`Native.Imaging`）は `EsUtil.Platform.Core` が提供します。
+インターフェース・コア値型・`CoordTransform`・画像型（`IEsBitmap` / `IEsWritableBitmap` / `EsBitmap` / `EsWritableBitmap` / `EsBitmapBase`）と、その Win32 実装（`Native.Win`）・画像のファイル入出力（`Native.Imaging`）は `EsUtil.Platform.Core` が提供します。
 
 ## 6. 座標系
 
