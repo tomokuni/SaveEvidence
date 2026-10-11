@@ -122,7 +122,7 @@ flowchart TB
 | コンポーネント | 説明 |
 | --- | --- |
 | `EsBitmapAvaloniaExtensions` | コアの画像（Core）の Avalonia 向け生成・変換・ピクセル操作拡張 |
-| `EsBitmapAvaloniaAdapter` | **コアの画像（`IEsBitmap`）**を包み、`IImage` と `IEsBitmap` の両面で公開するアダプタ（**射影元はコアの画像に限る**。 Avalonia の `Bitmap` を真実とする入口は持たない）。 **真実は所有しない**。 Avalonia 側の射影だけを初回に生成して `Dispose` で解放する。 新しく生成した画像は `Adopt` で所有させる |
+| `EsBitmapAvaloniaAdapter` | **コアの画像（`EsReadOnlyBitmap`）**を包み、`IImage`（表示）として公開するアダプタ（コアの画像は `GetEsBitmap()` で取り出す。 **コアの型は実装しない**）。 **射影元はコアの画像に限る**（Avalonia の `Bitmap` を真実とする入口は持たない）。 **真実は所有しない**。 Avalonia 側の射影だけを初回に生成して `Dispose` で解放する。 新しく生成した画像は `Adopt` で所有させる |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（スレッド安全。 容量超過時は全体をクリア） |
 | `SolidColorBrushCache` | `System.Drawing.Color` の色 → `SolidColorBrush` の変換と容量管理を単一所有するキャッシュ（描画アダプタとラベル要素の配置が共用する） |
 | `AvaloniaTextMeasure` | テキストの実寸測定を単一所有する（ラベルの配置矩形は実寸から決まるため、UI ごとの測定の食い違いを防ぐ） |
@@ -144,7 +144,7 @@ flowchart TB
   - `CreateAvaloniaImage` は生成した画像を `Adopt` でアダプタに所有させる（呼び出し側はアダプタを `Dispose` する）。
   - `EsBitmapAvaloniaAdapter` は受け取った真実を所有しない（ホストが破棄する）。 `Adopt` で生成した場合だけ内包する画像も解放する。
   - **表示用の縮小（`DisplayMaxSize`）はコアの `EsBitmapExtensions.Resize`（`DownscaleAlgorithm.Box` = 面積平均）が単一所有する**（本プロジェクトに縮小の実装を置かない。 画像が上限に収まっている場合は縮小せず等倍の射影を共用する。 面積平均にするのは、同じ寸法のサムネイルを出すフォルダビューの `Bitmap.DecodeToWidth` と画質を揃えるため）。
-  - **ファイルの保存・読み込みはコア（`EsBitmapExtensions.Save` / `EsBitmap.Load` / `EsWritableBitmap.Load`）が単一所有する**（本プロジェクトに保存・読み込みの実装を置かない）。
+  - **ファイルの保存・読み込みはコア（`EsBitmapExtensions.Save` / `EsBitmap.Load` / `EsBitmap.Load`）が単一所有する**（本プロジェクトに保存・読み込みの実装を置かない）。
   - 破棄済みの真実を渡した場合、寸法と画像の取得は `ObjectDisposedException`（`Draw` は no-op）。
 
 ## 9. ログ

@@ -135,7 +135,7 @@ EsUtil.Platform.Core（Es* 幾何型 / 画像型 / ICaptureService / IWindowServ
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ CaptureResult（record）                               │
-│ Image: EsWritableBitmap? / SourceBounds: EsRectInt? │
+│ Image: EsBitmap? / SourceBounds: EsRectInt? │
 └──────────────────────────────────────────────────────┘
 ┌──────────────────────────────────────────────────────┐
 │ 切り出しビューの画像ビューポート（クラス・静的クラス）    │
@@ -183,13 +183,13 @@ classDiagram
     class CropClipMath {
         +ResolveCaptureRect(CaptureType, EsRect, EsRectInt) EsRectInt
         +ResolveCaptureRect(CaptureType, EsRectInt, EsRectInt) EsRectInt
-        +ImageSize(IEsBitmap) EsSize
-        +ImageBounds(IEsBitmap, EsPointInt) EsRectInt
-        +ValidateImage(IEsBitmap, string)
+        +ImageSize(EsReadOnlyBitmap) EsSize
+        +ImageBounds(EsReadOnlyBitmap, EsPointInt) EsRectInt
+        +ValidateImage(EsReadOnlyBitmap, string)
         +ToLocalRect(EsRectInt, EsPointInt) EsRectInt
         +ToScreenRect(EsRect, EsPointInt) EsRect
         +ToScreenRect(EsRectInt, EsPointInt) EsRectInt
-        +Extract(IEsBitmap, EsPointInt, EsRectInt) EsWritableBitmap?
+        +Extract(EsReadOnlyBitmap, EsPointInt, EsRectInt) EsBitmap?
     }
     class CaptureHighlightSession {
         +EsRect? SourceRect
@@ -204,9 +204,9 @@ classDiagram
         +Take() EsRectInt?
     }
     class CaptureResult {
-        +EsWritableBitmap? Image
+        +EsBitmap? Image
         +EsRectInt? SourceBounds
-        +From(EsWritableBitmap, EsRectInt) CaptureResult
+        +From(EsBitmap, EsRectInt) CaptureResult
     }
     class CaptureHighlight {
         +EsRect? SourceRect
@@ -220,19 +220,19 @@ classDiagram
     }
     class CaptureClipCache {
         +HasCached(EsRectInt) bool
-        +Take(EsRectInt) EsWritableBitmap?
-        +Store(EsRectInt, EsWritableBitmap)
+        +Take(EsRectInt) EsBitmap?
+        +Store(EsRectInt, EsBitmap)
         +Dispose()
     }
     class CaptureImageHolder {
-        +EsWritableBitmap? Image
+        +EsBitmap? Image
         +EsPointInt Origin
         +EsRectInt Bounds
-        +Set(EsWritableBitmap, EsPointInt) bool
+        +Set(EsBitmap, EsPointInt) bool
         +Dispose()
     }
     class CaptureVirtualScreen {
-        +AwaitAsync(Task, TimeSpan) Task~EsWritableBitmap?~
+        +AwaitAsync(Task, TimeSpan) Task~EsBitmap?~
     }
     class CropSessionActions {
         +Resolve(bool, bool) CropSessionAction

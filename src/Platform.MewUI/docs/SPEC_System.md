@@ -63,8 +63,8 @@ graph LR
 | `EsGeometryMewUIInterop.cs` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / 色（`System.Drawing.Color` ⇔ `Aprillz.MewUI.Color`） |
 | `EsWindowStateMewUIInterop.cs` | `EsWindowState` ⇔ `Aprillz.MewUI.Controls.WindowState` |
 | `EsPlatformHandleMewUIInterop.cs` | `Aprillz.MewUI.Window` → `EsPlatformHandle` |
-| `src/Platform.MewUI/src/Imaging/SkiaImageView.cs` | `IEsBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生） |
-| `src/Platform.MewUI/src/Imaging/SkiaImageRenderer.cs`（internal） | `IEsBitmap` を Skia キャンバスへ敷く描画層（画素で検証できる） |
+| `src/Platform.MewUI/src/Imaging/SkiaImageView.cs` | `EsReadOnlyBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生） |
+| `src/Platform.MewUI/src/Imaging/SkiaImageRenderer.cs`（internal） | `EsReadOnlyBitmap` を Skia キャンバスへ敷く描画層（画素で検証できる） |
 | `src/Platform.MewUI/src/Imaging/ClientPixelScale.cs` | 描画面（物理ピクセル）と表示領域（DIP）の比から描画に使う実効倍率を解決する（DPI の通知が届かないコントロールでも画像と同じ倍率で描く） |
 | `src/Platform.MewUI/src/Imaging/MewUITextMeasure.cs` | MewUI のテキスト エンジン（DirectWrite の GDI 互換レイアウト）で文字列の実寸を測る。 描画エンジンを持たない環境では Skia の実測で代用する |
 | `src/Platform.MewUI/src/Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（`EsRect` を返す純粋関数。 **唯一の所有者**） |
@@ -99,10 +99,10 @@ graph LR
 | --- | --- | --- |
 | 負のサイズ（`Rect` / `Size`） | そのまま保持する | **0 にクランプ**する（座標 X / Y は保持） |
 | キー体系 | `EsKey` と同じ 223 メンバー（Win32 相当） | 抽象化された 91 メンバー（独自採番） |
-| 表示境界の画像型 | `IImage`（Avalonia 固有のため、コア型とのアダプタ `EsBitmapAvaloniaAdapter` が要る） | **`IEsBitmap`（コアの画像の面）**。 アダプタは不要（コアの画像がそのまま `IEsBitmap` を実装している） |
+| 表示境界の画像型 | `IImage`（Avalonia 固有のため、コア型とのアダプタ `EsBitmapAvaloniaAdapter` が要る） | **`EsReadOnlyBitmap`（コアの画像そのもの）**。 アダプタは不要（コアの画像をそのまま表示へ渡せる） |
 | 表示のコピー | `Bitmap` への変換がピクセルを複製する（実測: 4K で約 6 ms。 初回の 1 回に固定する） | `ToSKBitmap()` が**非所有ビュー**を返すため複製しない（実測: 0.3〜2 µs） |
 
-**画像を扱う設計が非対称な理由**: MewUI の描画は Skia 直結（`SKCanvas`）であり、コアの画像がそのまま描画元になるため、表示境界に UI 固有の画像型を持ち込みません（`ToSKBitmap()` は `SKBitmap.InstallPixels` による非所有ビュー）。 したがって Avalonia 側で必要だった「表示アダプタ」と「変換の 1 回化」は、MewUI では**原理的に不要**です（コアの画像が `IEsBitmap` を実装するため、コアの処理からの取り出しも1 型で済みます）。
+**画像を扱う設計が非対称な理由**: MewUI の描画は Skia 直結（`SKCanvas`）であり、コアの画像がそのまま描画元になるため、表示境界に UI 固有の画像型を持ち込みません（`ToSKBitmap()` は `SKBitmap.InstallPixels` による非所有ビュー）。 したがって Avalonia 側で必要だった「表示アダプタ」と「変換の 1 回化」は、MewUI では**原理的に不要**です（コアの画像が `EsReadOnlyBitmap` を実装するため、コアの処理からの取り出しも1 型で済みます）。
 
 ソースコードが UI 非依存のまま両 UI を扱うには、**UI 固有の値を UI 内部に閉じ込め**、境界ではコア型へ変換して渡す設計が必要です。
 

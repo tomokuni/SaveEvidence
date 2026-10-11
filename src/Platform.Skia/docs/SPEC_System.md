@@ -53,7 +53,7 @@ graph LR
 
 - 依存の向きは **MewUI 系 → Platform.Skia →（SkiaSharp / EsUtil.Platform.Core）** です。
 - **`EsUtil.Platform.Core` は SkiaSharp を参照しません**（Skia 依存は本層で止まる）。
-- `EsBitmapSkiaExtensions` は `EsUtil.Platform.Core` の `IEsBitmap` を拡張します。
+- `EsBitmapSkiaExtensions` は `EsUtil.Platform.Core` の `EsReadOnlyBitmap` を拡張します。
 
 ## 4. 依存関係
 
@@ -69,7 +69,7 @@ graph LR
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `EsBitmapSkiaExtensions.cs` | `public static class` | `ToSKBitmap`（非所有ビュー。 呼び出し側が破棄する）/ `ToEsWritableBitmap`（複製） |
+| `EsBitmapSkiaExtensions.cs` | `public static class` | `ToSKBitmap`（非所有ビュー。 呼び出し側が破棄する）/ `ToEsBitmap`（複製） |
 | `SkiaFill.cs` | `public static class` | 矩形・角丸矩形の塗り |
 | `SkiaLabel.cs` | `public static class` | ラベル 1 件（背景 + 文字）の描画順 |
 | `SkiaText.cs` | `public static class` | 実寸測定・描画・書体の解決 |
@@ -83,7 +83,7 @@ classDiagram
   class EsBitmapSkiaExtensions {
     <<static>>
     +ToSKBitmap(bitmap)$ SKBitmap
-    +ToEsWritableBitmap(bitmap)$ EsWritableBitmap
+    +ToEsBitmap(bitmap)$ EsBitmap
   }
   class SkiaFill {
     <<static>>
@@ -109,16 +109,16 @@ classDiagram
     +ToSKRect(rect)$ SKRect
     +ToEsSize(size)$ EsSize
   }
-  class IEsBitmap {
+  class EsReadOnlyBitmap {
     <<EsUtil.Platform.Core>>
     +int Width / Height / Stride
-    +ReadOnlySpan~byte~ Pixels
+    +ReadOnlySpan~byte~ ReadOnlyPixels
   }
   class SKBitmap {
     <<SkiaSharp>>
   }
 
-  EsBitmapSkiaExtensions ..> IEsBitmap : 参照（非所有ビュー / 複製元）
+  EsBitmapSkiaExtensions ..> EsReadOnlyBitmap : 参照（非所有ビュー / 複製元）
   EsBitmapSkiaExtensions ..> SKBitmap : 生成・複製
 ```
 
@@ -142,14 +142,14 @@ sequenceDiagram
 sequenceDiagram
   participant UI as MewUI のコントロール
   participant E as EsBitmapSkiaExtensions
-  participant Core as EsWritableBitmap（EsUtil.Platform.Core）
+  participant Core as EsBitmap（EsUtil.Platform.Core）
   participant SK as SKBitmap
 
-  UI->>E: skBitmap.ToEsWritableBitmap()
+  UI->>E: skBitmap.ToEsBitmap()
   E->>Core: CreateUninitialized(width, height)（全行をコピーする場合は 0 初期化を省く）
   E->>SK: GetPixels()
   E->>Core: 行単位で NativeMemory.Copy（コピー）
-  E-->>UI: EsWritableBitmap（所有権は呼び出し側）
+  E-->>UI: EsBitmap（所有権は呼び出し側）
   Note over SK: 引数の所有権は呼び出し側に残る（破棄しない）
 ```
 
@@ -160,8 +160,8 @@ sequenceDiagram
 | `ToSKBitmap` の対象が破棄済み | `ObjectDisposedException` |
 | `ToSKBitmap` の引数が null | `ArgumentNullException` |
 | ビューの作成に失敗（形式・寸法が不正） | `InvalidOperationException`（作成した `SKBitmap` は破棄してから投げる） |
-| `ToEsWritableBitmap` の引数が null | `ArgumentNullException` |
-| `ToEsWritableBitmap` のピクセルポインタが null | 複製せずに空のビットマップを返す（描画可能な状態を保つ） |
+| `ToEsBitmap` の引数が null | `ArgumentNullException` |
+| `ToEsBitmap` のピクセルポインタが null | 複製せずに空のビットマップを返す（描画可能な状態を保つ） |
 
 ## 10. 可視性ポリシー
 

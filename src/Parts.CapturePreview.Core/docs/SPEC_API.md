@@ -219,14 +219,14 @@
 
 | メンバー | 型 | 内容 |
 | --- | --- | --- |
-| `Image` | `EsWritableBitmap?` | キャプチャした画像（**生成した側が所有する**）。 キャンセル時は null |
+| `Image` | `EsBitmap?` | キャプチャした画像（**生成した側が所有する**）。 キャンセル時は null |
 | `SourceBounds` | `EsRectInt?` | キャプチャした領域（仮想スクリーン座標）。 キャンセル時は 0x0 |
 
 `Image` と `SourceBounds` は常に同時に null または同時に非 null になります。 `SourceBounds` は複数モニターを包含する座標空間のため、プライマリモニターが (0, 0) にない場合は負値になり得ます。
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `From` | `CaptureResult From(EsWritableBitmap? image, EsRectInt? bounds)` | 切り出し結果と領域から結果を生成する。 **キャンセル（画像または領域が無い）は画像 null・領域 0x0 の空結果へ正規化する**（UI が null 判定を書かない） |
+| `From` | `CaptureResult From(EsBitmap? image, EsRectInt? bounds)` | 切り出し結果と領域から結果を生成する。 **キャンセル（画像または領域が無い）は画像 null・領域 0x0 の空結果へ正規化する**（UI が null 判定を書かない） |
 
 ## 7. 補助 API
 
@@ -264,7 +264,7 @@
 
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
-| `AverageColor` | `DrawingColor AverageColor(IEsBitmap image)` | 画像全体の平均色。 画素を間引いて標本化する。 画像が null の場合は `ArgumentNullException` |
+| `AverageColor` | `DrawingColor AverageColor(EsReadOnlyBitmap image)` | 画像全体の平均色。 画素を間引いて標本化する。 画像が null の場合は `ArgumentNullException` |
 
 ### 7.5 CaptureSettingsMerge
 
@@ -304,12 +304,12 @@
 | `LogOperationError(Exception exception, string operation)` | 公開ファサードの操作で例外が発生したことを記録する（Error。 記録して再スローするための入口） |
 | `LogCaptureStart(CaptureType captureType)` | 撮影の開始 |
 | `LogCaptureFinished(CaptureResult? result)` | 撮影セッションの終了。 確定は `CaptureCompleted` → `Result` の 2 件（順序を含めて単一所有）、キャンセル（`result` が null または画像が null）は `CaptureCancelled` の 1 件 |
-| `LogCropStart(IEsBitmap image)` | 切り出しの開始（元画像サイズ） |
+| `LogCropStart(EsReadOnlyBitmap image)` | 切り出しの開始（元画像サイズ） |
 | `LogCropFinished(EsRectInt bounds)` | 切り出しセッションの終了。 **退化した選択（空の矩形）はキャンセルとして記録する**（UI が空判定とログの呼び分けを書かない） |
 | `LogCropCancelled()` | 切り出しのキャンセル（Esc・非アクティブ化・ウィンドウクローズ等） |
 | `LogConfirmRequested(EsRect rect)` / `LogConfirmRequested(EsRectInt rect)` | 選択の確定要求（Enter・ダブルクリック等。 診断用） |
 | `LogCancelRequested()` | 選択のキャンセル要求（Esc・非アクティブ化等。 診断用） |
-| `LogVirtualScreen(EsPointInt origin, IEsBitmap? bitmap)` | 仮想スクリーンの原点とサイズ（診断用）。 **画像未取得はサイズ 0** へ正規化する |
+| `LogVirtualScreen(EsPointInt origin, EsReadOnlyBitmap? bitmap)` | 仮想スクリーンの原点とサイズ（診断用）。 **画像未取得はサイズ 0** へ正規化する |
 | `LogHighlight(CaptureType captureType, bool detected, EsRectInt? rect, string? title, string? className)` | ハイライトの検出結果（Trace。 診断用。 `CaptureHighlightSession` が呼ぶ） |
 | `LogSettingApplied()` | 設定の適用（変化時の 1 回のみ。 同値の適用はログを出さない） |
 
@@ -331,12 +331,12 @@
 | --- | --- | --- |
 | `ResolveCaptureRect` | `EsRectInt ResolveCaptureRect(CaptureType captureType, EsRect screenRect, EsRectInt imageBounds)` | 選択矩形（画面物理座標）から切り出し矩形（画面物理座標）を求める。 **確定時の切り出し矩形を決める唯一の入口**（種別が決める区間の流儀に従った終点の加算・画像内へのクランプ・端数の丸めを組み合わせる）。 切り出せない場合は `IsEmpty` |
 | `ResolveCaptureRect`（整数版） | `EsRectInt ResolveCaptureRect(CaptureType captureType, EsRectInt screenRect, EsRectInt imageBounds)` | クリック確定・ホバーの検出矩形（整数）向けの同じ規則の入口（UI が整数矩形を浮動小数矩形へ広げないため） |
-| `ImageSize` | `EsSize ImageSize(IEsBitmap image)` | 画像のピクセルサイズ（コアの値型）。 コアの型同士の変換を UI に書かせない |
-| `ImageBounds` | `EsRectInt ImageBounds(IEsBitmap image, EsPointInt origin)` | 画像の占有範囲（原点とサイズ。 切り出しのクランプ境界になる） |
-| `ValidateImage` | `void ValidateImage(IEsBitmap image, string paramName)` | 画像が切り出せる（サイズが正）ことを検証する。 **幅・高さが 0 以下の場合は `ArgumentException`** |
+| `ImageSize` | `EsSize ImageSize(EsReadOnlyBitmap image)` | 画像のピクセルサイズ（コアの値型）。 コアの型同士の変換を UI に書かせない |
+| `ImageBounds` | `EsRectInt ImageBounds(EsReadOnlyBitmap image, EsPointInt origin)` | 画像の占有範囲（原点とサイズ。 切り出しのクランプ境界になる） |
+| `ValidateImage` | `void ValidateImage(EsReadOnlyBitmap image, string paramName)` | 画像が切り出せる（サイズが正）ことを検証する。 **幅・高さが 0 以下の場合は `ArgumentException`** |
 | `ToLocalRect` | `EsRectInt ToLocalRect(EsRectInt captureRect, EsPointInt origin)` / `EsRect ToLocalRect(EsRect captureRect, EsPointInt origin)` | 画面物理座標の矩形を画像ローカル座標（画面物理 − 原点）へ変換する |
 | `ToScreenRect` | `EsRect ToScreenRect(EsRect localRect, EsPointInt origin)` / `EsRectInt ToScreenRect(EsRectInt localRect, EsPointInt origin)` | 画像ローカル座標の矩形を画面物理座標へ変換する（`ToLocalRect` の逆変換。 双方向の対称性を保つ） |
-| `Extract` | `EsWritableBitmap? Extract(IEsBitmap? virtualScreen, EsPointInt origin, EsRectInt captureRect)` | 仮想スクリーン画像から切り出し矩形の領域を取り出す（**戻り値は書き換え可能な型**）。 **未取得・破棄済みの場合は null**（呼び出し側が領域指定のキャプチャへフォールバックする。 破棄は例外にしない） |
+| `Extract` | `EsBitmap? Extract(EsReadOnlyBitmap? virtualScreen, EsPointInt origin, EsRectInt captureRect)` | 仮想スクリーン画像から切り出し矩形の領域を取り出す（**戻り値は書き換え可能な型**）。 **未取得・破棄済みの場合は null**（呼び出し側が領域指定のキャプチャへフォールバックする。 破棄は例外にしない） |
 
 `ResolveCaptureRect` は最小サイズを判定しません（選択操作そのものの可否は `MarqueeOptions.MinSelectionSize` が持ち、検出矩形は小さい要素も切り出し対象にする）。
 
@@ -350,8 +350,8 @@
 
 | メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
-| `Set` | `bool Set(EsWritableBitmap? image, EsPointInt origin)` | 画像と原点を保持する（**旧い画像を破棄する**）。 **破棄済みの場合は受け付けず、渡された画像をその場で破棄して false** を返す |
-| `Image` / `Origin` | `EsWritableBitmap?` / `EsPointInt` | 保持している画像と原点（未取得は null・既定値） |
+| `Set` | `bool Set(EsBitmap? image, EsPointInt origin)` | 画像と原点を保持する（**旧い画像を破棄する**）。 **破棄済みの場合は受け付けず、渡された画像をその場で破棄して false** を返す |
+| `Image` / `Origin` | `EsBitmap?` / `EsPointInt` | 保持している画像と原点（未取得は null・既定値） |
 | `Bounds` | `EsRectInt` | 画像の占有範囲。 **未取得の場合はコンストラクタで指定したフォールバック範囲**（背景撮影完了前でも切り出し範囲をクランプできる） |
 | `Dispose` | `void Dispose()` | 保持している画像を破棄する（複数回呼んでも安全。 以降の `Set` は渡された画像をその場で破棄する） |
 
@@ -360,7 +360,7 @@
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
 | `ResolveBounds` | `EsRectInt? ResolveBounds(IEnumerable<EsRectInt>? screenBounds)` | 撮影対象の範囲（全モニタの包含矩形）を求める。 **モニタが無い場合は null**（撮影する領域が無い） |
-| `AwaitAsync` | `Task<EsWritableBitmap?> AwaitAsync(Task<EsWritableBitmap?> captureTask, TimeSpan? timeout = null)` | 仮想スクリーンの取得をタイムアウト付きで待つ。 **間に合わない場合は null を返し、遅れて完了した結果を破棄する**（既定の待ち時間は `CaptureTiming.ScreenCaptureTimeout`） |
+| `AwaitAsync` | `Task<EsBitmap?> AwaitAsync(Task<EsBitmap?> captureTask, TimeSpan? timeout = null)` | 仮想スクリーンの取得をタイムアウト付きで待つ。 **間に合わない場合は null を返し、遅れて完了した結果を破棄する**（既定の待ち時間は `CaptureTiming.ScreenCaptureTimeout`） |
 
 ### 7.12 CaptureClipCache
 
@@ -369,8 +369,8 @@
 | メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
 | `HasCached` | `bool HasCached(EsRectInt captureRect)` | 同じ矩形の画像を保持しているか（再切り出しのスキップ判断） |
-| `Take` | `EsWritableBitmap? Take(EsRectInt captureRect)` | 一致する画像を**所有権ごと**取り出す（以降の `Dispose` で破棄されない）。 一致しない場合は null |
-| `Store` | `void Store(EsRectInt captureRect, EsWritableBitmap? bitmap)` | 切り出した画像を格納する。 **旧いキャッシュを破棄してから**置き換える。 破棄済みの場合は渡された画像をその場で破棄する |
+| `Take` | `EsBitmap? Take(EsRectInt captureRect)` | 一致する画像を**所有権ごと**取り出す（以降の `Dispose` で破棄されない）。 一致しない場合は null |
+| `Store` | `void Store(EsRectInt captureRect, EsBitmap? bitmap)` | 切り出した画像を格納する。 **旧いキャッシュを破棄してから**置き換える。 破棄済みの場合は渡された画像をその場で破棄する |
 | `HasBitmap` / `StoreCount` | `bool` / `int` | 保持の有無・実際に格納した回数（スキップ判断の検証用） |
 | `Dispose` | `void Dispose()` | 保持中の画像を破棄する（複数回呼んでも安全） |
 

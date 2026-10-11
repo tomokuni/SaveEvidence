@@ -209,7 +209,7 @@ classDiagram
         +Build(vm, settings, undoStack)$ PageContent
     }
     class ImageThumbnailLoader {
-        +Load(filePath, maxSize)$ EsWritableBitmap?
+        +Load(filePath, maxSize)$ EsBitmap?
     }
     class EditHistory {
         +Undo(services)$ void
@@ -224,7 +224,7 @@ classDiagram
     }
     class ThumbnailView {
         <<SkiaCanvasView>>
-        +IEsBitmap? Source
+        +EsReadOnlyBitmap? Source
         +int RequestedSize
     }
     class FolderViewViewModel {
@@ -237,8 +237,8 @@ classDiagram
     class UndoHistory {
         <<App.Core>>
         +Push(image) void
-        +GetUndoHistory() IReadOnlyList~EsWritableBitmap~
-        +GetRedoHistory() IReadOnlyList~EsWritableBitmap~
+        +GetUndoHistory() IReadOnlyList~EsBitmap~
+        +GetRedoHistory() IReadOnlyList~EsBitmap~
     }
     class WindowPlacementMath {
         +ToPhysicalPixelPoint(EsPoint, scale)$ EsPointInt
@@ -250,7 +250,7 @@ classDiagram
     }
     class ZoomViewControl {
         <<Parts.CapturePreview.ControlMewUI>>
-        +IEsBitmap? Source
+        +EsReadOnlyBitmap? Source
         +double ZoomPercent
         +ZoomIn() void
         +ZoomOut() void
@@ -259,7 +259,7 @@ classDiagram
     }
     class CropViewControl {
         <<Parts.CapturePreview.ControlMewUI>>
-        +IEsBitmap? Source
+        +EsReadOnlyBitmap? Source
         +ZoomViewAppearance Appearance
         +IReadOnlyList~OverlayRect~ Rects
         +EsRect? HighlightSourceRect
@@ -270,7 +270,7 @@ classDiagram
         +ZoomFit() void
     }
     class MainViewModel {
-        +EsWritableBitmap PreviewImage
+        +EsBitmap PreviewImage
         +string ImageSizeDisplayText
         +string SaveStatusText
         +SaveImageAsync() Task
@@ -282,7 +282,7 @@ classDiagram
     }
     class IImageWriter {
         <<interface>>
-        +Save(IEsBitmap, string) void
+        +Save(EsReadOnlyBitmap, string) void
     }
 
     Program ..> MainWindow : 生成・配置復元
@@ -329,7 +329,7 @@ classDiagram
     UndoPage ..> UndoHistory : 履歴の参照
     UndoPage ..> ISettingsService : 表示モードの読み書き
     UndoPage ..> MainViewModel : 現在の画像を参照
-    ImageThumbnailLoader ..> EsWritableBitmap : 縮小デコードの結果
+    ImageThumbnailLoader ..> EsBitmap : 縮小デコードの結果
     ThumbnailView --|> SkiaImageView : 計測と Uniform 指定を与える
     SkiaImageView ..> ImageDrawMath : 配置計算
     CropViewControl ..> MainViewModel : 参照（Source / DetectedRects）
@@ -387,7 +387,7 @@ sequenceDiagram
 
     OW->>OS: キャプチャ除外 + 画面外へ退避（設定時）
     OW->>CS: CaptureVirtualScreen(全モニター)
-    CS-->>OW: EsWritableBitmap / 失敗時 null
+    CS-->>OW: EsBitmap / 失敗時 null
     OW->>OW: ボーダーレス・最前面のウィンドウを仮想スクリーン全面へ表示（透明 → 画像合成後に解除）
     Note over OW: 範囲選択はドラッグ、スクリーンはカーソル下のモニター、ウィンドウはカーソル下のウィンドウをハイライト
     OW->>OW: 確定時は CropClipMath で切り出し（キャンセル時は null）
@@ -442,7 +442,7 @@ sequenceDiagram
     FW->>TS: Reprioritize（可視領域と行の配置から見えている行を先に）
     TS->>IL: 背景スレッドで Load(path, iconSize, capacity)
     IL->>IL: キャッシュを確認 → 縮小デコード
-    IL-->>TS: EsWritableBitmap?
+    IL-->>TS: EsBitmap?
     TS->>FW: UI スレッドへ反映（生成が終わった 1 件から差し替え）
     MW->>FW: 別のページへ切替 → OnDeactivated
     FW->>FW: IsActive = false（非表示では 1 件ずつ）
@@ -465,7 +465,7 @@ sequenceDiagram
     alt 縮小されなかった
         IL->>SK: SKBitmap.Resize(目標寸法)
     end
-    IL-->>IL: skBitmap.ToEsWritableBitmap（複製してコアの画像を作る）
+    IL-->>IL: skBitmap.ToEsBitmap（複製してコアの画像を作る）
 ```
 
 ## 11. シーケンス図（編集履歴の移動）
@@ -480,7 +480,7 @@ sequenceDiagram
 
     BTN->>EH: Undo(services) / Redo(services)
     EH->>US: Undo(PreviewImage) / Redo()
-    US-->>EH: 復元する EsWritableBitmap（クローン保持のため安全）
+    US-->>EH: 復元する EsBitmap（クローン保持のため安全）
     EH->>VM: SetPreviewImage(image)
     VM-->>VM: 差し替え前の画像を破棄し、保存状態を未保存へ
     VM-->>CV: PropertyChanged(PreviewImage) → Source を設定
@@ -531,7 +531,7 @@ sequenceDiagram
     UP->>UP: IsActive = true（表示中は並列）
     UP->>US: GetRedoHistory() → GetUndoHistory()
     UP->>VM: PreviewImage
-    VM-->>UP: EsWritableBitmap?
+    VM-->>UP: EsBitmap?
     UP->>TV: 項目ごとに生成（RequestedSize / 代替画像の Source）
     UP->>TS: Clear() → Enqueue（項目ごと。 位置は一覧の並び）
     UP->>TS: Reprioritize（可視領域と行の配置から見えている行を先に）
@@ -580,7 +580,7 @@ sequenceDiagram
     ZV->>SK: canvas.Clear(暗色) + canvas.Scale(DPI)
     ZV->>VM: PreviewImage
     alt 画像あり
-        VM-->>ZV: EsWritableBitmap
+        VM-->>ZV: EsBitmap
         ZV->>SK: DrawBitmap(ToSKBitmap(), 表示矩形)
     else 画像なし
         ZV-->>MW: 描画せず終了

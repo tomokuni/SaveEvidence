@@ -116,12 +116,12 @@ MewUI のテキスト エンジンで文字列の実寸を測ります（ラベ�
 
 ### 1.7 `Imaging.SkiaImageView`（class : `SkiaCanvasView`）
 
-`IEsBitmap` を親が割り当てた領域へ描画する表示ビュー。 撮影画像のオーバーレイ（領域全体へ引き伸ばす）や
+`EsReadOnlyBitmap` を親が割り当てた領域へ描画する表示ビュー。 撮影画像のオーバーレイ（領域全体へ引き伸ばす）や
 サムネイル（縦横比を保って収める）のように、「1 枚の画像を領域へ敷く」表示を共通化します。
 
 | 種別 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- | --- |
-| プロパティ | `Source` | `IEsBitmap? Source { get; set; }` | 表示する画像。 null・破棄済みの場合は何も描画しない（余白のみ） |
+| プロパティ | `Source` | `EsReadOnlyBitmap? Source { get; set; }` | 表示する画像。 null・破棄済みの場合は何も描画しない（余白のみ） |
 | プロパティ | `UniformDraw` | `protected virtual bool UniformDraw { get; }` | 縦横比を保って収めるか（既定は false = 領域全体へ引き伸ばす） |
 
 ```csharp

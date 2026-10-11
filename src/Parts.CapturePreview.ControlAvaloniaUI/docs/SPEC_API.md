@@ -164,7 +164,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Image` | `EsWritableBitmap?` | キャプチャした画像（キャンセル時 null。 破棄は呼び出し側） |
+| `Image` | `EsBitmap?` | キャプチャした画像（キャンセル時 null。 破棄は呼び出し側） |
 | `SourceBounds` | `EsRectInt?` | キャプチャした領域（**画面物理 Pixel** の仮想画面座標） |
 
 - キャンセル時: `Image` は null、`SourceBounds` は 0x0（`EsRectInt(0, 0, 0, 0)`）

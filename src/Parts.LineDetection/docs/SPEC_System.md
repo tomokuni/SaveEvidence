@@ -23,7 +23,7 @@
 LineDetection は、キャプチャ画像から Windows のウィンドウ枠となる水平・垂直の辺（線分）を検出するライブラリです。
 
 - 検出方式は `ILineDetector` で抽象化され、ロジック方式（Canny + Hough）を同一の API で利用できます。
-- 入力は `IEsBitmap`（BGRA8888。 借用であり破棄しない）、出力は `LineDetectionResult` のリストです。
+- 入力は `EsReadOnlyBitmap`（BGRA8888。 借用であり破棄しない）、出力は `LineDetectionResult` のリストです。
 - OpenCvSharp は内部利用に閉じ、公開 API には露出しません。
 
 ## 2. 技術スタック
@@ -55,7 +55,7 @@ flowchart TB
         Cv["OpenCvSharp5<br/>（内部利用のみ）"]
     end
 
-    Caller -->|"Detect(IEsBitmap)"| I
+    Caller -->|"Detect(EsReadOnlyBitmap)"| I
     I --> Det
     Det --> Opt
     Det --> Rcn
@@ -78,14 +78,14 @@ flowchart TB
 | `LineRectangleReconstructor.cs` | 線分の集合から矩形（ウィンドウの 4 辺）を構成する静的ヘルパー（`EsRectInt` を返す）。 4 辺が矩形を構成する組み合わせのみを対象とし、候補数と処理量に上限を設けて UI のブロックを防ぐ。 |
 | `LineSegmentMath.cs` | 線分の演算（接続判定・平行判定・長さ等）の内部ヘルパー。 |
 | `LogicLineDetector.cs` | ロジック方式の検出器。 Canny + HoughLinesP + 幾何学的一貫性による矩形検出。 |
-| `MatHelper.cs` | コアの画像（`IEsBitmap`）↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
+| `MatHelper.cs` | コアの画像（`EsReadOnlyBitmap`）↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
 
 ## 5. 依存関係
 
-- `ILineDetector.cs` → `LineDetectionResult`（`EsPoint`）/ `IEsBitmap`（EsUtil.Platform.Core）
+- `ILineDetector.cs` → `LineDetectionResult`（`EsPoint`）/ `EsReadOnlyBitmap`（EsUtil.Platform.Core）
 - `LogicLineDetector.cs` → `ILineDetector` / `LineOrientation` / `LineDetectionOptions` / `LineRectangleReconstructor` / `LineSegmentMath` / `MatHelper`
 - `LineRectangleReconstructor.cs` → `LineDetectionResult` / `EsRectInt`（EsUtil.Platform.Core）
-- `MatHelper.cs` → OpenCvSharp（内部のみ）・`IEsBitmap`（EsUtil.Platform.Core）
+- `MatHelper.cs` → OpenCvSharp（内部のみ）・`EsReadOnlyBitmap`（EsUtil.Platform.Core）
 
 本プロジェクトは **UI フレームワーク非依存**です（依存は `EsUtil.Platform.Core` と OpenCvSharp のみ。 Avalonia への依存なし）。 座標はコア型（`EsPoint` / `EsRectInt`）で公開し、UI 側は境界で各 UI の型へ変換します。
 
@@ -104,14 +104,14 @@ slim が無効化するモジュール（`videoio` / `video` / `dnn` / `ml` / `h
 
 UI 非依存のアセンブリは `EsUtil.*`（`EsUtil.Platform.Core.*` 等）に置く方針のため、名前空間は `EsUtil.SaveEvidence.Parts.LineDetection` とし、プロジェクトとアセンブリは `Parts.LineDetection` とする（アセンブリ名はフォルダ名と一致させる規則による）。
 
-いずれも他の検出器へ依存しません（疎結合）。 `MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。 OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(IEsBitmap)`）には露出しません。
+いずれも他の検出器へ依存しません（疎結合）。 `MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。 OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(EsReadOnlyBitmap)`）には露出しません。
 
 ## 6. 検出アルゴリズム
 
 ### 6.1 ロジック方式（LogicLineDetector）
 
 ```text
-IEsBitmap (BGRA8888)
+EsReadOnlyBitmap (BGRA8888)
   → MatHelper.ToMat (OpenCV の Mat へ変換)
   → グレースケール化
   → Canny エッジ検出
