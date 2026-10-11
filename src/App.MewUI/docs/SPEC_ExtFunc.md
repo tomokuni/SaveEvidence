@@ -237,7 +237,7 @@
 
 ## 6. 画像の保存仕様
 
-保存形式（拡張子からの判別）とエンコードはコア（`EsBitmapExtensions.Save` / `EsBitmap.Load` / `EsBitmap.Load`）が**単一所有**します（両 UI で同じ結果にする）。
+保存形式（拡張子からの判別）とエンコードはコア（`EsBitmapExtensions.Save` / `EsReadOnlyBitmap.Load` / `EsBitmap.Load`）が**単一所有**します（両 UI で同じ結果にする）。
 
 | 拡張子 | 保存形式 |
 | --- | --- |

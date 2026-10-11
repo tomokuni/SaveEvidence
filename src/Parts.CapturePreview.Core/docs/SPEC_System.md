@@ -225,7 +225,7 @@ classDiagram
         +Dispose()
     }
     class CaptureImageHolder {
-        +EsBitmap? Image
+        +EsReadOnlyBitmap? Image
         +EsPointInt Origin
         +EsRectInt Bounds
         +Set(EsBitmap, EsPointInt) bool

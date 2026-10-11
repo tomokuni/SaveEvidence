@@ -57,13 +57,17 @@ Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブ
 ### 5.1 ViewModel
 
 ```csharp
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.LineDetection;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 
 ILineDetector detector = new LogicLineDetector();
 
-// 検出器はコアの画像（EsReadOnlyBitmap）を入力とする（BGRA8888）。Bitmap → EsBitmap 変換して渡す
-using var unified = bitmap.ToEsBitmap();
+// 検出器はコアの画像（EsReadOnlyBitmap）を入力とする（BGRA8888）。
+// Avalonia の Bitmap から書き換え可能な画像を作り、凍結してから 0 コピーで読み取り専用の型へ渡す
+using var writable = bitmap.ToEsBitmap();
+writable.SetReadOnly();
+using var unified = EsReadOnlyBitmap.FromBitmap(writable);
 var lines = detector.Detect(unified);
 ```
 

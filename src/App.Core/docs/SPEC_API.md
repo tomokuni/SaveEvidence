@@ -140,8 +140,8 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `Count` / `RedoCount` | 現在の Undo / Redo スタック深度 |
 | `IsRestoring` | Undo 復元中かどうか（復元中の `Push` を無視するために使用） |
 | `GetUndoHistory()` / `GetRedoHistory()` | スタック内の画像を古い順に取得する（読み取り専用。 変更・破棄してはならない） |
-| `Push(EsBitmap? currentImage)` | 現在の画像を Undo スタックへプッシュする（画素コピーで複製。 Redo 履歴はクリア） |
-| `Undo(EsBitmap? currentImage)` | 現在の画像を Redo スタックへ退避し、Undo スタックの最新画像を返す（所有権は呼び出し側） |
+| `Push(EsReadOnlyBitmap? currentImage)` | 現在の画像を Undo スタックへプッシュする（**複製**（`Copy`）して保持。 Redo 履歴はクリア） |
+| `Undo(EsReadOnlyBitmap? currentImage)` | 現在の画像を Redo スタックへ退避し、Undo スタックの最新画像を返す（所有権は呼び出し側） |
 | `Redo()` | Redo スタックから最新の画像を返す（所有権は呼び出し側） |
 | `Clear()` | 全画像を破棄して両スタックを空にする |
 
@@ -261,7 +261,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
-| `PreviewImage` | `EsBitmap?` | プレビュー画像（所有権は本 ViewModel。 差し替え時に旧画像を破棄） |
+| `PreviewImage` | `EsReadOnlyBitmap?` | プレビュー画像（所有権は本 ViewModel。 差し替え時に旧画像を破棄。 表示・保存・切り出し・検出は**読むだけ**であり、編集は新しい画像を作るため読み取り専用の型で保持する） |
 | `Settings` | `Settings` | 設定オブジェクト（`ISettingsService.Current`） |
 | `HasPreviewImage` / `CanCopy` / `CanSave` / `CanPaste` | `bool` | 各操作の可否（コマンドの `CanExecute`） |
 | `DetectedRects` | `IReadOnlyList<EsRectInt>` | 自動切り出しで検出した矩形候補群（画像座標・面積昇順・最大 256 件） |
@@ -280,7 +280,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 | メンバー | 説明 |
 | --- | --- |
-| `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る） |
+| `SetPreviewImage(EsReadOnlyBitmap)` / `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る）。 書き換え可能な画像を渡す版は、渡した実体を**凍結**して 0 コピーで共有する |
 | `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`） |
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`） |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`） |
@@ -292,7 +292,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | メンバー | 型 | 既定 |
 | --- | --- | --- |
 | `CopyToClipboardAsync` | `Func<EsReadOnlyBitmap, Task<bool>>?` | null（未設定時は何もしない） |
-| `PasteFromClipboardAsync` | `Func<Task<EsBitmap?>>?` | null |
+| `PasteFromClipboardAsync` | `Func<Task<EsBitmap?>>?` | null（貼り付けは画像を**作る**操作であるため、書き換え可能な型を返すコールバックを受ける） |
 | `ConfirmOverwriteAsync` | `Func<string, Task<bool>>?` | null（未設定時は上書きしない） |
 | `BeforeEditAction` | `Action?` | null |
 | `StartSelectionMode` | `Action<CaptureType>?` | null |

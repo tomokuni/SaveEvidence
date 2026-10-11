@@ -18,7 +18,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `Services.EsBitmapImageWriter` | `public` | `IImageWriter` の**唯一の本番実装**（Windows 専用）。 コアの `EsBitmapExtensions.Save` へ委譲する。 両 UI が同じ実装を使う（保存結果が UI で食い違わない） |
 | `Services.EsRectIntJsonConverter` | `internal` | `EsRectInt` の JSON コンバーター（`X` / `Y` / `Width` / `Height` のみを読み書き） |
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
-| `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsBitmap` のクローンを保持。 最大 5 段） |
+| `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsReadOnlyBitmap` の複製（`Copy`）を保持。 最大 5 段） |
 | `Models.HotKeyParser` | `public` | ホットキー文字列（"Ctrl + Shift + Q" 等）の解析 |
 | `Models.CapacityLimitedCache` | `internal` | 容量制限付きの静的キャッシュ（超過分は破棄。 上限判定と登録の直列化も担う） |
 | `Models.ThumbnailScheduler` | `internal` | 背景の処理（サムネイルの生成）をページの表示状態に応じた負荷で実行するスケジューラ（非表示では 1 件ずつ、表示中は並列。 優先度順に実行する） |
@@ -68,7 +68,7 @@ UI フレームワークへ依存しません。 外部依存は MVVM の `Commu
 | コールバック | 型 | 注入元（Avalonia 実装） |
 | --- | --- | --- |
 | `CopyToClipboardAsync` | `Func<EsReadOnlyBitmap, Task<bool>>` | `MainWindow`（`EsReadOnlyBitmap` → `Bitmap` 変換 + `Clipboard.SetBitmapAsync`） |
-| `PasteFromClipboardAsync` | `Func<Task<EsBitmap?>>` | `MainWindow`（`Clipboard.TryGetBitmapAsync` + `Bitmap` → `EsBitmap` 変換） |
+| `PasteFromClipboardAsync` | `Func<Task<EsBitmap?>>` | `MainWindow`（`Clipboard.TryGetBitmapAsync` + `Bitmap` → `EsBitmap` 変換。 画像を**作る**操作であるため書き換え可能な型） |
 | `ConfirmOverwriteAsync` | `Func<string, Task<bool>>` | `MainWindow`（`ConfirmDialog`） |
 | `BeforeEditAction` | `Action` | `CapturePage`（Undo スタックへのプッシュ） |
 | `StartSelectionMode` | `Action<CaptureType>` | `CapturePage`（キャプチャの開始） |

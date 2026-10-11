@@ -72,8 +72,8 @@ sequenceDiagram
   VM->>UI: CopyToClipboardAsync(EsReadOnlyBitmap)
   UI->>UI: ToAvaloniaBitmap() で変換
   UI->>UI: Clipboard.SetBitmapAsync
-  UI->>VM: PasteFromClipboardAsync() → EsBitmap?
-  VM->>VM: PreviewImage = EsBitmap
+  UI->>VM: PasteFromClipboardAsync() → EsBitmap?（貼り付けは画像を作る操作）
+  VM->>VM: PreviewImage = EsReadOnlyBitmap（書き終えてから凍結して渡す）
 ```
 
 | 注入点 | 種類 | 内容 |
@@ -89,7 +89,7 @@ sequenceDiagram
 
 例外を送出しません。 入力の不正（解釈できないホットキー文字列・無効なテンプレート）は `bool` の戻り値（`TryParse` / `IsValidTemplate`）またはクランプ（`ClampIndex`）で表現します。
 
-`UndoHistory` が保持する `EsBitmap` の破棄は所有者（`UndoHistory`）が行います。 `Undo` / `Redo` の戻り値の所有権は呼び出し側へ移ります。
+`UndoHistory` が保持する `EsReadOnlyBitmap` の破棄は所有者（`UndoHistory`）が行います。 `Undo` / `Redo` の戻り値の所有権は呼び出し側へ移ります。
 
 ## 7. 可視性ポリシー
 

@@ -351,7 +351,7 @@
 | メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
 | `Set` | `bool Set(EsBitmap? image, EsPointInt origin)` | 画像と原点を保持する（**旧い画像を破棄する**）。 **破棄済みの場合は受け付けず、渡された画像をその場で破棄して false** を返す |
-| `Image` / `Origin` | `EsBitmap?` / `EsPointInt` | 保持している画像と原点（未取得は null・既定値） |
+| `Image` / `Origin` | `EsReadOnlyBitmap?` / `EsPointInt` | 保持している画像と原点（未取得は null・既定値） |
 | `Bounds` | `EsRectInt` | 画像の占有範囲。 **未取得の場合はコンストラクタで指定したフォールバック範囲**（背景撮影完了前でも切り出し範囲をクランプできる） |
 | `Dispose` | `void Dispose()` | 保持している画像を破棄する（複数回呼んでも安全。 以降の `Set` は渡された画像をその場で破棄する） |
 

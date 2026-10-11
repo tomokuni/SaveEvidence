@@ -53,7 +53,7 @@ graph LR
 
 - 依存の向きは **MewUI 系 → Platform.Skia →（SkiaSharp / EsUtil.Platform.Core）** です。
 - **`EsUtil.Platform.Core` は SkiaSharp を参照しません**（Skia 依存は本層で止まる）。
-- `EsBitmapSkiaExtensions` は `EsUtil.Platform.Core` の `EsReadOnlyBitmap` を拡張します。
+- `EsBitmapSkiaExtensions` は `EsUtil.Platform.Core` の `EsReadOnlyBitmap` と `EsPixmap` を拡張します。
 
 ## 4. 依存関係
 
@@ -69,7 +69,7 @@ graph LR
 
 | ファイル | 可視性 | 内容 |
 | --- | --- | --- |
-| `EsBitmapSkiaExtensions.cs` | `public static class` | `ToSKBitmap`（非所有ビュー。 呼び出し側が破棄する）/ `ToEsBitmap`（複製） |
+| `EsBitmapSkiaExtensions.cs` | `public static class` | `ToSKBitmap`（非所有ビュー。 `EsReadOnlyBitmap` / `EsPixmap` の 2 オーバーロード。 呼び出し側が破棄する）/ `ToEsBitmap`（複製） |
 | `SkiaFill.cs` | `public static class` | 矩形・角丸矩形の塗り |
 | `SkiaLabel.cs` | `public static class` | ラベル 1 件（背景 + 文字）の描画順 |
 | `SkiaText.cs` | `public static class` | 実寸測定・描画・書体の解決 |
@@ -83,6 +83,7 @@ classDiagram
   class EsBitmapSkiaExtensions {
     <<static>>
     +ToSKBitmap(bitmap)$ SKBitmap
+    +ToSKBitmap(view)$ SKBitmap
     +ToEsBitmap(bitmap)$ EsBitmap
   }
   class SkiaFill {
@@ -114,11 +115,17 @@ classDiagram
     +int Width / Height / Stride
     +ReadOnlySpan~byte~ ReadOnlyPixels
   }
+  class EsPixmap {
+    <<EsUtil.Platform.Core>>
+    +int Width / Height / Stride
+    +ReadOnlySpan~byte~ ReadOnlyPixels
+  }
   class SKBitmap {
     <<SkiaSharp>>
   }
 
   EsBitmapSkiaExtensions ..> EsReadOnlyBitmap : 参照（非所有ビュー / 複製元）
+  EsBitmapSkiaExtensions ..> EsPixmap : 参照（切り出しの非所有ビュー）
   EsBitmapSkiaExtensions ..> SKBitmap : 生成・複製
 ```
 

@@ -209,7 +209,7 @@ classDiagram
         +Build(vm, settings, undoStack)$ PageContent
     }
     class ImageThumbnailLoader {
-        +Load(filePath, maxSize)$ EsBitmap?
+        +Load(filePath, maxSize)$ EsReadOnlyBitmap?
     }
     class EditHistory {
         +Undo(services)$ void
@@ -237,8 +237,8 @@ classDiagram
     class UndoHistory {
         <<App.Core>>
         +Push(image) void
-        +GetUndoHistory() IReadOnlyList~EsBitmap~
-        +GetRedoHistory() IReadOnlyList~EsBitmap~
+        +GetUndoHistory() IReadOnlyList~EsReadOnlyBitmap~
+        +GetRedoHistory() IReadOnlyList~EsReadOnlyBitmap~
     }
     class WindowPlacementMath {
         +ToPhysicalPixelPoint(EsPoint, scale)$ EsPointInt
@@ -270,7 +270,7 @@ classDiagram
         +ZoomFit() void
     }
     class MainViewModel {
-        +EsBitmap PreviewImage
+        +EsReadOnlyBitmap? PreviewImage
         +string ImageSizeDisplayText
         +string SaveStatusText
         +SaveImageAsync() Task
@@ -329,7 +329,7 @@ classDiagram
     UndoPage ..> UndoHistory : 履歴の参照
     UndoPage ..> ISettingsService : 表示モードの読み書き
     UndoPage ..> MainViewModel : 現在の画像を参照
-    ImageThumbnailLoader ..> EsBitmap : 縮小デコードの結果
+    ImageThumbnailLoader ..> EsReadOnlyBitmap : 縮小デコードの結果
     ThumbnailView --|> SkiaImageView : 計測と Uniform 指定を与える
     SkiaImageView ..> ImageDrawMath : 配置計算
     CropViewControl ..> MainViewModel : 参照（Source / DetectedRects）
@@ -442,7 +442,7 @@ sequenceDiagram
     FW->>TS: Reprioritize（可視領域と行の配置から見えている行を先に）
     TS->>IL: 背景スレッドで Load(path, iconSize, capacity)
     IL->>IL: キャッシュを確認 → 縮小デコード
-    IL-->>TS: EsBitmap?
+    IL-->>TS: EsReadOnlyBitmap?
     TS->>FW: UI スレッドへ反映（生成が終わった 1 件から差し替え）
     MW->>FW: 別のページへ切替 → OnDeactivated
     FW->>FW: IsActive = false（非表示では 1 件ずつ）
@@ -480,7 +480,7 @@ sequenceDiagram
 
     BTN->>EH: Undo(services) / Redo(services)
     EH->>US: Undo(PreviewImage) / Redo()
-    US-->>EH: 復元する EsBitmap（クローン保持のため安全）
+    US-->>EH: 復元する EsReadOnlyBitmap（複製を保持するため安全）
     EH->>VM: SetPreviewImage(image)
     VM-->>VM: 差し替え前の画像を破棄し、保存状態を未保存へ
     VM-->>CV: PropertyChanged(PreviewImage) → Source を設定
@@ -531,7 +531,7 @@ sequenceDiagram
     UP->>UP: IsActive = true（表示中は並列）
     UP->>US: GetRedoHistory() → GetUndoHistory()
     UP->>VM: PreviewImage
-    VM-->>UP: EsBitmap?
+    VM-->>UP: EsReadOnlyBitmap?
     UP->>TV: 項目ごとに生成（RequestedSize / 代替画像の Source）
     UP->>TS: Clear() → Enqueue（項目ごと。 位置は一覧の並び）
     UP->>TS: Reprioritize（可視領域と行の配置から見えている行を先に）
@@ -580,7 +580,7 @@ sequenceDiagram
     ZV->>SK: canvas.Clear(暗色) + canvas.Scale(DPI)
     ZV->>VM: PreviewImage
     alt 画像あり
-        VM-->>ZV: EsBitmap
+        VM-->>ZV: EsReadOnlyBitmap
         ZV->>SK: DrawBitmap(ToSKBitmap(), 表示矩形)
     else 画像なし
         ZV-->>MW: 描画せず終了
@@ -723,7 +723,7 @@ sequenceDiagram
 
 | 対象 | 方針 |
 | --- | --- |
-| `EsBitmapImageWriter`（`App.Core` の共通実装） | 実ファイルへ書き出し、コアの `EsBitmap.Load` で読み戻して画素数を検証する（保存形式の判別はコアのテストが担う） |
+| `EsBitmapImageWriter`（`App.Core` の共通実装） | 実ファイルへ書き出し、コアの `EsReadOnlyBitmap.Load` で読み戻して画素数を検証する（保存形式の判別はコアのテストが担う） |
 | `WindowPlacementMath` | 純粋関数のためヘッドレスで検証する。 スケール 0・負値・NaN、画面外判定、四捨五入の境界を含む |
 | `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。 Uniform / Fill・余白の中央寄せ・空の入力（`Platform.MewUI.Tests` が担う） |
 | `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。 6 / 8 桁・大文字小文字・不正入力・往復変換 |
