@@ -95,7 +95,7 @@ internal static class OverlayRectRasterizer
     /// <param name="horizontal">水平辺かどうか。</param>
     /// <remarks>
     /// 水平辺は Y 固定で太さ方向が X、垂直辺は X 固定で太さ方向が Y になる。<br/>
-    /// 太さ分だけ固定座標の両側へ広げて描画する（範囲外は <see cref="IEsWritableBitmap.TrySetPixel"/> が無視する）。
+    /// 太さ分だけ固定座標の両側へ広げて描画する（範囲外は <see cref="IEsWritableBitmap.TrySetPixel(int, int, DrawingColor)"/> が無視する）。
     /// </remarks>
     private static void StampPixel(IEsWritableBitmap bitmap, int x, int y, DrawingColor color, int half, bool horizontal)
     {

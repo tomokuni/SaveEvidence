@@ -14,13 +14,14 @@ public class ImageColorMathTests
     /// <param name="height">高さ。</param>
     /// <param name="color">塗る色（不透明）。</param>
     /// <returns>生成した画像（破棄は呼び出し側）。</returns>
-    private static EsWritableBitmap CreateFilled(int width, int height, DrawingColor color)
+    /// <remarks>名前を <c>CreateFilled</c> にしない（コアの充填の入口（確保と充填を 1 回で行う）と紛らわしいため）。</remarks>
+    private static EsWritableBitmap CreateSolidBitmap(int width, int height, DrawingColor color)
         => EsWritableBitmap.Create(width, height, color);
 
     [Fact]
     internal void AverageColor_単色画像はその色を返す()
     {
-        using var image = CreateFilled(40, 30, DrawingColor.FromArgb(255, 10, 20, 30));
+        using var image = CreateSolidBitmap(40, 30, DrawingColor.FromArgb(255, 10, 20, 30));
 
         var color = ImageColorMath.AverageColor(image);
 
@@ -54,7 +55,7 @@ public class ImageColorMathTests
     [Fact]
     internal void AverageColor_アルファは不透明で返す()
     {
-        using var image = CreateFilled(10, 10, DrawingColor.FromArgb(128, 1, 2, 3));
+        using var image = CreateSolidBitmap(10, 10, DrawingColor.FromArgb(128, 1, 2, 3));
 
         var color = ImageColorMath.AverageColor(image);
 
