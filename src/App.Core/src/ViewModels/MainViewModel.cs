@@ -193,7 +193,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <remarks>設定画面の ComboBox の ItemsSource に使用する。</remarks>
     public static IReadOnlyList<ThemeMode> ThemeModes => s_themeModes;
 
-    private static readonly ThemeMode[] s_themeModes = System.Enum.GetValues<ThemeMode>();
+    private static readonly ThemeMode[] s_themeModes = Enum.GetValues<ThemeMode>();
 
     /// <summary>現在の状態テキスト（左側: 保存済み/未）。</summary>
     /// <remarks>表示している画像が保存済みなら「保存済み」、画像変更後（キャプチャ・Crop・貼り付け等）または初期表示なら「未」。</remarks>

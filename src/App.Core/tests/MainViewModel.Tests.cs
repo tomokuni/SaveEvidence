@@ -102,7 +102,7 @@ public class MainViewModelTests
         Assert.True(result);
 
         // 1. 保存されたファイル名が「screenshot_001.png」（インクリメント前の現在の値）であること
-        Assert.True(File.Exists(System.IO.Path.Combine(tempDir.Path, "screenshot_001.png")),
+        Assert.True(File.Exists(Path.Combine(tempDir.Path, "screenshot_001.png")),
             "インクリメント前のファイル名（screenshot_001.png）で保存されること");
 
         // 2. 保存後にテンプレートの表示が「screenshot_002.png」に更新されること
@@ -136,7 +136,7 @@ public class MainViewModelTests
         // 保存失敗（false）で、インクリメントもされない
         Assert.False(result);
         Assert.Equal("screenshot_001.png", vm.FileNameTemplateText);
-        Assert.False(File.Exists(System.IO.Path.Combine(tempDir.Path, "screenshot_001.png")));
+        Assert.False(File.Exists(Path.Combine(tempDir.Path, "screenshot_001.png")));
         Assert.Empty(writer.SavedPaths);
         Assert.Empty(writer.SavedImages);
     }
@@ -149,7 +149,7 @@ public class MainViewModelTests
 
         // 同名ファイルを先に作成しておく
         await File.WriteAllTextAsync(
-            System.IO.Path.Combine(tempDir.Path, "screenshot_001.png"), "existing", TestContext.Current.CancellationToken);
+            Path.Combine(tempDir.Path, "screenshot_001.png"), "existing", TestContext.Current.CancellationToken);
 
         var vm = new MainViewModel(new MockSettingsService(), writer)
         {
@@ -176,7 +176,7 @@ public class MainViewModelTests
 
         // 同名ファイルを先に作成しておく
         await File.WriteAllTextAsync(
-            System.IO.Path.Combine(tempDir.Path, "screenshot_001.png"), "existing", TestContext.Current.CancellationToken);
+            Path.Combine(tempDir.Path, "screenshot_001.png"), "existing", TestContext.Current.CancellationToken);
 
         var vm = new MainViewModel(new MockSettingsService(), writer)
         {

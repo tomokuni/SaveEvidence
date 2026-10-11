@@ -256,7 +256,7 @@ public class CapturePreviewLogMessageTests
     [Fact]
     internal void 無効ロガーでも安全に実行される()
     {
-        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+        var logger = NullLogger.Instance;
 
         logger.LogZoomIn(50, 62);
         logger.LogZoomOut(62, 50);

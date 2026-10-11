@@ -73,10 +73,10 @@ public sealed partial class CapturePage : UserControl
     private static readonly ILogger s_logger = AppLog.CreateLogger("CapturePage");
 
     /// <summary>市松模様の明色（色 A）の既定色（設定の色文字列が不正な場合に使う）。</summary>
-    private static readonly System.Drawing.Color s_defaultCheckerColorA = System.Drawing.Color.FromArgb(255, 255, 255, 255);
+    private static readonly System.Drawing.Color s_defaultCheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255);
 
     /// <summary>市松模様の暗色（色 B）の既定色（設定の色文字列が不正な場合に使う）。</summary>
-    private static readonly System.Drawing.Color s_defaultCheckerColorB = System.Drawing.Color.FromArgb(255, 204, 204, 204);
+    private static readonly System.Drawing.Color s_defaultCheckerColorB = DrawingColor.FromArgb(255, 204, 204, 204);
 
     // ====================================================================
     // 構築
@@ -201,7 +201,7 @@ public sealed partial class CapturePage : UserControl
 
         // メニューを開かずに効く Ctrl ショートカット（Ctrl+S 等）を登録する
         // Tunnel で登録し、メニューのアクセラレータ文字（(_X)）は Alt 用として削除済み（Alt は無効化）
-        AddHandler(InputElement.KeyDownEvent, OnGlobalKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(KeyDownEvent, OnGlobalKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
 
         // Capture メニューにホットキー設定（SelectScreenHotKey 等）を表示する
         // ホットキーはグローバル登録（WM_HOTKEY）のため、Ctrl ショートカット（Ctrl+Q 等）とは独立して動作する
@@ -593,12 +593,12 @@ public sealed partial class CapturePage : UserControl
         }
 
         var text = value.TrimStart('#');
-        if (!uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, null, out var argb))
+        if (!uint.TryParse(text, NumberStyles.HexNumber, null, out var argb))
         {
             return fallback;
         }
 
-        return System.Drawing.Color.FromArgb(
+        return DrawingColor.FromArgb(
             (byte)((argb >> 24) & 0xFF),
             (byte)((argb >> 16) & 0xFF),
             (byte)((argb >> 8) & 0xFF),

@@ -12,7 +12,7 @@ public class AppPageTests
     [Fact]
     internal void AppPage_全ページが定義されている()
     {
-        var pages = System.Enum.GetValues<AppPage>();
+        var pages = Enum.GetValues<AppPage>();
 
         Assert.Equal(4, pages.Length);
         Assert.Contains(AppPage.Capture, pages);

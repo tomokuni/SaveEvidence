@@ -187,7 +187,7 @@ public sealed partial class MainWindow : Window
     /// <param name="e">ルーティングイベント。</param>
     private async void OnOpenImageClick(object? sender, RoutedEventArgs e)
     {
-        if (TopLevel.GetTopLevel(this) is not { } topLevel)
+        if (GetTopLevel(this) is not { } topLevel)
         {
             return;
         }

@@ -292,7 +292,7 @@ public class ColorPickerTests
         Assert.True(control.HasValidationError);
 
         // OnLostFocus は XAML で ComboBox にアタッチされているため、ComboBox に対してイベントを発火する
-        control._comboBox.RaiseEvent(new RoutedEventArgs(Control.LostFocusEvent));
+        control._comboBox.RaiseEvent(new RoutedEventArgs(Avalonia.Input.InputElement.LostFocusEvent));
         Dispatcher.UIThread.RunJobs();
 
         // 最終有効値（#AARRGGBB へ正規化済み）へ復帰する
@@ -306,7 +306,7 @@ public class ColorPickerTests
         var control = CreateControl();
         control.SelectedColor = "Green";
 
-        control._comboBox.RaiseEvent(new RoutedEventArgs(Control.LostFocusEvent));
+        control._comboBox.RaiseEvent(new RoutedEventArgs(Avalonia.Input.InputElement.LostFocusEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("#FF008000", control.SelectedColor);
@@ -325,7 +325,7 @@ public class ColorPickerTests
             .SetValue(control, null);
 
         // 例外なく完了する（_lastValidColor が null の場合は復帰しない）
-        control._comboBox.RaiseEvent(new RoutedEventArgs(Control.LostFocusEvent));
+        control._comboBox.RaiseEvent(new RoutedEventArgs(Avalonia.Input.InputElement.LostFocusEvent));
         Dispatcher.UIThread.RunJobs();
 
         Assert.Equal("NotAColor", control.SelectedColor);
@@ -360,7 +360,7 @@ public class ColorPickerTests
 
         // SelectionChanged を発火（ヘッドレスではテキストボックスが無いため null パスも通る）
         control._comboBox.RaiseEvent(new SelectionChangedEventArgs(
-            ComboBox.SelectionChangedEvent,
+            SelectingItemsControl.SelectionChangedEvent,
             new AvaloniaList<object?>(),
             new AvaloniaList<object?>()));
         Dispatcher.UIThread.RunJobs();
@@ -376,7 +376,7 @@ public class ColorPickerTests
 
         // sender が ComboBox 以外（Button 等）でも例外なく無視される
         control.RaiseEvent(new SelectionChangedEventArgs(
-            ComboBox.SelectionChangedEvent,
+            SelectingItemsControl.SelectionChangedEvent,
             new AvaloniaList<object?>(),
             new AvaloniaList<object?>())
         { Source = control });

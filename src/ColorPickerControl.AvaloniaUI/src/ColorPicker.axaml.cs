@@ -310,7 +310,7 @@ public sealed partial class ColorPickerControl : UserControl
             if (change.NewValue is Thickness margin)
                 _comboBox.Margin = margin;
             else
-                _comboBox.ClearValue(ComboBox.MarginProperty);
+                _comboBox.ClearValue(MarginProperty);
         }
     }
 
