@@ -62,7 +62,7 @@ internal static class EditHistory
     /// 差し替え前の画像の破棄と未保存化は <see cref="EsUtil.SaveEvidence.App.Core.ViewModels.MainViewModel"/>（<c>PreviewImage</c> の所有者）が行う。<br/>
     /// 履歴の画像はクローンのため、差し替え前の画像を破棄しても履歴の内容には影響しない。
     /// </remarks>
-    private static void Replace(AppServices services, EsWritableBitmap image, Action? restore)
+    private static void Replace(AppServices services, EsBitmap image, Action? restore)
     {
         services.Main.SetPreviewImage(image);
         restore?.Invoke();

@@ -18,7 +18,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 internal static class ThumbnailBackground
 {
     /// <summary>寸法ごとの代替画像（共有するためプロセス内で保持する）。</summary>
-    private static readonly ConcurrentDictionary<int, EsWritableBitmap> s_placeholders = new();
+    private static readonly ConcurrentDictionary<int, EsBitmap> s_placeholders = new();
 
     /// <summary>ロガー（背景の生成で想定外の例外が発生した場合に記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(ThumbnailBackground));
@@ -38,8 +38,8 @@ internal static class ThumbnailBackground
     /// <b>透明にする理由</b>: 枠の背景（テーマ色）が見えるため、ライト / ダークのどちらでも色が衝突しない。<br/>
     /// <b>共有するため破棄しない</b>（破棄すると他の行の表示が壊れる）。
     /// </remarks>
-    public static EsWritableBitmap Placeholder(int size)
-        => s_placeholders.GetOrAdd(Math.Max(1, size), static s => EsWritableBitmap.Create(s, s));
+    public static EsBitmap Placeholder(int size)
+        => s_placeholders.GetOrAdd(Math.Max(1, size), static s => EsBitmap.Create(s, s));
 
     /// <summary>背景の生成の結果を UI スレッドで反映する。</summary>
     /// <param name="action">反映する処理。</param>

@@ -5,8 +5,8 @@ namespace EsUtil.SaveEvidence.Parts.LineDetection.Tests;
 
 /// <summary>テスト用の共通ヘルパー。</summary>
 /// <remarks>
-/// 検出器本体（<see cref="LogicLineDetector"/>）は <see cref="IEsBitmap"/>（読み取りの面）を入力に取る。<br/>
-/// テストでは PNG を OpenCV（<see cref="Cv2"/>）で読み込み、BGRA の <see cref="EsWritableBitmap"/> を構築する。<br/>
+/// 検出器本体（<see cref="LogicLineDetector"/>）は <see cref="EsReadOnlyBitmap"/>（読み取りの面）を入力に取る。<br/>
+/// テストでは PNG を OpenCV（<see cref="Cv2"/>）で読み込み、BGRA の <see cref="EsBitmap"/> を構築する。<br/>
 /// （Avalonia の <c>new Bitmap(path)</c> はヘッドレスで 1x1 になるため、OpenCV でデコードする）<br/>
 /// OpenCV はテスト専用のユーティリティで、検出器の public API には露出しない。
 /// </remarks>
@@ -20,7 +20,7 @@ internal static class TestHelper
     /// 2. <see cref="ColorConversionCodes.BGR2BGRA"/> で BGRA へ変換する<br/>
     /// 3. <c>Mat.Data</c> からコアのピクセル バッファへ直接コピーする（中間バッファなし）
     /// </remarks>
-    public static EsWritableBitmap LoadBitmap(string path)
+    public static EsBitmap LoadBitmap(string path)
     {
         using var mat = Cv2.ImRead(path);
         using var bgra = new Mat();
@@ -29,10 +29,10 @@ internal static class TestHelper
         var height = bgra.Height;
         var width = bgra.Width;
         var srcStride = (int)bgra.Step();
-        var result = EsWritableBitmap.Create(width, height);
+        var result = EsBitmap.Create(width, height);
         var dstStride = result.Stride;
         var rowBytes = Math.Min(srcStride, dstStride);
-        var dst = result.WritablePixels;
+        var dst = result.Pixels;
         unsafe
         {
             // Mat のピクセル バッファからコアのピクセル バッファへ行単位で直接コピーする

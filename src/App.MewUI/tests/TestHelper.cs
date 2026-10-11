@@ -13,13 +13,13 @@ internal static class TestHelper
     /// <param name="width">幅（1 以上）。</param>
     /// <param name="height">高さ（1 以上）。</param>
     /// <returns>生成した画像。 所有権は呼び出し側。</returns>
-    public static EsWritableBitmap CreateBitmap(int width = 4, int height = 4)
+    public static EsBitmap CreateBitmap(int width = 4, int height = 4)
     {
         // 所有権は FromSKBitmap へ移るため using を付けない
         var bitmap = new SKBitmap(width, height);
         bitmap.Erase(SKColors.CornflowerBlue);
 
-        return bitmap.ToEsWritableBitmap();
+        return bitmap.ToEsBitmap();
     }
 
     /// <summary>一時ファイルのパスを作る（ファイルは作成しない）。</summary>

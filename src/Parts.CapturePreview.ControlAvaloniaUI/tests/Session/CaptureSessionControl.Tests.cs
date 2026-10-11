@@ -22,8 +22,8 @@ public class CaptureSessionControlTests
     /// <summary>キャプチャサービスのモック。</summary>
     private sealed class MockCaptureService : ICaptureService
     {
-        public EsWritableBitmap CaptureArea(EsRectInt bounds) => EsWritableBitmap.Create(bounds.Width, bounds.Height);
-        public EsWritableBitmap? CaptureVirtualScreen(out EsPointInt origin)
+        public EsBitmap CaptureArea(EsRectInt bounds) => EsBitmap.Create(bounds.Width, bounds.Height);
+        public EsBitmap? CaptureVirtualScreen(out EsPointInt origin)
         {
             origin = default;
             return null;
@@ -280,9 +280,9 @@ public class CaptureSessionControlTests
         window.Close();
     }
 
-    /// <summary>テスト用 EsWritableBitmap を生成する。</summary>
-    private static EsWritableBitmap CreateBitmap(int width, int height)
-        => EsWritableBitmap.Create(width, height);
+    /// <summary>テスト用 EsBitmap を生成する。</summary>
+    private static EsBitmap CreateBitmap(int width, int height)
+        => EsBitmap.Create(width, height);
 
     /// <summary>表示中の画像を設定した CropViewControl を生成する（切り出しの対象は表示中の画像）。</summary>
     private static CropViewControl CreateCropView(int width = 100, int height = 100)

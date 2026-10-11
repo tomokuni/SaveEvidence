@@ -5,7 +5,7 @@ using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 
-/// <summary>オーバーレイ矩形の 4 辺をルーペ画像（<see cref="IEsWritableBitmap"/>）へラスタライズする。</summary>
+/// <summary>オーバーレイ矩形の 4 辺をルーペ画像（<see cref="EsBitmap"/>）へラスタライズする。</summary>
 /// <remarks>
 /// ルーペに表示される切り出し済み画像へ、外部提供矩形の枠線を直接打ち込む（ドラッグハンドルを持つ<br/>
 /// UI の図形要素ではルーペ画像へ届かないため、ピクセル単位で描画する）。<br/>
@@ -17,7 +17,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 internal static class OverlayRectRasterizer
 {
     /// <summary>矩形の 4 辺（上・下・左・右）を描画する。</summary>
-    /// <param name="bitmap">描画対象の画像（<b>書き換えるため <see cref="IEsWritableBitmap"/> を受ける</b>）。 書き込み先のサイズ（正方形）は <see cref="IEsBitmap.Width"/>。</param>
+    /// <param name="bitmap">描画対象の画像（<b>書き換えるため <see cref="EsBitmap"/> を受ける</b>）。 書き込み先のサイズ（正方形）は <see cref="EsReadOnlyBitmap.Width"/>。</param>
     /// <param name="rect">描画する矩形（対象座標）とスタイル。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（対象座標系）。</param>
     /// <param name="scale">対象座標 → ルーペ画像ピクセル座標の変換係数。</param>
@@ -25,7 +25,7 @@ internal static class OverlayRectRasterizer
     /// 矩形が描画範囲外の場合は何もせずに戻る（早期リターン）。<br/>
     /// 対象座標 → ルーペピクセル座標の変換は半開区間の終点を含むよう幅・高さへ +1 する。
     /// </remarks>
-    internal static void Draw(IEsWritableBitmap bitmap, OverlayRect rect, EsPoint captureTopLeft, double scale)
+    internal static void Draw(EsBitmap bitmap, OverlayRect rect, EsPoint captureTopLeft, double scale)
     {
         // 対象座標 → ルーペピクセル座標（半開区間の終点を含むよう +1 する）
         double x = (rect.Bounds.X - captureTopLeft.X) * scale;
@@ -55,7 +55,7 @@ internal static class OverlayRectRasterizer
     /// 辺の軸の判定・ダッシュの刻み・端のクランプ・丸めは <see cref="OverlayDashWalk"/> が単一所有する。<br/>
     /// 破線はダッシュごとに前景色と背景色を交互に切り替える（インデックスの偶奇）。
     /// </remarks>
-    private static void DrawEdge(IEsWritableBitmap bitmap, EsPoint from, EsPoint to, OverlayRect rect)
+    private static void DrawEdge(EsBitmap bitmap, EsPoint from, EsPoint to, OverlayRect rect)
     {
         // 線の太さ（1 ピクセル以上。 偶数幅は中心から片側へ寄る）
         // 下限の規則は OverlayRectLayout.EffectiveThickness が単一所有する（両 UI のベクター描画と共有）
@@ -95,9 +95,9 @@ internal static class OverlayRectRasterizer
     /// <param name="horizontal">水平辺かどうか。</param>
     /// <remarks>
     /// 水平辺は Y 固定で太さ方向が X、垂直辺は X 固定で太さ方向が Y になる。<br/>
-    /// 太さ分だけ固定座標の両側へ広げて描画する（範囲外は <see cref="IEsWritableBitmap.TrySetPixel(int, int, DrawingColor)"/> が無視する）。
+    /// 太さ分だけ固定座標の両側へ広げて描画する（範囲外は <see cref="EsBitmap.TrySetPixel(int, int, DrawingColor)"/> が無視する）。
     /// </remarks>
-    private static void StampPixel(IEsWritableBitmap bitmap, int x, int y, DrawingColor color, int half, bool horizontal)
+    private static void StampPixel(EsBitmap bitmap, int x, int y, DrawingColor color, int half, bool horizontal)
     {
         var fixedCoord = horizontal ? y : x;
         for (var d = -half; d <= half; d++)

@@ -19,7 +19,7 @@ public class CaptureImageHolderTests
     /// <param name="width">幅。</param>
     /// <param name="height">高さ。</param>
     /// <returns>指定サイズの画像。</returns>
-    private static EsWritableBitmap CreateImage(int width, int height) => EsWritableBitmap.Create(width, height);
+    private static EsBitmap CreateImage(int width, int height) => EsBitmap.Create(width, height);
 
     [Fact]
     internal void Set_画像と原点を保持する()

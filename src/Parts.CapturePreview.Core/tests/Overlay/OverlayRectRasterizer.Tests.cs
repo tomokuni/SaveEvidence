@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Overlay;
 
 /// <summary><see cref="OverlayRectRasterizer"/> の単体テスト（4 辺のラスタライズ・破線・太さ）。</summary>
 /// <remarks>
-/// <see cref="EsWritableBitmap"/> への書き込みのみで完結するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
+/// <see cref="EsBitmap"/> への書き込みのみで完結するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
 /// 座標変換（対象座標 → ルーペピクセル）・切り出し左上の差し引き・スケール適用・範囲外の早期リターンを検証する。
 /// </remarks>
 public class OverlayRectRasterizerTests
@@ -20,7 +20,7 @@ public class OverlayRectRasterizerTests
     private static readonly DrawingColor s_background = DrawingColor.FromArgb(255, 0, 0, 255);
 
     /// <summary>指定座標が指定色かどうかを判定する（前景色用）。</summary>
-    private static void AssertPixelIs(EsWritableBitmap bitmap, int x, int y, DrawingColor expected)
+    private static void AssertPixelIs(EsBitmap bitmap, int x, int y, DrawingColor expected)
     {
         var (b, g, r, a) = bitmap.GetPixel(x, y);
 
@@ -31,7 +31,7 @@ public class OverlayRectRasterizerTests
     }
 
     /// <summary>指定座標が透明（未描画）かどうかを判定する。</summary>
-    private static void AssertPixelIsTransparent(EsWritableBitmap bitmap, int x, int y)
+    private static void AssertPixelIsTransparent(EsBitmap bitmap, int x, int y)
     {
         var (_, _, _, a) = bitmap.GetPixel(x, y);
 
@@ -49,7 +49,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_実線は4辺を描画し内側は残す()
     {
-        using var bitmap = EsWritableBitmap.Create(20, 20);
+        using var bitmap = EsBitmap.Create(20, 20);
 
         // 対象 (0,0)-(9,9)・スケール 1・切り出し左上 (0,0) → ルーペ (0,0)-(10,10) の枠
         OverlayRectRasterizer.Draw(bitmap, CreateRect(), new EsPoint(0, 0), 1.0);
@@ -71,7 +71,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_切り出し左上を差し引いた位置へ描画する()
     {
-        using var bitmap = EsWritableBitmap.Create(20, 20);
+        using var bitmap = EsBitmap.Create(20, 20);
         var rect = new OverlayRect(new EsRect(5, 5, 9, 9), OverlayLineStyle.Solid, s_foreground, s_background, 1.0);
 
         // 対象 (5,5) が切り出し左上 (5,5) に対応するため、ルーペ (0,0) から描画される
@@ -85,7 +85,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_スケールを掛けたピクセル位置へ描画する()
     {
-        using var bitmap = EsWritableBitmap.Create(20, 20);
+        using var bitmap = EsBitmap.Create(20, 20);
         var rect = new OverlayRect(new EsRect(0, 0, 4, 4), OverlayLineStyle.Solid, s_foreground, s_background, 1.0);
 
         // スケール 2 → 幅・高さ (4+1)*2 = 10 ピクセル
@@ -100,7 +100,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_描画範囲外の矩形は何も描画しない()
     {
-        using var bitmap = EsWritableBitmap.Create(20, 20);
+        using var bitmap = EsBitmap.Create(20, 20);
         var rect = new OverlayRect(new EsRect(100, 100, 9, 9), OverlayLineStyle.Solid, s_foreground, s_background, 1.0);
 
         OverlayRectRasterizer.Draw(bitmap, rect, new EsPoint(0, 0), 1.0);
@@ -117,7 +117,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_矩形が描画範囲の右外へはみ出しても描画を開始する()
     {
-        using var bitmap = EsWritableBitmap.Create(20, 20);
+        using var bitmap = EsBitmap.Create(20, 20);
         var rect = new OverlayRect(new EsRect(15, 0, 9, 9), OverlayLineStyle.Solid, s_foreground, s_background, 1.0);
 
         // x=15（<= 20）から始まるため早期リターンせず、範囲内の部分（左辺）が描画される
@@ -133,7 +133,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_破線はダッシュごとに前景色と背景色を交互に描画する()
     {
-        using var bitmap = EsWritableBitmap.Create(40, 40);
+        using var bitmap = EsBitmap.Create(40, 40);
         var rect = new OverlayRect(new EsRect(0, 0, 29, 29), OverlayLineStyle.Dashed, s_foreground, s_background, 1.0);
 
         // 上辺: ダッシュ長 8 / 間隔 4（OverlayLineDash）
@@ -152,7 +152,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_点線は破線より短いダッシュで描画する()
     {
-        using var bitmap = EsWritableBitmap.Create(40, 40);
+        using var bitmap = EsBitmap.Create(40, 40);
         var rect = new OverlayRect(new EsRect(0, 0, 29, 29), OverlayLineStyle.Dotted, s_foreground, s_background, 1.0);
 
         // 上辺: ダッシュ長 2 / 間隔 2 → 0〜2 前景、4〜6 背景、8〜10 前景
@@ -167,7 +167,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_実線は背景色を使用しない()
     {
-        using var bitmap = EsWritableBitmap.Create(20, 20);
+        using var bitmap = EsBitmap.Create(20, 20);
 
         OverlayRectRasterizer.Draw(bitmap, CreateRect(), new EsPoint(0, 0), 1.0);
 
@@ -185,7 +185,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_太さ3は中心の両側へ広げて描画する()
     {
-        using var bitmap = EsWritableBitmap.Create(20, 20);
+        using var bitmap = EsBitmap.Create(20, 20);
 
         OverlayRectRasterizer.Draw(bitmap, CreateRect(thickness: 3.0), new EsPoint(0, 0), 1.0);
 
@@ -203,7 +203,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_太さ0でも最低1ピクセルの線を描画する()
     {
-        using var bitmap = EsWritableBitmap.Create(20, 20);
+        using var bitmap = EsBitmap.Create(20, 20);
 
         OverlayRectRasterizer.Draw(bitmap, CreateRect(thickness: 0), new EsPoint(0, 0), 1.0);
 
@@ -214,7 +214,7 @@ public class OverlayRectRasterizerTests
     [Fact]
     internal void Draw_太さは四捨五入して整数化する()
     {
-        using var bitmap = EsWritableBitmap.Create(20, 20);
+        using var bitmap = EsBitmap.Create(20, 20);
 
         // 2.4 → 2（半幅 1）、上辺は y=0..1 に広がる
         OverlayRectRasterizer.Draw(bitmap, CreateRect(thickness: 2.4), new EsPoint(0, 0), 1.0);

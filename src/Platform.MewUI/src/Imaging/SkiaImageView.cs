@@ -5,9 +5,9 @@ using SkiaSharp;
 
 namespace EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 
-/// <summary><see cref="IEsBitmap"/> を親が割り当てた領域へ描画する表示ビュー（MewUI / Skia 版）。</summary>
+/// <summary><see cref="EsReadOnlyBitmap"/> を親が割り当てた領域へ描画する表示ビュー（MewUI / Skia 版）。</summary>
 /// <remarks>
-/// <b>適用パターン</b>: Adapter（<see cref="IEsBitmap"/> を MewUI の要素として適合させる）。<br/>
+/// <b>適用パターン</b>: Adapter（<see cref="EsReadOnlyBitmap"/> を MewUI の要素として適合させる）。<br/>
 /// <b>用途</b>: 「割り当てられた領域いっぱいへ 1 枚の画像を敷く」表示に使う。 表示サイズは親のレイアウトに従う<br/>
 /// （本クラス自身は要求サイズを持たない）。 縦横比から大きさを決める表示は、本クラスを継承して<br/>
 /// <c>MeasureContent</c> を上書きする。<br/>
@@ -27,8 +27,8 @@ public class SkiaImageView : SkiaCanvasView
     /// 変更は描画とレイアウトの両方に影響しうる（縦横比から大きさを決める派生クラスがあるため）。<br/>
     /// 派生クラスが <c>MeasureContent</c> で <see cref="Source"/> を参照するので、両方を無効化対象にする。
     /// </remarks>
-    public static readonly MewProperty<IEsBitmap?> SourceProperty =
-        MewProperty<IEsBitmap?>.Register<SkiaImageView>(
+    public static readonly MewProperty<EsReadOnlyBitmap?> SourceProperty =
+        MewProperty<EsReadOnlyBitmap?>.Register<SkiaImageView>(
             nameof(Source), null, MewPropertyOptions.AffectsRender | MewPropertyOptions.AffectsLayout);
 
     /// <summary>表示ビューを初期化する。</summary>
@@ -41,7 +41,7 @@ public class SkiaImageView : SkiaCanvasView
 
     /// <summary>表示する画像を取得または設定する。</summary>
     /// <value>表示する画像。 null の場合は何も描画しない（余白のみ）。</value>
-    public IEsBitmap? Source
+    public EsReadOnlyBitmap? Source
     {
         get => GetValue(SourceProperty);
         set => SetValue(SourceProperty, value);

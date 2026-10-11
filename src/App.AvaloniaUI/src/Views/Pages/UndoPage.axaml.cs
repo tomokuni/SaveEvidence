@@ -61,7 +61,7 @@ public sealed partial class UndoPage : ViewModePageBase
     /// <param name="RedoCount">Redo スタックの段数。</param>
     /// <param name="UndoCount">Undo スタックの段数。</param>
     /// <param name="Current">現在のプレビュー画像（<b>参照で比べる</b>）。</param>
-    private readonly record struct BuiltState(int Size, int RedoCount, int UndoCount, IEsBitmap? Current);
+    private readonly record struct BuiltState(int Size, int RedoCount, int UndoCount, EsReadOnlyBitmap? Current);
 
     /// <summary>最後に一覧を構築したときの履歴の状態（未構築は null）。</summary>
     private BuiltState? _built;
@@ -187,9 +187,9 @@ public sealed partial class UndoPage : ViewModePageBase
 
         var placeholder = ThumbnailPlaceholder.Get(size);
         var items = new List<UndoListItem>();
-        var sources = new List<IEsBitmap>();
+        var sources = new List<EsReadOnlyBitmap>();
 
-        void AddItem(IEsBitmap source, string label, bool isCurrent)
+        void AddItem(EsReadOnlyBitmap source, string label, bool isCurrent)
         {
             items.Add(new UndoListItem
             {
@@ -299,7 +299,7 @@ public sealed partial class UndoPage : ViewModePageBase
     /// 縮小は背景スレッドで行い、<see cref="UndoListItem.Thumbnail"/> への設定だけを UI スレッドで行う。<br/>
     /// 一覧が差し替わった後（<see cref="ThumbnailScheduler.Clear"/> の後）の結果は、作った射影を解放して捨てる。
     /// </remarks>
-    private static Func<CancellationToken, ValueTask> MakeThumbnailWork(UndoListItem item, IEsBitmap source, int size)
+    private static Func<CancellationToken, ValueTask> MakeThumbnailWork(UndoListItem item, EsReadOnlyBitmap source, int size)
         => token =>
         {
             token.ThrowIfCancellationRequested();
@@ -348,13 +348,12 @@ public sealed partial class UndoPage : ViewModePageBase
 
             // サムネイルは表示用のアダプタ（IImage）のため、コアの画像（所有する型）を真実から取り出して保存する。
             // 保存形式（拡張子からの判別）とエンコードはコアの画像型が単一所有する。
-            if (item.Thumbnail is not EsBitmapAvaloniaAdapter adapter
-                || adapter.GetEsBitmap() is not EsBitmapBase image)
+            if (item.Thumbnail is not EsBitmapAvaloniaAdapter adapter)
             {
                 return;
             }
 
-            image.Save(tempFile);
+            adapter.GetEsBitmap().Save(tempFile);
 
             using var process = new Process();
             process.StartInfo = new ProcessStartInfo

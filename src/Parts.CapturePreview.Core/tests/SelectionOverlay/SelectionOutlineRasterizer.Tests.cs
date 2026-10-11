@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.SelectionOverlay;
 
 /// <summary><see cref="SelectionOutlineRasterizer"/>（選択矩形破線オーバーレイ描画）の単体テスト。</summary>
 /// <remarks>
-/// 描画は純粋な静的メソッド（<see cref="EsWritableBitmap"/> のみを使用）のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
+/// 描画は純粋な静的メソッド（<see cref="EsBitmap"/> のみを使用）のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
 /// 期待値は実測（画素の読み出し）で確認する。 画素は BGRA のタプルで返る。
 /// </remarks>
 public class SelectionOutlineRasterizerTests
@@ -21,15 +21,15 @@ public class SelectionOutlineRasterizerTests
     /// <param name="width">幅（ピクセル）。</param>
     /// <param name="height">高さ（ピクセル）。</param>
     /// <returns>生成した画像。</returns>
-    private static EsWritableBitmap CreateSolidBitmap(int width, int height)
-        => EsWritableBitmap.Create(width, height, DrawingColor.White);
+    private static EsBitmap CreateSolidBitmap(int width, int height)
+        => EsBitmap.Create(width, height, DrawingColor.White);
 
     /// <summary>指定座標の画素を BGRA のタプルで取得する。</summary>
     /// <param name="bitmap">対象の画像。</param>
     /// <param name="x">X 座標。</param>
     /// <param name="y">Y 座標。</param>
     /// <returns>画素（青・緑・赤・アルファ）。</returns>
-    private static (byte B, byte G, byte R, byte A) PixelAt(EsWritableBitmap bitmap, int x, int y) => bitmap.GetPixel(x, y);
+    private static (byte B, byte G, byte R, byte A) PixelAt(EsBitmap bitmap, int x, int y) => bitmap.GetPixel(x, y);
 
     /// <summary>選択矩形の辺に破線が描画されることを検証する。</summary>
     [Fact]
@@ -238,7 +238,7 @@ public class SelectionOutlineRasterizerTests
         Assert.Empty(dashes);
     }
 
-    /// <summary>列挙した破線が <see cref="EsWritableBitmap"/> への描画結果と一致することを検証する。</summary>
+    /// <summary>列挙した破線が <see cref="EsBitmap"/> への描画結果と一致することを検証する。</summary>
     /// <remarks>列挙（MewUI の描画経路）と <c>DrawSelectionRect</c>（Avalonia の描画経路）が同じ幾何を使うことを担保する。</remarks>
     [Fact]
     internal void EnumerateDashes_列挙と画像への描画が一致する()

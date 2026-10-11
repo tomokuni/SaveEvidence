@@ -106,7 +106,7 @@ public sealed class CropViewControl : Grid
 
     /// <summary>表示する画像（ズーム・パンの対象）を取得または設定する。</summary>
     /// <value>表示する画像。 null の場合は何も表示しない。 設定すると Fit 表示へリセットする。</value>
-    public IEsBitmap? Source
+    public EsReadOnlyBitmap? Source
     {
         get => _zoomView.Source;
         set
@@ -545,7 +545,7 @@ public sealed class CropViewControl : Grid
 
     /// <summary>ルーペの拡大元画像を設定する。</summary>
     /// <param name="source">拡大元画像。</param>
-    public void SetLoupeSource(IEsBitmap? source) => _selectionOverlay.SetLoupeSource(source);
+    public void SetLoupeSource(EsReadOnlyBitmap? source) => _selectionOverlay.SetLoupeSource(source);
 
     /// <summary>ルーペを非表示にして拡大元画像を解放する。</summary>
     public void ClearLoupe() => _selectionOverlay.ClearLoupe();

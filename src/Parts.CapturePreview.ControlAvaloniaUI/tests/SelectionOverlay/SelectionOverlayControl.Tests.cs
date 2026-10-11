@@ -1015,5 +1015,5 @@ public class SelectionOverlayControlTests
     // ルーペの選択矩形破線オーバーレイ（Rendered イベント経由・ホスト側描画）
     // ====================================================================
     // 選択矩形破線オーバーレイの描画は純粋な静的メソッド（DrawSelectionRectOverlay）のため、
-    // EsWritableBitmap のみを使用し、ヘッドレス不要で並列実行できるテスト（FadeMaskDragRectOverlayTests）で検証する。
+    // EsBitmap のみを使用し、ヘッドレス不要で並列実行できるテスト（FadeMaskDragRectOverlayTests）で検証する。
 }

@@ -10,8 +10,8 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 /// <remarks>
 /// 選択矩形（対象座標）をルーペ画像ピクセル座標へ変換し、4 辺を 2 色の破線で描画する。<br/>
 /// 破線の幾何（位置・長さ・色の種別）は <see cref="EnumerateDashes"/> が単一所有し、<br/>
-/// 描画先（<see cref="EsBitmap"/> へ直接書き込む / 描画 API へ渡す）は呼び出し側が選べる<br/>
-/// （Avalonia 版は描画完了イベント経由で <see cref="EsBitmap"/> へ、MewUI 版は描画直後にキャンバスへ描く）。<br/>
+/// 描画先（<see cref="EsReadOnlyBitmap"/> へ直接書き込む / 描画 API へ渡す）は呼び出し側が選べる<br/>
+/// （Avalonia 版は描画完了イベント経由で <see cref="EsReadOnlyBitmap"/> へ、MewUI 版は描画直後にキャンバスへ描く）。<br/>
 /// ウィンドウを必要としない純粋計算のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 internal static class SelectionOutlineRasterizer
@@ -26,7 +26,7 @@ internal static class SelectionOutlineRasterizer
     private const double MinimumScale = 2.0;
 
     /// <summary>選択矩形の 4 辺を 2 色の破線でルーペ画像へ描画する。</summary>
-    /// <param name="bitmap">描画対象の画像（ルーペの表示画像）。 <b>書き換えるため <see cref="IEsWritableBitmap"/> を受ける</b>。</param>
+    /// <param name="bitmap">描画対象の画像（ルーペの表示画像）。 <b>書き換えるため <see cref="EsBitmap"/> を受ける</b>。</param>
     /// <param name="selectionSourceRect">選択矩形（対象座標系・半開区間）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（対象座標系）。</param>
     /// <param name="scale">対象座標 → ルーペ画像ピクセル座標の変換係数。</param>
@@ -37,7 +37,7 @@ internal static class SelectionOutlineRasterizer
     /// 2. 画像外へはみ出す画素は無視する（例外にしない）。
     /// </remarks>
     public static void DrawSelectionRect(
-        IEsWritableBitmap bitmap, EsRect selectionSourceRect, EsPoint captureTopLeft, double scale, DrawingColor colorA, DrawingColor colorB)
+        EsBitmap bitmap, EsRect selectionSourceRect, EsPoint captureTopLeft, double scale, DrawingColor colorA, DrawingColor colorB)
     {
         ArgumentNullException.ThrowIfNull(bitmap);
 

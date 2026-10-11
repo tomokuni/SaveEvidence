@@ -24,7 +24,7 @@ internal static class ThumbnailPlaceholder
     public static Bitmap Get(int size)
         => s_images.GetOrAdd(size, static s =>
         {
-            using var blank = EsWritableBitmap.Create(s, s);
+            using var blank = EsBitmap.Create(s, s);
             return blank.ToAvaloniaBitmap();
         });
 }

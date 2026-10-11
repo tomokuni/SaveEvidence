@@ -196,7 +196,7 @@ public sealed partial class MainWindow : Window
     /// <summary>ViewModel に UI 操作用のコールバックを設定する。</summary>
     /// <remarks>
     /// ViewModel（<c>App.Core</c>）は UI 非依存のため、クリップボード操作（Avalonia 依存）は<br/>
-    /// 本メソッドで境界変換して委譲する（コア型 <see cref="EsWritableBitmap"/> ⇔ Avalonia <see cref="Bitmap"/>）。
+    /// 本メソッドで境界変換して委譲する（コア型 <see cref="EsBitmap"/> ⇔ Avalonia <see cref="Bitmap"/>）。
     /// </remarks>
     private void SetupViewModelCallbacks()
     {
@@ -225,7 +225,7 @@ public sealed partial class MainWindow : Window
                 // 貼り付け結果（Avalonia Bitmap）をコア型へ変換して返す（変換後は不要になるため破棄する）
                 using (bitmap)
                 {
-                    return bitmap?.ToEsWritableBitmap();
+                    return bitmap?.ToEsBitmap();
                 }
             }
             catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
@@ -486,7 +486,7 @@ public sealed partial class MainWindow : Window
         {
             CaptureContent.PushUndo();
             CaptureContent.SetIsCaptureInProgress(true);
-            // キャプチャ結果（EsWritableBitmap）を内部表現のままプレビューへ設定する（所有権は ViewModel へ移る）。
+            // キャプチャ結果（EsBitmap）を内部表現のままプレビューへ設定する（所有権は ViewModel へ移る）。
             _viewModel.SetPreviewImage(captured);
             CaptureContent.SetIsCaptureInProgress(false);
             CaptureContent.ExitCropMode();

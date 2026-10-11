@@ -223,7 +223,7 @@ public sealed class CaptureSessionControl : IDisposable
     /// <param name="session">実行中の Crop セッション。</param>
     /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う）。</param>
     /// <returns>切り出し結果（キャンセル時は 0x0）。</returns>
-    private async Task<EsRectInt?> AwaitCropAsync(CropSession session, IEsBitmap sourceImage)
+    private async Task<EsRectInt?> AwaitCropAsync(CropSession session, EsReadOnlyBitmap sourceImage)
     {
         try
         {

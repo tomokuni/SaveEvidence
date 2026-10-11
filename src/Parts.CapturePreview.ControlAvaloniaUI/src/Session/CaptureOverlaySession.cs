@@ -167,7 +167,7 @@ internal sealed class CaptureOverlaySession(
     /// 生成前の null を読んで背景を設定しないまま Bitmap を破棄する競合が起きる）。
     /// </remarks>
     private static void SetupVirtualScreenContinuation(
-        CaptureOverlayWindow window, Task<EsWritableBitmap?> captureTask, Func<PixelPoint> originProvider)
+        CaptureOverlayWindow window, Task<EsBitmap?> captureTask, Func<PixelPoint> originProvider)
     {
         _ = Task.Run(async () =>
         {

@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.Platform.Skia;
 /// <remarks>
 /// 「背景を塗ってから文字を描く」という順序は、<see cref="SkiaFill"/> と <see cref="SkiaText"/> を<br/>
 /// 呼ぶ順序そのものであり、各 UI・各ホストが書くと順序（重なり）がずれうるため本クラスへ集約する。<br/>
-/// SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、<see cref="EsBitmap"/> と同じ層（本プロジェクト）が担う。<br/>
+/// SkiaSharp は UI フレームワークではなくピクセル・描画の基盤であるため、<see cref="EsReadOnlyBitmap"/> と同じ層（本プロジェクト）が担う。<br/>
 /// <b>テキストの実寸測定と配置の計算は呼び出し側が行う</b>（余白・行送り・クランプの規則は各コントロールのコアが単一所有する）。<br/>
 /// 背景の角丸にも対応する（角丸半径 0 以下は四角形として塗る）。
 /// </remarks>

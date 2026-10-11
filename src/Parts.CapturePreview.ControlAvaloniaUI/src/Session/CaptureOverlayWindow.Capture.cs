@@ -103,12 +103,12 @@ internal sealed partial class CaptureOverlayWindow
         // 切り出し（ピクセルコピー）は UI スレッドをブロックするため Task.Run で実行し、
         // 完了後に UI スレッドで確定する（確定→画像表示までの待ち時間を短縮）。
         var vBitmap = VirtualScreenBitmap;
-        Task<EsWritableBitmap?> clipTask;
+        Task<EsBitmap?> clipTask;
         if (vBitmap is null)
         {
             // キャプチャ未完了（オーバーレイを先に表示した直後）: 確定矩形を直接キャプチャする
             // （GDI キャプチャはスレッドセーフのためバックグラウンドで実行可能）
-            clipTask = Task.Run<EsWritableBitmap?>(() => _captureService.CaptureArea(captureRect));
+            clipTask = Task.Run<EsBitmap?>(() => _captureService.CaptureArea(captureRect));
         }
         else
         {
@@ -198,7 +198,7 @@ internal sealed partial class CaptureOverlayWindow
     /// <b>クローズ後</b>: ウィンドウの後片付けが済んでおり、渡された Bitmap は保持せずその場で破棄される<br/>
     /// （背景撮影の完了がキャンセルより遅れた場合の破棄漏れを防ぐ。 規則はコアの保持クラスが単一所有する）。
     /// </remarks>
-    public void SetVirtualScreen(EsWritableBitmap? bitmap, PixelPoint origin)
+    public void SetVirtualScreen(EsBitmap? bitmap, PixelPoint origin)
     {
         // 差し替え時の旧値の破棄・クローズ後の破棄はコアが単一所有する
         if (!_captureImage.Set(bitmap, origin.ToEsPointInt())) return;

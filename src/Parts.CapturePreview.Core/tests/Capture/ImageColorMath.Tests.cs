@@ -15,8 +15,8 @@ public class ImageColorMathTests
     /// <param name="color">塗る色（不透明）。</param>
     /// <returns>生成した画像（破棄は呼び出し側）。</returns>
     /// <remarks>名前を <c>CreateFilled</c> にしない（コアの充填の入口（確保と充填を 1 回で行う）と紛らわしいため）。</remarks>
-    private static EsWritableBitmap CreateSolidBitmap(int width, int height, DrawingColor color)
-        => EsWritableBitmap.Create(width, height, color);
+    private static EsBitmap CreateSolidBitmap(int width, int height, DrawingColor color)
+        => EsBitmap.Create(width, height, color);
 
     [Fact]
     internal void AverageColor_単色画像はその色を返す()
@@ -35,7 +35,7 @@ public class ImageColorMathTests
     internal void AverageColor_2色の画像は平均を返す()
     {
         // 左半分を黒・右半分を白にする（標本間引きで概ね中間になる）
-        using var image = EsWritableBitmap.Create(80, 80);
+        using var image = EsBitmap.Create(80, 80);
         for (var y = 0; y < 80; y++)
         {
             for (var x = 0; x < 80; x++)

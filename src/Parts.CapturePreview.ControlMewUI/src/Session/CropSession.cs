@@ -84,7 +84,7 @@ internal sealed class CropSession(
     /// <param name="sourceImage">開始時点の元画像（開始ログのサイズに使う。 呼び出し側が表示中の画像から解決して渡す）。</param>
     /// <returns>確定時は元画像上の切り出し範囲（コア型）、キャンセル時は 0x0 の空矩形。</returns>
     /// <remarks>切り出しの境界（元画像の範囲）は開始時のサイズへ固定せず、現在の画像から都度取り出す（表示中の画像が単一所有する）。</remarks>
-    public Task<EsRectInt?> RunAsync(IEsBitmap sourceImage)
+    public Task<EsRectInt?> RunAsync(EsReadOnlyBitmap sourceImage)
     {
         if (!_state.TryBegin())
         {

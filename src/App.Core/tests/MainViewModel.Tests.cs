@@ -42,13 +42,13 @@ public class MainViewModelTests
         public List<string> SavedPaths { get; } = [];
 
         /// <summary>保存対象として渡された画像の一覧。</summary>
-        public List<IEsBitmap> SavedImages { get; } = [];
+        public List<EsReadOnlyBitmap> SavedImages { get; } = [];
 
         /// <summary>書き出したダミーデータ（中身は検証しない）。</summary>
         private static readonly byte[] s_dummy = [1, 2, 3, 4];
 
         /// <inheritdoc/>
-        public void Save(IEsBitmap image, string filePath)
+        public void Save(EsReadOnlyBitmap image, string filePath)
         {
             SavedPaths.Add(filePath);
             SavedImages.Add(image);
@@ -56,11 +56,11 @@ public class MainViewModelTests
         }
     }
 
-    /// <summary>テスト用の EsWritableBitmap（10x10）を生成する。</summary>
-    /// <returns>生成した EsWritableBitmap。</returns>
-    private static EsWritableBitmap CreateBitmap()
+    /// <summary>テスト用の EsBitmap（10x10）を生成する。</summary>
+    /// <returns>生成した EsBitmap。</returns>
+    private static EsBitmap CreateBitmap()
     {
-        var bmp = EsWritableBitmap.Create(10, 10);
+        var bmp = EsBitmap.Create(10, 10);
         bmp.Clear(b: 255, g: 255, r: 255, a: 255);
         return bmp;
     }

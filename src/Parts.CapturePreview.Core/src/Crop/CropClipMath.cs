@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 /// 画面物理座標の切り出し矩形を、仮想スクリーン画像（Bitmap）のローカル座標へ変換して切り出す手順は<br/>
 /// UI フレームワークに依存しない規則であるため、本クラスが単一所有する<br/>
 /// （UI ごとに「原点の減算」を書くと、マルチモニタ（原点が負値）で切り出し位置がずれる）。<br/>
-/// <c>EsBitmap.Crop(int, int, int, int)</c> はピクセル読み取りのみで、バックグラウンドスレッドから安全に呼び出せる。<br/>
+/// <c>EsReadOnlyBitmap.Crop(int, int, int, int)</c> はピクセル読み取りのみで、バックグラウンドスレッドから安全に呼び出せる。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public static class CropClipMath
@@ -73,7 +73,7 @@ public static class CropClipMath
     /// <param name="image">対象の画像。</param>
     /// <returns>画像のピクセルサイズ（コアの値型）。</returns>
     /// <remarks>コアの型同士の変換はコアが単一所有する（UI が <c>new EsSize(image.Width, image.Height)</c> を書かない）。</remarks>
-    public static EsSize ImageSize(IEsBitmap image) => new(image.Width, image.Height);
+    public static EsSize ImageSize(EsReadOnlyBitmap image) => new(image.Width, image.Height);
 
     /// <summary>画像の占有範囲（原点とサイズ）を求める。</summary>
     /// <param name="image">対象の画像。</param>
@@ -83,7 +83,7 @@ public static class CropClipMath
     /// 原点が負値（仮想スクリーンの左上がプライマリより外側）でも同じ式で扱える。<br/>
     /// 占有範囲は切り出しのクランプ境界になるため、UI が幅・高さを組み立てないよう本メソッドが単一所有する。
     /// </remarks>
-    public static EsRectInt ImageBounds(IEsBitmap image, EsPointInt origin)
+    public static EsRectInt ImageBounds(EsReadOnlyBitmap image, EsPointInt origin)
         => new(origin.X, origin.Y, image.Width, image.Height);
 
     /// <summary>切り出し元の画像が切り出せる（サイズが正）であることを検証する。</summary>
@@ -94,7 +94,7 @@ public static class CropClipMath
     /// 「サイズが 0 の画像は切り出せない」という規則を単一所有する（公開 API の前提条件として検証する）。<br/>
     /// イベントハンドラから呼ばれる経路では例外を投げずに何もしない（呼び出し側が可否を判断する）。
     /// </remarks>
-    public static void ValidateImage(IEsBitmap image, string paramName)
+    public static void ValidateImage(EsReadOnlyBitmap image, string paramName)
     {
         if (image.Width <= 0 || image.Height <= 0)
         {
@@ -157,7 +157,7 @@ public static class CropClipMath
     /// 「破棄済みは切り出せない」規則を本クラスが単一所有し、UI が例外を捕まえない）。<br/>
     /// 取り出した画像の所有権は呼び出し側へ移る。
     /// </remarks>
-    public static EsWritableBitmap? Extract(IEsBitmap? virtualScreen, EsPointInt origin, EsRectInt captureRect)
+    public static EsBitmap? Extract(EsReadOnlyBitmap? virtualScreen, EsPointInt origin, EsRectInt captureRect)
     {
         if (virtualScreen is not { } source)
         {

@@ -445,7 +445,7 @@ public sealed class SelectionOverlayControl : Panel
     /// <summary>ルーペの拡大元画像を設定する。</summary>
     /// <param name="source">拡大元の画像。 null の場合は解除する。</param>
     /// <remarks>画像を設定しただけでは表示しない（表示開始は <see cref="SetLoupePosition"/> が担う）。 解除時は表示も解除する。</remarks>
-    public void SetLoupeSource(IEsBitmap? source)
+    public void SetLoupeSource(EsReadOnlyBitmap? source)
     {
         _loupe.Source = source;
 

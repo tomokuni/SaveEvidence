@@ -37,14 +37,14 @@ public class CaptureOverlayWindowTests
         /// <summary>CaptureArea の呼び出し回数（確定時の再キャプチャが廃止されたことの検証用）。</summary>
         public int CaptureAreaCallCount { get; private set; }
 
-        public EsWritableBitmap CaptureArea(EsRectInt bounds)
+        public EsBitmap CaptureArea(EsRectInt bounds)
         {
             // 呼び出し回数の検証だけが目的のモック。 実際の取得は仮想スクリーンのモックが担う
             CaptureAreaCallCount++;
-            return EsWritableBitmap.Create(bounds.Width, bounds.Height);
+            return EsBitmap.Create(bounds.Width, bounds.Height);
         }
 
-        public EsWritableBitmap? CaptureVirtualScreen(out EsPointInt origin)
+        public EsBitmap? CaptureVirtualScreen(out EsPointInt origin)
         {
             origin = default;
             return null;
@@ -79,7 +79,7 @@ public class CaptureOverlayWindowTests
     private static CaptureOverlayWindow CreateWindow(
         CaptureType captureType = CaptureType.AreaSelect,
         double scaling = 1.0,
-        Action<EsWritableBitmap?, EsRectInt?>? onComplete = null,
+        Action<EsBitmap?, EsRectInt?>? onComplete = null,
         MockCaptureService? captureService = null,
         MockElementFinder? elementFinder = null)
         => new(
@@ -153,7 +153,7 @@ public class CaptureOverlayWindowTests
     internal async Task CompleteSelection_仮想スクリーンから切り出しCaptureAreaを呼ばない()
     {
         var captureService = new MockCaptureService();
-        EsWritableBitmap? captured = null;
+        EsBitmap? captured = null;
         EsRectInt? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -162,7 +162,7 @@ public class CaptureOverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = EsWritableBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 確定: 選択矩形 (2,2)〜(5,5)（半開区間幅 3）→ 閉区間 (2,2,4,4)
@@ -183,7 +183,7 @@ public class CaptureOverlayWindowTests
     internal async Task CompleteSelection_仮想スクリーン未設定ならCaptureAreaでフォールバックする()
     {
         var captureService = new MockCaptureService();
-        EsWritableBitmap? captured = null;
+        EsBitmap? captured = null;
         EsRectInt? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -218,7 +218,7 @@ public class CaptureOverlayWindowTests
         window.Show();
 
         // セカンダリが左・上にある構成（仮想スクリーンの原点が負値）。 画像は (0,0)-(99,99) のローカル座標を持つ
-        var virtualScreen = EsWritableBitmap.Create(100, 100);
+        var virtualScreen = EsBitmap.Create(100, 100);
         window.SetVirtualScreen(virtualScreen, new PixelPoint(-50, -60));
 
         // 画面物理座標 (0,0)-(9,9)（画像ローカルでは (50,60)-(59,69)）を確定する
@@ -241,7 +241,7 @@ public class CaptureOverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = EsWritableBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // ホバー（検出枠の更新）→ 事前切り出しが実行される（Task.Run + Post のため完了をポーリングで待つ）
@@ -261,7 +261,7 @@ public class CaptureOverlayWindowTests
         var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0, elementFinder: finder);
         window.Show();
 
-        var virtualScreen = EsWritableBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 同じ矩形で 2 回ホバー → 事前切り出しは 1 回だけ（2 回目はスキップ）
@@ -283,7 +283,7 @@ public class CaptureOverlayWindowTests
         var window = CreateWindow(CaptureType.WindowSelect, scaling: 1.0, elementFinder: finder);
         window.Show();
 
-        var virtualScreen = EsWritableBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 異なる矩形で 2 回ホバー → 事前切り出しは 2 回
@@ -301,7 +301,7 @@ public class CaptureOverlayWindowTests
     internal async Task CompleteSelection_事前切り出しキャッシュを再利用する()
     {
         var captureService = new MockCaptureService();
-        EsWritableBitmap? captured = null;
+        EsBitmap? captured = null;
         EsRectInt? capturedBounds = null;
         var finder = new MockElementFinder
         {
@@ -315,7 +315,7 @@ public class CaptureOverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = EsWritableBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // ホバー（事前切り出し）→ 完了をポーリングで待つ
@@ -342,7 +342,7 @@ public class CaptureOverlayWindowTests
     [AvaloniaFact]
     internal async Task AreaSelect_確定要求でキャプチャが確定する()
     {
-        EsWritableBitmap? captured = null;
+        EsBitmap? captured = null;
         EsRectInt? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -350,7 +350,7 @@ public class CaptureOverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定（原点 = (0,0)）
-        var virtualScreen = EsWritableBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // 矩形を設定してから確定要求（Enter キー相当）を発行する
@@ -370,7 +370,7 @@ public class CaptureOverlayWindowTests
     [AvaloniaFact]
     internal void AreaSelect_キャンセル要求でキャンセルされる()
     {
-        EsWritableBitmap? captured = null;
+        EsBitmap? captured = null;
         EsRectInt? capturedBounds = null;
         var window = CreateWindow(
             captureType: CaptureType.AreaSelect,
@@ -378,7 +378,7 @@ public class CaptureOverlayWindowTests
         window.Show();
 
         // 仮想スクリーン全体（10×10 のダミー）を設定
-        var virtualScreen = EsWritableBitmap.Create(10, 10);
+        var virtualScreen = EsBitmap.Create(10, 10);
         window.SetVirtualScreen(virtualScreen, default);
 
         // キャンセル要求（Esc キー相当）を発行する
@@ -405,7 +405,7 @@ public class CaptureOverlayWindowTests
         var window = CreateWindow(CaptureType.AreaSelect);
         window.Show();
 
-        var bitmap = EsWritableBitmap.Create(100, 100);
+        var bitmap = EsBitmap.Create(100, 100);
         window.SetVirtualScreen(bitmap, default);
 
         // 固定背景画像（VirtualScreenImage）の Source が破棄済みでないこと（Size 参照で例外なし）
@@ -421,7 +421,7 @@ public class CaptureOverlayWindowTests
         var window = CreateWindow(CaptureType.AreaSelect);
         window.Show();
 
-        var bitmap = EsWritableBitmap.Create(100, 100);
+        var bitmap = EsBitmap.Create(100, 100);
         window.SetVirtualScreen(bitmap, default);
         Assert.NotNull(window.VirtualScreenImageControl.Source);
 
@@ -441,7 +441,7 @@ public class CaptureOverlayWindowTests
         window.Show();
         window.Close();
 
-        var late = EsWritableBitmap.Create(100, 100);
+        var late = EsBitmap.Create(100, 100);
         window.SetVirtualScreen(late, default);
 
         Assert.True(late.IsDisposed);

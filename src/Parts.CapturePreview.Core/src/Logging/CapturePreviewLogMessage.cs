@@ -151,7 +151,7 @@ public static partial class CapturePreviewLogMessage
     /// ログレベル: Debug。 出力書式: <c>[CapturePreview] CropStart: source={Width}x{Height}</c><br/>
     /// 元画像からサイズを取り出す入口を単一所有する（UI が独自に整数へ丸めない）。
     /// </remarks>
-    public static void LogCropStart(this ILogger logger, IEsBitmap image)
+    public static void LogCropStart(this ILogger logger, EsReadOnlyBitmap image)
         => LogCropStartCore(logger, Prefix, image.Width, image.Height);
 
     /// <summary>切り出しセッションの開始を記録する（内部用）。</summary>
@@ -285,7 +285,7 @@ public static partial class CapturePreviewLogMessage
     /// ログレベル: Debug。 出力書式: <c>[CapturePreview] VirtualScreen: origin=({X}, {Y}) size={Width}x{Height}</c><br/>
     /// 「未取得は 0」という正規化を単一所有する（呼び出し側で null 判定を書かない）。
     /// </remarks>
-    public static void LogVirtualScreen(this ILogger logger, EsPointInt origin, IEsBitmap? bitmap)
+    public static void LogVirtualScreen(this ILogger logger, EsPointInt origin, EsReadOnlyBitmap? bitmap)
         => LogVirtualScreenCore(logger, Prefix, origin.X, origin.Y, bitmap?.Width ?? 0, bitmap?.Height ?? 0);
 
     /// <summary>仮想スクリーンの原点とサイズを記録する（内部用）。</summary>

@@ -9,23 +9,23 @@ namespace EsUtil.SaveEvidence.Parts.LineDetection;
 internal static class MatHelper
 {
     /// <summary>画像（BGRA8888）を Mat（CV_8UC4）へ変換する。</summary>
-    /// <param name="bitmap">変換元の画像。 借用であり破棄しない（読み取るだけのため <see cref="IEsBitmap"/> を受ける）。</param>
+    /// <param name="bitmap">変換元の画像。 借用であり破棄しない（読み取るだけのため <see cref="EsReadOnlyBitmap"/> を受ける）。</param>
     /// <returns>変換された Mat（呼び出し元で破棄する）。</returns>
     /// <remarks>
-    /// ピクセル バッファ（<see cref="IEsBitmap.Pixels"/>）を直接読み取り、<see cref="Mat"/> へコピーする。<br/>
+    /// ピクセル バッファ（<see cref="EsReadOnlyBitmap.ReadOnlyPixels"/>）を直接読み取り、<see cref="Mat"/> へコピーする。<br/>
     /// ストライドが幅×4 と異なる場合は行単位でコピーする。
     /// </remarks>
-    public static Mat ToMat(IEsBitmap bitmap)
+    public static Mat ToMat(EsReadOnlyBitmap bitmap)
     {
         var width = bitmap.Width;
         var height = bitmap.Height;
-        var stride = width * IEsBitmap.BytesPerPixel;
+        var stride = width * EsReadOnlyBitmap.BytesPerPixel;
         var pixels = new byte[height * stride];
         var srcStride = bitmap.Stride;
 
         unsafe
         {
-            fixed (byte* src = bitmap.Pixels)
+            fixed (byte* src = bitmap.ReadOnlyPixels)
             fixed (byte* dst = pixels)
             {
                 if (srcStride == stride)

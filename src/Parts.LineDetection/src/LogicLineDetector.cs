@@ -62,7 +62,7 @@ public sealed class LogicLineDetector : ILineDetector
     ///    4 辺をコーナー近傍で交差する閉区間として出力する（<see cref="BuildRectangles"/>）<br/>
     /// 6. 矩形を構成できない場合は、最小長・暗いピクセル割合でフィルタしてスコア（長さ）降順で返す
     /// </remarks>
-    public IReadOnlyList<LineDetectionResult> Detect(IEsBitmap image)
+    public IReadOnlyList<LineDetectionResult> Detect(EsReadOnlyBitmap image)
     {
         ArgumentNullException.ThrowIfNull(image);
 

@@ -30,7 +30,7 @@ internal static class DatasetVerifier
         try
         {
             // ファイルの読み込みはコアの画像型が単一所有する（形式は内容から判別される）
-            using var unified = EsBitmap.Load(entry.PngPath);
+            using var unified = EsReadOnlyBitmap.Load(entry.PngPath);
             var results = detector.Detect(unified);
 
             if (TryReconstructBounds(results) is not { } bound)

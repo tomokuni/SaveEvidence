@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <summary>画像をアスペクト比を保って領域いっぱいへ収める表示ビュー（MewUI 版）。</summary>
 /// <remarks>
 /// 一覧のサムネイルのように「幅を固定して元画像の縦横比のまま見せる」用途に使う。<br/>
-/// <see cref="EsWritableBitmap"/> を保持するだけで UI 用ビットマップへ変換せず、Skia のキャンバスへ<br/>
+/// <see cref="EsBitmap"/> を保持するだけで UI 用ビットマップへ変換せず、Skia のキャンバスへ<br/>
 /// 1 回の <c>DrawBitmap</c> で描画する（中間バッファの生成とコピーを行わない）。<br/>
 /// <br/>
 /// <b>役割の分担</b>: 描画（クリア・配置の計算・描画）は基底の <see cref="SkiaImageView"/> が単一所有する。<br/>
@@ -54,7 +54,7 @@ internal sealed class ThumbnailView : SkiaImageView
     /// </remarks>
     protected override Size MeasureContent(Size availableSize)
     {
-        // 破棄済みの判定は読み取りの面（IEsBitmap.IsDisposed）が公開する
+        // 破棄済みの判定は読み取りの面（EsReadOnlyBitmap.IsDisposed）が公開する
         if (Source is not { } source || source.IsDisposed || source.Width <= 0 || RequestedSize <= 0)
         {
             return new Size(RequestedSize, RequestedSize);

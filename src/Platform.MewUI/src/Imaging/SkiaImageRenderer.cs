@@ -5,7 +5,7 @@ using SkiaSharp;
 
 namespace EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 
-/// <summary><see cref="IEsBitmap"/> を Skia キャンバスへ 1 回の描画で敷く描画層。</summary>
+/// <summary><see cref="EsReadOnlyBitmap"/> を Skia キャンバスへ 1 回の描画で敷く描画層。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: 描画層（コントロールから描画手順を分離する）。<br/>
 /// コントロールの <c>PaintSurface</c> から呼ぶ描画手順をコントロール内の private メソッドに置くと、<br/>
@@ -17,13 +17,13 @@ namespace EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 /// 3. 配置の矩形（<see cref="ImageDrawMath"/>）が空の場合は描画しない。<br/>
 /// 4. 矩形へ画像を 1 回の <c>DrawBitmap</c> で描く。<br/>
 /// <br/>
-/// <b>所有権</b>: 描画に使う Skia ビットマップは <see cref="IEsBitmap"/> のピクセルを指す<b>非所有ビュー</b>である。
+/// <b>所有権</b>: 描画に使う Skia ビットマップは <see cref="EsReadOnlyBitmap"/> のピクセルを指す<b>非所有ビュー</b>である。
 /// ビュー自体は本クラスが作り、描画の直後に破棄する（コアのピクセルは破棄されない。 ビューは <see cref="SKBitmap"/> の
 /// ファイナライザ対象のため、毎描画で残すと不要な GC 負荷になる）。
 /// </remarks>
 internal static class SkiaImageRenderer
 {
-    /// <summary><see cref="IEsBitmap"/> をキャンバス全体へ配置して描画する。</summary>
+    /// <summary><see cref="EsReadOnlyBitmap"/> をキャンバス全体へ配置して描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（左上を原点とする）。</param>
     /// <param name="info">キャンバスのピクセル情報（幅・高さを使用する）。</param>
     /// <param name="source">描画する画像。 null・破棄済みの場合は何も描画しない。</param>
@@ -32,11 +32,11 @@ internal static class SkiaImageRenderer
     /// 前提条件の判定（未設定・破棄済み・配置が空）をすべて本メソッドが担うため、<br/>
     /// 呼び出し側は判定を持たない。
     /// </remarks>
-    public static void Render(SKCanvas canvas, SKImageInfo info, IEsBitmap? source, ImageDrawMode mode)
+    public static void Render(SKCanvas canvas, SKImageInfo info, EsReadOnlyBitmap? source, ImageDrawMode mode)
     {
         canvas.Clear(SKColors.Transparent);
 
-        // 未設定・破棄済みの場合は描画しない（破棄状態は読み取りの面（IEsBitmap.IsDisposed）が公開する）
+        // 未設定・破棄済みの場合は描画しない（破棄状態は読み取りの面（EsReadOnlyBitmap.IsDisposed）が公開する）
         if (source is not { } bitmap || bitmap.IsDisposed)
         {
             return;
