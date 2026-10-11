@@ -63,8 +63,8 @@ SkiaLabel.Draw(canvas, background, bgColor, text, origin, fontSize, textColor, c
 
 ## 5. 設計上の約束
 
-1. **所有権は移動しない**: `ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製である。 コアのピクセルバッファの所有権は常に元画像（`EsReadOnlyBitmap`）に残る（元画像を破棄した後のビューは無効）。 `EsPixmap` のビューは元画像への参照を持つため、**ビュー自身を破棄するまで**元画像が解放されない（それでも `SKBitmap` のビューは `EsPixmap` の生存中に限る）。 ビュー自体（`SKBitmap` のインスタンス）は**呼び出し側が破棄する**（ファイナライザを持つため、描画のたびに作る用途では `using` が必須）。
-2. **ビューの寿命は元画像の生存期間と一致する**: ピクセルをコピーしないため、元画像を破棄した後にビューを使うと解放済みメモリを読む。 コピーが必要な場合はビューへ `Copy()` を適用する。
+1. **所有権は移動しない**: `ToSKBitmap` は非所有ビュー、`ToEsBitmap` は複製である。 コアのピクセルバッファの所有権は常に元画像（`EsReadOnlyBitmap`）に残る。 `EsPixmap` のビューは元画像のバッファへの参照を 1 つ持つため、**ビュー自身を破棄するまで**元画像が解放されない（それでも `SKBitmap` のビューは `EsPixmap` の生存中に限る）。 ビュー自体（`SKBitmap` のインスタンス）は**呼び出し側が破棄する**（ファイナライザを持つため、描画のたびに作る用途では `using` が必須）。
+2. **寿命は「参照が保つ」**: コアのビュー（`EsPixmap`）は<b>元画像を先に破棄しても読めます</b>（画素の解放は最後の 1 つが行う。 参照を数えるため）。 ただし `SKBitmap` の非所有ビューは<b>`EsPixmap` の生存中に限る</b>ため、ビューを破棄した後に `SKBitmap` を使うと解放済みメモリを読みます。 画素を独立させたい場合は `EsBitmap.FromPixmap` / `EsReadOnlyBitmap.FromPixmap`（**常に複製**）で画像にします。
 3. **ストライドは渡す相手で決まる**: 画像（`EsReadOnlyBitmap` / `EsBitmap`）の `Stride` は `幅 × 4`（パディングなし）で固定であり、Skia の `RowBytes` と一致する。 **ビュー（`EsPixmap`）の `Stride` は元画像のストライドのまま**であり `幅 × 4` より大きい場合がある（`EsPixmap.ReadOnlyPixels` は行の余白を含む）ため、**`ToSKBitmap(EsPixmap)` は `EsPixmap.Stride` をそのまま `RowBytes` へ渡す**（`幅 × 4` を渡すと行がずれる）。
 4. **`SKBitmap` を確保先として使わない**: コアのビットマップは自前のバッファ（`NativeMemory.AlignedAlloc`）を持つ。 Skia は描画・変換の相手としてのみ関与する。
 5. **`ImageDrawMath` は本層に置かない**: 画像配置の矩形計算は純粋計算であり Skia を必要としないため本層に置かず、使う UI のアダプタ層（`Platform.MewUI`）が所有する（戻り値は `EsRect`）。
