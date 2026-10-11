@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
@@ -120,8 +121,10 @@ public sealed partial class DetectionContext : ObservableObject
             return;
         }
 
-        // 検出器は EsBitmap を入力として受け取る（Bitmap → EsBitmap 変換）
-        using var unified = Image.ToEsBitmap();
+        // 検出器は読み取りの面（EsReadOnlyBitmap）を入力として受け取る（Bitmap → EsBitmap → 凍結して 0 コピーで共有）
+        using var unifiedBitmap = Image.ToEsBitmap();
+        unifiedBitmap.SetReadOnly();
+        using var unified = EsReadOnlyBitmap.FromBitmap(unifiedBitmap);
         var results = detector.Detector.Detect(unified);
 
         // モデル依存方式のエラー（モデル未配置等）をステータスへ反映する

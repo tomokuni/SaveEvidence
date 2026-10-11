@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Services;
 /// 撮影（<see cref="CaptureFlow"/>）と切り出し（<c>CaptureSessionControl</c>。 CaptureSessionControl.MewUI）は履歴の退避のみを担う。<br/>
 /// <br/>
 /// <b>所有権</b>: 履歴の画像はスタックが保持し、復元した画像の所有権はプレビューへ移る<br/>
-/// （差し替え前のプレビュー画像は破棄する。 履歴側はクローンを持つため影響しない）。<br/>
+/// （差し替え前のプレビュー画像は破棄する。 履歴側は独立した画素の複製を持つため影響しない）。<br/>
 /// <b>スタックが空の場合</b>: 何もしない（プレビューを変更しない。 例外にもしない）。<br/>
 /// <b>Redo の破棄</b>: Redo で戻すと現在の画像は履歴へ退避されない（Undo の逆操作として扱う）。
 /// </remarks>
@@ -60,9 +60,9 @@ internal static class EditHistory
     /// <param name="restore">差し替え後の後処理（省略可）。</param>
     /// <remarks>
     /// 差し替え前の画像の破棄と未保存化は <see cref="EsUtil.SaveEvidence.App.Core.ViewModels.MainViewModel"/>（<c>PreviewImage</c> の所有者）が行う。<br/>
-    /// 履歴の画像はクローンのため、差し替え前の画像を破棄しても履歴の内容には影響しない。
+    /// 履歴の画像は独立した画素の複製のため、差し替え前の画像を破棄しても履歴の内容には影響しない。
     /// </remarks>
-    private static void Replace(AppServices services, EsBitmap image, Action? restore)
+    private static void Replace(AppServices services, EsReadOnlyBitmap image, Action? restore)
     {
         services.Main.SetPreviewImage(image);
         restore?.Invoke();

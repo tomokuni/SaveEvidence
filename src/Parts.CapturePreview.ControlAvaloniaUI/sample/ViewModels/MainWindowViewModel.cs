@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
@@ -83,8 +84,11 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         if (result?.Image is { } image && result.SourceBounds is { } bounds)
         {
-            // キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換する（表示境界）。
-            CapturedImage = image.ToAvaloniaBitmap();
+            // キャプチャ結果（書き換え可能）を表示用 Bitmap へ変換する（表示境界）。
+            // 変換は読むだけ: 凍結して 0 コピーで読み取り専用の面へ渡す
+            image.SetReadOnly();
+            using var read = EsReadOnlyBitmap.FromBitmap(image);
+            CapturedImage = read.ToAvaloniaBitmap();
             ResultText = $"領域: X={bounds.X}, Y={bounds.Y}, 幅={bounds.Width}, 高さ={bounds.Height}（仮想画面座標）";
             StatusText = "キャプチャが完了しました。";
         }

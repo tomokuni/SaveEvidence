@@ -37,7 +37,7 @@ public class ZoomViewControlTests
     /// <param name="viewportWidth">ビューポートの幅（DIP）。</param>
     /// <param name="viewportHeight">ビューポートの高さ（DIP）。</param>
     /// <returns>コントロールと画像（画像の破棄は呼び出し側）。</returns>
-    private static (ZoomViewControl Control, EsBitmap Image) CreateWithImage(
+    private static (ZoomViewControl Control, EsReadOnlyBitmap Image) CreateWithImage(
         int imageWidth = 100, int imageHeight = 100, double viewportWidth = 200, double viewportHeight = 200)
     {
         var image = TestHelper.CreateBitmap(imageWidth, imageHeight, SKColors.Red);

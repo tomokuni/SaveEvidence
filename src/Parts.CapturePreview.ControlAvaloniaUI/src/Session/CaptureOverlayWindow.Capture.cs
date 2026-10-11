@@ -201,15 +201,18 @@ internal sealed partial class CaptureOverlayWindow
     public void SetVirtualScreen(EsBitmap? bitmap, PixelPoint origin)
     {
         // 差し替え時の旧値の破棄・クローズ後の破棄はコアが単一所有する
+        // （撮影の完了後に画像を書き換えないため、保持する型は読み取りの面になる。 凍結と 0 コピー共有もコアが行う）
         if (!_captureImage.Set(bitmap, origin.ToEsPointInt())) return;
 
-        _log.LogVirtualScreen(origin.ToEsPointInt(), bitmap);
+        // 保持している読み取りの面を取得する（表示と切り出しが同じ面を共有する）
+        var readOnly = _captureImage.Image;
+        _log.LogVirtualScreen(origin.ToEsPointInt(), readOnly);
         // 新しいアダプタを先に Source へ設定し、旧アダプタは後から破棄する。
         // Image.Source が旧アダプタを参照し続ける間に破棄すると、描画が破棄済みの射影へ触れて例外・チラつきになる
         // （順序の理由は LoupeControl.SetLoupeBitmap と同じ。 IImage は非所有のため、保持するホストが Dispose する）。
         // 元画像はコアの保持クラスが所有し、このアダプタは借用して包むだけ。
         var previousImage = _displayImage;
-        _displayImage = bitmap is null ? null : new EsBitmapAvaloniaAdapter(bitmap);
+        _displayImage = readOnly is null ? null : new EsBitmapAvaloniaAdapter(readOnly);
         VirtualScreenImage.Source = _displayImage;
         previousImage?.Dispose();
 

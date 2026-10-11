@@ -45,7 +45,7 @@ public sealed partial class MainViewModel : ObservableObject
     public bool CenterAlign => Settings.CenterAlign;
 
     /// <summary>プレビュー画像変更前の旧画像（新しい画像が Image.Source へ反映された後に破棄する）。</summary>
-    private EsBitmap? _previousPreviewImage;
+    private EsReadOnlyBitmap? _previousPreviewImage;
 
     /// <summary>選択モード開始デリゲート（View 側から設定されるコールバック）。</summary>
     public Action<CaptureType>? StartSelectionMode { get; set; }
@@ -58,6 +58,31 @@ public sealed partial class MainViewModel : ObservableObject
     /// <remarks>貼り付けは書き換え可能な画像（<see cref="EsBitmap"/>）を受け取り（所有権も移る）、
     /// UI 型からの変換は UI 実装側（View）が行う。</remarks>
     public Func<Task<EsBitmap?>>? PasteFromClipboardCallback { get; set; }
+
+    /// <summary>書き換え可能な画像をプレビューの型（読み取りの面）へ移す（凍結して 0 コピーで共有する）。</summary>
+    /// <param name="image">移す画像（書き換え可能）。 渡した実体は凍結される（読み取りは引き続きできる）。</param>
+    /// <returns>読み取りの面。 破棄はプレビューの所有者（本 ViewModel）が行う。</returns>
+    /// <remarks>
+    /// 渡した実体の画素は読み取りの面と共有されるため、<b>書き換えには新しい画像を作る</b>
+    /// （凍結のため <c>SetPixel</c> 等は例外になる）。
+    /// </remarks>
+    private static EsReadOnlyBitmap ToReadOnly(EsBitmap image)
+    {
+        image.SetReadOnly();
+        return EsReadOnlyBitmap.FromBitmap(image);
+    }
+
+    /// <summary>所有権ごと受け取った画像をプレビューの型（読み取りの面）へ移す。</summary>
+    /// <param name="image">移す画像（書き換え可能）。 画素は共有され、渡した実体は解放される。</param>
+    /// <returns>読み取りの面。 破棄はプレビューの所有者（本 ViewModel）が行う。</returns>
+    /// <remarks>編集結果・貼り付け結果のように<b>他に保持者がいない画像</b>に使う（参照を 1 つ早く返す）。</remarks>
+    private static EsReadOnlyBitmap TakeReadOnly(EsBitmap image)
+    {
+        var read = ToReadOnly(image);
+        // 画素は読み取りの面が共有して引き継ぐため、受け取った実体（参照）はここで解放する
+        image.Dispose();
+        return read;
+    }
 
     /// <summary>上書き確認ダイアログのコールバック（View 側から設定）。</summary>
     public Func<string, Task<bool>>? ConfirmOverwriteAsync { get; set; }
@@ -85,7 +110,11 @@ public sealed partial class MainViewModel : ObservableObject
         UpdateSaveFolderResolution();
     }
 
-    /// <summary>プレビュー画像（書き換え可能な画像。 表示は表示境界で Avalonia WriteableBitmap へ変換する）</summary>
+    /// <summary>プレビュー画像（読み取りの面。 表示は表示境界で Avalonia/Parts の画像へ変換する）</summary>
+    /// <remarks>
+    /// <b>読み取りの面で保持する理由</b>: 表示・保存・切り出し・検出はすべて画像を読むだけであり、<br/>
+    /// 編集は元の画像を書き換えず<b>新しい画像を作る</b>（差し替える）ため、書き換えの入口を持つ必要が無い。
+    /// </remarks>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasPreviewImage))]
     [NotifyPropertyChangedFor(nameof(CanCopy))]
@@ -93,7 +122,7 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SaveStatusText))]
     [NotifyPropertyChangedFor(nameof(SavedFileName))]
     [NotifyPropertyChangedFor(nameof(ImageSizeDisplayText))]
-    private EsBitmap? _previewImage;
+    private EsReadOnlyBitmap? _previewImage;
 
     /// <summary>画像が保存済みかどうか</summary>
     [ObservableProperty]
@@ -238,7 +267,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// ウィンドウ再表示時にプレビューエリアがチラつく（破棄済み Bitmap の描画）。<br/>
     /// 破棄は <c>OnPreviewImageChanged</c>（新しい画像が設定された後）で行う。
     /// </remarks>
-    partial void OnPreviewImageChanging(EsBitmap? value)
+    partial void OnPreviewImageChanging(EsReadOnlyBitmap? value)
     {
         // 前回の画像を保持（OnPreviewImageChanged で破棄。 Image.Source 更新前に破棄しない）
         _previousPreviewImage = _previewImage;
@@ -252,7 +281,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// 新しい画像が <c>Image.Source</c> へ反映された後に前回の画像を破棄することで、<br/>
     /// 破棄済み Bitmap が描画されるチラつきを防止する。
     /// </remarks>
-    partial void OnPreviewImageChanged(EsBitmap? value)
+    partial void OnPreviewImageChanged(EsReadOnlyBitmap? value)
     {
         _previousPreviewImage?.Dispose();
         _previousPreviewImage = null;
@@ -295,8 +324,22 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     /// <summary>指定された画像をプレビューとして設定する。</summary>
-    /// <param name="image">設定する画像（書き換え可能）。 所有権が本型へ移る。</param>
-    public void SetPreviewImage(EsBitmap image) => PreviewImage = image;
+    /// <param name="image">設定する画像（読み取りの面）。 所有権が本型へ移る。</param>
+    public void SetPreviewImage(EsReadOnlyBitmap image) => PreviewImage = image;
+
+    /// <summary>指定された画像をプレビューとして設定する（書き換え可能な画像を受け取る版）。</summary>
+    /// <param name="image">設定する画像（書き換え可能）。 凍結して 0 コピーでプレビューへ渡す。</param>
+    /// <remarks>
+    /// 撮影結果・貼り付け・読み込みは書き換え可能な画像として届くため、その入口を本オーバーロードが担う。<br/>
+    /// <b>渡した実体の所有権は移らない</b>（画素はプレビューと共有されて共に生かされる。 渡した実体を破棄するのは呼び出し側）。
+    /// ただし凍結されるため、以降の書き換えには新しい画像を作る。
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="image"/> が null の場合。</exception>
+    public void SetPreviewImage(EsBitmap image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+        PreviewImage = ToReadOnly(image);
+    }
 
     /// <summary>画像をクリップボードにコピーする。</summary>
     [RelayCommand]
@@ -305,6 +348,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (PreviewImage is not null && CopyToClipboardCallback is not null)
         {
             // クリップボードは UI 型を要求するため、変換は UI 実装側（View）が行う
+            // （プレビューは読み取りの面のため、そのまま渡せる。 借用であり破棄はしない）
             await CopyToClipboardCallback(PreviewImage);
         }
     }
@@ -321,7 +365,8 @@ public sealed partial class MainViewModel : ObservableObject
         var image = await PasteFromClipboardCallback();
         if (image is not null)
         {
-            PreviewImage = image;
+            // 貼り付け結果の所有権は本型へ移る（画素は読み取りの面が共有して引き継ぐ）
+            PreviewImage = TakeReadOnly(image);
             return true;
         }
 
@@ -350,6 +395,7 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         }
 
+        // 検出器は読み取りの面（EsReadOnlyBitmap）を入力として受け取るため、プレビューをそのまま渡せる
         // LineDetection で水平・垂直の辺（線分）を検出し、矩形（ウィンドウの 4 辺）を復元する
         var detector = new LogicLineDetector();
         var results = detector.Detect(image);
@@ -448,11 +494,13 @@ public sealed partial class MainViewModel : ObservableObject
 
         BeforeEditAction?.Invoke();
 
-        // PreviewImage（EsReadOnlyBitmap）→ 編集 → 編集結果を新しいプレビューとして設定する（所有権は ViewModel へ移る）
+        // プレビュー（読み取りの面）→ 編集 → 編集結果を新しいプレビューとして設定する
+        // （編集は元の画像を書き換えず、新しい画像を返す）
         var edited = edit(PreviewImage);
         if (edited is not null)
         {
-            PreviewImage = edited;
+            // 編集結果の所有権は本型へ移る（画素は読み取りの面が共有して引き継ぐ）
+            PreviewImage = TakeReadOnly(edited);
         }
     }
 
@@ -501,6 +549,7 @@ public sealed partial class MainViewModel : ObservableObject
             }
 
             // 画像エンコード・ファイル書き込みを IImageWriter に委譲する（本番は Avalonia Skia でエンコード）
+            // 保存は画像を読むだけであり、プレビューは読み取りの面のためそのまま渡せる
             _imageWriter.Save(PreviewImage, filePath);
 
             FileNameTemplateText = FileNameTemplate.IncrementRightmostNumber(FileNameTemplateText);

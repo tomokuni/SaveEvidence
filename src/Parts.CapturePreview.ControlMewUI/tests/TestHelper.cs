@@ -11,18 +11,23 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests;
 /// </remarks>
 internal static class TestHelper
 {
-    /// <summary>指定サイズの単色画像を生成する。</summary>
+    /// <summary>指定サイズの単色画像（読み取りの面）を生成する。</summary>
     /// <param name="width">幅（ピクセル）。</param>
     /// <param name="height">高さ（ピクセル）。</param>
     /// <param name="color">塗りつぶす色。</param>
-    /// <returns>生成した画像。 所有権は呼び出し側。</returns>
-    public static EsBitmap CreateBitmap(int width, int height, SKColor color)
+    /// <returns>生成した画像（読み取りの面）。 破棄は呼び出し側。</returns>
+    /// <remarks>
+    /// テスト画像は生成後に書き換えない（表示・描画の入力）ため、凍結して 0 コピーで読み取り専用の面へ渡す。
+    /// </remarks>
+    public static EsReadOnlyBitmap CreateBitmap(int width, int height, SKColor color)
     {
         // 所有権は FromSKBitmap へ移るため using を付けない
         var bitmap = new SKBitmap(width, height);
         bitmap.Erase(color);
 
-        return bitmap.ToEsBitmap();
+        using var created = bitmap.ToEsBitmap();
+        created.SetReadOnly();
+        return EsReadOnlyBitmap.FromBitmap(created);
     }
 
     /// <summary>描画先（キャンバスとその画素を読む手段）を生成する。</summary>

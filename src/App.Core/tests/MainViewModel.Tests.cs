@@ -56,13 +56,15 @@ public class MainViewModelTests
         }
     }
 
-    /// <summary>テスト用の EsBitmap（10x10）を生成する。</summary>
-    /// <returns>生成した EsBitmap。</returns>
-    private static EsBitmap CreateBitmap()
+    /// <summary>テスト用の画像（10x10・読み取りの面）を生成する。</summary>
+    /// <returns>生成した画像（読み取りの面）。 破棄は呼び出し側。</returns>
+    /// <remarks>プレビューは読み取りの面で保持されるため、書き込みの済んだ画像を凍結して 0 コピーで渡す。</remarks>
+    private static EsReadOnlyBitmap CreateBitmap()
     {
-        var bmp = EsBitmap.Create(10, 10);
+        using var bmp = EsBitmap.Create(10, 10);
         bmp.Clear(b: 255, g: 255, r: 255, a: 255);
-        return bmp;
+        bmp.SetReadOnly();
+        return EsReadOnlyBitmap.FromBitmap(bmp);
     }
 
     /// <summary>一時フォルダを生成し、テスト終了時に削除する（IDisposable）。</summary>

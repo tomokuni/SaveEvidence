@@ -11,11 +11,16 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// </remarks>
 public class UndoHistoryTests
 {
-    /// <summary>テスト用の EsBitmap（size x size）を生成する。</summary>
+    /// <summary>テスト用の画像（size x size・読み取りの面）を生成する。</summary>
     /// <param name="size">一辺のピクセル数（既定 10）。</param>
-    /// <returns>生成した EsBitmap。</returns>
-    private static EsBitmap CreateBitmap(int size = 10)
-        => EsBitmap.Create(size, size);
+    /// <returns>生成した画像（読み取りの面）。 破棄は呼び出し側。</returns>
+    /// <remarks>履歴は読み取りの面で保持されるため、生成した画像を凍結して 0 コピーで渡す。</remarks>
+    private static EsReadOnlyBitmap CreateBitmap(int size = 10)
+    {
+        using var bitmap = EsBitmap.Create(size, size);
+        bitmap.SetReadOnly();
+        return EsReadOnlyBitmap.FromBitmap(bitmap);
+    }
 
     [Fact]
     internal void Undo_現在の画像をRedoスタックへ退避して復元する()
@@ -123,7 +128,7 @@ public class UndoHistoryTests
         var img1 = CreateBitmap(10);
         var img2 = CreateBitmap(11);
 
-        // Push はクローンを積むため、元 Bitmap は破棄しても履歴には影響しない
+        // Push は独立した画素の複製を積むため、元の画像は破棄しても履歴には影響しない
         stack.Push(img1);
         stack.Push(img2);
         img1.Dispose();
@@ -131,7 +136,7 @@ public class UndoHistoryTests
 
         var history = stack.GetUndoHistory();
 
-        // 古い順（_stack[0] が最古）で取得できる（クローンのためサイズで判別）
+        // 古い順（_stack[0] が最古）で取得できる（複製のためサイズで判別）
         Assert.Equal(2, history.Count);
         Assert.Equal(10, history[0].Size.Width);
         Assert.Equal(10, history[0].Size.Height);
@@ -157,13 +162,13 @@ public class UndoHistoryTests
         var restored1 = stack.Undo(img3);
         Assert.NotNull(restored1);
 
-        // Undo 2回目: 現在の restored1（img2 のクローン）を退避 → _redoStack = [img3', img2'']、img1' を復元
+        // Undo 2回目: 現在の restored1（img2 の複製）を退避 → _redoStack = [img3', img2'']、img1' を復元
         var restored2 = stack.Undo(restored1);
         Assert.NotNull(restored2);
 
         var history = stack.GetRedoHistory();
 
-        // 退避された順（_redoStack[0] が現在に最も近い未来）で取得できる（クローンのためサイズで判別）
+        // 退避された順（_redoStack[0] が現在に最も近い未来）で取得できる（複製のためサイズで判別）
         Assert.Equal(2, history.Count);
         Assert.Equal(12, history[0].Size.Width);
         Assert.Equal(12, history[0].Size.Height);

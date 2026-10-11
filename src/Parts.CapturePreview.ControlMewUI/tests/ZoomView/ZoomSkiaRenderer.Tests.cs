@@ -18,7 +18,7 @@ public class ZoomSkiaRendererTests
     /// <param name="image">ズーム対象の画像。</param>
     /// <param name="viewportSize">ビューポートの一辺（DIP）。</param>
     /// <returns>セッション。</returns>
-    private static ZoomViewSession CreateSession(EsBitmap image, double viewportSize)
+    private static ZoomViewSession CreateSession(EsReadOnlyBitmap image, double viewportSize)
     {
         var session = new ZoomViewSession();
         session.SetViewport(new EsSize(viewportSize, viewportSize));

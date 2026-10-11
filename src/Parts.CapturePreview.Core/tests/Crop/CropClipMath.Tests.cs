@@ -10,11 +10,16 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.Crop;
 /// <remarks>画面物理座標 → 画像ローカル座標の変換と、切り出しのフォールバック規則を固定する。</remarks>
 public class CropClipMathTests
 {
-    /// <summary>検証用の単色画像を生成する。</summary>
+    /// <summary>検証用の画像を生成する（読み取りの面）。</summary>
     /// <param name="width">幅。</param>
     /// <param name="height">高さ。</param>
-    /// <returns>指定サイズの画像。</returns>
-    private static EsBitmap CreateImage(int width, int height) => EsBitmap.Create(width, height);
+    /// <returns>指定サイズの画像（読み取りの面。 破棄は呼び出し側）。</returns>
+    private static EsReadOnlyBitmap CreateImage(int width, int height)
+    {
+        using var bitmap = EsBitmap.Create(width, height);
+        bitmap.SetReadOnly();
+        return EsReadOnlyBitmap.FromBitmap(bitmap);
+    }
 
     // ====================================================================
     // ResolveCaptureRect（選択矩形 → 切り出し矩形）

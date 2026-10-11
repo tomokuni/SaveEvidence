@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
@@ -77,9 +78,12 @@ public sealed partial class CreatePageViewModel : ObservableObject
             return;
         }
 
-        // キャプチャ結果（コア型）を表示用の Avalonia 型へ変換する（表示境界で 1 回だけ行う）
+        // キャプチャ結果（コア型）を表示用の Avalonia 型へ変換する（表示境界で 1 回だけ行う）。
+        // 変換は読むだけ: 凍結して 0 コピーで読み取り専用の面へ渡す
+        image.SetReadOnly();
+        using var read = EsReadOnlyBitmap.FromBitmap(image);
         var bounds = sourceBounds.ToAvaloniaPixelRect();
-        CapturedImage = image.ToAvaloniaBitmap();
+        CapturedImage = read.ToAvaloniaBitmap();
         CaptureBounds = bounds;
         WindowInfos.Clear();
 

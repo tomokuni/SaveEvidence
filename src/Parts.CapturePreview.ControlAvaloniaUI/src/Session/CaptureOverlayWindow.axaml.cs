@@ -66,8 +66,8 @@ internal sealed partial class CaptureOverlayWindow : Window
     private readonly CaptureClickSelection _clickSelection = new();
 
     /// <summary>仮想スクリーン全体の画像（全モード共通のキャプチャソース・切り出し元）を取得する。</summary>
-    /// <value>撮影した画像。 未取得（背景撮影中・取得失敗）の場合は null。</value>
-    private EsBitmap? VirtualScreenBitmap => _captureImage.Image;
+    /// <value>撮影した画像（読み取りの面。 保持するコアのクラスが所有する）。 未取得（背景撮影中・取得失敗）の場合は null。</value>
+    private EsReadOnlyBitmap? VirtualScreenBitmap => _captureImage.Image;
 
     /// <summary>事前切り出し済みのキャッシュ（同一判定・所有権の受け渡し・旧値の破棄をコアが単一所有する）。</summary>
     private readonly CaptureClipCache _clipCache = new();

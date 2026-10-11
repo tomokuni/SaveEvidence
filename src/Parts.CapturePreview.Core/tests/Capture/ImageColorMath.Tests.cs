@@ -13,10 +13,14 @@ public class ImageColorMathTests
     /// <param name="width">幅。</param>
     /// <param name="height">高さ。</param>
     /// <param name="color">塗る色（不透明）。</param>
-    /// <returns>生成した画像（破棄は呼び出し側）。</returns>
+    /// <returns>生成した画像（読み取りの面。 破棄は呼び出し側）。</returns>
     /// <remarks>名前を <c>CreateFilled</c> にしない（コアの充填の入口（確保と充填を 1 回で行う）と紛らわしいため）。</remarks>
-    private static EsBitmap CreateSolidBitmap(int width, int height, DrawingColor color)
-        => EsBitmap.Create(width, height, color);
+    private static EsReadOnlyBitmap CreateSolidBitmap(int width, int height, DrawingColor color)
+    {
+        using var bitmap = EsBitmap.Create(width, height, color);
+        bitmap.SetReadOnly();
+        return EsReadOnlyBitmap.FromBitmap(bitmap);
+    }
 
     [Fact]
     internal void AverageColor_単色画像はその色を返す()
@@ -44,8 +48,10 @@ public class ImageColorMathTests
                 image.SetPixel(x, y, value, value, value, 0xFF);
             }
         }
+        image.SetReadOnly();
+        using var read = EsReadOnlyBitmap.FromBitmap(image);
 
-        var color = ImageColorMath.AverageColor(image);
+        var color = ImageColorMath.AverageColor(read);
 
         Assert.InRange(color.R, 100, 155);
         Assert.Equal(color.R, color.G);

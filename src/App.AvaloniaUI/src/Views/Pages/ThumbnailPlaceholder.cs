@@ -25,6 +25,10 @@ internal static class ThumbnailPlaceholder
         => s_images.GetOrAdd(size, static s =>
         {
             using var blank = EsBitmap.Create(s, s);
-            return blank.ToAvaloniaBitmap();
+
+            // その場で読むだけ（変換は複製を返す）: 凍結して 0 コピーで読み取り専用の面へ渡す
+            blank.SetReadOnly();
+            using var read = EsReadOnlyBitmap.FromBitmap(blank);
+            return read.ToAvaloniaBitmap();
         });
 }

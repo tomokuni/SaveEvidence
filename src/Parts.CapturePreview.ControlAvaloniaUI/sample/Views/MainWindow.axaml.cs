@@ -41,8 +41,8 @@ public sealed partial class MainWindow : Window
     /// <summary>ビューモデル。</summary>
     private readonly MainWindowViewModel _vm = new();
 
-    /// <summary>Crop プレビュー用の画像の元（本ウィンドウが所有する。 差し替え・クローズで破棄する）。</summary>
-    private EsBitmap? _previewEs;
+    /// <summary>Crop プレビュー用の画像の元（読み取りの面。 本ウィンドウが所有する。 差し替え・クローズで破棄する）。</summary>
+    private EsReadOnlyBitmap? _previewEs;
 
     /// <summary>Crop プレビュー用の表示画像（<see cref="_previewEs"/> を借りて包む非所有アダプタ）。</summary>
     private EsBitmapAvaloniaAdapter? _previewImage;
@@ -85,8 +85,8 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>プレビュー画像を差し替える（旧画像は破棄し、ViewModel の表示も更新する）。</summary>
-    /// <param name="bitmap">新しいプレビュー画像。 所有権は本ウィンドウへ移る。</param>
-    private void SetPreviewBitmap(EsBitmap bitmap)
+    /// <param name="bitmap">新しいプレビュー画像（読み取りの面）。 所有権は本ウィンドウへ移る。</param>
+    private void SetPreviewBitmap(EsReadOnlyBitmap bitmap)
     {
         // 新しいアダプタを先に Source へ設定し、旧アダプタと旧画像は後から破棄する
         // （IImage は非所有のため、保持するホストが破棄する。 破棄の順序の理由は EsBitmapAvaloniaAdapter の doc を参照）。
@@ -213,10 +213,10 @@ public sealed partial class MainWindow : Window
         try
         {
             // ファイルの読み込みはコアの画像型が単一所有する（形式は内容から判別される）。
-            // プレビューは書き換え可能な画像を要するため EsBitmap.Load を使う
-            // （EsReadOnlyBitmap.Load の結果を EsBitmap.Create で複製すると、全域コピーが 1 回増える。
-            // 実測: 4K で 5.7 ms / 31 MiB）。 所有権は SetPreviewBitmap へ移るため、ここでは破棄しない。
-            SetPreviewBitmap(EsBitmap.Load(files[0].Path.LocalPath));
+            // プレビューは読むだけ（表示と切り出しのみ）であるため、読み取りの面のまま渡す
+            // （書き換え可能へ複製すると、全域コピーが 1 回増える。 実測: 4K で 5.7 ms / 31 MiB）。
+            // 所有権は SetPreviewBitmap へ移るため、ここでは破棄しない。
+            SetPreviewBitmap(EsReadOnlyBitmap.Load(files[0].Path.LocalPath));
             _vm.AddLog($"[App] 画像を読み込みました: {files[0].Name}");
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
@@ -237,8 +237,11 @@ public sealed partial class MainWindow : Window
     {
         if (e.Result?.Image is { } image)
         {
-            // 画像変更（同期実行。 このハンドラの完了後に APP が再表示される）。 キャプチャ結果（EsBitmap）を表示用 Bitmap へ変換。
-            _vm.CapturedImage = image.ToAvaloniaBitmap();
+            // 画像変更（同期実行。 このハンドラの完了後に APP が再表示される）。 キャプチャ結果を表示用 Bitmap へ変換する
+            // （変換は読むだけ: 凍結して 0 コピーで読み取り専用の面へ渡す）
+            image.SetReadOnly();
+            using var read = EsReadOnlyBitmap.FromBitmap(image);
+            _vm.CapturedImage = read.ToAvaloniaBitmap();
             _vm.AddLog("[Event] CaptureCompleted（同期）：キャプチャ画像を更新しました。");
         }
         else
@@ -347,12 +350,13 @@ public sealed partial class MainWindow : Window
     /// <summary>グリッド付きのダミー画像を生成する（Crop プレビュー用）。</summary>
     /// <param name="width">画像の幅。</param>
     /// <param name="height">画像の高さ。</param>
-    /// <returns>生成した画像（<see cref="EsBitmap"/>。 呼び出し側（<see cref="SetPreviewBitmap"/>）が所有する）。</returns>
+    /// <returns>生成した画像（読み取りの面。 呼び出し側（<see cref="SetPreviewBitmap"/>）が所有する）。</returns>
     /// <remarks>
     /// 白地に 100px 間隔の薄いグリッドと、中央に色付きの矩形を描画する（サイズ感・座標の確認用）。<br/>
-    /// <b>EsBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、ピクセル操作が安定する。
+    /// <b>EsBitmap 採用理由</b>: <c>WriteableBitmap</c>（<c>Lock()</c> 書き込み）を避け、ピクセル操作が安定する。<br/>
+    /// 描画の完了後は読むだけ（表示と切り出しのみ）であるため、凍結して読み取り専用の面へ 0 コピーで渡す。
     /// </remarks>
-    private static EsBitmap CreateDummyBitmap(int width, int height)
+    private static EsReadOnlyBitmap CreateDummyBitmap(int width, int height)
     {
         var bitmap = EsBitmap.Create(width, height);
 
@@ -384,6 +388,10 @@ public sealed partial class MainWindow : Window
             }
         }
 
-        return bitmap;
+        // 以降は読むだけ（表示と切り出しのみ）であるため、凍結して 0 コピーで読み取り専用の面へ渡す
+        bitmap.SetReadOnly();
+        var read = EsReadOnlyBitmap.FromBitmap(bitmap);
+        bitmap.Dispose();
+        return read;
     }
 }

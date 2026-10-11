@@ -8,13 +8,13 @@ using SkiaSharp;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
-/// <summary>画像ファイルを縮小してサムネイル用の <see cref="EsBitmap"/> として読み込むローダー。</summary>
+/// <summary>画像ファイルを縮小してサムネイル用の画像（読み取りの面）として読み込むローダー。</summary>
 /// <remarks>
 /// <b>縮小デコード</b>: <see cref="SKCodec.GetPixels(SKImageInfo, out byte[])"/> へ縮小後の寸法を渡し、原寸のバッファを確保せずにデコードする<br/>
 /// （4K のスクリーンショットを多数並べるときのメモリと時間を抑える）。<br/>
 /// <b>キャッシュ</b>: 同一ファイル・同一サイズのデコード結果を共有する。 ファイルの更新日時をキーに含めるため、<br/>
 /// 内容が変われば再デコードされる。 容量管理は <see cref="CapacityLimitedCache"/> へ委譲し、<br/>
-/// 上限超過時は <see cref="EsBitmap"/>（<see cref="IDisposable"/>）が破棄されてから破棄される<br/>
+/// 上限超過時は <see cref="EsReadOnlyBitmap"/>（<see cref="IDisposable"/>）が破棄されてから破棄される<br/>
 /// （そのため上限は呼び出し側が表示する件数を渡す。<see cref="Load"/> を参照）。<br/>
 /// <b>失敗時</b>: 存在しない・非画像・破損などの場合は null を返す（例外 にしない）。<br/>
 /// <b>スレッド</b>: 背景の生成からも呼べる（キャッシュの上限判定・登 録は直列化される。 デコードは並列のまま）。
@@ -22,23 +22,25 @@ namespace EsUtil.SaveEvidence.App.MewUI.Services;
 internal static class ImageThumbnailLoader
 {
     /// <summary>デコード結果のキャッシュ（キー: パス・要求サイズ・更新日時）。</summary>
-    private static readonly ConcurrentDictionary<(string Path, int Size, DateTime LastWrite), EsBitmap?> s_cache = new();
+    private static readonly ConcurrentDictionary<(string Path, int Size, DateTime LastWrite), EsReadOnlyBitmap?> s_cache = new();
 
     /// <summary>画像ファイルを読み込み、長辺が指定サイズを超えないサムネイルを返す。</summary>
     /// <param name="filePath">対象のファイルパス。</param>
     /// <param name="maxSize">サムネイルの長辺の上限（ピクセル）。 0 以下は 1 として扱う。</param>
     /// <param name="capacity">キャッシュの最大保持数（一覧が表示する件数を渡す）。 1 未満は 1 として扱う。</param>
-    /// <returns>サムネイル画像。 読み込めない場合は null。</returns>
+    /// <returns>サムネイル画像（読み取りの面）。 読み込めない場合は null。</returns>
     /// <remarks>
     /// 1. 拡張子が画像でなければ読み込まずに null を返す。<br/>
     /// 2. キャッシュにあればそれを返す（キャッシュの値は本クラスが所有し、呼び出し側は破棄しない）。<br/>
     /// 3. 無ければ縮小デコードしてキャッシュへ登録する。<br/>
+    /// <b>読み取りの面で返す理由</b>: サムネイルは表示するだけ（書き換えない）であるため、
+    /// デコードの完了後に凍結して 0 コピーで読み取り専用の面へ渡す。<br/>
     /// <b>保持数を呼び出し側が渡す理由</b>: 一覧が表示する件数より小さい上限だと、生成の途中で表示中の
     /// サムネイルが破棄される（上限超過時はキャッシュが保持する値を破棄するため、描画が破棄済みの
     /// バッファへ触れる）。<br/>
     /// <b>複数スレッドから呼べる</b>（背景の生成から呼ぶ。 キャッシュの上限判定と登録は直列化される）。
     /// </remarks>
-    public static EsBitmap? Load(string filePath, int maxSize, int capacity)
+    public static EsReadOnlyBitmap? Load(string filePath, int maxSize, int capacity)
     {
         if (!ImageFileExtensions.IsImageFile(filePath))
         {
@@ -75,7 +77,7 @@ internal static class ImageThumbnailLoader
     /// <b>コスト</b>: デコード結果をコアの画像へ複製する（4K で約 6 ms）ため、Skia の縮小よりわずかに遅いが、
     /// 縮小自体は並列化され 4K で 1.8 ms である。
     /// </remarks>
-    private static EsBitmap? Decode(string filePath, int maxSize)
+    private static EsReadOnlyBitmap? Decode(string filePath, int maxSize)
     {
         using var stream = File.OpenRead(filePath);
         using var codec = SKCodec.Create(stream);
@@ -107,11 +109,28 @@ internal static class ImageThumbnailLoader
         // コーデック側で縮小されなかった（または目標に届かなかった）場合は、コアの面積平均で目標へ縮小する
         if (bitmap.Width == target.Width && bitmap.Height == target.Height)
         {
-            return bitmap.ToEsBitmap();
+            return ToReadOnly(bitmap.ToEsBitmap());
         }
 
         using var decoded = bitmap.ToEsBitmap();
-        return decoded.Resize(maxSize, DownscaleAlgorithm.Box);
+        // 縮小は読み取りの面が受けるため、書き込みの済んだ画像を凍結して 0 コピーで渡す
+        decoded.SetReadOnly();
+        using var readOnly = EsReadOnlyBitmap.FromBitmap(decoded);
+        return ToReadOnly(readOnly.Resize(maxSize, DownscaleAlgorithm.Box));
+    }
+
+    /// <summary>デコードした画像を表示へ渡せる読み取りの面にする（凍結して 0 コピーで共有する）。</summary>
+    /// <param name="image">移す画像（書き換え可能）。 画素は読み取りの面が引き継ぎ、渡した実体は解放する。</param>
+    /// <returns>読み取りの面。 所有権は呼び出し側へ移る。</returns>
+    /// <remarks>サムネイルは表示するだけ（書き換えない）であるため、凍結して共有する
+    /// （未凍結のまま渡すと複製になり、4K 相当では 1 枚ごとに 31 MiB の複製が増える）。</remarks>
+    private static EsReadOnlyBitmap ToReadOnly(EsBitmap image)
+    {
+        image.SetReadOnly();
+        var read = EsReadOnlyBitmap.FromBitmap(image);
+        // 画素は読み取りの面が共有して引き継ぐため、書き換え可能の実体（参照）はここで解放する
+        image.Dispose();
+        return read;
     }
 
     /// <summary>縮小後に目標とする寸法を求める。</summary>

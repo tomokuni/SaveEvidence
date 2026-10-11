@@ -18,7 +18,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 internal static class ThumbnailBackground
 {
     /// <summary>寸法ごとの代替画像（共有するためプロセス内で保持する）。</summary>
-    private static readonly ConcurrentDictionary<int, EsBitmap> s_placeholders = new();
+    private static readonly ConcurrentDictionary<int, EsReadOnlyBitmap> s_placeholders = new();
 
     /// <summary>ロガー（背景の生成で想定外の例外が発生した場合に記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(ThumbnailBackground));
@@ -31,15 +31,21 @@ internal static class ThumbnailBackground
 
     /// <summary>生成が終わるまで一覧に表示する代替画像を取得する。</summary>
     /// <param name="size">サムネイルの一辺のサイズ（ピクセル）。</param>
-    /// <returns>代替画像。<b>借用</b>（破棄しない）。</returns>
+    /// <returns>代替画像（読み取りの面）。<b>借用</b>（破棄しない）。</returns>
     /// <remarks>
     /// <b>正方形で場所を確保する</b>: 生成が終わるまで実体の縦横比は分からないため、要求寸法の正方形を表示して
     /// 行の位置を先に決める。<br/>
     /// <b>透明にする理由</b>: 枠の背景（テーマ色）が見えるため、ライト / ダークのどちらでも色が衝突しない。<br/>
-    /// <b>共有するため破棄しない</b>（破棄すると他の行の表示が壊れる）。
+    /// <b>共有するため破棄しない</b>（破棄すると他の行の表示が壊れる）。<br/>
+    /// <b>読み取りの面で保持する理由</b>: 表示は読むだけ（書き換えない）であるため、生成後に凍結して 0 コピーで渡す。
     /// </remarks>
-    public static EsBitmap Placeholder(int size)
-        => s_placeholders.GetOrAdd(Math.Max(1, size), static s => EsBitmap.Create(s, s));
+    public static EsReadOnlyBitmap Placeholder(int size)
+        => s_placeholders.GetOrAdd(Math.Max(1, size), static s =>
+        {
+            using var bitmap = EsBitmap.Create(s, s);
+            bitmap.SetReadOnly();
+            return EsReadOnlyBitmap.FromBitmap(bitmap);
+        });
 
     /// <summary>背景の生成の結果を UI スレッドで反映する。</summary>
     /// <param name="action">反映する処理。</param>

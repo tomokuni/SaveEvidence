@@ -11,9 +11,17 @@ internal static class TestHelper
     /// <param name="width">幅（ピクセル）。</param>
     /// <param name="height">高さ（ピクセル）。</param>
     /// <param name="color">塗りつぶす色。</param>
-    /// <returns>生成した画像。 破棄は呼び出し側。</returns>
-    public static EsBitmap CreateBitmap(int width, int height, DrawingColor color)
-        => EsBitmap.Create(width, height, color);
+    /// <returns>生成した画像（読み取りの面）。 破棄は呼び出し側。</returns>
+    /// <remarks>
+    /// 生成した画像は書き込まず読むだけ（表示・描画の入力）であるため、凍結して 0 コピーで
+    /// 読み取り専用の面へ渡す。
+    /// </remarks>
+    public static EsReadOnlyBitmap CreateBitmap(int width, int height, DrawingColor color)
+    {
+        using var created = EsBitmap.Create(width, height, color);
+        created.SetReadOnly();
+        return EsReadOnlyBitmap.FromBitmap(created);
+    }
 
     /// <summary>描画先（キャンバスとその画素を読む手段）を生成する。</summary>
     /// <param name="width">幅（ピクセル）。</param>

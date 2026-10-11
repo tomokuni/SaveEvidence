@@ -66,7 +66,7 @@ internal static class UndoPage
 
         // サムネイル用に縮小した画像（本ページが所有し、一覧の再構築のたびに破棄する）
         // （一覧を組み立てるローカル関数（CreateModeButton → OnModeChanged → Rebuild）から参照するため、 最初に宣言する）
-        var thumbnails = new List<EsBitmap>();
+        var thumbnails = new List<EsReadOnlyBitmap>();
 
         // 表示用の縮小（面積平均）は背景で行う（表示中は並列・非表示では 1 件ずつ）
         var scheduler = ThumbnailBackground.CreateScheduler();
@@ -153,7 +153,7 @@ internal static class UndoPage
             built = new BuiltState(iconSize, redo.Count, undo.Count, current);
 
             var previous = thumbnails;
-            var created = new List<EsBitmap>();
+            var created = new List<EsReadOnlyBitmap>();
 
             // 前回の生成要求を破棄する（別の寸法・別の一覧向けの生成を残さない）
             // （後から届く結果が破棄済みの一覧へ登録されないようにするため、先に破棄する）
@@ -165,7 +165,7 @@ internal static class UndoPage
             list.Clear();
 
             var placeholder = ThumbnailBackground.Placeholder(iconSize);
-            void AddItem(EsBitmap image, string label, bool isCurrent)
+            void AddItem(EsReadOnlyBitmap image, string label, bool isCurrent)
             {
                 var view = new ThumbnailView { RequestedSize = iconSize, Source = placeholder };
                 var element = CreateItem(view, image, label, isCurrent, iconSize);
@@ -315,7 +315,7 @@ internal static class UndoPage
     /// <param name="RedoCount">Redo スタックの段数。</param>
     /// <param name="UndoCount">Undo スタックの段数。</param>
     /// <param name="Current">現在のプレビュー画像（<b>参照で比べる</b>）。</param>
-    private readonly record struct BuiltState(int Size, int RedoCount, int UndoCount, EsBitmap? Current);
+    private readonly record struct BuiltState(int Size, int RedoCount, int UndoCount, EsReadOnlyBitmap? Current);
 
     /// <summary>1 行分の表示用の縮小（面積平均）の生成処理を生成する。</summary>
     /// <param name="owned">本ページが所有する縮小画像の登録先（一覧の再構築のたびに破棄する）。</param>
@@ -329,14 +329,19 @@ internal static class UndoPage
     /// 作った縮小画像を解放して捨てる（表示されない画像を保持しない）。
     /// </remarks>
     private static Func<CancellationToken, ValueTask> MakeThumbnailWork(
-        List<EsBitmap> owned, ThumbnailView view, EsBitmap image, int iconSize)
+        List<EsReadOnlyBitmap> owned, ThumbnailView view, EsReadOnlyBitmap image, int iconSize)
         => token =>
         {
             token.ThrowIfCancellationRequested();
 
             // 縮小後の寸法は元画像を超えない（コアの縮小は拡大を未サポートとする）
             var longSide = Math.Max(image.Width, image.Height);
-            var thumbnail = image.Resize(Math.Min(iconSize, longSide), DownscaleAlgorithm.Box);
+            var resized = image.Resize(Math.Min(iconSize, longSide), DownscaleAlgorithm.Box);
+
+            // 表示は読むだけ（書き換えない）であるため、凍結して 0 コピーで読み取り専用の面へ渡す
+            resized.SetReadOnly();
+            var thumbnail = EsReadOnlyBitmap.FromBitmap(resized);
+            resized.Dispose();
 
             ThumbnailBackground.Post(() =>
             {
@@ -369,7 +374,7 @@ internal static class UndoPage
     /// 縮小そのものは背景（<see cref="MakeThumbnailWork"/>）が行う。
     /// </remarks>
     private static Element CreateItem(
-        ThumbnailView view, EsBitmap image, string label, bool isCurrent, int iconSize)
+        ThumbnailView view, EsReadOnlyBitmap image, string label, bool isCurrent, int iconSize)
     {
         // 枠（背景色・枠線・角丸）はスタイルが与え、ホバーのハイライトはアイテム側が切り替える
         var frame = new Border()
@@ -396,7 +401,7 @@ internal static class UndoPage
     /// 一覧の画像はファイルではなくビットマップのため、一時フォルダへ PNG として書き出してから開く。<br/>
     /// 一時ファイルは OS の一時領域に残す（既定アプリが読み終える時刻を確定できないため、ここでは削除しない）。
     /// </remarks>
-    private static void OpenInDefaultApp(EsBitmap image)
+    private static void OpenInDefaultApp(EsReadOnlyBitmap image)
     {
         try
         {

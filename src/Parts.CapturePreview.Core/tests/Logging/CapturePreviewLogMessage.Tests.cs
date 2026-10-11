@@ -80,8 +80,10 @@ public class CapturePreviewLogMessageTests
     {
         var logger = new RecordingLogger();
         using var image = EsBitmap.Create(1920, 1080);
+        image.SetReadOnly();
+        using var read = EsReadOnlyBitmap.FromBitmap(image);
 
-        logger.LogCropStart(image);
+        logger.LogCropStart(read);
 
         Assert.Equal("[CapturePreview] CropStart: source=1920x1080", Assert.Single(logger.Messages));
     }
@@ -133,18 +135,20 @@ public class CapturePreviewLogMessageTests
     {
         var logger = NullLogger.Instance;
         using var image = EsBitmap.Create(1, 1);
+        image.SetReadOnly();
+        using var read = EsReadOnlyBitmap.FromBitmap(image);
 
         logger.LogCaptureStart(CaptureType.AreaSelect);
         logger.LogCaptureFinished(new CaptureResult(image, new EsRectInt(0, 0, 1, 1)));
         logger.LogCaptureFinished(null);
-        logger.LogCropStart(image);
+        logger.LogCropStart(read);
         logger.LogCropFinished(new EsRectInt(0, 0, 1, 1));
         logger.LogCropFinished(default);
         logger.LogCropCancelled();
         logger.LogSettingApplied();
         logger.LogConfirmRequested(new EsRect(0, 0, 1, 1));
         logger.LogCancelRequested();
-        logger.LogVirtualScreen(new EsPointInt(0, 0), image);
+        logger.LogVirtualScreen(new EsPointInt(0, 0), read);
         logger.LogVirtualScreen(new EsPointInt(1, 1), null);
         logger.LogHighlight(CaptureType.AreaSelect, true, new EsRectInt(0, 0, 1, 1), "t", "c");
     }
@@ -154,8 +158,10 @@ public class CapturePreviewLogMessageTests
     {
         var logger = new RecordingLogger();
         using var bitmap = EsBitmap.Create(3840, 2160);
+        bitmap.SetReadOnly();
+        using var read = EsReadOnlyBitmap.FromBitmap(bitmap);
 
-        logger.LogVirtualScreen(new EsPointInt(-1920, -200), bitmap);
+        logger.LogVirtualScreen(new EsPointInt(-1920, -200), read);
 
         Assert.Equal("[CapturePreview] VirtualScreen: origin=(-1920, -200) size=3840x2160", Assert.Single(logger.Messages));
     }

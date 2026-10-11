@@ -134,13 +134,13 @@ public sealed partial class CapturePage : UserControl
             {
                 case nameof(MainViewModel.PreviewImage):
                     OnPreviewImageChanged();
-                    // PreviewImage（EsBitmap）を表示境界で Avalonia 画像（IImage）へ変換して CropView へ設定する。
+                    // PreviewImage（コアの読み取りの面）を表示境界で Avalonia 画像（IImage）へ変換して CropView へ設定する。
                     // 画像の所有は ViewModel（PreviewImage）が保持し、本ページは非所有アダプタで包むだけ。
                     // IImage は非所有のため、差し替え時に本ページが旧アダプタを破棄する（射影の解放）。
                     // 新しいアダプタを先に Source へ設定し、旧アダプタは後から破棄する
                     // （描画が旧アダプタを参照している間に破棄すると、破棄済みバッファへ触れて例外になる）。
                     previousSource = _cropViewSource;
-                    _cropViewSource = _viewModel.PreviewImage is { } bmp ? new EsBitmapAvaloniaAdapter(bmp) : null;
+                    _cropViewSource = _viewModel.PreviewImage is { } read ? new EsBitmapAvaloniaAdapter(read) : null;
                     CropView.Source = _cropViewSource;
                     previousSource?.Dispose();
                     break;
@@ -615,22 +615,22 @@ public sealed partial class CapturePage : UserControl
     /// <summary>Undo スタックから画像を復元する（現在の画像は Redo スタックへ退避される）。</summary>
     public void RestoreUndo()
     {
-        // 現在のプレビュー画像（EsBitmap）を Undo へ渡す（Undo スタックは EsBitmap を保持）。
-        var current = _viewModel.PreviewImage;
-        using var prev = _undoHistory.Undo(current);
+        // 現在のプレビュー画像を Undo へ渡す（履歴は独立した画素の複製を保持する）
+        var prev = _undoHistory.Undo(_viewModel.PreviewImage);
         if (prev is not null) RestoreImage(prev);
     }
 
     /// <summary>Redo スタックから画像を復元する。</summary>
     public void RestoreRedo()
     {
-        using var redo = _undoHistory.Redo();
+        var redo = _undoHistory.Redo();
         if (redo is not null) RestoreImage(redo);
     }
 
     /// <summary>復元した画像へプレビューを差し替える。</summary>
-    /// <param name="image">復元する画像（EsBitmap）。 所有権は ViewModel へ移る。</param>
-    private void RestoreImage(EsBitmap image)
+    /// <param name="image">復元する画像（読み取りの面）。 所有権は ViewModel へ移る。</param>
+    /// <remarks>取り出した画像を破棄するとプレビューが読めなくなるため、所有権は ViewModel へ移す（ここでは破棄しない）。</remarks>
+    private void RestoreImage(EsReadOnlyBitmap image)
     {
         _viewModel.PreviewImage?.Dispose();
         _viewModel.SetPreviewImage(image);

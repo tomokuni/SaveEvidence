@@ -60,17 +60,20 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private readonly CaptureCompletion<CaptureResult?> _result = new();
 
-    /// <summary>取得したスクリーン画像（セッション中のみ保持し、終了時に破棄する）。</summary>
-    /// <remarks><see cref="RunAsync"/> の冒頭で設定する（それ以外では null）。</remarks>
-    private EsBitmap? _screen;
+    /// <summary>取得したスクリーン画像（読み取りの面。 セッション中のみ保持し、終了時に破棄する）。</summary>
+    /// <remarks>
+    /// <see cref="RunAsync"/> の冒頭で設定する（それ以外では null）。<br/>
+    /// 撮影が完了した画像は以降書き換えないため、凍結して 0 コピーで共有した読み取り専用の面を保持する。
+    /// </remarks>
+    private EsReadOnlyBitmap? _screen;
 
     /// <summary>取得対象のスクリーンの矩形（画面物理ピクセル）。<see cref="RunAsync"/> の冒頭で設定する。</summary>
     private EsRectInt _screenBounds;
 
     /// <summary>取得したスクリーン画像を取得する。</summary>
-    /// <value>撮影した仮想スクリーンの画像。</value>
+    /// <value>撮影した仮想スクリーンの画像（読み取りの面）。</value>
     /// <remarks>参照は <see cref="RunAsync"/> が設定した後に限られる（撮影はセッションの実行の一部である）。</remarks>
-    private EsBitmap Screen => _screen!;
+    private EsReadOnlyBitmap Screen => _screen!;
 
     /// <summary>ローカル DIP → 画像ピクセルの倍率。</summary>
     /// <remarks>
@@ -201,12 +204,16 @@ internal sealed class CaptureOverlay
             return null;
         }
 
-        _screen = screen;
+        // 撮影が完了した画像は以降書き換えないため、凍結して読み取り専用の面へ 0 コピーで引き渡す
+        // （画素は読み取り専用の面が最後の 1 つとして解放する）
+        screen.SetReadOnly();
+        _screen = EsReadOnlyBitmap.FromBitmap(screen);
+        screen.Dispose();
         // 画像の占有範囲（画面物理座標）= 撮影時の原点 + 画像サイズ（原点は負値になりうる）
-        _screenBounds = CropClipMath.ImageBounds(screen, origin);
+        _screenBounds = CropClipMath.ImageBounds(Screen, origin);
         _log.LogCaptureStart(_type);
         // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する。 Avalonia 版と同じ診断情報を残す）
-        _log.LogVirtualScreen(origin, screen);
+        _log.LogVirtualScreen(origin, Screen);
 
         try
         {
@@ -228,7 +235,7 @@ internal sealed class CaptureOverlay
         finally
         {
             // 画像はセッションの終了時に破棄する（以降の描画・切り出しは発生しない）
-            screen.Dispose();
+            _screen?.Dispose();
             _screen = null;
         }
     }

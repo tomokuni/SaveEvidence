@@ -29,7 +29,10 @@ public class CaptureImageHolderTests
 
         Assert.True(holder.Set(image, new EsPointInt(100, 50)));
 
-        Assert.Same(image, holder.Image);
+        // 保持する型は読み取りの面（渡した書き換え可能の実体は読み取り専用の面へ移して解放する）
+        Assert.True(image.IsDisposed);
+        Assert.NotNull(holder.Image);
+        Assert.Equal(new EsSizeInt(10, 20), holder.Image.Size);
         Assert.Equal(new EsPointInt(100, 50), holder.Origin);
         Assert.Equal(new EsRectInt(100, 50, 10, 20), holder.Bounds);
     }
@@ -68,9 +71,11 @@ public class CaptureImageHolderTests
         holder.Set(first, new EsPointInt(0, 0));
         holder.Set(second, new EsPointInt(5, 6));
 
+        // 旧い画像は破棄され、新しい画像は読み取りの面として保持される（書き換え可能の実体は Set が解放する）
         Assert.True(first.IsDisposed);
-        Assert.False(second.IsDisposed);
-        Assert.Same(second, holder.Image);
+        Assert.True(second.IsDisposed);
+        Assert.NotNull(holder.Image);
+        Assert.Equal(new EsSizeInt(30, 40), holder.Image.Size);
         Assert.Equal(new EsRectInt(5, 6, 30, 40), holder.Bounds);
     }
 
@@ -80,10 +85,11 @@ public class CaptureImageHolderTests
         var holder = new CaptureImageHolder(s_fallback);
         var image = CreateImage(10, 20);
         holder.Set(image, new EsPointInt(0, 0));
+        var held = holder.Image;
 
         holder.Dispose();
 
-        Assert.True(image.IsDisposed);
+        Assert.True(held!.IsDisposed);
         Assert.Null(holder.Image);
         Assert.Equal(s_fallback, holder.Bounds);
     }

@@ -11,18 +11,19 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// <remarks>
 /// <c>[Fact]</c> で <see cref="MainViewModel.AutoCropWindowCommand"/> を実行し、<br/>
 /// 検出結果（<see cref="MainViewModel.DetectedRects"/>）が設定されることを検証する。<br/>
-/// 単純な矩形パターン（白背景・黒枠線）の <see cref="EsBitmap"/> をプレビューに設定する。<br/>
+/// 単純な矩形パターン（白背景・黒枠線）の画像（読み取りの面）をプレビューに設定する。<br/>
 /// LineDetection の <see cref="EsUtil.SaveEvidence.Parts.LineDetection.LogicLineDetector"/> は純粋なピクセル検出のため、Avalonia ヘッドレスは不要。
 /// </remarks>
 public sealed class MainViewModelAutoCropTests
 {
-    /// <summary>白背景に黒枠線の矩形を描画した EsBitmap を生成する。</summary>
-    /// <returns>生成した EsBitmap。</returns>
+    /// <summary>白背景に黒枠線の矩形を描画した画像（読み取りの面）を生成する。</summary>
+    /// <returns>生成した画像（読み取りの面）。 破棄は呼び出し側。</returns>
     /// <remarks>
     /// ヘッドレスでは <c>WriteableBitmap.Lock()</c> 書き込みが読み出しに反映されないため、<br/>
-    /// ピクセル保持が確実な <see cref="EsBitmap"/>（SkiaSharp 内部）で構築する。
+    /// ピクセル保持が確実な <see cref="EsBitmap"/>（SkiaSharp 内部）で構築する。<br/>
+    /// プレビューは読み取りの面で保持されるため、描画の完了後に凍結して 0 コピーで渡す。
     /// </remarks>
-    private static EsBitmap CreateRectBitmap()
+    private static EsReadOnlyBitmap CreateRectBitmap()
     {
         const int size = 200;
         const int border = 3;
@@ -44,7 +45,10 @@ public sealed class MainViewModelAutoCropTests
             }
         }
 
-        return unified;
+        unified.SetReadOnly();
+        var read = EsReadOnlyBitmap.FromBitmap(unified);
+        unified.Dispose();
+        return read;
     }
 
     /// <summary>自動切り出しを実行すると検出矩形が設定されることを検証する。</summary>
@@ -62,16 +66,17 @@ public sealed class MainViewModelAutoCropTests
         Assert.NotEmpty(vm.DetectedRects);
     }
 
-    /// <summary>白背景に罫線を多数描いた EsBitmap（矩形を構成できない画像）を生成する。</summary>
+    /// <summary>白背景に罫線を多数描いた画像（矩形を構成できない画像。 読み取りの面）を生成する。</summary>
     /// <param name="width">画像の幅（ピクセル）。</param>
     /// <param name="height">画像の高さ（ピクセル）。</param>
-    /// <returns>生成した EsBitmap。</returns>
+    /// <returns>生成した画像（読み取りの面）。 破棄は呼び出し側。</returns>
     /// <remarks>
     /// 重なり合うウィンドウ風の枠（コーナーがずれて 1 つの矩形を構成しない）と、<br/>
     /// 表・テキスト相当の短い罫線を描く。 検出器は矩形を構成できないため、<br/>
-    /// 検出した線分をそのまま返す経路（多数の線分）を通る。
+    /// 検出した線分をそのまま返す経路（多数の線分）を通る。<br/>
+    /// プレビューは読み取りの面で保持されるため、描画の完了後に凍結して 0 コピーで渡す。
     /// </remarks>
-    private static EsBitmap CreateLineHeavyBitmap(int width, int height)
+    private static EsReadOnlyBitmap CreateLineHeavyBitmap(int width, int height)
     {
         var image = EsBitmap.Create(width, height);
         image.Clear(b: 255, g: 255, r: 255, a: 255); // 白
@@ -109,7 +114,10 @@ public sealed class MainViewModelAutoCropTests
             Vertical(height / 3 + i, height * 3 / 4 - i, width / 8 + i * 6);
         }
 
-        return image;
+        image.SetReadOnly();
+        var read = EsReadOnlyBitmap.FromBitmap(image);
+        image.Dispose();
+        return read;
     }
 
     /// <summary>矩形を構成できない線分が多い画像でも候補が上限内で短時間に収まることを検証する。</summary>

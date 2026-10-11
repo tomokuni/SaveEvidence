@@ -24,12 +24,16 @@ public class EsBitmapImageWriterTests
     private static string CreateTempPath(string extension)
         => Path.Combine(Path.GetTempPath(), $"saveevidence-writer-test-{Guid.NewGuid():N}{extension}");
 
-    /// <summary>単色の書き換え可能な画像を生成する。</summary>
+    /// <summary>保存へ渡すテスト用の画像（読み取りの面）を生成する。</summary>
     /// <param name="width">幅。</param>
     /// <param name="height">高さ。</param>
-    /// <returns>生成した画像。 所有権は呼び出し側。</returns>
-    private static EsBitmap CreateBitmap(int width = 4, int height = 4)
-        => EsBitmap.Create(width, height, System.Drawing.Color.CornflowerBlue);
+    /// <returns>生成した画像（読み取りの面。 破棄は呼び出し側）。</returns>
+    private static EsReadOnlyBitmap CreateBitmap(int width = 4, int height = 4)
+    {
+        using var bitmap = EsBitmap.Create(width, height, System.Drawing.Color.CornflowerBlue);
+        bitmap.SetReadOnly();
+        return EsReadOnlyBitmap.FromBitmap(bitmap);
+    }
 
     [Fact]
     internal void Save_コアの保存へ委譲する()

@@ -23,7 +23,7 @@ public sealed class LogicLineDetectorTests
     /// 枠線は矩形の外周（上・下・左・右）に黒（BGR=0, A=255）で描画し、内部は白のままにする。<br/>
     /// 検出器の最小長（<c>MinLineLength=50</c>）を満たすよう、十分なサイズの矩形を描画する。
     /// </remarks>
-    private static EsBitmap CreateRectImage(int width, int height, int borderThickness = 3)
+    private static EsReadOnlyBitmap CreateRectImage(int width, int height, int borderThickness = 3)
     {
         var bmp = EsBitmap.Create(width, height);
         bmp.Clear(b: 255, g: 255, r: 255, a: 255); // 白
@@ -41,7 +41,12 @@ public sealed class LogicLineDetectorTests
                 }
             }
         }
-        return bmp;
+
+        // 以降は読むだけ（検出器へ渡す）: 凍結して 0 コピーで読み取り専用の面へ渡す
+        bmp.SetReadOnly();
+        var read = EsReadOnlyBitmap.FromBitmap(bmp);
+        bmp.Dispose();
+        return read;
     }
 
     /// <summary>白背景に黒い枠線の矩形を検出し、4 辺を復元できることを検証する。</summary>

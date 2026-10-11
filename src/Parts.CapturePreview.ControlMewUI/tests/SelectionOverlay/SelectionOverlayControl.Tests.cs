@@ -24,8 +24,12 @@ public class SelectionOverlayControlTests
 {
     /// <summary>テスト用の拡大元画像を生成する。</summary>
     /// <returns>生成した画像。 破棄は呼び出し側。</returns>
-    private static EsUtil.Platform.Core.Imaging.EsBitmap CreateSource()
-        => EsUtil.Platform.Core.Imaging.EsBitmap.Create(32, 32, DrawingColor.White);
+    private static EsUtil.Platform.Core.Imaging.EsReadOnlyBitmap CreateSource()
+    {
+        using var bitmap = EsUtil.Platform.Core.Imaging.EsBitmap.Create(32, 32, DrawingColor.White);
+        bitmap.SetReadOnly();
+        return EsUtil.Platform.Core.Imaging.EsReadOnlyBitmap.FromBitmap(bitmap);
+    }
 
     /// <summary>等倍（1 対象ピクセル = 1 DIP）で境界 200x200 の座標変換ポートを生成する。</summary>
     /// <returns>座標変換ポート。</returns>
