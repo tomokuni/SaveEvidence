@@ -4,15 +4,17 @@ using EsUtil.Platform.Core.Imaging;
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 
 /// <summary>キャプチャ操作の結果を表すレコード型。</summary>
-/// <param name="Image">キャプチャした画像。 エラー時は null。</param>
-/// <param name="SourceBounds">キャプチャした領域（仮想画面座標）。 エラー時は null。</param>
+/// <param name="Image">キャプチャした画像（<b>書き換え可能</b>）。 キャンセル時は null。</param>
+/// <param name="SourceBounds">キャプチャした領域（仮想画面座標）。 キャンセル時は 0x0。</param>
 /// <remarks>
-/// `Image` と `SourceBounds` は常に同時に null または同時に非 null となる。<br/>
-/// - エラー時: 両方 null<br/>
-/// - キャンセル時: 両方 0x0（Image: 0x0 の空 EsReadOnlyBitmap、SourceBounds: 0x0 の空 PixelRect）<br/>
-/// `SourceBounds` は仮想画面座標（複数モニターを包含する座標空間）で表されるため、<br/>
-/// プライマリモニターが (0,0) にない場合、X / Y は負値になり得る。<br/>
-/// `Image` は表示境界で各 UI のビットマップ形式へ変換する（破棄は呼び出し側）。
+/// <b>キャンセルは「画像 null・領域 0x0」で表します</b>（<see cref="From"/> が単一所有する。 UI が null 判定を
+/// 書くと、UI ごとにキャンセルの表現が食い違います）。<br/>
+/// <b>画像を書き換え可能（<see cref="EsBitmap"/>）で返す理由</b>: 受け取った側（<c>CaptureImageHolder</c>）が
+/// <b>書き終えた時点で凍結して</b>読み取り専用の面を作るためです（撮影直後のオーバーレイ描画は書き込みを要します）。
+/// 読み取りだけの層へ渡す場合は <see cref="EsReadOnlyBitmap.FromBitmap"/> で読み取り専用の面にします。<br/>
+/// <b>所有権</b>: 画像は呼び出し側へ移ります（破棄するのは受け取った側）。<br/>
+/// <b>領域の座標</b>: 仮想画面座標（複数モニターを包含する座標空間）で表すため、プライマリモニターが (0, 0) に
+/// ない場合、X / Y は負値になり得ます。
 /// </remarks>
 public sealed record CaptureResult(EsBitmap? Image, EsRectInt? SourceBounds)
 {

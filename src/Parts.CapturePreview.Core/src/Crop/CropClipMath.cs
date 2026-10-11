@@ -7,10 +7,12 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 
 /// <summary>仮想スクリーン画像からの切り出し計算（純粋関数）を単一所有する。</summary>
 /// <remarks>
-/// 画面物理座標の切り出し矩形を、仮想スクリーン画像（Bitmap）のローカル座標へ変換して切り出す手順は<br/>
+/// 画面物理座標の切り出し矩形を、仮想スクリーン画像のローカル座標へ変換して切り出す手順は<br/>
 /// UI フレームワークに依存しない規則であるため、本クラスが単一所有する<br/>
 /// （UI ごとに「原点の減算」を書くと、マルチモニタ（原点が負値）で切り出し位置がずれる）。<br/>
-/// <c>EsReadOnlyBitmap.Crop(int, int, int, int)</c> はピクセル読み取りのみで、バックグラウンドスレッドから安全に呼び出せる。<br/>
+/// <c>EsReadOnlyBitmap.Crop(int, int, int, int)</c> は<b>画素を読むだけ</b>（書き込みの入口を触らない）ため、
+/// バックグラウンドスレッドから安全に呼び出せる。 画像の外側を含む要求は<b>透明で埋めた所有画像</b>を返す
+/// （切り出し結果を保持・破棄するのは呼び出し側）。<br/>
 /// UI フレームワークに依存しないため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 public static class CropClipMath

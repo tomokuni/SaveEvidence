@@ -332,7 +332,10 @@ public sealed partial class MainViewModel : ObservableObject
     /// <remarks>
     /// 撮影結果・貼り付け・読み込みは書き換え可能な画像として届くため、その入口を本オーバーロードが担う。<br/>
     /// <b>渡した実体の所有権は移らない</b>（画素はプレビューと共有されて共に生かされる。 渡した実体を破棄するのは呼び出し側）。
-    /// ただし凍結されるため、以降の書き換えには新しい画像を作る。
+    /// ただし凍結されるため、以降の書き換えには新しい画像を作る。<br/>
+    /// <b>呼び出し側が先に実体を破棄してもプレビューは読める</b>（<see cref="EsReadOnlyBitmap.FromBitmap"/> が画素領域の
+    /// 参照を 1 つ取るため。 実体の解放は最後の 1 つが行う）。 それでも決定的に解放したい場合は、渡した後に
+    /// 実体を破棄します（プレビューはそのまま使えます）。
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="image"/> が null の場合。</exception>
     public void SetPreviewImage(EsBitmap image)

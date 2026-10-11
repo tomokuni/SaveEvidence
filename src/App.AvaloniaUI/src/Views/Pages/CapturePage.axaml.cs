@@ -629,10 +629,13 @@ public sealed partial class CapturePage : UserControl
 
     /// <summary>復元した画像へプレビューを差し替える。</summary>
     /// <param name="image">復元する画像（読み取りの面）。 所有権は ViewModel へ移る。</param>
-    /// <remarks>取り出した画像を破棄するとプレビューが読めなくなるため、所有権は ViewModel へ移す（ここでは破棄しない）。</remarks>
+    /// <remarks>
+    /// 差し替え前の画像は <c>SetPreviewImage</c> が（<c>OnPreviewImageChanged</c> 経由で）破棄するため、
+    /// ここでは破棄しない（<c>Image.Source</c> が旧画像を参照している間に破棄すると、破棄済みのバッファを
+    /// 描画してチラつく。 破棄の時点は ViewModel が単一所有する）。
+    /// </remarks>
     private void RestoreImage(EsReadOnlyBitmap image)
     {
-        _viewModel.PreviewImage?.Dispose();
         _viewModel.SetPreviewImage(image);
     }
 
