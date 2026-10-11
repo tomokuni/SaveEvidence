@@ -220,6 +220,6 @@ var brush = s_cache.GetOrCreate(color);
 - `ScreenConverter` は Avalonia の `TopLevel` を解決するため、Avalonia 版専用です（他 UI では各 UI の実装が必要）。
 - ビジュアルツリー未接続時、`ScreenConverter` は等価変換（画面座標 = ローカル DIP）として動作します。
 - `EsBitmapAvaloniaExtensions` の `To*` は新しい画像を生成するため、呼び出し側が所有・破棄します（`CreateAvaloniaImage` は `Adopt` でアダプタに所有させます）。
-- **表示用の縮小はコアの `EsReadOnlyBitmap.Resize`（`DownscaleAlgorithm.Box` = 面積平均）が単一所有します**（本プロジェクトに縮小の実装は置きません）。 アダプタは `DisplayMaxSize` を渡され、かつ**画像が上限より大きいときに限り**表示用の射影を縮小します（上限に収まっている画像は等倍の射影を共用し、同じ寸法の複製を 2 つ作りません）。
+- **表示用の縮小はコアの `EsReadOnlyBitmap.Resize`（`ImageQuality.High` = 面積平均）が単一所有します**（本プロジェクトに縮小の実装は置きません）。 アダプタは `DisplayMaxSize` を渡され、かつ**画像が上限より大きいときに限り**表示用の射影を縮小します（上限に収まっている画像は等倍の射影を共用し、同じ寸法の複製を 2 つ作りません）。
 - **表示に面積平均を選ぶ理由は画質の一貫性です**: 同じ寸法のサムネイルを出すフォルダビュー（ファイル → `Bitmap.DecodeToWidth`）は面積平均相当の画質です。 双線形だと**同じサイズなのに一覧ごとに見え方が変わる**ためです（実測: 4K → 320x180 で幅 1 px の細線の輝度は面積平均 21 / 双線形 127 / 最近傍 255）。 面積平均は並列化されるため 4K 1 枚で 1.5〜2.0 ms です。
 - **ファイルの保存・読み込みはコア（`EsReadOnlyBitmap.Save` / `EsReadOnlyBitmap.Load` / `EsBitmap.Load`）が単一所有します**（本プロジェクトに保存・読み込みの実装は置きません）。

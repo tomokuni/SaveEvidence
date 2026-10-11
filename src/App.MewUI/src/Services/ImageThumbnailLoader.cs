@@ -72,7 +72,7 @@ internal static class ImageThumbnailLoader
     /// 4. 不完全なデータ（<c>IncompleteInput</c>）はデコードできた範囲を表示する。<br/>
     /// <b>縮小をコアへ委譲する理由</b>: Skia の縮小（<c>SKBitmap.Resize(Linear)</c>）は縮小率が大きいと
     /// <b>細線を実際より濃く残す</b>（実測: 4K → 320x180 で幅 1 px の細線の輝度 255・総和は真の平均の 12 倍）。
-    /// コアの面積平均（<see cref="DownscaleAlgorithm.Box"/>）へ揃えると、Avalonia 版のフォルダビュー
+    /// コアの面積平均（<see cref="ImageQuality.High"/>）へ揃えると、Avalonia 版のフォルダビュー
     /// （<c>Bitmap.DecodeToWidth</c> = 面積平均相当）と<b>同じ画質</b>になる。<br/>
     /// <b>コスト</b>: デコード結果をコアの画像へ複製する（4K で約 6 ms）ため、Skia の縮小よりわずかに遅いが、
     /// 縮小自体は並列化され 4K で 1.8 ms である。
@@ -116,7 +116,7 @@ internal static class ImageThumbnailLoader
         // 縮小は読み取りの面が受けるため、書き込みの済んだ画像を凍結して 0 コピーで渡す
         decoded.SetReadOnly();
         using var readOnly = EsReadOnlyBitmap.FromBitmap(decoded);
-        return ToReadOnly(readOnly.Resize(maxSize, DownscaleAlgorithm.Box));
+        return ToReadOnly(readOnly.Resize(maxSize, ImageQuality.High));
     }
 
     /// <summary>デコードした画像を表示へ渡せる読み取りの面にする（凍結して 0 コピーで共有する）。</summary>
