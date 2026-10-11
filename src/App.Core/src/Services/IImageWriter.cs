@@ -13,8 +13,8 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 public interface IImageWriter
 {
     /// <summary>画像を指定されたパスへ書き込む。</summary>
-    /// <param name="image">書き込む画像（<b>所有する画像の共通基底</b>。 保存は画像型の <c>Save</c> が担うため、書き換えの権利は要さない）。</param>
+    /// <param name="image">書き込む画像（<b>読み取りの面</b>。 保存は画素を読むだけであり、書き換えの権利も実体の型も要さないため）。</param>
     /// <param name="filePath">保存先のファイルパス。</param>
     /// <exception cref="ArgumentNullException">画像またはファイルパスが null の場合。</exception>
-    void Save(EsBitmapBase image, string filePath);
+    void Save(IEsBitmap image, string filePath);
 }

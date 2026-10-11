@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// </summary>
 /// <remarks>
 /// <b>保存形式ごとの細かい検証はコアが単一所有する</b>: 形式の判別とエンコードは
-/// <see cref="EsBitmapBase.Save(string)"/> / <see cref="EsBitmap.Load(string)"/>（<c>EsUtil.Platform.Core.Tests</c>）が検証済みである。<br/>
+/// <see cref="EsBitmapExtensions.Save(IEsBitmap, string)"/> / <see cref="EsBitmap.Load(string)"/>（<c>EsUtil.Platform.Core.Tests</c>）が検証済みである。<br/>
 /// 本テストは<b>アプリ側の契約</b>だけを検証する（コアの保存へ委譲されること・引数の検証・上書き）。<br/>
 /// 保存は Windows 専用の GDI+ を呼ぶため、本クラスは
 /// <see cref="SupportedOSPlatformAttribute"/> で Windows に限定する（コアの保存テストと同じ方針）。

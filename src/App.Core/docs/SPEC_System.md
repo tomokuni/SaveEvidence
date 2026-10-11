@@ -78,7 +78,7 @@ sequenceDiagram
 
 | 注入点 | 種類 | 内容 |
 | --- | --- | --- |
-| `IImageWriter` | コンストラクター引数 | 画像の保存（本番は `EsBitmapImageWriter`。 Avalonia 版は `Program.cs` の DI、MewUI 版は直接生成）。 **保存形式の判別とエンコードはコアの `EsBitmapBase.Save` が単一所有する** |
+| `IImageWriter` | コンストラクター引数 | 画像の保存（本番は `EsBitmapImageWriter`。 Avalonia 版は `Program.cs` の DI、MewUI 版は直接生成）。 **保存形式の判別とエンコードはコアの `EsBitmapExtensions.Save` が単一所有する** |
 | `CopyToClipboardAsync` | コールバック | `IEsBitmap` を受け取り、UI 型へ変換してクリップボードへ書く |
 | `PasteFromClipboardAsync` | コールバック | クリップボードから読み、UI 型から `EsWritableBitmap` へ変換して返す |
 | `ConfirmOverwriteAsync` | コールバック | 上書き確認ダイアログ |

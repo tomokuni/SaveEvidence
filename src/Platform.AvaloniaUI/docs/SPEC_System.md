@@ -144,7 +144,7 @@ flowchart TB
   - `CreateAvaloniaImage` は生成した画像を `Adopt` でアダプタに所有させる（呼び出し側はアダプタを `Dispose` する）。
   - `EsBitmapAvaloniaAdapter` は受け取った真実を所有しない（ホストが破棄する）。 `Adopt` で生成した場合だけ内包する画像も解放する。
   - **表示用の縮小（`DisplayMaxSize`）はコアの `EsBitmapExtensions.Resize`（`DownscaleAlgorithm.Box` = 面積平均）が単一所有する**（本プロジェクトに縮小の実装を置かない。 画像が上限に収まっている場合は縮小せず等倍の射影を共用する。 面積平均にするのは、同じ寸法のサムネイルを出すフォルダビューの `Bitmap.DecodeToWidth` と画質を揃えるため）。
-  - **ファイルの保存・読み込みはコアの画像型（`EsBitmapBase.Save` / `EsBitmap.Load` / `EsWritableBitmap.Load`）が単一所有する**（本プロジェクトに保存・読み込みの実装を置かない）。
+  - **ファイルの保存・読み込みはコア（`EsBitmapExtensions.Save` / `EsBitmap.Load` / `EsWritableBitmap.Load`）が単一所有する**（本プロジェクトに保存・読み込みの実装を置かない）。
   - 破棄済みの真実を渡した場合、寸法と画像の取得は `ObjectDisposedException`（`Draw` は no-op）。
 
 ## 9. ログ
