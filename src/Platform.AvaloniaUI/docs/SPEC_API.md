@@ -165,7 +165,7 @@ var localDip = ScreenConverter.ScreenToLocalDip(control, screenPt); // 画面物
 
 | 型 | 説明 |
 | --- | --- |
-| `EsBitmapAvaloniaAdapter` | コアの画像（`EsReadOnlyBitmap`）を包み、**`IImage`（表示）として公開する**アダプタ（コアの画像は `GetEsBitmap()` で取り出す）。 **コアの型は実装しない**（コアの画像型は表示アダプタが継承・実装できる型ではないため）。 **射影元はコアの画像に限る**（Avalonia の `Bitmap` を真実とする入口は持たない。 Avalonia の画像をコアで扱う場合は `ToEsBitmap()` で変換してから包む）。 コアへの射影は恒等で、Avalonia 側の射影は**初回に一度だけ**作る。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（コアの `EsBitmapExtensions` / `EsReadOnlyBitmap` を使 う）。 **一覧のサムネイルのように小さく表示する場合は `displayMaxSize` を渡す** （等倍の射影は画像 1 枚につき元寸法の複製を保持する。 実測: 4K で 32 MB / 7.8 ms に対し、96x54 の双線形の縮小版は 68 µs / 20 KB） |
+| `EsBitmapAvaloniaAdapter` | コアの画像（`EsReadOnlyBitmap`）を包み、**`IImage`（表示）として公開する**アダプタ（コアの画像は `GetEsBitmap()` で取り出す）。 **コアの型は実装しない**（コアの画像型は表示アダプタが継承・実装できる型ではないため）。 **射影元はコアの画像に限る**（Avalonia の `Bitmap` を真実とする入口は持たない。 Avalonia の画像をコアで扱う場合は `ToEsBitmap()` で変換してから包む）。 コアへの射影は恒等で、Avalonia 側の射影は**初回に一度だけ**作る。 **真実は所有しない**（破棄はホスト。 射影だけを `Dispose` で解放）。 **新しく生成した画像を解放する人がいない場合は `Adopt` で所有させる**。 ピクセル操作・切り出しは提供しない（コアの `EsReadOnlyBitmap.Crop` 等を使 う）。 **一覧のサムネイルのように小さく表示する場合は `displayMaxSize` を渡す** （等倍の射影は画像 1 枚につき元寸法の複製を保持する。 実測: 4K で 32 MB / 7.8 ms に対し、96x54 の双線形の縮小版は 68 µs / 20 KB） |
 | `CapacityLimitedCache<TKey, TValue>` | 生成にコストがかかる値をキー単位で共有する容量制限付きキャッシュ（`GetOrCreate` / `Count` / `DefaultCapacity`。 スレッド安全。 値はファクトリ関数で生成し、容量超過時は全体をクリアして無制限のメモリ増加を防ぐ） |
 | `AvaloniaTextMeasure` | テキストの実寸を測る（`Measure(text, fontSize)`。 ラベルの配置矩形の計算に使う。 測定に色は影響しないためブラシは固定で共有する） |
 
@@ -220,6 +220,6 @@ var brush = s_cache.GetOrCreate(color);
 - `ScreenConverter` は Avalonia の `TopLevel` を解決するため、Avalonia 版専用です（他 UI では各 UI の実装が必要）。
 - ビジュアルツリー未接続時、`ScreenConverter` は等価変換（画面座標 = ローカル DIP）として動作します。
 - `EsBitmapAvaloniaExtensions` の `To*` は新しい画像を生成するため、呼び出し側が所有・破棄します（`CreateAvaloniaImage` は `Adopt` でアダプタに所有させます）。
-- **表示用の縮小はコアの `EsBitmapExtensions.Resize`（`DownscaleAlgorithm.Box` = 面積平均）が単一所有します**（本プロジェクトに縮小の実装は置きません）。 アダプタは `DisplayMaxSize` を渡され、かつ**画像が上限より大きいときに限り**表示用の射影を縮小します（上限に収まっている画像は等倍の射影を共用し、同じ寸法の複製を 2 つ作りません）。
+- **表示用の縮小はコアの `EsReadOnlyBitmap.Resize`（`DownscaleAlgorithm.Box` = 面積平均）が単一所有します**（本プロジェクトに縮小の実装は置きません）。 アダプタは `DisplayMaxSize` を渡され、かつ**画像が上限より大きいときに限り**表示用の射影を縮小します（上限に収まっている画像は等倍の射影を共用し、同じ寸法の複製を 2 つ作りません）。
 - **表示に面積平均を選ぶ理由は画質の一貫性です**: 同じ寸法のサムネイルを出すフォルダビュー（ファイル → `Bitmap.DecodeToWidth`）は面積平均相当の画質です。 双線形だと**同じサイズなのに一覧ごとに見え方が変わる**ためです（実測: 4K → 320x180 で幅 1 px の細線の輝度は面積平均 21 / 双線形 127 / 最近傍 255）。 面積平均は並列化されるため 4K 1 枚で 1.5〜2.0 ms です。
-- **ファイルの保存・読み込みはコア（`EsBitmapExtensions.Save` / `EsReadOnlyBitmap.Load` / `EsBitmap.Load`）が単一所有します**（本プロジェクトに保存・読み込みの実装は置きません）。
+- **ファイルの保存・読み込みはコア（`EsReadOnlyBitmap.Save` / `EsReadOnlyBitmap.Load` / `EsBitmap.Load`）が単一所有します**（本プロジェクトに保存・読み込みの実装は置きません）。

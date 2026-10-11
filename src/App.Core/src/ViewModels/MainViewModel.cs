@@ -19,7 +19,7 @@ namespace EsUtil.SaveEvidence.App.Core.ViewModels;
 /// <c>[RelayCommand]</c> 属性によるソースジェネレーターを活用する。<br/>
 /// 設定管理は <see cref="Services.SettingsService"/> を介して行い、疎結合な設計を実現する。<br/>
 /// 画像のライフサイクル管理（Dispose）は <c>OnPreviewImageChanging</c> で行う。<br/>
-/// ピクセル操作（切出し）は UI 非依存の <see cref="EsReadOnlyBitmap"/> 拡張に委譲し、
+/// ピクセル操作（切出し）は UI 非依存の <see cref="EsReadOnlyBitmap"/> のメンバーに委譲し、
 /// 画面キャプチャは <see cref="CaptureType"/> に委譲する（プラットフォーム抽象。 DIP）。<br/>
 /// クリップボードと上書き確認は UI が必要なため、コールバックとして UI 実装側から注入する（依存性逆転）。
 /// </remarks>
@@ -484,7 +484,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>ピクセル編集（切出し等）を適用する（BeforeEditAction → 変換 → 画像差し替え）。</summary>
     /// <param name="edit">読み取りの面（<see cref="EsReadOnlyBitmap"/>）を受け取り、編集後の画像（書き換え可能）を返す処理。</param>
-    /// <remarks>ピクセル操作は共通基盤（<see cref="EsBitmapExtensions"/>）に委譲する。</remarks>
+    /// <remarks>ピクセル操作は共通基盤（<see cref="EsReadOnlyBitmap"/> のメンバー）に委譲する。</remarks>
     private void ApplyPixelEdit(Func<EsReadOnlyBitmap, EsBitmap?> edit)
     {
         if (PreviewImage is null)
