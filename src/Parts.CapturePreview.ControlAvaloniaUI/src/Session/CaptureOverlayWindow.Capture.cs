@@ -12,9 +12,7 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
-/// <summary>
-/// CaptureOverlayWindow の確定・切り出し・キャンセル・ライフサイクル処理（partial 分割）。
-/// </summary>
+/// <summary>CaptureOverlayWindow の確定・切り出し・キャンセル・ライフサイクル処理（partial 分割）。</summary>
 /// <remarks>
 /// 選択確定（<see cref="CompleteSelection(EsRect)"/>）・事前切り出し（<see cref="PreExtractClip"/>）・<br/>
 /// キャンセル・ウィンドウクローズ時の後片付け・仮想スクリーン設定を処理する。<br/>

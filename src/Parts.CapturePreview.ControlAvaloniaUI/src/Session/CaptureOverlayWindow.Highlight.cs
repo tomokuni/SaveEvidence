@@ -7,9 +7,7 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
-/// <summary>
-/// CaptureOverlayWindow のクリック確定フローとハイライト更新（partial 分割）。
-/// </summary>
+/// <summary>CaptureOverlayWindow のクリック確定フローとハイライト更新（partial 分割）。</summary>
 /// <remarks>
 /// ScreenSelect / WindowSelect のマウス移動時のハイライト更新と、<br/>
 /// クリック（押下 → 解放）による確定フローを処理する。<br/>

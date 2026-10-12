@@ -24,9 +24,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 
-/// <summary>
-/// 画像表示（拡大・パン・Fit）と領域選択（ドラッグ・暗転・ルーペ）を統合した高レベル複合コントロール。
-/// </summary>
+/// <summary>画像表示（拡大・パン・Fit）と領域選択（ドラッグ・暗転・ルーペ）を統合した高レベル複合コントロール。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: Facade / Composite（<see cref="ZoomViewControl"/> と <see cref="SelectionOverlayControl"/> を内包し、
 /// ホストへ統一インターフェースを提供）。<br/>
@@ -90,9 +88,7 @@ public sealed partial class CropViewControl : Panel
     /// <remarks>入力は受けず（<c>IsHitTestVisible = false</c>）描画のみを担う（ズーム・ドラッグは下のレイヤが受ける）。</remarks>
     private readonly MarqueeControl _highlight = new() { ZIndex = 30, IsHitTestVisible = false };
 
-    /// <summary>
-    /// <see cref="CropViewControl"/> の新しいインスタンスを初期化する。
-    /// </summary>
+    /// <summary><see cref="CropViewControl"/> の新しいインスタンスを初期化する。</summary>
     /// <remarks>
     /// 子コントロール（<see cref="ZoomViewControl"/> / <see cref="SelectionOverlayControl"/> / 矩形オーバーレイ / 強調オーバーレイ）を生成して配置し、<br/>
     /// ビューポート変化（パン・ズーム）を配線する。<br/>
