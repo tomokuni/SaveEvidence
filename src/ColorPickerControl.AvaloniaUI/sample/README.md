@@ -39,7 +39,7 @@ dotnet run -c Release --project src/ColorPickerControl.AvaloniaUI/sample/ColorPi
 `src/ColorPickerControl.AvaloniaUI/sample/RunSample.bat` をダブルクリックすると、リリースビルドを行った後、サンプルアプリケーションを起動します。
 
 ```text
-RunSample.bat  →  リリースビルド（dotnet build -c Release）→ EsUtil.SaveEvidence.ColorPicker.Sample.exe を起動
+RunSample.bat  →  リリースビルド（dotnet build -c Release）→ ColorPickerControl.AvaloniaUI.Sample.exe を起動
 ```
 
 > 本サンプルは独立したプロジェクトです。

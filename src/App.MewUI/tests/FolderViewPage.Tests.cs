@@ -6,9 +6,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Tests;
 
-/// <summary>
-/// <see cref="Views.FolderViewPage"/> の起動後の先読み（ページを表示せずに一覧を構築する）のテスト。
-/// </summary>
+/// <summary><see cref="Views.FolderViewPage"/> の起動後の先読み（ページを表示せずに一覧を構築する）のテスト。</summary>
 /// <remarks>
 /// <b>ウィンドウを必要としない</b>: ページの生成（<c>Build</c>）と表示状態の通知（<c>OnWarmUp</c> /
 /// <c>OnActivated</c>）は要素を組み立てるだけで、ホストへ載せなくても動く。<br/>

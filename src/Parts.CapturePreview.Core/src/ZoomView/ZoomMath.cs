@@ -3,9 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 
-/// <summary>
-/// ズーム表示の幾何計算（純粋関数）。
-/// </summary>
+/// <summary>ズーム表示の幾何計算（純粋関数）。</summary>
 /// <remarks>
 /// Fit 実効倍率・ズーム中心維持（スケール変化時のオフセット）・スクロール範囲クランプ・<br/>
 /// ビューポート ↔ コンテンツ座標変換を計算する。<br/>

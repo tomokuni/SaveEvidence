@@ -5,9 +5,7 @@ using EsUtil.SaveEvidence.App.Core.Enums;
 
 namespace EsUtil.SaveEvidence.App.Core.Models;
 
-/// <summary>
-/// アプリケーションの設定を表すデータモデル（変更通知対応）。
-/// </summary>
+/// <summary>アプリケーションの設定を表すデータモデル（変更通知対応）。</summary>
 /// <remarks>
 /// CommunityToolkit.Mvvm の <see cref="ObservableObject"/> を継承し、
 /// <c>[ObservableProperty]</c> 属性により自動的に変更通知を発行する。<br/>

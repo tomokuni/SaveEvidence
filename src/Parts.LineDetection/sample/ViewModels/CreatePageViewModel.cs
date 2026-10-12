@@ -15,9 +15,7 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 
-/// <summary>
-/// 「データ作成」ページの ViewModel。 評価用データ作成（Marquee キャプチャ → 正解ウィンドウ選択 → 保存）を統括する。
-/// </summary>
+/// <summary>「データ作成」ページの ViewModel。 評価用データ作成（Marquee キャプチャ → 正解ウィンドウ選択 → 保存）を統括する。</summary>
 /// <remarks>
 /// キャプチャの開始（Marquee）は UI スレッドから行う必要があるため、<see cref="Views.MainWindow"/> の
 /// コードビハインドが CaptureSessionControl を呼び、結果（画像 + 領域）を <see cref="ApplyCaptureResult"/> で受け取る。<br/>

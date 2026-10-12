@@ -28,9 +28,7 @@ using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
-/// <summary>
-/// 画像プレビュー・切出し・ズーム・ルーペ機能を提供するキャプチャページ。
-/// </summary>
+/// <summary>画像プレビュー・切出し・ズーム・ルーペ機能を提供するキャプチャページ。</summary>
 /// <remarks>
 /// MainWindow から分離された画像キャプチャ関連の全機能を提供する。<br/>
 /// CaptureSessionControl による領域選択・切出し、CropViewControl（ズーム + 領域選択 + ルーペを内包）
@@ -713,9 +711,7 @@ public sealed partial class CapturePage : UserControl
         }
     }
 
-    /// <summary>
-    /// 切出しセッションを開始し、確定・キャンセルを待機する。
-    /// </summary>
+    /// <summary>切出しセッションを開始し、確定・キャンセルを待機する。</summary>
     /// <remarks>
     /// StartCropAsync はイベント購読 → モード開始 → 確定待機 → 後片付けを完結して行う。<br/>
     /// 確定（Enter / ダブルクリック / Confirm）で切り出し範囲（コア型）、キャンセルで 0x0 の空矩形を返す。<br/>

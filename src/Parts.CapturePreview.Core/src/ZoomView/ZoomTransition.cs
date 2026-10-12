@@ -1,8 +1,6 @@
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 
-/// <summary>
-/// ズーム遷移の計算ロジック（純粋関数）。
-/// </summary>
+/// <summary>ズーム遷移の計算ロジック（純粋関数）。</summary>
 /// <remarks>
 /// ⊖⊕ ボタンの 23 段階遷移と Ctrl+ホイールの ×1.1 遷移を決定する。<br/>
 /// UI 状態（ViewModel・コントロール）に依存しないため、単体テストで遷移仕様を検証できる。<br/>

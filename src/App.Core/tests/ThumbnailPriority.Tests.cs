@@ -3,9 +3,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
 
-/// <summary>
-/// <see cref="ThumbnailPriority"/> の単体テスト（見えている部分の優先と、その中での上方優先）。
-/// </summary>
+/// <summary><see cref="ThumbnailPriority"/> の単体テスト（見えている部分の優先と、その中での上方優先）。</summary>
 /// <remarks>
 /// 可視判定は表示範囲の重なりだけで決まる純粋関数のため、画面なしで境界まで検証できる。
 /// </remarks>

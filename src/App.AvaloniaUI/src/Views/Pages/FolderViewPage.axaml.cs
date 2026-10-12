@@ -15,9 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
-/// <summary>
-/// 保存先フォルダの画像一覧を表示するフォルダビューページ。
-/// </summary>
+/// <summary>保存先フォルダの画像一覧を表示するフォルダビューページ。</summary>
 /// <remarks>
 /// 画像ファイルのサムネイル一覧を表示し、クリックでメイン画面のプレビューに読み込む。<br/>
 /// 表示モード（特大/大/中）、ソート切替、更新機能を提供する。<br/>
@@ -385,9 +383,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
     /// <summary>最新情報に更新。</summary>
     private void OnRefreshClick(object? sender, RoutedEventArgs e) => LoadFiles();
 
-    /// <summary>
-    /// ファイルのダブルクリック時に規定のアプリで開く。
-    /// </summary>
+    /// <summary>ファイルのダブルクリック時に規定のアプリで開く。</summary>
     private void OnFileDoubleTapped(object? sender, TappedEventArgs e)
     {
         if (FileListBox.SelectedItem is not FileListItem item) return;

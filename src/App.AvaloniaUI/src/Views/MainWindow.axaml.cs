@@ -24,9 +24,7 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views;
 
-/// <summary>
-/// SaveEvidence アプリケーションのメインウィンドウ。
-/// </summary>
+/// <summary>SaveEvidence アプリケーションのメインウィンドウ。</summary>
 /// <remarks>
 /// 画像のプレビュー表示、キャプチャ操作、保存、クリップボード連携、ルーペ表示、<br/>
 /// 切り出し選択、ズーム、ホットキー管理など、アプリケーションの主要機能を統括する。<br/>
@@ -55,9 +53,7 @@ public sealed partial class MainWindow : Window
     // 早期 return せず、初期ページの選択状態が設定されるようにする）
     private AppPage? _navSelectedPage;
 
-    /// <summary>
-    /// MainWindow を初期化する。
-    /// </summary>
+    /// <summary>MainWindow を初期化する。</summary>
     /// <param name="viewModel">メインViewModel</param>
     /// <param name="settingsService">設定サービス</param>
     /// <param name="hotKeyService">ホットキーサービス</param>

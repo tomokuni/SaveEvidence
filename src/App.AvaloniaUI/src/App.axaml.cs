@@ -10,9 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI;
 
-/// <summary>
-/// Avalonia アプリケーションのエントリポイント。
-/// </summary>
+/// <summary>Avalonia アプリケーションのエントリポイント。</summary>
 /// <remarks>
 /// DI コンテナの初期化とメインウィンドウの表示を行う。<br/>
 /// <see cref="IClassicDesktopStyleApplicationLifetime"/> を使用したデスクトップアプリケーションとして動作する。<br/>
@@ -20,17 +18,13 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI;
 /// </remarks>
 public sealed partial class App : Application
 {
-    /// <summary>
-    /// XAML の読み込み。 App.axaml で定義されたリソースとスタイルを適用する。
-    /// </summary>
+    /// <summary>XAML の読み込み。 App.axaml で定義されたリソースとスタイルを適用する。</summary>
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
     }
 
-    /// <summary>
-    /// フレームワークの初期化完了後、メインウィンドウを生成して表示する。
-    /// </summary>
+    /// <summary>フレームワークの初期化完了後、メインウィンドウを生成して表示する。</summary>
     public override void OnFrameworkInitializationCompleted()
     {
         // 設定のダークモードをテーマへ反映し、変更時は即時反映する

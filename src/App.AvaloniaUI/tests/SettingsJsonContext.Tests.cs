@@ -18,7 +18,7 @@ public class SettingsJsonContextTests
 {
     /// <summary>設定のプロパティ数の下限（目安。 設定項目を減らすと気づけるよう緩めに固定する）。</summary>
     /// <remarks>
-    /// <c>Settings</c> は 60 個のプロパティを持つ（実測）。 ここでは「生成されている」ことの確認が目的のため、<br/>
+    /// <c>Settings</c> のプロパティ数は設定項目の追加で増える。 ここでは「生成されている」ことの確認が目的のため、<br/>
     /// 少数の欠落で失敗しないよう余裕を持った下限にする（0 個・数個になれば AOT / トリミングで壊れている）。
     /// </remarks>
     private const int MinimumPropertyCount = 40;

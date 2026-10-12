@@ -45,7 +45,7 @@ public static class HotKeyParser
         var keyName = parts[^1];
 
         // 文字列の解釈は EnumCanonical へ集約する（Enum.TryParse は数値文字列（"999" 等）を受理するため、
-        // 列挙に無い値がキーとして通る。 実測: 修正前は "Ctrl + 999" が true になっていた）。
+        // 列挙に無い値がキーとして通る）。
         if (EnumCanonical.TryParse<EsKey>(keyName, out var key) && key != EsKey.None)
         {
             setting = new HotKeySetting(modifiers, key);

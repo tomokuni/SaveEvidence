@@ -5,9 +5,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
 
-/// <summary>
-/// <see cref="EsBitmapImageWriter"/>（<see cref="IImageWriter"/> の唯一の本番実装）のテスト。
-/// </summary>
+/// <summary><see cref="EsBitmapImageWriter"/>（<see cref="IImageWriter"/> の唯一の本番実装）のテスト。</summary>
 /// <remarks>
 /// <b>保存形式ごとの細かい検証はコアが単一所有する</b>: 形式の判別とエンコードは
 /// <see cref="EsReadOnlyBitmap.Save(string)"/> / <see cref="EsReadOnlyBitmap.Load(string)"/>（<c>EsUtil.Platform.Core.Tests</c>）が検証済みである。<br/>

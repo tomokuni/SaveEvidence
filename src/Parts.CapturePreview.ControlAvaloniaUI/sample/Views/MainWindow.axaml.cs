@@ -214,7 +214,7 @@ public sealed partial class MainWindow : Window
         {
             // ファイルの読み込みはコアの画像型が単一所有する（形式は内容から判別される）。
             // プレビューは読むだけ（表示と切り出しのみ）であるため、読み取りの面のまま渡す
-            // （書き換え可能へ複製すると、全域コピーが 1 回増える。 実測: 4K で 5.7 ms / 31 MiB）。
+            // （書き換え可能へ複製すると、全域コピーが 1 回増える）。
             // 所有権は SetPreviewBitmap へ移るため、ここでは破棄しない。
             SetPreviewBitmap(EsReadOnlyBitmap.Load(files[0].Path.LocalPath));
             _vm.AddLog($"[App] 画像を読み込みました: {files[0].Name}");

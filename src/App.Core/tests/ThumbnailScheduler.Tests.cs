@@ -4,9 +4,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
 
-/// <summary>
-/// <see cref="ThumbnailScheduler"/> の単体テスト（表示状態による負荷の切り替えと中断）。
-/// </summary>
+/// <summary><see cref="ThumbnailScheduler"/> の単体テスト（表示状態による負荷の切り替えと中断）。</summary>
 /// <remarks>
 /// <b>待ち時間に依存しない書き方</b>: 同時実行の検証は「開始した件数」を生成処理から記録し、
 /// <b>ブロックしたまま待つ</b>ことで行う（時間の経過で判定しない。 待機は「起きるのを待つ」向きにだけ使う）。

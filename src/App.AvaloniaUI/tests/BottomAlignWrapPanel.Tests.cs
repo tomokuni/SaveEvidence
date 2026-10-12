@@ -6,10 +6,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Tests;
 
-/// <summary>
-/// <see cref="BottomAlignWrapPanel"/> の委譲確認テスト（Control の Measure / Arrange が
-/// <see cref="EsUtil.SaveEvidence.App.Core.Layout.BottomAlignWrapLayout"/> の純粋計算へ正しく委譲することを検証）。
-/// </summary>
+/// <summary><see cref="BottomAlignWrapPanel"/> の委譲確認テスト（Control の Measure / Arrange が<see cref="EsUtil.SaveEvidence.App.Core.Layout.BottomAlignWrapLayout"/> の純粋計算へ正しく委譲することを検証）。</summary>
 /// <remarks>
 /// 折り返し・行高さ・下端揃えの計算ロジック自体は <c>BottomAlignWrapLayoutTests</c>（<c>[Fact]</c>・並列）で検証する。<br/>
 /// 本テストは <see cref="Control"/> のレイアウトエンジン経由で委譲が機能することを確認するため、<br/>

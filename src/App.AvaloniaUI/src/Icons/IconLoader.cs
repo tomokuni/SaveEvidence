@@ -11,9 +11,7 @@ using EsUtil.SaveEvidence.App.Core.Models;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 
-/// <summary>
-/// Icons フォルダの Fluent アイコン（SVG）からジオメトリ・ウィンドウアイコンを生成するヘルパー。
-/// </summary>
+/// <summary>Icons フォルダの Fluent アイコン（SVG）からジオメトリ・ウィンドウアイコンを生成するヘルパー。</summary>
 /// <remarks>
 /// 各 SVG は Fluent System Icons 形式の単一 <c>&lt;path d="..."&gt;</c> で構成され、<br/>
 /// viewBox は 24x24。<br/>

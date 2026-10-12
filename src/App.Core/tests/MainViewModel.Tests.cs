@@ -7,9 +7,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
 
-/// <summary>
-/// MainViewModel の画像保存（SaveImageAsync）と保存済み状態（IsSaved / CanSave）の単体テスト。
-/// </summary>
+/// <summary>MainViewModel の画像保存（SaveImageAsync）と保存済み状態（IsSaved / CanSave）の単体テスト。</summary>
 /// <remarks>
 /// <see cref="MainViewModel.SaveImageAsync"/> の画像エンコード・ファイル書き込みは <see cref="IImageWriter"/> に委譲するため、
 /// テストでは <see cref="MockImageWriter"/> を注入して Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）を不要にする。<br/>

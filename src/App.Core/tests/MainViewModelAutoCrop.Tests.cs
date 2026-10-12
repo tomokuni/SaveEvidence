@@ -122,9 +122,8 @@ public sealed class MainViewModelAutoCropTests
 
     /// <summary>矩形を構成できない線分が多い画像でも候補が上限内で短時間に収まることを検証する。</summary>
     /// <remarks>
-    /// 修正前は垂直ペア×水平ペアの全組み合わせ（この画像で数千万件）を候補にしていたため、<br/>
-    /// UI スレッドが長時間ブロックし、数 GB のメモリを割り当てて固まっていた（実測: 4K 相当で数十秒〜）。<br/>
-    /// 修正後は矩形を構成する組み合わせのみを対象とし、候補数と時間が上限内に収まる。
+    /// 垂直ペア×水平ペアの全組み合わせを候補にすると候補数が爆発し、UI スレッドを長時間ブロックしてメモリも大量に確保する。<br/>
+    /// 矩形を構成する組み合わせだけを対象とし、候補数と時間が上限内に収まることを確認する。
     /// </remarks>
     [Fact]
     internal void AutoCropWindow_矩形を構成できない画像でも候補が上限内に収まる()
@@ -142,7 +141,7 @@ public sealed class MainViewModelAutoCropTests
         Assert.NotEmpty(vm.DetectedRects);
         Assert.True(vm.DetectedRects.Count <= 256, $"候補が上限を超えている: {vm.DetectedRects.Count}");
 
-        // 修正前は同じ画像で数千万件（数十秒・数 GB）になっていた。 上限内なら数秒で終わる
+        // 全組み合わせを候補にすると上限を大きく超える規模の画像で、上限内に収まることを確認する
         Assert.True(stopwatch.Elapsed.TotalSeconds < 15, $"自動切り出しに時間がかかりすぎている: {stopwatch.Elapsed.TotalSeconds:0.0} 秒");
     }
 

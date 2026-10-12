@@ -7,9 +7,7 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 
-/// <summary>
-/// app プロジェクトのトレースログ定義（LoggerMessage ソース生成・拡張メソッド）。
-/// </summary>
+/// <summary>app プロジェクトのトレースログ定義（LoggerMessage ソース生成・拡張メソッド）。</summary>
 /// <remarks>
 /// <see cref="LoggerMessageAttribute"/> による事前コンパイル済みログで、<br/>
 /// 文字列補間による不要なアロケーションを回避しつつ、一貫したフォーマットで出力する。<br/>
@@ -24,9 +22,7 @@ internal static partial class AppLog
     /// <summary>接頭辞（固定。 アプリのログは DLL 名で読み分けるため、ホストからの設定対象外）。</summary>
     private const string Prefix = "[App.AvaloniaUI]";
 
-    /// <summary>
-    /// アプリケーション共有の Serilog ロガー（静的 <see cref="Log.Logger"/>）。
-    /// </summary>
+    /// <summary>アプリケーション共有の Serilog ロガー（静的 <see cref="Log.Logger"/>）。</summary>
     /// <remarks>
     /// グローバル例外ハンドラ（<c>Log.Fatal</c>）と <c>ILoggerFactory</c>（MEL ブリッジ）の両方が<br/>
     /// 同一の Serilog パイプラインを共有するため、静的ロガーを初期化してからファクトリを構築する。

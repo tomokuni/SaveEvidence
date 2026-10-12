@@ -8,9 +8,7 @@ using EsUtil.SaveEvidence.App.Core.ViewModels;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
-/// <summary>
-/// 表示モード（特大 / 大 / 中）を持つ一覧ページの共通基盤。
-/// </summary>
+/// <summary>表示モード（特大 / 大 / 中）を持つ一覧ページの共通基盤。</summary>
 /// <remarks>
 /// 表示モードの設定復元・保存、ToggleButton 同期、ページ表示時の一覧再構築を共通化する。<br/>
 /// 派生ページ（<see cref="FolderViewPage"/> / <see cref="UndoPage"/>）は一覧の再構築（<see cref="ReloadItems"/>）と

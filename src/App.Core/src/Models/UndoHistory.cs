@@ -2,9 +2,7 @@ using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.App.Core.Models;
 
-/// <summary>
-/// 画像の Undo / Redo スタックを管理する。
-/// </summary>
+/// <summary>画像の Undo / Redo スタックを管理する。</summary>
 /// <remarks>
 /// 最大 <see cref="MaxCount"/> 段階まで画像を保管し、超過時は古いものから破棄する。<br/>
 /// 履歴の画像は <see cref="EsReadOnlyBitmap.Copy"/>（独立した画素の複製）で保管し、元の画像に影響を与えない。<br/>
@@ -40,9 +38,7 @@ public sealed class UndoHistory
     /// <summary>Undo 復元中かどうか。</summary>
     public bool IsRestoring { get; private set; }
 
-    /// <summary>
-    /// 現在の画像を Undo スタックにプッシュする。
-    /// </summary>
+    /// <summary>現在の画像を Undo スタックにプッシュする。</summary>
     /// <param name="currentImage">現在表示中の画像。 null の場合は何もしない。</param>
     /// <remarks>
     /// 画像は独立した画素へ複製（<see cref="EsBitmap.Copy"/>）して保管するため、元の画像に変更があっても影響を受けない。<br/>
@@ -59,9 +55,7 @@ public sealed class UndoHistory
         AddWithLimit(_stack, Copy(currentImage));
     }
 
-    /// <summary>
-    /// Undo を実行する。 現在の画像を Redo スタックへ退避し、Undo スタックから最新の画像を返す。
-    /// </summary>
+    /// <summary>Undo を実行する。 現在の画像を Redo スタックへ退避し、Undo スタックから最新の画像を返す。</summary>
     /// <param name="currentImage">現在表示中の画像（Redo スタックへ退避される）。 null の場合は退避しない。</param>
     /// <returns>復元された画像。 スタックが空の場合は null。</returns>
     /// <remarks>
@@ -88,9 +82,7 @@ public sealed class UndoHistory
         }
     }
 
-    /// <summary>
-    /// Redo を実行する。 Redo スタックから最新の画像を返す。
-    /// </summary>
+    /// <summary>Redo を実行する。 Redo スタックから最新の画像を返す。</summary>
     /// <returns>復元された画像。 スタックが空の場合は null。</returns>
     /// <remarks>
     /// 呼び出し元は返された画像の所有権を持つため、適切に破棄する責任がある。

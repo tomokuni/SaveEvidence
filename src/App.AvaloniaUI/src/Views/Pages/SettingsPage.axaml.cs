@@ -13,9 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
-/// <summary>
-/// アプリケーション設定ページ。
-/// </summary>
+/// <summary>アプリケーション設定ページ。</summary>
 /// <remarks>
 /// キャプチャ設定、保存設定、ルーペ設定、ホットキー設定、画像設定、色設定を
 /// 一画面で編集する。<br/>
@@ -30,9 +28,7 @@ public sealed partial class SettingsPage : UserControl
     // 各キャプチャタイプに対応する設定プロパティ
     private enum HotkeyTarget { SelectScreen, WindowSelect, AreaSelect }
 
-    /// <summary>
-    /// SettingsPage を初期化する。
-    /// </summary>
+    /// <summary>SettingsPage を初期化する。</summary>
     public SettingsPage()
     {
         InitializeComponent();

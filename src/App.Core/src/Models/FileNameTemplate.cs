@@ -4,9 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace EsUtil.SaveEvidence.App.Core.Models;
 
-/// <summary>
-/// ファイル名テンプレート文字列を解析し、実際の保存ファイル名を生成するユーティリティクラス。
-/// </summary>
+/// <summary>ファイル名テンプレート文字列を解析し、実際の保存ファイル名を生成するユーティリティクラス。</summary>
 /// <remarks>
 /// プレースフォルダは <c>{ }</c> で囲われた文字列を対象とし、その内部のトークン（<c>date</c> / <c>time</c> / <c>yyyy</c> / <c>MM</c> / <c>dd</c> / <c>HH</c> / <c>mm</c> / <c>ss</c>）を日時値へ置換する。<br/>
 /// 例: <c>{yyyyMMdd}</c> → <c>20260819</c>、<c>{HHmm}</c> → <c>2352</c>。<br/>
@@ -39,12 +37,7 @@ public sealed partial class FileNameTemplate
         ("ss", "ss", "00"),
     ];
 
-    /// <summary>
-    /// テンプレートから実際のファイル名を生成する。
-    /// { } で囲われた領域内のトークン（date/time/yyyy/MM/dd/HH/mm/ss）を日時値へ置換する。<br/>
-    /// {{ はリテラル {、}} はリテラル } として解決される。<br/>
-    /// テンプレート内の数値はそのまま使用される（事前に IncrementRightmostNumber で更新済みであること）。
-    /// </summary>
+    /// <summary>テンプレートから実際のファイル名を生成する。 { } で囲われた領域内のトークン（date/time/yyyy/MM/dd/HH/mm/ss）を日時値へ置換する。<br/>{{ はリテラル {、}} はリテラル } として解決される。<br/>テンプレート内の数値はそのまま使用される（事前に IncrementRightmostNumber で更新済みであること）。</summary>
     /// <param name="template">テンプレート文字列</param>
     /// <param name="now">置換に使う日時。 null（既定）の場合は現在日時を使う。</param>
     /// <returns>生成されたファイル名</returns>
@@ -58,11 +51,7 @@ public sealed partial class FileNameTemplate
         return ReplacePlaceholders(template, t => timestamp.ToString(t.Format, CultureInfo.InvariantCulture));
     }
 
-    /// <summary>
-    /// テンプレート内の右端の数値連続を +1 し、桁数を維持する。
-    /// 基本的には <see cref="decimal"/> で扱い、Decimal 型でも扱えない桁数の場合には
-    /// <see cref="System.Numerics.BigInteger"/> として扱う。
-    /// </summary>
+    /// <summary>テンプレート内の右端の数値連続を +1 し、桁数を維持する。 基本的には <see cref="decimal"/> で扱い、Decimal 型でも扱えない桁数の場合には <see cref="System.Numerics.BigInteger"/> として扱う。</summary>
     /// <param name="text">置換対象の文字列</param>
     /// <returns>置換後の文字列。 数値が見つからない場合は元の文字列をそのまま返す。</returns>
     /// <example>"screenshot_05.png" → "screenshot_06.png"</example>
@@ -104,17 +93,11 @@ public sealed partial class FileNameTemplate
         return text[..lastIndex] + formattedNumber + text[(lastIndex + originalDigits.Length)..];
     }
 
-    /// <summary>
-    /// テンプレート内の数値の塊を検出する正規表現
-    /// </summary>
+    /// <summary>テンプレート内の数値の塊を検出する正規表現</summary>
     [GeneratedRegex("\\d+", RegexOptions.None, 100)]
     private static partial Regex NumberPattern();
 
-    /// <summary>
-    /// ファイル名テンプレートとして使用可能かどうかを検証する。
-    /// プレースホルダ（{ } 内のトークン）とエスケープ（{{ / }}）を解決し、
-    /// 右端数値を除去したとき、ファイル名に使用できない文字が含まれていないかを確認する。
-    /// </summary>
+    /// <summary>ファイル名テンプレートとして使用可能かどうかを検証する。 プレースホルダ（{ } 内のトークン）とエスケープ（{{ / }}）を解決し、右端数値を除去したとき、ファイル名に使用できない文字が含まれていないかを確認する。</summary>
     /// <param name="template">検証するテンプレート文字列</param>
     /// <param name="errorMessage">検証エラーメッセージ（無効な場合のみ設定）</param>
     /// <returns>テンプレートが有効な場合は true</returns>

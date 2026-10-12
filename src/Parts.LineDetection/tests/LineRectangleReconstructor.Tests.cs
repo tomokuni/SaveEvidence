@@ -171,7 +171,7 @@ public sealed class LineRectangleReconstructorTests
     internal void Reconstruct_線分が多い画像でも上限内で完了する()
     {
         // 実画面の検出結果に相当する規模（水平 200 本・垂直 60 本）。
-        // 全組み合わせを候補にすると 3,500 万件（実測 7 秒・3.5 GB）になる規模だが、上限内で完了する
+        // 全組み合わせを候補にすると候補数が爆発する規模だが、上限内で完了する
         var results = new List<LineDetectionResult>();
         for (var i = 0; i < 200; i++)
         {

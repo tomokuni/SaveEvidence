@@ -83,9 +83,7 @@ internal sealed class DatasetBoundsJson
     public int Bottom { get; set; }
 }
 
-/// <summary>
-/// メイン画面の ViewModel。 ナビゲーションのページ選択と、各ページの ViewModel を統括する。
-/// </summary>
+/// <summary>メイン画面の ViewModel。 ナビゲーションのページ選択と、各ページの ViewModel を統括する。</summary>
 /// <remarks>
 /// ナビゲーション（<see cref="Pages"/> / <see cref="SelectedPageItem"/>）で選択されたページを管理し、<br/>
 /// 対応するページ ViewModel（<see cref="DetectPage"/> / <see cref="VerifyPage"/> / <see cref="CreatePage"/> / <see cref="VerifyAllPage"/>）へ委譲する。<br/>

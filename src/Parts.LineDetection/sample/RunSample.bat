@@ -6,14 +6,14 @@ rem ====================================================================
 rem  ウィンドウ枠 辺検出サンプルアプリケーション（ビルド＆起動）
 rem
 rem  リリースビルド（dotnet build -c Release）を行い、成功したら
-rem  サンプルアプリケーション（LineDetection.Sample.exe）を起動する。
+rem  サンプルアプリケーション（Parts.LineDetection.Sample.exe）を起動する。
 rem
 rem  使い方:
 rem     RunSample.bat
 rem ====================================================================
 
 set "PROJECT=%~dp0Parts.LineDetection.Sample.csproj"
-set "EXE=%~dp0bin\Release\net10.0-windows10.0.17763.0\LineDetection.Sample.exe"
+set "EXE=%~dp0bin\Release\net10.0-windows10.0.17763.0\Parts.LineDetection.Sample.exe"
 
 echo [1/2] リリースビルドを開始します...
 dotnet build "%PROJECT%" -c Release --nologo

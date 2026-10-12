@@ -15,9 +15,7 @@ using Serilog;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI;
 
-/// <summary>
-/// アプリケーションのエントリポイント。
-/// </summary>
+/// <summary>アプリケーションのエントリポイント。</summary>
 /// <remarks>
 /// Avalonia のデスクトップアプリケーションとして起動する。<br/>
 /// Microsoft.Extensions.DependencyInjection を使用した DI コンテナを構築し、

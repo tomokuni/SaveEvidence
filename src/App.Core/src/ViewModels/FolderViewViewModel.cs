@@ -2,9 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace EsUtil.SaveEvidence.App.Core.ViewModels;
 
-/// <summary>
-/// FolderViewForm のステータスバー表示のための ViewModel。
-/// </summary>
+/// <summary>FolderViewForm のステータスバー表示のための ViewModel。</summary>
 /// <remarks>
 /// CommunityToolkit.Mvvm の <see cref="ObservableObject"/> を継承し、
 /// <c>[ObservableProperty]</c> 属性により自動的に変更通知を発行する。<br/>

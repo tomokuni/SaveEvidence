@@ -4,9 +4,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Tests;
 
-/// <summary>
-/// IconLoader（埋め込み SVG からアイコン生成）の単体テスト。
-/// </summary>
+/// <summary>IconLoader（埋め込み SVG からアイコン生成）の単体テスト。</summary>
 /// <remarks>
 /// EsUtil.SaveEvidence.csproj の <c>AvaloniaResource</c> で埋め込まれた SVG が<br/>
 /// <c>avares://</c> で正しく読み込めることを検証する（アセンブリ名の解決を含む）。

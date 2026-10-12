@@ -6,14 +6,14 @@ rem ====================================================================
 rem  ColorPickerControl サンプルアプリケーション（ビルド＆起動）
 rem
 rem  リリースビルド（dotnet build -c Release）を行い、成功したら
-rem  サンプルアプリケーション（EsUtil.SaveEvidence.ColorPicker.Sample.exe）を起動する。
+rem  サンプルアプリケーション（ColorPickerControl.AvaloniaUI.Sample.exe）を起動する。
 rem
 rem  使い方:
 rem     RunSample.bat
 rem ====================================================================
 
 set "PROJECT=%~dp0ColorPickerControl.AvaloniaUI.Sample.csproj"
-set "EXE=%~dp0bin\Release\net10.0\EsUtil.SaveEvidence.ColorPicker.Sample.exe"
+set "EXE=%~dp0bin\Release\net10.0\ColorPickerControl.AvaloniaUI.Sample.exe"
 
 echo [1/2] リリースビルドを開始します...
 dotnet build "%PROJECT%" -c Release --nologo

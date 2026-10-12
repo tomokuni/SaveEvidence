@@ -146,7 +146,7 @@ MewUI 側のウィンドウプロシージャ設定で上書きされ、`WM_HOTK
   ちらつくため、位置の変更（画面外配置）で代用します（Avalonia 版と同じ方式）。
   併せて **キャプチャ除外（`SetCaptureExclusion` = `WDA_EXCLUDEFROMCAPTURE`）も設定**し、撮影後に解除します。
 - **オーバーレイ表示時のちらつき防止**: ウィンドウは表示時に背景色で塗られるため、そのまま表示すると
-  撮影画像を描くまでの数十 ms（実測: 65 ms）が背景色の面として見えます。 透明な状態で表示して
+  撮影画像を描くまでの間が背景色の面として見えます。 透明な状態で表示して
   画像が合成されたフレームで透明を解除し、背景色は撮影画像の平均色に合わせて差を目立たなくします。
 
 ## 12. プレビューの切り出し
@@ -322,7 +322,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 - AOT のリンクには Visual Studio の C++ ビルドツール（`link.exe`）が必要です。
 - ネイティブ DLL は `OpenCvSharpExtern.dll` / `libSkiaSharp.dll` の 2 個です。 OpenCV は縮小構成
   （`OpenCvSharp5.runtime.win.slim`）のため、動画入出力（`videoio`）と FFmpeg
-  （`opencv_videoio_ffmpeg500_64.dll` 約 31 MB）を同梱しません（本アプリは動画を扱わない）。
+  （`opencv_videoio_ffmpeg500_64.dll`）を同梱しません（本アプリは動画を扱わない）。
 - **設定の読み書きには JSON ソース生成が必須**です。 反射ベースのシリアル化はトリミングで設定項目が
   削除され、設定が空（`{}`）になります。 アプリ本体は `SettingsJsonContext` を `SettingsService` へ
   注入しています（コンテキストは `Settings` を参照する側のアセンブリに置く必要があります）。

@@ -71,11 +71,10 @@ internal static class ImageThumbnailLoader
     /// 3. 縮小されなかった場合は、デコード後に目標寸法へ縮小する（<b>アルゴリズムはコアの面積平均</b>）。<br/>
     /// 4. 不完全なデータ（<c>IncompleteInput</c>）はデコードできた範囲を表示する。<br/>
     /// <b>縮小をコアへ委譲する理由</b>: Skia の縮小（<c>SKBitmap.Resize(Linear)</c>）は縮小率が大きいと
-    /// <b>細線を実際より濃く残す</b>（実測: 4K → 320x180 で幅 1 px の細線の輝度 255・総和は真の平均の 12 倍）。
+    /// <b>細線を実際より濃く残す</b>（細線の輝度が実際より高く出て、平均がその細線に引きずられる）。
     /// コアの面積平均（<see cref="EsImageQuality.High"/>）へ揃えると、Avalonia 版のフォルダビュー
     /// （<c>Bitmap.DecodeToWidth</c> = 面積平均相当）と<b>同じ画質</b>になる。<br/>
-    /// <b>コスト</b>: デコード結果をコアの画像へ複製する（4K で約 6 ms）ため、Skia の縮小よりわずかに遅いが、
-    /// 縮小自体は並列化され 4K で 1.8 ms である。
+    /// <b>コスト</b>: デコード結果をコアの画像へ複製するため Skia の縮小よりわずかに遅いが、縮小自体は並列化される。
     /// </remarks>
     private static EsReadOnlyBitmap? Decode(string filePath, int maxSize)
     {
@@ -123,7 +122,7 @@ internal static class ImageThumbnailLoader
     /// <param name="image">移す画像（書き換え可能）。 画素は読み取りの面が引き継ぎ、渡した実体は解放する。</param>
     /// <returns>読み取りの面。 所有権は呼び出し側へ移る。</returns>
     /// <remarks>サムネイルは表示するだけ（書き換えない）であるため、凍結して共有する
-    /// （未凍結のまま渡すと複製になり、4K 相当では 1 枚ごとに 31 MiB の複製が増える）。</remarks>
+    /// （未凍結のまま渡すと複製になり、1 枚ごとに元の寸法の複製が増える）。</remarks>
     private static EsReadOnlyBitmap ToReadOnly(EsBitmap image)
     {
         image.SetReadOnly();

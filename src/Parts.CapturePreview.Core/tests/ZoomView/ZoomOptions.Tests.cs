@@ -3,9 +3,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.ZoomView;
 
-/// <summary>
-/// ZoomOptions（ズーム遷移の設定・検証付き不変値）の仕様テスト。
-/// </summary>
+/// <summary>ZoomOptions（ズーム遷移の設定・検証付き不変値）の仕様テスト。</summary>
 /// <remarks>
 /// 不変条件（MinZoom > 0 / MaxZoom >= MinZoom / WheelFactor > 1 / レベル集合の非空・昇順・範囲内）と<br/>
 /// <c>ClampZoom</c>（ズーム範囲クランプ）を検証する。<br/>

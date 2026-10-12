@@ -95,8 +95,8 @@ flowchart TB
 
 | 参照 | `OpenCvSharpExtern.dll` | `opencv_videoio_ffmpeg500_64.dll` |
 | --- | --- | --- |
-| `OpenCvSharp5.runtime.win` | 78.0 MB | 29.4 MB |
-| `OpenCvSharp5.runtime.win.slim`（採用） | 61.9 MB | **含まない** |
+| `OpenCvSharp5.runtime.win` | 含む | **含む** |
+| `OpenCvSharp5.runtime.win.slim`（採用） | 含む（`videoio` 等を除いた分だけ小さい） | **含まない** |
 
 slim が無効化するモジュール（`videoio` / `video` / `dnn` / `ml` / `highgui` / `contrib` / `stitching` / `barcode`）は本プロジェクトでは使用しません。
 

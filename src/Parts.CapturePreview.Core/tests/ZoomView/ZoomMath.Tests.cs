@@ -4,9 +4,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.ZoomView;
 
-/// <summary>
-/// ZoomMath（ズーム表示の幾何計算・純粋関数）の回帰テスト。
-/// </summary>
+/// <summary>ZoomMath（ズーム表示の幾何計算・純粋関数）の回帰テスト。</summary>
 /// <remarks>
 /// ズーム中心維持の計算仕様（ズーム率変更時のオフセット算出・クランプ・Fit 実効倍率・座標変換）を検証する。<br/>
 /// UI 初期化を必要としないため、Avalonia ヘッドレスに依存せず並列実行できる。

@@ -10,10 +10,7 @@ using EsUtil.SaveEvidence.Parts.LineDetection;
 
 namespace EsUtil.SaveEvidence.App.Core.ViewModels;
 
-/// <summary>
-/// メイン画面の ViewModel。 CommunityToolkit.Mvvm ソースジェネレーターにより、
-/// プロパティ変更通知とコマンドを自動生成する。
-/// </summary>
+/// <summary>メイン画面の ViewModel。 CommunityToolkit.Mvvm ソースジェネレーターにより、プロパティ変更通知とコマンドを自動生成する。</summary>
 /// <remarks>
 /// <see cref="ObservableObject"/> を継承し、<c>[ObservableProperty]</c> や
 /// <c>[RelayCommand]</c> 属性によるソースジェネレーターを活用する。<br/>
@@ -90,9 +87,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>画像編集（切り出し等）前に View 側で Undo をプッシュするためのコールバック。</summary>
     public Action? BeforeEditAction { get; set; }
 
-    /// <summary>
-    /// MainViewModel の新しいインスタンスを初期化する。
-    /// </summary>
+    /// <summary>MainViewModel の新しいインスタンスを初期化する。</summary>
     /// <param name="settingsService">設定サービス</param>
     /// <param name="imageWriter">画像書き込みサービス。 本番は <see cref="EsBitmapImageWriter"/>（コアの保存へ委譲する）を注入する。</param>
     public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
@@ -257,9 +252,7 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>設定オブジェクトを取得する。</summary>
     public Settings Settings => _settingsService.Current;
 
-    /// <summary>
-    /// プレビュー画像変更前の処理（破棄は行わない。 変更後に破棄する）。
-    /// </summary>
+    /// <summary>プレビュー画像変更前の処理（破棄は行わない。 変更後に破棄する）。</summary>
     /// <param name="value">新しい画像（このメソッド内では未使用）</param>
     /// <remarks>
     /// <c>OnPreviewImageChanging</c> はフィールド更新前に呼ばれるため、<c>_previewImage</c> はまだ変更前の古い画像を保持している。<br/>
@@ -507,9 +500,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>
-    /// 現在のプレビュー画像を保存する。
-    /// </summary>
+    /// <summary>現在のプレビュー画像を保存する。</summary>
     /// <remarks>
     /// 保存後にファイル名の数値をインクリメントし、設定を更新する。<br/>
     /// 同名ファイルが存在する場合は、<see cref="ConfirmOverwriteAsync"/> で確認する。<br/>

@@ -14,9 +14,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
-/// <summary>
-/// Undo / Redo スタックの画像履歴を一覧表示するページ。
-/// </summary>
+/// <summary>Undo / Redo スタックの画像履歴を一覧表示するページ。</summary>
 /// <remarks>
 /// Undo / Redo スタック（<see cref="UndoHistory"/>・DI シングルトン）と現在のプレビュー画像
 /// （<see cref="MainViewModel.PreviewImage"/>・DI シングルトン）を
@@ -204,7 +202,7 @@ public sealed partial class UndoPage : ViewModePageBase
         // 1. Redo スタック（新しい順。 _redoStack[0] が現在に最も近い未来）
         // UndoHistory はコアの画像を保持し、表示境界で非所有アダプタ（IImage）へ変換する。
         // 一覧は小さく表示するため、表示用の射影（面積平均の縮小）を作る（等倍のままだと画像 1 枚につき元寸法の複製が
-        // 残る。 実測: 4K で 32 MB/枚）。 射影の生成は背景へ回し、ここでは生成元の画像だけを控える。
+        // 残る）。 射影の生成は背景へ回し、ここでは生成元の画像だけを控える。
         for (var i = 0; i < redo.Count; i++)
         {
             AddItem(redo[i], $"Redo {i + 1}", isCurrent: false);
@@ -329,9 +327,7 @@ public sealed partial class UndoPage : ViewModePageBase
     /// <param name="ex">発生した例外。</param>
     private static void OnThumbnailGenerateError(Exception ex) => s_logger.LogThumbnailGenerateError(ex);
 
-    /// <summary>
-    /// サムネイルのダブルクリック時に一時ファイルへ保存し、OS の既定アプリ（外部ツール）で開く。
-    /// </summary>
+    /// <summary>サムネイルのダブルクリック時に一時ファイルへ保存し、OS の既定アプリ（外部ツール）で開く。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">タップイベント。</param>
     /// <remarks>

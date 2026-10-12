@@ -3,9 +3,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.ZoomView;
 
-/// <summary>
-/// ZoomTransition の回帰テスト。
-/// </summary>
+/// <summary>ZoomTransition の回帰テスト。</summary>
 /// <remarks>
 /// ズーム遷移仕様（⊖⊕ 23 段階・Ctrl+ホイール ×1.1・Fit 基準の遷移）を検証する。<br/>
 /// バグ修正（ズーム中心維持・Fit 実効倍率の表示状態依存・段階遷移の往復）の回帰防止を目的とする。<br/>

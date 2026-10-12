@@ -369,8 +369,8 @@ internal static class UndoPage
     /// <remarks>
     /// ダブルクリックで <paramref name="image"/>（<b>元の寸法のまま</b>）を一時ファイルへ書き出し、OS の既定アプリで開く。<br/>
     /// <b>表示は縮小した画像を使う</b>: コアの面積平均（<see cref="EsImageQuality.High"/>）で <paramref name="iconSize"/> へ縮小してから描画する。<br/>
-    /// 描画時に Skia へ縮小させるとサンプリング（既定は最近傍）によって<b>同じ寸法でも画質が変わる</b>（実測: 4K → 320x180 で
-    /// 細線の輝度は既定 255 / 面積平均 21） ため、Avalonia 版（表示用の射影を縮小する）と同じ手順に揃える。<br/>
+    /// 描画時に Skia へ縮小させるとサンプリング（既定は最近傍）によって<b>同じ寸法でも画質が変わる</b>（細線の輝度が実際より高く出る）
+    /// ため、Avalonia 版（表示用の射影を縮小する）と同じ手順に揃える。<br/>
     /// 縮小そのものは背景（<see cref="MakeThumbnailWork"/>）が行う。
     /// </remarks>
     private static Element CreateItem(

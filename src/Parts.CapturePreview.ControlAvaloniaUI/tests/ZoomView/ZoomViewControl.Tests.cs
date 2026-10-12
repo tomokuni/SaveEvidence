@@ -7,9 +7,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.ZoomView;
 
-/// <summary>
-/// <see cref="ZoomViewControl"/>（自己完結型複合コントロール）の回帰テスト。
-/// </summary>
+/// <summary><see cref="ZoomViewControl"/>（自己完結型複合コントロール）の回帰テスト。</summary>
 /// <remarks>
 /// 実効ズーム率（<see cref="ZoomViewControl.ZoomPercent"/>）・<see cref="ZoomViewControl.ZoomFit"/>・
 /// <see cref="ZoomViewControl.IsFit"/>・setter の 0 拒否などの仕様を検証する。<br/>

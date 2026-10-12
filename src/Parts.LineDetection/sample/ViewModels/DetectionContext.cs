@@ -7,10 +7,7 @@ using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 
-/// <summary>
-/// 線分検出・データ検証ページで共有する「検出コンテキスト」。
-/// 表示中の画像・検出された線分一覧・ルーペ・ポインタ状態を一元的に保持する。
-/// </summary>
+/// <summary>線分検出・データ検証ページで共有する「検出コンテキスト」。 表示中の画像・検出された線分一覧・ルーペ・ポインタ状態を一元的に保持する。</summary>
 /// <remarks>
 /// 「線分検出」ページで貼り付けた画像と検出結果を、「データ検証」ページでも同じ内容で表示できるよう、
 /// 両ページが同一の <see cref="DetectionContext"/> を参照する。<br/>
