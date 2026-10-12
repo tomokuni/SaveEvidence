@@ -336,7 +336,7 @@ internal static class UndoPage
 
             // 縮小後の寸法は元画像を超えない（コアの縮小は拡大を未サポートとする）
             var longSide = Math.Max(image.Width, image.Height);
-            var resized = image.Resize(Math.Min(iconSize, longSide), ImageQuality.High);
+            var resized = image.Resize(Math.Min(iconSize, longSide), EsImageQuality.High);
 
             // 表示は読むだけ（書き換えない）であるため、凍結して 0 コピーで読み取り専用の面へ渡す
             resized.SetReadOnly();
@@ -368,7 +368,7 @@ internal static class UndoPage
     /// <returns>サムネイルとラベルを縦に並べた要素。</returns>
     /// <remarks>
     /// ダブルクリックで <paramref name="image"/>（<b>元の寸法のまま</b>）を一時ファイルへ書き出し、OS の既定アプリで開く。<br/>
-    /// <b>表示は縮小した画像を使う</b>: コアの面積平均（<see cref="ImageQuality.High"/>）で <paramref name="iconSize"/> へ縮小してから描画する。<br/>
+    /// <b>表示は縮小した画像を使う</b>: コアの面積平均（<see cref="EsImageQuality.High"/>）で <paramref name="iconSize"/> へ縮小してから描画する。<br/>
     /// 描画時に Skia へ縮小させるとサンプリング（既定は最近傍）によって<b>同じ寸法でも画質が変わる</b>（実測: 4K → 320x180 で
     /// 細線の輝度は既定 255 / 面積平均 21） ため、Avalonia 版（表示用の射影を縮小する）と同じ手順に揃える。<br/>
     /// 縮小そのものは背景（<see cref="MakeThumbnailWork"/>）が行う。
