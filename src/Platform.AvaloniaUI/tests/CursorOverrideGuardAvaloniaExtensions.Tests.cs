@@ -7,9 +7,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 
-/// <summary>
-/// <see cref="CursorOverrideGuardAvaloniaExtensions"/> の単体テスト（Avalonia の <see cref="TopLevel"/> からのハンドル取得）。
-/// </summary>
+/// <summary><see cref="CursorOverrideGuardAvaloniaExtensions"/> の単体テスト（Avalonia の <see cref="TopLevel"/> からのハンドル取得）。</summary>
 /// <remarks>
 /// <see cref="TopLevel"/> を生成するため、Avalonia ヘッドレス（<c>[AvaloniaFact]</c>）で直列実行する。<br/>
 /// コア側の <see cref="ICursorOverrideGuard.Attach(EsPlatformHandle)"/> のテストは
