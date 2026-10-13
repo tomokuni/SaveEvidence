@@ -24,6 +24,12 @@
       "problemMatcher": []
     },
     {
+      "label": "検証（文書とコードの走査のみ）",
+      "type": "shell",
+      "command": "pwsh -NoProfile -File buildScript/verifyDocs.ps1",
+      "problemMatcher": []
+    },
+    {
       "label": "検証（配布物）",
       "type": "shell",
       "command": "pwsh -NoProfile -File buildScript/verifyPublish.ps1",
