@@ -595,6 +595,58 @@ foreach ($projDir in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Directory
 Add-Result '命名と構造' ($codeIssues.Count -eq 0) "テストの可視性・クラス名・フォルダ・async void $($codeIssues.Count) 件"
 $codeIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
+# 8j-2) フィールドとインターフェースの命名（[.editorconfig] の命名規則を機械検査へ写したもの）
+#     命名規則（`dotnet_naming_rule.*`）は **ビルドでは報告されない**（`dotnet format` だけが検出する）。
+#     検査を本スクリプトへ写すことで `dotnet format`（実測 20 秒）を既定の経路から外せる。
+#     規則の所有者は [.editorconfig] であり、規則を足したら本検査も足す（ずれは本検査の不合格として現れる）。
+$rxFieldDecl = [regex]'^\s*(?<access>private|private\s+protected|protected\s+private)\s+(?<mods>(?:(?:static|readonly|const|volatile|event|new|unsafe|required)\s+)+)?(?<type>[\w\.\<\>\[\]\?\,\s]+?)\s+(?<name>[A-Za-z_]\w*)\s*(?:=[^=>]|;|\{)'
+$rxTypeKeyword = [regex]'\b(class|struct|record|interface|enum|delegate)\b'
+$rxPascalCase = [regex]'^[A-Z]'
+$rxCamelWithPrefix = [regex]'^_?[a-z][A-Za-z0-9]*$'
+$rxInterfaceDecl = [regex]'^\s*(?:(?:public|internal|private|protected|file)\s+)*(?:partial\s+)?interface\s+(?<name>[A-Za-z_]\w*)'
+$namingIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in $allCs) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    # 自動生成のファイル（`*.g.cs` / `AssemblyInfo.cs`）は対象外
+    if ($f.Name -match '\.g\.cs$|AssemblyInfo\.cs$') { continue }
+    $lines = Get-Lines $f.FullName
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        $line = $lines[$i]
+        foreach ($m in $rxFieldDecl.Matches($line)) {
+            $name = $m.Groups['name'].Value
+            $type = $m.Groups['type'].Value
+            # 型の宣言（入れ子の enum / class 等）と、式形式のメンバーはフィールドではない
+            if ($rxTypeKeyword.IsMatch($type)) { continue }
+            if ($line -match '=>') { continue }
+            # 型と名前の境目が取れない行（メソッド・プロパティ・式）は対象外にする
+            if ($name -in @('get', 'set', 'init', 'return', 'new', 'if', 'else', 'while', 'value')) { continue }
+            $mods = $m.Groups['mods'].Value
+            if ($mods -match '\bconst\b') {
+                if (-not $rxPascalCase.IsMatch($name)) {
+                    $namingIssues.Add(("{0}:{1}  const フィールド '{2}' は PascalCase にする（.editorconfig）" -f $rel, ($i + 1), $name))
+                }
+            }
+            elseif ($mods -match '\bstatic\b') {
+                if ($name -notmatch '^s_[a-z]') {
+                    $namingIssues.Add(("{0}:{1}  private static フィールド '{2}' は 's_' + camelCase にする（.editorconfig）" -f $rel, ($i + 1), $name))
+                }
+            }
+            elseif (-not $rxCamelWithPrefix.IsMatch($name) -or $name -notmatch '^_') {
+                $namingIssues.Add(("{0}:{1}  private フィールド '{2}' は '_' + camelCase にする（.editorconfig）" -f $rel, ($i + 1), $name))
+            }
+        }
+
+        foreach ($m in $rxInterfaceDecl.Matches($line)) {
+            $name = $m.Groups['name'].Value
+            if ($name -notmatch '^I[A-Z]') {
+                $namingIssues.Add(("{0}:{1}  interface '{2}' は 'I' + PascalCase にする（.editorconfig）" -f $rel, ($i + 1), $name))
+            }
+        }
+    }
+}
+Add-Result 'フィールドとインターフェースの命名' ($namingIssues.Count -eq 0) "$($namingIssues.Count) 件"
+$namingIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
 # 8k) イベントの発火は Raise ヘルパーへ集約する（`event` へ `?.Invoke` を書かない。 コーディング規約 §7）
 $rxEventDecl = [regex]'(?<![\w.])(?:public|internal|private|protected)\s+(?:static\s+)?event\s+(?:EventHandler(?:<[^>]+>)?|\w+(?:<\w+>)?)\s+(?<n>[A-Za-z_]\w*)'
 $invokeIssues = [System.Collections.Generic.List[string]]::new()

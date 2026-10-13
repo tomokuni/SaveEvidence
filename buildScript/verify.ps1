@@ -23,7 +23,10 @@ Copilot・CI・開発者が同じ手順を 1 コマンドで再現できるよ�
 テストは `--no-build` で実行するため、**一度もビルドしていないと失敗する**（先にビルドを 1 回実行する）。
 
 .PARAMETER SkipFormat
-dotnet format による検査（警告以上のコード スタイル。 命名規則を含む）を省略する（時間を短縮するとき）。
+コード スタイルの検査（`dotnet format`。 既定では省略する）を省略したものとして扱う。
+
+.PARAMETER FullFormat
+dotnet format による検査（警告以上のコード スタイル。 規則を足したときの確認用）を実行する（既定では省略し、ビルドと走査で代替する）。
 
 .PARAMETER SkipPackage
 NuGet の健全性（既知の脆弱性。 推移的依存を含む）の検査を省略する（ネットワークを使いたくないとき）。
@@ -49,6 +52,7 @@ param(
     [switch]$SkipBuild,
     [switch]$SkipTests,
     [switch]$SkipFormat,
+    [switch]$FullFormat,
     [switch]$SkipPackage,
     [switch]$Coverage,
     [switch]$NoRestore
@@ -181,11 +185,6 @@ else {
     Add-Info 'ビルド' '省略（-SkipBuild。 直前にビルドした出力を使う）'
 }
 
-# `dotnet format`（MSBuild の評価。 実測 20 秒）は待ち時間が長いため、ここで背景へ投入し、
-# テスト・ドキュメント検査と重ねる（-Fix のときは修正が先に要るため投入しない）。
-# `--severity warn` にするのは「警告以上を 0 件にする」合否基準を引数で表すためである
-# （情報レベルの提案（IDE0350 等。 実測 63 件）はビルドが強制する範囲ではなく、合否に含めない）。
-$backgroundFormat = if ($SkipFormat -or $Fix) { $null } else { Start-BackgroundDotNet @('format', 'style', $Solution, '--verify-no-changes', '--severity', 'warn', '--no-restore') }
 
 # ============================================================
 # 2. ビルド設定（単一所有と配布物へ XML を出さないこと）
@@ -352,11 +351,26 @@ else {
 }
 
 # ============================================================
-# 11. コードスタイル（dotnet format。 エラー・警告を 0 件にする）
+# 11. コードスタイル（`dotnet format`。 既定では省略し、ビルドと走査で代替する）
 # ============================================================
-if (-not $SkipFormat) {
+# **既定で省略する理由**: 同じことを 20 秒かけて確かめていた。 実測で次のように分担できる
+# （規則の実効的な強制は「ビルド」と「走査」が担い、`dotnet format` は自動修正の手段として残す）。
+#   - IDE / CA の規則（`IDE0044` / `IDE0055` / `CA1805` 等）は**ビルドが報告する**
+#     （`EnforceCodeStyleInBuild` + `TreatWarningsAsErrors`。 書式（`IDE0055`）もビルドが出すことを実測で確認した）。
+#   - **命名規則（`IDE1006`）だけはビルドが報告しない**（実測: `dotnet format` が 4 種類の違反を出し、
+#     ビルドは 0 件だった）。 これは走査（`verifyDocs.ps1` の「フィールドとインターフェースの命名」）が
+#     `.editorconfig` の 4 規則をそのまま検査する（同じ 4 件を検出することを実測で確認した）。
+# `-FullFormat` を付けると従来どおり `dotnet format` を実行する（規則を足したときの確認に使う）。
+if ($SkipFormat) {
+    Add-Info 'コードスタイル（dotnet format）' '省略（-SkipFormat）'
+}
+elseif (-not $Fix -and -not $FullFormat) {
+    Add-Info 'コードスタイル（dotnet format）' '省略（ビルドと走査で代替する。 命名規則は走査が検査する。 -FullFormat で実行）'
+}
+else {
     Write-Output '== 11. コードスタイル（dotnet format） =='
     if ($Fix) {
+        # 自動修正してから判定する（修正した内容で合否を出す）
         & dotnet format whitespace $Solution --no-restore 2>&1 | Out-Null
         & dotnet format style $Solution --severity warn --no-restore 2>&1 | Out-Null
         & dotnet format analyzers $Solution --severity warn --no-restore 2>&1 | Out-Null
@@ -364,25 +378,14 @@ if (-not $SkipFormat) {
         Clear-FileCache
     }
 
-    # 検査はビルドの直後に背景へ投入済み（-Fix のときは修正の後で実行する）
-    if ($backgroundFormat) {
-        $received = Receive-BackgroundDotNet $backgroundFormat
-        $fmtText = $received.Text
-        $fmtExit = $received.ExitCode
-    }
-    else {
-        $fmtText = & dotnet format style $Solution --verify-no-changes --severity warn --no-restore 2>&1 | Out-String
-        $fmtExit = $LASTEXITCODE
-    }
+    $fmtText = & dotnet format style $Solution --verify-no-changes --severity warn --no-restore 2>&1 | Out-String
+    $fmtExit = $LASTEXITCODE
     $fmtIssues = ([regex]::Matches($fmtText, ': (error|warning) (IDE|CA)\d+')).Count
     # 合否は「警告以上」の件数で判定する（引数の `--severity warn` と同じ基準。 情報レベルの提案は
     # ビルドが強制する範囲ではなく、改善の必要がない状態でも返るため合否に含めない）。
-    # error も数えるのは**命名規則（IDE1006）がビルドでは報告されない**ためである
-    # （実測: `private static readonly` を PascalCase で書いた 12 件が error IDE1006 で出ており、
-    #   ビルドは 0 警告だった。 命名規則の実効的な強制はこの検査だけが担う）。
     # 実行自体の失敗（引数の誤り・復元の失敗等）は 2 以外の終了コードになるため、それだけを不合格にする。
     $fmtRunFailed = $fmtExit -gt 2
-    Add-Result 'dotnet format' ($fmtIssues -eq 0 -and -not $fmtRunFailed) "警告以上 $fmtIssues 件"
+    Add-Result 'コードスタイル（dotnet format）' ($fmtIssues -eq 0 -and -not $fmtRunFailed) "警告以上 $fmtIssues 件"
     if ($fmtIssues -gt 0) { $fmtText -split "`r?`n" | Where-Object { $_ -match ': (error|warning) (IDE|CA)\d+' } | Select-Object -First 10 | ForEach-Object { "      $($_.Trim())" } }
     if ($fmtRunFailed) {
         "      実行に失敗した（終了コード $fmtExit）"

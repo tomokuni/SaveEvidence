@@ -20,7 +20,13 @@
     {
       "label": "検証（ビルド省略）",
       "type": "shell",
-      "command": "pwsh -NoProfile -File buildScript/verify.ps1 -SkipBuild -SkipFormat -SkipPackage",
+      "command": "pwsh -NoProfile -File buildScript/verify.ps1 -SkipBuild -SkipPackage",
+      "problemMatcher": []
+    },
+    {
+      "label": "検証（テスト省略）",
+      "type": "shell",
+      "command": "pwsh -NoProfile -File buildScript/verify.ps1 -SkipTests",
       "problemMatcher": []
     },
     {
