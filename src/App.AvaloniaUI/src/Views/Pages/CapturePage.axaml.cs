@@ -19,7 +19,6 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,12 +68,6 @@ public sealed partial class CapturePage : UserControl
 
     // アプリケーションロガー
     private static readonly ILogger s_logger = AppLog.CreateLogger("CapturePage");
-
-    /// <summary>市松模様の明色（色 A）の既定色（設定の色文字列が不正な場合に使う）。</summary>
-    private static readonly System.Drawing.Color s_defaultCheckerColorA = DrawingColor.FromArgb(255, 255, 255, 255);
-
-    /// <summary>市松模様の暗色（色 B）の既定色（設定の色文字列が不正な場合に使う）。</summary>
-    private static readonly System.Drawing.Color s_defaultCheckerColorB = DrawingColor.FromArgb(255, 204, 204, 204);
 
     // ====================================================================
     // 構築
@@ -155,9 +148,6 @@ public sealed partial class CapturePage : UserControl
             }
         };
 
-        // 設定変更時に市松模様背景を更新
-        SubscribeCheckerSizeChange();
-
         // 設定変更時（中央寄せ/原点寄せ）に画像配置を即時反映する
         SubscribeCenterAlignChange();
 
@@ -178,9 +168,6 @@ public sealed partial class CapturePage : UserControl
         {
             _captureSessionControl.NotifyViewportChanged();
         };
-
-        // 初期の市松模様背景を設定
-        ApplyCheckerboard();
 
         // 切出しボタンの初期ツールチップ・ラベルを設定する（AXAML の既定値ではなく UpdateCropButtonText の値を反映）
         UpdateCropButtonText();
@@ -525,28 +512,6 @@ public sealed partial class CapturePage : UserControl
         UpdateCropButtonText();
     }
 
-    // ====================================================================
-    // 市松模様背景
-    // ====================================================================
-
-    private void SubscribeCheckerSizeChange()
-    {
-        // 再読込時に再購読しても重複登録されないよう、先に解除してから購読する
-        _viewModel.Settings.PropertyChanged -= OnCheckerSizePropertyChanged;
-        _viewModel.Settings.PropertyChanged += OnCheckerSizePropertyChanged;
-    }
-
-    private void OnCheckerSizePropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // 市松模様のサイズ・色 A・色 B のいずれが変更されても再描画する（ルーペ設定から画像設定へ移管）
-        if (e.PropertyName is nameof(Settings.PreviewCheckerSize)
-            or nameof(Settings.PreviewCheckerColorA)
-            or nameof(Settings.PreviewCheckerColorB))
-        {
-            ApplyCheckerboard();
-        }
-    }
-
     /// <summary>設定変更（中央寄せ/原点寄せ）を監視して画像配置へ即時反映する。</summary>
     /// <remarks>
     /// Settings.CenterAlign は設定画面の CheckBox から変更される。<br/>
@@ -560,47 +525,6 @@ public sealed partial class CapturePage : UserControl
             if (string.Equals(e.PropertyName, nameof(Settings.CenterAlign), StringComparison.Ordinal))
                 CropView.CenterAlign = _viewModel.CenterAlign;
         };
-    }
-
-    /// <summary>プレビューの市松模様（画像の透明部分の背景）を設定する。</summary>
-    /// <remarks>
-    /// 描く範囲（画像の表示矩形の内側）とタイルサイズの規則（0 以下 = 描かない / 1 は下限へ切り上げ）はコアが単一所有する。<br/>
-    /// 画像の外（ペーストボード）は本コントロールの背景（テーマのブラシ）のままであり、市松模様は描かない。<br/>
-    /// 色の文字列が不正な場合は既定色を使う（描画を止めない）。
-    /// </remarks>
-    private void ApplyCheckerboard()
-    {
-        var settings = _viewModel.Settings;
-        CropView.Appearance = ZoomViewAppearance.Default with
-        {
-            CheckerSize = settings.PreviewCheckerSize,
-            CheckerColorA = ParseColor(settings.PreviewCheckerColorA, s_defaultCheckerColorA),
-            CheckerColorB = ParseColor(settings.PreviewCheckerColorB, s_defaultCheckerColorB),
-        };
-    }
-
-    /// <summary>設定の色文字列（<c>#AARRGGBB</c>）をコアの色型へ変換する。</summary>
-    /// <param name="value">色文字列。 null・空・不正な場合は <paramref name="fallback"/> を返す。</param>
-    /// <param name="fallback">解析できない場合の色。</param>
-    /// <returns>解析した色。</returns>
-    private static System.Drawing.Color ParseColor(string? value, System.Drawing.Color fallback)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return fallback;
-        }
-
-        var text = value.TrimStart('#');
-        if (!uint.TryParse(text, NumberStyles.HexNumber, null, out var argb))
-        {
-            return fallback;
-        }
-
-        return DrawingColor.FromArgb(
-            (byte)((argb >> 24) & 0xFF),
-            (byte)((argb >> 16) & 0xFF),
-            (byte)((argb >> 8) & 0xFF),
-            (byte)(argb & 0xFF));
     }
 
     /// <summary>現在の画像をUndoスタックに保存する。</summary>

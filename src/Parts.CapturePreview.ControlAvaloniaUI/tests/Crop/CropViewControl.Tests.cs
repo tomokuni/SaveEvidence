@@ -227,7 +227,7 @@ public class CropViewControlTests
         var view = new CropViewControl();
 
         // 画像なし（初期状態 Source = null）のとき、領域選択（Marquee）はヒットテスト不可かつ不可視
-        // （Crop モードの全面暗転が市松模様を暗くしないよう、オーバーレイごと非表示にする）。
+        // （Crop モードの全面暗転がプレビューを暗くしないよう、オーバーレイごと非表示にする）。
         Assert.Null(view.Source);
         Assert.False(view.SelectionOverlay.IsHitTestVisible);
         Assert.False(view.SelectionOverlay.IsVisible);

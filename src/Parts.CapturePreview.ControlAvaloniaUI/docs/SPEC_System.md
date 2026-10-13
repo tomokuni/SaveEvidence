@@ -21,8 +21,7 @@
   - [6.7 SelectionOverlayControl](#67-selectionoverlaycontrol)
   - [6.8 ZoomViewControl（切り出しビューの画像ビューポート）](#68-zoomviewcontrol切り出しビューの画像ビューポート)
   - [6.9 ZoomableView](#69-zoomableview)
-  - [6.10 CheckerboardView](#610-checkerboardview)
-  - [6.11 Parts.CapturePreview.Core の画像ビューポートの型（UI 非依存）](#611-partscapturepreviewcore-の画像ビューポートの型ui-非依存)
+  - [6.10 Parts.CapturePreview.Core の画像ビューポートの型（UI 非依存）](#610-partscapturepreviewcore-の画像ビューポートの型ui-非依存)
 - [7. 依存ルール](#7-依存ルール)
 - [8. ライフサイクル](#8-ライフサイクル)
 - [9. ログ](#9-ログ)
@@ -37,7 +36,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 
 本プロジェクト（Parts.CapturePreview.ControlAvaloniaUI）は、このシステムのうち**画面キャプチャ（ScreenSelect / WindowSelect / AreaSelect）と切出し（Crop）のセッション統括**を担います。 上位 AP（app）へは Task ベースの公開 Facade（`CaptureSessionControl`）を提供し、内部でオーバーレイ（`CaptureOverlayWindow`）と複合コントロール（`SelectionOverlayControl`）を組み立てて実行します。
 
-本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロール（画像表示 + 領域選択の `CropViewControl` と、領域選択の `SelectionOverlayControl`）を同一アセンブリ内に収録します。 `CropViewControl` は画像ビューポート（`ZoomViewControl` / `ZoomableView` / `CheckerboardView`）を内包し、その状態と判断は UI 非依存の `Parts.CapturePreview.Core`（`ZoomViewSession`）が単一所有します。
+本アセンブリは、セッションの Facade に加えて 2 つの公開複合コントロール（画像表示 + 領域選択の `CropViewControl` と、領域選択の `SelectionOverlayControl`）を同一アセンブリ内に収録します。 `CropViewControl` は画像ビューポート（`ZoomViewControl` / `ZoomableView`）を内包し、その状態と判断は UI 非依存の `Parts.CapturePreview.Core`（`ZoomViewSession`）が単一所有します。
 
 ## 2. 技術スタック
 
@@ -107,7 +106,7 @@ flowchart TB
         CV["CropViewControl<br/>public sealed<br/>CropViewControl.cs<br/>（切り出しビュー）"]
         FDR["SelectionOverlayControl<br/>public sealed<br/>SelectionOverlayControl.cs<br/>（領域選択）"]
         ZVW["ZoomViewControl<br/>public sealed<br/>ZoomViewControl.cs<br/>（切り出しビューの画像ビューポート）"]
-        ZVB["ZoomableView / CheckerboardView<br/>internal sealed<br/>ZoomView/（入力ブリッジ・描画）"]
+        ZVB["ZoomableView<br/>internal sealed<br/>ZoomView/（入力ブリッジ・描画）"]
     end
     subgraph Core["Parts.CapturePreview.Core プロジェクト（両 UI 共通の規則。UI 非依存）"]
         CS2["CaptureSettings / CaptureResult<br/>public sealed record"]
@@ -276,7 +275,7 @@ flowchart TB
 
 - **分類**: 公開コントロール（`public sealed class : Panel`。 自己完結型複合コントロール）
 - **責務**: 内部ビューポート（`ZoomableView`）を生成し、公開 API をコアの `ZoomViewSession` へ委譲する。 セッションの通知（`ZoomChanged` / `ViewportChanged`）を自 UI の公開イベントへ転送する。 **`CropViewControl` が内包する画像ビューポート**であり、独立した汎用コントロールとしての利用を前提としない
-- **非公開メンバー**: `Session`（内部ビューポートが所有するセッションへの参照）/ `ZoomableView`（内包するビューポート）/ `CheckerboardView`（画像の透明部分の背景を描く子要素）/ `OnSessionNotified`（通知の転送）
+- **非公開メンバー**: `Session`（内部ビューポートが所有するセッションへの参照）/ `ZoomableView`（内包するビューポート）/ `OnSessionNotified`（通知の転送）
 - **公開 API の詳細**: 外部機能仕様書（`SPEC_ExtFunc.md`）の 5.7 を参照
 - **可視性**: public（`CropViewControl` からは内部部品として扱う）
 - **依存**: `Parts.CapturePreview.Core`（`ZoomViewSession` / `ZoomOptions` / `ZoomNotice` / `ZoomState`）/ Platform.AvaloniaUI（コア型の相互変換）
@@ -290,15 +289,7 @@ flowchart TB
 - **可視性**: internal
 - **依存**: `Parts.CapturePreview.Core`（`ZoomViewSession` / `ZoomFeedback` / `ZoomNotice`）/ Platform.AvaloniaUI（相互変換）
 
-### 6.10 CheckerboardView
-
-- **分類**: 内部コントロール（`internal sealed class : Control`。 `ZoomViewControl` の内部実装）
-- **責務**: 画像の透明部分の背景（市松模様）を描く。 子の順序で画像より先に描かれるようにし、描く範囲（画像の表示矩形の内側）とタイルの位置はコア（`ZoomViewAppearance.ComputeCheckerArea` / `ZoomViewAppearance.EnumerateLightTileRects`）に問い合わせるだけである
-- **内部実装の詳細**: Panel は `Render` をシールしているため、子要素として画像の下にだけ描く層を作る。 画像の外（ペーストボード）は透明のままにし、親の背景をそのまま見せる。 入力は受けず（`IsHitTestVisible` を false）、表示矩形の変化と外観の変更で `InvalidateVisual` する
-- **可視性**: internal
-- **依存**: `Parts.CapturePreview.Core`（`ZoomViewSession` / `ZoomViewAppearance`）/ Platform.AvaloniaUI（ブラシのキャッシュ）
-
-### 6.11 Parts.CapturePreview.Core の画像ビューポートの型（UI 非依存）
+### 6.10 Parts.CapturePreview.Core の画像ビューポートの型（UI 非依存）
 
 すべて UI 非依存プロジェクト（名前空間 `EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView`）が提供する。
 
@@ -309,7 +300,7 @@ flowchart TB
 | `ZoomState` | 公開 readonly record struct | 通知する 4 値（実効ズーム率・Fit 状態・可否） |
 | `ZoomFeedback` | 公開 readonly record struct | UI が適用する効果（再描画・ポインタキャプチャ）。 適用順を単一所有する |
 | `ZoomNotice` / `ZoomNoticeKind` | 公開 enum / sealed record | セッションから UI への通知（種別と通知時点の値） |
-| `ZoomViewAppearance` | 公開 sealed record | 外観（下地・市松模様・スクロールバー）の単一値。 描画可否と市松模様を描く範囲（画像の表示矩形の内側）・タイル矩形も持つ |
+| `ZoomViewAppearance` | 公開 sealed record | 外観（下地色・スクロールバー）の単一値。 描画可否（トラックを描くか）も持つ |
 | `ZoomScrollBar` / `ZoomScrollBarMetrics` | 公開 record struct | スクロールバーの矩形、および標準スクロールバー部品へ写す同期値 |
 | `CapturePreviewLogMessage` | 公開静的クラス | ログ定義（接頭辞・書式・レベル・丸め）の単一所有 |
 | `ZoomMath` / `ZoomTransition` / `ZoomAvailability` / `ZoomScrollBarGeometry` | internal（純粋関数） | ズーム中心維持・Fit 実効倍率・座標変換・オフセットクランプ・段階遷移・可否判定・スクロールバーの幾何 |

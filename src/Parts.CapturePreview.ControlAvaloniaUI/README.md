@@ -203,7 +203,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 - **ズーム中心維持**: マウスポインタ位置（画像外はビューポート中心）を中心に拡大縮小し、中心のコンテンツ座標を不変に保つ
 - **パン**: マウスドラッグ（grab 方式）/ ホイール（縦・Shift で横）/ スクロールバー（オーバーレイ表示。 画像がビューポートより大きい軸のみ）
 - **座標系**: コンテンツ座標（元画像ピクセル。 ズーム率に依存しない不変座標）とビューポート座標（コントロールのローカル DIP）。 `CropViewControl.SourceToClient` / `ClientToSource` は画像表示矩形の原点基準（Fit 中央寄せ補正込み）で変換する
-- **市松模様**: 画像の透明部分の背景を `Appearance`（コアの `ZoomViewAppearance`）で指定する。 描くのは画像の表示矩形の内側だけで、画像の外（ペーストボード）は下地色の単色になる
+- **下地**: 画像が無い部分は本コントロールの背景（テーマのブラシ）の単色になる（市松模様は描かない）
 
 | 操作 | 内容 |
 | --- | --- |
@@ -262,7 +262,7 @@ Parts.CapturePreview.ControlAvaloniaUI/
 │   │   ├── CaptureOverlayWindow.Highlight.cs
 │   │   └── CropSession.cs                         # 切り出しセッション（internal）
 │   └── ZoomView/                   # 切り出しビューの画像ビューポート
-│       ├── ZoomViewControl.cs / ZoomableView.cs / CheckerboardView.cs / ZoomChangedEventArgs.cs
+│       ├── ZoomViewControl.cs / ZoomableView.cs / ZoomChangedEventArgs.cs
 ├── sample/                       # サンプルアプリ（sample/README.md 参照）
 └── tests/                        # 単体テスト（セッション + 収録コントロール）
     ├── Crop/ / SelectionOverlay/ / Session/ / ZoomView/

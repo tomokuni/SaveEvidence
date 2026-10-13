@@ -110,7 +110,7 @@
 | `ZoomState` | record struct | 通知する 4 値（実効ズーム率・Fit 状態・ズーム可否） |
 | `ZoomFeedback` | record struct | セッションから UI へ返す効果（再描画・ポインタキャプチャ）。 適用順を単一所有する |
 | `ZoomNotice` / `ZoomNoticeKind` | record / 列挙型 | セッションから UI への通知（種別と通知時点の値。 `ZoomChanged` / `ViewportChanged`） |
-| `ZoomViewAppearance` | record | 画像ビューポートの外観（下地・市松模様・スクロールバー）の単一値 |
+| `ZoomViewAppearance` | record | 画像ビューポートの外観（下地色・スクロールバー）の単一値 |
 | `ZoomScrollBar` / `ZoomScrollBarMetrics` | record struct | スクロールバーの矩形（トラック・サム）と、標準スクロールバー部品へ写す同期値 |
 | `ZoomScrollBarGeometry` | 静的クラス | スクロールバーのトラック・サムの矩形と可動範囲、オフセットの逆算（純粋関数） |
 | `ZoomTransition` | 静的クラス | ⊖⊕ の段階遷移・Ctrl+ホイールの遷移・ズーム可否の判定（純粋関数） |
@@ -649,11 +649,9 @@ public readonly record struct OverlayRect(
 
 ### 10.5 `ZoomViewAppearance`（外観）
 
-下地色・市松模様（タイルサイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を単一所有します。 描画の可否（`HasCheckerboard` / `HasScrollBarTrack`）と、市松模様を描く範囲（`ComputeCheckerArea`。 画像の表示矩形とビューポートの交差）・明色タイル矩形（`ComputeLightTileRects`。 一覧として返す版と、一覧を作らずに順に返す `EnumerateLightTileRects`）・タイルサイズの実効値（`ResolveCheckerTileSize`。 0 以下 = 描かない / 1 は下限 2 へ切り上げ）も本型が持ちます。 色は UI 非依存の `System.Drawing.Color` です。
+下地色・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を単一所有します。 描画の可否（`HasScrollBarTrack`）も本型が持ちます。 色は UI 非依存の `System.Drawing.Color` です。
 
-**市松模様は画像の透明部分の背景**であり、描く範囲は画像の表示矩形の内側に限ります（画像の外＝ペーストボードは下地色 `BackgroundColor` の単色になります）。 タイルの格子はビューポートの原点 `(0, 0)` を基準にするため、画像をパンしても模様が這いません。 範囲の外へはみ出すタイルは範囲で切り取った矩形として返します（呼び出し側は描画先をクリップする必要がありません）。
-
-**描画の経路は `EnumerateLightTileRects` を使います**。 タイルは画面を覆う数になり（タイル 8 DIP の 1920x1080 で約 16,000 個）、一覧へ実体化すると描画のたびに数百 KB を確保します。 配置規則（`(列 + 行)` が偶数・原点はビューポート）は `EnumerateLightTileRects` だけが持ち、`ComputeLightTileRects` はそれを実体化するだけです（規則が 2 箇所に存在しません）。
+**画像が無い部分は下地色 `BackgroundColor` の単色**です（明色テーマは白・暗色テーマは黒。 市松模様は描きません）。 画像の表示矩形の外（ペーストボード）も同じ色になります。
 
 ### 10.6 `ZoomScrollBar` / `ZoomScrollBarMetrics` / `ZoomScrollBarGeometry` / `ZoomAvailability`
 

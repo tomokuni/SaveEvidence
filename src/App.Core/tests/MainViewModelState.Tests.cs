@@ -578,9 +578,6 @@ public class MainViewModelStateTests
         s.LoupeZoomLevel = 16;
         s.LoupeSize = 320;
         s.LoupeOffset = 60;
-        s.PreviewCheckerColorA = "Black";
-        s.PreviewCheckerColorB = "#999999";
-        s.PreviewCheckerSize = 10;
         s.CaptureTextColor = "Cyan";
         s.SizeLabelBackgroundColor = "#99000000";
         s.SizeLabelFontSize = 16.0;
@@ -617,9 +614,6 @@ public class MainViewModelStateTests
         Assert.Equal(4, s.LoupeZoomLevel);
         Assert.Equal(160, s.LoupeSize);
         Assert.Equal(20.0, s.LoupeOffset);
-        Assert.Equal("#4C808080", s.PreviewCheckerColorA);
-        Assert.Equal("#4CA9A9A9", s.PreviewCheckerColorB);
-        Assert.Equal(6, s.PreviewCheckerSize);
         Assert.Equal("#FFFFFFFF", s.CaptureTextColor);
         Assert.Equal("#99000000", s.SizeLabelBackgroundColor);
         Assert.Equal(14.0, s.SizeLabelFontSize);

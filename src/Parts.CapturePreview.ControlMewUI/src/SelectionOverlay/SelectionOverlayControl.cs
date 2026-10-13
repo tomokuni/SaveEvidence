@@ -413,7 +413,7 @@ public sealed class SelectionOverlayControl : Panel
     /// <param name="sourcePos">ルーペ中心（対象座標）。</param>
     /// <remarks>
     /// 表示位置・サイズは座標変換ポート（<see cref="SetCoordTransform"/>）とコアの計算から求める。<br/>
-    /// <b>拡大元画像が未設定の間は表示しない</b>（未設定の市松模様を防ぐ。<see cref="SetLoupeSource"/> の後に呼び出す）。
+    /// <b>拡大元画像が未設定の間は表示しない</b>（未設定の下地（ペーストボード）を見せない。<see cref="SetLoupeSource"/> の後に呼び出す）。
     /// </remarks>
     public void SetLoupePosition(EsPoint sourcePos)
     {

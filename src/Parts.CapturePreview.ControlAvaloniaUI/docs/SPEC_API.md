@@ -325,7 +325,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `SelectionMode` | `SelectionOverlayMode` | 選択モード（既定 `Crop`）。 領域選択オーバーレイへ委譲する |
 | `SelectionOverlayOptions` | `SelectionOverlayOptions`（コア） | 領域選択オーバーレイの設定（寸法・表示可否。 色は含まない） |
 | `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 領域選択オーバーレイの外観（描画にだけ必要な設定） |
-| `Appearance` | `ZoomViewAppearance` | ズームビューの外観（下地色・市松模様等） |
+| `Appearance` | `ZoomViewAppearance` | ズームビューの外観（下地色・スクロールバー） |
 | `CenterAlign` | `bool` | 画像の中央寄せ（その軸で画像がビューポートより小さい場合に有効） |
 | `ZoomPercent` / `CanZoomIn` / `CanZoomOut` | `double` / `bool` / `bool` | ズーム率（%）と可否。 ズームの計算はコアが単一所有する |
 | `HasSelection` / `SelectionSourceRect` | `bool` / `Rect` | 選択状態と現在の選択矩形（対象座標） |
@@ -457,7 +457,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
 | `Source` | `IImage?`（読み書き） | ズーム対象の画像。 設定すると Fit 表示にリセット |
-| `Appearance` | `ZoomViewAppearance`（読み書き） | 外観の単一値（下地色・市松模様（サイズと 2 色）・スクロールバー）。 市松模様は画像の表示矩形の内側だけに描き、画像の外（ペーストボード）は下地色の単色になる |
+| `Appearance` | `ZoomViewAppearance`（読み書き） | 外観の単一値（下地色・スクロールバー）。 画像が無い部分は下地色の単色になる（市松模様は描かない） |
 | `ZoomPercent` | `double`（読み書き） | 実効ズーム率（%）。 getter は Fit 中は実効倍率（`MinZoom`〜`MaxZoom` にクランプ）・固定倍率中はズーム率を返す（0 にならない）。 setter は 0 より大きい値のみ設定（0 以下は無視。 Fit へは `ZoomFit`） |
 | `IsFit` | `bool` | Fit 表示中かどうか（Fit 判定はこちら。 `ZoomPercent` は 0 にならない） |
 | `CenterAlign` | `bool`（読み書き） | 画像の中央寄せ / 左上寄せ（軸ごとに独立。 その軸で画像がビューポートより小さい場合に有効） |

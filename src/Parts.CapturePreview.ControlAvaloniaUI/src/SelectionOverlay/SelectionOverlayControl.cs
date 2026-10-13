@@ -407,7 +407,7 @@ public sealed class SelectionOverlayControl : Panel
     /// <remarks>
     /// 表示位置・サイズは LoupeControl が座標変換ポート（<see cref="SetCoordTransform"/>）から自己計算する<br/>
     /// （カーソル右下 + オフセット + 親領域内への補正）。 配置前（Parent 未接続）の呼び出しは無視される。<br/>
-    /// <b>拡大元画像が未設定の間は表示しない</b>（未設定の市松模様を防ぐ。 Source 設定後に呼び出し直すことで表示される）。
+    /// <b>拡大元画像が未設定の間は表示しない</b>（未設定の下地（ペーストボード）を見せない。 Source 設定後に呼び出し直すことで表示される）。
     /// </remarks>
     public void SetLoupePosition(Point sourcePos)
     {
@@ -456,7 +456,7 @@ public sealed class SelectionOverlayControl : Panel
     /// <summary>ルーペの拡大元画像（Source）を設定する。</summary>
     /// <param name="source">拡大元画像。 null で解除。</param>
     /// <remarks>
-    /// LoupeControl.Source へ委譲する（Source 未設定の間はルーペを表示しない市松模様防止のため、<br/>
+    /// LoupeControl.Source へ委譲する（Source 未設定の間はルーペを表示しない（下地だけが見えるのを避ける）ため、<br/>
     /// 表示開始は <see cref="SetLoupePosition"/> が担う）。 解除時は表示も解除する。
     /// </remarks>
     public void SetLoupeSource(IImage? source)
@@ -684,7 +684,7 @@ public sealed class SelectionOverlayControl : Panel
     /// <remarks>
     /// 表示位置・サイズは LoupeControl が座標変換ポートから自己計算する（カーソル右下 + オフセット + 親領域内への補正）。<br/>
     /// <b>拡大元画像が未設定の間は表示しない</b>（AreaSelect の背景キャプチャ完了前は Source が null のため、<br/>
-    /// 表示すると市松模様が見える。 Source 設定後の表示開始はホスト（<see cref="SetLoupePosition"/> 経由）が行う）。<br/>
+    /// 表示すると下地が見える。 Source 設定後の表示開始はホスト（<see cref="SetLoupePosition"/> 経由）が行う）。<br/>
     /// ホストへの通知（<see cref="LoupePositionMoved"/>）は追加制御（Source 設定等）のフックとして発行する。
     /// </remarks>
     private void OnLoupePositionMoved(object? sender, MarqueePointEventArgs e)

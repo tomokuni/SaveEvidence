@@ -250,7 +250,6 @@ public class CropViewControlTests
         var control = CreateLaidOut();
         var appearance = ZoomViewAppearance.Default with
         {
-            CheckerSize = 8,
             BackgroundColor = DrawingColor.FromArgb(255, 16, 16, 16),
         };
 

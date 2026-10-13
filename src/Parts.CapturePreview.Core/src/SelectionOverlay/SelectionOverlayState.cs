@@ -43,7 +43,7 @@ internal readonly record struct SelectionOverlayState(bool UsesSelection)
     /// <param name="hasCenter">ルーペ中心（拡大中心）が設定されているかどうか。</param>
     /// <returns>表示する場合は true。</returns>
     /// <remarks>
-    /// 拡大元画像が未設定の間は表示しない（未設定の市松模様を見せない）。<br/>
+    /// 拡大元画像が未設定の間は表示しない（未設定の下地を見せない）。<br/>
     /// 拡大中心が未設定の間も表示しない（配置先が決まる前に要素を出さない。 表示位置は中心から計算する）。<br/>
     /// 選択矩形を使わないモードでは、画像と中心が設定されていても表示しない。
     /// </remarks>

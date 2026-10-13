@@ -158,7 +158,7 @@
                         </DockPanel>
 
                         <!-- 3 列構成: カテゴリ | 設定項目名 | 設定値 -->
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                               ColumnDefinitions="Auto,Auto,Auto,20"
                               Margin="0,5,0,0" ColumnSpacing="5" RowSpacing="5">
 
@@ -297,133 +297,109 @@
                                                          SelectedColor="{Binding Settings.LoupePasteboardColor, Mode=TwoWay}"
                                                          Grid.Row="22" Grid.Column="2" MinWidth="200"/>
 
-                            <!-- 市松模様（プレビュー背景とルーペ背景に適用） -->
-                            <!-- カテゴリ区切りの薄い水平線 -->
-                            <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                                    Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
-                                    Grid.Row="23" Grid.Column="0" Grid.ColumnSpan="4"/>
-                            <TextBlock Text="プレビューの市松模様" FontWeight="SemiBold" MinWidth="180"
-                                       HorizontalAlignment="Right" TextAlignment="Right"
-                                       Margin="0,8,16,0"
-                                       Grid.Row="23" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
-                            <Label Content="市松模様 A:" Margin="0,8,0,0" Grid.Row="23" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="PreviewCheckerColorAPicker"
-                                                         Margin="0,8,0,0"
-                                                         HighlightBorderOnError="True"
-                                                         SelectedColor="{Binding Settings.PreviewCheckerColorA, Mode=TwoWay}"
-                                                         Grid.Row="23" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="市松模様 B:" Grid.Row="24" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="PreviewCheckerColorBPicker"
-                                                         HighlightBorderOnError="True"
-                                                         SelectedColor="{Binding Settings.PreviewCheckerColorB, Mode=TwoWay}"
-                                                         Grid.Row="24" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="市松模様のタイルサイズ:" Grid.Row="25" Grid.Column="1"/>
-                            <NumericUpDown Value="{Binding Settings.PreviewCheckerSize}"
-                                           Minimum="1" Maximum="20" Increment="1" FormatString="N0"
-                                           Grid.Row="25" Grid.Column="2" MinWidth="120"/>
 
                             <!-- 選択矩形内のラベル -->
                             <!-- カテゴリ区切りの薄い水平線 -->
                             <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
                                     Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
-                                    Grid.Row="26" Grid.Column="0" Grid.ColumnSpan="4"/>
+                                    Grid.Row="23" Grid.Column="0" Grid.ColumnSpan="4"/>
                             <TextBlock Text="選択矩形内のラベル" FontWeight="SemiBold" MinWidth="180"
                                        HorizontalAlignment="Right" TextAlignment="Right"
                                        Margin="0,8,16,0"
-                                       Grid.Row="26" Grid.RowSpan="9" Grid.Column="0" VerticalAlignment="Top"/>
-                            <Label Content="1 行目 テキスト色:" Margin="0,8,0,0" Grid.Row="26" Grid.Column="1"/>
+                                       Grid.Row="23" Grid.RowSpan="9" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="1 行目 テキスト色:" Margin="0,8,0,0" Grid.Row="23" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="SizeLabelColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.CaptureTextColor, Mode=TwoWay}"
                                                          Margin="0,8,0,0"
-                                                         Grid.Row="26" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="1 行目 背景色:" Grid.Row="27" Grid.Column="1"/>
+                                                         Grid.Row="23" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="1 行目 背景色:" Grid.Row="24" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="SizeLabelBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.SizeLabelBackgroundColor, Mode=TwoWay}"
-                                                         Grid.Row="27" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="1 行目 フォントサイズ:" Grid.Row="28" Grid.Column="1"/>
+                                                         Grid.Row="24" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="1 行目 フォントサイズ:" Grid.Row="25" Grid.Column="1"/>
                             <NumericUpDown Value="{Binding Settings.SizeLabelFontSize}"
                                            Minimum="8" Maximum="32" Increment="1"
-                                           Grid.Row="28" Grid.Column="2" MinWidth="120"/>
-                            <Label Content="2 行目 テキスト色:" Grid.Row="29" Grid.Column="1"/>
+                                           Grid.Row="25" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="2 行目 テキスト色:" Grid.Row="26" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="SubLineColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.SubLineColor, Mode=TwoWay}"
-                                                         Grid.Row="29" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="2 行目 背景色:" Grid.Row="30" Grid.Column="1"/>
+                                                         Grid.Row="26" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="2 行目 背景色:" Grid.Row="27" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="SubLineBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.SubLineBackgroundColor, Mode=TwoWay}"
-                                                         Grid.Row="30" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="2 行目 フォントサイズ:" Grid.Row="31" Grid.Column="1"/>
+                                                         Grid.Row="27" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="2 行目 フォントサイズ:" Grid.Row="28" Grid.Column="1"/>
                             <NumericUpDown Value="{Binding Settings.SubLineFontSize}"
                                            Minimum="8" Maximum="32" Increment="1"
-                                           Grid.Row="31" Grid.Column="2" MinWidth="120"/>
-                            <Label Content="3 行目 テキスト色:" Grid.Row="32" Grid.Column="1"/>
+                                           Grid.Row="28" Grid.Column="2" MinWidth="120"/>
+                            <Label Content="3 行目 テキスト色:" Grid.Row="29" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="InfoLabelColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.InfoLabelColor, Mode=TwoWay}"
-                                                         Grid.Row="32" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="3 行目 背景色:" Grid.Row="33" Grid.Column="1"/>
+                                                         Grid.Row="29" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="3 行目 背景色:" Grid.Row="30" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="InfoLabelBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.InfoLabelBackgroundColor, Mode=TwoWay}"
-                                                         Grid.Row="33" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="3 行目 フォントサイズ:" Grid.Row="34" Grid.Column="1"/>
+                                                         Grid.Row="30" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="3 行目 フォントサイズ:" Grid.Row="31" Grid.Column="1"/>
                             <NumericUpDown Value="{Binding Settings.InfoLabelFontSize}"
                                            Minimum="8" Maximum="32" Increment="1"
-                                           Grid.Row="34" Grid.Column="2" MinWidth="120"/>
+                                           Grid.Row="31" Grid.Column="2" MinWidth="120"/>
 
                             <!-- カーソル位置の座標ラベル（Marquee） -->
                             <!-- カテゴリ区切りの薄い水平線 -->
                             <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
                                     Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
-                                    Grid.Row="35" Grid.Column="0" Grid.ColumnSpan="4"/>
+                                    Grid.Row="32" Grid.Column="0" Grid.ColumnSpan="4"/>
                             <TextBlock Text="カーソル位置の座標ラベル" FontWeight="SemiBold" MinWidth="180"
                                        HorizontalAlignment="Right" TextAlignment="Right"
                                        Margin="0,8,16,0"
-                                       Grid.Row="35" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
-                            <Label Content="テキスト色:" Margin="0,8,0,0" Grid.Row="35" Grid.Column="1"/>
+                                       Grid.Row="32" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="テキスト色:" Margin="0,8,0,0" Grid.Row="32" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="CoordLabelColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.CoordLabelColor, Mode=TwoWay}"
                                                          Margin="0,8,0,0"
-                                                         Grid.Row="35" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="背景色:" Grid.Row="36" Grid.Column="1"/>
+                                                         Grid.Row="32" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="背景色:" Grid.Row="33" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="CoordLabelBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.CoordLabelBackgroundColor, Mode=TwoWay}"
-                                                         Grid.Row="36" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="フォントサイズ:" Grid.Row="37" Grid.Column="1"/>
+                                                         Grid.Row="33" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="フォントサイズ:" Grid.Row="34" Grid.Column="1"/>
                             <NumericUpDown Value="{Binding Settings.CoordLabelFontSize}"
                                            Minimum="6" Maximum="48" Increment="1"
-                                           Grid.Row="37" Grid.Column="2" MinWidth="120"/>
+                                           Grid.Row="34" Grid.Column="2" MinWidth="120"/>
 
                             <!-- ルーペの中心座標ラベル -->
                             <!-- カテゴリ区切りの薄い水平線 -->
                             <Border Background="{DynamicResource SystemControlForegroundBaseLowBrush}"
                                     Height="1" Margin="0,0,0,8" VerticalAlignment="Top"
-                                    Grid.Row="38" Grid.Column="0" Grid.ColumnSpan="4"/>
+                                    Grid.Row="35" Grid.Column="0" Grid.ColumnSpan="4"/>
                             <TextBlock Text="ルーペの中心座標ラベル" FontWeight="SemiBold" MinWidth="180"
                                        HorizontalAlignment="Right" TextAlignment="Right"
                                        Margin="0,8,16,0"
-                                       Grid.Row="38" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
-                            <Label Content="座標ラベルのテキスト色:" Margin="0,8,0,0" Grid.Row="38" Grid.Column="1"/>
+                                       Grid.Row="35" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
+                            <Label Content="座標ラベルのテキスト色:" Margin="0,8,0,0" Grid.Row="35" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="LoupeCoordLabelColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.LoupeCoordLabelColor, Mode=TwoWay}"
                                                          Margin="0,8,0,0"
-                                                         Grid.Row="38" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="座標ラベルの背景色:" Grid.Row="39" Grid.Column="1"/>
+                                                         Grid.Row="35" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="座標ラベルの背景色:" Grid.Row="36" Grid.Column="1"/>
                             <controls:ColorPickerControl x:Name="LoupeCoordLabelBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.LoupeCoordLabelBackgroundColor, Mode=TwoWay}"
-                                                         Grid.Row="39" Grid.Column="2" MinWidth="200"/>
-                            <Label Content="座標ラベルのフォントサイズ:" Grid.Row="40" Grid.Column="1"/>
+                                                         Grid.Row="36" Grid.Column="2" MinWidth="200"/>
+                            <Label Content="座標ラベルのフォントサイズ:" Grid.Row="37" Grid.Column="1"/>
                             <NumericUpDown Value="{Binding Settings.LoupeCoordLabelFontSize}"
                                            Minimum="6" Maximum="48" Increment="1"
-                                           Grid.Row="40" Grid.Column="2" MinWidth="120"/>
+                                           Grid.Row="37" Grid.Column="2" MinWidth="120"/>
                         </Grid>
                     </StackPanel>
                 </Border>

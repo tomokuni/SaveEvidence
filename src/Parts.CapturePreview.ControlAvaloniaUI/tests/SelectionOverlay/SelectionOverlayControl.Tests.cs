@@ -440,7 +440,7 @@ public class SelectionOverlayControlTests
         var window = new Window { Content = new Panel { Children = { control } } };
         window.Show();
 
-        // Source 未設定の間は表示しない（市松模様防止の仕様）
+        // Source 未設定の間は表示しない（下地だけが見えるのを避ける仕様）
         control.SetLoupePosition(new Point(960, 540));
         Assert.False(control.Loupe.IsVisible);
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);

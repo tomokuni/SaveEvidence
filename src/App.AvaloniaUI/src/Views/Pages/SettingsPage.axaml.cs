@@ -150,7 +150,7 @@ public sealed partial class SettingsPage : UserControl
     /// <summary>外観設定をデフォルト値へ戻す。</summary>
     /// <remarks>
     /// <see cref="Settings.ResetAppearanceToDefaults"/> で外観設定（選択枠・暗転・ハンドル・マーカー・
-    /// ルーペ・市松模様・ラベル）をデフォルト値へ戻す。<br/>
+    /// ルーペ・ラベル）をデフォルト値へ戻す。<br/>
     /// コンストラクタで <see cref="SettingsService.Current"/> の <c>PropertyChanged</c> を購読しているため、
     /// 変更は自動保存される。
     /// </remarks>

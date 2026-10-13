@@ -182,16 +182,6 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private double _loupeOffset = 20.0;
 
-    /// <summary>プレビュー市松模様の色 A（明色）を取得または設定する。</summary>
-    /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: Gray 30% = <c>#4C808080</c>）。</remarks>
-    [ObservableProperty]
-    private string _previewCheckerColorA = "#4C808080";
-
-    /// <summary>プレビュー市松模様の色 B（暗色）を取得または設定する。</summary>
-    /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: Silver 30% = <c>#4CA9A9A9</c>）。</remarks>
-    [ObservableProperty]
-    private string _previewCheckerColorB = "#4CA9A9A9";
-
     /// <summary>ルーペの画像外（ペーストボード）の色を取得または設定する。</summary>
     /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: 中性グレー <c>#FF535353</c>。 透明にすると背後の要素が見える）。</remarks>
     [ObservableProperty]
@@ -276,16 +266,12 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private string _subLineBackgroundColor = "#99000000";
 
-    /// <summary>プレビュー市松模様の1タイルサイズ（ピクセル、1〜20）を取得または設定する。</summary>
-    [ObservableProperty]
-    private int _previewCheckerSize = 6;
-
     /// <summary>キャプチャ時にメインウィンドウを非表示にするかどうかを取得または設定する。</summary>
     /// <remarks>デフォルトは true（設定画面の現在値）。</remarks>
     [ObservableProperty]
     private bool _hideMainWindowOnCapture = true;
 
-    /// <summary>外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・プレビューの市松模様・ラベル）をデフォルト値へ戻す。</summary>
+    /// <summary>外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・ラベル）をデフォルト値へ戻す。</summary>
     /// <remarks>
     /// 設定画面の外観設定にある「デフォルト値に戻す」ボタンから呼び出される。<br/>
     /// デフォルト値は本クラスのフィールド初期化子（各 <c>[ObservableProperty]</c> フィールドの初期値）を真のソースとし、
@@ -318,10 +304,7 @@ public sealed partial class Settings : ObservableObject
         LoupeZoomLevel = d.LoupeZoomLevel;
         LoupeSize = d.LoupeSize;
         LoupeOffset = d.LoupeOffset;
-        // 市松模様（プレビュー）
-        PreviewCheckerColorA = d.PreviewCheckerColorA;
-        PreviewCheckerColorB = d.PreviewCheckerColorB;
-        PreviewCheckerSize = d.PreviewCheckerSize;
+
         // 選択矩形内のラベル（1〜3 行目）
         CaptureTextColor = d.CaptureTextColor;
         SizeLabelBackgroundColor = d.SizeLabelBackgroundColor;

@@ -61,7 +61,7 @@ public class ZoomViewControlTests
         Assert.Equal(100.0, control.ZoomPercent, 6);
         Assert.False(control.CanZoomIn);
         Assert.False(control.CanZoomOut);
-        Assert.Equal(0, control.Appearance.CheckerSize); // 市松模様なしが既定
+        Assert.Equal(ZoomViewAppearance.Default.BackgroundColor, control.Appearance.BackgroundColor); // 下地色が既定
         Assert.True(control.Appearance.ShowScrollBars);
     }
 
@@ -293,38 +293,12 @@ public class ZoomViewControlTests
     internal void Appearance_セッションへ反映される()
     {
         var control = CreateLaidOut();
-        var appearance = ZoomViewAppearance.Default with { CheckerSize = 8, ShowScrollBars = false };
+        var appearance = ZoomViewAppearance.Default with { ShowScrollBars = false, BackgroundColor = System.Drawing.Color.Red };
 
         control.Appearance = appearance;
 
-        Assert.Equal(8, control.Appearance.CheckerSize);
         Assert.False(control.Appearance.ShowScrollBars);
-    }
-
-    /// <summary>外観の市松模様の明色タイル矩形がコアで計算されることを検証する。</summary>
-    [Fact]
-    internal void Appearance_市松模様の明色タイルを列挙する()
-    {
-        var appearance = ZoomViewAppearance.Default with { CheckerSize = 10 };
-
-        var tiles = appearance.ComputeLightTileRects(new EsRect(0, 0, 25, 25));
-
-        // 3x3 のタイルのうち明色は (0,0)(0,2)(1,1)(2,0)(2,2) の 5 枚（端は領域で切り取られる）
-        Assert.Equal(5, tiles.Count);
-        Assert.All(tiles, tile =>
-        {
-            Assert.True(tile.Right <= 25 && tile.Bottom <= 25, $"領域外: {tile}");
-            Assert.True(tile.Width is 10 or 5, $"切り取り幅が不正: {tile}");
-        });
-    }
-
-    /// <summary>市松模様を無効にすると明色タイルが空になることを検証する。</summary>
-    [Fact]
-    internal void Appearance_市松模様なしは明色タイルが空になる()
-    {
-        var appearance = ZoomViewAppearance.Default with { CheckerSize = 0 };
-
-        Assert.Empty(appearance.ComputeLightTileRects(new EsRect(0, 0, 100, 100)));
+        Assert.Equal(System.Drawing.Color.Red, control.Appearance.BackgroundColor);
     }
 
     // ====================================================================

@@ -25,7 +25,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
 /// <b>Avalonia 版との違い</b>: 内部の <c>Image</c> + <c>RenderTransform</c> + <c>ScrollBar</c> を持たず、<br/>
 /// Skia のキャンバスへ 1 回の <c>DrawBitmap</c> で描画する（中間ビットマップも Transform の合成も不要）。<br/>
 /// スクロールバーはオーバーレイとして自前描画する（描画内容はセッションの値に従う）。<br/>
-/// 見た目（スクロールバーの太さ・余白・市松模様）は <see cref="ZoomViewAppearance"/> が単一所有し、<br/>
+/// 見た目（スクロールバーの太さ・余白・下地色）は <see cref="ZoomViewAppearance"/> が単一所有し、<br/>
 /// ホストが設定する（Avalonia 版は標準 <c>ScrollBar</c> を使うため太さ・余白は本値を使用しない）。
 /// </remarks>
 public sealed class ZoomViewControl : SkiaCanvasView
@@ -131,8 +131,8 @@ public sealed class ZoomViewControl : SkiaCanvasView
         set => SetValue(ClientToPixelScalingProperty, value);
     }
 
-    /// <summary>ズームビューの外観（下地・市松模様・スクロールバー）を取得または設定する。</summary>
-    /// <value>外観の単一値。 既定は暗色の下地・市松模様なし・スクロールバー表示。</value>
+    /// <summary>ズームビューの外観（下地・スクロールバー）を取得または設定する。</summary>
+    /// <value>外観の単一値。 既定は暗色の下地・スクロールバー表示。</value>
     /// <remarks>
     /// 外観はコア（<see cref="ZoomViewAppearance"/>）が単一所有する。<br/>
     /// 本プロパティはコアへ渡す窓口であり、本コントロールは外観値を保持しない（同値の再設定では再描画しない）。
@@ -490,33 +490,27 @@ public sealed class ZoomViewControl : SkiaCanvasView
         }
     }
 
-    /// <summary>画像・市松模様・スクロールバーを描画する。</summary>
+    /// <summary>画像・スクロールバーを描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
     /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>
-    /// 描画順（下地 → 市松模様 → 画像 → スクロールバー）は本メソッドが単一所有し、各描画内容はコアの値に従う。
+    /// 描画順（下地 → 画像 → スクロールバー）は本メソッドが単一所有し、各描画内容はコアの値に従う。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
     {
         var appearance = _session.Appearance;
+        // 画像が無い部分は下地色の単色（市松模様は描かない）
         canvas.Clear(appearance.BackgroundColor.ToSKColor());
 
         // スケーリングは描画面（物理ピクセル）と割り当て領域（DIP）の比から求める
         // （DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いてしまう）
         var scaling = ClientPixelScale.Resolve(info.Width, Bounds.Size.Width, ClientToPixelScaling);
 
-        // レイアウト前は Bounds が 0 のため、キャンバスサイズからビューポートを求める
-        var viewport = CurrentViewport();
-        if (viewport.Width <= 0 || viewport.Height <= 0)
-        {
-            viewport = new EsSize(info.Width / scaling, info.Height / scaling);
-        }
         canvas.Save();
         canvas.Scale((float)scaling);
         try
         {
-            DrawCheckerboard(canvas, viewport, appearance);
             ZoomSkiaRenderer.Render(canvas, Source, _session);
             DrawScrollBars(canvas, appearance);
         }
@@ -526,14 +520,6 @@ public sealed class ZoomViewControl : SkiaCanvasView
         }
     }
 
-    /// <summary>市松模様に使う塗りのペイント（スレッドごとに 1 つを使い回す）。</summary>
-    [ThreadStatic]
-    private static SKPaint? s_checkerDark;
-
-    /// <summary>明色タイルのペイント（スレッドごとに 1 つを使い回す）。</summary>
-    [ThreadStatic]
-    private static SKPaint? s_checkerLight;
-
     /// <summary>トラックのペイント（スレッドごとに 1 つを使い回す）。</summary>
     [ThreadStatic]
     private static SKPaint? s_track;
@@ -541,41 +527,6 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <summary>サムのペイント（スレッドごとに 1 つを使い回す）。</summary>
     [ThreadStatic]
     private static SKPaint? s_thumb;
-
-    /// <summary>市松模様（画像の透明部分の背景）を描画する。</summary>
-    /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
-    /// <param name="viewport">ビューポートのサイズ（DIP）。</param>
-    /// <param name="appearance">外観（市松模様の有無・タイルサイズ・色）。</param>
-    /// <remarks>
-    /// <b>描くのは画像の表示矩形の内側だけ</b>である（範囲は <see cref="ZoomViewAppearance.ComputeCheckerArea"/> が単一所有する）。<br/>
-    /// 矩形の外（ペーストボード）は描画の最初に塗った下地色（<see cref="ZoomViewAppearance.BackgroundColor"/>）の単色になる。<br/>
-    /// 描画の重ね順は「暗色（B）で範囲を塗る → 明色（A）のタイルを市松位置へ重ねる」。<br/>
-    /// 明色タイルの位置はコア（<see cref="ZoomViewAppearance.ComputeLightTileRects"/>）が単一所有する（UI 層に明暗判定を置かない）。
-    /// </remarks>
-    private void DrawCheckerboard(SKCanvas canvas, EsSize viewport, ZoomViewAppearance appearance)
-    {
-        var area = appearance.ComputeCheckerArea(_session.ImageRect, viewport);
-        if (area.IsEmpty)
-        {
-            return;
-        }
-
-        // 暗色・明色のペイントは書き換えて使い回す（市松模様は毎フレーム描く）
-        var dark = s_checkerDark ??= new SKPaint { IsAntialias = false };
-        var light = s_checkerLight ??= new SKPaint { IsAntialias = false };
-        dark.Color = appearance.CheckerColorB.ToSKColor();
-        light.Color = appearance.CheckerColorA.ToSKColor();
-
-        // 暗色で範囲を塗る（明色タイルの下地）
-        canvas.DrawRect(area.ToSKRect(), dark);
-
-        // タイルは画面を覆う数になるため、一覧を作らずに順に描く（毎フレームの確保をなくす）
-        foreach (var tile in appearance.EnumerateLightTileRects(area))
-        {
-            canvas.DrawRect(tile.ToSKRect(), light);
-        }
-    }
-
     /// <summary>オーバーレイスクロールバーを描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
     /// <param name="appearance">外観（スクロールバーの太さ・余白・色）。</param>

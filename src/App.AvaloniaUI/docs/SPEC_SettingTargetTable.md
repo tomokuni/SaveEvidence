@@ -81,8 +81,8 @@ SelectionOverlayControl（_selectionOverlay）
 | --- | --- | --- |
 | `App.AvaloniaUI` | — | `Parts.CapturePreview.ControlAvaloniaUI` の `AppearanceSettings`（`CaptureSettings`）へ `CaptureSettingsMapper` で変換して渡す |
 | `Parts.CapturePreview.ControlAvaloniaUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。 実行中の Crop セッションへ即時反映 |
-| `CropViewControl` | `SelectionOverlayOptions`（`SelectionOverlayOptions`）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `ClientToSourceScaling` / `LoupeClientToPixelScaling` / `Appearance` / `CenterAlign` | 設定は `SelectionOverlayControl` へ委譲。 DPI スケーリング・プレビューの市松模様は個別プロパティ（コードから動的設定） |
-| `ZoomViewControl` | `Appearance` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観（市松模様のサイズと 2 色・スクロールバー） |
+| `CropViewControl` | `SelectionOverlayOptions`（`SelectionOverlayOptions`）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `ClientToSourceScaling` / `LoupeClientToPixelScaling` / `Appearance` / `CenterAlign` | 設定は `SelectionOverlayControl` へ委譲。 DPI スケーリング・プレビューの下地色は個別プロパティ（コードから動的設定） |
+| `ZoomViewControl` | `Appearance` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観（下地色・スクロールバー） |
 | `SelectionOverlayControl` | `Options`（`SelectionOverlayOptions`）/ `MarqueeAppearance`（外観）/ `LoupeAppearance`（`LoupeAppearance`）/ `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` / `Mode` / `ShowFullOverlay` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | 下位（Marquee（選択の設定） / 装飾 / Loupe）の設定を一括公開（コアの設定値 1 つ）+ 外観（提示層の単一値 2 つ: `MarqueeAppearance` / `LoupeAppearance`）+ DPI スケーリングとラベル文言プロバイダを個別公開 |
 | `MarqueeControl` | `Options`（`MarqueeOptions`。 ハンドル寸法・マーカー寸法・対話パラメータ）/ `Appearance`（`MarqueeAppearance`。 色・枠線の太さ・表示可否）/ `ClientToSourceScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` | `SelectionOverlayOptions.Marquee`（選択の設定）と外観（`MarqueeAppearance`）からそれぞれ設定（枠線の太さと色は `MarqueeAppearance` が単一所有する）。 **操作・情報ラベルは本コントロールの概念ではない**ため、ホスト（`SelectionOverlayControl`）が `Options.Labels` で描く |
 | `LoupeControl` | `Options`（`LoupeOptions`。 基本サイズ・拡大率）/ `Appearance`（`LoupeAppearance`。 色・枠線の太さ・表示可否）/ `ClientToPixelScaling`（DPI 自動取得）/ `PositionOffset` | `SelectionOverlayOptions.Loupe` から設定（`ClientToPixelScaling` と外観を除く） |
@@ -104,7 +104,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 - 設定画面の変更は `Settings` の `PropertyChanged` で **即時反映** される。
 - Parts.CapturePreview.ControlAvaloniaUI への反映は `CaptureSettings`（nullable record・部分更新）を介して行い、`null` のメンバーは現在値を維持する。
 - **色はコアの設定値（`SelectionOverlayOptions`）に含まれない**。 UI 間で共有する `Parts.CapturePreview.Core`（`CapturePaintMapper`）が `CaptureSettings` から `MarqueeAppearance` / `LoupeAppearance` を組み立て、ホスト（`CropSession` / `CaptureOverlay`）がコントロールの `MarqueeAppearance` / `LoupeAppearance` プロパティへ設定する（写像は UI 非依存層が単一所有する）。
-- テーマ・画像配置・市松模様等、app 内で直接処理する項目は個別の購読で反映される。
+- テーマ・画像配置・下地色等、app 内で直接処理する項目は個別の購読で反映される。
 - `Platform.AvaloniaUI` は共通基盤のため、外観設定の公開対象ではない（参考として記載）。
 
 ## 3. 下位コントロールが公開する外観プロパティと上位での公開有無
@@ -212,7 +212,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` （`MarqueeAppearance` / `LoupeAppearance`） | ✅ `CaptureSettings`（`Parts.CapturePreview.Core` の `CapturePaintMapper` で組み立て） | ✅ | **色・枠線の太さ・表示可否はコアの設定マッパーでは写像しない**（写像は UI 非依存層が単一所有し、UI 層のホストが組み立てた外観を設定する） |
 | `ClientToSourceScaling` | ✅ `cropView.ClientToSourceScaling`（セッションが設定） | —（コードから動的設定） | DPI スケーリング（Crop は 1.0 固 定） |
 | `LoupeClientToPixelScaling` | ✅ `cropView.LoupeClientToPixelScaling`（セッションが設定） | —（DPI から自動取得） | ルーペ描画スケール（`CaptureSettings.LoupeClientToPixelScaling` 由来） |
-| `Appearance`（`ZoomViewAppearance`） | — | ✅（`Settings.PreviewCheckerColorA/B` / `PreviewCheckerSize`） | プレビューの市松模様（画像の透明部分の背景）。 `App.AvaloniaUI` 側（`CapturePage`）で直接設定する。 描く範囲は画像の表示矩形の内側だけであり、画像の外（ペーストボード）は背景の単色になる |
+| `Appearance`（`ZoomViewAppearance`） | — | — | プレビューの下地色（画像が無い部分）。 `App.AvaloniaUI` 側（`CapturePage`）は既定の外観を使う（本コントロールの背景がそのまま見える。 市松模様は描かない） |
 | `CenterAlign` | — | ✅（`Settings.CenterAlign`） | `App.AvaloniaUI` 側（`CapturePage`）で直接設定 |
 | `SelectionMode`（`SelectionOverlayMode`） | — | — | 選択モード。 `CaptureSettings` に含まれず、`CropViewControl` の既定（`Crop`）を使う（`CropSession` は読み取りのみ）。 他のモード（`AreaSelect` / `ScreenSelect` / `WindowSelect`）へ切り替えるホストは無い |
 
@@ -255,12 +255,9 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
 | スクロール不要時は中央に配置 | `CenterAlign` | `CropView.CenterAlign`（画像配置） |
-| 市松模様 A（色） | `PreviewCheckerColorA` | `CropView.Appearance.CheckerColorA`（プレビューの市松模様） |
-| 市松模様 B（色） | `PreviewCheckerColorB` | `CropView.Appearance.CheckerColorB`（プレビューの市松模様） |
-| 市松模様のタイルサイズ | `PreviewCheckerSize` | `CropView.Appearance.CheckerSize`（プレビュー）。 実効値は `ZoomViewAppearance.ResolveCheckerTileSize` が決める（0 以下 = 描かない / 1 は下限 2 へ切り上げ） |
 | ルーペの画像外の色 | `LoupePasteboardColor` | `LoupeControl.Appearance.PasteboardColor`（ルーペの画像外は無地） |
 
-- 市松模様は「画像設定」の詳細設定で管理し、**プレビューの画像の透明部分（画像の表示矩形の内側）に適用**する（画像のレターボックス＝ペーストボードは背景の単色のまま。 ルーペは市松模様を使わず、画像外を無地の色で示す）。
+- **画像が無い部分は下地色の単色で示す**（プレビューは本コントロールの背景、ルーペは設定の画像外の色。 市松模様は使わない）。
 
 ## 7. キャプチャ設定
 
@@ -309,7 +306,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | 座標ラベルのフォントサイズ | `LoupeCoordLabelFontSize` | `LoupeControl.Appearance.CoordLabelFontSize` |
 
 - 拡大率（`LoupeZoomLevel`）・サイズ（`LoupeSize`）・カーソルからのオフセット（`LoupeOffset`）は「外観設定」（§4）に配置。
-- 市松模様は「画像設定」（§6 ）で管理するため、ルーペ設定には含めない（ルーペは画像外を無地の色で示す）。
+- ルーペは画像外を無地の色（`LoupePasteboardColor`）で示すため、プレビューの下地と独立に設定する。
 - 座標ラベルの外観は詳細設定（Expander）内に配置。
 
 ### 9.1 描画スケール（自動設定・設定項目なし）
@@ -377,7 +374,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 
 ## 13. 外観設定のデフォルト値への復元
 
-設定画面「外観設定」の右上にある **「デフォルト値に戻す」** ボタンで、外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・プレビューの市松模様・選択矩形内ラベル・座標ラベル）をデフォルト値へ一括復元する。
+設定画面「外観設定」の右上にある **「デフォルト値に戻す」** ボタンで、外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・選択矩形内ラベル・座標ラベル）をデフォルト値へ一括復元する。
 
 - 実装: `Settings.ResetAppearanceToDefaults()`（新規インスタンスのフィールド初期化子 = デフォルト値をコピー）
 - デフォルト値は各コントロール（`MarqueeControl` / `LoupeControl` の `Options` と `Appearance` / 装飾の `MarqueeAppearance`）の既定値と一致させる

@@ -427,12 +427,9 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>ズームビューの外観（下地・市松模様・スクロールバーの色）を取得または設定する（<see cref="ZoomViewControl.Appearance"/> へ委譲）。</summary>
+    /// <summary>ズームビューの外観（スクロールバーの色）を取得または設定する（<see cref="ZoomViewControl.Appearance"/> へ委譲）。</summary>
     /// <value>外観の単一値。 既定は <see cref="ZoomViewAppearance.Default"/>。</value>
-    /// <remarks>
-    /// 市松模様は画像の透明部分の背景であり、描く範囲（画像の表示矩形の内側）はコアが単一所有する<br/>
-    /// （画像の外＝ペーストボードは下地色の単色になる）。 設定は <c>PreviewChecker*</c> をホストが写像する。
-    /// </remarks>
+    /// <remarks>画像が無い部分は本コントロールの背景（テーマのブラシ）の単色になる（市松模様は描かない）。</remarks>
     public ZoomViewAppearance Appearance
     {
         get => _zoomView.Appearance;

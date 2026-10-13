@@ -127,11 +127,11 @@ public sealed class CropViewControl : Grid
         set => _zoomView.CenterAlign = value;
     }
 
-    /// <summary>画像の下地（市松模様・背景色）の外観を取得または設定する（内包するズームビューの外観の写し）。</summary>
-    /// <value>市松模様の大きさ・2 色と下地色（下地・市松・スクロールバーをコアが単一所有する）。</value>
+    /// <summary>画像の下地（背景色）の外観を取得または設定する（内包するズームビューの外観の写し）。</summary>
+    /// <value>下地色（下地・スクロールバーをコアが単一所有する）。</value>
     /// <remarks>
-    /// 外観の既定値・描画可否（市松なし・背景が透明）はコアの <see cref="ZoomViewAppearance"/> が単一所有する。<br/>
-    /// Avalonia 版は市松模様をホストが <c>Brush</c> で供給する（自 UI の描画機構に合わせた非対称）。
+    /// 外観の既定値・描画可否はコアの <see cref="ZoomViewAppearance"/> が単一所有する。<br/>
+    /// 画像が無い部分の下地はホスト（テーマのブラシ）が供給する（自 UI の描画機構に合わせた非対称）。
     /// </remarks>
     public ZoomViewAppearance Appearance
     {

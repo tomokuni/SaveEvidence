@@ -36,7 +36,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 /// <b>UI 固有のホスト結線</b>: プレビューの切り出しは既存のビュー（<see cref="CropViewControl"/>）を操作するため、<br/>
 /// ホストが生成したコントロールを本クラスへ渡す（切り出しの対象画像は <see cref="CropViewControl.Source"/> が単一所有する）。<br/>
 /// <br/>
-/// <b>テーマ</b>: 切り出しのルーペの市松模様の下地色はテーマに依存する。 テーマ変更の購読はホストが行い、<br/>
+/// <b>テーマ</b>: 切り出しのルーペの下地色はテーマに依存する。 テーマ変更の購読はホストが行い、<br/>
 /// <see cref="AppearanceSettings"/> で反映する（本クラスはテーマの通知元を知らない）。
 /// </remarks>
 public sealed class CaptureSessionControl : IDisposable

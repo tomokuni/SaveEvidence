@@ -121,7 +121,7 @@ session.Dispose();
 | --- | --- | --- |
 | `Source` | `EsReadOnlyBitmap?` | 表示する画像。 設定すると Fit 表示へリセットする |
 | `CenterAlign` | `bool` | 画像がビューポートより小さい軸を中央寄せする |
-| `Appearance` | `ZoomViewAppearance` | 下地（市松模様の大きさ・2 色・背景色）の外観の単一値 |
+| `Appearance` | `ZoomViewAppearance` | 下地色の外観の単一値 |
 | `Rects` | `IReadOnlyList<OverlayRect>` | オーバーレイとして描画する矩形（対象座標） |
 | `HighlightSourceRect` | `EsRect?` | 強調する矩形（対象座標）。 `null` は強調なし |
 | `HighlightAppearance` | `MarqueeAppearance` | 強調の外観（色・枠線の太さ・表示可否）の単一値。 既定は内側の塗りと枠線だけ |
@@ -201,7 +201,7 @@ session.Dispose();
 - **ズーム中心維持**: マウスポインタ位置（画像外はビューポート中心）を中心に拡大縮小し、中心のコンテンツ座標を不変に保つ
 - **パン**: 左ドラッグ（grab 方式）/ ホイール（縦・Shift で横）/ スクロールバー（オーバーレイ表示）
 - **描画**: SkiaSharp で画像を 1 回の `DrawBitmap` で表示矩形へ描画する（Avalonia 版は `Image` + `RenderTransform`）
-- **市松模様**: 画像の透明部分の背景を `Appearance`（コアの `ZoomViewAppearance`）で指定する。 描くのは画像の表示矩形の内側だけで、画像の外（ペーストボード）は下地色の単色になる
+- **下地**: 画像が無い部分は `Appearance`（コアの `ZoomViewAppearance`）の下地色の単色になる（市松模様は描かない）
 
 | 操作 | 内容 |
 | --- | --- |

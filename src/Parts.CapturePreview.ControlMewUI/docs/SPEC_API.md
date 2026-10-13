@@ -194,7 +194,7 @@ Facade は次のサービスをコンストラクタで生成し、撮影セッ�
 | --- | --- | --- | --- |
 | `Source` | `EsReadOnlyBitmap?` | `null` | 表示する画像。 設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする |
 | `CenterAlign` | `bool` | `true` | 画像がビューポートより小さい軸を中央寄せする（false で左上寄せ） |
-| `Appearance` | `ZoomViewAppearance` | 暗色の下地・市松模様なし | 下地（市松模様の大きさ・2 色・背景色）の外観の**単一値**。 コアが単一所有する |
+| `Appearance` | `ZoomViewAppearance` | 暗色の下地 | 下地色の外観の**単一値**。 コアが単一所有する |
 | `Rects` | `IReadOnlyList<OverlayRect>` | 空 | オーバーレイとして描画する矩形（対象座標 = 元画像ピクセル座標）。 null は設定できない |
 | `HighlightSourceRect` | `EsRect?` | `null` | 強調する矩形（対象座標 = 元画像ピクセル座標）。 `null` は強調なし。 対象座標 → ビューポート座標の写像は本コントロールが単一所有する（ホストは座標変換を持たない） |
 | `HighlightAppearance` | `MarqueeAppearance`（提示層） | 内側の塗りと枠線だけ | 強調の外観（色・枠線の太さ・表示可否）の**単一値**。 既定は `CropViewControl.HighlightDefaultAppearance` |
@@ -394,7 +394,7 @@ MewUI 版はコア型（`EsReadOnlyBitmap` / `EsPoint` / `EsVector`）で入出�
 | メンバー | シグネチャ | 説明 |
 | --- | --- | --- |
 | `Source` | `EsReadOnlyBitmap?`（読み書き） | ズーム対象の画像。 設定すると Fit 表示にリセット |
-| `Appearance` | `ZoomViewAppearance`（読み書き） | 外観の単一値（下地色・市松模様（サイズと 2 色）・スクロールバー）。 市松模様は画像の表示矩形の内側だけに描き、画像の外は下地色の単色になる |
+| `Appearance` | `ZoomViewAppearance`（読み書き） | 外観の単一値（下地色・スクロールバー）。 画像が無い部分は下地色の単色になる（市松模様は描かない） |
 | `ZoomPercent` | `double`（読み書き） | 実効ズーム率（%）。 0 より大きい値のみ設定（0 以下は無視。 Fit へは `ZoomFit`）。 設定値は `ZoomOptions` の範囲へクランプする |
 | `IsFit` | `bool` | Fit 表示中かどうか（Fit 判定はこちら。 `ZoomPercent` は 0 にならない） |
 | `CenterAlign` | `bool`（読み書き） | 画像の中央寄せ / 左上寄せ（軸ごとに独立） |

@@ -144,7 +144,7 @@ internal sealed class CaptureOverlay
             Mode = CaptureLabelTexts.ToSelectionMode(type),
             Log = _log,         // 設定はコアのマッパーで 1 値に変換して一括適用する（変換はコアが単一所有する）。
                                 // 色は描画にだけ必要な設定のため、描画の設定として与える
-                                // （ルーペの市松模様の下地色は透明にし、背後の撮影画像を透かす。 Avalonia 版と同じ扱いにする）
+                                // （ルーペの下地色は透明にし、背後の撮影画像を透かす。 Avalonia 版と同じ扱いにする）
             Options = settings.ToSelectionOverlayOptions(),
             MarqueeAppearance = CapturePaintMapper.ToMarqueeAppearance(settings),
             LoupeAppearance = CapturePaintMapper.ToLoupeAppearance(settings)

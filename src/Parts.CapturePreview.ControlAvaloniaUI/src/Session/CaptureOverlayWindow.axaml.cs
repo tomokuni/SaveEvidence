@@ -191,7 +191,7 @@ internal sealed partial class CaptureOverlayWindow : Window
         // モード写像（キャプチャ種別 → 動作モード）はキャプチャコアが単一所有する
         SelectionOverlay.Mode = CaptureLabelTexts.ToSelectionMode(_captureType);
         // 設定を複合コントロールの設定値（1 値）へ変換して一括適用する（変換はコアのマッパーが単一所有する）。
-        // ルーペの市松模様の下地色は塗らない（Avalonia 版は背後に固定背景画像を置くため透明で透かす）
+        // ルーペの下地色は塗らない（Avalonia 版は背後に固定背景画像を置くため透明で透かす）
         SelectionOverlay.Options = s.ToSelectionOverlayOptions();
         // 描画に使う色（暗転・枠線・ハンドル・ラベル・ルーペ）は設定から写像する
         // （設定を反映しないと、切り出し（Crop）とキャプチャで見た目が食い違う）

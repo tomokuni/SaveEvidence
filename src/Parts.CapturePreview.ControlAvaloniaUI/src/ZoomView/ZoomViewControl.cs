@@ -27,9 +27,6 @@ public sealed class ZoomViewControl : Panel
     /// <summary>パン・ズーム表示を担う内部ビューポート（本コントロールが生成・保持する）。</summary>
     private readonly ZoomableView _zoomableView;
 
-    /// <summary>画像の透明部分の背景（市松模様）を描く内部ビュー（画像より先に描くため最初の子にする）。</summary>
-    private readonly CheckerboardView _checkerboard;
-
     /// <summary>既定の設定でズームビューコントロールを初期化する。</summary>
     /// <remarks>ズーム遷移の設定は <see cref="ZoomOptions.Default"/> を使用する。 カスタマイズは <see cref="ZoomViewControl(ZoomOptions)"/> を使用する。</remarks>
     public ZoomViewControl() : this(ZoomOptions.Default) { }
@@ -44,8 +41,6 @@ public sealed class ZoomViewControl : Panel
     {
         _zoomableView = new ZoomableView();
         _zoomableView.Session.ApplyConfig(config);
-        _checkerboard = new CheckerboardView(_zoomableView.Session);
-        Children.Add(_checkerboard);
         Children.Add(_zoomableView);
         _zoomableView.Session.Subscribe(OnSessionNotified);
     }
@@ -97,12 +92,11 @@ public sealed class ZoomViewControl : Panel
         set => _zoomableView.Source = value;
     }
 
-    /// <summary>外観（下地・市松模様・スクロールバーの色）を取得または設定する。</summary>
+    /// <summary>外観（スクロールバーの色）を取得または設定する。</summary>
     /// <value>外観の単一値。 既定は <see cref="ZoomViewAppearance.Default"/>。</value>
     /// <remarks>
-    /// <b>市松模様は画像の透明部分の背景</b>であり、描く範囲（画像の表示矩形の内側）はコア（<see cref="ZoomViewAppearance.ComputeCheckerArea"/>）が単一所有する。<br/>
-    /// 画像の外（ペーストボード）は下地色（<see cref="ZoomViewAppearance.BackgroundColor"/>）の単色になる。<br/>
-    /// 変更すると再描画される（市松模様は本コントロールが描画する）。
+    /// 画像が無い部分は本コントロールの背景（テーマのブラシ）の単色になる（市松模様は描かない）。<br/>
+    /// 変更すると再描画される。
     /// </remarks>
     public ZoomViewAppearance Appearance
     {
@@ -110,7 +104,6 @@ public sealed class ZoomViewControl : Panel
         set
         {
             _zoomableView.ApplyFeedback(Session.SetAppearance(value));
-            _checkerboard.InvalidateVisual();
         }
     }
 
@@ -257,8 +250,6 @@ public sealed class ZoomViewControl : Panel
                 ZoomChanged?.Invoke(this, new ZoomChangedEventArgs(notice.State));
                 break;
             case ZoomNoticeKind.ViewportChanged:
-                // 市松模様は画像の表示矩形に追従するため、市松ビューも描き直す
-                _checkerboard.InvalidateVisual();
                 ViewportChanged?.Invoke(this, EventArgs.Empty);
                 break;
         }

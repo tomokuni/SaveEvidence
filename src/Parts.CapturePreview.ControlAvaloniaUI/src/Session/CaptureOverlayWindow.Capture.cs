@@ -39,7 +39,7 @@ internal sealed partial class CaptureOverlayWindow
             }
         }
         // ルーペの表示はマウス移動（Marquee の LoupePositionMoved）が行う。
-        // ここで中央に表示するとポインタから遠くに描画され、Source 未設定の市松模様も見えるため表示しない。
+        // ここで中央に表示するとポインタから遠くに描画され、Source 未設定の下地も見えるため表示しない。
     }
 
     /// <summary>選択を確定してキャプチャする（選択矩形が浮動小数 = ドラッグ選択・ハイライト）。</summary>
@@ -192,7 +192,7 @@ internal sealed partial class CaptureOverlayWindow
     /// ルーペ中心は対象座標（仮想スクリーンピクセル）が既に Bitmap 上の座標と一致する。<br/>
     /// 確定時の切り出し（<see cref="CompleteSelection(EsRect)"/>）では保持している原点を減算して Bitmap 上の座標に変換する。<br/>
     /// ルーペの Source も同時に設定する（AreaSelect のウィンドウ表示時は Bitmap が未取得のため、
-    /// 取得完了時に改めて設定しないと市松模様のままになる）。<br/>
+    /// 取得完了時に改めて設定しないと下地のままになる）。<br/>
     /// <b>クローズ後</b>: ウィンドウの後片付けが済んでおり、渡された Bitmap は保持せずその場で破棄される<br/>
     /// （背景撮影の完了がキャンセルより遅れた場合の破棄漏れを防ぐ。 規則はコアの保持クラスが単一所有する）。
     /// </remarks>
@@ -215,7 +215,7 @@ internal sealed partial class CaptureOverlayWindow
         previousImage?.Dispose();
 
         // ルーペの Source を設定する（固定背景画像と同一のアダプタを共有する）。
-        // Source 未設定の間はルーペが表示されない（市松模様防止）ため、ここで Source を設定し、
+        // Source 未設定の間はルーペが表示されないため、ここで Source を設定し、
         // 既にドラッグ中（CenterPoint 設定済み）なら SetLoupePosition を再呼び出しして表示を開始する。
         if (_displayImage is not null && !CaptureTypeTraits.IsHighlighted(_captureType))
         {

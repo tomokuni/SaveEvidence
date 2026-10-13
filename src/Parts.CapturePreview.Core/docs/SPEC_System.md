@@ -346,7 +346,7 @@ classDiagram
     class ZoomState { <<readonly record struct>> +double ZoomPercent  +bool IsFit  +bool CanZoomIn  +bool CanZoomOut }
     class ZoomFeedback { <<readonly record struct>> +bool ShouldRedraw  +bool ShouldCapturePointer  +bool ShouldReleasePointer  +ApplyVisual(redraw)$  +ApplyPointer(capture, release)$ }
     class ZoomNotice { <<sealed record>> +ZoomNoticeKind Kind  +ZoomState State  +EsRect ImageRect }
-    class ZoomViewAppearance { <<sealed record>> +Color BackgroundColor  +ComputeCheckerArea(...)$  +EnumerateLightTileRects(...)$ }
+    class ZoomViewAppearance { <<sealed record>> +Color BackgroundColor  +bool HasScrollBarTrack }
     class ZoomScrollBarGeometry { <<static>> +Compute(...)$  +MovableThumbRange(...)$  +SourceOffsetFromThumb(...)$ }
     class ZoomTransition { <<static>> +NextLevel(...)$  +PrevLevel(...)$  +WheelZoomIn(...)$  +WheelZoomOut(...)$  +BuildAvailability(...)$ }
     class ZoomMath { <<static>> +FitScale(...)$  +ComputeOffsetAfterScaleChange(...)$  +ClampOffset(...)$  +ClientToSource(...)$ }
@@ -454,5 +454,5 @@ sequenceDiagram
 | `SelectionOutlineRasterizer` | 破線の列挙と描画の画素検証 |
 | `ZoomViewSession` | 実効ズーム率の導出・Fit の表現・可否・遷移の適用（ズーム中心の維持）・パン・Fit 復帰・スクロールバーのドラッグ |
 | `ZoomOptions` / `ZoomTransition` / `ZoomMath` | 不変条件の検証と `With` による部分更新・ 23 段階／ホイール遷移・可否判定・Fit 実効倍率・クランプ・座標変換 |
-| `ZoomViewAppearance` / `ZoomScrollBarGeometry` / `CapturePreviewLogMessage` | 描画可否・市松模様の範囲とタイル矩形（一覧を作る版と作らない版）・トラック／サムの矩形と逆算・ログ書式 |
+| `ZoomViewAppearance` / `ZoomScrollBarGeometry` / `CapturePreviewLogMessage` | 下地色・描画可否（トラック）・トラック／サムの矩形と逆算・ログ書式 |
 | `ZoomWheelIntent` | ホイールの解釈（Ctrl = ズーム / それ以外 = パン、Shift = 横方向、Ctrl 優先） |

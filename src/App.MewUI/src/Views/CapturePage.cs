@@ -56,12 +56,6 @@ internal static class CapturePage
     /// <remarks>アイコンは SVG を指定色でラスタライズするため、テーマ変更時は同じファイルから描き直す。</remarks>
     private sealed record IconImage(Image Image, string File);
 
-    /// <summary>市松模様の明色の既定（設定の色文字列が不正な場合に使う）。</summary>
-    private static readonly System.Drawing.Color s_defaultCheckerColorA = System.Drawing.Color.FromArgb(255, 255, 255, 255);
-
-    /// <summary>市松模様の暗色の既定（設定の色文字列が不正な場合に使う）。</summary>
-    private static readonly System.Drawing.Color s_defaultCheckerColorB = System.Drawing.Color.FromArgb(255, 204, 204, 204);
-
     /// <summary>テーマに合わせてアイコンを描き直す。</summary>
     /// <param name="icons">描き直す対象（<see cref="IconImage"/> の一覧）。</param>
     private static void RefreshIcons(List<IconImage> icons)
@@ -369,7 +363,6 @@ internal static class CapturePage
         root.Add(zoomMenu.Column(0));
 
         // テーマが変わったらスタイルで表せない値（アイコンの色）を描き直す
-        // （市松模様の背景色はプレビューの生成側で再適用する）
         AppStyles.ThemeChanged += (_, _) => RefreshIcons(iconImages);
 
         return new PageContent(root, OnKeyDown: e =>
@@ -661,12 +654,12 @@ internal static class CapturePage
 
         cropView.Source = viewModel.PreviewImage;
         SyncRects();
-        ApplyCheckerboard(cropView, settings);
+        ApplyPreviewBackground(cropView);
         cropView.CenterAlign = settings.CenterAlign;
         host.Children(cropView);
 
-        // テーマが変わったら市松模様の下地色（テーマの背景色）を描き直す
-        AppStyles.ThemeChanged += (_, _) => ApplyCheckerboard(cropView, settings);
+        // テーマが変わったら下地色（テーマの背景色）を描き直す
+        AppStyles.ThemeChanged += (_, _) => ApplyPreviewBackground(cropView);
 
         // マウス移動はヒットテスト対象の要素（ズームビュー）だけが受け取るため、ズームビューへ購読する
         // （祖先の CropViewControl へは移動イベントが届かない）。 ズームビューはプレビュー領域全体を占めるため、
@@ -715,14 +708,10 @@ internal static class CapturePage
             viewModel.CancelAutoCropCommand.Execute(null);
         });
 
-        // 市松模様の色・中央寄せを変えたときにプレビューへ即時反映する
+        // 中央寄せを変えたときにプレビューへ即時反映する
         settings.PropertyChanged += (_, e) =>
         {
-            if (IsCheckerSetting(e.PropertyName))
-            {
-                ApplyCheckerboard(cropView, settings);
-            }
-            else if (string.Equals(e.PropertyName, nameof(Settings.CenterAlign), StringComparison.Ordinal))
+            if (string.Equals(e.PropertyName, nameof(Settings.CenterAlign), StringComparison.Ordinal))
             {
                 cropView.CenterAlign = settings.CenterAlign;
             }
@@ -912,57 +901,18 @@ internal static class CapturePage
             Math.Clamp(content.Y, 0, image.Height - 1));
     }
 
-    /// <summary>設定の変更がプレビューの市松模様に関係するかどうかを判定する。</summary>
-    /// <param name="propertyName">変更されたプロパティ名。</param>
-    /// <returns>市松模様に関係する場合は true。</returns>
-    private static bool IsCheckerSetting(string? propertyName)
-        => propertyName is nameof(Settings.PreviewCheckerSize)
-            or nameof(Settings.PreviewCheckerColorA) or nameof(Settings.PreviewCheckerColorB);
-
-    /// <summary>設定の市松模様（サイズ・色）をプレビューへ反映する。</summary>
+    /// <summary>プレビューの下地色（テーマのページ背景）を反映する。</summary>
     /// <param name="cropView">対象のクロップビュー。</param>
-    /// <param name="settings">設定。</param>
-    /// <remarks>
-    /// 外観はコアの <see cref="ZoomViewAppearance"/> 1 値（既定は <see cref="ZoomViewAppearance.Default"/>）で与える。<br/>
-    /// 色は設定の <c>#AARRGGBB</c> 文字列のため、パースに失敗した場合は既定色として扱う（描画を止めない）。<br/>
-    /// サイズが 0 以下の場合は市松模様を描画しない（描画可否の判定はコアが単一所有する）。<br/>
-    /// 市松模様の色は半透明のため、下地（テーマのページ背景）を塗る。
-    /// </remarks>
-    private static void ApplyCheckerboard(CropViewControl cropView, Settings settings)
+    /// <remarks>画像が無い部分（ペーストボード）はこの色の単色になる（市松模様は描かない）。</remarks>
+    private static void ApplyPreviewBackground(CropViewControl cropView)
     {
         var background = AppStyles.CurrentPageBackground;
 
         // 下地はテーマのページ背景（S / R / G / B の並びは設定の #AARRGGBB と同じ）
         cropView.Appearance = ZoomViewAppearance.Default with
         {
-            CheckerSize = settings.PreviewCheckerSize,
-            CheckerColorA = ParseColor(settings.PreviewCheckerColorA, s_defaultCheckerColorA),
-            CheckerColorB = ParseColor(settings.PreviewCheckerColorB, s_defaultCheckerColorB),
             BackgroundColor = System.Drawing.Color.FromArgb(background.A, background.R, background.G, background.B),
         };
     }
 
-    /// <summary>設定の色文字列（<c>#AARRGGBB</c>）をコアの色型へ変換する。</summary>
-    /// <param name="value">色文字列。</param>
-    /// <param name="fallback">パースできない場合の色。</param>
-    /// <returns>変換した色。</returns>
-    private static System.Drawing.Color ParseColor(string? value, System.Drawing.Color fallback)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return fallback;
-        }
-
-        var text = value.TrimStart('#');
-        if (!uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, null, out var argb))
-        {
-            return fallback;
-        }
-
-        return System.Drawing.Color.FromArgb(
-            (byte)((argb >> 24) & 0xFF),
-            (byte)((argb >> 16) & 0xFF),
-            (byte)((argb >> 8) & 0xFF),
-            (byte)(argb & 0xFF));
-    }
 }

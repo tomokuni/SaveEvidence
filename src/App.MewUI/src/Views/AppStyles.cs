@@ -241,7 +241,7 @@ internal static class AppStyles
     private static readonly MewUIColor s_navBackgroundDark = MewUIColor.FromArgb(255, 31, 31, 31);
 
     /// <summary>ページ（ウィンドウ）の背景色（明色テーマ用）。</summary>
-    /// <remarks>Avalonia 版のウィンドウ背景と同じ値（市松模様の下地も兼ねる）。</remarks>
+    /// <remarks>Avalonia 版のウィンドウ背景と同じ値。</remarks>
     private static readonly MewUIColor s_pageBackgroundLight = MewUIColor.FromArgb(255, 255, 255, 255);
 
     /// <summary>ページ（ウィンドウ）の背景色（暗色テーマ用）。</summary>
@@ -424,8 +424,7 @@ internal static class AppStyles
     /// <summary>ページ（ウィンドウ）の背景色を取得する（現在のテーマ）。</summary>
     /// <value>明色テーマは白・暗色テーマは黒（不透明）。</value>
     /// <remarks>
-    /// スタイルではなくローカル値で設定する必要がある箇所（ウィンドウの背景・市松模様の下地）で使う。<br/>
-    /// 市松模様の色（<c>PreviewCheckerColorA</c> / <c>PreviewCheckerColorB</c>）は半透明のため、<br/>
+    /// スタイルではなくローカル値で設定する必要がある箇所（ウィンドウの背景・画像が無い部分の下地）で使う。<br/>
     /// 下地を塗らないと後ろの要素（プレビューの画像等）が透けて見える（Avalonia 版はページ背景の上へ重ねる）。
     /// </remarks>
     public static MewUIColor CurrentPageBackground

@@ -702,12 +702,12 @@ public class ZoomViewSessionTests
     {
         var session = new ZoomViewSession();
 
-        var changed = session.SetAppearance(ZoomViewAppearance.Default with { CheckerSize = 8 });
-        var same = session.SetAppearance(ZoomViewAppearance.Default with { CheckerSize = 8 });
+        var changed = session.SetAppearance(ZoomViewAppearance.Default with { ShowScrollBars = false });
+        var same = session.SetAppearance(ZoomViewAppearance.Default with { ShowScrollBars = false });
 
         Assert.True(changed.ShouldRedraw);
         Assert.Equal(default, same);
-        Assert.Equal(8, session.Appearance.CheckerSize);
+        Assert.False(session.Appearance.ShowScrollBars);
     }
 
     /// <summary>中央寄せの設定がビューポートの通知を伴い、同値では何もしないことを検証する。</summary>
