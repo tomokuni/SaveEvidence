@@ -119,6 +119,10 @@ public sealed class SelectionOverlayControl : Panel
         // ルーペ描画完了時に選択矩形の破線オーバーレイを描画する（LoupeControl の選択矩形 API は削除済み）
         _loupeControl.Rendered += OnLoupeRendered;
 
+        // ルーペの中心は、描画の直前に実カーソルからも取り直す（1 フレームに 1 回の再描画の中で取り直すため、
+        // 表示位置と拡大画像が同じ中心で揃う。 取り直しの可否はコアが単一所有する）
+        _loupeControl.CenterPointProvider = () => _marquee.TryGetCurrentLoupePosition(out var current) ? current : null;
+
         // 設定の既定値を子コントロールへ分配する（モードの状態適用は ApplyOptions の内部で行われる）
         ApplyOptions();
     }
@@ -685,12 +689,16 @@ public sealed class SelectionOverlayControl : Panel
     /// 表示位置・サイズは LoupeControl が座標変換ポートから自己計算する（カーソル右下 + オフセット + 親領域内への補正）。<br/>
     /// <b>拡大元画像が未設定の間は表示しない</b>（AreaSelect の背景キャプチャ完了前は Source が null のため、<br/>
     /// 表示すると下地が見える。 Source 設定後の表示開始はホスト（<see cref="SetLoupePosition"/> 経由）が行う）。<br/>
-    /// ホストへの通知（<see cref="LoupePositionMoved"/>）は追加制御（Source 設定等）のフックとして発行する。
+    /// ホストへの通知（<see cref="LoupePositionMoved"/>）は追加制御（Source 設定等）のフックとして発行する。<br/>
+    /// <b>中心はイベントの座標ではなく実カーソルから取り直す</b>（ポインター移動イベントの座標は入力へ積まれた分だけ古く、<br/>
+    /// そのまま使うとルーペがカーソルより遅れて見える。 取り直しの可否はコアが単一所有する）。<br/>
+    /// 取り直しは拡大元画像が設定された後も描画の直前に行われる（ルーペの拡大中心の取り直し）。
     /// </remarks>
     private void OnLoupePositionMoved(object? sender, MarqueePointEventArgs e)
     {
-        UpdateLoupePosition(e.Point);
-        RaiseLoupePositionMoved(e.Point);
+        var sourcePos = _marquee.TryGetCurrentLoupePosition(out var current) ? current : e.Point;
+        UpdateLoupePosition(sourcePos);
+        RaiseLoupePositionMoved(sourcePos);
     }
 
     // ====================================================================

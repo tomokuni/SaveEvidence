@@ -660,12 +660,16 @@ public sealed class SelectionOverlayControl : Panel
     /// <remarks>
     /// 拡大元画像が未設定の間は表示しない（ホストが <see cref="SetLoupeSource"/> を呼んだ後、<br/>
     /// <see cref="SetLoupePosition"/> で表示を開始する）。<br/>
-    /// ホストへの通知は追加制御（拡大元画像の設定等）のフックとして発行する。
+    /// ホストへの通知は追加制御（拡大元画像の設定等）のフックとして発行する。<br/>
+    /// <b>中心はイベントの座標ではなく実カーソルから取り直す</b>（ポインター移動イベントの座標は入力へ積まれた分だけ古く、<br/>
+    /// そのまま使うとルーペがカーソルより遅れて見える。 取り直しの可否はコアが単一所有する）。<br/>
+    /// 取り直した中心は本コントロールの再配置と描画（同じフレームで行われる）へそのまま反映される。
     /// </remarks>
     private void OnLoupePositionMoved(EsPoint sourcePos)
     {
-        UpdateLoupePosition(sourcePos);
-        RaiseLoupePositionMoved(sourcePos);
+        var position = _marquee.TryGetCurrentLoupePosition(out var current) ? current : sourcePos;
+        UpdateLoupePosition(position);
+        RaiseLoupePositionMoved(position);
     }
 
     // ====================================================================
