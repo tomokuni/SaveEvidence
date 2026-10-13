@@ -82,6 +82,22 @@ function Start-DocsVerification {
     return [pscustomobject]@{ Process = $process; OutFile = $base + '.out'; ErrFile = $base + '.err' }
 }
 
+# 走査の子プロセスと一時ファイルの後始末をする（回収済みなら何もしない。 二重に呼んでも安全）。
+function Stop-DocsVerification($Background) {
+    if ($null -eq $Background) {
+        return
+    }
+
+    if (-not $Background.Process.HasExited) {
+        $Background.Process.Kill()
+        $Background.Process.WaitForExit()
+    }
+
+    foreach ($file in @($Background.OutFile, $Background.ErrFile)) {
+        Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue
+    }
+}
+
 # 走査の出力をそのまま出し、合否を取り込む。 完走の印（##DOCS-DONE）が無ければ不合格にする
 # （走査の失敗を「違反 0 件」と読み替えないため）。
 function Receive-DocsVerification($Background) {
@@ -137,6 +153,12 @@ $restoreArgs = if ($NoRestore) { @('--no-restore') } else { @() }
 # 文書とコードの走査をここで起動する（ビルド・テストと重ねるため、結果を出す位置より先に始める）。
 # -Fix のときは直列にする（修正と判定の順序が決まっているため）ので、ここでは起動しない。
 $docsBackground = if ($Fix) { $null } else { Start-DocsVerification }
+
+# 途中で例外が出ても走査の子プロセスと一時ファイルを残さない（`break` で例外はそのまま伝える）。
+trap {
+    Stop-DocsVerification $docsBackground
+    break
+}
 
 # ============================================================
 # 1. ビルド（0 エラー / 0 警告。 IDE0005・書式・アナライザー・ドキュメントコメントを同時に検証する）
