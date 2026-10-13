@@ -649,9 +649,11 @@ public readonly record struct OverlayRect(
 
 ### 10.5 `ZoomViewAppearance`（外観）
 
-下地色・市松模様（タイルサイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を単一所有します。 描画の可否（`HasCheckerboard` / `HasScrollBarTrack`）と、市松模様を描く範囲（`ComputeCheckerArea`。 画像の表示矩形とビューポートの交差）・明色タイル矩形（`ComputeLightTileRects`）・タイルサイズの実効値（`ResolveCheckerTileSize`。 0 以下 = 描かない / 1 は下限 2 へ切り上げ）も本型が持ちます。 色は UI 非依存の `System.Drawing.Color` です。
+下地色・市松模様（タイルサイズと 2 色）・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を単一所有します。 描画の可否（`HasCheckerboard` / `HasScrollBarTrack`）と、市松模様を描く範囲（`ComputeCheckerArea`。 画像の表示矩形とビューポートの交差）・明色タイル矩形（`ComputeLightTileRects`。 一覧として返す版と、一覧を作らずに順に返す `EnumerateLightTileRects`）・タイルサイズの実効値（`ResolveCheckerTileSize`。 0 以下 = 描かない / 1 は下限 2 へ切り上げ）も本型が持ちます。 色は UI 非依存の `System.Drawing.Color` です。
 
 **市松模様は画像の透明部分の背景**であり、描く範囲は画像の表示矩形の内側に限ります（画像の外＝ペーストボードは下地色 `BackgroundColor` の単色になります）。 タイルの格子はビューポートの原点 `(0, 0)` を基準にするため、画像をパンしても模様が這いません。 範囲の外へはみ出すタイルは範囲で切り取った矩形として返します（呼び出し側は描画先をクリップする必要がありません）。
+
+**描画の経路は `EnumerateLightTileRects` を使います**。 タイルは画面を覆う数になり（タイル 8 DIP の 1920x1080 で約 16,000 個）、一覧へ実体化すると描画のたびに数百 KB を確保します。 配置規則（`(列 + 行)` が偶数・原点はビューポート）は `EnumerateLightTileRects` だけが持ち、`ComputeLightTileRects` はそれを実体化するだけです（規則が 2 箇所に存在しません）。
 
 ### 10.6 `ZoomScrollBar` / `ZoomScrollBarMetrics` / `ZoomScrollBarGeometry` / `ZoomAvailability`
 

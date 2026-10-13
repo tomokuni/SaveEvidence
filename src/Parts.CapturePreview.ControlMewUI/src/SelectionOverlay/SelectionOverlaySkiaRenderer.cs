@@ -15,6 +15,10 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 /// </remarks>
 internal static class SelectionOverlaySkiaRenderer
 {
+    /// <summary>破線の塗りのペイント（スレッドごとに 1 つを使い回す）。</summary>
+    [ThreadStatic]
+    private static SKPaint? s_fill;
+
     /// <summary>選択矩形の 4 辺を 2 色の破線でキャンバスへ描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（ピクセル等倍で描画できる状態であること）。</param>
     /// <param name="selectionSourceRect">選択矩形（対象座標系・半開区間）。</param>
@@ -34,7 +38,8 @@ internal static class SelectionOverlaySkiaRenderer
     {
         ArgumentNullException.ThrowIfNull(canvas);
 
-        using var paint = new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill };
+        // 破線は 2 色を交互に使うため、ペイントを 1 つ持ち色だけを書き換える
+        var paint = s_fill ??= new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill };
 
         foreach (var dash in SelectionOutlineRasterizer.EnumerateDashes(selectionSourceRect, captureTopLeft, scale, pixelSize))
         {

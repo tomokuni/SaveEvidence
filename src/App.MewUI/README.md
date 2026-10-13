@@ -286,7 +286,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 画像の中央寄せ / 左上寄せは設定（「外観設定」）の `CenterAlign` に追従します（`CropViewControl.CenterAlign`）。
 市松模様の色は半透明のため、下地（明色テーマは白・暗色テーマは黒）と合成して表示します（実測で明色 229 / 暗色 199、ダークは明色 73 / 暗色 50）。
 
-**市松模様は画像の透明部分の背景**であるため、描くのは画像の表示矩形の内側だけです（画像のレターボックス＝ペーストボードは下地色の単色になります）。 範囲とタイルの位置はコア（`ZoomViewAppearance.ComputeCheckerArea` / `ComputeLightTileRects`）が単一所有します。
+**市松模様は画像の透明部分の背景**であるため、描くのは画像の表示矩形の内側だけです（画像のレターボックス＝ペーストボードは下地色の単色になります）。 範囲とタイルの位置はコア（`ZoomViewAppearance.ComputeCheckerArea` / `ZoomViewAppearance.EnumerateLightTileRects`）が単一所有します。
 
 ## 22. ルーペ（切り出し中のみ）
 

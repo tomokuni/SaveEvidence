@@ -121,19 +121,29 @@ public sealed record ZoomViewAppearance
     /// 領域の外へはみ出すタイルは領域で切り取って返す（呼び出し側は描画先をクリップする必要がない）。<br/>
     /// タイルサイズは <see cref="ResolveCheckerTileSize"/> が解決した実効値を使う。
     /// </remarks>
-    public IReadOnlyList<EsRect> ComputeLightTileRects(EsRect area)
+    public IReadOnlyList<EsRect> ComputeLightTileRects(EsRect area) => [.. EnumerateLightTileRects(area)];
+
+    /// <summary>市松模様の明色タイル（色 A）の矩形を、一覧を作らずに順に返す。</summary>
+    /// <param name="area">市松模様を描く領域（ビューポート座標・DIP。 例: <see cref="ComputeCheckerArea"/> の結果）。</param>
+    /// <returns>明色タイルの矩形（描画の順は行ごと・列ごと）。 市松模様を描かない場合・領域が空の場合は空。</returns>
+    /// <remarks>
+    /// <b>描画の経路が使う入口</b>です。 タイルは画面を覆う数になり（タイル 8 DIP の 1920x1080 で約 16,000 個）、
+    /// <b>一覧へ実体化すると描画のたびに数百 KB を確保します</b>。 描くだけの呼び出し側は本メソッドを使います。<br/>
+    /// 配置規則（<c>(列 + 行)</c> が偶数・原点はビューポート）は <see cref="ComputeLightTileRects"/> と共通であり、
+    /// 規則は本メソッドだけが持ちます（<see cref="ComputeLightTileRects"/> は本メソッドを実体化するだけです）。
+    /// </remarks>
+    public IEnumerable<EsRect> EnumerateLightTileRects(EsRect area)
     {
         var tile = ResolveCheckerTileSize(CheckerSize);
         if (tile <= 0 || area.IsEmpty)
         {
-            return [];
+            yield break;
         }
 
         var firstColumn = (int)Math.Floor(area.X / tile);
         var lastColumn = (int)Math.Ceiling(area.Right / tile) - 1;
         var firstRow = (int)Math.Floor(area.Y / tile);
         var lastRow = (int)Math.Ceiling(area.Bottom / tile) - 1;
-        var rects = new List<EsRect>(((lastColumn - firstColumn + 1) * (lastRow - firstRow + 1) + 1) / 2);
 
         for (var row = firstRow; row <= lastRow; row++)
         {
@@ -147,11 +157,9 @@ public sealed record ZoomViewAppearance
                 var clipped = new EsRect(column * tile, row * tile, tile, tile).Intersect(area);
                 if (!clipped.IsEmpty)
                 {
-                    rects.Add(clipped);
+                    yield return clipped;
                 }
             }
         }
-
-        return rects;
     }
 }

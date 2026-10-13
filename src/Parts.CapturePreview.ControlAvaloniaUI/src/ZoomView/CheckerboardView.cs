@@ -51,7 +51,8 @@ internal sealed class CheckerboardView : Control
             area.ToAvaloniaRect());
 
         var lightBrush = SolidColorBrushCache.GetOrCreate(appearance.CheckerColorA);
-        foreach (var tile in appearance.ComputeLightTileRects(area))
+        // タイルは画面を覆う数になるため、一覧を作らずに順に描く（毎フレームの確保をなくす）
+        foreach (var tile in appearance.EnumerateLightTileRects(area))
         {
             context.FillRectangle(lightBrush, tile.ToAvaloniaRect());
         }

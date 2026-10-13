@@ -526,6 +526,22 @@ public sealed class ZoomViewControl : SkiaCanvasView
         }
     }
 
+    /// <summary>市松模様に使う塗りのペイント（スレッドごとに 1 つを使い回す）。</summary>
+    [ThreadStatic]
+    private static SKPaint? s_checkerDark;
+
+    /// <summary>明色タイルのペイント（スレッドごとに 1 つを使い回す）。</summary>
+    [ThreadStatic]
+    private static SKPaint? s_checkerLight;
+
+    /// <summary>トラックのペイント（スレッドごとに 1 つを使い回す）。</summary>
+    [ThreadStatic]
+    private static SKPaint? s_track;
+
+    /// <summary>サムのペイント（スレッドごとに 1 つを使い回す）。</summary>
+    [ThreadStatic]
+    private static SKPaint? s_thumb;
+
     /// <summary>市松模様（画像の透明部分の背景）を描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
     /// <param name="viewport">ビューポートのサイズ（DIP）。</param>
@@ -544,13 +560,17 @@ public sealed class ZoomViewControl : SkiaCanvasView
             return;
         }
 
-        using var light = new SKPaint { IsAntialias = false, Color = appearance.CheckerColorA.ToSKColor() };
-        using var dark = new SKPaint { IsAntialias = false, Color = appearance.CheckerColorB.ToSKColor() };
+        // 暗色・明色のペイントは書き換えて使い回す（市松模様は毎フレーム描く）
+        var dark = s_checkerDark ??= new SKPaint { IsAntialias = false };
+        var light = s_checkerLight ??= new SKPaint { IsAntialias = false };
+        dark.Color = appearance.CheckerColorB.ToSKColor();
+        light.Color = appearance.CheckerColorA.ToSKColor();
 
         // 暗色で範囲を塗る（明色タイルの下地）
         canvas.DrawRect(area.ToSKRect(), dark);
 
-        foreach (var tile in appearance.ComputeLightTileRects(area))
+        // タイルは画面を覆う数になるため、一覧を作らずに順に描く（毎フレームの確保をなくす）
+        foreach (var tile in appearance.EnumerateLightTileRects(area))
         {
             canvas.DrawRect(tile.ToSKRect(), light);
         }
@@ -571,8 +591,11 @@ public sealed class ZoomViewControl : SkiaCanvasView
             return;
         }
 
-        using var trackPaint = new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill, Color = appearance.ScrollBarTrackColor.ToSKColor() };
-        using var thumbPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill, Color = appearance.ScrollBarColor.ToSKColor() };
+        // トラックとサムのペイントは書き換えて使い回す（スクロールバーは毎フレーム描く）
+        var trackPaint = s_track ??= new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill };
+        var thumbPaint = s_thumb ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        trackPaint.Color = appearance.ScrollBarTrackColor.ToSKColor();
+        thumbPaint.Color = appearance.ScrollBarColor.ToSKColor();
 
         var drawTrack = appearance.HasScrollBarTrack;
         DrawScrollBar(canvas, horizontal, trackPaint, thumbPaint, drawTrack);

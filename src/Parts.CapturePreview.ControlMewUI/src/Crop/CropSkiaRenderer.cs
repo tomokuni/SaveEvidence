@@ -15,6 +15,11 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 /// </remarks>
 internal static class CropSkiaRenderer
 {
+    /// <summary>枠線のペイント（スレッドごとに 1 つを使い回す）。</summary>
+    /// <remarks>破線の指定（<c>PathEffect</c>）は描くときに付け外しする（<c>null</c> が実線）。</remarks>
+    [ThreadStatic]
+    private static SKPaint? s_stroke;
+
     /// <summary>描画入力を Skia のキャンバスへ描画する。</summary>
     /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
     /// <param name="frame">描画入力（コアが確定した配置・太さ・破線・色）。</param>
@@ -39,13 +44,14 @@ internal static class CropSkiaRenderer
         var half = (float)frame.HalfThickness;
         var inset = new SKRect(skRect.Left + half, skRect.Top + half, skRect.Right - half, skRect.Bottom - half);
 
-        using var paint = new SKPaint
+        var paint = s_stroke ??= new SKPaint
         {
             IsAntialias = false,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = strokeWidth,
             StrokeJoin = SKStrokeJoin.Miter,
         };
+        paint.StrokeWidth = strokeWidth;
+        paint.PathEffect = null;
 
         if (frame.DrawsBackground)
         {
@@ -61,6 +67,11 @@ internal static class CropSkiaRenderer
             // 前景色をダッシュで描く（間隔はコアの単一所有値を使う）
             using var dashEffect = SKPathEffect.CreateDash([(float)frame.DashLength, (float)frame.GapLength], 0f);
             paint.PathEffect = dashEffect;
+            canvas.DrawRect(inset, paint);
+
+            // 破線の指定は破棄済みの効果を指したままにしない（次の呼び出しは実線から始まる）
+            paint.PathEffect = null;
+            return;
         }
 
         canvas.DrawRect(inset, paint);

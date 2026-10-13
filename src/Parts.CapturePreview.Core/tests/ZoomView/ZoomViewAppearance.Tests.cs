@@ -141,6 +141,38 @@ public class ZoomViewAppearanceTests
         Assert.Empty(shifted);
     }
 
+    /// <summary>描画の経路が使う列挙が、一覧を作る版と順序まで一致することを検証する。</summary>
+    /// <param name="tileSize">タイルの一辺（DIP）。</param>
+    /// <param name="x">領域の左端。</param>
+    /// <param name="y">領域の上端。</param>
+    /// <param name="width">領域の幅。</param>
+    /// <param name="height">領域の高さ。</param>
+    /// <remarks>
+    /// 描画の経路は一覧を作らない（タイルは画面を覆う数になるため）。 2 つの入口で結果がずれると、
+    /// 描画と検証（テスト）が見ているものが食い違うため、順序まで一致することを確かめる。
+    /// </remarks>
+    [Theory]
+    [InlineData(8, 0, 0, 200, 100)]
+    [InlineData(8, 5, 5, 200, 100)]
+    [InlineData(8, -13, -7, 200, 100)]
+    [InlineData(2, 0, 0, 50, 50)]
+    [InlineData(16, 3, 11, 199, 101)]
+    [InlineData(7, 1, 2, 300, 200)]
+    internal void EnumerateLightTileRects_一覧を作る版と一致する(int tileSize, double x, double y, double width, double height)
+    {
+        var appearance = ZoomViewAppearance.Default with { CheckerSize = tileSize };
+        var area = new EsRect(x, y, width, height);
+
+        var list = appearance.ComputeLightTileRects(area);
+        var enumerated = new List<EsRect>(appearance.EnumerateLightTileRects(area));
+
+        Assert.Equal(list.Count, enumerated.Count);
+        for (var i = 0; i < list.Count; i++)
+        {
+            Assert.Equal(list[i], enumerated[i]);
+        }
+    }
+
     /// <summary>市松模様を描く範囲（画像の表示矩形の内側）を検証する。</summary>
     /// <param name="x">画像の表示矩形の X。</param>
     /// <param name="y">画像の表示矩形の Y。</param>

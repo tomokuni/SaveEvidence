@@ -293,7 +293,7 @@ flowchart TB
 ### 6.10 CheckerboardView
 
 - **分類**: 内部コントロール（`internal sealed class : Control`。 `ZoomViewControl` の内部実装）
-- **責務**: 画像の透明部分の背景（市松模様）を描く。 子の順序で画像より先に描かれるようにし、描く範囲（画像の表示矩形の内側）とタイルの位置はコア（`ZoomViewAppearance.ComputeCheckerArea` / `ComputeLightTileRects`）に問い合わせるだけである
+- **責務**: 画像の透明部分の背景（市松模様）を描く。 子の順序で画像より先に描かれるようにし、描く範囲（画像の表示矩形の内側）とタイルの位置はコア（`ZoomViewAppearance.ComputeCheckerArea` / `ZoomViewAppearance.EnumerateLightTileRects`）に問い合わせるだけである
 - **内部実装の詳細**: Panel は `Render` をシールしているため、子要素として画像の下にだけ描く層を作る。 画像の外（ペーストボード）は透明のままにし、親の背景をそのまま見せる。 入力は受けず（`IsHitTestVisible` を false）、表示矩形の変化と外観の変更で `InvalidateVisual` する
 - **可視性**: internal
 - **依存**: `Parts.CapturePreview.Core`（`ZoomViewSession` / `ZoomViewAppearance`）/ Platform.AvaloniaUI（ブラシのキャッシュ）
