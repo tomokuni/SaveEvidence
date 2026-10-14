@@ -11,7 +11,7 @@
 1. publish（`buildScript/*_publish_aot.bat`）を実行し（`-SkipPublish` で省略）、出力フォルダの exe が配布名と一致することを確認する。
 2. 実行ファイルが起動中でないことを確認する（起動中は設定ファイルが競合するため中止する）。
 3. ユーザーの設定ファイル（%LOCALAPPDATA% 配下の SaveEvidence フォルダーの settings.json）を退避する。
-4. exe を起動し、メイン ウィンドウが現れるのを待って `WM_CLOSE` で正常終了させる。
+4. exe を起動し、メイン ウィンドウが現れるのを待って `WM_CLOSE` で正常終了させる（終了コード 0 を確かめる）。
 5. 終了後の設定ファイルが空（`{}`）でなく、起動前と同じキーを保っていることを確認する（Native AOT のトリミングで
    設定が全損する不具合の回帰検出。 検証は [`検証手順.md`](../.github/検証手順.md) §18）。
 
@@ -115,6 +115,11 @@ function Invoke-AppRoundTrip([string]$ExePath, [int]$WindowTimeout, [int]$ExitTi
     if (-not $process.WaitForExit($ExitTimeout * 1000)) {
         $process.Kill()
         return [pscustomobject]@{ Closed = $false; Reason = "WM_CLOSE 後 $ExitTimeout 秒以内に終了しませんでした" }
+    }
+
+    # 終了できただけでは合格にしない（ウィンドウが出ても異常終了していれば不具合である）
+    if ($process.ExitCode -ne 0) {
+        return [pscustomobject]@{ Closed = $false; Reason = "終了コード $($process.ExitCode) で終了しました（異常終了）" }
     }
 
     return [pscustomobject]@{ Closed = $true; Reason = '' }
