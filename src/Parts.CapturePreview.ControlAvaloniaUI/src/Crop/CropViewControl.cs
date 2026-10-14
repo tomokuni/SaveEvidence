@@ -749,13 +749,13 @@ public sealed partial class CropViewControl : Panel
     // ルーペへの矩形描画（Rendered イベント経由）
     // ====================================================================
 
-    /// <summary>ルーペの描画完了時に、外部提供矩形を描画済み Bitmap へ描く。</summary>
+    /// <summary>ルーペの描画完了時に、外部提供矩形をルーペの描画面へ描く。</summary>
     /// <param name="sender">イベント送信元（SelectionOverlayControl）。</param>
-    /// <param name="e">描画済み Bitmap と表示情報。</param>
+    /// <param name="e">描画先の描画コンテキストと実際の描画計画。</param>
     /// <remarks>
     /// 外部提供矩形（<see cref="Rects"/>）を <c>(対象座標 − CaptureTopLeft) × Scale</c> で<br/>
     /// ルーペ画像ピクセル座標へ変換し、4 辺を破線（前景色 / 背景色・市松風）で描画する。<br/>
-    /// 描画範囲の判定は <see cref="OverlayRectRasterizer"/> が行うため、矩形が空でも分岐を持たない。
+    /// 破線の幾何と太さの下限はコアが単一所有するため、描画範囲の判定だけを行い、矩形が空でも分岐を持たない。
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {
@@ -766,7 +766,7 @@ public sealed partial class CropViewControl : Panel
 
         foreach (var rect in Rects)
         {
-            OverlayRectRasterizer.Draw(e.Bitmap, rect, topLeft, e.Content.ZoomLevel);
+            OverlayRectContextRenderer.Draw(e.Context, rect, topLeft, e.Content.ZoomLevel, e.Content.ClientPixelSize);
         }
     }
 }

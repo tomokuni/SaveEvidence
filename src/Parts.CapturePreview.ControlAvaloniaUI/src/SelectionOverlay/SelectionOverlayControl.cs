@@ -191,11 +191,12 @@ public sealed class SelectionOverlayControl : Panel
     /// <summary>ルーペ中心の更新イベント（対象座標。 ホストの追加制御用フック）。</summary>
     public event EventHandler<LoupePositionEventArgs>? LoupePositionMoved;
 
-    /// <summary>ルーペ描画完了イベント（描画済み Bitmap と表示情報。 ホストがオーバーレイを描画できる）。</summary>
+    /// <summary>ルーペ描画完了イベント（描画先の描画コンテキストと実際の描画計画。 ホストが付加情報を描画できる）。</summary>
     /// <remarks>
     /// <see cref="LoupeControl.Rendered"/> を中継する。<br/>
-    /// ホスト（上位 AP）は <see cref="LoupeRenderedEventArgs.Bitmap"/> を <c>Lock</c> して<br/>
-    /// 外部提供矩形（破線等）を直接描画できる（描画後は表示へ反映される）。
+    /// ホスト（上位 AP）は <see cref="LoupeRenderedEventArgs.Context"/> へ<br/>
+    /// 外部提供矩形（破線等）を<b>描画 API で</b>描ける（描いた内容はルーペの内容の上に重なる）。<br/>
+    /// 描画コンテキストは描画中のみ有効である（ハンドラ内で描画を完了させること）。
     /// </remarks>
     public event EventHandler<LoupeRenderedEventArgs>? LoupeRendered;
 
@@ -646,12 +647,12 @@ public sealed class SelectionOverlayControl : Panel
         context.DrawText(formatted, origin);
     }
 
-    /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを描画済み Bitmap へ描く。</summary>
+    /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイをルーペの描画面へ描く。</summary>
     /// <param name="sender">イベント送信元（LoupeControl）。</param>
-    /// <param name="e">描画済み Bitmap と表示情報。</param>
+    /// <param name="e">描画先の描画コンテキストと実際の描画計画。</param>
     /// <remarks>
     /// 選択矩形の破線は <see cref="LoupeControl"/> 内部では描画せず、本クラス（ホスト側）が<br/>
-    /// <see cref="LoupeControl.Rendered"/> イベントで通知された <see cref="LoupeRenderedEventArgs.Bitmap"/> へ直接描画する。<br/>
+    /// <see cref="LoupeControl.Rendered"/> イベントで通知された描画コンテキストへ描く（ルーペの内容の上に重なる）。<br/>
     /// 選択矩形（<see cref="SelectionSourceRect"/> = 対象座標）は <c>(対象座標 − CaptureTopLeft) × Scale</c> で<br/>
     /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
     /// <b>中心座標ラベルはルーペコントロールがテキスト要素として表示する</b>（本クラスは破線だけを描く）。<br/>
@@ -664,12 +665,12 @@ public sealed class SelectionOverlayControl : Panel
         if (SelectionOverlayState.Resolve(_mode).ShouldDrawSelectionOverlay(_marquee.HasSelection)
             && e.Content.CaptureTopLeft is { } topLeft)
         {
-            // 破線色（色A / 色B）を 2 つ用意し、交互に塗る（描画はコアが単一所有する）
-            SelectionOutlineRasterizer.DrawSelectionRect(
-                e.Bitmap,
+            SelectionOutlineContextRenderer.DrawSelectionRect(
+                e.Context,
                 _marquee.SelectionSourceRect,
                 topLeft,
                 e.Content.ZoomLevel,
+                e.Content.ClientPixelSize,
                 _options.SelectionRectColorA,
                 _options.SelectionRectColorB);
         }

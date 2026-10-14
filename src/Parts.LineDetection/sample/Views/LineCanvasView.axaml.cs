@@ -7,7 +7,6 @@ using Avalonia.Media;
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Loupe.AvaloniaUI;
 using EsUtil.Platform.Core.Coord;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 using DrawingColor = System.Drawing.Color;
 
@@ -116,11 +115,11 @@ public partial class LineCanvasView : UserControl
         return new Point(pos.X / scale, pos.Y / scale);
     }
 
-    /// <summary>ルーペの描画完了時に、描画済み Bitmap へ線分オーバーレイ（破線）を描画する。</summary>
+    /// <summary>ルーペの描画完了時に、ルーペの描画面へ線分オーバーレイ（破線）を描画する。</summary>
     /// <param name="sender">イベント送信元（LoupeControl）。</param>
-    /// <param name="e">描画済み Bitmap と表示情報。</param>
+    /// <param name="e">描画先の描画コンテキストと実際の描画計画。</param>
     /// <remarks>
-    /// イベントは表示へ反映する前に同期的に発火するため、ここで Bitmap に描画した内容がそのまま表示される。<br/>
+    /// イベントはルーペの内容を描いた直後に発火するため、ここで描いた内容がルーペの上に重なる。<br/>
     /// 対象座標（画像ピクセル）は <c>(対象座標 − CaptureTopLeft) × Scale</c> でルーペ画像ピクセル座標へ変換する。
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
@@ -128,13 +127,13 @@ public partial class LineCanvasView : UserControl
         DrawLoupeOverlay(e);
     }
 
-    /// <summary>検出コンテキストのホバー/選択状態の変化でルーペを再生成する。</summary>
+    /// <summary>検出コンテキストのホバー/選択状態の変化でルーペを再描画する。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">プロパティ変更イベント。</param>
     /// <remarks>
     /// 一覧のホバー・クリック・再検出など、ルーペの中心が変わらない経路でも、<br/>
-    /// 破線を描き直すために <see cref="LoupeControl.RequestRender"/> でルーペを再生成する<br/>
-    /// （再生成後に <see cref="OnLoupeRendered"/> が発火し、新しい Bitmap へ破線が描画される）。
+    /// 破線を描き直すために <see cref="LoupeControl.RequestRender"/> でルーペの再描画を要求する<br/>
+    /// （再描画後に <see cref="OnLoupeRendered"/> が発火し、新しい描画で破線が描かれる）。
     /// </remarks>
     private void OnContextPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -144,11 +143,11 @@ public partial class LineCanvasView : UserControl
         }
     }
 
-    /// <summary>ルーペの Bitmap に線分オーバーレイ（選択中/ホバー中の線分の破線）を描画する。</summary>
-    /// <param name="e">ルーペの表示情報（描画済み Bitmap・描画計画）。</param>
+    /// <summary>ルーペの描画面に線分オーバーレイ（選択中/ホバー中の線分の破線）を描画する。</summary>
+    /// <param name="e">ルーペの描画完了通知（描画先の描画コンテキストと描画計画）。</param>
     /// <remarks>
     /// 対象の線分一覧（<see cref="DetectionContext.LoupeOverlayLines"/>）を対象座標 → ルーペ画像ピクセル座標へ変換し、<br/>
-    /// 選択中 = オレンジ / ホバー中 = 赤の破線を Bitmap（WriteableBitmap）のピクセルバッファへ直接描画する。<br/>
+    /// 選択中 = オレンジ / ホバー中 = 赤の破線を描画 API で描く。<br/>
     /// 切り出し領域の左上・対象の線分が無い場合は何も描画しない。
     /// </remarks>
     private void DrawLoupeOverlay(LoupeRenderedEventArgs e)
@@ -163,7 +162,6 @@ public partial class LineCanvasView : UserControl
             return;
         }
 
-        // 選択中 = オレンジ / ホバー中 = 赤。 色は事前に選んでから描画する（ループ内のキャストを避ける）
         foreach (var line in lines)
         {
             var start = new Point((line.Start.X - topLeft.X) * e.Content.ZoomLevel, (line.Start.Y - topLeft.Y) * e.Content.ZoomLevel);
@@ -172,7 +170,7 @@ public partial class LineCanvasView : UserControl
             // 検出された線分の座標をそのまま使って破線を描画する。
             // 線分の座標は LogicLineDetector がウィンドウ枠の境界（外縁）に補正済みのため、
             // ルーペ内でも枠の線上に表示される（見た目だけのスナップは行わない）
-            DrawDashedLine(e.Bitmap, start, end, line.IsSelected ? s_selectedOverlayColor : s_hoverOverlayColor, s_dashPattern, e.Content.ZoomLevel);
+            DrawDashedLine(e.Context, start, end, line.IsSelected ? s_selectedOverlayColor : s_hoverOverlayColor, e.Content.ZoomLevel);
         }
     }
 
@@ -185,92 +183,25 @@ public partial class LineCanvasView : UserControl
     /// <summary>ルーペ内の線分オーバーレイの破線パターン（描画 4px・間隔 3px・ルーピクセル）。</summary>
     private static readonly double[] s_dashPattern = [4.0, 3.0];
 
-    /// <summary>EsBitmap 上に破線の線分を描画する。</summary>
-    /// <param name="bitmap">描画対象の EsBitmap。</param>
-    /// <param name="start">線分の始点（Bitmap ピクセル座標）。</param>
-    /// <param name="end">線分の終点（Bitmap ピクセル座標）。</param>
-    /// <param name="color">描画色（不透明）。</param>
-    /// <param name="dash">破線パターン（描画長・間隔長の交互リスト・ルーピクセル）。</param>
-    /// <param name="thickness">線の太さ（ルーピクセル）。 1 対象ピクセル = ズーム倍率（<see cref="LoupeDrawPlan.ZoomLevel"/>）分。</param>
+    /// <summary>ルーペの描画面へ破線の線分を描画する。</summary>
+    /// <param name="context">描画先の描画コンテキスト（描画中のみ有効）。</param>
+    /// <param name="start">線分の始点（ルーペ画像ピクセル座標）。</param>
+    /// <param name="end">線分の終点（ルーペ画像ピクセル座標）。</param>
+    /// <param name="color">描画色。</param>
+    /// <param name="thickness">線の太さ（ルーペピクセル）。 対象 1 ピクセル = ズーム倍率（<see cref="LoupeDrawPlan.ZoomLevel"/>）分。</param>
     /// <remarks>
-    /// 既存ピクセルを保持したまま、<paramref name="dash"/> のパターンで線分上のピクセルを塗る。<br/>
-    /// 線の太さは <paramref name="thickness"/> の分だけ線分の両側へ広げて塗る（中心線の法線方向）。<br/>
-    /// 描画は <c>EsBitmap.SetPixel</c> で行う（BGRA 変換はヘルパーに委譲）。
+    /// 描画 API へ破線を指定して線分を描く（<see cref="s_dashPattern"/> のパターンを線幅単位で与える）。<br/>
+    /// 描画面は物理ピクセルで倍率が適用済みのため、太さ・破線の単位はルーペピクセルである。
     /// </remarks>
     private static void DrawDashedLine(
-        EsBitmap bitmap, Point start, Point end, Color color, IReadOnlyList<double> dash, double thickness)
+        DrawingContext context, Point start, Point end, Color color, double thickness)
     {
-        var width = bitmap.Size.Width;
-        var height = bitmap.Size.Height;
-        if (width <= 0 || height <= 0)
+        var pen = new Pen(new SolidColorBrush(color), thickness)
         {
-            return;
-        }
+            DashStyle = new DashStyle(s_dashPattern, 0),
+        };
 
-        // 破線パターンの合計長（周期）。 正でない場合は何も描画しない
-        double dashTotal = 0;
-        foreach (var d in dash)
-        {
-            dashTotal += d;
-        }
-        if (dashTotal <= 0)
-        {
-            return;
-        }
-
-        // 線分の整数座標
-        int x0 = (int)Math.Round(start.X);
-        int y0 = (int)Math.Round(start.Y);
-        int x1 = (int)Math.Round(end.X);
-        int y1 = (int)Math.Round(end.Y);
-        double dx = x1 - x0;
-        double dy = y1 - y0;
-        double length = Math.Sqrt(dx * dx + dy * dy);
-        if (length < 1.0)
-        {
-            return;
-        }
-
-        // 線の太さ（最小 1px）。 法線方向へ half ピクセルずつ広げる
-        var half = Math.Max(0, (int)Math.Ceiling(thickness / 2.0) - 1);
-        var ux = -dy / length; // 法線 X
-        var uy = dx / length;  // 法線 Y
-
-        // 線分を 1 ピクセル刻みで辿り、ダッシュパターンに応じて塗る
-        int steps = Math.Max(1, (int)Math.Ceiling(length));
-        for (int i = 0; i <= steps; i++)
-        {
-            double t = (double)i / steps;
-            int px = (int)Math.Round(x0 + dx * t);
-            int py = (int)Math.Round(y0 + dy * t);
-
-            // 累積距離から描画区間（on）か間隔区間（off）かを判定する
-            double pos = length * t % dashTotal;
-            double acc = 0;
-            bool draw = false;
-            for (int j = 0; j + 1 < dash.Count; j += 2)
-            {
-                double onEnd = acc + dash[j];
-                if (pos < onEnd)
-                {
-                    draw = true;
-                    break;
-                }
-                acc = onEnd + dash[j + 1];
-            }
-            if (!draw)
-            {
-                continue;
-            }
-
-            // 中心点 + 法線方向へ太さ分のピクセルを塗る（範囲外は EsBitmap.TrySetPixel が無視）
-            for (int n = -half; n <= half; n++)
-            {
-                int ox = (int)Math.Round(px + ux * n);
-                int oy = (int)Math.Round(py + uy * n);
-                bitmap.TrySetPixel(ox, oy, DrawingColor.FromArgb(color.A, color.R, color.G, color.B));
-            }
-        }
+        context.DrawLine(pen, start, end);
     }
 
     /// <summary>画像上のマウス移動で線分のホバー状態とルーペ中心を更新する。</summary>

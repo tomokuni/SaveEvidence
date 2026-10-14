@@ -511,7 +511,7 @@ public class SelectionOverlayControlTests
                 Loupe = control.Options.Loupe with { RequestedSize = 200 },
                 SelectionRectColorA = Colors.White.ToDrawingColor(),
             };
-            await PumpUntilAsync(() => rendered > 0);
+            await PumpUntilAsync(() => rendered > 0, control.Loupe);
             Assert.True(rendered > 0);
             await PumpAsync();
             rendered = 0;
@@ -522,7 +522,7 @@ public class SelectionOverlayControlTests
             Assert.Equal(borderThickness, control.Loupe.Appearance.BorderThickness);
             Assert.Equal(200, control.Loupe.Options.RequestedSize);
 
-            await PumpUntilAsync(() => rendered > 0);
+            await PumpUntilAsync(() => rendered > 0, control.Loupe);
             Assert.True(rendered > 0, "破線色のみの変更でルーペが再描画されませんでした");
         }
         finally
@@ -551,7 +551,7 @@ public class SelectionOverlayControlTests
         control.Loupe.Rendered += OnRendered;
         try
         {
-            await PumpUntilAsync(() => rendered > 0);
+            await PumpUntilAsync(() => rendered > 0, control.Loupe);
             Assert.True(control.Loupe.IsVisible);
 
             // 破線を描画しないモード（ScreenSelect）へ変更する
@@ -587,7 +587,7 @@ public class SelectionOverlayControlTests
         control.Loupe.Rendered += OnRendered;
         try
         {
-            await PumpUntilAsync(() => rendered > 0);
+            await PumpUntilAsync(() => rendered > 0, control.Loupe);
             Assert.True(rendered > 0);
             await PumpAsync();
             rendered = 0;
@@ -595,7 +595,7 @@ public class SelectionOverlayControlTests
             // 選択矩形のみの変更（ルーペの中心・外観・サイズは不変）
             control.SetSelection(new Rect(1, 1, 5, 5));
 
-            await PumpUntilAsync(() => rendered > 0);
+            await PumpUntilAsync(() => rendered > 0, control.Loupe);
             Assert.True(rendered > 0, "選択矩形のみの変更でルーペが再描画されませんでした");
         }
         finally
@@ -625,28 +625,41 @@ public class SelectionOverlayControlTests
     // ヘルパー
     // ====================================================================
 
-    /// <summary>条件が成立するまで Dispatcher をポンプする（上限で打ち切る）。</summary>
+    /// <summary>条件が成立するまで Dispatcher をポンプし、描画フレームを進める（上限で打ち切る）。</summary>
     /// <param name="condition">成立を待つ条件。</param>
+    /// <param name="control">描画の対象（ウィンドウへ接続されている場合はフレームを進める）。</param>
     /// <remarks>
-    /// ルーペの描画は Dispatcher へのポスト（描画フェーズ）と非同期生成で行われるため、<br/>
-    /// 待機中は Dispatcher をポンプして描画ジョブと非同期の継続を進める。 上限に達しても例外にはしない。
+    /// ルーペの描画はウィンドウのフレームで行われるため、待機中は実行キューを消化しながら描画フレームを進める。<br/>
+    /// 上限に達しても例外にはしない（成立の検証は呼び出し側が行う）。
     /// </remarks>
-    private static async Task PumpUntilAsync(Func<bool> condition)
+    private static async Task PumpUntilAsync(Func<bool> condition, Control? control = null)
     {
         for (var i = 0; i < PumpLimit && !condition(); i++)
         {
+            if (control is not null) { RenderOnce(control); }
             Dispatcher.UIThread.RunJobs();
             await Task.Yield();
         }
     }
 
-    /// <summary>保留中の描画ジョブを消化する（計測の区切り用）。</summary>
+    /// <summary>保留中のジョブを消化する（計測の区切り用）。</summary>
+    /// <remarks>描画の要求は行わない（描画が発生しないことの検証に使える）。</remarks>
     private static async Task PumpAsync()
     {
         for (var i = 0; i < PumpOnce; i++)
         {
             Dispatcher.UIThread.RunJobs();
             await Task.Yield();
+        }
+    }
+
+    /// <summary>描画フレームを 1 回進める（ウィンドウの描画を実行する）。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    private static void RenderOnce(Control control)
+    {
+        if (TopLevel.GetTopLevel(control) is { } topLevel)
+        {
+            topLevel.CaptureRenderedFrame();
         }
     }
 

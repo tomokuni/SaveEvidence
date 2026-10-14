@@ -10,8 +10,9 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests;
 /// <remarks>
 /// <c>[AvaloniaFact]</c> / <c>[AvaloniaTheory]</c> のテストは本クラスが提供する AppBuilder で
 /// Avalonia を初期化する（<see cref="Avalonia.Headless.AvaloniaTestApplicationAttribute"/> アセンブリ属性）。<br/>
-/// Skia を有効化し、ヘッドレス描画を無効化することで WriteableBitmap のピクセル操作（書き込み・読み取り）が
-/// 正しく保持される。
+/// Skia を有効化し、<b>ヘッドレス描画を無効化</b>（<c>UseHeadlessDrawing = false</c>）することで、
+/// WriteableBitmap のピクセル操作（書き込み・読み取り）と実 Skia の描画（ウィンドウのフレーム）が動作する。<br/>
+/// 既定（無効化しない場合）は描画がスタブになり、描画結果の画素を読めない（フレームが得られない）。
 /// </remarks>
 public static class TestAppBuilder
 {
@@ -19,5 +20,5 @@ public static class TestAppBuilder
     /// <returns>構成済みの AppBuilder。</returns>
     public static AppBuilder BuildAvaloniaApp() => AppBuilder.Configure<Application>()
         .UseSkia()
-        .UseHeadless(new AvaloniaHeadlessPlatformOptions());
+        .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false });
 }

@@ -1,17 +1,14 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
-/// <summary>ルーペ画像上へ選択矩形の破線オーバーレイを描画する静的クラス。</summary>
+/// <summary>選択矩形の破線オーバーレイの幾何（位置・長さ・色の種別）を提供する静的クラス。</summary>
 /// <remarks>
-/// 選択矩形（対象座標）をルーペ画像ピクセル座標へ変換し、4 辺を 2 色の破線で描画する。<br/>
-/// 破線の幾何（位置・長さ・色の種別）は <see cref="EnumerateDashes"/> が単一所有し、<br/>
-/// 描画先（<see cref="EsReadOnlyBitmap"/> へ直接書き込む / 描画 API へ渡す）は呼び出し側が選べる<br/>
-/// （Avalonia 版は描画完了イベント経由で <see cref="EsReadOnlyBitmap"/> へ、MewUI 版は描画直後にキャンバスへ描く）。<br/>
+/// 選択矩形（対象座標）をルーペ画像ピクセル座標へ変換し、4 辺を 2 色の破線として<b>列挙</b>する。<br/>
+/// 描画そのものは UI 層が行う（列挙された 1 ピクセル厚の矩形を、自 UI の描画 API で塗る）。<br/>
+/// 幾何がコアの単一所有であるため、UI が違っても同じ破線になる。<br/>
 /// ウィンドウを必要としない純粋計算のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。
 /// </remarks>
 internal static class SelectionOutlineRasterizer
@@ -24,37 +21,6 @@ internal static class SelectionOutlineRasterizer
 
     /// <summary>破線を描画する最小のズーム倍率（1 倍では破線が潰れるため描画しない）。</summary>
     private const double MinimumScale = 2.0;
-
-    /// <summary>選択矩形の 4 辺を 2 色の破線でルーペ画像へ描画する。</summary>
-    /// <param name="bitmap">描画対象の画像（ルーペの表示画像）。 <b>書き換えるため <see cref="EsBitmap"/> を受ける</b>。</param>
-    /// <param name="selectionSourceRect">選択矩形（対象座標系・半開区間）。</param>
-    /// <param name="captureTopLeft">ルーペの切り出し領域の左上（対象座標系）。</param>
-    /// <param name="scale">対象座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    /// <param name="colorA">破線の色 A（描画開始色）。</param>
-    /// <param name="colorB">破線の色 B（色 A と交互に使用する）。</param>
-    /// <remarks>
-    /// 1. 破線の列挙は <see cref="EnumerateDashes"/> が単一所有する（MewUI 版と同じ幾何を使う）。<br/>
-    /// 2. 画像外へはみ出す画素は無視する（例外にしない）。
-    /// </remarks>
-    public static void DrawSelectionRect(
-        EsBitmap bitmap, EsRect selectionSourceRect, EsPoint captureTopLeft, double scale, DrawingColor colorA, DrawingColor colorB)
-    {
-        ArgumentNullException.ThrowIfNull(bitmap);
-
-        foreach (var dash in EnumerateDashes(selectionSourceRect, captureTopLeft, scale, bitmap.Size.Width))
-        {
-            var color = dash.IsColorA ? colorA : colorB;
-
-            // 範囲外は TrySetPixel が無視する（画像端をはみ出す矩形でも例外にしない）
-            for (var offset = 0; offset < dash.Width; offset++)
-            {
-                for (var row = 0; row < dash.Height; row++)
-                {
-                    bitmap.TrySetPixel(dash.X + offset, dash.Y + row, color);
-                }
-            }
-        }
-    }
 
     /// <summary>選択矩形の 4 辺の破線を 1 ピクセル厚の矩形として列挙する。</summary>
     /// <param name="selectionSourceRect">選択矩形（対象座標系。 区間の流儀（<see cref="EsRect.Interval"/>）で覆う画素数が決まる）。</param>

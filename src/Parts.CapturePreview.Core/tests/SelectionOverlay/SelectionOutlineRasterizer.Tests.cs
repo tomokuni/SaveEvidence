@@ -1,123 +1,17 @@
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using Xunit;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.SelectionOverlay;
 
-/// <summary><see cref="SelectionOutlineRasterizer"/>（選択矩形破線オーバーレイ描画）の単体テスト。</summary>
+/// <summary><see cref="SelectionOutlineRasterizer"/>（選択矩形破線オーバーレイの幾何）の単体テスト。</summary>
 /// <remarks>
-/// 描画は純粋な静的メソッド（<see cref="EsBitmap"/> のみを使用）のため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。<br/>
-/// 期待値は実測（画素の読み出し）で確認する。 画素は BGRA のタプルで返る。
+/// 本クラスは破線の<b>位置・長さ・色の種別</b>だけを列挙する（描画は UI 層が行う）ため、<br/>
+/// UI 初期化なしの <c>[Fact]</c> で並列検証できる。 描画結果の画素は各 UI の描画テストが検証する。
 /// </remarks>
 public class SelectionOutlineRasterizerTests
 {
-    /// <summary>白（描画されていない状態）の画素値。</summary>
-    private static readonly (byte B, byte G, byte R, byte A) s_white = (255, 255, 255, 255);
-
-    /// <summary>テスト用の単色画像（白）を生成する。</summary>
-    /// <param name="width">幅（ピクセル）。</param>
-    /// <param name="height">高さ（ピクセル）。</param>
-    /// <returns>生成した画像。</returns>
-    private static EsBitmap CreateSolidBitmap(int width, int height)
-        => EsBitmap.Create(width, height, DrawingColor.White);
-
-    /// <summary>指定座標の画素を BGRA のタプルで取得する。</summary>
-    /// <param name="bitmap">対象の画像。</param>
-    /// <param name="x">X 座標。</param>
-    /// <param name="y">Y 座標。</param>
-    /// <returns>画素（青・緑・赤・アルファ）。</returns>
-    private static (byte B, byte G, byte R, byte A) PixelAt(EsBitmap bitmap, int x, int y) => bitmap.GetPixel(x, y);
-
-    /// <summary>選択矩形の辺に破線が描画されることを検証する。</summary>
-    [Fact]
-    internal void DrawSelectionRect_選択矩形の辺に破線が描画される()
-    {
-        // 白の 40x40 画像へ選択矩形 (10,10,20,20) を倍率 4 で描画する
-        using var bitmap = CreateSolidBitmap(40, 40);
-
-        SelectionOutlineRasterizer.DrawSelectionRect(
-            bitmap, new EsRect(10, 10, 20, 20), new EsPoint(5, 5), 4.0, DrawingColor.Black, DrawingColor.Transparent);
-
-        // 上辺・左辺は覆う画素の 1 画素外側（対象 (9,9) → 画像 19）に描画される
-        var (B, G, R, A) = PixelAt(bitmap, 19, 19);
-        Assert.True(B < 255, $"選択矩形の辺に線が描画されていない: B={B}");
-
-        // 選択矩形の内側は描画されない
-        Assert.Equal(s_white, PixelAt(bitmap, 30, 30));
-    }
-
-    /// <summary>2 色の破線が交互に描画されることを検証する。</summary>
-    [Fact]
-    internal void DrawSelectionRect_2色の破線が交互に描画される()
-    {
-        using var bitmap = CreateSolidBitmap(64, 64);
-
-        // 選択矩形 (1,1,10,10)・倍率 4 → 覆う画素は 4 から。 枠はその 1 画素外側（y = 3）
-        // 破線は 2 ピクセル描画 + 2 ピクセル空白の周期で、色は A → B → A … と切り替わる
-        SelectionOutlineRasterizer.DrawSelectionRect(
-            bitmap, new EsRect(1, 1, 10, 10), new EsPoint(0, 0), 4.0, DrawingColor.Red, DrawingColor.Blue);
-
-        // 破線の先頭 2 ピクセルは色 A（赤）、次の 2 ピクセルは色 B（青）
-        Assert.Equal((byte)0, PixelAt(bitmap, 3, 3).B);
-        Assert.Equal((byte)255, PixelAt(bitmap, 3, 3).R);
-        Assert.Equal((byte)0, PixelAt(bitmap, 5, 3).R);
-        Assert.Equal((byte)255, PixelAt(bitmap, 5, 3).B);
-    }
-
-    /// <summary>倍率が 2 未満の場合は描画しないことを検証する。</summary>
-    /// <param name="scale">描画倍率。</param>
-    [Theory]
-    [InlineData(0.5)]
-    [InlineData(1.0)]
-    [InlineData(1.99)]
-    internal void DrawSelectionRect_倍率2未満では描画しない(double scale)
-    {
-        using var bitmap = CreateSolidBitmap(40, 40);
-
-        SelectionOutlineRasterizer.DrawSelectionRect(
-            bitmap, new EsRect(10, 10, 20, 20), new EsPoint(5, 5), scale, DrawingColor.Black, DrawingColor.Transparent);
-
-        // 白のまま（1 ピクセルも描画されない）
-        Assert.Equal(s_white, PixelAt(bitmap, 20, 20));
-    }
-
-    /// <summary>切り出し領域と交差しない場合は描画しないことを検証する。</summary>
-    [Fact]
-    internal void DrawSelectionRect_切り出し領域と交差しない場合は描画しない()
-    {
-        using var bitmap = CreateSolidBitmap(16, 16);
-
-        // 画像（切り出し領域 16x16）の外側に完全に出る矩形を指定する
-        SelectionOutlineRasterizer.DrawSelectionRect(
-            bitmap, new EsRect(-100, -100, 10, 10), new EsPoint(0, 0), 4.0, DrawingColor.Black, DrawingColor.Transparent);
-
-        Assert.Equal(s_white, PixelAt(bitmap, 8, 8));
-    }
-
-    /// <summary>画像の範囲外へはみ出す矩形でも例外にならず、画像内の辺のみ描画されることを検証する。</summary>
-    [Fact]
-    internal void DrawSelectionRect_画像外へはみ出しても例外にならない()
-    {
-        using var bitmap = CreateSolidBitmap(16, 16);
-
-        // 左上が画像外、右下が画像内に入る矩形（倍率 4） → 右辺・下辺（画像 8）だけが描画される
-        SelectionOutlineRasterizer.DrawSelectionRect(
-            bitmap, new EsRect(-2, -2, 4, 4), new EsPoint(0, 0), 4.0, DrawingColor.Black, DrawingColor.Transparent);
-
-        Assert.Equal((byte)0, PixelAt(bitmap, 8, 8).B);
-    }
-
-    /// <summary>画像が null の場合は例外になることを検証する。</summary>
-    [Fact]
-    internal void DrawSelectionRect_画像がnullの場合は例外になる()
-    {
-        Assert.Throws<ArgumentNullException>(() => SelectionOutlineRasterizer.DrawSelectionRect(
-            null!, new EsRect(0, 0, 10, 10), new EsPoint(0, 0), 4.0, DrawingColor.Black, DrawingColor.White));
-    }
-
     // ====================================================================
     // 破線の列挙（EnumerateDashes）
     // ====================================================================
@@ -236,48 +130,5 @@ public class SelectionOutlineRasterizerTests
             new EsRect(-100, -100, 10, 10), new EsPoint(0, 0), 4.0, pixelSize: 16);
 
         Assert.Empty(dashes);
-    }
-
-    /// <summary>列挙した破線が <see cref="EsBitmap"/> への描画結果と一致することを検証する。</summary>
-    /// <remarks>列挙（MewUI の描画経路）と <c>DrawSelectionRect</c>（Avalonia の描画経路）が同じ幾何を使うことを担保する。</remarks>
-    [Fact]
-    internal void EnumerateDashes_列挙と画像への描画が一致する()
-    {
-        using var bitmap = CreateSolidBitmap(64, 64);
-        var selection = new EsRect(2, 3, 8, 9);
-        var topLeft = new EsPoint(1, 2);
-
-        SelectionOutlineRasterizer.DrawSelectionRect(bitmap, selection, topLeft, 4.0, DrawingColor.Red, DrawingColor.Blue);
-
-        // 列挙した破線が覆う画素は、画像へ描画した画素と 1 画素も違わない
-        var drawn = new HashSet<(int X, int Y)>();
-        for (var y = 0; y < 64; y++)
-        {
-            for (var x = 0; x < 64; x++)
-            {
-                if (PixelAt(bitmap, x, y) != s_white)
-                {
-                    drawn.Add((x, y));
-                }
-            }
-        }
-
-        var enumerated = new HashSet<(int X, int Y)>();
-        foreach (var dash in SelectionOutlineRasterizer.EnumerateDashes(selection, topLeft, 4.0, 64))
-        {
-            for (var offset = 0; offset < dash.Width; offset++)
-            {
-                for (var row = 0; row < dash.Height; row++)
-                {
-                    if (dash.X + offset is >= 0 and < 64 && dash.Y + row is >= 0 and < 64)
-                    {
-                        enumerated.Add((dash.X + offset, dash.Y + row));
-                    }
-                }
-            }
-        }
-
-        Assert.NotEmpty(drawn);
-        Assert.Equal(drawn, enumerated);
     }
 }
