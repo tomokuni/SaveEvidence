@@ -42,6 +42,30 @@ $allCs = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filte
 $allCsproj = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.csproj' |
     Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
 
+# リポジトリ外の参照先（例: 隣に置いた EsUtil リポジトリ）のソースも読む。
+# 文書が外部の型を引用することはあるため、「型名の接頭辞が実在するか」の判定に含める
+# （判定の目的は「存在しない名前空間を書いていないか」であり、参照先の型は実在する）。
+$externalSrcRoots = [System.Collections.Generic.HashSet[string]]::new()
+foreach ($csproj in $allCsproj) {
+    $dir = Split-Path -Parent $csproj.FullName
+    foreach ($m in [regex]::Matches([IO.File]::ReadAllText($csproj.FullName, $enc), '<ProjectReference\s+Include="(?<p>[^"]+)"')) {
+        $full = [IO.Path]::GetFullPath((Join-Path $dir $m.Groups['p'].Value))
+        if ($full.StartsWith($repoRoot, [StringComparison]::OrdinalIgnoreCase)) { continue }
+        # 参照先のプロジェクト ファイルは `<参照先リポジトリ>/src/<プロジェクト>/src/…` に置かれる前提で
+        # 参照先リポジトリの `src/` を型の供給元にする（推移的に参照するプロジェクトの型も含める）
+        $srcRoot = Split-Path -Parent (Split-Path -Parent $full)
+        if (Test-Path -LiteralPath $srcRoot) { [void]$externalSrcRoots.Add($srcRoot) }
+    }
+}
+
+$externalCs = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+foreach ($root in $externalSrcRoots) {
+    foreach ($f in (Get-ChildItem -Path $root -Recurse -File -Filter '*.cs' |
+            Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+        $externalCs.Add($f)
+    }
+}
+
 # ============================================================
 # 5. ドキュメント（markdownlint）
 # ============================================================
@@ -187,6 +211,9 @@ $stale = [System.Collections.Generic.List[string]]::new()
 $rxStale = [regex]('(?<p>' + ($stalePatterns -join '|') + ')')
 foreach ($hit in (Get-GitList @('-c', 'core.quotepath=false', 'grep', '--untracked', '-n', '-E', '--', ($stalePatterns -join '|')))) {
     if ($hit -match 'archive/') { continue }
+    # バイナリ（バンドル・パッケージ・画像等）は対象外にする（`--untracked` は作業ツリーの
+    # 非テキスト ファイルも走査するため、圧縮データの中身がたまたま一致することがある）
+    if ($hit -match '\.(bundle|nupkg|snupkg|zip|dll|exe|pdb|png|jpg|jpeg|gif|ico|pdf|snk|pfx|ttf|woff|woff2)(:\d+)?:') { continue }
     # 検証手順と本スクリプトは、この検査の説明としてこれらの名前を引用するため対象外にする
     if ($hit -match '検証手順\.md') { continue }
     # 本検査の実装（パターンそのものを書く）は対象外にする
@@ -239,7 +266,7 @@ $statistic | Select-Object -First 10 | ForEach-Object { "      $_" }
 #     - 外部フレームワーク（`System.` / `Aprillz.` 等）はリポジトリの型名と同名の型を持つため対象外にする。
 $rxTypeDecl = [regex]'(?m)^\s*(?:(?:public|internal|private|protected|static|sealed|abstract|partial|readonly|ref|file|unsafe|new|required)\s+)*(?:class|struct|interface|enum|delegate|record(?:\s+(?:class|struct))?)\s+([A-Za-z_]\w*)'
 $typeQualifiers = @{}
-foreach ($f in ($allCs)) {
+foreach ($f in (@($allCs) + @($externalCs))) {
     $text = Get-Text $f.FullName
     $nsMatch = [regex]::Match($text, '(?m)^namespace\s+([\w.]+)\s*;')
     $suffixes = @()

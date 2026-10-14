@@ -162,7 +162,7 @@ dotnet_diagnostic.CA2225.severity = warning
 
 # 公開イベントの型は EventHandler / EventHandler<T>（T は EventArgs 派生）に限る。
 # 値型・record の通知（ヒープ確保 0 を守る）は event を使わず IDisposable Subscribe(Action<T>) で公開する
-# （仕組みは EsUtil.Platform.Core.CallbackList<T> が単一所有する。 規則は .github/コーディング規約.md §7）。
+# （仕組みは EsUtil.Platform.Core の CallbackList<T> が単一所有する（EsUtil リポジトリ）。 規則は .github/コーディング規約.md §7）。
 dotnet_diagnostic.CA1003.severity = warning
 
 # 連続する空行を検出する（体裁をコンパイラで守らせる）。
@@ -262,12 +262,12 @@ dotnet_diagnostic.CA2213.severity = none
 #   誤検出する（大半が `new Border()` 等の要素生成）。
 dotnet_diagnostic.CA2000.severity = none
 # CA2007 … ライブラリは `ConfigureAwait(false)` を明示する。
-#   方針（2026-10-04 検討）: **採用しない**。 可搬な層（`EsUtil.*`）には await が 1 つも無く（実測）、
+#   方針（2026-10-04 検討）: **採用しない**。 本リポジトリの層には await が 1 つも無く（実測）、
 #   製品内の層（`App.Core` の ViewModel・コントロール）は UI スレッドの文脈を前提とするため、
 #   `ConfigureAwait(false)` を書くと継続が UI スレッドで走らなくなり逆に壊れる（実測 12 件以上）。
 dotnet_diagnostic.CA2007.severity = none
 # CA1062 … 公開メンバーの参照型引数を検証する（`ArgumentNullException.ThrowIfNull`）。
-#   方針（2026-10-04 検討）: **可搬なライブラリ（`EsUtil.*`）に限って有効にする**。
+#   方針（2026-10-04 検討）: **本リポジトリのライブラリ プロジェクト（Platform.* / Parts.*）に限って有効にする**。
 #   これらは他リポジトリから呼ばれ、XAML・DI・リフレクション経由（コンパイル時の null 検査が効かない経路）もある。
 #   製品内の層（UI・アプリ）は `Nullable` 注釈を基本とし、境界（相互変換）で個別に検証する
 #   （全プロジェクトで有効にすると UI プロパティの setter の `value` まで対象になり、追加が広範囲に及ぶ。
@@ -321,27 +321,11 @@ dotnet_diagnostic.VSTHRD002.severity = none
 
 # CA1062 を可搬なライブラリ（UI 非依存・他リポジトリから呼ばれる層）に限って有効にする
 # （グローバルな opt-out より後に置く。 上記の注意を参照）。
-[src/EsUtil.Platform.Core/src/**,src/EsUtil.Feature.Loupe.Core/src/**,src/EsUtil.Feature.Loupe.Presenter/src/**,src/EsUtil.Feature.Marquee.Core/src/**,src/EsUtil.Feature.Marquee.Presenter/src/**]
-dotnet_diagnostic.CA1062.severity = warning
-# SkiaSharp の null 許容注釈と実際の戻り値が一致しない（SKCodec.Create は失敗時に null を返すが非 null として注釈されている）ため、
-# この 2 ファイルでは CA1508 を無効にする（防御的な null 検査を残す）。
-# 注意: セクション ヘッダーを 2 行 並べると、後のセクションだけが設定を持つ（EditorConfig の仕様）。 複数は 1 行へまとめる。
 [{src/App.MewUI/src/Services/ImageThumbnailLoader.cs,src/App.MewUI/tests/TestHelper.cs}]
 dotnet_diagnostic.CA1508.severity = none
 
 # `EsKey` のメンバーは UI フレームワークのキー enum（`Avalonia.Input.Key`）と同名にする規約があるため、
 # 型名と同名のメンバー（`Decimal` 等）を許可する（.github/命名規約.md の「UI フレームワークの enum と同じ意味ならメンバー名を揃える」）。
-[src/EsUtil.Platform.Core/src/EsKey.cs]
-dotnet_diagnostic.CA1720.severity = none
-
-# 禁止 API（RS0030）の所有者。 BannedSymbols.txt が禁止する API を「使う場所」はここだけである
-# （EnumCanonical は Enum.TryParse を使う）。
-[src/EsUtil.Platform.Core/src/EnumCanonical.cs]
-dotnet_diagnostic.RS0030.severity = none
-
-# 規約が認める付随型（型と一体の enum・操作クラス）を同居させるファイルは、ファイル名（主たる型）と
-# 2 番目の型名が一致しない（.github/命名規約.md「型と一体の付随型」）。 MA0048 を無効にする
-# （実測 7 ファイル。 主たる型＋付随型の組である）。
 [{src/Parts.CapturePreview.Core/src/Capture/CaptureHighlight.cs,src/Parts.CapturePreview.Core/src/Capture/CaptureKeyAction.cs,src/Parts.CapturePreview.Core/src/Crop/CropSessionAction.cs,src/Parts.CapturePreview.Core/src/ZoomView/ZoomNotice.cs,src/Parts.CapturePreview.Core/src/ZoomView/ZoomScrollBarGeometry.cs,src/Parts.LineDetection/src/LineDetectionResult.cs,src/Parts.LineDetection/src/LineSegmentMath.cs}]
 dotnet_diagnostic.MA0048.severity = none
 
@@ -352,12 +336,6 @@ dotnet_diagnostic.MA0048.severity = none
 
 # 同じ値を持つ別名（重複値）の解決を検証するテストは、検証データとして意図的に重複値を持つ
 # （実測: CA1069 は「意図的な重複」を区別できないため、本ファイルだけ無効にする）。
-[src/EsUtil.Platform.Core/tests/EnumCanonical.Tests.cs]
-dotnet_diagnostic.CA1069.severity = none
-
-# `CA1848`（LoggerMessage デリゲートの使用）と `RS0030`（禁止 API。 例: `Enum.HasFlag`）は
-# 製品コードの性能規則である。 テストは「NullLogger では何も起きない」ことの検証のために直接 ILogger を呼び、
-# サンプルは見た目の確認用であるため、どちらも対象外にする。
 [{**/tests/**,**/sample/**}]
 dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.RS0030.severity = none

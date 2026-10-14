@@ -103,17 +103,17 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 | コントロール | Core | Presenter |
 | --- | --- | --- |
-| Marquee | [`EsUtil.Feature.Marquee.Core`](EsUtil.Feature.Marquee.Core/README.md) | [`EsUtil.Feature.Marquee.Presenter`](EsUtil.Feature.Marquee.Presenter/README.md) |
-| Loupe | [`EsUtil.Feature.Loupe.Core`](EsUtil.Feature.Loupe.Core/README.md) | [`EsUtil.Feature.Loupe.Presenter`](EsUtil.Feature.Loupe.Presenter/README.md) |
+| Marquee | [`EsUtil.Feature.Marquee.Core`](../../EsUtil/src/EsUtil.Feature.Marquee.Core/README.md) | [`EsUtil.Feature.Marquee.Presenter`](../../EsUtil/src/EsUtil.Feature.Marquee.Presenter/README.md) |
+| Loupe | [`EsUtil.Feature.Loupe.Core`](../../EsUtil/src/EsUtil.Feature.Loupe.Core/README.md) | [`EsUtil.Feature.Loupe.Presenter`](../../EsUtil/src/EsUtil.Feature.Loupe.Presenter/README.md) |
 | CaptureOverlaySession | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md) | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md)（`Presentation/`） |
 | CropView | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md) | なし |
 | ZoomView | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md) | なし（UI 層が描く。 `CropViewControl` が内包） |
 | SelectionOverlay | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md) | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md)（`Presentation/`） |
 
-SelectionOverlay は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`EsUtil.Feature.Marquee.Presenter`](EsUtil.Feature.Marquee.Presenter/README.md) / [`EsUtil.Feature.Loupe.Presenter`](EsUtil.Feature.Loupe.Presenter/README.md)）。
+SelectionOverlay は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`EsUtil.Feature.Marquee.Presenter`](../../EsUtil/src/EsUtil.Feature.Marquee.Presenter/README.md) / [`EsUtil.Feature.Loupe.Presenter`](../../EsUtil/src/EsUtil.Feature.Loupe.Presenter/README.md)）。
 
-UI 層は [`EsUtil.Feature.Marquee.ControlAvaloniaUI`](EsUtil.Feature.Marquee.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Marquee.ControlMewUI`](EsUtil.Feature.Marquee.ControlMewUI/README.md) / [`EsUtil.Feature.Loupe.ControlAvaloniaUI`](EsUtil.Feature.Loupe.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Loupe.ControlMewUI`](EsUtil.Feature.Loupe.ControlMewUI/README.md)、
-プラットフォーム層は [`EsUtil.Platform.Core`](EsUtil.Platform.Core/README.md) / [`Platform.Skia`](Platform.Skia/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) を参照してください。
+UI 層は [`EsUtil.Feature.Marquee.ControlAvaloniaUI`](../../EsUtil/src/EsUtil.Feature.Marquee.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Marquee.ControlMewUI`](../../EsUtil/src/EsUtil.Feature.Marquee.ControlMewUI/README.md) / [`EsUtil.Feature.Loupe.ControlAvaloniaUI`](../../EsUtil/src/EsUtil.Feature.Loupe.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Loupe.ControlMewUI`](../../EsUtil/src/EsUtil.Feature.Loupe.ControlMewUI/README.md)、
+プラットフォーム層は [`EsUtil.Platform.Core`](../../EsUtil/src/EsUtil.Platform.Core/README.md) / [`Platform.Skia`](Platform.Skia/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) を参照してください。
 
 ## 7. 名前空間とフォルダ
 

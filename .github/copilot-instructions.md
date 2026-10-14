@@ -41,16 +41,19 @@
 
 SaveEvidence は Windows デスクトップの画面キャプチャ アプリである（実行ファイルは Avalonia UI 版と MewUI 版の 2 つ）。
 
-| 区分 | プロジェクト |
-| --- | --- |
-| 共通基盤（可搬） | `EsUtil.Platform.Core` |
-| 再利用可能なコントロール（可搬） | `EsUtil.Feature.Marquee.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI`、`EsUtil.Feature.Loupe.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI`、`ColorPickerControl.AvaloniaUI` |
-| 画像処理（可搬） | `Parts.LineDetection` |
-| プラットフォーム層 | `Platform.AvaloniaUI` / `Platform.MewUI` / `Platform.Skia` |
-| 撮影スタック（製品固有） | `Parts.CapturePreview.Core` / `.AvaloniaUI` / `.MewUI` |
-| アプリ | `App.Core` / `App.AvaloniaUI` / `App.MewUI` |
+**再利用可能な層（共通基盤と EsUtil 系のコントロール）は隣のリポジトリ [`EsUtil`](../../EsUtil/README.md) へ分離されている**。 本ソリューションはそれを**プロジェクト参照**で参照する（`..\..\..\..\EsUtil\src\<プロジェクト>\src\...`。 [`.github/依存関係.md`](依存関係.md) §2）。
 
-**層の帰属（Core / Presenter / UI のどれに置くか）・ラベルと装飾の分担・名前空間とフォルダの関係は [`../src/README.md`](../src/README.md) が所有する**（本節は要約しない）。
+| 区分 | プロジェクト | 所在 |
+| --- | --- | --- |
+| 共通基盤（可搬） | `EsUtil.Platform.Core` / `.Windows` | `../EsUtil` |
+| 再利用可能なコントロール（可搬） | `EsUtil.Feature.Marquee.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI`、`EsUtil.Feature.Loupe.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI` | `../EsUtil` |
+| 画像処理（可搬） | `Parts.LineDetection` | 本リポジトリ |
+| プラットフォーム層 | `Platform.AvaloniaUI` / `Platform.MewUI` / `Platform.Skia` | 本リポジトリ |
+| 撮影スタック（製品固有） | `Parts.CapturePreview.Core` / `.ControlAvaloniaUI` / `.ControlMewUI` | 本リポジトリ |
+| アプリが使う入力用コントロール | `ColorPickerControl.AvaloniaUI` | 本リポジトリ |
+| アプリ | `App.Core` / `App.AvaloniaUI` / `App.MewUI` | 本リポジトリ |
+
+**層の帰属（Core / Presenter / UI のどれに置くか）・ラベルと装飾の分担・名前空間とフォルダの関係は [`../src/README.md`](../src/README.md) が所有する**（本節は要約しない）。 EsUtil 側の層の帰属は [`../../EsUtil/src/README.md`](../../EsUtil/src/README.md) が所有する。
 
 | 知りたいこと | 所有者 |
 | --- | --- |
@@ -61,6 +64,8 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 
 ### 3.2 このリポジトリ固有の事実
 
+- **リポジトリは 2 つで、ワークスペースへ両方を載せる**（[`../SaveEvidence.code-workspace`](../SaveEvidence.code-workspace) が `../EsUtil` を含む）。 ライブラリ側の規約は [EsUtil の作業指示](../../EsUtil/.github/copilot-instructions.md) が所有する。
+- **EsUtil 側はパッケージ（ローカル フィード）としても参照できる**（[`../../EsUtil/nupkg/README.md`](../../EsUtil/nupkg/README.md)）。 本リポジトリは**プロジェクト参照**を使う（型の変更が即座に反映されるため）。
 - **実行ファイルは 2 つ**（`App.AvaloniaUI` / `App.MewUI`）で、**設定ファイルとログを共有する**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
 - **実行ファイルの名前はプロジェクト名と一致しない**（`App.AvaloniaUI` → `SaveEvidence.AvaloniaUI.exe` / `App.MewUI` → `SaveEvidence.MewUI.exe`。 `<AssemblyName>` で製品名を明示する。 配布名は [`.github/release-config.json`](release-config.json) が単一所有する）。
 - **文字コードは UTF-8（BOM なし）**で統一する（[`.editorconfig`](../.editorconfig) の `charset = utf-8`。 既存の `.cs` / `.md` / `.ps1` はすべて BOM なし）。
@@ -68,3 +73,4 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 - **`App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する**（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
 - **`AVLN3001` は `App.AvaloniaUI` だけが抑止する**（理由は csproj のコメントに記載。 [`検証手順.md`](検証手順.md) §1）。
 - **CI は本リポジトリにリモートが無いため未実行**である（[`workflows/build.yml`](workflows/build.yml) はローカルで `buildScript/verify.ps1` を Release 構成で実行するのと等価）。
+- **`EsUtil` 側の検証は EsUtil リポジトリで実行する**（本リポジトリの走査は `src/` 配下だけを対象にし、EsUtil の文書は走査しない）。
