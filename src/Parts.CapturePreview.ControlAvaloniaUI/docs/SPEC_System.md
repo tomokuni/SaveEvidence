@@ -277,7 +277,7 @@ flowchart TB
 - **分類**: 公開コントロール（`public sealed class : Panel`。 自己完結型複合コントロール）
 - **責務**: 内部ビューポート（`ZoomableView`）を生成し、公開 API をコアの `ZoomViewSession` へ委譲する。 セッションの通知（`ZoomChanged` / `ViewportChanged`）を自 UI の公開イベントへ転送する。 **`CropViewControl` が内包する画像ビューポート**であり、独立した汎用コントロールとしての利用を前提としない
 - **非公開メンバー**: `Session`（内部ビューポートが所有するセッションへの参照）/ `ZoomableView`（内包するビューポート）/ `OnSessionNotified`（通知の転送）
-- **公開 API の詳細**: 外部機能仕様書（`SPEC_ExtFunc.md`）の 5.7 を参照
+- **公開 API の詳細**: [`SPEC_API.md`](SPEC_API.md) の 5.7 を参照
 - **可視性**: public（`CropViewControl` からは内部部品として扱う）
 - **依存**: `Parts.CapturePreview.Core`（`ZoomViewSession` / `ZoomOptions` / `ZoomNotice` / `ZoomState`）/ Platform.AvaloniaUI（コア型の相互変換）
 - **状態と判断の所有者**: `ZoomViewSession`（コア）。 本コントロールは値の委譲と通知の転送のみを行う

@@ -47,7 +47,7 @@
 - フォルダビュー / Undo 一覧 / 設定画面
 - テーマ（ライト / ダーク / システム）
 
-ズーム率の遷移・表示方式などの詳細仕様は `CropViewControl`（`ZoomViewControl` を内包）の `SPEC_ExtFunc.md`（[`../Parts.CapturePreview.ControlAvaloniaUI/SPEC_ExtFunc.md`](../../Parts.CapturePreview.ControlAvaloniaUI/docs/SPEC_API.md)）を参照してください。
+ズーム率の遷移・表示方式などの詳細仕様は `CropViewControl`（`ZoomViewControl` を内包）の [`../../Parts.CapturePreview.ControlAvaloniaUI/docs/SPEC_API.md`](../../Parts.CapturePreview.ControlAvaloniaUI/docs/SPEC_API.md)（5.5 / 5.7）を参照してください。
 
 ## 3. テーマ（外観設定）
 
@@ -241,7 +241,7 @@
 - **フライアウト選択肢**: 拡大率ボタンのクリックで表示されるフライアウト（0=自動 + 固定倍率 10〜500% の 13 段階）から選択し、`CropView.ZoomPercent`（`MainViewModel.ZoomPercent`）を設定する（`CapturePage.OnZoomFlyoutItemClick`）
 - **切り出し中のズーム・パン**: 切り出し中は選択オーバーレイがプレビューを覆うため、ホイールは `CropViewControl` が内部でビューポートへ転送する（Ctrl+ホイール = カーソル位置を中心にズーム / 通常ホイール = パン / Shift+ホイール = 横パン）。 ステータスバーの ⊕⊖ ボタン・スライダ・`Ctrl +` / `Ctrl -` は切り出し中も使用できる（選択矩形は対象座標で不変のため維持される）。 スクロールバーはオーバーレイの下になり掴めないため、パンはホイールで行う
 
-詳細仕様（遷移ルール・表示方式・公開 API）は `CropViewControl`（`ZoomViewControl` を内包）の `SPEC_ExtFunc.md`（[`../Parts.CapturePreview.ControlAvaloniaUI/SPEC_ExtFunc.md`](../../Parts.CapturePreview.ControlAvaloniaUI/docs/SPEC_API.md)）を参照してください。
+詳細仕様（遷移ルール・表示方式・公開 API）は `CropViewControl`（`ZoomViewControl` を内包）の [`../../Parts.CapturePreview.ControlAvaloniaUI/docs/SPEC_API.md`](../../Parts.CapturePreview.ControlAvaloniaUI/docs/SPEC_API.md)（5.5 / 5.7）を参照してください。
 
 ## 8. ログ
 

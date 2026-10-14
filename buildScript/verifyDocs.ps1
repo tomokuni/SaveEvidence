@@ -203,7 +203,9 @@ $stalePatterns = @(
     'MarqueePresenter\.ResolveContent',
     'App\.(AvaloniaUI|MewUI)\.exe',
     'SaveEvidence\.exe',
-    'app\.(Core|AvaloniaUI|MewUI)'
+    'app\.(Core|AvaloniaUI|MewUI)',
+    # 改名・分割で消えた型（コメントだけが残りやすい。 実測 2026-10-14 に 2 箇所の残骸を直した）
+    'FadeMaskDragRect'
 )
 $stale = [System.Collections.Generic.List[string]]::new()
 # 走査は 1 回にする（パターンごとに `git grep` を起動すると、パターン数だけリポジトリ全体を走査する。

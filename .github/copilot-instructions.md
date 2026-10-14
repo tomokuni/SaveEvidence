@@ -65,7 +65,7 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 ### 3.2 このリポジトリ固有の事実
 
 - **リポジトリは 2 つで、ワークスペースへ両方を載せる**（[`../SaveEvidence.code-workspace`](../SaveEvidence.code-workspace) が `../EsUtil` を含む）。 ライブラリ側の規約は [EsUtil の作業指示](../../EsUtil/.github/copilot-instructions.md) が所有する。
-- **EsUtil 側はパッケージ（ローカル フィード）としても参照できる**（[`../../EsUtil/nupkg/README.md`](../../EsUtil/nupkg/README.md)）。 本リポジトリは**プロジェクト参照**を使う（型の変更が即座に反映されるため）。
+- **EsUtil 側はパッケージ（ローカル フィード）としても参照できる**（[EsUtil のビルド設定規約](../../EsUtil/.github/ビルド設定規約.md) §4 がパッケージの出力を定める。 **EsUtil 側の出力先 `.nupkg/` はリポジトリへ含まれない**ため、使う前に EsUtil で `pack.ps1` を実行する）。 本リポジトリは**プロジェクト参照**を使う（型の変更が即座に反映されるため）。
 - **実行ファイルは 2 つ**（`App.AvaloniaUI` / `App.MewUI`）で、**設定ファイルとログを共有する**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
 - **実行ファイルの名前はプロジェクト名と一致しない**（`App.AvaloniaUI` → `SaveEvidence.AvaloniaUI.exe` / `App.MewUI` → `SaveEvidence.MewUI.exe`。 `<AssemblyName>` で製品名を明示する。 配布名は [`.github/release-config.json`](release-config.json) が単一所有する）。
 - **文字コードは UTF-8（BOM なし）**で統一する（[`.editorconfig`](../.editorconfig) の `charset = utf-8`。 既存の `.cs` / `.md` / `.ps1` はすべて BOM なし）。

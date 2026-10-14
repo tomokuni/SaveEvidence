@@ -101,5 +101,5 @@ src/Parts.LineDetection/
 │   ├── ViewModels/       # MainWindowViewModel・LineItem・LineDetectorOption
 │   ├── Views/            # MainWindow.axaml / MainWindow.axaml.cs
 │   └── Imaging/          # ClipboardImageReader（Win32 CF_DIB）
-└── README.md / SPEC_ExtFunc.md / SPEC_System.md
+└── README.md
 ```

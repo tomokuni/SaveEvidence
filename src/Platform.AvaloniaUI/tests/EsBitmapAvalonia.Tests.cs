@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Platform.AvaloniaUI.Tests;
 /// <c>Bitmap.ToEsBitmap()</c> / <c>bitmap.ToAvaloniaWriteableBitmap()</c> は
 /// <c>WriteableBitmap</c> の生成・ピクセルコピーを伴うため、Avalonia ヘッドレスプラットフォームが必要。<br/>
 /// そのため <see cref="AvaloniaHeadlessGroup"/> 内で直列実行する（純粋計算テストは
-/// <c>EsBitmapTests</c> で並列実行）。<br/>
+/// `EsUtil.Platform.Core` の <c>EsBitmapTests</c> で並列実行）。<br/>
 /// サイズ・ストライドを主に検証する（ピクセル値はヘッドレス環境で不安定なため検証しない）。
 /// </remarks>
 [Collection("AvaloniaHeadless")]

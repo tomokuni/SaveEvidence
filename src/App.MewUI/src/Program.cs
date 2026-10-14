@@ -72,7 +72,7 @@ internal static class Program
         // ホットキーの開始経路（StartSelectionMode）は、撮影・切り出しのセッション寿命を所有するページが
         // Facade を生成した時点で設定する（本ホストは UI 層のオブジェクトを生成しないため、ここでは設定しない）。
 
-        // 骨格確認用の仮画像（キャプチャ実装までの暫定）
+        // 撮影前のプレースホルダ画像（撮影の成立を実機で判定するための目印。 README 27.2 の画素実測が使う）
         viewModel.SetPreviewImage(CreatePlaceholderImage());
 
         // ウィンドウ配置（位置・サイズ・状態）とナビ開閉は設定から復元し、終了時に保存する
@@ -171,9 +171,9 @@ internal static class Program
         }
     }
 
-    /// <summary>骨格確認用のプレビュー画像を生成する。</summary>
+    /// <summary>撮影前のプレースホルダ画像を生成する。</summary>
     /// <returns>生成した画像。 所有権は呼び出し側（<c>MainViewModel</c> へ渡す）。</returns>
-    /// <remarks>キャプチャ実装までの暫定。 グラデーションにすることで描画の成否を目視で判定できる。</remarks>
+    /// <remarks>グラデーションにすることで、撮影の前後を画素の実測で判定できる（README 27.2 の実機検証手順）。</remarks>
     private static EsBitmap CreatePlaceholderImage()
     {
         // 所有権は FromSKBitmap へ移るため using を付けない（付けると戻り値が破棄済みになる）

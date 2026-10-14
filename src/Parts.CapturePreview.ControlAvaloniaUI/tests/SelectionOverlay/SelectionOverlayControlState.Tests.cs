@@ -14,7 +14,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.SelectionOve
 /// <remarks>
 /// <see cref="SelectionOverlayControl"/> は LoupeControl（SolidColorBrush 等のスレッドアフィニティ）を内包するため、
 /// Avalonia ヘッドレス実行（Dispatcher）を必要とする。<c>[AvaloniaFact]</c> で直列コレクションに属して実行する。<br/>
-/// 設定値そのもの（既定値・部分変更・枠線の導出）の検証はコアの <c>FadeMaskDragRectOptionsTests</c> が担う。
+/// 設定値そのもの（既定値・部分変更・枠線の導出）の検証はコアの <c>SelectionOverlayOptionsTests</c> が担う。
 /// </remarks>
 [Collection("AvaloniaHeadless")]
 public class SelectionOverlayControlStateTests

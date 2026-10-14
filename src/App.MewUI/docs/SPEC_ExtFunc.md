@@ -66,11 +66,11 @@
 | 自動切り出し | 線検出によりウィンドウ枠を推定し、切り出し範囲を提示する。 再実行で確定 / モード外のダブルクリックと Escape でキャンセル |
 | 切り出し | プレビュー上のドラッグで現在の画像を切り出す（`Ctrl+R` / ツールバーの切り出しボタン / メニューで開始。 再押下で確定 / 選択なしでキャンセル） |
 | 戻す / やり直し | 編集履歴を移動する（撮影・切り出しの直前へ戻せる。 画像がない場合は無効） |
-| プレビュー | 画像をズーム・パンして表示する（ドラッグでパン / Ctrl+ホイールでズーム）。 詳細は `../Parts.CapturePreview.ControlMewUI/SPEC_ExtFunc.md` |
+| プレビュー | 画像をズーム・パンして表示する（ドラッグでパン / Ctrl+ホイールでズーム）。 詳細は [`../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md`](../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md) |
 | ズーム操作 | ⊖ / ⊕ / Fit ボタンとズーム率の表示（画像未設定時は可否が false） |
 | 検出矩形 | 自動切り出しの検出結果を**水色の実線枠**（2 DIP。 Avalonia 版と同じ）でオーバーレイ表示する。 ホバー中の矩形（面積が最小のもの）は**赤色**で強調する |
-| ルーペ | 切り出し中のみカーソル位置を拡大し、カーソルの右下（設定のオフセット）へ追従する。 切り出しを確定・キャンセルすると消える。 詳細は `../EsUtil.Feature.Loupe.ControlMewUI/SPEC_ExtFunc.md` |
-| 選択矩形の破線 | 撮影・切り出しの選択中は、ルーペ画像へ選択矩形の破線（2 色交互）を重ねる。 色は設定 `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB`。 詳細は `../Parts.CapturePreview.ControlMewUI/SPEC_ExtFunc.md` |
+| ルーペ | 切り出し中のみカーソル位置を拡大し、カーソルの右下（設定のオフセット）へ追従する。 切り出しを確定・キャンセルすると消える。 詳細は [`../../../../EsUtil/src/EsUtil.Feature.Loupe.ControlMewUI/docs/SPEC_API.md`](../../../../EsUtil/src/EsUtil.Feature.Loupe.ControlMewUI/docs/SPEC_API.md) |
+| 選択矩形の破線 | 撮影・切り出しの選択中は、ルーペ画像へ選択矩形の破線（2 色交互）を重ねる。 色は設定 `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB`。 詳細は [`../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md`](../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md) |
 | ステータス | 画像サイズ / 保存状態 / 通知メッセージを表示する |
 
 ### 3.2 キャプチャ選択の操作
@@ -285,12 +285,11 @@
 
 | アセンブリ | 仕様書 |
 | --- | --- |
-| `EsUtil.SaveEvidence.dll`（App.Core） | `../app/SPEC_ExtFunc.md`（アプリ共通のコア仕様） |
-| `EsUtil.Platform.Core` | `../EsUtil.Platform.Core/docs/SPEC_API.md`（`Native` / `Native.Win` を含む） |
-| `Platform.MewUI` | `../Platform.MewUI/SPEC_ExtFunc.md` |
-| `EsUtil.Feature.Loupe.ControlMewUI` | `../EsUtil.Feature.Loupe.ControlMewUI/SPEC_ExtFunc.md` |
-| `Parts.CapturePreview.ControlMewUI` | `../Parts.CapturePreview.ControlMewUI/SPEC_ExtFunc.md` |
-| `Parts.CapturePreview.ControlMewUI` | `../Parts.CapturePreview.ControlMewUI/SPEC_ExtFunc.md`（切り出しビュー・領域選択を含む） |
+| `App.Core` | [`SPEC_API.md`](../../App.Core/docs/SPEC_API.md)（UI 非依存のコア仕様） |
+| `EsUtil.Platform.Core` | [`SPEC_API.md`](../../../../EsUtil/src/EsUtil.Platform.Core/docs/SPEC_API.md)（`Native` / `Native.Win` を含む） |
+| `Platform.MewUI` | [`SPEC_API.md`](../../Platform.MewUI/docs/SPEC_API.md) |
+| `EsUtil.Feature.Loupe.ControlMewUI` | [`SPEC_API.md`](../../../../EsUtil/src/EsUtil.Feature.Loupe.ControlMewUI/docs/SPEC_API.md) |
+| `Parts.CapturePreview.ControlMewUI` | [`SPEC_API.md`](../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md)（切り出しビュー・領域選択を含む） |
 
 ## 9. エラー時の挙動
 

@@ -94,8 +94,8 @@ dotnet run --project src/Parts.LineDetection/sample/Parts.LineDetection.Sample.c
 
 ## 7. ドキュメント
 
-- `SPEC_ExtFunc.md`: 外部機能仕様書（公開 API 仕様）
-- `SPEC_System.md`: システム仕様書（アーキテクチャ・内部設計）
+- [SPEC_API.md](docs/SPEC_API.md) — 公開 API のリファレンス
+- [SPEC_System.md](docs/SPEC_System.md) — 設計・依存・検証方針
 
 ## 8. プロジェクト構成
 
