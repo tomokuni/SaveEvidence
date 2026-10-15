@@ -1,0 +1,38 @@
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
+using EsUtil.SaveEvidence.Platform.Skia;
+using SkiaSharp;
+
+namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.ZoomView;
+
+/// <summary>ズーム画像の描画層（WinUI 3 実装）。</summary>
+/// <remarks>
+/// <b>描画のみ</b>を担う層である。 表示矩形（配置・倍率）はコアの <see cref="ZoomViewSession"/> が単一所有するため、<br/>
+/// 本クラスは矩形を <see cref="SKCanvas"/> の描画 API へ写すだけで、判断・計算を持たない。<br/>
+/// ドキュメントコメント・コードコメントにも最適化の内容は記載しない（実装の一部として静かに行う）。
+/// </remarks>
+internal static class ZoomSkiaRenderer
+{
+    /// <summary>ズーム画像を描画する。</summary>
+    /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
+    /// <param name="source">ズーム対象の画像。 null の場合は何もしない。</param>
+    /// <param name="session">表示矩形（配置・倍率）を単一所有するセッション。</param>
+    /// <remarks>画像の全面を表示矩形へ 1 回で描画する（コアが配置を確定済みのため、Skia 側の計算は不要）。</remarks>
+    public static void Render(SKCanvas canvas, EsReadOnlyBitmap? source, ZoomViewSession session)
+    {
+        ArgumentNullException.ThrowIfNull(canvas);
+        ArgumentNullException.ThrowIfNull(session);
+
+        var rect = session.ImageRect;
+        if (source is null || rect.Width <= 0 || rect.Height <= 0)
+        {
+            return;
+        }
+
+        var src = new SKRect(0, 0, source.Width, source.Height);
+        var dst = rect.ToSKRect();
+        // ToSKBitmap は非所有ビュー（ピクセルは複製しない）だがファイナライザを持つため、描画の直後に破棄する
+        using var view = source.ToSKBitmap();
+        canvas.DrawBitmap(view, src, dst);
+    }
+}

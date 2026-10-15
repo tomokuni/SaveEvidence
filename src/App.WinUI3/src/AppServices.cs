@@ -1,0 +1,20 @@
+using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
+using EsUtil.SaveEvidence.App.Core.ViewModels;
+
+namespace EsUtil.SaveEvidence.App.WinUI3;
+
+/// <summary>アプリ全体で共有するコアオブジェクト（WinUI 3 版のサービス束）。</summary>
+/// <param name="Main">アプリのメイン ViewModel（プレビュー・コマンド）。</param>
+/// <param name="Settings">設定サービス（UI 非依存の共有実装）。</param>
+/// <param name="UndoHistory">Undo / Redo 履歴（キャプチャページと Undo 一覧で共有する）。</param>
+/// <param name="FolderView">フォルダビューの表示状態（表示モード・ソート順・フォルダパス）。</param>
+/// <remarks>
+/// 各ページは必要なメンバーのみを受け取る（本レコードをそのまま引き回さない）。<br/>
+/// UI 層（コントロール・ウィンドウ）は含めない（生成は各ページが行う）。
+/// </remarks>
+internal sealed record AppServices(
+    MainViewModel Main,
+    ISettingsService Settings,
+    UndoHistory UndoHistory,
+    FolderViewViewModel FolderView);

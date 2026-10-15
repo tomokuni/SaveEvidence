@@ -1,0 +1,162 @@
+using System.Collections.Concurrent;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.Platform.Skia;
+using SkiaSharp;
+
+namespace EsUtil.SaveEvidence.App.WinUI3.Services;
+
+/// <summary>画像ファイルを縮小してサムネイル用の画像（読み取りの面）として読み込むローダー。</summary>
+/// <remarks>
+/// <b>縮小デコード</b>: <see cref="SKCodec.GetPixels(SKImageInfo, IntPtr)"/> へ縮小後の寸法を渡し、<br/>
+/// 原寸のバッファを確保せずにデコードする（4K のスクリーンショットを多数並べるときのメモリと時間を抑える）。<br/>
+/// <b>キャッシュ</b>: 同一ファイル・同一サイズのデコード結果を共有する。 ファイルの更新日時をキーに含めるため、<br/>
+/// 内容が変われば再デコードされる。 容量管理は <see cref="CapacityLimitedCache"/> へ委譲し、<br/>
+/// 上限超過時は <see cref="EsReadOnlyBitmap"/>（<see cref="IDisposable"/>）が破棄されてから破棄される。<br/>
+/// <b>失敗時</b>: 存在しない・非画像・破損などの場合は null を返す（例外にしない）。<br/>
+/// <b>スレッド</b>: 背景の生成からも呼べる（キャッシュの上限判定・登録は直列化される。 デコードは並列のまま）。
+/// </remarks>
+internal static class ImageThumbnailLoader
+{
+    /// <summary>デコード結果のキャッシュ（キー: パス・要求サイズ・更新日時）。</summary>
+    private static readonly ConcurrentDictionary<(string Path, int Size, DateTime LastWrite), EsReadOnlyBitmap?> s_cache = new();
+
+    /// <summary>画像ファイルを読み込み、長辺が指定サイズを超えないサムネイルを返す。</summary>
+    /// <param name="filePath">対象のファイルパス。</param>
+    /// <param name="maxSize">サムネイルの長辺の上限（ピクセル）。 0 以下は 1 として扱う。</param>
+    /// <param name="capacity">キャッシュの最大保持数（一覧が表示する件数を渡す）。 1 未満は 1 として扱う。</param>
+    /// <returns>サムネイル画像（読み取りの面）。 読み込めない場合は null。</returns>
+    /// <remarks>
+    /// <b>読み取りの面で返す理由</b>: サムネイルは表示するだけ（書き換えない）であるため、<br/>
+    /// デコードの完了後に凍結して 0 コピーで読み取り専用の面へ渡す。<br/>
+    /// <b>保持数を呼び出し側が渡す理由</b>: 一覧が表示する件数より小さい上限だと、生成の途中で表示中の<br/>
+    /// サムネイルが破棄される（上限超過時はキャッシュが保持する値を破棄するため、描画が破棄済みの<br/>
+    /// バッファへ触れる）。<br/>
+    /// <b>キャッシュの値は本クラスが所有し、呼び出し側は破棄しない。</b>
+    /// </remarks>
+    public static EsReadOnlyBitmap? Load(string filePath, int maxSize, int capacity)
+    {
+        if (!ImageFileExtensions.IsImageFile(filePath))
+        {
+            return null;
+        }
+
+        var size = Math.Max(1, maxSize);
+
+        try
+        {
+            var key = (Path: filePath, Size: size, LastWrite: File.GetLastWriteTimeUtc(filePath));
+            return CapacityLimitedCache.GetOrAdd(s_cache, Math.Max(1, capacity), key, static k => Decode(k.Path, k.Size));
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // アクセス拒否・削除競合など、ファイルの状態による失敗は「表示できない」として扱う
+            return null;
+        }
+    }
+
+    /// <summary>画像ファイルを縮小してデコードする。</summary>
+    /// <param name="filePath">対象のファイルパス。</param>
+    /// <param name="maxSize">長辺の上限（ピクセル）。 1 以上。</param>
+    /// <returns>デコードした画像。 デコードできない場合は null。</returns>
+    /// <remarks>
+    /// 1. 長辺が上限に収まる倍率を求める（上限以下なら等倍）。<br/>
+    /// 2. コーデックが縮小デコードに対応していれば、その寸法でピクセルを取得する（原寸バッファを確保しない）。<br/>
+    /// 3. 縮小されなかった場合は、デコード後に目標寸法へ縮小する（アルゴリズムはコアの面積平均）。<br/>
+    /// <b>縮小をコアへ委譲する理由</b>: 縮小率が大きいときの細線の残り方が実装ごとに異なるため、<br/>
+    /// コアの面積平均へ揃えると他の UI 版と同じ画質になる。
+    /// </remarks>
+    private static EsReadOnlyBitmap? Decode(string filePath, int maxSize)
+    {
+        using var stream = File.OpenRead(filePath);
+        using var codec = CreateCodec(stream);
+        if (codec is null)
+        {
+            return null;
+        }
+
+        var source = codec.Info;
+        if (source.Width <= 0 || source.Height <= 0)
+        {
+            return null;
+        }
+
+        var scale = Math.Min((double)maxSize / source.Width, (double)maxSize / source.Height);
+        var target = scale < 1.0 ? ComputeTarget(source, scale) : new SKSizeI(source.Width, source.Height);
+        var decodeSize = scale < 1.0 ? codec.GetScaledDimensions((float)scale) : target;
+
+        // 内部表現（EsBitmap）と同じ BGRA8888・Premul を指定し、拡張子に依らず同じ形式へ揃える
+        using var bitmap = DecodePixels(codec, decodeSize);
+        if (bitmap is null)
+        {
+            return null;
+        }
+
+        if (bitmap.Width == target.Width && bitmap.Height == target.Height)
+        {
+            return ToReadOnly(bitmap.ToEsBitmap());
+        }
+
+        using var resized = bitmap.ToEsBitmap();
+        resized.SetReadOnly();
+        using var readOnly = EsReadOnlyBitmap.FromBitmap(resized);
+        return ToReadOnly(readOnly.Resize(maxSize, EsImageQuality.High));
+    }
+
+    /// <summary>デコードした画像を表示へ渡せる読み取りの面にする（凍結して 0 コピーで共有する）。</summary>
+    /// <param name="image">移す画像（書き換え可能）。 画素は読み取りの面が引き継ぎ、渡した実体は解放する。</param>
+    /// <returns>読み取りの面。 所有権は呼び出し側へ移る。</returns>
+    /// <remarks>サムネイルは表示するだけ（書き換えない）であるため、凍結して共有する。</remarks>
+    private static EsReadOnlyBitmap ToReadOnly(EsBitmap image)
+    {
+        image.SetReadOnly();
+        var read = EsReadOnlyBitmap.FromBitmap(image);
+
+        // 画素は読み取りの面が共有して引き継ぐため、書き換え可能の実体（参照）はここで解放する
+        image.Dispose();
+        return read;
+    }
+
+    /// <summary>縮小後に目標とする寸法を求める。</summary>
+    /// <param name="source">元画像のピクセル情報。</param>
+    /// <param name="scale">縮小倍率（1 未満）。</param>
+    /// <returns>目標寸法（各辺 1 以上）。</returns>
+    private static SKSizeI ComputeTarget(SKImageInfo source, double scale)
+        => new(
+            Math.Max(1, (int)Math.Round(source.Width * scale)),
+            Math.Max(1, (int)Math.Round(source.Height * scale)));
+
+    /// <summary>ストリームから画像コーデックを生成する。</summary>
+    /// <param name="stream">対象のストリーム。</param>
+    /// <returns>生成したコーデック。 判別できない場合は null。</returns>
+    /// <remarks>
+    /// SkiaSharp の <c>SKCodec.Create</c> は失敗時に null を返すが、注釈は非 null である。<br/>
+    /// <c>as</c> で null 許容へ落としてから呼び出し側で判定する（注釈を信用した判定は到達不能とみなされる）。
+    /// </remarks>
+    private static SKCodec? CreateCodec(Stream stream)
+    {
+        var codec = SKCodec.Create(stream);
+        return codec;
+    }
+
+    /// <summary>指定寸法でピクセルを取得する。</summary>
+    /// <param name="codec">対象のコーデック。</param>
+    /// <param name="size">取得する寸法（1 以上）。</param>
+    /// <returns>デコードしたビットマップ。 取得できない場合は null。</returns>
+    /// <remarks>不完全なデータ（<c>IncompleteInput</c>）はデコードできた範囲を表示する。</remarks>
+    private static SKBitmap? DecodePixels(SKCodec codec, SKSizeI size)
+    {
+        var info = new SKImageInfo(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+        var bitmap = new SKBitmap(info);
+
+        var result = codec.GetPixels(info, bitmap.GetPixels());
+        if (result is SKCodecResult.Success or SKCodecResult.IncompleteInput)
+        {
+            return bitmap;
+        }
+
+        bitmap.Dispose();
+        return null;
+    }
+}
