@@ -1,15 +1,15 @@
 # コントロールの層構成（Core / Presenter / UI）
 
-本リポジトリのコントロールは、**UI 非依存のコアを複数の UI（Avalonia / MewUI）で共有する**ために層を分けています。
+本リポジトリのコントロールは、**UI 非依存のコアを複数の UI（Avalonia / MewUI / WinUI 3 / WinForms）で共有する**ために層を分けています。
 本ドキュメントは「層の依存の向き」と「どこに何を置くか」の単一の説明です。 各層の中身は各プロジェクトの `README.md` / `SPEC_*.md` を参照してください。
 
 ## 1. 全体の階層
 
 ```mermaid
 flowchart TB
-    APP["アプリ層<br/>App.AvaloniaUI / App.MewUI（+ App.Core の ViewModel・Model）<br/>Parts.CapturePreview.*（撮影セッション + 切り出しビュー + 領域選択 + 切り出しプレビューのビューポート）"]
-    CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI"]
-    PLAT["プラットフォーム層<br/>EsUtil.Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>Platform.Skia（Skia 依存を閉じ込める）<br/>Platform.AvaloniaUI / Platform.MewUI（UI アダプタ）"]
+    APP["アプリ層<br/>App.AvaloniaUI / App.MewUI / App.WinUI3 / App.WinForms（+ App.Core の ViewModel・Model）<br/>Parts.CapturePreview.*（撮影セッション + 切り出しビュー + 領域選択 + 切り出しプレビューのビューポート）"]
+    CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI / .WinUI3 / .WinForms"]
+    PLAT["プラットフォーム層<br/>EsUtil.Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>Platform.Skia（Skia 依存を閉じ込める）<br/>Platform.AvaloniaUI / Platform.MewUI / Platform.WinUI3 / Platform.WinForms（UI アダプタ）"]
     APP --> CTRL
     APP --> PLAT
     CTRL --> PLAT
@@ -23,7 +23,7 @@ flowchart TB
 
 ```mermaid
 flowchart TB
-    UI["UI 層<br/>XxxControl.AvaloniaUI / .MewUI<br/>入力の受付・描画（自 UI の API）・ラベル要素の配置・ホスト結線"]
+    UI["UI 層<br/>XxxControl.AvaloniaUI / .MewUI / .WinUI3 / .WinForms<br/>入力の受付・描画（自 UI の API）・ラベル要素の配置・ホスト結線"]
     UB["Presenter<br/>提示（XxxPresenter：幾何＋外観 → 描画計画）<br/>＋ 外観（XxxAppearance）"]
     CORE["Core<br/>何を描くか（幾何）+ 計算<br/>（状態・値・純粋計算）"]
     UI --> UB
@@ -82,15 +82,15 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 | コントロール | Core | Presenter | UI |
 | --- | --- | --- | --- |
-| `MarqueeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI |
-| `LoupeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI |
+| `MarqueeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI / WinUI3 / WinForms |
+| `LoupeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI / WinUI3 / WinForms |
 | `ZoomViewControl` | あり（`Parts.CapturePreview.Core`） | なし（UI 層が描く） | `CapturePreview.*` に収録 |
-| `CropViewControl` | あり（`Parts.CapturePreview.Core`） | なし | AvaloniaUI / MewUI |
-| `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。 描画手順は持たない） | AvaloniaUI / MewUI |
-| `SelectionOverlayControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。 内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI |
+| `CropViewControl` | あり（`Parts.CapturePreview.Core`） | なし | AvaloniaUI / MewUI / WinUI3 / WinForms |
+| `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。 描画手順は持たない） | AvaloniaUI / MewUI / WinUI3 / WinForms |
+| `SelectionOverlayControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。 内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI / WinUI3 / WinForms |
 | `ColorPickerControl` | なし（UI のみ） | なし | AvaloniaUI |
 
-`CropViewControl` と `SelectionOverlayControl` は `Parts.CapturePreview.ControlAvaloniaUI` / `Parts.CapturePreview.ControlMewUI` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。 `ZoomViewControl` も同じアセンブリに収録され、`CropViewControl` が内包する画像ビューポートです（ZoomView の UI 層も独立したプロジェクトではありません。 ズーム・パンの状態と判断は UI 非依存コアの `Parts.CapturePreview.Core` が単一所有します）。
+`CropViewControl` と `SelectionOverlayControl` は `Parts.CapturePreview.ControlAvaloniaUI` / `Parts.CapturePreview.ControlMewUI` / `Parts.CapturePreview.ControlWinUI3` / `Parts.CapturePreview.ControlWinForms` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。 `ZoomViewControl` も同じアセンブリに収録され、`CropViewControl` が内包する画像ビューポートです（ZoomView の UI 層も独立したプロジェクトではありません。 ズーム・パンの状態と判断は UI 非依存コアの `Parts.CapturePreview.Core` が単一所有します）。
 
 **コントロール化を前提とした処理は UI が持ちます**: ホイール操作（どの入力がズーム・パンかを決める）・ビューポートの変化の追従・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるためです。
 `LoupeControl` の中間ビットマップの再描画スケジューリング（`LoupeRenderCoordinator`。 Avalonia 版が所有する）を MewUI が使わないのは、**MewUI が中間ビットマップを持たず同期描画するため**です（再描画のスケジューリングが不要）。 同じ必要が生じた時点で実装できます。
@@ -112,8 +112,9 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 SelectionOverlay は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`EsUtil.Feature.Marquee.Presenter`](../../EsUtil/src/EsUtil.Feature.Marquee.Presenter/README.md) / [`EsUtil.Feature.Loupe.Presenter`](../../EsUtil/src/EsUtil.Feature.Loupe.Presenter/README.md)）。
 
-UI 層は [`EsUtil.Feature.Marquee.ControlAvaloniaUI`](../../EsUtil/src/EsUtil.Feature.Marquee.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Marquee.ControlMewUI`](../../EsUtil/src/EsUtil.Feature.Marquee.ControlMewUI/README.md) / [`EsUtil.Feature.Loupe.ControlAvaloniaUI`](../../EsUtil/src/EsUtil.Feature.Loupe.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Loupe.ControlMewUI`](../../EsUtil/src/EsUtil.Feature.Loupe.ControlMewUI/README.md)、
-プラットフォーム層は [`EsUtil.Platform.Core`](../../EsUtil/src/EsUtil.Platform.Core/README.md) / [`Platform.Skia`](Platform.Skia/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) を参照してください。
+UI 層は [`EsUtil.Feature.Marquee.ControlAvaloniaUI`](../../EsUtil/src/EsUtil.Feature.Marquee.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Marquee.ControlMewUI`](../../EsUtil/src/EsUtil.Feature.Marquee.ControlMewUI/README.md) / [`EsUtil.Feature.Marquee.ControlWinUI3`](../../EsUtil/src/EsUtil.Feature.Marquee.ControlWinUI3/README.md) / [`EsUtil.Feature.Marquee.ControlWinForms`](../../EsUtil/src/EsUtil.Feature.Marquee.ControlWinForms/README.md) /
+[`EsUtil.Feature.Loupe.ControlAvaloniaUI`](../../EsUtil/src/EsUtil.Feature.Loupe.ControlAvaloniaUI/README.md) / [`EsUtil.Feature.Loupe.ControlMewUI`](../../EsUtil/src/EsUtil.Feature.Loupe.ControlMewUI/README.md) / [`EsUtil.Feature.Loupe.ControlWinUI3`](../../EsUtil/src/EsUtil.Feature.Loupe.ControlWinUI3/README.md) / [`EsUtil.Feature.Loupe.ControlWinForms`](../../EsUtil/src/EsUtil.Feature.Loupe.ControlWinForms/README.md)、
+プラットフォーム層は [`EsUtil.Platform.Core`](../../EsUtil/src/EsUtil.Platform.Core/README.md) / [`Platform.Skia`](Platform.Skia/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) / [`Platform.WinUI3`](Platform.WinUI3/README.md) / [`Platform.WinForms`](Platform.WinForms/README.md) を参照してください。
 
 ## 7. 名前空間とフォルダ
 

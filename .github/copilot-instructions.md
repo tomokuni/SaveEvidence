@@ -39,19 +39,19 @@
 
 ### 3.1 ソリューションの構成
 
-SaveEvidence は Windows デスクトップの画面キャプチャ アプリである（実行ファイルは Avalonia UI 版と MewUI 版の 2 つ）。
+SaveEvidence は Windows デスクトップの画面キャプチャ アプリである（実行ファイルは Avalonia UI 版・MewUI 版・WinUI 3 版・WinForms 版の 4 つ）。
 
 **再利用可能な層（共通基盤と EsUtil 系のコントロール）は隣のリポジトリ [`EsUtil`](../../EsUtil/README.md) へ分離されている**。 本ソリューションはそれを**プロジェクト参照**で参照する（`..\..\..\..\EsUtil\src\<プロジェクト>\src\...`。 [`.github/依存関係.md`](依存関係.md) §2）。
 
 | 区分 | プロジェクト | 所在 |
 | --- | --- | --- |
 | 共通基盤（可搬） | `EsUtil.Platform.Core` / `.Windows` | `../EsUtil` |
-| 再利用可能なコントロール（可搬） | `EsUtil.Feature.Marquee.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI`、`EsUtil.Feature.Loupe.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI` | `../EsUtil` |
+| 再利用可能なコントロール（可搬） | `EsUtil.Feature.Marquee.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI` / `.ControlWinUI3` / `.ControlWinForms`、`EsUtil.Feature.Loupe.Core` / `.Presenter` / `.ControlAvaloniaUI` / `.ControlMewUI` / `.ControlWinUI3` / `.ControlWinForms` | `../EsUtil` |
 | 画像処理（可搬） | `Parts.LineDetection` | 本リポジトリ |
-| プラットフォーム層 | `Platform.AvaloniaUI` / `Platform.MewUI` / `Platform.Skia` | 本リポジトリ |
-| 撮影スタック（製品固有） | `Parts.CapturePreview.Core` / `.ControlAvaloniaUI` / `.ControlMewUI` | 本リポジトリ |
+| プラットフォーム層 | `Platform.AvaloniaUI` / `Platform.MewUI` / `Platform.WinUI3` / `Platform.WinForms` / `Platform.Skia` | 本リポジトリ |
+| 撮影スタック（製品固有） | `Parts.CapturePreview.Core` / `.ControlAvaloniaUI` / `.ControlMewUI` / `.ControlWinUI3` / `.ControlWinForms` | 本リポジトリ |
 | アプリが使う入力用コントロール | `ColorPickerControl.AvaloniaUI` | 本リポジトリ |
-| アプリ | `App.Core` / `App.AvaloniaUI` / `App.MewUI` | 本リポジトリ |
+| アプリ | `App.Core` / `App.AvaloniaUI` / `App.MewUI` / `App.WinUI3` / `App.WinForms` | 本リポジトリ |
 
 **層の帰属（Core / Presenter / UI のどれに置くか）・ラベルと装飾の分担・名前空間とフォルダの関係は [`../src/README.md`](../src/README.md) が所有する**（本節は要約しない）。 EsUtil 側の層の帰属は [`../../EsUtil/src/README.md`](../../EsUtil/src/README.md) が所有する。
 

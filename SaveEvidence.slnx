@@ -12,6 +12,14 @@
     <Project Path="src/App.MewUI/src/App.MewUI.csproj" />
     <Project Path="src/App.MewUI/tests/App.MewUI.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/App.WinForms/">
+    <Project Path="src/App.WinForms/src/App.WinForms.csproj" />
+    <Project Path="src/App.WinForms/tests/App.WinForms.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/App.WinUI3/">
+    <Project Path="src/App.WinUI3/src/App.WinUI3.csproj" />
+    <Project Path="src/App.WinUI3/tests/App.WinUI3.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/Parts.CapturePreview.Core/" />
   <Folder Name="/src/Parts.CapturePreview.Core/src/">
     <Project Path="src/Parts.CapturePreview.Core/src/Parts.CapturePreview.Core.csproj" />
@@ -26,6 +34,20 @@
   <Folder Name="/src/Parts.CapturePreview.ControlMewUI/tests/">
     <Project Path="src/Parts.CapturePreview.ControlMewUI/tests/Parts.CapturePreview.ControlMewUI.Tests.csproj" />
   </Folder>
+  <Folder Name="/src/Parts.CapturePreview.ControlWinForms/" />
+  <Folder Name="/src/Parts.CapturePreview.ControlWinForms/src/">
+    <Project Path="src/Parts.CapturePreview.ControlWinForms/src/Parts.CapturePreview.ControlWinForms.csproj" />
+  </Folder>
+  <Folder Name="/src/Parts.CapturePreview.ControlWinForms/tests/">
+    <Project Path="src/Parts.CapturePreview.ControlWinForms/tests/Parts.CapturePreview.ControlWinForms.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/Parts.CapturePreview.ControlWinUI3/" />
+  <Folder Name="/src/Parts.CapturePreview.ControlWinUI3/src/">
+    <Project Path="src/Parts.CapturePreview.ControlWinUI3/src/Parts.CapturePreview.ControlWinUI3.csproj" />
+  </Folder>
+  <Folder Name="/src/Parts.CapturePreview.ControlWinUI3/tests/">
+    <Project Path="src/Parts.CapturePreview.ControlWinUI3/tests/Parts.CapturePreview.ControlWinUI3.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/ColorPickerControl.AvaloniaUI/">
     <Project Path="src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj" />
     <Project Path="src/ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj" />
@@ -39,6 +61,14 @@
   <Folder Name="/src/Platform.MewUI/">
     <Project Path="src/Platform.MewUI/src/Platform.MewUI.csproj" />
     <Project Path="src/Platform.MewUI/tests/Platform.MewUI.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/Platform.WinForms/">
+    <Project Path="src/Platform.WinForms/src/Platform.WinForms.csproj" />
+    <Project Path="src/Platform.WinForms/tests/Platform.WinForms.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/Platform.WinUI3/">
+    <Project Path="src/Platform.WinUI3/src/Platform.WinUI3.csproj" />
+    <Project Path="src/Platform.WinUI3/tests/Platform.WinUI3.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Platform.MewUI/src/" />
   <Folder Name="/src/Platform.AvaloniaUI/">

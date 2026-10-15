@@ -23,7 +23,7 @@
       <!-- 層の判定（プロジェクト名から導出する。 規則の表は .github/依存関係.md §2・§4） -->
       <_SeIsFeatureCore>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^EsUtil\.Feature\.[A-Za-z]+\.Core$'))</_SeIsFeatureCore>
       <_SeIsFeaturePresenter>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^EsUtil\.Feature\.[A-Za-z]+\.Presenter$'))</_SeIsFeaturePresenter>
-      <_SeIsUiLayer>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(EsUtil\.Feature\.[A-Za-z]+\.Control[A-Za-z]*|Platform\.[A-Za-z]+|Parts\.[A-Za-z]+\.(ControlAvaloniaUI|ControlMewUI|AvaloniaUI|MewUI)|ColorPickerControl\.[A-Za-z]+)$'))</_SeIsUiLayer>
+      <_SeIsUiLayer>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(EsUtil\.Feature\.[A-Za-z0-9]+\.Control[A-Za-z0-9]*|Platform\.[A-Za-z0-9]+|Parts\.[A-Za-z0-9]+\.(ControlAvaloniaUI|ControlMewUI|ControlWinUI3|ControlWinForms|AvaloniaUI|MewUI|WinUI3|WinForms)|ColorPickerControl\.[A-Za-z0-9]+)$'))</_SeIsUiLayer>
       <_SeIsUiIndependentCore>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(Parts\.[A-Za-z]+\.Core|App\.Core)$'))</_SeIsUiIndependentCore>
 
       <!-- 提示層が参照してよい同一機能のコア名（例: EsUtil.Feature.Loupe.Presenter → EsUtil.Feature.Loupe.Core） -->
@@ -62,7 +62,7 @@
 
     <!-- R5: UI 非依存の層は UI 層を参照しない -->
     <ItemGroup Condition="'$(_SeIsTestOrSample)' != 'true' And '$(_SeIsUiIndependentCore)' == 'true'">
-      <_SeBad5 Include="@(_SeRef)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Name)', '^(Platform\.(AvaloniaUI|MewUI)|Parts\.[A-Za-z]+\.(ControlAvaloniaUI|ControlMewUI|AvaloniaUI|MewUI)|App\.(AvaloniaUI|MewUI)|EsUtil\.Feature\.[A-Za-z]+\.Control[A-Za-z]*|ColorPickerControl\.[A-Za-z]+)$'))" />
+      <_SeBad5 Include="@(_SeRef)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Name)', '^(Platform\.(AvaloniaUI|MewUI|WinUI3|WinForms)|Parts\.[A-Za-z0-9]+\.(ControlAvaloniaUI|ControlMewUI|ControlWinUI3|ControlWinForms|AvaloniaUI|MewUI|WinUI3|WinForms)|App\.(AvaloniaUI|MewUI|WinUI3|WinForms)|EsUtil\.Feature\.[A-Za-z0-9]+\.Control[A-Za-z0-9]*|ColorPickerControl\.[A-Za-z0-9]+)$'))" />
     </ItemGroup>
     <Error Condition="'@(_SeBad5)' != ''"
            Code="DEP0005"

@@ -24,9 +24,13 @@
     <!-- 内部手順（切り出し矩形の解決・状態機械・幾何計算）は UI 実装とテストからのみ参照する -->
     <InternalsVisibleTo Include="Parts.CapturePreview.ControlAvaloniaUI" />
     <InternalsVisibleTo Include="Parts.CapturePreview.ControlMewUI" />
+    <InternalsVisibleTo Include="Parts.CapturePreview.ControlWinForms" />
+    <InternalsVisibleTo Include="Parts.CapturePreview.ControlWinUI3" />
     <InternalsVisibleTo Include="Parts.CapturePreview.Core.Tests" />
     <InternalsVisibleTo Include="Parts.CapturePreview.ControlAvaloniaUI.Tests" />
     <InternalsVisibleTo Include="Parts.CapturePreview.ControlMewUI.Tests" />
+    <InternalsVisibleTo Include="Parts.CapturePreview.ControlWinForms.Tests" />
+    <InternalsVisibleTo Include="Parts.CapturePreview.ControlWinUI3.Tests" />
   </ItemGroup>
 
 </Project>

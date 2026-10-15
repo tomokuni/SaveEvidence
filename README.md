@@ -8,6 +8,8 @@
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
 ![Avalonia](https://img.shields.io/badge/UI-Avalonia-8D46D6)
 ![MewUI](https://img.shields.io/badge/UI-MewUI-00BFFF)
+![WinUI3](https://img.shields.io/badge/UI-WinUI%203-0078D4)
+![WinForms](https://img.shields.io/badge/UI-WinForms-512BD4)
 ![License](https://img.shields.io/badge/License-MIT-3DA639)
 
 ---
@@ -429,7 +431,7 @@ SaveEvidence は、Avalonia UI 上で CommunityToolkit.Mvvm を使用した MVVM
 
 ### 7.1 コントロールライブラリの層構成
 
-キャプチャ・切り出し画面のコントロールは、UI 非依存のコアを Avalonia / MewUI で共有する層構成（Core / 提示層（Presenter） / UI）を採っています。 層の依存の向きと「どこに何を置くか」は [`src/README.md`](src/README.md) を参照してください。
+キャプチャ・切り出し画面のコントロールは、UI 非依存のコアを Avalonia / MewUI / WinUI 3 / WinForms で共有する層構成（Core / 提示層（Presenter） / UI）を採っています。 層の依存の向きと「どこに何を置くか」は [`src/README.md`](src/README.md) を参照してください。
 
 ---
 
