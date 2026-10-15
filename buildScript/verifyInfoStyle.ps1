@@ -53,6 +53,10 @@ $enc = [Text.UTF8Encoding]::new($false)
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repoRoot
 
+# `dotnet format` の出力もネイティブ コマンドの出力である（復号は Invoke-NativeText が単一所有する。
+# 文字化けの根拠は .github/検証手順.md §19）。
+. (Join-Path $PSScriptRoot 'VerifyCommon.ps1')
+
 $restoreArgs = if ($NoRestore) { @('--no-restore') } else { @() }
 # 診断行（`<ファイル>(<行>,<列>): <レベル> <規則>: <メッセージ> [<プロジェクト>]`）を分解する
 $rxDiagnostic = [regex]'(?m)^(?<file>.+?)\((?<line>\d+),(?<col>\d+)\): (?<level>error|warning|info) (?<rule>[A-Z]+\d+): (?<message>.+?) \[(?<project>.+)\]\s*$'
@@ -68,8 +72,10 @@ foreach ($target in $kinds) {
     Write-Output "== $target（情報レベル） =="
     $args = @('format', $target, $Solution, '--no-restore') + $restoreArgs
     if (-not $Fix) { $args += @('--verify-no-changes', '--severity', 'info') }
-    $text = & dotnet @args 2>&1 | Out-String
-    $exit = $LASTEXITCODE
+    # 出力の復号は Invoke-NativeText が行う（`& dotnet` は環境によっては日本語を文字化けさせる）
+    $formatRun = Invoke-NativeText 'dotnet' $args
+    $text = $formatRun.Text + $formatRun.ErrorText
+    $exit = $formatRun.ExitCode
 
     $diagnostics = @()
     foreach ($m in $rxDiagnostic.Matches($text)) {

@@ -54,19 +54,10 @@ $enc = [Text.UTF8Encoding]::new($false)
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repoRoot
 
-$script:Results = [System.Collections.Generic.List[object]]::new()
-
-function Add-Result([string]$Name, [bool]$Ok, [string]$Detail) {
-    $script:Results.Add([pscustomobject]@{ Name = $Name; Ok = $Ok; Detail = $Detail })
-    $mark = if ($Ok) { 'OK  ' } else { 'FAIL' }
-    Write-Output "$mark  $Name`t$Detail"
-}
-
-# 合否に含めない参考値（省略した publish など。 検査そのものは実行する）
-function Add-InfoResult([string]$Name, [string]$Detail) {
-    $script:Results.Add([pscustomobject]@{ Name = $Name; Ok = $true; Info = $true; Detail = $Detail })
-    Write-Output "INFO  $Name`t$Detail"
-}
+# 結果の記録（Add-Result / Add-Info）とネイティブ コマンドの読み取り（Invoke-NativeText）は
+# buildScript/VerifyCommon.ps1 が単一所有する（本スクリプトは自前の実装を持たない）。
+# 文字化け対策の根拠は .github/検証手順.md §19。
+. (Join-Path $PSScriptRoot 'VerifyCommon.ps1')
 
 # メイン ウィンドウへ WM_CLOSE を送るためだけの Win32 呼び出し（強制終了させない）
 Add-Type -Namespace SeVerifyPublish -Name Native -MemberDefinition @'
@@ -142,9 +133,10 @@ function Get-PublishFingerprint([string]$ScriptPath) {
     $paths = [System.Collections.Generic.List[string]]::new()
     # `buildScript` 全体は含めない（本スクリプトや verify.ps1 の編集で publish が無効化されてしまう）。
     # publish スクリプトの内容は下で個別に指紋へ入れる。
-    foreach ($rel in @(git -c core.quotepath=false ls-files -- 'src' 'Directory.Build.props' 'Directory.Build.targets' 'global.json' '.github/release-config.json' 2>$null)) { $paths.Add($rel) }
+    # 一覧は Get-GitList（VerifyCommon.ps1）が取る（未追跡も含める。 結果は 1 回だけ読んで使い回される）
+    foreach ($rel in (Get-GitList @('-c', 'core.quotepath=false', 'ls-files', '--', 'src', 'Directory.Build.props', 'Directory.Build.targets', 'global.json', '.github/release-config.json'))) { $paths.Add($rel) }
     # 未追跡（コミット前）のソースも入力である
-    foreach ($rel in @(git -c core.quotepath=false ls-files --others --exclude-standard -- 'src' 2>$null)) { $paths.Add($rel) }
+    foreach ($rel in (Get-GitList @('-c', 'core.quotepath=false', 'ls-files', '--others', '--exclude-standard', '--', 'src'))) { $paths.Add($rel) }
     foreach ($rel in ($paths | Sort-Object -Unique)) {
         $full = Join-Path $repoRoot $rel
         if (-not (Test-Path -LiteralPath $full -PathType Leaf)) { continue }
@@ -162,7 +154,8 @@ function Get-PublishFingerprint([string]$ScriptPath) {
     return [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([Text.Encoding]::UTF8.GetBytes($sb.ToString())))
 }
 
-$script:SdkVersion = (& dotnet --version 2>$null | Out-String).Trim()
+# SDK のバージョンは指紋の入力である（出力の復号は Invoke-NativeText が行う）
+$script:SdkVersion = (Invoke-NativeText 'dotnet' @('--version')).Text.Trim()
 $fingerprintDir = Join-Path ([IO.Path]::GetTempPath()) 'saveevidence-verify-publish'
 
 $settingsBackedUp = $false
@@ -180,13 +173,15 @@ try {
             $fingerprintPath = Join-Path $fingerprintDir "$($target.name).txt"
             $previous = if (Test-Path -LiteralPath $fingerprintPath) { [IO.File]::ReadAllText($fingerprintPath, $enc).Trim() } else { '' }
             if (-not $ForcePublish -and $previous -eq $fingerprint -and (Test-Path -LiteralPath $outputDir -PathType Container)) {
-                Add-InfoResult "$($target.name) publish" '省略（入力が前回と同一。 -ForcePublish で強制）'
+                Add-Info "$($target.name) publish" '省略（入力が前回と同一。 -ForcePublish で強制）'
             }
             else {
                 Write-Output "      publish: $scriptPath"
-                $publishText = (& cmd.exe /c "`"$scriptPath`"" 2>&1 | Out-String)
-                if ($LASTEXITCODE -ne 0) {
-                    Add-Result "$($target.name) publish" $false "終了コード $LASTEXITCODE"
+                # バッチ（.bat）は `cmd.exe` 経由で起動する。 出力の復号は Invoke-NativeText が行う。
+                $publish = Invoke-NativeText $env:ComSpec @('/c', (Join-Path $repoRoot $scriptPath))
+                $publishText = $publish.Text + $publish.ErrorText
+                if ($publish.ExitCode -ne 0) {
+                    Add-Result "$($target.name) publish" $false "終了コード $($publish.ExitCode)"
                     $publishText -split "`r?`n" | Where-Object { $_ -match 'error|ERROR' } | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" }
                     continue
                 }
@@ -270,11 +265,11 @@ finally {
 Write-Output ''
 Write-Output '===== 配布物の検証の要約 ====='
 foreach ($result in $script:Results) {
-    $mark = if ($result.Info) { 'INFO' } elseif ($result.Ok) { 'OK  ' } else { 'FAIL' }
+    $mark = if ($result.Kind -eq 'Info') { 'INFO' } elseif ($result.Ok) { 'OK  ' } else { 'FAIL' }
     Write-Output "$mark  $($result.Name)`t$($result.Detail)"
 }
 
-$failed = @($script:Results | Where-Object { -not $_.Info -and -not $_.Ok })
+$failed = @($script:Results | Where-Object { $_.Kind -eq 'Check' -and -not $_.Ok })
 if ($failed.Count -gt 0) {
     Write-Output ''
     Write-Output "不合格 $($failed.Count) 項目: $(($failed | ForEach-Object { $_.Name }) -join ', ')"
@@ -282,4 +277,4 @@ if ($failed.Count -gt 0) {
 }
 
 Write-Output ''
-Write-Output "すべて合格（合否 $(@($script:Results | Where-Object { -not $_.Info }).Count) 項目）"
+Write-Output "すべて合格（合否 $(@($script:Results | Where-Object { $_.Kind -eq 'Check' }).Count) 項目）"
