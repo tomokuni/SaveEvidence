@@ -126,6 +126,22 @@ internal static partial class AppLog
     public static void LogSettingsApplyError(this ILogger logger, Exception ex, string propertyName)
         => logger.LogSettingsApplyErrorCore(Prefix, ex, propertyName);
 
+    /// <summary>終了時のウィンドウ配置の保存で例外が発生したことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Warning <br/>
+    /// 出力書式: <c>ウィンドウ配置の保存で例外が発生</c>（例外はスタックトレース込み）<br/>
+    /// <c>Closed</c> は Win32 のウィンドウプロシージャから呼ばれる境界であり、例外がそのまま伝播すると<br/>
+    /// CLR がプロセスを異常終了させ、終了ログも保存結果も残らない。 保存に失敗しても終了は妨げない。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="ex">発生した例外。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} ウィンドウ配置の保存で例外が発生")]
+    private static partial void LogWindowPlacementSaveErrorCore(this ILogger logger, string prefix, Exception ex);
+
+    public static void LogWindowPlacementSaveError(this ILogger logger, Exception ex)
+        => logger.LogWindowPlacementSaveErrorCore(Prefix, ex);
+
     // ====================================================================
     // フォルダビュー
     // ====================================================================

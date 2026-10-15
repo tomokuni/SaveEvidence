@@ -285,7 +285,20 @@ internal sealed class MainWindow
         };
 
         // 終了時にウィンドウ配置とナビ開閉を保存する（強制終了では保存されない）
-        window.Closed += () => SaveWindowPlacement(window, settingsService);
+        // Closed は Win32 のウィンドウプロシージャから呼ばれる境界のため、例外はここで吸収する
+        // （伝播すると CLR がプロセスを異常終了させ、終了ログも残らない）。
+        window.Closed += () =>
+        {
+            try
+            {
+                SaveWindowPlacement(window, settingsService);
+            }
+            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            {
+                // 保存できなくても終了は妨げない（次の起動では前回保存された配置を使う）
+                s_logger.LogWindowPlacementSaveError(ex);
+            }
+        };
 
         // ページ内容は選択時に生成し、生成後は同じ要素を使い回す（ページの状態と購読を保つ）
         void Select(int index)
@@ -506,7 +519,8 @@ internal sealed class MainWindow
     /// MewUI の位置・サイズは DIP のため、ウィンドウの DPI スケールを掛けて画面物理ピクセルへ変換してから保存する<br/>
     /// （変換は <see cref="WindowPlacementMath"/> へ委譲する）。<br/>
     /// ナビパネルの開閉は <see cref="ISettingsService.Current"/> へ既に反映されている（変更時に保存する）。<br/>
-    /// 保存に失敗しても終了処理を妨げない（<c>SettingsService.Save</c> が内部で例外を吸収する）。
+    /// 保存に失敗しても終了処理を妨げない（ファイル入出力の失敗は <c>SettingsService.Save</c> が吸収し、<br/>
+    /// それ以外の例外は呼び出し元の <c>Closed</c> ハンドラーが吸収して Warning で記録する）。
     /// </remarks>
     private static void SaveWindowPlacement(Window window, ISettingsService settingsService)
     {

@@ -563,6 +563,7 @@ sequenceDiagram
     W->>C: Current.MainWindowState = Normal / Maximized
     W->>C: Current.IsNavigationExpanded = IsPaneOpen
     W->>C: settings.Save()
+    Note over W,C: 例外は Closed ハンドラーが吸収し Warning で記録する（終了は妨げない）
 ```
 
 ## 15. シーケンス図（プレビュー描画）
@@ -628,6 +629,7 @@ sequenceDiagram
 | オーバーレイの非アクティブ化 | キャンセルとして扱う（最前面のオーバーレイが残り続けるのを防ぐ） |
 | 要素を検出できない位置のクリック | 確定しない（誤クリックで撮影を取りこぼさない。 キャンセルは Esc） |
 | 未処理の例外（アプリ全体 / UI スレッド / 未観測タスク） | Critical で記録する。 UI スレッドの例外は記録後に処理済みとし、ウィンドウの表示を維持する（`Program.RegisterExceptionLogging`） |
+| 終了時（`Closed`）のウィンドウ配置の保存に失敗 | 例外を吸収して Warning で記録し、設定を保存せず終了する（`Closed` は Win32 のウィンドウプロシージャから呼ばれる境界であり、伝播させるとプロセスが異常終了する） |
 | アプリ終了中（オーナーがクローズ済み）にホットキーが届いた | オーナーの再表示を試みず、キャプチャを中止する（終了処理を妨げない） |
 
 ## 18. 設計判断

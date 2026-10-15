@@ -22,7 +22,7 @@ public class AppLogTests
         InvokeAll(logger);
 
         Assert.True(logger.IsEnabled(LogLevel.Trace));
-        Assert.Equal(4, logger.Messages.Count);
+        Assert.Equal(5, logger.Messages.Count);
     }
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
@@ -44,6 +44,7 @@ public class AppLogTests
         Assert.Equal("[App.MewUI] アプリケーション終了 (exitCode=0)", logger.Messages[1]);
         Assert.Equal("[App.MewUI] 未処理の例外: AppDomain.UnhandledException", logger.Messages[2]);
         Assert.Equal("[App.MewUI] フォルダビュー一覧の読み込みで例外が発生: C:\\images", logger.Messages[3]);
+        Assert.Equal("[App.MewUI] ウィンドウ配置の保存で例外が発生", logger.Messages[4]);
     }
 
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>
@@ -54,5 +55,6 @@ public class AppLogTests
         logger.LogAppExit(0);
         logger.LogUnhandledException(new InvalidOperationException("test"), "AppDomain.UnhandledException");
         logger.LogFolderLoadError(new IOException("test"), @"C:\images");
+        logger.LogWindowPlacementSaveError(new IOException("test"));
     }
 }
