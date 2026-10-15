@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EsUtil.SaveEvidence.App.WinForms</RootNamespace>
+    <!-- 実行ファイルの名前は製品名を優先する（配布物の exe 名。 命名規約の例外）。 -->
+    <AssemblyName>SaveEvidence.WinForms</AssemblyName>
+    <!-- 起動型は名前空間と一致しない（アプリの論理名を付けるため）ので明示する。 -->
+    <StartupObject>EsUtil.SaveEvidence.App.WinForms.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 操作ログ（Avalonia 版 / MewUI 版と同一のファイルへ出力する） -->
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
+    <PackageReference Include="Serilog" Version="[4.*,)" />
+    <PackageReference Include="Serilog.Extensions.Logging" Version="[10.*,)" />
+    <PackageReference Include="Serilog.Sinks.File" Version="[7.*,)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- UI 非依存のコア（設定・ViewModel・画像コンテナ） -->
+    <ProjectReference Include="..\..\App.Core\src\App.Core.csproj" />
+    <!-- 撮影・切り出しの共通規則（切り出し矩形の計算・ラベル文言・セッション状態） -->
+    <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
+    <!-- WinForms 版の撮影セッション（オーバーレイ・切り出しビュー・選択オーバーレイ） -->
+    <ProjectReference Include="..\..\Parts.CapturePreview.ControlWinForms\src\Parts.CapturePreview.ControlWinForms.csproj" />
+    <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型）と GDI+ の表示ビュー -->
+    <ProjectReference Include="..\..\Platform.WinForms\src\Platform.WinForms.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 内部型（サービス・ビュー）をテストから検証できるようにする -->
+    <InternalsVisibleTo Include="App.WinForms.Tests" />
+  </ItemGroup>
+
+</Project>
