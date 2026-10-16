@@ -266,6 +266,7 @@ flowchart TB
   - 座標変換ポートの一括分配（`SetCoordTransform`）
   - 付加情報（操作・情報ラベル）の描画（`SelectionOverlayLabelRenderer`。 文言はホストが与える）
   - ルーペ画像上の選択矩形破線の描画（`LoupeRendered` イベントで描画先を受け取り、コアの破線幾何を描く）
+  - ルーペの拡大元（コアの画像 `EsReadOnlyBitmap`）と表示用の射影（`IImage`。 省略可）の受け取り（射影があれば切り出しの複製を作らずに描ける。 0 コピー）
   - **ルーペ中心の取り直し**: 選択矩形コントロールからの追従位置は、実カーソルから取り直した位置（`TryGetCurrentLoupePosition`）を優先して使う（**ポインター移動イベントの座標は入力へ積まれた分だけ古く、そのまま使うとルーペがカーソルより遅れて見える**。 取り直しの可否はコアが単一所有する）。 加えてルーペの `CenterPointProvider`（描画の直前の取り直し）を配線し、描画フレームの提示までに中心が進んでも表示位置と拡大画像が同じ中心で揃うようにする
 - **公開メンバー**: `Mode` / `Options` / `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionSourceRect` / `HighlightSourceRect` / `ShowFullOverlay` / `LoupeCenterPoint` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `NotifyViewportChanged` / `RequestRedraw`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`
 - **可視性**: public（内包コントロールへの直接アクセスは internal）

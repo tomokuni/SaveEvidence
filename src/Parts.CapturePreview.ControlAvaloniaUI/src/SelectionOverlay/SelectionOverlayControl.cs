@@ -10,6 +10,7 @@ using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
@@ -458,15 +459,22 @@ public sealed class SelectionOverlayControl : Panel
         }
     }
 
-    /// <summary>ルーペの拡大元画像（Source）を設定する。</summary>
-    /// <param name="source">拡大元画像。 null で解除。</param>
+    /// <summary>ルーペの拡大元画像（コアの画像）と表示用の射影を設定する。</summary>
+    /// <param name="source">拡大元のコア画像（<see cref="EsReadOnlyBitmap"/>）。 null で解除。</param>
+    /// <param name="display">表示用の射影（省略可）。 ホストが表示に使っている Avalonia の画像を渡すと、切り出しの複製を作らずに描ける（0 コピー）。</param>
     /// <remarks>
-    /// LoupeControl.Source へ委譲する（Source 未設定の間はルーペを表示しない（下地だけが見えるのを避ける）ため、<br/>
-    /// 表示開始は <see cref="SetLoupePosition"/> が担う）。 解除時は表示も解除する。
+    /// LoupeControl.Source / LoupeControl.DisplaySource へ委譲する（Source 未設定の間はルーペを表示しない（下地だけが見えるのを避ける）ため、<br/>
+    /// 表示開始は <see cref="SetLoupePosition"/> が担う）。 解除時は表示も解除する。<br/>
+    /// <b>引数を 2 つ（第 2 引数は省略可）にした理由</b>: 拡大元はコアの画像（<see cref="EsReadOnlyBitmap"/>）、表示用の射影は表示境界の画像（<see cref="IImage"/>）で<br/>
+    /// <b>型が異なる</b>ため、1 引数にまとめると呼び出し側でどちらかを選ぶ判断が要る。 ホストは表示に使っている画像を既に持っていることが多く、<br/>
+    /// それをそのまま第 2 引数へ渡せる形にすると「渡し忘れて 0 コピーの経路を失う」事故が起きにくい（省略しても正しく描ける）。<br/>
+    /// <b>寸法が一致しない射影はルーペが無視する</b>（表示用に縮小された画像を渡しても拡大元から描かれる）。
     /// </remarks>
-    public void SetLoupeSource(IImage? source)
+    public void SetLoupeSource(EsReadOnlyBitmap? source, IImage? display = null)
     {
         _loupeControl.Source = source;
+        // 表示用の射影は拡大元と対で設定する（片方だけ残ると、差し替え前の画像を指したままになる）
+        _loupeControl.DisplaySource = display;
 
         if (source is null)
         {
@@ -476,11 +484,13 @@ public sealed class SelectionOverlayControl : Panel
         }
     }
 
-    /// <summary>ルーペを非表示にして後片付けする（拡大元画像・中心・Bitmap を解放する）。</summary>
-    /// <remarks>セッション終了時の後片付けに使用する（表示状態・中心・拡大元画像をまとめて破棄する）。</remarks>
+    /// <summary>ルーペを非表示にして後片付けする（拡大元画像・表示用の射影・中心・Bitmap を解放する）。</summary>
+    /// <remarks>セッション終了時の後片付けに使用する（表示状態・中心・拡大元画像・表示用の射影をまとめて破棄する）。</remarks>
     public void ClearLoupe()
     {
         _loupeControl.Source = null;
+        // 表示用の射影も解除する（拡大元と対で保持するため、片方だけ残さない）
+        _loupeControl.DisplaySource = null;
         _loupeControl.CenterPoint = null;
         _loupeControl.Clear();
     }

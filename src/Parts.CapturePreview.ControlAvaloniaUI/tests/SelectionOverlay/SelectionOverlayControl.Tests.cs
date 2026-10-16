@@ -9,6 +9,7 @@ using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI;
@@ -446,7 +447,7 @@ public class SelectionOverlayControlTests
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
 
         // Source 設定後に再呼び出しすると表示される
-        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.Loupe.Source = CreateLoupeSource();
         control.SetLoupePosition(new Point(960, 540));
         Assert.True(control.Loupe.IsVisible);
         Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
@@ -463,7 +464,7 @@ public class SelectionOverlayControlTests
         var window = new Window { Content = new Panel { Children = { control } } };
         window.Show();
 
-        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.Loupe.Source = CreateLoupeSource();
         control.SetLoupePosition(new Point(50, 60));
 
         // 配置フェーズ（ArrangeOverride）でラベル要素が更新される
@@ -497,7 +498,7 @@ public class SelectionOverlayControlTests
         var control = new SelectionOverlayControl();
         var window = new Window { Content = new Panel { Children = { control } } };
         window.Show();
-        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.Loupe.Source = CreateLoupeSource();
         control.SetLoupePosition(new Point(5, 5));
 
         var rendered = 0;
@@ -543,7 +544,7 @@ public class SelectionOverlayControlTests
         var control = new SelectionOverlayControl();
         var window = new Window { Content = new Panel { Children = { control } } };
         window.Show();
-        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.Loupe.Source = CreateLoupeSource();
         control.SetLoupePosition(new Point(5, 5));
 
         var rendered = 0;
@@ -579,7 +580,7 @@ public class SelectionOverlayControlTests
         var control = new SelectionOverlayControl();
         var window = new Window { Content = new Panel { Children = { control } } };
         window.Show();
-        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.Loupe.Source = CreateLoupeSource();
         control.SetLoupePosition(new Point(5, 5));
 
         var rendered = 0;
@@ -785,7 +786,7 @@ public class SelectionOverlayControlTests
         var control = new SelectionOverlayControl();
         var window = new Window { Content = new Panel { Children = { control } } };
         window.Show();
-        control.Loupe.Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.Loupe.Source = CreateLoupeSource();
 
         LoupePositionEventArgs? received = null;
         control.LoupePositionMoved += (_, e) => received = e;
@@ -844,6 +845,14 @@ public class SelectionOverlayControlTests
     /// <summary>テスト用のポインターを生成する。</summary>
     private static Pointer CreatePointer()
         => new(1, PointerType.Mouse, true);
+
+    /// <summary>テスト用の拡大元画像（コアの読み取り専用画像）を生成する。</summary>
+    /// <remarks>
+    /// ルーペの拡大元はコアの画像であるため、表示用のアダプタが内包する真実を借用で取り出す<br/>
+    /// （本リポジトリの Imaging 層と同じ取り出し方。 表示用の射影を渡さない経路の検証に使う）。
+    /// </remarks>
+    private static EsReadOnlyBitmap CreateLoupeSource()
+        => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent).GetEsBitmap();
 
     [AvaloniaFact]
     internal void 矩形外クリックでSelectionStartedにより選択状態がクリアされる()
@@ -913,18 +922,35 @@ public class SelectionOverlayControlTests
     internal void SetLoupeSource_ルーペのSourceが設定される()
     {
         var control = new SelectionOverlayControl();
-        var bitmap = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        var source = CreateLoupeSource();
 
-        control.SetLoupeSource(bitmap);
+        control.SetLoupeSource(source);
 
-        Assert.Same(bitmap, control.Loupe.Source);
+        Assert.Same(source, control.Loupe.Source);
+        // 表示用の射影を渡さない場合は未設定のまま（ルーペは拡大元から描く）
+        Assert.Null(control.Loupe.DisplaySource);
     }
 
     [AvaloniaFact]
-    internal void SetLoupeSource_解除すると非表示になる()
+    internal void SetLoupeSource_表示用の射影も設定される()
     {
         var control = new SelectionOverlayControl();
-        control.SetLoupeSource(EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent));
+        // 表示に使っている画像（アダプタ）をそのまま射影として渡す（0 コピーの描画経路）
+        var display = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        var source = display.GetEsBitmap();
+
+        control.SetLoupeSource(source, display);
+
+        Assert.Same(source, control.Loupe.Source);
+        Assert.Same(display, control.Loupe.DisplaySource);
+    }
+
+    [AvaloniaFact]
+    internal void SetLoupeSource_解除すると非表示になり射影も解除される()
+    {
+        var control = new SelectionOverlayControl();
+        var display = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.SetLoupeSource(display.GetEsBitmap(), display);
         control.SetLoupePosition(new Point(10, 10));
         Assert.True(control.Loupe.IsVisible);
 
@@ -932,6 +958,8 @@ public class SelectionOverlayControlTests
         control.SetLoupeSource(null);
 
         Assert.False(control.Loupe.IsVisible);
+        // 表示用の射影も拡大元と対で解除する（差し替え前の画像を指したままにしない）
+        Assert.Null(control.Loupe.DisplaySource);
     }
 
     [AvaloniaFact]
@@ -940,12 +968,16 @@ public class SelectionOverlayControlTests
         var control = new SelectionOverlayControl();
         var window = new Window { Content = control };
         window.Show();
-        control.SetLoupeSource(EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent));
+        var display = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+        control.SetLoupeSource(display.GetEsBitmap(), display);
         control.SetLoupePosition(new Point(10, 10));
         Assert.True(control.Loupe.IsVisible);
 
         control.ClearLoupe();
 
+        // 拡大元と表示用の射影の両方を解除する
+        Assert.Null(control.Loupe.Source);
+        Assert.Null(control.Loupe.DisplaySource);
         // LoupeCore.Clear は非表示（+ Bitmap 解放）を担う（IsVisible のみ公開検証。 Bitmap 解放は LoupeControl の責務）
         Assert.False(control.Loupe.IsVisible);
         window.Close();

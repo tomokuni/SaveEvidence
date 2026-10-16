@@ -81,10 +81,12 @@ internal sealed partial class CaptureOverlayWindow : Window
     /// <summary>撮影した画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時の範囲をコアが単一所有する）。</summary>
     private readonly CaptureImageHolder _captureImage;
 
-    /// <summary>表示境界の画像（<see cref="VirtualScreenImage"/>・ルーペの Source が共有する）。 本ウィンドウが破棄する。</summary>
+    /// <summary>表示境界の画像（<see cref="VirtualScreenImage"/>・ルーペの表示用の射影が共有する）。 本ウィンドウが破棄する。</summary>
     /// <remarks>
     /// <c>IImage</c>（Avalonia の表示用画像）は非所有の契約のため、設定しただけでは破棄されない。 <see cref="SetVirtualScreen"/> の差し替え時と
-    /// クローズ時に本ウィンドウが <see cref="EsBitmapAvaloniaAdapter.Dispose"/> を呼ぶ（元画像は <see cref="_captureImage"/> が所有する）。
+    /// クローズ時に本ウィンドウが <see cref="EsBitmapAvaloniaAdapter.Dispose"/> を呼ぶ（元画像は <see cref="_captureImage"/> が所有する）。<br/>
+    /// ルーペへは本アダプタが内包するコアの画像（<see cref="EsBitmapAvaloniaAdapter.GetEsBitmap"/>）を拡大元として渡し、
+    /// 本アダプタ自身を表示用の射影（<c>DisplaySource</c>）として渡す（背景画像と同じ画像であるため複製を作らずに描ける）。
     /// </remarks>
     private EsBitmapAvaloniaAdapter? _displayImage;
 

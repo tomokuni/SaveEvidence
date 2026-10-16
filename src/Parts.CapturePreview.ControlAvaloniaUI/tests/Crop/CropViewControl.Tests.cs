@@ -49,6 +49,40 @@ public class CropViewControlTests
         Assert.Same(bitmap, view.Source);
     }
 
+    /// <summary>表示する画像を設定すると、ルーペへコアの画像（拡大元）と表示用の射影が渡されることを検証する。</summary>
+    /// <remarks>
+    /// ルーペの拡大元はコアの画像（表示中のアダプタが内包する真実）であり、表示用の射影は表示中の画像そのものである<br/>
+    /// （射影を渡すと切り出しの複製を作らずに描ける。 0 コピーの描画経路の検証）。
+    /// </remarks>
+    [AvaloniaFact]
+    internal void Source_設定するとルーペへ拡大元と表示用の射影が渡される()
+    {
+        var display = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Blue);
+        var view = new CropViewControl { Source = display };
+
+        Assert.Same(display.GetEsBitmap(), view.SelectionOverlay.Loupe.Source);
+        Assert.Same(display, view.SelectionOverlay.Loupe.DisplaySource);
+    }
+
+    /// <summary>ルーペの拡大元と表示用の射影を明示的に設定・解除できることを検証する。</summary>
+    [AvaloniaFact]
+    internal void SetLoupeSource_拡大元と表示用の射影を設定し解除できる()
+    {
+        var view = new CropViewControl();
+        var display = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Blue);
+
+        view.SetLoupeSource(display.GetEsBitmap(), display);
+
+        Assert.Same(display.GetEsBitmap(), view.SelectionOverlay.Loupe.Source);
+        Assert.Same(display, view.SelectionOverlay.Loupe.DisplaySource);
+
+        // 解除すると拡大元と表示用の射影の両方が外れる（片方だけ残さない）
+        view.ClearLoupe();
+
+        Assert.Null(view.SelectionOverlay.Loupe.Source);
+        Assert.Null(view.SelectionOverlay.Loupe.DisplaySource);
+    }
+
     [AvaloniaFact]
     internal void SelectionMode_既定値はCropである()
     {

@@ -194,6 +194,8 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 主な公開メンバー: `Mode` / `Options`（コアの `SelectionOverlayOptions`）/ `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionSourceRect` / `HighlightSourceRect` / `ShowFullOverlay` / `LoupeCenterPoint` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling`、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `NotifyViewportChanged` / `RequestRedraw`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`。
 
+`SetLoupeSource` が受け取る拡大元は**コアの画像**（`EsReadOnlyBitmap`）です。 画像を `IImage` として表示している場合は、表示アダプタ（`EsBitmapAvaloniaAdapter`）の `GetEsBitmap()` でコアの画像を取り出して渡します。 第 2 引数（表示用の射影。 省略可）に表示に使っている `IImage` を渡すと、切り出しの複製を作らずに描けます（**0 コピー**。 寸法が一致しない射影は無視され、拡大元から描かれます）。
+
 ### 7.3 ZoomViewControl（切り出しビューの画像ビューポート）
 
 画像の拡大・パン・Fit 表示を担う画像ビューポートです。 **`CropViewControl` が内包する内部部品**であり、独立した汎用コントロールではなく切り出しビューの表示を成立させるために存在します（`CropViewControl` が `Source` / `ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` / `ClientToSource` 等を委譲し、ホストは通常 `CropViewControl` 経由で利用します）。 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー）は UI 非依存コア `Parts.CapturePreview.Core` の `ZoomViewSession` が単一所有します。

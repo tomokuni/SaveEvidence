@@ -207,19 +207,22 @@ internal sealed partial class CaptureOverlayWindow
         _log.LogVirtualScreen(origin.ToEsPointInt(), readOnly);
         // 新しいアダプタを先に Source へ設定し、旧アダプタは後から破棄する。
         // Image.Source が旧アダプタを参照し続ける間に破棄すると、描画が破棄済みの射影へ触れて例外・チラつきになる
-        // （順序の理由は LoupeControl.SetLoupeBitmap と同じ。 IImage は非所有のため、保持するホストが Dispose する）。
+        // （順序の規則は EsBitmapAvaloniaAdapter が単一所有する。 IImage は非所有のため、保持するホストが Dispose する）。
         // 元画像はコアの保持クラスが所有し、このアダプタは借用して包むだけ。
         var previousImage = _displayImage;
-        _displayImage = readOnly is null ? null : new EsBitmapAvaloniaAdapter(readOnly);
-        VirtualScreenImage.Source = _displayImage;
+        var displayImage = readOnly is null ? null : new EsBitmapAvaloniaAdapter(readOnly);
+        _displayImage = displayImage;
+        VirtualScreenImage.Source = displayImage;
         previousImage?.Dispose();
 
-        // ルーペの Source を設定する（固定背景画像と同一のアダプタを共有する）。
+        // ルーペのソースを設定する（固定背景画像と同一のアダプタを共有する）。
         // Source 未設定の間はルーペが表示されないため、ここで Source を設定し、
         // 既にドラッグ中（CenterPoint 設定済み）なら SetLoupePosition を再呼び出しして表示を開始する。
-        if (_displayImage is not null && !CaptureTypeTraits.IsHighlighted(_captureType))
+        // 拡大元は アダプタが内包するコアの画像（GetEsBitmap）、表示用の射影はアダプタ自身
+        // （背景画像と同じ画像を表示しているため、切り出しの複製を作らずに描ける）。
+        if (displayImage is not null && !CaptureTypeTraits.IsHighlighted(_captureType))
         {
-            SelectionOverlay.SetLoupeSource(_displayImage);
+            SelectionOverlay.SetLoupeSource(displayImage.GetEsBitmap(), displayImage);
             if (SelectionOverlay.LoupeCenterPoint is { } center)
             {
                 SelectionOverlay.SetLoupePosition(center);

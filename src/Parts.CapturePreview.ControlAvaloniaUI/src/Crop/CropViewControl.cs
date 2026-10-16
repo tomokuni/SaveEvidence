@@ -12,6 +12,7 @@ using EsUtil.Feature.Marquee.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
@@ -241,9 +242,12 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>ルーペの拡大元画像を <see cref="SelectionOverlayControl"/> へ設定する。</summary>
-    /// <remarks>真のソースはズームビューポートが持つため、本コントロールはフィールドへ複製せず参照する。</remarks>
-    private void UpdateLoupeSource() => _selectionOverlay.SetLoupeSource(_zoomView.Source);
+    /// <summary>ルーペの拡大元画像（コアの画像）を <see cref="SelectionOverlayControl"/> へ設定する。</summary>
+    /// <remarks>
+    /// 表示中の画像（<see cref="_zoomView"/>.Source）からコアの画像を取り出し、表示用の射影も併せて渡す（0 コピーの描画経路）。<br/>
+    /// 真のソースはズームビューポートが持つため、本コントロールはフィールドへ複製せず参照する。
+    /// </remarks>
+    private void UpdateLoupeSource() => _selectionOverlay.SetLoupeSource(this.CurrentImage(), _zoomView.Source);
 
     // ====================================================================
     // 公開 API: 外部提供矩形
@@ -536,13 +540,19 @@ public sealed partial class CropViewControl : Panel
         }
     }
 
-    /// <summary>ルーペの拡大元画像を設定する（<see cref="SelectionOverlayControl.SetLoupeSource"/> へ委譲）。</summary>
-    /// <param name="source">ルーペの拡大元画像。 null でルーペをクリア。</param>
-    public void SetLoupeSource(IImage? source)
+    /// <summary>ルーペの拡大元画像（コアの画像）と表示用の射影を設定する（<see cref="SelectionOverlayControl.SetLoupeSource"/> へ委譲）。</summary>
+    /// <param name="source">ルーペの拡大元画像（コアの読み取り専用画像）。 null でルーペをクリア。</param>
+    /// <param name="display">表示用の射影（省略可）。 表示に使っている Avalonia の画像を渡すと 0 コピーで描ける。</param>
+    /// <remarks>
+    /// <b>引数を 2 つ（第 2 引数は省略可）にした理由</b>: 拡大元（コアの画像）と表示用の射影（表示境界の画像）は型が異なるため、<br/>
+    /// 呼び出し側が表示に使っている画像を持っている場合にそのまま渡せた方が読みやすい（省略しても正しく描ける）。<br/>
+    /// 表示中の画像から両方を解決する経路（<c>Source</c> の設定時）は本コントロールが内部で行う。
+    /// </remarks>
+    public void SetLoupeSource(EsReadOnlyBitmap? source, IImage? display = null)
     {
         try
         {
-            _selectionOverlay.SetLoupeSource(source);
+            _selectionOverlay.SetLoupeSource(source, display);
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {

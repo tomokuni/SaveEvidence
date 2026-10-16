@@ -230,7 +230,9 @@ internal sealed class CropSession(
         cropView.SetCoordTransform(_coordPort);
         // ルーペのソースは表示中の画像（切り出しの対象と同じ画像。 画像の差し替えに追従する）。
         // 終了時にルーペを解除するため、開始と設定変更のたびに表示中の画像へ結び直す。
-        cropView.SetLoupeSource(cropView.Source);
+        // 拡大元はコアの画像（表示中のアダプタが内包する画像）、表示用の射影は表示中の画像そのもの
+        // （どちらも表示中の画像が単一所有するため、本クラスは複製も保持もしない）。
+        cropView.SetLoupeSource(cropView.CurrentImage(), cropView.Source);
     }
 
     /// <summary>セッション実行中に最新の設定を再適用する（Crop 中の設定変更の即時反映）。</summary>

@@ -6,24 +6,22 @@ rem  SaveEvidence (Avalonia UI) ビルドスクリプト
 rem
 rem  方式は buildScript/publish_ui.bat が aot ^> single ^> exe の優先順に選びます。
 rem
-rem  実測（2026-10-16）: 方式 1（Single + AOT）は使えません。
-rem    EsUtil.Feature.Loupe.ControlAvaloniaUI の LoupeSourceResolver が
-rem    Expression.Compile と Type.GetMethod で表示アダプタの契約（GetEsBitmap）を解決しており、
-rem    トリミング / AOT の解析が IL2070（GetMethod の引数の注釈不足）と
-rem    IL3050（Expression.Compile は動的コードを要求する）で失敗します（-warnaserror のためエラー）。
-rem    そのため方式 2（Single）で発行します。
-rem    ※ 方式 1 へ戻すには EsUtil 側の設計変更（公開インターフェースによる契約、または
-rem      アダプタの型をホストが解決してルーペへ直接渡す形）が必要です。
+rem  実測（2026-10-16）: 方式 1（Single + AOT）で発行されます。
+rem    以前は方式 1 が失敗していました（EsUtil.Feature.Loupe.ControlAvaloniaUI が
+rem    Expression.Compile と Type.GetMethod で表示アダプタの契約を解決しており、
+rem    IL2070 / IL3050 で AOT 解析が失敗していた。 反射を削除したことで解消）。
+rem    方式 1 へ戻れなくなったら、まず EsUtil 側で反射が復活していないかを疑ってください
+rem    （公開契約は「拡大元はコア画像で受け取り、表示用の射影は引数で渡す」です）。
 rem
 rem  前提:
 rem    Native AOT のリンクには Visual Studio の C++ ビルドツール（link.exe）が必要です。
 rem
-rem  構成（方式 1 のとき）:
+rem  構成:
 rem    - マネージドコードは全て exe（SaveEvidence.AvaloniaUI.exe）へコンパイルされます。
 rem    - Avalonia / SkiaSharp / OpenCvSharp のネイティブライブラリは exe へ同梱できないため、
 rem      同じフォルダーへ並べて配布します。
 rem
-rem  AOT で動作しない実装（実測。 方式 1 へ戻すときの前提）:
+rem  AOT で動作しない実装（実測）:
 rem    - 実行時の XAML 解決（AvaloniaXamlLoader.Load(Uri)）は
 rem      「No precompiled XAML found」で失敗します。 XAML はコンパイル時に取り込む形
 rem      （x:Class 付きの Styles）にしてください。

@@ -344,7 +344,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを内包コントロールへ一括分配 |
 | `RequestConfirm()` / `RequestCancel()` | 選択確定 / キャンセル要求 |
 | `FocusMarquee()` | 選択矩形へフォーカスを設定する（矢印キー nudge の受付開始） |
-| `SetLoupeSource(IImage?)` / `ClearLoupe()` | ルーペの拡大元画像の設定・クリア |
+| `SetLoupeSource(EsReadOnlyBitmap?, IImage?)` / `ClearLoupe()` | ルーペの拡大元画像（コアの画像）と表示用の射影の設定・クリア |
 | `NotifyViewportChanged()` | 表示（パン・ズーム・表示サイズ）の変化を内包オーバーレイへ通知 |
 | `ImageRectViewport()` / `SourceToClient(Point)` / `ClientToSource(Point)` | 画像表示矩形の取得と、対象 ↔ ビューポートの座標変換 |
 
@@ -400,7 +400,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | --- | --- |
 | `SetCoordTransform(ICoordTransform?)` | 座標変換ポートを一括分配（null で倍率からコアが解決） |
 | `SetSelection(Rect)` / `ClearSelection()` | 選択状態の設定・クリア |
-| `SetLoupePosition(Point)` / `SetLoupeSource(IImage?)` / `ClearLoupe()` | ルーペの制御 |
+| `SetLoupePosition(Point)` / `SetLoupeSource(EsReadOnlyBitmap?, IImage?)` / `ClearLoupe()` | ルーペの制御 |
 | `RequestConfirm()` / `RequestCancel()` | 確定・キャンセル要求 |
 | `FocusMarquee()` / `NotifyViewportChanged()` / `RequestRedraw()` | フォーカス設定・表示の変化への追従・再描画要求 |
 
@@ -412,6 +412,8 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `LoupeRendered` | `EventHandler<LoupeRenderedEventArgs>` | ルーペ描画完了の通知（ホストがルーペ画像へ外部提供矩形を描く用） |
 
 選択領域は**閉区間**（始点・終点を含む）として扱い、暗転マスク（非暗転領域）とルーペの選択枠が一致します。
+
+**ルーペの拡大元はコアの画像です**（`EsReadOnlyBitmap`。 MewUI / WinUI3 / WinForms 版と同じ契約）。 画像を `IImage` として表示している場合は、表示アダプタ（`EsBitmapAvaloniaAdapter`）の `GetEsBitmap()` でコアの画像を取り出して渡します。 第 2 引数の**表示用の射影**（`IImage?`。 省略可）に表示に使っている画像を渡すと、切り出しの複製も表示用の変換も作らずに描けます（**0 コピー**）。 射影の寸法が拡大元と一致しない場合は無視されるため、表示用に縮小した画像（`DisplayMaxSize`）を渡しても正しく動きます。 拡大元を解除すると表示用の射影も解除されます。
 
 ### 5.7 ZoomViewControl（切り出しビューの画像ビューポート）
 

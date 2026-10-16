@@ -262,12 +262,12 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 | UI | 添付ファイル | 方式（実測 2026-10-16） | zip の中身 |
 | --- | --- | --- | --- |
 | MewUI 版 | `SaveEvidence.MewUI.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
-| Avalonia UI 版 | `SaveEvidence.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
+| Avalonia UI 版 | `SaveEvidence.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
 | WinForms 版 | `SaveEvidence.WinForms.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
 | WinUI 3 版 | `SaveEvidence.WinUI3.zip` | EXE（フォルダー） | exe 1 個 + DLL / `.pri` / `.winmd` / `.json` |
 
 - **方式が Single AOT でない UI は、その理由がスクリプトのコメントに書かれています**（例: WinForms は SDK がトリミングを拒否する `NETSDK1175`、WinUI 3 は Windows App SDK 1.8 時点で Native AOT が未サポート）。
-- **Avalonia UI 版が AOT でないのは `EsUtil` 側の実装が原因**です（`LoupeSourceResolver` が `Expression.Compile` と `Type.GetMethod` で表示アダプタを解決しており、`IL2070` / `IL3050` で AOT 解析が失敗する）。 方式 1 へ戻すには `EsUtil` 側で反射をやめる設計変更（公開インターフェースによる契約、またはアダプタの型をホストが解決してルーペへ直接渡す形）が必要です。 **方式 1 へ戻すと出力フォルダー名（`-single` → `-aot`）が変わるため、`release-config.json` の `uis[].output` も更新してください**（検査が「出力フォルダーがありません」で気付きます）。
+- **方式 1 へ戻すと出力フォルダー名（`-single` → `-aot`）が変わるため、`release-config.json` の `uis[].output` も更新してください**（検査が「出力フォルダーがありません」で気付きます）。
 - **配布物は exe 1 個であることを検査します**（`buildScript/verifyPublish.ps1`）。 Windows App SDK が再起動 API 用に同封する `RestartAgent.exe` は配置しません（本アプリは再起動 API を使わない。 除いても起動と終了が正常であることを実測済み）。
 - **配布物から落としてよいのは `*.pdb` と `RestartAgent.exe` だけ**です。 他のファイルは拡張子で選別せずにすべて配置します（WinUI 3 は `.pri` / `.winmd` / `.json` を必要とし、`.pri` を落とすと起動はしても終了時に `0x80008083` で落ちます。 実測）。
 

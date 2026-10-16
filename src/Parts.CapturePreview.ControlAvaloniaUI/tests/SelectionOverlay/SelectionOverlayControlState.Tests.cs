@@ -3,6 +3,7 @@ using Avalonia.Media;
 using EsUtil.Feature.Loupe.AvaloniaUI;
 using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.AvaloniaUI;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
@@ -19,9 +20,10 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.SelectionOve
 [Collection("AvaloniaHeadless")]
 public class SelectionOverlayControlStateTests
 {
-    /// <summary>テスト用の拡大元画像を生成する（ルーペの表示可否の検証に使う）。</summary>
-    /// <returns>生成した画像。</returns>
-    private static IImage CreateSource() => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent);
+    /// <summary>テスト用の拡大元画像（コアの読み取り専用画像）を生成する（ルーペの表示可否の検証に使う）。</summary>
+    /// <returns>生成した画像（表示用のアダプタが内包する真実を借用で取り出す）。</returns>
+    private static EsReadOnlyBitmap CreateSource()
+        => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent).GetEsBitmap();
 
     [AvaloniaFact]
     internal void コンストラクタ_内包コントロールが2つ配置される()
