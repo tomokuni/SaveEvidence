@@ -1,56 +1,58 @@
 @echo off
 setlocal
+chcp 65001 >nul
 
 rem ============================================================
-rem  SaveEvidence (WinUI 3) ビルドスクリプト
+rem  SaveEvidence (WinUI 3) publish script
 rem
-rem  方式は buildScript/publish_ui.bat が aot ^> single ^> exe の優先順に選びます。
+rem  ASCII only.  cmd.exe reads a batch file with the console code page and counts the read
+rem  position in decoded characters, so non-ASCII text garbles the output and can make cmd
+rem  execute fragments of the file as commands.  The chcp below keeps the UTF-8 log of
+rem  dotnet readable (safe because this file is ASCII).  Rules: .github/RELEASE.md.
 rem
-rem  実測（2026-10-16）: 方式 1（Single + AOT）は使えません。
-rem    CsWinRT の AOT 解析（CsWinRT1028 / CsWinRT1030）が要求する
-rem    「WinRT ABI を渡る型を partial にする」「AllowUnsafeBlocks を有効にする」を
-rem    本アプリと WinUI 3 コントロールの各プロジェクトへ広げても解決しません。
-rem    Windows App SDK 1.8 時点で WinUI 3（C#）の Native AOT は未サポートであり、
-rem    XAML ランタイムがリフレクションに依存するため、解析を回避しても成立しません。
-rem    そのため方式 2（Single）で発行します。
+rem  The mode (aot ^> single ^> exe) is chosen by buildScript/publish_ui.bat.
+rem  Measured 2026-10-16: mode 1 (single + AOT) cannot be used.  Widening the requirements of
+rem  the CsWinRT AOT analysis (CsWinRT1028 / CsWinRT1030: make the types that cross the WinRT
+rem  ABI partial, enable AllowUnsafeBlocks) to the app and to the WinUI 3 control projects
+rem  does not fix it.  Native AOT of WinUI 3 (C#) is not supported as of Windows App SDK 1.8,
+rem  and the XAML runtime depends on reflection, so avoiding the analysis warnings does not
+rem  make it work either.  Mode 2 (single) is used instead.
 rem
-rem  ★ 単一ファイル化には「WinUI 3 のライブラリを RID 付きで先にビルドする」ことが必要です。
-rem    理由: 単一ファイル化は各 WinUI 3 プロジェクトの .pri（リソース インデックス）を
-rem    PublishSingleFile の入力に要求しますが（PRI175 / PRI252）、
-rem    RuntimeIdentifier は ProjectReference へ伝播しないため、アプリの publish が
-rem    参照プロジェクトをビルドしても .pri は TFM のみのフォルダへ出て、
-rem    アプリが探す <TFM>\<RID>\ には置かれません。 ライブラリを -r 付きで直接ビルドすると
-rem    <TFM>\<RID>\ へ .pri が出るため、その 1 手順を先に実行します（ライブラリに
-rem    EnableMsixTooling は不要です。 実測）。
+rem  Single file publishing needs the WinUI 3 libraries to be built with a RID first:
+rem  single file publishing requires the .pri (resource index) of every WinUI 3 project as an
+rem  input (PRI175 / PRI252), but RuntimeIdentifier does not flow to ProjectReference, so the
+rem  .pri files of the referenced projects land in the TFM only folder and not in the
+rem  <TFM>\<RID>\ folder that the app looks in.  Building the libraries directly with -r puts
+rem  the .pri files in <TFM>\<RID>\ (the libraries do not need EnableMsixTooling; measured).
 rem
-rem  構成:
-rem    - アンパッケージ（WindowsPackageType=None）+ Windows App SDK 自己完結
-rem      （WindowsAppSDKSelfContained）のため、Windows App SDK のランタイムを同封します。
-rem    - 本体プロジェクトの EnableMsixTooling は publish のために必要です（付けないと publish が
-rem      SaveEvidence.WinUI3.pri を発行せず、起動はしても終了時に 0xC000027B / 0x80008083
-rem      （WinRT の stowed exception）で落ちます。 実測）。
+rem  Layout: unpackaged (WindowsPackageType=None) and self-contained Windows App SDK
+rem  (WindowsAppSDKSelfContained), so the Windows App SDK runtime is shipped.  The main
+rem  project needs EnableMsixTooling for publish (without it the publish does not produce
+rem  SaveEvidence.WinUI3.pri and the app starts but fails on exit with 0xC000027B /
+rem  0x80008083, a WinRT stowed exception; measured).
 rem
-rem  設定 JSON（重要）:
-rem    SettingsJsonContext（JSON ソース生成コンテキスト）を SettingsService へ注入しています。
-rem    コンテキストは Settings を参照する側のアセンブリに置く必要があります
-rem    （同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
-rem    設定の往復は回帰テスト（src/App.WinUI3/tests/AppJsonContext.Tests.cs）が
-rem    検証します（buildScript/verify.ps1 のテスト実行に含まれます）。
+rem  Settings JSON: the app injects the JSON source generation context (SettingsJsonContext)
+rem  into SettingsService.  The context must live in the assembly that references Settings
+rem  (in one compilation the JSON source generator does not see the MVVM generator output).
+rem  The round trip of the settings is verified by a regression test
+rem  (src\App.WinUI3\tests\AppJsonContext.Tests.cs), which runs with the tests of
+rem  buildScript/verify.ps1.
 rem ============================================================
 
-rem スクリプトの場所（buildScript）からリポジトリルートへ移動する
+rem Move from the script folder (buildScript) to the repository root.
 pushd "%~dp0.."
 
-rem ターゲットランタイム（既定: win-x64）
+rem The target runtime (default: win-x64).
 if "%~1"=="" (set "RID=win-x64") else (set "RID=%~1")
 
-rem  WinUI 3 ライブラリの .pri を生成します（RID: %RID%）
-rem  単一ファイル化は各 WinUI 3 プロジェクトの .pri（リソース インデックス）を publish の入力に要求しますが、
-rem  RuntimeIdentifier は ProjectReference へ伝播しないため、アプリの publish が参照をビルドしても .pri は
-rem  TFM のみのフォルダへ出て、アプリが探す <TFM>\<RID>\ には置かれません。 ライブラリを -r 付きで
-rem  直接ビルドすると <TFM>\<RID>\ へ .pri が出ます（実測 2026-10-16）。
-rem  失敗しても続行する（.pri を要さない方式では成功するため、ここで止めない）。
-echo [INFO] WinUI 3 ライブラリの .pri を生成します（RID: %RID%）
+rem  Generate the .pri files of the WinUI 3 libraries (RID: %RID%).
+rem  Single file publishing requires the .pri (resource index) of every WinUI 3 project as an
+rem  input, but RuntimeIdentifier does not flow to ProjectReference, so building only the app
+rem  leaves the .pri files in the TFM only folder.  Building the libraries directly with -r
+rem  produces them in <TFM>\<RID>\ (measured 2026-10-16).
+rem  A failure here does not stop the script (a mode that does not need .pri files can still
+rem  succeed).
+echo [INFO] WinUI 3: generating the .pri files of the libraries (RID: %RID%)
 for %%p in (
   "..\EsUtil\src\EsUtil.Feature.Loupe.ControlWinUI3\src\WinUI3\EsUtil.Feature.Loupe.ControlWinUI3.csproj"
   "..\EsUtil\src\EsUtil.Feature.Marquee.ControlWinUI3\src\WinUI3\EsUtil.Feature.Marquee.ControlWinUI3.csproj"
@@ -58,9 +60,9 @@ for %%p in (
   "src\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj"
 ) do dotnet build %%p -c Release -r %RID% -v q --nologo >nul 2>&1
 
-rem 単一ファイル化は csproj の `SaveEvidencePublishSingleFile` で門を作る（src\App.WinUI3\src\App.WinUI3.csproj）。
-rem `-p:PublishSingleFile=true` を直接渡すと参照プロジェクトへ伝播し、WinUI 3 のライブラリが
-rem EnableMsixTooling と WindowsAppSDKSelfContained を要求して失敗する（実測）。
+rem Single file publishing is gated by `SaveEvidencePublishSingleFile` in
+rem src\App.WinUI3\src\App.WinUI3.csproj.  Passing `-p:PublishSingleFile=true` directly
+rem flows to the referenced projects, and the WinUI 3 libraries then fail (measured).
 set "SE_SINGLE_ARGS=-p:SaveEvidencePublishSingleFile=true"
 
 call "%~dp0publish_ui.bat" winui3 "src\App.WinUI3\src\App.WinUI3.csproj" %*

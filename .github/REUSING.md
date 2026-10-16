@@ -148,8 +148,9 @@ MTP モードではテスト対象を `--solution` / `--project` で指定しま
 
 UI ごとに `buildScript/<名前>_publish.bat` を作成します。 仕様は次のとおりです。
 
-- **発行方式（Single AOT / Single / EXE）の選択は [`buildScript/publish_ui.bat`](../buildScript/publish_ui.bat) が単一所有する**。 UI ごとのスクリプトは、その UI のプロジェクトを渡して呼ぶ薄い入口にする（`call "%~dp0publish_ui.bat" <UI 名小文字> "<プロジェクトの相対パス>" %*`）。 方式ごとの可否と実測は**その UI のスクリプトのコメント**に書く。
+- **発行方式（Single AOT / Single / EXE）の選択は [`buildScript/publish_ui.bat`](../buildScript/publish_ui.bat) が単一所有する**。 UI ごとのスクリプトは、その UI のプロジェクトを渡して呼ぶ薄い入口にする（`call "%~dp0publish_ui.bat" <UI 名小文字> "<プロジェクトの相対パス>" %*`）。 方式ごとの可否と実測は **`RELEASE.md` が持つ**（本リポジトリの例）。
 - **スクリプトの場所（`buildScript/`）からリポジトリルートへ移動してから実行する**（`pushd "%~dp0.."`）。 これにより、呼び出し元のカレントディレクトリに依存しません。
+- **バッチ ファイルは ASCII だけで書く**（`cmd.exe` はバッチ ファイルをコンソールのコードページで読み、読み取り位置を復号後の文字数で数えるため、日本語は化けと行のずれを起こします）。 **`setlocal` の直後に `chcp 65001 >nul` を置く**（ASCII なら安全であり、`dotnet` が出力する UTF-8 のログが読めます）。 根拠と検査は [`検証手順.md`](検証手順.md) §19
 - 成功時は終了コード 0、失敗時は非 0 で終了する
 - 出力先は `release-config.json` の `output` と一致させる（方式が名前に入るため、方式が変わったら `output` も更新する）
 - 他のスクリプトを呼ぶ場合は、カレントディレクトリではなく `%~dp0` を基準にする（例: `call "%~dp0MewUI_publish.bat"`）

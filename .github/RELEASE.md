@@ -266,7 +266,14 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 | WinForms 版 | `SaveEvidence.WinForms.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
 | WinUI 3 版 | `SaveEvidence.WinUI3.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
 
-- **方式が Single AOT でない UI は、その理由がスクリプトのコメントに書かれています**（例: WinForms は SDK がトリミングを拒否する `NETSDK1175`、WinUI 3 は Windows App SDK 1.8 時点で Native AOT が未サポート）。
+- **方式が Single AOT でない UI は、その理由を本節が持ちます**（例: WinForms は SDK がトリミングを拒否する `NETSDK1175`、WinUI 3 は Windows App SDK 1.8 時点で Native AOT が未サポート）。
+- **Avalonia UI 版の AOT は、以前は `IL2070` / `IL3050` で失敗していました**（`EsUtil.Feature.Loupe.ControlAvaloniaUI` が `Expression.Compile` と `Type.GetMethod` で表示アダプタの契約を解決していたため）。 反射を削除して方式 1 へ戻しています（方式 1 へ戻せなくなったら、まず EsUtil 側で反射が復活していないかを疑います）。
+- **MewUI 版と Avalonia UI 版のネイティブ ライブラリ（SkiaSharp・OpenCvSharp と Avalonia）は exe へ同梱できない**ため、同じフォルダーへ並べて配布します（ファイル数とサイズはコードの変更で変わるため、文書へ書かず `buildScript/verifyPublish.ps1` が実測して表示します）。
+- **WinUI 3 版の本体プロジェクトは `EnableMsixTooling` を必要とします**（付けないと publish が `.pri` を発行せず、起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます。 実測）。 Windows App SDK 自己完結（`WindowsAppSDKSelfContained`）+ アンパッケージ（`WindowsPackageType=None`）で配布します。
+- **publish はリポジトリ外の一時領域（`%TEMP%`）へ発行し、必要なファイルだけを `publish/` へ配置します**（リポジトリ内へ直接発行すると、参照プロジェクト側のディレクトリにも `publish` が作られます）。
+- **方式ごとの引数は環境変数で差し替えます**（`SE_AOT_ARGS` / `SE_SINGLE_ARGS`。 **空にする意図は `SE_SKIP_AOT_ARGS` / `SE_SKIP_SINGLE_ARGS`** で表します。 `cmd` では `set "VAR="` が変数を未定義へ戻すため、空文字では意図を表せません。 差し替えの例は WinUI 3 版です）。
+- **`SelfContained` は明示しません**（`-r` が暗黙に有効にします。 明示すると参照プロジェクトへ伝播し、WinUI 3 のライブラリが `EnableMsixTooling` と `WindowsAppSDKSelfContained` を要求して失敗します。 実測）。
+- **publish スクリプト（`buildScript/*.bat`）は ASCII だけで書きます**（日本語を書くと `cmd.exe` の読み取りがずれ、出力が化けたうえにコメントの断片がコマンドとして実行されます。 根拠と検査は [`検証手順.md`](検証手順.md) §19）。
 - **方式 1 へ戻すと出力フォルダー名（`-single` → `-aot`）が変わるため、`release-config.json` の `uis[].output` も更新してください**（検査が「出力フォルダーがありません」で気付きます）。
 - **単一ファイル化（`PublishSingleFile`）は publish のコマンドライン引数で渡さず、アプリの `.csproj` に置きます**。 コマンドライン引数は**参照プロジェクトへ伝播**し、WinUI 3 のライブラリが `EnableMsixTooling` と `WindowsAppSDKSelfContained` を要求して失敗するためです（後者は RID を要求しますが、RID は参照プロジェクトへ伝播しません。 実測 2026-10-16）。 プロパティを差し替えたい UI は `buildScript/publish_ui.bat` の `SE_SKIP_SINGLE_ARGS` を使います。
 - **WinUI 3 の単一ファイル化は「WinUI 3 のライブラリを RID 付きで直接ビルドする」手順を必要とします**（`buildScript/WinUI3_publish.bat` が実行）。 アプリの `.pri` 生成は参照プロジェクトの `<TFM>\<RID>\` の `.pri` を要求しますが、RID が伝播しないためアプリの publish ではそこへ出ません（`PRI175` / `PRI252`）。

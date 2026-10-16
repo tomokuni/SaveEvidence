@@ -1,43 +1,45 @@
 @echo off
 setlocal
+chcp 65001 >nul
 
 rem ============================================================
-rem  SaveEvidence (Avalonia UI) ビルドスクリプト
+rem  SaveEvidence (Avalonia UI) publish script
 rem
-rem  方式は buildScript/publish_ui.bat が aot ^> single ^> exe の優先順に選びます。
+rem  ASCII only.  cmd.exe reads a batch file with the console code page and counts the read
+rem  position in decoded characters, so non-ASCII text garbles the output and can make cmd
+rem  execute fragments of the file as commands.  The chcp below keeps the UTF-8 log of
+rem  dotnet readable (safe because this file is ASCII).  Rules: .github/RELEASE.md.
 rem
-rem  実測（2026-10-16）: 方式 1（Single + AOT）で発行されます。
-rem    以前は方式 1 が失敗していました（EsUtil.Feature.Loupe.ControlAvaloniaUI が
-rem    Expression.Compile と Type.GetMethod で表示アダプタの契約を解決しており、
-rem    IL2070 / IL3050 で AOT 解析が失敗していた。 反射を削除したことで解消）。
-rem    方式 1 へ戻れなくなったら、まず EsUtil 側で反射が復活していないかを疑ってください
-rem    （公開契約は「拡大元はコア画像で受け取り、表示用の射影は引数で渡す」です）。
+rem  The mode (aot ^> single ^> exe) is chosen by buildScript/publish_ui.bat.
+rem  Measured 2026-10-16: mode 1 (single + AOT) is used.  Mode 1 failed before that because
+rem  EsUtil.Feature.Loupe.ControlAvaloniaUI resolved the display adapter contract with
+rem  Expression.Compile and Type.GetMethod (IL2070 / IL3050); removing the reflection fixed
+rem  it.  If mode 1 stops working, first check whether reflection came back in EsUtil (the
+rem  public contract is: the source image is received as a core image, and the projection
+rem  for display is passed as an argument).
 rem
-rem  前提:
-rem    Native AOT のリンクには Visual Studio の C++ ビルドツール（link.exe）が必要です。
+rem  Prerequisite: linking for Native AOT needs link.exe from the Visual Studio C++ build
+rem  tools.
 rem
-rem  構成:
-rem    - マネージドコードは全て exe（SaveEvidence.AvaloniaUI.exe）へコンパイルされます。
-rem    - Avalonia / SkiaSharp / OpenCvSharp のネイティブライブラリは exe へ同梱できないため、
-rem      同じフォルダーへ並べて配布します。
+rem  Layout: all managed code is compiled into one exe.  The native libraries of Avalonia,
+rem  SkiaSharp and OpenCvSharp cannot be embedded into the exe, so they are distributed next
+rem  to it.
 rem
-rem  AOT で動作しない実装（実測）:
-rem    - 実行時の XAML 解決（AvaloniaXamlLoader.Load(Uri)）は
-rem      「No precompiled XAML found」で失敗します。 XAML はコンパイル時に取り込む形
-rem      （x:Class 付きの Styles）にしてください。
+rem  Does not work with AOT (measured): resolving XAML at run time
+rem  (AvaloniaXamlLoader.Load(Uri)) fails with "No precompiled XAML found".  XAML must be
+rem  taken in at compile time (Styles with x:Class).
 rem
-rem  設定 JSON（重要）:
-rem    Native AOT ではリフレクションベースの System.Text.Json が動作しません
-rem    （Settings の公開プロパティがトリミングで削除され、終了時に設定が空 {} になり全損します）。
-rem    そのためアプリ本体は JSON ソース生成コンテキスト（SettingsJsonContext）を
-rem    SettingsService へ注入しています。 コンテキストは Settings を参照する側の
-rem    アセンブリに置く必要があります（同一コンパイル内では MVVM のソース生成結果を
-rem    JSON のソース生成が見られないため）。
-rem    設定の往復は回帰テスト（src/App.AvaloniaUI/tests/SettingsJsonContext.Tests.cs）が
-rem    検証します（buildScript/verify.ps1 のテスト実行に含まれます）。
+rem  Settings JSON: reflection based System.Text.Json does not work with Native AOT (the
+rem  public properties of Settings are trimmed away and the settings file becomes {} on
+rem  exit, losing everything).  The app therefore injects the JSON source generation context
+rem  (SettingsJsonContext) into SettingsService.  The context must live in the assembly that
+rem  references Settings (in one compilation the JSON source generator does not see the MVVM
+rem  generator output).  The round trip of the settings is verified by a regression test
+rem  (src\App.AvaloniaUI\tests\SettingsJsonContext.Tests.cs), which runs with the tests of
+rem  buildScript/verify.ps1.
 rem ============================================================
 
-rem スクリプトの場所（buildScript）からリポジトリルートへ移動する
+rem Move from the script folder (buildScript) to the repository root.
 pushd "%~dp0.."
 call "%~dp0publish_ui.bat" avaloniaui "src\App.AvaloniaUI\src\App.AvaloniaUI.csproj" %*
 set "RESULT=%ERRORLEVEL%"

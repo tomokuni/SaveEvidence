@@ -3,36 +3,40 @@ setlocal
 chcp 65001 >nul
 
 rem ====================================================================
-rem  ColorPickerControl サンプルアプリケーション（ビルド＆起動）
+rem  ColorPickerControl sample application (build and run)
 rem
-rem  リリースビルド（dotnet build -c Release）を行い、成功したら
-rem  サンプルアプリケーション（ColorPickerControl.AvaloniaUI.Sample.exe）を起動する。
+rem  ASCII only.  cmd.exe reads a batch file with the console code page and counts the read
+rem  position in decoded characters, so non-ASCII text garbles the output and can make cmd
+rem  execute fragments of the file as commands.  The chcp below keeps the UTF-8 log of dotnet
+rem  readable (safe because this file is ASCII).
 rem
-rem  使い方:
+rem  Builds the sample in Release, and starts it when the build succeeded.
+rem
+rem  Usage:
 rem     RunSample.bat
 rem ====================================================================
 
 set "PROJECT=%~dp0ColorPickerControl.AvaloniaUI.Sample.csproj"
 set "EXE=%~dp0bin\Release\net10.0\ColorPickerControl.AvaloniaUI.Sample.exe"
 
-echo [1/2] リリースビルドを開始します...
+echo [1/2] Building the sample in Release...
 dotnet build "%PROJECT%" -c Release --nologo
 if errorlevel 1 (
     echo.
-    echo [ERROR] リリースビルドに失敗しました。エラーを確認してください。
+    echo [ERROR] The Release build failed.  Check the errors above.
     pause
     exit /b 1
 )
 
 echo.
-echo [2/2] サンプルアプリケーションを起動します...
+echo [2/2] Starting the sample application...
 if not exist "%EXE%" (
-    echo [ERROR] 実行ファイルが見つかりません: %EXE%
+    echo [ERROR] Executable not found: %EXE%
     pause
     exit /b 1
 )
 
 start "" "%EXE%"
 
-echo 起動しました（ウィンドウが表示されます）。
+echo Started (the window opens now).
 endlocal
