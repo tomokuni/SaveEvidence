@@ -8,11 +8,11 @@
     "release/**"
   ],
   "artifactRetentionDays": 30,
-  "releaseNotes": "2 種の UI 実装の配布物です。MewUI 版は Native AOT（マネージドコードは exe に同梱）、AvaloniaUI 版は Native AOT（exe + ネイティブ DLL）の zip です。",
+  "releaseNotes": "4 種の UI 実装の配布物です。発行方式は Single AOT、Single（非 AOT）、EXE（フォルダー）の優先順で UI ごとに選ばれます（方式は配布物のフォルダー名に現れます。.github/RELEASE.md を参照）。",
   "uis": [
     {
       "name": "MewUI",
-      "script": "buildScript/MewUI_publish_aot.bat",
+      "script": "buildScript/MewUI_publish.bat",
       "output": "publish/mewui-win-x64-aot",
       "exe": "SaveEvidence.MewUI.exe",
       "asset": "SaveEvidence.MewUI.zip",
@@ -20,10 +20,26 @@
     },
     {
       "name": "AvaloniaUI",
-      "script": "buildScript/AvaloniaUI_publish_aot.bat",
-      "output": "publish/avaloniaui-win-x64-aot",
+      "script": "buildScript/AvaloniaUI_publish.bat",
+      "output": "publish/avaloniaui-win-x64-single",
       "exe": "SaveEvidence.AvaloniaUI.exe",
       "asset": "SaveEvidence.zip",
+      "zip": true
+    },
+    {
+      "name": "WinForms",
+      "script": "buildScript/WinForms_publish.bat",
+      "output": "publish/winforms-win-x64-single",
+      "exe": "SaveEvidence.WinForms.exe",
+      "asset": "SaveEvidence.WinForms.zip",
+      "zip": true
+    },
+    {
+      "name": "WinUI3",
+      "script": "buildScript/WinUI3_publish.bat",
+      "output": "publish/winui3-win-x64-exe",
+      "exe": "SaveEvidence.WinUI3.exe",
+      "asset": "SaveEvidence.WinUI3.zip",
       "zip": true
     }
   ]

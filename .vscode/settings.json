@@ -1,11 +1,4 @@
 {
-    "python-envs.pythonProjects": [
-        {
-            "path": ".",
-            "envManager": "ms-python.python:venv",
-            "packageManager": "ms-python.python:pip"
-        }
-    ],
     // PowerShell スクリプトの診断設定（リポジトリの方針と衝突する規則だけを理由付きで除外する）
     "powershell.scriptAnalysis.settingsPath": ".vscode/PSScriptAnalyzerSettings.psd1"
 }

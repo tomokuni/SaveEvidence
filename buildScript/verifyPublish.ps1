@@ -8,7 +8,7 @@
 本スクリプトはそれを読む（UI を追加しても本スクリプトの変更は不要）。
 
 検証の内容:
-1. publish（`buildScript/*_publish_aot.bat`）を実行し（`-SkipPublish` で省略）、出力フォルダの exe が配布名と一致することを確認する。
+1. publish（`buildScript/*_publish.bat`）を実行し（`-SkipPublish` で省略）、出力フォルダの exe が配布名と一致することを確認する。
 2. 実行ファイルが起動中でないことを確認する（起動中は設定ファイルが競合するため中止する）。
 3. ユーザーの設定ファイル（%LOCALAPPDATA% 配下の SaveEvidence フォルダーの settings.json）を退避する。
 4. exe を起動し、メイン ウィンドウが現れるのを待って `WM_CLOSE` で正常終了させる（終了コード 0 を確かめる）。
@@ -42,7 +42,7 @@ pwsh -NoProfile -File buildScript/verifyPublish.ps1 -Ui MewUI -SkipPublish
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('All', 'AvaloniaUI', 'MewUI')][string]$Ui = 'All',
+    [ValidateSet('All', 'AvaloniaUI', 'MewUI', 'WinForms', 'WinUI3')][string]$Ui = 'All',
     [switch]$SkipPublish,
     [switch]$ForcePublish,
     [int]$WindowTimeoutSeconds = 60,

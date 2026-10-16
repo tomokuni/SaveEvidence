@@ -160,7 +160,14 @@ App.WinForms/
 
 ## 9. 配布形態
 
-`dotnet publish` による自己完結の発行、またはランタイムを要求する Framework 依存の発行が可能です（配布物の設計は別途定めます）。 設定の読み書きには JSON ソース生成（`SettingsJsonContext`）を使うため、トリミング / Native AOT でも設定項目が失われません。
+配布物は **Single（単一 exe・自己完結）**（[`buildScript/WinForms_publish.bat`](../../buildScript/WinForms_publish.bat)）です。 exe 1 個で配置でき、
+ネイティブ ライブラリは起動時に一時領域へ展開されます。
+
+- **Native AOT は使えません**。 SDK がトリミングを拒否します（`NETSDK1175`「Windows フォームに関して、トリミングの有効化は
+  サポートおよび推奨されていません」）。 Native AOT はトリミングを前提とするため WinForms では成立しません。
+- 方式は `buildScript/publish_ui.bat` が **Single AOT → Single → EXE** の優先順に選びます（他の UI と同じ規則）。
+- 期待する出力先と exe 名は [`.github/release-config.json`](../../.github/release-config.json) が単一所有します。
+- 設定の読み書きには JSON ソース生成（`SettingsJsonContext`）を使うため、トリミング / AOT でも設定項目が失われません。
 
 ## 10. 関連ドキュメント
 

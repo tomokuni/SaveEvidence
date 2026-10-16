@@ -257,15 +257,24 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 
 添付するファイルは `release-config.json` の `uis[].asset` が決めます。 `release.yml` は保管された成果物をそのまま添付するため、**UI を追加してもワークフローは変更不要**です。
 
-| UI | 添付ファイル | zip の中身 |
-| --- | --- | --- |
-| MewUI 版 | `SaveEvidence.MewUI.zip` | exe 1 個（Native AOT）+ ネイティブ DLL 3 個 |
-| Avalonia UI 版 | `SaveEvidence.zip` | exe 1 個 + ネイティブ DLL（自己完結） |
+**発行方式は UI ごとに、Single AOT → Single（非 AOT）→ EXE（フォルダー）の優先順で「可能なもの」が選ばれます**（実装は [../buildScript/publish_ui.bat](../buildScript/publish_ui.bat)。 可否は UI とフレームワークが決めます）。
+
+| UI | 添付ファイル | 方式（実測 2026-10-16） | zip の中身 |
+| --- | --- | --- | --- |
+| MewUI 版 | `SaveEvidence.MewUI.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
+| Avalonia UI 版 | `SaveEvidence.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
+| WinForms 版 | `SaveEvidence.WinForms.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
+| WinUI 3 版 | `SaveEvidence.WinUI3.zip` | EXE（フォルダー） | exe 1 個 + DLL / `.pri` / `.winmd` / `.json` |
+
+- **方式が Single AOT でない UI は、その理由がスクリプトのコメントに書かれています**（例: WinForms は SDK がトリミングを拒否する `NETSDK1175`、WinUI 3 は Windows App SDK 1.8 時点で Native AOT が未サポート）。
+- **Avalonia UI 版が AOT でないのは `EsUtil` 側の実装が原因**です（`LoupeSourceResolver` が `Expression.Compile` と `Type.GetMethod` で表示アダプタを解決しており、`IL2070` / `IL3050` で AOT 解析が失敗する）。 方式 1 へ戻すには `EsUtil` 側で反射をやめる設計変更（公開インターフェースによる契約、またはアダプタの型をホストが解決してルーペへ直接渡す形）が必要です。 **方式 1 へ戻すと出力フォルダー名（`-single` → `-aot`）が変わるため、`release-config.json` の `uis[].output` も更新してください**（検査が「出力フォルダーがありません」で気付きます）。
+- **配布物は exe 1 個であることを検査します**（`buildScript/verifyPublish.ps1`）。 Windows App SDK が再起動 API 用に同封する `RestartAgent.exe` は配置しません（本アプリは再起動 API を使わない。 除いても起動と終了が正常であることを実測済み）。
+- **配布物から落としてよいのは `*.pdb` と `RestartAgent.exe` だけ**です。 他のファイルは拡張子で選別せずにすべて配置します（WinUI 3 は `.pri` / `.winmd` / `.json` を必要とし、`.pri` を落とすと起動はしても終了時に `0x80008083` で落ちます。 実測）。
 
 **すべて zip で配布します。** `uis[].zip` が `true` の UI は、publish 後に配布物を zip 化してから保管します
 （出力が単一ファイル（exe）でもフォルダでも同じ指定で扱えます）。
 
-publish は `buildScript/` の `*_publish_*.bat` をそのまま実行するため、ローカルでの配布用ビルドと同一の手順・出力になります。
+publish は `buildScript/` の `<UI>_publish.bat` をそのまま実行するため、ローカルでの配布用ビルドと同一の手順・出力になります。
 スクリプトは `buildScript/` からリポジトリルートへ移動してから実行されるため、カレントディレクトリに依存しません。
 
 **publish の直後に `buildScript/verifyPublish.ps1 -SkipPublish` を実行し、配布物が実際に起動して設定を全損しないことを確かめます**

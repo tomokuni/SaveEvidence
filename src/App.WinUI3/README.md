@@ -48,9 +48,14 @@ dotnet test src/App.WinUI3/tests/App.WinUI3.Tests.csproj -c Debug
 | Windows App SDK | 自己完結（`<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>`） |
 | 実行時識別子 | `win-x64`（自己完結配置はアーキテクチャの指定を要求する） |
 | DPI 認識 | `app.manifest` で PerMonitorV2 を宣言する |
+| 発行方式 | EXE（フォルダー配布）。 Single AOT と Single は WinUI 3 では成立しない（理由は [`buildScript/WinUI3_publish.bat`](../../buildScript/WinUI3_publish.bat) のコメント） |
+| 配布スクリプト | [`buildScript/WinUI3_publish.bat`](../../buildScript/WinUI3_publish.bat)（方式は `buildScript/publish_ui.bat` が優先順に選ぶ） |
 
-AOT の発行スクリプトと配布物の定義は本プロジェクトでは持ちません（[`.github/release-config.json`](../../.github/release-config.json)
-が配布物を単一所有します）。
+`<EnableMsixTooling>true</EnableMsixTooling>` は **publish のためだけ**に必要です（付けないと publish が自分自身の `.pri` を発行せず、
+配布物の起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます）。
+
+**配布物はフォルダー単位で配置してください**（exe のほかに Windows App SDK のランタイム DLL と `.pri` / `.winmd` / `.json` が必要です）。
+期待する出力先と exe 名は [`.github/release-config.json`](../../.github/release-config.json) が単一所有します。
 
 ## 6. 機能一覧
 

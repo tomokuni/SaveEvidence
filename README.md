@@ -252,12 +252,18 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 ### 3.1 リリースビルド
 
-公開ビルドでは以下の設定が有効になります。
+公開ビルド（`buildScript/<UI>_publish.bat`）は、**UI ごとに可能な方式を次の優先順で選びます**（実装は [`buildScript/publish_ui.bat`](buildScript/publish_ui.bat)）。
 
-- **Native AOT コンパイル**（マネージドコードを exe へネイティブコンパイル。 `buildScript/AvaloniaUI_publish_aot.bat`）
-- **自己完結型配置**（ランタイム同梱・x64）
-- ネイティブライブラリ（SkiaSharp / OpenCvSharp 等）は exe の隣へ並べて配布
-- 単一ファイル実行（`PublishSingleFile`）は自己完結ランタイムを丸ごと含むため配布物が大きくなります（AOT の方が小さくなります）
+| 優先 | 方式 | 中身 |
+| --- | --- | --- |
+| 1 | Single AOT | マネージドコードを exe へネイティブコンパイル（自己完結・単一 exe + ネイティブ DLL） |
+| 2 | Single | 自己完結ランタイムを 1 つの exe へ同梱（単一 exe） |
+| 3 | EXE | 通常の発行（exe + DLL をフォルダーで配布） |
+
+方式ごとの可否は UI とフレームワークが決めます（実測は [`buildScript/`](buildScript) の各スクリプトのコメントを参照）。 出力先は `publish/<UI>-<RID>-<方式>` で、**方式がフォルダー名に現れます**（期待する出力先は [`.github/release-config.json`](.github/release-config.json) の `uis[].output` が単一所有します）。
+
+- ネイティブライブラリ（SkiaSharp / OpenCvSharp 等）は exe へ同梱できないため、同じフォルダーへ並べて配布します（方式 1 のとき）。
+- 方式 2 は自己完結ランタイムを丸ごと含むため、配布物は方式 1 より大きくなります。
 
 ---
 
@@ -268,12 +274,20 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 ```powershell
  git clone https://github.com/tomokuni/SaveEvidence.git
  cd SaveEvidence
- dotnet publish src/App.AvaloniaUI/src/App.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishAot=true -p:SelfContained=true -o publish/avaloniaui-win-x64-aot
+ # UI ごとの配布物を作る（方式は可能なものが自動で選ばれる）
+ cmd /c buildScript\AvaloniaUI_publish.bat
+ cmd /c buildScript\MewUI_publish.bat
+ cmd /c buildScript\WinUI3_publish.bat
+ cmd /c buildScript\WinForms_publish.bat
 ```
 
-`publish/avaloniaui-win-x64-aot` の `SaveEvidence.AvaloniaUI.exe` を実行してください（隣のネイティブ DLL も必要です）。
+出力先はスクリプトが表示します（`publish/<UI>-win-x64-<方式>`。 例: `publish/avaloniaui-win-x64-single`）。 リポジトリ外の一時領域へ発行してから必要なファイルだけを配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。
 
-配布物（ネイティブ DLL の配置まで含む）は `buildScript/AvaloniaUI_publish_aot.bat` が作ります。 リポジトリ外の一時領域へ発行してから必要なファイルだけを出力先へ配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。
+**単体のプロジェクトを直接発行する場合**（方式を自分で選ぶ場合）:
+
+```powershell
+dotnet publish src/App.AvaloniaUI/src/App.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishAot=true -p:SelfContained=true -o publish/avaloniaui-win-x64-aot
+```
 
 ### 4.2 検証（変更をコミットする前）
 
@@ -284,11 +298,20 @@ pwsh -NoProfile -File buildScript/verify.ps1
 ```
 
 - 合否基準と手順は [`.github/検証手順.md`](.github/検証手順.md) が単一所有します（CI も同じスクリプトを Release 構成で実行します）。
-- 配布物（Native AOT）の起動と設定の往復は `buildScript/verifyPublish.ps1` が検証します（`publish` を含むため数分かかります）。
+- 配布物の起動と設定の往復は `buildScript/verifyPublish.ps1` が検証します（`publish` を含むため数分かかります。 入力が前回と同一なら publish を省略します）。
 
 ### 4.3 配布物の実行
 
-配布物は `SaveEvidence.AvaloniaUI.exe` とネイティブ DLL のセットです（フォルダーごと配置してください）。
+配布物は UI ごとに実行ファイル名と構成が異なります（同じフォルダーの中身をまとめて配置してください）。
+
+| UI | 実行ファイル | 構成 |
+| --- | --- | --- |
+| MewUI 版 | `SaveEvidence.MewUI.exe` | exe + ネイティブ DLL |
+| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.exe` | exe 1 個（単一ファイル） |
+| WinForms 版 | `SaveEvidence.WinForms.exe` | exe 1 個（単一ファイル） |
+| WinUI 3 版 | `SaveEvidence.WinUI3.exe` | exe + DLL / `.pri` など（フォルダー単位で配置） |
+
+4 つの UI は**同じ設定ファイルとログを共有します**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
 
 ## 5. 操作方法
 
@@ -296,7 +319,7 @@ pwsh -NoProfile -File buildScript/verify.ps1
 
 ```text
 1. アプリケーション起動
-   └── SaveEvidence.AvaloniaUI.exe を実行
+   └── 使う UI の実行ファイルを実行（例: SaveEvidence.MewUI.exe）
    └── 前回終了時のウィンドウ位置・サイズが復元
 
 2. 画面キャプチャ

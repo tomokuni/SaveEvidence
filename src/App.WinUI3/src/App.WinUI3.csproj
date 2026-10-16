@@ -6,6 +6,12 @@
     <UseWinUI>true</UseWinUI>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <!-- publish のときだけ必要な指定（ビルドとテストには影響しない）。
+         付けないと publish が自分自身の .pri（リソース インデックス）を発行せず、配布物の起動時に
+         XAML の読み込みが失敗して 0xC000027B（stowed exception）で終了する（実測）。
+         アンパッケージ（WindowsPackageType=None）のまま .pri を発行させるために必要である
+         （配布は buildScript/WinUI3_publish.bat が行う）。 -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>EsUtil.SaveEvidence.App.WinUI3</RootNamespace>

@@ -12,6 +12,18 @@
             "type": "dotnet",
             "request": "launch",
             "projectPath": "${workspaceFolder}/src/App.MewUI/src/App.MewUI.csproj"
+        },
+        {
+            "name": "WinUI3: SaveEvidence",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/src/App.WinUI3/src/App.WinUI3.csproj"
+        },
+        {
+            "name": "WinForms: SaveEvidence",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/src/App.WinForms/src/App.WinForms.csproj"
         }
     ]
 }
