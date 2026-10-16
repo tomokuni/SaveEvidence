@@ -121,9 +121,17 @@ set "TRY_MODE=%~1"
 if exist "%STAGE%" rd /s /q "%STAGE%"
 
 set "ARGS="
-if "%TRY_MODE%"=="aot" set "ARGS=-p:PublishAot=true -p:SelfContained=true -p:PublishSingleFile=true"
-if "%TRY_MODE%"=="single" set "ARGS=-p:PublishSingleFile=true -p:SelfContained=true -p:IncludeNativeLibrariesForSelfExtract=true"
+rem 方式ごとの引数は UI のスクリプトが差し替えられる（WinUI 3 は単一ファイル化を csproj に置くため、
+rem コマンドラインで渡すと参照プロジェクトへ伝播して失敗する。 buildScript/WinUI3_publish.bat を参照）。
+rem cmd では `set "VAR="` が変数を未定義へ戻すため、空にする意図は SE_SKIP_*_ARGS で表す。
+if not defined SE_AOT_ARGS if not defined SE_SKIP_AOT_ARGS set "SE_AOT_ARGS=-p:PublishAot=true -p:PublishSingleFile=true"
+if not defined SE_SINGLE_ARGS if not defined SE_SKIP_SINGLE_ARGS set "SE_SINGLE_ARGS=-p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true"
+if "%TRY_MODE%"=="aot" set "ARGS=%SE_AOT_ARGS%"
+if "%TRY_MODE%"=="single" set "ARGS=%SE_SINGLE_ARGS%"
 
+rem 自己完結（SelfContained）は明示しない（-r が暗黙に有効にするため）。
+rem 明示すると参照プロジェクトへも伝播し、WinUI 3 のライブラリへ EnableMsixTooling と
+rem WindowsAppSDKSelfContained を要求して単一ファイル化が失敗する（実測）。
 dotnet publish "%PROJECT%" -c Release -r "%RID%" -warnaserror %ARGS% -o "%STAGE%" >"%LOG%" 2>&1
 if errorlevel 1 exit /b 1
 if not exist "%STAGE%\*.exe" exit /b 1

@@ -37,7 +37,7 @@
     {
       "name": "WinUI3",
       "script": "buildScript/WinUI3_publish.bat",
-      "output": "publish/winui3-win-x64-exe",
+      "output": "publish/winui3-win-x64-single",
       "exe": "SaveEvidence.WinUI3.exe",
       "asset": "SaveEvidence.WinUI3.zip",
       "zip": true

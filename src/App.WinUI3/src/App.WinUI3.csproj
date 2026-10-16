@@ -12,6 +12,16 @@
          アンパッケージ（WindowsPackageType=None）のまま .pri を発行させるために必要である
          （配布は buildScript/WinUI3_publish.bat が行う）。 -->
     <EnableMsixTooling>true</EnableMsixTooling>
+    <!-- 単一ファイル化。 publish のときだけ有効にする（`SaveEvidencePublishSingleFile` は
+         buildScript/WinUI3_publish.bat が publish のときに渡す）。
+         1) 常時有効にすると Debug ビルドで `PublishSingleFile is recommended only for .NET SelfContained apps`
+            が出る（ビルドは 0 警告が合否のため許容できない）。
+         2) publish のコマンドラインで `-p:PublishSingleFile=true` を渡すと**参照プロジェクトへも伝播**し、
+            WinUI 3 のライブラリが EnableMsixTooling と WindowsAppSDKSelfContained を要求して失敗する
+            （後者は RID を要求するが、RID は参照プロジェクトへ伝播しない）。
+         プロパティを csproj に置けば参照へ伝播せず、カスタム名で門を作れば通常のビルドに影響しない（実測 2026-10-16）。 -->
+    <PublishSingleFile Condition="'$(SaveEvidencePublishSingleFile)' == 'true'">true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract Condition="'$(SaveEvidencePublishSingleFile)' == 'true'">true</IncludeNativeLibrariesForSelfExtract>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>EsUtil.SaveEvidence.App.WinUI3</RootNamespace>
