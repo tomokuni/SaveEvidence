@@ -123,4 +123,43 @@
 
   </Target>
 
+  <!-- ============================================================
+       Windows App SDK 自己完結の同封物から、使わないコンポーネントを除く。
+       規則の所有者は .github/ビルド設定規約.md であり、本ファイルはその実装である。
+       規則を変えるときは .github/ビルド設定規約.md を先に更新する。
+
+       背景（実測 2026-10-16）:
+         同封物は `Microsoft.WindowsAppSDK.Runtime` が持つ
+         `tools\Msix\win10-<arch>\Microsoft.WindowsAppRuntime.*.Msix` を
+         `obj\<構成>\<TFM>\<RID>\MsixContent\` へ展開したものから作られる
+         （Microsoft.WindowsAppSDK.SelfContained.targets の
+         `ExtractMicrosoftWindowsAppSDKMsixFiles` /
+         `AddMicrosoftWindowsAppSDKPayloadFilesFromMsix`）。
+         MSIX は全コンポーネント（AI / ML / Widgets 等）を単一の塊として含むため、
+         `WindowsAppSdkComponentPackages` からコンポーネントを外しても減らない
+         （同封物は展開済みの MSIX から作られ、元のパッケージ一覧を使わない。 実測）。
+         `MicrosoftWindowsAppSDKFilesExcluded` も同封物の作成「前」にしか効かないため使えない。
+         展開後・コピー前に `None` から外すのが唯一効く点である。
+
+       対象は ML（ONNX Runtime と DirectML）・Windows AI・Widgets のネイティブ実体
+       （合計 43.7 MB。 本アプリはこれらの API を呼ばない = ソース参照 0 件）。
+       Widgets は Windows App SDK 自身も自己完結の登録対象から外している
+       （同 targets の `CreateWinRTRegistration` のコメントを参照）。
+       除去後の起動と設定の往復は buildScript/verifyPublish.ps1 が検証する。
+       ============================================================ -->
+  <Target Name="ExcludeUnusedWindowsAppSdkPayload"
+          AfterTargets="AddMicrosoftWindowsAppSDKPayloadFilesFromMsix"
+          Condition="'$(WindowsAppSDKSelfContained)' == 'true' And '$(MicrosoftWindowsAppSDKMsixContent)' != ''">
+    <ItemGroup>
+      <!-- ML（機械学習の実行時） -->
+      <None Remove="$(MicrosoftWindowsAppSDKMsixContent)\onnxruntime.dll" />
+      <None Remove="$(MicrosoftWindowsAppSDKMsixContent)\onnxruntime_providers_shared.dll" />
+      <None Remove="$(MicrosoftWindowsAppSDKMsixContent)\DirectML.dll" />
+      <!-- Windows AI（AI API の実装） -->
+      <None Remove="$(MicrosoftWindowsAppSDKMsixContent)\Microsoft.Windows.AI.*.dll" />
+      <!-- Widgets（ウィジェット） -->
+      <None Remove="$(MicrosoftWindowsAppSDKMsixContent)\Microsoft.Windows.Widgets.dll" />
+    </ItemGroup>
+  </Target>
+
 </Project>

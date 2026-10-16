@@ -272,6 +272,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 - **WinUI 3 の単一ファイル化は「WinUI 3 のライブラリを RID 付きで直接ビルドする」手順を必要とします**（`buildScript/WinUI3_publish.bat` が実行）。 アプリの `.pri` 生成は参照プロジェクトの `<TFM>\<RID>\` の `.pri` を要求しますが、RID が伝播しないためアプリの publish ではそこへ出ません（`PRI175` / `PRI252`）。
 - **配布物は exe 1 個であることを検査します**（`buildScript/verifyPublish.ps1`）。 Windows App SDK が再起動 API 用に同封する `RestartAgent.exe` は配置しません（本アプリは再起動 API を使わない。 除いても起動と終了が正常であることを実測済み）。
 - **配布物から落としてよいのは `*.pdb` と `RestartAgent.exe` だけ**です。 他のファイルは拡張子で選別せずにすべて配置します（単一ファイル化でない WinUI 3 の配布物は `.pri` / `.winmd` / `.json` を必要とし、`.pri` を落とすと起動はしても終了時に `0x80008083` で落ちます。 実測）。。
+- **WinUI 3 版は自己完結の Windows App SDK から ML（ONNX Runtime・DirectML）・Windows AI・Widgets のネイティブ実体を除いてから同梱します**（43.8 MB 減。 実装は [`../Directory.Build.targets`](../Directory.Build.targets) の `ExcludeUnusedWindowsAppSdkPayload`、規則は [`ビルド設定規約.md`](ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
 
 **すべて zip で配布します。** `uis[].zip` が `true` の UI は、publish 後に配布物を zip 化してから保管します
 （出力が単一ファイル（exe）でもフォルダでも同じ指定で扱えます）。

@@ -61,6 +61,11 @@ dotnet test src/App.WinUI3/tests/App.WinUI3.Tests.csproj -c Debug
 配布物は **exe 1 個**です（フォルダーごとではなく、単体で配置できます）。
 期待する出力先と exe 名は [`.github/release-config.json`](../../.github/release-config.json) が単一所有します。
 
+**自己完結の Windows App SDK から、使わないコンポーネント（ML = ONNX Runtime・DirectML、Windows AI、Widgets）の
+ネイティブ実体を除いて同梱します**（43.8 MB 減。 実装は [`Directory.Build.targets`](../../Directory.Build.targets) の
+`ExcludeUnusedWindowsAppSdkPayload`、規則は [`.github/ビルド設定規約.md`](../../.github/ビルド設定規約.md) §5）。
+本アプリはこれらの API を呼びません（ソース参照 0 件）。 減らせる理由と減らせない理由は同ターゲットのコメントにあります。
+
 ## 6. 機能一覧
 
 | 機能 | 内容 |
