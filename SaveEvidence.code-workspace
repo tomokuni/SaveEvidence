@@ -6,8 +6,5 @@
 		{
 			"path": "../EsUtil"
 		}
-	],
-	"settings": {
-		"dotnet.defaultSolution": "SaveEvidence.slnx"
-	}
+	]
 }
