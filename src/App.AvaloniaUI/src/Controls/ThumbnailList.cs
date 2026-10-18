@@ -38,15 +38,11 @@ public sealed class ThumbnailList : ListBox
     }
 
     /// <summary>影の定義（幅・濃さの変化は <see cref="ShadowPlan"/>（App.Core）が単一所有する）。</summary>
-    /// <remarks>AvaloniaUI 版の <c>BoxShadow</c> が全 UI 版の影の基準であり、計画はこの値を写したものである。</remarks>
-    private static BoxShadows Shadow => new(new BoxShadow
-    {
-        OffsetX = 0,
-        OffsetY = ShadowPlan.OffsetY,
-        Blur = ShadowPlan.BlurRadius,
-        Spread = 0,
-        Color = Color.FromUInt32(ShadowPlan.ColorArgb),
-    });
+    /// <remarks>
+    /// AvaloniaUI 版の <c>BoxShadow</c> が全 UI 版の影の基準であり、計画はこの値を写したものである。<br/>
+    /// 位置をずらさない（4 辺の影を同じ濃さにする。 ずらすと上辺だけ薄くなり、画像との間に白っぽい隙間が見える）。
+    /// </remarks>
+    private static BoxShadows Shadow => ShadowFactory.Create();
 
     /// <summary>サムネイル 1 件分の要素を生成する。</summary>
     /// <param name="item">並べる項目。</param>

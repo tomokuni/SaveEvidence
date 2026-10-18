@@ -1,24 +1,24 @@
 namespace EsUtil.SaveEvidence.App.Core.Services;
 
-/// <summary>画像の 4 辺へ落とす影の描画計画（4 つの UI 版で共通の唯一の定義）。</summary>
+/// <summary>画像の 4 辺と 4 隅へ落とす影の描画計画（4 つの UI 版で共通の唯一の定義）。</summary>
 /// <remarks>
-/// <b>基準</b>: AvaloniaUI 版のフォルダビューの <c>BoxShadow</c>（<c>0 3 10 0 #8A000000</c>）を実測して<br/>
-/// 色・幅・グラデーション・透過度を写した値である。 キャプチャページの画像・フォルダビュー・Undo 一覧の<br/>
-/// サムネイルは、すべてこの計画から描く（UI 版ごとに影の濃さ・広がりがずれないようにする）。<br/>
+/// <b>基準</b>: AvaloniaUI 版の <c>BoxShadow</c>（<c>0 0 10 0 #8A000000</c>）を実測して写した値である。<br/>
+/// キャプチャページの画像・フォルダビュー・Undo 一覧のサムネイルは、すべてこの計画から描く<br/>
+/// （UI 版ごとに影の濃さ・広がりがずれないようにする）。<br/>
 /// <br/>
-/// <b>描き方</b>: <see cref="BuildEdgeRects"/> が返す 4 辺の矩形を、<see cref="ShadowEdgePlan.Stops"/> の<br/>
-/// グラデーションで塗る（GDI+・Skia・XAML・Avalonia のいずれでも同じ手順になる）。<br/>
+/// <b>4 辺を同じ濃さにする理由</b>: 影を下方向へずらすと上辺だけが薄くなり、画像と影の間に<br/>
+/// 白っぽい隙間が見える（実測で指摘）。 4 辺とも画像の端で最も濃く、外側へ向けて同じ割合で薄くする。<br/>
 /// <br/>
-/// <b>角の扱い</b>: 上辺・下辺は画像の左右 + <see cref="BlurRadius"/> まで広げて角を埋め、左右の辺は画像の<br/>
-/// 高さいっぱいにする（重ねないため、角が二重に濃くならない）。
+/// <b>描き方</b>: <see cref="BuildEdgeRects"/> が返す 4 辺の矩形を <see cref="ShadowEdgePlan.Stops"/> の<br/>
+/// グラデーションで塗り、<see cref="BuildCornerFills"/> が返す 4 隅を放射グラデーションで塗る<br/>
+/// （GDI+・Skia・XAML・Avalonia のいずれでも同じ手順になる）。<br/>
+/// <br/>
+/// <b>重ねない</b>: 辺どうし・辺と隅は重ならない（重ねると角が二重に濃くなる）。
 /// </remarks>
 public static class ShadowPlan
 {
-    /// <summary>影のぼかしの広がり（DIP）。</summary>
+    /// <summary>影のぼかしの広がり（DIP）。 画像の端からこの距離まで影を落とす。</summary>
     public const double BlurRadius = 10;
-
-    /// <summary>影の下方向のオフセット（DIP）。</summary>
-    public const double OffsetY = 3;
 
     /// <summary>影の色（黒 54%）。</summary>
     /// <remarks>
@@ -27,35 +27,29 @@ public static class ShadowPlan
     /// </remarks>
     public const uint ColorArgb = 0x8A000000;
 
-    /// <summary>グラデーションの段数（1 DIP 刻み）。</summary>
-    /// <remarks>段数を増やすほど階段が目立たなくなる。 幅 10〜13 DIP に対して 12 段で十分滑らかに見える。</remarks>
-    public const int StepCount = 12;
-
-    /// <summary>上辺の幅（DIP）。 影が下へ落ちる分だけ狭い。</summary>
-    public const double TopExtent = BlurRadius - OffsetY;
-
-    /// <summary>下辺の幅（DIP）。 影が下へ落ちる分だけ広い。</summary>
-    public const double BottomExtent = BlurRadius + OffsetY;
-
     /// <summary>影の濃さの実測プロファイル（画像の端からの距離 → 不透明度）。</summary>
     /// <remarks>
-    /// AvaloniaUI 版の <c>BoxShadow</c>（<c>0 3 10 0 #8A000000</c>）の明色の一覧での実測値。<br/>
+    /// AvaloniaUI 版の <c>BoxShadow</c>（ぼかし 10 DIP・黒 54%）の明色の画面での実測値。<br/>
     /// 添字 0 は距離 1 DIP、以降 1 DIP 刻みで距離 10 DIP まで（それ以降は 0）。
     /// </remarks>
     private static readonly double[] s_alphaProfile = [0.245, 0.195, 0.150, 0.112, 0.079, 0.050, 0.033, 0.021, 0.012, 0.005];
 
-    /// <summary>4 辺の計画（描画順は上辺・下辺・左辺・右辺）。</summary>
+    /// <summary>4 辺の計画（描画順は上辺・右辺・下辺・左辺）。</summary>
     public static IReadOnlyList<ShadowEdgePlan> Edges { get; } =
     [
-        CreateEdge(ShadowSide.Top, TopExtent, OffsetY, outerAtStart: true),
-        CreateEdge(ShadowSide.Bottom, BottomExtent, 0, outerAtStart: false),
-        CreateEdge(ShadowSide.Left, BlurRadius, 0, outerAtStart: true),
-        CreateEdge(ShadowSide.Right, BlurRadius, 0, outerAtStart: false),
+        CreateEdge(ShadowSide.Top, outerAtStart: true),
+        CreateEdge(ShadowSide.Right, outerAtStart: false),
+        CreateEdge(ShadowSide.Bottom, outerAtStart: false),
+        CreateEdge(ShadowSide.Left, outerAtStart: true),
     ];
+
+    /// <summary>4 隅の計画（描画順は左上・右上・右下・左下）。</summary>
+    /// <remarks>全 UI 版が同じ値を使う。 位置は画像の矩形から <see cref="BuildCornerFills"/> が決める。</remarks>
+    public static IReadOnlyList<ShadowStop> CornerStops { get; } = CreateCornerStops();
 
     /// <summary>画像の周囲へ確保する影の余白を取得する。</summary>
     /// <remarks>アイテムの寸法を決めるときに使う（画像の外側にこの分の余地を確保する）。</remarks>
-    public static ShadowInsets Insets => new(BlurRadius, TopExtent, BlurRadius, BottomExtent);
+    public static ShadowInsets Insets => new(BlurRadius, BlurRadius, BlurRadius, BlurRadius);
 
     /// <summary>指定の辺の計画を取得する。</summary>
     /// <param name="side">辺。</param>
@@ -76,7 +70,7 @@ public static class ShadowPlan
     /// <summary>画像の端から <paramref name="distance"/> DIP 外側の影の不透明度を取得する。</summary>
     /// <param name="distance">画像の端からの距離（DIP）。</param>
     /// <returns>不透明度（0〜1）。</returns>
-    /// <remarks>距離 1 DIP 未満は端の値（最も濃い）、<see cref="BlurRadius"/> 以上は 0 として扱う。</remarks>
+    /// <remarks>距離 1 DIP 以下は端の値（最も濃い）、<see cref="BlurRadius"/> 以上は 0 として扱う。</remarks>
     public static double AlphaAtDistance(double distance)
     {
         if (distance <= 1)
@@ -102,16 +96,15 @@ public static class ShadowPlan
     public static uint ColorAtDistance(double distance)
         => ((uint)Math.Round(Math.Clamp(AlphaAtDistance(distance), 0, 1) * 255) << 24) | (ColorArgb & 0x00FFFFFF);
 
-    /// <summary>画像の矩形から、影を塗る 4 辺の矩形を作る（グラデーションを持つ描画 API 用）。</summary>
+    /// <summary>画像の矩形から、影を塗る 4 辺の矩形を作る。</summary>
     /// <param name="x">画像の左端。</param>
     /// <param name="y">画像の上端。</param>
     /// <param name="width">画像の幅。</param>
     /// <param name="height">画像の高さ。</param>
-    /// <returns>4 辺の矩形（画像には掛からない）。</returns>
+    /// <returns>4 辺の矩形（画像にも隅にも掛からない）。</returns>
     /// <remarks>
-    /// 上辺・下辺は画像の左右 + <see cref="BlurRadius"/> まで広げて角を埋め、左右の辺は画像の高さいっぱいにする<br/>
-    /// （辺どうしを重ねないため、角が二重に濃くならない）。 上辺は影が下へ落ちる分だけ画像へ重ねるが、<br/>
-    /// 画像を後から描くため見えない。
+    /// 辺は画像の幅・高さいっぱいにして、外側の隅は <see cref="BuildCornerFills"/> が埋める<br/>
+    /// （辺どうし・辺と隅を重ねないため、角が二重に濃くならない）。
     /// </remarks>
     public static IReadOnlyList<ShadowEdgeFill> BuildEdgeRects(double x, double y, double width, double height)
     {
@@ -122,42 +115,80 @@ public static class ShadowPlan
             return fills;
         }
 
-        var horizontalWidth = width + Insets.Left + Insets.Right;
         foreach (var edge in Edges)
         {
             fills.Add(edge.Side switch
             {
-                ShadowSide.Top => new ShadowEdgeFill(
-                    x - Insets.Left, y - edge.Extent, horizontalWidth, edge.Extent, edge),
-                ShadowSide.Bottom => new ShadowEdgeFill(
-                    x - Insets.Left, y + height, horizontalWidth, edge.Extent, edge),
-                ShadowSide.Left => new ShadowEdgeFill(
-                    x - edge.Extent, y, edge.Extent, height, edge),
-                _ => new ShadowEdgeFill(
-                    x + width, y, edge.Extent, height, edge),
+                ShadowSide.Top => new ShadowEdgeFill(x, y - edge.Extent, width, edge.Extent, edge),
+                ShadowSide.Bottom => new ShadowEdgeFill(x, y + height, width, edge.Extent, edge),
+                ShadowSide.Left => new ShadowEdgeFill(x - edge.Extent, y, edge.Extent, height, edge),
+                _ => new ShadowEdgeFill(x + width, y, edge.Extent, height, edge),
             });
         }
 
         return fills;
     }
-    /// <summary>1 辺分の計画を生成する。</summary>
-    /// <param name="side">辺。</param>
-    /// <param name="extent">辺の幅（DIP）。</param>
-    /// <param name="extraDistance">濃さを測る距離へ足す値（DIP）。</param>
-    /// <param name="outerAtStart">グラデーションの始点が外側かどうか。</param>
-    /// <returns>辺の計画。</returns>
-    private static ShadowEdgePlan CreateEdge(ShadowSide side, double extent, double extraDistance, bool outerAtStart)
-    {
-        var stops = new List<ShadowStop>((int)Math.Ceiling(extent) + 1);
 
-        // 外側（距離 = extent）から画像の端（距離 0）へ濃くする
-        for (var step = (int)Math.Ceiling(extent); step >= 0; step--)
+    /// <summary>画像の矩形から、影を塗る 4 隅の矩形を作る。</summary>
+    /// <param name="x">画像の左端。</param>
+    /// <param name="y">画像の上端。</param>
+    /// <param name="width">画像の幅。</param>
+    /// <param name="height">画像の高さ。</param>
+    /// <returns>4 隅の矩形（画像にも辺にも掛からない）。</returns>
+    /// <remarks>
+    /// 隅は辺と同じ幅の正方形にする。 中心は<b>画像の隅の頂点</b>（左上なら矩形の右下）であり、<br/>
+    /// 半径は <see cref="BlurRadius"/>（= 一辺）なので、隅の矩形いっぱいに円が収まる。
+    /// </remarks>
+    public static IReadOnlyList<ShadowCornerFill> BuildCornerFills(double x, double y, double width, double height)
+    {
+        var fills = new List<ShadowCornerFill>(4);
+
+        if (width <= 0 || height <= 0)
         {
-            var offset = extent > 0 ? 1 - (step / extent) : 1;
-            stops.Add(new ShadowStop(offset, ColorAtDistance(step + extraDistance)));
+            return fills;
         }
 
-        return new ShadowEdgePlan(side, extent, extraDistance, outerAtStart, stops);
+        var size = BlurRadius;
+        fills.Add(new ShadowCornerFill(x - size, y - size, size, 1, 1, CornerStops));
+        fills.Add(new ShadowCornerFill(x + width, y - size, size, 0, 1, CornerStops));
+        fills.Add(new ShadowCornerFill(x + width, y + height, size, 0, 0, CornerStops));
+        fills.Add(new ShadowCornerFill(x - size, y + height, size, 1, 0, CornerStops));
+
+        return fills;
+    }
+
+    /// <summary>1 辺分の計画を生成する。</summary>
+    /// <param name="side">辺。</param>
+    /// <param name="outerAtStart">グラデーションの始点が外側かどうか。</param>
+    /// <returns>辺の計画。</returns>
+    /// <remarks>濃さの変化は 4 辺で共通（<see cref="BlurRadius"/> の幅で端から外側へ薄くなる）。</remarks>
+    private static ShadowEdgePlan CreateEdge(ShadowSide side, bool outerAtStart)
+    {
+        var steps = (int)Math.Ceiling(BlurRadius);
+        var stops = new List<ShadowStop>(steps + 1);
+
+        // 外側（距離 = BlurRadius）から画像の端（距離 0）へ濃くする
+        for (var step = steps; step >= 0; step--)
+        {
+            stops.Add(new ShadowStop(1 - (step / BlurRadius), ColorAtDistance(step)));
+        }
+
+        return new ShadowEdgePlan(side, BlurRadius, outerAtStart, stops);
+    }
+
+    /// <summary>隅の放射グラデーションの停止点を生成する。</summary>
+    /// <returns>停止点（中心からの距離の順）。</returns>
+    /// <remarks>位置は「距離 ÷ <see cref="BlurRadius"/>」であり、辺の濃さの変化と同じ値になる。</remarks>
+    private static IReadOnlyList<ShadowStop> CreateCornerStops()
+    {
+        var steps = (int)Math.Ceiling(BlurRadius);
+        var stops = new List<ShadowStop>(steps + 1);
+
+        for (var step = 0; step <= steps; step++)
+        {
+            stops.Add(new ShadowStop(step / BlurRadius, ColorAtDistance(step)));
+        }
+
+        return stops;
     }
 }
-

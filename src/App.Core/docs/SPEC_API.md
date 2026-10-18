@@ -416,27 +416,31 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **`Services.ShadowPlan`（静的クラス）と影の計画**
 
-画像の 4 辺へ落とす影の**唯一の定義**です（キャプチャページの画像・フォルダビュー・Undo 一覧のサムネイルが同じ影になる）。 値は AvaloniaUI 版のフォルダビューの `BoxShadow`（`0 3 10 0 #8A000000`）を実測して写したものです。
+画像の 4 辺と 4 隅へ落とす影の**唯一の定義**です（キャプチャページの画像・フォルダビュー・Undo 一覧のサムネイルが同じ影になる）。 値は AvaloniaUI 版の `BoxShadow`（ぼかし 10 DIP・黒 54%）を実測して写したものです。
 
 | メンバー | 値 | 意味 |
 | --- | --- | --- |
-| `BlurRadius` / `OffsetY` | 10 / 3 DIP | 影の広がりと下方向のオフセット（元の `BoxShadow` と同じ） |
+| `BlurRadius` | 10 DIP | 影の広がり（画像の端からこの距離まで落とす） |
 | `ColorArgb` | `#8A000000` | 影の色（黒 54%） |
-| `StepCount` | 12 | グラデーションの段数（1 DIP 刻み） |
-| `TopExtent` / `BottomExtent` | 7 / 13 DIP | 上辺・下辺の幅（`BlurRadius ∓ OffsetY`） |
-| `Insets` | 左 10 / 上 7 / 右 10 / 下 13 | 画像の外側へ確保する影の余白 |
+| `Insets` | 4 辺とも 10 DIP | 画像の外側へ確保する影の余白 |
 | `Edges` / `Edge(ShadowSide)` | 4 辺 | 辺ごとの計画（幅・濃さの停止点・グラデーションの向き） |
+| `CornerStops` | 11 件 | 隅の放射グラデーションの停止点（中心が最も濃い） |
 | `AlphaAtDistance(double)` | 端 0.245 → 10 DIP で 0.005 | 画像の端から指定距離の不透明度（実測プロファイル） |
 | `ColorAtDistance(double)` | 黒 + 上記の透過度 | 指定距離の色（`0xAARRGGBB`） |
-| `BuildEdgeRects(x, y, w, h)` | 4 件 | 塗る矩形（`ShadowEdgeFill`）と辺の計画。 **画像には掛からない** |
+| `BuildEdgeRects(x, y, w, h)` | 4 件 | 塗る辺の矩形（`ShadowEdgeFill`）。 **画像にも隅にも掛からない** |
+| `BuildCornerFills(x, y, w, h)` | 4 件 | 塗る隅の矩形（`ShadowCornerFill`）。 中心は画像の隅の頂点・半径は一辺 |
 
-**型（1 型 1 ファイル）**: `ShadowSide`（辺）・`ShadowStop`（停止点 = 位置と色）・`ShadowInsets`（余白）・`ShadowEdgePlan`（辺の計画）・`ShadowEdgeFill`（塗る矩形と辺）・`ShadowPlan`（上表）。
+**型（1 型 1 ファイル）**: `ShadowSide`（辺）・`ShadowStop`（停止点 = 位置と色）・`ShadowInsets`（余白）・`ShadowEdgePlan`（辺の計画）・`ShadowEdgeFill`（塗る辺の矩形）・`ShadowCornerFill`（塗る隅の矩形）・`ShadowPlan`（上表）。
 
-**描き方**は 1 通りです。 `BuildEdgeRects` が返す 4 辺の矩形を、`ShadowEdgePlan.Stops` のグラデーション（位置 0 が外側、1 が画像の端）で塗ります。 各 UI 版は自分の描画 API へ写すだけです（AvaloniaUI は `BoxShadow` と `LinearGradientBrush`、WinUI 3 は `LinearGradientBrush`、WinForms は GDI+ の `LinearGradientBrush`、MewUI は Skia の `SKShader`）。
+**4 辺を同じ濃さにする理由**: 影を下方向へずらすと上辺だけが薄くなり、画像と影の間に白っぽい隙間が見えます（実測で指摘）。 4 辺とも画像の端で最も濃く、外側へ向けて同じ割合で薄くします。
 
-**角の扱い**: 上辺・下辺は画像の左右 + `BlurRadius` まで広げて角を埋め、左右の辺は画像の高さいっぱいにします。 辺どうしを重ねないため、角が二重に濃くなりません。
+**描き方**は 1 通りです。 `BuildEdgeRects` の 4 辺を `ShadowEdgePlan.Stops` の線形グラデーション（位置 0 が外側、1 が画像の端）で塗り、`BuildCornerFills` の 4 隅を `CornerStops` の**放射グラデーション**で塗ります。 各 UI 版は自分の描画 API へ写すだけです（AvaloniaUI は `BoxShadow` だけ、WinUI 3 は `LinearGradientBrush` / `RadialGradientBrush`、WinForms は GDI+ の `LinearGradientBrush` / `PathGradientBrush`、MewUI は Skia の `SKShader`）。
 
-**画像と影の間**には枠線・余白を置きません（辺の矩形は画像の境界から外側へ連続します）。 画像の外側に影の余地が無い場合（画像が領域の端まで達している場合）は、その辺の影は見えません。
+**隅を放射グラデーションにする理由**: 矩形の外側の点の「矩形までの距離」は、隅の付近では**隅の頂点からの距離**と一致します。 辺と同じ濃さの変化を隅でも再現でき、角が四角く突き出しません。
+
+**重ねない**: 辺どうし・辺と隅は重なりません（重ねると角が二重に濃くなります）。
+
+**画像と影の間**には枠線・余白を置きません（辺と隅の矩形は画像の境界から外側へ連続します）。 画像の外側に影の余地が無い場合（画像が領域の端まで達している場合）は、その辺の影は見えません。
 
 ## 26. 依存関係
 

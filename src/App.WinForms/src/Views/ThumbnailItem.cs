@@ -139,7 +139,8 @@ internal sealed class ThumbnailItem : Control
         // マウスが重なっている間は影を消す（AvaloniaUI 版の :pointerover と同じ）
         if (!_isHovered && !IsSelected)
         {
-            ShadowDrawer.Draw(e.Graphics, frame);
+            // アイテムの描画は DIP と同じ単位（倍率 1）で行う
+            ShadowDrawer.Draw(e.Graphics, frame, scaling: 1);
         }
 
         if (_bitmap is not null)

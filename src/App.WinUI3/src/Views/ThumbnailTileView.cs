@@ -34,6 +34,7 @@ internal sealed class ThumbnailTileView : Grid
         var host = new Grid();
         AddShadowParts(host);
         host.Children.Add(image);
+        AddCornerParts(host);
 
         var label = new TextBlock
         {
@@ -85,7 +86,7 @@ internal sealed class ThumbnailTileView : Grid
     /// </remarks>
     private void AddShadowParts(Grid host)
     {
-        var blur = ShadowPlan.Insets.Left;
+        var blur = ShadowPlan.BlurRadius;
 
         foreach (var edge in ShadowPlan.Edges)
         {
@@ -116,6 +117,81 @@ internal sealed class ThumbnailTileView : Grid
         }
     }
 
+    /// <summary>画像の 4 隅へ影の放射グラデーションを配置する。</summary>
+    /// <param name="host">画像を置く要素。</param>
+    /// <remarks>
+    /// 隅の影は「画像の隅の頂点を中心にした放射グラデーション」である（矩形の外側の点の距離は、<br/>
+    /// 隅の付近では隅の頂点からの距離と一致する）。 幅・濃さは <see cref="ShadowPlan"/>（4 UI 版で共通）が<br/>
+    /// 単一所有する。 隅は画像の外側へはみ出させる（負の余白）ため、画像には掛からない。
+    /// </remarks>
+    private void AddCornerParts(Grid host)
+    {
+        var size = ShadowPlan.BlurRadius;
+
+        // 左上・右上・右下・左下（中心はそれぞれ画像の隅の頂点 = 隅の矩形の内側の角）
+        AddCornerPart(host, new Thickness(-size, -size, 0, 0), HorizontalAlignment.Left, VerticalAlignment.Top, 1, 1);
+        AddCornerPart(host, new Thickness(0, -size, -size, 0), HorizontalAlignment.Right, VerticalAlignment.Top, 0, 1);
+        AddCornerPart(host, new Thickness(0, 0, -size, -size), HorizontalAlignment.Right, VerticalAlignment.Bottom, 0, 0);
+        AddCornerPart(host, new Thickness(-size, 0, 0, -size), HorizontalAlignment.Left, VerticalAlignment.Bottom, 1, 0);
+    }
+
+    /// <summary>隅の影を 1 つ配置する。</summary>
+    /// <param name="host">配置先。</param>
+    /// <param name="margin">外側へはみ出させる余白（負の値）。</param>
+    /// <param name="horizontalAlignment">横の配置。</param>
+    /// <param name="verticalAlignment">縦の配置。</param>
+    /// <param name="centerX">放射グラデーションの中心の X（0〜1）。</param>
+    /// <param name="centerY">放射グラデーションの中心の Y（0〜1）。</param>
+    private void AddCornerPart(
+        Grid host,
+        Thickness margin,
+        HorizontalAlignment horizontalAlignment,
+        VerticalAlignment verticalAlignment,
+        double centerX,
+        double centerY)
+    {
+        var part = new Border
+        {
+            Background = CreateCornerBrush(centerX, centerY),
+            Width = ShadowPlan.BlurRadius,
+            Height = ShadowPlan.BlurRadius,
+            Margin = margin,
+            HorizontalAlignment = horizontalAlignment,
+            VerticalAlignment = verticalAlignment,
+            IsHitTestVisible = false,
+        };
+
+        _shadowParts.Add(part);
+        host.Children.Add(part);
+    }
+
+    /// <summary>隅の放射グラデーションを生成する。</summary>
+    /// <param name="centerX">中心の X（0〜1）。</param>
+    /// <param name="centerY">中心の Y（0〜1）。</param>
+    /// <returns>放射グラデーションのブラシ。</returns>
+    /// <remarks>中心は画像の隅の頂点であり、半径は隅の矩形いっぱい（相対 1）にする。</remarks>
+    private static RadialGradientBrush CreateCornerBrush(double centerX, double centerY)
+    {
+        var brush = new RadialGradientBrush
+        {
+            Center = new Point(centerX, centerY),
+            // 焦点も中心へ置く（既定は矩形の中央であり、そのままだと濃さが斜めへ伸びる）
+            GradientOrigin = new Point(centerX, centerY),
+            RadiusX = 1,
+            RadiusY = 1,
+        };
+
+        foreach (var stop in ShadowPlan.CornerStops)
+        {
+            brush.GradientStops.Add(new GradientStop
+            {
+                Color = AppStyles.ToColor(stop.Argb),
+                Offset = Math.Clamp(stop.Offset, 0, 1),
+            });
+        }
+
+        return brush;
+    }
     /// <summary>影の 1 辺分を配置する。</summary>
     /// <param name="host">配置先。</param>
     /// <param name="edge">辺の計画。</param>
