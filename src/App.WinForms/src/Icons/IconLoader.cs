@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Text.RegularExpressions;
+using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Icons;
 
@@ -124,7 +125,7 @@ internal static partial class IconLoader
     private static string ResolveFile(AppIcon icon) => icon switch
     {
         AppIcon.NavToggle => "ic_fluent_arrow_autofit_width_dotted_24_regular.svg",
-        AppIcon.Capture => "ic_fluent_scan_table_24_regular.svg",
+        AppIcon.Capture => AppIdentity.IconFileName,
         AppIcon.Folder => "ic_fluent_folder_search_24_regular.svg",
         AppIcon.Undo => "ic_fluent_arrow_undo_24_regular.svg",
         AppIcon.Settings => "ic_fluent_settings_24_regular.svg",

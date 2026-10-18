@@ -105,7 +105,7 @@ internal sealed class MainForm : Form
         _services = services;
 
         var viewModel = services.Main;
-        Text = "SaveEvidence";
+        Text = AppIdentity.ProductName;
         // アイコンは他の UI 版と同じものを使う（共有する SVG から描く）
         Icon = IconLoader.CreateWindowIcon();
         AutoScaleMode = AutoScaleMode.Dpi;

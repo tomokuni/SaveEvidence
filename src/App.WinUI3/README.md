@@ -5,7 +5,7 @@ SaveEvidence の **WinUI 3 版ホストアプリ**です。 UI 非依存のコ�
 
 > **現状**: キャプチャ / フォルダビュー / Undo 一覧 / 設定の 4 ページと、撮影（スクリーン / ウィンドウ / 範囲）・
 > プレビューの切り出し・履歴の移動・設定の永続化・グローバル ホットキー・ログが動作します。
-> Avalonia 版 `App.AvaloniaUI` と MewUI 版 `App.MewUI` と同じ `settings.json` とログ ファイルを共有します。
+> Avalonia 版 `App.AvaloniaUI` と MewUI 版 `App.MewUI` と同じ `settings.json` とログ ファイルを共有します。 タスク バーでも 1 つのアプリとしてまとまります（4 UI 版が同じ `AppUserModelId` を設定します）。
 
 ## 1. 概要
 

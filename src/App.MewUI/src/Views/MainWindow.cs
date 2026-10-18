@@ -293,7 +293,7 @@ internal sealed class MainWindow
         // タイトルバーは MewUI 標準のクライアント領域拡張を使う（Avalonia 版の
         // ExtendClientAreaToDecorationsHint / ExtendClientAreaTitleBarHeightHint と同じ）。
         // タイトル文字列は空にし、タイトルバーへアプリ名を表示しない（Avalonia 版と同じ）。
-        window.Title = "SaveEvidence";
+        window.Title = AppIdentity.ProductName;
         window.ExtendClientAreaTitleBarHeight = TitleBarHeight;
 
         // ウィンドウ余白（Window 既定スタイルの ContainerPadding）を 0 にして、タイトルバーと
@@ -305,7 +305,7 @@ internal sealed class MainWindow
         root.Add(BuildWindowButtons(window).Column(0).ColumnSpan(2));
 
         // タスクバー・Alt+Tab のアイコンは Avalonia 版と同じアイコンを使う
-        window.Icon = IconLoader.LoadWindowIcon("ic_fluent_scan_table_24_regular.svg", 32, MewUIColor.Black);
+        window.Icon = IconLoader.LoadWindowIcon(AppIdentity.IconFileName, 32, MewUIColor.Black);
 
         // 同名ファイルが存在する場合の上書き確認は、オーナーウィンドウの中央にダイアログを出して問い合わせる
         // （未設定のままだと SaveImageAsync が確認なしに保存を中止し、操作が無言で無効になる）

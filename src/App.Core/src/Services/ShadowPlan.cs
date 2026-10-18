@@ -9,9 +9,9 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// <b>4 辺を同じ濃さにする理由</b>: 影を下方向へずらすと上辺だけが薄くなり、画像と影の間に<br/>
 /// 白っぽい隙間が見える（実測で指摘）。 4 辺とも画像の端で最も濃く、外側へ向けて同じ割合で薄くする。<br/>
 /// <br/>
-/// <b>描き方</b>: <see cref="BuildEdgeRects"/> が返す 4 辺の矩形を <see cref="ShadowEdgePlan.Stops"/> の<br/>
-/// グラデーションで塗り、<see cref="BuildCornerFills"/> が返す 4 隅を放射グラデーションで塗る<br/>
-/// （GDI+・Skia・XAML・Avalonia のいずれでも同じ手順になる）。<br/>
+/// <b>描き方</b>: 4 辺は <see cref="BuildDeviceBands"/> が返す<b>1 画素の帯</b>を単色で塗り、<br/>
+/// 4 隅は <see cref="BuildCornerFills"/> が返す矩形を放射グラデーションで塗る<br/>
+/// （グラデーション ブラシの端の扱いに依存しないため、どの UI 版でも同じ結果になる）。<br/>
 /// <br/>
 /// <b>重ねない</b>: 辺どうし・辺と隅は重ならない（重ねると角が二重に濃くなる）。
 /// </remarks>
@@ -101,39 +101,53 @@ public static class ShadowPlan
     public static uint ColorAtDistance(double distance)
         => ((uint)Math.Round(Math.Clamp(AlphaAtDistance(distance), 0, 1) * 255) << 24) | (ColorArgb & 0x00FFFFFF);
 
-    /// <summary>画像の矩形から、影を塗る 4 辺の矩形を作る。</summary>
-    /// <param name="x">画像の左端。</param>
-    /// <param name="y">画像の上端。</param>
-    /// <param name="width">画像の幅。</param>
-    /// <param name="height">画像の高さ。</param>
-    /// <returns>4 辺の矩形（画像にも隅にも掛からない）。</returns>
+    /// <summary>画像の矩形から、影を塗る 1 画素幅の帯（4 辺）を作る。</summary>
+    /// <param name="x">画像の左端（DIP）。</param>
+    /// <param name="y">画像の上端（DIP）。</param>
+    /// <param name="width">画像の幅（DIP）。</param>
+    /// <param name="height">画像の高さ（DIP）。</param>
+    /// <param name="scaling">DIP → 物理ピクセルの倍率（DPI の倍率）。</param>
+    /// <returns>帯の一覧（上辺・右辺・下辺・左辺の順。 各辺は画像に接する画素から外側へ）。</returns>
     /// <remarks>
-    /// 辺は画像の幅・高さいっぱいにして、外側の隅は <see cref="BuildCornerFills"/> が埋める<br/>
-    /// （辺どうし・辺と隅を重ねないため、角が二重に濃くならない）。
+    /// <b>これは「描画計画」の画素版である</b>: 辺の濃さを 1 画素ごとの単色へ落としているため、<br/>
+    /// どの UI 版も「単色の矩形を塗る」だけで同じ結果になる（グラデーション ブラシの端の扱いに依存しない）。<br/>
+    /// 濃さは画素の中心の距離で決める（<see cref="AlphaAtDistance"/>）。 画像の端は DIP の値を<br/>
+    /// 四捨五入して画素へ合わせる（画像を描く側と同じ丸めになる）。<br/>
+    /// 隅は <see cref="BuildCornerFills"/> が担う（帯は画像の幅・高さいっぱいで、隅には掛からない）。
     /// </remarks>
-    public static IReadOnlyList<ShadowEdgeFill> BuildEdgeRects(double x, double y, double width, double height)
+    public static IReadOnlyList<ShadowBand> BuildDeviceBands(double x, double y, double width, double height, double scaling)
     {
-        var fills = new List<ShadowEdgeFill>(4);
+        var bands = new List<ShadowBand>();
 
-        if (width <= 0 || height <= 0)
+        if (width <= 0 || height <= 0 || scaling <= 0)
         {
-            return fills;
+            return bands;
         }
 
-        foreach (var edge in Edges)
+        var extent = (int)Math.Round(BlurRadius * scaling);
+        var left = (int)Math.Round(x * scaling);
+        var top = (int)Math.Round(y * scaling);
+        var right = (int)Math.Round((x + width) * scaling);
+        var bottom = (int)Math.Round((y + height) * scaling);
+        var pixelsWide = right - left;
+        var pixelsHigh = bottom - top;
+        if (extent <= 0 || pixelsWide <= 0 || pixelsHigh <= 0)
         {
-            fills.Add(edge.Side switch
-            {
-                ShadowSide.Top => new ShadowEdgeFill(x, y - edge.Extent, width, edge.Extent, edge),
-                ShadowSide.Bottom => new ShadowEdgeFill(x, y + height, width, edge.Extent, edge),
-                ShadowSide.Left => new ShadowEdgeFill(x - edge.Extent, y, edge.Extent, height, edge),
-                _ => new ShadowEdgeFill(x + width, y, edge.Extent, height, edge),
-            });
+            return bands;
         }
 
-        return fills;
+        for (var i = 0; i < extent; i++)
+        {
+            // i = 0 が画像に接する画素。 画素の中心までの距離で濃さを決める（勾配の見た目と同じ）
+            var argb = ColorAtDistance((i + 0.5) / scaling);
+            bands.Add(new ShadowBand(left, top - 1 - i, pixelsWide, 1, argb));
+            bands.Add(new ShadowBand(left, bottom + i, pixelsWide, 1, argb));
+            bands.Add(new ShadowBand(left - 1 - i, top, 1, pixelsHigh, argb));
+            bands.Add(new ShadowBand(right + i, top, 1, pixelsHigh, argb));
+        }
+
+        return bands;
     }
-
     /// <summary>画像の矩形から、影を塗る 4 隅の矩形を作る。</summary>
     /// <param name="x">画像の左端。</param>
     /// <param name="y">画像の上端。</param>

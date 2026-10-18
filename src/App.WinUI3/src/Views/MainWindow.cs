@@ -107,7 +107,7 @@ internal sealed class MainWindow : Window
         ArgumentNullException.ThrowIfNull(services);
 
         Services = services;
-        Title = "SaveEvidence";
+        Title = AppIdentity.ProductName;
 
         var viewModel = services.Main;
         var settings = services.Settings;

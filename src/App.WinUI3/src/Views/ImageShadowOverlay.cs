@@ -10,21 +10,22 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 /// <remarks>
 /// <b>適用パターン</b>: 描画層（画像の外側へ影を描くだけの重ね合わせ）。<br/>
 /// 影の幅・濃さの変化は <see cref="ShadowPlan"/>（App.Core）が単一所有するため、本クラスは<br/>
-/// 「計画の 4 辺を線形グラデーションで、4 隅を放射グラデーションで塗る」手順だけを持つ<br/>
-/// （4 UI 版で同じ結果になる）。<br/>
+/// 計画を XAML の要素へ写すだけである（4 UI 版で同じ結果になる）。<br/>
+/// <b>4 辺は 1 画素の帯を単色で塗る</b>（<see cref="ShadowPlan.BuildDeviceBands"/>）: グラデーションの端の<br/>
+/// 扱いは描画側で異なるため、画素単位の帯にすればどの UI 版でも同じ結果になる。<br/>
 /// <b>画像の上へ重ねてよい理由</b>: 計画の辺と隅の矩形は画像の外側にだけ置かれる（画像へ掛からない）。<br/>
 /// <b>追従</b>: ズーム・パン・ウィンドウの大きさの変更で画像の表示矩形が変わるため、<br/>
 /// <see cref="CropControl.ViewportChanged"/> を購読して位置を更新する。
 /// </remarks>
 internal sealed class ImageShadowOverlay : Canvas
 {
-    /// <summary>4 辺の帯（<see cref="ShadowPlan.Edges"/> と同じ順）。</summary>
-    private readonly List<Border> _edges = [];
+    /// <summary>4 辺の帯（画素ごと。 必要な数だけ作り直す）。</summary>
+    private readonly List<Border> _bands = [];
 
     /// <summary>4 隅の帯（左上・右上・右下・左下）。</summary>
     private readonly List<Border> _corners = [];
 
-    /// <summary>影を落とす画像の表示矩形を提供するコントロール。</summary>
+    /// <summary>影を落す画像の表示矩形を提供するコントロール。</summary>
     private CropControl? _crop;
 
     /// <summary>重ね合わせを初期化する（マウス操作は下のコントロールへ通す）。</summary>
@@ -38,13 +39,6 @@ internal sealed class ImageShadowOverlay : Canvas
         {
             Rect = new Rect(0, 0, ActualWidth, ActualHeight),
         };
-
-        foreach (var edge in ShadowPlan.Edges)
-        {
-            var part = new Border { Background = CreateEdgeBrush(edge), IsHitTestVisible = false };
-            _edges.Add(part);
-            Children.Add(part);
-        }
 
         // 中心は画像の隅の頂点（左上 = 右下の角、右上 = 左下の角、右下 = 左上の角、左下 = 右上の角）
         AddCorner(1, 1);
@@ -94,62 +88,57 @@ internal sealed class ImageShadowOverlay : Canvas
         // 物理ピクセルの格子へ合わせる（半端な位置に置くと端の画素が半透明になり、
         // 画像との間に「白い線」「黒い線」として見える）
         var scale = XamlRoot?.RasterizationScale ?? 1.0;
-        var edges = ShadowPlan.BuildEdgeRects(image.X, image.Y, image.Width, image.Height);
-        for (var i = 0; i < _edges.Count && i < edges.Count; i++)
+        var bands = ShadowPlan.BuildDeviceBands(image.X, image.Y, image.Width, image.Height, scale);
+        EnsureBandCount(bands.Count);
+
+        for (var i = 0; i < bands.Count; i++)
         {
-            Place(_edges[i], edges[i].X, edges[i].Y, edges[i].Width, edges[i].Height, scale);
+            var band = bands[i];
+            var part = _bands[i];
+            part.Background = new SolidColorBrush(AppStyles.ToColor(band.Argb));
+            part.Width = band.Width / scale;
+            part.Height = band.Height / scale;
+            SetLeft(part, band.X / scale);
+            SetTop(part, band.Y / scale);
         }
 
         var corners = ShadowPlan.BuildCornerFills(image.X, image.Y, image.Width, image.Height);
         for (var i = 0; i < _corners.Count && i < corners.Count; i++)
         {
-            Place(_corners[i], corners[i].X, corners[i].Y, corners[i].Size, corners[i].Size, scale);
+            var fill = corners[i];
+            var part = _corners[i];
+
+            // 物理ピクセルの格子へ丸める（半端な位置だと端の画素が半透明になり、辺との間に線が見える）。
+            // 辺と重ねない（半透明どうしの重なりは濃くなる）
+            var left = Math.Round(fill.X * scale);
+            var top = Math.Round(fill.Y * scale);
+            var right = Math.Round((fill.X + fill.Size) * scale);
+            var bottom = Math.Round((fill.Y + fill.Size) * scale);
+
+            SetLeft(part, left / scale);
+            SetTop(part, top / scale);
+            part.Width = Math.Max(0, (right - left) / scale);
+            part.Height = Math.Max(0, (bottom - top) / scale);
         }
     }
 
-    /// <summary>要素を指定の位置と大きさへ置く（物理ピクセルの格子へ丸める）。</summary>
-    /// <param name="part">対象の要素。</param>
-    /// <param name="x">左端（DIP）。</param>
-    /// <param name="y">上端（DIP）。</param>
-    /// <param name="width">幅（DIP）。</param>
-    /// <param name="height">高さ（DIP）。</param>
-    /// <param name="scale">DIP → 物理ピクセルの倍率。</param>
-    private static void Place(Border part, double x, double y, double width, double height, double scale)
+    /// <summary>帯の要素を必要な数だけ用意する（DPI の倍率で数が変わる）。</summary>
+    /// <param name="count">必要な数。</param>
+    private void EnsureBandCount(int count)
     {
-        var left = Math.Round(x * scale) / scale;
-        var top = Math.Round(y * scale) / scale;
-        var right = Math.Round((x + width) * scale) / scale;
-        var bottom = Math.Round((y + height) * scale) / scale;
-
-        SetLeft(part, left);
-        SetTop(part, top);
-        part.Width = Math.Max(0, right - left);
-        part.Height = Math.Max(0, bottom - top);
-    }
-
-    /// <summary>辺のグラデーションを生成する（位置 0 が外側）。</summary>
-    /// <param name="edge">辺の計画。</param>
-    /// <returns>グラデーションのブラシ。</returns>
-    private static LinearGradientBrush CreateEdgeBrush(ShadowEdgePlan edge)
-    {
-        var outer = edge.IsOuterAtStart
-            ? (edge.IsVertical ? new Point(0.5, 0) : new Point(0, 0.5))
-            : (edge.IsVertical ? new Point(0.5, 1) : new Point(1, 0.5));
-        var inner = edge.IsOuterAtStart
-            ? (edge.IsVertical ? new Point(0.5, 1) : new Point(1, 0.5))
-            : (edge.IsVertical ? new Point(0.5, 0) : new Point(0, 0.5));
-
-        var brush = new LinearGradientBrush { StartPoint = outer, EndPoint = inner };
-        foreach (var stop in edge.Stops)
+        while (_bands.Count > count)
         {
-            brush.GradientStops.Add(new GradientStop
-            {
-                Color = AppStyles.ToColor(stop.Argb),
-                Offset = Math.Clamp(stop.Offset, 0, 1),
-            });
+            var removed = _bands[^1];
+            _bands.RemoveAt(_bands.Count - 1);
+            Children.Remove(removed);
         }
 
-        return brush;
+        while (_bands.Count < count)
+        {
+            var part = new Border { IsHitTestVisible = false };
+            _bands.Add(part);
+            Children.Add(part);
+        }
     }
 
     /// <summary>隅の放射グラデーションを生成する。</summary>

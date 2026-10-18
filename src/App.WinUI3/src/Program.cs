@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
@@ -31,6 +32,8 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
+        // タスク バーのグループ分けを 4 つの UI 版で揃える（ウィンドウを作る前に設定する）
+        TaskbarIdentity.Apply();
         // 未処理の例外を記録する（クラッシュ原因をログから特定できるようにする）
         RegisterExceptionLogging();
 

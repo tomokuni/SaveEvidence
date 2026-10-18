@@ -14,44 +14,60 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 internal static class ShadowRenderer
 {
     /// <summary>画像の 4 辺・4 隅へ影を描く（画像は塗らない）。</summary>
-    /// <param name="canvas">描画先のキャンバス（DIP 座標）。</param>
+    /// <param name="canvas">描画先のキャンバス（物理ピクセル座標。 拡大を適用しないこと）。</param>
     /// <param name="imageRect">画像の矩形（DIP）。</param>
-    public static void Render(SKCanvas canvas, SKRect imageRect)
-        => Render(canvas, imageRect.Left, imageRect.Top, imageRect.Width, imageRect.Height);
+    /// <param name="scaling">DIP → 物理ピクセルの倍率。</param>
+    public static void Render(SKCanvas canvas, SKRect imageRect, double scaling)
+        => Render(canvas, imageRect.Left, imageRect.Top, imageRect.Width, imageRect.Height, scaling);
 
     /// <summary>画像の 4 辺・4 隅へ影を描く（画像は塗らない）。</summary>
-    /// <param name="canvas">描画先のキャンバス（DIP 座標）。</param>
+    /// <param name="canvas">描画先のキャンバス（物理ピクセル座標。 拡大を適用しないこと）。</param>
     /// <param name="x">画像の左端（DIP）。</param>
     /// <param name="y">画像の上端（DIP）。</param>
     /// <param name="width">画像の幅（DIP）。</param>
     /// <param name="height">画像の高さ（DIP）。</param>
-    public static void Render(SKCanvas canvas, double x, double y, double width, double height)
+    /// <param name="scaling">DIP → 物理ピクセルの倍率。</param>
+    /// <remarks>
+    /// 4 辺は 1 画素の帯を単色で塗る（<see cref="ShadowPlan.BuildDeviceBands"/>。 端の扱いが描画 API に<br/>
+    /// 依存しない）。 4 隅は放射グラデーションで塗る（<see cref="ShadowPlan.BuildCornerFills"/>）。
+    /// </remarks>
+    public static void Render(SKCanvas canvas, double x, double y, double width, double height, double scaling)
     {
-        foreach (var fill in ShadowPlan.BuildEdgeRects(x, y, width, height))
+        if (scaling <= 0)
         {
-            var (start, end) = EdgeAxis(fill);
-            DrawWithShader(
-                canvas,
-                fill.X,
-                fill.Y,
-                fill.Width,
-                fill.Height,
-                SKShader.CreateLinearGradient(start, end, ToColors(fill.Edge.Stops), ToPositions(fill.Edge.Stops), SKShaderTileMode.Clamp));
+            return;
+        }
+
+        using (var paint = new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill })
+        {
+            foreach (var band in ShadowPlan.BuildDeviceBands(x, y, width, height, scaling))
+            {
+                var argb = band.Argb;
+
+                // SKColor の引数は (赤, 緑, 青, 透過度) の順である
+                paint.Color = new SKColor((byte)(argb >> 16), (byte)(argb >> 8), (byte)argb, (byte)(argb >> 24));
+                canvas.DrawRect(
+                    new SKRect(band.X, band.Y, band.X + band.Width, band.Y + band.Height),
+                    paint);
+            }
         }
 
         foreach (var fill in ShadowPlan.BuildCornerFills(x, y, width, height))
         {
+            var left = fill.X * scaling;
+            var top = fill.Y * scaling;
+            var size = fill.Size * scaling;
             var center = new SKPoint(
-                (float)(fill.X + (fill.CenterX * fill.Size)),
-                (float)(fill.Y + (fill.CenterY * fill.Size)));
+                (float)(left + (fill.CenterX * size)),
+                (float)(top + (fill.CenterY * size)));
             DrawWithShader(
                 canvas,
-                fill.X,
-                fill.Y,
-                fill.Size,
-                fill.Size,
+                left,
+                top,
+                size,
+                size,
                 SKShader.CreateRadialGradient(
-                    center, (float)fill.Size, ToColors(fill.Stops), ToPositions(fill.Stops), SKShaderTileMode.Clamp));
+                    center, (float)size, ToColors(fill.Stops), ToPositions(fill.Stops), SKShaderTileMode.Clamp));
         }
     }
 
@@ -69,28 +85,6 @@ internal static class ShadowRenderer
         {
             canvas.DrawRect(new SKRect((float)x, (float)y, (float)(x + width), (float)(y + height)), paint);
         }
-    }
-
-    /// <summary>影のグラデーションの始点と終点を求める（位置 0 が外側）。</summary>
-    /// <param name="fill">塗る矩形と辺の計画。</param>
-    /// <returns>始点と終点（DIP）。</returns>
-    private static (SKPoint Start, SKPoint End) EdgeAxis(ShadowEdgeFill fill)
-    {
-        var left = (float)fill.X;
-        var top = (float)fill.Y;
-        var right = (float)(fill.X + fill.Width);
-        var bottom = (float)(fill.Y + fill.Height);
-
-        if (fill.Edge.IsVertical)
-        {
-            return fill.Edge.IsOuterAtStart
-                ? (new SKPoint(left, top), new SKPoint(left, bottom))
-                : (new SKPoint(left, bottom), new SKPoint(left, top));
-        }
-
-        return fill.Edge.IsOuterAtStart
-            ? (new SKPoint(left, top), new SKPoint(right, top))
-            : (new SKPoint(right, top), new SKPoint(left, top));
     }
 
     /// <summary>停止点の色を取り出す。</summary>

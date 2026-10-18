@@ -103,34 +103,56 @@ public class ShadowPlanTests
         Assert.True(stops[^1].Argb >> 24 < 0x10);
     }
     [Fact]
-    internal void 辺の矩形_は画像の幅と高さいっぱい()
+    internal void 帯_は4辺それぞれ画素の数だけ作られる()
     {
-        var fills = ShadowPlan.BuildEdgeRects(100, 100, 200, 50);
+        // 10 DIP × 100%（scaling 1） → 1 辺 10 画素 × 4 辺
+        var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
 
-        Assert.Equal(4, fills.Count);
-
-        var top = fills.Single(f => f.Edge.Side == ShadowSide.Top);
-        var bottom = fills.Single(f => f.Edge.Side == ShadowSide.Bottom);
-        var left = fills.Single(f => f.Edge.Side == ShadowSide.Left);
-        var right = fills.Single(f => f.Edge.Side == ShadowSide.Right);
-
-        Assert.Equal(100, top.X);
-        Assert.Equal(100 - ShadowPlan.BlurRadius, top.Y);
-        Assert.Equal(200, top.Width);
-        Assert.Equal(100, top.Y + top.Height);
-
-        Assert.Equal(100, bottom.X);
-        Assert.Equal(150, bottom.Y);
-        Assert.Equal(200, bottom.Width);
-
-        Assert.Equal(100 - ShadowPlan.BlurRadius, left.X);
-        Assert.Equal(100, left.Y);
-        Assert.Equal(50, left.Height);
-
-        Assert.Equal(300, right.X);
-        Assert.Equal(50, right.Height);
+        Assert.Equal(40, bands.Count);
+        Assert.All(bands, b => Assert.True(b.Width == 1 || b.Height == 1));
     }
 
+    [Fact]
+    internal void 帯_は画像に接する画素が最も濃く外側が最も薄い()
+    {
+        var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
+
+        // 上辺の帯（y が 100 未満）
+        var top = bands.Where(b => b.Y < 100).OrderByDescending(b => b.Y).ToList();
+        Assert.NotEmpty(top);
+
+        // 画像に接する画素（最も下）が最も濃い
+        Assert.True(top[0].Argb >> 24 > (top[^1].Argb >> 24));
+
+        // 外側（最も上）はほぼ透明（影の外側に線が見えない）
+        Assert.InRange(top[^1].Argb >> 24, 0u, 4u);
+    }
+
+    [Fact]
+    internal void 帯_は画像の外側にだけ置かれる()
+    {
+        var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
+
+        // 上辺・下辺は画像の幅ちょうど、左右の辺は画像の外側
+        Assert.All(bands.Where(b => b.Y < 100), b => Assert.Equal(100, b.X));
+        Assert.All(bands.Where(b => b.Y < 100), b => Assert.Equal(200, b.Width));
+        Assert.All(bands.Where(b => b.Y >= 150), b => Assert.Equal(200, b.Width));
+        Assert.All(bands.Where(b => b.X < 100), b => Assert.Equal(1, b.Width));
+        Assert.All(bands.Where(b => b.X >= 300), b => Assert.Equal(1, b.Width));
+    }
+
+    [Fact]
+    internal void 帯_はDPIの倍率で画素数が変わる()
+    {
+        var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1.25);
+
+        // 10 DIP × 125% = 12.5 → 12 画素（Math.Round の既定 = 偶数丸め）× 4 辺
+        Assert.Equal(48, bands.Count);
+    }
+
+    [Fact]
+    internal void 帯_は画像が空なら作らない()
+        => Assert.Empty(ShadowPlan.BuildDeviceBands(10, 10, 0, 40, scaling: 1));
     [Fact]
     internal void 隅の矩形_は中心が画像の隅の頂点になる()
     {
@@ -152,9 +174,6 @@ public class ShadowPlanTests
     }
 
     [Fact]
-    internal void 矩形_は画像が空なら作らない()
-    {
-        Assert.Empty(ShadowPlan.BuildEdgeRects(10, 10, 0, 40));
-        Assert.Empty(ShadowPlan.BuildCornerFills(10, 10, 40, 0));
-    }
+    internal void 隅の矩形_は画像が空なら作らない()
+        => Assert.Empty(ShadowPlan.BuildCornerFills(10, 10, 40, 0));
 }

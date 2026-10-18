@@ -30,6 +30,8 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
+        // タスク バーのグループ分けを 4 つの UI 版で揃える（ウィンドウを作る前に設定する）
+        TaskbarIdentity.Apply();
         // DPI 対応を有効化する（他の API より前に呼ぶ必要がある）
         _ = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
         Application.EnableVisualStyles();

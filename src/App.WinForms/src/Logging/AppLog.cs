@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using EsUtil.SaveEvidence.App.Core.Services;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する。
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -50,16 +51,11 @@ internal static partial class AppLog
     /// </remarks>
     private static LoggerConfiguration CreateLoggingConfiguration()
     {
-        var logDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SaveEvidence",
-            "logs");
-
         return new LoggerConfiguration()
             .MinimumLevel.Verbose()
             .Enrich.FromLogContext()
             .WriteTo.File(
-                Path.Combine(logDir, "SaveEvidence.log"),
+                AppIdentity.LogFilePath,
                 outputTemplate: "{Timestamp:HH:mm:ss.fff} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
                 formatProvider: CultureInfo.InvariantCulture,
                 rollingInterval: RollingInterval.Day,

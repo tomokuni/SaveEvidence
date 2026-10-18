@@ -36,6 +36,10 @@ internal sealed class ImageShadowOverlay : Control
         Dock = DockStyle.Fill;
         Enabled = false;
         TabStop = false;
+
+        // 表示領域の下地を画像領域の背景色に合わせる（最も外側の帯はほぼ透明のため、
+        // 下地がグレーだと影の外側に 1 画素の筋として見える）
+        BackColor = AppStyles.ImageAreaBackground;
     }
 
     /// <summary>影を落とす対象のコントロールを設定する。</summary>

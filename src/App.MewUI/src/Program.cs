@@ -39,6 +39,8 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
+        // タスク バーのグループ分けを 4 つの UI 版で揃える（ウィンドウを作る前に設定する）
+        TaskbarIdentity.Apply();
         // Per-Monitor V2 の DPI 対応を有効化する（アプリ起動時に呼ぶ必要がある）。
         // これを呼ばないと OS の DPI クエリが 96 に仮想化され、ウィンドウ配置の復元がずれる。
         DpiHelper.EnablePerMonitorDpiAwareness();

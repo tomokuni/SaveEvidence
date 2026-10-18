@@ -35,7 +35,8 @@
 - [23. `Services.EnumDisplayNames`（静的クラス）](#23-servicesenumdisplaynames静的クラス)
 - [24. `Services.SettingsMetrics`（静的クラス）](#24-servicessettingsmetrics静的クラス)
 - [25. `Services.ThumbnailTileMetrics`（静的クラス）](#25-servicesthumbnailtilemetrics静的クラス)
-- [26. 依存関係](#26-依存関係)
+- [26. `Services.AppIdentity`（静的クラス）](#26-servicesappidentity静的クラス)
+- [27. 依存関係](#27-依存関係)
 
 ## 1. 公開 API の可視性
 
@@ -427,14 +428,14 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 | `CornerStops` | 11 件 | 隅の放射グラデーションの停止点（中心が最も濃い） |
 | `AlphaAtDistance(double)` | 端 0.245 → 10 DIP で 0.005 | 画像の端から指定距離の不透明度（実測プロファイル） |
 | `ColorAtDistance(double)` | 黒 + 上記の透過度 | 指定距離の色（`0xAARRGGBB`） |
-| `BuildEdgeRects(x, y, w, h)` | 4 件 | 塗る辺の矩形（`ShadowEdgeFill`）。 **画像にも隅にも掛からない** |
+| `BuildDeviceBands(x, y, w, h, scaling)` | 4 × 画素数 件 | 4 辺を**1 画素の帯**（`ShadowBand`）へ落とした計画。 各 UI 版は単色で塗るだけ |
 | `BuildCornerFills(x, y, w, h)` | 4 件 | 塗る隅の矩形（`ShadowCornerFill`）。 中心は画像の隅の頂点・半径は一辺 |
 
-**型（1 型 1 ファイル）**: `ShadowSide`（辺）・`ShadowStop`（停止点 = 位置と色）・`ShadowInsets`（余白）・`ShadowEdgePlan`（辺の計画）・`ShadowEdgeFill`（塗る辺の矩形）・`ShadowCornerFill`（塗る隅の矩形）・`ShadowPlan`（上表）。
+**型（1 型 1 ファイル）**: `ShadowSide`（辺）・`ShadowStop`（停止点 = 位置と色）・`ShadowInsets`（余白）・`ShadowEdgePlan`（辺の計画）・`ShadowBand`（1 画素の帯）・`ShadowCornerFill`（塗る隅の矩形）・`ShadowPlan`（上表）。
 
 **4 辺を同じ濃さにする理由**: 影を下方向へずらすと上辺だけが薄くなり、画像と影の間に白っぽい隙間が見えます（実測で指摘）。 4 辺とも画像の端で最も濃く、外側へ向けて同じ割合で薄くします。
 
-**描き方**は 1 通りです。 `BuildEdgeRects` の 4 辺を `ShadowEdgePlan.Stops` の線形グラデーション（位置 0 が外側、1 が画像の端）で塗り、`BuildCornerFills` の 4 隅を `CornerStops` の**放射グラデーション**で塗ります。 各 UI 版は自分の描画 API へ写すだけです（AvaloniaUI は `LinearGradientBrush` / `RadialGradientBrush`（キャプチャページ）と `BoxShadow`（一覧のサムネイル）、WinUI 3 は `LinearGradientBrush` / `RadialGradientBrush`、WinForms は GDI+ の `LinearGradientBrush` / `PathGradientBrush`、MewUI は Skia の `SKShader`）。
+**描き方**は 1 通りです。 4 辺は `BuildDeviceBands` の帯（1 画素）を**単色で塗り**、4 隅は `BuildCornerFills` を `CornerStops` の**放射グラデーション**で塗ります。 各 UI 版は自分の描画 API へ写すだけです（AvaloniaUI は `DrawRectangle` と `BoxShadow`（一覧のサムネイル）、WinUI 3 は `Border` と `RadialGradientBrush`、WinForms は GDI+ の `FillRectangle` と `PathGradientBrush`、MewUI は Skia の `DrawRect` と `SKShader`）。
 
 **隅を放射グラデーションにする理由**: 矩形の外側の点の「矩形までの距離」は、隅の付近では**隅の頂点からの距離**と一致します。 辺と同じ濃さの変化を隅でも再現でき、角が四角く突き出しません。
 
@@ -442,9 +443,25 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **画像と影の間**には枠線・余白を置きません（辺と隅の矩形は画像の境界から外側へ連続します）。 画像の外側に影の余地が無い場合（画像が領域の端まで達している場合）は、その辺の影は見えません。
 
-**画素の格子へ揃える**（キャプチャページの画像）: 画像は端数のある位置へ描かれるため、影の矩形を端数のまま描くと端の画素が半透明になり、画像との間に「白い線」または「黒い線」として見えます。 各 UI 版は影の矩形を物理ピクセルの格子へ丸め、アンチエイリアスを切って画像の端と隙間なく接させます（AvaloniaUI は `RenderScaling`、WinUI 3 は `XamlRoot.RasterizationScale`、WinForms は GDI+ の描画と同じ四捨五入）。
+**画素の格子へ揃える**（キャプチャページの画像）: 画像は端数のある位置へ描かれるため、影の矩形を端数のまま描くと端の画素が半透明になり、画像との間に「白い線」または「黒い線」として見えます。 `BuildDeviceBands` が**物理ピクセルの整数矩形**を返すため、各 UI 版は丸めを持ちません（DIP へ戻すときだけ倍率で割ります）。 アンチエイリアスは切って画像の端と隙間なく接させます。 4 隅は放射グラデーションで塗るため、描画側が端の画素を切り捨てる場合は**画像に接する辺を 1 画素広げ**ます（AvaloniaUI の `ImageShadowOverlay`。 広げた分は画像に隠れます）。
 
-## 26. 依存関係
+## 26. `Services.AppIdentity`（静的クラス）
+
+アプリの**名前・タスク バーの識別子・アイコン・保存先**の唯一の定義です（4 つの UI 版が同じ値を使う）。 UI 版ごとに文字列を書くと、綴りの違いで設定・ログ・タスク バーのグループ分けがずれます。
+
+| メンバー | 値 | 用途 |
+| --- | --- | --- |
+| `ProductName` | `SaveEvidence` | ウィンドウ タイトル・フォルダ名・ログ ファイル名 |
+| `AppUserModelId` | `EsUtil.SaveEvidence` | タスク バーのグループ分け（逆ドメイン形式） |
+| `IconFileName` | `ic_fluent_scan_table_24_regular.svg` | ウィンドウ（タスク バー）アイコン（4 UI 版が共有） |
+| `LocalAppDataFolder` | `%LOCALAPPDATA%\SaveEvidence` | 設定・ログの置き場 |
+| `LogsFolder` / `LogFilePath` | `…\logs` / `…\logs\SaveEvidence.log` | ログ出力（Serilog） |
+| `SettingsFilePath` | `…\settings.json` | 設定ファイル |
+| `TempFolder` | `%TEMP%\SaveEvidence` | 実行時に組み立てるファイル（ICO 等） |
+
+`TaskbarIdentity.Apply()` は **`SetCurrentProcessExplicitAppUserModelID`** でプロセスの AUMID を設定します（4 UI 版が同じ値を使うため、タスク バーでは 1 つのアプリにまとまります）。 **ウィンドウを作る前**に各 UI 版のエントリ ポイントが 1 回呼びます。 失敗（API 不在等）しても例外にせず、起動を妨げません（タスク バーのグループ分けが既定のままになるだけです）。
+
+## 27. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

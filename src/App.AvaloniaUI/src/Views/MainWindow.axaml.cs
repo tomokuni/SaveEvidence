@@ -136,7 +136,7 @@ public sealed partial class MainWindow : Window
         SetupNavIcons();
 
         // アプリ（ウィンドウ）アイコンを設定する
-        Icon = IconLoader.LoadWindowIcon("ic_fluent_scan_table_24_regular.svg");
+        Icon = IconLoader.LoadWindowIcon(AppIdentity.IconFileName);
 
         // 初期のナビパネル高さを設定する（IsNavigationExpanded の設定後）
         UpdateNavPanelLayout();

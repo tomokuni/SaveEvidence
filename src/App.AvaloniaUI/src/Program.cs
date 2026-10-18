@@ -36,6 +36,8 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
+        // タスク バーのグループ分けを 4 つの UI 版で揃える（ウィンドウを作る前に設定する）
+        TaskbarIdentity.Apply();
         // Serilog を初期化（ファイル出力先は AppLog.CreateLoggingConfiguration と整合させる）。
         // グローバル例外ハンドラの即時ログ出力に使用するため、Log.Logger を設定する。
         var appLog = AppLog.CreateLogger("App");

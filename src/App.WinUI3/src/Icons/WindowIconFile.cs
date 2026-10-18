@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core;
+using EsUtil.SaveEvidence.App.Core.Services;
 using SkiaSharp;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Icons;
@@ -16,9 +17,7 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Icons;
 /// </remarks>
 internal static class WindowIconFile
 {
-    /// <summary>ウィンドウ アイコンに使う SVG ファイル名。</summary>
-    /// <remarks>他の UI 版と同じアイコンを使う（AvaloniaUI 版の <c>MainWindow</c> と同じ選択）。</remarks>
-    private const string IconFileName = "ic_fluent_scan_table_24_regular.svg";
+
 
     /// <summary>ICO に含めるサイズ（ピクセル）。</summary>
     /// <remarks>タスク バー・Alt+Tab・大きいアイコン表示のそれぞれで必要になるサイズを揃える。</remarks>
@@ -39,7 +38,7 @@ internal static class WindowIconFile
 
         try
         {
-            var directory = Path.Combine(Path.GetTempPath(), "SaveEvidence");
+            var directory = AppIdentity.TempFolder;
             Directory.CreateDirectory(directory);
             var path = Path.Combine(directory, "app-icon.ico");
             File.WriteAllBytes(path, Build());
@@ -108,7 +107,7 @@ internal static class WindowIconFile
         using var bitmap = new SKBitmap(info);
         using (var canvas = new SKCanvas(bitmap))
         {
-            IconLoader.Draw(canvas, IconFileName, size, 0xFF000000);
+            IconLoader.Draw(canvas, AppIdentity.IconFileName, size, 0xFF000000);
         }
 
         using var image = SKImage.FromBitmap(bitmap);

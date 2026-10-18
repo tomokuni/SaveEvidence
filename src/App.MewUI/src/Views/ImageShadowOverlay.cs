@@ -43,7 +43,7 @@ internal sealed class ImageShadowOverlay : SkiaCanvasView
     /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
     /// <param name="info">描画先の情報（幅・高さ）。</param>
     /// <remarks>
-    /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（画像の表示矩形と座標系を一致させる）。<br/>
+    /// 影の帯は物理ピクセルの矩形で描く（倍率を掛けて描くため、端の画素が半端にならない）。<br/>
     /// 影の外側は透明にして下の画像を見せる。
     /// </remarks>
     private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
@@ -59,15 +59,7 @@ internal sealed class ImageShadowOverlay : SkiaCanvasView
         var scaling = ClientPixelScale.Resolve(info.Width, Bounds.Size.Width, fallback: 1.0);
         var image = _crop.ImageRectViewport();
 
-        canvas.Save();
-        canvas.Scale((float)scaling);
-        try
-        {
-            ShadowRenderer.Render(canvas, image.X, image.Y, image.Width, image.Height);
-        }
-        finally
-        {
-            canvas.Restore();
-        }
+        // 影は物理ピクセルで描く（帯の矩形が画素に一致する）
+        ShadowRenderer.Render(canvas, image.X, image.Y, image.Width, image.Height, scaling);
     }
 }

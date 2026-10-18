@@ -117,22 +117,23 @@ internal sealed class ThumbnailView : SkiaCanvasView
             (float)(width - insets.Right),
             (float)(height - insets.Bottom));
 
-        canvas.Save();
-        canvas.Scale((float)scaling);
-        try
-        {
-            ShadowRenderer.Render(canvas, imageRect);
+        // 影は物理ピクセルで描く（帯の矩形が画素に一致する）。 画像は DIP 座標で描く
+        ShadowRenderer.Render(canvas, imageRect.Left, imageRect.Top, imageRect.Width, imageRect.Height, scaling);
 
-            if (Source is { } bitmap && !bitmap.IsDisposed && !imageRect.IsEmpty)
+        if (Source is { } bitmap && !bitmap.IsDisposed && !imageRect.IsEmpty)
+        {
+            canvas.Save();
+            canvas.Scale((float)scaling);
+            try
             {
                 // ToSKBitmap は非所有ビューを作る（ピクセルは複製しない。 ファイナライザ対策で直後に破棄する）
                 using var view = bitmap.ToSKBitmap();
                 canvas.DrawBitmap(view, imageRect);
             }
-        }
-        finally
-        {
-            canvas.Restore();
+            finally
+            {
+                canvas.Restore();
+            }
         }
     }
 }

@@ -20,9 +20,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// </remarks>
 public sealed class SettingsService : ISettingsService
 {
-    private static readonly string s_settingsFilePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "SaveEvidence", "settings.json");
+    private static readonly string s_settingsFilePath = AppIdentity.SettingsFilePath;
 
     private readonly Lock _lock = new();
 
