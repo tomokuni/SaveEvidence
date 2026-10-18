@@ -153,12 +153,20 @@
             収納時は NavPanel がコンテンツ高さに縮むため * 行は 0 になり、下部の余白は UpdateNavPanelLayout の
             Padding（背景色付き）で確保する（設定アイコンの下が白く見えないようにする）。
             -->
-            <Grid RowDefinitions="Auto,Auto,*,Auto">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <!-- 44 = ツールバーの行（6 + 32）と同じ中心になる高さ（WindowLayout.AppIconRowHeight） -->
+                    <RowDefinition Height="44"/>
+                    <!-- 40 = ナビの開閉ボタンの高さ（WindowLayout.NavToggleHeight） -->
+                    <RowDefinition Height="40"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <!-- 左上のアプリ アイコン（タスク バーと同じアイコン）。 押下で Windows の標準メニューを出す -->
                 <Button x:Name="AppIconButton"
                         Grid.Row="0"
-                        Width="32"
-                        Height="32"
+                        Width="{x:Static services:WindowLayout.AppIconColumnWidth}"
+                        Height="{x:Static services:WindowLayout.AppIconRowHeight}"
                         Padding="0"
                         HorizontalAlignment="Left"
                         Background="Transparent"
@@ -166,7 +174,10 @@
                         CornerRadius="0"
                         Click="OnAppIconClick"
                         ToolTip.Tip="ウィンドウ メニュー">
-                    <PathIcon x:Name="AppIconImage" Width="16" Height="16" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+                    <PathIcon x:Name="AppIconImage"
+                              Width="{x:Static services:WindowLayout.AppIconSize}"
+                              Height="{x:Static services:WindowLayout.AppIconSize}"
+                              Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
                 </Button>
 
                 <!-- ナビゲーションの開閉（アイコンのみ。 開いているときは「閉じる」、閉じているときは「開く」）と、

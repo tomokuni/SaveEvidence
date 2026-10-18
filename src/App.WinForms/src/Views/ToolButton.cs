@@ -22,6 +22,18 @@ internal sealed class ToolButton : Button
     /// <summary>選択状態を示す背景色で描くかどうか。</summary>
     private bool _isSelected;
 
+    /// <summary>選択中に左端のマークを描くかどうか。</summary>
+    private bool _showSelectionMark;
+
+    /// <summary>選択中のマークの幅（DIP）。 他の UI 版と同じ 3 DIP。</summary>
+    private const int MarkWidth = 3;
+
+    /// <summary>選択中のマークの高さ（DIP）。 他の UI 版と同じ 16 DIP。</summary>
+    private const int MarkHeight = 16;
+
+    /// <summary>選択中のマークの左端（DIP）。 他の UI 版と同じ 4 DIP。</summary>
+    private const int MarkLeft = 4;
+
     /// <summary>ツールバー用のボタンを生成する。</summary>
     /// <param name="icon">表示するアイコン（null の場合は文字だけを表示する）。</param>
     /// <param name="toolTip">ツールヒントの文言。</param>
@@ -64,6 +76,65 @@ internal sealed class ToolButton : Button
 
             _isSelected = value;
             ApplyTheme();
+        }
+    }
+
+    /// <summary>選択中に左端のマーク（ナビゲーションの選択表示）を描くかどうかを取得または設定する。</summary>
+    /// <value>true の場合は選択中に左端へアクセント色の縦線を描く。</value>
+    /// <remarks>ナビゲーションの項目だけが true にする（ツールバーのボタンは背景色だけで示す）。</remarks>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool ShowSelectionMark
+    {
+        get => _showSelectionMark;
+        set
+        {
+            if (_showSelectionMark == value)
+            {
+                return;
+            }
+
+            _showSelectionMark = value;
+            Invalidate();
+        }
+    }
+
+    /// <summary>選択中のマークを描く。</summary>
+    /// <param name="e">描画の情報。</param>
+    /// <remarks>
+    /// マークはボタンの内側（文字とアイコンの左）に描く。 位置と大きさは DIP で決め、<br/>
+    /// 画面の DPI で物理ピクセルへ換算する（<c>AutoScaleMode.Dpi</c> は描画コードを拡大しない）。
+    /// </remarks>
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        ArgumentNullException.ThrowIfNull(e);
+        base.OnPaint(e);
+
+        if (!_isSelected || !_showSelectionMark)
+        {
+            return;
+        }
+
+        var scaling = DeviceDpi / 96.0;
+        var width = Math.Max(1, (int)Math.Round(MarkWidth * scaling));
+        var height = (int)Math.Round(MarkHeight * scaling);
+        var left = (int)Math.Round(MarkLeft * scaling);
+        var top = (Height - height) / 2;
+
+        // 上下を丸めた縦長の帯（上は 180° から 180°、下は 0° から 180° の弧で閉じる）
+        using var path = new System.Drawing.Drawing2D.GraphicsPath();
+        path.AddArc(left, top, width, width, 180, 180);
+        path.AddArc(left, top + height - width, width, width, 0, 180);
+        path.CloseFigure();
+        using var brush = new SolidBrush(AppStyles.Accent);
+        var smoothing = e.Graphics.SmoothingMode;
+        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        try
+        {
+            e.Graphics.FillPath(brush, path);
+        }
+        finally
+        {
+            e.Graphics.SmoothingMode = smoothing;
         }
     }
 

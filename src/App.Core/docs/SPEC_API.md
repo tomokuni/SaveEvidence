@@ -471,12 +471,14 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 | --- | --- | --- |
 | `WindowMetrics.MinimumWidth` / `MinimumHeight` | 700 / 400 DIP | ウィンドウの最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算して指定する） |
 | `WindowMetrics.DefaultWidth` / `DefaultHeight` | 700 / 400 DIP | 復元する配置が無いときの既定サイズ |
-| `WindowLayout.TitleBarHeight` | 32 DIP | 上端のアイコンとドラッグ領域の高さ（タイトル バーの帯は作りません） |
-| `WindowLayout.AppIconSize` / `AppIconButtonSize` / `AppIconMargin` | 16 / 32 / 8 DIP | 左上のアプリ アイコン（タスク バーと同じアイコン）の寸法 |
-| `WindowLayout.AppNameLeft` | 32 DIP | アプリ名の左端 |
-| `WindowLayout.NavToggleHeight` | 40 DIP | ナビ領域の一番上に置く開閉ボタンの高さ |
+| `WindowLayout.ToolbarRowTop` / `ToolbarButtonHeight` | 6 / 32 DIP | ページのツールバーの行の上端とボタンの高さ（アプリ アイコンの縦位置の基準） |
+| `WindowLayout.AppIconRowHeight` | 44 DIP | 左上のアプリ アイコンを置く行の高さ（中心がツールバーのアイコンと一致する 6 + 32 + 6） |
+| `WindowLayout.AppIconSize` | 16 DIP | 左上のアプリ アイコン（タスク バーと同じアイコン）の一辺。 **ナビゲーションのアイコンと同じ大きさ** |
+| `WindowLayout.AppIconColumnWidth` | 40 DIP | 左上のアプリ アイコンの列の幅（開閉アイコンと同じ列に置く） |
+| `WindowLayout.NavToggleHeight` / `NavToggleWidth` | 40 / 40 DIP | ナビ領域の一番上に置く開閉ボタンの大きさ |
+| `WindowLayout.TitleBarHeight` | 32 DIP | 上端のドラッグ領域の高さ（タイトル バーの帯は作りません） |
 
-**ナビゲーション パネルの配置**: 展開しても**ページ領域は動きません**（収納時の幅の位置に留まります）。 展開したパネルはページ領域の上へ重なり、上端はページ領域の先頭、下端はステータス バーに被ります。 パネルの一番上にアプリ アイコン、その下に開閉ボタン（アイコンのみ）を置き、**展開時は開閉ボタンの右にアプリ名を表示**します。 展開中にナビ領域の外を操作すると収納へ戻ります。
+**ナビゲーション パネルの配置**: 展開しても**ページ領域は動きません**（収納時の幅の位置に留まります）。 展開したパネルはページ領域の上へ重なり、上端はページ領域の先頭、下端はステータス バーに被ります。 パネルの一番上にアプリ アイコン、その下に開閉ボタン（アイコンのみ）を置き、**展開時は開閉ボタンの右にアプリ名を表示**します。 アプリ アイコンは**ナビゲーションのアイコンと同じ大きさ**にし、**縦位置をツールバーのアイコンと揃え**（`AppIconRowHeight` の中で中央）、**横位置を開閉アイコンと同じ列**（`AppIconColumnWidth` の中で中央）に置きます。 展開中にナビ領域の外を操作すると収納へ戻ります。
 
 ## 28. `Services.WindowMenu`
 

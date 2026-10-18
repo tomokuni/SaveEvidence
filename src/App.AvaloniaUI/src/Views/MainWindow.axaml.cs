@@ -171,9 +171,9 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        // ナビ領域は「タイトル バーの下・ナビの幅の内側」である。 その外（タイトル バーを含む）は閉じる
+        // ナビ領域はナビの幅の内側である。 その外（上端の帯を含む）は閉じる
         var position = e.GetPosition(this);
-        var insideNavigation = position.Y >= WindowLayout.TitleBarHeight && position.X < _viewModel.NavPanelWidth;
+        var insideNavigation = position.X < _viewModel.NavPanelWidth;
         if (insideNavigation)
         {
             return;

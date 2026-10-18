@@ -153,7 +153,9 @@ internal sealed class MainForm : Form
                 TextAlign = ContentAlignment.MiddleLeft,
                 // アイコンと文字を左端から並べる（中央寄せだと幅が足りないとき両側が欠ける）
                 ImageAlign = ContentAlignment.MiddleLeft,
-                Padding = new Padding(6, 0, 0, 0),
+                // 左の 12 DIP は選択中のマーク（4..7 DIP）と間隔に使う（他の UI 版と同じ位置）
+                ShowSelectionMark = true,
+                Padding = new Padding(12, 0, 0, 0),
                 Margin = new Padding(0, 1, 0, 1),
                 // 文字サイズは 4 つの UI 版で共通（DIP → pt へ換算する。 NavPanelMetrics が単一所有する）
                 Font = new Font(
@@ -184,7 +186,7 @@ internal sealed class MainForm : Form
         // フッターは下端へ寄せる（他の UI 版と同じ位置）
         // 開閉ボタンとアプリ名はパネルの左上に固定し、項目一覧はその下から並べる
         _navPanel.Padding = new Padding(0);
-        _navItems.Padding = new Padding(4, 44, 4, 4);
+        _navItems.Padding = new Padding(0, 44, 0, 4);
 
         // ナビゲーション パネルはページ領域の上へ重ねる（ページ領域は開閉で動かない）。
         // 前面へ置くため、ページ領域を追加した後に追加する
@@ -530,7 +532,7 @@ internal sealed class MainForm : Form
         {
             _navButtons[i].Text = expanded ? _entries[i].Title : "";
             _navButtons[i].Width = expanded
-                ? Math.Max(DpiScaler.ScaleToPixel(40, scaling), _navPanel.Width - DpiScaler.ScaleToPixel(12, scaling))
+                ? Math.Max(DpiScaler.ScaleToPixel(40, scaling), _navPanel.Width - DpiScaler.ScaleToPixel(2, scaling))
                 : DpiScaler.ScaleToPixel(32, scaling);
         }
 

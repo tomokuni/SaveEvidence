@@ -10,11 +10,18 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 public class WindowLayoutTests
 {
     [Fact]
-    internal void タイトルバー_は32でアプリ名はアイコンの右()
+    internal void アプリアイコン_はナビアイコンと同じ大きさでツールバーと同じ高さに揃う()
     {
-        Assert.Equal(32, WindowLayout.TitleBarHeight);
-        Assert.True(WindowLayout.AppNameLeft > WindowLayout.AppIconMargin + WindowLayout.AppIconSize);
-        Assert.Equal(WindowLayout.TitleBarHeight, WindowLayout.AppIconButtonSize);
+        // 大きさはナビゲーションのアイコンと同じ
+        Assert.Equal(NavPanelMetrics.IconSize, WindowLayout.AppIconSize);
+
+        // 中心の高さ = ツールバーのアイコンの中心
+        var appIconCenter = WindowLayout.AppIconRowHeight / 2;
+        var toolbarIconCenter = WindowLayout.ToolbarRowTop + (WindowLayout.ToolbarButtonHeight / 2);
+        Assert.Equal(toolbarIconCenter, appIconCenter);
+
+        // 列の幅は開閉アイコンと同じ（同じ列に中央揃えで置ける）
+        Assert.Equal(WindowLayout.NavToggleWidth, WindowLayout.AppIconColumnWidth);
     }
 
     [Fact]

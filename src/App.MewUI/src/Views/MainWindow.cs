@@ -161,7 +161,7 @@ internal sealed class MainWindow
             StyleName = AppStyles.MenuSurface,
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
-            Margin = new Thickness(WindowLayout.AppIconMargin, WindowLayout.TitleBarHeight, 0, 0),
+            Margin = new Thickness(8, WindowLayout.AppIconRowHeight, 0, 0),
         };
 
         // ナビが開いている間だけ表示する覆い（ナビ領域の外のクリックで閉じる）。
@@ -283,8 +283,8 @@ internal sealed class MainWindow
         var appIconButton = new Button
         {
             Content = appIconImage.Center(),
-            Width = WindowLayout.AppIconButtonSize,
-            Height = WindowLayout.AppIconButtonSize,
+            Width = WindowLayout.AppIconColumnWidth,
+            Height = WindowLayout.AppIconRowHeight,
             Padding = new Thickness(0),
             CornerRadius = 0,
             StyleName = AppStyles.FlatButton,
@@ -294,7 +294,7 @@ internal sealed class MainWindow
         appIconButton.Cursor(CursorType.Hand);
         appIconButton.WithToolTip("ウィンドウ メニュー", () => ShowWindowMenu(appIconButton));
         // ナビ領域の一番上はアプリ アイコン、その下に開閉ボタン（アイコンのみ）と、その右のアプリ名（展開時のみ表示）
-        var header = new Grid().Rows($"{WindowLayout.TitleBarHeight},{WindowLayout.NavToggleHeight}");
+        var header = new Grid().Rows($"{WindowLayout.AppIconRowHeight},{WindowLayout.NavToggleHeight}");
         header.Add(appIconButton.Row(0));
         var toggleRow = new Grid().Columns("Auto,*").Rows($"{WindowLayout.NavToggleHeight}");
         toggleRow.Add(toggle.Column(0));
