@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.Platform.Skia;
 /// <remarks>
 /// <b>1 画素の帯を単色で塗るだけ</b>である: グラデーション ブラシの端・半径の扱いは描画 API ごとに<br/>
 /// 異なるため、画素単位の帯（<see cref="SkiaShadowBand"/>）を単色で塗ればどの環境でも同じ結果になる。<br/>
-/// <b>4 隅も帯で塗る</b>（横の帯と縦の帯が隅で重なって合成される。 濃さの計画は <c>ShadowPlan</c> が単一所有）。<br/>
+/// <b>4 隅も帯で塗る</b>（隅の濃さは画像の隅の頂点からの斜めの距離で決まり、辺と同じ濃さの変化が続く。 計画は <c>ShadowPlan</c> が単一所有）。<br/>
 /// <b>アンチエイリアスは無効</b>にする（端の画素を半透明にすると、画像との間に線として見える）。
 /// </remarks>
 public static class SkiaShadowRenderer

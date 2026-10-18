@@ -11,9 +11,9 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// <br/>
 /// <b>描き方</b>: <see cref="BuildDeviceBands"/> が返す<b>1 画素の帯</b>を単色で塗るだけである<br/>
 /// （グラデーション ブラシの端の扱いに依存しないため、どの UI 版でも同じ結果になる）。<br/>
-/// <b>4 隅もグラデーションを使わない</b>: 辺の帯を隅の正方形まで伸ばし、横の帯と縦の帯を重ねて<br/>
-/// <b>合成</b>する（重なった画素は 1-(1-横)(1-縦) の濃さになる）。 放射グラデーションは描画 API ごとに<br/>
-/// 半径・中心の解釈が揺れ、隅だけ濃い点や薄い筋として見えた（実測）。
+/// <b>4 隅もグラデーションを使わない</b>: 隅の画素の濃さは<b>画像の隅の頂点からの距離</b>（斜めの距離）で<br/>
+/// 決める。 辺と同じ濃さの変化が斜めにもそのまま続き、四角い塊や濃い点にならない<br/>
+/// （放射グラデーションは描画 API ごとに半径・中心の解釈が揺れ、隅だけ濃い点や薄い筋として見えた。 実測）。
 /// </remarks>
 public static class ShadowPlan
 {
@@ -104,21 +104,21 @@ public static class ShadowPlan
     public static uint ColorAtDistance(double distance)
         => ((uint)Math.Round(Math.Clamp(AlphaAtDistance(distance), 0, 1) * 255) << 24) | (ColorArgb & 0x00FFFFFF);
 
-    /// <summary>画像の矩形から、影を塗る 1 画素幅の帯（4 辺）を作る。</summary>
+    /// <summary>画像の矩形から、影を塗る 1 画素幅の帯（4 辺と 4 隅）を作る。</summary>
     /// <param name="x">画像の左端（DIP）。</param>
     /// <param name="y">画像の上端（DIP）。</param>
     /// <param name="width">画像の幅（DIP）。</param>
     /// <param name="height">画像の高さ（DIP）。</param>
     /// <param name="scaling">DIP → 物理ピクセルの倍率（DPI の倍率）。</param>
-    /// <returns>帯の一覧（上辺・右辺・下辺・左辺の順。 各辺は画像に接する画素から外側へ）。</returns>
+    /// <returns>帯の一覧（上辺・右辺・下辺・左辺・4 隅の順。 各辺は画像に接する画素から外側へ）。</returns>
     /// <remarks>
     /// <b>これは「描画計画」の画素版である</b>: 辺の濃さを 1 画素ごとの単色へ落としているため、<br/>
     /// どの UI 版も「単色の矩形を塗る」だけで同じ結果になる（グラデーション ブラシの端の扱いに依存しない）。<br/>
     /// 濃さは画素の中心の距離で決める（<see cref="AlphaAtDistance"/>）。<br/>
     /// <b>画像の下へ潜らせる</b>: 内側の端は切り捨てるため、帯は画像の端の画素（画像と背景の混色）に<br/>
     /// 最大 1 画素掛かる。 影を画像より先に描けば隠れ、混色の下地が影になるため白い線が出ない。<br/>
-    /// <b>4 隅も同じ帯で塗る</b>: 辺の帯を隅の正方形まで伸ばし、横の帯と縦の帯を重ねて合成する<br/>
-    /// （放射グラデーションは描画 API ごとに半径・中心の解釈が揺れ、隅だけ濃い点や薄い筋として見えた。 実測）。
+    /// <b>4 隅</b>は<b>画像の隅の頂点からの距離</b>（斜めの距離）で濃さを決める。 辺と同じ濃さの変化が<br/>
+    /// 斜めにもそのまま続くため、四角い塊や濃い点にならない（辺とは重ねない。 重ねると隅だけ濃くなる）。
     /// </remarks>
     public static IReadOnlyList<ShadowBand> BuildDeviceBands(double x, double y, double width, double height, double scaling)
     {
@@ -145,29 +145,88 @@ public static class ShadowPlan
             return bands;
         }
 
-        // 帯は隅の正方形まで伸ばす（横の帯と縦の帯が隅で重なって合成され、隅の濃さになる）
-        var spanX = pixelsWide + (2 * extent);
-        var spanY = pixelsHigh + (2 * extent);
+        // 4 辺は画像の幅・高さいっぱい（隅は AddCornerBands が塗る。 重ねない）
         for (var i = 0; i < extent; i++)
         {
             // i = 0 が画像に接する画素。 画素の中心までの距離で濃さを決める（勾配の見た目と同じ）
             var argb = ColorAtDistance((i + 0.5) / scaling);
-            bands.Add(new ShadowBand(left - extent, top - 1 - i, spanX, 1, argb));
-            bands.Add(new ShadowBand(left - extent, bottom + i, spanX, 1, argb));
-            bands.Add(new ShadowBand(left - 1 - i, top - extent, 1, spanY, argb));
-            bands.Add(new ShadowBand(right + i, top - extent, 1, spanY, argb));
+            bands.Add(new ShadowBand(left, top - 1 - i, pixelsWide, 1, argb));
+            bands.Add(new ShadowBand(left, bottom + i, pixelsWide, 1, argb));
+            bands.Add(new ShadowBand(left - 1 - i, top, 1, pixelsHigh, argb));
+            bands.Add(new ShadowBand(right + i, top, 1, pixelsHigh, argb));
         }
 
         // 画像の端の画素（切り捨てた行・列）も覆う: 画像の描画側は端の画素を切り捨てたり
         // 切り上げたりし、floor の行・列が画像でも影でも塗られず<b>背景（白）が残る</b>ことがある（実測:
         // 拡大率によって画像の上辺に 1 画素の白い線）。 画像がその画素を塗る場合は画像に隠れる。
+        // 行の帯と列の帯は重ねない（重なると四隅の 1 画素だけ濃い点になる）。
         var edgeArgb = ColorAtDistance(0.5 / scaling);
-        bands.Add(new ShadowBand(left - extent, top, spanX, 1, edgeArgb));
-        bands.Add(new ShadowBand(left - extent, bottom - 1, spanX, 1, edgeArgb));
-        bands.Add(new ShadowBand(left, top - extent, 1, spanY, edgeArgb));
-        bands.Add(new ShadowBand(right - 1, top - extent, 1, spanY, edgeArgb));
+        bands.Add(new ShadowBand(left, top, pixelsWide, 1, edgeArgb));
+        if (pixelsHigh > 1)
+        {
+            bands.Add(new ShadowBand(left, bottom - 1, pixelsWide, 1, edgeArgb));
+        }
+
+        var columnHeight = pixelsHigh - 2;
+        if (columnHeight > 0)
+        {
+            bands.Add(new ShadowBand(left, top + 1, 1, columnHeight, edgeArgb));
+            if (pixelsWide > 1)
+            {
+                bands.Add(new ShadowBand(right - 1, top + 1, 1, columnHeight, edgeArgb));
+            }
+        }
+
+        // 4 隅（画像の外側の正方形）。 中心は画像の隅の頂点であり、距離は斜めに測る
+        AddCornerBands(bands, left, top, extent, stepX: -1, stepY: -1, scaling);      // 左上
+        AddCornerBands(bands, right - 1, top, extent, stepX: 1, stepY: -1, scaling);  // 右上
+        AddCornerBands(bands, right - 1, bottom - 1, extent, stepX: 1, stepY: 1, scaling); // 右下
+        AddCornerBands(bands, left, bottom - 1, extent, stepX: -1, stepY: 1, scaling);     // 左下
 
         return bands;
+    }
+
+    /// <summary>1 隅分の帯（画素）を追加する。</summary>
+    /// <param name="bands">追加先。</param>
+    /// <param name="cornerX">画像の隅の頂点に接する画素の X（画像の内側の端）。</param>
+    /// <param name="cornerY">画像の隅の頂点に接する画素の Y（画像の内側の端）。</param>
+    /// <param name="extent">隅の正方形の一辺（画素）。</param>
+    /// <param name="stepX">外側へ進む向き（左の隅は -1、右の隅は +1）。</param>
+    /// <param name="stepY">外側へ進む向き（上の隅は -1、下の隅は +1）。</param>
+    /// <param name="scaling">DIP → 物理ピクセルの倍率。</param>
+    /// <remarks>
+    /// 濃さは<b>画像の隅の頂点からの距離</b>（<c>√(dx² + dy²)</c>）で決めるため、辺の濃さの変化が<br/>
+    /// 斜めにもそのまま続く（隅だけ濃い点や四角い塊にならない）。 同じ濃さが続く画素は 1 本の帯へまとめる<br/>
+    /// （描画の呼び出しを減らす。 濃さは画素ごとに単調に薄くなるため、まとめても結果は変わらない）。
+    /// </remarks>
+    private static void AddCornerBands(List<ShadowBand> bands, int cornerX, int cornerY, int extent, int stepX, int stepY, double scaling)
+    {
+        for (var row = 0; row < extent; row++)
+        {
+            var y = cornerY + (stepY * (row + 1));
+            var dy = row + 0.5;
+            var column = 0;
+            while (column < extent)
+            {
+                var dx = column + 0.5;
+                var argb = ColorAtDistance(Math.Sqrt((dx * dx) + (dy * dy)) / scaling);
+                var run = 1;
+                while (column + run < extent)
+                {
+                    var next = column + run + 0.5;
+                    if (ColorAtDistance(Math.Sqrt((next * next) + (dy * dy)) / scaling) != argb)
+                    {
+                        break;
+                    }
+
+                    run++;
+                }
+
+                var x = stepX < 0 ? cornerX - column - run : cornerX + 1 + column;
+                bands.Add(new ShadowBand(x, y, run, 1, argb));
+                column += run;
+            }
+        }
     }
     /// <summary>1 辺分の計画を生成する。</summary>
     /// <param name="side">辺。</param>

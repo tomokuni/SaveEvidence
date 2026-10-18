@@ -103,14 +103,62 @@ public class ShadowPlanTests
         Assert.True(stops[^1].Argb >> 24 < 0x10);
     }
     [Fact]
-    internal void 帯_は4辺それぞれ画素の数だけ作られる()
+    internal void 帯_は4辺と4隅の画素を1本ずつ覆う()
     {
-        // 10 DIP × 100%（scaling 1） → 1 辺 10 画素 × 4 辺
+        // 10 DIP × 100%（scaling 1） → 影の広がりは 10 画素
         var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
 
-        // 4 辺 × 10 画素 + 画像の端の画素を覆う 4 本（切り捨てた行・列の白い線を防ぐ）
-        Assert.Equal(44, bands.Count);
+        // 4 辺 × 10 画素 + 画像の端の画素を覆う 4 本（切り捨てた行・列の白い線を防ぐ）より多い
+        Assert.True(bands.Count > 44);
+
+        // どの帯も 1 画素の高さ（横の帯・隅の帯）か 1 画素の幅（縦の帯）である
         Assert.All(bands, b => Assert.True(b.Width == 1 || b.Height == 1));
+    }
+
+    [Fact]
+    internal void 帯_は影の範囲を隙間なく一度だけ覆う()
+    {
+        // 画像の外側（影の範囲）を走査し、どの画素もちょうど 1 本の帯で塗られることを確かめる
+        // （重なると隅だけ濃くなり、隙間があると背景の白い線が見える）
+        var bands = ShadowPlan.BuildDeviceBands(100, 100, 20, 20, scaling: 1);
+        var covered = new Dictionary<(int X, int Y), int>();
+        foreach (var band in bands)
+        {
+            for (var y = band.Y; y < band.Y + band.Height; y++)
+            {
+                for (var x = band.X; x < band.X + band.Width; x++)
+                {
+                    covered[(x, y)] = covered.GetValueOrDefault((x, y)) + 1;
+                }
+            }
+        }
+
+        // 画像の外側 10 画素のリング（30 × 30 − 20 × 20 = 500 画素）
+        for (var y = 90; y < 120; y++)
+        {
+            for (var x = 90; x < 120; x++)
+            {
+                if (x >= 100 && x < 120 && y >= 100 && y < 120)
+                {
+                    continue;
+                }
+
+                Assert.Equal(1, covered.GetValueOrDefault((x, y)));
+            }
+        }
+
+        // 画像の端の行・列も 1 本だけ（画像が端の画素を切り捨てても下地が影になる）
+        for (var x = 100; x < 120; x++)
+        {
+            Assert.Equal(1, covered.GetValueOrDefault((x, 100)));
+            Assert.Equal(1, covered.GetValueOrDefault((x, 119)));
+        }
+
+        for (var y = 100; y < 120; y++)
+        {
+            Assert.Equal(1, covered.GetValueOrDefault((100, y)));
+            Assert.Equal(1, covered.GetValueOrDefault((119, y)));
+        }
     }
 
     [Fact]
@@ -130,35 +178,26 @@ public class ShadowPlanTests
     }
 
     [Fact]
-    internal void 帯_は隅の正方形まで伸びて横と縦が重なる()
+    internal void 帯_は隅の濃さを斜めの距離で決める()
     {
         var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
 
-        static int Coverage(IReadOnlyList<ShadowBand> bands, int x, int y)
-        {
-            var count = 0;
-            foreach (var band in bands)
-            {
-                if (x >= band.X && x < band.X + band.Width && y >= band.Y && y < band.Y + band.Height)
-                {
-                    count++;
-                }
-            }
+        static uint ColorAt(IReadOnlyList<ShadowBand> bands, int x, int y)
+            => bands.First(b => x >= b.X && x < b.X + b.Width && y >= b.Y && y < b.Y + b.Height).Argb;
 
-            return count;
-        }
+        // 隅の最初の画素は辺の最初の画素と同じ濃さ（同じ濃さの変化を使う。 隅だけ濃くしない）
+        Assert.Equal(ColorAt(bands, 200, 99), ColorAt(bands, 99, 99));
 
-        // 辺の中央は 1 本だけ（帯を重ねて濃くしない）
-        Assert.Equal(1, Coverage(bands, 200, 95));
-        Assert.Equal(1, Coverage(bands, 200, 155));
-        Assert.Equal(1, Coverage(bands, 95, 120));
-        Assert.Equal(1, Coverage(bands, 305, 120));
+        // 隅も外側へ向けて薄くなる（四角い塊にならず、辺と同じ向きに変化する）
+        Assert.True(ColorAt(bands, 99, 95) >> 24 > (ColorAt(bands, 95, 95) >> 24));
+        Assert.True(ColorAt(bands, 95, 95) >> 24 > (ColorAt(bands, 91, 95) >> 24));
 
-        // 隅は横の帯と縦の帯が重なる（合成されて隅の濃さになる = 放射グラデーションを使わない）
-        Assert.Equal(2, Coverage(bands, 95, 95));
-        Assert.Equal(2, Coverage(bands, 304, 95));
-        Assert.Equal(2, Coverage(bands, 304, 154));
-        Assert.Equal(2, Coverage(bands, 95, 154));
+        // 対角線上でも隅の頂点から離れるほど薄くなる
+        Assert.True(ColorAt(bands, 99, 99) >> 24 > (ColorAt(bands, 95, 95) >> 24));
+        Assert.True(ColorAt(bands, 95, 95) >> 24 > (ColorAt(bands, 91, 91) >> 24));
+
+        // 隅の各画素は 1 本の帯で塗られる（辺と重ねない）
+        Assert.Equal(1, bands.Count(b => 99 >= b.X && 99 < b.X + b.Width && 99 >= b.Y && 99 < b.Y + b.Height));
     }
 
     [Fact]
@@ -167,10 +206,10 @@ public class ShadowPlanTests
         var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
 
         // 画像の描画側は端の画素を切り捨てることがあり、その行・列が背景（白）のまま残るため
-        Assert.Contains(bands, b => b.X == 90 && b.Y == 100 && b.Width == 220 && b.Height == 1);
-        Assert.Contains(bands, b => b.X == 90 && b.Y == 149 && b.Width == 220 && b.Height == 1);
-        Assert.Contains(bands, b => b.X == 100 && b.Y == 90 && b.Width == 1 && b.Height == 70);
-        Assert.Contains(bands, b => b.X == 299 && b.Y == 90 && b.Width == 1 && b.Height == 70);
+        Assert.Contains(bands, b => b.X == 100 && b.Y == 100 && b.Width == 200 && b.Height == 1);
+        Assert.Contains(bands, b => b.X == 100 && b.Y == 149 && b.Width == 200 && b.Height == 1);
+        Assert.Contains(bands, b => b.X == 100 && b.Y == 101 && b.Width == 1 && b.Height == 48);
+        Assert.Contains(bands, b => b.X == 299 && b.Y == 101 && b.Width == 1 && b.Height == 48);
     }
 
     [Fact]
@@ -178,8 +217,8 @@ public class ShadowPlanTests
     {
         var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1.25);
 
-        // 10 DIP × 125% = 12.5 → 12 画素（Math.Round の既定 = 偶数丸め）× 4 辺 + 端の 4 本
-        Assert.Equal(52, bands.Count);
+        // 10 DIP × 125% = 12.5 → 12 画素（Math.Round の既定 = 偶数丸め）× 4 辺 + 端の 4 本 + 4 隅
+        Assert.True(bands.Count > 52);
     }
 
     [Fact]

@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 public static class AppPalette
 {
     /// <summary>画像領域（プレビューの下地）の背景色（明色）。</summary>
-    public const uint ImageAreaLight = 0xFFFAFAFA;
+    public const uint ImageAreaLight = 0xFFF7F7F7;
 
     /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色（明色）。</summary>
     public const uint ListBackgroundLight = 0xFFF2F2F2;
@@ -24,7 +24,7 @@ public static class AppPalette
     public const uint ImageAreaDark = 0xFF202020;
 
     /// <summary>ナビゲーション パネルの背景色（明色）。</summary>
-    public const uint NavPanelLight = 0xFFE6E6E6;
+    public const uint NavPanelLight = 0xFFF0F0F0;
 
     /// <summary>ナビゲーション パネルの背景色（暗色）。 画像領域より少し明るくして境目を見せる。</summary>
     public const uint NavPanelDark = 0xFF2B2B2B;

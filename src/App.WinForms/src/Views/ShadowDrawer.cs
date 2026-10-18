@@ -12,7 +12,7 @@ namespace EsUtil.SaveEvidence.App.WinForms.Views;
 /// <b>1 画素の帯を単色で塗るだけ</b>である（<see cref="ShadowPlan.BuildDeviceBands"/>）: GDI+ の<br/>
 /// <c>LinearGradientBrush</c> は軸の外側を繰り返し、<b>最も濃い色の 1 画素を影の外側へ描く</b>（実測）。<br/>
 /// 画素単位の帯を塗れば、その現象も端の半透明も起こらない。<br/>
-/// <b>4 隅も帯で塗る</b>（横の帯と縦の帯が隅で重なって合成される）。
+/// <b>4 隅も帯で塗る</b>（隅の濃さは画像の隅の頂点からの斜めの距離で決まる）。
 /// </remarks>
 internal static class ShadowDrawer
 {

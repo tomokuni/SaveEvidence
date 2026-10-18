@@ -82,18 +82,16 @@ internal sealed class ThumbnailTileView : Grid
     /// <param name="host">画像を置く要素。</param>
     /// <remarks>
     /// 辺の幅・濃さの変化は <see cref="ShadowPlan"/>（App.Core。 4 UI 版で共通）が単一所有する。<br/>
-    /// 上辺と下辺は左右の角まで広げ（角の隙間を埋め）、左右の辺は画像の高さいっぱいに置く。
+    /// 上辺と下辺は<b>画像の幅ちょうど</b>に置く（左右の角は隅の要素が塗る。 広げると隅と重なって濃い四角になる）。
     /// </remarks>
     private void AddShadowParts(Grid host)
     {
-        var blur = ShadowPlan.BlurRadius;
-
         foreach (var edge in ShadowPlan.Edges)
         {
             var margin = edge.Side switch
             {
-                ShadowSide.Top => new Thickness(-blur, -edge.Extent, -blur, 0),
-                ShadowSide.Bottom => new Thickness(-blur, 0, -blur, -edge.Extent),
+                ShadowSide.Top => new Thickness(0, -edge.Extent, 0, 0),
+                ShadowSide.Bottom => new Thickness(0, 0, 0, -edge.Extent),
                 ShadowSide.Left => new Thickness(-edge.Extent, 0, 0, 0),
                 _ => new Thickness(0, 0, -edge.Extent, 0),
             };

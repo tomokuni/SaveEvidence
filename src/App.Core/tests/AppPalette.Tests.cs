@@ -11,11 +11,11 @@ public class AppPaletteTests
 {
     [Fact]
     internal void 画像領域_は明色で指定色を使う()
-        => Assert.Equal(0xFFFAFAFAu, AppPalette.ImageArea(isDark: false));
+        => Assert.Equal(0xFFF7F7F7u, AppPalette.ImageArea(isDark: false));
 
     [Fact]
     internal void ナビパネル_は明色で指定色を使う()
-        => Assert.Equal(0xFFE6E6E6u, AppPalette.NavPanel(isDark: false));
+        => Assert.Equal(0xFFF0F0F0u, AppPalette.NavPanel(isDark: false));
 
     [Fact]
     internal void 暗色_は明色より暗い()

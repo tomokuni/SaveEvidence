@@ -336,8 +336,8 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 | 面 | 明色 | 暗色 | 取得 |
 | --- | --- | --- | --- |
-| 画像領域（プレビューの下地） | `#FAFAFA` | `#202020` | `ImageArea(bool isDark)` / `ImageAreaDrawingColor(bool isDark)` |
-| ナビゲーション パネル | `#E6E6E6` | `#2B2B2B` | `NavPanel(bool isDark)` |
+| 画像領域（プレビューの下地） | `#F7F7F7` | `#202020` | `ImageArea(bool isDark)` / `ImageAreaDrawingColor(bool isDark)` |
+| ナビゲーション パネル | `#F0F0F0` | `#2B2B2B` | `NavPanel(bool isDark)` |
 | ページ（ウィンドウ）の下地 | `#FFFFFF` | `#202020` | `Page(bool isDark)` |
 | ナビゲーション項目の選択中の背景（薄いグレー） | `#DEDEDE` | `#373737` | `NavItemSelected(bool isDark)` |
 | ナビゲーション項目の選択マーク（左端の青） | `#0067C0` | `#4CC2FF` | `NavItemSelectionAccent(bool isDark)` |
@@ -428,17 +428,17 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 | `CornerStops` | 11 件 | 隅の放射グラデーションの停止点（中心が最も濃い。 隅を 1 つの要素で塗る WinUI 3 の一覧だけが使う） |
 | `AlphaAtDistance(double)` | 端 0.245 → 10 DIP で 0.005 | 画像の端から指定距離の不透明度（実測プロファイル） |
 | `ColorAtDistance(double)` | 黒 + 上記の透過度 | 指定距離の色（`0xAARRGGBB`） |
-| `BuildDeviceBands(x, y, w, h, scaling)` | 4 × 画素数 + 4 件 | 4 辺と 4 隅を**1 画素の帯**（`ShadowBand`）へ落とした計画。 各 UI 版は単色で塗るだけ（隅は横の帯と縦の帯が重なって合成される） |
+| `BuildDeviceBands(x, y, w, h, scaling)` | 4 × 画素数 + 4 + 隅の行数 | 4 辺と 4 隅を**1 画素の帯**（`ShadowBand`）へ落とした計画。 各 UI 版は単色で塗るだけ（隅の濃さは画像の隅の頂点からの斜めの距離で決める） |
 
 **型（1 型 1 ファイル）**: `ShadowSide`（辺）・`ShadowStop`（停止点 = 位置と色）・`ShadowInsets`（余白）・`ShadowEdgePlan`（辺の計画）・`ShadowBand`（1 画素の帯）・`ShadowPlan`（上表）。
 
 **4 辺を同じ濃さにする理由**: 影を下方向へずらすと上辺だけが薄くなり、画像と影の間に白っぽい隙間が見えます（実測で指摘）。 4 辺とも画像の端で最も濃く、外側へ向けて同じ割合で薄くします。
 
-**描き方**は 1 通りです。 `BuildDeviceBands` の帯（1 画素）を**単色で塗るだけ**です（4 辺も 4 隅も同じ帯）。 各 UI 版は自分の描画 API へ写します（AvaloniaUI は `DrawRectangle` と `BoxShadow`（一覧のサムネイル）、WinUI 3 は `Border` / Skia の `DrawRect` と `RadialGradientBrush`（一覧の隅だけ）、WinForms と MewUI は GDI+ / Skia の `FillRectangle`）。
+**描き方**は 1 通りです。 `BuildDeviceBands` の帯（1 画素）を**単色で塗るだけ**です（4 辺も 4 隅も同じ帯。 隅の帯は行ごとに同じ濃さの画素をまとめて 1 本にしてあります）。 各 UI 版は自分の描画 API へ写します（AvaloniaUI は `DrawRectangle` と `BoxShadow`（一覧のサムネイル）、WinUI 3 は `Border` / Skia の `DrawRect` と `RadialGradientBrush`（一覧の隅だけ）、WinForms と MewUI は GDI+ / Skia の `FillRectangle`）。
 
-**隅に放射グラデーションを使わない理由**: 放射グラデーションは描画 API ごとに半径・中心の解釈が揺れ、隅だけ濃い点や薄い筋として見えました（実測）。 帯を隅の正方形まで伸ばして**横の帯と縦の帯を重ねる**と、重なった画素は `1-(1-横)(1-縦)` の濃さになり、どの UI 版でも同じ合成結果になります（本物のぼかしの隅と同じく、隅は辺より濃くなります）。
+**隅に放射グラデーションを使わない理由**: 放射グラデーションは描画 API ごとに半径・中心の解釈が揺れ、隅だけ濃い点や薄い筋として見えました（実測）。 隅の画素の濃さは**画像の隅の頂点からの距離**（斜めの距離 `√(dx²+dy²)`）で決めます。 辺と同じ濃さの変化が斜めにもそのまま続くため、四角い塊や濃い点になりません（辺の帯と隅の帯は重ねません。 重ねると隅だけ濃くなります）。
 
-**隅だけ重ねる**: 辺の中央は 1 本の帯だけ、隅は横の帯と縦の帯の 2 本が重なります（意図した合成です）。
+**重ねない**: 辺の帯どうし・辺と隅の帯・画像の端を覆う帯は重なりません（重なるとその画素だけ濃くなります。 実測: 隅の 1 画素が濃い点になった）。
 
 **画像と影の間**には枠線・余白を置きません（辺と隅の矩形は画像の境界から外側へ連続します）。 画像の外側に影の余地が無い場合（画像が領域の端まで達している場合）は、その辺の影は見えません。
 
