@@ -136,14 +136,16 @@
         <Grid Grid.Row="1" x:Name="ImageAreaGrid"
               Background="{DynamicResource ImageAreaBackgroundBrush}"
               PointerPressed="OnImageAreaPointerPressed">
+            <!-- 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）。
+                 画像の背後へ置く（画像の端のアンチエイリアスを影と混ぜ、画像との間に白い線を作らない）。 -->
+            <controls:ImageShadowOverlay x:Name="ImageShadow"/>
+
             <!-- 高レベル複合コントロール（ズーム・パン・Fit + 領域選択 + ルーペを内包。ScrollViewer 不使用。
                  ズーム率・座標変換・オーバーレイの配線を一本化した CropViewControl）
                  自動切り出し（LineDetection 検出）のホバー強調も `HighlightSourceRect` / `HighlightAppearance` で
                  本コントロールへ委譲する（ホストはコントロールを重ねない）。 -->
 <crop:CropViewControl x:Name="CropView"
                            Background="Transparent"/>
-            <!-- 画像の 4 辺の影（幅・濃さは App.Core の ShadowPlan が単一所有する） -->
-            <controls:ImageShadowOverlay x:Name="ImageShadow"/>
 
         </Grid>
 

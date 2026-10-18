@@ -102,34 +102,7 @@ internal static partial class IconLoader
         using var bitmap = new SKBitmap(info);
         using (var canvas = new SKCanvas(bitmap))
         {
-            canvas.Clear(SKColors.Transparent);
-
-            using var path = LoadPath(fileName);
-
-            // 図形の実寸（余白を除いた外接矩形）を一辺いっぱいへ広げる。
-            // Avalonia 版の PathIcon はジオメトリの外接矩形を枠いっぱいへ引き伸ばすため、
-            // SVG の viewBox（24x24）基準で描くとアイコンだけが小さく見える（実測）
-            var bounds = path.Bounds;
-            if (bounds.Width > 0 && bounds.Height > 0)
-            {
-                var scale = Math.Min(size / bounds.Width, size / bounds.Height);
-                canvas.Translate(
-                    ((size - (bounds.Width * scale)) / 2f) - (bounds.Left * scale),
-                    ((size - (bounds.Height * scale)) / 2f) - (bounds.Top * scale));
-                canvas.Scale(scale);
-
-                using var paint = new SKPaint
-                {
-                    IsAntialias = true,
-                    Style = SKPaintStyle.Fill,
-                    Color = new SKColor(
-                        (byte)((argb >> 16) & 0xFF),
-                        (byte)((argb >> 8) & 0xFF),
-                        (byte)(argb & 0xFF),
-                        (byte)((argb >> 24) & 0xFF)),
-                };
-                canvas.DrawPath(path, paint);
-            }
+            Draw(canvas, fileName, size, argb);
         }
 
         var image = new WriteableBitmap(size, size);
@@ -142,6 +115,45 @@ internal static partial class IconLoader
         return image;
     }
 
+    /// <summary>指定 SVG をキャンバスいっぱいへ描く（透明でクリアしてから描く）。</summary>
+    /// <param name="canvas">描画先（<paramref name="size"/> の正方形）。</param>
+    /// <param name="fileName">SVG ファイル名。</param>
+    /// <param name="size">一辺（ピクセル）。</param>
+    /// <param name="argb">描画色（<c>0xAARRGGBB</c>）。</param>
+    /// <remarks>
+    /// 図形の実寸（余白を除いた外接矩形）を一辺いっぱいへ広げる。 Avalonia 版の <c>PathIcon</c> は<br/>
+    /// ジオメトリの外接矩形を枠いっぱいへ引き伸ばすため、SVG の viewBox（24x24）基準で描くと<br/>
+    /// アイコンだけが小さく見える（実測）。 ウィンドウ アイコンの生成も本メソッドを共用する。
+    /// </remarks>
+    public static void Draw(SKCanvas canvas, string fileName, int size, uint argb)
+    {
+        canvas.Clear(SKColors.Transparent);
+
+        using var path = LoadPath(fileName);
+        var bounds = path.Bounds;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
+
+        var scale = Math.Min(size / bounds.Width, size / bounds.Height);
+        canvas.Translate(
+            ((size - (bounds.Width * scale)) / 2f) - (bounds.Left * scale),
+            ((size - (bounds.Height * scale)) / 2f) - (bounds.Top * scale));
+        canvas.Scale(scale);
+
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            Color = new SKColor(
+                (byte)((argb >> 16) & 0xFF),
+                (byte)((argb >> 8) & 0xFF),
+                (byte)(argb & 0xFF),
+                (byte)((argb >> 24) & 0xFF)),
+        };
+        canvas.DrawPath(path, paint);
+    }
     /// <summary>埋め込みリソースから SVG のテキストを読み込む。</summary>
     /// <param name="fileName">SVG ファイル名。</param>
     /// <returns>SVG のテキスト。 読み込めない場合は空文字。</returns>

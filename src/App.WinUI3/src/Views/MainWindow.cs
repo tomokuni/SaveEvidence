@@ -133,6 +133,13 @@ internal sealed class MainWindow : Window
 
         SelectPage(_currentPage, force: true);
 
+        // ウィンドウ（タスク バー）アイコンを他の UI 版と同じアイコンにする。
+        // WinUI 3 はアイコン ファイルのパスしか受け付けないため、共有 SVG から ICO を書き出して渡す
+        if (WindowIconFile.Ensure() is { Length: > 0 } iconPath)
+        {
+            AppWindow.SetIcon(iconPath);
+        }
+
         // 保存済みの位置・サイズ・表示状態を復元する（表示前でも AppWindow は操作できる）
         WindowPlacementStore.Restore(this, settings.Current);
 

@@ -32,6 +32,13 @@ internal sealed class ImageShadowOverlay : Canvas
     {
         IsHitTestVisible = false;
 
+        // 影は画像の外側へ 10 DIP 広がるため、プレビュー領域の外（ツールバー・ステータスバー）へ
+        // 描かないよう自分の領域で切り取る（画像が Fit より大きいと影の位置が領域の外へ出る）
+        SizeChanged += (_, _) => Clip = new RectangleGeometry
+        {
+            Rect = new Rect(0, 0, ActualWidth, ActualHeight),
+        };
+
         foreach (var edge in ShadowPlan.Edges)
         {
             var part = new Border { Background = CreateEdgeBrush(edge), IsHitTestVisible = false };
@@ -54,6 +61,7 @@ internal sealed class ImageShadowOverlay : Canvas
 
         _crop = crop;
         crop.ViewportChanged += (_, _) => Update();
+        Loaded += (_, _) => Update();
         Update();
     }
 
@@ -82,31 +90,41 @@ internal sealed class ImageShadowOverlay : Canvas
         }
 
         var image = _crop.ImageRectViewport();
+
+        // 物理ピクセルの格子へ合わせる（半端な位置に置くと端の画素が半透明になり、
+        // 画像との間に「白い線」「黒い線」として見える）
+        var scale = XamlRoot?.RasterizationScale ?? 1.0;
         var edges = ShadowPlan.BuildEdgeRects(image.X, image.Y, image.Width, image.Height);
         for (var i = 0; i < _edges.Count && i < edges.Count; i++)
         {
-            Place(_edges[i], edges[i].X, edges[i].Y, edges[i].Width, edges[i].Height);
+            Place(_edges[i], edges[i].X, edges[i].Y, edges[i].Width, edges[i].Height, scale);
         }
 
         var corners = ShadowPlan.BuildCornerFills(image.X, image.Y, image.Width, image.Height);
         for (var i = 0; i < _corners.Count && i < corners.Count; i++)
         {
-            Place(_corners[i], corners[i].X, corners[i].Y, corners[i].Size, corners[i].Size);
+            Place(_corners[i], corners[i].X, corners[i].Y, corners[i].Size, corners[i].Size, scale);
         }
     }
 
-    /// <summary>要素を指定の位置と大きさへ置く。</summary>
+    /// <summary>要素を指定の位置と大きさへ置く（物理ピクセルの格子へ丸める）。</summary>
     /// <param name="part">対象の要素。</param>
-    /// <param name="x">左端。</param>
-    /// <param name="y">上端。</param>
-    /// <param name="width">幅。</param>
-    /// <param name="height">高さ。</param>
-    private static void Place(Border part, double x, double y, double width, double height)
+    /// <param name="x">左端（DIP）。</param>
+    /// <param name="y">上端（DIP）。</param>
+    /// <param name="width">幅（DIP）。</param>
+    /// <param name="height">高さ（DIP）。</param>
+    /// <param name="scale">DIP → 物理ピクセルの倍率。</param>
+    private static void Place(Border part, double x, double y, double width, double height, double scale)
     {
-        SetLeft(part, x);
-        SetTop(part, y);
-        part.Width = width;
-        part.Height = height;
+        var left = Math.Round(x * scale) / scale;
+        var top = Math.Round(y * scale) / scale;
+        var right = Math.Round((x + width) * scale) / scale;
+        var bottom = Math.Round((y + height) * scale) / scale;
+
+        SetLeft(part, left);
+        SetTop(part, top);
+        part.Width = Math.Max(0, right - left);
+        part.Height = Math.Max(0, bottom - top);
     }
 
     /// <summary>辺のグラデーションを生成する（位置 0 が外側）。</summary>

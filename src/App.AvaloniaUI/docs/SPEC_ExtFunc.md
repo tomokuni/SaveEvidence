@@ -74,6 +74,7 @@
 - 背景・文字色は **Fluent テーマの標準リソース（DynamicResource）** を参照し、テーマ切替に自動追従する（カスタム ThemeDictionaries は不使用）
 - **画像の周りは影だけ**にする（枠線・下地・角丸は描かない）
 - サムネイル影は `ShadowFactory` が `ShadowPlan`（App.Core）の値（`BlurRadius` / `ColorArgb`）から `BoxShadow` を生成する（キャプチャページの画像・Undo 一覧と同じ計画を使う。 位置はずらさない）
+- **キャプチャページの画像の影**は `ImageShadowOverlay` が同じ計画から描く（4 辺の線形 + 4 隅の放射グラデーション。 物理ピクセルの格子へ丸め、`ClipToBounds` でプレビュー領域の外へ描かない。 画像の背後へ置き、画像の端のアンチエイリアスが影と混ざるようにする）
 - ホバー時は影を非表示にし、一覧の項目（`ListBoxItem`）の帯（`#DADADA`）を表示する
 
 ## 4. フォルダビュー

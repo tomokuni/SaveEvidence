@@ -6,22 +6,69 @@ namespace EsUtil.SaveEvidence.App.WinForms.Views;
 /// <summary>画像の 4 辺・4 隅へ影を描く描画層（WinForms / GDI+ 版）。</summary>
 /// <remarks>
 /// <b>適用パターン</b>: 描画層（描画手順をコントロールから分離する）。<br/>
-/// 幅・濃さの変化・矩形は <see cref="ShadowPlan"/>（App.Core）が単一所有するため、本クラスは<br/>
+/// 幅・濃さの変化は <see cref="ShadowPlan"/>（App.Core）が単一所有するため、本クラスは<br/>
 /// 「計画の 4 辺を線形グラデーションで、4 隅を放射グラデーションで塗る」手順だけを持つ<br/>
 /// （4 UI 版で同じ結果になる。 一覧のサムネイルとキャプチャページの画像が共用する）。<br/>
 /// <br/>
-/// <b>端数を丸めない理由</b>: 画像は端数のある位置へ描かれる。 影の矩形を整数へ丸めると、<br/>
-/// 画像と影の間に背景が 1 ピクセル筋状に見える（実測）。 計画の矩形をそのまま拡大し、<br/>
-/// アンチエイリアスで隣り合う塗りを連続させる。<br/>
-/// <br/>
-/// <b>画像側へ 1 ピクセル広げる理由</b>: 画像の描画位置は GDI+ が端数を丸めるため、通知された<br/>
-/// 表示矩形と最大 1 ピクセルずれる。 影を画像側へ広げておくと、そのずれが背景の筋として見えない<br/>
-/// （画像の端 1 ピクセルに最も濃い影が掛かる）。
+/// <b>整数の画素へ揃える理由</b>: 画像は GDI+ が端数を丸めた位置へ描く。 影の矩形を端数のまま<br/>
+/// 塗ると、GDI+ は塗りを切り捨てるため画像との間に背景が 1 ピクセル残り「白い線」に見える（実測）。<br/>
+/// 画像の端と同じ丸め（四捨五入）で矩形を組み立て、アンチエイリアスを切って隙間なく接させる。
 /// </remarks>
 internal static class ShadowDrawer
 {
-    /// <summary>画像側へ広げる量（ピクセル）。</summary>
-    private const int OverlapPixels = 1;
+    /// <summary>画像の 4 辺と 4 隅の矩形（ピクセル）を求める。</summary>
+    /// <param name="frame">影を落とす矩形（画像）。</param>
+    /// <param name="scaling">描画単位への倍率（DIP → ピクセル）。 1 の場合はそのまま。</param>
+    /// <returns>上辺・右辺・下辺・左辺・左上・右上・右下・左下の矩形（この順）。</returns>
+    public static IReadOnlyList<Rectangle> BuildRects(RectangleF frame, double scaling)
+    {
+        if (frame.Width <= 0 || frame.Height <= 0 || scaling <= 0)
+        {
+            return [];
+        }
+
+        var extent = (int)Math.Round(ShadowPlan.BlurRadius * scaling);
+        if (extent <= 0)
+        {
+            return [];
+        }
+
+        // 画像の端は GDI+ の描画と同じ四捨五入で合わせる（ずれると画素が 1 つ余る / 掛かる）
+        var left = (int)Math.Round(frame.X * scaling);
+        var top = (int)Math.Round(frame.Y * scaling);
+        var right = (int)Math.Round((frame.X + frame.Width) * scaling);
+        var bottom = (int)Math.Round((frame.Y + frame.Height) * scaling);
+        var width = Math.Max(0, right - left);
+        var height = Math.Max(0, bottom - top);
+
+        return
+        [
+            new Rectangle(left, top - extent, width, extent),
+            new Rectangle(right, top, extent, height),
+            new Rectangle(left, bottom, width, extent),
+            new Rectangle(left - extent, top, extent, height),
+            new Rectangle(left - extent, top - extent, extent, extent),
+            new Rectangle(right, top - extent, extent, extent),
+            new Rectangle(right, bottom, extent, extent),
+            new Rectangle(left - extent, bottom, extent, extent),
+        ];
+    }
+
+    /// <summary>影を塗る図形（表示領域の切り抜きに使う）を組み立てる。</summary>
+    /// <param name="frame">影を落とす矩形（画像）。</param>
+    /// <param name="scaling">描画単位への倍率（DIP → ピクセル）。</param>
+    /// <returns>影の帯の図形（<see cref="Region"/> が複製するため、呼び出し側が破棄する）。</returns>
+    public static GraphicsPath BuildRegionPath(RectangleF frame, double scaling)
+    {
+        // 重なった矩形を打ち消さないよう和集合にする（既定の Alternate は境界の画素が抜ける）
+        var path = new GraphicsPath { FillMode = FillMode.Winding };
+        foreach (var rect in BuildRects(frame, scaling))
+        {
+            path.AddRectangle(rect);
+        }
+
+        return path;
+    }
 
     /// <summary>画像の 4 辺・4 隅へ影を描く。</summary>
     /// <param name="graphics">描画先。</param>
@@ -29,136 +76,102 @@ internal static class ShadowDrawer
     /// <param name="scaling">描画単位への倍率（DIP → ピクセル）。 1 の場合はそのまま描く。</param>
     public static void Draw(Graphics graphics, RectangleF frame, double scaling)
     {
-        if (frame.Width <= 0 || frame.Height <= 0 || scaling <= 0)
+        var rects = BuildRects(frame, scaling);
+        if (rects.Count < 8)
         {
             return;
         }
 
+        // 端の画素を半透明にしない（半端な位置へ描くと、画像との間に線として見える）
         var smoothing = graphics.SmoothingMode;
-        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        var offsetMode = graphics.PixelOffsetMode;
+        graphics.SmoothingMode = SmoothingMode.None;
+        graphics.PixelOffsetMode = PixelOffsetMode.None;
         try
         {
-            foreach (var fill in ShadowPlan.BuildEdgeRects(frame.X, frame.Y, frame.Width, frame.Height))
-            {
-                var area = Scale(fill.X, fill.Y, fill.Width, fill.Height, scaling);
-                FillEdge(graphics, GrowEdge(area, fill.Edge), fill.Edge);
-            }
+            FillEdge(graphics, rects[0], ShadowPlan.Edge(ShadowSide.Top));
+            FillEdge(graphics, rects[1], ShadowPlan.Edge(ShadowSide.Right));
+            FillEdge(graphics, rects[2], ShadowPlan.Edge(ShadowSide.Bottom));
+            FillEdge(graphics, rects[3], ShadowPlan.Edge(ShadowSide.Left));
 
-            foreach (var fill in ShadowPlan.BuildCornerFills(frame.X, frame.Y, frame.Width, frame.Height))
-            {
-                var area = Scale(fill.X, fill.Y, fill.Size, fill.Size, scaling);
-                FillCorner(graphics, GrowCorner(area, fill), fill);
-            }
+            FillCorner(graphics, rects[4], 1, 1);
+            FillCorner(graphics, rects[5], 0, 1);
+            FillCorner(graphics, rects[6], 0, 0);
+            FillCorner(graphics, rects[7], 1, 0);
         }
         finally
         {
             graphics.SmoothingMode = smoothing;
+            graphics.PixelOffsetMode = offsetMode;
         }
     }
 
-    /// <summary>計画の矩形を描画単位へ拡大する。</summary>
-    /// <param name="x">左端。</param>
-    /// <param name="y">上端。</param>
-    /// <param name="width">幅。</param>
-    /// <param name="height">高さ。</param>
-    /// <param name="scaling">倍率。</param>
-    /// <returns>描画単位の矩形。</returns>
-    private static RectangleF Scale(double x, double y, double width, double height, double scaling)
-        => new(
-            (float)(x * scaling),
-            (float)(y * scaling),
-            (float)(width * scaling),
-            (float)(height * scaling));
-
-    /// <summary>辺の矩形を画像側へ広げる。</summary>
-    /// <param name="rect">辺の矩形。</param>
-    /// <param name="edge">辺（広げる向きを決める）。</param>
-    /// <returns>画像側へ広げた矩形。</returns>
-    private static RectangleF GrowEdge(RectangleF rect, ShadowEdgePlan edge)
-        => edge.Side switch
-        {
-            ShadowSide.Top => RectangleF.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom + OverlapPixels),
-            ShadowSide.Bottom => RectangleF.FromLTRB(rect.Left, rect.Top - OverlapPixels, rect.Right, rect.Bottom),
-            ShadowSide.Left => RectangleF.FromLTRB(rect.Left, rect.Top, rect.Right + OverlapPixels, rect.Bottom),
-            _ => RectangleF.FromLTRB(rect.Left - OverlapPixels, rect.Top, rect.Right, rect.Bottom),
-        };
-
-    /// <summary>隅の矩形を画像側（放射グラデーションの中心の向き）へ広げる。</summary>
-    /// <param name="rect">隅の矩形。</param>
-    /// <param name="fill">隅の計画（中心の向き）。</param>
-    /// <returns>画像側へ広げた矩形。</returns>
-    private static RectangleF GrowCorner(RectangleF rect, ShadowCornerFill fill)
-        => RectangleF.FromLTRB(
-            fill.CenterX >= 1 ? rect.Left : rect.Left - OverlapPixels,
-            fill.CenterY >= 1 ? rect.Top : rect.Top - OverlapPixels,
-            fill.CenterX >= 1 ? rect.Right + OverlapPixels : rect.Right,
-            fill.CenterY >= 1 ? rect.Bottom + OverlapPixels : rect.Bottom);
-
     /// <summary>影の 1 辺分のグラデーションを描く。</summary>
     /// <param name="graphics">描画先。</param>
-    /// <param name="area">塗る矩形（画像側へ 1 ピクセル広げたもの。 グラデーションの軸もこの矩形で決める）。</param>
+    /// <param name="rect">描く矩形（画像の外側）。</param>
     /// <param name="edge">辺の計画（濃さの停止点と向き）。</param>
-    private static void FillEdge(Graphics graphics, RectangleF area, ShadowEdgePlan edge)
+    private static void FillEdge(Graphics graphics, Rectangle rect, ShadowEdgePlan edge)
     {
-        if (area.Width <= 0 || area.Height <= 0)
+        if (rect.Width <= 0 || rect.Height <= 0)
         {
             return;
         }
 
         // 始点を外側にする（位置 0 が外側になる）
         var start = edge.IsVertical
-            ? new PointF(area.Left, edge.IsOuterAtStart ? area.Top : area.Bottom)
-            : new PointF(edge.IsOuterAtStart ? area.Left : area.Right, area.Top);
+            ? new PointF(rect.Left, edge.IsOuterAtStart ? rect.Top : rect.Bottom)
+            : new PointF(edge.IsOuterAtStart ? rect.Left : rect.Right, rect.Top);
         var end = edge.IsVertical
-            ? new PointF(area.Left, edge.IsOuterAtStart ? area.Bottom : area.Top)
-            : new PointF(edge.IsOuterAtStart ? area.Right : area.Left, area.Top);
+            ? new PointF(rect.Left, edge.IsOuterAtStart ? rect.Bottom : rect.Top)
+            : new PointF(edge.IsOuterAtStart ? rect.Right : rect.Left, rect.Top);
 
         using var brush = new LinearGradientBrush(start, end, Color.Black, Color.Black)
         {
             InterpolationColors = ToColorBlend(edge.Stops),
         };
-        graphics.FillRectangle(brush, area);
+        graphics.FillRectangle(brush, rect);
     }
 
     /// <summary>影の 1 隅分の放射グラデーションを描く。</summary>
     /// <param name="graphics">描画先。</param>
-    /// <param name="area">塗る矩形（画像側へ 1 ピクセル広げたもの。 円の半径もこの矩形で決める）。</param>
-    /// <param name="fill">隅の計画（放射グラデーションの中心）。</param>
+    /// <param name="rect">隅の矩形（画像の外側）。</param>
+    /// <param name="centerX">中心の X（0〜1。 隅の矩形に対する相対位置）。</param>
+    /// <param name="centerY">中心の Y（0〜1）。</param>
     /// <remarks>
     /// GDI+ の <see cref="PathGradientBrush"/> は<b>中心から図形の輪郭へ</b>補間するため、半径 = 一辺の円を使えば<br/>
     /// 矩形の外側の距離に応じた濃さの変化（放射グラデーション）になる。 円の外側は塗らないよう矩形で切り抜く。
     /// </remarks>
-    private static void FillCorner(Graphics graphics, RectangleF area, ShadowCornerFill fill)
+    private static void FillCorner(Graphics graphics, Rectangle rect, int centerX, int centerY)
     {
-        if (area.Width <= 0 || area.Height <= 0)
+        if (rect.Width <= 0 || rect.Height <= 0)
         {
             return;
         }
 
         var center = new PointF(
-            (float)(area.X + (fill.CenterX * area.Width)),
-            (float)(area.Y + (fill.CenterY * area.Height)));
+            rect.Left + (centerX * rect.Width),
+            rect.Top + (centerY * rect.Height));
 
         using var path = new GraphicsPath();
         path.AddEllipse(new RectangleF(
-            center.X - area.Width,
-            center.Y - area.Height,
-            area.Width * 2,
-            area.Height * 2));
+            center.X - rect.Width,
+            center.Y - rect.Height,
+            rect.Width * 2,
+            rect.Height * 2));
 
         using var brush = new PathGradientBrush(path)
         {
             CenterPoint = center,
 
             // PathGradientBrush の色の変化は位置 0 が輪郭・1 が中心である（線形グラデーションとは逆）
-            InterpolationColors = ToCenterColorBlend(fill.Stops),
+            InterpolationColors = ToCenterColorBlend(ShadowPlan.CornerStops),
         };
 
         var state = graphics.Save();
         try
         {
-            graphics.SetClip(area);
-            graphics.FillRectangle(brush, area);
+            graphics.SetClip(rect);
+            graphics.FillRectangle(brush, rect);
         }
         finally
         {

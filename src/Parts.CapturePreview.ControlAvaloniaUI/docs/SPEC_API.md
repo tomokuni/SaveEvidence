@@ -421,6 +421,8 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 
 判断（実効ズーム率の導出・可否・遷移の適用・パン・スクロールバー・Fit 復帰）は UI 非依存コア `Parts.CapturePreview.Core` の `ZoomViewSession` が単一所有し、本コントロールは入力の変換・効果の適用・描画・通知の転送だけを担います。
 
+**描画**: 画像は `Image` の `RenderTransform`（`ScaleTransform` + `TranslateTransform`）で配置します。 補間はズーム時の画質を優先して高品質（`BitmapInterpolationMode.HighQuality`）とし、**画素の端はアンチエイリアスしません**（`EdgeMode.Aliased`）。 端を半透明で描くと、ホストが画像の外側へ影を置いたときに画像との間に白い線として見えるためです（他の UI 版の描画（Skia / GDI+）も端をぼかさない）。
+
 #### 5.7.1 ズーム遷移ルール
 
 | 操作 | 内容 |

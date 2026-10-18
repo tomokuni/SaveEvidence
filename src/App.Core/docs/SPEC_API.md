@@ -434,13 +434,15 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **4 辺を同じ濃さにする理由**: 影を下方向へずらすと上辺だけが薄くなり、画像と影の間に白っぽい隙間が見えます（実測で指摘）。 4 辺とも画像の端で最も濃く、外側へ向けて同じ割合で薄くします。
 
-**描き方**は 1 通りです。 `BuildEdgeRects` の 4 辺を `ShadowEdgePlan.Stops` の線形グラデーション（位置 0 が外側、1 が画像の端）で塗り、`BuildCornerFills` の 4 隅を `CornerStops` の**放射グラデーション**で塗ります。 各 UI 版は自分の描画 API へ写すだけです（AvaloniaUI は `BoxShadow` だけ、WinUI 3 は `LinearGradientBrush` / `RadialGradientBrush`、WinForms は GDI+ の `LinearGradientBrush` / `PathGradientBrush`、MewUI は Skia の `SKShader`）。
+**描き方**は 1 通りです。 `BuildEdgeRects` の 4 辺を `ShadowEdgePlan.Stops` の線形グラデーション（位置 0 が外側、1 が画像の端）で塗り、`BuildCornerFills` の 4 隅を `CornerStops` の**放射グラデーション**で塗ります。 各 UI 版は自分の描画 API へ写すだけです（AvaloniaUI は `LinearGradientBrush` / `RadialGradientBrush`（キャプチャページ）と `BoxShadow`（一覧のサムネイル）、WinUI 3 は `LinearGradientBrush` / `RadialGradientBrush`、WinForms は GDI+ の `LinearGradientBrush` / `PathGradientBrush`、MewUI は Skia の `SKShader`）。
 
 **隅を放射グラデーションにする理由**: 矩形の外側の点の「矩形までの距離」は、隅の付近では**隅の頂点からの距離**と一致します。 辺と同じ濃さの変化を隅でも再現でき、角が四角く突き出しません。
 
 **重ねない**: 辺どうし・辺と隅は重なりません（重ねると角が二重に濃くなります）。
 
 **画像と影の間**には枠線・余白を置きません（辺と隅の矩形は画像の境界から外側へ連続します）。 画像の外側に影の余地が無い場合（画像が領域の端まで達している場合）は、その辺の影は見えません。
+
+**画素の格子へ揃える**（キャプチャページの画像）: 画像は端数のある位置へ描かれるため、影の矩形を端数のまま描くと端の画素が半透明になり、画像との間に「白い線」または「黒い線」として見えます。 各 UI 版は影の矩形を物理ピクセルの格子へ丸め、アンチエイリアスを切って画像の端と隙間なく接させます（AvaloniaUI は `RenderScaling`、WinUI 3 は `XamlRoot.RasterizationScale`、WinForms は GDI+ の描画と同じ四捨五入）。
 
 ## 26. 依存関係
 

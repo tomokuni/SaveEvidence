@@ -93,6 +93,8 @@ internal sealed class ZoomableView : Panel
         Focusable = true;
         // 高品質補間（ズーム時の画質）
         RenderOptions.SetBitmapInterpolationMode(_image, BitmapInterpolationMode.HighQuality);
+        // 画像の端をアンチエイリアスしない（半端な画素で背景と混ざり、影との間に白い線として見えるため）
+        RenderOptions.SetEdgeMode(_image, EdgeMode.Aliased);
 
         _transformGroup.Children.Add(_translateTransform);
         _transformGroup.Children.Add(_scaleTransform);

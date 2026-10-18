@@ -34,6 +34,8 @@ public static class ShadowPlan
     /// </remarks>
     private static readonly double[] s_alphaProfile = [0.245, 0.195, 0.150, 0.112, 0.079, 0.050, 0.033, 0.021, 0.012, 0.005];
 
+
+
     /// <summary>4 辺の計画（描画順は上辺・右辺・下辺・左辺）。</summary>
     public static IReadOnlyList<ShadowEdgePlan> Edges { get; } =
     [
@@ -70,7 +72,10 @@ public static class ShadowPlan
     /// <summary>画像の端から <paramref name="distance"/> DIP 外側の影の不透明度を取得する。</summary>
     /// <param name="distance">画像の端からの距離（DIP）。</param>
     /// <returns>不透明度（0〜1）。</returns>
-    /// <remarks>距離 1 DIP 以下は端の値（最も濃い）、<see cref="BlurRadius"/> 以上は 0 として扱う。</remarks>
+    /// <remarks>
+    /// 距離 1 DIP 以下は端の値（最も濃い。 画像のすぐ外側が最も濃く、影として自然に見える）、<br/>
+    /// <see cref="BlurRadius"/> 以上は 0 として扱う。
+    /// </remarks>
     public static double AlphaAtDistance(double distance)
     {
         if (distance <= 1)

@@ -68,7 +68,7 @@ public class ShadowPlanTests
         {
             Assert.Equal(ShadowPlan.BlurRadius, edge.Extent);
 
-            // 画像の端（位置 1）が最も濃い
+            // 画像の端（位置 1）が最も濃い（画像のすぐ外側が最も濃い影になる）
             Assert.Equal(ShadowPlan.ColorAtDistance(1), edge.Stops[^1].Argb);
             Assert.Equal(1.0, edge.Stops[^1].Offset, 3);
         }
@@ -92,7 +92,6 @@ public class ShadowPlanTests
             }
         }
     }
-
     [Fact]
     internal void 隅の停止点_は中心が最も濃く半径で0に近づく()
     {
@@ -103,7 +102,6 @@ public class ShadowPlanTests
         Assert.Equal(1.0, stops[^1].Offset, 3);
         Assert.True(stops[^1].Argb >> 24 < 0x10);
     }
-
     [Fact]
     internal void 辺の矩形_は画像の幅と高さいっぱい()
     {

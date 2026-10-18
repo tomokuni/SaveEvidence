@@ -1,4 +1,3 @@
-using System.Drawing.Drawing2D;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Crop;
 
@@ -22,9 +21,6 @@ namespace EsUtil.SaveEvidence.App.WinForms.Views;
 /// </remarks>
 internal sealed class ImageShadowOverlay : Control
 {
-    /// <summary>表示領域を描画範囲より広く取る量（ピクセル）。 影は画像側へ 1 ピクセル広がる。</summary>
-    private const int OverlapPixels = 1;
-
     /// <summary>影を落とす画像の表示矩形を提供するコントロール。</summary>
     private CropViewControl? _crop;
 
@@ -70,53 +66,10 @@ internal sealed class ImageShadowOverlay : Control
         _image = image;
         Region?.Dispose();
         Region = image.Width > 0 && image.Height > 0
-            ? new Region(BuildRegionPath(image, DeviceDpi / 96.0))
+            ? new Region(ShadowDrawer.BuildRegionPath(image, DeviceDpi / 96.0))
             : null;
         Invalidate();
     }
-
-    /// <summary>影の帯（4 辺 + 4 隅）を表す図形を組み立てる。</summary>
-    /// <param name="image">画像の矩形（DIP）。</param>
-    /// <param name="scaling">DIP → ピクセルの倍率。</param>
-    /// <returns>表示領域の図形（<see cref="Region"/> が複製するため、呼び出し側が破棄する）。</returns>
-    /// <remarks>
-    /// 外側へ丸める（床と天井）のは、<b>表示領域を必ず描画範囲より広くする</b>ためである。<br/>
-    /// 内側へ丸めると、帯と隅の境界に 1 ピクセルの塗り残しができ、背景が筋状に見える。
-    /// </remarks>
-    private static GraphicsPath BuildRegionPath(RectangleF image, double scaling)
-    {
-        // 既定の Alternate は重なった矩形を打ち消す（境界の 1 ピクセルが抜ける）ため、和集合にする
-        var path = new GraphicsPath { FillMode = FillMode.Winding };
-        foreach (var fill in ShadowPlan.BuildEdgeRects(image.X, image.Y, image.Width, image.Height))
-        {
-            path.AddRectangle(ToPixels(fill.X, fill.Y, fill.Width, fill.Height, scaling));
-        }
-
-        foreach (var fill in ShadowPlan.BuildCornerFills(image.X, image.Y, image.Width, image.Height))
-        {
-            path.AddRectangle(ToPixels(fill.X, fill.Y, fill.Size, fill.Size, scaling));
-        }
-
-        return path;
-    }
-
-    /// <summary>DIP の矩形をピクセル矩形へ変換する（外側へ広げる）。</summary>
-    /// <param name="x">左端（DIP）。</param>
-    /// <param name="y">上端（DIP）。</param>
-    /// <param name="width">幅（DIP）。</param>
-    /// <param name="height">高さ（DIP）。</param>
-    /// <param name="scaling">DIP → ピクセルの倍率。</param>
-    /// <returns>ピクセル矩形。</returns>
-    /// <remarks>
-    /// 端数を外側へ丸め、さらに <see cref="OverlapPixels"/> だけ広げる。 表示領域が描画範囲より狭いと、<br/>
-    /// 帯と隅の境界や画像との境目に 1 ピクセルの塗り残しができ、背景が筋状に見える。
-    /// </remarks>
-    private static Rectangle ToPixels(double x, double y, double width, double height, double scaling)
-        => Rectangle.FromLTRB(
-            (int)Math.Floor(x * scaling) - OverlapPixels,
-            (int)Math.Floor(y * scaling) - OverlapPixels,
-            (int)Math.Ceiling((x + width) * scaling) + OverlapPixels,
-            (int)Math.Ceiling((y + height) * scaling) + OverlapPixels);
 
     /// <summary>影を描画する（領域で帯だけに絞られている）。</summary>
     /// <param name="e">描画のイベント引数。</param>
