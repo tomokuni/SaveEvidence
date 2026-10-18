@@ -12,7 +12,7 @@ UI 非依存のコア（`App.Core`）と撮影スタック（`Parts.CapturePrevi
 | 設定ファイル | `%LOCALAPPDATA%\SaveEvidence\settings.json` |
 | ログ | `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持） |
 | 描画 | GDI+（`System.Drawing`）。 画像の縮小は `EsUtil.Platform.Core` の面積平均を使う |
-| アイコン | 他の UI 版と同じ SVG ファイル（`App.AvaloniaUI/src/Icons/*.svg`）を共有し、GDI+ のパスへ変換して描く |
+| アイコン | 他の UI 版と同じ SVG ファイル（`App.Core/src/Icons/*.svg`。 `SvgIconLoader` が単一所有する）を共有し、GDI+ のパスへ変換して描く |
 
 ## 2. システム要件
 

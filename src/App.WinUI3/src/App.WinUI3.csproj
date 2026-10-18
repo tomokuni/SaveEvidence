@@ -72,12 +72,5 @@
     <InternalsVisibleTo Include="App.WinUI3.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <!-- アイコン（SVG）は Avalonia 版と同一のファイルを共有する（埋め込みリソースとして参照する）。
-         論理名を固定し、実行時はマニフェスト名の列挙なしで読み込む（トリミング / Native AOT 対応）。 -->
-    <EmbeddedResource Include="..\..\App.AvaloniaUI\src\Icons\*.svg">
-      <LogicalName>SaveEvidence.WinUI3.Icons.%(Filename)%(Extension)</LogicalName>
-    </EmbeddedResource>
-  </ItemGroup>
 
 </Project>

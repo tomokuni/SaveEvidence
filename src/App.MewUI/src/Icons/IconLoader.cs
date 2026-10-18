@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using System.Text.RegularExpressions;
 using Aprillz.MewUI;
 using EsUtil.Platform.Core;
+using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Models;
 using SkiaSharp;
 
@@ -9,23 +9,20 @@ namespace EsUtil.SaveEvidence.App.MewUI.Icons;
 
 /// <summary>Icons フォルダの Fluent アイコン（SVG）からパス形状と画像を生成するヘルパー（MewUI 版）。</summary>
 /// <remarks>
-/// Avalonia 版 <c>IconLoader</c> と同じ SVG を共有する（<c>App.AvaloniaUI/src/Icons/*.svg</c> を埋め込みリソースとして参照する）。<br/>
+/// SVG の出所は <see cref="SvgIconLoader"/>（App.Core）が単一所有する（4 つの UI 版で同じファイルを使う）。<br/>
 /// 各 SVG は Fluent System Icons 形式の単一 <c>&lt;path d="..."&gt;</c> で構成され、viewBox は 24x24。<br/>
 /// <br/>
 /// <b>Avalonia 版との違い</b>: MewUI には <c>PathIcon</c>（ジオメトリを色付きで描く要素）が無いため、<br/>
 /// ジオメトリを Skia で指定サイズ・指定色へラスタライズし、<see cref="ImageSource"/> として <c>Image</c> 要素やウィンドウアイコンへ渡す。<br/>
 /// 生成結果は容量制限付きのキャッシュで共有する（ナビ・ツールバーのアイコンは表示のたびに参照されるため）。
 /// </remarks>
-internal static partial class IconLoader
+internal static class IconLoader
 {
     /// <summary>SVG の viewBox サイズ（Fluent System Icons 標準の 24x24）。</summary>
     private const double ViewBoxSize = 24;
 
     /// <summary>画像キャッシュの最大保持数。</summary>
     private const int CacheCapacity = 48;
-
-    /// <summary>埋め込みリソースの論理名プレフィックス。</summary>
-    private const string ResourcePrefix = "SaveEvidence.MewUI.Icons.";
 
     /// <summary>生成済み画像のキャッシュ（ファイル名・サイズ・色で一意）。</summary>
     private static readonly ConcurrentDictionary<(string File, int Size, uint Argb), ImageSource> s_cache = new();
@@ -62,17 +59,18 @@ internal static partial class IconLoader
     /// <remarks>読み込み失敗（リソース欠落・パスデータ不正）でも例外にせず空の形状を返す（UI を壊さない）。</remarks>
     public static SKPath LoadPath(string fileName)
     {
-        try
+        var icon = SvgIconLoader.Load(fileName);
+        var path = new SKPath();
+        foreach (var data in icon.PathData)
         {
-            var svg = ReadSvg(fileName);
-            var match = PathDataRegex().Match(svg);
-            return match.Success ? SKPath.ParseSvgPathData(match.Groups["path"].Value) ?? new SKPath() : new SKPath();
+            using var part = SKPath.ParseSvgPathData(data);
+            if (part is not null)
+            {
+                path.AddPath(part);
+            }
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
-        {
-            // リソース読み込み失敗（欠落等）は空の形状で代替する
-            return new SKPath();
-        }
+
+        return path;
     }
 
     /// <summary>指定 SVG を指定サイズ・指定色でラスタライズした画像を取得する。</summary>
@@ -224,24 +222,4 @@ internal static partial class IconLoader
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         return data.ToArray();
     }
-
-    /// <summary>埋め込み SVG リソースを読み込む。</summary>
-    /// <param name="fileName">SVG ファイル名。</param>
-    /// <returns>SVG の XML テキスト。</returns>
-    /// <remarks>
-    /// 埋め込みリソースの論理名は csproj の <c>LogicalName</c> で固定する<br/>
-    /// （トリミング / Native AOT でもマニフェスト名の列挙なしで読めるようにするため）。
-    /// </remarks>
-    private static string ReadSvg(string fileName)
-    {
-        var assembly = typeof(IconLoader).Assembly;
-        using var stream = assembly.GetManifestResourceStream(ResourcePrefix + fileName)
-            ?? throw new FileNotFoundException($"アイコンリソースが見つかりません: {fileName}", fileName);
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
-    }
-
-    /// <summary>SVG の path 要素から d 属性（パスデータ）を抽出する正規表現。</summary>
-    [GeneratedRegex("d=\"(?<path>[^\"]*)\"", RegexOptions.None, 100)]
-    private static partial Regex PathDataRegex();
 }

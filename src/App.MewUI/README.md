@@ -102,7 +102,7 @@ Avalonia 版 `App.AvaloniaUI` とはコアを共有し、UI 層のみが異な�
 | ヘッダー | 左上のトグル（開閉）とアプリ名。 先頭ページを選択した状態で起動する |
 | 開閉の保存 | 開閉状態は設定へ保存し、次回起動時に復元する |
 
-**アイコン**: Avalonia 版と**同一の SVG ファイル**（`App.AvaloniaUI/src/Icons/*.svg` を埋め込みリソースとして共有）を
+**アイコン**: 4 つの UI 版で**同一の SVG ファイル**（`App.Core/src/Icons/*.svg`。 `SvgIconLoader` が単一所有する）を
 `SKPath.ParseSvgPathData` で読み、Skia で 32 px にラスタライズして `Image` へ渡します（テーマ変更時に色を更新）。
 
 ## 8. ウィンドウの見た目

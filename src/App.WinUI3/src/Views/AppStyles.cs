@@ -78,11 +78,13 @@ internal static class AppStyles
     /// <summary>ナビゲーション項目の文字サイズ（DIP）。 4 つの UI 版で共通。</summary>
     public const double NavItemFontSize = NavPanelMetrics.ItemFontSize;
 
-    /// <summary>ウィンドウの最小幅（DIP）。 他の UI 版と同じ値。</summary>
-    public const double MinWindowWidth = 800;
+    /// <summary>ウィンドウの最小幅（DIP）。 4 つの UI 版で共通。</summary>
+    /// <remarks>値は <see cref="WindowMetrics"/>（App.Core）が単一所有する。</remarks>
+    public const double MinWindowWidth = WindowMetrics.MinimumWidth;
 
-    /// <summary>ウィンドウの最小の高さ（DIP）。 他の UI 版と同じ値。</summary>
-    public const double MinWindowHeight = 400;
+    /// <summary>ウィンドウの最小の高さ（DIP）。 4 つの UI 版で共通。</summary>
+    /// <remarks>値は <see cref="WindowMetrics"/>（App.Core）が単一所有する。</remarks>
+    public const double MinWindowHeight = WindowMetrics.MinimumHeight;
 
     /// <summary>自前のタイトル バーの高さ（DIP）。 他の UI 版と同じ値。</summary>
     public const double TitleBarHeight = 32;

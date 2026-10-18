@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text.RegularExpressions;
-using EsUtil.Platform.Core;
+using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.WinUI3.Views;
 using Microsoft.UI.Xaml.Media;
@@ -12,7 +11,7 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Icons;
 
 /// <summary>Icons フォルダの Fluent アイコン（SVG）から画像を生成するヘルパー（WinUI 3 版）。</summary>
 /// <remarks>
-/// 他の UI 版と同じ SVG を共有する（<c>App.AvaloniaUI/src/Icons/*.svg</c> を埋め込みリソースとして参照する）。<br/>
+/// SVG の出所は <see cref="SvgIconLoader"/>（App.Core）が単一所有する（4 つの UI 版で同じファイルを使う）。<br/>
 /// 各 SVG は Fluent System Icons 形式の単一 <c>&lt;path d="..."&gt;</c> で構成され、viewBox は 24x24。<br/>
 /// <br/>
 /// <b>ラスタライズする理由</b>: WinUI 3 の <c>PathIcon</c> はジオメトリの文字列を XAML の型変換でしか<br/>
@@ -20,13 +19,10 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Icons;
 /// 指定サイズ・指定色へラスタライズし、<see cref="WriteableBitmap"/> として渡す（中間の符号化を行わない）。<br/>
 /// 生成結果は容量制限付きのキャッシュで共有する（ナビ・ツールバーのアイコンは表示のたびに参照されるため）。
 /// </remarks>
-internal static partial class IconLoader
+internal static class IconLoader
 {
     /// <summary>画像キャッシュの最大保持数。</summary>
     private const int CacheCapacity = 48;
-
-    /// <summary>埋め込みリソースの論理名プレフィックス。</summary>
-    private const string ResourcePrefix = "SaveEvidence.WinUI3.Icons.";
 
     /// <summary>アイコン色（明色テーマ用）。</summary>
     private const uint ForegroundLight = 0xFF1A1A1A;
@@ -48,17 +44,18 @@ internal static partial class IconLoader
     /// <remarks>読み込み失敗（リソース欠落・パスデータ不正）でも例外にせず空の形状を返す（UI を壊さない）。</remarks>
     public static SKPath LoadPath(string fileName)
     {
-        try
+        var icon = SvgIconLoader.Load(fileName);
+        var path = new SKPath();
+        foreach (var data in icon.PathData)
         {
-            var svg = ReadSvg(fileName);
-            var match = PathDataRegex().Match(svg);
-            return match.Success ? SKPath.ParseSvgPathData(match.Groups["path"].Value) ?? new SKPath() : new SKPath();
+            using var part = SKPath.ParseSvgPathData(data);
+            if (part is not null)
+            {
+                path.AddPath(part);
+            }
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
-        {
-            // リソース読み込み失敗（欠落等）は空の形状で代替する
-            return new SKPath();
-        }
+
+        return path;
     }
 
     /// <summary>指定 SVG を指定サイズ・指定色でラスタライズした画像を取得する。</summary>
@@ -154,25 +151,4 @@ internal static partial class IconLoader
         };
         canvas.DrawPath(path, paint);
     }
-    /// <summary>埋め込みリソースから SVG のテキストを読み込む。</summary>
-    /// <param name="fileName">SVG ファイル名。</param>
-    /// <returns>SVG のテキスト。 読み込めない場合は空文字。</returns>
-    private static string ReadSvg(string fileName)
-    {
-        using var stream = typeof(IconLoader).Assembly.GetManifestResourceStream(ResourcePrefix + fileName);
-        if (stream is null)
-        {
-            return string.Empty;
-        }
-
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
-    }
-
-    /// <summary>SVG の <c>path</c> 要素の <c>d</c> 属性を取り出す正規表現。</summary>
-    /// <returns>パス データを <c>path</c> グループへ捕捉する正規表現。</returns>
-    /// <remarks>引用符は 16 進エスケープで表す（検証用の正規表現に生の引用符を持ち込まない）。</remarks>
-    [GeneratedRegex(@"<path\b[^>]*?\bd\s*=\s*\x22(?<path>[^\x22]+)\x22",
-        RegexOptions.CultureInvariant | RegexOptions.NonBacktracking)]
-    private static partial Regex PathDataRegex();
 }

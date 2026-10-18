@@ -33,7 +33,7 @@ internal static class WindowPlacementStore
     /// 単一所有する。 画面外の座標を復元するとウィンドウが見えないまま起動するため、その場合は位置だけを<br/>
     /// 表示領域の内側へ収める。
     /// </remarks>
-    public static void Restore(Window window, Settings settings)
+    public static bool Restore(Window window, Settings settings)
     {
         ArgumentNullException.ThrowIfNull(window);
         ArgumentNullException.ThrowIfNull(settings);
@@ -44,11 +44,12 @@ internal static class WindowPlacementStore
         var visibleArea = WindowPlacementMath.GetVirtualScreenBounds();
         if (!WindowPlacementRule.CanRestore(settings.MainWindowBounds, visibleArea))
         {
-            return;
+            return false;
         }
 
         var bounds = WindowPlacementRule.ClampToVisibleArea(settings.MainWindowBounds!.Value, visibleArea);
         appWindow.MoveAndResize(new RectInt32(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+        return true;
     }
 
     /// <summary>現在の位置・サイズ・表示状態を設定へ保存する。</summary>

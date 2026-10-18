@@ -60,7 +60,6 @@
 
   <ItemGroup>
     <!-- アイコン（SVG）をアセンブリリソースとして埋め込む -->
-    <AvaloniaResource Include="Icons/**" />
   </ItemGroup>
 
 </Project>

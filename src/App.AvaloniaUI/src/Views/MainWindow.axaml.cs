@@ -135,11 +135,16 @@ public sealed partial class MainWindow : Window
         // ナビパネルのアイコン（SVG）を設定する
         SetupNavIcons();
 
-        // アプリ（ウィンドウ）アイコンを設定する
+        // アプリ（ウィンドウ）アイコンを設定する。 左上のタイトル バーにも同じアイコンを出す
         Icon = IconLoader.LoadWindowIcon(AppIdentity.IconFileName);
+        AppIconImage.Data = IconLoader.LoadGeometry(AppIdentity.IconFileName);
 
         // 初期のナビパネル高さを設定する（IsNavigationExpanded の設定後）
         UpdateNavPanelLayout();
+
+        // ナビゲーションが開いているとき、ナビ領域の外の操作（押下）で閉じる。
+        // トンネル段階で購読するのは、ページのコントロールが押下を処理した（Handled）場合でも閉じるため
+        AddHandler(PointerPressedEvent, OnNavigationOutsidePointerPressed, RoutingStrategies.Tunnel);
 
         // アンロード時の処理
         Closing += OnMainWindowClosing;
@@ -150,6 +155,41 @@ public sealed partial class MainWindow : Window
         // ウィンドウを表示した後（Opened）のディスパッチャ ターンで開始し、描画のジョブより後に回す（起動の描画を遅らせない）。
         // 生成は低負荷で進み、キャプチャページの操作を妨げない。
         Opened += (_, _) => Dispatcher.UIThread.Post(WarmUpThumbnails, DispatcherPriority.Background);
+    }
+
+    /// <summary>ナビ領域の外の押下でナビゲーションを閉じる。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">ポインターの情報。</param>
+    /// <remarks>
+    /// ナビはページ領域の左端へ重ねて表示する（幅は <see cref="MainViewModel.NavPanelWidth"/>）ため、<br/>
+    /// 押下位置の X がその幅以上ならナビ領域の外である。 押下自体は処理しない（背後の要素の操作を妨げない）。
+    /// </remarks>
+    private void OnNavigationOutsidePointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!_viewModel.IsNavigationExpanded)
+        {
+            return;
+        }
+
+        // ナビ領域は「タイトル バーの下・ナビの幅の内側」である。 その外（タイトル バーを含む）は閉じる
+        var position = e.GetPosition(this);
+        var insideNavigation = position.Y >= WindowLayout.TitleBarHeight && position.X < _viewModel.NavPanelWidth;
+        if (insideNavigation)
+        {
+            return;
+        }
+
+        CollapseNavigation();
+    }
+
+    /// <summary>展開中のナビゲーションを閉じる。</summary>
+    /// <remarks>設定への保存と高さの更新は <see cref="MainViewModel.IsNavigationExpanded"/> の購読が行う。</remarks>
+    private void CollapseNavigation()
+    {
+        if (_viewModel.IsNavigationExpanded)
+        {
+            _viewModel.IsNavigationExpanded = false;
+        }
     }
 
     /// <summary>タイトル バー相当の帯の押下でウィンドウの移動を開始する。</summary>
@@ -186,31 +226,6 @@ public sealed partial class MainWindow : Window
 
     /// <summary>タイトル バー相当の領域の高さ（DIP）。 この帯の押下でウィンドウを移動する。</summary>
     private const double TitleBarDragHeight = 32;
-
-    /// <summary>タイトル バー相当の領域をドラッグしてウィンドウを移動する。</summary>
-    /// <param name="sender">イベントの送信元。</param>
-    /// <param name="e">ポインターの情報。</param>
-    /// <remarks>
-    /// クライアント領域をタイトル バーへ拡張しているため、自前の領域でドラッグを開始する必要がある<br/>
-    /// （<see cref="Window.BeginMoveDrag"/> に任せる）。 ダブルクリックで最大化と元のサイズを切り替える。
-    /// </remarks>
-    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-        {
-            return;
-        }
-
-        if (e.ClickCount == 2)
-        {
-            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-            e.Handled = true;
-            return;
-        }
-
-        BeginMoveDrag(e);
-        e.Handled = true;
-    }
 
     /// <summary>最小化ボタンの押下でウィンドウを最小化する。</summary>
     /// <param name="sender">イベントの送信元。</param>
@@ -270,7 +285,8 @@ public sealed partial class MainWindow : Window
 
     /// <summary>ナビパネルの高さを開閉状態に応じて調整する。</summary>
     /// <remarks>
-    /// - 展開時: <see cref="VerticalAlignment.Stretch"/> でウィンドウの全高に広げる。<br/>
+    /// - 展開時: <see cref="VerticalAlignment.Stretch"/> でウィンドウの全高に広げる（<b>ページ領域の上へ重ねる</b>。<br/>
+    ///   ページ領域は収納時の位置から移動しない）。<br/>
     /// - 収納時: <see cref="VerticalAlignment.Top"/> + 自動高さでコンテンツ分（タイトルバー + アイテム）に縮む。<br/>
     /// NavPanel の Background は Transparent（MainWindow.axaml）で、その背後に全高の背景色 Border を<br/>
     /// 配置しているため、収納時に NavPanel が縮んでもその下は背景色で塗られ、白く見えない。<br/>
@@ -281,13 +297,95 @@ public sealed partial class MainWindow : Window
         // 収納時はコンテンツ高さ（Top）。 展開時は全高（Stretch）
         NavPanel.VerticalAlignment = _viewModel.IsNavigationExpanded ? VerticalAlignment.Stretch : VerticalAlignment.Top;
         NavPanel.Height = double.NaN; // Auto（コンテンツ高さ）
+
+        // 開いているときは「閉じる」、閉じているときは「開く」のアイコンにする
+        NavToggleIcon.Data = IconLoader.LoadGeometry(
+            _viewModel.IsNavigationExpanded ? NavIconPanelLeftContract : NavIconPanelRightContract);
+    }
+
+    /// <summary>ナビゲーション パネルの開閉アイコン（開いているときに使う「閉じる」）。</summary>
+    private const string NavIconPanelLeftContract = "ic_fluent_panel_left_contract_24_filled.svg";
+
+    /// <summary>ナビゲーション パネルの開閉アイコン（閉じているときに使う「開く」）。</summary>
+    private const string NavIconPanelRightContract = "ic_fluent_panel_right_contract_24_filled.svg";
+
+    /// <summary>ナビゲーションの開閉ボタンの押下で開閉を切り替える。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">イベント引数。</param>
+    private void OnNavToggleClick(object? sender, RoutedEventArgs e)
+        => _viewModel.IsNavigationExpanded = !_viewModel.IsNavigationExpanded;
+
+    /// <summary>左上のアプリ アイコンの押下でウィンドウの標準メニューを出す。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">イベント引数。</param>
+    /// <remarks>
+    /// 項目と並びは <see cref="WindowMenu"/>（App.Core）が単一所有する（4 つの UI 版で同じメニューになる）。<br/>
+    /// 移動・サイズ変更は OS のモードへ入るため、Win32 のシステム コマンドを送る（<see cref="SystemWindowCommands"/>）。
+    /// </remarks>
+    private void OnAppIconClick(object? sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu { Placement = PlacementMode.BottomEdgeAlignedLeft };
+        foreach (var entry in WindowMenu.Items(WindowState == WindowState.Maximized))
+        {
+            if (entry.IsSeparatorBefore)
+            {
+                menu.Items.Add(new Separator());
+            }
+
+            var item = new MenuItem { Header = entry.Label, IsEnabled = entry.IsEnabled };
+            var action = entry.Action;
+            item.Click += (_, _) => ExecuteWindowMenuAction(action);
+            menu.Items.Add(item);
+        }
+
+        menu.Open(AppIconButton);
+    }
+
+    /// <summary>ウィンドウの標準メニューの項目を実行する。</summary>
+    /// <param name="action">実行する操作。</param>
+    private void ExecuteWindowMenuAction(WindowMenuAction action)
+    {
+        switch (action)
+        {
+            case WindowMenuAction.Restore:
+                WindowState = WindowState.Normal;
+                UpdateMaximizeGlyph();
+                break;
+            case WindowMenuAction.Move:
+                SendSystemCommand(SystemWindowCommands.BeginMove);
+                break;
+            case WindowMenuAction.Size:
+                SendSystemCommand(SystemWindowCommands.BeginSize);
+                break;
+            case WindowMenuAction.Minimize:
+                WindowState = WindowState.Minimized;
+                break;
+            case WindowMenuAction.Maximize:
+                WindowState = WindowState.Maximized;
+                UpdateMaximizeGlyph();
+                break;
+            case WindowMenuAction.Close:
+                Close();
+                break;
+            default:
+                break;
+        }
+    }
+
+    /// <summary>ウィンドウへネイティブのシステム コマンドを送る。</summary>
+    /// <param name="command">送るコマンド（ハンドルを受け取る）。</param>
+    private void SendSystemCommand(Func<EsPlatformHandle, bool> command)
+    {
+        if (TryGetPlatformHandle() is { } handle)
+        {
+            _ = command(new EsPlatformHandle(handle.Handle));
+        }
     }
 
     /// <summary>ナビパネルのトグルボタンとアイテム（キャプチャ / フォルダビュー / Undo 一覧 / 設定）のアイコンを SVG から設定する。</summary>
     /// <remarks>各アイコンのジオメトリは <see cref="Icons.IconLoader.LoadGeometry"/> で読み込む。</remarks>
     private void SetupNavIcons()
     {
-        NavToggleIcon.Data = IconLoader.LoadGeometry("ic_fluent_arrow_autofit_width_dotted_24_regular.svg");
         NavCaptureIcon.Data = IconLoader.LoadGeometry("ic_fluent_scan_table_24_regular.svg");
         NavFolderViewIcon.Data = IconLoader.LoadGeometry("ic_fluent_folder_search_24_regular.svg");
         NavUndoIcon.Data = IconLoader.LoadGeometry("ic_fluent_arrow_undo_24_regular.svg");
@@ -392,10 +490,13 @@ public sealed partial class MainWindow : Window
         s_logger.LogActivated();
     }
 
-    /// <summary>ウィンドウの非アクティブ化を記録する。</summary>
+    /// <summary>ウィンドウの非アクティブ化を記録し、展開中のナビゲーションを閉じる。</summary>
     private void OnMainWindowDeactivated(object? sender, EventArgs e)
     {
         s_logger.LogDeactivated();
+
+        // ウィンドウの外を操作した場合もナビ領域の外の操作とみなして閉じる
+        CollapseNavigation();
     }
 
     /// <summary>ウィンドウ位置・サイズを復元する。</summary>
@@ -541,19 +642,31 @@ public sealed partial class MainWindow : Window
 
     /// <summary>ナビ「キャプチャ」クリック。</summary>
     private void OnNavCaptureClick(object? sender, RoutedEventArgs e)
-        => NavigateTo(AppPage.Capture);
+    {
+        NavigateTo(AppPage.Capture);
+        CollapseNavigation();
+    }
 
     /// <summary>ナビ「フォルダビュー」クリック。</summary>
     private void OnNavFolderViewClick(object? sender, RoutedEventArgs e)
-        => NavigateTo(AppPage.FolderView);
+    {
+        NavigateTo(AppPage.FolderView);
+        CollapseNavigation();
+    }
 
     /// <summary>ナビ「Undo 一覧」クリック。</summary>
     private void OnNavUndoClick(object? sender, RoutedEventArgs e)
-        => NavigateTo(AppPage.Undo);
+    {
+        NavigateTo(AppPage.Undo);
+        CollapseNavigation();
+    }
 
     /// <summary>ナビ「設定」クリック。</summary>
     private void OnNavSettingsClick(object? sender, RoutedEventArgs e)
-        => NavigateTo(AppPage.Settings);
+    {
+        NavigateTo(AppPage.Settings);
+        CollapseNavigation();
+    }
 
     // ===================== キャプチャ関連 =====================
 

@@ -1,30 +1,26 @@
 using System.Collections.Concurrent;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Text.RegularExpressions;
+using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Icons;
 
 /// <summary>他の UI 版と共有する SVG アイコンを GDI+ のビットマップへ描く単一の描画層。</summary>
 /// <remarks>
-/// <b>SVG を出所にする理由</b>: アイコンは 4 つの UI 版で同じ見た目にする必要がある。 出所を<br/>
-/// <c>App.AvaloniaUI/src/Icons/*.svg</c>（Fluent System Icons 形式。 viewBox は 24x24）の 1 つに固定し、<br/>
-/// 本 UI はそれを埋め込みリソースとして読み、GDI+ のパスへ変換して描く（<see cref="SvgPathData"/>）。<br/>
+/// <b>SVG を出所にする理由</b>: アイコンは 4 つの UI 版で同じ見た目にする必要がある。 出所は<br/>
+/// <see cref="SvgIconLoader"/>（App.Core）が単一所有し、本 UI はパスを GDI+ へ変換して描く（<see cref="SvgPathData"/>）。<br/>
 /// <br/>
 /// <b>描画の性質</b>: サイズと色を引数で受け取り、<b>用途ごとに 1 枚のビットマップ</b>を描く（テーマの変更時に描き直す）。<br/>
 /// 描画は <see cref="Bitmap"/> と <c>Graphics.FromImage</c> だけで完結するため、ウィンドウ（ハンドル）を生成せずに画素を検証できる。
 /// </remarks>
-internal static partial class IconLoader
+internal static class IconLoader
 {
     /// <summary>SVG の viewBox の一辺（Fluent System Icons 標準の 24x24）。</summary>
     private const double ViewBoxSize = 24;
 
-    /// <summary>埋め込みリソースの論理名の接頭辞。</summary>
-    private const string ResourcePrefix = "SaveEvidence.WinForms.Icons.";
-
-    /// <summary>読み込んだパス データのキャッシュ（ファイル名で一意）。</summary>
-    private static readonly ConcurrentDictionary<string, string> s_pathData = new(StringComparer.Ordinal);
+    /// <summary>読み込んだパスのキャッシュ（ファイル名で一意）。</summary>
+    private static readonly ConcurrentDictionary<string, GraphicsPath> s_pathData = new(StringComparer.Ordinal);
 
     /// <summary>ウィンドウ アイコンの元になるハンドル（プロセスの寿命まで保持する）。</summary>
     private static IntPtr s_windowIconHandle;
@@ -55,16 +51,11 @@ internal static partial class IconLoader
             return bitmap;
         }
 
-        var data = ReadPathData(icon);
-        if (data.Length == 0)
-        {
-            // リソースの欠落・パス データの非対応は空のビットマップで代替する（UI を壊さない）
-            return bitmap;
-        }
-
-        using var path = SvgPathData.Parse(data);
+        // パスはキャッシュが所有する（破棄すると次の描画で使えない）
+        var path = LoadPath(icon);
         if (path.PointCount == 0)
         {
+            // リソースの欠落・パス データの非対応は空のビットマップで代替する（UI を壊さない）
             return bitmap;
         }
 
@@ -124,7 +115,8 @@ internal static partial class IconLoader
     /// <remarks>対応は他の UI 版（Avalonia / MewUI / WinUI 3）と同じファイルを選ぶ。</remarks>
     private static string ResolveFile(AppIcon icon) => icon switch
     {
-        AppIcon.NavToggle => "ic_fluent_arrow_autofit_width_dotted_24_regular.svg",
+        AppIcon.PanelOpen => "ic_fluent_panel_right_contract_24_filled.svg",
+        AppIcon.PanelClose => "ic_fluent_panel_left_contract_24_filled.svg",
         AppIcon.Capture => AppIdentity.IconFileName,
         AppIcon.Folder => "ic_fluent_folder_search_24_regular.svg",
         AppIcon.Undo => "ic_fluent_arrow_undo_24_regular.svg",
@@ -140,28 +132,31 @@ internal static partial class IconLoader
         _ => "",
     };
 
-    /// <summary>アイコンのパス データ（<c>d</c> 属性の値）を読み込む。</summary>
+    /// <summary>アイコンのパス（GDI+ の図形）を読み込む。</summary>
     /// <param name="icon">対象のアイコン。</param>
-    /// <returns>パス データ。 読み込めない場合は空文字。 読み込み結果はキャッシュする。</returns>
-    private static string ReadPathData(AppIcon icon)
+    /// <returns>パス。 読み込めない場合は空のパス。 読み込み結果はキャッシュする。</returns>
+    private static GraphicsPath LoadPath(AppIcon icon)
     {
         var fileName = ResolveFile(icon);
         if (fileName.Length == 0)
         {
-            return "";
+            return new GraphicsPath();
         }
 
         return s_pathData.GetOrAdd(fileName, static name =>
         {
-            using var stream = typeof(IconLoader).Assembly.GetManifestResourceStream(ResourcePrefix + name);
-            if (stream is null)
+            var svg = SvgIconLoader.Load(name);
+            var path = new GraphicsPath();
+            foreach (var data in svg.PathData)
             {
-                return "";
+                using var part = SvgPathData.Parse(data);
+                if (part.PointCount > 0)
+                {
+                    path.AddPath(part, connect: false);
+                }
             }
 
-            using var reader = new StreamReader(stream);
-            var match = PathDataRegex().Match(reader.ReadToEnd());
-            return match.Success ? match.Groups["path"].Value : "";
+            return path;
         });
     }
 
@@ -188,7 +183,4 @@ internal static partial class IconLoader
         }
     }
 
-    /// <summary>SVG の <c>path</c> 要素から <c>d</c> 属性（パス データ）を抽出する正規表現。</summary>
-    [GeneratedRegex("d=\"(?<path>[^\"]*)\"", RegexOptions.None, 100)]
-    private static partial Regex PathDataRegex();
 }

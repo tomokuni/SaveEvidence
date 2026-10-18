@@ -28,12 +28,10 @@ internal sealed class MainForm : Form
     /// <summary>ロガー（ウィンドウ配置の保存の失敗を記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(MainForm));
 
-    /// <summary>復元するサイズが設定されていない場合の既定ウィンドウ サイズ（ピクセル）。</summary>
-    private static readonly Size s_defaultWindowSize = new(1200, 800);
+    /// <summary>復元するサイズが設定されていない場合の既定ウィンドウ サイズ（DIP）。</summary>
+    /// <remarks>値は <see cref="WindowMetrics"/>（App.Core）が 4 つの UI 版で共通に単一所有する。</remarks>
+    private static readonly Size s_defaultWindowSizeDip = new((int)WindowMetrics.DefaultWidth, (int)WindowMetrics.DefaultHeight);
 
-
-    /// <summary>ナビゲーション パネルのヘッダーの高さ（DIP）。</summary>
-    private const int NavHeaderHeight = 34;
 
     /// <summary>ナビゲーション項目の高さ（DIP）。 他の UI 版（40）と同じ値にする。</summary>
     private const int NavItemHeight = 40;
@@ -56,8 +54,11 @@ internal sealed class MainForm : Form
     /// <summary>ナビゲーションのボタン。</summary>
     private readonly ToolButton[] _navButtons;
 
-    /// <summary>ナビゲーション パネル。</summary>
-    private readonly Panel _navPanel = new() { Dock = DockStyle.Left, Padding = new Padding(0, 4, 0, 4) };
+    /// <summary>ナビゲーション パネル（ページ領域の上へ重ねる。 位置と大きさは <see cref="LayoutNavigation"/> が決める）。</summary>
+    private readonly Panel _navPanel = new() { Padding = new Padding(0, 0, 0, 0) };
+
+    /// <summary>ナビ領域の外の押下でナビゲーションを閉じるメッセージ フィルター。</summary>
+    private readonly NavigationDismissFilter _navDismissFilter;
 
     /// <summary>ナビゲーション項目を並べる入れ物。</summary>
     private readonly FlowLayoutPanel _navItems = new()
@@ -125,9 +126,13 @@ internal sealed class MainForm : Form
         _pages = new PageContent?[_entries.Length];
         _navButtons = new ToolButton[_entries.Length];
 
-        _navToggle = UiFactory.CreateToolButton(AppIcon.NavToggle, "ナビゲーション パネルの開閉", ToggleNavigation);
-        _navToggle.Location = new Point(4, 4);
-        _navToggle.Size = new Size(28, 28);
+        _navDismissFilter = new NavigationDismissFilter(this);
+        _navToggle = UiFactory.CreateToolButton(
+            viewModel.IsNavigationExpanded ? AppIcon.PanelClose : AppIcon.PanelOpen,
+            "ナビゲーション パネルの開閉",
+            ToggleNavigation);
+        _navToggle.Size = new Size(40, 40);
+        _navToggle.Location = new Point(0, 0);
 
         for (var i = 0; i < _entries.Length; i++)
         {
@@ -148,22 +153,33 @@ internal sealed class MainForm : Form
                     (float)(NavPanelMetrics.ItemFontSize * 72.0 / 96.0),
                     AppStyles.UiFont.Style),
             };
-            _navButtons[index].Click += (_, _) => Select(index);
+            _navButtons[index].Click += (_, _) =>
+            {
+                Select(index);
+                CollapseNavigation();
+            };
         }
 
         _navPanel.Controls.Add(_navItems);
-        _navPanel.Controls.Add(_navToggle);
         _navPanel.Controls.Add(_navFooter);
+        _navPanel.Controls.Add(_navToggle);
+
+        // 開閉ボタンは一番上に置く（ドッキングする要素より前面へ出す）
+        _navToggle.BringToFront();
         _navItems.Controls.AddRange(_navButtons);
 
         // 開閉ボタンの領域はナビゲーション パネルの Padding で確保する（ドッキングする項目一覧は
         // Padding の内側へ配置されるため、ボタンが一覧の下へ隠れない）。
         // フッターは下端へ寄せる（他の UI 版と同じ位置）
-        _navPanel.Padding = new Padding(0, NavHeaderHeight, 0, 0);
+        // 開閉ボタンの高さの分だけ下を空ける（ボタンはパネルの左上に固定する）
+        _navPanel.Padding = new Padding(0, 40, 0, 0);
         _navItems.Padding = new Padding(4, 4, 4, 4);
 
+        // ナビゲーション パネルはページ領域の上へ重ねる（ページ領域は開閉で動かない）。
+        // 前面へ置くため、ページ領域を追加した後に追加する
         Controls.Add(_contentHost);
         Controls.Add(_navPanel);
+        _navPanel.BringToFront();
 
         // 本 UI 版はダークテーマを使用しない（常に明色）。 配色は明色で 1 回だけ適用する
         ApplyAppearance();
@@ -177,8 +193,9 @@ internal sealed class MainForm : Form
         FormClosed += OnFormClosed;
     }
 
-    /// <summary>ウィンドウの最小サイズ（DIP。 他の UI 版と同じ値）。</summary>
-    private static readonly Size s_minWindowSizeDip = new(800, 400);
+    /// <summary>ウィンドウの最小サイズ（DIP）。</summary>
+    /// <remarks>値は <see cref="WindowMetrics"/>（App.Core）が 4 つの UI 版で共通に単一所有する。</remarks>
+    private static readonly Size s_minWindowSizeDip = new((int)WindowMetrics.MinimumWidth, (int)WindowMetrics.MinimumHeight);
 
     /// <summary>自動スケーリングの後（読み込み時）に最小サイズと保存済みの配置を反映する。</summary>
     /// <param name="e">イベント引数。</param>
@@ -195,6 +212,29 @@ internal sealed class MainForm : Form
 
         ApplyMinimumSize();
         RestorePlacement();
+
+        // 拡大の後（DPI が確定した後）にナビゲーションの寸法を合わせ直す
+        ApplyNavigationLayout();
+
+        // 子コントロールの押下はフォームへ届かないため、メッセージを横取りして外側の押下を拾う
+        Application.AddMessageFilter(_navDismissFilter);
+    }
+
+    /// <summary>ウィンドウの大きさが変わったらナビゲーションの高さを合わせる。</summary>
+    /// <param name="e">イベント引数。</param>
+    protected override void OnClientSizeChanged(EventArgs e)
+    {
+        base.OnClientSizeChanged(e);
+        LayoutNavigation();
+    }
+
+    /// <summary>ウィンドウが非アクティブになったら展開中のナビゲーションを閉じる。</summary>
+    /// <param name="e">イベント引数。</param>
+    /// <remarks>ウィンドウの外の操作もナビ領域の外の操作とみなす（他の UI 版と同じ）。</remarks>
+    protected override void OnDeactivate(EventArgs e)
+    {
+        base.OnDeactivate(e);
+        CollapseNavigation();
     }
 
     /// <summary>DPI が変わったときに最小サイズを掛け直す。</summary>
@@ -315,6 +355,7 @@ internal sealed class MainForm : Form
     /// <param name="e">イベント引数。</param>
     private void OnFormClosed(object? sender, FormClosedEventArgs e)
     {
+        Application.RemoveMessageFilter(_navDismissFilter);
         _services.Settings.Current.PropertyChanged -= OnSettingsChanged;
         _hotKeys.Dispose();
     }
@@ -483,6 +524,80 @@ internal sealed class MainForm : Form
         }
 
         _navFooter.Visible = expanded;
+        _navToggle.Image = IconLoader.Create(
+            expanded ? AppIcon.PanelClose : AppIcon.PanelOpen,
+            _navToggle.Height - 8,
+            AppStyles.Foreground);
+        LayoutNavigation();
+    }
+
+    /// <summary>ナビゲーション パネルとページ領域の配置を更新する。</summary>
+    /// <remarks>
+    /// ナビゲーション パネルは<b>ページ領域の上へ重ねる</b>（開いてもページ領域は動かない）。<br/>
+    /// ページ領域は収納時の幅（<see cref="NavPanelMetrics.CompactWidth"/>）だけ左へ余白を取る<br/>
+    /// （収納時のアイコンがページの操作を隠さない位置）。
+    /// </remarks>
+    private void LayoutNavigation()
+    {
+        var scaling = DpiScaler.ToScaling(DeviceDpi);
+        _navPanel.Bounds = new Rectangle(0, 0, _navPanel.Width, ClientSize.Height);
+        _contentHost.Padding = new Padding(
+            DpiScaler.ScaleToPixel(NavPanelMetrics.CompactWidth, scaling), 0, 0, 0);
+    }
+
+    /// <summary>展開中のナビゲーションを閉じる。</summary>
+    /// <remarks>設定への保存とレイアウトの更新は <see cref="ToggleNavigation"/> と同じ経路で行う。</remarks>
+    private void CollapseNavigation()
+    {
+        if (!_services.Main.IsNavigationExpanded)
+        {
+            return;
+        }
+
+        _services.Main.IsNavigationExpanded = false;
+        _services.Settings.Current.IsNavigationExpanded = false;
+        _services.Settings.Save();
+        ApplyNavigationLayout();
+    }
+
+    /// <summary>ナビ領域の外の押下でナビゲーションを閉じる。</summary>
+    /// <param name="screenPoint">押下位置（画面座標）。</param>
+    private void CollapseNavigationIfOutside(Point screenPoint)
+    {
+        if (!_services.Main.IsNavigationExpanded)
+        {
+            return;
+        }
+
+        if (!_navPanel.Bounds.Contains(PointToClient(screenPoint)))
+        {
+            CollapseNavigation();
+        }
+    }
+
+    /// <summary>ナビ領域の外の押下でナビゲーションを閉じるメッセージ フィルター。</summary>
+    /// <remarks>
+    /// 子コントロールの押下はフォームへ届かない（WinForms のマウス イベントは親へ伝播しない）ため、<br/>
+    /// アプリケーションのメッセージを横取りして押下位置だけを見る。 押下自体は妨げない。
+    /// </remarks>
+    /// <param name="owner">通知先のフォーム。</param>
+    private sealed class NavigationDismissFilter(MainForm owner) : IMessageFilter
+    {
+        /// <summary>左ボタン・右ボタン・中央ボタンの押下のメッセージ。</summary>
+        private static readonly int[] s_buttonDownMessages = [0x0201, 0x0204, 0x0207];
+
+        /// <summary>メッセージを処理する。</summary>
+        /// <param name="m">メッセージ。</param>
+        /// <returns>常に false（メッセージはそのまま渡す）。</returns>
+        public bool PreFilterMessage(ref Message m)
+        {
+            if (Array.IndexOf(s_buttonDownMessages, m.Msg) >= 0)
+            {
+                owner.CollapseNavigationIfOutside(Cursor.Position);
+            }
+
+            return false;
+        }
     }
 
     /// <summary>配色を現在のテーマへ合わせる。</summary>
@@ -521,7 +636,10 @@ internal sealed class MainForm : Form
         }
         else
         {
-            Size = s_defaultWindowSize;
+            var scaling = DpiScaler.ToScaling(DeviceDpi);
+            Size = new Size(
+                WindowPlacementRule.ToPhysicalLength(s_defaultWindowSizeDip.Width, scaling),
+                WindowPlacementRule.ToPhysicalLength(s_defaultWindowSizeDip.Height, scaling));
         }
 
         // 最小化は復元しない（最小化のまま起動するとウィンドウが表示されない）

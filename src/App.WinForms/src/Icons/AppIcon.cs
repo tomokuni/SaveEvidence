@@ -2,7 +2,7 @@ namespace EsUtil.SaveEvidence.App.WinForms.Icons;
 
 /// <summary>アプリが表示するアイコンの種類。</summary>
 /// <remarks>
-/// アイコンは<b>他の UI 版と同じ SVG ファイル</b>（<c>App.AvaloniaUI/src/Icons/*.svg</c>）から描く。<br/>
+/// アイコンは<b>他の UI 版と同じ SVG ファイル</b>（<c>SvgIconLoader</c>（App.Core）が単一所有する）から描く。<br/>
 /// 本列挙は表示名であり、実際のファイルとの対応と描画は <see cref="IconLoader"/> が単一所有する。<br/>
 /// <b>共有するアイコンを持たない種類</b>（<see cref="Menu"/>）だけは、他 UI 版と同じ見た目になる図形を
 /// <see cref="IconLoader"/> が描く。
@@ -12,8 +12,11 @@ internal enum AppIcon
     /// <summary>メニュー（他の UI 版は ☰ の文字で表す）。</summary>
     Menu,
 
-    /// <summary>ナビゲーション パネルの開閉。</summary>
-    NavToggle,
+    /// <summary>ナビゲーション パネルを開く（閉じているときに使う）。</summary>
+    PanelOpen,
+
+    /// <summary>ナビゲーション パネルを閉じる（開いているときに使う）。</summary>
+    PanelClose,
 
     /// <summary>キャプチャ（アプリのアイコン。 ウィンドウ アイコンにも使う）。</summary>
     Capture,

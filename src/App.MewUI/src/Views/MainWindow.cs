@@ -1,6 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -35,20 +36,24 @@ internal sealed class MainWindow
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(MainWindow));
 
     /// <summary>復元するサイズが設定されていない場合の既定ウィンドウサイズ（DIP）。</summary>
-    private static readonly Size s_defaultWindowSize = new(1200, 800);
+    /// <remarks>値は <see cref="WindowMetrics"/>（App.Core）が 4 つの UI 版で共通に単一所有する。</remarks>
+    private static readonly Size s_defaultWindowSize = new(WindowMetrics.DefaultWidth, WindowMetrics.DefaultHeight);
 
     /// <summary>ウィンドウの最小サイズ（DIP）。</summary>
-    /// <remarks>Avalonia 版 <c>MainWindow.axaml</c> の <c>MinWidth</c> / <c>MinHeight</c> と同じ値。</remarks>
-    private static readonly Size s_minWindowSize = new(650, 400);
+    /// <remarks>値は <see cref="WindowMetrics"/>（App.Core）が 4 つの UI 版で共通に単一所有する。</remarks>
+    private static readonly Size s_minWindowSize = new(WindowMetrics.MinimumWidth, WindowMetrics.MinimumHeight);
 
     /// <summary>タイトルバー領域の高さ（DIP）。 非クライアント領域をこの高さでクライアント領域へ拡張する。</summary>
     private const double TitleBarHeight = 32;
 
-    /// <summary>ナビパネル上部（タイトルバー領域）の高さ（DIP）。</summary>
-    /// <remarks>
-    /// 50。 トグルボタン（高さ 28）を中央に置くと上端に余白が生まれ、ツールバーの文字と縦位置が揃う（実測）。
-    /// </remarks>
-    private const double NavHeaderHeight = 50;
+    /// <summary>ナビ領域の一番上に置く開閉ボタンの一辺（DIP）。</summary>
+    private const double NavToggleSize = 40;
+
+    /// <summary>ナビの開閉アイコン（開いているときに使う「閉じる」）。</summary>
+    private const string NavIconPanelLeftContract = "ic_fluent_panel_left_contract_24_filled.svg";
+
+    /// <summary>ナビの開閉アイコン（閉じているときに使う「開く」）。</summary>
+    private const string NavIconPanelRightContract = "ic_fluent_panel_right_contract_24_filled.svg";
 
     /// <summary>ナビ項目の選択マークの幅（DIP）。 WinUI 3 の選択マークと同じ。</summary>
     private const double NavSelectionMarkWidth = 3;
@@ -147,6 +152,32 @@ internal sealed class MainWindow
 
         // ナビパネルの要素（開閉に応じて幅・文字の表示を切り替える）
         var navPanel = new Border();
+
+        // ウィンドウ メニュー（アプリ アイコンの押下で出す）
+        var windowMenu = new Border
+        {
+            Child = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4)),
+            IsVisible = false,
+            StyleName = AppStyles.MenuSurface,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(WindowLayout.AppIconMargin, WindowLayout.TitleBarHeight, 0, 0),
+        };
+
+        // ナビが開いている間だけ表示する覆い（ナビ領域の外のクリックで閉じる）。
+        // MewUI のイベントは親へ伝播しないため、外側のクリックを拾うには専用の面が要る
+        var navDismissLayer = new Border
+        {
+            Background = MewUIColor.Transparent,
+            IsVisible = viewModel.IsNavigationExpanded,
+        };
+        navDismissLayer.OnMouseDown(_ =>
+        {
+            CloseWindowMenu();
+            CollapseNavigation();
+        });
+
+        // タイトル バーのアプリ名（アイコンの右。 開閉状態に依存しない）
         var navTitle = new TextBlock().Text("SaveEvidence").FontSize(14);
         navTitle.FontWeight = FontWeight.Bold;
         // フッターの UI 名とバージョン（下で生成するが、ApplyNavigationLayout から参照するため先に宣言する）
@@ -157,7 +188,7 @@ internal sealed class MainWindow
         var navItemButtons = new Button[entries.Length];
         var navToggleIcon = new Image
         {
-            Source = LoadNavIcon("ic_fluent_arrow_autofit_width_dotted_24_regular.svg"),
+            Source = LoadNavIcon(NavIconPanelIcon(viewModel.IsNavigationExpanded)),
             Width = NavIconSize,
             Height = NavIconSize
         };
@@ -165,12 +196,11 @@ internal sealed class MainWindow
         var toggle = new Button
         {
             Content = navToggleIcon.Center(),
-            Margin = new Thickness(6, 0, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Center,
             Padding = new Thickness(0),
-            Width = AppStyles.NavToggleSize,
-            Height = AppStyles.NavToggleSize,
+            Width = NavToggleSize,
+            Height = NavToggleSize,
             StyleName = AppStyles.NavToggle,
         };
         toggle.Cursor(CursorType.Hand);
@@ -232,32 +262,24 @@ internal sealed class MainWindow
             button.Cursor(CursorType.Hand);
 
             var index = i;
-            button.WithToolTip(entry.Title, () => Select(index));
+            button.WithToolTip(entry.Title, () =>
+            {
+                Select(index);
+                CollapseNavigation();
+            });
             navItemButtons[i] = button;
             items.Add(button);
         }
 
-        var header = new Grid().Columns("Auto,*").Rows($"{NavHeaderHeight}");
+        // ナビ領域の一番上は開閉ボタン（アイコンのみ）
+        var header = new Grid().Columns("Auto,*").Rows($"{WindowLayout.NavToggleHeight}");
         header.Add(toggle.Column(0));
-        navTitle.VerticalAlignment = VerticalAlignment.Center;
-        // 開閉ボタン（幅 28）のアイコン右端へ寄せる（アイコンはボタン中央の 16 DIP）
-        navTitle.Margin = new Thickness(0, 0, 0, 0);
-        navTitle.IsVisible = viewModel.IsNavigationExpanded;
 
-        // アプリ名の列全体をタイトルバーのドラッグ領域にする（収納時もアプリ名の領域でドラッグできる）。
-        // トグルボタンとウィンドウ操作ボタンは含めない（各ボタンがクリックを処理する）。
-        var dragArea = new Border
-        {
-            Child = navTitle,
-            Background = MewUIColor.Transparent,
-        };
-        dragArea.OnMouseDown(_ => window.DragMove());
-        dragArea.OnMouseDoubleClick(_ => ToggleMaximize(window));
-        header.Add(dragArea.Column(1));
-
-        // ナビパネルの背景はスタイルで与える（テーマ変更で自動的に再解決される）
+        // ナビパネルの背景はスタイルで与える（テーマ変更で自動的に再解決される）。
+        // ページ領域の上へ重ねるため、幅だけを持たせて左端へ寄せる（残りの列はページ領域が使う）
         navPanel.StyleName = AppStyles.NavPanel;
         navPanel.Width = viewModel.NavPanelWidth;
+        navPanel.HorizontalAlignment = HorizontalAlignment.Left;
 
         // フッター（UI 名と実際のバージョン。 収納時は非表示）。
         // 位置と書式は Avalonia 版と同じ（項目一覧の下・下端へ寄せ、中央寄せ）。
@@ -285,9 +307,54 @@ internal sealed class MainWindow
             }
         };
 
-        var root = new Grid().Columns("Auto,*").Rows("*");
-        root.Add(navPanel.Column(0));
-        root.Add(contentHost.Column(1));
+        // ページ領域の左の余白（ナビの収納時の幅）。 ナビを開いてもページ領域は動かさない
+        var navGutter = new Border { Width = NavPanelMetrics.CompactWidth, Background = MewUIColor.Transparent };
+
+        // タイトル バー（ナビはこの帯へ重ねない）。 左端にタスク バーと同じアプリ アイコンを置く
+        var appIconImage = new Image
+        {
+            Source = IconLoader.LoadImage(AppIdentity.IconFileName, (int)WindowLayout.AppIconSize, IconColor()),
+            Width = WindowLayout.AppIconSize,
+            Height = WindowLayout.AppIconSize,
+        };
+        var appIconButton = new Button
+        {
+            Content = appIconImage.Center(),
+            Width = WindowLayout.AppIconButtonSize,
+            Height = WindowLayout.AppIconButtonSize,
+            Padding = new Thickness(0),
+            CornerRadius = 0,
+            StyleName = AppStyles.FlatButton,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        appIconButton.Cursor(CursorType.Hand);
+        appIconButton.WithToolTip("ウィンドウ メニュー", () => ShowWindowMenu(appIconButton));
+
+        // アプリ名とその右の余白をドラッグ領域にする（収納状態に依存しない）
+        navTitle.VerticalAlignment = VerticalAlignment.Center;
+        navTitle.Margin = new Thickness(WindowLayout.AppNameLeft - WindowLayout.AppIconButtonSize, 0, 0, 0);
+        var titleDragArea = new Border
+        {
+            Child = navTitle,
+            Background = MewUIColor.Transparent,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+        titleDragArea.OnMouseDown(_ => window.DragMove());
+        titleDragArea.OnMouseDoubleClick(_ => ToggleMaximize(window));
+
+        var titleBar = new Grid().Columns("Auto,*,Auto").Rows($"{WindowLayout.TitleBarHeight}");
+        titleBar.Add(appIconButton.Column(0));
+        titleBar.Add(titleDragArea.Column(1));
+
+        // ナビパネルとメニューは ページ領域の上へ重ねる（後から追加した要素が前面に描かれる）
+        var root = new Grid().Columns("Auto,*").Rows($"{WindowLayout.TitleBarHeight},*");
+        root.Add(titleBar.Column(0).ColumnSpan(2).Row(0));
+        root.Add(navGutter.Column(0).Row(1));
+        root.Add(contentHost.Column(1).Row(1));
+        root.Add(navDismissLayer.Column(0).ColumnSpan(2).Row(1));
+        root.Add(navPanel.Column(0).ColumnSpan(2).Row(1));
+        root.Add(windowMenu.Column(0).ColumnSpan(2).Row(1));
         window.Content(root);
 
         // タイトルバーは MewUI 標準のクライアント領域拡張を使う（Avalonia 版の
@@ -302,7 +369,7 @@ internal sealed class MainWindow
 
         // クライアント領域を拡張してもネイティブのウィンドウボタンは描画されないため、
         // タイトルバーの右端に自前で置く（Avalonia 版と同じ位置・役割）
-        root.Add(BuildWindowButtons(window).Column(0).ColumnSpan(2));
+        root.Add(BuildWindowButtons(window).Column(0).ColumnSpan(2).Row(0));
 
         // タスクバー・Alt+Tab のアイコンは Avalonia 版と同じアイコンを使う
         window.Icon = IconLoader.LoadWindowIcon(AppIdentity.IconFileName, 32, MewUIColor.Black);
@@ -339,6 +406,9 @@ internal sealed class MainWindow
         // （メニューを開いたまま別のウィンドウを操作しても閉じない、との指摘への対応）
         window.Deactivated += () =>
         {
+            // ウィンドウの外を操作した場合もナビ領域の外の操作とみなして閉じる
+            CollapseNavigation();
+
             if (selectedIndex >= 0 && pages[selectedIndex] is { OnWindowDeactivated: { } onWindowDeactivated })
             {
                 onWindowDeactivated();
@@ -474,12 +544,93 @@ internal sealed class MainWindow
 
         window.FirstFrameRendered += WarmUpPages;
 
+        // ウィンドウ メニューの項目を組み立てて開く（項目と並びは WindowMenu（App.Core）が単一所有）
+        void ShowWindowMenu(FrameworkElement anchor)
+        {
+            var panel = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
+            foreach (var entry in WindowMenu.Items(window.WindowState == WindowState.Maximized))
+            {
+                if (entry.IsSeparatorBefore)
+                {
+                    panel.Add(new Border { Height = 1, Margin = new Thickness(6, 4, 6, 4), StyleName = AppStyles.Divider });
+                }
+
+                var item = new Button
+                {
+                    Content = new TextBlock().Text(entry.Label).FontSize(12).VerticalAlignment(VerticalAlignment.Center),
+                    Padding = new Thickness(10, 6, 10, 6),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    CornerRadius = 0,
+                    StyleName = AppStyles.FlatButton,
+                };
+                item.IsEnabled(entry.IsEnabled);
+                item.Cursor(CursorType.Hand);
+                var action = entry.Action;
+                item.OnClick(() =>
+                {
+                    CloseWindowMenu();
+                    ExecuteWindowMenuAction(action);
+                });
+                panel.Add(item);
+            }
+
+            windowMenu.Child = panel;
+            windowMenu.Width = 180;
+            windowMenu.IsVisible = true;
+            navDismissLayer.IsVisible = true;
+            _ = anchor;
+        }
+
+        // 開いているウィンドウ メニューを閉じる
+        void CloseWindowMenu()
+        {
+            windowMenu.IsVisible = false;
+            navDismissLayer.IsVisible = viewModel.IsNavigationExpanded;
+        }
+
+        // ウィンドウ メニューの項目を実行する
+        void ExecuteWindowMenuAction(WindowMenuAction action)
+        {
+            switch (action)
+            {
+                case WindowMenuAction.Restore:
+                    window.WindowState = WindowState.Normal;
+                    break;
+                case WindowMenuAction.Move:
+                    SendSystemCommand(SystemWindowCommands.BeginMove);
+                    break;
+                case WindowMenuAction.Size:
+                    SendSystemCommand(SystemWindowCommands.BeginSize);
+                    break;
+                case WindowMenuAction.Minimize:
+                    window.Minimize();
+                    break;
+                case WindowMenuAction.Maximize:
+                    window.Maximize();
+                    break;
+                case WindowMenuAction.Close:
+                    window.Close();
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // ウィンドウへネイティブのシステム コマンドを送る
+        void SendSystemCommand(Func<EsPlatformHandle, bool> command)
+        {
+            if (window.Handle != IntPtr.Zero)
+            {
+                _ = command(new EsPlatformHandle(window.Handle));
+            }
+        }
         void ApplyNavigationLayout()
         {
             var expanded = viewModel.IsNavigationExpanded;
             navPanel.Width = viewModel.NavPanelWidth;
-            navTitle.IsVisible = expanded;
             navVersionText.IsVisible = expanded;
+            navDismissLayer.IsVisible = expanded || windowMenu.IsVisible;
+            navToggleIcon.Source = LoadNavIcon(NavIconPanelIcon(expanded));
 
             foreach (var text in navItemTexts)
             {
@@ -487,10 +638,20 @@ internal sealed class MainWindow
             }
         }
 
+        // 展開中のナビを閉じる（設定への保存とレイアウトの更新は IsNavigationExpanded の購読が行う）
+        void CollapseNavigation()
+        {
+            if (viewModel.IsNavigationExpanded)
+            {
+                viewModel.IsNavigationExpanded = false;
+            }
+        }
+
         void ApplyThemeColors()
         {
             var color = IconColor();
-            navToggleIcon.Source = IconLoader.LoadImage("ic_fluent_arrow_autofit_width_dotted_24_regular.svg", NavIconRasterSize, color);
+            navToggleIcon.Source = IconLoader.LoadImage(NavIconPanelIcon(viewModel.IsNavigationExpanded), NavIconRasterSize, color);
+            appIconImage.Source = IconLoader.LoadImage(AppIdentity.IconFileName, (int)WindowLayout.AppIconSize, color);
 
             for (var i = 0; i < navItemImages.Length; i++)
             {
@@ -564,6 +725,12 @@ internal sealed class MainWindow
         row.Height = TitleBarHeight;
         return row;
     }
+
+    /// <summary>ナビの開閉状態に応じたアイコンのファイル名を取得する。</summary>
+    /// <param name="expanded">開いているかどうか。</param>
+    /// <returns>開いているときは「閉じる」、閉じているときは「開く」のアイコン。</returns>
+    private static string NavIconPanelIcon(bool expanded)
+        => expanded ? NavIconPanelLeftContract : NavIconPanelRightContract;
 
     /// <summary>ナビ項目のアイコン画像を現在のテーマ色で生成する。</summary>
     /// <param name="fileName">SVG ファイル名。</param>

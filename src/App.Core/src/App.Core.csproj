@@ -12,6 +12,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- アイコンの SVG は 4 つの UI 版で共有する（UI 版ごとに複製すると片方だけ直したときに見た目がずれる）。
+         論理名は SvgIconLoader の ResourcePrefix と一致させる -->
+    <EmbeddedResource Include="Icons\*.svg">
+      <LogicalName>EsUtil.SaveEvidence.App.Core.Icons.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- 自動切り出しの矩形検出（LineDetection は UI 非依存） -->

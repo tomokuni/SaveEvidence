@@ -1,12 +1,9 @@
 using System.Collections.Concurrent;
-using System.Reflection;
-using System.Text.RegularExpressions;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
-using EsUtil.Platform.Core;
+using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Models;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
@@ -40,17 +37,10 @@ internal static partial class IconLoader
     public static Geometry LoadGeometry(string fileName)
         => CapacityLimitedCache.GetOrAdd(s_geometryCache, GeometryCacheCapacity, fileName, static f =>
         {
-            try
-            {
-                var svg = ReadSvg(f);
-                var match = PathDataRegex().Match(svg);
-                return match.Success ? StreamGeometry.Parse(match.Groups["path"].Value) : StreamGeometry.Parse("M0,0");
-            }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
-            {
-                // リソース読み込み失敗（FileNotFoundException 等）は空ジオメトリで代替する（UI を壊さない）
-                return StreamGeometry.Parse("M0,0");
-            }
+            var icon = SvgIconLoader.Load(f);
+            return icon.PathData.Count == 0
+                ? StreamGeometry.Parse("M0,0")
+                : StreamGeometry.Parse(icon.PathData[0]);
         });
 
     /// <summary>指定 SVG ファイルからウィンドウアイコンを生成する。</summary>
@@ -79,23 +69,38 @@ internal static partial class IconLoader
         return new WindowIcon(bitmap);
     }
 
-    /// <summary>埋め込み SVG リソースを読み込む。</summary>
+    /// <summary>指定 SVG を指定サイズ・指定色で描いたビットマップを取得する。</summary>
     /// <param name="fileName">SVG ファイル名。</param>
-    /// <returns>SVG の XML テキスト。</returns>
-    /// <remarks>
-    /// アセンブリ名は本クラスが属するアセンブリ（<c>App.AvaloniaUI.csproj</c>）の実際の名前から<br/>
-    /// 動的に解決する（<see cref="Assembly.GetName()"/>）。 アセンブリ名変更時も追従する。
-    /// </remarks>
-    private static string ReadSvg(string fileName)
+    /// <param name="size">一辺（ピクセル）。</param>
+    /// <param name="color">塗りの色。</param>
+    /// <returns>描いたビットマップ。 所有権は呼び出し側へ移る。</returns>
+    public static Bitmap LoadBitmap(string fileName, int size, Color color)
     {
-        var assemblyName = typeof(IconLoader).Assembly.GetName().Name;
-        var uri = new Uri($"avares://{assemblyName}/Icons/{fileName}");
-        using var stream = AssetLoader.Open(uri);
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
-    }
+        var pixels = Math.Max(1, size);
+        var icon = SvgIconLoader.Load(fileName);
+        var bitmap = new RenderTargetBitmap(new PixelSize(pixels, pixels), new Vector(96, 96));
+        using (var context = bitmap.CreateDrawingContext())
+        {
+            foreach (var data in icon.PathData)
+            {
+                var geometry = StreamGeometry.Parse(data);
+                var bounds = geometry.Bounds;
+                if (bounds.Width <= 0 || bounds.Height <= 0)
+                {
+                    continue;
+                }
 
-    /// <summary>SVG の path 要素から d 属性（パスデータ）を抽出する正規表現。</summary>
-    [GeneratedRegex("d=\"(?<path>[^\"]*)\"", RegexOptions.None, 100)]
-    private static partial Regex PathDataRegex();
+                // 図形の実寸を枠いっぱいへ広げる（他の UI 版と同じ大きさに見えるようにする）
+                var scale = Math.Min(pixels / bounds.Width, pixels / bounds.Height);
+                var offsetX = ((pixels - (bounds.Width * scale)) / 2) - (bounds.X * scale);
+                var offsetY = ((pixels - (bounds.Height * scale)) / 2) - (bounds.Y * scale);
+                using (context.PushTransform(Matrix.CreateTranslation(offsetX, offsetY) * Matrix.CreateScale(scale, scale)))
+                {
+                    context.DrawGeometry(new SolidColorBrush(color), null, geometry);
+                }
+            }
+        }
+
+        return bitmap;
+    }
 }

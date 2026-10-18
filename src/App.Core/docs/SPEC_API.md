@@ -36,7 +36,10 @@
 - [24. `Services.SettingsMetrics`（静的クラス）](#24-servicessettingsmetrics静的クラス)
 - [25. `Services.ThumbnailTileMetrics`（静的クラス）](#25-servicesthumbnailtilemetrics静的クラス)
 - [26. `Services.AppIdentity`（静的クラス）](#26-servicesappidentity静的クラス)
-- [27. 依存関係](#27-依存関係)
+- [27. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）](#27-serviceswindowmetrics--serviceswindowlayout静的クラス)
+- [28. `Services.WindowMenu`](#28-serviceswindowmenu)
+- [29. `Icons.SvgIconLoader`（内部）](#29-iconssvgiconloader内部)
+- [30. 依存関係](#30-依存関係)
 
 ## 1. 公開 API の可視性
 
@@ -460,7 +463,46 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 `TaskbarIdentity.Apply()` は **`SetCurrentProcessExplicitAppUserModelID`** でプロセスの AUMID を設定します（4 UI 版が同じ値を使うため、タスク バーでは 1 つのアプリにまとまります）。 **ウィンドウを作る前**に各 UI 版のエントリ ポイントが 1 回呼びます。 失敗（API 不在等）しても例外にせず、起動を妨げません（タスク バーのグループ分けが既定のままになるだけです）。
 
-## 27. 依存関係
+## 27. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）
+
+メイン ウィンドウの寸法と配置の**唯一の定義**です（4 つの UI 版で同じ値を使う）。
+
+| メンバー | 値 | 意味 |
+| --- | --- | --- |
+| `WindowMetrics.MinimumWidth` / `MinimumHeight` | 620 / 400 DIP | ウィンドウの最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算して指定する） |
+| `WindowMetrics.DefaultWidth` / `DefaultHeight` | 620 / 400 DIP | 復元する配置が無いときの既定サイズ |
+| `WindowLayout.TitleBarHeight` | 32 DIP | タイトル バーの高さ（ナビゲーション パネルはこの帯へ重ねない） |
+| `WindowLayout.AppIconSize` / `AppIconButtonSize` / `AppIconMargin` | 16 / 32 / 8 DIP | 左上のアプリ アイコン（タスク バーと同じアイコン）の寸法 |
+| `WindowLayout.AppNameLeft` | 32 DIP | アプリ名の左端 |
+| `WindowLayout.NavToggleHeight` | 40 DIP | ナビ領域の一番上に置く開閉ボタンの高さ |
+
+**ナビゲーション パネルの配置**: 展開しても**ページ領域は動きません**（収納時の幅の位置に留まります）。 展開したパネルはページ領域の上へ重なり、下端はステータス バーに被ります。 上端はタイトル バーの下（`WindowLayout.TitleBarHeight`）です。 展開中にナビ領域の外を操作すると収納へ戻ります。
+
+## 28. `Services.WindowMenu`
+
+ウィンドウ左上のアイコンの押下で出す標準メニューの**項目・並び・有効/無効**の唯一の定義です（4 つの UI 版で同じメニューになる）。
+
+| メンバー | 内容 |
+| --- | --- |
+| `Items(bool isMaximized, ...)` | 元のサイズに戻す / 移動 / サイズ変更 / 最小化 / 最大化 / 閉じる（閉じるの前だけ区切り線） |
+| `WindowMenuAction` | 実行する操作（`Restore` / `Move` / `Size` / `Minimize` / `Maximize` / `Close`） |
+| `WindowMenuEntry` | 1 項目（操作・表示名・有効かどうか・区切りの有無） |
+
+**移動とサイズ変更**は `EsUtil.Platform.Core` の `SystemWindowCommands` が OS のモード（`WM_SYSCOMMAND`）へ入ります（アプリ側で追従を実装しない）。
+
+## 29. `Icons.SvgIconLoader`（内部）
+
+アイコンの SVG の**読み込みと解析**の唯一の定義です（4 つの UI 版が同じファイルを使う）。
+
+| メンバー | 内容 |
+| --- | --- |
+| `Load(string fileName)` | `SvgIcon`（viewBox・パス データ・塗りの色）を返す。 見つからない場合は空のアイコン |
+| `Enumerate()` | 埋め込みリソースのファイル名の一覧 |
+| `SvgIcon` | viewBox の大きさ・パス データ（`d` 属性）・塗りの色（`0xAARRGGBB`） |
+
+**アイコンのファイルは `src/App.Core/src/Icons/` に置きます**（埋め込みリソース。 論理名は `EsUtil.SaveEvidence.App.Core.Icons.<ファイル名>`）。 各 UI 版はパス データを自分の描画 API へ変換して描くだけです（UI 版ごとに SVG を複製すると、片方だけ直したときに見た目がずれます）。
+
+## 30. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |
