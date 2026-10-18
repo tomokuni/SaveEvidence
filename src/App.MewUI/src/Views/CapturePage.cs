@@ -800,10 +800,9 @@ internal static class CapturePage
         cropView.CenterAlign = settings.CenterAlign;
         host.Children(cropView);
 
-        // 画像の 4 辺の影（幅・濃さは App.Core の ShadowPlan が単一所有する）を表示矩形へ追従させる
-        var imageShadow = new ImageShadowOverlay();
-        imageShadow.Attach(cropView);
-        host.Children(imageShadow);
+        // 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）。
+        // 画像と同じ描画面へ先に描く（重ねると画像の端の混色の下地が背景になり、白い線として見える）
+        cropView.ZoomView.SurroundRenderer = ShadowRenderer.Render;
 
         // テーマが変わったら下地色（テーマの背景色）を描き直す
         AppStyles.ThemeChanged += (_, _) => ApplyPreviewBackground(cropView);

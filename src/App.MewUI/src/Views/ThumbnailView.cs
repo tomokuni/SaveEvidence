@@ -118,7 +118,7 @@ internal sealed class ThumbnailView : SkiaCanvasView
             (float)(height - insets.Bottom));
 
         // 影は物理ピクセルで描く（帯の矩形が画素に一致する）。 画像は DIP 座標で描く
-        ShadowRenderer.Render(canvas, imageRect.Left, imageRect.Top, imageRect.Width, imageRect.Height, scaling);
+        ShadowRenderer.Render(canvas, imageRect, scaling);
 
         if (Source is { } bitmap && !bitmap.IsDisposed && !imageRect.IsEmpty)
         {

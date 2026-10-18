@@ -88,6 +88,16 @@ public sealed class ZoomViewControl : SKXamlCanvas
     /// <value>セッション。 ホストは本プロパティを使わず、コントロールの公開 API を使用する。</value>
     internal ZoomViewSession Session => _session;
 
+    /// <summary>画像の周囲（外側）へ影などを描く描画フックを取得または設定する。</summary>
+    /// <value>描画フック。 null の場合は何も描かない（既定）。</value>
+    /// <remarks>
+    /// <b>同じ描画面へ描くための入口</b>である: 画像の外側へ別の要素を重ねると、画像の端の画素<br/>
+    /// （画像と背景の混色）の下地が背景になり、画像と影の間に白い線として見える（実測）。<br/>
+    /// 本フックは<b>下地の塗りつぶし後・画像の描画前</b>に呼ばれるため、混色の下地を影にできる。<br/>
+    /// 引数は画像の表示矩形（DIP）と DIP → 物理ピクセルの倍率。 拡大は適用しない<br/>
+    /// （画素の格子に一致させるため。 画素への変換は描画計画が担う）。
+    /// </remarks>
+    public Action<SKCanvas, SKRect, double>? SurroundRenderer { get; set; }
     /// <summary>ズーム率が変更されたときに発火する（実効ズーム率・Fit 状態・ズーム可否を通知する）。</summary>
     public event EventHandler<ZoomChangedEventArgs>? ZoomChanged;
 
@@ -604,6 +614,20 @@ public sealed class ZoomViewControl : SKXamlCanvas
         // スケーリングは描画面（物理ピクセル）と割り当て領域（DIP）の比から求める
         // （DPI の変更通知は描画の前に届かないことがあるため、保持値だけに頼ると 100% で描いてしまう）
         var scaling = ClientPixelScale.Resolve(e.Info.Width, ActualWidth, _clientToPixelScaling);
+
+        // 画像の外側（影など）を先に描く（画像の端の混色の下地を影にする。 拡大は適用しない）
+        if (SurroundRenderer is { } surround)
+        {
+            var area = _session.ImageRect;
+            surround(
+                canvas,
+                new SKRect(
+                    (float)area.X,
+                    (float)area.Y,
+                    (float)(area.X + area.Width),
+                    (float)(area.Y + area.Height)),
+                scaling);
+        }
 
         canvas.Save();
         canvas.Scale((float)scaling);

@@ -635,10 +635,9 @@ internal static class CapturePage
         var host = new Grid { Background = new SolidColorBrush(Colors.Transparent) };
         host.Children.Add(crop);
 
-        // 画像の 4 辺の影（幅・濃さは App.Core の ShadowPlan が単一所有する）を表示矩形へ追従させる
-        var shadow = new ImageShadowOverlay();
-        shadow.Attach(crop);
-        host.Children.Add(shadow);
+        // 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）。
+        // 画像と同じ描画面へ先に描く（重ねると画像の端の混色の下地が背景になり、白い線として見える）
+        crop.ZoomView.SurroundRenderer = ShadowRenderer.Render;
 
         // 起動直後は XamlRoot が無くスケーリングを取得できないため、読み込み後に外観を反映し直す
         crop.Loaded += (_, _) => session.AppearanceSettings = CaptureSettingsMapper.From(settings, ReadRenderScaling(crop));

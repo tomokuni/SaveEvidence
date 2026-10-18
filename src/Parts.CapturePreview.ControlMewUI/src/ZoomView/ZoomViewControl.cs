@@ -309,6 +309,16 @@ public sealed class ZoomViewControl : SkiaCanvasView
         }
     }
 
+    /// <summary>画像の周囲（外側）へ影などを描く描画フックを取得または設定する。</summary>
+    /// <value>描画フック。 null の場合は何も描かない（既定）。</value>
+    /// <remarks>
+    /// <b>同じ描画面へ描くための入口</b>である: 画像の外側へ別のコントロールを重ねると、画像の端の<br/>
+    /// 画素（画像と背景の混色）の下地が背景になり、画像と影の間に白い線として見える（実測）。<br/>
+    /// 本フックは<b>下地の塗りつぶし後・画像の描画前</b>に呼ばれるため、混色の下地を影にできる。<br/>
+    /// 引数は画像の表示矩形（DIP）と DIP → 物理ピクセルの倍率。 拡大は適用しない<br/>
+    /// （画素の格子に一致させるため。 画素への変換は描画計画が担う）。
+    /// </remarks>
+    public Action<SKCanvas, SKRect, double>? SurroundRenderer { get; set; }
     /// <summary>要求サイズを返す。</summary>
     /// <param name="availableSize">親から提示された利用可能サイズ（使用しない）。</param>
     /// <returns>常に <c>Size.Empty</c>（親の残余を埋める）。</returns>
@@ -506,6 +516,20 @@ public sealed class ZoomViewControl : SkiaCanvasView
         // スケーリングは描画面（物理ピクセル）と割り当て領域（DIP）の比から求める
         // （DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いてしまう）
         var scaling = ClientPixelScale.Resolve(info.Width, Bounds.Size.Width, ClientToPixelScaling);
+
+        // 画像の外側（影など）を先に描く（画像の端の混色の下地を影にする。 拡大は適用しない）
+        if (SurroundRenderer is { } surround)
+        {
+            var area = _session.ImageRect;
+            surround(
+                canvas,
+                new SKRect(
+                    (float)area.X,
+                    (float)area.Y,
+                    (float)(area.X + area.Width),
+                    (float)(area.Y + area.Height)),
+                scaling);
+        }
 
         canvas.Save();
         canvas.Scale((float)scaling);

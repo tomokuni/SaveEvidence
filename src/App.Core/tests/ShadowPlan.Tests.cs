@@ -108,7 +108,8 @@ public class ShadowPlanTests
         // 10 DIP × 100%（scaling 1） → 1 辺 10 画素 × 4 辺
         var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
 
-        Assert.Equal(40, bands.Count);
+        // 4 辺 × 10 画素 + 画像の端の画素を覆う 4 本（切り捨てた行・列の白い線を防ぐ）
+        Assert.Equal(44, bands.Count);
         Assert.All(bands, b => Assert.True(b.Width == 1 || b.Height == 1));
     }
 
@@ -117,8 +118,8 @@ public class ShadowPlanTests
     {
         var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
 
-        // 上辺の帯（y が 100 未満）
-        var top = bands.Where(b => b.Y < 100).OrderByDescending(b => b.Y).ToList();
+        // 上辺の帯（横の帯だけ。 y が 100 未満で高さ 1 画素）
+        var top = bands.Where(b => b.Y < 100 && b.Height == 1).OrderByDescending(b => b.Y).ToList();
         Assert.NotEmpty(top);
 
         // 画像に接する画素（最も下）が最も濃い
@@ -129,16 +130,47 @@ public class ShadowPlanTests
     }
 
     [Fact]
-    internal void 帯_は画像の外側にだけ置かれる()
+    internal void 帯_は隅の正方形まで伸びて横と縦が重なる()
     {
         var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
 
-        // 上辺・下辺は画像の幅ちょうど、左右の辺は画像の外側
-        Assert.All(bands.Where(b => b.Y < 100), b => Assert.Equal(100, b.X));
-        Assert.All(bands.Where(b => b.Y < 100), b => Assert.Equal(200, b.Width));
-        Assert.All(bands.Where(b => b.Y >= 150), b => Assert.Equal(200, b.Width));
-        Assert.All(bands.Where(b => b.X < 100), b => Assert.Equal(1, b.Width));
-        Assert.All(bands.Where(b => b.X >= 300), b => Assert.Equal(1, b.Width));
+        static int Coverage(IReadOnlyList<ShadowBand> bands, int x, int y)
+        {
+            var count = 0;
+            foreach (var band in bands)
+            {
+                if (x >= band.X && x < band.X + band.Width && y >= band.Y && y < band.Y + band.Height)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        // 辺の中央は 1 本だけ（帯を重ねて濃くしない）
+        Assert.Equal(1, Coverage(bands, 200, 95));
+        Assert.Equal(1, Coverage(bands, 200, 155));
+        Assert.Equal(1, Coverage(bands, 95, 120));
+        Assert.Equal(1, Coverage(bands, 305, 120));
+
+        // 隅は横の帯と縦の帯が重なる（合成されて隅の濃さになる = 放射グラデーションを使わない）
+        Assert.Equal(2, Coverage(bands, 95, 95));
+        Assert.Equal(2, Coverage(bands, 304, 95));
+        Assert.Equal(2, Coverage(bands, 304, 154));
+        Assert.Equal(2, Coverage(bands, 95, 154));
+    }
+
+    [Fact]
+    internal void 帯_は画像の端の画素も覆う()
+    {
+        var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1);
+
+        // 画像の描画側は端の画素を切り捨てることがあり、その行・列が背景（白）のまま残るため
+        Assert.Contains(bands, b => b.X == 90 && b.Y == 100 && b.Width == 220 && b.Height == 1);
+        Assert.Contains(bands, b => b.X == 90 && b.Y == 149 && b.Width == 220 && b.Height == 1);
+        Assert.Contains(bands, b => b.X == 100 && b.Y == 90 && b.Width == 1 && b.Height == 70);
+        Assert.Contains(bands, b => b.X == 299 && b.Y == 90 && b.Width == 1 && b.Height == 70);
     }
 
     [Fact]
@@ -146,34 +178,12 @@ public class ShadowPlanTests
     {
         var bands = ShadowPlan.BuildDeviceBands(100, 100, 200, 50, scaling: 1.25);
 
-        // 10 DIP × 125% = 12.5 → 12 画素（Math.Round の既定 = 偶数丸め）× 4 辺
-        Assert.Equal(48, bands.Count);
+        // 10 DIP × 125% = 12.5 → 12 画素（Math.Round の既定 = 偶数丸め）× 4 辺 + 端の 4 本
+        Assert.Equal(52, bands.Count);
     }
 
     [Fact]
     internal void 帯_は画像が空なら作らない()
         => Assert.Empty(ShadowPlan.BuildDeviceBands(10, 10, 0, 40, scaling: 1));
-    [Fact]
-    internal void 隅の矩形_は中心が画像の隅の頂点になる()
-    {
-        var fills = ShadowPlan.BuildCornerFills(100, 100, 200, 50);
-
-        Assert.Equal(4, fills.Count);
-        Assert.All(fills, f => Assert.Equal(ShadowPlan.BlurRadius, f.Size));
-
-        // 中心（隅の矩形に対する相対位置）が画像の隅の頂点を指す
-        Assert.All(fills, f =>
-            Assert.InRange((f.X + (f.CenterX * f.Size)) - 100, -0.001, 200.001));
-        Assert.All(fills, f =>
-            Assert.InRange((f.Y + (f.CenterY * f.Size)) - 100, -0.001, 50.001));
-
-        Assert.Contains(fills, f => f.X < 100 && f.Y < 100);   // 左上
-        Assert.Contains(fills, f => f.X >= 300 && f.Y < 100);  // 右上
-        Assert.Contains(fills, f => f.X >= 300 && f.Y >= 150); // 右下
-        Assert.Contains(fills, f => f.X < 100 && f.Y >= 150);  // 左下
-    }
-
-    [Fact]
-    internal void 隅の矩形_は画像が空なら作らない()
-        => Assert.Empty(ShadowPlan.BuildCornerFills(10, 10, 40, 0));
 }
+

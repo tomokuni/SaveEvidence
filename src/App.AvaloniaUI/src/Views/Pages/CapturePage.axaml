@@ -2,7 +2,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
              xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;assembly=Parts.CapturePreview.ControlAvaloniaUI"
-             xmlns:controls="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Controls"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
@@ -136,9 +135,9 @@
         <Grid Grid.Row="1" x:Name="ImageAreaGrid"
               Background="{DynamicResource ImageAreaBackgroundBrush}"
               PointerPressed="OnImageAreaPointerPressed">
-            <!-- 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）。
-                 画像の背後へ置く（画像の端のアンチエイリアスを影と混ぜ、画像との間に白い線を作らない）。 -->
-            <controls:ImageShadowOverlay x:Name="ImageShadow"/>
+            <!-- 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）は
+                 CropViewControl.SurroundRenderer が同じ描画面へ先に描く（重ねると画像の端の混色の
+                 下地が背景になり、画像と影の間に白い線として見える）。 -->
 
             <!-- 高レベル複合コントロール（ズーム・パン・Fit + 領域選択 + ルーペを内包。ScrollViewer 不使用。
                  ズーム率・座標変換・オーバーレイの配線を一本化した CropViewControl）

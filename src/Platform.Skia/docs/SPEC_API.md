@@ -10,8 +10,9 @@
 - [3. `SkiaFill`（塗りの部品）](#3-skiafill塗りの部品)
 - [4. `SkiaLabel` / `SkiaText`](#4-skialabel--skiatext)
 - [5. `SkiaColorInterop` / `SkiaGeometryInterop`（相互変換）](#5-skiacolorinterop--skiageometryinterop相互変換)
-- [6. 依存関係](#6-依存関係)
-- [7. 本プロジェクトを置く理由](#7-本プロジェクトを置く理由)
+- [6. `SkiaShadowRenderer` / `SkiaShadowBand`（影の描画）](#6-skiashadowrenderer--skiashadowband影の描画)
+- [7. 依存関係](#7-依存関係)
+- [8. 本プロジェクトを置く理由](#8-本プロジェクトを置く理由)
 
 ## 1. 公開 API の可視性
 
@@ -20,6 +21,7 @@
 | `EsBitmapSkiaExtensions` | `public` | 任意（コアのビットマップと Skia の相互変換） |
 | `SkiaFill` / `SkiaLabel` / `SkiaText` | `public` | 任意（描画の部品。 描画の呼び出しは利用者が行う） |
 | `SkiaColorInterop` / `SkiaGeometryInterop` | `public` | 任意（色・幾何の相互変換） |
+| `SkiaShadowRenderer` / `SkiaShadowBand` | `public` | 任意（影の描画。 濃さの計画はアプリ側が単一所有する） |
 
 ## 2. `EsBitmapSkiaExtensions`（相互変換）
 
@@ -62,7 +64,18 @@
 | `ToSKRect(this EsRect rect)` | `EsRect` → `SKRect` |
 | `ToEsSize(this SKSizeI size)` | `SKSizeI` → `EsSize` |
 
-## 6. 依存関係
+## 6. `SkiaShadowRenderer` / `SkiaShadowBand`（影の描画）
+
+`SkiaShadowRenderer` は画像の 4 辺・4 隅へ影を描く描画手順を単一所有します。 濃さの計画（幅・濃さの変化）はアプリの `ShadowPlan` が単一所有し、本クラスは渡された帯を塗るだけです。
+
+| メンバー | 内容 |
+| --- | --- |
+| `SkiaShadowBand(int X, int Y, int Width, int Height, uint Argb)` | 影の 1 画素分の帯（物理ピクセルの矩形と色） |
+| `SkiaShadowRenderer.Draw(SKCanvas, ReadOnlySpan<SkiaShadowBand>)` | 帯を**単色の矩形**で塗る（アンチエイリアス無効） |
+
+**グラデーションを使わない理由**: グラデーション ブラシの端・半径の扱いは描画 API ごとに異なり、影の外側に線が出たり、隅だけ濃い点や薄い筋として見えたりします（実測）。 1 画素の帯を単色で塗れば、どの環境でも同じ結果になります。 4 隅も辺の帯を隅の正方形まで伸ばして重ねるため、本クラスに隅専用の処理はありません。
+
+## 7. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |
@@ -71,7 +84,7 @@
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。
 
-## 7. 本プロジェクトを置く理由
+## 8. 本プロジェクトを置く理由
 
 `EsUtil.Platform.Core` の判定基準は「**外部 PackageReference なし**（`.NET 標準ライブラリ` と Microsoft 公式パッケージは許容）」です。 SkiaSharp は外部パッケージであるため、Skia に依存する型を `EsUtil.Platform.Core` へ置けません。 本プロジェクトは Skia 依存を単一所有し、UI 非依存層が SkiaSharp を参照しない状態を保ちます。
 

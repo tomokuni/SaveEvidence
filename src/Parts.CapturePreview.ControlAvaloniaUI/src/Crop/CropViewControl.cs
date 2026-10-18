@@ -89,6 +89,9 @@ public sealed partial class CropViewControl : Panel
     /// <remarks>入力は受けず（<c>IsHitTestVisible = false</c>）描画のみを担う（ズーム・ドラッグは下のレイヤが受ける）。</remarks>
     private readonly MarqueeControl _highlight = new() { ZIndex = 30, IsHitTestVisible = false };
 
+    /// <summary>画像の周囲（影など）を画像より奥へ描く子（入力は受けない）。</summary>
+    private readonly SurroundPainter _surround = new() { ZIndex = -1 };
+
     /// <summary><see cref="CropViewControl"/> の新しいインスタンスを初期化する。</summary>
     /// <remarks>
     /// 子コントロール（<see cref="ZoomViewControl"/> / <see cref="SelectionOverlayControl"/> / 矩形オーバーレイ / 強調オーバーレイ）を生成して配置し、<br/>
@@ -101,6 +104,11 @@ public sealed partial class CropViewControl : Panel
         _zoomView.HorizontalAlignment = HorizontalAlignment.Stretch;
         _zoomView.VerticalAlignment = VerticalAlignment.Stretch;
         _highlight.Appearance = HighlightDefaultAppearance;
+
+        // 影などの周辺描画がプレビュー領域の外（ツールバー・ステータスバー）へ出ないよう切り取る
+        ClipToBounds = true;
+        _surround.ImageRect = ImageRectViewport;
+        Children.Add(_surround);
         Children.Add(_zoomView);
         Children.Add(_selectionOverlay);
         Children.Add(_rectOverlay);
@@ -112,6 +120,9 @@ public sealed partial class CropViewControl : Panel
             _selectionOverlay.NotifyViewportChanged();
             UpdateRectOverlay();
             UpdateHighlight();
+
+            // 周辺描画（画像の影）は画像の表示矩形に追従する（子の変化では奥の子は描き直されない）
+            _surround.InvalidateVisual();
         };
 
         // 領域選択オーバーレイ上のホイールをビューポートへ転送する。
@@ -401,6 +412,23 @@ public sealed partial class CropViewControl : Panel
     {
         add => _zoomView.ViewportChanged += value;
         remove => _zoomView.ViewportChanged -= value;
+    }
+
+    /// <summary>画像の周囲（影など）を画像より先に描く描画フックを取得または設定する。</summary>
+    /// <value>描画先・画像の表示矩形（DIP）・倍率（DIP → 物理ピクセル）を受け取る処理。 null の場合は何も描かない。</value>
+    /// <remarks>
+    /// <b>画像の下へ描く</b>: 実体は画像より奥の子（<see cref="SurroundPainter"/>）であり、画像の端の画素<br/>
+    /// （画像と背景の混色）の下地を影にできる（別のコントロールを画像の上へ重ねると、その画素の下地が<br/>
+    /// 背景のまま残り、画像と影の間に白い線として見える。 実測）。
+    /// </remarks>
+    public Action<DrawingContext, Rect, double>? SurroundRenderer
+    {
+        get => _surround.Renderer;
+        set
+        {
+            _surround.Renderer = value;
+            _surround.InvalidateVisual();
+        }
     }
 
     /// <summary>現在のズーム状態でズームインが可能かどうか（<see cref="ZoomViewControl.CanZoomIn"/> へ委譲）。</summary>

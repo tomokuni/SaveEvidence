@@ -9,11 +9,11 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// <b>4 辺を同じ濃さにする理由</b>: 影を下方向へずらすと上辺だけが薄くなり、画像と影の間に<br/>
 /// 白っぽい隙間が見える（実測で指摘）。 4 辺とも画像の端で最も濃く、外側へ向けて同じ割合で薄くする。<br/>
 /// <br/>
-/// <b>描き方</b>: 4 辺は <see cref="BuildDeviceBands"/> が返す<b>1 画素の帯</b>を単色で塗り、<br/>
-/// 4 隅は <see cref="BuildCornerFills"/> が返す矩形を放射グラデーションで塗る<br/>
+/// <b>描き方</b>: <see cref="BuildDeviceBands"/> が返す<b>1 画素の帯</b>を単色で塗るだけである<br/>
 /// （グラデーション ブラシの端の扱いに依存しないため、どの UI 版でも同じ結果になる）。<br/>
-/// <br/>
-/// <b>重ねない</b>: 辺どうし・辺と隅は重ならない（重ねると角が二重に濃くなる）。
+/// <b>4 隅もグラデーションを使わない</b>: 辺の帯を隅の正方形まで伸ばし、横の帯と縦の帯を重ねて<br/>
+/// <b>合成</b>する（重なった画素は 1-(1-横)(1-縦) の濃さになる）。 放射グラデーションは描画 API ごとに<br/>
+/// 半径・中心の解釈が揺れ、隅だけ濃い点や薄い筋として見えた（実測）。
 /// </remarks>
 public static class ShadowPlan
 {
@@ -45,8 +45,11 @@ public static class ShadowPlan
         CreateEdge(ShadowSide.Left, outerAtStart: true),
     ];
 
-    /// <summary>4 隅の計画（描画順は左上・右上・右下・左下）。</summary>
-    /// <remarks>全 UI 版が同じ値を使う。 位置は画像の矩形から <see cref="BuildCornerFills"/> が決める。</remarks>
+    /// <summary>4 隅の放射グラデーションの停止点（要素を並べる一覧だけが使う）。</summary>
+    /// <remarks>
+    /// キャプチャページの画像と Skia / GDI+ の一覧は<b>帯の重ね合わせ</b>（<see cref="BuildDeviceBands"/>）で隅を塗る。<br/>
+    /// 本停止点は、隅を 1 つの要素で塗る一覧（WinUI 3 の <c>ThumbnailTileView</c>）が使う。
+    /// </remarks>
     public static IReadOnlyList<ShadowStop> CornerStops { get; } = CreateCornerStops();
 
     /// <summary>画像の周囲へ確保する影の余白を取得する。</summary>
@@ -111,9 +114,11 @@ public static class ShadowPlan
     /// <remarks>
     /// <b>これは「描画計画」の画素版である</b>: 辺の濃さを 1 画素ごとの単色へ落としているため、<br/>
     /// どの UI 版も「単色の矩形を塗る」だけで同じ結果になる（グラデーション ブラシの端の扱いに依存しない）。<br/>
-    /// 濃さは画素の中心の距離で決める（<see cref="AlphaAtDistance"/>）。 画像の端は DIP の値を<br/>
-    /// 四捨五入して画素へ合わせる（画像を描く側と同じ丸めになる）。<br/>
-    /// 隅は <see cref="BuildCornerFills"/> が担う（帯は画像の幅・高さいっぱいで、隅には掛からない）。
+    /// 濃さは画素の中心の距離で決める（<see cref="AlphaAtDistance"/>）。<br/>
+    /// <b>画像の下へ潜らせる</b>: 内側の端は切り捨てるため、帯は画像の端の画素（画像と背景の混色）に<br/>
+    /// 最大 1 画素掛かる。 影を画像より先に描けば隠れ、混色の下地が影になるため白い線が出ない。<br/>
+    /// <b>4 隅も同じ帯で塗る</b>: 辺の帯を隅の正方形まで伸ばし、横の帯と縦の帯を重ねて合成する<br/>
+    /// （放射グラデーションは描画 API ごとに半径・中心の解釈が揺れ、隅だけ濃い点や薄い筋として見えた。 実測）。
     /// </remarks>
     public static IReadOnlyList<ShadowBand> BuildDeviceBands(double x, double y, double width, double height, double scaling)
     {
@@ -125,10 +130,14 @@ public static class ShadowPlan
         }
 
         var extent = (int)Math.Round(BlurRadius * scaling);
-        var left = (int)Math.Round(x * scaling);
-        var top = (int)Math.Round(y * scaling);
-        var right = (int)Math.Round((x + width) * scaling);
-        var bottom = (int)Math.Round((y + height) * scaling);
+
+        // 画像の端は<b>切り捨て</b>る: 画像は端数のある位置へ描かれ、その最後の画素は画像と背景の<br/>
+        // 混色になる。 影の内側を切り捨てて画像の下へ潜らせると、その混色の下地が影になり<br/>
+        // 白い線が見えない（切り上げると 1 画素だけ背景が残る。 実測）。
+        var left = (int)Math.Floor(x * scaling);
+        var top = (int)Math.Floor(y * scaling);
+        var right = (int)Math.Floor((x + width) * scaling);
+        var bottom = (int)Math.Floor((y + height) * scaling);
         var pixelsWide = right - left;
         var pixelsHigh = bottom - top;
         if (extent <= 0 || pixelsWide <= 0 || pixelsHigh <= 0)
@@ -136,46 +145,30 @@ public static class ShadowPlan
             return bands;
         }
 
+        // 帯は隅の正方形まで伸ばす（横の帯と縦の帯が隅で重なって合成され、隅の濃さになる）
+        var spanX = pixelsWide + (2 * extent);
+        var spanY = pixelsHigh + (2 * extent);
         for (var i = 0; i < extent; i++)
         {
             // i = 0 が画像に接する画素。 画素の中心までの距離で濃さを決める（勾配の見た目と同じ）
             var argb = ColorAtDistance((i + 0.5) / scaling);
-            bands.Add(new ShadowBand(left, top - 1 - i, pixelsWide, 1, argb));
-            bands.Add(new ShadowBand(left, bottom + i, pixelsWide, 1, argb));
-            bands.Add(new ShadowBand(left - 1 - i, top, 1, pixelsHigh, argb));
-            bands.Add(new ShadowBand(right + i, top, 1, pixelsHigh, argb));
+            bands.Add(new ShadowBand(left - extent, top - 1 - i, spanX, 1, argb));
+            bands.Add(new ShadowBand(left - extent, bottom + i, spanX, 1, argb));
+            bands.Add(new ShadowBand(left - 1 - i, top - extent, 1, spanY, argb));
+            bands.Add(new ShadowBand(right + i, top - extent, 1, spanY, argb));
         }
+
+        // 画像の端の画素（切り捨てた行・列）も覆う: 画像の描画側は端の画素を切り捨てたり
+        // 切り上げたりし、floor の行・列が画像でも影でも塗られず<b>背景（白）が残る</b>ことがある（実測:
+        // 拡大率によって画像の上辺に 1 画素の白い線）。 画像がその画素を塗る場合は画像に隠れる。
+        var edgeArgb = ColorAtDistance(0.5 / scaling);
+        bands.Add(new ShadowBand(left - extent, top, spanX, 1, edgeArgb));
+        bands.Add(new ShadowBand(left - extent, bottom - 1, spanX, 1, edgeArgb));
+        bands.Add(new ShadowBand(left, top - extent, 1, spanY, edgeArgb));
+        bands.Add(new ShadowBand(right - 1, top - extent, 1, spanY, edgeArgb));
 
         return bands;
     }
-    /// <summary>画像の矩形から、影を塗る 4 隅の矩形を作る。</summary>
-    /// <param name="x">画像の左端。</param>
-    /// <param name="y">画像の上端。</param>
-    /// <param name="width">画像の幅。</param>
-    /// <param name="height">画像の高さ。</param>
-    /// <returns>4 隅の矩形（画像にも辺にも掛からない）。</returns>
-    /// <remarks>
-    /// 隅は辺と同じ幅の正方形にする。 中心は<b>画像の隅の頂点</b>（左上なら矩形の右下）であり、<br/>
-    /// 半径は <see cref="BlurRadius"/>（= 一辺）なので、隅の矩形いっぱいに円が収まる。
-    /// </remarks>
-    public static IReadOnlyList<ShadowCornerFill> BuildCornerFills(double x, double y, double width, double height)
-    {
-        var fills = new List<ShadowCornerFill>(4);
-
-        if (width <= 0 || height <= 0)
-        {
-            return fills;
-        }
-
-        var size = BlurRadius;
-        fills.Add(new ShadowCornerFill(x - size, y - size, size, 1, 1, CornerStops));
-        fills.Add(new ShadowCornerFill(x + width, y - size, size, 0, 1, CornerStops));
-        fills.Add(new ShadowCornerFill(x + width, y + height, size, 0, 0, CornerStops));
-        fills.Add(new ShadowCornerFill(x - size, y + height, size, 1, 0, CornerStops));
-
-        return fills;
-    }
-
     /// <summary>1 辺分の計画を生成する。</summary>
     /// <param name="side">辺。</param>
     /// <param name="outerAtStart">グラデーションの始点が外側かどうか。</param>

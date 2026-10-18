@@ -9,6 +9,7 @@ using Avalonia.Media;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Controls;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -97,8 +98,9 @@ public sealed partial class CapturePage : UserControl
         // CropViewControl（自己完結型複合コントロール）にロガーを注入する
         CropView.Log = s_logger;
 
-        // 画像の 4 辺の影（幅・濃さは App.Core の ShadowPlan が単一所有する）を表示矩形へ追従させる
-        ImageShadow.Attach(CropView);
+        // 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）。
+        // 画像と同じ描画面へ先に描く（重ねると画像の端の混色の下地が背景になり、白い線として見える）
+        CropView.SurroundRenderer = ShadowRenderer.Render;
 
         // 自動切り出しのホバー強調の外観（内側の塗りと枠線）を CropViewControl へ与える。
         // 色・枠線の太さ・表示可否は描画にだけ必要な設定であり、強調の描画手順は CropViewControl（Parts）が単一所有する。
