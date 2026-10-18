@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core.Geometry;
+﻿using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.ZoomView;
@@ -88,7 +88,8 @@ public sealed class ZoomGraphicsRendererTests
         var bar = new ZoomScrollBar(new EsRect(0, 0, 100, 8), new EsRect(10, 0, 30, 8));
         using var target = TestHelper.CreateTarget(120, 20);
 
-        ZoomGraphicsRenderer.RenderScrollBar(target.Graphics, bar, track, thumb, drawTrack: true);
+        ZoomGraphicsRenderer.RenderScrollBar(
+            target.Graphics, bar, track, thumb, drawTrack: true, DrawingColor.Transparent, 0);
 
         Assert.Equal(track, target.GetPixel(2, 4));
         Assert.Equal(thumb, target.GetPixel(20, 4));
@@ -103,7 +104,8 @@ public sealed class ZoomGraphicsRendererTests
         var bar = new ZoomScrollBar(new EsRect(0, 0, 100, 8), new EsRect(10, 0, 30, 8));
         using var target = TestHelper.CreateTarget(120, 20);
 
-        ZoomGraphicsRenderer.RenderScrollBar(target.Graphics, bar, track, thumb, drawTrack: false);
+        ZoomGraphicsRenderer.RenderScrollBar(
+            target.Graphics, bar, track, thumb, drawTrack: false, DrawingColor.Transparent, 0);
 
         Assert.Equal(TestHelper.EmptyPixel, target.GetPixel(2, 4));
         Assert.Equal(thumb, target.GetPixel(20, 4));
@@ -116,9 +118,27 @@ public sealed class ZoomGraphicsRendererTests
         using var target = TestHelper.CreateTarget(20, 20);
 
         ZoomGraphicsRenderer.RenderScrollBar(
-            target.Graphics, null, DrawingColor.Red, DrawingColor.Blue, drawTrack: true);
+            target.Graphics, null, DrawingColor.Red, DrawingColor.Blue, drawTrack: true, DrawingColor.Transparent, 0);
 
         Assert.Equal(TestHelper.EmptyPixel, target.GetPixel(5, 5));
+    }
+
+    /// <summary>スクロールバーの枠がトラックの縁へ描かれることを検証する。</summary>
+    [Fact]
+    internal void RenderScrollBar_枠を描く()
+    {
+        var track = DrawingColor.FromArgb(255, 255, 255, 255);
+        var thumb = DrawingColor.FromArgb(255, 0, 255, 0);
+        var border = DrawingColor.FromArgb(255, 255, 0, 0);
+        var bar = new ZoomScrollBar(new EsRect(10, 10, 100, 20), new EsRect(30, 10, 30, 20));
+        using var target = TestHelper.CreateTarget(140, 40);
+
+        ZoomGraphicsRenderer.RenderScrollBar(
+            target.Graphics, bar, track, thumb, drawTrack: true, border, borderThickness: 2);
+
+        // 枠はトラックの縁（上辺の内側）へ描かれ、内側はトラックの色のままになる
+        Assert.Equal(border, target.GetPixel(60, 10));
+        Assert.Equal(track, target.GetPixel(60, 20));
     }
 
     /// <summary>表示条件を確定させたセッションを生成する。</summary>

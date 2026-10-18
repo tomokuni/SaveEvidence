@@ -1,4 +1,4 @@
-using EsUtil.SaveEvidence.App.Core.Enums;
+﻿using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
@@ -77,6 +77,18 @@ internal static class AppStyles
 
     /// <summary>ナビゲーション項目の文字サイズ（DIP）。 4 つの UI 版で共通。</summary>
     public const double NavItemFontSize = NavPanelMetrics.ItemFontSize;
+
+    /// <summary>ナビゲーション項目の高さ（DIP）。 4 つの UI 版で共通。</summary>
+    public const double NavItemHeight = NavPanelMetrics.ItemHeight;
+
+    /// <summary>ナビゲーション項目の一覧の上下の余白（DIP）。 4 つの UI 版で共通。</summary>
+    public const double NavItemsMarginTop = NavPanelMetrics.ItemsMarginTop;
+
+    /// <summary>選択中のマークの幅（DIP）。 4 つの UI 版で共通。</summary>
+    public const double NavSelectionMarkWidth = NavPanelMetrics.SelectionMarkWidth;
+
+    /// <summary>選択中のマークの左端（DIP）。 4 つの UI 版で共通。</summary>
+    public const double NavSelectionMarkLeft = NavPanelMetrics.SelectionMarkLeft;
 
     /// <summary>ウィンドウの最小幅（DIP）。 4 つの UI 版で共通。</summary>
     /// <remarks>値は <see cref="WindowMetrics"/>（App.Core）が単一所有する。</remarks>

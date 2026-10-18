@@ -1,4 +1,4 @@
-# App.Core API リファレンス
+﻿# App.Core API リファレンス
 
 `App.Core` は UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供します。 名前空間は `App.AvaloniaUI` と同一の `EsUtil.SaveEvidence.*` です。
 
@@ -39,7 +39,8 @@
 - [27. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）](#27-serviceswindowmetrics--serviceswindowlayout静的クラス)
 - [28. `Services.WindowMenu`](#28-serviceswindowmenu)
 - [29. `Icons.SvgIconLoader`（内部）](#29-iconssvgiconloader内部)
-- [30. 依存関係](#30-依存関係)
+- [30. `Services.ZoomMenuLevels`（静的クラス）](#30-serviceszoommenulevels静的クラス)
+- [31. 依存関係](#31-依存関係)
 
 ## 1. 公開 API の可視性
 
@@ -48,7 +49,7 @@
 | `Enums.AppPage` / `Enums.ThemeMode` | `public` | 任意 |
 | `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` / `Models.HotKeyParser` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
-| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` | `public` | 任意 |
+| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` / `Services.ZoomMenuLevels` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
 | `Services.EsRectIntJsonConverter` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
 | `Models.CapacityLimitedCache` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
@@ -354,13 +355,16 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 ## 21. `Services.NavPanelMetrics`（静的クラス）
 
-ナビゲーション パネルの幅と項目の文字サイズを単一所有します（UI 版ごとに幅・文字の大きさがずれないようにするため）。
+ナビゲーション パネルの幅と項目の寸法を単一所有します（UI 版ごとに幅・大きさがずれないようにするため）。
 
 | 定数 | 値（DIP） | 意味 |
 | --- | --- | --- |
 | `ItemFontSize` | 14 | 項目の文字サイズ（AvaloniaUI 版の項目と同じ大きさ） |
 | `ItemHorizontalPadding` | 12 | 項目の左右の余白 |
-| `IconSize` | 16 | 項目のアイコンの一辺 |
+| `ItemHeight` | 40 | 項目の高さ（開閉・文字の有無で変わらない） |
+| `ItemsMarginTop` | 8 | 項目の一覧の上下の余白 |
+| `SelectionMarkWidth` / `SelectionMarkLeft` | 3 / 4 | 選択中のマークの幅と左端 |
+| `IconSize` | 16 | 項目のアイコンの一辺（開閉ボタン・左上のアプリ アイコン・ツールバーも同じ値） |
 | `IconSpacing` | 8 | アイコンと文字の間隔 |
 | `LabelWidth` | 68 | 最も長い項目名（「フォルダビュー」）の実測幅 |
 | `TrailingSlack` | 20 | UI ごとの内部余白の差を吸収する α |
@@ -368,6 +372,8 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `ExpandedWidth` | 136 | 展開時の幅（左右の余白 + アイコン + 間隔 + 文字 + α） |
 
 `Width(bool isExpanded)` が展開・収納を切り替えます。 `MainViewModel.NavPanelWidth` は本クラスへ委譲します。
+
+項目の高さを `ItemHeight` に固定するのは、**文字の有無で高さが変わると開閉で項目の位置がずれる**ためです（AvaloniaUI 版の実測で 33.6 → 36.8 DIP と変わっていました）。
 
 ## 22. `Services.StartupPreviewImage`（静的クラス）
 
@@ -504,7 +510,17 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **アイコンのファイルは `src/App.Core/src/Icons/` に置きます**（埋め込みリソース。 論理名は `EsUtil.SaveEvidence.App.Core.Icons.<ファイル名>`）。 各 UI 版はパス データを自分の描画 API へ変換して描くだけです（UI 版ごとに SVG を複製すると、片方だけ直したときに見た目がずれます）。
 
-## 30. 依存関係
+## 30. `Services.ZoomMenuLevels`（静的クラス）
+
+ステータス バーの**拡大率の押下で出す選択肢**（%）の唯一の定義です（4 つの UI 版で同じ選択肢になる）。 メニューの先頭には「自動」（Fit 表示へ戻す）を別途置きます。
+
+| メンバー | 内容 |
+| --- | --- |
+| `All` | 10 / 15 / 25 / 35 / 50 / 75 / 100 / 150 / 200 / 250 / 350 / 500（%・昇順） |
+
+⊖⊕ ボタンの段階（`ZoomTransition.DefaultButtonZoomLevels`・23 段階）とは目的が異なるため別に持ちます。
+
+## 31. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

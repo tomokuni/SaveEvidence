@@ -1,4 +1,4 @@
-# Parts.CapturePreview.Core システム仕様書
+﻿# Parts.CapturePreview.Core システム仕様書
 
 ## 目次 <!-- omit from toc -->
 
@@ -348,7 +348,7 @@ classDiagram
     class ZoomState { <<readonly record struct>> +double ZoomPercent  +bool IsFit  +bool CanZoomIn  +bool CanZoomOut }
     class ZoomFeedback { <<readonly record struct>> +bool ShouldRedraw  +bool ShouldCapturePointer  +bool ShouldReleasePointer  +ApplyVisual(redraw)$  +ApplyPointer(capture, release)$ }
     class ZoomNotice { <<sealed record>> +ZoomNoticeKind Kind  +ZoomState State  +EsRect ImageRect }
-    class ZoomViewAppearance { <<sealed record>> +Color BackgroundColor  +bool HasScrollBarTrack }
+    class ZoomViewAppearance { <<sealed record>> +Color BackgroundColor  +bool HasScrollBarTrack  +bool HasScrollBarBorder }
     class ZoomScrollBarGeometry { <<static>> +Compute(...)$  +MovableThumbRange(...)$  +SourceOffsetFromThumb(...)$ }
     class ZoomTransition { <<static>> +NextLevel(...)$  +PrevLevel(...)$  +WheelZoomIn(...)$  +WheelZoomOut(...)$  +BuildAvailability(...)$ }
     class ZoomMath { <<static>> +FitScale(...)$  +ComputeOffsetAfterScaleChange(...)$  +ClampOffset(...)$  +ClientToSource(...)$ }

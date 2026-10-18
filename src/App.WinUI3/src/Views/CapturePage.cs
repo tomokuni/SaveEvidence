@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core;
+﻿using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -54,9 +54,6 @@ internal static class CapturePage
 
     /// <summary>ファイル名テンプレートの幅に足す左右の余白（DIP・枠とカーソル分）。 Avalonia 版と同じ値。</summary>
     private const double TemplateHorizontalPadding = 24;
-
-    /// <summary>拡大率メニューの選択肢（%）。</summary>
-    private static readonly double[] s_zoomMenuLevels = [10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
 
     /// <summary>自動切り出しの検出矩形の枠線色（水色・不透明）。</summary>
     private static readonly DrawingColor s_autoCropBorder = DrawingColor.FromArgb(255, 0, 191, 255);
@@ -474,7 +471,8 @@ internal static class CapturePage
     private static MenuFlyout BuildZoomMenu(CropViewControl cropView)
     {
         var flyout = new MenuFlyout();
-        foreach (var level in s_zoomMenuLevels)
+        // 選択肢と並びは App.Core（ZoomMenuLevels）が単一所有する（他の UI 版と同じ）
+        foreach (var level in ZoomMenuLevels.All)
         {
             var item = new MenuFlyoutItem { Text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{level:0}%") };
             var percent = level;

@@ -1,4 +1,4 @@
-using Aprillz.MewUI;
+﻿using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
@@ -548,6 +548,10 @@ public sealed class ZoomViewControl : SkiaCanvasView
     [ThreadStatic]
     private static SKPaint? s_track;
 
+    /// <summary>枠のペイント（スレッドごとに 1 つを使い回す）。</summary>
+    [ThreadStatic]
+    private static SKPaint? s_border;
+
     /// <summary>サムのペイント（スレッドごとに 1 つを使い回す）。</summary>
     [ThreadStatic]
     private static SKPaint? s_thumb;
@@ -572,9 +576,18 @@ public sealed class ZoomViewControl : SkiaCanvasView
         trackPaint.Color = appearance.ScrollBarTrackColor.ToSKColor();
         thumbPaint.Color = appearance.ScrollBarColor.ToSKColor();
 
+        // 枠はトラックの縁へ描く（色はトラックより若干グレー、透過度はトラックと同じ）
+        SKPaint? borderPaint = null;
+        if (appearance.HasScrollBarBorder)
+        {
+            borderPaint = s_border ??= new SKPaint { IsAntialias = false, Style = SKPaintStyle.Stroke };
+            borderPaint.Color = appearance.ScrollBarBorderColor.ToSKColor();
+            borderPaint.StrokeWidth = (float)appearance.ScrollBarBorderThickness;
+        }
+
         var drawTrack = appearance.HasScrollBarTrack;
-        DrawScrollBar(canvas, horizontal, trackPaint, thumbPaint, drawTrack);
-        DrawScrollBar(canvas, vertical, trackPaint, thumbPaint, drawTrack);
+        DrawScrollBar(canvas, horizontal, trackPaint, thumbPaint, borderPaint, drawTrack);
+        DrawScrollBar(canvas, vertical, trackPaint, thumbPaint, borderPaint, drawTrack);
     }
 
     /// <summary>スクロールバー 1 本を描画する。</summary>
@@ -582,8 +595,11 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <param name="bar">描画するスクロールバー。 null の場合は何もしない。</param>
     /// <param name="trackPaint">トラックの描画設定。</param>
     /// <param name="thumbPaint">サムの描画設定。</param>
+    /// <param name="borderPaint">枠の描画設定（描かない場合は null）。</param>
     /// <param name="drawTrack">トラックを描くかどうか（<see cref="ZoomViewAppearance.HasScrollBarTrack"/> の値）。</param>
-    private static void DrawScrollBar(SKCanvas canvas, ZoomScrollBar? bar, SKPaint trackPaint, SKPaint thumbPaint, bool drawTrack)
+    /// <remarks>トラック → 枠 → サムの順に描く（枠はトラックの縁、サムはトラックの上に載る）。</remarks>
+    private static void DrawScrollBar(
+        SKCanvas canvas, ZoomScrollBar? bar, SKPaint trackPaint, SKPaint thumbPaint, SKPaint? borderPaint, bool drawTrack)
     {
         if (bar is not { } value)
         {
@@ -593,6 +609,15 @@ public sealed class ZoomViewControl : SkiaCanvasView
         if (drawTrack)
         {
             canvas.DrawRect(value.Track.ToSKRect(), trackPaint);
+        }
+
+        if (borderPaint is not null)
+        {
+            // 枠はトラックの内側へ描く（外へはみ出して画像に掛からないようにする）
+            var inset = borderPaint.StrokeWidth / 2;
+            var border = value.Track.ToSKRect();
+            border.Inflate(-inset, -inset);
+            canvas.DrawRect(border, borderPaint);
         }
 
         canvas.DrawRect(value.Thumb.ToSKRect(), thumbPaint);

@@ -1,4 +1,4 @@
-using Aprillz.MewUI;
+﻿using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
@@ -66,10 +66,6 @@ internal static class CapturePage
             entry.Image.Source = IconLoader.LoadImage(entry.File, IconRasterSize, color);
         }
     }
-
-    /// <summary>拡大率メニューの選択肢（%。 0 = 自動は別途追加する）。</summary>
-    /// <remarks>Avalonia 版のフライアウトと同じ段階を使う。</remarks>
-    private static readonly double[] s_zoomMenuLevels = [10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
 
     /// <summary>ファイル名テンプレートの最小幅（DIP）。 Avalonia 版と同じ値。</summary>
     private const double TemplateMinWidth = 100;
@@ -707,7 +703,8 @@ internal static class CapturePage
         // 0（自動）は Fit へ戻す
         Add("自動", crop.ZoomFit);
 
-        foreach (var level in s_zoomMenuLevels)
+        // 選択肢と並びは App.Core（ZoomMenuLevels）が単一所有する（Avalonia 版のフライアウトと同じ）
+        foreach (var level in ZoomMenuLevels.All)
         {
             var zoom = level;
             Add($"{zoom:0}%", () => crop.ZoomPercent = zoom);

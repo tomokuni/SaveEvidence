@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
@@ -540,10 +540,23 @@ public sealed class ZoomViewControl : Control
         }
 
         var drawTrack = appearance.HasScrollBarTrack;
+        var borderThickness = appearance.HasScrollBarBorder ? appearance.ScrollBarBorderThickness : 0;
         ZoomGraphicsRenderer.RenderScrollBar(
-            graphics, horizontal, appearance.ScrollBarTrackColor, appearance.ScrollBarColor, drawTrack);
+            graphics,
+            horizontal,
+            appearance.ScrollBarTrackColor,
+            appearance.ScrollBarColor,
+            drawTrack,
+            appearance.ScrollBarBorderColor,
+            borderThickness);
         ZoomGraphicsRenderer.RenderScrollBar(
-            graphics, vertical, appearance.ScrollBarTrackColor, appearance.ScrollBarColor, drawTrack);
+            graphics,
+            vertical,
+            appearance.ScrollBarTrackColor,
+            appearance.ScrollBarColor,
+            drawTrack,
+            appearance.ScrollBarBorderColor,
+            borderThickness);
     }
 
     /// <summary>セッションの通知を自 UI の公開イベントへ転送する。</summary>

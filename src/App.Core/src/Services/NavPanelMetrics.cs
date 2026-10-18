@@ -32,6 +32,18 @@ public static class NavPanelMetrics
     /// <summary>アイコンと文字の間隔（DIP）。</summary>
     public const double IconSpacing = 8;
 
+    /// <summary>項目の高さ（DIP）。 全 UI 版で同じ値を使う（開閉しても変わらない）。</summary>
+    public const double ItemHeight = 40;
+
+    /// <summary>項目の一覧の上下の余白（DIP）。</summary>
+    public const double ItemsMarginTop = 8;
+
+    /// <summary>選択中のマークの幅（DIP）。</summary>
+    public const double SelectionMarkWidth = 3;
+
+    /// <summary>選択中のマークの左端（DIP）。</summary>
+    public const double SelectionMarkLeft = 4;
+
     /// <summary>最も長い項目名（「フォルダビュー」）の幅（DIP・<see cref="ItemFontSize"/> で実測）。</summary>
     public const double LabelWidth = 68;
 

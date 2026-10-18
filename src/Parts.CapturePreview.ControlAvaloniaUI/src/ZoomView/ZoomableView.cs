@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -73,6 +73,26 @@ internal sealed class ZoomableView : Panel
         IsVisible = false,
     };
 
+    /// <summary>縦スクロールバーの枠（標準の <see cref="ScrollBar"/> は枠を持たないため重ねて描く）。</summary>
+    private readonly Border _verticalScrollBarFrame = new()
+    {
+        Width = ScrollBarThickness,
+        HorizontalAlignment = HorizontalAlignment.Right,
+        VerticalAlignment = VerticalAlignment.Stretch,
+        IsVisible = false,
+        IsHitTestVisible = false,
+    };
+
+    /// <summary>横スクロールバーの枠（標準の <see cref="ScrollBar"/> は枠を持たないため重ねて描く）。</summary>
+    private readonly Border _horizontalScrollBarFrame = new()
+    {
+        Height = ScrollBarThickness,
+        HorizontalAlignment = HorizontalAlignment.Stretch,
+        VerticalAlignment = VerticalAlignment.Bottom,
+        IsVisible = false,
+        IsHitTestVisible = false,
+    };
+
     /// <summary>スクロールバー同期中の再入防止フラグ（プログラム同期とユーザー操作の循環を断つ）。</summary>
     private bool _isSyncingScrollBars;
 
@@ -89,6 +109,8 @@ internal sealed class ZoomableView : Panel
         Children.Add(_image);
         Children.Add(_verticalScrollBar);
         Children.Add(_horizontalScrollBar);
+        Children.Add(_verticalScrollBarFrame);
+        Children.Add(_horizontalScrollBarFrame);
         ClipToBounds = true;
         Focusable = true;
         // 高品質補間（ズーム時の画質）
@@ -172,6 +194,7 @@ internal sealed class ZoomableView : Panel
             ApplyImageLayout();
             ApplyTransform();
             SyncScrollBars();
+            ApplyScrollBarFrames();
             InvalidateVisual();
         }
         finally
@@ -283,6 +306,33 @@ internal sealed class ZoomableView : Panel
         {
             _isSyncingScrollBars = false;
         }
+    }
+
+    /// <summary>スクロールバーの枠（トラックの輪郭）を外観の値へ合わせる。</summary>
+    /// <remarks>
+    /// 標準の <see cref="ScrollBar"/> は枠を持たないため、同じ位置へ重ねた <see cref="Border"/> で描く。<br/>
+    /// 枠の色・太さ・可否はコア（<see cref="ZoomViewAppearance"/>）が単一所有する。<br/>
+    /// 枠は操作を受け取らない（<c>IsHitTestVisible</c> を false にする）ため、ドラッグの妨げにならない。
+    /// </remarks>
+    private void ApplyScrollBarFrames()
+    {
+        var appearance = _session.Appearance;
+        var thickness = appearance.HasScrollBarBorder ? appearance.ScrollBarBorderThickness : 0;
+        var brush = new SolidColorBrush(appearance.ScrollBarBorderColor.ToAvaloniaColor());
+        ApplyScrollBarFrame(_verticalScrollBarFrame, _verticalScrollBar, thickness, brush);
+        ApplyScrollBarFrame(_horizontalScrollBarFrame, _horizontalScrollBar, thickness, brush);
+    }
+
+    /// <summary>スクロールバーの枠 1 本の太さ・色・表示を同期する。</summary>
+    /// <param name="frame">枠の要素。</param>
+    /// <param name="bar">対応するスクロールバー。</param>
+    /// <param name="thickness">枠の太さ（DIP）。 0 以下の場合は枠を描かない。</param>
+    /// <param name="brush">枠の色。</param>
+    private static void ApplyScrollBarFrame(Border frame, ScrollBar bar, double thickness, IBrush brush)
+    {
+        frame.BorderThickness = new Thickness(thickness);
+        frame.BorderBrush = thickness > 0 ? brush : null;
+        frame.IsVisible = thickness > 0 && bar.IsVisible;
     }
 
     /// <summary>スクロールバー 1 本の範囲・値・表示状態を同期する。</summary>

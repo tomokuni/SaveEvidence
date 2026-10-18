@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core;
+﻿using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -106,7 +106,15 @@ internal static class CapturePage
         UiFactory.CenterInStatusBar(zoomSlider, 24);
         var syncingZoomSlider = false;
 
-        var zoomText = UiFactory.CreateStatusLabel(52, "拡大率");
+        // 拡大率の選択肢（作り直さずに使い回す。 破棄は root の破棄に合わせる）
+        var zoomMenu = CreateZoomMenu();
+
+        // 拡大率は右端の枠の中で中央へ置き、押下で選択肢（App.Core の ZoomMenuLevels）を出す
+        var zoomText = UiFactory.CreateStatusLabel(
+            DpiScaler.ScaleToPixel(56, DpiScaler.ToScaling(crop.DeviceDpi)), "拡大率（クリックで選択）");
+        zoomText.TextAlign = ContentAlignment.MiddleCenter;
+        zoomText.Cursor = Cursors.Hand;
+        zoomText.Click += (_, _) => ShowZoomMenu();
         var zoomOutButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomOut, "縮小", () => crop.ZoomOut()));
         var zoomInButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomIn, "拡大", () => crop.ZoomIn()));
         var zoomFitButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomFit, "ウィンドウに合わせる", () => crop.ZoomFit()));
@@ -206,7 +214,11 @@ internal static class CapturePage
         // ウィンドウの非アクティブ化の際に ObjectDisposedException で落ちる（実測）。
         // 破棄はページの破棄に合わせる
         var menu = CreateMenu();
-        root.Disposed += (_, _) => menu.Dispose();
+        root.Disposed += (_, _) =>
+        {
+            menu.Dispose();
+            zoomMenu.Dispose();
+        };
         menuButton.Click += (_, _) => menu.Show(menuButton, new Point(0, menuButton.Height));
         crop.ZoomChanged += OnZoomChanged;
         zoomSlider.ValueChanged += (_, _) =>
@@ -523,6 +535,26 @@ internal static class CapturePage
             AddMenuItem(menuStrip, "ファイル名テンプレートを編集", "", () => templateBox.Focus());
             return menuStrip;
         }
+
+        // 拡大率の選択肢を組み立てる（値と並びは App.Core の ZoomMenuLevels が単一所有する）。
+        // 先頭の「自動」は Fit（画像をウィンドウへ合わせる）へ戻す。
+        // メニューは 1 度だけ作り、以降は同じインスタンスを表示する（破棄の理由は CreateMenu と同じ）
+        ContextMenuStrip CreateZoomMenu()
+        {
+            var zoomMenuStrip = new ContextMenuStrip();
+            AddMenuItem(zoomMenuStrip, "自動", "", crop.ZoomFit);
+            foreach (var level in ZoomMenuLevels.All)
+            {
+                var zoom = level;
+                AddMenuItem(zoomMenuStrip, UiFactory.FormatNumber(zoom, "0") + "%", "", () => crop.ZoomPercent = zoom);
+            }
+
+            return zoomMenuStrip;
+        }
+
+        // 拡大率の選択肢をステータス バーの拡大率の上へ出す。
+        void ShowZoomMenu()
+            => zoomMenu.Show(zoomText, new Point(0, -zoomMenu.Height - zoomText.Height));
 
         // ページ固有のショートカット キーを処理する。
         bool HandleShortcut(Keys keyData)

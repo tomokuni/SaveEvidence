@@ -652,7 +652,9 @@ public readonly record struct OverlayRect(
 
 ### 10.5 `ZoomViewAppearance`（外観）
 
-下地色・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を単一所有します。 描画の可否（`HasScrollBarTrack`）も本型が持ちます。 色は UI 非依存の `System.Drawing.Color` です。
+下地色・スクロールバー（表示可否・太さ・余白・サム色・トラック色・枠の色と太さ）を単一所有します。 描画の可否（`HasScrollBarTrack` / `HasScrollBarBorder`）も本型が持ちます。 色は UI 非依存の `System.Drawing.Color` です。
+
+**枠（`ScrollBarBorderColor` / `ScrollBarBorderThickness`）** はスクロールバーの輪郭です。 単色のバーは表示中の画像によっては見えないため（明るい画像の上の白いバーなど）、トラックより**若干グレー**で**透過度はトラックと同じ**色の輪郭を描きます（既定は `#606060` の 16%・太さ 1 DIP）。 描画順は **トラック → 枠 → サム**で、枠はトラックの内側へ描きます（外へはみ出して画像に掛からないようにする）。
 
 **`FitInset`（既定 0）** は Fit の計算にだけ使う余白（DIP・4 辺とも同じ値）です。 画像の周囲へ影を描く UI 版は影のぼかし幅を渡し、**Fit は影も含めて収まる**倍率になります（画像の中央寄せはビューポート全体が基準のため、画像は自然に余白を空けます）。
 

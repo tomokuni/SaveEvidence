@@ -1,4 +1,4 @@
-﻿using Aprillz.MewUI;
+using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
@@ -56,7 +56,7 @@ internal sealed class MainWindow
     private const string NavIconPanelRightContract = "ic_fluent_panel_right_contract_24_filled.svg";
 
     /// <summary>ナビ項目の選択マークの幅（DIP）。 WinUI 3 の選択マークと同じ。</summary>
-    private const double NavSelectionMarkWidth = 3;
+    private const double NavSelectionMarkWidth = NavPanelMetrics.SelectionMarkWidth;
 
     /// <summary>ナビ項目の選択マークの高さ（DIP）。 WinUI 3 の選択マークと同じ。</summary>
     private const double NavSelectionMarkHeight = 16;
@@ -69,7 +69,7 @@ internal sealed class MainWindow
     /// AvaloniaUI 版の項目（アイコンの領域 24 + 上下の余白 8 + 8 = 40）と同じ高さにする。<br/>
     /// 文字の表示を切り替えると内容の高さが変わり、開閉で項目の高さが変わってしまうため固定する。
     /// </remarks>
-    private const double NavItemHeight = 40;
+    private const double NavItemHeight = NavPanelMetrics.ItemHeight;
 
     /// <summary>ナビ項目のアイコンを生成する解像度（ピクセル）。</summary>
     /// <remarks>表示サイズ（16 DIP）に対して高 DPI でも鮮明になるよう余裕を持たせる。</remarks>
@@ -207,7 +207,8 @@ internal sealed class MainWindow
         toggle.Cursor(CursorType.Hand);
         toggle.WithToolTip("ナビゲーションを開閉", () => viewModel.IsNavigationExpanded = !viewModel.IsNavigationExpanded);
 
-        var items = new StackPanel().Vertical().Spacing(0).Margin(new Thickness(0, 8, 0, 8));
+        var items = new StackPanel().Vertical().Spacing(0)
+            .Margin(new Thickness(0, NavPanelMetrics.ItemsMarginTop, 0, NavPanelMetrics.ItemsMarginTop));
 
         for (var i = 0; i < entries.Length; i++)
         {
@@ -662,6 +663,8 @@ internal sealed class MainWindow
         {
             var expanded = viewModel.IsNavigationExpanded;
             navPanel.Width = viewModel.NavPanelWidth;
+            // アプリ名とフッターは展開時だけ表示する（収納時はアイコンだけ）
+            navTitle.IsVisible = expanded;
             navVersionText.IsVisible = expanded;
             navDismissLayer.IsVisible = expanded || windowMenu.IsVisible;
             navToggleIcon.Source = LoadNavIcon(NavIconPanelIcon(expanded));

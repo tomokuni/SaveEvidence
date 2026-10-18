@@ -1,4 +1,4 @@
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
+﻿using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Platform.WinForms.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.ZoomView;
@@ -39,13 +39,21 @@ internal static class ZoomGraphicsRenderer
     /// <param name="trackColor">トラックの色。</param>
     /// <param name="thumbColor">サムの色。</param>
     /// <param name="drawTrack">トラックを描くかどうか。</param>
+    /// <param name="borderColor">枠の色。</param>
+    /// <param name="borderThickness">枠の太さ（DIP）。 0 以下の場合は枠を描かない。</param>
     /// <remarks>
     /// 矩形はコア（<see cref="ZoomViewSession.CurrentScrollBars"/>）が確定済みのため、本メソッドは塗るだけである。<br/>
-    /// トラックを先に、サムを後に塗る（サムがトラックの上に載る）。
+    /// トラック → 枠 → サムの順に描く（枠はトラックの縁、サムはトラックの上に載る）。
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="graphics"/> が null の場合。</exception>
     public static void RenderScrollBar(
-        Graphics graphics, ZoomScrollBar? bar, Color trackColor, Color thumbColor, bool drawTrack)
+        Graphics graphics,
+        ZoomScrollBar? bar,
+        Color trackColor,
+        Color thumbColor,
+        bool drawTrack,
+        Color borderColor,
+        double borderThickness)
     {
         ArgumentNullException.ThrowIfNull(graphics);
 
@@ -57,6 +65,19 @@ internal static class ZoomGraphicsRenderer
         if (drawTrack)
         {
             GdiFill.Rect(graphics, value.Track, trackColor);
+        }
+
+        if (borderThickness > 0)
+        {
+            // 枠はトラックの内側へ描く（外へはみ出して画像に掛からないようにする）
+            var inset = borderThickness / 2;
+            using var pen = new Pen(borderColor, (float)borderThickness);
+            graphics.DrawRectangle(
+                pen,
+                (float)(value.Track.X + inset),
+                (float)(value.Track.Y + inset),
+                (float)Math.Max(0, value.Track.Width - borderThickness),
+                (float)Math.Max(0, value.Track.Height - borderThickness));
         }
 
         GdiFill.Rect(graphics, value.Thumb, thumbColor);

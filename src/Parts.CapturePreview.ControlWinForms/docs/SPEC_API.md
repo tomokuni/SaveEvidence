@@ -1,4 +1,4 @@
-# Parts.CapturePreview.ControlWinForms API リファレンス
+﻿# Parts.CapturePreview.ControlWinForms API リファレンス
 
 `Parts.CapturePreview.ControlWinForms` は撮影スタックの UI 層を WinForms で提供します。 名前空間は `EsUtil.SaveEvidence.Parts.CapturePreview.WinForms` 配下（`ZoomView` / `Crop` / `SelectionOverlay` / `Session` / `Overlay`）です。
 
@@ -210,7 +210,7 @@ WinForms の `MouseEventArgs.Delta` は 1 ノッチ = 120 であるため、コ�
 | メソッド | 説明 |
 | --- | --- |
 | `Render(this Graphics graphics, Bitmap? source, ZoomViewSession session)` | セッションが確定した表示矩形へ画像を 1 回で描画する |
-| `RenderScrollBar(this Graphics graphics, ZoomScrollBar? bar, Color trackColor, Color thumbColor, bool drawTrack)` | スクロールバー 1 本を描画する（トラック → サムの順） |
+| `RenderScrollBar(this Graphics graphics, ZoomScrollBar? bar, Color trackColor, Color thumbColor, bool drawTrack, Color borderColor, double borderThickness)` | スクロールバー 1 本を描画する（トラック → 枠 → サムの順。 枠はトラックの内側へ描く） |
 
 ### 7.2 `RectOverlayCanvas`（内部・オーバーレイ コントロール）
 

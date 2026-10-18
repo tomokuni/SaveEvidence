@@ -1,4 +1,4 @@
-using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
+﻿using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.ZoomView;
@@ -43,6 +43,47 @@ public class ZoomViewAppearanceTests
         };
 
         Assert.True(appearance.HasScrollBarTrack);
+    }
+
+    [Fact]
+    internal void HasScrollBarBorder_アルファ0なら描かない()
+    {
+        var appearance = ZoomViewAppearance.Default with
+        {
+            ScrollBarBorderColor = System.Drawing.Color.FromArgb(0, 160, 160, 160),
+        };
+
+        Assert.False(appearance.HasScrollBarBorder);
+    }
+
+    [Fact]
+    internal void HasScrollBarBorder_太さ0なら描かない()
+    {
+        var appearance = ZoomViewAppearance.Default with { ScrollBarBorderThickness = 0 };
+
+        Assert.False(appearance.HasScrollBarBorder);
+    }
+
+    [Fact]
+    internal void HasScrollBarBorder_色と太さがあれば描く()
+    {
+        var appearance = ZoomViewAppearance.Default;
+
+        Assert.True(appearance.HasScrollBarBorder);
+        Assert.Equal(ZoomViewAppearance.DefaultScrollBarBorderThickness, appearance.ScrollBarBorderThickness);
+    }
+
+    /// <summary>枠はトラックより若干グレーで、透過度（アルファ）がトラックと同じであることを検証する。</summary>
+    /// <remarks>枠の目的は「単色のバーでは見えない画像の上でも輪郭で視認できる」ことである。</remarks>
+    [Fact]
+    internal void 枠の色はトラックよりグレーで透過度が同じ()
+    {
+        var appearance = ZoomViewAppearance.Default;
+
+        Assert.Equal(appearance.ScrollBarTrackColor.A, appearance.ScrollBarBorderColor.A);
+        Assert.True(appearance.ScrollBarBorderColor.R < appearance.ScrollBarTrackColor.R);
+        Assert.True(appearance.ScrollBarBorderColor.G < appearance.ScrollBarTrackColor.G);
+        Assert.True(appearance.ScrollBarBorderColor.B < appearance.ScrollBarTrackColor.B);
     }
 
     /// <summary>市松模様の設定が公開されていないことを検証する（廃止の固定）。</summary>

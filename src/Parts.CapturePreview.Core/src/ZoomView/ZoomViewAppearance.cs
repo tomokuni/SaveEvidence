@@ -61,6 +61,26 @@ public sealed record ZoomViewAppearance
     /// <value>トラック色のアルファが 0 より大きい場合は true。</value>
     public bool HasScrollBarTrack => ScrollBarTrackColor.A > 0;
 
+    /// <summary>スクロールバーの枠の太さの既定値（DIP）。</summary>
+    public const double DefaultScrollBarBorderThickness = 1.0;
+
+    /// <summary>スクロールバーの枠の色を取得する。</summary>
+    /// <value>アルファを含む色。 既定は白 16%（トラックと同じ透過度）のグレー（#606060）。</value>
+    /// <remarks>
+    /// <b>枠を描く理由</b>: 単色のバーは表示中の画像によっては見えない（明るい画像の上の白いバーなど）。<br/>
+    /// 輪郭だけをトラックより<b>若干グレー</b>にし、<b>透過度はトラックと同じ</b>にして視認できるようにする。<br/>
+    /// アルファ 0 の場合は枠を描かない。
+    /// </remarks>
+    public DrawingColor ScrollBarBorderColor { get; init; } = DrawingColor.FromArgb(40, 96, 96, 96);
+
+    /// <summary>スクロールバーの枠の太さ（DIP）を取得する。</summary>
+    /// <value>太さ（DIP）。 既定は <see cref="DefaultScrollBarBorderThickness"/>。</value>
+    public double ScrollBarBorderThickness { get; init; } = DefaultScrollBarBorderThickness;
+
+    /// <summary>スクロールバーの枠を描画するかどうかを取得する。</summary>
+    /// <value>枠色のアルファと枠の太さがともに 0 より大きい場合は true。</value>
+    public bool HasScrollBarBorder => ScrollBarBorderColor.A > 0 && ScrollBarBorderThickness > 0;
+
     /// <summary>画像の周囲に確保する余白（DIP）を取得する。</summary>
     /// <value>余白（DIP）。 既定は 0（余白なし）。</value>
     /// <remarks>

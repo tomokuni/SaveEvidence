@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
         xmlns:pages="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages"
@@ -41,11 +41,17 @@
         <!-- ナビゲーションパネルアイテムのスタイル。
              選択中は WinUI 3 と同じ「薄いグレーの角丸背景 + 左端の青いマーク」で示す -->
         <Style Selector="Border.NavItem">
-            <Setter Property="Padding" Value="4,8"/>
+            <!-- 高さは他の UI 版と同じ 40 DIP（開閉・文字の有無で変わらない） -->
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="4,0"/>
             <Setter Property="Margin" Value="2,1"/>
             <Setter Property="CornerRadius" Value="4"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <!-- 内容（マーク + アイコン + 文字）は項目の高さの中央へ置く -->
+        <Style Selector="Border.NavItem > Grid">
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
         <Style Selector="Border.NavItem:hover">
             <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}"/>

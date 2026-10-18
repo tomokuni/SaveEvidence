@@ -87,8 +87,17 @@ internal sealed class MainWindow : Window
     /// <summary>ページの内容（選択時に生成し、以降は同じ要素を表示する）。</summary>
     private readonly PageContent?[] _pages = new PageContent?[s_entries.Length];
 
-    /// <summary>ナビゲーションの要素（メニュー項目と内容のホスト）。</summary>
-    private readonly NavigationView _navigation = new();
+    /// <summary>ページ領域のホスト（ナビゲーションのアイコン列の右）。</summary>
+    private readonly Grid _contentHost = new();
+
+    /// <summary>収納時のナビゲーション（アイコン列）。</summary>
+    private readonly StackPanel _navRail = new();
+
+    /// <summary>ナビゲーションの列の下地（収納・展開で同じ色）。</summary>
+    private Border _navRailBackground = null!;
+
+    /// <summary>収納時のナビゲーションの項目（選択状態の反映に使う）。</summary>
+    private readonly List<NavItemVisual> _navRailItems = [];
 
     /// <summary>グローバル ホットキーの登録。</summary>
     private readonly GlobalHotKeyRegistration _hotKeys = new();
@@ -112,14 +121,14 @@ internal sealed class MainWindow : Window
     private Border _navOverlay = null!;
 
     /// <summary>展開時のナビゲーションの項目（選択状態の反映に使う）。</summary>
-    private readonly List<NavOverlayItem> _navOverlayItems = [];
+    private readonly List<NavItemVisual> _navOverlayItems = [];
 
-    /// <summary>展開時のナビゲーションの項目の見た目。</summary>
+    /// <summary>ナビゲーションの項目の見た目（収納時のアイコン列と展開時の一覧で共用する）。</summary>
     /// <param name="Page">対応するページ。</param>
     /// <param name="Button">項目のボタン。</param>
     /// <param name="Mark">選択中を示す縦のマーク。</param>
     /// <param name="Icon">項目のアイコン（テーマ変更で描き直す）。</param>
-    private sealed record NavOverlayItem(AppPage Page, Button Button, Border Mark, Image Icon);
+    private sealed record NavItemVisual(AppPage Page, Button Button, Border Mark, Image Icon);
 
     /// <summary>メイン ウィンドウを生成する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
@@ -153,7 +162,7 @@ internal sealed class MainWindow : Window
 
         // 上書き確認とクリップボードは UI 型を要求するため、UI 層の実装をコールバックへ配線する
         viewModel.ConfirmOverwriteAsync = fileName => ConfirmDialog.ShowAsync(
-            _navigation.XamlRoot!, "上書きの確認", $"{fileName} は既に存在します。上書きしますか？");
+            (Content as FrameworkElement)!.XamlRoot!, "上書きの確認", $"{fileName} は既に存在します。上書きしますか？");
         viewModel.CopyToClipboardCallback = image => Task.FromResult(CaptureClipboard.Copy(image));
         viewModel.PasteFromClipboardCallback = CaptureClipboard.PasteAsync;
 
@@ -177,67 +186,28 @@ internal sealed class MainWindow : Window
         ApplyThemeResources();
 
         // OS のテーマが変わったとき（System のとき）も色を追随させる
-        _navigation.ActualThemeChanged += (_, _) => ApplyThemeResources();
+        ((FrameworkElement)Content).ActualThemeChanged += (_, _) => ApplyThemeResources();
         Activated += OnWindowActivated;
         Closed += OnWindowClosed;
 
         // 先読みは要素ツリーが実体化した後に行う（表示が済んでから一覧の構築を始める）
-        _navigation.Loaded += (_, _) =>
+        ((FrameworkElement)Content).Loaded += (_, _) =>
         {
             // DPI が変わると物理ピクセルの最小サイズも変わる（読み込み後に倍率が確定する）
-            if (_navigation.XamlRoot is { } root)
+            if (((FrameworkElement)Content).XamlRoot is { } root)
             {
                 root.Changed += (_, _) => ApplyMinimumSize();
             }
 
             ApplyMinimumSize();
             ApplyDefaultSizeIfNeeded();
-            HideStandardPaneToggle();
 
             TryWarmUpPages();
         };
     }
 
-    /// <summary>標準のナビゲーション開閉ボタンを透明にして操作不可にする。</summary>
-    /// <remarks>
-    /// 標準のボタンはアイコンを差し替えられないため自前のボタンを使うが、<b>領域の確保</b>には必要である<br/>
-    /// （収納時に項目が上へ詰まり、自前のボタンと重なる）。 そのため要素は残し、見た目と操作だけを無効化する。<br/>
-    /// テンプレートの内部要素は名前で探す（ビジュアル ツリーは読み込み後に確定する）。
-    /// </remarks>
-    private void HideStandardPaneToggle()
-    {
-        if (FindDescendant(_navigation, "TogglePaneButton") is not Control toggle)
-        {
-            return;
-        }
-
-        toggle.Opacity = 0;
-        toggle.IsHitTestVisible = false;
-    }
-
-    /// <summary>ビジュアル ツリーから名前で要素を探す。</summary>
-    /// <param name="root">探索の起点。</param>
-    /// <param name="name">探す要素の名前。</param>
-    /// <returns>見つかった要素。 見つからない場合は null。</returns>
-    private static FrameworkElement? FindDescendant(DependencyObject root, string name)
-    {
-        var count = VisualTreeHelper.GetChildrenCount(root);
-        for (var i = 0; i < count; i++)
-        {
-            var child = VisualTreeHelper.GetChild(root, i);
-            if (child is FrameworkElement element && string.Equals(element.Name, name, StringComparison.Ordinal))
-            {
-                return element;
-            }
-
-            if (FindDescendant(child, name) is { } found)
-            {
-                return found;
-            }
-        }
-
-        return null;
-    }
+    /// <summary>DPI の倍率（要素ツリーが実体化するまでは 1）。</summary>
+    private double RasterizationScale => (Content as FrameworkElement)?.XamlRoot?.RasterizationScale ?? 1.0;
 
     /// <summary>最小サイズを現在の DPI で画面物理ピクセルへ換算して設定する。</summary>
     /// <remarks>
@@ -252,7 +222,7 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        var scaling = _navigation.XamlRoot?.RasterizationScale ?? 1.0;
+        var scaling = RasterizationScale;
         presenter.PreferredMinimumWidth = WindowPlacementRule.ToPhysicalLength(AppStyles.MinWindowWidth, scaling);
         presenter.PreferredMinimumHeight = WindowPlacementRule.ToPhysicalLength(AppStyles.MinWindowHeight, scaling);
     }
@@ -270,7 +240,7 @@ internal sealed class MainWindow : Window
         }
 
         _isSizeInitialized = true;
-        var scaling = _navigation.XamlRoot?.RasterizationScale ?? 1.0;
+        var scaling = RasterizationScale;
         AppWindow.Resize(new SizeInt32(
             WindowPlacementRule.ToPhysicalLength(WindowMetrics.DefaultWidth, scaling),
             WindowPlacementRule.ToPhysicalLength(WindowMetrics.DefaultHeight, scaling)));
@@ -298,14 +268,34 @@ internal sealed class MainWindow : Window
         var root = new Grid();
         _root = root;
 
-        // ページ領域とナビゲーション ペイン（ペインはページ領域の上へ重なり、上端はページ領域の先頭に揃う）
-        root.Children.Add(_navigation);
+        // 左の列がナビゲーション（収納時 40 DIP）、右の列がページ領域。
+        // ページ領域は収納時の幅だけ右へ寄せたまま動かない（展開したナビは上へ重ねる）
+        root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(AppStyles.NavPanelCompactWidth) });
+        root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        // 左上のアプリ アイコン（タスク バーと同じアイコン）と開閉ボタンは、ページ領域の上へ重ねる
-        // （項目と重ならないよう、ナビゲーションの先頭に同じ高さの空きを確保する）
+        Grid.SetColumn(_contentHost, 1);
+        root.Children.Add(_contentHost);
+
+        // ナビゲーションの列の下地（上端の見出しと同じ色で下端まで塗る）
+        _navRailBackground = new Border
+        {
+            Background = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavPanel(AppStyles.IsDarkTheme))),
+        };
+        Grid.SetColumn(_navRailBackground, 0);
+        root.Children.Add(_navRailBackground);
+
+        // 収納時のアイコン列（見出しの下から並べる）
+        Grid.SetColumn(_navRail, 0);
+        root.Children.Add(_navRail);
+
+        // 展開時の一覧と左上の見出し（アプリ アイコン・アプリ名・開閉ボタン）は上へ重ねる
         root.Children.Add(BuildNavigationOverlay());
         root.Children.Add(BuildNavigationHeader());
+        Grid.SetColumnSpan(_navOverlay, 2);
+        Grid.SetColumnSpan(_navHeader, 2);
 
+        // ページ固有のキー処理を表示中のページへ転送する
+        root.KeyDown += OnRootKeyDown;
 
 
         // クライアント領域をタイトル バーへ拡張する（標準のウィンドウ操作ボタンが描画される）
@@ -432,6 +422,8 @@ internal sealed class MainWindow : Window
             var navPanel = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavPanel(AppStyles.IsDarkTheme)));
             _navHeader.Background = navPanel;
             _navOverlay.Background = navPanel;
+            _navRailBackground.Background = navPanel;
+            RefreshNavSelection();
         }
     }
 
@@ -490,7 +482,7 @@ internal sealed class MainWindow : Window
         }
 
         var position = e.GetCurrentPoint(this.Content).Position;
-        var scaling = _navigation.XamlRoot?.RasterizationScale ?? 1.0;
+        var scaling = RasterizationScale;
         var dx = (int)Math.Round((position.X - _dragStartPointer.X) * scaling);
         var dy = (int)Math.Round((position.Y - _dragStartPointer.Y) * scaling);
         AppWindow.Move(new PointInt32(_dragStartWindowPosition.X + dx, _dragStartWindowPosition.Y + dy));
@@ -555,66 +547,106 @@ internal sealed class MainWindow : Window
             VerticalContentAlignment = VerticalAlignment.Center,
         };
 
-    /// <summary>ナビゲーション ペインとメニュー項目を組み立てる。</summary>
+    /// <summary>ナビゲーションの項目（収納時のアイコン列）を組み立てる。</summary>
+    /// <remarks>
+    /// <b>NavigationView を使わない理由</b>: ペインの展開は窓の幅・DPI・テーマによってラベルが出ない、<br/>
+    /// 内容が上端から始まらないなど表示が安定しない（実測）。 4 つの UI 版で同じ見た目にするため、<br/>
+    /// 収納時はアイコン列、展開時は一覧を自前で組み立てる（位置は <see cref="WindowLayout"/> と<br/>
+    /// <see cref="NavPanelMetrics"/>（App.Core）が単一所有する）。
+    /// </remarks>
     private void BuildNavigation()
     {
-        // 収納時はアイコンのみを並べる（左 40 DIP の帯）。 展開時の一覧は NavigationView の
-        // ペインを使わず自前で重ねる（ペインの展開はラベルの有無・幅が環境で崩れるため。 実測）
-        _navigation.PaneDisplayMode = NavigationViewPaneDisplayMode.LeftCompact;
-        _navigation.IsSettingsVisible = false;
-        _navigation.IsBackButtonVisible = NavigationViewBackButtonVisible.Collapsed;
-        _navigation.IsTitleBarAutoPaddingEnabled = false;
-        // 標準の開閉ボタンは**領域の確保**に必要なので残し、読み込み後に透明化して操作不可にする
-        _navigation.IsPaneToggleButtonVisible = true;
-        _navigation.CompactPaneLength = AppStyles.NavPanelCompactWidth;
-        _navigation.IsPaneOpen = false;
-
-        // 見出し（アプリ アイコン・アプリ名・開閉ボタン）の下から項目を並べる
-        _navigation.Margin = new Thickness(
-            0, WindowLayout.AppIconRowHeight + WindowLayout.NavToggleHeight, 0, 0);
-
+        // 見出し（アプリ アイコン 44 + 開閉ボタン 40）の下から並べる（他の UI 版と同じ間隔）
+        _navRail.VerticalAlignment = VerticalAlignment.Top;
+        _navRail.Margin = new Thickness(
+            0,
+            WindowLayout.AppIconRowHeight + WindowLayout.NavToggleHeight + AppStyles.NavItemsMarginTop,
+            0,
+            AppStyles.NavItemsMarginTop);
 
         foreach (var entry in s_entries)
         {
-            _navigation.MenuItems.Add(new NavigationViewItem
-            {
-                Content = entry.Title,
-                Tag = entry.Page,
-                // 文字サイズは 4 つの UI 版で共通（既定の 14 では他 UI より大きい）
-                FontSize = AppStyles.NavItemFontSize,
-                Icon = new ImageIcon { Source = IconLoader.LoadThemedImage(entry.Icon, AppStyles.IconRasterSize) },
-            });
+            var item = CreateNavRailItem(entry);
+            _navRailItems.Add(item);
+            _navRail.Children.Add(item.Button);
         }
-
-        _navigation.SelectionFollowsFocus = NavigationViewSelectionFollowsFocus.Disabled;
-        _navigation.ItemInvoked += OnNavigationItemInvoked;
-
-        _navigation.KeyDown += OnRootKeyDown;
-
-        // ナビゲーション ペインの背景をテーマ別に与える。
-        // NavigationView のペイン背景はテーマ リソースから解決されるが、ルートの RequestedTheme を
-        // 実行時に変えても追随しない（実測: ダークへ切り替えても明色のまま残る）。
-        // ThemeDictionaries に入れると ThemeResource の解決がテーマ変更でやり直される。
-        var paneResources = new ResourceDictionary();
-        foreach (var (key, isDark) in new[] { ("Light", false), ("Dark", true), ("Default", false) })
-        {
-            var brush = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavPanel(isDark)));
-            paneResources.ThemeDictionaries[key] = new ResourceDictionary
-            {
-                ["NavigationViewDefaultPaneBackground"] = brush,
-                ["NavigationViewExpandedPaneBackground"] = brush,
-            };
-        }
-
-        _navigation.Resources.MergedDictionaries.Add(paneResources);
 
         // テーマが変わったらラスタライズ済みのアイコンと下地を描き直す（色は画像へ焼き込まれている）
         AppStyles.ThemeChanged += (_, _) =>
         {
             RefreshNavigationIcons();
-            RefreshNavOverlaySelection();
+            RefreshNavSelection();
         };
     }
+
+    /// <summary>収納時のナビゲーションの項目を 1 つ組み立てる。</summary>
+    /// <param name="entry">項目の定義。</param>
+    /// <returns>項目の見た目（選択状態の反映に使う要素を含む）。</returns>
+    private NavItemVisual CreateNavRailItem(NavEntry entry)
+    {
+        var (mark, icon) = CreateNavMarkAndIcon(entry);
+
+        var content = new Grid();
+        content.Children.Add(mark);
+        content.Children.Add(icon);
+
+        var button = CreateNavItemButton(content);
+        button.Click += (_, _) =>
+        {
+            SelectPage(entry.Page, force: false);
+            CollapseNavigation();
+        };
+
+        return new NavItemVisual(entry.Page, button, mark, icon);
+    }
+
+    /// <summary>ナビゲーションの項目の選択マークとアイコンを組み立てる。</summary>
+    /// <param name="entry">項目の定義。</param>
+    /// <returns>選択マーク（左端）とアイコン（中央）。</returns>
+    private static (Border Mark, Image Icon) CreateNavMarkAndIcon(NavEntry entry)
+    {
+        var mark = new Border
+        {
+            Width = AppStyles.NavSelectionMarkWidth,
+            Height = NavPanelMetrics.IconSize,
+            CornerRadius = new CornerRadius(AppStyles.NavSelectionMarkWidth / 2),
+            Margin = new Thickness(AppStyles.NavSelectionMarkLeft, 0, 0, 0),
+            Background = new SolidColorBrush(
+                AppStyles.ToColor(AppPalette.NavItemSelectionAccent(AppStyles.IsDarkTheme))),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center,
+            Visibility = Visibility.Collapsed,
+        };
+
+        var icon = new Image
+        {
+            Width = NavPanelMetrics.IconSize,
+            Height = NavPanelMetrics.IconSize,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Source = IconLoader.LoadThemedImage(entry.Icon, AppStyles.IconRasterSize),
+        };
+
+        return (mark, icon);
+    }
+
+    /// <summary>ナビゲーションの項目のボタンを組み立てる。</summary>
+    /// <param name="content">ボタンの内容。</param>
+    /// <returns>項目の高さ・余白を他の UI 版と揃えたボタン。</returns>
+    private static Button CreateNavItemButton(UIElement content)
+        => new()
+        {
+            Content = content,
+            Height = AppStyles.NavItemHeight,
+            Margin = new Thickness(2, 1, 2, 1),
+            Padding = new Thickness(0),
+            Background = new SolidColorBrush(Colors.Transparent),
+            BorderThickness = new Thickness(0),
+            CornerRadius = new CornerRadius(4),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Stretch,
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
 
     /// <summary>コアの ViewModel と設定の変更通知を購読する。</summary>
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
@@ -641,20 +673,6 @@ internal sealed class MainWindow : Window
             AppStyles.ApplyTheme(Content as FrameworkElement, settings.Current.ThemeMode);
             ApplyThemeResources();
         };
-    }
-
-    /// <summary>ナビゲーション項目が選ばれたときにページを切り替える。</summary>
-    /// <param name="sender">イベントの送信元（ナビゲーション）。</param>
-    /// <param name="args">選択された項目の情報。</param>
-    private void OnNavigationItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
-    {
-        if (args.InvokedItemContainer?.Tag is AppPage page)
-        {
-            SelectPage(page, force: false);
-        }
-
-        // 項目を選んだら閉じる（開いたままにするとページの操作を覆い続ける）
-        CollapseNavigation();
     }
 
     /// <summary>ナビ領域の外の押下でナビゲーションを閉じる。</summary>
@@ -729,27 +747,14 @@ internal sealed class MainWindow : Window
     /// <summary>展開時のナビゲーションの項目を 1 つ組み立てる。</summary>
     /// <param name="entry">項目の定義。</param>
     /// <returns>項目の見た目（選択状態の反映に使う要素を含む）。</returns>
-    private NavOverlayItem CreateNavOverlayItem(NavEntry entry)
+    private NavItemVisual CreateNavOverlayItem(NavEntry entry)
     {
-        var mark = new Border
-        {
-            Width = 3,
-            Height = NavPanelMetrics.IconSize,
-            CornerRadius = new CornerRadius(1.5),
-            Background = new SolidColorBrush(
-                AppStyles.ToColor(AppPalette.NavItemSelectionAccent(AppStyles.IsDarkTheme))),
-            VerticalAlignment = VerticalAlignment.Center,
-            Visibility = Visibility.Collapsed,
-        };
+        var (mark, icon) = CreateNavMarkAndIcon(entry);
 
-        var icon = new Image
-        {
-            Width = NavPanelMetrics.IconSize,
-            Height = NavPanelMetrics.IconSize,
-            Margin = new Thickness(9, 0, 0, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Source = IconLoader.LoadThemedImage(entry.Icon, AppStyles.IconRasterSize),
-        };
+        // 一覧のアイコンは他の UI 版と同じ 12 DIP（マーク 4 + 幅 3 + 間隔 5）の位置へ置く
+        mark.Margin = new Thickness(AppStyles.NavSelectionMarkLeft, 0, 5, 0);
+        icon.HorizontalAlignment = HorizontalAlignment.Left;
+        icon.Margin = new Thickness(0);
 
         var label = new TextBlock
         {
@@ -768,24 +773,15 @@ internal sealed class MainWindow : Window
         content.Children.Add(icon);
         content.Children.Add(label);
 
-        var button = new Button
-        {
-            Content = content,
-            Height = WindowLayout.NavToggleHeight,
-            Padding = new Thickness(0),
-            Background = new SolidColorBrush(Colors.Transparent),
-            BorderThickness = new Thickness(0),
-            CornerRadius = new CornerRadius(0),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
-        };
+        var button = CreateNavItemButton(content);
+        button.HorizontalContentAlignment = HorizontalAlignment.Left;
         button.Click += (_, _) =>
         {
             SelectPage(entry.Page, force: false);
             CollapseNavigation();
         };
 
-        return new NavOverlayItem(entry.Page, button, mark, icon);
+        return new NavItemVisual(entry.Page, button, mark, icon);
     }
 
     /// <summary>ナビゲーションの開閉状態を画面へ反映する。</summary>
@@ -797,17 +793,17 @@ internal sealed class MainWindow : Window
         _navHeader.Width = NavPanelMetrics.Width(expanded);
         _navToggleIcon.Source = IconLoader.LoadThemedImage(
             NavToggleIconFile(expanded), AppStyles.IconRasterSize);
-        RefreshNavOverlaySelection();
+        RefreshNavSelection();
     }
 
-    /// <summary>展開時の一覧の選択状態を現在のページへ合わせる。</summary>
-    private void RefreshNavOverlaySelection()
+    /// <summary>ナビゲーションの選択状態（収納時のアイコン列と展開時の一覧）を現在のページへ合わせる。</summary>
+    private void RefreshNavSelection()
     {
         var isDark = AppStyles.IsDarkTheme;
         var selectedBrush = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavItemSelected(isDark)));
         var transparent = new SolidColorBrush(Colors.Transparent);
         var accent = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavItemSelectionAccent(isDark)));
-        foreach (var item in _navOverlayItems)
+        foreach (var item in _navRailItems.Concat(_navOverlayItems))
         {
             var isCurrent = item.Page == _currentPage;
             item.Button.Background = isCurrent ? selectedBrush : transparent;
@@ -929,20 +925,12 @@ internal sealed class MainWindow : Window
 
         var content = EnsurePage(index);
         _currentPage = page;
-        _navigation.Content = content.Content;
+        _contentHost.Children.Clear();
+        _contentHost.Children.Add(content.Content);
         content.OnActivated?.Invoke();
 
         // ナビの選択状態を合わせる（プログラムからの切り替えでも選択がずれないようにする）
-        foreach (var item in _navigation.MenuItems)
-        {
-            if (item is NavigationViewItem { Tag: AppPage tagged } && tagged == page)
-            {
-                _navigation.SelectedItem = item;
-                break;
-            }
-        }
-
-        RefreshNavOverlaySelection();
+        RefreshNavSelection();
     }
 
     /// <summary>ページ固有のキー処理を表示中のページへ転送する。</summary>
@@ -960,21 +948,7 @@ internal sealed class MainWindow : Window
     /// <summary>ナビゲーションのアイコンを現在のテーマの色で描き直す。</summary>
     private void RefreshNavigationIcons()
     {
-        foreach (var item in _navigation.MenuItems)
-        {
-            if (item is not NavigationViewItem { Icon: ImageIcon icon } entry)
-            {
-                continue;
-            }
-
-            var entryIndex = Array.FindIndex(s_entries, e => e.Page is AppPage page && page == (AppPage)entry.Tag);
-            if (entryIndex >= 0)
-            {
-                icon.Source = IconLoader.LoadThemedImage(s_entries[entryIndex].Icon, AppStyles.IconRasterSize);
-            }
-        }
-
-        foreach (var item in _navOverlayItems)
+        foreach (var item in _navRailItems.Concat(_navOverlayItems))
         {
             var index = Array.FindIndex(s_entries, e => e.Page == item.Page);
             if (index >= 0)

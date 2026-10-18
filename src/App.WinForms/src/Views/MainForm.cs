@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core;
+﻿using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native;
@@ -33,8 +33,9 @@ internal sealed class MainForm : Form
     private static readonly Size s_defaultWindowSizeDip = new((int)WindowMetrics.DefaultWidth, (int)WindowMetrics.DefaultHeight);
 
 
-    /// <summary>ナビゲーション項目の高さ（DIP）。 他の UI 版（40）と同じ値にする。</summary>
-    private const int NavItemHeight = 40;
+    /// <summary>ナビゲーション項目の高さ（DIP）。 4 つの UI 版で共通。</summary>
+    /// <remarks>値は <see cref="NavPanelMetrics"/>（App.Core）が単一所有する。</remarks>
+    private const int NavItemHeight = (int)NavPanelMetrics.ItemHeight;
 
     /// <summary>ナビゲーション パネルのフッター（UI 名とバージョン）の高さ（DIP）。</summary>
     private const int NavFooterHeight = 28;
@@ -132,7 +133,7 @@ internal sealed class MainForm : Form
             viewModel.IsNavigationExpanded ? AppIcon.PanelClose : AppIcon.PanelOpen,
             "ナビゲーション パネルの開閉",
             ToggleNavigation);
-        _navToggle.Size = new Size(40, 40);
+        // 大きさは DPI に合わせて ApplyNavigationLayout が設定する（AutoScaleMode は実行時の代入を拡大しない）
         _navToggle.Location = new Point(0, 0);
 
         for (var i = 0; i < _entries.Length; i++)
@@ -177,7 +178,6 @@ internal sealed class MainForm : Form
         // フッターは下端へ寄せる（他の UI 版と同じ位置）
         // 開閉ボタンとアプリ名はパネルの左上に固定し、項目一覧はその下から並べる
         _navPanel.Padding = new Padding(0);
-        _navItems.Padding = new Padding(0, 44, 0, 4);
 
         // ナビゲーション パネルはページ領域の上へ重ねる（ページ領域は開閉で動かない）。
         // 前面へ置くため、ページ領域を追加した後に追加する
@@ -519,20 +519,31 @@ internal sealed class MainForm : Form
         var scaling = DpiScaler.ToScaling(DeviceDpi);
         _navPanel.Width = DpiScaler.ScaleToPixel(_services.Main.NavPanelWidth, scaling);
 
-        for (var i = 0; i < _navButtons.Length; i++)
-        {
-            _navButtons[i].Text = expanded ? _entries[i].Title : "";
-            _navButtons[i].Width = expanded
-                ? Math.Max(DpiScaler.ScaleToPixel(40, scaling), _navPanel.Width - DpiScaler.ScaleToPixel(2, scaling))
-                : DpiScaler.ScaleToPixel(32, scaling);
-        }
-
-        _navFooter.Visible = expanded;
-        // アイコンの大きさは他の UI 版と同じ 16 DIP（画面物理ピクセルへ換算する）
+        // 開閉ボタンと項目一覧の開始位置（他の UI 版と同じ 40 DIP のボタンの下に 4 DIP 空ける）
+        var toggleSize = DpiScaler.ScaleToPixel((int)WindowLayout.NavToggleHeight, scaling);
+        _navToggle.Size = new Size(toggleSize, toggleSize);
         _navToggle.Image = IconLoader.Create(
             expanded ? AppIcon.PanelClose : AppIcon.PanelOpen,
             DpiScaler.ScaleToPixel(NavPanelMetrics.IconSize, scaling),
             AppStyles.Foreground);
+        _navItems.Padding = new Padding(
+            0, toggleSize + DpiScaler.ScaleToPixel(4, scaling), 0, DpiScaler.ScaleToPixel(4, scaling));
+
+        // 項目は開閉・文字の有無で大きさを変えない（収納時もアイコンが中央へ来る幅にする）
+        var itemHeight = DpiScaler.ScaleToPixel(NavItemHeight, scaling);
+        for (var i = 0; i < _navButtons.Length; i++)
+        {
+            _navButtons[i].Text = expanded ? _entries[i].Title : "";
+            _navButtons[i].Height = itemHeight;
+            _navButtons[i].Width = expanded
+                ? Math.Max(DpiScaler.ScaleToPixel(40, scaling), _navPanel.Width - DpiScaler.ScaleToPixel(2, scaling))
+                : _navPanel.Width;
+            // 収納時はアイコンだけを中央へ置く（文字が無いときにアイコンが左へ寄らないようにする）
+            _navButtons[i].ImageAlign = expanded ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleCenter;
+            _navButtons[i].Padding = expanded ? new Padding(DpiScaler.ScaleToPixel(12, scaling), 0, 0, 0) : Padding.Empty;
+        }
+
+        _navFooter.Visible = expanded;
         LayoutNavigation();
     }
 

@@ -1,4 +1,4 @@
-using EsUtil.SaveEvidence.App.Core.Services;
+﻿using EsUtil.SaveEvidence.App.Core.Services;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
@@ -35,4 +35,18 @@ public class NavPanelMetricsTests
     [Fact]
     internal void ItemFontSize_はAvaloniaUI版の項目と同じ14()
         => Assert.Equal(14, NavPanelMetrics.ItemFontSize);
+
+    /// <summary>項目の高さが 4 つの UI 版で同じ値（40 DIP）であることを検証する。</summary>
+    /// <remarks>開閉・文字の有無で高さが変わると、項目の位置が UI 版ごとにずれる。</remarks>
+    [Fact]
+    internal void ItemHeight_は4つのUI版で共通の40()
+        => Assert.Equal(40, NavPanelMetrics.ItemHeight);
+
+    /// <summary>選択中のマークの寸法が 4 つの UI 版で同じであることを検証する。</summary>
+    [Fact]
+    internal void SelectionMark_は幅3で左端4()
+    {
+        Assert.Equal(3, NavPanelMetrics.SelectionMarkWidth);
+        Assert.Equal(4, NavPanelMetrics.SelectionMarkLeft);
+    }
 }
