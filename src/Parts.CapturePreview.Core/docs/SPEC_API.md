@@ -1,4 +1,4 @@
-# Parts.CapturePreview.Core API リファレンス
+﻿# Parts.CapturePreview.Core API リファレンス
 
 撮影・切り出しの共通規則が提供する**公開 API** を記載します。 内部実装（呼び出し手順・キャッシュ等）は記載しません。
 
@@ -640,7 +640,7 @@ public readonly record struct OverlayRect(
 
 | メソッド | 説明 |
 | --- | --- |
-| `FitScale` / `FitZoomPercent` | ビューポートに収まる Uniform（アスペクト比維持）の実効倍率・実効ズーム率 |
+| `FitScale` / `FitZoomPercent` | ビューポートから `FitInset` を除いた領域に収まる Uniform（アスペクト比維持）の実効倍率・実効ズーム率 |
 | `ComputeEffectiveScale` | 内部ズーム率（0 = Fit）から実効倍率を導出する |
 | `ComputeOffsetAfterScaleChange` | ズーム中心を維持するためのオフセットを計算する |
 | `ClampOffset` / `MaxCentered` | スクロール範囲へのクランプ・中央寄せ／左上寄せの表示サイズ |
@@ -653,6 +653,8 @@ public readonly record struct OverlayRect(
 ### 10.5 `ZoomViewAppearance`（外観）
 
 下地色・スクロールバー（表示可否・太さ・余白・サム色・トラック色）を単一所有します。 描画の可否（`HasScrollBarTrack`）も本型が持ちます。 色は UI 非依存の `System.Drawing.Color` です。
+
+**`FitInset`（既定 0）** は Fit の計算にだけ使う余白（DIP・4 辺とも同じ値）です。 画像の周囲へ影を描く UI 版は影のぼかし幅を渡し、**Fit は影も含めて収まる**倍率になります（画像の中央寄せはビューポート全体が基準のため、画像は自然に余白を空けます）。
 
 **画像が無い部分は下地色 `BackgroundColor` の単色**です（明色テーマは白・暗色テーマは黒。 市松模様は描きません）。 画像の表示矩形の外（ペーストボード）も同じ色になります。
 

@@ -3,6 +3,7 @@
         xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
         xmlns:pages="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages"
         xmlns:services="clr-namespace:EsUtil.SaveEvidence.App.Core.Services;assembly=App.Core"
+        xmlns:chrome="clr-namespace:Avalonia.Controls.Chrome;assembly=Avalonia.Controls"
         x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="{x:Static services:AppIdentity.ProductName}"
@@ -11,7 +12,7 @@
         Background="{DynamicResource PageBackgroundBrush}"
         ExtendClientAreaToDecorationsHint="True"
         WindowDecorations="BorderOnly"
-        ExtendClientAreaTitleBarHeightHint="32">
+        ExtendClientAreaTitleBarHeightHint="-1">
     <Window.Styles>
         <!-- タイトル文字は描かない（WindowDecorations=BorderOnly。 Window.Title はタスクバーの表示に使う） -->
         <Style Selector="MenuItem, Button, ToggleButton">
@@ -162,48 +163,52 @@
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <!-- 左上のアプリ アイコン（タスク バーと同じアイコン）。 押下で Windows の標準メニューを出す -->
-                <Button x:Name="AppIconButton"
-                        Grid.Row="0"
-                        Width="{x:Static services:WindowLayout.AppIconColumnWidth}"
-                        Height="{x:Static services:WindowLayout.AppIconRowHeight}"
-                        Padding="0"
-                        HorizontalAlignment="Left"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        CornerRadius="0"
-                        Click="OnAppIconClick"
-                        ToolTip.Tip="ウィンドウ メニュー">
-                    <PathIcon x:Name="AppIconImage"
-                              Width="{x:Static services:WindowLayout.AppIconSize}"
-                              Height="{x:Static services:WindowLayout.AppIconSize}"
-                              Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-                </Button>
-
-                <!-- ナビゲーションの開閉（アイコンのみ。 開いているときは「閉じる」、閉じているときは「開く」）と、
-                     その右のアプリ名（展開時のみ表示） -->
-                <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button x:Name="NavToggleButton"
-                            Classes="NavToggle"
-                            Width="40"
-                            Height="40"
+                <!-- 左上のアプリ アイコン（タスク バーと同じアイコン）。 左クリックでナビを開閉し、
+                     右クリックで Windows の標準メニューを出す。 アプリ名はその右（展開時のみ表示） -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="AppIconButton"
+                            chrome:WindowDecorationProperties.ElementRole="User"
+                            AutomationProperties.Name="ナビゲーションを開閉"
+                            Width="{x:Static services:WindowLayout.AppIconColumnWidth}"
+                            Height="{x:Static services:WindowLayout.AppIconRowHeight}"
                             Padding="0"
                             Background="Transparent"
                             BorderThickness="0"
-                            CornerRadius="4"
-                            VerticalAlignment="Center"
-                            Click="OnNavToggleClick"
-                            ToolTip.Tip="ナビゲーションを開閉">
-                        <PathIcon x:Name="NavToggleIcon" Width="16" Height="16"/>
+                            CornerRadius="0"
+                            Click="OnAppIconClick"
+                            ToolTip.Tip="ナビゲーションを開閉（右クリックでウィンドウ メニュー）">
+                        <PathIcon x:Name="AppIconImage"
+                                  Width="{x:Static services:WindowLayout.AppIconSize}"
+                                  Height="{x:Static services:WindowLayout.AppIconSize}"
+                                  Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
                     </Button>
+                    <!-- アイコンの右端（ボタン中央の 16 DIP の右）へ寄せる（間隔を狭くする） -->
                     <TextBlock x:Name="NavTitleText"
                                Text="SaveEvidence"
                                FontSize="14"
                                FontWeight="Bold"
-                               Margin="4,0,0,0"
+                               Margin="-8,0,0,0"
                                VerticalAlignment="Center"
                                IsVisible="{Binding IsNavigationExpanded}"/>
                 </StackPanel>
+
+                <!-- ナビゲーションの開閉（アイコンのみ。 開いているときは「閉じる」、閉じているときは「開く」） -->
+                <Button x:Name="NavToggleButton"
+                        Grid.Row="1"
+                        AutomationProperties.Name="ナビゲーションの開閉ボタン"
+                        Classes="NavToggle"
+                        Width="40"
+                        Height="40"
+                        Padding="0"
+                        HorizontalAlignment="Left"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        CornerRadius="4"
+                        VerticalAlignment="Center"
+                        Click="OnNavToggleClick"
+                        ToolTip.Tip="ナビゲーションを開閉">
+                    <PathIcon x:Name="NavToggleIcon" Width="16" Height="16"/>
+                </Button>
                 <!-- ナビゲーションアイテム一覧（収納時はアイコンのみ。アイコンの位置は展開時と同じ左端に固定）。
                      下部余白 8px により、収納時も設定アイコンの下が背景色で塗られる -->
                 <StackPanel Grid.Row="2" Margin="0,8,0,8">

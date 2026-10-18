@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core;
+﻿using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -105,6 +105,22 @@ internal sealed class MainWindow : Window
     /// <summary>ウィンドウのサイズを確定したかどうか（保存された配置の復元、または既定サイズの適用）。</summary>
     private bool _isSizeInitialized;
 
+    /// <summary>左上の見出し（アプリ アイコン・アプリ名・開閉ボタン）の下地。</summary>
+    private Border _navHeader = null!;
+
+    /// <summary>展開時のナビゲーション（ページ領域の上へ重ねる自前の一覧）。</summary>
+    private Border _navOverlay = null!;
+
+    /// <summary>展開時のナビゲーションの項目（選択状態の反映に使う）。</summary>
+    private readonly List<NavOverlayItem> _navOverlayItems = [];
+
+    /// <summary>展開時のナビゲーションの項目の見た目。</summary>
+    /// <param name="Page">対応するページ。</param>
+    /// <param name="Button">項目のボタン。</param>
+    /// <param name="Mark">選択中を示す縦のマーク。</param>
+    /// <param name="Icon">項目のアイコン（テーマ変更で描き直す）。</param>
+    private sealed record NavOverlayItem(AppPage Page, Button Button, Border Mark, Image Icon);
+
     /// <summary>メイン ウィンドウを生成する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <remarks>
@@ -177,6 +193,7 @@ internal sealed class MainWindow : Window
             ApplyMinimumSize();
             ApplyDefaultSizeIfNeeded();
             HideStandardPaneToggle();
+
             TryWarmUpPages();
         };
     }
@@ -286,6 +303,7 @@ internal sealed class MainWindow : Window
 
         // 左上のアプリ アイコン（タスク バーと同じアイコン）と開閉ボタンは、ページ領域の上へ重ねる
         // （項目と重ならないよう、ナビゲーションの先頭に同じ高さの空きを確保する）
+        root.Children.Add(BuildNavigationOverlay());
         root.Children.Add(BuildNavigationHeader());
 
 
@@ -327,8 +345,10 @@ internal sealed class MainWindow : Window
             Height = WindowLayout.AppIconSize,
         };
         appIconButton.HorizontalAlignment = HorizontalAlignment.Left;
-        ToolTipService.SetToolTip(appIconButton, "ウィンドウ メニュー");
-        appIconButton.Click += OnAppIconClick;
+        ToolTipService.SetToolTip(appIconButton, "ナビゲーションを開閉（右クリックでウィンドウ メニュー）");
+        // 左クリックでナビを開閉し、右クリックでウィンドウ メニューを出す
+        appIconButton.Click += (_, _) => Services.Main.IsNavigationExpanded = !Services.Main.IsNavigationExpanded;
+        appIconButton.RightTapped += OnAppIconRightTapped;
 
         _navToggle = CreateCaptionButton(AppStyles.NavPanelCompactWidth);
         _navToggleIcon = new ImageIcon
@@ -343,28 +363,34 @@ internal sealed class MainWindow : Window
         ToolTipService.SetToolTip(_navToggle, "ナビゲーション パネルの開閉");
         _navToggle.Click += (_, _) => Services.Main.IsNavigationExpanded = !Services.Main.IsNavigationExpanded;
 
-        // アプリ名は開閉アイコンの右（展開時のみ表示）
+        // アプリ名はアプリ アイコンの右（展開時のみ表示。 アイコンとの間隔を狭くする）
         _navTitle = new Border
         {
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Left,
             IsHitTestVisible = false,
-            Margin = new Thickness(AppStyles.NavPanelCompactWidth, 0, 0, 0),
+            Margin = new Thickness(-8, 0, 0, 0),
             Child = new TextBlock
             {
                 Text = AppIdentity.ProductName,
                 FontSize = AppStyles.NavTitleFontSize,
                 FontWeight = Microsoft.UI.Text.FontWeights.Bold,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(4, 0, 0, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+
+                // ペインの幅からはみ出さない（はみ出すとページのツールバーへ重なる）
+                MaxWidth = AppStyles.NavPanelExpandedWidth - WindowLayout.AppIconColumnWidth + 4,
             },
             Visibility = Services.Main.IsNavigationExpanded ? Visibility.Visible : Visibility.Collapsed,
         };
 
-        var toggleRow = new Grid { Height = WindowLayout.NavToggleHeight };
-        toggleRow.Children.Add(_navToggle);
-        toggleRow.Children.Add(_navTitle);
-        _navToggle.HorizontalAlignment = HorizontalAlignment.Left;
+        var titleRow = new Grid { Height = WindowLayout.AppIconRowHeight };
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(WindowLayout.AppIconColumnWidth) });
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        Grid.SetColumn(appIconButton, 0);
+        titleRow.Children.Add(appIconButton);
+        Grid.SetColumn(_navTitle, 1);
+        titleRow.Children.Add(_navTitle);
 
         var header = new Grid
         {
@@ -373,10 +399,21 @@ internal sealed class MainWindow : Window
         };
         header.RowDefinitions.Add(new RowDefinition { Height = new GridLength(WindowLayout.AppIconRowHeight) });
         header.RowDefinitions.Add(new RowDefinition { Height = new GridLength(WindowLayout.NavToggleHeight) });
-        header.Children.Add(appIconButton);
-        Grid.SetRow(toggleRow, 1);
-        header.Children.Add(toggleRow);
-        return header;
+        header.Children.Add(titleRow);
+        Grid.SetRow(_navToggle, 1);
+        header.Children.Add(_navToggle);
+
+        // 見出しの下地はナビゲーションと同じ色にする（展開時はアプリ名の分だけ広げる）
+        _navHeader = new Border
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Width = NavPanelMetrics.Width(Services.Main.IsNavigationExpanded),
+            Height = WindowLayout.AppIconRowHeight + WindowLayout.NavToggleHeight,
+            Background = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavPanel(AppStyles.IsDarkTheme))),
+            Child = header,
+        };
+        return _navHeader;
     }
 
     /// <summary>テーマに依存する色（下地）を現在のテーマで塗り直す。</summary>
@@ -388,6 +425,14 @@ internal sealed class MainWindow : Window
     private void ApplyThemeResources()
     {
         _root.Background = new SolidColorBrush(AppStyles.ToColor(AppPalette.Page(AppStyles.IsDarkTheme)));
+
+        // 自前で描くナビゲーションの下地も同じ色へ揃える
+        if (_navHeader is not null)
+        {
+            var navPanel = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavPanel(AppStyles.IsDarkTheme)));
+            _navHeader.Background = navPanel;
+            _navOverlay.Background = navPanel;
+        }
     }
 
     /// <summary>タイトル バー相当の帯のダブルクリックで最大化と元のサイズを切り替える。</summary>
@@ -513,45 +558,21 @@ internal sealed class MainWindow : Window
     /// <summary>ナビゲーション ペインとメニュー項目を組み立てる。</summary>
     private void BuildNavigation()
     {
-        // LeftCompact は「閉じるとアイコンのみ・開くとページ領域の上へ重なる」表示になり、
-        // ページ領域は収納時の幅（CompactPaneLength）だけ左へ寄せたまま動かない
+        // 収納時はアイコンのみを並べる（左 40 DIP の帯）。 展開時の一覧は NavigationView の
+        // ペインを使わず自前で重ねる（ペインの展開はラベルの有無・幅が環境で崩れるため。 実測）
         _navigation.PaneDisplayMode = NavigationViewPaneDisplayMode.LeftCompact;
         _navigation.IsSettingsVisible = false;
         _navigation.IsBackButtonVisible = NavigationViewBackButtonVisible.Collapsed;
         _navigation.IsTitleBarAutoPaddingEnabled = false;
-        // 開閉ボタンは自前（左上へ重ねる）。 標準のボタンはアイコンを他 UI 版と揃えられない。
-        // ただし標準のボタンは**領域の確保**に必要なので残す（収納時に項目が上へ詰まって
-        // 自前のボタンと重なるのを防ぐ）。 標準のボタンは読み込み後に透明化して操作不可にする
+        // 標準の開閉ボタンは**領域の確保**に必要なので残し、読み込み後に透明化して操作不可にする
         _navigation.IsPaneToggleButtonVisible = true;
-        _navigation.OpenPaneLength = AppStyles.NavPanelExpandedWidth;
         _navigation.CompactPaneLength = AppStyles.NavPanelCompactWidth;
-        _navigation.IsPaneOpen = Services.Main.IsNavigationExpanded;
+        _navigation.IsPaneOpen = false;
 
-        // ペインの見出し: PaneHeader は NavigationView の内部余白の影響で開閉ボタンから離れた位置に
-        // 置かれる（実測: アイコンの右 100 DIP 以上）ため使わない。 アプリ名は BuildRoot が
-        // 開閉ボタンのすぐ右へ重ねて置き、縦位置をアイコンと揃える。
+        // 見出し（アプリ アイコン・アプリ名・開閉ボタン）の下から項目を並べる
+        _navigation.Margin = new Thickness(
+            0, WindowLayout.AppIconRowHeight + WindowLayout.NavToggleHeight, 0, 0);
 
-
-        // ペインのフッター: UI 名と実際のバージョン（他の UI 版と同じ位置・書式）
-        _navFooter = new TextBlock
-        {
-            Text = AppVersion.For("WinUI3"),
-            FontSize = AppStyles.NavVersionFontSize,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Margin = new Thickness(0, 8, 0, 8),
-            Visibility = Services.Main.IsNavigationExpanded ? Visibility.Visible : Visibility.Collapsed,
-        };
-        _navigation.PaneFooter = _navFooter;
-
-        // 左上のアイコンと開閉ボタンの分の高さを空ける（空けないと最初の項目と重なる。 実測）。
-        // 標準の開閉ボタンの領域（高さ 40 + 余白 4）は既に空いているため、その分を差し引く
-        _navigation.MenuItems.Add(new NavigationViewItem
-        {
-            Height = Math.Max(0, WindowLayout.AppIconRowHeight + WindowLayout.NavToggleHeight - 44),
-            IsEnabled = false,
-            IsHitTestVisible = false,
-            Opacity = 0,
-        });
 
         foreach (var entry in s_entries)
         {
@@ -568,8 +589,6 @@ internal sealed class MainWindow : Window
         _navigation.SelectionFollowsFocus = NavigationViewSelectionFollowsFocus.Disabled;
         _navigation.ItemInvoked += OnNavigationItemInvoked;
 
-        // ペイン自身が閉じた場合（外側の押下による自動の閉じ）も設定と一致させる
-        _navigation.PaneClosed += (_, _) => Services.Main.IsNavigationExpanded = false;
         _navigation.KeyDown += OnRootKeyDown;
 
         // ナビゲーション ペインの背景をテーマ別に与える。
@@ -589,8 +608,12 @@ internal sealed class MainWindow : Window
 
         _navigation.Resources.MergedDictionaries.Add(paneResources);
 
-        // テーマが変わったらラスタライズ済みのアイコンを描き直す（色は画像へ焼き込まれている）
-        AppStyles.ThemeChanged += (_, _) => RefreshNavigationIcons();
+        // テーマが変わったらラスタライズ済みのアイコンと下地を描き直す（色は画像へ焼き込まれている）
+        AppStyles.ThemeChanged += (_, _) =>
+        {
+            RefreshNavigationIcons();
+            RefreshNavOverlaySelection();
+        };
     }
 
     /// <summary>コアの ViewModel と設定の変更通知を購読する。</summary>
@@ -602,11 +625,7 @@ internal sealed class MainWindow : Window
         {
             if (string.Equals(e.PropertyName, nameof(MainViewModel.IsNavigationExpanded), StringComparison.Ordinal))
             {
-                _navigation.IsPaneOpen = viewModel.IsNavigationExpanded;
-                _navToggleIcon.Source = IconLoader.LoadThemedImage(
-                    NavToggleIconFile(viewModel.IsNavigationExpanded), AppStyles.IconRasterSize);
-                _navTitle.Visibility = viewModel.IsNavigationExpanded ? Visibility.Visible : Visibility.Collapsed;
-                _navFooter.Visibility = _navTitle.Visibility;
+                ApplyNavigationExpansion(viewModel.IsNavigationExpanded);
             }
         };
 
@@ -662,6 +681,141 @@ internal sealed class MainWindow : Window
         CollapseNavigation();
     }
 
+    /// <summary>展開時のナビゲーション（ページ領域の上へ重ねる一覧）を組み立てる。</summary>
+    /// <returns>見出しの下からページ領域の上へ重ねる要素。</returns>
+    /// <remarks>
+    /// <b>NavigationView のペインを使わない理由</b>: ペインの展開は窓の幅・DPI・テーマによって<br/>
+    /// ラベルが出ない、幅が収納時のままになるなど表示が安定しない（実測）。 4 つの UI 版で<br/>
+    /// 同じ見た目にするため、展開時の一覧は自前で組み立てる（収納時はアイコン列を使う）。
+    /// </remarks>
+    private FrameworkElement BuildNavigationOverlay()
+    {
+        var items = new StackPanel { Margin = new Thickness(0, 4, 0, 0) };
+        foreach (var entry in s_entries)
+        {
+            var item = CreateNavOverlayItem(entry);
+            _navOverlayItems.Add(item);
+            items.Children.Add(item.Button);
+        }
+
+        // フッター: UI 名と実際のバージョン（他の UI 版と同じ位置・書式）
+        _navFooter = new TextBlock
+        {
+            Text = AppVersion.For("WinUI3"),
+            FontSize = AppStyles.NavVersionFontSize,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Margin = new Thickness(0, 0, 0, 8),
+        };
+
+        var grid = new Grid();
+        grid.Children.Add(items);
+        grid.Children.Add(_navFooter);
+
+        _navOverlay = new Border
+        {
+            Width = NavPanelMetrics.ExpandedWidth,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Stretch,
+            Margin = new Thickness(
+                0, WindowLayout.AppIconRowHeight + WindowLayout.NavToggleHeight, 0, 0),
+            Background = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavPanel(AppStyles.IsDarkTheme))),
+            Visibility = Services.Main.IsNavigationExpanded ? Visibility.Visible : Visibility.Collapsed,
+            Child = grid,
+        };
+        return _navOverlay;
+    }
+
+    /// <summary>展開時のナビゲーションの項目を 1 つ組み立てる。</summary>
+    /// <param name="entry">項目の定義。</param>
+    /// <returns>項目の見た目（選択状態の反映に使う要素を含む）。</returns>
+    private NavOverlayItem CreateNavOverlayItem(NavEntry entry)
+    {
+        var mark = new Border
+        {
+            Width = 3,
+            Height = NavPanelMetrics.IconSize,
+            CornerRadius = new CornerRadius(1.5),
+            Background = new SolidColorBrush(
+                AppStyles.ToColor(AppPalette.NavItemSelectionAccent(AppStyles.IsDarkTheme))),
+            VerticalAlignment = VerticalAlignment.Center,
+            Visibility = Visibility.Collapsed,
+        };
+
+        var icon = new Image
+        {
+            Width = NavPanelMetrics.IconSize,
+            Height = NavPanelMetrics.IconSize,
+            Margin = new Thickness(9, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Source = IconLoader.LoadThemedImage(entry.Icon, AppStyles.IconRasterSize),
+        };
+
+        var label = new TextBlock
+        {
+            Text = entry.Title,
+            FontSize = AppStyles.NavItemFontSize,
+            Margin = new Thickness(NavPanelMetrics.IconSpacing, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        var content = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        content.Children.Add(mark);
+        content.Children.Add(icon);
+        content.Children.Add(label);
+
+        var button = new Button
+        {
+            Content = content,
+            Height = WindowLayout.NavToggleHeight,
+            Padding = new Thickness(0),
+            Background = new SolidColorBrush(Colors.Transparent),
+            BorderThickness = new Thickness(0),
+            CornerRadius = new CornerRadius(0),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            HorizontalContentAlignment = HorizontalAlignment.Left,
+        };
+        button.Click += (_, _) =>
+        {
+            SelectPage(entry.Page, force: false);
+            CollapseNavigation();
+        };
+
+        return new NavOverlayItem(entry.Page, button, mark, icon);
+    }
+
+    /// <summary>ナビゲーションの開閉状態を画面へ反映する。</summary>
+    /// <param name="expanded">開いているかどうか。</param>
+    private void ApplyNavigationExpansion(bool expanded)
+    {
+        _navOverlay.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+        _navTitle.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+        _navHeader.Width = NavPanelMetrics.Width(expanded);
+        _navToggleIcon.Source = IconLoader.LoadThemedImage(
+            NavToggleIconFile(expanded), AppStyles.IconRasterSize);
+        RefreshNavOverlaySelection();
+    }
+
+    /// <summary>展開時の一覧の選択状態を現在のページへ合わせる。</summary>
+    private void RefreshNavOverlaySelection()
+    {
+        var isDark = AppStyles.IsDarkTheme;
+        var selectedBrush = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavItemSelected(isDark)));
+        var transparent = new SolidColorBrush(Colors.Transparent);
+        var accent = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavItemSelectionAccent(isDark)));
+        foreach (var item in _navOverlayItems)
+        {
+            var isCurrent = item.Page == _currentPage;
+            item.Button.Background = isCurrent ? selectedBrush : transparent;
+            item.Mark.Background = accent;
+            item.Mark.Visibility = isCurrent ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
     /// <summary>ナビゲーションの開閉状態に応じたアイコンのファイル名を取得する。</summary>
     /// <param name="expanded">開いているかどうか。</param>
     /// <returns>開いているときは「閉じる」、閉じているときは「開く」のアイコン。</returns>
@@ -672,9 +826,8 @@ internal sealed class MainWindow : Window
 
     /// <summary>左上のアプリ アイコンの押下でウィンドウの標準メニューを出す。</summary>
     /// <param name="sender">イベントの送信元。</param>
-    /// <param name="args">イベント引数。</param>
     /// <remarks>項目と並びは <see cref="WindowMenu"/>（App.Core）が単一所有する。</remarks>
-    private void OnAppIconClick(object sender, RoutedEventArgs args)
+    private void OnAppIconClick(object sender)
     {
         var presenter = AppWindow.Presenter as OverlappedPresenter;
         var isMaximized = presenter?.State == OverlappedPresenterState.Maximized;
@@ -693,6 +846,16 @@ internal sealed class MainWindow : Window
         }
 
         flyout.ShowAt((FrameworkElement)sender);
+    }
+
+    /// <summary>左上のアプリ アイコンの右クリックでウィンドウの標準メニューを出す。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">タップの情報。</param>
+    /// <remarks>左クリックはナビゲーションの開閉に使うため、メニューは右クリックで出す。</remarks>
+    private void OnAppIconRightTapped(object sender, RightTappedRoutedEventArgs e)
+    {
+        e.Handled = true;
+        OnAppIconClick(sender);
     }
 
     /// <summary>ウィンドウの標準メニューの項目を実行する。</summary>
@@ -778,6 +941,8 @@ internal sealed class MainWindow : Window
                 break;
             }
         }
+
+        RefreshNavOverlaySelection();
     }
 
     /// <summary>ページ固有のキー処理を表示中のページへ転送する。</summary>
@@ -808,6 +973,15 @@ internal sealed class MainWindow : Window
                 icon.Source = IconLoader.LoadThemedImage(s_entries[entryIndex].Icon, AppStyles.IconRasterSize);
             }
         }
+
+        foreach (var item in _navOverlayItems)
+        {
+            var index = Array.FindIndex(s_entries, e => e.Page == item.Page);
+            if (index >= 0)
+            {
+                item.Icon.Source = IconLoader.LoadThemedImage(s_entries[index].Icon, AppStyles.IconRasterSize);
+            }
+        }
     }
 
     /// <summary>初回の表示時にウィンドウ配置の反映とホットキーの登録を行う。</summary>
@@ -815,10 +989,10 @@ internal sealed class MainWindow : Window
     /// <param name="args">ウィンドウの有効化の情報。</param>
     private void OnWindowActivated(object sender, WindowActivatedEventArgs args)
     {
-        // ウィンドウの外を操作した場合もナビ領域の外の操作とみなして閉じる
+        // 非アクティブ（他のウィンドウへ切り替え）では閉じない。 実測では表示直後にも通知が来て、
+        // 設定が「展開」でも収納のまま起動してしまう。 閉じるのはナビ領域の外の操作と項目の選択だけにする
         if (args.WindowActivationState == WindowActivationState.Deactivated)
         {
-            CollapseNavigation();
             return;
         }
 

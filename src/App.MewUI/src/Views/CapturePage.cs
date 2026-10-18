@@ -1059,9 +1059,11 @@ internal static class CapturePage
         var background = AppStyles.CurrentImageAreaBackground;
 
         // 下地は画像領域の背景色（S / R / G / B の並びは設定の #AARRGGBB と同じ）
+        // Fit は影も含めて収める（画像の周囲に影を描くため、その分だけ内側へ収めた大きさで計算する）
         cropView.Appearance = ZoomViewAppearance.Default with
         {
             BackgroundColor = System.Drawing.Color.FromArgb(background.A, background.R, background.G, background.B),
+            FitInset = ShadowPlan.BlurRadius,
         };
     }
 

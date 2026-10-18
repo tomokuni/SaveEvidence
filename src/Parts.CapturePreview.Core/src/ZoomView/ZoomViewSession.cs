@@ -113,6 +113,28 @@ public sealed partial class ZoomViewSession(ZoomOptions? config = null)
     /// <value>ビューポートのサイズ。 未レイアウト時は 0。</value>
     public EsSize ViewportSize => _viewportSize;
 
+    /// <summary>Fit の計算に使うビューポートのサイズ（画像の周囲の余白を除いた大きさ）を取得する。</summary>
+    /// <value>ビューポートから左右・上下へ <see cref="ZoomViewAppearance.FitInset"/> を除いた大きさ（1 未満は 1）。</value>
+    /// <remarks>
+    /// 画像の周囲へ影を描く場合、画像だけをビューポートへ収めると影が切れる。 余白の分だけ内側へ<br/>
+    /// 収めた大きさで Fit を計算すると、影も含めた全体がビューポートへ収まる。
+    /// </remarks>
+    private EsSize FitViewport
+    {
+        get
+        {
+            var inset = _appearance.FitInset;
+            if (inset <= 0 || _viewportSize.Width <= 0 || _viewportSize.Height <= 0)
+            {
+                return _viewportSize;
+            }
+
+            return new EsSize(
+                Math.Max(1, _viewportSize.Width - (inset * 2)),
+                Math.Max(1, _viewportSize.Height - (inset * 2)));
+        }
+    }
+
     /// <summary>画像がビューポートより小さい軸を中央寄せするかどうかを取得する。</summary>
     /// <value>中央寄せの場合は true（既定）。</value>
     public bool CenterAlign => _centerAlign;
@@ -147,7 +169,7 @@ public sealed partial class ZoomViewSession(ZoomOptions? config = null)
             }
 
             var value = _hasSource && _viewportSize.Width > 0 && _viewportSize.Height > 0
-                ? ZoomMath.FitZoomPercent(_sourceSize, _viewportSize)
+                ? ZoomMath.FitZoomPercent(_sourceSize, FitViewport)
                 : ZoomMath.FallbackFitZoomPercent;
             _fitZoomCache = value;
             return value;
@@ -157,7 +179,7 @@ public sealed partial class ZoomViewSession(ZoomOptions? config = null)
     /// <summary>現在の表示に使用する実効スケールを取得する。</summary>
     /// <value>倍率（1.0 = 100%）。 固定倍率中はズーム率 / 100、Fit 中は Fit スケール、画像なしは 1。</value>
     /// <remarks>ゼロ除算を避けるため、座標変換・パン量の計算には必ず本値を使用する（Fit 中は <see cref="Scale"/> が 0 のため）。</remarks>
-    public double EffectiveScale => ZoomMath.ComputeEffectiveScale(_zoomPercent, _sourceSize, _viewportSize);
+    public double EffectiveScale => ZoomMath.ComputeEffectiveScale(_zoomPercent, _sourceSize, FitViewport);
 
     /// <summary>現在の実効ズーム率（%）を取得する。</summary>
     /// <value>Fit 中はクランプした Fit 実効倍率、固定倍率中はズーム率。 0 にはならない。</value>
@@ -291,7 +313,16 @@ public sealed partial class ZoomViewSession(ZoomOptions? config = null)
             return default;
         }
 
+        // Fit の余白が変わると Fit 実効倍率も変わるため、キャッシュを破棄して通知する
+        var fitInsetChanged = _appearance.FitInset != appearance.FitInset;
         _appearance = appearance;
+        if (fitInsetChanged)
+        {
+            Invalidate();
+            RaiseZoomChanged();
+            RaiseViewportChanged();
+        }
+
         return new ZoomFeedback { ShouldRedraw = true };
     }
 

@@ -197,9 +197,13 @@ internal sealed class ZoomableView : Panel
         var bounds = Bounds;
         if (_session.IsFit)
         {
+            // 表示サイズはコアが決める（画像の周囲へ影を描く場合、その余白も含めた Fit 倍率になる）。
+            // Stretch.Uniform + 上限だけの指定ではビューポートいっぱいまで広がってしまうため、
+            // コアの表示サイズをそのまま使う（他の UI 版と同じ倍率・同じ余白になる）。
+            var display = _session.DisplaySize;
             _image.Stretch = Stretch.Uniform;
-            _image.Width = double.NaN;
-            _image.Height = double.NaN;
+            _image.Width = display.Width > 0 ? display.Width : double.NaN;
+            _image.Height = display.Height > 0 ? display.Height : double.NaN;
             _image.MaxWidth = bounds.Width;
             _image.MaxHeight = bounds.Height;
             _image.HorizontalAlignment = _session.CenterAlign ? HorizontalAlignment.Center : HorizontalAlignment.Left;

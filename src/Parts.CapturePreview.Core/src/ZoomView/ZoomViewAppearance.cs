@@ -60,4 +60,14 @@ public sealed record ZoomViewAppearance
     /// <summary>スクロールバーのトラックを描画するかどうかを取得する。</summary>
     /// <value>トラック色のアルファが 0 より大きい場合は true。</value>
     public bool HasScrollBarTrack => ScrollBarTrackColor.A > 0;
+
+    /// <summary>画像の周囲に確保する余白（DIP）を取得する。</summary>
+    /// <value>余白（DIP）。 既定は 0（余白なし）。</value>
+    /// <remarks>
+    /// <b>Fit の計算に含める</b>ための値である。 画像の周囲へ影を描く場合、画像だけをビューポートへ<br/>
+    /// 収めると影が切れる（ビューポートの端で見えなくなる）。 本値の分だけ内側へ収めた大きさで Fit を<br/>
+    /// 計算すると、影も含めた全体がビューポートへ収まる（ホストが影の広がりを設定する）。<br/>
+    /// 画像の中央寄せはビューポート全体を基準にするため、画像は自然に本値以上の余白を空けて置かれる。
+    /// </remarks>
+    public double FitInset { get; init; }
 }

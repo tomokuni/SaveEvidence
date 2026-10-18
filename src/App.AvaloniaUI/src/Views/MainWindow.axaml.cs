@@ -138,6 +138,7 @@ public sealed partial class MainWindow : Window
         // アプリ（ウィンドウ）アイコンを設定する。 左上のタイトル バーにも同じアイコンを出す
         Icon = IconLoader.LoadWindowIcon(AppIdentity.IconFileName);
         AppIconImage.Data = IconLoader.LoadGeometry(AppIdentity.IconFileName);
+        SetupAppIconMenu();
 
         // 初期のナビパネル高さを設定する（IsNavigationExpanded の設定後）
         UpdateNavPanelLayout();
@@ -207,8 +208,10 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        // ウィンドウ座標（クライアント領域の左上基準）で判定する
-        if (e.GetPosition(this).Y > TitleBarDragHeight)
+        // ウィンドウ座標（クライアント領域の左上基準）で判定する。
+        // ナビの列は除く（アプリ アイコン・開閉ボタンの操作をドラッグで奪わない）
+        var position = e.GetPosition(this);
+        if (position.Y > TitleBarDragHeight || position.X < _viewModel.NavPanelWidth)
         {
             return;
         }
@@ -324,22 +327,34 @@ public sealed partial class MainWindow : Window
     /// 移動・サイズ変更は OS のモードへ入るため、Win32 のシステム コマンドを送る（<see cref="SystemWindowCommands"/>）。
     /// </remarks>
     private void OnAppIconClick(object? sender, RoutedEventArgs e)
+        => _viewModel.IsNavigationExpanded = !_viewModel.IsNavigationExpanded;
+
+    /// <summary>左上のアプリ アイコンの右クリックでウィンドウの標準メニューを出す。</summary>
+    /// <remarks>
+    /// 左クリックはナビゲーションの開閉に使うため、メニューは右クリック（コンテキスト メニュー）で出す。<br/>
+    /// 項目は開くたびに作り直す（最大化の状態が変わるため）。
+    /// </remarks>
+    private void SetupAppIconMenu()
     {
         var menu = new ContextMenu { Placement = PlacementMode.BottomEdgeAlignedLeft };
-        foreach (var entry in WindowMenu.Items(WindowState == WindowState.Maximized))
+        menu.Opening += (_, _) =>
         {
-            if (entry.IsSeparatorBefore)
+            menu.Items.Clear();
+            foreach (var entry in WindowMenu.Items(WindowState == WindowState.Maximized))
             {
-                menu.Items.Add(new Separator());
+                if (entry.IsSeparatorBefore)
+                {
+                    menu.Items.Add(new Separator());
+                }
+
+                var item = new MenuItem { Header = entry.Label, IsEnabled = entry.IsEnabled };
+                var action = entry.Action;
+                item.Click += (_, _) => ExecuteWindowMenuAction(action);
+                menu.Items.Add(item);
             }
+        };
 
-            var item = new MenuItem { Header = entry.Label, IsEnabled = entry.IsEnabled };
-            var action = entry.Action;
-            item.Click += (_, _) => ExecuteWindowMenuAction(action);
-            menu.Items.Add(item);
-        }
-
-        menu.Open(AppIconButton);
+        AppIconButton.ContextMenu = menu;
     }
 
     /// <summary>ウィンドウの標準メニューの項目を実行する。</summary>

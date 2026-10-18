@@ -654,9 +654,11 @@ internal static class CapturePage
     /// </remarks>
     private static void ApplyImageAreaBackground(CropViewControl crop)
     {
+        // Fit は影も含めて収める（画像の周囲に影を描くため、その分だけ内側へ収めた大きさで計算する）
         crop.Appearance = crop.Appearance with
         {
             BackgroundColor = AppPalette.ImageAreaDrawingColor(AppStyles.IsDarkTheme),
+            FitInset = ShadowPlan.BlurRadius,
         };
     }
 

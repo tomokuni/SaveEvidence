@@ -70,6 +70,52 @@ public class ZoomViewSessionTests
     }
 
     // ====================================================================
+    // Fit の余白（画像の周囲に影を描く場合に影も収める）
+    // ====================================================================
+
+    /// <summary>Fit の余白を設定すると、その分だけ内側へ収めた大きさで Fit を計算することを検証する。</summary>
+    /// <remarks>
+    /// 画像 100x100・ビューポート 200x200・余白 10 DIP の場合、Fit は 180x180 に収まる 180% になる<br/>
+    /// （画像の周囲に 10 DIP の影を描いてもビューポートからはみ出さない）。
+    /// </remarks>
+    [Fact]
+    internal void FitInset_影の分だけ内側へ収めた倍率になる()
+    {
+        var session = CreateStandard();
+        Assert.Equal(200.0, session.FitZoomPercent, 6);
+
+        session.SetAppearance(session.Appearance with { FitInset = 10 });
+
+        Assert.Equal(180.0, session.FitZoomPercent, 6);
+        Assert.Equal(180.0, session.ZoomPercent, 6);
+        Assert.Equal(180.0, session.DisplaySize.Width, 6);
+    }
+
+    /// <summary>Fit の余白を変えるとズーム状態を通知することを検証する。</summary>
+    [Fact]
+    internal void FitInset_変更を通知する()
+    {
+        var session = CreateStandard();
+        var kinds = new List<ZoomNoticeKind>();
+        session.Subscribe(notice => kinds.Add(notice.Kind));
+
+        session.SetAppearance(session.Appearance with { FitInset = 10 });
+
+        Assert.Equal([ZoomNoticeKind.ZoomChanged, ZoomNoticeKind.ViewportChanged], kinds);
+    }
+
+    /// <summary>Fit の余白が 0（既定）なら Fit の倍率が変わらないことを検証する。</summary>
+    [Fact]
+    internal void FitInset_既定はFitの倍率を変えない()
+    {
+        var session = CreateStandard();
+
+        session.SetAppearance(session.Appearance with { FitInset = 0 });
+
+        Assert.Equal(200.0, session.FitZoomPercent, 6);
+    }
+
+    // ====================================================================
     // ビューポート変更と Fit キャッシュ（旧 UI にあった陳腐化の回帰）
     // ====================================================================
 

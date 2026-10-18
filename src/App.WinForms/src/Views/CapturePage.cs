@@ -270,10 +270,12 @@ internal static class CapturePage
             templateBox.BackColor = pageBackground;
             zoomSlider.BackColor = pageBackground;
 
+            // Fit は影も含めて収める（画像の周囲に影を描くため、その分だけ内側へ収めた大きさで計算する）
             crop.Appearance = ZoomViewAppearance.Default with
             {
                 BackgroundColor = AppStyles.ImageAreaBackground,
                 ShowScrollBars = true,
+                FitInset = ShadowPlan.BlurRadius,
             };
             crop.CenterAlign = viewModel.CenterAlign;
 

@@ -98,6 +98,9 @@ public sealed partial class CapturePage : UserControl
         // CropViewControl（自己完結型複合コントロール）にロガーを注入する
         CropView.Log = s_logger;
 
+        // Fit は影も含めて収める（画像の周囲に影を描くため、その分だけ内側へ収めた大きさで計算する）
+        CropView.Appearance = CropView.Appearance with { FitInset = ShadowPlan.BlurRadius };
+
         // 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）。
         // 画像と同じ描画面へ先に描く（重ねると画像の端の混色の下地が背景になり、白い線として見える）
         CropView.SurroundRenderer = ShadowRenderer.Render;

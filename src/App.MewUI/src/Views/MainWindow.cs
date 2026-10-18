@@ -1,4 +1,4 @@
-using Aprillz.MewUI;
+﻿using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
@@ -292,14 +292,34 @@ internal sealed class MainWindow
             VerticalAlignment = VerticalAlignment.Center,
         };
         appIconButton.Cursor(CursorType.Hand);
-        appIconButton.WithToolTip("ウィンドウ メニュー", () => ShowWindowMenu(appIconButton));
-        // ナビ領域の一番上はアプリ アイコン、その下に開閉ボタン（アイコンのみ）と、その右のアプリ名（展開時のみ表示）
+        appIconButton.Background = MewUIColor.Transparent;
+        appIconButton.ToolTip("ナビゲーションを開閉（右クリックでウィンドウ メニュー）");
+
+        // 左クリックでナビを開閉し、右クリックでウィンドウ メニューを出す
+        appIconButton.MouseDown += e =>
+        {
+            e.Handled = true;
+            if (e.Button == MouseButton.Right)
+            {
+                ShowWindowMenu(appIconButton);
+                return;
+            }
+
+            viewModel.IsNavigationExpanded = !viewModel.IsNavigationExpanded;
+        };
+
+
+        // ナビ領域の一番上はアプリ アイコンとその右のアプリ名（展開時のみ表示）。
+        // その下に開閉ボタン（アイコンのみ）
+        var titleRow = new Grid().Columns("Auto,*").Rows($"{WindowLayout.AppIconRowHeight}");
+        titleRow.Add(appIconButton.Column(0));
+        navTitle.VerticalAlignment = VerticalAlignment.Center;
+        navTitle.Margin = new Thickness(-8, 0, 0, 0);
+        titleRow.Add(navTitle.Column(1));
+
         var header = new Grid().Rows($"{WindowLayout.AppIconRowHeight},{WindowLayout.NavToggleHeight}");
-        header.Add(appIconButton.Row(0));
-        var toggleRow = new Grid().Columns("Auto,*").Rows($"{WindowLayout.NavToggleHeight}");
-        toggleRow.Add(toggle.Column(0));
-        toggleRow.Add(navTitle.Column(1));
-        header.Add(toggleRow.Row(1));
+        header.Add(titleRow.Row(0));
+        header.Add(toggle.Row(1));
 
         // ナビパネルの背景はスタイルで与える（テーマ変更で自動的に再解決される）。
         // ページ領域の上へ重ねるため、幅だけを持たせて左端へ寄せる（残りの列はページ領域が使う）
@@ -337,9 +357,7 @@ internal sealed class MainWindow
         var navGutter = new Border { Width = NavPanelMetrics.CompactWidth, Background = MewUIColor.Transparent };
 
 
-        // アプリ名はナビの開閉アイコンの右（展開時のみ表示）
-        navTitle.VerticalAlignment = VerticalAlignment.Center;
-        navTitle.Margin = new Thickness(4, 0, 0, 0);
+
 
         // ナビパネルとメニューは ページ領域の上へ重ねる（後から追加した要素が前面に描かれる）。
         // タイトル バーの帯は作らない（ページ領域は上端から始まる）
@@ -355,7 +373,10 @@ internal sealed class MainWindow
         // 子の要素がクリックを処理した場合はここへ届かない（各ボタンの操作を妨げない）
         root.OnMouseDown(e =>
         {
-            if (e.GetPosition(root).Y < WindowLayout.TitleBarHeight)
+            var point = e.GetPosition(root);
+
+            // ナビの列は除く（開閉ボタンの操作をドラッグで奪わない）
+            if (point.Y < WindowLayout.TitleBarHeight && point.X >= viewModel.NavPanelWidth)
             {
                 window.DragMove();
                 e.Handled = true;

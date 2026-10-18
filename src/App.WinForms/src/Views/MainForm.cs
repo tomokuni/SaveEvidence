@@ -75,13 +75,6 @@ internal sealed class MainForm : Form
     /// <summary>ナビゲーション パネルの開閉ボタン。</summary>
     private readonly ToolButton _navToggle;
 
-    /// <summary>ナビゲーション パネルの左上に出すアプリ名（展開時のみ表示）。</summary>
-    private readonly Label _navTitle = new()
-    {
-        Text = AppIdentity.ProductName,
-        AutoSize = true,
-        Location = new Point(46, 12),
-    };
 
     /// <summary>ナビゲーション パネルのフッター（UI 名とバージョン）。 収納時は非表示。</summary>
     private readonly Label _navFooter = new()
@@ -173,12 +166,10 @@ internal sealed class MainForm : Form
         _navPanel.Controls.Add(_navItems);
         _navPanel.Controls.Add(_navFooter);
         _navPanel.Controls.Add(_navToggle);
-        _navPanel.Controls.Add(_navTitle);
 
-        // 開閉ボタンとアプリ名は一番上に置く（ドッキングする要素より前面へ出す）
+        // 開閉ボタンは一番上に置く（ドッキングする要素より前面へ出す）。
+        // アプリ名は OS 標準のタイトル バーが左上のアイコンの右へ表示する（本 UI 版は自前の帯を持たない）
         _navToggle.BringToFront();
-        _navTitle.BringToFront();
-        _navTitle.BackColor = Color.Transparent;
         _navItems.Controls.AddRange(_navButtons);
 
         // 開閉ボタンの領域はナビゲーション パネルの Padding で確保する（ドッキングする項目一覧は
@@ -537,9 +528,6 @@ internal sealed class MainForm : Form
         }
 
         _navFooter.Visible = expanded;
-        _navTitle.Visible = expanded;
-        _navTitle.Font = new Font(AppStyles.UiFont.FontFamily, (float)(14 * 72.0 / 96.0), FontStyle.Bold);
-        _navTitle.ForeColor = AppStyles.Foreground;
         // アイコンの大きさは他の UI 版と同じ 16 DIP（画面物理ピクセルへ換算する）
         _navToggle.Image = IconLoader.Create(
             expanded ? AppIcon.PanelClose : AppIcon.PanelOpen,
