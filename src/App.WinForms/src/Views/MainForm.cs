@@ -75,6 +75,14 @@ internal sealed class MainForm : Form
     /// <summary>ナビゲーション パネルの開閉ボタン。</summary>
     private readonly ToolButton _navToggle;
 
+    /// <summary>ナビゲーション パネルの左上に出すアプリ名（展開時のみ表示）。</summary>
+    private readonly Label _navTitle = new()
+    {
+        Text = AppIdentity.ProductName,
+        AutoSize = true,
+        Location = new Point(46, 12),
+    };
+
     /// <summary>ナビゲーション パネルのフッター（UI 名とバージョン）。 収納時は非表示。</summary>
     private readonly Label _navFooter = new()
     {
@@ -163,17 +171,20 @@ internal sealed class MainForm : Form
         _navPanel.Controls.Add(_navItems);
         _navPanel.Controls.Add(_navFooter);
         _navPanel.Controls.Add(_navToggle);
+        _navPanel.Controls.Add(_navTitle);
 
-        // 開閉ボタンは一番上に置く（ドッキングする要素より前面へ出す）
+        // 開閉ボタンとアプリ名は一番上に置く（ドッキングする要素より前面へ出す）
         _navToggle.BringToFront();
+        _navTitle.BringToFront();
+        _navTitle.BackColor = Color.Transparent;
         _navItems.Controls.AddRange(_navButtons);
 
         // 開閉ボタンの領域はナビゲーション パネルの Padding で確保する（ドッキングする項目一覧は
         // Padding の内側へ配置されるため、ボタンが一覧の下へ隠れない）。
         // フッターは下端へ寄せる（他の UI 版と同じ位置）
-        // 開閉ボタンの高さの分だけ下を空ける（ボタンはパネルの左上に固定する）
-        _navPanel.Padding = new Padding(0, 40, 0, 0);
-        _navItems.Padding = new Padding(4, 4, 4, 4);
+        // 開閉ボタンとアプリ名はパネルの左上に固定し、項目一覧はその下から並べる
+        _navPanel.Padding = new Padding(0);
+        _navItems.Padding = new Padding(4, 44, 4, 4);
 
         // ナビゲーション パネルはページ領域の上へ重ねる（ページ領域は開閉で動かない）。
         // 前面へ置くため、ページ領域を追加した後に追加する
@@ -524,9 +535,13 @@ internal sealed class MainForm : Form
         }
 
         _navFooter.Visible = expanded;
+        _navTitle.Visible = expanded;
+        _navTitle.Font = new Font(AppStyles.UiFont.FontFamily, (float)(14 * 72.0 / 96.0), FontStyle.Bold);
+        _navTitle.ForeColor = AppStyles.Foreground;
+        // アイコンの大きさは他の UI 版と同じ 16 DIP（画面物理ピクセルへ換算する）
         _navToggle.Image = IconLoader.Create(
             expanded ? AppIcon.PanelClose : AppIcon.PanelOpen,
-            _navToggle.Height - 8,
+            DpiScaler.ScaleToPixel(NavPanelMetrics.IconSize, scaling),
             AppStyles.Foreground);
         LayoutNavigation();
     }

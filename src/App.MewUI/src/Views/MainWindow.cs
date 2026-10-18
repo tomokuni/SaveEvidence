@@ -190,7 +190,8 @@ internal sealed class MainWindow
         {
             Source = LoadNavIcon(NavIconPanelIcon(viewModel.IsNavigationExpanded)),
             Width = NavIconSize,
-            Height = NavIconSize
+            Height = NavIconSize,
+            VerticalAlignment = VerticalAlignment.Center
         };
 
         var toggle = new Button
@@ -215,7 +216,8 @@ internal sealed class MainWindow
             {
                 Source = LoadNavIcon(entry.Icon),
                 Width = NavIconSize,
-                Height = NavIconSize
+                Height = NavIconSize,
+                VerticalAlignment = VerticalAlignment.Center
             };
             navItemImages[i] = icon;
 
@@ -271,9 +273,33 @@ internal sealed class MainWindow
             items.Add(button);
         }
 
-        // ナビ領域の一番上は開閉ボタン（アイコンのみ）
-        var header = new Grid().Columns("Auto,*").Rows($"{WindowLayout.NavToggleHeight}");
-        header.Add(toggle.Column(0));
+        // 左上のアプリ アイコン（タスク バーと同じアイコン。 押下でウィンドウ メニューを出す）
+        var appIconImage = new Image
+        {
+            Source = IconLoader.LoadImage(AppIdentity.IconFileName, (int)WindowLayout.AppIconSize, IconColor()),
+            Width = WindowLayout.AppIconSize,
+            Height = WindowLayout.AppIconSize,
+        };
+        var appIconButton = new Button
+        {
+            Content = appIconImage.Center(),
+            Width = WindowLayout.AppIconButtonSize,
+            Height = WindowLayout.AppIconButtonSize,
+            Padding = new Thickness(0),
+            CornerRadius = 0,
+            StyleName = AppStyles.FlatButton,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        appIconButton.Cursor(CursorType.Hand);
+        appIconButton.WithToolTip("ウィンドウ メニュー", () => ShowWindowMenu(appIconButton));
+        // ナビ領域の一番上はアプリ アイコン、その下に開閉ボタン（アイコンのみ）と、その右のアプリ名（展開時のみ表示）
+        var header = new Grid().Rows($"{WindowLayout.TitleBarHeight},{WindowLayout.NavToggleHeight}");
+        header.Add(appIconButton.Row(0));
+        var toggleRow = new Grid().Columns("Auto,*").Rows($"{WindowLayout.NavToggleHeight}");
+        toggleRow.Add(toggle.Column(0));
+        toggleRow.Add(navTitle.Column(1));
+        header.Add(toggleRow.Row(1));
 
         // ナビパネルの背景はスタイルで与える（テーマ変更で自動的に再解決される）。
         // ページ領域の上へ重ねるため、幅だけを持たせて左端へ寄せる（残りの列はページ領域が使う）
@@ -310,52 +336,39 @@ internal sealed class MainWindow
         // ページ領域の左の余白（ナビの収納時の幅）。 ナビを開いてもページ領域は動かさない
         var navGutter = new Border { Width = NavPanelMetrics.CompactWidth, Background = MewUIColor.Transparent };
 
-        // タイトル バー（ナビはこの帯へ重ねない）。 左端にタスク バーと同じアプリ アイコンを置く
-        var appIconImage = new Image
-        {
-            Source = IconLoader.LoadImage(AppIdentity.IconFileName, (int)WindowLayout.AppIconSize, IconColor()),
-            Width = WindowLayout.AppIconSize,
-            Height = WindowLayout.AppIconSize,
-        };
-        var appIconButton = new Button
-        {
-            Content = appIconImage.Center(),
-            Width = WindowLayout.AppIconButtonSize,
-            Height = WindowLayout.AppIconButtonSize,
-            Padding = new Thickness(0),
-            CornerRadius = 0,
-            StyleName = AppStyles.FlatButton,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        appIconButton.Cursor(CursorType.Hand);
-        appIconButton.WithToolTip("ウィンドウ メニュー", () => ShowWindowMenu(appIconButton));
 
-        // アプリ名とその右の余白をドラッグ領域にする（収納状態に依存しない）
+        // アプリ名はナビの開閉アイコンの右（展開時のみ表示）
         navTitle.VerticalAlignment = VerticalAlignment.Center;
-        navTitle.Margin = new Thickness(WindowLayout.AppNameLeft - WindowLayout.AppIconButtonSize, 0, 0, 0);
-        var titleDragArea = new Border
-        {
-            Child = navTitle,
-            Background = MewUIColor.Transparent,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
-        titleDragArea.OnMouseDown(_ => window.DragMove());
-        titleDragArea.OnMouseDoubleClick(_ => ToggleMaximize(window));
+        navTitle.Margin = new Thickness(4, 0, 0, 0);
 
-        var titleBar = new Grid().Columns("Auto,*,Auto").Rows($"{WindowLayout.TitleBarHeight}");
-        titleBar.Add(appIconButton.Column(0));
-        titleBar.Add(titleDragArea.Column(1));
-
-        // ナビパネルとメニューは ページ領域の上へ重ねる（後から追加した要素が前面に描かれる）
-        var root = new Grid().Columns("Auto,*").Rows($"{WindowLayout.TitleBarHeight},*");
-        root.Add(titleBar.Column(0).ColumnSpan(2).Row(0));
-        root.Add(navGutter.Column(0).Row(1));
-        root.Add(contentHost.Column(1).Row(1));
-        root.Add(navDismissLayer.Column(0).ColumnSpan(2).Row(1));
-        root.Add(navPanel.Column(0).ColumnSpan(2).Row(1));
-        root.Add(windowMenu.Column(0).ColumnSpan(2).Row(1));
+        // ナビパネルとメニューは ページ領域の上へ重ねる（後から追加した要素が前面に描かれる）。
+        // タイトル バーの帯は作らない（ページ領域は上端から始まる）
+        var root = new Grid().Columns("Auto,*").Rows("*");
+        root.Add(navGutter.Column(0));
+        root.Add(contentHost.Column(1));
+        root.Add(navDismissLayer.Column(0).ColumnSpan(2));
+        root.Add(navPanel.Column(0).ColumnSpan(2));
+        root.Add(windowMenu.Column(0).ColumnSpan(2));
         window.Content(root);
+
+        // 上端の帯（タイトル バー相当）をドラッグしてウィンドウを移動する。
+        // 子の要素がクリックを処理した場合はここへ届かない（各ボタンの操作を妨げない）
+        root.OnMouseDown(e =>
+        {
+            if (e.GetPosition(root).Y < WindowLayout.TitleBarHeight)
+            {
+                window.DragMove();
+                e.Handled = true;
+            }
+        });
+        root.OnMouseDoubleClick(e =>
+        {
+            if (e.GetPosition(root).Y < WindowLayout.TitleBarHeight)
+            {
+                ToggleMaximize(window);
+                e.Handled = true;
+            }
+        });
 
         // タイトルバーは MewUI 標準のクライアント領域拡張を使う（Avalonia 版の
         // ExtendClientAreaToDecorationsHint / ExtendClientAreaTitleBarHeightHint と同じ）。

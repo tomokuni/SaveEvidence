@@ -69,6 +69,9 @@ internal sealed class MainWindow : Window
     /// <summary>ナビゲーションの開閉アイコン（開閉の状態で差し替える）。</summary>
     private ImageIcon _navToggleIcon = null!;
 
+    /// <summary>ナビゲーション ペインのフッター（UI 名とバージョン。 収納時は隠す）。</summary>
+    private TextBlock _navFooter = null!;
+
     /// <summary>ウィンドウ内容のルート（テーマの下地色を塗る対象）。</summary>
     private Grid _root = null!;
 
@@ -237,7 +240,7 @@ internal sealed class MainWindow : Window
         presenter.PreferredMinimumHeight = WindowPlacementRule.ToPhysicalLength(AppStyles.MinWindowHeight, scaling);
     }
 
-    /// <summary>保存された配置が無い場合に既定のサイズ（620 × 400 DIP）を適用する。</summary>
+    /// <summary>保存された配置が無い場合に既定のサイズ（700 × 400 DIP）を適用する。</summary>
     /// <remarks>
     /// サイズは画面物理ピクセルで指定するため、<b>DPI が確定した後</b>（要素ツリーの読み込み後）に適用する。<br/>
     /// 1 回だけ適用する（利用者がサイズを変えた後に読み込みが再度走っても上書きしない）。
@@ -275,11 +278,13 @@ internal sealed class MainWindow : Window
     /// </remarks>
     private FrameworkElement BuildRoot()
     {
-        var root = new Grid { RowDefinitions = { new RowDefinition { Height = new GridLength(WindowLayout.TitleBarHeight) }, new RowDefinition { Height = new GridLength(1, GridUnitType.Star) } } };
+        var root = new Grid();
         _root = root;
 
-        // タイトル バー（ナビゲーション ペインはこの帯へ重ねない）。
-        // 左端にタスク バーと同じアプリ アイコンを置き、押下でウィンドウの標準メニューを出す
+        // ページ領域とナビゲーション ペイン（ペインはページ領域の上へ重なり、上端はページ領域の先頭に揃う）
+        root.Children.Add(_navigation);
+
+        // 左上のアプリ アイコン（タスク バーと同じアイコン）。 押下でウィンドウの標準メニューを出す
         var appIconButton = CreateCaptionButton(WindowLayout.AppIconButtonSize);
         appIconButton.Content = new ImageIcon
         {
@@ -288,38 +293,10 @@ internal sealed class MainWindow : Window
             Height = WindowLayout.AppIconSize,
         };
         appIconButton.HorizontalAlignment = HorizontalAlignment.Left;
-        appIconButton.VerticalAlignment = VerticalAlignment.Center;
+        appIconButton.VerticalAlignment = VerticalAlignment.Top;
         ToolTipService.SetToolTip(appIconButton, "ウィンドウ メニュー");
         appIconButton.Click += OnAppIconClick;
-
-        // アプリ名はアイコンの右へ置く（開閉状態に依存しない）
-        var navTitleText = new TextBlock
-        {
-            Text = AppIdentity.ProductName,
-            FontSize = AppStyles.NavTitleFontSize,
-            FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(WindowLayout.AppNameLeft - WindowLayout.AppIconButtonSize, 0, 0, 0),
-        };
-        _navTitle = new Border
-        {
-            Height = WindowLayout.TitleBarHeight,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            Child = navTitleText,
-        };
-
-        var titleBar = new Grid { ColumnDefinitions = { new ColumnDefinition { Width = GridLength.Auto }, new ColumnDefinition() } };
-        titleBar.Children.Add(appIconButton);
-        Grid.SetColumn(_navTitle, 1);
-        titleBar.Children.Add(_navTitle);
-        Grid.SetRow(titleBar, 0);
-        Grid.SetColumnSpan(titleBar, 2);
-        root.Children.Add(titleBar);
-
-        // ページ領域とナビゲーション ペイン（ペインはページ領域の上へ重なる）
-        Grid.SetRow(_navigation, 1);
-        root.Children.Add(_navigation);
+        root.Children.Add(appIconButton);
 
         // ナビゲーションの開閉（ペインの一番上・常に表示）。 開閉の状態でアイコンを差し替える
         _navToggle = CreateCaptionButton(AppStyles.NavPanelCompactWidth);
@@ -333,11 +310,30 @@ internal sealed class MainWindow : Window
         _navToggle.HorizontalAlignment = HorizontalAlignment.Left;
         _navToggle.VerticalAlignment = VerticalAlignment.Top;
         _navToggle.Height = WindowLayout.NavToggleHeight;
-        // ペインの上端（タイトル バーの下）に置く
         _navToggle.Margin = new Thickness(0, WindowLayout.TitleBarHeight, 0, 0);
         ToolTipService.SetToolTip(_navToggle, "ナビゲーション パネルの開閉");
         _navToggle.Click += (_, _) => Services.Main.IsNavigationExpanded = !Services.Main.IsNavigationExpanded;
+
+        // アプリ名は開閉アイコンの右（展開時のみ表示）
+        _navTitle = new Border
+        {
+            Height = WindowLayout.NavToggleHeight,
+            VerticalAlignment = VerticalAlignment.Top,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(AppStyles.NavPanelCompactWidth, WindowLayout.TitleBarHeight, 0, 0),
+            Child = new TextBlock
+            {
+                Text = AppIdentity.ProductName,
+                FontSize = AppStyles.NavTitleFontSize,
+                FontWeight = Microsoft.UI.Text.FontWeights.Bold,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(4, 0, 0, 0),
+            },
+        };
+
+        // 左上のアプリ アイコンの下（ペインの先頭）へ置く
         root.Children.Add(_navToggle);
+        root.Children.Add(_navTitle);
 
         // クライアント領域をタイトル バーへ拡張する（標準のウィンドウ操作ボタンが描画される）
         ExtendsContentIntoTitleBar = true;
@@ -511,13 +507,15 @@ internal sealed class MainWindow : Window
         // 開閉ボタンのすぐ右へ重ねて置き、縦位置をアイコンと揃える。
 
         // ペインのフッター: UI 名と実際のバージョン（他の UI 版と同じ位置・書式）
-        _navigation.PaneFooter = new TextBlock
+        _navFooter = new TextBlock
         {
             Text = AppVersion.For("WinUI3"),
             FontSize = AppStyles.NavVersionFontSize,
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 8, 0, 8),
+            Visibility = Services.Main.IsNavigationExpanded ? Visibility.Visible : Visibility.Collapsed,
         };
+        _navigation.PaneFooter = _navFooter;
 
         foreach (var entry in s_entries)
         {
@@ -571,6 +569,8 @@ internal sealed class MainWindow : Window
                 _navigation.IsPaneOpen = viewModel.IsNavigationExpanded;
                 _navToggleIcon.Source = IconLoader.LoadThemedImage(
                     NavToggleIconFile(viewModel.IsNavigationExpanded), AppStyles.IconRasterSize);
+                _navTitle.Visibility = viewModel.IsNavigationExpanded ? Visibility.Visible : Visibility.Collapsed;
+                _navFooter.Visibility = _navTitle.Visibility;
             }
         };
 

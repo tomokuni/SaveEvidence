@@ -6,8 +6,8 @@
         x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="{x:Static services:AppIdentity.ProductName}"
-        Width="620" Height="400"
-        MinWidth="620" MinHeight="400"
+        Width="700" Height="400"
+        MinWidth="700" MinHeight="400"
         Background="{DynamicResource PageBackgroundBrush}"
         ExtendClientAreaToDecorationsHint="True"
         WindowDecorations="BorderOnly"
@@ -112,36 +112,13 @@
 
     <!-- Background を Transparent にするのは、余白（ページの背景）の押下を本 Grid で受け取るため
          （null のままだとヒットテストの対象外になり、タイトル バー相当の帯でドラッグできない） -->
-    <Grid RowDefinitions="32,*" ColumnDefinitions="Auto,*" Background="Transparent" PointerPressed="OnWindowPointerPressed">
-        <!-- タイトル バー（ナビゲーション パネルはこの帯へ重ねない）。
-             左端にタスク バーと同じアプリ アイコンを置き、押下で Windows の標準メニューを出す -->
-        <Grid Grid.Row="0" Grid.ColumnSpan="2" ColumnDefinitions="Auto,*">
-            <Button x:Name="AppIconButton"
-                    Grid.Column="0"
-                    Width="32"
-                    Height="32"
-                    Padding="0"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    CornerRadius="0"
-                    Click="OnAppIconClick"
-                    ToolTip.Tip="ウィンドウ メニュー">
-                <PathIcon x:Name="AppIconImage" Width="16" Height="16" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-            </Button>
-            <!-- アプリ名はアイコンの右へ置く（開閉状態に依存しない） -->
-            <TextBlock Grid.Column="1"
-                       Text="SaveEvidence"
-                       FontSize="14"
-                       FontWeight="Bold"
-                       VerticalAlignment="Center"/>
-        </Grid>
-
+    <Grid ColumnDefinitions="Auto,*" Background="Transparent" PointerPressed="OnWindowPointerPressed">
         <!-- ページ領域の左の余白（ナビゲーション パネルの収納時の幅）。
              ナビを開いてもページ領域は動かさない（開いたナビはページ領域の上へ重ねる） -->
-        <Border Grid.Row="1" Grid.Column="0" Width="{x:Static services:NavPanelMetrics.CompactWidth}"/>
+        <Border Grid.Column="0" Width="{x:Static services:NavPanelMetrics.CompactWidth}"/>
 
         <!-- メインコンテンツエリア（ページ領域。 ナビの開閉で移動しない） -->
-        <Grid Grid.Row="1" Grid.Column="1">
+        <Grid Grid.Column="1">
             <!-- ===== ページ0: キャプチャ（画像プレビュー） ===== -->
             <pages:CapturePage x:Name="CaptureContent"/>
 
@@ -157,8 +134,7 @@
 
         <!-- ナビパネルの背景（ページ領域の上へ重ねる。 上端はタイトル バーの下、下端はステータス バーに被る）。
              NavPanel は収納時に Top + Auto 高さへ縮むため、その下の白見えを防ぐために本 Border が下端まで塗る -->
-        <Border Grid.Row="1"
-                Grid.Column="0"
+        <Border Grid.Column="0"
                 Grid.ColumnSpan="2"
                 HorizontalAlignment="Left"
                 Width="{Binding NavPanelWidth}"
@@ -167,7 +143,6 @@
         <!-- ナビゲーションパネル（左・開閉可能）。 一番上に開閉ボタン（アイコンのみ）を置く。
              背景は上の全高 Border が担うため Transparent -->
         <Border x:Name="NavPanel"
-                Grid.Row="1"
                 Grid.Column="0"
                 Grid.ColumnSpan="2"
                 HorizontalAlignment="Left"
@@ -178,25 +153,49 @@
             収納時は NavPanel がコンテンツ高さに縮むため * 行は 0 になり、下部の余白は UpdateNavPanelLayout の
             Padding（背景色付き）で確保する（設定アイコンの下が白く見えないようにする）。
             -->
-            <Grid RowDefinitions="Auto,*,Auto">
-                <!-- ナビゲーションの開閉（アイコンのみ。 開いているときは「閉じる」、閉じているときは「開く」） -->
-                <Button x:Name="NavToggleButton"
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <!-- 左上のアプリ アイコン（タスク バーと同じアイコン）。 押下で Windows の標準メニューを出す -->
+                <Button x:Name="AppIconButton"
                         Grid.Row="0"
-                        Classes="NavToggle"
-                        Height="40"
+                        Width="32"
+                        Height="32"
                         Padding="0"
+                        HorizontalAlignment="Left"
                         Background="Transparent"
                         BorderThickness="0"
-                        CornerRadius="4"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Click="OnNavToggleClick"
-                        ToolTip.Tip="ナビゲーションを開閉">
-                    <PathIcon x:Name="NavToggleIcon" Width="16" Height="16"/>
+                        CornerRadius="0"
+                        Click="OnAppIconClick"
+                        ToolTip.Tip="ウィンドウ メニュー">
+                    <PathIcon x:Name="AppIconImage" Width="16" Height="16" Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
                 </Button>
+
+                <!-- ナビゲーションの開閉（アイコンのみ。 開いているときは「閉じる」、閉じているときは「開く」）と、
+                     その右のアプリ名（展開時のみ表示） -->
+                <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="NavToggleButton"
+                            Classes="NavToggle"
+                            Width="40"
+                            Height="40"
+                            Padding="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            CornerRadius="4"
+                            VerticalAlignment="Center"
+                            Click="OnNavToggleClick"
+                            ToolTip.Tip="ナビゲーションを開閉">
+                        <PathIcon x:Name="NavToggleIcon" Width="16" Height="16"/>
+                    </Button>
+                    <TextBlock x:Name="NavTitleText"
+                               Text="SaveEvidence"
+                               FontSize="14"
+                               FontWeight="Bold"
+                               Margin="4,0,0,0"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding IsNavigationExpanded}"/>
+                </StackPanel>
                 <!-- ナビゲーションアイテム一覧（収納時はアイコンのみ。アイコンの位置は展開時と同じ左端に固定）。
                      下部余白 8px により、収納時も設定アイコンの下が背景色で塗られる -->
-                <StackPanel Grid.Row="1" Margin="0,8,0,8">
+                <StackPanel Grid.Row="2" Margin="0,8,0,8">
                     <Border x:Name="NavCapture"
                             Classes="NavItem"
                             ToolTip.Tip="キャプチャ"
@@ -262,7 +261,7 @@
                 <!-- パネルフッター（UI 名とバージョン。 収納時は非表示）。 背景は全高の Border が担う。
                      バージョンは AppVersion（App.Core）から取り、コード ビハインドで設定する -->
                 <TextBlock x:Name="VersionText"
-                           Grid.Row="2"
+                           Grid.Row="3"
                            FontSize="11"
                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                            Margin="12,8"
@@ -273,8 +272,7 @@
 
         <!-- ウィンドウ操作ボタン（自前）。 WindowDecorations="BorderOnly" のため標準のボタンは描かれない。
              他の UI 版と同じ 46 × 32 DIP・右上配置にする。 -->
-        <StackPanel Grid.Row="0"
-                    Grid.ColumnSpan="2"
+        <StackPanel Grid.ColumnSpan="2"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top">

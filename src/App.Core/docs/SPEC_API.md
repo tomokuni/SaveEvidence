@@ -469,14 +469,14 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 | メンバー | 値 | 意味 |
 | --- | --- | --- |
-| `WindowMetrics.MinimumWidth` / `MinimumHeight` | 620 / 400 DIP | ウィンドウの最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算して指定する） |
-| `WindowMetrics.DefaultWidth` / `DefaultHeight` | 620 / 400 DIP | 復元する配置が無いときの既定サイズ |
-| `WindowLayout.TitleBarHeight` | 32 DIP | タイトル バーの高さ（ナビゲーション パネルはこの帯へ重ねない） |
+| `WindowMetrics.MinimumWidth` / `MinimumHeight` | 700 / 400 DIP | ウィンドウの最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算して指定する） |
+| `WindowMetrics.DefaultWidth` / `DefaultHeight` | 700 / 400 DIP | 復元する配置が無いときの既定サイズ |
+| `WindowLayout.TitleBarHeight` | 32 DIP | 上端のアイコンとドラッグ領域の高さ（タイトル バーの帯は作りません） |
 | `WindowLayout.AppIconSize` / `AppIconButtonSize` / `AppIconMargin` | 16 / 32 / 8 DIP | 左上のアプリ アイコン（タスク バーと同じアイコン）の寸法 |
 | `WindowLayout.AppNameLeft` | 32 DIP | アプリ名の左端 |
 | `WindowLayout.NavToggleHeight` | 40 DIP | ナビ領域の一番上に置く開閉ボタンの高さ |
 
-**ナビゲーション パネルの配置**: 展開しても**ページ領域は動きません**（収納時の幅の位置に留まります）。 展開したパネルはページ領域の上へ重なり、下端はステータス バーに被ります。 上端はタイトル バーの下（`WindowLayout.TitleBarHeight`）です。 展開中にナビ領域の外を操作すると収納へ戻ります。
+**ナビゲーション パネルの配置**: 展開しても**ページ領域は動きません**（収納時の幅の位置に留まります）。 展開したパネルはページ領域の上へ重なり、上端はページ領域の先頭、下端はステータス バーに被ります。 パネルの一番上にアプリ アイコン、その下に開閉ボタン（アイコンのみ）を置き、**展開時は開閉ボタンの右にアプリ名を表示**します。 展開中にナビ領域の外を操作すると収納へ戻ります。
 
 ## 28. `Services.WindowMenu`
 

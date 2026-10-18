@@ -301,6 +301,7 @@ public sealed partial class MainWindow : Window
         // 開いているときは「閉じる」、閉じているときは「開く」のアイコンにする
         NavToggleIcon.Data = IconLoader.LoadGeometry(
             _viewModel.IsNavigationExpanded ? NavIconPanelLeftContract : NavIconPanelRightContract);
+        NavTitleText.IsVisible = _viewModel.IsNavigationExpanded;
     }
 
     /// <summary>ナビゲーション パネルの開閉アイコン（開いているときに使う「閉じる」）。</summary>
