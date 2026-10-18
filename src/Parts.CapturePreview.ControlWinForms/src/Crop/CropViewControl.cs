@@ -536,15 +536,24 @@ public sealed class CropViewControl : UserControl
     /// <remarks>
     /// 切り出し中のみ表示する（非表示中は入力も受けない。 暗転マスク・選択枠・ルーペが一括で切り替わる）。<br/>
     /// 非表示へ戻すときは選択を破棄する（暗転マスク・選択枠がプレビューへ残留するのを防ぐ）。<br/>
-    /// 切り替えのたびに描画を要求する（非表示の間に描画済みのキャンバスは表示後に再描画されないため）。
+    /// 切り替えのたびに描画を要求する（非表示の間に描画済みのキャンバスは表示後に再描画されないため）。<br/>
+    /// <b>重なり順の切り替え</b>: WinForms の子コントロールは親の描画を自分の背景として塗るため、<br/>
+    /// 上に重なる兄弟があると選択枠の描画がクリップされて表示されない（<c>WM_PAINT</c> も届かない）。<br/>
+    /// 切り出し中は選択枠を最前面へ出し、終了時に元の重なり順（画像 → 領域選択 → 外部提供矩形 → 強調）へ戻す。
     /// </remarks>
     public void SetSelectionOverlayVisible(bool visible)
     {
         _selectionOverlay.Visible = visible;
 
-        if (!visible)
+        if (visible)
+        {
+            _selectionOverlay.BringToFront();
+        }
+        else
         {
             ClearSelection();
+            _rectOverlay.BringToFront();
+            _highlight.BringToFront();
         }
 
         _selectionOverlay.RequestRedraw();

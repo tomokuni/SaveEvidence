@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
              xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;assembly=Parts.CapturePreview.ControlAvaloniaUI"
+             xmlns:controls="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Controls"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
@@ -16,6 +17,14 @@
         <GridLength x:Key="SliderPostContentMargin">10</GridLength>
     </UserControl.Resources>
     <UserControl.Styles>
+        <!-- ツールバーの区切り（縦線）。 Fluent の Separator は横線のため、縦の | を自前で置く -->
+        <Style Selector="Border.toolbar-separator">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Margin" Value="4,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Background" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+        </Style>
         <!-- トラックのヒット領域を広げる FocusTarget の上下拡大マージン（-10px）を 0 に上書きし、
              トラック行の高さ要求を 4px に抑える（これがないと 24px の高さに収まらず上半分が切れる） -->
         <Style Selector="Slider /template/ Border#FocusTarget">
@@ -29,7 +38,7 @@
 
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- ツールバー（左端にハンバーガーメニュー）。上部の余白はウィンドウ最上部（タイトルバー領域）とのスペース。右側の余白はシステムボタン（最小化・最大化・閉じる）との重なりを防止 -->
-        <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="2,6,140,2">
+        <WrapPanel x:Name="Toolbar" Grid.Row="0" Orientation="Horizontal" Margin="2,6,140,2">
             <Button x:Name="HamburgerButton"
                     Classes="toolbar"
                     ToolTip.Tip="メニュー"
@@ -81,9 +90,10 @@
                 </Button.Flyout>
                 <TextBlock Text="☰" FontSize="16" VerticalAlignment="Center"/>
             </Button>
-            <Separator Margin="2"/>
+            <Border Classes="toolbar-separator"/>
             <!-- 保存するファイル名テンプレート（保存ボタンの左） -->
-            <!-- テキストの内容に応じて幅を自動調整する（TextChanged で FormattedText 計測。MinWidth/MaxWidth の範囲内） -->
+            <!-- テキストの内容に応じて幅を自動調整する（TextChanged で FormattedText 計測。MinWidth の範囲内、上限は
+                 ツールバーが折り返さない幅 = ツールバー幅から他の要素を除いた幅） -->
             <!-- ToolTip は {date}/{time} がマークアップ拡張と衝突するため、コードビハインド（Initialize）で設定する -->
             <TextBox x:Name="FileNameTemplateBox"
                      Classes="toolbar"
@@ -105,7 +115,7 @@
                     <PathIcon x:Name="SaveIcon" Width="16" Height="16"/>
                 </StackPanel>
             </Button>
-            <Separator Margin="2"/>
+            <Border Classes="toolbar-separator"/>
             <Button ToolTip.Tip="スクリーン選択キャプチャ" Classes="toolbar" Click="OnCaptureScreenClick" Margin="1" VerticalAlignment="Center">
                 <PathIcon x:Name="ScreenSelectIcon" Width="16" Height="16"/>
             </Button>
@@ -115,15 +125,16 @@
             <Button ToolTip.Tip="領域選択キャプチャ" Classes="toolbar" Click="OnCaptureAreaClick" Margin="1" VerticalAlignment="Center">
                 <PathIcon x:Name="AreaSelectIcon" Width="16" Height="16"/>
             </Button>
-            <Separator Margin="2"/>
+            <Border Classes="toolbar-separator"/>
             <Button x:Name="CropButton" Classes="toolbar" ToolTip.Tip="切り出し（切出しモード開始/終了）" IsEnabled="{Binding CanCopy}" Click="OnCropButtonClick" Margin="1" VerticalAlignment="Center">
                 <PathIcon x:Name="CropIcon" Width="16" Height="16"/>
             </Button>
 
         </WrapPanel>
 
-        <!-- メイン画像エリア -->
+        <!-- メイン画像エリア（背景色は他の UI 版と同じ。 テーマ別の値は AppPalette が単一所有する） -->
         <Grid Grid.Row="1" x:Name="ImageAreaGrid"
+              Background="{DynamicResource ImageAreaBackgroundBrush}"
               PointerPressed="OnImageAreaPointerPressed">
             <!-- 高レベル複合コントロール（ズーム・パン・Fit + 領域選択 + ルーペを内包。ScrollViewer 不使用。
                  ズーム率・座標変換・オーバーレイの配線を一本化した CropViewControl）
@@ -131,11 +142,13 @@
                  本コントロールへ委譲する（ホストはコントロールを重ねない）。 -->
 <crop:CropViewControl x:Name="CropView"
                            Background="Transparent"/>
+            <!-- 画像の 4 辺の影（幅・濃さは App.Core の ShadowPlan が単一所有する） -->
+            <controls:ImageShadowOverlay x:Name="ImageShadow"/>
 
         </Grid>
 
         <!-- ステータスバー（左: 保存済み/未 | 保存ファイル名 / 右: 拡大率（スライダ + % + フライアウト）） -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="4,1" VerticalAlignment="Center">
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="4,1" MinHeight="32" VerticalAlignment="Center">
             <!-- 左側（左寄せ）: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存済み/未 | 保存ファイル名 -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                 <TextBlock Text="{Binding PointerDisplayText}" FontSize="12" Width="70" VerticalAlignment="Center"
@@ -144,15 +157,13 @@
                            ToolTip.Tip="画像サイズ（対象座標 = 元画像ピクセル）"/>
                 <TextBlock Text="{Binding SaveStatusText}" FontSize="12"/>
                 <TextBlock Text="{Binding SavedFileName}" FontSize="12"/>
-                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#007ACC" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource AnnounceForeground}" VerticalAlignment="Center"/>
             </StackPanel>
 
             <!-- 右側（右寄せ）: 拡大率 -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                <TextBlock Text="拡大率:" FontSize="12" VerticalAlignment="Center"/>
-
                 <!-- ズームアウト（⊖）。フライアウトの選択肢（25〜500%）に沿ってズームアウトする -->
-                <Button x:Name="ZoomOutButton" ToolTip.Tip="ズームアウト（25〜500% の選択肢）"
+                <Button x:Name="ZoomOutButton" Classes="status" ToolTip.Tip="ズームアウト（25〜500% の選択肢）"
                         Click="OnZoomOutButtonClick"
                         IsEnabled="False"
                         Padding="2,0"
@@ -169,8 +180,6 @@
                      Pre/Post 余白（10px）+ トラック（4px）= 24px に収めてトラックを中央に表示する -->
                 <Slider x:Name="ZoomSlider"
                         Width="120"
-                        Height="24"
-                        MinHeight="24"
                         Minimum="10"
                         Maximum="500"
                         VerticalAlignment="Center"
@@ -179,7 +188,7 @@
                         ToolTip.Tip="拡大率を調整（10〜500%）" />
 
                 <!-- ズームイン（⊕）。フライアウトの選択肢（25〜500%）に沿ってズームインする -->
-                <Button x:Name="ZoomInButton" ToolTip.Tip="ズームイン（25〜500% の選択肢）"
+                <Button x:Name="ZoomInButton" Classes="status" ToolTip.Tip="ズームイン（25〜500% の選択肢）"
                         Click="OnZoomInButtonClick"
                         IsEnabled="False"
                         Padding="2,0"
@@ -192,7 +201,7 @@
                 </Button>
 
                 <!-- Fit 表示（ウィンドウに合わせて画像を表示） -->
-                <Button ToolTip.Tip="ウィンドウに合わせて表示（Fit）"
+                <Button Classes="status" ToolTip.Tip="ウィンドウに合わせて表示（Fit）"
                         Click="OnZoomFitButtonClick"
                         Padding="4,0"
                         MinWidth="30"
@@ -204,7 +213,7 @@
                 </Button>
 
                 <!-- % 表示（クリックで拡大率選択フライアウトを表示）。500% が入る固定幅・テキスト中央寄せ -->
-                <Button x:Name="ZoomPercentButton"
+                <Button x:Name="ZoomPercentButton" Classes="status"
                         Width="56"
                         Padding="0"
                         Height="20"
@@ -236,3 +245,4 @@
     </Grid>
 
 </UserControl>
+

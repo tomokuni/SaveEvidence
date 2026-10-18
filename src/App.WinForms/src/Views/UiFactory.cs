@@ -15,8 +15,8 @@ internal static class UiFactory
     /// <summary>ツールバーのコントロールの高さ（DIP）。</summary>
     public const int ToolbarHeight = 30;
 
-    /// <summary>ステータスバーの高さ（DIP）。</summary>
-    public const int StatusBarHeight = 26;
+    /// <summary>ステータスバーの高さ（DIP）。 置く要素（ボタン 30）より少しだけ広げる。</summary>
+    public const int StatusBarHeight = 32;
 
     /// <summary>プロセスで共用するツールヒントの部品。</summary>
     private static readonly ToolTip s_toolTip = new()
@@ -37,12 +37,12 @@ internal static class UiFactory
     }
 
     /// <summary>ツールバー用のボタンを生成する。</summary>
-    /// <param name="icon">表示するアイコン。</param>
+    /// <param name="icon">表示するアイコン（null の場合は文字だけを表示する）。</param>
     /// <param name="toolTip">ツールヒントの文言。</param>
     /// <param name="onClick">押下時の処理。</param>
     /// <param name="caption">アイコンの右へ表示する文字（省略時はアイコンのみ）。</param>
     /// <returns>生成したボタン。</returns>
-    public static ToolButton CreateToolButton(AppIcon icon, string toolTip, Action onClick, string caption = "")
+    public static ToolButton CreateToolButton(AppIcon? icon, string toolTip, Action onClick, string caption = "")
     {
         ArgumentNullException.ThrowIfNull(onClick);
 
@@ -92,22 +92,54 @@ internal static class UiFactory
         };
     }
 
-    /// <summary>ステータスバーの項目を生成する（幅を固定して値の変化で揺れないようにする）。</summary>
+    /// <summary>ステータス バーの内側の高さ（DIP。 上下の余白を除いた高さ）。</summary>
+    public const int StatusBarContentHeight = StatusBarHeight - 2;
+
+    /// <summary>ステータス バーの中身を垂直方向中央へ揃える。</summary>
+    /// <param name="control">対象のコントロール。</param>
+    /// <param name="height">中身の高さ（DIP）。 コントロールの高さをこの値へ揃える。</param>
+    /// <returns>対象のコントロール（呼び出し側で続けて設定できるようにする）。</returns>
+    /// <remarks>
+    /// <see cref="FlowLayoutPanel"/> は子を上端へ寄せるため、余白を上下均等に割り当てて中央揃えにする<br/>
+    /// （行の高さと子の高さを一致させると、文字のベースラインが上へずれる）。
+    /// </remarks>
+    public static T CenterInStatusBar<T>(T control, int height = 24)
+        where T : Control
+    {
+        ArgumentNullException.ThrowIfNull(control);
+
+        control.Height = height;
+        var space = Math.Max(0, StatusBarContentHeight - height);
+        control.Margin = new Padding(control.Margin.Left, space / 2, control.Margin.Right, space - (space / 2));
+        return control;
+    }
+
+    /// <summary>ステータス バーの項目を生成する（幅を固定して値の変化で揺れないようにする）。</summary>
     /// <param name="width">幅（DIP）。 0 以下は自動。</param>
     /// <param name="toolTip">ツールヒントの文言（省略可）。</param>
     /// <returns>生成したラベル。</returns>
     public static Label CreateStatusLabel(int width, string toolTip = "")
     {
+        var autoWidth = width <= 0;
         var label = new Label
         {
-            AutoSize = width <= 0,
+            AutoSize = autoWidth,
             Width = Math.Max(1, width),
-            Height = StatusBarHeight - 4,
+            // ステータス バーの内側の高さいっぱいに広げ、文字を垂直方向中央へ置く
+            Height = StatusBarContentHeight,
             TextAlign = ContentAlignment.MiddleLeft,
             ForeColor = AppStyles.Foreground,
             BackColor = Color.Transparent,
             Margin = new Padding(2, 0, 6, 0),
         };
+
+        if (autoWidth)
+        {
+            // 幅を自動にすると高さも文字の高さになり、上端へ寄る（実測）。
+            // 高さは文字 1 行分のまま、上下の余白で中央へ揃える
+            var space = Math.Max(0, StatusBarContentHeight - label.PreferredHeight);
+            label.Margin = new Padding(2, space / 2, 6, space - (space / 2));
+        }
 
         if (toolTip.Length > 0)
         {
@@ -141,6 +173,14 @@ internal static class UiFactory
         return input;
     }
 
+    /// <summary>色ボタンの幅（ピクセル）。 値（<c>#AARRGGBB</c>）が設定フォントで収まる幅。</summary>
+    /// <remarks>
+    /// 固定値にすると文字サイズを変えたときに欠けるため、実測値から求める。<br/>
+    /// <see cref="TextRenderer.MeasureText(string, Font)"/> は余白を含まないため、左右の余白を足す。
+    /// </remarks>
+    private static int ColorButtonWidth =>
+        TextRenderer.MeasureText("#FFA9A9A9", AppStyles.SettingsFont).Width + 14;
+
     /// <summary>色を選ぶボタンを生成する（押下で色の選択ダイアログを開く）。</summary>
     /// <param name="color">初期の色。</param>
     /// <param name="onSelected">色が選ばれたときの処理。</param>
@@ -156,12 +196,16 @@ internal static class UiFactory
 
         var button = new Button
         {
-            Width = 72,
-            Height = 24,
+            // 値は #AARRGGBB の 9 文字。 幅・高さが足りないと文字が欠けるため、
+            // 設定フォントで実際に測った大きさに余白を足す（文字サイズを変えても欠けない）
+            Width = ColorButtonWidth,
+            Height = AppStyles.SettingsControlHeight,
+            Font = AppStyles.SettingsFont,
             FlatStyle = FlatStyle.Flat,
             BackColor = color,
             ForeColor = IsDark(color) ? Color.White : Color.Black,
             Text = FormatColor(color),
+            TextAlign = ContentAlignment.MiddleCenter,
             UseVisualStyleBackColor = false,
             TabStop = false,
         };
@@ -217,7 +261,11 @@ internal static class UiFactory
         input.Location = new Point(label.Width + 8, 2);
         row.Controls.Add(label);
         row.Controls.Add(input);
-        row.Height = Math.Max(label.Height, input.Height) + 6;
+
+        // 入力の下端（位置 2 + 高さ）が欠けないよう、下余白を多めに取る。
+        // 設定ページは文字サイズが大きいため、入力の高さが確定する前でも収まるよう最小の高さを確保する
+        // （固定の余白だけだと、コンボ ボックスの下端が枠線に重なる。 実測）
+        row.Height = Math.Max(Math.Max(label.Height, input.Height + 2), AppStyles.SettingsControlHeight + 2) + 8;
 
         if (toolTip.Length > 0)
         {

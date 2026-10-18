@@ -50,24 +50,35 @@ internal static class ThumbnailGeneration
             return;
         }
 
-        if (item.IsDisposed || !item.IsHandleCreated)
+        if (item.IsDisposed)
         {
             bitmap.Dispose();
             return;
         }
 
+        // 反映は UI スレッドで行う。 ページを表示する前に生成した項目は自分のハンドルを持たないため、
+        // 自分の BeginInvoke ではなく所属するフォームの BeginInvoke を使う
+        // （自分のハンドルが無いと BeginInvoke できず、画像を捨ててしまい一覧が空のままになる）。
+        void Apply()
+        {
+            if (item.IsDisposed || token.IsCancellationRequested)
+            {
+                bitmap.Dispose();
+                return;
+            }
+
+            item.SetImage(bitmap);
+        }
+
         try
         {
-            item.BeginInvoke(() =>
+            if (item.FindForm() is { IsHandleCreated: true } form && form.InvokeRequired)
             {
-                if (item.IsDisposed || token.IsCancellationRequested)
-                {
-                    bitmap.Dispose();
-                    return;
-                }
+                form.BeginInvoke(Apply);
+                return;
+            }
 
-                item.SetImage(bitmap);
-            });
+            Apply();
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {

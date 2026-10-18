@@ -50,6 +50,9 @@ public sealed class SelectionOverlayControl : Control
     /// <summary>ルーペコントロール（表示位置は本クラスが配置する）。</summary>
     private readonly LoupeControl _loupe = new();
 
+    /// <summary>直前にルーペを置いた領域（残像を消すために使う）。 未配置は <see cref="Rectangle.Empty"/>。</summary>
+    private Rectangle _lastLoupeBounds = Rectangle.Empty;
+
     /// <summary>設定（選択矩形・暗転マスク・ルーペ・選択矩形破線の外観）。</summary>
     private SelectionOverlayOptions _options = SelectionOverlayOptions.Default;
 
@@ -108,6 +111,13 @@ public sealed class SelectionOverlayControl : Control
 
     /// <summary>ルーペ中心の更新イベント（対象座標。 ホストの追加制御用フック）。</summary>
     public event EventHandler<LoupePositionEventArgs>? LoupePositionMoved;
+
+    /// <summary>選択矩形（暗転マスクを含む）の描画が完了したことを通知するイベント。</summary>
+    /// <remarks>
+    /// 描画のたびに発火する（マスクの描画完了を待ってから何かを行いたいホストが購読する）。<br/>
+    /// 撮影オーバーレイは透明度を使わず、下地色を最終の見た目に合わせているため本イベントを使わない。
+    /// </remarks>
+    public event EventHandler? MarqueeRendered;
 
     /// <summary>設定（選択矩形・暗転マスク・ルーペ・選択矩形破線の外観）を取得または設定する。</summary>
     /// <value>設定の単一値。 既定は <see cref="SelectionOverlayOptions.Default"/>（内包コントロールの既定値）。</value>
@@ -543,7 +553,7 @@ public sealed class SelectionOverlayControl : Control
 
         if (!_loupe.Visible)
         {
-            _loupe.Bounds = Rectangle.Empty;
+            HideLoupe();
             return;
         }
 
@@ -551,12 +561,74 @@ public sealed class SelectionOverlayControl : Control
         var layout = _loupe.ResolveLayout(_loupe.ToDipSize(ClientSize));
         if (layout.Position is not { } position)
         {
-            _loupe.Bounds = Rectangle.Empty;
+            HideLoupe();
             return;
         }
 
         var size = _loupe.ToClientPixel(layout.ClientSize);
-        _loupe.Bounds = new Rectangle(_loupe.ToClientPixel(position.X), _loupe.ToClientPixel(position.Y), size, size);
+        var bounds = new Rectangle(_loupe.ToClientPixel(position.X), _loupe.ToClientPixel(position.Y), size, size);
+        if (bounds != _loupe.Bounds)
+        {
+            // 直前の位置を消してから移す（消さないと、移動前のルーペが残像として一瞬残る）。
+            // 自分の描画は下の画像を透かして描かれるため、移動前の領域を無効化して
+            // 描き直させる（親は子の領域を描かないため、親の無効化では消えない）
+            var previous = _lastLoupeBounds;
+            _loupe.Bounds = bounds;
+            _lastLoupeBounds = bounds;
+
+            if (previous is { IsEmpty: false })
+            {
+                InvalidateBelow(previous);
+            }
+
+            Invalidate(bounds);
+            Update();
+        }
+    }
+
+    /// <summary>ルーペを消し、直前の位置を消す。</summary>
+    private void HideLoupe()
+    {
+        ClearLoupeTrace();
+        _loupe.Bounds = Rectangle.Empty;
+        _lastLoupeBounds = Rectangle.Empty;
+    }
+
+    /// <summary>直前のルーペの領域を、下の画像ごと描き直す。</summary>
+    /// <remarks>
+    /// 本コントロールは背景を描かず、実際に画像を透かして描くのは全面を覆う <c>_marquee</c>（既定で透明な背景を持つ）である。<br/>
+    /// 自分の領域を無効化しても、全面を覆う子（<c>_marquee</c>）に切り取られて何も描かれないため、<br/>
+    /// ルーペが動いた跡は <c>_marquee</c> を無効化しないと消えない（実測）。
+    /// </remarks>
+    private void ClearLoupeTrace()
+    {
+        if (_lastLoupeBounds is not { IsEmpty: false } previous)
+        {
+            return;
+        }
+
+        InvalidateBelow(previous);
+        _lastLoupeBounds = Rectangle.Empty;
+    }
+
+    /// <summary>ルーペの下にある描画（画像を透かす子、無ければ自分）を指定領域で描き直す。</summary>
+    /// <param name="bounds">描き直す領域（本コントロールのクライアント座標）。</param>
+    private void InvalidateBelow(Rectangle bounds)
+    {
+        // 縁のアンチエイリアス分も含めて描き直す
+        bounds.Inflate(2, 2);
+
+        // _marquee は Dock=Fill のため、そのクライアント座標は本コントロールと一致する
+        if (_marquee.Visible)
+        {
+            _marquee.Invalidate(bounds);
+            _marquee.Update();
+            return;
+        }
+
+        Invalidate(bounds);
+        Parent?.Invalidate(bounds, false);
+        Update();
     }
 
     /// <summary>ウィンドウ メッセージを処理する（入力を受け取らないモードでは下のコントロールへ通す）。</summary>
@@ -664,6 +736,9 @@ public sealed class SelectionOverlayControl : Control
         {
             DrawLabel(e.Graphics, in placement);
         }
+
+        // 描画の完了をホストへ通知する（撮影オーバーレイはこれを受けてウィンドウを不透明にする）
+        MarqueeRendered?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>付加情報ラベル 1 件を描画面へ描く（背景を塗ってから文字を描く）。</summary>

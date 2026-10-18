@@ -3,7 +3,6 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.App.WinForms.Icons;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
 using Microsoft.Extensions.Logging;
 
@@ -79,7 +78,7 @@ internal static class UndoPage
         {
             var index = i;
             modeButtons[index] = UiFactory.CreateToolButton(
-                AppIcon.Undo,
+                null,
                 $"表示モード: {ViewModeDisplay.GetText(index)}",
                 () => ChangeMode(index),
                 ViewModeDisplay.GetText(index));
@@ -111,7 +110,6 @@ internal static class UndoPage
         };
 
         list.Scroll += (_, _) => Reprioritize();
-        AppStyles.ThemeChanged += (_, _) => ApplyAppearance();
 
         viewModel.PropertyChanged += (_, e) =>
         {
@@ -227,7 +225,7 @@ internal static class UndoPage
 
             for (var i = 0; i < redo.Count; i++)
             {
-                Add(redo[i], $"Redo {i + 1}", isCurrent: false);
+                Add(redo[i], $"やり直し {i + 1}", isCurrent: false);
             }
 
             if (current is not null)
@@ -237,7 +235,7 @@ internal static class UndoPage
 
             for (var i = undo.Count - 1; i >= 0; i--)
             {
-                Add(undo[i], $"Undo {undo.Count - i}", isCurrent: false);
+                Add(undo[i], $"元に戻す {undo.Count - i}", isCurrent: false);
             }
 
             list.SetItems(items);

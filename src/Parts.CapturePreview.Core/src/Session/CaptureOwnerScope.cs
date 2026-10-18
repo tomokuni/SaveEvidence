@@ -35,8 +35,19 @@ public sealed class CaptureOwnerScope : IDisposable
     /// <summary>キャプチャ除外を設定したかどうか。</summary>
     private readonly bool _excluded;
 
+    /// <summary>退避を予約したかどうか（キャプチャ除外が効いた場合に、オーバーレイ表示後まで遅らせる）。</summary>
+    private bool _hidePending;
+
     /// <summary>復帰済みかどうか（多重呼び出しを防ぐ）。</summary>
     private bool _disposed;
+
+    /// <summary>キャプチャ除外を設定できたかどうかを取得する。</summary>
+    /// <value>除外を設定した場合は true。 退避しない場合（設定が false・オーナーが非表示）も false。</value>
+    /// <remarks>
+    /// 除外できる環境では撮影の間もオーナーを表示したままにでき、退避の順序を呼び出し側が選べる<br/>
+    /// （退避を遅らせると、オーバーレイが画面を覆うまでデスクトップが見える瞬間を作らない）。
+    /// </remarks>
+    public bool IsExcluded { get; }
 
     /// <summary>オーナーウィンドウの退避と除外の設定を行う。</summary>
     /// <param name="windowService">ネイティブウィンドウ操作サービス。</param>
@@ -56,10 +67,20 @@ public sealed class CaptureOwnerScope : IDisposable
 
         // 1. 撮影より先にキャプチャ除外を設定する（画面キャプチャへ自ウィンドウを写さない）
         _excluded = windowService.SetCaptureExclusion(handle, exclude: true);
+        IsExcluded = _excluded;
 
-        // 2. 画面外へ退避する（非表示は使わない。 位置の変更のためウィンドウは再作成されない）
-        owner.HideOffScreen();
+        // 2. 退避する。 除外が効いている場合は<b>予約だけ</b>し、オーバーレイが画面を覆ってから
+        //    実際に退避する（撮影の間ずっとデスクトップが見える「白い一瞬」を防ぐ）。
+        //    除外が効かない環境では自ウィンドウが画像へ写るため、撮影の前に退避する。
         _owner = owner;
+        if (_excluded)
+        {
+            _hidePending = true;
+        }
+        else
+        {
+            owner.HideOffScreen();
+        }
     }
 
     /// <summary>オーナーウィンドウの退避とキャプチャ除外の設定を開始する。</summary>
@@ -75,6 +96,24 @@ public sealed class CaptureOwnerScope : IDisposable
     public static CaptureOwnerScope Enter(
         IWindowService windowService, EsPlatformHandle handle, ICaptureOwnerWindow owner, bool hideOwner)
         => new(windowService, handle, owner, hideOwner);
+
+    /// <summary>予約した退避を実行する（オーバーレイが画面全体を覆ってから呼ぶ）。</summary>
+    /// <remarks>
+    /// キャプチャ除外が効いている場合は、退避を本メソッドの呼び出しまで遅らせている<br/>
+    /// （撮影の間ずっとデスクトップが見える「一瞬の白い画面」を防ぐ）。<br/>
+    /// 除外が効いていない場合は <see cref="Enter"/> の時点で退避済みのため、何もしない。<br/>
+    /// 2 回目以降の呼び出しは何もしない。
+    /// </remarks>
+    public void ApplyPendingHide()
+    {
+        if (!_hidePending)
+        {
+            return;
+        }
+
+        _hidePending = false;
+        _owner?.HideOffScreen();
+    }
 
     /// <summary>撮影前に退避していたオーナーウィンドウを復帰する（呼び出し側の処理の後に行う）。</summary>
     /// <remarks>
@@ -92,6 +131,8 @@ public sealed class CaptureOwnerScope : IDisposable
         _disposed = true;
 
         // 4. 配置を復帰する（画像の差し替えが済んだ後に呼ぶと、新しい画像が描画済みの状態で表示される）
+        //    退避を実行していない場合（予約のまま）は、アダプタが退避前の配置を保持していないため何も起きない
+        _hidePending = false;
         _owner?.RestorePlacement();
 
         // 5. キャプチャ除外を解除する

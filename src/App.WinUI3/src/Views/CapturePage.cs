@@ -16,7 +16,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
+using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
 using DrawingColor = System.Drawing.Color;
@@ -46,6 +48,12 @@ internal static class CapturePage
 
     /// <summary>ズーム スライダの最大値（%）。</summary>
     private const double ZoomSliderMaximum = 500;
+
+    /// <summary>ファイル名テンプレートの最小幅（DIP）。 Avalonia 版と同じ値。</summary>
+    private const double TemplateMinWidth = 220;
+
+    /// <summary>ファイル名テンプレートの幅に足す左右の余白（DIP・枠とカーソル分）。 Avalonia 版と同じ値。</summary>
+    private const double TemplateHorizontalPadding = 24;
 
     /// <summary>拡大率メニューの選択肢（%）。</summary>
     private static readonly double[] s_zoomMenuLevels = [10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
@@ -138,14 +146,19 @@ internal static class CapturePage
         statusLeft.Children.Add(messageText);
 
         var statusRight = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
-        statusRight.Children.Add(CreateLabel("拡大率:", AppStyles.StatusFontSize));
         statusRight.Children.Add(zoomOut);
         statusRight.Children.Add(zoomSlider);
         statusRight.Children.Add(zoomIn);
         statusRight.Children.Add(fit);
         statusRight.Children.Add(zoomPercent);
 
-        var statusGrid = new Grid { Padding = new Thickness(AppStyles.StatusPaddingX, AppStyles.StatusPaddingY, AppStyles.StatusPaddingX, AppStyles.StatusPaddingY) };
+        var statusGrid = new Grid
+        {
+            // 行の高さを中身（スライダ 24）より少しだけ広げ、左右の要素を垂直方向中央へ置く
+            Height = AppStyles.StatusBarRowHeight,
+            VerticalAlignment = VerticalAlignment.Center,
+            Padding = new Thickness(AppStyles.StatusPaddingX, 0, AppStyles.StatusPaddingX, 0),
+        };
         statusGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         statusGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         Grid.SetColumn(statusLeft, 0);
@@ -216,11 +229,12 @@ internal static class CapturePage
 
         var menuButton = CreateMenuButton(services, viewModel, toggleCrop, captureSession);
         items.Children.Add(menuButton);
+        items.Children.Add(CreateSeparator());
 
         var templateBox = new TextBox
         {
             Text = viewModel.FileNameTemplateText,
-            MinWidth = 220,
+            MinWidth = TemplateMinWidth,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(1),
         };
@@ -239,24 +253,23 @@ internal static class CapturePage
             "ic_fluent_select_object_24_regular.svg", "領域選択キャプチャ",
             () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
         var crop = CreateIconButton("ic_fluent_crop_24_regular.svg", "切り出し（切出しモード開始/終了）", toggleCrop, AppStyles.ToolbarIconSize);
-        var undo = CreateIconButton("ic_fluent_arrow_undo_24_regular.svg", "元に戻す", () => EditHistory.Undo(services), AppStyles.ToolbarIconSize);
-        var redo = CreateIconButton("ic_fluent_page_fit_24_regular.svg", "元に戻すを取り消す", () => EditHistory.Redo(services), AppStyles.ToolbarIconSize);
 
+        // 並びと区切りは Avalonia 版と同じにする（☰ | テンプレート | 保存 | 撮影 3 種 | 切り出し）。
+        // 元に戻す・やり直しはメニューから実行する（ツールバーに置かない）
+        items.Children.Add(CreateSeparator());
         items.Children.Add(save);
+        items.Children.Add(CreateSeparator());
         items.Children.Add(screen);
         items.Children.Add(windowSelect);
         items.Children.Add(area);
+        items.Children.Add(CreateSeparator());
         items.Children.Add(crop);
-        items.Children.Add(undo);
-        items.Children.Add(redo);
 
         // 画像の状態とテンプレートの妥当性に追従して可否を更新する
         viewModel.PropertyChanged += (_, e) =>
         {
             save.IsEnabled = viewModel.CanSave;
             crop.IsEnabled = viewModel.HasPreviewImage;
-            undo.IsEnabled = viewModel.HasPreviewImage;
-            redo.IsEnabled = viewModel.HasPreviewImage;
 
             if (!string.Equals(e.PropertyName, nameof(MainViewModel.FileNameTemplateText), StringComparison.Ordinal))
             {
@@ -272,8 +285,6 @@ internal static class CapturePage
 
         save.IsEnabled = viewModel.CanSave;
         crop.IsEnabled = viewModel.HasPreviewImage;
-        undo.IsEnabled = viewModel.HasPreviewImage;
-        redo.IsEnabled = viewModel.HasPreviewImage;
 
         // 上書き確認で使う保存先をツールチップへ反映する
         UpdateSaveToolTip(save, viewModel);
@@ -307,15 +318,64 @@ internal static class CapturePage
             }
         };
 
-        return new ScrollViewer
+        var toolbar = new ScrollViewer
         {
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            // 横スクロールは無効にする（スクロール バーを出さず、内容も動かさない）。
+            // 有効のままだと、ツールバーの余白をクリックした操作で内容が横へ流れ、
+            // 左端のメニュー ボタンが画面外へ隠れる（実測）
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            HorizontalScrollMode = ScrollMode.Auto,
-            Padding = new Thickness(AppStyles.ToolbarPaddingX, AppStyles.ToolbarPaddingY, AppStyles.ToolbarMarginRight, AppStyles.ToolbarPaddingY),
+            HorizontalScrollMode = ScrollMode.Disabled,
+            VerticalScrollMode = ScrollMode.Disabled,
+
+            // 行の高さを中身（ボタン 30）より少しだけ広げ、中身を垂直方向中央へ置く
+            Height = AppStyles.ToolbarRowHeight,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Padding = new Thickness(AppStyles.ToolbarPaddingX, 0, AppStyles.ToolbarMarginRight, 0),
             Margin = new Thickness(0, AppStyles.ToolbarMarginTop, 0, AppStyles.ToolbarMarginBottom),
             Content = items,
         };
+
+        // ファイル名テンプレートの幅をテキストの実測に合わせる（上限は右の要素が隠れない幅）。
+        // ツールバーの幅が変わったら計算し直す
+        var measureText = new TextBlock { FontSize = templateBox.FontSize, Text = templateBox.Text };
+        void UpdateTemplateWidth()
+        {
+            measureText.Text = templateBox.Text;
+            measureText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            var width = measureText.DesiredSize.Width + TemplateHorizontalPadding;
+            templateBox.Width = Math.Max(TemplateMinWidth, Math.Min(width, ResolveTemplateMaxWidth()));
+        }
+
+        double ResolveTemplateMaxWidth()
+        {
+            var available = toolbar.ActualWidth - toolbar.Padding.Left - toolbar.Padding.Right;
+            if (available <= 1)
+            {
+                return TemplateMinWidth;
+            }
+
+            var others = 0.0;
+            foreach (var child in items.Children)
+            {
+                if (ReferenceEquals(child, templateBox) || child is not FrameworkElement element)
+                {
+                    continue;
+                }
+
+                child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                others += child.DesiredSize.Width + element.Margin.Left + element.Margin.Right;
+            }
+
+            // StackPanel の Spacing（要素間の余白）も差し引く
+            others += items.Spacing * Math.Max(0, items.Children.Count - 1);
+            return Math.Max(TemplateMinWidth, available - others - templateBox.Margin.Left - templateBox.Margin.Right);
+        }
+
+        toolbar.SizeChanged += (_, _) => UpdateTemplateWidth();
+        templateBox.TextChanged += (_, _) => UpdateTemplateWidth();
+        UpdateTemplateWidth();
+        return toolbar;
     }
 
     /// <summary>メニュー（☰）のボタンを組み立てる。</summary>
@@ -331,7 +391,12 @@ internal static class CapturePage
     private static Button CreateMenuButton(
         AppServices services, MainViewModel viewModel, Action toggleCrop, CaptureSessionControl captureSession)
     {
-        var flyout = new MenuFlyout();
+        var flyout = new MenuFlyout
+        {
+            // メニューはボタンの下へ開く（上へ開くと、ツールバーの上に何も無いぶん余計に視線が動く。
+            // 他の UI 版はすべて下へ開く）
+            Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
+        };
         var save = CreateMenuItem("File - 画像を保存", "Ctrl+S", () => _ = viewModel.SaveImageAsync());
         var copy = CreateMenuItem("Clipboard - コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
         var paste = CreateMenuItem("Clipboard - 貼り付け", "Ctrl+V", () => _ = PasteAsync(services));
@@ -385,6 +450,24 @@ internal static class CapturePage
         };
     }
 
+    /// <summary>ツールバーの区切り（縦線）を組み立てる。</summary>
+    /// <returns>組み立てた区切り。</returns>
+    /// <remarks>
+    /// Fluent の <c>MenuFlyoutSeparator</c> はメニュー専用で、横線しか表せない。<br/>
+    /// ツールバーの区切りは他の UI 版と同じ縦線（<c>|</c>）にするため、細い Border を置く。<br/>
+    /// 色は半透明の灰色（Avalonia 版の <c>SystemControlForegroundBaseLowBrush</c> 相当の濃さ）にして、
+    /// 明色・暗色の両テーマで背景に馴染ませる。 太さ・余白は他の UI 版（1 × 20 DIP・左右 4 DIP）と揃える。
+    /// </remarks>
+    private static Border CreateSeparator()
+        => new()
+        {
+            Width = 1,
+            Height = 20,
+            Margin = new Thickness(4, 0, 4, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Background = new SolidColorBrush(Color.FromArgb(0x66, 0x80, 0x80, 0x80)),
+        };
+
     /// <summary>拡大率メニュー（% 表示のクリックで開く）を組み立てる。</summary>
     /// <param name="cropView">対象のプレビュー。</param>
     /// <returns>組み立てたメニュー。</returns>
@@ -436,6 +519,12 @@ internal static class CapturePage
             InnerBorderColor = s_autoCropHoverBorder,
             InnerBorderThickness = AutoCropBorderThickness,
         };
+
+        // 画像の無い部分（プレビューの下地）の色を他の UI 版と同じにする。
+        // 色は AppPalette（App.Core）が単一所有する。 テーマが変わったら塗り直す
+        // （下地は Skia で描くため、テーマのリソースでは追随しない）
+        ApplyImageAreaBackground(crop);
+        AppStyles.ThemeChanged += (_, _) => ApplyImageAreaBackground(crop);
 
         // 撮影・切り出しの撮影セッション。 撮影と切り出しの排他とセッションの寿命を単一所有する
         var session = new CaptureSessionControl(
@@ -546,12 +635,30 @@ internal static class CapturePage
         var host = new Grid { Background = new SolidColorBrush(Colors.Transparent) };
         host.Children.Add(crop);
 
+        // 画像の 4 辺の影（幅・濃さは App.Core の ShadowPlan が単一所有する）を表示矩形へ追従させる
+        var shadow = new ImageShadowOverlay();
+        shadow.Attach(crop);
+        host.Children.Add(shadow);
+
         // 起動直後は XamlRoot が無くスケーリングを取得できないため、読み込み後に外観を反映し直す
         crop.Loaded += (_, _) => session.AppearanceSettings = CaptureSettingsMapper.From(settings, ReadRenderScaling(crop));
 
         // 終了時に切り出しセッションを完了させる（待機中のタスクを残さない）
         window.Closed += (_, _) => session.Dispose();
         return host;
+    }
+
+    /// <summary>プレビューの下地色（画像領域の背景色）を反映する。</summary>
+    /// <param name="crop">対象のプレビュー。</param>
+    /// <remarks>
+    /// 画像が無い部分はこの色の単色になる。 色は <see cref="AppPalette"/>（App.Core）が単一所有する。
+    /// </remarks>
+    private static void ApplyImageAreaBackground(CropViewControl crop)
+    {
+        crop.Appearance = crop.Appearance with
+        {
+            BackgroundColor = AppPalette.ImageAreaDrawingColor(AppStyles.IsDarkTheme),
+        };
     }
 
     /// <summary>メイン ViewModel の変更通知をステータス バーの表示へ反映する。</summary>
@@ -606,13 +713,8 @@ internal static class CapturePage
     /// <summary>画像をクリップボードから貼り付ける。</summary>
     /// <param name="services">アプリ全体で共有するコア オブジェクト。</param>
     /// <returns>待機タスク。</returns>
-    private static async Task PasteAsync(AppServices services)
-    {
-        if (await services.Main.PasteFromClipboardAsync())
-        {
-            services.Main.StatusMessage = "クリップボードから貼り付けました";
-        }
-    }
+    /// <remarks>結果の通知（文言）はコア（<c>MainViewModel.PasteFromClipboardAsync</c>）が行う。</remarks>
+    private static async Task PasteAsync(AppServices services) => await services.Main.PasteFromClipboardAsync();
 
     /// <summary>撮影結果をプレビューへ反映する（撮影完了イベントのハンドラ）。</summary>
     /// <param name="services">アプリ全体で共有するコア オブジェクト（履歴の所有者）。</param>
@@ -633,8 +735,8 @@ internal static class CapturePage
 
         services.UndoHistory.Push(viewModel.PreviewImage);
         viewModel.SetPreviewImage(captured);
-        viewModel.StatusMessage = string.Create(
-            System.Globalization.CultureInfo.InvariantCulture, $"キャプチャしました（{captured.Width} x {captured.Height}）");
+        // 通知の文言はコアが単一所有する（キャプチャ結果は画像の差し替えより後に通知する）
+        viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
     }
 
     /// <summary>切り出しの開始・確定・キャンセルを 1 つの操作で切り替える（ボタン・キー・メニュー共通）。</summary>
@@ -791,9 +893,38 @@ internal static class CapturePage
             button.Click += (_, _) => onClick();
         }
 
+        ApplyIconButtonColors(button);
+
         // テーマが変わったらラスタライズ済みのアイコンを描き直す
-        AppStyles.ThemeChanged += (_, _) => content.Source = IconLoader.LoadThemedImage(icon, AppStyles.IconRasterSize);
+        AppStyles.ThemeChanged += (_, _) =>
+        {
+            content.Source = IconLoader.LoadThemedImage(icon, AppStyles.IconRasterSize);
+            ApplyIconButtonColors(button);
+        };
         return button;
+    }
+
+    /// <summary>アイコン ボタンの背景色と角丸を 4 UI 版で共通の値に揃える。</summary>
+    /// <param name="button">対象のボタン。</param>
+    /// <remarks>
+    /// WinUI 3 の標準ボタンは通常時にも下地を塗るため、通常時は透明・ホバーで薄いグレー・押下で濃いグレーに<br/>
+    /// 上書きする（値は <see cref="AppPalette.ToolbarButtonBackground"/>（App.Core）が単一所有する）。<br/>
+    /// 上書きはコントロールの <c>Resources</c> へ入れる（テーマ リソースの解決より優先される）。
+    /// </remarks>
+    private static void ApplyIconButtonColors(Button button)
+    {
+        var isDark = AppStyles.IsDarkTheme;
+        var transparent = new SolidColorBrush(Colors.Transparent);
+
+        button.Resources["ButtonBackground"] = transparent;
+        button.Resources["ButtonBorderBrush"] = transparent;
+        button.Resources["ButtonBorderBrushPointerOver"] = transparent;
+        button.Resources["ButtonBorderBrushPressed"] = transparent;
+        button.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(
+            AppStyles.ToColor(AppPalette.ToolbarButtonBackground(isDark, isPressed: false)));
+        button.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(
+            AppStyles.ToColor(AppPalette.ToolbarButtonBackground(isDark, isPressed: true)));
+        button.CornerRadius = new CornerRadius(AppPalette.ToolbarButtonCornerRadius);
     }
 
     /// <summary>文字付きの小さなボタンを生成する。</summary>

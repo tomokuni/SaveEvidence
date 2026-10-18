@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using EsUtil.SaveEvidence.App.WinUI3.Services;
@@ -38,7 +39,16 @@ internal static class SettingsPage
         var settings = services.Settings.Current;
         var viewModel = services.Main;
 
-        var root = new StackPanel { Spacing = 12, Padding = new Thickness(12) };
+        // 上端はタイトル バーの分だけ空ける（他の UI 版と同じ）。 余白は **ScrollViewer の外側**へ置く
+        // （内側の余白にすると、スクロールしたときに内容がタイトル バー相当の位置へ食い込む）
+        // 文字サイズは AvaloniaUI 版と同じ 14 DIP（SettingsMetrics が単一所有する）。
+        // 各コントロールの既定はテーマ依存のため、行・ラベル・見出しの生成時に明示する
+        var root = new StackPanel
+        {
+            Spacing = 12,
+            Padding = new Thickness(12),
+        };
+
         root.Children.Add(BuildThemeSection(window, settings));
         root.Children.Add(BuildSaveSection(window, viewModel, settings));
         root.Children.Add(BuildImageSection(settings));
@@ -47,12 +57,16 @@ internal static class SettingsPage
         root.Children.Add(BuildHotKeySection(settings));
         root.Children.Add(BuildAppearanceSection(settings));
 
-        var page = new ScrollViewer
+        var page = new Grid
+        {
+            Margin = new Thickness(0, AppStyles.TitleBarHeight, 0, 0),
+        };
+        page.Children.Add(new ScrollViewer
         {
             Content = root,
             HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        };
+        });
 
         return new PageContent(page);
     }
@@ -94,13 +108,17 @@ internal static class SettingsPage
     /// <returns>生成したセクション。</returns>
     private static FrameworkElement BuildSaveSection(MainWindow window, MainViewModel viewModel, Settings settings)
     {
-        var box = new TextBox { Text = settings.SaveFolderPath, MinWidth = 320 };
+        var box = new TextBox { Text = settings.SaveFolderPath, HorizontalAlignment = HorizontalAlignment.Stretch, MinWidth = 120, FontSize = SettingsMetrics.FontSize };
         box.TextChanged += (_, _) => settings.SaveFolderPath = box.Text;
 
-        var browse = new Button { Content = "参照...", Margin = new Thickness(4, 0, 0, 0) };
+        var browse = new Button { Content = "参照...", Margin = new Thickness(4, 0, 0, 0), FontSize = SettingsMetrics.FontSize };
         browse.Click += (_, _) => _ = BrowseFolderAsync(window, box);
 
-        var pathRow = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+        // 保存先の欄は残り幅いっぱいに広げ、ウィンドウ幅へ追従させる（横並びの StackPanel は引き伸ばさない）
+        var pathRow = new Grid { VerticalAlignment = VerticalAlignment.Center };
+        pathRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        pathRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        Grid.SetColumn(browse, 1);
         pathRow.Children.Add(box);
         pathRow.Children.Add(browse);
 
@@ -125,16 +143,38 @@ internal static class SettingsPage
             }
         };
 
-        return Section("保存設定", Row("保存先フォルダ", pathRow));
+        // プレースホルダの説明（文言は SettingsMetrics（App.Core）が単一所有する）
+        var hint = new TextBlock
+        {
+            Text = SettingsMetrics.SaveFolderHint,
+            FontSize = SettingsMetrics.HintFontSize,
+            TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 3, 0, 0),
+            Opacity = 0.75,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        return Section(
+            "保存設定",
+            Row("保存先フォルダ", pathRow),
+            new StackPanel { Margin = new Thickness(0, 0, 0, 2), Children = { hint } });
     }
 
     /// <summary>画像のセクションを生成する。</summary>
     /// <param name="settings">設定。</param>
     /// <returns>生成したセクション。</returns>
     private static FrameworkElement BuildImageSection(Settings settings)
-        => Section(
+    {
+        // 起動直後の画像の選択肢（表示名は列挙の説明属性が単一所有する）
+        var modes = MainViewModel.StartupPreviewModes;
+        var options = modes.Select(EnumDisplayNames.Get).ToArray();
+        var selected = Math.Max(0, modes.ToList().IndexOf(settings.StartupPreview));
+
+        return Section(
             "画像設定",
-            Row("画像を中央に配置", CheckRow(settings.CenterAlign, value => settings.CenterAlign = value, null)));
+            Row("画像を中央に配置", CheckRow(settings.CenterAlign, value => settings.CenterAlign = value, null)),
+            Row("起動時の画像", ChoiceRow(options, selected, index => settings.StartupPreview = modes[index])));
+    }
 
     /// <summary>キャプチャのセクションを生成する。</summary>
     /// <param name="settings">設定。</param>
@@ -171,7 +211,7 @@ internal static class SettingsPage
     /// <remarks>見出しの右端に「デフォルト値に戻す」を置く。</remarks>
     private static FrameworkElement BuildAppearanceSection(Settings settings)
     {
-        var reset = new Button { Content = "デフォルト値に戻す" };
+        var reset = new Button { Content = "デフォルト値に戻す", FontSize = SettingsMetrics.FontSize };
         reset.Click += (_, _) => settings.ResetAppearanceToDefaults();
 
         (string Category, (string Name, FrameworkElement Control)[] Items)[] categories =
@@ -292,7 +332,12 @@ internal static class SettingsPage
                 }
                 else
                 {
-                    var label = new TextBlock { Text = name, VerticalAlignment = VerticalAlignment.Center };
+                    var label = new TextBlock
+                    {
+                        Text = name,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        FontSize = SettingsMetrics.FontSize,
+                    };
                     Grid.SetRow(label, row);
                     Grid.SetColumn(label, 1);
                     Grid.SetRow(control, row);
@@ -347,7 +392,14 @@ internal static class SettingsPage
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var titleText = new TextBlock { Text = title, VerticalAlignment = VerticalAlignment.Center };
+        var titleText = new TextBlock
+        {
+            Text = title,
+            VerticalAlignment = VerticalAlignment.Center,
+            // グループ名は他の UI 版と同じく太字にする（見出しと項目の区別を付ける）
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            FontSize = AppStyles.SectionHeaderFontSize,
+        };
         Grid.SetColumn(titleText, 0);
         header.Children.Add(titleText);
 
@@ -383,7 +435,13 @@ internal static class SettingsPage
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        var labelText = new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center, MinWidth = 170 };
+        var labelText = new TextBlock
+        {
+            Text = label,
+            VerticalAlignment = VerticalAlignment.Center,
+            MinWidth = 170,
+            FontSize = SettingsMetrics.FontSize,
+        };
         Grid.SetColumn(labelText, 0);
         Grid.SetColumn(control, 1);
         grid.Children.Add(labelText);
@@ -398,7 +456,12 @@ internal static class SettingsPage
     /// <returns>生成したチェック ボックス。</returns>
     private static FrameworkElement CheckRow(bool initial, Action<bool> apply, string? text)
     {
-        var check = new CheckBox { IsChecked = initial, Content = text ?? string.Empty };
+        var check = new CheckBox
+        {
+            IsChecked = initial,
+            Content = text ?? string.Empty,
+            FontSize = SettingsMetrics.FontSize,
+        };
         check.Checked += (_, _) => apply(true);
         check.Unchecked += (_, _) => apply(false);
         return check;
@@ -425,6 +488,7 @@ internal static class SettingsPage
             SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
             HorizontalAlignment = HorizontalAlignment.Left,
             MinWidth = 120,
+            FontSize = SettingsMetrics.FontSize,
         };
 
         box.ValueChanged += (_, e) =>
@@ -495,7 +559,13 @@ internal static class SettingsPage
             apply(value);
         };
 
-        var flyout = new Flyout { Content = picker };
+        // ポップアップをウィンドウの内側に収めない（他 UI 版の色ダイアログと同じく、
+        // ウィンドウの外へはみ出して表示する）。 収めると、ピッカーが縮んでスクロール表示になる
+        var flyout = new Flyout
+        {
+            Content = picker,
+            ShouldConstrainToRootBounds = false,
+        };
         button.Flyout = flyout;
         return button;
     }
@@ -507,7 +577,7 @@ internal static class SettingsPage
     /// <returns>生成した選択入力。</returns>
     private static FrameworkElement ChoiceRow(string[] options, int selectedIndex, Action<int> apply)
     {
-        var combo = new ComboBox { MinWidth = 120 };
+        var combo = new ComboBox { MinWidth = 120, FontSize = SettingsMetrics.FontSize };
         foreach (var option in options)
         {
             combo.Items.Add(new ComboBoxItem { Content = option });
@@ -541,9 +611,10 @@ internal static class SettingsPage
             Text = get().ToString(),
             MinWidth = 200,
             VerticalAlignment = VerticalAlignment.Center,
+            FontSize = SettingsMetrics.FontSize,
         };
 
-        var clear = new Button { Content = "クリア", Margin = new Thickness(4, 0, 0, 0) };
+        var clear = new Button { Content = "クリア", Margin = new Thickness(4, 0, 0, 0), FontSize = SettingsMetrics.FontSize };
 
         void Apply(HotKeySetting setting)
         {
@@ -655,3 +726,5 @@ internal static class SettingsPage
         }
     }
 }
+
+

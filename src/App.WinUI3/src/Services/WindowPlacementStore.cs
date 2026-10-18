@@ -28,21 +28,26 @@ internal static class WindowPlacementStore
     /// <summary>設定に保存された位置・サイズ・表示状態をウィンドウへ復元する。</summary>
     /// <param name="window">対象のウィンドウ。</param>
     /// <param name="settings">復元する設定。</param>
-    /// <remarks>保存値が無い・利用できない場合は何もしない（既定の位置と大きさのまま表示する）。</remarks>
+    /// <remarks>
+    /// 復元してよいかの判定（壊れたサイズ・画面外の座標・最小化）は共有規則（<see cref="WindowPlacementRule"/>）が<br/>
+    /// 単一所有する。 画面外の座標を復元するとウィンドウが見えないまま起動するため、その場合は位置だけを<br/>
+    /// 表示領域の内側へ収める。
+    /// </remarks>
     public static void Restore(Window window, Settings settings)
     {
         ArgumentNullException.ThrowIfNull(window);
         ArgumentNullException.ThrowIfNull(settings);
 
         var appWindow = window.AppWindow;
-        RestorePresenter(appWindow, settings.MainWindowState);
+        RestorePresenter(appWindow, WindowPlacementRule.ToRestorableState(settings.MainWindowState));
 
-        if (!WindowPlacementMath.IsUsable(settings.MainWindowBounds))
+        var visibleArea = WindowPlacementMath.GetVirtualScreenBounds();
+        if (!WindowPlacementRule.CanRestore(settings.MainWindowBounds, visibleArea))
         {
             return;
         }
 
-        var bounds = settings.MainWindowBounds!.Value;
+        var bounds = WindowPlacementRule.ClampToVisibleArea(settings.MainWindowBounds!.Value, visibleArea);
         appWindow.MoveAndResize(new RectInt32(bounds.X, bounds.Y, bounds.Width, bounds.Height));
     }
 

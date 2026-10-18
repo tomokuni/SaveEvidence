@@ -123,6 +123,7 @@ public sealed class SettingsService : ISettingsService
                 new JsonStringEnumConverter<EsKey>(),
                 new JsonStringEnumConverter<EsWindowState>(),
                 new JsonStringEnumConverter<ThemeMode>(),
+                new JsonStringEnumConverter<StartupPreviewMode>(),
             },
         };
 

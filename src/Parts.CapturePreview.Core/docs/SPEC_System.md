@@ -267,6 +267,8 @@ classDiagram
     }
     class CaptureOwnerScope {
         +Enter(IWindowService, EsPlatformHandle, ICaptureOwnerWindow, bool) CaptureOwnerScope
+        +IsExcluded bool
+        +ApplyPendingHide()
         +Dispose()
     }
     CaptureHighlightSession ..> CaptureHighlight : 導出

@@ -196,9 +196,12 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(NavPanelWidth))]
     private bool _isNavigationExpanded = true;
 
-    /// <summary>ナビゲーションパネルの幅（展開時 180 / 収納時 40）。</summary>
-    /// <remarks>収納時はアイコンのみ表示する幅。</remarks>
-    public double NavPanelWidth => IsNavigationExpanded ? 180 : 40;
+    /// <summary>ナビゲーションパネルの幅（展開時 128 / 収納時 40）。</summary>
+    /// <remarks>
+    /// 幅の根拠（アイコン + 最も長い項目名 + 余白）は <see cref="NavPanelMetrics"/> が単一所有する<br/>
+    /// （4 つの UI 版が同じ幅を使う。 UI ごとに固定値を書かない）。
+    /// </remarks>
+    public double NavPanelWidth => NavPanelMetrics.Width(IsNavigationExpanded);
 
     /// <summary>プレビュー画像が存在するかどうかを取得する。</summary>
     public bool HasPreviewImage => PreviewImage is not null;
@@ -217,7 +220,13 @@ public sealed partial class MainViewModel : ObservableObject
     /// <remarks>設定画面の ComboBox の ItemsSource に使用する。</remarks>
     public static IReadOnlyList<ThemeMode> ThemeModes => s_themeModes;
 
+    /// <summary>起動直後の画像（プレースホルダ）の選択肢（グラデーション画像 / 空白）を取得する。</summary>
+    /// <remarks>設定画面のコンボ ボックスの選択肢に使用する（表示名は列挙の説明属性が単一所有する）。</remarks>
+    public static IReadOnlyList<StartupPreviewMode> StartupPreviewModes => s_startupPreviewModes;
+
     private static readonly ThemeMode[] s_themeModes = Enum.GetValues<ThemeMode>();
+
+    private static readonly StartupPreviewMode[] s_startupPreviewModes = Enum.GetValues<StartupPreviewMode>();
 
     /// <summary>現在の状態テキスト（左側: 保存済み/未）。</summary>
     /// <remarks>表示している画像が保存済みなら「保存済み」、画像変更後（キャプチャ・Crop・貼り付け等）または初期表示なら「未」。</remarks>
@@ -351,10 +360,12 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>クリップボードから画像を貼り付ける。</summary>
     /// <returns>貼り付けに成功したかどうか</returns>
+    /// <remarks>結果は <see cref="StatusMessage"/> へ通知する（UI 層で文言を組み立てない）。</remarks>
     public async Task<bool> PasteFromClipboardAsync()
     {
         if (PasteFromClipboardCallback is null)
         {
+            StatusMessage = StatusMessages.PasteUnavailable();
             return false;
         }
 
@@ -363,9 +374,11 @@ public sealed partial class MainViewModel : ObservableObject
         {
             // 貼り付け結果の所有権は本型へ移る（画素は読み取りの面が共有して引き継ぐ）
             PreviewImage = TakeReadOnly(image);
+            StatusMessage = StatusMessages.PasteCompleted();
             return true;
         }
 
+        StatusMessage = StatusMessages.PasteUnavailable();
         return false;
     }
 
@@ -373,7 +386,13 @@ public sealed partial class MainViewModel : ObservableObject
     /// <param name="bounds">切り出す矩形領域（画像座標 <see cref="EsRectInt"/>）</param>
     [RelayCommand]
     private void CropPreview(EsRectInt bounds)
-        => ApplyPixelEdit(srcData => srcData.Crop(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+    {
+        // 通知は画像の差し替えより後に行う（画像の差し替えは StatusMessage を空にするため）
+        if (ApplyPixelEdit(srcData => srcData.Crop(bounds.X, bounds.Y, bounds.Width, bounds.Height)))
+        {
+            StatusMessage = StatusMessages.CropCompleted(bounds.Width, bounds.Height);
+        }
+    }
 
     /// <summary>プレビュー画像を LineDetection で検出し、ウィンドウ矩形の候補を表示する。</summary>
     /// <remarks>
@@ -402,8 +421,8 @@ public sealed partial class MainViewModel : ObservableObject
         HoveredRect = null;
 
         StatusMessage = rects.Count > 0
-            ? $"自動切り出し: {rects.Count} 個のウィンドウを検出しました。ダブルクリックで確定してください。"
-            : "自動切り出し: ウィンドウを検出できませんでした。";
+            ? StatusMessages.AutoCropDetected(rects.Count)
+            : StatusMessages.AutoCropNotFound();
     }
 
     /// <summary>検出された線分から矩形（ウィンドウの 4 辺）の候補を復元する。</summary>
@@ -465,27 +484,37 @@ public sealed partial class MainViewModel : ObservableObject
         HoveredRect = null;
         StatusMessage = "";
 
-        ApplyPixelEdit(srcData => srcData.Crop(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+        // 通知は画像の差し替えより後に行う（画像の差し替えは StatusMessage を空にするため）
+        if (ApplyPixelEdit(srcData => srcData.Crop(bounds.X, bounds.Y, bounds.Width, bounds.Height)))
+        {
+            StatusMessage = StatusMessages.CropCompleted(bounds.Width, bounds.Height);
+        }
     }
 
     /// <summary>自動切り出しモードをキャンセルする。</summary>
     [RelayCommand]
     private void CancelAutoCrop()
     {
+        // モードに入っていないときは通知しない（画像変更などの内部的な後片付けと区別する）
+        var wasActive = IsAutoCropActive;
         IsAutoCropActive = false;
         DetectedRects = [];
         HoveredRect = null;
-        StatusMessage = "";
+        StatusMessage = wasActive ? StatusMessages.AutoCropCanceled() : "";
     }
 
     /// <summary>ピクセル編集（切出し等）を適用する（BeforeEditAction → 変換 → 画像差し替え）。</summary>
     /// <param name="edit">読み取りの面（<see cref="EsReadOnlyBitmap"/>）を受け取り、編集後の画像（書き換え可能）を返す処理。</param>
-    /// <remarks>ピクセル操作は共通基盤（<see cref="EsReadOnlyBitmap"/> のメンバー）に委譲する。</remarks>
-    private void ApplyPixelEdit(Func<EsReadOnlyBitmap, EsBitmap?> edit)
+    /// <returns>編集を適用した場合は true。 対象の画像が無い・編集結果が無い場合は false。</returns>
+    /// <remarks>
+    /// ピクセル操作は共通基盤（<see cref="EsReadOnlyBitmap"/> のメンバー）に委譲する。<br/>
+    /// 画像を差し替えると <see cref="StatusMessage"/> が空になるため、通知は本メソッドの<b>後</b>に行う。
+    /// </remarks>
+    private bool ApplyPixelEdit(Func<EsReadOnlyBitmap, EsBitmap?> edit)
     {
         if (PreviewImage is null)
         {
-            return;
+            return false;
         }
 
         BeforeEditAction?.Invoke();
@@ -493,11 +522,14 @@ public sealed partial class MainViewModel : ObservableObject
         // プレビュー（読み取りの面）→ 編集 → 編集結果を新しいプレビューとして設定する
         // （編集は元の画像を書き換えず、新しい画像を返す）
         var edited = edit(PreviewImage);
-        if (edited is not null)
+        if (edited is null)
         {
-            // 編集結果の所有権は本型へ移る（画素は読み取りの面が共有して引き継ぐ）
-            PreviewImage = TakeReadOnly(edited);
+            return false;
         }
+
+        // 編集結果の所有権は本型へ移る（画素は読み取りの面が共有して引き継ぐ）
+        PreviewImage = TakeReadOnly(edited);
+        return true;
     }
 
     /// <summary>現在のプレビュー画像を保存する。</summary>
@@ -555,7 +587,8 @@ public sealed partial class MainViewModel : ObservableObject
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
-            // 保存失敗時は false を返す
+            // 保存失敗は通知する（通知の有無・文言が UI 版でずれないようコアが単一所有する）
+            StatusMessage = StatusMessages.SaveFailed();
             return false;
         }
     }

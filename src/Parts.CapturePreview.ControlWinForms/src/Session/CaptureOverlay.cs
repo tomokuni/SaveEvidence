@@ -172,34 +172,23 @@ internal sealed class CaptureOverlay
         ArgumentNullException.ThrowIfNull(owner);
 
         // オーナーの退避とキャプチャ除外の設定・解除は CaptureOwnerScope（コア）が単一所有する
-        // （手順: 除外の設定 → 画面外へ退避 → 撮影 → 配置の復帰 → 除外の解除）
+        // （手順: 除外の設定 → 退避 → 撮影 → 配置の復帰 → 除外の解除）。
+        // 除外が効いている間は退避が予約され、オーバーレイが画面を覆ってから実行される
+        // （撮影の間ずっとデスクトップが見える「白い一瞬」を防ぐ）
         using var ownerScope = CaptureOwnerScope.Enter(
             services.Window, owner.ToEsPlatformHandle(), new OwnerWindowAdapter(owner),
             hideOwner: _settings.HideOwnerWindow!.Value);
 
-        // 全モニターを包含する 1 枚の画像として取得する。
-        // 1 モニターに限定すると、カーソルのあるモニターでしか選択できないため、仮想スクリーン全体を対象にする
-        var screen = services.Capture.CaptureVirtualScreen(out var origin);
-        if (screen is null)
+        // 全モニターを包含する 1 枚の画像として取得する（オーナーは撮影から除外済み）
+        if (!CaptureScreen(services))
         {
             return null;
         }
 
-        // 撮影が完了した画像は以降書き換えないため、凍結して読み取り専用の面へ 0 コピーで引き渡す
-        // （画素は読み取り専用の面が最後の 1 つとして解放する）
-        screen.SetReadOnly();
-        _screen = EsReadOnlyBitmap.FromBitmap(screen);
-        screen.Dispose();
-        // 画像の占有範囲（画面物理座標）= 撮影時の原点 + 画像サイズ（原点は負値になりうる）
-        _screenBounds = CropClipMath.ImageBounds(Screen, origin);
-        _log.LogCaptureStart(_type);
-        // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する）
-        _log.LogVirtualScreen(origin, Screen);
-
         try
         {
             // 確定・キャンセルまで待つ（入れ子ループを作らない非同期の待機。 ホストの継続は呼び出し側へ戻る）
-            await ShowAsync(owner, services).ConfigureAwait(true);
+            await ShowAsync(owner, services, ownerScope).ConfigureAwait(true);
             // 確定・キャンセルは必ず結果を確定させてからフォームを閉じるため、待機は即座に返る
             var result = await _result.Task.ConfigureAwait(true);
             // 完了の記録（確定は 2 件・キャンセルは 1 件）はコアが単一所有する
@@ -217,6 +206,32 @@ internal sealed class CaptureOverlay
             _screen?.Dispose();
             _screen = null;
         }
+    }
+
+    /// <summary>画面全体（仮想スクリーン）を 1 枚の画像として取得する。</summary>
+    /// <param name="services">撮影サービス。</param>
+    /// <returns>取得できた場合は true。 取得できなかった場合は false。</returns>
+    /// <remarks>
+    /// 1 モニターに限定すると、カーソルのあるモニターでしか選択できないため、仮想スクリーン全体を対象にする。<br/>
+    /// 取得した画像は以降書き換えないため凍結して読み取り専用の面へ 0 コピーで引き渡す。
+    /// </remarks>
+    private bool CaptureScreen(CaptureOverlayServices services)
+    {
+        var screen = services.Capture.CaptureVirtualScreen(out var origin);
+        if (screen is null)
+        {
+            return false;
+        }
+
+        screen.SetReadOnly();
+        _screen = EsReadOnlyBitmap.FromBitmap(screen);
+        screen.Dispose();
+        // 画像の占有範囲（画面物理座標）= 撮影時の原点 + 画像サイズ（原点は負値になりうる）
+        _screenBounds = CropClipMath.ImageBounds(Screen, origin);
+        _log.LogCaptureStart(_type);
+        // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する）
+        _log.LogVirtualScreen(origin, Screen);
+        return true;
     }
 
     /// <summary>進行中の撮影セッションをキャンセルする。</summary>
@@ -251,9 +266,10 @@ internal sealed class CaptureOverlay
         public bool IsVisible => window.Visible;
 
         /// <inheritdoc/>
+        /// <remarks>退避（復帰できるよう、移動前の配置を保持する）。 呼び出しの順序は <see cref="CaptureOwnerScope"/> が単一所有する。</remarks>
         public void HideOffScreen()
         {
-            _savedBounds = window.Bounds;
+            _savedBounds ??= window.Bounds;
 
             // 画面外（仮想スクリーン座標の外）へ退避する。 負の大きな座標は Windows で
             // 標準的に使われる「画面外配置」であり、ヒットテスト・検出の対象外になる。
@@ -279,6 +295,7 @@ internal sealed class CaptureOverlay
     /// <summary>オーバーレイを表示し、確定またはキャンセルまで待つ。</summary>
     /// <param name="owner">オーナーウィンドウ。</param>
     /// <param name="services">オーバーレイの実行に必要なサービス（撮影サービス・ウィンドウ操作）。</param>
+    /// <param name="ownerScope">オーナーの退避とキャプチャ除外のスコープ（退避の実行時期を本メソッドが決める）。</param>
     /// <returns>フォームが閉じるまで待機するタスク。</returns>
     /// <remarks>
     /// フォームは仮想スクリーンの位置・サイズでボーダーレス・最前面に表示する。<br/>
@@ -286,7 +303,7 @@ internal sealed class CaptureOverlay
     /// <b>モーダル表示（<c>ShowDialog</c>）を使わない</b>: 入れ子ループではセッションの開始から終了まで<br/>
     /// 呼び出し側のコードが進まず、Facade がセッションの生成・破棄と排他の解放を担えない。
     /// </remarks>
-    private async Task ShowAsync(Form owner, CaptureOverlayServices services)
+    private async Task ShowAsync(Form owner, CaptureOverlayServices services, CaptureOwnerScope ownerScope)
     {
         // セッションを開始する（完了は 1 回だけ受け付ける）
         _state.TryBegin();
@@ -315,14 +332,19 @@ internal sealed class CaptureOverlay
             TopMost = true,
             KeyPreview = true,
             // 透明の間はフォームの背景色だけが合成されるため、透明を解除した瞬間の 1 フレームは
-            // 背景色が見える。 背景を撮影画像の平均色に合わせて、その差を目立たなくする
-            BackColor = ImageColorMath.AverageColor(Screen),
+            // 背景色が見える。 背景を「撮影画像の平均色へ暗転色を重ねた色」にして、暗転後の見た目に
+            // 合わせる（平均色のままにすると、その 1 フレームが明るい画面に見える）
+            BackColor = ImageColorMath.Composite(
+                ImageColorMath.AverageColor(Screen), _settings.OverlayColor!.Value),
             // 位置とサイズは画面物理ピクセルで指定する（生成直後のちらつきを抑える）
             Bounds = _screenBounds.ToRectangle(),
         };
         _overlay = form;
 
         _selector.Visible = true;
+        // 選択オーバーレイは画面全体を覆う（暗転マスクの描画とドラッグ選択の入力の両方が表示領域を要する。
+        // 覆わないと、左上の既定サイズの範囲でしか暗転も選択も起きない）
+        _selector.Dock = DockStyle.Fill;
         imageView.Controls.Add(_selector);
         _selector.BringToFront();
         form.Controls.Add(imageView);
@@ -398,9 +420,9 @@ internal sealed class CaptureOverlay
             };
         }
 
-        // 画像が描かれる前の 1 フレームを見せない（透明で表示し、表示後に不透明へ戻す）
-        form.Opacity = 0;
-
+        // 表示直後の 1 フレームは下地色（撮影画像の平均色へ暗転色を重ねた色）だけが見える。
+        // 透明（Opacity = 0）にして後から不透明にすると、その切り替えで未描画の面が一瞬白く合成されるため、
+        // 透明度は使わず、下地色を最終の見た目に合わせておく（下地の選択は ImageColorMath が単一所有する）
         var closed = new TaskCompletionSource();
         form.Shown += (_, _) =>
         {
@@ -425,7 +447,17 @@ internal sealed class CaptureOverlay
                 _selector.SetCoordTransform(CreatePort());
             }
 
-            form.Opacity = 1;
+            // 画像と暗転マスクを描き切る
+            form.Refresh();
+
+            // オーナーの退避は、キャプチャ除外が効かない場合だけ行う（自ウィンドウが撮影画像へ写るため）。
+            // 除外が効いている場合は退避しない: オーバーレイが画面全体を覆っているため見た目は変わらないが、
+            // 退避の瞬間にウィンドウが再合成され、一瞬だけ明るい画面が見える（実測）
+            if (!ownerScope.IsExcluded)
+            {
+                ownerScope.ApplyPendingHide();
+            }
+
             // 他のウィンドウへ切り替わった（非アクティブ化した）場合はキャンセルする
             // （最前面のオーバーレイが残り続けるのを防ぐ）
             form.Deactivate += (_, _) => Cancel();
@@ -526,8 +558,13 @@ internal sealed class CaptureOverlay
         => ConfirmScreen(CropClipMath.ToScreenRect(e.SelectionSourceRect, _screenBounds.TopLeft));
 
     /// <summary>現在のオーバーレイ フォームを閉じる。</summary>
+    /// <remarks>
+    /// 閉じる前にルーペを消す（ルーペはカーソル位置に残るため、閉じた瞬間の 1 フレームに<br/>
+    /// 画像だけが取り残された「残像」が見える）。 消してから閉じると、最後の描画にも残らない。
+    /// </remarks>
     private void CloseOverlay()
     {
+        _selector.ClearLoupe();
         var overlay = _overlay;
         _overlay = null;
         overlay?.Close();

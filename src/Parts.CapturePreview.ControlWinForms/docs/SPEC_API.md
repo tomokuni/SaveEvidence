@@ -140,6 +140,7 @@ WinForms の `MouseEventArgs.Delta` は 1 ノッチ = 120 であるため、コ�
 | `Log` / `LogPrefix` | ログの出力先と接頭辞（内包するコントロールへ伝搬する） |
 | `ConfirmRequested` / `CancelRequested` | 確定・キャンセルの要求 |
 | `LoupePositionMoved` | ルーペ中心の更新（対象座標。 ホストの追加制御用フック） |
+| `MarqueeRendered` | 選択矩形（暗転マスクを含む）の描画完了（描画のたびに発火する） |
 
 | メソッド | 説明 |
 | --- | --- |
@@ -284,7 +285,7 @@ cropView.ZoomChanged += (_, e) =>
 | 描画の補間 | 画像の拡大・縮小は最近傍である（`Platform.WinForms` の描画層が定める） |
 | 横ホイール | WinForms の `MouseEventArgs` から横方向の回転量を取得できないため、常に縦方向として扱う |
 | 座標変換の精度 | `CropViewControl.TranslatePositionFrom` は整数の座標（`Point`）を経由するため、小数部が丸められる |
-| ルーペの配置 | `SelectionOverlayControl` はレイアウト時にルーペの位置とサイズを再解決する（親のサイズ変更に追従する） |
+| ルーペの配置 | `SelectionOverlayControl` はレイアウト時にルーペの位置とサイズを再解決する（親のサイズ変更に追従する）。 移動時は**移動前の領域を内包する `MarqueeControl` で無効化**して描き直す（本コントロールは背景を描かず、全面を覆う子が画像を透かして描くため、自分の無効化では残像が残る） |
 | 撮影の対象範囲 | 全モニター（仮想スクリーン）である（1 モニターに限定しない） |
 | モーダル表示 | 撮影オーバーレイはモーダル ダイアログではない（入れ子ループを作らないため、ホストは操作を無効化して排他を保つ） |
 

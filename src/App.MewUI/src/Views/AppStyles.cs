@@ -1,6 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.SaveEvidence.App.Core.Enums;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.MewUI.Icons;
 using MewUIColor = Aprillz.MewUI.Color;
 
@@ -88,6 +89,9 @@ internal static class AppStyles
     /// <summary>ステータスバーの文字サイズ（DIP）。</summary>
     public const double StatusFontSize = 12;
 
+    /// <summary>ナビゲーション パネルのフッター（UI 名とバージョン）の文字サイズ（DIP）。</summary>
+    public const double NavVersionFontSize = 11;
+
     /// <summary>ナビゲーション開閉トグルボタンの一辺（DIP）。</summary>
     public const double NavToggleSize = 28;
 
@@ -112,6 +116,14 @@ internal static class AppStyles
 
     /// <summary>ツールバーのボタンのスタイル名。</summary>
     public const string ToolbarButton = "toolbar-button";
+
+    /// <summary>ツールバーのボタン（押している間）のスタイル名。</summary>
+    /// <remarks>
+    /// MewUI 0.21.1 ではツールヒントを閉じる際に押下状態（<c>IsPressed</c>）が失われるため、<br/>
+    /// 押している間の背景は <see cref="VisualStateFlags.Pressed"/> に頼らず、<br/>
+    /// 押下を検出した側がスタイル名を差し替えて表す（<c>ClickableToolTip</c> と同じ回避策）。
+    /// </remarks>
+    public const string ToolbarButtonPressed = "toolbar-button-pressed";
 
     /// <summary>ステータスバーのボタンのスタイル名。</summary>
     public const string StatusButton = "status-button";
@@ -154,16 +166,17 @@ internal static class AppStyles
     // ====================================================================
 
     /// <summary>ホバー時の背景色（明色テーマ）。</summary>
-    private static readonly MewUIColor s_hoverLight = MewUIColor.FromArgb(255, 233, 233, 233);
+    /// <remarks>値は <see cref="AppPalette.ToolbarButtonBackground"/>（App.Core）が単一所有する。</remarks>
+    private static readonly MewUIColor s_hoverLight = ToColor(AppPalette.ToolbarButtonHoverLight);
 
     /// <summary>ホバー時の背景色（暗色テーマ）。</summary>
-    private static readonly MewUIColor s_hoverDark = MewUIColor.FromArgb(255, 58, 58, 58);
+    private static readonly MewUIColor s_hoverDark = ToColor(AppPalette.ToolbarButtonHoverDark);
 
     /// <summary>押下時の背景色（明色テーマ）。</summary>
-    private static readonly MewUIColor s_pressedLight = MewUIColor.FromArgb(255, 219, 219, 219);
+    private static readonly MewUIColor s_pressedLight = ToColor(AppPalette.ToolbarButtonPressedLight);
 
     /// <summary>押下時の背景色（暗色テーマ）。</summary>
-    private static readonly MewUIColor s_pressedDark = MewUIColor.FromArgb(255, 69, 69, 69);
+    private static readonly MewUIColor s_pressedDark = ToColor(AppPalette.ToolbarButtonPressedDark);
 
     /// <summary>ナビ項目のホバー背景色（明色テーマ）。</summary>
     private static readonly MewUIColor s_navHoverLight = MewUIColor.FromArgb(255, 229, 233, 240);
@@ -171,11 +184,11 @@ internal static class AppStyles
     /// <summary>ナビ項目のホバー背景色（暗色テーマ）。</summary>
     private static readonly MewUIColor s_navHoverDark = MewUIColor.FromArgb(255, 48, 52, 60);
 
-    /// <summary>ナビ項目の選択背景色（明色テーマ）。</summary>
-    private static readonly MewUIColor s_navSelectedLight = MewUIColor.FromArgb(255, 224, 231, 245);
+    /// <summary>ナビ項目の選択背景色（明色テーマ）。 薄いグレー（WinUI 3 と同じ）。</summary>
+    private static readonly MewUIColor s_navSelectedLight = ToColor(AppPalette.NavItemSelected(isDark: false));
 
     /// <summary>ナビ項目の選択背景色（暗色テーマ）。</summary>
-    private static readonly MewUIColor s_navSelectedDark = MewUIColor.FromArgb(255, 58, 63, 75);
+    private static readonly MewUIColor s_navSelectedDark = ToColor(AppPalette.NavItemSelected(isDark: true));
 
     /// <summary>閉じるボタンのホバー背景色（赤。 Windows の標準と同じ）。</summary>
     private static readonly MewUIColor s_closeHover = MewUIColor.FromArgb(255, 196, 43, 28);
@@ -190,62 +203,30 @@ internal static class AppStyles
     /// <summary>閉じるボタンのホバー時の文字色（白）。</summary>
     private static readonly MewUIColor s_closeHoverForeground = MewUIColor.FromArgb(255, 255, 255, 255);
 
-    /// <summary>サムネイルの枠色（グレー）。</summary>
-    private static readonly MewUIColor s_thumbnailBorder = MewUIColor.FromArgb(255, 128, 128, 128);
-
-    /// <summary>サムネイルの枠色（ホバー時のハイライト。 青）。</summary>
-    private static readonly MewUIColor s_thumbnailHoverBorder = MewUIColor.FromArgb(255, 0, 120, 212);
-
-    /// <summary>サムネイルの枠色（現在表示中の画像。 青）。</summary>
-    private static readonly MewUIColor s_thumbnailCurrentBorder = MewUIColor.FromArgb(255, 0, 120, 212);
-
-    /// <summary>一覧アイテムのホバー時の背景（明色テーマ用。 黒 10%）。</summary>
-    /// <remarks>
-    /// Avalonia 版は <c>ListBox</c> の項目（<c>ListBoxItem</c>）がホバー時に薄い帯を表示する。<br/>
-    /// MewUI は <c>ListBox</c> を使わないため、同じ見た目の帯をアイテム側で描く（実測値は黒 / 白の 10%）。
-    /// </remarks>
-    private static readonly MewUIColor s_thumbnailHoverBackgroundLight = MewUIColor.FromArgb(26, 0, 0, 0);
-
-    /// <summary>一覧アイテムのホバー時の背景（暗色テーマ用。 白 10%）。</summary>
-    private static readonly MewUIColor s_thumbnailHoverBackgroundDark = MewUIColor.FromArgb(26, 255, 255, 255);
-
-    /// <summary>現在表示中のサムネイルの枠線の太さ（DIP）。</summary>
-    private const double CurrentFrameThickness = 3.0;
-
     // ====================================================================
     // サムネイル（フォルダビュー / Undo 一覧）
     // ====================================================================
 
-    /// <summary>サムネイルの枠の角丸（DIP）。</summary>
-    public const double ThumbnailCornerRadius = 2;
-
-    /// <summary>サムネイルの影のぼかし半径（DIP）。</summary>
-    /// <remarks>
-    /// Avalonia 版の <c>ThumbnailShadow</c>（<c>0 3 10 0 #8A000000</c>）の <c>Blur=10</c> に相当する値を、<br/>
-    /// 実測の広がりが一致するよう MewUI の <see cref="ShadowDecorator"/> 向けに調整した値。<br/>
-    /// MewUI のぼかしは Avalonia より狭く濃く出るため、同じ 10 では影が小さく見える。
-    /// </remarks>
-    public const double ThumbnailShadowBlur = 15;
-
-    /// <summary>サムネイルの影の下方向のオフセット（DIP）。</summary>
-    public const double ThumbnailShadowOffsetY = 3;
-
-    /// <summary>サムネイルの影の色（黒 54%）。</summary>
-    public static readonly MewUIColor ThumbnailShadowColor = MewUIColor.FromArgb(138, 0, 0, 0);
-
     /// <summary>ナビパネルの背景色（明色テーマ用）。</summary>
-    /// <remarks>Avalonia 版の <c>SystemControlBackgroundChromeMediumBrush</c> と同じ値。</remarks>
-    private static readonly MewUIColor s_navBackgroundLight = MewUIColor.FromArgb(255, 230, 230, 230);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（4 つの UI 版で同じ色にする）。</remarks>
+    private static readonly MewUIColor s_navBackgroundLight = ToColor(AppPalette.NavPanel(isDark: false));
 
     /// <summary>ナビパネルの背景色（暗色テーマ用）。</summary>
-    private static readonly MewUIColor s_navBackgroundDark = MewUIColor.FromArgb(255, 31, 31, 31);
+    private static readonly MewUIColor s_navBackgroundDark = ToColor(AppPalette.NavPanel(isDark: true));
 
     /// <summary>ページ（ウィンドウ）の背景色（明色テーマ用）。</summary>
-    /// <remarks>Avalonia 版のウィンドウ背景と同じ値。</remarks>
-    private static readonly MewUIColor s_pageBackgroundLight = MewUIColor.FromArgb(255, 255, 255, 255);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する。</remarks>
+    private static readonly MewUIColor s_pageBackgroundLight = ToColor(AppPalette.Page(isDark: false));
 
     /// <summary>ページ（ウィンドウ）の背景色（暗色テーマ用）。</summary>
-    private static readonly MewUIColor s_pageBackgroundDark = MewUIColor.FromArgb(255, 0, 0, 0);
+    private static readonly MewUIColor s_pageBackgroundDark = ToColor(AppPalette.Page(isDark: true));
+
+    /// <summary>画像領域（プレビューの下地）の背景色（明色テーマ用）。</summary>
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する。</remarks>
+    private static readonly MewUIColor s_imageAreaBackgroundLight = ToColor(AppPalette.ImageArea(isDark: false));
+
+    /// <summary>画像領域（プレビューの下地）の背景色（暗色テーマ用）。</summary>
+    private static readonly MewUIColor s_imageAreaBackgroundDark = ToColor(AppPalette.ImageArea(isDark: true));
 
     /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色（明色テーマ用）。</summary>
     /// <remarks>Avalonia 版の <c>SystemControlBackgroundChromeMediumLowBrush</c> と同じ値。</remarks>
@@ -273,21 +254,10 @@ internal static class AppStyles
     /// <summary>設定ページのカードの枠線の色（暗色テーマ用）。</summary>
     private static readonly MewUIColor s_cardBorderDark = MewUIColor.FromArgb(255, 90, 90, 90);
 
-    /// <summary>サムネイルの枠線の太さ（DIP。 通常時）。</summary>
-    private const double ThumbnailFrameThickness = 1;
-
-    /// <summary>サムネイルの枠色（通常時）。</summary>
-    /// <value>グレー。 テーマに依存しない（Avalonia 版の <c>SystemControlForegroundChromeGrayBrush</c> 相当）。</value>
-    public static MewUIColor ThumbnailBorder => s_thumbnailBorder;
-
-    /// <summary>サムネイルの枠色（ホバー時）。</summary>
-    /// <value>青（ハイライト）。</value>
-    public static MewUIColor ThumbnailHoverBorder => s_thumbnailHoverBorder;
-
     /// <summary>一覧アイテムのホバー時の背景色を取得する（現在のテーマ）。</summary>
-    /// <returns>ホバー時の背景色（半透明のため一覧背景と合成される）。</returns>
+    /// <returns>ホバー時の背景色。 値は <see cref="ThumbnailTileMetrics.HoverBackground"/>（App.Core）が単一所有する。</returns>
     public static MewUIColor CurrentThumbnailHoverBackground
-        => IconLoader.IsDarkTheme() ? s_thumbnailHoverBackgroundDark : s_thumbnailHoverBackgroundLight;
+        => ToColor(ThumbnailTileMetrics.HoverBackground(IconLoader.IsDarkTheme()));
 
     /// <summary>ツールバーの区切り線（縦の細線）を生成する。</summary>
     /// <returns>高さ 20 DIP の縦線。</returns>
@@ -317,6 +287,7 @@ internal static class AppStyles
         sheet.Define(NavItem, () => NavItemStyle(s_navHoverLight, s_navHoverDark, _ => MewUIColor.Transparent));
         sheet.Define(NavItemSelected, () => NavItemStyle(s_navSelectedLight, s_navSelectedDark, t => t.IsDark ? s_navSelectedDark : s_navSelectedLight));
         sheet.Define(ToolbarButton, () => Flat(s_hoverLight, s_hoverDark));
+        sheet.Define(ToolbarButtonPressed, () => Flat(s_pressedLight, s_pressedDark));
         sheet.Define(StatusButton, () => StatusButtonStyle());
         sheet.Define(FlatButton, () => Flat(s_hoverLight, s_hoverDark));
         sheet.Define(WindowButton, () => WindowButtonStyle());
@@ -341,29 +312,27 @@ internal static class AppStyles
             ],
         });
 
-        // サムネイルの枠: 通常はグレー、背景は一覧の背景（Avalonia 版の ChromeMediumLowBrush 相当）
-        // ホバーのハイライトは ShadowDecorator 配下では StateTrigger が効かない（実測）ため、
+        // サムネイルの枠: 画像の周りは影だけにする（枠線・下地・角丸は描かない。 4 UI 版で共通）。
+        // ホバーの帯と影の切り替えは ShadowDecorator 配下では StateTrigger が効かない（実測）ため、
         // ホスト側が MouseEnter / MouseLeave で直接切り替える
         sheet.Define(ThumbnailFrame, () => new Style(typeof(Border))
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, t => ListBackground(t)),
-                Setter.Create(Control.BorderBrushProperty, _ => s_thumbnailBorder),
-                Setter.Create(Control.BorderThicknessProperty, ThumbnailFrameThickness),
-                Setter.Create(Control.CornerRadiusProperty, ThumbnailCornerRadius),
+                Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent),
+                Setter.Create(Control.BorderThicknessProperty, 0.0),
+                Setter.Create(Control.CornerRadiusProperty, 0.0),
             ],
         });
 
-        // 現在表示中のサムネイルの枠: 常に青の太枠（ホバーでも変えない）
+        // 現在表示中のサムネイルも同じ見た目にする（区別はラベルの太字だけ）
         sheet.Define(ThumbnailFrameCurrent, () => new Style(typeof(Border))
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, t => ListBackground(t)),
-                Setter.Create(Control.BorderBrushProperty, _ => s_thumbnailCurrentBorder),
-                Setter.Create(Control.BorderThicknessProperty, CurrentFrameThickness),
-                Setter.Create(Control.CornerRadiusProperty, ThumbnailCornerRadius),
+                Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent),
+                Setter.Create(Control.BorderThicknessProperty, 0.0),
+                Setter.Create(Control.CornerRadiusProperty, 0.0),
             ],
         });
 
@@ -420,6 +389,28 @@ internal static class AppStyles
     /// <returns>ナビパネルの背景色。</returns>
     public static MewUIColor NavPanelBackground(Theme theme)
         => theme.IsDark ? s_navBackgroundDark : s_navBackgroundLight;
+
+    /// <summary>ナビ項目の選択状態を示す左端のマークの色を取得する（現在のテーマ）。</summary>
+    /// <remarks>
+    /// マークは選択状態とテーマの 2 つで色が変わるため、スタイルではなくローカル値で設定する<br/>
+    /// （選択の切り替え時に呼び出し側が塗り直す）。 色は <see cref="AppPalette"/>（App.Core）が単一所有する。
+    /// </remarks>
+    public static MewUIColor CurrentNavSelectionAccent
+        => ToColor(AppPalette.NavItemSelectionAccent(IconLoader.IsDarkTheme()));
+
+    /// <summary>画像領域（プレビューの下地）の背景色を取得する（現在のテーマ）。</summary>
+    /// <remarks>
+    /// 画像の無い部分（プレビューの下地）を塗る。 色は <see cref="AppPalette"/>（App.Core）が単一所有する。<br/>
+    /// 塗らないと後ろの要素（ウィンドウの背景等）が透けて見える。
+    /// </remarks>
+    public static MewUIColor CurrentImageAreaBackground
+        => IconLoader.IsDarkTheme() ? s_imageAreaBackgroundDark : s_imageAreaBackgroundLight;
+
+    /// <summary>32 ビットの色値（0xAARRGGBB）を MewUI の色へ変換する。</summary>
+    /// <param name="argb">色（0xAARRGGBB）。</param>
+    /// <returns>MewUI の色。</returns>
+    private static MewUIColor ToColor(uint argb)
+        => MewUIColor.FromArgb((byte)(argb >> 24), (byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
 
     /// <summary>ページ（ウィンドウ）の背景色を取得する（現在のテーマ）。</summary>
     /// <value>明色テーマは白・暗色テーマは黒（不透明）。</value>
@@ -483,6 +474,10 @@ internal static class AppStyles
     /// <param name="hoverLight">ホバー時の背景色（明色テーマ）。</param>
     /// <param name="hoverDark">ホバー時の背景色（暗色テーマ）。</param>
     /// <returns>生成したスタイル。</returns>
+    /// <remarks>
+    /// 角丸は <see cref="AppPalette.ToolbarButtonCornerRadius"/>（App.Core）に揃える<br/>
+    /// （AvaloniaUI 版・WinUI 3 版のアイコン ボタンと同じ形にするため）。
+    /// </remarks>
     private static Style Flat(MewUIColor hoverLight, MewUIColor hoverDark)
         => new(typeof(Button))
         {
@@ -490,6 +485,7 @@ internal static class AppStyles
             [
                 Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent),
                 Setter.Create(Control.BorderThicknessProperty, 0.0),
+                Setter.Create(Control.CornerRadiusProperty, AppPalette.ToolbarButtonCornerRadius),
             ],
             Triggers =
             [
@@ -591,3 +587,10 @@ internal static class AppStyles
             ],
         };
 }
+
+
+
+
+
+
+

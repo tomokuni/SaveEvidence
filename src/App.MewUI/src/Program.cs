@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Skia.Interop;
 using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -10,9 +9,7 @@ using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.SaveEvidence.App.MewUI.Services;
 using EsUtil.SaveEvidence.App.MewUI.Views;
-using EsUtil.SaveEvidence.Platform.Skia;
 using Microsoft.Extensions.Logging;
-using SkiaSharp;
 
 
 namespace EsUtil.SaveEvidence.App.MewUI;
@@ -72,8 +69,8 @@ internal static class Program
         // ホットキーの開始経路（StartSelectionMode）は、撮影・切り出しのセッション寿命を所有するページが
         // Facade を生成した時点で設定する（本ホストは UI 層のオブジェクトを生成しないため、ここでは設定しない）。
 
-        // 撮影前のプレースホルダ画像（撮影の成立を実機で判定するための目印。 README 27.2 の画素実測が使う）
-        viewModel.SetPreviewImage(CreatePlaceholderImage());
+        // 起動直後のプレビュー画像（設定で「グラデーション画像」か「空白」を選ぶ）
+        StartupPreviewImage.Apply(viewModel, settings.Current.StartupPreview);
 
         // ウィンドウ配置（位置・サイズ・状態）とナビ開閉は設定から復元し、終了時に保存する
         var window = MainWindow.Create(services);
@@ -169,25 +166,6 @@ internal static class Program
         {
             s_logger.LogHotKeyRegisterFailed(action, setting.Key);
         }
-    }
-
-    /// <summary>撮影前のプレースホルダ画像を生成する。</summary>
-    /// <returns>生成した画像。 所有権は呼び出し側（<c>MainViewModel</c> へ渡す）。</returns>
-    /// <remarks>グラデーションにすることで、撮影の前後を画素の実測で判定できる（README 27.2 の実機検証手順）。</remarks>
-    private static EsBitmap CreatePlaceholderImage()
-    {
-        // 所有権は FromSKBitmap へ移るため using を付けない（付けると戻り値が破棄済みになる）
-        var bitmap = new SKBitmap(320, 180);
-        using var canvas = new SKCanvas(bitmap);
-
-        using var paint = new SKPaint { IsAntialias = false };
-        paint.Shader = SKShader.CreateLinearGradient(
-            new SKPoint(0, 0), new SKPoint(320, 180),
-            [new SKColor(30, 144, 255), new SKColor(255, 140, 0)],
-            null, SKShaderTileMode.Clamp);
-        canvas.DrawRect(new SKRect(0, 0, 320, 180), paint);
-
-        return bitmap.ToEsBitmap();
     }
 }
 

@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
@@ -91,6 +92,14 @@ public sealed partial class MainWindow : Window
         // CapturePage を初期化（CaptureSessionControl を注入）
         CaptureContent.Initialize(viewModel, settingsService, this, _captureSessionControl);
 
+        // 起動直後のプレビュー画像（設定で「グラデーション画像」か「空白」を選ぶ）。
+        // ページの初期化より後に設定する（ページは PreviewImage の変更通知で画像を取り込むため）
+        StartupPreviewImage.Apply(viewModel, _settingsService.Current.StartupPreview);
+
+        // ナビゲーション パネルのフッターへ UI 名と実際のバージョンを表示する
+        // （バージョンの整形は AppVersion（App.Core）が単一所有する）
+        VersionText.Text = AppVersion.For("AvaloniaUI");
+
         // グローバルホットキーを登録（ネイティブウィンドウハンドルが必要）
         // 実際の登録は NavigateTo(AppPage.Capture) が行う（キャプチャページ表示時のみ有効）
         _hotKeyService = hotKeyService;
@@ -141,6 +150,102 @@ public sealed partial class MainWindow : Window
         // ウィンドウを表示した後（Opened）のディスパッチャ ターンで開始し、描画のジョブより後に回す（起動の描画を遅らせない）。
         // 生成は低負荷で進み、キャプチャページの操作を妨げない。
         Opened += (_, _) => Dispatcher.UIThread.Post(WarmUpThumbnails, DispatcherPriority.Background);
+    }
+
+    /// <summary>タイトル バー相当の帯の押下でウィンドウの移動を開始する。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">ポインターの情報。</param>
+    /// <remarks>
+    /// 押下位置がタイトル バーの高さ以内のときだけ移動を開始する（ページの操作を妨げない）。<br/>
+    /// ボタンなどが押下を処理した場合は <see cref="RoutedEventArgs.Handled"/> が立つため、本ハンドラは呼ばれない<br/>
+    /// （ツールバーのボタン操作と両立する）。 ダブルクリックで最大化と元のサイズを切り替える。
+    /// </remarks>
+    private void OnWindowPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.Handled || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        // ウィンドウ座標（クライアント領域の左上基準）で判定する
+        if (e.GetPosition(this).Y > TitleBarDragHeight)
+        {
+            return;
+        }
+
+        if (e.ClickCount == 2)
+        {
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            e.Handled = true;
+            return;
+        }
+
+        BeginMoveDrag(e);
+        e.Handled = true;
+    }
+
+    /// <summary>タイトル バー相当の領域の高さ（DIP）。 この帯の押下でウィンドウを移動する。</summary>
+    private const double TitleBarDragHeight = 32;
+
+    /// <summary>タイトル バー相当の領域をドラッグしてウィンドウを移動する。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">ポインターの情報。</param>
+    /// <remarks>
+    /// クライアント領域をタイトル バーへ拡張しているため、自前の領域でドラッグを開始する必要がある<br/>
+    /// （<see cref="Window.BeginMoveDrag"/> に任せる）。 ダブルクリックで最大化と元のサイズを切り替える。
+    /// </remarks>
+    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            return;
+        }
+
+        if (e.ClickCount == 2)
+        {
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+            e.Handled = true;
+            return;
+        }
+
+        BeginMoveDrag(e);
+        e.Handled = true;
+    }
+
+    /// <summary>最小化ボタンの押下でウィンドウを最小化する。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">イベント引数。</param>
+    private void OnMinimizeClick(object? sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+    /// <summary>最大化ボタンの押下で最大化と元のサイズを切り替える。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">イベント引数。</param>
+    private void OnMaximizeClick(object? sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        UpdateMaximizeGlyph();
+    }
+
+    /// <summary>閉じるボタンの押下でウィンドウを閉じる。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">イベント引数。</param>
+    private void OnCloseClick(object? sender, RoutedEventArgs e) => Close();
+
+    /// <summary>最大化ボタンのアイコンとツールヒントを現在の状態へ合わせる。</summary>
+    private void UpdateMaximizeGlyph()
+    {
+        if (this.FindControl<TextBlock>("MaximizeGlyph") is not { } glyph)
+        {
+            return;
+        }
+
+        var maximized = WindowState == WindowState.Maximized;
+        // Segoe Fluent Icons: E922 = 最大化 / E923 = 元のサイズに戻す
+        glyph.Text = maximized ? "\uE923" : "\uE922";
+        if (this.FindControl<Button>("MaximizeButton") is { } button)
+        {
+            ToolTip.SetTip(button, maximized ? "元のサイズに戻す" : "最大化");
+        }
     }
 
     /// <summary>一覧ページ（フォルダビュー / Undo 一覧）のサムネイルを低負荷で先に生成しておく。</summary>
@@ -294,28 +399,74 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>ウィンドウ位置・サイズを復元する。</summary>
+    /// <remarks>
+    /// 保存値は<b>画面物理ピクセル</b>（4 つの UI 版が共有する設定の単位）。 Avalonia の <see cref="Window.Position"/> は<br/>
+    /// 物理ピクセルだが <see cref="Layoutable.Width"/> / <see cref="Layoutable.Height"/> は DIP のため、モニターの<br/>
+    /// スケールで割って設定する（そのまま入れると高 DPI 環境でウィンドウが倍率分だけ大きくなる）。<br/>
+    /// 画面外・最小化の値は復元しない（判定は <see cref="WindowPlacementRule"/> が単一所有する）。
+    /// </remarks>
     private void RestoreWindowBounds()
     {
-        var bounds = _settingsService.Current.MainWindowBounds;
-        if (bounds is not null)
+        if (_settingsService.Current.MainWindowBounds is { } saved)
         {
-            Position = new PixelPoint(bounds.Value.X, bounds.Value.Y);
-            Width = bounds.Value.Width;
-            Height = bounds.Value.Height;
+            var visibleArea = GetVisibleScreenArea();
+            if (WindowPlacementRule.CanRestore(saved, visibleArea))
+            {
+                var bounds = WindowPlacementRule.ClampToVisibleArea(saved, visibleArea);
+                var scaling = ResolveScaling(bounds.X, bounds.Y);
+                Position = new PixelPoint(bounds.X, bounds.Y);
+                Width = bounds.Width / scaling;
+                Height = bounds.Height / scaling;
+            }
         }
 
         // 設定は UI 非依存のコア型で保持されるため、境界で Avalonia 型へ変換する
-        WindowState = _settingsService.Current.MainWindowState.ToAvaloniaWindowState();
+        // （最小化は通常表示へ置き換える: 最小化のまま起動すると「表示されない」ように見える）
+        WindowState = WindowPlacementRule.ToRestorableState(_settingsService.Current.MainWindowState)
+            .ToAvaloniaWindowState();
     }
 
     /// <summary>ウィンドウ位置・サイズを保存する。</summary>
+    /// <remarks>保存先の単位は画面物理ピクセル（他 UI 版と同じ）。 DIP の <see cref="Layoutable.Width"/> を換算する。</remarks>
     private void SaveWindowBounds()
     {
+        var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         _settingsService.Current.MainWindowBounds = new EsRectInt(
-            Position.X, Position.Y, (int)Width, (int)Height);
+            Position.X, Position.Y,
+            WindowPlacementRule.ToPhysicalLength(Width, scaling),
+            WindowPlacementRule.ToPhysicalLength(Height, scaling));
 
         _settingsService.Current.MainWindowState = WindowState.ToEsWindowState();
         _settingsService.Save();
+    }
+
+    /// <summary>全モニターを包含する表示領域を取得する（画面物理ピクセル）。</summary>
+    /// <returns>表示領域。 モニターが取得できない場合は 0 サイズ（復元しない）。</returns>
+    private EsRectInt GetVisibleScreenArea()
+    {
+        var screens = Screens.All;
+        if (screens.Count == 0)
+        {
+            return new EsRectInt(0, 0, 0, 0);
+        }
+
+        var left = screens.Min(screen => screen.Bounds.X);
+        var top = screens.Min(screen => screen.Bounds.Y);
+        var right = screens.Max(screen => screen.Bounds.X + screen.Bounds.Width);
+        var bottom = screens.Max(screen => screen.Bounds.Y + screen.Bounds.Height);
+        return new EsRectInt(left, top, right - left, bottom - top);
+    }
+
+    /// <summary>指定位置のモニターの DPI スケール係数を取得する。</summary>
+    /// <param name="x">X 座標（画面物理ピクセル）。</param>
+    /// <param name="y">Y 座標（画面物理ピクセル）。</param>
+    /// <returns>スケール係数（1.0 = 96 DPI）。 取得できない場合はプライマリ モニターの値。</returns>
+    private double ResolveScaling(int x, int y)
+    {
+        var scaling = Screens.ScreenFromPoint(new PixelPoint(x, y))?.Scaling
+            ?? Screens.Primary?.Scaling
+            ?? 1.0;
+        return DpiScaler.NormalizeScaling(scaling);
     }
 
     // ===================== ナビゲーション =====================
@@ -486,6 +637,10 @@ public sealed partial class MainWindow : Window
             _viewModel.SetPreviewImage(captured);
             CaptureContent.SetIsCaptureInProgress(false);
             CaptureContent.ExitCropMode();
+
+            // 通知メッセージは画像の差し替え（SetPreviewImage が StatusMessage を空にする）より後に設定する
+            // （先に設定すると消える）。 文言はコア（StatusMessages）が単一所有する
+            _viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
         }
     }
 }

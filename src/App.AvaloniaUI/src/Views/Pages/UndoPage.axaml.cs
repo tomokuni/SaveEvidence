@@ -205,7 +205,7 @@ public sealed partial class UndoPage : ViewModePageBase
         // 残る）。 射影の生成は背景へ回し、ここでは生成元の画像だけを控える。
         for (var i = 0; i < redo.Count; i++)
         {
-            AddItem(redo[i], $"Redo {i + 1}", isCurrent: false);
+            AddItem(redo[i], $"やり直し {i + 1}", isCurrent: false);
         }
 
         // 2. 現在の画像（青枠で強調）
@@ -217,7 +217,7 @@ public sealed partial class UndoPage : ViewModePageBase
         // 3. Undo スタック（新しい順。 _stack[^1] が現在の直前）
         for (var i = undo.Count - 1; i >= 0; i--)
         {
-            AddItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false);
+            AddItem(undo[i], $"元に戻す {undo.Count - i}", isCurrent: false);
         }
 
         _viewModel.ItemCount = items.Count;
@@ -294,7 +294,7 @@ public sealed partial class UndoPage : ViewModePageBase
     /// <param name="size">表示する長辺の上限（ピクセル）。</param>
     /// <returns>生成処理。</returns>
     /// <remarks>
-    /// 縮小は背景スレッドで行い、<see cref="UndoListItem.Thumbnail"/> への設定だけを UI スレッドで行う。<br/>
+    /// 縮小は背景スレッドで行い、<see cref="ThumbnailListItem.Thumbnail"/> への設定だけを UI スレッドで行う。<br/>
     /// 一覧が差し替わった後（<see cref="ThumbnailScheduler.Clear"/> の後）の結果は、作った射影を解放して捨てる。
     /// </remarks>
     private static Func<CancellationToken, ValueTask> MakeThumbnailWork(UndoListItem item, EsReadOnlyBitmap source, int size)
@@ -365,3 +365,5 @@ public sealed partial class UndoPage : ViewModePageBase
         }
     }
 }
+
+

@@ -1,7 +1,6 @@
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.App.WinForms.Icons;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
 using EsUtil.SaveEvidence.App.WinForms.Services;
 using Microsoft.Extensions.Logging;
@@ -75,20 +74,21 @@ internal static class FolderViewPage
         {
             var index = i;
             modeButtons[index] = UiFactory.CreateToolButton(
-                AppIcon.Folder,
+                null,
                 $"表示モード: {ViewModeDisplay.GetText(index)}",
                 () => ChangeMode(index),
                 ViewModeDisplay.GetText(index));
         }
 
+        // 並べ替えは他の UI 版と同じく「▲ 昇順」「▼ 降順」の文字ボタンで表す
         var sortButtons = new ToolButton[2];
         sortButtons[0] = UiFactory.CreateToolButton(
-            AppIcon.SortAscending, "昇順に並べ替える", () => ChangeSort(ascending: true));
+            null, "昇順に並べ替える", () => ChangeSort(ascending: true), "▲ 昇順");
         sortButtons[1] = UiFactory.CreateToolButton(
-            AppIcon.SortDescending, "降順に並べ替える", () => ChangeSort(ascending: false));
+            null, "降順に並べ替える", () => ChangeSort(ascending: false), "▼ 降順");
 
         var toolbar = UiFactory.CreateToolbar();
-        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.Refresh, "最新の情報に更新", () => Rebuild(force: true)));
+        toolbar.Controls.Add(UiFactory.CreateToolButton(null, "最新の情報に更新", () => Rebuild(force: true), "最新の情報に更新"));
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.AddRange(modeButtons);
         toolbar.Controls.Add(UiFactory.CreateSeparator());
@@ -108,8 +108,6 @@ internal static class FolderViewPage
         };
 
         list.Scroll += (_, _) => Reprioritize();
-
-        AppStyles.ThemeChanged += (_, _) => ApplyAppearance();
 
         ApplyAppearance();
         SyncSortButtons();

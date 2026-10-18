@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
@@ -33,6 +34,22 @@ internal static class Program
         // 未処理の例外を記録する（クラッシュ原因をログから特定できるようにする）
         RegisterExceptionLogging();
 
+        // アンパッケージの WinUI 3 アプリは .NET ホスト（dotnet <アプリ>.dll）から起動できない。
+        // マニフェストによるアクティベーションと resources.pri の解決をアプリ ホストの exe が担うため、
+        // XAML の初期化で stowed exception（0xC000027B）になり、理由の分からない即時終了に見える。
+        // 起動方法の誤りを利用者へ示す（ログだけでは気づけないため、メッセージ ボックスも出す）
+        if (IsStartedByDotnetHost())
+        {
+            s_logger.LogStartedFromDotnetHost();
+            _ = MessageBoxW(
+                IntPtr.Zero,
+                "SaveEvidence.WinUI3.exe（実行ファイル）から起動してください。\n"
+                + ".NET ホスト（dotnet <アプリ>.dll）からは起動できません。",
+                "SaveEvidence",
+                0x00000010 /* MB_ICONERROR */);
+            return;
+        }
+
         // 設定の読み込みとサービス・ウィンドウの生成（UI スレッドの開始前に行う）
         AppHost.Compose();
 
@@ -58,6 +75,26 @@ internal static class Program
     /// <returns>バージョン文字列。 取得できない場合は "unknown"。</returns>
     private static string ReadVersion()
         => typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown";
+
+    /// <summary>.NET ホスト（<c>dotnet</c>）から起動されたかどうかを判定する。</summary>
+    /// <returns><c>dotnet</c> から起動された場合は true。</returns>
+    /// <remarks>
+    /// アプリ ホストの exe から起動した場合、<see cref="Environment.ProcessPath"/> はアプリの exe になる。<br/>
+    /// <c>dotnet exec</c> / <c>dotnet &lt;dll&gt;</c> の場合は <c>dotnet.exe</c> になる。
+    /// </remarks>
+    private static bool IsStartedByDotnetHost()
+        => Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "")
+            .Equals("dotnet", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>メッセージ ボックスを表示する（XAML の初期化前に使えるネイティブ API）。</summary>
+    /// <param name="hWnd">オーナー ウィンドウ（無い場合は <see cref="IntPtr.Zero"/>）。</param>
+    /// <param name="text">本文。</param>
+    /// <param name="caption">表題。</param>
+    /// <param name="type">アイコンの種類。</param>
+    /// <returns>選択されたボタンの値。</returns>
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "MessageBoxW")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    private static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
 
     /// <summary>未処理の例外を記録するハンドラを登録する。</summary>
     /// <remarks>

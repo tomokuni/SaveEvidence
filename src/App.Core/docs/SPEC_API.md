@@ -27,7 +27,15 @@
   - [18.2 主なプロパティ](#182-主なプロパティ)
   - [18.3 主な操作](#183-主な操作)
   - [18.4 UI 依存の注入点](#184-ui-依存の注入点)
-- [19. 依存関係](#19-依存関係)
+- [19. `Services.StatusMessages`（静的クラス）](#19-servicesstatusmessages静的クラス)
+  - [19.1 通知と画像の差し替えの順序](#191-通知と画像の差し替えの順序)
+- [20. `Services.AppPalette`（静的クラス）](#20-servicesapppalette静的クラス)
+- [21. `Services.NavPanelMetrics`（静的クラス）](#21-servicesnavpanelmetrics静的クラス)
+- [22. `Services.StartupPreviewImage`（静的クラス）](#22-servicesstartuppreviewimage静的クラス)
+- [23. `Services.EnumDisplayNames`（静的クラス）](#23-servicesenumdisplaynames静的クラス)
+- [24. `Services.SettingsMetrics`（静的クラス）](#24-servicessettingsmetrics静的クラス)
+- [25. `Services.ThumbnailTileMetrics`（静的クラス）](#25-servicesthumbnailtilemetrics静的クラス)
+- [26. 依存関係](#26-依存関係)
 
 ## 1. 公開 API の可視性
 
@@ -36,6 +44,7 @@
 | `Enums.AppPage` / `Enums.ThemeMode` | `public` | 任意 |
 | `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` / `Models.HotKeyParser` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
+| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
 | `Services.EsRectIntJsonConverter` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
 | `Models.CapacityLimitedCache` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
@@ -61,12 +70,13 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 | プロパティ（抜粋） | 型 | 説明 |
 | --- | --- | --- |
-| `MainWindowBounds` | `EsRectInt?` | MainWindow の位置・サイズ（画面物理座標） |
+| `MainWindowBounds` | `EsRectInt?` | MainWindow の位置・サイズ（**画面物理座標**。 4 UI 版が共有するため、保存・復元の単位も共通） |
 | `MainWindowState` | `EsWindowState` | MainWindow のウィンドウ状態 |
 | `SelectScreenHotKey` / `WindowSelectHotKey` / `AreaSelectHotKey` | `HotKeySetting` | グローバルホットキー |
 | `FileNameTemplate` / `SaveFolderPath` | `string` | ファイル名テンプレート・保存先フォルダ |
 | `ThemeMode` | `ThemeMode` | テーマモード |
 | `IsNavigationExpanded` | `bool` | ナビゲーションパネルの展開状態 |
+| `StartupPreview` | `StartupPreviewMode` | 起動直後のキャプチャ ページに置く画像（`Gradient` = グラデーション画像 / `Blank` = 空白。 既定は `Gradient`） |
 | `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | フォルダビューのアイコンサイズ |
 
 ## 5. `Services.ISettingsService` / `Services.SettingsService`（クラス）
@@ -273,7 +283,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `SaveFolderPath` / `SaveFolderPathResolved` / `HasInvalidSaveFolder` | `string` / `bool` | 保存先フォルダ |
 | `ValidationMessage` / `HasValidTemplate` / `HasInvalidTemplate` | `string?` / `bool` | テンプレート検証結果 |
 | `CenterAlign` | `bool` | Fit 時の画像配置（設定へ委譲） |
-| `NavPanelWidth` / `IsNavigationExpanded` | `double` / `bool` | ナビパネル |
+| `NavPanelWidth` / `IsNavigationExpanded` | `double` / `bool` | ナビパネル（幅の根拠は `NavPanelMetrics`（App.Core）が単一所有。 展開 136 / 収納 40 DIP） |
 | `ThemeModes` | `IReadOnlyList<ThemeMode>` | テーマモードの選択肢 |
 
 ### 18.3 主な操作
@@ -281,11 +291,11 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | メンバー | 説明 |
 | --- | --- |
 | `SetPreviewImage(EsReadOnlyBitmap)` / `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る）。 書き換え可能な画像を渡す版は、渡した実体を**凍結**して 0 コピーで共有する |
-| `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`） |
-| `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`） |
-| `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`） |
+| `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`）。 失敗時は `StatusMessage` へ通知する |
+| `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`）。 成功時に `切り出しました（W x H）` を通知する |
+| `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`）。 検出結果とキャンセルを通知する |
 | `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。 両 UI のホバー強調と確定・キャンセル判定が共用する |
-| `CopyToClipboardAsync` / `PasteFromClipboardAsync` | クリップボード操作（実体はコールバックへ委譲） |
+| `CopyToClipboardAsync` / `PasteFromClipboardAsync` | クリップボード操作（実体はコールバックへ委譲）。 貼り付けの成否は `PasteFromClipboardAsync` が通知する |
 
 ### 18.4 UI 依存の注入点
 
@@ -297,7 +307,138 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `BeforeEditAction` | `Action?` | null |
 | `StartSelectionMode` | `Action<CaptureType>?` | null |
 
-## 19. 依存関係
+## 19. `Services.StatusMessages`（静的クラス）
+
+ステータスバーへ出す通知メッセージ（操作の結果）の文言を単一所有します。 UI 版ごとに文言・有無がずれないよう、**実際の設定もコア（`MainViewModel`）が行い**、UI 層は結果の表示だけを担います。
+
+| メソッド | 通知する場面 | 文言（例） |
+| --- | --- | --- |
+| `CaptureCompleted(int width, int height)` | 撮影の確定（各 UI の撮影完了ハンドラーが使う） | `キャプチャしました（640 x 480）` |
+| `CropCompleted(int width, int height)` | 切り出しの確定（手動・自動の両方） | `切り出しました（120 x 90）` |
+| `PasteCompleted()` / `PasteUnavailable()` | クリップボードからの貼り付けの成否 | `クリップボードの画像を貼り付けました。` / `クリップボードに画像がありません。` |
+| `SaveFailed()` | 保存の失敗（例外） | `保存できませんでした（保存先フォルダを確認してください）。` |
+| `SaveUnavailable(bool hasInvalidTemplate, string? validationMessage)` | 保存を実行できない状態（UI がボタンを無効にする代わりに出す） | `保存できる状態ではありません（…）` |
+| `AutoCropDetected(int count)` / `AutoCropNotFound()` | 自動切り出しの検出結果 | `自動切り出し: 3 個のウィンドウを検出しました。…` |
+| `AutoCropCanceled()` | 自動切り出しのキャンセル（**実行中だった場合のみ**） | `自動切り出しをキャンセルしました。` |
+
+### 19.1 通知と画像の差し替えの順序
+
+`MainViewModel` はプレビュー画像が変わると `StatusMessage` を空にします（古い通知を残さないため）。 したがって通知は**画像の差し替えより後**に設定します。
+
+- `CropPreview` / `ConfirmAutoCrop` は `ApplyPixelEdit`（画像の差し替え）が成功した後に `CropCompleted` を設定する
+- 撮影完了は UI 側のハンドラーが `SetPreviewImage` の後に `CaptureCompleted` を設定する
+- `StatusMessages` のサイズ表記はカルチャに依存させない（桁区切り・全角数字を出さない）
+
+## 20. `Services.AppPalette`（静的クラス）
+
+4 つの UI 版で共通に使う配色を単一所有します（色は UI 非依存の `0xAARRGGBB` で保持し、各 UI 版が自分の色型へ変換する）。 **明色で指定された色を暗色でも使うと画面がまぶしく暗色テーマの意味が無くなる**ため、テーマ別に値を持ちます。
+
+| 面 | 明色 | 暗色 | 取得 |
+| --- | --- | --- | --- |
+| 画像領域（プレビューの下地） | `#FAFAFA` | `#202020` | `ImageArea(bool isDark)` / `ImageAreaDrawingColor(bool isDark)` |
+| ナビゲーション パネル | `#E6E6E6` | `#2B2B2B` | `NavPanel(bool isDark)` |
+| ページ（ウィンドウ）の下地 | `#FFFFFF` | `#202020` | `Page(bool isDark)` |
+| ナビゲーション項目の選択中の背景（薄いグレー） | `#DEDEDE` | `#373737` | `NavItemSelected(bool isDark)` |
+| ナビゲーション項目の選択マーク（左端の青） | `#0067C0` | `#4CC2FF` | `NavItemSelectionAccent(bool isDark)` |
+| 一覧（フォルダビュー / Undo 一覧）の背景 | `#F2F2F2` | `#2B2B2B` | `ListBackground(bool isDark)` |
+| ツールバーのアイコン ボタンの背景（ホバー） | `#E9E9E9` | `#3A3A3A` | `ToolbarButtonBackground(bool isDark, bool isPressed)` |
+| ツールバーのアイコン ボタンの背景（押下） | `#DBDBDB` | `#4E4E4E` | `ToolbarButtonBackground(bool isDark, bool isPressed)` |
+
+`ToolbarButtonCornerRadius`（4 DIP）はツールバーのアイコン ボタンの角丸です。 通常時は下地を塗らず、マウスを重ねると薄い角丸の矩形を出し、押している間はさらに濃くします（暗色では「濃く」を「明るく」で表す）。
+
+`ImageAreaDrawingColor` はプレビューの下地（`ZoomViewAppearance.BackgroundColor`、UI 非依存の `System.Drawing.Color`）向けです。 変換を各 UI 版へ書き分けないよう本クラスが担います。 選択中の 2 色は WinUI 3 の `NavigationViewItem` の実測値です（AvaloniaUI / MewUI が同じ表示にする）。
+
+## 21. `Services.NavPanelMetrics`（静的クラス）
+
+ナビゲーション パネルの幅と項目の文字サイズを単一所有します（UI 版ごとに幅・文字の大きさがずれないようにするため）。
+
+| 定数 | 値（DIP） | 意味 |
+| --- | --- | --- |
+| `ItemFontSize` | 14 | 項目の文字サイズ（AvaloniaUI 版の項目と同じ大きさ） |
+| `ItemHorizontalPadding` | 12 | 項目の左右の余白 |
+| `IconSize` | 16 | 項目のアイコンの一辺 |
+| `IconSpacing` | 8 | アイコンと文字の間隔 |
+| `LabelWidth` | 68 | 最も長い項目名（「フォルダビュー」）の実測幅 |
+| `TrailingSlack` | 20 | UI ごとの内部余白の差を吸収する α |
+| `CompactWidth` | 40 | 収納時の幅（左右の余白 + アイコン） |
+| `ExpandedWidth` | 136 | 展開時の幅（左右の余白 + アイコン + 間隔 + 文字 + α） |
+
+`Width(bool isExpanded)` が展開・収納を切り替えます。 `MainViewModel.NavPanelWidth` は本クラスへ委譲します。
+
+## 22. `Services.StartupPreviewImage`（静的クラス）
+
+起動直後のキャプチャ ページに置くプレースホルダ画像（グラデーション）を生成します。 **4 つの UI 版が同じ画像を使います**（UI ごとに別の画像を作らない）。
+
+| メンバー | 説明 |
+| --- | --- |
+| `Width` / `Height` | 画像の大きさ（640 × 400 ピクセル） |
+| `CreateGradient()` | 左上（`#1E90FF`）から右下（`#FF8C00`）への線形グラデーションを生成する（画素は BGRA8888 を直接書くため Skia / GDI+ に依存しない） |
+| `Apply(MainViewModel, StartupPreviewMode)` | 設定に従って画像を設定する（`Blank` の場合は何もしない）。 4 UI の起動時に 1 回だけ呼ぶ |
+
+設定 `StartupPreview`（`Enums.StartupPreviewMode`）は「グラデーション画像」と「空白」の 2 択で、設定画面（画像設定）で選びます。 **切り替えは次回起動から反映**します（撮影中の画像を勝手に差し替えないため）。
+
+## 23. `Services.EnumDisplayNames`（静的クラス）
+
+列挙値の表示名（`DescriptionAttribute`）を取得します。 表示名は列挙の定義側が単一所有し、UI ごとに文言を書き分けません。
+
+| メンバー | 説明 |
+| --- | --- |
+| `Get<T>(T value)` / `Get(Enum value)` | 表示名を返す（属性が無い場合は列挙の名前） |
+
+## 24. `Services.SettingsMetrics`（静的クラス）
+
+設定ページの文字サイズと共通の文言を単一所有します（UI 版ごとに見た目がずれないようにするため）。 文字サイズは **AvaloniaUI 版（Fluent テーマの既定 14 DIP）を基準**にします。
+
+| 定数 | 値 | 意味 |
+| --- | --- | --- |
+| FontSize | 14 DIP | 設定ページの文字サイズ（見出し・項目名・チェック ボックス・コンボ ボックス） |
+| HintFontSize | 11 DIP | 補足（例・説明）の文字サイズ |
+| SaveFolderHint | 文字列 | 保存先フォルダの入力欄の下へ出す補足（例: {MyPictures}\SaveEvidence（…）） |
+
+WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。
+
+## 25. `Services.ThumbnailTileMetrics`（静的クラス）
+
+一覧（フォルダビュー / Undo 一覧）のサムネイル 1 件の見た目の寸法を単一所有します（UI 版ごとに影の濃さ・名前の位置がずれないようにするため）。 **画像の周りに枠線・下地は置きません**（影だけを付けます）。
+
+| 定数 | 値 | 意味 |
+| --- | --- | --- |
+| `LabelFontSize` | 11 DIP | 名前の文字サイズ |
+| `LabelHeight` | 30 DIP | 名前の行の高さ（2 行分を固定し、行内の名前の位置を揃える） |
+| `LabelHorizontalPadding` | 1 DIP | 名前の左右の余白 |
+| `ItemMargin` / `ItemPadding` | 2 / 12 DIP | 画像の外側の余白 / 一覧が確保する余白（AvaloniaUI 版の `ListBoxItem` と同じ） |
+| `ItemGap` | 28 DIP | 隣り合う画像の間隔（`(ItemPadding + ItemMargin) × 2`） |
+| `HoverBackground(bool isDark)` | `#DADADA` / `#303030` | マウスを重ねたときの帯の色（AvaloniaUI 版の一覧の項目と同じ） |
+
+`ImageHeight(double width, int pixelWidth, int pixelHeight)` は、幅を固定したときの表示高さ（縦横比を保つ）を返します。 一覧のアイテムはこの高さを持ち、行の高さは「その行の最大アイテム高さ」、アイテムは行内で下端揃えになります（AvaloniaUI 版の `BottomAlignWrapPanel` と同じ並べ方）。
+
+**影は `Services.ShadowPlan` が単一所有します**（下記「`Services.ShadowPlan`」）。 Undo 一覧も同じ寸法を使い、現在表示中の画像は**枠を変えずに名前を太字にする**ため、影・ホバーがフォルダビューと一致します。
+
+**`Services.ShadowPlan`（静的クラス）と影の計画**
+
+画像の 4 辺へ落とす影の**唯一の定義**です（キャプチャページの画像・フォルダビュー・Undo 一覧のサムネイルが同じ影になる）。 値は AvaloniaUI 版のフォルダビューの `BoxShadow`（`0 3 10 0 #8A000000`）を実測して写したものです。
+
+| メンバー | 値 | 意味 |
+| --- | --- | --- |
+| `BlurRadius` / `OffsetY` | 10 / 3 DIP | 影の広がりと下方向のオフセット（元の `BoxShadow` と同じ） |
+| `ColorArgb` | `#8A000000` | 影の色（黒 54%） |
+| `StepCount` | 12 | グラデーションの段数（1 DIP 刻み） |
+| `TopExtent` / `BottomExtent` | 7 / 13 DIP | 上辺・下辺の幅（`BlurRadius ∓ OffsetY`） |
+| `Insets` | 左 10 / 上 7 / 右 10 / 下 13 | 画像の外側へ確保する影の余白 |
+| `Edges` / `Edge(ShadowSide)` | 4 辺 | 辺ごとの計画（幅・濃さの停止点・グラデーションの向き） |
+| `AlphaAtDistance(double)` | 端 0.245 → 10 DIP で 0.005 | 画像の端から指定距離の不透明度（実測プロファイル） |
+| `ColorAtDistance(double)` | 黒 + 上記の透過度 | 指定距離の色（`0xAARRGGBB`） |
+| `BuildEdgeRects(x, y, w, h)` | 4 件 | 塗る矩形（`ShadowEdgeFill`）と辺の計画。 **画像には掛からない** |
+
+**型（1 型 1 ファイル）**: `ShadowSide`（辺）・`ShadowStop`（停止点 = 位置と色）・`ShadowInsets`（余白）・`ShadowEdgePlan`（辺の計画）・`ShadowEdgeFill`（塗る矩形と辺）・`ShadowPlan`（上表）。
+
+**描き方**は 1 通りです。 `BuildEdgeRects` が返す 4 辺の矩形を、`ShadowEdgePlan.Stops` のグラデーション（位置 0 が外側、1 が画像の端）で塗ります。 各 UI 版は自分の描画 API へ写すだけです（AvaloniaUI は `BoxShadow` と `LinearGradientBrush`、WinUI 3 は `LinearGradientBrush`、WinForms は GDI+ の `LinearGradientBrush`、MewUI は Skia の `SKShader`）。
+
+**角の扱い**: 上辺・下辺は画像の左右 + `BlurRadius` まで広げて角を埋め、左右の辺は画像の高さいっぱいにします。 辺どうしを重ねないため、角が二重に濃くなりません。
+
+**画像と影の間**には枠線・余白を置きません（辺の矩形は画像の境界から外側へ連続します）。 画像の外側に影の余地が無い場合（画像が領域の端まで達している場合）は、その辺の影は見えません。
+
+## 26. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

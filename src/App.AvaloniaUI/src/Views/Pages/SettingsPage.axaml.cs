@@ -39,6 +39,9 @@ public sealed partial class SettingsPage : UserControl
         _settingsService = Program.SettingsService;
         DataContext = _viewModel;
 
+        // 保存先フォルダの補足（文言は SettingsMetrics（App.Core）が単一所有する）
+        SaveFolderHint.Text = SettingsMetrics.SaveFolderHint;
+
         // 全設定変更を即時ファイル保存する
         _settingsService.Current.PropertyChanged += (_, _) => _settingsService.Save();
 

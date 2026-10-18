@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 
@@ -79,4 +80,39 @@ public static class WindowPlacementMath
     /// 判定と基準値は両 UI 共通の <see cref="DpiScaler.NormalizeScaling"/> が単一所有する（本クラスは委譲する）。
     /// </remarks>
     private static double NormalizeScale(double scale) => DpiScaler.NormalizeScaling(scale);
+
+    /// <summary>全モニターを包含する仮想スクリーンの矩形（画面物理ピクセル）を取得する。</summary>
+    /// <returns>仮想スクリーンの矩形。 取得できない場合は空の矩形。</returns>
+    /// <remarks>
+    /// <b><c>DisplayArea.FindAll()</c> を使わない理由</b>: ウィンドウの表示前に列挙すると、この環境では<br/>
+    /// WinRT の射影で <see cref="InvalidCastException"/> になり起動できない（実測 2026-10-17）。<br/>
+    /// <c>GetSystemMetrics</c> はウィンドウに依存せず、撮影スタック（<c>WinCaptureService</c>）と同じ値の出所になる。
+    /// </remarks>
+    public static EsRectInt GetVirtualScreenBounds()
+    {
+        var width = GetSystemMetrics(SmCxVirtualScreen);
+        var height = GetSystemMetrics(SmCyVirtualScreen);
+        return width <= 0 || height <= 0
+            ? new EsRectInt(0, 0, 0, 0)
+            : new EsRectInt(GetSystemMetrics(SmXVirtualScreen), GetSystemMetrics(SmYVirtualScreen), width, height);
+    }
+
+    /// <summary>仮想スクリーンの左上の X 座標を要求する指標（<c>SM_XVIRTUALSCREEN</c>）。</summary>
+    private const int SmXVirtualScreen = 76;
+
+    /// <summary>仮想スクリーンの左上の Y 座標を要求する指標（<c>SM_YVIRTUALSCREEN</c>）。</summary>
+    private const int SmYVirtualScreen = 77;
+
+    /// <summary>仮想スクリーンの幅を要求する指標（<c>SM_CXVIRTUALSCREEN</c>）。</summary>
+    private const int SmCxVirtualScreen = 78;
+
+    /// <summary>仮想スクリーンの高さを要求する指標（<c>SM_CYVIRTUALSCREEN</c>）。</summary>
+    private const int SmCyVirtualScreen = 79;
+
+    /// <summary>システム メトリクスを取得する（<c>user32.GetSystemMetrics</c>）。</summary>
+    /// <param name="index">指標（<c>SM_</c> 定数）。</param>
+    /// <returns>取得した値。</returns>
+    [DllImport("user32.dll")]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    private static extern int GetSystemMetrics(int index);
 }

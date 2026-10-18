@@ -22,9 +22,6 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Icons;
 /// </remarks>
 internal static partial class IconLoader
 {
-    /// <summary>SVG の viewBox サイズ（Fluent System Icons 標準の 24x24）。</summary>
-    private const double ViewBoxSize = 24;
-
     /// <summary>画像キャッシュの最大保持数。</summary>
     private const int CacheCapacity = 48;
 
@@ -108,18 +105,31 @@ internal static partial class IconLoader
             canvas.Clear(SKColors.Transparent);
 
             using var path = LoadPath(fileName);
-            canvas.Scale(size / (float)ViewBoxSize);
-            using var paint = new SKPaint
+
+            // 図形の実寸（余白を除いた外接矩形）を一辺いっぱいへ広げる。
+            // Avalonia 版の PathIcon はジオメトリの外接矩形を枠いっぱいへ引き伸ばすため、
+            // SVG の viewBox（24x24）基準で描くとアイコンだけが小さく見える（実測）
+            var bounds = path.Bounds;
+            if (bounds.Width > 0 && bounds.Height > 0)
             {
-                IsAntialias = true,
-                Style = SKPaintStyle.Fill,
-                Color = new SKColor(
-                    (byte)((argb >> 16) & 0xFF),
-                    (byte)((argb >> 8) & 0xFF),
-                    (byte)(argb & 0xFF),
-                    (byte)((argb >> 24) & 0xFF)),
-            };
-            canvas.DrawPath(path, paint);
+                var scale = Math.Min(size / bounds.Width, size / bounds.Height);
+                canvas.Translate(
+                    ((size - (bounds.Width * scale)) / 2f) - (bounds.Left * scale),
+                    ((size - (bounds.Height * scale)) / 2f) - (bounds.Top * scale));
+                canvas.Scale(scale);
+
+                using var paint = new SKPaint
+                {
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Fill,
+                    Color = new SKColor(
+                        (byte)((argb >> 16) & 0xFF),
+                        (byte)((argb >> 8) & 0xFF),
+                        (byte)(argb & 0xFF),
+                        (byte)((argb >> 24) & 0xFF)),
+                };
+                canvas.DrawPath(path, paint);
+            }
         }
 
         var image = new WriteableBitmap(size, size);

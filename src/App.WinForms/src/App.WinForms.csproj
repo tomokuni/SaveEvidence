@@ -37,4 +37,12 @@
     <InternalsVisibleTo Include="App.WinForms.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- アイコン（SVG）は他の UI 版と同一のファイルを共有する（埋め込みリソースとして参照する）。
+         論理名を固定し、実行時はマニフェスト名の列挙なしで読み込む。 -->
+    <EmbeddedResource Include="..\..\App.AvaloniaUI\src\Icons\*.svg">
+      <LogicalName>SaveEvidence.WinForms.Icons.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>

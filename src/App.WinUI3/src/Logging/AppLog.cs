@@ -109,6 +109,21 @@ internal static partial class AppLog
     public static void LogAppExit(this ILogger logger, int exitCode)
         => logger.LogAppExitCore(Prefix, exitCode);
 
+    /// <summary>.NET ホスト（<c>dotnet</c>）から起動されたことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Warning <br/>
+    /// 出力書式: <c>.NET ホストから起動されました（実行ファイルから起動してください）</c>
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} .NET ホストから起動されました（実行ファイルから起動してください）")]
+    private static partial void LogStartedFromDotnetHostCore(this ILogger logger, string prefix);
+
+    /// <summary>.NET ホスト（<c>dotnet</c>）から起動されたことを記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    public static void LogStartedFromDotnetHost(this ILogger logger)
+        => logger.LogStartedFromDotnetHostCore(Prefix);
+
     // ====================================================================
     // 撮影セッション / 切出しセッションのログは撮影スタック（Parts.CapturePreview）が単一所有する
     // （CapturePreviewLogMessage。 接頭辞は [CapturePreview]）。

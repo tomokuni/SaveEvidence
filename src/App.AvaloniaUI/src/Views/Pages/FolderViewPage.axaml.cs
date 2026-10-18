@@ -225,6 +225,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         _viewModel.ItemCount = items.Count;
         FileListBox.ItemsSource = items;
 
+
         // レイアウト済みなら直ちに、未なら LayoutUpdated が可視領域の確定後に呼ぶ
         UpdateThumbnailPriorities();
     }
@@ -295,7 +296,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
     /// <param name="capacity">サムネイルのキャッシュの最大保持数（一覧が表示する件数）。</param>
     /// <returns>生成処理。</returns>
     /// <remarks>
-    /// 復号は背景スレッドで行い、<see cref="FileListItem.Thumbnail"/> への設定だけを UI スレッドで行う。<br/>
+    /// 復号は背景スレッドで行い、<see cref="ThumbnailListItem.Thumbnail"/> への設定だけを UI スレッドで行う。<br/>
     /// 一覧が差し替わった後（<see cref="ThumbnailScheduler.Clear"/> の後）の結果は反映しない
     /// （消えた行へ画像を入れない。 破棄済みの行への代入を避ける）。
     /// </remarks>
@@ -405,3 +406,6 @@ public sealed partial class FolderViewPage : ViewModePageBase
         }
     }
 }
+
+
+

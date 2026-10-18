@@ -1,8 +1,10 @@
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.Core.Enums;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
 using EsUtil.SaveEvidence.Platform.WinForms;
@@ -29,14 +31,15 @@ internal sealed class MainForm : Form
     /// <summary>復元するサイズが設定されていない場合の既定ウィンドウ サイズ（ピクセル）。</summary>
     private static readonly Size s_defaultWindowSize = new(1200, 800);
 
-    /// <summary>ウィンドウの最小サイズ（ピクセル）。</summary>
-    private static readonly Size s_minWindowSize = new(800, 400);
 
     /// <summary>ナビゲーション パネルのヘッダーの高さ（DIP）。</summary>
     private const int NavHeaderHeight = 34;
 
-    /// <summary>ナビゲーション項目の高さ（DIP）。</summary>
-    private const int NavItemHeight = 32;
+    /// <summary>ナビゲーション項目の高さ（DIP）。 他の UI 版（40）と同じ値にする。</summary>
+    private const int NavItemHeight = 40;
+
+    /// <summary>ナビゲーション パネルのフッター（UI 名とバージョン）の高さ（DIP）。</summary>
+    private const int NavFooterHeight = 28;
 
     /// <summary>アプリ全体で共有するコアオブジェクト。</summary>
     private readonly AppServices _services;
@@ -71,6 +74,16 @@ internal sealed class MainForm : Form
     /// <summary>ナビゲーション パネルの開閉ボタン。</summary>
     private readonly ToolButton _navToggle;
 
+    /// <summary>ナビゲーション パネルのフッター（UI 名とバージョン）。 収納時は非表示。</summary>
+    private readonly Label _navFooter = new()
+    {
+        Dock = DockStyle.Bottom,
+        Height = NavFooterHeight,
+        TextAlign = ContentAlignment.MiddleCenter,
+        AutoSize = false,
+        Text = AppVersion.For("WinForms"),
+    };
+
     /// <summary>現在選択中のページ。</summary>
     private int _selectedIndex = -1;
 
@@ -93,8 +106,8 @@ internal sealed class MainForm : Form
 
         var viewModel = services.Main;
         Text = "SaveEvidence";
-        Icon = SystemIcons.Application;
-        MinimumSize = s_minWindowSize;
+        // アイコンは他の UI 版と同じものを使う（共有する SVG から描く）
+        Icon = IconLoader.CreateWindowIcon();
         AutoScaleMode = AutoScaleMode.Dpi;
         StartPosition = FormStartPosition.Manual;
         KeyPreview = false;
@@ -104,7 +117,7 @@ internal sealed class MainForm : Form
 
         _entries =
         [
-            new(AppPage.Capture, "キャプチャ", AppIcon.ScreenSelect, () => CapturePage.Build(services, this)),
+            new(AppPage.Capture, "キャプチャ", AppIcon.Capture, () => CapturePage.Build(services, this)),
             new(AppPage.FolderView, "フォルダビュー", AppIcon.Folder, () => FolderViewPage.Build(services)),
             new(AppPage.Undo, "Undo 一覧", AppIcon.Undo, () => UndoPage.Build(services)),
             new(AppPage.Settings, "設定", AppIcon.Settings, () => SettingsPage.Build(services)),
@@ -114,7 +127,7 @@ internal sealed class MainForm : Form
 
         _navToggle = UiFactory.CreateToolButton(AppIcon.NavToggle, "ナビゲーション パネルの開閉", ToggleNavigation);
         _navToggle.Location = new Point(4, 4);
-        _navToggle.Size = new Size(26, 26);
+        _navToggle.Size = new Size(28, 28);
 
         for (var i = 0; i < _entries.Length; i++)
         {
@@ -125,23 +138,34 @@ internal sealed class MainForm : Form
                 Height = NavItemHeight,
                 Width = 160,
                 TextAlign = ContentAlignment.MiddleLeft,
+                // アイコンと文字を左端から並べる（中央寄せだと幅が足りないとき両側が欠ける）
+                ImageAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(6, 0, 0, 0),
                 Margin = new Padding(0, 1, 0, 1),
+                // 文字サイズは 4 つの UI 版で共通（DIP → pt へ換算する。 NavPanelMetrics が単一所有する）
+                Font = new Font(
+                    AppStyles.UiFont.FontFamily,
+                    (float)(NavPanelMetrics.ItemFontSize * 72.0 / 96.0),
+                    AppStyles.UiFont.Style),
             };
             _navButtons[index].Click += (_, _) => Select(index);
         }
 
         _navPanel.Controls.Add(_navItems);
         _navPanel.Controls.Add(_navToggle);
+        _navPanel.Controls.Add(_navFooter);
         _navItems.Controls.AddRange(_navButtons);
-        _navItems.Padding = new Padding(4, NavHeaderHeight, 4, 4);
+
+        // 開閉ボタンの領域はナビゲーション パネルの Padding で確保する（ドッキングする項目一覧は
+        // Padding の内側へ配置されるため、ボタンが一覧の下へ隠れない）。
+        // フッターは下端へ寄せる（他の UI 版と同じ位置）
+        _navPanel.Padding = new Padding(0, NavHeaderHeight, 0, 0);
+        _navItems.Padding = new Padding(4, 4, 4, 4);
 
         Controls.Add(_contentHost);
         Controls.Add(_navPanel);
 
-        RestorePlacement();
-
-        AppStyles.ThemeChanged += (_, _) => ApplyAppearance();
-        AppStyles.ApplyTheme(services.Settings.Current.ThemeMode);
+        // 本 UI 版はダークテーマを使用しない（常に明色）。 配色は明色で 1 回だけ適用する
         ApplyAppearance();
         ApplyNavigationLayout();
 
@@ -151,6 +175,43 @@ internal sealed class MainForm : Form
         Shown += OnShown;
         FormClosing += OnFormClosing;
         FormClosed += OnFormClosed;
+    }
+
+    /// <summary>ウィンドウの最小サイズ（DIP。 他の UI 版と同じ値）。</summary>
+    private static readonly Size s_minWindowSizeDip = new(800, 400);
+
+    /// <summary>自動スケーリングの後（読み込み時）に最小サイズと保存済みの配置を反映する。</summary>
+    /// <param name="e">イベント引数。</param>
+    /// <remarks>
+    /// <b>読み込み時に行う理由</b>: <c>AutoScaleMode.Dpi</c> のとき、<br/>
+    /// コンストラクタで設定した位置とサイズは読み込み時に DPI 倍率で<b>もう一度</b>掛け算される<br/>
+    /// （実測: 800 × 1.25 = 1000 になる）。 保存値は画面物理ピクセルのため、拡大の後の<br/>
+    /// ここで設定して倍率の二重適用を避ける。 最小サイズも同じ理由でここで設定する<br/>
+    /// （<see cref="Form.MinimumSize"/> は画面物理ピクセルで解釈される）。
+    /// </remarks>
+    protected override void OnLoad(EventArgs e)
+    {
+        base.OnLoad(e);
+
+        ApplyMinimumSize();
+        RestorePlacement();
+    }
+
+    /// <summary>DPI が変わったときに最小サイズを掛け直す。</summary>
+    /// <param name="e">イベント引数。</param>
+    protected override void OnDpiChanged(DpiChangedEventArgs e)
+    {
+        base.OnDpiChanged(e);
+        ApplyMinimumSize();
+    }
+
+    /// <summary>最小サイズを現在の DPI で画面物理ピクセルへ換算して設定する。</summary>
+    private void ApplyMinimumSize()
+    {
+        var scaling = DpiScaler.ToScaling(DeviceDpi);
+        MinimumSize = new Size(
+            WindowPlacementRule.ToPhysicalLength(s_minWindowSizeDip.Width, scaling),
+            WindowPlacementRule.ToPhysicalLength(s_minWindowSizeDip.Height, scaling));
     }
 
     /// <summary>ページ表示の定義。</summary>
@@ -193,12 +254,41 @@ internal sealed class MainForm : Form
 
         _isWarmedUp = true;
 
-        // 最初の描画の後に先読みを始める（起動を遅くしない）
-        BeginInvoke(() =>
+        // キャプチャ ページの描画が終わってから、残りのページを 1 つずつ背景で作る。
+        // BeginInvoke を直後に呼ぶと、投稿されたメッセージが最初の描画（WM_PAINT）より先に処理され、
+        // キャプチャ ページが表示されるまで待たされる（実測）。 短いタイマーを 1 回だけ待つと、
+        // 最初の描画が済んでから先読みが始まる。
+        var pending = new Queue<AppPage>([AppPage.FolderView, AppPage.Undo, AppPage.Settings]);
+        var warmUpDelay = new System.Windows.Forms.Timer { Interval = 200 };
+        warmUpDelay.Tick += (_, _) =>
         {
-            WarmUp(AppPage.FolderView);
-            WarmUp(AppPage.Undo);
-        });
+            warmUpDelay.Stop();
+            warmUpDelay.Dispose();
+            ScheduleNextWarmUp();
+        };
+        warmUpDelay.Start();
+
+        // 1 ページ作るごとにメッセージ ループへ戻る（まとめて作ると、その間 UI スレッドが塞がれる）
+        void ScheduleNextWarmUp()
+        {
+            if (pending.Count == 0 || IsDisposed)
+            {
+                return;
+            }
+
+            BeginInvoke(Step);
+
+            void Step()
+            {
+                if (IsDisposed)
+                {
+                    return;
+                }
+
+                WarmUp(pending.Dequeue());
+                ScheduleNextWarmUp();
+            }
+        }
     }
 
     /// <summary>終了時にウィンドウ配置とナビゲーションの開閉を保存する。</summary>
@@ -373,16 +463,26 @@ internal sealed class MainForm : Form
     }
 
     /// <summary>ナビゲーション パネルの幅と文言の表示を設定へ合わせる。</summary>
+    /// <remarks>
+    /// 幅はコア（<see cref="NavPanelMetrics"/>）が DIP で単一所有する。 WinForms の <c>Width</c> は<br/>
+    /// 画面物理ピクセルのため、実行時に代入する値は DPI 倍率で換算する（<c>AutoScaleMode</c> は<br/>
+    /// デザイン時の値だけを拡大する）。
+    /// </remarks>
     private void ApplyNavigationLayout()
     {
         var expanded = _services.Main.IsNavigationExpanded;
-        _navPanel.Width = (int)Math.Round(_services.Main.NavPanelWidth);
+        var scaling = DpiScaler.ToScaling(DeviceDpi);
+        _navPanel.Width = DpiScaler.ScaleToPixel(_services.Main.NavPanelWidth, scaling);
 
         for (var i = 0; i < _navButtons.Length; i++)
         {
             _navButtons[i].Text = expanded ? _entries[i].Title : "";
-            _navButtons[i].Width = expanded ? Math.Max(40, _navPanel.Width - 12) : 32;
+            _navButtons[i].Width = expanded
+                ? Math.Max(DpiScaler.ScaleToPixel(40, scaling), _navPanel.Width - DpiScaler.ScaleToPixel(12, scaling))
+                : DpiScaler.ScaleToPixel(32, scaling);
         }
+
+        _navFooter.Visible = expanded;
     }
 
     /// <summary>配色を現在のテーマへ合わせる。</summary>
@@ -393,6 +493,8 @@ internal sealed class MainForm : Form
         _navItems.BackColor = AppStyles.NavBackground;
         _contentHost.BackColor = AppStyles.PageBackground;
         _navToggle.BackColor = AppStyles.NavBackground;
+        _navFooter.BackColor = AppStyles.NavBackground;
+        _navFooter.ForeColor = AppStyles.Foreground;
 
         for (var i = 0; i < _navButtons.Length; i++)
         {
@@ -404,34 +506,44 @@ internal sealed class MainForm : Form
     /// <summary>保存済みのウィンドウ配置を復元する。</summary>
     /// <remarks>
     /// 設定の座標は画面物理ピクセルであり、WinForms のウィンドウ矩形も同じ座標系のため変換しない。<br/>
-    /// 幅・高さが 1 未満の壊れた値は既定サイズへフォールバックする（0 サイズのウィンドウを作らない）。
+    /// 復元してよいかの判定（壊れたサイズ・画面外の座標・最小化）は共有規則（<see cref="WindowPlacementRule"/>）が<br/>
+    /// 単一所有する。 画面外の座標を復元するとウィンドウが見えないまま起動するため、その場合は位置だけを<br/>
+    /// 表示領域の内側へ収める。
     /// </remarks>
     private void RestorePlacement()
     {
         var settings = _services.Settings.Current;
-        var bounds = settings.MainWindowBounds;
-        if (bounds is { } value && WindowPlacementMath.IsUsable(value))
+        var visibleArea = SystemInformation.VirtualScreen.ToEsRectInt();
+        if (WindowPlacementRule.CanRestore(settings.MainWindowBounds, visibleArea))
         {
-            SetBounds(value.X, value.Y, value.Width, value.Height);
+            var bounds = WindowPlacementRule.ClampToVisibleArea(settings.MainWindowBounds!.Value, visibleArea);
+            SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         }
         else
         {
             Size = s_defaultWindowSize;
         }
 
-        if (settings.MainWindowState.IsRepresentable())
+        // 最小化は復元しない（最小化のまま起動するとウィンドウが表示されない）
+        var state = WindowPlacementRule.ToRestorableState(settings.MainWindowState);
+        if (state.IsRepresentable())
         {
-            WindowState = settings.MainWindowState.ToFormWindowState();
+            WindowState = state.ToFormWindowState();
         }
     }
 
     /// <summary>現在のウィンドウ配置を設定へ保存する。</summary>
+    /// <remarks>
+    /// <b><see cref="Form.RestoreBounds"/> を使わない理由</b>: 最大化・最小化を一度もしていないウィンドウでは、<br/>
+    /// <see cref="Form.RestoreBounds"/> が復元した時点の矩形を返したまま更新されない（実測 2026-10-17:<br/>
+    /// 移動後も起動時の矩形が保存される）。 通常表示のときは現在の <see cref="Control.Bounds"/> を使う。
+    /// </remarks>
     private void SavePlacement()
     {
         var settings = _services.Settings.Current;
 
         // 最大化・最小化中でも復元できるよう、通常表示の矩形を保存する
-        var bounds = RestoreBounds;
+        var bounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
         settings.MainWindowBounds = new EsRectInt(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         settings.MainWindowState = WindowState.ToEsWindowState();
         settings.IsNavigationExpanded = _services.Main.IsNavigationExpanded;

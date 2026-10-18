@@ -15,6 +15,28 @@ public static class ImageColorMath
     /// <summary>平均色の標本を間引く基準（この値で長辺を割った間隔でサンプルする）。</summary>
     public const int SampleDivisor = 40;
 
+    /// <summary>下地色の上に暗転色を重ねた色を求める（アルファ合成）。</summary>
+    /// <param name="backdrop">下地の色（不透明として扱う）。</param>
+    /// <param name="overlay">重ねる色（アルファが不透明度）。</param>
+    /// <returns>合成した色（不透明）。 不透明度 0 なら <paramref name="backdrop"/> と同じ色。</returns>
+    /// <remarks>
+    /// 撮影オーバーレイの下地（表示直後、まだ画像を描いていない瞬間の背景）を「暗転後の見た目」に合わせるために使う。<br/>
+    /// 下地を画像の平均色のままにすると、画像を描く前の数フレームが明るい画面になり「一瞬白くなる」ため、<br/>
+    /// あらかじめ暗転色を合成した色を下地にする（合成の式は本メソッドが単一所有する）。
+    /// </remarks>
+    public static DrawingColor Composite(DrawingColor backdrop, DrawingColor overlay)
+    {
+        var alpha = overlay.A / 255.0;
+        byte Mix(byte back, byte front)
+            => (byte)Math.Round((front * alpha) + (back * (1.0 - alpha)), MidpointRounding.AwayFromZero);
+
+        return DrawingColor.FromArgb(
+            255,
+            Mix(backdrop.R, overlay.R),
+            Mix(backdrop.G, overlay.G),
+            Mix(backdrop.B, overlay.B));
+    }
+
     /// <summary>画像の平均色を求める（標本間引き）。</summary>
     /// <param name="image">対象の画像。</param>
     /// <returns>平均色（不透明）。 画素数が 0 の場合は黒。</returns>

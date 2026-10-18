@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using Xunit;
 using MockImageWriter = EsUtil.SaveEvidence.App.Core.Tests.MainViewModelTests.MockImageWriter;
@@ -192,7 +193,8 @@ public sealed class MainViewModelAutoCropTests
         Assert.False(vm.IsAutoCropActive);
         Assert.Empty(vm.DetectedRects);
         Assert.Null(vm.HoveredRect);
-        Assert.Equal(string.Empty, vm.StatusMessage);
+        // キャンセルしたことは通知する（文言は StatusMessages が単一所有する）
+        Assert.Equal(StatusMessages.AutoCropCanceled(), vm.StatusMessage);
     }
 
     /// <summary>検出矩形のヒット判定（座標を含む矩形のうち面積が最小のもの）を検証する。</summary>

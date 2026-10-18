@@ -40,15 +40,26 @@ internal sealed class RectOverlayCanvas : Control
             true);
         BackColor = Color.Transparent;
         Enabled = false;
+        // 描く矩形が設定されるまでは表示しない（兄弟の描画を覆わない。 SetRects が切り替える）
+        Visible = false;
 
         _zoomView = zoomView;
     }
 
     /// <summary>描画する矩形（対象座標）を設定する。</summary>
     /// <param name="rects">描画する矩形。 空の場合は何も描画しない。</param>
+    /// <remarks>
+    /// <b>矩形が無い間は非表示にする</b>: WinForms の子コントロールは親の描画を自分の背景として塗るため、<br/>
+    /// 描くものが無くても表示したままだと、上に重なる位置の兄弟（領域選択オーバーレイ）の描画を覆い隠し、<br/>
+    /// 覆われた側は描画がクリップされて <c>WM_PAINT</c> すら届かなくなる。
+    /// </remarks>
     public void SetRects(IReadOnlyList<OverlayRect> rects)
     {
+        ArgumentNullException.ThrowIfNull(rects);
+
         _rects = rects;
+        // 矩形が無い間は表示しない（兄弟の描画を覆わない。 空の描画しかしないため見た目は変わらない）
+        Visible = rects.Count > 0;
         Invalidate();
     }
 

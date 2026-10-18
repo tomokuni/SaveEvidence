@@ -2,58 +2,45 @@ namespace EsUtil.SaveEvidence.App.WinForms.Icons;
 
 /// <summary>アプリが表示するアイコンの種類。</summary>
 /// <remarks>
-/// アイコンは GDI+ の図形で描く（SVG のラスタライズやアイコン フォントを必要としない）。<br/>
-/// 論理名で参照し、実際の描画は <see cref="IconLoader"/> が単一所有する。
+/// アイコンは<b>他の UI 版と同じ SVG ファイル</b>（<c>App.AvaloniaUI/src/Icons/*.svg</c>）から描く。<br/>
+/// 本列挙は表示名であり、実際のファイルとの対応と描画は <see cref="IconLoader"/> が単一所有する。<br/>
+/// <b>共有するアイコンを持たない種類</b>（<see cref="Menu"/>）だけは、他 UI 版と同じ見た目になる図形を
+/// <see cref="IconLoader"/> が描く。
 /// </remarks>
 internal enum AppIcon
 {
-    /// <summary>メニュー（横 3 本線）。</summary>
+    /// <summary>メニュー（他の UI 版は ☰ の文字で表す）。</summary>
     Menu,
+
+    /// <summary>ナビゲーション パネルの開閉。</summary>
+    NavToggle,
+
+    /// <summary>キャプチャ（アプリのアイコン。 ウィンドウ アイコンにも使う）。</summary>
+    Capture,
+
+    /// <summary>フォルダビュー。</summary>
+    Folder,
+
+    /// <summary>Undo 一覧。</summary>
+    Undo,
+
+    /// <summary>設定。</summary>
+    Settings,
 
     /// <summary>保存。</summary>
     Save,
 
-    /// <summary>スクリーン（モニター）選択。</summary>
+    /// <summary>スクリーン選択。</summary>
     ScreenSelect,
 
     /// <summary>ウィンドウ選択。</summary>
     WindowSelect,
 
-    /// <summary>範囲選択（破線の矩形）。</summary>
+    /// <summary>領域選択。</summary>
     AreaSelect,
 
-    /// <summary>切り出し（切り出しマーク）。</summary>
+    /// <summary>切り出し。</summary>
     Crop,
-
-    /// <summary>自動切り出し（矩形 + 拡大鏡）。</summary>
-    AutoCrop,
-
-    /// <summary>コピー。</summary>
-    Copy,
-
-    /// <summary>貼り付け。</summary>
-    Paste,
-
-    /// <summary>元に戻す。</summary>
-    Undo,
-
-    /// <summary>元に戻すを取り消す。</summary>
-    Redo,
-
-    /// <summary>最新の情報に更新。</summary>
-    Refresh,
-
-    /// <summary>昇順に並べ替える。</summary>
-    SortAscending,
-
-    /// <summary>降順に並べ替える。</summary>
-    SortDescending,
-
-    /// <summary>設定（歯車）。</summary>
-    Settings,
-
-    /// <summary>フォルダ。</summary>
-    Folder,
 
     /// <summary>拡大。</summary>
     ZoomIn,
@@ -63,7 +50,4 @@ internal enum AppIcon
 
     /// <summary>ウィンドウに合わせる（Fit）。</summary>
     ZoomFit,
-
-    /// <summary>ナビゲーション パネルの開閉。</summary>
-    NavToggle,
 }

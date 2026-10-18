@@ -73,6 +73,12 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private readonly CaptureCompletion<CaptureResult?> _result = new();
 
+    /// <summary>最初の描画フレームを待つ上限（画面外の 1x1 では合成が走らないことがあるため）。</summary>
+    private static readonly TimeSpan s_firstFrameTimeout = TimeSpan.FromMilliseconds(400);
+
+    /// <summary>最初のフレームの後に合成の完了を待つ時間（白い下地を見せないための実測値）。</summary>
+    private static readonly TimeSpan s_composeSettleDelay = TimeSpan.FromMilliseconds(200);
+
     /// <summary>取得したスクリーン画像（読み取りの面。 セッション中のみ保持し、終了時に破棄する）。</summary>
     /// <remarks>
     /// <see cref="RunAsync"/> の冒頭で設定する（それ以外では null）。<br/>
@@ -216,7 +222,7 @@ internal sealed class CaptureOverlay
         try
         {
             // 確定・キャンセルまで待つ（入れ子ループを作らない非同期の待機）
-            await ShowAsync(services).ConfigureAwait(true);
+            await ShowAsync(services, ownerScope).ConfigureAwait(true);
             // 確定・キャンセルは必ず結果を確定させてからウィンドウを閉じるため、待機は即座に返る
             // （ウィンドウのクローズ経路は CompleteCapture / Cancel に限られる）
             var result = await _result.Task.ConfigureAwait(true);
@@ -279,6 +285,7 @@ internal sealed class CaptureOverlay
 
     /// <summary>オーバーレイを表示し、確定またはキャンセルまで待つ。</summary>
     /// <param name="services">オーバーレイの実行に必要なサービス（撮影サービス・ウィンドウ操作）。</param>
+    /// <param name="ownerScope">オーナーの退避とキャプチャ除外のスコープ（退避の実行時期を本メソッドが決める）。</param>
     /// <returns>ウィンドウが閉じるまで待機するタスク。</returns>
     /// <remarks>
     /// ウィンドウは仮想スクリーンの位置・サイズでボーダーレス・最前面に表示する。<br/>
@@ -287,7 +294,7 @@ internal sealed class CaptureOverlay
     /// OS が作業領域内へ補正してしまう。 <see cref="AppWindow.MoveAndResize(RectInt32)"/> は物理ピクセルを取る）。<br/>
     /// ウィンドウはフィールドへ保持する（キャンセル要求が表示前に届いても、後から表示されたウィンドウを閉じられるようにする）。
     /// </remarks>
-    private async Task ShowAsync(CaptureOverlayServices services)
+    private async Task ShowAsync(CaptureOverlayServices services, CaptureOwnerScope ownerScope)
     {
         // セッションを開始する（完了は 1 回だけ受け付ける）
         _state.TryBegin();
@@ -312,9 +319,11 @@ internal sealed class CaptureOverlay
         {
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
-            // 画像が合成されるまでの 1 フレームは撮影画像の平均色で覆う
-            // （WinUI 3 のウィンドウは透明を表現できないため、下地色の不一致を目立たなくする）
-            Background = new SolidColorBrush(ImageColorMath.AverageColor(Screen).ToWinUIColor()),
+            // 画像が合成されるまでの 1 フレームは「暗転後の平均色」で覆う
+            // （WinUI 3 のウィンドウは透明を表現できないため、下地色の不一致を目立たなくする。
+            //  平均色のままだと、その 1 フレームが明るい画面に見える）
+            Background = new SolidColorBrush(ImageColorMath.Composite(
+                ImageColorMath.AverageColor(Screen), _settings.OverlayColor!.Value).ToWinUIColor()),
         };
 
         // 撮影画像は仮想スクリーンと等倍（領域と同じ縦横比）のため、領域全体へ敷く（Uniform にしない）
@@ -360,16 +369,98 @@ internal sealed class CaptureOverlay
             root.PointerReleased += OnRootPointerReleased;
         }
 
-        // 全モニターを跨ぐウィンドウを物理ピクセルで仮想スクリーン全面へ置く
-        // （表示の前に置くため、位置の補正によるちらつきは起きない）
-        window.AppWindow.MoveAndResize(new RectInt32(
-            _screenBounds.X, _screenBounds.Y, _screenBounds.Width, _screenBounds.Height));
+        // 全モニターを跨ぐウィンドウを、**最初から仮想スクリーンと同じ大きさ**で画面外に置く。
+        // 大きさを変えずに位置だけ動かすのは、大きさを変えると再レイアウトが走り、
+        // その瞬間にウィンドウの下地（白）が 1 フレーム見えるため（実測 2026-10-17）。
+        // 枠の分だけクライアント領域が小さくなるため、クライアント領域が画面と一致するように置く
+        // （一致しないと撮影画像が数ピクセル縮小され、画面の座標とずれる）
+        OverlayWindowPlacer.MoveClientArea(window.AppWindow, new EsRectInt(
+            CaptureTiming.OwnerOffScreenCoord, CaptureTiming.OwnerOffScreenCoord,
+            _screenBounds.Width, _screenBounds.Height));
+        window.Activate();
+
+        // 最初の描画フレームまで待つ（内容の無いフレームを見せない）。
+        // 画面外では合成が走らないことがあるため、待ち時間に上限を設け、超えたら続行する
+        // （超えた場合も合成待ちの時間を置くため、下地だけのフレームは出ない）
+        try
+        {
+            await WaitForFirstFrameAsync(root).WaitAsync(s_firstFrameTimeout).ConfigureAwait(true);
+        }
+        catch (TimeoutException)
+        {
+            _log.LogOperationError(
+                new TimeoutException("最初の描画フレームを待てませんでした（画面外では合成が走らないことがあります）。"),
+                nameof(ShowAsync));
+        }
+        // 合成の完了をもう少し待つ（1 フレームでは DWM へ提示される前に画面内へ移してしまい、
+        // 白い下地が 1〜2 フレーム見える。 実測 2026-10-17）
+        await Task.Delay(s_composeSettleDelay).ConfigureAwait(true);
+
+        // 大きさはそのままで画面内へ移す（再レイアウトを起こさず、合成済みの面がそのまま出る）
+        OverlayWindowPlacer.MoveClientArea(window.AppWindow, _screenBounds);
+        // 最前面の提示（IsAlwaysOnTop）だけでは前面に出ないことがあるため、Z 順も明示的に最前面へする
+        // （オーナーを退避しない場合、オーナーの背後に隠れてオーバーレイが見えなくなる）
+        window.AppWindow.MoveInZOrderAtTop();
+
+        // オーナーの退避は、キャプチャ除外が効かない場合だけ行う（自ウィンドウが撮影画像へ写るため）。
+        // 除外が効いている場合は退避しない: オーバーレイが画面全体を覆っているため見た目は変わらないが、
+        // 退避の瞬間にウィンドウが再合成され、一瞬だけ明るい画面が見える（実測）
+        if (!ownerScope.IsExcluded)
+        {
+            ownerScope.ApplyPendingHide();
+        }
 
         window.Activate();
+        _isShown = true;
 
         // ウィンドウが閉じるまで待つ（閉じる経路は CompleteCapture / Cancel / ウィンドウの閉じる操作）
         await _closed.Task.ConfigureAwait(true);
     }
+
+    /// <summary>要素の最初の描画フレームを待つ。</summary>
+    /// <param name="element">対象の要素。</param>
+    /// <returns>最初のフレームを描き終えたときに完了するタスク。</returns>
+    /// <remarks>
+    /// 内容を構築しただけでは XAML の合成が済んでおらず、表示した直後の 1 フレームは
+    /// ウィンドウの下地（白）だけが見える（実測）。 合成の 1 フレームを待ってから画面へ出す。
+    /// 要素が既に読み込まれている場合は <c>Loaded</c> を待たない。
+    /// </remarks>
+    private static Task WaitForFirstFrameAsync(FrameworkElement element)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+
+        var completed = new TaskCompletionSource();
+
+        void OnRendering(object? sender, object args)
+        {
+            CompositionTarget.Rendering -= OnRendering;
+            completed.TrySetResult();
+        }
+
+        void OnLoaded(object? sender, RoutedEventArgs args)
+        {
+            element.Loaded -= OnLoaded;
+            CompositionTarget.Rendering += OnRendering;
+        }
+
+        if (element.IsLoaded)
+        {
+            CompositionTarget.Rendering += OnRendering;
+        }
+        else
+        {
+            element.Loaded += OnLoaded;
+        }
+
+        return completed.Task;
+    }
+
+    /// <summary>オーバーレイを画面内へ出し終えたかどうか（出し終えるまでは非アクティブ化でキャンセルしない）。</summary>
+    /// <remarks>
+    /// 準備中（画面外での描画待ち）に非アクティブ化しても、まだ画面に出していないため<br/>
+    /// キャンセルすると撮影が始まらない。 画面内へ出した後の非アクティブ化だけをキャンセル扱いにする。
+    /// </remarks>
+    private bool _isShown;
 
     /// <summary>ウィンドウが閉じられたことを通知する完了シグナル。</summary>
     /// <remarks>
@@ -683,10 +774,13 @@ internal sealed class CaptureOverlay
     /// <summary>ウィンドウの非アクティブ化を処理する（キャンセルする）。</summary>
     /// <param name="sender">イベントの送信元（オーバーレイ ウィンドウ）。</param>
     /// <param name="e">ウィンドウの状態。</param>
-    /// <remarks>最前面のオーバーレイが残り続けるのを防ぐ。</remarks>
+    /// <remarks>
+    /// 最前面のオーバーレイが残り続けるのを防ぐ。<br/>
+    /// 画面内へ出し終える前（準備中）の非アクティブ化ではキャンセルしない（取り消されると撮影が始まらない）。
+    /// </remarks>
     private void OnWindowActivated(object sender, WindowActivatedEventArgs e)
     {
-        if (e.WindowActivationState == WindowActivationState.Deactivated)
+        if (_isShown && e.WindowActivationState == WindowActivationState.Deactivated)
         {
             Cancel();
         }

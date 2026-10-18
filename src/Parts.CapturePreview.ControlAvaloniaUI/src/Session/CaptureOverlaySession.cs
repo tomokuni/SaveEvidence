@@ -85,6 +85,10 @@ internal sealed class CaptureOverlaySession(
 
         _window.Show(owner);
 
+        // 予約した退避を実行する（オーバーレイが画面を覆ってから退避するため、
+        // 撮影開始時にデスクトップが一瞬見える「白い画面」が発生しない）
+        ownerScope.ApplyPendingHide();
+
         try
         {
             var result = await completion.Task;

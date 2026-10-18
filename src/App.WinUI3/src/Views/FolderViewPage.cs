@@ -1,14 +1,13 @@
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using EsUtil.SaveEvidence.App.WinUI3.Services;
 using Microsoft.Extensions.Logging;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Media;
 using Windows.Storage;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
@@ -47,18 +46,9 @@ internal static class FolderViewPage
         viewModel.SelectedViewModeIndex = ViewModeDisplay.ClampIndex(settingsService.Current.FolderViewModeIndex);
         viewModel.IsSortAscending = settingsService.Current.FolderViewSortAscending;
 
-        var listHost = new Grid();
-        var listRoot = new Grid { RowSpacing = AppStyles.ListItemSpacing, ColumnSpacing = AppStyles.ListItemSpacing };
-
-        // 一覧のスクロール領域は 1 度だけ生成し、再構築では内容だけを差し替える。
-        // ローカル関数が参照するため、それらより前に生成する（生成が後だと未割り当てとして扱われる）
-        var listScroll = new ScrollViewer
-        {
-            Padding = new Thickness(AppStyles.ListItemSpacing),
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-        };
-        listHost.Children.Add(listScroll);
+        // 一覧は Undo 一覧と同じ共通コントロール（ThumbnailList）を使う
+        var list = new ThumbnailList();
+        var listHost = list.Host;
 
         // 生成中の要求と、その項目の一覧内の位置（見え方の変化で優先度を付け直す）
         var pending = new List<(ThumbnailScheduler.ThumbnailRequest Request, int Index)>();
@@ -190,6 +180,7 @@ internal static class FolderViewPage
             Margin = new Thickness(0, AppStyles.ToolbarMarginTop, 0, AppStyles.ToolbarMarginBottom),
         };
 
+
         Grid.SetRow(toolbar, 0);
         Grid.SetRow(listHost, 1);
         Grid.SetRow(status, 2);
@@ -205,54 +196,30 @@ internal static class FolderViewPage
                 return;
             }
 
-            var top = listScroll.VerticalOffset;
-            var viewportHeight = listScroll.ViewportHeight > 0 ? listScroll.ViewportHeight : listHost.ActualHeight;
+            var top = list.Scroll.VerticalOffset;
+            var viewportHeight = list.Scroll.ViewportHeight > 0 ? list.Scroll.ViewportHeight : listHost.ActualHeight;
             var bottom = top + viewportHeight;
 
             foreach (var (request, index) in pending)
             {
-                if (index >= listRoot.Children.Count)
+                if (index >= list.Tiles.Count)
                 {
                     continue;
                 }
 
-                var element = (FrameworkElement)listRoot.Children[index];
-                var itemTop = element.TransformToVisual(listRoot).TransformPoint(new Windows.Foundation.Point(0, 0)).Y;
+                var element = list.Tiles[index];
+                var itemTop = element
+                    .TransformToVisual(list.Host)
+                    .TransformPoint(new Windows.Foundation.Point(0, 0)).Y;
                 thumbnails.Reprioritize(
                     request, ThumbnailPriority.FromRange(itemTop, itemTop + element.ActualHeight, top, bottom, index));
             }
         }
 
-        listScroll.ViewChanged += (_, _) => UpdatePriorities();
+        list.Scroll.ViewChanged += (_, _) => UpdatePriorities();
 
-        // 一覧の余白は表示領域の幅から決まるため、幅の変化で並べ直す
-        void LayoutList(double availableWidth)
-        {
-            var size = settingsService.Current.GetIconSize(viewModel.SelectedViewModeIndex);
-            var columns = WrapLayoutMath.Columns(availableWidth, size, AppStyles.ListItemSpacing);
-            var rows = (listRoot.Children.Count + columns - 1) / columns;
-
-            listRoot.ColumnDefinitions.Clear();
-            listRoot.RowDefinitions.Clear();
-            for (var column = 0; column < columns; column++)
-            {
-                listRoot.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            }
-
-            for (var row = 0; row < rows; row++)
-            {
-                listRoot.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            }
-
-            for (var i = 0; i < listRoot.Children.Count; i++)
-            {
-                var child = (FrameworkElement)listRoot.Children[i];
-                Grid.SetColumn(child, i % columns);
-                Grid.SetRow(child, i / columns);
-            }
-
-            UpdatePriorities();
-        }
+        // 一覧の幅が変わったら並べ直す（行の高さは行内の最大アイテム高さ・アイテムは下端揃え）
+        void LayoutList(double availableWidth) => list.Layout(availableWidth);
 
         void Rebuild()
         {
@@ -264,7 +231,7 @@ internal static class FolderViewPage
 
             thumbnails.Clear();
             pending.Clear();
-            listRoot.Children.Clear();
+            list.Clear();
 
             var files = ReadFiles(folderPath, viewModel.IsSortAscending, s_logger);
             var capacity = Math.Max(AppStyles.ThumbnailCacheCapacity, files.Count);
@@ -272,20 +239,24 @@ internal static class FolderViewPage
             for (var index = 0; index < files.Count; index++)
             {
                 var file = files[index];
+
+                // 高さを元画像の縦横比で決める（作る時点で確定させ、生成後に大きさを変えない）
+                var (pixelWidth, pixelHeight) = ImageSizeReader.Read(file, iconSize);
                 var view = new ThumbnailView
                 {
                     Width = iconSize,
-                    Height = iconSize,
+                    Height = ThumbnailTileMetrics.ImageHeight(iconSize, pixelWidth, pixelHeight),
                     Source = ThumbnailBackground.Placeholder(iconSize),
                 };
 
-                listRoot.Children.Add(CreateItem(view, file));
+                list.Add(view, Path.GetFileName(file), iconSize, file, () => _ = OpenInDefaultAppAsync(file));
 
                 // 生成が終わるまでは代替画像を表示し、生成は背景へ依頼する
                 // （見えている項目の優先度は、レイアウトの確定後に付け直す）
                 pending.Add((
                     thumbnails.Enqueue(
-                        ThumbnailPriority.Background(index), MakeThumbnailWork(view, file, iconSize, capacity)),
+                        ThumbnailPriority.Background(index),
+                        MakeThumbnailWork(view, file, iconSize, capacity)),
                     index));
             }
 
@@ -294,7 +265,6 @@ internal static class FolderViewPage
             modeText.Text = viewModel.ViewModeText;
             sortText.Text = viewModel.SortStatusText;
 
-            listScroll.Content = listRoot;
             LayoutList(listHost.ActualWidth);
         }
 
@@ -314,7 +284,7 @@ internal static class FolderViewPage
             {
                 // 表示前に一覧を構築し、低負荷で生成を始める（キャプチャ ページの操作は妨げない）
                 Rebuild();
-                s_logger.LogThumbnailWarmUp("フォルダビュー", listRoot.Children.Count);
+                s_logger.LogThumbnailWarmUp("フォルダビュー", list.Tiles.Count);
             });
     }
 
@@ -336,45 +306,16 @@ internal static class FolderViewPage
         }
     }
 
-    /// <summary>一覧の 1 項目を生成する。</summary>
-    /// <param name="view">サムネイルの表示要素。</param>
-    /// <param name="filePath">対象のファイル パス。</param>
-    /// <returns>生成した項目。</returns>
-    /// <remarks>画像を縦横比のまま表示し、マウスを重ねると枠と背景が変わる。</remarks>
-    private static FrameworkElement CreateItem(ThumbnailView view, string filePath)
-    {
-        var frame = new Border
-        {
-            BorderThickness = new Thickness(1),
-            BorderBrush = new SolidColorBrush(Colors.Transparent),
-            Background = new SolidColorBrush(Colors.Transparent),
-            Padding = new Thickness(2),
-            Child = view,
-        };
-
-        ToolTipService.SetToolTip(frame, filePath);
-        frame.DoubleTapped += (_, _) => _ = OpenInDefaultAppAsync(filePath);
-
-        frame.PointerEntered += (_, _) =>
-        {
-            frame.BorderBrush = new SolidColorBrush(Colors.DodgerBlue);
-            frame.Background = new SolidColorBrush(Colors.LightGray);
-        };
-        frame.PointerExited += (_, _) =>
-        {
-            frame.BorderBrush = new SolidColorBrush(Colors.Transparent);
-            frame.Background = new SolidColorBrush(Colors.Transparent);
-        };
-
-        return frame;
-    }
-
     /// <summary>サムネイルを背景で生成し、UI スレッドで表示へ反映する処理を作る。</summary>
     /// <param name="view">反映先の表示要素。</param>
     /// <param name="filePath">対象のファイル パス。</param>
     /// <param name="iconSize">サムネイルの一辺（ピクセル）。</param>
     /// <param name="capacity">サムネイル キャッシュの最大保持数。</param>
     /// <returns>背景で実行する処理。</returns>
+    /// <remarks>
+    /// 表示要素の大きさは作る時点で決めてある（<see cref="ImageSizeReader"/>）ため、ここでは画像だけを差し替える。<br/>
+    /// 大きさを変えると縮小キャンバスの表面が作り直されて内容が消えるため、生成後に寸法は変えない。
+    /// </remarks>
     private static Func<CancellationToken, ValueTask> MakeThumbnailWork(
         ThumbnailView view, string filePath, int iconSize, int capacity)
         => _ =>
@@ -449,3 +390,14 @@ internal static class FolderViewPage
     private static TextBlock CreateStatusLabel(string text)
         => new() { Text = text, FontSize = AppStyles.StatusFontSize, VerticalAlignment = VerticalAlignment.Center };
 }
+
+
+
+
+
+
+
+
+
+
+

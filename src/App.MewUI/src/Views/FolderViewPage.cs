@@ -30,13 +30,6 @@ internal static class FolderViewPage
     /// <summary>サムネイルとファイル名の間隔（DIP）。</summary>
     private const double ItemSpacing = 2;
 
-    /// <summary>一覧の余白（DIP）。</summary>
-    private const double ListPadding = 4;
-
-    /// <summary>ファイル名領域の高さ（DIP）。</summary>
-    /// <remarks>行内でサムネイルの下端を揃えるため、ファイル名は 2 行分の固定高とする（Avalonia 版と同じ）。</remarks>
-    private const double LabelHeight = 30;
-
     /// <summary>サムネイルのキャッシュの最小保持数。</summary>
     /// <remarks>一覧が表示する件数がこれより少ない場合でも、この数までは保持する（一覧間の行き来で再デコードしない）。</remarks>
     private const int CacheCapacity = 100;
@@ -58,7 +51,8 @@ internal static class FolderViewPage
         var settingsService = services.Settings;
         var viewModel = services.FolderView;
 
-        var list = new BottomAlignWrapPanel(ItemSpacing) { Padding = new Thickness(ListPadding) };
+        // 一覧は Undo 一覧と同じ共通コントロール（ThumbnailList）を使う
+        var list = new ThumbnailList(ItemSpacing);
 
         // サムネイルの生成は背景で行う（表示中は並列・非表示では 1 件ずつ）
         var thumbnails = ThumbnailBackground.CreateScheduler();
@@ -122,8 +116,7 @@ internal static class FolderViewPage
                     Source = ThumbnailBackground.Placeholder(iconSize),
                 };
 
-                var element = CreateItem(view, file, iconSize);
-                list.Add(element);
+                var element = list.Add(view, Path.GetFileName(file), iconSize, isCurrent: false, () => OpenInDefaultApp(file));
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 requested.Add((thumbnails.Enqueue(
@@ -236,7 +229,7 @@ internal static class FolderViewPage
         statusGrid.Add(status.Column(0));
         statusGrid.Add(folderText.Column(1));
 
-        var scroll = new ScrollViewer().Content(list);
+        var scroll = new ScrollViewer().Content(list.Panel);
 
         // 見え方が変わったら優先度を付け直す（スクロールと、ウィンドウの大きさの変化）
         scroll.ScrollChanged += () => UpdatePriorities(scroll);
@@ -294,7 +287,7 @@ internal static class FolderViewPage
                 toolbar,
                 new Border()
                     .StyleName(AppStyles.ListSurface)
-                    .Child(new Grid().Rows("*").Columns("*").Padding(10).Children(scroll)),
+                    .Child(new Grid().Rows("*").Columns("*").Children(scroll)),
                 new Border()
                     .Padding(AppStyles.StatusPaddingX, AppStyles.ListStatusPaddingY)
                     .StyleName(AppStyles.StatusBar)
@@ -393,36 +386,6 @@ internal static class FolderViewPage
         }
     }
 
-    /// <summary>一覧の 1 件分の要素を生成する。</summary>
-    /// <param name="view">サムネイルを表示する要素（生成の結果は後から本要素へ設定する）。</param>
-    /// <param name="filePath">対象のファイルパス。</param>
-    /// <param name="iconSize">サムネイルの一辺のサイズ（DIP）。</param>
-    /// <returns>サムネイルとファイル名を縦に並べた要素。</returns>
-    /// <remarks>
-    /// ダブルクリックで <paramref name="filePath"/> を OS の既定アプリで開く（原寸が必要な操作はファイルから読み込む。
-    /// 一覧はサムネイルだけを保持する）。
-    /// </remarks>
-    private static Element CreateItem(ThumbnailView view, string filePath, int iconSize)
-    {
-        // 枠（背景色・枠線・角丸）はスタイルが与え、ホバーのハイライトは アイテム側が切り替える
-        var frame = new Border()
-            .StyleName(AppStyles.ThumbnailFrame)
-            .Child(view);
-
-        // ラベルは枠（画像 + 影の余白）と同じ幅にし、ファイル名を画像の中央へ揃える
-        // （文字は Avalonia 版と同じく領域の上端へ寄せる）
-        var label = new Label()
-            .Text(Path.GetFileName(filePath))
-            .TextAlignment(TextAlignment.Center)
-            .VerticalTextAlignment(TextAlignment.Top)
-            .Width(iconSize + AppStyles.ThumbnailShadowBlur * 2)
-            .Height(LabelHeight)
-            .FontSize(11);
-        label.Padding = new Thickness(1, 1, 2, 1);
-
-        return ThumbnailItem.Create(frame, label, () => OpenInDefaultApp(filePath));
-    }
-
     /// <summary>ファイルを OS の既定アプリで開く。</summary>
     /// <param name="filePath">対象のファイルパス。</param>
     /// <remarks>関連付けが無い等で開けない場合でも操作を妨げない（失敗は無視する）。</remarks>
@@ -442,3 +405,7 @@ internal static class FolderViewPage
         }
     }
 }
+
+
+
+

@@ -96,8 +96,8 @@ Avalonia 版 `App.AvaloniaUI` とはコアを共有し、UI 層のみが異な�
 
 | 項目 | Avalonia 版と同じ仕様 |
 | --- | --- |
-| 幅 | 展開 180 / 収納 40（`MainViewModel.NavPanelWidth`） |
-| アイテム | アイコン（16 DIP） + ページ名（展開時のみ表示）。 選択中は背景色で示す |
+| 幅 | 展開 136 / 収納 40（`MainViewModel.NavPanelWidth`。 展開時はアイコン + 最も長い項目名 + 余白で、値は `NavPanelMetrics`（App.Core）が単一所有） |
+| アイテム | アイコン（16 DIP） + ページ名（展開時のみ表示）。 選択中は薄いグレーの角丸背景と左端 3 DIP の青いマークで示す（WinUI 3 と同じ。 色は `AppPalette`（App.Core）が単一所有する） |
 | 余白・区切り線 | なし（ページとの境界線も描画しない） |
 | ヘッダー | 左上のトグル（開閉）とアプリ名。 先頭ページを選択した状態で起動する |
 | 開閉の保存 | 開閉状態は設定へ保存し、次回起動時に復元する |
@@ -109,8 +109,9 @@ Avalonia 版 `App.AvaloniaUI` とはコアを共有し、UI 層のみが異な�
 
 | 項目 | 仕様 |
 | --- | --- |
-| タイトルバー | 非クライアント領域をクライアント領域へ拡張（`ExtendClientAreaTitleBarHeight = 32`）。 タイトル文字列は空 |
+| タイトルバー | 非クライアント領域をクライアント領域へ拡張（`ExtendClientAreaTitleBarHeight = 32`）。 タイトル文字列はタスクバーの表示（`SaveEvidence`）にだけ使い、タイトルバーには描かない |
 | ウィンドウボタン | クライアント領域を拡張するとネイティブのボタンが描画されないため、最小化 / 最大化（元のサイズに戻す）/ 閉じるをタイトルバー右端へ自前配置 |
+| フッター | ナビゲーション パネルの下端へ UI 名と実際のバージョン（`MewUI  v0.1.0`）を表示する（`AppVersion`（App.Core）が表記を単一所有）。 収納時は非表示 |
 | 最小サイズ | `800 x 400`（DIP。 Avalonia 版 `MainWindow.axaml` の `MinWidth` / `MinHeight` と同じ） |
 | タスクバーアイコン | Avalonia 版と同じアイコン（`ic_fluent_scan_table_24_regular.svg`）を PNG 化し ICO へ詰めて設定 |
 
@@ -270,18 +271,19 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 設定の「テーマ」でライト / ダーク / システムを選べます。 **保存したテーマは起動時にも適用されます**。
 ページ背景・ナビパネル・一覧・プルダウン・設定のカードなどはテーマに追従し、
 ツールバーのアイコンとプレビューの下地色も切り替え時に更新されます。
-面の色は Avalonia 版の実測値と同じです。
+面の色は 4 つの UI 版で共通に使う色を `AppPalette`（App.Core）から取得します（本表はその値）。
 
 | 面 | 明色 | 暗色 |
 | --- | --- | --- |
-| ページ（ウィンドウ） | `#FFFFFF` | `#000000` |
-| ナビパネル | `#E6E6E6` | `#1F1F1F` |
+| ページ（ウィンドウ） | `#FFFFFF` | `#202020` |
+| ナビパネル | `#E6E6E6` | `#2B2B2B` |
+| 画像領域（プレビューの下地） | `#FAFAFA` | `#202020` |
 | 一覧（フォルダ / Undo） | `#F2F2F2` | `#2B2B2B` |
 
 ## 21. プレビューの背景（下地色）
 
-画像が無い部分は**下地色の単色**で表示します（明色テーマは白・暗色テーマは黒）。 市松模様は描きません（ルーペの画像外と同じ扱い）。
-外観はコアの `ZoomViewAppearance` 1 値として `CropViewControl.Appearance` へ設定します（テーマのページ背景から `Appearance with { ... }` を組み立てる）。
+画像が無い部分は**下地色の単色**で表示します（色は `AppPalette.ImageArea`）。 市松模様は描きません（ルーペの画像外と同じ扱い）。
+外観はコアの `ZoomViewAppearance` 1 値として `CropViewControl.Appearance` へ設定します（`AppStyles.CurrentImageAreaBackground` から `Appearance with { ... }` を組み立てる）。
 画像の中央寄せ / 左上寄せは設定（「外観設定」）の `CenterAlign` に追従します（`CropViewControl.CenterAlign`）。
 テーマを変えると下地色を描き直します（`AppStyles.ThemeChanged`）。
 

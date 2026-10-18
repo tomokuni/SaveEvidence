@@ -28,6 +28,18 @@ dotnet run --project src/App.WinUI3/src/App.WinUI3.csproj
 アンパッケージ（MSIX なし）で起動します。 Windows App SDK は自己完結で配置するため、
 **Windows App Runtime のインストールは不要**です。
 
+**起動は実行ファイル（アプリ ホスト）から行います**。 アンパッケージの WinUI 3 アプリは、
+マニフェストによるアクティベーションと `resources.pri` の解決をアプリ ホストの exe が担うため、
+`dotnet <アプリ>.dll` / `dotnet exec <アプリ>.dll` では起動できません（`Microsoft.UI.Xaml.dll` の
+stowed exception `0xC000027B` で即座に終了します。 実測 2026-10-17）。 ビルド成果物の exe を直接起動してください。
+
+```powershell
+src/App.WinUI3/src/bin/Debug/net10.0-windows10.0.22621.0/win-x64/SaveEvidence.WinUI3.exe
+```
+
+VS Code のデバッグ構成（[`.vscode/launch.json`](../../.vscode/launch.json) の `WinUI3: SaveEvidence`）は、
+この制約に合わせて **exe を起動する構成**にしています（`type: dotnet` は .NET ホスト経由で起動するため使えません）。
+
 ## 4. ビルドと検証
 
 ```powershell

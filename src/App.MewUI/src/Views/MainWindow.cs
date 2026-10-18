@@ -39,17 +39,32 @@ internal sealed class MainWindow
 
     /// <summary>ウィンドウの最小サイズ（DIP）。</summary>
     /// <remarks>Avalonia 版 <c>MainWindow.axaml</c> の <c>MinWidth</c> / <c>MinHeight</c> と同じ値。</remarks>
-    private static readonly Size s_minWindowSize = new(800, 400);
+    private static readonly Size s_minWindowSize = new(650, 400);
 
     /// <summary>タイトルバー領域の高さ（DIP）。 非クライアント領域をこの高さでクライアント領域へ拡張する。</summary>
     private const double TitleBarHeight = 32;
 
     /// <summary>ナビパネル上部（タイトルバー領域）の高さ（DIP）。</summary>
-    /// <remarks>Avalonia 版と同じ 50。 トグルボタン（高さ 28）を中央に置くと上端に余白が生まれ、ツールバーと高さが揃う。</remarks>
+    /// <remarks>
+    /// 50。 トグルボタン（高さ 28）を中央に置くと上端に余白が生まれ、ツールバーの文字と縦位置が揃う（実測）。
+    /// </remarks>
     private const double NavHeaderHeight = 50;
+
+    /// <summary>ナビ項目の選択マークの幅（DIP）。 WinUI 3 の選択マークと同じ。</summary>
+    private const double NavSelectionMarkWidth = 3;
+
+    /// <summary>ナビ項目の選択マークの高さ（DIP）。 WinUI 3 の選択マークと同じ。</summary>
+    private const double NavSelectionMarkHeight = 16;
 
     /// <summary>ナビ項目のアイコンの一辺（DIP）。</summary>
     private const double NavIconSize = 16;
+
+    /// <summary>ナビ項目の高さ（DIP）。 開閉の状態で変わらない。</summary>
+    /// <remarks>
+    /// AvaloniaUI 版の項目（アイコンの領域 24 + 上下の余白 8 + 8 = 40）と同じ高さにする。<br/>
+    /// 文字の表示を切り替えると内容の高さが変わり、開閉で項目の高さが変わってしまうため固定する。
+    /// </remarks>
+    private const double NavItemHeight = 40;
 
     /// <summary>ナビ項目のアイコンを生成する解像度（ピクセル）。</summary>
     /// <remarks>表示サイズ（16 DIP）に対して高 DPI でも鮮明になるよう余裕を持たせる。</remarks>
@@ -133,8 +148,12 @@ internal sealed class MainWindow
         // ナビパネルの要素（開閉に応じて幅・文字の表示を切り替える）
         var navPanel = new Border();
         var navTitle = new TextBlock().Text("SaveEvidence").FontSize(14);
+        navTitle.FontWeight = FontWeight.Bold;
+        // フッターの UI 名とバージョン（下で生成するが、ApplyNavigationLayout から参照するため先に宣言する）
+        TextBlock navVersionText;
         var navItemTexts = new TextBlock[entries.Length];
         var navItemImages = new Image[entries.Length];
+        var navItemMarks = new Border[entries.Length];
         var navItemButtons = new Button[entries.Length];
         var navToggleIcon = new Image
         {
@@ -171,16 +190,43 @@ internal sealed class MainWindow
             navItemImages[i] = icon;
 
             var text = new TextBlock().Text(entry.Title);
+            // 文字サイズは 4 つの UI 版で共通（NavPanelMetrics が単一所有する）
+            text.FontSize(NavPanelMetrics.ItemFontSize);
             text.VerticalAlignment = VerticalAlignment.Center;
             text.IsVisible = viewModel.IsNavigationExpanded;
             navItemTexts[i] = text;
 
+            // 選択中を示す左端のマーク（既定は透明。 選択中だけアクセント色にする）
+            var mark = new Border
+            {
+                Width = NavSelectionMarkWidth,
+                Height = NavSelectionMarkHeight,
+                CornerRadius = NavSelectionMarkWidth / 2,
+                Margin = new Thickness(0, 0, 5, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Background = MewUIColor.Transparent,
+            };
+            navItemMarks[i] = mark;
+
+            var content = new Grid().Columns("Auto,*");
+            content.Add(mark.Column(0));
+            content.Add(new StackPanel().Horizontal().Spacing(8).Children(icon, text).Column(1));
+
+            // 内容の高さを固定する（文字の表示を切り替えても項目の高さが変わらないようにする）。
+            // アイコンだけの収納時も、アイコン + 文字の展開時も同じ高さになる
+            content.Height = NavItemHeight - 16; // 上下の余白（8 + 8）を除いた高さ
+
             var button = new Button
             {
-                Content = new StackPanel().Horizontal().Spacing(8).Children(icon, text),
-                Padding = new Thickness(12, 8, 12, 8),
-                Margin = new Thickness(0),
-                CornerRadius = 0,
+                Content = content,
+                // 左の余白は「マーク + 間隔」を含めてアイコンが展開時と同じ位置（12 DIP）に来る幅にする
+                Padding = new Thickness(4, 8, 12, 8),
+                Margin = new Thickness(2, 1, 2, 1),
+                CornerRadius = 4,
+
+                // 文字の表示を切り替えても高さを変えない（開閉で項目の高さが変わらないようにする）
+                Height = NavItemHeight,
+                MinHeight = NavItemHeight,
                 StyleName = AppStyles.NavItem,
             };
             button.Cursor(CursorType.Hand);
@@ -194,7 +240,8 @@ internal sealed class MainWindow
         var header = new Grid().Columns("Auto,*").Rows($"{NavHeaderHeight}");
         header.Add(toggle.Column(0));
         navTitle.VerticalAlignment = VerticalAlignment.Center;
-        navTitle.Margin = new Thickness(6, 0, 0, 0);
+        // 開閉ボタン（幅 28）のアイコン右端へ寄せる（アイコンはボタン中央の 16 DIP）
+        navTitle.Margin = new Thickness(0, 0, 0, 0);
         navTitle.IsVisible = viewModel.IsNavigationExpanded;
 
         // アプリ名の列全体をタイトルバーのドラッグ領域にする（収納時もアプリ名の領域でドラッグできる）。
@@ -211,7 +258,21 @@ internal sealed class MainWindow
         // ナビパネルの背景はスタイルで与える（テーマ変更で自動的に再解決される）
         navPanel.StyleName = AppStyles.NavPanel;
         navPanel.Width = viewModel.NavPanelWidth;
-        navPanel.Child(new StackPanel().Vertical().Children(header, items));
+
+        // フッター（UI 名と実際のバージョン。 収納時は非表示）。
+        // 位置と書式は Avalonia 版と同じ（項目一覧の下・下端へ寄せ、中央寄せ）。
+        // バージョンの整形は AppVersion（App.Core）が単一所有する
+        var versionText = new TextBlock()
+            .Text(AppVersion.For("MewUI"))
+            .FontSize(AppStyles.NavVersionFontSize);
+        versionText.HorizontalAlignment = HorizontalAlignment.Center;
+        versionText.Margin = new Thickness(0, 8, 0, 8);
+        versionText.IsVisible = viewModel.IsNavigationExpanded;
+        navVersionText = versionText;
+
+        // 項目一覧は残りの高さ（*）を占め、フッターは下端（Auto）へ寄せる（Avalonia 版の Grid と同じ）
+        navPanel.Child(new Grid().Rows("Auto,*,Auto")
+            .Children(header, items, versionText));
 
         // 開閉の変更でナビパネルの幅・文字の表示を更新する
         viewModel.PropertyChanged += (_, e) =>
@@ -232,7 +293,7 @@ internal sealed class MainWindow
         // タイトルバーは MewUI 標準のクライアント領域拡張を使う（Avalonia 版の
         // ExtendClientAreaToDecorationsHint / ExtendClientAreaTitleBarHeightHint と同じ）。
         // タイトル文字列は空にし、タイトルバーへアプリ名を表示しない（Avalonia 版と同じ）。
-        window.Title = "";
+        window.Title = "SaveEvidence";
         window.ExtendClientAreaTitleBarHeight = TitleBarHeight;
 
         // ウィンドウ余白（Window 既定スタイルの ContainerPadding）を 0 にして、タイトルバーと
@@ -271,6 +332,16 @@ internal sealed class MainWindow
             if (selectedIndex >= 0 && pages[selectedIndex] is { OnKeyDown: { } onKeyDown })
             {
                 onKeyDown(e);
+            }
+        };
+
+        // ウィンドウが非アクティブになったら、表示中のページが開いているポップアップを閉じる
+        // （メニューを開いたまま別のウィンドウを操作しても閉じない、との指摘への対応）
+        window.Deactivated += () =>
+        {
+            if (selectedIndex >= 0 && pages[selectedIndex] is { OnWindowDeactivated: { } onWindowDeactivated })
+            {
+                onWindowDeactivated();
             }
         };
 
@@ -328,7 +399,19 @@ internal sealed class MainWindow
                 navItemButtons[i].StyleName = i == index ? AppStyles.NavItemSelected : AppStyles.NavItem;
             }
 
+            ApplySelectionMarks();
+
             activators[index]?.Invoke();
+        }
+
+        // 選択中だけ左端のマークをアクセント色にする（テーマ変更でも呼び直す）
+        void ApplySelectionMarks()
+        {
+            var accent = AppStyles.CurrentNavSelectionAccent;
+            for (var i = 0; i < navItemMarks.Length; i++)
+            {
+                navItemMarks[i].Background = i == selectedIndex ? accent : MewUIColor.Transparent;
+            }
         }
 
         void EnsurePage(int index)
@@ -349,26 +432,43 @@ internal sealed class MainWindow
         // 一覧ページのサムネイルを先に生成しておく（最初の切り替えを待たせない）
         // 初回描画の後（ウィンドウの表示が終わった後）に開始するため、起動は遅くならない。
         // ページを表示せずに一覧を構築し、生成は低負荷（1 件ずつ）で進むため、キャプチャページの操作を妨げない。
+        // **1 ページずつ別のディスパッチャー ターンで作る**: まとめて作ると、その間 UI スレッドが
+        // 塞がれてキャプチャ ページの操作が引っかかる（実測）。
         void WarmUpPages()
         {
-            try
-            {
-                foreach (var page in new[] { AppPage.FolderView, AppPage.Undo })
-                {
-                    var index = Array.FindIndex(entries, entry => entry.Page == page);
-                    if (index < 0)
-                    {
-                        continue;
-                    }
+            var pending = new Queue<AppPage>([AppPage.FolderView, AppPage.Undo, AppPage.Settings]);
+            ScheduleNext();
 
-                    EnsurePage(index);
-                    warmUps[index]?.Invoke();
-                }
-            }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            void ScheduleNext()
             {
-                // 先読みの失敗はアプリの動作を妨げない（ページを開いたときに改めて構築される）
-                s_logger.LogThumbnailGenerateError(ex);
+                var dispatcher = Application.Current?.Dispatcher;
+                if (dispatcher is null || pending.Count == 0)
+                {
+                    return;
+                }
+
+                dispatcher.BeginInvoke(DispatcherPriority.Background, Step);
+            }
+
+            void Step()
+            {
+                try
+                {
+                    var page = pending.Dequeue();
+                    var index = Array.FindIndex(entries, entry => entry.Page == page);
+                    if (index >= 0)
+                    {
+                        EnsurePage(index);
+                        warmUps[index]?.Invoke();
+                    }
+                }
+                catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+                {
+                    // 先読みの失敗はアプリの動作を妨げない（ページを開いたときに改めて構築される）
+                    s_logger.LogThumbnailGenerateError(ex);
+                }
+
+                ScheduleNext();
             }
         }
 
@@ -379,6 +479,7 @@ internal sealed class MainWindow
             var expanded = viewModel.IsNavigationExpanded;
             navPanel.Width = viewModel.NavPanelWidth;
             navTitle.IsVisible = expanded;
+            navVersionText.IsVisible = expanded;
 
             foreach (var text in navItemTexts)
             {
@@ -537,3 +638,4 @@ internal sealed class MainWindow
         settingsService.Save();
     }
 }
+

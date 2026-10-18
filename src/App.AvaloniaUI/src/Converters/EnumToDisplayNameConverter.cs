@@ -44,6 +44,11 @@ public sealed class EnumToDisplayNameConverter : IValueConverter
             return ResolveDisplayName(typeof(ThemeMode), themeMode.ToString());
         }
 
+        if (value is StartupPreviewMode previewMode)
+        {
+            return ResolveDisplayName(typeof(StartupPreviewMode), previewMode.ToString());
+        }
+
         // 表示名を持たない値はメンバー名をそのまま返す
         return value.ToString() ?? "";
     }

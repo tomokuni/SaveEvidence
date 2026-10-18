@@ -2,6 +2,13 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "ビルド（App.WinUI3）",
+      "type": "shell",
+      "command": "dotnet build src/App.WinUI3/src/App.WinUI3.csproj",
+      "group": "build",
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "検証（全体）",
       "type": "shell",
       "command": "pwsh -NoProfile -File buildScript/verify.ps1",

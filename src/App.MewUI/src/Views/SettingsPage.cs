@@ -4,6 +4,7 @@ using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
+using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.MewUI.Services;
 using EsUtil.SaveEvidence.Platform.MewUI;
 using MewUIColor = Aprillz.MewUI.Color;
@@ -133,29 +134,48 @@ internal static class SettingsPage
 
         var pathBox = new TextBox()
             .Text(settings.SaveFolderPath)
-            .Width(420)
+            .FontSize(SettingsMetrics.FontSize)
             .OnTextChanged(text =>
             {
                 settings.SaveFolderPath = text;
                 RefreshValidation();
             });
 
-        var browse = new Button().Content("参照").OnClick(() => BrowseFolder(pathBox, settings));
+        var browse = new Button().Content("参照").FontSize(SettingsMetrics.FontSize).OnClick(() => BrowseFolder(pathBox, settings));
+
+        // 保存先の欄は残り幅いっぱい（ラベルと参照ボタンを除いた分）にし、ウィンドウ幅へ追従させる
+        var label = new Label().Text("保存先フォルダ")
+            .FontSize(SettingsMetrics.FontSize)
+            .Width(LabelWidth)
+            .VerticalTextAlignment(TextAlignment.Center)
+            .Margin(new Thickness(0, 0, 8, 0));
+        var pathRow = new Grid().Columns("Auto,*,Auto");
+        pathRow.Add(label.Column(0));
+        pathRow.Add(pathBox.Column(1));
+        pathRow.Add(browse.Column(2).Margin(new Thickness(6, 0, 0, 0)));
 
         return Section(
             "保存設定",
-            Row("保存先フォルダ", new StackPanel().Horizontal().Spacing(6).Children(pathBox, browse)),
-            Row("", new Label().Text("例: {MyPictures}\\SaveEvidence（{MyPictures} はピクチャフォルダへ展開されます）").FontSize(11)),
-            Row("", new Label().BindText(validationText).FontSize(11)));
+            pathRow,
+            Row("", new Label().Text(SettingsMetrics.SaveFolderHint).FontSize(SettingsMetrics.HintFontSize)),
+            Row("", new Label().BindText(validationText).FontSize(SettingsMetrics.HintFontSize)));
     }
 
     /// <summary>画像設定のセクションを構築する。</summary>
     /// <param name="settings">設定。</param>
     /// <returns>セクションの要素。</returns>
     private static Element BuildImageSection(Settings settings)
-        => Section(
+    {
+        // 起動直後の画像の選択肢（表示名は列挙の説明属性が単一所有する）
+        var modes = MainViewModel.StartupPreviewModes;
+        var options = modes.Select(mode => EnumDisplayNames.Get(mode)).ToArray();
+        var selected = Math.Max(0, modes.ToList().IndexOf(settings.StartupPreview));
+
+        return Section(
             "画像設定",
-            Row("", CheckRow(settings.CenterAlign, value => settings.CenterAlign = value, "画像を中央に配置（オフで左上配置）")));
+            Row("", CheckRow(settings.CenterAlign, value => settings.CenterAlign = value, "画像を中央に配置（オフで左上配置）")),
+            Row("起動時の画像", ChoiceRow(options, selected, index => settings.StartupPreview = modes[index])));
+    }
 
     /// <summary>キャプチャ設定のセクションを構築する。</summary>
     /// <param name="settings">設定。</param>
@@ -185,7 +205,7 @@ internal static class SettingsPage
                 () => settings.WindowSelectHotKey, value => settings.WindowSelectHotKey = value),
             HotkeyRow("範囲選択キャプチャ",
                 () => settings.AreaSelectHotKey, value => settings.AreaSelectHotKey = value),
-            Row("", new Label().Text("テキストボックスへフォーカスし、修飾キー付きのキーを押すと設定されます。").FontSize(11)));
+            Row("", new Label().Text("テキストボックスへフォーカスし、修飾キー付きのキーを押すと設定されます。").FontSize(SettingsMetrics.HintFontSize)));
 
     /// <summary>外観（選択枠・暗転・ハンドル・ルーペ・ラベル）のセクションを構築する。</summary>
     /// <param name="settings">設定。</param>
@@ -197,7 +217,7 @@ internal static class SettingsPage
     /// </remarks>
     private static Element BuildAppearanceSection(Settings settings)
     {
-        var reset = new Button().Content("デフォルト値に戻す").OnClick(() => settings.ResetAppearanceToDefaults());
+        var reset = new Button().Content("デフォルト値に戻す").FontSize(SettingsMetrics.FontSize).OnClick(() => settings.ResetAppearanceToDefaults());
 
         (string Category, (string Name, FrameworkElement Control)[] Items)[] categories =
         [
@@ -290,7 +310,7 @@ internal static class SettingsPage
             // カテゴリの切れ目（最初のカテゴリ以外の先頭）は水平線の分だけ下へずらす
             var categoryOffset = row == 0 ? 0 : CategorySpacing;
 
-            var categoryLabel = new Label().Text(category).Bold().FontSize(12);
+            var categoryLabel = new Label().Text(category).Bold().FontSize(SettingsMetrics.FontSize);
             categoryLabel.MinWidth = CategoryWidth;
             categoryLabel.HorizontalAlignment = HorizontalAlignment.Right;
             categoryLabel.TextAlignment(TextAlignment.Right);
@@ -323,7 +343,9 @@ internal static class SettingsPage
                 }
                 else
                 {
-                    var nameLabel = new Label().Text(name).VerticalTextAlignment(TextAlignment.Center);
+                    var nameLabel = new Label().Text(name)
+                        .FontSize(SettingsMetrics.FontSize)
+                        .VerticalTextAlignment(TextAlignment.Center);
                     nameLabel.Margin(new Thickness(0, offset, 0, 0));
                     grid.Add(nameLabel.GridPosition(row, 1, 1, 1));
                     grid.Add(control.GridPosition(row, 2, 1, 1));
@@ -368,7 +390,7 @@ internal static class SettingsPage
     private static Element SectionCore(string title, Element? action, params Element[] rows)
     {
         var headerLabel = new Label().Text(title);
-        headerLabel.FontSize(12);
+        headerLabel.FontSize(SettingsMetrics.FontSize);
         headerLabel.Bold();
         headerLabel.VerticalTextAlignment(TextAlignment.Center);
 
@@ -396,7 +418,7 @@ internal static class SettingsPage
     /// <returns>項目名と編集 UI を横に並べた要素。</returns>
     private static Element Row(string label, Element control)
     {
-        var name = new Label().Text(label).VerticalTextAlignment(TextAlignment.Center);
+        var name = new Label().Text(label).FontSize(SettingsMetrics.FontSize).VerticalTextAlignment(TextAlignment.Center);
 
         // 項目名が無い行（チェックボックス・説明文）は項目名の列を確保しない（Avalonia 版と同じ左端寄せ）
         if (label.Length > 0)
@@ -419,6 +441,9 @@ internal static class SettingsPage
     private static FrameworkElement CheckRow(bool initial, Action<bool> apply, string? text = null)
     {
         var box = new CheckBox().IsChecked(initial).OnCheckedChanged(apply);
+
+        // 文字サイズは AvaloniaUI 版と同じ 14 DIP（SettingsMetrics が単一所有する）
+        box.FontSize(SettingsMetrics.FontSize);
 
         if (text is not null)
         {
@@ -443,6 +468,7 @@ internal static class SettingsPage
             .Maximum(maximum)
             .Step(step)
             .IsInteger(isInteger)
+            .FontSize(SettingsMetrics.FontSize)
             .Width(NumberWidth);
         input.Value = initial;
         input.OnValueChanged(apply);
@@ -472,7 +498,7 @@ internal static class SettingsPage
         return new StackPanel()
             .Horizontal()
             .Spacing(8)
-            .Children(picker, new TextBlock().BindText(text).VerticalAlignment(VerticalAlignment.Center));
+            .Children(picker, new TextBlock().BindText(text).FontSize(SettingsMetrics.FontSize).VerticalAlignment(VerticalAlignment.Center));
     }
 
     /// <summary>選択肢の行を構築する。</summary>
@@ -483,6 +509,7 @@ internal static class SettingsPage
     private static Element ChoiceRow(string[] options, int selectedIndex, Action<int> apply)
     {
         var combo = new ComboBox().Items(options);
+        combo.FontSize(SettingsMetrics.FontSize);
         combo.SelectedIndex = selectedIndex;
 
         // 選択変更はインデックスで受け取る（MewUI のハンドラは選択された項目を受け取る）
@@ -503,7 +530,7 @@ internal static class SettingsPage
     /// </remarks>
     private static Element HotkeyRow(string label, Func<HotKeySetting> get, Action<HotKeySetting> set)
     {
-        var box = new TextBox().Text(Format(get())).Width(220);
+        var box = new TextBox().Text(Format(get())).FontSize(SettingsMetrics.FontSize).Width(220);
 
         box.OnKeyDown(e =>
         {
@@ -548,7 +575,7 @@ internal static class SettingsPage
             box.Text = Format(get());
         });
 
-        var clear = new Button().Content("クリア").OnClick(() =>
+        var clear = new Button().Content("クリア").FontSize(SettingsMetrics.FontSize).OnClick(() =>
         {
             set(new HotKeySetting(HotKeyModifiers.None, EsKey.None));
             box.Text = Format(get());
@@ -638,3 +665,4 @@ internal static class SettingsPage
         }
     }
 }
+

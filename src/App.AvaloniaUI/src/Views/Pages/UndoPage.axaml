@@ -2,78 +2,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
              xmlns:controls="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Controls"
-             xmlns:local="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.UndoPage"
              x:DataType="vm:UndoViewModel">
-    <UserControl.Styles>
-        <!-- ホバー中は枠をハイライトし、影を表示しない（擬似クラスによる状態変化はスタイルでのみ表現可能） -->
-        <Style Selector="Border.thumbnail-frame:pointerover">
-            <Setter Property="BorderBrush" Value="#0078D4"/>
-            <Setter Property="BoxShadow" Value="none"/>
-        </Style>
-        <!-- 現在のキャプチャページに表示中の画像（IsCurrent=true）は青枠で強調する -->
-        <Style Selector="Border.thumbnail-frame.current">
-            <Setter Property="BorderBrush" Value="#0078D4"/>
-            <Setter Property="BorderThickness" Value="3"/>
-            <Setter Property="BoxShadow" Value="none"/>
-        </Style>
-    </UserControl.Styles>
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- ツールバー。上部の余白はウィンドウ最上部（タイトルバー領域）とのスペース。右側の余白はウィンドウ右上のシステムボタン（最小化・最大化・閉じる）との重なりを防止 -->
-        <!-- 各 ToggleButton は x:Name で個別参照する（Tag ベースの一括走査は行わない） -->
         <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="2,6,140,2">
             <ToggleButton x:Name="ExtraLargeButton" Classes="toolbar" Content="特大" Click="OnViewModeClick" Tag="0" Margin="1"/>
             <ToggleButton x:Name="LargeButton" Classes="toolbar" Content="大" Click="OnViewModeClick" Tag="1" Margin="1"/>
             <ToggleButton x:Name="MediumButton" Classes="toolbar" Content="中" Click="OnViewModeClick" Tag="2" Margin="1"/>
         </WrapPanel>
 
-        <!-- 画像履歴一覧（表示順: 新しい → 古い = Redo → 現在 → Undo。背景は Fluent テーマのデフォルトに従う） -->
-        <!--
-        行の高さは固定値とせず各行の最大アイテム高さに応じる（BottomAlignWrapPanel）。
-        アイテムは行内で下端揃えされ、ラベルの 1 文字目の高さ位置が各行内で揃う。
-        -->
-        <ListBox x:Name="UndoListBox"
-                 Grid.Row="1"
-                 SelectionMode="Single"
-                 DoubleTapped="OnItemDoubleTapped">
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <controls:BottomAlignWrapPanel/>
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-            <ListBox.ItemTemplate>
-                <DataTemplate x:DataType="local:UndoListItem">
-                    <Border Margin="2" Padding="0">
-                        <StackPanel Width="{Binding ThumbnailWidth}">
-                            <!-- サムネイル画像（グレーの枠線 + ぼやかした影で浮かせる。現在表示中は青枠） -->
-                            <Border Classes="thumbnail-frame"
-                                    Classes.current="{Binding IsCurrent}"
-                                    BorderBrush="{DynamicResource SystemControlForegroundChromeGrayBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="2"
-                                    Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                                    BoxShadow="{DynamicResource ThumbnailShadow}">
-                                <Image Source="{Binding Thumbnail}"
-                                       Stretch="Uniform"
-                                       Width="{Binding ThumbnailWidth}"
-                                       HorizontalAlignment="Center"/>
-                            </Border>
-                            <!--
-                            ラベル領域の高さを固定する（2 行分）。
-                            各行内で下端揃えされたアイテムのラベル 1 文字目の高さ位置を揃えるため。
-                            背景は透明（リスト背景が見える）・文字色はテーマに従う。
-                            -->
-                            <TextBlock Text="{Binding Label}"
-                                       TextAlignment="Center"
-                                       FontSize="11"
-                                       TextWrapping="Wrap"
-                                       Height="30"
-                                       Padding="1,1,2,1"/>
-                        </StackPanel>
-                    </Border>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <!-- 画像履歴一覧（フォルダビューと同じ共通コントロール。 表示順: 新しい → 古い = やり直し → 現在 → 元に戻す） -->
+        <controls:ThumbnailList x:Name="UndoListBox"
+                                Grid.Row="1"
+                                DoubleTapped="OnItemDoubleTapped"/>
 
         <!-- ステータスバー -->
         <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,*,Auto" Margin="4,2">

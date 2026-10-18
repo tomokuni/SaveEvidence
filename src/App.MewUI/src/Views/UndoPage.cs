@@ -30,13 +30,6 @@ internal static class UndoPage
     /// <summary>サムネイルとラベルの間隔（DIP）。</summary>
     private const double ItemSpacing = 2;
 
-    /// <summary>一覧の余白（DIP）。</summary>
-    private const double ListPadding = 4;
-
-    /// <summary>ラベル領域の高さ（DIP）。</summary>
-    /// <remarks>行内でサムネイルの下端を揃えるため、ラベルは 2 行分の固定高とする（Avalonia 版と同じ）。</remarks>
-    private const double LabelHeight = 30;
-
     /// <summary>画像を一時ファイルへ書き出すライター（ダブルクリックで外部ツールを使う場合に限る）。</summary>
     private static readonly IImageWriter s_writer = new EsBitmapImageWriter();
 
@@ -57,7 +50,8 @@ internal static class UndoPage
         // 表示モードはラムダ間で共有するためローカルに保持する（設定が単一所有元）
         var selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.UndoViewModeIndex);
 
-        var list = new BottomAlignWrapPanel(ItemSpacing) { Padding = new Thickness(ListPadding) };
+        // 一覧はフォルダビューと同じ共通コントロール（ThumbnailList）を使う
+        var list = new ThumbnailList(ItemSpacing);
 
         var countText = new ObservableValue<string>(ViewModeDisplay.GetItemCountText(0));
         var modeText = new ObservableValue<string>(ViewModeDisplay.GetText(selectedIndex));
@@ -168,18 +162,17 @@ internal static class UndoPage
             void AddItem(EsReadOnlyBitmap image, string label, bool isCurrent)
             {
                 var view = new ThumbnailView { RequestedSize = iconSize, Source = placeholder };
-                var element = CreateItem(view, image, label, isCurrent, iconSize);
-                list.Add(element);
+                var element = list.Add(view, label, iconSize, isCurrent, () => OpenInDefaultApp(image));
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 requested.Add((scheduler.Enqueue(
-                    ThumbnailPriority.Background(list.Count - 1), MakeThumbnailWork(created, view, image, iconSize)), element));
+                    ThumbnailPriority.Background(list.Items.Count - 1), MakeThumbnailWork(created, view, image, iconSize)), element));
             }
 
             // 表示順を固定する: Redo（現在に近い未来から）→ 現在 → Undo（現在の直前から過去へ）
             for (var i = 0; i < redo.Count; i++)
             {
-                AddItem(redo[i], $"Redo {i + 1}", isCurrent: false);
+                AddItem(redo[i], $"やり直し {i + 1}", isCurrent: false);
             }
 
             if (current is not null)
@@ -189,7 +182,7 @@ internal static class UndoPage
 
             for (var i = undo.Count - 1; i >= 0; i--)
             {
-                AddItem(undo[i], $"Undo {undo.Count - i}", isCurrent: false);
+                AddItem(undo[i], $"元に戻す {undo.Count - i}", isCurrent: false);
             }
 
             thumbnails = created;
@@ -200,7 +193,7 @@ internal static class UndoPage
                 thumbnail.Dispose();
             }
 
-            countText.Value = ViewModeDisplay.GetItemCountText(list.Count);
+            countText.Value = ViewModeDisplay.GetItemCountText(list.Items.Count);
             modeText.Value = ViewModeDisplay.GetText(selectedIndex);
         }
 
@@ -238,7 +231,7 @@ internal static class UndoPage
         statusGrid.Add(status.Column(0));
         statusGrid.Add(hint.Column(1));
 
-        var scroll = new ScrollViewer().Content(list);
+        var scroll = new ScrollViewer().Content(list.Panel);
 
         // 見え方が変わったら優先度を付け直す（スクロールと、ウィンドウの大きさの変化）
         // 可視領域はスクロールの位置と高さから求め、行の位置は要素の配置から取る
@@ -300,7 +293,7 @@ internal static class UndoPage
                 toolbar,
                 new Border()
                     .StyleName(AppStyles.ListSurface)
-                    .Child(new Grid().Rows("*").Columns("*").Padding(10).Children(scroll)),
+                    .Child(new Grid().Rows("*").Columns("*").Children(scroll)),
                 new Border()
                     .Padding(AppStyles.StatusPaddingX, AppStyles.ListStatusPaddingY)
                     .StyleName(AppStyles.StatusBar)
@@ -359,42 +352,6 @@ internal static class UndoPage
             return ValueTask.CompletedTask;
         };
 
-    /// <summary>サムネイル 1 件分の要素を生成する。</summary>
-    /// <param name="view">サムネイルを表示する要素（生成の結果は後から本要素へ設定する）。</param>
-    /// <param name="image">サムネイルの元画像（所有権はスタック側が保持する。 本ページは破棄しない）。</param>
-    /// <param name="label">サムネイル下のラベル。</param>
-    /// <param name="isCurrent">現在プレビューに表示中の画像かどうか（true の場合は青枠で強調する）。</param>
-    /// <param name="iconSize">サムネイルの一辺のサイズ（DIP）。</param>
-    /// <returns>サムネイルとラベルを縦に並べた要素。</returns>
-    /// <remarks>
-    /// ダブルクリックで <paramref name="image"/>（<b>元の寸法のまま</b>）を一時ファイルへ書き出し、OS の既定アプリで開く。<br/>
-    /// <b>表示は縮小した画像を使う</b>: コアの面積平均（<see cref="EsImageQuality.High"/>）で <paramref name="iconSize"/> へ縮小してから描画する。<br/>
-    /// 描画時に Skia へ縮小させるとサンプリング（既定は最近傍）によって<b>同じ寸法でも画質が変わる</b>（細線の輝度が実際より高く出る）
-    /// ため、Avalonia 版（表示用の射影を縮小する）と同じ手順に揃える。<br/>
-    /// 縮小そのものは背景（<see cref="MakeThumbnailWork"/>）が行う。
-    /// </remarks>
-    private static Element CreateItem(
-        ThumbnailView view, EsReadOnlyBitmap image, string label, bool isCurrent, int iconSize)
-    {
-        // 枠（背景色・枠線・角丸）はスタイルが与え、ホバーのハイライトはアイテム側が切り替える
-        var frame = new Border()
-            .StyleName(isCurrent ? AppStyles.ThumbnailFrameCurrent : AppStyles.ThumbnailFrame)
-            .Child(view);
-
-        // ラベルは枠（画像 + 影の余白）と同じ幅にし、文字を画像の中央へ揃える
-        // （文字は Avalonia 版と同じく領域の上端へ寄せる）
-        var caption = new Label()
-            .Text(label)
-            .TextAlignment(TextAlignment.Center)
-            .VerticalTextAlignment(TextAlignment.Top)
-            .Width(iconSize + AppStyles.ThumbnailShadowBlur * 2)
-            .Height(LabelHeight)
-            .FontSize(11);
-        caption.Padding = new Thickness(1, 1, 2, 1);
-
-        return ThumbnailItem.Create(frame, caption, () => OpenInDefaultApp(image));
-    }
-
     /// <summary>画像を一時ファイルへ書き出し、OS の既定アプリで開く。</summary>
     /// <param name="image">開く画像。</param>
     /// <remarks>
@@ -420,3 +377,7 @@ internal static class UndoPage
         }
     }
 }
+
+
+
+

@@ -81,7 +81,7 @@ classDiagram
     class GdiImageView {
         +Source
         #UniformDraw
-        #OnPaint()
+        #OnPaintBackground()
     }
     class EsBitmapDrawingInterop
     class GdiImageRenderer

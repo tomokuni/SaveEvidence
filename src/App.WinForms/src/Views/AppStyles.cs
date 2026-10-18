@@ -1,14 +1,14 @@
-using EsUtil.SaveEvidence.App.Core.Enums;
-using Microsoft.Win32;
+using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
 
 /// <summary>アプリ共通の外観（面の色・文字色・枠線・アイテムの色）の単一所有。</summary>
 /// <remarks>
-/// <b>テーマ</b>: 設定のテーマ（ライト / ダーク / システム）に追従する。 「システム」は OS の<br/>
-/// アプリ用テーマ（<c>HKCU\...\Themes\Personalize</c> の <c>AppsUseLightTheme</c>）を読んで解決する。<br/>
-/// <b>色の値</b>: 他の実装と同じ実測値（ページは白 / 黒、ナビは <c>#E6E6E6</c> / <c>#1F1F1F</c>、<br/>
-/// 一覧は <c>#F2F2F2</c> / <c>#2B2B2B</c>）を使う。<br/>
+/// <b>テーマ</b>: 本 UI 版（WinForms）は<b>ダークテーマを使用しない</b>（常に明色）。 ネイティブ コントロール<br/>
+/// （タイトル バー・スクロールバー・コンボ ボックス等）の配色を標準機能では揃えられず、部分的な暗色化は<br/>
+/// かえって読みにくくなるため、明色で統一する（設定ファイルの <c>ThemeMode</c> は読むが反映しない）。<br/>
+/// <b>色の値</b>: 4 つの UI 版で共通に使う色（ページ・ナビ・画像領域）は <see cref="AppPalette"/>（App.Core）が<br/>
+/// 単一所有する。 本クラスは明色の値を WinForms の色型へ変換して返す。<br/>
 /// <b>面の単位</b>: ここで返すのは DIP 相当の値であり、コントロールは <c>AutoScaleMode = Dpi</c> で<br/>
 /// 実際の DPI へ拡大する。
 /// </remarks>
@@ -23,86 +23,83 @@ internal static class AppStyles
     /// <summary>選択中の項目を示す枠の太さ（DIP）。</summary>
     public const float SelectedBorderWidth = 2f;
 
-    /// <summary>明色テーマを使用中かどうか。</summary>
-    private static bool s_isLight = true;
-
-    /// <summary>テーマが変わったことを通知する。</summary>
-    /// <remarks>画像アイコンやコントロールへ直接設定した色を持つページが購読して描き直す。</remarks>
-    public static event EventHandler? ThemeChanged;
-
     /// <summary>ページ（ウィンドウ）の背景色を取得する。</summary>
-    public static Color PageBackground => s_isLight ? Color.FromArgb(0xFF, 0xFF, 0xFF) : Color.FromArgb(0x00, 0x00, 0x00);
+    public static Color PageBackground => ToColor(AppPalette.Page(isDark: false));
 
     /// <summary>ナビゲーション パネルの背景色を取得する。</summary>
-    public static Color NavBackground => s_isLight ? Color.FromArgb(0xE6, 0xE6, 0xE6) : Color.FromArgb(0x1F, 0x1F, 0x1F);
+    public static Color NavBackground => ToColor(AppPalette.NavPanel(isDark: false));
+
+    /// <summary>画像領域（プレビューの下地）の背景色を取得する。</summary>
+    public static Color ImageAreaBackground => ToColor(AppPalette.ImageArea(isDark: false));
 
     /// <summary>一覧の背景色を取得する。</summary>
-    public static Color ListBackground => s_isLight ? Color.FromArgb(0xF2, 0xF2, 0xF2) : Color.FromArgb(0x2B, 0x2B, 0x2B);
+    public static Color ListBackground => Color.FromArgb(0xF2, 0xF2, 0xF2);
 
     /// <summary>文字の色を取得する。</summary>
-    public static Color Foreground => s_isLight ? Color.FromArgb(0x1A, 0x1A, 0x1A) : Color.FromArgb(0xF0, 0xF0, 0xF0);
+    public static Color Foreground => Color.FromArgb(0x1A, 0x1A, 0x1A);
 
     /// <summary>枠線の色を取得する。</summary>
-    public static Color Border => s_isLight ? Color.FromArgb(0xC8, 0xC8, 0xC8) : Color.FromArgb(0x55, 0x55, 0x55);
+    public static Color Border => Color.FromArgb(0xC8, 0xC8, 0xC8);
+
+    /// <summary>通知メッセージ（「キャプチャしました」など）の文字色を取得する。</summary>
+    /// <remarks>他の UI 版（WinUI3 / MewUI / AvaloniaUI）と同じ青（<c>#007ACC</c>）にする。</remarks>
+    public static Color Announce => Color.FromArgb(0x00, 0x7A, 0xCC);
 
     /// <summary>選択中のナビ項目の背景色を取得する。</summary>
-    public static Color NavItemSelected => s_isLight ? Color.FromArgb(0xD0, 0xD0, 0xD0) : Color.FromArgb(0x3A, 0x3A, 0x3A);
+    public static Color NavItemSelected => Color.FromArgb(0xD0, 0xD0, 0xD0);
 
     /// <summary>ナビ項目にカーソルが重なったときの背景色を取得する。</summary>
-    public static Color NavItemHover => s_isLight ? Color.FromArgb(0xDC, 0xDC, 0xDC) : Color.FromArgb(0x2A, 0x2A, 0x2A);
+    public static Color NavItemHover => Color.FromArgb(0xDC, 0xDC, 0xDC);
 
     /// <summary>一覧の項目にカーソルが重なったときの背景色を取得する。</summary>
-    public static Color ItemHover => s_isLight ? Color.FromArgb(0xE0, 0xE0, 0xE0) : Color.FromArgb(0x3A, 0x3A, 0x3A);
+    public static Color ItemHover => ToColor(ThumbnailTileMetrics.HoverBackground(isDark: false));
 
     /// <summary>強調（選択・リンク）の色を取得する。</summary>
     public static Color Accent => Color.FromArgb(0x00, 0x78, 0xD4);
 
     /// <summary>ツールバーとステータスバーの背景色を取得する。</summary>
-    public static Color BarBackground => s_isLight ? Color.FromArgb(0xF7, 0xF7, 0xF7) : Color.FromArgb(0x14, 0x14, 0x14);
+    public static Color BarBackground => Color.FromArgb(0xF7, 0xF7, 0xF7);
 
     /// <summary>使用する UI フォントを取得する。</summary>
     /// <remarks>システムのメッセージ ボックス フォントを共用する（ページごとにフォントを作らない）。</remarks>
     public static Font UiFont => SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
 
-    /// <summary>テーマを適用する。</summary>
-    /// <param name="mode">適用するテーマ モード。</param>
-    /// <remarks>「システム」は OS の設定を読んで解決する。 変更は <see cref="ThemeChanged"/> で通知する。</remarks>
-    public static void ApplyTheme(ThemeMode mode)
-    {
-        var isLight = mode switch
-        {
-            ThemeMode.Light => true,
-            ThemeMode.Dark => false,
-            _ => IsSystemLightTheme(),
-        };
+    /// <summary>使用する UI フォントの太字を取得する。</summary>
+    /// <value>現在の画像（現在プレビューに表示中の履歴）の名前を強調するために使う。</value>
+    /// <remarks>呼ぶたびに <c>Font</c> を作ると GDI ハンドルが増えるため、1 つだけ生成して共用する。</remarks>
+    public static Font BoldUiFont => s_boldUiFont;
 
-        if (s_isLight == isLight)
-        {
-            return;
-        }
+    private static readonly Font s_boldUiFont =
+        new(UiFont.FontFamily, UiFont.Size, FontStyle.Bold);
 
-        s_isLight = isLight;
-        ThemeChanged?.Invoke(null, EventArgs.Empty);
-    }
-
-    /// <summary>OS のアプリ用テーマが明色かどうかを判定する。</summary>
-    /// <returns>明色の場合は true。 読めない場合は true（既定は明色）。</returns>
+    /// <summary>設定ページのフォントを取得する。</summary>
+    /// <value>AvaloniaUI 版と同じ 14 DIP を pt へ換算したフォント。</value>
     /// <remarks>
-    /// テーマの設定は利用者ごとのレジストリに保存される。 読めない場合は例外にせず既定値を使う<br/>
-    /// （テーマが読めないことで起動できなくならないようにする）。
+    /// <b>1 つだけ生成して共用する</b>: 呼ぶたびに <c>Font</c> を作ると GDI ハンドルが増える。<br/>
+    /// <c>Font</c> は pt 単位のため、DIP（96 DPI 基準）から <c>× 72 ÷ 96</c> で換算する。
     /// </remarks>
-    private static bool IsSystemLightTheme()
-    {
-        try
-        {
-            using var key = Registry.CurrentUser.OpenSubKey(
-                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
-            return key?.GetValue("AppsUseLightTheme") is not int value || value != 0;
-        }
-        catch (Exception ex) when (EsUtil.Platform.Core.BoundaryCatch.IsRecoverable(ex))
-        {
-            // レジストリを読めない環境（権限・ポリシー）では明色として扱う
-            return true;
-        }
-    }
+    public static Font SettingsFont => s_settingsFont;
+
+    private static readonly Font s_settingsFont = new(
+        UiFont.FontFamily, (float)(SettingsMetrics.FontSize * 72.0 / 96.0), UiFont.Style);
+
+    /// <summary>設定ページの補足（例・説明）のフォントを取得する。</summary>
+    /// <value>AvaloniaUI 版と同じ 11 DIP を pt へ換算したフォント。</value>
+    /// <remarks>呼ぶたびに <c>Font</c> を作ると GDI ハンドルが増えるため、1 つだけ生成して共用する。</remarks>
+    public static Font SettingsHintFont => s_settingsHintFont;
+
+    private static readonly Font s_settingsHintFont = new(
+        UiFont.FontFamily, (float)(SettingsMetrics.HintFontSize * 72.0 / 96.0), UiFont.Style);
+
+    /// <summary>設定ページの入力コントロールの標準の高さ（ピクセル）を取得する。</summary>
+    /// <value>設定フォントの行高 + 上下の余白。</value>
+    /// <remarks>ボタン・入力欄の高さを固定値にすると、文字が大きくなったときに文字が欠ける。</remarks>
+    public static int SettingsControlHeight => Math.Max(26, (int)Math.Ceiling(s_settingsFont.GetHeight()) + 10);
+
+    /// <summary>32 ビットの色値（0xAARRGGBB）を WinForms の色へ変換する。</summary>
+    /// <param name="argb">色（0xAARRGGBB）。</param>
+    /// <returns>WinForms の色。</returns>
+    private static Color ToColor(uint argb)
+        => Color.FromArgb((byte)(argb >> 24), (byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
 }
+

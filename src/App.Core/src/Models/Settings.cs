@@ -86,6 +86,14 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private bool _centerAlign;
 
+    /// <summary>起動直後のキャプチャ ページに置く画像（プレースホルダ）の種類を取得または設定する。</summary>
+    /// <remarks>
+    /// デフォルトは <see cref="StartupPreviewMode.Gradient"/>（撮影前に機能の動作確認ができる）。<br/>
+    /// <see cref="StartupPreviewMode.Blank"/> を選ぶと画像を置かない（プレビューは画像領域の背景色だけになる）。
+    /// </remarks>
+    [ObservableProperty]
+    private StartupPreviewMode _startupPreview = StartupPreviewMode.Gradient;
+
     /// <summary>キャプチャ時（SnipOverlayWindow）の選択枠境界線色を取得または設定する。</summary>
     /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: DarkGray = <c>#FFA9A9A9</c>）。</remarks>
     [ObservableProperty]

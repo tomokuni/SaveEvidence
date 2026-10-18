@@ -3,9 +3,6 @@
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.App">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- フォルダビューのサムネイル影（Fluent テーマに BoxShadows の標準リソースがないため、
-                 テーマ非依存の単一値として App レベルで定義する） -->
-            <BoxShadows x:Key="ThumbnailShadow">0 3 10 0 #8A000000</BoxShadows>
         </ResourceDictionary>
     </Application.Resources>
 
@@ -33,6 +30,18 @@
         <Style Selector="TextBox.toolbar">
             <Setter Property="Height" Value="32"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- ステータスバーのズーム操作（⊖ / ⊕ / Fit / 拡大率）は通常時の背景を持たない
+             （ホバー・押下の見た目は Fluent テーマの既定に任せる）。 -->
+        <Style Selector="Button.status">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.status:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}"/>
+        </Style>
+        <Style Selector="Button.status:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPressed}"/>
         </Style>
 
         <!-- フルスクリーンボタン（最小化ボタンの左の斜め矢印）を無効化する（KIOSK 化機能は不要）。

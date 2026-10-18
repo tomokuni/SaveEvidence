@@ -4,13 +4,10 @@ using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Media;
 using Windows.Storage;
-using Windows.UI;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 
@@ -29,9 +26,6 @@ internal static class UndoPage
 
     /// <summary>サムネイルの書き出しに使う画像ライター（表示用の一時ファイルを作る）。</summary>
     private static readonly IImageWriter s_writer = new EsBitmapImageWriter();
-
-    /// <summary>現在の画像を強調する枠の色。</summary>
-    private static readonly Color s_currentBorder = Color.FromArgb(255, 30, 144, 255);
 
     /// <summary>ページの内容を生成する。</summary>
     /// <param name="services">アプリ全体で共有するコア オブジェクト。</param>
@@ -55,8 +49,10 @@ internal static class UndoPage
         };
 
         var iconSize = settingsService.Current.GetIconSize(view.SelectedViewModeIndex);
-        var listHost = new Grid();
-        var listRoot = new Grid { RowSpacing = AppStyles.ListItemSpacing, ColumnSpacing = AppStyles.ListItemSpacing };
+
+        // 一覧はフォルダビューと同じ共通コントロール（ThumbnailList）を使う
+        var list = new ThumbnailList();
+        var listHost = list.Host;
 
         var itemCountText = CreateStatusLabel(view.ItemCountText);
         var modeText = CreateStatusLabel(view.ViewModeText);
@@ -148,66 +144,40 @@ internal static class UndoPage
         page.Children.Add(listHost);
         page.Children.Add(status);
 
-        void LayoutList(double availableWidth)
-        {
-            var size = settingsService.Current.GetIconSize(view.SelectedViewModeIndex);
-            var columns = WrapLayoutMath.Columns(availableWidth, size, AppStyles.ListItemSpacing);
-            var rows = (listRoot.Children.Count + columns - 1) / columns;
-
-            listRoot.ColumnDefinitions.Clear();
-            listRoot.RowDefinitions.Clear();
-            for (var column = 0; column < columns; column++)
-            {
-                listRoot.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            }
-
-            for (var row = 0; row < rows; row++)
-            {
-                listRoot.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            }
-
-            for (var i = 0; i < listRoot.Children.Count; i++)
-            {
-                var child = (FrameworkElement)listRoot.Children[i];
-                Grid.SetColumn(child, i % columns);
-                Grid.SetRow(child, i / columns);
-            }
-        }
+        // 一覧の幅が変わったら並べ直す（行の高さは行内の最大アイテム高さ・アイテムは下端揃え）
+        void LayoutList(double availableWidth) => list.Layout(availableWidth);
 
         void Rebuild()
         {
             iconSize = settingsService.Current.GetIconSize(view.SelectedViewModeIndex);
-            listRoot.Children.Clear();
+            list.Clear();
 
             // Redo（新しい未来）→ 現在 → Undo（古い過去）の順に並べる
             var redo = history.GetRedoHistory();
             for (var i = redo.Count - 1; i >= 0; i--)
             {
-                listRoot.Children.Add(CreateItem(redo[i], iconSize, isCurrent: false));
+                var image = redo[i];
+                list.Add(CreateItem(image, iconSize), $"やり直し {redo.Count - i}", iconSize, "履歴の画像",
+                    () => _ = OpenInDefaultAppAsync(image));
             }
 
             if (viewModel.PreviewImage is { } current)
             {
-                listRoot.Children.Add(CreateItem(current, iconSize, isCurrent: true));
+                list.Add(CreateItem(current, iconSize), "現在", iconSize, "現在の画像",
+                    () => _ = OpenInDefaultAppAsync(current), isCurrent: true);
             }
 
-            foreach (var image in history.GetUndoHistory())
+            var undo = history.GetUndoHistory();
+            for (var i = undo.Count - 1; i >= 0; i--)
             {
-                listRoot.Children.Add(CreateItem(image, iconSize, isCurrent: false));
+                var image = undo[i];
+                list.Add(CreateItem(image, iconSize), $"元に戻す {undo.Count - i}", iconSize, "履歴の画像",
+                    () => _ = OpenInDefaultAppAsync(image));
             }
 
-            view.ItemCount = listRoot.Children.Count;
+            view.ItemCount = list.Tiles.Count;
             itemCountText.Text = view.ItemCountText;
             modeText.Text = view.ViewModeText;
-
-            listHost.Children.Clear();
-            listHost.Children.Add(new ScrollViewer
-            {
-                Content = listRoot,
-                Padding = new Thickness(AppStyles.ListItemSpacing),
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            });
 
             LayoutList(listHost.ActualWidth);
         }
@@ -220,40 +190,22 @@ internal static class UndoPage
             OnWarmUp: () =>
             {
                 Rebuild();
-                s_logger.LogThumbnailWarmUp("Undo 一覧", listRoot.Children.Count);
+                s_logger.LogThumbnailWarmUp("Undo 一覧", list.Tiles.Count);
             });
     }
 
-    /// <summary>一覧の 1 項目を生成する。</summary>
+    /// <summary>履歴の画像を表示する要素を生成する。</summary>
     /// <param name="image">表示する画像（借用。 破棄しない）。</param>
     /// <param name="iconSize">サムネイルの一辺（DIP）。</param>
-    /// <param name="isCurrent">現在の画像の場合は true（青い太枠で強調する）。</param>
-    /// <returns>生成した項目。</returns>
-    private static FrameworkElement CreateItem(EsReadOnlyBitmap image, int iconSize, bool isCurrent)
-    {
-        var thumbnail = new ThumbnailView
+    /// <returns>サムネイルの表示要素。</returns>
+    /// <remarks>枠・影・名前の行は共通の <see cref="ThumbnailTileView"/>（4 UI 版で共通の寸法）が組み立てる。</remarks>
+    private static ThumbnailView CreateItem(EsReadOnlyBitmap image, int iconSize)
+        => new()
         {
             Width = iconSize,
-            Height = iconSize,
+            Height = ThumbnailTileMetrics.ImageHeight(iconSize, image.Width, image.Height),
             Source = image,
         };
-
-        var frame = new Border
-        {
-            BorderThickness = isCurrent ? new Thickness(3) : new Thickness(1),
-            BorderBrush = new SolidColorBrush(isCurrent ? s_currentBorder : Colors.Transparent),
-            Padding = new Thickness(2),
-            Child = thumbnail,
-        };
-
-        ToolTipService.SetToolTip(frame, isCurrent ? "現在の画像" : "履歴の画像");
-        if (!isCurrent)
-        {
-            frame.DoubleTapped += (_, _) => _ = OpenInDefaultAppAsync(image);
-        }
-
-        return frame;
-    }
 
     /// <summary>画像を一時ファイル（PNG）へ書き出し、OS の既定アプリで開く。</summary>
     /// <param name="image">対象の画像（借用。 破棄しない）。</param>
@@ -305,3 +257,6 @@ internal static class UndoPage
     private static TextBlock CreateStatusLabel(string text)
         => new() { Text = text, FontSize = AppStyles.StatusFontSize, VerticalAlignment = VerticalAlignment.Center };
 }
+
+
+

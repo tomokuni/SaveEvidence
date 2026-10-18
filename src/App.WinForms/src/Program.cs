@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -50,8 +49,8 @@ internal static class Program
         var services = new AppServices(
             viewModel, settings, undoHistory, new FolderViewViewModel(), new UndoViewModel());
 
-        // 撮影前のプレースホルダ画像（起動直後からプレビュー・保存・履歴を操作できるようにする）
-        viewModel.SetPreviewImage(CreatePlaceholderImage());
+        // 起動直後のプレビュー画像（設定で「グラデーション画像」か「空白」を選ぶ）
+        StartupPreviewImage.Apply(viewModel, settings.Current.StartupPreview);
 
         s_logger.LogAppStart(typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown");
 
@@ -96,38 +95,5 @@ internal static class Program
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         Application.ThreadException += (_, e) =>
             s_logger.LogUnhandledException(e.Exception, "Application.ThreadException");
-    }
-
-    /// <summary>撮影前のプレースホルダ画像を生成する。</summary>
-    /// <returns>生成した画像。 所有権は呼び出し側（メイン ViewModel）へ移る。</returns>
-    /// <remarks>
-    /// 起動直後は画像が無く、保存・コピー・切り出しがすべて無効になる。 プレースホルダを置くことで、<br/>
-    /// 撮影の成否とは無関係に UI の各機能を確認できる（座標表示・ズーム・保存の動作確認に使う）。
-    /// </remarks>
-    private static EsBitmap CreatePlaceholderImage()
-    {
-        const int width = 640;
-        const int height = 400;
-        using var bitmap = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-        using (var graphics = Graphics.FromImage(bitmap))
-        {
-            using var topLeft = new SolidBrush(Color.FromArgb(255, 32, 64, 128));
-            using var bottomRight = new SolidBrush(Color.FromArgb(255, 16, 24, 48));
-            graphics.FillRectangle(topLeft, 0, 0, width, height / 2);
-            graphics.FillRectangle(bottomRight, 0, height / 2, width, height / 2);
-
-            using var border = new Pen(Color.FromArgb(255, 200, 200, 200), 2);
-            graphics.DrawRectangle(border, 8, 8, width - 17, height - 17);
-
-            TextRenderer.DrawText(
-                graphics,
-                "SaveEvidence (WinForms)",
-                SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont,
-                new Rectangle(0, 0, width, height),
-                Color.White,
-                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-        }
-
-        return GdiBitmapInterop.ToEsBitmap(bitmap);
     }
 }

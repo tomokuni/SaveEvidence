@@ -53,15 +53,23 @@
                         BorderThickness="1" Grid.Row="1" Margin="0,0,0,5" Padding="5">
                     <StackPanel>
                         <TextBlock Text="保存設定" FontWeight="Bold" Margin="0,0,0,5"/>
-                        <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="5">
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="5">
                             <Label Content="保存先フォルダ:" Grid.Column="0"/>
-                            <!-- ToolTip は {MyPictures} がマークアップ拡張と衝突するためコードビハインドで設定する -->
+                            <!-- ToolTip は {MyPictures} がマークアップ拡張と衝突するためコードビハインドで設定する。
+                                 幅は残り（ラベルと参照ボタンを除いた分）いっぱいに広げ、ウィンドウ幅へ追従させる -->
                             <TextBox x:Name="SaveFolderTextBox" Text="{Binding SaveFolderPath}" Grid.Column="1"
-                                     MinWidth="400"
+                                     HorizontalAlignment="Stretch"
                                      VerticalContentAlignment="Center"
                                      Classes.validation-error="{Binding HasInvalidSaveFolder}"/>
                             <Button Content="参照..." Grid.Column="2" Click="OnBrowseFolderClick"/>
                         </Grid>
+                        <!-- プレースホルダの説明（文言は SettingsMetrics（App.Core）が単一所有する。
+                             {MyPictures} がマークアップ拡張と衝突するため、Text はコードビハインドで設定する） -->
+                        <TextBlock x:Name="SaveFolderHint"
+                                   FontSize="11"
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                     </StackPanel>
                 </Border>
 
@@ -72,6 +80,21 @@
                         <TextBlock Text="画像設定" FontWeight="Bold" Margin="0,0,0,5"/>
                         <CheckBox IsChecked="{Binding Settings.CenterAlign}"
                                   Content="画像を中央に配置（オフで左上配置）"/>
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="5" Margin="0,5,0,0">
+                            <Label Content="起動時の画像:" Grid.Column="0"/>
+                            <ComboBox ItemsSource="{Binding StartupPreviewModes}"
+                                      SelectedItem="{Binding Settings.StartupPreview}"
+                                      Grid.Column="1"
+                                      MinWidth="140"
+                                      HorizontalAlignment="Left"
+                                      ToolTip.Tip="起動直後のキャプチャ ページに置く画像（次回起動から反映）">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="enum:StartupPreviewMode">
+                                        <TextBlock Text="{Binding Converter={StaticResource EnumToDisplayNameConverter}}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
                     </StackPanel>
                 </Border>
 

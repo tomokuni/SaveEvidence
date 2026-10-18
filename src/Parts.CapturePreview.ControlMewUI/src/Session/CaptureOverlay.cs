@@ -218,7 +218,7 @@ internal sealed class CaptureOverlay
         try
         {
             // 確定・キャンセルまで待つ（入れ子ループを作らない非同期の待機。 ホストの継続は呼び出し側へ戻る）
-            await ShowAsync(owner, services).ConfigureAwait(true);
+            await ShowAsync(owner, services, ownerScope).ConfigureAwait(true);
             // 確定・キャンセルは必ず結果を確定させてからウィンドウを閉じるため、待機は即座に返る
             // （ウィンドウのクローズ経路は CompleteCapture / Cancel に限られる）。
             // 結果の読み出しは待機で行う（完了済みのタスクを同期的に読むと、UI スレッドをブロックしうる）
@@ -301,6 +301,7 @@ internal sealed class CaptureOverlay
     /// <summary>オーバーレイを表示し、確定またはキャンセルまで待つ。</summary>
     /// <param name="owner">オーナーウィンドウ。</param>
     /// <param name="services">オーバーレイの実行に必要なサービス（撮影サービス・ウィンドウ操作）。</param>
+    /// <param name="ownerScope">オーナーの退避とキャプチャ除外のスコープ（退避の実行時期を本メソッドが決める）。</param>
     /// <returns>ウィンドウが閉じるまで待機するタスク。</returns>
     /// <remarks>
     /// ウィンドウは仮想スクリーンの位置・サイズでボーダーレス・最前面に表示する。<br/>
@@ -309,7 +310,7 @@ internal sealed class CaptureOverlay
     /// セッションの開始から終了までの間、呼び出し側のコードが進まない（Facade がセッションの生成・破棄と<br/>
     /// 排他の解放を担えないため、Avalonia 版と契約が食い違う）。
     /// </remarks>
-    private async Task ShowAsync(Window owner, CaptureOverlayServices services)
+    private async Task ShowAsync(Window owner, CaptureOverlayServices services, CaptureOwnerScope ownerScope)
     {
         ArgumentNullException.ThrowIfNull(owner);
 
@@ -376,6 +377,14 @@ internal sealed class CaptureOverlay
 
             revealed = true;
             window.Opacity = 1;
+
+            // オーナーの退避は、キャプチャ除外が効かない場合だけ行う（自ウィンドウが撮影画像へ写るため）。
+            // 除外が効いている場合は退避しない: オーバーレイが画面全体を覆っているため見た目は変わらないが、
+            // 退避の瞬間にウィンドウが再合成され、一瞬だけ明るい画面が見える（実測）
+            if (!ownerScope.IsExcluded)
+            {
+                ownerScope.ApplyPendingHide();
+            }
         };
 
         // 撮影中の一時的な表示のため、タスクバー・Alt+Tab の一覧には出さない

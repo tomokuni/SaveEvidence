@@ -9,6 +9,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <param name="OnKeyDown">ページ固有のキー処理。 不要なページは null。<c>Handled</c> を設定した場合、以降へ伝わらない。</param>
 /// <param name="OnDeactivated">ページが表示から外れるたびに呼ぶ処理。 不要なページ は null。</param>
 /// <param name="OnWarmUp">起動後に一度だけ呼ぶ処理（ページを表示せずに一覧を構築し、低負荷で準備する）。 不要なページは null。</param>
+/// <param name="OnWindowDeactivated">ウィンドウが非アクティブになったときに呼ぶ処理（開いているポップアップを閉じる等）。 不要なページは null。</param>
 /// <remarks>
 /// <b>OnActivated が必要な理由</b>: MewUI の <c>NavigationView</c> は選択のたびに内容を渡し直す用途を想定しているが、<br/>
 /// 本アプリはページの要素を 1 度だけ生成して再利用する（状態と購読を保持するため）。<br/>
@@ -26,4 +27,4 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// </remarks>
 internal sealed record PageContent(
     FrameworkElement Content, Action? OnActivated = null, Action<KeyEventArgs>? OnKeyDown = null, Action? OnDeactivated = null,
-    Action? OnWarmUp = null);
+    Action? OnWarmUp = null, Action? OnWindowDeactivated = null);

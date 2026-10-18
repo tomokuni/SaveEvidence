@@ -66,16 +66,15 @@
 
 | コンポーネント | 標準リソース | ライト | ダーク |
 | --- | --- | --- | --- |
-| フォルダリスト背景 | `SystemControlBackgroundAltHighBrush` | 白 | 黒 |
-| ファイル名ラベル背景 | `SystemControlBackgroundAltHighBrush`（リストと同一色） | 白 | 黒 |
+| フォルダリスト背景 | Fluent の `ListBox` 既定 | 薄いグレー（`#F2F2F2`） | 暗いグレー（`#2B2B2B`） |
+| ファイル名ラベル背景 | 透明（リストの背景が見える） | — | — |
 | ファイル名文字 | `SystemControlForegroundBaseHighBrush` | 黒 | 白 |
-| サムネイル枠背景 | `SystemControlBackgroundChromeMediumLowBrush` | 薄いグレー（`#F2F2F2`） | 暗いグレー（`#FF2B2B2B`） |
-| サムネイル枠線 | `SystemControlForegroundChromeGrayBrush` | グレー（`#767676`） | グレー（`#767676`） |
-| サムネイル影 | `ThumbnailShadow`（App リソース・テーマ非依存） | 単一値（`0 3 10 0 #8A000000`） | 単一値（同左） |
+| サムネイル影 | `ShadowPlan`（App.Core。 幅・濃さの変化の単一所有者） | 単一値（計画から `BoxShadow` を生成） | 単一値（同左） |
 
-- 背景・枠線・文字色は **Fluent テーマの標準リソース（DynamicResource）** を参照し、テーマ切替に自動追従する（カスタム ThemeDictionaries は不使用）
-- サムネイル影のみ、Fluent テーマに BoxShadows の標準リソースが存在しないため、テーマ非依存の単一値として App リソース（`ThumbnailShadow`）で定義する
-- ホバー時は枠線がアクセントブルー（`#0078D4`）にハイライトされ、影は非表示になる（テーマ非依存）
+- 背景・文字色は **Fluent テーマの標準リソース（DynamicResource）** を参照し、テーマ切替に自動追従する（カスタム ThemeDictionaries は不使用）
+- **画像の周りは影だけ**にする（枠線・下地・角丸は描かない）
+- サムネイル影は `ShadowPlan`（App.Core）の値（`OffsetY` / `BlurRadius` / `ColorArgb`）から `BoxShadow` を生成する（キャプチャページの画像・Undo 一覧と同じ計画を使う）
+- ホバー時は影を非表示にし、一覧の項目（`ListBoxItem`）の帯（`#DADADA`）を表示する
 
 ## 4. フォルダビュー
 
@@ -93,6 +92,11 @@
 - **復元時の同期**: 復元した表示モード・ソート順を ToggleButton の選択状態（チェック）へ同期する。 同期対象は対応するボタン群のみ（表示モードボタンは Tag=0〜2、ソートボタンは Tag=asc/desc。 他グループには触れない）
 
 ### 4.2 一覧表示
+
+**一覧は 2 つのページで共通のコントロール**: フォルダビューと Undo 一覧は、同じ `ThumbnailList`（`ListBox` の派生。 テーマは `ListBox` のものを使用）を使います。 枠・影・名前の行・ホバーの表現・並べ方（`BottomAlignWrapPanel`）はこのコントロールが単一所有し、ページは並べる項目（`ThumbnailListItem`）を渡すだけです。 寸法は `ThumbnailTileMetrics`（App.Core）が単一所有します。
+
+- 項目の外側の余白は 12 DIP（`ListBoxItem` の既定）＋ 2 DIP（項目の `Margin`）で、隣り合う画像の間隔は 28 DIP（`ThumbnailTileMetrics.ItemGap`）です。
+- マウスを重ねると、項目全体（余白を含む）へ薄いグレーの帯（`#DADADA`）を出し、影を消します。
 
 **サムネイルの縮小方式（両方とも同じ画質にするための構成）**: 2 つの一覧は画像の出所が違いますが、**最終的な縮小はどちらも面積平均**に揃えています（コーデック／Skia の縮小は「デコードのついで」に使うだけです）。
 
@@ -170,6 +174,8 @@
 - **エラーメッセージ**: `ValidationMessage`（例: 「ファイル名に使用できない文字 ('/') が含まれています。」）
 - **即時反映**: テキスト入力中も含め即時検証・反映され、エラー解消で自動的に通常表示へ戻る
 - **オートインクリメント**: 保存成功後に、テンプレート文字列の**右端の数値**をインクリメントして次のファイル名を自動生成する（`FileNameTemplate.IncrementRightmostNumber`。 桁数は維持: `screenshot_001.png` → `screenshot_002.png`）。 数値がなければそのまま維持される
+- **入力欄の幅**: 入力した文字列の実測幅に合わせて広がる（最小 220 DIP・左右の余白 24 DIP）。 上限は**ツールバーが折り返さない幅**（ツールバーの幅から自分以外の要素と余白を除いた幅）で、超える分は入力欄の中でスクロールする（アイコン類が 2 段にならない）。 ウィンドウの幅が変わったときも上限を計算し直す
+- **アイコン ボタンの背景**: 通常時は下地を塗らず、マウスを重ねると角丸の薄い矩形、押している間はさらに濃い矩形になる（角丸 4 DIP・色は `AppPalette.ToolbarButtonBackground` が単一所有し、MewUI 版・WinUI 3 版と同じ段階）。 表示モードの `ToggleButton` は選択状態を塗り分けるため対象外
 
 ### 5.1 プレースホルダ
 
@@ -214,6 +220,7 @@
 - パスの一部に含められる（例: `{MyPictures}\SaveEvidence`）
 - 解決は `MainViewModel.ResolveSaveFolderPath` / `SaveFolderPathResolved` が行い、保存・フォルダ一覧（FolderViewPage）・保存ボタンの ToolTip・エクスプローラーで開く操作はすべて解決済みパスを使用する
 - 設定値（`Settings.SaveFolderPath`）にはプレースホルダのまま保存される
+- 入力欄の下に補足（例: `例: {MyPictures}\SaveEvidence（{MyPictures} はピクチャフォルダへ展開されます）`）を表示する（文言は `SettingsMetrics.SaveFolderHint`（App.Core）が単一所有し、4 UI 版で共通）
 
 ### 6.1 ToolTip
 
@@ -237,7 +244,9 @@
 ### 7.1 拡大率表示と座標表示
 
 - **拡大率表示**: `CropView.ZoomChanged` イベントの `e.ZoomPercent` から `MainViewModel.ZoomDisplayText`（例: "120%"）を生成し、ステータスバーがバインディングで表示する。 Fit 中も実効倍率の % を表示する（「自動」表記なし）
+- **ズーム操作ボタンの下地**: ステータスバーの ⊖ / ⊕ / Fit / 拡大率のボタンは通常時の下地を塗らない（`Button.status`。 ホバー・押下は Fluent テーマの既定のまま）
 - **座標表示**: `CapturePage.OnImagePointerMoved` が `CropView.ImageRectViewport()` / `CropView.ClientToSource()`（`ClientToSource` ヘルパー経由）でポインタの対象座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `-`）
+- **通知メッセージ**: 撮影が確定したら `MainWindow.OnCaptureCompleted` が `MainViewModel.StatusMessage` へ「キャプチャしました（W x H）」を設定する。 `MainViewModel.SetPreviewImage` は `StatusMessage` を空にするため、**画像の差し替えより後**に設定する。 文言は `StatusMessages`（App.Core）が単一所有し、切り出し・貼り付け・保存失敗・自動切り出しの通知はコアが設定する。 文字色は他の UI 版と同じ青 `#007ACC`
 - **フライアウト選択肢**: 拡大率ボタンのクリックで表示されるフライアウト（0=自動 + 固定倍率 10〜500% の 13 段階）から選択し、`CropView.ZoomPercent`（`MainViewModel.ZoomPercent`）を設定する（`CapturePage.OnZoomFlyoutItemClick`）
 - **切り出し中のズーム・パン**: 切り出し中は選択オーバーレイがプレビューを覆うため、ホイールは `CropViewControl` が内部でビューポートへ転送する（Ctrl+ホイール = カーソル位置を中心にズーム / 通常ホイール = パン / Shift+ホイール = 横パン）。 ステータスバーの ⊕⊖ ボタン・スライダ・`Ctrl +` / `Ctrl -` は切り出し中も使用できる（選択矩形は対象座標で不変のため維持される）。 スクロールバーはオーバーレイの下になり掴めないため、パンはホイールで行う
 

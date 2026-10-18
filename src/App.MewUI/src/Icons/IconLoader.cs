@@ -100,20 +100,31 @@ internal static partial class IconLoader
             {
                 canvas.Clear(SKColors.Transparent);
 
-                var scale = size2 / (float)ViewBoxSize;
-                canvas.Scale(scale);
-                using var paint = new SKPaint
+                // 図形の実寸（余白を除いた外接矩形）を一辺いっぱいへ広げる。
+                // Avalonia 版の PathIcon はジオメトリの外接矩形を枠いっぱいへ引き伸ばすため、
+                // SVG の viewBox（24x24）基準で描くとアイコンだけが小さく見える（実測）
+                var bounds = path.Bounds;
+                if (bounds.Width > 0 && bounds.Height > 0)
                 {
-                    IsAntialias = true,
-                    Style = SKPaintStyle.Fill,
-                    // アイコンの色は 0xAARRGGBB で受け取る
-                    Color = new SKColor(
-                        (byte)((argb >> 16) & 0xFF),
-                        (byte)((argb >> 8) & 0xFF),
-                        (byte)(argb & 0xFF),
-                        (byte)((argb >> 24) & 0xFF)),
-                };
-                canvas.DrawPath(path, paint);
+                    var scale = Math.Min(size2 / bounds.Width, size2 / bounds.Height);
+                    canvas.Translate(
+                        ((size2 - (bounds.Width * scale)) / 2f) - (bounds.Left * scale),
+                        ((size2 - (bounds.Height * scale)) / 2f) - (bounds.Top * scale));
+                    canvas.Scale(scale);
+
+                    using var paint = new SKPaint
+                    {
+                        IsAntialias = true,
+                        Style = SKPaintStyle.Fill,
+                        // アイコンの色は 0xAARRGGBB で受け取る
+                        Color = new SKColor(
+                            (byte)((argb >> 16) & 0xFF),
+                            (byte)((argb >> 8) & 0xFF),
+                            (byte)(argb & 0xFF),
+                            (byte)((argb >> 24) & 0xFF)),
+                    };
+                    canvas.DrawPath(path, paint);
+                }
             }
 
             using var image = SKImage.FromBitmap(bitmap);

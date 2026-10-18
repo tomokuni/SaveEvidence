@@ -45,6 +45,22 @@ public class IconLoaderTests
         Assert.Equal(1, bitmap.Height);
     }
 
+    /// <summary>ウィンドウ アイコンが指定サイズで作られ、呼び出しごとに別のインスタンスになることを検証する。</summary>
+    /// <remarks>
+    /// Windows Forms はフォームへ設定した <see cref="Icon"/> を破棄するため、同じインスタンスを共有すると<br/>
+    /// 2 つ目のウィンドウで破棄済みのアイコンを使うことになる。
+    /// </remarks>
+    [Fact]
+    public void ウィンドウアイコンを呼び出しごとに作る()
+    {
+        var first = IconLoader.CreateWindowIcon(24);
+        var second = IconLoader.CreateWindowIcon(24);
+
+        Assert.Equal(24, first.Width);
+        Assert.Equal(24, first.Height);
+        Assert.NotSame(first, second);
+    }
+
     /// <summary>透明でない画素が 1 つ以上あるかどうかを判定する。</summary>
     /// <param name="bitmap">対象のビットマップ。</param>
     /// <returns>透明でない画素がある場合は true。</returns>

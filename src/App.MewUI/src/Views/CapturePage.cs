@@ -71,6 +71,12 @@ internal static class CapturePage
     /// <remarks>Avalonia 版のフライアウトと同じ段階を使う。</remarks>
     private static readonly double[] s_zoomMenuLevels = [10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
 
+    /// <summary>ファイル名テンプレートの最小幅（DIP）。 Avalonia 版と同じ値。</summary>
+    private const double TemplateMinWidth = 220;
+
+    /// <summary>ファイル名テンプレートの幅に足す左右の余白（DIP・枠とカーソル分）。 Avalonia 版と同じ値。</summary>
+    private const double TemplateHorizontalPadding = 24;
+
     /// <summary>自動切り出しの検出矩形の枠線色（水色・不透明。 Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropBorder = System.Drawing.Color.FromArgb(255, 0, 191, 255);
 
@@ -153,11 +159,61 @@ internal static class CapturePage
             }
         };
 
+        // メニューの外側をクリックしたら閉じるための覆い。
+        // メニューより背面・ページより前面に置き、開いている間だけ表示する
+        // （MewUI のイベントは親へ伝播しないため、外側のクリックを拾うには専用の面が要る）。
+        var dismissLayer = new Border
+        {
+            Background = MewUIColor.Transparent,
+            IsVisible = false,
+        };
+
         // ── メニュー（☰ の下へ出すプルダウン。 Avalonia 版の MenuFlyout に相当）──
-        var menuPanel = BuildMenu(viewModel, services, captureSession, ToggleCrop);
+        // 項目を選んで閉じたときも覆いを隠す（隠さないと次のクリックが覆いに吸われる）
+        var menuPanel = BuildMenu(
+            viewModel, services, captureSession, ToggleCrop, () => dismissLayer.IsVisible = false);
 
         // ── 拡大率メニュー（% 表示のクリックで出す。 Avalonia 版のフライアウトに相当）──
         var zoomMenu = BuildZoomMenu(crop);
+
+        // メニューの開閉。 メニューを開いているときに同じボタンを押すと、押下は覆い（dismissLayer）が受け取り、
+        // その後に届くマウス アップで ClickableToolTip の補完（ClickableToolTip のコメント参照）が走って
+        // 「閉じた直後に開き直す」ため、覆いで閉じた直後のクリックは無視する（実測 2026-10-18）。
+        var suppressMenuToggleUntil = DateTime.MinValue;
+
+        // メニュー・拡大率メニューを閉じる（外側のクリック・ページの切り替え・ウィンドウが非アクティブになったとき）
+        void CloseMenus()
+        {
+            menuPanel.IsVisible = false;
+            zoomMenu.IsVisible = false;
+            dismissLayer.IsVisible = false;
+            suppressMenuToggleUntil = DateTime.UtcNow.AddMilliseconds(300);
+        }
+
+        dismissLayer.OnMouseDown(_ => CloseMenus());
+
+        // メニュー・拡大率メニューの表示を切り替え、覆いの表示も合わせる
+        void ShowMenu(bool show)
+        {
+            menuPanel.IsVisible = show;
+            if (show)
+            {
+                zoomMenu.IsVisible = false;
+            }
+
+            dismissLayer.IsVisible = show || zoomMenu.IsVisible;
+        }
+
+        void ShowZoomMenu(bool show)
+        {
+            zoomMenu.IsVisible = show;
+            if (show)
+            {
+                menuPanel.IsVisible = false;
+            }
+
+            dismissLayer.IsVisible = show || menuPanel.IsVisible;
+        }
 
         // テーマ変更時に描き直すアイコン（画像と元の SVG ファイル名）
         var iconImages = new List<IconImage>();
@@ -178,15 +234,20 @@ internal static class CapturePage
         menuButton.Cursor(CursorType.Hand);
         menuButton.WithToolTip("メニュー", () =>
         {
-            zoomMenu.IsVisible = false;
-            menuPanel.IsVisible = !menuPanel.IsVisible;
+            if (DateTime.UtcNow < suppressMenuToggleUntil)
+            {
+                return;
+            }
+
+            ShowMenu(!menuPanel.IsVisible);
         });
 
         // 保存するファイル名テンプレート（保存ボタンの左）
+        // 幅はテキストの実測に合わせ、ツールバーが折り返さない幅を上限にする（下の UpdateTemplateWidth）
         var template = new TextBox
         {
             Text = viewModel.FileNameTemplateText,
-            MinWidth = 220,
+            MinWidth = TemplateMinWidth,
             Height = AppStyles.ToolbarButtonHeight,
             Margin = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
@@ -222,6 +283,49 @@ internal static class CapturePage
                 areaSelect,
                 AppStyles.CreateToolbarDivider(),
                 cropButton);
+
+        // ファイル名テンプレートの幅をテキストの実測に合わせる（上限は折り返さない幅）。
+        // ツールバーの幅が変わったら計算し直す
+        var measureText = new TextBlock().FontSize(template.FontSize);
+        void UpdateTemplateWidth()
+        {
+            measureText.Text(template.Text ?? string.Empty);
+            measureText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            var width = measureText.DesiredSize.Width + TemplateHorizontalPadding;
+            template.Width = Math.Max(TemplateMinWidth, Math.Min(width, ResolveTemplateMaxWidth()));
+        }
+
+        double ResolveTemplateMaxWidth()
+        {
+            var available = toolbar.Bounds.Width;
+            if (available <= 1)
+            {
+                return TemplateMinWidth;
+            }
+
+            var others = 0.0;
+            foreach (var child in toolbar.Children)
+            {
+                if (ReferenceEquals(child, template) || child is not FrameworkElement element)
+                {
+                    continue;
+                }
+
+                child.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                others += child.DesiredSize.Width + element.Margin.Left + element.Margin.Right;
+            }
+
+            return Math.Max(TemplateMinWidth, available - others - template.Margin.Left - template.Margin.Right);
+        }
+
+        // 入力に合わせて幅を計算し直す（テキスト変更・ツールバーの幅の変更）
+        template.OnTextChanged(value =>
+        {
+            viewModel.FileNameTemplateText = value;
+            UpdateTemplateWidth();
+        });
+        toolbar.SizeChanged += _ => UpdateTemplateWidth();
+        UpdateTemplateWidth();
 
         // ── ステータスバー ──
         // 左: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存済み/未 | 保存ファイル名 | 通知
@@ -275,9 +379,6 @@ internal static class CapturePage
         fit.Cursor(CursorType.Hand);
         fit.WithToolTip("ウィンドウに合わせて表示（Fit）", crop.ZoomFit);
 
-        var zoomLabel = new TextBlock().Text("拡大率:").FontSize(AppStyles.StatusFontSize);
-        zoomLabel.VerticalAlignment = VerticalAlignment.Center;
-
         // ズームスライダ（10〜500%）。 Avalonia 版と同じ範囲・幅・高さを使う
         zoomSlider = new Slider
         {
@@ -314,16 +415,12 @@ internal static class CapturePage
             StyleName = AppStyles.StatusButton,
         };
         zoomPercentButton.Cursor(CursorType.Hand);
-        zoomPercentButton.WithToolTip("クリックで拡大率を選択", () =>
-        {
-            menuPanel.IsVisible = false;
-            zoomMenu.IsVisible = !zoomMenu.IsVisible;
-        });
+        zoomPercentButton.WithToolTip("クリックで拡大率を選択", () => ShowZoomMenu(!zoomMenu.IsVisible));
 
         var statusRight = new StackPanel()
             .Horizontal()
             .Spacing(4)
-            .Children(zoomLabel, zoomOut, zoomSlider, zoomIn, fit, zoomPercentButton);
+            .Children(zoomOut, zoomSlider, zoomIn, fit, zoomPercentButton);
 
         var statusGrid = new Grid().Columns("*,Auto").Rows("Auto");
         statusLeft.VerticalAlignment = VerticalAlignment.Center;
@@ -359,22 +456,39 @@ internal static class CapturePage
 
         var root = new Grid().Columns("*").Rows("*");
         root.Add(page.Column(0));
+
+        // 覆いはページの上・メニューの下へ置く（開いている間だけ表示する）
+        root.Add(dismissLayer.Column(0));
         root.Add(menuPanel.Column(0));
         root.Add(zoomMenu.Column(0));
 
         // テーマが変わったらスタイルで表せない値（アイコンの色）を描き直す
         AppStyles.ThemeChanged += (_, _) => RefreshIcons(iconImages);
 
-        return new PageContent(root, OnKeyDown: e =>
-        {
-            // 切り出しの開始・確定・キャンセルを Ctrl+R でも操作できるようにする
-            // （Avalonia 版はメニュー項目の InputGesture が同じ役割を担う）
-            if (e.ControlKey && e.Key == Key.R)
+        return new PageContent(
+            root,
+            OnKeyDown: e =>
             {
-                ToggleCrop();
-                e.Handled = true;
-            }
-        });
+                // 切り出しの開始・確定・キャンセルを Ctrl+R でも操作できるようにする
+                // （Avalonia 版はメニュー項目の InputGesture が同じ役割を担う）
+                if (e.ControlKey && e.Key == Key.R)
+                {
+                    ToggleCrop();
+                    e.Handled = true;
+                    return;
+                }
+
+                // Escape でメニューを閉じる
+                if (e.Key == Key.Escape && (menuPanel.IsVisible || zoomMenu.IsVisible))
+                {
+                    CloseMenus();
+                    e.Handled = true;
+                }
+            },
+            // ページを離れたとき・ウィンドウが非アクティブになったときにメニューを閉じる
+            // （メニューを開いたままナビゲーションを操作しても閉じない、との指摘への対応）
+            OnDeactivated: CloseMenus,
+            OnWindowDeactivated: CloseMenus);
     }
 
     /// <summary>メニューのプルダウン（ツールバーの ☰ から開く）を生成する。</summary>
@@ -382,19 +496,33 @@ internal static class CapturePage
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <param name="captureSession">撮影・切り出しの Facade（切り出しメニューの接続先）。</param>
     /// <param name="toggleCrop">切り出しの開始・確定・キャンセルを行う窓口（ツールバー・キーと同じもの）。</param>
+    /// <param name="onClosed">項目の選択でメニューを閉じたときに呼ぶ処理（外側クリック用の覆いを隠す）。</param>
     /// <returns>初期状態で非表示のプルダウン。</returns>
     /// <remarks>
     /// Avalonia 版の <c>MenuFlyout</c> と同じ項目・同じ区切り・同じショートカット表記で並べる。<br/>
     /// ショートカットは表示のみ（Avalonia 版も <c>MenuItem.InputGesture</c> の表示であり、キー操作は受け付けない）。
     /// </remarks>
     private static Border BuildMenu(
-        MainViewModel viewModel, AppServices services, CaptureSessionControl captureSession, Action toggleCrop)
+        MainViewModel viewModel,
+        AppServices services,
+        CaptureSessionControl captureSession,
+        Action toggleCrop,
+        Action? onClosed = null)
     {
         var panel = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
         Border? menu = null;
 
-        // 項目を選んだらメニューを閉じる（Avalonia 版の MenuFlyout と同じ振る舞い）
-        void Close() => menu?.IsVisible = false;
+        // 項目を選んだらメニューを閉じる（Avalonia 版の MenuFlyout と同じ振る舞い）。
+        // 覆い（外側クリックの受け皿）も一緒に隠す（隠さないと次のクリックが覆いに吸われる）
+        void Close()
+        {
+            if (menu is not null)
+            {
+                menu.IsVisible = false;
+            }
+
+            onClosed?.Invoke();
+        }
 
         void Add(string text, Action action, bool enabled = true, string? gesture = null)
         {
@@ -490,6 +618,20 @@ internal static class CapturePage
         };
         button.Cursor(CursorType.Hand);
         button.WithToolTip(toolTip, onClick);
+
+        // 押している間は背景を濃くする（ホバーより濃い）。
+        // MewUI 0.21.1 はツールヒントを閉じる際に押下状態を失うため（ClickableToolTip のコメント参照）、
+        // 状態ではなくスタイル名の差し替えで表す。
+        button.MouseDown += e =>
+        {
+            if (e.Button == MouseButton.Left)
+            {
+                button.StyleName = AppStyles.ToolbarButtonPressed;
+            }
+        };
+        button.MouseUp += _ => button.StyleName = AppStyles.ToolbarButton;
+        button.MouseLeave += () => button.StyleName = AppStyles.ToolbarButton;
+
         return button;
     }
 
@@ -658,6 +800,11 @@ internal static class CapturePage
         cropView.CenterAlign = settings.CenterAlign;
         host.Children(cropView);
 
+        // 画像の 4 辺の影（幅・濃さは App.Core の ShadowPlan が単一所有する）を表示矩形へ追従させる
+        var imageShadow = new ImageShadowOverlay();
+        imageShadow.Attach(cropView);
+        host.Children(imageShadow);
+
         // テーマが変わったら下地色（テーマの背景色）を描き直す
         AppStyles.ThemeChanged += (_, _) => ApplyPreviewBackground(cropView);
 
@@ -763,7 +910,8 @@ internal static class CapturePage
 
         services.UndoHistory.Push(viewModel.PreviewImage);
         viewModel.SetPreviewImage(captured);
-        viewModel.StatusMessage = $"キャプチャしました（{captured.Width} x {captured.Height}）";
+        // 通知の文言はコアが単一所有する（キャプチャ結果は画像の差し替えより後に通知する）
+        viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
     }
 
     /// <summary>切り出しの開始・確定・キャンセルを 1 つの操作で切り替える（ボタン・キー・メニュー共通）。</summary>
@@ -901,14 +1049,17 @@ internal static class CapturePage
             Math.Clamp(content.Y, 0, image.Height - 1));
     }
 
-    /// <summary>プレビューの下地色（テーマのページ背景）を反映する。</summary>
+    /// <summary>プレビューの下地色（画像領域の背景色）を反映する。</summary>
     /// <param name="cropView">対象のクロップビュー。</param>
-    /// <remarks>画像が無い部分（ペーストボード）はこの色の単色になる（市松模様は描かない）。</remarks>
+    /// <remarks>
+    /// 画像が無い部分（ペーストボード）はこの色の単色になる（市松模様は描かない）。<br/>
+    /// 色は <see cref="AppStyles.CurrentImageAreaBackground"/>（実体は <see cref="AppPalette"/>（App.Core））が単一所有する。
+    /// </remarks>
     private static void ApplyPreviewBackground(CropViewControl cropView)
     {
-        var background = AppStyles.CurrentPageBackground;
+        var background = AppStyles.CurrentImageAreaBackground;
 
-        // 下地はテーマのページ背景（S / R / G / B の並びは設定の #AARRGGBB と同じ）
+        // 下地は画像領域の背景色（S / R / G / B の並びは設定の #AARRGGBB と同じ）
         cropView.Appearance = ZoomViewAppearance.Default with
         {
             BackgroundColor = System.Drawing.Color.FromArgb(background.A, background.R, background.G, background.B),

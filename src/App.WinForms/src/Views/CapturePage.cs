@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -51,10 +52,11 @@ internal static class CapturePage
         var viewModel = services.Main;
         var settingsService = services.Settings;
 
-        var captureSession = new CaptureSessionControl(CaptureSettingsMapper.From(settingsService.Current, 1.0))
-        {
-            LogPrefix = "[App.WinForms]",
-        };
+        // ログは撮影スタック自身のカテゴリと既定の接頭辞で記録する（他の UI 版と同じ。
+        // 接頭辞をアプリのものへ差し替えると、出力元のアセンブリを読み分けられなくなる）
+        var captureSession = new CaptureSessionControl(
+            CaptureSettingsMapper.From(settingsService.Current, 1.0),
+            AppLog.CreateLogger(nameof(CaptureSessionControl)));
 
         var crop = new CropViewControl
         {
@@ -73,8 +75,14 @@ internal static class CapturePage
         // 撮影結果の反映はイベント（同期）で行う（オーナーの再表示より前に画像を差し替える）
         captureSession.CaptureCompleted += (_, e) => ApplyCaptureResult(services, viewModel, e);
 
-        var canvas = new Panel { Dock = DockStyle.Fill, BackColor = AppStyles.PageBackground };
+        var canvas = new Panel { Dock = DockStyle.Fill, BackColor = AppStyles.ImageAreaBackground };
         canvas.Controls.Add(crop);
+
+        // 画像の 4 辺の影（幅・濃さは App.Core の ShadowPlan が単一所有する）を表示矩形へ追従させる
+        var imageShadow = new ImageShadowOverlay();
+        imageShadow.Attach(crop);
+        canvas.Controls.Add(imageShadow);
+        imageShadow.BringToFront();
 
         var zoomSlider = new TrackBar
         {
@@ -84,21 +92,27 @@ internal static class CapturePage
             SmallChange = 5,
             LargeChange = 25,
             Width = 140,
-            Height = UiFactory.StatusBarHeight,
+            // 既定は AutoSize（推奨サイズ 56）で Height の指定を無視するため、明示的に無効にする
+            // （行の高さ 30 に収まらず、トラックが中央から外れる）
+            AutoSize = false,
+            // 目盛りは表示しない（Avalonia / MewUI 版のスライダーと同じ見た目にする）
+            TickStyle = TickStyle.None,
             TabStop = false,
         };
+        UiFactory.CenterInStatusBar(zoomSlider, 24);
         var syncingZoomSlider = false;
 
         var zoomText = UiFactory.CreateStatusLabel(52, "拡大率");
-        var zoomOutButton = UiFactory.CreateToolButton(AppIcon.ZoomOut, "縮小", () => crop.ZoomOut());
-        var zoomInButton = UiFactory.CreateToolButton(AppIcon.ZoomIn, "拡大", () => crop.ZoomIn());
-        var zoomFitButton = UiFactory.CreateToolButton(AppIcon.ZoomFit, "ウィンドウに合わせる", () => crop.ZoomFit());
+        var zoomOutButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomOut, "縮小", () => crop.ZoomOut()));
+        var zoomInButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomIn, "拡大", () => crop.ZoomIn()));
+        var zoomFitButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomFit, "ウィンドウに合わせる", () => crop.ZoomFit()));
 
-        var pointerLabel = UiFactory.CreateStatusLabel(150, "カーソル位置（画像ピクセル）");
-        var sizeLabel = UiFactory.CreateStatusLabel(150, "プレビュー画像のサイズ");
-        var saveStateLabel = UiFactory.CreateStatusLabel(64, "保存済み / 未保存");
+        var pointerLabel = UiFactory.CreateStatusLabel(70, "カーソル位置（画像ピクセル）");
+        var sizeLabel = UiFactory.CreateStatusLabel(80, "プレビュー画像のサイズ");
+        var saveStateLabel = UiFactory.CreateStatusLabel(54, "保存済み / 未保存");
         var savedFileLabel = UiFactory.CreateStatusLabel(0, "直前に保存したファイル名");
         var messageLabel = UiFactory.CreateStatusLabel(0);
+        messageLabel.ForeColor = AppStyles.Announce;
 
         var statusBar = UiFactory.CreateStatusBar();
         var statusFlow = new FlowLayoutPanel
@@ -107,6 +121,7 @@ internal static class CapturePage
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
             Margin = new Padding(0),
+            Padding = new Padding(0),
         };
         statusFlow.Controls.AddRange([pointerLabel, sizeLabel, saveStateLabel, savedFileLabel, messageLabel]);
 
@@ -116,6 +131,8 @@ internal static class CapturePage
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = false,
             AutoSize = true,
+            Margin = new Padding(0),
+            Padding = new Padding(0),
         };
         zoomPanel.Controls.AddRange([zoomOutButton, zoomSlider, zoomInButton, zoomFitButton, zoomText]);
 
@@ -127,7 +144,9 @@ internal static class CapturePage
         {
             Width = 260,
             Text = viewModel.FileNameTemplateText,
-            Margin = new Padding(1, 4, 1, 1),
+            // ツールバーの行（30）の中で文字が垂直方向中央に来るよう、高さと上下の余白を揃える
+            Height = 24,
+            Margin = new Padding(3, 3, 3, 3),
         };
         UiFactory.AttachToolTip(templateBox, "ファイル名テンプレート（例: screenshot_007_{date}-{time}.png）");
         templateBox.TextChanged += (_, _) => viewModel.FileNameTemplateText = templateBox.Text;
@@ -138,22 +157,26 @@ internal static class CapturePage
         toolbar.Controls.Add(menuButton);
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(templateBox);
-        toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.Save, "保存", SaveImage));
+        toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.ScreenSelect, "スクリーン選択で撮影", () => StartCapture(CaptureType.ScreenSelect)));
         toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.WindowSelect, "ウィンドウ選択で撮影", () => StartCapture(CaptureType.WindowSelect)));
         toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.AreaSelect, "範囲選択で撮影", () => StartCapture(CaptureType.AreaSelect)));
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.Crop, "切り出し（開始 / 確定 / キャンセル）", ToggleCrop));
-        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.AutoCrop, "自動切り出し（ウィンドウ枠の検出）", AutoCrop));
 
         var root = new Panel { Dock = DockStyle.Fill, BackColor = AppStyles.PageBackground };
         root.Controls.Add(canvas);
         root.Controls.Add(toolbar);
         root.Controls.Add(statusBar);
 
-        menuButton.Click += (_, _) => ShowMenu();
-
+        // メニューは 1 度だけ作り、以降は同じインスタンスを表示する。
+        // 表示のたびに作って破棄すると、WinForms のメニュー フィルターが破棄済みのメニューを参照し、
+        // ウィンドウの非アクティブ化の際に ObjectDisposedException で落ちる（実測）。
+        // 破棄はページの破棄に合わせる
+        var menu = CreateMenu();
+        root.Disposed += (_, _) => menu.Dispose();
+        menuButton.Click += (_, _) => menu.Show(menuButton, new Point(0, menuButton.Height));
         crop.ZoomChanged += OnZoomChanged;
         zoomSlider.ValueChanged += (_, _) =>
         {
@@ -190,8 +213,6 @@ internal static class CapturePage
             UpdateStatus();
         };
 
-        AppStyles.ThemeChanged += (_, _) => ApplyAppearance();
-
         ApplyAppearance();
         ApplyAutoCropRects();
         crop.Source = viewModel.PreviewImage;
@@ -212,14 +233,15 @@ internal static class CapturePage
             statusFlow.BackColor = pageBackground;
             zoomPanel.BackColor = pageBackground;
             root.BackColor = pageBackground;
-            canvas.BackColor = pageBackground;
+            // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
+            canvas.BackColor = AppStyles.ImageAreaBackground;
             templateBox.ForeColor = AppStyles.Foreground;
             templateBox.BackColor = pageBackground;
             zoomSlider.BackColor = pageBackground;
 
             crop.Appearance = ZoomViewAppearance.Default with
             {
-                BackgroundColor = pageBackground,
+                BackgroundColor = AppStyles.ImageAreaBackground,
                 ShowScrollBars = true,
             };
             crop.CenterAlign = viewModel.CenterAlign;
@@ -233,6 +255,9 @@ internal static class CapturePage
             {
                 label.ForeColor = AppStyles.Foreground;
             }
+
+            // 通知メッセージだけは強調色にする（上の一括設定より後に置く）
+            messageLabel.ForeColor = AppStyles.Announce;
 
             ApplySessionSettings();
         }
@@ -289,33 +314,22 @@ internal static class CapturePage
         {
             if (!viewModel.CanSave)
             {
-                viewModel.StatusMessage = viewModel.HasInvalidTemplate
-                    ? $"ファイル名テンプレートが無効です: {viewModel.ValidationMessage}"
-                    : "保存できる状態ではありません（画像が無い・保存済み・保存先が不正）。";
+                // 実行できない理由の文言はコアが単一所有する
+                viewModel.StatusMessage = StatusMessages.SaveUnavailable(
+                    viewModel.HasInvalidTemplate, viewModel.ValidationMessage);
                 return;
             }
 
             _ = SaveImageCoreAsync();
         }
 
-        // 保存を実行し、結果をステータスへ通知する。
+        // 保存を実行する（失敗の通知はコア（SaveImageAsync）が行う）。
         async Task SaveImageCoreAsync()
-        {
-            var saved = await viewModel.SaveImageAsync().ConfigureAwait(true);
-            if (!saved)
-            {
-                viewModel.StatusMessage = "保存できませんでした（保存先フォルダを確認してください）。";
-            }
-        }
+            => await viewModel.SaveImageAsync().ConfigureAwait(true);
 
-        // クリップボードの画像を貼り付け、成否をステータスへ通知する。
+        // クリップボードの画像を貼り付ける（成否の通知はコアが行う）。
         async Task PasteCoreAsync()
-        {
-            var pasted = await viewModel.PasteFromClipboardAsync().ConfigureAwait(true);
-            viewModel.StatusMessage = pasted
-                ? "クリップボードの画像を貼り付けました。"
-                : "クリップボードに画像がありません。";
-        }
+            => await viewModel.PasteFromClipboardAsync().ConfigureAwait(true);
 
         // 切り出しの開始・確定・キャンセルを 1 つの操作で切り替える。
         void ToggleCrop()
@@ -351,24 +365,19 @@ internal static class CapturePage
             }
 
             viewModel.CropPreviewCommand.Execute(rect);
-            viewModel.StatusMessage = $"切り出しました（{rect.Width} x {rect.Height}）";
         }
 
-        // ウィンドウ枠の自動検出を実行・キャンセルする。
+        // ウィンドウ枠の自動検出を実行・キャンセルする（通知はコアが行う）。
         void AutoCrop()
         {
+            // 実行中は同じ操作でキャンセルする（状態の判定はコアのプロパティに従う）
             if (viewModel.IsAutoCropActive)
             {
                 viewModel.CancelAutoCropCommand.Execute(null);
-                viewModel.StatusMessage = "自動切り出しをキャンセルしました。";
                 return;
             }
 
             viewModel.AutoCropWindowCommand.Execute(null);
-            if (viewModel.DetectedRects.Count == 0)
-            {
-                viewModel.StatusMessage = "ウィンドウ枠を検出できませんでした。";
-            }
         }
 
         // 検出矩形とホバーの強調をオーバーレイへ反映する。
@@ -399,7 +408,30 @@ internal static class CapturePage
         // カーソル移動を座標表示とホバーの強調へ反映する。
         void OnPointerMoved(Point location)
         {
-            var source = crop.ClientToSource(new EsPoint(location.X, location.Y));
+            // クライアント座標（物理ピクセル）→ ビューポート座標（DIP）→ 対象座標（元画像ピクセル）の順に変換する
+            // （座標変換の規則は CropViewControl が単一所有する）
+            var scaling = DpiScaler.ToScaling(crop.ZoomView.DeviceDpi);
+            var viewport = new EsPoint(
+                DpiScaler.ToDip(location.X, scaling), DpiScaler.ToDip(location.Y, scaling));
+            var source = crop.ClientToSource(viewport);
+
+            // 画像の外（余白）では座標を表示しない（他の UI 版と同じ "-" 表示）。
+            // 判定は変換結果の範囲で行う（表示矩形の大きさに依存せず、倍率・中央寄せの影響を受けない）
+            if (viewModel.PreviewImage is not { } image ||
+                source.X < 0 || source.Y < 0 ||
+                source.X >= image.Size.Width || source.Y >= image.Size.Height)
+            {
+                viewModel.PointerDisplayText = "-";
+                UpdateStatus();
+                if (viewModel.IsAutoCropActive)
+                {
+                    viewModel.HoveredRect = null;
+                    crop.HighlightSourceRect = null;
+                }
+
+                return;
+            }
+
             viewModel.PointerDisplayText =
                 $"{UiFactory.FormatNumber(Math.Round(source.X), "0")}, {UiFactory.FormatNumber(Math.Round(source.Y), "0")}";
             UpdateStatus();
@@ -430,40 +462,45 @@ internal static class CapturePage
             if (hit is { } rect)
             {
                 viewModel.ConfirmAutoCropCommand.Execute(rect);
-                viewModel.StatusMessage = $"切り出しました（{rect.Width} x {rect.Height}）";
                 return;
             }
 
             viewModel.CancelAutoCropCommand.Execute(null);
-            viewModel.StatusMessage = "自動切り出しをキャンセルしました。";
         }
 
-        // メニュー（画像の操作・撮影・切り出し）を表示する。
-        void ShowMenu()
+        // メニュー（画像の操作・撮影・切り出し）を組み立てる。
+        // 表示は menuButton の購読が行い、破棄は root の破棄に合わせる（同じインスタンスを使い回す）。
+        ContextMenuStrip CreateMenu()
         {
-            using var menu = new ContextMenuStrip();
-            AddMenuItem(menu, "画像を保存", "Ctrl+S", SaveImage);
-            AddMenuItem(menu, "コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
-            AddMenuItem(menu, "貼り付け", "Ctrl+V", () => _ = PasteCoreAsync());
-            menu.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menu, "元に戻す", "Ctrl+Z", () => EditHistory.Undo(services, ApplyAppearance));
-            AddMenuItem(menu, "元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services, ApplyAppearance));
-            menu.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menu, "撮影 - スクリーン選択", "", () => StartCapture(CaptureType.ScreenSelect));
-            AddMenuItem(menu, "撮影 - ウィンドウ選択", "", () => StartCapture(CaptureType.WindowSelect));
-            AddMenuItem(menu, "撮影 - 範囲選択", "", () => StartCapture(CaptureType.AreaSelect));
-            menu.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menu, "切り出し", "Ctrl+R", ToggleCrop);
-            AddMenuItem(menu, "Crop - 自動切り出し", "", AutoCrop);
-            menu.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menu, "ファイル名テンプレートを編集", "", () => templateBox.Focus());
-
-            menu.Show(menuButton, new Point(0, menuButton.Height));
+            var menuStrip = new ContextMenuStrip();
+            AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage);
+            AddMenuItem(menuStrip, "コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
+            AddMenuItem(menuStrip, "貼り付け", "Ctrl+V", () => _ = PasteCoreAsync());
+            menuStrip.Items.Add(new ToolStripSeparator());
+            AddMenuItem(menuStrip, "元に戻す", "Ctrl+Z", () => EditHistory.Undo(services, ApplyAppearance));
+            AddMenuItem(menuStrip, "元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services, ApplyAppearance));
+            menuStrip.Items.Add(new ToolStripSeparator());
+            AddMenuItem(menuStrip, "撮影 - スクリーン選択", "", () => StartCapture(CaptureType.ScreenSelect));
+            AddMenuItem(menuStrip, "撮影 - ウィンドウ選択", "", () => StartCapture(CaptureType.WindowSelect));
+            AddMenuItem(menuStrip, "撮影 - 範囲選択", "", () => StartCapture(CaptureType.AreaSelect));
+            menuStrip.Items.Add(new ToolStripSeparator());
+            AddMenuItem(menuStrip, "切り出し", "Ctrl+R", ToggleCrop);
+            AddMenuItem(menuStrip, "Crop - 自動切り出し", "", AutoCrop);
+            menuStrip.Items.Add(new ToolStripSeparator());
+            AddMenuItem(menuStrip, "ファイル名テンプレートを編集", "", () => templateBox.Focus());
+            return menuStrip;
         }
 
         // ページ固有のショートカット キーを処理する。
         bool HandleShortcut(Keys keyData)
         {
+            // テキスト入力中のショートカットは文字編集を優先する
+            // （Ctrl+V を画像の貼り付けとして横取りすると、テンプレート欄へ文字列を貼れない）
+            if (IsTextInputFocused())
+            {
+                return false;
+            }
+
             var key = keyData & Keys.KeyCode;
             if ((keyData & Keys.Control) != Keys.Control)
             {
@@ -500,6 +537,14 @@ internal static class CapturePage
                     return false;
             }
         }
+
+        // テキスト入力中のコントロールにフォーカスがあるかどうか。
+        // 入力中はページのショートカット（Ctrl+C/V/Z/Y）を横取りしない（文字編集を優先する）。
+        bool IsTextInputFocused()
+        {
+            var focused = owner.ActiveControl;
+            return focused is TextBoxBase or ComboBox or NumericUpDown;
+        }
     }
 
     /// <summary>撮影結果をプレビューへ反映する。</summary>
@@ -521,7 +566,8 @@ internal static class CapturePage
 
         services.UndoHistory.Push(viewModel.PreviewImage);
         viewModel.SetPreviewImage(captured);
-        viewModel.StatusMessage = $"キャプチャしました（{captured.Width} x {captured.Height}）";
+        // 通知の文言はコアが単一所有する（キャプチャ結果は画像の差し替えより後に通知する）
+        viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
     }
 
     /// <summary>上書きの確認ダイアログを表示する。</summary>

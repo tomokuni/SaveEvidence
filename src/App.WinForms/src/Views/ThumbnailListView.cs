@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
 
@@ -24,6 +25,8 @@ internal sealed class ThumbnailListView : Panel
     /// <summary>一覧を生成する。</summary>
     public ThumbnailListView()
     {
+        // 親の領域いっぱいに広げる（これがないと既定の 200x100 のまま残り、一覧が 1 列だけになる）
+        Dock = DockStyle.Fill;
         AutoScroll = true;
         BackColor = AppStyles.ListBackground;
         DoubleBuffered = true;
@@ -53,7 +56,7 @@ internal sealed class ThumbnailListView : Panel
             _iconSize = size;
             foreach (var item in _items)
             {
-                item.Size = ComputeItemSize();
+                item.SetIconSize(size);
             }
 
             Relayout();
@@ -90,9 +93,10 @@ internal sealed class ThumbnailListView : Panel
 
             foreach (var item in _items)
             {
-                item.Size = ComputeItemSize();
+                item.SetIconSize(_iconSize);
                 item.Click += OnItemClick;
                 item.DoubleClick += OnItemDoubleClick;
+                item.SizeChanged += OnItemSizeChanged;
                 Controls.Add(item);
             }
 
@@ -121,8 +125,8 @@ internal sealed class ThumbnailListView : Panel
     public int VisibleCapacity()
     {
         var item = ComputeItemSize();
-        var columns = Math.Max(1, (ClientSize.Width - Padding.Horizontal) / Math.Max(1, item.Width + item.Width / 4));
-        var rows = Math.Max(1, (ClientSize.Height - Padding.Vertical) / Math.Max(1, item.Height + item.Height / 4));
+        var columns = Math.Max(1, (ClientSize.Width - Padding.Horizontal) / Math.Max(1, item.Width));
+        var rows = Math.Max(1, (ClientSize.Height - Padding.Vertical) / Math.Max(1, item.Height));
         return Math.Max(1, columns * rows);
     }
 
@@ -152,6 +156,11 @@ internal sealed class ThumbnailListView : Panel
     }
 
     /// <summary>項目を格子へ並べる。</summary>
+    /// <remarks>
+    /// 行の高さは固定値とせず<b>その行の最大アイテム高さ</b>で決め、アイテムは行内で下端を揃えて配置する<br/>
+    /// （画像の縦横比によって高さが変わるため、名前の 1 文字目の高さ位置が行内で揃う）。<br/>
+    /// AvaloniaUI 版の <c>BottomAlignWrapPanel</c> と同じ並べ方。
+    /// </remarks>
     public void Relayout()
     {
         var size = ComputeItemSize();
@@ -161,16 +170,30 @@ internal sealed class ThumbnailListView : Panel
         SuspendLayout();
         try
         {
-            for (var i = 0; i < _items.Count; i++)
+            var y = Padding.Top;
+            for (var start = 0; start < _items.Count; start += columns)
             {
-                var column = i % columns;
-                var row = i / columns;
-                _items[i].Location = new Point(
-                    Padding.Left + (column * size.Width), Padding.Top + (row * size.Height));
+                var end = Math.Min(start + columns, _items.Count);
+
+                // 行の高さは行内の最大アイテム高さ
+                var rowHeight = 0;
+                for (var i = start; i < end; i++)
+                {
+                    rowHeight = Math.Max(rowHeight, _items[i].TileHeight);
+                }
+
+                for (var i = start; i < end; i++)
+                {
+                    var item = _items[i];
+                    item.Location = new Point(
+                        Padding.Left + ((i - start) * size.Width),
+                        y + rowHeight - item.TileHeight);
+                }
+
+                y += rowHeight;
             }
 
-            var rows = (int)Math.Ceiling(_items.Count / (double)columns);
-            AutoScrollMinSize = new Size(0, (rows * size.Height) + Padding.Vertical);
+            AutoScrollMinSize = new Size(0, (y - Padding.Top) + Padding.Vertical);
         }
         finally
         {
@@ -178,10 +201,17 @@ internal sealed class ThumbnailListView : Panel
         }
     }
 
-    /// <summary>項目の寸法を求める。</summary>
-    /// <returns>項目の寸法（アイコンの一辺 + ファイル名の行）。</returns>
+    /// <summary>項目の幅と高さの目安を求める。</summary>
+    /// <returns>項目の寸法（アイコンの一辺 + 影の余白 + 名前の行）。</returns>
+    /// <remarks>実際の高さは画像の縦横比で変わるため、目安として正方形の寸法を返す。</remarks>
     private Size ComputeItemSize()
-        => new(_iconSize + 12, _iconSize + 20);
+        => new(ThumbnailItem.WidthFor(_iconSize), _iconSize + (int)ThumbnailTileMetrics.LabelHeight);
+
+    /// <summary>項目の大きさが変わったときに並べ直す。</summary>
+    /// <param name="sender">大きさが変わった項目。</param>
+    /// <param name="e">イベント引数。</param>
+    private void OnItemSizeChanged(object? sender, EventArgs e)
+        => Relayout();
 
     /// <summary>項目が押されたときに選択を移す。</summary>
     /// <param name="sender">押された項目。</param>
@@ -214,3 +244,4 @@ internal sealed class ThumbnailListView : Panel
         Relayout();
     }
 }
+

@@ -14,20 +14,20 @@ namespace EsUtil.SaveEvidence.App.WinForms.Views;
 internal sealed class ToolButton : Button
 {
     /// <summary>アイコンの一辺の基準サイズ（DIP）。</summary>
-    private const int BaseIconSize = 20;
+    private const int BaseIconSize = 16;
 
-    /// <summary>このボタンが表示するアイコン。</summary>
-    private readonly AppIcon _icon;
+    /// <summary>このボタンが表示するアイコン（null の場合は文字だけを表示する）。</summary>
+    private readonly AppIcon? _icon;
 
     /// <summary>選択状態を示す背景色で描くかどうか。</summary>
     private bool _isSelected;
 
     /// <summary>ツールバー用のボタンを生成する。</summary>
-    /// <param name="icon">表示するアイコン。</param>
+    /// <param name="icon">表示するアイコン（null の場合は文字だけを表示する）。</param>
     /// <param name="toolTip">ツールヒントの文言。</param>
     /// <param name="caption">アイコンの右へ表示する文字（省略時はアイコンのみ）。</param>
     /// <remarks>配色は <see cref="AppStyles"/> に追従する（テーマの変更で描き直す）。</remarks>
-    public ToolButton(AppIcon icon, string toolTip, string caption = "")
+    public ToolButton(AppIcon? icon, string toolTip, string caption = "")
     {
         _icon = icon;
         Text = caption;
@@ -41,7 +41,9 @@ internal sealed class ToolButton : Button
         Margin = new Padding(1, 1, 1, 1);
 
         // サイズはアイコンと文字の実寸から決める（DPI へは AutoScaleMode が追従する）
-        var width = caption.Length == 0 ? 30 : 30 + (caption.Length * 16);
+        var width = icon is null
+            ? (caption.Length == 0 ? 30 : (caption.Length * 16) + 14)
+            : caption.Length == 0 ? 30 : 30 + (caption.Length * 16);
         Size = new Size(width, 30);
         UiFactory.AttachToolTip(this, toolTip);
         ApplyTheme();
@@ -68,10 +70,18 @@ internal sealed class ToolButton : Button
     /// <summary>アイコンを現在の DPI とテーマの色で描き直す。</summary>
     internal void RefreshIcon()
     {
+        var previous = Image;
+        if (_icon is not { } icon)
+        {
+            // 文字だけのボタンは画像を持たない
+            Image = null;
+            previous?.Dispose();
+            return;
+        }
+
         var size = Math.Max(12, (int)Math.Round(BaseIconSize * DeviceDpi / 96.0));
         var color = Enabled ? AppStyles.Foreground : AppStyles.Border;
-        var previous = Image;
-        Image = IconLoader.Create(_icon, size, color);
+        Image = IconLoader.Create(icon, size, color);
         previous?.Dispose();
     }
 

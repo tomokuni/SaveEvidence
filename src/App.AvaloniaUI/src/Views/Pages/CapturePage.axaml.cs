@@ -97,6 +97,9 @@ public sealed partial class CapturePage : UserControl
         // CropViewControl（自己完結型複合コントロール）にロガーを注入する
         CropView.Log = s_logger;
 
+        // 画像の 4 辺の影（幅・濃さは App.Core の ShadowPlan が単一所有する）を表示矩形へ追従させる
+        ImageShadow.Attach(CropView);
+
         // 自動切り出しのホバー強調の外観（内側の塗りと枠線）を CropViewControl へ与える。
         // 色・枠線の太さ・表示可否は描画にだけ必要な設定であり、強調の描画手順は CropViewControl（Parts）が単一所有する。
         CropView.HighlightAppearance = CropViewControl.HighlightDefaultAppearance with
@@ -177,6 +180,10 @@ public sealed partial class CapturePage : UserControl
 
         // ファイル名テンプレートの初期幅をテキスト内容に合わせて設定する
         UpdateFileNameTemplateWidth(FileNameTemplateBox);
+
+        // ツールバーの幅が変わったら幅の上限を計算し直す（折り返さない範囲に収める）
+        Toolbar.SizeChanged += (_, _) => UpdateFileNameTemplateWidth(FileNameTemplateBox);
+        FileNameTemplateBox.AttachedToVisualTree += (_, _) => UpdateFileNameTemplateWidth(FileNameTemplateBox);
 
         // ファイル名テンプレートの ToolTip を設定する（{date}/{time} はマークアップ拡張と衝突するためコード側で構築）
         ToolTip.SetTip(FileNameTemplateBox, BuildFileNameTemplateToolTip());
@@ -593,7 +600,7 @@ public sealed partial class CapturePage : UserControl
     /// テキストが短い場合は MinWidth（220）、長い場合は MaxWidth（260）に固定され、<br/>
     /// 中間の長さではテキスト全体が収まる幅になる（超過時は TextBox 内部でスクロール）。
     /// </remarks>
-    private static void UpdateFileNameTemplateWidth(TextBox box)
+    private void UpdateFileNameTemplateWidth(TextBox box)
     {
         // TextBox の実際のフォント情報を使用してテキスト幅を計測する
         var typeface = new Typeface(box.FontFamily, box.FontStyle, box.FontWeight);
@@ -604,7 +611,41 @@ public sealed partial class CapturePage : UserControl
         // 左右パディング（TextBox テンプレート内の余白・ボーダー）+ 余裕
         const double horizontalPadding = 24;
         var width = Math.Ceiling(formatted.Width) + horizontalPadding;
-        box.Width = Math.Clamp(width, box.MinWidth, box.MaxWidth);
+
+        // 上限は「ツールバーが折り返さない幅」（超えるとアイコン類が 2 段になる）
+        var maxWidth = ResolveFileNameTemplateMaxWidth(box);
+        box.Width = Math.Clamp(width, box.MinWidth, Math.Max(box.MinWidth, maxWidth));
+    }
+
+    /// <summary>ファイル名テンプレートの幅の上限（ツールバーが折り返さない幅）を求める。</summary>
+    /// <param name="box">幅を決めるテキスト ボックス。</param>
+    /// <returns>上限の幅（DIP）。 レイアウト前（幅が未確定）は <see cref="double.PositiveInfinity"/>。</returns>
+    /// <remarks>
+    /// ツールバー（<see cref="WrapPanel"/>）の幅から自分以外の要素（マージン込み）を除いた幅を上限にする。<br/>
+    /// 他の要素の幅は実測値（<c>Bounds</c>）ではなく希望サイズ（<c>DesiredSize</c>）を使う
+    /// （自分の幅で折り返し位置が変わっても、他の要素の幅は変わらないため）。
+    /// </remarks>
+    private double ResolveFileNameTemplateMaxWidth(TextBox box)
+    {
+        var available = Toolbar.Bounds.Width;
+        if (double.IsNaN(available) || available <= 1)
+        {
+            // レイアウト前は上限を決められない（初期幅は最小幅になる）
+            return double.PositiveInfinity;
+        }
+
+        var others = 0.0;
+        foreach (var child in Toolbar.Children)
+        {
+            if (ReferenceEquals(child, box))
+            {
+                continue;
+            }
+
+            others += child.DesiredSize.Width + child.Margin.Left + child.Margin.Right;
+        }
+
+        return available - others - box.Margin.Left - box.Margin.Right;
     }
 
     /// <summary>クリップボードから貼り付けを行う。</summary>

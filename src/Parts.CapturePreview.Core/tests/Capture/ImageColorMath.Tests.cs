@@ -79,4 +79,39 @@ public class ImageColorMathTests
     {
         Assert.Equal(40, ImageColorMath.SampleDivisor);
     }
+
+    [Fact]
+    internal void Composite_不透明度0なら下地と同じ色()
+    {
+        var color = ImageColorMath.Composite(
+            DrawingColor.FromArgb(255, 100, 150, 200), DrawingColor.FromArgb(0, 255, 0, 0));
+
+        Assert.Equal(255, color.A);
+        Assert.Equal(100, color.R);
+        Assert.Equal(150, color.G);
+        Assert.Equal(200, color.B);
+    }
+
+    [Fact]
+    internal void Composite_不透明度255なら重ねる色()
+    {
+        var color = ImageColorMath.Composite(
+            DrawingColor.FromArgb(255, 100, 150, 200), DrawingColor.FromArgb(255, 255, 0, 0));
+
+        Assert.Equal(255, color.R);
+        Assert.Equal(0, color.G);
+        Assert.Equal(0, color.B);
+    }
+
+    [Fact]
+    internal void Composite_半透明の黒は下地を半分にする()
+    {
+        var color = ImageColorMath.Composite(
+            DrawingColor.FromArgb(255, 200, 100, 20), DrawingColor.FromArgb(128, 0, 0, 0));
+
+        // 200 * 0.498 ≈ 100 / 100 * 0.498 ≈ 50 / 20 * 0.498 ≈ 10
+        Assert.Equal(100, color.R);
+        Assert.Equal(50, color.G);
+        Assert.Equal(10, color.B);
+    }
 }

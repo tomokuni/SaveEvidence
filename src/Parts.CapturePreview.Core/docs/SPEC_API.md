@@ -265,6 +265,7 @@
 | メソッド | シグネチャ | 内容 |
 | --- | --- | --- |
 | `AverageColor` | `DrawingColor AverageColor(EsReadOnlyBitmap image)` | 画像全体の平均色。 画素を間引いて標本化する。 画像が null の場合は `ArgumentNullException` |
+| `Composite` | `DrawingColor Composite(DrawingColor backdrop, DrawingColor overlay)` | 下地の色へ暗転色をアルファ合成した色（不透明）。 **撮影オーバーレイの下地色**（表示直後の 1 フレーム）を暗転後の見た目に合わせるために使う。 不透明度 0 なら下地と同じ色 |
 
 ### 7.5 CaptureSettingsMerge
 
@@ -290,6 +291,8 @@
 | メンバー | シグネチャ | 内容 |
 | --- | --- | --- |
 | `Enter` | `CaptureOwnerScope Enter(IWindowService windowService, EsPlatformHandle handle, ICaptureOwnerWindow owner, bool hideOwner)` | 撮影中のオーナー退避とキャプチャ除外を開始する。 **キャプチャ除外を先に、退避を後に**行う順序を単一所有する |
+| `IsExcluded` | `bool IsExcluded { get; }` | キャプチャ除外を設定できたかどうか。 **false の場合は自ウィンドウが画像へ写るため、撮影の前に退避を実行する**必要がある（退避を遅らせてよいかの判断に使う） |
+| `ApplyPendingHide` | `void ApplyPendingHide()` | 予約した退避を実行する。 **`IsExcluded` が false のときだけ呼ぶ**（除外が効いている場合はオーナーを退避しなくても撮影画像へ写らない。 退避するとウィンドウの再合成で一瞬明るい画面が見えるため、退避しない）。 2 回目以降は何もしない |
 | `Dispose` | `void Dispose()` | 配置を復帰し、キャプチャ除外を解除する。 `hideOwner` が false の場合も同じスコープを返す |
 
 撮影が例外で終わっても復帰するため、必ず `using` で使います。

@@ -95,6 +95,15 @@ public static class EsGeometryWinFormsInterop
     /// <returns>コアの矩形。</returns>
     public static EsRect ToEsRect(this RectangleF rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
 
+    /// <summary>GDI+ の矩形型を画面物理ピクセルの矩形へ変換する。</summary>
+    /// <param name="rect">変換元の矩形（画面物理ピクセル）。</param>
+    /// <returns>コアの矩形（画面物理ピクセル）。</returns>
+    /// <remarks>
+    /// <see cref="Rectangle"/> はどちらの座標系にも使われるため、物理ピクセルとして扱う呼び出し側は<br/>
+    /// 本メソッドを使う（<see cref="RectangleF"/> 版は DIP 用であり、意味が異なる）。
+    /// </remarks>
+    public static EsRectInt ToEsRectInt(this Rectangle rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
+
     /// <summary>画面物理ピクセルの矩形を GDI+ の矩形型へ変換する。</summary>
     /// <param name="rect">変換元の矩形（画面物理ピクセル）。</param>
     /// <returns>GDI+ の矩形（値域が同じ整数のため損失しない）。</returns>

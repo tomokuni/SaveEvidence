@@ -69,18 +69,36 @@ public class GdiImageView : Control
     /// <remarks>派生クラスが固定値を与える（プロパティにすると、使い分けのない側へ不要な設定面が増える）。</remarks>
     protected virtual bool UniformDraw => false;
 
-    /// <summary>画像を描画する。</summary>
+    /// <summary>画像を背景として描画する。</summary>
+    /// <param name="pevent">描画のイベント引数（描画面を持つ）。</param>
+    /// <remarks>
+    /// <b>背景として描く理由</b>: 本コントロールの上へ透明な子（撮影オーバーレイ・選択矩形など）を重ねるため。<br/>
+    /// WinForms の透明な子は「親の<b>背景</b>」を自分の下地として描く（親の <see cref="OnPaint"/> は呼ばない）。<br/>
+    /// 画像を <see cref="OnPaint"/> で描くと、透明な子が動いた跡（残像）を親の背景で消せない。
+    /// </remarks>
+    protected override void OnPaintBackground(PaintEventArgs pevent)
+    {
+        ArgumentNullException.ThrowIfNull(pevent);
+
+        if (_bitmap is null)
+        {
+            base.OnPaintBackground(pevent);
+            return;
+        }
+
+        RenderTo(pevent.Graphics, ClientSize);
+    }
+
+    /// <summary>画像を描画する（背景として描くため本メソッドでは描かない）。</summary>
     /// <param name="e">描画のイベント引数（描画面を持つ）。</param>
     /// <remarks>
     /// 図形の描画は <see cref="GdiImageRenderer"/> が単一所有する（本メソッドは配置の判断を持たない）。<br/>
-    /// 下地は塗らない（親の描画をそのまま残し、画像の無い部分を透かす）。
+    /// 画像は <see cref="OnPaintBackground"/> が描く（透明な子が下地として参照できるようにするため）。
     /// </remarks>
     protected override void OnPaint(PaintEventArgs e)
     {
         ArgumentNullException.ThrowIfNull(e);
         base.OnPaint(e);
-
-        RenderTo(e.Graphics, ClientSize);
     }
 
     /// <summary>画像を指定の描画面と領域へ描画する（描画の実体。 テストはウィンドウなしで本メソッドを呼ぶ）。</summary>

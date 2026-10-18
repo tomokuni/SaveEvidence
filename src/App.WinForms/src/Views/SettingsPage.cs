@@ -1,7 +1,4 @@
-using System.ComponentModel;
-using System.Reflection;
 using EsUtil.Platform.Core;
-using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -21,6 +18,26 @@ internal static class SettingsPage
     /// <summary>値の列の幅（DIP）。</summary>
     private const int ValueColumnWidth = 260;
 
+    /// <summary>サブグループの区切り行の高さ（ピクセル）。 線（1）と上下の余白を含む。</summary>
+    private const int SeparatorHeight = 11;
+
+    /// <summary>サブグループの区切り線。</summary>
+    /// <remarks>
+    /// ページの配色を一括適用する処理（ローカル関数 <c>ApplyThemeTo</c>）が <see cref="Panel"/> の背景を<br/>
+    /// ページの背景色で塗りつぶすため、区切り線は <see cref="Control"/> 派生の専用型にして対象外にする<br/>
+    /// （<see cref="Panel"/> のままだと線の色が消える。 実測）。
+    /// </remarks>
+    private sealed class SeparatorLine : Control
+    {
+        /// <summary>区切り線を生成する。</summary>
+        public SeparatorLine()
+        {
+            Dock = DockStyle.Bottom;
+            Height = 1;
+            BackColor = AppStyles.Border;
+        }
+    }
+
     /// <summary>ページの内容を生成する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <returns>ページの内容。</returns>
@@ -32,7 +49,15 @@ internal static class SettingsPage
         var settingsService = services.Settings;
         var settings = settingsService.Current;
 
-        var host = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = AppStyles.PageBackground };
+        var host = new Panel
+        {
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+            BackColor = AppStyles.PageBackground,
+            // 文字サイズは AvaloniaUI 版（14 DIP）に合わせる（DIP → pt へ換算する）。
+            // WinForms の子は親のフォントを継承するため、ページのルートへ 1 回設定すれば全体へ伝わる
+            Font = AppStyles.SettingsFont,
+        };
         var stack = new FlowLayoutPanel
         {
             Dock = DockStyle.Top,
@@ -44,7 +69,7 @@ internal static class SettingsPage
         };
         host.Controls.Add(stack);
 
-        stack.Controls.Add(BuildThemeSection(settingsService));
+        // 本 UI 版はダークテーマを使用しないため、テーマの選択は表示しない（設定ファイルの値も反映しない）
         stack.Controls.Add(BuildSaveFolderSection(settingsService));
         stack.Controls.Add(BuildImageSection(settingsService));
         stack.Controls.Add(BuildCaptureSection(settingsService));
@@ -52,7 +77,23 @@ internal static class SettingsPage
         stack.Controls.Add(BuildHotKeySection(settingsService));
         stack.Controls.Add(BuildAppearanceSection(settingsService));
 
-        AppStyles.ThemeChanged += (_, _) => ApplyAppearance();
+        // セクションの幅をウィンドウ幅へ追従させる（FlowLayoutPanel は子を引き伸ばさないため明示する）
+        void LayoutSections()
+        {
+            var width = host.ClientSize.Width - stack.Padding.Horizontal - 2;
+            if (width <= 0)
+            {
+                return;
+            }
+
+            foreach (Control section in stack.Controls)
+            {
+                section.Width = width;
+            }
+        }
+
+        host.SizeChanged += (_, _) => LayoutSections();
+        LayoutSections();
         ApplyAppearance();
 
         return new PageContent(host, OnActivated: ApplyAppearance);
@@ -86,6 +127,7 @@ internal static class SettingsPage
 
             if (control is FlowLayoutPanel or TableLayoutPanel or Panel)
             {
+                // 区切り線（SeparatorLine）は専用の色を持つため塗り替えない
                 control.BackColor = AppStyles.PageBackground;
             }
 
@@ -96,40 +138,6 @@ internal static class SettingsPage
         }
     }
 
-    /// <summary>外観テーマのセクションを生成する。</summary>
-    /// <param name="settingsService">設定サービス。</param>
-    /// <returns>生成したセクション。</returns>
-    private static Control BuildThemeSection(ISettingsService settingsService)
-    {
-        var section = CreateSection("外観テーマ設定");
-        var combo = new ComboBox
-        {
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 200,
-        };
-
-        foreach (var mode in MainViewModel.ThemeModes)
-        {
-            combo.Items.Add(GetDescription(mode));
-        }
-
-        combo.SelectedIndex = Math.Max(0, IndexOfThemeMode(settingsService.Current.ThemeMode));
-        combo.SelectedIndexChanged += (_, _) =>
-        {
-            if (combo.SelectedIndex < 0)
-            {
-                return;
-            }
-
-            var mode = MainViewModel.ThemeModes[combo.SelectedIndex];
-            settingsService.Current.ThemeMode = mode;
-            settingsService.Save();
-            AppStyles.ApplyTheme(mode);
-        };
-
-        section.Controls.Add(UiFactory.CreateRow("テーマ", combo, "ライト / ダーク / システム（OS の設定に追従）"));
-        return section;
-    }
 
     /// <summary>保存設定のセクションを生成する。</summary>
     /// <param name="settingsService">設定サービス。</param>
@@ -139,10 +147,17 @@ internal static class SettingsPage
         var section = CreateSection("保存設定");
         var text = new TextBox
         {
-            Width = 420,
             Text = settingsService.Current.SaveFolderPath,
+            Height = AppStyles.SettingsControlHeight,
         };
-        var browse = new Button { Text = "参照...", Width = 64, FlatStyle = FlatStyle.Flat, TabStop = false };
+        var browse = new Button
+        {
+            Text = "参照...",
+            Width = 76,
+            Height = AppStyles.SettingsControlHeight,
+            FlatStyle = FlatStyle.Flat,
+            TabStop = false,
+        };
         browse.Click += (_, _) =>
         {
             using var dialog = new FolderBrowserDialog { SelectedPath = text.Text };
@@ -152,10 +167,53 @@ internal static class SettingsPage
             }
         };
 
-        var row = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = new Padding(0, 2, 0, 2) };
-        var label = new Label { Text = "保存先フォルダ", AutoSize = true, Margin = new Padding(0, 6, 8, 0) };
+        // 保存先の欄は残り幅いっぱい（ラベルと参照ボタンを除いた分）にし、ウィンドウ幅へ追従させる。
+        // FlowLayoutPanel は子を引き伸ばさないため、入れ物の幅が変わったら幅を計算し直す
+        var row = new Panel
+        {
+            AutoSize = false,
+            Height = AppStyles.SettingsControlHeight + 4,
+            Margin = new Padding(0, 2, 0, 2),
+        };
+        var label = new Label
+        {
+            Text = "保存先フォルダ",
+            AutoSize = true,
+            Margin = new Padding(0, 0, 8, 0),
+        };
         row.Controls.AddRange([label, text, browse]);
-        section.Controls.Add(row);
+        section.Body.Controls.Add(row);
+
+        // プレースホルダの説明（文言は SettingsMetrics（App.Core）が単一所有する）
+        var hint = new Label
+        {
+            Text = SettingsMetrics.SaveFolderHint,
+            AutoSize = true,
+            Font = AppStyles.SettingsHintFont,
+            ForeColor = AppStyles.Foreground,
+            Margin = new Padding(0, 0, 0, 4),
+        };
+        section.Body.Controls.Add(hint);
+
+        void LayoutRow()
+        {
+            var width = section.Body.ClientSize.Width;
+            if (width <= 0)
+            {
+                return;
+            }
+
+            row.Width = width;
+            label.Top = Math.Max(0, (row.Height - label.Height) / 2);
+            text.Left = label.Right + 6;
+            text.Width = Math.Max(120, width - text.Left - browse.Width - 6);
+            text.Top = Math.Max(0, (row.Height - text.Height) / 2);
+            browse.Left = text.Right + 6;
+            browse.Top = Math.Max(0, (row.Height - browse.Height) / 2);
+        }
+
+        section.Body.SizeChanged += (_, _) => LayoutRow();
+        LayoutRow();
 
         void Save()
         {
@@ -178,7 +236,7 @@ internal static class SettingsPage
     private static Control BuildImageSection(ISettingsService settingsService)
     {
         var section = CreateSection("画像設定");
-        section.Controls.Add(CreateCheckBox(
+        section.Body.Controls.Add(CreateCheckBox(
             "画像を中央に配置（オフの場合は左上に配置）",
             settingsService.Current.CenterAlign,
             value =>
@@ -186,6 +244,35 @@ internal static class SettingsPage
                 settingsService.Current.CenterAlign = value;
                 settingsService.Save();
             }));
+
+        // 起動直後の画像の選択肢（表示名は列挙の説明属性が単一所有する）
+        var modes = MainViewModel.StartupPreviewModes;
+        var combo = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 200,
+        };
+
+        foreach (var mode in modes)
+        {
+            combo.Items.Add(EnumDisplayNames.Get(mode));
+        }
+
+        combo.SelectedIndex = Math.Max(0, modes.ToList().IndexOf(settingsService.Current.StartupPreview));
+        combo.SelectedIndexChanged += (_, _) =>
+        {
+            if (combo.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            settingsService.Current.StartupPreview = modes[combo.SelectedIndex];
+            settingsService.Save();
+        };
+
+        section.Body.Controls.Add(UiFactory.CreateRow(
+            "起動時の画像", combo, "起動直後のキャプチャ ページに置く画像（次回起動から反映）"));
+
         return section;
     }
 
@@ -195,7 +282,7 @@ internal static class SettingsPage
     private static Control BuildCaptureSection(ISettingsService settingsService)
     {
         var section = CreateSection("キャプチャ設定");
-        section.Controls.Add(CreateCheckBox(
+        section.Body.Controls.Add(CreateCheckBox(
             "キャプチャ時にメイン ウィンドウを隠す",
             settingsService.Current.HideMainWindowOnCapture,
             value =>
@@ -212,7 +299,7 @@ internal static class SettingsPage
     private static Control BuildSelectionClampSection(ISettingsService settingsService)
     {
         var section = CreateSection("矩形選択範囲の制限");
-        section.Controls.Add(CreateCheckBox(
+        section.Body.Controls.Add(CreateCheckBox(
             "画像外の選択を禁止（境界内にクリップ）",
             settingsService.Current.ClampToSourceBounds,
             value =>
@@ -237,13 +324,20 @@ internal static class SettingsPage
 
         void Add(string caption, Func<HotKeySetting> get, Action<HotKeySetting> set)
         {
-            var text = new TextBox { Width = 200, Text = FormatHotKey(get()) };
-            var clear = new Button { Text = "クリア", Width = 64, FlatStyle = FlatStyle.Flat, TabStop = false };
+            var text = new TextBox { Width = 200, Text = FormatHotKey(get()), Height = AppStyles.SettingsControlHeight };
+            var clear = new Button
+            {
+                Text = "クリア",
+                Width = 76,
+                Height = AppStyles.SettingsControlHeight,
+                FlatStyle = FlatStyle.Flat,
+                TabStop = false,
+            };
 
             var row = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Margin = new Padding(0, 2, 0, 2) };
-            var label = new Label { Text = caption, AutoSize = true, Width = 180, Margin = new Padding(0, 6, 8, 0) };
+            var label = new Label { Text = caption, AutoSize = true, Width = 180, Margin = new Padding(0, 4, 8, 0) };
             row.Controls.AddRange([label, text, clear]);
-            section.Controls.Add(row);
+            section.Body.Controls.Add(row);
 
             void Commit()
             {
@@ -311,7 +405,7 @@ internal static class SettingsPage
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         };
-        section.Controls.Add(reset);
+        section.AddHeaderAction(reset);
 
         var table = new TableLayoutPanel
         {
@@ -324,30 +418,43 @@ internal static class SettingsPage
         table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, ValueColumnWidth));
-        section.Controls.Add(table);
+        section.Body.Controls.Add(table);
 
         var category = "";
 
-        void Next(string name)
+        bool Next(string name)
         {
-            if (category.Length > 0 && !string.Equals(category, name, StringComparison.Ordinal))
+            var started = category.Length > 0 && !string.Equals(category, name, StringComparison.Ordinal);
+            if (started)
             {
-                var line = new Panel { Height = 1, BackColor = AppStyles.Border, Dock = DockStyle.Fill };
+                // サブグループの区切り線。 行の高さを固定しないと線の太さが行の高さに伸びる
+                // （Dock=Fill は行の高さいっぱいへ広がる）。
+                var separator = new SeparatorLine();
+                var separatorRow = table.RowCount;
                 table.RowCount++;
-                table.Controls.Add(new Label { Text = "", AutoSize = true }, 0, table.RowCount - 1);
-                table.Controls.Add(line, 1, table.RowCount - 1);
-                table.SetColumnSpan(line, 2);
+                table.RowStyles.Add(new RowStyle(SizeType.Absolute, SeparatorHeight));
+                table.Controls.Add(separator, 0, separatorRow);
+                table.SetColumnSpan(separator, 3);
             }
 
+            var isFirst = category.Length == 0;
             category = name;
+            return isFirst || started;
         }
 
         void AddRow(string name, string caption, Control input)
         {
-            Next(name);
+            // グループ名は各グループの先頭行にだけ表示する（Avalonia 版の行連結と同じ見た目）。
+            // 全行へ繰り返すと、どの行の項目かが読み取りにくく、縦にも長くなる
+            var showCategory = Next(name);
+            var row = table.RowCount;
             table.RowCount++;
-            var row = table.RowCount - 1;
-            table.Controls.Add(new Label { Text = name, AutoSize = true, Margin = new Padding(0, 6, 8, 0) }, 0, row);
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            table.Controls.Add(
+                showCategory
+                    ? new Label { Text = name, AutoSize = true, ForeColor = AppStyles.Foreground, Margin = new Padding(0, 6, 12, 0) }
+                    : new Label { Text = "", AutoSize = true },
+                0, row);
             table.Controls.Add(new Label { Text = caption, AutoSize = true, Margin = new Padding(0, 6, 8, 0) }, 1, row);
             table.Controls.Add(input, 2, row);
         }
@@ -455,19 +562,115 @@ internal static class SettingsPage
     /// <summary>セクションの枠（見出し付きの入れ物）を生成する。</summary>
     /// <param name="title">見出しの文言。</param>
     /// <returns>生成したセクション。</returns>
-    private static GroupBox CreateSection(string title)
-        => new()
+    /// <remarks>
+    /// <b>中身は <see cref="SectionBox.Body"/> へ追加する理由</b>:<br/>
+    /// <see cref="GroupBox"/> に直接子を追加すると、子は枠の内側の余白（<see cref="Control.Padding"/>）を<br/>
+    /// 無視して左上（枠線の上）へ置かれ、複数の子が同じ位置へ重なる。<br/>
+    /// 本メソッドは中身専用の入れ物（<see cref="SectionBox.Body"/>）を持たせ、子はそこへ追加する。
+    /// </remarks>
+    private static SectionBox CreateSection(string title) => new(title);
+
+    /// <summary>見出し（グループ名）と枠を持ち、中身を縦 1 列で並べるセクション。</summary>
+    /// <remarks>
+    /// <b>中身専用の入れ物を持つ理由</b>: <see cref="GroupBox"/> へ直接追加した子は、枠の内側の余白を無視して<br/>
+    /// 左上へ置かれ、複数の子が同じ位置へ重なる（実測）。 <see cref="Body"/> は枠の内側（見出しの下）へ<br/>
+    /// ドッキングするため、子は重ならず、枠線にも重ならない。<br/>
+    /// <b>上余白を小さくする理由</b>: <see cref="GroupBox"/> は見出しの分を <see cref="Control.DisplayRectangle"/><br/>
+    /// で既に確保している。 さらに大きな上余白を足すと、グループ名と中身が離れすぎる（実測）。<br/>
+    /// <b>高さを自前で決める理由</b>: <c>AutoSize = true</c> の <see cref="GroupBox"/> は、この環境では<br/>
+    /// 見出しの文字を描かない（実測）。 <c>AutoSize = false</c> にして中身の実際の下端から高さを求める。
+    /// </remarks>
+    private sealed class SectionBox : GroupBox
+    {
+        /// <summary>見出しの下へ中身を並べる入れ物。</summary>
+        private readonly FlowLayoutPanel _body = new()
         {
-            Text = title,
+            Dock = DockStyle.Top,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            Width = 700,
-            Padding = new Padding(8),
-            Margin = new Padding(0, 0, 0, 6),
-            ForeColor = AppStyles.Foreground,
+            Padding = new Padding(0),
+            Margin = new Padding(0),
         };
 
-    /// <summary>チェック ボックスの行を生成する。</summary>
+        /// <summary>高さの再計算中かどうか（再入防止）。</summary>
+        private bool _adjusting;
+
+        /// <summary>セクションを生成する。</summary>
+        /// <param name="title">見出しの文言。</param>
+        public SectionBox(string title)
+        {
+            Text = title;
+            AutoSize = false;
+            Width = 700;
+            Height = 40;
+            Margin = new Padding(0, 0, 0, 8);
+            ForeColor = AppStyles.Foreground;
+            // 文字サイズは AvaloniaUI 版と同じにする（親の継承に頼らず明示する）
+            Font = AppStyles.SettingsFont;
+            // 見出しは GroupBox が確保するため、上下は小さく取る（中身をグループ名のすぐ下へ置く）
+            Padding = new Padding(10, 4, 10, 6);
+            Controls.Add(_body);
+
+            // 中身の高さに合わせて枠の高さを決める
+            _body.ControlAdded += (_, _) => AdjustHeight();
+            _body.ControlRemoved += (_, _) => AdjustHeight();
+            _body.Layout += (_, _) => AdjustHeight();
+            AdjustHeight();
+        }
+
+        /// <summary>中身を追加する入れ物を取得する。</summary>
+        /// <value>縦 1 列で子を並べる入れ物。</value>
+        public FlowLayoutPanel Body => _body;
+
+        /// <summary>見出しの右端に置く操作（「デフォルト値に戻す」など）を追加する。</summary>
+        /// <param name="action">見出しの右端へ置くコントロール。</param>
+        /// <remarks>
+        /// <see cref="GroupBox"/> へ直接追加した子は枠の内側の余白を無視して左上へ置かれるため、<br/>
+        /// 位置を明示する（見出しの行の右端・中身の上端）。
+        /// </remarks>
+        public void AddHeaderAction(Control action)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+
+            action.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            Controls.Add(action);
+            action.BringToFront();
+            Layout += (_, _) => action.Location = new Point(
+                Math.Max(Padding.Left, ClientSize.Width - Padding.Right - action.Width), 2);
+        }
+
+        /// <summary>中身の高さに合わせてセクションの高さを更新する。</summary>
+        /// <remarks>
+        /// <b>中身の実際の下端から求める理由</b>: <c>AutoSize = true</c> にすると見出しが描かれず（実測）、<br/>
+        /// <see cref="Control.PreferredSize"/> はレイアウト前だと実際より小さく、最後の行が枠に隠れる（実測）。<br/>
+        /// 中身は見出しの下（<see cref="Control.DisplayRectangle"/>）へ置かれるため、その下端に下余白を足す。<br/>
+        /// <b>足りないときだけ広げる理由</b>: 縮めると、フォント変更直後の一瞬だけ行が欠ける（ちらつき）。
+        /// </remarks>
+        private void AdjustHeight()
+        {
+            if (_adjusting || !IsHandleCreated)
+            {
+                return;
+            }
+
+            _adjusting = true;
+            try
+            {
+                var desired = _body.Bottom + Padding.Bottom;
+                if (desired > Height)
+                {
+                    Height = desired;
+                }
+            }
+            finally
+            {
+                _adjusting = false;
+            }
+        }
+    }
+
     /// <param name="caption">文言。</param>
     /// <param name="value">初期値。</param>
     /// <param name="onChanged">変更時の処理。</param>
@@ -483,33 +686,6 @@ internal static class SettingsPage
         };
         box.CheckedChanged += (_, _) => onChanged(box.Checked);
         return box;
-    }
-
-    /// <summary>テーマ モードの表示名（<see cref="DescriptionAttribute"/>）を取得する。</summary>
-    /// <param name="mode">テーマ モード。</param>
-    /// <returns>表示名。 属性が無い場合は列挙の名前。</returns>
-    private static string GetDescription(ThemeMode mode)
-    {
-        var field = typeof(ThemeMode).GetField(mode.ToString());
-        var attribute = field?.GetCustomAttribute<DescriptionAttribute>();
-        return attribute?.Description ?? mode.ToString();
-    }
-
-    /// <summary>テーマ モードの一覧内の位置を求める。</summary>
-    /// <param name="mode">対象のテーマ モード。</param>
-    /// <returns>位置。 見つからない場合は 0。</returns>
-    private static int IndexOfThemeMode(ThemeMode mode)
-    {
-        var modes = MainViewModel.ThemeModes;
-        for (var i = 0; i < modes.Count; i++)
-        {
-            if (modes[i] == mode)
-            {
-                return i;
-            }
-        }
-
-        return 0;
     }
 
     /// <summary>ホットキー設定を表示用の文字列へ整形する。</summary>
