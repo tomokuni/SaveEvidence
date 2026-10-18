@@ -22,7 +22,11 @@ public static class NavPanelMetrics
     /// <summary>項目の左右の余白（DIP）。</summary>
     public const double ItemHorizontalPadding = 12;
 
-    /// <summary>項目のアイコンの一辺（DIP）。</summary>
+    /// <summary>アイコンの一辺（DIP）。 ナビゲーションとツールバーで同じ値を使う。</summary>
+    /// <remarks>
+    /// ナビゲーションの項目・開閉ボタン・左上のアプリ アイコンと、ページのツールバーのアイコンは<br/>
+    /// <b>すべてこの値</b>を使う（UI 版ごとに大きさが変わらないようにする）。
+    /// </remarks>
     public const double IconSize = 16;
 
     /// <summary>アイコンと文字の間隔（DIP）。</summary>

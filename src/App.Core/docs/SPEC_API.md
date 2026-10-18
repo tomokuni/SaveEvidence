@@ -469,8 +469,8 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 | メンバー | 値 | 意味 |
 | --- | --- | --- |
-| `WindowMetrics.MinimumWidth` / `MinimumHeight` | 700 / 400 DIP | ウィンドウの最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算して指定する） |
-| `WindowMetrics.DefaultWidth` / `DefaultHeight` | 700 / 400 DIP | 復元する配置が無いときの既定サイズ |
+| `WindowMetrics.MinimumWidth` / `MinimumHeight` | 640 / 400 DIP | ウィンドウの最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算して指定する） |
+| `WindowMetrics.DefaultWidth` / `DefaultHeight` | 640 / 400 DIP | 復元する配置が無いときの既定サイズ |
 | `WindowLayout.ToolbarRowTop` / `ToolbarButtonHeight` | 6 / 32 DIP | ページのツールバーの行の上端とボタンの高さ（アプリ アイコンの縦位置の基準） |
 | `WindowLayout.AppIconRowHeight` | 44 DIP | 左上のアプリ アイコンを置く行の高さ（中心がツールバーのアイコンと一致する 6 + 32 + 6） |
 | `WindowLayout.AppIconSize` | 16 DIP | 左上のアプリ アイコン（タスク バーと同じアイコン）の一辺。 **ナビゲーションのアイコンと同じ大きさ** |

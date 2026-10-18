@@ -36,6 +36,12 @@ internal static class CapturePage
     /// <summary>自動切り出しの検出矩形の枠線の太さ（DIP）。</summary>
     private const double AutoCropBorderThickness = 2.0;
 
+    /// <summary>ファイル名テンプレートの最小幅（DIP）。 4 つの UI 版で共通。</summary>
+    private const double TemplateMinWidth = 100;
+
+    /// <summary>ファイル名テンプレートの文字の左右の余白（DIP）。</summary>
+    private const double TemplateTextPadding = 16;
+
     /// <summary>ロガー（設定の反映失敗を記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(CapturePage));
 
@@ -141,6 +147,7 @@ internal static class CapturePage
         var templateBox = new TextBox
         {
             Width = 260,
+            MinimumSize = new Size(DpiScaler.ScaleToPixel(TemplateMinWidth, DpiScaler.ToScaling(crop.DeviceDpi)), 0),
             Text = viewModel.FileNameTemplateText,
             // ツールバーの行（30）の中で文字が垂直方向中央に来るよう、高さと上下の余白を揃える
             Height = 24,
@@ -162,6 +169,32 @@ internal static class CapturePage
         toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.AreaSelect, "範囲選択で撮影", () => StartCapture(CaptureType.AreaSelect)));
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.Crop, "切り出し（開始 / 確定 / キャンセル）", ToggleCrop));
+
+        // 幅は入力された文字列の幅に合わせる（最小 100 DIP・上限はツールバーが折り返さない幅）。
+        // 上限を取るのは、幅を広げすぎるとツールバーのアイコンが 2 段になるため（他の UI 版と同じ）。
+        void UpdateTemplateWidth()
+        {
+            var scaling = DpiScaler.ToScaling(crop.DeviceDpi);
+            var minimum = DpiScaler.ScaleToPixel(TemplateMinWidth, scaling);
+            var textWidth = TextRenderer.MeasureText(templateBox.Text, templateBox.Font).Width;
+            var desired = Math.Max(minimum, textWidth + DpiScaler.ScaleToPixel(TemplateTextPadding, scaling));
+
+            var others = 0;
+            foreach (Control child in toolbar.Controls)
+            {
+                if (!ReferenceEquals(child, templateBox) && child.Visible)
+                {
+                    others += child.Width + child.Margin.Horizontal;
+                }
+            }
+
+            var available = toolbar.ClientSize.Width - others - templateBox.Margin.Horizontal;
+            templateBox.Width = available > minimum ? Math.Min(desired, available) : minimum;
+        }
+
+        templateBox.TextChanged += (_, _) => UpdateTemplateWidth();
+        toolbar.SizeChanged += (_, _) => UpdateTemplateWidth();
+        UpdateTemplateWidth();
 
         var root = new Panel { Dock = DockStyle.Fill, BackColor = AppStyles.PageBackground };
         root.Controls.Add(canvas);

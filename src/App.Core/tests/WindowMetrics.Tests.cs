@@ -10,16 +10,16 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 public class WindowMetricsTests
 {
     [Fact]
-    internal void 最小サイズ_は700x400()
+    internal void 最小サイズ_は640x400()
     {
-        Assert.Equal(700, WindowMetrics.MinimumWidth);
+        Assert.Equal(640, WindowMetrics.MinimumWidth);
         Assert.Equal(400, WindowMetrics.MinimumHeight);
     }
 
     [Fact]
-    internal void 既定サイズ_は700x400()
+    internal void 既定サイズ_は640x400()
     {
-        Assert.Equal(700, WindowMetrics.DefaultWidth);
+        Assert.Equal(640, WindowMetrics.DefaultWidth);
         Assert.Equal(400, WindowMetrics.DefaultHeight);
     }
 

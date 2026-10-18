@@ -117,10 +117,10 @@ internal static class AppStyles
     public const double SectionHeaderFontSize = SettingsMetrics.FontSize;
 
     /// <summary>ツールバーのアイコンの一辺（DIP）。</summary>
-    public const double ToolbarIconSize = 16;
+    public const double ToolbarIconSize = NavPanelMetrics.IconSize;
 
     /// <summary>ナビゲーション項目のアイコンの一辺（DIP）。</summary>
-    public const double NavIconSize = 16;
+    public const double NavIconSize = NavPanelMetrics.IconSize;
 
     /// <summary>ナビゲーション パネルの文字サイズ（見出しのアプリ名。 DIP）。</summary>
     public const double NavTitleFontSize = 14;

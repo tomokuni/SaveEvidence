@@ -62,7 +62,7 @@ internal sealed class MainWindow
     private const double NavSelectionMarkHeight = 16;
 
     /// <summary>ナビ項目のアイコンの一辺（DIP）。</summary>
-    private const double NavIconSize = 16;
+    private const double NavIconSize = NavPanelMetrics.IconSize;
 
     /// <summary>ナビ項目の高さ（DIP）。 開閉の状態で変わらない。</summary>
     /// <remarks>

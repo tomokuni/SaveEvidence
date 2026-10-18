@@ -36,7 +36,7 @@ internal static class CapturePage
     private const double AutoCropBorderThickness = 2;
 
     /// <summary>ツールバーのアイコンの一辺（DIP）。</summary>
-    private const double IconSize = 16;
+    private const double IconSize = NavPanelMetrics.IconSize;
 
     /// <summary>ツールバーのアイコンを生成する解像度（ピクセル）。</summary>
     private const int IconRasterSize = 32;
@@ -72,7 +72,7 @@ internal static class CapturePage
     private static readonly double[] s_zoomMenuLevels = [10, 15, 25, 35, 50, 75, 100, 150, 200, 250, 350, 500];
 
     /// <summary>ファイル名テンプレートの最小幅（DIP）。 Avalonia 版と同じ値。</summary>
-    private const double TemplateMinWidth = 220;
+    private const double TemplateMinWidth = 100;
 
     /// <summary>ファイル名テンプレートの幅に足す左右の余白（DIP・枠とカーソル分）。 Avalonia 版と同じ値。</summary>
     private const double TemplateHorizontalPadding = 24;

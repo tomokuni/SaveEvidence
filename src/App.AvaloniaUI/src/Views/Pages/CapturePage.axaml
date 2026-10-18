@@ -91,14 +91,14 @@
             </Button>
             <Border Classes="toolbar-separator"/>
             <!-- 保存するファイル名テンプレート（保存ボタンの左） -->
-            <!-- テキストの内容に応じて幅を自動調整する（TextChanged で FormattedText 計測。MinWidth の範囲内、上限は
+            <!-- テキストの内容に応じて幅を自動調整する（TextChanged で FormattedText 計測。MinWidth（100）の範囲内、上限は
                  ツールバーが折り返さない幅 = ツールバー幅から他の要素を除いた幅） -->
             <!-- ToolTip は {date}/{time} がマークアップ拡張と衝突するため、コードビハインド（Initialize）で設定する -->
             <TextBox x:Name="FileNameTemplateBox"
                      Classes="toolbar"
                      Text="{Binding FileNameTemplateText}"
                      Classes.validation-error="{Binding HasInvalidTemplate}"
-                     MinWidth="220"
+                     MinWidth="100"
                      VerticalContentAlignment="Center"
                      Margin="1"
                      TextChanged="OnFileNameTemplateTextChanged"/>

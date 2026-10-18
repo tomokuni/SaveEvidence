@@ -14,13 +14,13 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 public static class WindowMetrics
 {
     /// <summary>ウィンドウの最小幅（DIP）。</summary>
-    public const double MinimumWidth = 700;
+    public const double MinimumWidth = 640;
 
     /// <summary>ウィンドウの最小の高さ（DIP）。</summary>
     public const double MinimumHeight = 400;
 
     /// <summary>復元する配置が無いときの既定の幅（DIP）。</summary>
-    public const double DefaultWidth = 700;
+    public const double DefaultWidth = 640;
 
     /// <summary>復元する配置が無いときの既定の高さ（DIP）。</summary>
     public const double DefaultHeight = 400;

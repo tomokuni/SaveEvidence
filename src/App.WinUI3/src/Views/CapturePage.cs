@@ -50,7 +50,7 @@ internal static class CapturePage
     private const double ZoomSliderMaximum = 500;
 
     /// <summary>ファイル名テンプレートの最小幅（DIP）。 Avalonia 版と同じ値。</summary>
-    private const double TemplateMinWidth = 220;
+    private const double TemplateMinWidth = 100;
 
     /// <summary>ファイル名テンプレートの幅に足す左右の余白（DIP・枠とカーソル分）。 Avalonia 版と同じ値。</summary>
     private const double TemplateHorizontalPadding = 24;

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
@@ -14,7 +15,7 @@ namespace EsUtil.SaveEvidence.App.WinForms.Views;
 internal sealed class ToolButton : Button
 {
     /// <summary>アイコンの一辺の基準サイズ（DIP）。</summary>
-    private const int BaseIconSize = 16;
+    private const int BaseIconSize = (int)NavPanelMetrics.IconSize;
 
     /// <summary>このボタンが表示するアイコン（null の場合は文字だけを表示する）。</summary>
     private readonly AppIcon? _icon;

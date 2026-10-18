@@ -20,11 +20,40 @@
             <Setter Property="SelectionForegroundBrush" Value="#FF000000"/>
         </Style>
 
-        <!-- ツールバーボタン（各ページのツールバー高さを統一する。フォルダビューの標準ボタンサイズが基準） -->
+        <!-- ツールバーボタン（各ページのツールバー高さを統一する。フォルダビューの標準ボタンサイズが基準）。
+             通常時は背景を持たず、マウスを重ねると薄い角丸の矩形、押している間はさらに濃くする
+             （色は AppPalette（App.Core）が単一所有する。 他の UI 版と同じ段階）。 -->
         <Style Selector="Button.toolbar, ToggleButton.toolbar">
             <Setter Property="Height" Value="32"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        <Style Selector="Button.toolbar /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.toolbar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.toolbar:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonPressedBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="ToggleButton.toolbar /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="ToggleButton.toolbar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="ToggleButton.toolbar:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonPressedBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
         <!-- ツールバーのテキストボックス（ファイル名テンプレート等）も同じ高さに揃える -->
         <Style Selector="TextBox.toolbar">
