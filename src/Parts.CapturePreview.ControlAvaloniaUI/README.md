@@ -229,9 +229,9 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 | --- | --- |
 | `Parts.CapturePreview.Core` | 両 UI 共通の規則（`CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `SelectionOverlayOptionsMapper` / `CropBoundsMath` / `CropClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / `OverlayRect` / `OverlayLineStyle` / `SelectionOverlayMode` / `SelectionOverlayOptions` / ログ定義）と、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession` / `ZoomOptions` / `ZoomState` / `ZoomViewAppearance` / `CapturePreviewLogMessage`）。 さらに `Presentation/` に設定 → 外観の写像（`CapturePaintMapper`）・子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）・付加情報ラベルの配置（`SelectionOverlayLabelRenderer`）を持つ。 UI 非依存 |
 | `Platform.AvaloniaUI` | サービス生成 / `ScreenConverter` / 色の相互変換（`ColorAvaloniaInterop`）。 抽象（`ICaptureService` / `IWindowService` / `IElementFinder`）は `EsUtil.Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `EsUtil.Platform.Core` |
-| `EsUtil.Feature.Marquee.ControlAvaloniaUI` | `MarqueeControl`（選択矩形と、その外側に描く装飾（暗転マスク・外枠・ハイライト）） |
-| `EsUtil.Feature.Loupe.ControlAvaloniaUI` | `LoupeControl`（拡大鏡）/ `LoupeRenderedEventArgs` |
-| `EsUtil.Feature.Marquee.Presenter` | `MarqueeAppearance`（描画にだけ必要な外観。 内包コントロール（`EsUtil.Feature.Marquee.ControlAvaloniaUI`）の推移的依存） |
+| `EsUtil.Ui.AvaloniaUI.Marquee` | `MarqueeControl`（選択矩形と、その外側に描く装飾（暗転マスク・外枠・ハイライト）） |
+| `EsUtil.Ui.AvaloniaUI.Loupe` | `LoupeControl`（拡大鏡）/ `LoupeRenderedEventArgs` |
+| `EsUtil.Feature.Marquee.Presenter` | `MarqueeAppearance`（描画にだけ必要な外観。 内包コントロール（`EsUtil.Ui.AvaloniaUI.Marquee`）の推移的依存） |
 | `EsUtil.Feature.Loupe.Core` | ルーペの配置計算（内包コントロールの推移的依存） |
 | `EsUtil.Feature.Loupe.Presenter` | `LoupeAppearance`（描画にだけ必要な外観。 内包コントロールの推移的依存） |
 

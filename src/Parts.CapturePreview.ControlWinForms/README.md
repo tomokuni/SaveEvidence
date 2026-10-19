@@ -12,7 +12,7 @@
 | --- | --- |
 | ズーム・パン・Fit | 画像ビューポート（`ZoomViewControl`）。 段階ズーム・ホイール操作・スクロールバーをオーバーレイ描画する |
 | 切り出しビュー | 画像表示 + 外部提供矩形オーバーレイ + 強調表示の統合（`CropViewControl`） |
-| 領域選択 | 暗転マスク + 選択矩形 + ルーペ（`SelectionOverlayControl`）。 `EsUtil.Feature.Marquee.ControlWinForms` と `EsUtil.Feature.Loupe.ControlWinForms` を内包する |
+| 領域選択 | 暗転マスク + 選択矩形 + ルーペ（`SelectionOverlayControl`）。 `EsUtil.Ui.WinForms.Marquee` と `EsUtil.Ui.WinForms.Loupe` を内包する |
 | 撮影セッション | 画面全体を覆う選択オーバーレイから切り出した画像を返す（`CaptureSessionControl`）。 キャプチャ除外が効いている環境ではオーナーを退避しない（オーバーレイが画面全体を覆うため見た目は変わらない。 退避すると再合成で一瞬明るい画面が見える）。 透明度の切り替えは使わず、下地色（撮影画像の平均色へ暗転色を重ねた色）を最初から最終の見た目に合わせる（透明度を切り替えると、未描画の面が一瞬白く合成される） |
 | 切り出しセッション | 表示中の画像を対象にした切り出し（確定・キャンセル・非アクティブ化でキャンセル） |
 
@@ -107,8 +107,8 @@ dotnet test src/Parts.CapturePreview.ControlWinForms/tests/Parts.CapturePreview.
 | `Parts.CapturePreview.Core` | 撮影・切り出し・選択の共通規則と提示の写像（UI 非依存） |
 | `Platform.WinForms` | コア型 ⇔ GDI+ 型の変換、DIP 換算、画像の表示ビューと描画プリミティブ |
 | `EsUtil.Platform.Core` | コア型・画像・DPI 換算・Win32 サービス（キャプチャ・要素検出・ウィンドウ操作） |
-| `EsUtil.Feature.Marquee.ControlWinForms` | 選択矩形コントロール（暗転マスク・ハンドル・ラベル） |
-| `EsUtil.Feature.Loupe.ControlWinForms` | ルーペ コントロール（拡大鏡） |
+| `EsUtil.Ui.WinForms.Marquee` | 選択矩形コントロール（暗転マスク・ハンドル・ラベル） |
+| `EsUtil.Ui.WinForms.Loupe` | ルーペ コントロール（拡大鏡） |
 
 ## 8. ライセンス
 

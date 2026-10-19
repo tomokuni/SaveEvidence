@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Threading;
-using EsUtil.Feature.Thumbnail.AvaloniaUI;
+using EsUtil.Ui.AvaloniaUI.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;

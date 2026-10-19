@@ -51,8 +51,8 @@ Parts.CapturePreview.ControlMewUI
     ├── Platform.MewUI（コア型 ⇔ MewUI 型の Interop / DIP 変換）
     ├── EsUtil.Platform.Core（ICaptureService / IElementFinder / IWindowService の Win32 実装を Facade が生成する）
     ├── Platform.Skia（Skia 依存の閉じ込め）
-    ├── EsUtil.Feature.Marquee.ControlMewUI（選択矩形と、その外側に描く装飾。 描画計画と外観は EsUtil.Feature.Marquee.Core / EsUtil.Feature.Marquee.Presenter を推移参照する）
-    └── EsUtil.Feature.Loupe.ControlMewUI（拡大鏡。 配置計算と外観は EsUtil.Feature.Loupe.Core / EsUtil.Feature.Loupe.Presenter を推移参照する）
+    ├── EsUtil.Ui.MewUI.Marquee（選択矩形と、その外側に描く装飾。 描画計画と外観は EsUtil.Feature.Marquee.Core / EsUtil.Feature.Marquee.Presenter を推移参照する）
+    └── EsUtil.Ui.MewUI.Loupe（拡大鏡。 配置計算と外観は EsUtil.Feature.Loupe.Core / EsUtil.Feature.Loupe.Presenter を推移参照する）
 ```
 
 依存は一方向です（アプリから本ライブラリを参照し、逆は参照しない）。

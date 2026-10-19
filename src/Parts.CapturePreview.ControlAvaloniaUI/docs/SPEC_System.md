@@ -50,7 +50,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | Parts.CapturePreview.Core（撮影セッション・切り出しビュー・領域選択・画像ビューポートの状態と判断、設定 → 外観の写像）/ EsUtil.Feature.Marquee.ControlAvaloniaUI / EsUtil.Feature.Loupe.ControlAvaloniaUI（内包コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
+| **依存プロジェクト** | Parts.CapturePreview.Core（撮影セッション・切り出しビュー・領域選択・画像ビューポートの状態と判断、設定 → 外観の写像）/ EsUtil.Ui.AvaloniaUI.Marquee / EsUtil.Ui.AvaloniaUI.Loupe（内包コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
 
 撮影セッション（`CaptureSessionControl` / `CaptureOverlaySession` / `CaptureOverlayWindow`）は内包コントロール（MarqueeControl / LoupeControl）を直接参照しません（窓口は `SelectionOverlayControl` のみ。 公開型のカプセル化）。 内包コントロールを参照するのは同一アセンブリ内の複合コントロールだけです。
 
@@ -122,8 +122,8 @@ flowchart TB
         Ct["CaptureType<br/>public enum"]
     end
     subgraph Dep["外部依存プロジェクト（内包コントロール）"]
-        DR["EsUtil.Feature.Marquee.ControlAvaloniaUI<br/>MarqueeControl（選択矩形 UI ＋ 外側の装飾の描画）"]
-        LP["EsUtil.Feature.Loupe.ControlAvaloniaUI<br/>LoupeControl（ルーペ表示）"]
+        DR["EsUtil.Ui.AvaloniaUI.Marquee<br/>MarqueeControl（選択矩形 UI ＋ 外側の装飾の描画）"]
+        LP["EsUtil.Ui.AvaloniaUI.Loupe<br/>LoupeControl（ルーペ表示）"]
     end
 
     AP -->|"Task ベース API / 設定 / キャンセル"| Fac

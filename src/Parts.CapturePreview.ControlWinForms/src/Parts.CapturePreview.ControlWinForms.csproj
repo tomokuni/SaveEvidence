@@ -18,10 +18,10 @@
     <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型）・DIP 変換・画像の表示ビュー -->
     <ProjectReference Include="..\..\Platform.WinForms\src\Platform.WinForms.csproj" />
     <!-- コア幾何型 -->
-    <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Platform.Core\src\EsUtil.Platform.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->
-    <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Feature.Marquee.ControlWinForms\src\WinForms\EsUtil.Feature.Marquee.ControlWinForms.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Feature.Loupe.ControlWinForms\src\WinForms\EsUtil.Feature.Loupe.ControlWinForms.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Marquee\src\EsUtil.Ui.WinForms.Marquee.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Loupe\src\EsUtil.Ui.WinForms.Loupe.csproj" />
   </ItemGroup>
 
   <ItemGroup>

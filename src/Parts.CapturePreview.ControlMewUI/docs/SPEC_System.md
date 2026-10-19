@@ -192,7 +192,7 @@ classDiagram
 
 | 種別 | 依存先 |
 | --- | --- |
-| プロジェクト | `Parts.CapturePreview.Core` / `Platform.MewUI` / `Platform.Skia` / `EsUtil.Platform.Core` / `EsUtil.Feature.Marquee.ControlMewUI` / `EsUtil.Feature.Loupe.ControlMewUI` |
+| プロジェクト | `Parts.CapturePreview.Core` / `Platform.MewUI` / `Platform.Skia` / `EsUtil.Platform.Core` / `EsUtil.Ui.MewUI.Marquee` / `EsUtil.Ui.MewUI.Loupe` |
 | パッケージ | `Aprillz.MewUI.*`（バージョン固定） |
 
 - **上位（アプリのコア・アプリ）を参照しません**（参照するとライブラリとして成立しないため）。

@@ -169,7 +169,7 @@ Platform.AvaloniaUI/
 └── tests/                          # 単体テスト
 ```
 
-抽象・値型・純粋ロジックと Win32 実装の全体は [`EsUtil.Platform.Core`](../../../EsUtil/src/EsUtil.Platform.Core/README.md) を参照してください（Win32 実装は `Native/` 配下）。
+抽象・値型・純粋ロジックと Win32 実装の全体は [`EsUtil.Platform.Core`](../../../EsUtil/EsUtil/Platform.Core/README.md) を参照してください（Win32 実装は `Native/` 配下）。
 
 ## 10. テスト
 

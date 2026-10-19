@@ -1,4 +1,4 @@
-using EsUtil.Feature.Thumbnail.WinForms;
+using EsUtil.Ui.WinForms.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;

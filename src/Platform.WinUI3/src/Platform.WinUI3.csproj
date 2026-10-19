@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Platform.Core\src\EsUtil.Platform.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- Skia への依存を閉じ込めた層（SKCanvas への描画と EsReadOnlyBitmap の Skia 相互変換） -->
     <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
   </ItemGroup>

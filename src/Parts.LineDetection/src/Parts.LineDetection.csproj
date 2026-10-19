@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Platform.Core\src\EsUtil.Platform.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

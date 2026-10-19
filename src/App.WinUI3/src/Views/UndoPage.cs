@@ -1,4 +1,4 @@
-using EsUtil.Feature.Thumbnail.WinUI3;
+using EsUtil.Ui.WinUI3.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Services;

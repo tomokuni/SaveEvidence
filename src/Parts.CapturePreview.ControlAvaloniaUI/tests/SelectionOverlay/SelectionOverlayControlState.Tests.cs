@@ -1,8 +1,8 @@
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
-using EsUtil.Feature.Loupe.AvaloniaUI;
+using EsUtil.Ui.AvaloniaUI.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.AvaloniaUI;
+using EsUtil.Ui.AvaloniaUI.Marquee;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;

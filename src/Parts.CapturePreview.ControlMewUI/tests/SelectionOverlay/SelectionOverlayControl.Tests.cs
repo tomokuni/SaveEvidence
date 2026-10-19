@@ -2,7 +2,7 @@ using System.Reflection;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.MewUI;
+using EsUtil.Ui.MewUI.Marquee;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
@@ -16,7 +16,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.SelectionOverlay;
 /// <summary><see cref="SelectionOverlayControl"/>（MewUI 版の複合コントロール）の単体テスト。</summary>
 /// <remarks>
 /// ウィンドウを必要としない範囲（モード切替・状態同期・配線・配置計算）を検証する。<br/>
-/// マウス・キー入力はウィンドウを必要とするため、内包コントロールのテスト（<c>EsUtil.Feature.Marquee.ControlMewUI.Tests</c>）に委ねる。<br/>
+/// マウス・キー入力はウィンドウを必要とするため、内包コントロールのテスト（<c>EsUtil.Ui.MewUI.Marquee.Tests</c>）に委ねる。<br/>
 /// <b>要素を生成するテストはコレクションで直列化する</b>（MewUI のビジュアル ツリーはスレッドセーフでない）。
 /// </remarks>
 [Collection("MewUI")]

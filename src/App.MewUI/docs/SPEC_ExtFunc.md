@@ -1,4 +1,4 @@
-﻿# App.MewUI 外部機能仕様書
+# App.MewUI 外部機能仕様書
 
 `App.MewUI` が外部利用者へ提供する機能と公開 API の仕様です。 内部実装の詳細は記載しません。
 
@@ -78,7 +78,7 @@
 | プレビュー | 画像をズーム・パンして表示する（ドラッグでパン / Ctrl+ホイールでズーム）。 詳細は [`../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md`](../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md) |
 | ズーム操作 | ⊖ / ⊕ / Fit ボタンとズーム率の表示（画像未設定時は可否が false） |
 | 検出矩形 | 自動切り出しの検出結果を**水色の実線枠**（2 DIP。 Avalonia 版と同じ）でオーバーレイ表示する。 ホバー中の矩形（面積が最小のもの）は**赤色**で強調する |
-| ルーペ | 切り出し中のみカーソル位置を拡大し、カーソルの右下（設定のオフセット）へ追従する。 切り出しを確定・キャンセルすると消える。 詳細は [`../../../../EsUtil/src/EsUtil.Feature.Loupe.ControlMewUI/docs/SPEC_API.md`](../../../../EsUtil/src/EsUtil.Feature.Loupe.ControlMewUI/docs/SPEC_API.md) |
+| ルーペ | 切り出し中のみカーソル位置を拡大し、カーソルの右下（設定のオフセット）へ追従する。 切り出しを確定・キャンセルすると消える。 詳細は [`../../../../EsUtil/EsUtil.Ui.MewUI/Loupe/docs/SPEC_API.md`](../../../../EsUtil/EsUtil.Ui.MewUI/Loupe/docs/SPEC_API.md) |
 | 選択矩形の破線 | 撮影・切り出しの選択中は、ルーペ画像へ選択矩形の破線（2 色交互）を重ねる。 色は設定 `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB`。 詳細は [`../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md`](../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md) |
 | ステータス | 画像サイズ / 保存状態 / 通知メッセージを表示する |
 
@@ -299,9 +299,9 @@
 | アセンブリ | 仕様書 |
 | --- | --- |
 | `App.Core` | [`SPEC_API.md`](../../App.Core/docs/SPEC_API.md)（UI 非依存のコア仕様） |
-| `EsUtil.Platform.Core` | [`SPEC_API.md`](../../../../EsUtil/src/EsUtil.Platform.Core/docs/SPEC_API.md)（`Native` / `Native.Win` を含む） |
+| `EsUtil.Platform.Core` | [`SPEC_API.md`](../../../../EsUtil/EsUtil/Platform.Core/docs/SPEC_API.md)（`Native` / `Native.Win` を含む） |
 | `Platform.MewUI` | [`SPEC_API.md`](../../Platform.MewUI/docs/SPEC_API.md) |
-| `EsUtil.Feature.Loupe.ControlMewUI` | [`SPEC_API.md`](../../../../EsUtil/src/EsUtil.Feature.Loupe.ControlMewUI/docs/SPEC_API.md) |
+| `EsUtil.Ui.MewUI.Loupe` | [`SPEC_API.md`](../../../../EsUtil/EsUtil.Ui.MewUI/Loupe/docs/SPEC_API.md) |
 | `Parts.CapturePreview.ControlMewUI` | [`SPEC_API.md`](../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md)（切り出しビュー・領域選択を含む） |
 
 ## 9. エラー時の挙動

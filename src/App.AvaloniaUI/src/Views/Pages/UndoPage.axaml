@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
-             xmlns:thumb="clr-namespace:EsUtil.Feature.Thumbnail.AvaloniaUI;assembly=EsUtil.Feature.Thumbnail.ControlAvaloniaUI"
+             xmlns:thumb="clr-namespace:EsUtil.Ui.AvaloniaUI.Thumbnail;assembly=EsUtil.Ui.AvaloniaUI.Thumbnail"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.UndoPage"
              x:DataType="vm:UndoViewModel">
     <Grid RowDefinitions="Auto,*,Auto">

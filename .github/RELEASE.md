@@ -267,7 +267,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 | WinUI 3 版 | `SaveEvidence.WinUI3.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
 
 - **方式が Single AOT でない UI は、その理由を本節が持ちます**（例: WinForms は SDK がトリミングを拒否する `NETSDK1175`、WinUI 3 は Windows App SDK 1.8 時点で Native AOT が未サポート）。
-- **Avalonia UI 版の AOT は、以前は `IL2070` / `IL3050` で失敗していました**（`EsUtil.Feature.Loupe.ControlAvaloniaUI` が `Expression.Compile` と `Type.GetMethod` で表示アダプタの契約を解決していたため）。 反射を削除して方式 1 へ戻しています（方式 1 へ戻せなくなったら、まず EsUtil 側で反射が復活していないかを疑います）。
+- **Avalonia UI 版の AOT は、以前は `IL2070` / `IL3050` で失敗していました**（`EsUtil.Ui.AvaloniaUI.Loupe` が `Expression.Compile` と `Type.GetMethod` で表示アダプタの契約を解決していたため）。 反射を削除して方式 1 へ戻しています（方式 1 へ戻せなくなったら、まず EsUtil 側で反射が復活していないかを疑います）。
 - **MewUI 版と Avalonia UI 版のネイティブ ライブラリ（SkiaSharp・OpenCvSharp と Avalonia）は exe へ同梱できない**ため、同じフォルダーへ並べて配布します（ファイル数とサイズはコードの変更で変わるため、文書へ書かず `buildScript/verifyPublish.ps1` が実測して表示します）。
 - **WinUI 3 版の本体プロジェクトは `EnableMsixTooling` を必要とします**（付けないと publish が `.pri` を発行せず、起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます。 実測）。 Windows App SDK 自己完結（`WindowsAppSDKSelfContained`）+ アンパッケージ（`WindowsPackageType=None`）で配布します。
 - **publish はリポジトリ外の一時領域（`%TEMP%`）へ発行し、必要なファイルだけを `publish/` へ配置します**（リポジトリ内へ直接発行すると、参照プロジェクト側のディレクトリにも `publish` が作られます）。

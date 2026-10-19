@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.WinForms;
+using EsUtil.Ui.WinForms.Marquee;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;

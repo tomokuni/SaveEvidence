@@ -1,9 +1,9 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Loupe;
-using EsUtil.Feature.Loupe.MewUI;
+using EsUtil.Ui.MewUI.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.MewUI;
+using EsUtil.Ui.MewUI.Marquee;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;

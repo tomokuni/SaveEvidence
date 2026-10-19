@@ -26,7 +26,7 @@
     <!-- 検出ロジック（ロジック方式）を参照する -->
     <ProjectReference Include="..\src\Parts.LineDetection.csproj" />
     <!-- マウス位置の拡大表示（ルーペ）に使用する -->
-    <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Feature.Loupe.ControlAvaloniaUI\src\AvaloniaUI\EsUtil.Feature.Loupe.ControlAvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Loupe\src\EsUtil.Ui.AvaloniaUI.Loupe.csproj" />
     <!-- データセット作成ページの Marquee キャプチャ（スクリーン領域選択 + ウィンドウ列挙）に使用する -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlAvaloniaUI\src\Parts.CapturePreview.ControlAvaloniaUI.csproj" />
     <!-- Parts.CapturePreview.ControlAvaloniaUI が内部で使用する要素検出（ウィンドウ列挙）機能 -->

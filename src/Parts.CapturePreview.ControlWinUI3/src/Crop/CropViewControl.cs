@@ -1,6 +1,6 @@
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.WinUI3;
+using EsUtil.Ui.WinUI3.Marquee;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;

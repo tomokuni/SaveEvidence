@@ -2,7 +2,7 @@ using System.Diagnostics;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Thumbnail;
-using EsUtil.Feature.Thumbnail.MewUI;
+using EsUtil.Ui.MewUI.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;

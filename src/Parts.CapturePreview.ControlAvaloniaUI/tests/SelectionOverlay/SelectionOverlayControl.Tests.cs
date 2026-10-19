@@ -7,7 +7,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.Feature.Marquee.AvaloniaUI;
+using EsUtil.Ui.AvaloniaUI.Marquee;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
@@ -571,7 +571,7 @@ public class SelectionOverlayControlTests
 
     /// <summary>選択矩形のみの変更でもルーペ Bitmap が再生成される（破線は Bitmap へ焼き込まれる）。</summary>
     /// <remarks>
-    /// 破線は <see cref="EsUtil.Feature.Loupe.AvaloniaUI.LoupeControl.Rendered"/> でルーペ Bitmap へ描画されるため、<br/>
+    /// 破線は <see cref="EsUtil.Ui.AvaloniaUI.Loupe.LoupeControl.Rendered"/> でルーペ Bitmap へ描画されるため、<br/>
     /// 選択矩形が変わった場合は中心（ルーペのプロパティ）が変わらなくても再生成が必要になる。
     /// </remarks>
     [AvaloniaFact]

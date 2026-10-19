@@ -4,7 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using EsUtil.Feature.Thumbnail.AvaloniaUI;
+using EsUtil.Ui.AvaloniaUI.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;

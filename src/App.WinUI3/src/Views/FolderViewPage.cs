@@ -1,5 +1,5 @@
 using EsUtil.Feature.Thumbnail;
-using EsUtil.Feature.Thumbnail.WinUI3;
+using EsUtil.Ui.WinUI3.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;

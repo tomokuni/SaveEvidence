@@ -32,7 +32,7 @@
 | UI フレームワーク | WinForms（`UseWindowsForms`） | 本層が提供する対象 |
 | 描画 API | GDI+（`System.Drawing`） | Skia は `net10.0-windows` で解決できないため（`Platform.WinForms` が同じ理由を持つ） |
 | 依存パッケージ | `Microsoft.Extensions.Logging.Abstractions` | ログの抽象（`ILogger`） |
-| 参照するプロジェクト | `Parts.CapturePreview.Core` / `Platform.WinForms` / `EsUtil.Platform.Core` / `EsUtil.Feature.Marquee.ControlWinForms` / `EsUtil.Feature.Loupe.ControlWinForms` | コアの規則・描画のプリミティブ・内包するコントロール |
+| 参照するプロジェクト | `Parts.CapturePreview.Core` / `Platform.WinForms` / `EsUtil.Platform.Core` / `EsUtil.Ui.WinForms.Marquee` / `EsUtil.Ui.WinForms.Loupe` | コアの規則・描画のプリミティブ・内包するコントロール |
 | テスト | xUnit v3 | 他プロジェクトと同じ（`テスト規約.md`） |
 
 ## 3. アーキテクチャ
@@ -172,8 +172,8 @@ sequenceDiagram
 | `Parts.CapturePreview.Core` | 撮影・切り出し・選択の共通規則と提示の写像（UI 非依存） |
 | `Platform.WinForms` | コア型 ⇔ GDI+ 型の変換・DIP 換算・画像の複製と描画・テキストと矩形の描画 |
 | `EsUtil.Platform.Core` | コア型・画像・DPI 換算・Win32 サービス（キャプチャ・要素検出・ウィンドウ操作） |
-| `EsUtil.Feature.Marquee.ControlWinForms` | 選択矩形コントロール（暗転マスク・ハンドル・nudge・サイズラベル） |
-| `EsUtil.Feature.Loupe.ControlWinForms` | ルーペ コントロール（拡大鏡） |
+| `EsUtil.Ui.WinForms.Marquee` | 選択矩形コントロール（暗転マスク・ハンドル・nudge・サイズラベル） |
+| `EsUtil.Ui.WinForms.Loupe` | ルーペ コントロール（拡大鏡） |
 
 **参照しない**: `App.*`（`依存関係.md` §4 の `DEP0004` が拒否します）。 許可された参照の一覧は `依存関係.md` §3 が所有します。
 

@@ -84,8 +84,8 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 （撮影・切り出しは Parts が担う）
 
 App.MewUI ──> Parts.CapturePreview.ControlMewUI ──> Parts.CapturePreview.Core（撮影・切り出しの共通規則）
-                                                 ├──> EsUtil.Feature.Marquee.ControlMewUI（領域選択）
-                                                 └──> EsUtil.Feature.Loupe.ControlMewUI（ルーペ）
+                                                 ├──> EsUtil.Ui.MewUI.Marquee（領域選択）
+                                                 └──> EsUtil.Ui.MewUI.Loupe（ルーペ）
 ```
 
 - **プレビュー／切り出しに対する操作（外部提供矩形の表示・ホバー強調など）は `Parts.CapturePreview` が担い、
@@ -733,7 +733,7 @@ sequenceDiagram
 | `FolderViewPage` | 先読み（`OnWarmUp`）がウィンドウ無しで一覧を構築すること、その後の表示（`OnActivated`）と離脱（`OnDeactivated`）で件数が変わらないこと、保存先が無い場合でも失敗しないことを検証する |
 | `AppLog` | LoggerMessage の生成コードを `RecordingLogger` と `NullLogger` の両方で実行し、書式と IsEnabled 分岐を検証する |
 | ビュー（`MainWindow` / `CapturePage` / `FolderViewPage` / `UndoPage` / `SettingsPage`） | MewUI はホスト初期化を要するため自動テストの対象外とし、実機検証（`PrintWindow` による撮影と画素の実測）で確認する |
-| 組み込み先のコントロール | `EsUtil.Feature.Loupe.ControlMewUI.Tests` / `Parts.CapturePreview.ControlMewUI.Tests` が描画と状態を検証する |
+| 組み込み先のコントロール | `EsUtil.Ui.MewUI.Loupe.Tests` / `Parts.CapturePreview.ControlMewUI.Tests` が描画と状態を検証する |
 | コアロジック | `App.Core` / `Platform.*` / `*Control.Core` のテストで担保する（UI 層にロジックを持たない） |
 
 ### 20.1 実機検証（手順）
