@@ -147,7 +147,7 @@ src/App.WinUI3/src/
 | `GlobalHotKeyRegistration` | グローバル ホットキーの登録・解除と押下の配信 |
 | `WindowPlacementStore` | ウィンドウの位置・サイズ・表示状態の保存と復元 |
 | `ImageThumbnailLoader` | 画像ファイルの縮小デコードとキャッシュ（縮小はコアの面積平均を使う） |
-| `ThumbnailBackground` | 背景のサムネイル生成の共通処理（代替画像・UI スレッドへの反映） |
+| `ThumbnailBackground` | 背景のサムネイル生成の共通処理（代替画像・UI スレッドへの反映）。 ディスパッチャ キューはウィンドウの生成より前に設定し、**それ以前に届いた反映は保留して設定時に流す**（背景スレッドのまま UI を触ると例外になる） |
 | `FolderFileListReader` | 一覧に出す画像ファイルの列挙と並び順 |
 | `IconLoader` | 埋め込み SVG の読み込みと、指定色・指定サイズへのラスタライズ |
 | `AppLog` | ログの定義（`LoggerMessage` ソース生成）と出力構成 |

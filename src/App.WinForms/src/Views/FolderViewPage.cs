@@ -256,16 +256,19 @@ internal static class FolderViewPage
             var capacity = Math.Max(list.ItemCount, list.ItemCount);
             for (var i = 0; i < files.Count; i++)
             {
+                // 添字はループのたびに新しい変数へ写す（生成は後から走るため、ループ変数を捕まえると
+                // すべての生成が最後の添字を指し、一覧の範囲外になって画像が反映されない）
+                var index = i;
                 var path = files[i];
                 var request = scheduler.Enqueue(
-                    ThumbnailPriority.Background(i),
+                    ThumbnailPriority.Background(index),
                     token => ThumbnailGeneration.GenerateAsync(
                         list,
-                        i,
+                        index,
                         () => ImageThumbnailLoader.Load(path, iconSize, capacity),
                         iconSize,
                         token));
-                requests.Add((i, request));
+                requests.Add((index, request));
             }
 
             Reprioritize();

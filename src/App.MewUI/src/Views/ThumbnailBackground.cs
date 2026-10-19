@@ -23,6 +23,16 @@ internal static class ThumbnailBackground
     /// <summary>ロガー（背景の生成で想定外の例外が発生した場合に記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(ThumbnailBackground));
 
+    /// <summary>UI スレッドのディスパッチャ（<see cref="Initialize"/> が設定する）。</summary>
+    /// <remarks>
+    /// <b>背景スレッドから <c>Application.Current</c> を参照しない</b>: アプリの初期化前は例外になり、<br/>
+    /// 参照できても UI スレッド以外では当てにできない。 UI スレッドで 1 度だけ取得して保持する。
+    /// </remarks>
+    private static IDispatcher? s_dispatcher;
+
+    /// <summary>ディスパッチャが未設定の間に届いた反映を保留する待ち行列（設定時に UI スレッドで流す）。</summary>
+    private static readonly ConcurrentQueue<Action> s_pending = new();
+
     /// <summary>背景の生成のスケジューラを生成する。</summary>
     /// <returns>ページが保持するスケジューラ。</returns>
     /// <remarks>ページはアプリの生存期間で 1 つ生成されるため、明示的に破棄しない（終了時にプロセスごと解放される）。</remarks>
@@ -47,15 +57,36 @@ internal static class ThumbnailBackground
             return EsReadOnlyBitmap.FromBitmap(bitmap);
         });
 
+    /// <summary>UI スレッドのディスパッチャを取得し、保留していた反映を実行する（UI スレッドから呼ぶ）。</summary>
+    /// <remarks>
+    /// <c>Application.Run</c> の起動コールバック（ディスパッチャ導入後）で 1 度だけ呼ぶ。<br/>
+    /// 起動前の先読みで生成が終わったサムネイルは、ここで初めて一覧へ反映される。
+    /// </remarks>
+    public static void Initialize()
+    {
+        s_dispatcher = Application.Current?.Dispatcher;
+
+        while (s_pending.TryDequeue(out var action))
+        {
+            action();
+        }
+    }
+
     /// <summary>背景の生成の結果を UI スレッドで反映する。</summary>
     /// <param name="action">反映する処理。</param>
     /// <remarks>
-    /// 既に UI スレッドにいる場合（テスト・ウィンドウ生成前）はその場で実行する。
+    /// ディスパッチャが未設定の場合（起動前の先読み）は保留し、<see cref="Initialize"/> で流す<br/>
+    /// （背景スレッドのまま UI を触ると例外になる）。
     /// </remarks>
     public static void Post(Action action)
     {
-        var dispatcher = Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.IsOnUIThread)
+        if (s_dispatcher is not { } dispatcher)
+        {
+            s_pending.Enqueue(action);
+            return;
+        }
+
+        if (dispatcher.IsOnUIThread)
         {
             action();
             return;

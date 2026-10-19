@@ -24,12 +24,26 @@ internal static class ThumbnailBackground
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(ThumbnailBackground));
 
     /// <summary>UI スレッドのディスパッチャ キュー（起動時に設定する）。</summary>
-    /// <remarks>ウィンドウ生成前は null であり、その場合は <see cref="Post"/> がその場で実行する。</remarks>
+    /// <remarks>ウィンドウ生成前は null であり、その間の反映は <see cref="s_pending"/> へ保留する。</remarks>
     private static DispatcherQueue? s_dispatcherQueue;
 
-    /// <summary>UI スレッドのディスパッチャ キューを設定する。</summary>
-    /// <param name="dispatcherQueue">メイン ウィンドウのディスパッチャ キュー。</param>
-    public static void SetDispatcherQueue(DispatcherQueue dispatcherQueue) => s_dispatcherQueue = dispatcherQueue;
+    /// <summary>ディスパッチャ キューが未設定の間に届いた反映を保留する待ち行列。</summary>
+    private static readonly ConcurrentQueue<Action> s_pending = new();
+
+    /// <summary>UI スレッドのディスパッチャ キューを設定し、保留していた反映を実行する。</summary>
+    /// <param name="dispatcherQueue">UI スレッドのディスパッチャ キュー（UI スレッドから渡す）。</param>
+    /// <remarks>ウィンドウの生成（ページの先読みの開始）より前に呼ぶ。</remarks>
+    public static void SetDispatcherQueue(DispatcherQueue dispatcherQueue)
+    {
+        ArgumentNullException.ThrowIfNull(dispatcherQueue);
+
+        s_dispatcherQueue = dispatcherQueue;
+
+        while (s_pending.TryDequeue(out var action))
+        {
+            action();
+        }
+    }
 
     /// <summary>背景の生成のスケジューラを生成する。</summary>
     /// <returns>ページが保持するスケジューラ。</returns>
@@ -56,17 +70,26 @@ internal static class ThumbnailBackground
 
     /// <summary>背景の生成の結果を UI スレッドで反映する。</summary>
     /// <param name="action">反映する処理。</param>
-    /// <remarks>既に UI スレッドにいる場合（起動前・テスト）はその場で実行する。</remarks>
+    /// <remarks>
+    /// ディスパッチャ キューが未設定の場合（起動前の先読み）は保留し、設定時に UI スレッドで流す<br/>
+    /// （背景スレッドのまま UI を触ると例外になる）。
+    /// </remarks>
     public static void Post(Action action)
     {
         ArgumentNullException.ThrowIfNull(action);
 
-        if (s_dispatcherQueue is null || s_dispatcherQueue.HasThreadAccess)
+        if (s_dispatcherQueue is not { } queue)
+        {
+            s_pending.Enqueue(action);
+            return;
+        }
+
+        if (queue.HasThreadAccess)
         {
             action();
             return;
         }
 
-        s_dispatcherQueue.TryEnqueue(() => action());
+        queue.TryEnqueue(() => action());
     }
 }

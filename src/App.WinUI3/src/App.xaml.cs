@@ -32,11 +32,11 @@ public partial class App : Application
     /// </remarks>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // 背景のサムネイル生成の結果を UI スレッドで反映できるようにする（ページの先読みより前に設定する）
+        AppHost.InitializeDispatcher();
+
         // XAML のディスパッチャが用意された後にウィンドウを生成する（UI 要素の生成は UI スレッドを要する）
         AppHost.CreateMainWindow();
-
-        // 背景のサムネイル生成の結果を UI スレッドで反映できるようにする
-        AppHost.OnWindowCreated();
 
         AppHost.MainWindow.Activate();
     }

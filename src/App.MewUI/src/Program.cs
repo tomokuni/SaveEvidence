@@ -89,6 +89,9 @@ internal static class Program
         s_logger.LogAppStart(typeof(Program).Assembly.GetName().Version?.ToString() ?? "unknown");
         Application.Run(window, () =>
         {
+            // 背景の生成結果を UI スレッドへ戻すためのディスパッチャを先に確保する
+            // （ページの先読みは最初の描画後に始まるため、これより後になる）
+            ThumbnailBackground.Initialize();
             AppStyles.ApplyTheme(settings.Current.ThemeMode);
             MainWindow.RestorePlacement(window, settings);
         });

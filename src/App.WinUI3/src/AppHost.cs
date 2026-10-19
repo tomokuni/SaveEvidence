@@ -87,12 +87,13 @@ internal static class AppHost
         s_mainWindow = new MainWindow(Services);
     }
 
-    /// <summary>アプリの初期化完了後に一度だけ呼ぶ後処理を実行する。</summary>
-    /// <remarks>ウィンドウのディスパッチャ キューを背景処理へ渡す（サムネイルの生成結果を UI スレッドで反映するため）。</remarks>
-    public static void OnWindowCreated()
-    {
-        ThumbnailBackground.SetDispatcherQueue(MainWindow.DispatcherQueue);
-    }
+    /// <summary>背景処理へ UI スレッドのディスパッチャ キューを渡す（UI スレッドから呼ぶ）。</summary>
+    /// <remarks>
+    /// <b>ウィンドウの生成より前に呼ぶ</b>: ページの先読みはウィンドウの生成中に始まるため、<br/>
+    /// キューが未設定のままだと生成結果を UI スレッドへ戻せない（背景スレッドのまま UI を触って例外になる）。
+    /// </remarks>
+    public static void InitializeDispatcher()
+        => ThumbnailBackground.SetDispatcherQueue(Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread());
 
     /// <summary>アプリ終了時に DI コンテナを破棄する。</summary>
     /// <remarks>メッセージ ループを抜けた後に呼ぶ（共有サービスを確実に解放する）。</remarks>
