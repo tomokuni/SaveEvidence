@@ -73,14 +73,14 @@ public class ZoomViewAppearanceTests
         Assert.Equal(ZoomViewAppearance.DefaultScrollBarBorderThickness, appearance.ScrollBarBorderThickness);
     }
 
-    /// <summary>枠の色が不透明のグレー（#FF808080）であることを検証する。</summary>
+    /// <summary>枠の色がグレー（#808080）で、透過度が元の色（16% = アルファ 40）のままであることを検証する。</summary>
     /// <remarks>枠の目的は「単色のバーでは見えない画像の上でも輪郭で視認できる」ことである。</remarks>
     [Fact]
-    internal void 枠の色は不透明のグレー()
+    internal void 枠の色はグレーで透過度は元のまま()
     {
         var appearance = ZoomViewAppearance.Default;
 
-        Assert.Equal(System.Drawing.Color.FromArgb(255, 128, 128, 128), appearance.ScrollBarBorderColor);
+        Assert.Equal(System.Drawing.Color.FromArgb(40, 128, 128, 128), appearance.ScrollBarBorderColor);
     }
 
     /// <summary>市松模様の設定が公開されていないことを検証する（廃止の固定）。</summary>

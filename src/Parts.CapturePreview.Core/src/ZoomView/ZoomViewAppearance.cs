@@ -65,12 +65,13 @@ public sealed record ZoomViewAppearance
     public const double DefaultScrollBarBorderThickness = 1.0;
 
     /// <summary>スクロールバーの枠の色を取得する。</summary>
-    /// <value>アルファを含む色。 既定は不透明のグレー（#FF808080）。</value>
+    /// <value>アルファを含む色。 既定はグレー（#808080）を 16%（アルファ 40）で描く。</value>
     /// <remarks>
     /// <b>枠を描く理由</b>: 単色のバーは表示中の画像によっては見えない（明るい画像の上の白いバーなど）。<br/>
-    /// 輪郭をグレーで描いて視認できるようにする。 アルファ 0 の場合は枠を描かない。
+    /// 輪郭をグレーで描いて視認できるようにする。 <b>透過度は元の色（16%）のまま</b>にする。<br/>
+    /// アルファ 0 の場合は枠を描かない。
     /// </remarks>
-    public DrawingColor ScrollBarBorderColor { get; init; } = DrawingColor.FromArgb(255, 128, 128, 128);
+    public DrawingColor ScrollBarBorderColor { get; init; } = DrawingColor.FromArgb(40, 128, 128, 128);
 
     /// <summary>スクロールバーの枠の太さ（DIP）を取得する。</summary>
     /// <value>太さ（DIP）。 既定は <see cref="DefaultScrollBarBorderThickness"/>。</value>
