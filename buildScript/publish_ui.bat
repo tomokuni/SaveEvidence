@@ -3,7 +3,7 @@ setlocal
 chcp 65001 >nul
 
 rem ============================================================
-rem  SaveEvidence: publish procedure shared by every UI (called from <UI>_publish.bat)
+rem  SaveEvidence: publish procedure shared by every UI (called from publish_<UI>.bat)
 rem
 rem  ASCII only.  cmd.exe reads a batch file with the console code page and counts the read
 rem  position in decoded characters, so non-ASCII text garbles the output and can make cmd
@@ -66,7 +66,10 @@ rem Publishing inside the repository also creates publish folders in the referen
 rem so the publish goes to a temporary folder outside the repository, and only the needed
 rem files are copied to the output folder.
 set "STAGE=%TEMP%\saveevidence-publish-%UI%-%RID%"
-set "LOG=%TEMP%\saveevidence-publish-%UI%-%RID%.log"
+rem One log per mode.  A shared log would be overwritten by the fallback mode, losing the reason
+rem the previous mode failed (measured 2026-10-19: AOT fell back to single and only the log of
+rem single was left).
+set "LOGNAME=saveevidence-publish-%UI%-%RID%"
 
 echo.
 echo [INFO] UI     : %UI%
@@ -91,8 +94,9 @@ if not defined MODE (
 
 if not defined MODE (
   echo.
-  echo [ERROR] Publish failed in every mode.  Log: %LOG%
-  if exist "%LOG%" type "%LOG%"
+  echo [ERROR] Publish failed in every mode.
+  for %%m in (aot single exe) do if exist "%TEMP%\%LOGNAME%-%%m.log" echo      %%m: %TEMP%\%LOGNAME%-%%m.log
+  if exist "%TEMP%\%LOGNAME%-exe.log" type "%TEMP%\%LOGNAME%-exe.log"
   if exist "%STAGE%" rd /s /q "%STAGE%"
   exit /b 1
 )
@@ -126,12 +130,13 @@ rem  Try to publish with one mode.  Returns 0 on success, 1 on failure.
 rem ============================================================
 :TryPublish
 set "TRY_MODE=%~1"
+set "TRY_LOG=%TEMP%\%LOGNAME%-%TRY_MODE%.log"
 if exist "%STAGE%" rd /s /q "%STAGE%"
 
 set "ARGS="
 rem The UI script can replace the arguments per mode (WinUI 3 keeps single file publishing in
 rem its csproj, because passing it on the command line flows to the referenced projects and
-rem fails there.  See buildScript/WinUI3_publish.bat).
+rem fails there.  See buildScript/publish_WinUI3.bat).
 rem `set "VAR="` makes a variable undefined in cmd, so the intent "empty" is expressed by
 rem SE_SKIP_*_ARGS instead.
 if not defined SE_AOT_ARGS if not defined SE_SKIP_AOT_ARGS set "SE_AOT_ARGS=-p:PublishAot=true -p:PublishSingleFile=true"
@@ -142,7 +147,13 @@ if "%TRY_MODE%"=="single" set "ARGS=%SE_SINGLE_ARGS%"
 rem SelfContained is not passed explicitly (-r implies it).  Passing it also flows to the
 rem referenced projects, which then demand EnableMsixTooling and WindowsAppSDKSelfContained
 rem from the WinUI 3 libraries and fail (measured).
-dotnet publish "%PROJECT%" -c Release -r "%RID%" -warnaserror %ARGS% -o "%STAGE%" >"%LOG%" 2>&1
-if errorlevel 1 exit /b 1
-if not exist "%STAGE%\*.exe" exit /b 1
+dotnet publish "%PROJECT%" -c Release -r "%RID%" -warnaserror %ARGS% -o "%STAGE%" >"%TRY_LOG%" 2>&1
+if errorlevel 1 (
+  echo [WARN] Mode %TRY_MODE% failed.  Log: %TRY_LOG%
+  exit /b 1
+)
+if not exist "%STAGE%\*.exe" (
+  echo [WARN] Mode %TRY_MODE% failed: no exe was published.
+  exit /b 1
+)
 exit /b 0

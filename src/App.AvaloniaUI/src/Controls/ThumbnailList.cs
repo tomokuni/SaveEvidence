@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
@@ -57,11 +56,20 @@ public sealed class ThumbnailList : ListBox
         {
             Stretch = Stretch.Uniform,
             HorizontalAlignment = HorizontalAlignment.Center,
+            // 幅だけを与えて縦横比のまま縮小する（高さは画像の縦横比で決まる）
+            Width = item.ThumbnailWidth,
+            Source = item.Thumbnail,
         };
 
-        // 幅だけを与えて縦横比のまま縮小する（高さは画像の縦横比で決まる）
-        image.Bind(WidthProperty, new Binding(nameof(ThumbnailListItem.ThumbnailWidth)) { Source = item });
-        image.Bind(Image.SourceProperty, new Binding(nameof(ThumbnailListItem.Thumbnail)) { Source = item });
+        // バインド（ReflectionBinding）は AOT / トリミングの解析が拒否する（IL2026 / IL3050）ため、
+        // 後から設定されるサムネイルは PropertyChanged の購読で反映する
+        item.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(ThumbnailListItem.Thumbnail), StringComparison.Ordinal))
+            {
+                image.Source = item.Thumbnail;
+            }
+        };
 
         var frame = new Border
         {
@@ -84,8 +92,7 @@ public sealed class ThumbnailList : ListBox
                 ThumbnailTileMetrics.LabelHorizontalPadding, 1, ThumbnailTileMetrics.LabelHorizontalPadding, 1),
         };
 
-        var tile = new StackPanel { Orientation = Orientation.Vertical };
-        tile.Bind(WidthProperty, new Binding(nameof(ThumbnailListItem.ThumbnailWidth)) { Source = item });
+        var tile = new StackPanel { Orientation = Orientation.Vertical, Width = item.ThumbnailWidth };
         tile.Children.Add(frame);
         tile.Children.Add(label);
 
