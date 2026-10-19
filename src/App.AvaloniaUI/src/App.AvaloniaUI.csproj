@@ -29,7 +29,7 @@
          ここへ書かない。 構成（Release）へ書くと `dotnet build -c Release` が自己完結として扱われ、
          本プロジェクトを参照するテスト プロジェクトが NETSDK1151（自己完結の exe は参照できない）で
          ビルドできなくなる（復元は既定の Debug 構成で走るため NETSDK1047 も出る）。
-         publish は buildScript/*_publish_aot.bat が -r <RID> -p:PublishAot=true -p:SelfContained=true を
+         publish は buildScript/publish_AvaloniaUI.bat が -r <RID> -p:PublishAot=true -p:SelfContained=true を
          明示して実行する。 -->
   </PropertyGroup>
 

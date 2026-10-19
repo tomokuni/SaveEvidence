@@ -10,10 +10,10 @@
          付けないと publish が自分自身の .pri（リソース インデックス）を発行せず、配布物の起動時に
          XAML の読み込みが失敗して 0xC000027B（stowed exception）で終了する（実測）。
          アンパッケージ（WindowsPackageType=None）のまま .pri を発行させるために必要である
-         （配布は buildScript/WinUI3_publish.bat が行う）。 -->
+         （配布は buildScript/publish_WinUI3.bat が行う）。 -->
     <EnableMsixTooling>true</EnableMsixTooling>
     <!-- 単一ファイル化。 publish のときだけ有効にする（`SaveEvidencePublishSingleFile` は
-         buildScript/WinUI3_publish.bat が publish のときに渡す）。
+         buildScript/publish_WinUI3.bat が publish のときに渡す）。
          1) 常時有効にすると Debug ビルドで `PublishSingleFile is recommended only for .NET SelfContained apps`
             が出る（ビルドは 0 警告が合否のため許容できない）。
          2) publish のコマンドラインで `-p:PublishSingleFile=true` を渡すと**参照プロジェクトへも伝播**し、

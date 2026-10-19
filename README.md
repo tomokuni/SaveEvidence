@@ -252,7 +252,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 ### 3.1 リリースビルド
 
-公開ビルド（`buildScript/<UI>_publish.bat`）は、**UI ごとに可能な方式を次の優先順で選びます**（実装は [`buildScript/publish_ui.bat`](buildScript/publish_ui.bat)）。
+公開ビルド（`buildScript/publish_<UI>.bat`）は、**UI ごとに可能な方式を次の優先順で選びます**（実装は [`buildScript/publish_ui.bat`](buildScript/publish_ui.bat)）。
 
 | 優先 | 方式 | 中身 |
 | --- | --- | --- |
@@ -275,10 +275,10 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
  git clone https://github.com/tomokuni/SaveEvidence.git
  cd SaveEvidence
  # UI ごとの配布物を作る（方式は可能なものが自動で選ばれる）
- cmd /c buildScript\AvaloniaUI_publish.bat
- cmd /c buildScript\MewUI_publish.bat
- cmd /c buildScript\WinUI3_publish.bat
- cmd /c buildScript\WinForms_publish.bat
+ cmd /c buildScript\publish_AvaloniaUI.bat
+ cmd /c buildScript\publish_MewUI.bat
+ cmd /c buildScript\publish_WinUI3.bat
+ cmd /c buildScript\publish_WinForms.bat
 ```
 
 出力先はスクリプトが表示します（`publish/<UI>-win-x64-<方式>`。 例: `publish/avaloniaui-win-x64-single`）。 リポジトリ外の一時領域へ発行してから必要なファイルだけを配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。

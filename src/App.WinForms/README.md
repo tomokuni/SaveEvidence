@@ -163,7 +163,7 @@ App.WinForms/
 
 ## 9. 配布形態
 
-配布物は **Single（単一 exe・自己完結）**（[`buildScript/WinForms_publish.bat`](../../buildScript/WinForms_publish.bat)）です。 exe 1 個で配置でき、
+配布物は **Single（単一 exe・自己完結）**（[`buildScript/publish_WinForms.bat`](../../buildScript/publish_WinForms.bat)）です。 exe 1 個で配置でき、
 ネイティブ ライブラリは起動時に一時領域へ展開されます。
 
 - **Native AOT は使えません**。 SDK がトリミングを拒否します（`NETSDK1175`「Windows フォームに関して、トリミングの有効化は

@@ -315,7 +315,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 
 ## 25. 配布形態（Native AOT）
 
-配布物は **Native AOT**（`buildScript/MewUI_publish.bat`）です。 マネージドコードは全て exe（`SaveEvidence.MewUI.exe`）へ
+配布物は **Native AOT**（`buildScript/publish_MewUI.bat`）です。 マネージドコードは全て exe（`SaveEvidence.MewUI.exe`）へ
 コンパイルされ、ネイティブライブラリ（SkiaSharp / OpenCvSharp）だけが隣に並びます。
 
 - AOT のリンクには Visual Studio の C++ ビルドツール（`link.exe`）が必要です。

@@ -5,7 +5,7 @@
 
 ## 何が流用できるか
 
-**リポジトリ固有の知識を `release-config.json` と `buildScript/*_publish.bat` に閉じ込めています。** それ以外は汎用です。
+**リポジトリ固有の知識を `release-config.json` と `buildScript/publish_*.bat` に閉じ込めています。** それ以外は汎用です。
 
 | ファイル | 流用 | 備考 |
 | --- | --- | --- |
@@ -21,7 +21,7 @@
 | [`workflows/publish.yml`](workflows/publish.yml) | **コピーして調整** | `uis[]` を読んで配布物を作る。 `.bat` の呼び出しと zip 化はこのリポジトリ固有 |
 | [`workflows/release.yml`](workflows/release.yml) | **そのまま** | 設定を読むため変更不要（配布物はファイル名のまま添付する） |
 | [`workflows/build.yml`](workflows/build.yml) | **コピーして編集** | 実行環境（`windows-latest`）のみリポジトリ依存 |
-| `buildScript/*_publish.bat` | **新規作成** | UI ごとの publish 手順 |
+| `buildScript/publish_*.bat` | **新規作成** | UI ごとの publish 手順 |
 | 本ドキュメント・`RELEASE.md` | コピーして調整 | |
 
 ## 手順
@@ -115,7 +115,7 @@ MTP モードではテスト対象を `--solution` / `--project` で指定しま
 | キー | 内容 |
 | --- | --- |
 | `name` | アーティファクト名（ジョブの表示にも使う） |
-| `script` | publish スクリプト（リポジトリルートからの相対パス。 例: `buildScript/MewUI_publish.bat`） |
+| `script` | publish スクリプト（リポジトリルートからの相対パス。 例: `buildScript/publish_MewUI.bat`） |
 | `output` | publish の出力パス（複数ファイルの場合はフォルダ） |
 | `asset` | Release に添付するファイル名（zip する場合は作成後の名前。 例: `SaveEvidence.MewUI.zip`） |
 | `zip` | 配布前に zip 化する場合は `true`。 `output` が単一ファイル（exe）でもフォルダ（exe + ネイティブ DLL）でも同じ指定で扱える |
@@ -146,16 +146,16 @@ MTP モードではテスト対象を `--solution` / `--project` で指定しま
 
 ### 4. publish スクリプトを用意する
 
-UI ごとに `buildScript/<名前>_publish.bat` を作成します。 仕様は次のとおりです。
+UI ごとに `buildScript/publish_<名前>.bat` を作成します。 仕様は次のとおりです。
 
 - **発行方式（Single AOT / Single / EXE）の選択は [`buildScript/publish_ui.bat`](../buildScript/publish_ui.bat) が単一所有する**。 UI ごとのスクリプトは、その UI のプロジェクトを渡して呼ぶ薄い入口にする（`call "%~dp0publish_ui.bat" <UI 名小文字> "<プロジェクトの相対パス>" %*`）。 方式ごとの可否と実測は **`RELEASE.md` が持つ**（本リポジトリの例）。
 - **スクリプトの場所（`buildScript/`）からリポジトリルートへ移動してから実行する**（`pushd "%~dp0.."`）。 これにより、呼び出し元のカレントディレクトリに依存しません。
 - **バッチ ファイルは ASCII だけで書く**（`cmd.exe` はバッチ ファイルをコンソールのコードページで読み、読み取り位置を復号後の文字数で数えるため、日本語は化けと行のずれを起こします）。 **`setlocal` の直後に `chcp 65001 >nul` を置く**（ASCII なら安全であり、`dotnet` が出力する UTF-8 のログが読めます）。 根拠と検査は [`検証手順.md`](検証手順.md) §19
 - 成功時は終了コード 0、失敗時は非 0 で終了する
 - 出力先は `release-config.json` の `output` と一致させる（方式が名前に入るため、方式が変わったら `output` も更新する）
-- 他のスクリプトを呼ぶ場合は、カレントディレクトリではなく `%~dp0` を基準にする（例: `call "%~dp0MewUI_publish.bat"`）
+- 他のスクリプトを呼ぶ場合は、カレントディレクトリではなく `%~dp0` を基準にする（例: `call "%~dp0publish_MewUI.bat"`）
 
-[buildScript/AvaloniaUI_publish.bat](../buildScript/AvaloniaUI_publish.bat) と [buildScript/MewUI_publish.bat](../buildScript/MewUI_publish.bat) が参考になります。
+[buildScript/publish_AvaloniaUI.bat](../buildScript/publish_AvaloniaUI.bat) と [buildScript/publish_MewUI.bat](../buildScript/publish_MewUI.bat) が参考になります。
 
 ### 5. `show-current-versions.ps1` を調整する
 

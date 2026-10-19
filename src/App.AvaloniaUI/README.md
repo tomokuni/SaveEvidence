@@ -71,7 +71,7 @@ dotnet test src/App.AvaloniaUI/tests/App.AvaloniaUI.Tests.csproj
 ### 4.1 配布ビルド（Native AOT）
 
 ```bat
-buildScript\AvaloniaUI_publish.bat
+buildScript\publish_AvaloniaUI.bat
 ```
 
 - 出力: `publish/avaloniaui-win-x64-aot`（`SaveEvidence.AvaloniaUI.exe` + ネイティブ DLL）

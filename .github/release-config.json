@@ -12,7 +12,7 @@
   "uis": [
     {
       "name": "MewUI",
-      "script": "buildScript/MewUI_publish.bat",
+      "script": "buildScript/publish_MewUI.bat",
       "output": "publish/mewui-win-x64-aot",
       "exe": "SaveEvidence.MewUI.exe",
       "asset": "SaveEvidence.MewUI.zip",
@@ -20,7 +20,7 @@
     },
     {
       "name": "AvaloniaUI",
-      "script": "buildScript/AvaloniaUI_publish.bat",
+      "script": "buildScript/publish_AvaloniaUI.bat",
       "output": "publish/avaloniaui-win-x64-aot",
       "exe": "SaveEvidence.AvaloniaUI.exe",
       "asset": "SaveEvidence.zip",
@@ -28,7 +28,7 @@
     },
     {
       "name": "WinForms",
-      "script": "buildScript/WinForms_publish.bat",
+      "script": "buildScript/publish_WinForms.bat",
       "output": "publish/winforms-win-x64-single",
       "exe": "SaveEvidence.WinForms.exe",
       "asset": "SaveEvidence.WinForms.zip",
@@ -36,7 +36,7 @@
     },
     {
       "name": "WinUI3",
-      "script": "buildScript/WinUI3_publish.bat",
+      "script": "buildScript/publish_WinUI3.bat",
       "output": "publish/winui3-win-x64-single",
       "exe": "SaveEvidence.WinUI3.exe",
       "asset": "SaveEvidence.WinUI3.zip",

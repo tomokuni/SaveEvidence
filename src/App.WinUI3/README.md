@@ -60,8 +60,8 @@ dotnet test src/App.WinUI3/tests/App.WinUI3.Tests.csproj -c Debug
 | Windows App SDK | 自己完結（`<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>`） |
 | 実行時識別子 | `win-x64`（自己完結配置はアーキテクチャの指定を要求する） |
 | DPI 認識 | `app.manifest` で PerMonitorV2 を宣言する |
-| 発行方式 | Single（単一 exe・自己完結）。 Single AOT は WinUI 3 では成立しない（理由は [`buildScript/WinUI3_publish.bat`](../../buildScript/WinUI3_publish.bat) のコメント） |
-| 配布スクリプト | [`buildScript/WinUI3_publish.bat`](../../buildScript/WinUI3_publish.bat)（方式は `buildScript/publish_ui.bat` が優先順に選ぶ） |
+| 発行方式 | Single（単一 exe・自己完結）。 Single AOT は WinUI 3 では成立しない（理由は [`buildScript/publish_WinUI3.bat`](../../buildScript/publish_WinUI3.bat) のコメント） |
+| 配布スクリプト | [`buildScript/publish_WinUI3.bat`](../../buildScript/publish_WinUI3.bat)（方式は `buildScript/publish_ui.bat` が優先順に選ぶ） |
 
 `<EnableMsixTooling>true</EnableMsixTooling>` は **publish のためだけ**に必要です（付けないと publish が自分自身の `.pri` を発行せず、
 配布物の起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます）。

@@ -276,7 +276,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 - **publish スクリプト（`buildScript/*.bat`）は ASCII だけで書きます**（日本語を書くと `cmd.exe` の読み取りがずれ、出力が化けたうえにコメントの断片がコマンドとして実行されます。 根拠と検査は [`検証手順.md`](検証手順.md) §19）。
 - **方式 1 へ戻すと出力フォルダー名（`-single` → `-aot`）が変わるため、`release-config.json` の `uis[].output` も更新してください**（検査が「出力フォルダーがありません」で気付きます）。
 - **単一ファイル化（`PublishSingleFile`）は publish のコマンドライン引数で渡さず、アプリの `.csproj` に置きます**。 コマンドライン引数は**参照プロジェクトへ伝播**し、WinUI 3 のライブラリが `EnableMsixTooling` と `WindowsAppSDKSelfContained` を要求して失敗するためです（後者は RID を要求しますが、RID は参照プロジェクトへ伝播しません。 実測 2026-10-16）。 プロパティを差し替えたい UI は `buildScript/publish_ui.bat` の `SE_SKIP_SINGLE_ARGS` を使います。
-- **WinUI 3 の単一ファイル化は「WinUI 3 のライブラリを RID 付きで直接ビルドする」手順を必要とします**（`buildScript/WinUI3_publish.bat` が実行）。 アプリの `.pri` 生成は参照プロジェクトの `<TFM>\<RID>\` の `.pri` を要求しますが、RID が伝播しないためアプリの publish ではそこへ出ません（`PRI175` / `PRI252`）。
+- **WinUI 3 の単一ファイル化は「WinUI 3 のライブラリを RID 付きで直接ビルドする」手順を必要とします**（`buildScript/publish_WinUI3.bat` が実行）。 アプリの `.pri` 生成は参照プロジェクトの `<TFM>\<RID>\` の `.pri` を要求しますが、RID が伝播しないためアプリの publish ではそこへ出ません（`PRI175` / `PRI252`）。
 - **配布物は exe 1 個であることを検査します**（`buildScript/verifyPublish.ps1`）。 Windows App SDK が再起動 API 用に同封する `RestartAgent.exe` は配置しません（本アプリは再起動 API を使わない。 除いても起動と終了が正常であることを実測済み）。
 - **配布物から落としてよいのは `*.pdb` と `RestartAgent.exe` だけ**です。 他のファイルは拡張子で選別せずにすべて配置します（単一ファイル化でない WinUI 3 の配布物は `.pri` / `.winmd` / `.json` を必要とし、`.pri` を落とすと起動はしても終了時に `0x80008083` で落ちます。 実測）。。
 - **WinUI 3 版は自己完結の Windows App SDK から ML（ONNX Runtime・DirectML）・Windows AI・Widgets のネイティブ実体を除いてから同梱します**（43.8 MB 減。 実装は [`../Directory.Build.targets`](../Directory.Build.targets) の `ExcludeUnusedWindowsAppSdkPayload`、規則は [`ビルド設定規約.md`](ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
@@ -284,7 +284,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 **すべて zip で配布します。** `uis[].zip` が `true` の UI は、publish 後に配布物を zip 化してから保管します
 （出力が単一ファイル（exe）でもフォルダでも同じ指定で扱えます）。
 
-publish は `buildScript/` の `<UI>_publish.bat` をそのまま実行するため、ローカルでの配布用ビルドと同一の手順・出力になります。
+publish は `buildScript/` の `publish_<UI>.bat` をそのまま実行するため、ローカルでの配布用ビルドと同一の手順・出力になります。
 スクリプトは `buildScript/` からリポジトリルートへ移動してから実行されるため、カレントディレクトリに依存しません。
 
 **publish の直後に `buildScript/verifyPublish.ps1 -SkipPublish` を実行し、配布物が実際に起動して設定を全損しないことを確かめます**
