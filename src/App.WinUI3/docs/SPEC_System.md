@@ -120,8 +120,6 @@ src/App.WinUI3/src/
     ├── UndoPage.cs                     Undo 一覧ページ
     ├── SettingsPage.cs                 設定ページ
     ├── ConfirmDialog.cs                上書き確認ダイアログ
-    ├── ThumbnailView.cs                縦横比を保って収める画像表示
-    └── WrapLayoutMath.cs               一覧の折り返し配置の計算
 ```
 
 ### 4.2 コンポーネント一覧

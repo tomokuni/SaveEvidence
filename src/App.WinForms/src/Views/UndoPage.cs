@@ -1,3 +1,4 @@
+using EsUtil.Feature.Thumbnail.WinForms;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -40,15 +41,19 @@ internal static class UndoPage
         var selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.UndoViewModeIndex);
         var scheduler = new ThumbnailScheduler(
             ex => s_logger.LogThumbnailGenerateError(ex), idleInterval: TimeSpan.FromMilliseconds(100));
-        var requests = new List<(ThumbnailItem Item, ThumbnailScheduler.ThumbnailRequest Request)>();
+        var requests = new List<(int Index, ThumbnailScheduler.ThumbnailRequest Request)>();
 
         // 項目と元画像の対応（2 回押しで元の寸法の画像を書き出すために使う）。
-        var itemSources = new List<(ThumbnailItem Item, EsReadOnlyBitmap Source)>();
+        var itemSources = new List<EsReadOnlyBitmap>();
 
         // 直前の組み立ての条件（同じ履歴では組み直さない）。
         (int IconSize, int RedoCount, int UndoCount, EsReadOnlyBitmap? Current)? built = null;
 
-        var list = new ThumbnailListView { IconSize = settingsService.Current.GetIconSize(selectedIndex) };
+        var list = new ThumbnailControl
+        {
+            ImageWidth = settingsService.Current.GetIconSize(selectedIndex),
+            Dock = DockStyle.Fill,
+        };
 
         var countLabel = UiFactory.CreateStatusLabel(160, "項目数");
         var modeLabel = UiFactory.CreateStatusLabel(80, "表示モード");
@@ -92,20 +97,11 @@ internal static class UndoPage
         root.Controls.Add(toolbar);
         root.Controls.Add(statusBar);
 
-        list.ItemActivated += (_, _) =>
+        list.ItemActivated += (_, e) =>
         {
-            if (list.SelectedItem is not { } item)
+            if (e.Tag is EsReadOnlyBitmap image)
             {
-                return;
-            }
-
-            foreach (var (candidate, source) in itemSources)
-            {
-                if (ReferenceEquals(candidate, item))
-                {
-                    OpenInDefaultApp(source);
-                    return;
-                }
+                OpenInDefaultApp(image);
             }
         };
 
@@ -172,7 +168,8 @@ internal static class UndoPage
             settingsService.Current.UndoViewModeIndex = index;
             settingsService.Save();
             SyncModeButtons();
-            list.IconSize = settingsService.Current.GetIconSize(index);
+            list.ImageWidth = settingsService.Current.GetIconSize(index);
+            Rebuild(force: true);
             Rebuild(force: true);
         }
 
@@ -214,13 +211,13 @@ internal static class UndoPage
             requests.Clear();
             itemSources.Clear();
 
-            List<ThumbnailItem> items = [];
+            list.ClearItems();
+            list.ImageWidth = iconSize;
 
             void Add(EsReadOnlyBitmap image, string label, bool isCurrent)
             {
-                var item = new ThumbnailItem(label, iconSize, "") { IsCurrent = isCurrent };
-                items.Add(item);
-                itemSources.Add((item, image));
+                list.Add(null, label, isCurrent: isCurrent, tag: image);
+                itemSources.Add(image);
             }
 
             for (var i = 0; i < redo.Count; i++)
@@ -238,19 +235,21 @@ internal static class UndoPage
                 Add(undo[i], $"元に戻す {undo.Count - i}", isCurrent: false);
             }
 
-            list.SetItems(items);
-            countLabel.Text = ViewModeDisplay.GetItemCountText(items.Count);
-            undoViewModel.ItemCount = items.Count;
+            countLabel.Text = ViewModeDisplay.GetItemCountText(list.ItemCount);
+            undoViewModel.ItemCount = list.ItemCount;
 
-            for (var i = 0; i < items.Count; i++)
+            // 縮小は背景へ依頼する（一覧は先に表示し、できた 1 件から差し替える）
+            for (var i = 0; i < itemSources.Count; i++)
             {
-                var item = items[i];
-                var source = itemSources[i].Source;
+                var index = i;
+                var source = itemSources[i];
                 var request = scheduler.Enqueue(
-                    ThumbnailPriority.Background(i),
-                    token => ThumbnailGeneration.GenerateAsync(item, () => source, iconSize, token));
-                requests.Add((item, request));
+                    ThumbnailPriority.Background(index),
+                    token => ThumbnailGeneration.GenerateAsync(list, index, () => source, iconSize, token));
+                requests.Add((index, request));
             }
+
+            Reprioritize();
 
             Reprioritize();
         }
@@ -258,11 +257,12 @@ internal static class UndoPage
         // 可視範囲に応じて未実行の要求の優先度を付け直す。
         void Reprioritize()
         {
-            var (top, bottom) = list.ViewportRange();
             for (var i = 0; i < requests.Count; i++)
             {
-                var (item, request) = requests[i];
-                var priority = ThumbnailPriority.FromRange(item.Top, item.Bottom, top, bottom, i);
+                var (index, request) = requests[i];
+                var bounds = list.ItemBounds(index);
+                var priority = ThumbnailPriority.FromRange(
+                    bounds.Top, bounds.Bottom, 0, list.ClientSize.Height, i);
                 _ = scheduler.Reprioritize(request, priority);
             }
         }

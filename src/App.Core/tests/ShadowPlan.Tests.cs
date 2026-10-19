@@ -224,5 +224,36 @@ public class ShadowPlanTests
     [Fact]
     internal void 帯_は画像が空なら作らない()
         => Assert.Empty(ShadowPlan.BuildDeviceBands(10, 10, 0, 40, scaling: 1));
-}
 
+    /// <summary>一覧用の計画（<c>EsUtil.Feature.Thumbnail</c>）と同じ値であることを検証する。</summary>
+    /// <remarks>
+    /// キャプチャページの画像と一覧のサムネイルは同じ見た目にする必要がある。 計画が 2 つあるため、<br/>
+    /// 値を片方だけ変えると UI 版ごとに影がずれる（本テストが食い違いをビルドで止める）。
+    /// </remarks>
+    [Fact]
+    internal void 一覧用の影の計画と同じ値を使う()
+    {
+        var other = EsUtil.Feature.Thumbnail.ThumbnailShadowPlan.Default;
+
+        Assert.Equal(ShadowPlan.BlurRadius, other.BlurRadius);
+        Assert.Equal(ShadowPlan.ColorArgb, other.ColorArgb);
+        Assert.Equal(ShadowPlan.Insets.Left, other.BlurRadius);
+        Assert.Equal(other.Edges.Count, ShadowPlan.Edges.Count);
+        for (var i = 0; i < other.Edges.Count; i++)
+        {
+            Assert.Equal(other.Edges[i].Side.ToString(), ShadowPlan.Edges[i].Side.ToString());
+            Assert.Equal(other.Edges[i].Extent, ShadowPlan.Edges[i].Extent);
+            Assert.Equal(other.Edges[i].Stops.Count, ShadowPlan.Edges[i].Stops.Count);
+            for (var j = 0; j < other.Edges[i].Stops.Count; j++)
+            {
+                Assert.Equal(other.Edges[i].Stops[j].Offset, ShadowPlan.Edges[i].Stops[j].Offset, 6);
+                Assert.Equal(other.Edges[i].Stops[j].Argb, ShadowPlan.Edges[i].Stops[j].Argb);
+            }
+        }
+
+        for (var step = 0; step <= (int)other.BlurRadius; step++)
+        {
+            Assert.Equal(other.AlphaAtDistance(step), ShadowPlan.AlphaAtDistance(step), 6);
+        }
+    }
+}

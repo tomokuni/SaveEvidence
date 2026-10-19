@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Controls;
 /// 「画素単位の帯を単色で塗る」手順だけを持つ（4 UI 版で同じ結果になる）。<br/>
 /// <b>4 隅も帯で塗る</b>（隅の濃さは画像の隅の頂点からの斜めの距離で決まる。 放射グラデーションは描画側の<br/>
 /// 半径の解釈が揺れ、隅だけ濃い点や薄い筋として見えた）。<br/>
-/// <b><c>BoxShadow</c> を使わない理由</b>: 一覧のサムネイル（<see cref="ThumbnailList"/>）は <c>BoxShadow</c> を<br/>
+/// <b><c>BoxShadow</c> を使わない理由</b>: 一覧のサムネイル（<c>EsUtil.Feature.Thumbnail</c> のコントロール）は <c>BoxShadow</c> を<br/>
 /// 使うが、キャプチャページの画像は<b>他の UI 版と同じ合成</b>にする必要がある（<c>BoxShadow</c> の<br/>
 /// ぼかしは画像の端で濃い輪を作り、画像との間に線として見える）。
 /// </remarks>

@@ -1,3 +1,4 @@
+using EsUtil.Feature.Thumbnail.WinForms;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -35,14 +36,15 @@ internal static class FolderViewPage
         var selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.FolderViewModeIndex);
         var scheduler = new ThumbnailScheduler(
             ex => s_logger.LogThumbnailGenerateError(ex), idleInterval: TimeSpan.FromMilliseconds(100));
-        var requests = new List<(ThumbnailItem Item, ThumbnailScheduler.ThumbnailRequest Request)>();
+        var requests = new List<(int Index, ThumbnailScheduler.ThumbnailRequest Request)>();
 
         // 直前の組み立ての条件（同じ条件では組み直さない）。
         string? builtKey = null;
 
-        var list = new ThumbnailListView
+        var list = new ThumbnailControl
         {
-            IconSize = settingsService.Current.GetIconSize(selectedIndex),
+            ImageWidth = settingsService.Current.GetIconSize(selectedIndex),
+            Dock = DockStyle.Fill,
         };
 
         var countLabel = UiFactory.CreateStatusLabel(160, "一覧の件数");
@@ -99,11 +101,11 @@ internal static class FolderViewPage
         root.Controls.Add(toolbar);
         root.Controls.Add(statusBar);
 
-        list.ItemActivated += (_, _) =>
+        list.ItemActivated += (_, e) =>
         {
-            if (list.SelectedItem is { Identity.Length: > 0 } item)
+            if (e.Tag is string filePath and { Length: > 0 })
             {
-                OpenInDefaultApp(item.Identity);
+                OpenInDefaultApp(filePath);
             }
         };
 
@@ -162,7 +164,8 @@ internal static class FolderViewPage
             settingsService.Current.FolderViewModeIndex = index;
             settingsService.Save();
             SyncModeButtons();
-            list.IconSize = settingsService.Current.GetIconSize(index);
+            list.ImageWidth = settingsService.Current.GetIconSize(index);
+            list.RefreshLayout();
             Rebuild(force: true);
         }
 
@@ -233,36 +236,36 @@ internal static class FolderViewPage
 
             if (files.Count == 0)
             {
-                list.SetItems([]);
+                list.ClearItems();
                 countLabel.Text = ViewModeDisplay.GetItemCountText(0);
                 folderView.ItemCount = 0;
                 return;
             }
 
-            List<ThumbnailItem> items = [];
+            list.ClearItems();
+            list.ImageWidth = iconSize;
             foreach (var file in files)
             {
-                items.Add(new ThumbnailItem(Path.GetFileName(file), iconSize, file));
+                list.Add(null, Path.GetFileName(file), toolTip: file, tag: file);
             }
 
-            list.SetItems(items);
-            countLabel.Text = ViewModeDisplay.GetItemCountText(items.Count);
-            folderView.ItemCount = items.Count;
+            countLabel.Text = ViewModeDisplay.GetItemCountText(list.ItemCount);
+            folderView.ItemCount = list.ItemCount;
 
             // 生成は背景へ依頼する（一覧は先に表示し、できた 1 件から差し替える）
-            var capacity = Math.Max(items.Count, list.VisibleCapacity());
-            for (var i = 0; i < items.Count; i++)
+            var capacity = Math.Max(list.ItemCount, list.ItemCount);
+            for (var i = 0; i < files.Count; i++)
             {
-                var item = items[i];
-                var path = item.Identity;
+                var path = files[i];
                 var request = scheduler.Enqueue(
                     ThumbnailPriority.Background(i),
                     token => ThumbnailGeneration.GenerateAsync(
-                        item,
+                        list,
+                        i,
                         () => ImageThumbnailLoader.Load(path, iconSize, capacity),
                         iconSize,
                         token));
-                requests.Add((item, request));
+                requests.Add((i, request));
             }
 
             Reprioritize();
@@ -271,12 +274,12 @@ internal static class FolderViewPage
         // 可視範囲に応じて未実行の要求の優先度を付け直す。
         void Reprioritize()
         {
-            var (top, bottom) = list.ViewportRange();
             for (var i = 0; i < requests.Count; i++)
             {
-                var (item, request) = requests[i];
+                var (index, request) = requests[i];
+                var bounds = list.ItemBounds(index);
                 var priority = ThumbnailPriority.FromRange(
-                    item.Top, item.Bottom, top, bottom, i);
+                    bounds.Top, bounds.Bottom, 0, list.ClientSize.Height, i);
                 _ = scheduler.Reprioritize(request, priority);
             }
         }

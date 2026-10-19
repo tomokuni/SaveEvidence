@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
+using EsUtil.Feature.Thumbnail;
+using EsUtil.Feature.Thumbnail.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -27,9 +29,6 @@ internal static class FolderViewPage
     /// <summary>ロガー（一覧の読み込み失敗を記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(FolderViewPage));
 
-    /// <summary>サムネイルとファイル名の間隔（DIP）。</summary>
-    private const double ItemSpacing = 2;
-
     /// <summary>サムネイルのキャッシュの最小保持数。</summary>
     /// <remarks>一覧が表示する件数がこれより少ない場合でも、この数までは保持する（一覧間の行き来で再デコードしない）。</remarks>
     private const int CacheCapacity = 100;
@@ -51,14 +50,14 @@ internal static class FolderViewPage
         var settingsService = services.Settings;
         var viewModel = services.FolderView;
 
-        // 一覧は Undo 一覧と同じ共通コントロール（ThumbnailList）を使う
-        var list = new ThumbnailList(ItemSpacing);
+        // 一覧は Undo 一覧と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
+        var list = new ThumbnailControl();
 
         // サムネイルの生成は背景で行う（表示中は並列・非表示では 1 件ずつ）
         var thumbnails = ThumbnailBackground.CreateScheduler();
 
         // 生成中の要求と、その項目の要素（一覧の位置は上方が小さい）
-        var requested = new List<(ThumbnailScheduler.ThumbnailRequest Request, Element Element)>();
+        var requested = new List<(ThumbnailScheduler.ThumbnailRequest Request, int Index)>();
 
         // 最後に優先度を付けた可視領域（変わっていなければ付け直さない）
         var lastViewportTop = double.NaN;
@@ -67,12 +66,18 @@ internal static class FolderViewPage
         // 見え方が変わったら（スクロール・サイズ変更・行数の変化）優先度を付け直す
         // 可視領域はスクロールの位置と高さから求め、行の位置は要素の配置から取る
         // （一覧は折り返しパネルで全件を実体化するため、行の配置がそのまま内容の座標になる）。
-        void UpdatePriorities(ScrollViewer scroll)
+        void UpdatePriorities()
         {
             if (requested.Count == 0) return;
 
-            var top = scroll.VerticalOffset;
-            var bottom = top + scroll.ViewportHeight;
+            var range = list.VisibleRange;
+            if (range.IsEmpty && requested.Count > 0)
+            {
+                range = new ThumbnailRange(0, requested.Count - 1);
+            }
+
+            var top = list.SlotBounds(range.First).Y;
+            var bottom = list.SlotBounds(range.Last).Bottom;
             if (top == lastViewportTop && bottom == lastViewportBottom) return;
 
             lastViewportTop = top;
@@ -80,10 +85,12 @@ internal static class FolderViewPage
 
             for (var i = 0; i < requested.Count; i++)
             {
-                var (request, element) = requested[i];
-                var bounds = element.Bounds;
+                var (request, index) = requested[i];
+                var bounds = list.SlotBounds(index);
+                if (bounds.IsEmpty) continue;
+
                 thumbnails.Reprioritize(
-                    request, ThumbnailPriority.FromRange(bounds.Top, bounds.Bottom, top, bottom, i));
+                    request, ThumbnailPriority.FromRange(bounds.Y, bounds.Bottom, top, bottom, i));
             }
         }
 
@@ -97,7 +104,8 @@ internal static class FolderViewPage
             thumbnails.Clear();
             requested.Clear();
 
-            list.Clear();
+            list.ClearItems();
+            list.ImageWidth = settingsService.Current.GetIconSize(viewModel.SelectedViewModeIndex);
 
             var files = LoadFiles(folderPath, viewModel.IsSortAscending);
             var iconSize = settingsService.Current.GetIconSize(viewModel.SelectedViewModeIndex);
@@ -110,17 +118,12 @@ internal static class FolderViewPage
                 var file = files[i];
 
                 // 生成が終わるまでは代替画像を表示し、生成は背景へ依頼する
-                var view = new ThumbnailView
-                {
-                    RequestedSize = iconSize,
-                    Source = ThumbnailBackground.Placeholder(iconSize),
-                };
-
-                var element = list.Add(view, Path.GetFileName(file), iconSize, isCurrent: false, () => OpenInDefaultApp(file));
+                var index = list.Add(
+                    ThumbnailBackground.Placeholder(iconSize), Path.GetFileName(file), toolTip: file, tag: file);
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 requested.Add((thumbnails.Enqueue(
-                    ThumbnailPriority.Background(i), MakeThumbnailWork(view, file, iconSize, capacity)), element));
+                    ThumbnailPriority.Background(index), MakeThumbnailWork(list, index, file, iconSize, capacity)), index));
             }
 
             viewModel.ItemCount = files.Count;
@@ -229,11 +232,16 @@ internal static class FolderViewPage
         statusGrid.Add(status.Column(0));
         statusGrid.Add(folderText.Column(1));
 
-        var scroll = new ScrollViewer().Content(list.Panel);
-
         // 見え方が変わったら優先度を付け直す（スクロールと、ウィンドウの大きさの変化）
-        scroll.ScrollChanged += () => UpdatePriorities(scroll);
-        scroll.SizeChanged += _ => UpdatePriorities(scroll);
+        list.ScrollChanged += (_, _) => UpdatePriorities();
+        list.ItemActivated += (_, e) =>
+        {
+            if (e.Tag is string filePath)
+            {
+                OpenInDefaultApp(filePath);
+            }
+        };
+        list.SizeChanged += _ => UpdatePriorities();
 
         // 保存先フォルダの解決結果が変わったら一覧を追従させる
         main.PropertyChanged += (_, e) =>
@@ -254,7 +262,7 @@ internal static class FolderViewPage
             SyncToggles(modeButtons, viewModel.SelectedViewModeIndex);
             SyncToggles(sortButtons, viewModel.IsSortAscending ? 0 : 1);
             Rebuild();
-            UpdatePriorities(scroll);
+            UpdatePriorities();
         }
 
         // 表示されるたび: 生成を全力にする（隠れている間は 1 件ずつ）
@@ -287,7 +295,7 @@ internal static class FolderViewPage
                 toolbar,
                 new Border()
                     .StyleName(AppStyles.ListSurface)
-                    .Child(new Grid().Rows("*").Columns("*").Children(scroll)),
+                    .Child(new Grid().Rows("*").Columns("*").Children(list)),
                 new Border()
                     .Padding(AppStyles.StatusPaddingX, AppStyles.ListStatusPaddingY)
                     .StyleName(AppStyles.StatusBar)
@@ -298,19 +306,20 @@ internal static class FolderViewPage
     }
 
     /// <summary>1 件分のサムネイル生成の処理を生成する。</summary>
-    /// <param name="view">結果を設定する要素（UI スレッドでのみ書き換える）。</param>
+    /// <param name="list">結果を設定する一覧（UI スレッドでのみ書き換える）。</param>
+    /// <param name="index">項目の添字。</param>
     /// <param name="filePath">対象のファイルパス。</param>
     /// <param name="iconSize">サムネイルの一辺のサイズ（DIP）。</param>
     /// <param name="capacity">サムネイルのキャッシュの最大保持数（一覧が表示する件数）。</param>
     /// <returns>生成処理。</returns>
     /// <remarks>
-    /// 縮小デコード（ファイル読み込み）は背景スレッドで行い、<c>Source</c> への設定だけを
+    /// 縮小デコード（ファイル読み込み）は背景スレッドで行い、一覧への設定だけを
     /// UI スレッドで行う。<br/>
     /// 一覧が差し替わった後（<see cref="ThumbnailScheduler.Clear"/> の後）の結果は反映しない
     /// （消えた行へ画像を入れない）。
     /// </remarks>
     private static Func<CancellationToken, ValueTask> MakeThumbnailWork(
-        ThumbnailView view, string filePath, int iconSize, int capacity)
+        ThumbnailControl list, int index, string filePath, int iconSize, int capacity)
         => token =>
         {
             token.ThrowIfCancellationRequested();
@@ -323,7 +332,7 @@ internal static class FolderViewPage
             {
                 if (token.IsCancellationRequested) return;
 
-                view.Source = thumbnail ?? fallback;
+                list.SetImage(index, thumbnail ?? fallback);
             });
 
             return ValueTask.CompletedTask;

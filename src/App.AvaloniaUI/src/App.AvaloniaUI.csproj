@@ -56,6 +56,7 @@
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlAvaloniaUI\src\Parts.CapturePreview.ControlAvaloniaUI.csproj" />
     <ProjectReference Include="..\..\ColorPickerControl.AvaloniaUI\src\ColorPickerControl.AvaloniaUI.csproj" />
     <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Feature.Thumbnail.ControlAvaloniaUI\src\AvaloniaUI\EsUtil.Feature.Thumbnail.ControlAvaloniaUI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

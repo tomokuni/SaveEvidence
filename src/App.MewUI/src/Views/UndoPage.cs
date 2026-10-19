@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
+using EsUtil.Feature.Thumbnail;
+using EsUtil.Feature.Thumbnail.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -18,7 +20,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <b>表示順</b>: Redo（新しい未来）→ 現在 → Undo（古い過去）の固定。 現在プレビューに表示中の画像を青枠で強調する。<br/>
 /// <b>表示モード</b>: 特大 / 大 / 中。<c>Settings.UndoViewModeIndex</c> へ保存・復元し、名前と範囲の補正は<br/>
 /// <see cref="ViewModeDisplay"/>（コア）が単一所有する。<br/>
-/// <b>サムネイル</b>: <see cref="ThumbnailView"/> が画像を正方形へ収めて描画する。<br/>
+/// <b>サムネイル</b>: 一覧（<see cref="ThumbnailControl"/>）が画像を枠へ収めて描画する。<br/>
 /// <b>ダブルクリック</b>: 画像を一時ファイルへ書き出し、OS の既定アプリで開く。<br/>
 /// <b>画像の所有権</b>: 一覧は <see cref="UndoHistory"/> と <see cref="MainViewModel"/> が保持する画像を参照するだけで、破棄しない。
 /// </remarks>
@@ -26,9 +28,6 @@ internal static class UndoPage
 {
     /// <summary>ロガー（一覧の準備を記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(UndoPage));
-
-    /// <summary>サムネイルとラベルの間隔（DIP）。</summary>
-    private const double ItemSpacing = 2;
 
     /// <summary>画像を一時ファイルへ書き出すライター（ダブルクリックで外部ツールを使う場合に限る）。</summary>
     private static readonly IImageWriter s_writer = new EsBitmapImageWriter();
@@ -50,8 +49,8 @@ internal static class UndoPage
         // 表示モードはラムダ間で共有するためローカルに保持する（設定が単一所有元）
         var selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.UndoViewModeIndex);
 
-        // 一覧はフォルダビューと同じ共通コントロール（ThumbnailList）を使う
-        var list = new ThumbnailList(ItemSpacing);
+        // 一覧はフォルダビューと同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
+        var list = new ThumbnailControl();
 
         var countText = new ObservableValue<string>(ViewModeDisplay.GetItemCountText(0));
         var modeText = new ObservableValue<string>(ViewModeDisplay.GetText(selectedIndex));
@@ -66,7 +65,7 @@ internal static class UndoPage
         var scheduler = ThumbnailBackground.CreateScheduler();
 
         // 生成中の要求と、その行の要素（一覧の位置は上方が小さい）
-        var requested = new List<(ThumbnailScheduler.ThumbnailRequest Request, Element Element)>();
+        var requested = new List<(ThumbnailScheduler.ThumbnailRequest Request, int Index)>();
 
         // 最後に優先度を付けた可視領域（変わっていなければ付け直さない）
         var lastViewportTop = double.NaN;
@@ -156,17 +155,16 @@ internal static class UndoPage
             lastViewportTop = double.NaN;
             lastViewportBottom = double.NaN;
 
-            list.Clear();
+            list.ClearItems();
 
             var placeholder = ThumbnailBackground.Placeholder(iconSize);
             void AddItem(EsReadOnlyBitmap image, string label, bool isCurrent)
             {
-                var view = new ThumbnailView { RequestedSize = iconSize, Source = placeholder };
-                var element = list.Add(view, label, iconSize, isCurrent, () => OpenInDefaultApp(image));
+                var index = list.Add(placeholder, label, isCurrent: isCurrent, tag: image);
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 requested.Add((scheduler.Enqueue(
-                    ThumbnailPriority.Background(list.Items.Count - 1), MakeThumbnailWork(created, view, image, iconSize)), element));
+                    ThumbnailPriority.Background(index), MakeThumbnailWork(created, list, index, image, iconSize)), index));
             }
 
             // 表示順を固定する: Redo（現在に近い未来から）→ 現在 → Undo（現在の直前から過去へ）
@@ -193,7 +191,7 @@ internal static class UndoPage
                 thumbnail.Dispose();
             }
 
-            countText.Value = ViewModeDisplay.GetItemCountText(list.Items.Count);
+            countText.Value = ViewModeDisplay.GetItemCountText(list.ItemCount);
             modeText.Value = ViewModeDisplay.GetText(selectedIndex);
         }
 
@@ -231,20 +229,28 @@ internal static class UndoPage
         statusGrid.Add(status.Column(0));
         statusGrid.Add(hint.Column(1));
 
-        var scroll = new ScrollViewer().Content(list.Panel);
-
         // 見え方が変わったら優先度を付け直す（スクロールと、ウィンドウの大きさの変化）
-        // 可視領域はスクロールの位置と高さから求め、行の位置は要素の配置から取る
-        // （一覧は折り返しパネルで全件を実体化するため、行の配置がそのまま内容の座標になる）。
-        scroll.ScrollChanged += UpdatePriorities;
-        scroll.SizeChanged += _ => UpdatePriorities();
+        // 可視領域は一覧（コントロール）が単一所有する
+        list.ScrollChanged += (_, _) => UpdatePriorities();
+        list.ItemActivated += (_, e) =>
+        {
+            if (e.Tag is EsReadOnlyBitmap image)
+            {
+                OpenInDefaultApp(image);
+            }
+        };
+        list.SizeChanged += _ => UpdatePriorities();
 
         void UpdatePriorities()
         {
-            if (requested.Count == 0) return;
+            var range = list.VisibleRange;
+            if (range.IsEmpty && requested.Count > 0)
+            {
+                range = new ThumbnailRange(0, requested.Count - 1);
+            }
 
-            var top = scroll.VerticalOffset;
-            var bottom = top + scroll.ViewportHeight;
+            var top = list.SlotBounds(range.First).Y;
+            var bottom = list.SlotBounds(range.Last).Bottom;
             if (top == lastViewportTop && bottom == lastViewportBottom) return;
 
             lastViewportTop = top;
@@ -252,10 +258,12 @@ internal static class UndoPage
 
             for (var i = 0; i < requested.Count; i++)
             {
-                var (request, element) = requested[i];
-                var bounds = element.Bounds;
+                var (request, index) = requested[i];
+                var bounds = list.SlotBounds(index);
+                if (bounds.IsEmpty) continue;
+
                 scheduler.Reprioritize(
-                    request, ThumbnailPriority.FromRange(bounds.Top, bounds.Bottom, top, bottom, i));
+                    request, ThumbnailPriority.FromRange(bounds.Y, bounds.Bottom, top, bottom, i));
             }
         }
 
@@ -293,7 +301,7 @@ internal static class UndoPage
                 toolbar,
                 new Border()
                     .StyleName(AppStyles.ListSurface)
-                    .Child(new Grid().Rows("*").Columns("*").Children(scroll)),
+                    .Child(new Grid().Rows("*").Columns("*").Children(list)),
                 new Border()
                     .Padding(AppStyles.StatusPaddingX, AppStyles.ListStatusPaddingY)
                     .StyleName(AppStyles.StatusBar)
@@ -312,7 +320,8 @@ internal static class UndoPage
 
     /// <summary>1 行分の表示用の縮小（面積平均）の生成処理を生成する。</summary>
     /// <param name="owned">本ページが所有する縮小画像の登録先（一覧の再構築のたびに破棄する）。</param>
-    /// <param name="view">結果を設定する要素（UI スレッドでのみ書き換える）。</param>
+    /// <param name="list">結果を設定する一覧（UI スレッドでのみ書き換える）。</param>
+    /// <param name="index">項目の添字。</param>
     /// <param name="image">縮小元の画像（所有権はスタック側が保持する。 本ページは破棄しない）。</param>
     /// <param name="iconSize">表示する一辺のサイズ（DIP）。</param>
     /// <returns>生成処理。</returns>
@@ -322,7 +331,7 @@ internal static class UndoPage
     /// 作った縮小画像を解放して捨てる（表示されない画像を保持しない）。
     /// </remarks>
     private static Func<CancellationToken, ValueTask> MakeThumbnailWork(
-        List<EsReadOnlyBitmap> owned, ThumbnailView view, EsReadOnlyBitmap image, int iconSize)
+        List<EsReadOnlyBitmap> owned, ThumbnailControl list, int index, EsReadOnlyBitmap image, int iconSize)
         => token =>
         {
             token.ThrowIfCancellationRequested();
@@ -346,7 +355,7 @@ internal static class UndoPage
                 }
 
                 owned.Add(thumbnail);
-                view.Source = thumbnail;
+                list.SetImage(index, thumbnail);
             });
 
             return ValueTask.CompletedTask;
@@ -377,7 +386,3 @@ internal static class UndoPage
         }
     }
 }
-
-
-
-

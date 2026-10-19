@@ -44,28 +44,4 @@ public class ThumbnailPlaceholderTests
 
         Assert.NotNull(again);
     }
-
-    [AvaloniaFact]
-    internal void ファイル一覧のサムネイル差し替えは通知される()
-    {
-        var item = new FileListItem { FilePath = "a.png", FileName = "a.png", ThumbnailWidth = 96 };
-        var changed = new List<string>();
-        item.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? string.Empty);
-
-        item.Thumbnail = ThumbnailPlaceholder.Get(96);
-
-        Assert.Equal([nameof(FileListItem.Thumbnail)], changed);
-    }
-
-    [AvaloniaFact]
-    internal void 履歴一覧のサムネイル差し替えは通知される()
-    {
-        var item = new UndoListItem { Label = "現在", IsCurrent = true, ThumbnailWidth = 96 };
-        var changed = new List<string>();
-        item.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? string.Empty);
-
-        item.Thumbnail = ThumbnailPlaceholder.Get(96);
-
-        Assert.Equal([nameof(UndoListItem.Thumbnail)], changed);
-    }
 }

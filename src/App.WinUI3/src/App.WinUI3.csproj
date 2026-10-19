@@ -65,6 +65,7 @@
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj" />
     <!-- WinUI 3 版 Interop（コア型 ⇔ WinUI 型・ウィンドウ配置の換算・画像の Skia 描画） -->
     <ProjectReference Include="..\..\Platform.WinUI3\src\Platform.WinUI3.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Feature.Thumbnail.ControlWinUI3\src\WinUI3\EsUtil.Feature.Thumbnail.ControlWinUI3.csproj" />
   </ItemGroup>
 
   <ItemGroup>

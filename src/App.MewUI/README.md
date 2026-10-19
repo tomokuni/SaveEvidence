@@ -63,8 +63,7 @@ src/App.MewUI/
         ├── ThumbnailBackground.cs # サムネイルの背景生成（スケジューラ・代替画像・UI スレッドへの反映）
         ├── UndoPage.cs           # Undo 一覧ページ（サムネイル一覧・表示モード・ダブルクリックで外部表示）
         ├── SettingsPage.cs       # 設定ページ（テーマ / 保存 / キャプチャ / ホットキー / 一覧 / 外観）
-        └── ThumbnailView.cs      # 画像を正方形へ収めるサムネイル表示ビュー
-└── tests/
+    └── tests/
     ├── App.MewUI.Tests.csproj           # xUnit v3（net10.0-windows）
     ├── TestHelper.cs                    # テスト共通ユーティリティ
     ├── ImageThumbnailLoader.Tests.cs    # 縮小デコード・キャッシュ・失敗時の扱 い

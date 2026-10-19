@@ -89,6 +89,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。 描画手順は持たない） | AvaloniaUI / MewUI / WinUI3 / WinForms |
 | `SelectionOverlayControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。 内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI / WinUI3 / WinForms |
 | `ColorPickerControl` | なし（UI のみ） | なし | AvaloniaUI |
+| `ThumbnailControl` | あり（`EsUtil.Feature.Thumbnail.Core`） | あり（`EsUtil.Feature.Thumbnail.Presenter`。 提示 + 外観 + 影） | AvaloniaUI / WinForms（EsUtil のコントロール） |
 
 `CropViewControl` と `SelectionOverlayControl` は `Parts.CapturePreview.ControlAvaloniaUI` / `Parts.CapturePreview.ControlMewUI` / `Parts.CapturePreview.ControlWinUI3` / `Parts.CapturePreview.ControlWinForms` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。 `ZoomViewControl` も同じアセンブリに収録され、`CropViewControl` が内包する画像ビューポートです（ZoomView の UI 層も独立したプロジェクトではありません。 ズーム・パンの状態と判断は UI 非依存コアの `Parts.CapturePreview.Core` が単一所有します）。
 

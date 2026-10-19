@@ -30,6 +30,7 @@
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlWinForms\src\Parts.CapturePreview.ControlWinForms.csproj" />
     <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型）と GDI+ の表示ビュー -->
     <ProjectReference Include="..\..\Platform.WinForms\src\Platform.WinForms.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\src\EsUtil.Feature.Thumbnail.ControlWinForms\src\WinForms\EsUtil.Feature.Thumbnail.ControlWinForms.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -134,8 +134,6 @@ src/App.WinUI3/
 │       ├── UndoPage.cs          # Undo 一覧ページ
 │       ├── SettingsPage.cs      # 設定ページ
 │       ├── ConfirmDialog.cs     # 上書き確認ダイアログ
-│       ├── ThumbnailView.cs     # 縦横比を保って収める画像表示
-│       └── WrapLayoutMath.cs    # 一覧の折り返し配置の計算
 └── tests/
     ├── App.WinUI3.Tests.csproj
     ├── AppLog.Tests.cs
@@ -145,7 +143,6 @@ src/App.WinUI3/
     ├── FolderFileListReader.Tests.cs
     ├── ImageThumbnailLoader.Tests.cs
     ├── SettingsColorMath.Tests.cs
-    ├── WrapLayoutMath.Tests.cs
     └── TestHelper.cs
 ```
 

@@ -1,3 +1,4 @@
+using EsUtil.Feature.Thumbnail.WinUI3;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -15,7 +16,7 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 /// <remarks>
 /// 編集履歴と現在の画像をサムネイルで一覧表示する。 表示順は Redo（新しい未来）→ 現在 → Undo（古い過去）で固定し、<br/>
 /// 現在の画像は青い太枠で強調する。<br/>
-/// <b>配置</b>: WinUI 3 の標準パネルに折り返しパネルが無いため、列数を <see cref="WrapLayoutMath"/> で<br/>
+/// <b>配置</b>: WinUI 3 の標準パネルに折り返しパネルが無いため、列数を 共通コントロール で<br/>
 /// 計算して <c>Grid</c> へ配置する（幅の変化で並べ直す）。<br/>
 /// <b>サムネイル</b>: 履歴が保持する画像をそのまま表示する（破棄しない）。
 /// </remarks>
@@ -50,9 +51,8 @@ internal static class UndoPage
 
         var iconSize = settingsService.Current.GetIconSize(view.SelectedViewModeIndex);
 
-        // 一覧はフォルダビューと同じ共通コントロール（ThumbnailList）を使う
-        var list = new ThumbnailList();
-        var listHost = list.Host;
+        // 一覧はフォルダビューと同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
+        var list = new ThumbnailControl();
 
         var itemCountText = CreateStatusLabel(view.ItemCountText);
         var modeText = CreateStatusLabel(view.ViewModeText);
@@ -138,51 +138,51 @@ internal static class UndoPage
         page.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
         page.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         Grid.SetRow(toolbar, 0);
-        Grid.SetRow(listHost, 1);
+        Grid.SetRow(list, 1);
         Grid.SetRow(status, 2);
         page.Children.Add(toolbar);
-        page.Children.Add(listHost);
+        page.Children.Add(list);
         page.Children.Add(status);
 
-        // 一覧の幅が変わったら並べ直す（行の高さは行内の最大アイテム高さ・アイテムは下端揃え）
-        void LayoutList(double availableWidth) => list.Layout(availableWidth);
+        list.ItemActivated += (_, e) =>
+        {
+            if (e.Tag is EsReadOnlyBitmap image)
+            {
+                _ = OpenInDefaultAppAsync(image);
+            }
+        };
 
         void Rebuild()
         {
             iconSize = settingsService.Current.GetIconSize(view.SelectedViewModeIndex);
-            list.Clear();
+            list.ClearItems();
+            list.ImageWidth = iconSize;
 
             // Redo（新しい未来）→ 現在 → Undo（古い過去）の順に並べる
             var redo = history.GetRedoHistory();
             for (var i = redo.Count - 1; i >= 0; i--)
             {
                 var image = redo[i];
-                list.Add(CreateItem(image, iconSize), $"やり直し {redo.Count - i}", iconSize, "履歴の画像",
-                    () => _ = OpenInDefaultAppAsync(image));
+                list.Add(image, $"やり直し {redo.Count - i}", "履歴の画像", tag: image);
             }
 
             if (viewModel.PreviewImage is { } current)
             {
-                list.Add(CreateItem(current, iconSize), "現在", iconSize, "現在の画像",
-                    () => _ = OpenInDefaultAppAsync(current), isCurrent: true);
+                list.Add(current, "現在", "現在の画像", isCurrent: true, tag: current);
             }
 
             var undo = history.GetUndoHistory();
             for (var i = undo.Count - 1; i >= 0; i--)
             {
                 var image = undo[i];
-                list.Add(CreateItem(image, iconSize), $"元に戻す {undo.Count - i}", iconSize, "履歴の画像",
-                    () => _ = OpenInDefaultAppAsync(image));
+                list.Add(image, $"元に戻す {undo.Count - i}", "履歴の画像", tag: image);
             }
 
-            view.ItemCount = list.Tiles.Count;
+            view.ItemCount = list.ItemCount;
             itemCountText.Text = view.ItemCountText;
             modeText.Text = view.ViewModeText;
 
-            LayoutList(listHost.ActualWidth);
         }
-
-        listHost.SizeChanged += (_, e) => LayoutList(e.NewSize.Width);
 
         return new PageContent(
             page,
@@ -190,22 +190,9 @@ internal static class UndoPage
             OnWarmUp: () =>
             {
                 Rebuild();
-                s_logger.LogThumbnailWarmUp("Undo 一覧", list.Tiles.Count);
+                s_logger.LogThumbnailWarmUp("Undo 一覧", list.ItemCount);
             });
     }
-
-    /// <summary>履歴の画像を表示する要素を生成する。</summary>
-    /// <param name="image">表示する画像（借用。 破棄しない）。</param>
-    /// <param name="iconSize">サムネイルの一辺（DIP）。</param>
-    /// <returns>サムネイルの表示要素。</returns>
-    /// <remarks>枠・影・名前の行は共通の <see cref="ThumbnailTileView"/>（4 UI 版で共通の寸法）が組み立てる。</remarks>
-    private static ThumbnailView CreateItem(EsReadOnlyBitmap image, int iconSize)
-        => new()
-        {
-            Width = iconSize,
-            Height = ThumbnailTileMetrics.ImageHeight(iconSize, image.Width, image.Height),
-            Source = image,
-        };
 
     /// <summary>画像を一時ファイル（PNG）へ書き出し、OS の既定アプリで開く。</summary>
     /// <param name="image">対象の画像（借用。 破棄しない）。</param>

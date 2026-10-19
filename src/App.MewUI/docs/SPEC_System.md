@@ -131,13 +131,10 @@ src/App.MewUI/src/
     ├── ConfirmDialog.cs              簡易確認ダイアログ（はい / いいえ。保存の上書き確認）
     ├── ClickableToolTip.cs          ツールヒント付きボタンのクリック登録（MewUI の不具合回避）
     ├── AppStyles.cs                 共通スタイル（ナビ・ツールバー・ウィンドウ操作・サムネイル枠・面のテーマ追従）
-    ├── BottomAlignWrapPanel.cs      折り返し + 行内下端揃えのパネル（コアの計算へ委譲）
     ├── FolderViewPage.cs             フォルダビューページ（サムネイル一覧・表示モード・ソート）
-    ├── ThumbnailItem.cs              一覧アイテム（枠 + 影 + ラベル。ホバーの枠色と影を担う）
     ├── ThumbnailBackground.cs       サムネイルの背景生成（スケジューラ・代替画像・UI スレッドへの反映）
     ├── UndoPage.cs                   Undo 一覧ページ（サムネイル一覧・表示モード・外部表示）
     ├── SettingsPage.cs               設定ページ（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観）
-    └── ThumbnailView.cs              画像を正方形へ収めるサムネイル表示ビュー
 
 tests/
 ├── App.MewUI.Tests.csproj      xUnit v3（net10.0-windows）

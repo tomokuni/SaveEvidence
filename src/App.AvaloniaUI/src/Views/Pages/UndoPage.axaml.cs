@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
+using EsUtil.Feature.Thumbnail.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
@@ -45,8 +44,8 @@ public sealed partial class UndoPage : ViewModePageBase
     /// <summary>生成中の要求（一覧の位置と対応する）。</summary>
     private readonly List<ThumbnailScheduler.ThumbnailRequest?> _thumbnailRequests = [];
 
-    /// <summary>一覧のスクロール（可視領域の取得元。 レイアウト後に解決する）。</summary>
-    private ScrollViewer? _thumbnailScroll;
+    /// <summary>一覧へ設定した表示用の射影（アイテムを差し替えたときに解放する）。</summary>
+    private readonly List<EsBitmapAvaloniaAdapter> _adapters = [];
 
     /// <summary>最後に優先度を付けた可視領域の上端（変わっていなければ付け直さない）。</summary>
     private double _lastViewportTop = double.NaN;
@@ -79,6 +78,8 @@ public sealed partial class UndoPage : ViewModePageBase
 
         // 見え方が変わったら（スクロール・サイズ変更・行数の変化）優先度を付け直す
         UndoListBox.LayoutUpdated += (_, _) => UpdateThumbnailPriorities();
+        UndoListBox.ScrollChanged += (_, _) => UpdateThumbnailPriorities();
+        UndoListBox.ItemActivated += OnItemActivated;
 
         InitializeViewModePage(
             Program.SettingsService,
@@ -184,18 +185,22 @@ public sealed partial class UndoPage : ViewModePageBase
         _thumbnailScheduler.IsActive = IsVisible;
 
         var placeholder = ThumbnailPlaceholder.Get(size);
-        var items = new List<UndoListItem>();
         var sources = new List<EsReadOnlyBitmap>();
+
+        // 新しい一覧を先に組み、旧一覧の射影は表示から外れた後に解放する
+        // （表示が旧サムネイルを参照している間に破棄すると、描画が破棄済みバッファへ触れて例外になる）。
+        UndoListBox.ClearItems();
+        UndoListBox.ImageWidth = size;
+        foreach (var adapter in _adapters)
+        {
+            adapter.Dispose();
+        }
+
+        _adapters.Clear();
 
         void AddItem(EsReadOnlyBitmap source, string label, bool isCurrent)
         {
-            items.Add(new UndoListItem
-            {
-                Thumbnail = placeholder,
-                Label = label,
-                IsCurrent = isCurrent,
-                ThumbnailWidth = size
-            });
+            UndoListBox.Add(placeholder, label, isCurrent: isCurrent, tag: source);
             sources.Add(source);
         }
 
@@ -220,30 +225,13 @@ public sealed partial class UndoPage : ViewModePageBase
             AddItem(undo[i], $"元に戻す {undo.Count - i}", isCurrent: false);
         }
 
-        _viewModel.ItemCount = items.Count;
-
-        // 新しい一覧を先に設定し、旧一覧のサムネイルは後から解放する
-        // （IImage は非所有のため、保持する本ページが破棄する。 表示が旧サムネイルを参照している間に
-        //  破棄すると、描画が破棄済みバッファへ触れて例外になる）。
-        var previousItems = UndoListBox.ItemsSource as IEnumerable<UndoListItem>;
-        UndoListBox.ItemsSource = items;
-        if (previousItems is not null)
-        {
-            foreach (var old in previousItems)
-            {
-                // 代替画像（全行で共有する）は破棄しない（表示用の射影を持つアダプタだけを解放する）
-                if (old.Thumbnail is EsBitmapAvaloniaAdapter adapter)
-                {
-                    adapter.Dispose();
-                }
-            }
-        }
+        _viewModel.ItemCount = sources.Count;
 
         // 生成の負荷はページの表示状態に従う（表示中は並列・非表示では 1 件ずつ）
-        for (var i = 0; i < items.Count; i++)
+        for (var i = 0; i < sources.Count; i++)
         {
             _thumbnailRequests.Add(_thumbnailScheduler.Enqueue(
-                ThumbnailPriority.Background(i), MakeThumbnailWork(items[i], sources[i], size)));
+                ThumbnailPriority.Background(i), MakeThumbnailWork(i, sources[i], size)));
         }
 
         // レイアウト済みなら直ちに、未なら LayoutUpdated が可視領域の確定後に呼ぶ
@@ -260,19 +248,8 @@ public sealed partial class UndoPage : ViewModePageBase
     {
         if (_thumbnailRequests.Count == 0) return;
 
-        // スクロールはテンプレートが作るため、最初に見つけたものを覚える
-        if (_thumbnailScroll is null)
-        {
-            _thumbnailScroll = UndoListBox.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
-            if (_thumbnailScroll is { } scroll)
-            {
-                scroll.ScrollChanged += (_, _) => UpdateThumbnailPriorities();
-            }
-        }
-
-        // スクロールが見つからない間は全件を見えている扱いにする（上方から順に生成される）
-        var top = _thumbnailScroll?.Offset.Y ?? 0;
-        var bottom = top + (_thumbnailScroll?.Viewport.Height ?? double.PositiveInfinity);
+        var top = UndoListBox.Offset.Y;
+        var bottom = top + UndoListBox.Viewport.Height;
         if (top == _lastViewportTop && bottom == _lastViewportBottom) return;
 
         _lastViewportTop = top;
@@ -281,23 +258,25 @@ public sealed partial class UndoPage : ViewModePageBase
         for (var i = 0; i < _thumbnailRequests.Count; i++)
         {
             if (_thumbnailRequests[i] is not { } request) continue;
-            if (UndoListBox.ContainerFromIndex(i) is not { } container) continue;
-            var bounds = container.Bounds;
+
+            var bounds = UndoListBox.SlotBounds(i);
+            if (bounds.IsEmpty) continue;
+
             _thumbnailScheduler.Reprioritize(
                 request, ThumbnailPriority.FromRange(bounds.Y, bounds.Bottom, top, bottom, i));
         }
     }
 
     /// <summary>1 行分の表示用の射影（アイコンサイズへの縮小）の生成処理を生成する。</summary>
-    /// <param name="item">結果を設定するアイテム。</param>
+    /// <param name="index">結果を設定する項目の添字。</param>
     /// <param name="source">生成元の画像（借用。 <see cref="UndoHistory"/> または <see cref="MainViewModel"/> が保持する）。</param>
     /// <param name="size">表示する長辺の上限（ピクセル）。</param>
     /// <returns>生成処理。</returns>
     /// <remarks>
-    /// 縮小は背景スレッドで行い、<see cref="ThumbnailListItem.Thumbnail"/> への設定だけを UI スレッドで行う。<br/>
+    /// 縮小は背景スレッドで行い、一覧への設定だけを UI スレッドで行う。<br/>
     /// 一覧が差し替わった後（<see cref="ThumbnailScheduler.Clear"/> の後）の結果は、作った射影を解放して捨てる。
     /// </remarks>
-    private static Func<CancellationToken, ValueTask> MakeThumbnailWork(UndoListItem item, EsReadOnlyBitmap source, int size)
+    private Func<CancellationToken, ValueTask> MakeThumbnailWork(int index, EsReadOnlyBitmap source, int size)
         => token =>
         {
             token.ThrowIfCancellationRequested();
@@ -317,7 +296,8 @@ public sealed partial class UndoPage : ViewModePageBase
                     return;
                 }
 
-                item.Thumbnail = adapter;
+                _adapters.Add(adapter);
+                UndoListBox.SetImage(index, adapter);
             });
 
             return ValueTask.CompletedTask;
@@ -329,27 +309,22 @@ public sealed partial class UndoPage : ViewModePageBase
 
     /// <summary>サムネイルのダブルクリック時に一時ファイルへ保存し、OS の既定アプリ（外部ツール）で開く。</summary>
     /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">タップイベント。</param>
+    /// <param name="e">2 回押しのイベント引数（対象の画像は <see cref="ThumbnailActivatedEventArgs.Tag"/>）。</param>
     /// <remarks>
     /// Undo / Redo スタックの画像はファイルではなく Bitmap のため、
     /// 一時フォルダに PNG として保存してから <see cref="Process.Start()"/> で開く。
     /// </remarks>
-    private void OnItemDoubleTapped(object? sender, TappedEventArgs e)
+    private void OnItemActivated(object? sender, ThumbnailActivatedEventArgs e)
     {
-        if (UndoListBox.SelectedItem is not UndoListItem item) return;
+        // 一覧が保持するのは表示用の射影（縮小済み）であるため、保存には元の画像を使う
+        if (e.Tag is not EsReadOnlyBitmap source) return;
 
         try
         {
             var tempFile = Path.Combine(Path.GetTempPath(), $"SaveEvidence_undo_{Guid.NewGuid():N}.png");
 
-            // サムネイルは表示用のアダプタ（IImage）のため、コアの画像（所有する型）を真実から取り出して保存する。
             // 保存形式（拡張子からの判別）とエンコードはコアの画像型が単一所有する。
-            if (item.Thumbnail is not EsBitmapAvaloniaAdapter adapter)
-            {
-                return;
-            }
-
-            adapter.GetEsBitmap().Save(tempFile);
+            source.Save(tempFile);
 
             using var process = new Process();
             process.StartInfo = new ProcessStartInfo

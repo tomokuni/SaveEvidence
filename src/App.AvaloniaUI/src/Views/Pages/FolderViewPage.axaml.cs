@@ -1,11 +1,10 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
+using EsUtil.Feature.Thumbnail.AvaloniaUI;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -48,9 +47,6 @@ public sealed partial class FolderViewPage : ViewModePageBase
     /// <summary>生成中の要求（一覧の位置と対応する。 生成済みの位置は null）。</summary>
     private readonly List<ThumbnailScheduler.ThumbnailRequest?> _thumbnailRequests = [];
 
-    /// <summary>一覧のスクロール（可視領域の取得元。 レイアウト後に解決する）。</summary>
-    private ScrollViewer? _thumbnailScroll;
-
     /// <summary>最後に優先度を付けた可視領域の上端（変わっていなければ付け直さない）。</summary>
     private double _lastViewportTop = double.NaN;
 
@@ -71,6 +67,8 @@ public sealed partial class FolderViewPage : ViewModePageBase
 
         // 見え方が変わったら（スクロール・サイズ変更・行数の変化）優先度を付け直す
         FileListBox.LayoutUpdated += (_, _) => UpdateThumbnailPriorities();
+        FileListBox.ScrollChanged += (_, _) => UpdateThumbnailPriorities();
+        FileListBox.ItemActivated += OnItemActivated;
 
         InitializeViewModePage(
             Program.SettingsService,
@@ -146,7 +144,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         {
             s_logger.LogFolderViewLoadError(ex, MainViewModel.SaveFolderPathResolved);
             _viewModel.ItemCount = 0;
-            FileListBox.ItemsSource = null;
+            FileListBox.ClearItems();
         }
     }
 
@@ -170,7 +168,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
         {
             _viewModel.ItemCount = 0;
-            FileListBox.ItemsSource = null;
+            FileListBox.ClearItems();
             return;
         }
 
@@ -189,42 +187,33 @@ public sealed partial class FolderViewPage : ViewModePageBase
         // 保持数は表示する件数以上にする（生成の途中で表示中のサムネイルが破棄されないようにする）
         var capacity = Math.Max(ThumbnailCacheCapacity, files.Count);
 
-        var items = new List<FileListItem>(files.Count);
-
         // 生成の負荷はページの表示状態に従う（表示中は並列・非表示では 1 件ずつ）
         _thumbnailScheduler.IsActive = IsVisible;
+
+        FileListBox.ClearItems();
+        FileListBox.ImageWidth = iconSize;
 
         for (var i = 0; i < files.Count; i++)
         {
             var file = files[i];
-            var item = new FileListItem
-            {
-                FilePath = file,
-                FileName = Path.GetFileName(file),
-                ThumbnailWidth = iconSize
-            };
 
             // 生成済みはその場で表示し、未生成は代替画像を表示して背景へ回す
             if (GetCachedThumbnail(file, iconSize) is { } cached)
             {
-                item.Thumbnail = cached;
+                FileListBox.Add(cached, Path.GetFileName(file), toolTip: file, tag: file);
                 _thumbnailRequests.Add(null);
             }
             else
             {
-                item.Thumbnail = placeholder;
+                FileListBox.Add(placeholder, Path.GetFileName(file), toolTip: file, tag: file);
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 _thumbnailRequests.Add(_thumbnailScheduler.Enqueue(
-                    ThumbnailPriority.Background(i), MakeThumbnailWork(item, file, iconSize, capacity)));
+                    ThumbnailPriority.Background(i), MakeThumbnailWork(i, file, iconSize, capacity)));
             }
-
-            items.Add(item);
         }
 
-        _viewModel.ItemCount = items.Count;
-        FileListBox.ItemsSource = items;
-
+        _viewModel.ItemCount = files.Count;
 
         // レイアウト済みなら直ちに、未なら LayoutUpdated が可視領域の確定後に呼ぶ
         UpdateThumbnailPriorities();
@@ -240,19 +229,8 @@ public sealed partial class FolderViewPage : ViewModePageBase
     {
         if (_thumbnailRequests.Count == 0) return;
 
-        // スクロールはテンプレートが作るため、最初に見つけたものを覚える
-        if (_thumbnailScroll is null)
-        {
-            _thumbnailScroll = FileListBox.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
-            if (_thumbnailScroll is { } scroll)
-            {
-                scroll.ScrollChanged += (_, _) => UpdateThumbnailPriorities();
-            }
-        }
-
-        // スクロールが見つからない間は全件を見えている扱いにする（上方から順に生成される）
-        var top = _thumbnailScroll?.Offset.Y ?? 0;
-        var bottom = top + (_thumbnailScroll?.Viewport.Height ?? double.PositiveInfinity);
+        var top = FileListBox.Offset.Y;
+        var bottom = top + FileListBox.Viewport.Height;
         if (top == _lastViewportTop && bottom == _lastViewportBottom) return;
 
         _lastViewportTop = top;
@@ -261,9 +239,10 @@ public sealed partial class FolderViewPage : ViewModePageBase
         for (var i = 0; i < _thumbnailRequests.Count; i++)
         {
             if (_thumbnailRequests[i] is not { } request) continue;
-            if (FileListBox.ContainerFromIndex(i) is not { } container) continue;
 
-            var bounds = container.Bounds;
+            var bounds = FileListBox.SlotBounds(i);
+            if (bounds.IsEmpty) continue;
+
             _thumbnailScheduler.Reprioritize(
                 request, ThumbnailPriority.FromRange(bounds.Y, bounds.Bottom, top, bottom, i));
         }
@@ -290,18 +269,18 @@ public sealed partial class FolderViewPage : ViewModePageBase
     }
 
     /// <summary>1 件分のサムネイル生成の処理を生成する。</summary>
-    /// <param name="item">結果を設定するアイテム。</param>
+    /// <param name="index">結果を設定する項目の添字。</param>
     /// <param name="filePath">対象のファイルパス。</param>
     /// <param name="iconSize">サムネイルの幅（ピクセル）。</param>
     /// <param name="capacity">サムネイルのキャッシュの最大保持数（一覧が表示する件数）。</param>
     /// <returns>生成処理。</returns>
     /// <remarks>
-    /// 復号は背景スレッドで行い、<see cref="ThumbnailListItem.Thumbnail"/> への設定だけを UI スレッドで行う。<br/>
+    /// 復号は背景スレッドで行い、一覧への設定だけを UI スレッドで行う。<br/>
     /// 一覧が差し替わった後（<see cref="ThumbnailScheduler.Clear"/> の後）の結果は反映しない
-    /// （消えた行へ画像を入れない。 破棄済みの行への代入を避ける）。
+    /// （消えた行へ画像を入れない）。
     /// </remarks>
-    private static Func<CancellationToken, ValueTask> MakeThumbnailWork(
-        FileListItem item, string filePath, int iconSize, int capacity)
+    private Func<CancellationToken, ValueTask> MakeThumbnailWork(
+        int index, string filePath, int iconSize, int capacity)
         => token =>
         {
             token.ThrowIfCancellationRequested();
@@ -314,7 +293,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
             {
                 if (token.IsCancellationRequested) return;
 
-                item.Thumbnail = thumbnail ?? fallback;
+                FileListBox.SetImage(index, thumbnail ?? fallback);
             });
 
             return ValueTask.CompletedTask;
@@ -385,17 +364,18 @@ public sealed partial class FolderViewPage : ViewModePageBase
     private void OnRefreshClick(object? sender, RoutedEventArgs e) => LoadFiles();
 
     /// <summary>ファイルのダブルクリック時に規定のアプリで開く。</summary>
-    private void OnFileDoubleTapped(object? sender, TappedEventArgs e)
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">2 回押しのイベント引数（対象のファイルパスは <see cref="ThumbnailActivatedEventArgs.Tag"/>）。</param>
+    private void OnItemActivated(object? sender, ThumbnailActivatedEventArgs e)
     {
-        if (FileListBox.SelectedItem is not FileListItem item) return;
-        if (string.IsNullOrEmpty(item.FilePath)) return;
+        if (e.Tag is not string filePath || string.IsNullOrEmpty(filePath)) return;
 
         try
         {
             using var process = new Process();
             process.StartInfo = new ProcessStartInfo
             {
-                FileName = item.FilePath,
+                FileName = filePath,
                 UseShellExecute = true
             };
             process.Start();

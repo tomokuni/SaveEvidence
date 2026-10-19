@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
-             xmlns:controls="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Controls"
+             xmlns:thumb="clr-namespace:EsUtil.Feature.Thumbnail.AvaloniaUI;assembly=EsUtil.Feature.Thumbnail.ControlAvaloniaUI"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.FolderViewPage"
              x:DataType="vm:FolderViewViewModel">
     <Grid RowDefinitions="Auto,*,Auto">
@@ -18,10 +18,8 @@
             <ToggleButton x:Name="SortDescendingButton" Classes="toolbar" Content="▼ 降順" Click="OnSortDescendingClick" Tag="desc" Margin="1"/>
         </WrapPanel>
 
-        <!-- サムネイル一覧（Undo 一覧と同じ共通コントロール。 枠・影・名前の行は ThumbnailList が単一所有する） -->
-        <controls:ThumbnailList x:Name="FileListBox"
-                                Grid.Row="1"
-                                DoubleTapped="OnFileDoubleTapped"/>
+        <!-- サムネイル一覧（Undo 一覧と同じ共通コントロール。 枠・影・名前の行は EsUtil.Feature.Thumbnail が単一所有する） -->
+        <thumb:ThumbnailControl x:Name="FileListBox" Grid.Row="1"/>
 
         <!-- ステータスバー -->
         <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,*,Auto" Margin="4,2">

@@ -138,8 +138,6 @@ App.WinForms/
         ├── FolderViewPage.cs     # フォルダビュー ページ（サムネイル一覧・表示モード・並べ替え）
         ├── UndoPage.cs           # Undo 一覧ページ（履歴のサムネイル一覧・外部表示）
         ├── SettingsPage.cs       # 設定ページ（保存 / ホットキー / 外観）
-        ├── ThumbnailItem.cs      # サムネイル 1 件（画像とファイル名）
-        ├── ThumbnailListView.cs  # サムネイルを格子状に並べる一覧
         └── ThumbnailGeneration.cs # サムネイルの縮小と項目への反映
 ```
 
