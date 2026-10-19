@@ -12,7 +12,7 @@ rem  dotnet readable (safe because this file is ASCII).  Rules: .github/RELEASE.
 rem
 rem  The mode (aot ^> single ^> exe) is chosen by buildScript/publish_ui.bat.
 rem  Measured 2026-10-16: mode 1 (single + AOT) is used.  Mode 1 failed before that because
-rem  EsUtil.Feature.Loupe.ControlAvaloniaUI resolved the display adapter contract with
+rem  EsUtil.Ui.AvaloniaUI.Loupe resolved the display adapter contract with
 rem  Expression.Compile and Type.GetMethod (IL2070 / IL3050); removing the reflection fixed
 rem  it.  If mode 1 stops working, first check whether reflection came back in EsUtil (the
 rem  public contract is: the source image is received as a core image, and the projection

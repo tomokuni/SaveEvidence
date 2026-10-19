@@ -54,8 +54,8 @@ rem  A failure here does not stop the script (a mode that does not need .pri fil
 rem  succeed).
 echo [INFO] WinUI 3: generating the .pri files of the libraries (RID: %RID%)
 for %%p in (
-  "..\EsUtil\src\EsUtil.Feature.Loupe.ControlWinUI3\src\WinUI3\EsUtil.Feature.Loupe.ControlWinUI3.csproj"
-  "..\EsUtil\src\EsUtil.Feature.Marquee.ControlWinUI3\src\WinUI3\EsUtil.Feature.Marquee.ControlWinUI3.csproj"
+  "..\EsUtil\EsUtil.Ui.WinUI3\Loupe\src\EsUtil.Ui.WinUI3.Loupe.csproj"
+  "..\EsUtil\EsUtil.Ui.WinUI3\Marquee\src\EsUtil.Ui.WinUI3.Marquee.csproj"
   "src\Platform.WinUI3\src\Platform.WinUI3.csproj"
   "src\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj"
 ) do dotnet build %%p -c Release -r %RID% -v q --nologo >nul 2>&1
