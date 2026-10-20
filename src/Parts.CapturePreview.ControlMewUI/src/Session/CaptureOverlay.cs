@@ -329,7 +329,7 @@ internal sealed class CaptureOverlay
         }
         var content = new Grid().Columns("*").Rows("*");
         // 撮影画像は仮想スクリーンと等倍（領域と同じ縦横比）のため、領域全体へ敷く（Uniform にしない）
-        content.Add(new SkiaImageView { Source = Screen });
+        content.Add(new ImageView { Source = Screen });
 
         var window = new Window()
             .Borderless()

@@ -4,17 +4,17 @@ using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Platform.MewUI.Tests;
 
-/// <summary><see cref="SkiaImageView"/> のプロパティと継承のテスト。</summary>
+/// <summary><see cref="ImageView"/> のプロパティと継承のテスト。</summary>
 /// <remarks>
 /// MewUI の要素生成はプラットフォームホストの登録を必要としないため、UI を表示せずに検証できる。<br/>
-/// 描画結果の検証は <see cref="SkiaImageRendererTests"/> が担う。
+/// 描画の判断は <see cref="ImageRenderPlanTests"/> が担う。
 /// </remarks>
-public class SkiaImageViewTests
+public class ImageViewTests
 {
     [Fact]
     internal void Source_既定はnull()
     {
-        var view = new SkiaImageView();
+        var view = new ImageView();
 
         Assert.Null(view.Source);
     }
@@ -22,7 +22,7 @@ public class SkiaImageViewTests
     [Fact]
     internal void Source_設定した値をそのまま返す()
     {
-        var view = new SkiaImageView();
+        var view = new ImageView();
         using var bitmap = TestHelper.CreateBitmap(2, 2, DrawingColor.Red);
 
         view.Source = bitmap;
@@ -46,7 +46,7 @@ public class SkiaImageViewTests
     [Fact]
     internal void Source_nullへ戻せる()
     {
-        var view = new SkiaImageView();
+        var view = new ImageView();
         using var bitmap = TestHelper.CreateBitmap(2, 2, DrawingColor.Red);
         view.Source = bitmap;
 
@@ -55,8 +55,8 @@ public class SkiaImageViewTests
         Assert.Null(view.Source);
     }
 
-    /// <summary>縦横比を保つ配置を選ぶ派生クラス（検証用に <see cref="UniformDraw"/> を公開する）。</summary>
-    private sealed class UniformView : SkiaImageView
+    /// <summary>縦横比を保つ配置を選ぶ派生クラス（検証用に <see cref="ImageView.UniformDraw"/> を公開する）。</summary>
+    private sealed class UniformView : ImageView
     {
         /// <summary>縦横比を保って収める。</summary>
         protected override bool UniformDraw => true;

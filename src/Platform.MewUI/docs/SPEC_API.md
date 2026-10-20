@@ -14,7 +14,7 @@
   - [1.4 `EsPlatformHandleMewUIInterop`](#14-esplatformhandlemewuiinterop)
   - [1.5 `Imaging.ClientPixelScale`（static class）](#15-imagingclientpixelscalestatic-class)
   - [1.6 `Imaging.MewUITextMeasure`（static class）](#16-imagingmewuitextmeasurestatic-class)
-  - [1.7 `Imaging.SkiaImageView`（class : `SkiaCanvasView`）](#17-imagingskiaimageviewclass--skiacanvasview)
+  - [1.7 `Imaging.ImageView`（class : `Control`）](#17-imagingimageviewclass--control)
 - [2. 依存関係](#2-依存関係)
 - [3. バージョン依存](#3-バージョン依存)
 
@@ -110,11 +110,11 @@ MewUI のテキスト エンジンで文字列の実寸を測ります（ラベ�
 | `Measure(string text, double fontSize)` → `EsSize` | 文字列の実寸（DIP。 送り幅と行高）を返す |
 | `Measure`（内部） | ツリー外の `TextBlock` へ文字列とフォントサイズを写して `Measure` し、`DesiredSize` を返す。 DPI はアプリケーションから解決されるため、要素と同じ丸めで測れる |
 
-**描画に使うエンジンで測る必要があります**: MewUI のテキスト エンジン（DirectWrite の GDI 互換レイアウト）は文字の送りを物理ピクセルの格子へ丸めるため、Skia の実測より広い値を返します。 ラベルを `TextBlock` 要素として置く UI が背景を Skia の実測で作ると、**文字が背景からはみ出して切れます**。
+**描画に使うエンジンで測る必要があります**: MewUI のテキスト エンジン（DirectWrite の GDI 互換レイアウト）は文字の送りを物理ピクセルの格子へ丸めるため、別のエンジンで測った値より広い値を返します。 ラベルを `TextBlock` 要素として置く UI が背景を Skia の実測で作ると、**文字が背景からはみ出して切れます**。
 
-グラフィックス バックエンドが登録されていない環境（ウィンドウを生成しない単体テスト）では測定できないため、Skia の実測で代用します（実アプリでは常にエンジンで測ります）。
+グラフィックス バックエンドが登録されていない環境（ウィンドウを生成しない単体テスト）では測定できません。 その場合は配置計算の `measure` 引数へ測定関数を差し替えてください（実アプリでは常にエンジンで測ります）。
 
-### 1.7 `Imaging.SkiaImageView`（class : `SkiaCanvasView`）
+### 1.7 `Imaging.ImageView`（class : `Control`）
 
 `EsReadOnlyBitmap` を親が割り当てた領域へ描画する表示ビュー。 撮影画像のオーバーレイ（領域全体へ引き伸ばす）や
 サムネイル（縦横比を保って収める）のように、「1 枚の画像を領域へ敷く」表示を共通化します。
@@ -126,19 +126,20 @@ MewUI のテキスト エンジンで文字列の実寸を測ります（ラベ�
 
 ```csharp
 // 親の領域いっぱいへ撮影画像を敷く（引き伸ばし）
-content.Add(new SkiaImageView { Source = screen });
+content.Add(new ImageView { Source = screen });
 
 // 縦横比から大きさを決める表示は、計測を上書きして UniformDraw を true にする
-internal sealed class ThumbnailView : SkiaImageView
+internal sealed class ThumbnailView : ImageView
 {
     protected override bool UniformDraw => true;
     protected override Size MeasureContent(Size availableSize) => ...;
 }
 ```
 
-描画手順（透明でクリア → 未設定・破棄済みの判定 → 配置の計算 → 1 回の `DrawBitmap`）は
-`SkiaImageRenderer`（internal）が単一所有し、配置の矩形は本プロジェクトの `ImageDrawMath` が単一所有します。  
-静止画のため連続再描画は無効化し、`Source` の変更時のみ描画します。
+描画は**フレームワーク標準の `Control.OnRender(IGraphicsContext)`** で行います（Skia のキャンバスを使いません）。  
+可否と配置の判定は `ImageRenderPlan`（internal）が、`IImage` への変換と `DrawImage` の呼び出しは `ImageRenderer` が単一所有します。
+配置の矩形は `ImageDrawMath` が単一所有します。  
+変換した画像は `Source` が変わったときだけ作り直します（毎フレーム変換すると画素数分の費用が乗るため）。
 
 ## 2. 依存関係
 
@@ -146,9 +147,8 @@ internal sealed class ThumbnailView : SkiaImageView
 | --- | --- |
 | `EsUtil.Platform.Core`（`EsUtil.Platform.Core.*`） | コア型（`EsKey` / `EsPoint` / `EsSize` / `EsVector` / `EsRect` / `EsWindowState` / `EsPlatformHandle` / `EsBitmap`） |
 | `Aprillz.MewUI.Core`（バージョン固定） | MewUI の型（`Key` / `Point` / `Size` / `Vector` / `Rect` / `Color` / `Window` / `WindowState` / `MewProperty`） |
-| `Aprillz.MewUI.Skia`（バージョン固定） | `SkiaCanvasView`（`SkiaImageView` の基底）と `SkiaSharp` の型 |
 
-プラットフォームホスト（`Aprillz.MewUI.Windows` 等）やバックエンドには依存しません（`Skia` パッケージは描画型のみを提供し、ホストを含まないため）。
+プラットフォームホスト（`Aprillz.MewUI.Windows` 等）やバックエンドには依存しません（描画は `IGraphicsContext` の抽象だけを使うため）。
 
 ## 3. バージョン依存
 

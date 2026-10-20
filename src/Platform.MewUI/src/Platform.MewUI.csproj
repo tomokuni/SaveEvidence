@@ -8,25 +8,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- MewUI のコア（型・値型）と Skia 描画（SkiaCanvasView・SKCanvas）。プラットフォームホストは含まない -->
+    <!-- MewUI のコア（型・値型・標準描画の IGraphicsContext）。 プラットフォームホストは含まない -->
     <PackageReference Include="Aprillz.MewUI.Core" Version="0.21.1" />
-    <!-- EsBitmap を Skia キャンバスへ描く表示ビュー（SkiaImageView）が SkiaCanvasView を使う -->
-    <PackageReference Include="Aprillz.MewUI.Skia" Version="0.21.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
   </ItemGroup>
 
-
   <ItemGroup>
     <!-- 単体テスト（tests/）からのみ internal 型へアクセスできるようにする -->
     <InternalsVisibleTo Include="Platform.MewUI.Tests" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- Skia への依存を閉じ込めた層（SkiaEsCanvas / EsBitmap の Skia 相互変換） -->
-    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
   </ItemGroup>
 
 </Project>

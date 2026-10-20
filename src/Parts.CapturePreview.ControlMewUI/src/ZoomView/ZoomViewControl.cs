@@ -1,5 +1,6 @@
-﻿using Aprillz.MewUI;
-using Aprillz.MewUI.Skia.Controls;
+using Aprillz.MewUI;
+using Aprillz.MewUI.Controls;
+using Aprillz.MewUI.Rendering;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
@@ -7,28 +8,25 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Platform.MewUI;
-using EsUtil.SaveEvidence.Platform.MewUI.Imaging;
-using EsUtil.SaveEvidence.Platform.Skia;
 using Microsoft.Extensions.Logging;
-using SkiaSharp;
 
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
 
-/// <summary>ズーム・パン可能な画像表示コントロール（MewUI 実装。 Skia のキャンバスへ直接描画する）。</summary>
+/// <summary>ズーム・パン可能な画像表示コントロール（MewUI 実装。 フレームワーク標準の描画で描く）。</summary>
 /// <remarks>
 /// <b>UI 層の責務は 3 つだけ</b>である（判断・値・計算はコアの <see cref="ZoomViewSession"/> が単一所有する）。<br/>
 /// 1. <b>入力ブリッジ</b>: マウス・ホイールのイベントをコア型へ変換してセッションへ渡し、返された効果（再描画・ポインタキャプチャ）を適用する。<br/>
-/// 2. <b>描画</b>: セッションの値（画像表示矩形・スクロールバー・外観）を Skia の描画 API へ写す（外観値・判断を持たない）。<br/>
+/// 2. <b>描画</b>: セッションの値（画像表示矩形・スクロールバー・外観）を MewUI の描画 API へ写す（外観値・判断を持たない）。<br/>
 /// 3. <b>ホスト結線</b>: プロパティ機構（<c>MewProperty</c>）・DPI 追従・ポインタキャプチャ・レイアウト。<br/>
 /// <br/>
 /// <b>Avalonia 版との違い</b>: 内部の <c>Image</c> + <c>RenderTransform</c> + <c>ScrollBar</c> を持たず、<br/>
-/// Skia のキャンバスへ 1 回の <c>DrawBitmap</c> で描画する（中間ビットマップも Transform の合成も不要）。<br/>
+/// MewUI の描画コンテキストへ 1 回の <c>DrawImage</c> で描画する（中間ビットマップも Transform の合成も不要）。<br/>
 /// スクロールバーはオーバーレイとして自前描画する（描画内容はセッションの値に従う）。<br/>
 /// 見た目（スクロールバーの太さ・余白・下地色）は <see cref="ZoomViewAppearance"/> が単一所有し、<br/>
 /// ホストが設定する（Avalonia 版は標準 <c>ScrollBar</c> を使うため太さ・余白は本値を使用しない）。
 /// </remarks>
-public sealed class ZoomViewControl : SkiaCanvasView
+public sealed class ZoomViewControl : Control
 {
     /// <summary><see cref="Source"/> プロパティ（ズーム対象の画像）。</summary>
     /// <remarks>設定すると Fit 表示（ズーム率 0・オフセット 0）へリセットする。</remarks>
@@ -50,6 +48,9 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// <summary>ズームの状態・判断・計算を単一所有するセッション。</summary>
     private readonly ZoomViewSession _session;
 
+    /// <summary>画像の描画と変換の保持を担う層。</summary>
+    private readonly ZoomImageRenderer _imageRenderer = new();
+
     /// <summary>ズームビューコントロールを既定の設定で初期化する。</summary>
     public ZoomViewControl() : this(ZoomOptions.Default) { }
 
@@ -64,8 +65,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
         _session = new ZoomViewSession(config);
         _session.Subscribe(OnSessionNotified);
 
-        ContinuousAnimation = false;
-        PaintSurface += OnPaintSurface;
+        // 静止画のため、ズーム・パンの変更時（InvalidateVisual）だけ描画する
     }
 
     /// <summary>ズームの状態・判断・計算を単一所有するセッションを取得する（テスト用アクセサ）。</summary>
@@ -318,7 +318,7 @@ public sealed class ZoomViewControl : SkiaCanvasView
     /// 引数は画像の表示矩形（DIP）と DIP → 物理ピクセルの倍率。 拡大は適用しない<br/>
     /// （画素の格子に一致させるため。 画素への変換は描画計画が担う）。
     /// </remarks>
-    public Action<SKCanvas, SKRect, double>? SurroundRenderer { get; set; }
+    public Action<IGraphicsContext, EsRect, double>? SurroundRenderer { get; set; }
     /// <summary>要求サイズを返す。</summary>
     /// <param name="availableSize">親から提示された利用可能サイズ（使用しない）。</param>
     /// <returns>常に <c>Size.Empty</c>（親の残余を埋める）。</returns>
@@ -501,68 +501,48 @@ public sealed class ZoomViewControl : SkiaCanvasView
     }
 
     /// <summary>画像・スクロールバーを描画する。</summary>
-    /// <param name="canvas">描画先のキャンバス（物理ピクセル）。</param>
-    /// <param name="info">描画先の情報（幅・高さ）。</param>
+    /// <param name="context">描画先のコンテキスト（DIP 座標で描画する）。</param>
     /// <remarks>
-    /// キャンバスを DPI スケーリングしてから DIP 座標で描画する（コアの計算と座標系を一致させる）。<br/>
-    /// 描画順（下地 → 画像 → スクロールバー）は本メソッドが単一所有し、各描画内容はコアの値に従う。
+    /// 描画順（下地 → 周囲 → 画像 → スクロールバー）は本メソッドが単一所有し、各描画内容はコアの値に従う。<br/>
+    /// スケーリングは描画先の DPI（<see cref="IGraphicsContext.DpiScale"/>）から求める
+    /// （コアの計算は物理ピクセル基準のため、DIP の座標を同じ倍率で拡大する）。
     /// </remarks>
-    private void OnPaintSurface(SKCanvas canvas, SKImageInfo info)
+    protected override void OnRender(IGraphicsContext context)
     {
         var appearance = _session.Appearance;
-        // 画像が無い部分は下地色の単色（市松模様は描かない）
-        canvas.Clear(appearance.BackgroundColor.ToSKColor());
 
-        // スケーリングは描画面（物理ピクセル）と割り当て領域（DIP）の比から求める
-        // （DPI の通知は追加直後のコントロールへ届かないため、保持値だけに頼ると 100% で描いてしまう）
-        var scaling = ClientPixelScale.Resolve(info.Width, Bounds.Size.Width, ClientToPixelScaling);
+        // 画像が無い部分は下地色の単色（市松模様は描かない）
+        context.Clear(appearance.BackgroundColor.ToMewUIColor());
+
+        var scaling = DpiScaler.NormalizeScaling(context.DpiScale);
 
         // 画像の外側（影など）を先に描く（画像の端の混色の下地を影にする。 拡大は適用しない）
         if (SurroundRenderer is { } surround)
         {
-            var area = _session.ImageRect;
-            surround(
-                canvas,
-                new SKRect(
-                    (float)area.X,
-                    (float)area.Y,
-                    (float)(area.X + area.Width),
-                    (float)(area.Y + area.Height)),
-                scaling);
+            surround(context, _session.ImageRect, scaling);
         }
 
-        canvas.Save();
-        canvas.Scale((float)scaling);
+        context.Save();
+        context.Scale(scaling, scaling);
         try
         {
-            ZoomSkiaRenderer.Render(canvas, Source, _session);
-            DrawScrollBars(canvas, appearance);
+            _imageRenderer.Render(context, Source, _session);
+            DrawScrollBars(context, appearance);
         }
         finally
         {
-            canvas.Restore();
+            context.Restore();
         }
     }
 
-    /// <summary>トラックのペイント（スレッドごとに 1 つを使い回す）。</summary>
-    [ThreadStatic]
-    private static SKPaint? s_track;
-
-    /// <summary>枠のペイント（スレッドごとに 1 つを使い回す）。</summary>
-    [ThreadStatic]
-    private static SKPaint? s_border;
-
-    /// <summary>サムのペイント（スレッドごとに 1 つを使い回す）。</summary>
-    [ThreadStatic]
-    private static SKPaint? s_thumb;
     /// <summary>オーバーレイスクロールバーを描画する。</summary>
-    /// <param name="canvas">描画先のキャンバス（DIP 座標で描画できる状態であること）。</param>
+    /// <param name="context">描画先のコンテキスト（DIP 座標で描画できる状態であること）。</param>
     /// <param name="appearance">外観（スクロールバーの太さ・余白・色）。</param>
     /// <remarks>
     /// スクロール不要な軸（画像がビューポートに収まる軸）には描画しない（セッションが null を返す）。<br/>
     /// トラックの表示可否はコア（<see cref="ZoomViewAppearance.HasScrollBarTrack"/>）が単一所有する。
     /// </remarks>
-    private void DrawScrollBars(SKCanvas canvas, ZoomViewAppearance appearance)
+    private void DrawScrollBars(IGraphicsContext context, ZoomViewAppearance appearance)
     {
         var (horizontal, vertical) = _session.CurrentScrollBars();
         if (horizontal is null && vertical is null)
@@ -570,36 +550,35 @@ public sealed class ZoomViewControl : SkiaCanvasView
             return;
         }
 
-        // トラックとサムのペイントは書き換えて使い回す（スクロールバーは毎フレーム描く）
-        var trackPaint = s_track ??= new SKPaint { IsAntialias = false, Style = SKPaintStyle.Fill };
-        var thumbPaint = s_thumb ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
-        trackPaint.Color = appearance.ScrollBarTrackColor.ToSKColor();
-        thumbPaint.Color = appearance.ScrollBarColor.ToSKColor();
-
-        // 枠はトラックの縁へ描く（色はトラックより若干グレー、透過度はトラックと同じ）
-        SKPaint? borderPaint = null;
-        if (appearance.HasScrollBarBorder)
-        {
-            borderPaint = s_border ??= new SKPaint { IsAntialias = false, Style = SKPaintStyle.Stroke };
-            borderPaint.Color = appearance.ScrollBarBorderColor.ToSKColor();
-            borderPaint.StrokeWidth = (float)appearance.ScrollBarBorderThickness;
-        }
-
+        var trackColor = appearance.ScrollBarTrackColor.ToMewUIColor();
+        var thumbColor = appearance.ScrollBarColor.ToMewUIColor();
+        var borderColor = appearance.ScrollBarBorderColor.ToMewUIColor();
         var drawTrack = appearance.HasScrollBarTrack;
-        DrawScrollBar(canvas, horizontal, trackPaint, thumbPaint, borderPaint, drawTrack);
-        DrawScrollBar(canvas, vertical, trackPaint, thumbPaint, borderPaint, drawTrack);
+        var hasBorder = appearance.HasScrollBarBorder;
+
+        DrawScrollBar(context, horizontal, trackColor, thumbColor, borderColor, hasBorder, drawTrack, appearance.ScrollBarBorderThickness);
+        DrawScrollBar(context, vertical, trackColor, thumbColor, borderColor, hasBorder, drawTrack, appearance.ScrollBarBorderThickness);
     }
 
     /// <summary>スクロールバー 1 本を描画する。</summary>
-    /// <param name="canvas">描画先のキャンバス。</param>
+    /// <param name="context">描画先のコンテキスト。</param>
     /// <param name="bar">描画するスクロールバー。 null の場合は何もしない。</param>
-    /// <param name="trackPaint">トラックの描画設定。</param>
-    /// <param name="thumbPaint">サムの描画設定。</param>
-    /// <param name="borderPaint">枠の描画設定（描かない場合は null）。</param>
+    /// <param name="trackColor">トラックの色。</param>
+    /// <param name="thumbColor">サムの色。</param>
+    /// <param name="borderColor">枠の色（描かない場合も渡す）。</param>
+    /// <param name="hasBorder">枠を描くかどうか（<see cref="ZoomViewAppearance.HasScrollBarBorder"/> の値）。</param>
     /// <param name="drawTrack">トラックを描くかどうか（<see cref="ZoomViewAppearance.HasScrollBarTrack"/> の値）。</param>
+    /// <param name="borderThickness">枠の太さ（DIP）。 枠を描かない場合も渡す。</param>
     /// <remarks>トラック → 枠 → サムの順に描く（枠はトラックの縁、サムはトラックの上に載る）。</remarks>
     private static void DrawScrollBar(
-        SKCanvas canvas, ZoomScrollBar? bar, SKPaint trackPaint, SKPaint thumbPaint, SKPaint? borderPaint, bool drawTrack)
+        IGraphicsContext context,
+        ZoomScrollBar? bar,
+        Color trackColor,
+        Color thumbColor,
+        Color borderColor,
+        bool hasBorder,
+        bool drawTrack,
+        double borderThickness)
     {
         if (bar is not { } value)
         {
@@ -608,19 +587,19 @@ public sealed class ZoomViewControl : SkiaCanvasView
 
         if (drawTrack)
         {
-            canvas.DrawRect(value.Track.ToSKRect(), trackPaint);
+            context.FillRectangle(value.Track.ToMewUIRect(), trackColor);
         }
 
-        if (borderPaint is not null)
+        if (hasBorder)
         {
             // 枠はトラックの内側へ描く（外へはみ出して画像に掛からないようにする）
-            var inset = borderPaint.StrokeWidth / 2;
-            var border = value.Track.ToSKRect();
-            border.Inflate(-inset, -inset);
-            canvas.DrawRect(border, borderPaint);
+            var inset = borderThickness / 2;
+            var track = value.Track;
+            var border = new EsRect(
+                track.X + inset, track.Y + inset, track.Width - borderThickness, track.Height - borderThickness);
+            context.DrawRectangle(border.ToMewUIRect(), borderColor, borderThickness);
         }
 
-        canvas.DrawRect(value.Thumb.ToSKRect(), thumbPaint);
+        context.FillRectangle(value.Thumb.ToMewUIRect(), thumbColor);
     }
 }
-
