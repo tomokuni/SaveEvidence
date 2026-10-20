@@ -27,6 +27,7 @@ public sealed partial class App : Application
 
         // ステータス バーの文字サイズは 4 UI 版で共通の値（App.Core が単一所有する）を使う
         Resources["StatusBarFontSize"] = StatusBarMetrics.FontSize;
+        Resources["ToolbarFontSize"] = ToolbarMetrics.FontSize;
 
         // システム追従（ThemeVariant.Default）で OS のテーマが変わったときも配色を追随させる
         ActualThemeVariantChanged += (_, _) => ApplyPaletteResources();

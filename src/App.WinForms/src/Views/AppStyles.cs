@@ -94,6 +94,13 @@ internal static class AppStyles
     /// <remarks>システムのメッセージ ボックス フォントを共用する（ページごとにフォントを作らない）。</remarks>
     public static Font UiFont => SystemFonts.MessageBoxFont ?? SystemFonts.DefaultFont;
 
+    /// <summary>ツールバーの文字サイズを使うフォントを取得する。</summary>
+    /// <remarks>DIP からポイントへ換算したフォントを 1 つだけ生成して共用する。</remarks>
+    public static Font ToolbarFont => s_toolbarFont;
+
+    private static readonly Font s_toolbarFont = new(
+        UiFont.FontFamily, (float)(ToolbarMetrics.FontSize * 72.0 / 96.0), UiFont.Style);
+
     /// <summary>使用する UI フォントの太字を取得する。</summary>
     /// <value>現在の画像（現在プレビューに表示中の履歴）の名前を強調するために使う。</value>
     /// <remarks>呼ぶたびに <c>Font</c> を作ると GDI ハンドルが増えるため、1 つだけ生成して共用する。</remarks>
@@ -143,4 +150,3 @@ internal static class AppStyles
     private static Color ToColor(uint argb)
         => Color.FromArgb((byte)(argb >> 24), (byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
 }
-

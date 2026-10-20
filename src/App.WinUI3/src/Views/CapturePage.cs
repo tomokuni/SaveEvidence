@@ -231,6 +231,7 @@ internal static class CapturePage
         var templateBox = new TextBox
         {
             Text = viewModel.FileNameTemplateText,
+            FontSize = AppStyles.ToolbarFontSize,
             MinWidth = TemplateMinWidth,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(1),

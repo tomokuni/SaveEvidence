@@ -248,6 +248,7 @@ internal static class CapturePage
             Margin = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
         };
+        template.FontSize(AppStyles.ToolbarFontSize);
         template.OnTextChanged(value => viewModel.FileNameTemplateText = value);
 
         var save = IconButton("ic_fluent_save_24_regular.svg", "画像を保存", () => _ = viewModel.SaveImageAsync(), iconImages);

@@ -157,6 +157,7 @@ internal static class UndoPage
             lastViewportBottom = double.NaN;
 
             list.ClearItems();
+            list.ImageWidth = iconSize;
 
             var placeholder = ThumbnailBackground.Placeholder(iconSize);
             void AddItem(EsReadOnlyBitmap image, string label, bool isCurrent)

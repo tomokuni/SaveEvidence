@@ -99,6 +99,7 @@ internal static class FolderViewPage
             var button = new ToggleButton
             {
                 Content = ViewModeDisplay.GetText(index),
+                FontSize = AppStyles.ToolbarFontSize,
                 IsChecked = index == viewModel.SelectedViewModeIndex,
                 MinWidth = 48,
                 Height = AppStyles.ToolbarButtonHeight,
@@ -140,6 +141,7 @@ internal static class FolderViewPage
             var button = new ToggleButton
             {
                 Content = ascending ? "▲ 昇順" : "▼ 降順",
+                FontSize = AppStyles.ToolbarFontSize,
                 IsChecked = ascending == viewModel.IsSortAscending,
                 Height = AppStyles.ToolbarButtonHeight,
                 Margin = new Thickness(1),
@@ -152,6 +154,7 @@ internal static class FolderViewPage
         var refresh = new Button
         {
             Content = "最新の情報に更新",
+            FontSize = AppStyles.ToolbarFontSize,
             Height = AppStyles.ToolbarButtonHeight,
             Margin = new Thickness(1),
         };
@@ -401,7 +404,6 @@ internal static class FolderViewPage
     private static TextBlock CreateStatusLabel(string text)
         => new() { Text = text, FontSize = AppStyles.StatusFontSize, VerticalAlignment = VerticalAlignment.Center };
 }
-
 
 
 

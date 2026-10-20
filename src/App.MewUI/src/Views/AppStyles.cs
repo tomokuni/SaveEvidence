@@ -49,6 +49,9 @@ internal static class AppStyles
     /// <summary>ツールバーのボタン・テキストボックスの高さ（DIP）。</summary>
     public const double ToolbarButtonHeight = 32;
 
+    /// <summary>ツールバーの文字サイズ（DIP）。</summary>
+    public const double ToolbarFontSize = ToolbarMetrics.FontSize;
+
     /// <summary>ツールバーのボタンの水平余白（DIP）。</summary>
     public const double ToolbarPaddingX = 8;
 
@@ -551,6 +554,7 @@ internal static class AppStyles
         {
             Setters =
             [
+                Setter.Create(TextElement.FontSizeProperty, ToolbarMetrics.FontSize),
                 Setter.Create(Control.BorderBrushProperty, t => t.IsDark ? s_buttonBorderDark : s_buttonBorderLight),
                 Setter.Create(Control.BorderThicknessProperty, 1.0),
                 Setter.Create(Control.CornerRadiusProperty, AppPalette.ToolbarButtonCornerRadius),
@@ -596,6 +600,7 @@ internal static class AppStyles
         {
             Setters =
             [
+                Setter.Create(TextElement.FontSizeProperty, ToolbarMetrics.FontSize),
                 Setter.Create(Control.BorderBrushProperty, t => t.IsDark ? s_buttonBorderDark : s_buttonBorderLight),
                 Setter.Create(Control.BorderThicknessProperty, 1.0),
                 Setter.Create(Control.CornerRadiusProperty, AppPalette.ToolbarButtonCornerRadius),
@@ -728,7 +733,6 @@ internal static class AppStyles
             ],
         };
 }
-
 
 
 

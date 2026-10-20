@@ -155,6 +155,7 @@ internal static class CapturePage
         var templateBox = new TextBox
         {
             Width = 260,
+            Font = AppStyles.ToolbarFont,
             MinimumSize = new Size(DpiScaler.ScaleToPixel(TemplateMinWidth, DpiScaler.ToScaling(crop.DeviceDpi)), 0),
             Text = viewModel.FileNameTemplateText,
             // ツールバーの行（30）の中で文字が垂直方向中央に来るよう、高さと上下の余白を揃える

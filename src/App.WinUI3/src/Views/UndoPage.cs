@@ -101,6 +101,7 @@ internal static class UndoPage
             var button = new ToggleButton
             {
                 Content = ViewModeDisplay.GetText(index),
+                FontSize = AppStyles.ToolbarFontSize,
                 IsChecked = index == view.SelectedViewModeIndex,
                 MinWidth = 48,
                 Height = AppStyles.ToolbarButtonHeight,
@@ -241,6 +242,5 @@ internal static class UndoPage
     private static TextBlock CreateStatusLabel(string text)
         => new() { Text = text, FontSize = AppStyles.StatusFontSize, VerticalAlignment = VerticalAlignment.Center };
 }
-
 
 

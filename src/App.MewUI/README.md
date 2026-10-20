@@ -111,7 +111,7 @@ Avalonia 版 `App.AvaloniaUI` とはコアを共有し、UI 層のみが異な�
 | タイトルバー | 非クライアント領域をクライアント領域へ拡張（`ExtendClientAreaTitleBarHeight = 32`）。 タイトル文字列はタスクバーの表示（`SaveEvidence`）にだけ使い、タイトルバーには描かない |
 | ウィンドウボタン | クライアント領域を拡張するとネイティブのボタンが描画されないため、最小化 / 最大化（元のサイズに戻す）/ 閉じるをタイトルバー右端へ自前配置 |
 | フッター | ナビゲーション パネルの下端へ UI 名と実際のバージョン（`MewUI  v0.1.0`）を表示する（`AppVersion`（App.Core）が表記を単一所有）。 収納時は非表示 |
-| 最小サイズ | `800 x 400`（DIP。 Avalonia 版 `MainWindow.axaml` の `MinWidth` / `MinHeight` と同じ） |
+| 最小サイズ | ウィンドウ枠を含む外寸で `640 x 400 DIP`（実際の枠寸法を差し引いたクライアント領域の最小サイズを指定） |
 | タスクバーアイコン | Avalonia 版と同じアイコン（`ic_fluent_scan_table_24_regular.svg`）を PNG 化し ICO へ詰めて設定 |
 
 ## 9. ナビゲーション（OnActivated の処理）

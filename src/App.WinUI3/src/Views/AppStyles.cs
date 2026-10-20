@@ -31,6 +31,9 @@ internal static class AppStyles
     /// <summary>ツールバーのボタンの高さ（DIP）。</summary>
     public const double ToolbarButtonHeight = 30;
 
+    /// <summary>ツールバーの文字サイズ（DIP）。 4 つの UI 版で共通。</summary>
+    public const double ToolbarFontSize = ToolbarMetrics.FontSize;
+
     /// <summary>ツールバーの左右の内側余白（DIP）。</summary>
     public const double ToolbarPaddingX = 8;
 

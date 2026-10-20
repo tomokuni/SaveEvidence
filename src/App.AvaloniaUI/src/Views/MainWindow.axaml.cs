@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -84,7 +86,15 @@ public sealed partial class MainWindow : Window
         ApplyCaptureSessionSettings();
 
         // DPI スケーリング（描画スケール）の変化に追従する（別モニタへの移動・ディスプレイ設定変更時）
-        ScalingChanged += (_, _) => TryApplyCaptureSessionSettings(nameof(ScalingChanged));
+        ScalingChanged += (_, _) =>
+        {
+            if (IsVisible)
+            {
+                ApplyMinimumOuterSize();
+            }
+
+            TryApplyCaptureSessionSettings(nameof(ScalingChanged));
+        };
 
         // ViewModel にコールバックを設定
         SetupViewModelCallbacks();
@@ -155,7 +165,11 @@ public sealed partial class MainWindow : Window
         // 一覧ページのサムネイルを先に生成しておく（最初の切り替えを待たせない）
         // ウィンドウを表示した後（Opened）のディスパッチャ ターンで開始し、描画のジョブより後に回す（起動の描画を遅らせない）。
         // 生成は低負荷で進み、キャプチャページの操作を妨げない。
-        Opened += (_, _) => Dispatcher.UIThread.Post(WarmUpThumbnails, DispatcherPriority.Background);
+        Opened += (_, _) =>
+        {
+            ApplyMinimumOuterSize();
+            Dispatcher.UIThread.Post(WarmUpThumbnails, DispatcherPriority.Background);
+        };
     }
 
     /// <summary>ナビ領域の外の押下でナビゲーションを閉じる。</summary>
@@ -535,12 +549,67 @@ public sealed partial class MainWindow : Window
                 Width = bounds.Width / scaling;
                 Height = bounds.Height / scaling;
             }
+
         }
 
         // 設定は UI 非依存のコア型で保持されるため、境界で Avalonia 型へ変換する
         // （最小化は通常表示へ置き換える: 最小化のまま起動すると「表示されない」ように見える）
         WindowState = WindowPlacementRule.ToRestorableState(_settingsService.Current.MainWindowState)
             .ToAvaloniaWindowState();
+    }
+
+    /// <summary>実際のウィンドウ枠を考慮して外寸の最小サイズを設定する。</summary>
+    private void ApplyMinimumOuterSize()
+    {
+        if (TryGetPlatformHandle() is not { } platformHandle)
+        {
+            throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
+        }
+
+        if (!GetWindowRect(platformHandle.Handle, out var windowRect))
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウの外寸を取得できません。");
+        }
+
+        if (!GetClientRect(platformHandle.Handle, out var clientRect))
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウのクライアント領域を取得できません。");
+        }
+
+        var scaling = DpiScaler.NormalizeScaling(RenderScaling);
+        var frameWidth = (windowRect.Right - windowRect.Left) - (clientRect.Right - clientRect.Left);
+        var frameHeight = (windowRect.Bottom - windowRect.Top) - (clientRect.Bottom - clientRect.Top);
+        MinWidth = Math.Max(0, WindowMetrics.MinimumWidth - (frameWidth / scaling));
+        MinHeight = Math.Max(0, WindowMetrics.MinimumHeight - (frameHeight / scaling));
+    }
+
+    /// <summary>ウィンドウの外寸を画面物理ピクセルで取得する。</summary>
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowRect", SetLastError = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetWindowRect(IntPtr hwnd, out NativeRect rect);
+
+    /// <summary>ウィンドウのクライアント領域を画面物理ピクセルで取得する。</summary>
+    [LibraryImport("user32.dll", EntryPoint = "GetClientRect", SetLastError = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetClientRect(IntPtr hwnd, out NativeRect rect);
+
+    /// <summary>Win32 の矩形（<c>RECT</c>）。</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        /// <summary>左端の座標。</summary>
+        public int Left;
+
+        /// <summary>上端の座標。</summary>
+        public int Top;
+
+        /// <summary>右端の座標。</summary>
+        public int Right;
+
+        /// <summary>下端の座標。</summary>
+        public int Bottom;
     }
 
     /// <summary>ウィンドウ位置・サイズを保存する。</summary>

@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
@@ -30,7 +32,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <b>設定の永続化</b>: 起動時にウィンドウ位置・サイズ・状態を復元し、終了時（<c>Closed</c>）に保存する。<br/>
 /// MewUI のウィンドウ位置・サイズは DIP、設定は画面物理ピクセルのため、変換は <see cref="WindowPlacementMath"/> が単一所有する。
 /// </remarks>
-internal sealed class MainWindow
+internal sealed partial class MainWindow
 {
     /// <summary>ロガー（先読みの失敗を記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(MainWindow));
@@ -39,7 +41,7 @@ internal sealed class MainWindow
     /// <remarks>値は <see cref="WindowMetrics"/>（App.Core）が 4 つの UI 版で共通に単一所有する。</remarks>
     private static readonly Size s_defaultWindowSize = new(WindowMetrics.DefaultWidth, WindowMetrics.DefaultHeight);
 
-    /// <summary>ウィンドウの最小サイズ（DIP）。</summary>
+    /// <summary>ウィンドウ枠を含む最小外寸（DIP）。</summary>
     /// <remarks>値は <see cref="WindowMetrics"/>（App.Core）が 4 つの UI 版で共通に単一所有する。</remarks>
     private static readonly Size s_minWindowSize = new(WindowMetrics.MinimumWidth, WindowMetrics.MinimumHeight);
 
@@ -139,6 +141,7 @@ internal sealed class MainWindow
 
         // ウィンドウは先に生成する（ナビパネル上部のドラッグ領域が本ウィンドウを参照するため）。
         // ページ内容は後から設定する。
+        // 枠寸法を測定し、外寸の最小値から差し引いたクライアント最小寸法を設定する。
         var window = new Window()
             .Resizable(
                 s_defaultWindowSize.Width, s_defaultWindowSize.Height,
@@ -577,7 +580,12 @@ internal sealed class MainWindow
             }
         }
 
-        window.FirstFrameRendered += WarmUpPages;
+        window.DpiChanged += (_, _) => ApplyMinimumOuterSize(window);
+        window.FirstFrameRendered += () =>
+        {
+            ApplyMinimumOuterSize(window);
+            WarmUpPages();
+        };
 
         // ウィンドウ メニューの項目を組み立てて開く（項目と並びは WindowMenu（App.Core）が単一所有）
         void ShowWindowMenu(FrameworkElement anchor)
@@ -800,6 +808,8 @@ internal sealed class MainWindow
     /// </remarks>
     public static void RestorePlacement(Window window, ISettingsService settingsService)
     {
+        ApplyMinimumOuterSize(window);
+
         if (!WindowPlacementMath.IsUsable(settingsService.Current.MainWindowBounds))
         {
             return;
@@ -807,14 +817,78 @@ internal sealed class MainWindow
 
         var bounds = settingsService.Current.MainWindowBounds!.Value;
         var scale = DpiHelper.GetDpiForPoint(new Point(bounds.X, bounds.Y)) / 96.0;
+        var minimumWidth = window.WindowSize.MinWidth;
+        var minimumHeight = window.WindowSize.MinHeight;
 
         window.WindowSize = WindowSize.Resizable(
-            Math.Max(s_minWindowSize.Width, WindowPlacementMath.ToDipLength(bounds.Width, scale)),
-            Math.Max(s_minWindowSize.Height, WindowPlacementMath.ToDipLength(bounds.Height, scale)),
-            s_minWindowSize.Width, s_minWindowSize.Height);
+            Math.Max(minimumWidth, WindowPlacementMath.ToDipLength(bounds.Width, scale)),
+            Math.Max(minimumHeight, WindowPlacementMath.ToDipLength(bounds.Height, scale)),
+            minimumWidth, minimumHeight);
 
         var position = WindowPlacementMath.ToDipPoint(new EsPointInt(bounds.X, bounds.Y), scale);
         window.StartManualPosition(position.X, position.Y);
+    }
+
+    /// <summary>実際のウィンドウ枠を考慮して外寸の最小サイズを設定する。</summary>
+    private static void ApplyMinimumOuterSize(Window window)
+    {
+        var hwnd = window.Handle;
+        if (hwnd == IntPtr.Zero)
+        {
+            return;
+        }
+
+        if (!GetWindowRect(hwnd, out var windowRect))
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウの外寸を取得できません。");
+        }
+
+        if (!GetClientRect(hwnd, out var clientRect))
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウのクライアント領域を取得できません。");
+        }
+
+        var scaling = DpiHelper.GetScaleFactor(hwnd);
+        var frameWidth = (windowRect.Right - windowRect.Left) - (clientRect.Right - clientRect.Left);
+        var frameHeight = (windowRect.Bottom - windowRect.Top) - (clientRect.Bottom - clientRect.Top);
+        var currentSize = window.WindowSize;
+
+        window.WindowSize = WindowSize.Resizable(
+            currentSize.Width,
+            currentSize.Height,
+            Math.Max(0, WindowMetrics.MinimumWidth - (frameWidth / scaling)),
+            Math.Max(0, WindowMetrics.MinimumHeight - (frameHeight / scaling)),
+            currentSize.MaxWidth,
+            currentSize.MaxHeight);
+    }
+
+    /// <summary>ウィンドウの外寸を画面物理ピクセルで取得する。</summary>
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowRect", SetLastError = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetWindowRect(IntPtr hwnd, out NativeRect rect);
+
+    /// <summary>ウィンドウのクライアント領域を画面物理ピクセルで取得する。</summary>
+    [LibraryImport("user32.dll", EntryPoint = "GetClientRect", SetLastError = true)]
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetClientRect(IntPtr hwnd, out NativeRect rect);
+
+    /// <summary>Win32 の矩形（<c>RECT</c>）。</summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeRect
+    {
+        /// <summary>左端の座標。</summary>
+        public int Left;
+
+        /// <summary>上端の座標。</summary>
+        public int Top;
+
+        /// <summary>右端の座標。</summary>
+        public int Right;
+
+        /// <summary>下端の座標。</summary>
+        public int Bottom;
     }
 
     /// <summary>ウィンドウの位置・サイズ・状態とナビパネルの開閉を設定へ保存する。</summary>
@@ -842,4 +916,3 @@ internal sealed class MainWindow
         settingsService.Save();
     }
 }
-

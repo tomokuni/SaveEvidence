@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>EsUtil.SaveEvidence.App.MewUI</RootNamespace>
     <!-- 実行ファイルの名前は製品名を優先する（配布物の exe 名。 命名規約の例外）。 -->

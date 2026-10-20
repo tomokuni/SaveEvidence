@@ -42,6 +42,7 @@
 - [30. `Icons.SvgIconLoader`（内部）](#30-iconssvgiconloader内部)
 - [31. `Services.ZoomMenuLevels`（静的クラス）](#31-serviceszoommenulevels静的クラス)
 - [32. 依存関係](#32-依存関係)
+- [33. `Services.ToolbarMetrics`（静的クラス）](#33-servicestoolbarmetrics静的クラス)
 
 ## 1. 公開 API の可視性
 
@@ -50,7 +51,7 @@
 | `Enums.AppPage` / `Enums.ThemeMode` | `public` | 任意 |
 | `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` / `Models.HotKeyParser` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
-| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` / `Services.ZoomMenuLevels` | `public` | 任意 |
+| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
 | `Services.EsRectIntJsonConverter` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
 | `Models.CapacityLimitedCache` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
@@ -493,7 +494,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 | メンバー | 値 | 意味 |
 | --- | --- | --- |
-| `WindowMetrics.MinimumWidth` / `MinimumHeight` | 640 / 400 DIP | ウィンドウの最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算して指定する） |
+| `WindowMetrics.MinimumWidth` / `MinimumHeight` | 640 / 400 DIP | ウィンドウ枠を含む外寸の最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算し、Avalonia / MewUI は実際の枠を差し引いたクライアント領域の最小サイズを指定する） |
 | `WindowMetrics.DefaultWidth` / `DefaultHeight` | 640 / 400 DIP | 復元する配置が無いときの既定サイズ |
 | `WindowLayout.ToolbarRowTop` / `ToolbarButtonHeight` | 6 / 32 DIP | ページのツールバーの行の上端とボタンの高さ（アプリ アイコンの縦位置の基準） |
 | `WindowLayout.AppIconRowHeight` | 44 DIP | 左上のアプリ アイコンを置く行の高さ（中心がツールバーのアイコンと一致する 6 + 32 + 6） |
@@ -547,3 +548,13 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 | `CommunityToolkit.Mvvm` | `ObservableObject` / `[RelayCommand]` / `[ObservableProperty]` |
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。
+
+## 33. `Services.ToolbarMetrics`（静的クラス）
+
+ツールバーの文字サイズを単一所有します（UI 版ごとにテーマ既定値が異なるため、4 UI 版で同じ値を明示します）。
+
+| 定数 | 値 | 意味 |
+| --- | --- | --- |
+| `FontSize` | 12 DIP | ツールバーのボタンとファイル名テンプレート入力欄の文字サイズ |
+
+MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ既定は 14 DIP です。 WinForms の `Font` はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。

@@ -48,6 +48,7 @@ internal static class UiFactory
 
         var button = new ToolButton(icon, toolTip, caption)
         {
+            Font = AppStyles.ToolbarFont,
             IsToolbarButton = true,
         };
         button.Click += (_, _) => onClick();
