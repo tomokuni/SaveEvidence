@@ -1,5 +1,6 @@
-﻿using EsUtil.Platform.Core;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -240,17 +241,17 @@ internal static class CapturePage
         templateBox.TextChanged += (_, _) => viewModel.FileNameTemplateText = templateBox.Text;
         items.Children.Add(templateBox);
 
-        var save = CreateIconButton("ic_fluent_save_24_regular.svg", "画像を保存", () => _ = viewModel.SaveImageAsync(), AppStyles.ToolbarIconSize);
+        var save = CreateIconButton(CaptureIconFiles.Save, "画像を保存", () => _ = viewModel.SaveImageAsync(), AppStyles.ToolbarIconSize);
         var screen = CreateIconButton(
-            "ic_fluent_rectangle_landscape_24_regular.svg", "スクリーン選択キャプチャ",
+            CaptureIconFiles.ScreenSelect, "スクリーン選択キャプチャ",
             () => CaptureFlow.Start(CaptureType.ScreenSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
         var windowSelect = CreateIconButton(
-            "ic_fluent_window_24_regular.svg", "ウィンドウ選択キャプチャ",
+            CaptureIconFiles.WindowSelect, "ウィンドウ選択キャプチャ",
             () => CaptureFlow.Start(CaptureType.WindowSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
         var area = CreateIconButton(
-            "ic_fluent_select_object_24_regular.svg", "領域選択キャプチャ",
+            CaptureIconFiles.AreaSelect, "領域選択キャプチャ",
             () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
-        var crop = CreateIconButton("ic_fluent_crop_24_regular.svg", "切り出し（切出しモード開始/終了）", toggleCrop, AppStyles.ToolbarIconSize);
+        var crop = CreateIconButton(CaptureIconFiles.Crop, "切り出し（切出しモード開始/終了）", toggleCrop, AppStyles.ToolbarIconSize);
 
         // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 撮影 3 種 | 切り出し）。
         // 元に戻す・やり直しはメニューから実行する（ツールバーに置かない）
@@ -394,15 +395,15 @@ internal static class CapturePage
             // 他の UI 版はすべて下へ開く）
             Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
         };
-        var save = CreateMenuItem("File - 画像を保存", "Ctrl+S", () => _ = viewModel.SaveImageAsync());
+        var save = CreateMenuItem("File - 画像を保存", "Ctrl+S", () => _ = viewModel.SaveImageAsync(), CaptureIconFiles.Save);
         var copy = CreateMenuItem("Clipboard - コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
         var paste = CreateMenuItem("Clipboard - 貼り付け", "Ctrl+V", () => _ = PasteAsync(services));
         var undo = CreateMenuItem("Image - 元に戻す", "Ctrl+Z", () => EditHistory.Undo(services));
         var redo = CreateMenuItem("Image - 元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services));
-        var screen = CreateMenuItem("Capture - スクリーン選択", "Ctrl+Shift+Q", () => CaptureFlow.Start(CaptureType.ScreenSelect, AppContext(), captureSession));
-        var windowSelect = CreateMenuItem("Capture - ウィンドウ選択", "Ctrl+Shift+W", () => CaptureFlow.Start(CaptureType.WindowSelect, AppContext(), captureSession));
-        var area = CreateMenuItem("Capture - 範囲選択", "Ctrl+Shift+E", () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession));
-        var crop = CreateMenuItem("Crop - 切り出し", "Ctrl+R", toggleCrop);
+        var screen = CreateMenuItem("Capture - スクリーン選択", "Ctrl+Shift+Q", () => CaptureFlow.Start(CaptureType.ScreenSelect, AppContext(), captureSession), CaptureIconFiles.ScreenSelect);
+        var windowSelect = CreateMenuItem("Capture - ウィンドウ選択", "Ctrl+Shift+W", () => CaptureFlow.Start(CaptureType.WindowSelect, AppContext(), captureSession), CaptureIconFiles.WindowSelect);
+        var area = CreateMenuItem("Capture - 範囲選択", "Ctrl+Shift+E", () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession), CaptureIconFiles.AreaSelect);
+        var crop = CreateMenuItem("Crop - 切り出し", "Ctrl+R", toggleCrop, CaptureIconFiles.Crop);
         var autoCrop = CreateMenuItem("Crop - 自動切り出し", null, () => viewModel.AutoCropWindowCommand.Execute(null));
 
         flyout.Items.Add(save);
@@ -616,9 +617,9 @@ internal static class CapturePage
         var host = new Grid { Background = new SolidColorBrush(Colors.Transparent) };
         host.Children.Add(crop);
 
-        // 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）。
-        // 画像と同じ描画面へ先に描く（重ねると画像の端の混色の下地が背景になり、白い線として見える）
-        crop.ZoomView.SurroundRenderer = ShadowRenderer.Render;
+        // 画像の 4 辺・4 隅の影（ぼかしの広がりと濃さは App.Core の ShadowPlan が単一所有する）。
+        // Composition の DropShadow を使うため、画像と同じ面に合成され、要素を増やさない
+        crop.ZoomView.SetShadow(ShadowPlan.BlurRadius, ShadowPlan.ColorArgb);
 
         // 起動直後は XamlRoot が無くスケーリングを取得できないため、読み込み後に外観を反映し直す
         crop.Loaded += (_, _) => session.AppearanceSettings = CaptureSettingsMapper.From(settings, ReadRenderScaling(crop));
@@ -877,7 +878,7 @@ internal static class CapturePage
 
         ApplyIconButtonColors(button);
 
-        // テーマが変わったらラスタライズ済みのアイコンを描き直す
+        // テーマが変わったらアイコンの色を描き直す
         AppStyles.ThemeChanged += (_, _) =>
         {
             content.Source = IconLoader.LoadThemedImage(icon, AppStyles.IconRasterSize);
@@ -939,11 +940,19 @@ internal static class CapturePage
     /// <param name="text">表示する文字列。</param>
     /// <param name="shortcut">表示するショートカット（null の場合は表示しない）。</param>
     /// <param name="onClick">選択時の処理。</param>
+    /// <param name="iconFile">アイコンを表示する場合の SVG ファイル名。</param>
     /// <returns>生成した項目。</returns>
     /// <remarks>ショートカットは表示だけにする（キーの登録は行わない）。</remarks>
-    private static MenuFlyoutItem CreateMenuItem(string text, string? shortcut, Action onClick)
+    private static MenuFlyoutItem CreateMenuItem(string text, string? shortcut, Action onClick, string? iconFile = null)
     {
         var item = new MenuFlyoutItem { Text = text };
+        if (iconFile is not null)
+        {
+            item.Icon = new ImageIcon { Source = IconLoader.LoadThemedImage(iconFile, AppStyles.IconRasterSize) };
+            AppStyles.ThemeChanged += (_, _) =>
+                item.Icon = new ImageIcon { Source = IconLoader.LoadThemedImage(iconFile, AppStyles.IconRasterSize) };
+        }
+
         if (shortcut is not null)
         {
             item.KeyboardAcceleratorTextOverride = shortcut;

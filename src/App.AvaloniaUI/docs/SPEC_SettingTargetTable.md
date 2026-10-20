@@ -370,7 +370,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | ウィンドウの位置・サイズ | `MainWindowBounds` | `MainWindow`（起動時復元・終了時保存） |
 | ウィンドウの状態 | `MainWindowState` | `MainWindow`（起動時復元・終了時保存） |
 
-- `MainWindowBounds` の単位は**画面物理ピクセル**（4 つの UI 版が同じ設定ファイルを共有するため、単位も共通）。 Avalonia の `Position` は物理ピクセルだが `Width` / `Height` は DIP のため、モニターのスケールで換算して保存・復元する（換算は `WindowPlacementRule`（App.Core）が単一所有する）
+- `MainWindowBounds` は**画面物理ピクセルのウィンドウ外寸**（枠を含む）で、4 UI 版が同じ単位を使う。 Avalonia の `Position` は物理ピクセル、`Width` / `Height` はクライアント DIP のため、実際の枠を測定して保存・復元時に換算する（換算は `WindowPlacementRule`（App.Core）が単一所有する）
 - 復元してよいか（画面外・最小化）の判定も `WindowPlacementRule` が単一所有し、復元できない場合は既定の配置で表示する
 
 - Undo 一覧のアイコンサイズはフォルダビューと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する

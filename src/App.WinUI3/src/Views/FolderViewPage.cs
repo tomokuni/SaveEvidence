@@ -65,8 +65,8 @@ internal static class FolderViewPage
         folderText.HorizontalAlignment = HorizontalAlignment.Right;
         folderText.TextTrimming = TextTrimming.CharacterEllipsis;
 
-        var modeButtons = new List<ToggleButton>();
-        var sortButtons = new List<ToggleButton>();
+        var modeButtons = new ToggleButton[ViewModeDisplay.Count];
+        var sortButtons = new ToggleButton[2];
 
         // 表示モードの切り替え（解除は許さない。 常に 1 つを選択状態に保つ）
         void OnModeChanged(int index, bool isChecked)
@@ -107,7 +107,7 @@ internal static class FolderViewPage
             };
             button.Checked += (_, _) => OnModeChanged(index, true);
             button.Unchecked += (_, _) => OnModeChanged(index, false);
-            modeButtons.Add(button);
+            modeButtons[i] = button;
         }
 
         // ソート順の切り替え（解除は許さない）
@@ -148,7 +148,7 @@ internal static class FolderViewPage
             };
             button.Checked += (_, _) => OnSortChanged(ascending, true);
             button.Unchecked += (_, _) => OnSortChanged(ascending, false);
-            sortButtons.Add(button);
+            sortButtons[i] = button;
         }
 
         var refresh = new Button
@@ -363,9 +363,9 @@ internal static class FolderViewPage
     /// <summary>トグル ボタンの選択状態を 1 つだけ true に揃える。</summary>
     /// <param name="buttons">対象のボタン。</param>
     /// <param name="selectedIndex">選択する位置。</param>
-    private static void SynchronizeChecks(IReadOnlyList<ToggleButton> buttons, int selectedIndex)
+    private static void SynchronizeChecks(ToggleButton[] buttons, int selectedIndex)
     {
-        for (var i = 0; i < buttons.Count; i++)
+        for (var i = 0; i < buttons.Length; i++)
         {
             buttons[i].IsChecked = i == selectedIndex;
         }
@@ -404,7 +404,6 @@ internal static class FolderViewPage
     private static TextBlock CreateStatusLabel(string text)
         => new() { Text = text, FontSize = AppStyles.StatusFontSize, VerticalAlignment = VerticalAlignment.Center };
 }
-
 
 
 

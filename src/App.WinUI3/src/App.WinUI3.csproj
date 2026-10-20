@@ -45,8 +45,7 @@
     <!-- WinUI 3（Microsoft.UI.Xaml）のコントロールと WinRT の投影型 -->
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="[1.*,2.0.0)" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="[10.0.*,)" />
-    <!-- アイコンのラスタライズとサムネイルの縮小デコード（画像表示の Skia キャンバスも含む） -->
-    <PackageReference Include="SkiaSharp.Views.WinUI" Version="[3.*,4.0.0)" />
+    <!-- Windows App SDK（コントロール・Composition・WIC） -->
     <!-- 起動時の合成ルート（サービスの生成と共有） -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10.*,)" />
     <!-- 操作ログ（Avalonia 版 / MewUI 版と同一のファイルへ出力する） -->
@@ -63,7 +62,7 @@
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <!-- WinUI 3 版の撮影セッション（オーバーレイ・切り出しビュー） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj" />
-    <!-- WinUI 3 版 Interop（コア型 ⇔ WinUI 型・ウィンドウ配置の換算・画像の Skia 描画） -->
+    <!-- WinUI 3 版 Interop（コア型 ⇔ WinUI 型・ウィンドウ配置の換算・表示の描画基盤） -->
     <ProjectReference Include="..\..\Platform.WinUI3\src\Platform.WinUI3.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Thumbnail\src\EsUtil.Ui.WinUI3.Thumbnail.csproj" />
   </ItemGroup>
@@ -72,6 +71,45 @@
     <!-- 内部型（サービス・ビュー）をテストから検証できるようにする -->
     <InternalsVisibleTo Include="App.WinUI3.Tests" />
   </ItemGroup>
+
+  <!-- 配布物を「exe + ネイティブ DLL + 必須のリソース」へ絞る（実測 2026-10-20）。
+       除外してよいことは、公開物から 1 種類ずつ削除して起動・終了・設定の往復を実測して確認した
+       （buildScript/verifyPublish.ps1 が毎回この構成を検査する）。
+       残す必須のファイルは次の 3 つで、いずれも実測で削除すると起動または終了に失敗する。
+       1. `<AssemblyName>.pri`: リソース インデックス（削除すると起動しない）
+       2. `ja-JP` / `en-us` の `.mui`: WinUI の言語リソース（削除すると終了時に 0xC000027B で落ちる）
+       3. `Microsoft.UI.Xaml\Assets` / `NpuDetect`: WinUI と Windows App SDK が参照する資産
+       Windows App SDK を同梱する場合（自己完結）は WinUI ランタイムのネイティブ DLL が加わる。
+       Native AOT はネイティブ DLL を exe へ内包できないため、これらは exe の隣へ置くしかない。 -->
+  <Target Name="TrimWinUI3PublishNoise" BeforeTargets="ComputeFilesToPublish">
+    <ItemGroup>
+      <!-- WinRT のメタデータ（実行時は投影アセンブリが型情報を持つ） -->
+      <_SEPublishNoise Include="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.winmd'" />
+      <!-- アプリ以外のリソース インデックス（アプリの .pri が統合済み） -->
+      <_SEPublishNoise Include="@(ResolvedFileToPublish)"
+                       Condition="'%(Extension)' == '.pri' And '%(Filename)' != '$(AssemblyName)'" />
+      <!-- 使わない言語の WinUI リソース（日本語と英語だけを残す）。
+           言語フォルダーは配置先の相対パス（RelativePath）の先頭で判定する
+           （RelativeDir は取得元のパスであり、配置先のフォルダーではない） -->
+      <_SEPublishNoise Include="@(ResolvedFileToPublish)"
+                       Condition="'%(Extension)' == '.mui'
+                                  And !$([System.String]::Copy('%(RelativePath)').StartsWith('ja-JP'))
+                                  And !$([System.String]::Copy('%(RelativePath)').StartsWith('en-us'))" />
+      <!-- 実行時に参照しないファイル（コンパイル済み XAML、マニフェストの写し、Windows App SDK の定義） -->
+      <_SEPublishNoise Include="@(ResolvedFileToPublish)"
+                       Condition="('%(Filename)' == 'App' And '%(Extension)' == '.xaml')
+                                  Or '%(Filename)%(Extension)' == 'app.manifest'
+                                  Or '%(Filename)%(Extension)' == 'WindowsAppRuntime.png'
+                                  Or $([System.String]::Copy('%(Filename)').StartsWith('workloads'))" />
+      <!-- 本アプリが使わない Windows App SDK の部品（WebView2 とバックグラウンド タスクの仲介）。
+           削除しても起動・終了・設定の往復が通ることを実測した（2026-10-20） -->
+      <_SEPublishNoise Include="@(ResolvedFileToPublish)"
+                       Condition="'%(Filename)%(Extension)' == 'Microsoft.Web.WebView2.Core.dll'
+                                  Or '%(Filename)%(Extension)' == 'WebView2Loader.dll'
+                                  Or '%(Filename)%(Extension)' == 'Microsoft.Windows.ApplicationModel.Background.UniversalBGTask.dll'" />
+      <ResolvedFileToPublish Remove="@(_SEPublishNoise)" />
+    </ItemGroup>
+  </Target>
 
 
 </Project>

@@ -32,7 +32,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.Crop;
 /// - <see cref="SelectionOverlayControl"/>: 領域選択の複合コントロール（暗転マスク + 選択矩形 + ルーペ）。 切り出し中のみ表示する。<br/>
 /// - 強調オーバーレイ: ホストから渡された <see cref="HighlightSourceRect"/>（対象座標）を強調表示する（描画のみ・入力なし）。
 /// </remarks>
-public sealed class CropViewControl : Grid
+public sealed partial class CropViewControl : Grid
 {
     /// <summary>ホイール 1 ノッチあたりの回転量（WinUI 3 は 120 単位で報告する）。</summary>
     /// <remarks>コアの回転量の単位（1 ノッチ = 1.0）へ換算するために使う。</remarks>
@@ -594,7 +594,7 @@ public sealed class CropViewControl : Grid
     /// <param name="e">イベント引数。</param>
     private void OnZoomViewportChanged(object? sender, EventArgs e)
     {
-        _rectOverlay.Invalidate();
+        _rectOverlay.Refresh();
         _selectionOverlay.NotifyViewportChanged();
         UpdateHighlight();
     }

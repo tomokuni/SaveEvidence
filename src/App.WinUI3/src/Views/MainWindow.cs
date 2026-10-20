@@ -1,4 +1,4 @@
-﻿using EsUtil.Platform.Core;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -213,7 +213,7 @@ internal sealed class MainWindow : Window
     /// <remarks>
     /// <see cref="OverlappedPresenter.PreferredMinimumWidth"/> / <c>PreferredMinimumHeight</c> は<br/>
     /// 画面物理ピクセルで解釈されるため、他の UI 版と同じ DIP の見た目にするには DPI 倍率を掛ける<br/>
-    /// （掛けないと高 DPI ほど最小サイズが他 UI 版より小さくなる。 実測 125%: 800 × 400 ピクセル = 640 × 320 DIP）。
+    /// （掛けないと高 DPI ほど最小サイズが他 UI 版より小さくなる。 実測 125%: 外寸 640 × 400 DIP = 800 × 500 ピクセル）。
     /// </remarks>
     private void ApplyMinimumSize()
     {
@@ -227,7 +227,7 @@ internal sealed class MainWindow : Window
         presenter.PreferredMinimumHeight = WindowPlacementRule.ToPhysicalLength(AppStyles.MinWindowHeight, scaling);
     }
 
-    /// <summary>保存された配置が無い場合に既定のサイズ（700 × 400 DIP）を適用する。</summary>
+    /// <summary>保存された配置が無い場合に既定の外寸（640 × 400 DIP）を適用する。</summary>
     /// <remarks>
     /// サイズは画面物理ピクセルで指定するため、<b>DPI が確定した後</b>（要素ツリーの読み込み後）に適用する。<br/>
     /// 1 回だけ適用する（利用者がサイズを変えた後に読み込みが再度走っても上書きしない）。
@@ -343,7 +343,8 @@ internal sealed class MainWindow : Window
         _navToggle = CreateCaptionButton(AppStyles.NavPanelCompactWidth);
         _navToggleIcon = new ImageIcon
         {
-            Source = IconLoader.LoadThemedImage(NavToggleIconFile(Services.Main.IsNavigationExpanded), AppStyles.IconRasterSize),
+            Source = IconLoader.LoadThemedImage(
+                NavToggleIconFile(Services.Main.IsNavigationExpanded), AppStyles.IconRasterSize),
             Width = AppStyles.NavIconSize,
             Height = AppStyles.NavIconSize,
         };

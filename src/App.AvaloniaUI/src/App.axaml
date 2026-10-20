@@ -6,6 +6,11 @@
             <!-- ステータス バーの文字サイズ。 実際の値は App.axaml.cs が
                  StatusBarMetrics.FontSize（App.Core。 4 UI 版の単一所有者）から設定する。 -->
             <x:Double x:Key="StatusBarFontSize">12</x:Double>
+            <x:Double x:Key="ToolbarFontSize">12</x:Double>
+            <x:Double x:Key="ToolbarButtonHeight">32</x:Double>
+            <x:Double x:Key="ToolbarIconSize">16</x:Double>
+            <CornerRadius x:Key="ToolbarCornerRadius">4</CornerRadius>
+            <Thickness x:Key="ToolbarButtonPadding">8,4</Thickness>
         </ResourceDictionary>
     </Application.Resources>
 
@@ -27,22 +32,22 @@
              外観は WinUI 3 の既定のボタンに合わせる（面 + 1 DIP の枠線 + 角丸 4 DIP。
              色は AppPalette（App.Core）が単一所有する）。 -->
         <Style Selector="Button.toolbar, ToggleButton.toolbar">
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Height" Value="{StaticResource ToolbarButtonHeight}"/>
+            <Setter Property="Padding" Value="{StaticResource ToolbarButtonPadding}"/>
             <Setter Property="FontSize" Value="{StaticResource ToolbarFontSize}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
         </Style>
         <Style Selector="Button.toolbar /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
         </Style>
         <Style Selector="Button.toolbar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
@@ -54,12 +59,28 @@
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
+        <Style Selector="Button.toolbar-icon /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.toolbar-icon">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinWidth" Value="{StaticResource ToolbarButtonHeight}"/>
+        </Style>
+        <Style Selector="Button.toolbar-icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.toolbar-icon:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
         <Style Selector="ToggleButton.toolbar /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
         </Style>
         <Style Selector="ToggleButton.toolbar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
@@ -81,12 +102,12 @@
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonCheckedFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonCheckedBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
             <Setter Property="Foreground" Value="{DynamicResource ToolbarButtonCheckedForegroundBrush}"/>
         </Style>
         <!-- ツールバーのテキストボックス（ファイル名テンプレート等）も同じ高さに揃える -->
         <Style Selector="TextBox.toolbar">
-            <Setter Property="Height" Value="32"/>
+            <Setter Property="Height" Value="{StaticResource ToolbarButtonHeight}"/>
             <Setter Property="FontSize" Value="{StaticResource ToolbarFontSize}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
@@ -100,7 +121,7 @@
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
         </Style>
         <Style Selector="Button.status:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>

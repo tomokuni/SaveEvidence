@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.Session;
 /// 本クラスは撮影オーバーレイのルート（全面を覆う領域）として、ドラッグ選択中に十字カーソルを表示する入口だけを提供する。<br/>
 /// <b>背景</b>は撮影画像の平均色を設定する（画像が合成されるまでの 1 フレームの見え方を抑える）。
 /// </remarks>
-internal sealed class CaptureOverlayRoot : Grid
+internal sealed partial class CaptureOverlayRoot : Grid
 {
     /// <summary>十字カーソル（ドラッグで矩形を作る種別で使う）。</summary>
     private static readonly InputCursor s_crossCursor = InputSystemCursor.Create(InputSystemCursorShape.Cross);

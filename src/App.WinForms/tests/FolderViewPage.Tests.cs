@@ -10,10 +10,10 @@ namespace EsUtil.SaveEvidence.App.WinForms.Tests;
 
 /// <summary>フォルダビューの一覧が実際にサムネイルを描くことを検証するテスト。</summary>
 /// <remarks>
-/// <b>ウィンドウを必要としない</b>: ページの生成・表示の通知はコントロールを組み立てるだけで、
-/// ホストへ載せなくても動く。 描画は <see cref="ThumbnailControl"/> の描画処理を直接呼び、
-/// 画素を検査する（画面を持たない環境でも確かめられる）。<br/>
-/// 背景の生成は並列に走るため、画像が反映されるまで待ってから描画する。
+/// <b>非表示のウィンドウへホストする</b>: フォルダの列挙は背景で行い、結果を UI スレッドへ戻すため、<br/>
+/// テストでも所有ウィンドウのハンドルとメッセージ キューを用意する。 描画は
+/// <see cref="ThumbnailControl"/> の描画処理を直接呼び、画素を検査する。<br/>
+/// 背景の生成は並列に走るため、画像が反映されるまで UI メッセージを処理しながら待つ。
 /// </remarks>
 public class FolderViewPageTests : IDisposable
 {
@@ -76,7 +76,16 @@ public class FolderViewPageTests : IDisposable
 
         var (services, view) = CreateServices();
         var page = FolderViewPage.Build(services);
+        using var form = new Form();
+        form.Controls.Add(page.Content);
+        _ = form.Handle;
         page.OnActivated?.Invoke();
+
+        for (var attempt = 0; attempt < 100 && view.ItemCount != 2; attempt++)
+        {
+            Application.DoEvents();
+            Thread.Sleep(50);
+        }
 
         Assert.Equal(2, view.ItemCount);
 
@@ -87,6 +96,7 @@ public class FolderViewPageTests : IDisposable
         IReadOnlyList<string> images = [];
         for (var attempt = 0; attempt < 100; attempt++)
         {
+            Application.DoEvents();
             images = ReadItemImages(list!);
             if (images.Count > 0 && images.All(static text => text != "null"))
             {

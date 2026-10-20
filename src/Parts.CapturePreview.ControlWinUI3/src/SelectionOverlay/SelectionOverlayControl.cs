@@ -9,12 +9,11 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Platform.Skia;
+using EsUtil.SaveEvidence.Platform.WinUI3.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using SkiaSharp;
 using Windows.Foundation;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.SelectionOverlay;
@@ -47,7 +46,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.SelectionOverlay;
 /// <b>UI 層に残す例外（UI 固有のホスト結線）</b>: 子コントロールの生成・重なり順・ヒットテストの有無・クランプ・<br/>
 /// フレームワーク固有の描画先（キャンバス / レイアウト要素）は UI 層が担う。
 /// </remarks>
-public sealed class SelectionOverlayControl : Panel
+public sealed partial class SelectionOverlayControl : Panel
 {
     /// <summary>ドラッグ選択コントロール（選択矩形・ハンドル・nudge と、外側の装飾（暗転マスク・枠・ラベル）の描画）。</summary>
     private readonly MarqueeControl _marquee = new() { IsHitTestVisible = true };
@@ -536,7 +535,7 @@ public sealed class SelectionOverlayControl : Panel
 
         _marquee.InvalidateRender();
         // ルーペは描画のたびに選択矩形の破線を組み立てるため、破線色の変更は再描画で反映される
-        _loupe.Invalidate();
+        _loupe.RequestRedraw();
         InvalidateArrange();
     }
 
@@ -573,7 +572,7 @@ public sealed class SelectionOverlayControl : Panel
     /// <summary>選択矩形の変更を処理する（ルーペ画像上の破線の再描画）。</summary>
     /// <param name="sender">イベントの送信元（ドラッグ選択コントロール）。</param>
     /// <param name="e">選択矩形の情報。</param>
-    private void OnMarqueeSelectionChanged(object? sender, SelectionRectEventArgs e) => _loupe.Invalidate();
+    private void OnMarqueeSelectionChanged(object? sender, SelectionRectEventArgs e) => _loupe.RequestRedraw();
 
     /// <summary>ルーペ位置の通知を処理する（ホストへの転送）。</summary>
     /// <param name="sender">イベントの送信元（ドラッグ選択コントロール）。</param>
@@ -609,11 +608,17 @@ public sealed class SelectionOverlayControl : Panel
             MarqueeAppearance,
             OperationTextProvider?.Invoke(),
             InfoTextProvider?.Invoke(),
-            SkiaText.Measure);
+            WinUI3TextMeasure.Measure);
 
         foreach (var placement in placements)
         {
-            DrawLabel(e.Canvas, in placement);
+            // 付加情報のラベルは矩形（背景）と文字で表す（描画 API は公開されない）
+            e.AddRect(
+                placement.DipRect.X,
+                placement.DipRect.Y,
+                placement.DipRect.Width,
+                placement.DipRect.Height,
+                ToArgb(placement.BackgroundColor));
         }
     }
 
@@ -627,53 +632,35 @@ public sealed class SelectionOverlayControl : Panel
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
     {
-        if (e.Content.CaptureTopLeft is { } topLeft)
+        if (e.Content.CaptureTopLeft is not { } topLeft)
         {
-            DrawSelectionOverlay(e.Canvas, topLeft, e.Content.ZoomLevel, e.Content.ClientPixelSize);
+            return;
         }
-    }
 
-    /// <summary>付加情報ラベル 1 件をキャンバスへ描く（背景を塗ってから文字を描く）。</summary>
-    /// <param name="canvas">描画先のキャンバス。</param>
-    /// <param name="placement">配置指示（寸法は実寸を反映済み）。</param>
-    private static void DrawLabel(SKCanvas canvas, in MarqueeLabelPlacement placement)
-    {
-        var bounds = placement.DipRect;
-        var textOrigin = new EsPoint(bounds.X + placement.PaddingX, bounds.Y + placement.PaddingY);
-        SkiaLabel.Draw(
-            canvas, bounds, placement.BackgroundColor, placement.Text, textOrigin,
-            placement.FontSize, placement.TextColor, cornerRadius: 0);
-    }
-
-    /// <summary>ルーペ画像上の選択矩形破線をキャンバスへ描画する。</summary>
-    /// <param name="canvas">描画先のキャンバス（ピクセル等倍で描画できる状態であること）。</param>
-    /// <param name="captureTopLeft">ルーペの切り出し領域の左上（対象座標系）。</param>
-    /// <param name="scale">対象座標 → ルーペ画像ピクセル座標の変換係数。</param>
-    /// <param name="clientPixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。</param>
-    /// <remarks>
-    /// 選択矩形（<see cref="SelectionSourceRect"/> = 対象座標）は <c>(対象座標 − captureTopLeft) × scale</c> で<br/>
-    /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
-    /// 破線を描画しない場合（選択矩形を使わないモード・選択なし）は何もしない。
-    /// </remarks>
-    internal void DrawSelectionOverlay(SKCanvas canvas, EsPoint captureTopLeft, double scale, int clientPixelSize)
-    {
         // 破線を描くかどうかはモードと選択矩形の有無（コアが単一所有する判断）で決まる
         if (!SelectionOverlayState.Resolve(_mode).ShouldDrawSelectionOverlay(_marquee.HasSelection))
         {
             return;
         }
 
-        SelectionOverlaySkiaRenderer.DrawSelectionRect(
-            canvas,
-            _marquee.SelectionSourceRect,
-            captureTopLeft,
-            scale,
-            clientPixelSize,
-            _options.SelectionRectColorA,
-            _options.SelectionRectColorB);
+        foreach (var dash in SelectionOutlineRasterizer.EnumerateDashes(
+            _marquee.SelectionSourceRect, topLeft, e.Content.ZoomLevel, e.Content.ClientPixelSize))
+        {
+            var color = dash.IsColorA ? _options.SelectionRectColorA : _options.SelectionRectColorB;
+            e.AddRect(
+                dash.Bounds.X,
+                dash.Bounds.Y,
+                dash.Bounds.Width,
+                dash.Bounds.Height,
+                ((uint)color.A << 24) | ((uint)color.R << 16) | ((uint)color.G << 8) | color.B);
+        }
     }
 
-    /// <summary>ルーペ位置の更新（ドラッグ選択からの通知）を処理する。</summary>
+    /// <summary>色を <c>0xAARRGGBB</c> へ変換する。</summary>
+    /// <param name="color">変換する色。</param>
+    /// <returns>変換した色。</returns>
+    private static uint ToArgb(System.Drawing.Color color)
+        => ((uint)color.A << 24) | ((uint)color.R << 16) | ((uint)color.G << 8) | color.B;
     /// <param name="sourcePos">ルーペ中心（対象座標）。</param>
     /// <remarks>
     /// 拡大元画像が未設定の間は表示しない（ホストが <see cref="SetLoupeSource"/> を呼んだ後、<br/>

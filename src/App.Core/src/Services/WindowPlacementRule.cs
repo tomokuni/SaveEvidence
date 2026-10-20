@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 
 /// <summary>保存されたウィンドウ配置を復元してよいかの判定（UI 非依存の共有規則）。</summary>
 /// <remarks>
-/// 保存値は画面物理ピクセルの矩形であり、次の 2 つを満たさないと復元できない。<br/>
+/// 保存値はウィンドウ枠を含む画面物理ピクセルの矩形であり、次の 2 つを満たさないと復元できない。<br/>
 /// 1. 幅・高さが 1 以上（0 サイズのウィンドウを作らない）。<br/>
 /// 2. 画面の表示領域と十分に重なっている（画面外の座標を復元すると、ウィンドウが見えないまま起動する）。<br/>
 /// <br/>
@@ -75,4 +75,28 @@ public static class WindowPlacementRule
     /// </remarks>
     public static int ToPhysicalLength(double dip, double scaling)
         => Math.Max(1, (int)Math.Round(dip * DpiScaler.NormalizeScaling(scaling)));
+
+    /// <summary>物理ピクセルのウィンドウ枠を差し引き、外寸 DIP からクライアント DIP を求める。</summary>
+    /// <param name="outerDip">枠を含む外寸（DIP）。</param>
+    /// <param name="framePixels">枠の合計幅または高さ（画面物理ピクセル）。</param>
+    /// <param name="scaling">DPI スケール係数。</param>
+    /// <returns>クライアント領域の長さ（DIP）。</returns>
+    public static double ToClientLength(double outerDip, int framePixels, double scaling)
+        => Math.Max(0, outerDip - (Math.Max(0, framePixels) / DpiScaler.NormalizeScaling(scaling)));
+
+    /// <summary>クライアント DIP と物理ピクセルのウィンドウ枠から外寸ピクセルを求める。</summary>
+    /// <param name="clientDip">クライアント領域の長さ（DIP）。</param>
+    /// <param name="framePixels">枠の合計幅または高さ（画面物理ピクセル）。</param>
+    /// <param name="scaling">DPI スケール係数。</param>
+    /// <returns>ウィンドウ外寸の長さ（画面物理ピクセル）。</returns>
+    public static int ToOuterPhysicalLength(double clientDip, int framePixels, double scaling)
+        => ToPhysicalLength(clientDip, scaling) + Math.Max(0, framePixels);
+
+    /// <summary>物理ピクセルのウィンドウ枠を差し引き、外寸ピクセルからクライアント DIP を求める。</summary>
+    /// <param name="outerPixels">枠を含む外寸（画面物理ピクセル）。</param>
+    /// <param name="framePixels">枠の合計幅または高さ（画面物理ピクセル）。</param>
+    /// <param name="scaling">DPI スケール係数。</param>
+    /// <returns>クライアント領域の長さ（DIP）。</returns>
+    public static double ToClientLength(int outerPixels, int framePixels, double scaling)
+        => Math.Max(0, (outerPixels - Math.Max(0, framePixels)) / DpiScaler.NormalizeScaling(scaling));
 }

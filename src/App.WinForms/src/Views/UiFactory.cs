@@ -41,14 +41,17 @@ internal static class UiFactory
     /// <param name="toolTip">ツールヒントの文言。</param>
     /// <param name="onClick">押下時の処理。</param>
     /// <param name="caption">アイコンの右へ表示する文字（省略時はアイコンのみ）。</param>
+    /// <param name="isBorderless">true の場合はツールバーの枠線を表示しない。</param>
     /// <returns>生成したボタン。</returns>
-    public static ToolButton CreateToolButton(AppIcon? icon, string toolTip, Action onClick, string caption = "")
+    public static ToolButton CreateToolButton(
+        AppIcon? icon, string toolTip, Action onClick, string caption = "", bool isBorderless = false)
     {
         ArgumentNullException.ThrowIfNull(onClick);
 
         var button = new ToolButton(icon, toolTip, caption)
         {
             Font = AppStyles.ToolbarFont,
+            IsBorderless = isBorderless,
             IsToolbarButton = true,
         };
         button.Click += (_, _) => onClick();

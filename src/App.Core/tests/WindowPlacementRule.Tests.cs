@@ -9,6 +9,15 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 public class WindowPlacementRuleTests
 {
     [Fact]
+    internal void WindowMetrics_最小外寸と既定外寸を共有する()
+    {
+        Assert.Equal(640, WindowMetrics.MinimumWidth);
+        Assert.Equal(400, WindowMetrics.MinimumHeight);
+        Assert.Equal(1200, WindowMetrics.DefaultWidth);
+        Assert.Equal(800, WindowMetrics.DefaultHeight);
+    }
+
+    [Fact]
     internal void CanRestore_画面内の配置は復元できる()
     {
         Assert.True(WindowPlacementRule.CanRestore(
@@ -74,4 +83,16 @@ public class WindowPlacementRuleTests
         Assert.Equal(1000, WindowPlacementRule.ToPhysicalLength(800, 1.25));
         Assert.Equal(1200, WindowPlacementRule.ToPhysicalLength(800, 1.5));
     }
+
+    [Fact]
+    internal void ToClientLength_外寸DIPから物理枠を差し引く()
+        => Assert.Equal(627.2, WindowPlacementRule.ToClientLength(640.0, 16, 1.25), 5);
+
+    [Fact]
+    internal void ToOuterPhysicalLength_クライアントDIPへ物理枠を加える()
+        => Assert.Equal(800, WindowPlacementRule.ToOuterPhysicalLength(627.2, 16, 1.25));
+
+    [Fact]
+    internal void ToClientLength_外寸物理ピクセルから物理枠を差し引く()
+        => Assert.Equal(627.2, WindowPlacementRule.ToClientLength(800, 16, 1.25), 5);
 }

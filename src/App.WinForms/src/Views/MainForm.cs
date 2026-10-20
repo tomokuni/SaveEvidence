@@ -301,11 +301,11 @@ internal sealed class MainForm : Form
 
         _isWarmedUp = true;
 
-        // キャプチャ ページの描画が終わってから、残りのページを 1 つずつ背景で作る。
+        // キャプチャ ページの描画後、先読み対象を 1 ページずつ生成する。
         // BeginInvoke を直後に呼ぶと、投稿されたメッセージが最初の描画（WM_PAINT）より先に処理され、
         // キャプチャ ページが表示されるまで待たされる（実測）。 短いタイマーを 1 回だけ待つと、
         // 最初の描画が済んでから先読みが始まる。
-        var pending = new Queue<AppPage>([AppPage.FolderView, AppPage.Undo, AppPage.Settings]);
+        var pending = new Queue<AppPage>([AppPage.FolderView, AppPage.Undo]);
         var warmUpDelay = new System.Windows.Forms.Timer { Interval = 200 };
         warmUpDelay.Tick += (_, _) =>
         {

@@ -49,6 +49,10 @@ public sealed partial class MainWindow : Window
     /// <summary>Parts.CapturePreview.ControlAvaloniaUI へ注入するロガー（Serilog 経由でファイル出力）。</summary>
     private readonly ILogger _captureSessionControlLogger = null!;
 
+    private EsRectInt? _restoredWindowBounds;
+
+    private double? _restoredWindowScaling;
+
     /// <summary>アプリケーションロガー。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger("MainWindow");
 
@@ -168,6 +172,7 @@ public sealed partial class MainWindow : Window
         Opened += (_, _) =>
         {
             ApplyMinimumOuterSize();
+            ApplyInitialOuterSize();
             Dispatcher.UIThread.Post(WarmUpThumbnails, DispatcherPriority.Background);
         };
     }
@@ -544,12 +549,10 @@ public sealed partial class MainWindow : Window
             if (WindowPlacementRule.CanRestore(saved, visibleArea))
             {
                 var bounds = WindowPlacementRule.ClampToVisibleArea(saved, visibleArea);
-                var scaling = ResolveScaling(bounds.X, bounds.Y);
                 Position = new PixelPoint(bounds.X, bounds.Y);
-                Width = bounds.Width / scaling;
-                Height = bounds.Height / scaling;
+                _restoredWindowBounds = bounds;
+                _restoredWindowScaling = ResolveScaling(bounds.X, bounds.Y);
             }
-
         }
 
         // 設定は UI 非依存のコア型で保持されるため、境界で Avalonia 型へ変換する
@@ -566,21 +569,51 @@ public sealed partial class MainWindow : Window
             throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
         }
 
-        if (!GetWindowRect(platformHandle.Handle, out var windowRect))
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウの外寸を取得できません。");
-        }
-
-        if (!GetClientRect(platformHandle.Handle, out var clientRect))
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウのクライアント領域を取得できません。");
-        }
-
+        var frame = GetWindowFrame(platformHandle.Handle);
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
-        var frameWidth = (windowRect.Right - windowRect.Left) - (clientRect.Right - clientRect.Left);
-        var frameHeight = (windowRect.Bottom - windowRect.Top) - (clientRect.Bottom - clientRect.Top);
-        MinWidth = Math.Max(0, WindowMetrics.MinimumWidth - (frameWidth / scaling));
-        MinHeight = Math.Max(0, WindowMetrics.MinimumHeight - (frameHeight / scaling));
+        MinWidth = WindowPlacementRule.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling);
+        MinHeight = WindowPlacementRule.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling);
+    }
+
+    /// <summary>枠を含む既定または復元サイズを適用する。</summary>
+    private void ApplyInitialOuterSize()
+    {
+        if (TryGetPlatformHandle() is not { } platformHandle)
+        {
+            throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
+        }
+
+        var frame = GetWindowFrame(platformHandle.Handle);
+        var scaling = DpiScaler.NormalizeScaling(RenderScaling);
+        Width = _restoredWindowBounds is { } bounds
+            ? WindowPlacementRule.ToClientLength(bounds.Width / (_restoredWindowScaling ?? scaling), frame.Width, scaling)
+            : WindowPlacementRule.ToClientLength(WindowMetrics.DefaultWidth, frame.Width, scaling);
+        Height = _restoredWindowBounds is { } restoredBounds
+            ? WindowPlacementRule.ToClientLength(restoredBounds.Height / (_restoredWindowScaling ?? scaling), frame.Height, scaling)
+            : WindowPlacementRule.ToClientLength(WindowMetrics.DefaultHeight, frame.Height, scaling);
+    }
+
+    /// <summary>指定位置のモニターの DPI スケール係数を取得する。</summary>
+    private double ResolveScaling(int x, int y)
+    {
+        var scaling = Screens.ScreenFromPoint(new PixelPoint(x, y))?.Scaling
+            ?? Screens.Primary?.Scaling
+            ?? 1.0;
+        return DpiScaler.NormalizeScaling(scaling);
+    }
+
+    /// <summary>ウィンドウ外寸とクライアント領域の差を取得する。</summary>
+    private static (int Width, int Height) GetWindowFrame(IntPtr handle)
+    {
+        if (!GetWindowRect(handle, out var windowRect))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウの外寸を取得できません。");
+
+        if (!GetClientRect(handle, out var clientRect))
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウのクライアント領域を取得できません。");
+
+        return (
+            (windowRect.Right - windowRect.Left) - (clientRect.Right - clientRect.Left),
+            (windowRect.Bottom - windowRect.Top) - (clientRect.Bottom - clientRect.Top));
     }
 
     /// <summary>ウィンドウの外寸を画面物理ピクセルで取得する。</summary>
@@ -617,10 +650,13 @@ public sealed partial class MainWindow : Window
     private void SaveWindowBounds()
     {
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
+        var platformHandle = TryGetPlatformHandle()
+            ?? throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
+        var frame = GetWindowFrame(platformHandle.Handle);
         _settingsService.Current.MainWindowBounds = new EsRectInt(
             Position.X, Position.Y,
-            WindowPlacementRule.ToPhysicalLength(Width, scaling),
-            WindowPlacementRule.ToPhysicalLength(Height, scaling));
+            WindowPlacementRule.ToOuterPhysicalLength(Width, frame.Width, scaling),
+            WindowPlacementRule.ToOuterPhysicalLength(Height, frame.Height, scaling));
 
         _settingsService.Current.MainWindowState = WindowState.ToEsWindowState();
         _settingsService.Save();
@@ -641,18 +677,6 @@ public sealed partial class MainWindow : Window
         var right = screens.Max(screen => screen.Bounds.X + screen.Bounds.Width);
         var bottom = screens.Max(screen => screen.Bounds.Y + screen.Bounds.Height);
         return new EsRectInt(left, top, right - left, bottom - top);
-    }
-
-    /// <summary>指定位置のモニターの DPI スケール係数を取得する。</summary>
-    /// <param name="x">X 座標（画面物理ピクセル）。</param>
-    /// <param name="y">Y 座標（画面物理ピクセル）。</param>
-    /// <returns>スケール係数（1.0 = 96 DPI）。 取得できない場合はプライマリ モニターの値。</returns>
-    private double ResolveScaling(int x, int y)
-    {
-        var scaling = Screens.ScreenFromPoint(new PixelPoint(x, y))?.Scaling
-            ?? Screens.Primary?.Scaling
-            ?? 1.0;
-        return DpiScaler.NormalizeScaling(scaling);
     }
 
     // ===================== ナビゲーション =====================

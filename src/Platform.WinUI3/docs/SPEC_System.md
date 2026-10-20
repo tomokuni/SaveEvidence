@@ -18,7 +18,7 @@
 ## 1. システム概要
 
 `Platform.WinUI3` は、UI フレームワーク非依存のコア（`EsUtil.Platform.Core`）と WinUI 3（Windows App SDK・`Microsoft.UI.Xaml`）の型の境界を担う層です。
-コアの値型・列挙型を WinUI 3 の型へ写す関数と、Skia のキャンバスへ画像を敷く表示ビューだけを提供します。
+コアの値型・列挙型を WinUI 3 の型へ写す関数と、描画リストを要素へ反映する層・画像を Composition で表示するビューだけを提供します。
 
 - **判断・計算を持たない**: 写像の規則と DIP ⇔ 画面物理ピクセルの換算式だけを持ちます。 ウィンドウ状態やキーの意味はコアが所有します。
 - **UI ホストを必要としない部分を厚くする**: 値型の変換と純粋計算は XAML の初期化なしで検証できます（ヘッドレスで実行できる範囲を最大化する）。
@@ -31,7 +31,7 @@
 | 対象フレームワーク | `net10.0-windows10.0.22621.0` |
 | UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 1.x。 `UseWinUI` を有効にする） |
 | 最低対応 OS | `10.0.19041.0`（`SupportedOSPlatformVersion`） |
-| 描画 | SkiaSharp（`SkiaSharp.Views.WinUI` 3.x の `SKXamlCanvas`） |
+| 表示 | WinUI 3 の XAML 要素（`Rectangle` / `Border`）と Composition（`SpriteVisual` + `LoadedImageSurface`） |
 | 言語 | C# 14（`Nullable` / `ImplicitUsings` を有効にする） |
 | テスト | xUnit v3（`OutputType` は `Exe` を明示する） |
 
@@ -46,7 +46,7 @@ flowchart TB
 
     APP --> PLAT
     PLAT --> CORE["EsUtil.Platform.Core"]
-    PLAT --> SKIA["Platform.Skia"]
+    PLAT --> XAML["Microsoft.UI.Xaml / Composition"]
     PLAT --> WINSDK["Windows App SDK（XAML・ウィンドウ）"]
 ```
 
@@ -69,9 +69,8 @@ flowchart LR
     subgraph Support["配置と描画"]
         PLACE["WindowPlacementMath"]
         SCALE["Imaging.ClientPixelScale"]
-        DRAW["Imaging.ImageDrawMath"]
-        VIEW["Imaging.SkiaImageView"]
-        PAINT["Imaging.SkiaImageRenderer"]
+    DRAW["Drawing.DrawList / DrawRect"]
+               VIEW["Drawing.CompositionImageView"]
         TEXT["Imaging.WinUI3TextMeasure"]
     end
 ```
@@ -84,9 +83,9 @@ flowchart LR
 | `EsPlatformHandleWinUI3Interop` | ウィンドウから Win32 の `HWND` を取り出す |
 | `WindowPlacementMath` | DIP ⇔ 画面物理ピクセルの換算と復元可否の判定 |
 | `Imaging.ClientPixelScale` | 描画面（物理ピクセル）と割り当て領域（DIP）から実効の表示倍率を解く |
-| `Imaging.SkiaImageView` | コアの画像を親の領域へ敷く表示ビュー |
-| `Imaging.SkiaImageRenderer` | 画像を Skia のキャンバスへ敷く描画（画素で検証できる） |
-| `Imaging.ImageDrawMath` / `Imaging.ImageDrawMode` | 画像の配置矩形の計算と配置方法 |
+| `Drawing.CompositionImageView` | コアの画像を Composition のサーフェスで表示するビュー（拡大とクリップは GPU） |
+| `Drawing.RectShapeLayer` | 描画リスト（`DrawList`）を `Rectangle` / `Border` へ反映する |
+| `Drawing.BmpStreamBuilder` | 画素から無圧縮 BMP を組み立てる（サーフェスへ渡す形式） |
 | `Imaging.WinUI3TextMeasure` | 要素として置くラベルの実寸測定 |
 
 ## 5. 依存関係
@@ -94,9 +93,9 @@ flowchart LR
 | 参照先 | 用途 |
 | --- | --- |
 | `EsUtil.Platform.Core` | コアの値型（座標・矩形・色・キー・窓状態）、`DpiScaler`、`EnumCanonical`、画像型 |
-| `Platform.Skia` | `EsReadOnlyBitmap` の Skia 相互変換と Skia の描画プリミティブ |
+| `EsUtil.Platform.Core` | コアの値型・画像・境界の捕捉 |
 | `Microsoft.WindowsAppSDK` | XAML の要素とウィンドウ、`Microsoft.UI.Windowing` |
-| `SkiaSharp.Views.WinUI` | `SKXamlCanvas`（描画面を持つ要素） |
+| `Microsoft.WindowsAppSDK` | XAML の要素・Composition・WIC |
 
 - **本プロジェクトから上位（アプリ・撮影スタック・コントロール）への参照はない**（`DEP0006` が機械的に拒否する）。
 - 名前空間はフォルダに追従します（`IDE0130` がビルドで検査する）。
@@ -127,27 +126,27 @@ classDiagram
     class ClientPixelScale {
         +Resolve(double, double, double) double
     }
-    class ImageDrawMath {
-        +ComputeDestination(int, int, int, int, ImageDrawMode) EsRect
+class DrawList {
+        +AddRect(EsRect, DrawingColor) void
     }
-    class SkiaImageView {
+    class CompositionImageView {
         +Source EsReadOnlyBitmap
-        #UniformDraw bool
-    }
-    SkiaImageView --> ImageDrawMath
-    SkiaImageView --> SkiaImageRenderer
+        +SetBounds(Rect) void
+        +SetShadow(double, uint) void
+    CompositionImageView --> BmpStreamBuilder
+    RectShapeLayer --> DrawList
 ```
 
 ## 8. シーケンス図
 
-画像を敷く場合の流れ（`Imaging.SkiaImageView`）:
+画像を表示する場合の流れ（`Drawing.CompositionImageView`）:
 
 ```mermaid
 sequenceDiagram
     participant H as ホスト
-    participant V as SkiaImageView
-    participant S as SkiaImageRenderer
-    participant M as ImageDrawMath
+    participant V as CompositionImageView
+    participant S as BmpStreamBuilder
+    participant M as DrawList
 
     H->>V: Source へ画像を設定
     V->>V: 描画とレイアウトを無効化
@@ -161,7 +160,7 @@ sequenceDiagram
 
 ## 9. 状態遷移図
 
-`Imaging.SkiaImageView` の表示状態（入力は画像の有無だけである）:
+`Drawing.CompositionImageView` の表示状態（入力は画像の有無だけである）:
 
 ```mermaid
 stateDiagram-v2
@@ -185,7 +184,7 @@ flowchart TD
 ## 10. テスト方針
 
 - **検証はビルドの警告 0 と `dotnet test` の全件合格で判定する**（[`検証手順.md`](../../../.github/検証手順.md)）。
-- 対象は値型の相互変換・純粋計算・Skia の描画（画素）であり、いずれも XAML の初期化を必要としない。
+- 対象は値型の相互変換・純粋計算・描画リストの内容であり、いずれも XAML の初期化を必要としない。
 - **キーの変換は代表値と未対応値の両方を固定する**（別名表の追加漏れと、対応先がないキーが別のキーへ化けることを検出する）。
 - **破棄済みの画像・空の入力・範囲外の倍率**を明示的に検証する（描画しない契約を固定する）。
 
@@ -193,7 +192,7 @@ flowchart TD
 
 | 対象 | 理由 | 確認の方法 |
 | --- | --- | --- |
-| `Imaging.SkiaImageView` のインスタンス生成 | XAML の型は、XAML のランタイムを初期化していないプロセスで生成できない（実測: `COMException` 0x80040154 `REGDB_E_CLASSNOTREG`） | アプリでの動作確認 |
+| `Drawing.CompositionImageView` のインスタンス生成 | XAML の型は、XAML のランタイムを初期化していないプロセスで生成できない（実測: `COMException` 0x80040154 `REGDB_E_CLASSNOTREG`） | アプリでの動作確認 |
 | `EsPlatformHandleWinUI3Interop` | ウィンドウの生成が必要 | アプリでの動作確認 |
 | `Imaging.WinUI3TextMeasure` のテキストエンジン経路 | 要素（`Microsoft.UI.Xaml.Controls.TextBlock`）の生成が必要 | アプリでの動作確認（単体テストは代用の経路を検証する） |
 

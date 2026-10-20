@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Platform.Skia;
 using Microsoft.UI.Xaml.Controls;
 using Windows.Foundation;
 
@@ -15,11 +14,12 @@ namespace EsUtil.SaveEvidence.Platform.WinUI3.Imaging;
 /// <b>測定用の要素</b>: 表示する要素と同じフォント（テーマのフォント）で測るため、ツリー外の <see cref="TextBlock"/> を使う。<br/>
 /// ツリー外でも DPI は XAML のルートから解決されるため、要素と同じ丸めで測れる。<br/>
 /// <br/>
-/// <b>キャンバスへ文字を描く表示は本クラスを使わない</b>: Skia の描画面へ描く表示（<c>SKXamlCanvas</c> を基底にする<br/>
-/// コントロール）は、測るエンジンと描くエンジンを揃える必要があるため <see cref="SkiaText.Measure"/> を使う。<br/>
+/// <b>キャンバスへ文字を描かない</b>: WinUI 3 版は文字を <see cref="TextBlock"/> として置くため、測るエンジンと<br/>
+/// 描くエンジンが一致する（ラベルの背景と文字の大きさがずれない）。<br/>
 /// <br/>
 /// <b>テキストエンジンが無い場合</b>: XAML のランタイムが初期化されていない環境（ウィンドウを生成しない単体テスト）では<br/>
-/// 要素を生成できず測定できないため、<see cref="SkiaText.Measure"/> で代用する（実アプリでは常にエンジンで測る）。
+/// 要素を生成できず測定できない。 その場合は文字数とフォントサイズからの近似を返す<br/>
+/// （実アプリは常にエンジンで測る）。
 /// </remarks>
 public static class WinUI3TextMeasure
 {
@@ -48,18 +48,29 @@ public static class WinUI3TextMeasure
             catch (COMException)
             {
                 // XAML のランタイムが無い環境（ウィンドウを生成しない単体テスト）では要素を生成できない。
-                // 以後は同じ失敗を繰り返さないよう Skia の実測へ切り替える
+                // 以後は同じ失敗を繰り返さないよう近似へ切り替える
                 s_engineAvailable = false;
             }
             catch (InvalidOperationException)
             {
-                // 要素は生成できたがレイアウトを実行できない場合（同上）。 以後は Skia の実測へ切り替える
+                // 要素は生成できたがレイアウトを実行できない場合（同上）。 以後は近似へ切り替える
                 s_engineAvailable = false;
             }
         }
 
-        return SkiaText.Measure(text, fontSize);
+        return Approximate(text, fontSize);
     }
+
+    /// <summary>テキストエンジンを使えない環境での近似値を求める。</summary>
+    /// <param name="text">測定するテキスト。</param>
+    /// <param name="fontSize">フォントサイズ（DIP）。</param>
+    /// <returns>近似の実寸（DIP）。</returns>
+    /// <remarks>
+    /// 等幅フォントを仮定した概算である（1 文字 = フォントサイズの 0.6 倍、行高 = フォントサイズの 1.4 倍）。<br/>
+    /// <b>実アプリでは使われない</b>: テキストエンジンが使える環境では常に <see cref="MeasureWithEngine"/> が測る。
+    /// </remarks>
+    private static EsSize Approximate(string text, double fontSize)
+        => new(text.Length * fontSize * 0.6, fontSize * 1.4);
 
     /// <summary>テキストエンジン（WinUI 3 のテキスト レイアウト）で実寸を測る。</summary>
     /// <param name="text">測定するテキスト。</param>

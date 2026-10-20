@@ -11,10 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- WinUI 3 のコントロール・描画（SKXamlCanvas。 撮影スタックの描画はすべて Skia のキャンバスへ行う） -->
+    <!-- WinUI 3 のコントロール（撮影スタックの表示は Composition と XAML の要素で行う） -->
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="[1.*,2.0.0)" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="[10.0.*,)" />
-    <PackageReference Include="SkiaSharp.Views.WinUI" Version="[3.*,4.0.0)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
   </ItemGroup>
 
@@ -23,9 +22,8 @@
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <!-- WinUI 3 版 Interop（コア型 ⇔ Win UI 型）と DIP 変換 -->
     <ProjectReference Include="..\..\Platform.WinUI3\src\Platform.WinUI3.csproj" />
-    <!-- コア幾何型と Skia の描画プリミティブ -->
+    <!-- コア幾何型 -->
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
-    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Marquee\src\EsUtil.Ui.WinUI3.Marquee.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Loupe\src\EsUtil.Ui.WinUI3.Loupe.csproj" />

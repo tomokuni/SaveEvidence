@@ -29,8 +29,9 @@ rem
 rem  Which modes work is decided by the UI and its framework (measured facts: .github/RELEASE.md).
 rem
 rem  Warnings are errors (-warnaserror), so trimming and AOT analysis warnings
-rem  (IL2026 / IL2070 / IL3050 ...) fail the publish as well.  Measured: adding it revealed
-rem  latent defects that the build had not reported.
+rem  (IL2026 / IL2070 / IL3050 ...) fail the publish as well, except for an explicitly
+rem  documented per-UI warning ID exception (currently WinUI 3 IL2026; see .github/RELEASE.md).
+rem  Measured: adding it revealed latent defects that the build had not reported.
 rem
 rem  Not shipped:
 rem    - *.pdb        debug symbols
@@ -71,25 +72,27 @@ rem the previous mode failed (measured 2026-10-19: AOT fell back to single and o
 rem single was left).
 set "LOGNAME=saveevidence-publish-%UI%-%RID%"
 
+rem The UI script can restrict the modes (`set "SE_MODES=single"`).  The default tries all
+rem modes in order.  A UI that must ship more than one shape calls this script once per shape
+rem from its own wrappers (WinUI 3: publish_WinUI3.bat and publish_WinUI3Single.bat).
+if not defined SE_MODES set "SE_MODES=aot single exe"
+
 echo.
 echo [INFO] UI     : %UI%
 echo [INFO] Target : %RID%
-echo [INFO] Modes  : aot ^> single ^> exe (first success wins)
+echo [INFO] Modes  : %SE_MODES% (first success wins)
 echo.
 
+rem The UI script can restrict the modes (`set "SE_MODES=single"`).  The default tries all
+rem modes in order.  A UI that must ship more than one shape calls this script once per shape
+rem from its own wrappers (WinUI 3: publish_WinUI3.bat and publish_WinUI3Single.bat).
 set "MODE="
 
-call :TryPublish aot
-if not errorlevel 1 set "MODE=aot"
-
-if not defined MODE (
-  call :TryPublish single
-  if not errorlevel 1 set "MODE=single"
-)
-
-if not defined MODE (
-  call :TryPublish exe
-  if not errorlevel 1 set "MODE=exe"
+for %%m in (%SE_MODES%) do (
+  if not defined MODE (
+    call :TryPublish %%m
+    if not errorlevel 1 set "MODE=%%m"
+  )
 )
 
 if not defined MODE (

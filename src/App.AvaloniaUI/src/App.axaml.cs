@@ -28,6 +28,10 @@ public sealed partial class App : Application
         // ステータス バーの文字サイズは 4 UI 版で共通の値（App.Core が単一所有する）を使う
         Resources["StatusBarFontSize"] = StatusBarMetrics.FontSize;
         Resources["ToolbarFontSize"] = ToolbarMetrics.FontSize;
+        Resources["ToolbarButtonHeight"] = ToolbarMetrics.ButtonHeight;
+        Resources["ToolbarIconSize"] = ToolbarMetrics.IconSize;
+        Resources["ToolbarCornerRadius"] = new CornerRadius(ToolbarMetrics.CornerRadius);
+        Resources["ToolbarButtonPadding"] = new Thickness(ToolbarMetrics.PaddingX, ToolbarMetrics.PaddingY);
 
         // システム追従（ThemeVariant.Default）で OS のテーマが変わったときも配色を追随させる
         ActualThemeVariantChanged += (_, _) => ApplyPaletteResources();

@@ -13,6 +13,8 @@ namespace EsUtil.SaveEvidence.App.WinForms.Views;
 /// <b>構成</b>: ツールバー（最新の情報に更新 / 表示モード 3 種 / 並べ替え）/ サムネイル一覧 / ステータスバー。<br/>
 /// <b>縮小は背景で行う</b>: 一覧の構築では縮小せず、全項目を先に並べてから縮小を依頼し、<br/>
 /// 生成が終わった 1 件から差し替える（一覧の表示を縮小の時間で待たせない）。<br/>
+/// <b>ファイル列挙も背景で行う</b>: フォルダ内の検索・並べ替えを UI スレッドから分離し、<br/>
+/// 画面の更新は UI スレッドへ戻して行う。<br/>
 /// <b>負荷の切り替え</b>: ページを表示している間は並列に、表示から外れている間は 1 件ずつ低負荷で生成する。<br/>
 /// <b>並べ替え</b>: ファイル名の昇順 / 降順（設定へ保存し、次回起動時に復元する）。
 /// </remarks>
@@ -40,6 +42,7 @@ internal static class FolderViewPage
 
         // 直前の組み立ての条件（同じ条件では組み直さない）。
         string? builtKey = null;
+        var scanGeneration = 0;
 
         var list = new ThumbnailControl
         {
@@ -113,7 +116,6 @@ internal static class FolderViewPage
 
         ApplyAppearance();
         SyncSortButtons();
-        Rebuild(force: false);
 
         return new PageContent(
             root,
@@ -216,13 +218,61 @@ internal static class FolderViewPage
 
             var iconSize = settingsService.Current.GetIconSize(selectedIndex);
             var ascending = settingsService.Current.FolderViewSortAscending;
-
-            var files = EnumerateImages(folderPath);
-            if (!ascending)
+            var generation = ++scanGeneration;
+            if (list.FindForm() is not { } form)
             {
-                files.Reverse();
+                throw new InvalidOperationException("フォルダ一覧の所有ウィンドウを取得できません。");
             }
 
+            _ = LoadImagesAsync(form, generation, folderPath, iconSize, ascending, force);
+        }
+
+        async Task LoadImagesAsync(
+            Form form, int generation, string folderPath, int iconSize, bool ascending, bool force)
+        {
+            try
+            {
+                var files = await Task.Run(() =>
+                {
+                    var enumeratedFiles = EnumerateImages(folderPath);
+                    if (!ascending)
+                    {
+                        enumeratedFiles.Reverse();
+                    }
+
+                    return enumeratedFiles;
+                }).ConfigureAwait(false);
+
+                if (form.IsDisposed || !form.IsHandleCreated)
+                {
+                    return;
+                }
+
+                form.BeginInvoke(new Action(() =>
+                {
+                    if (form.IsDisposed || generation != scanGeneration)
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        ApplyImages(files, folderPath, iconSize, ascending, force);
+                    }
+                    catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+                    {
+                        s_logger.LogFolderLoadError(ex, folderPath);
+                    }
+                }));
+            }
+            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            {
+                s_logger.LogFolderLoadError(ex, folderPath);
+            }
+        }
+
+        void ApplyImages(List<string> files, string folderPath, int iconSize, bool ascending, bool force)
+        {
             var key = $"{folderPath}|{iconSize}|{ascending}|{files.Count}";
             if (!force && string.Equals(key, builtKey, StringComparison.Ordinal))
             {

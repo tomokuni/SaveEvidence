@@ -29,16 +29,16 @@ internal static class AppStyles
     public const double ToolbarRowHeight = 34;
 
     /// <summary>ツールバーのボタンの高さ（DIP）。</summary>
-    public const double ToolbarButtonHeight = 30;
+    public const double ToolbarButtonHeight = ToolbarMetrics.ButtonHeight;
 
     /// <summary>ツールバーの文字サイズ（DIP）。 4 つの UI 版で共通。</summary>
     public const double ToolbarFontSize = ToolbarMetrics.FontSize;
 
     /// <summary>ツールバーの左右の内側余白（DIP）。</summary>
-    public const double ToolbarPaddingX = 8;
+    public const double ToolbarPaddingX = ToolbarMetrics.PaddingX;
 
     /// <summary>ツールバーの上下の内側余白（DIP）。</summary>
-    public const double ToolbarPaddingY = 4;
+    public const double ToolbarPaddingY = ToolbarMetrics.PaddingY;
 
     /// <summary>ステータス バーの行の高さ（DIP）。 中身（スライダ 32・ボタン 20）より少しだけ広げる。</summary>
     /// <remarks>
@@ -134,7 +134,7 @@ internal static class AppStyles
     public const double SectionHeaderFontSize = SettingsMetrics.FontSize;
 
     /// <summary>ツールバーのアイコンの一辺（DIP）。</summary>
-    public const double ToolbarIconSize = NavPanelMetrics.IconSize;
+    public const double ToolbarIconSize = ToolbarMetrics.IconSize;
 
     /// <summary>ナビゲーション項目のアイコンの一辺（DIP）。</summary>
     public const double NavIconSize = NavPanelMetrics.IconSize;

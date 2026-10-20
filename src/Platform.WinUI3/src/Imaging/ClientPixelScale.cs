@@ -2,9 +2,9 @@ using EsUtil.Platform.Core.Coord;
 
 namespace EsUtil.SaveEvidence.Platform.WinUI3.Imaging;
 
-/// <summary>Skia の描画面（物理ピクセル）と表示領域（DIP）から、描画に使うスケーリング係数を解決する。</summary>
+/// <summary>物理ピクセルと表示領域（DIP）から、描画に使うスケーリング係数を解決する。</summary>
 /// <remarks>
-/// <b>位置付け</b>: <c>SKXamlCanvas</c> の描画面は要素の表示サイズ（DIP）へ表示倍率を掛けた大きさで作られるため、<br/>
+/// <b>位置付け</b>: 描画面（Composition のサーフェス）は要素の表示サイズ（DIP）へ表示倍率を掛けた大きさになるため、<br/>
 /// 両者の比がその時点で実際に使うべき倍率になる。<br/>
 /// <br/>
 /// <b>なぜ保持値（DPI の通知）だけに頼らないか</b>: 描画の前に <c>XamlRoot</c> が確定していない要素<br/>

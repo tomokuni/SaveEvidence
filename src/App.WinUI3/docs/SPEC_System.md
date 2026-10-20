@@ -40,7 +40,7 @@
 | UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 1.x） |
 | 対象フレームワーク | `net10.0-windows10.0.22621.0`（`SupportedOSPlatformVersion` は 10.0.19041.0） |
 | 配置 | アンパッケージ（`WindowsPackageType=None`）/ Windows App SDK 自己完結 / `win-x64` |
-| 画像処理 | Skia（アイコンのラスタライズ・サムネイルの縮小デコード・画像表示のキャンバス） |
+| 画像処理 | Windows App SDK の WIC（サムネイルの縮小デコード・画像の符号化）と自前の SVG ラスタライズ（アイコン） |
 | ログ | `Serilog` + `Microsoft.Extensions.Logging`（`LoggerMessage` ソース生成） |
 | 合成 | `Microsoft.Extensions.DependencyInjection` |
 | 設定 | `System.Text.Json` のソース生成（`AppJsonContext`） |
@@ -199,7 +199,7 @@ classDiagram
 | `App.Core` | 設定・ViewModel・画像のコンテナ・保存の実装 |
 | `Parts.CapturePreview.Core` | 切り出しの共通規則・外観設定の型・オーバーレイの型 |
 | `Parts.CapturePreview.ControlWinUI3` | 撮影セッション・切り出しビュー・ズーム ビュー |
-| `Platform.WinUI3` | コア型と WinUI 3 型の相互変換・画像の Skia 描画・DIP の換算 |
+| `Platform.WinUI3` | コア型と WinUI 3 型の相互変換・描画リストの要素への反映・Composition の画像表示・DIP の換算 |
 
 `EsUtil` リポジトリのプロジェクトは上記の推移参照で解決します。
 

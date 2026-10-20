@@ -8,6 +8,21 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// </remarks>
 public static class ToolbarMetrics
 {
+    /// <summary>ツールバー ボタンの高さ（DIP）。</summary>
+    public const double ButtonHeight = 32;
+
+    /// <summary>ツールバー アイコンの一辺（DIP）。</summary>
+    public const double IconSize = NavPanelMetrics.IconSize;
+
+    /// <summary>ツールバー ボタンの水平内側余白（DIP）。</summary>
+    public const double PaddingX = 8;
+
+    /// <summary>ツールバー ボタンの垂直内側余白（DIP）。</summary>
+    public const double PaddingY = 4;
+
+    /// <summary>ツールバー アイコン ボタンの角丸（DIP）。</summary>
+    public const double CornerRadius = AppPalette.ToolbarButtonCornerRadius;
+
     /// <summary>ツールバーの文字サイズ（DIP）。</summary>
     public const double FontSize = 12;
 }

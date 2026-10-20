@@ -64,7 +64,7 @@ internal static class UndoPage
         var hintText = CreateStatusLabel("ダブルクリックで外部ツール表示");
         hintText.HorizontalAlignment = HorizontalAlignment.Right;
 
-        var modeButtons = new List<ToggleButton>();
+        var modeButtons = new ToggleButton[ViewModeDisplay.Count];
 
         // 表示モードの切り替え（解除は許さない。 常に 1 つを選択状態に保つ）
         void OnModeChanged(int index, bool isChecked)
@@ -87,7 +87,7 @@ internal static class UndoPage
             view.SelectedViewModeIndex = index;
             settingsService.Current.UndoViewModeIndex = index;
             settingsService.Save();
-            for (var i = 0; i < modeButtons.Count; i++)
+            for (var i = 0; i < modeButtons.Length; i++)
             {
                 modeButtons[i].IsChecked = i == index;
             }
@@ -109,7 +109,7 @@ internal static class UndoPage
             };
             button.Checked += (_, _) => OnModeChanged(index, true);
             button.Unchecked += (_, _) => OnModeChanged(index, false);
-            modeButtons.Add(button);
+            modeButtons[i] = button;
         }
 
         var toolbarItems = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
@@ -242,5 +242,4 @@ internal static class UndoPage
     private static TextBlock CreateStatusLabel(string text)
         => new() { Text = text, FontSize = AppStyles.StatusFontSize, VerticalAlignment = VerticalAlignment.Center };
 }
-
 

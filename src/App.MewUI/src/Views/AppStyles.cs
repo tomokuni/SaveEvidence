@@ -47,16 +47,16 @@ internal static class AppStyles
     public const double ToolbarMarginRight = 140;
 
     /// <summary>ツールバーのボタン・テキストボックスの高さ（DIP）。</summary>
-    public const double ToolbarButtonHeight = 32;
+    public const double ToolbarButtonHeight = ToolbarMetrics.ButtonHeight;
 
     /// <summary>ツールバーの文字サイズ（DIP）。</summary>
     public const double ToolbarFontSize = ToolbarMetrics.FontSize;
 
     /// <summary>ツールバーのボタンの水平余白（DIP）。</summary>
-    public const double ToolbarPaddingX = 8;
+    public const double ToolbarPaddingX = ToolbarMetrics.PaddingX;
 
     /// <summary>ツールバーのボタンの垂直余白（DIP）。</summary>
-    public const double ToolbarPaddingY = 4;
+    public const double ToolbarPaddingY = ToolbarMetrics.PaddingY;
 
     /// <summary>ツールバー行の高さ（DIP。 上余白 + ボタン高さ + 下余白）。</summary>
     public const double ToolbarRowHeight = ToolbarMarginTop + ToolbarButtonHeight + ToolbarMarginBottom;
@@ -121,6 +121,9 @@ internal static class AppStyles
     /// <summary>ツールバーのボタンのスタイル名。</summary>
     public const string ToolbarButton = "toolbar-button";
 
+    /// <summary>ツールバーの枠なしアイコン ボタンのスタイル名。</summary>
+    public const string ToolbarIconButton = "toolbar-icon-button";
+
     /// <summary>ツールバーのトグル ボタン（表示モード・並べ替え）のスタイル名。</summary>
     public const string ToolbarToggle = "toolbar-toggle";
 
@@ -131,6 +134,9 @@ internal static class AppStyles
     /// 押下を検出した側がスタイル名を差し替えて表す（<c>ClickableToolTip</c> と同じ回避策）。
     /// </remarks>
     public const string ToolbarButtonPressed = "toolbar-button-pressed";
+
+    /// <summary>ツールバーの枠なしアイコン ボタン（押している間）のスタイル名。</summary>
+    public const string ToolbarIconButtonPressed = "toolbar-icon-button-pressed";
 
     /// <summary>ステータスバーのボタンのスタイル名。</summary>
     public const string StatusButton = "status-button";
@@ -326,8 +332,10 @@ internal static class AppStyles
         sheet.Define(NavItem, () => NavItemStyle(s_navHoverLight, s_navHoverDark, _ => MewUIColor.Transparent));
         sheet.Define(NavItemSelected, () => NavItemStyle(s_navSelectedLight, s_navSelectedDark, t => t.IsDark ? s_navSelectedDark : s_navSelectedLight));
         sheet.Define(ToolbarButton, () => Filled());
+        sheet.Define(ToolbarIconButton, () => Flat(s_hoverLight, s_hoverDark));
         sheet.Define(ToolbarToggle, () => FilledToggle());
         sheet.Define(ToolbarButtonPressed, () => Filled(pressed: true));
+        sheet.Define(ToolbarIconButtonPressed, () => FlatPressed());
         sheet.Define(StatusButton, () => StatusButtonStyle());
         sheet.Define(FlatButton, () => Flat(s_hoverLight, s_hoverDark));
         sheet.Define(WindowButton, () => WindowButtonStyle());
@@ -542,6 +550,19 @@ internal static class AppStyles
             ],
         };
 
+    /// <summary>枠線なしで押下中の背景色を表示するボタンのスタイルを生成する。</summary>
+    /// <returns>生成したスタイル。</returns>
+    private static Style FlatPressed()
+        => new(typeof(Button))
+        {
+            Setters =
+            [
+                Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_pressedDark : s_pressedLight),
+                Setter.Create(Control.BorderThicknessProperty, 0.0),
+                Setter.Create(Control.CornerRadiusProperty, AppPalette.ToolbarButtonCornerRadius),
+            ],
+        };
+
     /// <summary>WinUI 3 の既定のボタンと同じ外観（面 + 1 DIP の枠線 + 角丸）のスタイルを生成する。</summary>
     /// <param name="pressed">押したままの状態を保つ場合 true（フライアウトを開いている間）。</param>
     /// <returns>生成したスタイル。</returns>
@@ -733,8 +754,6 @@ internal static class AppStyles
             ],
         };
 }
-
-
 
 
 

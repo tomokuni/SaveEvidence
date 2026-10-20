@@ -1,10 +1,10 @@
+using System.Runtime.InteropServices.WindowsRuntime;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
-using EsUtil.SaveEvidence.Platform.Skia;
 using Microsoft.Extensions.Logging;
-using SkiaSharp;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Services;
@@ -15,6 +15,8 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Services;
 /// 変換は UI 層である本クラスが所有する（メイン ViewModel のコールバックへ配線する）。<br/>
 /// <b>受け渡す形式</b>: クリップボードの画像は PNG へ符号化した 1 本のストリームとして渡す<br/>
 /// （<c>DataPackage.SetBitmap</c> が要求する <c>IRandomAccessStreamReference</c> を満たす最も確実な形式）。<br/>
+/// <b>符号化と復号</b>: WIC（<see cref="BitmapEncoder"/> / <see cref="BitmapDecoder"/>）が担う<br/>
+/// （OS 標準の仕組みであり、追加のライブラリを必要としない）。<br/>
 /// <b>失敗時</b>: クリップボードは他のプロセスと共有する資源であり使用中に失敗し得るため、<br/>
 /// 例外にせず false / null を返し、原因を Warning で記録する。
 /// </remarks>
@@ -66,7 +68,7 @@ internal static class CaptureClipboard
             var reference = await content.GetBitmapAsync();
             using var source = await reference.OpenReadAsync();
 
-            return DecodePng(source);
+            return await DecodePngAsync(source);
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
@@ -75,53 +77,60 @@ internal static class CaptureClipboard
         }
     }
 
-    /// <summary>画像を PNG としてストリームへ書き出す。</summary>
+    /// <summary>画像を PNG としてストリームへ書き出す（WIC）。</summary>
     /// <param name="image">書き出す画像（読み取りの面）。</param>
     /// <param name="stream">書き出し先のストリーム。</param>
-    /// <remarks>コアのピクセルはコピーせず、非所有ビュー（<c>ToSKBitmap</c>）を 1 回の符号化で使う。</remarks>
+    /// <remarks>
+    /// WIC の API は非同期であるため、専用のスレッドへ隔離して待つ（UI スレッドの同期コンテキストで<br/>
+    /// 待つとデッドロックする）。<br/>
+    /// 画素はコアの面から 1 回だけ複製する（WIC へ渡す <c>SoftwareBitmap</c> は自前の領域を要求する）。
+    /// </remarks>
     private static void WritePng(EsReadOnlyBitmap image, IRandomAccessStream stream)
     {
-        using var bitmap = image.ToSKBitmap();
-        using var skiaImage = SKImage.FromBitmap(bitmap);
-        using var encoded = skiaImage.Encode(SKEncodedImageFormat.Png, 100);
-        using var target = stream.AsStreamForWrite();
+        var task = Task.Run(async () =>
+        {
+            var pixels = image.ReadOnlyPixels.ToArray();
+            var bitmap = SoftwareBitmap.CreateCopyFromBuffer(
+                pixels.AsBuffer(),
+                BitmapPixelFormat.Bgra8,
+                image.Width,
+                image.Height,
+                BitmapAlphaMode.Premultiplied);
 
-        encoded.SaveTo(target);
-        target.Flush();
-        stream.Seek(0);
+            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+            encoder.SetSoftwareBitmap(bitmap);
+            await encoder.FlushAsync();
+            stream.Seek(0);
+        });
+
+        task.GetAwaiter().GetResult();
     }
 
-    /// <summary>PNG ストリームを画像として読み込む。</summary>
+    /// <summary>PNG ストリームを画像として読み込む（WIC）。</summary>
     /// <param name="stream">読み込み元のストリーム。</param>
     /// <returns>読み込んだ画像。 読み込めない場合は null。</returns>
-    private static EsBitmap? DecodePng(IRandomAccessStreamWithContentType stream)
+    /// <remarks>画素はコアの内部表現（BGRA8888・乗算済み）へ揃えて返す。</remarks>
+    private static async Task<EsBitmap?> DecodePngAsync(IRandomAccessStreamWithContentType stream)
     {
-        using var source = stream.AsStreamForRead();
-        var codec = CreateCodec(source);
-        if (codec is null)
+        var decoder = await BitmapDecoder.CreateAsync(stream);
+        var width = (int)decoder.PixelWidth;
+        var height = (int)decoder.PixelHeight;
+        if (width <= 0 || height <= 0)
         {
             return null;
         }
 
-        using (codec)
-        {
-            var info = codec.Info;
-            using var bitmap = new SKBitmap(new SKImageInfo(info.Width, info.Height, SKColorType.Bgra8888, SKAlphaType.Premul));
-            var result = codec.GetPixels(bitmap.Info, bitmap.GetPixels());
-            return result is SKCodecResult.Success or SKCodecResult.IncompleteInput ? bitmap.ToEsBitmap() : null;
-        }
-    }
+        using var bitmap = await decoder.GetSoftwareBitmapAsync(
+            BitmapPixelFormat.Bgra8,
+            BitmapAlphaMode.Premultiplied,
+            new BitmapTransform(),
+            ExifOrientationMode.RespectExifOrientation,
+            ColorManagementMode.DoNotColorManage);
 
-    /// <summary>ストリームから画像コーデックを生成する。</summary>
-    /// <param name="stream">対象のストリーム。</param>
-    /// <returns>生成したコーデック。 判別できない場合は null。</returns>
-    /// <remarks>
-    /// SkiaSharp の <c>SKCodec.Create</c> は失敗時に null を返すが、注釈は非 null である。<br/>
-    /// 生成と判定を別のメソッドへ分けることで、注釈を信用した到達不能な判定（CA1508）にしない。
-    /// </remarks>
-    private static SKCodec? CreateCodec(Stream stream)
-    {
-        var codec = SKCodec.Create(stream);
-        return codec;
+        var stride = width * EsBitmap.BytesPerPixel;
+        var pixels = new byte[stride * height];
+        bitmap.CopyToBuffer(pixels.AsBuffer());
+
+        return EsBitmap.CreateFilled(width, height, span => pixels.AsSpan().CopyTo(span));
     }
 }

@@ -13,6 +13,7 @@ using EsUtil.SaveEvidence.App.AvaloniaUI.Controls;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
@@ -358,16 +359,31 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>各アイコンのジオメトリは <see cref="Icons.IconLoader.LoadGeometry"/> で読み込む。</remarks>
     private void SetupToolbarIcons()
     {
-        SaveIcon.Data = IconLoader.LoadGeometry("ic_fluent_save_24_regular.svg");
-        ScreenSelectIcon.Data = IconLoader.LoadGeometry("ic_fluent_rectangle_landscape_24_regular.svg");
-        WindowSelectIcon.Data = IconLoader.LoadGeometry("ic_fluent_window_24_regular.svg");
-        AreaSelectIcon.Data = IconLoader.LoadGeometry("ic_fluent_select_object_24_regular.svg");
-        CropIcon.Data = IconLoader.LoadGeometry("ic_fluent_crop_24_regular.svg");
+        SaveIcon.Data = IconLoader.LoadGeometry(CaptureIconFiles.Save);
+        ScreenSelectIcon.Data = IconLoader.LoadGeometry(CaptureIconFiles.ScreenSelect);
+        WindowSelectIcon.Data = IconLoader.LoadGeometry(CaptureIconFiles.WindowSelect);
+        AreaSelectIcon.Data = IconLoader.LoadGeometry(CaptureIconFiles.AreaSelect);
+        CropIcon.Data = IconLoader.LoadGeometry(CaptureIconFiles.Crop);
+
+        SaveMenuItem.Icon = CreateMenuIcon(CaptureIconFiles.Save);
+        CaptureScreenMenuItem.Icon = CreateMenuIcon(CaptureIconFiles.ScreenSelect);
+        CaptureWindowMenuItem.Icon = CreateMenuIcon(CaptureIconFiles.WindowSelect);
+        CaptureAreaMenuItem.Icon = CreateMenuIcon(CaptureIconFiles.AreaSelect);
+        CropMenuItem.Icon = CreateMenuIcon(CaptureIconFiles.Crop);
 
         // ステータスバーのズーム（⊕⊖）アイコン
         ZoomOutIcon.Data = IconLoader.LoadGeometry("ic_fluent_subtract_circle_24_regular.svg");
         ZoomInIcon.Data = IconLoader.LoadGeometry("ic_fluent_add_circle_24_regular.svg");
     }
+
+    /// <summary>共通アイコンからメニュー表示用のジオメトリを生成する。</summary>
+    private static PathIcon CreateMenuIcon(string fileName)
+        => new()
+        {
+            Data = IconLoader.LoadGeometry(fileName),
+            Width = ToolbarMetrics.IconSize,
+            Height = ToolbarMetrics.IconSize,
+        };
 
     /// <summary>ファイル名テンプレートの ToolTip（プレースホルダ・オートインクリメントの説明）を構築する。</summary>
     /// <returns>ToolTip として表示するパネル。</returns>

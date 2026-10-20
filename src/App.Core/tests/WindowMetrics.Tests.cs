@@ -17,10 +17,10 @@ public class WindowMetricsTests
     }
 
     [Fact]
-    internal void 既定サイズ_は640x400()
+    internal void 既定外寸_は1200x800DIP()
     {
-        Assert.Equal(640, WindowMetrics.DefaultWidth);
-        Assert.Equal(400, WindowMetrics.DefaultHeight);
+        Assert.Equal(1200, WindowMetrics.DefaultWidth);
+        Assert.Equal(800, WindowMetrics.DefaultHeight);
     }
 
     [Fact]

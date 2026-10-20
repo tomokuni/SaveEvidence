@@ -171,13 +171,17 @@ internal static class CapturePage
         toolbar.Controls.Add(menuButton);
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(templateBox);
-        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.Save, "保存", SaveImage));
+        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.Save, "保存", SaveImage, isBorderless: true));
         toolbar.Controls.Add(UiFactory.CreateSeparator());
-        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.ScreenSelect, "スクリーン選択で撮影", () => StartCapture(CaptureType.ScreenSelect)));
-        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.WindowSelect, "ウィンドウ選択で撮影", () => StartCapture(CaptureType.WindowSelect)));
-        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.AreaSelect, "範囲選択で撮影", () => StartCapture(CaptureType.AreaSelect)));
+        toolbar.Controls.Add(UiFactory.CreateToolButton(
+            AppIcon.ScreenSelect, "スクリーン選択で撮影", () => StartCapture(CaptureType.ScreenSelect), isBorderless: true));
+        toolbar.Controls.Add(UiFactory.CreateToolButton(
+            AppIcon.WindowSelect, "ウィンドウ選択で撮影", () => StartCapture(CaptureType.WindowSelect), isBorderless: true));
+        toolbar.Controls.Add(UiFactory.CreateToolButton(
+            AppIcon.AreaSelect, "範囲選択で撮影", () => StartCapture(CaptureType.AreaSelect), isBorderless: true));
         toolbar.Controls.Add(UiFactory.CreateSeparator());
-        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.Crop, "切り出し（開始 / 確定 / キャンセル）", ToggleCrop));
+        toolbar.Controls.Add(UiFactory.CreateToolButton(
+            AppIcon.Crop, "切り出し（開始 / 確定 / キャンセル）", ToggleCrop, isBorderless: true));
 
         // 幅は入力された文字列の幅に合わせる（最小 100 DIP・上限はツールバーが折り返さない幅）。
         // 上限を取るのは、幅を広げすぎるとツールバーのアイコンが 2 段になるため（他の UI 版と同じ）。
@@ -519,18 +523,18 @@ internal static class CapturePage
         ContextMenuStrip CreateMenu()
         {
             var menuStrip = new ContextMenuStrip();
-            AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage);
+            AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage, AppIcon.Save);
             AddMenuItem(menuStrip, "コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
             AddMenuItem(menuStrip, "貼り付け", "Ctrl+V", () => _ = PasteCoreAsync());
             menuStrip.Items.Add(new ToolStripSeparator());
             AddMenuItem(menuStrip, "元に戻す", "Ctrl+Z", () => EditHistory.Undo(services, ApplyAppearance));
             AddMenuItem(menuStrip, "元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services, ApplyAppearance));
             menuStrip.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menuStrip, "撮影 - スクリーン選択", "", () => StartCapture(CaptureType.ScreenSelect));
-            AddMenuItem(menuStrip, "撮影 - ウィンドウ選択", "", () => StartCapture(CaptureType.WindowSelect));
-            AddMenuItem(menuStrip, "撮影 - 範囲選択", "", () => StartCapture(CaptureType.AreaSelect));
+            AddMenuItem(menuStrip, "撮影 - スクリーン選択", "", () => StartCapture(CaptureType.ScreenSelect), AppIcon.ScreenSelect);
+            AddMenuItem(menuStrip, "撮影 - ウィンドウ選択", "", () => StartCapture(CaptureType.WindowSelect), AppIcon.WindowSelect);
+            AddMenuItem(menuStrip, "撮影 - 範囲選択", "", () => StartCapture(CaptureType.AreaSelect), AppIcon.AreaSelect);
             menuStrip.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menuStrip, "切り出し", "Ctrl+R", ToggleCrop);
+            AddMenuItem(menuStrip, "切り出し", "Ctrl+R", ToggleCrop, AppIcon.Crop);
             AddMenuItem(menuStrip, "Crop - 自動切り出し", "", AutoCrop);
             menuStrip.Items.Add(new ToolStripSeparator());
             AddMenuItem(menuStrip, "ファイル名テンプレートを編集", "", () => templateBox.Focus());
@@ -654,9 +658,18 @@ internal static class CapturePage
     /// <param name="text">表示する文言。</param>
     /// <param name="shortcut">右端へ表示するショートカット（表示のみ）。</param>
     /// <param name="action">選択時の処理。</param>
-    private static void AddMenuItem(ContextMenuStrip menu, string text, string shortcut, Action action)
+    /// <param name="icon">メニュー項目に表示するアイコン。</param>
+    private static void AddMenuItem(ContextMenuStrip menu, string text, string shortcut, Action action, AppIcon? icon = null)
     {
         var item = new ToolStripMenuItem(text);
+        if (icon is { } appIcon)
+        {
+            var size = Math.Max(1, (int)Math.Round(ToolbarMetrics.IconSize * menu.DeviceDpi / 96.0));
+            var image = IconLoader.Create(appIcon, size, AppStyles.Foreground);
+            item.Image = image;
+            menu.Disposed += (_, _) => image.Dispose();
+        }
+
         if (shortcut.Length > 0)
         {
             item.ShortcutKeyDisplayString = shortcut;

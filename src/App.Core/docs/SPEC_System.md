@@ -14,7 +14,7 @@
 
 ## 1. 概要
 
-SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI ホストが共有する、UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供するライブラリです。 SaveEvidence のマルチ UI 対応における「app の Core / UI 分割」（ティア F）です。
+SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有する、UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供するライブラリです。 マルチ UI 対応における「app の Core / UI 分割」（ティア F）です。
 
 ## 2. 技術スタック
 
@@ -25,8 +25,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 ## 3. アーキテクチャ
 
 ```mermaid
-  A[app<br/>Avalonia 実装] --> B[App.Core]
-  C["App.MewUI（将来）"] --> B
+  A["4 UI ホスト"] --> B[App.Core]
   B --> D[EsUtil.Platform.Core]
   B --> F[LineDetection]
   A --> E[Parts.CapturePreview.ControlAvaloniaUI / ColorPickerControl / Platform.AvaloniaUI]
@@ -55,6 +54,9 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）と将来の MewUI �
 | `src/App.Core/src/Services/ISettingsService.cs` | `public interface` | 設定管理サービスの抽象 |
 | `src/App.Core/src/Services/IImageWriter.cs` | `public interface` | 画像（`EsReadOnlyBitmap`）のファイル書き込みの抽象 |
 | `src/App.Core/src/Services/SettingsService.cs` | `public sealed class` | JSON ファイルによる設定管理（**設定の永続化形式 = JSON の構造・enum の文字列表現の唯一の所有者**）。 ソース生成コンテキストを必須とする |
+| `src/App.Core/src/Services/WindowPlacementRule.cs` | `public static class` | ウィンドウ配置の復元判定・補正と、外寸 / クライアント寸法の換算 |
+| `src/App.Core/src/Services/ToolbarMetrics.cs` | `public static class` | 4 UI 版が共有するツールバー寸法・文字サイズ |
+| `src/App.Core/src/Icons/CaptureIconFiles.cs` | `public static class` | キャプチャ ページのツールバーとメニューで使う共通 SVG 名 |
 | `src/App.Core/src/Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
 | `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モード（特大 / 大 / 中）の名称・件数表示（**唯一の所有者**。 `FolderViewViewModel` / `UndoViewModel` が委譲する） |
 | `src/App.Core/src/ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | フォルダビューの表示モード・ソート状態 |

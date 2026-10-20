@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Enums;
@@ -584,6 +585,7 @@ internal sealed partial class MainWindow
         window.FirstFrameRendered += () =>
         {
             ApplyMinimumOuterSize(window);
+            ApplyInitialOuterSize(window, settingsService);
             WarmUpPages();
         };
 
@@ -816,15 +818,7 @@ internal sealed partial class MainWindow
         }
 
         var bounds = settingsService.Current.MainWindowBounds!.Value;
-        var scale = DpiHelper.GetDpiForPoint(new Point(bounds.X, bounds.Y)) / 96.0;
-        var minimumWidth = window.WindowSize.MinWidth;
-        var minimumHeight = window.WindowSize.MinHeight;
-
-        window.WindowSize = WindowSize.Resizable(
-            Math.Max(minimumWidth, WindowPlacementMath.ToDipLength(bounds.Width, scale)),
-            Math.Max(minimumHeight, WindowPlacementMath.ToDipLength(bounds.Height, scale)),
-            minimumWidth, minimumHeight);
-
+        var scale = DpiScaler.NormalizeScaling(DpiHelper.GetDpiForPoint(new Point(bounds.X, bounds.Y)) / 96.0);
         var position = WindowPlacementMath.ToDipPoint(new EsPointInt(bounds.X, bounds.Y), scale);
         window.StartManualPosition(position.X, position.Y);
     }
@@ -838,6 +832,54 @@ internal sealed partial class MainWindow
             return;
         }
 
+        var frame = GetWindowFrame(hwnd);
+        var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
+        var currentSize = window.WindowSize;
+
+        window.WindowSize = WindowSize.Resizable(
+            currentSize.Width,
+            currentSize.Height,
+            WindowPlacementRule.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling),
+            WindowPlacementRule.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling),
+            currentSize.MaxWidth,
+            currentSize.MaxHeight);
+    }
+
+    /// <summary>枠を含む保存サイズまたは既定サイズをクライアント領域へ換算して設定する。</summary>
+    private static void ApplyInitialOuterSize(Window window, ISettingsService settingsService)
+    {
+        var hwnd = window.Handle;
+        if (hwnd == IntPtr.Zero)
+        {
+            return;
+        }
+
+        var frame = GetWindowFrame(hwnd);
+        var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
+        var bounds = settingsService.Current.MainWindowBounds;
+        var savedScale = WindowPlacementMath.IsUsable(bounds)
+            ? DpiScaler.NormalizeScaling(DpiHelper.GetDpiForPoint(new Point(bounds!.Value.X, bounds.Value.Y)) / 96.0)
+            : scaling;
+        var outerWidth = WindowPlacementMath.IsUsable(bounds)
+            ? WindowPlacementMath.ToDipLength(bounds!.Value.Width, savedScale)
+            : WindowMetrics.DefaultWidth;
+        var outerHeight = WindowPlacementMath.IsUsable(bounds)
+            ? WindowPlacementMath.ToDipLength(bounds!.Value.Height, savedScale)
+            : WindowMetrics.DefaultHeight;
+        var minimumWidth = window.WindowSize.MinWidth;
+        var minimumHeight = window.WindowSize.MinHeight;
+        window.WindowSize = WindowSize.Resizable(
+            Math.Max(minimumWidth, WindowPlacementRule.ToClientLength(outerWidth, frame.Width, scaling)),
+            Math.Max(minimumHeight, WindowPlacementRule.ToClientLength(outerHeight, frame.Height, scaling)),
+            minimumWidth,
+            minimumHeight,
+            window.WindowSize.MaxWidth,
+            window.WindowSize.MaxHeight);
+    }
+
+    /// <summary>ウィンドウ外寸とクライアント領域の差を取得する。</summary>
+    private static (int Width, int Height) GetWindowFrame(IntPtr hwnd)
+    {
         if (!GetWindowRect(hwnd, out var windowRect))
         {
             throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウの外寸を取得できません。");
@@ -848,18 +890,9 @@ internal sealed partial class MainWindow
             throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウのクライアント領域を取得できません。");
         }
 
-        var scaling = DpiHelper.GetScaleFactor(hwnd);
-        var frameWidth = (windowRect.Right - windowRect.Left) - (clientRect.Right - clientRect.Left);
-        var frameHeight = (windowRect.Bottom - windowRect.Top) - (clientRect.Bottom - clientRect.Top);
-        var currentSize = window.WindowSize;
-
-        window.WindowSize = WindowSize.Resizable(
-            currentSize.Width,
-            currentSize.Height,
-            Math.Max(0, WindowMetrics.MinimumWidth - (frameWidth / scaling)),
-            Math.Max(0, WindowMetrics.MinimumHeight - (frameHeight / scaling)),
-            currentSize.MaxWidth,
-            currentSize.MaxHeight);
+        return (
+            (windowRect.Right - windowRect.Left) - (clientRect.Right - clientRect.Left),
+            (windowRect.Bottom - windowRect.Top) - (clientRect.Bottom - clientRect.Top));
     }
 
     /// <summary>ウィンドウの外寸を画面物理ピクセルで取得する。</summary>
@@ -903,13 +936,16 @@ internal sealed partial class MainWindow
     /// </remarks>
     private static void SaveWindowPlacement(Window window, ISettingsService settingsService)
     {
-        var scale = DpiHelper.GetScaleFactor(window.Handle);
+        var scale = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(window.Handle));
+        var frame = GetWindowFrame(window.Handle);
         var position = WindowPlacementMath.ToPhysicalPixelPoint(
             new EsPoint(window.Position.X, window.Position.Y), scale);
-        var size = WindowPlacementMath.ToPhysicalPixelSize(
-            new EsSize(window.ClientSize.Width, window.ClientSize.Height), scale);
 
-        settingsService.Current.MainWindowBounds = new EsRectInt(position.X, position.Y, size.Width, size.Height);
+        settingsService.Current.MainWindowBounds = new EsRectInt(
+            position.X,
+            position.Y,
+            WindowPlacementRule.ToOuterPhysicalLength(window.ClientSize.Width, frame.Width, scale),
+            WindowPlacementRule.ToOuterPhysicalLength(window.ClientSize.Height, frame.Height, scale));
         settingsService.Current.MainWindowState = window.WindowState.ToEsWindowState();
 
         // ナビパネルの開閉は変更時に保存済みのため、ここでは配置と状態のみを保存する

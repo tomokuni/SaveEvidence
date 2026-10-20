@@ -17,20 +17,18 @@ MewUI 版の `Platform.MewUI` と同じ役割を WinUI 3 向けに提供しま�
 | `EsWindowStateWinUI3Interop` | `EsWindowState` ⇔ ウィンドウの提示（`AppWindowPresenterKind`）と重ね表示の状態（`OverlappedPresenterState`） |
 | `EsPlatformHandleWinUI3Interop` | ウィンドウ → `EsPlatformHandle`（Win32 の `HWND` を返す） |
 | `WindowPlacementMath` | ウィンドウ配置の DIP ⇔ 画面物理ピクセルの変換、スケールの正規化、復元可否の判定（純粋関数）。 **換算と正規化は `EsUtil.Platform.Core` の `DpiScaler` へ委譲する** |
-| `Imaging.SkiaImageView` | `EsReadOnlyBitmap` を親が割り当てた領域へ描画する表示ビュー（`SKXamlCanvas` 派生。 `Source` を設定するだけで描く） |
-| `Imaging.SkiaImageRenderer`（内部・描画） | `EsReadOnlyBitmap` を Skia キャンバスへ敷く描画層（`SkiaImageView` が使う。 画素で検証できる） |
+| `Drawing.DrawList` / `Drawing.DrawRect` | 描く矩形の列（UI 型を持たない純データ。 ウィンドウ無しで検証できる） |
+| `Drawing.RectShapeLayer` | `DrawList` を `Rectangle` / `Border` へ反映する層（要素を使い回す） |
+| `Drawing.CompositionImageView` | `EsReadOnlyBitmap` を Composition のサーフェスで表示するビュー（拡大とクリップは GPU。 `DropShadow` も持つ） |
+| `Drawing.BmpStreamBuilder` | 画素から無圧縮 BMP を組み立てる（`LoadedImageSurface` へ渡す形式） |
 | `Imaging.ClientPixelScale` | 描画面（物理ピクセル）と表示領域（DIP）の比から、描画に使う実効倍率を解決する。 **表示倍率の変更通知は描画の前に届かないことがあるため、保持値だけに頼ると 100% で描いて画像とずれる** |
-| `Imaging.ImageDrawMath` / `Imaging.ImageDrawMode` | 画像を描画先の領域へ配置する矩形計算（縦横比を保つ収め方 / 領域全体への引き伸ばし） |
-| `Imaging.WinUI3TextMeasure` | WinUI 3 のテキストエンジンで文字列の実寸を測る（ラベルを要素として置く場合の入口。 テキストエンジンを持たない環境では Skia の実測で代用する） |
-
-依存方向:
 
 ```text
 Platform.WinUI3（本プロジェクト）
-  └──> EsUtil.Platform.Core（コア型・画像の配置計算）
-  └──> Platform.Skia（SKCanvas への描画と画像の相互変換）
-  └──> Windows App SDK（Microsoft.UI.Xaml）
-  └──> SkiaSharp.Views.WinUI（SKXamlCanvas）
+ 依存方向:
+
+  └──> EsUtil.Platform.Core（コアの値型・画像・境界の捕捉）
+  └──> Windows App SDK（XAML・Composition・WIC）
 ```
 
 ## 3. WinUI 3 固有の挙動（注意点）
@@ -42,7 +40,7 @@ Platform.WinUI3（本プロジェクト）
 | 色 | 色型（`Windows.UI.Color`）の成分は `byte` のため、ARGB は変換で失われない |
 | ウィンドウ状態 | WinUI 3 は**1 つの列挙型でウィンドウ状態を表さない**。 全画面は提示（`AppWindowPresenterKind`）、通常・最小化・最大化は重ね表示の状態（`OverlappedPresenterState`）が担うため、2 系統の写像を提供する |
 | キー | `EsKey` は 223 メンバー、`VirtualKey` は 172 メンバーで体系が異なる（例: `D0` ⇔ `Number0`、`NumLock` ⇔ `NumberKeyLock`）。 **値ではなく名前**で変換する |
-| テキスト計測 | 撮影スタックのラベルは Skia のキャンバスへ描くため、`SkiaText`（描画層が所有する測定）で測る。 `Imaging.WinUI3TextMeasure` は**ラベルを要素として置く表示**（XAML のレイアウトへ寸法を渡す場合）で使う |
+| テキスト計測 | ラベルは要素として置くため、`Imaging.WinUI3TextMeasure` で測る（表示する要素と同じエンジンで測ることで、背景と文字の大きさが一致する） |
 
 ## 4. ビルド
 
@@ -52,7 +50,7 @@ dotnet build src/Platform.WinUI3/src/Platform.WinUI3.csproj
 
 ## 5. テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。 値型の変換・純粋計算・Skia の描画だけを検証するため、
+`tests/` が本プロジェクトの単体テストを持ちます。 値型の変換・純粋計算・描画リストの内容だけを検証するため、
 XAML の初期化を必要とせず、すべて `[Fact]` / `[Theory]` で並列実行されます。
 
 ```powershell
@@ -61,7 +59,7 @@ dotnet test src/Platform.WinUI3/tests/Platform.WinUI3.Tests.csproj
 
 **検証できない範囲**: XAML の型（`Microsoft.UI.Xaml` のコントロール）は、XAML のランタイムが初期化されていない
 プロセスでは生成できません（実測: `COMException` 0x80040154 `REGDB_E_CLASSNOTREG`）。 したがって
-`Imaging.SkiaImageView` のインスタンス生成とウィンドウ連携（`EsPlatformHandleWinUI3Interop`）は、
+`Drawing.CompositionImageView` / `Drawing.RectShapeLayer` のインスタンス生成とウィンドウ連携（`EsPlatformHandleWinUI3Interop`）は、
 アプリ（`App.WinUI3`）での動作確認に委ねます。 詳細は [docs/SPEC_System.md](docs/SPEC_System.md) を参照してください。
 
 ## 6. ドキュメント

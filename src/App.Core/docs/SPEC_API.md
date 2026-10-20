@@ -43,6 +43,8 @@
 - [31. `Services.ZoomMenuLevels`（静的クラス）](#31-serviceszoommenulevels静的クラス)
 - [32. 依存関係](#32-依存関係)
 - [33. `Services.ToolbarMetrics`（静的クラス）](#33-servicestoolbarmetrics静的クラス)
+- [34. `Services.WindowPlacementRule`（静的クラス）](#34-serviceswindowplacementrule静的クラス)
+- [35. `Icons.CaptureIconFiles`（静的クラス）](#35-iconscaptureiconfiles静的クラス)
 
 ## 1. 公開 API の可視性
 
@@ -51,7 +53,7 @@
 | `Enums.AppPage` / `Enums.ThemeMode` | `public` | 任意 |
 | `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` / `Models.HotKeyParser` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
-| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` | `public` | 任意 |
+| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` / `Services.WindowPlacementRule` / `Icons.CaptureIconFiles` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
 | `Services.EsRectIntJsonConverter` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
 | `Models.CapacityLimitedCache` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
@@ -77,7 +79,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 | プロパティ（抜粋） | 型 | 説明 |
 | --- | --- | --- |
-| `MainWindowBounds` | `EsRectInt?` | MainWindow の位置・サイズ（**画面物理座標**。 4 UI 版が共有するため、保存・復元の単位も共通） |
+| `MainWindowBounds` | `EsRectInt?` | MainWindow の位置とウィンドウ枠を含む外寸（画面物理ピクセル。 4 UI 版で共通） |
 | `MainWindowState` | `EsWindowState` | MainWindow のウィンドウ状態 |
 | `SelectScreenHotKey` / `WindowSelectHotKey` / `AreaSelectHotKey` | `HotKeySetting` | グローバルホットキー |
 | `FileNameTemplate` / `SaveFolderPath` | `string` | ファイル名テンプレート・保存先フォルダ |
@@ -494,8 +496,8 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 | メンバー | 値 | 意味 |
 | --- | --- | --- |
-| `WindowMetrics.MinimumWidth` / `MinimumHeight` | 640 / 400 DIP | ウィンドウ枠を含む外寸の最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算し、Avalonia / MewUI は実際の枠を差し引いたクライアント領域の最小サイズを指定する） |
-| `WindowMetrics.DefaultWidth` / `DefaultHeight` | 640 / 400 DIP | 復元する配置が無いときの既定サイズ |
+| `WindowMetrics.MinimumWidth` / `MinimumHeight` | 640 / 400 DIP | ウィンドウ枠を含む外寸の最小サイズ（WinUI 3 / WinForms は物理ピクセルへ換算し、Avalonia / MewUI は枠を差し引いたクライアント領域の最小サイズを指定する） |
+| `WindowMetrics.DefaultWidth` / `DefaultHeight` | 1200 / 800 DIP | 復元する配置が無いときの既定外寸 |
 | `WindowLayout.ToolbarRowTop` / `ToolbarButtonHeight` | 6 / 32 DIP | ページのツールバーの行の上端とボタンの高さ（アプリ アイコンの縦位置の基準） |
 | `WindowLayout.AppIconRowHeight` | 44 DIP | 左上のアプリ アイコンを置く行の高さ（中心がツールバーのアイコンと一致する 6 + 32 + 6） |
 | `WindowLayout.AppIconSize` | 16 DIP | 左上のアプリ アイコン（タスク バーと同じアイコン）の一辺。 **ナビゲーションのアイコンと同じ大きさ** |
@@ -551,10 +553,38 @@ UI フレームワーク（Avalonia / MewUI）への依存はありません。
 
 ## 33. `Services.ToolbarMetrics`（静的クラス）
 
-ツールバーの文字サイズを単一所有します（UI 版ごとにテーマ既定値が異なるため、4 UI 版で同じ値を明示します）。
+ツールバーの共通寸法・文字サイズを単一所有します（4 UI 版は同じサイズを使い、各フレームワークの標準スタイルで描画します）。
 
 | 定数 | 値 | 意味 |
 | --- | --- | --- |
+| `ButtonHeight` | 32 DIP | ツールバー ボタンとテンプレート入力欄の高さ |
+| `IconSize` | 16 DIP | ツールバー アイコンの一辺 |
+| `PaddingX` / `PaddingY` | 8 / 4 DIP | 文字付きツールバー ボタンの内側余白 |
+| `CornerRadius` | 4 DIP | アイコン ボタンの角丸（`AppPalette.ToolbarButtonCornerRadius` を参照） |
 | `FontSize` | 12 DIP | ツールバーのボタンとファイル名テンプレート入力欄の文字サイズ |
 
-MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ既定は 14 DIP です。 WinForms の `Font` はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。
+MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ既定は 14 DIP です。 WinForms の `Font` はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。 アイコン単独のボタンは 32 × 32 DIP・16 DIP アイコン・内側余白 0 とし、文字付きボタンには表の余白を使います。
+
+## 34. `Services.WindowPlacementRule`（静的クラス）
+
+ウィンドウ配置の復元判定・可視領域への補正と、外寸・クライアント寸法間の単位変換を単一所有します。 保存する配置矩形はウィンドウ枠を含む外寸で、画面物理ピクセルです。
+
+| メンバー | 内容 |
+| --- | --- |
+| `CanRestore` / `ClampToVisibleArea` | 配置を復元できるかの判定 / 表示領域内への位置補正 |
+| `ToPhysicalLength` | DIP から物理ピクセルへの換算 |
+| `ToClientLength(double, int, double)` | 外寸 DIP と枠の物理ピクセルからクライアント DIP への換算 |
+| `ToClientLength(int, int, double)` | 外寸物理ピクセルと枠からクライアント DIP への換算 |
+| `ToOuterPhysicalLength` | クライアント DIP と枠から外寸物理ピクセルへの換算 |
+
+## 35. `Icons.CaptureIconFiles`（静的クラス）
+
+キャプチャ ページのツールバーとメニューで共用するアイコン ファイル名です。 アイコン画像は `SvgIconLoader` が扱う埋め込み SVG から各 UI 版が描画します。
+
+| 定数 | 用途 |
+| --- | --- |
+| `Save` | 保存 |
+| `ScreenSelect` | スクリーン選択キャプチャ |
+| `WindowSelect` | ウィンドウ選択キャプチャ |
+| `AreaSelect` | 領域選択キャプチャ |
+| `Crop` | 切り出し |

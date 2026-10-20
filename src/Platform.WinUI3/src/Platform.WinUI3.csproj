@@ -14,14 +14,10 @@
     <!-- WinUI 3（Microsoft.UI.Xaml）のコントロールと、WinRT の投影型（Windows.Foundation の幾何型・色型） -->
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="[1.*,2.0.0)" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="[10.0.*,)" />
-    <!-- EsReadOnlyBitmap を Skia キャンバスへ描く表示ビュー（SkiaImageView）が SKXamlCanvas を使う -->
-    <PackageReference Include="SkiaSharp.Views.WinUI" Version="[3.*,4.0.0)" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
-    <!-- Skia への依存を閉じ込めた層（SKCanvas への描画と EsReadOnlyBitmap の Skia 相互変換） -->
-    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
   </ItemGroup>
 
   <ItemGroup>

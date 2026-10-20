@@ -1,7 +1,7 @@
 # Parts.CapturePreview.ControlWinUI3
 
 画面キャプチャの撮影スタック（撮影セッション・切り出しビュー・領域選択・ズーム表示）を **WinUI 3** で提供する複合コントロール集です。
-UI 非依存のコア（`Parts.CapturePreview.Core`）と同じ規則を使い、描画だけを Skia のキャンバス（`SKXamlCanvas`）へ行います。
+UI 非依存のコア（`Parts.CapturePreview.Core`）と同じ規則を使い、表示だけを Composition と XAML の要素で行います。
 
 ## 1. 目的
 
@@ -15,7 +15,7 @@ UI 非依存のコア（`Parts.CapturePreview.Core`）と同じ規則を使い�
 | --- | --- |
 | `Session.CaptureSessionControl` | 撮影と切り出しのFacade。 **本プロジェクトの公開 API の中心**（セッションの生成・排他・破棄を所有する） |
 | `Crop.CropViewControl` | 画像表示（拡大・パン・Fit）＋外部提供矩形のオーバーレイ＋領域選択の複合コントロール |
-| `ZoomView.ZoomViewControl` | ズーム・パン可能な画像表示コントロール（Skia のキャンバスへ描画する） |
+| `ZoomView.ZoomViewControl` | ズーム・パン可能な画像表示コントロール（Composition の画像と XAML の矩形で表示する） |
 | `SelectionOverlay.SelectionOverlayControl` | 領域選択の複合コントロール（選択矩形 + 暗転マスク + ルーペ） |
 | `SelectionOverlay.LoupePositionEventArgs` / `SelectionOverlay.SelectionConfirmedEventArgs` / `ZoomView.ZoomChangedEventArgs` | 公開イベントの引数 |
 
@@ -50,7 +50,7 @@ dotnet build src/Parts.CapturePreview.ControlWinUI3/src/Parts.CapturePreview.Con
 
 ## 5. テスト
 
-`tests/` が本プロジェクトの単体テストを持ちます。 Skia の描画（画素）と Facade の状態だけを検証するため、
+`tests/` が本プロジェクトの単体テストを持ちます。 描画リストの内容と Facade の状態だけを検証するため、
 XAML の初期化を必要とせず、すべて `[Fact]` / `[Theory]` で並列実行されます。
 
 ```powershell

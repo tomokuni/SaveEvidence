@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Drawing.Drawing2D;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
 
@@ -15,13 +16,16 @@ namespace EsUtil.SaveEvidence.App.WinForms.Views;
 internal sealed class ToolButton : Button
 {
     /// <summary>アイコンの一辺の基準サイズ（DIP）。</summary>
-    private const int BaseIconSize = (int)NavPanelMetrics.IconSize;
+    private const int BaseIconSize = (int)ToolbarMetrics.IconSize;
 
     /// <summary>このボタンが表示するアイコン（null の場合は文字だけを表示する）。</summary>
     private readonly AppIcon? _icon;
 
     /// <summary>ツールバーのボタンとして塗る（面・枠線・選択色）かどうか。</summary>
     private bool _isToolbarButton;
+
+    /// <summary>ツールバーの枠線を表示しないかどうか。</summary>
+    private bool _isBorderless;
 
     /// <summary>選択状態を示す背景色で描くかどうか。</summary>
     private bool _isSelected;
@@ -58,9 +62,9 @@ internal sealed class ToolButton : Button
 
         // サイズはアイコンと文字の実寸から決める（DPI へは AutoScaleMode が追従する）
         var width = icon is null
-            ? (caption.Length == 0 ? 30 : (caption.Length * 16) + 14)
-            : caption.Length == 0 ? 30 : 30 + (caption.Length * 16);
-        Size = new Size(width, 30);
+            ? (caption.Length == 0 ? (int)ToolbarMetrics.ButtonHeight : (caption.Length * 16) + 14)
+            : caption.Length == 0 ? (int)ToolbarMetrics.ButtonHeight : (int)ToolbarMetrics.ButtonHeight + (caption.Length * 16);
+        Size = new Size(width, (int)ToolbarMetrics.ButtonHeight);
         UiFactory.AttachToolTip(this, toolTip);
         ApplyTheme();
     }
@@ -101,6 +105,24 @@ internal sealed class ToolButton : Button
             }
 
             _isToolbarButton = value;
+            ApplyTheme();
+        }
+    }
+
+    /// <summary>ツールバーの枠線を表示しないかどうかを取得または設定する。</summary>
+    /// <value>true の場合は枠線を表示しない。</value>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool IsBorderless
+    {
+        get => _isBorderless;
+        set
+        {
+            if (_isBorderless == value)
+            {
+                return;
+            }
+
+            _isBorderless = value;
             ApplyTheme();
         }
     }
@@ -187,6 +209,19 @@ internal sealed class ToolButton : Button
     {
         if (_isToolbarButton)
         {
+            ApplyToolbarRegion();
+            if (_isBorderless)
+            {
+                BackColor = AppStyles.BarBackground;
+                ForeColor = AppStyles.Foreground;
+                FlatAppearance.BorderSize = 0;
+                FlatAppearance.BorderColor = AppStyles.BarBackground;
+                FlatAppearance.MouseOverBackColor = AppStyles.ButtonHover;
+                FlatAppearance.MouseDownBackColor = AppStyles.ButtonPressed;
+                RefreshIcon();
+                return;
+            }
+
             // ツールバーのボタンは WinUI 3 の既定のボタンと同じ外観にする（面 + 枠線 + 選択時はアクセント色）
             BackColor = _isSelected ? AppStyles.SelectedButtonFace : AppStyles.ButtonFace;
             ForeColor = _isSelected ? AppStyles.SelectedButtonForeground : AppStyles.Foreground;
@@ -198,6 +233,7 @@ internal sealed class ToolButton : Button
             return;
         }
 
+        ApplyToolbarRegion();
         // ナビゲーションの項目はナビゲーション パネルの下地をそのまま見せる（選択の帯だけで示す）
         BackColor = _isSelected ? AppStyles.NavItemSelected : AppStyles.NavBackground;
         ForeColor = AppStyles.Foreground;
@@ -219,7 +255,39 @@ internal sealed class ToolButton : Button
     protected override void OnDpiChangedAfterParent(EventArgs e)
     {
         base.OnDpiChangedAfterParent(e);
+        ApplyToolbarRegion();
         RefreshIcon();
+    }
+
+    /// <summary>WinUI 3 と同じ角丸をツールバー ボタンへ適用する。</summary>
+    private void ApplyToolbarRegion()
+    {
+        var previous = Region;
+        if (!_isToolbarButton || Width <= 0 || Height <= 0)
+        {
+            Region = null;
+            previous?.Dispose();
+            return;
+        }
+
+        var radius = Math.Max(1, (int)Math.Round(ToolbarMetrics.CornerRadius * DeviceDpi / 96.0));
+        var diameter = Math.Min(radius * 2, Math.Min(Width, Height));
+        using var path = new GraphicsPath();
+        path.AddArc(0, 0, diameter, diameter, 180, 90);
+        path.AddArc(Width - diameter, 0, diameter, diameter, 270, 90);
+        path.AddArc(Width - diameter, Height - diameter, diameter, diameter, 0, 90);
+        path.AddArc(0, Height - diameter, diameter, diameter, 90, 90);
+        path.CloseFigure();
+        Region = new Region(path);
+        previous?.Dispose();
+    }
+
+    /// <summary>大きさの変更時に角丸を作り直す。</summary>
+    /// <param name="e">イベント引数。</param>
+    protected override void OnSizeChanged(EventArgs e)
+    {
+        base.OnSizeChanged(e);
+        ApplyToolbarRegion();
     }
 
     /// <summary>有効・無効が変わったときにアイコンの色を合わせる。</summary>
@@ -238,6 +306,8 @@ internal sealed class ToolButton : Button
         {
             Image?.Dispose();
             Image = null;
+            Region?.Dispose();
+            Region = null;
         }
 
         base.Dispose(disposing);

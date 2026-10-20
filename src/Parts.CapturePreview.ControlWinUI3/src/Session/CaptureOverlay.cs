@@ -13,7 +13,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.SelectionOverlay;
 using EsUtil.SaveEvidence.Platform.WinUI3;
-using EsUtil.SaveEvidence.Platform.WinUI3.Imaging;
+using EsUtil.SaveEvidence.Platform.WinUI3.Drawing;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.UI.Windowing;
@@ -327,7 +327,7 @@ internal sealed class CaptureOverlay
         };
 
         // 撮影画像は仮想スクリーンと等倍（領域と同じ縦横比）のため、領域全体へ敷く（Uniform にしない）
-        root.Children.Add(new SkiaImageView { Source = Screen });
+        root.Children.Add(new CompositionImageView { Source = Screen });
 
         // 十字カーソルはドラッグで矩形を作る種別（ハイライト型以外 = 範囲選択）で使う
         // （選択スタイルの判定はコアが単一所有する）

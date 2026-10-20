@@ -10,13 +10,9 @@ rem  position in decoded characters, so non-ASCII text garbles the output and ca
 rem  execute fragments of the file as commands.  The chcp below keeps the UTF-8 log of
 rem  dotnet readable (safe because this file is ASCII).  Rules: .github/RELEASE.md.
 rem
-rem  The mode (aot ^> single ^> exe) is chosen by buildScript/publish_ui.bat.
-rem  Measured 2026-10-16: mode 1 (single + AOT) cannot be used.  Widening the requirements of
-rem  the CsWinRT AOT analysis (CsWinRT1028 / CsWinRT1030: make the types that cross the WinRT
-rem  ABI partial, enable AllowUnsafeBlocks) to the app and to the WinUI 3 control projects
-rem  does not fix it.  Native AOT of WinUI 3 (C#) is not supported as of Windows App SDK 1.8,
-rem  and the XAML runtime depends on reflection, so avoiding the analysis warnings does not
-rem  make it work either.  Mode 2 (single) is used instead.
+rem  This script publishes the single file shape (the default).  The AOT shape lives in
+rem  buildScript/publish_WinUI3Aot.bat.  The mode is chosen by buildScript/publish_ui.bat.
+rem  Measured 2026-10-20: the single file distribution starts and exits with code 0.
 rem
 rem  Single file publishing needs the WinUI 3 libraries to be built with a RID first:
 rem  single file publishing requires the .pri (resource index) of every WinUI 3 project as an
@@ -60,9 +56,16 @@ for %%p in (
   "src\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj"
 ) do dotnet build %%p -c Release -r %RID% -v q --nologo >nul 2>&1
 
+rem The default shape is one self contained file.  Native AOT cannot bundle native libraries
+rem (measured 2026-10-20: PublishSingleFile + IncludeNativeLibrariesForSelfExtract together with
+rem PublishAot still leaves the native DLLs next to the exe), and Windows App SDK rejects single
+rem file publishing while it is framework dependent, so "one file and no prerequisite" means a
+rem self contained single file publish without AOT.  The AOT shape lives in
+rem buildScript/publish_WinUI3Aot.bat (a folder of native DLLs, also without a prerequisite).
 rem Single file publishing is gated by `SaveEvidencePublishSingleFile` in
-rem src\App.WinUI3\src\App.WinUI3.csproj.  Passing `-p:PublishSingleFile=true` directly
-rem flows to the referenced projects, and the WinUI 3 libraries then fail (measured).
+rem src\App.WinUI3\src\App.WinUI3.csproj: passing `-p:PublishSingleFile=true` directly flows to
+rem the referenced projects and the WinUI 3 libraries then fail (measured).
+set "SE_MODES=single"
 set "SE_SINGLE_ARGS=-p:SaveEvidencePublishSingleFile=true"
 
 call "%~dp0publish_ui.bat" winui3 "src\App.WinUI3\src\App.WinUI3.csproj" %*

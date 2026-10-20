@@ -21,7 +21,7 @@
 
 - **撮影（画面全体の選択）と切り出し（プレビュー内の範囲指定）の 2 つのセッション**を持ちます。
 - 状態・判断・計算は UI 非依存のコア（`Parts.CapturePreview.Core`）が持ち、本層は**入力の受付・効果の適用・描画・配線**だけを行います。
-- 描画は **Skia のキャンバス**（`SKXamlCanvas`）へ行います。 撮影画像は撮影時に 1 度だけ Skia の面へ写し、以降は加工しません。
+- 表示は **Composition と XAML の要素**で行います。 撮影画像は撮影時に 1 度だけ Composition のサーフェスへ写し、以降は加工しません。
 
 ## 2. 技術スタック
 
@@ -30,7 +30,7 @@
 | 対象フレームワーク | `net10.0-windows10.0.22621.0` |
 | UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 1.x。 `UseWinUI` を有効にする） |
 | 最低対応 OS | `10.0.19041.0` |
-| 描画 | SkiaSharp（`SkiaSharp.Views.WinUI` 3.x の `SKXamlCanvas`） |
+| 表示 | Composition（`SpriteVisual` + `LoadedImageSurface`）と XAML の要素（`Rectangle`） |
 | 画像とログ | `EsUtil.Platform.Core`（画像型・Win32 サービス）、`Microsoft.Extensions.Logging.Abstractions` |
 | テスト | xUnit v3（`OutputType` は `Exe` を明示する） |
 
@@ -44,7 +44,7 @@ flowchart TB
     UI["UI 層（本プロジェクト）<br/>Facade・複合コントロール・描画・座標変換のブリッジ"]
     CORE["Parts.CapturePreview.Core<br/>撮影・切り出し・選択・ズームの規則と提示の写像"]
     CTRL["再利用可能なコントロール<br/>選択矩形・ルーペ（WinUI 3 版）"]
-    PLAT["Platform.WinUI3 / Platform.Skia / EsUtil.Platform.Core"]
+    PLAT["Platform.WinUI3 / EsUtil.Platform.Core"]
 
     APP --> UI
     UI --> CORE
@@ -68,7 +68,7 @@ flowchart LR
     subgraph Capture["撮影の 1 セッション"]
         OVERLAY["Session.CaptureOverlay"]
         ROOT["Session.CaptureOverlayRoot"]
-        VIEW["Imaging.SkiaImageView"]
+        VIEW["Drawing.CompositionImageView"]
     end
     subgraph Crop["切り出しの複合コントロール"]
         CROPV["Crop.CropViewControl"]
@@ -104,7 +104,7 @@ flowchart LR
 | `Parts.CapturePreview.Core` | 撮影・切り出し・選択・ズームの規則、設定型、ログ定義、提示の写像 |
 | `Platform.WinUI3` | コア型 ⇔ WinUI 3 の型の変換、DIP の換算、画像の表示ビュー、実効倍率の解決 |
 | `EsUtil.Platform.Core` | コアの値型、画像型、Win32 のサービス（画面キャプチャ・要素検出・ウィンドウ操作） |
-| `Platform.Skia` | `EsReadOnlyBitmap` の Skia 相互変換、Skia の描画プリミティブ、テキストの測定と描画 |
+| `Platform.WinUI3` | 描画リストの要素への反映、Composition の画像表示、テキストの実寸測定 |
 | 再利用可能なコントロール（WinUI 3 版） | 選択矩形（`Marquee`）とルーペ（`Loupe`）のコントロール |
 
 - **本層からアプリへの参照はない**（`DEP0004` が機械的に拒否する）。
@@ -246,7 +246,7 @@ stateDiagram-v2
 ## 10. テスト方針
 
 - **検証はビルドの警告 0 と `dotnet test` の全件合格で判定する**（[`検証手順.md`](../../../.github/検証手順.md)）。
-- 対象は Skia の描画（画素）と Facade の状態（設定の部分更新・破棄・操作なしの呼び出し）です。
+- 対象は描画リストの内容（矩形・色・順序）と Facade の状態（設定の部分更新・破棄・操作なしの呼び出し）です。
 - **描画層のテストは画素で固定する**（破線のダッシュ長・半透明のアルファ・退化した入力で描かないこと）。
 - **Facade のテストはウィンドウを生成しない**（コンストラクタとサービスの生成は P/Invoke を実行しない）。
 
