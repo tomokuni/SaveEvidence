@@ -13,13 +13,15 @@
         </WrapPanel>
 
         <!-- 画像履歴一覧（フォルダビューと同じ共通コントロール。 表示順: 新しい → 古い = やり直し → 現在 → 元に戻す） -->
-        <thumb:ThumbnailControl x:Name="UndoListBox" Grid.Row="1"/>
+        <!-- 一覧の下地は 4 UI 版で同じ色にする（値は AppPalette.ListBackground（App.Core）が単一所有する） -->
+        <thumb:ThumbnailControl x:Name="UndoListBox" Grid.Row="1"
+                                Background="{DynamicResource ListBackgroundBrush}"/>
 
         <!-- ステータスバー -->
         <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,*,Auto" Margin="4,2">
-            <TextBlock Grid.Column="0" Text="{Binding ItemCountText}" Margin="0,0,8,0"/>
-            <TextBlock Grid.Column="1" Text="{Binding ViewModeText}"/>
-            <TextBlock Grid.Column="3" Text="ダブルクリックで外部ツール表示" HorizontalAlignment="Right" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            <TextBlock Grid.Column="0" Classes="status" Text="{Binding ItemCountText}" Margin="0,0,8,0"/>
+            <TextBlock Grid.Column="1" Classes="status" Text="{Binding ViewModeText}"/>
+            <TextBlock Grid.Column="3" Classes="status" Text="ダブルクリックで外部ツール表示" HorizontalAlignment="Right"/>
         </Grid>
     </Grid>
 </UserControl>

@@ -47,6 +47,33 @@ public class AppPaletteTests
     internal void ツールバーのボタン_は角丸で描く()
         => Assert.True(AppPalette.ToolbarButtonCornerRadius > 0);
 
+    [Fact]
+    internal void ボタンの面と枠線_は明色でWinUI3の既定のボタンと同じ値()
+    {
+        Assert.Equal(0xFFFFFFFFu, AppPalette.ButtonFace(isDark: false));
+        Assert.Equal(0xFFD6D6D6u, AppPalette.ButtonBorder(isDark: false));
+    }
+
+    [Fact]
+    internal void ボタンの面と枠線_は暗色でも指定色を使う()
+    {
+        Assert.Equal(0xFF2D2D2Du, AppPalette.ButtonFace(isDark: true));
+        Assert.Equal(0xFF303030u, AppPalette.ButtonBorder(isDark: true));
+    }
+
+    [Fact]
+    internal void 選択中のトグル_はアクセント色で塗り文字色を反転する()
+    {
+        Assert.Equal(0xFF0067C0u, AppPalette.ButtonCheckedFace(isDark: false));
+        Assert.Equal(0xFFFFFFFFu, AppPalette.ButtonCheckedForeground(isDark: false));
+        Assert.Equal(0xFF4CC2FFu, AppPalette.ButtonCheckedFace(isDark: true));
+        Assert.Equal(0xFF000000u, AppPalette.ButtonCheckedForeground(isDark: true));
+    }
+
+    [Fact]
+    internal void 一覧の背景_は明色で指定色を使う()
+        => Assert.Equal(0xFFF2F2F2u, AppPalette.ListBackground(isDark: false));
+
     /// <summary>色の明るさ（0〜255 の単純平均）を求める。</summary>
     /// <param name="argb">色（0xAARRGGBB）。</param>
     /// <returns>明るさ。</returns>

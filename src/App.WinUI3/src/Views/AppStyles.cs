@@ -1,6 +1,7 @@
 ﻿using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
@@ -66,7 +67,8 @@ internal static class AppStyles
     public const double StatusIconSize = 14;
 
     /// <summary>ステータス バーの文字サイズ（DIP）。</summary>
-    public const double StatusFontSize = 12;
+    /// <remarks>値は <see cref="StatusBarMetrics.FontSize"/>（App.Core）が単一所有する（4 つの UI 版で同じ大きさにする）。</remarks>
+    public const double StatusFontSize = StatusBarMetrics.FontSize;
 
     /// <summary>ナビゲーション パネルの幅（展開時・DIP）。</summary>
     /// <remarks>幅の根拠（アイコン + 最も長い項目名 + 余白）は <see cref="NavPanelMetrics"/>（App.Core）が単一所有する。</remarks>
@@ -174,6 +176,29 @@ internal static class AppStyles
     /// <summary>画像領域（プレビューの下地）の背景色を取得する。</summary>
     /// <value>現在のテーマの色。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</value>
     public static SolidColorBrush ImageAreaBackground => new(ToColor(AppPalette.ImageArea(IsDarkTheme)));
+
+    /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色を取得する。</summary>
+    /// <value>現在のテーマの色。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</value>
+    /// <remarks>4 UI 版で同じ色にする（影の見え方を揃えるため。 詳細は <see cref="AppPalette.ListBackground"/>）。</remarks>
+    public static SolidColorBrush ListBackground => new(ToColor(AppPalette.ListBackground(IsDarkTheme)));
+
+    /// <summary>ツールバーの区切り（縦線）を生成する。</summary>
+    /// <returns>幅 1・高さ 20 DIP の縦線。</returns>
+    /// <remarks>
+    /// Fluent の <c>MenuFlyoutSeparator</c> はメニュー専用で、横線しか表せない。<br/>
+    /// ツールバーの区切りは他の UI 版と同じ縦線にするため、細い <see cref="Border"/> を置く。<br/>
+    /// 色は半透明の灰色（AvaloniaUI 版の <c>SystemControlForegroundBaseLowBrush</c> 相当の濃さ）にして、<br/>
+    /// 明色・暗色の両テーマで背景に馴染ませる。 太さ・余白は他の UI 版（1 × 20 DIP・左右 4 DIP）と揃える。
+    /// </remarks>
+    public static Border CreateToolbarSeparator()
+        => new()
+        {
+            Width = 1,
+            Height = 20,
+            Margin = new Thickness(4, 0, 4, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x66, 0x80, 0x80, 0x80)),
+        };
 
     /// <summary>32 ビットの色値（0xAARRGGBB）を WinUI の色へ変換する。</summary>
     /// <param name="argb">色（0xAARRGGBB）。</param>

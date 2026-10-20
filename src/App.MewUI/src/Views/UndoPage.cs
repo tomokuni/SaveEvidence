@@ -101,6 +101,7 @@ internal static class UndoPage
         ToggleButton CreateModeButton(int index)
         {
             var button = new ToggleButton()
+                .StyleName(AppStyles.ToolbarToggle)
                 .Content(ViewModeDisplay.GetText(index))
                 .Height(AppStyles.ToolbarButtonHeight)
                 .Margin(new Thickness(1));
@@ -218,10 +219,10 @@ internal static class UndoPage
             .Spacing(12)
             .VerticalAlignment(VerticalAlignment.Center)
             .Children(
-                new TextBlock().BindText(countText),
-                new TextBlock().BindText(modeText));
+                new TextBlock().BindText(countText).FontSize(AppStyles.StatusFontSize),
+                new TextBlock().BindText(modeText).FontSize(AppStyles.StatusFontSize));
 
-        var hint = new TextBlock().Text("ダブルクリックで外部ツール表示");
+        var hint = new TextBlock().Text("ダブルクリックで外部ツール表示").FontSize(AppStyles.StatusFontSize);
         hint.HorizontalAlignment = HorizontalAlignment.Right;
         hint.VerticalAlignment = VerticalAlignment.Center;
 

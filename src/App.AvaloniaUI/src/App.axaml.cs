@@ -25,6 +25,9 @@ public sealed partial class App : Application
     {
         AvaloniaXamlLoader.Load(this);
 
+        // ステータス バーの文字サイズは 4 UI 版で共通の値（App.Core が単一所有する）を使う
+        Resources["StatusBarFontSize"] = StatusBarMetrics.FontSize;
+
         // システム追従（ThemeVariant.Default）で OS のテーマが変わったときも配色を追随させる
         ActualThemeVariantChanged += (_, _) => ApplyPaletteResources();
     }
@@ -105,8 +108,14 @@ public sealed partial class App : Application
         Resources["NavPanelBackgroundBrush"] = new SolidColorBrush(ToColor(AppPalette.NavPanel(isDark)));
         Resources["ImageAreaBackgroundBrush"] = new SolidColorBrush(ToColor(AppPalette.ImageArea(isDark)));
         Resources["PageBackgroundBrush"] = new SolidColorBrush(ToColor(AppPalette.Page(isDark)));
+        Resources["ListBackgroundBrush"] = new SolidColorBrush(ToColor(AppPalette.ListBackground(isDark)));
         Resources["NavItemSelectedBrush"] = new SolidColorBrush(ToColor(AppPalette.NavItemSelected(isDark)));
         Resources["NavSelectionAccentBrush"] = new SolidColorBrush(ToColor(AppPalette.NavItemSelectionAccent(isDark)));
+        Resources["ToolbarButtonFaceBrush"] = new SolidColorBrush(ToColor(AppPalette.ButtonFace(isDark)));
+        Resources["ToolbarButtonBorderBrush"] = new SolidColorBrush(ToColor(AppPalette.ButtonBorder(isDark)));
+        Resources["ToolbarButtonCheckedFaceBrush"] = new SolidColorBrush(ToColor(AppPalette.ButtonCheckedFace(isDark)));
+        Resources["ToolbarButtonCheckedBorderBrush"] = new SolidColorBrush(ToColor(AppPalette.ButtonCheckedBorder(isDark)));
+        Resources["ToolbarButtonCheckedForegroundBrush"] = new SolidColorBrush(ToColor(AppPalette.ButtonCheckedForeground(isDark)));
         Resources["ToolbarButtonHoverBrush"] = new SolidColorBrush(
             ToColor(AppPalette.ToolbarButtonBackground(isDark, isPressed: false)));
         Resources["ToolbarButtonPressedBrush"] = new SolidColorBrush(

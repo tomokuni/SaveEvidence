@@ -3,6 +3,9 @@
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.App">
     <Application.Resources>
         <ResourceDictionary>
+            <!-- ステータス バーの文字サイズ。 実際の値は App.axaml.cs が
+                 StatusBarMetrics.FontSize（App.Core。 4 UI 版の単一所有者）から設定する。 -->
+            <x:Double x:Key="StatusBarFontSize">12</x:Double>
         </ResourceDictionary>
     </Application.Resources>
 
@@ -21,39 +24,64 @@
         </Style>
 
         <!-- ツールバーボタン（各ページのツールバー高さを統一する。フォルダビューの標準ボタンサイズが基準）。
-             通常時は背景を持たず、マウスを重ねると薄い角丸の矩形、押している間はさらに濃くする
-             （色は AppPalette（App.Core）が単一所有する。 他の UI 版と同じ段階）。 -->
+             外観は WinUI 3 の既定のボタンに合わせる（面 + 1 DIP の枠線 + 角丸 4 DIP。
+             色は AppPalette（App.Core）が単一所有する）。 -->
         <Style Selector="Button.toolbar, ToggleButton.toolbar">
             <Setter Property="Height" Value="32"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="4"/>
         </Style>
         <Style Selector="Button.toolbar /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
         </Style>
         <Style Selector="Button.toolbar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="Button.toolbar:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonPressedBrush}"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="ToggleButton.toolbar /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
         </Style>
         <Style Selector="ToggleButton.toolbar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="ToggleButton.toolbar:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonPressedBrush}"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <!-- 選択中のトグル ボタンはアクセント色で塗る（WinUI 3 の既定と同じ）。
+             テーマの既定は「アクセント色の面に白い文字」を前提とするため、面を自前で塗ると
+             文字色も自前で決めないと白いままになって見えなくなる（実測）。 -->
+        <Style Selector="ToggleButton.toolbar:checked">
+            <Setter Property="Foreground" Value="{DynamicResource ToolbarButtonCheckedForegroundBrush}"/>
+        </Style>
+        <Style Selector="ToggleButton.toolbar:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonCheckedFaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonCheckedBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Foreground" Value="{DynamicResource ToolbarButtonCheckedForegroundBrush}"/>
         </Style>
         <!-- ツールバーのテキストボックス（ファイル名テンプレート等）も同じ高さに揃える -->
         <Style Selector="TextBox.toolbar">
@@ -61,16 +89,38 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
-        <!-- ステータスバーのズーム操作（⊖ / ⊕ / Fit / 拡大率）は通常時の背景を持たない
-             （ホバー・押下の見た目は Fluent テーマの既定に任せる）。 -->
+        <!-- ステータスバーのズーム操作（⊖ / ⊕ / Fit / 拡大率）も WinUI 3 の既定のボタンと同じ外観にする。 -->
         <Style Selector="Button.status">
-            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        </Style>
+        <Style Selector="Button.status /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
         </Style>
         <Style Selector="Button.status:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}"/>
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
         </Style>
         <Style Selector="Button.status:pressed /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPressed}"/>
+            <Setter Property="Background" Value="{DynamicResource ToolbarButtonPressedBrush}"/>
+        </Style>
+
+        <!-- ステータス バーの文字は 4 UI 版で同じ大きさにする（値は StatusBarMetrics（App.Core）が単一所有する） -->
+        <Style Selector="TextBlock.status">
+            <Setter Property="FontSize" Value="{StaticResource StatusBarFontSize}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- ツールバーの区切り（縦線）。 Fluent の Separator は横線のため、縦の | を自前で置く
+             （見た目は他の UI 版の区切りと同じ 1 × 20 DIP・左右 4 DIP）。 -->
+        <Style Selector="Border.toolbar-separator">
+            <Setter Property="Width" Value="1"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Margin" Value="4,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Background" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
         </Style>
 
         <!-- フルスクリーンボタン（最小化ボタンの左の斜め矢印）を無効化する（KIOSK 化機能は不要）。

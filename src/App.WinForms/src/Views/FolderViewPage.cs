@@ -47,9 +47,9 @@ internal static class FolderViewPage
             Dock = DockStyle.Fill,
         };
 
-        var countLabel = UiFactory.CreateStatusLabel(160, "一覧の件数");
-        var modeLabel = UiFactory.CreateStatusLabel(80, "表示モード");
-        var sortLabel = UiFactory.CreateStatusLabel(80, "並べ替え");
+        var countLabel = UiFactory.CreateStatusLabel(0, "一覧の件数");
+        var modeLabel = UiFactory.CreateStatusLabel(0, "表示モード");
+        var sortLabel = UiFactory.CreateStatusLabel(0, "並べ替え");
         var folderLabel = UiFactory.CreateStatusLabel(0, "一覧しているフォルダ");
 
         var statusBar = UiFactory.CreateStatusBar();
@@ -96,7 +96,7 @@ internal static class FolderViewPage
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.AddRange(sortButtons);
 
-        var root = new Panel { Dock = DockStyle.Fill, BackColor = AppStyles.ListBackground };
+        var root = new Panel { Dock = DockStyle.Fill, BackColor = AppStyles.PageBackground };
         root.Controls.Add(list);
         root.Controls.Add(toolbar);
         root.Controls.Add(statusBar);
@@ -139,12 +139,13 @@ internal static class FolderViewPage
         // 配色を現在のテーマへ合わせる。
         void ApplyAppearance()
         {
-            root.BackColor = AppStyles.ListBackground;
+            // ページは下地（白）のまま、一覧だけ 4 UI 版で共通の一覧色にする
+            root.BackColor = AppStyles.PageBackground;
             list.BackColor = AppStyles.ListBackground;
             toolbar.BackColor = AppStyles.BarBackground;
-            statusBar.BackColor = AppStyles.ListBackground;
-            statusFlow.BackColor = AppStyles.ListBackground;
-            folderPanel.BackColor = AppStyles.ListBackground;
+            statusBar.BackColor = AppStyles.PageBackground;
+            statusFlow.BackColor = AppStyles.PageBackground;
+            folderPanel.BackColor = AppStyles.PageBackground;
 
             foreach (var label in new[] { countLabel, modeLabel, sortLabel, folderLabel })
             {
@@ -202,7 +203,7 @@ internal static class FolderViewPage
             sortButtons[0].IsSelected = ascending;
             sortButtons[1].IsSelected = !ascending;
             folderView.IsSortAscending = ascending;
-            sortLabel.Text = ascending ? "昇順" : "降順";
+            sortLabel.Text = folderView.SortStatusText;
         }
 
         // 一覧を組み直す（履歴・表示モードが変わっていなければ何もしない）。

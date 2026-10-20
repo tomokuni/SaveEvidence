@@ -16,14 +16,6 @@
         <GridLength x:Key="SliderPostContentMargin">10</GridLength>
     </UserControl.Resources>
     <UserControl.Styles>
-        <!-- ツールバーの区切り（縦線）。 Fluent の Separator は横線のため、縦の | を自前で置く -->
-        <Style Selector="Border.toolbar-separator">
-            <Setter Property="Width" Value="1"/>
-            <Setter Property="Height" Value="20"/>
-            <Setter Property="Margin" Value="4,0"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Background" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
-        </Style>
         <!-- トラックのヒット領域を広げる FocusTarget の上下拡大マージン（-10px）を 0 に上書きし、
              トラック行の高さ要求を 4px に抑える（これがないと 24px の高さに収まらず上半分が切れる） -->
         <Style Selector="Slider /template/ Border#FocusTarget">
@@ -152,13 +144,13 @@
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="4,1" MinHeight="32" VerticalAlignment="Center">
             <!-- 左側（左寄せ）: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存済み/未 | 保存ファイル名 -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                <TextBlock Text="{Binding PointerDisplayText}" FontSize="12" Width="70" VerticalAlignment="Center"
+                <TextBlock Classes="status" Text="{Binding PointerDisplayText}" Width="70"
                            ToolTip.Tip="マウスポインタ位置（対象座標 = 画像ピクセル）"/>
-                <TextBlock Text="{Binding ImageSizeDisplayText}" FontSize="12" Width="80" VerticalAlignment="Center"
+                <TextBlock Classes="status" Text="{Binding ImageSizeDisplayText}" Width="80"
                            ToolTip.Tip="画像サイズ（対象座標 = 元画像ピクセル）"/>
-                <TextBlock Text="{Binding SaveStatusText}" FontSize="12"/>
-                <TextBlock Text="{Binding SavedFileName}" FontSize="12"/>
-                <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{StaticResource AnnounceForeground}" VerticalAlignment="Center"/>
+                <TextBlock Classes="status" Text="{Binding SaveStatusText}"/>
+                <TextBlock Classes="status" Text="{Binding SavedFileName}"/>
+                <TextBlock Classes="status" Text="{Binding StatusMessage}" Foreground="{StaticResource AnnounceForeground}"/>
             </StackPanel>
 
             <!-- 右側（右寄せ）: 拡大率 -->
@@ -210,7 +202,7 @@
                         HorizontalContentAlignment="Center"
                         VerticalContentAlignment="Center"
                         VerticalAlignment="Center">
-                    <TextBlock Text="Fit" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <TextBlock Classes="status" Text="Fit" HorizontalAlignment="Center"/>
                 </Button>
 
                 <!-- % 表示（クリックで拡大率選択フライアウトを表示）。500% が入る固定幅・テキスト中央寄せ -->
@@ -239,7 +231,7 @@
                             <MenuItem Header="500%" Tag="500" Click="OnZoomFlyoutItemClick"/>
                         </MenuFlyout>
                     </Button.Flyout>
-                    <TextBlock x:Name="ZoomPercentText" Text="{Binding ZoomDisplayText}" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="ZoomPercentText" Classes="status" Text="{Binding ZoomDisplayText}" HorizontalAlignment="Center"/>
                 </Button>
             </StackPanel>
         </Grid>

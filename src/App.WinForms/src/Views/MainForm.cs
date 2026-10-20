@@ -129,10 +129,13 @@ internal sealed class MainForm : Form
         _navButtons = new ToolButton[_entries.Length];
 
         _navDismissFilter = new NavigationDismissFilter(this);
-        _navToggle = UiFactory.CreateToolButton(
+
+        // ナビゲーションの開閉は他のナビ項目と同じ外観にする（ツールバーのボタンの面・枠線は付けない）
+        _navToggle = new ToolButton(
             viewModel.IsNavigationExpanded ? AppIcon.PanelClose : AppIcon.PanelOpen,
-            "ナビゲーション パネルの開閉",
-            ToggleNavigation);
+            "ナビゲーション パネルの開閉");
+        _navToggle.Click += (_, _) => ToggleNavigation();
+        UiFactory.AttachToolTip(_navToggle, "ナビゲーション パネルの開閉");
         // 大きさは DPI に合わせて ApplyNavigationLayout が設定する（AutoScaleMode は実行時の代入を拡大しない）
         _navToggle.Location = new Point(0, 0);
 

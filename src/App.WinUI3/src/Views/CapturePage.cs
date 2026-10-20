@@ -226,7 +226,7 @@ internal static class CapturePage
 
         var menuButton = CreateMenuButton(services, viewModel, toggleCrop, captureSession);
         items.Children.Add(menuButton);
-        items.Children.Add(CreateSeparator());
+        items.Children.Add(AppStyles.CreateToolbarSeparator());
 
         var templateBox = new TextBox
         {
@@ -251,15 +251,14 @@ internal static class CapturePage
             () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
         var crop = CreateIconButton("ic_fluent_crop_24_regular.svg", "切り出し（切出しモード開始/終了）", toggleCrop, AppStyles.ToolbarIconSize);
 
-        // 並びと区切りは Avalonia 版と同じにする（☰ | テンプレート | 保存 | 撮影 3 種 | 切り出し）。
+        // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 撮影 3 種 | 切り出し）。
         // 元に戻す・やり直しはメニューから実行する（ツールバーに置かない）
-        items.Children.Add(CreateSeparator());
         items.Children.Add(save);
-        items.Children.Add(CreateSeparator());
+        items.Children.Add(AppStyles.CreateToolbarSeparator());
         items.Children.Add(screen);
         items.Children.Add(windowSelect);
         items.Children.Add(area);
-        items.Children.Add(CreateSeparator());
+        items.Children.Add(AppStyles.CreateToolbarSeparator());
         items.Children.Add(crop);
 
         // 画像の状態とテンプレートの妥当性に追従して可否を更新する
@@ -447,23 +446,6 @@ internal static class CapturePage
         };
     }
 
-    /// <summary>ツールバーの区切り（縦線）を組み立てる。</summary>
-    /// <returns>組み立てた区切り。</returns>
-    /// <remarks>
-    /// Fluent の <c>MenuFlyoutSeparator</c> はメニュー専用で、横線しか表せない。<br/>
-    /// ツールバーの区切りは他の UI 版と同じ縦線（<c>|</c>）にするため、細い Border を置く。<br/>
-    /// 色は半透明の灰色（Avalonia 版の <c>SystemControlForegroundBaseLowBrush</c> 相当の濃さ）にして、
-    /// 明色・暗色の両テーマで背景に馴染ませる。 太さ・余白は他の UI 版（1 × 20 DIP・左右 4 DIP）と揃える。
-    /// </remarks>
-    private static Border CreateSeparator()
-        => new()
-        {
-            Width = 1,
-            Height = 20,
-            Margin = new Thickness(4, 0, 4, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Background = new SolidColorBrush(Color.FromArgb(0x66, 0x80, 0x80, 0x80)),
-        };
 
     /// <summary>拡大率メニュー（% 表示のクリックで開く）を組み立てる。</summary>
     /// <param name="cropView">対象のプレビュー。</param>

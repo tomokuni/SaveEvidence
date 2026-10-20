@@ -9,24 +9,26 @@
         <!-- 各 ToggleButton は x:Name で個別参照する（Tag ベースの一括走査は行わない） -->
         <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="2,6,140,2">
             <Button Classes="toolbar" Content="最新の情報に更新" Click="OnRefreshClick" Margin="1"/>
-            <Separator Margin="2"/>
+            <Border Classes="toolbar-separator"/>
             <ToggleButton x:Name="ExtraLargeButton" Classes="toolbar" Content="特大" Click="OnViewModeClick" Tag="0" Margin="1"/>
             <ToggleButton x:Name="LargeButton" Classes="toolbar" Content="大" Click="OnViewModeClick" Tag="1" Margin="1"/>
             <ToggleButton x:Name="MediumButton" Classes="toolbar" Content="中" Click="OnViewModeClick" Tag="2" Margin="1"/>
-            <Separator Margin="2"/>
+            <Border Classes="toolbar-separator"/>
             <ToggleButton x:Name="SortAscendingButton" Classes="toolbar" Content="▲ 昇順" Click="OnSortAscendingClick" Tag="asc" Margin="1"/>
             <ToggleButton x:Name="SortDescendingButton" Classes="toolbar" Content="▼ 降順" Click="OnSortDescendingClick" Tag="desc" Margin="1"/>
         </WrapPanel>
 
         <!-- サムネイル一覧（Undo 一覧と同じ共通コントロール。 枠・影・名前の行は EsUtil.Feature.Thumbnail が単一所有する） -->
-        <thumb:ThumbnailControl x:Name="FileListBox" Grid.Row="1"/>
+        <!-- 一覧の下地は 4 UI 版で同じ色にする（値は AppPalette.ListBackground（App.Core）が単一所有する） -->
+        <thumb:ThumbnailControl x:Name="FileListBox" Grid.Row="1"
+                                Background="{DynamicResource ListBackgroundBrush}"/>
 
         <!-- ステータスバー -->
         <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,*,Auto" Margin="4,2">
-            <TextBlock Grid.Column="0" Text="{Binding ItemCountText}" Margin="0,0,8,0"/>
-            <TextBlock Grid.Column="1" Text="{Binding ViewModeText}" Margin="0,0,8,0"/>
-            <TextBlock Grid.Column="2" Text="{Binding SortStatusText}" HorizontalAlignment="Left"/>
-            <TextBlock Grid.Column="3" Text="{Binding FolderPathText}" HorizontalAlignment="Right"/>
+            <TextBlock Grid.Column="0" Classes="status" Text="{Binding ItemCountText}" Margin="0,0,8,0"/>
+            <TextBlock Grid.Column="1" Classes="status" Text="{Binding ViewModeText}" Margin="0,0,8,0"/>
+            <TextBlock Grid.Column="2" Classes="status" Text="{Binding SortStatusText}" HorizontalAlignment="Left"/>
+            <TextBlock Grid.Column="3" Classes="status" Text="{Binding FolderPathText}" HorizontalAlignment="Right"/>
         </Grid>
     </Grid>
 </UserControl>

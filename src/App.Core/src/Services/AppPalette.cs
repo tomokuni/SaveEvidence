@@ -94,16 +94,51 @@ public static class AppPalette
     /// <summary>ツールバーのアイコン ボタンの背景色を取得する。</summary>
     /// <param name="isDark">暗色テーマかどうか。</param>
     /// <param name="isPressed">押している間かどうか。</param>
-    /// <returns>色（<c>0xAARRGGBB</c>）。 マウスが重なっていないときは透明。</returns>
+    /// <returns>色（<c>0xAARRGGBB</c>）。 マウスが重なっていないときは <see cref="ButtonFace"/> の上に重ねる色。</returns>
     /// <remarks>
-    /// 通常時は下地を塗らない（アイコンだけが見える）。 マウスを重ねると薄いグレーの角丸な矩形を出し、<br/>
-    /// 押している間はさらに濃くする（WinUI 3 のアイコン ボタンと同じ段階）。<br/>
+    /// 通常時は <see cref="ButtonFace"/> の面を塗り、マウスを重ねると薄いグレー、押している間はさらに濃くする<br/>
+    /// （WinUI 3 のアイコン ボタンと同じ段階）。<br/>
     /// 暗色テーマでは「濃く」を「明るく」で表す（暗い下地の上では明るい方が押下として目立つ）。
     /// </remarks>
     public static uint ToolbarButtonBackground(bool isDark, bool isPressed)
         => isPressed
             ? (isDark ? ToolbarButtonPressedDark : ToolbarButtonPressedLight)
             : (isDark ? ToolbarButtonHoverDark : ToolbarButtonHoverLight);
+
+    /// <summary>ボタンの面の色（通常時）を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>
+    /// <b>WinUI 3 の既定のボタンと同じ見え方にする</b>: WinUI 3 の面は半透明の白<br/>
+    /// （明色 <c>#B3FFFFFF</c> / 暗色 <c>#0FFFFFFF</c>）であり、下地（明色 <c>#FFFFFF</c> / 暗色 <c>#202020</c>）<br/>
+    /// と重ねた結果の実測値（明色 <c>#FFFFFF</c> / 暗色 <c>#2D2D2D</c>）を opaque な値として持つ<br/>
+    /// （半透明のまま配ると、下地が変わったときに 4 UI 版で見え方がずれる）。
+    /// </remarks>
+    public static uint ButtonFace(bool isDark) => isDark ? 0xFF2D2D2D : 0xFFFFFFFF;
+
+    /// <summary>ボタンの枠線の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>WinUI 3 の既定のボタンの枠線（下端）の実測値（明色 <c>#D6D6D6</c> / 暗色 <c>#303030</c>）。</remarks>
+    public static uint ButtonBorder(bool isDark) => isDark ? 0xFF303030 : 0xFFD6D6D6;
+
+    /// <summary>選択中（チェック済み）のトグル ボタンの面の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>WinUI 3 の既定のトグル ボタンの選択時（アクセント色）の実測値（明色 <c>#0067C0</c> / 暗色 <c>#4CC2FF</c>）。</remarks>
+    public static uint ButtonCheckedFace(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF0067C0;
+
+    /// <summary>選択中（チェック済み）のトグル ボタンの枠線の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>WinUI 3 の既定のトグル ボタンの選択時の枠線（下端）の実測値（明色 <c>#003E73</c> / 暗色 <c>#42A7DC</c>）。</remarks>
+    public static uint ButtonCheckedBorder(bool isDark) => isDark ? 0xFF42A7DC : 0xFF003E73;
+
+    /// <summary>選択中（チェック済み）のトグル ボタンの文字色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>面の色との組み合わせで決める（明色は濃い青の面に白 / 暗色は明るい青の面に黒）。</remarks>
+    public static uint ButtonCheckedForeground(bool isDark) => isDark ? 0xFF000000 : 0xFFFFFFFF;
 
     /// <summary>画像領域の背景色を <see cref="System.Drawing.Color"/> で取得する。</summary>
     /// <param name="isDark">暗色テーマかどうか。</param>

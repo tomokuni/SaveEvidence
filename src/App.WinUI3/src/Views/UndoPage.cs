@@ -54,9 +54,14 @@ internal static class UndoPage
         // 一覧はフォルダビューと同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
         var list = new ThumbnailControl();
 
+        // 一覧の下地は 4 UI 版で同じ色にする（テーマの変更にも追随させる）
+        void ApplyListBackground() => list.Background = AppStyles.ListBackground;
+        ApplyListBackground();
+        AppStyles.ThemeChanged += (_, _) => ApplyListBackground();
+
         var itemCountText = CreateStatusLabel(view.ItemCountText);
         var modeText = CreateStatusLabel(view.ViewModeText);
-        var hintText = CreateStatusLabel("ダブルクリックで既定のアプリで開きます");
+        var hintText = CreateStatusLabel("ダブルクリックで外部ツール表示");
         hintText.HorizontalAlignment = HorizontalAlignment.Right;
 
         var modeButtons = new List<ToggleButton>();
@@ -106,21 +111,13 @@ internal static class UndoPage
             modeButtons.Add(button);
         }
 
-        var refresh = new Button
-        {
-            Content = "最新の情報に更新",
-            Height = AppStyles.ToolbarButtonHeight,
-            Margin = new Thickness(1),
-        };
-        refresh.Click += (_, _) => Rebuild();
-
         var toolbarItems = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+
+        // 4 UI 版で同じ並びにする（Undo 一覧は履歴が自動で更新されるため「最新の情報に更新」は置かない）
         foreach (var button in modeButtons)
         {
             toolbarItems.Children.Add(button);
         }
-
-        toolbarItems.Children.Add(refresh);
 
         var toolbar = new ScrollViewer
         {

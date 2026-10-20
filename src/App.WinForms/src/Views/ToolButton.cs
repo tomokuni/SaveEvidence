@@ -20,6 +20,9 @@ internal sealed class ToolButton : Button
     /// <summary>このボタンが表示するアイコン（null の場合は文字だけを表示する）。</summary>
     private readonly AppIcon? _icon;
 
+    /// <summary>ツールバーのボタンとして塗る（面・枠線・選択色）かどうか。</summary>
+    private bool _isToolbarButton;
+
     /// <summary>選択状態を示す背景色で描くかどうか。</summary>
     private bool _isSelected;
 
@@ -76,6 +79,28 @@ internal sealed class ToolButton : Button
             }
 
             _isSelected = value;
+            ApplyTheme();
+        }
+    }
+
+    /// <summary>ツールバーのボタンとして塗る（面・枠線・選択色）かどうかを取得または設定する。</summary>
+    /// <value>true の場合は WinUI 3 の既定のボタンと同じ外観（面・枠線・選択時はアクセント色）で描く。</value>
+    /// <remarks>
+    /// ナビゲーションの項目（<c>false</c>）は下地を持たない（選択の帯だけで示す）。<br/>
+    /// ツールバーのボタンは面を持つため、同じ <see cref="ToolButton"/> でも描き分ける。
+    /// </remarks>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool IsToolbarButton
+    {
+        get => _isToolbarButton;
+        set
+        {
+            if (_isToolbarButton == value)
+            {
+                return;
+            }
+
+            _isToolbarButton = value;
             ApplyTheme();
         }
     }
@@ -160,7 +185,21 @@ internal sealed class ToolButton : Button
     /// <summary>配色を現在のテーマへ合わせる。</summary>
     private void ApplyTheme()
     {
-        BackColor = _isSelected ? AppStyles.NavItemSelected : AppStyles.BarBackground;
+        if (_isToolbarButton)
+        {
+            // ツールバーのボタンは WinUI 3 の既定のボタンと同じ外観にする（面 + 枠線 + 選択時はアクセント色）
+            BackColor = _isSelected ? AppStyles.SelectedButtonFace : AppStyles.ButtonFace;
+            ForeColor = _isSelected ? AppStyles.SelectedButtonForeground : AppStyles.Foreground;
+            FlatAppearance.BorderSize = 1;
+            FlatAppearance.BorderColor = _isSelected ? AppStyles.SelectedButtonBorder : AppStyles.ButtonBorder;
+            FlatAppearance.MouseOverBackColor = _isSelected ? AppStyles.SelectedButtonFace : AppStyles.ButtonHover;
+            FlatAppearance.MouseDownBackColor = _isSelected ? AppStyles.SelectedButtonFace : AppStyles.ButtonPressed;
+            RefreshIcon();
+            return;
+        }
+
+        // ナビゲーションの項目はナビゲーション パネルの下地をそのまま見せる（選択の帯だけで示す）
+        BackColor = _isSelected ? AppStyles.NavItemSelected : AppStyles.NavBackground;
         ForeColor = AppStyles.Foreground;
         FlatAppearance.MouseOverBackColor = AppStyles.NavItemHover;
         FlatAppearance.MouseDownBackColor = AppStyles.NavItemSelected;

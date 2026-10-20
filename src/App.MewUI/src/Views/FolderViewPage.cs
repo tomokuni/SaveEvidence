@@ -157,6 +157,7 @@ internal static class FolderViewPage
         {
             var index = i;
             modeButtons[i] = new ToggleButton()
+                .StyleName(AppStyles.ToolbarToggle)
                 .Content(ViewModeDisplay.GetText(index))
                 .Height(AppStyles.ToolbarButtonHeight)
                 .Margin(new Thickness(1));
@@ -191,6 +192,7 @@ internal static class FolderViewPage
         {
             var ascending = i == 0;
             sortButtons[i] = new ToggleButton()
+                .StyleName(AppStyles.ToolbarToggle)
                 .Content(ascending ? "▲ 昇順" : "▼ 降順")
                 .Height(AppStyles.ToolbarButtonHeight)
                 .Margin(new Thickness(1));
@@ -198,6 +200,7 @@ internal static class FolderViewPage
         }
 
         var refresh = new Button()
+            .StyleName(AppStyles.ToolbarButton)
             .Content("最新の情報に更新")
             .Height(AppStyles.ToolbarButtonHeight)
             .MinWidth(AppStyles.ToolbarButtonHeight)
@@ -220,11 +223,11 @@ internal static class FolderViewPage
             .Spacing(12)
             .VerticalAlignment(VerticalAlignment.Center)
             .Children(
-                new TextBlock().Bind(TextBlock.TextProperty, viewModel, static x => x.ItemCountText),
-                new TextBlock().Bind(TextBlock.TextProperty, viewModel, static x => x.ViewModeText),
-                new TextBlock().Bind(TextBlock.TextProperty, viewModel, static x => x.SortStatusText));
+                new TextBlock().Bind(TextBlock.TextProperty, viewModel, static x => x.ItemCountText).FontSize(AppStyles.StatusFontSize),
+                new TextBlock().Bind(TextBlock.TextProperty, viewModel, static x => x.ViewModeText).FontSize(AppStyles.StatusFontSize),
+                new TextBlock().Bind(TextBlock.TextProperty, viewModel, static x => x.SortStatusText).FontSize(AppStyles.StatusFontSize));
 
-        var folderText = new TextBlock().Bind(TextBlock.TextProperty, viewModel, static x => x.FolderPathText);
+        var folderText = new TextBlock().Bind(TextBlock.TextProperty, viewModel, static x => x.FolderPathText).FontSize(AppStyles.StatusFontSize);
         folderText.HorizontalAlignment = HorizontalAlignment.Right;
         folderText.VerticalAlignment = VerticalAlignment.Center;
 

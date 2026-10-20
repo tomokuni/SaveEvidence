@@ -46,7 +46,10 @@ internal static class UiFactory
     {
         ArgumentNullException.ThrowIfNull(onClick);
 
-        var button = new ToolButton(icon, toolTip, caption);
+        var button = new ToolButton(icon, toolTip, caption)
+        {
+            IsToolbarButton = true,
+        };
         button.Click += (_, _) => onClick();
         AttachToolTip(button, toolTip);
         return button;
@@ -125,6 +128,8 @@ internal static class UiFactory
         {
             AutoSize = autoWidth,
             Width = Math.Max(1, width),
+            // ステータス バーの文字サイズは 4 UI 版で共通の値（App.Core が単一所有する）を使う
+            Font = AppStyles.StatusBarFont,
             // ステータス バーの内側の高さいっぱいに広げ、文字を垂直方向中央へ置く
             Height = StatusBarContentHeight,
             TextAlign = ContentAlignment.MiddleLeft,

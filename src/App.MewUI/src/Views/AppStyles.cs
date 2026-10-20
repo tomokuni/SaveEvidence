@@ -87,7 +87,8 @@ internal static class AppStyles
     public const double StatusIconSize = 14;
 
     /// <summary>ステータスバーの文字サイズ（DIP）。</summary>
-    public const double StatusFontSize = 12;
+    /// <remarks>値は <see cref="StatusBarMetrics.FontSize"/>（App.Core）が単一所有する（4 つの UI 版で同じ大きさにする）。</remarks>
+    public const double StatusFontSize = StatusBarMetrics.FontSize;
 
     /// <summary>ナビゲーション パネルのフッター（UI 名とバージョン）の文字サイズ（DIP）。</summary>
     public const double NavVersionFontSize = 11;
@@ -116,6 +117,9 @@ internal static class AppStyles
 
     /// <summary>ツールバーのボタンのスタイル名。</summary>
     public const string ToolbarButton = "toolbar-button";
+
+    /// <summary>ツールバーのトグル ボタン（表示モード・並べ替え）のスタイル名。</summary>
+    public const string ToolbarToggle = "toolbar-toggle";
 
     /// <summary>ツールバーのボタン（押している間）のスタイル名。</summary>
     /// <remarks>
@@ -178,6 +182,37 @@ internal static class AppStyles
     /// <summary>押下時の背景色（暗色テーマ）。</summary>
     private static readonly MewUIColor s_pressedDark = ToColor(AppPalette.ToolbarButtonPressedDark);
 
+    /// <summary>ボタンの面の色（明色テーマ）。</summary>
+    /// <remarks>値は <see cref="AppPalette.ButtonFace"/>（App.Core）が単一所有する（WinUI 3 の既定のボタンの実測値）。</remarks>
+    private static readonly MewUIColor s_buttonFaceLight = ToColor(AppPalette.ButtonFace(isDark: false));
+
+    /// <summary>ボタンの面の色（暗色テーマ）。</summary>
+    private static readonly MewUIColor s_buttonFaceDark = ToColor(AppPalette.ButtonFace(isDark: true));
+
+    /// <summary>ボタンの枠線の色（明色テーマ）。</summary>
+    private static readonly MewUIColor s_buttonBorderLight = ToColor(AppPalette.ButtonBorder(isDark: false));
+
+    /// <summary>ボタンの枠線の色（暗色テーマ）。</summary>
+    private static readonly MewUIColor s_buttonBorderDark = ToColor(AppPalette.ButtonBorder(isDark: true));
+
+    /// <summary>選択中のトグル ボタンの面の色（明色テーマ）。</summary>
+    private static readonly MewUIColor s_checkedFaceLight = ToColor(AppPalette.ButtonCheckedFace(isDark: false));
+
+    /// <summary>選択中のトグル ボタンの面の色（暗色テーマ）。</summary>
+    private static readonly MewUIColor s_checkedFaceDark = ToColor(AppPalette.ButtonCheckedFace(isDark: true));
+
+    /// <summary>選択中のトグル ボタンの枠線の色（明色テーマ）。</summary>
+    private static readonly MewUIColor s_checkedBorderLight = ToColor(AppPalette.ButtonCheckedBorder(isDark: false));
+
+    /// <summary>選択中のトグル ボタンの枠線の色（暗色テーマ）。</summary>
+    private static readonly MewUIColor s_checkedBorderDark = ToColor(AppPalette.ButtonCheckedBorder(isDark: true));
+
+    /// <summary>選択中のトグル ボタンの文字色（明色テーマ）。</summary>
+    private static readonly MewUIColor s_checkedForegroundLight = ToColor(AppPalette.ButtonCheckedForeground(isDark: false));
+
+    /// <summary>選択中のトグル ボタンの文字色（暗色テーマ）。</summary>
+    private static readonly MewUIColor s_checkedForegroundDark = ToColor(AppPalette.ButtonCheckedForeground(isDark: true));
+
     /// <summary>ナビ項目のホバー背景色（明色テーマ）。</summary>
     private static readonly MewUIColor s_navHoverLight = MewUIColor.FromArgb(255, 229, 233, 240);
 
@@ -229,11 +264,12 @@ internal static class AppStyles
     private static readonly MewUIColor s_imageAreaBackgroundDark = ToColor(AppPalette.ImageArea(isDark: true));
 
     /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色（明色テーマ用）。</summary>
-    /// <remarks>Avalonia 版の <c>SystemControlBackgroundChromeMediumLowBrush</c> と同じ値。</remarks>
-    private static readonly MewUIColor s_listBackgroundLight = MewUIColor.FromArgb(255, 242, 242, 242);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（4 つの UI 版で同じ色にする）。</remarks>
+    private static readonly MewUIColor s_listBackgroundLight = ToColor(AppPalette.ListBackground(isDark: false));
 
     /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色（暗色テーマ用）。</summary>
-    private static readonly MewUIColor s_listBackgroundDark = MewUIColor.FromArgb(255, 43, 43, 43);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（4 つの UI 版で同じ色にする）。</remarks>
+    private static readonly MewUIColor s_listBackgroundDark = ToColor(AppPalette.ListBackground(isDark: true));
 
     /// <summary>プルダウンの背景色（明色テーマ用）。</summary>
     private static readonly MewUIColor s_menuBackgroundLight = MewUIColor.FromArgb(255, 252, 252, 252);
@@ -286,8 +322,9 @@ internal static class AppStyles
         sheet.Define(NavToggle, () => Flat(s_hoverLight, s_hoverDark));
         sheet.Define(NavItem, () => NavItemStyle(s_navHoverLight, s_navHoverDark, _ => MewUIColor.Transparent));
         sheet.Define(NavItemSelected, () => NavItemStyle(s_navSelectedLight, s_navSelectedDark, t => t.IsDark ? s_navSelectedDark : s_navSelectedLight));
-        sheet.Define(ToolbarButton, () => Flat(s_hoverLight, s_hoverDark));
-        sheet.Define(ToolbarButtonPressed, () => Flat(s_pressedLight, s_pressedDark));
+        sheet.Define(ToolbarButton, () => Filled());
+        sheet.Define(ToolbarToggle, () => FilledToggle());
+        sheet.Define(ToolbarButtonPressed, () => Filled(pressed: true));
         sheet.Define(StatusButton, () => StatusButtonStyle());
         sheet.Define(FlatButton, () => Flat(s_hoverLight, s_hoverDark));
         sheet.Define(WindowButton, () => WindowButtonStyle());
@@ -502,6 +539,103 @@ internal static class AppStyles
             ],
         };
 
+    /// <summary>WinUI 3 の既定のボタンと同じ外観（面 + 1 DIP の枠線 + 角丸）のスタイルを生成する。</summary>
+    /// <param name="pressed">押したままの状態を保つ場合 true（フライアウトを開いている間）。</param>
+    /// <returns>生成したスタイル。</returns>
+    /// <remarks>
+    /// 通常時は面を塗り（<see cref="AppPalette.ButtonFace"/>）、マウスを重ねると薄いグレー、押している間は<br/>
+    /// さらに濃くする。 面・枠線・角丸は WinUI 3 の既定のボタンの実測値に合わせる（4 UI 版で同じ見え方にする）。
+    /// </remarks>
+    private static Style Filled(bool pressed = false)
+        => new(typeof(Button))
+        {
+            Setters =
+            [
+                Setter.Create(Control.BorderBrushProperty, t => t.IsDark ? s_buttonBorderDark : s_buttonBorderLight),
+                Setter.Create(Control.BorderThicknessProperty, 1.0),
+                Setter.Create(Control.CornerRadiusProperty, AppPalette.ToolbarButtonCornerRadius),
+            ],
+            Triggers =
+            [
+                // 面の色はトリガーで与える（既定のテーマは状態トリガーで面を塗るため、
+                // セッターだけでは既定の色に負ける。 実測: 面が既定のグレーのまま残った）
+                new StateTrigger
+                {
+                    Match = VisualStateFlags.None,
+                    Setters =
+                    [
+                        Setter.Create(
+                            Control.BackgroundProperty,
+                            t => pressed
+                                ? (t.IsDark ? s_pressedDark : s_pressedLight)
+                                : (t.IsDark ? s_buttonFaceDark : s_buttonFaceLight)),
+                    ],
+                },
+                new StateTrigger
+                {
+                    Match = VisualStateFlags.Hot,
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_hoverDark : s_hoverLight)],
+                },
+                new StateTrigger
+                {
+                    Match = VisualStateFlags.Pressed,
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_pressedDark : s_pressedLight)],
+                },
+            ],
+        };
+
+    /// <summary>ツールバーのトグル ボタン（表示モード・並べ替え）のスタイルを生成する。</summary>
+    /// <returns>生成したスタイル。</returns>
+    /// <remarks>
+    /// <b>選択中はアクセント色で塗る</b>（WinUI 3 の既定のトグル ボタンと同じ）。<br/>
+    /// 文字色も選択中だけ切り替える（明色は濃い青の面に白 / 暗色は明るい青の面に黒）。<br/>
+    /// ホバー・押下は選択中に重ねない（選択中の色を保つ）。
+    /// </remarks>
+    private static Style FilledToggle()
+        => new(typeof(ToggleButton))
+        {
+            Setters =
+            [
+                Setter.Create(Control.BorderBrushProperty, t => t.IsDark ? s_buttonBorderDark : s_buttonBorderLight),
+                Setter.Create(Control.BorderThicknessProperty, 1.0),
+                Setter.Create(Control.CornerRadiusProperty, AppPalette.ToolbarButtonCornerRadius),
+            ],
+            Triggers =
+            [
+                // 面の色はトリガーで与える（既定のテーマは状態トリガーで面を塗るため、セッターだけでは既定の色に負ける）
+                new StateTrigger
+                {
+                    Match = VisualStateFlags.None,
+                    Exclude = VisualStateFlags.Checked,
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_buttonFaceDark : s_buttonFaceLight)],
+                },
+                new StateTrigger
+                {
+                    Match = VisualStateFlags.Hot,
+                    Exclude = VisualStateFlags.Checked,
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_hoverDark : s_hoverLight)],
+                },
+                new StateTrigger
+                {
+                    Match = VisualStateFlags.Pressed,
+                    Exclude = VisualStateFlags.Checked,
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_pressedDark : s_pressedLight)],
+                },
+                new StateTrigger
+                {
+                    Match = VisualStateFlags.Checked,
+                    Setters =
+                    [
+                        Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_checkedFaceDark : s_checkedFaceLight),
+                        Setter.Create(Control.BorderBrushProperty, t => t.IsDark ? s_checkedBorderDark : s_checkedBorderLight),
+                        Setter.Create(
+                            TextElement.ForegroundProperty,
+                            t => t.IsDark ? s_checkedForegroundDark : s_checkedForegroundLight),
+                    ],
+                },
+            ],
+        };
+
     /// <summary>ウィンドウ操作ボタン（最小化・最大化）のスタイルを生成する。</summary>
     /// <returns>生成したスタイル。</returns>
     /// <remarks>
@@ -534,7 +668,7 @@ internal static class AppStyles
     /// <summary>ステータスバーのボタンのスタイルを生成する。</summary>
     /// <returns>生成したスタイル。</returns>
     /// <remarks>
-    /// 背景を持たず、ホバー・押下で薄い背景を表示するのは他の透過ボタンと同じ。<br/>
+    /// 外観は WinUI 3 の既定のボタンと同じ（面 + 枠線 + 角丸）にする。<br/>
     /// ボタンの既定スタイルは <c>MinHeight</c> をウィンドウの基準コントロール高（32 DIP）にするため、<br/>
     /// ステータスバーの小さな寸法（高さ 20）を指定しても既定値に負けて高さが変わらない。<br/>
     /// そのため最小寸法を 0 に上書きして、指定した高さをそのまま使えるようにする。
@@ -544,13 +678,20 @@ internal static class AppStyles
         {
             Setters =
             [
-                Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent),
-                Setter.Create(Control.BorderThicknessProperty, 0.0),
+                Setter.Create(Control.BorderBrushProperty, t => t.IsDark ? s_buttonBorderDark : s_buttonBorderLight),
+                Setter.Create(Control.BorderThicknessProperty, 1.0),
+                Setter.Create(Control.CornerRadiusProperty, AppPalette.ToolbarButtonCornerRadius),
                 Setter.Create(FrameworkElement.MinHeightProperty, 0.0),
                 Setter.Create(FrameworkElement.MinWidthProperty, 0.0),
             ],
             Triggers =
             [
+                // 面の色はトリガーで与える（既定のテーマは状態トリガーで面を塗るため、セッターだけでは既定の色に負ける）
+                new StateTrigger
+                {
+                    Match = VisualStateFlags.None,
+                    Setters = [Setter.Create(Control.BackgroundProperty, t => t.IsDark ? s_buttonFaceDark : s_buttonFaceLight)],
+                },
                 new StateTrigger
                 {
                     Match = VisualStateFlags.Hot,

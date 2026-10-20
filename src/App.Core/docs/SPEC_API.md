@@ -1,4 +1,4 @@
-﻿# App.Core API リファレンス
+# App.Core API リファレンス
 
 `App.Core` は UI フレームワーク非依存のモデル・ユーティリティ・ViewModel を提供します。 名前空間は `App.AvaloniaUI` と同一の `EsUtil.SaveEvidence.*` です。
 
@@ -33,14 +33,15 @@
 - [21. `Services.NavPanelMetrics`（静的クラス）](#21-servicesnavpanelmetrics静的クラス)
 - [22. `Services.StartupPreviewImage`（静的クラス）](#22-servicesstartuppreviewimage静的クラス)
 - [23. `Services.EnumDisplayNames`（静的クラス）](#23-servicesenumdisplaynames静的クラス)
-- [24. `Services.SettingsMetrics`（静的クラス）](#24-servicessettingsmetrics静的クラス)
-- [25. `Services.ThumbnailTileMetrics`（静的クラス）](#25-servicesthumbnailtilemetrics静的クラス)
-- [26. `Services.AppIdentity`（静的クラス）](#26-servicesappidentity静的クラス)
-- [27. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）](#27-serviceswindowmetrics--serviceswindowlayout静的クラス)
-- [28. `Services.WindowMenu`](#28-serviceswindowmenu)
-- [29. `Icons.SvgIconLoader`（内部）](#29-iconssvgiconloader内部)
-- [30. `Services.ZoomMenuLevels`（静的クラス）](#30-serviceszoommenulevels静的クラス)
-- [31. 依存関係](#31-依存関係)
+- [24. `Services.StatusBarMetrics`（静的クラス）](#24-servicesstatusbarmetrics静的クラス)
+- [25. `Services.SettingsMetrics`（静的クラス）](#25-servicessettingsmetrics静的クラス)
+- [26. `Services.ThumbnailTileMetrics`（静的クラス）](#26-servicesthumbnailtilemetrics静的クラス)
+- [27. `Services.AppIdentity`（静的クラス）](#27-servicesappidentity静的クラス)
+- [28. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）](#28-serviceswindowmetrics--serviceswindowlayout静的クラス)
+- [29. `Services.WindowMenu`](#29-serviceswindowmenu)
+- [30. `Icons.SvgIconLoader`（内部）](#30-iconssvgiconloader内部)
+- [31. `Services.ZoomMenuLevels`（静的クラス）](#31-serviceszoommenulevels静的クラス)
+- [32. 依存関係](#32-依存関係)
 
 ## 1. 公開 API の可視性
 
@@ -346,10 +347,15 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | ナビゲーション項目の選択中の背景（薄いグレー） | `#DEDEDE` | `#373737` | `NavItemSelected(bool isDark)` |
 | ナビゲーション項目の選択マーク（左端の青） | `#0067C0` | `#4CC2FF` | `NavItemSelectionAccent(bool isDark)` |
 | 一覧（フォルダビュー / Undo 一覧）の背景 | `#F2F2F2` | `#2B2B2B` | `ListBackground(bool isDark)` |
-| ツールバーのアイコン ボタンの背景（ホバー） | `#E9E9E9` | `#3A3A3A` | `ToolbarButtonBackground(bool isDark, bool isPressed)` |
-| ツールバーのアイコン ボタンの背景（押下） | `#DBDBDB` | `#4E4E4E` | `ToolbarButtonBackground(bool isDark, bool isPressed)` |
+| ボタンの面（通常時） | `#FFFFFF` | `#2D2D2D` | `ButtonFace(bool isDark)` |
+| ボタンの枠線 | `#D6D6D6` | `#303030` | `ButtonBorder(bool isDark)` |
+| 選択中のトグル ボタンの面 | `#0067C0` | `#4CC2FF` | `ButtonCheckedFace(bool isDark)` |
+| 選択中のトグル ボタンの枠線 | `#003E73` | `#42A7DC` | `ButtonCheckedBorder(bool isDark)` |
+| 選択中のトグル ボタンの文字 | `#FFFFFF` | `#000000` | `ButtonCheckedForeground(bool isDark)` |
+| ボタンの面（ホバー） | `#E9E9E9` | `#3A3A3A` | `ToolbarButtonBackground(bool isDark, bool isPressed)` |
+| ボタンの面（押下） | `#DBDBDB` | `#4E4E4E` | `ToolbarButtonBackground(bool isDark, bool isPressed)` |
 
-`ToolbarButtonCornerRadius`（4 DIP）はツールバーのアイコン ボタンの角丸です。 通常時は下地を塗らず、マウスを重ねると薄い角丸の矩形を出し、押している間はさらに濃くします（暗色では「濃く」を「明るく」で表す）。
+`ToolbarButtonCornerRadius`（4 DIP）はボタンの角丸です。 ボタンは **WinUI 3 の既定のボタンと同じ外観**（面・1 DIP の枠線・選択中はアクセント色）にし、マウスを重ねると薄いグレー、押している間はさらに濃くします（暗色では「濃く」を「明るく」で表す）。 面・枠線・アクセント色は WinUI 3 の実測値です（半透明の面を下地と重ねた結果を opaque な値として保持する。 半透明のまま配ると下地が変わったときに UI 版でずれる）。
 
 `ImageAreaDrawingColor` はプレビューの下地（`ZoomViewAppearance.BackgroundColor`、UI 非依存の `System.Drawing.Color`）向けです。 変換を各 UI 版へ書き分けないよう本クラスが担います。 選択中の 2 色は WinUI 3 の `NavigationViewItem` の実測値です（AvaloniaUI / MewUI が同じ表示にする）。
 
@@ -395,7 +401,19 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | --- | --- |
 | `Get<T>(T value)` / `Get(Enum value)` | 表示名を返す（属性が無い場合は列挙の名前） |
 
-## 24. `Services.SettingsMetrics`（静的クラス）
+## 24. `Services.StatusBarMetrics`（静的クラス）
+
+ステータス バーの文字サイズを単一所有します（UI 版ごとに文字の大きさがずれないようにするため）。
+
+| 定数 | 値 | 意味 |
+| --- | --- | --- |
+| FontSize | 12 DIP | ステータス バーの文字サイズ（4 つの UI 版で共通） |
+
+**経緯**: AvaloniaUI 版だけがテーマの既定（14 DIP）を使い、他の UI 版より 1 回り大きく見えました。 4 UI 版とも同じ値を使います。
+
+WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します（`AppStyles.StatusBarFont` が換算済みのフォントを 1 つだけ生成して共用する）。
+
+## 25. `Services.SettingsMetrics`（静的クラス）
 
 設定ページの文字サイズと共通の文言を単一所有します（UI 版ごとに見た目がずれないようにするため）。 文字サイズは **AvaloniaUI 版（Fluent テーマの既定 14 DIP）を基準**にします。
 
@@ -407,7 +425,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。
 
-## 25. `Services.ThumbnailTileMetrics`（静的クラス）
+## 26. `Services.ThumbnailTileMetrics`（静的クラス）
 
 一覧（フォルダビュー / Undo 一覧）のサムネイル 1 件の見た目の寸法を単一所有します（UI 版ごとに影の濃さ・名前の位置がずれないようにするため）。 **画像の周りに枠線・下地は置きません**（影だけを付けます）。
 
@@ -453,7 +471,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **画素の格子へ揃える**（キャプチャページの画像）: 画像は端数のある位置へ描かれるため、影の矩形を端数のまま描くと端の画素が半透明になり、画像との間に「白い線」または「黒い線」として見えます。 `BuildDeviceBands` が**物理ピクセルの整数矩形**を返すため、各 UI 版は丸めを持ちません（DIP へ戻すときだけ倍率で割ります）。 アンチエイリアスは切って画像の端と隙間なく接させます。 さらに**画像の端の画素（切り捨てた行・列）も帯で覆い**ます: 画像の描画側は端の画素を切り捨てたり切り上げたりするため、`floor` の行・列が画像でも影でも塗られず**背景（白）が残る**ことがあります（実測: 拡大率によって画像の上辺に 1 画素の白い線）。 覆った分は画像が塗る場合は画像に隠れます。
 
-## 26. `Services.AppIdentity`（静的クラス）
+## 27. `Services.AppIdentity`（静的クラス）
 
 アプリの**名前・タスク バーの識別子・アイコン・保存先**の唯一の定義です（4 つの UI 版が同じ値を使う）。 UI 版ごとに文字列を書くと、綴りの違いで設定・ログ・タスク バーのグループ分けがずれます。
 
@@ -469,7 +487,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 `TaskbarIdentity.Apply()` は **`SetCurrentProcessExplicitAppUserModelID`** でプロセスの AUMID を設定します（4 UI 版が同じ値を使うため、タスク バーでは 1 つのアプリにまとまります）。 **ウィンドウを作る前**に各 UI 版のエントリ ポイントが 1 回呼びます。 失敗（API 不在等）しても例外にせず、起動を妨げません（タスク バーのグループ分けが既定のままになるだけです）。
 
-## 27. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）
+## 28. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）
 
 メイン ウィンドウの寸法と配置の**唯一の定義**です（4 つの UI 版で同じ値を使う）。
 
@@ -486,7 +504,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **ナビゲーション パネルの配置**: 展開しても**ページ領域は動きません**（収納時の幅の位置に留まります）。 展開したパネルはページ領域の上へ重なり、上端はページ領域の先頭、下端はステータス バーに被ります。 パネルの一番上にアプリ アイコン、その下に開閉ボタン（アイコンのみ）を置き、**展開時は開閉ボタンの右にアプリ名を表示**します。 アプリ アイコンは**ナビゲーションのアイコンと同じ大きさ**にし、**縦位置をツールバーのアイコンと揃え**（`AppIconRowHeight` の中で中央）、**横位置を開閉アイコンと同じ列**（`AppIconColumnWidth` の中で中央）に置きます。 展開中にナビ領域の外を操作すると収納へ戻ります。
 
-## 28. `Services.WindowMenu`
+## 29. `Services.WindowMenu`
 
 ウィンドウ左上のアイコンの押下で出す標準メニューの**項目・並び・有効/無効**の唯一の定義です（4 つの UI 版で同じメニューになる）。
 
@@ -498,7 +516,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **移動とサイズ変更**は `EsUtil.Platform.Core` の `SystemWindowCommands` が OS のモード（`WM_SYSCOMMAND`）へ入ります（アプリ側で追従を実装しない）。
 
-## 29. `Icons.SvgIconLoader`（内部）
+## 30. `Icons.SvgIconLoader`（内部）
 
 アイコンの SVG の**読み込みと解析**の唯一の定義です（4 つの UI 版が同じファイルを使う）。
 
@@ -510,7 +528,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **アイコンのファイルは `src/App.Core/src/Icons/` に置きます**（埋め込みリソース。 論理名は `EsUtil.SaveEvidence.App.Core.Icons.<ファイル名>`）。 各 UI 版はパス データを自分の描画 API へ変換して描くだけです（UI 版ごとに SVG を複製すると、片方だけ直したときに見た目がずれます）。
 
-## 30. `Services.ZoomMenuLevels`（静的クラス）
+## 31. `Services.ZoomMenuLevels`（静的クラス）
 
 ステータス バーの**拡大率の押下で出す選択肢**（%）の唯一の定義です（4 つの UI 版で同じ選択肢になる）。 メニューの先頭には「自動」（Fit 表示へ戻す）を別途置きます。
 
@@ -520,7 +538,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 ⊖⊕ ボタンの段階（`ZoomTransition.DefaultButtonZoomLevels`・23 段階）とは目的が異なるため別に持ちます。
 
-## 31. 依存関係
+## 32. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |

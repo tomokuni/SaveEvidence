@@ -50,6 +50,11 @@ internal static class FolderViewPage
         // 一覧は Undo 一覧と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
         var list = new ThumbnailControl();
 
+        // 一覧の下地は 4 UI 版で同じ色にする（テーマの変更にも追随させる）
+        void ApplyListBackground() => list.Background = AppStyles.ListBackground;
+        ApplyListBackground();
+        AppStyles.ThemeChanged += (_, _) => ApplyListBackground();
+
         // 生成中の要求と、その項目の一覧内の位置（見え方の変化で優先度を付け直す）
         var pending = new List<(ThumbnailScheduler.ThumbnailRequest Request, int Index)>();
 
@@ -153,17 +158,22 @@ internal static class FolderViewPage
         refresh.Click += (_, _) => Rebuild();
 
         var toolbarItems = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+
+        // 4 UI 版で同じ並びにする（最新の情報に更新 / 表示モード / 並べ替え）
+        toolbarItems.Children.Add(refresh);
+        toolbarItems.Children.Add(AppStyles.CreateToolbarSeparator());
+
         foreach (var button in modeButtons)
         {
             toolbarItems.Children.Add(button);
         }
 
+        toolbarItems.Children.Add(AppStyles.CreateToolbarSeparator());
+
         foreach (var button in sortButtons)
         {
             toolbarItems.Children.Add(button);
         }
-
-        toolbarItems.Children.Add(refresh);
 
         var status = BuildStatusBar(itemCountText, modeText, sortText, folderText);
         var page = new Grid();

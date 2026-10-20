@@ -55,8 +55,8 @@ internal static class UndoPage
             Dock = DockStyle.Fill,
         };
 
-        var countLabel = UiFactory.CreateStatusLabel(160, "項目数");
-        var modeLabel = UiFactory.CreateStatusLabel(80, "表示モード");
+        var countLabel = UiFactory.CreateStatusLabel(0, "項目数");
+        var modeLabel = UiFactory.CreateStatusLabel(0, "表示モード");
         var hintLabel = UiFactory.CreateStatusLabel(0);
 
         var statusBar = UiFactory.CreateStatusBar();
@@ -92,7 +92,7 @@ internal static class UndoPage
         var toolbar = UiFactory.CreateToolbar();
         toolbar.Controls.AddRange(modeButtons);
 
-        var root = new Panel { Dock = DockStyle.Fill, BackColor = AppStyles.ListBackground };
+        var root = new Panel { Dock = DockStyle.Fill, BackColor = AppStyles.PageBackground };
         root.Controls.Add(list);
         root.Controls.Add(toolbar);
         root.Controls.Add(statusBar);
@@ -141,12 +141,13 @@ internal static class UndoPage
         // 配色を現在のテーマへ合わせる。
         void ApplyAppearance()
         {
-            root.BackColor = AppStyles.ListBackground;
+            // ページは下地（白）のまま、一覧だけ 4 UI 版で共通の一覧色にする
+            root.BackColor = AppStyles.PageBackground;
             list.BackColor = AppStyles.ListBackground;
             toolbar.BackColor = AppStyles.BarBackground;
-            statusBar.BackColor = AppStyles.ListBackground;
-            statusFlow.BackColor = AppStyles.ListBackground;
-            hintPanel.BackColor = AppStyles.ListBackground;
+            statusBar.BackColor = AppStyles.PageBackground;
+            statusFlow.BackColor = AppStyles.PageBackground;
+            hintPanel.BackColor = AppStyles.PageBackground;
             hintLabel.Text = "ダブルクリックで外部ツール表示";
             hintLabel.ForeColor = AppStyles.Foreground;
 

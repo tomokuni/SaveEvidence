@@ -33,7 +33,34 @@ internal static class AppStyles
     public static Color ImageAreaBackground => ToColor(AppPalette.ImageArea(isDark: false));
 
     /// <summary>一覧の背景色を取得する。</summary>
-    public static Color ListBackground => Color.FromArgb(0xF2, 0xF2, 0xF2);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（4 つの UI 版で同じ色にする）。</remarks>
+    public static Color ListBackground => ToColor(AppPalette.ListBackground(isDark: false));
+
+    /// <summary>ボタンの面の色を取得する。</summary>
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（WinUI 3 の既定のボタンの実測値）。</remarks>
+    public static Color ButtonFace => ToColor(AppPalette.ButtonFace(isDark: false));
+
+    /// <summary>ボタンの枠線の色を取得する。</summary>
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する。</remarks>
+    public static Color ButtonBorder => ToColor(AppPalette.ButtonBorder(isDark: false));
+
+    /// <summary>選択中のトグル ボタンの面の色を取得する。</summary>
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する。</remarks>
+    public static Color SelectedButtonFace => ToColor(AppPalette.ButtonCheckedFace(isDark: false));
+
+    /// <summary>選択中のトグル ボタンの枠線の色を取得する。</summary>
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する。</remarks>
+    public static Color SelectedButtonBorder => ToColor(AppPalette.ButtonCheckedBorder(isDark: false));
+
+    /// <summary>選択中のトグル ボタンの文字色を取得する。</summary>
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する。</remarks>
+    public static Color SelectedButtonForeground => ToColor(AppPalette.ButtonCheckedForeground(isDark: false));
+
+    /// <summary>ボタンにカーソルが重なったときの面の色を取得する。</summary>
+    public static Color ButtonHover => ToColor(AppPalette.ToolbarButtonBackground(isDark: false, isPressed: false));
+
+    /// <summary>ボタンを押している間の面の色を取得する。</summary>
+    public static Color ButtonPressed => ToColor(AppPalette.ToolbarButtonBackground(isDark: false, isPressed: true));
 
     /// <summary>文字の色を取得する。</summary>
     public static Color Foreground => Color.FromArgb(0x1A, 0x1A, 0x1A);
@@ -58,7 +85,10 @@ internal static class AppStyles
     public static Color Accent => Color.FromArgb(0x00, 0x78, 0xD4);
 
     /// <summary>ツールバーとステータスバーの背景色を取得する。</summary>
-    public static Color BarBackground => Color.FromArgb(0xF7, 0xF7, 0xF7);
+    /// <remarks>
+    /// 4 UI 版の他のページと同じく、ページの下地をそのまま見せる（ツールバーだけ色を変えない）。
+    /// </remarks>
+    public static Color BarBackground => PageBackground;
 
     /// <summary>使用する UI フォントを取得する。</summary>
     /// <remarks>システムのメッセージ ボックス フォントを共用する（ページごとにフォントを作らない）。</remarks>
@@ -95,6 +125,17 @@ internal static class AppStyles
     /// <value>設定フォントの行高 + 上下の余白。</value>
     /// <remarks>ボタン・入力欄の高さを固定値にすると、文字が大きくなったときに文字が欠ける。</remarks>
     public static int SettingsControlHeight => Math.Max(26, (int)Math.Ceiling(s_settingsFont.GetHeight()) + 10);
+
+    /// <summary>ステータス バーのフォントを取得する。</summary>
+    /// <value>4 UI 版で共通の文字サイズ（<see cref="StatusBarMetrics.FontSize"/>）を pt へ換算したフォント。</value>
+    /// <remarks>
+    /// <b>1 つだけ生成して共用する</b>: 呼ぶたびに <c>Font</c> を作ると GDI ハンドルが増える。<br/>
+    /// <c>Font</c> は pt 単位のため、DIP（96 DPI 基準）から <c>× 72 ÷ 96</c> で換算する。
+    /// </remarks>
+    public static Font StatusBarFont => s_statusBarFont;
+
+    private static readonly Font s_statusBarFont = new(
+        UiFont.FontFamily, (float)(StatusBarMetrics.FontSize * 72.0 / 96.0), UiFont.Style);
 
     /// <summary>32 ビットの色値（0xAARRGGBB）を WinForms の色へ変換する。</summary>
     /// <param name="argb">色（0xAARRGGBB）。</param>
