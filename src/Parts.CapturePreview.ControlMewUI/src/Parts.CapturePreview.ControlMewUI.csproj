@@ -12,8 +12,6 @@
   <ItemGroup>
     <!-- MewUI のコントロール・描画（Windows 向け全バックエンド + SkiaCanvasView + GPU ブリッジ） -->
     <PackageReference Include="Aprillz.MewUI.Windows" Version="$(MewUIVersion)" />
-    <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
-    <PackageReference Include="Aprillz.MewUI.Skia.Interop.Direct2D" Version="$(MewUIVersion)" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
   </ItemGroup>
 
@@ -24,7 +22,6 @@
     <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
     <!-- コア幾何型と Skia の描画プリミティブ -->
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
-    <ProjectReference Include="..\..\Platform.Skia\src\Platform.Skia.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Marquee\src\EsUtil.Ui.MewUI.Marquee.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Loupe\src\EsUtil.Ui.MewUI.Loupe.csproj" />

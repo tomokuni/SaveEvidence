@@ -9,7 +9,7 @@ SaveEvidence の **MewUI 版ホストアプリ**です。 UI 非依存のコア�
 
 ## 1. 概要
 
-SaveEvidence の **MewUI 版アプリ**（実行ファイル `SaveEvidence.MewUI.exe`）です。 Avalonia 版（`App.AvaloniaUI`）と同じ `App.Core` のモデル・ViewModel と撮影スタック（`Parts.CapturePreview.*`）を共有し、**画面の構築だけを MewUI**（`Aprillz.MewUI`・Skia 描画）で実装します。
+SaveEvidence の **MewUI 版アプリ**（実行ファイル `SaveEvidence.MewUI.exe`）です。 Avalonia 版（`App.AvaloniaUI`）と同じ `App.Core` のモデル・ViewModel と撮影スタック（`Parts.CapturePreview.*`）を共有し、**画面の構築だけを MewUI**（`Aprillz.MewUI`・Direct2D の標準描画）で実装します。
 
 ## 2. 前提
 
@@ -31,7 +31,6 @@ dotnet run --project src/App.MewUI/src/App.MewUI.csproj
 ```csharp
 Direct2DBackend.Register();        // 描画バックエンド
 Win32Platform.Register();          // プラットフォームホスト
-SkiaDirect2DInterop.Register();    // Direct2D ⇔ Skia のブリッジ（未登録なら CPU 転送経路になる）
 ```
 
 ## 5. 構成
@@ -102,7 +101,7 @@ Avalonia 版 `App.AvaloniaUI` とはコアを共有し、UI 層のみが異な�
 | 開閉の保存 | 開閉状態は設定へ保存し、次回起動時に復元する |
 
 **アイコン**: 4 つの UI 版で**同一の SVG ファイル**（`App.Core/src/Icons/*.svg`。 `SvgIconLoader` が単一所有する）を
-`SKPath.ParseSvgPathData` で読み、Skia で 32 px にラスタライズして `Image` へ渡します（テーマ変更時に色を更新）。
+パスデータを自前で解析して 32 px へラスタライズし、`Image` へ渡します（テーマ変更時に色を更新）。
 
 ## 8. ウィンドウの見た目
 
@@ -315,10 +314,10 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 ## 25. 配布形態（Native AOT）
 
 配布物は **Native AOT**（`buildScript/publish_MewUI.bat`）です。 マネージドコードは全て exe（`SaveEvidence.MewUI.exe`）へ
-コンパイルされ、ネイティブライブラリ（SkiaSharp / OpenCvSharp）だけが隣に並びます。
+コンパイルされ、ネイティブライブラリ（OpenCvSharp）だけが隣に並びます。
 
 - AOT のリンクには Visual Studio の C++ ビルドツール（`link.exe`）が必要です。
-- ネイティブ DLL は `OpenCvSharpExtern.dll` / `libSkiaSharp.dll` の 2 個です。 OpenCV は縮小構成
+- ネイティブ DLL は `OpenCvSharpExtern.dll` の 1 個です。 OpenCV は縮小構成
   （`OpenCvSharp5.runtime.win.slim`）のため、動画入出力（`videoio`）と FFmpeg
   （`opencv_videoio_ffmpeg500_64.dll`）を同梱しません（本アプリは動画を扱わない）。
 - **設定の読み書きには JSON ソース生成が必須**です。 反射ベースのシリアル化はトリミングで設定項目が
@@ -351,7 +350,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 
 その他の実測事項:
 
-- **`SkiaCanvasView` は静的画像に対して連続再描画しない**。 既定の `ContinuousAnimation` は `true` のため、
+- **静的画像の要素は再描画を要求したときだけ描く**（プロパティの変更が `AffectsRender` で無効化する）。
   静止画では `false` にし、画像差し替え時に `InvalidateVisual()` を呼びます。
 - **`Rect` / `Size` は負のサイズを 0 にクランプ**します（Avalonia は保持する）。
 - **`Grid` の行割当**は `Row()` を明示せず `AutoIndexing`（既定）に任せて問題ありません

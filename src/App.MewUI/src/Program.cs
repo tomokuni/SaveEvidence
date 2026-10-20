@@ -1,5 +1,4 @@
 using Aprillz.MewUI;
-using Aprillz.MewUI.Skia.Interop;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
@@ -21,8 +20,7 @@ namespace EsUtil.SaveEvidence.App.MewUI;
 /// <br/>
 /// <b>必須の初期化</b>:<br/>
 /// 1. <c>DpiHelper.EnablePerMonitorDpiAwareness()</c>（DPI 対応。 呼ばないとウィンドウ配置の復元がずれる）<br/>
-/// 2. <c>Direct2DBackend.Register()</c> / <c>Win32Platform.Register()</c>（バックエンドとプラットフォームホストの明示登録）<br/>
-/// 3. <c>SkiaDirect2DInterop.Register()</c>（Direct2D ⇔ Skia の GPU ブリッジ。 未登録でも動作するが遅い）<br/>
+/// 2. <c>Direct2DBackend.Register()</c> / <c>Win32Platform.Register()</c>（描画バックエンドとプラットフォームホストの明示登録）<br/>
 /// <br/>
 /// <b>ウィンドウ配置の復元</b>: 位置・サイズの DIP はモニターの DPI が必要なため、<c>Application.Run</c> の<br/>
 /// <c>startup</c>（ディスパッチャ導入後・ウィンドウ表示前）で復元する。<br/>
@@ -49,8 +47,6 @@ internal static class Program
         Direct2DBackend.Register();
         Win32Platform.Register();
 
-        // Direct2D ⇔ Skia のブリッジを有効化する（未登録だと Skia 描画が毎フレーム CPU 転送になる）
-        SkiaDirect2DInterop.Register();
 
         // 未処理の例外を記録する（クラッシュ原因をログから特定できるようにする。 Avalonia 版と同じ対象）
         RegisterExceptionLogging();

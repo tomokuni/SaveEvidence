@@ -6,7 +6,7 @@
 
 コアロジック（`EsPoint` / `EsKey` / `EsWindowState` 等）は UI フレームワークに依存しないため、UI 境界でのみ型変換が必要です。 `Platform.AvaloniaUI` / `Platform.MewUI` と同じ役割を WinForms 向けに提供します。
 
-**MewUI 版や Avalonia 版と異なり Skia を使いません**。 `SkiaSharp.Views.WindowsForms` は .NET Framework 向けの資産しか持たず `net10.0-windows` では解決できないため（実測）、描画は WinForms 自身の描画 API（GDI+ / `System.Drawing`）で行います。
+**MewUI 版と同じく Skia を使いません**（WinUI 3 版も使いません）。 描画は WinForms 自身の描画 API（GDI+ / `System.Drawing`）で行います。
 
 ## 2. 収録する型
 

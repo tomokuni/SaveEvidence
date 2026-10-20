@@ -63,10 +63,10 @@ graph LR
 | `EsGeometryMewUIInterop.cs` | `EsPoint` / `EsSize` / `EsVector` / `EsRect` / 色（`System.Drawing.Color` ⇔ `Aprillz.MewUI.Color`） |
 | `EsWindowStateMewUIInterop.cs` | `EsWindowState` ⇔ `Aprillz.MewUI.Controls.WindowState` |
 | `EsPlatformHandleMewUIInterop.cs` | `Aprillz.MewUI.Window` → `EsPlatformHandle` |
-| `src/Platform.MewUI/src/Imaging/SkiaImageView.cs` | `EsReadOnlyBitmap` を親が割り当てた領域へ描画する表示ビュー（`SkiaCanvasView` 派生） |
-| `src/Platform.MewUI/src/Imaging/SkiaImageRenderer.cs`（internal） | `EsReadOnlyBitmap` を Skia キャンバスへ敷く描画層（画素で検証できる） |
+| `src/Platform.MewUI/src/Imaging/ImageView.cs` | `EsReadOnlyBitmap` を親が割り当てた領域へ描画する表示ビュー（`Control` 派生・フレームワーク標準の描画） |
+| `src/Platform.MewUI/src/Imaging/ImageRenderer.cs`（internal） | `EsReadOnlyBitmap` を `IImage` へ結び付けて描く層（変換は `Source` の変更時だけ） |
 | `src/Platform.MewUI/src/Imaging/ClientPixelScale.cs` | 描画面（物理ピクセル）と表示領域（DIP）の比から描画に使う実効倍率を解決する（DPI の通知が届かないコントロールでも画像と同じ倍率で描く） |
-| `src/Platform.MewUI/src/Imaging/MewUITextMeasure.cs` | MewUI のテキスト エンジン（DirectWrite の GDI 互換レイアウト）で文字列の実寸を測る。 描画エンジンを持たない環境では Skia の実測で代用する |
+| `src/Platform.MewUI/src/Imaging/MewUITextMeasure.cs` | MewUI のテキスト エンジン（DirectWrite の GDI 互換レイアウト）で文字列の実寸を測る（グラフィックス バックエンドの登録が前提） |
 | `src/Platform.MewUI/src/Imaging/ImageDrawMath.cs` | 画像を描画先の領域へ配置する矩形の計算（`EsRect` を返す純粋関数。 **唯一の所有者**） |
 
 ## 6. 設計判断

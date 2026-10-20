@@ -80,11 +80,4 @@
     <Project Path="src/Parts.CapturePreview.ControlAvaloniaUI/src/Parts.CapturePreview.ControlAvaloniaUI.csproj" />
     <Project Path="src/Parts.CapturePreview.ControlAvaloniaUI/tests/Parts.CapturePreview.ControlAvaloniaUI.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Platform.Skia/" />
-  <Folder Name="/src/Platform.Skia/src/">
-    <Project Path="src/Platform.Skia/src/Platform.Skia.csproj" />
-  </Folder>
-  <Folder Name="/src/Platform.Skia/tests/">
-    <Project Path="src/Platform.Skia/tests/Platform.Skia.Tests.csproj" />
-  </Folder>
 </Solution>

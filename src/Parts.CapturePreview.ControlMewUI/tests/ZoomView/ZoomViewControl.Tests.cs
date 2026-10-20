@@ -1,9 +1,9 @@
 using Aprillz.MewUI;
+using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
-using SkiaSharp;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.ZoomView;
@@ -40,7 +40,7 @@ public class ZoomViewControlTests
     private static (ZoomViewControl Control, EsReadOnlyBitmap Image) CreateWithImage(
         int imageWidth = 100, int imageHeight = 100, double viewportWidth = 200, double viewportHeight = 200)
     {
-        var image = TestHelper.CreateBitmap(imageWidth, imageHeight, SKColors.Red);
+        var image = TestHelper.CreateBitmap(imageWidth, imageHeight, DrawingColor.Red);
         var control = CreateLaidOut(viewportWidth, viewportHeight);
         control.Source = image;
         return (control, image);

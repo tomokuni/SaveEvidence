@@ -4,7 +4,6 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
-using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
@@ -13,7 +12,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.Crop;
 /// <summary><see cref="CropViewControl"/> の Facade としてのテスト。</summary>
 /// <remarks>
 /// MewUI の要素生成とレイアウトはホスト登録を必要としないため、UI を表示せずに検証できる。<br/>
-/// 矩形オーバーレイの描画結果は <see cref="CropSkiaRendererTests"/> が担う。<br/>
+/// 矩形オーバーレイの描画結果は <see cref="CropOverlayRendererTests"/> が担う。<br/>
 /// <b>要素を生成するテストはコレクションで直列化する</b>（MewUI のビジュアル ツリーはスレッドセーフでなく、<br/>
 /// 並列に要素を生成すると <c>Panel.Add</c> が共有の走査バッファを壊す。 実測で再現した）。
 /// </remarks>
@@ -98,7 +97,7 @@ public class CropViewControlTests
     [Fact]
     internal void HighlightSourceRect_対象座標をビューポート座標へ写像する()
     {
-        using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
+        using var image = TestHelper.CreateBitmap(100, 100, DrawingColor.Red);
         var control = CreateLaidOut();
         control.Source = image;
 
@@ -138,7 +137,7 @@ public class CropViewControlTests
     [Fact]
     internal void Sourceの設定がズームビューへ委譲される()
     {
-        using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
+        using var image = TestHelper.CreateBitmap(100, 100, DrawingColor.Red);
         var control = CreateLaidOut();
 
         control.Source = image;
@@ -152,7 +151,7 @@ public class CropViewControlTests
     [Fact]
     internal void ズーム操作がズームビューへ委譲される()
     {
-        using var image = TestHelper.CreateBitmap(200, 200, SKColors.Red);
+        using var image = TestHelper.CreateBitmap(200, 200, DrawingColor.Red);
         var control = CreateLaidOut(100, 100);
         control.Source = image;
 
@@ -173,7 +172,7 @@ public class CropViewControlTests
     [Fact]
     internal void ズーム可否がズームビューから取得される()
     {
-        using var image = TestHelper.CreateBitmap(200, 200, SKColors.Red);
+        using var image = TestHelper.CreateBitmap(200, 200, DrawingColor.Red);
         var control = CreateLaidOut(100, 100);
         control.Source = image;
 
@@ -185,7 +184,7 @@ public class CropViewControlTests
     [Fact]
     internal void ズームイベントが中継される()
     {
-        using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
+        using var image = TestHelper.CreateBitmap(100, 100, DrawingColor.Red);
         var control = CreateLaidOut();
         control.Source = image;
 
@@ -203,7 +202,7 @@ public class CropViewControlTests
     internal void ビューポート変化イベントが中継される()
     {
         // パンできるよう、ビューポートより大きい画像を 100% で表示する
-        using var image = TestHelper.CreateBitmap(400, 400, SKColors.Red);
+        using var image = TestHelper.CreateBitmap(400, 400, DrawingColor.Red);
         var control = CreateLaidOut(200, 200);
         control.Source = image;
         control.ZoomPercent = 100;
@@ -220,7 +219,7 @@ public class CropViewControlTests
     [Fact]
     internal void 座標変換が往復する()
     {
-        using var image = TestHelper.CreateBitmap(100, 100, SKColors.Red);
+        using var image = TestHelper.CreateBitmap(100, 100, DrawingColor.Red);
         var control = CreateLaidOut();
         control.Source = image;
 

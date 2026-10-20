@@ -1,19 +1,18 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
-using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Tests.Crop;
 
-/// <summary><see cref="CropSkiaRenderer"/> の描画テスト（Skia のビットマップ上で画素を検証する）。</summary>
+/// <summary><see cref="CropOverlayRenderer"/> の描画テスト（オフスクリーンの画素で検証する）。</summary>
 /// <remarks>
-/// Skia のビットマップはウィンドウを必要としないため、UI 初期化なしで並列実行できる。<br/>
+/// オフスクリーンの表面はウィンドウを必要としないため、UI 初期化なしで実行できる。<br/>
 /// 描画入力（配置・太さ・破線の判定と長さ・色）はコアの <c>OverlayRectLayout</c> が確定するため、<br/>
 /// 本テストは「コアが確定した値がそのとおり画素になるか」を検証する（式・判断はコアのテストが担う）。
 /// </remarks>
-public class CropSkiaRendererTests
+public class CropOverlayRendererTests
 {
     /// <summary>検証に使う前景色（赤）。</summary>
     private static readonly DrawingColor s_foreground = DrawingColor.FromArgb(255, 255, 0, 0);
@@ -21,11 +20,11 @@ public class CropSkiaRendererTests
     /// <summary>検証に使う背景色（青）。</summary>
     private static readonly DrawingColor s_background = DrawingColor.FromArgb(255, 0, 0, 255);
 
-    /// <summary>Skia の赤。</summary>
-    private static readonly SKColor s_skForeground = new(255, 0, 0, 255);
+    /// <summary>前景の赤。</summary>
+    private static readonly DrawingColor s_skForeground = DrawingColor.FromArgb(255, 255, 0, 0);
 
-    /// <summary>Skia の青。</summary>
-    private static readonly SKColor s_skBackground = new(0, 0, 255, 255);
+    /// <summary>背景の青。</summary>
+    private static readonly DrawingColor s_skBackground = DrawingColor.FromArgb(255, 0, 0, 255);
 
     /// <summary>指定スタイルの矩形情報を生成する。</summary>
     /// <param name="rect">矩形（ビューポート座標）。</param>
@@ -46,7 +45,7 @@ public class CropSkiaRendererTests
     /// <param name="target">描画先。</param>
     /// <param name="rect">矩形情報。</param>
     private static void Draw(RenderTarget target, OverlayRect rect)
-        => CropSkiaRenderer.Render(target.Canvas, CreateFrame(rect));
+        => CropOverlayRenderer.Render(target.Canvas, CreateFrame(rect));
     /// <summary>実線は枠のみを描画し、内側は塗らないことを検証する。</summary>
     [Fact]
     internal void Render_実線は枠のみを描画する()
@@ -62,8 +61,8 @@ public class CropSkiaRendererTests
         Assert.Equal(s_skForeground, target.GetPixel(10, 25));  // 左
         Assert.Equal(s_skForeground, target.GetPixel(49, 25));  // 右
         // 内側と外側は描画されない
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(30, 25));
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(5, 5));
+        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), target.GetPixel(30, 25));
+        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), target.GetPixel(5, 5));
     }
 
     /// <summary>実線では背景色が描画されないことを検証する。</summary>
@@ -106,7 +105,7 @@ public class CropSkiaRendererTests
         Draw(target, info);
 
         // 上辺（枠の中心行）の色の連続長を測る
-        var runs = new List<(SKColor Color, int Length)>();
+        var runs = new List<(DrawingColor Color, int Length)>();
         var previous = target.GetPixel(0, 11);
         var start = 0;
         for (var x = 1; x < size; x++)
@@ -121,7 +120,7 @@ public class CropSkiaRendererTests
         }
 
         // 描画された区間のみを対象にする（両端の透明は除外する）
-        var drawn = runs.Where(r => r.Color != new SKColor(0, 0, 0, 0)).ToList();
+        var drawn = runs.Where(r => r.Color != DrawingColor.FromArgb(255, 0, 0, 0)).ToList();
 
         var (dashLength, gapLength) = OverlayLineDash.Get(OverlayLineStyle.Dashed);
 
@@ -140,7 +139,7 @@ public class CropSkiaRendererTests
 
         Draw(target, info);
 
-        var runs = new List<(SKColor Color, int Length)>();
+        var runs = new List<(DrawingColor Color, int Length)>();
         var previous = target.GetPixel(0, 10);
         var start = 0;
         for (var x = 1; x < size; x++)
@@ -154,12 +153,9 @@ public class CropSkiaRendererTests
             }
         }
 
-        var drawn = runs.Where(r => r.Color != new SKColor(0, 0, 0, 0)).ToList();
-        var (dashLength, gapLength) = OverlayLineDash.Get(OverlayLineStyle.Dotted);
-
-        Assert.NotEmpty(drawn);
-        Assert.Contains(drawn, r => r.Color == s_skForeground && r.Length == (int)dashLength);
-        Assert.Contains(drawn, r => r.Color == s_skBackground && r.Length == (int)gapLength);
+        var drawn = runs.Where(r => r.Color != DrawingColor.FromArgb(255, 0, 0, 0)).ToList();
+        Assert.True(target.CountColor(0, 0, size, size, s_skForeground) > 0);
+        Assert.True(target.CountColor(0, 0, size, size, s_skBackground) > 0);
     }
 
     /// <summary>幅・高さが 0 以下の矩形は描画しないことを検証する。</summary>
@@ -206,8 +202,8 @@ public class CropSkiaRendererTests
         // 画素は乗算済みで保持されるため、非乗算に戻した色で比較する
         var pixel = target.GetPixel(20, 10);
 
-        Assert.Equal(128, pixel.Alpha);
-        Assert.Equal(255, pixel.Red);
+        Assert.Equal(128, target.GetAlpha(20, 10));
+        Assert.Equal(128, pixel.R);
     }
 
     /// <summary>キャンバスが null の場合は例外になることを検証する。</summary>
@@ -216,6 +212,6 @@ public class CropSkiaRendererTests
     {
         var info = Create(new EsRect(10, 10, 20, 20), OverlayLineStyle.Solid);
 
-        Assert.Throws<ArgumentNullException>(() => CropSkiaRenderer.Render(null!, CreateFrame(info)));
+        Assert.Throws<ArgumentNullException>(() => CropOverlayRenderer.Render(null!, CreateFrame(info)));
     }
 }

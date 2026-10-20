@@ -325,9 +325,10 @@ dotnet_diagnostic.VSTHRD002.severity = none
 
 # CA1062 を可搬なライブラリ（UI 非依存・他リポジトリから呼ばれる層）に限って有効にする
 # （グローバルな opt-out より後に置く。 上記の注意を参照）。
+# 到達不能な防御の判別が実装の意図と合わない箇所（`EsBitmap` のプロパティは null 許容でないため、
+# 縮小の要否を寸法で判定する分岐を「常に真」と誤検出する）。
 [{src/App.MewUI/src/Services/ImageThumbnailLoader.cs,src/App.MewUI/tests/TestHelper.cs}]
 dotnet_diagnostic.CA1508.severity = none
-
 # `EsKey` のメンバーは UI フレームワークのキー enum（`Avalonia.Input.Key`）と同名にする規約があるため、
 # 型名と同名のメンバー（`Decimal` 等）を許可する（.github/命名規約.md の「UI フレームワークの enum と同じ意味ならメンバー名を揃える」）。
 [{src/Parts.CapturePreview.Core/src/Capture/CaptureHighlight.cs,src/Parts.CapturePreview.Core/src/Capture/CaptureKeyAction.cs,src/Parts.CapturePreview.Core/src/Crop/CropSessionAction.cs,src/Parts.CapturePreview.Core/src/ZoomView/ZoomNotice.cs,src/Parts.CapturePreview.Core/src/ZoomView/ZoomScrollBarGeometry.cs,src/Parts.LineDetection/src/LineDetectionResult.cs,src/Parts.LineDetection/src/LineSegmentMath.cs}]

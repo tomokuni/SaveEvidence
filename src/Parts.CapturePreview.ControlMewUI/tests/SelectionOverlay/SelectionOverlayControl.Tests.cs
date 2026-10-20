@@ -7,7 +7,6 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
-using SkiaSharp;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 
@@ -324,10 +323,10 @@ public class SelectionOverlayControlTests
         control.DrawSelectionOverlay(target.Canvas, new EsPoint(0, 0), 4.0, 64);
 
         // 1 色目（白）で上辺が描画される
-        Assert.Equal(new SKColor(255, 255, 255), target.GetPixel(39, 39));
-        Assert.NotEqual(new SKColor(0, 0, 0, 0), target.GetPixel(39, 40));
+        Assert.Equal(DrawingColor.FromArgb(255, 255, 255, 255), target.GetPixel(39, 39));
+        Assert.NotEqual(DrawingColor.FromArgb(255, 0, 0, 0), target.GetPixel(39, 40));
         // 選択矩形の内側は描画されない
-        Assert.Equal(new SKColor(0, 0, 0, 0), target.GetPixel(50, 50));
+        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 0), target.GetPixel(50, 50));
     }
 
     [Fact]
@@ -338,7 +337,7 @@ public class SelectionOverlayControlTests
 
         control.DrawSelectionOverlay(target.Canvas, new EsPoint(0, 0), 4.0, 64);
 
-        Assert.Equal(0, target.CountColor(new SKColor(255, 255, 255)));
+        Assert.Equal(0, target.CountColor(0, 0, 64, 64, DrawingColor.FromArgb(255, 255, 255, 255)));
     }
 
     [Fact]
@@ -350,7 +349,7 @@ public class SelectionOverlayControlTests
 
         control.DrawSelectionOverlay(target.Canvas, new EsPoint(0, 0), 4.0, 64);
 
-        Assert.Equal(0, target.CountColor(new SKColor(255, 255, 255)));
+        Assert.Equal(0, target.CountColor(0, 0, 64, 64, DrawingColor.FromArgb(255, 255, 255, 255)));
     }
 
     [Fact]
@@ -370,8 +369,8 @@ public class SelectionOverlayControlTests
         control.DrawSelectionOverlay(target.Canvas, new EsPoint(0, 0), 4.0, 64);
 
         // 上辺は y = 39 から。 破線は 2 ピクセル描画 + 2 ピクセル空白の周期で色が切り替わる
-        Assert.Equal(new SKColor(255, 0, 0), target.GetPixel(39, 39));
-        Assert.Equal(new SKColor(0, 0, 255), target.GetPixel(41, 39));
+        Assert.Equal(DrawingColor.FromArgb(255, 255, 0, 0), target.GetPixel(39, 39));
+        Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 255), target.GetPixel(41, 39));
     }
 
     // ====================================================================

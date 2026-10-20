@@ -1,7 +1,7 @@
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using SkiaSharp;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Tests;
@@ -39,12 +39,9 @@ public class FolderViewPageTests : IDisposable
     private string WriteImage(string name)
     {
         var path = Path.Combine(_folder, name);
-        using (var source = new SKBitmap(32, 24))
-        using (var image = SKImage.FromBitmap(source))
-        using (var encoded = image.Encode(SKEncodedImageFormat.Png, 100))
-        using (var stream = File.Create(path))
+        using (var source = EsBitmap.Create(32, 24))
         {
-            encoded.SaveTo(stream);
+            source.Save(path);
         }
 
         return path;

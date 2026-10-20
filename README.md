@@ -262,7 +262,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 方式ごとの可否は UI とフレームワークが決めます（実測は [`buildScript/`](buildScript) の各スクリプトのコメントを参照）。 出力先は `publish/<UI>-<RID>-<方式>` で、**方式がフォルダー名に現れます**（期待する出力先は [`.github/release-config.json`](.github/release-config.json) の `uis[].output` が単一所有します）。
 
-- ネイティブライブラリ（SkiaSharp / OpenCvSharp 等）は exe へ同梱できないため、同じフォルダーへ並べて配布します（方式 1 のとき）。
+- ネイティブライブラリ（OpenCvSharp・Avalonia の GL 実装等）は exe へ同梱できないため、同じフォルダーへ並べて配布します（方式 1 のとき）。
 - 方式 2 は自己完結ランタイムを丸ごと含むため、配布物は方式 1 より大きくなります。
 
 ---

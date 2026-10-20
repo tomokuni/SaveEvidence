@@ -2,22 +2,19 @@ using System.Collections.Concurrent;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.Platform.Skia;
-using SkiaSharp;
-
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
 
 /// <summary>画像ファイルを縮小してサムネイル用の画像（読み取りの面）として読み込むローダー。</summary>
 /// <remarks>
-/// <b>縮小デコード</b>: <see cref="SKCodec.GetPixels(SKImageInfo, out byte[])"/> へ縮小後の寸法を渡し、原寸のバッファを確保せずにデコードする<br/>
-/// （4K のスクリーンショットを多数並べるときのメモリと時間を抑える）。<br/>
+/// <b>デコードはコア（WIC）</b>: <see cref="EsReadOnlyBitmap.Load"/> が OS のコーデックで読み込み、
+/// 縮小はコアの面積平均（<see cref="EsImageQuality.High"/>）へ委譲する。<br/>
 /// <b>キャッシュ</b>: 同一ファイル・同一サイズのデコード結果を共有する。 ファイルの更新日時をキーに含めるため、<br/>
 /// 内容が変われば再デコードされる。 容量管理は <see cref="CapacityLimitedCache"/> へ委譲し、<br/>
 /// 上限超過時は <see cref="EsReadOnlyBitmap"/>（<see cref="IDisposable"/>）が破棄されてから破棄される<br/>
 /// （そのため上限は呼び出し側が表示する件数を渡す。<see cref="Load"/> を参照）。<br/>
-/// <b>失敗時</b>: 存在しない・非画像・破損などの場合は null を返す（例外 にしない）。<br/>
-/// <b>スレッド</b>: 背景の生成からも呼べる（キャッシュの上限判定・登 録は直列化される。 デコードは並列のまま）。
+/// <b>失敗時</b>: 存在しない・非画像・破損などの場合は null を返す（例外にしない）。<br/>
+/// <b>スレッド</b>: 背景の生成からも呼べる（キャッシュの上限判定・登録は直列化される。 デコードは並列のまま）。
 /// </remarks>
 internal static class ImageThumbnailLoader
 {
@@ -32,7 +29,7 @@ internal static class ImageThumbnailLoader
     /// <remarks>
     /// 1. 拡張子が画像でなければ読み込まずに null を返す。<br/>
     /// 2. キャッシュにあればそれを返す（キャッシュの値は本クラスが所有し、呼び出し側は破棄しない）。<br/>
-    /// 3. 無ければ縮小デコードしてキャッシュへ登録する。<br/>
+    /// 3. 無ければデコードして縮小し、キャッシュへ登録する。<br/>
     /// <b>読み取りの面で返す理由</b>: サムネイルは表示するだけ（書き換えない）であるため、
     /// デコードの完了後に凍結して 0 コピーで読み取り専用の面へ渡す。<br/>
     /// <b>保持数を呼び出し側が渡す理由</b>: 一覧が表示する件数より小さい上限だと、生成の途中で表示中の
@@ -66,98 +63,44 @@ internal static class ImageThumbnailLoader
     /// <param name="maxSize">長辺の上限（ピクセル）。 1 以上。</param>
     /// <returns>デコードした画像。 デコードできない場合は null。</returns>
     /// <remarks>
-    /// 1. 長辺が上限に収まる倍率を求める（上限以下なら等倍）。<br/>
-    /// 2. コーデックが縮小デコードに対応していれば、その寸法でピクセルを取得する（原寸バッファを確保しない）。<br/>
-    /// 3. 縮小されなかった場合は、デコード後に目標寸法へ縮小する（<b>アルゴリズムはコアの面積平均</b>）。<br/>
-    /// 4. 不完全なデータ（<c>IncompleteInput</c>）はデコードできた範囲を表示する。<br/>
-    /// <b>縮小をコアへ委譲する理由</b>: Skia の縮小（<c>SKBitmap.Resize(Linear)</c>）は縮小率が大きいと
-    /// <b>細線を実際より濃く残す</b>（細線の輝度が実際より高く出て、平均がその細線に引きずられる）。
-    /// コアの面積平均（<see cref="EsImageQuality.High"/>）へ揃えると、Avalonia 版のフォルダビュー
-    /// （<c>Bitmap.DecodeToWidth</c> = 面積平均相当）と<b>同じ画質</b>になる。<br/>
-    /// <b>コスト</b>: デコード結果をコアの画像へ複製するため Skia の縮小よりわずかに遅いが、縮小自体は並列化される。
+    /// 1. コア（WIC）で読み込む（形式は内容から判別される）。<br/>
+    /// 2. 長辺が上限を超える場合はコアの面積平均で縮小する（拡大はしない）。<br/>
+    /// <b>縮小をコアへ委譲する理由</b>: 4 つの UI 版で同じ画質にするため
+    /// （Avalonia 版の <c>Bitmap.DecodeToWidth</c> と面積平均相当）。
     /// </remarks>
     private static EsReadOnlyBitmap? Decode(string filePath, int maxSize)
     {
-        using var stream = File.OpenRead(filePath);
-        using var codec = SKCodec.Create(stream);
-        if (codec is null)
+        EsReadOnlyBitmap loaded;
+        try
         {
+            loaded = EsReadOnlyBitmap.Load(filePath);
+        }
+        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        {
+            // 非画像・破損・削除競合は「表示できない」として扱う
             return null;
         }
 
-        var source = codec.Info;
-        if (source.Width <= 0 || source.Height <= 0)
+        try
         {
-            return null;
+            if (loaded.Width <= maxSize && loaded.Height <= maxSize)
+            {
+                return loaded;
+            }
+
+            // 縮小は書き換え可能な画像を返すため、凍結して 0 コピーで読み取り専用の面へ渡す
+            using var resized = loaded.Resize(maxSize, EsImageQuality.High);
+            resized.SetReadOnly();
+            return EsReadOnlyBitmap.FromBitmap(resized);
         }
-
-        // 長辺が maxSize に収まる倍率（上限以下なら等倍）
-        var scale = Math.Min((double)maxSize / source.Width, (double)maxSize / source.Height);
-        var target = scale < 1.0 ? ComputeTarget(source, scale) : new SKSizeI(source.Width, source.Height);
-
-        // コーデックが対応していれば縮小した寸法でデコードする（対応可否は形式により異なる）
-        var decodeSize = scale < 1.0 ? codec.GetScaledDimensions((float)scale) : target;
-
-        // 内部表現（EsBitmap）と同じ BGRA8888・Premul を指定し、拡張子に依らず同じ形式へ揃える
-        using var bitmap = DecodePixels(codec, decodeSize);
-        if (bitmap is null)
+        finally
         {
-            return null;
+            // 元の画像は（縮小した場合は）複製を作らないため、縮小結果とは別に解放する
+            // （縮小しなかった場合は返した画像をそのまま使うため、ここでは解放しない）
+            if (loaded.Width > maxSize || loaded.Height > maxSize)
+            {
+                loaded.Dispose();
+            }
         }
-
-        // コーデック側で縮小されなかった（または目標に届かなかった）場合は、コアの面積平均で目標へ縮小する
-        if (bitmap.Width == target.Width && bitmap.Height == target.Height)
-        {
-            return ToReadOnly(bitmap.ToEsBitmap());
-        }
-
-        using var decoded = bitmap.ToEsBitmap();
-        // 縮小は読み取りの面が受けるため、書き込みの済んだ画像を凍結して 0 コピーで渡す
-        decoded.SetReadOnly();
-        using var readOnly = EsReadOnlyBitmap.FromBitmap(decoded);
-        return ToReadOnly(readOnly.Resize(maxSize, EsImageQuality.High));
-    }
-
-    /// <summary>デコードした画像を表示へ渡せる読み取りの面にする（凍結して 0 コピーで共有する）。</summary>
-    /// <param name="image">移す画像（書き換え可能）。 画素は読み取りの面が引き継ぎ、渡した実体は解放する。</param>
-    /// <returns>読み取りの面。 所有権は呼び出し側へ移る。</returns>
-    /// <remarks>サムネイルは表示するだけ（書き換えない）であるため、凍結して共有する
-    /// （未凍結のまま渡すと複製になり、1 枚ごとに元の寸法の複製が増える）。</remarks>
-    private static EsReadOnlyBitmap ToReadOnly(EsBitmap image)
-    {
-        image.SetReadOnly();
-        var read = EsReadOnlyBitmap.FromBitmap(image);
-        // 画素は読み取りの面が共有して引き継ぐため、書き換え可能の実体（参照）はここで解放する
-        image.Dispose();
-        return read;
-    }
-
-    /// <summary>縮小後に目標とする寸法を求める。</summary>
-    /// <param name="source">元画像のピクセル情報。</param>
-    /// <param name="scale">縮小倍率（1 未満）。</param>
-    /// <returns>目標寸法（各辺 1 以上）。</returns>
-    private static SKSizeI ComputeTarget(SKImageInfo source, double scale)
-        => new(
-            Math.Max(1, (int)Math.Round(source.Width * scale)),
-            Math.Max(1, (int)Math.Round(source.Height * scale)));
-
-    /// <summary>指定寸法でピクセルを取得する。</summary>
-    /// <param name="codec">対象のコーデック。</param>
-    /// <param name="size">取得する寸法（1 以上）。</param>
-    /// <returns>デコードしたビットマップ。 取得できない場合は null。</returns>
-    private static SKBitmap? DecodePixels(SKCodec codec, SKSizeI size)
-    {
-        var info = new SKImageInfo(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
-        var bitmap = new SKBitmap(info);
-
-        var result = codec.GetPixels(info, bitmap.GetPixels());
-        if (result is SKCodecResult.Success or SKCodecResult.IncompleteInput)
-        {
-            return bitmap;
-        }
-
-        bitmap.Dispose();
-        return null;
     }
 }
-

@@ -46,8 +46,8 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 | 対象フレームワーク | .NET 10（`net10.0-windows`） |
 | 言語 | C# 14 |
 | UI フレームワーク | MewUI（`Aprillz.MewUI` 0.21.1 固定） |
-| グラフィックス | SkiaSharp（`SkiaCanvasView` でコアの画像を直接描画） |
-| 描画バックエンド | Direct2D + Win32 プラットフォームホスト + `Aprillz.MewUI.Skia.Interop.Direct2D`（GPU ブリッジ） |
+| グラフィックス | MewUI の標準描画（`IGraphicsContext`。 画像は `ImageSource.FromBgraPixels` で取り込む） |
+| 描画バックエンド | Direct2D + Win32 プラットフォームホスト（Skia を使わない） |
 | MVVM | `CommunityToolkit.Mvvm`（コアの `MainViewModel` をそのまま使用） |
 | ログ | Serilog 4.x（`Serilog.Sinks.File` + `Serilog.Extensions.Logging`。 Avalonia 版と同じファイルへ出力） |
 
@@ -96,7 +96,7 @@ App.MewUI ──> Parts.CapturePreview.ControlMewUI ──> Parts.CapturePreview
 
 `App.MewUI` は `Avalonia*` を参照しません。 Avalonia への依存は `Platform.AvaloniaUI`（アダプタ専用）と
 `App.AvaloniaUI`（Avalonia UI）のみに閉じています。 コアが UI 型を漏らしていないことは、
-`App.Core` / `EsUtil.Platform.Core` の依存先が SkiaSharp・OpenCvSharp・`System.Drawing.Color` 等に
+`App.Core` / `EsUtil.Platform.Core` の依存先が OpenCvSharp・`System.Drawing.Color` 等に
 限られることで担保しています。
 
 ### 3.3 境界の変換
@@ -158,12 +158,12 @@ tests/
 | `BottomAlignWrapPanel` | 横方向に折り返し、各行内で子要素を下端揃えするパネル。 行高さと配置の計算はコアの `BottomAlignWrapLayout` が所有し、本クラスは寸法の変換と委譲のみを担う（Avalonia 版の同名パネルと計算を共有する） |
 | `ThumbnailItem` | 一覧アイテム 1 件（枠 + 影 + ラベル）を組み立てる。 影（`ShadowDecorator`）の配下では `StateTrigger`（ホバー）が効かないため、ホバー時の枠色と影の有無を `MouseEnter` / `MouseLeave` で直接切り替える（現在表示中の枠は影なし） |
 | `FolderViewPage` | フォルダ一覧のツールバー・サムネイル一覧・ステータスバー（保存先フォルダを右端へ寄せる）。 **保持する画像はサムネイルだけ**（原寸が必要な操作はファイルパスから読み込む）。 **生成は背景で行う**（`ThumbnailScheduler`。 表示中は並列・非表示では 1 件ずつ）。 未生成の行は代替画像を表示し、生成が終わった 1 件から差し替える（キャッシュの上限は表示件数以上を渡す）。 **初回描画の後に一度だけ先読みする**（`OnWarmUp`） |
-| `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし）。 **サムネイルはコアの面積平均で DIP サイズへ縮小してから描画する**（Skia の描画時サンプリングは既定が最近傍のため、同じ寸法でも画質が変わる）。 **縮小は背景で行う**（`ThumbnailScheduler`。 表示中は並列・非表示では 1 件ずつ）ため、本ページが所有する縮小画像は生成の完了時に登録し、一覧の再構築のたびに破棄する。 **履歴が変わったら隠れていても再構築し**（低負荷）、**履歴の状態が同じなら再構築しない**（先読みした縮小画像をそのまま使う） |
+| `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし）。 **サムネイルはコアの面積平均で DIP サイズへ縮小してから描画する**（描画時のサンプリングは最近傍のため、同じ寸法でも画質が変わる）。 **縮小は背景で行う**（`ThumbnailScheduler`。 表示中は並列・非表示では 1 件ずつ）ため、本ページが所有する縮小画像は生成の完了時に登録し、一覧の再構築のたびに破棄する。 **履歴が変わったら隠れていても再構築し**（低負荷）、**履歴の状態が同じなら再構築しない**（先読みした縮小画像をそのまま使う） |
 | `ThumbnailBackground` | 一覧のサムネイルを背景で生成するための共通処理（スケジューラの生成・代替画像の提供・UI スレッドへの反映）。 代替画像は寸法ごとに 1 枚を共有し、**破棄しない**（借用して表示するだけ）。 ディスパッチャは `Initialize()`（`Application.Run` の起動コールバック）が取得し、**それ以前に届いた反映は保留して起動時に流す**（背景スレッドのまま UI を触ると例外になる） |
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。 変更の即時保存・テーマの即時適用・ホットキー入力を担う |
-| `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `SkiaImageView` が単一所有し、計測と Uniform 指定だけを与える） |
+| `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `ImageView` が単一所有し、計測と Uniform 指定だけを与える） |
 | `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsReadOnlyBitmap.Save`（拡張子が形式を決める）へ委譲する |
-| `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ。 **縮小はコアの面積平均（`EsReadOnlyBitmap.Resize`）へ委譲する**（Skia の `Resize(Linear)` は大きな縮小率で細線を実際より濃く残すため使わない。 コーデックの縮小デコードはデコードの高速化としてのみ使う）。 **背景の生成からも呼べる**（キャッシュの上限判定と登録は直列化される）。 キャッシュの上限は**一覧が表示する件数以上**を呼び出し側が渡す（上限超過時に保持中の値が破棄され、描画が破棄済みのバッファへ触れるのを防ぐ） |
+| `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ。 **縮小はコアの面積平均（`EsReadOnlyBitmap.Resize`）へ委譲する**（WIC の `Resize(Linear)` は大きな縮小率で細線を実際より濃く残すため使わない。 コーデックの縮小デコードはデコードの高速化としてのみ使う）。 **背景の生成からも呼べる**（キャッシュの上限判定と登録は直列化される）。 キャッシュの上限は**一覧が表示する件数以上**を呼び出し側が渡す（上限超過時に保持中の値が破棄され、描画が破棄済みのバッファへ触れるのを防ぐ） |
 | `ImageDrawMath`（`Platform.MewUI`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |
@@ -173,7 +173,7 @@ tests/
 | `EditHistory` | 編集履歴の移動（履歴からの画像の取り出しとプレビューへの差し替え） |
 | `WindowPlacementMath`（`Platform.MewUI`） | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
 | `AppLog` | ログ定義と Serilog のファクトリ（Avalonia 版と同一のファイル・書式。 `src/App.MewUI/src/Logging/AppLog.cs`） |
-| `IconLoader` | Avalonia 版と共有する SVG アイコンを Skia でラスタライズし、画像・ウィンドウアイコン（ICO）を生成する（`src/App.MewUI/src/Icons/IconLoader.cs`） |
+| `IconLoader` | Avalonia 版と共有する SVG アイコンを自前の走査線塗りでラスタライズし、画像・ウィンドウアイコン（ICO）を生成する（`src/App.MewUI/src/Icons/IconLoader.cs`） |
 
 ## 5. クラス図
 
@@ -220,7 +220,7 @@ classDiagram
         +Default$ SettingsJsonContext
     }
     class ThumbnailView {
-        <<SkiaCanvasView>>
+        <<Control>>
         +EsReadOnlyBitmap? Source
         +int RequestedSize
     }
@@ -312,7 +312,7 @@ classDiagram
     SettingsService ..> SettingsJsonContext : 型情報の取得
     CaptureFlow ..> CaptureSessionControl : 撮影の実行（StartCaptureAsync）
     CapturePage ..> MainViewModel : 切り出しの適用（CropPreviewCommand）
-    CaptureOverlay ..> SkiaImageView : 下敷きの画像
+    CaptureOverlay ..> ImageView : 下敷きの画像
     CaptureOverlay ..> SelectionOverlayControl : 配置（Area / Screen / Window）
     CaptureOverlay ..> IElementFinder : 要素の検出
     CaptureOverlay ..> ICaptureService : 画面の取得
@@ -327,8 +327,8 @@ classDiagram
     UndoPage ..> ISettingsService : 表示モードの読み書き
     UndoPage ..> MainViewModel : 現在の画像を参照
     ImageThumbnailLoader ..> EsReadOnlyBitmap : 縮小デコードの結果
-    ThumbnailView --|> SkiaImageView : 計測と Uniform 指定を与える
-    SkiaImageView ..> ImageDrawMath : 配置計算
+    ThumbnailView --|> ImageView : 計測と Uniform 指定を与える
+    ImageView ..> ImageDrawMath : 配置計算
     CropViewControl ..> MainViewModel : 参照（Source / DetectedRects）
     EsBitmapImageWriter ..|> IImageWriter
 ```
@@ -346,7 +346,7 @@ sequenceDiagram
     OS->>P: Main()
     P->>MW: Direct2DBackend.Register()
     P->>MW: Win32Platform.Register()
-    P->>MW: SkiaDirect2DInterop.Register()
+    P->>MW: Win32Platform.Register()
     P->>C: new SettingsService(SettingsJsonContext.Default)
     P->>C: new MainViewModel(settings, EsBitmapImageWriter)
     P->>C: SetPreviewImage(placeholder)
@@ -453,7 +453,7 @@ sequenceDiagram
 sequenceDiagram
     participant IL as ImageThumbnailLoader
     participant CO as SKCodec
-    participant SK as SkiaSharp
+    participant GF as IGraphicsContext
 
     IL->>CO: SKCodec.Create(stream)
     IL->>CO: GetScaledDimensions(scale)
@@ -571,7 +571,7 @@ sequenceDiagram
     participant CV as CropViewControl
     participant ZV as ZoomViewControl
     participant VM as MainViewModel
-    participant SK as SkiaSharp
+    participant GF as IGraphicsContext
 
     MW->>CV: PaintSurface（子のキャンバス）
     CV->>ZV: PaintSurface（画像）
@@ -615,7 +615,7 @@ sequenceDiagram
 | 保存先フォルダが存在しない | 一覧を空にし、ステータスのアイテム数を 0 にする |
 | 保存先フォルダの列挙に失敗（アクセス拒否等） | 一覧を空にする（ページごと落とさない） |
 | 画像のデコードに失敗（破損・非画像） | その項目のサムネイルを描画しない（項目自体は残す） |
-| 破棄済みの画像を描画しようとした | `ThumbnailView` / `SkiaImageView` が描画を省略する（キャッシュの容量超過で破棄された場合） |
+| 破棄済みの画像を描画しようとした | `ThumbnailView` / `ImageView` が描画を省略する（キャッシュの容量超過で破棄された場合） |
 | 対象モニターを検出できない | キャプチャを開始しない（画像の取得に失敗した場合） |
 | 画面の取得に失敗 | キャプチャを開始しない（オーナーの表示状態を戻す） |
 | 選択が退化している（1px 未満） | キャンセルと同じ扱いにする（0 サイズの画像を作らない） |
@@ -634,10 +634,10 @@ sequenceDiagram
 1. **UI 層のみを実装する**。 状態・設定・画像コンテナはコアが単一所有し、`App.MewUI` は保持しない。
 2. **ViewModel をラップしない**。 `App.Core` の `MainViewModel`（`INotifyPropertyChanged`）を
    `Bind` へ直接渡す。 UI ごとの ViewModel を増やすと二重管理になるため。
-3. **画像アダプタを作らない**。 MewUI は SkiaSharp を直接扱えるため、コアの画像を変換せず描画できる。
+3. **画像アダプタは 1 か所だけ**。 コアの画素（BGRA8888）を `ImageSource.FromBgraPixels` で取り込み、`Source` の変更時だけ変換する。
 4. **パッケージバージョンを固定する**。 MewUI は 0.x で API が安定化中であり、
    破壊的変更を検知できるよう `MewUIVersion` をプロパティで単一管理する。
-5. **プレビューは Star 行に置く**。 `SkiaCanvasView` の `MeasureContent` は `Size.Empty` を返し、
+5. **プレビューは Star 行に置く**。 表示ビューの `MeasureContent` は `Size.Empty` を返し、
    親が割り当てた領域全体を描画に使うため、3 行の Grid（Auto / Star / Auto）で残余を占めさせる。
 6. **静止画では連続再描画を無効化する**。 `ContinuousAnimation` を `false` にし、
    画像の差し替え時のみ `InvalidateVisual()` を呼ぶ。
@@ -662,7 +662,7 @@ sequenceDiagram
     モニターでしか選択できないため、仮想スクリーンを 1 枚の画像とし、オーバーレイで全面を覆う
     （フレームワークの論理座標による配置は OS に補正されるため、物理ピクセルで置き直す）。
 15. **表示状態と画像の配置を別のビューへ分ける**。 撮影のオーバーレイ（`Parts.CapturePreview.ControlMewUI`）と
-    サムネイル（`ThumbnailView`）は大きさの要求が異なるが、描画は `Platform.MewUI` の `SkiaImageView` が、
+    サムネイル（`ThumbnailView`）は大きさの要求が異なるが、描画は `Platform.MewUI` の `ImageView` が、
     配置の計算は `ImageDrawMath`（`Platform.MewUI`）が単一所有する（サムネイルは計測と Uniform 指定だけを加える）。
 16. **色の変換を専用クラスへ分離する**。 設定は色を文字列で保持するため、境界の変換は
    `SettingsColorMath` が単一所有し、不正な値は既定色へフォールバックする。
@@ -790,7 +790,7 @@ MewUI のウィンドウは**端から 6 DIP をサイズ変更の判定領域**
 | **色の引数順が型で異なる**（`SKColor` は R/G/B/A・`MewUIColor` の 4 引数コンストラクタは A/R/G/B） | 取り違えると「不透明の暗色」のつもりが「半透明の赤（あずき色）」になる。 `MewUIColor.FromArgb` と `new SKColor(r, g, b, a)` を明示して使う |
 | **ステータスバーの行高はスライダが決める**（Avalonia 版は `Height=24` のスライダが最大要素） | スライダの高さを Avalonia 版と同じ 24 DIP にし、行の高さを固定せず内容依存にする（両 UI とも 25.6 DIP になる） |
 | **`MewUIColor` の 4 引数コンストラクタは A / R / G / B 順**（`(255, 32, 32, 32)` は暗色ではなく「アルファ 32 の赤」になる）。 不透明度のつもりで渡すと透ける | 色は `MewUIColor.FromArgb(a, r, g, b)` で組み立てる（`SKColor` は `r, g, b, a` 順のため混同しない） |
-| **Skia キャンバスの下地を塗らないと後ろの要素が透けて見える** | 描画の先頭で下地へテーマの背景色を塗る（プレビューは `ZoomViewAppearance.BackgroundColor`。 画像が無い部分はこの下地色の単色になる） |
+| **下地を塗らないと後ろの要素が透けて見える** | 描画の先頭で下地へテーマの背景色を塗る（プレビューは `ZoomViewAppearance.BackgroundColor`。 画像が無い部分はこの下地色の単色になる） |
 | **ステータスバーへ独自の背景色を与えると、同じホバー色でも他と違って見える**（背景との明度差でホバーのコントラストが変わる） | ステータスバーの背景はページ背景（`Theme.Palette.ControlBackground`）に統一する |
 | **ウィンドウの非表示（`Hide` = `ShowWindow(SW_HIDE)`）は DWM のコンポジションへ即時反映されない**。 直後に `CopyFromScreen` すると、自ウィンドウが**半透明の状態で写り込む**（待機を入れても再現する） | 撮影の前にウィンドウを**画面外へ退避**（`MoveTo`）する。 併せて `IWindowService.SetCaptureExclusion` も設定し、撮影後に解除する |
 | **`Hide` と `Show` の往復はウィンドウを再作成させる**（復帰時に一瞬表示 → 非表示 → 再表示のちらつきが出る） | 退避は `Hide` ではなく位置の変更（画面外配置）にし、復帰は位置を戻すだけにする（Avalonia 版と同じ方式） |

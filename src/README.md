@@ -9,7 +9,7 @@
 flowchart TB
     APP["アプリ層<br/>App.AvaloniaUI / App.MewUI / App.WinUI3 / App.WinForms（+ App.Core の ViewModel・Model）<br/>Parts.CapturePreview.*（撮影セッション + 切り出しビュー + 領域選択 + 切り出しプレビューのビューポート）"]
     CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI / .WinUI3 / .WinForms"]
-    PLAT["プラットフォーム層<br/>EsUtil.Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>Platform.Skia（Skia 依存を閉じ込める）<br/>Platform.AvaloniaUI / Platform.MewUI / Platform.WinUI3 / Platform.WinForms（UI アダプタ）"]
+    PLAT["プラットフォーム層<br/>EsUtil.Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>Platform.AvaloniaUI / Platform.MewUI / Platform.WinUI3 / Platform.WinForms（UI アダプタ）"]
     APP --> CTRL
     APP --> PLAT
     CTRL --> PLAT
@@ -115,7 +115,7 @@ SelectionOverlay は複合コントロールであり、内包する Marquee / L
 
 UI 層は [`EsUtil.Ui.AvaloniaUI.Marquee`](../../EsUtil/EsUtil.Ui.AvaloniaUI/Marquee/README.md) / [`EsUtil.Ui.MewUI.Marquee`](../../EsUtil/EsUtil.Ui.MewUI/Marquee/README.md) / [`EsUtil.Ui.WinUI3.Marquee`](../../EsUtil/EsUtil.Ui.WinUI3/Marquee/README.md) / [`EsUtil.Ui.WinForms.Marquee`](../../EsUtil/EsUtil.Ui.WinForms/Marquee/README.md) /
 [`EsUtil.Ui.AvaloniaUI.Loupe`](../../EsUtil/EsUtil.Ui.AvaloniaUI/Loupe/README.md) / [`EsUtil.Ui.MewUI.Loupe`](../../EsUtil/EsUtil.Ui.MewUI/Loupe/README.md) / [`EsUtil.Ui.WinUI3.Loupe`](../../EsUtil/EsUtil.Ui.WinUI3/Loupe/README.md) / [`EsUtil.Ui.WinForms.Loupe`](../../EsUtil/EsUtil.Ui.WinForms/Loupe/README.md)、
-プラットフォーム層は [`EsUtil.Platform.Core`](../../EsUtil/EsUtil/Platform.Core/README.md) / [`Platform.Skia`](Platform.Skia/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) / [`Platform.WinUI3`](Platform.WinUI3/README.md) / [`Platform.WinForms`](Platform.WinForms/README.md) を参照してください。
+プラットフォーム層は [`EsUtil.Platform.Core`](../../EsUtil/EsUtil/Platform.Core/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) / [`Platform.WinUI3`](Platform.WinUI3/README.md) / [`Platform.WinForms`](Platform.WinForms/README.md) を参照してください。
 
 ## 7. 名前空間とフォルダ
 

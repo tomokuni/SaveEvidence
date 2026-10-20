@@ -11,11 +11,11 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using Aprillz.MewUI.Rendering;
 using EsUtil.SaveEvidence.Platform.MewUI;
-using EsUtil.SaveEvidence.Platform.Skia;
+using EsUtil.SaveEvidence.Platform.MewUI.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using SkiaSharp;
 
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
@@ -590,23 +590,23 @@ public sealed class SelectionOverlayControl : Panel
             MarqueeAppearance,
             OperationTextProvider?.Invoke(),
             InfoTextProvider?.Invoke(),
-            SkiaText.Measure);
+            MewUITextMeasure.Measure);
 
         foreach (var placement in placements)
         {
-            DrawLabel(e.Canvas, in placement);
+            DrawLabel(e.Context, in placement);
         }
     }
 
-    /// <summary>付加情報ラベル 1 件を canvas へ描く（背景を塗ってから文字を描く）。</summary>
-    /// <param name="canvas">描画先の canvas。</param>
+    /// <summary>付加情報ラベル 1 件をコンテキストへ描く（背景を塗ってから文字を描く）。</summary>
+    /// <param name="context">描画先のコンテキスト。</param>
     /// <param name="placement">配置指示（寸法は実寸を反映済み）。</param>
-    private static void DrawLabel(SKCanvas canvas, in MarqueeLabelPlacement placement)
+    private static void DrawLabel(IGraphicsContext context, in MarqueeLabelPlacement placement)
     {
         var bounds = placement.DipRect;
         var textOrigin = new EsPoint(bounds.X + placement.PaddingX, bounds.Y + placement.PaddingY);
-        SkiaLabel.Draw(
-            canvas, bounds, placement.BackgroundColor, placement.Text, textOrigin,
+        MewLabel.Draw(
+            context, bounds, placement.BackgroundColor, placement.Text, textOrigin,
             placement.FontSize, placement.TextColor, cornerRadius: 0);
     }
 
@@ -623,12 +623,12 @@ public sealed class SelectionOverlayControl : Panel
     {
         if (e.Content.CaptureTopLeft is { } topLeft)
         {
-            DrawSelectionOverlay(e.Canvas, topLeft, e.Content.ZoomLevel, e.Content.ClientPixelSize);
+            DrawSelectionOverlay(e.Context, topLeft, e.Content.ZoomLevel, e.Content.ClientPixelSize);
         }
     }
 
     /// <summary>ルーペ画像上の選択矩形破線をキャンバスへ描画する。</summary>
-    /// <param name="canvas">描画先のキャンバス（ピクセル等倍で描画できる状態であること）。</param>
+    /// <param name="context">描画先のコンテキスト（ピクセル等倍で描画できる状態であること）。</param>
     /// <param name="captureTopLeft">ルーペの切り出し領域の左上（対象座標系）。</param>
     /// <param name="scale">対象座標 → ルーペ画像ピクセル座標の変換係数。</param>
     /// <param name="clientPixelSize">ルーペ画像の一辺のサイズ（ピクセル）。 切り出し領域との交差判定に使用する。</param>
@@ -637,7 +637,7 @@ public sealed class SelectionOverlayControl : Panel
     /// ルーペ画像ピクセル座標へ変換する（変換と破線の幾何はコアが単一所有する）。<br/>
     /// 破線を描画しない場合（選択矩形を使わないモード・選択なし）は何もしない。
     /// </remarks>
-    internal void DrawSelectionOverlay(SKCanvas canvas, EsPoint captureTopLeft, double scale, int clientPixelSize)
+    internal void DrawSelectionOverlay(IGraphicsContext context, EsPoint captureTopLeft, double scale, int clientPixelSize)
     {
         // 破線を描くかどうかはモードと選択矩形の有無（コアが単一所有する判断）で決まる
         if (!SelectionOverlayState.Resolve(_mode).ShouldDrawSelectionOverlay(_marquee.HasSelection))
@@ -645,8 +645,8 @@ public sealed class SelectionOverlayControl : Panel
             return;
         }
 
-        SelectionOverlaySkiaRenderer.DrawSelectionRect(
-            canvas,
+        SelectionOverlayRenderer.DrawSelectionRect(
+            context,
             _marquee.SelectionSourceRect,
             captureTopLeft,
             scale,

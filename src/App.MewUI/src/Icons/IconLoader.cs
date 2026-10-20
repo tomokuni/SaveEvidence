@@ -3,7 +3,6 @@ using Aprillz.MewUI;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Models;
-using SkiaSharp;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Icons;
 
@@ -12,15 +11,13 @@ namespace EsUtil.SaveEvidence.App.MewUI.Icons;
 /// SVG の出所は <see cref="SvgIconLoader"/>（App.Core）が単一所有する（4 つの UI 版で同じファイルを使う）。<br/>
 /// 各 SVG は Fluent System Icons 形式の単一 <c>&lt;path d="..."&gt;</c> で構成され、viewBox は 24x24。<br/>
 /// <br/>
-/// <b>Avalonia 版との違い</b>: MewUI には <c>PathIcon</c>（ジオメトリを色付きで描く要素）が無いため、<br/>
-/// ジオメトリを Skia で指定サイズ・指定色へラスタライズし、<see cref="ImageSource"/> として <c>Image</c> 要素やウィンドウアイコンへ渡す。<br/>
+/// <b>ラスタライズは自前</b>: MewUI にはジオメトリを描く要素が無いため、パスデータを折れ線へ分解し、
+/// 走査線で被覆率を数えて画素へ展開する（<see cref="SvgPathRasterizer"/>。 外部ライブラリを使わない）。<br/>
+/// 生成した画素は BGRA8888 のまま <c>ImageSource.FromBgraPixels</c> へ渡す（PNG の往復をしない）。<br/>
 /// 生成結果は容量制限付きのキャッシュで共有する（ナビ・ツールバーのアイコンは表示のたびに参照されるため）。
 /// </remarks>
 internal static class IconLoader
 {
-    /// <summary>SVG の viewBox サイズ（Fluent System Icons 標準の 24x24）。</summary>
-    private const double ViewBoxSize = 24;
-
     /// <summary>画像キャッシュの最大保持数。</summary>
     private const int CacheCapacity = 48;
 
@@ -53,24 +50,26 @@ internal static class IconLoader
     /// <returns>前景色。</returns>
     public static Color ForegroundColor() => IsDarkTheme() ? s_foregroundDark : s_foregroundLight;
 
-    /// <summary>指定 SVG のパス形状を読み込む。</summary>
+    /// <summary>指定 SVG の図形（折れ線へ分解する前のパス）を読み込む。</summary>
     /// <param name="fileName">SVG ファイル名（例: "ic_fluent_save_24_regular.svg"）。</param>
-    /// <returns>SVG のパス形状。 読み込めない場合は空の形状。</returns>
-    /// <remarks>読み込み失敗（リソース欠落・パスデータ不正）でも例外にせず空の形状を返す（UI を壊さない）。</remarks>
-    public static SKPath LoadPath(string fileName)
+    /// <returns>SVG の図形。 読み込めない場合は空。</returns>
+    /// <remarks>読み込み失敗（リソース欠落・パスデータ不正）でも例外にせず空の図形を返す（UI を壊さない）。</remarks>
+    public static IReadOnlyList<SvgPathFigure> LoadFigures(string fileName)
     {
         var icon = SvgIconLoader.Load(fileName);
-        var path = new SKPath();
-        foreach (var data in icon.PathData)
+        if (icon.PathData.Count == 0)
         {
-            using var part = SKPath.ParseSvgPathData(data);
-            if (part is not null)
-            {
-                path.AddPath(part);
-            }
+            return [];
         }
 
-        return path;
+        // 各 SVG は単一の <path d="..."> で構成される（複数ある場合は連結して 1 つの図形として扱う）
+        var figures = new List<SvgPathFigure>();
+        foreach (var data in icon.PathData)
+        {
+            figures.AddRange(SvgPathData.Parse(data));
+        }
+
+        return figures;
     }
 
     /// <summary>指定 SVG を指定サイズ・指定色でラスタライズした画像を取得する。</summary>
@@ -79,7 +78,7 @@ internal static class IconLoader
     /// <param name="color">アイコンの色。</param>
     /// <returns>ラスタライズした画像。 生成結果はキャッシュして共有する。</returns>
     /// <remarks>
-    /// 24x24 の viewBox を <paramref name="size"/> へ等方スケールして描画する。<br/>
+    /// 図形の外接矩形を一辺いっぱいへ広げて描く（Avalonia 版の <c>PathIcon</c> と同じ見え方）。<br/>
     /// 生成した画像は本クラスが所有し、呼び出し側は破棄しない（キャッシュから共有されるため）。
     /// </remarks>
     public static ImageSource LoadImage(string fileName, int size, Color color)
@@ -87,47 +86,12 @@ internal static class IconLoader
         var length = Math.Max(1, size);
         var key = (fileName, length, color.ToArgb());
 
-        return CapacityLimitedCache.GetOrAdd(s_cache, CacheCapacity, key, k =>
+        return CapacityLimitedCache.GetOrAdd(s_cache, CacheCapacity, key, static k =>
         {
             // 汎用ヘルパー経由ではタプルの要素名が失われるため、分解して受け取る
             var (file, size2, argb) = k;
-            using var path = LoadPath(file);
-
-            using var bitmap = new SKBitmap(size2, size2);
-            using (var canvas = new SKCanvas(bitmap))
-            {
-                canvas.Clear(SKColors.Transparent);
-
-                // 図形の実寸（余白を除いた外接矩形）を一辺いっぱいへ広げる。
-                // Avalonia 版の PathIcon はジオメトリの外接矩形を枠いっぱいへ引き伸ばすため、
-                // SVG の viewBox（24x24）基準で描くとアイコンだけが小さく見える（実測）
-                var bounds = path.Bounds;
-                if (bounds.Width > 0 && bounds.Height > 0)
-                {
-                    var scale = Math.Min(size2 / bounds.Width, size2 / bounds.Height);
-                    canvas.Translate(
-                        ((size2 - (bounds.Width * scale)) / 2f) - (bounds.Left * scale),
-                        ((size2 - (bounds.Height * scale)) / 2f) - (bounds.Top * scale));
-                    canvas.Scale(scale);
-
-                    using var paint = new SKPaint
-                    {
-                        IsAntialias = true,
-                        Style = SKPaintStyle.Fill,
-                        // アイコンの色は 0xAARRGGBB で受け取る
-                        Color = new SKColor(
-                            (byte)((argb >> 16) & 0xFF),
-                            (byte)((argb >> 8) & 0xFF),
-                            (byte)(argb & 0xFF),
-                            (byte)((argb >> 24) & 0xFF)),
-                    };
-                    canvas.DrawPath(path, paint);
-                }
-            }
-
-            using var image = SKImage.FromBitmap(bitmap);
-            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-            return ImageSource.FromBytes(data.ToArray());
+            var pixels = Rasterize(file, size2, argb);
+            return ImageSource.FromBgraPixels(size2, size2, pixels, hasAlpha: true);
         });
     }
 
@@ -137,24 +101,34 @@ internal static class IconLoader
     /// <param name="color">アイコンの色。</param>
     /// <returns>生成した <see cref="IconSource"/>。 複数サイズを含む。</returns>
     /// <remarks>
-    /// MewUI の <see cref="IconSource.FromBytes"/> は ICO 形式を要求するため、<br/>
-    /// 各サイズの PNG を ICO コンテナ（Vista 以降の PNG 埋め込み形式）へ詰めて渡す。<br/>
-    /// タスクバー・Alt+Tab・タイトルバーの要求サイズに応じて選ばれるよう、複数のサイズを登録する。
+    /// タスクバー・Alt+Tab・タイトルバーの要求サイズに応じて選ばれるよう、複数のサイズを ICO へ詰めて渡す。<br/>
+    /// 各画像は <b>32bpp の DIB（無圧縮）</b>で格納する（PNG を作らないため、エンコーダーを必要としない）。
     /// </remarks>
     public static IconSource LoadWindowIcon(string fileName, int size, Color color)
     {
         var sizes = new[] { 16, 24, 32, 48, 64, size }.Distinct().Where(static s => s > 0).OrderBy(static s => s).ToArray();
-        return IconSource.FromBytes(BuildIco([.. sizes.Select(s => (s, EncodePng(fileName, s, color)))]));
+        return IconSource.FromBytes(BuildIco([.. sizes.Select(s => (s, Rasterize(fileName, s, color.ToArgb())))]));
     }
 
-    /// <summary>複数サイズの PNG を 1 つの ICO（アイコン）バイナリへ詰める。</summary>
-    /// <param name="images">サイズと PNG バイト列の組（1 件以上）。</param>
+    /// <summary>SVG を指定サイズ・指定色の BGRA 画素へ展開する。</summary>
+    /// <param name="fileName">SVG ファイル名。</param>
+    /// <param name="size">一辺（ピクセル）。</param>
+    /// <param name="argb">色（<c>0xAARRGGBB</c>）。</param>
+    /// <returns>画素（行幅 = 幅 × 4）。</returns>
+    private static byte[] Rasterize(string fileName, int size, uint argb)
+    {
+        var figures = LoadFigures(fileName);
+        return figures.Count == 0 ? new byte[size * size * 4] : SvgPathRasterizer.Rasterize(figures, size, argb);
+    }
+
+    /// <summary>複数サイズの画素を 1 つの ICO（アイコン）バイナリへ詰める。</summary>
+    /// <param name="images">サイズと BGRA 画素の組（1 件以上）。</param>
     /// <returns>ICO 形式のバイト列。</returns>
     /// <remarks>
     /// ICO の構造は ICONDIR（6 バイト）+ ICONDIRENTRY（16 バイト × 件数）+ 画像データ。<br/>
-    /// Vista 以降は各画像に PNG をそのまま格納できる（BMP への展開が不要）。
+    /// 画像は <b>BITMAPINFOHEADER（40 バイト）+ 下から上の BGRA + AND マスク</b>で格納する（PNG を使わない）。
     /// </remarks>
-    private static byte[] BuildIco(IReadOnlyList<(int Size, byte[] Png)> images)
+    private static byte[] BuildIco(IReadOnlyList<(int Size, byte[] Bgra)> images)
     {
         const int DirectorySize = 6;
         const int EntrySize = 16;
@@ -168,58 +142,61 @@ internal static class IconLoader
         writer.Write((ushort)images.Count);
 
         var offset = DirectorySize + (EntrySize * images.Count);
-        foreach (var (size, png) in images)
+        var payloads = new List<byte[]>(images.Count);
+        foreach (var (size, bgra) in images)
         {
+            var payload = BuildDib(size, bgra);
+            payloads.Add(payload);
+
             // 256 以上のサイズは 0 として記録する（ICO の仕様）
             writer.Write((byte)(size >= 256 ? 0 : size));
             writer.Write((byte)(size >= 256 ? 0 : size));
-            writer.Write((byte)0);  // パレット数（32bpp では未使用）
-            writer.Write((byte)0);  // 予約
+            writer.Write((byte)0);   // パレット数（32bpp では未使用）
+            writer.Write((byte)0);   // 予約
             writer.Write((ushort)1); // プレーン数
             writer.Write((ushort)32); // ビット深度
-            writer.Write(png.Length);
+            writer.Write(payload.Length);
             writer.Write(offset);
-            offset += png.Length;
+            offset += payload.Length;
         }
 
-        foreach (var (_, png) in images)
+        foreach (var payload in payloads)
         {
-            writer.Write(png);
+            writer.Write(payload);
         }
 
         writer.Flush();
         return stream.ToArray();
     }
 
-    /// <summary>指定 SVG を指定サイズ・指定色で PNG バイト列へエンコードする。</summary>
-    /// <param name="fileName">SVG ファイル名。</param>
+    /// <summary>32bpp の DIB（BITMAPINFOHEADER + 画素 + AND マスク）を組み立てる。</summary>
     /// <param name="size">一辺（ピクセル）。</param>
-    /// <param name="color">アイコンの色。</param>
-    /// <returns>PNG のバイト列。</returns>
-    private static byte[] EncodePng(string fileName, int size, Color color)
+    /// <param name="bgra">画素（行幅 = 幅 × 4・上から下）。</param>
+    /// <returns>DIB のバイト列。</returns>
+    /// <remarks>
+    /// <b>高さは 2 倍で書く</b>（ICO の仕様: 画素の高さ + AND マスクの高さ）。<br/>
+    /// AND マスクは 1bpp で 4 バイト境界へ揃える（32bpp のアルファを使うため全 0 でよい）。
+    /// </remarks>
+    private static byte[] BuildDib(int size, byte[] bgra)
     {
-        using var path = LoadPath(fileName);
-        using var bitmap = new SKBitmap(size, size);
-        using (var canvas = new SKCanvas(bitmap))
+        const int HeaderSize = 40;
+        var maskStride = ((size + 31) / 32) * 4;
+        var maskSize = maskStride * size;
+        var payload = new byte[HeaderSize + (size * size * 4) + maskSize];
+
+        BitConverter.GetBytes(HeaderSize).CopyTo(payload, 0);
+        BitConverter.GetBytes(size).CopyTo(payload, 4);
+        BitConverter.GetBytes(size * 2).CopyTo(payload, 8);
+        BitConverter.GetBytes((ushort)1).CopyTo(payload, 12);
+        BitConverter.GetBytes((ushort)32).CopyTo(payload, 14);
+        BitConverter.GetBytes(size * size * 4).CopyTo(payload, 20);
+
+        // 画素は下から上へ並べる
+        for (var y = 0; y < size; y++)
         {
-            canvas.Clear(SKColors.Transparent);
-            var scale = size / (float)ViewBoxSize;
-            canvas.Scale(scale);
-            using var paint = new SKPaint
-            {
-                IsAntialias = true,
-                Style = SKPaintStyle.Fill,
-                Color = new SKColor(
-                    (byte)((color.ToArgb() >> 16) & 0xFF),
-                    (byte)((color.ToArgb() >> 8) & 0xFF),
-                    (byte)(color.ToArgb() & 0xFF),
-                    (byte)((color.ToArgb() >> 24) & 0xFF)),
-            };
-            canvas.DrawPath(path, paint);
+            Array.Copy(bgra, y * size * 4, payload, HeaderSize + ((size - 1 - y) * size * 4), size * 4);
         }
 
-        using var image = SKImage.FromBitmap(bitmap);
-        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
-        return data.ToArray();
+        return payload;
     }
 }

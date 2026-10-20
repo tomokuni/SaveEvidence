@@ -1,7 +1,5 @@
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Platform.Skia;
 using Microsoft.Extensions.Logging;
-using SkiaSharp;
 
 
 namespace EsUtil.SaveEvidence.App.MewUI.Tests;
@@ -15,11 +13,7 @@ internal static class TestHelper
     /// <returns>生成した画像。 所有権は呼び出し側。</returns>
     public static EsBitmap CreateBitmap(int width = 4, int height = 4)
     {
-        // 所有権は FromSKBitmap へ移るため using を付けない
-        var bitmap = new SKBitmap(width, height);
-        bitmap.Erase(SKColors.CornflowerBlue);
-
-        return bitmap.ToEsBitmap();
+        return EsBitmap.Create(width, height, System.Drawing.Color.CornflowerBlue);
     }
 
     /// <summary>一時ファイルのパスを作る（ファイルは作成しない）。</summary>

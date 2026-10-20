@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.MewUI.Services;
-using SkiaSharp;
+using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Tests;
@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Tests;
 /// <summary><see cref="ImageThumbnailLoader"/> の単体テスト（縮小デコード・キャッシュ・失敗時の扱い）。</summary>
 /// <remarks>
 /// 実ファイルへ書き出した画像を読み込み、寸法・アルファ・同一性（キャッシュ）を検証する。<br/>
-/// 縮小デコードは <see cref="SKCodec"/> へ縮小後の寸法を渡す実装のため、寸法が要求どおりになることを固定する。
+/// 寸法・アルファ・同一性（キャッシュ）が要求どおりになることを固定する。
 /// </remarks>
 public class ImageThumbnailLoaderTests : IDisposable
 {
@@ -24,19 +24,12 @@ public class ImageThumbnailLoaderTests : IDisposable
     /// <param name="color">塗りつぶし色。</param>
     /// <param name="extension">拡張子（保存形式を決める）。</param>
     /// <returns>書き出したファイルのパス。</returns>
-    private string WriteImage(int width, int height, SKColor color, string extension = ".png")
+    private string WriteImage(int width, int height, System.Drawing.Color color, string extension = ".png")
     {
         var path = TestHelper.CreateTempPath(extension);
 
-        // 所有権は FromSKBitmap へ移るため using を付けない
-        var source = new SKBitmap(width, height);
-        source.Erase(color);
-        using var image = SKImage.FromBitmap(source);
-        using var encoded = image.Encode(extension == ".jpg" ? SKEncodedImageFormat.Jpeg : SKEncodedImageFormat.Png, 100);
-        using (var stream = File.Create(path))
-        {
-            encoded.SaveTo(stream);
-        }
+        using var source = EsBitmap.Create(width, height, color);
+        source.Save(path);
 
         _files.Add(path);
         return path;
@@ -67,7 +60,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     internal void Load_長辺が指定サイズへ縮小される(
         int sourceWidth, int sourceHeight, int maxSize, int expectedWidth, int expectedHeight)
     {
-        var path = WriteImage(sourceWidth, sourceHeight, SKColors.Red);
+        var path = WriteImage(sourceWidth, sourceHeight, System.Drawing.Color.Red);
 
         var thumbnail = ImageThumbnailLoader.Load(path, maxSize, Capacity);
 
@@ -79,7 +72,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     [Fact]
     internal void Load_指定サイズ以下の画像は拡大しない()
     {
-        var path = WriteImage(40, 20, SKColors.Red);
+        var path = WriteImage(40, 20, System.Drawing.Color.Red);
 
         var thumbnail = ImageThumbnailLoader.Load(path, 320, Capacity);
 
@@ -93,14 +86,9 @@ public class ImageThumbnailLoaderTests : IDisposable
     {
         // 半透明（アルファ 128）の赤を 1x1 で書き出し、デコード後もアルファが残ることを確認する
         var path = TestHelper.CreateTempPath(".png");
-        var source = new SKBitmap(new SKImageInfo(1, 1, SKColorType.Bgra8888, SKAlphaType.Unpremul));
-        source.SetPixel(0, 0, new SKColor(255, 0, 0, 128));
-        using (var image = SKImage.FromBitmap(source))
-        using (var encoded = image.Encode(SKEncodedImageFormat.Png, 100))
-        using (var stream = File.Create(path))
-        {
-            encoded.SaveTo(stream);
-        }
+        using var source = EsBitmap.Create(1, 1);
+        source.SetPixel(0, 0, b: 0, g: 0, r: 255, a: 128);
+        source.Save(path);
 
         _files.Add(path);
 
@@ -114,7 +102,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     [Fact]
     internal void Load_Jpegのサムネイルも読み込める()
     {
-        var path = WriteImage(300, 150, SKColors.Green, ".jpg");
+        var path = WriteImage(300, 150, System.Drawing.Color.Green, ".jpg");
 
         var thumbnail = ImageThumbnailLoader.Load(path, 150, Capacity);
 
@@ -126,7 +114,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     [Fact]
     internal void Load_同じ条件では同一のインスタンスを共有する()
     {
-        var path = WriteImage(400, 200, SKColors.Red);
+        var path = WriteImage(400, 200, System.Drawing.Color.Red);
 
         var first = ImageThumbnailLoader.Load(path, 100, Capacity);
         var second = ImageThumbnailLoader.Load(path, 100, Capacity);
@@ -138,7 +126,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     [Fact]
     internal void Load_サイズが異なれば別のインスタンスを返す()
     {
-        var path = WriteImage(400, 200, SKColors.Red);
+        var path = WriteImage(400, 200, System.Drawing.Color.Red);
 
         var small = ImageThumbnailLoader.Load(path, 100, Capacity);
         var large = ImageThumbnailLoader.Load(path, 200, Capacity);
@@ -181,7 +169,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     [Fact]
     internal void Load_サイズ0以下は1ピクセルとして扱う()
     {
-        var path = WriteImage(400, 200, SKColors.Red);
+        var path = WriteImage(400, 200, System.Drawing.Color.Red);
 
         var thumbnail = ImageThumbnailLoader.Load(path, 0, Capacity);
 
@@ -193,7 +181,7 @@ public class ImageThumbnailLoaderTests : IDisposable
     [Fact]
     internal void Load_拡張子が大文字でも読み込める()
     {
-        var path = WriteImage(80, 40, SKColors.Red, ".PNG");
+        var path = WriteImage(80, 40, System.Drawing.Color.Red, ".PNG");
 
         var thumbnail = ImageThumbnailLoader.Load(path, 40, Capacity);
 

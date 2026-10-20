@@ -17,9 +17,7 @@
     <!-- Core + Win32 プラットフォームホスト + Windows 向け全描画バックエンド -->
     <PackageReference Include="Aprillz.MewUI.Windows" Version="$(MewUIVersion)" />
     <!-- SkiaCanvasView（EsBitmap をそのまま描画する） -->
-    <PackageReference Include="Aprillz.MewUI.Skia" Version="$(MewUIVersion)" />
     <!-- Direct2D ↔ Skia の GPU ブリッジ（未登録でも CPU 経路で動作するが、描画コストが高い） -->
-    <PackageReference Include="Aprillz.MewUI.Skia.Interop.Direct2D" Version="$(MewUIVersion)" />
     <!-- 操作ログ（Avalonia 版と同一のファイルへ出力する） -->
     <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
     <PackageReference Include="Serilog" Version="[4.*,)" />
