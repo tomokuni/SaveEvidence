@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core;
-using Windows.Win32;
+using EsUtil.Platform.Core.Native.Win;
 
 namespace EsUtil.SaveEvidence.App.Core.Services;
 
@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// <br/>
 /// <b>設定する時機</b>: ウィンドウを作る<b>前</b>（プロセス単位の設定のため、最初のウィンドウ作成より前に行う）。<br/>
 /// <b>失敗時</b>: 記録せずに続行する（タスク バーのグループ分けが既定のままになるだけで、機能は損なわれない）。
-/// <b>Win32 の宣言は CsWin32 が生成する</b>（<c>src/NativeMethods.txt</c>。 宣言を手で書かない）。
+/// <b>Win32 の呼び出しはコアが単一所有する</b>（<see cref="WinAppUserModelId"/>。 本クラスは製品の AUMID を決めるだけ）。
 /// </remarks>
 public static class TaskbarIdentity
 {
@@ -27,7 +27,7 @@ public static class TaskbarIdentity
     {
         try
         {
-            return PInvoke.SetCurrentProcessExplicitAppUserModelID(appUserModelId).Succeeded;
+            return WinAppUserModelId.SetProcessId(appUserModelId);
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {

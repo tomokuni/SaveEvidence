@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;
@@ -43,7 +44,7 @@ internal static class Program
         if (IsStartedByDotnetHost())
         {
             s_logger.LogStartedFromDotnetHost();
-            StartupDialog.ShowError(
+            WinMessageBox.ShowError(
                 "SaveEvidence.WinUI3.exe（実行ファイル）から起動してください。\n"
                 + ".NET ホスト（dotnet <アプリ>.dll）からは起動できません。",
                 "SaveEvidence");

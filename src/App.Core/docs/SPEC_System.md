@@ -21,7 +21,7 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 - .NET 10 / C# 14
 - UI フレームワークは一切参照しない
 - 外部依存は `CommunityToolkit.Mvvm`（UI フレームワーク非依存の MVVM ツールキット）のみ
-- **Win32 の宣言は CsWin32（ソース生成）が持つ**（`Microsoft.Windows.CsWin32` は `PrivateAssets="all"` のため実行時依存も配布物も増えない。 宣言は `src/NativeMethods.txt` にだけ書き、手で `DllImport` を書かない）
+- **Win32 の呼び出しは `EsUtil.Platform.Core`（`Native/Win`）が単一所有する**（`WinWindowFrame` / `WinAppUserModelId` / `WinMessageBox` / `WinClipboard`。 本プロジェクトは P/Invoke も CsWin32 も持たない）
 
 ## 3. アーキテクチャ
 
@@ -56,9 +56,6 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 | `src/App.Core/src/Services/SettingsService.cs` | `public sealed class` | JSON ファイルによる設定管理（**設定の永続化形式 = JSON の構造・enum の文字列表現の唯一の所有者**）。 ソース生成コンテキストを必須とする |
 | `src/App.Core/src/Services/WindowPlacementRule.cs` | `public static class` | ウィンドウ配置の復元判定・補正と、外寸 / クライアント寸法の換算 |
 | `src/App.Core/src/Services/ToolbarMetrics.cs` | `public static class` | 4 UI 版が共有するツールバー寸法・文字サイズ |
-| `src/App.Core/src/Services/WindowFrameMetrics.cs` | `internal static class` | ウィンドウの外寸とクライアント領域の差（枠の太さ）の実測（4 UI 版が共有。 Win32 の宣言は CsWin32） |
-| `src/App.Core/src/Services/StartupDialog.cs` | `internal static class` | 起動できない理由を利用者へ示すエラー表示（XAML の初期化前に使える。 Win32 の宣言は CsWin32） |
-| `src/App.Core/src/NativeMethods.txt` | （生成の入力） | CsWin32 が生成する Win32 API の一覧（`GetWindowRect` / `GetClientRect` / `SetCurrentProcessExplicitAppUserModelID` / `MessageBox`） |
 | `src/App.Core/src/Icons/CaptureIconFiles.cs` | `public static class` | キャプチャ ページのツールバーとメニューで使う共通 SVG 名 |
 | `src/App.Core/src/Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
 | `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モード（特大 / 大 / 中）の名称・件数表示（**唯一の所有者**。 `FolderViewViewModel` / `UndoViewModel` が委譲する） |

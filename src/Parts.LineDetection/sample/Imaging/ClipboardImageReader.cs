@@ -1,70 +1,34 @@
-using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
-using Windows.Win32;
-using Windows.Win32.Foundation;
-
-// 本アセンブリ（サンプル）の P/Invoke はシステム ディレクトリ（System32）だけを探索する（CA5392）。
-[assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+using EsUtil.Platform.Core.Native.Win;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.Imaging;
 
-/// <summary>Win32 クリップボードから画像（CF_DIB）を読み取るユーティリティ。</summary>
+/// <summary>クリップボードから画像（CF_DIB）を読み取るユーティリティ。</summary>
 /// <remarks>
 /// クリップボードの標準画像形式である CF_DIB（BITMAPINFOHEADER + パレット + ピクセルデータ）を直接読み取り、<br/>
 /// Avalonia の <see cref="WriteableBitmap"/>（BGRA8888）へ変換する。<br/>
 /// スクリーンショットツール（Snipping Tool / PrintScreen 等）は主に CF_DIB を提供するため、<br/>
-/// PNG 文字列フォーマットが無い場合のフォールバックとして使用する（Windows 専用）。
+/// PNG 文字列フォーマットが無い場合のフォールバックとして使用する（Windows 専用）。<br/>
+/// <b>クリップボードの開閉はコアが単一所有する</b>（<see cref="WinClipboard.TryReadDib"/>。 解放漏れを作らない）。
 /// </remarks>
-internal static partial class ClipboardImageReader
+internal static class ClipboardImageReader
 {
     /// <summary>CF_DIB フォーマット識別子。</summary>
     private const uint CF_DIB = 8;
 
-    /// <summary>クリップボードを開いて CF_DIB 画像を読み取る。</summary>
+    /// <summary>クリップボードの CF_DIB 画像を読み取る。</summary>
     /// <returns>取得した画像。 画像が無い・失敗時は null。</returns>
     /// <remarks>
-    /// 1. <c>OpenClipboard</c> でクリップボードを開く<br/>
-    /// 2. <c>GetClipboardData(CF_DIB)</c> で DIB を取得<br/>
-    /// 3. <see cref="BitmapFromDib"/> で BITMAPINFOHEADER を解析し BGRA8888 へ変換する<br/>
-    /// 4. <c>CloseClipboard</c> で必ず解放する
+    /// 1. クリップボードを開いて CF_DIB を取得する（<see cref="WinClipboard.TryReadDib"/>）<br/>
+    /// 2. <see cref="BitmapFromDib"/> で BITMAPINFOHEADER を解析し BGRA8888 へ変換する<br/>
+    /// 3. 解放は <see cref="WinClipboard.TryReadDib"/> が必ず行う
     /// </remarks>
-    public static unsafe Bitmap? ReadImageFromDib()
+    public static Bitmap? ReadImageFromDib()
     {
-        if (!PInvoke.OpenClipboard(default))
-        {
-            return null;
-        }
-
-        try
-        {
-            var clipboard = PInvoke.GetClipboardData(CF_DIB);
-            if (clipboard.IsNull)
-            {
-                return null;
-            }
-
-            var hGlobal = (HGLOBAL)clipboard.Value;
-            var memory = PInvoke.GlobalLock(hGlobal);
-            if (memory is null)
-            {
-                return null;
-            }
-
-            try
-            {
-                return BitmapFromDib((IntPtr)memory);
-            }
-            finally
-            {
-                _ = PInvoke.GlobalUnlock(hGlobal);
-            }
-        }
-        finally
-        {
-            _ = PInvoke.CloseClipboard();
-        }
+        Bitmap? image = null;
+        return WinClipboard.TryReadDib(CF_DIB, dib => image = BitmapFromDib(dib)) ? image : null;
     }
 
     /// <summary>DIB メモリ（BITMAPINFOHEADER 先頭）を解析して BGRA8888 の Bitmap を生成する。</summary>

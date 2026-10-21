@@ -3,6 +3,7 @@ using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -830,7 +831,7 @@ internal sealed partial class MainWindow
             return;
         }
 
-        var frame = WindowFrameMetrics.Get(hwnd);
+        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(hwnd));
         var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
         var currentSize = window.WindowSize;
 
@@ -852,7 +853,7 @@ internal sealed partial class MainWindow
             return;
         }
 
-        var frame = WindowFrameMetrics.Get(hwnd);
+        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(hwnd));
         var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
         var bounds = settingsService.Current.MainWindowBounds;
         var savedScale = EsWindowPlacementMath.IsUsable(bounds)
@@ -888,7 +889,7 @@ internal sealed partial class MainWindow
     private static void SaveWindowPlacement(Window window, ISettingsService settingsService)
     {
         var scale = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(window.Handle));
-        var frame = WindowFrameMetrics.Get(window.Handle);
+        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(window.Handle));
         var position = EsWindowPlacementMath.ToPhysicalPixelPoint(
             new EsPoint(window.Position.X, window.Position.Y), scale);
 

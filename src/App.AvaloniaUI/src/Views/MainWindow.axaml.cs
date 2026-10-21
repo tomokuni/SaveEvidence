@@ -11,6 +11,7 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Enums;
@@ -567,7 +568,7 @@ public sealed partial class MainWindow : Window
             throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
         }
 
-        var frame = WindowFrameMetrics.Get(platformHandle.Handle);
+        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(platformHandle.Handle));
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         MinWidth = WindowPlacementRule.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling);
         MinHeight = WindowPlacementRule.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling);
@@ -581,7 +582,7 @@ public sealed partial class MainWindow : Window
             throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
         }
 
-        var frame = WindowFrameMetrics.Get(platformHandle.Handle);
+        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(platformHandle.Handle));
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         Width = _restoredWindowBounds is { } bounds
             ? WindowPlacementRule.ToClientLength(bounds.Width / (_restoredWindowScaling ?? scaling), frame.Width, scaling)
@@ -607,7 +608,7 @@ public sealed partial class MainWindow : Window
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         var platformHandle = TryGetPlatformHandle()
             ?? throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
-        var frame = WindowFrameMetrics.Get(platformHandle.Handle);
+        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(platformHandle.Handle));
         _settingsService.Current.MainWindowBounds = new EsRectInt(
             Position.X, Position.Y,
             WindowPlacementRule.ToOuterPhysicalLength(Width, frame.Width, scaling),
