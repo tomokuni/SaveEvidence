@@ -232,10 +232,10 @@ src/
 │   ├── Crop/                               # 切り出しビュー（画像ビューポート + 領域選択 + 矩形オーバーレイ + 強調オーバーレイ）
 │   │   ├── CropViewControl.cs              # 切り出しビュー（公開）
 │   │   ├── RectOverlayCanvas.cs            # 透明な矩形オーバーレイ（internal）
-│   │   └── CropSkiaRenderer.cs             # コアの描画入力を Skia へ写す（internal）
+│   │   └── CropOverlayRenderer.cs             # コアの描画入力を Skia へ写す（internal）
 │   ├── SelectionOverlay/                   # 領域選択（暗転マスク + 選択矩形 + ルーペ）
 │   │   ├── SelectionOverlayControl.cs              # 領域選択（公開）
-│   │   ├── SelectionOverlaySkiaRenderer.cs         # 選択矩形破線の描画（internal）
+│   │   ├── SelectionOverlayRenderer.cs         # 選択矩形破線の描画（internal）
 │   │   ├── SelectionConfirmedEventArgs.cs          # 確定要求のイベント引数（公開クラス）
 │   │   └── LoupePositionEventArgs.cs               # ルーペ位置のイベント引数（公開クラス）
 │   ├── Session/                            # セッション（Facade と撮影・切り出しの実装）

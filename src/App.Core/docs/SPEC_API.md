@@ -45,6 +45,7 @@
 - [33. `Services.ToolbarMetrics`（静的クラス）](#33-servicestoolbarmetrics静的クラス)
 - [34. `Services.WindowPlacementRule`（静的クラス）](#34-serviceswindowplacementrule静的クラス)
 - [35. `Icons.CaptureIconFiles`（静的クラス）](#35-iconscaptureiconfiles静的クラス)
+- [36. `Icons.SvgPathData` / `SvgPathRasterizer`（内部）](#36-iconssvgpathdata--svgpathrasterizer内部)
 
 ## 1. 公開 API の可視性
 
@@ -588,3 +589,14 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 | `WindowSelect` | ウィンドウ選択キャプチャ |
 | `AreaSelect` | 領域選択キャプチャ |
 | `Crop` | 切り出し |
+
+## 36. `Icons.SvgPathData` / `SvgPathRasterizer`（内部）
+
+SVG パス データの**解析**と、図形の**画素への展開**の唯一の定義です（WinUI 3 版と MewUI 版が同じ解析結果を使う）。
+
+| メンバー | 内容 |
+| --- | --- |
+| `SvgPathData.Parse(string? data)` | パス データ（`d` 属性）を `SvgPathFigure` の列へ解析する（`M` / `L` / `H` / `V` / `C` / `Z` のみ。 未対応のコマンドは空の列） |
+| `SvgPathRasterizer.Rasterize(IReadOnlyList<SvgPathFigure> figures, int size, uint argb)` | 図形を `size` × `size` の BGRA8888 画素へ展開する（図形の外接矩形を一辺いっぱいへ広げる。 被覆率は副標本で数える） |
+
+**解析結果を UI 非依存の形で返す理由**: WinUI 3 版は `PathGeometry` へ、MewUI 版は画素へ写す。 解析を UI 版へ複製すると、片方だけ直したときにアイコンの形がずれる。

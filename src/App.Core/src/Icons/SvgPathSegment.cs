@@ -1,4 +1,4 @@
-namespace EsUtil.SaveEvidence.App.MewUI.Icons;
+namespace EsUtil.SaveEvidence.App.Core.Icons;
 
 /// <summary>SVG の線分または 3 次ベジェ。</summary>
 /// <param name="IsCubic">3 次ベジェかどうか（false の場合は線分）。</param>

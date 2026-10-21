@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace EsUtil.SaveEvidence.App.WinUI3.Icons;
+namespace EsUtil.SaveEvidence.App.Core.Icons;
 
 /// <summary>SVG のパス データ（<c>d</c> 属性）を UI に依存しない図形の列へ変換する。</summary>
 /// <remarks>
@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Icons;
 /// （アイコンは <c>M</c> / <c>L</c> / <c>H</c> / <c>V</c> / <c>C</c> / <c>Z</c> だけで構成される。 実測 2026-10-20）。<br/>
 /// <br/>
 /// <b>UI に依存しない形で返す理由</b>: 画素への展開（<see cref="SvgPathRasterizer"/>）と WinUI 3 の<br/>
-/// 形状への変換（<see cref="IconLoader"/>）が同じ解析結果を使う。 WinUI 3 の <c>PathGeometry</c> の<br/>
+/// 形状への変換（<see cref="SvgIconLoader"/> と各 UI の <c>IconLoader</c>）が同じ解析結果を使う。 WinUI 3 の <c>PathGeometry</c> の<br/>
 /// コレクションは<b>列挙できない</b>（<c>IList</c> の列挙子の取得が実行時に失敗する。 実測 2026-10-20）ため、<br/>
 /// 図形は<b>追加するだけ</b>にする。<br/>
 /// <br/>

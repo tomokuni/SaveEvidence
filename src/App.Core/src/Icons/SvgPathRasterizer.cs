@@ -1,4 +1,4 @@
-namespace EsUtil.SaveEvidence.App.MewUI.Icons;
+namespace EsUtil.SaveEvidence.App.Core.Icons;
 
 /// <summary>SVG の図形を指定サイズの画素へ展開する。</summary>
 /// <remarks>

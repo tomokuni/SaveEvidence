@@ -1,7 +1,7 @@
-using EsUtil.SaveEvidence.App.WinUI3.Icons;
+using EsUtil.SaveEvidence.App.Core.Icons;
 using Xunit;
 
-namespace EsUtil.SaveEvidence.App.WinUI3.Tests;
+namespace EsUtil.SaveEvidence.App.Core.Tests;
 
 /// <summary><see cref="SvgPathData"/> の単体テスト（SVG パス データの解析）。</summary>
 /// <remarks>

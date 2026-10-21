@@ -57,6 +57,9 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 | `src/App.Core/src/Services/WindowPlacementRule.cs` | `public static class` | ウィンドウ配置の復元判定・補正と、外寸 / クライアント寸法の換算 |
 | `src/App.Core/src/Services/ToolbarMetrics.cs` | `public static class` | 4 UI 版が共有するツールバー寸法・文字サイズ |
 | `src/App.Core/src/Icons/CaptureIconFiles.cs` | `public static class` | キャプチャ ページのツールバーとメニューで使う共通 SVG 名 |
+| `src/App.Core/src/Icons/SvgPathData.cs` | `internal static class` | SVG パス データ（`d` 属性）の解析（**唯一の所有者**。 2 UI 版が同じ解析結果を使う） |
+| `src/App.Core/src/Icons/SvgPathFigure.cs` / `SvgPathSegment.cs` | `internal readonly record struct` | 解析結果の図形と線分（UI 非依存） |
+| `src/App.Core/src/Icons/SvgPathRasterizer.cs` | `internal static class` | 図形を指定サイズの BGRA 画素へ展開する（走査線の被覆率。 **外部ライブラリを使わない**） |
 | `src/App.Core/src/Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
 | `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モード（特大 / 大 / 中）の名称・件数表示（**唯一の所有者**。 `FolderViewViewModel` / `UndoViewModel` が委譲する） |
 | `src/App.Core/src/ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | フォルダビューの表示モード・ソート状態 |

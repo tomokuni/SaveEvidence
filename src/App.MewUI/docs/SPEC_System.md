@@ -117,7 +117,7 @@ src/App.MewUI/src/
 ├── Program.cs                        起動（バックエンド登録 → コアの組み立て → ホットキー登録 → ウィンドウ表示）
 ├── AppServices.cs                    共有するコアオブジェクトの束
 ├── Services/
-│   ├── ImageThumbnailLoader.cs       画像ファイルの縮小デコード（縮小はコアの面積平均）とキャッシュ
+│   ├── ImageThumbnailLoader.cs       画像ファイルの縮小デコード（コアの WIC スケーラー）とキャッシュ
 │   ├── SettingsColorMath.cs          設定の色文字列 ⇔ 色の変換
 │   ├── SettingsJsonContext.cs        設定の JSON ソース生成（Native AOT 対応）
 │   ├── CaptureFlow.cs                キャプチャの開始（多重起動の防止。 画像の反映は CaptureCompleted）
@@ -163,7 +163,7 @@ tests/
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。 変更の即時保存・テーマの即時適用・ホットキー入力を担う |
 | `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `ImageView` が単一所有し、計測と Uniform 指定だけを与える） |
 | `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsReadOnlyBitmap.Save`（拡張子が形式を決める）へ委譲する |
-| `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ。 **縮小はコアの面積平均（`EsReadOnlyBitmap.Resize`）へ委譲する**（WIC の `Resize(Linear)` は大きな縮小率で細線を実際より濃く残すため使わない。 コーデックの縮小デコードはデコードの高速化としてのみ使う）。 **背景の生成からも呼べる**（キャッシュの上限判定と登録は直列化される）。 キャッシュの上限は**一覧が表示する件数以上**を呼び出し側が渡す（上限超過時に保持中の値が破棄され、描画が破棄済みのバッファへ触れるのを防ぐ） |
+| `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ。 **縮小はコアの `EsReadOnlyBitmap.Load(string, int)` へ委譲する**（WIC のスケーラーがデコードしながら縮小するため原寸のバッファを確保しない。 補間は Fant であり WinUI 3 版と同じ画質）。 **背景の生成からも呼べる**（キャッシュの上限判定と登録は直列化される）。 キャッシュの上限は**一覧が表示する件数以上**を呼び出し側が渡す（上限超過時に保持中の値が破棄され、描画が破棄済みのバッファへ触れるのを防ぐ） |
 | `ImageDrawMath`（`Platform.MewUI`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |
@@ -532,7 +532,7 @@ sequenceDiagram
     UP->>TV: 項目ごとに生成（RequestedSize / 代替画像の Source）
     UP->>TS: Clear() → Enqueue（項目ごと。 位置は一覧の並び）
     UP->>TS: Reprioritize（可視領域と行の配置から見えている行を先に）
-    TS->>TS: 背景スレッドで面積平均の縮小
+TS->>TS: 背景スレッドで縮小デコード（WIC のスケーラー）
     TS-->>UP: UI スレッドへ反映（生成が終わった 1 行から差し替え、縮小画像を登録）
     TV->>TV: DrawBitmap（幅・高さの小さい方のスケールで中央寄せ）
     MW->>UP: 別のページへ切替 → OnDeactivated → IsActive = false

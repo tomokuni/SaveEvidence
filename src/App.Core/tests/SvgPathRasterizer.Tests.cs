@@ -1,7 +1,7 @@
-using EsUtil.SaveEvidence.App.WinUI3.Icons;
+using EsUtil.SaveEvidence.App.Core.Icons;
 using Xunit;
 
-namespace EsUtil.SaveEvidence.App.WinUI3.Tests;
+namespace EsUtil.SaveEvidence.App.Core.Tests;
 
 /// <summary><see cref="SvgPathRasterizer"/> の単体テスト（図形の画素への展開）。</summary>
 /// <remarks>
