@@ -269,7 +269,7 @@
 | `App.Core` | 設定・ViewModel・画像のコンテナ・保存の実装。 サムネイル生成のスケジューラと優先度・容量制限付きキャッシュ・画像拡張子の判定・表示モードの文言・設定の写像は**内部型**（`InternalsVisibleTo`）として本アプリが使う |
 | `Parts.CapturePreview.Core` | 撮影・切り出しの共通規則と外観設定の型 |
 | `Parts.CapturePreview.ControlWinUI3` | 撮影セッション・切り出しビュー・選択オーバーレイのコントロール |
-| `Platform.WinUI3` | コア型と WinUI 3 型の相互変換・描画リストの要素への反映・Composition の画像表示 |
+| `EsUtil.Ui.WinUI3.Interop` | コア型と WinUI 3 型の相互変換・描画リストの要素への反映・Composition の画像表示 |
 
 ## 10. エラー時の挙動
 

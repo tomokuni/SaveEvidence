@@ -13,7 +13,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.ZoomView;
-using EsUtil.SaveEvidence.Platform.WinForms;
+using EsUtil.Ui.WinForms.Interop;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Crop;

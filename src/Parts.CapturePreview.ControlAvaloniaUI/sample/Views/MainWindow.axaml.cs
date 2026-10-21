@@ -12,8 +12,8 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.ViewModels;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.Views;
 
@@ -45,7 +45,7 @@ public sealed partial class MainWindow : Window
     private EsReadOnlyBitmap? _previewEs;
 
     /// <summary>Crop プレビュー用の表示画像（<see cref="_previewEs"/> を借りて包む非所有アダプタ）。</summary>
-    private EsBitmapAvaloniaAdapter? _previewImage;
+    private EsBitmapAdapter? _previewImage;
 
     /// <summary>スライダ同期中の再入防止フラグ（プログラム側の同期による ValueChanged を無視する）。</summary>
     private bool _isSyncingZoomSlider;
@@ -89,11 +89,11 @@ public sealed partial class MainWindow : Window
     private void SetPreviewBitmap(EsReadOnlyBitmap bitmap)
     {
         // 新しいアダプタを先に Source へ設定し、旧アダプタと旧画像は後から破棄する
-        // （IImage は非所有のため、保持するホストが破棄する。 破棄の順序の理由は EsBitmapAvaloniaAdapter の doc を参照）。
+        // （IImage は非所有のため、保持するホストが破棄する。 破棄の順序の理由は EsBitmapAdapter の doc を参照）。
         var previousImage = _previewImage;
         var previousEs = _previewEs;
         _previewEs = bitmap;
-        _previewImage = new EsBitmapAvaloniaAdapter(bitmap);
+        _previewImage = new EsBitmapAdapter(bitmap);
         PreviewCropView.Source = _previewImage;
         previousImage?.Dispose();
         previousEs?.Dispose();

@@ -1,4 +1,4 @@
-﻿# Parts.CapturePreview.ControlWinForms API リファレンス
+# Parts.CapturePreview.ControlWinForms API リファレンス
 
 `Parts.CapturePreview.ControlWinForms` は撮影スタックの UI 層を WinForms で提供します。 名前空間は `EsUtil.SaveEvidence.Parts.CapturePreview.WinForms` 配下（`ZoomView` / `Crop` / `SelectionOverlay` / `Session` / `Overlay`）です。
 
@@ -282,7 +282,7 @@ cropView.ZoomChanged += (_, e) =>
 
 | 制限 | 内容 |
 | --- | --- |
-| 描画の補間 | 画像の拡大・縮小は最近傍である（`Platform.WinForms` の描画層が定める） |
+| 描画の補間 | 画像の拡大・縮小は最近傍である（`EsUtil.Ui.WinForms.Interop` の描画層が定める） |
 | 横ホイール | WinForms の `MouseEventArgs` から横方向の回転量を取得できないため、常に縦方向として扱う |
 | 座標変換の精度 | `CropViewControl.TranslatePositionFrom` は整数の座標（`Point`）を経由するため、小数部が丸められる |
 | ルーペの配置 | `SelectionOverlayControl` はレイアウト時にルーペの位置とサイズを再解決する（親のサイズ変更に追従する）。 移動時は**移動前の領域を内包する `MarqueeControl` で無効化**して描き直す（本コントロールは背景を描かず、全面を覆う子が画像を透かして描くため、自分の無効化では残像が残る） |

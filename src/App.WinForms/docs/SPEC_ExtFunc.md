@@ -1,4 +1,4 @@
-﻿# App.WinForms 外部機能仕様書
+# App.WinForms 外部機能仕様書
 
 `App.WinForms`（実行ファイル `SaveEvidence.WinForms.exe`）は、Windows デスクトップ向けの画面キャプチャ アプリです。 本ドキュメントは**利用者から見た機能**（画面・操作・設定ファイル・エラー時の挙動）を記述します。
 
@@ -280,7 +280,7 @@ Windows 上で画面の一部をすばやく切り出して保存したい利用
 
 ## 8. 公開 API
 
-本アプリは**実行可能ファイル**であり、他のプロジェクトから参照する公開 API を持ちません。 再利用する層（`App.Core` / `Parts.CapturePreview.*` / `Platform.WinForms`）が公開 API を提供し、本アプリはその利用者です。 各層の API はそれぞれの `docs/SPEC_API.md` を参照してください。
+本アプリは**実行可能ファイル**であり、他のプロジェクトから参照する公開 API を持ちません。 再利用する層（`App.Core` / `Parts.CapturePreview.*` / `EsUtil.Ui.WinForms.Interop`）が公開 API を提供し、本アプリはその利用者です。 各層の API はそれぞれの `docs/SPEC_API.md` を参照してください。
 
 ## 9. エラー時の挙動
 

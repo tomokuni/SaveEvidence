@@ -37,7 +37,7 @@
 
 - **3 種のキャプチャモード**: `ScreenSelect`（全画面）/ `WindowSelect`（ウィンドウ選択）/ `AreaSelect`（範囲選択）
 - **切出し（Crop）**: プレビュー画像上の選択矩形で元画像から切り出し範囲を取得
-- **Facade パターン**: 状態は複合コントロール `SelectionOverlayControl`（Marquee（外側の装飾を含む）+ Loupe を内包）と Platform.AvaloniaUI / EsUtil.Platform.Core（`Native` の Win32 実装を含む）が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
+- **Facade パターン**: 状態は複合コントロール `SelectionOverlayControl`（Marquee（外側の装飾を含む）+ Loupe を内包）と EsUtil.Ui.AvaloniaUI.Interop / EsUtil.Platform.Core（`Native` の Win32 実装を含む）が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
 - **Task ベース API**: 結果は `Task` で返却（`await` で直感的に利用）
 - **キャプチャ完了イベント**: `CaptureCompleted`（同期型）で画像変更 → オーナー再表示の順序を保証
 - **イベント駆動**: 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）
@@ -145,7 +145,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 ### 6.1 StartCaptureAsync
 
 1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出（0 以下は 1.0 へ正規化）
-2. `CaptureOverlaySession` を生成（Platform.AvaloniaUI からサービスを注入）
+2. `CaptureOverlaySession` を生成（EsUtil.Ui.AvaloniaUI.Interop からサービスを注入）
 3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`）→ 画面外へ退避（`HideOwnerWindow`。 非表示ではなく `Opacity=0` + 位置退避）
 4. **仮想スクリーン全体をバックグラウンド + タイムアウト付きでキャプチャ（全モード共通の切り出し元）**
 5. `CaptureOverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示）
@@ -228,7 +228,7 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 | 参照先 | 利用機能 |
 | --- | --- |
 | `Parts.CapturePreview.Core` | 両 UI 共通の規則（`CaptureSettings` / `CaptureResult` / `CaptureSettingsMerge` / `SelectionOverlayOptionsMapper` / `CropBoundsMath` / `CropClipMath` / `CaptureImageHolder` / `CaptureVirtualScreen` / `CaptureHighlightSession` / `CaptureKeyActions` / `CaptureClickSelection` / `CaptureLabelTexts` / `CropLabelTexts` / `CaptureTypeTraits` / `MonitorScalingMath` / `CaptureSessionSlot` / `CaptureOwnerScope` / `OverlayRect` / `OverlayLineStyle` / `SelectionOverlayMode` / `SelectionOverlayOptions` / ログ定義）と、切り出しビューの画像ビューポートの状態と判断（`ZoomViewSession` / `ZoomOptions` / `ZoomState` / `ZoomViewAppearance` / `CapturePreviewLogMessage`）。 さらに `Presentation/` に設定 → 外観の写像（`CapturePaintMapper`）・子コントロールへ適用する値の解決（`SelectionOverlayChildValues`）・付加情報ラベルの配置（`SelectionOverlayLabelRenderer`）を持つ。 UI 非依存 |
-| `Platform.AvaloniaUI` | サービス生成 / `ScreenConverter` / 色の相互変換（`ColorAvaloniaInterop`）。 抽象（`ICaptureService` / `IWindowService` / `IElementFinder`）は `EsUtil.Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `EsUtil.Platform.Core` |
+| `EsUtil.Ui.AvaloniaUI.Interop` | サービス生成 / `ScreenConverter` / 色の相互変換（`ColorAvaloniaInterop`）。 抽象（`ICaptureService` / `IWindowService` / `IElementFinder`）は `EsUtil.Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `EsUtil.Platform.Core` |
 | `EsUtil.Ui.AvaloniaUI.Marquee` | `MarqueeControl`（選択矩形と、その外側に描く装飾（暗転マスク・外枠・ハイライト）） |
 | `EsUtil.Ui.AvaloniaUI.Loupe` | `LoupeControl`（拡大鏡）/ `LoupeRenderedEventArgs` |
 | `EsUtil.Feature.Marquee.Presenter` | `MarqueeAppearance`（描画にだけ必要な外観。 内包コントロール（`EsUtil.Ui.AvaloniaUI.Marquee`）の推移的依存） |

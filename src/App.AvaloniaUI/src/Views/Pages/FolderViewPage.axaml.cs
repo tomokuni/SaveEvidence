@@ -6,7 +6,7 @@ using Avalonia.Threading;
 using EsUtil.Feature.Thumbnail;
 using EsUtil.Platform.Core.Caching;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using EsUtil.Ui.AvaloniaUI.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;

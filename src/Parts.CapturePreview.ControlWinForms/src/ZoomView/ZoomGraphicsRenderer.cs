@@ -1,5 +1,5 @@
-﻿using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
-using EsUtil.SaveEvidence.Platform.WinForms.Imaging;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
+using EsUtil.Ui.WinForms.Interop.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.ZoomView;
 
@@ -17,7 +17,7 @@ internal static class ZoomGraphicsRenderer
     /// <param name="session">表示矩形（配置・倍率）を単一所有するセッション。</param>
     /// <remarks>
     /// 画像の全面を表示矩形へ 1 回で描画する（コアが配置を確定済みのため、GDI+ 側の計算は不要）。<br/>
-    /// 拡大・縮小の見え方は <see cref="GdiImageRenderer.DrawScaled"/> が単一所有する。
+    /// 拡大・縮小の見え方は <see cref="ImageRenderer.DrawScaled"/> が単一所有する。
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="graphics"/> または <paramref name="session"/> が null の場合。</exception>
     public static void Render(Graphics graphics, Bitmap? source, ZoomViewSession session)
@@ -30,7 +30,7 @@ internal static class ZoomGraphicsRenderer
             return;
         }
 
-        GdiImageRenderer.DrawScaled(graphics, source, session.ImageRect);
+        ImageRenderer.DrawScaled(graphics, source, session.ImageRect);
     }
 
     /// <summary>スクロールバー 1 本を描画する。</summary>

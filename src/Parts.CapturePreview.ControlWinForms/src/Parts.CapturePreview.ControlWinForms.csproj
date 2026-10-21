@@ -16,7 +16,7 @@
     <!-- 撮影・切り出しの共通規則と提示の写像（切り出し矩形・設定・セッション状態・色の写像） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型）・DIP 変換・画像の表示ビュー -->
-    <ProjectReference Include="..\..\Platform.WinForms\src\Platform.WinForms.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Interop\src\EsUtil.Ui.WinForms.Interop.csproj" />
     <!-- コア幾何型 -->
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->

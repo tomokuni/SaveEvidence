@@ -12,8 +12,8 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using Aprillz.MewUI.Rendering;
-using EsUtil.SaveEvidence.Platform.MewUI;
-using EsUtil.SaveEvidence.Platform.MewUI.Imaging;
+using EsUtil.Ui.MewUI.Interop;
+using EsUtil.Ui.MewUI.Interop.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -590,7 +590,7 @@ public sealed class SelectionOverlayControl : Panel
             MarqueeAppearance,
             OperationTextProvider?.Invoke(),
             InfoTextProvider?.Invoke(),
-            MewUITextMeasure.Measure);
+            TextMeasure.Measure);
 
         foreach (var placement in placements)
         {

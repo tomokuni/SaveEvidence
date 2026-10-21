@@ -23,13 +23,13 @@
 
 ## 1. システム概要
 
-本アプリは、UI 非依存のコア（`App.Core`）と撮影スタック（`Parts.CapturePreview.Core` / `Parts.CapturePreview.ControlWinForms`）、および WinForms 版のプラットフォーム層（`Platform.WinForms`）を組み合わせ、**UI 層（ページ・サービス・ログ・アイコン）だけを本プロジェクトで実装**します。
+本アプリは、UI 非依存のコア（`App.Core`）と撮影スタック（`Parts.CapturePreview.Core` / `Parts.CapturePreview.ControlWinForms`）、および WinForms 版のプラットフォーム層（`EsUtil.Ui.WinForms.Interop`）を組み合わせ、**UI 層（ページ・サービス・ログ・アイコン）だけを本プロジェクトで実装**します。
 
 | 関心事 | 所有者 |
 | --- | --- |
 | 設定モデル・設定の読み書き・メイン ViewModel・編集履歴のスタック・ファイル名テンプレート・ホットキー文字列の解析 | `App.Core` |
 | 撮影セッション・切り出しセッション・選択オーバーレイ・切り出しビュー・ラベル文言・切り出し矩形の計算 | `Parts.CapturePreview.Core` / `Parts.CapturePreview.ControlWinForms` |
-| コア型 ⇔ GDI+ 型の変換・ウィンドウ配置の換算・モニター DPI・GDI+ の描画プリミティブ | `Platform.WinForms` |
+| コア型 ⇔ GDI+ 型の変換・ウィンドウ配置の換算・モニター DPI・GDI+ の描画プリミティブ | `EsUtil.Ui.WinForms.Interop` |
 | 画像の保持・切り出し・縮小・保存（面積平均・GDI+ コーデック）・画面キャプチャ・要素検出・グローバル ホットキー | `EsUtil.Platform.Core`（隣のリポジトリ。 本ソリューションはプロジェクト参照で参照する） |
 | 設定の写像（設定 → 撮影設定）・拡張子判定・表示モードの表示名・件数上限付きキャッシュ・サムネイル生成のスケジューラと優先度 | `App.Core`（`internal`。 `InternalsVisibleTo` で本プロジェクトへ公開する） |
 | ページの組み立て・ナビゲーション・一覧のサムネイル・設定画面・ログ・アイコン | **本プロジェクト** |
@@ -68,7 +68,7 @@ flowchart TD
     end
 
     subgraph platform["プラットフォーム層"]
-        PlatformWinForms["Platform.WinForms"]
+        PlatformWinForms["EsUtil.Ui.WinForms.Interop"]
     end
 
     subgraph core["UI 非依存のコア"]
@@ -90,7 +90,7 @@ flowchart TD
     Logging --> EsCore
 ```
 
-依存は**上から下への一方向**です。 本プロジェクトは `App.Core` / `Parts.CapturePreview.*` / `Platform.WinForms` / `EsUtil.Platform.Core` を参照し、逆方向の参照を持ちません（参照の許可範囲は [`.github/依存関係.md`](../../../.github/依存関係.md) が定めます）。
+依存は**上から下への一方向**です。 本プロジェクトは `App.Core` / `Parts.CapturePreview.*` / `EsUtil.Ui.WinForms.Interop` / `EsUtil.Platform.Core` を参照し、逆方向の参照を持ちません（参照の許可範囲は [`.github/依存関係.md`](../../../.github/依存関係.md) が定めます）。
 
 ### 3.2 UI 非依存の担保
 
@@ -105,7 +105,7 @@ flowchart TD
 | コアの画像（`EsReadOnlyBitmap` / `EsBitmap`）⇔ GDI+（`Bitmap`） | `GdiBitmapInterop`（BGRA8888・アルファ乗算済み ⇔ `Format32bppPArgb`。 行幅が異なるため行単位でコピーする） |
 | 設定（`Settings`）→ 撮影設定（`CaptureSettings`） | `App.Core` の `CaptureSettingsMapper`（色は `#AARRGGBB` の文字列から `Color` へ） |
 | 設定の色文字列 ⇔ `Color` | `SettingsColorMath` |
-| キー（`EsKey` ⇔ `Keys`）・ウィンドウ状態（`EsWindowState` ⇔ `FormWindowState`）・コアの幾何 ⇔ GDI+ | `Platform.WinForms` |
+| キー（`EsKey` ⇔ `Keys`）・ウィンドウ状態（`EsWindowState` ⇔ `FormWindowState`）・コアの幾何 ⇔ GDI+ | `EsUtil.Ui.WinForms.Interop` |
 | 設定の JSON | `SettingsJsonContext`（ソース生成。 トリミング / Native AOT でも設定項目が失われない） |
 
 ## 4. コンポーネント構成

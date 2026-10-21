@@ -12,7 +12,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.ZoomView;
-using EsUtil.SaveEvidence.Platform.WinUI3;
+using EsUtil.Ui.WinUI3.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

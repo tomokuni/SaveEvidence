@@ -74,7 +74,7 @@ src/App.MewUI/
 ```text
 App.MewUI ──> App.Core ──> EsUtil.Platform.Core / LineDetection
     │                              │
-    ├──> Platform.MewUI ────┘（コア型 ⇔ MewUI 型の変換）
+    ├──> EsUtil.Ui.MewUI.Interop ────┘（コア型 ⇔ MewUI 型の変換）
     ├──> EsUtil.Platform.Core の Win32 実装（キャプチャ等。Native.Win）
     └──> Parts.CapturePreview.ControlMewUI ──> Parts.CapturePreview.Core（撮影・切り出しの共通規則、複合コントロールの設定とモード、画像ビューポートの状態と判断）
 ```

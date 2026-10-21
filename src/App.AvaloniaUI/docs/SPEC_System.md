@@ -32,7 +32,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
-本プロジェクト（app）は、このシステムの**実行可能アプリケーション本体**です。 UI（ウィンドウ・ページ・コントロール）・ViewModel・設定サービスを統括し、キャプチャ・切出し・保存・ズーム・フォルダビュー・設定画面をユーザーに提供します。 キャプチャ・切出しのセッションは Parts.CapturePreview.ControlAvaloniaUI、色選択は ColorPickerControl、プラットフォーム抽象は Platform.AvaloniaUI を利用します。
+本プロジェクト（app）は、このシステムの**実行可能アプリケーション本体**です。 UI（ウィンドウ・ページ・コントロール）・ViewModel・設定サービスを統括し、キャプチャ・切出し・保存・ズーム・フォルダビュー・設定画面をユーザーに提供します。 キャプチャ・切出しのセッションは Parts.CapturePreview.ControlAvaloniaUI、色選択は ColorPickerControl、プラットフォーム抽象は EsUtil.Ui.AvaloniaUI.Interop を利用します。
 
 ## 2. 技術スタック
 
@@ -49,7 +49,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ログ** | Serilog 4.x + Serilog.Sinks.File（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
 | **シリアル化** | System.Text.Json（設定ファイル） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | Parts.CapturePreview.ControlAvaloniaUI / ColorPickerControl / Platform.AvaloniaUI / LineDetection |
+| **依存プロジェクト** | Parts.CapturePreview.ControlAvaloniaUI / ColorPickerControl / EsUtil.Ui.AvaloniaUI.Interop / LineDetection |
 
 ## 3. アーキテクチャ
 
@@ -59,7 +59,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage）
   → ViewModel Layer（MainViewModel / FolderViewViewModel / UndoViewModel）
     → Model / Service Layer（UndoHistory / SettingsService 等）
-      → 外部ライブラリ（Parts.CapturePreview.ControlAvaloniaUI / ColorPickerControl / Platform.AvaloniaUI / LineDetection）
+      → 外部ライブラリ（Parts.CapturePreview.ControlAvaloniaUI / ColorPickerControl / EsUtil.Ui.AvaloniaUI.Interop / LineDetection）
 ```
 
 ### 3.2 依存方向

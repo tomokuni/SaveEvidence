@@ -1,6 +1,6 @@
 using System.Drawing.Drawing2D;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
-using EsUtil.SaveEvidence.Platform.WinForms;
+using EsUtil.Ui.WinForms.Interop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Crop;
 

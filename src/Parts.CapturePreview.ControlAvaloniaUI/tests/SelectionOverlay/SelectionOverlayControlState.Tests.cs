@@ -6,7 +6,7 @@ using EsUtil.Ui.AvaloniaUI.Marquee;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.SelectionOverlay;
@@ -23,7 +23,7 @@ public class SelectionOverlayControlStateTests
     /// <summary>テスト用の拡大元画像（コアの読み取り専用画像）を生成する（ルーペの表示可否の検証に使う）。</summary>
     /// <returns>生成した画像（表示用のアダプタが内包する真実を借用で取り出す）。</returns>
     private static EsReadOnlyBitmap CreateSource()
-        => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent).GetEsBitmap();
+        => EsBitmapExtensions.CreateAvaloniaImage(10, 10, Colors.Transparent).GetEsBitmap();
 
     [AvaloniaFact]
     internal void コンストラクタ_内包コントロールが2つ配置される()

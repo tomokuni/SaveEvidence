@@ -12,7 +12,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using BindingFlags = System.Reflection.BindingFlags;
@@ -410,7 +410,7 @@ public class CaptureOverlayWindowTests
 
         // 固定背景画像（VirtualScreenImage）の Source が破棄済みでないこと（Size 参照で例外なし）
         Assert.NotNull(window.VirtualScreenImageControl.Source);
-        Assert.True(window.VirtualScreenImageControl.Source is EsBitmapAvaloniaAdapter img
+        Assert.True(window.VirtualScreenImageControl.Source is EsBitmapAdapter img
             && img.GetEsBitmap() is { } bmp && bmp.Size.Width > 0);
         window.Close();
     }

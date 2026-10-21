@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.ZoomView;
@@ -18,8 +18,8 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.ZoomView;
 public class ZoomViewControlTests
 {
     /// <summary>テスト用の画像（指定サイズ・白の単色）を生成する。</summary>
-    private static EsBitmapAvaloniaAdapter CreateBitmap(int w, int h)
-        => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(w, h, Colors.White);
+    private static EsBitmapAdapter CreateBitmap(int w, int h)
+        => EsBitmapExtensions.CreateAvaloniaImage(w, h, Colors.White);
 
     /// <summary>テスト用の ZoomViewControl（画像を設定済み）を生成する。</summary>
     private static ZoomViewControl CreateView()
@@ -52,11 +52,11 @@ public class ZoomViewControlTests
     internal void 画像がWriteableBitmapではなくIImageでもFit実効倍率が計算される()
     {
         // 回帰: ComputeRawFitZoomPercent が Source を Bitmap 型へキャストしていたため、
-        // EsBitmapAvaloniaAdapter（WriteableBitmap を生成しない IImage）では常に 100 を返していた。
+        // EsBitmapAdapter（WriteableBitmap を生成しない IImage）では常に 100 を返していた。
         // IImage.Size（DIP）から Fit 実効倍率を計算するよう修正したことを検証する。
         var view = new ZoomViewControl
         {
-            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(1000, 500, Colors.White)
+            Source = EsBitmapExtensions.CreateAvaloniaImage(1000, 500, Colors.White)
         };
         view.Measure(new Size(400, 200));
         view.Arrange(new Rect(0, 0, 400, 200));

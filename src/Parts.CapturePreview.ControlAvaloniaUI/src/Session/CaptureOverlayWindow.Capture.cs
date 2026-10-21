@@ -7,8 +7,8 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
@@ -207,10 +207,10 @@ internal sealed partial class CaptureOverlayWindow
         _log.LogVirtualScreen(origin.ToEsPointInt(), readOnly);
         // 新しいアダプタを先に Source へ設定し、旧アダプタは後から破棄する。
         // Image.Source が旧アダプタを参照し続ける間に破棄すると、描画が破棄済みの射影へ触れて例外・チラつきになる
-        // （順序の規則は EsBitmapAvaloniaAdapter が単一所有する。 IImage は非所有のため、保持するホストが Dispose する）。
+        // （順序の規則は EsBitmapAdapter が単一所有する。 IImage は非所有のため、保持するホストが Dispose する）。
         // 元画像はコアの保持クラスが所有し、このアダプタは借用して包むだけ。
         var previousImage = _displayImage;
-        var displayImage = readOnly is null ? null : new EsBitmapAvaloniaAdapter(readOnly);
+        var displayImage = readOnly is null ? null : new EsBitmapAdapter(readOnly);
         _displayImage = displayImage;
         VirtualScreenImage.Source = displayImage;
         previousImage?.Dispose();

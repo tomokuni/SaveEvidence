@@ -8,7 +8,7 @@ using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;

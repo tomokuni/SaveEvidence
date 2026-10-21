@@ -135,7 +135,7 @@ src/App.WinUI3/src/
 | `FolderViewPage` | 保存先フォルダのサムネイル一覧（表示モード・ソート順・既定アプリで開く） |
 | `UndoPage` | 編集履歴と現在の画像のサムネイル一覧（一時ファイルへ書き出して開く） |
 | `SettingsPage` | 設定のセクションと入力（真偽値 / 数値 / 色 / 選択肢 / ホットキー） |
-| `ThumbnailView` | 画像を縦横比を保って領域へ収める表示（描画は `Platform.WinUI3` の画像表示ビューへ委譲する） |
+| `ThumbnailView` | 画像を縦横比を保って領域へ収める表示（描画は `EsUtil.Ui.WinUI3.Interop` の画像表示ビューへ委譲する） |
 | `WrapLayoutMath` / `AppStyles` | 一覧の配置の計算・共通の寸法 |
 | `CaptureFlow` | 撮影の開始（多重起動の防止）。 画像の反映は撮影完了イベントの購読側が行う |
 | `EditHistory` | 編集履歴（戻す / やり直し）の実行 |
@@ -196,7 +196,7 @@ classDiagram
 | `App.Core` | 設定・ViewModel・画像のコンテナ・保存の実装 |
 | `Parts.CapturePreview.Core` | 切り出しの共通規則・外観設定の型・オーバーレイの型 |
 | `Parts.CapturePreview.ControlWinUI3` | 撮影セッション・切り出しビュー・ズーム ビュー |
-| `Platform.WinUI3` | コア型と WinUI 3 型の相互変換・描画リストの要素への反映・Composition の画像表示・DIP の換算 |
+| `EsUtil.Ui.WinUI3.Interop` | コア型と WinUI 3 型の相互変換・描画リストの要素への反映・Composition の画像表示・DIP の換算 |
 
 `EsUtil` リポジトリのプロジェクトは上記の推移参照で解決します。
 
@@ -210,7 +210,7 @@ classDiagram
   **コアの実装が単一所有**であり、本プロジェクトに同じ役割の型を持ちません（§4.2 の一覧）。
   内部型を使う理由は「公開 API を増やさずに UI 実装間で規則を 1 つに保つ」ことです。
 - **`EsUtil` リポジトリのプロジェクト**は `ProjectReference` の推移参照で解決します（本プロジェクトから
-  直接参照するのは `Platform.WinUI3` と `Parts.CapturePreview.ControlWinUI3` です）。
+  直接参照するのは `EsUtil.Ui.WinUI3.Interop` と `Parts.CapturePreview.ControlWinUI3` です）。
 
 ## 6. 例外処理ポリシー
 

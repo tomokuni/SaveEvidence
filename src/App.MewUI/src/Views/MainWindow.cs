@@ -11,7 +11,7 @@ using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.MewUI.Icons;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
-using EsUtil.SaveEvidence.Platform.MewUI;
+using EsUtil.Ui.MewUI.Interop;
 using Microsoft.Extensions.Logging;
 using MewUIColor = Aprillz.MewUI.Color;
 

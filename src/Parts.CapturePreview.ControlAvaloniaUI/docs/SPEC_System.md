@@ -50,7 +50,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | Parts.CapturePreview.Core（撮影セッション・切り出しビュー・領域選択・画像ビューポートの状態と判断、設定 → 外観の写像）/ EsUtil.Ui.AvaloniaUI.Marquee / EsUtil.Ui.AvaloniaUI.Loupe（内包コントロール）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
+| **依存プロジェクト** | Parts.CapturePreview.Core（撮影セッション・切り出しビュー・領域選択・画像ビューポートの状態と判断、設定 → 外観の写像）/ EsUtil.Ui.AvaloniaUI.Marquee / EsUtil.Ui.AvaloniaUI.Loupe（内包コントロール）/ EsUtil.Ui.AvaloniaUI.Interop（ScreenConverter）/ EsUtil.Platform.Core（抽象・値型／Win32 実装は `Native` 配下） |
 
 撮影セッション（`CaptureSessionControl` / `CaptureOverlaySession` / `CaptureOverlayWindow`）は内包コントロール（MarqueeControl / LoupeControl）を直接参照しません（窓口は `SelectionOverlayControl` のみ。 公開型のカプセル化）。 内包コントロールを参照するのは同一アセンブリ内の複合コントロールだけです。
 
@@ -62,17 +62,17 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 公開 Facade（CaptureSessionControl）
   → セッション（CaptureOverlaySession / CropSession）
     → オーバーレイ / 複合コントロール（CaptureOverlayWindow / SelectionOverlayControl）
-      → 各コントロール（Marquee / Loupe）+ Platform.AvaloniaUI
+      → 各コントロール（Marquee / Loupe）+ EsUtil.Ui.AvaloniaUI.Interop
 
 並置: 公開複合コントロール（CropViewControl / SelectionOverlayControl）
-  → 各コントロール（Marquee / Loupe / ZoomView）+ Platform.AvaloniaUI
+  → 各コントロール（Marquee / Loupe / ZoomView）+ EsUtil.Ui.AvaloniaUI.Interop
 
 横断: Parts.CapturePreview.Core（設定のマージ・実行の排他・切り出し範囲・モニタ倍率・複合コントロールのモードと設定・ログ定義）
 ```
 
 ### 3.2 依存方向
 
-- 依存は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール → 各コントロール / Platform.AvaloniaUI）。
+- 依存は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール → 各コントロール / EsUtil.Ui.AvaloniaUI.Interop）。
 - 配線・状態同期は複合コントロールに集約し、セッションは薄い統括者（SRP / DRY）。
 - プラットフォームサービス（ICaptureService / IWindowService / IElementFinder）は注入され、内部で生成しない（DIP）。
 - 両 UI 共通の規則（状態・判断・契約・ログ定義）は `Parts.CapturePreview.Core` が単一所有し、本プロジェクトは委譲する（同じ規則を両 UI に書かない）。
@@ -170,7 +170,7 @@ flowchart TB
   - メソッド: `StartCaptureAsync(CaptureType, Window)` / `StartCropAsync(CropViewControl, Window)` / `ResolveCropAction()` / `Cancel()` / `Confirm()` / `NotifyViewportChanged()` / `Dispose()`
   - イベント: `CaptureCompleted`（`event EventHandler<CaptureCompletedEventArgs>?`。 同期実行・UI スレッド）
 - **可視性**: public
-- **依存**: CaptureOverlaySession / CropSession / CaptureSettings / CaptureResult / CaptureType / CaptureSessionSlot / CaptureSettingsMerge / Platform.AvaloniaUI
+- **依存**: CaptureOverlaySession / CropSession / CaptureSettings / CaptureResult / CaptureType / CaptureSessionSlot / CaptureSettingsMerge / EsUtil.Ui.AvaloniaUI.Interop
 
 ### 6.2 CaptureOverlaySession
 
@@ -231,7 +231,7 @@ flowchart TB
   - クリック確定 → キャプチャ実行 → 結果コールバック
   - 非アクティブ化 / Close → キャンセル
 - **可視性**: internal（クラス。 コンストラクタ等のシグネチャは public）
-- **依存**: SelectionOverlayControl（同一アセンブリ。 `SelectionOverlayControl` / `SelectionOverlayMode`）/ Platform.AvaloniaUI（ScreenConverter）/ EsUtil.Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CropClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CapturePreviewLogMessage / CaptureResult
+- **依存**: SelectionOverlayControl（同一アセンブリ。 `SelectionOverlayControl` / `SelectionOverlayMode`）/ EsUtil.Ui.AvaloniaUI.Interop（ScreenConverter）/ EsUtil.Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CropClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CapturePreviewLogMessage / CaptureResult
 
 ### 6.5 公開データ型
 
@@ -252,7 +252,7 @@ flowchart TB
   - `SourceToClient` / `ClientToSource`（対象 ↔ ビューポート。 画像表示矩形の原点基準）とコア確定値の描画先への写像
 - **公開メンバー**: `Source` / `Rects` / `SelectionMode` / `SelectionOverlayOptions` / `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `Appearance` / `CenterAlign` / `ZoomPercent` / `CanZoomIn` / `CanZoomOut` / `HasSelection` / `SelectionSourceRect` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `ZoomIn` / `ZoomOut` / `ZoomFit` / `SetSelection` / `ClearSelection` / `SetSelectionOverlayVisible` / `SetCoordTransform` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `SetLoupeSource` / `ClearLoupe` / `NotifyViewportChanged` / `ImageRectViewport` / `SourceToClient` / `ClientToSource`、イベント `ConfirmRequested` / `CancelRequested` / `ZoomChanged` / `ViewportChanged`
 - **可視性**: public
-- **依存**: ZoomViewControl / SelectionOverlayControl（同一アセンブリ）/ Parts.CapturePreview.Core（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）/ Platform.AvaloniaUI（色の相互変換）/ EsUtil.Platform.Core（画像型 / `ICoordTransform`）
+- **依存**: ZoomViewControl / SelectionOverlayControl（同一アセンブリ）/ Parts.CapturePreview.Core（`OverlayRect` / `OverlayRectLayout` / `OverlayRectFrame` / `OverlayRectRasterizer`）/ EsUtil.Ui.AvaloniaUI.Interop（色の相互変換）/ EsUtil.Platform.Core（画像型 / `ICoordTransform`）
 - **備考**: 画像表示・領域選択の状態と判断は内包コントロールとそのコアが単一所有し、本コントロールは配置・転送・写像のみを担う（自身は判断を持たない）
 
 ### 6.7 SelectionOverlayControl
@@ -280,7 +280,7 @@ flowchart TB
 - **非公開メンバー**: `Session`（内部ビューポートが所有するセッションへの参照）/ `ZoomableView`（内包するビューポート）/ `OnSessionNotified`（通知の転送）
 - **公開 API の詳細**: [`SPEC_API.md`](SPEC_API.md) の 5.7 を参照
 - **可視性**: public（`CropViewControl` からは内部部品として扱う）
-- **依存**: `Parts.CapturePreview.Core`（`ZoomViewSession` / `ZoomOptions` / `ZoomNotice` / `ZoomState`）/ Platform.AvaloniaUI（コア型の相互変換）
+- **依存**: `Parts.CapturePreview.Core`（`ZoomViewSession` / `ZoomOptions` / `ZoomNotice` / `ZoomState`）/ EsUtil.Ui.AvaloniaUI.Interop（コア型の相互変換）
 - **状態と判断の所有者**: `ZoomViewSession`（コア）。 本コントロールは値の委譲と通知の転送のみを行う
 
 ### 6.9 ZoomableView
@@ -289,7 +289,7 @@ flowchart TB
 - **責務**: ScrollViewer 不使用のパン・ズームビューポート。 入力（ポインター・ホイール）をコア型へ変換してセッションへ渡し、返された効果（再描画・ポインタキャプチャ）を適用する。 セッションの値（表示サイズ・原点・オフセット・スクロール可否）を `Image` のレイアウト・`RenderTransform`・標準 `ScrollBar` へ写す。 ビューポートのサイズ（`Bounds`）の所有者であり、変更時にセッションへ通知する
 - **内部実装の詳細**: ScrollViewer を使用せず、RenderTransform ベースで配置する（レイアウトによるオフセット上書きが原理的に発生しない）。 描画位置 = 実効スケール × (コンテンツ座標 − オフセット) であり、値（スケール・オフセット・中央寄せ補正）はコアが確定する。 見た目のスクロールバー太さは標準 `ScrollBar` 固有であり、コアの外観（`ZoomViewAppearance`）は参照しない
 - **可視性**: internal
-- **依存**: `Parts.CapturePreview.Core`（`ZoomViewSession` / `ZoomFeedback` / `ZoomNotice`）/ Platform.AvaloniaUI（相互変換）
+- **依存**: `Parts.CapturePreview.Core`（`ZoomViewSession` / `ZoomFeedback` / `ZoomNotice`）/ EsUtil.Ui.AvaloniaUI.Interop（相互変換）
 
 ### 6.10 Parts.CapturePreview.Core の画像ビューポートの型（UI 非依存）
 
@@ -311,8 +311,8 @@ flowchart TB
 
 ## 7. 依存ルール
 
-- 依存方向は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール SelectionOverlayControl → 各コントロール / Platform.AvaloniaUI）。
-- CaptureSessionControl / セッションは状態を保持せず、状態は複合コントロールと各コントロール / Platform.AvaloniaUI が保持する（薄い統括者・SRP）。
+- 依存方向は**一方向の階層構造**（CaptureSessionControl → Sessions → 複合コントロール SelectionOverlayControl → 各コントロール / EsUtil.Ui.AvaloniaUI.Interop）。
+- CaptureSessionControl / セッションは状態を保持せず、状態は複合コントロールと各コントロール / EsUtil.Ui.AvaloniaUI.Interop が保持する（薄い統括者・SRP）。
 - Marquee / Loupe の配線は複合コントロールに集約され、セッションは配線コードを持たない（DRY）。
 - セッションへのプラットフォームサービス（ICaptureService / IWindowService / IElementFinder）は注入され、内部で生成しない（DIP）。
 - 上位 AP への通知は Task 返却と `CaptureCompleted` イベント（同期型）の併用（Task が完了結果、イベントが画像変更の順序保証）。

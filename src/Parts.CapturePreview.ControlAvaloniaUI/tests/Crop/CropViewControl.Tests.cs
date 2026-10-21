@@ -11,7 +11,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Xunit;
 using DrawingColor = System.Drawing.Color;
 using Point = Avalonia.Point;
@@ -33,8 +33,8 @@ public class CropViewControlTests
     /// <summary>テスト用の CropViewControl（画像を設定済み）を生成する。</summary>
     private static CropViewControl CreateView()
     {
-        // Source は IImage のため、WriteableBitmap を生成しない EsBitmapAvaloniaAdapter（表示用の変換は初回のみ）で高速に生成する。
-        var view = new CropViewControl { Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Blue) };
+        // Source は IImage のため、WriteableBitmap を生成しない EsBitmapAdapter（表示用の変換は初回のみ）で高速に生成する。
+        var view = new CropViewControl { Source = EsBitmapExtensions.CreateAvaloniaImage(10, 10, Colors.Blue) };
         view.Measure(new Size(400, 200));
         view.Arrange(new Rect(0, 0, 400, 200));
         return view;
@@ -43,7 +43,7 @@ public class CropViewControlTests
     [AvaloniaFact]
     internal void Source_設定した画像が取得できる()
     {
-        using var bitmap = EsBitmapAvaloniaExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Blue);
+        using var bitmap = EsBitmapExtensions.CreateAvaloniaWriteableBitmap(10, 10, Colors.Blue);
         var view = new CropViewControl { Source = bitmap };
 
         Assert.Same(bitmap, view.Source);
@@ -57,7 +57,7 @@ public class CropViewControlTests
     [AvaloniaFact]
     internal void Source_設定するとルーペへ拡大元と表示用の射影が渡される()
     {
-        var display = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Blue);
+        var display = EsBitmapExtensions.CreateAvaloniaImage(10, 10, Colors.Blue);
         var view = new CropViewControl { Source = display };
 
         Assert.Same(display.GetEsBitmap(), view.SelectionOverlay.Loupe.Source);
@@ -69,7 +69,7 @@ public class CropViewControlTests
     internal void SetLoupeSource_拡大元と表示用の射影を設定し解除できる()
     {
         var view = new CropViewControl();
-        var display = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(10, 10, Colors.Blue);
+        var display = EsBitmapExtensions.CreateAvaloniaImage(10, 10, Colors.Blue);
 
         view.SetLoupeSource(display.GetEsBitmap(), display);
 
@@ -373,7 +373,7 @@ public class CropViewControlTests
     {
         var view = new CropViewControl
         {
-            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(400, 200, Colors.Blue),
+            Source = EsBitmapExtensions.CreateAvaloniaImage(400, 200, Colors.Blue),
         };
         var window = new Window { Content = view };
         window.Show();
@@ -395,7 +395,7 @@ public class CropViewControlTests
     {
         var view = new CropViewControl
         {
-            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(1000, 500, Colors.Blue),
+            Source = EsBitmapExtensions.CreateAvaloniaImage(1000, 500, Colors.Blue),
         };
         var window = new Window { Content = view };
         window.Show();
@@ -425,7 +425,7 @@ public class CropViewControlTests
     {
         var view = new CropViewControl
         {
-            Source = EsBitmapAvaloniaExtensions.CreateAvaloniaImage(400, 200, Colors.Blue),
+            Source = EsBitmapExtensions.CreateAvaloniaImage(400, 200, Colors.Blue),
         };
         var window = new Window { Content = view };
         window.Show();

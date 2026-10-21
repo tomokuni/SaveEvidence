@@ -2,8 +2,8 @@ using Avalonia.Input;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Coord;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop.Coord;
+using EsUtil.Ui.AvaloniaUI.Interop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 

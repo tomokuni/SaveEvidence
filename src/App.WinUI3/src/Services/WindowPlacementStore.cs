@@ -3,7 +3,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
-using EsUtil.SaveEvidence.Platform.WinUI3;
+using EsUtil.Ui.WinUI3.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -92,7 +92,7 @@ internal static class WindowPlacementStore
     /// <param name="state">復元する表示状態。</param>
     /// <remarks>
     /// 全画面は表示方法（<c>AppWindowPresenterKind</c>）で、通常・最小化・最大化は重ね表示の状態で表す<br/>
-    /// （写像は <see cref="EsWindowStateWinUI3Interop"/> が単一所有する）。
+    /// （写像は <see cref="EsWindowStateInterop"/> が単一所有する）。
     /// </remarks>
     private static void RestorePresenter(AppWindow appWindow, EsWindowState state)
     {

@@ -63,7 +63,7 @@ EsUtil.Platform.Core（Es* 型 / サービス抽象）
 │    ├─ CaptureOwnerScope.Enter(...)   … 除外 + 退避      │
 │    ├─ ICaptureService.CaptureVirtualScreen … 全モニター │
 │    ├─ SelectionOverlayControl（暗転 + 選択 + ルーペ）    │
-│    ├─ SkiaImageView（撮影画像の描画。Platform.MewUI）    │
+│    ├─ SkiaImageView（撮影画像の描画。EsUtil.Ui.MewUI.Interop）    │
 │    ├─ CaptureSessionState（再入禁止・単一完了）           │
 │    ├─ onCaptured（完了の通知。オーナー再表示より前）      │
 │    └─ CropClipMath（切り出し矩形の解決と切り出し）      │
@@ -192,7 +192,7 @@ classDiagram
 
 | 種別 | 依存先 |
 | --- | --- |
-| プロジェクト | `Parts.CapturePreview.Core` / `Platform.MewUI` / `Platform.Skia` / `EsUtil.Platform.Core` / `EsUtil.Ui.MewUI.Marquee` / `EsUtil.Ui.MewUI.Loupe` |
+| プロジェクト | `Parts.CapturePreview.Core` / `EsUtil.Ui.MewUI.Interop` / `Platform.Skia` / `EsUtil.Platform.Core` / `EsUtil.Ui.MewUI.Marquee` / `EsUtil.Ui.MewUI.Loupe` |
 | パッケージ | `Aprillz.MewUI.*`（バージョン固定） |
 
 - **上位（アプリのコア・アプリ）を参照しません**（参照するとライブラリとして成立しないため）。

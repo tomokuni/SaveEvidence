@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Avalonia.Media.Imaging;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 

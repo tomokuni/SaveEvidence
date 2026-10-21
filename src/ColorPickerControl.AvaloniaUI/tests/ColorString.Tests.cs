@@ -1,5 +1,5 @@
 using Avalonia.Media;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI;
+using EsUtil.Ui.AvaloniaUI.Interop;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.ColorPicker.AvaloniaUI.Tests;

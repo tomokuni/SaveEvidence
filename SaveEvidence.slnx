@@ -58,23 +58,6 @@
     <Project Path="src/Parts.LineDetection/src/Parts.LineDetection.csproj" />
     <Project Path="src/Parts.LineDetection/tests/Parts.LineDetection.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Platform.MewUI/">
-    <Project Path="src/Platform.MewUI/src/Platform.MewUI.csproj" />
-    <Project Path="src/Platform.MewUI/tests/Platform.MewUI.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/Platform.WinForms/">
-    <Project Path="src/Platform.WinForms/src/Platform.WinForms.csproj" />
-    <Project Path="src/Platform.WinForms/tests/Platform.WinForms.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/Platform.WinUI3/">
-    <Project Path="src/Platform.WinUI3/src/Platform.WinUI3.csproj" />
-    <Project Path="src/Platform.WinUI3/tests/Platform.WinUI3.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/Platform.MewUI/src/" />
-  <Folder Name="/src/Platform.AvaloniaUI/">
-    <Project Path="src/Platform.AvaloniaUI/src/Platform.AvaloniaUI.csproj" />
-    <Project Path="src/Platform.AvaloniaUI/tests/Platform.AvaloniaUI.Tests.csproj" />
-  </Folder>
   <Folder Name="/src/Parts.CapturePreview.ControlAvaloniaUI/">
     <Project Path="src/Parts.CapturePreview.ControlAvaloniaUI/sample/Parts.CapturePreview.ControlAvaloniaUI.Sample.csproj" />
     <Project Path="src/Parts.CapturePreview.ControlAvaloniaUI/src/Parts.CapturePreview.ControlAvaloniaUI.csproj" />

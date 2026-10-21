@@ -14,7 +14,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
-using EsUtil.SaveEvidence.Platform.MewUI;
+using EsUtil.Ui.MewUI.Interop;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;

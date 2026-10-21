@@ -14,8 +14,8 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -634,8 +634,8 @@ public sealed class SelectionOverlayControl : Panel
     /// <param name="text">測定するテキスト。</param>
     /// <param name="fontSize">フォントサイズ（DIP）。</param>
     /// <returns>テキストの実寸（DIP）。</returns>
-    /// <remarks>測定の実装は <see cref="AvaloniaTextMeasure"/> が単一所有する（UI ごとの実寸の食い違いを防ぐ）。</remarks>
-    private static EsSize MeasureText(string text, double fontSize) => AvaloniaTextMeasure.Measure(text, fontSize);
+    /// <remarks>測定の実装は <see cref="TextMeasure"/> が単一所有する（UI ごとの実寸の食い違いを防ぐ）。</remarks>
+    private static EsSize MeasureText(string text, double fontSize) => TextMeasure.Measure(text, fontSize);
 
     /// <summary>付加情報ラベル 1 件を描画コンテキストへ描く（背景を塗ってから文字を描く）。</summary>
     /// <param name="context">描画コンテキスト（描画中のみ有効）。</param>

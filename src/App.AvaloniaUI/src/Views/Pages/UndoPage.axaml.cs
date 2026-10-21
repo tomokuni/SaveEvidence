@@ -7,7 +7,7 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -45,7 +45,7 @@ public sealed partial class UndoPage : ViewModePageBase
     private readonly List<ThumbnailScheduler.ThumbnailRequest?> _thumbnailRequests = [];
 
     /// <summary>一覧へ設定した表示用の射影（アイテムを差し替えたときに解放する）。</summary>
-    private readonly List<EsBitmapAvaloniaAdapter> _adapters = [];
+    private readonly List<EsBitmapAdapter> _adapters = [];
 
     /// <summary>最後に優先度を付けた可視領域の上端（変わっていなければ付け直さない）。</summary>
     private double _lastViewportTop = double.NaN;
@@ -281,7 +281,7 @@ public sealed partial class UndoPage : ViewModePageBase
         {
             token.ThrowIfCancellationRequested();
 
-            var adapter = new EsBitmapAvaloniaAdapter(source, size);
+            var adapter = new EsBitmapAdapter(source, size);
 
             // 表示用の射影（面積平均の縮小）をここ（背景）で作る
             // （射影は初回の参照で作るため、描画時に UI スレッドで作ると 1 枚あたり数 ms の描画の停止になる）

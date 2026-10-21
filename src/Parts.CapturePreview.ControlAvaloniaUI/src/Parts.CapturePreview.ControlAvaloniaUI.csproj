@@ -24,7 +24,7 @@
     <!-- 複合コントロールを構成する内包コントロール -->
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Marquee\src\EsUtil.Ui.AvaloniaUI.Marquee.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Loupe\src\EsUtil.Ui.AvaloniaUI.Loupe.csproj" />
-    <ProjectReference Include="..\..\Platform.AvaloniaUI\src\Platform.AvaloniaUI.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Interop\src\EsUtil.Ui.AvaloniaUI.Interop.csproj" />
   </ItemGroup>
 
 </Project>

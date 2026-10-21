@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Rendering;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
-using EsUtil.SaveEvidence.Platform.MewUI;
+using EsUtil.Ui.MewUI.Interop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 

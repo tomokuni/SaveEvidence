@@ -105,7 +105,7 @@ dotnet test src/Parts.CapturePreview.ControlWinForms/tests/Parts.CapturePreview.
 | 参照先 | 用途 |
 | --- | --- |
 | `Parts.CapturePreview.Core` | 撮影・切り出し・選択の共通規則と提示の写像（UI 非依存） |
-| `Platform.WinForms` | コア型 ⇔ GDI+ 型の変換、DIP 換算、画像の表示ビューと描画プリミティブ |
+| `EsUtil.Ui.WinForms.Interop` | コア型 ⇔ GDI+ 型の変換、DIP 換算、画像の表示ビューと描画プリミティブ |
 | `EsUtil.Platform.Core` | コア型・画像・DPI 換算・Win32 サービス（キャプチャ・要素検出・ウィンドウ操作） |
 | `EsUtil.Ui.WinForms.Marquee` | 選択矩形コントロール（暗転マスク・ハンドル・ラベル） |
 | `EsUtil.Ui.WinForms.Loupe` | ルーペ コントロール（拡大鏡） |

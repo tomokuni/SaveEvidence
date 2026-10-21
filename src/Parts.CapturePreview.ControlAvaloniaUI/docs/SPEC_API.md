@@ -65,7 +65,7 @@
 
 `Parts.CapturePreview.ControlAvaloniaUI` は、外部アプリケーションが画面キャプチャと切出しを**単一の API**（`CaptureSessionControl`）で利用できるようにする Facade パターンのライブラリです。
 
-状態は複合コントロール `SelectionOverlayControl`（Marquee（外側の装飾を含む）+ Loupe を内包）と Platform.AvaloniaUI が保持し、
+状態は複合コントロール `SelectionOverlayControl`（Marquee（外側の装飾を含む）+ Loupe を内包）と EsUtil.Ui.AvaloniaUI.Interop が保持し、
 `CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者です。  
 Parts.CapturePreview.ControlAvaloniaUI は内包コントロール（MarqueeControl / LoupeControl）を直接参照しない（公開型のカプセル化）。
 

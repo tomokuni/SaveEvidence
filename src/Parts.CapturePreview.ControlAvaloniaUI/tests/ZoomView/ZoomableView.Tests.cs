@@ -5,7 +5,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.ZoomView;
@@ -25,8 +25,8 @@ public class ZoomableViewTests
     /// <param name="width">幅（ピクセル）。</param>
     /// <param name="height">高さ（ピクセル）。</param>
     /// <returns>生成した画像。</returns>
-    private static EsBitmapAvaloniaAdapter CreateBitmap(int width, int height)
-        => EsBitmapAvaloniaExtensions.CreateAvaloniaImage(width, height, Colors.White);
+    private static EsBitmapAdapter CreateBitmap(int width, int height)
+        => EsBitmapExtensions.CreateAvaloniaImage(width, height, Colors.White);
 
     /// <summary>ビューポートを確定させたビューポートを生成する。</summary>
     /// <param name="image">表示する画像。 null の場合は設定しない。</param>

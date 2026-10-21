@@ -44,7 +44,7 @@ flowchart TB
     UI["UI 層（本プロジェクト）<br/>Facade・複合コントロール・描画・座標変換のブリッジ"]
     CORE["Parts.CapturePreview.Core<br/>撮影・切り出し・選択・ズームの規則と提示の写像"]
     CTRL["再利用可能なコントロール<br/>選択矩形・ルーペ（WinUI 3 版）"]
-    PLAT["Platform.WinUI3 / EsUtil.Platform.Core"]
+    PLAT["EsUtil.Ui.WinUI3.Interop / EsUtil.Platform.Core"]
 
     APP --> UI
     UI --> CORE
@@ -102,9 +102,9 @@ flowchart LR
 | 参照先 | 用途 |
 | --- | --- |
 | `Parts.CapturePreview.Core` | 撮影・切り出し・選択・ズームの規則、設定型、ログ定義、提示の写像 |
-| `Platform.WinUI3` | コア型 ⇔ WinUI 3 の型の変換、DIP の換算、画像の表示ビュー、実効倍率の解決 |
+| `EsUtil.Ui.WinUI3.Interop` | コア型 ⇔ WinUI 3 の型の変換、DIP の換算、画像の表示ビュー、実効倍率の解決 |
 | `EsUtil.Platform.Core` | コアの値型、画像型、Win32 のサービス（画面キャプチャ・要素検出・ウィンドウ操作） |
-| `Platform.WinUI3` | 描画リストの要素への反映、Composition の画像表示、テキストの実寸測定 |
+| `EsUtil.Ui.WinUI3.Interop` | 描画リストの要素への反映、Composition の画像表示、テキストの実寸測定 |
 | 再利用可能なコントロール（WinUI 3 版） | 選択矩形（`Marquee`）とルーペ（`Loupe`）のコントロール |
 
 - **本層からアプリへの参照はない**（`DEP0004` が機械的に拒否する）。

@@ -7,7 +7,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
-using EsUtil.SaveEvidence.Platform.MewUI;
+using EsUtil.Ui.MewUI.Interop;
 using Microsoft.Extensions.Logging;
 
 

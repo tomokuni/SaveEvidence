@@ -64,7 +64,7 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
         │                              │
         ▼                              ▼
 ┌────────────────┐            ┌──────────────────────┐
-│   App.Core     │            │ Platform.MewUI      │  コア型 ⇔ MewUI 型
+│   App.Core     │            │ EsUtil.Ui.MewUI.Interop      │  コア型 ⇔ MewUI 型
 │ (VM / 設定)    │            └──────────┬───────────┘
 └───────┬────────┘                       │
         │                                │
@@ -94,7 +94,7 @@ App.MewUI ──> Parts.CapturePreview.ControlMewUI ──> Parts.CapturePreview
 
 ### 3.2 UI 非依存の担保
 
-`App.MewUI` は `Avalonia*` を参照しません。 Avalonia への依存は `Platform.AvaloniaUI`（アダプタ専用）と
+`App.MewUI` は `Avalonia*` を参照しません。 Avalonia への依存は `EsUtil.Ui.AvaloniaUI.Interop`（アダプタ専用）と
 `App.AvaloniaUI`（Avalonia UI）のみに閉じています。 コアが UI 型を漏らしていないことは、
 `App.Core` / `EsUtil.Platform.Core` の依存先が OpenCvSharp・`System.Drawing.Color` 等に
 限られることで担保しています。
@@ -104,7 +104,7 @@ App.MewUI ──> Parts.CapturePreview.ControlMewUI ──> Parts.CapturePreview
 コアの型（画像型 / `EsKey` / `EsRect` 等）と MewUI の型は、境界で **1 行の変換**を行います。
 
 ```text
-コア型 ──[Platform.MewUI の Interop]──> MewUI 型
+コア型 ──[EsUtil.Ui.MewUI.Interop の Interop]──> MewUI 型
 ```
 
 - 画像は変換不要（`ToSKBitmap()` の非所有ビューをそのまま描画）。
@@ -159,16 +159,16 @@ tests/
 | `UndoPage` | Undo / Redo 履歴のサムネイル一覧、表示モードの保存・復元、ダブルクリックでの外部表示（現在の画像は青の太枠 + 影なし）。 **サムネイルはコアの面積平均で DIP サイズへ縮小してから描画する**（描画時のサンプリングは最近傍のため、同じ寸法でも画質が変わる）。 **縮小は背景で行う**（`ThumbnailScheduler`。 表示中は並列・非表示では 1 件ずつ）ため、本ページが所有する縮小画像は生成の完了時に登録し、一覧の再構築のたびに破棄する。 **履歴が変わったら隠れていても再構築し**（低負荷）、**履歴の状態が同じなら再構築しない**（先読みした縮小画像をそのまま使う） |
 | `ThumbnailBackground` | 一覧のサムネイルを背景で生成するための共通処理（スケジューラの生成・代替画像の提供・UI スレッドへの反映）。 代替画像は寸法ごとに 1 枚を共有し、**破棄しない**（借用して表示するだけ）。 ディスパッチャは `Initialize()`（`Application.Run` の起動コールバック）が取得し、**それ以前に届いた反映は保留して起動時に流す**（背景スレッドのまま UI を触ると例外になる） |
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。 変更の即時保存・テーマの即時適用・ホットキー入力を担う |
-| `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `ImageView` が単一所有し、計測と Uniform 指定だけを与える） |
+| `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `EsUtil.Ui.MewUI.Interop` の `ImageView` が単一所有し、計測と Uniform 指定だけを与える） |
 | `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsReadOnlyBitmap.Save`（拡張子が形式を決める）へ委譲する |
-| `ImageDrawMath`（`Platform.MewUI`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
+| `ImageDrawMath`（`EsUtil.Ui.MewUI.Interop`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |
 | `LoupeOptions` | 設定のルーペ項目をルーペコントロールへ反映（プレビュー / 撮影 / 切り出しで共用） |
 | `CropBoundsMath`（`Parts.CapturePreview.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。 Avalonia 版と共用する（`CropSession` が使用） |
 | `CaptureFlow` | キャプチャの開始（ホットキーの連打の防止）のみを担う。 撮影の完了を待たず、画像の反映は `CaptureSessionControl.CaptureCompleted` の購読（`CapturePage`）が行う（Undo 退避 → プレビュー設定 → ステータス通知）。 排他は Facade（`CaptureSessionControl`）が担う |
 | `EditHistory` | 編集履歴の移動（履歴からの画像の取り出しとプレビューへの差し替え） |
-| `WindowPlacementMath`（`Platform.MewUI`） | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
+| `WindowPlacementMath`（`EsUtil.Ui.MewUI.Interop`） | 物理px ⇔ DIP の変換、スケールの正規化、画面外判定（純粋関数） |
 | `AppLog` | ログ定義と Serilog のファクトリ（Avalonia 版と同一のファイル・書式。 `src/App.MewUI/src/Logging/AppLog.cs`） |
 | `IconLoader` | Avalonia 版と共有する SVG アイコンを自前の走査線塗りでラスタライズし、画像・ウィンドウアイコン（ICO）を生成する（`src/App.MewUI/src/Icons/IconLoader.cs`） |
 
@@ -653,8 +653,8 @@ sequenceDiagram
     モニターでしか選択できないため、仮想スクリーンを 1 枚の画像とし、オーバーレイで全面を覆う
     （フレームワークの論理座標による配置は OS に補正されるため、物理ピクセルで置き直す）。
 15. **表示状態と画像の配置を別のビューへ分ける**。 撮影のオーバーレイ（`Parts.CapturePreview.ControlMewUI`）と
-    サムネイル（`ThumbnailView`）は大きさの要求が異なるが、描画は `Platform.MewUI` の `ImageView` が、
-    配置の計算は `ImageDrawMath`（`Platform.MewUI`）が単一所有する（サムネイルは計測と Uniform 指定だけを加える）。
+    サムネイル（`ThumbnailView`）は大きさの要求が異なるが、描画は `EsUtil.Ui.MewUI.Interop` の `ImageView` が、
+    配置の計算は `ImageDrawMath`（`EsUtil.Ui.MewUI.Interop`）が単一所有する（サムネイルは計測と Uniform 指定だけを加える）。
 16. **色の変換を専用クラスへ分離する**。 設定は色を文字列で保持するため、境界の変換は
    `SettingsColorMath` が単一所有し、不正な値は既定色へフォールバックする。
 17. **絶対配置が必要な子は自前の Panel で配置する**。 MewUI の `Grid` は整列で位置を決め、`Margin` と
@@ -715,7 +715,7 @@ sequenceDiagram
 | --- | --- |
 | `EsBitmapImageWriter`（`App.Core` の共通実装） | 実ファイルへ書き出し、コアの `EsReadOnlyBitmap.Load` で読み戻して画素数を検証する（保存形式の判別はコアのテストが担う） |
 | `WindowPlacementMath` | 純粋関数のためヘッドレスで検証する。 スケール 0・負値・NaN、画面外判定、四捨五入の境界を含む |
-| `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。 Uniform / Fill・余白の中央寄せ・空の入力（`Platform.MewUI.Tests` が担う） |
+| `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。 Uniform / Fill・余白の中央寄せ・空の入力（`EsUtil.Ui.MewUI.Interop.Tests` が担う） |
 | `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。 6 / 8 桁・大文字小文字・不正入力・往復変換 |
 | `SettingsService` | ソース生成と反射の書式の一致（既存の設定ファイルとの互換性）を `App.Core.Tests` で検証する |
 | `ThumbnailScheduler`（`App.Core`） | 表示状態による負荷の切替（非表示では 1 件ずつ・表示中は上限まで並列）、優先度（見えている帯が先・同帯は位置順）、`Clear()` での未実行要求の破棄と実行中への中断伝搬、失敗の通知と継続を検証する（時間の経過ではなく「開始した件数」とトークンの状態で判定する）。 ページ側はスケジューラへの要求と表示状態の反映だけを担う |

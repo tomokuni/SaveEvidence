@@ -30,9 +30,9 @@
 | --- | --- | --- |
 | 対象フレームワーク | `net10.0-windows` | `System.Windows.Forms` を使う層の割り当て（`ビルド設定規約.md` §4） |
 | UI フレームワーク | WinForms（`UseWindowsForms`） | 本層が提供する対象 |
-| 描画 API | GDI+（`System.Drawing`） | Skia は `net10.0-windows` で解決できないため（`Platform.WinForms` が同じ理由を持つ） |
+| 描画 API | GDI+（`System.Drawing`） | Skia は `net10.0-windows` で解決できないため（`EsUtil.Ui.WinForms.Interop` が同じ理由を持つ） |
 | 依存パッケージ | `Microsoft.Extensions.Logging.Abstractions` | ログの抽象（`ILogger`） |
-| 参照するプロジェクト | `Parts.CapturePreview.Core` / `Platform.WinForms` / `EsUtil.Platform.Core` / `EsUtil.Ui.WinForms.Marquee` / `EsUtil.Ui.WinForms.Loupe` | コアの規則・描画のプリミティブ・内包するコントロール |
+| 参照するプロジェクト | `Parts.CapturePreview.Core` / `EsUtil.Ui.WinForms.Interop` / `EsUtil.Platform.Core` / `EsUtil.Ui.WinForms.Marquee` / `EsUtil.Ui.WinForms.Loupe` | コアの規則・描画のプリミティブ・内包するコントロール |
 | テスト | xUnit v3 | 他プロジェクトと同じ（`テスト規約.md`） |
 
 ## 3. アーキテクチャ
@@ -45,7 +45,7 @@ graph TD
     SEL["SelectionOverlayControl（選択 + 暗転 + ルーペ）"]
     ZOOM["ZoomViewControl（ズーム・パン）"]
     CORE["Parts.CapturePreview.Core（UI 非依存の規則）"]
-    PLAT["Platform.WinForms（Interop・描画プリミティブ）"]
+    PLAT["EsUtil.Ui.WinForms.Interop（Interop・描画プリミティブ）"]
     ESUTIL["EsUtil の WinForms コントロール（選択矩形・ルーペ）"]
 
     HOST --> FACADE
@@ -69,7 +69,7 @@ graph TD
 | コア（`Parts.CapturePreview.Core`） | ズームの状態遷移・表示矩形の計算・切り出し範囲の決定・選択の可否・モードごとの表示可否・ラベルの配置指示・ログの書式 |
 | EsUtil のコントロール | 選択矩形のドラッグ・ハンドル・nudge・暗転マスク・サイズラベル、ルーペの切り出しと拡大 |
 | 本プロジェクト（UI 層） | 入力のブリッジ・描画・重ね合わせ・DPI 追従・セッションのライフサイクル |
-| `Platform.WinForms` | コア型 ⇔ GDI+ 型の変換、画像の複製と描画、テキストと矩形の描画プリミティブ |
+| `EsUtil.Ui.WinForms.Interop` | コア型 ⇔ GDI+ 型の変換、画像の複製と描画、テキストと矩形の描画プリミティブ |
 
 ## 4. コンポーネント構成
 
@@ -170,7 +170,7 @@ sequenceDiagram
 | 参照先 | 用途 |
 | --- | --- |
 | `Parts.CapturePreview.Core` | 撮影・切り出し・選択の共通規則と提示の写像（UI 非依存） |
-| `Platform.WinForms` | コア型 ⇔ GDI+ 型の変換・DIP 換算・画像の複製と描画・テキストと矩形の描画 |
+| `EsUtil.Ui.WinForms.Interop` | コア型 ⇔ GDI+ 型の変換・DIP 換算・画像の複製と描画・テキストと矩形の描画 |
 | `EsUtil.Platform.Core` | コア型・画像・DPI 換算・Win32 サービス（キャプチャ・要素検出・ウィンドウ操作） |
 | `EsUtil.Ui.WinForms.Marquee` | 選択矩形コントロール（暗転マスク・ハンドル・nudge・サイズラベル） |
 | `EsUtil.Ui.WinForms.Loupe` | ルーペ コントロール（拡大鏡） |

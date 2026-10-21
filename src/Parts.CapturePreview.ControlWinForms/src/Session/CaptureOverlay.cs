@@ -12,8 +12,8 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.SelectionOverlay;
-using EsUtil.SaveEvidence.Platform.WinForms;
-using EsUtil.SaveEvidence.Platform.WinForms.Imaging;
+using EsUtil.Ui.WinForms.Interop;
+using EsUtil.Ui.WinForms.Interop.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -318,7 +318,7 @@ internal sealed class CaptureOverlay
         }
 
         // 撮影画像は仮想スクリーンと等倍（領域と同じ縦横比）のため、領域全体へ敷く（Uniform にしない）
-        var imageView = new GdiImageView
+        var imageView = new ImageView
         {
             Dock = DockStyle.Fill,
             Source = Screen,

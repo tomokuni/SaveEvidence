@@ -1,5 +1,5 @@
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
-using EsUtil.SaveEvidence.Platform.WinUI3.Drawing;
+using EsUtil.Ui.WinUI3.Interop.Drawing;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.ZoomView;

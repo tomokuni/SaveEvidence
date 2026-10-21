@@ -9,7 +9,7 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Platform.WinUI3.Imaging;
+using EsUtil.Ui.WinUI3.Interop.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.UI.Xaml;
@@ -608,7 +608,7 @@ public sealed partial class SelectionOverlayControl : Panel
             MarqueeAppearance,
             OperationTextProvider?.Invoke(),
             InfoTextProvider?.Invoke(),
-            WinUI3TextMeasure.Measure);
+            TextMeasure.Measure);
 
         foreach (var placement in placements)
         {

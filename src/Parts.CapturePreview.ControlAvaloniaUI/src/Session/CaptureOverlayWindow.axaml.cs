@@ -13,8 +13,8 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -84,11 +84,11 @@ internal sealed partial class CaptureOverlayWindow : Window
     /// <summary>表示境界の画像（<see cref="VirtualScreenImage"/>・ルーペの表示用の射影が共有する）。 本ウィンドウが破棄する。</summary>
     /// <remarks>
     /// <c>IImage</c>（Avalonia の表示用画像）は非所有の契約のため、設定しただけでは破棄されない。 <see cref="SetVirtualScreen"/> の差し替え時と
-    /// クローズ時に本ウィンドウが <see cref="EsBitmapAvaloniaAdapter.Dispose"/> を呼ぶ（元画像は <see cref="_captureImage"/> が所有する）。<br/>
-    /// ルーペへは本アダプタが内包するコアの画像（<see cref="EsBitmapAvaloniaAdapter.GetEsBitmap"/>）を拡大元として渡し、
+    /// クローズ時に本ウィンドウが <see cref="EsBitmapAdapter.Dispose"/> を呼ぶ（元画像は <see cref="_captureImage"/> が所有する）。<br/>
+    /// ルーペへは本アダプタが内包するコアの画像（<see cref="EsBitmapAdapter.GetEsBitmap"/>）を拡大元として渡し、
     /// 本アダプタ自身を表示用の射影（<c>DisplaySource</c>）として渡す（背景画像と同じ画像であるため複製を作らずに描ける）。
     /// </remarks>
-    private EsBitmapAvaloniaAdapter? _displayImage;
+    private EsBitmapAdapter? _displayImage;
 
     /// <summary>カーソル下の要素のハイライト状態（対象座標への変換・表示名・ログをコアが単一所有する）。</summary>
     private readonly CaptureHighlightSession _highlight;

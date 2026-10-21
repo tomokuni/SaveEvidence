@@ -48,7 +48,7 @@
 ```text
 Parts.CapturePreview.ControlMewUI
     ├── Parts.CapturePreview.Core（撮影・切り出しの共通規則・複合コントロールの設定とモード・切り出しビューの画像ビューポートの状態と判断・設定 → 外観の写像・付加情報ラベルの配置）
-    ├── Platform.MewUI（コア型 ⇔ MewUI 型の Interop / DIP 変換）
+    ├── EsUtil.Ui.MewUI.Interop（コア型 ⇔ MewUI 型の Interop / DIP 変換）
     ├── EsUtil.Platform.Core（ICaptureService / IElementFinder / IWindowService の Win32 実装を Facade が生成する）
     ├── Platform.Skia（Skia 依存の閉じ込め）
     ├── EsUtil.Ui.MewUI.Marquee（選択矩形と、その外側に描く装飾。 描画計画と外観は EsUtil.Feature.Marquee.Core / EsUtil.Feature.Marquee.Presenter を推移参照する）
@@ -244,7 +244,7 @@ src/
 │   │   ├── CaptureOverlayServices.cs       # サービス（キャプチャ・検出・ウィンドウ・ロガー）の束（internal。 Facade が生成する）
 │   │   └── CropSession.cs                  # 切り出しセッション（internal）
 │   ├── ZoomView/                           # 切り出しビューの画像ビューポート（ZoomViewControl / ZoomSkiaRenderer / ZoomChangedEventArgs）
-│   └── （撮影画像の描画は Platform.MewUI の SkiaImageView を使う）
+│   └── （撮影画像の描画は EsUtil.Ui.MewUI.Interop の SkiaImageView を使う）
 ```
 
 本プロジェクトは UI 操作（描画・入力・ウィンドウ）のみを持ち、共通規則は `Parts.CapturePreview.Core` が単一所有します。 画面を伴うセッションは実機検証で確認し、複合コントロールは本プロジェクトのテスト（`tests/` 配下。 切り出しビューと領域選択のサブフォルダに分ける）で検証します。

@@ -301,7 +301,7 @@
 | --- | --- |
 | `App.Core` | [`SPEC_API.md`](../../App.Core/docs/SPEC_API.md)（UI 非依存のコア仕様） |
 | `EsUtil.Platform.Core` | [`SPEC_API.md`](../../../../EsUtil/EsUtil/Platform.Core/docs/SPEC_API.md)（`Native` / `Native.Win` を含む） |
-| `Platform.MewUI` | [`SPEC_API.md`](../../Platform.MewUI/docs/SPEC_API.md) |
+| `EsUtil.Ui.MewUI.Interop` | [`SPEC_API.md`](../../../../EsUtil/EsUtil.Ui.MewUI/Interop/docs/SPEC_API.md) |
 | `EsUtil.Ui.MewUI.Loupe` | [`SPEC_API.md`](../../../../EsUtil/EsUtil.Ui.MewUI/Loupe/docs/SPEC_API.md) |
 | `Parts.CapturePreview.ControlMewUI` | [`SPEC_API.md`](../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md)（切り出しビュー・領域選択を含む） |
 

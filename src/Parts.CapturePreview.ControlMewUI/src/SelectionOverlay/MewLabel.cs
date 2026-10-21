@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Rendering;
 using Aprillz.MewUI.Text;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.SaveEvidence.Platform.MewUI;
+using EsUtil.Ui.MewUI.Interop;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;

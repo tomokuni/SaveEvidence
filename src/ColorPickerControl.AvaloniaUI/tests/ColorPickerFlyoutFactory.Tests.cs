@@ -3,7 +3,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI;
+using EsUtil.Ui.AvaloniaUI.Interop;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 

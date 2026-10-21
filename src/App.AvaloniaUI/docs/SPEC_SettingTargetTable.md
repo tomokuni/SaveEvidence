@@ -61,7 +61,7 @@ app
 SelectionOverlayControl（_selectionOverlay）
   ├─ MarqueeControl
   ├─ LoupeControl
-  └─ Platform.AvaloniaUI（Avalonia アダプタ）／EsUtil.Platform.Core（抽象・値型。Win32 実装は Native 配下）
+  └─ EsUtil.Ui.AvaloniaUI.Interop（Avalonia アダプタ）／EsUtil.Platform.Core（抽象・値型。Win32 実装は Native 配下）
 ```
 
 - **`Parts.CapturePreview.ControlAvaloniaUI` は `CropViewControl` を内包しません**。 `StartCropAsync(CropViewControl, ...)` の引数として外部から受け取るだけです。
@@ -86,7 +86,7 @@ SelectionOverlayControl（_selectionOverlay）
 | `SelectionOverlayControl` | `Options`（`SelectionOverlayOptions`）/ `MarqueeAppearance`（外観）/ `LoupeAppearance`（`LoupeAppearance`）/ `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` / `Mode` / `ShowFullOverlay` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | 下位（Marquee（選択の設定） / 装飾 / Loupe）の設定を一括公開（コアの設定値 1 つ）+ 外観（提示層の単一値 2 つ: `MarqueeAppearance` / `LoupeAppearance`）+ DPI スケーリングとラベル文言プロバイダを個別公開 |
 | `MarqueeControl` | `Options`（`MarqueeOptions`。 ハンドル寸法・マーカー寸法・対話パラメータ）/ `Appearance`（`MarqueeAppearance`。 色・枠線の太さ・表示可否）/ `ClientToSourceScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` | `SelectionOverlayOptions.Marquee`（選択の設定）と外観（`MarqueeAppearance`）からそれぞれ設定（枠線の太さと色は `MarqueeAppearance` が単一所有する）。 **操作・情報ラベルは本コントロールの概念ではない**ため、ホスト（`SelectionOverlayControl`）が `Options.Labels` で描く |
 | `LoupeControl` | `Options`（`LoupeOptions`。 基本サイズ・拡大率）/ `Appearance`（`LoupeAppearance`。 色・枠線の太さ・表示可否）/ `ClientToPixelScaling`（DPI 自動取得）/ `PositionOffset` | `SelectionOverlayOptions.Loupe` から設定（`ClientToPixelScaling` と外観を除く） |
-| `Platform.AvaloniaUI` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。 `EsUtil.Platform.Core` 提供）を提供 |
+| `EsUtil.Ui.AvaloniaUI.Interop` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。 `EsUtil.Platform.Core` 提供）を提供 |
 
 ### 2.3 反映経路
 
@@ -105,7 +105,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 - Parts.CapturePreview.ControlAvaloniaUI への反映は `CaptureSettings`（nullable record・部分更新）を介して行い、`null` のメンバーは現在値を維持する。
 - **色はコアの設定値（`SelectionOverlayOptions`）に含まれない**。 UI 間で共有する `Parts.CapturePreview.Core`（`CapturePaintMapper`）が `CaptureSettings` から `MarqueeAppearance` / `LoupeAppearance` を組み立て、ホスト（`CropSession` / `CaptureOverlay`）がコントロールの `MarqueeAppearance` / `LoupeAppearance` プロパティへ設定する（写像は UI 非依存層が単一所有する）。
 - テーマ・画像配置・下地色等、app 内で直接処理する項目は個別の購読で反映される。
-- `Platform.AvaloniaUI` は共通基盤のため、外観設定の公開対象ではない（参考として記載）。
+- `EsUtil.Ui.AvaloniaUI.Interop` は共通基盤のため、外観設定の公開対象ではない（参考として記載）。
 
 ## 3. 下位コントロールが公開する外観プロパティと上位での公開有無
 

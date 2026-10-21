@@ -9,7 +9,7 @@
 flowchart TB
     APP["アプリ層<br/>App.AvaloniaUI / App.MewUI / App.WinUI3 / App.WinForms（+ App.Core の ViewModel・Model）<br/>Parts.CapturePreview.*（撮影セッション + 切り出しビュー + 領域選択 + 切り出しプレビューのビューポート）"]
     CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI / .WinUI3 / .WinForms"]
-    PLAT["プラットフォーム層<br/>EsUtil.Platform.Core（このソリューション以外でも使える値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>Platform.AvaloniaUI / Platform.MewUI / Platform.WinUI3 / Platform.WinForms（UI アダプタ）"]
+    PLAT["共通基盤とブリッジ（いずれも EsUtil リポジトリ）<br/>EsUtil.Platform.Core（値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>EsUtil.Ui.AvaloniaUI.Interop / EsUtil.Ui.MewUI.Interop / EsUtil.Ui.WinUI3.Interop / EsUtil.Ui.WinForms.Interop"]
     APP --> CTRL
     APP --> PLAT
     CTRL --> PLAT
@@ -74,7 +74,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 **描画計画のまとめ型**: 描画計画（`XxxDrawPlan`）は「フレーム 1 枚分」のまとめ型であり、Presenter から UI へ渡す唯一の描画契約です。 項目が複数の値を 1 つの概念としてまとめる場合にだけ専用型を作ります（単一のコレクションで足りる項目に型を作りません）。
 
-アセンブリ参照の向きは `UI → 提示層（Presenter）→ Core` です（提示層は Core の幾何（`XxxGeometry`）を使うので Core を参照する）。 **逆向きの参照はありません**（Core は提示層も Platform.* の UI アダプタも参照しない）。
+アセンブリ参照の向きは `UI → 提示層（Presenter）→ Core` です（提示層は Core の幾何（`XxxGeometry`）を使うので Core を参照する）。 **逆向きの参照はありません**（Core は提示層もブリッジ（`EsUtil.Ui.*.Interop`）も参照しない）。
 
 **コントロールを差し替えるには**: 描画計画の構成を変える場合は `XxxPresenter` を継承して `ResolveDrawPlan` を上書きする（または `XxxPresenterXxx` を作る）。 見た目だけを変える場合は外観（`XxxAppearance`）を差し替える。 コアの公開 API だけで描画計画を組み立てられるため、`XxxPresenter` を使わない独自実装も可能です。
 
@@ -115,7 +115,7 @@ SelectionOverlay は複合コントロールであり、内包する Marquee / L
 
 UI 層は [`EsUtil.Ui.AvaloniaUI.Marquee`](../../EsUtil/EsUtil.Ui.AvaloniaUI/Marquee/README.md) / [`EsUtil.Ui.MewUI.Marquee`](../../EsUtil/EsUtil.Ui.MewUI/Marquee/README.md) / [`EsUtil.Ui.WinUI3.Marquee`](../../EsUtil/EsUtil.Ui.WinUI3/Marquee/README.md) / [`EsUtil.Ui.WinForms.Marquee`](../../EsUtil/EsUtil.Ui.WinForms/Marquee/README.md) /
 [`EsUtil.Ui.AvaloniaUI.Loupe`](../../EsUtil/EsUtil.Ui.AvaloniaUI/Loupe/README.md) / [`EsUtil.Ui.MewUI.Loupe`](../../EsUtil/EsUtil.Ui.MewUI/Loupe/README.md) / [`EsUtil.Ui.WinUI3.Loupe`](../../EsUtil/EsUtil.Ui.WinUI3/Loupe/README.md) / [`EsUtil.Ui.WinForms.Loupe`](../../EsUtil/EsUtil.Ui.WinForms/Loupe/README.md)、
-プラットフォーム層は [`EsUtil.Platform.Core`](../../EsUtil/EsUtil/Platform.Core/README.md) / [`Platform.AvaloniaUI`](Platform.AvaloniaUI/README.md) / [`Platform.MewUI`](Platform.MewUI/README.md) / [`Platform.WinUI3`](Platform.WinUI3/README.md) / [`Platform.WinForms`](Platform.WinForms/README.md) を参照してください。
+共通基盤とブリッジは [`EsUtil.Platform.Core`](../../EsUtil/EsUtil/Platform.Core/README.md) / [`EsUtil.Ui.AvaloniaUI.Interop`](../../EsUtil/EsUtil.Ui.AvaloniaUI/Interop/README.md) / [`EsUtil.Ui.MewUI.Interop`](../../EsUtil/EsUtil.Ui.MewUI/Interop/README.md) / [`EsUtil.Ui.WinUI3.Interop`](../../EsUtil/EsUtil.Ui.WinUI3/Interop/README.md) / [`EsUtil.Ui.WinForms.Interop`](../../EsUtil/EsUtil.Ui.WinForms/Interop/README.md) を参照してください。
 
 ## 7. 名前空間とフォルダ
 

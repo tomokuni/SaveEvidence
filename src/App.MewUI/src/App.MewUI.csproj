@@ -33,7 +33,7 @@
     <!-- MewUI 版の撮影セッション（オーバーレイ・切り出しビュー） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlMewUI\src\Parts.CapturePreview.ControlMewUI.csproj" />
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型） -->
-    <ProjectReference Include="..\..\Platform.MewUI\src\Platform.MewUI.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Interop\src\EsUtil.Ui.MewUI.Interop.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Thumbnail\src\EsUtil.Ui.MewUI.Thumbnail.csproj" />
   </ItemGroup>
 

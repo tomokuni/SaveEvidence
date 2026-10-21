@@ -8,7 +8,7 @@ using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
-using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using Rect = Avalonia.Rect;
@@ -287,7 +287,7 @@ public class CaptureSessionControlTests
     /// <summary>表示中の画像を設定した CropViewControl を生成する（切り出しの対象は表示中の画像）。</summary>
     /// <remarks>アダプタへ引き渡して所有させる（画素は凍結して 0 コピーで共有される）ため、ここでは破棄しない。</remarks>
     private static CropViewControl CreateCropView(int width = 100, int height = 100)
-        => new() { Source = EsBitmapAvaloniaAdapter.Adopt(CreateBitmap(width, height)) };
+        => new() { Source = EsBitmapAdapter.Adopt(CreateBitmap(width, height)) };
 
     // ====================================================================
     // 切り出し結果の型（コア型で返る）と確定の成立
@@ -379,7 +379,7 @@ public class CaptureSessionControlTests
         cropView.SetSelection(new Rect(0, 0, 80, 80));
 
         // 設定後に画像を 40x40 へ差し替える（切り出しの対象が変わる）
-        cropView.Source = EsBitmapAvaloniaAdapter.Adopt(CreateBitmap(40, 40));
+        cropView.Source = EsBitmapAdapter.Adopt(CreateBitmap(40, 40));
 
         cropView.RequestConfirm();
         EsRectInt? result = await task;

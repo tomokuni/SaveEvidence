@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using EsUtil.SaveEvidence.Platform.WinForms.Imaging;
+using EsUtil.Ui.WinForms.Interop.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.SelectionOverlay;
 

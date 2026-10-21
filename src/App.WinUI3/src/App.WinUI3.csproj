@@ -63,7 +63,7 @@
     <!-- WinUI 3 版の撮影セッション（オーバーレイ・切り出しビュー） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj" />
     <!-- WinUI 3 版 Interop（コア型 ⇔ WinUI 型・ウィンドウ配置の換算・表示の描画基盤） -->
-    <ProjectReference Include="..\..\Platform.WinUI3\src\Platform.WinUI3.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Interop\src\EsUtil.Ui.WinUI3.Interop.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Thumbnail\src\EsUtil.Ui.WinUI3.Thumbnail.csproj" />
   </ItemGroup>
 

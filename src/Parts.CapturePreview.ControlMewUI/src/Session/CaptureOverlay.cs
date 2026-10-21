@@ -14,8 +14,8 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
-using EsUtil.SaveEvidence.Platform.MewUI;
-using EsUtil.SaveEvidence.Platform.MewUI.Imaging;
+using EsUtil.Ui.MewUI.Interop;
+using EsUtil.Ui.MewUI.Interop.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
