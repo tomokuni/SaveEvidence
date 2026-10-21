@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.App.WinForms.Icons;
 /// <summary>他の UI 版と共有する SVG アイコンを GDI+ のビットマップへ描く単一の描画層。</summary>
 /// <remarks>
 /// <b>SVG を出所にする理由</b>: アイコンは 4 つの UI 版で同じ見た目にする必要がある。 出所は<br/>
-/// <see cref="SvgIconLoader"/>（App.Core）が単一所有し、本 UI はパスを GDI+ へ変換して描く（<see cref="SvgPathData"/>）。<br/>
+/// <see cref="AppIcons"/>（App.Core）が単一所有し、本 UI はパスを GDI+ へ変換して描く（<see cref="SvgPathData"/>）。<br/>
 /// <br/>
 /// <b>描画の性質</b>: サイズと色を引数で受け取り、<b>用途ごとに 1 枚のビットマップ</b>を描く（テーマの変更時に描き直す）。<br/>
 /// 描画は <see cref="Bitmap"/> と <c>Graphics.FromImage</c> だけで完結するため、ウィンドウ（ハンドル）を生成せずに画素を検証できる。
@@ -145,7 +145,7 @@ internal static class IconLoader
 
         return s_pathData.GetOrAdd(fileName, static name =>
         {
-            var svg = SvgIconLoader.Load(name);
+            var svg = AppIcons.Source.Load(name);
             var path = new GraphicsPath();
             foreach (var data in svg.PathData)
             {

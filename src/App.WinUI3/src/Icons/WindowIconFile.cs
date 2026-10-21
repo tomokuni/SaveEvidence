@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices.WindowsRuntime;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Svg;
 using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Windows.Graphics.Imaging;
@@ -70,7 +71,7 @@ internal static class WindowIconFile
     /// <returns>ICO のバイト列。</returns>
     private static byte[] Build()
     {
-        var figures = SvgPathData.Parse(SvgIconLoader.Load(AppIdentity.IconFileName).PathData[0]);
+        var figures = SvgPathParser.Parse(AppIcons.Source.Load(AppIdentity.IconFileName).PathData[0]);
         var images = new List<byte[]>(s_sizes.Length);
         foreach (var size in s_sizes)
         {

@@ -19,12 +19,11 @@ internal static class ThumbnailGeneration
     /// <param name="list">反映先の一覧。</param>
     /// <param name="index">項目の添字。</param>
     /// <param name="load">元画像を取得する処理（背景スレッドで実行される）。</param>
-    /// <param name="iconSize">サムネイルの長辺の上限（ピクセル）。</param>
     /// <param name="token">中断のトークン。</param>
     /// <returns>反映の要求が終わるまで完了しないタスク。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="list"/> または <paramref name="load"/> が null の場合。</exception>
     public static async ValueTask GenerateAsync(
-        ThumbnailControl list, int index, Func<EsReadOnlyBitmap?> load, int iconSize, CancellationToken token)
+        ThumbnailControl list, int index, Func<EsReadOnlyBitmap?> load, CancellationToken token)
     {
         ArgumentNullException.ThrowIfNull(list);
         ArgumentNullException.ThrowIfNull(load);
@@ -37,7 +36,7 @@ internal static class ThumbnailGeneration
                 {
                     token.ThrowIfCancellationRequested();
                     var source = load();
-                    return source is null ? null : ImageThumbnailLoader.ToThumbnailBitmap(source, iconSize);
+                    return source is null ? null : GdiBitmapInterop.ToDrawingBitmap(source);
                 },
                 token).ConfigureAwait(false);
         }

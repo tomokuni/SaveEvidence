@@ -9,7 +9,7 @@ public class CaptureIconFilesTests
     [Fact]
     internal void All_埋め込みリソースに存在する()
     {
-        var resources = SvgIconLoader.Enumerate();
+        var resources = AppIcons.Source.EnumerateKeys();
 
         Assert.Contains(CaptureIconFiles.Save, resources);
         Assert.Contains(CaptureIconFiles.ScreenSelect, resources);

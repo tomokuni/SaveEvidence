@@ -1,7 +1,7 @@
-using System.Collections.Concurrent;
 using System.Runtime.InteropServices.WindowsRuntime;
+using EsUtil.Platform.Core.Caching;
+using EsUtil.Platform.Core.Svg;
 using EsUtil.SaveEvidence.App.Core.Icons;
-using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.WinUI3.Views;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Icons;
 
 /// <summary>Icons フォルダの Fluent アイコン（SVG）から画像を生成するヘルパー（WinUI 3 版）。</summary>
 /// <remarks>
-/// SVG の出所は <see cref="SvgIconLoader"/>（App.Core）が単一所有する（4 つの UI 版で同じファイルを使う）。<br/>
+/// SVG の出所は <see cref="AppIcons"/>（App.Core）が単一所有する（4 つの UI 版で同じファイルを使う）。<br/>
 /// 各 SVG は Fluent System Icons 形式の単一 <c>&lt;path d="..."&gt;</c> で構成され、viewBox は 24x24。<br/>
 /// <br/>
 /// <b>画素へ展開する理由</b>: WinUI 3 の <c>Path</c> / <c>PathIcon</c> へ形状を渡す方法は、本アプリの<br/>
@@ -31,8 +31,8 @@ internal static class IconLoader
     private const uint ForegroundDark = 0xFFEEEEEE;
 
     /// <summary>生成済み画像のキャッシュ（ファイル名・サイズ・色で一意）。</summary>
-    private static readonly ConcurrentDictionary<(string File, int Size, uint Argb), ImageSource> s_cache =
-        new(KeyComparer.Instance);
+    private static readonly CapacityLimitedCache<(string File, int Size, uint Argb), ImageSource> s_cache =
+        new(static k => Rasterize(k.File, k.Size, k.Argb), CacheCapacity, KeyComparer.Instance);
 
     /// <summary>テーマに応じたアイコン・文字の色を取得する。</summary>
     /// <returns>前景色（<c>0xAARRGGBB</c>）。</returns>
@@ -53,9 +53,7 @@ internal static class IconLoader
         var length = Math.Max(1, size);
         var key = (File: fileName, Size: length, Argb: argb);
 
-        // ラムダの引数型はタプル（要素名は保持される）。 Rasterize は static メソッドのため static ラムダにできない
-        // （static ラムダの内側から型のメンバーを参照できない）
-        return CapacityLimitedCache.GetOrAdd(s_cache, CacheCapacity, key, k => Rasterize(k.File, k.Size, k.Argb));
+        return s_cache.GetOrAdd(key);
     }
 
     /// <summary>テーマに合うアイコンを生成する。</summary>
@@ -76,7 +74,7 @@ internal static class IconLoader
     /// </remarks>
     private static ImageSource Rasterize(string fileName, int size, uint argb)
     {
-        var figures = SvgPathData.Parse(SvgIconLoader.Load(fileName).PathData[0]);
+        var figures = SvgPathParser.Parse(AppIcons.Source.Load(fileName).PathData[0]);
         var pixels = SvgPathRasterizer.Rasterize(figures, size, argb);
 
         var image = new WriteableBitmap(size, size);

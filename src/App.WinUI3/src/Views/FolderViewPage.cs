@@ -334,7 +334,7 @@ internal static class FolderViewPage
         ThumbnailControl list, int index, string filePath, int iconSize, int capacity)
         => _ =>
         {
-            var thumbnail = ImageThumbnailLoader.Load(filePath, iconSize, capacity);
+            var thumbnail = ThumbnailImageLoader.Load(filePath, iconSize, capacity);
             if (thumbnail is not null)
             {
                 ThumbnailBackground.Post(() => list.SetImage(index, thumbnail));

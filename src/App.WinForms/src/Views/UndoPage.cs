@@ -246,7 +246,7 @@ internal static class UndoPage
                 var source = itemSources[i];
                 var request = scheduler.Enqueue(
                     ThumbnailPriority.Background(index),
-                    token => ThumbnailGeneration.GenerateAsync(list, index, () => source, iconSize, token));
+                    token => ThumbnailGeneration.GenerateAsync(list, index, () => source, token));
                 requests.Add((index, request));
             }
 

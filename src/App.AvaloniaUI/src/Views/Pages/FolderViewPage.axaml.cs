@@ -1,9 +1,12 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using EsUtil.Feature.Thumbnail;
+using EsUtil.Platform.Core.Caching;
+using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.Platform.AvaloniaUI.Imaging;
 using EsUtil.Ui.AvaloniaUI.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
@@ -38,7 +41,8 @@ public sealed partial class FolderViewPage : ViewModePageBase
     /// <remarks>一覧が表示する件数がこれより少ない場合でも、この数までは保持する（一覧間の行き来で再復号しない）。</remarks>
     private const int ThumbnailCacheCapacity = 100;
 
-    private static readonly ConcurrentDictionary<(string Path, int Size, DateTime LastWrite), Bitmap> s_thumbnailCache = new();
+    private static readonly CapacityLimitedCache<(string Path, int Size, DateTime LastWrite), Bitmap?> s_thumbnailCache =
+        new(static key => LoadBitmap(key.Path, key.Size), ThumbnailCacheCapacity);
 
     /// <summary>背景のサムネイル生成（非表示では 1 件ずつ、表示中は並列）。</summary>
     /// <remarks>ページはアプリの生存期間で 1 つ生成されるため、明示的に破棄しない（終了時にプロセスごと解放される）。</remarks>
@@ -173,13 +177,14 @@ public sealed partial class FolderViewPage : ViewModePageBase
         }
 
         var files = Directory.GetFiles(folderPath, "*.*")
-            .Where(static f => ImageFileExtensions.IsImageFile(f))
+            .Where(static f => EsImageFileExtensions.IsImageFile(f))
             .ToList();
 
         // ソート順を適用（比較子を選択。 名前順・大文字小文字を区別しない）
-        files.Sort(_viewModel.IsSortAscending
+        IComparer<string> comparer = _viewModel.IsSortAscending
             ? StringComparer.OrdinalIgnoreCase
-            : Comparer<string>.Create((a, b) => StringComparer.OrdinalIgnoreCase.Compare(b, a)));
+            : Comparer<string>.Create(static (a, b) => StringComparer.OrdinalIgnoreCase.Compare(b, a));
+        files.Sort(comparer);
 
         var iconSize = GetIconSize();
         var placeholder = ThumbnailPlaceholder.Get(iconSize);
@@ -267,7 +272,6 @@ public sealed partial class FolderViewPage : ViewModePageBase
             return null;
         }
     }
-
     /// <summary>1 件分のサムネイル生成の処理を生成する。</summary>
     /// <param name="index">結果を設定する項目の添字。</param>
     /// <param name="filePath">対象のファイルパス。</param>
@@ -319,12 +323,10 @@ public sealed partial class FolderViewPage : ViewModePageBase
         {
             var lastWrite = File.GetLastWriteTimeUtc(filePath);
             (string Path, int Size, DateTime LastWrite) key = (filePath, size, lastWrite);
-            return CapacityLimitedCache.GetOrAdd(
-                s_thumbnailCache, Math.Max(1, capacity), key, static k =>
-                {
-                    using var stream = File.OpenRead(k.Path);
-                    return Bitmap.DecodeToWidth(stream, k.Size);
-                });
+
+            // 保持数は呼び出しのたびに決まる（表示する件数）ため、上限を先に更新してから取得する
+            s_thumbnailCache.Capacity = Math.Max(1, capacity);
+            return s_thumbnailCache.GetOrAdd(key);
         }
         catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
         {
@@ -333,6 +335,20 @@ public sealed partial class FolderViewPage : ViewModePageBase
             return null;
         }
     }
+
+    /// <summary>画像ファイルを縮小デコードして Avalonia の画像へ変換する。</summary>
+    /// <param name="filePath">対象のファイルパス。</param>
+    /// <param name="size">サムネイルの幅（ピクセル）。</param>
+    /// <returns>サムネイル。 復号できない場合は null。</returns>
+    /// <remarks>
+    /// <b>縮小デコードは <see cref="ThumbnailImageLoader"/>（EsUtil）が単一所有する</b>
+    /// （MewUI / WinUI 3 / WinForms 版と同じ画質・同じ EXIF の扱いになる）。
+    /// 本クラスは<b>変換した画像のキャッシュ</b>だけを持つ（一覧の行は描画のたびに画像を参照するため）。
+    /// </remarks>
+    private static Bitmap? LoadBitmap(string filePath, int size)
+        => ThumbnailImageLoader.Load(filePath, size, s_thumbnailCache.Capacity) is { } source
+            ? source.ToAvaloniaBitmap()
+            : null;
 
     /// <summary>昇順ボタンクリック。</summary>
     private void OnSortAscendingClick(object? sender, RoutedEventArgs e)

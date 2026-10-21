@@ -2,13 +2,13 @@ using System.Diagnostics;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Thumbnail;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.Ui.MewUI.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
-using EsUtil.SaveEvidence.App.MewUI.Services;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
@@ -20,8 +20,8 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <b>一覧</b>: 保存先フォルダの画像をサムネイル + ファイル名で並べる。 ウィンドウ幅に合わせて折り返す。<br/>
 /// <b>表示モード</b>: 特大 / 大 / 中。<c>Settings.FolderViewModeIndex</c> へ保存し、次回起動時に復元する。<br/>
 /// <b>ソート順</b>: 名前の昇順 / 降順。<c>Settings.FolderViewSortAscending</c> へ保存する。<br/>
-/// <b>サムネイル</b>: 文字列とした画像の縮小デコードとキャッシュは <see cref="ImageThumbnailLoader"/> が所有する。<br/>
-/// <b>画像の抽出</b>: 一覧に含める拡張子の判定は <see cref="ImageFileExtensions"/>（コア）が単一所有する。<br/>
+/// <b>サムネイル</b>: 文字列とした画像の縮小デコードとキャッシュは <see cref="ThumbnailImageLoader"/>（コア）が所有する。<br/>
+/// <b>画像の抽出</b>: 一覧に含める拡張子の判定は <see cref="EsImageFileExtensions"/>（コア）が単一所有する。<br/>
 /// <b>ダブルクリック</b>: ファイルを OS の既定アプリで開く（Avalonia 版と同一の挙動）。
 /// </remarks>
 internal static class FolderViewPage
@@ -328,7 +328,7 @@ internal static class FolderViewPage
             token.ThrowIfCancellationRequested();
 
             // 読み込めない画像は null で返る（その場合は代替画像のまま表示する）
-            var thumbnail = ImageThumbnailLoader.Load(filePath, iconSize, capacity);
+            var thumbnail = ThumbnailImageLoader.Load(filePath, iconSize, capacity);
             var fallback = ThumbnailBackground.Placeholder(iconSize);
 
             ThumbnailBackground.Post(() =>
@@ -381,12 +381,13 @@ internal static class FolderViewPage
         try
         {
             var files = Directory.GetFiles(folderPath, "*.*")
-                .Where(static f => ImageFileExtensions.IsImageFile(f))
+                .Where(static f => EsImageFileExtensions.IsImageFile(f))
                 .ToList();
 
-            files.Sort(ascending
+            IComparer<string> comparer = ascending
                 ? StringComparer.OrdinalIgnoreCase
-                : Comparer<string>.Create(static (a, b) => StringComparer.OrdinalIgnoreCase.Compare(b, a)));
+                : Comparer<string>.Create(static (a, b) => StringComparer.OrdinalIgnoreCase.Compare(b, a));
+            files.Sort(comparer);
 
             return files;
         }

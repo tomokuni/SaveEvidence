@@ -15,37 +15,34 @@
   - [8.1 テンプレートの書式](#81-テンプレートの書式)
 - [9. `Models.UndoHistory`（クラス）](#9-modelsundohistoryクラス)
 - [10. `Models.HotKeyParser`（静的クラス）](#10-modelshotkeyparser静的クラス)
-- [11. `Models.CapacityLimitedCache`（内部・静的クラス）](#11-modelscapacitylimitedcache内部静的クラス)
-- [12. `Models.ThumbnailScheduler`（内部・クラス）](#12-modelsthumbnailscheduler内部クラス)
-- [13. `Models.ThumbnailPriority`（内部・構造体）](#13-modelsthumbnailpriority内部構造体)
-- [14. `Models.ImageFileExtensions`（内部・静的クラス）](#14-modelsimagefileextensions内部静的クラス)
-- [15. `ViewModels.ViewModeDisplay`（内部・静的クラス）](#15-viewmodelsviewmodedisplay内部静的クラス)
-- [16. `ViewModels.FolderViewViewModel`（クラス）](#16-viewmodelsfolderviewviewmodelクラス)
-- [17. `ViewModels.UndoViewModel`（クラス）](#17-viewmodelsundoviewmodelクラス)
-- [18. `ViewModels.MainViewModel`（クラス）](#18-viewmodelsmainviewmodelクラス)
-  - [18.1 コンストラクター](#181-コンストラクター)
-  - [18.2 主なプロパティ](#182-主なプロパティ)
-  - [18.3 主な操作](#183-主な操作)
-  - [18.4 UI 依存の注入点](#184-ui-依存の注入点)
-- [19. `Services.StatusMessages`（静的クラス）](#19-servicesstatusmessages静的クラス)
-  - [19.1 通知と画像の差し替えの順序](#191-通知と画像の差し替えの順序)
-- [20. `Services.AppPalette`（静的クラス）](#20-servicesapppalette静的クラス)
-- [21. `Services.NavPanelMetrics`（静的クラス）](#21-servicesnavpanelmetrics静的クラス)
-- [22. `Services.StartupPreviewImage`（静的クラス）](#22-servicesstartuppreviewimage静的クラス)
-- [23. `Services.EnumDisplayNames`（静的クラス）](#23-servicesenumdisplaynames静的クラス)
-- [24. `Services.StatusBarMetrics`（静的クラス）](#24-servicesstatusbarmetrics静的クラス)
-- [25. `Services.SettingsMetrics`（静的クラス）](#25-servicessettingsmetrics静的クラス)
-- [26. `Services.ThumbnailTileMetrics`（静的クラス）](#26-servicesthumbnailtilemetrics静的クラス)
-- [27. `Services.AppIdentity`（静的クラス）](#27-servicesappidentity静的クラス)
-- [28. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）](#28-serviceswindowmetrics--serviceswindowlayout静的クラス)
-- [29. `Services.WindowMenu`](#29-serviceswindowmenu)
-- [30. `Icons.SvgIconLoader`（内部）](#30-iconssvgiconloader内部)
-- [31. `Services.ZoomMenuLevels`（静的クラス）](#31-serviceszoommenulevels静的クラス)
-- [32. 依存関係](#32-依存関係)
-- [33. `Services.ToolbarMetrics`（静的クラス）](#33-servicestoolbarmetrics静的クラス)
-- [34. `Services.WindowPlacementRule`（静的クラス）](#34-serviceswindowplacementrule静的クラス)
-- [35. `Icons.CaptureIconFiles`（静的クラス）](#35-iconscaptureiconfiles静的クラス)
-- [36. `Icons.SvgPathData` / `SvgPathRasterizer`（内部）](#36-iconssvgpathdata--svgpathrasterizer内部)
+- [11. `Models.ThumbnailScheduler`（内部・クラス）](#11-modelsthumbnailscheduler内部クラス)
+- [12. `Models.ThumbnailPriority`（内部・構造体）](#12-modelsthumbnailpriority内部構造体)
+- [13. `ViewModels.ViewModeDisplay`（内部・静的クラス）](#13-viewmodelsviewmodedisplay内部静的クラス)
+- [14. `ViewModels.FolderViewViewModel`（クラス）](#14-viewmodelsfolderviewviewmodelクラス)
+- [15. `ViewModels.UndoViewModel`（クラス）](#15-viewmodelsundoviewmodelクラス)
+- [16. `ViewModels.MainViewModel`（クラス）](#16-viewmodelsmainviewmodelクラス)
+  - [16.1 コンストラクター](#161-コンストラクター)
+  - [16.2 主なプロパティ](#162-主なプロパティ)
+  - [16.3 主な操作](#163-主な操作)
+  - [16.4 UI 依存の注入点](#164-ui-依存の注入点)
+- [17. `Services.StatusMessages`（静的クラス）](#17-servicesstatusmessages静的クラス)
+  - [17.1 通知と画像の差し替えの順序](#171-通知と画像の差し替えの順序)
+- [18. `Services.AppPalette`（静的クラス）](#18-servicesapppalette静的クラス)
+- [19. `Services.NavPanelMetrics`（静的クラス）](#19-servicesnavpanelmetrics静的クラス)
+- [20. `Services.StartupPreviewImage`（静的クラス）](#20-servicesstartuppreviewimage静的クラス)
+- [21. `Services.EnumDisplayNames`（静的クラス）](#21-servicesenumdisplaynames静的クラス)
+- [22. `Services.StatusBarMetrics`（静的クラス）](#22-servicesstatusbarmetrics静的クラス)
+- [23. `Services.SettingsMetrics`（静的クラス）](#23-servicessettingsmetrics静的クラス)
+- [24. `Services.ThumbnailTileMetrics`（静的クラス）](#24-servicesthumbnailtilemetrics静的クラス)
+- [25. `Services.AppIdentity`（静的クラス）](#25-servicesappidentity静的クラス)
+- [26. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）](#26-serviceswindowmetrics--serviceswindowlayout静的クラス)
+- [27. `Services.WindowMenu`](#27-serviceswindowmenu)
+- [28. `Icons.AppIcons`（内部・静的クラス）](#28-iconsappicons内部静的クラス)
+- [29. `Services.ZoomMenuLevels`（静的クラス）](#29-serviceszoommenulevels静的クラス)
+- [30. 依存関係](#30-依存関係)
+- [31. `Services.ToolbarMetrics`（静的クラス）](#31-servicestoolbarmetrics静的クラス)
+- [32. `Services.WindowPlacementRule`（静的クラス）](#32-serviceswindowplacementrule静的クラス)
+- [33. `Icons.CaptureIconFiles`（静的クラス）](#33-iconscaptureiconfiles静的クラス)
 
 ## 1. 公開 API の可視性
 
@@ -57,10 +54,9 @@
 | `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` / `Services.WindowPlacementRule` / `Icons.CaptureIconFiles` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
 | `Services.EsRectIntJsonConverter` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
-| `Models.CapacityLimitedCache` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
 | `Models.ThumbnailScheduler` | `internal` | 同上 |
 | `Models.ThumbnailPriority` | `internal` | 同上 |
-| `Models.ImageFileExtensions` | `internal` | `SaveEvidence` / `EsUtil.SaveEvidence.App.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests` |
+| `Icons.AppIcons` | `internal` | 同上 |
 | `ViewModels.ViewModeDisplay` | `internal` | 同上 |
 | `ViewModels.FolderViewViewModel` / `ViewModels.UndoViewModel` / `ViewModels.MainViewModel` | `public` | 任意 |
 
@@ -177,17 +173,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 - 最低 1 つの修飾キーが必要です。 キー名が解釈できない場合は false を返します。
 - **キーは正規化してから採用します**（`EsKeyExtensions.Normalize`）。 文字列からの解釈は `Enum.TryParse` を使うため**数値文字列を受理してしまい**、列挙に無い値（例: `"999"`）がキーとして通ります。 正規化で未定義値を拒否します。
 
-## 11. `Models.CapacityLimitedCache`（内部・静的クラス）
-
-| メソッド | 説明 |
-| --- | --- |
-| `GetOrAdd<TKey, TValue>(ConcurrentDictionary<TKey, TValue> cache, int capacity, TKey key, Func<TKey, TValue> factory)` | キャッシュに値を取得または追加する。 容量超過時はキャッシュ全体をクリアして肥大化を防ぐ |
-
-- **容量の判定・破棄・登録はロックで直列化します**（ファクトリの実行はロックの外）。 複数スレッドから呼んでも、同じ値を 2 回破棄したり、先に入れた値を上書きして漏らしたりしません。 生成（復号など）は並列のままです。
-- **ファクトリの実行中に同じキーが登録された場合は、先に登録された値を返し、後から作った値は破棄します**（同じキーに 2 つの値を持たない）。
-- **`capacity` は呼び出し側が渡します**。 一覧が表示する件数より小さい上限を渡すと、表示中の値が破棄されます（例: サムネイルの生成中に表示中の画像が破棄される）。
-
-## 12. `Models.ThumbnailScheduler`（内部・クラス）
+## 11. `Models.ThumbnailScheduler`（内部・クラス）
 
 背景の処理（サムネイルの生成）を、ページの表示状態に応じた負荷で実行するスケジューラ。 UI フレームワークに依存しません。
 
@@ -210,7 +196,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 - **`Clear()` は実行中の要求のトークンをキャンセルしますが、CTS を破棄しません**（実行側がトークンを参照しているため。 世代番号で古い結果を無効化する）。 `Dispose()` も同様です。
 - 用途はフォルダビュー / Undo 一覧のサムネイル生成（両 UI で共用）です。 表示中の全力生成と、**起動後の先読み**（ウィンドウを表示した後に低負荷で生成しておき、ページの切り替えを待たせない）の両方に使います。 `Enqueue` が返す `ThumbnailRequest`（入れ子型）は `Reprioritize` の識別子として呼び出し側が保持します。
 
-## 13. `Models.ThumbnailPriority`（内部・構造体）
+## 12. `Models.ThumbnailPriority`（内部・構造体）
 
 サムネイル生成の優先度（値が小さいほど先に実行する）。
 
@@ -225,18 +211,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 - **可視判定は純粋関数**（表示範囲の重なりだけ）のため、画面なしで境界まで検証できます。 端が一致するだけの場合は重なりとみなしません。
 - `IComparable<T>` は実装しません（比較演算子の実装を避け、`Compare` へ一本化する）。
 
-## 14. `Models.ImageFileExtensions`（内部・静的クラス）
-
-フォルダビューの一覧に含める画像ファイルの拡張子判定。 判定は拡張子のみで行い、大文字・小文字は区別しません。
-
-| メンバー | 説明 |
-| --- | --- |
-| `All` | 対象拡張子の一覧（読み取り専用）。 `.png` / `.jpg` / `.jpeg` / `.bmp` / `.gif` / `.tiff` / `.tif` / `.webp` |
-| `IsImageFile(string path)` | 拡張子が対象のいずれかなら true |
-
-- 拡張子の抽出には `Path.GetExtension` を使用するため、`.png` のようにドットで始まる名前も画像として扱われます（末尾のドット `a.` は空文字のため対象外）。
-
-## 15. `ViewModels.ViewModeDisplay`（内部・静的クラス）
+## 13. `ViewModels.ViewModeDisplay`（内部・静的クラス）
 
 | メンバー | 説明 |
 | --- | --- |
@@ -245,7 +220,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `ClampIndex(int index)` | 表示モードのインデックスを有効範囲へクランプする |
 | `GetItemCountText(int count)` | 件数の表示文字列を返す |
 
-## 16. `ViewModels.FolderViewViewModel`（クラス）
+## 14. `ViewModels.FolderViewViewModel`（クラス）
 
 フォルダビューの表示モード・ソート順の状態を保持し、変更を通知します（`ObservableObject`）。
 
@@ -256,7 +231,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `IsSortAscending` / `SortStatusText` | ソート順（昇順 / 降順）と表示文字列 |
 | `FolderPathText` | フォルダパスの表示文字列 |
 
-## 17. `ViewModels.UndoViewModel`（クラス）
+## 15. `ViewModels.UndoViewModel`（クラス）
 
 Undo 一覧の表示モード状態を保持し、変更を通知します（`ObservableObject`）。
 
@@ -265,11 +240,11 @@ Undo 一覧の表示モード状態を保持し、変更を通知します（`Ob
 | `ItemCount` / `ItemCountText` | 項目数と表示文字列 |
 | `SelectedViewModeIndex` / `ViewModeText` | 表示モードのインデックスと表示文字列 |
 
-## 18. `ViewModels.MainViewModel`（クラス）
+## 16. `ViewModels.MainViewModel`（クラス）
 
 メイン画面の状態を保持し、コマンドと変更通知を提供します（`ObservableObject` + `[RelayCommand]` / `[ObservableProperty]`）。
 
-### 18.1 コンストラクター
+### 16.1 コンストラクター
 
 ```csharp
 public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
@@ -277,7 +252,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 `IImageWriter` には本番の実装（本プロジェクトの `EsBitmapImageWriter`）を注入します（Avalonia 版は `Program.cs` の DI で登録、MewUI 版は `Program.cs` で直接生成）。 **保存形式の判別とエンコードはコアの `EsReadOnlyBitmap.Save` が単一所有します**（本プロジェクトの実装は委譲するだけの薄い適合で、保存形式は両 UI で同じ ）。
 
-### 18.2 主なプロパティ
+### 16.2 主なプロパティ
 
 | メンバー | 型 | 説明 |
 | --- | --- | --- |
@@ -296,7 +271,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `NavPanelWidth` / `IsNavigationExpanded` | `double` / `bool` | ナビパネル（幅の根拠は `NavPanelMetrics`（App.Core）が単一所有。 展開 136 / 収納 40 DIP） |
 | `ThemeModes` | `IReadOnlyList<ThemeMode>` | テーマモードの選択肢 |
 
-### 18.3 主な操作
+### 16.3 主な操作
 
 | メンバー | 説明 |
 | --- | --- |
@@ -307,7 +282,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。 両 UI のホバー強調と確定・キャンセル判定が共用する |
 | `CopyToClipboardAsync` / `PasteFromClipboardAsync` | クリップボード操作（実体はコールバックへ委譲）。 貼り付けの成否は `PasteFromClipboardAsync` が通知する |
 
-### 18.4 UI 依存の注入点
+### 16.4 UI 依存の注入点
 
 | メンバー | 型 | 既定 |
 | --- | --- | --- |
@@ -317,7 +292,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `BeforeEditAction` | `Action?` | null |
 | `StartSelectionMode` | `Action<CaptureType>?` | null |
 
-## 19. `Services.StatusMessages`（静的クラス）
+## 17. `Services.StatusMessages`（静的クラス）
 
 ステータスバーへ出す通知メッセージ（操作の結果）の文言を単一所有します。 UI 版ごとに文言・有無がずれないよう、**実際の設定もコア（`MainViewModel`）が行い**、UI 層は結果の表示だけを担います。
 
@@ -331,7 +306,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `AutoCropDetected(int count)` / `AutoCropNotFound()` | 自動切り出しの検出結果 | `自動切り出し: 3 個のウィンドウを検出しました。…` |
 | `AutoCropCanceled()` | 自動切り出しのキャンセル（**実行中だった場合のみ**） | `自動切り出しをキャンセルしました。` |
 
-### 19.1 通知と画像の差し替えの順序
+### 17.1 通知と画像の差し替えの順序
 
 `MainViewModel` はプレビュー画像が変わると `StatusMessage` を空にします（古い通知を残さないため）。 したがって通知は**画像の差し替えより後**に設定します。
 
@@ -339,7 +314,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 - 撮影完了は UI 側のハンドラーが `SetPreviewImage` の後に `CaptureCompleted` を設定する
 - `StatusMessages` のサイズ表記はカルチャに依存させない（桁区切り・全角数字を出さない）
 
-## 20. `Services.AppPalette`（静的クラス）
+## 18. `Services.AppPalette`（静的クラス）
 
 4 つの UI 版で共通に使う配色を単一所有します（色は UI 非依存の `0xAARRGGBB` で保持し、各 UI 版が自分の色型へ変換する）。 **明色で指定された色を暗色でも使うと画面がまぶしく暗色テーマの意味が無くなる**ため、テーマ別に値を持ちます。
 
@@ -363,7 +338,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 `ImageAreaDrawingColor` はプレビューの下地（`ZoomViewAppearance.BackgroundColor`、UI 非依存の `System.Drawing.Color`）向けです。 変換を各 UI 版へ書き分けないよう本クラスが担います。 選択中の 2 色は WinUI 3 の `NavigationViewItem` の実測値です（AvaloniaUI / MewUI が同じ表示にする）。
 
-## 21. `Services.NavPanelMetrics`（静的クラス）
+## 19. `Services.NavPanelMetrics`（静的クラス）
 
 ナビゲーション パネルの幅と項目の寸法を単一所有します（UI 版ごとに幅・大きさがずれないようにするため）。
 
@@ -385,7 +360,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 項目の高さを `ItemHeight` に固定するのは、**文字の有無で高さが変わると開閉で項目の位置がずれる**ためです（AvaloniaUI 版の実測で 33.6 → 36.8 DIP と変わっていました）。
 
-## 22. `Services.StartupPreviewImage`（静的クラス）
+## 20. `Services.StartupPreviewImage`（静的クラス）
 
 起動直後のキャプチャ ページに置くプレースホルダ画像（グラデーション）を生成します。 **4 つの UI 版が同じ画像を使います**（UI ごとに別の画像を作らない）。
 
@@ -397,7 +372,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 設定 `StartupPreview`（`Enums.StartupPreviewMode`）は「グラデーション画像」と「空白」の 2 択で、設定画面（画像設定）で選びます。 **切り替えは次回起動から反映**します（撮影中の画像を勝手に差し替えないため）。
 
-## 23. `Services.EnumDisplayNames`（静的クラス）
+## 21. `Services.EnumDisplayNames`（静的クラス）
 
 列挙値の表示名（`DescriptionAttribute`）を取得します。 表示名は列挙の定義側が単一所有し、UI ごとに文言を書き分けません。
 
@@ -405,7 +380,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | --- | --- |
 | `Get<T>(T value)` / `Get(Enum value)` | 表示名を返す（属性が無い場合は列挙の名前） |
 
-## 24. `Services.StatusBarMetrics`（静的クラス）
+## 22. `Services.StatusBarMetrics`（静的クラス）
 
 ステータス バーの文字サイズを単一所有します（UI 版ごとに文字の大きさがずれないようにするため）。
 
@@ -417,7 +392,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します（`AppStyles.StatusBarFont` が換算済みのフォントを 1 つだけ生成して共用する）。
 
-## 25. `Services.SettingsMetrics`（静的クラス）
+## 23. `Services.SettingsMetrics`（静的クラス）
 
 設定ページの文字サイズと共通の文言を単一所有します（UI 版ごとに見た目がずれないようにするため）。 文字サイズは **AvaloniaUI 版（Fluent テーマの既定 14 DIP）を基準**にします。
 
@@ -429,7 +404,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。
 
-## 26. `Services.ThumbnailTileMetrics`（静的クラス）
+## 24. `Services.ThumbnailTileMetrics`（静的クラス）
 
 一覧（フォルダビュー / Undo 一覧）のサムネイル 1 件の見た目の寸法を単一所有します（UI 版ごとに影の濃さ・名前の位置がずれないようにするため）。 **画像の周りに枠線・下地は置きません**（影だけを付けます）。
 
@@ -475,7 +450,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **画素の格子へ揃える**（キャプチャページの画像）: 画像は端数のある位置へ描かれるため、影の矩形を端数のまま描くと端の画素が半透明になり、画像との間に「白い線」または「黒い線」として見えます。 `BuildDeviceBands` が**物理ピクセルの整数矩形**を返すため、各 UI 版は丸めを持ちません（DIP へ戻すときだけ倍率で割ります）。 アンチエイリアスは切って画像の端と隙間なく接させます。 さらに**画像の端の画素（切り捨てた行・列）も帯で覆い**ます: 画像の描画側は端の画素を切り捨てたり切り上げたりするため、`floor` の行・列が画像でも影でも塗られず**背景（白）が残る**ことがあります（実測: 拡大率によって画像の上辺に 1 画素の白い線）。 覆った分は画像が塗る場合は画像に隠れます。
 
-## 27. `Services.AppIdentity`（静的クラス）
+## 25. `Services.AppIdentity`（静的クラス）
 
 アプリの**名前・タスク バーの識別子・アイコン・保存先**の唯一の定義です（4 つの UI 版が同じ値を使う）。 UI 版ごとに文字列を書くと、綴りの違いで設定・ログ・タスク バーのグループ分けがずれます。
 
@@ -491,7 +466,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 `TaskbarIdentity.Apply()` は **`SetCurrentProcessExplicitAppUserModelID`** でプロセスの AUMID を設定します（4 UI 版が同じ値を使うため、タスク バーでは 1 つのアプリにまとまります）。 **ウィンドウを作る前**に各 UI 版のエントリ ポイントが 1 回呼びます。 失敗（API 不在等）しても例外にせず、起動を妨げません（タスク バーのグループ分けが既定のままになるだけです）。
 
-## 28. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）
+## 26. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）
 
 メイン ウィンドウの寸法と配置の**唯一の定義**です（4 つの UI 版で同じ値を使う）。
 
@@ -508,7 +483,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **ナビゲーション パネルの配置**: 展開しても**ページ領域は動きません**（収納時の幅の位置に留まります）。 展開したパネルはページ領域の上へ重なり、上端はページ領域の先頭、下端はステータス バーに被ります。 パネルの一番上にアプリ アイコン、その下に開閉ボタン（アイコンのみ）を置き、**展開時は開閉ボタンの右にアプリ名を表示**します。 アプリ アイコンは**ナビゲーションのアイコンと同じ大きさ**にし、**縦位置をツールバーのアイコンと揃え**（`AppIconRowHeight` の中で中央）、**横位置を開閉アイコンと同じ列**（`AppIconColumnWidth` の中で中央）に置きます。 展開中にナビ領域の外を操作すると収納へ戻ります。
 
-## 29. `Services.WindowMenu`
+## 27. `Services.WindowMenu`
 
 ウィンドウ左上のアイコンの押下で出す標準メニューの**項目・並び・有効/無効**の唯一の定義です（4 つの UI 版で同じメニューになる）。
 
@@ -520,7 +495,15 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **移動とサイズ変更**は `EsUtil.Platform.Core` の `SystemWindowCommands` が OS のモード（`WM_SYSCOMMAND`）へ入ります（アプリ側で追従を実装しない）。
 
-## 30. `Icons.SvgIconLoader`（内部）
+## 28. `Icons.AppIcons`（内部・静的クラス）
+
+アイコンの SVG の**読み込み元**の唯一の定義です（4 つの UI 版が同じファイルを使います）。
+
+| メンバー | 内容 |
+| --- | --- |
+| `Source` | `SvgIconSource`（`EsUtil.Platform.Core.Svg`）。 埋め込みリソースを読み、解析結果を共有する |
+
+**アイコンのファイルは `src/App.Core/src/Icons/` に置きます**（埋め込みリソース。 論理名は `EsUtil.SaveEvidence.App.Core.Icons.<ファイル名>`）。 **SVG の解析は行いません**: コアの `SvgIconSource` が `XDocument` で読み、`SvgPathParser` がパス データを解釈します。 各 UI 版はパス データを自分の描画 API へ変換して描くだけです（UI 版ごとに SVG を複製すると、片方だけ直したときに見た目がずれます）。
 
 アイコンの SVG の**読み込みと解析**の唯一の定義です（4 つの UI 版が同じファイルを使う）。
 
@@ -532,7 +515,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **アイコンのファイルは `src/App.Core/src/Icons/` に置きます**（埋め込みリソース。 論理名は `EsUtil.SaveEvidence.App.Core.Icons.<ファイル名>`）。 各 UI 版はパス データを自分の描画 API へ変換して描くだけです（UI 版ごとに SVG を複製すると、片方だけ直したときに見た目がずれます）。
 
-## 31. `Services.ZoomMenuLevels`（静的クラス）
+## 29. `Services.ZoomMenuLevels`（静的クラス）
 
 ステータス バーの**拡大率の押下で出す選択肢**（%）の唯一の定義です（4 つの UI 版で同じ選択肢になる）。 メニューの先頭には「自動」（Fit 表示へ戻す）を別途置きます。
 
@@ -542,7 +525,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 ⊖⊕ ボタンの段階（`ZoomTransition.DefaultButtonZoomLevels`・23 段階）とは目的が異なるため別に持ちます。
 
-## 32. 依存関係
+## 30. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |
@@ -552,7 +535,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。
 
-## 33. `Services.ToolbarMetrics`（静的クラス）
+## 31. `Services.ToolbarMetrics`（静的クラス）
 
 ツールバーの共通寸法・文字サイズを単一所有します（4 UI 版は同じサイズを使い、各フレームワークの標準スタイルで描画します）。
 
@@ -566,7 +549,7 @@ UI フレームワーク（Avalonia / MewUI）への依存はありません。
 
 MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ既定は 14 DIP です。 WinForms の `Font` はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。 アイコン単独のボタンは 32 × 32 DIP・16 DIP アイコン・内側余白 0 とし、文字付きボタンには表の余白を使います。
 
-## 34. `Services.WindowPlacementRule`（静的クラス）
+## 32. `Services.WindowPlacementRule`（静的クラス）
 
 ウィンドウ配置の復元判定・可視領域への補正と、外寸・クライアント寸法間の単位変換を単一所有します。 保存する配置矩形はウィンドウ枠を含む外寸で、画面物理ピクセルです。
 
@@ -578,9 +561,9 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 | `ToClientLength(int, int, double)` | 外寸物理ピクセルと枠からクライアント DIP への換算 |
 | `ToOuterPhysicalLength` | クライアント DIP と枠から外寸物理ピクセルへの換算 |
 
-## 35. `Icons.CaptureIconFiles`（静的クラス）
+## 33. `Icons.CaptureIconFiles`（静的クラス）
 
-キャプチャ ページのツールバーとメニューで共用するアイコン ファイル名です。 アイコン画像は `SvgIconLoader` が扱う埋め込み SVG から各 UI 版が描画します。
+キャプチャ ページのツールバーとメニューで共用するアイコン ファイル名です。 アイコン画像は `AppIcons` が扱う埋め込み SVG から各 UI 版が描画します。
 
 | 定数 | 用途 |
 | --- | --- |
@@ -589,14 +572,3 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 | `WindowSelect` | ウィンドウ選択キャプチャ |
 | `AreaSelect` | 領域選択キャプチャ |
 | `Crop` | 切り出し |
-
-## 36. `Icons.SvgPathData` / `SvgPathRasterizer`（内部）
-
-SVG パス データの**解析**と、図形の**画素への展開**の唯一の定義です（WinUI 3 版と MewUI 版が同じ解析結果を使う）。
-
-| メンバー | 内容 |
-| --- | --- |
-| `SvgPathData.Parse(string? data)` | パス データ（`d` 属性）を `SvgPathFigure` の列へ解析する（`M` / `L` / `H` / `V` / `C` / `Z` のみ。 未対応のコマンドは空の列） |
-| `SvgPathRasterizer.Rasterize(IReadOnlyList<SvgPathFigure> figures, int size, uint argb)` | 図形を `size` × `size` の BGRA8888 画素へ展開する（図形の外接矩形を一辺いっぱいへ広げる。 被覆率は副標本で数える） |
-
-**解析結果を UI 非依存の形で返す理由**: WinUI 3 版は `PathGeometry` へ、MewUI 版は画素へ写す。 解析を UI 版へ複製すると、片方だけ直したときにアイコンの形がずれる。

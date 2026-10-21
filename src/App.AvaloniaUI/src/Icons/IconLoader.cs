@@ -1,10 +1,9 @@
-using System.Collections.Concurrent;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using EsUtil.Platform.Core.Caching;
 using EsUtil.SaveEvidence.App.Core.Icons;
-using EsUtil.SaveEvidence.App.Core.Models;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 
@@ -25,7 +24,14 @@ internal static partial class IconLoader
     /// <summary>ジオメトリキャッシュの最大保持数。</summary>
     private const int GeometryCacheCapacity = 32;
 
-    private static readonly ConcurrentDictionary<string, Geometry> s_geometryCache = new(StringComparer.Ordinal);
+    private static readonly CapacityLimitedCache<string, Geometry> s_geometryCache =
+        new(static f =>
+        {
+            var icon = AppIcons.Source.Load(f);
+            return icon.PathData.Count == 0
+                ? StreamGeometry.Parse("M0,0")
+                : StreamGeometry.Parse(icon.PathData[0]);
+        }, GeometryCacheCapacity);
 
     /// <summary>指定 SVG ファイルからアイコン描画用のジオメトリを読み込む。</summary>
     /// <param name="fileName">SVG ファイル名（例: "ic_fluent_scan_table_24_regular.svg"）。</param>
@@ -34,14 +40,7 @@ internal static partial class IconLoader
     /// パスデータが抽出できない・リソースが見つからない場合は空ジオメトリ（M0,0）を返す<br/>
     /// （表示上のフェールセーフ。 アイコン欠落時もアプリはクラッシュしない）。
     /// </remarks>
-    public static Geometry LoadGeometry(string fileName)
-        => CapacityLimitedCache.GetOrAdd(s_geometryCache, GeometryCacheCapacity, fileName, static f =>
-        {
-            var icon = SvgIconLoader.Load(f);
-            return icon.PathData.Count == 0
-                ? StreamGeometry.Parse("M0,0")
-                : StreamGeometry.Parse(icon.PathData[0]);
-        });
+    public static Geometry LoadGeometry(string fileName) => s_geometryCache.GetOrAdd(fileName);
 
     /// <summary>指定 SVG ファイルからウィンドウアイコンを生成する。</summary>
     /// <param name="fileName">SVG ファイル名。</param>
@@ -77,7 +76,7 @@ internal static partial class IconLoader
     public static Bitmap LoadBitmap(string fileName, int size, Color color)
     {
         var pixels = Math.Max(1, size);
-        var icon = SvgIconLoader.Load(fileName);
+        var icon = AppIcons.Source.Load(fileName);
         var bitmap = new RenderTargetBitmap(new PixelSize(pixels, pixels), new Vector(96, 96));
         using (var context = bitmap.CreateDrawingContext())
         {

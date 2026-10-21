@@ -2,7 +2,7 @@ namespace EsUtil.SaveEvidence.App.WinForms.Icons;
 
 /// <summary>アプリが表示するアイコンの種類。</summary>
 /// <remarks>
-/// アイコンは<b>他の UI 版と同じ SVG ファイル</b>（<c>SvgIconLoader</c>（App.Core）が単一所有する）から描く。<br/>
+/// アイコンは<b>他の UI 版と同じ SVG ファイル</b>（<c>AppIcons</c>（App.Core）が単一所有する）から描く。<br/>
 /// 本列挙は表示名であり、実際のファイルとの対応と描画は <see cref="IconLoader"/> が単一所有する。<br/>
 /// <b>共有するアイコンを持たない種類</b>（<see cref="Menu"/>）だけは、他 UI 版と同じ見た目になる図形を
 /// <see cref="IconLoader"/> が描く。

@@ -1,14 +1,14 @@
-using System.Collections.Concurrent;
 using Aprillz.MewUI;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Caching;
+using EsUtil.Platform.Core.Svg;
 using EsUtil.SaveEvidence.App.Core.Icons;
-using EsUtil.SaveEvidence.App.Core.Models;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Icons;
 
 /// <summary>Icons フォルダの Fluent アイコン（SVG）からパス形状と画像を生成するヘルパー（MewUI 版）。</summary>
 /// <remarks>
-/// SVG の出所は <see cref="SvgIconLoader"/>（App.Core）が単一所有する（4 つの UI 版で同じファイルを使う）。<br/>
+/// SVG の出所は <see cref="AppIcons"/>（App.Core）が単一所有する（4 つの UI 版で同じファイルを使う）。<br/>
 /// 各 SVG は Fluent System Icons 形式の単一 <c>&lt;path d="..."&gt;</c> で構成され、viewBox は 24x24。<br/>
 /// <br/>
 /// <b>ラスタライズは自前</b>: MewUI にはジオメトリを描く要素が無いため、パスデータを折れ線へ分解し、
@@ -22,7 +22,8 @@ internal static class IconLoader
     private const int CacheCapacity = 48;
 
     /// <summary>生成済み画像のキャッシュ（ファイル名・サイズ・色で一意）。</summary>
-    private static readonly ConcurrentDictionary<(string File, int Size, uint Argb), ImageSource> s_cache = new();
+    private static readonly CapacityLimitedCache<(string File, int Size, uint Argb), ImageSource> s_cache =
+        new(static k => RasterizeToImage(k.File, k.Size, k.Argb), CacheCapacity);
 
     /// <summary>アイコン色（明色テーマ用）。</summary>
     private static readonly Color s_foregroundLight = new(255, 26, 26, 26);
@@ -56,7 +57,7 @@ internal static class IconLoader
     /// <remarks>読み込み失敗（リソース欠落・パスデータ不正）でも例外にせず空の図形を返す（UI を壊さない）。</remarks>
     public static IReadOnlyList<SvgPathFigure> LoadFigures(string fileName)
     {
-        var icon = SvgIconLoader.Load(fileName);
+        var icon = AppIcons.Source.Load(fileName);
         if (icon.PathData.Count == 0)
         {
             return [];
@@ -66,7 +67,7 @@ internal static class IconLoader
         var figures = new List<SvgPathFigure>();
         foreach (var data in icon.PathData)
         {
-            figures.AddRange(SvgPathData.Parse(data));
+            figures.AddRange(SvgPathParser.Parse(data));
         }
 
         return figures;
@@ -86,13 +87,18 @@ internal static class IconLoader
         var length = Math.Max(1, size);
         var key = (fileName, length, color.ToArgb());
 
-        return CapacityLimitedCache.GetOrAdd(s_cache, CacheCapacity, key, static k =>
-        {
-            // 汎用ヘルパー経由ではタプルの要素名が失われるため、分解して受け取る
-            var (file, size2, argb) = k;
-            var pixels = Rasterize(file, size2, argb);
-            return ImageSource.FromBgraPixels(size2, size2, pixels, hasAlpha: true);
-        });
+        return s_cache.GetOrAdd(key);
+    }
+
+    /// <summary>指定 SVG を指定サイズ・指定色でラスタライズして画像を生成する。</summary>
+    /// <param name="fileName">SVG ファイル名。</param>
+    /// <param name="size">生成する画像の一辺（ピクセル）。</param>
+    /// <param name="argb">アイコンの色（<c>0xAARRGGBB</c>）。</param>
+    /// <returns>生成した画像（キャッシュの外側）。</returns>
+    private static ImageSource RasterizeToImage(string fileName, int size, uint argb)
+    {
+        var pixels = Rasterize(fileName, size, argb);
+        return ImageSource.FromBgraPixels(size, size, pixels, hasAlpha: true);
     }
 
     /// <summary>指定 SVG の画像からウィンドウ（タスクバー）アイコンを生成する。</summary>

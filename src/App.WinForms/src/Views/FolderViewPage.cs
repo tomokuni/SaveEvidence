@@ -1,9 +1,10 @@
+using EsUtil.Feature.Thumbnail;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.Ui.WinForms.Thumbnail;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
-using EsUtil.SaveEvidence.App.WinForms.Services;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
@@ -316,8 +317,7 @@ internal static class FolderViewPage
                     token => ThumbnailGeneration.GenerateAsync(
                         list,
                         index,
-                        () => ImageThumbnailLoader.Load(path, iconSize, capacity),
-                        iconSize,
+                        () => ThumbnailImageLoader.Load(path, iconSize, capacity),
                         token));
                 requests.Add((index, request));
             }
@@ -349,7 +349,7 @@ internal static class FolderViewPage
             try
             {
                 var files = Directory.GetFiles(folderPath, "*.*")
-                    .Where(ImageFileExtensions.IsImageFile)
+                    .Where(EsImageFileExtensions.IsImageFile)
                     .OrderBy(path => Path.GetFileName(path), StringComparer.OrdinalIgnoreCase)
                     .ToList();
                 return files;
