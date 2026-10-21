@@ -111,7 +111,7 @@ App.WinForms/
 ├── README.md                # 本ファイル
 ├── docs/                    # SPEC_ExtFunc.md（外部機能仕様書）/ SPEC_System.md（システム仕様書）
 └── src/
-    ├── App.WinForms.csproj  # WinExe / net10.0-windows / UseWindowsForms
+    ├── App.WinForms.csproj  # WinExe / net10.0-windows10.0.17763.0 / UseWindowsForms
     ├── Program.cs           # DPI 対応 → コアの組み立て（AppServices） → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / 履歴 / 一覧の状態）
     ├── Icons/

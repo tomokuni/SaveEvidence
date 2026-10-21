@@ -127,7 +127,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | --- | --- | --- |
 | `Save` | `void Save(EsReadOnlyBitmap image, string filePath)` | 画像を指定パスへ書き込む（コアの `EsReadOnlyBitmap.Save` へ委譲） |
 
-- **Windows 専用です**（`SupportedOSPlatform("windows")`）。 保存の実体（`System.Drawing.Common`）が Windows 専用のためです。 利用側の両アプリは `net10.0-windows` です。
+- **Windows 専用です**（`SupportedOSPlatform("windows")`）。 保存の実体（`System.Drawing.Common`）が Windows 専用のためです。 利用側の両アプリは `net10.0-windows10.0.17763.0` です。
 - **1 型に集約する理由**: 実装を UI ごとに分けると保存結果が食い違いうるため、`IImageWriter` の実装は 1 型（`EsBitmapImageWriter`）が担い、保存はコアへ委譲する。
 
 ## 8. `Models.FileNameTemplate`（静的クラス）

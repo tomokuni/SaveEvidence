@@ -28,9 +28,9 @@
 
 | 項目 | 値 | 理由 |
 | --- | --- | --- |
-| 対象フレームワーク | `net10.0-windows` | `System.Windows.Forms` を使う層の割り当て（`ビルド設定規約.md` §4） |
+| 対象フレームワーク | `net10.0-windows10.0.17763.0` | `System.Windows.Forms` を使う層の割り当て（`ビルド設定規約.md` §4） |
 | UI フレームワーク | WinForms（`UseWindowsForms`） | 本層が提供する対象 |
-| 描画 API | GDI+（`System.Drawing`） | Skia は `net10.0-windows` で解決できないため（`EsUtil.Ui.WinForms.Interop` が同じ理由を持つ） |
+| 描画 API | GDI+（`System.Drawing`） | Skia は `net10.0-windows10.0.17763.0` で解決できないため（`EsUtil.Ui.WinForms.Interop` が同じ理由を持つ） |
 | 依存パッケージ | `Microsoft.Extensions.Logging.Abstractions` | ログの抽象（`ILogger`） |
 | 参照するプロジェクト | `Parts.CapturePreview.Core` / `EsUtil.Ui.WinForms.Interop` / `EsUtil.Platform.Core` / `EsUtil.Ui.WinForms.Marquee` / `EsUtil.Ui.WinForms.Loupe` | コアの規則・描画のプリミティブ・内包するコントロール |
 | テスト | xUnit v3 | 他プロジェクトと同じ（`テスト規約.md`） |

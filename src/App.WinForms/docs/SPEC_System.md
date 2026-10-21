@@ -38,7 +38,7 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| 対象フレームワーク | `net10.0-windows` |
+| 対象フレームワーク | `net10.0-windows10.0.17763.0` |
 | UI | Windows Forms（`UseWindowsForms` = true）。 画面は**コードで組み立てる**（`Designer.cs` を使わない） |
 | 画像 | GDI+（`System.Drawing`）。 縮小・保存・形式判定は `EsUtil.Platform.Core` に委譲する |
 | MVVM | `CommunityToolkit.Mvvm`（コアの ViewModel が使用。 本プロジェクトは変更通知を購読するだけ） |

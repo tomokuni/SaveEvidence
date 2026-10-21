@@ -1,4 +1,3 @@
-using System.Runtime.Versioning;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Xunit;
@@ -11,9 +10,8 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// <see cref="EsReadOnlyBitmap.Save(string)"/> / <see cref="EsReadOnlyBitmap.Load(string)"/>（<c>EsUtil.Platform.Core.Tests</c>）が検証済みである。<br/>
 /// 本テストは<b>アプリ側の契約</b>だけを検証する（コアの保存へ委譲されること・引数の検証・上書き）。<br/>
 /// 保存は Windows 専用の GDI+ を呼ぶため、本クラスは
-/// <see cref="SupportedOSPlatformAttribute"/> で Windows に限定する（コアの保存テストと同じ方針）。
+/// 対象フレームワーク（<c>net10.0-windows10.0.17763.0</c>）が Windows を表す（コアの保存テストと同じ方針）。
 /// </remarks>
-[SupportedOSPlatform("windows")]
 public class EsBitmapImageWriterTests
 {
     /// <summary>一時ファイルのパスを作る（ファイルは作成しない）。</summary>

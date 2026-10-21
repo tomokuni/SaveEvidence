@@ -87,7 +87,7 @@ RunSample.bat  →  リリースビルド（dotnet build -c Release）→ Parts.
 
 ```text
 Parts.CapturePreview.ControlAvaloniaUI/sample/
-├── Parts.CapturePreview.ControlAvaloniaUI.Sample.csproj # サンプルアプリのプロジェクト（net10.0-windows / Avalonia 12.1）
+├── Parts.CapturePreview.ControlAvaloniaUI.Sample.csproj # サンプルアプリのプロジェクト（net10.0-windows10.0.17763.0 / Avalonia 12.1）
 ├── app.manifest                # アプリケーションマニフェスト（DPI 認識 PerMonitorV2）
 ├── Program.cs                  # エントリポイント（Avalonia 起動）
 ├── App.axaml(.cs)              # アプリケーション本体（FluentTheme）

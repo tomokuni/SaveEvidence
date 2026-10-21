@@ -293,7 +293,7 @@ cropView.ZoomChanged += (_, e) =>
 
 | 項目 | 内容 |
 | --- | --- |
-| 対象フレームワーク | `net10.0-windows`（`UseWindowsForms` を有効にする） |
+| 対象フレームワーク | `net10.0-windows10.0.17763.0`（`UseWindowsForms` を有効にする） |
 | プラットフォーム | Windows のみ（Win32 の画面キャプチャ・要素検出・ウィンドウ操作を使う） |
 | UI スレッド | `StartCaptureAsync` / `StartCropAsync` は UI スレッドから呼び出す（コントロールの生成と描画を伴う） |
 | 切り出しの対象画像 | `CropViewControl.Source` が単一所有する。 画像を別引数で渡さない（二重に所有しない） |

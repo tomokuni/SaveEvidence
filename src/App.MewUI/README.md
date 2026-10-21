@@ -42,7 +42,7 @@ src/App.MewUI/
 ├── mewui-initial.png        # 検証時の実行結果（証跡）
 ├── mewui-resized.png        # ウィンドウ縮小時の実行結果（証跡）
 └── src/
-    ├── App.MewUI.csproj     # WinExe / net10.0-windows / MewUI 0.21.1 固定
+    ├── App.MewUI.csproj     # WinExe / net10.0-windows10.0.17763.0 / MewUI 0.21.1 固定
     ├── Program.cs           # 登録 → コアの組み立て（AppServices） → ホットキー登録 → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoHistory / FolderView）
     ├── Services/
