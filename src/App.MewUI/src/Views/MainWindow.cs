@@ -31,7 +31,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <b>ツールヒント</b>: クリックできるボタンは <see cref="ClickableToolTip"/> で登録する<br/>
 /// （MewUI の不具合でクリックが無効になるのを防ぐ）。<br/>
 /// <b>設定の永続化</b>: 起動時にウィンドウ位置・サイズ・状態を復元し、終了時（<c>Closed</c>）に保存する。<br/>
-/// MewUI のウィンドウ位置・サイズは DIP、設定は画面物理ピクセルのため、変換は <see cref="WindowPlacementMath"/> が単一所有する。
+/// MewUI のウィンドウ位置・サイズは DIP、設定は画面物理ピクセルのため、変換は <see cref="EsWindowPlacementMath"/> が単一所有する。
 /// </remarks>
 internal sealed partial class MainWindow
 {
@@ -812,14 +812,14 @@ internal sealed partial class MainWindow
     {
         ApplyMinimumOuterSize(window);
 
-        if (!WindowPlacementMath.IsUsable(settingsService.Current.MainWindowBounds))
+        if (!EsWindowPlacementMath.IsUsable(settingsService.Current.MainWindowBounds))
         {
             return;
         }
 
         var bounds = settingsService.Current.MainWindowBounds!.Value;
         var scale = DpiScaler.NormalizeScaling(DpiHelper.GetDpiForPoint(new Point(bounds.X, bounds.Y)) / 96.0);
-        var position = WindowPlacementMath.ToDipPoint(new EsPointInt(bounds.X, bounds.Y), scale);
+        var position = EsWindowPlacementMath.ToDipPoint(new EsPointInt(bounds.X, bounds.Y), scale);
         window.StartManualPosition(position.X, position.Y);
     }
 
@@ -857,14 +857,14 @@ internal sealed partial class MainWindow
         var frame = GetWindowFrame(hwnd);
         var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
         var bounds = settingsService.Current.MainWindowBounds;
-        var savedScale = WindowPlacementMath.IsUsable(bounds)
+        var savedScale = EsWindowPlacementMath.IsUsable(bounds)
             ? DpiScaler.NormalizeScaling(DpiHelper.GetDpiForPoint(new Point(bounds!.Value.X, bounds.Value.Y)) / 96.0)
             : scaling;
-        var outerWidth = WindowPlacementMath.IsUsable(bounds)
-            ? WindowPlacementMath.ToDipLength(bounds!.Value.Width, savedScale)
+        var outerWidth = EsWindowPlacementMath.IsUsable(bounds)
+            ? EsWindowPlacementMath.ToDipLength(bounds!.Value.Width, savedScale)
             : WindowMetrics.DefaultWidth;
-        var outerHeight = WindowPlacementMath.IsUsable(bounds)
-            ? WindowPlacementMath.ToDipLength(bounds!.Value.Height, savedScale)
+        var outerHeight = EsWindowPlacementMath.IsUsable(bounds)
+            ? EsWindowPlacementMath.ToDipLength(bounds!.Value.Height, savedScale)
             : WindowMetrics.DefaultHeight;
         var minimumWidth = window.WindowSize.MinWidth;
         var minimumHeight = window.WindowSize.MinHeight;
@@ -929,7 +929,7 @@ internal sealed partial class MainWindow
     /// <param name="settingsService">設定サービス。</param>
     /// <remarks>
     /// MewUI の位置・サイズは DIP のため、ウィンドウの DPI スケールを掛けて画面物理ピクセルへ変換してから保存する<br/>
-    /// （変換は <see cref="WindowPlacementMath"/> へ委譲する）。<br/>
+    /// （変換は <see cref="EsWindowPlacementMath"/> へ委譲する）。<br/>
     /// ナビパネルの開閉は <see cref="ISettingsService.Current"/> へ既に反映されている（変更時に保存する）。<br/>
     /// 保存に失敗しても終了処理を妨げない（ファイル入出力の失敗は <c>SettingsService.Save</c> が吸収し、<br/>
     /// それ以外の例外は呼び出し元の <c>Closed</c> ハンドラーが吸収して Warning で記録する）。
@@ -938,7 +938,7 @@ internal sealed partial class MainWindow
     {
         var scale = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(window.Handle));
         var frame = GetWindowFrame(window.Handle);
-        var position = WindowPlacementMath.ToPhysicalPixelPoint(
+        var position = EsWindowPlacementMath.ToPhysicalPixelPoint(
             new EsPoint(window.Position.X, window.Position.Y), scale);
 
         settingsService.Current.MainWindowBounds = new EsRectInt(

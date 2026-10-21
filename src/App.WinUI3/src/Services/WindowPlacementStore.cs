@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -16,7 +17,7 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Services;
 /// <b>単位</b>: WinUI 3 の <c>AppWindow</c> は画面物理ピクセルで位置と大きさを表すため、<br/>
 /// 設定（画面物理ピクセルの整数矩形）との変換は不要である（他の UI 版のような DIP 変換を行わない）。<br/>
 /// <b>復元できない値</b>: 幅・高さが 0 以下の値（壊れた設定ファイル・手編集の誤り）では復元しない<br/>
-/// （0 サイズのウィンドウが作られて操作不能になるのを防ぐ。 判定は <see cref="WindowPlacementMath.IsUsable"/>）。<br/>
+/// （0 サイズのウィンドウが作られて操作不能になるのを防ぐ。 判定は <see cref="EsWindowPlacementMath.IsUsable"/>）。<br/>
 /// <b>保存の失敗</b>: 終了処理はウィンドウ メッセージの境界であり、例外がそのまま伝播するとプロセスが<br/>
 /// 異常終了する。 保存できなくても終了は妨げず、原因だけを Warning で記録する。
 /// </remarks>
@@ -41,7 +42,7 @@ internal static class WindowPlacementStore
         var appWindow = window.AppWindow;
         RestorePresenter(appWindow, WindowPlacementRule.ToRestorableState(settings.MainWindowState));
 
-        var visibleArea = WindowPlacementMath.GetVirtualScreenBounds();
+        var visibleArea = EsWindowPlacementMath.GetVirtualScreenBounds();
         if (!WindowPlacementRule.CanRestore(settings.MainWindowBounds, visibleArea))
         {
             return false;

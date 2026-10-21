@@ -347,7 +347,7 @@ public sealed class ZoomViewControl : Control
     /// 割り当て領域が確定しない場合（クライアント領域が 0 の間）は、DPI の通知から保持している係数を使う。
     /// </remarks>
     internal double ResolveClientScaling()
-        => ClientPixelScale.Resolve(
+        => DpiScaler.ResolveClientScale(
             ClientSize.Width,
             DpiScaler.ToDip(ClientSize.Width, DpiScaler.ToScaling(DeviceDpi)),
             _clientToPixelScaling);

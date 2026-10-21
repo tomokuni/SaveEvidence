@@ -34,7 +34,7 @@ echo [INFO] WinUI 3: generating the .pri files of the libraries (RID: %RID%)
 for %%p in (
   "..\EsUtil\EsUtil.Ui.WinUI3\Loupe\src\EsUtil.Ui.WinUI3.Loupe.csproj"
   "..\EsUtil\EsUtil.Ui.WinUI3\Marquee\src\EsUtil.Ui.WinUI3.Marquee.csproj"
-  "src\Platform.WinUI3\src\Platform.WinUI3.csproj"
+  "..\EsUtil\EsUtil.Ui.WinUI3\Interop\src\EsUtil.Ui.WinUI3.Interop.csproj"
   "src\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj"
 ) do dotnet build %%p -c Release -r %RID% -v q --nologo >nul 2>&1
 

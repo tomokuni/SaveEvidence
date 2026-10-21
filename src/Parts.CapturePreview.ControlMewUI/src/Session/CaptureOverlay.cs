@@ -407,8 +407,8 @@ internal sealed class CaptureOverlay
         // 最大化は使わない（OS が 1 モニターへ寄せてしまうため、全モニターを覆えない）。
         var creationScale = DpiScaler.ToScaling(DpiHelper.GetDpiForPoint(new Point(0, 0)));
         window.WindowSize = WindowSize.Resizable(
-            WindowPlacementMath.ToDipLength(Screen.Width, creationScale),
-            WindowPlacementMath.ToDipLength(Screen.Height, creationScale));
+            EsWindowPlacementMath.ToDipLength(Screen.Width, creationScale),
+            EsWindowPlacementMath.ToDipLength(Screen.Height, creationScale));
 
         _selector.SetLoupeSource(Screen);
         ApplyLabels();
@@ -437,7 +437,7 @@ internal sealed class CaptureOverlay
         };
 
         // 位置は生成時のスケールで解釈される
-        var position = WindowPlacementMath.ToDipPoint(_screenBounds.TopLeft, creationScale);
+        var position = EsWindowPlacementMath.ToDipPoint(_screenBounds.TopLeft, creationScale);
 
         window.StartManualPosition(position.X, position.Y);
 
