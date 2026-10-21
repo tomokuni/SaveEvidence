@@ -34,7 +34,7 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 
 - `App.Core` は UI フレームワークへ依存しません。
 - 名前空間は `EsUtil.SaveEvidence.App.Core`、アセンブリ名は `App.Core` です（ホストの `EsUtil.SaveEvidence.App.AvaloniaUI` とは名前空間もアセンブリも別）。
-- `internal` 型（`CapacityLimitedCache` / `ThumbnailScheduler` / `ThumbnailPriority` / `ImageFileExtensions` / `ViewModeDisplay`）は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests`）で UI 実装とテストへ公開します。
+- `internal` 型（`ThumbnailScheduler` / `ThumbnailPriority` / `AppIcons` / `ViewModeDisplay`）は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests`）で UI 実装とテストへ公開します。
 
 ## 4. コンポーネント構成
 
@@ -46,10 +46,9 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 | `src/App.Core/src/Models/FileNameTemplate.cs` | `public static partial class` | ファイル名テンプレートの書式と使用不可文字の検証・解析・生成（**唯一の所有者**） |
 | `src/App.Core/src/Models/UndoHistory.cs` | `public sealed class` | 画像の Undo / Redo スタック |
 | `src/App.Core/src/Models/HotKeyParser.cs` | `public static class` | ホットキー文字列の解析 |
-| `src/App.Core/src/Models/CapacityLimitedCache.cs` | `internal static class` | 容量制限付きの静的キャッシュ操作（上限超過時の全クリアと `IDisposable` の破棄まで含めた**唯一の所有者**。 上限判定と登録の直列化も担う） |
 | `src/App.Core/src/Models/ThumbnailScheduler.cs` | `internal sealed class` | 背景の処理（サムネイルの生成）をページの表示状態に応じた負荷で実行するスケジューラ（非表示では 1 件ずつ、表示中は並列。 優先度順に実行し、見えている項目を先に回す。 両 UI のフォルダビュー / Undo 一覧が使う**唯一の所有者**） |
 | `src/App.Core/src/Models/ThumbnailPriority.cs` | `internal readonly record struct` | サムネイル生成の優先度（見えている帯 / 見えていない帯と、帯の中の位置。 可視判定は純粋関数） |
-| `src/App.Core/src/Models/ImageFileExtensions.cs` | `internal static class` | 画像ファイルの拡張子判定（フォルダビューの一覧に含める拡張子の**唯一の所有者**。 両 UI が委譲する） |
+| `src/App.Core/src/Icons/AppIcons.cs` | `internal static class` | アイコンの読み込み元（`App.Core` に埋め込んだ SVG。 解析はコアの `SvgIconSource` が担う） |
 | `src/App.Core/src/Layout/BottomAlignWrapLayout.cs` | `internal static class` | 折り返しパネルの行高さ・下端揃えの配置計算（Avalonia / MewUI 両版のパネルが委譲する単一所有） |
 | `src/App.Core/src/Services/ISettingsService.cs` | `public interface` | 設定管理サービスの抽象 |
 | `src/App.Core/src/Services/IImageWriter.cs` | `public interface` | 画像（`EsReadOnlyBitmap`）のファイル書き込みの抽象 |
@@ -57,9 +56,6 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 | `src/App.Core/src/Services/WindowPlacementRule.cs` | `public static class` | ウィンドウ配置の復元判定・補正と、外寸 / クライアント寸法の換算 |
 | `src/App.Core/src/Services/ToolbarMetrics.cs` | `public static class` | 4 UI 版が共有するツールバー寸法・文字サイズ |
 | `src/App.Core/src/Icons/CaptureIconFiles.cs` | `public static class` | キャプチャ ページのツールバーとメニューで使う共通 SVG 名 |
-| `src/App.Core/src/Icons/SvgPathData.cs` | `internal static class` | SVG パス データ（`d` 属性）の解析（**唯一の所有者**。 2 UI 版が同じ解析結果を使う） |
-| `src/App.Core/src/Icons/SvgPathFigure.cs` / `SvgPathSegment.cs` | `internal readonly record struct` | 解析結果の図形と線分（UI 非依存） |
-| `src/App.Core/src/Icons/SvgPathRasterizer.cs` | `internal static class` | 図形を指定サイズの BGRA 画素へ展開する（走査線の被覆率。 **外部ライブラリを使わない**） |
 | `src/App.Core/src/Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
 | `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モード（特大 / 大 / 中）の名称・件数表示（**唯一の所有者**。 `FolderViewViewModel` / `UndoViewModel` が委譲する） |
 | `src/App.Core/src/ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | フォルダビューの表示モード・ソート状態 |
@@ -99,7 +95,7 @@ sequenceDiagram
 ## 7. 可視性ポリシー
 
 - `AppPage` / `ThemeMode` / `Settings` / `FileNameTemplate` / `UndoHistory` / `HotKeyParser` / `ISettingsService` / `SettingsService` / `FolderViewViewModel` / `UndoViewModel` は `public`（`App.AvaloniaUI` と MewUI ホストが共有する契約）。
-- `CapacityLimitedCache` / `ThumbnailScheduler` / `ThumbnailPriority` / `ImageFileExtensions` / `ViewModeDisplay` / `EsRectIntJsonConverter` は `internal`。 `internal` → `public` の変更は壊的な設計変更として扱います。
+- `ThumbnailScheduler` / `ThumbnailPriority` / `AppIcons` / `ViewModeDisplay` / `EsRectIntJsonConverter` は `internal`。 `internal` → `public` の変更は壊的な設計変更として扱います。
 
 ## 8. 設定ファイルの互換性
 

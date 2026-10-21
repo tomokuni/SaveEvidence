@@ -122,7 +122,6 @@ src/App.WinUI3/
 │   │   ├── EditHistory.cs             # 編集履歴（戻す / やり直し）の実行
 │   │   ├── GlobalHotKeyRegistration.cs # グローバル ホットキーの登録と配信
 │   │   ├── WindowPlacementStore.cs    # ウィンドウ配置の保存と復元
-│   │   ├── ImageThumbnailLoader.cs    # 画像ファイルの縮小デコードとキャッシュ
 │   │   ├── ThumbnailBackground.cs     # 背景生成の共通処理（代替画像・UI スレッド反映）
 │   │   └── FolderFileListReader.cs    # 一覧に出す画像ファイルの列挙
 │   └── Views/
@@ -141,7 +140,6 @@ src/App.WinUI3/
     ├── CaptureSettingsMapper.Tests.cs
     ├── EditHistory.Tests.cs
     ├── FolderFileListReader.Tests.cs
-    ├── ImageThumbnailLoader.Tests.cs
     ├── SettingsColorMath.Tests.cs
     └── TestHelper.cs
 ```

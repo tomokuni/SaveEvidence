@@ -71,7 +71,6 @@ graph TD
     CapturePage --> CaptureClipboard
     MainWindow --> GlobalHotKeyRegistration
     MainWindow --> WindowPlacementStore
-    FolderViewPage --> ImageThumbnailLoader
     FolderViewPage --> ThumbnailScheduler
     UndoPage --> ThumbnailView
     AppServices --> MainViewModel
@@ -108,7 +107,6 @@ src/App.WinUI3/src/
 │   ├── CaptureClipboard.cs             クリップボードとの画像の受け渡し
 │   ├── GlobalHotKeyRegistration.cs     グローバル ホットキーの登録と配信
 │   ├── WindowPlacementStore.cs         ウィンドウ配置の保存と復元
-│   ├── ImageThumbnailLoader.cs         画像ファイルの縮小デコードとキャッシュ
 │   ├── ThumbnailBackground.cs          背景生成の共通処理（代替画像・UI スレッド反映）
 │   └── FolderFileListReader.cs         一覧に出す画像ファイルの列挙
 └── Views/
@@ -146,7 +144,6 @@ src/App.WinUI3/src/
 | `CaptureClipboard` | クリップボードとの画像の受け渡し（PNG として授受する） |
 | `GlobalHotKeyRegistration` | グローバル ホットキーの登録・解除と押下の配信 |
 | `WindowPlacementStore` | ウィンドウの位置・サイズ・表示状態の保存と復元 |
-| `ImageThumbnailLoader` | 画像ファイルの縮小デコードとキャッシュ（縮小はコアの面積平均を使う） |
 | `ThumbnailBackground` | 背景のサムネイル生成の共通処理（代替画像・UI スレッドへの反映）。 ディスパッチャ キューはウィンドウの生成より前に設定し、**それ以前に届いた反映は保留して設定時に流す**（背景スレッドのまま UI を触ると例外になる） |
 | `FolderFileListReader` | 一覧に出す画像ファイルの列挙と並び順 |
 | `IconLoader` | 埋め込み SVG の読み込みと、指定色・指定サイズへのラスタライズ |
@@ -316,7 +313,6 @@ stateDiagram-v2
 | --- | --- |
 | `ThumbnailScheduler` / `ThumbnailPriority` | `App.Core.Tests`（優先順位・並列度・中断・失敗の分離） |
 | `ImageFileExtensions` / `ViewModeDisplay` | `App.Core.Tests`（拡張子の判定・表示モードの文言と範囲補正） |
-| `CapacityLimitedCache` | 専用のテストは無く、本プロジェクトの `ImageThumbnailLoader.Tests`（同一条件で同じ実体を返すこと）が通る |
 | `CaptureSettingsMapper` | **本プロジェクト**（`App.Core.Tests` に検証が無く、本アプリの撮影設定の写像を保証する必要があるため） |
 
 - 本プロジェクトのテストは**本プロジェクト固有の振る舞い**（色文字列の往復・設定の JSON 往復・

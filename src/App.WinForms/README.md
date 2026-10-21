@@ -125,7 +125,6 @@ App.WinForms/
     │   ├── ClipboardImageService.cs  # クリップボードとの画像の受け渡し
     │   ├── EditHistory.cs            # 編集履歴（戻す / やり直し）の実行
     │   ├── GdiBitmapInterop.cs       # GDI+ のビットマップ ⇔ コアの画像
-    │   ├── ImageThumbnailLoader.cs   # 画像ファイルの縮小読み込みとキャッシュ
     │   ├── SettingsColorMath.cs      # 設定の色文字列 ⇔ 色
     │   └── SettingsJsonContext.cs    # 設定の JSON ソース生成（トリミング / Native AOT 対応）
     └── Views/

@@ -117,7 +117,6 @@ src/App.MewUI/src/
 ├── Program.cs                        起動（バックエンド登録 → コアの組み立て → ホットキー登録 → ウィンドウ表示）
 ├── AppServices.cs                    共有するコアオブジェクトの束
 ├── Services/
-│   ├── ImageThumbnailLoader.cs       画像ファイルの縮小デコード（コアの WIC スケーラー）とキャッシュ
 │   ├── SettingsColorMath.cs          設定の色文字列 ⇔ 色の変換
 │   ├── SettingsJsonContext.cs        設定の JSON ソース生成（Native AOT 対応）
 │   ├── CaptureFlow.cs                キャプチャの開始（多重起動の防止。 画像の反映は CaptureCompleted）
@@ -139,7 +138,6 @@ src/App.MewUI/src/
 tests/
 ├── App.MewUI.Tests.csproj      xUnit v3（net10.0-windows）
 ├── TestHelper.cs               テスト共通ユーティリティ
-├── ImageThumbnailLoader.Tests.cs 縮小デコード・キャッシュ・失敗時の扱い
 ├── SettingsColorMath.Tests.cs  色文字列の解析と整形
 ├── AppLog.Tests.cs             ログ定義の書式と IsEnabled 分岐
 ```
@@ -163,7 +161,6 @@ tests/
 | `SettingsPage` | 全設定の編集 UI（Avalonia 版と同じ 7 セクション + 外観設定の 8 カテゴリ）。 変更の即時保存・テーマの即時適用・ホットキー入力を担う |
 | `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `Platform.MewUI` の `ImageView` が単一所有し、計測と Uniform 指定だけを与える） |
 | `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsReadOnlyBitmap.Save`（拡張子が形式を決める）へ委譲する |
-| `ImageThumbnailLoader` | 画像ファイルの一覧抽出・縮小デコード・容量制限付きキャッシュ。 **縮小はコアの `EsReadOnlyBitmap.Load(string, int)` へ委譲する**（WIC のスケーラーがデコードしながら縮小するため原寸のバッファを確保しない。 補間は Fant であり WinUI 3 版と同じ画質）。 **背景の生成からも呼べる**（キャッシュの上限判定と登録は直列化される）。 キャッシュの上限は**一覧が表示する件数以上**を呼び出し側が渡す（上限超過時に保持中の値が破棄され、描画が破棄済みのバッファへ触れるのを防ぐ） |
 | `ImageDrawMath`（`Platform.MewUI`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
 | `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |
@@ -205,7 +202,6 @@ classDiagram
     class UndoPage {
         +Build(vm, settings, undoStack)$ PageContent
     }
-    class ImageThumbnailLoader {
         +Load(filePath, maxSize)$ EsReadOnlyBitmap?
     }
     class EditHistory {
@@ -319,14 +315,12 @@ classDiagram
     SettingsPage ..> SettingsColorMath : 色の変換
     SettingsPage ..> ISettingsService : 設定の読み書き
     FolderViewPage ..> ThumbnailView : 配置
-    FolderViewPage ..> ImageThumbnailLoader : サムネイルの読み込み
     FolderViewPage ..> FolderViewViewModel : 束縛
     FolderViewPage ..> ISettingsService : 表示モード・ソート順
     UndoPage ..> ThumbnailView : 配置
     UndoPage ..> UndoHistory : 履歴の参照
     UndoPage ..> ISettingsService : 表示モードの読み書き
     UndoPage ..> MainViewModel : 現在の画像を参照
-    ImageThumbnailLoader ..> EsReadOnlyBitmap : 縮小デコードの結果
     ThumbnailView --|> ImageView : 計測と Uniform 指定を与える
     ImageView ..> ImageDrawMath : 配置計算
     CropViewControl ..> MainViewModel : 参照（Source / DetectedRects）
@@ -427,7 +421,6 @@ sequenceDiagram
     participant FW as FolderViewPage
     participant ST as 設定（ISettingsService）
     participant TS as ThumbnailScheduler（App.Core）
-    participant IL as ImageThumbnailLoader
 
     MW->>FW: Build(services)（初回のみ・要素は保持）
     FW->>ST: FolderViewModeIndex / FolderViewSortAscending
@@ -451,7 +444,6 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant IL as ImageThumbnailLoader
     participant CO as SKCodec
     participant GF as IGraphicsContext
 
@@ -653,7 +645,6 @@ sequenceDiagram
 10. **共有するコアオブジェクトを `AppServices` で束ねる**。 DI コンテナを持たないため起動時に生成して渡すが、
    各ページは必要なメンバーだけを受け取る（束をそのまま引き回さない）。
 11. **サムネイルの読み込みを専用クラスへ分離する**。 縮小デコードと容量制限付きキャッシュは
-   `ImageThumbnailLoader` が単一所有し、ページは `Load` を呼ぶだけにする（UI なしで検証できる）。
 12. **キャプチャの開始経路を 1 つにする**。 ツールバーのボタンとグローバルホットキーは
    `MainViewModel.StartSelectionMode` → `CaptureFlow.Start` → Facade（`CaptureSessionControl`）へ集約する（開始処理を二重所有しない）。
 13. **ホットキーは初回描画後に登録する**。 ウィンドウハンドルとウィンドウプロシージャは表示時に確定し、
@@ -727,7 +718,6 @@ sequenceDiagram
 | `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。 Uniform / Fill・余白の中央寄せ・空の入力（`Platform.MewUI.Tests` が担う） |
 | `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。 6 / 8 桁・大文字小文字・不正入力・往復変換 |
 | `SettingsService` | ソース生成と反射の書式の一致（既存の設定ファイルとの互換性）を `App.Core.Tests` で検証する |
-| `ImageThumbnailLoader` | 実ファイルへ書き出した画像を読み込み、寸法（長辺の上限）・アルファ・キャッシュの同一性・失敗時の null を検証する |
 | `ThumbnailScheduler`（`App.Core`） | 表示状態による負荷の切替（非表示では 1 件ずつ・表示中は上限まで並列）、優先度（見えている帯が先・同帯は位置順）、`Clear()` での未実行要求の破棄と実行中への中断伝搬、失敗の通知と継続を検証する（時間の経過ではなく「開始した件数」とトークンの状態で判定する）。 ページ側はスケジューラへの要求と表示状態の反映だけを担う |
 | `ThumbnailPriority`（`App.Core`） | 表示範囲と可視領域の重なりによる可視判定の境界（内側・外側・端が一致する場合）と、帯・位置の順序を検証する |
 | `FolderViewPage` | 先読み（`OnWarmUp`）がウィンドウ無しで一覧を構築すること、その後の表示（`OnActivated`）と離脱（`OnDeactivated`）で件数が変わらないこと、保存先が無い場合でも失敗しないことを検証する |

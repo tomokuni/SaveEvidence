@@ -46,7 +46,6 @@ src/App.MewUI/
     ├── Program.cs           # 登録 → コアの組み立て（AppServices） → ホットキー登録 → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoHistory / FolderView）
     ├── Services/
-│   ├── ImageThumbnailLoader.cs    # 画像ファイルの縮小デコード（コアの WIC スケーラー）とキャッシュ
     │   ├── SettingsColorMath.cs       # 設定の色文字列 ⇔ 色の変換
     │   ├── SettingsJsonContext.cs     # 設定の JSON ソース生成（Native AOT 対応）
     │   ├── CaptureFlow.cs             # キャプチャの開始（多重起動の防止。 画像の反映は CaptureCompleted）
@@ -65,7 +64,6 @@ src/App.MewUI/
     └── tests/
     ├── App.MewUI.Tests.csproj           # xUnit v3（net10.0-windows）
     ├── TestHelper.cs                    # テスト共通ユーティリティ
-    ├── ImageThumbnailLoader.Tests.cs    # 縮小デコード・キャッシュ・失敗時の扱 い
     └── SettingsColorMath.Tests.cs       # 色文字列の解析と整形
 ```
 
