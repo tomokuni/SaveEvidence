@@ -13,6 +13,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Win32 の宣言は CsWin32 が生成する（ソース生成だけを目的とするため実行時依存を持たない。
+         規則は ../../../.github/ビルド設定規約.md §7）。 生成対象はサンプル直下の NativeMethods.txt。 -->
+    <PackageReference Include="Microsoft.Windows.CsWin32" Version="[0.3.*,)">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Avalonia" Version="[12.*,)" />
     <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.*,)" />

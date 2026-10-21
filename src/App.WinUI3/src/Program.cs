@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;
@@ -44,12 +43,10 @@ internal static class Program
         if (IsStartedByDotnetHost())
         {
             s_logger.LogStartedFromDotnetHost();
-            _ = MessageBoxW(
-                IntPtr.Zero,
+            StartupDialog.ShowError(
                 "SaveEvidence.WinUI3.exe（実行ファイル）から起動してください。\n"
                 + ".NET ホスト（dotnet <アプリ>.dll）からは起動できません。",
-                "SaveEvidence",
-                0x00000010 /* MB_ICONERROR */);
+                "SaveEvidence");
             return;
         }
 
@@ -88,16 +85,6 @@ internal static class Program
     private static bool IsStartedByDotnetHost()
         => Path.GetFileNameWithoutExtension(Environment.ProcessPath ?? "")
             .Equals("dotnet", StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>メッセージ ボックスを表示する（XAML の初期化前に使えるネイティブ API）。</summary>
-    /// <param name="hWnd">オーナー ウィンドウ（無い場合は <see cref="IntPtr.Zero"/>）。</param>
-    /// <param name="text">本文。</param>
-    /// <param name="caption">表題。</param>
-    /// <param name="type">アイコンの種類。</param>
-    /// <returns>選択されたボタンの値。</returns>
-    [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "MessageBoxW")]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    private static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);
 
     /// <summary>未処理の例外を記録するハンドラを登録する。</summary>
     /// <remarks>

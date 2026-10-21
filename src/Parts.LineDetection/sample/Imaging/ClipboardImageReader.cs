@@ -2,8 +2,10 @@ using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Windows.Win32;
+using Windows.Win32.Foundation;
 
-// 本アセンブリ（サンプル）の P/Invoke はシステム ディレクトリ（System32）だけを探索する（CA5392。 理由は WinNative.cs と同じ）。
+// 本アセンブリ（サンプル）の P/Invoke はシステム ディレクトリ（System32）だけを探索する（CA5392）。
 [assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.Imaging;
@@ -28,39 +30,40 @@ internal static partial class ClipboardImageReader
     /// 3. <see cref="BitmapFromDib"/> で BITMAPINFOHEADER を解析し BGRA8888 へ変換する<br/>
     /// 4. <c>CloseClipboard</c> で必ず解放する
     /// </remarks>
-    public static Bitmap? ReadImageFromDib()
+    public static unsafe Bitmap? ReadImageFromDib()
     {
-        if (!OpenClipboard(IntPtr.Zero))
+        if (!PInvoke.OpenClipboard(default))
         {
             return null;
         }
 
         try
         {
-            var hGlobal = GetClipboardData(CF_DIB);
-            if (hGlobal == IntPtr.Zero)
+            var clipboard = PInvoke.GetClipboardData(CF_DIB);
+            if (clipboard.IsNull)
             {
                 return null;
             }
 
-            var ptr = GlobalLock(hGlobal);
-            if (ptr == IntPtr.Zero)
+            var hGlobal = (HGLOBAL)clipboard.Value;
+            var memory = PInvoke.GlobalLock(hGlobal);
+            if (memory is null)
             {
                 return null;
             }
 
             try
             {
-                return BitmapFromDib(ptr);
+                return BitmapFromDib((IntPtr)memory);
             }
             finally
             {
-                GlobalUnlock(hGlobal);
+                _ = PInvoke.GlobalUnlock(hGlobal);
             }
         }
         finally
         {
-            CloseClipboard();
+            _ = PInvoke.CloseClipboard();
         }
     }
 
@@ -212,22 +215,4 @@ internal static partial class ClipboardImageReader
 
     /// <summary>BI_BITFIELDS 圧縮（16bpp のカラーマスク）。</summary>
     private const int BI_BITFIELDS = 3;
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool OpenClipboard(IntPtr hWndNewOwner);
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool CloseClipboard();
-
-    [LibraryImport("user32.dll")]
-    private static partial IntPtr GetClipboardData(uint uFormat);
-
-    [LibraryImport("kernel32.dll")]
-    private static partial IntPtr GlobalLock(IntPtr hMem);
-
-    [LibraryImport("kernel32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool GlobalUnlock(IntPtr hMem);
 }
