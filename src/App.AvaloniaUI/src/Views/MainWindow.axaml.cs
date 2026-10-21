@@ -1,5 +1,3 @@
-using System.ComponentModel;
-using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -569,7 +567,7 @@ public sealed partial class MainWindow : Window
             throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
         }
 
-        var frame = GetWindowFrame(platformHandle.Handle);
+        var frame = WindowFrameMetrics.Get(platformHandle.Handle);
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         MinWidth = WindowPlacementRule.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling);
         MinHeight = WindowPlacementRule.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling);
@@ -583,7 +581,7 @@ public sealed partial class MainWindow : Window
             throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
         }
 
-        var frame = GetWindowFrame(platformHandle.Handle);
+        var frame = WindowFrameMetrics.Get(platformHandle.Handle);
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         Width = _restoredWindowBounds is { } bounds
             ? WindowPlacementRule.ToClientLength(bounds.Width / (_restoredWindowScaling ?? scaling), frame.Width, scaling)
@@ -602,49 +600,6 @@ public sealed partial class MainWindow : Window
         return DpiScaler.NormalizeScaling(scaling);
     }
 
-    /// <summary>ウィンドウ外寸とクライアント領域の差を取得する。</summary>
-    private static (int Width, int Height) GetWindowFrame(IntPtr handle)
-    {
-        if (!GetWindowRect(handle, out var windowRect))
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウの外寸を取得できません。");
-
-        if (!GetClientRect(handle, out var clientRect))
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウのクライアント領域を取得できません。");
-
-        return (
-            (windowRect.Right - windowRect.Left) - (clientRect.Right - clientRect.Left),
-            (windowRect.Bottom - windowRect.Top) - (clientRect.Bottom - clientRect.Top));
-    }
-
-    /// <summary>ウィンドウの外寸を画面物理ピクセルで取得する。</summary>
-    [LibraryImport("user32.dll", EntryPoint = "GetWindowRect", SetLastError = true)]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool GetWindowRect(IntPtr hwnd, out NativeRect rect);
-
-    /// <summary>ウィンドウのクライアント領域を画面物理ピクセルで取得する。</summary>
-    [LibraryImport("user32.dll", EntryPoint = "GetClientRect", SetLastError = true)]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool GetClientRect(IntPtr hwnd, out NativeRect rect);
-
-    /// <summary>Win32 の矩形（<c>RECT</c>）。</summary>
-    [StructLayout(LayoutKind.Sequential)]
-    private struct NativeRect
-    {
-        /// <summary>左端の座標。</summary>
-        public int Left;
-
-        /// <summary>上端の座標。</summary>
-        public int Top;
-
-        /// <summary>右端の座標。</summary>
-        public int Right;
-
-        /// <summary>下端の座標。</summary>
-        public int Bottom;
-    }
-
     /// <summary>ウィンドウ位置・サイズを保存する。</summary>
     /// <remarks>保存先の単位は画面物理ピクセル（他 UI 版と同じ）。 DIP の <see cref="Layoutable.Width"/> を換算する。</remarks>
     private void SaveWindowBounds()
@@ -652,7 +607,7 @@ public sealed partial class MainWindow : Window
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         var platformHandle = TryGetPlatformHandle()
             ?? throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
-        var frame = GetWindowFrame(platformHandle.Handle);
+        var frame = WindowFrameMetrics.Get(platformHandle.Handle);
         _settingsService.Current.MainWindowBounds = new EsRectInt(
             Position.X, Position.Y,
             WindowPlacementRule.ToOuterPhysicalLength(Width, frame.Width, scaling),

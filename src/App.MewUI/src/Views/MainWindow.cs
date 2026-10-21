@@ -1,5 +1,3 @@
-using System.ComponentModel;
-using System.Runtime.InteropServices;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
@@ -832,7 +830,7 @@ internal sealed partial class MainWindow
             return;
         }
 
-        var frame = GetWindowFrame(hwnd);
+        var frame = WindowFrameMetrics.Get(hwnd);
         var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
         var currentSize = window.WindowSize;
 
@@ -854,7 +852,7 @@ internal sealed partial class MainWindow
             return;
         }
 
-        var frame = GetWindowFrame(hwnd);
+        var frame = WindowFrameMetrics.Get(hwnd);
         var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
         var bounds = settingsService.Current.MainWindowBounds;
         var savedScale = EsWindowPlacementMath.IsUsable(bounds)
@@ -877,53 +875,6 @@ internal sealed partial class MainWindow
             window.WindowSize.MaxHeight);
     }
 
-    /// <summary>ウィンドウ外寸とクライアント領域の差を取得する。</summary>
-    private static (int Width, int Height) GetWindowFrame(IntPtr hwnd)
-    {
-        if (!GetWindowRect(hwnd, out var windowRect))
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウの外寸を取得できません。");
-        }
-
-        if (!GetClientRect(hwnd, out var clientRect))
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error(), "ウィンドウのクライアント領域を取得できません。");
-        }
-
-        return (
-            (windowRect.Right - windowRect.Left) - (clientRect.Right - clientRect.Left),
-            (windowRect.Bottom - windowRect.Top) - (clientRect.Bottom - clientRect.Top));
-    }
-
-    /// <summary>ウィンドウの外寸を画面物理ピクセルで取得する。</summary>
-    [LibraryImport("user32.dll", EntryPoint = "GetWindowRect", SetLastError = true)]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool GetWindowRect(IntPtr hwnd, out NativeRect rect);
-
-    /// <summary>ウィンドウのクライアント領域を画面物理ピクセルで取得する。</summary>
-    [LibraryImport("user32.dll", EntryPoint = "GetClientRect", SetLastError = true)]
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool GetClientRect(IntPtr hwnd, out NativeRect rect);
-
-    /// <summary>Win32 の矩形（<c>RECT</c>）。</summary>
-    [StructLayout(LayoutKind.Sequential)]
-    private struct NativeRect
-    {
-        /// <summary>左端の座標。</summary>
-        public int Left;
-
-        /// <summary>上端の座標。</summary>
-        public int Top;
-
-        /// <summary>右端の座標。</summary>
-        public int Right;
-
-        /// <summary>下端の座標。</summary>
-        public int Bottom;
-    }
-
     /// <summary>ウィンドウの位置・サイズ・状態とナビパネルの開閉を設定へ保存する。</summary>
     /// <param name="window">対象のウィンドウ。</param>
     /// <param name="settingsService">設定サービス。</param>
@@ -937,7 +888,7 @@ internal sealed partial class MainWindow
     private static void SaveWindowPlacement(Window window, ISettingsService settingsService)
     {
         var scale = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(window.Handle));
-        var frame = GetWindowFrame(window.Handle);
+        var frame = WindowFrameMetrics.Get(window.Handle);
         var position = EsWindowPlacementMath.ToPhysicalPixelPoint(
             new EsPoint(window.Position.X, window.Position.Y), scale);
 
