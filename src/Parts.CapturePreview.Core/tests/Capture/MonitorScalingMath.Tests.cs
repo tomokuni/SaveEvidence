@@ -1,3 +1,5 @@
+using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using Xunit;
 

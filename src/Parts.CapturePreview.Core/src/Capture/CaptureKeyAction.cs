@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 

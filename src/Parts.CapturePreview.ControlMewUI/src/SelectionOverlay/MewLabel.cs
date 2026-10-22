@@ -1,6 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Rendering;
 using Aprillz.MewUI.Text;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Ui.MewUI.Interop;
 using DrawingColor = System.Drawing.Color;
 

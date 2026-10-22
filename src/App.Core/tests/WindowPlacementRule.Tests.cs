@@ -1,3 +1,5 @@
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Xunit;
 

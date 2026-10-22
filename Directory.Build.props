@@ -45,15 +45,4 @@
     <PackageReference Include="Meziantou.Analyzer" Version="[3.*,)" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(UseEsPlatformCoreUsings)' != 'false'">
-    <!-- 共通基盤の主要な名前空間はグローバル using にする（ソースに階層ごとの using を書かせない）。
-         実測 2026-10-22: 手書きの using EsUtil.Platform.Core* は 936 行（Geometry 388 / Imaging 200 / root 150 / Coord 105）。
-         分類（フォルダ = 名前空間）は変えず、**利用側の記述だけ**を減らす。
-         Platform.Core を参照しないプロジェクトは <UseEsPlatformCoreUsings>false</UseEsPlatformCoreUsings> を指定する。 -->
-    <Using Include="EsUtil.Platform.Core" />
-    <Using Include="EsUtil.Platform.Core.Coord" />
-    <Using Include="EsUtil.Platform.Core.Geometry" />
-    <Using Include="EsUtil.Platform.Core.Imaging" />
-  </ItemGroup>
-
 </Project>

@@ -1,5 +1,7 @@
 using Aprillz.MewUI;
 using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
 using Xunit;

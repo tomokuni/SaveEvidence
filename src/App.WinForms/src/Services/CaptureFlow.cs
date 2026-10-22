@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Session;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Services;

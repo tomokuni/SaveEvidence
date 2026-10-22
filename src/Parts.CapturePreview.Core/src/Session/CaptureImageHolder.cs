@@ -1,3 +1,5 @@
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;

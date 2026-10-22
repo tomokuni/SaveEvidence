@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.ZoomView;
 using EsUtil.Ui.WinUI3.Interop.Drawing;

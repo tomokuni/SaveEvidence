@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.Ui.WinUI3.Interop.Drawing;
 using DrawingColor = System.Drawing.Color;

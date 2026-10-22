@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.WinForms.Views;
 using Xunit;
 

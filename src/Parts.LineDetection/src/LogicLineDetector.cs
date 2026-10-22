@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using OpenCvSharp;
 using static EsUtil.SaveEvidence.Parts.LineDetection.LineSegmentMath;
 using Point = EsUtil.Platform.Core.Geometry.EsPoint;

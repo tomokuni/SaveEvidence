@@ -3,6 +3,8 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Marquee;
 using EsUtil.Ui.MewUI.Marquee;
+using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 using Xunit;

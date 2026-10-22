@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.Core.Models;
 

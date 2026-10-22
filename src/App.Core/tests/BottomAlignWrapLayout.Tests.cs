@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Layout;
 using Xunit;
 

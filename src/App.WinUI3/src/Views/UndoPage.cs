@@ -1,4 +1,6 @@
 using EsUtil.Ui.WinUI3.Thumbnail;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;

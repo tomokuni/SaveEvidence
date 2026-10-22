@@ -1,3 +1,6 @@
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.Core.Enums;

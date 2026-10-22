@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Services;
 

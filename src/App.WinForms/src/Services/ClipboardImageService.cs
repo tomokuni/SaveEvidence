@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using DrawingBitmap = System.Drawing.Bitmap;
 using DrawingImage = System.Drawing.Image;
 

@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 

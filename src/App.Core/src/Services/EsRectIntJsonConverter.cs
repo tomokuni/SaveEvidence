@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.SaveEvidence.App.Core.Services;
 

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Aprillz.MewUI;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
 using Microsoft.Extensions.Logging;

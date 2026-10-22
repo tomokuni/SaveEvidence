@@ -1,5 +1,6 @@
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;

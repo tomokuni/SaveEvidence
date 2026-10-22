@@ -1,4 +1,5 @@
 using System.Drawing.Imaging;
+using EsUtil.Platform.Core.Imaging;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Tests;

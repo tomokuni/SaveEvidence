@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using Xunit;
 using DrawingColor = System.Drawing.Color;

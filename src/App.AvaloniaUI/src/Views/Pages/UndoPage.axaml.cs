@@ -2,6 +2,8 @@ using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Threading;
 using EsUtil.Ui.AvaloniaUI.Thumbnail;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;

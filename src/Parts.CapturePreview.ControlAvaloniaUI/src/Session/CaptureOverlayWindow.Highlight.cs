@@ -1,4 +1,5 @@
 using Avalonia.Input;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.Ui.AvaloniaUI.Interop.Coord;

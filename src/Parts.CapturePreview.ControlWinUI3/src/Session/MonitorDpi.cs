@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native.Win;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.Session;

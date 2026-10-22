@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Media;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;

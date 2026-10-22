@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;

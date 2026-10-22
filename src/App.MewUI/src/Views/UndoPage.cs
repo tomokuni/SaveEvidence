@@ -3,6 +3,8 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Thumbnail;
 using EsUtil.Ui.MewUI.Thumbnail;
+using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
