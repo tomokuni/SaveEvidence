@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

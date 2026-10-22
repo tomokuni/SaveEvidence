@@ -1,5 +1,4 @@
 using System.Text.Json;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Xunit;

@@ -3,7 +3,6 @@ using Avalonia.Media;
 using EsUtil.Ui.AvaloniaUI.Loupe;
 using EsUtil.Feature.Marquee;
 using EsUtil.Ui.AvaloniaUI.Marquee;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;

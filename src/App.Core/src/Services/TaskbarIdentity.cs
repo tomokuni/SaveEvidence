@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native.Win;
 
 namespace EsUtil.SaveEvidence.App.Core.Services;

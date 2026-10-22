@@ -1,5 +1,4 @@
 using Avalonia.Media.Imaging;
-using EsUtil.Platform.Core.Imaging;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Tests;

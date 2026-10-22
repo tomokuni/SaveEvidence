@@ -1,5 +1,4 @@
 using Aprillz.MewUI.Rendering;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.Ui.MewUI.Interop;
 using DrawingColor = System.Drawing.Color;

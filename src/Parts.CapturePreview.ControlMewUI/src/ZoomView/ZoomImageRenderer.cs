@@ -1,5 +1,4 @@
 using Aprillz.MewUI.Rendering;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.Ui.MewUI.Interop.Imaging;
 

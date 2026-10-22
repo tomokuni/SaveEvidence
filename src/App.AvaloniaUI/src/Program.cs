@@ -1,7 +1,6 @@
 using System.Reflection;
 using Avalonia;
 using Avalonia.Threading;
-using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;

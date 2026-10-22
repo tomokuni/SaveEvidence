@@ -1,6 +1,5 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Rendering;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;

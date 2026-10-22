@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using Xunit;
 using DrawingColor = System.Drawing.Color;

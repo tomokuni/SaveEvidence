@@ -1,5 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 

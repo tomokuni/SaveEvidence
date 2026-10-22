@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;

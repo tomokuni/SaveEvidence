@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;

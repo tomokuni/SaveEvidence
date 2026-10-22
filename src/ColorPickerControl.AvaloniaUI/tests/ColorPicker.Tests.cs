@@ -6,7 +6,6 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using EsUtil.Platform.Core;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 using BindingFlags = System.Reflection.BindingFlags;

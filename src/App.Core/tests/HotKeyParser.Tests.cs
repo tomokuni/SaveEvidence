@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using Xunit;
 

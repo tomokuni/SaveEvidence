@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.SelectionOverlay;
 using Xunit;
 using DrawingColor = System.Drawing.Color;

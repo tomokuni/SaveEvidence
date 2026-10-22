@@ -1,6 +1,5 @@
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using EsUtil.Platform.Core.Imaging;
 using DrawingBitmap = System.Drawing.Bitmap;
 using DrawingPixelFormat = System.Drawing.Imaging.PixelFormat;
 using DrawingRectangle = System.Drawing.Rectangle;

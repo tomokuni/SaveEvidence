@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;

@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices.WindowsRuntime;
-using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Svg;
 using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Services;

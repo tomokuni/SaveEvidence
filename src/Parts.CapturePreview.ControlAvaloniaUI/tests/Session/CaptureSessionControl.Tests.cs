@@ -1,9 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;

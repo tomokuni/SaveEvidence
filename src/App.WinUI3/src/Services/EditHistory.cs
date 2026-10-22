@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Services;
 

@@ -1,5 +1,4 @@
 using EsUtil.Feature.Marquee;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;

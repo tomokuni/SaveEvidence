@@ -1,10 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;

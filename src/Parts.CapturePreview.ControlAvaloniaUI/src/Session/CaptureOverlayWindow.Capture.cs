@@ -1,8 +1,5 @@
 using Avalonia;
 using Avalonia.Threading;
-using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;

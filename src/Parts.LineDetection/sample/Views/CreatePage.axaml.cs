@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 

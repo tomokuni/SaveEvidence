@@ -6,7 +6,6 @@ using Avalonia.Input;
 using Avalonia.Media;
 using EsUtil.Feature.Loupe;
 using EsUtil.Ui.AvaloniaUI.Loupe;
-using EsUtil.Platform.Core.Coord;
 using EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 using DrawingColor = System.Drawing.Color;
 

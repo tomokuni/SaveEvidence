@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using Xunit;
 

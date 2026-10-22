@@ -1,7 +1,3 @@
-using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Coord;
-using EsUtil.Platform.Core.Geometry;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.Ui.WinUI3.Interop;

@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;

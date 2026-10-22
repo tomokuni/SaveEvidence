@@ -1,6 +1,4 @@
 using System.Text.Json;
-using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 

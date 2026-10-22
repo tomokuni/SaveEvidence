@@ -1,6 +1,4 @@
 using EsUtil.Ui.WinForms.Thumbnail;
-using EsUtil.Platform.Core;
-using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.WinForms.Services;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
