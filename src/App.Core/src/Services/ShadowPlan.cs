@@ -1,3 +1,5 @@
+using EsUtil.Platform.Core.Geometry;
+
 namespace EsUtil.SaveEvidence.App.Core.Services;
 
 /// <summary>画像の 4 辺と 4 隅へ落とす影の描画計画（4 つの UI 版で共通の唯一の定義）。</summary>
@@ -54,7 +56,7 @@ public static class ShadowPlan
 
     /// <summary>画像の周囲へ確保する影の余白を取得する。</summary>
     /// <remarks>アイテムの寸法を決めるときに使う（画像の外側にこの分の余地を確保する）。</remarks>
-    public static ShadowInsets Insets => new(BlurRadius, BlurRadius, BlurRadius, BlurRadius);
+    public static EsThickness Insets => new(BlurRadius, BlurRadius, BlurRadius, BlurRadius);
 
     /// <summary>指定の辺の計画を取得する。</summary>
     /// <param name="side">辺。</param>
