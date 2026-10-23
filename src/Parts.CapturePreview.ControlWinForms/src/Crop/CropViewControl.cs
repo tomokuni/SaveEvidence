@@ -99,9 +99,10 @@ public sealed class CropViewControl : UserControl
 
         // 領域選択オーバーレイ上のホイールをビューポートへ転送する
         // （オーバーレイは切り出し中に画像の上を覆って入力を占有するため、ホイールはオーバーレイ側が受け取る）。
-        // ホイールはフォーカスを持つコントロールへ届くため、複合コントロールと内包する選択矩形の両方で受ける
+        // ホイールはフォーカスを持つコントロールへ届くが、未処理のホイールは WinForms が親へ転送するため、
+        // 内包する選択矩形で受け取った場合もこの複合コントロールの MouseWheel が発火する（購読は 1 箇所でよい。
+        // 両方で購読すると 1 回の操作で 2 回転送され、ズームが 2 段階進む）
         _selectionOverlay.MouseWheel += OnSelectionOverlayWheel;
-        _selectionOverlay.Marquee.MouseWheel += OnSelectionOverlayWheel;
 
         // 既定は切り出し（プレビュー内の切出し）。 ホストが SelectionMode で変更できる
         _selectionOverlay.Mode = SelectionOverlayMode.Crop;
