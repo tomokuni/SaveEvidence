@@ -1,5 +1,5 @@
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Input;
-using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Services;
@@ -350,7 +350,7 @@ internal static class SettingsPage
                     return;
                 }
 
-                if (!HotKeyParser.TryParse(text.Text, out var parsed))
+                if (!EsInput.TryParseHotKey(text.Text, out var parsed))
                 {
                     text.BackColor = Color.FromArgb(0x50, 0x20, 0x20);
                     UiFactory.AttachToolTip(text, "解釈できません（例: Ctrl + Shift + Q。 修飾キーが最低 1 つ必要です）");

@@ -16,10 +16,8 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。 JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
 | `Services.IImageWriter` | `public` | 画像（`EsReadOnlyBitmap`）のファイル書き込みの抽象 |
 | `Services.EsBitmapImageWriter` | `public` | `IImageWriter` の**唯一の本番実装**（Windows 専用）。 コアの `EsReadOnlyBitmap.Save` へ委譲する。 両 UI が同じ実装を使う（保存結果が UI で食い違わない） |
-| `Services.EsRectIntJsonConverter` | `internal` | `EsRectInt` の JSON コンバーター（`X` / `Y` / `Width` / `Height` のみを読み書き） |
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
 | `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsReadOnlyBitmap` の複製（`Copy`）を保持。 最大 5 段） |
-| `Models.HotKeyParser` | `public` | ホットキー文字列（"Ctrl + Shift + Q" 等）の解析 |
 | `Models.ThumbnailScheduler` | `internal` | 背景の処理（サムネイルの生成）をページの表示状態に応じた負荷で実行するスケジューラ（非表示では 1 件ずつ、表示中は並列。 優先度順に実行する） |
 | `Models.ThumbnailPriority` | `internal` | サムネイル生成の優先度（見えている項目を先に、その中では上方を先に。 可視判定は純粋関数） |
 | `Icons.AppIcons` | `internal` | 本アプリのアイコンの読み込み元（`App.Core` に埋め込んだ SVG）。 解析はコアの `SvgIconSource` が担う |
@@ -36,7 +34,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 
 ## 4. 設定ファイルの互換性
 
-`EsRectInt` は専用の JSON コンバーター（`EsRectIntJsonConverter`）が `X` / `Y` / `Width` / `Height` のみを読み書きし、`EsWindowState` は enum の名前で書き出すため、**既存の `settings.json` はそのまま読み込めます**。
+`EsRectInt` の JSON の保存形式は `EsUtil.Platform.Core.Geometry.EsRectIntJsonConverter`（`X` / `Y` / `Width` / `Height` のみを読み書き）、`EsWindowState` は enum の名前で書き出すため、**既存の `settings.json` はそのまま読み込めます**。
 
 ### 4.1 トリミング / Native AOT 対応
 

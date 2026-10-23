@@ -156,7 +156,7 @@ src/App.WinUI3/src/
 | --- | --- |
 | `ThumbnailScheduler` / `ThumbnailPriority` | サムネイル生成の優先度付きスケジューラと優先度（優先順位・並列度・中断・失敗の分離） |
 | `CapacityLimitedCache` | 容量制限付きキャッシュ（上限超過時の一括破棄） |
-| `ImageFileExtensions` | 一覧へ出す画像の拡張子判定 |
+| `EsImageFileExtensions` | 一覧へ出す画像の拡張子判定 |
 | `CaptureSettingsMapper` | 設定 → 撮影スタックの外観設定の変換（色と描画スケールの写像） |
 | `ViewModeDisplay` | 表示モード（特大 / 大 / 中）の文言と範囲補正 |
 
@@ -312,7 +312,7 @@ stateDiagram-v2
 | 対象 | 検証の所在 |
 | --- | --- |
 | `ThumbnailScheduler` / `ThumbnailPriority` | `App.Core.Tests`（優先順位・並列度・中断・失敗の分離） |
-| `ImageFileExtensions` / `ViewModeDisplay` | `App.Core.Tests`（拡張子の判定・表示モードの文言と範囲補正） |
+| `EsImageFileExtensions` / `ViewModeDisplay` | `App.Core.Tests`（拡張子の判定・表示モードの文言と範囲補正） |
 | `CaptureSettingsMapper` | **本プロジェクト**（`App.Core.Tests` に検証が無く、本アプリの撮影設定の写像を保証する必要があるため） |
 
 - 本プロジェクトのテストは**本プロジェクト固有の振る舞い**（色文字列の往復・設定の JSON 往復・

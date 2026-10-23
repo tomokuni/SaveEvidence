@@ -9,12 +9,12 @@
 - [3. `Enums.ThemeMode`（列挙型）](#3-enumsthememode列挙型)
 - [4. `Models.Settings`（クラス）](#4-modelssettingsクラス)
 - [5. `Services.ISettingsService` / `Services.SettingsService`（クラス）](#5-servicesisettingsservice--servicessettingsserviceクラス)
-- [6. `Services.EsRectIntJsonConverter`（内部・クラス）](#6-servicesesrectintjsonconverter内部クラス)
+- [6. `EsRectInt` の JSON コンバーター（EsUtil.Platform.Core へ移設）](#6-esrectint-の-json-コンバーターesutilplatformcore-へ移設)
 - [7. `Services.IImageWriter`（インターフェース）](#7-servicesiimagewriterインターフェース)
 - [8. `Models.FileNameTemplate`（静的クラス）](#8-modelsfilenametemplate静的クラス)
   - [8.1 テンプレートの書式](#81-テンプレートの書式)
 - [9. `Models.UndoHistory`（クラス）](#9-modelsundohistoryクラス)
-- [10. `Models.HotKeyParser`（静的クラス）](#10-modelshotkeyparser静的クラス)
+- [10. ホットキー文字列の解釈（EsUtil.Platform.Core へ移設）](#10-ホットキー文字列の解釈esutilplatformcore-へ移設)
 - [11. `Models.ThumbnailScheduler`（内部・クラス）](#11-modelsthumbnailscheduler内部クラス)
 - [12. `Models.ThumbnailPriority`（内部・構造体）](#12-modelsthumbnailpriority内部構造体)
 - [13. `ViewModels.ViewModeDisplay`（内部・静的クラス）](#13-viewmodelsviewmodedisplay内部静的クラス)
@@ -41,7 +41,7 @@
 - [29. `Services.ZoomMenuLevels`（静的クラス）](#29-serviceszoommenulevels静的クラス)
 - [30. 依存関係](#30-依存関係)
 - [31. `Services.ToolbarMetrics`（静的クラス）](#31-servicestoolbarmetrics静的クラス)
-- [32. `Services.WindowPlacementRule`（静的クラス）](#32-serviceswindowplacementrule静的クラス)
+- [32. ウィンドウ配置の復元規則（EsUtil.Platform.Core へ移設）](#32-ウィンドウ配置の復元規則esutilplatformcore-へ移設)
 - [33. `Icons.CaptureIconFiles`（静的クラス）](#33-iconscaptureiconfiles静的クラス)
 
 ## 1. 公開 API の可視性
@@ -49,11 +49,10 @@
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
 | `Enums.AppPage` / `Enums.ThemeMode` | `public` | 任意 |
-| `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` / `Models.HotKeyParser` | `public` | 任意 |
+| `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
-| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` / `Services.WindowPlacementRule` / `Icons.CaptureIconFiles` | `public` | 任意 |
+| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` / `Icons.CaptureIconFiles` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
-| `Services.EsRectIntJsonConverter` | `internal` | `SaveEvidence` / `App.AvaloniaUI.Tests` / `App.Core.Tests` |
 | `Models.ThumbnailScheduler` | `internal` | 同上 |
 | `Models.ThumbnailPriority` | `internal` | 同上 |
 | `Icons.AppIcons` | `internal` | 同上 |
@@ -103,12 +102,12 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 > **トリミング / Native AOT**: コンテキストを注入しないと設定が空（`{}`）になります。 コンテキストは `Settings` を参照する側のアセンブリに置いてください（同一コンパイル内では MVVM のソース生成結果を JSON のソース生成が見られないため）。
 
-## 6. `Services.EsRectIntJsonConverter`（内部・クラス）
+## 6. `EsRectInt` の JSON コンバーター（EsUtil.Platform.Core へ移設）
 
-`EsRectInt` は読み取り専用プロパティ（`Right` 等）を持つため、専用コンバーターで `X` / `Y` / `Width` / `Height` のみを読み書きします。
+`EsRectInt` の JSON の保存形式（`X` / `Y` / `Width` / `Height` のみを読み書きし、未知のプロパティは無視、欠落は 0）は **`EsUtil.Platform.Core.Geometry.EsRectIntJsonConverter` が単一所有**します（2026-10-23 に本プロジェクトから移設）。
 
-- 読み込み時に欠落したプロパティは 0、未知のプロパティは無視します。
-- 既存の設定ファイルをそのまま読み込めます。
+- 保存形式は型の形（読み取り専用プロパティを持つこと）から決まるため、アプリごとに実装すると**保存形式が食い違う**。
+- `SettingsService.CreateJsonOptions` はこの型を登録する（既存の `settings.json` はそのまま読み込める）。
 
 ## 7. `Services.IImageWriter`（インターフェース）
 
@@ -163,15 +162,12 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 - スレッドセーフではありません（UI スレッドからのみ操作します）。
 
-## 10. `Models.HotKeyParser`（静的クラス）
+## 10. ホットキー文字列の解釈（EsUtil.Platform.Core へ移設）
 
-| メソッド | 説明 |
-| --- | --- |
-| `TryParse(string text, out HotKeySetting setting)` | ホットキー文字列を `HotKeySetting` へ変換する（成功時 true） |
+"Ctrl + Shift + Q" 形式の解釈は **`EsUtil.Platform.Core.Input.HotKeyParser` が単一所有**します（2026-10-23 に本プロジェクトから移設。 4 つの UI 版の設定画面が共有する）。
 
-- "Ctrl + Shift + Q" / "Ctrl+Shift+Q" 形式に対応します。 大文字小文字は区別しません。
-- 最低 1 つの修飾キーが必要です。 キー名が解釈できない場合は false を返します。
-- **キーは正規化してから採用します**（`EsKeyExtensions.Normalize`）。 文字列からの解釈は `Enum.TryParse` を使うため**数値文字列を受理してしまい**、列挙に無い値（例: `"999"`）がキーとして通ります。 正規化で未定義値を拒否します。
+- 形式・修飾キーの名前・失敗条件（修飾キー 1 つ以上）は移設先の仕様が単一所有します。
+- **数値文字列を受理しない**（`Enum.TryParse` は `"999"` を通すため、列挙に無い値を弾く判断は移設先の `EnumCanonical` が持つ）。
 
 ## 11. `Models.ThumbnailScheduler`（内部・クラス）
 
@@ -549,17 +545,13 @@ UI フレームワーク（Avalonia / MewUI）への依存はありません。
 
 MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ既定は 14 DIP です。 WinForms の `Font` はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。 アイコン単独のボタンは 32 × 32 DIP・16 DIP アイコン・内側余白 0 とし、文字付きボタンには表の余白を使います。
 
-## 32. `Services.WindowPlacementRule`（静的クラス）
+## 32. ウィンドウ配置の復元規則（EsUtil.Platform.Core へ移設）
 
-ウィンドウ配置の復元判定・可視領域への補正と、外寸・クライアント寸法間の単位変換を単一所有します。 保存する配置矩形はウィンドウ枠を含む外寸で、画面物理ピクセルです。
+ウィンドウ配置の復元判定・可視領域への補正・外寸とクライアント寸法の換算は
+**`EsUtil.Platform.Core.Window.EsWindowPlacementMath` が単一所有**します（2026-10-23 に本プロジェクトの `WindowPlacementRule` から移設）。
 
-| メンバー | 内容 |
-| --- | --- |
-| `CanRestore` / `ClampToVisibleArea` | 配置を復元できるかの判定 / 表示領域内への位置補正 |
-| `ToPhysicalLength` | DIP から物理ピクセルへの換算 |
-| `ToClientLength(double, int, double)` | 外寸 DIP と枠の物理ピクセルからクライアント DIP への換算 |
-| `ToClientLength(int, int, double)` | 外寸物理ピクセルと枠からクライアント DIP への換算 |
-| `ToOuterPhysicalLength` | クライアント DIP と枠から外寸物理ピクセルへの換算 |
+- 「画面外で復元しない」「最小化は通常表示にする」の判断も移設先が持つ（4 つの UI 版で同じ規則になる）。
+- 仮想スクリーンの照会は `EsUtil.Platform.Core.Native.Win.WinVirtualScreen` が担う。
 
 ## 33. `Icons.CaptureIconFiles`（静的クラス）
 

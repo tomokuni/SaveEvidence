@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Common;
-using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -31,7 +31,7 @@ internal static class WindowPlacementStore
     /// <param name="window">対象のウィンドウ。</param>
     /// <param name="settings">復元する設定。</param>
     /// <remarks>
-    /// 復元してよいかの判定（壊れたサイズ・画面外の座標・最小化）は共有規則（<see cref="WindowPlacementRule"/>）が<br/>
+    /// 復元してよいかの判定（壊れたサイズ・画面外の座標・最小化）は共有規則（<see cref="EsWindowPlacementMath"/>）が<br/>
     /// 単一所有する。 画面外の座標を復元するとウィンドウが見えないまま起動するため、その場合は位置だけを<br/>
     /// 表示領域の内側へ収める。
     /// </remarks>
@@ -41,15 +41,15 @@ internal static class WindowPlacementStore
         ArgumentNullException.ThrowIfNull(settings);
 
         var appWindow = window.AppWindow;
-        RestorePresenter(appWindow, WindowPlacementRule.ToRestorableState(settings.MainWindowState));
+        RestorePresenter(appWindow, EsWindowPlacementMath.ToRestorableState(settings.MainWindowState));
 
-        var visibleArea = EsWindowPlacementMath.GetVirtualScreenBounds();
-        if (!WindowPlacementRule.CanRestore(settings.MainWindowBounds, visibleArea))
+        var visibleArea = WinVirtualScreen.Bounds;
+        if (!EsWindowPlacementMath.CanRestore(settings.MainWindowBounds, visibleArea))
         {
             return false;
         }
 
-        var bounds = WindowPlacementRule.ClampToVisibleArea(settings.MainWindowBounds!.Value, visibleArea);
+        var bounds = EsWindowPlacementMath.ClampToVisibleArea(settings.MainWindowBounds!.Value, visibleArea);
         appWindow.MoveAndResize(new RectInt32(bounds.X, bounds.Y, bounds.Width, bounds.Height));
         return true;
     }

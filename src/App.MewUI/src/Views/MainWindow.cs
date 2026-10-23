@@ -838,8 +838,8 @@ internal sealed partial class MainWindow
         window.WindowSize = WindowSize.Resizable(
             currentSize.Width,
             currentSize.Height,
-            WindowPlacementRule.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling),
-            WindowPlacementRule.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling),
+            EsWindowPlacementMath.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling),
+            EsWindowPlacementMath.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling),
             currentSize.MaxWidth,
             currentSize.MaxHeight);
     }
@@ -868,8 +868,8 @@ internal sealed partial class MainWindow
         var minimumWidth = window.WindowSize.MinWidth;
         var minimumHeight = window.WindowSize.MinHeight;
         window.WindowSize = WindowSize.Resizable(
-            Math.Max(minimumWidth, WindowPlacementRule.ToClientLength(outerWidth, frame.Width, scaling)),
-            Math.Max(minimumHeight, WindowPlacementRule.ToClientLength(outerHeight, frame.Height, scaling)),
+            Math.Max(minimumWidth, EsWindowPlacementMath.ToClientLength(outerWidth, frame.Width, scaling)),
+            Math.Max(minimumHeight, EsWindowPlacementMath.ToClientLength(outerHeight, frame.Height, scaling)),
             minimumWidth,
             minimumHeight,
             window.WindowSize.MaxWidth,
@@ -896,8 +896,8 @@ internal sealed partial class MainWindow
         settingsService.Current.MainWindowBounds = new EsRectInt(
             position.X,
             position.Y,
-            WindowPlacementRule.ToOuterPhysicalLength(window.ClientSize.Width, frame.Width, scale),
-            WindowPlacementRule.ToOuterPhysicalLength(window.ClientSize.Height, frame.Height, scale));
+            EsWindowPlacementMath.ToOuterPhysicalLength(window.ClientSize.Width, frame.Width, scale),
+            EsWindowPlacementMath.ToOuterPhysicalLength(window.ClientSize.Height, frame.Height, scale));
         settingsService.Current.MainWindowState = window.WindowState.ToEsWindowState();
 
         // ナビパネルの開閉は変更時に保存済みのため、ここでは配置と状態のみを保存する

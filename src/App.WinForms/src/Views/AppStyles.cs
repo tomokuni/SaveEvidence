@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Coord;
 using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
@@ -99,7 +100,7 @@ internal static class AppStyles
     public static Font ToolbarFont => s_toolbarFont;
 
     private static readonly Font s_toolbarFont = new(
-        UiFont.FontFamily, (float)(ToolbarMetrics.FontSize * 72.0 / 96.0), UiFont.Style);
+        UiFont.FontFamily, (float)DpiScaler.ToPoint(ToolbarMetrics.FontSize), UiFont.Style);
 
     /// <summary>使用する UI フォントの太字を取得する。</summary>
     /// <value>現在の画像（現在プレビューに表示中の履歴）の名前を強調するために使う。</value>
@@ -118,7 +119,7 @@ internal static class AppStyles
     public static Font SettingsFont => s_settingsFont;
 
     private static readonly Font s_settingsFont = new(
-        UiFont.FontFamily, (float)(SettingsMetrics.FontSize * 72.0 / 96.0), UiFont.Style);
+        UiFont.FontFamily, (float)DpiScaler.ToPoint(SettingsMetrics.FontSize), UiFont.Style);
 
     /// <summary>設定ページの補足（例・説明）のフォントを取得する。</summary>
     /// <value>AvaloniaUI 版と同じ 11 DIP を pt へ換算したフォント。</value>
@@ -126,7 +127,7 @@ internal static class AppStyles
     public static Font SettingsHintFont => s_settingsHintFont;
 
     private static readonly Font s_settingsHintFont = new(
-        UiFont.FontFamily, (float)(SettingsMetrics.HintFontSize * 72.0 / 96.0), UiFont.Style);
+        UiFont.FontFamily, (float)DpiScaler.ToPoint(SettingsMetrics.HintFontSize), UiFont.Style);
 
     /// <summary>設定ページの入力コントロールの標準の高さ（ピクセル）を取得する。</summary>
     /// <value>設定フォントの行高 + 上下の余白。</value>
@@ -142,7 +143,7 @@ internal static class AppStyles
     public static Font StatusBarFont => s_statusBarFont;
 
     private static readonly Font s_statusBarFont = new(
-        UiFont.FontFamily, (float)(StatusBarMetrics.FontSize * 72.0 / 96.0), UiFont.Style);
+        UiFont.FontFamily, (float)DpiScaler.ToPoint(StatusBarMetrics.FontSize), UiFont.Style);
 
     /// <summary>32 ビットの色値（0xAARRGGBB）を WinForms の色へ変換する。</summary>
     /// <param name="argb">色（0xAARRGGBB）。</param>

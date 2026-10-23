@@ -96,7 +96,7 @@ flowchart TD
 
 - **状態と操作の判断はコアが持ちます**。 撮影種別ごとの選択モードの対応、切り出しの 1 操作の決定（開始 / 確定 / キャンセル）、矩形のヒット判定、ファイル名の生成、履歴の段数、設定の検証はいずれもコアの API を呼ぶだけです。
 - **UI 依存の操作はコールバックとして注入します**。 `MainViewModel` はクリップボード操作・上書き確認・編集前の退避を `Func` / `Action` として受け取ります。 本プロジェクトは `ClipboardImageService` と `MessageBox` を割り当てます（コアは WinForms を参照しません）。
-- **`internal` の補助は `App.Core` が単一所有します**。 設定の写像（`CaptureSettingsMapper`）・拡張子判定（`ImageFileExtensions`）・表示モードの表示名（`ViewModeDisplay`）・件数上限付きキャッシュ（`CapacityLimitedCache`）・サムネイル生成のスケジューラと優先度（`ThumbnailScheduler` / `ThumbnailPriority`）は `App.Core` の `internal` 型であり、`InternalsVisibleTo` を通じて本プロジェクトが**そのまま使います**（同じ表を二重に持たない）。
+- **`internal` の補助は `App.Core` が単一所有します**。 設定の写像（`CaptureSettingsMapper`）・拡張子判定（`EsImageFileExtensions`）・表示モードの表示名（`ViewModeDisplay`）・件数上限付きキャッシュ（`CapacityLimitedCache`。 EsUtil.Platform.Core）・サムネイル生成のスケジューラと優先度（`ThumbnailScheduler` / `ThumbnailPriority`）は `App.Core` の `internal` 型であり、`InternalsVisibleTo` を通じて本プロジェクトが**そのまま使います**（同じ表を二重に持たない）。
 
 ### 3.3 境界の変換
 
@@ -196,9 +196,9 @@ flowchart LR
 | `CaptureFlow` | 撮影の開始を 1 箇所に集約し、撮影中の多重起動を防ぐ |
 | `EditHistory` | 履歴から画像を取り出してプレビューへ差し替える操作の集約 |
 | `CaptureSettingsMapper`（`App.Core`） | 設定 → 撮影設定の写像（色の解析を含む）。 本プロジェクトは呼ぶだけ（同じ写像を二重に持たない） |
-| `ImageFileExtensions`（`App.Core`） | 一覧に含める画像の拡張子判定 |
+| `EsImageFileExtensions`（`App.Core`） | 一覧に含める画像の拡張子判定 |
 | `ViewModeDisplay`（`App.Core`） | 表示モード（特大 / 大 / 中）の表示名とアイテム数テキスト |
-| `CapacityLimitedCache`（`App.Core`） | 件数の上限を持つキャッシュ（上限を超える新規登録では全体を破棄する。 生成は並列、判定と登録は直列） |
+| `CapacityLimitedCache`（EsUtil.Platform.Core） | 件数の上限を持つキャッシュ（上限を超える新規登録では全体を破棄する。 生成は並列、判定と登録は直列） |
 | `ThumbnailScheduler` / `ThumbnailPriority`（`App.Core`） | サムネイル生成のスケジューラ（優先度順の実行・表示中は並列 / 非表示は 1 件ずつ・一覧の再構築で未実行の要求を破棄）と優先度。 要求は `ThumbnailScheduler.ThumbnailRequest`（入れ子型）を保持する |
 | `ImageThumbnailLoader` | 画像ファイルの縮小読み込み（GDI+ の高品質縮小）と結果の共有。 コアの画像を表示用のビットマップへ縮小する入口も持つ |
 | `ThumbnailGeneration` | 1 件分の縮小を背景で実行し、完成した画像を UI スレッドへ戻して項目へ反映する |
@@ -245,7 +245,7 @@ classDiagram
     note for CaptureSettingsMapper "App.Core（internal）"
     note for ImageFileExtensions "App.Core（internal）"
     note for ViewModeDisplay "App.Core（internal）"
-    note for CapacityLimitedCache "App.Core（internal）"
+    note for CapacityLimitedCache "EsUtil.Platform.Core（public）"
     note for ThumbnailScheduler "App.Core（internal）"
     note for ThumbnailPriority "App.Core（internal）"
 
@@ -460,7 +460,7 @@ sequenceDiagram
 | --- | --- | --- |
 | `SettingsColorMath` | 8 桁 / 6 桁の解析、記号と空白の省略、不正値のフォールバック、整形 | 本プロジェクト |
 | `CaptureSettingsMapper`（`App.Core`） | 設定の写像、色の解析とフォールバック、描画スケールの写像 | 本プロジェクト（`App.Core.Tests` に同等のテストが無いため利用側で固定） |
-| `CapacityLimitedCache`（`App.Core`） | 同じキーでの再生成の防止、上限ちょうどの保持、上限超過時の破棄、容量 0 以下での直近 1 件の保持 | `App.Core.Tests` |
+| `CapacityLimitedCache`（EsUtil.Platform.Core） | 同じキーでの再生成の防止、上限ちょうどの保持、上限超過時の破棄、容量 0 以下での直近 1 件の保持 | `App.Core.Tests` |
 | `GdiBitmapInterop` | 画素の並び、往復の一致、引数の検証 | 本プロジェクト |
 | `ImageThumbnailLoader` | 縮小の上限、等倍の維持、非画像・破損ファイルの扱い、結果の共有、拡大しないこと | 本プロジェクト |
 | `IconLoader` | 全アイコンの描画（サイズと不透明な画素）、色の反映、サイズの下限、ウィンドウ アイコンの生成 | 本プロジェクト |
@@ -469,7 +469,7 @@ sequenceDiagram
 | `SettingsPage` | ホットキーの整形（未設定・修飾キー） | 本プロジェクト |
 | `ThumbnailScheduler`（`App.Core`） | 優先度順の実行、上方優先、優先度の変更、中断（未実行の破棄・実行中への伝達）、表示中の並列実行、失敗時の継続、破棄後の受付拒否 | `App.Core.Tests` |
 | `ThumbnailPriority`（`App.Core`） | 見えている判定（端が一致するだけでは見えているとしない）、優先度の比較 | `App.Core.Tests` |
-| `ImageFileExtensions`（`App.Core`） | 拡張子の判定（大文字小文字を区別しない）、拡張子の一覧 | `App.Core.Tests` |
+| `EsImageFileExtensions`（`App.Core`） | 拡張子の判定（大文字小文字を区別しない）、拡張子の一覧 | `App.Core.Tests` |
 | `ViewModeDisplay`（`App.Core`） | 表示名、クランプ、アイテム数テキスト、`Count` との整合 | `App.Core.Tests` |
 
 `App.Core` の `internal` 型のうち、**本プロジェクトから使うが `App.Core.Tests` に検証が無いもの**（`CaptureSettingsMapper`）は、**利用側である本プロジェクトのテストで境界を固定します**（`App.Core.Tests` へ同等のテストが追加された場合は本プロジェクト側を削除できます）。

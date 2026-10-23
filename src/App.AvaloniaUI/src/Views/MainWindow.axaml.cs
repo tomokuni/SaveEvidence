@@ -540,16 +540,16 @@ public sealed partial class MainWindow : Window
     /// 保存値は<b>画面物理ピクセル</b>（4 つの UI 版が共有する設定の単位）。 Avalonia の <see cref="Window.Position"/> は<br/>
     /// 物理ピクセルだが <see cref="Layoutable.Width"/> / <see cref="Layoutable.Height"/> は DIP のため、モニターの<br/>
     /// スケールで割って設定する（そのまま入れると高 DPI 環境でウィンドウが倍率分だけ大きくなる）。<br/>
-    /// 画面外・最小化の値は復元しない（判定は <see cref="WindowPlacementRule"/> が単一所有する）。
+    /// 画面外・最小化の値は復元しない（判定は <see cref="EsWindowPlacementMath"/> が単一所有する）。
     /// </remarks>
     private void RestoreWindowBounds()
     {
         if (_settingsService.Current.MainWindowBounds is { } saved)
         {
             var visibleArea = GetVisibleScreenArea();
-            if (WindowPlacementRule.CanRestore(saved, visibleArea))
+            if (EsWindowPlacementMath.CanRestore(saved, visibleArea))
             {
-                var bounds = WindowPlacementRule.ClampToVisibleArea(saved, visibleArea);
+                var bounds = EsWindowPlacementMath.ClampToVisibleArea(saved, visibleArea);
                 Position = new PixelPoint(bounds.X, bounds.Y);
                 _restoredWindowBounds = bounds;
                 _restoredWindowScaling = ResolveScaling(bounds.X, bounds.Y);
@@ -558,7 +558,7 @@ public sealed partial class MainWindow : Window
 
         // 設定は UI 非依存のコア型で保持されるため、境界で Avalonia 型へ変換する
         // （最小化は通常表示へ置き換える: 最小化のまま起動すると「表示されない」ように見える）
-        WindowState = WindowPlacementRule.ToRestorableState(_settingsService.Current.MainWindowState)
+        WindowState = EsWindowPlacementMath.ToRestorableState(_settingsService.Current.MainWindowState)
             .ToAvaloniaWindowState();
     }
 
@@ -572,8 +572,8 @@ public sealed partial class MainWindow : Window
 
         var frame = WinWindowFrame.GetSize(new EsPlatformHandle(platformHandle.Handle));
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
-        MinWidth = WindowPlacementRule.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling);
-        MinHeight = WindowPlacementRule.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling);
+        MinWidth = EsWindowPlacementMath.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling);
+        MinHeight = EsWindowPlacementMath.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling);
     }
 
     /// <summary>枠を含む既定または復元サイズを適用する。</summary>
@@ -587,11 +587,11 @@ public sealed partial class MainWindow : Window
         var frame = WinWindowFrame.GetSize(new EsPlatformHandle(platformHandle.Handle));
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         Width = _restoredWindowBounds is { } bounds
-            ? WindowPlacementRule.ToClientLength(bounds.Width / (_restoredWindowScaling ?? scaling), frame.Width, scaling)
-            : WindowPlacementRule.ToClientLength(WindowMetrics.DefaultWidth, frame.Width, scaling);
+            ? EsWindowPlacementMath.ToClientLength(bounds.Width / (_restoredWindowScaling ?? scaling), frame.Width, scaling)
+            : EsWindowPlacementMath.ToClientLength(WindowMetrics.DefaultWidth, frame.Width, scaling);
         Height = _restoredWindowBounds is { } restoredBounds
-            ? WindowPlacementRule.ToClientLength(restoredBounds.Height / (_restoredWindowScaling ?? scaling), frame.Height, scaling)
-            : WindowPlacementRule.ToClientLength(WindowMetrics.DefaultHeight, frame.Height, scaling);
+            ? EsWindowPlacementMath.ToClientLength(restoredBounds.Height / (_restoredWindowScaling ?? scaling), frame.Height, scaling)
+            : EsWindowPlacementMath.ToClientLength(WindowMetrics.DefaultHeight, frame.Height, scaling);
     }
 
     /// <summary>指定位置のモニターの DPI スケール係数を取得する。</summary>
@@ -613,8 +613,8 @@ public sealed partial class MainWindow : Window
         var frame = WinWindowFrame.GetSize(new EsPlatformHandle(platformHandle.Handle));
         _settingsService.Current.MainWindowBounds = new EsRectInt(
             Position.X, Position.Y,
-            WindowPlacementRule.ToOuterPhysicalLength(Width, frame.Width, scaling),
-            WindowPlacementRule.ToOuterPhysicalLength(Height, frame.Height, scaling));
+            EsWindowPlacementMath.ToOuterPhysicalLength(Width, frame.Width, scaling),
+            EsWindowPlacementMath.ToOuterPhysicalLength(Height, frame.Height, scaling));
 
         _settingsService.Current.MainWindowState = WindowState.ToEsWindowState();
         _settingsService.Save();

@@ -1,4 +1,5 @@
 using System.Globalization;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
@@ -288,7 +289,7 @@ internal static class UiFactory
     /// <param name="color">整形する色。</param>
     /// <returns><c>#AARRGGBB</c> 形式の文字列。</returns>
     public static string FormatColor(Color color)
-        => $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+        => color.ToHexText();
 
     /// <summary>背景色に対して暗い色かどうかを判定する（文字色の選択に使う）。</summary>
     /// <param name="color">判定する色。</param>

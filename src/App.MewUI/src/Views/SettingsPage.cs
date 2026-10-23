@@ -2,6 +2,7 @@ using MewUIColor = Aprillz.MewUI.Color;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Common;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -525,7 +526,7 @@ internal static class SettingsPage
     /// <returns>項目名・入力欄・クリアボタンを並べた要素。</returns>
     /// <remarks>
     /// 1. 入力欄へフォーカスした状態で修飾キー付きのキーを押すと、その組み合わせを設定する。<br/>
-    /// 2. フォーカスを外した時は入力テキストを <see cref="HotKeyParser"/> で解釈する（手入力にも対応）。<br/>
+    /// 2. フォーカスを外した時は入力テキストを <see cref="EsInput.TryParseHotKey"/> で解釈する（手入力にも対応）。<br/>
     /// 3. 解釈できないテキストは現在値へ戻し、空にした場合は未設定にする。<br/>
     /// 4. クリアボタンは未設定（<see cref="EsKey.None"/>）へ戻す。
     /// </remarks>
@@ -565,7 +566,7 @@ internal static class SettingsPage
                 return;
             }
 
-            if (HotKeyParser.TryParse(text, out var parsed))
+            if (EsInput.TryParseHotKey(text, out var parsed))
             {
                 set(parsed);
                 box.Text = Format(parsed);

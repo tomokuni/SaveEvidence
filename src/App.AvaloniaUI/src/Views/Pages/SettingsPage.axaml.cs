@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -248,7 +249,7 @@ public sealed partial class SettingsPage : UserControl
             return;
         }
 
-        if (HotKeyParser.TryParse(text, out var setting))
+        if (EsInput.TryParseHotKey(text, out var setting))
         {
             if (target.HasValue)
             {

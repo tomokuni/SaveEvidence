@@ -224,8 +224,8 @@ internal sealed class MainWindow : Window
         }
 
         var scaling = RasterizationScale;
-        presenter.PreferredMinimumWidth = WindowPlacementRule.ToPhysicalLength(AppStyles.MinWindowWidth, scaling);
-        presenter.PreferredMinimumHeight = WindowPlacementRule.ToPhysicalLength(AppStyles.MinWindowHeight, scaling);
+        presenter.PreferredMinimumWidth = EsWindowPlacementMath.ToPhysicalLength(AppStyles.MinWindowWidth, scaling);
+        presenter.PreferredMinimumHeight = EsWindowPlacementMath.ToPhysicalLength(AppStyles.MinWindowHeight, scaling);
     }
 
     /// <summary>保存された配置が無い場合に既定の外寸（640 × 400 DIP）を適用する。</summary>
@@ -243,8 +243,8 @@ internal sealed class MainWindow : Window
         _isSizeInitialized = true;
         var scaling = RasterizationScale;
         AppWindow.Resize(new SizeInt32(
-            WindowPlacementRule.ToPhysicalLength(WindowMetrics.DefaultWidth, scaling),
-            WindowPlacementRule.ToPhysicalLength(WindowMetrics.DefaultHeight, scaling)));
+            EsWindowPlacementMath.ToPhysicalLength(WindowMetrics.DefaultWidth, scaling),
+            EsWindowPlacementMath.ToPhysicalLength(WindowMetrics.DefaultHeight, scaling)));
     }
 
     /// <summary>アプリ全体で共有するコアオブジェクトを取得する。</summary>

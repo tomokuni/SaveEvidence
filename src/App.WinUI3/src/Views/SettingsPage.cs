@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Common;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -649,7 +650,7 @@ internal static class SettingsPage
         // テキストで入力された場合も解釈する（"Ctrl + Shift + Q" 等）
         box.LostFocus += (_, _) =>
         {
-            if (HotKeyParser.TryParse(box.Text, out var parsed))
+            if (EsInput.TryParseHotKey(box.Text, out var parsed))
             {
                 Apply(parsed);
                 return;

@@ -1,3 +1,5 @@
+using EsUtil.Platform.Core.Window;
+
 namespace EsUtil.SaveEvidence.App.Core.Services;
 
 /// <summary>メイン ウィンドウの寸法（4 つの UI 版で共通）。</summary>
@@ -5,7 +7,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// 最小サイズと既定サイズを 1 か所で決める（UI 版ごとに値がずれないようにする）。<br/>
 /// 最小・既定サイズはウィンドウ枠を含む外寸で、値は <b>DIP</b> で持つ。 WinUI 3 の<br/>
 /// <c>OverlappedPresenter.PreferredMinimumWidth</c> と WinForms の <c>Form.MinimumSize</c> は画面物理ピクセルで<br/>
-/// 解釈されるため、各 UI 版は <see cref="WindowPlacementRule.ToPhysicalLength"/> で換算して指定する。<br/>
+/// 解釈されるため、各 UI 版は <see cref="EsWindowPlacementMath.ToPhysicalLength"/> で換算して指定する。<br/>
 /// クライアント領域を制約する UI 版は、実際のウィンドウ枠を測定して最小クライアント寸法へ換算する。<br/>
 /// <br/>
 /// <b>ナビゲーション パネルをオーバーレイ表示にする前提の幅</b>である: ページ領域はナビゲーション パネルの<br/>

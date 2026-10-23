@@ -5,6 +5,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Input;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
+using EsUtil.Platform.Core.Window;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
@@ -159,7 +160,7 @@ internal sealed class MainForm : Form
                 // 文字サイズは 4 つの UI 版で共通（DIP → pt へ換算する。 NavPanelMetrics が単一所有する）
                 Font = new Font(
                     AppStyles.UiFont.FontFamily,
-                    (float)(NavPanelMetrics.ItemFontSize * 72.0 / 96.0),
+                    (float)DpiScaler.ToPoint(NavPanelMetrics.ItemFontSize),
                     AppStyles.UiFont.Style),
             };
             _navButtons[index].Click += (_, _) =>
@@ -259,8 +260,8 @@ internal sealed class MainForm : Form
     {
         var scaling = DpiScaler.ToScaling(DeviceDpi);
         MinimumSize = new Size(
-            WindowPlacementRule.ToPhysicalLength(s_minWindowSizeDip.Width, scaling),
-            WindowPlacementRule.ToPhysicalLength(s_minWindowSizeDip.Height, scaling));
+            EsWindowPlacementMath.ToPhysicalLength(s_minWindowSizeDip.Width, scaling),
+            EsWindowPlacementMath.ToPhysicalLength(s_minWindowSizeDip.Height, scaling));
     }
 
     /// <summary>ページ表示の定義。</summary>
@@ -642,7 +643,7 @@ internal sealed class MainForm : Form
     /// <summary>保存済みのウィンドウ配置を復元する。</summary>
     /// <remarks>
     /// 設定の座標は画面物理ピクセルであり、WinForms のウィンドウ矩形も同じ座標系のため変換しない。<br/>
-    /// 復元してよいかの判定（壊れたサイズ・画面外の座標・最小化）は共有規則（<see cref="WindowPlacementRule"/>）が<br/>
+    /// 復元してよいかの判定（壊れたサイズ・画面外の座標・最小化）は共有規則（<see cref="EsWindowPlacementMath"/>）が<br/>
     /// 単一所有する。 画面外の座標を復元するとウィンドウが見えないまま起動するため、その場合は位置だけを<br/>
     /// 表示領域の内側へ収める。
     /// </remarks>
@@ -650,21 +651,21 @@ internal sealed class MainForm : Form
     {
         var settings = _services.Settings.Current;
         var visibleArea = SystemInformation.VirtualScreen.ToEsRectInt();
-        if (WindowPlacementRule.CanRestore(settings.MainWindowBounds, visibleArea))
+        if (EsWindowPlacementMath.CanRestore(settings.MainWindowBounds, visibleArea))
         {
-            var bounds = WindowPlacementRule.ClampToVisibleArea(settings.MainWindowBounds!.Value, visibleArea);
+            var bounds = EsWindowPlacementMath.ClampToVisibleArea(settings.MainWindowBounds!.Value, visibleArea);
             SetBounds(bounds.X, bounds.Y, bounds.Width, bounds.Height);
         }
         else
         {
             var scaling = DpiScaler.ToScaling(DeviceDpi);
             Size = new Size(
-                WindowPlacementRule.ToPhysicalLength(s_defaultWindowSizeDip.Width, scaling),
-                WindowPlacementRule.ToPhysicalLength(s_defaultWindowSizeDip.Height, scaling));
+                EsWindowPlacementMath.ToPhysicalLength(s_defaultWindowSizeDip.Width, scaling),
+                EsWindowPlacementMath.ToPhysicalLength(s_defaultWindowSizeDip.Height, scaling));
         }
 
         // 最小化は復元しない（最小化のまま起動するとウィンドウが表示されない）
-        var state = WindowPlacementRule.ToRestorableState(settings.MainWindowState);
+        var state = EsWindowPlacementMath.ToRestorableState(settings.MainWindowState);
         if (state.IsRepresentable())
         {
             WindowState = state.ToFormWindowState();

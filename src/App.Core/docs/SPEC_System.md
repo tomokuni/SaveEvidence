@@ -46,7 +46,6 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 | `src/App.Core/src/Models/Settings.cs` | `public sealed partial class` | アプリケーション設定（変更通知付き） |
 | `src/App.Core/src/Models/FileNameTemplate.cs` | `public static partial class` | ファイル名テンプレートの書式と使用不可文字の検証・解析・生成（**唯一の所有者**） |
 | `src/App.Core/src/Models/UndoHistory.cs` | `public sealed class` | 画像の Undo / Redo スタック |
-| `src/App.Core/src/Models/HotKeyParser.cs` | `public static class` | ホットキー文字列の解析 |
 | `src/App.Core/src/Models/ThumbnailScheduler.cs` | `internal sealed class` | 背景の処理（サムネイルの生成）をページの表示状態に応じた負荷で実行するスケジューラ（非表示では 1 件ずつ、表示中は並列。 優先度順に実行し、見えている項目を先に回す。 両 UI のフォルダビュー / Undo 一覧が使う**唯一の所有者**） |
 | `src/App.Core/src/Models/ThumbnailPriority.cs` | `internal readonly record struct` | サムネイル生成の優先度（見えている帯 / 見えていない帯と、帯の中の位置。 可視判定は純粋関数） |
 | `src/App.Core/src/Icons/AppIcons.cs` | `internal static class` | アイコンの読み込み元（`App.Core` に埋め込んだ SVG。 解析はコアの `SvgIconSource` が担う） |
@@ -54,10 +53,8 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 | `src/App.Core/src/Services/ISettingsService.cs` | `public interface` | 設定管理サービスの抽象 |
 | `src/App.Core/src/Services/IImageWriter.cs` | `public interface` | 画像（`EsReadOnlyBitmap`）のファイル書き込みの抽象 |
 | `src/App.Core/src/Services/SettingsService.cs` | `public sealed class` | JSON ファイルによる設定管理（**設定の永続化形式 = JSON の構造・enum の文字列表現の唯一の所有者**）。 ソース生成コンテキストを必須とする |
-| `src/App.Core/src/Services/WindowPlacementRule.cs` | `public static class` | ウィンドウ配置の復元判定・補正と、外寸 / クライアント寸法の換算 |
 | `src/App.Core/src/Services/ToolbarMetrics.cs` | `public static class` | 4 UI 版が共有するツールバー寸法・文字サイズ |
 | `src/App.Core/src/Icons/CaptureIconFiles.cs` | `public static class` | キャプチャ ページのツールバーとメニューで使う共通 SVG 名 |
-| `src/App.Core/src/Services/EsRectIntJsonConverter.cs` | `internal sealed class` | `EsRectInt` の JSON コンバーター |
 | `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モード（特大 / 大 / 中）の名称・件数表示（**唯一の所有者**。 `FolderViewViewModel` / `UndoViewModel` が委譲する） |
 | `src/App.Core/src/ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | フォルダビューの表示モード・ソート状態 |
 | `src/App.Core/src/ViewModels/UndoViewModel.cs` | `public sealed partial class` | Undo 一覧の表示モード状態 |
@@ -95,8 +92,8 @@ sequenceDiagram
 
 ## 7. 可視性ポリシー
 
-- `AppPage` / `ThemeMode` / `Settings` / `FileNameTemplate` / `UndoHistory` / `HotKeyParser` / `ISettingsService` / `SettingsService` / `FolderViewViewModel` / `UndoViewModel` は `public`（`App.AvaloniaUI` と MewUI ホストが共有する契約）。
-- `ThumbnailScheduler` / `ThumbnailPriority` / `AppIcons` / `ViewModeDisplay` / `EsRectIntJsonConverter` は `internal`。 `internal` → `public` の変更は壊的な設計変更として扱います。
+- `AppPage` / `ThemeMode` / `Settings` / `FileNameTemplate` / `UndoHistory` / `ISettingsService` / `SettingsService` / `FolderViewViewModel` / `UndoViewModel` は `public`（`App.AvaloniaUI` と MewUI ホストが共有する契約）。
+- `ThumbnailScheduler` / `ThumbnailPriority` / `AppIcons` / `ViewModeDisplay` は `internal`。 `internal` → `public` の変更は壊的な設計変更として扱います。
 
 ## 8. 設定ファイルの互換性
 

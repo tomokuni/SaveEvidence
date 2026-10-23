@@ -1,16 +1,14 @@
 using System.Text.Json;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Models;
-using EsUtil.SaveEvidence.App.Core.Services;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
 
-/// <summary><see cref="EsRectIntJsonConverter"/> の単体テスト（設定ファイルの JSON 互換）。</summary>
+/// <summary>設定モデルが <see cref="EsRectIntJsonConverter"/> を登録した状態で往復できることの検証。</summary>
 /// <remarks>
-/// JSON の読み書きのみを検証するため、UI 初期化に依存せず <c>[Fact]</c> で並列実行する。<br/>
-/// 既存の設定ファイルと同じ JSON 形式（<c>X</c> / <c>Y</c> / <c>Width</c> / <c>Height</c>）を<br/>
-/// 保つことを検証する（既存の設定ファイルをそのまま読み込めることの保証）。
+/// コンバーター自体の仕様（保存形式）は EsUtil.Platform.Core のテストが検証する。<br/>
+/// ここでは<b>実際の利用形態</b>（<c>Settings.MainWindowBounds</c> として往復する）だけを検証する。
 /// </remarks>
 public class EsRectIntJsonConverterTests
 {
@@ -19,62 +17,6 @@ public class EsRectIntJsonConverterTests
     {
         Converters = { new EsRectIntJsonConverter() },
     };
-
-    [Fact]
-    internal void Write_XYWidthHeightのみを書き出す()
-    {
-        var rect = new EsRectInt(444, 230, 1284, 1032);
-
-        var json = JsonSerializer.Serialize(rect, s_options);
-
-        Assert.Equal("""{"X":444,"Y":230,"Width":1284,"Height":1032}""", json);
-    }
-
-    [Fact]
-    internal void Read_XYWidthHeightを読み取る()
-    {
-        var rect = JsonSerializer.Deserialize<EsRectInt>(
-            """{"X":444,"Y":230,"Width":1284,"Height":1032}""", s_options);
-
-        Assert.Equal(new EsRectInt(444, 230, 1284, 1032), rect);
-    }
-
-    [Fact]
-    internal void 往復変換で値が一致する()
-    {
-        var rect = new EsRectInt(-100, -50, 1920, 1080);
-
-        var json = JsonSerializer.Serialize(rect, s_options);
-        var back = JsonSerializer.Deserialize<EsRectInt>(json, s_options);
-
-        Assert.Equal(rect, back);
-    }
-
-    [Fact]
-    internal void Read_欠落したプロパティは0になる()
-    {
-        var rect = JsonSerializer.Deserialize<EsRectInt>("""{"X":10,"Width":20}""", s_options);
-
-        Assert.Equal(new EsRectInt(10, 0, 20, 0), rect);
-    }
-
-    [Fact]
-    internal void Read_未知のプロパティは無視する()
-    {
-        var rect = JsonSerializer.Deserialize<EsRectInt>(
-            """{"X":1,"Y":2,"Width":3,"Height":4,"Right":4,"Unknown":99}""", s_options);
-
-        Assert.Equal(new EsRectInt(1, 2, 3, 4), rect);
-    }
-
-    [Fact]
-    internal void Read_順序が異なっても読み取る()
-    {
-        var rect = JsonSerializer.Deserialize<EsRectInt>(
-            """{"Height":40,"Width":30,"Y":20,"X":10}""", s_options);
-
-        Assert.Equal(new EsRectInt(10, 20, 30, 40), rect);
-    }
 
     [Fact]
     internal void 設定モデル_複合型のプロパティとして往復変換できる()
