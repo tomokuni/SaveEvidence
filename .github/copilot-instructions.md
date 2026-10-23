@@ -46,11 +46,10 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 | 区分 | プロジェクト | 所在 |
 | --- | --- | --- |
 | 共通基盤（可搬） | `EsUtil.Platform.Core` / `.Windows` | `../EsUtil` |
-| 再利用可能なコントロール（可搬） | `EsUtil.Feature.Marquee.Core` / `.Presenter` / `EsUtil.Ui.<UI>.Marquee`、`EsUtil.Feature.Loupe.Core` / `.Presenter` / `EsUtil.Ui.<UI>.Loupe`、`EsUtil.Feature.Thumbnail.Core` / `.Presenter` / `EsUtil.Ui.<UI>.Thumbnail`（`<UI>` = `AvaloniaUI` / `MewUI` / `WinUI3` / `WinForms`） | `../EsUtil` |
+| 再利用可能なコントロール（可搬） | `EsUtil.Feature.Marquee.Core` / `.Presenter` / `EsUtil.Ui.<UI>.Marquee`、`EsUtil.Feature.Loupe.Core` / `.Presenter` / `EsUtil.Ui.<UI>.Loupe`、`EsUtil.Feature.Thumbnail.Core` / `.Presenter` / `EsUtil.Ui.<UI>.Thumbnail`（`<UI>` = `AvaloniaUI` / `MewUI` / `WinUI3` / `WinForms`）、`EsUtil.Ui.AvaloniaUI.ColorPicker`（AvaloniaUI のみ） | `../EsUtil` |
 | 画像処理（可搬） | `Parts.LineDetection` | 本リポジトリ |
 | ブリッジ（可搬） | `EsUtil.Ui.AvaloniaUI.Interop` / `EsUtil.Ui.MewUI.Interop` / `EsUtil.Ui.WinUI3.Interop` / `EsUtil.Ui.WinForms.Interop` | `../EsUtil` |
 | 撮影スタック（製品固有） | `Parts.CapturePreview.Core` / `.ControlAvaloniaUI` / `.ControlMewUI` / `.ControlWinUI3` / `.ControlWinForms` | 本リポジトリ |
-| アプリが使う入力用コントロール | `ColorPickerControl.AvaloniaUI` | 本リポジトリ |
 | アプリ | `App.Core` / `App.AvaloniaUI` / `App.MewUI` / `App.WinUI3` / `App.WinForms` | 本リポジトリ |
 
 **層の帰属（Core / Presenter / UI のどれに置くか）・ラベルと装飾の分担・名前空間とフォルダの関係は [`../src/README.md`](../src/README.md) が所有する**（本節は要約しない）。 EsUtil 側の層の帰属は [`../../EsUtil/EsUtil/README.md`](../../EsUtil/EsUtil/README.md) が所有する。

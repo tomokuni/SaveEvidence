@@ -335,7 +335,7 @@ dotnet_diagnostic.CA1508.severity = none
 dotnet_diagnostic.MA0048.severity = none
 
 # Avalonia のコードビハインドは `.axaml.cs` にコントロールの型を置くため、ファイル名と型名が一致しない
-# （.github/命名規約.md「Avalonia のコードビハインド（`ColorPicker.axaml.cs` に `ColorPickerControl`）」）。
+# （.github/命名規約.md「Avalonia のコードビハインド（`MainWindow.axaml.cs` に `MainWindow`）」）。
 [**/*.axaml.cs]
 dotnet_diagnostic.MA0048.severity = none
 

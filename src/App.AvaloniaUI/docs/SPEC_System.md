@@ -32,7 +32,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
 
-本プロジェクト（app）は、このシステムの**実行可能アプリケーション本体**です。 UI（ウィンドウ・ページ・コントロール）・ViewModel・設定サービスを統括し、キャプチャ・切出し・保存・ズーム・フォルダビュー・設定画面をユーザーに提供します。 キャプチャ・切出しのセッションは Parts.CapturePreview.ControlAvaloniaUI、色選択は ColorPickerControl、プラットフォーム抽象は EsUtil.Ui.AvaloniaUI.Interop を利用します。
+本プロジェクト（app）は、このシステムの**実行可能アプリケーション本体**です。 UI（ウィンドウ・ページ・コントロール）・ViewModel・設定サービスを統括し、キャプチャ・切出し・保存・ズーム・フォルダビュー・設定画面をユーザーに提供します。 キャプチャ・切出しのセッションは Parts.CapturePreview.ControlAvaloniaUI、色選択は EsUtil.Ui.AvaloniaUI.ColorPicker、プラットフォーム抽象は EsUtil.Ui.AvaloniaUI.Interop を利用します。
 
 ## 2. 技術スタック
 
@@ -49,7 +49,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ログ** | Serilog 4.x + Serilog.Sinks.File（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
 | **シリアル化** | System.Text.Json（設定ファイル） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
-| **依存プロジェクト** | Parts.CapturePreview.ControlAvaloniaUI / ColorPickerControl / EsUtil.Ui.AvaloniaUI.Interop / LineDetection |
+| **依存プロジェクト** | Parts.CapturePreview.ControlAvaloniaUI / EsUtil.Ui.AvaloniaUI.ColorPicker / EsUtil.Ui.AvaloniaUI.Interop / LineDetection |
 
 ## 3. アーキテクチャ
 
@@ -59,7 +59,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 View Layer（MainWindow / CapturePage / FolderViewPage / UndoPage / SettingsPage）
   → ViewModel Layer（MainViewModel / FolderViewViewModel / UndoViewModel）
     → Model / Service Layer（UndoHistory / SettingsService 等）
-      → 外部ライブラリ（Parts.CapturePreview.ControlAvaloniaUI / ColorPickerControl / EsUtil.Ui.AvaloniaUI.Interop / LineDetection）
+      → 外部ライブラリ（Parts.CapturePreview.ControlAvaloniaUI / EsUtil.Ui.AvaloniaUI.ColorPicker / EsUtil.Ui.AvaloniaUI.Interop / LineDetection）
 ```
 
 ### 3.2 依存方向
@@ -98,7 +98,7 @@ flowchart TB
     end
     subgraph Dep["外部依存プロジェクト（主要コンポーネント）"]
         SN["CaptureSessionControl<br/>公開 Facade（キャプチャ・切出し）"]
-        CPK["ColorPickerControl<br/>公開コントロール（色選択）"]
+        CPK["EsUtil.Ui.AvaloniaUI.ColorPicker<br/>公開コントロール（色選択）"]
         LD["LogicLineDetector<br/>公開クラス（ウィンドウ矩形検出）"]
     end
     subgraph Infra["外部基盤"]
@@ -185,7 +185,7 @@ flowchart TB
 - **外観設定**: テーマ（`ThemeMode`: Light / Dark / System）を ComboBox で選択。 System は OS の設定に追従。 右下の「デフォルト値に戻す」ボタンで外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・ラベル）を `Settings.ResetAppearanceToDefaults()` により一括復元（外観設定以外は変更されない）
 - **ラベル設定**: キャプチャ選択画面の左上ラベル（1 行目 = サイズ / 2 行目 = 操作 / 3 行目 = 情報）を行ごとに設定。 各行で表示・文字色・背景色・フォントサイズを個別に設定可能（背景色は不透明度を統合した `#AARRGGBB` 形式。 カラーピッカーでアルファも設定できる）
 - **設定項目の対応先**: 全設定項目と反映先コントロールの対応は `SPEC_SettingTargetTable.md` を参照
-- **依存**: SettingsService / ColorPickerControl（色選択）
+- **依存**: SettingsService / EsUtil.Ui.AvaloniaUI.ColorPicker（色選択）
 
 ### 6.6 CropViewControl（ズーム・パン表示と領域選択）
 

@@ -29,7 +29,7 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
   A["4 UI ホスト"] --> B[App.Core]
   B --> D[EsUtil.Platform.Core]
   B --> F[LineDetection]
-  A --> E[Parts.CapturePreview.ControlAvaloniaUI / ColorPickerControl / EsUtil.Ui.AvaloniaUI.Interop]
+  A --> E[Parts.CapturePreview.ControlAvaloniaUI / EsUtil.Ui.AvaloniaUI.ColorPicker / EsUtil.Ui.AvaloniaUI.Interop]
   A -->|コールバック注入（クリップボード / 上書き確認）| B
 ```
 

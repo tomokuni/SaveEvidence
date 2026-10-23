@@ -3,7 +3,7 @@
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
              xmlns:enum="using:EsUtil.SaveEvidence.App.Core.Enums"
              xmlns:converters="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Converters"
-             xmlns:controls="clr-namespace:EsUtil.SaveEvidence.ColorPicker.AvaloniaUI;assembly=ColorPickerControl.AvaloniaUI"
+             xmlns:controls="clr-namespace:EsUtil.Ui.AvaloniaUI.ColorPicker;assembly=EsUtil.Ui.AvaloniaUI.ColorPicker"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.SettingsPage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>

@@ -48,11 +48,7 @@
   <Folder Name="/src/Parts.CapturePreview.ControlWinUI3/tests/">
     <Project Path="src/Parts.CapturePreview.ControlWinUI3/tests/Parts.CapturePreview.ControlWinUI3.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/ColorPickerControl.AvaloniaUI/">
-    <Project Path="src/ColorPickerControl.AvaloniaUI/sample/ColorPickerControl.AvaloniaUI.Sample.csproj" />
-    <Project Path="src/ColorPickerControl.AvaloniaUI/src/ColorPickerControl.AvaloniaUI.csproj" />
-    <Project Path="src/ColorPickerControl.AvaloniaUI/tests/ColorPickerControl.AvaloniaUI.Tests.csproj" />
-  </Folder>
+
   <Folder Name="/src/Parts.LineDetection/">
     <Project Path="src/Parts.LineDetection/sample/Parts.LineDetection.Sample.csproj" />
     <Project Path="src/Parts.LineDetection/src/Parts.LineDetection.csproj" />
