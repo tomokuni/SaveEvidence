@@ -55,7 +55,7 @@
     <ProjectReference Include="..\..\App.Core\src\App.Core.csproj" />
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlAvaloniaUI\src\Parts.CapturePreview.ControlAvaloniaUI.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Interop\src\EsUtil.Ui.AvaloniaUI.Interop.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\ColorPicker\src\EsUtil.Ui.AvaloniaUI.ColorPicker.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\ColorComboBox\src\EsUtil.Ui.AvaloniaUI.ColorComboBox.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Thumbnail\src\EsUtil.Ui.AvaloniaUI.Thumbnail.csproj" />
   </ItemGroup>
 

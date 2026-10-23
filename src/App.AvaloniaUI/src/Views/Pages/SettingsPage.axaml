@@ -3,7 +3,7 @@
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
              xmlns:enum="using:EsUtil.SaveEvidence.App.Core.Enums"
              xmlns:converters="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Converters"
-             xmlns:controls="clr-namespace:EsUtil.Ui.AvaloniaUI.ColorPicker;assembly=EsUtil.Ui.AvaloniaUI.ColorPicker"
+             xmlns:controls="clr-namespace:EsUtil.Ui.AvaloniaUI.ColorComboBox;assembly=EsUtil.Ui.AvaloniaUI.ColorComboBox"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.SettingsPage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
@@ -215,7 +215,7 @@
                                        Margin="0,8,16,0"
                                        Grid.Row="5" Grid.RowSpan="4" Grid.Column="0" VerticalAlignment="Top"/>
                             <Label Content="選択枠の色:"  Margin="0,8,0,0" Grid.Row="5" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="CaptureBorderColorPicker"
+                            <controls:ColorComboBoxControl x:Name="CaptureBorderColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.CaptureBorderColor, Mode=TwoWay}"
                                                           Margin="0,8,0,0"
@@ -229,7 +229,7 @@
                                            Minimum="1" Maximum="100" Increment="1" FormatString="N0"
                                            Grid.Row="7" Grid.Column="2" MinWidth="120"/>
                             <Label Content="暗転オーバーレイの色:" Grid.Row="8" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="CaptureOverlayColorPicker"
+                            <controls:ColorComboBoxControl x:Name="CaptureOverlayColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.CaptureOverlayColor, Mode=TwoWay}"
                                                          Grid.Row="8" Grid.Column="2" MinWidth="200"/>
@@ -244,7 +244,7 @@
                                        Margin="0,8,16,0"
                                        Grid.Row="9" Grid.RowSpan="5" Grid.Column="0" VerticalAlignment="Top"/>
                             <Label Content="ハンドルの色:" Margin="0,8,0,0" Grid.Row="9" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="HandleColorPicker"
+                            <controls:ColorComboBoxControl x:Name="HandleColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.HandleColor, Mode=TwoWay}"
                                                          Margin="0,8,0,0"
@@ -258,7 +258,7 @@
                                            Minimum="2" Maximum="40" Increment="1"
                                            Grid.Row="11" Grid.Column="2" MinWidth="120"/>
                             <Label Content="マーカーの色:" Grid.Row="12" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="MarkerColorPicker"
+                            <controls:ColorComboBoxControl x:Name="MarkerColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.MarkerColor, Mode=TwoWay}"
                                                          Grid.Row="12" Grid.Column="2" MinWidth="200"/>
@@ -277,7 +277,7 @@
                                        Margin="0,8,16,0"
                                        Grid.Row="14" Grid.RowSpan="9" Grid.Column="0" VerticalAlignment="Top"/>
                             <Label Content="枠色:" Margin="0,8,0,0" Grid.Row="14" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="LoupeFrameColorPicker"
+                            <controls:ColorComboBoxControl x:Name="LoupeFrameColorPicker"
                                                          Margin="0,8,0,0"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.LoupeFrameColor, Mode=TwoWay}"
@@ -288,17 +288,17 @@
                                            FormatString="N0"
                                            Grid.Row="15" Grid.Column="2" MinWidth="120"/>
                             <Label Content="十字線色:" Grid.Row="16" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="LoupeCrossColorPicker"
+                            <controls:ColorComboBoxControl x:Name="LoupeCrossColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.LoupeCrossColor, Mode=TwoWay}"
                                                          Grid.Row="16" Grid.Column="2" MinWidth="200"/>
                             <Label Content="選択矩形破線の色A:" Grid.Row="17" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="LoupeSelectionRectColorAPicker"
+                            <controls:ColorComboBoxControl x:Name="LoupeSelectionRectColorAPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.LoupeSelectionRectColorA, Mode=TwoWay}"
                                                          Grid.Row="17" Grid.Column="2" MinWidth="200"/>
                             <Label Content="選択矩形破線の色B:" Grid.Row="18" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="LoupeSelectionRectColorBPicker"
+                            <controls:ColorComboBoxControl x:Name="LoupeSelectionRectColorBPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.LoupeSelectionRectColorB, Mode=TwoWay}"
                                                          Grid.Row="18" Grid.Column="2" MinWidth="200"/>
@@ -315,7 +315,7 @@
                                            Minimum="0" Maximum="200" Increment="4"
                                            Grid.Row="21" Grid.Column="2" MinWidth="120"/>
                             <Label Content="画像外の色:" Grid.Row="22" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="LoupePasteboardColorPicker"
+                            <controls:ColorComboBoxControl x:Name="LoupePasteboardColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.LoupePasteboardColor, Mode=TwoWay}"
                                                          Grid.Row="22" Grid.Column="2" MinWidth="200"/>
@@ -331,13 +331,13 @@
                                        Margin="0,8,16,0"
                                        Grid.Row="23" Grid.RowSpan="9" Grid.Column="0" VerticalAlignment="Top"/>
                             <Label Content="1 行目 テキスト色:" Margin="0,8,0,0" Grid.Row="23" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="SizeLabelColorPicker"
+                            <controls:ColorComboBoxControl x:Name="SizeLabelColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.CaptureTextColor, Mode=TwoWay}"
                                                          Margin="0,8,0,0"
                                                          Grid.Row="23" Grid.Column="2" MinWidth="200"/>
                             <Label Content="1 行目 背景色:" Grid.Row="24" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="SizeLabelBackgroundColorPicker"
+                            <controls:ColorComboBoxControl x:Name="SizeLabelBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.SizeLabelBackgroundColor, Mode=TwoWay}"
                                                          Grid.Row="24" Grid.Column="2" MinWidth="200"/>
@@ -346,12 +346,12 @@
                                            Minimum="8" Maximum="32" Increment="1"
                                            Grid.Row="25" Grid.Column="2" MinWidth="120"/>
                             <Label Content="2 行目 テキスト色:" Grid.Row="26" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="SubLineColorPicker"
+                            <controls:ColorComboBoxControl x:Name="SubLineColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.SubLineColor, Mode=TwoWay}"
                                                          Grid.Row="26" Grid.Column="2" MinWidth="200"/>
                             <Label Content="2 行目 背景色:" Grid.Row="27" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="SubLineBackgroundColorPicker"
+                            <controls:ColorComboBoxControl x:Name="SubLineBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.SubLineBackgroundColor, Mode=TwoWay}"
                                                          Grid.Row="27" Grid.Column="2" MinWidth="200"/>
@@ -360,12 +360,12 @@
                                            Minimum="8" Maximum="32" Increment="1"
                                            Grid.Row="28" Grid.Column="2" MinWidth="120"/>
                             <Label Content="3 行目 テキスト色:" Grid.Row="29" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="InfoLabelColorPicker"
+                            <controls:ColorComboBoxControl x:Name="InfoLabelColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.InfoLabelColor, Mode=TwoWay}"
                                                          Grid.Row="29" Grid.Column="2" MinWidth="200"/>
                             <Label Content="3 行目 背景色:" Grid.Row="30" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="InfoLabelBackgroundColorPicker"
+                            <controls:ColorComboBoxControl x:Name="InfoLabelBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.InfoLabelBackgroundColor, Mode=TwoWay}"
                                                          Grid.Row="30" Grid.Column="2" MinWidth="200"/>
@@ -384,13 +384,13 @@
                                        Margin="0,8,16,0"
                                        Grid.Row="32" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
                             <Label Content="テキスト色:" Margin="0,8,0,0" Grid.Row="32" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="CoordLabelColorPicker"
+                            <controls:ColorComboBoxControl x:Name="CoordLabelColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.CoordLabelColor, Mode=TwoWay}"
                                                          Margin="0,8,0,0"
                                                          Grid.Row="32" Grid.Column="2" MinWidth="200"/>
                             <Label Content="背景色:" Grid.Row="33" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="CoordLabelBackgroundColorPicker"
+                            <controls:ColorComboBoxControl x:Name="CoordLabelBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.CoordLabelBackgroundColor, Mode=TwoWay}"
                                                          Grid.Row="33" Grid.Column="2" MinWidth="200"/>
@@ -409,13 +409,13 @@
                                        Margin="0,8,16,0"
                                        Grid.Row="35" Grid.RowSpan="3" Grid.Column="0" VerticalAlignment="Top"/>
                             <Label Content="座標ラベルのテキスト色:" Margin="0,8,0,0" Grid.Row="35" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="LoupeCoordLabelColorPicker"
+                            <controls:ColorComboBoxControl x:Name="LoupeCoordLabelColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.LoupeCoordLabelColor, Mode=TwoWay}"
                                                          Margin="0,8,0,0"
                                                          Grid.Row="35" Grid.Column="2" MinWidth="200"/>
                             <Label Content="座標ラベルの背景色:" Grid.Row="36" Grid.Column="1"/>
-                            <controls:ColorPickerControl x:Name="LoupeCoordLabelBackgroundColorPicker"
+                            <controls:ColorComboBoxControl x:Name="LoupeCoordLabelBackgroundColorPicker"
                                                          HighlightBorderOnError="True"
                                                          SelectedColor="{Binding Settings.LoupeCoordLabelBackgroundColor, Mode=TwoWay}"
                                                          Grid.Row="36" Grid.Column="2" MinWidth="200"/>
