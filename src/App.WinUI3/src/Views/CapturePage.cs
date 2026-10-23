@@ -1,7 +1,7 @@
 using DrawingColor = System.Drawing.Color;
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -522,7 +522,7 @@ internal static class CapturePage
             {
                 session.AppearanceSettings = CaptureSettingsMapper.From(settings, ReadRenderScaling(crop));
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 s_logger.LogSettingsApplyError(ex, e.PropertyName ?? string.Empty);
             }

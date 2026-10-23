@@ -8,10 +8,10 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Input;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Controls;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
@@ -772,7 +772,7 @@ public sealed partial class CapturePage : UserControl
     private async void OnPasteMenuClick(object? sender, RoutedEventArgs e)
     {
         try { await PasteFromClipboardAsync(); }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 貼り付け失敗（クリップボードに画像がない等）は何もしない
         }

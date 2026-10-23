@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Session;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Services;
@@ -62,7 +62,7 @@ internal static class CaptureFlow
         {
             await captureSession.StartCaptureAsync(type, owner).ConfigureAwait(true);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // ファサードが記録済みのため、ここでは握って継続する
             _ = ex;

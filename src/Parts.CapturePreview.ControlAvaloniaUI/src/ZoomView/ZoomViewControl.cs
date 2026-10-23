@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.Ui.AvaloniaUI.Interop;
@@ -153,7 +153,7 @@ public sealed class ZoomViewControl : Panel
         {
             _zoomableView.ApplyFeedback(Session.ZoomIn());
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ZoomIn));
@@ -169,7 +169,7 @@ public sealed class ZoomViewControl : Panel
         {
             _zoomableView.ApplyFeedback(Session.ZoomOut());
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ZoomOut));
@@ -185,7 +185,7 @@ public sealed class ZoomViewControl : Panel
         {
             _zoomableView.ApplyFeedback(Session.ZoomFit());
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ZoomFit));

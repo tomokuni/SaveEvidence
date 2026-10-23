@@ -2,8 +2,8 @@ using System.Diagnostics;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Thumbnail;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -382,7 +382,7 @@ internal static class UndoPage
                 UseShellExecute = true,
             });
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 外部ツールで開けない場合でも操作を妨げない（拡張子の関連付けが無い環境など）
         }

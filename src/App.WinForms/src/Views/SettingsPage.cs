@@ -345,7 +345,7 @@ internal static class SettingsPage
                 {
                     // クリアは「未設定」を意味する（登録側が未設定をスキップする）
                     text.BackColor = AppStyles.PageBackground;
-                    set(new HotKeySetting(HotKeyModifiers.None, EsKey.None));
+                    set(EsInput.NoHotKey);
                     settingsService.Save();
                     return;
                 }

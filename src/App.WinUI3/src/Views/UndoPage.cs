@@ -1,5 +1,5 @@
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
@@ -206,7 +206,7 @@ internal static class UndoPage
             var file = await StorageFile.GetFileFromPathAsync(path);
             _ = await Windows.System.Launcher.LaunchFileAsync(file);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogThumbnailGenerateError(ex);
         }

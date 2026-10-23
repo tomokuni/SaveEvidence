@@ -1,8 +1,8 @@
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;
@@ -45,7 +45,7 @@ internal sealed class GlobalHotKeyRegistration : IDisposable
             _service.Initialize(handle.Handle);
             return true;
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogHotKeyInitializeFailed(ex);
             return false;

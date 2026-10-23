@@ -5,8 +5,8 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using EsUtil.Feature.Thumbnail;
 using EsUtil.Platform.Core.Caching;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -144,7 +144,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         {
             LoadFilesCore();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogFolderViewLoadError(ex, MainViewModel.SaveFolderPathResolved);
             _viewModel.ItemCount = 0;
@@ -265,7 +265,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
             (string Path, int Size, DateTime LastWrite) key = (filePath, size, File.GetLastWriteTimeUtc(filePath));
             return s_thumbnailCache.TryGetValue(key, out var cached) ? cached : null;
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 更新日時を取得できないファイルは未生成として扱う（一覧は継続する）
             s_logger.LogThumbnailLoadError(ex, filePath);
@@ -328,7 +328,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
             s_thumbnailCache.Capacity = Math.Max(1, capacity);
             return s_thumbnailCache.GetOrAdd(key);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 復号できない画像はサムネイルを出さない（一覧は継続する）
             s_logger.LogThumbnailLoadError(ex, filePath);
@@ -396,7 +396,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
             };
             process.Start();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // ファイルを開けなくてもユーザー操作を妨げない
         }

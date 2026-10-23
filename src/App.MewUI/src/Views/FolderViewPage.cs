@@ -2,8 +2,8 @@ using System.Diagnostics;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Feature.Thumbnail;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -391,7 +391,7 @@ internal static class FolderViewPage
 
             return files;
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 一覧が空になる原因を追跡できるよう記録する（表示は空の一覧で継続する）
             s_logger.LogFolderLoadError(ex, folderPath);
@@ -412,7 +412,7 @@ internal static class FolderViewPage
                 UseShellExecute = true,
             });
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 関連付けが無い・アクセス拒否などの場合は何もしない
         }

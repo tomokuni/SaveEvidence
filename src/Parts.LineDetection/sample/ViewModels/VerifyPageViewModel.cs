@@ -1,7 +1,7 @@
+using EsUtil.Platform.Core;
 using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
-using EsUtil.Platform.Core.Common;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 
@@ -79,7 +79,7 @@ public sealed partial class VerifyPageViewModel : ObservableObject
 
             Context.StatusText = $"dataset: {value.Name} を検証";
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // ステータスへ理由を出し、診断用に記録する（アプリを止めない）
             System.Diagnostics.Debug.WriteLine($"dataset 読み込み失敗: {value.Name}（{ex.Message}）");

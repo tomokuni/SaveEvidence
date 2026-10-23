@@ -1,8 +1,8 @@
 using Avalonia;
 using Avalonia.Threading;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
@@ -31,7 +31,7 @@ internal sealed partial class CaptureOverlayWindow
             {
                 _windowService.HideFromTaskSwitcher(selfHandle.ToEsPlatformHandle());
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 // 除外できなくても選択操作は成立する（Alt+Tab の一覧に残るだけ）。
                 // ウィンドウ イベントのハンドラーを例外で抜けないよう、境界で記録して続行する

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices.WindowsRuntime;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;
 using Windows.ApplicationModel.DataTransfer;
@@ -45,7 +45,7 @@ internal static class CaptureClipboard
             Clipboard.Flush();
             return true;
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogClipboardError(ex, "コピー");
             return false;
@@ -70,7 +70,7 @@ internal static class CaptureClipboard
 
             return await DecodePngAsync(source);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogClipboardError(ex, "貼り付け");
             return null;

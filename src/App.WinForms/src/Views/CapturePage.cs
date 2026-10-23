@@ -1,7 +1,7 @@
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
@@ -321,7 +321,7 @@ internal static class CapturePage
                 captureSession.AppearanceSettings =
                     CaptureSettingsMapper.From(settingsService.Current, owner.DeviceDpi / 96.0);
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 // 設定の検証（範囲外の値）で例外になっても UI を壊さない
                 s_logger.LogSettingsApplyError(ex, nameof(CaptureSessionControl.AppearanceSettings));

@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 using BindingFlags = System.Reflection.BindingFlags;
 using Avalonia;
 using Avalonia.Collections;
@@ -7,7 +8,6 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using EsUtil.Platform.Core.Common;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -403,7 +403,7 @@ public class ColorPickerTests
             button!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Dispatcher.UIThread.RunJobs();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // ヘッドレスではポップアップを表示できないため、構築までで検証する
         }
@@ -427,7 +427,7 @@ public class ColorPickerTests
             button!.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
             Dispatcher.UIThread.RunJobs();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // ヘッドレスではポップアップを表示できないため、構築までで検証する
         }

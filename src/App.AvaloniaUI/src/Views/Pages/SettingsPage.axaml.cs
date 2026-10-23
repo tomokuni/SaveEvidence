@@ -224,7 +224,7 @@ public sealed partial class SettingsPage : UserControl
         var target = GetHotkeyTarget(tb);
         if (!target.HasValue) return;
 
-        var setting = new HotKeySetting(modifiers, e.Key.ToEsKey());
+        var setting = EsInput.CreateHotKey(modifiers, e.Key.ToEsKey());
         SetHotkey(target.Value, setting);
         tb.Text = setting.ToString();
         e.Handled = true;
@@ -298,7 +298,7 @@ public sealed partial class SettingsPage : UserControl
         HotkeyTarget.SelectScreen => _viewModel.Settings.SelectScreenHotKey,
         HotkeyTarget.WindowSelect => _viewModel.Settings.WindowSelectHotKey,
         HotkeyTarget.AreaSelect => _viewModel.Settings.AreaSelectHotKey,
-        _ => new HotKeySetting(HotKeyModifiers.None, EsKey.None)
+        _ => EsInput.NoHotKey
     };
 
     private void OnClearSelectScreenClick(object? sender, RoutedEventArgs e)
@@ -313,7 +313,7 @@ public sealed partial class SettingsPage : UserControl
     /// <summary>指定されたホットキーをクリアして表示を更新する。</summary>
     private void ClearHotkey(HotkeyTarget target, TextBox textBox)
     {
-        SetHotkey(target, new HotKeySetting(HotKeyModifiers.None, EsKey.None));
+        SetHotkey(target, EsInput.NoHotKey);
         textBox.Text = "(未設定)";
     }
 

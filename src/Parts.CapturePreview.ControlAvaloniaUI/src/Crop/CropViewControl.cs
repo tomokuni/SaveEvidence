@@ -7,10 +7,10 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
@@ -361,7 +361,7 @@ public sealed partial class CropViewControl : Panel
         {
             _zoomView.ZoomIn();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ZoomIn));
@@ -376,7 +376,7 @@ public sealed partial class CropViewControl : Panel
         {
             _zoomView.ZoomOut();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ZoomOut));
@@ -392,7 +392,7 @@ public sealed partial class CropViewControl : Panel
         {
             _zoomView.ZoomFit();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ZoomFit));
@@ -451,7 +451,7 @@ public sealed partial class CropViewControl : Panel
         {
             return _zoomView.ImageRectViewport();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ImageRectViewport));
@@ -496,7 +496,7 @@ public sealed partial class CropViewControl : Panel
         {
             _selectionOverlay.SetSelection(rect);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(SetSelection));
@@ -511,7 +511,7 @@ public sealed partial class CropViewControl : Panel
         {
             _selectionOverlay.ClearSelection();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ClearSelection));
@@ -544,7 +544,7 @@ public sealed partial class CropViewControl : Panel
         {
             _selectionOverlay.SetCoordTransform(port);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(SetCoordTransform));
@@ -560,7 +560,7 @@ public sealed partial class CropViewControl : Panel
         {
             _selectionOverlay.FocusMarquee();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(FocusMarquee));
@@ -582,7 +582,7 @@ public sealed partial class CropViewControl : Panel
         {
             _selectionOverlay.SetLoupeSource(source, display);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(SetLoupeSource));
@@ -597,7 +597,7 @@ public sealed partial class CropViewControl : Panel
         {
             _selectionOverlay.ClearLoupe();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ClearLoupe));
@@ -634,7 +634,7 @@ public sealed partial class CropViewControl : Panel
         {
             _selectionOverlay.NotifyViewportChanged();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(NotifyViewportChanged));
@@ -649,7 +649,7 @@ public sealed partial class CropViewControl : Panel
         {
             _selectionOverlay.RequestConfirm();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(RequestConfirm));
@@ -664,7 +664,7 @@ public sealed partial class CropViewControl : Panel
         {
             _selectionOverlay.RequestCancel();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(RequestCancel));

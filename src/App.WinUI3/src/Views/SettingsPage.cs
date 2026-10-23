@@ -1,4 +1,3 @@
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Enums;
@@ -643,7 +642,7 @@ internal static class SettingsPage
                 return;
             }
 
-            Apply(new HotKeySetting(modifiers, key));
+            Apply(EsInput.CreateHotKey(modifiers, key));
             e.Handled = true;
         };
 
@@ -659,7 +658,7 @@ internal static class SettingsPage
             box.Text = get().ToString();
         };
 
-        clear.Click += (_, _) => Apply(new HotKeySetting(HotKeyModifiers.None, EsKey.None));
+        clear.Click += (_, _) => Apply(EsInput.NoHotKey);
 
         var row = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         row.Children.Add(box);
@@ -722,7 +721,7 @@ internal static class SettingsPage
                 box.Text = folder.Path;
             }
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogSettingsApplyError(ex, nameof(Settings.SaveFolderPath));
         }

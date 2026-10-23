@@ -1,5 +1,5 @@
+using EsUtil.Platform.Core;
 using EsUtil.Feature.Thumbnail;
-using EsUtil.Platform.Core.Common;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
@@ -313,7 +313,7 @@ internal static class FolderViewPage
         {
             return FolderFileListReader.Read(folderPath, isSortAscending);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             logger.LogFolderLoadError(ex, folderPath);
             return [];
@@ -354,7 +354,7 @@ internal static class FolderViewPage
             var file = await StorageFile.GetFileFromPathAsync(filePath);
             _ = await Windows.System.Launcher.LaunchFileAsync(file);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogFolderLoadError(ex, filePath);
         }

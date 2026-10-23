@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.WinForms.Views;
 using Xunit;
@@ -12,7 +13,7 @@ public class SettingsPageTests
     [Fact]
     public void ホットキーが表示用の文字列へ整形される()
     {
-        var setting = new HotKeySetting(HotKeyModifiers.Control | HotKeyModifiers.Shift, EsKey.Q);
+        var setting = EsInput.CreateHotKey(HotKeyModifiers.Control | HotKeyModifiers.Shift, EsKey.Q);
 
         Assert.Equal("Ctrl + Shift + Q", SettingsPage.FormatHotKey(setting));
         Assert.Equal("Ctrl + Shift + Q", setting.ToString());
@@ -21,13 +22,13 @@ public class SettingsPageTests
     /// <summary>未設定のホットキーが空文字になることを検証する。</summary>
     [Fact]
     public void 未設定のホットキーは空文字になる()
-        => Assert.Equal("", SettingsPage.FormatHotKey(new HotKeySetting(HotKeyModifiers.None, EsKey.None)));
+        => Assert.Equal("", SettingsPage.FormatHotKey(EsInput.NoHotKey));
 
     /// <summary>修飾キーのみの設定でも整形できることを検証する。</summary>
     [Fact]
     public void 修飾キーのみでも整形できる()
     {
-        var setting = new HotKeySetting(HotKeyModifiers.Alt, EsKey.A);
+        var setting = EsInput.CreateHotKey(HotKeyModifiers.Alt, EsKey.A);
 
         Assert.Equal("Alt + A", SettingsPage.FormatHotKey(setting));
     }

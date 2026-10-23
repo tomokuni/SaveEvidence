@@ -1,8 +1,8 @@
 using DrawingColor = System.Drawing.Color;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.Ui.WinUI3.Interop;
@@ -243,7 +243,7 @@ public sealed partial class ZoomViewControl : Grid
         {
             return _session.DisplaySize;
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(DisplaySize));
@@ -259,7 +259,7 @@ public sealed partial class ZoomViewControl : Grid
         {
             return _session.ImageRect;
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ImageRectViewport));
@@ -277,7 +277,7 @@ public sealed partial class ZoomViewControl : Grid
         {
             return _session.ClientToDisplayedSource(viewportPos);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ClientToDisplayedSource));
@@ -295,7 +295,7 @@ public sealed partial class ZoomViewControl : Grid
         {
             return _session.DisplayedSourceToClient(contentPos);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(DisplayedSourceToClient));
@@ -313,7 +313,7 @@ public sealed partial class ZoomViewControl : Grid
         {
             Apply(_session.PanByWheel(delta, shift));
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(PanByWheel));
@@ -336,7 +336,7 @@ public sealed partial class ZoomViewControl : Grid
         {
             Apply(_session.ZoomIn());
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ZoomIn));
@@ -352,7 +352,7 @@ public sealed partial class ZoomViewControl : Grid
         {
             Apply(_session.ZoomOut());
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ZoomOut));
@@ -368,7 +368,7 @@ public sealed partial class ZoomViewControl : Grid
         {
             Apply(_session.ZoomFit());
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             Log.LogOperationError(ex, nameof(ZoomFit));

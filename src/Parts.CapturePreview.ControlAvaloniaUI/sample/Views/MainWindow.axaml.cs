@@ -6,8 +6,8 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Sample.ViewModels;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
@@ -220,7 +220,7 @@ public sealed partial class MainWindow : Window
             SetPreviewBitmap(EsReadOnlyBitmap.Load(files[0].Path.LocalPath));
             _vm.AddLog($"[App] 画像を読み込みました: {files[0].Name}");
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 画像を読み込めない場合は何もしない（現在の画像を維持する）
             _vm.AddLog("[App] 画像を読み込めませんでした（現在の画像を維持します）。");

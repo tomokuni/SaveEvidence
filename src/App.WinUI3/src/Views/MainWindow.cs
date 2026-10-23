@@ -1,6 +1,6 @@
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -1054,7 +1054,7 @@ internal sealed class MainWindow : Window
                     EnsurePage(index).OnWarmUp?.Invoke();
                 }
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 s_logger.LogThumbnailGenerateError(ex);
             }

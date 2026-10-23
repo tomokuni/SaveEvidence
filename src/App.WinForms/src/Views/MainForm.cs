@@ -1,11 +1,11 @@
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Input;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
@@ -354,7 +354,7 @@ internal sealed class MainForm : Form
         {
             SavePlacement();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogWindowPlacementSaveError(ex);
         }
@@ -404,7 +404,7 @@ internal sealed class MainForm : Form
         {
             _hotKeys.Initialize(Handle);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // ウィンドウ プロシージャを差し替えられない場合はホットキーを使えない（アプリは継続する）
             s_logger.LogUnhandledException(ex, "MainForm.RegisterHotKeys");
@@ -496,7 +496,7 @@ internal sealed class MainForm : Form
             _pages[index]!.OnWarmUp?.Invoke();
             s_logger.LogThumbnailWarmUp(page.ToString(), _pages[index] is { } content ? content.Content.Controls.Count : 0);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 先読みの失敗はアプリの動作を妨げない（ページを開いたときに改めて構築される）
             s_logger.LogThumbnailGenerateError(ex);

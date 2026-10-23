@@ -1,6 +1,6 @@
 using EsUtil.Feature.Thumbnail;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
@@ -260,13 +260,13 @@ internal static class FolderViewPage
                     {
                         ApplyImages(files, folderPath, iconSize, ascending, force);
                     }
-                    catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+                    catch (Exception ex) when (EsErrors.IsRecoverable(ex))
                     {
                         s_logger.LogFolderLoadError(ex, folderPath);
                     }
                 }));
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 s_logger.LogFolderLoadError(ex, folderPath);
             }
@@ -354,7 +354,7 @@ internal static class FolderViewPage
                     .ToList();
                 return files;
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 // アクセス拒否・パスの消失などで一覧が空になる原因を追跡できるようにする
                 s_logger.LogFolderLoadError(ex, folderPath);
@@ -376,7 +376,7 @@ internal static class FolderViewPage
                 UseShellExecute = true,
             });
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogOpenFileError(ex, filePath);
         }

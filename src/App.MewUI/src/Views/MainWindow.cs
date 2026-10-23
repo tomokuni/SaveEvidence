@@ -1,11 +1,11 @@
 using MewUIColor = Aprillz.MewUI.Color;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -472,7 +472,7 @@ internal sealed partial class MainWindow
             {
                 SaveWindowPlacement(window, settingsService);
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 // 保存できなくても終了は妨げない（次の起動では前回保存された配置を使う）
                 s_logger.LogWindowPlacementSaveError(ex);
@@ -570,7 +570,7 @@ internal sealed partial class MainWindow
                         warmUps[index]?.Invoke();
                     }
                 }
-                catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+                catch (Exception ex) when (EsErrors.IsRecoverable(ex))
                 {
                     // 先読みの失敗はアプリの動作を妨げない（ページを開いたときに改めて構築される）
                     s_logger.LogThumbnailGenerateError(ex);
@@ -665,7 +665,7 @@ internal sealed partial class MainWindow
         {
             if (window.Handle != IntPtr.Zero)
             {
-                _ = command(new EsPlatformHandle(window.Handle));
+                _ = command(EsWindow.FromHandle(window.Handle));
             }
         }
         void ApplyNavigationLayout()
@@ -831,7 +831,7 @@ internal sealed partial class MainWindow
             return;
         }
 
-        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(hwnd));
+        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(hwnd));
         var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
         var currentSize = window.WindowSize;
 
@@ -853,7 +853,7 @@ internal sealed partial class MainWindow
             return;
         }
 
-        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(hwnd));
+        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(hwnd));
         var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
         var bounds = settingsService.Current.MainWindowBounds;
         var savedScale = EsWindowPlacementMath.IsUsable(bounds)
@@ -889,7 +889,7 @@ internal sealed partial class MainWindow
     private static void SaveWindowPlacement(Window window, ISettingsService settingsService)
     {
         var scale = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(window.Handle));
-        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(window.Handle));
+        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(window.Handle));
         var position = EsWindowPlacementMath.ToPhysicalPixelPoint(
             new EsPoint(window.Position.X, window.Position.Y), scale);
 

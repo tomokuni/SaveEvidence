@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Threading;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -334,7 +334,7 @@ public sealed partial class UndoPage : ViewModePageBase
             };
             process.Start();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 外部ツールで開けなくてもユーザー操作を妨げない
         }

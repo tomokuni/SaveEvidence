@@ -7,13 +7,13 @@ using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Enums;
@@ -299,7 +299,7 @@ public sealed partial class MainWindow : Window
             FolderViewContent.WarmUp();
             UndoContent.WarmUp();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 先読みの失敗はアプリの動作を妨げない（ページを開いたときに改めて構築される）
             s_logger.LogThumbnailGenerateError(ex);
@@ -414,7 +414,7 @@ public sealed partial class MainWindow : Window
     {
         if (TryGetPlatformHandle() is { } handle)
         {
-            _ = command(new EsPlatformHandle(handle.Handle));
+            _ = command(EsWindow.FromHandle(handle.Handle));
         }
     }
 
@@ -463,7 +463,7 @@ public sealed partial class MainWindow : Window
                     return bitmap?.ToEsBitmap();
                 }
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 // クリップボードに画像がない場合は無視
                 return null;
@@ -570,7 +570,7 @@ public sealed partial class MainWindow : Window
             throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
         }
 
-        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(platformHandle.Handle));
+        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(platformHandle.Handle));
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         MinWidth = EsWindowPlacementMath.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling);
         MinHeight = EsWindowPlacementMath.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling);
@@ -584,7 +584,7 @@ public sealed partial class MainWindow : Window
             throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
         }
 
-        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(platformHandle.Handle));
+        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(platformHandle.Handle));
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         Width = _restoredWindowBounds is { } bounds
             ? EsWindowPlacementMath.ToClientLength(bounds.Width / (_restoredWindowScaling ?? scaling), frame.Width, scaling)
@@ -610,7 +610,7 @@ public sealed partial class MainWindow : Window
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         var platformHandle = TryGetPlatformHandle()
             ?? throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
-        var frame = WinWindowFrame.GetSize(new EsPlatformHandle(platformHandle.Handle));
+        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(platformHandle.Handle));
         _settingsService.Current.MainWindowBounds = new EsRectInt(
             Position.X, Position.Y,
             EsWindowPlacementMath.ToOuterPhysicalLength(Width, frame.Width, scaling),
@@ -760,7 +760,7 @@ public sealed partial class MainWindow : Window
         {
             ApplyCaptureSessionSettings();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             s_logger.LogSettingsApplyError(ex, propertyName);
         }
@@ -791,7 +791,7 @@ public sealed partial class MainWindow : Window
             var imgInfo = result?.Image is not null ? $"{result.Image.Size.Width}x{result.Image.Size.Height}" : "null";
             s_logger.LogSessionReturned(imgInfo, result?.SourceBounds?.ToString() ?? "null");
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // セッション開始の失敗（画面取得不可等）はアプリを継続する
             s_logger.LogCaptureStartError(ex, captureType);

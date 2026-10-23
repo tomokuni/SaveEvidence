@@ -1,7 +1,6 @@
 using MewUIColor = Aprillz.MewUI.Color;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Enums;
@@ -550,7 +549,7 @@ internal static class SettingsPage
                 return;
             }
 
-            var setting = new HotKeySetting(modifiers, e.Key.ToEsKey());
+            var setting = EsInput.CreateHotKey(modifiers, e.Key.ToEsKey());
             set(setting);
             box.Text = Format(setting);
             e.Handled = true;
@@ -561,7 +560,7 @@ internal static class SettingsPage
             var text = box.Text;
             if (string.IsNullOrWhiteSpace(text))
             {
-                set(new HotKeySetting(HotKeyModifiers.None, EsKey.None));
+                set(EsInput.NoHotKey);
                 box.Text = Format(get());
                 return;
             }
@@ -579,7 +578,7 @@ internal static class SettingsPage
 
         var clear = new Button().Content("クリア").FontSize(SettingsMetrics.FontSize).OnClick(() =>
         {
-            set(new HotKeySetting(HotKeyModifiers.None, EsKey.None));
+            set(EsInput.NoHotKey);
             box.Text = Format(get());
         });
 
@@ -661,7 +660,7 @@ internal static class SettingsPage
                 box.Text = selected;
             }
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // ダイアログを開けない環境（サービス未登録等）では設定を変更しない
         }

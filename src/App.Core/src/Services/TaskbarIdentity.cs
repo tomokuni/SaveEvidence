@@ -1,5 +1,5 @@
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Native.Win;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.App.Core.Services;
 
@@ -29,7 +29,7 @@ public static class TaskbarIdentity
         {
             return WinAppUserModelId.SetProcessId(appUserModelId);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // API 不在・値の不備でも起動を妨げない（タスク バーのグループ分けが既定のままになるだけ）
             return false;

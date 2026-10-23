@@ -1,11 +1,11 @@
 using Avalonia.Controls;
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
@@ -160,7 +160,7 @@ public sealed class CaptureSessionControl : IDisposable
                 _slot.EndCapture(session);
             }
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             _log.LogOperationError(ex, nameof(StartCaptureAsync));
@@ -212,7 +212,7 @@ public sealed class CaptureSessionControl : IDisposable
 
             return AwaitCropAsync(session, sourceImage);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 公開ファサードとして内部の例外を集約して記録し、呼び出し側へ伝搬する（例外処理規約 §4）
             _log.LogOperationError(ex, nameof(StartCropAsync));
@@ -259,7 +259,7 @@ public sealed class CaptureSessionControl : IDisposable
         {
             return CropSessionActions.Resolve(_slot.HasCrop, _slot.HasCropSelection(static crop => crop.HasSelection));
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             _log.LogOperationError(ex, nameof(ResolveCropAction));
             throw;
@@ -280,7 +280,7 @@ public sealed class CaptureSessionControl : IDisposable
         {
             _slot.CancelAll(static s => s.Cancel(), static s => s.Cancel());
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             _log.LogOperationError(ex, nameof(Cancel));
             throw;
@@ -300,7 +300,7 @@ public sealed class CaptureSessionControl : IDisposable
         {
             _slot.Crop?.Confirm();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             _log.LogOperationError(ex, nameof(Confirm));
             throw;
@@ -321,7 +321,7 @@ public sealed class CaptureSessionControl : IDisposable
         {
             _slot.Crop?.NotifyViewportChanged();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             _log.LogOperationError(ex, nameof(NotifyViewportChanged));
             throw;

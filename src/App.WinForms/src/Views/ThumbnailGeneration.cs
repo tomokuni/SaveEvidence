@@ -1,5 +1,5 @@
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.WinForms.Services;
 using EsUtil.Ui.WinForms.Thumbnail;
 
@@ -81,7 +81,7 @@ internal static class ThumbnailGeneration
 
             Apply();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 一覧が既に破棄されている（組み直しと競合した）場合は表示しない
             bitmap.Dispose();

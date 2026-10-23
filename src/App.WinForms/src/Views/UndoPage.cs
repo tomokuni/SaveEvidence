@@ -1,5 +1,5 @@
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -279,7 +279,7 @@ internal static class UndoPage
                 s_writer.Save(image, tempFile);
                 FolderViewPage.OpenInDefaultApp(tempFile);
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 // 書き出せない場合でも操作を妨げない
                 s_logger.LogOpenFileError(ex, "履歴の画像");

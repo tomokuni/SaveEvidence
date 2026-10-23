@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices.WindowsRuntime;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Svg;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Windows.Graphics.Imaging;
@@ -58,7 +58,7 @@ internal static class WindowIconFile
             File.WriteAllBytes(path, Task.Run(Build).GetAwaiter().GetResult());
             s_path = path;
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 書き出せなくてもアプリは動作する（アイコンが既定のままになるだけ）
             s_path = string.Empty;

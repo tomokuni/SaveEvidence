@@ -1,7 +1,7 @@
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
@@ -82,7 +82,7 @@ internal static class WindowPlacementStore
 
             settingsService.Save();
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 終了処理の境界のため、保存できなくても終了は妨げない（原因だけを残す）
             s_logger.LogWindowPlacementSaveError(ex);

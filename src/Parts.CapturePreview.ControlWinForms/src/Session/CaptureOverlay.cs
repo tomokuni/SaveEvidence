@@ -1,9 +1,9 @@
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
@@ -432,7 +432,7 @@ internal sealed class CaptureOverlay
             {
                 services.Window.SetBounds(form.ToEsPlatformHandle(), _screenBounds);
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 // 配置できないと全モニターの選択ができないが、表示の完了を例外で中断すると
                 // セッションが終了できなくなるため、境界で記録して続行する

@@ -1,6 +1,6 @@
 using Aprillz.MewUI;
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;
@@ -57,7 +57,7 @@ internal static class CaptureFlow
         {
             await captureSession.StartCaptureAsync(type, owner).ConfigureAwait(true);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 撮影の開始・実行の失敗（画面取得不可・要素検出の失敗等）ではアプリを継続する。
             // 原因は Facade（公開 API）が公開操作の境界で既に記録しているため、ここでは再記録しない

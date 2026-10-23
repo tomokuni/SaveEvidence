@@ -1,6 +1,6 @@
 using System.Text.Json;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core;
 
 namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.ViewModels;
 
@@ -60,7 +60,7 @@ internal static class DatasetVerifier
 
             return new VerifyResultItem(entry.Name, correct, detailLines);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 検証結果として失敗を返す（判定を止めない）
             System.Diagnostics.Debug.WriteLine($"検証失敗: {entry.Name}（{ex.Message}）");
@@ -144,7 +144,7 @@ internal static class DatasetVerifier
 
                 items.Add(new DatasetEntry(name, png, new DatasetBounds(b.X, b.Y, b.Right, b.Bottom)));
             }
-            catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
                 System.Diagnostics.Debug.WriteLine($"dataset 読み込み失敗: {name}（{ex.Message}）");
             }

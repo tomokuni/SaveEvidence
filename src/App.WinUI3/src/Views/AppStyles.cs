@@ -269,7 +269,7 @@ internal static class AppStyles
                 @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
             return key?.GetValue("AppsUseLightTheme") is int value && value == 0;
         }
-        catch (Exception ex) when (EsUtil.Platform.Core.Common.BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsUtil.Platform.Core.EsErrors.IsRecoverable(ex))
         {
             // レジストリを読めない環境（権限・ポリシー）では明色として扱う（起動を妨げない）
             return false;

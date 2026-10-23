@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Window;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using Xunit;
@@ -17,7 +18,7 @@ public class CaptureOwnerScopeTests
         var service = new FakeWindowService(log);
         var owner = new FakeOwner(log);
 
-        using (var scope = CaptureOwnerScope.Enter(service, new EsPlatformHandle(1, "HWND"), owner, hideOwner: true))
+        using (var scope = CaptureOwnerScope.Enter(service, EsWindow.FromHandle(1, "HWND"), owner, hideOwner: true))
         {
             // 除外を設定できた場合は、退避をオーバーレイ表示後まで遅らせる（撮影時にデスクトップを見せない）
             Assert.True(scope.IsExcluded);
@@ -40,7 +41,7 @@ public class CaptureOwnerScopeTests
         var service = new FakeWindowService(log) { CanExclude = false };
         var owner = new FakeOwner(log);
 
-        using (var scope = CaptureOwnerScope.Enter(service, new EsPlatformHandle(1, "HWND"), owner, hideOwner: true))
+        using (var scope = CaptureOwnerScope.Enter(service, EsWindow.FromHandle(1, "HWND"), owner, hideOwner: true))
         {
             // 除外できないと自ウィンドウが写るため、予約せずに退避する（ApplyPendingHide は何もしない）
             Assert.False(scope.IsExcluded);
@@ -61,7 +62,7 @@ public class CaptureOwnerScopeTests
         var service = new FakeWindowService(log);
         var owner = new FakeOwner(log);
 
-        using (CaptureOwnerScope.Enter(service, new EsPlatformHandle(1, "HWND"), owner, hideOwner: false))
+        using (CaptureOwnerScope.Enter(service, EsWindow.FromHandle(1, "HWND"), owner, hideOwner: false))
         {
             Assert.Empty(log);
         }
@@ -76,7 +77,7 @@ public class CaptureOwnerScopeTests
         var service = new FakeWindowService(log);
         var owner = new FakeOwner(log) { IsVisible = false };
 
-        using (CaptureOwnerScope.Enter(service, new EsPlatformHandle(1, "HWND"), owner, hideOwner: true))
+        using (CaptureOwnerScope.Enter(service, EsWindow.FromHandle(1, "HWND"), owner, hideOwner: true))
         {
             Assert.Empty(log);
         }
@@ -91,7 +92,7 @@ public class CaptureOwnerScopeTests
         var service = new FakeWindowService(log);
         var owner = new FakeOwner(log);
 
-        var scope = CaptureOwnerScope.Enter(service, new EsPlatformHandle(1, "HWND"), owner, hideOwner: true);
+        var scope = CaptureOwnerScope.Enter(service, EsWindow.FromHandle(1, "HWND"), owner, hideOwner: true);
         scope.ApplyPendingHide();
         scope.Dispose();
         scope.Dispose();

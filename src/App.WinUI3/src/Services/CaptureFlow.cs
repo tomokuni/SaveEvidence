@@ -1,5 +1,5 @@
 using EsUtil.Platform.Core.Capture;
-using EsUtil.Platform.Core.Common;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.Session;
 using Microsoft.UI.Xaml;
 
@@ -60,7 +60,7 @@ internal static class CaptureFlow
             // 待機中は UI スレッドへ戻す（イベント購読と画面の反映は UI スレッドで行う）
             await captureSession.StartCaptureAsync(type, owner);
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 撮影の開始・実行の失敗（画面取得不可・要素検出の失敗等）ではアプリを継続する。
             // 原因は撮影セッション（公開操作の境界）が既に記録しているため、ここでは再記録しない

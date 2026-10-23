@@ -1,7 +1,7 @@
 using Aprillz.MewUI;
 using EsUtil.Platform.Core.Caching;
-using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Svg;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Icons;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Icons;
@@ -40,7 +40,7 @@ internal static class IconLoader
         {
             return Application.Current?.Theme?.IsDark ?? false;
         }
-        catch (Exception ex) when (BoundaryCatch.IsRecoverable(ex))
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // テーマ未確定（起動前）は明色として扱う
             return false;
