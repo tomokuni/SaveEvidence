@@ -1,8 +1,7 @@
 using System.ComponentModel;
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.Ui.WinForms.Marquee;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -14,6 +13,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.ZoomView;
 using EsUtil.Ui.WinForms.Interop;
+using EsUtil.Ui.WinForms.Marquee;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Crop;

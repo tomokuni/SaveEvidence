@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Enums;

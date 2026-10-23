@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices.WindowsRuntime;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;

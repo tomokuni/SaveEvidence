@@ -1,10 +1,10 @@
 using EsUtil.Feature.Thumbnail;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Ui.WinForms.Thumbnail;
-using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
+using EsUtil.Ui.WinForms.Thumbnail;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;

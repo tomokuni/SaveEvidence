@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using Xunit;

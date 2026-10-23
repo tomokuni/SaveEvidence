@@ -1,19 +1,22 @@
 using System.ComponentModel;
 using System.Globalization;
+using DrawingColor = System.Drawing.Color;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Controls;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
-using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Icons;
+using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
@@ -21,11 +24,10 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
-using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using EsUtil.Ui.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 

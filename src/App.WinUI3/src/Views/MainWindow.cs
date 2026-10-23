@@ -1,5 +1,6 @@
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Native.Win;
+using EsUtil.Platform.Core.Window;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -10,13 +11,13 @@ using EsUtil.SaveEvidence.App.WinUI3.Services;
 using EsUtil.Ui.WinUI3.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Dispatching;
 using Windows.Foundation;
 using Windows.Graphics;
 

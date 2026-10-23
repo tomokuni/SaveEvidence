@@ -1,6 +1,8 @@
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
+using EsUtil.Platform.Core.Window;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;

@@ -1,7 +1,6 @@
 using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.Ui.WinUI3.Marquee;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -13,6 +12,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.ZoomView;
 using EsUtil.Ui.WinUI3.Interop;
+using EsUtil.Ui.WinUI3.Marquee;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

@@ -1,14 +1,14 @@
 using Avalonia;
 using Avalonia.Threading;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
-using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using EsUtil.Ui.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 
@@ -46,7 +46,7 @@ internal sealed partial class CaptureOverlayWindow
     /// <param name="screenRect">選択矩形（画面物理座標 = 仮想スクリーン原点基準）。</param>
     /// <remarks>
     /// 切り出し矩形の決定（種別ごとの閉区間化・画像内へのクランプ・端数の丸め）は<br/>
-    /// コアの <see cref="CropClipMath.ResolveCaptureRect(EsUtil.Platform.Core.CaptureType, EsRect, EsRectInt)"/> が単一所有する。
+    /// コアの <see cref="CropClipMath.ResolveCaptureRect(EsUtil.Platform.Core.Capture.CaptureType, EsRect, EsRectInt)"/> が単一所有する。
     /// 切り出せる矩形が無い場合（退化した選択）はキャンセルとして完了する。<br/>
     /// <b>確定要求の記録はこの入口が担う</b>（キー・クリック・アダプタ要求のすべてがここを通るため、<br/>
     /// 経路ごとにログを書くと抜けや重複が生じる）。 記録する矩形は画面物理座標（両 UI で同じ意味になる）。<br/>

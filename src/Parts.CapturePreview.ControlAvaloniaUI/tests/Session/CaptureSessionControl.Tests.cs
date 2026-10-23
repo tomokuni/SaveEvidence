@@ -1,17 +1,18 @@
+using Rect = Avalonia.Rect;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Window;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
-using Rect = Avalonia.Rect;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Tests.Session;
 

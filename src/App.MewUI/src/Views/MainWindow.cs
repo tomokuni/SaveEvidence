@@ -1,9 +1,11 @@
+using MewUIColor = Aprillz.MewUI.Color;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
-using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Native.Win;
+using EsUtil.Platform.Core.Window;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -11,7 +13,6 @@ using EsUtil.SaveEvidence.App.MewUI.Icons;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.Ui.MewUI.Interop;
 using Microsoft.Extensions.Logging;
-using MewUIColor = Aprillz.MewUI.Color;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 

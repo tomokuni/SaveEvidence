@@ -5,13 +5,13 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using EsUtil.Feature.Thumbnail;
 using EsUtil.Platform.Core.Caching;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
-using EsUtil.Ui.AvaloniaUI.Thumbnail;
-using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
+using EsUtil.Ui.AvaloniaUI.Thumbnail;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 

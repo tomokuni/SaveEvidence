@@ -1,4 +1,5 @@
-using EsUtil.Platform.Core;
+using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -12,7 +13,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.System;
-using DrawingColor = System.Drawing.Color;
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.ZoomView;
 
 /// <summary>ズーム・パン可能な画像表示コントロール（WinUI 3 実装）。</summary>

@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using Xunit;
 

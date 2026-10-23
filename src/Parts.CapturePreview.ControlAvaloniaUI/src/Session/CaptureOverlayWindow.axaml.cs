@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -13,8 +13,8 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
-using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using EsUtil.Ui.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

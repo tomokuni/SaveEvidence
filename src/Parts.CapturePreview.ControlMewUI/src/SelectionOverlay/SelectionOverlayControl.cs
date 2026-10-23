@@ -1,19 +1,19 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
+using Aprillz.MewUI.Rendering;
 using EsUtil.Feature.Loupe;
-using EsUtil.Ui.MewUI.Loupe;
 using EsUtil.Feature.Marquee;
-using EsUtil.Ui.MewUI.Marquee;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
-using Aprillz.MewUI.Rendering;
 using EsUtil.Ui.MewUI.Interop;
 using EsUtil.Ui.MewUI.Interop.Imaging;
+using EsUtil.Ui.MewUI.Loupe;
+using EsUtil.Ui.MewUI.Marquee;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

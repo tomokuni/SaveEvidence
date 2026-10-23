@@ -1,4 +1,6 @@
-using EsUtil.Platform.Core;
+using DrawingColor = System.Drawing.Color;
+using EsUtil.Platform.Core.Capture;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -22,7 +24,6 @@ using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
-using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 

@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

@@ -1,5 +1,6 @@
 using Aprillz.MewUI;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
+using EsUtil.Platform.Core.Common;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Services;

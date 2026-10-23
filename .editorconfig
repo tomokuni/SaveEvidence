@@ -166,7 +166,7 @@ dotnet_diagnostic.CA2225.severity = warning
 
 # 公開イベントの型は EventHandler / EventHandler<T>（T は EventArgs 派生）に限る。
 # 値型・record の通知（ヒープ確保 0 を守る）は event を使わず IDisposable Subscribe(Action<T>) で公開する
-# （仕組みは EsUtil.Platform.Core の CallbackList<T> が単一所有する（EsUtil リポジトリ）。 規則は .github/コーディング規約.md §7）。
+# （仕組みは EsUtil.Platform.Core.Common の CallbackList<T> が単一所有する（EsUtil リポジトリ）。 規則は .github/コーディング規約.md §7）。
 dotnet_diagnostic.CA1003.severity = warning
 
 # 連続する空行を検出する（体裁をコンパイラで守らせる）。

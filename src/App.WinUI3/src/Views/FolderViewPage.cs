@@ -1,10 +1,10 @@
 using EsUtil.Feature.Thumbnail;
-using EsUtil.Ui.WinUI3.Thumbnail;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Common;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using EsUtil.SaveEvidence.App.WinUI3.Services;
+using EsUtil.Ui.WinUI3.Thumbnail;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

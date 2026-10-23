@@ -1,4 +1,4 @@
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;

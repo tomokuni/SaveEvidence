@@ -6,12 +6,14 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
+using EsUtil.Platform.Core.Common;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
+using EsUtil.Platform.Core.Window;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Enums;
@@ -19,8 +21,8 @@ using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
-using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using EsUtil.Ui.AvaloniaUI.Interop;
+using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 

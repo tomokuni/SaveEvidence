@@ -1,4 +1,5 @@
-using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Common;
+using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;

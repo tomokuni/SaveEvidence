@@ -1,5 +1,5 @@
-using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Window;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
 
 namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
