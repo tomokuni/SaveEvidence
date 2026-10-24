@@ -580,6 +580,7 @@ internal sealed partial class MainWindow
             }
         }
 
+
         window.DpiChanged += (_, _) => ApplyMinimumOuterSize(window);
         window.FirstFrameRendered += () =>
         {
@@ -708,6 +709,7 @@ internal sealed partial class MainWindow
         }
 
         Select(0);
+
         return window;
     }
 

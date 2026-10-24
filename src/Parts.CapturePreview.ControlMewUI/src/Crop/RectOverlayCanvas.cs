@@ -73,6 +73,10 @@ internal sealed class RectOverlayCanvas : Control
         var scaling = DpiScaler.NormalizeScaling(context.DpiScale);
 
         context.Save();
+
+        // 描画コンテキストはウィンドウ絶対座標である（要素の左上は (0, 0) ではない）。
+        // 以降を自領域の座標で描けるよう、自領域の左上へ原点を移す
+        context.Translate(Bounds.X, Bounds.Y);
         context.Scale(scaling, scaling);
         try
         {

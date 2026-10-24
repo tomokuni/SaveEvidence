@@ -511,30 +511,42 @@ public sealed class ZoomViewControl : Control
     {
         var appearance = _session.Appearance;
 
-        // 画像が無い部分は下地色の単色（市松模様は描かない）
-        context.Clear(appearance.BackgroundColor.ToMewUIColor());
-
-        var scaling = DpiScaler.NormalizeScaling(context.DpiScale);
-
-        // 画像の外側（影など）を先に描く（画像の端の混色の下地を影にする。 拡大は適用しない）
-        if (SurroundRenderer is { } surround)
-        {
-            surround(context, _session.ImageRect, scaling);
-        }
-
+        // 描画コンテキストはウィンドウ絶対座標である（要素の左上は (0, 0) ではない）。
+        // 以降の計算を自領域の座標で行えるよう、自領域の左上へ原点を移す（兄弟の描画へ漏らさない）。
         context.Save();
-        context.Scale(scaling, scaling);
+        context.Translate(Bounds.X, Bounds.Y);
         try
         {
-            _imageRenderer.Render(context, Source, _session);
-            DrawScrollBars(context, appearance);
+            // 画像が無い部分は下地色の単色（市松模様は描かない）。
+            // 描画面全体を消す Clear は使わない（ウィンドウの他の要素まで消える。 自領域だけを塗る）
+            context.FillRectangle(
+                new Rect(0, 0, RenderSize.Width, RenderSize.Height), appearance.BackgroundColor.ToMewUIColor());
+
+            var scaling = DpiScaler.NormalizeScaling(context.DpiScale);
+
+            // 画像の外側（影など）を先に描く（画像の端の混色の下地を影にする。 拡大は適用しない）
+            if (SurroundRenderer is { } surround)
+            {
+                surround(context, _session.ImageRect, scaling);
+            }
+
+            context.Save();
+            context.Scale(scaling, scaling);
+            try
+            {
+                _imageRenderer.Render(context, Source, _session);
+                DrawScrollBars(context, appearance);
+            }
+            finally
+            {
+                context.Restore();
+            }
         }
         finally
         {
             context.Restore();
         }
     }
-
     /// <summary>オーバーレイスクロールバーを描画する。</summary>
     /// <param name="context">描画先のコンテキスト（DIP 座標で描画できる状態であること）。</param>
     /// <param name="appearance">外観（スクロールバーの太さ・余白・色）。</param>

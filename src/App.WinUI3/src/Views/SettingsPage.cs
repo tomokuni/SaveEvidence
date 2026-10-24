@@ -486,7 +486,9 @@ internal static class SettingsPage
             Maximum = maximum,
             SmallChange = step,
             LargeChange = step * 5,
-            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
+            // 増減ボタンは入力欄の中へ常時表示する（Compact はポップアップを開くため、
+            // 設定画面をスクロールするとポップアップが取り残されてウィンドウ外に見える。 実測 2026-10-24）
+            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
             HorizontalAlignment = HorizontalAlignment.Left,
             MinWidth = 120,
             FontSize = SettingsMetrics.FontSize,
