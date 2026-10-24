@@ -5,7 +5,7 @@ using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
-using EsUtil.SaveEvidence.App.WinUI3.Services;
+using EsUtil.Ui.WinUI3.ColorComboBox;
 using EsUtil.Ui.WinUI3.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI;
@@ -509,68 +509,18 @@ internal static class SettingsPage
     /// <summary>色入力の行を生成する。</summary>
     /// <param name="initial">初期値（<c>#AARRGGBB</c>）。</param>
     /// <param name="apply">変更を設定へ反映する処理。</param>
-    /// <returns>生成した色入力。</returns>
-    /// <remarks>現在値を色見本と 16 進文字列で表示し、クリックで色ピッカーを開く。</remarks>
+    /// <returns>色選択コントロール。</returns>
+    /// <remarks>
+    /// 色の入力・一覧・カラーピッカーは <see cref="ColorComboBoxControl"/>（EsUtil.Ui.WinUI3.ColorComboBox）が担う。<br/>
+    /// 受理する入力と保存値の形式はコア（<c>EsUtil.Platform.Core.Palette</c>）が単一所有するため、
+    /// 設定画面は値を受け渡すだけでよい（4 つの UI 版で同じ解釈になる）。
+    /// </remarks>
     private static FrameworkElement ColorRow(string initial, Action<string> apply)
     {
-        var argb = SettingsColorMath.ToArgb(initial, 0xFF000000);
-        var swatch = new Border
-        {
-            Width = 20,
-            Height = 20,
-            BorderThickness = new Thickness(1),
-            BorderBrush = new SolidColorBrush(Colors.Gray),
-            Background = new SolidColorBrush(SettingsColorMath.ToColor(argb)),
-        };
-
-        var text = new TextBlock
-        {
-            Text = SettingsColorMath.ToArgbString(argb),
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(6, 0, 0, 0),
-            FontFamily = new FontFamily("Consolas"),
-        };
-
-        var button = new Button
-        {
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Padding = new Thickness(6, 2, 6, 2),
-        };
-
-        var content = new StackPanel { Orientation = Orientation.Horizontal };
-        content.Children.Add(swatch);
-        content.Children.Add(text);
-        button.Content = content;
-
-        var picker = new ColorPicker
-        {
-            IsAlphaEnabled = true,
-            IsAlphaSliderVisible = true,
-            IsAlphaTextInputVisible = true,
-            IsColorChannelTextInputVisible = true,
-            ColorSpectrumShape = ColorSpectrumShape.Ring,
-            Color = SettingsColorMath.ToColor(argb),
-        };
-
-        picker.ColorChanged += (_, e) =>
-        {
-            var value = SettingsColorMath.ToArgbString(SettingsColorMath.ToArgb(e.NewColor));
-            swatch.Background = new SolidColorBrush(e.NewColor);
-            text.Text = value;
-            apply(value);
-        };
-
-        // ポップアップをウィンドウの内側に収めない（他 UI 版の色ダイアログと同じく、
-        // ウィンドウの外へはみ出して表示する）。 収めると、ピッカーが縮んでスクロール表示になる
-        var flyout = new Flyout
-        {
-            Content = picker,
-            ShouldConstrainToRootBounds = false,
-        };
-        button.Flyout = flyout;
-        return button;
+        var control = new ColorComboBoxControl { SelectedColor = initial };
+        control.SelectedColorChanged += (_, _) => apply(control.SelectedColor);
+        return control;
     }
-
     /// <summary>選択肢の行を生成する。</summary>
     /// <param name="options">選択肢の表示名。</param>
     /// <param name="selectedIndex">初期の選択位置。</param>

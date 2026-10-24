@@ -65,6 +65,8 @@
     <!-- WinUI 3 版 Interop（コア型 ⇔ WinUI 型・ウィンドウ配置の換算・表示の描画基盤） -->
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Interop\src\EsUtil.Ui.WinUI3.Interop.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Thumbnail\src\EsUtil.Ui.WinUI3.Thumbnail.csproj" />
+    <!-- 設定画面の色選択（色名・16 進・ピッカーを 1 つにまとめたコントロール） -->
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\ColorComboBox\src\EsUtil.Ui.WinUI3.ColorComboBox.csproj" />
   </ItemGroup>
 
   <ItemGroup>

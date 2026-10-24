@@ -1,13 +1,12 @@
-using MewUIColor = Aprillz.MewUI.Color;
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Input;
+using EsUtil.Ui.MewUI.ColorComboBox;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
-using EsUtil.SaveEvidence.App.MewUI.Services;
 using EsUtil.Ui.MewUI.Interop;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
@@ -19,7 +18,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <br/>
 /// <b>保存</b>: 変更のたびに <see cref="ISettingsService.Save"/> を呼ぶ（Avalonia 版と同一のタイミング）。<br/>
 /// <b>テーマ</b>: <c>ThemeMode</c> は <c>Application.SetThemeMode</c> へ即時反映する。<br/>
-/// <b>色</b>: 設定は <c>#AARRGGBB</c> の文字列で保持するため、変換は <see cref="SettingsColorMath"/> が単一所有する。<br/>
+/// <b>色</b>: 設定は <c>#AARRGGBB</c> の文字列で保持し、入力は <see cref="ColorComboBoxControl"/> が担う（規則はコアの <c>Palette</c> が単一所有する）。<br/>
 /// <b>ホットキー</b>: テキストボックス上で修飾キー付きのキーを押すとその組み合わせを設定する（テキスト入力でも解釈する）。<br/>
 /// <b>構成</b>: 折り畳みなしの縦 1 列（テーマ / 保存 / キャプチャ / ホットキー / 一覧表示 / 外観）をスクロール表示する。
 /// </remarks>
@@ -479,27 +478,17 @@ internal static class SettingsPage
     /// <summary>色編集の行を構築する。</summary>
     /// <param name="initial">初期値（<c>#AARRGGBB</c>）。</param>
     /// <param name="apply">変更の反映先。</param>
-    /// <returns>色ピッカーと現在値の表示を並べた要素。</returns>
-    /// <remarks>色は文字列（<c>#AARRGGBB</c>）で保存するため、境界の変換は <see cref="SettingsColorMath"/> に委譲する。</remarks>
+    /// <returns>色選択コントロール。</returns>
+    /// <remarks>
+    /// 色の入力・一覧・カラーピッカーは <see cref="ColorComboBoxControl"/>（EsUtil.Ui.MewUI.ColorComboBox）が担う。<br/>
+    /// 受理する入力と保存値の形式はコア（<c>EsUtil.Platform.Core.Palette</c>）が単一所有するため、
+    /// 設定画面は値を受け渡すだけでよい（他の UI 版と同じ解釈になる）。
+    /// </remarks>
     private static FrameworkElement ColorRow(string initial, Action<string> apply)
     {
-        var text = new ObservableValue<string>(initial);
-
-        var picker = new ColorPicker()
-            .ShowAlpha(true)
-            .Width(160);
-        picker.SelectedColor = SettingsColorMath.ToMewUIColor(initial, MewUIColor.Transparent);
-        picker.SelectedColorChanged += color =>
-        {
-            var value = SettingsColorMath.ToArgbString(color);
-            text.Value = value;
-            apply(value);
-        };
-
-        return new StackPanel()
-            .Horizontal()
-            .Spacing(8)
-            .Children(picker, new TextBlock().BindText(text).FontSize(SettingsMetrics.FontSize).VerticalAlignment(VerticalAlignment.Center));
+        var control = new ColorComboBoxControl { SelectedColor = initial };
+        control.SelectedColorChanged += (_, _) => apply(control.SelectedColor);
+        return control;
     }
 
     /// <summary>選択肢の行を構築する。</summary>

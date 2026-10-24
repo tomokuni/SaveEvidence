@@ -35,6 +35,8 @@
     <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型） -->
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Interop\src\EsUtil.Ui.MewUI.Interop.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Thumbnail\src\EsUtil.Ui.MewUI.Thumbnail.csproj" />
+    <!-- 設定画面の色選択（色名・16 進・ピッカーを 1 つにまとめたコントロール） -->
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\ColorComboBox\src\EsUtil.Ui.MewUI.ColorComboBox.csproj" />
   </ItemGroup>
 
   <ItemGroup>
