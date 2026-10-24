@@ -158,7 +158,7 @@ buildScript\publish_AvaloniaUI.bat
 
 ## 10. フォルダビュー
 
-保存先フォルダの画像ファイル（PNG / JPG / BMP / GIF / TIFF / WEBP）をサムネイル一覧表示します。
+保存先フォルダの画像ファイル（PNG / JPG / BMP / GIF / TIFF / WEBP / JPEG XR / HEIF / JPEG XL）をサムネイル一覧表示します。
 
 - **表示モード**: 特大 / 大 / 中（選択状態は自動保存され、次回起動時に復元）
 - **ソート**: 名前の昇順 / 降順

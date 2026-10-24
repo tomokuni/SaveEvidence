@@ -201,7 +201,7 @@ public sealed partial class MainWindow : Window
             [
                 new FilePickerFileType("画像ファイル")
                 {
-                    Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.webp"]
+                    Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tif", "*.tiff", "*.jxr", "*.wdp", "*.heic", "*.heif", "*.webp", "*.jxl"]
                 }
             ],
         });
