@@ -511,6 +511,7 @@ public sealed class ZoomViewControl : Control
     {
         var appearance = _session.Appearance;
 
+
         // 描画コンテキストはウィンドウ絶対座標である（要素の左上は (0, 0) ではない）。
         // 以降の計算を自領域の座標で行えるよう、自領域の左上へ原点を移す（兄弟の描画へ漏らさない）。
         context.Save();

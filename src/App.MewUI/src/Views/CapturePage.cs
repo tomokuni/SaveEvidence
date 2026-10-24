@@ -884,7 +884,7 @@ internal static class CapturePage
         // 撮影に必要なサービス（キャプチャ・要素検出・ウィンドウ操作）の生成は Facade が担う（ホストは組み立てない）。
         // ログは Facade 自身のカテゴリで記録する（ページのログと混ざらないようにする）
         captureSession = new CaptureSessionControl(
-            CaptureSettingsMapper.From(settings, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0),
+            CaptureSettingsMapper.From(settings, ResolveRenderScaling(cropView)),
             AppLog.CreateLogger(nameof(CaptureSessionControl)));
 
         // 設定変更を Facade へ即時反映する（部分更新・検証・同値スキップ・適用ログはコアが単一所有する）。
@@ -897,7 +897,7 @@ internal static class CapturePage
             try
             {
                 session.AppearanceSettings = CaptureSettingsMapper.From(
-                    settings, DpiHelper.GetDpiForPoint(new Point(0, 0)) / 96.0);
+                    settings, ResolveRenderScaling(cropView));
             }
             catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
@@ -907,6 +907,16 @@ internal static class CapturePage
         return host;
     }
 
+    /// <summary>プレビューを表示している画面の描画倍率を求める（100% = 1.0）。</summary>
+    /// <param name="element">倍率を求める要素（表示中の画面の DPI を使う）。</param>
+    /// <returns>描画倍率。 取得できない場合は基準値（1.0）。</returns>
+    /// <remarks>
+    /// <b>要素の DPI を使う理由</b>: 座標 (0, 0) のモニターの倍率で固定すると、ウィンドウを別の倍率の
+    /// モニターへ移したときにルーペの拡大・サイズラベルの表示倍率が実際と食い違う（ルーペの拡大画像が
+    /// 実際と違う大きさで見える。 実測 2026-10-24）。
+    /// </remarks>
+    private static double ResolveRenderScaling(FrameworkElement element)
+        => EsUtil.Platform.Core.Coord.DpiScaler.NormalizeScaling(element.GetDpi() / 96.0);
     /// <summary>撮影結果をプレビューへ反映する（CaptureCompleted イベントのハンドラ）。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト（履歴の所有者）。</param>
     /// <param name="viewModel">アプリのメイン ViewModel（画像の所有者）。</param>
