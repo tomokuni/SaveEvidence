@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 /// <b>保存形式ごとの細かい検証はコアが単一所有する</b>: 形式の判別とエンコードは
 /// <see cref="EsReadOnlyBitmap.Save(string)"/> / <see cref="EsReadOnlyBitmap.Load(string)"/>（<c>EsUtil.Platform.Core.Tests</c>）が検証済みである。<br/>
 /// 本テストは<b>アプリ側の契約</b>だけを検証する（コアの保存へ委譲されること・引数の検証・上書き）。<br/>
-/// 保存は Windows 専用の GDI+ を呼ぶため、本クラスは
+/// 保存は Windows 専用の WIC（Windows Imaging Component）を呼ぶため、本クラスは
 /// 対象フレームワーク（<c>net10.0-windows10.0.17763.0</c>）が Windows を表す（コアの保存テストと同じ方針）。
 /// </remarks>
 public class EsBitmapImageWriterTests

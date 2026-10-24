@@ -5,7 +5,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// <summary><see cref="IImageWriter"/> の実装（コアのファイル保存へ委譲する）。</summary>
 /// <remarks>
 /// <b>保存形式とエンコードは <see cref="EsReadOnlyBitmap.Save(string)"/> が単一所有する</b>（拡張子が形式を決め、
-/// 未対応の拡張子は <see cref="NotSupportedException"/>。 実装は OS の GDI+ を直接呼ぶ）。<br/>
+/// 未対応の拡張子は <see cref="NotSupportedException"/>。 実装は OS の WIC（Windows Imaging Component）を直接呼ぶ）。<br/>
 /// <b>なぜ本プロジェクト（UI 非依存）に置けるのか</b>: 呼び出し元の UI 実装を必要としないため、両 UI で同じ実装を
 /// 使える（実装が 1 つになり、保存結果が UI で食い違わない）。 本クラスは Windows 専用の API を呼ぶため
 /// <b>Windows 専用</b>: 本プロジェクトの対象フレームワーク（<c>net10.0-windows10.0.17763.0</c>）で前提を表す。<br/>
@@ -18,7 +18,7 @@ public sealed class EsBitmapImageWriter : IImageWriter
     /// <exception cref="ArgumentNullException">画像またはファイルパスが null の場合。</exception>
     /// <exception cref="ArgumentException">ファイルパスが空白の場合。</exception>
     /// <exception cref="NotSupportedException">拡張子が対応形式でない場合。</exception>
-    /// <exception cref="System.Runtime.InteropServices.ExternalException">エンコード（GDI+）が失敗した場合。</exception>
+    /// <exception cref="System.Runtime.InteropServices.ExternalException">エンコード（WIC）が失敗した場合。</exception>
     public void Save(EsReadOnlyBitmap image, string filePath)
     {
         ArgumentNullException.ThrowIfNull(image);
