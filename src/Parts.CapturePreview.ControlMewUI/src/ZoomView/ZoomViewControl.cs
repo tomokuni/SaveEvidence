@@ -504,8 +504,8 @@ public sealed class ZoomViewControl : Control
     /// <param name="context">描画先のコンテキスト（DIP 座標で描画する）。</param>
     /// <remarks>
     /// 描画順（下地 → 周囲 → 画像 → スクロールバー）は本メソッドが単一所有し、各描画内容はコアの値に従う。<br/>
-    /// スケーリングは描画先の DPI（<see cref="IGraphicsContext.DpiScale"/>）から求める
-    /// （コアの計算は物理ピクセル基準のため、DIP の座標を同じ倍率で拡大する）。
+    /// <b>座標はすべて DIP である</b>: 描画先が DPI の換算を行うため、本メソッドは倍率を掛けない
+    /// （掛けると二重に拡大され、画像が領域からはみ出す。 実測 2026-10-25）。 倍率は周囲（影）の描画フックへ渡すだけである。
     /// </remarks>
     protected override void OnRender(IGraphicsContext context)
     {
@@ -531,23 +531,17 @@ public sealed class ZoomViewControl : Control
                 surround(context, _session.ImageRect, scaling);
             }
 
-            context.Save();
-            context.Scale(scaling, scaling);
-            try
-            {
-                _imageRenderer.Render(context, Source, _session);
-                DrawScrollBars(context, appearance);
-            }
-            finally
-            {
-                context.Restore();
-            }
+            // 描画コンテキストは DIP 座標である（DPI の換算はコンテキストが行う）。
+            // ここで DpiScale を掛けると二重に拡大され、画像が領域からはみ出して位置もずれる（実測 2026-10-25）
+            _imageRenderer.Render(context, Source, _session);
+            DrawScrollBars(context, appearance);
         }
         finally
         {
             context.Restore();
         }
     }
+
     /// <summary>オーバーレイスクロールバーを描画する。</summary>
     /// <param name="context">描画先のコンテキスト（DIP 座標で描画できる状態であること）。</param>
     /// <param name="appearance">外観（スクロールバーの太さ・余白・色）。</param>

@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Rendering;
-using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
@@ -69,15 +68,11 @@ internal sealed class RectOverlayCanvas : Control
             return;
         }
 
-        // スケーリング係数の正規化（0 以下は基準値）はコアが単一所有する
-        var scaling = DpiScaler.NormalizeScaling(context.DpiScale);
-
         context.Save();
 
-        // 描画コンテキストはウィンドウ絶対座標である（要素の左上は (0, 0) ではない）。
-        // 以降を自領域の座標で描けるよう、自領域の左上へ原点を移す
+        // 描画コンテキストはウィンドウ絶対座標（要素の左上は (0, 0) ではない）かつ DIP 座標である。
+        // 自領域の左上へ原点を移す（DPI の換算はコンテキストが行うため、ここで倍率を掛けない）
         context.Translate(Bounds.X, Bounds.Y);
-        context.Scale(scaling, scaling);
         try
         {
             foreach (var rect in _rects)

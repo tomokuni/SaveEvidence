@@ -308,7 +308,9 @@ internal sealed class MainForm : Form
         // BeginInvoke を直後に呼ぶと、投稿されたメッセージが最初の描画（WM_PAINT）より先に処理され、
         // キャプチャ ページが表示されるまで待たされる（実測）。 短いタイマーを 1 回だけ待つと、
         // 最初の描画が済んでから先読みが始まる。
-        var pending = new Queue<AppPage>([AppPage.FolderView, AppPage.Undo]);
+        // 設定ページも先読みする（他の UI 版と同じ）。 先読みしないと、アイコンを押した時点で
+        // 数十行の入力コントロールをまとめて生成するため、開くまで待たされる（実測 2026-10-25）
+        var pending = new Queue<AppPage>([AppPage.FolderView, AppPage.Undo, AppPage.Settings]);
         var warmUpDelay = new System.Windows.Forms.Timer { Interval = 200 };
         warmUpDelay.Tick += (_, _) =>
         {
