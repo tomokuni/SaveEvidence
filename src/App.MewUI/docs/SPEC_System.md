@@ -117,7 +117,6 @@ src/App.MewUI/src/
 ├── Program.cs                        起動（バックエンド登録 → コアの組み立て → ホットキー登録 → ウィンドウ表示）
 ├── AppServices.cs                    共有するコアオブジェクトの束
 ├── Services/
-│   ├── SettingsColorMath.cs          設定の色文字列 ⇔ 色の変換
 │   ├── SettingsJsonContext.cs        設定の JSON ソース生成（Native AOT 対応）
 │   ├── CaptureFlow.cs                キャプチャの開始（多重起動の防止。 画像の反映は CaptureCompleted）
 │   ├── EditHistory.cs                編集履歴（戻す / やり直し）の実行
@@ -138,7 +137,6 @@ src/App.MewUI/src/
 tests/
 ├── App.MewUI.Tests.csproj      xUnit v3（net10.0-windows）
 ├── TestHelper.cs               テスト共通ユーティリティ
-├── SettingsColorMath.Tests.cs  色文字列の解析と整形
 ├── AppLog.Tests.cs             ログ定義の書式と IsEnabled 分岐
 ```
 
@@ -162,7 +160,7 @@ tests/
 | `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `EsUtil.Ui.MewUI.Interop` の `ImageView` が単一所有し、計測と Uniform 指定だけを与える） |
 | `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsReadOnlyBitmap.Save`（拡張子が形式を決める）へ委譲する |
 | `ImageDrawMath`（`EsUtil.Ui.MewUI.Interop`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
-| `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）⇔ MewUI / System.Drawing の色（純粋関数） |
+| `ColorComboBoxControl` | 設定画面の色選択（EsUtil.Ui.MewUI.ColorComboBox）。 色名・16 進の入力、一覧、ピッカー、検証を持つ |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |
 | `LoupeOptions` | 設定のルーペ項目をルーペコントロールへ反映（プレビュー / 撮影 / 切り出しで共用） |
 | `CropBoundsMath`（`Parts.CapturePreview.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。 Avalonia 版と共用する（`CropSession` が使用） |
@@ -312,7 +310,7 @@ classDiagram
     CaptureOverlay ..> SelectionOverlayControl : 配置（Area / Screen / Window）
     CaptureOverlay ..> IElementFinder : 要素の検出
     CaptureOverlay ..> ICaptureService : 画面の取得
-    SettingsPage ..> SettingsColorMath : 色の変換
+    SettingsPage ..> ColorComboBox : 色の入力を委譲
     SettingsPage ..> ISettingsService : 設定の読み書き
     FolderViewPage ..> ThumbnailView : 配置
     FolderViewPage ..> FolderViewViewModel : 束縛
@@ -656,7 +654,7 @@ sequenceDiagram
     サムネイル（`ThumbnailView`）は大きさの要求が異なるが、描画は `EsUtil.Ui.MewUI.Interop` の `ImageView` が、
     配置の計算は `ImageDrawMath`（`EsUtil.Ui.MewUI.Interop`）が単一所有する（サムネイルは計測と Uniform 指定だけを加える）。
 16. **色の変換を専用クラスへ分離する**。 設定は色を文字列で保持するため、境界の変換は
-   `SettingsColorMath` が単一所有し、不正な値は既定色へフォールバックする。
+   コア（`EsUtil.Platform.Core.Palette` の `ColorString`）が単一所有し、入力の検証は `ColorComboBoxControl` が行う。
 17. **絶対配置が必要な子は自前の Panel で配置する**。 MewUI の `Grid` は整列で位置を決め、`Margin` と
    `Canvas` の絶対配置は反映されない（実測）。 また `ActualWidth` / `ActualHeight` は測定結果（残余を埋める
    要素では 0）であり実サイズは配置引数からしか得られない。
@@ -716,7 +714,7 @@ sequenceDiagram
 | `EsBitmapImageWriter`（`App.Core` の共通実装） | 実ファイルへ書き出し、コアの `EsReadOnlyBitmap.Load` で読み戻して画素数を検証する（保存形式の判別はコアのテストが担う） |
 | `WindowPlacementMath` | 純粋関数のためヘッドレスで検証する。 スケール 0・負値・NaN、画面外判定、四捨五入の境界を含む |
 | `ImageDrawMath` | 純粋関数のためヘッドレスで検証する。 Uniform / Fill・余白の中央寄せ・空の入力（`EsUtil.Ui.MewUI.Interop.Tests` が担う） |
-| `SettingsColorMath` | 純粋関数のためヘッドレスで検証する。 6 / 8 桁・大文字小文字・不正入力・往復変換 |
+| `ColorComboBoxControl` | 色文字列の規則はコアのテストが検証する（EsUtil 側）。 設定画面は値の受け渡しだけを行う |
 | `SettingsService` | ソース生成と反射の書式の一致（既存の設定ファイルとの互換性）を `App.Core.Tests` で検証する |
 | `ThumbnailScheduler`（`App.Core`） | 表示状態による負荷の切替（非表示では 1 件ずつ・表示中は上限まで並列）、優先度（見えている帯が先・同帯は位置順）、`Clear()` での未実行要求の破棄と実行中への中断伝搬、失敗の通知と継続を検証する（時間の経過ではなく「開始した件数」とトークンの状態で判定する）。 ページ側はスケジューラへの要求と表示状態の反映だけを担う |
 | `ThumbnailPriority`（`App.Core`） | 表示範囲と可視領域の重なりによる可視判定の境界（内側・外側・端が一致する場合）と、帯・位置の順序を検証する |

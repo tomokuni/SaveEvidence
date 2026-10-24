@@ -46,8 +46,7 @@ src/App.MewUI/
     ├── Program.cs           # 登録 → コアの組み立て（AppServices） → ホットキー登録 → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoHistory / FolderView）
     ├── Services/
-    │   ├── SettingsColorMath.cs       # 設定の色文字列 ⇔ 色の変換
-    │   ├── SettingsJsonContext.cs     # 設定の JSON ソース生成（Native AOT 対応）
+        │   ├── SettingsJsonContext.cs     # 設定の JSON ソース生成（Native AOT 対応）
     │   ├── CaptureFlow.cs             # キャプチャの開始（多重起動の防止。 画像の反映は CaptureCompleted）
     │   └── EditHistory.cs             # 編集履歴（戻す / やり直し）の実行
     └── Views/
@@ -64,8 +63,7 @@ src/App.MewUI/
     └── tests/
     ├── App.MewUI.Tests.csproj           # xUnit v3（net10.0-windows）
     ├── TestHelper.cs                    # テスト共通ユーティリティ
-    └── SettingsColorMath.Tests.cs       # 色文字列の解析と整形
-```
+    ```
 
 画像の保存（`IImageWriter`）は `App.Core` の `EsBitmapImageWriter`（両 UI 共通）を使います。
 

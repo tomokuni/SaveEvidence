@@ -102,7 +102,6 @@ src/App.WinUI3/src/
 ├── Services/
 │   ├── CaptureFlow.cs                  撮影の開始（多重起動の防止）
 │   ├── EditHistory.cs                  編集履歴（戻す / やり直し）の実行
-│   ├── SettingsColorMath.cs            設定の色文字列 ⇔ 色の変換
 │   ├── AppJsonContext.cs               設定の JSON ソース生成コンテキスト
 │   ├── CaptureClipboard.cs             クリップボードとの画像の受け渡し
 │   ├── GlobalHotKeyRegistration.cs     グローバル ホットキーの登録と配信
@@ -139,7 +138,7 @@ src/App.WinUI3/src/
 | `WrapLayoutMath` / `AppStyles` | 一覧の配置の計算・共通の寸法 |
 | `CaptureFlow` | 撮影の開始（多重起動の防止）。 画像の反映は撮影完了イベントの購読側が行う |
 | `EditHistory` | 編集履歴（戻す / やり直し）の実行 |
-| `SettingsColorMath` | 設定の色文字列（`#AARRGGBB`）と色の相互変換 |
+| `ColorComboBoxControl` | 設定画面の色選択（EsUtil.Ui.WinUI3.ColorComboBox）。 色名・16 進の入力、一覧、ピッカー、検証を持つ |
 | `AppJsonContext` | 設定の JSON ソース生成コンテキスト |
 | `CaptureClipboard` | クリップボードとの画像の受け渡し（PNG として授受する） |
 | `GlobalHotKeyRegistration` | グローバル ホットキーの登録・解除と押下の配信 |

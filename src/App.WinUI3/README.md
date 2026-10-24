@@ -116,7 +116,6 @@ src/App.WinUI3/
 │   │   └── AppLog.cs        # ログ定義（LoggerMessage ソース生成）と出力構成
 │   ├── Services/
 │   │   ├── AppJsonContext.cs          # 設定の JSON ソース生成コンテキスト
-│   │   ├── SettingsColorMath.cs       # 設定の色文字列 ⇔ 色の変換
 │   │   ├── CaptureFlow.cs             # 撮影の開始（多重起動の防止）
 │   │   ├── CaptureClipboard.cs        # クリップボードとの画像の受け渡し
 │   │   ├── EditHistory.cs             # 編集履歴（戻す / やり直し）の実行
@@ -140,8 +139,7 @@ src/App.WinUI3/
     ├── CaptureSettingsMapper.Tests.cs
     ├── EditHistory.Tests.cs
     ├── FolderFileListReader.Tests.cs
-    ├── SettingsColorMath.Tests.cs
-    └── TestHelper.cs
+        └── TestHelper.cs
 ```
 
 `App.Core` の内部型は `InternalsVisibleTo` で公開されているため、サムネイル生成のスケジューラ（`ThumbnailScheduler` / `ThumbnailPriority`）・容量制限付きキャッシュ・画像拡張子の判定・設定の写像・表示モードの文言は
