@@ -264,6 +264,7 @@
 | `.heic` / `.heif` | HEIF（コーデック拡張が要る。 無い環境では一覧に出ない） |
 | `.jxl` | JPEG XL（コーデック拡張が要る。 無い環境では一覧に出ない） |
 
+- **表は代表的な形式です**。 保存できる形式の一覧は**実行環境の WIC のエンコーダーから作る**ため、コーデック拡張（Microsoft Store）の有無で変わります（`EsReadOnlyBitmap.SupportedFileExtensions` が実際に書き出せる拡張子だけを返します）。
 - 拡張子の大文字・小文字は区別しません（`.PNG` も PNG として保存）。
 - **上記以外の拡張子は保存できません**（`NotSupportedException`。 例: `.webp`）。 PNG 等へ黙って差し替えると、意図と違う形式のファイルができて気付かないためです。
 - エンコードの実体は OS の WIC（`windowscodecs.dll`）です（Windows 専用）。 品質の指定はしていません（形式ごとの既定値）。
