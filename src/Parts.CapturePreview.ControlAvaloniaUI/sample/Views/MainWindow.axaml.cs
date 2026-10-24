@@ -201,7 +201,10 @@ public sealed partial class MainWindow : Window
             [
                 new FilePickerFileType("画像ファイル")
                 {
-                    Patterns = ["*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.tif", "*.tiff", "*.jxr", "*.wdp", "*.heic", "*.heif", "*.webp", "*.jxl"]
+                    // 一覧に並べる拡張子の単一所有者（コアの窓口）から作る（ここへ拡張子を書き並べない）
+                    Patterns = [.. EsImageCodec.ListableExtensions
+                        .Order(StringComparer.Ordinal)
+                        .Select(extension => string.Concat("*", extension))],
                 }
             ],
         });
