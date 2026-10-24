@@ -2,6 +2,35 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "ビルド（全体・並列）",
+      "detail": "ソリューション全体を MSBuild の並列ビルドでビルドする（端末では色付きの出力と工程ごとの所要時間が出る）",
+      "type": "shell",
+      "command": "dotnet build SaveEvidence.slnx",
+      "group": "build",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "ビルド（App.AvaloniaUI）",
+      "type": "shell",
+      "command": "dotnet build src/App.AvaloniaUI/src/App.AvaloniaUI.csproj",
+      "group": "build",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "ビルド（App.MewUI）",
+      "type": "shell",
+      "command": "dotnet build src/App.MewUI/src/App.MewUI.csproj",
+      "group": "build",
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "ビルド（App.WinForms）",
+      "type": "shell",
+      "command": "dotnet build src/App.WinForms/src/App.WinForms.csproj",
+      "group": "build",
+      "problemMatcher": "$msCompile"
+    },
+    {
       "label": "ビルド（App.WinUI3）",
       "type": "shell",
       "command": "dotnet build src/App.WinUI3/src/App.WinUI3.csproj",
