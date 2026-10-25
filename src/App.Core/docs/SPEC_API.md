@@ -31,18 +31,19 @@
 - [19. `Services.NavPanelMetrics`（静的クラス）](#19-servicesnavpanelmetrics静的クラス)
 - [20. `Services.StartupPreviewImage`（静的クラス）](#20-servicesstartuppreviewimage静的クラス)
 - [21. `Services.EnumDisplayNames`（静的クラス）](#21-servicesenumdisplaynames静的クラス)
-- [22. `Services.StatusBarMetrics`（静的クラス）](#22-servicesstatusbarmetrics静的クラス)
-- [23. `Services.SettingsMetrics`（静的クラス）](#23-servicessettingsmetrics静的クラス)
-- [24. `Services.ThumbnailTileMetrics`（静的クラス）](#24-servicesthumbnailtilemetrics静的クラス)
-- [25. `Services.AppIdentity`（静的クラス）](#25-servicesappidentity静的クラス)
-- [26. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）](#26-serviceswindowmetrics--serviceswindowlayout静的クラス)
-- [27. `Services.WindowMenu`](#27-serviceswindowmenu)
-- [28. `Icons.AppIcons`（内部・静的クラス）](#28-iconsappicons内部静的クラス)
-- [29. `Services.ZoomMenuLevels`（静的クラス）](#29-serviceszoommenulevels静的クラス)
-- [30. 依存関係](#30-依存関係)
-- [31. `Services.ToolbarMetrics`（静的クラス）](#31-servicestoolbarmetrics静的クラス)
-- [32. ウィンドウ配置の復元規則（EsUtil.Platform.Core へ移設）](#32-ウィンドウ配置の復元規則esutilplatformcore-へ移設)
-- [33. `Icons.CaptureIconFiles`（静的クラス）](#33-iconscaptureiconfiles静的クラス)
+- [22. `Services.ColorTextFormatDisplay`（静的クラス）](#22-servicescolortextformatdisplay静的クラス)
+- [23. `Services.StatusBarMetrics`（静的クラス）](#23-servicesstatusbarmetrics静的クラス)
+- [24. `Services.SettingsMetrics`（静的クラス）](#24-servicessettingsmetrics静的クラス)
+- [25. `Services.ThumbnailTileMetrics`（静的クラス）](#25-servicesthumbnailtilemetrics静的クラス)
+- [26. `Services.AppIdentity`（静的クラス）](#26-servicesappidentity静的クラス)
+- [27. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）](#27-serviceswindowmetrics--serviceswindowlayout静的クラス)
+- [28. `Services.WindowMenu`](#28-serviceswindowmenu)
+- [29. `Icons.AppIcons`（内部・静的クラス）](#29-iconsappicons内部静的クラス)
+- [30. `Services.ZoomMenuLevels`（静的クラス）](#30-serviceszoommenulevels静的クラス)
+- [31. 依存関係](#31-依存関係)
+- [32. `Services.ToolbarMetrics`（静的クラス）](#32-servicestoolbarmetrics静的クラス)
+- [33. ウィンドウ配置の復元規則（EsUtil.Platform.Core へ移設）](#33-ウィンドウ配置の復元規則esutilplatformcore-へ移設)
+- [34. `Icons.CaptureIconFiles`（静的クラス）](#34-iconscaptureiconfiles静的クラス)
 
 ## 1. 公開 API の可視性
 
@@ -51,7 +52,7 @@
 | `Enums.AppPage` / `Enums.ThemeMode` | `public` | 任意 |
 | `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
-| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` / `Icons.CaptureIconFiles` | `public` | 任意 |
+| `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.ColorTextFormatDisplay` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` / `Icons.CaptureIconFiles` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
 | `Models.ThumbnailScheduler` | `internal` | 同上 |
 | `Models.ThumbnailPriority` | `internal` | 同上 |
@@ -80,6 +81,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `SelectScreenHotKey` / `WindowSelectHotKey` / `AreaSelectHotKey` | `HotKeySetting` | グローバルホットキー |
 | `FileNameTemplate` / `SaveFolderPath` | `string` | ファイル名テンプレート・保存先フォルダ |
 | `ThemeMode` | `ThemeMode` | テーマモード |
+| `ColorTextFormat` | `ColorTextFormat`（EsUtil.Platform.Core.Palette） | 色選択コントロールの入力欄へ出す表記（`NameWithAlpha` = 色名 + 不透明度 / `HexCode` = `#AARRGGBB`）。 保存値は変わらない |
 | `IsNavigationExpanded` | `bool` | ナビゲーションパネルの展開状態 |
 | `StartupPreview` | `StartupPreviewMode` | 起動直後のキャプチャ ページに置く画像（`Gradient` = グラデーション画像 / `Blank` = 空白。 既定は `Gradient`） |
 | `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | フォルダビューのアイコンサイズ |
@@ -266,6 +268,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `CenterAlign` | `bool` | Fit 時の画像配置（設定へ委譲） |
 | `NavPanelWidth` / `IsNavigationExpanded` | `double` / `bool` | ナビパネル（幅の根拠は `NavPanelMetrics`（App.Core）が単一所有。 展開 136 / 収納 40 DIP） |
 | `ThemeModes` | `IReadOnlyList<ThemeMode>` | テーマモードの選択肢 |
+| `ColorTextFormats` | `IReadOnlyList<ColorTextFormat>` | 色の表記の選択肢（表示名は `Services.ColorTextFormatDisplay` が単一所有する） |
 
 ### 16.3 主な操作
 
@@ -376,7 +379,18 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | --- | --- |
 | `Get<T>(T value)` / `Get(Enum value)` | 表示名を返す（属性が無い場合は列挙の名前） |
 
-## 22. `Services.StatusBarMetrics`（静的クラス）
+## 22. `Services.ColorTextFormatDisplay`（静的クラス）
+
+色選択コントロールの入力欄の表記（`EsUtil.Platform.Core.Palette.ColorTextFormat`）の**表示名と選択肢**を単一所有します。 `ColorTextFormat` は UI 非依存のライブラリ（EsUtil）の型で表示名を持たないため、アプリ側の文言はここへ集約します。
+
+| メンバー | 説明 |
+| --- | --- |
+| `All` | 設定画面へ並べる表記（`NameWithAlpha` → `HexCode` の順） |
+| `Get(ColorTextFormat)` | 表示名（`DarkGray（色名 + 不透明度）` / `#FFFFFFFF（カラーコード）`） |
+
+設定画面（AvaloniaUI / MewUI / WinUI 3）は `Settings.ColorTextFormat` を ComboBox で選ばせ、色選択コントロールの `TextFormat` へ反映します（保存値は変わりません）。
+
+## 23. `Services.StatusBarMetrics`（静的クラス）
 
 ステータス バーの文字サイズを単一所有します（UI 版ごとに文字の大きさがずれないようにするため）。
 
@@ -388,7 +402,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します（`AppStyles.StatusBarFont` が換算済みのフォントを 1 つだけ生成して共用する）。
 
-## 23. `Services.SettingsMetrics`（静的クラス）
+## 24. `Services.SettingsMetrics`（静的クラス）
 
 設定ページの文字サイズと共通の文言を単一所有します（UI 版ごとに見た目がずれないようにするため）。 文字サイズは **AvaloniaUI 版（Fluent テーマの既定 14 DIP）を基準**にします。
 
@@ -400,7 +414,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。
 
-## 24. `Services.ThumbnailTileMetrics`（静的クラス）
+## 25. `Services.ThumbnailTileMetrics`（静的クラス）
 
 一覧（フォルダビュー / Undo 一覧）のサムネイル 1 件の見た目の寸法を単一所有します（UI 版ごとに影の濃さ・名前の位置がずれないようにするため）。 **画像の周りに枠線・下地は置きません**（影だけを付けます）。
 
@@ -446,7 +460,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **画素の格子へ揃える**（キャプチャページの画像）: 画像は端数のある位置へ描かれるため、影の矩形を端数のまま描くと端の画素が半透明になり、画像との間に「白い線」または「黒い線」として見えます。 `BuildDeviceBands` が**物理ピクセルの整数矩形**を返すため、各 UI 版は丸めを持ちません（DIP へ戻すときだけ倍率で割ります）。 アンチエイリアスは切って画像の端と隙間なく接させます。 さらに**画像の端の画素（切り捨てた行・列）も帯で覆い**ます: 画像の描画側は端の画素を切り捨てたり切り上げたりするため、`floor` の行・列が画像でも影でも塗られず**背景（白）が残る**ことがあります（実測: 拡大率によって画像の上辺に 1 画素の白い線）。 覆った分は画像が塗る場合は画像に隠れます。
 
-## 25. `Services.AppIdentity`（静的クラス）
+## 26. `Services.AppIdentity`（静的クラス）
 
 アプリの**名前・タスク バーの識別子・アイコン・保存先**の唯一の定義です（4 つの UI 版が同じ値を使う）。 UI 版ごとに文字列を書くと、綴りの違いで設定・ログ・タスク バーのグループ分けがずれます。
 
@@ -462,7 +476,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 `TaskbarIdentity.Apply()` は **`SetCurrentProcessExplicitAppUserModelID`** でプロセスの AUMID を設定します（4 UI 版が同じ値を使うため、タスク バーでは 1 つのアプリにまとまります）。 **ウィンドウを作る前**に各 UI 版のエントリ ポイントが 1 回呼びます。 失敗（API 不在等）しても例外にせず、起動を妨げません（タスク バーのグループ分けが既定のままになるだけです）。
 
-## 26. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）
+## 27. `Services.WindowMetrics` / `Services.WindowLayout`（静的クラス）
 
 メイン ウィンドウの寸法と配置の**唯一の定義**です（4 つの UI 版で同じ値を使う）。
 
@@ -479,7 +493,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **ナビゲーション パネルの配置**: 展開しても**ページ領域は動きません**（収納時の幅の位置に留まります）。 展開したパネルはページ領域の上へ重なり、上端はページ領域の先頭、下端はステータス バーに被ります。 パネルの一番上にアプリ アイコン、その下に開閉ボタン（アイコンのみ）を置き、**展開時は開閉ボタンの右にアプリ名を表示**します。 アプリ アイコンは**ナビゲーションのアイコンと同じ大きさ**にし、**縦位置をツールバーのアイコンと揃え**（`AppIconRowHeight` の中で中央）、**横位置を開閉アイコンと同じ列**（`AppIconColumnWidth` の中で中央）に置きます。 展開中にナビ領域の外を操作すると収納へ戻ります。
 
-## 27. `Services.WindowMenu`
+## 28. `Services.WindowMenu`
 
 ウィンドウ左上のアイコンの押下で出す標準メニューの**項目・並び・有効/無効**の唯一の定義です（4 つの UI 版で同じメニューになる）。
 
@@ -491,7 +505,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **移動とサイズ変更**は `EsUtil.Platform.Core` の `SystemWindowCommands` が OS のモード（`WM_SYSCOMMAND`）へ入ります（アプリ側で追従を実装しない）。
 
-## 28. `Icons.AppIcons`（内部・静的クラス）
+## 29. `Icons.AppIcons`（内部・静的クラス）
 
 アイコンの SVG の**読み込み元**の唯一の定義です（4 つの UI 版が同じファイルを使います）。
 
@@ -511,7 +525,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **アイコンのファイルは `src/App.Core/src/Icons/` に置きます**（埋め込みリソース。 論理名は `EsUtil.SaveEvidence.App.Core.Icons.<ファイル名>`）。 各 UI 版はパス データを自分の描画 API へ変換して描くだけです（UI 版ごとに SVG を複製すると、片方だけ直したときに見た目がずれます）。
 
-## 29. `Services.ZoomMenuLevels`（静的クラス）
+## 30. `Services.ZoomMenuLevels`（静的クラス）
 
 ステータス バーの**拡大率の押下で出す選択肢**（%）の唯一の定義です（4 つの UI 版で同じ選択肢になる）。 メニューの先頭には「自動」（Fit 表示へ戻す）を別途置きます。
 
@@ -521,7 +535,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 ⊖⊕ ボタンの段階（`ZoomTransition.DefaultButtonZoomLevels`・23 段階）とは目的が異なるため別に持ちます。
 
-## 30. 依存関係
+## 31. 依存関係
 
 | 依存 | 用途 |
 | --- | --- |
@@ -531,7 +545,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 UI フレームワーク（Avalonia / MewUI）への依存はありません。
 
-## 31. `Services.ToolbarMetrics`（静的クラス）
+## 32. `Services.ToolbarMetrics`（静的クラス）
 
 ツールバーの共通寸法・文字サイズを単一所有します（4 UI 版は同じサイズを使い、各フレームワークの標準スタイルで描画します）。
 
@@ -545,7 +559,7 @@ UI フレームワーク（Avalonia / MewUI）への依存はありません。
 
 MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ既定は 14 DIP です。 WinForms の `Font` はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。 アイコン単独のボタンは 32 × 32 DIP・16 DIP アイコン・内側余白 0 とし、文字付きボタンには表の余白を使います。
 
-## 32. ウィンドウ配置の復元規則（EsUtil.Platform.Core へ移設）
+## 33. ウィンドウ配置の復元規則（EsUtil.Platform.Core へ移設）
 
 ウィンドウ配置の復元判定・可視領域への補正・外寸とクライアント寸法の換算は
 **`EsUtil.Platform.Core.Window.EsWindowPlacementMath` が単一所有**します（2026-10-23 に本プロジェクトの `WindowPlacementRule` から移設）。
@@ -553,7 +567,7 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 - 「画面外で復元しない」「最小化は通常表示にする」の判断も移設先が持つ（4 つの UI 版で同じ規則になる）。
 - 仮想スクリーンの照会は `EsUtil.Platform.Core.Native.Win.WinVirtualScreen` が担う。
 
-## 33. `Icons.CaptureIconFiles`（静的クラス）
+## 34. `Icons.CaptureIconFiles`（静的クラス）
 
 キャプチャ ページのツールバーとメニューで共用するアイコン ファイル名です。 アイコン画像は `AppIcons` が扱う埋め込み SVG から各 UI 版が描画します。
 

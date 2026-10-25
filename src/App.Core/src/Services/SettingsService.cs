@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Input;
+using EsUtil.Platform.Core.Palette;
 using EsUtil.Platform.Core.Window;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Enums;
@@ -125,6 +126,7 @@ public sealed class SettingsService : ISettingsService
                 new JsonStringEnumConverter<EsWindowState>(),
                 new JsonStringEnumConverter<ThemeMode>(),
                 new JsonStringEnumConverter<StartupPreviewMode>(),
+                new JsonStringEnumConverter<ColorTextFormat>(),
             },
         };
 

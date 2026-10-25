@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Input;
+using EsUtil.Platform.Core.Palette;
 using EsUtil.Platform.Core.Window;
 using EsUtil.SaveEvidence.App.Core.Enums;
 
@@ -54,6 +55,15 @@ public sealed partial class Settings : ObservableObject
     /// <remarks>アプリ全体のテーマ（<c>RequestedThemeVariant</c>）に反映される。 既定は OS 追従（System）。</remarks>
     [ObservableProperty]
     private ThemeMode _themeMode = ThemeMode.System;
+
+    /// <summary>色選択コントロールの入力欄へ出す表記を取得または設定する。</summary>
+    /// <remarks>
+    /// 保存値は表記に依らず <c>#AARRGGBB</c> のままである（表記は画面に出す文字列だけを決める）。<br/>
+    /// 既定は色名 + 不透明度（<see cref="ColorTextFormat.NameWithAlpha"/>）。<br/>
+    /// 反映先は <c>EsUtil.Ui.*.ColorComboBox</c> の <c>TextFormat</c> である。
+    /// </remarks>
+    [ObservableProperty]
+    private ColorTextFormat _colorTextFormat = ColorTextFormat.NameWithAlpha;
 
     /// <summary>FolderViewForm の特大アイコンサイズ（ピクセル）。</summary>
     [ObservableProperty]

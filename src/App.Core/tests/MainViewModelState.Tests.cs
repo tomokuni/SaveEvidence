@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core.Palette;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -421,6 +422,15 @@ public class MainViewModelStateTests
         Assert.Equal(
             [ThemeMode.Light, ThemeMode.Dark, ThemeMode.System],
             MainViewModel.ThemeModes);
+    }
+
+    [Fact]
+    internal void ColorTextFormats_2つの選択肢が定義される()
+    {
+        // 色名 + 不透明度 / カラーコード の 2 択（既定は先頭）
+        Assert.Equal(
+            [ColorTextFormat.NameWithAlpha, ColorTextFormat.HexCode],
+            MainViewModel.ColorTextFormats);
     }
 
     [Fact]

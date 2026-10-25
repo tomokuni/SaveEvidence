@@ -3,7 +3,9 @@ using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Avalonia.Data.Converters;
+using EsUtil.Platform.Core.Palette;
 using EsUtil.SaveEvidence.App.Core.Enums;
+using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Converters;
 
@@ -47,6 +49,13 @@ public sealed class EnumToDisplayNameConverter : IValueConverter
         if (value is StartupPreviewMode previewMode)
         {
             return ResolveDisplayName(typeof(StartupPreviewMode), previewMode.ToString());
+        }
+
+        // 色の表記は EsUtil（UI 非依存のライブラリ）の型であり Description 属性を持たないため、
+        // アプリ側の表示名（ColorTextFormatDisplay）が単一所有する文言を返す
+        if (value is ColorTextFormat textFormat)
+        {
+            return ColorTextFormatDisplay.Get(textFormat);
         }
 
         // 表示名を持たない値はメンバー名をそのまま返す

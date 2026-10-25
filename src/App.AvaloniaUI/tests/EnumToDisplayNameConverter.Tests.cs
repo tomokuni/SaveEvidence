@@ -1,5 +1,6 @@
 using System.Globalization;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Converters;
+using EsUtil.Platform.Core.Palette;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using Xunit;
 
@@ -25,6 +26,15 @@ public class EnumToDisplayNameConverterTests
     [InlineData(ThemeMode.Dark, "ダーク")]
     [InlineData(ThemeMode.System, "システム")]
     internal void Convert_表示名を持つenumは表示名へ変換される(ThemeMode value, string expected)
+        => Assert.Equal(expected, s_converter.Convert(value, typeof(string), null, CultureInfo.InvariantCulture));
+
+    /// <summary>色の表記（EsUtil の enum。 Description 属性を持たない）はアプリ側の表示名へ変換される。</summary>
+    /// <param name="value">対象の表記。</param>
+    /// <param name="expected">期待する表示名。</param>
+    [Theory]
+    [InlineData(ColorTextFormat.NameWithAlpha, "DarkGray（色名 + 不透明度）")]
+    [InlineData(ColorTextFormat.HexCode, "#FFFFFFFF（カラーコード）")]
+    internal void Convert_色の表記はアプリ側の表示名へ変換される(ColorTextFormat value, string expected)
         => Assert.Equal(expected, s_converter.Convert(value, typeof(string), null, CultureInfo.InvariantCulture));
 
     /// <summary>同じ値の 2 回目の変換はキャッシュから返る（同じ表示名になる）。</summary>

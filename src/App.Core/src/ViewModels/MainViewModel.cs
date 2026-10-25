@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core.Palette;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -220,6 +221,10 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>テーマモードの選択肢（Light / Dark / System）を取得する。</summary>
     /// <remarks>設定画面の ComboBox の ItemsSource に使用する。</remarks>
     public static IReadOnlyList<ThemeMode> ThemeModes => s_themeModes;
+
+    /// <summary>色の表記の選択肢（色名 + 不透明度 / カラーコード）を取得する。</summary>
+    /// <remarks>設定画面の ComboBox の ItemsSource に使用する（表示名は <see cref="ColorTextFormatDisplay"/> が単一所有する）。</remarks>
+    public static IReadOnlyList<ColorTextFormat> ColorTextFormats => ColorTextFormatDisplay.All;
 
     /// <summary>起動直後の画像（プレースホルダ）の選択肢（グラデーション画像 / 空白）を取得する。</summary>
     /// <remarks>設定画面のコンボ ボックスの選択肢に使用する（表示名は列挙の説明属性が単一所有する）。</remarks>
