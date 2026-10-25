@@ -5,13 +5,25 @@
             "name": "Avalonia: SaveEvidence",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/App.AvaloniaUI/src/App.AvaloniaUI.csproj"
+            "projectPath": "${workspaceFolder}/src/App.AvaloniaUI/src/App.AvaloniaUI.csproj",
+            // モジュールの読み込み通知は動作に影響しないため出さない
+            // （「モジュールが読み込まれました。シンボルが読み込まれました。」の行。 実測 2026-10-25）
+            "logging": {
+                "moduleLoad": false
+            },
+            // 最適化されたモジュールでもシンボルを読み込む
+            // （「シンボルの読み込みをスキップしました」の通知自体を出さない。 デバッグの挙動は変わらない）
+            "justMyCode": false
         },
         {
             "name": "MewUI: SaveEvidence",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/App.MewUI/src/App.MewUI.csproj"
+            "projectPath": "${workspaceFolder}/src/App.MewUI/src/App.MewUI.csproj",
+            "logging": {
+                "moduleLoad": false
+            },
+            "justMyCode": false
         },
         {
             // アンパッケージの WinUI 3 アプリは .NET ホスト（dotnet exec）から起動できない
@@ -25,13 +37,21 @@
             "program": "${workspaceFolder}/src/App.WinUI3/src/bin/Debug/net10.0-windows10.0.22621.0/win-x64/SaveEvidence.WinUI3.exe",
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
-            "stopAtEntry": false
+            "stopAtEntry": false,
+            "logging": {
+                "moduleLoad": false
+            },
+            "justMyCode": false
         },
         {
             "name": "WinForms: SaveEvidence",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/App.WinForms/src/App.WinForms.csproj"
+            "projectPath": "${workspaceFolder}/src/App.WinForms/src/App.WinForms.csproj",
+            "logging": {
+                "moduleLoad": false
+            },
+            "justMyCode": false
         }
     ]
 }
