@@ -9,5 +9,10 @@
     // 自動探索する。 本リポジトリは構成を buildScript/ へ置く（ルート直下のファイルを減らすため。
     // .github/ビルド設定規約.md §1）ため、場所を明示する。 ${workspaceFolder} は文書ごとのフォルダーへ解決される
     // （複数ルートのワークスペースでも各リポジトリの構成を指す）。
-    "markdownlint.configFile": "${workspaceFolder}/buildScript/markdownlint.json"
+    "markdownlint.configFile": "${workspaceFolder}/buildScript/markdownlint.json",
+    // デバッグ実行時の「モジュールが読み込まれました。シンボルが読み込まれました。」と
+    // 「シンボルの読み込みをスキップしました…」は情報であり、動作・例外・ログには影響しない。
+    // 起動構成（launch.json）ではなく拡張機能の設定で止める（起動構成の種類によっては無視されるため。
+    // 設定名は ms-dotnettools.csharp の contributes.configuration が定める）。
+    "csharp.debug.logging.moduleLoad": false
 }
