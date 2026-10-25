@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using EsUtil.Platform.Core.Caching;
 using EsUtil.Platform.Core.Svg;
-using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Icons;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Icons;
@@ -33,18 +32,21 @@ internal static class IconLoader
 
     /// <summary>現在のテーマが暗色かどうかを取得する。</summary>
     /// <returns>暗色テーマの場合は true。</returns>
-    /// <remarks>テーマ未確定（ウィンドウ生成前）は明色として扱う。</remarks>
+    /// <remarks>
+    /// <b><c>Application.Current</c> は <c>Application.Run</c> より前だと例外を投げる</b>
+    /// （実測 2026-10-25: <c>InvalidOperationException</c>「Application not initialized. Call Application.Run() first.」）。<br/>
+    /// 例外は MewUI の getter が投げるため、捕捉してもデバッガーの出力に「例外がスローされました」が残る。<br/>
+    /// <see cref="Application.IsRunning"/> は Run より前でも <c>false</c> を返し例外を投げないため、
+    /// これを先に判定して <c>Application.Current</c> へ触らない（ウィンドウ生成時は明色として扱う）。
+    /// </remarks>
     public static bool IsDarkTheme()
     {
-        try
+        if (!Application.IsRunning)
         {
-            return Application.Current?.Theme?.IsDark ?? false;
-        }
-        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
-        {
-            // テーマ未確定（起動前）は明色として扱う
             return false;
         }
+
+        return Application.Current?.Theme?.IsDark ?? false;
     }
 
     /// <summary>テーマに応じたアイコン・文字の色を取得する。</summary>

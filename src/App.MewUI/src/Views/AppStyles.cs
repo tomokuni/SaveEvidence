@@ -503,7 +503,8 @@ internal static class AppStyles
     /// </remarks>
     public static bool ApplyTheme(ThemeMode mode)
     {
-        if (Application.Current is not { } application)
+        // Application.Current は Run より前だと例外を投げる（実測 2026-10-25）ため、先に実行状態を見る
+        if (!Application.IsRunning || Application.Current is not { } application)
         {
             return false;
         }
