@@ -113,7 +113,11 @@ internal static class SettingsPage
             {
                 settings.ThemeMode = modes[selected];
                 ApplyTheme(modes[selected]);
-            })));
+            })),
+            Row("色の表記", ChoiceRow(
+                [.. ColorTextFormatDisplay.All.Select(ColorTextFormatDisplay.Get)],
+                Math.Max(0, ColorTextFormatDisplay.All.ToList().IndexOf(settings.ColorTextFormat)),
+                selected => settings.ColorTextFormat = ColorTextFormatDisplay.All[selected])));
     }
 
     /// <summary>保存設定のセクションを構築する。</summary>
@@ -231,53 +235,53 @@ internal static class SettingsPage
             ]),
             ("選択枠・暗転",
             [
-                ("選択枠の色", ColorRow(settings.CaptureBorderColor, value => settings.CaptureBorderColor = value)),
+                ("選択枠の色", ColorRow(settings, settings.CaptureBorderColor, value => settings.CaptureBorderColor = value)),
                 ("選択枠の太さ", NumberRow(settings.CaptureBorderThickness, 0.5, 8.0, 0.5, false, value => settings.CaptureBorderThickness = value)),
                 ("選択矩形の最小サイズ", NumberRow(settings.MinSelectionSize, 1, 100, 1, true, value => settings.MinSelectionSize = (int)value)),
-                ("暗転オーバーレイの色", ColorRow(settings.CaptureOverlayColor, value => settings.CaptureOverlayColor = value)),
+                ("暗転オーバーレイの色", ColorRow(settings, settings.CaptureOverlayColor, value => settings.CaptureOverlayColor = value)),
             ]),
             ("ドラッグハンドル・マーカー",
             [
-                ("ハンドルの色", ColorRow(settings.HandleColor, value => settings.HandleColor = value)),
+                ("ハンドルの色", ColorRow(settings, settings.HandleColor, value => settings.HandleColor = value)),
                 ("ハンドルのサイズ", NumberRow(settings.HandleSize, 2, 30, 1, false, value => settings.HandleSize = value)),
                 ("ハンドル判定半径", NumberRow(settings.HandleHitRadius, 2, 40, 1, false, value => settings.HandleHitRadius = value)),
-                ("マーカーの色", ColorRow(settings.MarkerColor, value => settings.MarkerColor = value)),
+                ("マーカーの色", ColorRow(settings, settings.MarkerColor, value => settings.MarkerColor = value)),
                 ("マーカーの長さ", NumberRow(settings.MarkerLength, 8, 40, 2, false, value => settings.MarkerLength = value)),
             ]),
             ("ルーペ",
             [
-                ("枠色", ColorRow(settings.LoupeFrameColor, value => settings.LoupeFrameColor = value)),
+                ("枠色", ColorRow(settings, settings.LoupeFrameColor, value => settings.LoupeFrameColor = value)),
                 ("枠の太さ", NumberRow(settings.LoupeFrameWidth, 1, 10, 1, true, value => settings.LoupeFrameWidth = (int)value)),
-                ("十字線色", ColorRow(settings.LoupeCrossColor, value => settings.LoupeCrossColor = value)),
-                ("画像外の色", ColorRow(settings.LoupePasteboardColor, value => settings.LoupePasteboardColor = value)),
-                ("選択矩形破線の色A", ColorRow(settings.LoupeSelectionRectColorA, value => settings.LoupeSelectionRectColorA = value)),
-                ("選択矩形破線の色B", ColorRow(settings.LoupeSelectionRectColorB, value => settings.LoupeSelectionRectColorB = value)),
+                ("十字線色", ColorRow(settings, settings.LoupeCrossColor, value => settings.LoupeCrossColor = value)),
+                ("画像外の色", ColorRow(settings, settings.LoupePasteboardColor, value => settings.LoupePasteboardColor = value)),
+                ("選択矩形破線の色A", ColorRow(settings, settings.LoupeSelectionRectColorA, value => settings.LoupeSelectionRectColorA = value)),
+                ("選択矩形破線の色B", ColorRow(settings, settings.LoupeSelectionRectColorB, value => settings.LoupeSelectionRectColorB = value)),
                 ("拡大率", NumberRow(settings.LoupeZoomLevel, 4, 32, 2, true, value => settings.LoupeZoomLevel = (int)value)),
                 ("サイズ", NumberRow(settings.LoupeSize, 64, 512, 8, true, value => settings.LoupeSize = (int)value)),
                 ("カーソルからのオフセット", NumberRow(settings.LoupeOffset, 0, 200, 4, false, value => settings.LoupeOffset = value)),
             ]),
             ("選択矩形内のラベル",
             [
-                ("1 行目 テキスト色", ColorRow(settings.CaptureTextColor, value => settings.CaptureTextColor = value)),
-                ("1 行目 背景色", ColorRow(settings.SizeLabelBackgroundColor, value => settings.SizeLabelBackgroundColor = value)),
+                ("1 行目 テキスト色", ColorRow(settings, settings.CaptureTextColor, value => settings.CaptureTextColor = value)),
+                ("1 行目 背景色", ColorRow(settings, settings.SizeLabelBackgroundColor, value => settings.SizeLabelBackgroundColor = value)),
                 ("1 行目 フォントサイズ", NumberRow(settings.SizeLabelFontSize, 8, 32, 1, false, value => settings.SizeLabelFontSize = value)),
-                ("2 行目 テキスト色", ColorRow(settings.SubLineColor, value => settings.SubLineColor = value)),
-                ("2 行目 背景色", ColorRow(settings.SubLineBackgroundColor, value => settings.SubLineBackgroundColor = value)),
+                ("2 行目 テキスト色", ColorRow(settings, settings.SubLineColor, value => settings.SubLineColor = value)),
+                ("2 行目 背景色", ColorRow(settings, settings.SubLineBackgroundColor, value => settings.SubLineBackgroundColor = value)),
                 ("2 行目 フォントサイズ", NumberRow(settings.SubLineFontSize, 8, 32, 1, false, value => settings.SubLineFontSize = value)),
-                ("3 行目 テキスト色", ColorRow(settings.InfoLabelColor, value => settings.InfoLabelColor = value)),
-                ("3 行目 背景色", ColorRow(settings.InfoLabelBackgroundColor, value => settings.InfoLabelBackgroundColor = value)),
+                ("3 行目 テキスト色", ColorRow(settings, settings.InfoLabelColor, value => settings.InfoLabelColor = value)),
+                ("3 行目 背景色", ColorRow(settings, settings.InfoLabelBackgroundColor, value => settings.InfoLabelBackgroundColor = value)),
                 ("3 行目 フォントサイズ", NumberRow(settings.InfoLabelFontSize, 8, 32, 1, false, value => settings.InfoLabelFontSize = value)),
             ]),
             ("カーソル位置の座標ラベル",
             [
-                ("テキスト色", ColorRow(settings.CoordLabelColor, value => settings.CoordLabelColor = value)),
-                ("背景色", ColorRow(settings.CoordLabelBackgroundColor, value => settings.CoordLabelBackgroundColor = value)),
+                ("テキスト色", ColorRow(settings, settings.CoordLabelColor, value => settings.CoordLabelColor = value)),
+                ("背景色", ColorRow(settings, settings.CoordLabelBackgroundColor, value => settings.CoordLabelBackgroundColor = value)),
                 ("フォントサイズ", NumberRow(settings.CoordLabelFontSize, 6, 48, 1, false, value => settings.CoordLabelFontSize = value)),
             ]),
             ("ルーペの中心座標ラベル",
             [
-                ("座標ラベルのテキスト色", ColorRow(settings.LoupeCoordLabelColor, value => settings.LoupeCoordLabelColor = value)),
-                ("座標ラベルの背景色", ColorRow(settings.LoupeCoordLabelBackgroundColor, value => settings.LoupeCoordLabelBackgroundColor = value)),
+                ("座標ラベルのテキスト色", ColorRow(settings, settings.LoupeCoordLabelColor, value => settings.LoupeCoordLabelColor = value)),
+                ("座標ラベルの背景色", ColorRow(settings, settings.LoupeCoordLabelBackgroundColor, value => settings.LoupeCoordLabelBackgroundColor = value)),
                 ("座標ラベルのフォントサイズ", NumberRow(settings.LoupeCoordLabelFontSize, 6, 48, 1, false, value => settings.LoupeCoordLabelFontSize = value)),
             ]),
         ];
@@ -476,18 +480,30 @@ internal static class SettingsPage
     }
 
     /// <summary>色編集の行を構築する。</summary>
+    /// <param name="settings">設定（表記の取得元）。</param>
     /// <param name="initial">初期値（<c>#AARRGGBB</c>）。</param>
     /// <param name="apply">変更の反映先。</param>
     /// <returns>色選択コントロール。</returns>
     /// <remarks>
     /// 色の入力・一覧・カラーピッカーは <see cref="ColorComboBoxControl"/>（EsUtil.Ui.MewUI.ColorComboBox）が担う。<br/>
     /// 受理する入力と保存値の形式はコア（<c>EsUtil.Platform.Core.Palette</c>）が単一所有するため、
-    /// 設定画面は値を受け渡すだけでよい（他の UI 版と同じ解釈になる）。
+    /// 設定画面は値を受け渡すだけでよい（他の UI 版と同じ解釈になる）。<br/>
+    /// 入力欄の表記は <c>Models.Settings.ColorTextFormat</c> に従い、設定の変更へ追従する<br/>
+    /// （設定画面を作り直さずに全行の表記が変わる）。
     /// </remarks>
-    private static FrameworkElement ColorRow(string initial, Action<string> apply)
+    private static FrameworkElement ColorRow(Settings settings, string initial, Action<string> apply)
     {
-        var control = new ColorComboBoxControl { SelectedColor = initial };
+        var control = new ColorComboBoxControl { SelectedColor = initial, TextFormat = settings.ColorTextFormat };
         control.SelectedColorChanged += (_, _) => apply(control.SelectedColor);
+
+        settings.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(Settings.ColorTextFormat), StringComparison.Ordinal))
+            {
+                control.TextFormat = settings.ColorTextFormat;
+            }
+        };
+
         return control;
     }
 

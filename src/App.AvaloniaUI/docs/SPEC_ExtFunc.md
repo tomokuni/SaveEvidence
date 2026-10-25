@@ -69,6 +69,16 @@
 - **反映方式**: `ThemeMode`（`Settings.ThemeMode`）→ `App.RequestedThemeVariant` へ反映。 FluentTheme の DynamicResource により全コントロールの色が自動的に切り替わる
 - **設定ファイル**: enum は文字列で保存（`"ThemeMode": "Dark"`）
 
+**色の表記**: 同じ「外観設定」で、色選択コントロールの入力欄の表記を選べます。
+
+| 表記 | 表示例 |
+| --- | --- |
+| `DarkGray（色名 + 不透明度）` | `DarkGray` / `Red+50%`（既定値） |
+| `#FFFFFFFF（カラーコード）` | `#FFA9A9A9` |
+
+- **反映方式**: `Settings.ColorTextFormat` → `ColorComboBoxControl.TextFormat` へバインド（19 個の色選択すべてに即時反映）。 保存値は `#AARRGGBB` のまま変わらない（表記は画面に出す文字列だけを決める）
+- **設定ファイル**: enum は文字列で保存（`"ColorTextFormat": "HexCode"`）
+
 ### 3.1 テーマ対応コンポーネント
 
 | コンポーネント | 標準リソース | ライト | ダーク |
