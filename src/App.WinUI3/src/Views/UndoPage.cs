@@ -66,6 +66,10 @@ internal static class UndoPage
 
         var modeButtons = new ToggleButton[ViewModeDisplay.Count];
 
+        // 直前に並べた内容（同じ内容を並べ直さないための記録）
+        List<object> builtItems = [];
+        var builtIconSize = -1;
+
         // 表示モードの切り替え（解除は許さない。 常に 1 つを選択状態に保つ）
         void OnModeChanged(int index, bool isChecked)
         {
@@ -153,6 +157,23 @@ internal static class UndoPage
         void Rebuild()
         {
             iconSize = settingsService.Current.GetIconSize(view.SelectedViewModeIndex);
+
+            // 同じ内容なら並べ直さない: 並べ直すと項目の要素とサムネイルの変換を作り直すため、
+            // ページを表示するたびに作り直すと切り替えが待たされる（実測 2026-10-25）。
+            // 履歴が変わったときだけ作り直す
+            var currentOrder = history.GetRedoHistory().Concat<object>(
+                viewModel.PreviewImage is { } preview ? [preview] : []).Concat(history.GetUndoHistory()).ToList();
+            if (iconSize == builtIconSize
+                && currentOrder.Count == builtItems.Count
+                && currentOrder.SequenceEqual(builtItems, ReferenceEqualityComparer.Instance))
+            {
+                UpdateStatusTexts();
+                return;
+            }
+
+            builtIconSize = iconSize;
+            builtItems = currentOrder;
+
             list.ClearItems();
             list.ImageWidth = iconSize;
 
@@ -176,10 +197,14 @@ internal static class UndoPage
                 list.Add(image, $"元に戻す {undo.Count - i}", "履歴の画像", tag: image);
             }
 
+            UpdateStatusTexts();
+        }
+
+        void UpdateStatusTexts()
+        {
             view.ItemCount = list.ItemCount;
             itemCountText.Text = view.ItemCountText;
             modeText.Text = view.ViewModeText;
-
         }
 
         return new PageContent(

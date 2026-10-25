@@ -375,10 +375,16 @@ internal sealed class CaptureOverlay
         // その瞬間にウィンドウの下地（白）が 1 フレーム見えるため（実測 2026-10-17）。
         // 枠の分だけクライアント領域が小さくなるため、クライアント領域が画面と一致するように置く
         // （一致しないと撮影画像が数ピクセル縮小され、画面の座標とずれる）
-        OverlayWindowPlacer.MoveClientArea(window.AppWindow, new EsRectInt(
+        var offScreenBounds = new EsRectInt(
             CaptureTiming.OwnerOffScreenCoord, CaptureTiming.OwnerOffScreenCoord,
-            _screenBounds.Width, _screenBounds.Height));
+            _screenBounds.Width, _screenBounds.Height);
+        OverlayWindowPlacer.MoveClientArea(window.AppWindow, offScreenBounds);
         window.Activate();
+
+        // **Activate でもう一度置き直す**: ウィンドウは Activate で初めて表示され、
+        // そのときに既定の位置・大きさ（画面中央の小さい矩形）が適用されることがある。
+        // その 1 フレームが「画面が小さく表示される」ちらつきになる（実測 2026-10-25）。
+        OverlayWindowPlacer.MoveClientArea(window.AppWindow, offScreenBounds);
 
         // 最初の描画フレームまで待つ（内容の無いフレームを見せない）。
         // 画面外では合成が走らないことがあるため、待ち時間に上限を設け、超えたら続行する
@@ -403,6 +409,19 @@ internal sealed class CaptureOverlay
         {
             _log.LogOperationError(
                 new TimeoutException("撮影画像の読み込み完了を待てませんでした。"), nameof(ShowAsync));
+        }
+
+        // **画像が合成されたフレームをもう 1 回待つ**: 読み込みが終わっても、その画像を含むフレームが
+        // DWM へ提示されるのは次の描画である。 提示前に画面内へ移すと、縮小された画像や下地の色が
+        // 1〜2 フレーム見える（実測 2026-10-25: スクリーン選択で「小さい画面」が一瞬出た）。
+        try
+        {
+            await WaitForFirstFrameAsync(root).WaitAsync(s_firstFrameTimeout).ConfigureAwait(true);
+        }
+        catch (TimeoutException)
+        {
+            _log.LogOperationError(
+                new TimeoutException("画像を含む最初の描画フレームを待てませんでした。"), nameof(ShowAsync));
         }
 
         // 合成の完了をもう少し待つ（1 フレームでは DWM へ提示される前に画面内へ移してしまい、
