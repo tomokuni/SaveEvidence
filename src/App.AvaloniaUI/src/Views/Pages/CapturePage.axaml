@@ -98,20 +98,22 @@
                      TextChanged="OnFileNameTemplateTextChanged"/>
             <!-- 保存ボタン（フライアウトメニューのキャプチャボタンの左） -->
             <!-- ToolTip は保存先フォルダを含むため、コードビハインド（Initialize / フォルダ変更時）で設定する -->
-            <!-- テンプレートの入力欄とは別の操作であることが分かる間隔を空ける（左 4 DIP）。
+            <!-- テンプレートの入力欄とは別の操作であることが分かる間隔を空ける（左 8 DIP）。
                  アイコン ボタンは MinWidth 32 でアイコンの左右に 8 DIP の余白を持つため、
-                 右隣の区切り線は余白を打ち消す 1 DIP だけ空ける（アイコンと線が離れすぎない） -->
+                 入力欄との間はアイコンの余白（8）と合わせて 17 DIP になる。
+                 右隣の区切り線は余白を打ち消して 0 にし、アイコンから 9 DIP に寄せる
+                 （区切り線の既定のマージン（4）だと 12 DIP になり、線だけが浮いて見える） -->
             <Button x:Name="SaveButton"
                     Classes="toolbar toolbar-icon"
                     Command="{Binding SaveImageCommand}"
                     IsEnabled="{Binding CanSave}"
-                    Margin="4,1,1,1"
+                    Margin="8,1,1,1"
                     VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <PathIcon x:Name="SaveIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
                 </StackPanel>
             </Button>
-            <Border Classes="toolbar-separator" Margin="1,0"/>
+            <Border Classes="toolbar-separator" Margin="0,0"/>
             <Button ToolTip.Tip="スクリーン選択キャプチャ" Classes="toolbar toolbar-icon" Click="OnCaptureScreenClick" Margin="1" VerticalAlignment="Center">
                 <PathIcon x:Name="ScreenSelectIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
             </Button>
