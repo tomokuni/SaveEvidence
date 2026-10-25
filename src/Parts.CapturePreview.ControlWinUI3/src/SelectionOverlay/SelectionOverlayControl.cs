@@ -607,6 +607,8 @@ public sealed partial class SelectionOverlayControl : Panel
     /// </remarks>
     private void OnMarqueeRendered(object? sender, MarqueeRenderedEventArgs e)
     {
+        var start = System.Diagnostics.Stopwatch.GetTimestamp();
+
         var placements = SelectionOverlayLabelRenderer.Resolve(
             e.Content,
             _options.Labels,
@@ -625,7 +627,48 @@ public sealed partial class SelectionOverlayControl : Panel
                 placement.DipRect.Height,
                 ToArgb(placement.BackgroundColor));
         }
+
+        MeasureRenderFrame(isMarquee: true, start);
     }
+
+    /// <summary>描画 1 フレーム分の処理時間を集計し、30 フレームごとに 1 行で記録する。</summary>
+    /// <param name="isMarquee">true はマーキー、false はルーペの描画。</param>
+    /// <param name="start">処理の開始時刻（<see cref="System.Diagnostics.Stopwatch.GetTimestamp"/>）。</param>
+    /// <remarks>
+    /// <b>ドラッグの滑らかさは数値で判断する</b>: 体感だけでは「描画が遅い」のか「入力が届いていない」のかを
+    /// 切り分けられない。 集計は 30 フレームごとに 1 行だけ出す（1 フレームごとでは読めない）。
+    /// </remarks>
+    private void MeasureRenderFrame(bool isMarquee, long start)
+    {
+        var ms = System.Diagnostics.Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+        ref var stats = ref isMarquee ? ref _marqueeFrame : ref _loupeFrame;
+        stats.Count++;
+        stats.Total += ms;
+        if (ms > stats.Max)
+        {
+            stats.Max = ms;
+        }
+
+        if (stats.Count < RenderMeasureInterval)
+        {
+            return;
+        }
+
+        var average = stats.Total / stats.Count;
+        var max = stats.Max;
+        var count = stats.Count;
+        stats = default;
+        Log.LogRenderTime(isMarquee ? "マーキー" : "ルーペ", average, max, count);
+    }
+
+    /// <summary>描画時間の集計を記録するフレーム間隔。</summary>
+    private const int RenderMeasureInterval = 30;
+
+    /// <summary>マーキーの描画 1 フレーム分の処理時間の集計値。</summary>
+    private (int Count, double Total, double Max) _marqueeFrame;
+
+    /// <summary>ルーペの描画 1 フレーム分の処理時間の集計値。</summary>
+    private (int Count, double Total, double Max) _loupeFrame;
 
     /// <summary>ルーペの描画完了時に、選択矩形の破線オーバーレイを同一のキャンバスへ描画する。</summary>
     /// <param name="sender">イベントの送信元（ルーペコントロール）。</param>
@@ -636,6 +679,21 @@ public sealed partial class SelectionOverlayControl : Panel
     /// <b>中心座標ラベルはルーペコントロールが描画する</b>（本クラスは破線だけを描く）。
     /// </remarks>
     private void OnLoupeRendered(object? sender, LoupeRenderedEventArgs e)
+    {
+        var start = System.Diagnostics.Stopwatch.GetTimestamp();
+        try
+        {
+            DrawLoupeOverlay(e);
+        }
+        finally
+        {
+            MeasureRenderFrame(isMarquee: false, start);
+        }
+    }
+
+    /// <summary>ルーペの描画面へ選択矩形の破線を追加する。</summary>
+    /// <param name="e">描画先キャンバスと表示情報。</param>
+    private void DrawLoupeOverlay(LoupeRenderedEventArgs e)
     {
         if (e.Content.CaptureTopLeft is not { } topLeft)
         {

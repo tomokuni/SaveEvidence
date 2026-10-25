@@ -464,5 +464,38 @@ public static partial class CapturePreviewLogMessage
     [LoggerMessage(EventId = 17, Level = LogLevel.Information,
         Message = "{Prefix} ZoomOutWheel: {Current}% -> {Target}%")]
     private static partial void LogZoomOutWheelCore(this ILogger logger, string prefix, int current, int target);
+
+    /// <summary>描画 1 フレーム分の処理時間の集計を記録する（ドラッグ中の滑らかさの判定に使う）。</summary>
+    /// <remarks>
+    /// ログレベル: Debug。 出力書式: <c>[CapturePreview] 描画時間 ({Kind}): 平均={Average} ms / 最大={Max} ms / {Frames} フレーム</c><br/>
+    /// 30 フレームごとの集計を 1 行で出す（1 フレームごとに出すとログが埋まり、肝心の値が読めない）。
+    /// </remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="kind">描画の種類（マーキー / ルーペ）。</param>
+    /// <param name="average">平均の処理時間（ミリ秒）。</param>
+    /// <param name="max">最大の処理時間（ミリ秒）。</param>
+    /// <param name="frames">集計したフレーム数。</param>
+    public static void LogRenderTime(this ILogger logger, string kind, double average, double max, int frames)
+    {
+        if (!logger.IsEnabled(LogLevel.Debug))
+        {
+            return;
+        }
+
+        logger.LogRenderTimeCore(Prefix, kind, Math.Round(average, 2), Math.Round(max, 2), frames);
+    }
+
+    /// <summary>描画 1 フレーム分の処理時間の集計を記録する（生成メソッド）。</summary>
+    /// <remarks>ログレベル: Debug。 出力書式: <c>[CapturePreview] 描画時間 ({Kind}): 平均={Average} ms / 最大={Max} ms / {Frames} フレーム</c></remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="kind">描画の種類（マーキー / ルーペ）。</param>
+    /// <param name="average">平均の処理時間（ミリ秒）。</param>
+    /// <param name="max">最大の処理時間（ミリ秒）。</param>
+    /// <param name="frames">集計したフレーム数。</param>
+    [LoggerMessage(EventId = 18, Level = LogLevel.Debug,
+        Message = "{Prefix} 描画時間 ({Kind}): 平均={Average} ms / 最大={Max} ms / {Frames} フレーム")]
+    private static partial void LogRenderTimeCore(
+        this ILogger logger, string prefix, string kind, double average, double max, int frames);
 }
 
