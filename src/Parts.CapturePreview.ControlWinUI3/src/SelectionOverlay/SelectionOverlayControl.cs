@@ -648,9 +648,33 @@ public sealed partial class SelectionOverlayControl : Panel
             return;
         }
 
-        foreach (var dash in SelectionOutlineRasterizer.EnumerateDashes(
-            _marquee.SelectionSourceRect, topLeft, e.Content.ZoomLevel, e.Content.ClientPixelSize))
+        // **ルーペに写る範囲へ絞ってから列挙する**。 破線は 1 ピクセル刻みで列挙されるため、
+        // 選択矩形が大きいと 1 フレームで数千個になり、そのすべてが要素として作られて描画が重くなる
+        // （実測 2026-10-25: 1000×800 の選択・4 倍で約 7200 個）。 ルーペの外は見えないので落とす。
+        var zoom = e.Content.ZoomLevel;
+        var pixelSize = e.Content.ClientPixelSize;
+        if (zoom <= 0 || pixelSize <= 0)
         {
+            return;
+        }
+
+        var visibleSource = new EsRect(topLeft.X, topLeft.Y, pixelSize / zoom, pixelSize / zoom);
+        var selection = _marquee.SelectionSourceRect;
+        if (!selection.Intersects(visibleSource))
+        {
+            return;
+        }
+
+        foreach (var dash in SelectionOutlineRasterizer.EnumerateDashes(
+            selection.Intersect(visibleSource), topLeft, zoom, pixelSize))
+        {
+            // 交差判定の外側（面の外）に掛かる破線も落とす（要素を増やさない）
+            if (dash.Bounds.X + dash.Bounds.Width <= 0 || dash.Bounds.Y + dash.Bounds.Height <= 0
+                || dash.Bounds.X >= pixelSize || dash.Bounds.Y >= pixelSize)
+            {
+                continue;
+            }
+
             var color = dash.IsColorA ? _options.SelectionRectColorA : _options.SelectionRectColorB;
             e.AddRect(
                 dash.Bounds.X,
