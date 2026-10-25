@@ -321,23 +321,8 @@ public sealed partial class MainWindow : Window
         NavPanel.VerticalAlignment = _viewModel.IsNavigationExpanded ? VerticalAlignment.Stretch : VerticalAlignment.Top;
         NavPanel.Height = double.NaN; // Auto（コンテンツ高さ）
 
-        // 開いているときは「閉じる」、閉じているときは「開く」のアイコンにする
-        NavToggleIcon.Data = IconLoader.LoadGeometry(
-            _viewModel.IsNavigationExpanded ? NavIconPanelLeftContract : NavIconPanelRightContract);
         NavTitleText.IsVisible = _viewModel.IsNavigationExpanded;
     }
-
-    /// <summary>ナビゲーション パネルの開閉アイコン（開いているときに使う「閉じる」）。</summary>
-    private const string NavIconPanelLeftContract = "ic_fluent_panel_left_contract_24_filled.svg";
-
-    /// <summary>ナビゲーション パネルの開閉アイコン（閉じているときに使う「開く」）。</summary>
-    private const string NavIconPanelRightContract = "ic_fluent_panel_right_contract_24_filled.svg";
-
-    /// <summary>ナビゲーションの開閉ボタンの押下で開閉を切り替える。</summary>
-    /// <param name="sender">イベントの送信元。</param>
-    /// <param name="e">イベント引数。</param>
-    private void OnNavToggleClick(object? sender, RoutedEventArgs e)
-        => _viewModel.IsNavigationExpanded = !_viewModel.IsNavigationExpanded;
 
     /// <summary>左上のアプリ アイコンの押下でウィンドウの標準メニューを出す。</summary>
     /// <param name="sender">イベントの送信元。</param>

@@ -1,4 +1,4 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
         xmlns:pages="clr-namespace:EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages"
@@ -75,32 +75,7 @@
             <Setter Property="Background" Value="{DynamicResource NavSelectionAccentBrush}"/>
         </Style>
 
-        <!-- ナビゲーション開閉ボタンのスタイル（パネル背景に馴染ませる。 アイコンのみ） -->
-        <Style Selector="Button.NavToggle">
-            <Setter Property="Width" Value="40"/>
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="HorizontalContentAlignment" Value="Center"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
-        <Style Selector="Button.NavToggle /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-        </Style>
-        <Style Selector="Button.NavToggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-        </Style>
-        <Style Selector="Button.NavToggle:pressed /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListMediumBrush}"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-        </Style>
+
         <!-- フルスクリーンボタン（最小化ボタンの左の斜め矢印）を無効化する（KIOSK 化機能は不要）。
              IsVisible=False にするとボタン群のスペースが消えて最小化・最大化・閉じるが左に寄るため、
              透明 + 非ヒットテストでスペースを維持したまま操作不可にする。 -->
@@ -164,8 +139,6 @@
                 <Grid.RowDefinitions>
                     <!-- 44 = ツールバーの行（6 + 32）と同じ中心になる高さ（WindowLayout.AppIconRowHeight） -->
                     <RowDefinition Height="44"/>
-                    <!-- 40 = ナビの開閉ボタンの高さ（WindowLayout.NavToggleHeight） -->
-                    <RowDefinition Height="40"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
@@ -198,26 +171,10 @@
                                IsVisible="{Binding IsNavigationExpanded}"/>
                 </StackPanel>
 
-                <!-- ナビゲーションの開閉（アイコンのみ。 開いているときは「閉じる」、閉じているときは「開く」） -->
-                <Button x:Name="NavToggleButton"
-                        Grid.Row="1"
-                        AutomationProperties.Name="ナビゲーションの開閉ボタン"
-                        Classes="NavToggle"
-                        Width="40"
-                        Height="40"
-                        Padding="0"
-                        HorizontalAlignment="Left"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        CornerRadius="4"
-                        VerticalAlignment="Center"
-                        Click="OnNavToggleClick"
-                        ToolTip.Tip="ナビゲーションを開閉">
-                    <PathIcon x:Name="NavToggleIcon" Width="16" Height="16"/>
-                </Button>
+
                 <!-- ナビゲーションアイテム一覧（収納時はアイコンのみ。アイコンの位置は展開時と同じ左端に固定）。
                      下部余白 8px により、収納時も設定アイコンの下が背景色で塗られる -->
-                <StackPanel Grid.Row="2" Margin="0,8,0,8">
+                <StackPanel Grid.Row="1" Margin="0,8,0,8">
                     <Border x:Name="NavCapture"
                             Classes="NavItem"
                             ToolTip.Tip="キャプチャ"
@@ -283,7 +240,7 @@
                 <!-- パネルフッター（UI 名とバージョン。 収納時は非表示）。 背景は全高の Border が担う。
                      バージョンは AppVersion（App.Core）から取り、コード ビハインドで設定する -->
                 <TextBlock x:Name="VersionText"
-                           Grid.Row="3"
+                           Grid.Row="2"
                            FontSize="11"
                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
                            Margin="12,8"

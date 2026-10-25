@@ -61,14 +61,8 @@ internal sealed class MainWindow : Window
         new(AppPage.Settings, "設定", "ic_fluent_settings_24_regular.svg", static w => SettingsPage.Build(w.Services, w)),
     ];
 
-    /// <summary>ナビゲーション ペインの開閉ボタン（左上へ重ねる）。</summary>
-    private Button _navToggle = null!;
-
     /// <summary>アプリ名（タイトル バー。 開閉に依存しない）。</summary>
     private Border _navTitle = null!;
-
-    /// <summary>ナビゲーションの開閉アイコン（開閉の状態で差し替える）。</summary>
-    private ImageIcon _navToggleIcon = null!;
 
     /// <summary>ナビゲーション ペインのフッター（UI 名とバージョン。 収納時は隠す）。</summary>
     private TextBlock _navFooter = null!;
@@ -341,19 +335,6 @@ internal sealed class MainWindow : Window
         appIconButton.Click += (_, _) => Services.Main.IsNavigationExpanded = !Services.Main.IsNavigationExpanded;
         appIconButton.RightTapped += OnAppIconRightTapped;
 
-        _navToggle = CreateCaptionButton(AppStyles.NavPanelCompactWidth);
-        _navToggleIcon = new ImageIcon
-        {
-            Source = IconLoader.LoadThemedImage(
-                NavToggleIconFile(Services.Main.IsNavigationExpanded), AppStyles.IconRasterSize),
-            Width = AppStyles.NavIconSize,
-            Height = AppStyles.NavIconSize,
-        };
-        _navToggle.Content = _navToggleIcon;
-        _navToggle.HorizontalAlignment = HorizontalAlignment.Left;
-        _navToggle.Height = WindowLayout.NavToggleHeight;
-        ToolTipService.SetToolTip(_navToggle, "ナビゲーション パネルの開閉");
-        _navToggle.Click += (_, _) => Services.Main.IsNavigationExpanded = !Services.Main.IsNavigationExpanded;
 
         // アプリ名はアプリ アイコンの右（展開時のみ表示。 アイコンとの間隔を狭くする）
         _navTitle = new Border
@@ -384,16 +365,14 @@ internal sealed class MainWindow : Window
         Grid.SetColumn(_navTitle, 1);
         titleRow.Children.Add(_navTitle);
 
+        // 開閉は左上のアプリ アイコンのクリックが担う（専用の開閉ボタンは置かない）
         var header = new Grid
         {
+            Height = WindowLayout.AppIconRowHeight,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Top,
         };
-        header.RowDefinitions.Add(new RowDefinition { Height = new GridLength(WindowLayout.AppIconRowHeight) });
-        header.RowDefinitions.Add(new RowDefinition { Height = new GridLength(WindowLayout.NavToggleHeight) });
         header.Children.Add(titleRow);
-        Grid.SetRow(_navToggle, 1);
-        header.Children.Add(_navToggle);
 
         // 見出しの下地はナビゲーションと同じ色にする（展開時はアプリ名の分だけ広げる）
         _navHeader = new Border
@@ -401,7 +380,7 @@ internal sealed class MainWindow : Window
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
             Width = NavPanelMetrics.Width(Services.Main.IsNavigationExpanded),
-            Height = WindowLayout.AppIconRowHeight + WindowLayout.NavToggleHeight,
+            Height = WindowLayout.AppIconRowHeight,
             Background = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavPanel(AppStyles.IsDarkTheme))),
             Child = header,
         };
@@ -558,11 +537,11 @@ internal sealed class MainWindow : Window
     /// </remarks>
     private void BuildNavigation()
     {
-        // 見出し（アプリ アイコン 44 + 開閉ボタン 40）の下から並べる（他の UI 版と同じ間隔）
+        // 見出し（アプリ アイコン 44）の下から並べる（他の UI 版と同じ間隔）
         _navRail.VerticalAlignment = VerticalAlignment.Top;
         _navRail.Margin = new Thickness(
             0,
-            WindowLayout.AppIconRowHeight + WindowLayout.NavToggleHeight + AppStyles.NavItemsMarginTop,
+            WindowLayout.AppIconRowHeight + AppStyles.NavItemsMarginTop,
             0,
             AppStyles.NavItemsMarginTop);
 
@@ -737,8 +716,7 @@ internal sealed class MainWindow : Window
             Width = NavPanelMetrics.ExpandedWidth,
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Stretch,
-            Margin = new Thickness(
-                0, WindowLayout.AppIconRowHeight + WindowLayout.NavToggleHeight, 0, 0),
+            Margin = new Thickness(0, WindowLayout.AppIconRowHeight, 0, 0),
             Background = new SolidColorBrush(AppStyles.ToColor(AppPalette.NavPanel(AppStyles.IsDarkTheme))),
             Visibility = Services.Main.IsNavigationExpanded ? Visibility.Visible : Visibility.Collapsed,
             Child = grid,
@@ -793,8 +771,6 @@ internal sealed class MainWindow : Window
         _navOverlay.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
         _navTitle.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
         _navHeader.Width = NavPanelMetrics.Width(expanded);
-        _navToggleIcon.Source = IconLoader.LoadThemedImage(
-            NavToggleIconFile(expanded), AppStyles.IconRasterSize);
         RefreshNavSelection();
     }
 
@@ -814,13 +790,6 @@ internal sealed class MainWindow : Window
         }
     }
 
-    /// <summary>ナビゲーションの開閉状態に応じたアイコンのファイル名を取得する。</summary>
-    /// <param name="expanded">開いているかどうか。</param>
-    /// <returns>開いているときは「閉じる」、閉じているときは「開く」のアイコン。</returns>
-    private static string NavToggleIconFile(bool expanded)
-        => expanded
-            ? "ic_fluent_panel_left_contract_24_filled.svg"
-            : "ic_fluent_panel_right_contract_24_filled.svg";
 
     /// <summary>左上のアプリ アイコンの押下でウィンドウの標準メニューを出す。</summary>
     /// <param name="sender">イベントの送信元。</param>
@@ -927,8 +896,20 @@ internal sealed class MainWindow : Window
 
         var content = EnsurePage(index);
         _currentPage = page;
-        _contentHost.Children.Clear();
-        _contentHost.Children.Add(content.Content);
+
+        // 表示の切り替えは**可視性だけ**で行う（要素を付け替えない）。
+        // 付け替えるとツリーが作り直され、一覧の項目（Composition の層を持つ）が再生成されて
+        // 切り替えに待たされる（実測 2026-10-25: 31 件の一覧で目視できる遅さ）。
+        foreach (var candidate in _pages)
+        {
+            if (candidate is not null)
+            {
+                candidate.Content.Visibility = ReferenceEquals(candidate, content)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+        }
+
         content.OnActivated?.Invoke();
 
         // ナビの選択状態を合わせる（プログラムからの切り替えでも選択がずれないようにする）
@@ -1019,7 +1000,23 @@ internal sealed class MainWindow : Window
     /// <summary>ページの内容を生成して保持する（表示はしない）。</summary>
     /// <param name="index">ページの位置。</param>
     /// <returns>生成済み（または既存）のページの内容。</returns>
-    private PageContent EnsurePage(int index) => _pages[index] ??= s_entries[index].Build(this);
+    /// <remarks>
+    /// 生成したページは<b>表示しない状態でホストへ加える</b>（表示の切り替えは可視性で行う）。
+    /// 要素を付け替えるとツリーが作り直されるため、初回だけ親へ加える。
+    /// </remarks>
+    private PageContent EnsurePage(int index)
+    {
+        if (_pages[index] is { } cached)
+        {
+            return cached;
+        }
+
+        var created = s_entries[index].Build(this);
+        created.Content.Visibility = Visibility.Collapsed;
+        _contentHost.Children.Add(created.Content);
+        _pages[index] = created;
+        return created;
+    }
 
     /// <summary>一覧・設定ページを表示せずに構築し、サムネイルの低負荷生成を始める。</summary>
     /// <remarks>

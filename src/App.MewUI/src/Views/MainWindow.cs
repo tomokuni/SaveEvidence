@@ -48,14 +48,6 @@ internal sealed partial class MainWindow
     /// <summary>タイトルバー領域の高さ（DIP）。 非クライアント領域をこの高さでクライアント領域へ拡張する。</summary>
     private const double TitleBarHeight = 32;
 
-    /// <summary>ナビ領域の一番上に置く開閉ボタンの一辺（DIP）。</summary>
-    private const double NavToggleSize = 40;
-
-    /// <summary>ナビの開閉アイコン（開いているときに使う「閉じる」）。</summary>
-    private const string NavIconPanelLeftContract = "ic_fluent_panel_left_contract_24_filled.svg";
-
-    /// <summary>ナビの開閉アイコン（閉じているときに使う「開く」）。</summary>
-    private const string NavIconPanelRightContract = "ic_fluent_panel_right_contract_24_filled.svg";
 
     /// <summary>ナビ項目の選択マークの幅（DIP）。 WinUI 3 の選択マークと同じ。</summary>
     private const double NavSelectionMarkWidth = NavPanelMetrics.SelectionMarkWidth;
@@ -189,26 +181,6 @@ internal sealed partial class MainWindow
         var navItemImages = new Image[entries.Length];
         var navItemMarks = new Border[entries.Length];
         var navItemButtons = new Button[entries.Length];
-        var navToggleIcon = new Image
-        {
-            Source = LoadNavIcon(NavIconPanelIcon(viewModel.IsNavigationExpanded)),
-            Width = NavIconSize,
-            Height = NavIconSize,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
-        var toggle = new Button
-        {
-            Content = navToggleIcon.Center(),
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Center,
-            Padding = new Thickness(0),
-            Width = NavToggleSize,
-            Height = NavToggleSize,
-            StyleName = AppStyles.NavToggle,
-        };
-        toggle.Cursor(CursorType.Hand);
-        toggle.WithToolTip("ナビゲーションを開閉", () => viewModel.IsNavigationExpanded = !viewModel.IsNavigationExpanded);
 
         var items = new StackPanel().Vertical().Spacing(0)
             .Margin(new Thickness(0, NavPanelMetrics.ItemsMarginTop, 0, NavPanelMetrics.ItemsMarginTop));
@@ -314,16 +286,12 @@ internal sealed partial class MainWindow
 
 
         // ナビ領域の一番上はアプリ アイコンとその右のアプリ名（展開時のみ表示）。
-        // その下に開閉ボタン（アイコンのみ）
-        var titleRow = new Grid().Columns("Auto,*").Rows($"{WindowLayout.AppIconRowHeight}");
-        titleRow.Add(appIconButton.Column(0));
+        // 開閉は左上のアプリ アイコンのクリックが担う（専用の開閉ボタンは置かない）
+        var header = new Grid().Columns("Auto,*").Rows($"{WindowLayout.AppIconRowHeight}");
+        header.Add(appIconButton.Column(0));
         navTitle.VerticalAlignment = VerticalAlignment.Center;
         navTitle.Margin = new Thickness(-8, 0, 0, 0);
-        titleRow.Add(navTitle.Column(1));
-
-        var header = new Grid().Rows($"{WindowLayout.AppIconRowHeight},{WindowLayout.NavToggleHeight}");
-        header.Add(titleRow.Row(0));
-        header.Add(toggle.Row(1));
+        header.Add(navTitle.Column(1));
 
         // ナビパネルの背景はスタイルで与える（テーマ変更で自動的に再解決される）。
         // ページ領域の上へ重ねるため、幅だけを持たせて左端へ寄せる（残りの列はページ領域が使う）
@@ -677,7 +645,6 @@ internal sealed partial class MainWindow
             navTitle.IsVisible = expanded;
             navVersionText.IsVisible = expanded;
             navDismissLayer.IsVisible = expanded || windowMenu.IsVisible;
-            navToggleIcon.Source = LoadNavIcon(NavIconPanelIcon(expanded));
 
             foreach (var text in navItemTexts)
             {
@@ -697,7 +664,6 @@ internal sealed partial class MainWindow
         void ApplyThemeColors()
         {
             var color = IconColor();
-            navToggleIcon.Source = IconLoader.LoadImage(NavIconPanelIcon(viewModel.IsNavigationExpanded), NavIconRasterSize, color);
             appIconImage.Source = IconLoader.LoadImage(AppIdentity.IconFileName, (int)WindowLayout.AppIconSize, color);
 
             for (var i = 0; i < navItemImages.Length; i++)
@@ -774,11 +740,6 @@ internal sealed partial class MainWindow
         return row;
     }
 
-    /// <summary>ナビの開閉状態に応じたアイコンのファイル名を取得する。</summary>
-    /// <param name="expanded">開いているかどうか。</param>
-    /// <returns>開いているときは「閉じる」、閉じているときは「開く」のアイコン。</returns>
-    private static string NavIconPanelIcon(bool expanded)
-        => expanded ? NavIconPanelLeftContract : NavIconPanelRightContract;
 
     /// <summary>ナビ項目のアイコン画像を現在のテーマ色で生成する。</summary>
     /// <param name="fileName">SVG ファイル名。</param>

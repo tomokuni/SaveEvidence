@@ -31,10 +31,14 @@ public static class WindowLayout
     /// <summary>左上のアプリ アイコンの列の幅（DIP）。 ナビゲーションの開閉アイコンと同じ列に置く。</summary>
     public const double AppIconColumnWidth = NavPanelMetrics.CompactWidth;
 
-    /// <summary>ナビゲーションの開閉ボタンの高さ（DIP）。 ナビゲーション パネルの一番上に置く。</summary>
+    /// <summary>ナビゲーションの開閉ボタンの高さ（DIP）。</summary>
+    /// <remarks>
+    /// <b>Windows Forms 版だけが使う</b>: 他の 3 つの UI 版は左上のアプリ アイコンのクリックで開閉するため、
+    /// 専用の開閉ボタンを置かない（ウィンドウ左上のアイコンで開閉できるようにしたため）。
+    /// </remarks>
     public const double NavToggleHeight = 40;
 
-    /// <summary>ナビゲーションの開閉ボタンの幅（DIP）。</summary>
+    /// <summary>ナビゲーションの開閉ボタンの幅（DIP）。 Windows Forms 版だけが使う（<see cref="NavToggleHeight"/>）。</summary>
     public const double NavToggleWidth = NavPanelMetrics.CompactWidth;
 
     /// <summary>上端のドラッグ領域の高さ（DIP）。</summary>
