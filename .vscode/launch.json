@@ -5,13 +5,27 @@
             "name": "Avalonia: SaveEvidence",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/App.AvaloniaUI/src/App.AvaloniaUI.csproj"
+            "projectPath": "${workspaceFolder}/src/App.AvaloniaUI/src/App.AvaloniaUI.csproj",
+            // 「モジュールが読み込まれました。シンボルが読み込まれました。」は動作・例外・ログに
+            // 影響しない情報のため出さない（モジュールの読み込み通知）
+            "logging": {
+                "moduleLoad": false
+            },
+            // 「シンボルの読み込みをスキップしました。… [マイ コードのみ] 設定が有効になっています」は
+            // 最適化されたモジュールへ [マイ コードのみ] が効いたときに毎回出る。
+            // [マイ コードのみ] を無効にすると対象外になり、この行は出ない
+            // （ステップ実行は自前のコードとフレームワークの両方へ入れるようになる）
+            "justMyCode": false
         },
         {
             "name": "MewUI: SaveEvidence",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/App.MewUI/src/App.MewUI.csproj"
+            "projectPath": "${workspaceFolder}/src/App.MewUI/src/App.MewUI.csproj",
+            "logging": {
+                "moduleLoad": false
+            },
+            "justMyCode": false
         },
         {
             // アンパッケージの WinUI 3 アプリは .NET ホスト（dotnet exec）から起動できない
@@ -25,13 +39,21 @@
             "program": "${workspaceFolder}/src/App.WinUI3/src/bin/Debug/net10.0-windows10.0.22621.0/win-x64/SaveEvidence.WinUI3.exe",
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
-            "stopAtEntry": false
+            "stopAtEntry": false,
+            "logging": {
+                "moduleLoad": false
+            },
+            "justMyCode": false
         },
         {
             "name": "WinForms: SaveEvidence",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/App.WinForms/src/App.WinForms.csproj"
+            "projectPath": "${workspaceFolder}/src/App.WinForms/src/App.WinForms.csproj",
+            "logging": {
+                "moduleLoad": false
+            },
+            "justMyCode": false
         }
     ]
 }
