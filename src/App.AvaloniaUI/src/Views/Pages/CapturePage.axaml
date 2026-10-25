@@ -98,22 +98,21 @@
                      TextChanged="OnFileNameTemplateTextChanged"/>
             <!-- 保存ボタン（フライアウトメニューのキャプチャボタンの左） -->
             <!-- ToolTip は保存先フォルダを含むため、コードビハインド（Initialize / フォルダ変更時）で設定する -->
-            <!-- テンプレートの入力欄とは別の操作であることが分かる間隔を空ける（左 8 DIP）。
-                 アイコン ボタンは MinWidth 32 でアイコンの左右に 8 DIP の余白を持つため、
-                 入力欄との間はアイコンの余白（8）と合わせて 17 DIP になる。
-                 右隣の区切り線は余白を打ち消して 0 にし、アイコンから 9 DIP に寄せる
-                 （区切り線の既定のマージン（4）だと 12 DIP になり、線だけが浮いて見える） -->
+            <!-- 間隔は他の区切りと同じ 12 DIP にする（入力欄の余白 1 + 左 3 + アイコンの余白 8）。
+                 アイコン ボタンは 32 DIP でアイコン（16 DIP）を中央に置くため、左右に 8 DIP の余白がある。
+                 入力欄の側だけ 3 DIP を足し、区切り線の側は区切り線の余白（3）と合わせて 12 DIP にする。
+                 アイコンを横並びの StackPanel で包むと中央に置かれず、**左寄せになって入力欄との間隔だけが
+                 8 DIP 狭く見える**（実測 2026-10-25）。 12 DIP はツールバーが狭いときに入力欄の
+                 ファイル名が欠けない上限でもある（13 DIP では末尾が 2 文字だけ切れた。 実測） -->
             <Button x:Name="SaveButton"
                     Classes="toolbar toolbar-icon"
                     Command="{Binding SaveImageCommand}"
                     IsEnabled="{Binding CanSave}"
-                    Margin="8,1,1,1"
+                    Margin="3,1,1,1"
                     VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" Spacing="4">
-                    <PathIcon x:Name="SaveIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
-                </StackPanel>
+                <PathIcon x:Name="SaveIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
             </Button>
-            <Border Classes="toolbar-separator" Margin="0,0"/>
+            <Border Classes="toolbar-separator"/>
             <Button ToolTip.Tip="スクリーン選択キャプチャ" Classes="toolbar toolbar-icon" Click="OnCaptureScreenClick" Margin="1" VerticalAlignment="Center">
                 <PathIcon x:Name="ScreenSelectIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
             </Button>

@@ -137,11 +137,12 @@
         </Style>
 
         <!-- ツールバーの区切り（縦線）。 Fluent の Separator は横線のため、縦の | を自前で置く
-             （見た目は他の UI 版の区切りと同じ 1 × 20 DIP・左右 4 DIP）。 -->
+             （見た目は他の UI 版の区切りと同じ 1 × 20 DIP・左右 3 DIP。 左右 4 DIP では、狭いウィンドウで
+             ファイル名の入力欄が末尾 2 文字だけ欠けた。 実測 2026-10-25）。 -->
         <Style Selector="Border.toolbar-separator">
             <Setter Property="Width" Value="1"/>
             <Setter Property="Height" Value="20"/>
-            <Setter Property="Margin" Value="4,0"/>
+            <Setter Property="Margin" Value="3,0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Background" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
         </Style>
