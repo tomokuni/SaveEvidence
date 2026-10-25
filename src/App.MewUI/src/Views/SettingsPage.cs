@@ -493,7 +493,14 @@ internal static class SettingsPage
     /// </remarks>
     private static FrameworkElement ColorRow(Settings settings, string initial, Action<string> apply)
     {
-        var control = new ColorComboBoxControl { SelectedColor = initial, TextFormat = settings.ColorTextFormat };
+        // 文字サイズは周囲の入力欄（SettingsMetrics.FontSize）へ合わせる。
+        // MewUI の要素は文字サイズを継承しないため、明示的に渡さないと 1 回り小さく表示される
+        var control = new ColorComboBoxControl
+        {
+            SelectedColor = initial,
+            TextFormat = settings.ColorTextFormat,
+            TextFontSize = SettingsMetrics.FontSize,
+        };
         control.SelectedColorChanged += (_, _) => apply(control.SelectedColor);
 
         settings.PropertyChanged += (_, e) =>

@@ -38,7 +38,7 @@ src/App.WinUI3/src/bin/Debug/net10.0-windows10.0.22621.0/win-x64/SaveEvidence.Wi
 ```
 
 VS Code のデバッグ構成（[`.vscode/launch.json`](../../.vscode/launch.json) の `WinUI3: SaveEvidence`）は、
-この制約に合わせて **exe を起動する構成**にしています（`type: dotnet` は .NET ホスト経由で起動するため使えません）。
+この制約に合わせて **exe を起動する構成**（`type: coreclr`）にしています（`type: dotnet` は .NET ホスト経由で起動するため使えません）。 4 つの UI 版とも `coreclr` で起動します（デバッガーの設定 `logging.moduleLoad` / `justMyCode` が coreclr でだけ確実に効くため。 実測 2026-10-25）。
 
 ## 4. ビルドと検証
 

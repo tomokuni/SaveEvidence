@@ -2,10 +2,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            // **coreclr で起動する**: デバッガーの設定（logging / justMyCode）は coreclr の起動構成でだけ
+            // 確実に効く。 `dotnet` 種別はプロジェクトの起動を包むため、指定がデバッガーまで届かないことがある
+            // （「モジュールが読み込まれました…」「シンボルの読み込みをスキップしました…」が消えない。 実測 2026-10-25）
             "name": "Avalonia: SaveEvidence",
-            "type": "dotnet",
+            "type": "coreclr",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/App.AvaloniaUI/src/App.AvaloniaUI.csproj",
+            "preLaunchTask": "ビルド（App.AvaloniaUI）",
+            "program": "${workspaceFolder}/src/App.AvaloniaUI/src/bin/Debug/net10.0-windows10.0.17763.0/SaveEvidence.AvaloniaUI.exe",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false,
             // 「モジュールが読み込まれました。シンボルが読み込まれました。」は動作・例外・ログに
             // 影響しない情報のため出さない（モジュールの読み込み通知）
             "logging": {
@@ -14,14 +21,17 @@
             // 「シンボルの読み込みをスキップしました。… [マイ コードのみ] 設定が有効になっています」は
             // 最適化されたモジュールへ [マイ コードのみ] が効いたときに毎回出る。
             // [マイ コードのみ] を無効にすると対象外になり、この行は出ない
-            // （ステップ実行は自前のコードとフレームワークの両方へ入れるようになる）
             "justMyCode": false
         },
         {
             "name": "MewUI: SaveEvidence",
-            "type": "dotnet",
+            "type": "coreclr",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/App.MewUI/src/App.MewUI.csproj",
+            "preLaunchTask": "ビルド（App.MewUI）",
+            "program": "${workspaceFolder}/src/App.MewUI/src/bin/Debug/net10.0-windows10.0.17763.0/SaveEvidence.MewUI.exe",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false,
             "logging": {
                 "moduleLoad": false
             },
@@ -47,9 +57,13 @@
         },
         {
             "name": "WinForms: SaveEvidence",
-            "type": "dotnet",
+            "type": "coreclr",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/App.WinForms/src/App.WinForms.csproj",
+            "preLaunchTask": "ビルド（App.WinForms）",
+            "program": "${workspaceFolder}/src/App.WinForms/src/bin/Debug/net10.0-windows10.0.17763.0/SaveEvidence.WinForms.exe",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false,
             "logging": {
                 "moduleLoad": false
             },

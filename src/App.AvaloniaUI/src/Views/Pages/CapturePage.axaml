@@ -102,7 +102,7 @@
                     Classes="toolbar toolbar-icon"
                     Command="{Binding SaveImageCommand}"
                     IsEnabled="{Binding CanSave}"
-                    Margin="1"
+                    Margin="8,1,1,1"
                     VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="4">
                     <PathIcon x:Name="SaveIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>

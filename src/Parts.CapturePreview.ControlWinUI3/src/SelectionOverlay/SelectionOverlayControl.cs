@@ -506,6 +506,11 @@ public sealed partial class SelectionOverlayControl : Panel
             return finalSize;
         }
 
+        // **大きさを明示する**: Canvas の子は配置の矩形ではなく自分の要求サイズで並ぶため、
+        // Arrange だけでは意図した大きさにならないことがある（実測 2026-10-25: ルーペだけが
+        // 指定（160 DIP）より小さい 128 DIP で表示された）。 Width / Height は要求サイズより優先される。
+        _loupe.Width = layout.ClientSize;
+        _loupe.Height = layout.ClientSize;
         _loupe.Arrange(new Rect(position.X, position.Y, layout.ClientSize, layout.ClientSize));
         return finalSize;
     }

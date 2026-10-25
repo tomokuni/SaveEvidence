@@ -327,7 +327,8 @@ internal sealed class CaptureOverlay
         };
 
         // 撮影画像は仮想スクリーンと等倍（領域と同じ縦横比）のため、領域全体へ敷く（Uniform にしない）
-        root.Children.Add(new CompositionImageView { Source = Screen });
+        var screenView = new CompositionImageView { Source = Screen };
+        root.Children.Add(screenView);
 
         // 十字カーソルはドラッグで矩形を作る種別（ハイライト型以外 = 範囲選択）で使う
         // （選択スタイルの判定はコアが単一所有する）
@@ -392,6 +393,18 @@ internal sealed class CaptureOverlay
                 new TimeoutException("最初の描画フレームを待てませんでした（画面外では合成が走らないことがあります）。"),
                 nameof(ShowAsync));
         }
+        // 画像（サーフェス）の読み込み完了も待つ。 LoadedImageSurface は**段階的に復号する**ため、
+        // 完了前に画面内へ移すと、縮小された内容が 1〜2 フレーム見える（実測 2026-10-25）。
+        try
+        {
+            await screenView.WaitForSourceReadyAsync().WaitAsync(s_firstFrameTimeout).ConfigureAwait(true);
+        }
+        catch (TimeoutException)
+        {
+            _log.LogOperationError(
+                new TimeoutException("撮影画像の読み込み完了を待てませんでした。"), nameof(ShowAsync));
+        }
+
         // 合成の完了をもう少し待つ（1 フレームでは DWM へ提示される前に画面内へ移してしまい、
         // 白い下地が 1〜2 フレーム見える。 実測 2026-10-17）
         await Task.Delay(s_composeSettleDelay).ConfigureAwait(true);
