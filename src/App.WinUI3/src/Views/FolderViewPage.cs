@@ -58,6 +58,10 @@ internal static class FolderViewPage
         // 生成中の要求と、その項目の一覧内の位置（見え方の変化で優先度を付け直す）
         var pending = new List<(ThumbnailScheduler.ThumbnailRequest Request, int Index)>();
 
+        // 直前に並べた内容（同じ内容を並べ直さないための記録）
+        var builtFiles = new List<string>();
+        var builtIconSize = -1;
+
         var itemCountText = CreateStatusLabel(viewModel.ItemCountText);
         var modeText = CreateStatusLabel(viewModel.ViewModeText);
         var sortText = CreateStatusLabel(viewModel.SortStatusText);
@@ -249,12 +253,28 @@ internal static class FolderViewPage
             viewModel.FolderPathText = folderPath;
             folderText.Text = folderPath;
 
+            var files = ReadFiles(folderPath, viewModel.IsSortAscending, s_logger);
+
+            // 同じ内容なら並べ直さない: 並べ直すと項目の要素とサムネイルの生成（復号）を作り直すため、
+            // ページを表示するたびに作り直すと切り替えが待たされる（実測 2026-10-25: 31 件で目視できる遅さ）。
+            // フォルダの列挙は残すため、新しいキャプチャは次に表示したときに反映される
+            var unchanged = iconSize == builtIconSize
+                && files.Count == builtFiles.Count
+                && files.SequenceEqual(builtFiles, StringComparer.OrdinalIgnoreCase);
+            if (unchanged)
+            {
+                UpdateStatusTexts(files.Count);
+                return;
+            }
+
+            builtIconSize = iconSize;
+            builtFiles.Clear();
+            builtFiles.AddRange(files);
+
             thumbnails.Clear();
             pending.Clear();
             list.ClearItems();
             list.ImageWidth = iconSize;
-
-            var files = ReadFiles(folderPath, viewModel.IsSortAscending, s_logger);
             var capacity = Math.Max(AppStyles.ThumbnailCacheCapacity, files.Count);
 
             for (var index = 0; index < files.Count; index++)
@@ -277,11 +297,15 @@ internal static class FolderViewPage
                     index));
             }
 
-            viewModel.ItemCount = files.Count;
+            UpdateStatusTexts(files.Count);
+        }
+
+        void UpdateStatusTexts(int count)
+        {
+            viewModel.ItemCount = count;
             itemCountText.Text = viewModel.ItemCountText;
             modeText.Text = viewModel.ViewModeText;
             sortText.Text = viewModel.SortStatusText;
-
         }
 
         return new PageContent(
