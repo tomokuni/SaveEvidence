@@ -208,6 +208,48 @@ internal static partial class AppLog
     public static void LogThumbnailGenerateError(this ILogger logger, Exception ex)
         => logger.LogThumbnailGenerateErrorCore(Prefix, ex);
 
+    /// <summary>ページの切り替えにかかった時間を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Debug <br/>
+    /// 出力書式: <c>ページ切り替え: {Page} 表示={ShowMs} ms / 活性化={ActivateMs} ms</c><br/>
+    /// 切り替えの内訳（要素の可視性の切り替えと、ページの活性化（一覧の再構築など））を分けて残す。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="page">切り替え先のページ名。</param>
+    /// <param name="showMs">要素の可視性の切り替えにかかった時間（ミリ秒）。</param>
+    /// <param name="activateMs">ページの活性化（一覧の再構築など）にかかった時間（ミリ秒）。</param>
+    [LoggerMessage(LogLevel.Debug, "{Prefix} ページ切り替え: {Page} 表示={ShowMs} ms / 活性化={ActivateMs} ms")]
+    private static partial void LogPageSwitchCore(this ILogger logger, string prefix, string page, double showMs, double activateMs);
+
+    /// <summary>ページの切り替え時間を記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="page">切り替え先のページ名。</param>
+    /// <param name="showMs">要素の可視性の切り替えにかかった時間（ミリ秒）。</param>
+    /// <param name="activateMs">ページの活性化にかかった時間（ミリ秒）。</param>
+    public static void LogPageSwitch(this ILogger logger, string page, double showMs, double activateMs)
+        => logger.LogPageSwitchCore(Prefix, page, showMs, activateMs);
+
+    /// <summary>ページの最初の描画フレームまでの時間を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Debug <br/>
+    /// 出力書式: <c>ページ描画: {Page} {RenderMs} ms</c><br/>
+    /// 体感の遅さは描画（要素の構築と合成）に出るため、切り替えの処理時間とは別に残す。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="page">表示したページ名。</param>
+    /// <param name="renderMs">最初の描画フレームまでの時間（ミリ秒）。</param>
+    [LoggerMessage(LogLevel.Debug, "{Prefix} ページ描画: {Page} {RenderMs} ms")]
+    private static partial void LogPageRenderedCore(this ILogger logger, string prefix, string page, double renderMs);
+
+    /// <summary>ページの最初の描画フレームまでの時間を記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="page">表示したページ名。</param>
+    /// <param name="renderMs">最初の描画フレームまでの時間（ミリ秒）。</param>
+    public static void LogPageRendered(this ILogger logger, string page, double renderMs)
+        => logger.LogPageRenderedCore(Prefix, page, renderMs);
+
     /// <summary>起動後のサムネイルの先読みを開始したことを記録する。</summary>
     /// <remarks>
     /// LogLevel: Debug <br/>

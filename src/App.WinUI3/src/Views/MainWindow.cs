@@ -896,6 +896,7 @@ internal sealed class MainWindow : Window
 
         var content = EnsurePage(index);
         _currentPage = page;
+        var showStart = System.Diagnostics.Stopwatch.GetTimestamp();
 
         // 表示の切り替えは**可視性だけ**で行う（要素を付け替えない）。
         // 付け替えるとツリーが作り直され、一覧の項目（Composition の層を持つ）が再生成されて
@@ -910,7 +911,24 @@ internal sealed class MainWindow : Window
             }
         }
 
+        var showMs = System.Diagnostics.Stopwatch.GetElapsedTime(showStart).TotalMilliseconds;
+        var activateStart = System.Diagnostics.Stopwatch.GetTimestamp();
         content.OnActivated?.Invoke();
+        var activateMs = System.Diagnostics.Stopwatch.GetElapsedTime(activateStart).TotalMilliseconds;
+
+        s_logger.LogPageSwitch(page.ToString(), showMs, activateMs);
+
+        // **最初の描画フレームまでの時間**も測る（ページの要素が複雑だと、切り替えの処理が
+        // 軽くても描画に時間がかかる。 体感の遅さはこちらに出る）
+        var renderStart = System.Diagnostics.Stopwatch.GetTimestamp();
+        void OnFirstRender(object? sender, object args)
+        {
+            Microsoft.UI.Xaml.Media.CompositionTarget.Rendering -= OnFirstRender;
+            s_logger.LogPageRendered(
+                page.ToString(), System.Diagnostics.Stopwatch.GetElapsedTime(renderStart).TotalMilliseconds);
+        }
+
+        Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += OnFirstRender;
 
         // ナビの選択状態を合わせる（プログラムからの切り替えでも選択がずれないようにする）
         RefreshNavSelection();
