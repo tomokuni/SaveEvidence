@@ -261,4 +261,4 @@ dotnet test src/Parts.CapturePreview.ControlMewUI/tests/Parts.CapturePreview.Con
 
 ## 9. ライセンス
 
-MIT License（全文は [`../../LICENSE`](../../LICENSE) を参照）。
+[MIT License](LICENSE)

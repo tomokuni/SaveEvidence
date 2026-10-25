@@ -509,4 +509,4 @@ GitHub が README に求めるのは次の 5 項目です。
 
 ## 10. ライセンス
 
-MIT License（全文は [`LICENSE`](LICENSE) を参照）。
+[MIT License](LICENSE)
