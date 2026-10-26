@@ -200,17 +200,40 @@ public sealed class LogicLineDetector : ILineDetector
         var bestEdgeDistance = double.MaxValue;
         var found = false;
 
-        foreach (var h1 in hs)
+        // **組み合わせは i < j の一方向だけを見る**。 上下・左右は入れ替えても同じ矩形になる（矩形の座標は
+        // min/max で作る）ため、両順序を評価すると同じ候補を 4 回調べることになる（実測 2026-10-27:
+        // 反復が |hs|²|vs|² → C(|hs|,2)·C(|vs|,2) になる）。 走査順は「最初に現れる順」と同じなので、
+        // 同点のときに選ばれる候補も変わらない。
+        // 垂直座標と平行方向の長さは候補ごとに 1 回だけ求める（内側のループで計算し直さない）。
+        var hPerp = new double[hs.Count];
+        var hSpan = new double[hs.Count];
+        for (var i = 0; i < hs.Count; i++)
         {
-            var y1 = PerpCoord(h1, isHorizontal: true);
-            foreach (var h2 in hs)
+            hPerp[i] = PerpCoord(hs[i], isHorizontal: true);
+            hSpan[i] = ParallelSpan(hs[i], isHorizontal: true);
+        }
+
+        var vPerp = new double[vs.Count];
+        var vSpan = new double[vs.Count];
+        for (var i = 0; i < vs.Count; i++)
+        {
+            vPerp[i] = PerpCoord(vs[i], isHorizontal: false);
+            vSpan[i] = ParallelSpan(vs[i], isHorizontal: false);
+        }
+
+        for (var hi = 0; hi < hs.Count; hi++)
+        {
+            var h1 = hs[hi];
+            var y1 = hPerp[hi];
+            for (var hj = hi + 1; hj < hs.Count; hj++)
             {
+                var h2 = hs[hj];
                 if (h1 == h2)
                 {
                     continue;
                 }
 
-                var y2 = PerpCoord(h2, isHorizontal: true);
+                var y2 = hPerp[hj];
                 if (Math.Abs(y2 - y1) < options.MinLineLength)
                 {
                     continue;
@@ -218,29 +241,31 @@ public sealed class LogicLineDetector : ILineDetector
 
                 // 対辺（上辺と下辺）の長さが揃っていること（矩形の対辺は同じ長さ）。
                 // コーナーが欠けてスパンが揃わないことがあるため、比率で許容する
-                if (!SameLength(ParallelSpan(h1, isHorizontal: true), ParallelSpan(h2, isHorizontal: true)))
+                if (!SameLength(hSpan[hi], hSpan[hj]))
                 {
                     continue;
                 }
 
-                foreach (var v1 in vs)
+                for (var vi = 0; vi < vs.Count; vi++)
                 {
-                    var x1 = PerpCoord(v1, isHorizontal: false);
-                    foreach (var v2 in vs)
+                    var v1 = vs[vi];
+                    var x1 = vPerp[vi];
+                    for (var vj = vi + 1; vj < vs.Count; vj++)
                     {
+                        var v2 = vs[vj];
                         if (v1 == v2)
                         {
                             continue;
                         }
 
-                        var x2 = PerpCoord(v2, isHorizontal: false);
+                        var x2 = vPerp[vj];
                         if (Math.Abs(x2 - x1) < options.MinLineLength)
                         {
                             continue;
                         }
 
                         // 対辺（左辺と右辺）の長さが揃っていること（矩形の対辺は同じ長さ）
-                        if (!SameLength(ParallelSpan(v1, isHorizontal: false), ParallelSpan(v2, isHorizontal: false)))
+                        if (!SameLength(vSpan[vi], vSpan[vj]))
                         {
                             continue;
                         }
