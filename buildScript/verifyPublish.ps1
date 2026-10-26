@@ -31,6 +31,12 @@ publish の入力が前回と同一でも publish する（入力が同一のと
 .PARAMETER WindowTimeoutSeconds
 メイン ウィンドウが現れるまでの待ち時間（既定 60 秒）。
 
+.PARAMETER SettleSeconds
+メイン ウィンドウが現れてから `WM_CLOSE` を送るまでの待ち時間（既定 2 秒）。
+ウィンドウ ハンドルは XAML の初期化が終わる前に作られるため、直後に閉じると初期化の途中で破棄され、
+アクセス違反（`0xC0000005`）で終了することがある（実測 2026-10-26: CI の dry-run で 1 回だけ
+起動直後に `0xC0000005` で終了し、同じ実行の再実行では成功した。 ローカルでは 20 回再現しなかった）。
+
 .PARAMETER ExitTimeoutSeconds
 `WM_CLOSE` を送ってからプロセスが終了するまでの待ち時間（既定 60 秒）。
 
@@ -46,6 +52,7 @@ param(
     [switch]$SkipPublish,
     [switch]$ForcePublish,
     [int]$WindowTimeoutSeconds = 60,
+    [int]$SettleSeconds = 2,
     [int]$ExitTimeoutSeconds = 60
 )
 
@@ -87,7 +94,7 @@ function Get-SettingKeys {
 }
 
 # exe を起動し、ウィンドウが現れてから正常終了させる
-function Invoke-AppRoundTrip([string]$ExePath, [int]$WindowTimeout, [int]$ExitTimeout) {
+function Invoke-AppRoundTrip([string]$ExePath, [int]$WindowTimeout, [int]$Settle, [int]$ExitTimeout) {
     $process = Start-Process -FilePath $ExePath -PassThru
 
     $handle = [IntPtr]::Zero
@@ -103,6 +110,15 @@ function Invoke-AppRoundTrip([string]$ExePath, [int]$WindowTimeout, [int]$ExitTi
     if ($handle -eq [IntPtr]::Zero) {
         if (-not $process.HasExited) { $process.Kill() }
         return [pscustomobject]@{ Closed = $false; Reason = "メイン ウィンドウが $WindowTimeout 秒以内に現れませんでした" }
+    }
+
+    # ウィンドウ ハンドルは XAML の初期化が終わる前に作られる。 直後に閉じると初期化の途中で
+    # 破棄され、アクセス違反（0xC0000005）で終了することがある（実測 2026-10-26: CI の dry-run で
+    # 1 回だけ起動直後に 0xC0000005 で終了し、再実行では成功した。 ローカルでは 20 回再現しなかった）。
+    # 立ち上がりきるのを待ってから閉じる（待つだけで、判定は弱めない）。
+    Start-Sleep -Seconds $Settle
+    if ($process.HasExited) {
+        return [pscustomobject]@{ Closed = $false; Reason = "ウィンドウが現れた後に終了しました（終了コード $($process.ExitCode)）" }
     }
 
     [void][SeVerifyPublish.Native]::PostMessage($handle, 0x0010, [IntPtr]::Zero, [IntPtr]::Zero)   # WM_CLOSE
@@ -247,7 +263,7 @@ try {
         }
 
         # 4. 起動と終了（正常終了させる。 強制終了では終了時の保存が走らない）
-        $roundTrip = Invoke-AppRoundTrip -ExePath $exe.FullName -WindowTimeout $WindowTimeoutSeconds -ExitTimeout $ExitTimeoutSeconds
+        $roundTrip = Invoke-AppRoundTrip -ExePath $exe.FullName -WindowTimeout $WindowTimeoutSeconds -Settle $SettleSeconds -ExitTimeout $ExitTimeoutSeconds
         Add-Result "$($target.name) 起動と終了" $roundTrip.Closed $(if ($roundTrip.Closed) { $exe.Name } else { $roundTrip.Reason })
 
         # 5. 設定の往復（空になっていないこと・キーが保たれていること）
