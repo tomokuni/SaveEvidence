@@ -11,10 +11,7 @@ internal static class MatHelper
     /// <param name="bitmap">変換元の画像。 借用であり破棄しない（読み取るだけのため <see cref="EsReadOnlyBitmap"/> を受ける）。</param>
     /// <returns>変換された Mat（呼び出し元で破棄する）。</returns>
     /// <remarks>
-    /// ピクセル バッファ（<see cref="EsReadOnlyBitmap.ReadOnlyPixels"/>）から <see cref="Mat"/> の領域へ**直接**コピーする。<br/>
-    /// <b>中間のマネージド配列を作らない</b>: 以前は画像全体の <c>byte[]</c> を確保して 2 回コピーしていた
-    /// （配列へコピー → <c>Marshal.Copy</c> で Mat へ）。 検出のたびに幅×高さ×4 バイトの配列を確保しないため、
-    /// フレーム全体のコピーが 2 回から 1 回になり、大きな画像での LOH の断片化も避けられる。<br/>
+    /// ピクセル バッファ（<see cref="EsReadOnlyBitmap.ReadOnlyPixels"/>）から <see cref="Mat"/> の領域へ直接コピーする。<br/>
     /// ストライドが一致しない場合は行単位でコピーする（コピー元とコピー先の両方を見る）。
     /// </remarks>
     public static Mat ToMat(EsReadOnlyBitmap bitmap)
