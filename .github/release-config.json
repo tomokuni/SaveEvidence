@@ -4,8 +4,11 @@
   "solutionFile": "SaveEvidence.slnx",
   "gateWorkflow": "build.yml",
   "releaseBranches": [
+    "main"
+  ],
+  "dryRunBranches": [
     "main",
-    "release/**"
+    "dev"
   ],
   "settingsFiles": ["settings.json"],
   "requiredBuildProps": ["EnforceCodeStyleInBuild", "GenerateDocumentationFile", "CopyDocumentationFileToOutputDirectory", "PublishDocumentationFiles", "AnalysisLevel", "AnalysisMode", "TreatWarningsAsErrors"],

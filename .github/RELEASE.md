@@ -21,7 +21,7 @@
 
 UI の追加・変更は **`release-config.json` の `uis[]` を編集します**（ワークフローとスクリプトの変更は不要です）。
 **ビルド・テストの対象は `solutionFile` が持ちます**（ワークフローには書きません）。
-**リリースを許可するブランチは `releaseBranches` が持ちます**（本リポジトリは `["main", "release/**"]`。
+**実行できるブランチはモードで変わります**（`dry-run` は `dryRunBranches`、公開は `releaseBranches`。 本リポジトリは dry-run が `["main", "dev", "release/**"]`、公開が `["main", "release/**"]`。
 `release/` 配下は **`release/<major>.<minor>` の形式**に限定され、入力バージョンの系列と一致させる必要があります）。
 
 ```text
@@ -145,7 +145,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 | --- | --- | --- |
 | [`workflows/build.yml`](workflows/build.yml) | `main` への push（マージ後）、`main` 向け PR（**必ず実行**）、`dev` への push、`release/**` への push、手動実行 | 復元・ビルド・テスト（**配布物は作らない**）。 PR では必須チェック `build` |
 | [`workflows/publish.yml`](workflows/publish.yml) | `workflow_call` | 全 UI の publish・**配布物の起動検証**・保管の単一実装（`version` を受け取るとそのバージョンでビルドする） |
-| [`workflows/release.yml`](workflows/release.yml) | **手動実行のみ。 実行ブランチは `releaseBranches` に従う**。 `mode` で 2 段階（`dry-run` / `release`） | 検証 → SBOM → 全 UI の publish →（release のみ）**承認** → タグ + GitHub Release 作成 |
+| [`workflows/release.yml`](workflows/release.yml) | **手動実行のみ。 実行ブランチは `mode` に従う**（`dry-run` は `dryRunBranches`、公開は `releaseBranches`）。 `mode` で 2 段階（`dry-run` / `release`） | 検証 → SBOM → 全 UI の publish →（release のみ）**承認** → タグ + GitHub Release 作成 |
 
 `build.yml` の成功実行はリリースの**前提（ゲート）**です。 `release.yml` は、リリース対象コミットに対する `build.yml` の成功実行が存在することを確認してから Release を作成します。
 
@@ -161,7 +161,7 @@ flowchart TD
     A --> B["build.yml（必ず実行）<br/>復元 + ビルド + テスト"]
     B --> D{"リリースする?"}
 
-    subgraph rel ["release.yml（手動実行のみ / 実行できるブランチは releaseBranches）"]
+    subgraph rel ["release.yml（手動実行のみ / dry-run は dev も可、公開は main のみ）"]
         F["verify<br/>ブランチ / ゲート / 版 / タグ未作成 / dry-run の成功"]
         S["sbom<br/>CycloneDX を作成"]
         G["publish<br/>publish.yml を呼ぶ<br/>全 UI を publish して保管"]
@@ -202,14 +202,14 @@ flowchart LR
 
 **注意事項**:
 
-- **リリースできるブランチは `release-config.json` の `releaseBranches` が決めます**（本リポジトリは `["main", "release/**"]`）。
+- **実行できるブランチは `release-config.json` の `dryRunBranches`（dry-run）と `releaseBranches`（公開）が決めます**（本リポジトリは dry-run が `["main", "dev", "release/**"]`、公開が `["main", "release/**"]`）。 **開発から dry-run までの確認は `dev` で行い、公開は `main` で行います**。
   `verify` ジョブが最初に実行ブランチを検証し、含まれない場合は失敗します。
   `release/` 配下のブランチは **`release/<major>.<minor>`**（例: `release/0.1`）にしてください。
 - **`release` は、同じコミットの `dry-run` が成功していることを要求します**（実行名 `DryRun …` の成功実行を確認します）。 満たさない場合は失敗します。
 - **版は自動採番しません**。 入力 `version` は**確認用**であり、`Directory.Build.props` の `<Version>` と一致しなければ失敗します。
 - **タグは公開が成功した後にだけ作ります**（作成に失敗しても、タグは消費されません）。
 - **`release` ジョブは `environment: release` を持ちます**。 承認者（Required reviewers）の設定は [リポジトリの設定](#リポジトリの設定初回のみ) を参照してください。
-- **ワークフローはバージョンをコミットしません**（`main` の版はリリース前に人が上げます）。 そのためバックポートでも版の書き換えは起きません。
+- **ワークフローはバージョンをコミットしません**（`main` の版はリリース前に人が上げます）。
 - **同じ系列の中で既存以下のバージョンは検証で失敗します**（同値の再リリースも不可）。
 - **実行一覧（`Actions` → Release）の実行名は `DryRun <ブランチ> <SHA>` / `Release <ブランチ> <SHA>`** です（どのコミットを出したかを一判別できます）。
 - サマリーを表示するステップが失敗しても、リリースは中止されません（情報の表示のみで、状態を変更しません）。
@@ -237,7 +237,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 
 | # | 条件 | 失敗する例 |
 | --- | --- | --- |
-| 1 | 実行ブランチが `releaseBranches` に一致する（完全一致またはワイルドカード） | `dev` を選んで実行 |
+| 1 | 実行ブランチがモードの許可ブランチに一致する（dry-run: `dryRunBranches` / 公開: `releaseBranches`） | 公開で `dev` を選んで実行（公開は不可） |
 | 2 | `release/X.Y` の場合、入力バージョンの系列が `X.Y` に一致する | `release/0.1` に `0.2.0` を入力 |
 | 3 | 対象コミットに対する `build.yml` の**成功実行がある** | push 直後（Build 実行中・失敗）に実行 |
 | 4 | バージョンが semver 形式（先頭 0 不可） | `1.2`、`01.2.3` |
@@ -248,32 +248,17 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 
 条件 5・6 により、**同値の入力も失敗**します（同じバージョンの再リリースはできません）。
 
-## バックポートリリース
+## 古い系列のリリース
 
-古い系列の保守リリースは、`release/<major>.<minor>` ブランチから実行します。
+**本リポジトリは系列ブランチ（`release/<major>.<minor>`）を使いません**（公開は `main` からのみ）。 古い系列を保守する必要が出た場合は、次のいずれかを選びます。
 
-```text
-例: v1.0.0 をリリース済みで、0.1 系に修正を出したい場合
-
-1. release/0.1 ブランチを作成し、修正を cherry-pick する
-2. release/0.1 へ push する（Build が成功するまで待つ）
-3. Actions → Release → Run workflow で
-   実行ブランチに release/0.1 を選び、version に 0.1.2 を入力する
-```
+- **`main` から旧系列のバージョンを公開する**: `main` の版を旧系列（例 `0.1.2`）にしてコミットし、`main` から dry-run → release を実行する。 この場合 `--latest=false` と `--notes-start-tag` が自動で付き、`Directory.Build.props` は**書き換えません**（新しい系列の版を旧系列へ戻さないため）。
+- **系列ブランチを復活させる**: `release-config.json` の `releaseBranches` に `"release/**"` を戻す（そのときは本文書の旧版にあった系列ブランチの手順を復元する）。
 
 | 実行ブランチ | 比較対象 | 例（タグ: v0.1.1 / v1.0.0） | バージョンファイル | Latest |
 | --- | --- | --- | --- | --- |
 | `main`（新しい系列） | 入力バージョンと**同じ系列**の最大 | `1.0.1` は OK / `1.0.0` は失敗（同値） | 書き換える | 更新する |
-| `main`（旧系列を入力＝バックポート） | 同上 | `0.1.2` は OK（同じ系列の最大 `0.1.1` より大きい） / `0.1.1` は失敗（同値） | **書き換えない**（main のバージョンを旧系列へ戻さないため） | 更新しない |
-| `release/0.1` | 同じ系列の最大 | `0.1.2` は OK / `1.0.1` は失敗（系列不一致） | 書き換える | 更新しない |
-
-系列ブランチ（`release/X.Y`）と、`main` からのバックポートでは次を自動で行います。
-
-- `--latest=false`（古い系列を Latest にしない）
-- `--notes-start-tag v0.1.1`（リリースノートの範囲を系列内に限定）
-
-なお、`main` から旧系列のバージョン（例: `v1.0.0` がある状態で `0.1.2`）をリリースした場合は、
-`main` の `Directory.Build.props` を旧系列へ戻さないため**バージョンファイルを書き換えません**。
+| `main`（旧系列を入力） | 同上 | `0.1.2` は OK（同じ系列の最大 `0.1.1` より大きい） / `0.1.1` は失敗（同値） | **書き換えない** | 更新しない |
 
 ## Release の添付ファイル
 

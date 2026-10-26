@@ -3,8 +3,7 @@
 # 実行契機は次のとおり。
 #   main への push（マージ含む） … 必ず実行する（main へは PR でのみ反映する。 ruleset `Protect main`）
 #   main 向け Pull Request       … 必ず実行する（必須チェック `build`）
-#   dev への push                … 必ず実行する（作業ブランチの壊れを早く見つけるため）
-#   release/** への push         … 系列ブランチ（release/<major>.<minor>）のゲートとして実行する
+#   dev への push                … 必ず実行する（開発〜dry-run までの確認は dev で行う）
 #   手動実行（workflow_dispatch）  … 任意のブランチで確認する場合に使用する
 #
 # 復元・検証（Release）を実行する（配布物の作成と公開は行わない）。
@@ -35,10 +34,9 @@ name: Build
 on:
   push:
     # main への直接 push は ruleset `Protect main` が拒否する（main は PR でのみ更新する）
-    # main への push はマージ後の検証として必ず実行する
-    # dev は作業ブランチ。 push で検証する（壊れを早く見つけるため）
-    # release/** は系列ブランチ（release/<major>.<minor>）からのバックポート時に、ゲートの Build として実行する
-    branches: [main, dev, 'release/**']
+    # main への push はマージ後の検証として必ず実行する（公開は main でのみ行う）
+    # dev は作業ブランチ。 push で検証する（開発〜dry-run までの確認を dev で行うため）
+    branches: [main, dev]
   pull_request:
     branches: [main]
   # 手動実行（dev など任意のブランチでの確認、およびバージョンコミットの検証に使用する）

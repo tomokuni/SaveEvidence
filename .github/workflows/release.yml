@@ -115,7 +115,7 @@ jobs:
           Write-Host "対象の版: $version（コミット済み: $committed / モード: $($env:MODE)）"
 
           # semver・ブランチ・系列・タグ未作成の検証（規則は version.ps1 と verify-release-version.ps1 が持つ）
-          $info = & ./.github/scripts/verify-release-version.ps1 -Version $version -Branch $env:BRANCH | ConvertFrom-Json
+          $info = & ./.github/scripts/verify-release-version.ps1 -Version $version -Branch $env:BRANCH -Mode $env:MODE | ConvertFrom-Json
 
           # ゲート（build.yml）の成功実行が、このコミットに対して存在すること
           $gateRuns = @(gh run list --repo $env:REPO --workflow $env:GATE_WORKFLOW --commit $env:SHA --limit 50 --json conclusion | ConvertFrom-Json)

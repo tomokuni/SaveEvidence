@@ -36,6 +36,9 @@ param(
 
     [Parameter(Mandatory)]
     [string]$Branch,
+    # dry-run は dev でも実行できる（公開は main と系列ブランチだけ）。 既定は公開（安全側）。
+    [ValidateSet('dry-run', 'release')]
+    [string]$Mode = 'release',
 
     [string]$RepoRoot
 )
@@ -54,7 +57,9 @@ $null = ConvertTo-SemanticVersion -Version $Version
 $tag = Get-TagName -Version $Version
 $series = Get-VersionSeries -Version $Version
 
-# ─── 許可ブランチの読み込み（release-config.json の releaseBranches。未指定は main のみ）───
+# ─── 許可ブランチの読み込み（release-config.json。未指定は main のみ）───
+# dry-run（配布物を作れることの確認）は dev でも実行できる。 **公開（release）は main と系列ブランチだけ**。
+# これにより、開発から dry-run までの確認を dev で終えられる（公開は main でのみ）。
 $configPath = Join-Path $RepoRoot '.github/release-config.json'
 
 if (-not (Test-Path -LiteralPath $configPath)) {
@@ -62,11 +67,22 @@ if (-not (Test-Path -LiteralPath $configPath)) {
 }
 
 $config = Get-Content $configPath -Raw | ConvertFrom-Json
-$allowedBranches = @('main')
+$releaseBranches = @('main')
+$dryRunBranches = @('main')
 
 if ($config.PSObject.Properties['releaseBranches'] -and $config.releaseBranches) {
-    $allowedBranches = @($config.releaseBranches)
+    $releaseBranches = @($config.releaseBranches)
 }
+if ($config.PSObject.Properties['dryRunBranches'] -and $config.dryRunBranches) {
+    $dryRunBranches = @($config.dryRunBranches)
+}
+else {
+    $dryRunBranches = $releaseBranches
+}
+
+$isDryRun = $Mode -eq 'dry-run'
+$allowedBranches = if ($isDryRun) { $dryRunBranches } else { $releaseBranches }
+$modeLabel = if ($isDryRun) { 'dry-run' } else { '公開' }
 
 <#
 .SYNOPSIS
@@ -97,7 +113,7 @@ function Test-BranchAllowed {
 
 # ─── 実行ブランチの検証 ───
 if (-not (Test-BranchAllowed -Name $Branch -Patterns $allowedBranches)) {
-    throw "リリースは次のブランチからのみ実行できます: $($allowedBranches -join ', ')（現在: $Branch）"
+    throw "モード $modeLabel は次のブランチからのみ実行できます: $($allowedBranches -join ', ')（現在: $Branch）"
 }
 
 # release/ 配下のブランチは release/<major>.<minor> の形式に限定し、入力バージョンの系列をブランチ名に合わせる
