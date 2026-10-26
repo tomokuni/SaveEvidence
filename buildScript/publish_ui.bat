@@ -74,7 +74,7 @@ set "LOGNAME=publish-ui-%UI%-%RID%"
 
 rem The UI script can restrict the modes (`set "SE_MODES=single"`).  The default tries all
 rem modes in order.  A UI that must ship more than one shape calls this script once per shape
-rem from its own wrappers (WinUI 3: publish_WinUI3.bat and publish_WinUI3Single.bat).
+rem from its own wrapper (WinUI 3 keeps single file publishing in publish_WinUI3.bat alone).
 if not defined SE_MODES set "SE_MODES=aot single exe"
 
 echo.
@@ -85,7 +85,7 @@ echo.
 
 rem The UI script can restrict the modes (`set "SE_MODES=single"`).  The default tries all
 rem modes in order.  A UI that must ship more than one shape calls this script once per shape
-rem from its own wrappers (WinUI 3: publish_WinUI3.bat and publish_WinUI3Single.bat).
+rem from its own wrapper (WinUI 3 keeps single file publishing in publish_WinUI3.bat alone).
 set "MODE="
 
 for %%m in (%SE_MODES%) do (
