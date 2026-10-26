@@ -2,7 +2,7 @@
 
 SaveEvidence の UI（Avalonia UI）からコアロジックを分離し、複数 UI（Avalonia UI / MewUI）へ対応するための作業計画と進捗です。
 
-参考実装: `D:\Dev\Repos\GitHub\ClipboardZenHanConverter`（`src/core` / `src/core_presentation` / `src/app_*` の 4 UI 構成）
+参考実装: `D:\Dev\Repos\GitHub\ZenHanConverter`（`src/core` / `src/core_presentation` / `src/app_*` の 4 UI 構成）
 
 - [複数 UI 対応作業](#複数-ui-対応作業)
   - [1. 目的](#1-目的)
@@ -1914,7 +1914,7 @@ src/ZoomViewControl.MewUI/tests/ZoomViewControl.Tests.cs      既定値と設定
 
 ### 28.1 目的
 
-`D:\Dev\Repos\GitHub\ClipboardZenHanConverter` で確立したリリースの仕組み（設定 1 ファイル + 役割別 3 ワークフロー +
+`D:\Dev\Repos\GitHub\ZenHanConverter` で確立したリリースの仕組み（設定 1 ファイル + 役割別 3 ワークフロー +
 スクリプト）を SaveEvidence へ展開する。
 
 ### 28.2 方針（リポジトリ固有の知識だけを置き換える）
@@ -3064,7 +3064,7 @@ README / SPEC（2 ファイル）・複数UI対応作業.md の記載
 | 2026-09-19 | MewUI 版コントロール移植の第 5 弾（`DragRectControl`）。`DragRectControl.MewUI`（状態機械はコア・入力と描画は MewUI）を新設。イベント引数はコア型で公開し、`MouseDown`/`MouseUp` は基底 `UIElement` との衝突回避のため `DragMouseDown`/`DragMouseUp` へ改名。`ScrollViewer` 自動連携の代わりに `NotifyViewportChanged()` を追加 | ビルド成功（警告 0）/ 1381 件 green / `DragRectControl.MewUI.Tests` 28 件（描画は画素実測） |
 | 2026-09-19 | MewUI 版コントロール移植の第 6 弾（`FadeMaskDragRectControl`）。`FadeMaskDragRectControl.Core` を新設し `FadeMaskDragRectMode` を移設（enum の重複定義を解消）、モード写像と選択矩形破線描画をコアへ集約。`FadeMaskDragRectControl.MewUI`（`Panel` 派生の Facade。3 子の配線・同期・ルーペ配置）を新設。`FadeMaskControl.MewUI` に座標変換ポート `Port` を追加 | ビルド成功（警告 0）/ 1423 件 green / Core 17 件 + MewUI Facade 27 件 |
 | 2026-09-20 | MewUI 版コントロール移植の第 7 弾（`ZoomViewControl` のスクロールバー）。`ZoomScrollBarGeometry` をコアへ新設（トラック・サム・オフセット逆算）し、オーバーレイ描画とサムのドラッグ・トラックのクリックを実装。画像が収まる軸には生成しない | ビルド成功（警告 0）/ 1447 件 green |
-| 2026-09-20 | CI / リリース整備。`ClipboardZenHanConverter` の `.github`（workflows 3 種 / read-config / scripts 4 種 / ruleset / dependabot）を流用し、`Directory.Build.props` と `global.json` を新設。`release-config.json` を 2 UI（MewUI / AvaloniaUI）へ、`dependabot.yml` を 58 プロジェクトへ更新。スクリプト 3 種・zip 化・配布物の起動を実測検証 | ビルド成功（警告 0）/ 1447 件 green / 配布物の起動を実測（描画 99.9%・終了コード 0） |
+| 2026-09-20 | CI / リリース整備。`ZenHanConverter` の `.github`（workflows 3 種 / read-config / scripts 4 種 / ruleset / dependabot）を流用し、`Directory.Build.props` と `global.json` を新設。`release-config.json` を 2 UI（MewUI / AvaloniaUI）へ、`dependabot.yml` を 58 プロジェクトへ更新。スクリプト 3 種・zip 化・配布物の起動を実測検証 | ビルド成功（警告 0）/ 1447 件 green / 配布物の起動を実測（描画 99.9%・終了コード 0） |
 | 2026-09-20 | `app.MewUI` の設定永続化（No.29 の一部）。`WindowPlacementMath` を新設し、`MainWindow` へ配置の復元・保存とナビ開閉の復元を配線。起動時に `DpiHelper.EnablePerMonitorDpiAwareness()` を呼び、復元は `Application.Run` の起動時コールバック（`StartManualPosition` + `WindowSize.Resizable`）で実施。一時診断用の `MonitorDpi.cs` を削除 | ビルド成功（警告 0）/ 1474 件 green / 配置の復元（150,180 / 900x600 → `GetWindowRect` 918x647）と保存（1100x800 → 1082x753）を実測 |
 | 2026-09-20 | `app.MewUI` の Undo 一覧ページ（No.29 の一部）。`ThumbnailView`（`SkiaCanvasView` 派生・Uniform 収め）と `UndoPage`（Redo → 現在 → Undo の順、現在は青枠、表示モードの保存・復元、ダブルクリックで外部表示）を新設。`ViewModeDisplay` に `Count` を追加し、`Program` で `UndoStack` を生成して `BeforeEditAction` を配線 | ビルド成功（警告 0）/ 1492 件 green / 実機撮影でサムネイル・青枠・折り返し・ステータスを画素実測 |
 | 2026-09-20 | `app.MewUI` のフォルダビューページ（No.29 の一部）。`ImageThumbnailLoader`（縮小デコード + 容量制限付きキャッシュ）と `FolderViewPage` を新設し、`AppServices` と `PageContent` を導入してページの生成結果を保持・表示時に最新化する構成へ変更。拡張子判定をコアの `ImageFileExtensions` へ集約し、Avalonia 版の重複を削除 | ビルド成功（警告 0）/ 1525 件 green / 実機撮影で 4 件のサムネイル・折り返し・昇順・ステータスを画素実測 / `verify-ui.ps1` でキャプチャページの回帰なしを確認 |
