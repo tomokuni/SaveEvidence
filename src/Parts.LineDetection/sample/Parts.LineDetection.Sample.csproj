@@ -17,7 +17,13 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="Avalonia.Fonts.Inter" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Condition="'$(Configuration)' == 'Debug'" />
+    <!-- 開発者ツールは Debug だけに含める。 **PackageReference 自体は無条件**にする（プロジェクトの
+         参照の有無を構成で変えると packages.lock.json が構成ごとに書き換わり、Release のビルド直後に
+         Debug で復元すると NU1004 で失敗する。 実測 2026-10-26）。 -->
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="System.Reactive" />
   </ItemGroup>

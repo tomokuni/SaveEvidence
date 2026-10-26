@@ -52,3 +52,11 @@ Thumbs.db
 appsettings.local.json
 *.tmp
 FolderProfile.pubxml.user
+
+# AI モデル（配布も履歴への追加もしない。 GitHub の 100 MB/ファイル制限に抵触する）
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.ckpt
+**/weights/
