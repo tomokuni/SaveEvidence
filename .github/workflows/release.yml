@@ -184,6 +184,15 @@ jobs:
       - name: チェックアウト
         uses: actions/checkout@v5
 
+      # ツール（CycloneDX）の取得と復元をキャッシュする（初回は約 2 分かかる。 実測 2026-10-26）
+      - name: NuGet をキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/packages.lock.json', 'Directory.Packages.props') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
       - name: SBOM を作成
         shell: pwsh
         env:
@@ -205,8 +214,9 @@ jobs:
   # ────────────────────────────────────────────────────────────
   # 3. 配布物の作成（dry-run でも実行して、作れることを確かめる）
   # ────────────────────────────────────────────────────────────
+  # **sbom と並列に走らせる**（配布物は SBOM を使わない。 直列にすると SBOM の約 2 分を毎回待つ。 実測 2026-10-26）
   publish:
-    needs: [verify, sbom]
+    needs: verify
     permissions:
       contents: read
     uses: ./.github/workflows/publish.yml

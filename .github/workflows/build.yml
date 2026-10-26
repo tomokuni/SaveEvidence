@@ -19,7 +19,8 @@
 # イメージの SDK は C:\Program Files\dotnet に入り PATH も通っているため、そのまま dotnet を実行できる。
 # global.json は rollForward: latestFeature のため、イメージの最新 10.0 SDK で要件を満たす。
 # setup-dotnet を使うと「10.0 の最新」を取得しようとしてイメージに無い版を毎回ダウンロードする。
-# キャッシュは NuGet の復元（最も時間を使う工程）だけを対象にする。
+# キャッシュは NuGet の復元と npm（markdownlint）だけを対象にする。
+# 走査（文書とコード）はビルド・テストと重ねて実行する（入口が背景で起動する）。
 #
 # テストは xunit.v3 + Microsoft.NET.Test.Sdk（VSTest）で実行するため、`dotnet test <ソリューション>` で
 # 全テストプロジェクトを実行できる（Microsoft.Testing.Platform の --solution は不要）。
@@ -79,6 +80,17 @@ jobs:
           # 一致するキャッシュが無い場合は直近のものから復元し、不足分だけをダウンロードさせる
           restore-keys: |
             nuget-${{ runner.os }}-
+
+      # markdownlint は npx で取る。 キャッシュしないと毎回ダウンロードして走査が 2 分近くかかる
+      # （実測 2026-10-26: 走査 125 秒。 復元済みなら 20 秒）。 走査はビルド・テストと重なるため、
+      # ここが遅いとジョブ全体が遅くなる。 版は buildScript/verifyDocs.ps1 が単一所有する。
+      - name: npm をキャッシュ
+        uses: actions/cache@v6
+        with:
+          path: ~\AppData\Local\npm-cache
+          key: npm-${{ runner.os }}-${{ hashFiles('buildScript/verifyDocs.ps1', 'buildScript/markdownlint.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
 
       # 復元は検証の前に 1 回だけ行う（NuGet キャッシュを効かせ、以降を --no-restore にするため）
       # パスは設定（release-config.json）が持つため、空白を含んでいても壊れないよう引用符で囲む。
