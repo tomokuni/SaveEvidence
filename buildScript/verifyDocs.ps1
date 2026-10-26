@@ -114,7 +114,11 @@ foreach ($lock in $lockFiles) {
 # 5. ドキュメント（markdownlint）
 # ============================================================
 Write-Output '== 5. ドキュメント（markdownlint） =='
-$mdArgs = @('--yes', 'markdownlint-cli2', '--config', 'buildScript/markdownlint.json')
+# ツールの版はここが単一所有する（`npx --yes markdownlint-cli2` は毎回「最新」を解決するため、
+# 版が上がると同じ文書の合否が変わる。 CI のキャッシュも版に追随させる）。
+# 版を上げるときは、この行を直してから `-Fix` で全文書を整形し直す。
+$mdVersion = 'markdownlint-cli2@0.24.0'
+$mdArgs = @('--yes', $mdVersion, '--config', 'buildScript/markdownlint.json')
 if ($Fix) { $mdArgs += '--fix' }
 $mdArgs += @('src/**/*.md', '.github/**/*.md', '*.md', '!**/obj/**', '!**/bin/**')
 # npx は `cmd.exe` 経由で起動する（`.cmd` は直接起動できない）。 出力の復号は Invoke-NativeText が行う。
