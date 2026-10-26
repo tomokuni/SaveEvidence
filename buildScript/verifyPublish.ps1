@@ -241,7 +241,8 @@ try {
         $beforeKeys = @{}
         foreach ($settingsPath in $settingsPaths) {
             $keys = Get-SettingKeys $settingsPath
-            $beforeKeys[$settingsPath] = @($keys)
+            # `@($null)` は 1 要素の配列になるため、$null は空配列として扱う
+            $beforeKeys[$settingsPath] = if ($null -eq $keys) { @() } else { @($keys) }
             if ($null -ne $keys) { $beforeCount += $keys.Count }
         }
 
@@ -257,8 +258,9 @@ try {
         $afterCount = 0
         $keysKept = $true
         foreach ($settingsPath in $settingsPaths) {
-            $after = @(Get-SettingKeys $settingsPath)
-            if ($null -ne $after) { $afterCount += $after.Count }
+            $rawAfter = Get-SettingKeys $settingsPath
+            $after = if ($null -eq $rawAfter) { @() } else { @($rawAfter) }
+            $afterCount += $after.Count
             foreach ($key in $beforeKeys[$settingsPath]) {
                 if ($after -notcontains $key) { $keysKept = $false }
             }
