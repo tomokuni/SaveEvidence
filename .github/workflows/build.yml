@@ -126,6 +126,8 @@ jobs:
       # PATH へ追加しているため、以降のステップでそのまま dotnet を実行できる）。
       # NuGet のグローバル パッケージ フォルダはキャッシュする（復元が最も時間を使う工程のため）。
       - name: NuGet をキャッシュ
+        # 文書だけの変更では復元もビルドもしないため、1.9GB の復元は無駄になる（実測 2026-10-27: 47 秒）
+        if: steps.kind.outputs.code == 'true'
         uses: actions/cache@v6
         with:
           # 既定のグローバル パッケージ フォルダ（%USERPROFILE%\.nuget\packages）。NUGET_PACKAGES は変更しない
