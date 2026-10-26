@@ -150,7 +150,12 @@ if "%TRY_MODE%"=="single" set "ARGS=%SE_SINGLE_ARGS%"
 rem SelfContained is not passed explicitly (-r implies it).  Passing it also flows to the
 rem referenced projects, which then demand EnableMsixTooling and WindowsAppSDKSelfContained
 rem from the WinUI 3 libraries and fail (measured).
-dotnet publish "%PROJECT%" -c Release -r "%RID%" -warnaserror %ARGS% -o "%STAGE%" >"%TRY_LOG%" 2>&1
+rem The publish restore uses its own lock file (NuGetLockFilePath).  A restore with a RID records
+rem the RID in the lock, and the build / test restore (no RID) then fails with NU1004 ("runtime
+rem identifiers differ").  RestorePackagesWithLockFile=false is not an option either (NU1005 while
+rem packages.lock.json exists).  The committed packages.lock.json therefore stays free of RIDs,
+rem and the RID graph is written to packages.%RID%.lock.json (git-ignored).  Measured 2026-10-26.
+dotnet publish "%PROJECT%" -c Release -r "%RID%" -warnaserror -p:NuGetLockFilePath=packages.%RID%.lock.json %ARGS% -o "%STAGE%" >"%TRY_LOG%" 2>&1
 if errorlevel 1 (
   echo [WARN] Mode %TRY_MODE% failed.  Log: %TRY_LOG%
   exit /b 1
