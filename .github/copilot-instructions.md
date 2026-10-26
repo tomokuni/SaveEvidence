@@ -68,11 +68,11 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 - **パッケージの版は [`Directory.Packages.props`](../Directory.Packages.props) が単一所有し、復元は `packages.lock.json` で固定する**（**コミットする**）。 取得元は [`NuGet.config`](../NuGet.config) の `nuget.org` だけ（`<clear />` でユーザー単位の取得元を打ち消す）。
 - **SBOM（CycloneDX）をリリースへ添付する**（`buildScript/generateSbom.ps1`。 ツールの版は [`.config/dotnet-tools.json`](../.config/dotnet-tools.json)）。 配布物から依存を辿れるようにするため。
 - **アプリの製品バージョンは `<Version>+esutil.<EsUtilVersion>`**（使った EsUtil の版を exe から辿れるようにする。 SourceLink のコミットは SDK が後ろへ足す）。
-- **実行ファイルは 2 つ**（`App.AvaloniaUI` / `App.MewUI`）で、**設定ファイルとログを共有する**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
-- **実行ファイルの名前はプロジェクト名と一致しない**（`App.AvaloniaUI` → `SaveEvidence.AvaloniaUI.exe` / `App.MewUI` → `SaveEvidence.MewUI.exe`。 `<AssemblyName>` で製品名を明示する。 配布名は [`.github/release-config.json`](release-config.json) が単一所有する）。
+- **実行ファイルは 4 つ**（`App.AvaloniaUI` / `App.MewUI` / `App.WinForms` / `App.WinUI3`）で、**設定ファイルとログを共有する**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
+- **実行ファイルの名前はプロジェクト名と一致しない**（`App.AvaloniaUI` → `SaveEvidence.AvaloniaUI.exe` / `App.MewUI` → `SaveEvidence.MewUI.exe` / `App.WinForms` → `SaveEvidence.WinForms.exe` / `App.WinUI3` → `SaveEvidence.WinUI3.exe`。 `<AssemblyName>` で製品名を明示する。 配布名は [`.github/release-config.json`](release-config.json) が単一所有する）。
 - **文字コードは UTF-8（BOM なし）**で統一する（[`.editorconfig`](../.editorconfig) の `charset = utf-8`。 既存の `.cs` / `.md` / `.ps1` はすべて BOM なし）。
 - **作業ツリーの改行コードは CRLF**（[`.editorconfig`](../.editorconfig) の `end_of_line = crlf`。 リポジトリのブロブは [`.gitattributes`](../.gitattributes) が LF へ正規化する）。
 - **`App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する**（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
 - **`AVLN3001` は `App.AvaloniaUI` だけが抑止する**（理由は csproj のコメントに記載。 [`検証手順.md`](検証手順.md) §1）。
-- **CI は本リポジトリにリモートが無いため未実行**である（[`workflows/build.yml`](workflows/build.yml) はローカルで `buildScript/verify.ps1` を Release 構成で実行するのと等価）。
+- **CI は GitHub Actions で実行する**（`main` / `dev` への push と `main` 向け PR。 手動実行も可）。 [`workflows/build.yml`](workflows/build.yml) は `buildScript/verify.ps1` を Release 構成で実行する（ローカルの既定は Debug 構成。 合否基準は [`検証手順.md`](検証手順.md)）。
 - **`EsUtil` 側の検証は EsUtil リポジトリで実行する**（本リポジトリの走査は `src/` 配下だけを対象にし、EsUtil の文書は走査しない）。
