@@ -62,6 +62,9 @@ jobs:
     steps:
       - name: チェックアウト
         uses: actions/checkout@v5
+        with:
+          # 変更の判定に使う（既定の深さ 1 では直前のコミットが無く git diff が失敗する）
+          fetch-depth: 0
 
       # 対象のソリューション ファイルは release-config.json が単一所有する
       - name: リリース設定を読む
@@ -82,19 +85,42 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
 
-          # core.quotepath=false: 非 ASCII のパスを引用させない（引用されると .md 判定を取りこぼす）
-          $changed = if ($env:EVENT_NAME -eq 'pull_request' -and $env:BASE_REF) {
-            git fetch --no-tags origin $env:BASE_REF 2>$null | Out-Null
-            @(git -c core.quotepath=false diff --name-only "origin/$($env:BASE_REF)...$env:HEAD_SHA")
+          # 変更の一覧を取る。 **取れなければ「コードの変更」として扱う**（取りこぼして
+          # 検証を飛ばすより、余分に走らせる方が安全）。
+          # core.quotepath=false: 非 ASCII のパスを引用させない（引用されると .md 判定を取りこぼす）。
+          function Get-ChangedFiles {
+            if ($env:EVENT_NAME -eq 'pull_request' -and $env:BASE_REF) {
+              git fetch --no-tags origin $env:BASE_REF 2>&1 | Out-Null
+              return @(git -c core.quotepath=false diff --name-only "origin/$($env:BASE_REF)...$env:HEAD_SHA" 2>&1)
+            }
+            if ($env:BEFORE_SHA -and $env:BEFORE_SHA -notmatch '^0+$') {
+              return @(git -c core.quotepath=false diff --name-only "$($env:BEFORE_SHA)...$($env:HEAD_SHA)" 2>&1)
+            }
+            return $null
           }
-          elseif ($env:BEFORE_SHA -and $env:BEFORE_SHA -notmatch '^0+$') {
-            @(git -c core.quotepath=false diff --name-only "$($env:BEFORE_SHA)...$($env:HEAD_SHA)")
-          }
-          else { @() }
 
-          $code = @($changed | Where-Object { $_ -notmatch '\.md$' })
-          "code=$(($code.Count -gt 0 -or $changed.Count -eq 0).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
-          Write-Host "変更 $($changed.Count) 件（うちコード $($code.Count) 件）"
+          $files = $null
+          try {
+            $files = Get-ChangedFiles
+          }
+          catch {
+            Write-Host "変更の判定に失敗しました（コードの変更として扱います）: $($_.Exception.Message)"
+          }
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "git diff が終了コード $LASTEXITCODE で失敗しました（コードの変更として扱います）"
+            $files = $null
+          }
+
+          if ($null -eq $files -or $files.Count -eq 0) {
+            # 判定できない（初回 push・タグ・手動実行・git の失敗・差分なし）→ コードの変更として扱う
+            "code=true" >> $env:GITHUB_OUTPUT
+            Write-Host '変更を判定できないため、コードの変更として検証します'
+          }
+          else {
+            $code = @($files | Where-Object { $_ -notmatch '\.md$' })
+            "code=$(($code.Count -gt 0).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+            Write-Host "変更 $($files.Count) 件（うちコード $($code.Count) 件）"
+          }
 
       # .NET SDK はランナー イメージの最新版を使う（setup-dotnet は不要。イメージが C:\Program Files\dotnet を
       # PATH へ追加しているため、以降のステップでそのまま dotnet を実行できる）。
