@@ -7,6 +7,7 @@
     "main",
     "release/**"
   ],
+  "requiredBuildProps": ["EnforceCodeStyleInBuild", "GenerateDocumentationFile", "CopyDocumentationFileToOutputDirectory", "PublishDocumentationFiles", "AnalysisLevel", "AnalysisMode", "TreatWarningsAsErrors"],
   "artifactRetentionDays": 30,
   "releaseNotes": "4 種の UI 実装の配布物です。発行方式は Single AOT、Single（非 AOT）、EXE（フォルダー）の優先順で UI ごとに選ばれます（方式は配布物のフォルダー名に現れます。.github/RELEASE.md を参照）。",
   "uis": [

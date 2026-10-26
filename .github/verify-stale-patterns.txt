@@ -1,0 +1,14 @@
+# 陳腐化した識別子（改名・削除の残骸）のパターン。 1 行 1 つの正規表現。
+# verifyDocs.ps1 の 8c が全追跡ファイル（文書・スクリプトのコメントを含む）から探す。
+# 対象を追加して育てる。 `#` で始まる行と空行は無視される。
+
+App\.LineDetection
+EsUtil\.SaveEvidence\.LineDetection
+verify-ui
+MarqueeCore\.ResolveContent
+MarqueePresenter\.ResolveContent
+App\.(AvaloniaUI|MewUI)\.exe
+SaveEvidence\.exe
+app\.(Core|AvaloniaUI|MewUI)
+# 改名・分割で消えた型（コメントだけが残りやすい。 実測 2026-10-14 に 2 箇所の残骸を直した）
+FadeMaskDragRect
