@@ -8,14 +8,17 @@
 #
 # 使い方:
 #   pwsh -NoProfile -File buildScript/generateSbom.ps1
-#   pwsh -NoProfile -File buildScript/generateSbom.ps1 -Output sbom -Version 0.2.0 -Product SaveEvidence
+#   pwsh -NoProfile -File buildScript/generateSbom.ps1 -Output sbom -Version 0.2.0
+#
+# ソリューション ファイルと製品名の既定は .github/release-config.json が単一所有する
+# （スクリプトの本文へリポジトリ固有の名前を書かない）。
 
 [CmdletBinding()]
 param(
-    [string]$Solution = 'SaveEvidence.slnx',
+    [string]$Solution = '',
     [string]$Output = 'artifacts/sbom',
     [string]$Version = '',
-    [string]$Product = 'SaveEvidence'
+    [string]$Product = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -24,6 +27,11 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repoRoot
 
 . (Join-Path $PSScriptRoot 'VerifyCommon.ps1')
+
+# ソリューション ファイルと製品名は release-config.json が単一所有する
+$config = Get-RepoConfig $repoRoot
+if (-not $Solution) { $Solution = $config.solutionFile }
+if (-not $Product) { $Product = $config.product }
 
 if (-not $Version) {
     # 版は Directory.Build.props が単一所有する（引数は CI からの上書き用）
