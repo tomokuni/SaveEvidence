@@ -238,8 +238,10 @@ try {
             }
         }
         $beforeCount = 0
+        $beforeKeys = @{}
         foreach ($settingsPath in $settingsPaths) {
             $keys = Get-SettingKeys $settingsPath
+            $beforeKeys[$settingsPath] = @($keys)
             if ($null -ne $keys) { $beforeCount += $keys.Count }
         }
 
@@ -248,13 +250,20 @@ try {
         Add-Result "$($target.name) 起動と終了" $roundTrip.Closed $(if ($roundTrip.Closed) { $exe.Name } else { $roundTrip.Reason })
 
         # 5. 設定の往復（空になっていないこと・キーが保たれていること）
+        # 判定は「設定が失われていないこと」。 UI によっては起動時に全ファイルを書かないため、
+        # **各ファイルが空でないこと**ではなく「起動前にあったキーが残っていること」と
+        # 「1 つ以上の設定が書かれていること」で判定する（実測 2026-10-26: WinUI 3 版は
+        # 終了時に AppSetting.json だけを書く）。
         $afterCount = 0
         $keysKept = $true
         foreach ($settingsPath in $settingsPaths) {
-            $after = Get-SettingKeys $settingsPath
-            if ($null -eq $after -or $after.Count -eq 0) { $keysKept = $false }
-            else { $afterCount += $after.Count }
+            $after = @(Get-SettingKeys $settingsPath)
+            if ($null -ne $after) { $afterCount += $after.Count }
+            foreach ($key in $beforeKeys[$settingsPath]) {
+                if ($after -notcontains $key) { $keysKept = $false }
+            }
         }
+        if ($afterCount -eq 0) { $keysKept = $false }
         Add-Result "$($target.name) 設定の往復" $keysKept "起動前 $beforeCount キー / 終了後 $afterCount キー"
         if (-not $keysKept) {
             Write-Output '      設定ファイルが空になったか、キーが失われています（Native AOT のトリミングで設定が全損する不具合の疑い）'
