@@ -46,14 +46,6 @@
       "exe": "SaveEvidence.WinUI3.exe",
       "asset": "SaveEvidence.WinUI3.zip",
       "zip": true
-    },
-    {
-      "name": "WinUI3Aot",
-      "script": "buildScript/publish_WinUI3Aot.bat",
-      "output": "publish/winui3-win-x64-aot",
-      "exe": "SaveEvidence.WinUI3.exe",
-      "asset": "SaveEvidence.WinUI3.Aot.zip",
-      "zip": true
     }
   ]
 }

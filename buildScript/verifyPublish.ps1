@@ -42,7 +42,7 @@ pwsh -NoProfile -File buildScript/verifyPublish.ps1 -Ui MewUI -SkipPublish
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('All', 'AvaloniaUI', 'MewUI', 'WinForms', 'WinUI3', 'WinUI3Aot')][string]$Ui = 'All',
+    [ValidateSet('All', 'AvaloniaUI', 'MewUI', 'WinForms', 'WinUI3')][string]$Ui = 'All',
     [switch]$SkipPublish,
     [switch]$ForcePublish,
     [int]$WindowTimeoutSeconds = 60,
