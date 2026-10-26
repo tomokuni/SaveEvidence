@@ -39,24 +39,24 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.*,)" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
-    <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.*,)" />
-    <PackageReference Include="FluentAvaloniaUI" Version="[3.*,)" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10.*,)" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
-    <PackageReference Include="Serilog" Version="[4.*,)" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="[10.*,)" />
-    <PackageReference Include="Serilog.Sinks.File" Version="[7.*,)" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" />
+    <PackageReference Include="FluentAvaloniaUI" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\App.Core\src\App.Core.csproj" />
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlAvaloniaUI\src\Parts.CapturePreview.ControlAvaloniaUI.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Interop\src\EsUtil.Ui.AvaloniaUI.Interop.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\ColorComboBox\src\EsUtil.Ui.AvaloniaUI.ColorComboBox.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Thumbnail\src\EsUtil.Ui.AvaloniaUI.Thumbnail.csproj" />
+    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Interop" />
+    <PackageReference Include="EsUtil.Ui.AvaloniaUI.ColorComboBox" />
+    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Thumbnail" />
   </ItemGroup>
 
   <ItemGroup>

@@ -9,8 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
 
@@ -22,9 +22,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Marquee\src\EsUtil.Ui.AvaloniaUI.Marquee.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Loupe\src\EsUtil.Ui.AvaloniaUI.Loupe.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Interop\src\EsUtil.Ui.AvaloniaUI.Interop.csproj" />
+    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Marquee" />
+    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Loupe" />
+    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Interop" />
   </ItemGroup>
 
 </Project>

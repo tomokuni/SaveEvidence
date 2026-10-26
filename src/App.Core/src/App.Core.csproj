@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
+    <PackageReference Include="EsUtil.Platform.Core" />
     <!-- 自動切り出しの矩形検出（LineDetection は UI 非依存） -->
     <ProjectReference Include="..\..\Parts.LineDetection\src\Parts.LineDetection.csproj" />
   </ItemGroup>

@@ -13,12 +13,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="[12.*,)" />
-    <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.*,)" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="[12.*,)" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.*,)" Condition="'$(Configuration)' == 'Debug'" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
   </ItemGroup>
 

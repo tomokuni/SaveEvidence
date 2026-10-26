@@ -5,26 +5,22 @@
     <RootNamespace>EsUtil.SaveEvidence.Parts.CapturePreview.MewUI</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- MewUI は API が安定化中（0.x）。破壊的変更を避けるためバージョンを固定する。 -->
-    <MewUIVersion>0.21.1</MewUIVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- MewUI のコントロール・描画（Windows 向け全バックエンド + SkiaCanvasView + GPU ブリッジ） -->
-    <PackageReference Include="Aprillz.MewUI.Windows" Version="$(MewUIVersion)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+    <PackageReference Include="Aprillz.MewUI.Windows" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- 撮影・切り出しの共通規則と提示の写像（切り出し矩形・設定・セッション状態・色の写像） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
-    <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型）と DIP 変換 -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Interop\src\EsUtil.Ui.MewUI.Interop.csproj" />
+    <PackageReference Include="EsUtil.Ui.MewUI.Interop" />
     <!-- コア幾何型と Skia の描画プリミティブ -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
+    <PackageReference Include="EsUtil.Platform.Core" />
     <!-- 複合コントロールを構成する内包コントロール -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Marquee\src\EsUtil.Ui.MewUI.Marquee.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Loupe\src\EsUtil.Ui.MewUI.Loupe.csproj" />
+    <PackageReference Include="EsUtil.Ui.MewUI.Marquee" />
+    <PackageReference Include="EsUtil.Ui.MewUI.Loupe" />
   </ItemGroup>
 
   <ItemGroup>

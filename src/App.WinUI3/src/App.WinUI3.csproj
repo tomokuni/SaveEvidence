@@ -43,16 +43,16 @@
 
   <ItemGroup>
     <!-- WinUI 3（Microsoft.UI.Xaml）のコントロールと WinRT の投影型 -->
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="[1.*,2.0.0)" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="[10.0.*,)" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
     <!-- Windows App SDK（コントロール・Composition・WIC） -->
     <!-- 起動時の合成ルート（サービスの生成と共有） -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="[10.*,)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <!-- 操作ログ（Avalonia 版 / MewUI 版と同一のファイルへ出力する） -->
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
-    <PackageReference Include="Serilog" Version="[4.*,)" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="[10.*,)" />
-    <PackageReference Include="Serilog.Sinks.File" Version="[7.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
   </ItemGroup>
 
   <ItemGroup>
@@ -63,10 +63,10 @@
     <!-- WinUI 3 版の撮影セッション（オーバーレイ・切り出しビュー） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj" />
     <!-- WinUI 3 版 Interop（コア型 ⇔ WinUI 型・ウィンドウ配置の換算・表示の描画基盤） -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Interop\src\EsUtil.Ui.WinUI3.Interop.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Thumbnail\src\EsUtil.Ui.WinUI3.Thumbnail.csproj" />
+    <PackageReference Include="EsUtil.Ui.WinUI3.Interop" />
+    <PackageReference Include="EsUtil.Ui.WinUI3.Thumbnail" />
     <!-- 設定画面の色選択（色名・16 進・ピッカーを 1 つにまとめたコントロール） -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\ColorComboBox\src\EsUtil.Ui.WinUI3.ColorComboBox.csproj" />
+    <PackageReference Include="EsUtil.Ui.WinUI3.ColorComboBox" />
   </ItemGroup>
 
   <ItemGroup>

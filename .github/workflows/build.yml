@@ -73,15 +73,18 @@ jobs:
           # 既定のグローバル パッケージ フォルダ（%USERPROFILE%\.nuget\packages）。NUGET_PACKAGES は変更しない
           path: ~/.nuget/packages
           # 参照しているパッケージが変わったときだけキャッシュを作り直す
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          # （lock の内容もキーへ入れる。 同じ csproj でも lock が変われば別のキャッシュになる）
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/packages.lock.json', 'Directory.Packages.props') }}
           # 一致するキャッシュが無い場合は直近のものから復元し、不足分だけをダウンロードさせる
           restore-keys: |
             nuget-${{ runner.os }}-
 
       # 復元は検証の前に 1 回だけ行う（NuGet キャッシュを効かせ、以降を --no-restore にするため）
-      # パスは設定（release-config.json）が持つため、空白を含んでいても壊れないよう引用符で囲む
+      # パスは設定（release-config.json）が持つため、空白を含んでいても壊れないよう引用符で囲む。
+      # **lock どおりに復元する**（-p:RestoreLockedMode=true）。 csproj / Directory.Packages.props と
+      # packages.lock.json が食い違えば NU1004 で失敗する（依存の版が黙って変わるのを防ぐ）。
       - name: 復元
-        run: dotnet restore '${{ steps.config.outputs.solution_file }}'
+        run: dotnet restore '${{ steps.config.outputs.solution_file }}' -p:RestoreLockedMode=true
 
       # 検証は buildScript/verify.ps1 が単一所有する（合否基準は .github/検証手順.md が所有者）。
       # ローカルと同じ判定を CI でも使う（手順の二重実装を作らない）。

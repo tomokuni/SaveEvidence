@@ -15,10 +15,10 @@
 
   <ItemGroup>
     <!-- 操作ログ（Avalonia 版 / MewUI 版と同一のファイルへ出力する） -->
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
-    <PackageReference Include="Serilog" Version="[4.*,)" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="[10.*,)" />
-    <PackageReference Include="Serilog.Sinks.File" Version="[7.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,8 +29,8 @@
     <!-- WinForms 版の撮影セッション（オーバーレイ・切り出しビュー・選択オーバーレイ） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlWinForms\src\Parts.CapturePreview.ControlWinForms.csproj" />
     <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型）と GDI+ の表示ビュー -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Interop\src\EsUtil.Ui.WinForms.Interop.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Thumbnail\src\EsUtil.Ui.WinForms.Thumbnail.csproj" />
+    <PackageReference Include="EsUtil.Ui.WinForms.Interop" />
+    <PackageReference Include="EsUtil.Ui.WinForms.Thumbnail" />
   </ItemGroup>
 
   <ItemGroup>

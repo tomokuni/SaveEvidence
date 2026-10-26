@@ -12,21 +12,21 @@
 
   <ItemGroup>
     <!-- WinUI 3 のコントロール（撮影スタックの表示は Composition と XAML の要素で行う） -->
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="[1.*,2.0.0)" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="[10.0.*,)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- 撮影・切り出しの共通規則と提示の写像（切り出し矩形・設定・セッション状態・色の写像） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <!-- WinUI 3 版 Interop（コア型 ⇔ Win UI 型）と DIP 変換 -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Interop\src\EsUtil.Ui.WinUI3.Interop.csproj" />
+    <PackageReference Include="EsUtil.Ui.WinUI3.Interop" />
     <!-- コア幾何型 -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
+    <PackageReference Include="EsUtil.Platform.Core" />
     <!-- 複合コントロールを構成する内包コントロール -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Marquee\src\EsUtil.Ui.WinUI3.Marquee.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Loupe\src\EsUtil.Ui.WinUI3.Loupe.csproj" />
+    <PackageReference Include="EsUtil.Ui.WinUI3.Marquee" />
+    <PackageReference Include="EsUtil.Ui.WinUI3.Loupe" />
   </ItemGroup>
 
   <ItemGroup>

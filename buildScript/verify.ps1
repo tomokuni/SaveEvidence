@@ -212,6 +212,36 @@ Add-Result 'ビルド設定' ($missingProps.Count -eq 0 -and $duplicateProps.Cou
 $missingProps | ForEach-Object { "      Directory.Build.props に無い: $_" }
 $duplicateProps | ForEach-Object { "      重複指定: $($_.FullName.Substring($repoRoot.Length + 1))" }
 
+# 2a) パッケージの版の単一所有（Central Package Management）
+#     版は Directory.Packages.props が持ち、各 .csproj では指定しない（規則は .github/ビルド設定規約.md §4）。
+$packagesPropsPath = Join-Path $repoRoot 'Directory.Packages.props'
+$packagesPropsText = if (Test-Path -LiteralPath $packagesPropsPath) { [IO.File]::ReadAllText($packagesPropsPath, $enc) } else { '' }
+$cpmIssues = [System.Collections.Generic.List[string]]::new()
+if ($packagesPropsText -notmatch '<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>') {
+    $cpmIssues.Add('Directory.Packages.props に ManagePackageVersionsCentrally=true が無い')
+}
+# 版の範囲（`[1.*,)`）は使わない（同じタグでも復元結果が変わる）
+foreach ($m in [regex]::Matches($packagesPropsText, '<PackageVersion Include="(?<id>[^"]+)" Version="(?<v>[^"]+)"')) {
+    if ($m.Groups['v'].Value -match '^[\[*]|\*') { $cpmIssues.Add(("{0}: 版が範囲指定です（固定する）: {1}" -f $m.Groups['id'].Value, $m.Groups['v'].Value)) }
+}
+foreach ($csproj in (Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.csproj' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })) {
+    $text = [IO.File]::ReadAllText($csproj.FullName, $enc)
+    foreach ($m in [regex]::Matches($text, '<PackageReference\s+[^>]*?Include="(?<id>[^"]+)"\s+Version=')) {
+        $cpmIssues.Add(("{0}: {1} に Version が書かれている（Directory.Packages.props へ移す）" -f $csproj.FullName.Substring($repoRoot.Length + 1), $m.Groups['id'].Value))
+    }
+}
+Add-Result 'パッケージの版' ($cpmIssues.Count -eq 0) "違反 $($cpmIssues.Count) 件"
+$cpmIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
+# 2a-2) 復元の固定（packages.lock.json）
+#     依存の版を lock で固定する（同じ版で別の中身が入る事故を防ぐ）。 規則は .github/ビルド設定規約.md §4。
+$lockMissing = @(Get-ChildItem -Path (Join-Path $repoRoot 'src') -Recurse -File -Filter '*.csproj' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' } |
+        Where-Object { -not (Test-Path -LiteralPath (Join-Path $_.DirectoryName 'packages.lock.json')) })
+Add-Result 'ロックファイル' ($lockMissing.Count -eq 0) "未作成 $($lockMissing.Count) 件"
+$lockMissing | Select-Object -First 10 | ForEach-Object { "      packages.lock.json が無い: $($_.FullName.Substring($repoRoot.Length + 1))（dotnet restore で作られる）" }
+
 # 2b) アナライザー設定が .cs へ適用されているか
 #     `.editorconfig` の `dotnet_diagnostic.*` は「直前のセクション」に属する。 セクションを分け忘れると
 #     設定が `.cs` 以外（例: `[*.csproj]`）に属し、**設定が無効のまま「0 警告」になる**（実測で発生した）。
@@ -326,6 +356,14 @@ if (-not $SkipTests) {
 # ============================================================
 if (-not $SkipPackage) {
     Write-Output '== 4. NuGet の健全性 =='
+    # まず lock どおりに復元できるかを確かめる（lock と csproj / Directory.Packages.props が食い違えば
+    # NU1004 で失敗する）。 監査は --force-evaluate で lock を書き換え得るため、この検査を先に行う。
+    $locked = Invoke-DotNet @('restore', $Solution, '-p:RestoreLockedMode=true')
+    $lockedText = $locked.Text + $locked.ErrorText
+    $lockedIssues = @($lockedText -split "`r?`n" | Where-Object { $_ -match 'NU1004|error' })
+    Add-Result 'ロックどおりの復元' ($locked.ExitCode -eq 0) "終了コード $($locked.ExitCode)"
+    if ($locked.ExitCode -ne 0) { $lockedIssues | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" } }
+
     # 脆弱性は復元の NuGet 監査で検出する（推移的依存も対象。 実測 2.7 秒。 同じ結果を
     # `dotnet package list --vulnerable --include-transitive` で取ると 35 秒かかる）。
     # `--force-evaluate` は「復元は最新」と判定されたときにも監査を走らせるために付ける

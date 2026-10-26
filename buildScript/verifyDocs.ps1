@@ -66,6 +66,48 @@ foreach ($root in $externalSrcRoots) {
     }
 }
 
+# パッケージ参照の型（`PackageReference` で参照している同一組織のパッケージ）は、
+# パッケージに同封された XML ドキュメントから型名と名前空間を読む（ソースは手元に無い）。
+# 読まないと、`ICaptureService.CaptureVirtualScreen` のような**実在する型**を「実在しない」と誤判定する
+# （実測 2026-10-26: ProjectReference を PackageReference へ変えたときに 2 件の誤検出が出た）。
+$externalPackageTypes = @{}
+$lockFiles = @(Get-ChildItem -Path $repoRoot -Recurse -File -Filter 'packages.lock.json' |
+        Where-Object { $_.FullName -notmatch '\\(obj|bin)\\' })
+if ($lockFiles.Count -gt 0) {
+    $locals = Invoke-NativeText 'dotnet' @('nuget', 'locals', 'global-packages', '--list')
+    $globalPackages = (($locals.Text + $locals.ErrorText) -split "`r?`n" |
+            Where-Object { $_ -match 'global-packages:' } |
+            Select-Object -First 1) -replace '^global-packages:\s*', ''
+}
+
+foreach ($lock in $lockFiles) {
+    $json = Get-Content -LiteralPath $lock.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+    foreach ($tfm in $json.dependencies.PSObject.Properties) {
+        foreach ($package in $tfm.Value.PSObject.Properties) {
+            $id = $package.Name
+            if ($id -notmatch '^EsUtil\.') { continue }
+            $version = $package.Value.resolved
+            if (-not $version -or -not $globalPackages) { continue }
+            $dir = Join-Path $globalPackages ("{0}\{1}" -f $id.ToLowerInvariant(), $version)
+            $xml = Get-ChildItem -Path $dir -Recurse -File -Filter '*.xml' -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $xml) { continue }
+            $text = Get-Content -LiteralPath $xml.FullName -Raw -Encoding UTF8
+            foreach ($m in [regex]::Matches($text, 'name="T:(?<t>[\w.`]+)"')) {
+                $full = ($m.Groups['t'].Value -split '`')[0]
+                $segments = $full.Split('.')
+                $typeName = $segments[-1]
+                $nsSegments = $segments[0..($segments.Count - 2)]
+                if (-not $externalPackageTypes.ContainsKey($typeName)) {
+                    $externalPackageTypes[$typeName] = [System.Collections.Generic.HashSet[string]]::new()
+                }
+                for ($k = 0; $k -lt $nsSegments.Count; $k++) {
+                    [void]$externalPackageTypes[$typeName].Add(($nsSegments[$k..($nsSegments.Count - 1)] -join '.'))
+                }
+            }
+        }
+    }
+}
+
 # ============================================================
 # 5. ドキュメント（markdownlint）
 # ============================================================
@@ -283,6 +325,11 @@ foreach ($f in (@($allCs) + @($externalCs))) {
         if (-not $typeQualifiers.ContainsKey($name)) { $typeQualifiers[$name] = [System.Collections.Generic.HashSet[string]]::new() }
         foreach ($s in $suffixes) { [void]$typeQualifiers[$name].Add($s) }
     }
+}
+# パッケージ参照の型（XML ドキュメントから読んだもの）を足す
+foreach ($name in $externalPackageTypes.Keys) {
+    if (-not $typeQualifiers.ContainsKey($name)) { $typeQualifiers[$name] = [System.Collections.Generic.HashSet[string]]::new() }
+    foreach ($s in $externalPackageTypes[$name]) { [void]$typeQualifiers[$name].Add($s) }
 }
 $rxTypeRef = [regex]'(?<![\w.])((?:[A-Za-z_]\w*\.)+[A-Za-z_]\w*)(?![\w./\\-])'
 $rxExternalRoot = [regex]'^(System|Microsoft|Avalonia|SkiaSharp|Serilog|Xunit|Newtonsoft|Windows|Moq|NSubstitute|Aprillz|ShimSkiaSharp|HarfBuzz|CommunityToolkit)\b'

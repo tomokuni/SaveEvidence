@@ -1,0 +1,70 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- パッケージの版は本ファイルが単一所有する（各 .csproj では指定しない）。
+         版は**固定**する（[12.*,) のような範囲を書かない。 範囲を書くと、同じタグでも復元結果が変わる）。
+         規則は .github/ビルド設定規約.md §4。 -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- 推移依存の版は固定しない（直接参照だけを管理する。 推移依存は packages.lock.json が固定する）。 -->
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="EsUtil（公開パッケージ）">
+    <PackageVersion Include="EsUtil.Feature.Loupe.Presenter" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Feature.Marquee.Presenter" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Feature.Thumbnail.Presenter" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Platform.Core" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.AvaloniaUI.ColorComboBox" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.AvaloniaUI.Interop" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.AvaloniaUI.Loupe" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.AvaloniaUI.Marquee" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.AvaloniaUI.Thumbnail" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.MewUI.ColorComboBox" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.MewUI.Interop" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.MewUI.Loupe" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.MewUI.Marquee" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.MewUI.Thumbnail" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinForms.Interop" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinForms.Loupe" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinForms.Marquee" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinForms.Thumbnail" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinUI3.ColorComboBox" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinUI3.Interop" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinUI3.Loupe" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinUI3.Marquee" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinUI3.Thumbnail" Version="$(EsUtilVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Label="サードパーティ">
+    <PackageVersion Include="Aprillz.MewUI.Windows" Version="0.21.1" />
+    <PackageVersion Include="Avalonia" Version="12.1.4" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.4" />
+    <PackageVersion Include="Avalonia.Headless" Version="12.1.4" />
+    <PackageVersion Include="Avalonia.Headless.XUnit" Version="12.1.4" />
+    <PackageVersion Include="Avalonia.Skia" Version="12.1.4" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
+    <PackageVersion Include="FluentAvaloniaUI" Version="3.1.0" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.317" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15" />
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="1.8.260921001" />
+    <PackageVersion Include="OpenCvSharp5" Version="5.0.0.20261018" />
+    <PackageVersion Include="OpenCvSharp5.runtime.win.slim" Version="5.0.0.20261018" />
+    <PackageVersion Include="Serilog" Version="4.4.0" />
+    <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageVersion Include="System.Reactive" Version="7.0.0" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+  </ItemGroup>
+
+</Project>

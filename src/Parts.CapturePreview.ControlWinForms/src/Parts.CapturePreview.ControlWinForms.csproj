@@ -9,19 +9,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[10.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- 撮影・切り出しの共通規則と提示の写像（切り出し矩形・設定・セッション状態・色の写像） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型）・DIP 変換・画像の表示ビュー -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Interop\src\EsUtil.Ui.WinForms.Interop.csproj" />
+    <PackageReference Include="EsUtil.Ui.WinForms.Interop" />
     <!-- コア幾何型 -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
+    <PackageReference Include="EsUtil.Platform.Core" />
     <!-- 複合コントロールを構成する内包コントロール -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Marquee\src\EsUtil.Ui.WinForms.Marquee.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Loupe\src\EsUtil.Ui.WinForms.Loupe.csproj" />
+    <PackageReference Include="EsUtil.Ui.WinForms.Marquee" />
+    <PackageReference Include="EsUtil.Ui.WinForms.Loupe" />
   </ItemGroup>
 
   <ItemGroup>

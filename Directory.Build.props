@@ -2,8 +2,26 @@
 
   <PropertyGroup>
     <!-- リリースバージョン。全プロジェクトで単一所有し、各 .csproj では指定しない。 -->
-    <!-- 自動インクリメントは行わない。リリース時に .github/workflows/release.yml が入力値へ更新する。 -->
+    <!-- 自動インクリメントは行わない。リリース時に版を上げてコミットする（.github/RELEASE.md）。 -->
     <Version>0.1.0</Version>
+
+    <!-- 本リポジトリが使う EsUtil の版（公開済みのパッケージ）。 版の値はここが単一所有し、
+         Directory.Packages.props の PackageVersion と InformationalVersion が参照する
+         （Directory.Packages.props は本ファイルより後に読み込まれるため、値はここで定義する）。 -->
+    <!-- アプリの版から「使った EsUtil の版」を辿れるようにする（`+esutil.0.1.0`）。
+         EsUtil はパッケージ参照であり、配布物だけを見ても版が分からないため、製品バージョンへ残す。
+         SourceLink のコミット（`+<sha>`）は SDK が後ろへ足す。 -->
+    <EsUtilVersion>0.1.0</EsUtilVersion>
+    <InformationalVersion Condition="'$(EsUtilVersion)' != ''">$(Version)+esutil.$(EsUtilVersion)</InformationalVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- 復元の再現性: 依存の版を packages.lock.json へ固定する（**コミットする**）。
+         同じ版でも、取得元や解決の揺れで別の中身が入る事故を防ぐ（実測 2026-10-26: ローカルのキャッシュに
+         同じ版番号で依存の違うパッケージがあり、NU1605 になった）。
+         CI は -p:RestoreLockedMode=true で「lock と違う解決」を失敗させる。
+         規則は .github/ビルド設定規約.md §4。 -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -33,16 +51,16 @@
     <!-- 使用を禁止する API（buildScript/BannedSymbols.txt）をコンパイラで検出する。
          規則の所有者は .github/コーディング規約.md（例: フラグ enum は HasFlag ではなくビット演算を使う）。
          一覧をルート直下に置かないのは、ルートのファイルを減らすため（規則は .github/ビルド設定規約.md §1）。 -->
-    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="[5.*,)" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)buildScript\BannedSymbols.txt" />
 
     <!-- 規約のうち、SDK のアナライザー（AnalysisMode=Recommended）が検出しない項目を補うアナライザー。
          有効にする規則は .editorconfig が単一所有する（既定の重要度のまま使わない）。 -->
     <!-- 非同期の書き方（`async void` の禁止・`Async` 接尾辞）。 規則は .github/コーディング規約.md §7 / .github/命名規約.md。 -->
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="[17.*,)" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" />
     <!-- ファイル名と型名の一致（MA0048）/ 名前空間セグメントと型名の一致の禁止（MA0049）。
          規則は .github/命名規約.md（「1 ファイル 1 型」「ファイル名は型名と一致」「名前空間セグメントと型名を一致させない」）。 -->
-    <PackageReference Include="Meziantou.Analyzer" Version="[3.*,)" PrivateAssets="all" />
+    <PackageReference Include="Meziantou.Analyzer" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

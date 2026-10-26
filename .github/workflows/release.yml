@@ -1,36 +1,36 @@
 # リリースワークフロー
 #
-# 自動インクリメントは行わない。実行は手動（Actions → Release → Run workflow）のみで、
-# **release-config.json の releaseBranches に含まれるブランチからのみ実行できる**（それ以外では検証で失敗する）。
-# 責務ごとにジョブを分ける。失敗してもタグと Release は作成されない。
+# 実行は手動のみ（Actions → Release → Run workflow）。 **`mode` で 2 段階に分ける**。
 #
-#   verify  … 前提検証（ブランチ / ゲート / バージョン / タグ未作成）
-#   publish … 全 UI を publish（実装は publish.yml に集約。バージョンを適用してビルドする）
-#   release … バージョンをコミットして push し、タグと GitHub Release を作成する
+#   dry-run … 配布物の作成と検証だけを行う（**公開もタグ作成もしない**。 内容は Summary に出す）
+#   release … 同じコミットの dry-run が成功していることを前提に、承認 → 配布 → **タグと Release** の順で進む
 #
-# バージョンが未入力の場合は「ドライラン」として、現在のバージョン状況の表示だけを行い、
-# publish と release は実行しない（入力フォームに現在の値を表示できないため、先に確認する手段として使う）。
+# 設計の要点:
+#   - **版は人が `Directory.Build.props` へ書いてコミットしておく**（自動採番しない）。
+#     入力 `version` は確認用であり、ツリーの値と一致しなければ失敗する。
+#   - **タグと GitHub Release は、配布物の作成と承認が終わった後にだけ作る**（`gh release create --target`）。
+#     失敗してもタグを消費しない。
+#   - **`release` ジョブは `environment: release`（Required reviewers）で承認を要求する**。
+#   - 配布物には **SBOM（CycloneDX）** を添付する（使った依存を配布物から辿れるようにする）。
 #
-# 注意: タグとバージョンは、配布物の作成（publish）が成功した後に初めて消費する。
-# タグは gh release create --target に作成させる（publish の成功後にのみタグが作られる）。
-#
-# GITHUB_TOKEN による push はワークフローを再トリガーしないため、Build が連鎖起動しない。
-#
-# .NET SDK のバージョンはリポジトリルートの global.json が単一所有する（ワークフローでは指定しない）。
-# verify ジョブの dotnet msbuild（PackageId の取得）は、ランナー イメージの SDK をそのまま使う（setup-dotnet は不要）。
+# 前提検証: ブランチ（`releaseBranches`）/ ゲート（`build.yml` の成功実行）/ semver / 系列 / タグ未作成。
+# 規則の所有者は .github/RELEASE.md。
 name: Release
 
-# 実行一覧にバージョンを表示する（未入力のドライランはその旨を表示する）
-run-name: Release ${{ inputs.version || '（現在のバージョンを確認）' }}
+# 実行一覧で dry-run と release を区別する（release 側は dry-run の成功を確認するため、この名前を見る）
+run-name: ${{ inputs.mode == 'dry-run' && 'DryRun' || 'Release' }} ${{ github.ref_name }} ${{ github.sha }}
 
 on:
-  # 手動実行のみ。バージョンは入力で指定する（自動インクリメントは行わない）
   workflow_dispatch:
     inputs:
+      mode:
+        description: 'dry-run（作成と検証のみ）/ release（承認 → 配布 → タグ）'
+        required: true
+        type: choice
+        options: [dry-run, release]
+        default: dry-run
       version:
-        # 入力フォームには現在の値を表示できない（default に式を指定できない）ため、
-        # 未入力のまま実行すると「現在のバージョン状況の表示」だけを行うドライランになる
-        description: 'リリースするバージョン（例: 0.2.0 / 1.0.0 / 1.2.3-rc.1）。未入力のまま実行すると、リリースを行わず現在のバージョン（タグ・GitHub Release・配布物）だけを Summary に表示します'
+        description: '任意: 公開する版（Directory.Build.props の <Version> と一致しなければ失敗します。 dry-run では省略可）'
         required: false
         type: string
 
@@ -39,27 +39,26 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   # ────────────────────────────────────────────────────────────
   # 1. 前提検証
   # ────────────────────────────────────────────────────────────
   verify:
     runs-on: ubuntu-latest
-    # 検証と gh への問い合わせのみ（実測 28 秒）。停止した場合に 6 時間（既定）待たないための上限
     timeout-minutes: 30
     permissions:
       contents: read
-      # Build（ゲート）の実行結果の参照
+      # dry-run の実行結果の参照
       actions: read
     outputs:
-      # 'true' の場合はドライラン（バージョン未入力。表示のみでリリースは行わない）
-      dry_run: ${{ steps.mode.outputs.dry_run }}
+      dry_run: ${{ steps.verify.outputs.dry_run }}
       version: ${{ steps.verify.outputs.version }}
       tag: ${{ steps.verify.outputs.tag }}
       prerelease: ${{ steps.verify.outputs.prerelease }}
       notes_start_tag: ${{ steps.verify.outputs.notes_start_tag }}
-      is_backport: ${{ steps.verify.outputs.is_backport }}
-      update_version_file: ${{ steps.verify.outputs.update_version_file }}
       mark_latest: ${{ steps.verify.outputs.mark_latest }}
       gate_workflow: ${{ steps.config.outputs.gate_workflow }}
       version_file: ${{ steps.config.outputs.version_file }}
@@ -69,7 +68,6 @@ jobs:
       - name: チェックアウト
         uses: actions/checkout@v5
         with:
-          # タグの列挙のため全履歴を取得する
           fetch-depth: 0
 
       # リリース設定（バージョンファイル・表示名・説明・ブランチ・ゲート）は release-config.json が単一所有する
@@ -77,211 +75,150 @@ jobs:
         id: config
         uses: ./.github/actions/read-config
 
-      # バージョンが未入力ならドライラン（現在のバージョン状況の表示だけを行う）
-      - name: 実行モードを判定
-        id: mode
-        shell: pwsh
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          # 未入力（空白のみを含む）ならドライラン
-          $dryRun = [string]::IsNullOrWhiteSpace($env:INPUT_VERSION)
-          # 注意: 文字列補間の $() の外に続くメソッド呼び出しは評価されないため、値を変数へ入れてから出力する
-          $dryRunText = if ($dryRun) { 'true' } else { 'false' }
-
-          "dry_run=$dryRunText" >> $env:GITHUB_OUTPUT
-
-          if ($dryRun) {
-            Write-Host 'バージョンが未入力のため、ドライランとして実行します（現在のバージョン状況の表示のみ。リリースは行いません）。'
-          }
-          else {
-            Write-Host "リリースするバージョン: $($env:INPUT_VERSION.Trim())"
-          }
-
-      # 現在どこまでリリースされているか（バージョン・タグ・GitHub Release・配布物）を
-      # 実行サマリーへ表示する。入力フォームには現在の値を表示できないため、ここで確認できるようにする
+      # 現在どこまでリリースされているか（バージョン・タグ・GitHub Release・配布物）を Summary へ表示する
       - name: 現在のバージョン状況を表示
-        # 情報の表示のみで状態を変更しないため、問い合わせに失敗してもリリースは続行する
         continue-on-error: true
         shell: pwsh
         env:
-          # 最新の GitHub Release の取得（gh release list / gh release view）に使用する
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: ${{ github.ref_name }}
         run: ./.github/scripts/show-current-versions.ps1 -Branch $env:BRANCH
 
-      # ドライランでは検証しない（同じ内容を次回の本実行でも行うため、ここで止める必要がない）
-      - name: バージョンとブランチを検証
+      - name: 版と前提を検証
         id: verify
-        if: steps.mode.outputs.dry_run != 'true'
-        shell: pwsh
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-          BRANCH: ${{ github.ref_name }}
-        run: |
-          $version = $env:INPUT_VERSION.Trim()
-          if ([string]::IsNullOrEmpty($version)) { throw 'バージョンが入力されていません。' }
-
-          # 形式・ブランチ（release-config.json の releaseBranches）・単調性（同じ系列の最大より大きいこと）・タグ未作成を検証する
-          $info = & ./.github/scripts/verify-release-version.ps1 -Version $version -Branch $env:BRANCH | ConvertFrom-Json
-
-          # 注意: 文字列補間の $() の外に続くメソッド呼び出しは評価されないため、値を変数へ入れてから出力する
-          $isPrerelease = if ($info.prerelease) { 'true' } else { 'false' }
-          $isBackport = if ($info.isBackport) { 'true' } else { 'false' }
-          # main からのバックポートでは、main のバージョンを旧系列へ戻さないようバージョンファイルを書き換えない
-          $updateVersionFile = if ($info.updateVersionFile) { 'true' } else { 'false' }
-          # GitHub Release の Latest にするのは main からの通常のリリースのみ
-          $markLatest = if ($info.markLatest) { 'true' } else { 'false' }
-
-          "version=$($info.version)" >> $env:GITHUB_OUTPUT
-          "tag=$($info.tag)" >> $env:GITHUB_OUTPUT
-          "notes_start_tag=$($info.notesStartTag)" >> $env:GITHUB_OUTPUT
-          # プレリリース（例: 1.2.3-rc.1）は GitHub 上でもプレリリースとして登録する
-          "prerelease=$isPrerelease" >> $env:GITHUB_OUTPUT
-          "is_backport=$isBackport" >> $env:GITHUB_OUTPUT
-          "update_version_file=$updateVersionFile" >> $env:GITHUB_OUTPUT
-          "mark_latest=$markLatest" >> $env:GITHUB_OUTPUT
-
-      # ドライランではゲートを確認しない（表示だけのため、ここで失敗させない）
-      - name: Build ワークフローの成功を確認（ゲート）
-        if: steps.mode.outputs.dry_run != 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODE: ${{ inputs.mode }}
+          INPUT_VERSION: ${{ inputs.version }}
           BRANCH: ${{ github.ref_name }}
+          VERSION_FILE: ${{ steps.config.outputs.version_file }}
           GATE_WORKFLOW: ${{ steps.config.outputs.gate_workflow }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
         run: |
-          $sha = $env:GITHUB_SHA
-          $workflow = $env:GATE_WORKFLOW
-          Write-Host "リリース対象コミット: $sha（ブランチ: $env:BRANCH / ゲート: $workflow）"
+          $ErrorActionPreference = 'Stop'
+          $dryRun = $env:MODE -eq 'dry-run'
+          "dry_run=$($dryRun.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
-          # 同一ブランチで成功した実行から、対象コミットをビルドしたものを探す
-          $runs = gh run list --workflow=$workflow --branch=$env:BRANCH --status=success --limit=50 --json headSha,event
-          if ($LASTEXITCODE -ne 0) {
-            throw "実行一覧の取得に失敗しました（gh の権限や接続を確認してください）"
+          # 版はコミット済みの値を使う（ワークフローで書き換えない）
+          $text = [IO.File]::ReadAllText($env:VERSION_FILE, [Text.UTF8Encoding]::new($false))
+          $m = [regex]::Match($text, '<Version>(?<v>[^<]+)</Version>')
+          if (-not $m.Success) { throw "$($env:VERSION_FILE) に <Version> がありません" }
+          $committed = $m.Groups['v'].Value.Trim()
+
+          $input = if ($env:INPUT_VERSION) { $env:INPUT_VERSION.Trim() } else { '' }
+          if (-not $dryRun -and $input -and $input -ne $committed) {
+            throw "入力 $input がコミット済みの版 $committed と一致しません（版はリリース前にコミットしてください）"
+          }
+          $version = if ($input) { $input } else { $committed }
+          Write-Host "対象の版: $version（コミット済み: $committed / モード: $($env:MODE)）"
+
+          # semver・ブランチ・系列・タグ未作成の検証（規則は version.ps1 と verify-release-version.ps1 が持つ）
+          $info = & ./.github/scripts/verify-release-version.ps1 -Version $version -Branch $env:BRANCH | ConvertFrom-Json
+
+          # ゲート（build.yml）の成功実行が、このコミットに対して存在すること
+          $gateRuns = @(gh run list --repo $env:REPO --workflow $env:GATE_WORKFLOW --commit $env:SHA --limit 50 --json conclusion | ConvertFrom-Json)
+          if (@($gateRuns | Where-Object { $_.conclusion -eq 'success' }).Count -eq 0) {
+            throw "コミット $($env:SHA) に対する $($env:GATE_WORKFLOW) の成功実行がありません。先に push して Build を成功させてください。"
           }
 
-          $hit = ($runs | ConvertFrom-Json) | Where-Object { $_.headSha -eq $sha } | Select-Object -First 1
-
-          if (-not $hit) {
-            throw "コミット $sha に対する $workflow の成功実行がありません。先に $env:BRANCH へ push して Build を成功させてください。"
+          # release は「同じコミットの dry-run が成功している」ことを前提にする
+          # （表示名は run-name。 name はワークフロー名 `Release` のため判定に使えない）
+          if (-not $dryRun) {
+            $runs = @(gh run list --repo $env:REPO --workflow release.yml --commit $env:SHA --limit 50 --json displayTitle,conclusion | ConvertFrom-Json)
+            if (@($runs | Where-Object { $_.displayTitle -like 'DryRun*' -and $_.conclusion -eq 'success' }).Count -eq 0) {
+              throw "このコミット（$($env:SHA)）の dry-run の成功実行がありません。先に mode=dry-run で実行してください。"
+            }
           }
 
-          Write-Host "ゲートOK: $workflow が成功しています（event: $($hit.event)）"
+          "version=$($info.version)" >> $env:GITHUB_OUTPUT
+          "tag=$($info.tag)" >> $env:GITHUB_OUTPUT
+          "prerelease=$($info.prerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          "notes_start_tag=$($info.notesStartTag)" >> $env:GITHUB_OUTPUT
+          "mark_latest=$($info.markLatest.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
-      # ドライラン（バージョン未入力）の場合は、現在のバージョン状況の表示だけで終了する
-      - name: ドライランの結果をまとめ
-        if: steps.mode.outputs.dry_run == 'true'
+      - name: 対象をまとめ
         shell: pwsh
         env:
+          SUMMARY_MODE: ${{ inputs.mode }}
+          SUMMARY_VERSION: ${{ steps.verify.outputs.version }}
+          SUMMARY_TAG: ${{ steps.verify.outputs.tag }}
           SUMMARY_BRANCH: ${{ github.ref_name }}
+          SUMMARY_SHA: ${{ github.sha }}
         run: |
-          # 注意: ダブルクォートの here-string では、バックティックがエスケープ文字になるため使わない。
-          # （`` `$env:X `` は展開されずリテラルになり、`` `v `` は垂直タブになる）
-          # シングルクォートの here-string は展開されないため、値を入れる場合は -f を使う。
-          # 先頭の空行は、直前に表示した「現在のバージョン状況」との区切り（Out-File -Append のため）
-          $message = @'
+          $message = @"
 
-          ## ドライラン（リリースは行っていません）
+          ### リリース対象
 
-          `version` が**未入力**だったため、現在のバージョン状況の表示だけを行いました。
-          検証・publish・タグ作成・Release 作成は実行していません。
-
-          ### 次の操作
-
-          上の「現在のバージョン状況」を確認し、`version` にリリースするバージョンを入力して、
-          もう一度 **Run workflow** を実行してください。
-
-          - 実行ブランチ: `{0}`
-          '@ -f $env:SUMMARY_BRANCH
-
+          - モード: ``$env:SUMMARY_MODE``
+          - 版: ``$env:SUMMARY_VERSION``
+          - タグ: ``$env:SUMMARY_TAG``
+          - 実行ブランチ: ``$env:SUMMARY_BRANCH``
+          - コミット: ``$env:SUMMARY_SHA``
+          "@
           $message | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
 
   # ────────────────────────────────────────────────────────────
-  # 2. 全 UI を publish して保管（実装は publish.yml に集約）
+  # 2. SBOM（CycloneDX）を作る（dry-run でも作って検証する）
+  # ────────────────────────────────────────────────────────────
+  sbom:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v5
+
+      - name: SBOM を作成
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+          PRODUCT: ${{ needs.verify.outputs.product }}
+        run: |
+          # ツールの版は .config/dotnet-tools.json が単一所有する（CI とローカルで同じものを使う）
+          & pwsh -NoProfile -File buildScript/generateSbom.ps1 -Output 'sbom' -Version $env:VERSION -Product $env:PRODUCT
+          if ($LASTEXITCODE -ne 0) { throw "SBOM の作成に失敗しました（exit $LASTEXITCODE）" }
+          Get-ChildItem -Path 'sbom' -File | ForEach-Object { $_.Name }
+
+      - name: SBOM を保管
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/*.json
+          if-no-files-found: error
+
+  # ────────────────────────────────────────────────────────────
+  # 3. 配布物の作成（dry-run でも実行して、作れることを確かめる）
   # ────────────────────────────────────────────────────────────
   publish:
-    needs: verify
-    # ドライラン（バージョン未入力）では publish しない
-    if: needs.verify.outputs.dry_run != 'true'
-    # 呼び出される publish.yml が必要とする権限をここで付与する（それ以上は与えない）
-    # 注意: 再利用ワークフローを呼ぶジョブには timeout-minutes を指定できない（指定できるキーが限られる）。
-    # タイムアウトは呼び先の publish.yml の各ジョブが持つ
+    needs: [verify, sbom]
     permissions:
       contents: read
     uses: ./.github/workflows/publish.yml
     with:
-      # コミット前でも配布物へバージョンを反映する（配布物とリリースのバージョンを一致させる）
+      # 版はコミット済みの値（publish.yml が作業ツリーへ適用するが、同じ値なので実質は検証になる）
       version: ${{ needs.verify.outputs.version }}
 
   # ────────────────────────────────────────────────────────────
-  # 3. バージョンのコミット・push と、タグ + GitHub Release の作成
+  # 4. タグと GitHub Release（release のみ。 承認 → 作成の順）
   # ────────────────────────────────────────────────────────────
   release:
-    needs: [verify, publish]
-    # ドライラン（バージョン未入力）ではコミット・タグ・Release を作成しない
-    if: needs.verify.outputs.dry_run != 'true'
+    needs: [verify, publish, sbom]
+    if: inputs.mode == 'release'
     runs-on: ubuntu-latest
-    # バージョンのコミット・push と Release 作成（実測 28 秒）。停止した場合に 6 時間（既定）待たないための上限
     timeout-minutes: 30
+    # 承認されたジョブだけがタグと Release を作る（配布物は既に作成済みなので、ここは不可逆な操作だけ）
+    environment: release
     permissions:
-      # ブランチ push、タグ作成、Release 作成
       contents: write
-      # バージョンコミットの検証（Build）の起動
-      actions: write
     steps:
-      - name: チェックアウト
-        uses: actions/checkout@v5
-        with:
-          # バージョンコミットの push のため全履歴を取得する
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: 成果物をダウンロード
         uses: actions/download-artifact@v7
         with:
           path: assets
-          # 各 UI の成果物を 1 つのフォルダへ集約する（ファイル名は配布名のまま）
+          # 配布物と SBOM を 1 つのフォルダへ集約する
           merge-multiple: true
-
-      - name: バージョンをコミット
-        id: apply
-        shell: pwsh
-        env:
-          VERSION: ${{ needs.verify.outputs.version }}
-          VERSION_FILE: ${{ needs.verify.outputs.version_file }}
-          UPDATE_VERSION_FILE: ${{ needs.verify.outputs.update_version_file }}
-        run: |
-          if ($env:UPDATE_VERSION_FILE -ne 'true') {
-            # main からのバックポートでは、main のバージョンを旧系列へ戻さないようファイルを書き換えない
-            Write-Host "バックポートのため、バージョンファイルは変更しません（main のバージョンを維持します）"
-          }
-          else {
-            & ./.github/scripts/set-version.ps1 -Version $env:VERSION -VersionFile $env:VERSION_FILE | Out-Null
-
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-
-            # publish の作業ツリーにのみ適用していた場合は、ここで初めて変更が生じる
-            if (git status --porcelain) {
-              git commit -am "リリースバージョンを $env:VERSION へ更新"
-              Write-Host "バージョンをコミットしました"
-            }
-            else {
-              Write-Host "バージョンは既に設定済みのため、コミットをスキップしました"
-            }
-          }
-
-          "sha=$((git rev-parse HEAD).Trim())" >> $env:GITHUB_OUTPUT
-
-      - name: ブランチを push
-        shell: pwsh
-        env:
-          BRANCH: ${{ github.ref_name }}
-          SHA: ${{ steps.apply.outputs.sha }}
-        run: |
-          git push origin "HEAD:$env:BRANCH"
-          Write-Host "push しました: $env:SHA -> $env:BRANCH"
 
       - name: GitHub Release を作成
         shell: pwsh
@@ -294,13 +231,12 @@ jobs:
           NOTES_START_TAG: ${{ needs.verify.outputs.notes_start_tag }}
           PRERELEASE: ${{ needs.verify.outputs.prerelease }}
           MARK_LATEST: ${{ needs.verify.outputs.mark_latest }}
-          SHA: ${{ steps.apply.outputs.sha }}
+          SHA: ${{ github.sha }}
         run: |
-          # 添付する配布物は publish ジョブが保管したもの（ファイル名は配布名のまま。UI の定義に依存しない）
           $assets = @(Get-ChildItem -Path 'assets' -File | Select-Object -ExpandProperty FullName)
           if ($assets.Count -eq 0) { throw '添付する成果物がありません。' }
 
-          # タグは gh に作成させる（--target で公開対象コミットを指定する）
+          # タグは gh に作成させる（--target で公開対象コミットを指定する。 失敗してもタグは残らない）
           $ghArgs = @(
             'release', 'create', $env:TAG,
             '--title', "$env:PRODUCT $env:VERSION",
@@ -308,13 +244,9 @@ jobs:
             '--generate-notes'
           )
 
-          # 先頭に付ける説明は設定（release-config.json）が持つ
           if ($env:RELEASE_NOTES) { $ghArgs += @('--notes', $env:RELEASE_NOTES) }
-          # リリースノートは同じ系列の前回リリースからの差分にする（前回のタグを明示する）
           if ($env:NOTES_START_TAG) { $ghArgs += @('--notes-start-tag', $env:NOTES_START_TAG) }
-          # プレリリースは Latest にしない
-          if ($env:PRERELEASE -eq 'true') { $ghArgs += @('--prerelease') }
-          # 旧系列（バックポート・系列ブランチ）は Latest にしない
+          if ($env:PRERELEASE -eq 'true') { $ghArgs += '--prerelease' }
           if ($env:MARK_LATEST -ne 'true') { $ghArgs += @('--latest=false') }
 
           $ghArgs += $assets
@@ -323,49 +255,3 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "GitHub Release の作成に失敗しました（exit $LASTEXITCODE）" }
 
           Write-Host "リリースを作成しました: $env:TAG（添付 $($assets.Count) 件）"
-
-      # バージョンコミットは GITHUB_TOKEN の push では Build が起動しない（workflow_dispatch は例外として起動する）。
-      # バージョンコミットの検証（ビルドとテスト）を行い、チェックを付けて次のリリースのゲートを満たす。
-      - name: バージョンコミットの検証を起動
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: ${{ github.ref_name }}
-          GATE_WORKFLOW: ${{ needs.verify.outputs.gate_workflow }}
-        run: |
-          $workflow = $env:GATE_WORKFLOW
-
-          gh workflow run $workflow --ref $env:BRANCH
-          if ($LASTEXITCODE -ne 0) { throw "$workflow の起動に失敗しました（exit $LASTEXITCODE）" }
-
-          Write-Host "$workflow を起動しました（ブランチ: $env:BRANCH）"
-          Write-Host "実行完了は待たない（Actions で結果を確認できる）"
-
-      - name: 結果をまとめ
-        if: always()
-        shell: pwsh
-        env:
-          SUMMARY_VERSION: ${{ needs.verify.outputs.version }}
-          SUMMARY_TAG: ${{ needs.verify.outputs.tag }}
-          SUMMARY_SHA: ${{ steps.apply.outputs.sha }}
-          SUMMARY_PRERELEASE: ${{ needs.verify.outputs.prerelease }}
-          SUMMARY_KIND: ${{ needs.verify.outputs.is_backport }}
-        run: |
-          # バックポートかどうかを表示用の文言にする
-          $kind = if ($env:SUMMARY_KIND -eq 'true') { 'バックポート（バージョンファイルは変更しません）' } else { '通常のリリース' }
-
-          # 注意: ダブルクォートの here-string では、バックティックがエスケープ文字になり、
-          # `` `$env:X `` が展開されずリテラル（$env:X）になる。シングルクォート + -f で埋め込む。
-          $message = @'
-          ## リリース結果
-
-          | 項目 | 値 |
-          | --- | --- |
-          | バージョン | `{0}` |
-          | タグ | `{1}` |
-          | 対象コミット | `{2}` |
-          | プレリリース | {3} |
-          | 種別 | {4} |
-          '@ -f $env:SUMMARY_VERSION, $env:SUMMARY_TAG, $env:SUMMARY_SHA, $env:SUMMARY_PRERELEASE, $kind
-
-          $message | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8

@@ -9,20 +9,18 @@
     <RootNamespace>EsUtil.SaveEvidence.App.MewUI</RootNamespace>
     <!-- 実行ファイルの名前は製品名を優先する（配布物の exe 名。 命名規約の例外）。 -->
     <AssemblyName>SaveEvidence.MewUI</AssemblyName>
-    <!-- MewUI は API が安定化中（0.x）。 破壊的変更を避けるためバージョンを固定する。 -->
-    <MewUIVersion>0.21.1</MewUIVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- Core + Win32 プラットフォームホスト + Windows 向け全描画バックエンド -->
-    <PackageReference Include="Aprillz.MewUI.Windows" Version="$(MewUIVersion)" />
+    <PackageReference Include="Aprillz.MewUI.Windows" />
     <!-- SkiaCanvasView（EsBitmap をそのまま描画する） -->
     <!-- Direct2D ↔ Skia の GPU ブリッジ（未登録でも CPU 経路で動作するが、描画コストが高い） -->
     <!-- 操作ログ（Avalonia 版と同一のファイルへ出力する） -->
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="[10.*,)" />
-    <PackageReference Include="Serilog" Version="[4.*,)" />
-    <PackageReference Include="Serilog.Extensions.Logging" Version="[10.*,)" />
-    <PackageReference Include="Serilog.Sinks.File" Version="[7.*,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,13 +28,11 @@
     <ProjectReference Include="..\..\App.Core\src\App.Core.csproj" />
     <!-- 撮影・切り出しの共通規則（切り出し矩形の計算） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
-    <!-- MewUI 版の撮影セッション（オーバーレイ・切り出しビュー） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlMewUI\src\Parts.CapturePreview.ControlMewUI.csproj" />
-    <!-- MewUI 版 Interop（コア型 ⇔ MewUI 型） -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Interop\src\EsUtil.Ui.MewUI.Interop.csproj" />
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Thumbnail\src\EsUtil.Ui.MewUI.Thumbnail.csproj" />
+    <PackageReference Include="EsUtil.Ui.MewUI.Interop" />
+    <PackageReference Include="EsUtil.Ui.MewUI.Thumbnail" />
     <!-- 設定画面の色選択（色名・16 進・ピッカーを 1 つにまとめたコントロール） -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\ColorComboBox\src\EsUtil.Ui.MewUI.ColorComboBox.csproj" />
+    <PackageReference Include="EsUtil.Ui.MewUI.ColorComboBox" />
   </ItemGroup>
 
   <ItemGroup>

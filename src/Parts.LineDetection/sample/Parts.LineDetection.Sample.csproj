@@ -13,24 +13,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="[12.*,)" />
-    <PackageReference Include="Avalonia.Desktop" Version="[12.*,)" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.*,)" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="[12.*,)" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="[2.*,)" Condition="'$(Configuration)' == 'Debug'" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="[8.*,)" />
-    <PackageReference Include="System.Reactive" Version="[7.*,)" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="System.Reactive" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- 検出ロジック（ロジック方式）を参照する -->
     <ProjectReference Include="..\src\Parts.LineDetection.csproj" />
     <!-- マウス位置の拡大表示（ルーペ）に使用する -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Loupe\src\EsUtil.Ui.AvaloniaUI.Loupe.csproj" />
+    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Loupe" />
     <!-- データセット作成ページの Marquee キャプチャ（スクリーン領域選択 + ウィンドウ列挙）に使用する -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlAvaloniaUI\src\Parts.CapturePreview.ControlAvaloniaUI.csproj" />
     <!-- Parts.CapturePreview.ControlAvaloniaUI が内部で使用する要素検出（ウィンドウ列挙）機能 -->
-    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Interop\src\EsUtil.Ui.AvaloniaUI.Interop.csproj" />
+    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Interop" />
   </ItemGroup>
 
   <ItemGroup>
