@@ -21,8 +21,8 @@
 
 UI の追加・変更は **`release-config.json` の `uis[]` を編集します**（ワークフローとスクリプトの変更は不要です）。
 **ビルド・テストの対象は `solutionFile` が持ちます**（ワークフローには書きません）。
-**実行できるブランチはモードで変わります**（`dry-run` は `dryRunBranches`、公開は `releaseBranches`。 本リポジトリは dry-run が `["main", "dev", "release/**"]`、公開が `["main", "release/**"]`。
-`release/` 配下は **`release/<major>.<minor>` の形式**に限定され、入力バージョンの系列と一致させる必要があります）。
+**実行できるブランチはモードで変わります**（`dry-run` は `dryRunBranches`、公開は `releaseBranches`。 本リポジトリは dry-run が `["main", "dev"]`、公開が `["main"]`。
+**開発から dry-run までの確認は `dev` で行い、公開は `main` で行います**）。
 
 ```text
 <リポジトリルート>/
@@ -143,7 +143,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 
 | ワークフロー | 実行契機 | 内容 |
 | --- | --- | --- |
-| [`workflows/build.yml`](workflows/build.yml) | `main` への push（マージ後）、`main` 向け PR（**必ず実行**）、`dev` への push、`release/**` への push、手動実行 | 復元・ビルド・テスト（**配布物は作らない**）。 PR では必須チェック `build` |
+| [`workflows/build.yml`](workflows/build.yml) | `main` への push（マージ後）、`main` 向け PR（**必ず実行**）、`dev` への push、手動実行 | 復元・ビルド・テスト（**配布物は作らない**）。 PR では必須チェック `build` |
 | [`workflows/publish.yml`](workflows/publish.yml) | `workflow_call` | 全 UI の publish・**配布物の起動検証**・保管の単一実装（`version` を受け取るとそのバージョンでビルドする） |
 | [`workflows/release.yml`](workflows/release.yml) | **手動実行のみ。 実行ブランチは `mode` に従う**（`dry-run` は `dryRunBranches`、公開は `releaseBranches`）。 `mode` で 2 段階（`dry-run` / `release`） | 検証 → SBOM → 全 UI の publish →（release のみ）**承認** → タグ + GitHub Release 作成 |
 
@@ -202,9 +202,8 @@ flowchart LR
 
 **注意事項**:
 
-- **実行できるブランチは `release-config.json` の `dryRunBranches`（dry-run）と `releaseBranches`（公開）が決めます**（本リポジトリは dry-run が `["main", "dev", "release/**"]`、公開が `["main", "release/**"]`）。 **開発から dry-run までの確認は `dev` で行い、公開は `main` で行います**。
+- **実行できるブランチは `release-config.json` の `dryRunBranches`（dry-run）と `releaseBranches`（公開）が決まります**（本リポジトリは dry-run が `["main", "dev"]`、公開が `["main"]`）。 **開発から dry-run までの確認は `dev` で行い、公開は `main` で行います**。
   `verify` ジョブが最初に実行ブランチを検証し、含まれない場合は失敗します。
-  `release/` 配下のブランチは **`release/<major>.<minor>`**（例: `release/0.1`）にしてください。
 - **`release` は、同じコミットの `dry-run` が成功していることを要求します**（実行名 `DryRun …` の成功実行を確認します）。 満たさない場合は失敗します。
 - **版は自動採番しません**。 入力 `version` は**確認用**であり、`Directory.Build.props` の `<Version>` と一致しなければ失敗します。
 - **タグは公開が成功した後にだけ作ります**（作成に失敗しても、タグは消費されません）。
