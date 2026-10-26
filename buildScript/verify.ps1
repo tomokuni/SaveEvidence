@@ -297,10 +297,12 @@ if (-not $SkipTests) {
     if ($Coverage) { $testArgs += @('--collect:XPlat Code Coverage', "--results-directory:$coverageDir") }
     $test = Invoke-DotNet $testArgs
     $testText = $test.Text
+    # 件数の見出しはランナーの言語で変わる（日本語の "合格:" と英語の "Passed:"）。
+    # **どちらでも数える**（片方だけだと、英語のランナーで「0 件＝不合格」と誤判定する。 実測 2026-10-26）。
     $passed = 0
-    foreach ($m in [regex]::Matches($testText, '合格:\s*(\d+)')) { $passed += [int]$m.Groups[1].Value }
+    foreach ($m in [regex]::Matches($testText, '(?:合格|Passed):\s*(\d+)')) { $passed += [int]$m.Groups[1].Value }
     $failed = 0
-    foreach ($m in [regex]::Matches($testText, '失敗:\s*(\d+)')) { $failed += [int]$m.Groups[1].Value }
+    foreach ($m in [regex]::Matches($testText, '(?:失敗|Failed):\s*(\d+)')) { $failed += [int]$m.Groups[1].Value }
     $projects = [regex]::Matches($testText, '\.dll \(net10\.0[^)]*\)').Count
     Add-Result 'テスト' ($failed -eq 0 -and $passed -gt 0 -and $test.ExitCode -eq 0) "合格 $passed / 失敗 $failed / $projects プロジェクト / 終了コード $($test.ExitCode)"
     if ($failed -gt 0) {
@@ -358,7 +360,9 @@ if (-not $SkipPackage) {
     Write-Output '== 4. NuGet の健全性 =='
     # まず lock どおりに復元できるかを確かめる（lock と csproj / Directory.Packages.props が食い違えば
     # NU1004 で失敗する）。 監査は --force-evaluate で lock を書き換え得るため、この検査を先に行う。
-    $locked = Invoke-DotNet @('restore', $Solution, '-p:RestoreLockedMode=true')
+    # 構成はビルドと同じにする（`dotnet restore` は `-c` を持たないため `-p:Configuration=` で渡す。
+    # 構成で参照が変わるプロジェクトがあると、構成の違う復元が lock と食い違って NU1004 になる）
+    $locked = Invoke-DotNet @('restore', $Solution, "-p:Configuration=$Configuration", '-p:RestoreLockedMode=true')
     $lockedText = $locked.Text + $locked.ErrorText
     $lockedIssues = @($lockedText -split "`r?`n" | Where-Object { $_ -match 'NU1004|error' })
     Add-Result 'ロックどおりの復元' ($locked.ExitCode -eq 0) "終了コード $($locked.ExitCode)"
@@ -370,7 +374,7 @@ if (-not $SkipPackage) {
     # （付けないと監査が省略され、0 件と誤判定する）。 監査は検査そのものなので、-NoRestore は適用しない。
     # 直接参照の脆弱性はビルドの復元でも検出される（`NuGetAuditMode` の既定は direct であり、
     # 警告は Directory.Build.props の TreatWarningsAsErrors でエラーになる）。 本節は推移的依存まで広げる。
-    $audit = Invoke-DotNet @('restore', $Solution, '-p:NuGetAuditMode=all', '--force-evaluate')
+    $audit = Invoke-DotNet @('restore', $Solution, "-p:Configuration=$Configuration", '-p:NuGetAuditMode=all', '--force-evaluate')
     $auditText = $audit.Text
     $auditHits = @($auditText -split "`r?`n" | Where-Object { $_ -match 'NU19\d\d' })
 

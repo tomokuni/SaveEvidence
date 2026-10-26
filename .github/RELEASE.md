@@ -115,11 +115,35 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 - **更新・削除は管理者でも通常は拒否されます**（Bypass は管理者にのみ許されます）。
 - 定義を変更した場合は、**同じ JSON の値と実際の ruleset を一致**させてください（ruleset はコードから自動適用されないため、変更時は手動で更新します）。
 
+### ブランチの保護（Branch ruleset）
+
+`main` への**直接 push を禁止**し、**PR 経由と `build` の成功をマージ条件**にします。 定義は
+[`rulesets/protect-main.json`](rulesets/protect-main.json) にあります。
+
+| 項目 | 値 |
+| --- | --- |
+| Ruleset name | `Protect main` |
+| Target | **Branches** |
+| Enforcement status | **Active** |
+| Target branches | `~DEFAULT_BRANCH`（既定ブランチ＝`main`） |
+| Rules | **Restrict deletions** / **Block force pushes** / **Require a pull request before merging** / **Require status checks to pass**（`build`） |
+| Required approvals | **0**（承認者は不要。 「PR 経由」だけを強制する） |
+| Bypass list | **なし**（管理者も迂回できない。 非常時は ruleset 自体を編集する） |
+
+**設定手順**: `gh api -X POST repos/<owner>/<repo>/rulesets --input .github/rulesets/protect-main.json`
+（既存は `-X PUT .../rulesets/<id>`）で適用します。 UI からは **Settings → Rules → Rulesets** で同じ値を設定します。
+
+**注意事項**:
+
+- **`dev` への push は制限しません**（作業ブランチのため）。 **`main` へは PR でのみ**反映します。
+- 承認者を 0 にしているため、**CI が緑なら作成者自身がマージできます**。
+- `strict_required_status_checks_policy` は `false`（毎回の rebase を強制しない）。
+
 ## ワークフロー
 
 | ワークフロー | 実行契機 | 内容 |
 | --- | --- | --- |
-| [`workflows/build.yml`](workflows/build.yml) | `main` への push、`main` 向け PR（**必ず実行**）、`release/**` への push、手動実行（dev など任意のブランチ） | 復元・ビルド・テスト（**配布物は作らない**） |
+| [`workflows/build.yml`](workflows/build.yml) | `main` への push（マージ後）、`main` 向け PR（**必ず実行**）、`dev` への push、`release/**` への push、手動実行 | 復元・ビルド・テスト（**配布物は作らない**）。 PR では必須チェック `build` |
 | [`workflows/publish.yml`](workflows/publish.yml) | `workflow_call` | 全 UI の publish・**配布物の起動検証**・保管の単一実装（`version` を受け取るとそのバージョンでビルドする） |
 | [`workflows/release.yml`](workflows/release.yml) | **手動実行のみ。 実行ブランチは `releaseBranches` に従う**。 `mode` で 2 段階（`dry-run` / `release`） | 検証 → SBOM → 全 UI の publish →（release のみ）**承認** → タグ + GitHub Release 作成 |
 
