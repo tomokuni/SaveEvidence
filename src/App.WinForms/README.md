@@ -1,5 +1,12 @@
 # App.WinForms
 
+![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
+![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?branch=main)
+![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
+![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
+![WinForms](https://img.shields.io/badge/UI-WinForms-512BD4)
+![License](https://img.shields.io/badge/License-MIT-3DA639)
+
 ## 1. 概要
 
 SaveEvidence の **WinForms 版アプリ**です。 画面キャプチャ（全画面 / ウィンドウ / 範囲）、取り込んだ画像の切り出し（手動 / 自動）、保存・クリップボード連携・編集履歴・保存先フォルダのサムネイル一覧を提供します。

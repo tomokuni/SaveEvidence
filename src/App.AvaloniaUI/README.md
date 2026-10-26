@@ -1,5 +1,12 @@
 # App.AvaloniaUI
 
+![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
+![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?branch=main)
+![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
+![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
+![Avalonia](https://img.shields.io/badge/UI-Avalonia-8D46D6)
+![License](https://img.shields.io/badge/License-MIT-3DA639)
+
 > プロジェクト名: `App.AvaloniaUI`（Avalonia UI 版）。 MewUI 版は `App.MewUI`、UI 非依存のコアは `App.Core` にあります。
 
 ## 目次 <!-- omit from toc -->

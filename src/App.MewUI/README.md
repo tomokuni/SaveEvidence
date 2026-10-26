@@ -1,5 +1,12 @@
 # App.MewUI
 
+![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
+![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?branch=main)
+![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
+![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
+![MewUI](https://img.shields.io/badge/UI-MewUI-00BFFF)
+![License](https://img.shields.io/badge/License-MIT-3DA639)
+
 SaveEvidence の **MewUI 版ホストアプリ**です。 UI 非依存のコア（`App.Core` / `EsUtil.Platform.Core`（Win32 実装を含む） /
 `LineDetection`）をそのまま使い、UI 層だけを MewUI で実装します。
 

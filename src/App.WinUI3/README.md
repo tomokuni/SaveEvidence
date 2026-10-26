@@ -1,5 +1,12 @@
 # App.WinUI3
 
+![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
+![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?branch=main)
+![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
+![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
+![WinUI3](https://img.shields.io/badge/UI-WinUI%203-0078D4)
+![License](https://img.shields.io/badge/License-MIT-3DA639)
+
 SaveEvidence の **WinUI 3 版ホストアプリ**です。 UI 非依存のコア（`App.Core` / `EsUtil.Platform.Core` / `Parts.LineDetection`）を
 そのまま使い、UI 層だけを WinUI 3（`Microsoft.WindowsAppSDK`）で実装します。
 
