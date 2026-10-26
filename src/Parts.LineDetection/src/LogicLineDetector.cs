@@ -200,11 +200,9 @@ public sealed class LogicLineDetector : ILineDetector
         var bestEdgeDistance = double.MaxValue;
         var found = false;
 
-        // **組み合わせは i < j の一方向だけを見る**。 上下・左右は入れ替えても同じ矩形になる（矩形の座標は
-        // min/max で作る）ため、両順序を評価すると同じ候補を 4 回調べることになる（実測 2026-10-27:
-        // 反復が |hs|²|vs|² → C(|hs|,2)·C(|vs|,2) になる）。 走査順は「最初に現れる順」と同じなので、
-        // 同点のときに選ばれる候補も変わらない。
-        // 垂直座標と平行方向の長さは候補ごとに 1 回だけ求める（内側のループで計算し直さない）。
+        // 上下・左右は入れ替えても同じ矩形になる（座標は min/max で作る）ため、組み合わせは一方向だけを見る。
+        // 走査順は「最初に現れる順」と同じなので、同点のときに選ばれる候補は変わらない。
+        // 垂直座標と平行方向の長さは候補ごとに 1 回だけ求める。
         var hPerp = new double[hs.Count];
         var hSpan = new double[hs.Count];
         for (var i = 0; i < hs.Count; i++)
@@ -539,9 +537,7 @@ public sealed class LogicLineDetector : ILineDetector
         if (isHorizontal)
         {
             // 水平線分: Y 方向の輝度プロファイル（線分の X 範囲で平均）を計算する
-            // **範囲の切り出しは行の外で 1 回だけ**行う（画素ごとに範囲を判定すると、線分の長さ ×
-            // 探索幅の回数だけ分岐が入る。 実測 2026-10-27）。 範囲外を除いた画素数で割るため、
-            // 結果は切り出しを内側で行う場合と同じになる。
+            // 範囲の切り出しは行の外で 1 回だけ行う（範囲外の画素数で割る）
             var xLo = Math.Max(Math.Min(seg.X1, seg.X2), 0);
             var xHi = Math.Min(Math.Max(seg.X1, seg.X2), grayWidth - 1);
             var yLo = Math.Max(0, center - searchRadius);
@@ -568,7 +564,7 @@ public sealed class LogicLineDetector : ILineDetector
         else
         {
             // 垂直線分: X 方向の輝度プロファイル（線分の Y 範囲で平均）を計算する
-            // 範囲の切り出しは列の外で 1 回だけ行う（水平線分と同じ理由）
+            // 範囲の切り出しは列の外で 1 回だけ行う（範囲外の画素数で割る）
             var yLo = Math.Max(Math.Min(seg.Y1, seg.Y2), 0);
             var yHi = Math.Min(Math.Max(seg.Y1, seg.Y2), grayHeight - 1);
             var xLo = Math.Max(0, center - searchRadius);
