@@ -65,9 +65,12 @@ Add-Type -Namespace SeVerifyPublish -Name Native -MemberDefinition @'
 public static extern bool PostMessage(System.IntPtr hWnd, uint msg, System.IntPtr wParam, System.IntPtr lParam);
 '@
 
-# アプリが共有する設定ファイル（両 UI で同じ場所。 App.Core の SettingsService が単一所有する）
-# 場所は %LOCALAPPDATA% 配下の SaveEvidence フォルダーの settings.json
-$settingsPath = Join-Path (Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)) 'SaveEvidence') 'settings.json'
+# アプリが保存する設定ファイルの一覧は release-config.json の settingsFiles が単一所有する
+# （ファイル名はリポジトリごとに違い、複数持つこともある）。 場所は %LOCALAPPDATA% 配下の製品フォルダー。
+$verifyConfig = Get-RepoConfig $repoRoot
+$settingsRoot = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::LocalApplicationData)) $verifyConfig.product
+$settingsPaths = @($verifyConfig.settingsFiles | ForEach-Object { Join-Path $settingsRoot $_ })
+if ($settingsPaths.Count -eq 0) { throw '.github/release-config.json に settingsFiles がありません' }
 
 # 設定ファイルの最上位キー（無い場合は $null、空の JSON は空配列）
 function Get-SettingKeys {
@@ -158,8 +161,8 @@ function Get-PublishFingerprint([string]$ScriptPath) {
 $script:SdkVersion = (Invoke-NativeText 'dotnet' @('--version')).Text.Trim()
 $fingerprintDir = Join-Path ([IO.Path]::GetTempPath()) 'saveevidence-verify-publish'
 
-$settingsBackedUp = $false
-$settingsBackupPath = Join-Path ([IO.Path]::GetTempPath()) ("se_settings_" + [Guid]::NewGuid().ToString('N') + '.json')
+# 退避した設定ファイル（パス -> 退避先）。 finally で必ず戻す
+$settingsBackups = @{}
 
 try {
     foreach ($target in $targets) {
@@ -225,41 +228,55 @@ try {
             continue
         }
 
-        # 3. 設定ファイルを退避する
-        $hadSettings = Test-Path -LiteralPath $settingsPath
-        if ($hadSettings) {
-            Copy-Item -LiteralPath $settingsPath -Destination $settingsBackupPath -Force
-            $settingsBackedUp = $true
+        # 3. 設定ファイルを退避する（複数のことがある）
+        $settingsBackups = @{}
+        foreach ($settingsPath in $settingsPaths) {
+            if (Test-Path -LiteralPath $settingsPath) {
+                $backup = "$settingsPath.bak"
+                Copy-Item -LiteralPath $settingsPath -Destination $backup -Force
+                $settingsBackups[$settingsPath] = $backup
+            }
         }
-        $before = Get-SettingKeys $settingsPath
+        $beforeCount = 0
+        foreach ($settingsPath in $settingsPaths) {
+            $keys = Get-SettingKeys $settingsPath
+            if ($null -ne $keys) { $beforeCount += $keys.Count }
+        }
 
         # 4. 起動と終了（正常終了させる。 強制終了では終了時の保存が走らない）
         $roundTrip = Invoke-AppRoundTrip -ExePath $exe.FullName -WindowTimeout $WindowTimeoutSeconds -ExitTimeout $ExitTimeoutSeconds
         Add-Result "$($target.name) 起動と終了" $roundTrip.Closed $(if ($roundTrip.Closed) { $exe.Name } else { $roundTrip.Reason })
 
         # 5. 設定の往復（空になっていないこと・キーが保たれていること）
-        $after = Get-SettingKeys $settingsPath
-        $beforeCount = if ($null -eq $before) { 0 } else { $before.Count }
-        $afterCount = if ($null -eq $after) { 0 } else { $after.Count }
-        $keysKept = $null -ne $after -and $afterCount -gt 0 -and ($null -eq $before -or (Compare-Object $before $after).Count -eq 0)
+        $afterCount = 0
+        $keysKept = $true
+        foreach ($settingsPath in $settingsPaths) {
+            $after = Get-SettingKeys $settingsPath
+            if ($null -eq $after -or $after.Count -eq 0) { $keysKept = $false }
+            else { $afterCount += $after.Count }
+        }
         Add-Result "$($target.name) 設定の往復" $keysKept "起動前 $beforeCount キー / 終了後 $afterCount キー"
         if (-not $keysKept) {
             Write-Output '      設定ファイルが空になったか、キーが失われています（Native AOT のトリミングで設定が全損する不具合の疑い）'
         }
 
         # 6. 設定ファイルを元へ戻す（次の UI の検証もユーザーの実設定から始める）
-        if ($settingsBackedUp) {
-            Copy-Item -LiteralPath $settingsBackupPath -Destination $settingsPath -Force
-            $settingsBackedUp = $false
+        foreach ($settingsPath in $settingsPaths) {
+            if ($settingsBackups.ContainsKey($settingsPath)) {
+                Copy-Item -LiteralPath $settingsBackups[$settingsPath] -Destination $settingsPath -Force
+            }
         }
+        $settingsBackups = @{}
     }
 }
 finally {
     # 途中で失敗してもユーザーの設定ファイルを必ず戻す
-    if ($settingsBackedUp -and (Test-Path -LiteralPath $settingsBackupPath)) {
-        Copy-Item -LiteralPath $settingsBackupPath -Destination $settingsPath -Force
+    foreach ($key in $settingsBackups.Keys) {
+        if (Test-Path -LiteralPath $settingsBackups[$key]) {
+            Copy-Item -LiteralPath $settingsBackups[$key] -Destination $key -Force
+            Remove-Item -LiteralPath $settingsBackups[$key] -Force
+        }
     }
-    if (Test-Path -LiteralPath $settingsBackupPath) { Remove-Item -LiteralPath $settingsBackupPath -Force }
 }
 
 Write-Output ''
