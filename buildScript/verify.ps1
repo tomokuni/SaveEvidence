@@ -318,9 +318,10 @@ if (-not $SkipTests) {
     # **どちらでも数える**（片方だけだと、英語のランナーで「0 件＝不合格」と誤判定する。 実測 2026-10-26）。
     $passed = 0
     # 実行基盤で見出しが変わる（VSTest は「合格 / Passed」、Microsoft.Testing.Platform は「成功 / Succeeded」）。
-    foreach ($m in [regex]::Matches($testText, '(?:合格|Passed|成功|Succeeded):\s*(\d+)')) { $passed += [int]$m.Groups[1].Value }
+    # 見出しは小文字にもなる（Microsoft.Testing.Platform の英語出力は `succeeded:`）。 大文字小文字を無視する。
+    foreach ($m in [regex]::Matches($testText, '(?:合格|Passed|成功|Succeeded):\s*(\d+)', 'IgnoreCase')) { $passed += [int]$m.Groups[1].Value }
     $failed = 0
-    foreach ($m in [regex]::Matches($testText, '(?:失敗|Failed):\s*(\d+)')) { $failed += [int]$m.Groups[1].Value }
+    foreach ($m in [regex]::Matches($testText, '(?:失敗|Failed):\s*(\d+)', 'IgnoreCase')) { $failed += [int]$m.Groups[1].Value }
     $projects = [regex]::Matches($testText, '\.dll \(net10\.0[^)]*\)').Count
     Add-Result 'テスト' ($failed -eq 0 -and $passed -gt 0 -and $test.ExitCode -eq 0) "合格 $passed / 失敗 $failed / $projects プロジェクト / 終了コード $($test.ExitCode)"
     if ($failed -gt 0) {
