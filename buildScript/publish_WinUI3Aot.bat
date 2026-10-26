@@ -21,8 +21,8 @@ rem  SkiaSharp WinRT activation-factory code; keep them visible and exempt only 
 rem  warnings-as-errors.  The AOT folder distribution starts and exits with code 0.
 rem
 rem  Publishing needs the .pri files of the WinUI 3 libraries to be built with a RID first
-rem  (the same preparation as the single file script explains).  The preparation is shared with
-rem  buildScript/publish_WinUI3.bat through buildScript/publish_ui.bat being called once.
+rem  (the same preparation as the single file script explains).  Only the libraries of this
+rem  repository are built: EsUtil is a package reference and the packages carry their .pri.
 rem ============================================================
 
 pushd "%~dp0.."
@@ -32,9 +32,6 @@ if "%~1"=="" (set "RID=win-x64") else (set "RID=%~1")
 
 echo [INFO] WinUI 3: generating the .pri files of the libraries (RID: %RID%)
 for %%p in (
-  "..\EsUtil\EsUtil.Ui.WinUI3\Loupe\src\EsUtil.Ui.WinUI3.Loupe.csproj"
-  "..\EsUtil\EsUtil.Ui.WinUI3\Marquee\src\EsUtil.Ui.WinUI3.Marquee.csproj"
-  "..\EsUtil\EsUtil.Ui.WinUI3\Interop\src\EsUtil.Ui.WinUI3.Interop.csproj"
   "src\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj"
 ) do dotnet build %%p -c Release -r %RID% -v q --nologo >nul 2>&1
 

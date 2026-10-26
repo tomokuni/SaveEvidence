@@ -42,17 +42,18 @@ rem The target runtime (default: win-x64).
 if "%~1"=="" (set "RID=win-x64") else (set "RID=%~1")
 
 rem  Generate the .pri files of the WinUI 3 libraries (RID: %RID%).
-rem  Single file publishing requires the .pri (resource index) of every WinUI 3 project as an
+rem  Single file publishing requires the .pri (resource index) of the WinUI 3 libraries as an
 rem  input, but RuntimeIdentifier does not flow to ProjectReference, so building only the app
-rem  leaves the .pri files in the TFM only folder.  Building the libraries directly with -r
+rem  leaves the .pri files in the TFM only folder.  Building the library directly with -r
 rem  produces them in <TFM>\<RID>\ (measured 2026-10-16).
+rem  Only the libraries of this repository are built here.  EsUtil is a package reference and the
+rem  packages carry their .pri; building the EsUtil projects here became wrong after the switch
+rem  to packages (the folder does not exist in CI, and the app then exited with 0xC0000409).
+rem  Measured 2026-10-26.
 rem  A failure here does not stop the script (a mode that does not need .pri files can still
 rem  succeed).
 echo [INFO] WinUI 3: generating the .pri files of the libraries (RID: %RID%)
 for %%p in (
-  "..\EsUtil\EsUtil.Ui.WinUI3\Loupe\src\EsUtil.Ui.WinUI3.Loupe.csproj"
-  "..\EsUtil\EsUtil.Ui.WinUI3\Marquee\src\EsUtil.Ui.WinUI3.Marquee.csproj"
-  "..\EsUtil\EsUtil.Ui.WinUI3\Interop\src\EsUtil.Ui.WinUI3.Interop.csproj"
   "src\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj"
 ) do dotnet build %%p -c Release -r %RID% -v q --nologo >nul 2>&1
 
