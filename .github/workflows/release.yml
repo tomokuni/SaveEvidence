@@ -164,7 +164,9 @@ jobs:
   # ────────────────────────────────────────────────────────────
   sbom:
     needs: verify
-    runs-on: ubuntu-latest
+    # Windows を対象にしたプロジェクト（`net10.0-windows…`）は Linux では復元できない
+    # （`NETSDK1100`。 実測 2026-10-26）ため、ビルドと同じランナーで作る
+    runs-on: windows-latest
     timeout-minutes: 30
     steps:
       - name: チェックアウト
