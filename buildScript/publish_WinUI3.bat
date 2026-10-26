@@ -55,7 +55,7 @@ rem  succeed).
 echo [INFO] WinUI 3: generating the .pri files of the libraries (RID: %RID%)
 for %%p in (
   "src\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj"
-) do dotnet build %%p -c Release -r %RID% -v q --nologo >nul 2>&1
+) do dotnet build %%p -c Release -r %RID% -v q --nologo -p:NuGetLockFilePath=packages.%RID%.lock.json >nul 2>&1
 
 rem The default shape is one self contained file.  Native AOT cannot bundle native libraries
 rem (measured 2026-10-20: PublishSingleFile + IncludeNativeLibrariesForSelfExtract together with

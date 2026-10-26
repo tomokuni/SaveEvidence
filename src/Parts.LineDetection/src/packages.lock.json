@@ -38,14 +38,6 @@
         "resolved": "5.0.0.20261018",
         "contentHash": "7tzvOcZTn8/j3MDsFBaiOVa+1LVddGwoyUk2pjGYP6UuURnd+Df9WgavhpVHoU5zRSroWQmaunWAs8t2E+0HPA=="
       }
-    },
-    "net10.0/win-x64": {
-      "OpenCvSharp5.runtime.win.slim": {
-        "type": "Direct",
-        "requested": "[5.0.0.20261018, )",
-        "resolved": "5.0.0.20261018",
-        "contentHash": "7tzvOcZTn8/j3MDsFBaiOVa+1LVddGwoyUk2pjGYP6UuURnd+Df9WgavhpVHoU5zRSroWQmaunWAs8t2E+0HPA=="
-      }
     }
   }
 }

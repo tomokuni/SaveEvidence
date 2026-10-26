@@ -33,7 +33,7 @@ if "%~1"=="" (set "RID=win-x64") else (set "RID=%~1")
 echo [INFO] WinUI 3: generating the .pri files of the libraries (RID: %RID%)
 for %%p in (
   "src\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj"
-) do dotnet build %%p -c Release -r %RID% -v q --nologo >nul 2>&1
+) do dotnet build %%p -c Release -r %RID% -v q --nologo -p:NuGetLockFilePath=packages.%RID%.lock.json >nul 2>&1
 
 rem WindowsAppSDKSelfContained stays true (the csproj default): a framework dependent AOT build
 rem would be much smaller but would require the Windows App SDK runtime on the target machine.
