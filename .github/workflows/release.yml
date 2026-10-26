@@ -137,6 +137,8 @@ jobs:
           "prerelease=$($info.prerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
           "notes_start_tag=$($info.notesStartTag)" >> $env:GITHUB_OUTPUT
           "mark_latest=$($info.markLatest.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          # dry-run で「同じ版」の警告だけを出して続行したか（公開すると失敗する状態か）
+          "already_released=$($info.alreadyReleased.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
       - name: 対象をまとめ
         shell: pwsh
@@ -146,18 +148,28 @@ jobs:
           SUMMARY_TAG: ${{ steps.verify.outputs.tag }}
           SUMMARY_BRANCH: ${{ github.ref_name }}
           SUMMARY_SHA: ${{ github.sha }}
+          SUMMARY_ALREADY_RELEASED: ${{ steps.verify.outputs.already_released }}
         run: |
-          $message = @"
+          $lines = @(
+            '',
+            '### リリース対象',
+            '',
+            "- モード: ``$env:SUMMARY_MODE``",
+            "- 版: ``$env:SUMMARY_VERSION``",
+            "- タグ: ``$env:SUMMARY_TAG``",
+            "- 実行ブランチ: ``$env:SUMMARY_BRANCH``",
+            "- コミット: ``$env:SUMMARY_SHA``"
+          )
 
-          ### リリース対象
+          # 同じ版が公開済みのまま dry-run した場合（このままでは公開できない）
+          if ($env:SUMMARY_ALREADY_RELEASED -eq 'true') {
+            $lines += ''
+            $lines += '> [!WARNING]'
+            $lines += '> この版は既に公開済みです（同じ版は再リリースできません）。'
+            $lines += '> dry-run は「それ以外の条件」を確認するために続行しました。 公開するには版を上げてコミットしてください。'
+          }
 
-          - モード: ``$env:SUMMARY_MODE``
-          - 版: ``$env:SUMMARY_VERSION``
-          - タグ: ``$env:SUMMARY_TAG``
-          - 実行ブランチ: ``$env:SUMMARY_BRANCH``
-          - コミット: ``$env:SUMMARY_SHA``
-          "@
-          $message | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          ($lines -join "`n") | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
 
   # ────────────────────────────────────────────────────────────
   # 2. SBOM（CycloneDX）を作る（dry-run でも作って検証する）

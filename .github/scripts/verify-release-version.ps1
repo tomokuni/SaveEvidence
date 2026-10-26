@@ -12,7 +12,10 @@
      - release/<major>.<minor> ブランチでは、入力バージョンの系列がブランチ名と一致すること
   3. 単調性（**同じ系列**のタグの最大より大きいこと）
      - 系列内でのみ比較するため、旧系列へのリリース（バックポート）も指定できる
+     - **dry-run では違反を警告にして続行する**（版を上げていないだけの状態でも、
+       それ以外の条件が通ることを確認できるようにするため。 公開では失敗させる）
   4. タグ v<version> が未作成であること（同値のリリースを防ぐ）
+     - 3 と同じく **dry-run では警告にして続行する**
 
 現在のバージョン状況の確認は show-current-versions.ps1 が行う（本スクリプトは検証のみ）。
 既存タグの比較はバージョンの規則を単一所有する version.ps1 に委譲する
@@ -136,16 +139,33 @@ $released = @(Get-ReleasedVersions -RepoRoot $RepoRoot)
 
 # ─── 単調性の検証（同じ系列の最大より大きいこと）───
 # 系列をまたぐ比較はしない（v2.0.0 があっても 1.0.1 をバックポートできるようにする）
+# 同じ版は再リリースできないが、**dry-run では止めない**（版を上げていないだけの状態でも、
+# それ以外の条件が通ることを確認できるようにする。 公開（release）では失敗させる）。
 $seriesVersions = @($released | Where-Object { (Get-VersionSeries -Version $_) -eq $series })
 $maxSeries = Get-MaxVersion -Versions $seriesVersions
+$alreadyReleased = $false
 
 if ($maxSeries -and -not (Test-VersionGreater -Version $Version -Than $maxSeries)) {
-    throw "入力 $Version は系列 $series の最大 $maxSeries 以下です。より大きいバージョンを指定してください。"
+    $message = "入力 $Version は系列 $series の最大 $maxSeries 以下です。より大きいバージョンを指定してください。"
+
+    if (-not $isDryRun) {
+        throw $message
+    }
+
+    Write-Host "::warning::$message（dry-run のため続行します。 公開では失敗します）"
+    $alreadyReleased = $true
 }
 
 # ─── タグの未作成確認 ───
 if (git tag -l $tag) {
-    throw "タグ $tag は既に存在します。"
+    $message = "タグ $tag は既に存在します。"
+
+    if (-not $isDryRun) {
+        throw $message
+    }
+
+    Write-Host "::warning::$message（dry-run のため続行します。 公開では失敗します）"
+    $alreadyReleased = $true
 }
 
 # ─── 全タグの最大との比較（バックポートかの判定）───
@@ -176,6 +196,7 @@ $versionFileLabel = if ($updateVersionFile) { '書き換える' } else { '書き
 Write-Host "検証OK: version=$Version tag=$tag branch=$Branch"
 Write-Host "  系列: $series / 系列の最大: $maxSeriesLabel / 全タグの最大: $maxAllLabel"
 Write-Host "  種別: $kindLabel / バージョンファイル: $versionFileLabel"
+if ($alreadyReleased) { Write-Host '  注意: この版は既に公開済みです（dry-run のため続行。 公開はできません）' }
 
 # 呼び出し側が取り出せるよう、結果のみを JSON で出力する
 Write-Output (@{
@@ -187,4 +208,6 @@ Write-Output (@{
         updateVersionFile = $updateVersionFile
         markLatest        = $markLatest
         notesStartTag     = $notesStartTag
+        # dry-run で「同じ版」の警告だけを出して続行したか（公開すると失敗する状態か）
+        alreadyReleased   = $alreadyReleased
     } | ConvertTo-Json -Compress)
