@@ -539,22 +539,21 @@ public sealed class LogicLineDetector : ILineDetector
         if (isHorizontal)
         {
             // 水平線分: Y 方向の輝度プロファイル（線分の X 範囲で平均）を計算する
-            var xStart = Math.Min(seg.X1, seg.X2);
-            var xEnd = Math.Max(seg.X1, seg.X2);
+            // **範囲の切り出しは行の外で 1 回だけ**行う（画素ごとに範囲を判定すると、線分の長さ ×
+            // 探索幅の回数だけ分岐が入る。 実測 2026-10-27）。 範囲外を除いた画素数で割るため、
+            // 結果は切り出しを内側で行う場合と同じになる。
+            var xLo = Math.Max(Math.Min(seg.X1, seg.X2), 0);
+            var xHi = Math.Min(Math.Max(seg.X1, seg.X2), grayWidth - 1);
             var yLo = Math.Max(0, center - searchRadius);
             var yHi = Math.Min(grayHeight - 1, center + searchRadius);
             var lumas = new double[yHi - yLo + 1];
             for (var y = yLo; y <= yHi; y++)
             {
                 double sum = 0;
-                var count = 0;
-                for (var x = xStart; x <= xEnd; x++)
+                var count = xHi - xLo + 1;
+                for (var x = xLo; x <= xHi; x++)
                 {
-                    if (x >= 0 && x < grayWidth)
-                    {
-                        sum += gray.At<byte>(y, x);
-                        count++;
-                    }
+                    sum += gray.At<byte>(y, x);
                 }
 
                 lumas[y - yLo] = count > 0 ? sum / count : -1;
@@ -569,22 +568,19 @@ public sealed class LogicLineDetector : ILineDetector
         else
         {
             // 垂直線分: X 方向の輝度プロファイル（線分の Y 範囲で平均）を計算する
-            var yStart = Math.Min(seg.Y1, seg.Y2);
-            var yEnd = Math.Max(seg.Y1, seg.Y2);
+            // 範囲の切り出しは列の外で 1 回だけ行う（水平線分と同じ理由）
+            var yLo = Math.Max(Math.Min(seg.Y1, seg.Y2), 0);
+            var yHi = Math.Min(Math.Max(seg.Y1, seg.Y2), grayHeight - 1);
             var xLo = Math.Max(0, center - searchRadius);
             var xHi = Math.Min(grayWidth - 1, center + searchRadius);
             var lumas = new double[xHi - xLo + 1];
             for (var x = xLo; x <= xHi; x++)
             {
                 double sum = 0;
-                var count = 0;
-                for (var y = yStart; y <= yEnd; y++)
+                var count = yHi - yLo + 1;
+                for (var y = yLo; y <= yHi; y++)
                 {
-                    if (y >= 0 && y < grayHeight)
-                    {
-                        sum += gray.At<byte>(y, x);
-                        count++;
-                    }
+                    sum += gray.At<byte>(y, x);
                 }
 
                 lumas[x - xLo] = count > 0 ? sum / count : -1;
