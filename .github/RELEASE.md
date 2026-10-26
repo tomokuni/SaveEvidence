@@ -277,21 +277,20 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 | MewUI 版 | `SaveEvidence.MewUI.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
 | Avalonia UI 版 | `SaveEvidence.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
 | WinForms 版 | `SaveEvidence.WinForms.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
-| WinUI 3 版（既定） | `SaveEvidence.WinUI3.zip` | Single（AOT なし。 Windows App SDK は自己完結） | **exe 1 個**（自己完結ランタイムとネイティブ DLL を同梱。 **SkiaSharp を含まない**） |
-| WinUI 3 版（AOT） | `SaveEvidence.WinUI3.Aot.zip` | Native AOT（Windows App SDK は自己完結） | exe 1 個 + ネイティブ DLL + 必須リソース（`.pri` / `.mui` / 資産。 **SkiaSharp を含まない**） |
+| WinUI 3 版 | `SaveEvidence.WinUI3.zip` | Single（AOT なし。 Windows App SDK は自己完結） | **exe 1 個**（自己完結ランタイムとネイティブ DLL を同梱。 **SkiaSharp を含まない**） |
 
 - **方式が Single AOT でない UI は、その理由を本節が持ちます**（WinForms は SDK がトリミングを拒否する `NETSDK1175`）。
-- **WinUI 3 版の既定は「1 ファイル・事前インストール不要」です**（[../buildScript/publish_WinUI3.bat](../buildScript/publish_WinUI3.bat)）。 **Native AOT はこの形を作れません**（後述）。 AOT の形（[../buildScript/publish_WinUI3Aot.bat](../buildScript/publish_WinUI3Aot.bat)）も**同じく事前インストール不要**です（Windows App SDK を同梱するため）。
-- **Native AOT はネイティブ DLL を exe へ内包できません**（実測 2026-10-20: `PublishAot` と同時に `PublishSingleFile` / `IncludeNativeLibrariesForSelfExtract` を指定しても、ネイティブ ライブラリは exe の隣へ出力されます。 最小構成の再現で確認）。 さらに Windows App SDK は**フレームワーク依存のまま `PublishSingleFile` を拒否**します。 よって **「1 ファイル」と「AOT」は両立しません**。 事前インストールを避けるには、①**AOT なしの自己完結 Single（1 ファイル）** か ②**自己完結 AOT（フォルダー配布）** のどちらかを選びます。 本リポジトリは①を既定にし、②を別の配布物として用意します。
-- **Windows App SDK をフレームワーク依存にすると AOT 配布物は数ファイルまで小さくなりますが、配布先に Windows App SDK ランタイム（1.8 系）のインストールが必要**になります。 本リポジトリは**事前インストール不要を優先**するため、自己完結を既定にしています（フレームワーク依存にする場合は `SE_AOT_ARGS` へ `-p:WindowsAppSDKSelfContained=false` を足します）。
+- **WinUI 3 版は「1 ファイル・事前インストール不要」です**（[../buildScript/publish_WinUI3.bat](../buildScript/publish_WinUI3.bat)）。 **Native AOT はこの形を作れません**（後述）ため、**WinUI 3 版は AOT を配布しません**（AOT の配布物は MewUI 版と Avalonia UI 版が担います）。
+- **Native AOT はネイティブ DLL を exe へ内包できません**（実測 2026-10-20: `PublishAot` と同時に `PublishSingleFile` / `IncludeNativeLibrariesForSelfExtract` を指定しても、ネイティブ ライブラリは exe の隣へ出力されます。 最小構成の再現で確認）。 さらに Windows App SDK は**フレームワーク依存のまま `PublishSingleFile` を拒否**します。 よって **「1 ファイル」と「AOT」は両立しません**。 事前インストールを避けるには、①**AOT なしの自己完結 Single（1 ファイル）** か ②**自己完結 AOT（フォルダー配布）** のどちらかを選びます。 本リポジトリは①を採用し、②（自己完結 AOT のフォルダー配布）は MewUI 版と Avalonia UI 版が担います。
+- **Windows App SDK をフレームワーク依存にすると配布物は小さくなりますが、配布先に Windows App SDK ランタイム（1.8 系）のインストールが必要**になります。 本リポジトリは**事前インストール不要を優先**するため、自己完結を既定にしています。
 - **WinUI 3 の配布物は、exe へ入れられない非ネイティブのファイルを公開時に絞ります**（`src/App.WinUI3/src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`）。 残す必須のファイルは **アプリの `.pri`・`ja-JP` と `en-us` の `.mui`・`Microsoft.UI.Xaml\Assets`・`NpuDetect`** です（1 種類ずつ削除して起動・終了・設定の往復を実測。 **アプリの `.pri` を削除すると起動せず、`.mui` を削除すると終了時に `0xC000027B` で落ちます**）。 `.winmd`・他の言語の `.mui`・アプリ以外の `.pri`・`workloads*.json`・`App.xaml`・`app.manifest`・`WindowsAppRuntime.png`・WebView2 関連・`UniversalBGTask` は削除してよいことを実測済みです。
-- **WinUI 3 の AOT は、Windows App SDK を自己完結に保ったまま発行します**（事前インストールを不要にするため）。 **SkiaSharp を外したため、警告を 1 つも抑止していません**（移行前は生成された SkiaSharp の WinRT 投影に由来する `IL2026` を warnings-as-errors の対象外にしていましたが、不要になったことを実測しました）。
+- **WinUI 3 版は SkiaSharp を含みません**（描画は Windows App SDK 標準）。 そのためトリミング・AOT 解析の警告（`IL2026` 等）を抑止していません。
 - **Avalonia UI 版の AOT は、以前は `IL2070` / `IL3050` で失敗していました**（`EsUtil.Ui.AvaloniaUI.Loupe` が `Expression.Compile` と `Type.GetMethod` で表示アダプタの契約を解決していたため）。 反射を削除して方式 1 へ戻しています（方式 1 へ戻せなくなったら、まず EsUtil 側で反射が復活していないかを疑います）。
 - **ネイティブ ライブラリ（OpenCvSharp と Avalonia の GL 実装）は exe へ同梱できない**ため、同じフォルダーへ並べて配布します（ファイル数とサイズはコードの変更で変わるため、文書へ書かず `buildScript/verifyPublish.ps1` が実測して表示します）。 MewUI 版は Native AOT で **exe 1 個 + ネイティブ DLL 1 個**まで縮みました（Skia を外したため）。
 - **WinUI 3 版の本体プロジェクトは `EnableMsixTooling` を必要とします**（付けないと publish が `.pri` を発行せず、起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます。 実測）。 Windows App SDK 自己完結（`WindowsAppSDKSelfContained`）+ アンパッケージ（`WindowsPackageType=None`）で配布します。
 - **publish はリポジトリ外の一時領域（`%TEMP%`）へ発行し、必要なファイルだけを `publish/` へ配置します**（リポジトリ内へ直接発行すると、参照プロジェクト側のディレクトリにも `publish` が作られます）。
 - **方式ごとの引数は環境変数で差し替えます**（`SE_AOT_ARGS` / `SE_SINGLE_ARGS`。 **空にする意図は `SE_SKIP_AOT_ARGS` / `SE_SKIP_SINGLE_ARGS`** で表します。 `cmd` では `set "VAR="` が変数を未定義へ戻すため、空文字では意図を表せません。 差し替えの例は WinUI 3 版です）。
-- **UI ごとに試す方式は `SE_MODES` で絞れます**（既定は `aot single exe`）。 1 つの UI が複数の形を配布する場合は、形ごとに `publish_<UI>*.bat` を用意して `release-config.json` の `uis[]` へ 1 件ずつ登録します（WinUI 3 版は既定の `publish_WinUI3.bat` が single、`publish_WinUI3Aot.bat` が aot を `SE_MODES` で選びます）。
+- **UI ごとに試す方式は `SE_MODES` で絞れます**（既定は `aot single exe`）。 1 つの UI が複数の形を配布する場合は、形ごとに `publish_<UI>*.bat` を用意して `release-config.json` の `uis[]` へ 1 件ずつ登録します（**現在は 4 UI が 1 形ずつで、複数形を配布する UI はありません**）。
 - **`SelfContained` は明示しません**（`-r` が暗黙に有効にします。 明示すると参照プロジェクトへ伝播し、WinUI 3 のライブラリが `EnableMsixTooling` と `WindowsAppSDKSelfContained` を要求して失敗します。 実測）。
 - **publish スクリプト（`buildScript/*.bat`）は ASCII だけで書きます**（日本語を書くと `cmd.exe` の読み取りがずれ、出力が化けたうえにコメントの断片がコマンドとして実行されます。 根拠と検査は [`検証手順.md`](検証手順.md) §19）。
 - **方式 1 へ戻すと出力フォルダー名（`-single` → `-aot`）が変わるため、`release-config.json` の `uis[].output` も更新してください**（検査が「出力フォルダーがありません」で気付きます）。
