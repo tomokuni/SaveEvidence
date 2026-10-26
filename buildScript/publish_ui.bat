@@ -66,11 +66,11 @@ rem Temporary staging folder for the publish.
 rem Publishing inside the repository also creates publish folders in the referenced projects,
 rem so the publish goes to a temporary folder outside the repository, and only the needed
 rem files are copied to the output folder.
-set "STAGE=%TEMP%\saveevidence-publish-%UI%-%RID%"
+set "STAGE=%TEMP%\publish-ui-%UI%-%RID%"
 rem One log per mode.  A shared log would be overwritten by the fallback mode, losing the reason
 rem the previous mode failed (measured 2026-10-19: AOT fell back to single and only the log of
 rem single was left).
-set "LOGNAME=saveevidence-publish-%UI%-%RID%"
+set "LOGNAME=publish-ui-%UI%-%RID%"
 
 rem The UI script can restrict the modes (`set "SE_MODES=single"`).  The default tries all
 rem modes in order.  A UI that must ship more than one shape calls this script once per shape

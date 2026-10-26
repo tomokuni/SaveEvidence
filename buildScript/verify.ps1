@@ -42,11 +42,12 @@ pwsh -NoProfile -File buildScript/verify.ps1
 .EXAMPLE
 pwsh -NoProfile -File buildScript/verify.ps1 -Fix
 .EXAMPLE
-pwsh -NoProfile -File buildScript/verify.ps1 -Configuration Release -Solution SaveEvidence.slnx -NoRestore
+pwsh -NoProfile -File buildScript/verify.ps1 -Configuration Release -Solution <solution>.slnx -NoRestore
 #>
 [CmdletBinding()]
 param(
-    [string]$Solution = 'SaveEvidence.slnx',
+    # 既定は release-config.json の solutionFile（リポジトリごとに違うため、本文には書かない）
+    [string]$Solution = '',
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
     [switch]$Fix,
     [switch]$SkipBuild,
@@ -65,6 +66,13 @@ Set-Location $repoRoot
 
 
 . (Join-Path $PSScriptRoot 'VerifyCommon.ps1')
+
+# 対象のソリューション ファイルは release-config.json が単一所有する
+if (-not $Solution) { $Solution = (Get-RepoConfig $repoRoot).solutionFile }
+
+# テストの実行基盤（VSTest / Microsoft.Testing.Platform）は global.json が単一所有する
+$globalJsonPath = Join-Path $repoRoot 'global.json'
+$globalJsonText = if (Test-Path -LiteralPath $globalJsonPath) { [IO.File]::ReadAllText($globalJsonPath, $enc) } else { '' }
 
 # `dotnet` を実行し、**出力と終了コード**を返す。 出力の文字列だけを見ると、CLI 自体の異常終了
 # （引数の誤り・復元の失敗など、警告の形で出ないもの）を「警告 0 件」と読み替えてしまうため、
@@ -200,8 +208,9 @@ Write-Output '== 2. ビルド設定 =='
 $propsPath = Join-Path $repoRoot 'Directory.Build.props'
 $propsText = if (Test-Path -LiteralPath $propsPath) { [IO.File]::ReadAllText($propsPath, $enc) } else { '' }
 $missingProps = [System.Collections.Generic.List[string]]::new()
-foreach ($p in 'EnforceCodeStyleInBuild', 'GenerateDocumentationFile', 'CopyDocumentationFileToOutputDirectory', 'PublishDocumentationFiles',
-    'AnalysisLevel', 'AnalysisMode', 'TreatWarningsAsErrors') {
+# 必須のビルド設定はリポジトリごとに違う（規則文書と解析の厳しさを持つリポジトリだけが要求する）ため、
+# release-config.json の requiredBuildProps が単一所有する。
+foreach ($p in (Get-RepoConfig $repoRoot).requiredBuildProps) {
     if ($propsText -notmatch "<$p>") { $missingProps.Add($p) }
 }
 # 各 .csproj が重複して指定していないか（単一所有の確認）
@@ -292,7 +301,15 @@ $callSiteGates | Select-Object -First 8 | ForEach-Object { "      $_" }
 # ============================================================
 if (-not $SkipTests) {
     Write-Output '== 3. テスト =='
-    $testArgs = @('test', $Solution, '-c', $Configuration, '-tl:off', '--no-build')
+    # テストの実行基盤は global.json の test.runner が単一所有する。
+    # Microsoft.Testing.Platform のときは対象を `--solution` で渡す（位置引数を渡すとテスト アプリへの
+    # 引数として扱われ、0 件・終了コード 5 になる。 実測 2026-10-26）。 VSTest は位置引数で受ける。
+    $useMtp = $globalJsonText -match '"runner"\s*:\s*"Microsoft\.Testing\.Platform"'
+    $testArgs = @('test')
+    $testArgs += if ($useMtp) { @('--solution', $Solution) } else { @($Solution) }
+    $testArgs += @('-c', $Configuration, '--no-build')
+    # `-tl:off` は VSTest の用語（Microsoft.Testing.Platform は受け付けず終了コード 5 になる。 実測 2026-10-26）
+    if (-not $useMtp) { $testArgs += '-tl:off' }
     $coverageDir = Join-Path ([IO.Path]::GetTempPath()) ("se_cov_" + [Guid]::NewGuid().ToString('N'))
     if ($Coverage) { $testArgs += @('--collect:XPlat Code Coverage', "--results-directory:$coverageDir") }
     $test = Invoke-DotNet $testArgs
@@ -300,7 +317,8 @@ if (-not $SkipTests) {
     # 件数の見出しはランナーの言語で変わる（日本語の "合格:" と英語の "Passed:"）。
     # **どちらでも数える**（片方だけだと、英語のランナーで「0 件＝不合格」と誤判定する。 実測 2026-10-26）。
     $passed = 0
-    foreach ($m in [regex]::Matches($testText, '(?:合格|Passed):\s*(\d+)')) { $passed += [int]$m.Groups[1].Value }
+    # 実行基盤で見出しが変わる（VSTest は「合格 / Passed」、Microsoft.Testing.Platform は「成功 / Succeeded」）。
+    foreach ($m in [regex]::Matches($testText, '(?:合格|Passed|成功|Succeeded):\s*(\d+)')) { $passed += [int]$m.Groups[1].Value }
     $failed = 0
     foreach ($m in [regex]::Matches($testText, '(?:失敗|Failed):\s*(\d+)')) { $failed += [int]$m.Groups[1].Value }
     $projects = [regex]::Matches($testText, '\.dll \(net10\.0[^)]*\)').Count

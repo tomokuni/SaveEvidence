@@ -41,7 +41,7 @@ pwsh -NoProfile -File buildScript/verifyInfoStyle.ps1 -Kind Analyzer -MaxDetail 
 #>
 [CmdletBinding()]
 param(
-    [string]$Solution = 'SaveEvidence.slnx',
+    [string]$Solution = '',
     [switch]$Fix,
     [ValidateSet('Style', 'Analyzer', 'All')][string]$Kind = 'Style',
     [int]$MaxDetail = 5,
@@ -56,6 +56,9 @@ Set-Location $repoRoot
 # `dotnet format` の出力もネイティブ コマンドの出力である（復号は Invoke-NativeText が単一所有する。
 # 文字化けの根拠は .github/検証手順.md §19）。
 . (Join-Path $PSScriptRoot 'VerifyCommon.ps1')
+
+# 対象のソリューション ファイルは release-config.json が単一所有する
+if (-not $Solution) { $Solution = (Get-RepoConfig $repoRoot).solutionFile }
 
 $restoreArgs = if ($NoRestore) { @('--no-restore') } else { @() }
 # 診断行（`<ファイル>(<行>,<列>): <レベル> <規則>: <メッセージ> [<プロジェクト>]`）を分解する

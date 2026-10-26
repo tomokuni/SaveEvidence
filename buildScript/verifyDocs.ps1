@@ -24,6 +24,8 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repoRoot
 $enc = [Text.UTF8Encoding]::new($false)
 . (Join-Path $PSScriptRoot 'VerifyCommon.ps1')
+# 製品名はリポジトリごとに違うため、release-config.json から取る
+$productName = (Get-RepoConfig $repoRoot).product
 
 # 以降のドキュメント検査で使う文書一覧（リポジトリ直下の文書も対象にする）
 $docs = @(
@@ -249,26 +251,26 @@ foreach ($f in $docs) {
     }
 }
 
-# 8c) 陳腐化した識別子（改名・削除の残骸。 対象を追加して育てる）
-#     全追跡ファイルを対象にする（文書だけでなくビルドスクリプト・設定ファイルのコメントも含める）
-$stalePatterns = @(
-    'App\.LineDetection',
-    'EsUtil\.SaveEvidence\.LineDetection',
-    'verify-ui',
-    'MarqueeCore\.ResolveContent',
-    'MarqueePresenter\.ResolveContent',
-    'App\.(AvaloniaUI|MewUI)\.exe',
-    'SaveEvidence\.exe',
-    'app\.(Core|AvaloniaUI|MewUI)',
-    # 改名・分割で消えた型（コメントだけが残りやすい。 実測 2026-10-14 に 2 箇所の残骸を直した）
-    'FadeMaskDragRect'
-)
+# 8c) 陳腐化した識別子（改名・削除の残骸）
+#     全追跡ファイルを対象にする（文書だけでなくビルドスクリプト・設定ファイルのコメントも含める）。
+#     **パターンはリポジトリごとに違う**ため、スクリプトへ書かず `.github/verify-stale-patterns.txt` が持つ
+#     （1 行 1 パターンの正規表現。 `#` で始まる行と空行は無視する。 対象を追加して育てる）。
+$stalePatternsPath = Join-Path $repoRoot '.github/verify-stale-patterns.txt'
+if (-not (Test-Path -LiteralPath $stalePatternsPath)) { throw "陳腐化パターンの一覧がありません: $stalePatternsPath" }
+$stalePatterns = @([IO.File]::ReadAllLines($stalePatternsPath, $enc) |
+    ForEach-Object { $_.Trim() } |
+    Where-Object { $_ -and -not $_.StartsWith('#') })
+# パターンが 1 つも無いのは正当な状態（既知の残骸が無いリポジトリ）。 その場合は 8c を省略する。
+$skipStale = $stalePatterns.Count -eq 0
 $stale = [System.Collections.Generic.List[string]]::new()
 # 走査は 1 回にする（パターンごとに `git grep` を起動すると、パターン数だけリポジトリ全体を走査する。
 # 実測: 8 パターンで 8 回 → 1 回にまとめた）。 当たったパターンは一致部分から特定する。
-$rxStale = [regex]('(?<p>' + ($stalePatterns -join '|') + ')')
-foreach ($hit in (Get-GitList @('-c', 'core.quotepath=false', 'grep', '--untracked', '-n', '-E', '--', ($stalePatterns -join '|')))) {
+$rxStale = if ($skipStale) { $null } else { [regex]('(?<p>' + ($stalePatterns -join '|') + ')') }
+$staleHits = if ($skipStale) { @() } else { Get-GitList @('-c', 'core.quotepath=false', 'grep', '--untracked', '-n', '-E', '--', ($stalePatterns -join '|')) }
+foreach ($hit in $staleHits) {
     if ($hit -match 'archive/') { continue }
+    # パターンの一覧そのものは対象外（自分の定義に一致してしまう）
+    if ($hit -match 'verify-stale-patterns\.txt') { continue }
     # バイナリ（バンドル・パッケージ・画像等）は対象外にする（`--untracked` は作業ツリーの
     # 非テキスト ファイルも走査するため、圧縮データの中身がたまたま一致することがある）
     if ($hit -match '\.(bundle|nupkg|snupkg|zip|dll|exe|pdb|png|jpg|jpeg|gif|ico|pdf|snk|pfx|ttf|woff|woff2)(:\d+)?:') { continue }
@@ -773,8 +775,9 @@ Add-Result 'ログ定義の doc' ($logDocIssues.Count -eq 0) "レベル・出力
 $logDocIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
 # 8m) コードの抑止は ビルド設定規約.md の「付録 A 抑止の一覧」にあるものだけ（規約が例外の所有者）
+# 規則文書が無いリポジトリ（規則をまだ持たない）では、この検査だけを省略する（他の検査は動かす）。
 $buildRulesPath = Join-Path $repoRoot '.github/ビルド設定規約.md'
-$buildRules = [IO.File]::ReadAllText($buildRulesPath, $enc)
+$buildRules = if (Test-Path -LiteralPath $buildRulesPath) { [IO.File]::ReadAllText($buildRulesPath, $enc) } else { $null }
 $suppressSites = [System.Collections.Generic.List[object]]::new()
 # 列挙は 8j で作った一覧を再利用する（`-Include` は obj/bin まで全ファイルを走査してから絞るため遅い。 実測 6 秒 → 0.5 秒）
 foreach ($f in @($allCs + $allCsproj)) {
@@ -792,7 +795,12 @@ foreach ($f in @($allCs + $allCsproj)) {
     }
 }
 $unlisted = @($suppressSites | Where-Object { $buildRules -notmatch [regex]::Escape($_.Code) -or $buildRules -notmatch [regex]::Escape($_.File) })
-Add-Result '抑止の一覧' ($unlisted.Count -eq 0) "付録 A にない抑止 $($unlisted.Count) 件 / 抑止 $($suppressSites.Count) 件"
+if ($null -eq $buildRules) {
+    Add-Info '抑止の一覧' "省略（.github/ビルド設定規約.md が無い。 規則文書を持つリポジトリだけが検査する）"
+}
+else {
+    Add-Result '抑止の一覧' ($unlisted.Count -eq 0) "付録 A にない抑止 $($unlisted.Count) 件 / 抑止 $($suppressSites.Count) 件"
+}
 $unlisted | Select-Object -First 10 | ForEach-Object { "      {0}:{1}  {2}（付録 A へ理由付きで追加する）" -f $_.File, $_.Line, $_.Code }
 
 # 8n) 文書の H1（ドキュメント規約 §2。 対象はリポジトリ直下と src/ 配下の文書）
@@ -804,7 +812,8 @@ foreach ($f in @($docFiles | Where-Object { $_.FullName -notmatch '\\(obj|bin|ar
     $h1 = $null
     foreach ($l in (Get-Lines $f.FullName)) { if ($l.StartsWith('# ')) { $h1 = $l.Substring(2).Trim(); break } }
     $expected = $null
-    if ($rel -eq 'README.md') { $expected = 'SaveEvidence' }
+    # ルートの H1 は製品名（リポジトリごとに違うため release-config.json から取る）
+    if ($rel -eq 'README.md') { $expected = $productName }
     elseif ($rel -match '^src/(?<p>[^/]+)/docs/SPEC_(?<k>[A-Za-z]+)\.md$') {
         $kind = @{ 'API' = 'API リファレンス'; 'System' = 'システム仕様書'; 'ExtFunc' = '外部機能仕様書' }[$Matches['k']]
         if ($kind) { $expected = "$($Matches['p']) $kind" }
@@ -812,7 +821,12 @@ foreach ($f in @($docFiles | Where-Object { $_.FullName -notmatch '\\(obj|bin|ar
         continue
     }
     elseif ($rel -match '^src/(?<p>[^/]+)/sample/README\.md$') { $expected = "$($Matches['p']) サンプルアプリケーション" }
-    elseif ($rel -match '^src/(?<p>[^/]+)/README\.md$') { $expected = $Matches['p'] }
+    # UI の README の H1 は「プロジェクト フォルダ名」か「製品名（UI 名）」のどちらでもよい
+    # （プロジェクト名をそのまま見出しにするリポジトリと、製品名＋UI 名にするリポジトリがある）。
+    elseif ($rel -match '^src/(?<p>[^/]+)/README\.md$') {
+        if ($h1 -and ($h1 -eq $Matches['p'] -or $h1 -like "$productName*")) { continue }
+        $expected = $Matches['p']
+    }
     if ($null -eq $expected) { continue }
     if ($null -eq $h1) { $h1Issues.Add(("{0}  H1 がない" -f $rel)) }
     elseif ($h1 -ne $expected) { $h1Issues.Add(("{0}  H1 [{1}] / 期待 [{2}]" -f $rel, $h1, $expected)) }
