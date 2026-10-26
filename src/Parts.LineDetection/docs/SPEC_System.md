@@ -78,7 +78,7 @@ flowchart TB
 | `LineRectangleReconstructor.cs` | 線分の集合から矩形（ウィンドウの 4 辺）を構成する静的ヘルパー（`EsRectInt` を返す）。 4 辺が矩形を構成する組み合わせのみを対象とし、候補数と処理量に上限を設けて UI のブロックを防ぐ。 |
 | `LineSegmentMath.cs` | 線分の演算（接続判定・平行判定・長さ等）の内部ヘルパー。 |
 | `LogicLineDetector.cs` | ロジック方式の検出器。 Canny + HoughLinesP + 幾何学的一貫性による矩形検出。 |
-| `MatHelper.cs` | コアの画像（`EsReadOnlyBitmap`）↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 |
+| `MatHelper.cs` | コアの画像（`EsReadOnlyBitmap`）↔ `Mat` 変換のヘルパー（OpenCvSharp 依存を内部に閉じ込める）。 **中間のマネージド配列を作らず、`Mat` の領域へ直接コピーする**（フレーム全体のコピーが 2 回から 1 回になり、大きな画像でも配列を確保しない）。 |
 
 ## 5. 依存関係
 
