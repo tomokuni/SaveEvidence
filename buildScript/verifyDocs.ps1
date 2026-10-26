@@ -130,6 +130,9 @@ if ($mdIssues -gt 0) { $mdText -split "`r?`n" | Where-Object { $_ -match 'error|
 # ============================================================
 Write-Output '== 6. 相対リンク =='
 $brokenLinks = [System.Collections.Generic.List[string]]::new()
+# リポジトリ外（隣接リポジトリ）への参照のうち、そのリポジトリが無い環境で飛ばした件数
+$externalLinks = 0
+$repoParent = Split-Path $repoRoot -Parent
 $rxLink = [regex]'\]\((?<t>[^)\s]+)\)'
 $rxCode = [regex]'`[^`]*`'
 foreach ($f in $docs) {
@@ -143,10 +146,19 @@ foreach ($f in $docs) {
         # ファイルへの参照だけを対象にする（`.` も `/` も含まない語は例示・用語）
         if ($path -notmatch '[./]') { continue }
         $full = [IO.Path]::GetFullPath((Join-Path $f.DirectoryName $path))
-        if (-not (Test-Path -LiteralPath $full)) { $brokenLinks.Add("$($f.FullName.Substring($repoRoot.Length + 1)) -> $target") }
+        if (Test-Path -LiteralPath $full) { continue }
+        # 隣接リポジトリ（`../../EsUtil/...`）への参照は、そのリポジトリを取得していない環境
+        # （CI の単一リポジトリ チェックアウト）では解決できない。 **隣接リポジトリ自体が無い場合は
+        # 対象外**にし、ある場合はリンク切れとして報告する（ローカルでは従来どおり検証する。 実測 2026-10-26）。
+        if (-not $full.StartsWith($repoRoot, [StringComparison]::OrdinalIgnoreCase)) {
+            $sibling = Join-Path $repoParent ([IO.Path]::GetRelativePath($repoParent, $full).Split([IO.Path]::DirectorySeparatorChar)[0])
+            if (-not (Test-Path -LiteralPath $sibling)) { $externalLinks++; continue }
+        }
+        $brokenLinks.Add("$($f.FullName.Substring($repoRoot.Length + 1)) -> $target")
     }
 }
 Add-Result '相対リンク' ($brokenLinks.Count -eq 0) "$($brokenLinks.Count) 件"
+if ($externalLinks -gt 0) { Add-Info '相対リンク（隣接リポジトリ）' "対象外 $externalLinks 件（隣接リポジトリを取得していないため検証しない）" }
 $brokenLinks | Select-Object -First 10 | ForEach-Object { "      $_" }
 
 # ============================================================
