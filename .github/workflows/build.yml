@@ -7,6 +7,8 @@
 #   手動実行（workflow_dispatch）  … 任意のブランチで確認する場合に使用する
 #
 # 復元・検証（Release）を実行する（配布物の作成と公開は行わない）。
+# **文書（.md）だけの変更では復元・ビルド・テストを省略し、走査（verifyDocs.ps1）だけを実行する**
+# （実測 2026-10-27: 文書だけの push に 2 分 43 秒かけていた。 コードの判定は core.quotepath=false で行う）。
 # 検証の内容は buildScript/verify.ps1 が単一所有し、合否基準は .github/検証手順.md が定める。
 #
 # 本ワークフローは「検証」だけを行い、配布物の作成は release.yml が publish.yml を通じて行う。
@@ -66,6 +68,34 @@ jobs:
         id: config
         uses: ./.github/actions/read-config
 
+      # **文書（.md）だけの変更では復元もビルドもテストも要らない**（実測 2026-10-27: 文書だけの push に
+      # 2 分 43 秒かけていた。 文書の検査は buildScript/verifyDocs.ps1 が持つ）。
+      # 判定できない場合（初回 push・タグ・手動実行）は**コードの変更として扱う**（取りこぼしを避ける）。
+      - name: 変更の種類を判定
+        id: kind
+        shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # core.quotepath=false: 非 ASCII のパスを引用させない（引用されると .md 判定を取りこぼす）
+          $changed = if ($env:EVENT_NAME -eq 'pull_request' -and $env:BASE_REF) {
+            git fetch --no-tags origin $env:BASE_REF 2>$null | Out-Null
+            @(git -c core.quotepath=false diff --name-only "origin/$($env:BASE_REF)...$env:HEAD_SHA")
+          }
+          elseif ($env:BEFORE_SHA -and $env:BEFORE_SHA -notmatch '^0+$') {
+            @(git -c core.quotepath=false diff --name-only "$($env:BEFORE_SHA)...$($env:HEAD_SHA)")
+          }
+          else { @() }
+
+          $code = @($changed | Where-Object { $_ -notmatch '\.md$' })
+          "code=$(($code.Count -gt 0 -or $changed.Count -eq 0).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          Write-Host "変更 $($changed.Count) 件（うちコード $($code.Count) 件）"
+
       # .NET SDK はランナー イメージの最新版を使う（setup-dotnet は不要。イメージが C:\Program Files\dotnet を
       # PATH へ追加しているため、以降のステップでそのまま dotnet を実行できる）。
       # NuGet のグローバル パッケージ フォルダはキャッシュする（復元が最も時間を使う工程のため）。
@@ -97,11 +127,23 @@ jobs:
       # **lock どおりに復元する**（-p:RestoreLockedMode=true）。 csproj / Directory.Packages.props と
       # packages.lock.json が食い違えば NU1004 で失敗する（依存の版が黙って変わるのを防ぐ）。
       - name: 復元
+        if: steps.kind.outputs.code == 'true'
         run: dotnet restore '${{ steps.config.outputs.solution_file }}' -p:RestoreLockedMode=true
 
       # 検証は buildScript/verify.ps1 が単一所有する（合否基準は .github/検証手順.md が所有者）。
       # ローカルと同じ判定を CI でも使う（手順の二重実装を作らない）。
       # -NoRestore は直前の復元を再利用するため（Release のビルド結果をテストでも使う）。
+      # -FullBuild: CI の新規チェックアウトは obj が空で増分と結果が同じになるが、キャッシュの
+      # 取り違えを疑う余地を残さないため明示する（実測 2026-10-27: 追加コストは約 8 秒）。
       - name: 検証（Release）
+        if: steps.kind.outputs.code == 'true'
         shell: pwsh
-        run: pwsh -NoProfile -File buildScript/verify.ps1 -Solution '${{ steps.config.outputs.solution_file }}' -Configuration Release -NoRestore
+        run: pwsh -NoProfile -File buildScript/verify.ps1 -Solution '${{ steps.config.outputs.solution_file }}' -Configuration Release -NoRestore -FullBuild
+
+      # **文書だけの変更**ではビルドもテストも要らない（走査だけを実行する。 直列で走らせる）。
+      - name: 走査（文書のみの変更）
+        if: steps.kind.outputs.code != 'true'
+        shell: pwsh
+        run: |
+          & pwsh -NoProfile -File buildScript/verifyDocs.ps1
+          if ($LASTEXITCODE -ne 0) { throw "走査が失敗しました（exit $LASTEXITCODE）" }

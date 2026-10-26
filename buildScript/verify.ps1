@@ -34,6 +34,13 @@ NuGet の健全性（既知の脆弱性。 推移的依存を含む）の検査�
 .PARAMETER Coverage
 テスト時にカバレッジを取得し、対象ファイルごとの被覆率を集計する（テスト規約の「カバレッジ 100% を目指す」の数値確認用）。
 
+.PARAMETER FullBuild
+`--no-incremental` を付けて**全プロジェクトを必ず作り直す**（既定は付けない）。
+既定で付けない理由: MSBuild の最新性チェックは`.editorconfig` / `Directory.Build.props` / 参照の変更も入力に含むため
+（実測 2026-10-27: `.editorconfig` を変えると再コンパイルされる）、CI の新規チェックアウト（`obj` が空）では
+`--no-incremental` と結果が同じで、無駄に 30 秒かかるだけだった（実測: 30 秒 → 7 秒）。
+**キャッシュを疑うときだけ**付ける。
+
 .PARAMETER SkipDocs
 文書とコードの走査（ビルド・テストと重ねて実行する独立した検査）を省略する。
 **CI が走査を別のジョブへ分けたときに使う**（同じ走査を 2 回走らせないため）。 省略した検査は合否に含めない。
@@ -61,6 +68,7 @@ param(
     [switch]$SkipPackage,
     [switch]$Coverage,
     [switch]$SkipDocs,
+    [switch]$FullBuild,
     [switch]$NoRestore
 )
 
@@ -200,7 +208,11 @@ if (-not $SkipBuild) {
     Write-Output '== 1. ビルド =='
     # 警告のエラー化は Directory.Build.props の TreatWarningsAsErrors が単一所有する（-warnaserror は付けない）。
     # これで素の `dotnet build` でも規約違反が終了コードに出る（スクリプトの引数に依存しない）。
-    $buildArgs = @('build', $Solution, '-c', $Configuration, '-tl:off', '-v:q', '--no-incremental') + $restoreArgs
+    # 既定は増分ビルド（最新性チェックは .editorconfig / Directory.Build.props / 参照も入力に含む）。
+    # 全プロジェクトを作り直すのは -FullBuild のときだけ（規則は .github/検証手順.md §3）。
+    $buildArgs = @('build', $Solution, '-c', $Configuration, '-tl:off', '-v:q')
+    if ($FullBuild) { $buildArgs += '--no-incremental' }
+    $buildArgs += $restoreArgs
     $build = Invoke-DotNet $buildArgs
     $buildText = $build.Text
     $buildWarnings = ([regex]::Matches($buildText, 'warning ')).Count
