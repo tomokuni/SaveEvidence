@@ -379,9 +379,9 @@ if (-not $SkipPackage) {
     Write-Output '== 4. NuGet の健全性 =='
     # まず lock どおりに復元できるかを確かめる（lock と csproj / Directory.Packages.props が食い違えば
     # NU1004 で失敗する）。 監査は --force-evaluate で lock を書き換え得るため、この検査を先に行う。
-    # 構成はビルドと同じにする（`dotnet restore` は `-c` を持たないため `-p:Configuration=` で渡す。
-    # 構成で参照が変わるプロジェクトがあると、構成の違う復元が lock と食い違って NU1004 になる）
-    $locked = Invoke-DotNet @('restore', $Solution, "-p:Configuration=$Configuration", '-p:RestoreLockedMode=true')
+    # 構成は指定しない（CI の復元と同じ条件にする）。 `packages.lock.json` は 1 つしか持てないため、
+    # 構成で解決が変わるプロジェクトがあると、構成を変えるだけで NU1004 になる（実測 2026-10-26）。
+    $locked = Invoke-DotNet @('restore', $Solution, '-p:RestoreLockedMode=true')
     $lockedText = $locked.Text + $locked.ErrorText
     $lockedIssues = @($lockedText -split "`r?`n" | Where-Object { $_ -match 'NU1004|error' })
     Add-Result 'ロックどおりの復元' ($locked.ExitCode -eq 0) "終了コード $($locked.ExitCode)"
