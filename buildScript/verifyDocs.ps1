@@ -351,8 +351,12 @@ foreach ($name in $externalPackageTypes.Keys) {
 }
 $rxTypeRef = [regex]'(?<![\w.])((?:[A-Za-z_]\w*\.)+[A-Za-z_]\w*)(?![\w./\\-])'
 $rxExternalRoot = [regex]'^(System|Microsoft|Avalonia|SkiaSharp|Serilog|Xunit|Newtonsoft|Windows|Moq|NSubstitute|Aprillz|ShimSkiaSharp|HarfBuzz|CommunityToolkit)\b'
+# **参照先の型を 1 つも解決できないときは判定しない**（INFO）。 文書は隣のリポジトリ（EsUtil）の型を
+# 引用するため、そのソースもパッケージの XML ドキュメントも無い環境では「実在しない」と誤判定する
+# （実測 2026-10-27: 文書だけの変更で復元を省略した CI が 2 件を誤検出した）。
+$externalTypesAvailable = ($externalCs.Count -gt 0) -or ($externalPackageTypes.Count -gt 0)
 $typeRefIssues = [System.Collections.Generic.List[string]]::new()
-foreach ($f in $docs) {
+foreach ($f in $(if ($externalTypesAvailable) { $docs } else { @() })) {
     $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
     # 本検査の説明（不合格の例を引用する）は対象外にする（8c と同じ扱い）
     if ($rel -match '検証手順\.md$') { continue }
@@ -381,7 +385,12 @@ foreach ($f in $docs) {
         }
     }
 }
-Add-Result '文書の型参照' ($typeRefIssues.Count -eq 0) "$($typeRefIssues.Count) 件"
+if ($externalTypesAvailable) {
+    Add-Result '文書の型参照' ($typeRefIssues.Count -eq 0) "$($typeRefIssues.Count) 件"
+}
+else {
+    Add-Info '文書の型参照' '省略（参照先（EsUtil）の型を解決できない。 ソースもパッケージの XML ドキュメントも無い）'
+}
 $typeRefIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
 # 8f) 文書の体裁（規約 §6・§7）
