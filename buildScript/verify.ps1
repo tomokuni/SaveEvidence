@@ -324,6 +324,31 @@ foreach ($hit in @(git -c core.quotepath=false grep --untracked -n -E '\bIsEnabl
 Add-Result 'ログの有効判定' ($callSiteGates.Count -eq 0) "呼び出し側の IsEnabled $($callSiteGates.Count) 件"
 $callSiteGates | Select-Object -First 8 | ForEach-Object { "      $_" }
 
+# 2d) Dependabot の対象（.csproj を持つフォルダが全て列挙されているか）
+#     列挙漏れがあると、後から足したプロジェクトの依存だけが更新されない（気付かないまま古くなる）。
+#     規則の所有者は .github/検証手順.md §9。 対象は**リポジトリ内の全プロジェクト**（テスト・サンプルを含む。
+#     どれも依存を持つため）。
+$dependabotPath = Join-Path $repoRoot '.github/dependabot.yml'
+$dependabotMissing = [System.Collections.Generic.List[string]]::new()
+if (-not (Test-Path -LiteralPath $dependabotPath)) {
+    Add-Result 'Dependabot の対象' $false '.github/dependabot.yml が無い'
+}
+else {
+    $dependabotText = [IO.File]::ReadAllText($dependabotPath, $enc)
+    $listedDirectories = @([regex]::Matches($dependabotText, '(?m)^\s*-\s*"(?<path>/[^"]*)"\s*$') |
+            ForEach-Object { $_.Groups['path'].Value.TrimEnd('/') })
+    # **追跡対象と未追跡（無視されない）の `.csproj` だけを見る**: 無視されたフォルダー（`.idea/` 等）の
+    # 生成物を対象にすると、リポジトリの外の事情で不合格になる（実測 2026-10-28）。
+    $projectDirectories = @(git ls-files --cached --others --exclude-standard -- '*.csproj' |
+            ForEach-Object { '/' + ([IO.Path]::GetDirectoryName($_)).Replace('\', '/') } |
+            Sort-Object -Unique)
+    foreach ($directory in $projectDirectories) {
+        if ($listedDirectories -notcontains $directory) { $dependabotMissing.Add($directory) }
+    }
+    Add-Result 'Dependabot の対象' ($dependabotMissing.Count -eq 0) "未登録 $($dependabotMissing.Count) 件"
+    $dependabotMissing | Select-Object -First 8 | ForEach-Object { "      .github/dependabot.yml の directories に無い: $_" }
+}
+
 # ============================================================
 # 3. テスト（全件合格。 -Coverage でカバレッジも集計する）
 # ============================================================
