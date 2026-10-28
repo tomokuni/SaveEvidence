@@ -4,6 +4,9 @@
 他のリポジトリへの流用方法は [`REUSING.md`](REUSING.md)、
 アプリの利用方法は [`../README.md`](../README.md) を参照してください。
 
+**リリース手順の所有者は本ドキュメント**です（[`workflows/release.yml`](workflows/release.yml) と
+[`workflows/publish.yml`](workflows/publish.yml) はその実装であり、手順を重複して書かない）。
+
 リリースは **手動実行のみ**です。 バージョンの**自動インクリメントは行いません**。
 
 ## 構成
@@ -311,6 +314,8 @@ publish は `buildScript/` の `publish_<UI>.bat` をそのまま実行するた
 
 **publish の直後に `buildScript/verifyPublish.ps1 -SkipPublish` を実行し、配布物が実際に起動して設定を全損しないことを確かめます**
 （Native AOT のトリミングで設定が空（`{}`）になる不具合の回帰検出。 検査の内容と合否基準は [`検証手順.md`](検証手順.md) §18）。
+
+**配布物には由来の証明（build provenance）を付けます**（`actions/attest-build-provenance`。 `release` ジョブが Release の作成前に実行）。 どのワークフロー・どのコミットが成果物を作ったかを、`gh attestation verify <ファイル> --repo <リポジトリ>` で後から検証できます。 公開物は取り消せないため、**出所を後から確かめられる状態**にしておきます。
 
 ## 失敗した場合の復旧
 
