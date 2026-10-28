@@ -102,7 +102,7 @@ slim が無効化するモジュール（`videoio` / `video` / `dnn` / `ml` / `h
 
 ### 5.2 名前空間
 
-UI 非依存のアセンブリは `EsUtil.*`（`EsUtil.Platform.Core.*` 等）に置く方針のため、名前空間は `EsUtil.SaveEvidence.Parts.LineDetection` とし、プロジェクトとアセンブリは `Parts.LineDetection` とする（アセンブリ名はフォルダ名と一致させる規則による）。
+UI 非依存のアセンブリでも製品固有の型は `EsUtil.SaveEvidence` 配下へ置く方針（[`.github/命名規約.md`](../../../.github/命名規約.md) のルート名前空間）のため、名前空間は `EsUtil.SaveEvidence.Parts.LineDetection` とし、プロジェクトとアセンブリは `Parts.LineDetection` とする（アセンブリ名はフォルダ名と一致させる規則による）。
 
 いずれも他の検出器へ依存しません（疎結合）。 `MatHelper` / `LineSegmentMath` は内部実装のため公開 API ではありません。 OpenCvSharp は `MatHelper` に閉じ、公開 API（`ILineDetector.Detect(EsReadOnlyBitmap)`）には露出しません。
 
