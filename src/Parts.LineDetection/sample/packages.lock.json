@@ -63,24 +63,24 @@
       },
       "EsUtil.Ui.AvaloniaUI.Interop": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "bdOOvGqlOZpSrmbp5qriBrlo3SCmC/x6WCmXptvZ3Jdc5o7kHCnA7snft2eFF10ys4zDyC1G/kQVfJxx4YKQIw==",
+        "requested": "[0.2.0, )",
+        "resolved": "0.2.0",
+        "contentHash": "LNHbI3gUdJC2kZyMDPvSy00ZTDlaY6fC7q7GtOicJQbpNMlFWZ8Rf7pXzf5/l305nkEJc/h3yCou3HY1BlrMpw==",
         "dependencies": {
           "Avalonia": "12.1.4",
-          "EsUtil.Platform.Core": "0.1.0"
+          "EsUtil.Platform.Core": "0.2.0"
         }
       },
       "EsUtil.Ui.AvaloniaUI.Loupe": {
         "type": "Direct",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "gViIsBa4PiZYBe2ZAZ4S+M/jEh9K3ifD7Ei8U7HUSFodhEBLOFivcE5+MiD83LVdSjGyqxoeiPMQ2pRu8o+pYg==",
+        "requested": "[0.2.0, )",
+        "resolved": "0.2.0",
+        "contentHash": "eHvB2rxEZaOZ83Vuul4mkG3WKSPJRZ0dcmzbNwVJhWZf6tEJmQH5ICSk85E5uB8Nv2EZkNlkNfTCq8ykBBxAaQ==",
         "dependencies": {
           "Avalonia": "12.1.4",
-          "EsUtil.Feature.Loupe.Presenter": "0.1.0",
-          "EsUtil.Platform.Core": "0.1.0",
-          "EsUtil.Ui.AvaloniaUI.Interop": "0.1.0",
+          "EsUtil.Feature.Loupe.Presenter": "0.2.0",
+          "EsUtil.Platform.Core": "0.2.0",
+          "EsUtil.Ui.AvaloniaUI.Interop": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
@@ -181,19 +181,19 @@
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "Transitive",
-        "resolved": "0.1.0",
-        "contentHash": "Yeg2khmWO45F0KckFlOHziVhuWW70Xhi+pdJoY3VASVK2xnLeNOXsp9yUr6ayPHZzSGxaL3ds5+Y+ai2s6/hpQ==",
+        "resolved": "0.2.0",
+        "contentHash": "s1ZEcWFjO23tGW/+F5X6lPWuWnRSDLAjN06iYTJi+at3o4Gozuype7E+j3SbBCKhHKp53DIgcD3H+pX5/zdSdA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.1.0",
+          "EsUtil.Platform.Core": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "Transitive",
-        "resolved": "0.1.0",
-        "contentHash": "HL+jMryWB+CiDn/l/ttlufCWXMdZe1HUFTKG1KaDfV2TqNJqYLJ8i0pht07YqmMxKGVy5+atssqFuFeRzeVDig==",
+        "resolved": "0.2.0",
+        "contentHash": "QD3HdiVX7HyG+eVj3dln50LIaldGqIJmNQkF+UrZCwEnOZ8vgkwIiAeY49GcyL3ad/gtKvQCtuZnWvUK1wb7eQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.1.0",
+          "EsUtil.Platform.Core": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
@@ -279,9 +279,9 @@
         "type": "Project",
         "dependencies": {
           "Avalonia.Desktop": "[12.1.4, )",
-          "EsUtil.Ui.AvaloniaUI.Interop": "[0.1.0, )",
-          "EsUtil.Ui.AvaloniaUI.Loupe": "[0.1.0, )",
-          "EsUtil.Ui.AvaloniaUI.Marquee": "[0.1.0, )",
+          "EsUtil.Ui.AvaloniaUI.Interop": "[0.2.0, )",
+          "EsUtil.Ui.AvaloniaUI.Loupe": "[0.2.0, )",
+          "EsUtil.Ui.AvaloniaUI.Marquee": "[0.2.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
           "Parts.CapturePreview.Core": "[0.1.0, )"
         }
@@ -289,16 +289,16 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Presenter": "[0.1.0, )",
-          "EsUtil.Feature.Marquee.Presenter": "[0.1.0, )",
-          "EsUtil.Platform.Core": "[0.1.0, )",
+          "EsUtil.Feature.Loupe.Presenter": "[0.2.0, )",
+          "EsUtil.Feature.Marquee.Presenter": "[0.2.0, )",
+          "EsUtil.Platform.Core": "[0.2.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )"
         }
       },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.1.0, )",
+          "EsUtil.Platform.Core": "[0.2.0, )",
           "OpenCvSharp5": "[5.0.0.20261018, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261018, )"
         }
@@ -320,42 +320,42 @@
       },
       "EsUtil.Feature.Loupe.Presenter": {
         "type": "CentralTransitive",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "7HPkci+Xubp8Dv5rCVFjlvv7+5TIJ7WONVGi8MWefeFNFMIJ8tCtN7HpLy8pKTEOLbnNGR8xgF8pDh92uodv9w==",
+        "requested": "[0.2.0, )",
+        "resolved": "0.2.0",
+        "contentHash": "icuq9ZrZlhMvgrOFEISY5WGbr5Di1cXu4Fm76to6gG9dhdF21ZznyDDKtDnEMZdNib8LXovREc86Jlm0DWTlDQ==",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "0.1.0",
-          "EsUtil.Platform.Core": "0.1.0",
+          "EsUtil.Feature.Loupe.Core": "0.2.0",
+          "EsUtil.Platform.Core": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Marquee.Presenter": {
         "type": "CentralTransitive",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "UorMrjLmIe8W73i4g/zmTHBUmvfA38e7/58W8M0WGbOfNDic6GuqEmwmCOMu62ZELUbJfSbTs0lfQaSdtKq8VA==",
+        "requested": "[0.2.0, )",
+        "resolved": "0.2.0",
+        "contentHash": "C3M/1nZnC6ykAZ/dpqsALgvIU8Z0a/wqA0Qea/fc7osTNxOm1OUQA+xEW1jUq7TEGWu58S/MPSucpmtmiM7M0A==",
         "dependencies": {
-          "EsUtil.Feature.Marquee.Core": "0.1.0",
-          "EsUtil.Platform.Core": "0.1.0",
+          "EsUtil.Feature.Marquee.Core": "0.2.0",
+          "EsUtil.Platform.Core": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "u6Egia91a61wnuKPxQN6MGg667XUBlPR9hoku+T5NNfr6WvOT+aP5FfEuJ4L6g4dXiufYfkzt+SbptjhGQODDw=="
+        "requested": "[0.2.0, )",
+        "resolved": "0.2.0",
+        "contentHash": "YgU1pr8gmK1Zn+LZRwVNz17YJsOgV20JyfhCdtQsUEVLhrzs2tghU4MP1Rjr+iLUsiRyuM4dLcrLxpQSgwA98w=="
       },
       "EsUtil.Ui.AvaloniaUI.Marquee": {
         "type": "CentralTransitive",
-        "requested": "[0.1.0, )",
-        "resolved": "0.1.0",
-        "contentHash": "S5uSqS5+WxLm4XCs+bh3RCNUB6/4AIn77bNLX9Q1qtJFYWQkX5ymha1jPa/rGnvDXbNSA7MA29O/mws8hQPBDw==",
+        "requested": "[0.2.0, )",
+        "resolved": "0.2.0",
+        "contentHash": "aOiFL/kHLoT14IkiXPrtpNTxEGN83XDNhaw0l9iLS4EZ7uccb1uSvlTBSj88A8jtl00NEp5opxowpcTyGEQaXA==",
         "dependencies": {
           "Avalonia": "12.1.4",
-          "EsUtil.Feature.Marquee.Presenter": "0.1.0",
-          "EsUtil.Platform.Core": "0.1.0",
-          "EsUtil.Ui.AvaloniaUI.Interop": "0.1.0",
+          "EsUtil.Feature.Marquee.Presenter": "0.2.0",
+          "EsUtil.Platform.Core": "0.2.0",
+          "EsUtil.Ui.AvaloniaUI.Interop": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
