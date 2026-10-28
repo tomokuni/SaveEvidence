@@ -12,6 +12,8 @@
 #     失敗してもタグを消費しない。
 #   - **`release` ジョブは `environment: release`（Required reviewers）で承認を要求する**。
 #   - 配布物には **SBOM（CycloneDX）** を添付する（使った依存を配布物から辿れるようにする）。
+#   - **配布物には由来の証明（build provenance）を付ける**（`actions/attest-build-provenance`。
+#     どのワークフロー・どのコミットが作ったかを後から検証できる）。
 #
 # 前提検証: ブランチ（`releaseBranches`）/ ゲート（`build.yml` の成功実行）/ semver / 系列 / タグ未作成。
 # 規則の所有者は .github/RELEASE.md。
@@ -236,6 +238,9 @@ jobs:
     environment: release
     permissions:
       contents: write
+      # 成果物の由来（provenance）を証明する（署名は GitHub の OIDC で行う）
+      id-token: write
+      attestations: write
     steps:
       - name: 成果物をダウンロード
         uses: actions/download-artifact@v7
@@ -243,6 +248,13 @@ jobs:
           path: assets
           # 配布物と SBOM を 1 つのフォルダへ集約する
           merge-multiple: true
+
+      # **由来の証明**（どのワークフロー・どのコミットが作ったかを検証できるようにする）。
+      # 配布物は取り消せないため、後から出所を確かめられる状態にする（規則は .github/RELEASE.md）。
+      - name: 由来を証明
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'assets/**'
 
       - name: GitHub Release を作成
         shell: pwsh
