@@ -39,7 +39,7 @@ jobs:
       retention: ${{ steps.read.outputs.artifact_retention_days }}
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # matrix で使う uis（1 行の JSON）を含め、全設定をここで読み取る
       - name: リリース設定を読む
@@ -62,7 +62,7 @@ jobs:
         ui: ${{ fromJson(needs.config.outputs.uis) }}
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # .NET SDK はランナー イメージの最新版を使う（setup-dotnet は不要）。
       # NuGet のキャッシュは UI ごとに分ける。
@@ -127,7 +127,7 @@ jobs:
 
       # この成果物は release.yml が GitHub Release へ添付する（公開先は GitHub Release のみ）
       - name: 成果物をアップロード
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.ui.name }}
           # zip する UI は作成済みの zip を、しない UI は出力そのものを保管する

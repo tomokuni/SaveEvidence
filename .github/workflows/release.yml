@@ -68,7 +68,7 @@ jobs:
       release_notes: ${{ steps.config.outputs.release_notes }}
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -184,7 +184,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # ツール（CycloneDX）の取得と復元をキャッシュする（初回は約 2 分かかる。 実測 2026-10-26）
       - name: NuGet をキャッシュ
@@ -207,7 +207,7 @@ jobs:
           Get-ChildItem -Path 'sbom' -File | ForEach-Object { $_.Name }
 
       - name: SBOM を保管
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom
           path: sbom/*.json
@@ -245,12 +245,12 @@ jobs:
       # gh の `--generate-notes` はローカルの git リポジトリ（履歴とタグ）を読むため、チェックアウトする。
       # 浅い取得では `--notes-start-tag` の範囲を辿れないため全履歴を取る。
       - name: チェックアウト
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: 成果物をダウンロード
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: assets
           # 配布物と SBOM を 1 つのフォルダへ集約する
@@ -259,7 +259,7 @@ jobs:
       # **由来の証明**（どのワークフロー・どのコミットが作ったかを検証できるようにする）。
       # 配布物は取り消せないため、後から出所を確かめられる状態にする（規則は .github/RELEASE.md）。
       - name: 由来を証明
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'assets/**'
 
