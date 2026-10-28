@@ -84,6 +84,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 - Dependabot は**指定したディレクトリ直下のみを走査します**（再帰しません）。 プロジェクトを増やした場合は
   `dependabot.yml` の `directories` にも追加してください。
 - Pull Request の内容を確認して `main` へマージします（マージ方式は Squash merge を推奨）。 マージ後の `main` への push で `build.yml`（ゲート）が実行されます。
+- **Dependabot は `packages.lock.json` を一部のプロジェクトしか更新しません**（Dependabot の制限）。 そのため NuGet の Pull Request は、**そのままでは CI が `NU1004`（lock が古い）で失敗します**。 ブランチを取得して `dotnet restore <ソリューション> --force-evaluate` を実行し、lock を追加コミットしてからマージします（版の更新自体は PR の内容のままです）。
 - 破壊的な変更（`actions/upload-artifact` のメジャー更新など）は、CI が失敗した内容を確認して修正します。
 
 ## リポジトリの設定（初回のみ）
@@ -281,7 +282,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 | UI | 添付ファイル | 方式（実測 2026-10-20） | zip の中身 |
 | --- | --- | --- | --- |
 | MewUI 版 | `SaveEvidence.MewUI.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
-| Avalonia UI 版 | `SaveEvidence.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
+| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
 | WinForms 版 | `SaveEvidence.WinForms.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
 | WinUI 3 版 | `SaveEvidence.WinUI3.zip` | Single（AOT なし。 Windows App SDK は自己完結） | **exe 1 個**（自己完結ランタイムとネイティブ DLL を同梱。 **SkiaSharp を含まない**） |
 
