@@ -61,7 +61,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           # 変更の判定に使う（既定の深さ 1 では直前のコミットが無く git diff が失敗する）
           fetch-depth: 0
