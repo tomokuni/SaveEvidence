@@ -54,7 +54,7 @@
       "EsUtil.Feature.Loupe.Core": {
         "type": "Transitive",
         "resolved": "0.2.0",
-        "contentHash": "s1ZEcWFjO23tGW/+F5X6lPWuWnRSDLAjN06iYTJi+at3o4Gozuype7E+j3SbBCKhHKp53DIgcD3H+pX5/zdSdA==",
+        "contentHash": "bvRepY+MtFvc4aPKKnsk4AxKUqhr5d3fcDUK/N27QzeN7P1N23dYc10Ji6l6RKrt+fQrSriJhIPNtUPgKSMOCw==",
         "dependencies": {
           "EsUtil.Platform.Core": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
@@ -63,7 +63,7 @@
       "EsUtil.Feature.Marquee.Core": {
         "type": "Transitive",
         "resolved": "0.2.0",
-        "contentHash": "QD3HdiVX7HyG+eVj3dln50LIaldGqIJmNQkF+UrZCwEnOZ8vgkwIiAeY49GcyL3ad/gtKvQCtuZnWvUK1wb7eQ==",
+        "contentHash": "ppZEjsu4FQ8y7X2XgJSluFsFSbcGeOJ5vNPdeXRBP+Tpp897KHWtdaA/NQ/izfbfRI02CL3+YMxlSTICvDOptQ==",
         "dependencies": {
           "EsUtil.Platform.Core": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
@@ -228,7 +228,7 @@
         "type": "CentralTransitive",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "icuq9ZrZlhMvgrOFEISY5WGbr5Di1cXu4Fm76to6gG9dhdF21ZznyDDKtDnEMZdNib8LXovREc86Jlm0DWTlDQ==",
+        "contentHash": "v2NVmyTfVxlp969WeSQGExD0u8ZldbWEydjk1GcAtgvJ6U5R2pLuKYqcJnlncd64HNlJs6oT6Nhfo7UUD2ljLQ==",
         "dependencies": {
           "EsUtil.Feature.Loupe.Core": "0.2.0",
           "EsUtil.Platform.Core": "0.2.0",
@@ -239,7 +239,7 @@
         "type": "CentralTransitive",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "C3M/1nZnC6ykAZ/dpqsALgvIU8Z0a/wqA0Qea/fc7osTNxOm1OUQA+xEW1jUq7TEGWu58S/MPSucpmtmiM7M0A==",
+        "contentHash": "GFc+OHZ/AwArXLDcXCxng3FAh4oPy63pWRuweItJ0FV0YwKP+FzPZOlWomt5fCqsaXubufP5oSlksZ1O+yzi2g==",
         "dependencies": {
           "EsUtil.Feature.Marquee.Core": "0.2.0",
           "EsUtil.Platform.Core": "0.2.0",
@@ -250,13 +250,13 @@
         "type": "CentralTransitive",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "YgU1pr8gmK1Zn+LZRwVNz17YJsOgV20JyfhCdtQsUEVLhrzs2tghU4MP1Rjr+iLUsiRyuM4dLcrLxpQSgwA98w=="
+        "contentHash": "3iTyDtWPcO/0lBuEZ6CMVbYw1+XDlrzgrJIfgCBf/ux4OdwLVC99QVEx8n2Y74IwzB6N/WyM3eL650IQeOyhCA=="
       },
       "EsUtil.Ui.WinForms.Interop": {
         "type": "CentralTransitive",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "CbqnK10Oi4fx8qJkUzCkUwL4O6i0Jr1pb6S9WqFj7OxZytngdjU+h0f4M9FWsO5D2yXnZ+wC2E9GPHdDqztL3w==",
+        "contentHash": "aP0fUhs8zaGrWjWicyCFxhKuVp/xs/iv8Dx5QyyG6MoJwRNouDg1t56SItTRG/LY5II4jXnaRBZi0SouMn6p+g==",
         "dependencies": {
           "EsUtil.Platform.Core": "0.2.0"
         }
@@ -265,7 +265,7 @@
         "type": "CentralTransitive",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "rNwkO2bqJ2bWES5ef7IQTm+PasD74bc+dGwZn3dlTRqTmUJzCXFyJoID503Ac4zGWsJDLoZ1UY0dZiSIKRWPKA==",
+        "contentHash": "am+UHtZqlgxSH4L/86+GWxxx4par4iNyIFL+vujP86HzDagnYf+8psEGKgLsriAGVqMEEzTR5Gyiw7LDpmqueQ==",
         "dependencies": {
           "EsUtil.Feature.Loupe.Presenter": "0.2.0",
           "EsUtil.Platform.Core": "0.2.0",
@@ -277,7 +277,7 @@
         "type": "CentralTransitive",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "qIp1MwWaBBcigvOyANyMFSh2HyRxSdq5JH3UCgWE0YXvcRS/aPMCT+XX2dIE+DhVM9YZH1FDDb54hN4S2DzU2Q==",
+        "contentHash": "UDAHnnLc3nToRJ66UuQ8WrSSzxCJL2Z5wY+RBj5ONWkPackhLNp9zQQWl1fLIHu4ql7Ud2YMCeMvUSyhg5oclQ==",
         "dependencies": {
           "EsUtil.Feature.Marquee.Presenter": "0.2.0",
           "EsUtil.Platform.Core": "0.2.0",

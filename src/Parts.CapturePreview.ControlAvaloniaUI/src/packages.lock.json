@@ -20,7 +20,7 @@
         "type": "Direct",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "LNHbI3gUdJC2kZyMDPvSy00ZTDlaY6fC7q7GtOicJQbpNMlFWZ8Rf7pXzf5/l305nkEJc/h3yCou3HY1BlrMpw==",
+        "contentHash": "NttlkLzEUzn6oANQoi0T0U2lk6D1yxnZkopq9twdXDhOUelWzRkxiTS3+rHL/rcWFw3SkEq2bNtiZFubeceuyw==",
         "dependencies": {
           "Avalonia": "12.1.4",
           "EsUtil.Platform.Core": "0.2.0"
@@ -30,7 +30,7 @@
         "type": "Direct",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "eHvB2rxEZaOZ83Vuul4mkG3WKSPJRZ0dcmzbNwVJhWZf6tEJmQH5ICSk85E5uB8Nv2EZkNlkNfTCq8ykBBxAaQ==",
+        "contentHash": "DTS5IVI36wrsqx/jegyg/X6ve8hln4HqwW1SzWdCEEGYfzL0sNu27cf8mUZ6HAI93e1OeB8nx6xxMCA6OwsQ7g==",
         "dependencies": {
           "Avalonia": "12.1.4",
           "EsUtil.Feature.Loupe.Presenter": "0.2.0",
@@ -43,7 +43,7 @@
         "type": "Direct",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "aOiFL/kHLoT14IkiXPrtpNTxEGN83XDNhaw0l9iLS4EZ7uccb1uSvlTBSj88A8jtl00NEp5opxowpcTyGEQaXA==",
+        "contentHash": "UYHNYxB4qG6yNGqGO/FWrwTyYA4H7inocY23QTulYu9pIu+ZBkQyVcL6u0Pb10ND/5oJD3LETwdC41tzt56qnQ==",
         "dependencies": {
           "Avalonia": "12.1.4",
           "EsUtil.Feature.Marquee.Presenter": "0.2.0",
@@ -153,7 +153,7 @@
       "EsUtil.Feature.Loupe.Core": {
         "type": "Transitive",
         "resolved": "0.2.0",
-        "contentHash": "s1ZEcWFjO23tGW/+F5X6lPWuWnRSDLAjN06iYTJi+at3o4Gozuype7E+j3SbBCKhHKp53DIgcD3H+pX5/zdSdA==",
+        "contentHash": "bvRepY+MtFvc4aPKKnsk4AxKUqhr5d3fcDUK/N27QzeN7P1N23dYc10Ji6l6RKrt+fQrSriJhIPNtUPgKSMOCw==",
         "dependencies": {
           "EsUtil.Platform.Core": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
@@ -162,7 +162,7 @@
       "EsUtil.Feature.Marquee.Core": {
         "type": "Transitive",
         "resolved": "0.2.0",
-        "contentHash": "QD3HdiVX7HyG+eVj3dln50LIaldGqIJmNQkF+UrZCwEnOZ8vgkwIiAeY49GcyL3ad/gtKvQCtuZnWvUK1wb7eQ==",
+        "contentHash": "ppZEjsu4FQ8y7X2XgJSluFsFSbcGeOJ5vNPdeXRBP+Tpp897KHWtdaA/NQ/izfbfRI02CL3+YMxlSTICvDOptQ==",
         "dependencies": {
           "EsUtil.Platform.Core": "0.2.0",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
@@ -280,7 +280,7 @@
         "type": "CentralTransitive",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "icuq9ZrZlhMvgrOFEISY5WGbr5Di1cXu4Fm76to6gG9dhdF21ZznyDDKtDnEMZdNib8LXovREc86Jlm0DWTlDQ==",
+        "contentHash": "v2NVmyTfVxlp969WeSQGExD0u8ZldbWEydjk1GcAtgvJ6U5R2pLuKYqcJnlncd64HNlJs6oT6Nhfo7UUD2ljLQ==",
         "dependencies": {
           "EsUtil.Feature.Loupe.Core": "0.2.0",
           "EsUtil.Platform.Core": "0.2.0",
@@ -291,7 +291,7 @@
         "type": "CentralTransitive",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "C3M/1nZnC6ykAZ/dpqsALgvIU8Z0a/wqA0Qea/fc7osTNxOm1OUQA+xEW1jUq7TEGWu58S/MPSucpmtmiM7M0A==",
+        "contentHash": "GFc+OHZ/AwArXLDcXCxng3FAh4oPy63pWRuweItJ0FV0YwKP+FzPZOlWomt5fCqsaXubufP5oSlksZ1O+yzi2g==",
         "dependencies": {
           "EsUtil.Feature.Marquee.Core": "0.2.0",
           "EsUtil.Platform.Core": "0.2.0",
@@ -302,7 +302,7 @@
         "type": "CentralTransitive",
         "requested": "[0.2.0, )",
         "resolved": "0.2.0",
-        "contentHash": "YgU1pr8gmK1Zn+LZRwVNz17YJsOgV20JyfhCdtQsUEVLhrzs2tghU4MP1Rjr+iLUsiRyuM4dLcrLxpQSgwA98w=="
+        "contentHash": "3iTyDtWPcO/0lBuEZ6CMVbYw1+XDlrzgrJIfgCBf/ux4OdwLVC99QVEx8n2Y74IwzB6N/WyM3eL650IQeOyhCA=="
       }
     }
   }
