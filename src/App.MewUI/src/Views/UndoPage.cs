@@ -340,7 +340,7 @@ internal static class UndoPage
 
             // 縮小後の寸法は元画像を超えない（コアの縮小は拡大を未サポートとする）
             var longSide = Math.Max(image.Width, image.Height);
-            var resized = image.Resize(Math.Min(iconSize, longSide), EsImageQuality.High);
+            var resized = image.Resize(Math.Min(iconSize, longSide), EsImageScalingMode.WicFant);
 
             // 表示は読むだけ（書き換えない）であるため、凍結して 0 コピーで読み取り専用の面へ渡す
             resized.SetReadOnly();
