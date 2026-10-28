@@ -242,6 +242,13 @@ jobs:
       id-token: write
       attestations: write
     steps:
+      # gh の `--generate-notes` はローカルの git リポジトリ（履歴とタグ）を読むため、チェックアウトする。
+      # 浅い取得では `--notes-start-tag` の範囲を辿れないため全履歴を取る。
+      - name: チェックアウト
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
       - name: 成果物をダウンロード
         uses: actions/download-artifact@v7
         with:
