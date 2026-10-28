@@ -476,6 +476,7 @@ SaveEvidence は、Avalonia UI 上で CommunityToolkit.Mvvm を使用した MVVM
 | `README.md` | 利用仕様書（何ができるか・使い方・拡張） | 各プロジェクト直下 |
 | `docs/SPEC_API.md` | API リファレンス（公開型・メンバー・使用例） | 各プロジェクトの `docs/` |
 | `docs/SPEC_System.md` | システム仕様書（アーキテクチャ・依存・設計判断） | 各プロジェクトの `docs/` |
+| `CHANGELOG.md` | 変更履歴（利用者に影響する変更。 版は人が決める） | リポジトリ直下 |
 
 リポジトリ全体の層構成は [`src/README.md`](src/README.md) を参照してください。
 
