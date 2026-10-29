@@ -179,6 +179,10 @@ $fingerprintDir = Join-Path ([IO.Path]::GetTempPath()) 'saveevidence-verify-publ
 
 # 退避した設定ファイル（パス -> 退避先）。 finally で必ず戻す
 $settingsBackups = @{}
+# 退避先は**ユーザーのフォルダーの外**（一時フォルダー）へ置き、名前に GUID を付ける。
+# 設定ファイルの隣の固定名（`settings.json.bak`）へ `-Force` で上書きすると、利用者が残していた
+# 復旧用のバックアップを消してしまう（実測 2026-10-28: レビューで指摘）。
+$settingsBackupDir = Join-Path ([IO.Path]::GetTempPath()) ("saveevidence-verify-settings-" + [guid]::NewGuid().ToString('N'))
 
 try {
     foreach ($target in $targets) {
@@ -246,9 +250,13 @@ try {
 
         # 3. 設定ファイルを退避する（複数のことがある）
         $settingsBackups = @{}
+        if ($settingsPaths.Count -gt 0 -and -not (Test-Path -LiteralPath $settingsBackupDir)) {
+            [void](New-Item -ItemType Directory -Path $settingsBackupDir -Force)
+        }
         foreach ($settingsPath in $settingsPaths) {
             if (Test-Path -LiteralPath $settingsPath) {
-                $backup = "$settingsPath.bak"
+                # 同じ名前の設定ファイルが複数あっても衝突しないよう、連番を付ける
+                $backup = Join-Path $settingsBackupDir ("{0}-{1}" -f $settingsBackups.Count, [IO.Path]::GetFileName($settingsPath))
                 Copy-Item -LiteralPath $settingsPath -Destination $backup -Force
                 $settingsBackups[$settingsPath] = $backup
             }
@@ -288,9 +296,12 @@ try {
         }
 
         # 6. 設定ファイルを元へ戻す（次の UI の検証もユーザーの実設定から始める）
+        #    **戻した退避ファイルは削除してから辞書を空にする**（空にしてからでは finally が
+        #    退避先を見つけられず、一時フォルダーにコピーが残る。 実測 2026-10-28: レビューで指摘）。
         foreach ($settingsPath in $settingsPaths) {
             if ($settingsBackups.ContainsKey($settingsPath)) {
                 Copy-Item -LiteralPath $settingsBackups[$settingsPath] -Destination $settingsPath -Force
+                Remove-Item -LiteralPath $settingsBackups[$settingsPath] -Force
             }
         }
         $settingsBackups = @{}
@@ -303,6 +314,10 @@ finally {
             Copy-Item -LiteralPath $settingsBackups[$key] -Destination $key -Force
             Remove-Item -LiteralPath $settingsBackups[$key] -Force
         }
+    }
+    # 退避用の一時フォルダーは残さない（空でない場合だけ消す）
+    if (Test-Path -LiteralPath $settingsBackupDir) {
+        Remove-Item -LiteralPath $settingsBackupDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
 
