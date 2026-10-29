@@ -28,7 +28,7 @@
       "script": "buildScript/publish_AvaloniaUI.bat",
       "output": "publish/avaloniaui-win-x64-aot",
       "exe": "SaveEvidence.AvaloniaUI.exe",
-      "asset": "SaveEvidence.zip",
+      "asset": "SaveEvidence.AvaloniaUI.zip",
       "zip": true
     },
     {

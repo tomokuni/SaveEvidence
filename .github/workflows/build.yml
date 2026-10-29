@@ -61,7 +61,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: チェックアウト
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           # 変更の判定に使う（既定の深さ 1 では直前のコミットが無く git diff が失敗する）
           fetch-depth: 0
@@ -94,7 +94,10 @@ jobs:
               return @(git -c core.quotepath=false diff --name-only "origin/$($env:BASE_REF)...$env:HEAD_SHA" 2>&1)
             }
             if ($env:BEFORE_SHA -and $env:BEFORE_SHA -notmatch '^0+$') {
-              return @(git -c core.quotepath=false diff --name-only "$($env:BEFORE_SHA)...$($env:HEAD_SHA)" 2>&1)
+              # push は **2 点（A B）** で比べる。 3 点（A...B）は共通の祖先からの差分になるため、
+              # 履歴を書き換えた push では before 側だけにあった変更（削除・巻き戻し）を取りこぼす
+              # （実測 2026-10-28: レビューで指摘）。
+              return @(git -c core.quotepath=false diff --name-only "$($env:BEFORE_SHA)" "$($env:HEAD_SHA)" 2>&1)
             }
             return $null
           }

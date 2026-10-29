@@ -349,6 +349,24 @@ else {
     $dependabotMissing | Select-Object -First 8 | ForEach-Object { "      .github/dependabot.yml の directories に無い: $_" }
 }
 
+# 2e) 配布物の名前（`<製品名>.<UI名>.exe` / `<製品名>.<UI名>.zip`）
+#     exe と zip の名前が UI ごとに揃っていないと、利用者がどれを展開すべきか分からなくなる
+#     （実測 2026-10-28: Avalonia UI 版だけ `SaveEvidence.zip` で、他は `SaveEvidence.<UI名>.zip` だった）。
+#     規則の所有者は .github/命名規約.md「アセンブリ名」。
+$distIssues = [System.Collections.Generic.List[string]]::new()
+$releaseConfig = Get-RepoConfig $repoRoot
+$product = $releaseConfig.product
+foreach ($ui in @($releaseConfig.uis)) {
+    $expectedExe = "$product.$($ui.name).exe"
+    if ($ui.exe -ne $expectedExe) { $distIssues.Add(("{0}: exe が {1} です（{2} にする）" -f $ui.name, $ui.exe, $expectedExe)) }
+    if ($ui.zip) {
+        $expectedAsset = "$product.$($ui.name).zip"
+        if ($ui.asset -ne $expectedAsset) { $distIssues.Add(("{0}: asset が {1} です（{2} にする）" -f $ui.name, $ui.asset, $expectedAsset)) }
+    }
+}
+Add-Result '配布物の名前' ($distIssues.Count -eq 0) "不一致 $($distIssues.Count) 件"
+$distIssues | ForEach-Object { "      $_" }
+
 # ============================================================
 # 3. テスト（全件合格。 -Coverage でカバレッジも集計する）
 # ============================================================
