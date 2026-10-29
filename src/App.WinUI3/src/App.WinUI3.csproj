@@ -10,8 +10,11 @@
          付けないと publish が自分自身の .pri（リソース インデックス）を発行せず、配布物の起動時に
          XAML の読み込みが失敗して 0xC000027B（stowed exception）で終了する（実測）。
          アンパッケージ（WindowsPackageType=None）のまま .pri を発行させるために必要である
-         （配布は buildScript/publish_WinUI3.bat が行う）。 -->
-    <EnableMsixTooling>true</EnableMsixTooling>
+         （配布は buildScript/publish_WinUI3.bat が行う）。
+         **RID を渡したときだけ有効にする**: 有効にすると MSIX のパッケージング処理が走り、
+         RID の無い AnyCPU では `Packaged .NET applications with an app host exe cannot be
+         ProcessorArchitecture neutral.` でビルドが失敗する（実測 2026-10-30）。 -->
+    <EnableMsixTooling Condition="'$(RuntimeIdentifier)' != ''">true</EnableMsixTooling>
     <!-- 単一ファイル化。 publish のときだけ有効にする（`SaveEvidencePublishSingleFile` は
          buildScript/publish_WinUI3.bat が publish のときに渡す）。
          1) 常時有効にすると Debug ビルドで `PublishSingleFile is recommended only for .NET SelfContained apps`
@@ -33,10 +36,11 @@
     <StartupObject>EsUtil.SaveEvidence.App.WinUI3.Program</StartupObject>
     <!-- アンパッケージ（MSIX なし）で起動できるようにする。 -->
     <WindowsPackageType>None</WindowsPackageType>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    <!-- Windows App SDK の自己完結配置は Windows のアーキテクチャ指定を要求する
-         （未指定は `WindowsAppSDKSelfContained requires a supported Windows architecture.` で失敗する）。 -->
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <!-- 自己完結配置（Windows App SDK を同封する）は RID を要求する（未指定は
+         `WindowsAppSDKSelfContained requires a supported Windows architecture.` で失敗する）。
+         RID を渡したとき（publish の -r）だけ自己完結にし、通常のビルドは AnyCPU（フレームワーク依存。
+         実行にはインストール済みの Windows App Runtime を使う）にする。 -->
+    <WindowsAppSDKSelfContained Condition="'$(RuntimeIdentifier)' != ''">true</WindowsAppSDKSelfContained>
     <!-- DPI 認識（PerMonitorV2）を宣言する（宣言が無いとウィンドウ配置の復元がずれる）。 -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
