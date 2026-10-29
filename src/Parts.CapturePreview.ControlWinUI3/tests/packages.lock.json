@@ -309,7 +309,7 @@
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
           "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2705, )",
           "Microsoft.WindowsAppSDK": "[1.8.260921001, )",
-          "Parts.CapturePreview.Core": "[0.1.0, )"
+          "Parts.CapturePreview.Core": "[0.1.1, )"
         }
       },
       "parts.capturepreview.core": {
