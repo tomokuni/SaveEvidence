@@ -128,8 +128,8 @@
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "EsUtil.Platform.Core": "[0.2.0, )",
-          "Parts.CapturePreview.Core": "[0.1.0, )",
-          "Parts.LineDetection": "[0.1.0, )"
+          "Parts.CapturePreview.Core": "[0.1.1, )",
+          "Parts.LineDetection": "[0.1.1, )"
         }
       },
       "parts.capturepreview.controlwinforms": {
@@ -140,7 +140,7 @@
           "EsUtil.Ui.WinForms.Loupe": "[0.2.0, )",
           "EsUtil.Ui.WinForms.Marquee": "[0.2.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
-          "Parts.CapturePreview.Core": "[0.1.0, )"
+          "Parts.CapturePreview.Core": "[0.1.1, )"
         }
       },
       "parts.capturepreview.core": {

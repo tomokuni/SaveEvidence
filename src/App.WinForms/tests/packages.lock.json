@@ -232,8 +232,8 @@
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "EsUtil.Platform.Core": "[0.2.0, )",
-          "Parts.CapturePreview.Core": "[0.1.0, )",
-          "Parts.LineDetection": "[0.1.0, )"
+          "Parts.CapturePreview.Core": "[0.1.1, )",
+          "Parts.LineDetection": "[0.1.1, )"
         }
       },
       "parts.capturepreview.controlwinforms": {
@@ -244,7 +244,7 @@
           "EsUtil.Ui.WinForms.Loupe": "[0.2.0, )",
           "EsUtil.Ui.WinForms.Marquee": "[0.2.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
-          "Parts.CapturePreview.Core": "[0.1.0, )"
+          "Parts.CapturePreview.Core": "[0.1.1, )"
         }
       },
       "parts.capturepreview.core": {
@@ -267,12 +267,12 @@
       "SaveEvidence.WinForms": {
         "type": "Project",
         "dependencies": {
-          "App.Core": "[0.1.0, )",
+          "App.Core": "[0.1.1, )",
           "EsUtil.Ui.WinForms.Interop": "[0.2.0, )",
           "EsUtil.Ui.WinForms.Thumbnail": "[0.2.0, )",
           "Microsoft.Extensions.Logging": "[10.0.14, )",
-          "Parts.CapturePreview.ControlWinForms": "[0.1.0, )",
-          "Parts.CapturePreview.Core": "[0.1.0, )",
+          "Parts.CapturePreview.ControlWinForms": "[0.1.1, )",
+          "Parts.CapturePreview.Core": "[0.1.1, )",
           "Serilog": "[4.4.0, )",
           "Serilog.Extensions.Logging": "[10.0.0, )",
           "Serilog.Sinks.File": "[7.0.0, )"

@@ -366,6 +366,29 @@ foreach ($ui in @($releaseConfig.uis)) {
 }
 Add-Result '配布物の名前' ($distIssues.Count -eq 0) "不一致 $($distIssues.Count) 件"
 $distIssues | ForEach-Object { "      $_" }
+# 2f) 実行ファイルのアーキテクチャ（64bit）
+#     AnyCPU の exe は apphost をビルドしたマシンの RID で作るため、32bit 環境では 32bit になる。
+#     アプリは x64 に固定する（規則は .github/ビルド設定規約.md §5）。
+$archIssues = [System.Collections.Generic.List[string]]::new()
+$archChecked = 0
+foreach ($rel in @(git ls-files --cached --others --exclude-standard -- 'src/**/App.*.csproj')) {
+    $text = [IO.File]::ReadAllText((Join-Path $repoRoot $rel), $enc)
+    # ライブラリ（App.Core など）とテストは対象外（アーキテクチャを固定しない）
+    if ($rel -match '(\\|/)tests(\\|/)|\.Tests\.csproj$') { continue }
+    if ($text -notmatch '<OutputType>(WinExe|Exe)</OutputType>') { continue }
+    $archChecked += 1
+    if ($text -match '<Prefer32Bit>true</Prefer32Bit>' -or $text -match '<PlatformTarget>x86</PlatformTarget>') {
+        $archIssues.Add(("{0}: 32bit の指定がある" -f $rel))
+    }
+    elseif ($text -match '<PlatformTarget>x64</PlatformTarget>' -or $text -match '<RuntimeIdentifier[s]?>\s*win-x64') {
+        continue
+    }
+    else {
+        $archIssues.Add(("{0}: x64 の指定が無い（PlatformTarget か RuntimeIdentifier を書く）" -f $rel))
+    }
+}
+Add-Result '実行ファイルのアーキテクチャ' ($archIssues.Count -eq 0) "対象 $archChecked 件 / x64 以外 $($archIssues.Count) 件"
+$archIssues | ForEach-Object { "      $_" }
 
 # ============================================================
 # 3. テスト（全件合格。 -Coverage でカバレッジも集計する）

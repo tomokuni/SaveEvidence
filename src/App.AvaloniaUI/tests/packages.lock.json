@@ -429,8 +429,8 @@
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "EsUtil.Platform.Core": "[0.2.0, )",
-          "Parts.CapturePreview.Core": "[0.1.0, )",
-          "Parts.LineDetection": "[0.1.0, )"
+          "Parts.CapturePreview.Core": "[0.1.1, )",
+          "Parts.LineDetection": "[0.1.1, )"
         }
       },
       "parts.capturepreview.controlavaloniaui": {
@@ -441,7 +441,7 @@
           "EsUtil.Ui.AvaloniaUI.Loupe": "[0.2.0, )",
           "EsUtil.Ui.AvaloniaUI.Marquee": "[0.2.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
-          "Parts.CapturePreview.Core": "[0.1.0, )"
+          "Parts.CapturePreview.Core": "[0.1.1, )"
         }
       },
       "parts.capturepreview.core": {
@@ -464,7 +464,7 @@
       "SaveEvidence.AvaloniaUI": {
         "type": "Project",
         "dependencies": {
-          "App.Core": "[0.1.0, )",
+          "App.Core": "[0.1.1, )",
           "Avalonia.Desktop": "[12.1.4, )",
           "Avalonia.Themes.Fluent": "[12.1.4, )",
           "AvaloniaUI.DiagnosticsSupport": "[2.2.3, )",
@@ -475,7 +475,7 @@
           "FluentAvaloniaUI": "[3.1.0, )",
           "Microsoft.Extensions.DependencyInjection": "[10.0.14, )",
           "Microsoft.Extensions.Logging": "[10.0.14, )",
-          "Parts.CapturePreview.ControlAvaloniaUI": "[0.1.0, )",
+          "Parts.CapturePreview.ControlAvaloniaUI": "[0.1.1, )",
           "Serilog": "[4.4.0, )",
           "Serilog.Extensions.Logging": "[10.0.0, )",
           "Serilog.Sinks.File": "[7.0.0, )"
