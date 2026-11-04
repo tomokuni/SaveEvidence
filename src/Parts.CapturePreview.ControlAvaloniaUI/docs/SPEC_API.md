@@ -373,25 +373,25 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 
 #### 5.6.1 動作モード
 
-| モード | 選択矩形 | ルーペ | 全面暗転 | 用途 |
+| モード | 選択矩形 | ルーペ | 暗転 | 用途 |
 | --- | --- | --- | --- | --- |
 | `Crop` | 有効 | 有効 | 有効 | プレビュー内の切出し |
 | `AreaSelect` | 有効 | 有効 | 有効 | 全画面オーバーレイの範囲選択 |
-| `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ。 確定フローはホスト） |
-| `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ。 確定フローはホスト） |
+| `ScreenSelect` | 無効 | 無効 | 有効（外側のみ） | スクリーン選択（ハイライトのみ。 確定フローはホスト） |
+| `WindowSelect` | 無効 | 無効 | 有効（外側のみ） | ウィンドウ選択（ハイライトのみ。 確定フローはホスト） |
 
-既定値は `AreaSelect` です。 モードの解釈（表示可否・全面暗転）はコアの `SelectionOverlayState` が単一所有します。
+既定値は `AreaSelect` です。 モードの解釈（選択矩形・ルーペの表示可否）はコアの `SelectionOverlayState` が単一所有します。 暗転の可否は外観（設定の暗転色が見えるか）が単一所有し、全面暗転と注目矩形の外側だけの暗転の切り替えは描画計画が注目矩形の有無で行います。
 
 #### 5.6.2 プロパティ
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Mode` | `SelectionOverlayMode` | 動作モード（可視性と全面暗転を一括切替。 既定 `AreaSelect`） |
+| `Mode` | `SelectionOverlayMode` | 動作モード（選択矩形とルーペの可視性を一括切替。 既定 `AreaSelect`） |
 | `Options` | `SelectionOverlayOptions`（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 色は含まない）。 同じ値の再設定はスキップされる |
 | `MarqueeAppearance` / `LoupeAppearance` | 提示層の外観 | 描画にだけ必要な外観の単一値（内包コントロールへ委譲する） |
 | `HasSelection` / `SelectionSourceRect` | `bool` / `Rect` | 選択矩形の有無と現在値（対象座標） |
 | `HighlightSourceRect` | `Rect?` | ハイライト矩形（**null はハイライトなし**） |
-| `ShowFullOverlay` | `bool` | 全面暗転の有無（モードから導出。 読み取り専用） |
+| `ShowOuterMask` | `bool` | 暗転マスクを描くかどうか（外観の暗転色が見えるか。 読み取り専用） |
 | `LoupeCenterPoint` | `Point?` | ルーペ中心（対象座標。 未設定時は null） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
 | `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値） |

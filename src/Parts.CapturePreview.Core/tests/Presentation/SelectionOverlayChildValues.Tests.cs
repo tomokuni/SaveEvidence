@@ -37,8 +37,8 @@ public class SelectionOverlayChildValuesTests
     {
         var values = SelectionOverlayChildValues.Resolve(CreateOptions(), mode, CreateAppearance());
 
-        // ハイライトのみのモードでも暗転マスクは描画する（全面暗転は行わない）
-        Assert.False(values.MarqueeAppearance.ShowOuterMask);
+        // 暗転マスクの可否はホストの外観が単一所有する（ハイライトのみのモードでも暗転色は反映する）
+        Assert.True(values.MarqueeAppearance.ShowOuterMask);
         Assert.False(values.MarqueeAppearance.ShowHandles);
         Assert.False(values.IsHitTestVisible);
     }

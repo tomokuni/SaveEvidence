@@ -265,9 +265,15 @@ internal sealed class CaptureOverlay
     private void Finish(CaptureResult? result)
     {
         _log.LogCaptureFinished(result);
-        _onCaptured?.Invoke(result);
-        // オーナーの復帰（オーバーレイが画面を覆っている間に行う）
-        _ownerScope?.Dispose();
+        try
+        {
+            _onCaptured?.Invoke(result);
+        }
+        finally
+        {
+            // 通知が例外を投げても、オーナーの復帰は必ず行う（オーバーレイが画面を覆っている間に行う）
+            _ownerScope?.Dispose();
+        }
     }
 
     /// <summary>オーナーウィンドウ（WinUI 3）を撮影時に画面外へ退避するアダプタ。</summary>
@@ -628,11 +634,35 @@ internal sealed class CaptureOverlay
         var image = CropClipMath.Extract(Screen, _screenBounds.TopLeft, pixels);
         // 結果の確定（最初の 1 件だけを採用する）はコアが単一所有する。 領域は契約どおり仮想画面座標（画面物理）で渡す。
         var result = CaptureResult.From(image, pixels);
-        _result.TrySetResult(result);
         // 画像変更（ホスト）とオーナーの復帰をウィンドウのクローズ前に行い、
         // オーナーが新しい画像を描き終えてから閉じる
-        Finish(result);
-        _ = CloseAfterOwnerPaintedAsync();
+        CompleteWith(result);
+    }
+
+    /// <summary>結果の通知・オーナーの復帰・ウィンドウのクローズを 1 か所で行う。</summary>
+    /// <param name="result">キャプチャ結果（キャンセル時は null）。</param>
+    /// <remarks>
+    /// 通知（ホストの画像変更）が例外を投げても、オーナーの復帰（<see cref="Finish"/>）とクローズは必ず行う。<br/>
+    /// 通知の失敗は待機側へ伝える（伝えないと <c>ShowAsync</c> の呼び出し元が完了しないままオーバーレイが残る）。
+    /// </remarks>
+    private void CompleteWith(CaptureResult? result)
+    {
+        try
+        {
+            Finish(result);
+            _result.TrySetResult(result);
+        }
+        catch (Exception ex)
+        {
+            // 通知の失敗は待機側へ伝える（伝えないと ShowAsync の呼び出し元が完了しないまま残る）
+            _result.TrySetException(ex);
+            throw;
+        }
+        finally
+        {
+            // オーナーが新しい画像を描き終えてから閉じる
+            _ = CloseAfterOwnerPaintedAsync();
+        }
     }
 
     /// <summary>キャンセルする（切り出しを行わずに閉じる）。</summary>
@@ -651,9 +681,7 @@ internal sealed class CaptureOverlay
         // キャンセルの通知（ホスト）とオーナーの復帰をウィンドウのクローズ前に行い、
         // オーナーが描き終えてから閉じる
         _log.LogCancelRequested();
-        _result.TrySetResult(null);
-        Finish(null);
-        _ = CloseAfterOwnerPaintedAsync();
+        CompleteWith(null);
     }
 
     /// <summary>オーナーが再描画されるまで待ってからオーバーレイを閉じる。</summary>

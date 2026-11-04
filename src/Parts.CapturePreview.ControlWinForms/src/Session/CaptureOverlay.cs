@@ -224,9 +224,15 @@ internal sealed class CaptureOverlay
     private void Finish(CaptureResult? result)
     {
         _log.LogCaptureFinished(result);
-        _onCaptured?.Invoke(result);
-        // オーナーの復帰（オーバーレイが画面を覆っている間に行う）
-        _ownerScope?.Dispose();
+        try
+        {
+            _onCaptured?.Invoke(result);
+        }
+        finally
+        {
+            // 通知が例外を投げても、オーナーの復帰は必ず行う（オーバーレイが画面を覆っている間に行う）
+            _ownerScope?.Dispose();
+        }
     }
 
     /// <summary>画面全体（仮想スクリーン）を 1 枚の画像として取得する。</summary>
@@ -268,10 +274,8 @@ internal sealed class CaptureOverlay
         }
 
         _log.LogCancelRequested();
-        _result.TrySetResult(null);
         // キャンセルの通知（ホスト）とオーナーの復帰をフォームのクローズ前に行う
-        Finish(null);
-        CloseOverlay();
+        CompleteWith(null);
     }
 
     /// <summary>オーナーウィンドウ（WinForms）を撮影時に画面外へ退避するポート実装。</summary>
@@ -569,11 +573,32 @@ internal sealed class CaptureOverlay
         // 切り出し矩形は画面物理座標のため、画像の原点を渡して取り出す（座標変換はコアが単一所有する）
         var image = CropClipMath.Extract(Screen, _screenBounds.TopLeft, pixels);
         // 結果の確定（最初の 1 件だけを採用する）はコアが単一所有する。 領域は契約どおり仮想画面座標（画面物理）で渡す。
-        var result = CaptureResult.From(image, pixels);
-        _result.TrySetResult(result);
-        // 画像変更（ホスト）とオーナーの復帰をフォームのクローズ前に行う
-        Finish(result);
-        CloseOverlay();
+        CompleteWith(CaptureResult.From(image, pixels));
+    }
+
+    /// <summary>結果の通知・オーナーの復帰・オーバーレイのクローズを 1 か所で行う。</summary>
+    /// <param name="result">キャプチャ結果（キャンセル時は null）。</param>
+    /// <remarks>
+    /// 通知（ホストの画像変更）が例外を投げても、オーナーの復帰（<see cref="Finish"/>）とクローズは必ず行う。<br/>
+    /// 通知の失敗は待機側へ伝える（伝えないと <c>ShowAsync</c> の呼び出し元が完了しないままオーバーレイが残る）。
+    /// </remarks>
+    private void CompleteWith(CaptureResult? result)
+    {
+        try
+        {
+            Finish(result);
+            _result.TrySetResult(result);
+        }
+        catch (Exception ex)
+        {
+            // 通知の失敗は待機側へ伝える（伝えないと ShowAsync の呼び出し元が完了しないまま残る）
+            _result.TrySetException(ex);
+            throw;
+        }
+        finally
+        {
+            CloseOverlay();
+        }
     }
 
     /// <summary>選択オーバーレイの確定要求（Enter キー・ダブルクリック等）を処理する。</summary>

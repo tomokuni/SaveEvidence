@@ -20,11 +20,6 @@ internal readonly record struct SelectionOverlayState(bool UsesSelection)
     public static SelectionOverlayState Resolve(SelectionOverlayMode mode)
         => new(mode is SelectionOverlayMode.Crop or SelectionOverlayMode.AreaSelect);
 
-    /// <summary>全面暗転（注目なし）を表示するかどうかを取得する。</summary>
-    /// <value>選択矩形を使うモードでは true（切り出し・領域選択は全面を暗転して穴を開ける）。</value>
-    /// <remarks>選択矩形を使わないモード（ScreenSelect / WindowSelect）はハイライトのみを表示するため全面暗転しない。</remarks>
-    public bool ShowFullOverlay => UsesSelection;
-
     /// <summary>ルーペ画像上へ選択矩形の破線オーバーレイを描画するかどうかを取得する。</summary>
     /// <value>選択矩形を使うモードでは true。</value>
     public bool ShowSelectionOverlay => UsesSelection;

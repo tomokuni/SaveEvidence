@@ -157,14 +157,14 @@ session.Dispose();
 
 選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、配線と状態同期を内側で完結させる複合コントロールです（Facade / Composite パターン）。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。
 
-| モード | 選択矩形 | ルーペ | 全面暗転 | 用途 |
+| モード | 選択矩形 | ルーペ | 暗転 | 用途 |
 | --- | --- | --- | --- | --- |
 | `Crop` | 有効 | 有効 | 有効 | プレビュー内の切出し |
 | `AreaSelect` | 有効 | 有効 | 有効 | 全画面オーバーレイの領域選択 |
 | `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ） |
 | `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ） |
 
-既定値は `AreaSelect` です。 モードの解釈（表示可否・全面暗転）はコアの `SelectionOverlayState` が単一所有します。
+既定値は `AreaSelect` です。 モードの解釈（選択矩形・ルーペの表示可否）はコアの `SelectionOverlayState` が単一所有します。
 
 | メンバー | 説明 |
 | --- | --- |
@@ -173,7 +173,7 @@ session.Dispose();
 | `MarqueeAppearance` / `LoupeAppearance` | 描画にだけ必要な外観の単一値（提示層の外観。 内包コントロールへ委譲） |
 | `HasSelection` / `SelectionSourceRect` | 現在の選択状態（対象座標） |
 | `HighlightSourceRect` | ハイライト（`ScreenSelect` / `WindowSelect` の注目矩形。 null はハイライトなし） |
-| `ShowFullOverlay` | 全面暗転の有無（モードから導出） |
+| `ShowOuterMask` | 暗転マスクを描くかどうか（外観の暗転色が見えるか） |
 | `LoupeCenterPoint` | ルーペ中心（対象座標） |
 | `OperationTextProvider` / `InfoTextProvider` / `SizeLabelOverrideProvider` | 操作ラベル（2 行目）・情報ラベル（3 行目）・サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
 | `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | DPI スケーリング（設定には含めない環境値） |

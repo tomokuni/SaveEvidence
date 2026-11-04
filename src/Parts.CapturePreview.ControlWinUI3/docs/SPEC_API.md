@@ -150,7 +150,7 @@
 | `SelectionOverlayMode Mode { get; set; }` | 動作モード（切り出し / 領域選択 / スクリーン選択 / ウィンドウ選択） |
 | `bool HasSelection { get; }` / `EsRect SelectionSourceRect { get; }` | 選択矩形の有無と値（対象座標） |
 | `EsRect? HighlightSourceRect { get; set; }` | ハイライト矩形（対象座標）。 null は「ハイライトしない」 |
-| `bool ShowFullOverlay { get; }` | 全面暗転の表示可否（モードから導出する読み取り専用の値） |
+| `bool ShowOuterMask { get; }` | 暗転マスクを描くかどうか（外観の暗転色が見えるか。 読み取り専用の値） |
 | `EsPoint? LoupeCenterPoint { get; }` | ルーペ中心（対象座標）。 未設定時は null |
 | `MarqueeAppearance MarqueeAppearance { get; set; }` | 選択矩形の外観（描画にだけ必要な設定） |
 | `LoupeAppearance LoupeAppearance { get; set; }` | ルーペの外観（描画にだけ必要な設定） |

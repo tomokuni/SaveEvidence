@@ -260,7 +260,7 @@ flowchart TB
 - **分類**: 公開複合コントロール（`public sealed class : Panel`・Facade / Composite パターン）
 - **責務**:
   - 選択矩形（`MarqueeControl`。 選択矩形の外側に描く装飾も同コントロールが描画する）・拡大鏡（`LoupeControl`）の生成・配置・配線・状態同期を 1 箇所に集約する
-  - `Mode` による可視性・全面暗転の一括切替（解釈はコアの `SelectionOverlayState`）
+  - `Mode` による選択矩形・ルーペの可視性の一括切替（解釈はコアの `SelectionOverlayState`）
   - `Options`（コアの設定値）と `MarqueeAppearance` / `LoupeAppearance`（提示層の外観）の一括適用
   - 設定とモードから子コントロールへ適用する値の解決は `SelectionOverlayChildValues` が単一所有し、本コントロールは代入するだけ
   - 座標変換ポートの一括分配（`SetCoordTransform`）
@@ -268,7 +268,7 @@ flowchart TB
   - ルーペ画像上の選択矩形破線の描画（`LoupeRendered` イベントで描画先を受け取り、コアの破線幾何を描く）
   - ルーペの拡大元（コアの画像 `EsReadOnlyBitmap`）と表示用の射影（`IImage`。 省略可）の受け取り（射影があれば切り出しの複製を作らずに描ける。 0 コピー）
   - **ルーペ中心の取り直し**: 選択矩形コントロールからの追従位置は、実カーソルから取り直した位置（`TryGetCurrentLoupePosition`）を優先して使う（**ポインター移動イベントの座標は入力へ積まれた分だけ古く、そのまま使うとルーペがカーソルより遅れて見える**。 取り直しの可否はコアが単一所有する）。 加えてルーペの `CenterPointProvider`（描画の直前の取り直し）を配線し、描画フレームの提示までに中心が進んでも表示位置と拡大画像が同じ中心で揃うようにする
-- **公開メンバー**: `Mode` / `Options` / `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionSourceRect` / `HighlightSourceRect` / `ShowFullOverlay` / `LoupeCenterPoint` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `NotifyViewportChanged` / `RequestRedraw`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`
+- **公開メンバー**: `Mode` / `Options` / `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionSourceRect` / `HighlightSourceRect` / `ShowOuterMask` / `LoupeCenterPoint` / ラベルプロバイダ / `Log` / DPI スケーリング、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `NotifyViewportChanged` / `RequestRedraw`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`
 - **可視性**: public（内包コントロールへの直接アクセスは internal）
 - **依存**: MarqueeControl / LoupeControl / Parts.CapturePreview.Core（`SelectionOverlayMode` / `SelectionOverlayState` / `SelectionOverlayOptions` / `SelectionOverlayState` / `SelectionOutlineRasterizer`）/ 提示層の外観（`MarqueeAppearance` / `LoupeAppearance`）/ EsUtil.Platform.Core
 - **備考**: ホイール操作と表示の変化の追従は本コントロールの配線ではなく、ホストが担う（コントロール化を前提とした処理）

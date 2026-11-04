@@ -61,23 +61,24 @@ public class SelectionOverlayControlTests
     [AvaloniaTheory]
     [InlineData(SelectionOverlayMode.Crop, true, true)]
     [InlineData(SelectionOverlayMode.AreaSelect, true, true)]
-    [InlineData(SelectionOverlayMode.ScreenSelect, false, false)]
-    [InlineData(SelectionOverlayMode.WindowSelect, false, false)]
-    internal void Mode_入力の可否と全面暗転が切り替わる(
-        SelectionOverlayMode mode, bool expectedMarqueeInteractive, bool expectedShowFullOverlay)
+    [InlineData(SelectionOverlayMode.ScreenSelect, false, true)]
+    [InlineData(SelectionOverlayMode.WindowSelect, false, true)]
+    internal void Mode_入力の可否と暗転の可否が切り替わる(
+        SelectionOverlayMode mode, bool expectedMarqueeInteractive, bool expectedShowOuterMask)
     {
         var control = new SelectionOverlayControl { Mode = mode };
 
         // 選択矩形を使わないモードでも暗転マスク（ハイライト）を描画するため、描画は止めず入力だけを止める
         Assert.Equal(expectedMarqueeInteractive, control.Marquee.IsHitTestVisible);
         Assert.True(control.Marquee.IsVisible);
-        Assert.Equal(expectedShowFullOverlay, control.ShowFullOverlay);
+        // 暗転の可否はホストの外観（暗転色が見えるか）が単一所有するため、モードでは変わらない
+        Assert.Equal(expectedShowOuterMask, control.ShowOuterMask);
     }
 
     /// <summary>外観（色）を代入してもモードから導出する表示可否が保たれることを検証する。</summary>
     /// <remarks>
-    /// 外観はホストが与える素材であり、モードから導出する表示可否（ハンドル・全面暗転）は本層が上書きする。<br/>
-    /// 代入の順序（設定 → 外観）でモードの判断が失われると、<b>選択前は全面暗転が描かれず何も見えない</b><br/>
+    /// 外観はホストが与える素材であり、モードから導出する表示可否（ハンドル）は本層が上書きする。<br/>
+    /// 代入の順序（設定 → 外観）でモードの判断が失われると、<b>選択前はハンドルが描かれない</b><br/>
     /// （実際にキャプチャと切り出しで表示されない不具合として発生した）。
     /// </remarks>
     [AvaloniaFact]
@@ -93,43 +94,42 @@ public class SelectionOverlayControlTests
             }
         };
 
-        // 色は与えた値のまま、モード由来の表示可否（選択を使うモード = 全面暗転 + ハンドル）になる
+        // 色と暗転の可否は与えた値のまま、モード由来の表示可否（ハンドル）だけが上書きされる
         var appearance = control.Marquee.Appearance;
         Assert.Equal(90, appearance.OuterMaskColor.A);
         Assert.Equal((1, 2, 3), (appearance.OuterMaskColor.R, appearance.OuterMaskColor.G, appearance.OuterMaskColor.B));
         Assert.True(appearance.ShowOuterMask);
         Assert.True(appearance.ShowHandles);
-        Assert.True(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
 
-        // 選択を使わないモードへ変えた後に外観を代入しても、モードの判断（全面暗転なし）が残る
+        // 選択を使わないモードへ変えても、暗転の可否はホストの外観が単一所有する（暗転色は反映される）
         control.Mode = SelectionOverlayMode.WindowSelect;
         control.MarqueeAppearance = MarqueeAppearance.Default with
         {
             OuterMaskColor = DrawingColor.FromArgb(90, 1, 2, 3),
         };
 
-        Assert.False(control.Marquee.Appearance.ShowOuterMask);
+        Assert.True(control.Marquee.Appearance.ShowOuterMask);
         Assert.False(control.Marquee.Appearance.ShowHandles);
-        Assert.False(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
     }
 
-    /// <summary>モードを往復してもホストが与えた表示可否が戻ることを検証する。</summary>
+    /// <summary>モードを往復してもホストが与えた暗転の可否が保たれることを検証する。</summary>
     /// <remarks>
     /// モードから導出する表示可否を子コントロールの外観へ合成したまま素材として読み直すと、<br/>
-    /// 「暗転しないモード」を経た時点で素材の可否が false に落ち、選択を使うモードへ戻しても暗転しない<br/>
-    /// （素材はホストが与えた値として保持する）。
+    /// 「ハンドルを描かないモード」を経た時点で素材の可否が false に落ちる（素材はホストが与えた値として保持する）。
     /// </remarks>
     [AvaloniaFact]
-    internal void Mode_往復しても全面暗転の表示可否が戻る()
+    internal void Mode_往復しても暗転の可否が保たれる()
     {
         var control = new SelectionOverlayControl { Mode = SelectionOverlayMode.Crop };
-        Assert.True(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
 
         control.Mode = SelectionOverlayMode.WindowSelect;
-        Assert.False(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
 
         control.Mode = SelectionOverlayMode.Crop;
-        Assert.True(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
     }
 
     // ====================================================================
@@ -579,7 +579,7 @@ public class SelectionOverlayControlTests
 
             // ルーペが非表示になる（以降の描画は発生しない）
             Assert.False(control.Loupe.IsVisible);
-            Assert.False(control.ShowFullOverlay);
+            Assert.True(control.ShowOuterMask);
         }
         finally
         {
@@ -1066,13 +1066,13 @@ public class SelectionOverlayControlTests
     }
 
     [AvaloniaFact]
-    internal void ShowFullOverlay_モードに応じた全面暗転状態を返す()
+    internal void ShowOuterMask_暗転色が見える間はすべてのモードで描く()
     {
-        // Crop / AreaSelect は全面暗転あり、ScreenSelect / WindowSelect はなし
-        Assert.True(new SelectionOverlayControl { Mode = SelectionOverlayMode.Crop }.ShowFullOverlay);
-        Assert.True(new SelectionOverlayControl { Mode = SelectionOverlayMode.AreaSelect }.ShowFullOverlay);
-        Assert.False(new SelectionOverlayControl { Mode = SelectionOverlayMode.ScreenSelect }.ShowFullOverlay);
-        Assert.False(new SelectionOverlayControl { Mode = SelectionOverlayMode.WindowSelect }.ShowFullOverlay);
+        // 暗転の可否はホストの外観（暗転色が見えるか）が単一所有するため、モードでは変わらない
+        Assert.True(new SelectionOverlayControl { Mode = SelectionOverlayMode.Crop }.ShowOuterMask);
+        Assert.True(new SelectionOverlayControl { Mode = SelectionOverlayMode.AreaSelect }.ShowOuterMask);
+        Assert.True(new SelectionOverlayControl { Mode = SelectionOverlayMode.ScreenSelect }.ShowOuterMask);
+        Assert.True(new SelectionOverlayControl { Mode = SelectionOverlayMode.WindowSelect }.ShowOuterMask);
     }
 
     // ====================================================================

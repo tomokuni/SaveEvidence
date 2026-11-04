@@ -187,14 +187,14 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、配線と状態同期を内側で完結させる複合コントロールです。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。
 
-| モード | 選択矩形 | ルーペ | 全面暗転 | 用途 |
+| モード | 選択矩形 | ルーペ | 暗転 | 用途 |
 | --- | --- | --- | --- | --- |
 | `Crop` | 有効 | 有効 | 有効 | プレビュー内の切出し |
 | `AreaSelect` | 有効 | 有効 | 有効 | 全画面オーバーレイの領域選択 |
 | `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ） |
 | `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ） |
 
-主な公開メンバー: `Mode` / `Options`（コアの `SelectionOverlayOptions`）/ `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionSourceRect` / `HighlightSourceRect` / `ShowFullOverlay` / `LoupeCenterPoint` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling`、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `NotifyViewportChanged` / `RequestRedraw`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`。
+主な公開メンバー: `Mode` / `Options`（コアの `SelectionOverlayOptions`）/ `MarqueeAppearance` / `LoupeAppearance` / `HasSelection` / `SelectionSourceRect` / `HighlightSourceRect` / `ShowOuterMask` / `LoupeCenterPoint` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` / `Log` / `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling`、メソッド `SetCoordTransform` / `SetSelection` / `ClearSelection` / `SetLoupeSource` / `SetLoupePosition` / `ClearLoupe` / `RequestConfirm` / `RequestCancel` / `FocusMarquee` / `NotifyViewportChanged` / `RequestRedraw`、イベント `ConfirmRequested` / `CancelRequested` / `LoupePositionMoved` / `LoupeRendered`。
 
 `SetLoupeSource` が受け取る拡大元は**コアの画像**（`EsReadOnlyBitmap`）です。 画像を `IImage` として表示している場合は、表示アダプタ（`EsBitmapAvaloniaAdapter`）の `GetEsBitmap()` でコアの画像を取り出して渡します。 第 2 引数（表示用の射影。 省略可）に表示に使っている `IImage` を渡すと、切り出しの複製を作らずに描けます（**0 コピー**。 寸法が一致しない射影は無視され、拡大元から描かれます）。
 

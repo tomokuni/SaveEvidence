@@ -527,9 +527,13 @@ public sealed class SelectionOverlayControl : Panel
         set => _marquee.HighlightSourceRect = value?.ToEsRect();
     }
 
-    /// <summary>全面暗転（注目なし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
-    /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ（外観の表示可否を参照する）。</remarks>
-    public bool ShowFullOverlay => _marquee.Appearance.ShowOuterMask;
+    /// <summary>暗転マスク（注目矩形の外側・注目なしの全面）を描くかどうかを取得する。</summary>
+    /// <remarks>
+    /// 表示の可否は外観（暗転色が見えるか）が単一所有する。 全面暗転と注目矩形の外側の暗転の切り替えは
+    /// 描画計画が注目矩形の有無で行う。<br/>
+    /// 設定が変わったときに、暗転が描かれるかを読み取るための読み取り専用プロパティである。
+    /// </remarks>
+    public bool ShowOuterMask => _marquee.Appearance.ShowOuterMask;
 
     // ====================================================================
     // 公開 API: 描画に使う色

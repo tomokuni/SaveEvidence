@@ -83,7 +83,7 @@ SelectionOverlayControl（_selectionOverlay）
 | `Parts.CapturePreview.ControlAvaloniaUI` | `AppearanceSettings`（`CaptureSettings`） | 部分更新（null は現在値維持）。 実行中の Crop セッションへ即時反映 |
 | `CropViewControl` | `SelectionOverlayOptions`（`SelectionOverlayOptions`）/ `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` / `ClientToSourceScaling` / `LoupeClientToPixelScaling` / `Appearance` / `CenterAlign` | 設定は `SelectionOverlayControl` へ委譲。 DPI スケーリング・プレビューの下地色は個別プロパティ（コードから動的設定） |
 | `ZoomViewControl` | `Appearance` / `CenterAlign` / `ZoomPercent` / `IsFit` | 画像ビューポートの外観（下地色・スクロールバー） |
-| `SelectionOverlayControl` | `Options`（`SelectionOverlayOptions`）/ `MarqueeAppearance`（外観）/ `LoupeAppearance`（`LoupeAppearance`）/ `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` / `Mode` / `ShowFullOverlay` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | 下位（Marquee（選択の設定） / 装飾 / Loupe）の設定を一括公開（コアの設定値 1 つ）+ 外観（機能アセンブリの単一値 2 つ: `MarqueeAppearance` / `LoupeAppearance`）+ DPI スケーリングとラベル文言プロバイダを個別公開 |
+| `SelectionOverlayControl` | `Options`（`SelectionOverlayOptions`）/ `MarqueeAppearance`（外観）/ `LoupeAppearance`（`LoupeAppearance`）/ `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` / `Mode` / `ShowOuterMask` / `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | 下位（Marquee（選択の設定） / 装飾 / Loupe）の設定を一括公開（コアの設定値 1 つ）+ 外観（機能アセンブリの単一値 2 つ: `MarqueeAppearance` / `LoupeAppearance`）+ DPI スケーリングとラベル文言プロバイダを個別公開 |
 | `MarqueeControl` | `Options`（`MarqueeOptions`。 ハンドル寸法・マーカー寸法・対話パラメータ）/ `Appearance`（`MarqueeAppearance`。 色・枠線の太さ・表示可否）/ `ClientToSourceScaling` / `DisplayScaleScaling` / `SizeLabelOverrideProvider` | `SelectionOverlayOptions.Marquee`（選択の設定）と外観（`MarqueeAppearance`）からそれぞれ設定（枠線の太さと色は `MarqueeAppearance` が単一所有する）。 **操作・情報ラベルは本コントロールの概念ではない**ため、ホスト（`SelectionOverlayControl`）が `Options.Labels` で描く |
 | `LoupeControl` | `Options`（`LoupeOptions`。 基本サイズ・拡大率）/ `Appearance`（`LoupeAppearance`。 色・枠線の太さ・表示可否）/ `ClientToPixelScaling`（DPI 自動取得）/ `PositionOffset` | `SelectionOverlayOptions.Loupe` から設定（`ClientToPixelScaling` と外観を除く） |
 | `EsUtil.Ui.AvaloniaUI.Interop` | —（共通基盤） | カーソル操作（`ICursorService`）・座標変換ポート（`ICoordTransform`。 `EsUtil.Platform.Core` 提供）を提供 |
@@ -150,10 +150,10 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `BorderThickness`（`MarqueeAppearance`） | ✅ `MarqueeAppearance.BorderThickness` | ✅ | 枠線の太さ（外観が単一所有する） |
 | `InfoColor` / `InfoBackgroundColor` / `InfoFontSize` / `ShowInfoLabel`（`SelectionOverlayLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 情報ラベル（3 行目）。 **文言の生成と描画はホスト**が行う |
 | `OperationColor` / `OperationFontSize` / `OperationBackgroundColor` / `ShowOperationLabel`（`SelectionOverlayLabelOptions`） | ✅ `Options.Labels.*` | ✅ | 操作ラベル（2 行目）。 **文言の生成と描画はホスト**が行う |
-| `Mode` | —（`Mode` で公開） | —（セッションで決定） | 子コントロールの有効・無効と全面暗転（`SelectionOverlayMode`） |
+| `Mode` | —（`Mode` で公開） | —（セッションで決定） | 子コントロールの有効・無効と選択矩形の可視性（`SelectionOverlayMode`） |
 
 - サイズラベルの表示可否は外観（`MarqueeAppearance.ShowSizeLabel`）が、装飾の太さと描画可否は同じ外観（`MarqueeAppearance`）が、操作・情報ラベルは `Options.Labels`（`SelectionOverlayLabelOptions`）が単一所有する。 **描画にだけ必要な設定（色・枠線の太さ・表示可否と、ラベルのフォントサイズ・角丸）は外観 `MarqueeAppearance` / `LoupeAppearance`（`SelectionOverlayControl.MarqueeAppearance` / `.LoupeAppearance`）が単一所有する**。
-- `Mode` は `SelectionOverlayControl.Mode`（`SelectionOverlayMode`）として公開される（モードが決めるのは子コントロールの有効・無効と全面暗転のみ。 文言はホストがプロバイダで与える）。
+- `Mode` は `SelectionOverlayControl.Mode`（`SelectionOverlayMode`）として公開される（モードが決めるのは子コントロールの有効・無効と選択矩形の可視性のみ。 文言はホストがプロバイダで与える）。
 - **例外**: `ClientToSourceScaling` / `DisplayScaleScaling` は設定（`Options`）の**対象外**の環境値で、`SelectionOverlayControl.ClientToSourceScaling` / `.DisplayScaleScaling`（個別プロパティ）として公開される。 DPI スケーリング・マルチスクリーン補正のため設定画面では設定不可（セッションがコードから動的設定）。
 
 ### 3.3 LoupeControl の公開外観と SelectionOverlayControl での公開有無
@@ -195,7 +195,7 @@ SettingsPage.axaml（ColorPicker / CheckBox / NumericUpDown / ComboBox）
 | `LoupeClientToPixelScaling` | ✅ `LoupeClientToPixelScaling`（個別プロパティ） | —（DPI から自動取得） | ルーペ描画スケール |
 | `Mode`（`SelectionOverlayMode`） | ✅ `SelectionMode`（`SelectionOverlayMode` をそのまま委譲） | — | |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | ✅ `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider`（そのまま委譲） | — | ラベル文言プロバイダ（キャプチャセッションが `CaptureLabelTexts` から与える） |
-| `ShowFullOverlay` | —（公開しない） | — | モードから導出される描画状態。 `SelectionOverlayControl` の公開面であり、`CropViewControl` は透過しない |
+| `ShowOuterMask` | —（公開しない） | — | 外観から導出される描画状態。 `SelectionOverlayControl` の公開面であり、`CropViewControl` は透過しない |
 
 - `CropViewControl` は `SelectionOverlayControl` の `Options` / `MarqueeAppearance` / `LoupeAppearance` と DPI スケーリング個別プロパティをそのまま公開する（型を透過）。
 - `ClientToSourceScaling` / `LoupeClientToPixelScaling` は `Options` には**含まれず**、個別プロパティで公開される（**コードから動的設定**のため設定画面では設定不可）。

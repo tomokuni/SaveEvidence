@@ -167,9 +167,10 @@ public sealed partial class SelectionOverlayControl : Panel
         set => _marquee.HighlightSourceRect = value;
     }
 
-    /// <summary>全面暗転（注目なし）を表示するかどうかを取得する。</summary>
-    /// <value>全面暗転する場合は true。 モードから導出される読み取り専用の値（外観の表示可否を参照する）。</value>
-    public bool ShowFullOverlay => _marquee.Appearance.ShowOuterMask;
+    /// <summary>暗転マスク（注目矩形の外側・注目なしの全面）を描くかどうかを取得する。</summary>
+    /// <value>暗転を描く場合は true（外観の暗転色が見えるか）。</value>
+    /// <remarks>全面暗転と注目矩形の外側の暗転の切り替えは描画計画が注目矩形の有無で行う。</remarks>
+    public bool ShowOuterMask => _marquee.Appearance.ShowOuterMask;
 
     /// <summary>ルーペ中心（対象座標）を取得する。</summary>
     /// <value>ルーペ中心。 未設定時は null。</value>

@@ -50,9 +50,10 @@ public readonly record struct SelectionOverlayChildValues(
             marqueeAppearance with
             {
                 ShowHandles = state.UsesSelection,
-                // 全面暗転は「モードが暗転する」かつ「暗転色が見える」ときだけ描く
-                // （提示層の外観は暗転の可否を 1 つのフラグで持つため、モードの判断と合成する）
-                ShowOuterMask = state.ShowFullOverlay && marqueeAppearance.ShowOuterMask,
+                // 暗転マスクの可否はホストの外観（暗転色が見えるか）が単一所有する。
+                // 全面暗転と注目矩形の外側の暗転の切り替えは描画計画が注目矩形の有無で行うため、
+                // ここでモードの判断を合成しない（合成するとハイライトのみのモードで暗転色が無視される）。
+                ShowOuterMask = marqueeAppearance.ShowOuterMask,
             },
             options.Loupe,
             options.LoupeOffset,

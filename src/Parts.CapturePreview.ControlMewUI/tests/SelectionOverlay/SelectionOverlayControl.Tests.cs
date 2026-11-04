@@ -48,26 +48,27 @@ public class SelectionOverlayControlTests
         Assert.False(control.HasSelection);
         Assert.Equal(default, control.SelectionSourceRect);
         Assert.Null(control.HighlightSourceRect);
-        Assert.True(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
         Assert.True(control.Marquee.IsVisible);
         Assert.Null(control.LoupeCenterPoint);
     }
 
-    /// <summary>モードに応じて選択矩形・ルーペの可視性と全面暗転が切り替わることを検証する。</summary>
+    /// <summary>モードに応じて選択矩形の可視性と入力の可否が切り替わることを検証する。</summary>
     /// <param name="mode">設定する動作モード。</param>
-    /// <param name="expectedShowFullOverlay">全面暗転の期待値。</param>
+    /// <param name="expectedShowOuterMask">暗転を描くかどうかの期待値（暗転色が見えるため常に true）。</param>
     /// <param name="expectedMarqueeVisible">選択矩形の可視性の期待値。</param>
     [Theory]
     [InlineData(SelectionOverlayMode.Crop, true, true)]
     [InlineData(SelectionOverlayMode.AreaSelect, true, true)]
-    [InlineData(SelectionOverlayMode.ScreenSelect, false, false)]
-    [InlineData(SelectionOverlayMode.WindowSelect, false, false)]
-    internal void モード切替_選択矩形の可視性と全面暗転を切り替える(
-        SelectionOverlayMode mode, bool expectedShowFullOverlay, bool expectedMarqueeVisible)
+    [InlineData(SelectionOverlayMode.ScreenSelect, true, false)]
+    [InlineData(SelectionOverlayMode.WindowSelect, true, false)]
+    internal void モード切替_選択矩形の可視性と入力の可否を切り替える(
+        SelectionOverlayMode mode, bool expectedShowOuterMask, bool expectedMarqueeVisible)
     {
         var control = new SelectionOverlayControl { Mode = mode };
 
-        Assert.Equal(expectedShowFullOverlay, control.ShowFullOverlay);
+        // 暗転の可否はホストの外観（暗転色が見えるか）が単一所有するため、モードでは変わらない
+        Assert.Equal(expectedShowOuterMask, control.ShowOuterMask);
         // 選択矩形を使わないモードでも暗転マスク（ハイライト）を描画するため、描画は止めず入力だけを止める
         Assert.Equal(expectedMarqueeVisible, control.Marquee.IsHitTestVisible);
         Assert.True(control.Marquee.IsVisible);
@@ -92,24 +93,24 @@ public class SelectionOverlayControlTests
             }
         };
 
-        // 色は与えた値のまま、モード由来の表示可否（選択を使うモード = 全面暗転 + ハンドル）になる
+        // 色と暗転の可否は与えた値のまま、モード由来の表示可否（ハンドル）だけが上書きされる
         var appearance = control.Marquee.Appearance;
         Assert.Equal(90, appearance.OuterMaskColor.A);
         Assert.Equal((1, 2, 3), (appearance.OuterMaskColor.R, appearance.OuterMaskColor.G, appearance.OuterMaskColor.B));
         Assert.True(appearance.ShowOuterMask);
         Assert.True(appearance.ShowHandles);
-        Assert.True(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
 
-        // 選択を使わないモードへ変えた後に外観を代入しても、モードの判断（全面暗転なし）が残る
+        // 選択を使わないモードへ変えても、暗転の可否はホストの外観が単一所有する（暗転色は反映される）
         control.Mode = SelectionOverlayMode.WindowSelect;
         control.MarqueeAppearance = MarqueeAppearance.Default with
         {
             OuterMaskColor = DrawingColor.FromArgb(90, 1, 2, 3),
         };
 
-        Assert.False(control.Marquee.Appearance.ShowOuterMask);
+        Assert.True(control.Marquee.Appearance.ShowOuterMask);
         Assert.False(control.Marquee.Appearance.ShowHandles);
-        Assert.False(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
     }
 
     /// <summary>拡大元画像と中心があるとき、選択矩形を使うモードでのみルーペを表示することを検証する。</summary>
@@ -142,7 +143,7 @@ public class SelectionOverlayControlTests
         control.Mode = SelectionOverlayMode.AreaSelect;
 
         Assert.Equal(SelectionOverlayMode.AreaSelect, control.Mode);
-        Assert.True(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
     }
 
     // ====================================================================
@@ -709,6 +710,6 @@ public class SelectionOverlayControlTests
 
         control.RequestRedraw();
 
-        Assert.True(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
     }
 }

@@ -30,32 +30,33 @@ public sealed class SelectionOverlayControlTests
         Assert.False(control.HasSelection);
     }
 
-    /// <summary>範囲選択モードでは全面暗転を表示し入力を有効にすることを検証する。</summary>
+    /// <summary>範囲選択モードでは暗転を描き入力を有効にすることを検証する。</summary>
     [Fact]
-    internal void 範囲選択_全面暗転と入力を有効にする()
+    internal void 範囲選択_暗転と入力を有効にする()
     {
         using var control = new SelectionOverlayControl
         {
             Mode = SelectionOverlayMode.AreaSelect,
         };
 
-        Assert.True(control.ShowFullOverlay);
+        Assert.True(control.ShowOuterMask);
         Assert.True(control.Enabled);
     }
 
-    /// <summary>ハイライトのみのモードでは全面暗転をせず入力を受け取らないことを検証する。</summary>
+    /// <summary>ハイライトのみのモードでも暗転を描き、入力は受け取らないことを検証する。</summary>
     /// <param name="mode">ハイライトのみのモード。</param>
     [Theory]
     [InlineData(SelectionOverlayMode.ScreenSelect)]
     [InlineData(SelectionOverlayMode.WindowSelect)]
-    internal void ハイライトのみ_全面暗転も入力もしない(SelectionOverlayMode mode)
+    internal void ハイライトのみ_暗転は描くが入力は受けない(SelectionOverlayMode mode)
     {
         using var control = new SelectionOverlayControl
         {
             Mode = mode,
         };
 
-        Assert.False(control.ShowFullOverlay);
+        // 暗転の可否は設定（暗転色が見えるか）が単一所有するため、ハイライトのみのモードでも描く
+        Assert.True(control.ShowOuterMask);
         // 入力を受け取らない（WinForms では無効状態が「入力が下のコントロールへ通る」を表す）
         Assert.False(control.Enabled);
     }

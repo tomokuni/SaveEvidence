@@ -1,4 +1,4 @@
-﻿# Parts.CapturePreview.Core システム仕様書
+# Parts.CapturePreview.Core システム仕様書
 
 ## 目次 <!-- omit from toc -->
 
@@ -302,7 +302,7 @@ classDiagram
 │  SelectionOverlayOptions（record）: Marquee / Labels / Loupe / 破線色 2 / LoupeOffset │
 │  SelectionOverlayLabelOptions（record）: 操作・情報ラベルの外観 │
 │  SelectionOverlayState: Resolve（モード → 状態）        │
-│  SelectionOverlayState: UsesSelection / ShowFullOverlay / ShowSelectionOverlay │
+│  SelectionOverlayState: UsesSelection / ShowSelectionOverlay                      │
 │  SelectionOverlayState: ShouldDrawSelectionOverlay（モードと選択の合成判断） │
 │  SelectionUsability: IsUsable（選択の可否）       │
 │  SelectionOutlineRasterizer: DrawSelectionRect（2 色の破線。 選択が覆う画素の外側へ引く） │
@@ -332,7 +332,7 @@ classDiagram
     class OverlayRectLayout { <<static>> +Resolve(rect, topLeft, bottomRight)$ OverlayRectFrame  +EffectiveThickness(thickness)$ double }
     class SelectionOverlayMode { <<enum>> Crop  AreaSelect  ScreenSelect  WindowSelect }
     class SelectionOverlayOptions { <<record>> +MarqueeOptions Marquee  +LoupeOptions Loupe  +SelectionOverlayLabelOptions Labels  +double LoupeOffset }
-    class SelectionOverlayState { <<readonly record struct>> +bool UsesSelection  +bool ShowFullOverlay  +bool ShowSelectionOverlay  +ShouldDrawSelectionOverlay(hasSelection)$ bool  +Resolve(mode)$ SelectionOverlayState }
+    class SelectionOverlayState { <<readonly record struct>> +bool UsesSelection  +bool ShowSelectionOverlay  +ShouldDrawSelectionOverlay(hasSelection)$ bool  +Resolve(mode)$ SelectionOverlayState }
 
     OverlayRectLayout ..> OverlayRect : 入力
     OverlayRectLayout ..> OverlayRectFrame : 生成
@@ -425,14 +425,14 @@ sequenceDiagram
 - **判定を「クランプ前の値」で行う**: 画像外へ出た選択矩形を「大きい」と誤判定しないため、最小サイズの判定は画像内へクランプする前の値で行う。
 - **丸めは 0.5 を切り上げ**: `Math.Round` の既定（銀行丸め）はピクセル座標の直感に反するため `MidpointRounding.AwayFromZero` を使う。
 - **矩形の描画判断を 1 箇所に置く**: 負サイズのクランプ・太さの 1 ピクセル下限・破線かどうか・背景色を使うかは `OverlayRectLayout` が単一所有する。 経路（ベクターの図形要素 / ラスタライズ）ごとに判断すると見た目がずれる。
-- **モードの解釈を 1 箇所に置く**: モードと表示可否（選択矩形・破線・全面暗転・ルーペ）の対応は `SelectionOverlayState` が単一所有する。 UI が `switch` を書くと片方の UI だけ挙動がずれる。
+- **モードの解釈を 1 箇所に置く**: モードと表示可否（選択矩形・破線・ルーペ）の対応は `SelectionOverlayState` が単一所有する。 UI が `switch` を書くと片方の UI だけ挙動がずれる。 暗転マスクの可否は設定（暗転色が見えるか）が単一所有し、全面暗転と注目矩形の外側の暗転の切り替えは描画計画が注目矩形の有無で行う（ハイライトのみのモードでも設定した暗転色を反映する）。
 - **画像ビューポートの状態と判断を 1 箇所に置く**: 実効ズーム率の導出・可否・遷移の適用・パン・スクロールバーは `ZoomViewSession` が単一所有し、純粋計算（`ZoomTransition` / `ZoomMath` / `ZoomScrollBarGeometry`）へ委譲する。 UI が判断を持つと、ズーム挙動と設定が両 UI でずれる。
 - **市松模様は画像の表示矩形の内側に限る**: 透明部分の背景は画像の内側だけに描き、画像の外（ペーストボード）は下地色の単色にする。 タイルの格子をビューポート原点基準に固定することで、パンしても模様が這わない。
 - **設定 → 選択オーバーレイの写像は写像先のカテゴリ（`SelectionOverlay/`）が持つ**: `SelectionOverlayOptionsMapper` は写像元が `Setting/` の `CaptureSettings` だが、組み立てるのは選択オーバーレイの設定値であり、「どの設定が自分の設定値になるか」は**写像先が所有する規則**である（写像元へ置くと、写像先を増やすたびに設定側のカテゴリが膨らむ）。 `Setting/` が持つのは「設定値そのもののマージ・検証」（`CaptureSettingsMerge`）に限る。
 - **一方の UI だけが使うコア型もコアに置く**: `ImageColorMath`（撮影の下地色の決定。 現在は MewUI が使用）と `OverlayRectRasterizer`（ルーペ画像への矩形ラスタライズ。 現在は Avalonia が使用）は、**UI フレームワークに依存しない規則**であり、コアに置く（UI 側へ移すと、もう一方の UI が同じ必要を持った時点で再びコピーになる。 「どちらの UI が使うか」は配置の基準にしない）。
 - **ズームの表示規則（中央寄せ・スクロールバー値の範囲）はコアが単一所有する**: 中央寄せ補正は `ZoomMath.MaxCentered`（Fit 中は `ComputeImageOrigin`）、スクロールバー値の [0, 最大オフセット] へのクランプは `ZoomScrollBarMetrics.ClampOffset` が持ち、UI は自前の式を書かない（UI ごとに条件を書くと、画像がビューポートに収まる軸の扱いがずれる）。
 - **ログ定義は本アセンブリで 1 つ**: 撮影・切り出し・ズーム・設定のログは `CapturePreviewLogMessage` が同居する（[`.github/ログ規約.md`](../../../.github/ログ規約.md) の「定義クラスはアセンブリごとに 1 つ」に従う）。 カテゴリ別に分割しない。
-- **依存の宣言は推移参照で省略する**: 本プロジェクトは機能アセンブリ（`EsUtil.Feature.*.Core`）を**宣言せず**、UI コントロール（`EsUtil.Ui.*.Marquee` / `.Loupe`）の推移参照で解決する（[`.github/依存関係.md`](../../../.github/依存関係.md) §1）。 外観型とコアの設定型（`MarqueeOptions` / `LoupeOptions`）は同じパッケージが公開するため、宣言を分ける意味がない（宣言を消してもアセンブリ依存は残る）。
+- **依存の宣言は推移参照で省略しない**: 本プロジェクトは機能アセンブリ（`EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Loupe.Core`）を**直接宣言する**（`Parts.CapturePreview.Core.csproj`）。 本プロジェクトは UI 非依存のコアであり、UI コントロール（`EsUtil.Ui.*`）の**参照元ではない**ため、推移参照では解決できない（[`.github/依存関係.md`](../../../.github/依存関係.md) §1）。 外観型とコアの設定型（`MarqueeOptions` / `LoupeOptions`）は 0.4.0 以降同じパッケージが公開するため、宣言は機能ごとに 1 つで足りる。
 
 ## 8. 検証
 

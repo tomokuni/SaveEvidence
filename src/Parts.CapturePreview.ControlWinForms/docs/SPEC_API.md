@@ -131,7 +131,7 @@ WinForms の `MouseEventArgs.Delta` は 1 ノッチ = 120 であるため、コ�
 | `Mode`（`SelectionOverlayMode`） | 動作モード。 既定は `AreaSelect`。 Crop / AreaSelect は選択矩形とルーペを有効化し、ScreenSelect / WindowSelect はハイライトのみになる |
 | `HasSelection`（`bool`） / `SelectionSourceRect`（`EsRect`） | 選択の有無と選択矩形（対象座標） |
 | `HighlightSourceRect`（`EsRect?`） | ハイライト矩形（対象座標）。 null が「ハイライトしない」を意味し、選択矩形より優先される |
-| `ShowFullOverlay`（`bool`） | 全面暗転を表示するかどうか（モードから導出される読み取り専用の値） |
+| `ShowOuterMask`（`bool`） | 暗転マスクを描くかどうか（外観の暗転色が見えるか。 読み取り専用の値） |
 | `LoupeCenterPoint`（`EsPoint?`） | ルーペ中心（対象座標）。 未設定時は null |
 | `MarqueeAppearance` / `LoupeAppearance` | 選択矩形と ルーペの外観（描画にだけ必要な設定） |
 | `OperationTextProvider` / `InfoTextProvider` | 付加情報ラベルの文言プロバイダ（アプリ固有の文言はホストが与える） |
