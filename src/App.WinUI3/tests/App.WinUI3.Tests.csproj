@@ -8,14 +8,6 @@
     <UseWinUI>true</UseWinUI>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-    <!-- テスト ホストは Windows App SDK を同封する（.NET 側はフレームワーク依存のまま）。
-         同封しないと、Windows App Runtime が機械に無い環境（CI のランナー）で WinRT 型に触れたテストが
-         ランタイム探索のダイアログを出して停止する（実測 2026-11-04。 6 件合格後にハング）。
-         自己完結は RID を要求するためテストだけ固定する（アプリは publish の -r で渡す）。
-         規則は .github/ビルド設定規約.md §4。 -->
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    <SelfContained>false</SelfContained>
     <RootNamespace>EsUtil.SaveEvidence.App.WinUI3.Tests</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
