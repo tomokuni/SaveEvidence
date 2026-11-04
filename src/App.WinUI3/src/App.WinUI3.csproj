@@ -15,16 +15,9 @@
          RID の無い AnyCPU では `Packaged .NET applications with an app host exe cannot be
          ProcessorArchitecture neutral.` でビルドが失敗する（実測 2026-10-30）。 -->
     <EnableMsixTooling Condition="'$(RuntimeIdentifier)' != ''">true</EnableMsixTooling>
-    <!-- 単一ファイル化。 publish のときだけ有効にする（`SaveEvidencePublishSingleFile` は
-         buildScript/publish_WinUI3.bat が publish のときに渡す）。
-         1) 常時有効にすると Debug ビルドで `PublishSingleFile is recommended only for .NET SelfContained apps`
-            が出る（ビルドは 0 警告が合否のため許容できない）。
-         2) publish のコマンドラインで `-p:PublishSingleFile=true` を渡すと**参照プロジェクトへも伝播**し、
-            WinUI 3 のライブラリが EnableMsixTooling と WindowsAppSDKSelfContained を要求して失敗する
-            （後者は RID を要求するが、RID は参照プロジェクトへ伝播しない）。
-         プロパティを csproj に置けば参照へ伝播せず、カスタム名で門を作れば通常のビルドに影響しない（実測 2026-10-16）。 -->
-    <PublishSingleFile Condition="'$(SaveEvidencePublishSingleFile)' == 'true'">true</PublishSingleFile>
-    <IncludeNativeLibrariesForSelfExtract Condition="'$(SaveEvidencePublishSingleFile)' == 'true'">true</IncludeNativeLibrariesForSelfExtract>
+    <!-- 単一ファイル化は行わない。 Native AOT はネイティブ DLL を exe へ内包できず、Windows App SDK も
+         フレームワーク依存のまま PublishSingleFile を拒否する（実測 2026-10-20）。 WinUI 3 版は
+         「AOT（フォルダー配布）」で公開する（buildScript/publish_WinUI3.bat）。 -->
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>EsUtil.SaveEvidence.App.WinUI3</RootNamespace>
@@ -36,13 +29,33 @@
     <StartupObject>EsUtil.SaveEvidence.App.WinUI3.Program</StartupObject>
     <!-- アンパッケージ（MSIX なし）で起動できるようにする。 -->
     <WindowsPackageType>None</WindowsPackageType>
-    <!-- 自己完結配置（Windows App SDK を同封する）は RID を要求する（未指定は
-         `WindowsAppSDKSelfContained requires a supported Windows architecture.` で失敗する）。
-         RID を渡したとき（publish の -r）だけ自己完結にし、通常のビルドは AnyCPU（フレームワーク依存。
-         実行にはインストール済みの Windows App Runtime を使う）にする。 -->
-    <WindowsAppSDKSelfContained Condition="'$(RuntimeIdentifier)' != ''">true</WindowsAppSDKSelfContained>
+    <!-- **Windows App Runtime へはフレームワーク依存で動く**（同封しない）。 自己完結（同封）は
+         配布物が大きく、**起動が遅くメモリも多く使う**（コード ページを他のアプリと共有できず、
+         フレームワークの保守も効かない。 Microsoft の展開ガイドの比較表。 実測 2026-11-05:
+         同封 231.9 MB → フレームワーク依存 + AOT 78 MB、起動と作業セットも減少）。
+         ランタイムが無い環境への導入は EsUtil.Ui.WinUI3.Interop の実装（作成中）が担うため、
+         本アプリはここでは扱わない（保留）。 それまでの間は、導入済みのランタイムを使う。 -->
+    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
+    <!-- 配布物のアーキテクチャは publish の `-r`（win-x64）で渡す（csproj へ書くと復元とロックが RID ごとに分かれる）。
+         AOT のネイティブ出力と Windows App Runtime の選択はその RID に従う。 -->
     <!-- DPI 認識（PerMonitorV2）を宣言する（宣言が無いとウィンドウ配置の復元がずれる）。 -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <!-- publish（AOT）のときだけ有効にする指定。 buildScript/publish_WinUI3.bat が
+       `-p:SaveEvidencePublishAot=true` を渡す（コマンド ラインの `-p:PublishAot=true` は参照プロジェクトへも
+       伝播し、ライブラリの構成まで変わるため使わない）。 通常のビルドとテストには影響しない。 -->
+  <PropertyGroup Condition="'$(SaveEvidencePublishAot)' == 'true'">
+    <PublishAot>true</PublishAot>
+    <!-- 起動と定常の速度を優先する（既定のバランスよりコードを多く残す。 配布物は x64 の 1 形態のみ）。 -->
+    <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+    <!-- メモリと配布物を減らす。 どれも本アプリが使わない機能である。
+         - MetadataUpdaterSupport: ホット リロード用のメタデータ（製品では不要）
+         - EventSourceSupport: EventSource のイベント（ログは Serilog が担う）
+         - HttpActivityPropagationSupport: HttpClient の診断（通信しない） -->
+    <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+    <EventSourceSupport>false</EventSourceSupport>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
   </PropertyGroup>
 
   <ItemGroup>
@@ -113,6 +126,15 @@
                        Condition="'%(Filename)%(Extension)' == 'Microsoft.Web.WebView2.Core.dll'
                                   Or '%(Filename)%(Extension)' == 'WebView2Loader.dll'
                                   Or '%(Filename)%(Extension)' == 'Microsoft.Windows.ApplicationModel.Background.UniversalBGTask.dll'" />
+      <!-- 本アプリが使わない ML（ONNX Runtime・DirectML）と Windows AI のネイティブ実体。
+           フレームワーク依存の publish はこれらをパッケージの資産としてそのまま出力する
+           ソース参照 0 件であり、除いても起動・終了・設定の往復が通ることを buildScript/verifyPublish.ps1 が確かめる。
+           除かないと 40 MB（onnxruntime 22 MB・DirectML 17.8 MB ほか）を配布物が無駄に運ぶ。 -->
+      <_SEPublishNoise Include="@(ResolvedFileToPublish)"
+                       Condition="'%(Filename)%(Extension)' == 'onnxruntime.dll'
+                                  Or '%(Filename)%(Extension)' == 'onnxruntime_providers_shared.dll'
+                                  Or '%(Filename)%(Extension)' == 'DirectML.dll'
+                                  Or '%(Filename)%(Extension)' == 'Microsoft.Windows.AI.MachineLearning.dll'" />
       <ResolvedFileToPublish Remove="@(_SEPublishNoise)" />
     </ItemGroup>
   </Target>

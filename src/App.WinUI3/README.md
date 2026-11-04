@@ -73,17 +73,20 @@ dotnet test src/App.WinUI3/tests/App.WinUI3.Tests.csproj -c Debug
 `<EnableMsixTooling>true</EnableMsixTooling>` は **publish のためだけ**に必要です（付けないと publish が自分自身の `.pri` を発行せず、
 配布物の起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます）。
 
-**単一ファイル化（`<PublishSingleFile>`）は本 csproj に置きます**（publish のコマンドライン引数では渡しません）。
-コマンドライン引数は**参照プロジェクトへ伝播**し、WinUI 3 のライブラリが `EnableMsixTooling` と
-`WindowsAppSDKSelfContained` を要求して失敗するためです（後者は RID を要求しますが、RID は参照プロジェクトへ伝播しません）。
-
-配布物は **exe 1 個**です（フォルダーごとではなく、単体で配置できます）。
+配布物は **Native AOT のフォルダー配布**です（exe + ネイティブ DLL + `.pri`）。 **Native AOT はネイティブ DLL を
+exe へ内包できず**、Windows App SDK はフレームワーク依存のまま単一ファイル化を拒否するためです（実測）。
+AOT は `SaveEvidencePublishAot`（`buildScript/publish_WinUI3.bat` が渡す）で有効にし、通常のビルドとテストには
+影響しません（コマンドラインの `-p:PublishAot=true` は参照プロジェクトへ伝播するため使いません）。
 期待する出力先と exe 名は [`.github/release-config.json`](../../.github/release-config.json) が単一所有します。
 
-**自己完結の Windows App SDK から、使わないコンポーネント（ML = ONNX Runtime・DirectML、Windows AI、Widgets）の
-ネイティブ実体を除いて同梱します**（43.8 MB 減。 実装は [`Directory.Build.targets`](../../Directory.Build.targets) の
-`ExcludeUnusedWindowsAppSdkPayload`、規則は [`.github/ビルド設定規約.md`](../../.github/ビルド設定規約.md) §5）。
-本アプリはこれらの API を呼びません（ソース参照 0 件）。 減らせる理由と減らせない理由は同ターゲットのコメントにあります。
+**Windows App SDK は同梱しません**（`WindowsAppSDKSelfContained=false`）。 コード ページを他のアプリと共有できるため、
+**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（実測 2026-11-05: 同梱 231.9 MB / 起動 723 ms /
+作業セット 204.8 MB → フレームワーク依存 + AOT 78.3 MB / 313 ms / 140.3 MB）。 ランタイムが無い環境への導入は
+`EsUtil.Ui.WinUI3.Interop` の実装（作成中）が担うため、本アプリは持っていません。
+
+**配布物からは、使わないコンポーネント（ML = ONNX Runtime・DirectML、Windows AI）のネイティブ実体を除きます**
+（約 40 MB 減。 実装は `src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`、規則は
+[`.github/ビルド設定規約.md`](../../.github/ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
 
 ## 6. 機能一覧
 
