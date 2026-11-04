@@ -153,6 +153,22 @@ jobs:
           restore-keys: |
             npm-${{ runner.os }}-
 
+      # WinUI 3 のテストは WinRT 型を使うため、テスト ホストが Windows App Runtime を機械から解決する。
+      # SDK の自動初期化は既定で「見つからないとモーダル ダイアログを出す」（OnNoMatch_ShowUI）ため、
+      # ランナーに無い版（本アプリは 2.6。 イメージには 1.6 / 1.8 のみ）だとテストが入力待ちで停止する
+      # （実測 2026-11-04: 6 件合格後にハングし、30 分のジョブ上限で打ち切られた）。
+      # テスト ホストの自己完結（テスト プロジェクトへの RID 付与）では解決しない（初期化の実体は
+      # 参照するアプリのアセンブリにある）。 規則は .github/検証手順.md §17。
+      - name: Windows App Runtime を導入
+        if: steps.kind.outputs.code == 'true'
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP 'windowsappruntimeinstall-x64.exe'
+          Invoke-WebRequest 'https://aka.ms/windowsappsdk/2.6/latest/windowsappruntimeinstall-x64.exe' -OutFile $installer
+          & $installer --quiet
+          if ($LASTEXITCODE -ne 0) { throw "Windows App Runtime の導入に失敗しました（exit $LASTEXITCODE）" }
+          Get-AppxPackage -Name 'Microsoft.WindowsAppRuntime.2.6*' | Select-Object Name, Version | Format-Table
+
       # 復元は検証の前に 1 回だけ行う（NuGet キャッシュを効かせ、以降を --no-restore にするため）
       # パスは設定（release-config.json）が持つため、空白を含んでいても壊れないよう引用符で囲む。
       # **lock どおりに復元する**（-p:RestoreLockedMode=true）。 csproj / Directory.Packages.props と
