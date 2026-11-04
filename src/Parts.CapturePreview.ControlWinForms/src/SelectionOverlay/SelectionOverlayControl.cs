@@ -59,6 +59,13 @@ public sealed class SelectionOverlayControl : Control
     /// <summary>動作モード（既定は範囲選択）。</summary>
     private SelectionOverlayMode _mode = SelectionOverlayMode.AreaSelect;
 
+    /// <summary>ホストが与えた外観（モードから導出する表示可否を上書きする前の値）。</summary>
+    /// <remarks>
+    /// 子コントロールの外観はモードの判断を合成した値になるため、そこから素材を取り直すと<br/>
+    /// モードを往復したときに表示可否が戻らない（暗転を止めた状態が素材として残る）。 素材は本値が保持する。
+    /// </remarks>
+    private MarqueeAppearance _hostAppearance = MarqueeAppearance.Default;
+
     /// <summary>ログの接頭辞（未設定は null。 既定値は定義クラスが持つ）。</summary>
     private string? _logPrefix;
 
@@ -185,10 +192,11 @@ public sealed class SelectionOverlayControl : Control
         set => _marquee.HighlightSourceRect = value;
     }
 
-    /// <summary>全面暗転（注目なし）を表示するかどうかを取得する。</summary>
-    /// <value>全面暗転する場合は true。 モードから導出される読み取り専用の値（外観の表示可否を参照する）。</value>
+    /// <summary>暗転マスク（注目矩形の外側・注目なしの全面）を描くかどうかを取得する。</summary>
+    /// <value>暗転を描く場合は true（外観の暗転色が見えるか）。</value>
+    /// <remarks>全面暗転と注目矩形の外側の暗転の切り替えは描画計画が注目矩形の有無で行う。</remarks>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public bool ShowFullOverlay => _marquee.Appearance.ShowFullOverlay;
+    public bool ShowOuterMask => _marquee.Appearance.ShowOuterMask;
 
     /// <summary>ルーペ中心（対象座標）を取得する。</summary>
     /// <value>ルーペ中心。 未設定時は null。</value>
@@ -210,7 +218,7 @@ public sealed class SelectionOverlayControl : Control
         get => _marquee.Appearance;
         set
         {
-            _marquee.Appearance = value;
+            _hostAppearance = value;
             ApplyOptions();
         }
     }
@@ -684,7 +692,7 @@ public sealed class SelectionOverlayControl : Control
     private void ApplyOptions()
     {
         // ハイライト矩形は実行時状態のため、現在値を渡して引き継ぐ（設定の差し替えで失わない）
-        var values = SelectionOverlayChildValues.Resolve(_options, _mode, _marquee.Appearance);
+        var values = SelectionOverlayChildValues.Resolve(_options, _mode, _hostAppearance);
 
         _marquee.Options = values.Marquee;
         _marquee.Appearance = values.MarqueeAppearance;

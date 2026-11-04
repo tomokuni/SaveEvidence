@@ -76,7 +76,7 @@
 | `DarkGray（色名 + 不透明度）` | `DarkGray` / `Red+50%`（既定値） |
 | `#FFFFFFFF（カラーコード）` | `#FFA9A9A9` |
 
-- **反映方式**: `Settings.ColorTextFormat` → `ColorComboBoxControl.TextFormat` へバインド（19 個の色選択すべてに即時反映）。 保存値は `#AARRGGBB` のまま変わらない（表記は画面に出す文字列だけを決める）
+- **反映方式**: `Settings.ColorTextFormat` → `ColorSelectorControl.TextFormat` へバインド（19 個の色選択すべてに即時反映）。 保存値は `#AARRGGBB` のまま変わらない（表記は画面に出す文字列だけを決める）
 - **設定ファイル**: enum は文字列で保存（`"ColorTextFormat": "HexCode"`）
 
 ### 3.1 テーマ対応コンポーネント
@@ -154,7 +154,7 @@
 | 2 行目 | 操作ラベル | `SubLineColor` | `SubLineBackgroundColor` | `SubLineFontSize` |
 | 3 行目 | 情報ラベル | `InfoLabelColor` | `InfoLabelBackgroundColor` | `InfoLabelFontSize` |
 
-- **背景色**: 色と不透明度を統合した `#AARRGGBB` 形式（例: 黒 60% = `#99000000`）。 カラーピッカー（EsUtil.Ui.AvaloniaUI.ColorComboBox）の Flyout で不透明度（アルファ）も設定できる
+- **背景色**: 色と不透明度を統合した `#AARRGGBB` 形式（例: 黒 60% = `#99000000`）。 カラーピッカー（EsUtil.Ui.AvaloniaUI.ColorSelector）の Flyout で不透明度（アルファ）も設定できる
 - **キャプチャテキストの色の一本化**: キャプチャテキストの色は 1 行目（サイズラベル）の文字色に一本化する（設定キー `CaptureTextColor` は「ラベル設定」の 1 行目へマップ）
 
 ### 4.5 キーボードショートカット（Ctrl キー）

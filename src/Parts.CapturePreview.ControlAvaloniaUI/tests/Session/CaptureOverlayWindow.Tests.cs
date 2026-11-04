@@ -106,20 +106,20 @@ public class CaptureOverlayWindowTests
     }
 
     [AvaloniaFact]
-    internal void コンストラクタ_AreaSelectではドラッグ前から全面暗転を表示する()
+    internal void コンストラクタ_AreaSelectではドラッグ前から暗転を描く()
     {
         var window = CreateWindow(CaptureType.AreaSelect);
 
-        // 選択なし（HasSelection / HasHighlight とも false）でも全面暗転が描画される
-        Assert.True(window.SelectionOverlay.ShowFullOverlay);
+        // 選択なし（HasSelection / HasHighlight とも false）でも暗転が描画される（全面暗転は描画計画が決める）
+        Assert.True(window.SelectionOverlay.ShowOuterMask);
     }
 
     [AvaloniaFact]
-    internal void コンストラクタ_ScreenSelectとWindowSelectでは全面暗転を表示しない()
+    internal void コンストラクタ_ScreenSelectとWindowSelectでも設定した暗転色を反映する()
     {
-        // ScreenSelect / WindowSelect はカーソル位置の要素をハイライトするため、全面暗転は不要
-        Assert.False(CreateWindow(CaptureType.ScreenSelect).SelectionOverlay.ShowFullOverlay);
-        Assert.False(CreateWindow(CaptureType.WindowSelect).SelectionOverlay.ShowFullOverlay);
+        // ハイライトのみのモードでも、注目矩形の外側の暗転に設定した色を使う（可否は外観が単一所有する）
+        Assert.True(CreateWindow(CaptureType.ScreenSelect).SelectionOverlay.ShowOuterMask);
+        Assert.True(CreateWindow(CaptureType.WindowSelect).SelectionOverlay.ShowOuterMask);
     }
 
     [AvaloniaFact]

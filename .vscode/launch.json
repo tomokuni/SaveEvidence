@@ -46,7 +46,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "ビルド（App.WinUI3）",
-            "program": "${workspaceFolder}/src/App.WinUI3/src/bin/Debug/net10.0-windows10.0.22621.0/win-x64/SaveEvidence.WinUI3.exe",
+            "program": "${workspaceFolder}/src/App.WinUI3/src/bin/Debug/net10.0-windows10.0.22621.0/SaveEvidence.WinUI3.exe",
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "stopAtEntry": false,

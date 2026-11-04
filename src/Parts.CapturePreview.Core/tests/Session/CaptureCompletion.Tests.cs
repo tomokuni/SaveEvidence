@@ -37,5 +37,26 @@ public class CaptureCompletionTests
         Assert.True(completion.TrySetResult(null));
         Assert.Null(await completion.Task);
     }
+
+    [Fact]
+    internal async Task TrySetException_待機側へ例外を伝える()
+    {
+        var completion = new CaptureCompletion<int>();
+        var error = new InvalidOperationException("通知の失敗");
+
+        Assert.True(completion.TrySetException(error));
+
+        var thrown = await Assert.ThrowsAsync<InvalidOperationException>(() => completion.Task);
+        Assert.Same(error, thrown);
+    }
+
+    [Fact]
+    internal void TrySetException_完了済みなら例外を受け付けない()
+    {
+        var completion = new CaptureCompletion<int>();
+        completion.TrySetResult(1);
+
+        Assert.False(completion.TrySetException(new InvalidOperationException()));
+    }
 }
 

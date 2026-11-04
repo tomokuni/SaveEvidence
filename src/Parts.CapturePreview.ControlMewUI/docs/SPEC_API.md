@@ -71,7 +71,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 | イベント | シグネチャ | 内容 |
 | --- | --- | --- |
-| `CaptureCompleted` | `event EventHandler<CaptureCompletedEventArgs>? CaptureCompleted` | キャプチャ完了（同期実行。 UI スレッドで発行。 結果は `e.Result`）。 **オーナーの再表示より前に発行される**ため、ホストは本ハンドラで画像を差し替えてから再表示される（フロー: APP 非表示 → 撮影 → 画像変更 → APP 表示） |
+| `CaptureCompleted` | `event EventHandler<CaptureCompletedEventArgs>? CaptureCompleted` | キャプチャ完了（同期実行。 UI スレッドで発行。 結果は `e.Result`）。 **オーナーの復帰とオーバーレイのクローズより前に発行される**ため、ホストは本ハンドラで画像を差し替えてから表示される（フロー: APP 非表示 → 撮影 → 画像変更 → APP 表示 → オーバーレイを閉じる） |
 
 ### 2.1 排他の規則
 
@@ -144,7 +144,7 @@ Facade は次のサービスをコンストラクタで生成し、撮影セッ�
 | --- | --- |
 | `HideOwnerWindow` | 撮影中にオーナーウィンドウを画面外へ退避するか |
 | `MinSelectionSize` | 選択矩形のドラッグ中の最小サイズ（`MarqueeOptions.MinSelectionSize` へ反映。 切り出しの可否は選択操作そのものが判定する） |
-| `BorderColor` / `BorderThickness` / `OverlayColor` | 選択枠と暗転の外観（太さと色は提示層の `MarqueeAppearance`（`OuterBorderThickness` / `OuterBorderColor` / `OverlayColor`）へ反映。 枠線は選択矩形と共用） |
+| `BorderColor` / `BorderThickness` / `OverlayColor` | 選択枠と暗転の外観（太さと色は外観の `MarqueeAppearance`（`BorderThickness` / `BorderColor` / `OuterMaskColor`）へ反映。 枠線は選択矩形と共用） |
 | `HandleColor` / `HandleSize` / `HandleHitRadius` | ドラッグハンドル（寸法は選択矩形の設定、色は提示層の `MarqueeAppearance.HandleColor` へ反映） |
 | `MarkerColor` / `MarkerLength` | 微調整時の十字マーカー（寸法は選択矩形の設定、色は提示層の `MarqueeAppearance.MarkerColor` へ反映） |
 | `ClampToSourceBounds` | 画像外の選択を禁止するか |
@@ -270,7 +270,7 @@ Facade は次のサービスをコンストラクタで生成し、撮影セッ�
 
 ### 6.1 動作モード
 
-| モード | 選択矩形 | ルーペ | 全面暗転 | 用途 |
+| モード | 選択矩形 | ルーペ | 暗転 | 用途 |
 | --- | --- | --- | --- | --- |
 | `Crop` | 有効 | 有効 | 有効 | プレビュー内の切出し |
 | `AreaSelect` | 有効 | 有効 | 有効 | 全画面オーバーレイの領域選択 |
@@ -283,12 +283,12 @@ Facade は次のサービスをコンストラクタで生成し、撮影セッ�
 
 | プロパティ | 型 | 既定値 | 説明 |
 | --- | --- | --- | --- |
-| `Mode` | `SelectionOverlayMode` | `AreaSelect` | 動作モード（可視性と全面暗転を一括切替） |
+| `Mode` | `SelectionOverlayMode` | `AreaSelect` | 動作モード（選択矩形とルーペの可視性を一括切替） |
 | `Options` | `SelectionOverlayOptions`（コア） | `Default` | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 色は含まない）。 同じ値の再設定はスキップされる |
 | `MarqueeAppearance` / `LoupeAppearance` | 提示層の外観 | 各 `Default` | 描画にだけ必要な外観の単一値（コアの設定値には含まれない）。 `MarqueeAppearance` の設定時はモードから導出する表示可否を上書きし直す |
 | `HasSelection` / `SelectionSourceRect` | `bool` / `EsRect` | `false` / 空矩形 | 選択矩形の有無と現在値（対象座標） |
 | `HighlightSourceRect` | `EsRect?` | `null` | ハイライト矩形（対象座標。 **null はハイライトなし**。 選択矩形より優先） |
-| `ShowFullOverlay` | `bool`（取得のみ） | `true` | 全面暗転の有無（モードから導出） |
+| `ShowOuterMask` | `bool`（取得のみ） | `true` | 暗転マスクを描くかどうか（外観の暗転色が見えるか） |
 | `LoupeCenterPoint` | `EsPoint?`（取得のみ） | `null` | ルーペ中心（対象座標） |
 | `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | `double` | 各 `1.0` 等 | DPI スケーリング（設定には含めない環境値） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | `null` | ラベル文言を描画時に評価するデリゲート（null または空文字は描画しない。 文言はホストが与える） |

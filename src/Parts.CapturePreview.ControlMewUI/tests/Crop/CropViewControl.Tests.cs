@@ -118,19 +118,18 @@ public class CropViewControlTests
         Assert.Null(control.HighlightMarquee.HighlightSourceRect);
     }
 
-    /// <summary>強調の既定の外観が内側の塗りと枠線だけを描くことを検証する。</summary>
+    /// <summary>強調の既定の外観が内側の塗りだけを描くことを検証する。</summary>
     [Fact]
-    internal void HighlightAppearance_既定は内側の塗りと枠線だけを描く()
+    internal void HighlightAppearance_既定は内側の塗りだけを描く()
     {
         var control = CreateLaidOut();
 
         Assert.Equal(CropViewControl.HighlightDefaultAppearance, control.HighlightAppearance);
         Assert.Equal(CropViewControl.HighlightDefaultAppearance, control.HighlightMarquee.Appearance);
-        Assert.True(control.HighlightAppearance.ShowInnerFill);
-        Assert.True(control.HighlightAppearance.ShowInnerBorder);
+        Assert.True(control.HighlightAppearance.ShowInnerMask);
         Assert.False(control.HighlightAppearance.ShowHandles);
-        Assert.False(control.HighlightAppearance.ShowOverlay);
-        Assert.False(control.HighlightAppearance.ShowOuterBorder);
+        Assert.False(control.HighlightAppearance.ShowOuterMask);
+        Assert.False(control.HighlightAppearance.ShowBorder);
     }
 
     /// <summary>Source の設定が内包するズームビューへ委譲されることを検証する。</summary>

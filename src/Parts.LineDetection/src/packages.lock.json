@@ -4,15 +4,15 @@
     "net10.0": {
       "EsUtil.Platform.Core": {
         "type": "Direct",
-        "requested": "[0.2.0, )",
-        "resolved": "0.2.0",
-        "contentHash": "3iTyDtWPcO/0lBuEZ6CMVbYw1+XDlrzgrJIfgCBf/ux4OdwLVC99QVEx8n2Y74IwzB6N/WyM3eL650IQeOyhCA=="
+        "requested": "[0.5.1, )",
+        "resolved": "0.5.1",
+        "contentHash": "33j9JgNRcQ/qoEzrXnnMJdYxG5ijHPS6PmTx9jsbF9InA68CFnoisgmyNDS7PBMRAubZBx+x3wVOS0OdJoQXaw=="
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.317, )",
-        "resolved": "3.0.317",
-        "contentHash": "IC9fCjxniZol2dcdj+hiXjK01a8gBWQproGL/qWjBI7CgB5GeEOD5oGV0PwpQaSr7Aa/RPaM8Ddho3Y1OAZe1Q=="
+        "requested": "[3.0.320, )",
+        "resolved": "3.0.320",
+        "contentHash": "yKkD+uA684so6/ct3dcGm8H2esrLn/gAS9qYbAcis216gBx+o5LWm5ou/BZDIDg6TTzr5ayojv9cgpoHSasxOw=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",

@@ -66,11 +66,10 @@ public class SelectionOverlayLabelRendererTests
             [],
             [],
             null,
-            [],
             null,
             null,
             [],
-            []);
+            default);
 
     /// <summary>テスト用の外観を生成する（サイズラベルを描かない基準）。</summary>
     /// <returns>外観。</returns>

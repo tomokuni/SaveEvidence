@@ -213,9 +213,10 @@ sequenceDiagram
     OW->>OS: キャプチャ除外 + 画面外へ退避（CaptureOwnerScope）
     OW->>CS: CaptureVirtualScreen（全モニター）
     CS-->>OW: EsBitmap / null
-    OW->>UI: 仮想スクリーンの画像を敷き、透明な状態でウィンドウを表示
-    OW->>OW: 1 フレーム目で物理ピクセル配置（SetBounds）
-    OW->>OW: 2 フレーム目で透明を解除（背景は画像の平均色）
+    OW->>UI: 仮想スクリーンの画像を敷き、**画面外**に置いてウィンドウを表示
+    OW->>OW: 画面外で 2 フレーム描き、画像の合成を待つ
+    OW->>OW: 大きさを変えずに物理ピクセルで画面内へ移す（SetBounds）
+    OW->>OW: 画面内での 1 フレーム後にオーナーを退避
     App->>OW: Enter / 左クリック（確定）
     OW->>OW: CropClipMath.ToScreenRect（画像ローカル → 画面物理）
     OW->>OW: CropClipMath.ResolveCaptureRect（クランプ + 区間の流儀）
@@ -232,14 +233,14 @@ sequenceDiagram
 - **設定は Facade が単一所有する**: 設定（`AppearanceSettings`）は撮影と切り出しで同じ値を使う（撮影セッションへ設定を別途渡すと、ホストが同じ変換を 2 回呼び、2 つの値が食い違う余地ができる）。 部分更新・検証・同値スキップ・適用ログはコア（`CaptureSettingsMerge.Apply`）が単一所有し、実行中の切り出しセッションへは `CropSession.ApplySettings` で即時反映する（ページは 1 度だけ生成されるため、購読しないと設定画面での変更が届かない）。
 - **記録する診断情報は Avalonia 版と同一の集合にする**: 撮影の開始（`LogCaptureStart`）・撮影範囲の原点とサイズ（`LogVirtualScreen`）・確定要求（`LogConfirmRequested`）・キャンセル要求（`LogCancelRequested`）・セッションの終了（`LogCaptureFinished`。 確定は 2 件 / キャンセルは 1 件）を、Avalonia 版と同じ順序で出力する（片方の UI だけが出す情報を作ると、同じ操作のログを比較できない）。
 - **オーナーの退避は位置の変更で行う**: 非表示（`Hide`）は復帰時にウィンドウが再作成され「一瞬表示 → 非表示 → 再表示」のちらつきが出る。 位置の変更（画面外配置）とキャプチャ除外の併用にする（Avalonia 版と同じ）。
-- **オーバーレイは透明で表示する**: ウィンドウは表示時に背景色（`EffectiveOpaqueBackground`）で塗られるため、そのまま表示すると画像を描くまでの間が背景色の面として見える。 透明で表示し、画像が合成されたフレームで透明を解除する。 背景色は撮影画像の平均色に合わせて差を目立たなくする。
-- **配置は物理ピクセルで指定する**: 全モニターを跨ぐウィンドウは論理座標（DIP）の配置が OS により作業領域内へ補正される。 `IWindowService.SetBounds`（`SetWindowPos`）で物理ピクセル指定にし、起動時の配置より後（透明な 1 フレーム目）に適用する。
+- **オーバーレイは画面外で合成してから画面内へ出す**: ウィンドウは表示時に背景色で塗られるため、画面内で表示すると画像が合成されるまでの 1〜2 フレームが下地の面として見える。 画面外に置いて 2 フレーム描き、**大きさを変えずに位置だけ**画面内へ移す（サイズを変えると再レイアウトが走り、その瞬間に下地が 1 フレーム見える）。 背景色は撮影画像の平均色にして、万一先に見えても差を目立たなくする。
+- **配置は物理ピクセルで指定する**: 全モニターを跨ぐウィンドウは論理座標（DIP）の配置が OS により作業領域内へ補正される。 `IWindowService.SetBounds`（`SetWindowPos`）で物理ピクセル指定にする。
 - **切り出し中のホイールは切り出しビューが転送する**: 選択オーバーレイは切り出し中にプレビューを覆って入力を占有するため、ホイールはオーバーレイだけが受け取る。 `CropViewControl` が受け取って内包するビューポート（`PanByWheel` / `ZoomByWheel`）へ転送する（換算とズーム率の決定はビューポートが単一所有する。 ホストは配線しない）。
 - **切り出しの座標変換はビューポートへ委譲する**: ローカル DIP ⇔ 画像ピクセルの変換（画像矩形・実効倍率・Fit / 中央寄せの原点補正）は `CropViewControl.ClientToSource` / `SourceToClient` が単一所有する。 `CropSession` は式を持たず、ズーム・パンのたびにポートを作り直すだけにする（撮影の `CaptureOverlay` は単一モニタ全体を敷くため倍率のみを使う）。
 - **排他は Facade がコアのスロットで行う**: 撮影と切り出しは同時に 1 つだけ実行できる（規則は `CaptureSessionSlot` が単一所有する）。 UI ごとにフィールドの null 判定を書くと片方だけ漏れるため、本プロジェクトは Facade（`CaptureSessionControl`）が唯一の適用者になる（Avalonia 版と同じ）。
 - **1 セッション = 1 インスタンス**: 撮影（`CaptureOverlay`）も切り出し（`CropSession`）もセッションごとに生成・破棄する。 切り出しは `CropViewControl` へ領域選択を可視化して操作し、終了時に非表示へ戻す（アプリはオーバーレイを事前に配置せず、表示ツリーの追加・取り外しも行わない）。 終了時はホストウィンドウと `CropViewControl` への購読を解除する（残すとセッション数だけ呼び出しが増え、終了したセッションを参照し続ける）。
 - **外観は設定に従う（固定値を持たない）**: 切り出し（`CropSession`）の枠線・ハンドル・十字マーカー・座標ラベルは `CaptureSettings` から反映する（撮影の `CaptureOverlay` と Avalonia 版の `CropSession` に同じ対応）。 寸法・表示可否はコアの設定値（`SelectionOverlayOptionsMapper`）が、描画にだけ必要な外観は UI 間で共有する `Parts.CapturePreview.Core` の `CapturePaintMapper`（`MarqueeAppearance` / `LoupeAppearance`）が写像する。 ただし、切り出しのルーペ・ラベルはプレビューの表示倍率（`CropViewControl` が所有）に従うため、`LoupeClientToPixelScaling` / `DisplayScaleScaling` は与えない。 UI ごとに白枠 2 DIP 等の固定値を持つと、設定を変えても反映されず UI 間で見た目がずれる。
-- **ちらつき対策の待機量は本 UI の実測値**: 透明を解除するフレーム数（`FramesUntilReveal`）は実測に基づく MewUI 固有の実装値である（外観の設定値ではない）。 画面外へ退避する座標は全 UI 共通のためコア（`CaptureTiming`）が単一所有する。
+- **ちらつき対策の待機量は本 UI の実測値**: 画面外で待つフレーム数（`FramesBeforePlace`）・画面内へ移してからオーナーを退避するまでのフレーム数（`FramesBeforeHideOwner`）・オーナーの再描画待ち（`OwnerPaintFrames`）は実測に基づく MewUI 固有の実装値である（外観の設定値ではない）。 画面外へ退避する座標は全 UI 共通のためコア（`CaptureTiming`）が単一所有する。
 - **選択の破棄は画像の差し替え時だけ行う**: ズーム・パンでは対象座標（元画像ピクセル）が変わらないため、選択矩形は維持する（座標変換ポートの更新のみ）。 画像の差し替えでは座標系が変わるため選択を破棄する。
 - **複合コントロールも同じアセンブリに収録する**: セッション（Facade）・切り出しビュー（`CropViewControl`）・領域選択（`SelectionOverlayControl`）は、同じ設定型（`CaptureSettings` → `SelectionOverlayOptions`）と外観写像（`Parts.CapturePreview.Core`）を共有し、後 2 者は同じ内包コントロール（`ZoomViewControl` / `MarqueeControl` / `LoupeControl`）を使う。 別アセンブリに分けると参照とバージョンの整合が増えるため 1 つにまとめる。 型は `public` のまま維持し、ホストは独立したコントロールとしても利用できる。
 - **画像ビューポートは切り出しビューが内包し、状態と判断はコアが単一所有する**: `CropViewControl` は `ZoomViewControl` を内包し、ズーム操作・座標変換を委譲する。 実効ズーム率の導出・可否・遷移の適用・パン・スクロールバーは `Parts.CapturePreview.Core` の `ZoomViewSession` が単一所有し、MewUI 実装は入力の変換・効果の適用・Skia への描画・通知の転送だけを担う（Avalonia 版と同一のコアを共有するため、ズーム挙動と設定が両 UI で一致する）。
@@ -252,9 +253,9 @@ sequenceDiagram
 | --- | --- |
 | **全モニターを跨ぐウィンドウの論理座標配置は OS に補正される**（実測: 仮想スクリーン原点の `y=-1200` を指定すると `y=0` へ移動） | `SetWindowPos` で物理ピクセル指定にする |
 | **`WindowState.Maximized` は 1 モニターへ寄せる**（全モニターを覆えない） | 最大化は使わず、物理ピクセルで仮想スクリーン全面を指定する |
-| **ウィンドウは表示時に背景色で塗られる**（画像を描くまで背景色の面が見える） | 透明で表示し、2 フレーム目で解除する（背景は画像の平均色） |
+| **ウィンドウは表示時に背景色で塗られる**（画像を合成するまで背景色の面が見える） | 画面外で 2 フレーム描いてから位置だけ画面内へ移す（背景は画像の平均色） |
 | **`Hide` と `Show` の往復はウィンドウを再作成させる** | 退避は位置の変更にし、復帰は位置を戻すだけにする |
-| **描画層が UI 層へ渡す値（`EsUtil.Feature.Marquee.Presenter` の `MarqueeDrawPlan` 等）は `EsUtil.Feature.Marquee` で `public`** | 汎用コアと描画層として公開する（ `InternalsVisibleTo` は不要） |
+| **描画層が UI 層へ渡す値（`EsUtil.Feature.Marquee.Core` の `MarqueeDrawPlan` 等）は `EsUtil.Feature.Marquee` で `public`** | 汎用の機能アセンブリとして公開する（ `InternalsVisibleTo` は不要） |
 
 ## 9. 検証
 

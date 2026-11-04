@@ -131,7 +131,7 @@ WinForms の `MouseEventArgs.Delta` は 1 ノッチ = 120 であるため、コ�
 | `Mode`（`SelectionOverlayMode`） | 動作モード。 既定は `AreaSelect`。 Crop / AreaSelect は選択矩形とルーペを有効化し、ScreenSelect / WindowSelect はハイライトのみになる |
 | `HasSelection`（`bool`） / `SelectionSourceRect`（`EsRect`） | 選択の有無と選択矩形（対象座標） |
 | `HighlightSourceRect`（`EsRect?`） | ハイライト矩形（対象座標）。 null が「ハイライトしない」を意味し、選択矩形より優先される |
-| `ShowFullOverlay`（`bool`） | 全面暗転を表示するかどうか（モードから導出される読み取り専用の値） |
+| `ShowOuterMask`（`bool`） | 暗転マスクを描くかどうか（外観の暗転色が見えるか。 読み取り専用の値） |
 | `LoupeCenterPoint`（`EsPoint?`） | ルーペ中心（対象座標）。 未設定時は null |
 | `MarqueeAppearance` / `LoupeAppearance` | 選択矩形と ルーペの外観（描画にだけ必要な設定） |
 | `OperationTextProvider` / `InfoTextProvider` | 付加情報ラベルの文言プロバイダ（アプリ固有の文言はホストが与える） |
@@ -176,7 +176,7 @@ WinForms の `MouseEventArgs.Delta` は 1 ノッチ = 120 であるため、コ�
 | `NotifyViewportChanged()` | 実行中の切り出しへビューポートの変化を通知する |
 | `Dispose()` | 進行中のセッションをキャンセルして完了させる |
 
-**画像の反映はホストが行います**（Undo 退避・画像の差し替えはアプリ側の責務です）。 キャプチャ完了はオーナーウィンドウの再表示より前に発火するため、ハンドラで画像を差し替えてから再表示できます。
+**画像の反映はホストが行います**（Undo 退避・画像の差し替えはアプリ側の責務です）。 キャプチャ完了はオーナーウィンドウの復帰とオーバーレイのクローズより前に発火するため、ハンドラで画像を差し替えてから表示されます（逆順だと、閉じた後にデスクトップや旧画像が一瞬見えます）。
 
 ## 6. イベント引数
 

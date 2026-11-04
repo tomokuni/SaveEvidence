@@ -74,7 +74,9 @@ internal sealed partial class CaptureOverlayWindow
     /// 確定時はその Bitmap から切り出す。 枠選択中に <see cref="PreExtractClip"/> で事前切り出し済みの<br/>
     /// キャッシュ（<see cref="CaptureClipCache"/>）が現在の矩形と一致する場合はそれを再利用する（切り出しスキップ）。<br/>
     /// キャッシュ不一致はバックグラウンドで切り出す（ピクセルコピーで UI スレッドをブロックしない）。<br/>
-    /// Bitmap 上の座標 = 画面物理座標 − 仮想スクリーンの原点（コアの保持クラスが保持する）。
+    /// Bitmap 上の座標 = 画面物理座標 − 仮想スクリーンの原点（コアの保持クラスが保持する）。<br/>
+    /// <b>ウィンドウは閉じない</b>: 結果の通知だけを行い、閉じる順序（画像変更 → オーナーの復帰 → クローズ）は<br/>
+    /// セッション（<c>CaptureOverlaySession</c>）が単一所有する（ここで閉じると、閉じた後にデスクトップや旧画像が一瞬見える）。
     /// </remarks>
     private void CompleteSelectionCore(EsRectInt captureRect)
     {
@@ -85,7 +87,6 @@ internal sealed partial class CaptureOverlayWindow
         {
             // 切り出せる矩形がない（退化した選択）: 0 サイズの画像を作らずキャンセルとして完了する
             _onComplete(null, null);
-            Close();
             return;
         }
 
@@ -93,7 +94,6 @@ internal sealed partial class CaptureOverlayWindow
         if (_clipCache.Take(captureRect) is { } cached)
         {
             _onComplete(cached, captureRect);
-            Close();
             return;
         }
 
@@ -118,7 +118,6 @@ internal sealed partial class CaptureOverlayWindow
             {
                 // 確定のログはセッション層（CaptureOverlaySession）が結果を受けて 1 回だけ出力する
                 _onComplete(t.Result, captureRect);
-                Close();
             }),
             TaskScheduler.Default);
     }
@@ -151,14 +150,24 @@ internal sealed partial class CaptureOverlayWindow
     }
 
     /// <summary>選択をキャンセルする（0x0 の空結果）。</summary>
+    /// <remarks>
+    /// <b>ウィンドウは閉じない</b>: 閉じる順序（オーナーの復帰 → クローズ）はセッション<br/>
+    /// （<c>CaptureOverlaySession</c>）が単一所有する（逆順だと、閉じた後にデスクトップが一瞬見える）。
+    /// </remarks>
     private void CompleteCancelled()
     {
         // 完了は 1 回だけ受け付ける（規則はコアが単一所有する）
         if (!_state.TryComplete()) return;
         _log.LogCancelRequested();
         _onComplete(null, null);
-        Close();
     }
+
+    /// <summary>進行中の選択をキャンセルとして完了させる（ウィンドウはセッションが閉じる）。</summary>
+    /// <remarks>
+    /// ファサード（<c>CaptureSessionControl.Cancel</c>）から呼ばれる。 ウィンドウを直接閉じないのは、<br/>
+    /// 閉じる順序（オーナーの復帰 → クローズ）をセッションが単一所有するためである。
+    /// </remarks>
+    internal void RequestCancel() => CompleteCancelled();
 
     /// <summary>非アクティブ化時のキャンセル（通常時の防止は本イベントが担う）。</summary>
     private void OnOverlayWindowDeactivated(object? sender, EventArgs e) => CompleteCancelled();

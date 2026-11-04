@@ -2,7 +2,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Input;
-using EsUtil.Ui.MewUI.ColorComboBox;
+using EsUtil.Ui.MewUI.ColorSelector;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -18,7 +18,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <br/>
 /// <b>保存</b>: 変更のたびに <see cref="ISettingsService.Save"/> を呼ぶ（Avalonia 版と同一のタイミング）。<br/>
 /// <b>テーマ</b>: <c>ThemeMode</c> は <c>Application.SetThemeMode</c> へ即時反映する。<br/>
-/// <b>色</b>: 設定は <c>#AARRGGBB</c> の文字列で保持し、入力は <see cref="ColorComboBoxControl"/> が担う（規則はコアの <c>Palette</c> が単一所有する）。<br/>
+/// <b>色</b>: 設定は <c>#AARRGGBB</c> の文字列で保持し、入力は <see cref="ColorSelectorControl"/> が担う（規則はコアの <c>Palette</c> が単一所有する）。<br/>
 /// <b>ホットキー</b>: テキストボックス上で修飾キー付きのキーを押すとその組み合わせを設定する（テキスト入力でも解釈する）。<br/>
 /// <b>構成</b>: 折り畳みなしの縦 1 列（テーマ / 保存 / キャプチャ / ホットキー / 一覧表示 / 外観）をスクロール表示する。
 /// </remarks>
@@ -485,7 +485,7 @@ internal static class SettingsPage
     /// <param name="apply">変更の反映先。</param>
     /// <returns>色選択コントロール。</returns>
     /// <remarks>
-    /// 色の入力・一覧・カラーピッカーは <see cref="ColorComboBoxControl"/>（EsUtil.Ui.MewUI.ColorComboBox）が担う。<br/>
+    /// 色の入力・一覧・カラーピッカーは <see cref="ColorSelectorControl"/>（EsUtil.Ui.MewUI.ColorSelector）が担う。<br/>
     /// 受理する入力と保存値の形式はコア（<c>EsUtil.Platform.Core.Palette</c>）が単一所有するため、
     /// 設定画面は値を受け渡すだけでよい（他の UI 版と同じ解釈になる）。<br/>
     /// 入力欄の表記は <c>Models.Settings.ColorTextFormat</c> に従い、設定の変更へ追従する<br/>
@@ -495,7 +495,7 @@ internal static class SettingsPage
     {
         // 文字サイズは周囲の入力欄（SettingsMetrics.FontSize）へ合わせる。
         // MewUI の要素は文字サイズを継承しないため、明示的に渡さないと 1 回り小さく表示される
-        var control = new ColorComboBoxControl
+        var control = new ColorSelectorControl
         {
             SelectedColor = initial,
             TextFormat = settings.ColorTextFormat,

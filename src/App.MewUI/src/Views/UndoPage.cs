@@ -162,7 +162,12 @@ internal static class UndoPage
             var placeholder = ThumbnailBackground.Placeholder(iconSize);
             void AddItem(EsReadOnlyBitmap image, string label, bool isCurrent)
             {
-                var index = list.Add(placeholder, label, isCurrent: isCurrent, tag: image);
+                // 強調は選択（提示層は「現在項目」を持たない）で表す
+                var index = list.Add(placeholder, label, tag: image);
+                if (isCurrent)
+                {
+                    list.SelectedIndex = index;
+                }
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 requested.Add((scheduler.Enqueue(

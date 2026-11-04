@@ -30,7 +30,7 @@
 - **3 種のキャプチャモード**: スクリーン選択（カーソル下のモニター）/ ウィンドウ選択（カーソル下の最前面ウィンドウ）/ 範囲選択（ドラッグ）
 - **仮想スクリーン全体を対象**: 全モニターを 1 枚の画像として取得し、オーバーレイで全面を覆う（1 モニターに限定するとカーソルのあるモニターでしか操作できないため）
 - **自ウィンドウの写り込み防止**: 撮影前にキャプチャ除外（`WDA_EXCLUDEFROMCAPTURE`）を設定し、画面外へ退避する
-- **ちらつきの防止**: オーナーの退避は非表示ではなく位置の変更。 オーバーレイは透明で表示し、画像が合成されたフレームで透明を解除する
+- **ちらつきの防止**: オーナーの退避は非表示ではなく位置の変更。 オーバーレイは**画面外で画像を合成してから位置だけ画面内へ移す**（画面内で合成すると、合成前の 1〜2 フレームが下地の面として見える）
 - **選択矩形のクロップ**: 確定時は種別に応じて切り出す（範囲選択は閉区間 = 始点・終点のピクセルを含む。 切り出し矩形の解決は Core の `CropClipMath.ResolveCaptureRect`（**画面物理座標の入口**。 選択矩形は画像ローカル座標のため `ToScreenRect` で戻してから渡す）、切り出しは Core の `CropClipMath`）
 - **キーボード操作**: Enter（Return を含む）= 確定 / Escape = キャンセル（確定対象が無い状態の Enter は何もしない。 解釈は Core の `CaptureKeyActions` が単一所有する）
 - **クリック確定**: 左押下でカーソル下の要素を固定し、解放時に確定する（押下を伴わない解放・退化した検出では確定しない。 規則は Core の `CaptureClickSelection` が単一所有する）
@@ -51,8 +51,8 @@ Parts.CapturePreview.ControlMewUI
     ├── EsUtil.Ui.MewUI.Interop（コア型 ⇔ MewUI 型の Interop / DIP 変換）
     ├── EsUtil.Platform.Core（ICaptureService / IElementFinder / IWindowService の Win32 実装を Facade が生成する）
     ├── Platform.Skia（Skia 依存の閉じ込め）
-    ├── EsUtil.Ui.MewUI.Marquee（選択矩形と、その外側に描く装飾。 描画計画と外観は EsUtil.Feature.Marquee.Core / EsUtil.Feature.Marquee.Presenter を推移参照する）
-    └── EsUtil.Ui.MewUI.Loupe（拡大鏡。 配置計算と外観は EsUtil.Feature.Loupe.Core / EsUtil.Feature.Loupe.Presenter を推移参照する）
+    ├── EsUtil.Ui.MewUI.Marquee（選択矩形と、その外側に描く装飾。 描画計画と外観は EsUtil.Feature.Marquee.Core を推移参照する）
+    └── EsUtil.Ui.MewUI.Loupe（拡大鏡。 配置計算と外観は EsUtil.Feature.Loupe.Core を推移参照する）
 ```
 
 依存は一方向です（アプリから本ライブラリを参照し、逆は参照しない）。
@@ -157,14 +157,14 @@ session.Dispose();
 
 選択矩形（ドラッグ）・暗転マスク・ルーペを 1 つのコントロールにまとめ、配線と状態同期を内側で完結させる複合コントロールです（Facade / Composite パターン）。 ホストは `Mode` の設定と状態の受け取りだけで利用できます。
 
-| モード | 選択矩形 | ルーペ | 全面暗転 | 用途 |
+| モード | 選択矩形 | ルーペ | 暗転 | 用途 |
 | --- | --- | --- | --- | --- |
 | `Crop` | 有効 | 有効 | 有効 | プレビュー内の切出し |
 | `AreaSelect` | 有効 | 有効 | 有効 | 全画面オーバーレイの領域選択 |
 | `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ） |
 | `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ） |
 
-既定値は `AreaSelect` です。 モードの解釈（表示可否・全面暗転）はコアの `SelectionOverlayState` が単一所有します。
+既定値は `AreaSelect` です。 モードの解釈（選択矩形・ルーペの表示可否）はコアの `SelectionOverlayState` が単一所有します。
 
 | メンバー | 説明 |
 | --- | --- |
@@ -173,7 +173,7 @@ session.Dispose();
 | `MarqueeAppearance` / `LoupeAppearance` | 描画にだけ必要な外観の単一値（提示層の外観。 内包コントロールへ委譲） |
 | `HasSelection` / `SelectionSourceRect` | 現在の選択状態（対象座標） |
 | `HighlightSourceRect` | ハイライト（`ScreenSelect` / `WindowSelect` の注目矩形。 null はハイライトなし） |
-| `ShowFullOverlay` | 全面暗転の有無（モードから導出） |
+| `ShowOuterMask` | 暗転マスクを描くかどうか（外観の暗転色が見えるか） |
 | `LoupeCenterPoint` | ルーペ中心（対象座標） |
 | `OperationTextProvider` / `InfoTextProvider` / `SizeLabelOverrideProvider` | 操作ラベル（2 行目）・情報ラベル（3 行目）・サイズラベルの文言を描画時に生成するデリゲート（文言はホストが与える） |
 | `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | DPI スケーリング（設定には含めない環境値） |

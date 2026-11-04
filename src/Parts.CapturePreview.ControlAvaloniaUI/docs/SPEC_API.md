@@ -181,7 +181,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 | コンストラクタ | `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)` | インスタンスを生成。 設定値が許容範囲外なら `ArgumentOutOfRangeException` |
 | `StartCaptureAsync` | `Task<CaptureResult?> StartCaptureAsync(CaptureType type, Window owner)` | 選択キャプチャを開始。 実行中は null / キャンセル時は 0x0 の空結果 |
 | `StartCropAsync` | `Task<EsRectInt?> StartCropAsync(CropViewControl cropView, Window hostWindow)` | 切出しを開始。 戻り値は元画像上の切り出し範囲（**コア型** `EsRectInt`。 UI 型は境界より外へ出さない）。 キャンセル・退化した選択は 0x0 の空矩形、開始できなかった場合は null（他のセッションが実行中 / 表示中の画像が無い）。 切り出しの対象画像は `cropView.Source`（表示中の画像）から解決し、確定時の範囲は**現在の画像**の範囲へクランプする（画像を引数で受け取らない）。 Crop 中のズーム・パン（ホイール）は `cropView` が内部で完結するため、上位のズーム配線は不要（`CropViewControl.ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` は従来どおり使用できる） |
-| `Cancel` | `void Cancel()` | 進行中セッションをキャンセル（Capture: オーバーレイを閉じる / Crop: 0x0 で完了） |
+| `Cancel` | `void Cancel()` | 進行中セッションをキャンセル（Capture: キャンセルとして完了し、オーナーを戻してからオーバーレイを閉じる / Crop: 0x0 で完了） |
 | `Confirm` | `void Confirm()` | Crop を現在の選択矩形で確定（Enter キー相当。 `CropViewControl.RequestConfirm` に委譲） |
 | `ResolveCropAction` | `CropSessionAction ResolveCropAction()` | 切り出し操作（開始 / 確定 / キャンセル）のうちいま行うべき操作を返す。 判断はコア（`CropSessionActions.Resolve`: 未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）が単一所有し、**ホストは戻り値を効果へ写すだけ**にする（同じ条件を UI に書かない） |
 | `IsCropping` | `bool` | 切り出し中かどうか（真のソースは排他スロット。 ホストが自前のフラグで判定しない） |
@@ -208,16 +208,20 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 
 #### 5.3.2 キャプチャ完了イベント（画像変更 → APP 表示の順序保証）
 
-`CaptureCompleted` は**同期型イベント**です。 C# のイベントは同期実行のため、ハンドラ（ホストの画像変更）の完了後に、キャプチャセッションの後続処理（オーナー再表示）が実行されます。
+`CaptureCompleted` は**同期型イベント**です。 C# のイベントは同期実行のため、ハンドラ（ホストの画像変更）の完了後に、キャプチャセッションの後続処理（オーナー再表示 → オーバーレイを閉じる）が実行されます。
 
 フロー:
 
 ```text
-APP 退避（HideOwnerWindow=true で自動。Opacity=0 + 画面外配置）
+APP 退避（HideOwnerWindow=true で自動。Opacity=0 + 画面外配置。 退避は撮影画像の表示後）
   → キャプチャ実行
   → CaptureCompleted イベント発行（同期）→ ホストが画像変更
-  → オーナー（APP）配置復帰
+  → オーナー（APP）配置復帰（オーバーレイが画面を覆っている間）
+  → 描画フレームの待機（新しい画像が合成されるまで）
+  → オーバーレイを閉じる
 ```
+
+- **画像変更と配置復帰はオーバーレイを閉じる前に行います**。 逆順にすると、オーバーレイが消えた後にデスクトップや旧画像が一瞬見えます。
 
 ```csharp
 _captureSessionControl.CaptureCompleted += result =>
@@ -321,7 +325,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `Source` | `IImage?` | 表示画像。 画像ビューポートとルーペへ伝搬し、変更時は Fit 表示にリセットする。 領域選択オーバーレイの可視性は `SetSelectionOverlayVisible` が専任する |
 | `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（対象座標）。 ビューポートとルーペの両方へ描画する |
 | `HighlightSourceRect` | `EsRect?` | 強調する矩形（対象座標）。 `null` は強調なし。 対象座標 → ビューポート座標の写像は本コントロールが単一所有する（ホストは座標変換を持たない） |
-| `HighlightAppearance` | `MarqueeAppearance`（提示層） | 強調の外観（色・枠線の太さ・表示可否）。 既定は `HighlightDefaultAppearance`（内側の塗りと枠線だけを描く） |
+| `HighlightAppearance` | `MarqueeAppearance`（提示層） | 強調の外観（色・枠線の太さ・表示可否）。 既定は `HighlightDefaultAppearance`（内側の塗りだけを描く） |
 | `SelectionMode` | `SelectionOverlayMode` | 選択モード（既定 `Crop`）。 領域選択オーバーレイへ委譲する |
 | `SelectionOverlayOptions` | `SelectionOverlayOptions`（コア） | 領域選択オーバーレイの設定（寸法・表示可否。 色は含まない） |
 | `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 領域選択オーバーレイの外観（描画にだけ必要な設定） |
@@ -369,25 +373,25 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 
 #### 5.6.1 動作モード
 
-| モード | 選択矩形 | ルーペ | 全面暗転 | 用途 |
+| モード | 選択矩形 | ルーペ | 暗転 | 用途 |
 | --- | --- | --- | --- | --- |
 | `Crop` | 有効 | 有効 | 有効 | プレビュー内の切出し |
 | `AreaSelect` | 有効 | 有効 | 有効 | 全画面オーバーレイの範囲選択 |
-| `ScreenSelect` | 無効 | 無効 | 無効 | スクリーン選択（ハイライトのみ。 確定フローはホスト） |
-| `WindowSelect` | 無効 | 無効 | 無効 | ウィンドウ選択（ハイライトのみ。 確定フローはホスト） |
+| `ScreenSelect` | 無効 | 無効 | 有効（外側のみ） | スクリーン選択（ハイライトのみ。 確定フローはホスト） |
+| `WindowSelect` | 無効 | 無効 | 有効（外側のみ） | ウィンドウ選択（ハイライトのみ。 確定フローはホスト） |
 
-既定値は `AreaSelect` です。 モードの解釈（表示可否・全面暗転）はコアの `SelectionOverlayState` が単一所有します。
+既定値は `AreaSelect` です。 モードの解釈（選択矩形・ルーペの表示可否）はコアの `SelectionOverlayState` が単一所有します。 暗転の可否は外観（設定の暗転色が見えるか）が単一所有し、全面暗転と注目矩形の外側だけの暗転の切り替えは描画計画が注目矩形の有無で行います。
 
 #### 5.6.2 プロパティ
 
 | プロパティ | 型 | 説明 |
 | --- | --- | --- |
-| `Mode` | `SelectionOverlayMode` | 動作モード（可視性と全面暗転を一括切替。 既定 `AreaSelect`） |
+| `Mode` | `SelectionOverlayMode` | 動作モード（選択矩形とルーペの可視性を一括切替。 既定 `AreaSelect`） |
 | `Options` | `SelectionOverlayOptions`（コア） | 設定の単一値（選択矩形 / 暗転マスク / ルーペ / 選択矩形破線。 色は含まない）。 同じ値の再設定はスキップされる |
 | `MarqueeAppearance` / `LoupeAppearance` | 提示層の外観 | 描画にだけ必要な外観の単一値（内包コントロールへ委譲する） |
 | `HasSelection` / `SelectionSourceRect` | `bool` / `Rect` | 選択矩形の有無と現在値（対象座標） |
 | `HighlightSourceRect` | `Rect?` | ハイライト矩形（**null はハイライトなし**） |
-| `ShowFullOverlay` | `bool` | 全面暗転の有無（モードから導出。 読み取り専用） |
+| `ShowOuterMask` | `bool` | 暗転マスクを描くかどうか（外観の暗転色が見えるか。 読み取り専用） |
 | `LoupeCenterPoint` | `Point?` | ルーペ中心（対象座標。 未設定時は null） |
 | `SizeLabelOverrideProvider` / `OperationTextProvider` / `InfoTextProvider` | `Func<string?>?` | ラベル文言のプロバイダ（文言はホストが与える） |
 | `ClientToSourceScaling` / `DisplayScaleScaling` / `LoupeClientToPixelScaling` | `double` | DPI スケーリング（環境値） |

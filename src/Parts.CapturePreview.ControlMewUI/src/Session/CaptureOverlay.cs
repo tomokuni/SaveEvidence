@@ -114,6 +114,24 @@ internal sealed class CaptureOverlay
     /// <summary>設定（ラベルの再組み立てに使用する）。</summary>
     private readonly CaptureSettings _settings;
 
+    /// <summary>表示中のオーバーレイ ウィンドウ（未表示の場合は null）。</summary>
+    /// <remarks>
+    /// 閉じる対象をフィールドで保持する。 <c>Application.Current.AllWindows</c> の末尾を使うと、<br/>
+    /// 復帰時にオーナーを前面へ出した（<c>Activate</c>）後では末尾がオーナーになり、**アプリを閉じてしまう**。
+    /// </remarks>
+    private Window? _overlayWindow;
+
+    /// <summary>オーナーウィンドウ（復帰後の描画待ちに使う。 <see cref="RunAsync"/> が設定する）。</summary>
+    private Window? _ownerWindow;
+
+    /// <summary>オーナーの退避と復帰のスコープ（<see cref="RunAsync"/> が設定する）。</summary>
+    /// <remarks>
+    /// 復帰はウィンドウを閉じる<b>前</b>に行う（オーバーレイが画面を覆っている間に行うことで、<br/>
+    /// 閉じた瞬間にデスクトップが見えるのを防ぐ）。 破棄は <see cref="Finish"/> と <see cref="RunAsync"/> の<br/>
+    /// 両方から呼ばれるが、二重呼び出しは無害（コアのスコープが 1 回だけ実行する）。
+    /// </remarks>
+    private CaptureOwnerScope? _ownerScope;
+
     /// <summary>キャプチャ完了の通知先（結果をホストへ中継する）。</summary>
     /// <remarks>
     /// 完了の通知はオーナーの再表示より<b>前</b>に行う（ホストが画像を差し替えてから再表示する順序を保証する。<br/>
@@ -191,11 +209,16 @@ internal sealed class CaptureOverlay
     /// </remarks>
     internal async Task<CaptureResult?> RunAsync(Window owner, CaptureOverlayServices services)
     {
+        ArgumentNullException.ThrowIfNull(owner);
+        _ownerWindow = owner;
+
         // オーナーの退避とキャプチャ除外の設定・解除は CaptureOwnerScope（コア）が単一所有する
         // （手順: 除外の設定 → 画面外へ退避 → 撮影 → 配置の復帰 → 除外の解除。 Avalonia 版と同じ）
         using var ownerScope = CaptureOwnerScope.Enter(
             services.Window, owner.ToEsPlatformHandle(), new OwnerWindowAdapter(owner),
             hideOwner: _settings.HideOwnerWindow!.Value);
+        // 復帰をウィンドウのクローズ前に行えるよう、スコープを保持する（破棄は Finish が行う）
+        _ownerScope = ownerScope;
 
         // 全モニターを包含する 1 枚の画像として取得する（Avalonia 版と同じ）。
         // 1 モニターに限定すると、カーソルのあるモニターでしか選択できない（別のモニターへ
@@ -221,24 +244,40 @@ internal sealed class CaptureOverlay
         {
             // 確定・キャンセルまで待つ（入れ子ループを作らない非同期の待機。 ホストの継続は呼び出し側へ戻る）
             await ShowAsync(owner, services, ownerScope).ConfigureAwait(true);
-            // 確定・キャンセルは必ず結果を確定させてからウィンドウを閉じるため、待機は即座に返る
-            // （ウィンドウのクローズ経路は CompleteCapture / Cancel に限られる）。
+            // 完了の記録（確定は 2 件・キャンセルは 1 件）とホストへの通知は Finish が行う
+            // （ウィンドウのクローズ前に済ませる。 画像変更 → オーナーの復帰 → クローズの順）。
             // 結果の読み出しは待機で行う（完了済みのタスクを同期的に読むと、UI スレッドをブロックしうる）
             var result = await _result.Task.ConfigureAwait(true);
-            // 完了の記録（確定は 2 件・キャンセルは 1 件）はコアが単一所有する
-            _log.LogCaptureFinished(result);
-            // キャプチャ完了イベントを発行する（同期実行）。
-            // C# のイベントは同期型のため、ホストのハンドラ（画像変更）が完了してから
-            // 以下の finally（オーナー再表示）が実行される。
-            // フロー: APP 非表示 → キャプチャ → 画像変更（イベント受信） → APP 表示（再表示）
-            _onCaptured?.Invoke(result);
             return result;
         }
         finally
         {
+            _ownerScope = null;
+            _ownerWindow = null;
             // 画像はセッションの終了時に破棄する（以降の描画・切り出しは発生しない）
             _screen?.Dispose();
             _screen = null;
+        }
+    }
+
+    /// <summary>キャプチャ結果をホストへ通知し、オーナーを復帰させる（ウィンドウを閉じる前に呼ぶ）。</summary>
+    /// <param name="result">キャプチャ結果（キャンセル時は null）。</param>
+    /// <remarks>
+    /// 画像変更（ホスト）とオーナーの復帰をクローズ前に済ませることで、<br/>
+    /// オーバーレイが消えた後にデスクトップや旧画像が一瞬見えるのを防ぐ（Avalonia 版と同じ順序）。<br/>
+    /// 完了の記録は本メソッドが単一所有する（確定・キャンセルの経路からそれぞれ呼ばない）。
+    /// </remarks>
+    private void Finish(CaptureResult? result)
+    {
+        _log.LogCaptureFinished(result);
+        try
+        {
+            _onCaptured?.Invoke(result);
+        }
+        finally
+        {
+            // 通知が例外を投げても、オーナーの復帰は必ず行う（オーバーレイが画面を覆っている間に行う）
+            _ownerScope?.Dispose();
         }
     }
 
@@ -277,17 +316,43 @@ internal sealed class CaptureOverlay
             }
 
             window.MoveTo(position.X, position.Y);
+            // 復帰後の内容を描き直す（オーバーレイを閉じた瞬間に旧画像が見えるのを防ぐ）
+            window.InvalidateVisual();
             window.Activate();
             _savedPosition = null;
         }
     }
 
-    /// <summary>透明を解除するまでに待つフレーム数。</summary>
+    /// <summary>画面外で画像を描き終えるまでに待つフレーム数。</summary>
     /// <remarks>
-    /// 表示直後のフレームはテーマ背景だけで、画像は次のフレームで合成される（実測）。<br/>
-    /// そのため 2 フレーム目（画像が合成されたフレーム）で透明を解除する。
+    /// ウィンドウを表示した直後の 1 フレーム目は下地（背景色）だけで、撮影画像は次のフレームで合成される（実測）。<br/>
+    /// 画面外に置いたまま 2 フレーム待つことで、画面内へ移した時点で画像が載っている（= 下地の色が一瞬見えない）。
     /// </remarks>
-    private const int FramesUntilReveal = 2;
+    private const int FramesBeforePlace = 2;
+
+    /// <summary>画面内へ移してからオーナーを退避するまでに待つフレーム数。</summary>
+    /// <remarks>移した直後に退避すると、退避の瞬間のデスクトップが 1 フレーム見える。</remarks>
+    private const int FramesBeforeHideOwner = 1;
+
+    /// <summary>オーナーの再描画を待つフレーム数。</summary>
+    /// <remarks>画像を差し替えただけでは合成されていないため、待たずに閉じると旧画像が 1〜2 フレーム見える。</remarks>
+    private const int OwnerPaintFrames = 2;
+
+    /// <summary>画面内へ出した後、画像の転送完了を待つ余裕（時間）。</summary>
+    /// <remarks>画像の GPU への転送が描画フレームに遅れる環境があるため、短い余裕を置く。</remarks>
+    private static readonly TimeSpan s_revealSettleDelay = TimeSpan.FromMilliseconds(20);
+
+    /// <summary>描画フレームを待つ上限（1 回分）。</summary>
+    /// <remarks>
+    /// 画面外・最小化では合成が走らないことがあるため、待ち続けずに打ち切る（通常のフレーム間隔より十分に長く取る）。
+    /// </remarks>
+    private static readonly TimeSpan s_frameTimeout = TimeSpan.FromMilliseconds(200);
+
+    /// <summary>画面外で画像を描き終えたかどうか（画面内へ移したか）。</summary>
+    private bool _placed;
+
+    /// <summary>オーナーの退避を実行したかどうか。</summary>
+    private bool _ownerHidden;
 
     /// <summary>画像の平均色を求める。</summary>
     /// <param name="image">対象の画像。</param>
@@ -337,57 +402,20 @@ internal sealed class CaptureOverlay
             .Borderless()
             .Topmost()
             .Content(content);
+        _overlayWindow = window;
+        // 閉じられたら保持を解除する（次回のセッションで別のウィンドウを閉じる）
+        window.Closed += () => _overlayWindow = null;
 
-        // 透明の間はウィンドウの背景色だけが合成されるため、透明を解除した瞬間の 1 フレームは
-        // 背景色が見える。 背景を撮影画像の平均色に合わせて、その差を目立たなくする。
+        // 撮影画像の平均色を下地にする（万一ウィンドウが画像より先に合成されても、その 1 フレームが
+        // 明るい面として目立たないようにする。 画面外で描き終えてから移すため、通常は見えない）。
         window.Background = AverageColor(Screen);
 
-        // ウィンドウは表示時に背景色で塗られるため、そのまま表示すると画像を描くまでの間が
-        // 背景色の面として見える。 そのため透明な状態で表示し、
-        // 画像が合成されたフレームで透明を解除する。
-        // 物理ピクセルでの配置は起動時の配置より後（1 フレーム目）に行う必要があるため、ここで行う。
-        var revealed = false;
-        var placed = false;
-        var frames = 0;
-        window.Opacity = 0;
-        window.FrameRendered += () =>
-        {
-            frames++;
-
-            if (!placed)
-            {
-                // 全モニターを跨ぐウィンドウは、UI フレームワークの論理座標（DIP）による配置が
-                // OS により作業領域内へ補正される（実測: 仮想スクリーン原点 -1200 が 0 になる）。
-                // そのため表示直後（透明なうち）に物理ピクセルで仮想スクリーン全面へ置き直す。
-                placed = true;
-                try
-                {
-                    services.Window.SetBounds(window.ToEsPlatformHandle(), _screenBounds);
-                }
-                catch (Exception ex) when (EsErrors.IsRecoverable(ex))
-                {
-                    // 配置できないと全モニターの選択ができないが、描画フレームのコールバックを
-                    // 例外で抜けると以降のフレーム処理が止まるため、境界で記録して続行する
-                    _log.LogOperationError(ex, nameof(RunAsync));
-                }
-            }
-
-            if (revealed || frames < FramesUntilReveal)
-            {
-                return;
-            }
-
-            revealed = true;
-            window.Opacity = 1;
-
-            // オーナーの退避は、キャプチャ除外が効かない場合だけ行う（自ウィンドウが撮影画像へ写るため）。
-            // 除外が効いている場合は退避しない: オーバーレイが画面全体を覆っているため見た目は変わらないが、
-            // 退避の瞬間にウィンドウが再合成され、一瞬だけ明るい画面が見える（実測）
-            if (!ownerScope.IsExcluded)
-            {
-                ownerScope.ApplyPendingHide();
-            }
-        };
+        // **画面外に置いた状態で表示し、画像を描き終えてから画面内へ移す**
+        // （画面内で表示してから画像を合成すると、合成前の 1〜2 フレームに下地の色やデスクトップが見える）。
+        // 大きさは変えずに位置だけ動かすのは、大きさを変えると再レイアウトが走り、
+        // その瞬間にウィンドウの下地が 1 フレーム見えるためである（WinUI 3 版と同じ方式）。
+        // ウィンドウが表示されてから動かす（表示前に動かすと、表示時の配置（画面外）に戻される）
+        window.Loaded += () => _ = RevealAsync(window, services, ownerScope);
 
         // 撮影中の一時的な表示のため、タスクバー・Alt+Tab の一覧には出さない
         // （Avalonia 版は HideFromTaskSwitcher で除外する）
@@ -411,6 +439,12 @@ internal sealed class CaptureOverlay
         window.WindowSize = WindowSize.Resizable(
             EsWindowPlacementMath.ToDipLength(Screen.Width, creationScale),
             EsWindowPlacementMath.ToDipLength(Screen.Height, creationScale));
+
+        // 画面外（仮想スクリーンの外）に置いて表示する（画面内に出すのは画像を描き終えてから）
+        var offScreen = EsWindowPlacementMath.ToDipPoint(
+            new EsPointInt(CaptureTiming.OwnerOffScreenCoord, CaptureTiming.OwnerOffScreenCoord),
+            creationScale);
+        window.StartManualPosition(offScreen.X, offScreen.Y);
 
         _selector.SetLoupeSource(Screen);
         ApplyLabels();
@@ -438,10 +472,8 @@ internal sealed class CaptureOverlay
             }
         };
 
-        // 位置は生成時のスケールで解釈される
-        var position = EsWindowPlacementMath.ToDipPoint(_screenBounds.TopLeft, creationScale);
-
-        window.StartManualPosition(position.X, position.Y);
+        // 位置は生成時のスケールで解釈される（画面外に置いて表示し、画像を描き終えてから移す）
+        window.StartManualPosition(offScreen.X, offScreen.Y);
 
         // Enter = 確定 / Escape = キャンセル（どのキーがどの操作かの解釈はコアが単一所有する）。
         // 確定対象が無い場合の Enter は何もしない（確定できない状態でキャンセル扱いにしない）
@@ -567,10 +599,33 @@ internal sealed class CaptureOverlay
         // 切り出し矩形は画面物理座標のため、画像の原点を渡して取り出す（座標変換はコアが単一所有する）
         var image = CropClipMath.Extract(Screen, _screenBounds.TopLeft, pixels);
         // 結果の確定（最初の 1 件だけを採用する）はコアが単一所有する。 領域は契約どおり仮想画面座標（画面物理）で渡す。
-        // 完了の記録とホストへの通知は RunAsync（待機側）が行う（ウィンドウは結果を確定させて閉じるだけ。
-        // Avalonia 版の CaptureOverlayWindow と同じ分担）
-        _result.TrySetResult(CaptureResult.From(image, pixels));
-        Close();
+        CompleteWith(CaptureResult.From(image, pixels));
+    }
+
+    /// <summary>結果の通知・オーナーの復帰・ウィンドウのクローズを 1 か所で行う。</summary>
+    /// <param name="result">キャプチャ結果（キャンセル時は null）。</param>
+    /// <remarks>
+    /// 通知（ホストの画像変更）が例外を投げても、オーナーの復帰（<see cref="Finish"/>）とクローズは必ず行う。<br/>
+    /// 通知の失敗は待機側へ伝える（伝えないと <c>ShowAsync</c> の呼び出し元が完了しないままオーバーレイが残る）。
+    /// </remarks>
+    private void CompleteWith(CaptureResult? result)
+    {
+        try
+        {
+            Finish(result);
+            _result.TrySetResult(result);
+        }
+        catch (Exception ex)
+        {
+            // 通知の失敗は待機側へ伝える（伝えないと ShowAsync の呼び出し元が完了しないまま残る）
+            _result.TrySetException(ex);
+            throw;
+        }
+        finally
+        {
+            // オーナーが新しい画像を描き終えてから閉じる
+            _ = CloseAfterOwnerPaintedAsync();
+        }
     }
 
     /// <summary>キャンセルする（切り出しを行わずに閉じる）。</summary>
@@ -587,10 +642,9 @@ internal sealed class CaptureOverlay
         }
 
         // 選択のキャンセル要求とセッションの完了（キャンセル 1 件）はコアが単一所有する。
-        // 完了の記録とホストへの通知は RunAsync（待機側）が行う
+        // 画像変更（ホストのキャンセル通知）とオーナーの復帰はウィンドウのクローズ前に行う
         _log.LogCancelRequested();
-        _result.TrySetResult(null);
-        Close();
+        CompleteWith(null);
     }
 
     /// <summary>選択オーバーレイの確定要求（Enter キー・ダブルクリック等）を処理する。</summary>
@@ -602,17 +656,121 @@ internal sealed class CaptureOverlay
     private void OnSelectorConfirmRequested(object? sender, SelectionConfirmedEventArgs e)
         => ConfirmScreen(CropClipMath.ToScreenRect(e.SelectionSourceRect, _screenBounds.TopLeft));
 
-    /// <summary>現在のオーバーレイウィンドウを閉じる。</summary>
-    /// <remarks>
-    /// ウィンドウはフィールドに保持しないため、表示中のウィンドウ（<c>Application.Current.AllWindows</c> の末尾）を閉じる。
-    /// </remarks>
-    private static void Close()
+    /// <summary>現在のオーバーレイ ウィンドウを閉じる（表示時に保持したウィンドウを使う）。</summary>
+    private void CloseOverlay()
     {
-        // 末尾のウィンドウが表示中のオーバーレイ（インデクサで取得し、LINQ を持ち込まない）
-        var windows = Application.Current?.AllWindows;
-        if (windows is { Count: > 0 })
+        var overlay = _overlayWindow;
+        _overlayWindow = null;
+        overlay?.Close();
+    }
+
+    /// <summary>画面外で画像を描き終えてからオーバーレイを画面内へ出し、その後でオーナーを退避する。</summary>
+    /// <param name="window">対象のオーバーレイ ウィンドウ。</param>
+    /// <param name="services">ウィンドウ操作サービス。</param>
+    /// <param name="ownerScope">オーナーの退避と復帰のスコープ。</param>
+    /// <returns>表示が完了したときに完了するタスク。</returns>
+    /// <remarks>
+    /// <b>画面外で描く理由</b>: 画面内で表示すると、画像が合成されるまでの 1〜2 フレームに<br/>
+    /// 下地の色（またはデスクトップ）が見える。 画面外で <see cref="FramesBeforePlace"/> フレーム描いてから<br/>
+    /// 位置だけ動かすと、合成済みの面がそのまま出る。<br/>
+    /// <b>フレームが来ない環境</b>（リモート デスクトップ等では画面外の合成が走らないことがある）でも<br/>
+    /// 操作不能にならないよう、待ち時間には上限を設けて画面内へ出す。<br/>
+    /// <b>セッションが先に完了した場合</b>（即座に確定・キャンセルされた場合）は何もしない。
+    /// </remarks>
+    private async Task RevealAsync(Window window, CaptureOverlayServices services, CaptureOwnerScope ownerScope)
+    {
+        await WaitForFramesAsync(window, FramesBeforePlace).ConfigureAwait(true);
+        // 画像の転送（GPU へのアップロード）がフレームに遅れる環境向けの余裕
+        await Task.Delay(s_revealSettleDelay).ConfigureAwait(true);
+
+        if (_placed || _overlayWindow is null || _result.Task.IsCompleted)
         {
-            windows[^1].Close();
+            return;
+        }
+
+        PlaceOnScreen(window, services);
+
+        // 画面内へ移した次のフレームでオーナーを退避する（退避の瞬間を見せない）
+        await WaitForFramesAsync(window, FramesBeforeHideOwner).ConfigureAwait(true);
+        if (!_ownerHidden && _overlayWindow is not null)
+        {
+            _ownerHidden = true;
+            ownerScope.ApplyPendingHide();
+        }
+    }
+
+    /// <summary>オーバーレイを大きさを変えずに画面内（仮想スクリーン全面）へ移す。</summary>
+    /// <param name="window">対象のオーバーレイ ウィンドウ。</param>
+    /// <param name="services">ウィンドウ操作サービス。</param>
+    /// <remarks>
+    /// 大きさを変えずに位置だけ動かすのは、大きさを変えると再レイアウトが走り、その瞬間に<br/>
+    /// ウィンドウの下地が 1 フレーム見えるためである（WinUI 3 版と同じ方式）。<br/>
+    /// 論理座標（DIP）での配置は OS が作業領域内へ補正するため、物理ピクセルで置き直す。<br/>
+    /// 失敗しても選択操作は成立しないが、描画フレームのコールバックを例外で抜けると以降のフレーム処理が止まるため、<br/>
+    /// 境界で記録して続行する。
+    /// </remarks>
+    private void PlaceOnScreen(Window window, CaptureOverlayServices services)
+    {
+        _placed = true;
+        try
+        {
+            services.Window.SetBounds(window.ToEsPlatformHandle(), _screenBounds);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            _log.LogOperationError(ex, nameof(PlaceOnScreen));
+        }
+    }
+
+    /// <summary>オーナーが再描画されるまで待ってからオーバーレイを閉じる。</summary>
+    /// <remarks>
+    /// 画像の差し替えは次の描画フレームで合成されるため、待たずに閉じると、オーバーレイが消えた後に<br/>
+    /// 旧画像が 1〜2 フレーム見える（= 再表示してから結果が出るまでのタイムラグ）。<br/>
+    /// フレームが来ない環境では上限時間で打ち切る（閉じられないままにしない）。
+    /// </remarks>
+    private async Task CloseAfterOwnerPaintedAsync()
+    {
+        if (_ownerWindow is { } owner)
+        {
+            await WaitForFramesAsync(owner, OwnerPaintFrames).ConfigureAwait(true);
+        }
+
+        CloseOverlay();
+    }
+
+    /// <summary>指定したウィンドウの描画フレームを待つ（合計で上限時間）。</summary>
+    /// <param name="window">対象のウィンドウ。</param>
+    /// <param name="frameCount">待つフレーム数。</param>
+    /// <returns>待機が完了したときに完了するタスク。</returns>
+    /// <remarks>
+    /// 画面外・最小化では合成が走らないことがあるため、<see cref="s_frameTimeout"/> で打ち切る。<br/>
+    /// 打ち切った場合は待機を続けない（閉じる操作を止めない）。
+    /// </remarks>
+    private static async Task WaitForFramesAsync(Window window, int frameCount)
+    {
+        var remaining = frameCount;
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        void OnFrame()
+        {
+            if (--remaining > 0)
+            {
+                return;
+            }
+
+            window.FrameRendered -= OnFrame;
+            completed.TrySetResult();
+        }
+
+        window.FrameRendered += OnFrame;
+        try
+        {
+            // 上限は合計で 1 回分（フレームが来ない環境で閉じる操作を待たせ続けない）
+            await Task.WhenAny(completed.Task, Task.Delay(s_frameTimeout)).ConfigureAwait(true);
+        }
+        finally
+        {
+            window.FrameRendered -= OnFrame;
         }
     }
 

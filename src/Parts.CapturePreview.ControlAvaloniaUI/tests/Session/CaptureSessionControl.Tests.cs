@@ -2,6 +2,7 @@ using Rect = Avalonia.Rect;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -86,6 +87,27 @@ public class CaptureSessionControlTests
     // スクリーン/ウィンドウ選択で自身のウィンドウが非表示にならない
     // ====================================================================
 
+    /// <summary>条件が満たされるまで UI スレッドへ制御を戻しながら待つ（上限つき）。</summary>
+    /// <param name="condition">満たすべき条件。</param>
+    /// <remarks>
+    /// オーナーの退避は「撮影画像をオーバーレイが表示した後」に行うため（デスクトップを見せない）、<br/>
+    /// セッション開始直後には同期で完了していない。 背景の継続（別スレッド + Dispatcher）を待つ。
+    /// </remarks>
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var timeout = TimeSpan.FromSeconds(5);
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        while (!condition())
+        {
+            if (stopwatch.Elapsed > timeout)
+            {
+                Assert.Fail("条件が満たされませんでした（タイムアウト）。");
+            }
+            await Dispatcher.UIThread.InvokeAsync(() => { });
+            await Task.Delay(10);
+        }
+    }
+
     [AvaloniaFact]
     internal async Task CaptureSession_HideOwnerWindowがtrueでオーナーが透明化され完了後に復元される()
     {
@@ -104,9 +126,11 @@ public class CaptureSessionControlTests
             1.0,
             logger: NullLogger.Instance);
 
-        // RunAsync を開始すると、オーバーレイ表示前にオーナーが透明化され画面外へ退避される
+        // RunAsync を開始すると、オーバーレイが撮影画像を表示した後にオーナーが透明化され画面外へ退避される
+        // （退避を先に行うと、透明なオーバーレイ越しにデスクトップが一瞬見える）
         var task = session.RunAsync(owner);
         Assert.True(owner.IsVisible); // 表示状態のまま（Hide しない）
+        await WaitUntilAsync(() => owner.Opacity == 0.0);
         Assert.Equal(0.0, owner.Opacity); // 透明化されている
         Assert.Equal(new PixelPoint(-32000, -32000), owner.Position); // 画面外へ退避
 
@@ -114,7 +138,7 @@ public class CaptureSessionControlTests
         session.Cancel();
         _ = await task;
 
-        // 完了後は元の位置と Opacity が即時復元される（async の待機は不要）
+        // 完了後は元の位置と Opacity が復元される
         Assert.True(owner.IsVisible);
         Assert.Equal(1.0, owner.Opacity); // Opacity が 1 に戻っている（透明のまま放置されない）
         Assert.Equal(new PixelPoint(123, 456), owner.Position); // 元の位置に復元
@@ -163,23 +187,22 @@ public class CaptureSessionControlTests
             new CaptureSettings(HideOwnerWindow: true),
             1.0,
             // キャプチャ完了イベント（同期）: ハンドラで画像変更を模擬する
-            onCaptured: _ => order.Add("画像変更"),
+            // 画像変更は「オーナーが退避したまま」の状態で行われる（復帰後に画像が遅れて出るのを防ぐ）
+            onCaptured: _ => order.Add(owner.Opacity == 0.0 ? "画像変更(退避中)" : "画像変更(復帰後)"),
             NullLogger.Instance);
 
         var task = session.RunAsync(owner);
-        Assert.Equal(0.0, owner.Opacity); // 透明化されている（表示状態のまま）
+        await WaitUntilAsync(() => owner.Opacity == 0.0); // 透明化されている（表示状態のまま）
 
         // Cancel() でキャンセルしてタスクを完了する
         session.Cancel();
         var result = await task;
-        // 復元は即時（async の待機は不要）。 イベント（画像変更）の完了後に実行される
+        // 復元は完了時に行われる（透明のまま放置されない）
         Assert.True(owner.IsVisible);
         Assert.Equal(1.0, owner.Opacity);
 
-        // イベント（画像変更）は復元より先に実行される（同期イベントの順序保証）
-        // ※ order の検証はイベント発行が復元前に呼ばれたかを確認するため、RunAsync 完了時点で
-        //    「画像変更」が記録されている
-        Assert.Contains("画像変更", order);
+        // イベント（画像変更）は復帰より先に実行される（同期イベントの順序保証）
+        Assert.Contains("画像変更(退避中)", order);
         owner.Close();
     }
 

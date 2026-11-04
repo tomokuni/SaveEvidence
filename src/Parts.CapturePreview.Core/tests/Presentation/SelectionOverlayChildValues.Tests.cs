@@ -25,7 +25,7 @@ public class SelectionOverlayChildValuesTests
     {
         var values = SelectionOverlayChildValues.Resolve(CreateOptions(), mode, CreateAppearance());
 
-        Assert.True(values.MarqueeAppearance.ShowFullOverlay);
+        Assert.True(values.MarqueeAppearance.ShowOuterMask);
         Assert.True(values.MarqueeAppearance.ShowHandles);
         Assert.True(values.IsHitTestVisible);
     }
@@ -37,8 +37,8 @@ public class SelectionOverlayChildValuesTests
     {
         var values = SelectionOverlayChildValues.Resolve(CreateOptions(), mode, CreateAppearance());
 
-        // ハイライトのみのモードでも暗転マスクは描画する（全面暗転は行わない）
-        Assert.False(values.MarqueeAppearance.ShowFullOverlay);
+        // 暗転マスクの可否はホストの外観が単一所有する（ハイライトのみのモードでも暗転色は反映する）
+        Assert.True(values.MarqueeAppearance.ShowOuterMask);
         Assert.False(values.MarqueeAppearance.ShowHandles);
         Assert.False(values.IsHitTestVisible);
     }
@@ -59,11 +59,11 @@ public class SelectionOverlayChildValuesTests
     [Fact]
     internal void 解決_外観は指定した値を保つ()
     {
-        var appearance = MarqueeAppearance.Default with { OverlayColor = System.Drawing.Color.Red, ShowSizeLabel = false };
+        var appearance = MarqueeAppearance.Default with { OuterMaskColor = System.Drawing.Color.Red, ShowSizeLabel = false };
 
         var values = SelectionOverlayChildValues.Resolve(CreateOptions(), SelectionOverlayMode.Crop, appearance);
 
-        Assert.Equal(System.Drawing.Color.Red, values.MarqueeAppearance.OverlayColor);
+        Assert.Equal(System.Drawing.Color.Red, values.MarqueeAppearance.OuterMaskColor);
         Assert.False(values.MarqueeAppearance.ShowSizeLabel);
     }
 

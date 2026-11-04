@@ -11,12 +11,13 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 public class ShadowPlanTests
 {
     [Fact]
-    internal void 影_は半透明の黒を使う()
+    internal void 影_は明暗どちらでも見える灰色を使う()
     {
-        Assert.Equal(0x00u, (ShadowPlan.ColorArgb >> 16) & 0xFF);
-        Assert.Equal(0x00u, (ShadowPlan.ColorArgb >> 8) & 0xFF);
-        Assert.Equal(0x00u, ShadowPlan.ColorArgb & 0xFF);
-        Assert.InRange(ShadowPlan.ColorArgb >> 24, 0x40u, 0xBFu);
+        // 黒だと暗色テーマの地色に埋もれるため、50% の灰色を使う（一覧用の計画と同じ値）
+        Assert.Equal(0x80u, (ShadowPlan.ColorArgb >> 16) & 0xFF);
+        Assert.Equal(0x80u, (ShadowPlan.ColorArgb >> 8) & 0xFF);
+        Assert.Equal(0x80u, ShadowPlan.ColorArgb & 0xFF);
+        Assert.Equal(0xC0u, ShadowPlan.ColorArgb >> 24);
     }
 
     [Fact]
@@ -46,7 +47,8 @@ public class ShadowPlanTests
     {
         var color = ShadowPlan.ColorAtDistance(1);
 
-        Assert.Equal(0x000000u, color & 0x00FFFFFF);
+        // 色は 50% の灰色（明暗どちらでも見える）、透過度だけが距離で変わる
+        Assert.Equal(ShadowPlan.ColorArgb & 0x00FFFFFF, color & 0x00FFFFFF);
         Assert.InRange(color >> 24, 0x26u, 0x4Du);
     }
 

@@ -12,3 +12,10 @@ SaveEvidence\.exe
 app\.(Core|AvaloniaUI|MewUI)
 # 改名・分割で消えた型（コメントだけが残りやすい。 実測 2026-10-14 に 2 箇所の残骸を直した）
 FadeMaskDragRect
+# EsUtil 0.4.0 で提示層が .Core へ統合され、ColorComboBox が ColorSelector へ改名された（実測 2026-11-03）
+EsUtil\.Feature\.(Marquee|Loupe|Thumbnail)\.Presenter
+ColorComboBoxControl
+EsUtil\.Ui\.[A-Za-z0-9]+\.ColorComboBox
+# MarqueeAppearance の改名（EsUtil 0.5.0。 実測 2026-11-03）
+MarqueeAppearance\.(OverlayColor|OuterBorderColor|OuterBorderThickness|InnerFillColor|InnerBorderColor|InnerBorderThickness)
+MarqueeAppearance\.Show(Overlay|OuterBorder|InnerFill|InnerBorder|FullOverlay)

@@ -42,7 +42,7 @@ public class CapturePaintMapperTests
         Assert.Equal(DrawingColor.FromArgb(10, 20, 30), paint.SizeLabelBackgroundColor);
         Assert.Equal(DrawingColor.Cyan, paint.CoordLabelColor);
         Assert.Equal(DrawingColor.FromArgb(40, 50, 60), paint.CoordLabelBackgroundColor);
-        Assert.Equal(DrawingColor.FromArgb(70, 80, 90), paint.OverlayColor);
+        Assert.Equal(DrawingColor.FromArgb(70, 80, 90), paint.OuterMaskColor);
     }
 
     /// <summary>選択枠線（ハンドルの枠線）と暗転マスクの外枠が同じ色になることを検証する。</summary>
@@ -55,18 +55,18 @@ public class CapturePaintMapperTests
         var paint = CapturePaintMapper.ToMarqueeAppearance(settings);
 
         Assert.Equal(DrawingColor.Red, paint.HandleBorderColor);
-        Assert.Equal(paint.HandleBorderColor, paint.OuterBorderColor);
+        Assert.Equal(paint.HandleBorderColor, paint.BorderColor);
     }
 
     /// <summary>写像しない色が既定値を保つことを検証する。</summary>
-    /// <remarks>内側の塗り・内側の枠線の描画可否は <see cref="MarqueeAppearance"/> のフラグが単一所有するため、色は既定の透明のままとする。</remarks>
+    /// <remarks>内側の塗りの描画可否は <see cref="MarqueeAppearance.ShowInnerMask"/> が単一所有するため、色は既定の透明のままとする。</remarks>
     [Fact]
     internal void 変換_写像しない色は既定値を保つ()
     {
         var paint = CapturePaintMapper.ToMarqueeAppearance(CreateSettings());
 
-        Assert.Equal(MarqueeAppearance.Default.InnerFillColor, paint.InnerFillColor);
-        Assert.Equal(MarqueeAppearance.Default.InnerBorderColor, paint.InnerBorderColor);
+        Assert.Equal(MarqueeAppearance.Default.InnerMaskColor, paint.InnerMaskColor);
+        Assert.Equal(MarqueeAppearance.Default.ShowInnerMask, paint.ShowInnerMask);
     }
 
     /// <summary>枠線の太さと表示可否が設定から写像されることを検証する。</summary>
@@ -86,12 +86,12 @@ public class CapturePaintMapperTests
 
         var paint = CapturePaintMapper.ToMarqueeAppearance(settings);
 
-        Assert.Equal(3.0, paint.OuterBorderThickness);
+        Assert.Equal(3.0, paint.BorderThickness);
         Assert.False(paint.ShowSizeLabel);
         Assert.False(paint.ShowCoordLabel);
         // 色が不透明なら描画する（色のアルファを「描かない」の代用にしない）
-        Assert.True(paint.ShowOverlay);
-        Assert.True(paint.ShowOuterBorder);
+        Assert.True(paint.ShowOuterMask);
+        Assert.True(paint.ShowBorder);
     }
 
     /// <summary>透明な色は描画しない扱いになることを検証する。</summary>
@@ -107,8 +107,8 @@ public class CapturePaintMapperTests
 
         var paint = CapturePaintMapper.ToMarqueeAppearance(settings);
 
-        Assert.False(paint.ShowOverlay);
-        Assert.False(paint.ShowOuterBorder);
+        Assert.False(paint.ShowOuterMask);
+        Assert.False(paint.ShowBorder);
     }
 
     [Fact]

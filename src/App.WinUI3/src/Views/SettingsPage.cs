@@ -5,7 +5,7 @@ using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
-using EsUtil.Ui.WinUI3.ColorComboBox;
+using EsUtil.Ui.WinUI3.ColorSelector;
 using EsUtil.Ui.WinUI3.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI;
@@ -524,7 +524,7 @@ internal static class SettingsPage
     /// <param name="apply">変更を設定へ反映する処理。</param>
     /// <returns>色選択コントロール。</returns>
     /// <remarks>
-    /// 色の入力・一覧・カラーピッカーは <see cref="ColorComboBoxControl"/>（EsUtil.Ui.WinUI3.ColorComboBox）が担う。<br/>
+    /// 色の入力・一覧・カラーピッカーは <see cref="ColorSelectorControl"/>（EsUtil.Ui.WinUI3.ColorSelector）が担う。<br/>
     /// 受理する入力と保存値の形式はコア（<c>EsUtil.Platform.Core.Palette</c>）が単一所有するため、
     /// 設定画面は値を受け渡すだけでよい（4 つの UI 版で同じ解釈になる）。<br/>
     /// 入力欄の表記は <c>Models.Settings.ColorTextFormat</c> に従い、設定の変更へ追従する
@@ -532,7 +532,7 @@ internal static class SettingsPage
     /// </remarks>
     private static FrameworkElement ColorRow(Settings settings, string initial, Action<string> apply)
     {
-        var control = new ColorComboBoxControl { SelectedColor = initial, TextFormat = settings.ColorTextFormat };
+        var control = new ColorSelectorControl { SelectedColor = initial, TextFormat = settings.ColorTextFormat };
         control.SelectedColorChanged += (_, _) => apply(control.SelectedColor);
 
         settings.PropertyChanged += (_, e) =>

@@ -217,7 +217,13 @@ internal static class UndoPage
 
             void Add(EsReadOnlyBitmap image, string label, bool isCurrent)
             {
-                list.Add(null, label, isCurrent: isCurrent, tag: image);
+                // 強調は選択（提示層は「現在項目」を持たない）で表す
+                var index = list.Add(null, label, tag: image);
+                if (isCurrent)
+                {
+                    list.SelectedIndex = index;
+                }
+
                 itemSources.Add(image);
             }
 

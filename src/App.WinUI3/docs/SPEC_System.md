@@ -139,7 +139,7 @@ src/App.WinUI3/src/
 | `WrapLayoutMath` / `AppStyles` | 一覧の配置の計算・共通の寸法 |
 | `CaptureFlow` | 撮影の開始（多重起動の防止）。 画像の反映は撮影完了イベントの購読側が行う |
 | `EditHistory` | 編集履歴（戻す / やり直し）の実行 |
-| `ColorComboBoxControl` | 設定画面の色選択（EsUtil.Ui.WinUI3.ColorComboBox）。 色名・16 進の入力、一覧、ピッカー、検証を持つ |
+| `ColorSelectorControl` | 設定画面の色選択（EsUtil.Ui.WinUI3.ColorSelector）。 色名・16 進の入力、一覧、ピッカー、検証を持つ |
 | `AppJsonContext` | 設定の JSON ソース生成コンテキスト |
 | `CaptureClipboard` | クリップボードとの画像の受け渡し（PNG として授受する） |
 | `GlobalHotKeyRegistration` | グローバル ホットキーの登録・解除と押下の配信 |

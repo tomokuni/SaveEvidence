@@ -24,4 +24,13 @@ public sealed class CaptureCompletion<TResult>
     /// <returns>この呼び出しで完了した場合は true。 既に完了している場合は false。</returns>
     /// <remarks>最初の 1 件だけが有効になる（2 件目以降は無視される）。</remarks>
     public bool TrySetResult(TResult result) => _source.TrySetResult(result);
+
+    /// <summary>セッションの失敗を設定して完了させる。</summary>
+    /// <param name="exception">待機側へ伝える例外。</param>
+    /// <returns>この呼び出しで完了した場合は true。 既に完了している場合は false。</returns>
+    /// <remarks>
+    /// ホストへの通知（画像変更のイベント）が例外を投げた場合に、待機側を完了させるために使う。<br/>
+    /// 通知の失敗を握りつぶすと、待機側（<c>ShowAsync</c> の呼び出し元）が完了しないままオーバーレイが残る。
+    /// </remarks>
+    public bool TrySetException(Exception exception) => _source.TrySetException(exception);
 }

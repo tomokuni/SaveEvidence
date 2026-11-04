@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Tests.SelectionOverlay;
 /// <remarks>純粋な分岐のみのため、UI 初期化なしの <c>[Fact]</c> で並列検証できる。</remarks>
 public class SelectionOverlayStateTests
 {
-    /// <summary>選択矩形・全面暗転・破線の可否がモードに対応することを検証する。</summary>
+    /// <summary>選択矩形と破線の可否がモードに対応することを検証する。</summary>
     /// <param name="mode">動作モード。</param>
     /// <param name="expected">選択矩形を使用する場合は true。</param>
     [Theory]
@@ -15,12 +15,11 @@ public class SelectionOverlayStateTests
     [InlineData(SelectionOverlayMode.AreaSelect, true)]
     [InlineData(SelectionOverlayMode.ScreenSelect, false)]
     [InlineData(SelectionOverlayMode.WindowSelect, false)]
-    internal void 解決_選択矩形を使うモードでは選択矩形と全面暗転と破線が有効になる(SelectionOverlayMode mode, bool expected)
+    internal void 解決_選択矩形を使うモードでは選択矩形と破線が有効になる(SelectionOverlayMode mode, bool expected)
     {
         var state = SelectionOverlayState.Resolve(mode);
 
         Assert.Equal(expected, state.UsesSelection);
-        Assert.Equal(expected, state.ShowFullOverlay);
         Assert.Equal(expected, state.ShowSelectionOverlay);
     }
 
@@ -54,7 +53,7 @@ public class SelectionOverlayStateTests
         var state = SelectionOverlayState.Resolve((SelectionOverlayMode)999);
 
         Assert.False(state.UsesSelection);
-        Assert.False(state.ShowFullOverlay);
+        Assert.False(state.ShowSelectionOverlay);
     }
 
     /// <summary>破線を描くかの合成判断（モードと選択の有無の両方が必要）を検証する。</summary>
