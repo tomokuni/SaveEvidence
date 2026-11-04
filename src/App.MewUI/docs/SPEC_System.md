@@ -160,7 +160,7 @@ tests/
 | `ThumbnailView` | 画像を縦横比を保って収める表示ビュー（描画は `EsUtil.Ui.MewUI.Interop` の `ImageView` が単一所有し、計測と Uniform 指定だけを与える） |
 | `EsBitmapImageWriter`（`App.Core`） | `IImageWriter` の唯一の本番実装（両 UI 共通）。 保存はコアの `EsReadOnlyBitmap.Save`（拡張子が形式を決める）へ委譲する |
 | `ImageDrawMath`（`EsUtil.Ui.MewUI.Interop`） | 画像の描画先矩形（Uniform / Fill）の計算（純粋関数。 両 UI で共用） |
-| `ColorComboBoxControl` | 設定画面の色選択（EsUtil.Ui.MewUI.ColorComboBox）。 色名・16 進の入力、一覧、ピッカー、検証を持つ |
+| `ColorSelectorControl` | 設定画面の色選択（EsUtil.Ui.MewUI.ColorSelector）。 色名・16 進の入力、一覧、ピッカー、検証を持つ |
 | `SettingsJsonContext` | 設定の JSON ソース生成コンテキスト（Native AOT 用。 `Settings` を参照する側に置く） |
 | `LoupeOptions` | 設定のルーペ項目をルーペコントロールへ反映（プレビュー / 撮影 / 切り出しで共用） |
 | `CropBoundsMath`（`Parts.CapturePreview.Core`） | 切り出し矩形の計算（画像内へのクランプ・端数の丸め・閉区間化・最小サイズ判定）を単一所有する純粋関数。 Avalonia 版と共用する（`CropSession` が使用） |

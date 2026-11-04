@@ -71,7 +71,7 @@ MewUI 版の撮影セッションが提供する**公開 API** を記載しま�
 
 | イベント | シグネチャ | 内容 |
 | --- | --- | --- |
-| `CaptureCompleted` | `event EventHandler<CaptureCompletedEventArgs>? CaptureCompleted` | キャプチャ完了（同期実行。 UI スレッドで発行。 結果は `e.Result`）。 **オーナーの再表示より前に発行される**ため、ホストは本ハンドラで画像を差し替えてから再表示される（フロー: APP 非表示 → 撮影 → 画像変更 → APP 表示） |
+| `CaptureCompleted` | `event EventHandler<CaptureCompletedEventArgs>? CaptureCompleted` | キャプチャ完了（同期実行。 UI スレッドで発行。 結果は `e.Result`）。 **オーナーの復帰とオーバーレイのクローズより前に発行される**ため、ホストは本ハンドラで画像を差し替えてから表示される（フロー: APP 非表示 → 撮影 → 画像変更 → APP 表示 → オーバーレイを閉じる） |
 
 ### 2.1 排他の規則
 
@@ -144,7 +144,7 @@ Facade は次のサービスをコンストラクタで生成し、撮影セッ�
 | --- | --- |
 | `HideOwnerWindow` | 撮影中にオーナーウィンドウを画面外へ退避するか |
 | `MinSelectionSize` | 選択矩形のドラッグ中の最小サイズ（`MarqueeOptions.MinSelectionSize` へ反映。 切り出しの可否は選択操作そのものが判定する） |
-| `BorderColor` / `BorderThickness` / `OverlayColor` | 選択枠と暗転の外観（太さと色は提示層の `MarqueeAppearance`（`OuterBorderThickness` / `OuterBorderColor` / `OverlayColor`）へ反映。 枠線は選択矩形と共用） |
+| `BorderColor` / `BorderThickness` / `OverlayColor` | 選択枠と暗転の外観（太さと色は外観の `MarqueeAppearance`（`BorderThickness` / `BorderColor` / `OuterMaskColor`）へ反映。 枠線は選択矩形と共用） |
 | `HandleColor` / `HandleSize` / `HandleHitRadius` | ドラッグハンドル（寸法は選択矩形の設定、色は提示層の `MarqueeAppearance.HandleColor` へ反映） |
 | `MarkerColor` / `MarkerLength` | 微調整時の十字マーカー（寸法は選択矩形の設定、色は提示層の `MarqueeAppearance.MarkerColor` へ反映） |
 | `ClampToSourceBounds` | 画像外の選択を禁止するか |

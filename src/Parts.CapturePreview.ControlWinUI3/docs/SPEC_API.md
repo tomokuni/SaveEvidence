@@ -49,7 +49,7 @@
 | メンバー | 説明 |
 | --- | --- |
 | `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)` | サービス（画面キャプチャ・要素検出・ウィンドウ操作）を生成する。 `initialSettings` の null メンバーは既定値で埋める |
-| `event EventHandler<CaptureCompletedEventArgs>? CaptureCompleted` | 撮影の完了（同期実行）。 引数の結果はキャンセル時に null |
+| `event EventHandler<CaptureCompletedEventArgs>? CaptureCompleted` | 撮影の完了（同期実行）。 引数の結果はキャンセル時に null。 **オーナーの復帰とオーバーレイのクローズより前に発行される**（ハンドラで画像を差し替えてから表示される） |
 | `CaptureSettings AppearanceSettings { get; set; }` | 現在の設定。 設定時は null メンバーのみ現在値を維持する（部分更新）。 実行中の切り出しへは即時反映する |
 | `string? LogPrefix { get; set; }` | ログの接頭辞（null または空白は既定値へ戻す） |
 | `Task<CaptureResult?> StartCaptureAsync(CaptureType type, Window owner)` | 撮影を開始し、確定またはキャンセルまで待つ（画像と領域を返す。 キャンセル・取得失敗は null） |
@@ -77,7 +77,7 @@
 | `bool CenterAlign { get; set; }` | 画像がビューポートより小さい軸の中央寄せ / 左上寄せ |
 | `ZoomViewAppearance Appearance { get; set; }` | 画像の下地とスクロールバーの外観 |
 | `IReadOnlyList<OverlayRect> Rects { get; set; }` | ビューポートへ重ねる矩形（外部提供。 対象座標） |
-| `static MarqueeAppearance HighlightDefaultAppearance { get; }` | 強調の既定の外観（内側の塗りと枠線だけ） |
+| `static MarqueeAppearance HighlightDefaultAppearance { get; }` | 強調の既定の外観（内側の塗りだけ） |
 | `EsRect? HighlightSourceRect { get; set; }` | 強調する矩形（対象座標）。 null の場合は強調しない |
 | `MarqueeAppearance HighlightAppearance { get; set; }` | 強調の外観（色・枠線・表示可否） |
 | `ZoomViewControl ZoomView { get; }` | 内包する画像ビューポート（座標変換と Fit 状態の参照に使う） |

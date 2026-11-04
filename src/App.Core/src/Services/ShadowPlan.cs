@@ -4,7 +4,8 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 
 /// <summary>画像の 4 辺と 4 隅へ落とす影の描画計画（4 つの UI 版で共通の唯一の定義）。</summary>
 /// <remarks>
-/// <b>基準</b>: AvaloniaUI 版の <c>BoxShadow</c>（<c>0 0 10 0 #8A000000</c>）を実測して写した値である。<br/>
+/// <b>基準</b>: AvaloniaUI 版の <c>BoxShadow</c>（ぼかし 10 DIP）の濃さの変化を実測して写した値である<br/>
+/// （色は明暗の両方で見えるよう 50% の灰色にしている。<see cref="ColorArgb"/>）。<br/>
 /// キャプチャページの画像・フォルダビュー・Undo 一覧のサムネイルは、すべてこの計画から描く<br/>
 /// （UI 版ごとに影の濃さ・広がりがずれないようにする）。<br/>
 /// <br/>
@@ -22,16 +23,18 @@ public static class ShadowPlan
     /// <summary>影のぼかしの広がり（DIP）。 画像の端からこの距離まで影を落とす。</summary>
     public const double BlurRadius = 10;
 
-    /// <summary>影の色（黒 54%）。</summary>
+    /// <summary>影の色（50% の灰色 75%）。</summary>
     /// <remarks>
     /// グラデーションの各停止点は、この色の透過度を<b>実測した濃さ</b>で置き換えて使う<br/>
-    /// （<see cref="AlphaAtDistance"/> が返す値がそのまま透過度になる）。
+    /// （<see cref="AlphaAtDistance"/> が返す値がそのまま透過度になる）。<br/>
+    /// <b>黒を使わない理由</b>: 黒の影は暗色テーマの地色に埋もれて見えない。 50% の灰色は地色へ合成されるため<br/>
+    /// 明暗で同じ程度になり、どちらのテーマでも自然に見える（一覧用の計画 <c>EsUtil.Feature.Thumbnail.ThumbnailShadowPlan</c> と同じ値）。
     /// </remarks>
-    public const uint ColorArgb = 0x8A000000;
+    public const uint ColorArgb = 0xC0808080;
 
     /// <summary>影の濃さの実測プロファイル（画像の端からの距離 → 不透明度）。</summary>
     /// <remarks>
-    /// AvaloniaUI 版の <c>BoxShadow</c>（ぼかし 10 DIP・黒 54%）の明色の画面での実測値。<br/>
+    /// AvaloniaUI 版の <c>BoxShadow</c>（ぼかし 10 DIP）の明色の画面での実測値（色は除く）。<br/>
     /// 添字 0 は距離 1 DIP、以降 1 DIP 刻みで距離 10 DIP まで（それ以降は 0）。
     /// </remarks>
     private static readonly double[] s_alphaProfile = [0.245, 0.195, 0.150, 0.112, 0.079, 0.050, 0.033, 0.021, 0.012, 0.005];
