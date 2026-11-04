@@ -310,7 +310,7 @@ classDiagram
     CaptureOverlay ..> SelectionOverlayControl : 配置（Area / Screen / Window）
     CaptureOverlay ..> IElementFinder : 要素の検出
     CaptureOverlay ..> ICaptureService : 画面の取得
-    SettingsPage ..> ColorComboBox : 色の入力を委譲
+    SettingsPage ..> ColorSelector : 色の入力を委譲
     SettingsPage ..> ISettingsService : 設定の読み書き
     FolderViewPage ..> ThumbnailView : 配置
     FolderViewPage ..> FolderViewViewModel : 束縛
@@ -654,7 +654,7 @@ sequenceDiagram
     サムネイル（`ThumbnailView`）は大きさの要求が異なるが、描画は `EsUtil.Ui.MewUI.Interop` の `ImageView` が、
     配置の計算は `ImageDrawMath`（`EsUtil.Ui.MewUI.Interop`）が単一所有する（サムネイルは計測と Uniform 指定だけを加える）。
 16. **色の変換を専用クラスへ分離する**。 設定は色を文字列で保持するため、境界の変換は
-   コア（`EsUtil.Platform.Core.Palette` の `ColorString`）が単一所有し、入力の検証は `ColorComboBoxControl` が行う。
+   コア（`EsUtil.Platform.Core.Palette` の `ColorString`）が単一所有し、入力の検証は `ColorSelectorControl` が行う。
 17. **絶対配置が必要な子は自前の Panel で配置する**。 MewUI の `Grid` は整列で位置を決め、`Margin` と
    `Canvas` の絶対配置は反映されない（実測）。 また `ActualWidth` / `ActualHeight` は測定結果（残余を埋める
    要素では 0）であり実サイズは配置引数からしか得られない。

@@ -83,7 +83,7 @@ public sealed class CropViewControlTests
         using var cropView = new CropViewControl();
         var appearance = CropViewControl.HighlightDefaultAppearance with
         {
-            InnerFillColor = DrawingColor.FromArgb(64, 255, 255, 0),
+            InnerMaskColor = DrawingColor.FromArgb(64, 255, 255, 0),
         };
 
         cropView.HighlightAppearance = appearance;

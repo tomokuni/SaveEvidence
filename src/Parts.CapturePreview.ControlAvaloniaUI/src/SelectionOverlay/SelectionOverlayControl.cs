@@ -79,6 +79,13 @@ public sealed class SelectionOverlayControl : Panel
     /// <summary>動作モード（C#14 の <c>field</c> キーワードでバッキングフィールドを暗黙定義）。</summary>
     private SelectionOverlayMode _mode = SelectionOverlayMode.AreaSelect;
 
+    /// <summary>ホストが与えた外観（モードから導出する表示可否を上書きする前の値）。</summary>
+    /// <remarks>
+    /// 子コントロールの外観はモードの判断を合成した値になるため、そこから素材を取り直すと<br/>
+    /// モードを往復したときに表示可否が戻らない（暗転を止めた状態が素材として残る）。 素材は本値が保持する。
+    /// </remarks>
+    private MarqueeAppearance _hostAppearance = MarqueeAppearance.Default;
+
     /// <summary>操作ラベル（アプリ固有の付加情報）の文言を描画時に生成するデリゲート。</summary>
     /// <value>描画のたびに評価される関数。 null または空文字を返す場合は描かない。</value>
     /// <remarks>
@@ -522,7 +529,7 @@ public sealed class SelectionOverlayControl : Panel
 
     /// <summary>全面暗転（注目なし）を表示するかどうか（選択矩形を使うモードで有効）。</summary>
     /// <remarks>モード（<see cref="Mode"/>）から導出される描画状態の読み取り専用プロパティ（外観の表示可否を参照する）。</remarks>
-    public bool ShowFullOverlay => _marquee.Appearance.ShowFullOverlay;
+    public bool ShowFullOverlay => _marquee.Appearance.ShowOuterMask;
 
     // ====================================================================
     // 公開 API: 描画に使う色
@@ -541,7 +548,7 @@ public sealed class SelectionOverlayControl : Panel
         get => _marquee.Appearance;
         set
         {
-            _marquee.Appearance = value;
+            _hostAppearance = value;
             ApplyOptions();
         }
     }
@@ -574,7 +581,7 @@ public sealed class SelectionOverlayControl : Panel
     private void ApplyOptions()
     {
         // ハイライト矩形は実行時状態のため子コントロールが保持する（設定の差し替えで失わない）
-        var values = SelectionOverlayChildValues.Resolve(_options, _mode, _marquee.Appearance);
+        var values = SelectionOverlayChildValues.Resolve(_options, _mode, _hostAppearance);
 
         _marquee.Options = values.Marquee;
         _marquee.Appearance = values.MarqueeAppearance;

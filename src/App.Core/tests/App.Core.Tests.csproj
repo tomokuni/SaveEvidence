@@ -21,7 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\src\App.Core.csproj" />
     <!-- 影の値が 2 つの計画（キャプチャ用と一覧用）で食い違わないことを検査する -->
-    <PackageReference Include="EsUtil.Feature.Thumbnail.Presenter" />
+    <PackageReference Include="EsUtil.Feature.Thumbnail.Core" />
   </ItemGroup>
 
 </Project>

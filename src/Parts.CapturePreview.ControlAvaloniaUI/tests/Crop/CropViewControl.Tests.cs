@@ -202,17 +202,16 @@ public class CropViewControlTests
     }
 
     [AvaloniaFact]
-    internal void HighlightAppearance_既定は内側の塗りと枠線だけを描く()
+    internal void HighlightAppearance_既定は内側の塗りだけを描く()
     {
         var view = new CropViewControl();
 
         Assert.Equal(CropViewControl.HighlightDefaultAppearance, view.HighlightAppearance);
         Assert.Equal(CropViewControl.HighlightDefaultAppearance, view.HighlightMarquee.Appearance);
-        Assert.True(view.HighlightAppearance.ShowInnerFill);
-        Assert.True(view.HighlightAppearance.ShowInnerBorder);
+        Assert.True(view.HighlightAppearance.ShowInnerMask);
         Assert.False(view.HighlightAppearance.ShowHandles);
-        Assert.False(view.HighlightAppearance.ShowOverlay);
-        Assert.False(view.HighlightAppearance.ShowOuterBorder);
+        Assert.False(view.HighlightAppearance.ShowOuterMask);
+        Assert.False(view.HighlightAppearance.ShowBorder);
     }
 
     [AvaloniaFact]

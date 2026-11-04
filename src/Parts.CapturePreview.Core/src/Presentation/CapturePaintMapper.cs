@@ -24,7 +24,7 @@ internal static class CapturePaintMapper
     /// 2. 枠線（<see cref="CaptureSettings.BorderColor"/>）は、暗転マスクの外枠（外側の装飾）とハンドルの枠線の両方へ同じ値を割り当てる<br/>
     ///    （両者は同じ矩形に重なるため、別々の値にすると見た目が崩れる）。<br/>
     /// 3. サイズラベルの背景はラベル共通の背景色（<see cref="CaptureSettings.TextBackgroundColor"/>）を使う。<br/>
-    /// 4. 内側の塗り・内側の枠線は写像しない（描画の可否は <see cref="MarqueeAppearance"/> のフラグが単一所有するため、既定の透明を保つ）。<br/>
+    /// 4. 注目矩形の内側の塗りは写像しない（描画の可否は <see cref="MarqueeAppearance.ShowInnerMask"/> が単一所有するため、既定の透明を保つ）。<br/>
     /// 5. 枠線の太さと表示可否（暗転・外枠・サイズラベル・座標ラベル）も写像する（描画にだけ必要な設定のため、コアの設定には含めない）。
     /// </remarks>
     /// <exception cref="ArgumentNullException"><paramref name="settings"/> が null の場合。</exception>
@@ -41,12 +41,12 @@ internal static class CapturePaintMapper
             SizeLabelBackgroundColor = settings.TextBackgroundColor!.Value,
             CoordLabelColor = settings.CoordLabelColor!.Value,
             CoordLabelBackgroundColor = settings.CoordLabelBackgroundColor!.Value,
-            OverlayColor = settings.OverlayColor!.Value,
-            OuterBorderColor = settings.BorderColor!.Value,
-            OuterBorderThickness = settings.BorderThickness!.Value,
+            OuterMaskColor = settings.OverlayColor!.Value,
+            BorderColor = settings.BorderColor!.Value,
+            BorderThickness = settings.BorderThickness!.Value,
             // 色が透明でも描画の可否は設定のフラグが決める（従来の「アルファ 0 = 描かない」を明示フラグで表現する）
-            ShowOverlay = settings.OverlayColor!.Value.IsVisible(),
-            ShowOuterBorder = settings.BorderColor!.Value.IsVisible(),
+            ShowOuterMask = settings.OverlayColor!.Value.IsVisible(),
+            ShowBorder = settings.BorderColor!.Value.IsVisible(),
             ShowSizeLabel = settings.SizeLabelVisible!.Value,
             ShowCoordLabel = settings.ShowCoordLabel!.Value,
         };

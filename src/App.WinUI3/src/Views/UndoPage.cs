@@ -187,7 +187,8 @@ internal static class UndoPage
 
             if (viewModel.PreviewImage is { } current)
             {
-                list.Add(current, "現在", "現在の画像", isCurrent: true, tag: current);
+                // 強調は選択（提示層は「現在項目」を持たない）で表す
+                list.SelectedIndex = list.Add(current, "現在", "現在の画像", tag: current);
             }
 
             var undo = history.GetUndoHistory();

@@ -60,7 +60,7 @@ public sealed partial class Settings : ObservableObject
     /// <remarks>
     /// 保存値は表記に依らず <c>#AARRGGBB</c> のままである（表記は画面に出す文字列だけを決める）。<br/>
     /// 既定は色名 + 不透明度（<see cref="ColorTextFormat.NameWithAlpha"/>）。<br/>
-    /// 反映先は <c>EsUtil.Ui.*.ColorComboBox</c> の <c>TextFormat</c> である。
+    /// 反映先は <c>EsUtil.Ui.*.ColorSelector</c> の <c>TextFormat</c> である。
     /// </remarks>
     [ObservableProperty]
     private ColorTextFormat _colorTextFormat = ColorTextFormat.NameWithAlpha;

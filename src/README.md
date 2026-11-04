@@ -8,7 +8,7 @@
 ```mermaid
 flowchart TB
     APP["アプリ層<br/>App.AvaloniaUI / App.MewUI / App.WinUI3 / App.WinForms（+ App.Core の ViewModel・Model）<br/>Parts.CapturePreview.*（撮影セッション + 切り出しビュー + 領域選択 + 切り出しプレビューのビューポート）"]
-    CTRL["コントロール層<br/>XxxControl.Core / .Presenter / .AvaloniaUI / .MewUI / .WinUI3 / .WinForms"]
+    CTRL["コントロール層<br/>XxxControl.Core（提示を含む）/ .AvaloniaUI / .MewUI / .WinUI3 / .WinForms"]
     PLAT["共通基盤とブリッジ（いずれも EsUtil リポジトリ）<br/>EsUtil.Platform.Core（値型・抽象。`Native/` 配下が Win32 実装を担う）<br/>EsUtil.Ui.AvaloniaUI.Interop / EsUtil.Ui.MewUI.Interop / EsUtil.Ui.WinUI3.Interop / EsUtil.Ui.WinForms.Interop"]
     APP --> CTRL
     APP --> PLAT
@@ -74,21 +74,21 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 **描画計画のまとめ型**: 描画計画（`XxxDrawPlan`）は「フレーム 1 枚分」のまとめ型であり、Presenter から UI へ渡す唯一の描画契約です。 項目が複数の値を 1 つの概念としてまとめる場合にだけ専用型を作ります（単一のコレクションで足りる項目に型を作りません）。
 
-アセンブリ参照の向きは `UI → 提示層（Presenter）→ Core` です（提示層は Core の幾何（`XxxGeometry`）を使うので Core を参照する）。 **逆向きの参照はありません**（Core は提示層もブリッジ（`EsUtil.Ui.*.Interop`）も参照しない）。
+アセンブリ参照の向きは `UI → 提示層（Presenter）→ Core` です（提示層は Core の幾何（`XxxGeometry`）を使う）。 **逆向きの参照はありません**（Core は提示層もブリッジ（`EsUtil.Ui.*.Interop`）も参照しない）。 0.4.0 以降、`EsUtil` 側では提示層がコアと同じアセンブリ（`EsUtil.Feature.<機能>.Core`）に入っており、層の分離は**フォルダと名前空間**（`src/Core/` / `src/Presenter/`）だけが担います（コアから提示層への参照は禁止のままです）。
 
 **コントロールを差し替えるには**: 描画計画の構成を変える場合は `XxxPresenter` を継承して `ResolveDrawPlan` を上書きする（または `XxxPresenterXxx` を作る）。 見た目だけを変える場合は外観（`XxxAppearance`）を差し替える。 コアの公開 API だけで描画計画を組み立てられるため、`XxxPresenter` を使わない独自実装も可能です。
 
 ## 5. コントロールごとの層
 
-| コントロール | Core | Presenter | UI |
+| コントロール | Core | Presenter（提示。 0.4.0 以降は Core と同一アセンブリ） | UI |
 | --- | --- | --- | --- |
-| `MarqueeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI / WinUI3 / WinForms |
-| `LoupeControl` | あり | あり（提示 + 外観） | AvaloniaUI / MewUI / WinUI3 / WinForms |
+| `MarqueeControl` | あり | あり（提示 + 外観。 `EsUtil.Feature.Marquee.Core` に同梱） | AvaloniaUI / MewUI / WinUI3 / WinForms |
+| `LoupeControl` | あり | あり（提示 + 外観。 `EsUtil.Feature.Loupe.Core` に同梱） | AvaloniaUI / MewUI / WinUI3 / WinForms |
 | `ZoomViewControl` | あり（`Parts.CapturePreview.Core`） | なし（UI 層が描く） | `CapturePreview.*` に収録 |
 | `CropViewControl` | あり（`Parts.CapturePreview.Core`） | なし | AvaloniaUI / MewUI / WinUI3 / WinForms |
 | `CaptureSessionControl` | あり | あり（設定 → 色の写像のみ。 描画手順は持たない） | AvaloniaUI / MewUI / WinUI3 / WinForms |
 | `SelectionOverlayControl` | あり | あり（値の解決 ＋ 付加情報ラベルの体裁。 内包する Marquee / Loupe の Presenter を再利用する） | AvaloniaUI / MewUI / WinUI3 / WinForms |
-| `ThumbnailControl` | あり（`EsUtil.Feature.Thumbnail.Core`） | あり（`EsUtil.Feature.Thumbnail.Presenter`。 提示 + 外観 + 影） | AvaloniaUI / WinForms（EsUtil のコントロール） |
+| `ThumbnailControl` | あり（`EsUtil.Feature.Thumbnail.Core`） | あり（`EsUtil.Feature.Thumbnail.Core` に同梱。 提示 + 外観 + 影） | AvaloniaUI / WinForms（EsUtil のコントロール） |
 
 `CropViewControl` と `SelectionOverlayControl` は `Parts.CapturePreview.ControlAvaloniaUI` / `Parts.CapturePreview.ControlMewUI` / `Parts.CapturePreview.ControlWinUI3` / `Parts.CapturePreview.ControlWinForms` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。 `ZoomViewControl` も同じアセンブリに収録され、`CropViewControl` が内包する画像ビューポートです（ZoomView の UI 層も独立したプロジェクトではありません。 ズーム・パンの状態と判断は UI 非依存コアの `Parts.CapturePreview.Core` が単一所有します）。
 
@@ -101,16 +101,16 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 ## 6. 各層のドキュメント
 
-| コントロール | Core | Presenter |
-| --- | --- | --- |
-| Marquee | [`EsUtil.Feature.Marquee.Core`](../../EsUtil/EsUtil/Feature.Marquee.Core/README.md) | [`EsUtil.Feature.Marquee.Presenter`](../../EsUtil/EsUtil/Feature.Marquee.Presenter/README.md) |
-| Loupe | [`EsUtil.Feature.Loupe.Core`](../../EsUtil/EsUtil/Feature.Loupe.Core/README.md) | [`EsUtil.Feature.Loupe.Presenter`](../../EsUtil/EsUtil/Feature.Loupe.Presenter/README.md) |
-| CaptureOverlaySession | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md) | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md)（`Presentation/`） |
-| CropView | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md) | なし |
-| ZoomView | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md) | なし（UI 層が描く。 `CropViewControl` が内包） |
-| SelectionOverlay | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md) | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md)（`Presentation/`） |
+| コントロール | Core（提示を含む） |
+| --- | --- |
+| Marquee | [`EsUtil.Feature.Marquee.Core`](../../EsUtil/EsUtil/Feature.Marquee.Core/README.md) |
+| Loupe | [`EsUtil.Feature.Loupe.Core`](../../EsUtil/EsUtil/Feature.Loupe.Core/README.md) |
+| CaptureOverlaySession | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md)（`Presentation/`） |
+| CropView | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md) |
+| ZoomView | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md)（UI 層が描く。 `CropViewControl` が内包） |
+| SelectionOverlay | [`Parts.CapturePreview.Core`](Parts.CapturePreview.Core/README.md)（`Presentation/`） |
 
-SelectionOverlay は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`EsUtil.Feature.Marquee.Presenter`](../../EsUtil/EsUtil/Feature.Marquee.Presenter/README.md) / [`EsUtil.Feature.Loupe.Presenter`](../../EsUtil/EsUtil/Feature.Loupe.Presenter/README.md)）。
+SelectionOverlay は複合コントロールであり、内包する Marquee / Loupe の層も参照します（[`EsUtil.Feature.Marquee.Core`](../../EsUtil/EsUtil/Feature.Marquee.Core/README.md) / [`EsUtil.Feature.Loupe.Core`](../../EsUtil/EsUtil/Feature.Loupe.Core/README.md)）。
 
 UI 層は [`EsUtil.Ui.AvaloniaUI.Marquee`](../../EsUtil/EsUtil.Ui.AvaloniaUI/Marquee/README.md) / [`EsUtil.Ui.MewUI.Marquee`](../../EsUtil/EsUtil.Ui.MewUI/Marquee/README.md) / [`EsUtil.Ui.WinUI3.Marquee`](../../EsUtil/EsUtil.Ui.WinUI3/Marquee/README.md) / [`EsUtil.Ui.WinForms.Marquee`](../../EsUtil/EsUtil.Ui.WinForms/Marquee/README.md) /
 [`EsUtil.Ui.AvaloniaUI.Loupe`](../../EsUtil/EsUtil.Ui.AvaloniaUI/Loupe/README.md) / [`EsUtil.Ui.MewUI.Loupe`](../../EsUtil/EsUtil.Ui.MewUI/Loupe/README.md) / [`EsUtil.Ui.WinUI3.Loupe`](../../EsUtil/EsUtil.Ui.WinUI3/Loupe/README.md) / [`EsUtil.Ui.WinForms.Loupe`](../../EsUtil/EsUtil.Ui.WinForms/Loupe/README.md)、

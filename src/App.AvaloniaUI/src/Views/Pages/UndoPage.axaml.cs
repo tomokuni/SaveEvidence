@@ -200,7 +200,13 @@ public sealed partial class UndoPage : ViewModePageBase
 
         void AddItem(EsReadOnlyBitmap source, string label, bool isCurrent)
         {
-            UndoListBox.Add(placeholder, label, isCurrent: isCurrent, tag: source);
+            // 強調は選択（提示層は「現在項目」を持たない）で表す
+            var index = UndoListBox.Add(placeholder, label, tag: source);
+            if (isCurrent)
+            {
+                UndoListBox.SelectedIndex = index;
+            }
+
             sources.Add(source);
         }
 

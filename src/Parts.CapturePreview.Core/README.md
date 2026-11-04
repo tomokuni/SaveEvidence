@@ -62,12 +62,12 @@
 ```text
 Parts.CapturePreview.Core
     ├── EsUtil.Platform.Core（Es* 幾何型 / 画像型）
-    ├─ EsUtil.Feature.Marquee.Presenter（MarqueeAppearance・MarqueeLabelPlacement、および推移参照の Marquee.Core = MarqueeOptions）
-    ├─ EsUtil.Feature.Loupe.Presenter（LoupeAppearance、および推移参照の Loupe.Core = LoupeOptions）
+    ├─ EsUtil.Feature.Marquee.Core（MarqueeAppearance / MarqueeLabelPlacement / MarqueeOptions。 コアと提示層が同一アセンブリ）
+    ├─ EsUtil.Feature.Loupe.Core（LoupeAppearance / LoupeOptions。 同上）
     └── Microsoft.Extensions.Logging.Abstractions（ログ定義のソース生成）
 ```
 
-依存は一方向です（UI プロジェクトから本プロジェクトを参照し、逆は参照しません）。 提示層（`EsUtil.Feature.*.Presenter`）への参照は、製品の設定型と提示層の外観を橋渡しする写像（`Presentation/`）を持つために限ります。 機能コア（`EsUtil.Feature.*.Core`）の型（`MarqueeOptions` / `LoupeOptions`）は提示層の公開面に現れるため、参照の宣言は提示層だけにします。
+依存は一方向です（UI プロジェクトから本プロジェクトを参照し、逆は参照しません）。 機能アセンブリ（`EsUtil.Feature.*.Core`）への参照は、製品の設定型と外観を橋渡しする写像（`Presentation/`）を持つために限ります。 0.4.0 で提示層がコアへ統合されたため、外観型とコアの設定型は 1 つのパッケージが公開します（宣言は 1 本で足ります）。
 
 ## 4. クイックスタート
 

@@ -89,15 +89,15 @@ public class SelectionOverlayControlTests
             Options = SelectionOverlayOptions.Default,
             MarqueeAppearance = MarqueeAppearance.Default with
             {
-                OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+                OuterMaskColor = DrawingColor.FromArgb(90, 1, 2, 3),
             }
         };
 
         // 色は与えた値のまま、モード由来の表示可否（選択を使うモード = 全面暗転 + ハンドル）になる
         var appearance = control.Marquee.Appearance;
-        Assert.Equal(90, appearance.OverlayColor.A);
-        Assert.Equal((1, 2, 3), (appearance.OverlayColor.R, appearance.OverlayColor.G, appearance.OverlayColor.B));
-        Assert.True(appearance.ShowFullOverlay);
+        Assert.Equal(90, appearance.OuterMaskColor.A);
+        Assert.Equal((1, 2, 3), (appearance.OuterMaskColor.R, appearance.OuterMaskColor.G, appearance.OuterMaskColor.B));
+        Assert.True(appearance.ShowOuterMask);
         Assert.True(appearance.ShowHandles);
         Assert.True(control.ShowFullOverlay);
 
@@ -105,12 +105,31 @@ public class SelectionOverlayControlTests
         control.Mode = SelectionOverlayMode.WindowSelect;
         control.MarqueeAppearance = MarqueeAppearance.Default with
         {
-            OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+            OuterMaskColor = DrawingColor.FromArgb(90, 1, 2, 3),
         };
 
-        Assert.False(control.Marquee.Appearance.ShowFullOverlay);
+        Assert.False(control.Marquee.Appearance.ShowOuterMask);
         Assert.False(control.Marquee.Appearance.ShowHandles);
         Assert.False(control.ShowFullOverlay);
+    }
+
+    /// <summary>モードを往復してもホストが与えた表示可否が戻ることを検証する。</summary>
+    /// <remarks>
+    /// モードから導出する表示可否を子コントロールの外観へ合成したまま素材として読み直すと、<br/>
+    /// 「暗転しないモード」を経た時点で素材の可否が false に落ち、選択を使うモードへ戻しても暗転しない<br/>
+    /// （素材はホストが与えた値として保持する）。
+    /// </remarks>
+    [AvaloniaFact]
+    internal void Mode_往復しても全面暗転の表示可否が戻る()
+    {
+        var control = new SelectionOverlayControl { Mode = SelectionOverlayMode.Crop };
+        Assert.True(control.ShowFullOverlay);
+
+        control.Mode = SelectionOverlayMode.WindowSelect;
+        Assert.False(control.ShowFullOverlay);
+
+        control.Mode = SelectionOverlayMode.Crop;
+        Assert.True(control.ShowFullOverlay);
     }
 
     // ====================================================================
@@ -143,11 +162,11 @@ public class SelectionOverlayControlTests
 
         control.Options = options;
         // 枠線の太さは描画にだけ必要な設定のため、外観として与える
-        control.MarqueeAppearance = MarqueeAppearance.Default with { OuterBorderThickness = 3.0 };
+        control.MarqueeAppearance = MarqueeAppearance.Default with { BorderThickness = 3.0 };
 
         var applied = control.Marquee.Options;
         Assert.Equal(5, applied.MinSelectionSize);
-        Assert.Equal(3.0, control.MarqueeAppearance.OuterBorderThickness);
+        Assert.Equal(3.0, control.MarqueeAppearance.BorderThickness);
         Assert.Equal(12.0, applied.HandleSize);
         Assert.Equal(15.0, applied.HandleHitRadius);
         Assert.True(applied.ClampToSourceBounds);
@@ -180,8 +199,8 @@ public class SelectionOverlayControlTests
         Assert.Equal(5, marquee.MinSelectionSize);
 
         // 外観（枠線の太さ・表示可否）は設定の反映後にモード導出分（ハンドル・全面暗転）を反映して保持される
-        Assert.True(control.MarqueeAppearance.ShowOuterBorder);
-        Assert.Equal(2.0, control.MarqueeAppearance.OuterBorderThickness);
+        Assert.True(control.MarqueeAppearance.ShowBorder);
+        Assert.Equal(2.0, control.MarqueeAppearance.BorderThickness);
         Assert.True(control.MarqueeAppearance.ShowHandles);
     }
 
@@ -290,11 +309,11 @@ public class SelectionOverlayControlTests
             Loupe = control.Options.Loupe with { RequestedSize = 200 },
         };
         // 枠線の太さは描画にだけ必要な設定のため、外観として与える（設定の差し替えで保持される）
-        control.MarqueeAppearance = control.MarqueeAppearance with { OuterBorderThickness = 4.0 };
+        control.MarqueeAppearance = control.MarqueeAppearance with { BorderThickness = 4.0 };
 
         Assert.Equal(5, control.Marquee.Options.MinSelectionSize);           // 未指定 → 現在値維持
         Assert.Equal(24.0, control.Marquee.Options.MarkerLength);            // 指定 → 反映
-        Assert.Equal(4.0, control.MarqueeAppearance.OuterBorderThickness);   // 指定 → 反映
+        Assert.Equal(4.0, control.MarqueeAppearance.BorderThickness);   // 指定 → 反映
         Assert.Equal(200, control.Loupe.Options.RequestedSize);               // 指定 → 反映
         Assert.Equal(30.0, control.Loupe.PositionOffset);                     // 未指定 → 現在値維持
         Assert.Equal(200, control.Options.Loupe.RequestedSize);               // getter は更新後の値を返す
@@ -475,8 +494,9 @@ public class SelectionOverlayControlTests
 
         // 文言はコアの EsPoint.Format が単一所有する
         Assert.Equal("(50, 60)", text.Text);
-        Assert.True(label.Width > 0);
-        Assert.True(label.Height > 0);
+        // 寸法は計画の実寸以上（文字に合わせて伸びるため、幅・高さは固定せず最小寸法で与える）
+        Assert.True(label.MinWidth > 0);
+        Assert.True(label.MinHeight > 0);
 
         window.Close();
     }

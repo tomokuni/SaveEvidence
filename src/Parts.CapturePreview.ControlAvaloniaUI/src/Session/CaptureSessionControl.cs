@@ -269,7 +269,7 @@ public sealed class CaptureSessionControl : IDisposable
     /// <summary>進行中の操作（StartCaptureAsync / StartCropAsync）をキャンセルする。</summary>
     /// <remarks>
     /// - Crop 実行中: セッションをキャンセルし、0x0 の空結果で完了する。<br/>
-    /// - Capture 実行中: オーバーレイウィンドウを閉じてキャンセルする（Deactivated 経由でキャンセル処理が走る）。<br/>
+    /// - Capture 実行中: オーバーレイをキャンセルとして完了させる（ウィンドウを閉じる順序はセッションが決める）。<br/>
     /// - 操作なし: 何もしない。
     /// </remarks>
     public void Cancel()

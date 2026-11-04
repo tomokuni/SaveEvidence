@@ -100,9 +100,9 @@ public class SelectionOverlayControlStateTests
         var control = new SelectionOverlayControl();
 
         // 既定の設定（コアの既定値）がそのまま子コントロールへ渡される
-        Assert.Equal(MarqueeAppearance.Default.OuterBorderThickness, control.MarqueeAppearance.OuterBorderThickness);
+        Assert.Equal(MarqueeAppearance.Default.BorderThickness, control.MarqueeAppearance.BorderThickness);
         // モードから導出される描画状態（既定は AreaSelect = 全面暗転）だけが外観の既定と異なる
-        Assert.True(control.MarqueeAppearance.ShowFullOverlay);
+        Assert.True(control.MarqueeAppearance.ShowOuterMask);
         Assert.True(control.MarqueeAppearance.ShowHandles);
         Assert.Equal(SelectionOverlayOptions.Default.Loupe, control.Loupe.Options);
         Assert.Equal(SelectionOverlayOptions.Default.LoupeOffset, control.Loupe.PositionOffset);
@@ -118,13 +118,13 @@ public class SelectionOverlayControlStateTests
         // 選択枠線（装飾の外枠）とハンドルの枠線は同じ矩形に重なるため、ホストが同じ色・太さを与える
         control.MarqueeAppearance = control.MarqueeAppearance with
         {
-            OuterBorderColor = System.Drawing.Color.Red,
+            BorderColor = System.Drawing.Color.Red,
             HandleBorderColor = System.Drawing.Color.Red,
-            OuterBorderThickness = 1.0,
+            BorderThickness = 1.0,
         };
 
-        Assert.Equal(System.Drawing.Color.Red, control.MarqueeAppearance.OuterBorderColor);
-        Assert.Equal(control.MarqueeAppearance.HandleBorderColor, control.MarqueeAppearance.OuterBorderColor);
-        Assert.Equal(1.0, control.MarqueeAppearance.OuterBorderThickness);
+        Assert.Equal(System.Drawing.Color.Red, control.MarqueeAppearance.BorderColor);
+        Assert.Equal(control.MarqueeAppearance.HandleBorderColor, control.MarqueeAppearance.BorderColor);
+        Assert.Equal(1.0, control.MarqueeAppearance.BorderThickness);
     }
 }

@@ -88,15 +88,15 @@ public class SelectionOverlayControlTests
             Options = SelectionOverlayOptions.Default,
             MarqueeAppearance = MarqueeAppearance.Default with
             {
-                OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+                OuterMaskColor = DrawingColor.FromArgb(90, 1, 2, 3),
             }
         };
 
         // 色は与えた値のまま、モード由来の表示可否（選択を使うモード = 全面暗転 + ハンドル）になる
         var appearance = control.Marquee.Appearance;
-        Assert.Equal(90, appearance.OverlayColor.A);
-        Assert.Equal((1, 2, 3), (appearance.OverlayColor.R, appearance.OverlayColor.G, appearance.OverlayColor.B));
-        Assert.True(appearance.ShowFullOverlay);
+        Assert.Equal(90, appearance.OuterMaskColor.A);
+        Assert.Equal((1, 2, 3), (appearance.OuterMaskColor.R, appearance.OuterMaskColor.G, appearance.OuterMaskColor.B));
+        Assert.True(appearance.ShowOuterMask);
         Assert.True(appearance.ShowHandles);
         Assert.True(control.ShowFullOverlay);
 
@@ -104,10 +104,10 @@ public class SelectionOverlayControlTests
         control.Mode = SelectionOverlayMode.WindowSelect;
         control.MarqueeAppearance = MarqueeAppearance.Default with
         {
-            OverlayColor = DrawingColor.FromArgb(90, 1, 2, 3),
+            OuterMaskColor = DrawingColor.FromArgb(90, 1, 2, 3),
         };
 
-        Assert.False(control.Marquee.Appearance.ShowFullOverlay);
+        Assert.False(control.Marquee.Appearance.ShowOuterMask);
         Assert.False(control.Marquee.Appearance.ShowHandles);
         Assert.False(control.ShowFullOverlay);
     }
@@ -227,18 +227,18 @@ public class SelectionOverlayControlTests
             // 枠線の太さ・表示可否は描画にだけ必要な設定のため、外観として与える
             MarqueeAppearance = MarqueeAppearance.Default with
             {
-                ShowOuterBorder = true,
-                OuterBorderThickness = 3.0,
+                ShowBorder = true,
+                BorderThickness = 3.0,
                 ShowSizeLabel = false,
             }
         };
 
-        Assert.True(control.MarqueeAppearance.ShowOuterBorder);
-        Assert.Equal(3.0, control.MarqueeAppearance.OuterBorderThickness);
+        Assert.True(control.MarqueeAppearance.ShowBorder);
+        Assert.Equal(3.0, control.MarqueeAppearance.BorderThickness);
 
         // 設定は子コントロールへ分配される（寸法は選択の設定、枠線と表示可否は外観が持つ）
-        Assert.True(control.Marquee.Appearance.ShowOuterBorder);
-        Assert.Equal(3.0, control.Marquee.Appearance.OuterBorderThickness);
+        Assert.True(control.Marquee.Appearance.ShowBorder);
+        Assert.Equal(3.0, control.Marquee.Appearance.BorderThickness);
         Assert.False(control.Marquee.Appearance.ShowSizeLabel);
         Assert.Equal(12.0, control.Marquee.Options.HandleSize);
     }

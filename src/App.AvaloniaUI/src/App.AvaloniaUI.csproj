@@ -55,7 +55,7 @@
     <ProjectReference Include="..\..\App.Core\src\App.Core.csproj" />
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlAvaloniaUI\src\Parts.CapturePreview.ControlAvaloniaUI.csproj" />
     <PackageReference Include="EsUtil.Ui.AvaloniaUI.Interop" />
-    <PackageReference Include="EsUtil.Ui.AvaloniaUI.ColorComboBox" />
+    <PackageReference Include="EsUtil.Ui.AvaloniaUI.ColorSelector" />
     <PackageReference Include="EsUtil.Ui.AvaloniaUI.Thumbnail" />
   </ItemGroup>
 

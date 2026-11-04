@@ -70,7 +70,7 @@
     <PackageReference Include="EsUtil.Ui.WinUI3.Interop" />
     <PackageReference Include="EsUtil.Ui.WinUI3.Thumbnail" />
     <!-- 設定画面の色選択（色名・16 進・ピッカーを 1 つにまとめたコントロール） -->
-    <PackageReference Include="EsUtil.Ui.WinUI3.ColorComboBox" />
+    <PackageReference Include="EsUtil.Ui.WinUI3.ColorSelector" />
   </ItemGroup>
 
   <ItemGroup>

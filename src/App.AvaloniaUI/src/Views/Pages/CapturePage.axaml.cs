@@ -110,11 +110,13 @@ public sealed partial class CapturePage : UserControl
 
         // 自動切り出しのホバー強調の外観（内側の塗りと枠線）を CropViewControl へ与える。
         // 色・枠線の太さ・表示可否は描画にだけ必要な設定であり、強調の描画手順は CropViewControl（Parts）が単一所有する。
+        // 枠線は外枠（注目矩形の辺）で描く（提示層の外観は内側だけの枠線を持たない）。
         CropView.HighlightAppearance = CropViewControl.HighlightDefaultAppearance with
         {
-            InnerFillColor = s_autoCropHoverFillColor,
-            InnerBorderColor = s_autoCropHoverBorderColor,
-            InnerBorderThickness = AutoCropStrokeThickness,
+            InnerMaskColor = s_autoCropHoverFillColor,
+            BorderColor = s_autoCropHoverBorderColor,
+            BorderThickness = AutoCropStrokeThickness,
+            ShowBorder = true,
         };
 
         // ズーム率の変化をスライダ・⊕⊖ ボタン・ViewModel へ反映する

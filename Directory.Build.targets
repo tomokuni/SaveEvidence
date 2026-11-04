@@ -31,7 +31,8 @@
       <_SeIsUiLayer>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(EsUtil\.Feature\.[A-Za-z0-9]+\.Control[A-Za-z0-9]*|Platform\.[A-Za-z0-9]+|Parts\.[A-Za-z0-9]+\.(ControlAvaloniaUI|ControlMewUI|ControlWinUI3|ControlWinForms|AvaloniaUI|MewUI|WinUI3|WinForms)|ColorPickerControl\.[A-Za-z0-9]+)$'))</_SeIsUiLayer>
       <_SeIsUiIndependentCore>$([System.Text.RegularExpressions.Regex]::IsMatch('$(MSBuildProjectName)', '^(Parts\.[A-Za-z]+\.Core|App\.Core)$'))</_SeIsUiIndependentCore>
 
-      <!-- 提示層が参照してよい同一機能のコア名（例: EsUtil.Feature.Loupe.Presenter → EsUtil.Feature.Loupe.Core） -->
+      <!-- 提示層が参照してよい同一機能のコア名（`<機能>.Presenter` プロジェクトのときだけ `<機能>.Core` を導出する。
+           EsUtil 0.4.0 で提示層はコアへ統合されたため、本リポジトリのプロジェクトには該当しない） -->
       <_SeFeatureCoreName Condition="'$(_SeIsFeaturePresenter)' == 'true'">$([System.Text.RegularExpressions.Regex]::Replace('$(MSBuildProjectName)', '\.Presenter$', '.Core'))</_SeFeatureCoreName>
     </PropertyGroup>
 

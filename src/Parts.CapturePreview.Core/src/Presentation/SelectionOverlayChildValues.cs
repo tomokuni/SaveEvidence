@@ -50,7 +50,9 @@ public readonly record struct SelectionOverlayChildValues(
             marqueeAppearance with
             {
                 ShowHandles = state.UsesSelection,
-                ShowFullOverlay = state.ShowFullOverlay,
+                // 全面暗転は「モードが暗転する」かつ「暗転色が見える」ときだけ描く
+                // （提示層の外観は暗転の可否を 1 つのフラグで持つため、モードの判断と合成する）
+                ShowOuterMask = state.ShowFullOverlay && marqueeAppearance.ShowOuterMask,
             },
             options.Loupe,
             options.LoupeOffset,

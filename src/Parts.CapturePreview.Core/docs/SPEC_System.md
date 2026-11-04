@@ -40,12 +40,12 @@ Parts.CapturePreview.ControlAvaloniaUI / Parts.CapturePreview.ControlMewUI（UI 
         ▼
 Parts.CapturePreview.Core（本プロジェクト。撮影・切り出しの共通規則と、切り出しビューの画像ビューポートの状態と判断、提示の写像）
         │ 参照
-        ├─> EsUtil.Feature.Marquee.Core / .Presenter、EsUtil.Feature.Loupe.Core / .Presenter
+        ├─> EsUtil.Feature.Marquee.Core（コアと提示を含む）、EsUtil.Feature.Loupe.Core（同）
         ▼
 EsUtil.Platform.Core（Es* 幾何型 / 画像型 / ICaptureService / IWindowService）
 ```
 
-依存は一方向です。 Core は UI フレームワーク（Avalonia / MewUI）を参照せず、提示層（`EsUtil.Feature.*.Presenter`）へは外観型（色・枠線の太さ・表示可否）の写像のためにのみ参照します（機能コアの「Core → Presenter 禁止」は同じ機能のコアが自身の提示層へ依存することを禁じる規則であり、本プロジェクトは製品の設定型と提示層の外観型を橋渡しする別の層です）。
+依存は一方向です。 Core は UI フレームワーク（Avalonia / MewUI）を参照せず、機能アセンブリ（`EsUtil.Feature.*.Core`）へは外観型（色・枠線の太さ・表示可否）の写像のためにのみ参照します（0.4.0 で提示層がコアへ統合されたため、外観型と計算用の設定型は同じパッケージが公開します）。
 
 ### 3.2 層の責務の境界
 
@@ -367,7 +367,7 @@ classDiagram
 
 | 種別 | 依存先 |
 | --- | --- |
-| プロジェクト | `EsUtil.Platform.Core` / `EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Loupe.Core` / `EsUtil.Feature.Marquee.Presenter` / `EsUtil.Feature.Loupe.Presenter` |
+| プロジェクト | `EsUtil.Platform.Core` / `EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Loupe.Core` |
 | パッケージ | `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成） |
 
 - **依存は一方向**です（UI 非依存の本コア → 各機能コア → `EsUtil.Platform.Core`）。 **UI フレームワーク（Avalonia / MewUI）を参照しません**。
@@ -432,7 +432,7 @@ sequenceDiagram
 - **一方の UI だけが使うコア型もコアに置く**: `ImageColorMath`（撮影の下地色の決定。 現在は MewUI が使用）と `OverlayRectRasterizer`（ルーペ画像への矩形ラスタライズ。 現在は Avalonia が使用）は、**UI フレームワークに依存しない規則**であり、コアに置く（UI 側へ移すと、もう一方の UI が同じ必要を持った時点で再びコピーになる。 「どちらの UI が使うか」は配置の基準にしない）。
 - **ズームの表示規則（中央寄せ・スクロールバー値の範囲）はコアが単一所有する**: 中央寄せ補正は `ZoomMath.MaxCentered`（Fit 中は `ComputeImageOrigin`）、スクロールバー値の [0, 最大オフセット] へのクランプは `ZoomScrollBarMetrics.ClampOffset` が持ち、UI は自前の式を書かない（UI ごとに条件を書くと、画像がビューポートに収まる軸の扱いがずれる）。
 - **ログ定義は本アセンブリで 1 つ**: 撮影・切り出し・ズーム・設定のログは `CapturePreviewLogMessage` が同居する（[`.github/ログ規約.md`](../../../.github/ログ規約.md) の「定義クラスはアセンブリごとに 1 つ」に従う）。 カテゴリ別に分割しない。
-- **依存の宣言は推移参照で省略する**: 本プロジェクトは機能コア（`EsUtil.Feature.*.Core`）を**宣言せず**、提示層（`EsUtil.Feature.*.Presenter`）の推移参照で解決する（[`.github/依存関係.md`](../../../.github/依存関係.md) §1）。 提示層の公開面にコアの型（`MarqueeOptions` / `LoupeOptions`）が現れるため、宣言を分ける意味がない（宣言を消してもアセンブリ依存は残る）。
+- **依存の宣言は推移参照で省略する**: 本プロジェクトは機能アセンブリ（`EsUtil.Feature.*.Core`）を**宣言せず**、UI コントロール（`EsUtil.Ui.*.Marquee` / `.Loupe`）の推移参照で解決する（[`.github/依存関係.md`](../../../.github/依存関係.md) §1）。 外観型とコアの設定型（`MarqueeOptions` / `LoupeOptions`）は同じパッケージが公開するため、宣言を分ける意味がない（宣言を消してもアセンブリ依存は残る）。
 
 ## 8. 検証
 

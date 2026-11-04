@@ -496,11 +496,13 @@ internal static class CapturePage
 
         // 自動切り出しのホバー強調の外観（内側の塗りと枠線）を与える。
         // 色・太さ・表示可否は描画にだけ必要な設定であり、描画手順はコントロールが単一所有する
+        // 枠線は外枠（注目矩形の辺）で描く（提示層の外観は内側だけの枠線を持たない）。
         crop.HighlightAppearance = CropViewControl.HighlightDefaultAppearance with
         {
-            InnerFillColor = s_autoCropHoverFill,
-            InnerBorderColor = s_autoCropHoverBorder,
-            InnerBorderThickness = AutoCropBorderThickness,
+            InnerMaskColor = s_autoCropHoverFill,
+            BorderColor = s_autoCropHoverBorder,
+            BorderThickness = AutoCropBorderThickness,
+            ShowBorder = true,
         };
 
         // 画像の無い部分（プレビューの下地）の色を他の UI 版と同じにする。
