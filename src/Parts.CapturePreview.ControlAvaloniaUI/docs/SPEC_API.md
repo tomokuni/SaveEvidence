@@ -181,7 +181,7 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 | コンストラクタ | `CaptureSessionControl(CaptureSettings? initialSettings = null, ILogger? logger = null)` | インスタンスを生成。 設定値が許容範囲外なら `ArgumentOutOfRangeException` |
 | `StartCaptureAsync` | `Task<CaptureResult?> StartCaptureAsync(CaptureType type, Window owner)` | 選択キャプチャを開始。 実行中は null / キャンセル時は 0x0 の空結果 |
 | `StartCropAsync` | `Task<EsRectInt?> StartCropAsync(CropViewControl cropView, Window hostWindow)` | 切出しを開始。 戻り値は元画像上の切り出し範囲（**コア型** `EsRectInt`。 UI 型は境界より外へ出さない）。 キャンセル・退化した選択は 0x0 の空矩形、開始できなかった場合は null（他のセッションが実行中 / 表示中の画像が無い）。 切り出しの対象画像は `cropView.Source`（表示中の画像）から解決し、確定時の範囲は**現在の画像**の範囲へクランプする（画像を引数で受け取らない）。 Crop 中のズーム・パン（ホイール）は `cropView` が内部で完結するため、上位のズーム配線は不要（`CropViewControl.ZoomPercent` / `ZoomIn` / `ZoomOut` / `ZoomFit` は従来どおり使用できる） |
-| `Cancel` | `void Cancel()` | 進行中セッションをキャンセル（Capture: オーバーレイを閉じる / Crop: 0x0 で完了） |
+| `Cancel` | `void Cancel()` | 進行中セッションをキャンセル（Capture: キャンセルとして完了し、オーナーを戻してからオーバーレイを閉じる / Crop: 0x0 で完了） |
 | `Confirm` | `void Confirm()` | Crop を現在の選択矩形で確定（Enter キー相当。 `CropViewControl.RequestConfirm` に委譲） |
 | `ResolveCropAction` | `CropSessionAction ResolveCropAction()` | 切り出し操作（開始 / 確定 / キャンセル）のうちいま行うべき操作を返す。 判断はコア（`CropSessionActions.Resolve`: 未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）が単一所有し、**ホストは戻り値を効果へ写すだけ**にする（同じ条件を UI に書かない） |
 | `IsCropping` | `bool` | 切り出し中かどうか（真のソースは排他スロット。 ホストが自前のフラグで判定しない） |
@@ -208,16 +208,20 @@ capture.Dispose();  // 以降の公開操作は ObjectDisposedException
 
 #### 5.3.2 キャプチャ完了イベント（画像変更 → APP 表示の順序保証）
 
-`CaptureCompleted` は**同期型イベント**です。 C# のイベントは同期実行のため、ハンドラ（ホストの画像変更）の完了後に、キャプチャセッションの後続処理（オーナー再表示）が実行されます。
+`CaptureCompleted` は**同期型イベント**です。 C# のイベントは同期実行のため、ハンドラ（ホストの画像変更）の完了後に、キャプチャセッションの後続処理（オーナー再表示 → オーバーレイを閉じる）が実行されます。
 
 フロー:
 
 ```text
-APP 退避（HideOwnerWindow=true で自動。Opacity=0 + 画面外配置）
+APP 退避（HideOwnerWindow=true で自動。Opacity=0 + 画面外配置。 退避は撮影画像の表示後）
   → キャプチャ実行
   → CaptureCompleted イベント発行（同期）→ ホストが画像変更
-  → オーナー（APP）配置復帰
+  → オーナー（APP）配置復帰（オーバーレイが画面を覆っている間）
+  → 描画フレームの待機（新しい画像が合成されるまで）
+  → オーバーレイを閉じる
 ```
+
+- **画像変更と配置復帰はオーバーレイを閉じる前に行います**。 逆順にすると、オーバーレイが消えた後にデスクトップや旧画像が一瞬見えます。
 
 ```csharp
 _captureSessionControl.CaptureCompleted += result =>
@@ -321,7 +325,7 @@ DIP 変換（÷ scaling）→ 物理換算（× scaling）の往復誤差（マ�
 | `Source` | `IImage?` | 表示画像。 画像ビューポートとルーペへ伝搬し、変更時は Fit 表示にリセットする。 領域選択オーバーレイの可視性は `SetSelectionOverlayVisible` が専任する |
 | `Rects` | `IReadOnlyList<OverlayRect>` | 外部提供矩形の一覧（対象座標）。 ビューポートとルーペの両方へ描画する |
 | `HighlightSourceRect` | `EsRect?` | 強調する矩形（対象座標）。 `null` は強調なし。 対象座標 → ビューポート座標の写像は本コントロールが単一所有する（ホストは座標変換を持たない） |
-| `HighlightAppearance` | `MarqueeAppearance`（提示層） | 強調の外観（色・枠線の太さ・表示可否）。 既定は `HighlightDefaultAppearance`（内側の塗りと枠線だけを描く） |
+| `HighlightAppearance` | `MarqueeAppearance`（提示層） | 強調の外観（色・枠線の太さ・表示可否）。 既定は `HighlightDefaultAppearance`（内側の塗りだけを描く） |
 | `SelectionMode` | `SelectionOverlayMode` | 選択モード（既定 `Crop`）。 領域選択オーバーレイへ委譲する |
 | `SelectionOverlayOptions` | `SelectionOverlayOptions`（コア） | 領域選択オーバーレイの設定（寸法・表示可否。 色は含まない） |
 | `SelectionOverlayMarqueeAppearance` / `SelectionOverlayLoupeAppearance` | `MarqueeAppearance` / `LoupeAppearance`（提示層） | 領域選択オーバーレイの外観（描画にだけ必要な設定） |

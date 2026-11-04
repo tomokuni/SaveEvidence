@@ -3,6 +3,7 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
@@ -137,6 +138,17 @@ internal sealed class CaptureOverlay
     /// <summary>キャプチャ完了の通知先（結果をホストへ中継する）。</summary>
     private readonly Action<CaptureResult?>? _onCaptured;
 
+    /// <summary>オーナーウィンドウ（復帰後の描画待ちに使う。 <see cref="RunAsync"/> が設定する）。</summary>
+    private Window? _ownerWindow;
+
+    /// <summary>オーナーの退避と復帰のスコープ（<see cref="RunAsync"/> が設定する）。</summary>
+    /// <remarks>
+    /// 復帰はウィンドウを閉じる<b>前</b>に行う（オーバーレイが画面を覆っている間に行うことで、<br/>
+    /// 閉じた瞬間にデスクトップが見えるのを防ぐ）。 破棄は <see cref="Finish"/> と <see cref="RunAsync"/> の<br/>
+    /// 両方から呼ばれるが、二重呼び出しは無害（コアのスコープが 1 回だけ実行する）。
+    /// </remarks>
+    private CaptureOwnerScope? _ownerScope;
+
     /// <summary>セッションを生成する（撮影は行わない）。</summary>
     /// <param name="type">キャプチャ種別。</param>
     /// <param name="settings">設定（全メンバー non-null を渡す）。</param>
@@ -198,6 +210,9 @@ internal sealed class CaptureOverlay
         using var ownerScope = CaptureOwnerScope.Enter(
             services.Window, owner.ToEsPlatformHandle(), new OwnerWindowAdapter(owner),
             hideOwner: _settings.HideOwnerWindow!.Value);
+        // 復帰をウィンドウのクローズ前に行えるよう、スコープを保持する（破棄は Finish が行う）
+        _ownerScope = ownerScope;
+        _ownerWindow = owner;
 
         // 全モニターを包含する 1 枚の画像として取得する。
         // 1 モニターに限定すると、カーソルのあるモニターでしか選択できない（別のモニターへ
@@ -226,21 +241,33 @@ internal sealed class CaptureOverlay
             // 確定・キャンセルは必ず結果を確定させてからウィンドウを閉じるため、待機は即座に返る
             // （ウィンドウのクローズ経路は CompleteCapture / Cancel に限られる）
             var result = await _result.Task.ConfigureAwait(true);
-            // 完了の記録（確定は 2 件・キャンセルは 1 件）はコアが単一所有する
-            _log.LogCaptureFinished(result);
-            // キャプチャ完了イベントを発行する（同期実行）。
-            // C# のイベントは同期型のため、ホストのハンドラ（画像変更）が完了してから
-            // 以下の finally（オーナー再表示）が実行される。
-            _onCaptured?.Invoke(result);
+            // 完了の記録とホストへの通知は Finish が行う（ウィンドウのクローズ前に済ませる）
             return result;
         }
         finally
         {
+            _ownerScope = null;
+            _ownerWindow = null;
             // 画像はセッションの終了時に破棄する（以降の描画・切り出しは発生しない）
             _screen?.Dispose();
             _screen = null;
             _window = null;
         }
+    }
+
+    /// <summary>キャプチャ結果をホストへ通知し、オーナーを復帰させる（ウィンドウを閉じる前に呼ぶ）。</summary>
+    /// <param name="result">キャプチャ結果（キャンセル時は null）。</param>
+    /// <remarks>
+    /// 画像変更（ホスト）とオーナーの復帰をクローズ前に済ませることで、<br/>
+    /// オーバーレイが消えた後にデスクトップや旧画像が一瞬見えるのを防ぐ（Avalonia 版と同じ順序）。<br/>
+    /// 完了の記録は本メソッドが単一所有する（確定・キャンセルの経路からそれぞれ呼ばない）。
+    /// </remarks>
+    private void Finish(CaptureResult? result)
+    {
+        _log.LogCaptureFinished(result);
+        _onCaptured?.Invoke(result);
+        // オーナーの復帰（オーバーレイが画面を覆っている間に行う）
+        _ownerScope?.Dispose();
     }
 
     /// <summary>オーナーウィンドウ（WinUI 3）を撮影時に画面外へ退避するアダプタ。</summary>
@@ -600,9 +627,12 @@ internal sealed class CaptureOverlay
         // 切り出し矩形は画面物理座標のため、画像の原点を渡して取り出す（座標変換はコアが単一所有する）
         var image = CropClipMath.Extract(Screen, _screenBounds.TopLeft, pixels);
         // 結果の確定（最初の 1 件だけを採用する）はコアが単一所有する。 領域は契約どおり仮想画面座標（画面物理）で渡す。
-        // 完了の記録とホストへの通知は RunAsync（待機側）が行う（ウィンドウは結果を確定させて閉じるだけ）。
-        _result.TrySetResult(CaptureResult.From(image, pixels));
-        Close();
+        var result = CaptureResult.From(image, pixels);
+        _result.TrySetResult(result);
+        // 画像変更（ホスト）とオーナーの復帰をウィンドウのクローズ前に行い、
+        // オーナーが新しい画像を描き終えてから閉じる
+        Finish(result);
+        _ = CloseAfterOwnerPaintedAsync();
     }
 
     /// <summary>キャンセルする（切り出しを行わずに閉じる）。</summary>
@@ -618,9 +648,36 @@ internal sealed class CaptureOverlay
         }
 
         // 選択のキャンセル要求とセッションの完了（キャンセル 1 件）はコアが単一所有する。
-        // 完了の記録とホストへの通知は RunAsync（待機側）が行う
+        // キャンセルの通知（ホスト）とオーナーの復帰をウィンドウのクローズ前に行い、
+        // オーナーが描き終えてから閉じる
         _log.LogCancelRequested();
         _result.TrySetResult(null);
+        Finish(null);
+        _ = CloseAfterOwnerPaintedAsync();
+    }
+
+    /// <summary>オーナーが再描画されるまで待ってからオーバーレイを閉じる。</summary>
+    /// <returns>待機タスク。</returns>
+    /// <remarks>
+    /// 画像の差し替えは次の描画フレームで合成されるため、待たずに閉じると、オーバーレイが消えた後に<br/>
+    /// 旧画像が 1〜2 フレーム見える（= 再表示してから結果が出るまでのタイムラグ）。<br/>
+    /// フレームが来ない環境（最小化等）では上限時間で打ち切る（閉じられないままにしない）。
+    /// </remarks>
+    private async Task CloseAfterOwnerPaintedAsync()
+    {
+        try
+        {
+            if (_ownerWindow?.Content is FrameworkElement content)
+            {
+                await WaitForFirstFrameAsync(content).WaitAsync(s_firstFrameTimeout).ConfigureAwait(true);
+            }
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            // 待てなくても閉じる（閉じないとオーバーレイが残り、操作できなくなる）
+            _log.LogOperationError(ex, nameof(CloseAfterOwnerPaintedAsync));
+        }
+
         Close();
     }
 

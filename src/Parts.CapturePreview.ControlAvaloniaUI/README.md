@@ -39,7 +39,7 @@
 - **切出し（Crop）**: プレビュー画像上の選択矩形で元画像から切り出し範囲を取得
 - **Facade パターン**: 状態は複合コントロール `SelectionOverlayControl`（Marquee（外側の装飾を含む）+ Loupe を内包）と EsUtil.Ui.AvaloniaUI.Interop / EsUtil.Platform.Core（`Native` の Win32 実装を含む）が保持し、`CaptureSessionControl` は「組み立て・ライフサイクル」のみを担う薄い統括者
 - **Task ベース API**: 結果は `Task` で返却（`await` で直感的に利用）
-- **キャプチャ完了イベント**: `CaptureCompleted`（同期型）で画像変更 → オーナー再表示の順序を保証
+- **キャプチャ完了イベント**: `CaptureCompleted`（同期型）で画像変更 → オーナー再表示 → オーバーレイを閉じる順序を保証
 - **イベント駆動**: 選択状態の同期は各コントロールの公開イベントのみ（ポーリングなし）
 - **再入禁止ガード**: 実行中の再呼び出しは `null` を返す（既存セッションを継続）
 - **部分更新設定**: `CaptureSettings` は全メンバー nullable（null = デフォルト値 or 現在値維持）で部分更新が可能
@@ -146,14 +146,16 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 
 1. オーナーウィンドウのスクリーン情報から DPI スケーリング係数を算出（0 以下は 1.0 へ正規化）
 2. `CaptureOverlaySession` を生成（EsUtil.Ui.AvaloniaUI.Interop からサービスを注入）
-3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`）→ 画面外へ退避（`HideOwnerWindow`。 非表示ではなく `Opacity=0` + 位置退避）
+3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`）。 退避（`HideOwnerWindow`。 非表示ではなく `Opacity=0` + 位置退避）は**撮影画像をオーバーレイが表示した後**に行う
 4. **仮想スクリーン全体をバックグラウンド + タイムアウト付きでキャプチャ（全モード共通の切り出し元）**
-5. `CaptureOverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示）
+5. `CaptureOverlayWindow` を**画面外に置いた状態で表示**し、撮影画像を合成した 2 フレーム後に**位置だけ**画面内へ移す（サイズを変えないので再レイアウトが起きず、合成済みの面がそのまま出る）。 画面内へ出した後にオーナーを退避する
    - AreaSelect: Marquee ドラッグ選択 + Loupe
    - Screen / WindowSelect: カーソル位置の要素検出 → ハイライト
 6. **枠選択中に事前切り出し**（ハイライト型のホバー時。 同じ矩形ならスキップ・キャッシュ再利用。 事前切り出しの有無はコアの `CaptureTypeTraits.IsHighlighted` で決まる）
 7. **確定時: 事前切り出しキャッシュを再利用**（不一致時のみ切り出し）
-8. 結果を `CaptureResult` で返却 → `CaptureCompleted`（画像変更） → オーナー再表示 → 除外解除
+8. 結果を `CaptureResult` で返却 → `CaptureCompleted`（画像変更） → **オーナー再表示（オーバーレイが画面を覆っている間）** → 描画フレームの待機 → **オーバーレイを閉じる** → 除外解除
+
+- **順序の理由**: 逆順（閉じる → 画像変更 → 再表示）にすると、オーバーレイが消えた後にデスクトップや旧画像が一瞬見える。 画像変更と再表示をクローズ前に済ませることで、閉じた瞬間に新しい画像のアプリが見える（4 UI 共通）。
 
 ### 6.2 StartCropAsync
 
@@ -231,9 +233,8 @@ capture.Dispose();  // リソース解放（以降の操作は ObjectDisposedExc
 | `EsUtil.Ui.AvaloniaUI.Interop` | サービス生成 / `ScreenConverter` / 色の相互変換（`ColorAvaloniaInterop`）。 抽象（`ICaptureService` / `IWindowService` / `IElementFinder`）は `EsUtil.Platform.Core.Native`（既定実装は `Native.Win`）、`ICoordTransform` / `CoordTransform` は `EsUtil.Platform.Core` |
 | `EsUtil.Ui.AvaloniaUI.Marquee` | `MarqueeControl`（選択矩形と、その外側に描く装飾（暗転マスク・外枠・ハイライト）） |
 | `EsUtil.Ui.AvaloniaUI.Loupe` | `LoupeControl`（拡大鏡）/ `LoupeRenderedEventArgs` |
-| `EsUtil.Feature.Marquee.Presenter` | `MarqueeAppearance`（描画にだけ必要な外観。 内包コントロール（`EsUtil.Ui.AvaloniaUI.Marquee`）の推移的依存） |
-| `EsUtil.Feature.Loupe.Core` | ルーペの配置計算（内包コントロールの推移的依存） |
-| `EsUtil.Feature.Loupe.Presenter` | `LoupeAppearance`（描画にだけ必要な外観。 内包コントロールの推移的依存） |
+| `EsUtil.Feature.Marquee.Core` | `MarqueeAppearance`（描画にだけ必要な外観）と `MarqueeOptions`（内包コントロール（`EsUtil.Ui.AvaloniaUI.Marquee`）の推移的依存） |
+| `EsUtil.Feature.Loupe.Core` | `LoupeAppearance` / ルーペの配置計算（内包コントロールの推移的依存） |
 
 `CropViewControl` / `SelectionOverlayControl` は本アセンブリが公開する複合コントロールです（別プロジェクトではありません）。 `ZoomViewControl` は `CropViewControl` が内包する画像ビューポートです（独立した汎用コントロールとしてではなく、切り出しビューの内部部品として収録します）。 撮影セッション（`CaptureSessionControl` / `CaptureOverlaySession` / `CaptureOverlayWindow`）は内包コントロール（`MarqueeControl` / `LoupeControl`）を直接参照しません（窓口は `SelectionOverlayControl` のみ。 公開型のカプセル化）。
 

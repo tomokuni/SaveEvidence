@@ -228,8 +228,8 @@ flowchart TB
   - **タイムアウト・画面外退避座標はコアの `CaptureTiming` が単一所有する**（両 UI で同じ値を使う）
   - **ラベル文言の正規化（未検出・null は空文字）はコアの `TextNormalize` が単一所有する**
   - ログ定義はコア（`CapturePreviewLogMessage`）が単一所有する（本クラスは `_log.LogXxx` を呼ぶだけ）
-  - クリック確定 → キャプチャ実行 → 結果コールバック
-  - 非アクティブ化 / Close → キャンセル
+  - クリック確定 → キャプチャ実行 → 結果コールバック（ウィンドウは閉じない。 オーナーの復帰後にセッションが閉じる）
+  - 非アクティブ化 / Close → キャンセル（非アクティブ化・Escape はウィンドウを閉じず、セッションが復帰後に閉じる）
 - **可視性**: internal（クラス。 コンストラクタ等のシグネチャは public）
 - **依存**: SelectionOverlayControl（同一アセンブリ。 `SelectionOverlayControl` / `SelectionOverlayMode`）/ EsUtil.Ui.AvaloniaUI.Interop（ScreenConverter）/ EsUtil.Platform.Core（`Native.ICaptureService` / `Native.IWindowService` / `Native.IElementFinder`）/ CaptureTypeTraits / CropClipMath / CaptureImageHolder / CaptureVirtualScreen / MonitorScalingMath / CaptureClipCache / CaptureHighlightSession / CaptureClickSelection / CaptureKeyActions / CaptureLabelTexts / CaptureTiming / CaptureSessionState / CapturePreviewLogMessage / CaptureResult
 
