@@ -337,8 +337,8 @@
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "EsUtil.Platform.Core": "[0.6.0, )",
-          "Parts.CapturePreview.Core": "[0.1.3, )",
-          "Parts.LineDetection": "[0.1.3, )"
+          "Parts.CapturePreview.Core": "[0.1.4, )",
+          "Parts.LineDetection": "[0.1.4, )"
         }
       },
       "parts.capturepreview.controlavaloniaui": {
@@ -349,7 +349,7 @@
           "EsUtil.Ui.AvaloniaUI.Loupe": "[0.6.0, )",
           "EsUtil.Ui.AvaloniaUI.Marquee": "[0.6.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
-          "Parts.CapturePreview.Core": "[0.1.3, )"
+          "Parts.CapturePreview.Core": "[0.1.4, )"
         }
       },
       "parts.capturepreview.core": {
