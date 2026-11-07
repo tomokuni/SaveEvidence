@@ -121,6 +121,24 @@ internal static partial class AppLog
     public static void LogStartedFromDotnetHost(this ILogger logger)
         => logger.LogStartedFromDotnetHostCore(Prefix);
 
+    /// <summary>Windows App Runtime を用意できなかったことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Warning <br/>
+    /// 出力書式: <c>Windows App Runtime を用意できませんでした (required={RequiredVersion})</c>
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="requiredVersion">必要とする Windows App Runtime の版（例: 2.6.4）。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} Windows App Runtime を用意できませんでした (required={RequiredVersion})")]
+    private static partial void LogWindowsAppRuntimeUnavailableCore(
+        this ILogger logger, string prefix, string requiredVersion);
+
+    /// <summary>Windows App Runtime を用意できなかったことを記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="requiredVersion">必要とする Windows App Runtime の版（例: 2.6.4）。</param>
+    public static void LogWindowsAppRuntimeUnavailable(this ILogger logger, string requiredVersion)
+        => logger.LogWindowsAppRuntimeUnavailableCore(Prefix, requiredVersion);
+
     // ====================================================================
     // 撮影セッション / 切出しセッションのログは撮影スタック（Parts.CapturePreview）が単一所有する
     // （CapturePreviewLogMessage。 接頭辞は [CapturePreview]）。
