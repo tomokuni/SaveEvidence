@@ -146,11 +146,12 @@ $brokenLinks = [System.Collections.Generic.List[string]]::new()
 $externalLinks = 0
 $repoParent = Split-Path $repoRoot -Parent
 $rxLink = [regex]'\]\((?<t>[^)\s]+)\)'
-$rxCode = [regex]'`[^`]*`'
+# **インライン コードは行をまたがない**（Markdown の仕様）。 行をまたいで対応させると、単独の
+# バックティックが後続の行と対になって対応がずれ、例示（`](...)`）をリンクとして拾う
+# （実測: ubuntu で `.github/検証手順.md` の例示を誤検出した）。
+$rxCode = [regex]'`[^`\r\n]*`'
 foreach ($f in $docs) {
-    # コード片（`...`）の中のリンク風表記は文書の例示なので対象外にする。
-    # **置換先にバックティックを使わない**: '``' へ置き換えるとバックティックの対応がずれ、後続の
-    # コード片が読み飛ばされずにリンクとして拾われる（実測: Linux で `](...)` の例示を誤検出した）。
+    # コード片（`...`）の中のリンク風表記は文書の例示なので対象外にする（置換先にバックティックを使わない）
     $text = $rxCode.Replace((Get-Text $f.FullName), ' ')
     foreach ($m in $rxLink.Matches($text)) {
         $target = $m.Groups['t'].Value
