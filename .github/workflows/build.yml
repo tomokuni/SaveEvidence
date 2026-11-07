@@ -181,7 +181,8 @@ jobs:
             nuget-${{ runner.os }}-docs-
 
       - name: 復元
-        run: dotnet restore '${{ steps.config.outputs.solution_file }}'
+        # **Linux でも Windows 向け TFM を復元できるようにする**（既定では `NETSDK1100` で失敗する）
+        run: dotnet restore '${{ steps.config.outputs.solution_file }}' -p:EnableWindowsTargeting=true
 
       # 合否基準は .github/検証手順.md（実装は buildScript/verifyDocs.ps1 が単一所有する）
       - name: 走査
