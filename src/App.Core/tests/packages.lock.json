@@ -10,19 +10,19 @@
       },
       "EsUtil.Feature.Thumbnail.Core": {
         "type": "Direct",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "dsETy8ssvIrcXyUzRirwSDAJitxqGvdOhedcwoVXem+4yN7+V9oDp8n6vrotZNIjHUHIjRs7V+wIuaeHs8NOkw==",
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "iq3BQSPrCHOgkgfZu6OU6VJsFvrGRUU14uLTgxIaCCB4FiEgmkhHEuTEfzI4NFRLABoB4CWHgznbBAySpv7DLA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.5.1",
+          "EsUtil.Platform.Core": "0.5.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.320, )",
-        "resolved": "3.0.320",
-        "contentHash": "yKkD+uA684so6/ct3dcGm8H2esrLn/gAS9qYbAcis216gBx+o5LWm5ou/BZDIDg6TTzr5ayojv9cgpoHSasxOw=="
+        "requested": "[3.0.321, )",
+        "resolved": "3.0.321",
+        "contentHash": "aFP7GiBBIb2x9rBTuUpw/jSs0JVbTofADlt6WxmYVYQ24KPAjFYyxcnNNVVf4F/eqKyzjik170nOpURmmyJDKg=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -200,7 +200,7 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
-          "EsUtil.Platform.Core": "[0.5.1, )",
+          "EsUtil.Platform.Core": "[0.5.3, )",
           "Parts.CapturePreview.Core": "[0.1.2, )",
           "Parts.LineDetection": "[0.1.2, )"
         }
@@ -208,16 +208,16 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.5.1, )",
-          "EsUtil.Feature.Marquee.Core": "[0.5.1, )",
-          "EsUtil.Platform.Core": "[0.5.1, )",
+          "EsUtil.Feature.Loupe.Core": "[0.5.3, )",
+          "EsUtil.Feature.Marquee.Core": "[0.5.3, )",
+          "EsUtil.Platform.Core": "[0.5.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )"
         }
       },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.5.1, )",
+          "EsUtil.Platform.Core": "[0.5.3, )",
           "OpenCvSharp5": "[5.0.0.20261018, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261018, )"
         }
@@ -230,29 +230,29 @@
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "4nHzMSQWQ8XTqyZuwByfhqVdrLrQby+WthkDE6y6d0eaZEl9wmlKIq3utb3LPXadaA76UXxSPlVl/hYqdZFHsg==",
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "ddCa7zLo794Z6+Tpv0FQgrykhuvi9sSeGhUrzykzRn8RFNz4VcNyKjIda0KAUYsPfUaAj0bL8NcXZce1qu+LTA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.5.1",
+          "EsUtil.Platform.Core": "0.5.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "uYv8cgUUv5iewUabcmHavgs1bMl1h/Z4gapqETi4Q93W4hYpDJGTvysAZ0c2mRvba+p9fCin+oZk7jPkRJY52Q==",
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "IKX/CJg1Hf1VC8VcwKG13OedxC56FESPVyR/zFafbFNyP8i10ickdCp++ODqDsuCwpQ1PKhafPp1KB0EUxuhVg==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.5.1",
+          "EsUtil.Platform.Core": "0.5.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "33j9JgNRcQ/qoEzrXnnMJdYxG5ijHPS6PmTx9jsbF9InA68CFnoisgmyNDS7PBMRAubZBx+x3wVOS0OdJoQXaw=="
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "J+yZNvNdB9ByjmfPxG7iXKvDwqxkEqUIuHLcbiwH7UkOtGxipivkgMyAwpsCATLBWs/WLhCDTDIuxwpP+3r2Bw=="
       },
       "Microsoft.Extensions.Logging.Abstractions": {
         "type": "CentralTransitive",

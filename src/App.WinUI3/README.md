@@ -22,7 +22,7 @@ SaveEvidence の **WinUI 3 版アプリ**（実行ファイル `SaveEvidence.Win
 ## 2. 前提
 
 - .NET 10 / Windows 10（19041）以降
-- `Microsoft.WindowsAppSDK` 1.x（アンパッケージ / 自己完結で動作する）
+- `Microsoft.WindowsAppSDK` 2.6（アンパッケージ / フレームワーク依存）と、PC に導入済みの **Windows App Runtime 2.6（x64）**
 - WinUI 3 の `App.xaml` 以外に XAML ファイルを持たず、**画面は C# のマークアップで組む**
   （MewUI 版と同じ方針。 ページごとの XAML とコードビハインドの二重管理を避ける）
 
@@ -32,8 +32,9 @@ SaveEvidence の **WinUI 3 版アプリ**（実行ファイル `SaveEvidence.Win
 dotnet run --project src/App.WinUI3/src/App.WinUI3.csproj
 ```
 
-アンパッケージ（MSIX なし）で起動します。 Windows App SDK は自己完結で配置するため、
-**Windows App Runtime のインストールは不要**です。
+アンパッケージ（MSIX なし）で起動します。 **Windows App SDK は同梱しない**（フレームワーク依存）ため、
+**Windows App Runtime 2.6（x64）が PC に導入されている必要があります**（無いと起動しません。 導入処理は
+本アプリが持ちません = §5）。
 
 **起動は実行ファイル（アプリ ホスト）から行います**。 アンパッケージの WinUI 3 アプリは、
 マニフェストによるアクティベーションと `resources.pri` の解決をアプリ ホストの exe が担うため、
@@ -64,26 +65,29 @@ dotnet test src/App.WinUI3/tests/App.WinUI3.Tests.csproj -c Debug
 | --- | --- |
 | 出力 | `SaveEvidence.WinUI3.exe`（`<AssemblyName>` で製品名を明示する） |
 | パッケージ | アンパッケージ（`<WindowsPackageType>None</WindowsPackageType>`） |
-| Windows App SDK | 自己完結（`<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>`） |
-| 実行時識別子 | `win-x64`（自己完結配置はアーキテクチャの指定を要求する） |
+| Windows App SDK | フレームワーク依存（`<WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>`）。 PC に **Windows App Runtime 2.6（x64）** の導入が要る |
+| 実行時識別子 | `win-x64`（publish の `-r` で渡す。 Native AOT はアーキテクチャの指定を要求する。 `.csproj` へは書かない） |
 | DPI 認識 | `app.manifest` で PerMonitorV2 を宣言する |
-| 発行方式 | Single（単一 exe・自己完結）。 Single AOT は WinUI 3 では成立しない（理由は [`buildScript/publish_WinUI3.bat`](../../buildScript/publish_WinUI3.bat) のコメント） |
+| 発行方式 | Native AOT のフォルダー配布（単一ファイル化はできない。 理由は [`buildScript/publish_WinUI3.bat`](../../buildScript/publish_WinUI3.bat) のコメント） |
 | 配布スクリプト | [`buildScript/publish_WinUI3.bat`](../../buildScript/publish_WinUI3.bat)（方式は `buildScript/publish_ui.bat` が優先順に選ぶ） |
 
 `<EnableMsixTooling>true</EnableMsixTooling>` は **publish のためだけ**に必要です（付けないと publish が自分自身の `.pri` を発行せず、
 配布物の起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます）。
 
-**単一ファイル化（`<PublishSingleFile>`）は本 csproj に置きます**（publish のコマンドライン引数では渡しません）。
-コマンドライン引数は**参照プロジェクトへ伝播**し、WinUI 3 のライブラリが `EnableMsixTooling` と
-`WindowsAppSDKSelfContained` を要求して失敗するためです（後者は RID を要求しますが、RID は参照プロジェクトへ伝播しません）。
-
-配布物は **exe 1 個**です（フォルダーごとではなく、単体で配置できます）。
+配布物は **Native AOT のフォルダー配布**です（exe + ネイティブ DLL + `.pri`）。 **Native AOT はネイティブ DLL を
+exe へ内包できず**、Windows App SDK はフレームワーク依存のまま単一ファイル化を拒否するためです（実測）。
+AOT は `SaveEvidencePublishAot`（`buildScript/publish_WinUI3.bat` が渡す）で有効にし、通常のビルドとテストには
+影響しません（コマンドラインの `-p:PublishAot=true` は参照プロジェクトへ伝播するため使いません）。
 期待する出力先と exe 名は [`.github/release-config.json`](../../.github/release-config.json) が単一所有します。
 
-**自己完結の Windows App SDK から、使わないコンポーネント（ML = ONNX Runtime・DirectML、Windows AI、Widgets）の
-ネイティブ実体を除いて同梱します**（43.8 MB 減。 実装は [`Directory.Build.targets`](../../Directory.Build.targets) の
-`ExcludeUnusedWindowsAppSdkPayload`、規則は [`.github/ビルド設定規約.md`](../../.github/ビルド設定規約.md) §5）。
-本アプリはこれらの API を呼びません（ソース参照 0 件）。 減らせる理由と減らせない理由は同ターゲットのコメントにあります。
+**Windows App SDK は同梱しません**（`WindowsAppSDKSelfContained=false`）。 コード ページを他のアプリと共有できるため、
+**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（実測 2026-11-05: 同梱 231.9 MB / 起動 723 ms /
+作業セット 204.8 MB → フレームワーク依存 + AOT 78.3 MB / 313 ms / 140.3 MB）。 ランタイムが無い環境への導入は
+`EsUtil.Ui.WinUI3.Interop` の実装（`Bootstrapping.WindowsAppRuntimeBootstrap`）が担うため、本アプリは持っていません。
+
+**配布物からは、使わないコンポーネント（ML = ONNX Runtime・DirectML、Windows AI）のネイティブ実体を除きます**
+（約 40 MB 減。 実装は `src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`、規則は
+[`.github/ビルド設定規約.md`](../../.github/ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
 
 ## 6. 機能一覧
 

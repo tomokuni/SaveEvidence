@@ -264,6 +264,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 - ネイティブライブラリ（OpenCvSharp・Avalonia の GL 実装等）は exe へ同梱できないため、同じフォルダーへ並べて配布します（方式 1 のとき）。
 - 方式 2 は自己完結ランタイムを丸ごと含むため、配布物は方式 1 より大きくなります。
+- **Windows App SDK を使う WinUI 3 版は、ランタイムを同梱せずフレームワーク依存で動きます**（コード ページを他のアプリと共有でき、起動が速くメモリも少なくて済みます。 実測 2026-11-05: 同梱 231.9 MB / 起動 723 ms / 作業セット 204.8 MB → フレームワーク依存 + AOT 78.3 MB / 313 ms / 140.3 MB）。 **配布先には Windows App Runtime 2.6（x64）の導入が必要です**（本アプリは導入処理を持ちません）。
 
 ---
 
@@ -309,7 +310,7 @@ pwsh -NoProfile -File buildScript/verify.ps1
 | MewUI 版 | `SaveEvidence.MewUI.exe` | exe + ネイティブ DLL |
 | Avalonia UI 版 | `SaveEvidence.AvaloniaUI.exe` | exe 1 個（単一ファイル） |
 | WinForms 版 | `SaveEvidence.WinForms.exe` | exe 1 個（単一ファイル） |
-| WinUI 3 版 | `SaveEvidence.WinUI3.exe` | exe + DLL / `.pri` など（フォルダー単位で配置） |
+| WinUI 3 版 | `SaveEvidence.WinUI3.exe` | exe + ネイティブ DLL / `.pri` など（フォルダー単位で配置。 Native AOT） |
 
 4 つの UI は**同じ設定ファイルとログを共有します**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
 

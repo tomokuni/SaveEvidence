@@ -10,9 +10,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.320, )",
-        "resolved": "3.0.320",
-        "contentHash": "yKkD+uA684so6/ct3dcGm8H2esrLn/gAS9qYbAcis216gBx+o5LWm5ou/BZDIDg6TTzr5ayojv9cgpoHSasxOw=="
+        "requested": "[3.0.321, )",
+        "resolved": "3.0.321",
+        "contentHash": "aFP7GiBBIb2x9rBTuUpw/jSs0JVbTofADlt6WxmYVYQ24KPAjFYyxcnNNVVf4F/eqKyzjik170nOpURmmyJDKg=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -302,10 +302,10 @@
       "parts.capturepreview.controlwinui3": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.5.1, )",
-          "EsUtil.Ui.WinUI3.Interop": "[0.5.1, )",
-          "EsUtil.Ui.WinUI3.Loupe": "[0.5.1, )",
-          "EsUtil.Ui.WinUI3.Marquee": "[0.5.1, )",
+          "EsUtil.Platform.Core": "[0.5.3, )",
+          "EsUtil.Ui.WinUI3.Interop": "[0.5.3, )",
+          "EsUtil.Ui.WinUI3.Loupe": "[0.5.3, )",
+          "EsUtil.Ui.WinUI3.Marquee": "[0.5.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
           "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2957, )",
           "Microsoft.WindowsAppSDK": "[2.6.5, )",
@@ -315,58 +315,58 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.5.1, )",
-          "EsUtil.Feature.Marquee.Core": "[0.5.1, )",
-          "EsUtil.Platform.Core": "[0.5.1, )",
+          "EsUtil.Feature.Loupe.Core": "[0.5.3, )",
+          "EsUtil.Feature.Marquee.Core": "[0.5.3, )",
+          "EsUtil.Platform.Core": "[0.5.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )"
         }
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "4nHzMSQWQ8XTqyZuwByfhqVdrLrQby+WthkDE6y6d0eaZEl9wmlKIq3utb3LPXadaA76UXxSPlVl/hYqdZFHsg==",
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "ddCa7zLo794Z6+Tpv0FQgrykhuvi9sSeGhUrzykzRn8RFNz4VcNyKjIda0KAUYsPfUaAj0bL8NcXZce1qu+LTA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.5.1",
+          "EsUtil.Platform.Core": "0.5.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "uYv8cgUUv5iewUabcmHavgs1bMl1h/Z4gapqETi4Q93W4hYpDJGTvysAZ0c2mRvba+p9fCin+oZk7jPkRJY52Q==",
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "IKX/CJg1Hf1VC8VcwKG13OedxC56FESPVyR/zFafbFNyP8i10ickdCp++ODqDsuCwpQ1PKhafPp1KB0EUxuhVg==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.5.1",
+          "EsUtil.Platform.Core": "0.5.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "33j9JgNRcQ/qoEzrXnnMJdYxG5ijHPS6PmTx9jsbF9InA68CFnoisgmyNDS7PBMRAubZBx+x3wVOS0OdJoQXaw=="
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "J+yZNvNdB9ByjmfPxG7iXKvDwqxkEqUIuHLcbiwH7UkOtGxipivkgMyAwpsCATLBWs/WLhCDTDIuxwpP+3r2Bw=="
       },
       "EsUtil.Ui.WinUI3.Interop": {
         "type": "CentralTransitive",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "1CJit8bQvRNpOJDVsZnJmCY5bQ2REMnRhdYBn+eI8vhuNmC5vv2v2s+hTE6Y4pE2Izau6Nr4pQKDANvstYkFGQ==",
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "awceTNPnvOLEIi6xMIgz/xEzx4Nz5O00iZuqEj/xBBQhylw3wUqnZObFGrc6Rhuj0w85v99/hHQg/ECQVOJd4A==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.5.1",
+          "EsUtil.Platform.Core": "0.5.3",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.6.4"
         }
       },
       "EsUtil.Ui.WinUI3.Loupe": {
         "type": "CentralTransitive",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "W8eJSyDaijjHGP3F1Ct76LInTBtT6O6IEeNgA68q8uuYJIZjOwa94+iKEXflFIqTicV9o5p0FHUjnomn9kuUNA==",
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "SyUGe3a2YXVz5wnKcNPNOctaK5jAsqZ7+2ue1G5+L6vbLSiqo2KJ5NsYIM0MXWjqkJv4Y2fdr0WW1gqW5nxxXQ==",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "0.5.1",
-          "EsUtil.Platform.Core": "0.5.1",
-          "EsUtil.Ui.WinUI3.Interop": "0.5.1",
+          "EsUtil.Feature.Loupe.Core": "0.5.3",
+          "EsUtil.Platform.Core": "0.5.3",
+          "EsUtil.Ui.WinUI3.Interop": "0.5.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.6.4"
@@ -374,13 +374,13 @@
       },
       "EsUtil.Ui.WinUI3.Marquee": {
         "type": "CentralTransitive",
-        "requested": "[0.5.1, )",
-        "resolved": "0.5.1",
-        "contentHash": "L9/wS8y1r8TdsTKwZSVN9zgp12ACSNAuYARG5jzJrmHuccrr3n9BA/70L8pLOXJrQPNPkj8fYID9TkonWKHkoQ==",
+        "requested": "[0.5.3, )",
+        "resolved": "0.5.3",
+        "contentHash": "+/nPjLtAE/r+nVi9dOKhL2dU0aoRw5iiJet9bkCZpOa5qt7o39p71vACzgY8FeeIEIGPLrCzwV2F2tGm1mAwFQ==",
         "dependencies": {
-          "EsUtil.Feature.Marquee.Core": "0.5.1",
-          "EsUtil.Platform.Core": "0.5.1",
-          "EsUtil.Ui.WinUI3.Interop": "0.5.1",
+          "EsUtil.Feature.Marquee.Core": "0.5.3",
+          "EsUtil.Platform.Core": "0.5.3",
+          "EsUtil.Ui.WinUI3.Interop": "0.5.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.6.4"
