@@ -45,7 +45,8 @@
       "output": "publish/winui3-win-x64-aot",
       "exe": "SaveEvidence.WinUI3.exe",
       "asset": "SaveEvidence.WinUI3.zip",
-      "zip": true
+      "zip": true,
+      "requiresWindowsAppRuntime": true
     }
   ]
 }
