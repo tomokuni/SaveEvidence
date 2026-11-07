@@ -22,7 +22,7 @@ SaveEvidence の **WinUI 3 版アプリ**（実行ファイル `SaveEvidence.Win
 ## 2. 前提
 
 - .NET 10 / Windows 10（19041）以降
-- `Microsoft.WindowsAppSDK` 1.x（アンパッケージ / 自己完結で動作する）
+- `Microsoft.WindowsAppSDK` 2.6（アンパッケージ / フレームワーク依存）と、PC に導入済みの **Windows App Runtime 2.6（x64）**
 - WinUI 3 の `App.xaml` 以外に XAML ファイルを持たず、**画面は C# のマークアップで組む**
   （MewUI 版と同じ方針。 ページごとの XAML とコードビハインドの二重管理を避ける）
 
@@ -32,8 +32,9 @@ SaveEvidence の **WinUI 3 版アプリ**（実行ファイル `SaveEvidence.Win
 dotnet run --project src/App.WinUI3/src/App.WinUI3.csproj
 ```
 
-アンパッケージ（MSIX なし）で起動します。 Windows App SDK は自己完結で配置するため、
-**Windows App Runtime のインストールは不要**です。
+アンパッケージ（MSIX なし）で起動します。 **Windows App SDK は同梱しない**（フレームワーク依存）ため、
+**Windows App Runtime 2.6（x64）が PC に導入されている必要があります**（無いと起動しません。 導入処理は
+本アプリが持ちません = §5）。
 
 **起動は実行ファイル（アプリ ホスト）から行います**。 アンパッケージの WinUI 3 アプリは、
 マニフェストによるアクティベーションと `resources.pri` の解決をアプリ ホストの exe が担うため、
@@ -64,10 +65,10 @@ dotnet test src/App.WinUI3/tests/App.WinUI3.Tests.csproj -c Debug
 | --- | --- |
 | 出力 | `SaveEvidence.WinUI3.exe`（`<AssemblyName>` で製品名を明示する） |
 | パッケージ | アンパッケージ（`<WindowsPackageType>None</WindowsPackageType>`） |
-| Windows App SDK | 自己完結（`<WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>`） |
-| 実行時識別子 | `win-x64`（自己完結配置はアーキテクチャの指定を要求する） |
+| Windows App SDK | フレームワーク依存（`<WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>`）。 PC に **Windows App Runtime 2.6（x64）** の導入が要る |
+| 実行時識別子 | `win-x64`（publish の `-r` で渡す。 Native AOT はアーキテクチャの指定を要求する。 `.csproj` へは書かない） |
 | DPI 認識 | `app.manifest` で PerMonitorV2 を宣言する |
-| 発行方式 | Single（単一 exe・自己完結）。 Single AOT は WinUI 3 では成立しない（理由は [`buildScript/publish_WinUI3.bat`](../../buildScript/publish_WinUI3.bat) のコメント） |
+| 発行方式 | Native AOT のフォルダー配布（単一ファイル化はできない。 理由は [`buildScript/publish_WinUI3.bat`](../../buildScript/publish_WinUI3.bat) のコメント） |
 | 配布スクリプト | [`buildScript/publish_WinUI3.bat`](../../buildScript/publish_WinUI3.bat)（方式は `buildScript/publish_ui.bat` が優先順に選ぶ） |
 
 `<EnableMsixTooling>true</EnableMsixTooling>` は **publish のためだけ**に必要です（付けないと publish が自分自身の `.pri` を発行せず、

@@ -37,9 +37,9 @@
 | 項目 | 値 |
 | --- | --- |
 | 言語 / ランタイム | C# 14 / .NET 10 |
-| UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 1.x） |
+| UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 2.6） |
 | 対象フレームワーク | `net10.0-windows10.0.22621.0`（`SupportedOSPlatformVersion` は 10.0.19041.0） |
-| 配置 | アンパッケージ（`WindowsPackageType=None`）/ Windows App SDK 自己完結 / `win-x64` |
+| 配置 | アンパッケージ（`WindowsPackageType=None`）/ Windows App SDK フレームワーク依存（**Windows App Runtime 2.6（x64）** の導入が要る）/ `win-x64` |
 | 画像処理 | Windows App SDK の WIC（サムネイルの縮小デコード・画像の符号化）と自前の SVG ラスタライズ（アイコン） |
 | ログ | `Serilog` + `Microsoft.Extensions.Logging`（`LoggerMessage` ソース生成） |
 | 合成 | `Microsoft.Extensions.DependencyInjection` |

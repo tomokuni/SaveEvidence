@@ -26,7 +26,8 @@ rem  Layout: unpackaged (WindowsPackageType=None) and framework-dependent Window
 rem  (WindowsAppSDKSelfContained=false), so the Windows App Runtime installed on the machine is
 rem  used (code pages are shared: measured 2026-11-05, smaller and lower memory than the former
 rem  self-contained shape).  Installing the runtime when it is missing is handled by
-rem  EsUtil.Ui.WinUI3.Interop (in progress); this app does not do it here.
+rem  EsUtil.Ui.WinUI3.Interop (Bootstrapping.WindowsAppRuntimeBootstrap, published in EsUtil 0.5.2);
+rem  this app does not do it here.
 rem  The main project needs EnableMsixTooling for publish (without it the publish does not produce
 rem  SaveEvidence.WinUI3.pri and the app starts but fails on exit with 0xC000027B /
 rem  0x80008083, a WinRT stowed exception; measured).
@@ -68,7 +69,8 @@ rem  Windows App SDK code pages are shared with other apps.  Native AOT cannot b
 rem  libraries into the exe (measured 2026-10-20), and Windows App SDK rejects single file
 rem  publishing while framework dependent, so the AOT shape is a folder distribution.
 rem  Installing the Windows App Runtime when it is missing is handled by
-rem  EsUtil.Ui.WinUI3.Interop (in progress); this app leaves it to that implementation.
+rem  EsUtil.Ui.WinUI3.Interop (Bootstrapping.WindowsAppRuntimeBootstrap, published in EsUtil 0.5.2);
+rem  this app leaves it to that implementation.
 rem  AOT is enabled by `SaveEvidencePublishAot` in src\App.WinUI3\src\App.WinUI3.csproj:
 rem  passing `-p:PublishAot=true` directly flows to the referenced projects (measured).
 set "SE_MODES=aot"
