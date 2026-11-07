@@ -264,7 +264,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 - ネイティブライブラリ（OpenCvSharp・Avalonia の GL 実装等）は exe へ同梱できないため、同じフォルダーへ並べて配布します（方式 1 のとき）。
 - 方式 2 は自己完結ランタイムを丸ごと含むため、配布物は方式 1 より大きくなります。
-- **Windows App SDK を使う WinUI 3 版は、ランタイムを同梱せずフレームワーク依存で動きます**（コード ページを他のアプリと共有でき、起動が速くメモリも少なくて済みます。 実測値は [`buildScript/verifyPublish.ps1`](buildScript/verifyPublish.ps1) が表示します）。 **配布先には Windows App Runtime 2.6（x64）が必要です**（無ければ起動時に案内して導入します）。
+- **Windows App SDK を使う WinUI 3 版は、ランタイムを同梱せずフレームワーク依存で動きます**（コード ページを他のアプリと共有でき、起動が速くメモリも少なくて済みます。 配布物の構成とサイズは [`buildScript/verifyPublish.ps1`](buildScript/verifyPublish.ps1) が実測して表示します）。 **配布先には Windows App Runtime 2.6（x64）が必要です**（無ければ起動時に案内して導入します）。
 
 ---
 

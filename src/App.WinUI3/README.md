@@ -82,7 +82,7 @@ AOT は `SaveEvidencePublishAot`（`buildScript/publish_WinUI3.bat` が渡す）
 期待する出力先と exe 名は [`.github/release-config.json`](../../.github/release-config.json) が単一所有します。
 
 **Windows App SDK は同梱しません**（`WindowsAppSDKSelfContained=false`）。 コード ページを他のアプリと共有できるため、
-**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（実測値は `buildScript/verifyPublish.ps1` が表示します）。 **ランタイムの確認と導入は起動時**に
+**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（配布物の構成とサイズは `buildScript/verifyPublish.ps1` が実測して表示します）。 **ランタイムの確認と導入は起動時**に
 `EsUtil.Ui.WinUI3.Interop` の `Bootstrapping.WindowsAppRuntimeBootstrap` が行います（無ければ案内を出し、選ばれた
 とおりに導入してから初期化します）。 そのため SDK の自動初期化（モジュール読み込み時に走り、導入はしない）は
 `WindowsAppSdkBootstrapInitialize=false` で止め、案内のタスク ダイアログのために `app.manifest` で

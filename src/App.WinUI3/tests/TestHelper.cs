@@ -48,6 +48,9 @@ internal sealed class RecordingLogger : ILogger
     /// <summary>収集したログメッセージ。</summary>
     public List<string> Messages { get; } = [];
 
+    /// <summary>収集したログ レベル（<see cref="Messages"/> と同じ順序）。</summary>
+    public List<LogLevel> Levels { get; } = [];
+
     /// <inheritdoc />
     public IDisposable? BeginScope<TState>(TState state)
         where TState : notnull => null;
@@ -80,6 +83,7 @@ internal sealed class RecordingLogger : ILogger
         }
 
         Messages.Add(formatter(state, exception));
+        Levels.Add(logLevel);
     }
 }
 

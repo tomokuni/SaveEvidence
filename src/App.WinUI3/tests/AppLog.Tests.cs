@@ -22,7 +22,7 @@ public class AppLogTests
         var logger = new RecordingLogger();
         InvokeAll(logger);
 
-        Assert.Equal(10, logger.Messages.Count);
+        Assert.Equal(11, logger.Messages.Count);
         Assert.All(logger.Messages, message => Assert.StartsWith("[App.WinUI3] ", message, StringComparison.Ordinal));
     }
 
@@ -43,6 +43,8 @@ public class AppLogTests
         Assert.Equal("[App.WinUI3] 一覧の読み込みで例外が発生: C:\\images", logger.Messages[3]);
         Assert.Equal("[App.WinUI3] ウィンドウ配置の保存で例外が発生", logger.Messages[4]);
         Assert.Equal("[App.WinUI3] ホットキーを登録できませんでした: ScreenSelect, key=Q", logger.Messages[9]);
+        Assert.Equal("[App.WinUI3] Windows App Runtime を用意できませんでした (required=2.6.4)", logger.Messages[10]);
+        Assert.Equal(LogLevel.Warning, logger.Levels[10]);
     }
 
     /// <summary>全ログメソッドを指定ロガーで呼び出す。</summary>
@@ -59,5 +61,6 @@ public class AppLogTests
         logger.LogSettingsApplyError(new InvalidOperationException("test"), "LoupeSize");
         logger.LogClipboardError(new InvalidOperationException("test"), "コピー");
         logger.LogHotKeyRegisterFailed(CaptureType.ScreenSelect, EsKey.Q);
+        logger.LogWindowsAppRuntimeUnavailable("2.6.4");
     }
 }
