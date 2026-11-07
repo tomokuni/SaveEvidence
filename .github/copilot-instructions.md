@@ -74,5 +74,5 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 - **作業ツリーの改行コードは CRLF**（[`.editorconfig`](../.editorconfig) の `end_of_line = crlf`。 リポジトリのブロブは [`.gitattributes`](../.gitattributes) が LF へ正規化する）。
 - **`App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する**（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
 - **`AVLN3001` は `App.AvaloniaUI` だけが抑止する**（理由は csproj のコメントに記載。 [`検証手順.md`](検証手順.md) §1）。
-- **CI は GitHub Actions で実行する**（`main` / `dev` への push と `main` 向け PR。 手動実行も可）。 [`workflows/build.yml`](workflows/build.yml) は `buildScript/verify.ps1` を Release 構成で実行する（ローカルの既定は Debug 構成。 合否基準は [`検証手順.md`](検証手順.md)）。
+- **CI は GitHub Actions で実行する**（`main` 向け PR と手動実行。 **push では実行しない**）。 [`workflows/build.yml`](workflows/build.yml) は `buildScript/verify.ps1` を Release 構成で実行する（ローカルの既定は Debug 構成。 合否基準は [`検証手順.md`](検証手順.md)）。
 - **`EsUtil` 側の検証は EsUtil リポジトリで実行する**（本リポジトリの走査は `src/` 配下だけを対象にし、EsUtil の文書は走査しない）。

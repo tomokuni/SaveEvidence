@@ -48,7 +48,8 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
     │   ├── verify-release-version.ps1  # リリース可否の検証
     │   └── show-current-versions.ps1   # 現在のバージョン状況の表示
     └── workflows/
-        ├── build.yml              # push / PR でビルド・テスト（配布物は作らない）
+        ├── build.yml              # main 向け PR でビルド・テスト（配布物は作らない。 必須チェックは ci）
+        ├── locks.yml              # main 向け PR で packages.lock.json を自動更新（版の変更に追随）
         ├── publish.yml            # 全 UI の publish と保管（release.yml から呼ばれる）
         └── release.yml            # 手動実行で検証・publish・タグ・Release 作成
 ```
@@ -83,7 +84,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 - **NuGet のメジャー更新は作成されません**（テストの書き方が変わるため、手動で判断します）。
 - Dependabot は**指定したディレクトリ直下のみを走査します**（再帰しません）。 プロジェクトを増やした場合は
   `dependabot.yml` の `directories` にも追加してください。
-- Pull Request の内容を確認して `main` へマージします（マージ方式は Squash merge を推奨）。 マージ後の `main` への push で `build.yml`（ゲート）が実行されます。
+- Pull Request の内容を確認して `main` へマージします（マージ方式は Squash merge を推奨）。 必須チェック `ci` は Pull Request で実行されるため、マージ後の再実行はありません。
 - **Dependabot は `packages.lock.json` を一部のプロジェクトしか更新しません**（Dependabot の制限）。 そのため NuGet の Pull Request は、**そのままでは CI が `NU1004`（lock が古い）で失敗します**。 ブランチを取得して `dotnet restore <ソリューション> --force-evaluate` を実行し、lock を追加コミットしてからマージします（版の更新自体は PR の内容のままです）。
 - 破壊的な変更（`actions/upload-artifact` のメジャー更新など）は、CI が失敗した内容を確認して修正します。
 
@@ -121,7 +122,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 
 ### ブランチの保護（Branch ruleset）
 
-`main` への**直接 push を禁止**し、**PR 経由と `build` の成功をマージ条件**にします。 定義は
+`main` への**直接 push を禁止**し、**PR 経由と `ci` の成功をマージ条件**にします。 定義は
 [`rulesets/protect-main.json`](rulesets/protect-main.json) にあります。
 
 | 項目 | 値 |
@@ -130,7 +131,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 | Target | **Branches** |
 | Enforcement status | **Active** |
 | Target branches | `~DEFAULT_BRANCH`（既定ブランチ＝`main`） |
-| Rules | **Restrict deletions** / **Block force pushes** / **Require a pull request before merging** / **Require status checks to pass**（`build`） |
+| Rules | **Restrict deletions** / **Block force pushes** / **Require a pull request before merging** / **Require status checks to pass**（`ci`） |
 | Required approvals | **0**（承認者は不要。 「PR 経由」だけを強制する） |
 | Bypass list | **なし**（管理者も迂回できない。 非常時は ruleset 自体を編集する） |
 
@@ -141,17 +142,17 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 
 - **`dev` への push は制限しません**（作業ブランチのため）。 **`main` へは PR でのみ**反映します。
 - 承認者を 0 にしているため、**CI が緑なら作成者自身がマージできます**。
-- `strict_required_status_checks_policy` は `false`（毎回の rebase を強制しない）。
+- `strict_required_status_checks_policy` は `true`（マージ前にブランチを最新へ更新させる）。
 
 ## ワークフロー
 
 | ワークフロー | 実行契機 | 内容 |
 | --- | --- | --- |
-| [`workflows/build.yml`](workflows/build.yml) | `main` への push（マージ後）、`main` 向け PR（**必ず実行**）、`dev` への push、手動実行 | 復元・ビルド・テスト（**配布物は作らない**）。 PR では必須チェック `build` |
+| [`workflows/build.yml`](workflows/build.yml) | `main` 向け PR、手動実行（**push では実行しない**） | 復元・ビルド・テストと走査（**配布物は作らない**）。 PR の必須チェックは集約ジョブ `ci` |
 | [`workflows/publish.yml`](workflows/publish.yml) | `workflow_call` | 全 UI の publish・**配布物の起動検証**・保管の単一実装（`version` を受け取るとそのバージョンでビルドする） |
 | [`workflows/release.yml`](workflows/release.yml) | **手動実行のみ。 実行ブランチは `mode` に従う**（`dry-run` は `dryRunBranches`、公開は `releaseBranches`）。 `mode` で 2 段階（`dry-run` / `release`） | 検証 → SBOM → 全 UI の publish →（release のみ）**承認** → タグ + GitHub Release 作成 |
 
-`build.yml` の成功実行はリリースの**前提（ゲート）**です。 `release.yml` は、リリース対象コミットに対する `build.yml` の成功実行が存在することを確認してから Release を作成します。
+`ci`（`build.yml` の集約ジョブ）の成功はリリースの**前提（ゲート）**です。 マージの前提は ruleset が保証するため、`release.yml` はリリース対象コミットに対する `build.yml` の実行を探しません（マージ後のコミットには実行が無いため）。
 
 **配布物を作る処理は重い（Native AOT を含む）ため、push では実行しません。** 配布物の作成はリリース時に 1 度だけ行います。
 
@@ -161,8 +162,8 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 
 ```mermaid
 flowchart TD
-    P["版を上げてコミット"] --> A["main へ push（マージ含む）"]
-    A --> B["build.yml（必ず実行）<br/>復元 + ビルド + テスト"]
+    P["版を上げてコミット"] --> A["PR を出す"]
+    A --> B["build.yml（main 向け PR で必ず実行）<br/>復元 + ビルド + テスト + 走査<br/>必須チェックは ci"]
     B --> D{"リリースする?"}
 
     subgraph rel ["release.yml（手動実行のみ / dry-run は dev も可、公開は main のみ）"]
@@ -187,7 +188,7 @@ flowchart TD
 リリースは **`dry-run` → `release` の 2 段階**で行います。 **版はリリース前にコミットしておきます**（自動採番しません）。
 
 1. **版を上げてコミットする**（`Directory.Build.props` の `<Version>`）。 `dev` で上げ、`main` へマージする
-2. `Actions` → **Build** が成功するまで待つ（`build.yml` の成功はリリースの**前提（ゲート）**です）
+2. Pull Request の `ci`（必須チェック）が成功していることを確認する（`main` へマージする）
 3. `Actions` → **Release** → `Run workflow` で、**モード `dry-run`** を選んで実行する
    - 配布物の作成（全 UI の publish）・起動検証・**SBOM の作成**まで行います（**公開もタグ作成もしません**）
    - `version` は省略できます（省略するとコミット済みの版を使います）
@@ -207,6 +208,7 @@ flowchart LR
 
 **注意事項**:
 
+- **`CHANGELOG.md` に「未リリース」の見出しを残しません**（`release.yml` が `## 未リリース` を見つけると失敗します）。 版を上げたコミットで「`## <版>（<公開日>）`」へ確定してください。
 - **実行できるブランチは `release-config.json` の `dryRunBranches`（dry-run）と `releaseBranches`（公開）が決まります**（本リポジトリは dry-run が `["main", "dev"]`、公開が `["main"]`）。 **開発から dry-run までの確認は `dev` で行い、公開は `main` で行います**。
   `verify` ジョブが最初に実行ブランチを検証し、含まれない場合は失敗します。
 - **`release` は、同じコミットの `dry-run` が成功していることを要求します**（実行名 `DryRun …` の成功実行を確認します）。 満たさない場合は失敗します。
@@ -243,7 +245,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 | --- | --- | --- |
 | 1 | 実行ブランチがモードの許可ブランチに一致する（dry-run: `dryRunBranches` / 公開: `releaseBranches`） | 公開で `dev` を選んで実行（公開は不可） |
 | 2 | `release/X.Y` の場合、入力バージョンの系列が `X.Y` に一致する | `release/0.1` に `0.2.0` を入力 |
-| 3 | 対象コミットに対する `build.yml` の**成功実行がある** | push 直後（Build 実行中・失敗）に実行 |
+| 3 | `main` 向け PR で `ci`（必須チェック）が成功している（ruleset `Protect main`） | 必須チェックが失敗・未実行のままマージしようとする |
 | 4 | バージョンが semver 形式（先頭 0 不可） | `1.2`、`01.2.3` |
 | 5 | **同じ系列のタグの最大より大きい** | `v0.1.1` があるのに `0.1.1` を入力 |
 | 6 | タグ `v<version>` が**未作成** | 既存と同じバージョンを入力 |
@@ -364,6 +366,6 @@ Get-MaxVersion -Versions @('1.0.0', '1.2.0')      # -> 1.2.0
 - **ワークフローは `main` へ push しません**（版はリリース前に人がコミットするため、push 権限は不要です）。 `contents: write` はタグと Release の作成だけに使います。
 - `release.yml` は `actions: read`（ゲートと dry-run の参照）と `contents: write`（タグと Release）を使用します。
 - **`build.yml` は配布物を作成しません。** ゲートはビルドとテストの成功であり、**配布物が作成できることは `dry-run` で確かめます**（そのために 2 段階にしています）。
-- `dev` への push でも `build.yml` を実行します（作業ブランチの壊れを早く見つけるため）。
+- **push では `build.yml` を実行しません**（同じツリーを検証し直さないため。 作業ブランチの壊れは手元の `buildScript/verify.ps1` か `workflow_dispatch` で見つけます）。
 - 配布物（アーティファクト）の保持期間は `release-config.json` の `artifactRetentionDays`（既定 30 日）です。
   **`release` は `dry-run` とは別の実行**であるため、成果物は `release` 実行の中で作り直します（`dry-run` の成果物には依存しません）。

@@ -5,7 +5,7 @@
 CI のランナーへ Windows App Runtime を導入する。
 
 .DESCRIPTION
-WinUI 3 版は Windows App Runtime へフレームワーク依存で動く（`src/App.WinUI3/src/App.WinUI3.csproj` の
+WinUI 3 版は Windows App Runtime へフレームワーク依存で動く（WinUI 3 版のプロジェクトの
 `WindowsAppSDKSelfContained=false`）ため、テストと配布物の起動検証にはランナーへランタイムが要る。
 ランナーのイメージには 1.6 / 1.8 しか無く、本アプリが使う版が無いため、公式のインストーラーで導入する。
 規則は `.github/検証手順.md` §17。
