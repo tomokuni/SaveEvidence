@@ -201,8 +201,8 @@
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "EsUtil.Platform.Core": "[0.5.3, )",
-          "Parts.CapturePreview.Core": "[0.1.2, )",
-          "Parts.LineDetection": "[0.1.2, )"
+          "Parts.CapturePreview.Core": "[0.1.3, )",
+          "Parts.LineDetection": "[0.1.3, )"
         }
       },
       "parts.capturepreview.core": {

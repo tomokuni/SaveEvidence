@@ -250,7 +250,7 @@
           "EsUtil.Ui.MewUI.Loupe": "[0.5.3, )",
           "EsUtil.Ui.MewUI.Marquee": "[0.5.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
-          "Parts.CapturePreview.Core": "[0.1.2, )"
+          "Parts.CapturePreview.Core": "[0.1.3, )"
         }
       },
       "parts.capturepreview.core": {
