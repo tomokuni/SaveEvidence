@@ -148,8 +148,10 @@ $repoParent = Split-Path $repoRoot -Parent
 $rxLink = [regex]'\]\((?<t>[^)\s]+)\)'
 $rxCode = [regex]'`[^`]*`'
 foreach ($f in $docs) {
-    # コード片（`...`）の中のリンク風表記は文書の例示なので対象外にする
-    $text = $rxCode.Replace((Get-Text $f.FullName), '``')
+    # コード片（`...`）の中のリンク風表記は文書の例示なので対象外にする。
+    # **置換先にバックティックを使わない**: '``' へ置き換えるとバックティックの対応がずれ、後続の
+    # コード片が読み飛ばされずにリンクとして拾われる（実測: Linux で `](...)` の例示を誤検出した）。
+    $text = $rxCode.Replace((Get-Text $f.FullName), ' ')
     foreach ($m in $rxLink.Matches($text)) {
         $target = $m.Groups['t'].Value
         if ($target -match '^(https?:|mailto:|\w+:|#)') { continue }
