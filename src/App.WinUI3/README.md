@@ -82,15 +82,14 @@ AOT は `SaveEvidencePublishAot`（`buildScript/publish_WinUI3.bat` が渡す）
 期待する出力先と exe 名は [`.github/release-config.json`](../../.github/release-config.json) が単一所有します。
 
 **Windows App SDK は同梱しません**（`WindowsAppSDKSelfContained=false`）。 コード ページを他のアプリと共有できるため、
-**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（実測 2026-11-05: 同梱 231.9 MB / 起動 723 ms /
-作業セット 204.8 MB → フレームワーク依存 + AOT 78.3 MB / 313 ms / 140.3 MB）。 **ランタイムの確認と導入は起動時**に
+**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（実測値は `buildScript/verifyPublish.ps1` が表示します）。 **ランタイムの確認と導入は起動時**に
 `EsUtil.Ui.WinUI3.Interop` の `Bootstrapping.WindowsAppRuntimeBootstrap` が行います（無ければ案内を出し、選ばれた
 とおりに導入してから初期化します）。 そのため SDK の自動初期化（モジュール読み込み時に走り、導入はしない）は
 `WindowsAppSdkBootstrapInitialize=false` で止め、案内のタスク ダイアログのために `app.manifest` で
 Common-Controls v6 を宣言しています。
 
 **配布物からは、使わないコンポーネント（ML = ONNX Runtime・DirectML、Windows AI）のネイティブ実体を除きます**
-（約 40 MB 減。 実装は `src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`、規則は
+（実装は `src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`、規則は
 [`.github/ビルド設定規約.md`](../../.github/ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
 
 ## 6. 機能一覧

@@ -65,10 +65,10 @@ for %%p in (
 ) do dotnet build %%p -c Release -r %RID% -v q --nologo -p:NuGetLockFilePath=packages.%RID%.lock.json >nul 2>&1
 
 rem  The shape is Native AOT in a folder (framework-dependent Windows App SDK).
-rem  Measured 2026-11-05: the framework-dependent publish is smaller than the former
-rem  self-contained single file (231.9 MB -> 78 MB) and starts with less memory, because the
-rem  Windows App SDK code pages are shared with other apps.  Native AOT cannot bundle native
-rem  libraries into the exe (measured 2026-10-20), and Windows App SDK rejects single file
+rem  The framework-dependent publish is smaller than the former self-contained single file and
+rem  starts with less memory, because the Windows App SDK code pages are shared with other apps
+rem  (sizes are measured and printed by buildScript/verifyPublish.ps1).  Native AOT cannot bundle
+rem  native libraries into the exe (measured 2026-10-20), and Windows App SDK rejects single file
 rem  publishing while framework dependent, so the AOT shape is a folder distribution.
 rem  The app checks for the Windows App Runtime at startup and installs it when the user agrees
 rem  (EsUtil.Ui.WinUI3.Interop / Bootstrapping.WindowsAppRuntimeBootstrap, published in EsUtil 0.5.2).

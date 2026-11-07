@@ -284,16 +284,16 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 | MewUI 版 | `SaveEvidence.MewUI.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
 | Avalonia UI 版 | `SaveEvidence.AvaloniaUI.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
 | WinForms 版 | `SaveEvidence.WinForms.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
-| WinUI 3 版 | `SaveEvidence.WinUI3.zip` | Single AOT（フォルダー配布。 Windows App SDK はフレームワーク依存） | exe 1 個 + ネイティブ DLL 2 個（OpenCvSharp・Bootstrapper）+ `.pri` |
+| WinUI 3 版 | `SaveEvidence.WinUI3.zip` | Single AOT（フォルダー配布。 Windows App SDK はフレームワーク依存） | exe 1 個 + ネイティブ DLL + `.pri` |
 
 - **方式が Single AOT でない UI は、その理由を本節が持ちます**（WinForms は SDK がトリミングを拒否する `NETSDK1175`）。
 - **WinUI 3 版は Native AOT のフォルダー配布です**（[../buildScript/publish_WinUI3.bat](../buildScript/publish_WinUI3.bat)）。 **Native AOT はネイティブ DLL を exe へ内包できない**（実測 2026-10-20: `PublishAot` と同時に `PublishSingleFile` / `IncludeNativeLibrariesForSelfExtract` を指定しても、ネイティブ ライブラリは exe の隣へ出力されます）、Windows App SDK は**フレームワーク依存のまま `PublishSingleFile` を拒否**するため、「1 ファイル」にはなりません。
-- **WinUI 3 版は Windows App Runtime を同梱しません**（`WindowsAppSDKSelfContained=false`）。 フレームワーク依存はコード ページを他のアプリと共有するため、**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（実測 2026-11-05: 同梱 231.9 MB / 起動 723 ms / 作業セット 204.8 MB → フレームワーク依存 + AOT 78.3 MB / 313 ms / 140.3 MB）。 旧方針（同梱して「事前インストール不要」を優先）は、Windows App SDK 2.6 への更新を機に取りやめました。
+- **WinUI 3 版は Windows App Runtime を同梱しません**（`WindowsAppSDKSelfContained=false`）。 フレームワーク依存はコード ページを他のアプリと共有するため、**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（サイズと起動時間の実測は `buildScript/verifyPublish.ps1` が表示します）。 旧方針（同梱して「事前インストール不要」を優先）は、Windows App SDK 2.6 への更新を機に取りやめました。
 - **Windows App Runtime が無い環境への導入は `EsUtil.Ui.WinUI3.Interop` が担います**（`Bootstrapping.WindowsAppRuntimeBootstrap`。 EsUtil 0.5.2 で公開）。 **WinUI 3 版は起動時にその実装で確認し、無ければ案内（自動インストール / ダウンロード ページ / 終了）を出して導入します**（SDK の自動初期化は `WindowsAppSdkBootstrapInitialize=false` で止めています）。 **テストと配布物の起動検証は同じランタイムが要る**ため、CI はビルドの前と配布物の起動検証の前に導入します（`buildScript/installWindowsAppRuntime.ps1`。 [`検証手順.md`](検証手順.md) §17）。
 - **WinUI 3 の配布物は、exe へ入れられない非ネイティブのファイルを公開時に絞ります**（`src/App.WinUI3/src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`）。 残す必須のファイルは **アプリの `.pri`・`ja-JP` と `en-us` の `.mui`・`Microsoft.UI.Xaml\Assets`・`NpuDetect`** です（1 種類ずつ削除して起動・終了・設定の往復を実測。 **アプリの `.pri` を削除すると起動せず、`.mui` を削除すると終了時に `0xC000027B` で落ちます**）。 `.winmd`・他の言語の `.mui`・アプリ以外の `.pri`・`workloads*.json`・`App.xaml`・`app.manifest`・`WindowsAppRuntime.png`・WebView2 関連・`UniversalBGTask` は削除してよいことを実測済みです。
 - **WinUI 3 版は SkiaSharp を含みません**（描画は Windows App SDK 標準）。 そのためトリミング・AOT 解析の警告（`IL2026` 等）を抑止していません。
 - **Avalonia UI 版の AOT は、以前は `IL2070` / `IL3050` で失敗していました**（`EsUtil.Ui.AvaloniaUI.Loupe` が `Expression.Compile` と `Type.GetMethod` で表示アダプタの契約を解決していたため）。 反射を削除して方式 1 へ戻しています（方式 1 へ戻せなくなったら、まず EsUtil 側で反射が復活していないかを疑います）。
-- **ネイティブ ライブラリ（OpenCvSharp と Avalonia の GL 実装）は exe へ同梱できない**ため、同じフォルダーへ並べて配布します（ファイル数とサイズはコードの変更で変わるため、文書へ書かず `buildScript/verifyPublish.ps1` が実測して表示します）。 MewUI 版は Native AOT で **exe 1 個 + ネイティブ DLL 1 個**まで縮みました（Skia を外したため）。
+- **ネイティブ ライブラリ（OpenCvSharp と Avalonia の GL 実装）は exe へ同梱できない**ため、同じフォルダーへ並べて配布します（ファイル数とサイズはコードの変更で変わるため、文書へ書かず `buildScript/verifyPublish.ps1` が実測して表示します）。 MewUI 版は Native AOT で **exe 1 個 + ネイティブ DLL** になりました（Skia を外したため）。
 - **WinUI 3 版の本体プロジェクトは `EnableMsixTooling` を必要とします**（付けないと publish が `.pri` を発行せず、起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます。 実測）。 アンパッケージ（`WindowsPackageType=None`）+ Windows App SDK フレームワーク依存（`WindowsAppSDKSelfContained=false`）+ Native AOT で配布します。
 - **publish はリポジトリ外の一時領域（`%TEMP%`）へ発行し、必要なファイルだけを `publish/` へ配置します**（リポジトリ内へ直接発行すると、参照プロジェクト側のディレクトリにも `publish` が作られます）。
 - **方式ごとの引数は環境変数で差し替えます**（`SE_AOT_ARGS` / `SE_SINGLE_ARGS`。 **空にする意図は `SE_SKIP_AOT_ARGS` / `SE_SKIP_SINGLE_ARGS`** で表します。 `cmd` では `set "VAR="` が変数を未定義へ戻すため、空文字では意図を表せません。 差し替えの例は WinUI 3 版です）。
@@ -305,7 +305,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 - **WinUI 3 は WinUI 3 のライブラリを RID 付きで直接ビルドしてから publish します**（`buildScript/publish_WinUI3.bat`）。 RID が参照プロジェクトへ伝播しないため、アプリの publish だけでは `<TFM>\<RID>\` の `.pri` が揃わず `PRI175` / `PRI252` で失敗します。
 - **配布物は exe 1 個であることを検査します**（AOT のフォルダー配布でも exe は 1 個）（`buildScript/verifyPublish.ps1`）。 Windows App SDK が再起動 API 用に同封する `RestartAgent.exe` は配置しません（本アプリは再起動 API を使わない。 除いても起動と終了が正常であることを実測済み）。
 - **配布物から落としてよいのは `*.pdb` と `RestartAgent.exe`、および `TrimWinUI3PublishNoise`（WinUI 3）が外すファイルだけ**です。 それ以外は拡張子で選別せずにすべて配置します（WinUI 3 の配布物は `.pri` / `.mui` を必要とし、`.pri` を落とすと起動せず、`.mui` を落とすと終了時に `0xC000027B` で落ちます。 実測 2026-10-20）。
-- **WinUI 3 版は ML（ONNX Runtime・DirectML）・Windows AI のネイティブ実体を配布物から除きます**（約 40 MB 減。 フレームワーク依存の publish ではパッケージの資産としてそのまま出るため、`src/App.WinUI3/src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise` が外します。 規則は [`ビルド設定規約.md`](ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
+- **WinUI 3 版は ML（ONNX Runtime・DirectML）・Windows AI のネイティブ実体を配布物から除きます**（フレームワーク依存の publish ではパッケージの資産としてそのまま出るため、`src/App.WinUI3/src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise` が外します。 規則は [`ビルド設定規約.md`](ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
 
 **すべて zip で配布します。** `uis[].zip` が `true` の UI は、publish 後に配布物を zip 化してから保管します
 （出力が単一ファイル（exe）でもフォルダでも同じ指定で扱えます）。
