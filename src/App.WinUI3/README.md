@@ -82,7 +82,7 @@ AOT は `SaveEvidencePublishAot`（`buildScript/publish_WinUI3.bat` が渡す）
 **Windows App SDK は同梱しません**（`WindowsAppSDKSelfContained=false`）。 コード ページを他のアプリと共有できるため、
 **起動が速くメモリも少なく**、Windows App SDK の保守も効きます（実測 2026-11-05: 同梱 231.9 MB / 起動 723 ms /
 作業セット 204.8 MB → フレームワーク依存 + AOT 78.3 MB / 313 ms / 140.3 MB）。 ランタイムが無い環境への導入は
-`EsUtil.Ui.WinUI3.Interop` の実装（作成中）が担うため、本アプリは持っていません。
+`EsUtil.Ui.WinUI3.Interop` の実装（`Bootstrapping.WindowsAppRuntimeBootstrap`）が担うため、本アプリは持っていません。
 
 **配布物からは、使わないコンポーネント（ML = ONNX Runtime・DirectML、Windows AI）のネイティブ実体を除きます**
 （約 40 MB 減。 実装は `src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`、規則は

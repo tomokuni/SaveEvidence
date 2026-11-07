@@ -33,7 +33,8 @@
          配布物が大きく、**起動が遅くメモリも多く使う**（コード ページを他のアプリと共有できず、
          フレームワークの保守も効かない。 Microsoft の展開ガイドの比較表。 実測 2026-11-05:
          同封 231.9 MB → フレームワーク依存 + AOT 78 MB、起動と作業セットも減少）。
-         ランタイムが無い環境への導入は EsUtil.Ui.WinUI3.Interop の実装（作成中）が担うため、
+         ランタイムが無い環境への導入は EsUtil.Ui.WinUI3.Interop の実装
+         （Bootstrapping.WindowsAppRuntimeBootstrap。 EsUtil 0.5.2 で公開）が担うため、
          本アプリはここでは扱わない（保留）。 それまでの間は、導入済みのランタイムを使う。 -->
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
     <!-- 配布物のアーキテクチャは publish の `-r`（win-x64）で渡す（csproj へ書くと復元とロックが RID ごとに分かれる）。
