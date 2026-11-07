@@ -11,6 +11,7 @@
 #
 # 設計の要点:
 #   - **同じリポジトリの Pull Request だけ**を対象にする（fork のブランチへは push できない）。
+#   - **Dependabot 起点の Pull Request は対象外**（`GITHUB_TOKEN` が読み取り専用で push できない）。
 #   - **自動コミットの本文に印（`[skip locks]`）を入れ**、次の実行で何もしない（無限ループを防ぐ）。
 #   - **`GITHUB_TOKEN` による push では `pull_request` の実行が起動しない**（GitHub の仕様）ため、
 #     自動コミットを push したら build.yml を明示的に起動し直す（更新後のコミットに `ci` を付ける）。
@@ -46,8 +47,14 @@ concurrency:
 
 jobs:
   update:
-    # fork の Pull Request は push できないため対象外（その場合は手元で updateLocks.ps1 を実行する）
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    # **push できない Pull Request は対象外**にする（その場合は手元で updateLocks.ps1 を実行する）。
+    #   - fork の Pull Request
+    #   - **Dependabot 起点の Pull Request**（`GITHUB_TOKEN` が読み取り専用になり、`permissions` を
+    #     書いても push できない。 lock は維持者が手元で更新する。 手順は .github/RELEASE.md）
+    if: |
+      (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository) &&
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: windows-latest
     timeout-minutes: 20
     permissions:
