@@ -214,7 +214,8 @@ dotnet test --solution <ソリューション>.slnx -c Release --no-build
 ## 複数リポジトリでの共通化（同じ CI を使う）
 
 **`.github/workflows/*.yml` と `.github/rulesets/*.json` は、リポジトリごとに書き分けません。** 次のリポジトリは
-**同じファイル**を使い、リポジトリ固有の値だけを `.github/release-config.json` に置きます（新しいリポジトリも同じ形で足せます）。
+**配布物を作る呼び出し先（`publish.yml` / `pack.yml`）とその公開処理を除いて同じファイル**を使い、
+リポジトリ固有の値だけを `.github/release-config.json` に置きます（新しいリポジトリも同じ形で足せます）。
 
 | リポジトリ | 種類 | 配布物の作り方 |
 | --- | --- | --- |
@@ -235,7 +236,8 @@ dotnet test --solution <ソリューション>.slnx -c Release --no-build
 | rulesets | [`rulesets/protect-main.json`](rulesets/protect-main.json)（`ci` を必須。 strict）と [`rulesets/tag-version.json`](rulesets/tag-version.json) |
 | 設定の単一所有 | `.github/release-config.json`（製品名・ソリューション・ブランチ・UI の定義）と [`.github/actions/read-config`](actions/read-config/action.yml) |
 
-**リポジトリごとに変えてよいのは次の 2 点だけ**です（それ以外はコピーします）。
+**リポジトリごとに変えてよいのは次の 3 点だけ**です（それ以外はコピーします）。
 
 - `release-config.json` の値（`product` / `solutionFile` / `uis` など）
 - 配布物の作り方（アプリは `publish.yml`、ライブラリは `pack.yml`）
+- `release.yml` の**配布物を作るジョブ**（呼び出し先の `publish.yml` / `pack.yml` の名前と、NuGet へ公開するかどうか）。 **前提検証・版・タグ・CHANGELOG の検証は共通**です
