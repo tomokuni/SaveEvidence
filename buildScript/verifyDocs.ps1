@@ -121,8 +121,14 @@ $mdVersion = 'markdownlint-cli2@0.24.0'
 $mdArgs = @('--yes', $mdVersion, '--config', 'buildScript/markdownlint.json')
 if ($Fix) { $mdArgs += '--fix' }
 $mdArgs += @('src/**/*.md', '.github/**/*.md', '*.md', '!**/obj/**', '!**/bin/**')
-# npx は `cmd.exe` 経由で起動する（`.cmd` は直接起動できない）。 出力の復号は Invoke-NativeText が行う。
-$mdRun = Invoke-NativeText $env:ComSpec (@('/c', 'npx') + $mdArgs)
+# npx は Windows では `cmd.exe` 経由で起動する（`.cmd` は直接起動できない）。 Linux / macOS では
+# 直接起動する（CI の docs ジョブは ubuntu で走る）。 出力の復号は Invoke-NativeText が行う。
+$mdRun = if ($env:ComSpec -and (Test-Path -LiteralPath $env:ComSpec)) {
+    Invoke-NativeText $env:ComSpec (@('/c', 'npx') + $mdArgs)
+}
+else {
+    Invoke-NativeText 'npx' $mdArgs
+}
 $mdText = $mdRun.Text + $mdRun.ErrorText
 # 自動修正した場合は、以降の検査が古い内容を読まないようキャッシュを捨てる
 if ($Fix) { Clear-FileCache }

@@ -39,6 +39,19 @@ public class CaptureSessionControlTests
         public bool SetCaptureExclusion(EsPlatformHandle handle, bool exclude) => true;
         public void SetBounds(EsPlatformHandle handle, EsRectInt bounds) { }
         public void EvacuateWindow(EsPlatformHandle handle) { }
+
+        public bool TryClientToScreen(EsPlatformHandle handle, EsPointInt clientPoint, out EsPointInt screenPoint)
+        {
+            // フェイクでは変換しない（入力をそのまま返す）
+            screenPoint = clientPoint;
+            return true;
+        }
+
+        public bool TryScreenToClient(EsPlatformHandle handle, EsPointInt screenPoint, out EsPointInt clientPoint)
+        {
+            clientPoint = screenPoint;
+            return true;
+        }
     }
 
     /// <summary>要素検出のモック（常に未検出）。</summary>

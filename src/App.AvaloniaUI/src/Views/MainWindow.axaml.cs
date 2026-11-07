@@ -547,6 +547,8 @@ public sealed partial class MainWindow : Window
             .ToAvaloniaWindowState();
     }
 
+    /// <summary>枠の太さを測る（実装は EsUtil が単一所有する）。</summary>
+    private static readonly WinWindowFrame s_windowFrame = new();
     /// <summary>実際のウィンドウ枠を考慮して外寸の最小サイズを設定する。</summary>
     private void ApplyMinimumOuterSize()
     {
@@ -555,7 +557,7 @@ public sealed partial class MainWindow : Window
             throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
         }
 
-        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(platformHandle.Handle));
+        var frame = s_windowFrame.GetSize(EsWindow.FromHandle(platformHandle.Handle));
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         MinWidth = EsWindowPlacementMath.ToClientLength(WindowMetrics.MinimumWidth, frame.Width, scaling);
         MinHeight = EsWindowPlacementMath.ToClientLength(WindowMetrics.MinimumHeight, frame.Height, scaling);
@@ -569,7 +571,7 @@ public sealed partial class MainWindow : Window
             throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
         }
 
-        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(platformHandle.Handle));
+        var frame = s_windowFrame.GetSize(EsWindow.FromHandle(platformHandle.Handle));
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         Width = _restoredWindowBounds is { } bounds
             ? EsWindowPlacementMath.ToClientLength(bounds.Width / (_restoredWindowScaling ?? scaling), frame.Width, scaling)
@@ -595,7 +597,7 @@ public sealed partial class MainWindow : Window
         var scaling = DpiScaler.NormalizeScaling(RenderScaling);
         var platformHandle = TryGetPlatformHandle()
             ?? throw new InvalidOperationException("ウィンドウ ハンドルを取得できません。");
-        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(platformHandle.Handle));
+        var frame = s_windowFrame.GetSize(EsWindow.FromHandle(platformHandle.Handle));
         _settingsService.Current.MainWindowBounds = new EsRectInt(
             Position.X, Position.Y,
             EsWindowPlacementMath.ToOuterPhysicalLength(Width, frame.Width, scaling),

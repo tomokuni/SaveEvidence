@@ -58,8 +58,8 @@
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
-    <PackageVersion Include="OpenCvSharp5" Version="5.0.0.20261018" />
-    <PackageVersion Include="OpenCvSharp5.runtime.win.slim" Version="5.0.0.20261018" />
+    <PackageVersion Include="OpenCvSharp5" Version="5.0.0.20261107" />
+    <PackageVersion Include="OpenCvSharp5.runtime.win.slim" Version="5.0.0.20261107" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />

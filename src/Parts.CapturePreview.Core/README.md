@@ -109,7 +109,7 @@ if (zoom.CurrentState is { IsFit: false, CanZoomOut: true })
 
 ```text
 src/
-│   ├── Parts.CapturePreview.Core.csproj  # ライブラリ（net10.0）
+│   ├── Parts.CapturePreview.Core.csproj  # ライブラリ（net10.0-windows10.0.17763.0）
 │   ├── Capture/                            # 撮影の判断と共有値
 │   │   ├── CaptureTypeTraits.cs            # キャプチャ種別の性質（ハイライト型・区間の流儀・検出対象）
 │   │   ├── CaptureElementTarget.cs         # カーソル下の検出対象（画面 / ウィンドウ）

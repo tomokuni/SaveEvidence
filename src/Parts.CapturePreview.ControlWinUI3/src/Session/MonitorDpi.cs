@@ -14,6 +14,9 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.Session;
 /// </remarks>
 internal static class MonitorDpi
 {
+    /// <summary>モニターの実効 DPI を照会する（実装は EsUtil が単一所有する）。</summary>
+    private static readonly WinMonitorDpi s_monitorDpi = new();
+
     /// <summary>基準の DPI（96 = 表示倍率 100%）。</summary>
     private const uint StandardDpi = WinMonitorDpi.StandardDpi;
 
@@ -22,5 +25,5 @@ internal static class MonitorDpi
     /// <returns>モニターの有効 DPI。 照会できない場合は 96。</returns>
     /// <remarks>最も近いモニターを対象にする（ウィンドウが跨っていても座標から一意に決まる）。</remarks>
     public static uint ForPoint(EsPointInt screenPoint)
-        => WinMonitorDpi.GetEffectiveDpi(screenPoint) ?? StandardDpi;
+        => s_monitorDpi.GetEffectiveDpi(screenPoint) ?? StandardDpi;
 }

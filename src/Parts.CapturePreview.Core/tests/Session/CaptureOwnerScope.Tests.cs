@@ -117,6 +117,19 @@ public class CaptureOwnerScopeTests
         public void SetBounds(EsPlatformHandle handle, EsRectInt bounds) => log.Add("bounds");
 
         public void EvacuateWindow(EsPlatformHandle handle) => log.Add("evacuate");
+
+        public bool TryClientToScreen(EsPlatformHandle handle, EsPointInt clientPoint, out EsPointInt screenPoint)
+        {
+            // フェイクでは変換しない（入力をそのまま返す）
+            screenPoint = clientPoint;
+            return true;
+        }
+
+        public bool TryScreenToClient(EsPlatformHandle handle, EsPointInt screenPoint, out EsPointInt clientPoint)
+        {
+            clientPoint = screenPoint;
+            return true;
+        }
     }
 
     /// <summary>オーナーウィンドウのフェイク（呼び出し順を記録する）。</summary>

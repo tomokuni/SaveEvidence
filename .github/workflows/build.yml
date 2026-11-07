@@ -145,10 +145,9 @@ jobs:
   # 3. 文書とコードの走査（ビルドも復元も要らない。 verify と同時に走らせる）
   # ────────────────────────────────────────────────────────────
   docs:
-    # **走査は Windows で実行する**: buildScript/VerifyCommon.ps1 の Invoke-NativeText は cmd.exe
-    # （`$env:ComSpec`）で外部コマンドを起動するため、ubuntu では「file name has not been provided」で失敗する
-    # （実測 2026-11-07）。 OS に依存しない走査へ直せたら ubuntu へ移す（節約は 1 分程度）。
-    runs-on: windows-latest
+    # OS に依存しない走査だけを ubuntu で実行する（`verifyDocs.ps1` は npx を Windows では cmd.exe 経由、
+    # Linux では直接起動する）
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: チェックアウト
@@ -159,7 +158,7 @@ jobs:
         uses: actions/cache@v6
         with:
           # キャッシュの場所は OS で変わる（ubuntu は `~/.npm`）
-          path: ~\AppData\Local\npm-cache
+          path: ~/.npm
           # 版は buildScript/verifyDocs.ps1 が単一所有する（版を上げるとキーが変わる）
           key: npm-${{ runner.os }}-${{ hashFiles('buildScript/verifyDocs.ps1', 'buildScript/markdownlint.json') }}
           restore-keys: |
