@@ -10,6 +10,10 @@ WinUI 3 版は Windows App Runtime へフレームワーク依存で動く（`sr
 ランナーのイメージには 1.6 / 1.8 しか無く、本アプリが使う版が無いため、公式のインストーラーで導入する。
 規則は `.github/検証手順.md` §17。
 
+**アプリ自身も起動時に確認して導入する**（`EsUtil.Ui.WinUI3.Interop` の `Bootstrapping.WindowsAppRuntimeBootstrap`。
+無ければ利用者へ案内する）。 CI でここで導入するのは、テスト（アプリを起動しない）にランタイムが要ることと、
+配布物の起動検証で案内 UI を出さずに済ませるためである。
+
 導入する版は `Directory.Packages.props` の `Microsoft.WindowsAppSDK` の版から導く（`2.6.5` なら `2.6`）。
 実際に導入されるのは、その major.minor 系列の最新版である。
 

@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
+using EsUtil.Ui.WinUI3.Interop.Bootstrapping;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
@@ -14,10 +15,11 @@ namespace EsUtil.SaveEvidence.App.WinUI3;
 /// WinUI 3 で実装する。 他の UI 版と同じコア ロジックと設定ファイル（<c>%LOCALAPPDATA%\SaveEvidence\settings.json</c>）を共有する。<br/>
 /// <br/>
 /// <b>起動の手順</b>:<br/>
-/// 1. 未処理の例外の記録を登録する（クラッシュ原因をログから特定できるようにする）<br/>
-/// 2. 合成ルート（<see cref="AppHost"/>）でサービスとメイン ウィンドウを組み立てる<br/>
-/// 3. WinRT の COM ラッパーを初期化し、XAML アプリケーションを開始する（メッセージ ループ）<br/>
-/// 4. メッセージ ループを抜けたら終了を記録し、DI コンテナを破棄する<br/>
+/// 1. Windows App Runtime を用意する（無ければ案内を出し、選ばれたとおりに導入する）<br/>
+/// 2. 未処理の例外の記録を登録する（クラッシュ原因をログから特定できるようにする）<br/>
+/// 3. 合成ルート（<see cref="AppHost"/>）でサービスとメイン ウィンドウを組み立てる<br/>
+/// 4. WinRT の COM ラッパーを初期化し、XAML アプリケーションを開始する（メッセージ ループ）<br/>
+/// 5. メッセージ ループを抜けたら終了を記録し、DI コンテナと Bootstrapper を破棄する<br/>
 /// <br/>
 /// <b>エントリ ポイントを自前で持つ理由</b>: 撮影の実行に必要な初期化（ログと設定の読み込み）を<br/>
 /// ウィンドウ生成より前に済ませるためである（XAML コンパイラが生成する <c>Main</c> は<br/>
@@ -32,6 +34,13 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
+        // Windows App Runtime を用意する（無ければ案内を出し、選ばれたとおりに導入する）。
+        // **WinUI の型へ触れる前**に 1 回呼ぶ（自動初期化は csproj の WindowsAppSdkBootstrapInitialize=false で止めている）
+        if (!EnsureWindowsAppRuntime())
+        {
+            return;
+        }
+
         // タスク バーのグループ分けを 4 つの UI 版で揃える（ウィンドウを作る前に設定する）
         TaskbarIdentity.Apply();
         // 未処理の例外を記録する（クラッシュ原因をログから特定できるようにする）
@@ -70,6 +79,36 @@ internal static class Program
 
         s_logger.LogAppExit(0);
         AppHost.Shutdown();
+        // Bootstrapper の初期化を解除する（本クラスが初期化した場合だけ。 自己完結・MSIX では何もしない）
+        WindowsAppRuntimeBootstrap.Shutdown();
+    }
+
+    /// <summary>Windows App Runtime を用意する（無ければ案内を出し、選ばれたとおりに導入する）。</summary>
+    /// <returns>用意できた場合は true。 利用者が導入しないことを選んだ、または導入できなかった場合は false。</returns>
+    /// <remarks>
+    /// 確認と導入は <see cref="WindowsAppRuntimeBootstrap"/> が担う（<see cref="WindowsAppRuntimeInstallMode.BootstrapUi"/>）。<br/>
+    /// 案内は「自動インストールする / ダウンロードページを表示する / インストールせずにアプリを終了する」の 3 択であり、<br/>
+    /// タスク ダイアログで出すため app.manifest で Common-Controls v6 を宣言している（宣言が無いとメッセージ ボックスへ落ちる）。
+    /// </remarks>
+    private static bool EnsureWindowsAppRuntime()
+    {
+        var options = WindowsAppRuntimeBootstrapOptions.Default with
+        {
+            InstallMode = WindowsAppRuntimeInstallMode.BootstrapUi,
+        };
+
+        if (WindowsAppRuntimeBootstrap.TryEnsureAvailable(options))
+        {
+            return true;
+        }
+
+        var required = WindowsAppRuntimeInventory.RequiredVersion.ToString(3);
+        s_logger.LogWindowsAppRuntimeUnavailable(required);
+        WinMessageBox.ShowError(
+            $"Windows App Runtime {required} 以降が必要です。\n"
+            + $"次のページから導入して、もう一度起動してください。\n{WindowsAppRuntimeBootstrap.DownloadPageUri}",
+            "SaveEvidence");
+        return false;
     }
 
     /// <summary>実行ファイルのバージョンを取得する。</summary>

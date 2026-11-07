@@ -31,12 +31,17 @@
     <WindowsPackageType>None</WindowsPackageType>
     <!-- **Windows App Runtime へはフレームワーク依存で動く**（同封しない）。 自己完結（同封）は
          配布物が大きく、**起動が遅くメモリも多く使う**（コード ページを他のアプリと共有できず、
-         フレームワークの保守も効かない。 Microsoft の展開ガイドの比較表。 実測 2026-11-05:
-         同封 231.9 MB → フレームワーク依存 + AOT 78 MB、起動と作業セットも減少）。
-         ランタイムが無い環境への導入は EsUtil.Ui.WinUI3.Interop の実装
-         （Bootstrapping.WindowsAppRuntimeBootstrap。 EsUtil 0.5.2 で公開）が担うため、
-         本アプリはここでは扱わない（保留）。 それまでの間は、導入済みのランタイムを使う。 -->
+         フレームワークの保守も効かない。 Microsoft の展開ガイドの比較表。 サイズは
+         buildScript/verifyPublish.ps1 が実測して表示する）。 ランタイムが無い環境への導入は
+         EsUtil.Ui.WinUI3.Interop の実装（Bootstrapping.WindowsAppRuntimeBootstrap）に任せる
+         （Program.Main で呼ぶ。 下の WindowsAppSdkBootstrapInitialize も参照）。 -->
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
+    <!-- **Windows App SDK の自動初期化を止める**。 既定（true）ではモジュール読み込み時に Bootstrapper が走り、
+         ランタイムが無い PC では SDK の案内 UI を出したうえで終了する（導入は行わない）。 本アプリは
+         Program.Main で EsUtil.Ui.WinUI3.Interop の Bootstrapper に確認と導入を任せるため、自動初期化を
+         止めて EsUtil だけが初期化する。 止めないと EsUtil の導入処理へ到達しない。 規則は
+         .github/検証手順.md §17。 -->
+    <WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
     <!-- 配布物のアーキテクチャは publish の `-r`（win-x64）で渡す（csproj へ書くと復元とロックが RID ごとに分かれる）。
          AOT のネイティブ出力と Windows App Runtime の選択はその RID に従う。 -->
     <!-- DPI 認識（PerMonitorV2）を宣言する（宣言が無いとウィンドウ配置の復元がずれる）。 -->
@@ -53,7 +58,7 @@
     <!-- メモリと配布物を減らす。 どれも本アプリが使わない機能である。
          - MetadataUpdaterSupport: ホット リロード用のメタデータ（製品では不要）
          - EventSourceSupport: EventSource のイベント（ログは Serilog が担う）
-         - HttpActivityPropagationSupport: HttpClient の診断（通信しない） -->
+         - HttpActivityPropagationSupport: HttpClient の診断（通信は Windows App Runtime の導入時だけ） -->
     <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
     <EventSourceSupport>false</EventSourceSupport>
     <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
@@ -130,7 +135,7 @@
       <!-- 本アプリが使わない ML（ONNX Runtime・DirectML）と Windows AI のネイティブ実体。
            フレームワーク依存の publish はこれらをパッケージの資産としてそのまま出力する
            ソース参照 0 件であり、除いても起動・終了・設定の往復が通ることを buildScript/verifyPublish.ps1 が確かめる。
-           除かないと 40 MB（onnxruntime 22 MB・DirectML 17.8 MB ほか）を配布物が無駄に運ぶ。 -->
+           除かないと ML・Windows AI のネイティブ実体を配布物が無駄に運ぶ。 -->
       <_SEPublishNoise Include="@(ResolvedFileToPublish)"
                        Condition="'%(Filename)%(Extension)' == 'onnxruntime.dll'
                                   Or '%(Filename)%(Extension)' == 'onnxruntime_providers_shared.dll'

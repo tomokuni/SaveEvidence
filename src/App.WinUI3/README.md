@@ -22,7 +22,8 @@ SaveEvidence の **WinUI 3 版アプリ**（実行ファイル `SaveEvidence.Win
 ## 2. 前提
 
 - .NET 10 / Windows 10（19041）以降
-- `Microsoft.WindowsAppSDK` 2.6（アンパッケージ / フレームワーク依存）と、PC に導入済みの **Windows App Runtime 2.6（x64）**
+- `Microsoft.WindowsAppSDK` 2.6（アンパッケージ / フレームワーク依存）と **Windows App Runtime 2.6（x64）**
+  （PC に無ければ起動時に案内を出して導入します）
 - WinUI 3 の `App.xaml` 以外に XAML ファイルを持たず、**画面は C# のマークアップで組む**
   （MewUI 版と同じ方針。 ページごとの XAML とコードビハインドの二重管理を避ける）
 
@@ -33,8 +34,8 @@ dotnet run --project src/App.WinUI3/src/App.WinUI3.csproj
 ```
 
 アンパッケージ（MSIX なし）で起動します。 **Windows App SDK は同梱しない**（フレームワーク依存）ため、
-**Windows App Runtime 2.6（x64）が PC に導入されている必要があります**（無いと起動しません。 導入処理は
-本アプリが持ちません = §5）。
+**Windows App Runtime 2.6（x64）** が要ります。 無い場合は起動時に案内（「自動インストールする /
+ダウンロードページを表示する / インストールせずにアプリを終了する」）を出します（§5）。
 
 **起動は実行ファイル（アプリ ホスト）から行います**。 アンパッケージの WinUI 3 アプリは、
 マニフェストによるアクティベーションと `resources.pri` の解決をアプリ ホストの exe が担うため、
@@ -65,7 +66,7 @@ dotnet test src/App.WinUI3/tests/App.WinUI3.Tests.csproj -c Debug
 | --- | --- |
 | 出力 | `SaveEvidence.WinUI3.exe`（`<AssemblyName>` で製品名を明示する） |
 | パッケージ | アンパッケージ（`<WindowsPackageType>None</WindowsPackageType>`） |
-| Windows App SDK | フレームワーク依存（`<WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>`）。 PC に **Windows App Runtime 2.6（x64）** の導入が要る |
+| Windows App SDK | フレームワーク依存（`<WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>`）。 **Windows App Runtime 2.6（x64）** が要り、無ければ起動時に導入する（下記） |
 | 実行時識別子 | `win-x64`（publish の `-r` で渡す。 Native AOT はアーキテクチャの指定を要求する。 `.csproj` へは書かない） |
 | DPI 認識 | `app.manifest` で PerMonitorV2 を宣言する |
 | 発行方式 | Native AOT のフォルダー配布（単一ファイル化はできない。 理由は [`buildScript/publish_WinUI3.bat`](../../buildScript/publish_WinUI3.bat) のコメント） |
@@ -81,12 +82,14 @@ AOT は `SaveEvidencePublishAot`（`buildScript/publish_WinUI3.bat` が渡す）
 期待する出力先と exe 名は [`.github/release-config.json`](../../.github/release-config.json) が単一所有します。
 
 **Windows App SDK は同梱しません**（`WindowsAppSDKSelfContained=false`）。 コード ページを他のアプリと共有できるため、
-**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（実測 2026-11-05: 同梱 231.9 MB / 起動 723 ms /
-作業セット 204.8 MB → フレームワーク依存 + AOT 78.3 MB / 313 ms / 140.3 MB）。 ランタイムが無い環境への導入は
-`EsUtil.Ui.WinUI3.Interop` の実装（`Bootstrapping.WindowsAppRuntimeBootstrap`）が担うため、本アプリは持っていません。
+**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（配布物の構成とサイズは `buildScript/verifyPublish.ps1` が実測して表示します）。 **ランタイムの確認と導入は起動時**に
+`EsUtil.Ui.WinUI3.Interop` の `Bootstrapping.WindowsAppRuntimeBootstrap` が行います（無ければ案内を出し、選ばれた
+とおりに導入してから初期化します）。 そのため SDK の自動初期化（モジュール読み込み時に走り、導入はしない）は
+`WindowsAppSdkBootstrapInitialize=false` で止め、案内のタスク ダイアログのために `app.manifest` で
+Common-Controls v6 を宣言しています。
 
 **配布物からは、使わないコンポーネント（ML = ONNX Runtime・DirectML、Windows AI）のネイティブ実体を除きます**
-（約 40 MB 減。 実装は `src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`、規則は
+（実装は `src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`、規則は
 [`.github/ビルド設定規約.md`](../../.github/ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
 
 ## 6. 機能一覧
