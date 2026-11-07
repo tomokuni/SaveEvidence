@@ -11,7 +11,7 @@
     <!-- アプリの版から「使った EsUtil の版」を辿れるようにする（`+esutil.0.5.1`）。
          EsUtil はパッケージ参照であり、配布物だけを見ても版が分からないため、製品バージョンへ残す。
          SourceLink のコミット（`+<sha>`）は SDK が後ろへ足す。 -->
-    <EsUtilVersion>0.5.3</EsUtilVersion>
+    <EsUtilVersion>0.6.0</EsUtilVersion>
     <InformationalVersion Condition="'$(EsUtilVersion)' != ''">$(Version)+esutil.$(EsUtilVersion)</InformationalVersion>
   </PropertyGroup>
 

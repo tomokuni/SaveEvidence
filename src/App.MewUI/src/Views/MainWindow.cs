@@ -785,6 +785,8 @@ internal sealed partial class MainWindow
         window.StartManualPosition(position.X, position.Y);
     }
 
+    /// <summary>枠の太さを測る（実装は EsUtil が単一所有する）。</summary>
+    private static readonly WinWindowFrame s_windowFrame = new();
     /// <summary>実際のウィンドウ枠を考慮して外寸の最小サイズを設定する。</summary>
     private static void ApplyMinimumOuterSize(Window window)
     {
@@ -794,7 +796,7 @@ internal sealed partial class MainWindow
             return;
         }
 
-        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(hwnd));
+        var frame = s_windowFrame.GetSize(EsWindow.FromHandle(hwnd));
         var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
         var currentSize = window.WindowSize;
 
@@ -816,7 +818,7 @@ internal sealed partial class MainWindow
             return;
         }
 
-        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(hwnd));
+        var frame = s_windowFrame.GetSize(EsWindow.FromHandle(hwnd));
         var scaling = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(hwnd));
         var bounds = settingsService.Current.MainWindowBounds;
         var savedScale = EsWindowPlacementMath.IsUsable(bounds)
@@ -852,7 +854,7 @@ internal sealed partial class MainWindow
     private static void SaveWindowPlacement(Window window, ISettingsService settingsService)
     {
         var scale = DpiScaler.NormalizeScaling(DpiHelper.GetScaleFactor(window.Handle));
-        var frame = WinWindowFrame.GetSize(EsWindow.FromHandle(window.Handle));
+        var frame = s_windowFrame.GetSize(EsWindow.FromHandle(window.Handle));
         var position = EsWindowPlacementMath.ToPhysicalPixelPoint(
             new EsPoint(window.Position.X, window.Position.Y), scale);
 

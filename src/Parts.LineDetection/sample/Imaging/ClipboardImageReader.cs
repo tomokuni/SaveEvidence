@@ -15,6 +15,9 @@ namespace EsUtil.SaveEvidence.Parts.LineDetection.Sample.Imaging;
 /// </remarks>
 internal static class ClipboardImageReader
 {
+    /// <summary>クリップボードを開閉する（実装は EsUtil が単一所有する）。</summary>
+    private static readonly WinClipboard s_clipboard = new();
+
     /// <summary>CF_DIB フォーマット識別子。</summary>
     private const uint CF_DIB = 8;
 
@@ -28,7 +31,7 @@ internal static class ClipboardImageReader
     public static Bitmap? ReadImageFromDib()
     {
         Bitmap? image = null;
-        return WinClipboard.TryReadDib(CF_DIB, dib => image = BitmapFromDib(dib)) ? image : null;
+        return s_clipboard.TryReadDib(CF_DIB, dib => image = BitmapFromDib(dib)) ? image : null;
     }
 
     /// <summary>DIB メモリ（BITMAPINFOHEADER 先頭）を解析して BGRA8888 の Bitmap を生成する。</summary>
