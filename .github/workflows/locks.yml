@@ -12,6 +12,8 @@
 # 設計の要点:
 #   - **同じリポジトリの Pull Request だけ**を対象にする（fork のブランチへは push できない）。
 #   - **自動コミットの本文に印（`[skip locks]`）を入れ**、次の実行で何もしない（無限ループを防ぐ）。
+#   - **`GITHUB_TOKEN` による push では `pull_request` の実行が起動しない**（GitHub の仕様）ため、
+#     自動コミットを push したら build.yml を明示的に起動し直す（更新後のコミットに `ci` を付ける）。
 #   - 差分の判定と更新は buildScript/updateLocks.ps1 が単一所有する（本ファイルは呼ぶだけ）。
 #   - 失敗しても Pull Request は止めない（lock が古いままなら build.yml が `NU1004` で落ちる）。
 name: Locks
@@ -50,6 +52,8 @@ jobs:
     permissions:
       # 自動コミットを Pull Request のブランチへ push する
       contents: write
+      # 更新後のコミットで Build を起動し直す（下記の `gh workflow run`）
+      actions: write
     steps:
       # **Pull Request の head ブランチ**を取得する（`github.ref` は `refs/pull/<番号>/merge` であり push 先ではない）
       - name: チェックアウト
@@ -101,7 +105,9 @@ jobs:
           BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $changed = @(git status --porcelain -- '*/packages.lock.json' 'packages.lock.json')
+          # **存在しないパスを pathspec に並べない**（1 つでも一致しないと `git add` が失敗する）。
+          # git の `*` は `/` も一致するため、`*packages.lock.json` でルート直下にも `src/` 配下にも当たる。
+          $changed = @(git status --porcelain -- '*packages.lock.json')
           if ($changed.Count -eq 0) {
             Write-Host 'lock は最新です（コミットしません）。'
             exit 0
@@ -110,8 +116,14 @@ jobs:
           $changed | ForEach-Object { Write-Host "  $_" }
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- '*/packages.lock.json' 'packages.lock.json'
+          git add -- '*packages.lock.json'
           # 印（`[skip locks]`）を本文に入れ、次の実行でこのコミットを飛ばす
           git commit -m 'lock を更新する（版の変更に追随）' -m '[skip locks]'
           git push origin "HEAD:$env:BRANCH"
           Write-Host "自動コミットを push しました: $env:BRANCH"
+
+          # **`GITHUB_TOKEN` による push では `pull_request` の実行は起動しない**（GitHub の仕様。
+          # 無限ループを防ぐため）。 そのままだと更新後のコミットに必須チェック `ci` が付かず、
+          # 古い lock で失敗した検証から自動で回復できない。 Build を明示的に起動し直す。
+          gh workflow run build.yml --ref "$env:BRANCH"
+          Write-Host "Build を起動しました（ref: $env:BRANCH）"

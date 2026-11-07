@@ -1072,7 +1072,11 @@ $internalIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 # 9. 改行コード
 # ============================================================
 Write-Output '== 9. 改行コード =='
-$eolIssues = @(Get-GitList @('ls-files', '--eol') | Select-String 'w/mixed|w/lf')
+# **作業ツリーの改行は OS で異なる**（Windows は `.editorconfig` の CRLF、Linux は LF）。
+# リポジトリの内容そのものの混在（index）は OS に依存しないため、Windows 以外では index を見る
+# （CI の docs ジョブは ubuntu で走る）。
+$eolPattern = if ($IsWindows) { 'w/mixed|w/lf' } else { 'i/mixed|w/mixed' }
+$eolIssues = @(Get-GitList @('ls-files', '--eol') | Select-String $eolPattern)
 Add-Result '改行コード' (@($eolIssues).Count -eq 0) "$(@($eolIssues).Count) 件"
 $eolIssues | Select-Object -First 5 | ForEach-Object { "      $($_.Line)" }
 
