@@ -74,6 +74,9 @@ jobs:
       # **文書（.md）だけの変更では復元もビルドもテストも要らない**（実測 2026-10-27: 文書だけの push に
       # 2 分 43 秒かけていた。 文書の検査は buildScript/verifyDocs.ps1 が持つ）。
       # 判定できない場合（初回 push・タグ・手動実行）は**コードの変更として扱う**（取りこぼしを避ける）。
+      # git が失敗すると $LASTEXITCODE が残るため、最後に 0 へ戻す（**履歴を書き換えた push** では
+      # before のコミットが clone に無く、git diff が 128 で失敗する。 実測 2026-11-07: 判定できず
+      # 「コードの変更として扱います」と表示した直後に、ステップが失敗していた）。
       - name: 変更の種類を判定
         id: kind
         shell: pwsh
@@ -124,6 +127,10 @@ jobs:
             "code=$(($code.Count -gt 0).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
             Write-Host "変更 $($files.Count) 件（うちコード $($code.Count) 件）"
           }
+
+          # git が失敗した場合も、このステップは「コードの変更として検証する」で成功させる
+          # （$LASTEXITCODE を残すと、その値でステップが失敗する）
+          $global:LASTEXITCODE = 0
 
       # .NET SDK はランナー イメージの最新版を使う（setup-dotnet は不要。イメージが C:\Program Files\dotnet を
       # PATH へ追加しているため、以降のステップでそのまま dotnet を実行できる）。
