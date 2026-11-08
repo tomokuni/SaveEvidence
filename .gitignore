@@ -63,3 +63,5 @@ FolderProfile.pubxml.user
 *.safetensors
 *.ckpt
 **/weights/
+# SBOM などの生成物（CI がアップロードする。 コミットしない）
+/artifacts/
