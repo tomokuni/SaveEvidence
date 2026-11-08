@@ -2,6 +2,11 @@
   "product": "SaveEvidence",
   "versionFile": "Directory.Build.props",
   "solutionFile": "SaveEvidence.slnx",
+  "layout": {
+    "roots": ["src"],
+    "projectTitleStyle": "name",
+    "solutionLabels": ["SaveEvidence.slnx"]
+  },
   "gateWorkflow": "build.yml",
   "releaseBranches": [
     "main"
