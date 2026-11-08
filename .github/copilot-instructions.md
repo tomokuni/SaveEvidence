@@ -31,7 +31,7 @@
 - コード変更は、Model / ViewModel / View の複数レイヤーを修正する必要がある場合でも実施する。
 - **作業の前に、対象の規約（上表）を読む**。 規約と実装が食い違う場合は、**規約を先に更新してから**実装を直す。
 - **実測してから書く**（推測でドキュメント・規約を書かない）。
-- **検証は `pwsh -NoProfile -File buildScript/verify.ps1` を 1 回実行する**（合否基準は [`.github/検証手順.md`](検証手順.md) が所有する。 手順を手作業で書き起こさない）。
+- **検証は `pwsh -NoProfile -File .github/verify/verify.ps1` を 1 回実行する**（合否基準は [`.github/検証手順.md`](検証手順.md) が所有する。 手順を手作業で書き起こさない）。
 
 ## 3. このワークスペース/ソリューションに固有の事項
 
@@ -66,7 +66,7 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 - **リポジトリは 2 つで、ワークスペースへ両方を載せる**（[`../SaveEvidence.code-workspace`](../SaveEvidence.code-workspace) が `../EsUtil` を含む）。 ライブラリ側の規約は [EsUtil の作業指示](../../EsUtil/.github/copilot-instructions.md) が所有する。
 - **EsUtil は nuget.org の公開パッケージとして参照する**（版は [`Directory.Build.props`](../Directory.Build.props) の `EsUtilVersion`。 未公開の版を試すときだけ、その環境で取得元を足す）。 **ソースの `ProjectReference` はビルドの `DEP0007` が拒否する**（別リポジトリのソースの一致は保証できないため）。
 - **パッケージの版は [`Directory.Packages.props`](../Directory.Packages.props) が単一所有し、復元は `packages.lock.json` で固定する**（**コミットする**）。 取得元は [`NuGet.config`](../NuGet.config) の `nuget.org` だけ（`<clear />` でユーザー単位の取得元を打ち消す）。
-- **SBOM（CycloneDX）をリリースへ添付する**（`buildScript/generateSbom.ps1`。 ツールの版は [`.config/dotnet-tools.json`](../.config/dotnet-tools.json)）。 配布物から依存を辿れるようにするため。
+- **SBOM（CycloneDX）をリリースへ添付する**（`.github/scripts/generateSbom.ps1`。 ツールの版は [`.config/dotnet-tools.json`](../.config/dotnet-tools.json)）。 配布物から依存を辿れるようにするため。
 - **アプリの製品バージョンは `<Version>+esutil.<EsUtilVersion>`**（使った EsUtil の版を exe から辿れるようにする。 SourceLink のコミットは SDK が後ろへ足す）。
 - **実行ファイルは 4 つ**（`App.AvaloniaUI` / `App.MewUI` / `App.WinForms` / `App.WinUI3`）で、**設定ファイルとログを共有する**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
 - **実行ファイルの名前はプロジェクト名と一致しない**（`App.AvaloniaUI` → `SaveEvidence.AvaloniaUI.exe` / `App.MewUI` → `SaveEvidence.MewUI.exe` / `App.WinForms` → `SaveEvidence.WinForms.exe` / `App.WinUI3` → `SaveEvidence.WinUI3.exe`。 `<AssemblyName>` で製品名を明示する。 配布名は [`.github/release-config.json`](release-config.json) が単一所有する）。
@@ -74,5 +74,5 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 - **作業ツリーの改行コードは CRLF**（[`.editorconfig`](../.editorconfig) の `end_of_line = crlf`。 リポジトリのブロブは [`.gitattributes`](../.gitattributes) が LF へ正規化する）。
 - **`App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する**（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
 - **`AVLN3001` は `App.AvaloniaUI` だけが抑止する**（理由は csproj のコメントに記載。 [`検証手順.md`](検証手順.md) §1）。
-- **CI は GitHub Actions で実行する**（`main` 向け PR と手動実行。 **push では実行しない**）。 [`workflows/build.yml`](workflows/build.yml) は `buildScript/verify.ps1` を Release 構成で実行する（ローカルの既定は Debug 構成。 合否基準は [`検証手順.md`](検証手順.md)）。
+- **CI は GitHub Actions で実行する**（`main` 向け PR と手動実行。 **push では実行しない**）。 [`workflows/build.yml`](workflows/build.yml) は `.github/verify/verify.ps1` を Release 構成で実行する（ローカルの既定は Debug 構成。 合否基準は [`検証手順.md`](検証手順.md)）。
 - **`EsUtil` 側の検証は EsUtil リポジトリで実行する**（本リポジトリの走査は `src/` 配下だけを対象にし、EsUtil の文書は走査しない）。

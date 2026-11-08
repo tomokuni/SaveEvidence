@@ -5,7 +5,8 @@
   "layout": {
     "roots": ["src"],
     "projectTitleStyle": "name",
-    "solutionLabels": ["SaveEvidence.slnx"]
+    "solutionLabels": ["SaveEvidence.slnx"],
+    "scriptRoots": ["buildScript", ".github"]
   },
   "gateWorkflow": "build.yml",
   "releaseBranches": [

@@ -36,7 +36,7 @@ rem  (SettingsJsonContext) into SettingsService.  The context must live in the a
 rem  references Settings (in one compilation the JSON source generator does not see the MVVM
 rem  generator output).  The round trip of the settings is verified by a regression test
 rem  (src\App.AvaloniaUI\tests\SettingsJsonContext.Tests.cs), which runs with the tests of
-rem  buildScript/verify.ps1.
+rem  .github/verify/verify.ps1.
 rem ============================================================
 
 rem Move from the script folder (buildScript) to the repository root.

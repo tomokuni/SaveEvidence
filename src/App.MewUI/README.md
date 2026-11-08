@@ -381,7 +381,7 @@ Avalonia 版と同じ 7 セクションです（折り畳みなしの縦 1 列�
 **配布物の起動と設定の往復**は自動で検証できます（手順の所有者は [`.github/検証手順.md`](../../.github/検証手順.md) §18）。
 
 ```powershell
-pwsh -NoProfile -File buildScript/verifyPublish.ps1 -Ui MewUI
+pwsh -NoProfile -File .github/verify/verifyPublish.ps1 -Ui MewUI
 ```
 
 > **重要（実測の落とし穴）**: 計測側のプロセスを **Per-Monitor V2（`SetProcessDpiAwarenessContext(-4)`）**

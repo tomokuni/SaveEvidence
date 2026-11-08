@@ -24,7 +24,7 @@ rem  Settings JSON: the app injects the JSON source generation context (Settings
 rem  into SettingsService (for trimming safety and startup time).  The context must live in
 rem  the assembly that references Settings (in one compilation the JSON source generator does
 rem  not see the MVVM generator output).  The round trip of the settings is verified with the
-rem  real exe by buildScript/verifyPublish.ps1 (this project has no dedicated unit test for
+rem  real exe by .github/verify/verifyPublish.ps1 (this project has no dedicated unit test for
 rem  it).
 rem ============================================================
 
