@@ -32,7 +32,7 @@
     <!-- **Windows App Runtime へはフレームワーク依存で動く**（同封しない）。 自己完結（同封）は
          配布物が大きく、**起動が遅くメモリも多く使う**（コード ページを他のアプリと共有できず、
          フレームワークの保守も効かない。 Microsoft の展開ガイドの比較表。 サイズは
-         buildScript/verifyPublish.ps1 が実測して表示する）。 ランタイムが無い環境への導入は
+         .github/verify/verifyPublish.ps1 が実測して表示する）。 ランタイムが無い環境への導入は
          EsUtil.Ui.WinUI3.Interop の実装（Bootstrapping.WindowsAppRuntimeBootstrap）に任せる
          （Program.Main で呼ぶ。 下の WindowsAppSdkBootstrapInitialize も参照）。 -->
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
@@ -99,7 +99,7 @@
 
   <!-- 配布物を「exe + ネイティブ DLL + 必須のリソース」へ絞る（実測 2026-10-20）。
        除外してよいことは、公開物から 1 種類ずつ削除して起動・終了・設定の往復を実測して確認した
-       （buildScript/verifyPublish.ps1 が毎回この構成を検査する）。
+       （.github/verify/verifyPublish.ps1 が毎回この構成を検査する）。
        残す必須のファイルは次の 3 つで、いずれも実測で削除すると起動または終了に失敗する。
        1. `<AssemblyName>.pri`: リソース インデックス（削除すると起動しない）
        2. `ja-JP` / `en-us` の `.mui`: WinUI の言語リソース（削除すると終了時に 0xC000027B で落ちる）
@@ -134,7 +134,7 @@
                                   Or '%(Filename)%(Extension)' == 'Microsoft.Windows.ApplicationModel.Background.UniversalBGTask.dll'" />
       <!-- 本アプリが使わない ML（ONNX Runtime・DirectML）と Windows AI のネイティブ実体。
            フレームワーク依存の publish はこれらをパッケージの資産としてそのまま出力する
-           ソース参照 0 件であり、除いても起動・終了・設定の往復が通ることを buildScript/verifyPublish.ps1 が確かめる。
+           ソース参照 0 件であり、除いても起動・終了・設定の往復が通ることを .github/verify/verifyPublish.ps1 が確かめる。
            除かないと ML・Windows AI のネイティブ実体を配布物が無駄に運ぶ。 -->
       <_SEPublishNoise Include="@(ResolvedFileToPublish)"
                        Condition="'%(Filename)%(Extension)' == 'onnxruntime.dll'

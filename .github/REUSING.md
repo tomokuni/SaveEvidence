@@ -14,7 +14,7 @@
 | [`../global.json`](../global.json) | **コピーして編集** | .NET SDK のバージョン（対象フレームワークに合わせる） |
 | [`scripts/version.ps1`](scripts/version.ps1) | **そのまま** | バージョンの規則（リポジトリ非依存） |
 | [`scripts/set-version.ps1`](scripts/set-version.ps1) | **そのまま** | バージョンファイルのパスは引数・設定で渡す |
-| [`scripts/verify-release-version.ps1`](scripts/verify-release-version.ps1) | **そのまま** | ブランチ規則は `releaseBranches` が持つため変更不要 |
+| [`verify/verify-release-version.ps1`](verify/verify-release-version.ps1) | **そのまま** | ブランチ規則は `releaseBranches` が持つため変更不要 |
 | [`scripts/show-current-versions.ps1`](scripts/show-current-versions.ps1) | **コピーして調整** | 現在のバージョン状況を表示する（読み取りのみ）。 配布物の表示方法のみリポジトリ依存 |
 | [`dependabot.yml`](dependabot.yml) | **コピーして調整** | GitHub Actions / NuGet の更新 PR。 `directories` を対象プロジェクトに合わせる |
 | [`rulesets/tag-version.json`](rulesets/tag-version.json) | **コピー（編集不要）** | Tag ruleset の定義。 リポジトリの Settings へインポートする |
@@ -45,8 +45,9 @@
 │   ├── scripts/
 │   │   ├── version.ps1
 │   │   ├── set-version.ps1
-│   │   ├── verify-release-version.ps1
 │   │   └── show-current-versions.ps1
+│   ├── verify/
+│   │   └── verify-release-version.ps1
 │   └── workflows/
 │       ├── build.yml
 │       ├── publish.yml
@@ -119,7 +120,7 @@ MTP モードではテスト対象を `--solution` / `--project` で指定しま
 | `output` | publish の出力パス（複数ファイルの場合はフォルダ） |
 | `asset` | Release に添付するファイル名（zip する場合は作成後の名前。 例: `SaveEvidence.MewUI.zip`） |
 | `zip` | 配布前に zip 化する場合は `true`。 `output` が単一ファイル（exe）でもフォルダ（exe + ネイティブ DLL）でも同じ指定で扱える |
-| `requiresWindowsAppRuntime` | 配布物が Windows App Runtime へフレームワーク依存で動く場合は `true`（`publish.yml` が配布物の起動検証の前に [`buildScript/installWindowsAppRuntime.ps1`](../buildScript/installWindowsAppRuntime.ps1) を実行する。 **版は `Directory.Packages.props` の `Microsoft.WindowsAppSDK` から導く**） |
+| `requiresWindowsAppRuntime` | 配布物が Windows App Runtime へフレームワーク依存で動く場合は `true`（`publish.yml` が配布物の起動検証の前に [`.github/scripts/installWindowsAppRuntime.ps1`](scripts/installWindowsAppRuntime.ps1) を実行する。 **版は `Directory.Packages.props` の `Microsoft.WindowsAppSDK` から導く**） |
 
 **UI を増やす場合はこの配列に要素を追加します。** ワークフローとスクリプトの変更は不要です。
 
@@ -170,7 +171,7 @@ UI ごとに `buildScript/publish_<名前>.bat` を作成します。 仕様は�
 # スクリプトの単体確認（バージョン設定・検証。既定のバージョンファイルは Directory.Build.props）
 Copy-Item Directory.Build.props "$env:TEMP/dbp.bak"
 & .github/scripts/set-version.ps1 -Version 0.0.2
-& .github/scripts/verify-release-version.ps1 -Version 0.0.3 -Branch main
+& .github/verify/verify-release-version.ps1 -Version 0.0.3 -Branch main
 & .github/scripts/show-current-versions.ps1 -Branch main -NoNetwork
 Copy-Item "$env:TEMP/dbp.bak" Directory.Build.props
 
@@ -229,9 +230,10 @@ dotnet test --solution <ソリューション>.slnx -c Release --no-build
 | --- | --- |
 | 必須チェック | **`ci`**（`build.yml` の集約ジョブ）。 ruleset `Protect main` が要求する |
 | `build.yml` の実行契機 | **`main` 向け Pull Request と手動実行だけ**（push では実行しない） |
-| 検証の中身 | `buildScript/verify.ps1`（ビルド・テスト・リポジトリ全体の検査）と `buildScript/verifyDocs.ps1`（文書とコードの走査） |
-| `locks.yml` | `main` 向け PR で `buildScript/updateLocks.ps1` を実行し、`packages.lock.json` の差分を自動コミットする（`GITHUB_TOKEN` の push では `pull_request` が起動しないため、`build.yml` を `workflow_dispatch` で起動し直す） |
-| 走査（`docs` ジョブ） | `buildScript/verifyDocs.ps1`。 **ubuntu で実行する**（`verifyDocs.ps1` が npx を Linux では直接起動し、改行コードは index を見る）。 **文書の型参照検査のため復元だけ行う**（参照先パッケージの XML ドキュメントを読む） |
+| 検証の中身 | `.github/verify/verify.ps1`（ビルド・テスト・リポジトリ全体の検査）と `.github/verify/verifyDocs.ps1`（文書とコードの走査） |
+| 検証スクリプトの共通化 | `.github/verify/verifyDocs.ps1` は**リポジトリの種類によらず同一ファイル**を使う。 プロジェクト フォルダの配置は `.github/release-config.json` の `layout`（`roots` / `projectTitleStyle` / `portablePrefixes` / `solutionLabels` / `externalDocTokens` / `scriptRoots`）が単一所有し、陳腐化した識別子は `.github/verify-stale-patterns.txt` が持つ。 `.github/verify/verify.ps1` は種類で規則が違う（アプリは配布物とロック、ライブラリはパッケージング・層の参照・AOT の制約）ため、アプリ用とライブラリ用に分かれる |
+| `locks.yml` | `main` 向け PR で `.github/scripts/updateLocks.ps1` を実行し、`packages.lock.json` の差分を自動コミットする（`GITHUB_TOKEN` の push では `pull_request` が起動しないため、`build.yml` を `workflow_dispatch` で起動し直す） |
+| 走査（`docs` ジョブ） | `.github/verify/verifyDocs.ps1`。 **ubuntu で実行する**（`verifyDocs.ps1` が npx を Linux では直接起動し、改行コードは index を見る）。 **文書の型参照検査のため復元だけ行う**（参照先パッケージの XML ドキュメントを読む） |
 | `release.yml` | Pull Request では**前提検証だけ**（版・タグ・CHANGELOG・ブランチ）。 手動実行の `mode` で `dry-run` / `release` を選ぶ |
 | rulesets | [`rulesets/protect-main.json`](rulesets/protect-main.json)（`ci` を必須。 strict）と [`rulesets/tag-version.json`](rulesets/tag-version.json) |
 | 設定の単一所有 | `.github/release-config.json`（製品名・ソリューション・ブランチ・UI の定義）と [`.github/actions/read-config`](actions/read-config/action.yml) |

@@ -10,7 +10,7 @@
 検証の内容:
 1. publish（`buildScript/publish_*.bat`）を実行し（`-SkipPublish` で省略）、出力フォルダの exe が配布名と一致することを確認する。
 2. 実行ファイルが起動中でないことを確認する（起動中は設定ファイルが競合するため中止する）。
-3. ユーザーの設定ファイル（%LOCALAPPDATA% 配下の SaveEvidence フォルダーの settings.json）を退避する。
+3. ユーザーの設定ファイル（%LOCALAPPDATA% 配下の製品名フォルダー（`release-config.json` の `product`）の settings.json）を退避する。
 4. exe を起動し、メイン ウィンドウが現れるのを待って `WM_CLOSE` で正常終了させる（終了コード 0 を確かめる）。
 5. 終了後の設定ファイルが空（`{}`）でなく、起動前と同じキーを保っていることを確認する（Native AOT のトリミングで
    設定が全損する不具合の回帰検出。 検証は [`検証手順.md`](../.github/検証手順.md) §18）。
@@ -41,10 +41,10 @@ publish の入力が前回と同一でも publish する（入力が同一のと
 `WM_CLOSE` を送ってからプロセスが終了するまでの待ち時間（既定 60 秒）。
 
 .EXAMPLE
-pwsh -NoProfile -File buildScript/verifyPublish.ps1
+pwsh -NoProfile -File .github/verify/verifyPublish.ps1
 
 .EXAMPLE
-pwsh -NoProfile -File buildScript/verifyPublish.ps1 -Ui MewUI -SkipPublish
+pwsh -NoProfile -File .github/verify/verifyPublish.ps1 -Ui MewUI -SkipPublish
 #>
 [CmdletBinding()]
 param(
@@ -58,13 +58,13 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $enc = [Text.UTF8Encoding]::new($false)
-$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 Set-Location $repoRoot
 
 # 結果の記録（Add-Result / Add-Info）とネイティブ コマンドの読み取り（Invoke-NativeText）は
-# buildScript/VerifyCommon.ps1 が単一所有する（本スクリプトは自前の実装を持たない）。
+# .github/verify/VerifyCommon.ps1 が単一所有する（本スクリプトは自前の実装を持たない）。
 # 文字化け対策の根拠は .github/検証手順.md §19。
-. (Join-Path $PSScriptRoot 'VerifyCommon.ps1')
+. (Join-Path $PSScriptRoot '..\verify\VerifyCommon.ps1')
 
 # メイン ウィンドウへ WM_CLOSE を送るためだけの Win32 呼び出し（強制終了させない）
 Add-Type -Namespace SeVerifyPublish -Name Native -MemberDefinition @'
@@ -95,6 +95,11 @@ function Get-SettingKeys {
 
 # exe を起動し、ウィンドウが現れてから正常終了させる
 function Invoke-AppRoundTrip([string]$ExePath, [int]$WindowTimeout, [int]$Settle, [int]$ExitTimeout) {
+    # 起動と終了の通過点をアプリに書かせ、異常終了の原因を CI のログだけで追えるようにする
+    # （アプリ側は環境変数 `ZENHANCONVERTER_STARTUP_LOG` が未設定なら何もしない）
+    $startupLog = Join-Path ([IO.Path]::GetTempPath()) ("{0}-startup-{1}.log" -f $verifyConfig.product.ToLowerInvariant(), [guid]::NewGuid().ToString('N'))
+    $env:ZENHANCONVERTER_STARTUP_LOG = $startupLog
+
     $process = Start-Process -FilePath $ExePath -PassThru
 
     $handle = [IntPtr]::Zero
@@ -129,10 +134,53 @@ function Invoke-AppRoundTrip([string]$ExePath, [int]$WindowTimeout, [int]$Settle
 
     # 終了できただけでは合格にしない（ウィンドウが出ても異常終了していれば不具合である）
     if ($process.ExitCode -ne 0) {
-        return [pscustomobject]@{ Closed = $false; Reason = "終了コード $($process.ExitCode) で終了しました（異常終了）" }
+        $detail = Get-CrashDiagnostics ([IO.Path]::GetFileName($ExePath)) + Get-StartupTrace $startupLog
+        return [pscustomobject]@{ Closed = $false; Reason = "終了コード $($process.ExitCode) で終了しました（異常終了）$detail" }
     }
 
+    # 成功時もトレースと環境変数を片付ける（失敗時は上の分岐で片付く）
+    [void](Get-StartupTrace $startupLog)
     return [pscustomobject]@{ Closed = $true; Reason = '' }
+}
+
+# アプリが書き出した起動トレースを、不合格の理由へ添える（ファイルは読み終わったら消す）
+function Get-StartupTrace([string]$Path) {
+    try {
+        if (-not (Test-Path -LiteralPath $Path)) { return '（起動トレースなし）' }
+        $lines = @(Get-Content -LiteralPath $Path -Encoding utf8)
+        Remove-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+        if ($lines.Count -eq 0) { return '（起動トレースは空）' }
+        return ('（起動トレース: ' + (($lines | Select-Object -Last 8) -join ' | ') + '）')
+    }
+    catch {
+        return ''
+    }
+    finally {
+        # 成否に関わらず環境変数は残さない（後続の UI の検証へ持ち越さない）
+        Remove-Item Env:\ZENHANCONVERTER_STARTUP_LOG -ErrorAction SilentlyContinue
+    }
+}
+
+# 異常終了の原因を CI のログだけで分かるようにする（アプリケーション ログの障害報告から、
+# 障害が起きたモジュールと例外コードを拾う）。 取得できなくても検証は止めない（診断は補助情報）。
+function Get-CrashDiagnostics([string]$ExeName) {
+    if (-not $IsWindows) { return '' }
+    try {
+        $events = @(Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-3) } -ErrorAction Stop |
+                Where-Object { $_.Message -and $_.Message.Contains($ExeName, [StringComparison]::OrdinalIgnoreCase) } |
+                Select-Object -First 2)
+        if ($events.Count -eq 0) { return '' }
+        $lines = foreach ($e in $events) {
+            # 「障害が発生しているモジュール名」「例外コード」の行だけを抜く（ログを肥大化させない）
+            foreach ($line in ($e.Message -split "`r?`n")) {
+                if ($line -match 'モジュール名|例外コード|Faulting module|Exception code') { " / $($line.Trim())" }
+            }
+        }
+        return ("（診断: " + (($lines -join '') -replace '^ / ', '') + "）")
+    }
+    catch {
+        return ''
+    }
 }
 
 # リリース設定（UI の定義）を読む
@@ -150,7 +198,7 @@ if ($targets.Count -eq 0) {
 function Get-PublishFingerprint([string]$ScriptPath) {
     $sb = [Text.StringBuilder]::new()
     $paths = [System.Collections.Generic.List[string]]::new()
-    # `buildScript` 全体は含めない（本スクリプトや verify.ps1 の編集で publish が無効化されてしまう）。
+    # 検証スクリプト（`.github/verify/`）は含めない（本スクリプトや verify.ps1 の編集で publish が無効化されてしまう）。
     # publish スクリプトの内容は下で個別に指紋へ入れる。
     # 一覧は Get-GitList（VerifyCommon.ps1）が取る（未追跡も含める。 結果は 1 回だけ読んで使い回される）
     foreach ($rel in (Get-GitList @('-c', 'core.quotepath=false', 'ls-files', '--', 'src', 'Directory.Build.props', 'Directory.Build.targets', 'global.json', '.github/release-config.json'))) { $paths.Add($rel) }
@@ -175,14 +223,14 @@ function Get-PublishFingerprint([string]$ScriptPath) {
 
 # SDK のバージョンは指紋の入力である（出力の復号は Invoke-NativeText が行う）
 $script:SdkVersion = (Invoke-NativeText 'dotnet' @('--version')).Text.Trim()
-$fingerprintDir = Join-Path ([IO.Path]::GetTempPath()) 'saveevidence-verify-publish'
+$fingerprintDir = Join-Path ([IO.Path]::GetTempPath()) ("{0}-verify-publish" -f $verifyConfig.product.ToLowerInvariant())
 
 # 退避した設定ファイル（パス -> 退避先）。 finally で必ず戻す
 $settingsBackups = @{}
 # 退避先は**ユーザーのフォルダーの外**（一時フォルダー）へ置き、名前に GUID を付ける。
 # 設定ファイルの隣の固定名（`settings.json.bak`）へ `-Force` で上書きすると、利用者が残していた
 # 復旧用のバックアップを消してしまう（実測 2026-10-28: レビューで指摘）。
-$settingsBackupDir = Join-Path ([IO.Path]::GetTempPath()) ("saveevidence-verify-settings-" + [guid]::NewGuid().ToString('N'))
+$settingsBackupDir = Join-Path ([IO.Path]::GetTempPath()) ("{0}-verify-settings-{1}" -f $verifyConfig.product.ToLowerInvariant(), [guid]::NewGuid().ToString('N'))
 
 try {
     foreach ($target in $targets) {

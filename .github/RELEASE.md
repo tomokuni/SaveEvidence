@@ -45,8 +45,9 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
     ├── scripts/
     │   ├── version.ps1            # バージョンの規則
     │   ├── set-version.ps1        # バージョンファイルの書き換え（冪等）
-    │   ├── verify-release-version.ps1  # リリース可否の検証
     │   └── show-current-versions.ps1   # 現在のバージョン状況の表示
+    ├── verify/
+    │   └── verify-release-version.ps1  # リリース可否の検証（合否を出すものはここへ置く）
     └── workflows/
         ├── build.yml              # main 向け PR でビルド・テスト（配布物は作らない。 必須チェックは ci）
         ├── locks.yml              # main 向け PR で packages.lock.json を自動更新（版の変更に追随）
@@ -272,7 +273,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 
 添付するファイルは `release-config.json` の `uis[].asset` が決めます。 `release.yml` は保管された成果物をそのまま添付するため、**UI を追加してもワークフローは変更不要**です。 **SBOM（`<製品名>.<版>.sbom.cdx.json`）も併せて添付します**。
 
-**SBOM（CycloneDX）は `buildScript/generateSbom.ps1` が作ります**（ツールの版は [`.config/dotnet-tools.json`](../.config/dotnet-tools.json) が単一所有し、`dotnet tool restore` で揃います）。 何のために付けるか:
+**SBOM（CycloneDX）は `.github/scripts/generateSbom.ps1` が作ります**（ツールの版は [`.config/dotnet-tools.json`](../.config/dotnet-tools.json) が単一所有し、`dotnet tool restore` で揃います）。 何のために付けるか:
 
 - 配布物（zip）からは「どの依存のどの版を使ったか」が分からない。 SBOM があれば、**公開済みの配布物から依存を辿れる**。
 - **EsUtil の版も SBOM に載る**（`EsUtil.*` はパッケージ参照のため、exe のプロパティだけでは分からない）。 アプリ側の版と併せて追跡できる。
@@ -290,12 +291,12 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 
 - **方式が Single AOT でない UI は、その理由を本節が持ちます**（WinForms は SDK がトリミングを拒否する `NETSDK1175`）。
 - **WinUI 3 版は Native AOT のフォルダー配布です**（[../buildScript/publish_WinUI3.bat](../buildScript/publish_WinUI3.bat)）。 **Native AOT はネイティブ DLL を exe へ内包できない**（実測 2026-10-20: `PublishAot` と同時に `PublishSingleFile` / `IncludeNativeLibrariesForSelfExtract` を指定しても、ネイティブ ライブラリは exe の隣へ出力されます）、Windows App SDK は**フレームワーク依存のまま `PublishSingleFile` を拒否**するため、「1 ファイル」にはなりません。
-- **WinUI 3 版は Windows App Runtime を同梱しません**（`WindowsAppSDKSelfContained=false`）。 フレームワーク依存はコード ページを他のアプリと共有するため、**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（配布物の構成とサイズは `buildScript/verifyPublish.ps1` が実測して表示します）。 旧方針（同梱して「事前インストール不要」を優先）は、Windows App SDK 2.6 への更新を機に取りやめました。
-- **Windows App Runtime が無い環境への導入は `EsUtil.Ui.WinUI3.Interop` が担います**（`Bootstrapping.WindowsAppRuntimeBootstrap`。 EsUtil 0.5.2 で公開）。 **WinUI 3 版は起動時にその実装で確認し、無ければ案内（自動インストール / ダウンロード ページ / 終了）を出して導入します**（SDK の自動初期化は `WindowsAppSdkBootstrapInitialize=false` で止めています）。 **テストと配布物の起動検証は同じランタイムが要る**ため、CI はビルドの前と配布物の起動検証の前に導入します（`buildScript/installWindowsAppRuntime.ps1`。 [`検証手順.md`](検証手順.md) §17）。
+- **WinUI 3 版は Windows App Runtime を同梱しません**（`WindowsAppSDKSelfContained=false`）。 フレームワーク依存はコード ページを他のアプリと共有するため、**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（配布物の構成とサイズは `.github/verify/verifyPublish.ps1` が実測して表示します）。 旧方針（同梱して「事前インストール不要」を優先）は、Windows App SDK 2.6 への更新を機に取りやめました。
+- **Windows App Runtime が無い環境への導入は `EsUtil.Ui.WinUI3.Interop` が担います**（`Bootstrapping.WindowsAppRuntimeBootstrap`。 EsUtil 0.5.2 で公開）。 **WinUI 3 版は起動時にその実装で確認し、無ければ案内（自動インストール / ダウンロード ページ / 終了）を出して導入します**（SDK の自動初期化は `WindowsAppSdkBootstrapInitialize=false` で止めています）。 **テストと配布物の起動検証は同じランタイムが要る**ため、CI はビルドの前と配布物の起動検証の前に導入します（`.github/scripts/installWindowsAppRuntime.ps1`。 [`検証手順.md`](検証手順.md) §17）。
 - **WinUI 3 の配布物は、exe へ入れられない非ネイティブのファイルを公開時に絞ります**（`src/App.WinUI3/src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`）。 残す必須のファイルは **アプリの `.pri`・`ja-JP` と `en-us` の `.mui`・`Microsoft.UI.Xaml\Assets`・`NpuDetect`** です（1 種類ずつ削除して起動・終了・設定の往復を実測。 **アプリの `.pri` を削除すると起動せず、`.mui` を削除すると終了時に `0xC000027B` で落ちます**）。 `.winmd`・他の言語の `.mui`・アプリ以外の `.pri`・`workloads*.json`・`App.xaml`・`app.manifest`・`WindowsAppRuntime.png`・WebView2 関連・`UniversalBGTask` は削除してよいことを実測済みです。
 - **WinUI 3 版は SkiaSharp を含みません**（描画は Windows App SDK 標準）。 そのためトリミング・AOT 解析の警告（`IL2026` 等）を抑止していません。
 - **Avalonia UI 版の AOT は、以前は `IL2070` / `IL3050` で失敗していました**（`EsUtil.Ui.AvaloniaUI.Loupe` が `Expression.Compile` と `Type.GetMethod` で表示アダプタの契約を解決していたため）。 反射を削除して方式 1 へ戻しています（方式 1 へ戻せなくなったら、まず EsUtil 側で反射が復活していないかを疑います）。
-- **ネイティブ ライブラリ（OpenCvSharp と Avalonia の GL 実装）は exe へ同梱できない**ため、同じフォルダーへ並べて配布します（ファイル数とサイズはコードの変更で変わるため、文書へ書かず `buildScript/verifyPublish.ps1` が実測して表示します）。 MewUI 版は Native AOT で **exe 1 個 + ネイティブ DLL** になりました（Skia を外したため）。
+- **ネイティブ ライブラリ（OpenCvSharp と Avalonia の GL 実装）は exe へ同梱できない**ため、同じフォルダーへ並べて配布します（ファイル数とサイズはコードの変更で変わるため、文書へ書かず `.github/verify/verifyPublish.ps1` が実測して表示します）。 MewUI 版は Native AOT で **exe 1 個 + ネイティブ DLL** になりました（Skia を外したため）。
 - **WinUI 3 版の本体プロジェクトは `EnableMsixTooling` を必要とします**（付けないと publish が `.pri` を発行せず、起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます。 実測）。 アンパッケージ（`WindowsPackageType=None`）+ Windows App SDK フレームワーク依存（`WindowsAppSDKSelfContained=false`）+ Native AOT で配布します。
 - **publish はリポジトリ外の一時領域（`%TEMP%`）へ発行し、必要なファイルだけを `publish/` へ配置します**（リポジトリ内へ直接発行すると、参照プロジェクト側のディレクトリにも `publish` が作られます）。
 - **方式ごとの引数は環境変数で差し替えます**（`SE_AOT_ARGS` / `SE_SINGLE_ARGS`。 **空にする意図は `SE_SKIP_AOT_ARGS` / `SE_SKIP_SINGLE_ARGS`** で表します。 `cmd` では `set "VAR="` が変数を未定義へ戻すため、空文字では意図を表せません。 差し替えの例は WinUI 3 版です）。
@@ -305,7 +306,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 - **方式 1 へ戻すと出力フォルダー名（`-single` → `-aot`）が変わるため、`release-config.json` の `uis[].output` も更新してください**（検査が「出力フォルダーがありません」で気付きます）。
 - **publish のプロパティは `.csproj` のカスタム名（`SaveEvidencePublishAot` など）で門を作り、publish のスクリプトがそれを渡します**。 `-p:PublishAot=true` / `-p:PublishSingleFile=true` を**コマンドラインで直接渡すと参照プロジェクトへ伝播**し、ライブラリの構成まで変わるためです（実測 2026-10-16）。 `buildScript/publish_ui.bat` の `SE_AOT_ARGS` / `SE_SINGLE_ARGS` で差し替えます。
 - **WinUI 3 は WinUI 3 のライブラリを RID 付きで直接ビルドしてから publish します**（`buildScript/publish_WinUI3.bat`）。 RID が参照プロジェクトへ伝播しないため、アプリの publish だけでは `<TFM>\<RID>\` の `.pri` が揃わず `PRI175` / `PRI252` で失敗します。
-- **配布物は exe 1 個であることを検査します**（AOT のフォルダー配布でも exe は 1 個）（`buildScript/verifyPublish.ps1`）。 Windows App SDK が再起動 API 用に同封する `RestartAgent.exe` は配置しません（本アプリは再起動 API を使わない。 除いても起動と終了が正常であることを実測済み）。
+- **配布物は exe 1 個であることを検査します**（AOT のフォルダー配布でも exe は 1 個）（`.github/verify/verifyPublish.ps1`）。 Windows App SDK が再起動 API 用に同封する `RestartAgent.exe` は配置しません（本アプリは再起動 API を使わない。 除いても起動と終了が正常であることを実測済み）。
 - **配布物から落としてよいのは `*.pdb` と `RestartAgent.exe`、および `TrimWinUI3PublishNoise`（WinUI 3）が外すファイルだけ**です。 それ以外は拡張子で選別せずにすべて配置します（WinUI 3 の配布物は `.pri` / `.mui` を必要とし、`.pri` を落とすと起動せず、`.mui` を落とすと終了時に `0xC000027B` で落ちます。 実測 2026-10-20）。
 - **WinUI 3 版は ML（ONNX Runtime・DirectML）・Windows AI のネイティブ実体を配布物から除きます**（フレームワーク依存の publish ではパッケージの資産としてそのまま出るため、`src/App.WinUI3/src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise` が外します。 規則は [`ビルド設定規約.md`](ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
 
@@ -315,7 +316,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 publish は `buildScript/` の `publish_<UI>.bat` をそのまま実行するため、ローカルでの配布用ビルドと同一の手順・出力になります。
 スクリプトは `buildScript/` からリポジトリルートへ移動してから実行されるため、カレントディレクトリに依存しません。
 
-**publish の直後に `buildScript/verifyPublish.ps1 -SkipPublish` を実行し、配布物が実際に起動して設定を全損しないことを確かめます**
+**publish の直後に `.github/verify/verifyPublish.ps1 -SkipPublish` を実行し、配布物が実際に起動して設定を全損しないことを確かめます**
 （Native AOT のトリミングで設定が空（`{}`）になる不具合の回帰検出。 検査の内容と合否基準は [`検証手順.md`](検証手順.md) §18）。
 
 **配布物には由来の証明（build provenance）を付けます**（`actions/attest-build-provenance`。 `release` ジョブが Release の作成前に実行）。 どのワークフロー・どのコミットが成果物を作ったかを、`gh attestation verify <ファイル> --repo <リポジトリ>` で後から検証できます。 公開物は取り消せないため、**出所を後から確かめられる状態**にしておきます。
@@ -344,7 +345,7 @@ publish は `buildScript/` の `publish_<UI>.bat` をそのまま実行するた
 & .github/scripts/set-version.ps1 -Version 0.2.0
 
 # リリース可否を事前確認する（形式・ブランチ・系列・単調性・タグ未作成）
-$info = & .github/scripts/verify-release-version.ps1 -Version 0.2.0 -Branch main | ConvertFrom-Json
+$info = & .github/verify/verify-release-version.ps1 -Version 0.2.0 -Branch main | ConvertFrom-Json
 $info.tag           # -> v0.2.0
 $info.notesStartTag # -> v0.1.1
 $info.prerelease    # -> False
@@ -367,6 +368,6 @@ Get-MaxVersion -Versions @('1.0.0', '1.2.0')      # -> 1.2.0
 - **ワークフローは `main` へ push しません**（版はリリース前に人がコミットするため、push 権限は不要です）。 `contents: write` はタグと Release の作成だけに使います。
 - `release.yml` は `actions: read`（ゲートと dry-run の参照）と `contents: write`（タグと Release）を使用します。
 - **`build.yml` は配布物を作成しません。** ゲートはビルドとテストの成功であり、**配布物が作成できることは `dry-run` で確かめます**（そのために 2 段階にしています）。
-- **push では `build.yml` を実行しません**（同じツリーを検証し直さないため。 作業ブランチの壊れは手元の `buildScript/verify.ps1` か `workflow_dispatch` で見つけます）。
+- **push では `build.yml` を実行しません**（同じツリーを検証し直さないため。 作業ブランチの壊れは手元の `.github/verify/verify.ps1` か `workflow_dispatch` で見つけます）。
 - 配布物（アーティファクト）の保持期間は `release-config.json` の `artifactRetentionDays`（既定 30 日）です。
   **`release` は `dry-run` とは別の実行**であるため、成果物は `release` 実行の中で作り直します（`dry-run` の成果物には依存しません）。

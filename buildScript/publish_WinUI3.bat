@@ -13,7 +13,7 @@ rem
 rem  This script publishes the Native AOT shape (folder distribution) for this UI.  The mode is
 rem  chosen by buildScript/publish_ui.bat.
 rem  Measured 2026-11-05: the AOT folder starts and exits with code 0 (verified by
-rem  buildScript/verifyPublish.ps1).
+rem  .github/verify/verifyPublish.ps1).
 rem
 rem  Single file publishing needs the WinUI 3 libraries to be built with a RID first:
 rem  single file publishing requires the .pri (resource index) of every WinUI 3 project as an
@@ -39,7 +39,7 @@ rem  into SettingsService.  The context must live in the assembly that reference
 rem  (in one compilation the JSON source generator does not see the MVVM generator output).
 rem  The round trip of the settings is verified by a regression test
 rem  (src\App.WinUI3\tests\AppJsonContext.Tests.cs), which runs with the tests of
-rem  buildScript/verify.ps1.
+rem  .github/verify/verify.ps1.
 rem ============================================================
 
 rem Move from the script folder (buildScript) to the repository root.
@@ -67,7 +67,7 @@ for %%p in (
 rem  The shape is Native AOT in a folder (framework-dependent Windows App SDK).
 rem  The framework-dependent publish is smaller than the former self-contained single file and
 rem  starts with less memory, because the Windows App SDK code pages are shared with other apps
-rem  (sizes are measured and printed by buildScript/verifyPublish.ps1).  Native AOT cannot bundle
+rem  (sizes are measured and printed by .github/verify/verifyPublish.ps1).  Native AOT cannot bundle
 rem  native libraries into the exe (measured 2026-10-20), and Windows App SDK rejects single file
 rem  publishing while framework dependent, so the AOT shape is a folder distribution.
 rem  The app checks for the Windows App Runtime at startup and installs it when the user agrees
