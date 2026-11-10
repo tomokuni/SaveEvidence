@@ -553,10 +553,11 @@ public sealed partial class MainViewModel : ObservableObject
             return false;
         }
 
+        string filePath = "";
         try
         {
             var fileName = FileNameTemplate.Generate(FileNameTemplateText);
-            var filePath = Path.Combine(SaveFolderPathResolved, fileName);
+            filePath = Path.Combine(SaveFolderPathResolved, fileName);
 
             if (File.Exists(filePath))
             {
@@ -595,9 +596,23 @@ public sealed partial class MainViewModel : ObservableObject
         {
             // 保存失敗は通知する（通知の有無・文言が UI 版でずれないようコアが単一所有する）
             StatusMessage = StatusMessages.SaveFailed();
+            // 原因はイベントでホストへ渡す（記録はログの所有者であるアプリが行う）
+            RaiseSaveFailed(new SaveFailedEventArgs(ex, filePath));
             return false;
         }
     }
+
+    /// <summary>画像の保存に失敗したときに発生する。</summary>
+    /// <remarks>
+    /// 保存の失敗は例外にせず本イベントで通知する（アプリは処理を継続する）。<br/>
+    /// 記録（ログ）はホスト（アプリ）が行う。 <see cref="SaveImageAsync"/> の完了より前に発火する。
+    /// </remarks>
+    public event EventHandler<SaveFailedEventArgs>? SaveFailed;
+
+    /// <summary><see cref="SaveFailed"/> を発火する。</summary>
+    /// <param name="args">イベントの引数。</param>
+    /// <remarks>イベントの発火は本ヘルパー 1 箇所へ集約する（[`.github/コーディング規約.md`](../../../../.github/コーディング規約.md) §7）。</remarks>
+    private void RaiseSaveFailed(SaveFailedEventArgs args) => SaveFailed?.Invoke(this, args);
 
 }
 

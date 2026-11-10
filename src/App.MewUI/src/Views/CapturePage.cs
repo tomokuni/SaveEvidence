@@ -31,7 +31,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// </remarks>
 internal static class CapturePage
 {
-    /// <summary>ロガー（Avalonia 版と同じログファイルへ出力する）。</summary>
+    /// <summary>ロガー（Avalonia 版と同じ書式のログへ出力する。 ファイルは UI 版ごとに分かれる）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(CapturePage));
 
     /// <summary>自動切り出しの検出矩形の枠線の太さ（DIP。 Avalonia 版と同じ）。</summary>

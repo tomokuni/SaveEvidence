@@ -1,4 +1,5 @@
 using DrawingColor = System.Drawing.Color;
+using System.ComponentModel;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core;
@@ -518,7 +519,7 @@ internal static class CapturePage
         captureSession = session;
 
         // 設定変更を撮影セッションへ即時反映する（部分更新・検証・同値スキップはコアが単一所有する）
-        settings.PropertyChanged += (_, e) =>
+        PropertyChangedEventHandler applyAppearance = (_, e) =>
         {
             try
             {
@@ -529,15 +530,17 @@ internal static class CapturePage
                 s_logger.LogSettingsApplyError(ex, e.PropertyName ?? string.Empty);
             }
         };
+        settings.PropertyChanged += applyAppearance;
 
         // 中央寄せの変更をプレビューへ即時反映する
-        settings.PropertyChanged += (_, e) =>
+        PropertyChangedEventHandler applyCenterAlign = (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(Settings.CenterAlign), StringComparison.Ordinal))
             {
                 crop.CenterAlign = settings.CenterAlign;
             }
         };
+        settings.PropertyChanged += applyCenterAlign;
 
         void SyncRects()
         {
@@ -627,8 +630,17 @@ internal static class CapturePage
         // 起動直後は XamlRoot が無くスケーリングを取得できないため、読み込み後に外観を反映し直す
         crop.Loaded += (_, _) => session.AppearanceSettings = CaptureSettingsMapper.From(settings, ReadRenderScaling(crop));
 
-        // 終了時に切り出しセッションを完了させる（待機中のタスクを残さない）
-        window.Closed += (_, _) => session.Dispose();
+        // 終了時に購読を解除してから切り出しセッションを完了させる（待機中のタスクを残さない）。
+        // **解除しないと終了時に例外になる**: 本ハンドラーは MainWindow の Closed より先に登録されるため
+        // 最初に走る。 そこで破棄した後に MainWindow.OnWindowClosed が終了時の設定
+        // （IsNavigationExpanded・MainWindowBounds）を書き込み、その PropertyChanged が破棄済みの
+        // セッションへ届いて ObjectDisposedException になる（実測 2026-11-09 / 2026-11-10）
+        window.Closed += (_, _) =>
+        {
+            settings.PropertyChanged -= applyAppearance;
+            settings.PropertyChanged -= applyCenterAlign;
+            session.Dispose();
+        };
         return host;
     }
 

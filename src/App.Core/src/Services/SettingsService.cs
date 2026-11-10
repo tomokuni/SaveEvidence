@@ -67,17 +67,43 @@ public sealed class SettingsService : ISettingsService
     }
 
     /// <summary>設定をファイルに保存する。</summary>
+    /// <remarks>
+    /// 保存の失敗は例外にせず <see cref="SaveFailed"/> で通知する（設定を書けなくても操作は継続する）。<br/>
+    /// イベントは排他制御の外で発火する（ハンドラーから <see cref="Save"/> を呼んでもデッドロックしない）。
+    /// </remarks>
     public void Save()
     {
+        SaveFailedEventArgs? failure = null;
         lock (_lock)
         {
             var json = JsonSerializer.Serialize(_current, _settingsTypeInfo);
             if (string.Equals(json, _lastSavedJson, StringComparison.Ordinal)) return;
 
-            SaveInternal(json);
-            _lastSavedJson = json;
+            try
+            {
+                SaveInternal(json);
+                _lastSavedJson = json;
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                // 保存できなくても操作は継続する。 原因はイベントでホストへ渡し、ホストがログへ記録する
+                failure = new SaveFailedEventArgs(ex, s_settingsFilePath);
+            }
+        }
+
+        if (failure is not null)
+        {
+            RaiseSaveFailed(failure);
         }
     }
+
+    /// <inheritdoc/>
+    public event EventHandler<SaveFailedEventArgs>? SaveFailed;
+
+    /// <summary><see cref="SaveFailed"/> を発火する。</summary>
+    /// <param name="args">イベントの引数。</param>
+    /// <remarks>イベントの発火は本ヘルパー 1 箇所へ集約する（[`.github/コーディング規約.md`](../../../../.github/コーディング規約.md) §7）。</remarks>
+    private void RaiseSaveFailed(SaveFailedEventArgs args) => SaveFailed?.Invoke(this, args);
 
     private Settings LoadInternal()
     {
@@ -135,15 +161,8 @@ public sealed class SettingsService : ISettingsService
 
     private static void SaveInternal(string json)
     {
-        try
-        {
-            var dir = Path.GetDirectoryName(s_settingsFilePath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
-            File.WriteAllText(s_settingsFilePath, json);
-        }
-        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
-        {
-            // 保存失敗時は続行
-        }
+        var dir = Path.GetDirectoryName(s_settingsFilePath);
+        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
+        File.WriteAllText(s_settingsFilePath, json);
     }
 }

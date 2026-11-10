@@ -40,6 +40,7 @@
 | UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 2.6） |
 | 対象フレームワーク | `net10.0-windows10.0.22621.0`（`SupportedOSPlatformVersion` は 10.0.19041.0） |
 | 配置 | アンパッケージ（`WindowsPackageType=None`）/ Windows App SDK フレームワーク依存（**Windows App Runtime 2.6（x64）** が要り、無ければ起動時に `EsUtil.Ui.WinUI3.Interop` の Bootstrapper が導入する）/ `win-x64` |
+| 要求する Windows App Runtime | **このアプリのビルドに使った `Microsoft.WindowsAppSDK` の版**（`WindowsAppRuntimeRequirement`）。 `WindowsAppSdkIncludeVersionInfo` が生成する `Microsoft.WindowsAppSDK.Runtime.Version` から取り、`WindowsAppRuntimeBootstrapOptions.RequiredVersion` へ渡す |
 | 画像処理 | Windows App SDK の WIC（サムネイルの縮小デコード・画像の符号化）と自前の SVG ラスタライズ（アイコン） |
 | ログ | `Serilog` + `Microsoft.Extensions.Logging`（`LoggerMessage` ソース生成） |
 | 合成 | `Microsoft.Extensions.DependencyInjection` |
@@ -50,6 +51,13 @@
   `WinExe` へ変えるため、実行可能ファイルであることを明示的に戻します。
 - **エントリ ポイントは本プロジェクトの `Program`** です。 定数 `DISABLE_XAML_GENERATED_MAIN` で
   XAML コンパイラが生成する `Main` を無効化し、`<StartupObject>` で `Program` を指定します。
+- **要求する Windows App Runtime の版はアプリのビルド版から取ります**。 `EsUtil.Ui.WinUI3.Interop` は
+  自分をビルドしたときの `Microsoft.WindowsAppSDK` の版を焼き込むため、そのまま任せると
+  **アプリのマネージド アセンブリより古いネイティブ ランタイム**で初期化が成功します（実測 2026-11-10:
+  2.6.5 でビルドしたアプリが 2.6.4 のランタイムで動き、レイアウト・画像・アイコン フォントは正常なまま
+  **本文のグリフだけが描かれなかった**）。 `WindowsAppRuntimeRequirement.Version` を
+  `WindowsAppRuntimeBootstrapOptions.RequiredVersion` へ渡し、実際に使う版は
+  `WindowsAppRuntimeBootstrap.GetRequiredVersion` が EsUtil の下限との高い方を採って決めます。 未指定は EsUtil の下限へフォールバックするため、`IsRequiredVersionSpecified` で検出して `[WRN]` を記録します。 **環境ログには「入っている版（一覧）」「要求版」「実際に読み込んだ版（`loaded`）」を出します**（3 つが食い違うと描画の不具合になるため。 `WindowsAppRuntimeInventory.TryGetLoadedVersion`）。
 
 ## 3. アーキテクチャ
 
@@ -148,6 +156,8 @@ src/App.WinUI3/src/
 | `FolderFileListReader` | 一覧に出す画像ファイルの列挙と並び順 |
 | `IconLoader` | 埋め込み SVG の読み込みと、指定色・指定サイズへのラスタライズ |
 | `AppLog` | ログの定義（`LoggerMessage` ソース生成）と出力構成 |
+| `RenderEnvironment` | 描画環境（リモート セッション / 仮想スクリーン / 倍率 / アダプター）の診断用の値の取得。 取得できなくても起動・描画を妨げない |
+| `TextRenderProbe` | 文字が描かれるかの切り分け用の計測（OS の文字倍率と、14px の `TextBlock` のレイアウト結果）。 取得できなくても描画を妨げない |
 | `ConfirmDialog` | 上書き確認ダイアログ |
 
 **コア（`App.Core`）が単一所有する型**（本プロジェクトは型を持たず、そのまま使う）:
@@ -224,7 +234,9 @@ classDiagram
 | 設定の反映 | 検証の失敗で UI を壊さないよう例外保護付きで反映し、原因だけを記録する |
 | 一覧・サムネイル | 1 件の失敗で全体を止めない（失敗は記録して次へ進む） |
 | クリップボード | 使用中の失敗は記録して継続する（通知は出さない） |
+| 設定・画像の保存 | コアが `SaveFailed` イベントで通知し、本アプリ（`AppHost`）が記録する。 保存できなくても操作は継続する |
 | ウィンドウ配置の保存 | 終了処理の境界のため、失敗しても終了を妨げず原因だけを記録する |
+| ウィンドウの終了 | `CapturePage` は終了時に**設定の購読を解除してから**撮影セッションを破棄する。 解除しないと、後から走る `MainWindow.OnWindowClosed` の設定書き込み（`IsNavigationExpanded`・`MainWindowBounds`）が破棄済みのセッションへ届き `ObjectDisposedException` になる |
 
 ## 7. 起動シーケンス
 
@@ -255,6 +267,14 @@ sequenceDiagram
   ウィンドウの表示後に確定するためです。
 - **先読みの起点は要素ツリーの実体化（`Loaded`）** です。 表示が済んでから一覧ページを構築し、
   サムネイル生成を低負荷で始めます（キャプチャ ページの操作を妨げません）。
+- **描画環境は要素ツリーの実体化時に 1 度だけ記録します**（`RenderEnvironment` → `AppLog.LogRenderEnvironment`）。
+  描画の不具合はアプリの値ではなく環境（リモート セッション・GPU・倍率）で決まることがあり、
+  実測 2026-11-08 では Windows Sandbox（Indirect Display・VRAM 128MB・GPU パーティション）でだけ
+  文字が描かれず撮影画像も崩れ、同じ exe をホスト機で動かすと正常でした。
+  ログの 1 行で環境の差（セッション名・仮想スクリーン・倍率・アダプター）を判別できます。
+- **文字が描かれるかは同じ位置で計測して記録します**（`TextRenderProbe` → `AppLog.LogTextRenderProbe`）。
+  「レイアウトが 0（フォント解決・文字倍率の異常）」と「大きさは正常なのに描画されない（ラスタライズの異常）」を
+  ログだけで分けるためです（実測 2026-11-10: ホスト機では 14px の `TextBlock` が 18x19）。
 
 ## 8. 撮影のシーケンス
 

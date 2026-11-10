@@ -23,6 +23,13 @@ public class MainViewModelTests
     {
         public Settings Current { get; } = new();
 
+        /// <inheritdoc/>
+        public event EventHandler<SaveFailedEventArgs>? SaveFailed
+        {
+            add { }
+            remove { }
+        }
+
         public void Save() { }
 
         public static void Reload() { }
@@ -52,6 +59,16 @@ public class MainViewModelTests
             SavedImages.Add(image);
             File.WriteAllBytes(filePath, s_dummy);
         }
+    }
+
+    /// <summary>テスト用の IImageWriter モック（常に例外を投げる）。</summary>
+    /// <remarks>保存の失敗が <see cref="MainViewModel.SaveFailed"/> で通知されることを検証するために使う。</remarks>
+    private sealed class FailingImageWriter : IImageWriter
+    {
+        /// <inheritdoc/>
+        /// <exception cref="IOException">常に投げる（テスト用の保存失敗）。</exception>
+        public void Save(EsReadOnlyBitmap image, string filePath)
+            => throw new IOException("テスト用の保存失敗");
     }
 
     /// <summary>テスト用の画像（10x10・読み取りの面）を生成する。</summary>
@@ -139,6 +156,36 @@ public class MainViewModelTests
         Assert.False(File.Exists(Path.Combine(tempDir.Path, "screenshot_001.png")));
         Assert.Empty(writer.SavedPaths);
         Assert.Empty(writer.SavedImages);
+    }
+
+    /// <summary>保存の例外が <see cref="MainViewModel.SaveFailed"/> で通知されることを検証する。</summary>
+    /// <remarks>
+    /// 通知はホスト（アプリ）がログへ記録するための経路であり、失敗しても操作は継続する<br/>
+    /// （[`.github/例外処理規約.md`](../../../../.github/例外処理規約.md) §4）。<br/>
+    /// 通知には保存先のパスと例外が入る（原因をログだけで追跡できる）。
+    /// </remarks>
+    [Fact]
+    internal async Task SaveImageAsync_保存に失敗したらSaveFailedで通知する()
+    {
+        using var tempDir = new TempDir();
+
+        var vm = new MainViewModel(new MockSettingsService(), new FailingImageWriter())
+        {
+            PreviewImage = CreateBitmap(),
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+        };
+
+        SaveFailedEventArgs? notified = null;
+        vm.SaveFailed += (_, e) => notified = e;
+
+        var result = await vm.SaveImageAsync();
+
+        Assert.False(result);
+        Assert.NotNull(notified);
+        Assert.IsType<IOException>(notified.Error);
+        Assert.Equal(Path.Combine(tempDir.Path, "screenshot_001.png"), notified.FilePath);
+        Assert.Equal(StatusMessages.SaveFailed(), vm.StatusMessage);
     }
 
     [Fact]

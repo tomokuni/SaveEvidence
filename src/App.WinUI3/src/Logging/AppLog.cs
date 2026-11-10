@@ -15,14 +15,22 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Logging;
 /// 文字列補間による不要なアロケーションを回避しつつ、一貫したフォーマットで出力する。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、<br/>
 /// 呼び出し側では logger 引数を省略する。<br/>
-/// 出力先は他の UI 版と同一の Serilog 構成（<c>%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log</c>、<br/>
-/// 日次ローテーション・7 日で自動削除）とし、UI が違っても同じログで追跡できるようにする。<br/>
+/// 出力先は他の UI 版と同一の書式の Serilog 構成（<c>%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.WinUI3.&lt;yyyyMMdd&gt;.log</c>、<br/>
+/// 日次ローテーション・7 日で自動削除）とし、UI 版ごとにファイルを分けて追跡できるようにする。<br/>
 /// ロガーは <see cref="CreateLogger"/> で生成し、各クラスの static フィールドで保持する。
 /// </remarks>
 internal static partial class AppLog
 {
     /// <summary>接頭辞（固定。 アプリのログは DLL 名で読み分けるため、ホストからの設定対象外）。</summary>
     private const string Prefix = "[App.WinUI3]";
+
+    /// <summary>このアセンブリの名前（ログ ファイル名の先頭に使う）。</summary>
+    /// <remarks>
+    /// ログは実行ファイルごとに分かれる（UI 版の区別をファイル名で付ける）。 命名は
+    /// <c>.github/命名規約.md</c>「ファイル」、出力先は <c>.github/ログ規約.md</c> §1.1 が定める。
+    /// </remarks>
+    private static readonly string s_assemblyName =
+        typeof(AppLog).Assembly.GetName().Name ?? AppIdentity.ProductName;
 
     /// <summary>アプリケーション共有の Serilog ロガー（静的 <see cref="Log.Logger"/>）。</summary>
     /// <remarks>
@@ -44,23 +52,41 @@ internal static partial class AppLog
     }
 
     /// <summary>Serilog のファイル出力構成を作成する。</summary>
-    /// <returns>ログ出力を <c>%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log</c>（日次ローテーション・7 日保持）へ書き込む構成。</returns>
+    /// <returns>ログ出力を <c>%LOCALAPPDATA%\SaveEvidence\logs\&lt;アセンブリ名&gt;.&lt;yyyyMMdd&gt;.log</c>（日次ローテーション・7 日保持）へ書き込む構成。</returns>
     /// <remarks>
     /// ログカテゴリは <c>{SourceContext}</c> として出力し、例外はスタックトレース込みで改行して書き出す。<br/>
-    /// 書式は他の UI 版と同一にする（同じログファイルを各 UI で共有するため）。
+    /// 書式は他の UI 版と同一にする（ファイルは UI 版ごとに分かれるが、行の書式は共通）。
     /// </remarks>
     private static LoggerConfiguration CreateLoggingConfiguration()
     {
         return new LoggerConfiguration()
             .MinimumLevel.Verbose()
             .Enrich.FromLogContext()
+            // レベルは 3 文字（[TRC] 等）で表す。 {Level:u3} は Verbose を VRB と表すため使わない
+            // （規則の所有者は .github/ログ規約.md §4.1）
+            .Enrich.With(new LogLevelTextEnricher())
             .WriteTo.File(
-                AppIdentity.LogFilePath,
-                outputTemplate: "{Timestamp:HH:mm:ss.fff} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
+                AppIdentity.GetLogFilePath(s_assemblyName),
+                outputTemplate: "{Timestamp:HH:mm:ss.fff} [{LogLevelText}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
                 formatProvider: CultureInfo.InvariantCulture,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
                 encoding: System.Text.Encoding.UTF8);
+    }
+
+    /// <summary>ログ イベントへ 3 文字のレベル表記（<c>TRC</c> 等）を追加するエンリッチャー。</summary>
+    /// <remarks>
+    /// 写像の規則は <see cref="LogLevelText"/>（コア）が単一所有する。 本クラスは Serilog のレベル名を渡すだけである<br/>
+    /// （コアは Serilog に依存しない。 4 つの UI 版が同じ表記を使う）。
+    /// </remarks>
+    private sealed class LogLevelTextEnricher : Serilog.Core.ILogEventEnricher
+    {
+        /// <summary>ログ イベントへ <c>LogLevelText</c> プロパティを追加する。</summary>
+        /// <param name="logEvent">対象のログ イベント。</param>
+        /// <param name="propertyFactory">プロパティの生成元。</param>
+        public void Enrich(Serilog.Events.LogEvent logEvent, Serilog.Core.ILogEventPropertyFactory propertyFactory)
+            => logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(
+                LogLevelText.PropertyName, LogLevelText.Abbreviate(logEvent.Level.ToString())));
     }
 
     /// <summary>指定カテゴリ名のロガーを生成する。</summary>
@@ -124,20 +150,57 @@ internal static partial class AppLog
     /// <summary>Windows App Runtime を用意できなかったことを記録する。</summary>
     /// <remarks>
     /// LogLevel: Warning <br/>
-    /// 出力書式: <c>Windows App Runtime を用意できませんでした (required={RequiredVersion})</c>
+    /// 出力書式: <c>Windows App Runtime を用意できませんでした (required={RequiredVersion}, before={InstalledBefore}, after={InstalledAfter})</c>
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="requiredVersion">必要とする Windows App Runtime の版（例: 2.6.4）。</param>
-    [LoggerMessage(LogLevel.Warning, "{Prefix} Windows App Runtime を用意できませんでした (required={RequiredVersion})")]
+    /// <param name="installedBefore">案内を出す前のインストール済みの版（1 行）。</param>
+    /// <param name="installedAfter">案内を出した後のインストール済みの版（1 行）。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} Windows App Runtime を用意できませんでした (required={RequiredVersion}, before={InstalledBefore}, after={InstalledAfter})")]
     private static partial void LogWindowsAppRuntimeUnavailableCore(
-        this ILogger logger, string prefix, string requiredVersion);
+        this ILogger logger, string prefix, string requiredVersion,
+        string installedBefore, string installedAfter);
 
     /// <summary>Windows App Runtime を用意できなかったことを記録する。</summary>
     /// <param name="logger">ロガー。</param>
     /// <param name="requiredVersion">必要とする Windows App Runtime の版（例: 2.6.4）。</param>
-    public static void LogWindowsAppRuntimeUnavailable(this ILogger logger, string requiredVersion)
-        => logger.LogWindowsAppRuntimeUnavailableCore(Prefix, requiredVersion);
+    /// <param name="installedBefore">案内を出す前のインストール済みの版（1 行）。</param>
+    /// <param name="installedAfter">案内を出した後のインストール済みの版（1 行）。</param>
+    public static void LogWindowsAppRuntimeUnavailable(
+        this ILogger logger, string requiredVersion, string installedBefore, string installedAfter)
+        => logger.LogWindowsAppRuntimeUnavailableCore(Prefix, requiredVersion, installedBefore, installedAfter);
+
+    /// <summary>Windows App Runtime を用意できたことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Information <br/>
+    /// 出力書式: <c>Windows App Runtime を用意しました (required={RequiredVersion}, before={InstalledBefore},
+    /// after={InstalledAfter}, initialized={Initialized})</c><br/>
+    /// <b>成功も記録する理由</b>: 「既に入っていたのか」「今回導入したのか」が分からないと、環境の切り分けができない<br/>
+    /// （実測 2026-11-09: Sandbox で導入に成功していたが記録が無く、環境側の問題と誤認した）。<br/>
+    /// 自己完結の診断ビルドでは <c>before</c> / <c>after</c> が <c>(なし)</c> のまま初期化も実行されない
+    /// （<c>initialized</c> が true で、同梱したランタイムで動いていることを表す）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="requiredVersion">必要とする Windows App Runtime の版（例: 2.6.4）。</param>
+    /// <param name="installedBefore">用意する前のインストール済みの版（1 行）。</param>
+    /// <param name="installedAfter">用意した後のインストール済みの版（1 行）。</param>
+    /// <param name="initialized">Bootstrapper の初期化が済んでいる（または不要）かどうか。</param>
+    [LoggerMessage(LogLevel.Information, "{Prefix} Windows App Runtime を用意しました (required={RequiredVersion}, before={InstalledBefore}, after={InstalledAfter}, initialized={Initialized})")]
+    private static partial void LogWindowsAppRuntimeReadyCore(
+        this ILogger logger, string prefix, string requiredVersion,
+        string installedBefore, string installedAfter, bool initialized);
+
+    /// <summary>Windows App Runtime を用意できたことを記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="requiredVersion">必要とする Windows App Runtime の版（例: 2.6.4）。</param>
+    /// <param name="installedBefore">用意する前のインストール済みの版（1 行）。</param>
+    /// <param name="installedAfter">用意した後のインストール済みの版（1 行）。</param>
+    /// <param name="initialized">Bootstrapper の初期化が済んでいる（または不要）かどうか。</param>
+    public static void LogWindowsAppRuntimeReady(
+        this ILogger logger, string requiredVersion, string installedBefore, string installedAfter, bool initialized)
+        => logger.LogWindowsAppRuntimeReadyCore(Prefix, requiredVersion, installedBefore, installedAfter, initialized);
 
     // ====================================================================
     // 撮影セッション / 切出しセッションのログは撮影スタック（Parts.CapturePreview）が単一所有する
@@ -375,4 +438,157 @@ internal static partial class AppLog
     /// <param name="ex">発生した例外。</param>
     public static void LogHotKeyInitializeFailed(this ILogger logger, Exception ex)
         => logger.LogHotKeyInitializeFailedCore(Prefix, ex);
+
+    // ====================================================================
+    // 保存（設定・画像）
+    // ====================================================================
+
+    /// <summary>設定の保存に失敗したことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Warning <br/>
+    /// 出力書式: <c>設定を保存できませんでした: {FilePath}</c>（例外はスタックトレース込み）<br/>
+    /// 設定は次回起動時の復元に使うため、書けないと「設定が保存されない」という症状だけが残る。<br/>
+    /// 失敗しても操作は継続する（原因の追跡だけを目的とする）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="filePath">保存しようとしたファイルのパス。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} 設定を保存できませんでした: {FilePath}")]
+    private static partial void LogSettingsSaveFailedCore(this ILogger logger, string prefix, Exception ex, string filePath);
+
+    /// <summary>設定の保存失敗を記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="filePath">保存しようとしたファイルのパス。</param>
+    public static void LogSettingsSaveFailed(this ILogger logger, Exception ex, string filePath)
+        => logger.LogSettingsSaveFailedCore(Prefix, ex, filePath);
+
+    /// <summary>画像の保存に失敗したことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Warning <br/>
+    /// 出力書式: <c>画像を保存できませんでした: {FilePath}</c>（例外はスタックトレース込み）<br/>
+    /// 保存の失敗はステータス バーの文言でしか利用者へ伝わらないため、原因（アクセス拒否・容量不足等）を<br/>
+    /// ファイルへ残す。 失敗しても操作は継続する。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="filePath">保存しようとしたファイルのパス（特定できない場合は空文字）。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} 画像を保存できませんでした: {FilePath}")]
+    private static partial void LogImageSaveFailedCore(this ILogger logger, string prefix, Exception ex, string filePath);
+
+    /// <summary>画像の保存失敗を記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="filePath">保存しようとしたファイルのパス。</param>
+    public static void LogImageSaveFailed(this ILogger logger, Exception ex, string filePath)
+        => logger.LogImageSaveFailedCore(Prefix, ex, filePath);
+
+    // ====================================================================
+    // 環境情報の診断
+    // ====================================================================
+
+    /// <summary>実行環境（OS・ランタイム・表示経路・倍率・GPU）を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Information <br/>
+    /// 出力書式: <c>環境情報: OS={OperatingSystem} / .NET={DotNet} / Windows App Runtime={RuntimeInstalled}
+    /// (required={RuntimeRequired}) / セッション={SessionName} / クライアント={ClientName}
+    /// / 仮想スクリーン={VirtualScreen} / ウィンドウ倍率={RasterizationScale} / モニター倍率={MonitorScales}
+    /// / アダプター={Adapters}</c><br/>
+    /// 描画の不具合はアプリの値ではなく環境（リモート セッション・GPU・倍率・ランタイムの版）で決まることがある。<br/>
+    /// 実測 2026-11-08: Windows Sandbox（Indirect Display・VRAM 128MB・GPU パーティション）だけ文字が描かれず、<br/>
+    /// ホスト機では正常だった。 実測 2026-11-10: アプリを 2.6.5 でビルドしながら 2.6.4 のランタイムで動くと<br/>
+    /// 本文のグリフだけが描かれなかった。 この 1 行で環境の差と版の不一致を判別できるようにする。<br/>
+    /// <b>起動ごとに 1 回だけ出す</b>（値は起動中に変わらない）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="operatingSystem">OS の版とアーキテクチャ。</param>
+    /// <param name="dotNet">実行している .NET の版。</param>
+    /// <param name="runtimeInstalled">インストール済みの Windows App Runtime の版（新しい順）。</param>
+    /// <param name="runtimeRequired">このビルドが要求する Windows App Runtime の版。</param>
+    /// <param name="runtimeLoaded">実際に読み込んでいる Windows App Runtime の版。</param>
+    /// <param name="sessionName">セッション名（<c>SESSIONNAME</c>。 例: Console / RDP-Tcp#3）。</param>
+    /// <param name="clientName">接続元の名前（<c>CLIENTNAME</c>。 ローカル実行では "(ローカル)"）。</param>
+    /// <param name="virtualScreen">仮想スクリーンの矩形（物理ピクセル）。</param>
+    /// <param name="rasterizationScale">ウィンドウの表示倍率（1.0 = 100%）。</param>
+    /// <param name="monitorScales">仮想スクリーンの位置から解決したモニターの倍率。</param>
+    /// <param name="adapters">表示アダプター（ドライバーの説明と VRAM）。 取得できない場合はその旨。</param>
+    [LoggerMessage(LogLevel.Information, "{Prefix} 環境情報: OS={OperatingSystem} / .NET={DotNet} / Windows App Runtime={RuntimeInstalled} (required={RuntimeRequired}, loaded={RuntimeLoaded}) / セッション={SessionName} / クライアント={ClientName} / 仮想スクリーン={VirtualScreen} / ウィンドウ倍率={RasterizationScale} / モニター倍率={MonitorScales} / アダプター={Adapters}")]
+    private static partial void LogEnvironmentCore(
+        this ILogger logger, string prefix, string operatingSystem, string dotNet,
+        string runtimeInstalled, string runtimeRequired, string runtimeLoaded,
+        string sessionName, string clientName,
+        string virtualScreen, double rasterizationScale, string monitorScales, string adapters);
+
+    /// <summary>要求する Windows App Runtime の版が指定されていないことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Warning <br/>
+    /// 出力書式: <c>要求する Windows App Runtime の版が指定されていません (library=…) — アプリは自分のビルド版を指定してください</c><br/>
+    /// <b>未指定は本アセンブリ（EsUtil）のビルド版へフォールバックする</b>ため、アプリが EsUtil より新しい
+    /// <c>Microsoft.WindowsAppSDK</c> でビルドされていると、アプリのマネージド アセンブリより古いネイティブ
+    /// ランタイムで初期化が成功し得る（実測 2026-11-10: 本文のグリフだけが描かれなかった）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="libraryVersion">EsUtil のビルド版（フォールバック先）。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} 要求する Windows App Runtime の版が指定されていません (library={LibraryVersion}) — アプリは自分のビルド版を指定してください")]
+    private static partial void LogWindowsAppRuntimeVersionNotSpecifiedCore(
+        this ILogger logger, string prefix, string libraryVersion);
+
+    /// <summary>要求する Windows App Runtime の版が指定されていないことを記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="libraryVersion">EsUtil のビルド版（フォールバック先）。</param>
+    public static void LogWindowsAppRuntimeVersionNotSpecified(this ILogger logger, string libraryVersion)
+        => logger.LogWindowsAppRuntimeVersionNotSpecifiedCore(Prefix, libraryVersion);
+
+    /// <summary>実行環境を記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="operatingSystem">OS の版とアーキテクチャ。</param>
+    /// <param name="dotNet">実行している .NET の版。</param>
+    /// <param name="runtimeInstalled">インストール済みの Windows App Runtime の版。</param>
+    /// <param name="runtimeRequired">要求する Windows App Runtime の版。</param>
+    /// <param name="runtimeLoaded">実際に読み込んでいる Windows App Runtime の版。</param>
+    /// <param name="sessionName">セッション名。</param>
+    /// <param name="clientName">接続元の名前。</param>
+    /// <param name="virtualScreen">仮想スクリーンの矩形。</param>
+    /// <param name="rasterizationScale">ウィンドウの表示倍率。</param>
+    /// <param name="monitorScales">モニターの倍率。</param>
+    /// <param name="adapters">表示アダプター。</param>
+    public static void LogEnvironment(
+        this ILogger logger, string operatingSystem, string dotNet,
+        string runtimeInstalled, string runtimeRequired, string runtimeLoaded,
+        string sessionName, string clientName,
+        string virtualScreen, double rasterizationScale, string monitorScales, string adapters)
+        => logger.LogEnvironmentCore(
+            Prefix, operatingSystem, dotNet, runtimeInstalled, runtimeRequired, runtimeLoaded,
+            sessionName, clientName, virtualScreen, rasterizationScale, monitorScales, adapters);
+
+    /// <summary>文字が描かれない環境かを切り分けるための値を記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Debug <br/>
+    /// 出力書式: <c>文字の描画: 文字倍率={TextScaleFactor} / 実測={ProbeSize} / テーマ={Theme}</c><br/>
+    /// <b>「レイアウトが 0 か」「描画されないだけか」を分けるため</b>: 実測は 14px の <c>TextBlock</c> を
+    /// 1 行ぶん計測した大きさである（既定のフォントと <c>Segoe UI</c> の 2 通り）。 0 ならフォント解決
+    /// （文字倍率・フォント）の問題、正常な大きさなのに見えないなら描画（ラスタライズ）の問題として切り分けられる。<br/>
+    /// 実測 2026-11-09: Windows Sandbox で文字だけが描かれない現象の切り分けに使う。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="textScaleFactor">OS の文字の大きさ（1.0 = 100%）。</param>
+    /// <param name="probeSize">計測した <c>TextBlock</c> の大きさ（フォントごとの幅x高さ。 装置非依存ピクセル）。</param>
+    /// <param name="theme">実際に適用されているテーマ（Light / Dark）。</param>
+    [LoggerMessage(LogLevel.Debug, "{Prefix} 文字の描画: 文字倍率={TextScaleFactor} / 実測={ProbeSize} / テーマ={Theme}")]
+    private static partial void LogTextRenderProbeCore(
+        this ILogger logger, string prefix, double textScaleFactor, string probeSize, string theme);
+
+    /// <summary>文字が描かれない環境かを切り分けるための値を記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="textScaleFactor">OS の文字の大きさ（1.0 = 100%）。</param>
+    /// <param name="probeSize">計測した <c>TextBlock</c> の大きさ。</param>
+    /// <param name="theme">実際に適用されているテーマ。</param>
+    public static void LogTextRenderProbe(
+        this ILogger logger, double textScaleFactor, string probeSize, string theme)
+        => logger.LogTextRenderProbeCore(Prefix, textScaleFactor, probeSize, theme);
 }

@@ -6,8 +6,8 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// （UI 版ごとに文字列を書くと、綴りの違いで設定・ログ・タスク バーのグループ分けがずれる）。<br/>
 /// 値は<b>事実のみ</b>を持ち、UI フレームワークに依存しない。<br/>
 /// <br/>
-/// <b>保存先を共有する理由</b>: 実行ファイルは 4 つだが、設定とログは 1 つである<br/>
-/// （どの UI 版を起動しても同じ設定で動く）。
+/// <b>設定は共有し、ログは分ける</b>: 実行ファイルは 4 つで、設定は 1 つ（どの UI 版を起動しても同じ設定で動く）。<br/>
+/// ログは実行ファイルごとに別のファイルへ書く（<see cref="GetLogFilePath"/>。 どの UI 版の記録かをファイル名で判別できる）。
 /// </remarks>
 public static class AppIdentity
 {
@@ -34,9 +34,23 @@ public static class AppIdentity
     /// <summary>ログを置くフォルダ（<c>%LOCALAPPDATA%\SaveEvidence\logs</c>）を取得する。</summary>
     public static string LogsFolder { get; } = Path.Combine(LocalAppDataFolder, "logs");
 
-    /// <summary>ログ ファイル（<c>%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log</c>）を取得する。</summary>
-    /// <remarks>日次ローテーションのため、実際のファイル名には日付が付く（Serilog が付ける）。</remarks>
-    public static string LogFilePath { get; } = Path.Combine(LogsFolder, ProductName + ".log");
+    /// <summary>指定されたアセンブリのログ ファイルのパス（日次ローテーションの基点）を取得する。</summary>
+    /// <param name="assemblyName">ログを書くアセンブリ名（例: <c>SaveEvidence.WinUI3</c>）。</param>
+    /// <returns>ログ シンクへ渡すパス。</returns>
+    /// <remarks>
+    /// <b>実際のファイル名は <c>&lt;アセンブリ名&gt;.&lt;yyyyMMdd&gt;.log</c></b>（例: <c>SaveEvidence.WinUI3.20261109.log</c>）。
+    /// Serilog は拡張子の直前に日付を挿入するため、<b>基点の名前は <c>&lt;アセンブリ名&gt;..log</c></b> とし、
+    /// 日付の直前へ <c>.</c> を残す（<c>&lt;アセンブリ名&gt;.log</c> を渡すと <c>&lt;アセンブリ名&gt;20261109.log</c> になり、
+    /// 区切りが無くなる。 実測 2026-11-09）。<br/>
+    /// <b>ログは実行ファイルごとに分ける</b>（設定ファイルは 4 つの UI 版で共有する）。 命名の規則は
+    /// <c>.github/命名規約.md</c>「ファイル」、出力先とローテーションは <c>.github/ログ規約.md</c> §1.1 が定める。
+    /// </remarks>
+    /// <exception cref="ArgumentException"><paramref name="assemblyName"/> が空または空白のみの場合。</exception>
+    public static string GetLogFilePath(string assemblyName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(assemblyName);
+        return Path.Combine(LogsFolder, assemblyName + "..log");
+    }
 
     /// <summary>設定ファイル（<c>%LOCALAPPDATA%\SaveEvidence\settings.json</c>）を取得する。</summary>
     public static string SettingsFilePath { get; } = Path.Combine(LocalAppDataFolder, "settings.json");

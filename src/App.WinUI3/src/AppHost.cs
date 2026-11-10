@@ -1,9 +1,11 @@
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
+using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using EsUtil.SaveEvidence.App.WinUI3.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.WinUI3;
 
@@ -19,6 +21,9 @@ namespace EsUtil.SaveEvidence.App.WinUI3;
 /// </remarks>
 internal static class AppHost
 {
+    /// <summary>ロガー（保存の失敗を記録する）。</summary>
+    private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(AppHost));
+
     /// <summary>組み立て済みのサービス束。</summary>
     private static AppServices? s_services;
 
@@ -73,6 +78,10 @@ internal static class AppHost
         viewModel.BeforeEditAction = () => undoHistory.Push(viewModel.PreviewImage);
 
         s_services = new AppServices(viewModel, settings, undoHistory, folderView);
+
+        // 保存の失敗はコアがイベントで通知する（記録はログの所有者であるアプリが行う）
+        settings.SaveFailed += (_, e) => s_logger.LogSettingsSaveFailed(e.Error, e.FilePath);
+        viewModel.SaveFailed += (_, e) => s_logger.LogImageSaveFailed(e.Error, e.FilePath);
     }
 
     /// <summary>メイン ウィンドウを生成する（UI スレッドから呼ぶ）。</summary>

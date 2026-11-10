@@ -93,6 +93,13 @@ internal sealed class TestSettingsService : ISettingsService
     /// <summary>保持する設定。</summary>
     public Settings Current { get; } = new();
 
+    /// <inheritdoc />
+    public event EventHandler<SaveFailedEventArgs>? SaveFailed
+    {
+        add { }
+        remove { }
+    }
+
     /// <summary>保存が要求された回数。</summary>
     public int SaveCount { get; private set; }
 

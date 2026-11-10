@@ -15,7 +15,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 /// 文字列補間による不要なアロケーションを回避しつつ、一貫したフォーマットで出力する。<br/>
 /// 各メソッドは <see cref="ILogger"/> の拡張メソッド（<c>this ILogger</c> 第一引数）として定義し、<br/>
 /// 呼び出し側では logger 引数を省略する（例: <c>_logger.LogZoomIn(current, target)</c>）。<br/>
-/// 出力先は Serilog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、日次ローテーション・7日で自動削除）。<br/>
+/// 出力先は Serilog（<c>%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.AvaloniaUI.&lt;yyyyMMdd&gt;.log</c>、日次ローテーション・7日で自動削除）。<br/>
 /// ロガーは <see cref="CreateLogger"/> で生成し、各クラスの static フィールドで保持する。<br/>
 /// ログメッセージは日本語で記述する（英語は使用しない）。
 /// </remarks>
@@ -23,6 +23,14 @@ internal static partial class AppLog
 {
     /// <summary>接頭辞（固定。 アプリのログは DLL 名で読み分けるため、ホストからの設定対象外）。</summary>
     private const string Prefix = "[App.AvaloniaUI]";
+
+    /// <summary>このアセンブリの名前（ログ ファイル名の先頭に使う）。</summary>
+    /// <remarks>
+    /// ログは実行ファイルごとに分かれる（UI 版の区別をファイル名で付ける）。 命名は
+    /// <c>.github/命名規約.md</c>「ファイル」、出力先は <c>.github/ログ規約.md</c> §1.1 が定める。
+    /// </remarks>
+    private static readonly string s_assemblyName =
+        typeof(AppLog).Assembly.GetName().Name ?? AppIdentity.ProductName;
 
     /// <summary>アプリケーション共有の Serilog ロガー（静的 <see cref="Log.Logger"/>）。</summary>
     /// <remarks>
@@ -45,7 +53,7 @@ internal static partial class AppLog
     }
 
     /// <summary>Serilog のファイル出力構成を作成する。</summary>
-    /// <returns>ログ出力を %LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log（日次ローテーション・7日保持）へ書き込む構成。</returns>
+    /// <returns>ログ出力を <c>%LOCALAPPDATA%\SaveEvidence\logs\&lt;アセンブリ名&gt;.&lt;yyyyMMdd&gt;.log</c>（日次ローテーション・7日保持）へ書き込む構成。</returns>
     /// <remarks>
     /// ログカテゴリは <c>{SourceContext}</c> として出力し、例外はスタックトレース込みで改行して書き出す。
     /// </remarks>
@@ -54,13 +62,31 @@ internal static partial class AppLog
         return new LoggerConfiguration()
             .MinimumLevel.Verbose()
             .Enrich.FromLogContext()
+            // レベルは 3 文字（[TRC] 等）で表す。 {Level:u3} は Verbose を VRB と表すため使わない
+            // （規則の所有者は .github/ログ規約.md §4.1）
+            .Enrich.With(new LogLevelTextEnricher())
             .WriteTo.File(
-                AppIdentity.LogFilePath,
-                outputTemplate: "{Timestamp:HH:mm:ss.fff} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
+                AppIdentity.GetLogFilePath(s_assemblyName),
+                outputTemplate: "{Timestamp:HH:mm:ss.fff} [{LogLevelText}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
                 formatProvider: CultureInfo.InvariantCulture,
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
                 encoding: System.Text.Encoding.UTF8);
+    }
+
+    /// <summary>ログ イベントへ 3 文字のレベル表記（<c>TRC</c> 等）を追加するエンリッチャー。</summary>
+    /// <remarks>
+    /// 写像の規則は <see cref="LogLevelText"/>（コア）が単一所有する。 本クラスは Serilog のレベル名を渡すだけである<br/>
+    /// （コアは Serilog に依存しない。 4 つの UI 版が同じ表記を使う）。
+    /// </remarks>
+    private sealed class LogLevelTextEnricher : Serilog.Core.ILogEventEnricher
+    {
+        /// <summary>ログ イベントへ <c>LogLevelText</c> プロパティを追加する。</summary>
+        /// <param name="logEvent">対象のログ イベント。</param>
+        /// <param name="propertyFactory">プロパティの生成元。</param>
+        public void Enrich(Serilog.Events.LogEvent logEvent, Serilog.Core.ILogEventPropertyFactory propertyFactory)
+            => logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(
+                LogLevelText.PropertyName, LogLevelText.Abbreviate(logEvent.Level.ToString())));
     }
 
     /// <summary>指定カテゴリ名のロガーを生成する。</summary>

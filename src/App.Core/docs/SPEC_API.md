@@ -44,6 +44,7 @@
 - [32. `Services.ToolbarMetrics`（静的クラス）](#32-servicestoolbarmetrics静的クラス)
 - [33. ウィンドウ配置の復元規則（EsUtil.Platform.Core へ移設）](#33-ウィンドウ配置の復元規則esutilplatformcore-へ移設)
 - [34. `Icons.CaptureIconFiles`（静的クラス）](#34-iconscaptureiconfiles静的クラス)
+- [35. `Services.LogLevelText`（内部・静的クラス）](#35-serviceslogleveltext内部静的クラス)
 
 ## 1. 公開 API の可視性
 
@@ -58,6 +59,7 @@
 | `Models.ThumbnailPriority` | `internal` | 同上 |
 | `Icons.AppIcons` | `internal` | 同上 |
 | `ViewModels.ViewModeDisplay` | `internal` | 同上 |
+| `Services.LogLevelText` | `internal` | 同上（4 つの UI 版の `AppLog` が使う） |
 | `ViewModels.FolderViewViewModel` / `ViewModels.UndoViewModel` / `ViewModels.MainViewModel` | `public` | 任意 |
 
 ## 2. `Enums.AppPage`（列挙型）
@@ -94,10 +96,13 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | --- | --- |
 | `SettingsService(JsonSerializerContext)` | JSON ソース生成コンテキストを指定して初期化する（必須。 既定の引数は持たない） |
 | `Current` | 現在の設定オブジェクト（`Settings`） |
+| `SaveFailed` | 設定の保存に失敗したときに発生するイベント（引数は `SaveFailedEventArgs`。 例外は投げない） |
 | `Save()` | 設定をファイルへ保存する（前回保存時と同一の JSON なら書き込まない） |
 
 - 排他制御（`Lock`）によりスレッドセーフな読み書きを保証します。
-- 読み込み・書き込みの失敗は握りつぶし、既定値または現状のまま続行します（設定ファイル破損で起動できなくならないようにするため）。
+- 読み込みの失敗は握りつぶし、既定値で続行します（設定ファイル破損で起動できなくならないようにするため）。
+- **書き込みの失敗は `SaveFailed` で通知します**（例外にしない）。 記録（ログ）はホスト（アプリ）が行います（[`.github/例外処理規約.md`](../../../.github/例外処理規約.md) §4）。 イベントは排他制御の外で発火するため、ハンドラーから `Save()` を呼んでもデッドロックしません。
+- `SaveFailedEventArgs` は `Error`（例外）と `FilePath`（保存しようとしたパス）を持ちます。 設定と画像の保存が同じ型を使います。
 - enum は名前で保存します（例: `"ThemeMode": "Dark"`）。 enum の変換器は AOT 対応のジェネリック版（型ごとに指定）を使用します。
 - **ソース生成コンテキストは必須です**（反射ベースのシリアル化はトリミング / Native AOT で公開プロパティが削除され、設定が空 `{}` になるため、本体は反射経路を持ちません）。
 - 書式（インデント・コメント許容・末尾カンマ許容・矩形の 4 項目保存）は、ソース生成の有無にかかわらず共通です。
@@ -275,7 +280,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | メンバー | 説明 |
 | --- | --- |
 | `SetPreviewImage(EsReadOnlyBitmap)` / `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る）。 書き換え可能な画像を渡す版は、渡した実体を**凍結**して 0 コピーで共有する |
-| `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`）。 失敗時は `StatusMessage` へ通知する |
+| `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`）。 失敗時は `StatusMessage` と `SaveFailed` へ通知する |
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`）。 成功時に `切り出しました（W x H）` を通知する |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`）。 検出結果とキャンセルを通知する |
 | `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。 両 UI のホバー強調と確定・キャンセル判定が共用する |
@@ -470,7 +475,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 | `AppUserModelId` | `EsUtil.SaveEvidence` | タスク バーのグループ分け（逆ドメイン形式） |
 | `IconFileName` | `ic_fluent_scan_table_24_regular.svg` | ウィンドウ（タスク バー）アイコン（4 UI 版が共有） |
 | `LocalAppDataFolder` | `%LOCALAPPDATA%\SaveEvidence` | 設定・ログの置き場 |
-| `LogsFolder` / `LogFilePath` | `…\logs` / `…\logs\SaveEvidence.log` | ログ出力（Serilog） |
+| `LogsFolder` / `GetLogFilePath` | `…\logs` / `…\logs\<アセンブリ名>..log`（実際のファイル名は `<アセンブリ名>.<yyyyMMdd>.log`） | ログ出力（Serilog） |
 | `SettingsFilePath` | `…\settings.json` | 設定ファイル |
 | `TempFolder` | `%TEMP%\SaveEvidence` | 実行時に組み立てるファイル（ICO 等） |
 
@@ -578,3 +583,17 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 | `WindowSelect` | ウィンドウ選択キャプチャ |
 | `AreaSelect` | 領域選択キャプチャ |
 | `Crop` | 切り出し |
+
+## 35. `Services.LogLevelText`（内部・静的クラス）
+
+ログのレベルを **3 文字の表記**（`TRC` / `DBG` / `INF` / `WRN` / `ERR` / `CRT`）へ写します。 表記の規則は [`../../../.github/ログ規約.md`](../../../.github/ログ規約.md) §4.1 が所有します。
+
+| メンバー | 説明 |
+| --- | --- |
+| `PropertyName` | ログ イベントのプロパティ名（`LogLevelText`）。 各 UI 版の出力テンプレート `[{LogLevelText}]` が読む |
+| `Abbreviate(string)` | レベル名を 3 文字へ写す（`Trace` / `Verbose` → `TRC`、`Critical` / `Fatal` → `CRT`） |
+
+- **Serilog の `{Level:u3}` を使いません**（`Verbose` を `VRB` と表し、`TRC` にならないため）。
+- **コアは Serilog に依存しません**（レベル名の文字列だけを受け取る）。 各 UI 版の `AppLog` が Serilog のレベル名を渡すエンリッチャーを持ちます。
+- `Trace` / `Verbose` と `Critical` / `Fatal` の両方を受け付けるのは、`Microsoft.Extensions.Logging` と Serilog で名前が違うためです。
+- 未知のレベル名は先頭 3 文字を大文字にします（空の場合は `???`）。
