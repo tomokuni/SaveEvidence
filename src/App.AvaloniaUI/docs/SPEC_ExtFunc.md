@@ -273,7 +273,7 @@
 ## 8. ログ
 
 本プロジェクト（app）のログ定義は `src/App.AvaloniaUI/src/Logging/AppLog.cs`（LoggerMessage ソース生成）に集約し、`ILogger` 経由で出力する。
-出力先は Serilog（`%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`、日次ローテーション・7日で自動アーカイブ・削除）で、`AppLog` のファイルシンク構成で制御する。
+出力先は Serilog（`%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.AvaloniaUI.<yyyyMMdd>.log`、日次ローテーション・7日で自動アーカイブ・削除）で、`AppLog` のファイルシンク構成で制御する（ログは UI 版ごとに分かれる）。
 （ズーム操作のログはコア（`Parts.CapturePreview.Core` の `CapturePreviewLogMessage`）が定義し、`ZoomViewControl.Log` へ注入されたロガーへ出力される）
 
 ### 8.1 LogLevel 設定ポリシー

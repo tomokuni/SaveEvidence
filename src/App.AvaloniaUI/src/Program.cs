@@ -20,7 +20,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI;
 /// Avalonia のデスクトップアプリケーションとして起動する。<br/>
 /// Microsoft.Extensions.DependencyInjection を使用した DI コンテナを構築し、
 /// 各 ViewModel および View の依存関係を管理する。<br/>
-/// ログ出力は Serilog により %LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log（日次ローテーション・7日で自動削除）へ出力される。<br/>
+/// ログ出力は Serilog により %LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.AvaloniaUI.&lt;yyyyMMdd&gt;.log（日次ローテーション・7日で自動削除）へ出力される。<br/>
 /// </remarks>
 internal static class Program
 {

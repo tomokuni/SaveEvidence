@@ -153,7 +153,7 @@
 
 | 項目 | 仕様 |
 | --- | --- |
-| 出力先 | `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持） |
+| 出力先 | `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.MewUI.<yyyyMMdd>.log`（日次ローテーション・7 日保持。 UI 版ごとに分かれる） |
 | 書式 | `{時刻} [{レベル}] [{カテゴリ}] {メッセージ}`（Avalonia 版と同一） |
 | カテゴリ | 出力元のクラス名（`Program` / `CaptureSessionControl` / `MarqueeControl` 等） |
 | 内容 | アプリ起動・終了 / 撮影の開始・確定・キャンセル / 切り出しの開始・確定・キャンセル / 選択操作（MouseDown・MouseUp・DragStart・KeyDown 等） / ズーム操作（前後のズーム率） / ルーペの状態変更（表示中の選択オーバーレイ） / 未処理の例外（Critical。 アプリ全体・UI スレッド・待機されなかったタスクの 3 経路） |

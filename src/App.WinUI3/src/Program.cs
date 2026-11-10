@@ -27,13 +27,25 @@ namespace EsUtil.SaveEvidence.App.WinUI3;
 /// </remarks>
 internal static class Program
 {
-    /// <summary>ロガー（他の UI 版と同じログファイルへ出力する）。</summary>
+    /// <summary>ロガー（他の UI 版と同じ書式のログへ出力する。 ファイルは UI 版ごとに分かれる）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(Program));
 
     /// <summary>アプリケーションを起動する。</summary>
     [STAThread]
     private static void Main()
     {
+        // 自己完結の Single 版では Windows App Runtime の展開先を自分で指す必要がある。
+        // Windows App SDK の単一ファイル配布は `MICROSOFT_WINDOWSAPPRUNTIME_BASE_DIRECTORY` を
+        // **プログラムの開始前**に設定することを要求する（設定しないと Dll の探索に失敗する）。
+        // **ビルド時の定数で切り替える**: 実行時に「単一ファイルか」を判定すると `Assembly.Location` が
+        // 空になることを使うしかなく、トリミング解析が IL3000 を報告する（抑制属性が必要になる）。
+        // 自己完結かどうかはビルド構成で決まるため、定数のほうが確実で抑止も要らない。
+        // フレームワーク依存の配置では同封物が無いため設定しない（設定すると探索先が変わる）。
+#if SE_WINDOWSAPPSDK_BUNDLED
+        Environment.SetEnvironmentVariable(
+            "MICROSOFT_WINDOWSAPPRUNTIME_BASE_DIRECTORY", AppContext.BaseDirectory);
+#endif
+
         // Windows App Runtime を用意する（無ければ案内を出し、選ばれたとおりに導入する）。
         // **WinUI の型へ触れる前**に 1 回呼ぶ（自動初期化は csproj の WindowsAppSdkBootstrapInitialize=false で止めている）
         if (!EnsureWindowsAppRuntime())
@@ -54,9 +66,9 @@ internal static class Program
         {
             s_logger.LogStartedFromDotnetHost();
             WinMessageBox.ShowError(
+                "SaveEvidence",
                 "SaveEvidence.WinUI3.exe（実行ファイル）から起動してください。\n"
-                + ".NET ホスト（dotnet <アプリ>.dll）からは起動できません。",
-                "SaveEvidence");
+                + ".NET ホスト（dotnet <アプリ>.dll）からは起動できません。");
             return;
         }
 
@@ -88,27 +100,59 @@ internal static class Program
     /// <remarks>
     /// 確認と導入は <see cref="WindowsAppRuntimeBootstrap"/> が担う（<see cref="WindowsAppRuntimeInstallMode.BootstrapUi"/>）。<br/>
     /// 案内は「自動インストールする / ダウンロードページを表示する / インストールせずにアプリを終了する」の 3 択であり、<br/>
-    /// タスク ダイアログで出すため app.manifest で Common-Controls v6 を宣言している（宣言が無いとメッセージ ボックスへ落ちる）。
+    /// タスク ダイアログで出すため app.manifest で Common-Controls v6 を宣言している（宣言が無いとメッセージ ボックスへ落ちる）。<br/>
+    /// <b>成否と版を必ず記録する</b>: 「入っていたのか」「今回入れたのか」が後から分からないと、環境の切り分けができない
+    /// （実測 2026-11-09: 導入に成功していたのに記録が無く、環境側の問題と誤認した）。
     /// </remarks>
     private static bool EnsureWindowsAppRuntime()
     {
         var options = WindowsAppRuntimeBootstrapOptions.Default with
         {
             InstallMode = WindowsAppRuntimeInstallMode.BootstrapUi,
+            // **アプリのビルド版を要求する**: EsUtil は 2.6.4 でビルドされているため、指定しないと
+            // 2.6.5 でビルドした本アプリが 2.6.4 のネイティブ ランタイムで初期化を通り、
+            // レイアウト・画像は正常なまま本文のグリフだけが描かれない（実測 2026-11-10）
+            RequiredVersion = WindowsAppRuntimeRequirement.Version,
         };
+
+        var required = WindowsAppRuntimeBootstrap.GetRequiredVersion(options).ToString(3);
+        var before = DescribeInstalledVersions();
+
+        // **指定の有無を必ず確かめる**: 未指定だと EsUtil のビルド版へフォールバックし、アプリの
+        // マネージド アセンブリより古いネイティブ ランタイムで初期化が成功し得る（実測 2026-11-10）
+        if (!WindowsAppRuntimeBootstrap.IsRequiredVersionSpecified(options))
+        {
+            s_logger.LogWindowsAppRuntimeVersionNotSpecified(
+                WindowsAppRuntimeInventory.RequiredVersion.ToString(3));
+        }
 
         if (WindowsAppRuntimeBootstrap.TryEnsureAvailable(options))
         {
+            s_logger.LogWindowsAppRuntimeReady(
+                required, before, DescribeInstalledVersions(), WindowsAppRuntimeBootstrap.IsInitialized);
             return true;
         }
 
-        var required = WindowsAppRuntimeInventory.RequiredVersion.ToString(3);
-        s_logger.LogWindowsAppRuntimeUnavailable(required);
+        s_logger.LogWindowsAppRuntimeUnavailable(required, before, DescribeInstalledVersions());
         WinMessageBox.ShowError(
+            "SaveEvidence",
             $"Windows App Runtime {required} 以降が必要です。\n"
-            + $"次のページから導入して、もう一度起動してください。\n{WindowsAppRuntimeBootstrap.DownloadPageUri}",
-            "SaveEvidence");
+            + $"次のページから導入して、もう一度起動してください。\n{WindowsAppRuntimeBootstrap.DownloadPageUri}");
         return false;
+    }
+
+    /// <summary>インストール済みの Windows App Runtime の版を 1 行の文字列にする。</summary>
+    /// <returns>新しい順の版（例: <c>2.6.5.0, 2.6.4.0</c>）。 1 件も無い場合は <c>(なし)</c>。</returns>
+    /// <remarks>
+    /// 自己完結の配置（<c>WindowsAppSDKSelfContained=true</c>）では同梱したランタイムを使うため、
+    /// ここが <c>(なし)</c> でも動作する（診断ビルドとの区別は <see cref="WindowsAppRuntimeBootstrap.IsInitialized"/> と併せて読む）。
+    /// </remarks>
+    private static string DescribeInstalledVersions()
+    {
+        var versions = WindowsAppRuntimeInventory.GetInstalledVersions();
+        return versions.Count == 0
+            ? "(なし)"
+            : string.Join(", ", versions.Select(version => version.ToString(4)));
     }
 
     /// <summary>実行ファイルのバージョンを取得する。</summary>
@@ -131,7 +175,7 @@ internal static class Program
     /// 1. <c>AppDomain.UnhandledException</c>: アプリ全体の未処理例外（プロセス終了を伴う）。<br/>
     /// 2. <c>TaskScheduler.UnobservedTaskException</c>: 待機されなかったタスクの例外（観測済みにして継続する）。<br/>
     /// <b>UI スレッドの例外</b>は XAML アプリケーションの <c>UnhandledException</c> で記録する（<c>App</c> が購読する）。<br/>
-    /// <b>書式</b>: 他の UI 版と同じ <c>未処理の例外: {発生源}</c> で記録し、同じログファイルで追跡できるようにする。
+    /// <b>書式</b>: 他の UI 版と同じ <c>未処理の例外: {発生源}</c> で記録する（ファイルは UI 版ごとに分かれる）。
     /// </remarks>
     private static void RegisterExceptionLogging()
     {

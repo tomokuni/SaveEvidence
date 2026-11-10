@@ -30,7 +30,7 @@ namespace EsUtil.SaveEvidence.App.MewUI;
 /// </remarks>
 internal static class Program
 {
-    /// <summary>ロガー（Avalonia 版と同じログファイルへ出力する）。</summary>
+    /// <summary>ロガー（Avalonia 版と同じ書式のログへ出力する。 ファイルは UI 版ごとに分かれる）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(Program));
 
     /// <summary>アプリケーションを起動する。</summary>
@@ -100,7 +100,7 @@ internal static class Program
     /// 2. <c>TaskScheduler.UnobservedTaskException</c>: 待機されなかったタスクの例外（観測済みにして継続する）。<br/>
     /// 3. <c>Application.DispatcherUnhandledException</c>: UI スレッドの例外。 記録後に <c>Handled</c> を立てて<br/>
     ///    ウィンドウの表示を維持する（Avalonia 版と同じ扱い。 UI スレッドを黙って終了させない）。<br/>
-    /// <b>書式</b>: Avalonia 版と同じ <c>未処理の例外: {発生源}</c> で記録し、同じログファイルで追跡できるようにする。
+    /// <b>書式</b>: Avalonia 版と同じ <c>未処理の例外: {発生源}</c> で記録する（ファイルは UI 版ごとに分かれる）。
     /// </remarks>
     private static void RegisterExceptionLogging()
     {

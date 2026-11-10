@@ -12,7 +12,7 @@ SaveEvidence の **WinUI 3 版ホストアプリ**です。 UI 非依存のコ�
 
 > **現状**: キャプチャ / フォルダビュー / Undo 一覧 / 設定の 4 ページと、撮影（スクリーン / ウィンドウ / 範囲）・
 > プレビューの切り出し・履歴の移動・設定の永続化・グローバル ホットキー・ログが動作します。
-> Avalonia 版 `App.AvaloniaUI` と MewUI 版 `App.MewUI` と同じ `settings.json` とログ ファイルを共有します。 タスク バーでも 1 つのアプリとしてまとまります（4 UI 版が同じ `AppUserModelId` を設定します）。
+> Avalonia 版 `App.AvaloniaUI` と MewUI 版 `App.MewUI` と同じ `settings.json` を共有します（ログは実行ファイルごとに分かれます）。 タスク バーでも 1 つのアプリとしてまとまります（4 UI 版が同じ `AppUserModelId` を設定します）。
 
 ## 1. 概要
 
@@ -92,6 +92,31 @@ Common-Controls v6 を宣言しています。
 （実装は `src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`、規則は
 [`.github/ビルド設定規約.md`](../../.github/ビルド設定規約.md) §5）。 本アプリはこれらの API を呼びません（ソース参照 0 件）。
 
+### 5.1 自己完結 Single 版（何も導入できない環境向け）
+
+**Windows App Runtime を導入できない環境**（Windows Sandbox・毎回初期化される VM 等）向けに、
+**Windows App Runtime と .NET を同梱した単一 exe** を配布します（`SaveEvidence.WinUI3.Single.<版数>.zip`）。
+
+```powershell
+& .\buildScript\publish_WinUI3.bat   # AOT 版と Single 版の両方を作る
+```
+
+- Windows App Runtime と .NET を**同梱**します（`SaveEvidenceSelfContained=true` + `PublishSingleFile=true`。
+  `App.WinUI3.csproj` の条件付きプロパティ）。 ランタイムが 1 つも入っていない環境でもそのまま起動します。
+- サイズは大きくなります（実測 2026-11-10: **293.5 MB の単一 exe**。 AOT 版は約 79 MB）。
+- 起動時に一時フォルダーへ展開するため、初回の起動は AOT 版より遅くなります。
+- **`-p:WindowsAppSDKSelfContained=true` をコマンド ラインへ直接渡さないでください**（参照プロジェクトへ
+  伝播し、`WindowsAppSDKSelfContained requires a supported Windows architecture` で失敗します。 実測 2026-11-09）。
+  スクリプトがプロジェクト内のプロパティを切り替えます。
+
+**Windows App Runtime の状態は起動時のログに残ります**（成否・必要版・導入前後の版）。
+
+```text
+11:11:14.417 [INF] [Program] [App.WinUI3] Windows App Runtime を用意しました (required=2.6.5, before=2.6.5.0, 2.6.4.0, after=2.6.5.0, 2.6.4.0, initialized=true)
+```
+
+Single 版では `before` / `after` が `(なし)` のままです（同梱したランタイムを使うため）。
+
 ## 6. 機能一覧
 
 | 機能 | 内容 |
@@ -106,7 +131,7 @@ Common-Controls v6 を宣言しています。
 | Undo 一覧 | 編集履歴と現在の画像のサムネイル一覧（表示モード・既定アプリで開く） |
 | 設定 | テーマ / 保存先 / 画像 / キャプチャ / 矩形選択範囲の制限 / ホットキー / 外観（即時保存） |
 | グローバル ホットキー | 3 種の撮影を他のアプリが前面でも開始できる（`RegisterHotKey`） |
-| ログ | 他の UI 版と同一のファイルへ出力（`%LOCALAPPDATA%\SaveEvidence\logs\`） |
+| ログ | 実行ファイルごとのファイルへ出力（`%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.WinUI3.<yyyyMMdd>.log`） |
 
 ## 7. 画面構成
 
@@ -166,8 +191,9 @@ src/App.WinUI3/
 
 ## 9. ログ
 
-`%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence<日付>.log` へ出力します（日次ローテーション・7 日保持）。
-接頭辞は `[App.WinUI3]` で、他の UI 版のログと同じファイルへ追記されます
+`%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.WinUI3.<yyyyMMdd>.log` へ出力します（日次ローテーション・7 日保持。 ログは UI 版ごとに分かれます）。
+接頭辞は `[App.WinUI3]` です。 起動時に Windows App Runtime の状態（必要版・導入前後の版・初期化の有無）も
+記録するため、環境ごとの差をログだけで判別できます
 （規則は [`../../.github/ログ規約.md`](../../.github/ログ規約.md) が所有します）。
 
 ## 10. 関連ドキュメント

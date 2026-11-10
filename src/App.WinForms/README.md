@@ -11,13 +11,13 @@
 
 SaveEvidence の **WinForms 版アプリ**です。 画面キャプチャ（全画面 / ウィンドウ / 範囲）、取り込んだ画像の切り出し（手動 / 自動）、保存・クリップボード連携・編集履歴・保存先フォルダのサムネイル一覧を提供します。
 
-UI 非依存のコア（`App.Core`）と撮影スタック（`Parts.CapturePreview`）を共有し、**UI 層だけを WinForms（GDI+）で実装**しています。 設定ファイルとログは他の UI 版と同じ場所を共有するため、起動した実行ファイルが違っても同じ設定・同じログで追跡できます。 タスク バーでも 1 つのアプリとしてまとまります（4 UI 版が同じ `AppUserModelId` を設定します）。
+UI 非依存のコア（`App.Core`）と撮影スタック（`Parts.CapturePreview`）を共有し、**UI 層だけを WinForms（GDI+）で実装**しています。 設定ファイルは他の UI 版と同じ場所を共有するため、起動した実行ファイルが違っても同じ設定で動きます。 ログは実行ファイルごとに分かれ（`SaveEvidence.WinForms.<yyyyMMdd>.log`）、どの UI 版の記録かをファイル名で判別できます。 タスク バーでも 1 つのアプリとしてまとまります（4 UI 版が同じ `AppUserModelId` を設定します）。
 
 | 項目 | 内容 |
 | --- | --- |
 | 実行ファイル | `SaveEvidence.WinForms.exe` |
 | 設定ファイル | `%LOCALAPPDATA%\SaveEvidence\settings.json` |
-| ログ | `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持） |
+| ログ | `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.WinForms.<yyyyMMdd>.log`（日次ローテーション・7 日保持。 UI 版ごとに分かれる） |
 | 描画 | GDI+（`System.Drawing`）。 画像の縮小は `EsUtil.Platform.Core` の面積平均を使う |
 | アイコン | 他の UI 版と同じ SVG ファイル（`App.Core/src/Icons/*.svg`。 `SvgIconLoader` が単一所有する）を共有し、GDI+ のパスへ変換して描く |
 
@@ -163,7 +163,7 @@ App.WinForms/
 | 一覧 | 保存先フォルダのサムネイル一覧（表示モード 3 種・並べ替え） |
 | 設定 | 保存先・ホットキー・撮影の外観（色と寸法） |
 | グローバル ホットキー | 3 種のキャプチャを他のアプリが前面でも開始できる |
-| ログ | 起動 / 終了 / 撮影・切り出し・ズーム・選択の操作（共有のログファイル） |
+| ログ | 起動 / 終了 / 撮影・切り出し・ズーム・選択の操作（実行ファイルごとのログファイル） |
 
 ## 9. 配布形態
 

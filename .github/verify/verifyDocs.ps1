@@ -860,6 +860,22 @@ foreach ($f in @($allCs | Where-Object { $_.FullName -notmatch '[\\/](obj|bin|te
 Add-Result 'ログ定義の doc' ($logDocIssues.Count -eq 0) "レベル・出力書式の記載漏れ $($logDocIssues.Count) 件"
 $logDocIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
+# 8l-2) ログの行のレベルは 3 文字の表記（[TRC] 等）で出す（ログ規約 §4.1）
+#      Serilog の {Level:u3} は Verbose を VRB と表すため使わない（TRC にならない）。
+#      アプリの AppLog.cs が持つ出力テンプレートを対象にする（EsUtil 側は別リポジトリが所有する）。
+$levelFormatIssues = [System.Collections.Generic.List[string]]::new()
+foreach ($f in @($allCs | Where-Object { $_.Name -eq 'AppLog.cs' -and $_.FullName -notmatch '[\\/](obj|bin|tests|sample)[\\/]' })) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    # コメントは対象外にする（「{Level:u3} を使わない」という説明を違反として拾わない）
+    $code = (Get-Lines $f.FullName | Where-Object { -not $_.TrimStart().StartsWith('//') }) -join "`n"
+    if ($code -match '\{Level:u3\}') { $levelFormatIssues.Add(("{0}  レベル表記に {{Level:u3}}（VRB）を使っている" -f $rel)) }
+    if ($code -match 'outputTemplate:' -and $code -notmatch '\[\{LogLevelText\}\]') {
+        $levelFormatIssues.Add(("{0}  出力テンプレートが [{LogLevelText}] を使っていない" -f $rel))
+    }
+}
+Add-Result 'ログのレベル表記' ($levelFormatIssues.Count -eq 0) "不備 $($levelFormatIssues.Count) 件（[TRC] などの 3 文字）"
+$levelFormatIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
 # 8m) コードの抑止は ビルド設定規約.md の「付録 A 抑止の一覧」にあるものだけ（規約が例外の所有者）
 # 規則文書が無いリポジトリ（規則をまだ持たない）では、この検査だけを省略する（他の検査は動かす）。
 $buildRulesPath = Join-Path $repoRoot '.github/ビルド設定規約.md'

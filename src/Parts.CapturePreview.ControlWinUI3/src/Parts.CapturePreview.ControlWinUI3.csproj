@@ -8,7 +8,25 @@
     <RootNamespace>EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- 単一ファイル配布（publish_WinUI3.bat の自己完結 Single 版）では、参照側の WinUI 3 プロジェクトも
+         resources.pri を埋め込む必要がある（PublishSingleFile は ProjectReference へ伝播する。 実測 2026-11-10:
+         `PublishSingleFile requires EnableMsixTooling` で失敗）。 **RID を渡したときだけ有効にする**
+         （RID の無い AnyCPU では MSIX のパッケージング処理が ProcessorArchitecture neutral で失敗する）。 -->
+    <EnableMsixTooling Condition="'$(RuntimeIdentifier)' != ''">true</EnableMsixTooling>
+    <!-- 単一ファイル（自己完結 Single 版）では PublishSingleFile が参照側へも伝播する。 クラス ライブラリは
+         それ自体を配布しないため、Windows App SDK の構成検証（自己完結を要求する）だけを省く。
+         `WindowsAppSDKSelfContained` は**クラス ライブラリには設定できない**（実測 2026-11-10:
+         `WindowsAppSDKSelfContained should not be applied to a class library`）。 -->
+    <WindowsAppSDKSingleFileVerifyConfiguration Condition="'$(PublishSingleFile)' == 'true'">false</WindowsAppSDKSingleFileVerifyConfiguration>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 単一ファイル配布では `AutoIncludeCopyToPublishDirectoryItems` が有効になり、プロジェクト直下の
+         `packages.lock.json` も発行物へ入る。 参照側と合わせて同じ相対パスが 2 つになり
+         NETSDK1152（同じ相対パスの発行出力ファイルが複数）で公開が失敗する（実測 2026-11-10）。 -->
+    <None Remove="packages.lock.json" />
+    <None Remove="packages.*.lock.json" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- WinUI 3 のコントロール（撮影スタックの表示は Composition と XAML の要素で行う） -->

@@ -68,7 +68,8 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 - **パッケージの版は [`Directory.Packages.props`](../Directory.Packages.props) が単一所有し、復元は `packages.lock.json` で固定する**（**コミットする**）。 取得元は [`NuGet.config`](../NuGet.config) の `nuget.org` だけ（`<clear />` でユーザー単位の取得元を打ち消す）。
 - **SBOM（CycloneDX）をリリースへ添付する**（`.github/scripts/generateSbom.ps1`。 ツールの版は [`.config/dotnet-tools.json`](../.config/dotnet-tools.json)）。 配布物から依存を辿れるようにするため。
 - **アプリの製品バージョンは `<Version>+esutil.<EsUtilVersion>`**（使った EsUtil の版を exe から辿れるようにする。 SourceLink のコミットは SDK が後ろへ足す）。
-- **実行ファイルは 4 つ**（`App.AvaloniaUI` / `App.MewUI` / `App.WinForms` / `App.WinUI3`）で、**設定ファイルとログを共有する**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
+- **実行ファイルは 4 つ**（`App.AvaloniaUI` / `App.MewUI` / `App.WinForms` / `App.WinUI3`）で、**設定ファイルを共有する**（`%LOCALAPPDATA%\SaveEvidence\settings.json`）。 **ログは実行ファイルごとに分かれる**（`%LOCALAPPDATA%\SaveEvidence\logs\` 配下の `<アセンブリ名>.<yyyyMMdd>.log`。 例: `SaveEvidence.WinUI3.20261109.log`）。
+- **配布用の zip の名前は `<アセンブリ名>.<版数>.zip`**（例: `SaveEvidence.WinForms.0.1.4.zip`。 `release-config.json` の `uis[].asset` が `{version}` を持ち、`publish.yml` が置き換える）。
 - **実行ファイルの名前はプロジェクト名と一致しない**（`App.AvaloniaUI` → `SaveEvidence.AvaloniaUI.exe` / `App.MewUI` → `SaveEvidence.MewUI.exe` / `App.WinForms` → `SaveEvidence.WinForms.exe` / `App.WinUI3` → `SaveEvidence.WinUI3.exe`。 `<AssemblyName>` で製品名を明示する。 配布名は [`.github/release-config.json`](release-config.json) が単一所有する）。
 - **文字コードは UTF-8（BOM なし）**で統一する（[`.editorconfig`](../.editorconfig) の `charset = utf-8`。 既存の `.cs` / `.md` / `.ps1` はすべて BOM なし）。
 - **作業ツリーの改行コードは CRLF**（[`.editorconfig`](../.editorconfig) の `end_of_line = crlf`。 リポジトリのブロブは [`.gitattributes`](../.gitattributes) が LF へ正規化する）。

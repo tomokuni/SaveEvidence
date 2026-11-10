@@ -258,7 +258,7 @@
 
 | 項目 | 仕様 |
 | --- | --- |
-| 出力先 | `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence<日付>.log` |
+| 出力先 | `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.WinUI3.<yyyyMMdd>.log`（UI 版ごとに分かれる） |
 | 保持 | 日次ローテーション・7 日 |
 | 接頭辞 | `[App.WinUI3]` |
 

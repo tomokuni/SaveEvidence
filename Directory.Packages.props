@@ -57,6 +57,11 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
+    <!-- **2.6.4 と 2.6.5 は描画に影響しない**（実測 2026-11-09: ネイティブの差分は版スタンプの 8〜40 バイトだけで、
+         DWriteCore.dll / Microsoft.ui.xaml.dll / Microsoft.ui.xaml.resources.common.dll の実体は同一。
+         Windows Sandbox で文字が出ない現象は 2.6.4 へ下げても解消しなかった）。
+         版を動かす理由は「EsUtil が要求するランタイムの版以上にする」ことだけである。
+         EsUtil の版を上げたら本行も追随させる（規則は .github/RELEASE.md「依存関係の更新」）。 -->
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
     <PackageVersion Include="OpenCvSharp5" Version="5.0.0.20261107" />
     <PackageVersion Include="OpenCvSharp5.runtime.win.slim" Version="5.0.0.20261107" />
