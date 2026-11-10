@@ -46,6 +46,28 @@
          AOT のネイティブ出力と Windows App Runtime の選択はその RID に従う。 -->
     <!-- DPI 認識（PerMonitorV2）を宣言する（宣言が無いとウィンドウ配置の復元がずれる）。 -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- **要求する Windows App Runtime の版をアプリのビルド版から取る**。 有効にすると
+         `Microsoft.WindowsAppSDK.Runtime.Version`（internal）がこのプロジェクトへ生成され、
+         WindowsAppRuntimeRequirement が読む。 有効にしないと EsUtil の焼き込んだ版
+         （2.6.4）で初期化してしまい、アプリのマネージド アセンブリ（2.6.5）とネイティブ ランタイムが
+         食い違って **本文のグリフだけが描かれない**（実測 2026-11-10）。 -->
+    <WindowsAppSdkIncludeVersionInfo>true</WindowsAppSdkIncludeVersionInfo>
+  </PropertyGroup>
+
+  <!-- 自己完結のビルド（buildScript/publish_WinUI3.bat の Single 版が有効にする）。
+       `-p:SaveEvidenceSelfContained=true` を渡すと Windows App Runtime と .NET を同梱する。
+       用途は「ランタイムを導入できない環境（Windows Sandbox 等）で動かすこと」であり、**配布物**である
+       （`SaveEvidence.WinUI3.Single.<版数>.zip` として Release へ添付する。 規則は .github/RELEASE.md）。
+       コマンド ラインの `-p:WindowsAppSDKSelfContained=true` は参照プロジェクトへも伝播し、
+       Windows App Runtime を持たないライブラリ側で失敗する（実測 2026-11-09）。そのため本プロジェクトの
+       プロパティとして切り替える（`ProjectReference` へは伝播しない）。 -->
+  <PropertyGroup Condition="'$(SaveEvidenceSelfContained)' == 'true'">
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <!-- 自己完結でビルドしたことをコードへ伝える（抑制属性も実行時判定も使わずに済む）。
+         Program.Main はこの定数があるときだけ `MICROSOFT_WINDOWSAPPRUNTIME_BASE_DIRECTORY` を設定する
+         （Windows App SDK の単一ファイル配布の要件。 実測 2026-11-10）。 -->
+    <DefineConstants>$(DefineConstants);SE_WINDOWSAPPSDK_BUNDLED</DefineConstants>
   </PropertyGroup>
 
   <!-- publish（AOT）のときだけ有効にする指定。 buildScript/publish_WinUI3.bat が

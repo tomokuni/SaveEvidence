@@ -76,7 +76,7 @@ public sealed partial class MainWindow : Window
         _settingsService = (SettingsService)settingsService;
 
         // Parts.CapturePreview.ControlAvaloniaUI 公開 Facade を生成
-        // ロガーは Serilog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log、日次ローテーション・7日で自動削除）へ転送する。
+        // ロガーは Serilog（%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.AvaloniaUI.<yyyyMMdd>.log、日次ローテーション・7日で自動削除）へ転送する。
         // AppLog.CreateLogger が Serilog のファイル出力を構成するため、コード内の設定は不要。
         _captureSessionControlLogger = AppLog.CreateLogger("Parts.CapturePreview.ControlAvaloniaUI");
         _captureSessionControl = new CaptureSessionControl(logger: _captureSessionControlLogger);

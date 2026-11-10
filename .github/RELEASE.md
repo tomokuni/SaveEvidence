@@ -151,7 +151,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 | --- | --- | --- |
 | [`workflows/build.yml`](workflows/build.yml) | `main` 向け PR、手動実行（**push では実行しない**） | 復元・ビルド・テストと走査（**配布物は作らない**）。 PR の必須チェックは集約ジョブ `ci` |
 | [`workflows/publish.yml`](workflows/publish.yml) | `workflow_call` | 全 UI の publish・**配布物の起動検証**・保管の単一実装（`version` を受け取るとそのバージョンでビルドする） |
-| [`workflows/release.yml`](workflows/release.yml) | **手動実行のみ。 実行ブランチは `mode` に従う**（`dry-run` は `dryRunBranches`、公開は `releaseBranches`）。 `mode` で 2 段階（`dry-run` / `release`） | 検証 → SBOM → 全 UI の publish →（release のみ）**承認** → タグ + GitHub Release 作成 |
+| [`workflows/release.yml`](workflows/release.yml) | **手動実行のみ。 実行ブランチは `mode` に従う**（`dry-run` は `dryRunBranches`、公開は `releaseBranches`）。 `mode` で 3 段階（`dry-run`（検証のみ）/ `dry-run-pack`（+ 配布物の作成と検証）/ `release`） | 検証 → SBOM → 全 UI の publish →（release のみ）**承認** → タグ + GitHub Release 作成 |
 
 `ci`（`build.yml` の集約ジョブ）の成功はリリースの**前提（ゲート）**です。 マージの前提は ruleset が保証するため、`release.yml` はリリース対象コミットに対する `build.yml` の実行を探しません（マージ後のコミットには実行が無いため）。
 
@@ -186,12 +186,12 @@ flowchart TD
 
 ## リリース手順
 
-リリースは **`dry-run` → `release` の 2 段階**で行います。 **版はリリース前にコミットしておきます**（自動採番しません）。
+リリースは **`dry-run`（検証のみ）→ `dry-run-pack`（配布物まで）→ `release` の 3 段階**で行います。 **版はリリース前にコミットしておきます**（自動採番しません）。
 
 1. **版を上げてコミットする**（`Directory.Build.props` の `<Version>`）。 `dev` で上げ、`main` へマージする
 2. Pull Request の `ci`（必須チェック）が成功していることを確認する（`main` へマージする）
-3. `Actions` → **Release** → `Run workflow` で、**モード `dry-run`** を選んで実行する
-   - 配布物の作成（全 UI の publish）・起動検証・**SBOM の作成**まで行います（**公開もタグ作成もしません**）
+3. `Actions` → **Release** → `Run workflow` で、**モード `dry-run`** を選んで実行する（版・ブランチ・タグ・CHANGELOG の検証だけ。 **配布物も SBOM も作らない**）
+   - 配布物の中身まで確かめたいときは、**モード `dry-run-pack`** を選ぶ（配布物の作成（全 UI の publish）・起動検証・**SBOM の作成**まで行い、**公開もタグ作成もしません**）
    - `version` は省略できます（省略するとコミット済みの版を使います）
 4. 実行サマリーと成果物（アーティファクト）を確認する
 5. **同じコミットのまま**、**モード `release`** で実行する
@@ -202,7 +202,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    A["dry-run<br/>検証・SBOM・publish"] --> B["release<br/>同じコミット"]
+    A["dry-run<br/>検証のみ"] --> A2["dry-run-pack<br/>検証・SBOM・publish"] --> B["release<br/>同じコミット"]
     B --> C["承認<br/>(environment: release)"]
     C --> D["タグ + Release<br/>配布物と SBOM を添付"]
 ```
@@ -282,15 +282,23 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 
 **発行方式は UI ごとに、Single AOT → Single（非 AOT）→ EXE（フォルダー）の優先順で「可能なもの」が選ばれます**（実装は [../buildScript/publish_ui.bat](../buildScript/publish_ui.bat)。 可否は UI とフレームワークが決めます）。
 
-| UI | 添付ファイル | 方式（実測 2026-10-20） | zip の中身 |
+| UI | 添付ファイル | 方式（実測 2026-11-10） | zip の中身 |
 | --- | --- | --- | --- |
-| MewUI 版 | `SaveEvidence.MewUI.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
-| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
-| WinForms 版 | `SaveEvidence.WinForms.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
-| WinUI 3 版 | `SaveEvidence.WinUI3.zip` | Single AOT（フォルダー配布。 Windows App SDK はフレームワーク依存） | exe 1 個 + ネイティブ DLL + `.pri` |
+| MewUI 版 | `SaveEvidence.MewUI.<版数>.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
+| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.<版数>.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
+| WinForms 版 | `SaveEvidence.WinForms.<版数>.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
+| WinUI 3 版（AOT） | `SaveEvidence.WinUI3.<版数>.zip` | AOT（フォルダー配布。 Windows App SDK はフレームワーク依存） | exe 1 個 + ネイティブ DLL + `.pri` |
+| WinUI 3 版（Single） | `SaveEvidence.WinUI3.Single.<版数>.zip` | 自己完結 + 単一ファイル（Windows App Runtime と .NET を同梱） | exe 1 個（293.5 MB。 起動時に一時フォルダーへ展開） |
+
+- **zip の名前は `<アセンブリ名>.<版数>.zip` です**（例: `SaveEvidence.WinForms.0.1.4.zip`）。 **同じ UI が複数の形態を配布するときは形態名を版数の前へ入れます**（例: `SaveEvidence.WinUI3.Single.0.1.4.zip`）。 版数は `Directory.Build.props` の `<Version>` で、**`uis[].outputs[].asset` の `{version}` を `publish.yml` が置き換えます**（利用者が「どの版・どの形態か」をファイル名だけで判別できるようにするため）。 規則の所有者は [`命名規約.md`](命名規約.md)「アセンブリ名」です。
 
 - **方式が Single AOT でない UI は、その理由を本節が持ちます**（WinForms は SDK がトリミングを拒否する `NETSDK1175`）。
-- **WinUI 3 版は Native AOT のフォルダー配布です**（[../buildScript/publish_WinUI3.bat](../buildScript/publish_WinUI3.bat)）。 **Native AOT はネイティブ DLL を exe へ内包できない**（実測 2026-10-20: `PublishAot` と同時に `PublishSingleFile` / `IncludeNativeLibrariesForSelfExtract` を指定しても、ネイティブ ライブラリは exe の隣へ出力されます）、Windows App SDK は**フレームワーク依存のまま `PublishSingleFile` を拒否**するため、「1 ファイル」にはなりません。
+- **WinUI 3 版は AOT と Single の 2 形態を作ります**（[../buildScript/publish_WinUI3.bat](../buildScript/publish_WinUI3.bat) が `publish_ui.bat` を 2 回呼びます。 出力は `publish/winui3-win-x64-aot` と `publish/winui3-win-x64-single`）。
+  - **AOT 版**: **Native AOT はネイティブ DLL を exe へ内包できない**（実測 2026-10-20）。 Windows App SDK フレームワーク依存のままでは `PublishSingleFile` も拒否されるため、フォルダー配布になります。
+  - **Single 版**: `SaveEvidenceSelfContained=true`（Windows App Runtime と .NET を同梱）+ `PublishSingleFile=true` + `IncludeNativeLibrariesForSelfExtract=true` で **1 つの exe** になります（実測 2026-11-10: 293.5 MB。 起動・描画・終了・設定の往復を確認）。 **何も導入できない環境（Windows Sandbox・まっさらな VM）向け**です。
+  - **Single 版は `MICROSOFT_WINDOWSAPPRUNTIME_BASE_DIRECTORY` をプログラム開始前に設定する必要があります**（Windows App SDK の単一ファイル配布の要件）。 `Program.Main` が単一ファイルかを判定して設定します（`IsSingleFileBundle`）。
+  - **参照プロジェクトも単一ファイル公開の構成に追随させる必要があります**（`PublishSingleFile` は `ProjectReference` へ伝播する。 実測 2026-11-10: `Parts.CapturePreview.ControlWinUI3` に `EnableMsixTooling`（RID 指定時）と `WindowsAppSDKSingleFileVerifyConfiguration=false` を追加。 後者は**クラス ライブラリに `WindowsAppSDKSelfContained` を設定できない**ため必要な措置）。
+
 - **WinUI 3 版は Windows App Runtime を同梱しません**（`WindowsAppSDKSelfContained=false`）。 フレームワーク依存はコード ページを他のアプリと共有するため、**起動が速くメモリも少なく**、Windows App SDK の保守も効きます（配布物の構成とサイズは `.github/verify/verifyPublish.ps1` が実測して表示します）。 旧方針（同梱して「事前インストール不要」を優先）は、Windows App SDK 2.6 への更新を機に取りやめました。
 - **Windows App Runtime が無い環境への導入は `EsUtil.Ui.WinUI3.Interop` が担います**（`Bootstrapping.WindowsAppRuntimeBootstrap`。 EsUtil 0.5.2 で公開）。 **WinUI 3 版は起動時にその実装で確認し、無ければ案内（自動インストール / ダウンロード ページ / 終了）を出して導入します**（SDK の自動初期化は `WindowsAppSdkBootstrapInitialize=false` で止めています）。 **テストと配布物の起動検証は同じランタイムが要る**ため、CI はビルドの前と配布物の起動検証の前に導入します（`.github/scripts/installWindowsAppRuntime.ps1`。 [`検証手順.md`](検証手順.md) §17）。
 - **WinUI 3 の配布物は、exe へ入れられない非ネイティブのファイルを公開時に絞ります**（`src/App.WinUI3/src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`）。 残す必須のファイルは **アプリの `.pri`・`ja-JP` と `en-us` の `.mui`・`Microsoft.UI.Xaml\Assets`・`NpuDetect`** です（1 種類ずつ削除して起動・終了・設定の往復を実測。 **アプリの `.pri` を削除すると起動せず、`.mui` を削除すると終了時に `0xC000027B` で落ちます**）。 `.winmd`・他の言語の `.mui`・アプリ以外の `.pri`・`workloads*.json`・`App.xaml`・`app.manifest`・`WindowsAppRuntime.png`・WebView2 関連・`UniversalBGTask` は削除してよいことを実測済みです。
@@ -362,6 +370,32 @@ ConvertTo-SemanticVersion -Version '1.2.3-rc.1'   # 不正なら例外
 Get-VersionSeries -Version '1.2.3'                # -> 1.2
 Get-MaxVersion -Versions @('1.0.0', '1.2.0')      # -> 1.2.0
 ```
+
+## 自己完結 Single 版（何も導入できない環境向け）
+
+**ランタイムを導入できない環境**（Windows Sandbox・毎回初期化される VM 等）向けに、WinUI 3 版は
+**Windows App Runtime と .NET を同梱した単一 exe** も配布します（`SaveEvidence.WinUI3.Single.<版数>.zip`）。
+**配布物です**（`release-config.json` の `uis[].outputs` に登録し、Release へ添付します）。
+
+```powershell
+& .\buildScript\publish_WinUI3.bat win-x64   # AOT 版と Single 版の両方を作る
+```
+
+- **Windows App Runtime と .NET を同梱します**（`SaveEvidenceSelfContained=true`。 csproj の
+  条件付きプロパティ + `PublishSingleFile=true`）。 そのため、ランタイムが 1 つも入っていない環境でも
+  そのまま起動します（実測 2026-11-10: 293.5 MB。 起動・描画・終了・設定の往復を確認）。
+- **AOT 版はフレームワーク依存のままです**（小さい・起動が速い・コード ページを共有できる）。
+  どちらを配布するかは利用者が選べます（zip 名の `Single` で判別できます）。
+- **`-p:WindowsAppSDKSelfContained=true` をコマンド ラインへ直接渡さないでください**（参照プロジェクトへ
+  伝播し、`WindowsAppSDKSelfContained requires a supported Windows architecture` で失敗します。 実測 2026-11-09）。
+  スクリプトがプロジェクト内のプロパティを切り替えます。
+- **Windows App Runtime の診断はログで行えます**: 起動時に次の 1 行が出ます（成否と、導入前後の版）。
+
+  ```text
+  [INF] [Program] [App.WinUI3] Windows App Runtime を用意しました (required=2.6.5, before=(なし), after=2.6.5.0, initialized=true)
+  ```
+
+  Single 版では `before` / `after` が `(なし)` のままになります（同梱したランタイムを使うため）。
 
 ## 注意点
 

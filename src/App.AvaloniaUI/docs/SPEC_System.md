@@ -46,7 +46,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ターゲットフレームワーク** | net10.0-windows10.0.17763.0 |
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **DI** | Microsoft.Extensions.DependencyInjection |
-| **ログ** | Serilog 4.x + Serilog.Sinks.File（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
+| **ログ** | Serilog 4.x + Serilog.Sinks.File（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.AvaloniaUI.<yyyyMMdd>.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
 | **シリアル化** | System.Text.Json（設定ファイル） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |
 | **依存プロジェクト** | Parts.CapturePreview.ControlAvaloniaUI / EsUtil.Ui.AvaloniaUI.ColorSelector / EsUtil.Ui.AvaloniaUI.Interop / LineDetection |
@@ -232,7 +232,7 @@ flowchart TB
 
 ## 8. ログ
 
-ログ定義は `src/App.AvaloniaUI/src/Logging/AppLog.cs`（LoggerMessage ソース生成）に集約し、Serilog 経由で `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7日で自動アーカイブ・削除）へ出力する。
+ログ定義は `src/App.AvaloniaUI/src/Logging/AppLog.cs`（LoggerMessage ソース生成）に集約し、Serilog 経由で `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.AvaloniaUI.<yyyyMMdd>.log`（日次ローテーション・7日で自動アーカイブ・削除）へ出力する。 ログは UI 版ごとに分かれ、設定ファイルだけを 4 つの UI 版で共有する。
 
 | LogLevel | 対象 | 例 |
 | --- | --- | --- |

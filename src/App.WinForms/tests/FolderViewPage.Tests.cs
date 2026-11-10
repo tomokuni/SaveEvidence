@@ -159,6 +159,13 @@ public class FolderViewPageTests : IDisposable
         public Settings Current { get; } = new();
 
         /// <inheritdoc/>
+        public event EventHandler<SaveFailedEventArgs>? SaveFailed
+        {
+            add { }
+            remove { }
+        }
+
+        /// <inheritdoc/>
         public void Save()
         {
             // テストではファイルへ書き込まない

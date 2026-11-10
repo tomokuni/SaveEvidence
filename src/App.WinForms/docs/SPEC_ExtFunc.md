@@ -220,7 +220,7 @@ Windows 上で画面の一部をすばやく切り出して保存したい利用
 
 ## 5. 操作ログ
 
-出力先は `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`（日次ローテーション・7 日保持。 Serilog）です。 他の UI 版と同じファイルへ出力するため、比較できます。
+出力先は `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.WinForms.<yyyyMMdd>.log`（日次ローテーション・7 日保持。 Serilog）です。 ログは UI 版ごとに分かれるため、実行した UI 版をファイル名で判別できます。
 
 | 内容 | 例 |
 | --- | --- |

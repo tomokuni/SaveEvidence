@@ -4,29 +4,29 @@
     "net10.0-windows10.0.17763": {
       "EsUtil.Feature.Loupe.Core": {
         "type": "Direct",
-        "requested": "[0.6.0, )",
-        "resolved": "0.6.0",
-        "contentHash": "pM70XGBcp862uEtX/NAnkNOqD9WYbIoVwTUSEdub/IMQC4LVJHfgM2lJm7UuP1e4eUhQuVIRRNVsR19iDm4huw==",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "IOgjwnFEIC9m6qturBruA9BGbPI8qLfTaFwKrePLHwQ/nw741GTlrAZg3obkLJfhSiUZ6Fe0O1zX7hb/21Fp8A==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.0",
+          "EsUtil.Platform.Core": "0.6.2",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "Direct",
-        "requested": "[0.6.0, )",
-        "resolved": "0.6.0",
-        "contentHash": "Rewb/k+9sTNewoM9usYFBVp9jZAlrnE13vd/fbu8/gTfCHqwqb1zuwRbp4oqnGjHpjgkPlkt7C+BHHrOlcgixw==",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "Cb4D1nxcKB4wpLfD4e5OZcKdhmewGseLucZdhdXqMqTQBE1gNChceBIf6BznzkQIpyAilSXC4vLWQE0OSkI75w==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.0",
+          "EsUtil.Platform.Core": "0.6.2",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "Direct",
-        "requested": "[0.6.0, )",
-        "resolved": "0.6.0",
-        "contentHash": "eshFW7EYXw06luqWHwhgCVrsmgF5n/muMMMdjy1X2WrjZ2WjpE6pa0UGVoWjTY/UjariArBPzGARqPiqqkWHuw=="
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "u08Uu8OXNBfUF/o6ESHJRuwmvPONY9gS5g0rFN1myZq73Wm4756W6FS5dmTUyTI3CLeQ9wrRm6BwZJSSlqDQkg=="
       },
       "Meziantou.Analyzer": {
         "type": "Direct",

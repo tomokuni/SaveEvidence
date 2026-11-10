@@ -1,4 +1,5 @@
 using EsUtil.SaveEvidence.App.Core.Services;
+using System.Globalization;
 using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
@@ -34,10 +35,33 @@ public class AppIdentityTests
         Assert.Equal(Path.Combine(localAppData, AppIdentity.ProductName), AppIdentity.LocalAppDataFolder);
         Assert.Equal(Path.Combine(AppIdentity.LocalAppDataFolder, "settings.json"), AppIdentity.SettingsFilePath);
         Assert.Equal(Path.Combine(AppIdentity.LocalAppDataFolder, "logs"), AppIdentity.LogsFolder);
-        Assert.Equal(
-            Path.Combine(AppIdentity.LogsFolder, AppIdentity.ProductName + ".log"),
-            AppIdentity.LogFilePath);
     }
+
+    /// <summary>ログ ファイル名が <c>&lt;アセンブリ名&gt;.&lt;yyyyMMdd&gt;.log</c> になることを検証する。</summary>
+    /// <remarks>
+    /// Serilog は拡張子の直前に日付を挿入するため、基点の名前は <c>&lt;アセンブリ名&gt;..log</c>（`.` が 2 つ）である。<br/>
+    /// 基点の綴りを変えると実際のファイル名が <c>SaveEvidence.WinForms20261109.log</c> のように
+    /// 区切り無しへ変わるため、日付を挿入した結果の形を固定する（実測 2026-11-09）。<br/>
+    /// 規則の所有者は <c>.github/命名規約.md</c>「ファイル」と <c>.github/ログ規約.md</c> §1.1。
+    /// </remarks>
+    [Fact]
+    internal void ログファイル名_はアセンブリ名と日付をドットで区切る()
+    {
+        var path = AppIdentity.GetLogFilePath("SaveEvidence.WinForms");
+
+        Assert.Equal(AppIdentity.LogsFolder, Path.GetDirectoryName(path));
+        Assert.Equal("SaveEvidence.WinForms..log", Path.GetFileName(path));
+
+        // Serilog は拡張子の直前に日付を挿入する（基点の末尾の `.` が日付との区切りになる）
+        var stem = Path.GetFileNameWithoutExtension(path);
+        var actual = stem + DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + Path.GetExtension(path);
+
+        Assert.Matches(@"^SaveEvidence\.WinForms\.\d{8}\.log$", actual);
+    }
+
+    [Fact]
+    internal void ログファイル名_はアセンブリ名が空なら例外()
+        => Assert.Throws<ArgumentException>(() => AppIdentity.GetLogFilePath(" "));
 
     [Fact]
     internal void 一時フォルダ_はTEMP配下の製品フォルダ()

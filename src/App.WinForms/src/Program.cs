@@ -11,7 +11,7 @@ namespace EsUtil.SaveEvidence.App.WinForms;
 /// <b>構成</b>: UI 非依存の <c>App.Core</c>（設定・ViewModel）と <c>Platform.WinForms</c>（Interop）を使い、<br/>
 /// UI 層だけを WinForms で実装する。 他の UI 実装と同じコアロジックを共有し、<br/>
 /// 設定ファイル（<c>%LOCALAPPDATA%\SaveEvidence\settings.json</c>）とログ<br/>
-/// （<c>%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log</c>）も共有する。<br/>
+/// （<c>%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.WinForms.&lt;yyyyMMdd&gt;.log</c>。 ログは UI 版ごとに分かれる）。<br/>
 /// <br/>
 /// <b>必須の初期化</b>:<br/>
 /// 1. <c>Application.SetHighDpiMode(PerMonitorV2)</c>（DPI 対応。 他の API より前に呼ぶ）<br/>
@@ -22,7 +22,7 @@ namespace EsUtil.SaveEvidence.App.WinForms;
 /// </remarks>
 internal static class Program
 {
-    /// <summary>ロガー（他の UI 実装と同じログファイルへ出力する）。</summary>
+    /// <summary>ロガー（他の UI 実装と同じ書式のログへ出力する。 ファイルは UI 版ごとに分かれる）。</summary>
     private static readonly Microsoft.Extensions.Logging.ILogger s_logger =
         Logging.AppLog.CreateLogger(nameof(Program));
 
@@ -68,7 +68,7 @@ internal static class Program
     /// 2. <c>TaskScheduler.UnobservedTaskException</c>: 待機されなかったタスクの例外（観測済みにして継続する）。<br/>
     /// 3. <c>Application.ThreadException</c>: UI スレッドの例外。 記録だけ行い、ウィンドウの表示を維持する<br/>
     ///    （UI スレッドを黙って終了させない）。<br/>
-    /// <b>書式</b>: 他の UI 実装と同じ <c>未処理の例外: {発生源}</c> で記録し、同じログファイルで追跡できるようにする。
+    /// <b>書式</b>: 他の UI 実装と同じ <c>未処理の例外: {発生源}</c> で記録する（ファイルは UI 版ごとに分かれる）。
     /// </remarks>
     private static void RegisterExceptionLogging()
     {

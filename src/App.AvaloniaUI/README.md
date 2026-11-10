@@ -196,7 +196,7 @@ buildScript\publish_AvaloniaUI.bat
 
 ログは Serilog によりファイル出力されます。
 
-- 場所: `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.log`
+- 場所: `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.AvaloniaUI.<yyyyMMdd>.log`（UI 版ごとに分かれる）
 - 保持: 7 日で自動アーカイブ・削除（日次ローテーション）
 - 設定ファイル: `%LOCALAPPDATA%\SaveEvidence\settings.json`（JSON・enum は文字列で保存）
 

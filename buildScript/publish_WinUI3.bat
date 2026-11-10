@@ -10,10 +10,13 @@ rem  position in decoded characters, so non-ASCII text garbles the output and ca
 rem  execute fragments of the file as commands.  The chcp below keeps the UTF-8 log of
 rem  dotnet readable (safe because this file is ASCII).  Rules: .github/RELEASE.md.
 rem
-rem  This script publishes the Native AOT shape (folder distribution) for this UI.  The mode is
-rem  chosen by buildScript/publish_ui.bat.
+rem  This script publishes **two shapes** for this UI (both are release assets):
+rem    - Native AOT in a folder with a framework-dependent Windows App SDK
+rem    - one self-contained exe with the Windows App Runtime and .NET bundled
+rem  The mode of each publish is chosen by buildScript/publish_ui.bat.
 rem  Measured 2026-11-05: the AOT folder starts and exits with code 0 (verified by
-rem  .github/verify/verifyPublish.ps1).
+rem  .github/verify/verifyPublish.ps1).  Measured 2026-11-10: the single self-contained exe
+rem  (293.5 MB) starts, draws and exits with code 0.
 rem
 rem  Single file publishing needs the WinUI 3 libraries to be built with a RID first:
 rem  single file publishing requires the .pri (resource index) of every WinUI 3 project as an
@@ -64,20 +67,51 @@ for %%p in (
   "src\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj"
 ) do dotnet build %%p -c Release -r %RID% -v q --nologo -p:NuGetLockFilePath=packages.%RID%.lock.json >nul 2>&1
 
-rem  The shape is Native AOT in a folder (framework-dependent Windows App SDK).
-rem  The framework-dependent publish is smaller than the former self-contained single file and
-rem  starts with less memory, because the Windows App SDK code pages are shared with other apps
-rem  (sizes are measured and printed by .github/verify/verifyPublish.ps1).  Native AOT cannot bundle
-rem  native libraries into the exe (measured 2026-10-20), and Windows App SDK rejects single file
-rem  publishing while framework dependent, so the AOT shape is a folder distribution.
+rem  Show the lower bound of the Windows App Runtime that the AOT shape needs.
+rem  The value is owned by Directory.Packages.props (Microsoft.WindowsAppSDK); the app asks for the
+rem  same version at start (WindowsAppRuntimeRequirement).  Keep it in sync, do not repeat the number
+rem  in this script.
+set "WASDK="
+for /f "tokens=3 delims==" %%v in ('findstr /c:"Include=\"Microsoft.WindowsAppSDK\"" Directory.Packages.props') do if not defined WASDK set "WASDK=%%v"
+if defined WASDK set "WASDK=%WASDK:"=%"
+for /f "tokens=1" %%v in ("%WASDK%") do set "WASDK=%%v"
+if defined WASDK echo [INFO] Windows App Runtime: %WASDK% or later (x64) is required for the AOT shape
+if not defined WASDK echo [WARN] Windows App Runtime: the lower bound was not found in Directory.Packages.props
+
+rem  The UI ships **two shapes** and both are release assets:
+rem    1. aot     Native AOT in a folder (framework-dependent Windows App SDK).  Smallest and
+rem               lowest memory when the runtime is installed (code pages are shared).
+rem    2. single  One self-contained exe (Windows App Runtime AND .NET bundled, files extracted at
+rem               start).  Runs on a machine where nothing can be installed (Windows Sandbox, a
+rem               fresh VM).  Measured 2026-11-10: 293.5 MB, starts, draws and exits with code 0.
+rem  The folder name carries the shape (publish\winui3-win-x64-aot / winui3-win-x64-single).
+rem  The asset name carries it too (SaveEvidence.WinUI3.{version}.zip / ...WinUI3.Single.{version}.zip);
+rem  the rule is owned by .github (naming rules document).
 rem  The app checks for the Windows App Runtime at startup and installs it when the user agrees
 rem  (EsUtil.Ui.WinUI3.Interop / Bootstrapping.WindowsAppRuntimeBootstrap, published in EsUtil 0.5.2).
+rem  The single shape needs the runtime directory to be set before program entry; Program.Main does it
+rem  when it detects a single file bundle (measured 2026-11-10).
+
+rem ---- Shape 1: Native AOT in a folder (framework-dependent Windows App SDK) ----
 rem  AOT is enabled by `SaveEvidencePublishAot` in src\App.WinUI3\src\App.WinUI3.csproj:
 rem  passing `-p:PublishAot=true` directly flows to the referenced projects (measured).
 set "SE_MODES=aot"
 set "SE_AOT_ARGS=-p:SaveEvidencePublishAot=true"
-
+set "SE_SINGLE_ARGS="
 call "%~dp0publish_ui.bat" winui3 "src\App.WinUI3\src\App.WinUI3.csproj" %*
-set "RESULT=%ERRORLEVEL%"
+set "RESULT_AOT=%ERRORLEVEL%"
+set "SE_AOT_ARGS="
+
+rem ---- Shape 2: one self-contained exe (Windows App Runtime + .NET bundled) ----
+rem  `SaveEvidenceSelfContained` bundles both runtimes (see src\App.WinUI3\src\App.WinUI3.csproj).
+rem  `IncludeNativeLibrariesForSelfExtract` keeps the native Windows App Runtime libraries inside the
+rem  exe and extracts them at start (required by the Windows App SDK single file support).
+set "SE_MODES=single"
+set "SE_SINGLE_ARGS=-p:SaveEvidenceSelfContained=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true"
+call "%~dp0publish_ui.bat" winui3 "src\App.WinUI3\src\App.WinUI3.csproj" %*
+set "RESULT_SINGLE=%ERRORLEVEL%"
+
 popd
-exit /b %RESULT%
+rem Both shapes are release assets, so a failure in either one fails the script.
+if not "%RESULT_AOT%"=="0" exit /b %RESULT_AOT%
+exit /b %RESULT_SINGLE%

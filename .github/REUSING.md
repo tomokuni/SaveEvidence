@@ -118,7 +118,7 @@ MTP モードではテスト対象を `--solution` / `--project` で指定しま
 | `name` | アーティファクト名（ジョブの表示にも使う） |
 | `script` | publish スクリプト（リポジトリルートからの相対パス。 例: `buildScript/publish_MewUI.bat`） |
 | `output` | publish の出力パス（複数ファイルの場合はフォルダ） |
-| `asset` | Release に添付するファイル名（zip する場合は作成後の名前。 例: `SaveEvidence.MewUI.zip`） |
+| `asset` | Release に添付する zip の名前（`<アセンブリ名>.<版数>.zip`。 例: `SaveEvidence.MewUI.0.1.2.zip`。 **版数は `{version}` と書き、`publish.yml` が `<Version>` で置き換える**） |
 | `zip` | 配布前に zip 化する場合は `true`。 `output` が単一ファイル（exe）でもフォルダ（exe + ネイティブ DLL）でも同じ指定で扱える |
 | `requiresWindowsAppRuntime` | 配布物が Windows App Runtime へフレームワーク依存で動く場合は `true`（`publish.yml` が配布物の起動検証の前に [`.github/scripts/installWindowsAppRuntime.ps1`](scripts/installWindowsAppRuntime.ps1) を実行する。 **版は `Directory.Packages.props` の `Microsoft.WindowsAppSDK` から導く**） |
 

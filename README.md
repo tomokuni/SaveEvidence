@@ -264,7 +264,8 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 
 - ネイティブライブラリ（OpenCvSharp・Avalonia の GL 実装等）は exe へ同梱できないため、同じフォルダーへ並べて配布します（方式 1 のとき）。
 - 方式 2 は自己完結ランタイムを丸ごと含むため、配布物は方式 1 より大きくなります。
-- **Windows App SDK を使う WinUI 3 版は、ランタイムを同梱せずフレームワーク依存で動きます**（コード ページを他のアプリと共有でき、起動が速くメモリも少なくて済みます。 配布物の構成とサイズは [`.github/verify/verifyPublish.ps1`](.github/verify/verifyPublish.ps1) が実測して表示します）。 **配布先には Windows App Runtime 2.6（x64）が必要です**（無ければ起動時に案内して導入します）。
+- **Windows App SDK を使う WinUI 3 版は 2 つの形で配布します**。 **AOT 版**はランタイムを同梱せずフレームワーク依存で動き（コード ページを他のアプリと共有でき、起動が速くメモリも少なくて済みます）、**Single 版**は Windows App Runtime と .NET を 1 つの exe に同梱します（何も導入できない環境（Windows Sandbox・まっさらな VM）でもそのまま動きます）。 配布物の構成とサイズは [`.github/verify/verifyPublish.ps1`](.github/verify/verifyPublish.ps1) が実測して表示します。
+- **AOT 版の配布先には Windows App Runtime 2.6.5 以降（x64）が必要です**（アプリのビルドに使った `Microsoft.WindowsAppSDK` の版が下限。 無ければ起動時に案内して導入します。 版は [`Directory.Packages.props`](Directory.Packages.props) が単一所有します）。 Single 版は同梱しているため不要です。
 
 ---
 
@@ -282,7 +283,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
  cmd /c buildScript\publish_WinForms.bat
 ```
 
-出力先はスクリプトが表示します（`publish/<UI>-win-x64-<方式>`。 例: `publish/avaloniaui-win-x64-single`）。 リポジトリ外の一時領域へ発行してから必要なファイルだけを配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。
+出力先はスクリプトが表示します（`publish/<UI>-win-x64-<方式>`。 例: `publish/avaloniaui-win-x64-single`）。 **WinUI 3 版だけは 2 つの形を作ります**（`publish/winui3-win-x64-aot` と `publish/winui3-win-x64-single`）。 リポジトリ外の一時領域へ発行してから必要なファイルだけを配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。
 
 **単体のプロジェクトを直接発行する場合**（方式を自分で選ぶ場合）:
 
@@ -310,9 +311,9 @@ pwsh -NoProfile -File .github/verify/verify.ps1
 | MewUI 版 | `SaveEvidence.MewUI.exe` | exe + ネイティブ DLL |
 | Avalonia UI 版 | `SaveEvidence.AvaloniaUI.exe` | exe 1 個（単一ファイル） |
 | WinForms 版 | `SaveEvidence.WinForms.exe` | exe 1 個（単一ファイル） |
-| WinUI 3 版 | `SaveEvidence.WinUI3.exe` | exe + ネイティブ DLL / `.pri` など（フォルダー単位で配置。 Native AOT） |
+| WinUI 3 版 | `SaveEvidence.WinUI3.exe` | **AOT 版**: exe + ネイティブ DLL / `.pri` など（フォルダー単位で配置） / **Single 版**: exe 1 個（Windows App Runtime と .NET を同梱） |
 
-4 つの UI は**同じ設定ファイルとログを共有します**（`%LOCALAPPDATA%\SaveEvidence\settings.json` と `%LOCALAPPDATA%\SaveEvidence\logs\`）。
+4 つの UI は**同じ設定ファイルを共有します**（`%LOCALAPPDATA%\SaveEvidence\settings.json`）。 **ログは実行ファイルごとに分かれます**（`%LOCALAPPDATA%\SaveEvidence\logs\<アセンブリ名>.<yyyyMMdd>.log`。 例: `SaveEvidence.WinUI3.20261109.log`）。
 
 ## 5. 操作方法
 
