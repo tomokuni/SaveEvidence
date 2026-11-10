@@ -195,6 +195,32 @@
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )"
         }
       },
+      "EsUtil.Feature.Loupe.Core": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "IOgjwnFEIC9m6qturBruA9BGbPI8qLfTaFwKrePLHwQ/nw741GTlrAZg3obkLJfhSiUZ6Fe0O1zX7hb/21Fp8A==",
+        "dependencies": {
+          "EsUtil.Platform.Core": "0.6.2",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
+        }
+      },
+      "EsUtil.Feature.Marquee.Core": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "Cb4D1nxcKB4wpLfD4e5OZcKdhmewGseLucZdhdXqMqTQBE1gNChceBIf6BznzkQIpyAilSXC4vLWQE0OSkI75w==",
+        "dependencies": {
+          "EsUtil.Platform.Core": "0.6.2",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
+        }
+      },
+      "EsUtil.Platform.Core": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "u08Uu8OXNBfUF/o6ESHJRuwmvPONY9gS5g0rFN1myZq73Wm4756W6FS5dmTUyTI3CLeQ9wrRm6BwZJSSlqDQkg=="
+      },
       "Microsoft.Extensions.Logging.Abstractions": {
         "type": "CentralTransitive",
         "requested": "[10.0.14, )",

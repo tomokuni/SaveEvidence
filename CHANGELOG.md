@@ -22,6 +22,7 @@
 - **Windows App Runtime の下限を README と `publish_WinUI3.bat` に明記しました**（2.6.5 以降）。
 - **リリースのモードを 3 段階にしました**（`dry-run`（検証のみ）/ `dry-run-pack`（配布物まで）/ `release`）。
 - 依存パッケージを更新しました（EsUtil 0.6.2）。
+
 ## 0.1.4（2026-11-07）
 
 ### 変更

@@ -194,7 +194,7 @@
           "EsUtil.Ui.WinForms.Loupe": "[0.6.2, )",
           "EsUtil.Ui.WinForms.Marquee": "[0.6.2, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
-          "Parts.CapturePreview.Core": "[0.1.4, )"
+          "Parts.CapturePreview.Core": "[0.1.5, )"
         }
       },
       "parts.capturepreview.core": {
@@ -204,6 +204,65 @@
           "EsUtil.Feature.Marquee.Core": "[0.6.2, )",
           "EsUtil.Platform.Core": "[0.6.2, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )"
+        }
+      },
+      "EsUtil.Feature.Loupe.Core": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "IOgjwnFEIC9m6qturBruA9BGbPI8qLfTaFwKrePLHwQ/nw741GTlrAZg3obkLJfhSiUZ6Fe0O1zX7hb/21Fp8A==",
+        "dependencies": {
+          "EsUtil.Platform.Core": "0.6.2",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
+        }
+      },
+      "EsUtil.Feature.Marquee.Core": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "Cb4D1nxcKB4wpLfD4e5OZcKdhmewGseLucZdhdXqMqTQBE1gNChceBIf6BznzkQIpyAilSXC4vLWQE0OSkI75w==",
+        "dependencies": {
+          "EsUtil.Platform.Core": "0.6.2",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
+        }
+      },
+      "EsUtil.Platform.Core": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "u08Uu8OXNBfUF/o6ESHJRuwmvPONY9gS5g0rFN1myZq73Wm4756W6FS5dmTUyTI3CLeQ9wrRm6BwZJSSlqDQkg=="
+      },
+      "EsUtil.Ui.WinForms.Interop": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "YbLmRD3tP9VjWYp7MI5bf6hFkK66tmh82Lb6WRnEOrKUpcAKsjs0a2mjp6CgCOzwSva2fqK/Rcnvwj6EtxL3Iw==",
+        "dependencies": {
+          "EsUtil.Platform.Core": "0.6.2"
+        }
+      },
+      "EsUtil.Ui.WinForms.Loupe": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "HQBOndhl4N5fh8qMw26Q/rFbJLhvQaTlz856ONSVG9gbQUIEAxPY9K10BK17Te+ikO2hWd9JUasx7rxCETgH8w==",
+        "dependencies": {
+          "EsUtil.Feature.Loupe.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Ui.WinForms.Interop": "0.6.2",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
+        }
+      },
+      "EsUtil.Ui.WinForms.Marquee": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "72I6TbbS8t7UQWJlW2mBxvq3gcJLEyY2e1QzlIeM7ahmK7h6r6boqd5BVUd+YP0QG7zGu4RpaHL/LzSbd3ZIoA==",
+        "dependencies": {
+          "EsUtil.Feature.Marquee.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Ui.WinForms.Interop": "0.6.2",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "Microsoft.Extensions.Logging.Abstractions": {

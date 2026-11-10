@@ -340,6 +340,12 @@
         "dependencies": {
           "Avalonia": "12.1.5"
         }
+      },
+      "EsUtil.Platform.Core": {
+        "type": "CentralTransitive",
+        "requested": "[0.6.2, )",
+        "resolved": "0.6.2",
+        "contentHash": "u08Uu8OXNBfUF/o6ESHJRuwmvPONY9gS5g0rFN1myZq73Wm4756W6FS5dmTUyTI3CLeQ9wrRm6BwZJSSlqDQkg=="
       }
     }
   }
