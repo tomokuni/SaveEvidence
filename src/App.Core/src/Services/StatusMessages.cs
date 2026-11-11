@@ -30,9 +30,30 @@ public static class StatusMessages
     /// <returns>通知の文言。</returns>
     public static string PasteUnavailable() => "クリップボードに画像がありません。";
 
+    /// <summary>画像を保存したことを通知する文言を取得する。</summary>
+    /// <param name="savedAt">保存した日時。</param>
+    /// <returns>通知の文言（例: <c>保存しました（2026.11.11 21:24:22）</c>）。</returns>
+    /// <remarks>
+    /// 保存後のステータスは撮影の通知（<see cref="CaptureCompleted"/>）を置き換える<br/>
+    /// （「キャプチャしました」と「保存しました」が並ぶと、どちらが現在の状態か読めない）。<br/>
+    /// 日時はカルチャに依存させない（24 時間表記・固定の区切り）。
+    /// </remarks>
+    public static string SaveCompleted(DateTime savedAt)
+        => $"保存しました（{savedAt.ToString("yyyy.MM.dd HH:mm:ss", CultureInfo.InvariantCulture)}）";
+
     /// <summary>画像の保存に失敗したことを通知する文言を取得する。</summary>
     /// <returns>通知の文言。</returns>
     public static string SaveFailed() => "保存できませんでした（保存先フォルダを確認してください）。";
+
+    /// <summary>自動保存を中止したこと（同名のファイルがある）を通知する文言を取得する。</summary>
+    /// <param name="fileName">保存しようとしたファイル名。</param>
+    /// <returns>通知の文言。</returns>
+    /// <remarks>
+    /// 自動保存は確認ダイアログを出さないため、同名のファイルは上書きせずに中止する<br/>
+    /// （利用者のファイルを無言で壊さない）。
+    /// </remarks>
+    public static string AutoSaveSkipped(string fileName)
+        => $"自動保存しませんでした（同名のファイルがあります: {fileName}）。";
 
     /// <summary>保存を実行できない状態であることを通知する文言を取得する。</summary>
     /// <param name="hasInvalidTemplate">ファイル名テンプレートが無効かどうか。</param>
@@ -41,7 +62,7 @@ public static class StatusMessages
     public static string SaveUnavailable(bool hasInvalidTemplate, string? validationMessage)
         => hasInvalidTemplate
             ? $"ファイル名テンプレートが無効です: {validationMessage}"
-            : "保存できる状態ではありません（画像が無い・保存済み・保存先が不正）。";
+            : "保存できる状態ではありません（画像が無い・初期画像・保存済み（画像が変わっていない）・保存先が不正）。";
 
     /// <summary>自動切り出しで矩形を検出したことを通知する文言を取得する。</summary>
     /// <param name="count">検出した矩形の数。</param>

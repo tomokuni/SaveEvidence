@@ -133,6 +133,108 @@ public class MainViewModelTests
         var saved = Assert.Single(writer.SavedPaths);
         Assert.EndsWith("screenshot_001.png", saved, StringComparison.Ordinal);
         Assert.Single(writer.SavedImages);
+
+        // 5. ステータスバーの通知が「保存しました（…）」に置き換わること（撮影の通知が残らない）
+        Assert.StartsWith("保存しました（", vm.StatusMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain("キャプチャしました", vm.StatusMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    internal async Task SaveImageAsync_画像が変わっていない場合は保存しない()
+    {
+        using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
+
+        var vm = new MainViewModel(new MockSettingsService(), writer)
+        {
+            PreviewImage = CreateBitmap(),
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+        };
+
+        Assert.True(await vm.SaveImageAsync());
+
+        // 画像が変わっていないため保存済みのまま。 2 回目は何もしない（キー リピート・連打で増やさない）
+        Assert.False(vm.CanSave);
+        Assert.False(await vm.SaveImageAsync());
+
+        Assert.Single(writer.SavedPaths);
+        Assert.Equal("screenshot_002.png", vm.FileNameTemplateText);
+    }
+
+    [Fact]
+    internal async Task SaveImageAsync_画像を変えて再保存するとSavedFileNameが更新される()
+    {
+        using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
+
+        var vm = new MainViewModel(new MockSettingsService(), writer)
+        {
+            PreviewImage = CreateBitmap(),
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+        };
+
+        Assert.True(await vm.SaveImageAsync());
+        Assert.Equal("screenshot_001.png", vm.SavedFileName);
+
+        // 画像を差し替えると保存済みが解除され、次の保存で新しい名前になる
+        vm.SetPreviewImage(CreateBitmap());
+        Assert.True(await vm.SaveImageAsync());
+
+        Assert.Equal("screenshot_002.png", vm.SavedFileName);
+    }
+
+    [Fact]
+    internal void CanSave_初期画像の場合はfalseになり通常の画像でtrueに戻る()
+    {
+        using var tempDir = new TempDir();
+
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
+        {
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+        };
+
+        // 起動直後の初期画像は利用者の画像ではないため保存できない
+        using (var startup = EsBitmap.Create(4, 4))
+        {
+            vm.SetStartupPreviewImage(startup);
+        }
+
+        Assert.True(vm.IsStartupImage);
+        Assert.False(vm.CanSave);
+
+        // 撮影等で差し替えると保存できる
+        vm.SetPreviewImage(CreateBitmap());
+        Assert.False(vm.IsStartupImage);
+        Assert.True(vm.CanSave);
+    }
+
+    [Fact]
+    internal async Task AutoSave_有効な場合は画像の変更で自動保存する()
+    {
+        using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
+
+        var vm = new MainViewModel(new MockSettingsService(), writer)
+        {
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+            AutoSave = true,
+        };
+
+        // 画像を設定すると（変更通知の後処理を待って）自動で保存される
+        vm.SetPreviewImage(CreateBitmap());
+
+        var path = Path.Combine(tempDir.Path, "screenshot_001.png");
+        for (var i = 0; i < 100 && !File.Exists(path); i++)
+        {
+            await Task.Delay(20, TestContext.Current.CancellationToken);
+        }
+
+        Assert.True(File.Exists(path), "自動保存でファイルが作られること");
+        Assert.True(vm.IsSaved);
     }
 
     [Fact]

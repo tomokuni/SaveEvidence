@@ -251,7 +251,20 @@ internal static class CapturePage
             VerticalAlignment = VerticalAlignment.Center,
         };
         template.FontSize(AppStyles.ToolbarFontSize);
+        // ツールチップの文言はコアが単一所有する（4 UI 版で同じ説明を出す）
+        template.ToolTip(FileNameTemplate.BuildHelpText());
         template.OnTextChanged(value => viewModel.FileNameTemplateText = value);
+
+        // 保存後のインクリメント等、ViewModel 側で変わったテンプレートを入力欄へ戻す
+        // （戻さないと、次に入力した文字列で古い値が上書きされ、番号が戻る）
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.FileNameTemplateText), StringComparison.Ordinal)
+                && !string.Equals(template.Text, viewModel.FileNameTemplateText, StringComparison.Ordinal))
+            {
+                template.Text = viewModel.FileNameTemplateText;
+            }
+        };
 
         var save = IconButton(CaptureIconFiles.Save, "画像を保存", () => _ = viewModel.SaveImageAsync(), iconImages);
         save.BindIsEnabled(canSave);
@@ -269,6 +282,18 @@ internal static class CapturePage
         var cropButton = IconButton(CaptureIconFiles.Crop, "切り出し（切出しモード開始/終了）", ToggleCrop, iconImages);
         cropButton.BindIsEnabled(hasImage);
 
+        // 自動保存のトグル（切り出しの右。 有効な間は画像が変わるたびに保存する）
+        // ツールヒントは付けない（MewUI 0.21.1 はツールヒント表示中の押下を取り消すため、
+        // トグルが反応しないことがある。 文言は自己説明的な「自動保存」にする）
+        var autoSaveButton = new ToggleButton()
+            .StyleName(AppStyles.ToolbarToggle)
+            .Content("自動保存")
+            .Height(AppStyles.ToolbarButtonHeight)
+            .Margin(new Thickness(1))
+            .IsChecked(viewModel.AutoSave);
+        autoSaveButton.Cursor(CursorType.Hand);
+        autoSaveButton.OnCheckedChanged(isChecked => viewModel.AutoSave = isChecked);
+
         var toolbar = new WrapPanel()
             .Margin(new Thickness(2, AppStyles.ToolbarMarginTop, AppStyles.ToolbarMarginRight, AppStyles.ToolbarMarginBottom))
             .Children(
@@ -281,7 +306,9 @@ internal static class CapturePage
                 windowSelect,
                 areaSelect,
                 AppStyles.CreateToolbarDivider(),
-                cropButton);
+                cropButton,
+                AppStyles.CreateToolbarDivider(),
+                autoSaveButton);
 
         // ファイル名テンプレートの幅をテキストの実測に合わせる（上限は折り返さない幅）。
         // ツールバーの幅が変わったら計算し直す
@@ -327,7 +354,7 @@ internal static class CapturePage
         UpdateTemplateWidth();
 
         // ── ステータスバー ──
-        // 左: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存済み/未 | 保存ファイル名 | 通知
+        // 左: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存ファイル名 | 通知
         // バインドはプロパティ名を推定するためインライン式で指定する
         var pointerLabel = new Label { Width = 70 };
         pointerLabel.FontSize(AppStyles.StatusFontSize);
@@ -341,10 +368,6 @@ internal static class CapturePage
         imageSizeLabel.Bind(Label.TextProperty, viewModel, static x => x.ImageSizeDisplayText);
         imageSizeLabel.ToolTip("画像サイズ（対象座標 = 元画像ピクセル）");
 
-        var saveStatusLabel = new Label { VerticalAlignment = VerticalAlignment.Center };
-        saveStatusLabel.FontSize(AppStyles.StatusFontSize);
-        saveStatusLabel.Bind(Label.TextProperty, viewModel, static x => x.SaveStatusText);
-
         var savedFileLabel = new Label { VerticalAlignment = VerticalAlignment.Center };
         savedFileLabel.FontSize(AppStyles.StatusFontSize);
         savedFileLabel.Bind(Label.TextProperty, viewModel, static x => x.SavedFileName);
@@ -357,7 +380,7 @@ internal static class CapturePage
         var statusLeft = new StackPanel()
             .Horizontal()
             .Spacing(4)
-            .Children(pointerLabel, imageSizeLabel, saveStatusLabel, savedFileLabel, messageLabel);
+            .Children(pointerLabel, imageSizeLabel, savedFileLabel, messageLabel);
 
         // 右: 拡大率（⊖ / ⊕ / Fit / % 表示。 % はクリックで拡大率メニューを出す）
         var zoomOut = StatusIconButton("ic_fluent_subtract_circle_24_regular.svg", "ズームアウト", crop.ZoomOut, iconImages);
@@ -468,6 +491,34 @@ internal static class CapturePage
             root,
             OnKeyDown: e =>
             {
+                // Ctrl+S / Ctrl+C / Ctrl+V（Avalonia 版と同じ操作）
+                // 保存は文字編集のショートカットではないため、テンプレート入力中でも行う。
+                // コピー・貼り付けはテンプレート入力中の文字編集を優先する
+                if (e.ControlKey && e.Key == Key.S)
+                {
+                    _ = viewModel.SaveImageAsync();
+                    e.Handled = true;
+                    return;
+                }
+
+                var focused = (template.FindVisualRoot() as Window)?.FocusManager.FocusedElement;
+                if (e.ControlKey && focused is not TextBox)
+                {
+                    if (e.Key == Key.C)
+                    {
+                        _ = viewModel.CopyToClipboardAsync();
+                        e.Handled = true;
+                        return;
+                    }
+
+                    if (e.Key == Key.V)
+                    {
+                        _ = viewModel.PasteFromClipboardAsync();
+                        e.Handled = true;
+                        return;
+                    }
+                }
+
                 // 切り出しの開始・確定・キャンセルを Ctrl+R でも操作できるようにする
                 // （Avalonia 版はメニュー項目の InputGesture が同じ役割を担う）
                 if (e.ControlKey && e.Key == Key.R)
@@ -513,6 +564,9 @@ internal static class CapturePage
         var panel = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
         Border? menu = null;
 
+        // 可否を後から更新するための項目（メニューは表示のたびに作り直さないため）
+        var entries = new List<(Button Button, Func<bool> CanExecute)>();
+
         // 項目を選んだらメニューを閉じる（Avalonia 版の MenuFlyout と同じ振る舞い）。
         // 覆い（外側クリックの受け皿）も一緒に隠す（隠さないと次のクリックが覆いに吸われる）
         void Close()
@@ -525,7 +579,7 @@ internal static class CapturePage
             onClosed?.Invoke();
         }
 
-        void Add(string text, Action action, bool enabled = true, string? gesture = null, string? iconFile = null)
+        void Add(string text, Action action, Func<bool>? canExecute = null, string? gesture = null, string? iconFile = null)
         {
             var content = new Grid().Columns("Auto,*,Auto");
             if (iconFile is not null)
@@ -561,7 +615,15 @@ internal static class CapturePage
                 CornerRadius = 0,
                 StyleName = AppStyles.FlatButton,
             };
-            button.IsEnabled(enabled);
+
+            // 可否は呼び出しのたびに評価する（メニューは 1 度だけ組み立てるため、
+            // 構築時の値で固定すると「保存済み」等の変化が反映されない）
+            if (canExecute is not null)
+            {
+                entries.Add((button, canExecute));
+                button.IsEnabled(canExecute());
+            }
+
             button.Cursor(CursorType.Hand);
             button.OnClick(() =>
             {
@@ -580,20 +642,31 @@ internal static class CapturePage
                 StyleName = AppStyles.Divider,
             });
 
-        Add("File - 画像を保存", () => _ = viewModel.SaveImageAsync(), viewModel.CanSave, "Ctrl+S", CaptureIconFiles.Save);
+        Add("File - 画像を保存", () => _ = viewModel.SaveImageAsync(), () => viewModel.CanSave, "Ctrl+S", CaptureIconFiles.Save);
         AddSeparator();
-        Add("Clipboard - コピー", () => _ = viewModel.CopyToClipboardAsync(), viewModel.CanCopy, "Ctrl+C");
-        Add("Clipboard - 貼り付け", () => _ = viewModel.PasteFromClipboardAsync(), viewModel.CanPaste, "Ctrl+V");
+        Add("Clipboard - コピー", () => _ = viewModel.CopyToClipboardAsync(), () => viewModel.CanCopy, "Ctrl+C");
+        Add("Clipboard - 貼り付け", () => _ = viewModel.PasteFromClipboardAsync(), () => viewModel.CanPaste, "Ctrl+V");
         AddSeparator();
-        Add("Image - 元に戻す", () => EditHistory.Undo(services), viewModel.HasPreviewImage, "Ctrl+Z");
-        Add("Image - 元に戻すを取り消す", () => EditHistory.Redo(services), viewModel.HasPreviewImage, "Ctrl+Y");
+        Add("Image - 元に戻す", () => EditHistory.Undo(services), () => viewModel.HasPreviewImage, "Ctrl+Z");
+        Add("Image - 元に戻すを取り消す", () => EditHistory.Redo(services), () => viewModel.HasPreviewImage, "Ctrl+Y");
         AddSeparator();
         Add("Capture - スクリーン選択", () => CaptureFlow.Start(CaptureType.ScreenSelect, captureSession), iconFile: CaptureIconFiles.ScreenSelect);
         Add("Capture - ウィンドウ選択", () => CaptureFlow.Start(CaptureType.WindowSelect, captureSession), iconFile: CaptureIconFiles.WindowSelect);
         Add("Capture - 範囲選択", () => CaptureFlow.Start(CaptureType.AreaSelect, captureSession), iconFile: CaptureIconFiles.AreaSelect);
         AddSeparator();
-        Add("Crop - 切り出し", toggleCrop, viewModel.CanCopy, "Ctrl+R", CaptureIconFiles.Crop);
-        Add("Crop - 自動切り出し", () => viewModel.AutoCropWindowCommand.Execute(null), viewModel.CanCopy);
+        Add("Crop - 切り出し", toggleCrop, () => viewModel.CanCopy, "Ctrl+R", CaptureIconFiles.Crop);
+        Add("Crop - 自動切り出し", () => viewModel.AutoCropWindowCommand.Execute(null), () => viewModel.CanCopy);
+
+        // 可否（保存済み・画像の有無・テンプレートの妥当性）に追従させる
+        void RefreshEnabled()
+        {
+            foreach (var (button, canExecute) in entries)
+            {
+                button.IsEnabled(canExecute());
+            }
+        }
+
+        viewModel.PropertyChanged += (_, _) => RefreshEnabled();
 
         menu = new Border
         {

@@ -34,6 +34,14 @@ public class StatusMessagesTests
         => Assert.False(string.IsNullOrWhiteSpace(StatusMessages.SaveFailed()));
 
     [Fact]
+    internal void SaveCompleted_は固定書式の日時を含む()
+    {
+        // カルチャに依存せず、24 時間・ゼロ埋めの固定書式で表す
+        var savedAt = new DateTime(2026, 11, 11, 21, 4, 5, DateTimeKind.Local);
+        Assert.Equal("保存しました（2026.11.11 21:04:05）", StatusMessages.SaveCompleted(savedAt));
+    }
+
+    [Fact]
     internal void SaveUnavailable_はテンプレートが無効なら検証結果を含む()
         => Assert.Contains("拡張子がありません", StatusMessages.SaveUnavailable(true, "拡張子がありません"), StringComparison.Ordinal);
 

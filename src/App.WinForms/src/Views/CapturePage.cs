@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core;
+using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
@@ -122,7 +123,6 @@ internal static class CapturePage
 
         var pointerLabel = UiFactory.CreateStatusLabel(70, "カーソル位置（画像ピクセル）");
         var sizeLabel = UiFactory.CreateStatusLabel(80, "プレビュー画像のサイズ");
-        var saveStateLabel = UiFactory.CreateStatusLabel(54, "保存済み / 未保存");
         var savedFileLabel = UiFactory.CreateStatusLabel(0, "直前に保存したファイル名");
         var messageLabel = UiFactory.CreateStatusLabel(0);
         messageLabel.ForeColor = AppStyles.Announce;
@@ -136,7 +136,7 @@ internal static class CapturePage
             Margin = new Padding(0),
             Padding = new Padding(0),
         };
-        statusFlow.Controls.AddRange([pointerLabel, sizeLabel, saveStateLabel, savedFileLabel, messageLabel]);
+        statusFlow.Controls.AddRange([pointerLabel, sizeLabel, savedFileLabel, messageLabel]);
 
         var zoomPanel = new FlowLayoutPanel
         {
@@ -163,7 +163,7 @@ internal static class CapturePage
             Height = 24,
             Margin = new Padding(3, 3, 3, 3),
         };
-        UiFactory.AttachToolTip(templateBox, "ファイル名テンプレート（例: screenshot_007_{date}-{time}.png）");
+        UiFactory.AttachToolTip(templateBox, FileNameTemplate.BuildHelpText());
         templateBox.TextChanged += (_, _) => viewModel.FileNameTemplateText = templateBox.Text;
 
         var menuButton = new ToolButton(AppIcon.Menu, "メニュー");
@@ -172,7 +172,8 @@ internal static class CapturePage
         toolbar.Controls.Add(menuButton);
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(templateBox);
-        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.Save, "保存", SaveImage, isBorderless: true));
+        var saveButton = UiFactory.CreateToolButton(AppIcon.Save, "保存", SaveImage, isBorderless: true);
+        toolbar.Controls.Add(saveButton);
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(UiFactory.CreateToolButton(
             AppIcon.ScreenSelect, "スクリーン選択で撮影", () => StartCapture(CaptureType.ScreenSelect), isBorderless: true));
@@ -183,6 +184,14 @@ internal static class CapturePage
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(UiFactory.CreateToolButton(
             AppIcon.Crop, "切り出し（開始 / 確定 / キャンセル）", ToggleCrop, isBorderless: true));
+
+        // 自動保存のトグル（切り出しの右。 有効な間は画像が変わるたびに保存する）
+        var autoSaveButton = UiFactory.CreateToolButton(
+            null, "画像が変わったら自動で保存する", () => { }, "自動保存", isBorderless: true);
+        autoSaveButton.Click += (_, _) => ToggleAutoSave();
+        autoSaveButton.IsSelected = viewModel.AutoSave;
+        toolbar.Controls.Add(UiFactory.CreateSeparator());
+        toolbar.Controls.Add(autoSaveButton);
 
         // 幅は入力された文字列の幅に合わせる（最小 100 DIP・上限はツールバーが折り返さない幅）。
         // 上限を取るのは、幅を広げすぎるとツールバーのアイコンが 2 段になるため（他の UI 版と同じ）。
@@ -219,6 +228,7 @@ internal static class CapturePage
         // 表示のたびに作って破棄すると、WinForms のメニュー フィルターが破棄済みのメニューを参照し、
         // ウィンドウの非アクティブ化の際に ObjectDisposedException で落ちる（実測）。
         // 破棄はページの破棄に合わせる
+        ToolStripMenuItem? saveMenuItem = null;
         var menu = CreateMenu();
         root.Disposed += (_, _) =>
         {
@@ -257,6 +267,14 @@ internal static class CapturePage
             if (e.PropertyName is nameof(MainViewModel.DetectedRects) or nameof(MainViewModel.IsAutoCropActive))
             {
                 ApplyAutoCropRects();
+            }
+
+            // 保存後のインクリメント等、ViewModel 側で変わったテンプレートを入力欄へ戻す
+            // （戻さないと、次に入力した文字列で古い値が上書きされ、番号が戻る）
+            if (e.PropertyName is nameof(MainViewModel.FileNameTemplateText)
+                && !string.Equals(templateBox.Text, viewModel.FileNameTemplateText, StringComparison.Ordinal))
+            {
+                templateBox.Text = viewModel.FileNameTemplateText;
             }
 
             UpdateStatus();
@@ -302,7 +320,7 @@ internal static class CapturePage
             crop.SizeLabelOverrideProvider = () =>
                 CropLabelTexts.ResolveSizeLabel(crop.HasSelection, crop.SelectionSourceRect, crop.ZoomPercent);
 
-            foreach (var label in new[] { pointerLabel, sizeLabel, saveStateLabel, savedFileLabel, messageLabel, zoomText })
+            foreach (var label in new[] { pointerLabel, sizeLabel, savedFileLabel, messageLabel, zoomText })
             {
                 label.ForeColor = AppStyles.Foreground;
             }
@@ -352,9 +370,23 @@ internal static class CapturePage
         {
             pointerLabel.Text = viewModel.PointerDisplayText;
             sizeLabel.Text = viewModel.ImageSizeDisplayText;
-            saveStateLabel.Text = viewModel.SaveStatusText;
             savedFileLabel.Text = viewModel.SavedFileName;
             messageLabel.Text = viewModel.StatusMessage;
+
+            // 保存できない間（未変更・初期画像・テンプレート無効）はボタンとメニューを無効にする（灰色表示）
+            var canSave = viewModel.CanSave;
+            saveButton.Enabled = canSave;
+            if (saveMenuItem is not null)
+            {
+                saveMenuItem.Enabled = canSave;
+            }
+        }
+
+        // 自動保存の有効・無効を切り替える。
+        void ToggleAutoSave()
+        {
+            viewModel.AutoSave = !viewModel.AutoSave;
+            autoSaveButton.IsSelected = viewModel.AutoSave;
         }
 
         // 撮影を開始する。
@@ -524,7 +556,7 @@ internal static class CapturePage
         ContextMenuStrip CreateMenu()
         {
             var menuStrip = new ContextMenuStrip();
-            AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage, AppIcon.Save);
+            saveMenuItem = AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage, AppIcon.Save);
             AddMenuItem(menuStrip, "コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
             AddMenuItem(menuStrip, "貼り付け", "Ctrl+V", () => _ = PasteCoreAsync());
             menuStrip.Items.Add(new ToolStripSeparator());
@@ -565,6 +597,16 @@ internal static class CapturePage
         // ページ固有のショートカット キーを処理する。
         bool HandleShortcut(Keys keyData)
         {
+            var key = keyData & Keys.KeyCode;
+
+            // 保存（Ctrl+S）は文字編集のショートカットではないため、テキスト入力中でも行う
+            // （テンプレート欄へ入力した直後に保存できず、フォーカスを移す操作を強いるのを避ける）
+            if ((keyData & Keys.Control) == Keys.Control && key == Keys.S)
+            {
+                SaveImage();
+                return true;
+            }
+
             // テキスト入力中のショートカットは文字編集を優先する
             // （Ctrl+V を画像の貼り付けとして横取りすると、テンプレート欄へ文字列を貼れない）
             if (IsTextInputFocused())
@@ -572,7 +614,6 @@ internal static class CapturePage
                 return false;
             }
 
-            var key = keyData & Keys.KeyCode;
             if ((keyData & Keys.Control) != Keys.Control)
             {
                 if (key == Keys.Escape && viewModel.IsAutoCropActive)
@@ -586,9 +627,6 @@ internal static class CapturePage
 
             switch (key)
             {
-                case Keys.S:
-                    SaveImage();
-                    return true;
                 case Keys.C:
                     _ = viewModel.CopyToClipboardAsync();
                     return true;
@@ -660,7 +698,7 @@ internal static class CapturePage
     /// <param name="shortcut">右端へ表示するショートカット（表示のみ）。</param>
     /// <param name="action">選択時の処理。</param>
     /// <param name="icon">メニュー項目に表示するアイコン。</param>
-    private static void AddMenuItem(ContextMenuStrip menu, string text, string shortcut, Action action, AppIcon? icon = null)
+    private static ToolStripMenuItem AddMenuItem(ContextMenuStrip menu, string text, string shortcut, Action action, AppIcon? icon = null)
     {
         var item = new ToolStripMenuItem(text);
         if (icon is { } appIcon)
@@ -678,6 +716,7 @@ internal static class CapturePage
 
         item.Click += (_, _) => action();
         menu.Items.Add(item);
+        return item;
     }
 
     /// <summary>コアの整数矩形を小数の矩形へ変換する。</summary>

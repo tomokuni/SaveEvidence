@@ -5,6 +5,9 @@
     <RootNamespace>EsUtil.SaveEvidence.App.Core</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- クリップボードの DIB の解析（Native/WinClipboardDib）で画素のポインターを扱う
+         （4 UI 版のうち MewUI は画像クリップボードの API を持たないため、共通基盤が担う） -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

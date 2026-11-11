@@ -105,6 +105,14 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private StartupPreviewMode _startupPreview = StartupPreviewMode.Gradient;
 
+    /// <summary>自動保存が有効かどうかを取得または設定する。</summary>
+    /// <remarks>
+    /// 有効な場合、画像が変わると自動で保存する（4 つの UI 版で共有する）。<br/>
+    /// 初期画像（起動直後のプレースホルダ）と保存できない状態では保存しない。
+    /// </remarks>
+    [ObservableProperty]
+    private bool _autoSave;
+
     /// <summary>キャプチャ時（SnipOverlayWindow）の選択枠境界線色を取得または設定する。</summary>
     /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: DarkGray = <c>#FFA9A9A9</c>）。</remarks>
     [ObservableProperty]

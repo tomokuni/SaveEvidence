@@ -105,7 +105,6 @@ internal static class CapturePage
         pointerText.Width = 70;
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
         imageSizeText.Width = 80;
-        var saveStatusText = CreateLabel(viewModel.SaveStatusText, AppStyles.StatusFontSize);
         var savedFileNameText = CreateLabel(viewModel.SavedFileName, AppStyles.StatusFontSize);
         var messageText = CreateLabel(viewModel.StatusMessage, AppStyles.StatusFontSize);
         messageText.Foreground = new SolidColorBrush(s_announceColor);
@@ -141,7 +140,6 @@ internal static class CapturePage
         var statusLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         statusLeft.Children.Add(pointerText);
         statusLeft.Children.Add(imageSizeText);
-        statusLeft.Children.Add(saveStatusText);
         statusLeft.Children.Add(savedFileNameText);
         statusLeft.Children.Add(messageText);
 
@@ -194,15 +192,36 @@ internal static class CapturePage
         zoomIn.IsEnabled = cropView.CanZoomIn;
         zoomOut.IsEnabled = cropView.CanZoomOut;
 
-        SubscribeViewModel(viewModel, settings, cropView, saveStatusText, savedFileNameText, messageText, imageSizeText, pointerText, zoomText);
+        SubscribeViewModel(viewModel, settings, cropView, savedFileNameText, messageText, imageSizeText, pointerText, zoomText);
 
         return new PageContent(page, OnKeyDown: args =>
         {
-            // 切り出しの開始・確定・キャンセルを Ctrl+R でも操作できるようにする
-            if (args.Key == VirtualKey.R && IsControlDown())
+            if (!IsControlDown())
             {
-                ToggleCrop();
-                args.Handled = true;
+                return;
+            }
+
+            switch (args.Key)
+            {
+                // 保存（文字編集のショートカットではないため、テンプレート入力中でも行う。
+                // コピー・貼り付けはテキスト ボックスが先に処理するため、ここへは届かない）
+                case VirtualKey.S:
+                    _ = viewModel.SaveImageAsync();
+                    args.Handled = true;
+                    return;
+                case VirtualKey.C:
+                    _ = viewModel.CopyToClipboardAsync();
+                    args.Handled = true;
+                    return;
+                case VirtualKey.V:
+                    _ = PasteAsync(services);
+                    args.Handled = true;
+                    return;
+                // 切り出しの開始・確定・キャンセルを Ctrl+R でも操作できるようにする
+                case VirtualKey.R:
+                    ToggleCrop();
+                    args.Handled = true;
+                    return;
             }
         });
     }
@@ -239,7 +258,8 @@ internal static class CapturePage
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(1),
         };
-        ToolTipService.SetToolTip(templateBox, "保存するファイル名のテンプレート（{date} / {time} / 連番 が使えます）");
+        // ツールチップの文言はコアが単一所有する（4 UI 版で同じ説明を出す）
+        ToolTipService.SetToolTip(templateBox, FileNameTemplate.BuildHelpText());
         templateBox.TextChanged += (_, _) => viewModel.FileNameTemplateText = templateBox.Text;
         items.Children.Add(templateBox);
 
@@ -255,7 +275,20 @@ internal static class CapturePage
             () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
         var crop = CreateIconButton(CaptureIconFiles.Crop, "切り出し（切出しモード開始/終了）", toggleCrop, AppStyles.ToolbarIconSize);
 
-        // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 撮影 3 種 | 切り出し）。
+        // 自動保存のトグル（切り出しの右。 有効な間は画像が変わるたびに保存する）
+        var autoSave = new ToggleButton
+        {
+            Content = "自動保存",
+            FontSize = AppStyles.ToolbarFontSize,
+            IsChecked = viewModel.AutoSave,
+            Height = AppStyles.ToolbarButtonHeight,
+            Margin = new Thickness(1),
+        };
+        ToolTipService.SetToolTip(autoSave, "画像が変わったら自動で保存する");
+        autoSave.Checked += (_, _) => viewModel.AutoSave = true;
+        autoSave.Unchecked += (_, _) => viewModel.AutoSave = false;
+
+        // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 撮影 3 種 | 切り出し | 自動保存）。
         // 元に戻す・やり直しはメニューから実行する（ツールバーに置かない）
         items.Children.Add(save);
         items.Children.Add(AppStyles.CreateToolbarSeparator());
@@ -264,6 +297,8 @@ internal static class CapturePage
         items.Children.Add(area);
         items.Children.Add(AppStyles.CreateToolbarSeparator());
         items.Children.Add(crop);
+        items.Children.Add(AppStyles.CreateToolbarSeparator());
+        items.Children.Add(autoSave);
 
         // 画像の状態とテンプレートの妥当性に追従して可否を更新する
         viewModel.PropertyChanged += (_, e) =>
@@ -663,7 +698,6 @@ internal static class CapturePage
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
     /// <param name="settings">設定。</param>
     /// <param name="cropView">プレビュー（中央寄せの反映先）。</param>
-    /// <param name="saveStatusText">保存状態の表示。</param>
     /// <param name="savedFileNameText">保存ファイル名の表示。</param>
     /// <param name="messageText">通知メッセージの表示。</param>
     /// <param name="imageSizeText">画像サイズの表示。</param>
@@ -671,16 +705,13 @@ internal static class CapturePage
     /// <param name="zoomText">拡大率の表示。</param>
     private static void SubscribeViewModel(
         MainViewModel viewModel, Settings settings, CropViewControl cropView,
-        TextBlock saveStatusText, TextBlock savedFileNameText, TextBlock messageText,
+        TextBlock savedFileNameText, TextBlock messageText,
         TextBlock imageSizeText, TextBlock pointerText, TextBlock zoomText)
     {
         viewModel.PropertyChanged += (_, e) =>
         {
             switch (e.PropertyName)
             {
-                case nameof(MainViewModel.SaveStatusText):
-                    saveStatusText.Text = viewModel.SaveStatusText;
-                    break;
                 case nameof(MainViewModel.SavedFileName):
                     savedFileNameText.Text = viewModel.SavedFileName;
                     break;

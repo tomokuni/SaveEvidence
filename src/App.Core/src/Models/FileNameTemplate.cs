@@ -51,6 +51,39 @@ public sealed partial class FileNameTemplate
         return ReplacePlaceholders(template, t => timestamp.ToString(t.Format, CultureInfo.InvariantCulture));
     }
 
+    /// <summary>ファイル名テンプレートの説明（ツールチップへ表示する文言）を生成する。</summary>
+    /// <param name="now">例に使う日時。 null（既定）の場合は現在日時を使う。</param>
+    /// <returns>複数行の説明文。</returns>
+    /// <remarks>
+    /// 文言を本クラスが単一所有する（4 つの UI 版で同じ説明を出す。 UI ごとに文面を持たない）。<br/>
+    /// <see cref="Generate"/> の例と同じ日時を使うため、ツールチップの例と実際の保存名がずれない。
+    /// </remarks>
+    public static string BuildHelpText(DateTime? now = null)
+    {
+        var timestamp = now ?? DateTime.Now;
+        return string.Join('\n',
+            "保存ファイル名テンプレート",
+            "テンプレート文字列から保存ファイル名を生成します。",
+            "",
+            "プレースホルダ",
+            $"{{date}} → 日付（例: {timestamp.ToString("yyyyMMdd", CultureInfo.InvariantCulture)} = yyyyMMdd）",
+            $"{{time}} → 時刻（例: {timestamp.ToString("HHmmss", CultureInfo.InvariantCulture)} = HHmmss）",
+            $"{{yyyy}} → 年（例: {timestamp.ToString("yyyy", CultureInfo.InvariantCulture)} = yyyy）",
+            $"{{MM}} → 月（例: {timestamp.ToString("MM", CultureInfo.InvariantCulture)} = MM）",
+            $"{{dd}} → 日（例: {timestamp.ToString("dd", CultureInfo.InvariantCulture)} = dd）",
+            $"{{HH}} → 時（例: {timestamp.ToString("HH", CultureInfo.InvariantCulture)} = HH）",
+            $"{{mm}} → 分（例: {timestamp.ToString("mm", CultureInfo.InvariantCulture)} = mm）",
+            $"{{ss}} → 秒（例: {timestamp.ToString("ss", CultureInfo.InvariantCulture)} = ss）",
+            "",
+            "オートインクリメント",
+            "一番右の数値連続が保存ごとに +1 されます。",
+            "必要桁数が増えない限り桁数は維持されます（01 → 02、99 → 100、099 → 100）。",
+            "",
+            "例",
+            "screenshot_{date}_{time}_01.png →",
+            $"screenshot_{timestamp.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}_{timestamp.ToString("HHmmss", CultureInfo.InvariantCulture)}_01.png");
+    }
+
     /// <summary>テンプレート内の右端の数値連続を +1 し、桁数を維持する。 基本的には <see cref="decimal"/> で扱い、Decimal 型でも扱えない桁数の場合には <see cref="System.Numerics.BigInteger"/> として扱う。</summary>
     /// <param name="text">置換対象の文字列</param>
     /// <returns>置換後の文字列。 数値が見つからない場合は元の文字列をそのまま返す。</returns>
