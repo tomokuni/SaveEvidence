@@ -85,7 +85,7 @@ rem    2. single  One self-contained exe (Windows App Runtime AND .NET bundled, 
 rem               start).  Runs on a machine where nothing can be installed (Windows Sandbox, a
 rem               fresh VM).  Measured 2026-11-10: 293.5 MB, starts, draws and exits with code 0.
 rem  The folder name carries the shape (publish\winui3-win-x64-aot / winui3-win-x64-single).
-rem  The asset name carries it too (SaveEvidence.WinUI3.{version}.zip / ...WinUI3.Single.{version}.zip);
+rem  The asset name carries it too (SaveEvidence.WinUI3.v{version}.zip / ...WinUI3.Single.v{version}.zip);
 rem  the rule is owned by .github (naming rules document).
 rem  The app checks for the Windows App Runtime at startup and installs it when the user agrees
 rem  (EsUtil.Ui.WinUI3.Interop / Bootstrapping.WindowsAppRuntimeBootstrap, published in EsUtil 0.5.2).

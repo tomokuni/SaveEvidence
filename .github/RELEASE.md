@@ -259,13 +259,13 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 
 | UI | 添付ファイル | 方式（実測 2026-11-10） | zip の中身 |
 | --- | --- | --- | --- |
-| MewUI 版 | `SaveEvidence.MewUI.<版数>.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
-| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.<版数>.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
-| WinForms 版 | `SaveEvidence.WinForms.<版数>.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
-| WinUI 3 版（AOT） | `SaveEvidence.WinUI3.<版数>.zip` | AOT（フォルダー配布。 Windows App SDK はフレームワーク依存） | exe 1 個 + ネイティブ DLL + `.pri` |
-| WinUI 3 版（Single） | `SaveEvidence.WinUI3.Single.<版数>.zip` | 自己完結 + 単一ファイル（Windows App Runtime と .NET を同梱） | exe 1 個（293.5 MB。 起動時に一時フォルダーへ展開） |
+| MewUI 版 | `SaveEvidence.MewUI.v<版数>.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
+| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.v<版数>.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
+| WinForms 版 | `SaveEvidence.WinForms.v<版数>.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
+| WinUI 3 版（AOT） | `SaveEvidence.WinUI3.v<版数>.zip` | AOT（フォルダー配布。 Windows App SDK はフレームワーク依存） | exe 1 個 + ネイティブ DLL + `.pri` |
+| WinUI 3 版（Single） | `SaveEvidence.WinUI3.Single.v<版数>.zip` | 自己完結 + 単一ファイル（Windows App Runtime と .NET を同梱） | exe 1 個（293.5 MB。 起動時に一時フォルダーへ展開） |
 
-- **zip の名前は `<アセンブリ名>.<版数>.zip` です**（例: `SaveEvidence.WinForms.0.1.4.zip`）。 **同じ UI が複数の形態を配布するときは形態名を版数の前へ入れます**（例: `SaveEvidence.WinUI3.Single.0.1.4.zip`）。 版数は `Directory.Build.props` の `<Version>` で、**`uis[].outputs[].asset` の `{version}` を `publish.yml` が置き換えます**（利用者が「どの版・どの形態か」をファイル名だけで判別できるようにするため）。 規則の所有者は [`命名規約.md`](命名規約.md)「アセンブリ名」です。
+- **zip の名前は `<アセンブリ名>.v<版数>.zip` です**（例: `SaveEvidence.WinForms.v0.1.4.zip`）。 **同じ UI が複数の形態を配布するときは形態名を版数の前へ入れます**（例: `SaveEvidence.WinUI3.Single.v0.1.4.zip`）。 版数は `Directory.Build.props` の `<Version>` で、**`uis[].outputs[].asset` の `{version}` を `publish.yml` が置き換えます**（利用者が「どの版・どの形態か」をファイル名だけで判別できるようにするため）。 規則の所有者は [`命名規約.md`](命名規約.md)「アセンブリ名」です。
 
 - **方式が Single AOT でない UI は、その理由を本節が持ちます**（WinForms は SDK がトリミングを拒否する `NETSDK1175`）。
 - **WinUI 3 版は AOT と Single の 2 形態を作ります**（[../buildScript/publish_WinUI3.bat](../buildScript/publish_WinUI3.bat) が `publish_ui.bat` を 2 回呼びます。 出力は `publish/winui3-win-x64-aot` と `publish/winui3-win-x64-single`）。
@@ -307,7 +307,7 @@ publish は `buildScript/` の `publish_<UI>.bat` をそのまま実行するた
 ### 4.4 自己完結 Single 版（何も導入できない環境向け）
 
 **ランタイムを導入できない環境**（Windows Sandbox・毎回初期化される VM 等）向けに、WinUI 3 版は
-**Windows App Runtime と .NET を同梱した単一 exe** も配布します（`SaveEvidence.WinUI3.Single.<版数>.zip`）。
+**Windows App Runtime と .NET を同梱した単一 exe** も配布します（`SaveEvidence.WinUI3.Single.v<版数>.zip`）。
 **配布物です**（`release-config.json` の `uis[].outputs` に登録し、Release へ添付します）。
 
 ```powershell

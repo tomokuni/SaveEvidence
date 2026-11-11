@@ -27,7 +27,7 @@
       "script": "buildScript/publish_MewUI.bat",
       "output": "publish/mewui-win-x64-aot",
       "exe": "SaveEvidence.MewUI.exe",
-      "asset": "SaveEvidence.MewUI.{version}.zip",
+      "asset": "SaveEvidence.MewUI.v{version}.zip",
       "zip": true
     },
     {
@@ -35,7 +35,7 @@
       "script": "buildScript/publish_AvaloniaUI.bat",
       "output": "publish/avaloniaui-win-x64-aot",
       "exe": "SaveEvidence.AvaloniaUI.exe",
-      "asset": "SaveEvidence.AvaloniaUI.{version}.zip",
+      "asset": "SaveEvidence.AvaloniaUI.v{version}.zip",
       "zip": true
     },
     {
@@ -43,7 +43,7 @@
       "script": "buildScript/publish_WinForms.bat",
       "output": "publish/winforms-win-x64-single",
       "exe": "SaveEvidence.WinForms.exe",
-      "asset": "SaveEvidence.WinForms.{version}.zip",
+      "asset": "SaveEvidence.WinForms.v{version}.zip",
       "zip": true
     },
     {
@@ -55,11 +55,11 @@
       "outputs": [
         {
           "output": "publish/winui3-win-x64-aot",
-          "asset": "SaveEvidence.WinUI3.{version}.zip"
+          "asset": "SaveEvidence.WinUI3.v{version}.zip"
         },
         {
           "output": "publish/winui3-win-x64-single",
-          "asset": "SaveEvidence.WinUI3.Single.{version}.zip"
+          "asset": "SaveEvidence.WinUI3.Single.v{version}.zip"
         }
       ]
     }
