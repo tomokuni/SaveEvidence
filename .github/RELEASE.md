@@ -9,7 +9,46 @@
 
 リリースは **手動実行のみ**です。 バージョンの**自動インクリメントは行いません**。
 
-## 構成
+## 1. リリース手順
+
+リリースは **`dry-run`（検証のみ）→ `dry-run-pack`（配布物まで）→ `release` の 3 段階**で行います。 **版はリリース前にコミットしておきます**（自動採番しません）。
+
+1. **版を上げてコミットする**（`Directory.Build.props` の `<Version>`。 **桁は [`コミット規約.md`](コミット規約.md) §5 の表で決める**）。 `dev` で上げ、`main` へマージする
+2. Pull Request の `ci`（必須チェック）が成功していることを確認する（`main` へマージする）
+3. `Actions` → **Release** → `Run workflow` で、**モード `dry-run`** を選んで実行する（版・ブランチ・タグ・CHANGELOG の検証だけ。 **配布物も SBOM も作らない**）
+   - 配布物の中身まで確かめたいときは、**モード `dry-run-pack`** を選ぶ（配布物の作成（全 UI の publish）・起動検証・**SBOM の作成**まで行い、**公開もタグ作成もしません**）
+   - `version` は省略できます（省略するとコミット済みの版を使います）
+4. 実行サマリーを確認する（`dry-run-pack` なら成果物（アーティファクト）も確認する）
+5. **同じコミットのまま**、**モード `release`** で実行する
+   - `publish` ジョブまで進んだあと、**`release` 環境の承認待ち**で止まります
+   - `Actions` → 実行 → **Review deployments** → `release` → **Approve** で承認する
+   - 承認後に**タグと GitHub Release** が作られ、配布物と SBOM が添付されます
+6. <https://github.com/tomokuni/SaveEvidence/releases> に配布物が添付されていることを確認する
+
+```mermaid
+flowchart LR
+    A["dry-run<br/>検証のみ"] --> A2["dry-run-pack<br/>検証・SBOM・publish"] --> B["release<br/>同じコミット"]
+    B --> C["承認<br/>(environment: release)"]
+    C --> D["タグ + Release<br/>配布物と SBOM を添付"]
+```
+
+**注意事項**:
+
+- **`CHANGELOG.md` に「未リリース」の見出しを残しません**（`release.yml` が `## 未リリース` を見つけると失敗します）。 版を上げたコミットで「`## <版>（<公開日>）`」へ確定してください。
+- **実行できるブランチは `release-config.json` の `dryRunBranches`（dry-run）と `releaseBranches`（公開）が決まります**（本リポジトリは dry-run が `["main", "dev"]`、公開が `["main"]`）。 **開発から dry-run までの確認は `dev` で行い、公開は `main` で行います**。
+  `verify` ジョブが最初に実行ブランチを検証し、含まれない場合は失敗します。
+- **`release` は、同じコミットの `dry-run` が成功していることを要求します**（実行名 `DryRun …` の成功実行を確認します）。 満たさない場合は失敗します。
+- **版は自動採番しません**。 入力 `version` は**確認用**であり、`Directory.Build.props` の `<Version>` と一致しなければ失敗します。
+- **タグは公開が成功した後にだけ作ります**（作成に失敗しても、タグは消費されません）。
+- **`release` ジョブは `environment: release` を持ちます**。 承認者（Required reviewers）の設定は「2.2 リポジトリの設定（初回のみ）」を参照してください。
+- **ワークフローはバージョンをコミットしません**（`main` の版はリリース前に人が上げます）。
+- **同じ系列の中で既存以下のバージョンは検証で失敗します**（同値の再リリースも不可）。
+- **実行一覧（`Actions` → Release）の実行名は `DryRun <ブランチ> <SHA>` / `Release <ブランチ> <SHA>`** です（どのコミットを出したかを一判別できます）。
+- サマリーを表示するステップが失敗しても、リリースは中止されません（情報の表示のみで、状態を変更しません）。
+
+## 2. 構成
+
+### 2.1 ファイルの構成
 
 リリースの設定と処理は、次のファイルが持ちます。 **同じ知識を複数箇所に置かない**ことが設計方針です。
 
@@ -70,30 +109,11 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 - **`build.yml` / `publish.yml` / `release.yml` は Windows 固有のターゲットを含むため、ビルド系のジョブは
   `windows-latest` で実行します**（`release.yml` の検証のみ `ubuntu-latest`）。
 
-## 依存関係の更新（Dependabot）
-
-[`dependabot.yml`](dependabot.yml) が、GitHub Actions と NuGet パッケージの更新 Pull Request を作成します。
-
-| 対象 | 間隔 | まとめ方 |
-| --- | --- | --- |
-| GitHub Actions（`uses:` で参照しているアクション） | 毎週月曜 09:00（Asia/Tokyo） | すべてを 1 つの Pull Request にまとめる |
-| NuGet（`src/` と `test/` の各プロジェクト） | 毎月 | minor / patch を 1 つの Pull Request にまとめる |
-
-**注意事項**:
-
-- Dependabot の Pull Request は**読み取り専用トークン・シークレット無し**で実行されます。 `build.yml` はシークレットを使わないため、CI はそのまま動作します。
-- **NuGet のメジャー更新は作成されません**（テストの書き方が変わるため、手動で判断します）。
-- Dependabot は**指定したディレクトリ直下のみを走査します**（再帰しません）。 プロジェクトを増やした場合は
-  `dependabot.yml` の `directories` にも追加してください。
-- Pull Request の内容を確認して `main` へマージします（マージ方式は Squash merge を推奨）。 必須チェック `ci` は Pull Request で実行されるため、マージ後の再実行はありません。
-- **Dependabot は `packages.lock.json` を一部のプロジェクトしか更新しません**（Dependabot の制限）。 そのため NuGet の Pull Request は、**そのままでは CI が `NU1004`（lock が古い）で失敗します**。 ブランチを取得して `dotnet restore <ソリューション> --force-evaluate` を実行し、lock を追加コミットしてからマージします（版の更新自体は PR の内容のままです）。
-- 破壊的な変更（`actions/upload-artifact` のメジャー更新など）は、CI が失敗した内容を確認して修正します。
-
-## リポジトリの設定（初回のみ）
+### 2.2 リポジトリの設定（初回のみ）
 
 次はワークフローでは設定できません。 リポジトリの **Settings** で有効化します。
 
-### タグの保護（Tag ruleset）
+#### 2.2.1 タグの保護（Tag ruleset）
 
 タグ（すべてのタグ）の**更新と削除**を禁止します。 定義は
 [`rulesets/tag-version.json`](rulesets/tag-version.json) にあります。
@@ -121,7 +141,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 - **更新・削除は管理者でも通常は拒否されます**（Bypass は管理者にのみ許されます）。
 - 定義を変更した場合は、**同じ JSON の値と実際の ruleset を一致**させてください（ruleset はコードから自動適用されないため、変更時は手動で更新します）。
 
-### ブランチの保護（Branch ruleset）
+#### 2.2.2 ブランチの保護（Branch ruleset）
 
 `main` への**直接 push を禁止**し、**PR 経由と `ci` の成功をマージ条件**にします。 定義は
 [`rulesets/protect-main.json`](rulesets/protect-main.json) にあります。
@@ -145,7 +165,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 - 承認者を 0 にしているため、**CI が緑なら作成者自身がマージできます**。
 - `strict_required_status_checks_policy` は `true`（マージ前にブランチを最新へ更新させる）。
 
-## ワークフロー
+## 3. 全体の流れ
 
 | ワークフロー | 実行契機 | 内容 |
 | --- | --- | --- |
@@ -177,51 +197,18 @@ flowchart TD
         G --> H
     end
 
-    D -->|"mode=dry-run で実行"| D1["verify → sbom と publish を並列<br/>（公開もタグ作成もしない）"]
+    D -->|"mode=dry-run（検証だけ）"| D0["verify<br/>公開もタグ作成もしない"]
+    D -->|"mode=dry-run-pack（配布物まで）"| D1["verify → sbom と publish を並列<br/>（公開もタグ作成もしない）"]
     D1 -->|"確認後、同じコミットで mode=release"| F
     H -->|失敗| J["中断<br/>タグは作られない"]
+    style D0 fill:#fff3cd
     style D1 fill:#fff3cd
     style H fill:#d4edda
 ```
 
-## リリース手順
+## 4. 細かい説明
 
-リリースは **`dry-run`（検証のみ）→ `dry-run-pack`（配布物まで）→ `release` の 3 段階**で行います。 **版はリリース前にコミットしておきます**（自動採番しません）。
-
-1. **版を上げてコミットする**（`Directory.Build.props` の `<Version>`。 **桁は [`コミット規約.md`](コミット規約.md) §5 の表で決める**）。 `dev` で上げ、`main` へマージする
-2. Pull Request の `ci`（必須チェック）が成功していることを確認する（`main` へマージする）
-3. `Actions` → **Release** → `Run workflow` で、**モード `dry-run`** を選んで実行する（版・ブランチ・タグ・CHANGELOG の検証だけ。 **配布物も SBOM も作らない**）
-   - 配布物の中身まで確かめたいときは、**モード `dry-run-pack`** を選ぶ（配布物の作成（全 UI の publish）・起動検証・**SBOM の作成**まで行い、**公開もタグ作成もしません**）
-   - `version` は省略できます（省略するとコミット済みの版を使います）
-4. 実行サマリーと成果物（アーティファクト）を確認する
-5. **同じコミットのまま**、**モード `release`** で実行する
-   - `publish` ジョブまで進んだあと、**`release` 環境の承認待ち**で止まります
-   - `Actions` → 実行 → **Review deployments** → `release` → **Approve** で承認する
-   - 承認後に**タグと GitHub Release** が作られ、配布物と SBOM が添付されます
-6. <https://github.com/tomokuni/SaveEvidence/releases> に配布物が添付されていることを確認する
-
-```mermaid
-flowchart LR
-    A["dry-run<br/>検証のみ"] --> A2["dry-run-pack<br/>検証・SBOM・publish"] --> B["release<br/>同じコミット"]
-    B --> C["承認<br/>(environment: release)"]
-    C --> D["タグ + Release<br/>配布物と SBOM を添付"]
-```
-
-**注意事項**:
-
-- **`CHANGELOG.md` に「未リリース」の見出しを残しません**（`release.yml` が `## 未リリース` を見つけると失敗します）。 版を上げたコミットで「`## <版>（<公開日>）`」へ確定してください。
-- **実行できるブランチは `release-config.json` の `dryRunBranches`（dry-run）と `releaseBranches`（公開）が決まります**（本リポジトリは dry-run が `["main", "dev"]`、公開が `["main"]`）。 **開発から dry-run までの確認は `dev` で行い、公開は `main` で行います**。
-  `verify` ジョブが最初に実行ブランチを検証し、含まれない場合は失敗します。
-- **`release` は、同じコミットの `dry-run` が成功していることを要求します**（実行名 `DryRun …` の成功実行を確認します）。 満たさない場合は失敗します。
-- **版は自動採番しません**。 入力 `version` は**確認用**であり、`Directory.Build.props` の `<Version>` と一致しなければ失敗します。
-- **タグは公開が成功した後にだけ作ります**（作成に失敗しても、タグは消費されません）。
-- **`release` ジョブは `environment: release` を持ちます**。 承認者（Required reviewers）の設定は [リポジトリの設定](#リポジトリの設定初回のみ) を参照してください。
-- **ワークフローはバージョンをコミットしません**（`main` の版はリリース前に人が上げます）。
-- **同じ系列の中で既存以下のバージョンは検証で失敗します**（同値の再リリースも不可）。
-- **実行一覧（`Actions` → Release）の実行名は `DryRun <ブランチ> <SHA>` / `Release <ブランチ> <SHA>`** です（どのコミットを出したかを一判別できます）。
-- サマリーを表示するステップが失敗しても、リリースは中止されません（情報の表示のみで、状態を変更しません）。
-
-## バージョンの指定
+### 4.1 バージョンの指定
 
 semver 形式で入力します。 数値部分の**先頭 0 は使用できません**。
 
@@ -233,12 +220,12 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 
 プレリリース識別子は `-rc.1` のように**数値をドットで区切る形式を推奨**します。 `-rc1` のような形式は辞書順で比較されるため（semver 仕様）、`rc10` が `rc2` より小さくなります。
 
-### FileVersion について
+#### FileVersion について
 
 プレリリース部分は **`InformationalVersion`（エクスプローラーの「製品バージョン」）にのみ反映**されます。
 `AssemblyVersion` / `FileVersion` は数値 4 桁しか許されないため、`1.2.3-rc.1` でも **`FileVersion` は `1.2.3.0`** になります。 rc と正式版をファイルのプロパティで区別する場合は「製品バージョン」を参照してください。
 
-## 検証される条件
+### 4.2 検証される条件
 
 `release.yml` は次をすべて満たさない場合に失敗します。
 
@@ -257,27 +244,15 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 
 ただし **`dry-run` では 5・6 を警告にして続行します**（版を上げていないだけの状態でも、それ以外の条件が通ることを確認できるようにするため。 **公開はできない**ので、そのまま `release` を実行すると条件 5・6 で失敗します）。 Summary にも「この版は既に公開済み」と表示します。
 
-## 古い系列のリリース
+### 4.3 Release の添付ファイル
 
-**本リポジトリは系列ブランチ（`release/<major>.<minor>`）を使いません**（公開は `main` からのみ）。 古い系列を保守する必要が出た場合は、次のいずれかを選びます。
-
-- **`main` から旧系列のバージョンを公開する**: `main` の版を旧系列（例 `0.1.2`）にしてコミットし、`main` から dry-run → release を実行する。 この場合 `--latest=false` と `--notes-start-tag` が自動で付き、`Directory.Build.props` は**書き換えません**（新しい系列の版を旧系列へ戻さないため）。
-- **系列ブランチを復活させる**: `release-config.json` の `releaseBranches` に `"release/**"` を戻す（そのときは本文書の旧版にあった系列ブランチの手順を復元する）。
-
-| 実行ブランチ | 比較対象 | 例（タグ: v0.1.1 / v1.0.0） | バージョンファイル | Latest |
-| --- | --- | --- | --- | --- |
-| `main`（新しい系列） | 入力バージョンと**同じ系列**の最大 | `1.0.1` は OK / `1.0.0` は失敗（同値） | 書き換える | 更新する |
-| `main`（旧系列を入力） | 同上 | `0.1.2` は OK（同じ系列の最大 `0.1.1` より大きい） / `0.1.1` は失敗（同値） | **書き換えない** | 更新しない |
-
-## Release の添付ファイル
-
-添付するファイルは `release-config.json` の `uis[].asset` が決めます。 `release.yml` は保管された成果物をそのまま添付するため、**UI を追加してもワークフローは変更不要**です。 **SBOM（`<製品名>.<版>.sbom.cdx.json`）も併せて添付します**。
+添付するファイルは `release-config.json` の `uis[].outputs[].asset`（1 形態だけなら `uis[].asset`）が決めます。 `release.yml` は保管された成果物をそのまま添付するため、**UI を追加してもワークフローは変更不要**です。 **SBOM（`<製品名>.<版>.sbom.cdx.json`）も併せて添付します**。
 
 **SBOM（CycloneDX）は `.github/scripts/generateSbom.ps1` が作ります**（ツールの版は [`.config/dotnet-tools.json`](../.config/dotnet-tools.json) が単一所有し、`dotnet tool restore` で揃います）。 何のために付けるか:
 
 - 配布物（zip）からは「どの依存のどの版を使ったか」が分からない。 SBOM があれば、**公開済みの配布物から依存を辿れる**。
 - **EsUtil の版も SBOM に載る**（`EsUtil.*` はパッケージ参照のため、exe のプロパティだけでは分からない）。 アプリ側の版と併せて追跡できる。
-- SBOM は **`dry-run` でも作る**（作れない状態をリリース前に検出する）。
+- SBOM は **`dry-run-pack` と `release` で作る**（`dry-run` では作らない。 作れない状態を公開前に検出するため、公開物の中身まで確かめたいときは `dry-run-pack` を使う）。
 - **SBOM の作成は配布物の作成と並列に走ります**（配布物は SBOM を使わないため。 直列にすると SBOM の約 2 分を毎回待っていました。 実測 2026-10-26: dry-run 313 秒 → 190 秒）。 順序は `verify` →（`sbom` と `publish` が同時）→ `release` です。
 
 **発行方式は UI ごとに、Single AOT → Single（非 AOT）→ EXE（フォルダー）の優先順で「可能なもの」が選ばれます**（実装は [../buildScript/publish_ui.bat](../buildScript/publish_ui.bat)。 可否は UI とフレームワークが決めます）。
@@ -329,7 +304,33 @@ publish は `buildScript/` の `publish_<UI>.bat` をそのまま実行するた
 
 **配布物には由来の証明（build provenance）を付けます**（`actions/attest-build-provenance`。 `release` ジョブが Release の作成前に実行）。 どのワークフロー・どのコミットが成果物を作ったかを、`gh attestation verify <ファイル> --repo <リポジトリ>` で後から検証できます。 公開物は取り消せないため、**出所を後から確かめられる状態**にしておきます。
 
-## 失敗した場合の復旧
+### 4.4 自己完結 Single 版（何も導入できない環境向け）
+
+**ランタイムを導入できない環境**（Windows Sandbox・毎回初期化される VM 等）向けに、WinUI 3 版は
+**Windows App Runtime と .NET を同梱した単一 exe** も配布します（`SaveEvidence.WinUI3.Single.<版数>.zip`）。
+**配布物です**（`release-config.json` の `uis[].outputs` に登録し、Release へ添付します）。
+
+```powershell
+& .\buildScript\publish_WinUI3.bat win-x64   # AOT 版と Single 版の両方を作る
+```
+
+- **Windows App Runtime と .NET を同梱します**（`SaveEvidenceSelfContained=true`。 csproj の
+  条件付きプロパティ + `PublishSingleFile=true`）。 そのため、ランタイムが 1 つも入っていない環境でも
+  そのまま起動します（実測 2026-11-10: 293.5 MB。 起動・描画・終了・設定の往復を確認）。
+- **AOT 版はフレームワーク依存のままです**（小さい・起動が速い・コード ページを共有できる）。
+  どちらを配布するかは利用者が選べます（zip 名の `Single` で判別できます）。
+- **`-p:WindowsAppSDKSelfContained=true` をコマンド ラインへ直接渡さないでください**（参照プロジェクトへ
+  伝播し、`WindowsAppSDKSelfContained requires a supported Windows architecture` で失敗します。 実測 2026-11-09）。
+  スクリプトがプロジェクト内のプロパティを切り替えます。
+- **Windows App Runtime の診断はログで行えます**: 起動時に次の 1 行が出ます（成否と、導入前後の版）。
+
+  ```text
+  [INF] [Program] [App.WinUI3] Windows App Runtime を用意しました (required=2.6.5, before=(なし), after=2.6.5.0, initialized=true)
+  ```
+
+  Single 版では `before` / `after` が `(なし)` のままになります（同梱したランタイムを使うため）。
+
+### 4.5 失敗した場合の復旧
 
 `release.yml` は **承認 → タグ作成 → Release 作成**の順に進みます。 そのため途中で失敗してもタグは作成されません。
 
@@ -344,7 +345,7 @@ publish は `buildScript/` の `publish_<UI>.bat` をそのまま実行するた
 - **`publish` の成果物を再利用したい場合は、`release` だけを再実行できません**（ジョブの依存関係により `publish` から再実行されます）。 時間はかかりますが、同じ入力から同じ成果物になります。
 - **由来の証明（`actions/attest-build-provenance`）は外部サービス（Sigstore の透明性ログ）に依存します**。 このサービスが 500 / 404 を返すと `release` ジョブ（承認後）が失敗し、**タグは作られません**（由来の証明は Release の作成より前に行います）。 **同じモードで再実行**してください（承認は再び要求されます）。 実測 2026-11-07: `error creating tlog entry - (500)` と `error fetching tlog entry - (404)` が発生し、復旧後の再実行で成功しました。
 
-## ローカルでの確認
+### 4.6 ローカルでの確認
 
 スクリプトはローカルでも実行できます。
 
@@ -371,37 +372,42 @@ Get-VersionSeries -Version '1.2.3'                # -> 1.2
 Get-MaxVersion -Versions @('1.0.0', '1.2.0')      # -> 1.2.0
 ```
 
-## 自己完結 Single 版（何も導入できない環境向け）
+### 4.7 依存関係の更新（Dependabot）
 
-**ランタイムを導入できない環境**（Windows Sandbox・毎回初期化される VM 等）向けに、WinUI 3 版は
-**Windows App Runtime と .NET を同梱した単一 exe** も配布します（`SaveEvidence.WinUI3.Single.<版数>.zip`）。
-**配布物です**（`release-config.json` の `uis[].outputs` に登録し、Release へ添付します）。
+[`dependabot.yml`](dependabot.yml) が、GitHub Actions と NuGet パッケージの更新 Pull Request を作成します。
 
-```powershell
-& .\buildScript\publish_WinUI3.bat win-x64   # AOT 版と Single 版の両方を作る
-```
+| 対象 | 間隔 | まとめ方 |
+| --- | --- | --- |
+| GitHub Actions（`uses:` で参照しているアクション） | 毎週月曜 09:00（Asia/Tokyo） | すべてを 1 つの Pull Request にまとめる |
+| NuGet（`src/` と `test/` の各プロジェクト） | 毎月 | minor / patch を 1 つの Pull Request にまとめる |
 
-- **Windows App Runtime と .NET を同梱します**（`SaveEvidenceSelfContained=true`。 csproj の
-  条件付きプロパティ + `PublishSingleFile=true`）。 そのため、ランタイムが 1 つも入っていない環境でも
-  そのまま起動します（実測 2026-11-10: 293.5 MB。 起動・描画・終了・設定の往復を確認）。
-- **AOT 版はフレームワーク依存のままです**（小さい・起動が速い・コード ページを共有できる）。
-  どちらを配布するかは利用者が選べます（zip 名の `Single` で判別できます）。
-- **`-p:WindowsAppSDKSelfContained=true` をコマンド ラインへ直接渡さないでください**（参照プロジェクトへ
-  伝播し、`WindowsAppSDKSelfContained requires a supported Windows architecture` で失敗します。 実測 2026-11-09）。
-  スクリプトがプロジェクト内のプロパティを切り替えます。
-- **Windows App Runtime の診断はログで行えます**: 起動時に次の 1 行が出ます（成否と、導入前後の版）。
+**注意事項**:
 
-  ```text
-  [INF] [Program] [App.WinUI3] Windows App Runtime を用意しました (required=2.6.5, before=(なし), after=2.6.5.0, initialized=true)
-  ```
+- Dependabot の Pull Request は**読み取り専用トークン・シークレット無し**で実行されます。 `build.yml` はシークレットを使わないため、CI はそのまま動作します。
+- **NuGet のメジャー更新は作成されません**（テストの書き方が変わるため、手動で判断します）。
+- Dependabot は**指定したディレクトリ直下のみを走査します**（再帰しません）。 プロジェクトを増やした場合は
+  `dependabot.yml` の `directories` にも追加してください。
+- Pull Request の内容を確認して `main` へマージします（マージ方式は Squash merge を推奨）。 必須チェック `ci` は Pull Request で実行されるため、マージ後の再実行はありません。
+- **Dependabot は `packages.lock.json` を一部のプロジェクトしか更新しません**（Dependabot の制限）。 そのため NuGet の Pull Request は、**そのままでは CI が `NU1004`（lock が古い）で失敗します**。 ブランチを取得して `dotnet restore <ソリューション> --force-evaluate` を実行し、lock を追加コミットしてからマージします（版の更新自体は PR の内容のままです）。
+- 破壊的な変更（`actions/upload-artifact` のメジャー更新など）は、CI が失敗した内容を確認して修正します。
 
-  Single 版では `before` / `after` が `(なし)` のままになります（同梱したランタイムを使うため）。
+### 4.8 古い系列のリリース
 
-## 注意点
+**本リポジトリは系列ブランチ（`release/<major>.<minor>`）を使いません**（公開は `main` からのみ）。 古い系列を保守する必要が出た場合は、次のいずれかを選びます。
+
+- **`main` から旧系列のバージョンを公開する**: `main` の版を旧系列（例 `0.1.2`）にしてコミットし、`main` から dry-run → release を実行する。 この場合 `--latest=false` と `--notes-start-tag` が自動で付き、`Directory.Build.props` は**書き換えません**（新しい系列の版を旧系列へ戻さないため）。
+- **系列ブランチを復活させる**: `release-config.json` の `releaseBranches` に `"release/**"` を戻す（そのときは本文書の旧版にあった系列ブランチの手順を復元する）。
+
+| 実行ブランチ | 比較対象 | 例（タグ: v0.1.1 / v1.0.0） | バージョンファイル | Latest |
+| --- | --- | --- | --- | --- |
+| `main`（新しい系列） | 入力バージョンと**同じ系列**の最大 | `1.0.1` は OK / `1.0.0` は失敗（同値） | 書き換える | 更新する |
+| `main`（旧系列を入力） | 同上 | `0.1.2` は OK（同じ系列の最大 `0.1.1` より大きい） / `0.1.1` は失敗（同値） | **書き換えない** | 更新しない |
+
+### 4.9 注意点
 
 - **ワークフローは `main` へ push しません**（版はリリース前に人がコミットするため、push 権限は不要です）。 `contents: write` はタグと Release の作成だけに使います。
 - `release.yml` は `actions: read`（ゲートと dry-run の参照）と `contents: write`（タグと Release）を使用します。
-- **`build.yml` は配布物を作成しません。** ゲートはビルドとテストの成功であり、**配布物が作成できることは `dry-run` で確かめます**（そのために 2 段階にしています）。
+- **`build.yml` は配布物を作成しません。** ゲートはビルドとテストの成功であり、**配布物が作成できることは `dry-run-pack` で確かめます**（そのために 3 段階にしています）。
 - **push では `build.yml` を実行しません**（同じツリーを検証し直さないため。 作業ブランチの壊れは手元の `.github/verify/verify.ps1` か `workflow_dispatch` で見つけます）。
 - 配布物（アーティファクト）の保持期間は `release-config.json` の `artifactRetentionDays`（既定 30 日）です。
-  **`release` は `dry-run` とは別の実行**であるため、成果物は `release` 実行の中で作り直します（`dry-run` の成果物には依存しません）。
+  **`release` は `dry-run` / `dry-run-pack` とは別の実行**であるため、成果物は `release` 実行の中で作り直します（先行する実行の成果物には依存しません）。
