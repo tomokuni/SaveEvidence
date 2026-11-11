@@ -185,6 +185,11 @@ internal static class AppStyles
     /// <remarks>4 UI 版で同じ色にする（影の見え方を揃えるため。 詳細は <see cref="AppPalette.ListBackground"/>）。</remarks>
     public static SolidColorBrush ListBackground => new(ToColor(AppPalette.ListBackground(IsDarkTheme)));
 
+    /// <summary>リンク（青字・下線）の文字色を取得する。</summary>
+    /// <value>現在のテーマの色。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</value>
+    /// <remarks>暗色の下地では明るい青へ切り替える（<see cref="AppPalette.Link"/>）。</remarks>
+    public static SolidColorBrush LinkForeground => new(ToColor(AppPalette.Link(IsDarkTheme)));
+
     /// <summary>ツールバーの区切り（縦線）を生成する。</summary>
     /// <returns>幅 1・高さ 20 DIP の縦線。</returns>
     /// <remarks>

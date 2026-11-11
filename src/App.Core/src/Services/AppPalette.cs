@@ -76,6 +76,15 @@ public static class AppPalette
     /// <remarks>WinUI 3 の選択マークと同じ値（明色 <c>#0067C0</c> / 暗色 <c>#4CC2FF</c>。 実測 2026-10-17）。</remarks>
     public static uint NavItemSelectionAccent(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF0067C0;
 
+    /// <summary>リンク（青字）の文字色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>
+    /// アクセント色と同じ値（明色 <c>#0067C0</c> / 暗色 <c>#4CC2FF</c>）を使う<br/>
+    /// （暗色の下地では濃い青が沈むため、明るい青へ切り替える）。
+    /// </remarks>
+    public static uint Link(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF0067C0;
+
     /// <summary>ツールバーのアイコン ボタンの角丸（DIP）。</summary>
     public const double ToolbarButtonCornerRadius = 4;
 

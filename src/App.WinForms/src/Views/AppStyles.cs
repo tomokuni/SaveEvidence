@@ -66,6 +66,10 @@ internal static class AppStyles
     /// <summary>文字の色を取得する。</summary>
     public static Color Foreground => Color.FromArgb(0x1A, 0x1A, 0x1A);
 
+    /// <summary>リンク（青字 + 下線）の文字色を取得する。</summary>
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（明色テーマの値）。</remarks>
+    public static Color Link => ToColor(AppPalette.Link(isDark: false));
+
     /// <summary>枠線の色を取得する。</summary>
     public static Color Border => Color.FromArgb(0xC8, 0xC8, 0xC8);
 

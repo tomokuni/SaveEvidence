@@ -214,6 +214,31 @@ internal static partial class AppLog
     internal static void LogFolderViewLoadError(this ILogger logger, Exception ex, string folderPath)
         => logger.LogFolderViewLoadErrorCore(Prefix, ex, folderPath);
 
+    /// <summary>選択した画像をごみ箱へ移動できなかったことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="filePath">対象のファイルパス。</param>
+    /// <remarks>LogLevel: Warning<br/>出力書式: <c>画像をごみ箱へ移動できませんでした: {filePath}</c><br/>
+    /// 移動できなかったファイルは一覧に残したまま継続する（握りつぶさず記録する）。</remarks>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} 画像をごみ箱へ移動できませんでした: {filePath}")]
+    private static partial void LogFileDeleteErrorCore(this ILogger logger, string prefix, Exception ex, string filePath);
+
+    internal static void LogFileDeleteError(this ILogger logger, Exception ex, string filePath)
+        => logger.LogFileDeleteErrorCore(Prefix, ex, filePath);
+
+    /// <summary>保存先フォルダをエクスプローラーで開けなかったことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="folderPath">対象のフォルダパス。</param>
+    /// <remarks>LogLevel: Warning<br/>出力書式: <c>エクスプローラーを起動できませんでした: {folderPath}</c></remarks>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} エクスプローラーを起動できませんでした: {folderPath}")]
+    private static partial void LogOpenFolderErrorCore(this ILogger logger, string prefix, Exception ex, string folderPath);
+
+    internal static void LogOpenFolderError(this ILogger logger, Exception ex, string folderPath)
+        => logger.LogOpenFolderErrorCore(Prefix, ex, folderPath);
+
     /// <summary>サムネイルの復号で例外が発生したことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>

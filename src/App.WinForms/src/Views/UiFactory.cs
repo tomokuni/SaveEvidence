@@ -159,6 +159,41 @@ internal static class UiFactory
         return label;
     }
 
+    /// <summary>ステータス バーのリンク（青字 + 下線）を生成する。</summary>
+    /// <param name="toolTip">ツールヒントの文言（省略可）。</param>
+    /// <returns>生成したリンク ラベル。</returns>
+    /// <remarks>
+    /// 文字サイズ・余白は <see cref="CreateStatusLabel"/> と同じにする（同じ行に並べるため）。<br/>
+    /// 色は <see cref="AppStyles.Link"/>（<see cref="App.Core.Services.AppPalette"/> が単一所有する）。
+    /// </remarks>
+    public static LinkLabel CreateStatusLink(string toolTip = "")
+    {
+        var link = new LinkLabel
+        {
+            AutoSize = true,
+            Font = AppStyles.StatusBarFont,
+            LinkColor = AppStyles.Link,
+            ActiveLinkColor = AppStyles.Link,
+            VisitedLinkColor = AppStyles.Link,
+            LinkBehavior = LinkBehavior.AlwaysUnderline,
+            BackColor = Color.Transparent,
+            Height = StatusBarContentHeight,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(2, 0, 6, 0),
+        };
+
+        // 幅を自動にすると高さも文字の高さになり、上端へ寄る（CreateStatusLabel と同じ扱い）
+        var space = Math.Max(0, StatusBarContentHeight - link.PreferredHeight);
+        link.Margin = new Padding(2, space / 2, 6, space - (space / 2));
+
+        if (toolTip.Length > 0)
+        {
+            AttachToolTip(link, toolTip);
+        }
+
+        return link;
+    }
+
     /// <summary>書式を固定した数値入力（小数）を生成する。</summary>
     /// <param name="value">初期値。</param>
     /// <param name="minimum">最小値。</param>

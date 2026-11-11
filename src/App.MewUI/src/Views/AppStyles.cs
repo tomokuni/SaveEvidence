@@ -475,6 +475,14 @@ internal static class AppStyles
     public static MewUIColor ListBackground(Theme theme)
         => theme.IsDark ? s_listBackgroundDark : s_listBackgroundLight;
 
+    /// <summary>リンク（青字・下線）の文字色を取得する（現在のテーマ）。</summary>
+    /// <remarks>
+    /// 色は <see cref="AppPalette"/>（App.Core）が単一所有する<br/>
+    /// （暗色の下地では明るい青へ切り替える）。
+    /// </remarks>
+    public static MewUIColor CurrentLinkForeground
+        => ToColor(AppPalette.Link(IconLoader.IsDarkTheme()));
+
     /// <summary>プルダウン（メニュー）の背景色を取得する。</summary>
     /// <param name="theme">現在のテーマ。</param>
     /// <returns>メニューの背景色。</returns>

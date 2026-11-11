@@ -1,6 +1,7 @@
 using EsUtil.Platform.Core;
 using EsUtil.Feature.Thumbnail;
 using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using EsUtil.SaveEvidence.App.WinUI3.Services;
@@ -10,6 +11,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Windows.Storage;
+using Windows.System;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 
@@ -68,6 +70,27 @@ internal static class FolderViewPage
         var folderText = CreateStatusLabel(viewModel.FolderPathText);
         folderText.HorizontalAlignment = HorizontalAlignment.Right;
         folderText.TextTrimming = TextTrimming.CharacterEllipsis;
+        // 保存先フォルダは青字 + 下線で表示し、クリックでエクスプローラーを開く
+        folderText.Foreground = AppStyles.LinkForeground;
+        folderText.TextDecorations = Windows.UI.Text.TextDecorations.Underline;
+        ToolTipService.SetToolTip(folderText, "クリックでエクスプローラーを開く");
+        folderText.Tapped += (_, _) =>
+        {
+            var folderPath = viewModel.FolderPathText;
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            try
+            {
+                FileSystemActions.OpenInExplorer(folderPath);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                s_logger.LogOpenFolderError(ex, folderPath);
+            }
+        };
 
         var modeButtons = new ToggleButton[ViewModeDisplay.Count];
         var sortButtons = new ToggleButton[2];
@@ -323,7 +346,54 @@ internal static class FolderViewPage
                 // 表示前に一覧を構築し、低負荷で生成を始める（キャプチャ ページの操作は妨げない）
                 Rebuild();
                 s_logger.LogThumbnailWarmUp("フォルダビュー", list.ItemCount);
+            },
+            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）
+            OnKeyDown: args =>
+            {
+                if (args.Key != VirtualKey.Delete)
+                {
+                    return;
+                }
+
+                args.Handled = true;
+                _ = DeleteSelectedAsync();
             });
+
+        // 選択中の画像をごみ箱へ移動する（確認ダイアログあり）
+        async Task DeleteSelectedAsync()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= builtFiles.Count)
+            {
+                return;
+            }
+
+            var filePath = builtFiles[index];
+            if (page.XamlRoot is not { } xamlRoot)
+            {
+                return;
+            }
+
+            var confirmed = await ConfirmDialog.ShowAsync(
+                xamlRoot, "削除の確認", $"「{Path.GetFileName(filePath)}」をごみ箱へ移動しますか？");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            try
+            {
+                FileSystemActions.DeleteToRecycleBin(filePath);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                // 移動できなかったファイルは一覧に残す（原因はログへ残す）
+                s_logger.LogFileDeleteError(ex, filePath);
+                return;
+            }
+
+            Rebuild();
+        }
     }
 
     /// <summary>画像ファイルを名前順で列挙する。</summary>

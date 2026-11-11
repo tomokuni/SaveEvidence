@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -9,6 +11,7 @@ using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using EsUtil.Ui.AvaloniaUI.Thumbnail;
@@ -57,6 +60,16 @@ public sealed partial class FolderViewPage : ViewModePageBase
     /// <summary>最後に優先度を付けた可視領域の下端。</summary>
     private double _lastViewportBottom = double.NaN;
 
+    /// <summary>一覧に並べたファイルのパス（一覧の位置と対応する。 選択項目の削除に使う）。</summary>
+    private readonly List<string> _filePaths = [];
+
+    /// <summary>Delete キーを登録したウィンドウ（未添付の間は null）。</summary>
+    /// <remarks>
+    /// 一覧にフォーカスが無い場合（ツールバーのボタンを押した直後等）も Delete キーを効かせるため、<br/>
+    /// ページではなくウィンドウ（<see cref="TopLevel"/>）へ登録する。
+    /// </remarks>
+    private TopLevel? _shortcutTopLevel;
+
     /// <summary>FolderViewPage を初期化する。</summary>
     public FolderViewPage()
     {
@@ -78,6 +91,101 @@ public sealed partial class FolderViewPage : ViewModePageBase
             Program.SettingsService,
             Program.ServiceProvider.GetRequiredService<MainViewModel>(),
             ExtraLargeButton, LargeButton, MediumButton);
+    }
+
+    /// <summary>ビジュアル ツリーへ添付されたときに Delete キーをウィンドウへ登録する。</summary>
+    /// <param name="e">添付の情報。</param>
+    /// <remarks>
+    /// 一覧にフォーカスが無い場合も効かせるため、ページではなく <see cref="TopLevel"/>（ウィンドウ）へ<br/>
+    /// トンネル段階で登録する。 表示されていない間は <see cref="OnKeyDown"/> が何もしない。
+    /// </remarks>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        DetachShortcutHandler();
+        _shortcutTopLevel = TopLevel.GetTopLevel(this);
+        _shortcutTopLevel?.AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    /// <summary>ビジュアル ツリーから外れたときに Delete キーの登録を解除する。</summary>
+    /// <param name="e">解除の情報。</param>
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        DetachShortcutHandler();
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    /// <summary>Delete キーの登録を解除する。</summary>
+    private void DetachShortcutHandler()
+    {
+        _shortcutTopLevel?.RemoveHandler(KeyDownEvent, OnKeyDown);
+        _shortcutTopLevel = null;
+    }
+
+    /// <summary>Delete キーで選択中の画像をごみ箱へ移動する。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">キーイベント。</param>
+    /// <remarks>
+    /// テキスト入力中（ファイル名テンプレート等）の Delete は文字編集を優先する。<br/>
+    /// 確認はダイアログ（<see cref="ConfirmDialog"/>）で行い、移動できた場合だけ一覧を読み直す。
+    /// </remarks>
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (!IsEffectivelyVisible || e.Key != Key.Delete || e.Source is TextBox) return;
+
+        e.Handled = true;
+        _ = DeleteSelectedAsync();
+    }
+
+    /// <summary>選択中の画像をごみ箱へ移動する（確認ダイアログあり）。</summary>
+    /// <returns>待機タスク。</returns>
+    private async Task DeleteSelectedAsync()
+    {
+        var index = FileListBox.SelectedIndex;
+        if (index < 0 || index >= _filePaths.Count) return;
+
+        var filePath = _filePaths[index];
+        if (TopLevel.GetTopLevel(this) is not Window owner) return;
+
+        var confirmed = await ConfirmDialog.ShowAsync(
+            owner, "削除の確認", $"「{Path.GetFileName(filePath)}」をごみ箱へ移動しますか？");
+        if (!confirmed) return;
+
+        try
+        {
+            FileSystemActions.DeleteToRecycleBin(filePath);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            // 移動できなかったファイルは一覧に残す（原因はログへ残す）
+            s_logger.LogFileDeleteError(ex, filePath);
+            return;
+        }
+
+        LoadFiles();
+    }
+
+    /// <summary>保存先フォルダをエクスプローラーで開く（ステータスバーのパスのクリック）。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">ポインターのイベント引数。</param>
+    private void OnFolderPathClick(object? sender, PointerPressedEventArgs e)
+    {
+        // 左ボタンだけを受け付ける（右クリックで開かない）
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
+
+        var folderPath = _viewModel.FolderPathText;
+        if (string.IsNullOrEmpty(folderPath)) return;
+
+        e.Handled = true;
+
+        try
+        {
+            FileSystemActions.OpenInExplorer(folderPath);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            s_logger.LogOpenFolderError(ex, folderPath);
+        }
     }
 
     /// <summary>ページの表示状態に合わせてサムネイル生成の負荷を切り替える。</summary>
@@ -149,6 +257,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
             s_logger.LogFolderViewLoadError(ex, MainViewModel.SaveFolderPathResolved);
             _viewModel.ItemCount = 0;
             FileListBox.ClearItems();
+            _filePaths.Clear();
         }
     }
 
@@ -166,6 +275,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         // 前回の生成要求を破棄する（別のフォルダ・別の寸法向けの生成を残さない）
         _thumbnailScheduler.Clear();
         _thumbnailRequests.Clear();
+        _filePaths.Clear();
         _lastViewportTop = double.NaN;
         _lastViewportBottom = double.NaN;
 
@@ -173,6 +283,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         {
             _viewModel.ItemCount = 0;
             FileListBox.ClearItems();
+            _filePaths.Clear();
             return;
         }
 
@@ -197,10 +308,12 @@ public sealed partial class FolderViewPage : ViewModePageBase
 
         FileListBox.ClearItems();
         FileListBox.ImageWidth = iconSize;
+        _filePaths.Clear();
 
         for (var i = 0; i < files.Count; i++)
         {
             var file = files[i];
+            _filePaths.Add(file);
 
             // 生成済みはその場で表示し、未生成は代替画像を表示して背景へ回す
             if (GetCachedThumbnail(file, iconSize) is { } cached)
