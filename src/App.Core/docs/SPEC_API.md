@@ -45,6 +45,8 @@
 - [33. ウィンドウ配置の復元規則（EsUtil.Platform.Core へ移設）](#33-ウィンドウ配置の復元規則esutilplatformcore-へ移設)
 - [34. `Icons.CaptureIconFiles`（静的クラス）](#34-iconscaptureiconfiles静的クラス)
 - [35. `Services.LogLevelText`（内部・静的クラス）](#35-serviceslogleveltext内部静的クラス)
+- [36. `Services.FileSystemActions`（静的クラス）](#36-servicesfilesystemactions静的クラス)
+- [37. `Services.ClipboardImage`（静的クラス）](#37-servicesclipboardimage静的クラス)
 
 ## 1. 公開 API の可視性
 
@@ -55,11 +57,15 @@
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
 | `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.ColorTextFormatDisplay` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` / `Icons.CaptureIconFiles` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
+| `Services.FileSystemActions` | `public` | 任意 |
+| `Services.ClipboardImage` | `public` | 任意（MewUI 版が使う。 画像クリップボードの API を持たない UI のため） |
 | `Models.ThumbnailScheduler` | `internal` | 同上 |
 | `Models.ThumbnailPriority` | `internal` | 同上 |
 | `Icons.AppIcons` | `internal` | 同上 |
 | `ViewModels.ViewModeDisplay` | `internal` | 同上 |
 | `Services.LogLevelText` | `internal` | 同上（4 つの UI 版の `AppLog` が使う） |
+| `Native.WinRecycleBin` | `internal` | 同上（`Services.FileSystemActions` だけが使う） |
+| `Native.WinClipboardDib` | `internal` | 同上（`Services.ClipboardImage` とテストが使う） |
 | `ViewModels.FolderViewViewModel` / `ViewModels.UndoViewModel` / `ViewModels.MainViewModel` | `public` | 任意 |
 
 ## 2. `Enums.AppPage`（列挙型）
@@ -86,6 +92,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `ColorTextFormat` | `ColorTextFormat`（EsUtil.Platform.Core.Palette） | 色選択コントロールの入力欄へ出す表記（`NameWithAlpha` = 色名 + 不透明度 / `HexCode` = `#AARRGGBB`）。 保存値は変わらない |
 | `IsNavigationExpanded` | `bool` | ナビゲーションパネルの展開状態 |
 | `StartupPreview` | `StartupPreviewMode` | 起動直後のキャプチャ ページに置く画像（`Gradient` = グラデーション画像 / `Blank` = 空白。 既定は `Gradient`） |
+| `AutoSave` | `bool` | 自動保存（有効な間は画像が変わるたびに保存する。 4 UI 版で共有。 既定は無効） |
 | `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | フォルダビューのアイコンサイズ |
 
 ## 5. `Services.ISettingsService` / `Services.SettingsService`（クラス）
@@ -142,6 +149,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | --- | --- |
 | `Generate(string template, DateTime? now = null)` | テンプレートから実際のファイル名を生成する（`{ }` 内の日時トークンを置換する。 `now` を省略すると現在日時を使う） |
 | `IncrementRightmostNumber(string text)` | 右端の数値連続を +1 する（桁数を維持。 `decimal` で扱えない桁数は `BigInteger`） |
+| `BuildHelpText(DateTime? now = null)` | ツールチップへ出す説明文（プレースホルダ・オートインクリメントの規則・例）を生成する（4 UI 版で共通の文言） |
 | `IsValidTemplate(string template, out string? errorMessage)` | ファイル名として使用可能かを検証する（使用不可文字を検出） |
 
 日時を引数（`now`）で受け取るのは、呼び出し側が時刻を固定して結果を再現できるようにするためです（本番の呼び出しは現在日時を使います）。
@@ -266,7 +274,9 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `HoveredRect` | `EsRectInt?` | ホバー中の矩形（面積最小） |
 | `IsAutoCropActive` | `bool` | 自動切り出しモード中かどうか |
 | `StatusMessage` / `ZoomDisplayText` / `PointerDisplayText` | `string` | 画面表示用テキスト |
-| `IsSaved` / `SavedFileName` / `SaveStatusText` | `bool` / `string` | 保存済み状態 |
+| `IsSaved` / `SavedFileName` | `bool` / `string` | 保存済み状態と保存したファイル名（保存状態の専用ラベルは持たない。 保存のたびに通知する） |
+| `IsStartupImage` | `bool` | 起動直後の初期画像（プレースホルダ）を表示しているか（true の間は保存できない） |
+| `AutoSave` | `bool` | 自動保存（`Settings.AutoSave` を読み書きし、設定へ保存する） |
 | `FileNameTemplateText` | `string` | ファイル名テンプレート（変更時に検証と保存） |
 | `SaveFolderPath` / `SaveFolderPathResolved` / `HasInvalidSaveFolder` | `string` / `bool` | 保存先フォルダ |
 | `ValidationMessage` / `HasValidTemplate` / `HasInvalidTemplate` | `string?` / `bool` | テンプレート検証結果 |
@@ -280,6 +290,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | メンバー | 説明 |
 | --- | --- |
 | `SetPreviewImage(EsReadOnlyBitmap)` / `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る）。 書き換え可能な画像を渡す版は、渡した実体を**凍結**して 0 コピーで共有する |
+| `SetStartupPreviewImage(EsBitmap)` | 起動直後の初期画像を設定する（`IsStartupImage` を立て、**保存できない**状態にする） |
 | `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`）。 失敗時は `StatusMessage` と `SaveFailed` へ通知する |
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`）。 成功時に `切り出しました（W x H）` を通知する |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`）。 検出結果とキャンセルを通知する |
@@ -305,6 +316,8 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `CaptureCompleted(int width, int height)` | 撮影の確定（各 UI の撮影完了ハンドラーが使う） | `キャプチャしました（640 x 480）` |
 | `CropCompleted(int width, int height)` | 切り出しの確定（手動・自動の両方） | `切り出しました（120 x 90）` |
 | `PasteCompleted()` / `PasteUnavailable()` | クリップボードからの貼り付けの成否 | `クリップボードの画像を貼り付けました。` / `クリップボードに画像がありません。` |
+| `SaveCompleted(DateTime savedAt)` | 保存の成功（`MainViewModel` が撮影の通知を置き換える） | `保存しました（2026.11.11 21:24:22）` |
+| `AutoSaveSkipped(string fileName)` | 自動保存の中止（同名のファイルがある。 確認せずに上書きしない） | `自動保存しませんでした（同名のファイルがあります: …）。` |
 | `SaveFailed()` | 保存の失敗（例外） | `保存できませんでした（保存先フォルダを確認してください）。` |
 | `SaveUnavailable(bool hasInvalidTemplate, string? validationMessage)` | 保存を実行できない状態（UI がボタンを無効にする代わりに出す） | `保存できる状態ではありません（…）` |
 | `AutoCropDetected(int count)` / `AutoCropNotFound()` | 自動切り出しの検出結果 | `自動切り出し: 3 個のウィンドウを検出しました。…` |
@@ -330,6 +343,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | ナビゲーション項目の選択中の背景（薄いグレー） | `#DEDEDE` | `#373737` | `NavItemSelected(bool isDark)` |
 | ナビゲーション項目の選択マーク（左端の青） | `#0067C0` | `#4CC2FF` | `NavItemSelectionAccent(bool isDark)` |
 | 一覧（フォルダビュー / Undo 一覧）の背景 | `#F2F2F2` | `#2B2B2B` | `ListBackground(bool isDark)` |
+| リンク（青字 + 下線）の文字 | `#0067C0` | `#4CC2FF` | `Link(bool isDark)` |
 | ボタンの面（通常時） | `#FFFFFF` | `#2D2D2D` | `ButtonFace(bool isDark)` |
 | ボタンの枠線 | `#D6D6D6` | `#303030` | `ButtonBorder(bool isDark)` |
 | 選択中のトグル ボタンの面 | `#0067C0` | `#4CC2FF` | `ButtonCheckedFace(bool isDark)` |
@@ -597,3 +611,27 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 - **コアは Serilog に依存しません**（レベル名の文字列だけを受け取る）。 各 UI 版の `AppLog` が Serilog のレベル名を渡すエンリッチャーを持ちます。
 - `Trace` / `Verbose` と `Critical` / `Fatal` の両方を受け付けるのは、`Microsoft.Extensions.Logging` と Serilog で名前が違うためです。
 - 未知のレベル名は先頭 3 文字を大文字にします（空の場合は `???`）。
+
+## 36. `Services.FileSystemActions`（静的クラス）
+
+フォルダ ビューから行う OS の操作（エクスプローラーの起動・ごみ箱への移動）を単一所有します。 4 つの UI 版が同じ手順を使います（UI ごとに起動引数を書くと片方だけ設定がずれるため）。 **失敗は例外で表し、記録は呼び出し側（各 UI 版のロガー）が行います**（コアはロガーを持ちません）。
+
+| メソッド | 説明 |
+| --- | --- |
+| `OpenInExplorer(string folderPath)` | フォルダをエクスプローラーで開く（`explorer.exe` を明示する。 パスは 1 つの引数として引用符で囲む） |
+| `DeleteToRecycleBin(string filePath)` | ファイルをごみ箱へ移動する（**完全削除しない**。 確認は UI のダイアログが行う）。 移動できなかった場合は `IOException` |
+
+- ごみ箱への移動は `SHFileOperationW`（`Native.WinRecycleBin`）が行います。 **シェル側の確認・進行・エラーのダイアログは出しません**（`FOF_NOCONFIRMATION` / `FOF_SILENT` / `FOF_NOERRORUI`。 確認はアプリのダイアログが担う）。
+- エクスプローラーの起動は `InvalidOperationException`（プロセスを起動できなかった場合）を投げます。
+
+## 37. `Services.ClipboardImage`（静的クラス）
+
+クリップボードとの画像の受け渡しを単一所有します。 **画像クリップボードの API を持たない UI（MewUI 版）のために共通基盤が担います**（Windows の `CF_DIB` を使います）。 失敗は例外にせず戻り値で表します（他アプリがクリップボードを使用中の場合があるため）。 記録は呼び出し側（UI 版のロガー）が行います。
+
+| メソッド | 説明 |
+| --- | --- |
+| `TryCopy(EsReadOnlyBitmap image, IntPtr ownerWindow)` | 画像をクリップボードへ書き込む（32bpp・上から下・圧縮なしの DIB）。 `ownerWindow` はクリップボードの所有者にする自ウィンドウのハンドル（`SetClipboardData` の要件） |
+| `TryGet()` | クリップボードの画像を読み取る（書き換え可能な型で返す。 貼り付けでそのまま扱える）。 画像が無い・他アプリが使用中の場合は null |
+
+- 実装は `Native.WinClipboardDib` が単一所有します（解析・書き込みの手順を UI 側へ漏らさない）。
+- 読み取りの対象は 32 / 24 / 16 / 8 bpp（上下反転の有無を含む）です。 圧縮 DIB（JPEG / PNG）は対象外です。

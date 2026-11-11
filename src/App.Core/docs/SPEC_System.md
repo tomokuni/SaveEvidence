@@ -21,7 +21,7 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 - .NET 10 / C# 14
 - UI フレームワークは一切参照しない
 - 外部依存は `CommunityToolkit.Mvvm`（UI フレームワーク非依存の MVVM ツールキット）のみ
-- **Win32 の呼び出しは `EsUtil.Platform.Core`（`Native/Win`）が単一所有する**（`WinWindowFrame` / `WinAppUserModelId` / `WinMessageBox` / `WinClipboard`。 本プロジェクトは P/Invoke も CsWin32 も持たない）
+- **Win32 の呼び出しは原則 `EsUtil.Platform.Core` が単一所有する**（`WinWindowFrame` / `WinAppUserModelId` / `WinMessageBox` / `WinClipboard`）。 **EsUtil に該当する API が無い 2 つだけ**（ごみ箱への移動 `SHFileOperationW`・画像クリップボード `CF_DIB`）は `src/App.Core/src/Native/` が直接呼ぶ（CsWin32 は使わず、宣言はそのファイルに閉じる）
 
 ## 3. アーキテクチャ
 
@@ -54,6 +54,10 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 | `src/App.Core/src/Services/IImageWriter.cs` | `public interface` | 画像（`EsReadOnlyBitmap`）のファイル書き込みの抽象 |
 | `src/App.Core/src/Services/SettingsService.cs` | `public sealed class` | JSON ファイルによる設定管理（**設定の永続化形式 = JSON の構造・enum の文字列表現の唯一の所有者**）。 ソース生成コンテキストを必須とする |
 | `src/App.Core/src/Services/ToolbarMetrics.cs` | `public static class` | 4 UI 版が共有するツールバー寸法・文字サイズ |
+| `src/App.Core/src/Services/FileSystemActions.cs` | `public static class` | フォルダ ビューから行う OS の操作（エクスプローラーの起動・ごみ箱への移動。 **唯一の所有者**） |
+| `src/App.Core/src/Native/WinRecycleBin.cs` | `internal static class` | ごみ箱への移動（`SHFileOperationW`。 シェルのダイアログは出さない） |
+| `src/App.Core/src/Services/ClipboardImage.cs` | `public static class` | クリップボードとの画像の受け渡し（画像クリップボードの API を持たない UI のため。 **唯一の所有者**） |
+| `src/App.Core/src/Native/WinClipboardDib.cs` | `internal static class` | `CF_DIB` の解析と書き込み（32 / 24 / 16 / 8 bpp・上下反転・圧縮なしの書き込み） |
 | `src/App.Core/src/Icons/CaptureIconFiles.cs` | `public static class` | キャプチャ ページのツールバーとメニューで使う共通 SVG 名 |
 | `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モード（特大 / 大 / 中）の名称・件数表示（**唯一の所有者**。 `FolderViewViewModel` / `UndoViewModel` が委譲する） |
 | `src/App.Core/src/ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | フォルダビューの表示モード・ソート状態 |
