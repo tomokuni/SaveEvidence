@@ -75,7 +75,12 @@ internal sealed class CaptureOverlay
     private readonly CaptureCompletion<CaptureResult?> _result = new();
 
     /// <summary>最初の描画フレームを待つ上限（画面外の 1x1 では合成が走らないことがあるため）。</summary>
-    private static readonly TimeSpan s_firstFrameTimeout = TimeSpan.FromMilliseconds(400);
+    /// <remarks>
+    /// 上限を短くするのは、**待てない環境でデスクトップが見える時間を延ばさない**ためである（画面外では<br/>
+    /// 合成が走らないことがあり、その場合は待っても画像は描かれない。 待つほど「アプリが消えてから暗転が<br/>
+    /// 掛かるまで」の間が伸び、ちらつきとして見える）。 合成待ちの余裕（<see cref="s_composeSettleDelay"/>）は残す。
+    /// </remarks>
+    private static readonly TimeSpan s_firstFrameTimeout = TimeSpan.FromMilliseconds(150);
 
     /// <summary>最初のフレームの後に合成の完了を待つ時間（白い下地を見せないための実測値）。</summary>
     private static readonly TimeSpan s_composeSettleDelay = TimeSpan.FromMilliseconds(200);

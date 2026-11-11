@@ -348,6 +348,14 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private static readonly TimeSpan s_frameTimeout = TimeSpan.FromMilliseconds(200);
 
+    /// <summary>オーバーレイを画面内へ出す前に、画面外での描画を待つ上限。</summary>
+    /// <remarks>
+    /// <see cref="s_frameTimeout"/> より短くするのは、**待てない環境でデスクトップが見える時間を延ばさない**ためである<br/>
+    /// （画面外では合成が走らないことがあり、その場合は待っても画像は描かれない。 待つほど「アプリが消えてから<br/>
+    /// 暗転が掛かるまで」の間が伸び、ちらつきとして見える。 60 ms は 60 Hz の 2 フレーム強に相当する）。
+    /// </remarks>
+    private static readonly TimeSpan s_revealFrameTimeout = TimeSpan.FromMilliseconds(60);
+
     /// <summary>画面外で画像を描き終えたかどうか（画面内へ移したか）。</summary>
     private bool _placed;
 
@@ -679,7 +687,9 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private async Task RevealAsync(Window window, CaptureOverlayServices services, CaptureOwnerScope ownerScope)
     {
-        await WaitForFramesAsync(window, FramesBeforePlace).ConfigureAwait(true);
+        // **待つ上限は短くする**: 画面外では合成が走らないことがあり、その場合は待っても画像は描かれない。
+        // 待つほど「アプリが消えてから暗転が掛かるまで」の間が伸び、ちらつきとして見える
+        await WaitForFramesAsync(window, FramesBeforePlace, s_revealFrameTimeout).ConfigureAwait(true);
         // 画像の転送（GPU へのアップロード）がフレームに遅れる環境向けの余裕
         await Task.Delay(s_revealSettleDelay).ConfigureAwait(true);
 
@@ -691,7 +701,7 @@ internal sealed class CaptureOverlay
         PlaceOnScreen(window, services);
 
         // 画面内へ移した次のフレームでオーナーを退避する（退避の瞬間を見せない）
-        await WaitForFramesAsync(window, FramesBeforeHideOwner).ConfigureAwait(true);
+        await WaitForFramesAsync(window, FramesBeforeHideOwner, s_revealFrameTimeout).ConfigureAwait(true);
         if (!_ownerHidden && _overlayWindow is not null)
         {
             _ownerHidden = true;
@@ -741,12 +751,13 @@ internal sealed class CaptureOverlay
     /// <summary>指定したウィンドウの描画フレームを待つ（合計で上限時間）。</summary>
     /// <param name="window">対象のウィンドウ。</param>
     /// <param name="frameCount">待つフレーム数。</param>
+    /// <param name="timeout">待つ上限（省略時は <see cref="s_frameTimeout"/>）。</param>
     /// <returns>待機が完了したときに完了するタスク。</returns>
     /// <remarks>
     /// 画面外・最小化では合成が走らないことがあるため、<see cref="s_frameTimeout"/> で打ち切る。<br/>
     /// 打ち切った場合は待機を続けない（閉じる操作を止めない）。
     /// </remarks>
-    private static async Task WaitForFramesAsync(Window window, int frameCount)
+    private static async Task WaitForFramesAsync(Window window, int frameCount, TimeSpan? timeout = null)
     {
         var remaining = frameCount;
         var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -766,7 +777,7 @@ internal sealed class CaptureOverlay
         try
         {
             // 上限は合計で 1 回分（フレームが来ない環境で閉じる操作を待たせ続けない）
-            await Task.WhenAny(completed.Task, Task.Delay(s_frameTimeout)).ConfigureAwait(true);
+            await Task.WhenAny(completed.Task, Task.Delay(timeout ?? s_frameTimeout)).ConfigureAwait(true);
         }
         finally
         {
