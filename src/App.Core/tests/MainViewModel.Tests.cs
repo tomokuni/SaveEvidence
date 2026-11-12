@@ -261,6 +261,59 @@ public class MainViewModelTests
     }
 
     [Fact]
+    internal async Task CanSave_保存後にテンプレートを変えると保存できる()
+    {
+        using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
+
+        var vm = new MainViewModel(new MockSettingsService(), writer)
+        {
+            PreviewImage = CreateBitmap(),
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+        };
+
+        Assert.True(await vm.SaveImageAsync());
+
+        // 保存直後（自動で +1 されただけ）は変化とみなさず保存できない
+        Assert.Equal("screenshot_002.png", vm.FileNameTemplateText);
+        Assert.False(vm.CanSave);
+
+        // 番号を戻すと保存できる
+        vm.FileNameTemplateText = "screenshot_001.png";
+        Assert.True(vm.CanSave);
+
+        // さらに進めた番号でも保存できる
+        vm.FileNameTemplateText = "screenshot_003.png";
+        Assert.True(vm.CanSave);
+    }
+
+    [Fact]
+    internal async Task PasteFromClipboardAsync_はUndoの対象になる()
+    {
+        using var tempDir = new TempDir();
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
+        {
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+            PreviewImage = CreateBitmap(),
+        };
+
+        var pushed = 0;
+        vm.BeforeEditAction = () => pushed++;
+
+        vm.PasteFromClipboardCallback = () =>
+        {
+            using var bmp = EsBitmap.Create(4, 4);
+            bmp.SetReadOnly();
+            return Task.FromResult<EsBitmap?>(EsBitmap.FromReadOnlyBitmap(EsReadOnlyBitmap.FromBitmap(bmp)));
+        };
+
+        Assert.True(await vm.PasteFromClipboardAsync());
+        Assert.Equal(1, pushed);
+    }
+
+    [Fact]
     internal async Task SaveImageAsync_プレビュー画像がnullの場合は保存せずインクリメントしない()
     {
         using var tempDir = new TempDir();

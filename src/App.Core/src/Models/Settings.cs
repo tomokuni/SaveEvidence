@@ -113,6 +113,14 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private bool _autoSave;
 
+    /// <summary>撮影・切り出しの後に画像をクリップボードへコピーするかどうかを取得または設定する。</summary>
+    /// <remarks>
+    /// 有効な場合、撮影（スクリーン / ウィンドウ / 領域選択）と切り出しの確定後に自動でコピーする<br/>
+    /// （4 つの UI 版で共有する。 既定は無効）。
+    /// </remarks>
+    [ObservableProperty]
+    private bool _copyAfterCapture;
+
     /// <summary>キャプチャ時（SnipOverlayWindow）の選択枠境界線色を取得または設定する。</summary>
     /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: DarkGray = <c>#FFA9A9A9</c>）。</remarks>
     [ObservableProperty]

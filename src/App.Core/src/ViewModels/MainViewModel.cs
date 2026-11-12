@@ -51,6 +51,13 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SavedFileName))]
     private string _lastSavedFileName = "";
 
+    /// <summary>最後に保存した直後のファイル名テンプレート（未保存の場合は null）。</summary>
+    /// <remarks>
+    /// 保存するとテンプレートの番号は自動で +1 される。 その +1 だけでは「変化した」とみなさず、<br/>
+    /// 保存を無効のままにする（利用者の操作ではないため）。 番号を戻した・さらに進めた・文字を変えた場合は保存できる。
+    /// </remarks>
+    private string? _savedTemplateText;
+
     /// <summary>ファイル名テンプレートの検証結果（有効時は null）。</summary>
     private string? _validationMessage;
 
@@ -236,9 +243,21 @@ public sealed partial class MainViewModel : ObservableObject
     /// - 画像が無い（<see cref="PreviewImage"/> が null）。<br/>
     /// - 起動直後の初期画像を表示している（<see cref="IsStartupImage"/>。 利用者の画像ではない）。<br/>
     /// - ファイル名テンプレートが無効。<br/>
-    /// - 保存済みで画像が変わっていない（<see cref="IsSaved"/>。 画像変更で解除される）。
+    /// - 保存済みで<b>画像もテンプレートも変わっていない</b>。 保存時の自動インクリメント（+1）は変化とみなさない<br/>
+    ///   （<see cref="_savedTemplateText"/>。 番号を戻した・さらに進めた・文字を変えた場合は保存できる）。
     /// </remarks>
-    public bool CanSave => PreviewImage is not null && HasValidTemplate && !IsSaved && !IsStartupImage;
+    public bool CanSave
+        => PreviewImage is not null
+            && HasValidTemplate
+            && !IsStartupImage
+            && (!IsSaved || HasTemplateChangedSinceSave);
+
+    /// <summary>最後の保存以降にファイル名テンプレートが変わったかどうかを取得する。</summary>
+    /// <value>変わった場合は true。 未保存（比較対象が無い）場合も true。</value>
+    /// <remarks>保存時の自動インクリメントは「変わっていない」として扱う（<see cref="CanSave"/>）。</remarks>
+    public bool HasTemplateChangedSinceSave
+        => _savedTemplateText is null
+            || !string.Equals(FileNameTemplateText, _savedTemplateText, StringComparison.Ordinal);
 
     /// <summary>起動直後の初期画像（プレースホルダ）を表示しているかどうかを取得する。</summary>
     /// <value>初期画像の場合は true。 撮影・切り出し・貼り付け等で差し替えると false。</value>
@@ -267,6 +286,39 @@ public sealed partial class MainViewModel : ObservableObject
             OnPropertyChanged();
         }
     }
+
+    /// <summary>撮影・切り出しの後に画像をクリップボードへコピーするかどうかを取得または設定する。</summary>
+    /// <value>有効な場合、撮影と切り出しの確定後に自動でコピーする（設定へ保存する）。</value>
+    /// <remarks>値の保持と永続化は <see cref="Models.Settings.CopyAfterCapture"/> が担う（4 つの UI 版で共有する）。</remarks>
+    public bool CopyAfterCapture
+    {
+        get => Settings.CopyAfterCapture;
+        set
+        {
+            if (Settings.CopyAfterCapture == value)
+            {
+                return;
+            }
+
+            Settings.CopyAfterCapture = value;
+            _settingsService.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>設定が有効な場合に画像をクリップボードへコピーする（撮影・切り出しの確定後に呼ぶ）。</summary>
+    /// <returns>待機タスク。</returns>
+    /// <remarks>
+    /// 撮影は UI 側のハンドラーが、切り出しは <see cref="CropPreview"/> 等が呼ぶ（手順を UI ごとに書かない）。
+    /// </remarks>
+    public async Task CopyAfterEditIfEnabledAsync()
+    {
+        if (CopyAfterCapture && CanCopy)
+        {
+            await CopyToClipboardAsync();
+        }
+    }
+
 
     /// <summary>貼り付け可能かどうかを取得する。</summary>
     public bool CanPaste => PasteFromClipboardCallback is not null;
@@ -388,6 +440,10 @@ public sealed partial class MainViewModel : ObservableObject
         _settingsService.Current.FileNameTemplate = value;
         _settingsService.Save();
         UpdateValidation();
+
+        // テンプレートが変わると保存できるようになる（未保存のまま・保存時の +1 のままは保存できない）
+        OnPropertyChanged(nameof(HasTemplateChangedSinceSave));
+        OnPropertyChanged(nameof(CanSave));
     }
 
     /// <summary>保存先フォルダ変更時に解決結果を更新し、設定を保存する。</summary>
@@ -486,6 +542,9 @@ public sealed partial class MainViewModel : ObservableObject
         var image = await PasteFromClipboardCallback();
         if (image is not null)
         {
+            // 貼り付けは画像の差し替えのため、Undo の対象にする（撮影・切り出しと同じ扱い）
+            BeforeEditAction?.Invoke();
+
             // 貼り付け結果の所有権は本型へ移る（画素は読み取りの面が共有して引き継ぐ）
             PreviewImage = TakeReadOnly(image);
             StatusMessage = StatusMessages.PasteCompleted();
@@ -505,6 +564,9 @@ public sealed partial class MainViewModel : ObservableObject
         if (ApplyPixelEdit(srcData => srcData.Crop(bounds.X, bounds.Y, bounds.Width, bounds.Height)))
         {
             StatusMessage = StatusMessages.CropCompleted(bounds.Width, bounds.Height);
+
+            // 設定が有効なら切り出した画像をクリップボードへコピーする
+            _ = CopyAfterEditIfEnabledAsync();
         }
     }
 
@@ -602,6 +664,9 @@ public sealed partial class MainViewModel : ObservableObject
         if (ApplyPixelEdit(srcData => srcData.Crop(bounds.X, bounds.Y, bounds.Width, bounds.Height)))
         {
             StatusMessage = StatusMessages.CropCompleted(bounds.Width, bounds.Height);
+
+            // 設定が有効なら切り出した画像をクリップボードへコピーする
+            _ = CopyAfterEditIfEnabledAsync();
         }
     }
 
@@ -712,6 +777,12 @@ public sealed partial class MainViewModel : ObservableObject
 
             LastSavedFileName = fileName;
             IsSaved = true;
+
+            // 保存直後のテンプレート（自動で +1 された値）を控える。 この +1 だけでは「変化」とみなさない
+            _savedTemplateText = FileNameTemplateText;
+            OnPropertyChanged(nameof(HasTemplateChangedSinceSave));
+            OnPropertyChanged(nameof(CanSave));
+
             // 撮影の通知を保存の通知で置き換える（保存後に何が起きたかがステータスバーで分かるようにする）
             StatusMessage = StatusMessages.SaveCompleted(DateTime.Now);
 

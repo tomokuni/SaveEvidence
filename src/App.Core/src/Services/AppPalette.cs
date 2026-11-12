@@ -85,6 +85,24 @@ public static class AppPalette
     /// </remarks>
     public static uint Link(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF0067C0;
 
+    /// <summary>通知メッセージ（「保存しました」等）の文字色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>
+    /// 4 UI 版で同じ青（<c>#007ACC</c>）にする。 暗色では明るい青へ切り替える<br/>
+    /// （濃い青は暗い下地に沈む）。
+    /// </remarks>
+    public static uint Announce(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF007ACC;
+
+    /// <summary>無効（操作できない）ボタンのアイコンの色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>
+    /// **アイコンは無効でも色が変わらない**（画像のためテーマの不透明度が効かない）。<br/>
+    /// 無効であることが分かるよう、地色に近い灰色で描く。
+    /// </remarks>
+    public static uint DisabledForeground(bool isDark) => isDark ? 0xFF6A6A6A : 0xFFA0A0A0;
+
     /// <summary>ツールバーのアイコン ボタンの角丸（DIP）。</summary>
     public const double ToolbarButtonCornerRadius = 4;
 
