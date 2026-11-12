@@ -93,6 +93,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `IsNavigationExpanded` | `bool` | ナビゲーションパネルの展開状態 |
 | `StartupPreview` | `StartupPreviewMode` | 起動直後のキャプチャ ページに置く画像（`Gradient` = グラデーション画像 / `Blank` = 空白。 既定は `Gradient`） |
 | `AutoSave` | `bool` | 自動保存（有効な間は画像が変わるたびに保存する。 4 UI 版で共有。 既定は無効） |
+| `CopyAfterCapture` | `bool` | 撮影・切り出しの後に画像をクリップボードへコピーする（4 UI 版で共有。 既定は無効） |
 | `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | フォルダビューのアイコンサイズ |
 
 ## 5. `Services.ISettingsService` / `Services.SettingsService`（クラス）
@@ -276,7 +277,9 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `StatusMessage` / `ZoomDisplayText` / `PointerDisplayText` | `string` | 画面表示用テキスト |
 | `IsSaved` / `SavedFileName` | `bool` / `string` | 保存済み状態と保存したファイル名（保存状態の専用ラベルは持たない。 保存のたびに通知する） |
 | `IsStartupImage` | `bool` | 起動直後の初期画像（プレースホルダ）を表示しているか（true の間は保存できない） |
+| `HasTemplateChangedSinceSave` | `bool` | 保存後にファイル名テンプレートが変わったか（保存時の自動インクリメントで +1 されただけの状態は「変わっていない」とみなす。 `CanSave` の判定に使う） |
 | `AutoSave` | `bool` | 自動保存（`Settings.AutoSave` を読み書きし、設定へ保存する） |
+| `CopyAfterCapture` | `bool` | 撮影・切り出しの後にクリップボードへコピーする（`Settings.CopyAfterCapture` を読み書きし、設定へ保存する） |
 | `FileNameTemplateText` | `string` | ファイル名テンプレート（変更時に検証と保存） |
 | `SaveFolderPath` / `SaveFolderPathResolved` / `HasInvalidSaveFolder` | `string` / `bool` | 保存先フォルダ |
 | `ValidationMessage` / `HasValidTemplate` / `HasInvalidTemplate` | `string?` / `bool` | テンプレート検証結果 |
@@ -291,6 +294,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | --- | --- |
 | `SetPreviewImage(EsReadOnlyBitmap)` / `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る）。 書き換え可能な画像を渡す版は、渡した実体を**凍結**して 0 コピーで共有する |
 | `SetStartupPreviewImage(EsBitmap)` | 起動直後の初期画像を設定する（`IsStartupImage` を立て、**保存できない**状態にする） |
+| `CopyAfterEditIfEnabledAsync()` | 撮影・切り出しの直後に呼ぶ。 `CopyAfterCapture` が有効なら現在の画像をクリップボードへコピーする（撮影の完了通知は変えない） |
 | `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`）。 失敗時は `StatusMessage` と `SaveFailed` へ通知する |
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`）。 成功時に `切り出しました（W x H）` を通知する |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`）。 検出結果とキャンセルを通知する |
@@ -351,6 +355,8 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | 選択中のトグル ボタンの文字 | `#FFFFFF` | `#000000` | `ButtonCheckedForeground(bool isDark)` |
 | ボタンの面（ホバー） | `#E9E9E9` | `#3A3A3A` | `ToolbarButtonBackground(bool isDark, bool isPressed)` |
 | ボタンの面（押下） | `#DBDBDB` | `#4E4E4E` | `ToolbarButtonBackground(bool isDark, bool isPressed)` |
+| 通知（「保存しました」など）の文字 | `#007ACC` | `#007ACC` | `Announce(bool isDark)` |
+| 無効な操作（保存できない間）のアイコン | `#A0A0A0` | `#6A6A6A` | `DisabledForeground(bool isDark)` |
 
 `ToolbarButtonCornerRadius`（4 DIP）はボタンの角丸です。 ボタンは **WinUI 3 の既定のボタンと同じ外観**（面・1 DIP の枠線・選択中はアクセント色）にし、マウスを重ねると薄いグレー、押している間はさらに濃くします（暗色では「濃く」を「明るく」で表す）。 面・枠線・アクセント色は WinUI 3 の実測値です（半透明の面を下地と重ねた結果を opaque な値として保持する。 半透明のまま配ると下地が変わったときに UI 版でずれる）。
 
@@ -597,6 +603,7 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 | `WindowSelect` | ウィンドウ選択キャプチャ |
 | `AreaSelect` | 領域選択キャプチャ |
 | `Crop` | 切り出し |
+| `Menu` | メニュー（三本線。 フォントのグリフではなくこの SVG を使う） |
 
 ## 35. `Services.LogLevelText`（内部・静的クラス）
 
