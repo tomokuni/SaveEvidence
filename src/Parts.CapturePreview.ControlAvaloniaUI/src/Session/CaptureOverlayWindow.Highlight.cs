@@ -1,6 +1,7 @@
 using Avalonia.Input;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.Ui.AvaloniaUI.Interop.Coord;
 using EsUtil.Ui.AvaloniaUI.Interop;
@@ -49,6 +50,35 @@ internal sealed partial class CaptureOverlayWindow
         SelectionOverlay.HighlightSourceRect = highlight.SourceRect is { } rect ? rect.ToAvaloniaRect() : null;
         return highlight;
     }
+
+    /// <summary>表示の前に、カーソル下の要素でハイライトを確定する。</summary>
+    /// <remarks>
+    /// <b>なぜ必要か</b>: ハイライトはポインター移動でしか更新しないため、表示直後は<b>全面がマスクされた状態</b>に
+    /// なり、最初の移動でカーソル下のモニター・ウィンドウのマスクが解除される。 これは
+    /// 「一度マスクされたかに見える」= ちらつきとして知覚される（実測 2026-11-13）。<br/>
+    /// <b>呼ぶ位置</b>: 撮影画像を背景へ設定した後、オーバーレイを画面内へ移す前（画面外・不可視の間）。<br/>
+    /// <b>対象</b>: ハイライト型（スクリーン選択 / ウィンドウ選択）だけ。 範囲選択はドラッグで矩形を作るため対象外。<br/>
+    /// <b>取得できない場合</b>: カーソル位置が取れない環境では何もしない（全面マスクのまま操作できる）。
+    /// </remarks>
+    internal void ApplyInitialHighlight()
+    {
+        if (!CaptureTypeTraits.IsHighlighted(_captureType) || _highlight.SourceRect is not null)
+        {
+            return;
+        }
+
+        if (!s_cursor.TryGetCursorScreenPoint(out var screenPoint))
+        {
+            return;
+        }
+
+        ApplyHighlight(CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint));
+        RequestOverlayRender();
+    }
+
+    /// <summary>カーソル位置の取得（表示前のハイライトの初期化に使う。 状態を持たないため共有できる）。</summary>
+    /// <remarks>表示の前に「カーソル下のモニター・ウィンドウ」をハイライトするために使う。</remarks>
+    private static readonly ICursorService s_cursor = new WinCursorService();
 
     /// <summary>対象矩形の中心が含まれるモニタのスケーリング係数を返す（サイズラベルの DisplayScale 表示用）。</summary>
     /// <param name="sourceRect">対象矩形（= 画面物理 − Position。 ウィンドウローカル物理ピクセル）。</param>

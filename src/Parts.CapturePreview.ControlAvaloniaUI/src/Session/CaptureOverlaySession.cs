@@ -309,6 +309,11 @@ internal sealed class CaptureOverlaySession(
                 window.SetVirtualScreen(bitmap, origin);
             }
 
+            // **画面内へ移す前にハイライトを確定する**: 全体をマスクした状態で 1 フレームでも見せると、
+            // カーソル下のモニター・ウィンドウだけが後から明るくなる（= マスクが一度掛かってから解除される）
+            // ように見え、ちらつきとして知覚される（実測 2026-11-13）
+            window.ApplyInitialHighlight();
+
             // 撮影画像が合成されたフレームを待ってから、位置だけ画面内へ移す
             await WaitForFramesAsync(window, RevealFrameCount).ConfigureAwait(true);
             if (completion.Task.IsCompleted)

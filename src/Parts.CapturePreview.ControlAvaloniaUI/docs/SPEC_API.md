@@ -520,7 +520,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 2. `CaptureOverlaySession` を生成（`IWindowService` / `ICaptureService` / `IElementFinder` を `EsUtil.Platform.Core` の `Native`（既定実装は `Native.Win`）から注入）
 3. オーナーウィンドウをキャプチャ除外に設定（`SetCaptureExclusion`。 オーバーレイの写り込み防止）→ 画面外へ退避（`HideOwnerWindow` が true の場合）
 4. **仮想スクリーン全体をバックグラウンド + 5 秒タイムアウトでキャプチャ（全モード共通。 切り出し元）**
-5. `CaptureOverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示）
+5. `CaptureOverlayWindow` を表示（全画面透明・Topmost・Alt+Tab 非表示）。 **画面内へ出す前にカーソル下の要素でハイライトを確定する**（全体をマスクした状態で 1 フレームでも見せると、カーソル下のモニター・ウィンドウだけが後から明るくなり、ちらつきとして知覚される）
    - AreaSelect: Marquee ドラッグ選択 + Loupe（仮想スクリーン Bitmap 取得完了後に表示開始。 Source 未設定の「画像外の色のみ」表示を防止）
    - Screen / WindowSelect: Pointer 移動で要素検出 → ハイライト。 **クリック（左ボタン押下でハイライト固定 → 解放で確定）/ Enter キーで確定 / Esc キーでキャンセル**
 6. 確定時: 選択矩形を種別に応じて切り出し矩形へ変換（AreaSelect は終点のピクセルを加算。 ScreenSelect / WindowSelect は変換なし）し、**枠選択中に事前切り出し済みのキャッシュを再利用**（不一致時のみ切り出し。 枠の変更がない場合は切り出しスキップ）

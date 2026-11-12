@@ -5,6 +5,7 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
@@ -97,6 +98,13 @@ internal sealed class CaptureOverlay
 
     /// <summary>カーソル下の要素を検出するサービス（ハイライト型（スクリーン選択 / ウィンドウ選択）のみ使用する）。</summary>
     private readonly IElementFinder _finder;
+
+    /// <summary>カーソル位置の取得（表示前のハイライトの初期化に使う。 状態を持たないため共有できる）。</summary>
+    /// <remarks>
+    /// 表示の前に「カーソル下のモニター・ウィンドウ」をハイライトするために使う（WIC 等と同じく
+    /// Windows 専用の具象で問題ない。 切り出しのカーソル上書き抑制も同じ形で具象を持つ）。
+    /// </remarks>
+    private static readonly ICursorService s_cursor = new WinCursorService();
 
     /// <summary>キャプチャ種別（操作ラベル・情報ラベルの文言に影響する）。</summary>
     private readonly CaptureType _type;
@@ -698,6 +706,11 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private async Task RevealAsync(Window window, CaptureOverlayServices services, CaptureOwnerScope ownerScope)
     {
+        // **表示の前にハイライトを確定する**: 全体をマスクした状態で 1 フレームでも見せると、
+        // カーソル下のモニター・ウィンドウだけが後から明るくなる（= マスクが一度掛かってから解除される）
+        // ように見え、ちらつきとして知覚される（実測 2026-11-13）。 画面外・透明の間に済ませる。
+        ApplyInitialHighlight();
+
         // **待つ上限は短くする**: 画面外では合成が走らないことがあり、その場合は待っても画像は描かれない。
         // 待つほど「アプリが消えてから暗転が掛かるまで」の間が伸び、ちらつきとして見える
         await WaitForFramesAsync(window, FramesBeforePlace, s_revealFrameTimeout).ConfigureAwait(true);
@@ -828,6 +841,29 @@ internal sealed class CaptureOverlay
         {
             _selector.RequestRedraw();
         }
+    }
+
+    /// <summary>表示の前に、カーソル下の要素でハイライトを確定する。</summary>
+    /// <remarks>
+    /// <b>なぜ必要か</b>: ハイライトはポインタ移動でしか更新しないため、表示直後は<b>全面がマスクされた状態</b>に
+    /// なり、最初のポインタ移動でカーソル下のモニター・ウィンドウのマスクが解除される。 これは
+    /// 「一度マスクされた後に明るくなる」= ちらつきとして知覚される（実測 2026-11-13）。<br/>
+    /// <b>対象</b>: ハイライト型（スクリーン選択 / ウィンドウ選択）だけ。 範囲選択はドラッグで矩形を作るため対象外。<br/>
+    /// <b>取得できない場合</b>: カーソル位置が取れない環境では何もしない（全面マスクのまま操作できる）。
+    /// </remarks>
+    private void ApplyInitialHighlight()
+    {
+        if (!CaptureTypeTraits.IsHighlighted(_type) || _highlight.SourceRect is not null)
+        {
+            return;
+        }
+
+        if (!s_cursor.TryGetCursorScreenPoint(out var screenPoint))
+        {
+            return;
+        }
+
+        Highlight(screenPoint);
     }
 
     /// <summary>マウス位置（画面物理ピクセル）をそのままコア型へ変換する。</summary>
