@@ -320,7 +320,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `CaptureCompleted(int width, int height)` | 撮影の確定（各 UI の撮影完了ハンドラーが使う） | `キャプチャしました（640 x 480）` |
 | `CropCompleted(int width, int height)` | 切り出しの確定（手動・自動の両方） | `切り出しました（120 x 90）` |
 | `PasteCompleted()` / `PasteUnavailable()` | クリップボードからの貼り付けの成否 | `クリップボードの画像を貼り付けました。` / `クリップボードに画像がありません。` |
-| `SaveCompleted(DateTime savedAt)` | 保存の成功（`MainViewModel` が撮影の通知を置き換える） | `保存しました（2026.11.11 21:24:22）` |
+| `SaveCompleted()` | 保存の成功（`MainViewModel` が撮影の通知を置き換える） | `保存しました` |
 | `AutoSaveSkipped(string fileName)` | 自動保存の中止（同名のファイルがある。 確認せずに上書きしない） | `自動保存しませんでした（同名のファイルがあります: …）。` |
 | `SaveFailed()` | 保存の失敗（例外） | `保存できませんでした（保存先フォルダを確認してください）。` |
 | `SaveUnavailable(bool hasInvalidTemplate, string? validationMessage)` | 保存を実行できない状態（UI がボタンを無効にする代わりに出す） | `保存できる状態ではありません（…）` |
@@ -644,6 +644,7 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 | メソッド | 説明 |
 | --- | --- |
 | `TryCopy(EsReadOnlyBitmap image, IntPtr ownerWindow)` | 画像をクリップボードへ書き込む（32bpp・**下から上**・圧縮なしの DIB）。 `ownerWindow` はクリップボードの所有者にする自ウィンドウのハンドル（`SetClipboardData` の要件） |
+| `TryCopyFile(string filePath, IntPtr ownerWindow)` | 画像ファイルを**等倍**で読み込んでクリップボードへ書き込む（一覧から選んだ画像のコピー用。 復号できない場合は false） |
 | `TryGet()` | クリップボードの画像を読み取る（書き換え可能な型で返す。 貼り付けでそのまま扱える）。 画像が無い・他アプリが使用中の場合は null |
 
 - 実装は `Native.WinClipboardDib` が単一所有します（解析・書き込みの手順を UI 側へ漏らさない）。

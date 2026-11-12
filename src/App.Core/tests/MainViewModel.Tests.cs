@@ -134,8 +134,8 @@ public class MainViewModelTests
         Assert.EndsWith("screenshot_001.png", saved, StringComparison.Ordinal);
         Assert.Single(writer.SavedImages);
 
-        // 5. ステータスバーの通知が「保存しました（…）」に置き換わること（撮影の通知が残らない）
-        Assert.StartsWith("保存しました（", vm.StatusMessage, StringComparison.Ordinal);
+        // 5. ステータスバーの通知が「保存しました」に置き換わること（撮影の通知が残らない）
+        Assert.Equal(StatusMessages.SaveCompleted(), vm.StatusMessage);
         Assert.DoesNotContain("キャプチャしました", vm.StatusMessage, StringComparison.Ordinal);
     }
 

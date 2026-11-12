@@ -784,7 +784,7 @@ public sealed partial class MainViewModel : ObservableObject
             OnPropertyChanged(nameof(CanSave));
 
             // 撮影の通知を保存の通知で置き換える（保存後に何が起きたかがステータスバーで分かるようにする）
-            StatusMessage = StatusMessages.SaveCompleted(DateTime.Now);
+            StatusMessage = StatusMessages.SaveCompleted();
 
             return true;
         }

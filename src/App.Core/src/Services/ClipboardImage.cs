@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.App.Core.Native;
 
@@ -20,4 +21,26 @@ public static class ClipboardImage
     /// <param name="ownerWindow">クリップボードの所有者にするウィンドウ（<c>SetClipboardData</c> の要件）。</param>
     /// <returns>書き込めた場合は true。 他アプリが使用中・確保できない場合は false。</returns>
     public static bool TryCopy(EsReadOnlyBitmap image, IntPtr ownerWindow) => WinClipboardDib.TryWrite(image, ownerWindow);
+
+    /// <summary>画像ファイルを読み込んでクリップボードへ書き込む。</summary>
+    /// <param name="filePath">読み込む画像ファイルのパス。</param>
+    /// <param name="ownerWindow">クリップボードの所有者にするウィンドウ（<c>SetClipboardData</c> の要件）。</param>
+    /// <returns>書き込めた場合は true。 復号できない・他アプリが使用中の場合は false。</returns>
+    /// <remarks>
+    /// 一覧（フォルダビュー）から選んだ画像をコピーするために使う（等倍で読み込む。<br/>
+    /// 縮小すると貼り付け先で粗くなる）。 復号の失敗は例外にせず false で表す（記録は呼び出し側が行う）。
+    /// </remarks>
+    public static bool TryCopyFile(string filePath, IntPtr ownerWindow)
+    {
+        try
+        {
+            using var image = EsReadOnlyBitmap.Load(filePath);
+            return TryCopy(image, ownerWindow);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            // 復号できない・他アプリが使用中の場合はコピーしない（記録は呼び出し側のロガーが行う）
+            return false;
+        }
+    }
 }

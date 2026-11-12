@@ -31,15 +31,13 @@ public static class StatusMessages
     public static string PasteUnavailable() => "クリップボードに画像がありません。";
 
     /// <summary>画像を保存したことを通知する文言を取得する。</summary>
-    /// <param name="savedAt">保存した日時。</param>
-    /// <returns>通知の文言（例: <c>保存しました（2026.11.11 21:24:22）</c>）。</returns>
+    /// <returns>通知の文言（<c>保存しました</c>）。</returns>
     /// <remarks>
     /// 保存後のステータスは撮影の通知（<see cref="CaptureCompleted"/>）を置き換える<br/>
     /// （「キャプチャしました」と「保存しました」が並ぶと、どちらが現在の状態か読めない）。<br/>
-    /// 日時はカルチャに依存させない（24 時間表記・固定の区切り）。
+    /// 日時は出さない（保存したファイル名はステータスバーへ別に出ており、日時はファイル名から読める）。
     /// </remarks>
-    public static string SaveCompleted(DateTime savedAt)
-        => $"保存しました（{savedAt.ToString("yyyy.MM.dd HH:mm:ss", CultureInfo.InvariantCulture)}）";
+    public static string SaveCompleted() => "保存しました";
 
     /// <summary>画像の保存に失敗したことを通知する文言を取得する。</summary>
     /// <returns>通知の文言。</returns>
