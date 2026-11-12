@@ -212,6 +212,29 @@ public class MainViewModelTests
     }
 
     [Fact]
+    internal void AutoSave_初期画像は自動保存しない()
+    {
+        using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
+
+        var vm = new MainViewModel(new MockSettingsService(), writer)
+        {
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+            AutoSave = true,
+        };
+
+        // 起動直後の初期画像は利用者の画像ではないため、自動保存の対象外
+        using (var startup = EsBitmap.Create(4, 4))
+        {
+            vm.SetStartupPreviewImage(startup);
+        }
+
+        Assert.True(vm.IsStartupImage);
+        Assert.Empty(writer.SavedPaths);
+    }
+
+    [Fact]
     internal async Task AutoSave_有効な場合は画像の変更で自動保存する()
     {
         using var tempDir = new TempDir();

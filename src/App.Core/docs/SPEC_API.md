@@ -630,8 +630,9 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 
 | メソッド | 説明 |
 | --- | --- |
-| `TryCopy(EsReadOnlyBitmap image, IntPtr ownerWindow)` | 画像をクリップボードへ書き込む（32bpp・上から下・圧縮なしの DIB）。 `ownerWindow` はクリップボードの所有者にする自ウィンドウのハンドル（`SetClipboardData` の要件） |
+| `TryCopy(EsReadOnlyBitmap image, IntPtr ownerWindow)` | 画像をクリップボードへ書き込む（32bpp・**下から上**・圧縮なしの DIB）。 `ownerWindow` はクリップボードの所有者にする自ウィンドウのハンドル（`SetClipboardData` の要件） |
 | `TryGet()` | クリップボードの画像を読み取る（書き換え可能な型で返す。 貼り付けでそのまま扱える）。 画像が無い・他アプリが使用中の場合は null |
 
 - 実装は `Native.WinClipboardDib` が単一所有します（解析・書き込みの手順を UI 側へ漏らさない）。
 - 読み取りの対象は 32 / 24 / 16 / 8 bpp（上下反転の有無を含む）です。 圧縮 DIB（JPEG / PNG）は対象外です。
+- **書き込みは下から上（`biHeight` が正値）にします**。 上から下（負値）は規格上は正しいものの、受け取る側が対応していないことがあるためです（実測 2026-11-12: 上から下だと `System.Windows.Forms.Clipboard.GetImage` が null を返し、Avalonia の `TryGetBitmapAsync` も読めませんでした）。

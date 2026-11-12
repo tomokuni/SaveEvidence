@@ -35,6 +35,13 @@ public sealed partial class MainViewModel : ObservableObject
     /// </remarks>
     private bool _isStartupImage;
 
+    /// <summary>初期画像の設定中かどうか（差し替えの経路が初期画像の印を消さないようにする）。</summary>
+    /// <remarks>
+    /// <see cref="SetStartupPreviewImage"/> は <see cref="PreviewImage"/> を設定するため差し替えの経路を通る。<br/>
+    /// その経路は印を消す（利用者の画像として扱う）ため、設定中だけは消さずに引き継ぐ。
+    /// </remarks>
+    private bool _settingStartupImage;
+
     /// <summary>最後に保存したファイル名（未保存の場合は空）。 保存のたびに更新して表示へ通知する。</summary>
     /// <remarks>
     /// <b>観測可能にしている理由</b>: 保存済みのまま再保存すると <see cref="IsSaved"/> が true のまま変わらず、<br/>
@@ -325,8 +332,13 @@ public sealed partial class MainViewModel : ObservableObject
         LastSavedFileName = "";
 
         // 差し替えは利用者の画像（撮影・切り出し・貼り付け等）のため初期画像ではない
-        // （初期画像を設定する経路は SetStartupPreviewImage が本メソッドの後に印を付ける）
-        _isStartupImage = false;
+        // （初期画像を設定する経路は SetStartupPreviewImage が印を引き継がせる）
+        var wasStartupImage = _isStartupImage;
+        _isStartupImage = _settingStartupImage;
+        if (wasStartupImage != _isStartupImage)
+        {
+            OnPropertyChanged(nameof(IsStartupImage));
+        }
     }
 
     /// <summary>プレビュー画像変更後に前回の画像を破棄する。</summary>
@@ -432,8 +444,17 @@ public sealed partial class MainViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(image);
 
-        // 差し替えの経路（OnPreviewImageChanging）が印を消すため、設定した後に付ける
-        PreviewImage = ToReadOnly(image);
+        // 差し替えの経路（OnPreviewImageChanging）が印を消すため、設定中だけは引き継がせる
+        _settingStartupImage = true;
+        try
+        {
+            PreviewImage = ToReadOnly(image);
+        }
+        finally
+        {
+            _settingStartupImage = false;
+        }
+
         _isStartupImage = true;
         OnPropertyChanged(nameof(IsStartupImage));
         OnPropertyChanged(nameof(CanSave));

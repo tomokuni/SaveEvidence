@@ -48,8 +48,10 @@ internal static class WinClipboardDib
     /// <param name="ownerWindow">クリップボードの所有者にするウィンドウ（<c>OpenClipboard</c> の引数）。</param>
     /// <returns>書き込めた場合は true。 他アプリが使用中・確保できない場合は false。</returns>
     /// <remarks>
-    /// 32bpp・上から下（<c>biHeight</c> が負値）・圧縮なしの DIB を書く<br/>
-    /// （本アプリの画像は BGRA8888 のため、行の並びをそのまま渡せる）。
+    /// 32bpp・圧縮なし・**下から上**（<c>biHeight</c> が正値）の DIB を書く。<br/>
+    /// 上から下（負値）は規格上は正しいが、<b>受け取る側が対応していないことがある</b><br/>
+    /// （実測 2026-11-12: 上から下だと `System.Windows.Forms.Clipboard.GetImage` が null を返し、
+    /// Avalonia の `TryGetBitmapAsync` も読めなかった。 下から上にすると両方で読めた）。
     /// </remarks>
     public static unsafe bool TryWrite(EsReadOnlyBitmap image, IntPtr ownerWindow)
     {
@@ -97,8 +99,14 @@ internal static class WinClipboardDib
                     var header = new Span<byte>(target, HeaderSize);
                     WriteHeader(header, width, height, imageSize);
 
-                    // 画素は BGRA8888・行幅 = 幅 × 4（画像のストライドと一致する）
-                    image.ReadOnlyPixels[..imageSize].CopyTo(new Span<byte>(target + HeaderSize, imageSize));
+                    // 画素は BGRA8888・行幅 = 幅 × 4。 下から上へ並べる
+                    var pixels = image.ReadOnlyPixels[..imageSize];
+                    for (var y = 0; y < height; y++)
+                    {
+                        var source = pixels.Slice(y * width * 4, width * 4);
+                        var destination = new Span<byte>(target + HeaderSize + ((height - 1 - y) * width * 4), width * 4);
+                        source.CopyTo(destination);
+                    }
                 }
                 finally
                 {
@@ -133,13 +141,13 @@ internal static class WinClipboardDib
     /// <param name="width">幅（ピクセル）。</param>
     /// <param name="height">高さ（ピクセル）。</param>
     /// <param name="imageSize">画素データのバイト数。</param>
+    /// <remarks>高さは正値（下から上）にする（<see cref="TryWrite"/> の注記を参照）。</remarks>
     private static void WriteHeader(Span<byte> header, int width, int height, int imageSize)
     {
         var values = header;
         WriteInt32(values, 0, HeaderSize);
         WriteInt32(values, 4, width);
-        // 負値は「上から下」を表す（画像の行の並びをそのまま渡すため）
-        WriteInt32(values, 8, -height);
+        WriteInt32(values, 8, height);
         WriteInt16(values, 12, 1);
         WriteInt16(values, 14, 32);
         WriteUInt32(values, 16, BI_RGB);
