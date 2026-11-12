@@ -308,13 +308,14 @@ internal static class CapturePage
         cropButton.BindIsEnabled(hasImage);
 
         // 自動保存のトグル（保存ボタンの右。 有効な間は画像が変わるたびに保存する）。
-        // 高さは保存ボタンのアイコンの見える高さ（16 DIP）に合わせる。
+        // 高さは 4 UI 版で揃える（既定の最小高に負けないよう MinHeight も同じ値にする）。
         // ツールヒントは付けない（MewUI 0.21.1 はツールヒント表示中の押下を取り消すため、
         // トグルが反応しないことがある。 文言は自己説明的な「自動保存」にする）
         var autoSaveButton = new ToggleButton()
             .StyleName(AppStyles.ToolbarToggle)
             .Content("自動保存")
-            .Height(IconSize)
+            .Height(ToolbarMetrics.AutoSaveHeight)
+            .MinHeight(ToolbarMetrics.AutoSaveHeight)
             .Padding(new Thickness(6, 0, 6, 0))
             .Margin(new Thickness(1))
             .IsChecked(viewModel.AutoSave);
@@ -405,11 +406,8 @@ internal static class CapturePage
         messageLabel.Foreground(AnnounceColor());
         messageLabel.Bind(Label.TextProperty, viewModel, static x => x.StatusMessage);
 
-        // ファイル名と通知の間は全角 1 文字分にする
-        var nameMessageGap = new Label();
-        nameMessageGap.FontSize(AppStyles.StatusFontSize);
-        nameMessageGap.VerticalAlignment = VerticalAlignment.Center;
-        nameMessageGap.Text("　");
+        // ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する）
+        var nameMessageGap = new Border { Width = StatusBarMetrics.NameMessageGapWidth };
 
         var nameAndMessage = new StackPanel()
             .Horizontal()

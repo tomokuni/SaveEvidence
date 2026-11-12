@@ -198,7 +198,8 @@
   - 保存後にステータスバーへ出す通知は**青字**（`AppPalette.Announce`）
 - **エラーメッセージ**: `ValidationMessage`（例: 「ファイル名に使用できない文字 ('/') が含まれています。」）
 - **即時反映**: テキスト入力中も含め即時検証・反映され、エラー解消で自動的に通常表示へ戻る
-- **自動保存**: ツールバーの「自動保存」トグル（**保存ボタンの右**。 高さは保存アイコンの見える高さに合わせる）が有効な間は、画像が変わるたびに自動で保存する（`Settings.AutoSave`。 4 UI 版で共有）。 同名のファイルがある場合は確認せずに中止する（`StatusMessages.AutoSaveSkipped`）
+- **自動保存**: ツールバーの「自動保存」トグル（**保存ボタンの右**。 高さは 4 UI 版で共通の `ToolbarMetrics.AutoSaveHeight` = 22.4 DIP）が有効な間は、画像が変わるたびに自動で保存する（`Settings.AutoSave`。 4 UI 版で共有）。 同名のファイルがある場合は確認せずに中止する（`StatusMessages.AutoSaveSkipped`）
+- **クリップボードへのコピー**: Avalonia の `Clipboard.SetDataObject`（`SetBitmapAsync`）ではなく、**共通基盤の `ClipboardImage`（`CF_DIB`。 下から上の向き）**へ書き込む（Avalonia の実装は上から下の DIB を書き、Paint など一部のアプリが画像として貼り付けできない。 実測 2026-11-12）。 書き込めない場合だけ Avalonia のクリップボードへ委譲する
 - **撮影後のコピー**: 設定「撮影・切り出しの後に画像をクリップボードへコピーする」（`Settings.CopyAfterCapture`）が有効な間は、撮影・切り出しの完了後に画像をクリップボードへ置く（`MainViewModel.CopyAfterEditIfEnabledAsync`）
 - **オートインクリメント**: 保存成功後に、テンプレート文字列の**右端の数値**をインクリメントして次のファイル名を自動生成する（`FileNameTemplate.IncrementRightmostNumber`。 桁数は維持: `screenshot_001.png` → `screenshot_002.png`）。 数値がなければそのまま維持される
 - **入力欄の幅**: 入力した文字列の実測幅に合わせて広がる（最小 100 DIP・左右の余白 24 DIP）。 上限は**ツールバーが折り返さない幅**（ツールバーの幅から自分以外の要素と余白を除いた幅）で、超える分は入力欄の中でスクロールする（アイコン類が 2 段にならない）。 ウィンドウの幅が変わったときも上限を計算し直す

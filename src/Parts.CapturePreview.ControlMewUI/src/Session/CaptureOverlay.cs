@@ -418,6 +418,12 @@ internal sealed class CaptureOverlay
         // 明るい面として目立たないようにする。 画面外で描き終えてから移すため、通常は見えない）。
         window.Background = AverageColor(Screen);
 
+        // **配置が済むまで透明にする**: MewUI はウィンドウを表示するときに既定の配置（画面の左上）を
+        // 一瞬適用してから指定の位置へ移すため、その 1〜2 フレームが「画面がずれて見える」ちらつきになる
+        // （実測 2026-11-12: 仮想スクリーンの原点が (0,-1200) の環境で、0,0 の位置に 1 フレーム出た）。
+        // 透明にしておけば、位置が確定して画像が合成された後に不透明へ戻すだけで済む。
+        window.Opacity = 0;
+
         // **画面外に置いた状態で表示し、画像を描き終えてから画面内へ移す**
         // （画面内で表示してから画像を合成すると、合成前の 1〜2 フレームに下地の色やデスクトップが見える）。
         // 大きさは変えずに位置だけ動かすのは、大きさを変えると再レイアウトが走り、
@@ -704,6 +710,11 @@ internal sealed class CaptureOverlay
         }
 
         PlaceOnScreen(window, services);
+
+        // 位置が確定した次のフレームで不透明へ戻す（透明のまま表示していた内容がこの時点で出る。
+        // 画像は画面外で合成済みのため、不透明にした瞬間から正しい内容が見える）
+        await WaitForFramesAsync(window, FramesBeforePlace, s_revealFrameTimeout).ConfigureAwait(true);
+        window.Opacity = 1;
 
         // 画面内へ移した次のフレームでオーナーを退避する（退避の瞬間を見せない）
         await WaitForFramesAsync(window, FramesBeforeHideOwner, s_revealFrameTimeout).ConfigureAwait(true);

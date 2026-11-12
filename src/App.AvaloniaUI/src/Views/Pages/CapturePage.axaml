@@ -112,13 +112,16 @@
                     VerticalAlignment="Center">
                 <PathIcon x:Name="SaveIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
             </Button>
-            <!-- 自動保存（有効な間は画像が変わるたびに保存する）。 高さは保存ボタンのアイコンの見える高さに合わせる -->
+            <!-- 自動保存（有効な間は画像が変わるたびに保存する）。
+                 高さは 4 UI 版で揃える（ToolbarMetrics.AutoSaveHeight。 既定の最小高に負けないよう
+                 MinHeight も同じ値にする） -->
             <ToggleButton x:Name="AutoSaveButton"
                           Classes="toolbar"
                           Content="自動保存"
                           IsChecked="{Binding AutoSave, Mode=TwoWay}"
                           ToolTip.Tip="画像が変わったら自動で保存する"
-                          Height="{DynamicResource ToolbarIconSize}"
+                          Height="{DynamicResource ToolbarAutoSaveHeight}"
+                          MinHeight="{DynamicResource ToolbarAutoSaveHeight}"
                           Padding="6,0"
                           FontSize="11"
                           VerticalAlignment="Center"
@@ -166,10 +169,10 @@
                            ToolTip.Tip="マウスポインタ位置（対象座標 = 画像ピクセル）"/>
                 <TextBlock Classes="status" Text="{Binding ImageSizeDisplayText}" Width="80"
                            ToolTip.Tip="画像サイズ（対象座標 = 元画像ピクセル）"/>
-                <!-- ファイル名と通知の間は全角 1 文字分にする（区切りの間隔は StackPanel の Spacing だけにする） -->
+                <!-- ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する） -->
                 <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
                     <TextBlock Classes="status" Text="{Binding SavedFileName}"/>
-                    <TextBlock Classes="status" Text="　"/>
+                    <Border Width="{DynamicResource StatusBarNameMessageGapWidth}"/>
                     <TextBlock Classes="status" Text="{Binding StatusMessage}"
                                Foreground="{DynamicResource AnnounceForegroundBrush}"/>
                 </StackPanel>

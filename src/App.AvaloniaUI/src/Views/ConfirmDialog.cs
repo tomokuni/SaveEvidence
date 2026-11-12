@@ -9,7 +9,7 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views;
 /// <summary>簡易確認ダイアログ（はい / いいえ）を表示する静的ヘルパー。</summary>
 /// <remarks>
 /// MainWindow に直接実装されていた確認ダイアログを分離し、再利用可能な形にした。<br/>
-/// ウィンドウ装飾なし（<see cref="WindowDecorations.None"/>）のモーダルダイアログとして表示する。
+/// 標準のウィンドウ装飾を持つモーダル ダイアログとしてオーナーの中央に表示する。
 /// </remarks>
 public static class ConfirmDialog
 {

@@ -141,10 +141,10 @@ internal static class CapturePage
         statusLeft.Children.Add(pointerText);
         statusLeft.Children.Add(imageSizeText);
 
-        // ファイル名と通知の間は全角 1 文字分にする
+        // ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する）
         var nameAndMessage = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
         nameAndMessage.Children.Add(savedFileNameText);
-        nameAndMessage.Children.Add(CreateLabel("　", AppStyles.StatusFontSize));
+        nameAndMessage.Children.Add(new Border { Width = StatusBarMetrics.NameMessageGapWidth });
         nameAndMessage.Children.Add(messageText);
         statusLeft.Children.Add(nameAndMessage);
 
@@ -281,13 +281,14 @@ internal static class CapturePage
         var crop = CreateIconButton(CaptureIconFiles.Crop, "切り出し（切出しモード開始/終了）", toggleCrop, AppStyles.ToolbarIconSize);
 
         // 自動保存のトグル（保存ボタンの右。 有効な間は画像が変わるたびに保存する）。
-        // 高さは保存ボタンのアイコンの見える高さ（16 DIP）に合わせる
+        // 高さは 4 UI 版で揃える（既定の最小高に負けないよう MinHeight も同じ値にする）
         var autoSave = new ToggleButton
         {
             Content = "自動保存",
             FontSize = 11,
             IsChecked = viewModel.AutoSave,
-            Height = AppStyles.ToolbarIconSize,
+            Height = ToolbarMetrics.AutoSaveHeight,
+            MinHeight = ToolbarMetrics.AutoSaveHeight,
             Padding = new Thickness(6, 0, 6, 0),
             VerticalAlignment = VerticalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,

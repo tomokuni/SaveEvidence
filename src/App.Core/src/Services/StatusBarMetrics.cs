@@ -12,4 +12,11 @@ public static class StatusBarMetrics
 {
     /// <summary>ステータス バーの文字サイズ（DIP）。</summary>
     public const double FontSize = 12;
+
+    /// <summary>保存したファイル名と通知メッセージの間隔（DIP）。</summary>
+    /// <remarks>
+    /// 全角 1 文字分にする。 全角スペースの送り幅は文字サイズ（em）と同じため、<br/>
+    /// 空白文字を並べるのではなく、この幅の空き要素を置く（UI 版ごとの余白の付け方が混ざらない）。
+    /// </remarks>
+    public const double NameMessageGapWidth = FontSize;
 }

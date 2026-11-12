@@ -25,4 +25,11 @@ public static class ToolbarMetrics
 
     /// <summary>ツールバーの文字サイズ（DIP）。</summary>
     public const double FontSize = 12;
+
+    /// <summary>自動保存のトグルの高さ（DIP。 4 UI 版で同じ値を使う）。</summary>
+    /// <remarks>
+    /// 各 UI のボタンの既定の最小高は 16〜32 DIP とばらつくため、高さを明示して揃える。<br/>
+    /// 値は MewUI で表示されていた高さ（ボタンの既定の最小高 28 DIP）の 80% とする。
+    /// </remarks>
+    public const double AutoSaveHeight = 22.4;
 }

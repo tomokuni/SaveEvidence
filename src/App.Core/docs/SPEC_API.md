@@ -422,8 +422,11 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | 定数 | 値 | 意味 |
 | --- | --- | --- |
 | FontSize | 12 DIP | ステータス バーの文字サイズ（4 つの UI 版で共通） |
+| NameMessageGapWidth | 12 DIP | 保存したファイル名と通知メッセージの間隔（全角 1 文字分。 全角スペースの送り幅 = 文字サイズ） |
 
 **経緯**: AvaloniaUI 版だけがテーマの既定（14 DIP）を使い、他の UI 版より 1 回り大きく見えました。 4 UI 版とも同じ値を使います。
+
+**間隔を空白文字で表さない理由**: 空白文字を置くと、UI 版ごとの余白（ラベルの Margin・Spacing）が加わり、全角 1 文字より広くなります（WinForms 版が広すぎ、WinUI 3 版は逆に詰まって見えました）。 幅を明示した空き要素を置きます。
 
 WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します（`AppStyles.StatusBarFont` が換算済みのフォントを 1 つだけ生成して共用する）。
 
@@ -581,8 +584,11 @@ UI フレームワーク（Avalonia / MewUI）への依存はありません。
 | `PaddingX` / `PaddingY` | 8 / 4 DIP | 文字付きツールバー ボタンの内側余白 |
 | `CornerRadius` | 4 DIP | アイコン ボタンの角丸（`AppPalette.ToolbarButtonCornerRadius` を参照） |
 | `FontSize` | 12 DIP | ツールバーのボタンとファイル名テンプレート入力欄の文字サイズ |
+| `AutoSaveHeight` | 22.4 DIP | 自動保存のトグルの高さ（4 UI 版で共通。 各 UI の既定の最小高は 16〜32 DIP とばらつくため明示する） |
 
 MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ既定は 14 DIP です。 WinForms の `Font` はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。 アイコン単独のボタンは 32 × 32 DIP・16 DIP アイコン・内側余白 0 とし、文字付きボタンには表の余白を使います。
+
+**`AutoSaveHeight` を明示する理由**: 自動保存のトグルの高さは、既定の最小高（MewUI の `ThemeMetrics.BaseControlHeight` = 28 DIP、AvaloniaUI・WinUI 3 = 32 DIP、WinForms = 指定なし）に左右され、UI 版ごとにばらつきました（実測 2026-11-12: MewUI 28 DIP / 他 16 DIP）。 4 UI 版とも同じ値を明示し、既定の最小高に負けないよう最小高も同じ値にします。 値は MewUI で表示されていた 28 DIP の 80% です。
 
 ## 33. ウィンドウ配置の復元規則（EsUtil.Platform.Core へ移設）
 

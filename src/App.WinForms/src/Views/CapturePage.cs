@@ -136,7 +136,8 @@ internal static class CapturePage
             Margin = new Padding(0),
             Padding = new Padding(0),
         };
-        // ファイル名と通知の間は全角 1 文字分にする
+        // ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する。
+        // 空白のラベルを置くとラベルの余白まで加わり、全角 1 文字より広くなる）
         var nameAndMessage = new FlowLayoutPanel
         {
             AutoSize = true,
@@ -145,8 +146,14 @@ internal static class CapturePage
             Margin = new Padding(0),
             Padding = new Padding(0),
         };
-        var nameMessageGap = UiFactory.CreateStatusLabel(0);
-        nameMessageGap.Text = "　";
+        var nameMessageGap = new Panel
+        {
+            Width = DpiScaler.ScaleToPixel(
+                StatusBarMetrics.NameMessageGapWidth, DpiScaler.ToScaling(crop.DeviceDpi)),
+            Height = UiFactory.StatusBarContentHeight,
+            Margin = new Padding(0),
+            BackColor = Color.Transparent,
+        };
         nameAndMessage.Controls.AddRange([savedFileLabel, nameMessageGap, messageLabel]);
         statusFlow.Controls.AddRange([pointerLabel, sizeLabel, nameAndMessage]);
 
@@ -193,13 +200,12 @@ internal static class CapturePage
             null, "画像が変わったら自動で保存する", () => { }, "自動保存");
         autoSaveButton.Click += (_, _) => ToggleAutoSave();
         autoSaveButton.IsSelected = viewModel.AutoSave;
-        // 高さは保存ボタンのアイコンの見える高さ（16 DIP）に合わせる。
-        // 文字が縦に潰れないようフォントは小さくし、余白を持たせて中央へ置く
-        autoSaveButton.Height = DpiScaler.ScaleToPixel(ToolbarMetrics.IconSize, DpiScaler.ToScaling(crop.DeviceDpi));
+        // 高さは 4 UI 版で揃える（ToolbarMetrics.AutoSaveHeight。 端数は物理ピクセルへ丸める）。
+        // 文字が縦に潰れないようフォントは小さくし、GDI+ の描画（UseCompatibleTextRendering）を使う
+        autoSaveButton.Height = DpiScaler.ScaleToPixel(ToolbarMetrics.AutoSaveHeight, DpiScaler.ToScaling(crop.DeviceDpi));
         autoSaveButton.Font = new Font(autoSaveButton.Font.FontFamily, 8F);
         autoSaveButton.Padding = Padding.Empty;
         autoSaveButton.TextAlign = ContentAlignment.MiddleCenter;
-        // 高さを詰めても文字が縦に潰れないよう GDI+ の描画を使う（既定の GDI 描画は行の高さで切れる）
         autoSaveButton.UseCompatibleTextRendering = true;
         toolbar.Controls.Add(autoSaveButton);
 
@@ -321,6 +327,9 @@ internal static class CapturePage
             statusFlow.BackColor = pageBackground;
             zoomPanel.BackColor = pageBackground;
             root.BackColor = pageBackground;
+            // ファイル名と通知の間の空きは DPI で物理ピクセルが変わるため、表示のたびに合わせ直す
+            nameMessageGap.Width = DpiScaler.ScaleToPixel(
+                StatusBarMetrics.NameMessageGapWidth, DpiScaler.ToScaling(statusBar.DeviceDpi));
             // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
             canvas.BackColor = AppStyles.ImageAreaBackground;
             templateBox.ForeColor = AppStyles.Foreground;
