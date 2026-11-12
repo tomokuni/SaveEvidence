@@ -590,8 +590,8 @@ internal static class CapturePage
             AddMenuItem(menuStrip, "コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
             AddMenuItem(menuStrip, "貼り付け", "Ctrl+V", () => _ = PasteCoreAsync());
             menuStrip.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menuStrip, "元に戻す", "Ctrl+Z", () => EditHistory.Undo(services, ApplyAppearance));
-            AddMenuItem(menuStrip, "元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services, ApplyAppearance));
+            AddMenuItem(menuStrip, "元に戻す", "Ctrl+Z", () => EditHistory.Undo(services.Main, services.UndoHistory, ApplyAppearance));
+            AddMenuItem(menuStrip, "元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services.Main, services.UndoHistory, ApplyAppearance));
             menuStrip.Items.Add(new ToolStripSeparator());
             // 撮影のショートカットはグローバル ホットキーの設定を表示する（キー処理はホットキーが担う）
             var hotKeys = settingsService.Current;
@@ -669,10 +669,10 @@ internal static class CapturePage
                     _ = PasteCoreAsync();
                     return true;
                 case Keys.Z:
-                    EditHistory.Undo(services, ApplyAppearance);
+                    EditHistory.Undo(services.Main, services.UndoHistory, ApplyAppearance);
                     return true;
                 case Keys.Y:
-                    EditHistory.Redo(services, ApplyAppearance);
+                    EditHistory.Redo(services.Main, services.UndoHistory, ApplyAppearance);
                     return true;
                 case Keys.R:
                     ToggleCrop();

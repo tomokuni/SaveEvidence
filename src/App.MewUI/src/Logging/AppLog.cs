@@ -1,9 +1,8 @@
-using System.Globalization;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
+using EsUtil.SaveEvidence.App.Core.Logging;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Microsoft.Extensions.Logging;
-using Serilog;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する。
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -32,63 +31,8 @@ internal static partial class AppLog
     private static readonly string s_assemblyName =
         typeof(AppLog).Assembly.GetName().Name ?? AppIdentity.ProductName;
 
-    /// <summary>アプリケーション共有の Serilog ロガー（静的 <see cref="Log.Logger"/>）。</summary>
-    /// <remarks>
-    /// グローバル例外ハンドラ（<c>Log.Fatal</c>）と <c>ILoggerFactory</c>（MEL ブリッジ）の両方が<br/>
-    /// 同一の Serilog パイプラインを共有するため、静的ロガーを初期化してからファクトリを構築する。
-    /// </remarks>
-    private static readonly ILoggerFactory s_factory = CreateFactory();
-
-    /// <summary>Serilog ロガーを初期化し、MEL (Microsoft.Extensions.Logging) ブリッジのファクトリを構築する。</summary>
-    /// <returns>Serilog へ転送する <see cref="ILoggerFactory"/>。</returns>
-    /// <remarks>
-    /// 静的 <see cref="Log.Logger"/> を設定し（<c>Log.Fatal</c> 等の Serilog 直接呼び出し用）、<br/>
-    /// <c>AddSerilog()</c> がグローバルロガーを MEL へ転送する。<br/>
-    /// 複数箇所で <c>LoggerFactory.Create</c> しないよう、本クラスに集約する（ログの二重出力防止）。
-    /// </remarks>
-    private static ILoggerFactory CreateFactory()
-    {
-        Log.Logger = CreateLoggingConfiguration().CreateLogger();
-        return LoggerFactory.Create(builder => builder.AddSerilog(dispose: false));
-    }
-
-    /// <summary>Serilog のファイル出力構成を作成する。</summary>
-    /// <returns>ログ出力を <c>%LOCALAPPDATA%\SaveEvidence\logs\&lt;アセンブリ名&gt;.&lt;yyyyMMdd&gt;.log</c>（日次ローテーション・7 日保持）へ書き込む構成。</returns>
-    /// <remarks>
-    /// ログカテゴリは <c>{SourceContext}</c> として出力し、例外はスタックトレース込みで改行して書き出す。<br/>
-    /// 書式は Avalonia 版と同一にする（ファイルは UI 版ごとに分かれるが、行の書式は共通）。
-    /// </remarks>
-    private static LoggerConfiguration CreateLoggingConfiguration()
-    {
-        return new LoggerConfiguration()
-            .MinimumLevel.Verbose()
-            .Enrich.FromLogContext()
-            // レベルは 3 文字（[TRC] 等）で表す。 {Level:u3} は Verbose を VRB と表すため使わない
-            // （規則の所有者は .github/ログ規約.md §4.1）
-            .Enrich.With(new LogLevelTextEnricher())
-            .WriteTo.File(
-                AppIdentity.GetLogFilePath(s_assemblyName),
-                outputTemplate: "{Timestamp:HH:mm:ss.fff} [{LogLevelText}] [{SourceContext}] {Message:lj}{NewLine}{Exception}",
-                formatProvider: CultureInfo.InvariantCulture,
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 7,
-                encoding: System.Text.Encoding.UTF8);
-    }
-
-    /// <summary>ログ イベントへ 3 文字のレベル表記（<c>TRC</c> 等）を追加するエンリッチャー。</summary>
-    /// <remarks>
-    /// 写像の規則は <see cref="LogLevelText"/>（コア）が単一所有する。 本クラスは Serilog のレベル名を渡すだけである<br/>
-    /// （コアは Serilog に依存しない。 4 つの UI 版が同じ表記を使う）。
-    /// </remarks>
-    private sealed class LogLevelTextEnricher : Serilog.Core.ILogEventEnricher
-    {
-        /// <summary>ログ イベントへ <c>LogLevelText</c> プロパティを追加する。</summary>
-        /// <param name="logEvent">対象のログ イベント。</param>
-        /// <param name="propertyFactory">プロパティの生成元。</param>
-        public void Enrich(Serilog.Events.LogEvent logEvent, Serilog.Core.ILogEventPropertyFactory propertyFactory)
-            => logEvent.AddPropertyIfAbsent(propertyFactory.CreateProperty(
-                LogLevelText.PropertyName, LogLevelText.Abbreviate(logEvent.Level.ToString())));
-    }
+    /// <summary>アプリ共有の Serilog ロガー（出力先と行の書式はコアの <c>AppLogging</c> が単一所有する）。</summary>
+    private static readonly ILoggerFactory s_factory = AppLogging.CreateFactory(s_assemblyName);
 
     /// <summary>指定カテゴリ名のロガーを生成する。</summary>
     /// <param name="categoryName">ロガーカテゴリ名（例: "CaptureOverlayWindow"）。</param>
@@ -99,31 +43,19 @@ internal static partial class AppLog
     // アプリライフサイクル
     // ====================================================================
 
-    /// <summary>アプリケーション起動のログ。</summary>
-    /// <remarks>
-    /// LogLevel: Information <br/>
-    /// 出力書式: <c>アプリケーション起動 (version={Version})</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="version">アプリケーションのバージョン。</param>
-    [LoggerMessage(LogLevel.Information, "{Prefix} アプリケーション起動 (version={Version})")]
-    private static partial void LogAppStartCore(this ILogger logger, string prefix, string version);
 
+    /// <summary>アプリケーション起動を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="version">アプリケーションのバージョン。</param>
     public static void LogAppStart(this ILogger logger, string version)
         => logger.LogAppStartCore(Prefix, version);
 
-    /// <summary>アプリケーション終了のログ。</summary>
-    /// <remarks>
-    /// LogLevel: Information <br/>
-    /// 出力書式: <c>アプリケーション終了 (exitCode={ExitCode})</c>
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="exitCode">終了コード。</param>
-    [LoggerMessage(LogLevel.Information, "{Prefix} アプリケーション終了 (exitCode={ExitCode})")]
-    private static partial void LogAppExitCore(this ILogger logger, string prefix, int exitCode);
 
+    /// <summary>アプリケーション終了を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="exitCode">終了コード。</param>
     public static void LogAppExit(this ILogger logger, int exitCode)
         => logger.LogAppExitCore(Prefix, exitCode);
 
@@ -133,35 +65,20 @@ internal static partial class AppLog
     // アプリ側で同じ操作を二重に記録しない（同じ操作のログに 2 つの所有者を作らない）。
     // ====================================================================
 
-    /// <summary>設定変更の CaptureSessionControl 反映で例外が発生したことを記録する。</summary>
-    /// <remarks>
-    /// LogLevel: Error <br/>
-    /// 出力書式: <c>設定変更の CaptureSessionControl 反映で例外が発生: {PropertyName}</c>（例外はスタックトレース込み）<br/>
-    /// 設定の検証（範囲外の値）で例外になっても UI を壊さないため、反映は例外保護付きで行う（Avalonia 版と同じ書式）。
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+
+    /// <summary>設定変更の撮影セッションへの反映の失敗を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="propertyName">変更された設定プロパティ名。</param>
-    [LoggerMessage(LogLevel.Error, "{Prefix} 設定変更の CaptureSessionControl 反映で例外が発生: {PropertyName}")]
-    private static partial void LogSettingsApplyErrorCore(this ILogger logger, string prefix, Exception ex, string propertyName);
-
     public static void LogSettingsApplyError(this ILogger logger, Exception ex, string propertyName)
         => logger.LogSettingsApplyErrorCore(Prefix, ex, propertyName);
 
-    /// <summary>終了時のウィンドウ配置の保存で例外が発生したことを記録する。</summary>
-    /// <remarks>
-    /// LogLevel: Warning <br/>
-    /// 出力書式: <c>ウィンドウ配置の保存で例外が発生</c>（例外はスタックトレース込み）<br/>
-    /// <c>Closed</c> は Win32 のウィンドウプロシージャから呼ばれる境界であり、例外がそのまま伝播すると<br/>
-    /// CLR がプロセスを異常終了させ、終了ログも保存結果も残らない。 保存に失敗しても終了は妨げない。
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="ex">発生した例外。</param>
-    [LoggerMessage(LogLevel.Warning, "{Prefix} ウィンドウ配置の保存で例外が発生")]
-    private static partial void LogWindowPlacementSaveErrorCore(this ILogger logger, string prefix, Exception ex);
 
+    /// <summary>終了時のウィンドウ配置の保存の失敗を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="ex">発生した例外。</param>
     public static void LogWindowPlacementSaveError(this ILogger logger, Exception ex)
         => logger.LogWindowPlacementSaveErrorCore(Prefix, ex);
 
@@ -169,100 +86,62 @@ internal static partial class AppLog
     // フォルダビュー
     // ====================================================================
 
-    /// <summary>フォルダビューのファイル一覧の読み込みで例外が発生したことを記録する。</summary>
-    /// <remarks>
-    /// LogLevel: Error <br/>
-    /// 出力書式: <c>フォルダビュー一覧の読み込みで例外が発生: {FolderPath}</c>（例外はスタックトレース込み）<br/>
-    /// 一覧が空になる原因（未解決のパス・アクセス拒否等）を追跡できるようにする。 Avalonia 版と同じ書式にする。
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+
+    /// <summary>一覧のファイル列挙の失敗を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="folderPath">対象のフォルダパス。</param>
-    [LoggerMessage(LogLevel.Error, "{Prefix} フォルダビュー一覧の読み込みで例外が発生: {FolderPath}")]
-    private static partial void LogFolderLoadErrorCore(this ILogger logger, string prefix, Exception ex, string folderPath);
-
     public static void LogFolderLoadError(this ILogger logger, Exception ex, string folderPath)
         => logger.LogFolderLoadErrorCore(Prefix, ex, folderPath);
 
+
     /// <summary>選択した画像をごみ箱へ移動できなかったことを記録する。</summary>
-    /// <remarks>
-    /// LogLevel: Warning <br/>
-    /// 出力書式: <c>画像をごみ箱へ移動できませんでした: {FilePath}</c>（例外はスタックトレース込み）<br/>
-    /// 移動できなかったファイルは一覧に残したまま継続する。 Avalonia 版と同じ書式にする。
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="filePath">対象のファイルパス。</param>
-    [LoggerMessage(LogLevel.Warning, "{Prefix} 画像をごみ箱へ移動できませんでした: {FilePath}")]
-    private static partial void LogFileDeleteErrorCore(this ILogger logger, string prefix, Exception ex, string filePath);
-
     public static void LogFileDeleteError(this ILogger logger, Exception ex, string filePath)
         => logger.LogFileDeleteErrorCore(Prefix, ex, filePath);
 
-    /// <summary>選択した画像をクリップボードへコピーできなかったことを記録する。</summary>
-    /// <remarks>LogLevel: Warning <br/>出力書式: <c>画像をクリップボードへコピーできませんでした: {FilePath}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="filePath">対象のファイルパス。</param>
-    [LoggerMessage(LogLevel.Warning, "{Prefix} 画像をクリップボードへコピーできませんでした: {FilePath}")]
-    private static partial void LogClipboardCopyErrorCore(this ILogger logger, string prefix, string filePath);
 
+    /// <summary>選択した画像をクリップボードへコピーできなかったことを記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="filePath">対象のファイルパス。</param>
     public static void LogClipboardCopyError(this ILogger logger, string filePath)
-        => logger.LogClipboardCopyErrorCore(Prefix, filePath);
+        => logger.LogClipboardCopyErrorCore(Prefix, null, filePath);
+
 
     /// <summary>履歴の画像をクリップボードへコピーできなかったことを記録する。</summary>
-    /// <remarks>LogLevel: Warning <br/>出力書式: <c>履歴の画像をクリップボードへコピーできませんでした</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    [LoggerMessage(LogLevel.Warning, "{Prefix} 履歴の画像をクリップボードへコピーできませんでした")]
-    private static partial void LogClipboardCopyImageErrorCore(this ILogger logger, string prefix);
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    public static void LogHistoryImageCopyError(this ILogger logger)
+        => logger.LogHistoryImageCopyErrorCore(Prefix);
 
-    public static void LogClipboardCopyImageError(this ILogger logger)
-        => logger.LogClipboardCopyImageErrorCore(Prefix);
 
     /// <summary>保存先フォルダをエクスプローラーで開けなかったことを記録する。</summary>
-    /// <remarks>LogLevel: Warning <br/>出力書式: <c>エクスプローラーを起動できませんでした: {FolderPath}</c></remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="folderPath">対象のフォルダパス。</param>
-    [LoggerMessage(LogLevel.Warning, "{Prefix} エクスプローラーを起動できませんでした: {FolderPath}")]
-    private static partial void LogOpenFolderErrorCore(this ILogger logger, string prefix, Exception ex, string folderPath);
-
     public static void LogOpenFolderError(this ILogger logger, Exception ex, string folderPath)
         => logger.LogOpenFolderErrorCore(Prefix, ex, folderPath);
 
-    /// <summary>背景のサムネイル生成で想定外の例外が発生したことを記録する。</summary>
-    /// <remarks>
-    /// LogLevel: Warning <br/>
-    /// 出力書式: <c>サムネイルの生成で例外が発生</c>（例外はスタックトレース込み）<br/>
-    /// 生成は背景で行うため、失敗しても一覧の表示は継続する（握りつぶさず記録する）。 Avalonia 版と同じ書式にする。
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="ex">発生した例外。</param>
-    [LoggerMessage(LogLevel.Warning, "{Prefix} サムネイルの生成で例外が発生")]
-    private static partial void LogThumbnailGenerateErrorCore(this ILogger logger, string prefix, Exception ex);
 
+    /// <summary>背景のサムネイル生成の失敗を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="ex">発生した例外。</param>
     public static void LogThumbnailGenerateError(this ILogger logger, Exception ex)
         => logger.LogThumbnailGenerateErrorCore(Prefix, ex);
 
-    /// <summary>起動後のサムネイルの先読みを開始したことを記録する。</summary>
-    /// <remarks>
-    /// LogLevel: Debug <br/>
-    /// 出力書式: <c>サムネイルの先読みを開始: {Target} 対象={Count} 件</c><br/>
-    /// 起動後の 1 回だけ出力する（ページを開く前に低負荷で生成しておき、切り替えを待たせない）。
-    /// 起動が遅くなっていないことは、この記録の時刻が起動ログより後であることで確認できる。 Avalonia 版と同じ書式にする。
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+
+    /// <summary>サムネイルの先読みの開始を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
     /// <param name="target">先読みの対象（ページ名）。</param>
     /// <param name="count">先読みする件数。</param>
-    [LoggerMessage(LogLevel.Debug, "{Prefix} サムネイルの先読みを開始: {Target} 対象={Count} 件")]
-    private static partial void LogThumbnailWarmUpCore(this ILogger logger, string prefix, string target, int count);
-
     public static void LogThumbnailWarmUp(this ILogger logger, string target, int count)
         => logger.LogThumbnailWarmUpCore(Prefix, target, count);
 
@@ -270,35 +149,21 @@ internal static partial class AppLog
     // 未処理の例外
     // ====================================================================
 
-    /// <summary>未処理の例外（AppDomain / UI スレッド / TaskScheduler）を記録する。</summary>
-    /// <remarks>
-    /// LogLevel: Critical <br/>
-    /// 出力書式: <c>未処理の例外: {Source}</c>（例外はスタックトレース込みで出力される）<br/>
-    /// アプリがクラッシュする直前の例外を確実に記録する（原因特定用）。 Avalonia 版と同じ書式にする。
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="ex">発生した例外。</param>
-    /// <param name="source">例外の発生源（例: "AppDomain.UnhandledException"）。</param>
-    [LoggerMessage(LogLevel.Critical, "{Prefix} 未処理の例外: {Source}")]
-    private static partial void LogUnhandledExceptionCore(this ILogger logger, string prefix, Exception ex, string source);
 
+    /// <summary>未処理の例外を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="source">例外の発生源。</param>
     public static void LogUnhandledException(this ILogger logger, Exception ex, string source)
         => logger.LogUnhandledExceptionCore(Prefix, ex, source);
 
-    /// <summary>ホットキーを登録できなかったことを記録する。</summary>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="captureType">登録しようとしたキャプチャ種別。</param>
-    /// <param name="key">登録しようとしたキー。</param>
-    /// <remarks>
-    /// LogLevel: Warning<br/>
-    /// 出力書式: <c>ホットキーを登録できませんでした: {CaptureType}, key={Key}</c><br/>
-    /// 他のアプリが同じ組み合わせを使用している場合にも起こる（そのホットキーが機能しないだけでアプリは継続する）。
-    /// </remarks>
-    [LoggerMessage(LogLevel.Warning, "{Prefix} ホットキーを登録できませんでした: {CaptureType}, key={Key}")]
-    private static partial void LogHotKeyRegisterFailedCore(this ILogger logger, string prefix, CaptureType captureType, EsKey key);
 
+    /// <summary>グローバル ホットキーの登録の失敗を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="captureType">登録しようとした撮影の種別。</param>
+    /// <param name="key">登録しようとしたキー。</param>
     public static void LogHotKeyRegisterFailed(this ILogger logger, CaptureType captureType, EsKey key)
         => logger.LogHotKeyRegisterFailedCore(Prefix, captureType, key);
 }

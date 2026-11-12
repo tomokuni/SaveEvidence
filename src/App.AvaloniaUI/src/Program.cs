@@ -42,7 +42,7 @@ internal static class Program
         // グローバル例外ハンドラの即時ログ出力に使用するため、Log.Logger を設定する。
         var appLog = AppLog.CreateLogger("App");
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "(unknown)";
-        appLog.LogAppStartup(version);
+        appLog.LogAppStart(version);
 
         // グローバル例外ハンドラを登録（未処理の例外をすべて補足・記録してクラッシュ原因を特定できるようにする）
         // ① AppDomain レベルの未処理例外（アプリ全体。 スタックトレースを含む Critical で記録）

@@ -689,8 +689,8 @@ internal static class CapturePage
         Add("Clipboard - コピー", () => _ = viewModel.CopyToClipboardAsync(), () => viewModel.CanCopy, "Ctrl+C");
         Add("Clipboard - 貼り付け", () => _ = viewModel.PasteFromClipboardAsync(), () => viewModel.CanPaste, "Ctrl+V");
         AddSeparator();
-        Add("Image - 元に戻す", () => EditHistory.Undo(services), () => viewModel.HasPreviewImage, "Ctrl+Z");
-        Add("Image - 元に戻すを取り消す", () => EditHistory.Redo(services), () => viewModel.HasPreviewImage, "Ctrl+Y");
+        Add("Image - 元に戻す", () => EditHistory.Undo(services.Main, services.UndoHistory), () => viewModel.HasPreviewImage, "Ctrl+Z");
+        Add("Image - 元に戻すを取り消す", () => EditHistory.Redo(services.Main, services.UndoHistory), () => viewModel.HasPreviewImage, "Ctrl+Y");
         AddSeparator();
         // 撮影のショートカットはグローバル ホットキーの設定を表示する（キー処理はホットキーが担う）
         var hotKeys = services.Settings.Current;

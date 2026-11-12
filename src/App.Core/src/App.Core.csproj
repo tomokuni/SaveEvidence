@@ -12,6 +12,11 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <!-- ログの出力先と行の書式（Logging/AppLogging）は 4 つの UI 版で 1 つである。
+         UI 非依存の層に置けるのは、Serilog が UI フレームワークに依存しないため（.github/依存関係.md §4） -->
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
   </ItemGroup>
 
   <ItemGroup>

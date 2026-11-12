@@ -356,7 +356,7 @@ internal static class UndoPage
 
         if (!ClipboardImage.TryCopy(sources[index], owner.Handle))
         {
-            s_logger.LogClipboardCopyImageError();
+            s_logger.LogHistoryImageCopyError();
         }
     }
 

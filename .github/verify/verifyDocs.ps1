@@ -862,9 +862,10 @@ $logDocIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
 # 8l-2) ログの行のレベルは 3 文字の表記（[TRC] 等）で出す（ログ規約 §4.1）
 #      Serilog の {Level:u3} は Verbose を VRB と表すため使わない（TRC にならない）。
-#      アプリの AppLog.cs が持つ出力テンプレートを対象にする（EsUtil 側は別リポジトリが所有する）。
+#      アプリの AppLog.cs（UI 固有の定義）と AppLogging.cs（共通の出力構成）が持つ出力テンプレートを対象にする
+#      （EsUtil 側は別リポジトリが所有する）。
 $levelFormatIssues = [System.Collections.Generic.List[string]]::new()
-foreach ($f in @($allCs | Where-Object { $_.Name -eq 'AppLog.cs' -and $_.FullName -notmatch '[\\/](obj|bin|tests|sample)[\\/]' })) {
+foreach ($f in @($allCs | Where-Object { ($_.Name -eq 'AppLog.cs' -or $_.Name -eq 'AppLogging.cs') -and $_.FullName -notmatch '[\\/](obj|bin|tests|sample)[\\/]' })) {
     $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
     # コメントは対象外にする（「{Level:u3} を使わない」という説明を違反として拾わない）
     $code = (Get-Lines $f.FullName | Where-Object { -not $_.TrimStart().StartsWith('//') }) -join "`n"

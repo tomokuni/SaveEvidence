@@ -370,7 +370,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         }
         catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
-            s_logger.LogFolderViewLoadError(ex, MainViewModel.SaveFolderPathResolved);
+            s_logger.LogFolderLoadError(ex, MainViewModel.SaveFolderPathResolved);
             _viewModel.ItemCount = 0;
             FileListBox.ClearItems();
             _filePaths.Clear();

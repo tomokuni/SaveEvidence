@@ -25,6 +25,9 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `ViewModels.FolderViewViewModel` | `public` | フォルダビューの表示モード・ソート状態 |
 | `ViewModels.UndoViewModel` | `public` | Undo 一覧の表示モード状態 |
 | `ViewModels.MainViewModel` | `public` | メイン画面の状態（プレビュー画像・ズーム表示・保存・自動切り出し）。 UI 依存はコールバック（クリップボード / 上書き確認）で注入する |
+| `Services.EditHistory` | `internal` | 履歴（`UndoHistory`）から画像を取り出してプレビューへ差し替える Undo / Redo の手順 |
+| `Logging.AppLogging` | `internal` | ログの出力先・行の書式・3 文字のレベル表記（Serilog の構成）。 **4 つの UI 版で 1 つ** |
+| `Logging.AppLogMessage` | `internal` | **4 つの UI 版で共通のログ文言**（`LoggerMessage` ソース生成）。 接頭辞は各 UI の `AppLog` が渡す |
 
 `internal` の型は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests`）で UI 実装とテストからのみ参照できます。
 
@@ -56,7 +59,8 @@ App.AvaloniaUI（Avalonia 実装） / App.MewUI
          └──> LineDetection（窓枠検出。UI 非依存）
 ```
 
-UI フレームワークへ依存しません。 外部依存は MVVM の `CommunityToolkit.Mvvm`（UI フレームワーク非依存）のみです。
+UI フレームワークへ依存しません。 外部依存は MVVM の `CommunityToolkit.Mvvm`（UI フレームワーク非依存）と、
+ログの `Serilog` 系（これも UI フレームワーク非依存。 出力先と行の書式を 4 つの UI 版で 1 つにするため本層が持つ）です。
 
 ## 6. UI 依存の注入（依存性逆転）
 

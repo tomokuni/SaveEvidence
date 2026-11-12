@@ -421,7 +421,7 @@ internal sealed class MainForm : Form
 
         foreach (var (action, setting) in _hotKeys.RegisterAll(registrations))
         {
-            s_logger.LogHotKeyRegisterFailed(action.ToString(), setting.ToString());
+            s_logger.LogHotKeyRegisterFailed(action, setting.Key);
         }
 
         void Add(CaptureType action, HotKeySetting setting)

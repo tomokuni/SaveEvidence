@@ -458,8 +458,8 @@ internal static class CapturePage
         var save = CreateMenuItem("File - 画像を保存", "Ctrl+S", () => _ = viewModel.SaveImageAsync(), CaptureIconFiles.Save);
         var copy = CreateMenuItem("Clipboard - コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
         var paste = CreateMenuItem("Clipboard - 貼り付け", "Ctrl+V", () => _ = PasteAsync(services));
-        var undo = CreateMenuItem("Image - 元に戻す", "Ctrl+Z", () => EditHistory.Undo(services));
-        var redo = CreateMenuItem("Image - 元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services));
+        var undo = CreateMenuItem("Image - 元に戻す", "Ctrl+Z", () => EditHistory.Undo(services.Main, services.UndoHistory));
+        var redo = CreateMenuItem("Image - 元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services.Main, services.UndoHistory));
         var screen = CreateMenuItem("Capture - スクリーン選択", "Ctrl+Shift+Q", () => CaptureFlow.Start(CaptureType.ScreenSelect, AppContext(), captureSession), CaptureIconFiles.ScreenSelect);
         var windowSelect = CreateMenuItem("Capture - ウィンドウ選択", "Ctrl+Shift+W", () => CaptureFlow.Start(CaptureType.WindowSelect, AppContext(), captureSession), CaptureIconFiles.WindowSelect);
         var area = CreateMenuItem("Capture - 範囲選択", "Ctrl+Shift+E", () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession), CaptureIconFiles.AreaSelect);
