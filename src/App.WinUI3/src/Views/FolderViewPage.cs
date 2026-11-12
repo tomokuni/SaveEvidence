@@ -327,7 +327,7 @@ internal static class FolderViewPage
 
                 // 高さは一覧が元画像の縦横比から決める（生成後に大きさを変えない）
                 list.Add(
-                    ThumbnailBackground.Placeholder(iconSize),
+                    ThumbnailPlaceholder.Get(iconSize),
                     Path.GetFileName(file),
                     toolTip: file,
                     tag: file);

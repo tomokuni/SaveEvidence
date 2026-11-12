@@ -163,7 +163,7 @@ internal static class UndoPage
             list.ImageWidth = iconSize;
             sources.Clear();
 
-            var placeholder = ThumbnailBackground.Placeholder(iconSize);
+            var placeholder = ThumbnailPlaceholder.Get(iconSize);
             void AddItem(EsReadOnlyBitmap image, string label, bool isCurrent)
             {
                 // 強調は選択（提示層は「現在項目」を持たない）で表す

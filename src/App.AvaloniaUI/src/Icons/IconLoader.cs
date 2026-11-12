@@ -3,7 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EsUtil.Platform.Core.Caching;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Icons;
+using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Icons;
 
@@ -84,16 +86,16 @@ internal static partial class IconLoader
             {
                 var geometry = StreamGeometry.Parse(data);
                 var bounds = geometry.Bounds;
-                if (bounds.Width <= 0 || bounds.Height <= 0)
+
+                // 図形の実寸（余白を除いた外接矩形）を枠いっぱいへ広げる式はコアが単一所有する
+                // （4 つの UI 版で同じ大きさに見えるようにする）
+                if (IconFit.Resolve(new EsRect(bounds.X, bounds.Y, bounds.Width, bounds.Height), pixels) is not { } fit)
                 {
                     continue;
                 }
 
-                // 図形の実寸を枠いっぱいへ広げる（他の UI 版と同じ大きさに見えるようにする）
-                var scale = Math.Min(pixels / bounds.Width, pixels / bounds.Height);
-                var offsetX = ((pixels - (bounds.Width * scale)) / 2) - (bounds.X * scale);
-                var offsetY = ((pixels - (bounds.Height * scale)) / 2) - (bounds.Y * scale);
-                using (context.PushTransform(Matrix.CreateTranslation(offsetX, offsetY) * Matrix.CreateScale(scale, scale)))
+                using (context.PushTransform(
+                    Matrix.CreateTranslation(fit.OffsetX, fit.OffsetY) * Matrix.CreateScale(fit.Scale, fit.Scale)))
                 {
                     context.DrawGeometry(new SolidColorBrush(color), null, geometry);
                 }

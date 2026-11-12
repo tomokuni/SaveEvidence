@@ -125,7 +125,7 @@ internal static class FolderViewPage
 
                 // 生成が終わるまでは代替画像を表示し、生成は背景へ依頼する
                 var index = list.Add(
-                    ThumbnailBackground.Placeholder(iconSize), Path.GetFileName(file), toolTip: file, tag: file);
+                    ThumbnailPlaceholder.Get(iconSize), Path.GetFileName(file), toolTip: file, tag: file);
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 requested.Add((thumbnails.Enqueue(
@@ -473,7 +473,7 @@ internal static class FolderViewPage
 
             // 読み込めない画像は null で返る（その場合は代替画像のまま表示する）
             var thumbnail = ThumbnailImageLoader.Load(filePath, iconSize, capacity);
-            var fallback = ThumbnailBackground.Placeholder(iconSize);
+            var fallback = ThumbnailPlaceholder.Get(iconSize);
 
             ThumbnailBackground.Post(() =>
             {
