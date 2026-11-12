@@ -1,4 +1,5 @@
 <Application xmlns="https://github.com/avaloniaui"
+             xmlns:styling="using:FluentAvalonia.Styling"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.App">
     <Application.Resources>
@@ -19,7 +20,12 @@
     </Application.Resources>
 
     <Application.Styles>
-        <FluentTheme />
+        <!-- テーマは FluentAvalonia のものを使う（Avalonia 標準の FluentTheme は置き換える）。
+             確認ダイアログに Fluent の ContentDialog（FAContentDialog）を使うため、
+             FluentAvalonia のテーマ全体（色・コントロールの見た目）を読み込む。
+             アクセント色は 4 UI 版で共通の値（AppPalette の #0067C0）に固定する
+             （既定はシステムのアクセント色になり、他の UI 版と色が変わる）。 -->
+        <styling:FluentAvaloniaTheme CustomAccentColor="#FF0067C0" />
         <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
 
         <!-- テキスト選択色の上書き（TextBox / ComboBox / NumericUpDown 等のテキスト選択時）。
@@ -49,24 +55,23 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
         </Style>
-        <Style Selector="Button.toolbar /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        <Style Selector="Button.toolbar /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
         </Style>
-        <Style Selector="Button.toolbar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.toolbar:pointerover /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
-        <Style Selector="Button.toolbar:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.toolbar:pressed /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonPressedBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
-        <Style Selector="Button.toolbar-icon /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.toolbar-icon /template/ Border">
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
@@ -74,7 +79,7 @@
             <Setter Property="Padding" Value="0"/>
             <Setter Property="MinWidth" Value="{StaticResource ToolbarButtonHeight}"/>
         </Style>
-        <Style Selector="Button.toolbar-icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.toolbar-icon:pointerover /template/ Border">
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
@@ -82,23 +87,22 @@
         <Style Selector="Button.toolbar-icon:disabled PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource DisabledForegroundBrush}"/>
         </Style>
-        <Style Selector="Button.toolbar-icon:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.toolbar-icon:pressed /template/ Border">
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
         </Style>
-        <Style Selector="ToggleButton.toolbar /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        <Style Selector="ToggleButton.toolbar /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
         </Style>
-        <Style Selector="ToggleButton.toolbar:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="ToggleButton.toolbar:pointerover /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
-        <Style Selector="ToggleButton.toolbar:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="ToggleButton.toolbar:pressed /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonPressedBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
@@ -109,12 +113,11 @@
         <Style Selector="ToggleButton.toolbar:checked">
             <Setter Property="Foreground" Value="{DynamicResource ToolbarButtonCheckedForegroundBrush}"/>
         </Style>
-        <Style Selector="ToggleButton.toolbar:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="ToggleButton.toolbar:checked /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonCheckedFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonCheckedBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
-            <Setter Property="Foreground" Value="{DynamicResource ToolbarButtonCheckedForegroundBrush}"/>
         </Style>
         <!-- ツールバーのテキストボックス（ファイル名テンプレート等）も同じ高さに揃える -->
         <Style Selector="TextBox.toolbar">
@@ -127,17 +130,16 @@
         <Style Selector="Button.status">
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
         </Style>
-        <Style Selector="Button.status /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
+        <Style Selector="Button.status /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="{StaticResource ToolbarCornerRadius}"/>
         </Style>
-        <Style Selector="Button.status:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.status:pointerover /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonHoverBrush}"/>
         </Style>
-        <Style Selector="Button.status:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.status:pressed /template/ Border">
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonPressedBrush}"/>
         </Style>
 

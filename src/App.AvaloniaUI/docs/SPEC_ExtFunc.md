@@ -66,7 +66,9 @@
 | `ダーク` | 常にダークテーマ |
 | `システム` | OS のダーク / ライト設定に追従（既定値） |
 
-- **反映方式**: `ThemeMode`（`Settings.ThemeMode`）→ `App.RequestedThemeVariant` へ反映。 FluentTheme の DynamicResource により全コントロールの色が自動的に切り替わる
+- **反映方式**: `ThemeMode`（`Settings.ThemeMode`）→ `App.RequestedThemeVariant` へ反映。 FluentAvalonia の DynamicResource により全コントロールの色が自動的に切り替わる
+- **テーマの実装**: Avalonia 標準の `FluentTheme` ではなく、**FluentAvalonia の `FluentAvaloniaTheme`** を読み込む（確認ダイアログに Fluent の `FAContentDialog` を使うため。 WinUI 3 の見た目に近づく）。 アクセント色は 4 UI 版で共通の `#0067C0`（`AppPalette` と同じ）に固定する（既定はシステムのアクセント色になり、他の UI 版と色が変わる）
+- **コントロールのテンプレート**: FluentAvalonia のボタン テンプレートは `ContentPresenter` ではなく `Border` を持つため、ツールバーなど見た目を上書きするスタイルは `/template/ Border` を対象にする
 - **設定ファイル**: enum は文字列で保存（`"ThemeMode": "Dark"`）
 
 **色の表記**: 同じ「外観設定」で、色選択コントロールの入力欄の表記を選べます。
@@ -106,6 +108,7 @@
 | ソート順 | `Settings.FolderViewSortAscending`（true=昇順, false=降順） | true（昇順） |
 
 - **Delete キー**: 一覧で選んだ画像を確認のうえ**ごみ箱へ移動**する（完全削除しない）。 移動できた場合だけ一覧を読み直す
+- **確認ダイアログ**: Fluent の `FAContentDialog`（タイトル・本文・右下の「はい」/「いいえ」。 既定のボタンは「いいえ」）をオーナーの中央へモーダル表示する（WinUI 3 版の `ContentDialog` と同じ系統）
 - **右クリック メニュー**: 一覧は「削除」（Delete キーと同じ処理）、ステータスバー右のパスは「エクスプローラで表示」
 - **保存先パス**: ステータスバー右のパスは**青字 + 下線**で表示し、クリックするとエクスプローラーを開く（ファイル名と通知の間は全角スペース 1 文字分）
 - **保存タイミング**: 表示モード・ソート切替操作のたびに保存（`SaveViewModeSettings`）

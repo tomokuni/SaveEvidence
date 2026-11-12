@@ -31,7 +31,8 @@
 - **メニューのショートカット表示を 4 UI 版で揃えました**（MewUI 版・WinForms 版の「撮影」3 項目に `Ctrl + Shift + Q/W/E` などの割り当てを表示）。
 - **MewUI 版のメニュー ボタン（三本線）の画像が歪む不具合を修正しました**（フォントのグリフではなく共有 SVG を使います）。
 - **MewUI 版・WinForms 版の「自動保存」が有効かどうか分からない不具合を修正しました**（MewUI 版は選択色、WinForms 版は選択の面で表します。 文字が縦に潰れる問題も直しました）。
-- **削除の確認ダイアログの見た目を揃えました**（MewUI 版は MewUI 標準のメッセージ ボックス、Avalonia UI 版は標準のウィンドウ装飾のダイアログ。 WinUI 3 版の ContentDialog・WinForms 版の MessageBox と同じ操作感）。
+- **削除の確認ダイアログの見た目を揃えました**（Avalonia UI 版は Fluent の ContentDialog（`FAContentDialog`）、MewUI 版は MewUI 標準のメッセージ ボックス。 WinUI 3 版の ContentDialog・WinForms 版の MessageBox と同じ操作感）。
+- **Avalonia UI 版のテーマを FluentAvalonia に切り替えました**（確認ダイアログに Fluent の ContentDialog を使うため。 アクセント色は 4 UI 版で共通の `#0067C0` に固定します。 画面の配色は従来どおりです）。
 
 ### 変更
 
