@@ -6,6 +6,7 @@ using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Window;
+using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
@@ -322,15 +323,15 @@ internal sealed class CaptureOverlay
         }
     }
 
-    /// <summary>撮影画像が合成されるまでに待つフレーム数。</summary>
+    /// <summary>画面外で画像を描き終えるまでに待つフレーム数。</summary>
     /// <remarks>
     /// ウィンドウを表示した直後の 1 フレーム目は下地（背景色）だけで、撮影画像は次のフレームで合成される（実測）。<br/>
-    /// 2 フレーム待ってから次の段へ進むことで、下地の色が一瞬見えるのを避ける。
+    /// 画面外に置いたまま 2 フレーム待つことで、画面内へ移した時点で画像が載っている（= 下地の色が一瞬見えない）。
     /// </remarks>
-    private const int FramesBeforeImageComposed = 2;
+    private const int FramesBeforePlace = 2;
 
-    /// <summary>画像を合成してからオーナーを退避するまでに待つフレーム数。</summary>
-    /// <remarks>合成直後に退避すると、退避の瞬間のデスクトップが 1 フレーム見える。</remarks>
+    /// <summary>画面内へ移してからオーナーを退避するまでに待つフレーム数。</summary>
+    /// <remarks>移した直後に退避すると、退避の瞬間のデスクトップが 1 フレーム見える。</remarks>
     private const int FramesBeforeHideOwner = 1;
 
     /// <summary>オーナーの再描画を待つフレーム数。</summary>
@@ -355,7 +356,7 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private static readonly TimeSpan s_revealFrameTimeout = TimeSpan.FromMilliseconds(60);
 
-    /// <summary>表示の準備（画像の合成待ち）が済んだかどうか。</summary>
+    /// <summary>画面外で画像を描き終えたかどうか（画面内へ移したか）。</summary>
     private bool _placed;
 
     /// <summary>オーナーの退避を実行したかどうか。</summary>
@@ -414,13 +415,21 @@ internal sealed class CaptureOverlay
         window.Closed += () => _overlayWindow = null;
 
         // 撮影画像の平均色を下地にする（万一ウィンドウが画像より先に合成されても、その 1 フレームが
-        // 明るい面として目立たないようにする）。
+        // 明るい面として目立たないようにする。 画面外で描き終えてから移すため、通常は見えない）。
         window.Background = AverageColor(Screen);
 
-        // **位置と大きさは表示前に最終値にし、表示後に動かさない**: 表示後に移すとウィンドウの面が
-        // 作り直され、下地が数フレーム見える（実測 2026-11-13。 ちらつきの原因）。
-        // 画像はオーナーの退避より前に合成を待つ（<see cref="RevealAsync"/>）
-        window.Loaded += () => _ = RevealAsync(window, ownerScope);
+        // **配置が済むまで透明にする**: MewUI はウィンドウを表示するときに既定の配置（画面の左上）を
+        // 一瞬適用してから指定の位置へ移すため、その 1〜2 フレームが「画面がずれて見える」ちらつきになる
+        // （実測 2026-11-12: 仮想スクリーンの原点が (0,-1200) の環境で、0,0 の位置に 1 フレーム出た）。
+        // 透明にしておけば、位置が確定して画像が合成された後に不透明へ戻すだけで済む。
+        window.Opacity = 0;
+
+        // **画面外に置いた状態で表示し、画像を描き終えてから画面内へ移す**
+        // （画面内で表示してから画像を合成すると、合成前の 1〜2 フレームに下地の色やデスクトップが見える）。
+        // 大きさは変えずに位置だけ動かすのは、大きさを変えると再レイアウトが走り、
+        // その瞬間にウィンドウの下地が 1 フレーム見えるためである（WinUI 3 版と同じ方式）。
+        // ウィンドウが表示されてから動かす（表示前に動かすと、表示時の配置（画面外）に戻される）
+        window.Loaded += () => _ = RevealAsync(window, services, ownerScope);
 
         // 撮影中の一時的な表示のため、タスクバー・Alt+Tab の一覧には出さない
         // （Avalonia 版は HideFromTaskSwitcher で除外する）
@@ -445,11 +454,11 @@ internal sealed class CaptureOverlay
             EsWindowPlacementMath.ToDipLength(Screen.Width, creationScale),
             EsWindowPlacementMath.ToDipLength(Screen.Height, creationScale));
 
-        // **最初から最終位置に置いて表示する**: 画面外に置いてから移すと、移した瞬間にウィンドウの面が
-        // 作り直され、下地（撮影画像の平均色）が数フレーム見える（実測 2026-11-13。 画面のちらつき）。
-        // 位置は生成時のスケール（プライマリ モニターの DPI）で解釈されるため、同じスケールで DIP へ換算する
-        var overlayPosition = EsWindowPlacementMath.ToDipPoint(_screenBounds.TopLeft, creationScale);
-        window.StartManualPosition(overlayPosition.X, overlayPosition.Y);
+        // 画面外（仮想スクリーンの外）に置いて表示する（画面内に出すのは画像を描き終えてから）
+        var offScreen = EsWindowPlacementMath.ToDipPoint(
+            new EsPointInt(CaptureTiming.OwnerOffScreenCoord, CaptureTiming.OwnerOffScreenCoord),
+            creationScale);
+        window.StartManualPosition(offScreen.X, offScreen.Y);
 
         _selector.SetLoupeSource(Screen);
         ApplyLabels();
@@ -465,10 +474,10 @@ internal sealed class CaptureOverlay
 
         window.Loaded += () =>
         {
-            // **表示直後にもう一度だけ同じ位置を指定する**: ウィンドウは最初の表示で
-            // 既定の位置・大きさ（画面中央）が適用されることがあるため、念のため置き直す
-            // （同じ値なので実際には動かない。 実測 2026-11-12）
-            window.StartManualPosition(overlayPosition.X, overlayPosition.Y);
+            // **表示された直後にもう一度だけ画面外へ置き直す**: ウィンドウは最初の表示で
+            // 既定の位置・大きさ（画面中央）が適用されることがあり、その 1 フレームが
+            // 「小さい画面」のちらつきになる（WinUI 3 版と同じ対策。 実測 2026-11-12）
+            window.StartManualPosition(offScreen.X, offScreen.Y);
 
             // 画像ピクセル ↔ DIP の倍率は表示に使うウィンドウの DPI で決める
             // （ウィンドウのクライアント座標は物理ピクセルで届くため、この倍率で画像ピクセルへ戻せる。
@@ -482,8 +491,8 @@ internal sealed class CaptureOverlay
             }
         };
 
-        // 位置は生成時のスケールで解釈される（最終位置を表示前に与える）
-        window.StartManualPosition(overlayPosition.X, overlayPosition.Y);
+        // 位置は生成時のスケールで解釈される（画面外に置いて表示し、画像を描き終えてから移す）
+        window.StartManualPosition(offScreen.X, offScreen.Y);
 
         // Enter = 確定 / Escape = キャンセル（どのキーがどの操作かの解釈はコアが単一所有する）。
         // 確定対象が無い場合の Enter は何もしない（確定できない状態でキャンセル扱いにしない）
@@ -674,23 +683,24 @@ internal sealed class CaptureOverlay
         overlay?.Close();
     }
 
-    /// <summary>画像を描き終えるまで待ってから、オーナーを退避する。</summary>
+    /// <summary>画面外で画像を描き終えてからオーバーレイを画面内へ出し、その後でオーナーを退避する。</summary>
     /// <param name="window">対象のオーバーレイ ウィンドウ。</param>
+    /// <param name="services">ウィンドウ操作サービス。</param>
     /// <param name="ownerScope">オーナーの退避と復帰のスコープ。</param>
     /// <returns>表示が完了したときに完了するタスク。</returns>
     /// <remarks>
-    /// <b>画像を描き終えるまで待つ理由</b>: 合成される前に見せると、1〜2 フレームに下地の色が見える。<br/>
-    /// <b>ウィンドウを動かさない理由</b>: 表示後に位置や大きさを変えるとウィンドウの面が作り直され、<br/>
-    /// 下地（撮影画像の平均色）が数フレーム見える（実測 2026-11-13。 ちらつきの原因）。<br/>
-    /// 位置と大きさは表示前に最終値にしてある（<see cref="ShowAsync"/>）。<br/>
-    /// <b>フレームが来ない環境</b>（リモート デスクトップ等）でも操作不能にならないよう、待ち時間には上限を設ける。<br/>
+    /// <b>画面外で描く理由</b>: 画面内で表示すると、画像が合成されるまでの 1〜2 フレームに<br/>
+    /// 下地の色（またはデスクトップ）が見える。 画面外で <see cref="FramesBeforePlace"/> フレーム描いてから<br/>
+    /// 位置だけ動かすと、合成済みの面がそのまま出る。<br/>
+    /// <b>フレームが来ない環境</b>（リモート デスクトップ等では画面外の合成が走らないことがある）でも<br/>
+    /// 操作不能にならないよう、待ち時間には上限を設けて画面内へ出す。<br/>
     /// <b>セッションが先に完了した場合</b>（即座に確定・キャンセルされた場合）は何もしない。
     /// </remarks>
-    private async Task RevealAsync(Window window, CaptureOwnerScope ownerScope)
+    private async Task RevealAsync(Window window, CaptureOverlayServices services, CaptureOwnerScope ownerScope)
     {
-        // **待つ上限は短くする**: 画像が合成される前に見せると、下地の色が数フレーム見える。
+        // **待つ上限は短くする**: 画面外では合成が走らないことがあり、その場合は待っても画像は描かれない。
         // 待つほど「アプリが消えてから暗転が掛かるまで」の間が伸び、ちらつきとして見える
-        await WaitForFramesAsync(window, FramesBeforeImageComposed, s_revealFrameTimeout).ConfigureAwait(true);
+        await WaitForFramesAsync(window, FramesBeforePlace, s_revealFrameTimeout).ConfigureAwait(true);
         // 画像の転送（GPU へのアップロード）がフレームに遅れる環境向けの余裕
         await Task.Delay(s_revealSettleDelay).ConfigureAwait(true);
 
@@ -699,23 +709,47 @@ internal sealed class CaptureOverlay
             return;
         }
 
-        _placed = true;
+        PlaceOnScreen(window, services);
 
-        // 位置と大きさは表示前から最終値にしてある（移す・大きさを変えるとウィンドウの面が作り直され、
-        // 下地（撮影画像の平均色）が数フレーム見える。 実測 2026-11-13）
+        // 位置が確定した次のフレームで不透明へ戻す（透明のまま表示していた内容がこの時点で出る。
+        // 画像は画面外で合成済みのため、不透明にした瞬間から正しい内容が見える）
+        await WaitForFramesAsync(window, FramesBeforePlace, s_revealFrameTimeout).ConfigureAwait(true);
+        window.Opacity = 1;
 
-        // 画像を描き終えた次のフレームでオーナーを退避する（退避の瞬間を見せない）。
+        // 画面内へ移した次のフレームでオーナーを退避する（退避の瞬間を見せない）。
         // **キャプチャ除外が効いている場合は退避しない**: オーバーレイが画面全体を覆っているため見た目は変わらないが、
-        // 退避の瞬間にウィンドウが再合成され、オーバーレイの下地が数フレーム見える（実測 2026-11-13。
-        // WinUI 3 版・WinForms 版と同じ判断）。
+        // 退避の瞬間にウィンドウが再合成され、一瞬だけちらつく（WinUI 3 版・WinForms 版と同じ判断）
         await WaitForFramesAsync(window, FramesBeforeHideOwner, s_revealFrameTimeout).ConfigureAwait(true);
-        if (!_ownerHidden)
+        if (!_ownerHidden && _overlayWindow is not null)
         {
             _ownerHidden = true;
             if (!ownerScope.IsExcluded)
             {
                 ownerScope.ApplyPendingHide();
             }
+        }
+    }
+
+    /// <summary>オーバーレイを大きさを変えずに画面内（仮想スクリーン全面）へ移す。</summary>
+    /// <param name="window">対象のオーバーレイ ウィンドウ。</param>
+    /// <param name="services">ウィンドウ操作サービス。</param>
+    /// <remarks>
+    /// 大きさを変えずに位置だけ動かすのは、大きさを変えると再レイアウトが走り、その瞬間に<br/>
+    /// ウィンドウの下地が 1 フレーム見えるためである（WinUI 3 版と同じ方式）。<br/>
+    /// 論理座標（DIP）での配置は OS が作業領域内へ補正するため、物理ピクセルで置き直す。<br/>
+    /// 失敗しても選択操作は成立しないが、描画フレームのコールバックを例外で抜けると以降のフレーム処理が止まるため、<br/>
+    /// 境界で記録して続行する。
+    /// </remarks>
+    private void PlaceOnScreen(Window window, CaptureOverlayServices services)
+    {
+        _placed = true;
+        try
+        {
+            services.Window.SetBounds(window.ToEsPlatformHandle(), _screenBounds);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            _log.LogOperationError(ex, nameof(PlaceOnScreen));
         }
     }
 
