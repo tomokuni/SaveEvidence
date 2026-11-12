@@ -6,7 +6,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <summary>簡易確認ダイアログ（はい / いいえ）を表示する静的ヘルパー（MewUI 版）。</summary>
 /// <remarks>
 /// Avalonia 版 <c>ConfirmDialog</c> に相当する。 MewUI は XAML を持たないため C# マークアップで組み立てる。<br/>
-/// ウィンドウ装飾なし（<c>Borderless</c>）・固定サイズのモーダルダイアログとしてオーナーの中央に表示する。<br/>
+/// 標準のウィンドウ装飾を持つモーダルダイアログとしてオーナーの中央に表示する。<br/>
 /// 用途: 保存時の上書き確認など（<c>MainViewModel.ConfirmOverwriteAsync</c> へ配線する）。
 /// </remarks>
 internal static class ConfirmDialog
@@ -14,11 +14,11 @@ internal static class ConfirmDialog
     /// <summary>ダイアログの幅（DIP）。</summary>
     private const double DialogWidth = 420;
 
-    /// <summary>ダイアログの高さ（DIP）。</summary>
-    private const double DialogHeight = 180;
+    /// <summary>ダイアログの高さの上限（DIP）。 実際の高さは中身に合わせる。</summary>
+    private const double DialogMaxHeight = 480;
 
     /// <summary>ボタンの幅（DIP）。</summary>
-    private const double ButtonWidth = 80;
+    private const double ButtonWidth = 88;
 
     /// <summary>確認ダイアログを表示し、ユーザーの選択を返す。</summary>
     /// <param name="owner">オーナーウィンドウ。</param>
@@ -62,15 +62,22 @@ internal static class ConfirmDialog
             }
         };
 
-        dialog.WindowSize = WindowSize.Fixed(DialogWidth, DialogHeight);
-        dialog.Borderless().Content(
-            new StackPanel()
-                .Vertical()
+        // **標準のウィンドウ装飾を使う**: 装飾なし・固定サイズだとボタンの位置と余白だけが浮いて見え、
+        // ダイアログに見えない（Avalonia 版と同じ判断。 実測 2026-11-12）。 高さは中身に合わせ、幅だけ固定する。
+        dialog.WindowSize = WindowSize.FitContentHeight(DialogWidth, DialogMaxHeight);
+        dialog.Content(
+            new Grid()
+                .Rows("Auto,*")
                 .Spacing(20)
                 .Padding(20)
                 .Children(
-                    new TextBlock().Text(message),
-                    new StackPanel().Horizontal().Spacing(10).Children(yes, no)));
+                    new TextBlock().Text(message).TextWrapping(TextWrapping.Wrap),
+                    new StackPanel()
+                        .Horizontal()
+                        .Spacing(8)
+                        .HorizontalAlignment(HorizontalAlignment.Right)
+                        .Children(yes, no)
+                        .Row(1)));
 
         await dialog.ShowDialogAsync(owner);
         return await result.Task;

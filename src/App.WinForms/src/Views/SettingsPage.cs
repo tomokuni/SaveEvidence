@@ -290,6 +290,14 @@ internal static class SettingsPage
                 settingsService.Current.HideMainWindowOnCapture = value;
                 settingsService.Save();
             }));
+        section.Body.Controls.Add(CreateCheckBox(
+            "撮影・切り出しの後にクリップボードへコピーする",
+            settingsService.Current.CopyAfterCapture,
+            value =>
+            {
+                settingsService.Current.CopyAfterCapture = value;
+                settingsService.Save();
+            }));
         return section;
     }
 

@@ -140,8 +140,13 @@ internal static class CapturePage
         var statusLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         statusLeft.Children.Add(pointerText);
         statusLeft.Children.Add(imageSizeText);
-        statusLeft.Children.Add(savedFileNameText);
-        statusLeft.Children.Add(messageText);
+
+        // ファイル名と通知の間は全角 1 文字分にする
+        var nameAndMessage = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
+        nameAndMessage.Children.Add(savedFileNameText);
+        nameAndMessage.Children.Add(CreateLabel("　", AppStyles.StatusFontSize));
+        nameAndMessage.Children.Add(messageText);
+        statusLeft.Children.Add(nameAndMessage);
 
         var statusRight = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         statusRight.Children.Add(zoomOut);
@@ -263,7 +268,7 @@ internal static class CapturePage
         templateBox.TextChanged += (_, _) => viewModel.FileNameTemplateText = templateBox.Text;
         items.Children.Add(templateBox);
 
-        var save = CreateIconButton(CaptureIconFiles.Save, "画像を保存", () => _ = viewModel.SaveImageAsync(), AppStyles.ToolbarIconSize);
+        var save = CreateIconButton(CaptureIconFiles.Save, "画像を保存", () => _ = viewModel.SaveImageAsync(), AppStyles.ToolbarIconSize, out var saveIcon);
         var screen = CreateIconButton(
             CaptureIconFiles.ScreenSelect, "スクリーン選択キャプチャ",
             () => CaptureFlow.Start(CaptureType.ScreenSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
@@ -275,35 +280,52 @@ internal static class CapturePage
             () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
         var crop = CreateIconButton(CaptureIconFiles.Crop, "切り出し（切出しモード開始/終了）", toggleCrop, AppStyles.ToolbarIconSize);
 
-        // 自動保存のトグル（切り出しの右。 有効な間は画像が変わるたびに保存する）
+        // 自動保存のトグル（保存ボタンの右。 有効な間は画像が変わるたびに保存する）。
+        // 高さは保存ボタンのアイコンの見える高さ（16 DIP）に合わせる
         var autoSave = new ToggleButton
         {
             Content = "自動保存",
-            FontSize = AppStyles.ToolbarFontSize,
+            FontSize = 11,
             IsChecked = viewModel.AutoSave,
-            Height = AppStyles.ToolbarButtonHeight,
+            Height = AppStyles.ToolbarIconSize,
+            Padding = new Thickness(6, 0, 6, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(1),
         };
         ToolTipService.SetToolTip(autoSave, "画像が変わったら自動で保存する");
         autoSave.Checked += (_, _) => viewModel.AutoSave = true;
         autoSave.Unchecked += (_, _) => viewModel.AutoSave = false;
 
-        // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 撮影 3 種 | 切り出し | 自動保存）。
+        // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 自動保存 | 撮影 3 種 | 切り出し）。
         // 元に戻す・やり直しはメニューから実行する（ツールバーに置かない）
         items.Children.Add(save);
+        items.Children.Add(autoSave);
         items.Children.Add(AppStyles.CreateToolbarSeparator());
         items.Children.Add(screen);
         items.Children.Add(windowSelect);
         items.Children.Add(area);
         items.Children.Add(AppStyles.CreateToolbarSeparator());
         items.Children.Add(crop);
-        items.Children.Add(AppStyles.CreateToolbarSeparator());
-        items.Children.Add(autoSave);
+
+        // 保存の可否に合わせて保存ボタンを灰色にする（アイコンはテーマの不透明度に追従しないため色で表す）
+        void ApplySaveEnabled()
+        {
+            save.IsEnabled = viewModel.CanSave;
+            saveIcon.Source = IconLoader.LoadImage(
+                CaptureIconFiles.Save,
+                AppStyles.IconRasterSize,
+                viewModel.CanSave
+                    ? IconLoader.ForegroundColor()
+                    : AppPalette.DisabledForeground(AppStyles.IsDarkTheme));
+        }
+        AppStyles.ThemeChanged += (_, _) => ApplySaveEnabled();
 
         // 画像の状態とテンプレートの妥当性に追従して可否を更新する
         viewModel.PropertyChanged += (_, e) =>
         {
-            save.IsEnabled = viewModel.CanSave;
+            ApplySaveEnabled();
             crop.IsEnabled = viewModel.HasPreviewImage;
 
             if (!string.Equals(e.PropertyName, nameof(MainViewModel.FileNameTemplateText), StringComparison.Ordinal))
@@ -318,7 +340,7 @@ internal static class CapturePage
             }
         };
 
-        save.IsEnabled = viewModel.CanSave;
+        ApplySaveEnabled();
         crop.IsEnabled = viewModel.HasPreviewImage;
 
         // 上書き確認で使う保存先をツールチップへ反映する
@@ -766,6 +788,9 @@ internal static class CapturePage
         viewModel.SetPreviewImage(captured);
         // 通知の文言はコアが単一所有する（キャプチャ結果は画像の差し替えより後に通知する）
         viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
+
+        // 設定が有効なら撮影した画像をクリップボードへコピーする
+        _ = viewModel.CopyAfterEditIfEnabledAsync();
     }
 
     /// <summary>切り出しの開始・確定・キャンセルを 1 つの操作で切り替える（ボタン・キー・メニュー共通）。</summary>
@@ -898,8 +923,19 @@ internal static class CapturePage
     /// <param name="iconSize">アイコンの一辺（DIP）。</param>
     /// <returns>生成したボタン。</returns>
     private static Button CreateIconButton(string icon, string toolTip, Action? onClick, double iconSize)
+        => CreateIconButton(icon, toolTip, onClick, iconSize, out _);
+
+    /// <summary>アイコン付きのボタンを生成し、アイコンの画像要素も返す。</summary>
+    /// <param name="icon">アイコンの SVG ファイル名。</param>
+    /// <param name="toolTip">ツールチップの文言。</param>
+    /// <param name="onClick">クリック時の処理。 null の場合は何もしない。</param>
+    /// <param name="iconSize">アイコンの一辺（DIP）。</param>
+    /// <param name="content">生成したアイコンの画像要素（無効時に灰色で描き直すために使う）。</param>
+    /// <returns>生成したボタン。</returns>
+    private static Button CreateIconButton(
+        string icon, string toolTip, Action? onClick, double iconSize, out Image content)
     {
-        var content = new Image
+        content = new Image
         {
             Source = IconLoader.LoadThemedImage(icon, AppStyles.IconRasterSize),
             Width = iconSize,
@@ -924,10 +960,11 @@ internal static class CapturePage
 
         ApplyIconButtonColors(button);
 
-        // テーマが変わったらアイコンの色を描き直す
+        // テーマが変わったらアイコンの色を描き直す（out パラメーターはラムダで使えないためローカルへ写す）
+        var iconContent = content;
         AppStyles.ThemeChanged += (_, _) =>
         {
-            content.Source = IconLoader.LoadThemedImage(icon, AppStyles.IconRasterSize);
+            iconContent.Source = IconLoader.LoadThemedImage(icon, AppStyles.IconRasterSize);
             ApplyIconButtonColors(button);
         };
         return button;

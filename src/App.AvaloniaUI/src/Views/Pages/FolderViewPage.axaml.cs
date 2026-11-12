@@ -87,6 +87,11 @@ public sealed partial class FolderViewPage : ViewModePageBase
         FileListBox.ScrollChanged += (_, _) => UpdateThumbnailPriorities();
         FileListBox.ItemActivated += OnItemActivated;
 
+        // 右クリックのメニュー: 一覧は「削除」、保存先パスは「エクスプローラで表示」
+        // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
+        AddContextMenu(FileListBox, "削除", () => _ = DeleteSelectedAsync());
+        AddContextMenu(FolderPathText, "エクスプローラで表示", OpenFolderInExplorer);
+
         InitializeViewModePage(
             Program.SettingsService,
             Program.ServiceProvider.GetRequiredService<MainViewModel>(),
@@ -165,18 +170,23 @@ public sealed partial class FolderViewPage : ViewModePageBase
         LoadFiles();
     }
 
-    /// <summary>保存先フォルダをエクスプローラーで開く（ステータスバーのパスのクリック）。</summary>
+    /// <summary>保存先フォルダをエクスプローラーで開く（ステータスバーのパスの左クリック）。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">ポインターのイベント引数。</param>
     private void OnFolderPathClick(object? sender, PointerPressedEventArgs e)
     {
-        // 左ボタンだけを受け付ける（右クリックで開かない）
+        // 左ボタンだけを受け付ける（右クリックはメニューを出す）
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed) return;
 
+        e.Handled = true;
+        OpenFolderInExplorer();
+    }
+
+    /// <summary>保存先フォルダをエクスプローラーで開く。</summary>
+    private void OpenFolderInExplorer()
+    {
         var folderPath = _viewModel.FolderPathText;
         if (string.IsNullOrEmpty(folderPath)) return;
-
-        e.Handled = true;
 
         try
         {
@@ -186,6 +196,17 @@ public sealed partial class FolderViewPage : ViewModePageBase
         {
             s_logger.LogOpenFolderError(ex, folderPath);
         }
+    }
+
+    /// <summary>要素へ 1 項目の右クリック メニューを付ける。</summary>
+    /// <param name="target">メニューを付ける要素。</param>
+    /// <param name="header">項目の文言。</param>
+    /// <param name="action">項目を選んだときの処理。</param>
+    private static void AddContextMenu(Control target, string header, Action action)
+    {
+        var item = new MenuItem { Header = header };
+        item.Click += (_, _) => action();
+        target.ContextMenu = new ContextMenu { Items = { item } };
     }
 
     /// <summary>ページの表示状態に合わせてサムネイル生成の負荷を切り替える。</summary>

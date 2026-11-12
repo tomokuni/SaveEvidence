@@ -187,7 +187,8 @@ internal static class SettingsPage
     private static Element BuildCaptureSection(Settings settings)
         => Section(
             "キャプチャ設定",
-            Row("", CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, "キャプチャ時にメインウィンドウを隠す")));
+            Row("", CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, "キャプチャ時にメインウィンドウを隠す")),
+            Row("", CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, "撮影・切り出しの後にクリップボードへコピーする")));
 
     /// <summary>矩形選択範囲の制限のセクションを構築する。</summary>
     /// <param name="settings">設定。</param>

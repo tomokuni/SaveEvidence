@@ -238,19 +238,31 @@ internal static class FolderViewPage
         folderText.VerticalAlignment = VerticalAlignment.Center;
         folderText.Foreground(AppStyles.CurrentLinkForeground);
 
-        // パスは青字 + 下線で表示し、クリックでエクスプローラーを開く（下線は下端の枠線で描く）
+        // パスは青字 + 下線で表示し、クリックでエクスプローラーを開く（下線は下端の枠線で描く）。
+        // 入力は Button で受ける（MewUI の Border・TextBlock はマウス ヒット テストの対象にならない）
+        var folderButton = new Button
+        {
+            Content = folderText,
+            Padding = new Thickness(0),
+            CornerRadius = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            StyleName = AppStyles.FlatButton,
+        };
+        folderButton.Cursor(CursorType.Hand);
+        folderButton.ToolTip("クリックでエクスプローラーを開く（右クリックでメニュー）");
+        folderButton.OnClick(OpenFolderInExplorer);
+
         var folderLink = new Border()
-            .Child(folderText)
+            .Child(folderButton)
+            .Background(AppStyles.CurrentPageBackground)
             .BorderBrush(AppStyles.CurrentLinkForeground)
             .BorderThickness(new Thickness(0, 0, 0, 1))
             .Padding(new Thickness(0))
             .VerticalAlignment(VerticalAlignment.Center);
-        folderLink.Cursor(CursorType.Hand);
-        folderLink.ToolTip("クリックでエクスプローラーを開く");
-        folderLink.OnMouseDown(e =>
-        {
-            if (e.Button != MouseButton.Left) return;
 
+        // 保存先フォルダをエクスプローラーで開く
+        void OpenFolderInExplorer()
+        {
             var folderPath = viewModel.FolderPathText;
             if (string.IsNullOrEmpty(folderPath)) return;
 
@@ -262,11 +274,27 @@ internal static class FolderViewPage
             {
                 s_logger.LogOpenFolderError(ex, folderPath);
             }
-        });
+        }
 
         var statusGrid = new Grid().Columns("*,Auto");
         statusGrid.Add(status.Column(0));
         statusGrid.Add(folderLink.Column(1));
+
+        // 右クリックのメニュー: 一覧は「削除」、保存先パスは「エクスプローラで表示」
+        // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
+        var deleteCommand = new Command("folderView.delete", "削除", null);
+        list.Commands.Register(deleteCommand, () => _ = DeleteSelectedAsync(list, currentFiles, Rebuild), static () => true);
+        list.ContextMenu = new ContextMenu();
+        list.ContextMenu.AddItem("削除", deleteCommand);
+
+        var openFolderCommand = new Command("folderView.openInExplorer", "エクスプローラで表示", null);
+        folderButton.Commands.Register(openFolderCommand, OpenFolderInExplorer, static () => true);
+        // 右クリックのメニューは「背景を持つ要素」に付ける必要がある（MewUI はマウス位置の要素から
+        // 親をたどって ContextMenu を探すが、背景が無い要素はヒット テストの対象にならない）
+        var folderMenu = new ContextMenu();
+        folderMenu.AddItem("エクスプローラで表示", openFolderCommand);
+        folderLink.ContextMenu = folderMenu;
+        folderButton.ContextMenu = folderMenu;
 
         // 見え方が変わったら優先度を付け直す（スクロールと、ウィンドウの大きさの変化）
         list.ScrollChanged += (_, _) => UpdatePriorities();

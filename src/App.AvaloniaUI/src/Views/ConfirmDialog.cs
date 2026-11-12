@@ -26,18 +26,19 @@ public static class ConfirmDialog
     {
         var tcs = new TaskCompletionSource<bool>();
 
+        // **標準のウィンドウ装飾を使う**: 装飾なし・固定サイズだとボタンの位置と余白だけが浮いて見え、
+        // ダイアログに見えない（実測 2026-11-12）。 高さは中身に合わせ、幅だけ固定する。
         var dialog = new Window
         {
             Title = title,
             Width = 420,
-            Height = 180,
+            SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             CanResize = false,
-            WindowDecorations = WindowDecorations.None,
         };
 
-        var yesButton = new Button { Content = "はい", Width = 80, Margin = new Thickness(5) };
-        var noButton = new Button { Content = "いいえ", Width = 80, Margin = new Thickness(5) };
+        var yesButton = new Button { Content = "はい", Width = 88, MinHeight = 32 };
+        var noButton = new Button { Content = "いいえ", Width = 88, MinHeight = 32 };
 
         yesButton.Click += (_, _) => { tcs.TrySetResult(true); dialog.Close(); };
         noButton.Click += (_, _) => { tcs.TrySetResult(false); dialog.Close(); };
@@ -56,20 +57,32 @@ public static class ConfirmDialog
             }
         };
 
-        dialog.Content = new StackPanel
+        // 本文とボタンを左右に分け、ボタンは右下へ寄せる（WinUI 3 の ContentDialog と同じ見え方）
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 8,
+            Children = { yesButton, noButton },
+        };
+
+        dialog.Content = new Grid
         {
             Margin = new Thickness(20),
+            RowDefinitions = new RowDefinitions("*,Auto"),
             Children =
             {
-                new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 20) },
-                new StackPanel
+                new TextBlock
                 {
-                    Orientation = Orientation.Horizontal,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Children = { yesButton, noButton }
-                }
-            }
+                    Text = message,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 0, 0, 20),
+                    VerticalAlignment = VerticalAlignment.Center,
+                },
+                buttons,
+            },
         };
+        Grid.SetRow(buttons, 1);
 
         await dialog.ShowDialog(owner);
         return await tcs.Task;

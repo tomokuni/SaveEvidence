@@ -136,7 +136,19 @@ internal static class CapturePage
             Margin = new Padding(0),
             Padding = new Padding(0),
         };
-        statusFlow.Controls.AddRange([pointerLabel, sizeLabel, savedFileLabel, messageLabel]);
+        // ファイル名と通知の間は全角 1 文字分にする
+        var nameAndMessage = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Margin = new Padding(0),
+            Padding = new Padding(0),
+        };
+        var nameMessageGap = UiFactory.CreateStatusLabel(0);
+        nameMessageGap.Text = "　";
+        nameAndMessage.Controls.AddRange([savedFileLabel, nameMessageGap, messageLabel]);
+        statusFlow.Controls.AddRange([pointerLabel, sizeLabel, nameAndMessage]);
 
         var zoomPanel = new FlowLayoutPanel
         {
@@ -174,6 +186,23 @@ internal static class CapturePage
         toolbar.Controls.Add(templateBox);
         var saveButton = UiFactory.CreateToolButton(AppIcon.Save, "保存", SaveImage, isBorderless: true);
         toolbar.Controls.Add(saveButton);
+
+        // 自動保存のトグル（保存ボタンの右。 有効な間は画像が変わるたびに保存する）。
+        // 選択状態は面の色で表すため、枠なしにせず既定のツールバー ボタンとして描く
+        var autoSaveButton = UiFactory.CreateToolButton(
+            null, "画像が変わったら自動で保存する", () => { }, "自動保存");
+        autoSaveButton.Click += (_, _) => ToggleAutoSave();
+        autoSaveButton.IsSelected = viewModel.AutoSave;
+        // 高さは保存ボタンのアイコンの見える高さ（16 DIP）に合わせる。
+        // 文字が縦に潰れないようフォントは小さくし、余白を持たせて中央へ置く
+        autoSaveButton.Height = DpiScaler.ScaleToPixel(ToolbarMetrics.IconSize, DpiScaler.ToScaling(crop.DeviceDpi));
+        autoSaveButton.Font = new Font(autoSaveButton.Font.FontFamily, 8F);
+        autoSaveButton.Padding = Padding.Empty;
+        autoSaveButton.TextAlign = ContentAlignment.MiddleCenter;
+        // 高さを詰めても文字が縦に潰れないよう GDI+ の描画を使う（既定の GDI 描画は行の高さで切れる）
+        autoSaveButton.UseCompatibleTextRendering = true;
+        toolbar.Controls.Add(autoSaveButton);
+
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(UiFactory.CreateToolButton(
             AppIcon.ScreenSelect, "スクリーン選択で撮影", () => StartCapture(CaptureType.ScreenSelect), isBorderless: true));
@@ -184,14 +213,6 @@ internal static class CapturePage
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(UiFactory.CreateToolButton(
             AppIcon.Crop, "切り出し（開始 / 確定 / キャンセル）", ToggleCrop, isBorderless: true));
-
-        // 自動保存のトグル（切り出しの右。 有効な間は画像が変わるたびに保存する）
-        var autoSaveButton = UiFactory.CreateToolButton(
-            null, "画像が変わったら自動で保存する", () => { }, "自動保存", isBorderless: true);
-        autoSaveButton.Click += (_, _) => ToggleAutoSave();
-        autoSaveButton.IsSelected = viewModel.AutoSave;
-        toolbar.Controls.Add(UiFactory.CreateSeparator());
-        toolbar.Controls.Add(autoSaveButton);
 
         // 幅は入力された文字列の幅に合わせる（最小 100 DIP・上限はツールバーが折り返さない幅）。
         // 上限を取るのは、幅を広げすぎるとツールバーのアイコンが 2 段になるため（他の UI 版と同じ）。
@@ -563,9 +584,14 @@ internal static class CapturePage
             AddMenuItem(menuStrip, "元に戻す", "Ctrl+Z", () => EditHistory.Undo(services, ApplyAppearance));
             AddMenuItem(menuStrip, "元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services, ApplyAppearance));
             menuStrip.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menuStrip, "撮影 - スクリーン選択", "", () => StartCapture(CaptureType.ScreenSelect), AppIcon.ScreenSelect);
-            AddMenuItem(menuStrip, "撮影 - ウィンドウ選択", "", () => StartCapture(CaptureType.WindowSelect), AppIcon.WindowSelect);
-            AddMenuItem(menuStrip, "撮影 - 範囲選択", "", () => StartCapture(CaptureType.AreaSelect), AppIcon.AreaSelect);
+            // 撮影のショートカットはグローバル ホットキーの設定を表示する（キー処理はホットキーが担う）
+            var hotKeys = settingsService.Current;
+            AddMenuItem(menuStrip, "撮影 - スクリーン選択", hotKeys.SelectScreenHotKey.ToString(),
+                () => StartCapture(CaptureType.ScreenSelect), AppIcon.ScreenSelect);
+            AddMenuItem(menuStrip, "撮影 - ウィンドウ選択", hotKeys.WindowSelectHotKey.ToString(),
+                () => StartCapture(CaptureType.WindowSelect), AppIcon.WindowSelect);
+            AddMenuItem(menuStrip, "撮影 - 範囲選択", hotKeys.AreaSelectHotKey.ToString(),
+                () => StartCapture(CaptureType.AreaSelect), AppIcon.AreaSelect);
             menuStrip.Items.Add(new ToolStripSeparator());
             AddMenuItem(menuStrip, "切り出し", "Ctrl+R", ToggleCrop, AppIcon.Crop);
             AddMenuItem(menuStrip, "Crop - 自動切り出し", "", AutoCrop);
@@ -677,6 +703,9 @@ internal static class CapturePage
         viewModel.SetPreviewImage(captured);
         // 通知の文言はコアが単一所有する（キャプチャ結果は画像の差し替えより後に通知する）
         viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
+
+        // 設定が有効なら撮影した画像をクリップボードへコピーする
+        _ = viewModel.CopyAfterEditIfEnabledAsync();
     }
 
     /// <summary>上書きの確認ダイアログを表示する。</summary>

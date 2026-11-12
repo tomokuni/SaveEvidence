@@ -43,9 +43,6 @@ internal static class CapturePage
     /// <summary>ツールバーのアイコンを生成する解像度（ピクセル）。</summary>
     private const int IconRasterSize = 32;
 
-    /// <summary>メニューアイコン（ハンバーガー）の大きさ（半径。 DIP）。</summary>
-    private const double MenuGlyphSize = 6;
-
     /// <summary>ズームスライダの最小値（%）。</summary>
     private const double ZoomSliderMinimum = 10;
 
@@ -141,6 +138,22 @@ internal static class CapturePage
         var hasImage = new ObservableValue<bool>(viewModel.HasPreviewImage);
         var canSave = new ObservableValue<bool>(viewModel.CanSave);
         var canCopy = new ObservableValue<bool>(viewModel.CanCopy);
+
+        // 保存アイコンは可否に応じて色を差し替える（生成はツールバーの組み立て時）
+        IconImage? saveIcon = null;
+        void ApplySaveIcon()
+        {
+            if (saveIcon is null)
+            {
+                return;
+            }
+
+            saveIcon.Image.Source = IconLoader.LoadImage(
+                saveIcon.File,
+                IconRasterSize,
+                canSave.Value ? IconLoader.ForegroundColor() : DisabledIconColor());
+        }
+
         viewModel.PropertyChanged += (_, e) =>
         {
             switch (e.PropertyName)
@@ -150,6 +163,7 @@ internal static class CapturePage
                     break;
                 case nameof(MainViewModel.CanSave):
                     canSave.Value = viewModel.CanSave;
+                    ApplySaveIcon();
                     break;
                 case nameof(MainViewModel.CanCopy):
                     canCopy.Value = viewModel.CanCopy;
@@ -219,10 +233,16 @@ internal static class CapturePage
         // ── ツールバー（Avalonia 版と同じアイコン配置）──
         // ウィンドウ幅が狭い・ファイル名テンプレートが長い場合はアイコンがウィンドウ操作ボタンへ重なるため、
         // 横方向へ折り返す（Avalonia 版のツールバーも WrapPanel）。
+        // メニューのアイコンは他の UI 版と同じ SVG を使う（ベクターグリフの三本線は
+        // 描画時に縦横比が崩れて歪んで見える。 実測 2026-11-12）
         var menuButton = new Button
         {
-            // メニューのアイコンはベクターグリフを使う（文字の ☰ はフォントの代替字形が下へ寄り、縦位置が揃わない）
-            Content = new GlyphElement { Kind = GlyphKind.Hamburger, GlyphSize = MenuGlyphSize }.Center(),
+            Content = new Image
+            {
+                Source = IconLoader.LoadImage(CaptureIconFiles.Menu, IconRasterSize, IconLoader.ForegroundColor()),
+                Width = IconSize,
+                Height = IconSize,
+            }.Center(),
             Padding = new Thickness(AppStyles.ToolbarPaddingX, AppStyles.ToolbarPaddingY),
             Margin = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
@@ -269,6 +289,11 @@ internal static class CapturePage
         var save = IconButton(CaptureIconFiles.Save, "画像を保存", () => _ = viewModel.SaveImageAsync(), iconImages);
         save.BindIsEnabled(canSave);
 
+        // MewUI のツールバー ボタンは無効時も内容（アイコン画像）の色を落とさないため、
+        // 保存できない間はアイコンをグレーへ差し替える（Avalonia 版・WinUI 3 版と同じ見え方）
+        saveIcon = iconImages[^1];
+        ApplySaveIcon();
+
         var screenSelect = IconButton(
             CaptureIconFiles.ScreenSelect, "スクリーン選択キャプチャ",
             () => CaptureFlow.Start(CaptureType.ScreenSelect, captureSession), iconImages);
@@ -282,15 +307,19 @@ internal static class CapturePage
         var cropButton = IconButton(CaptureIconFiles.Crop, "切り出し（切出しモード開始/終了）", ToggleCrop, iconImages);
         cropButton.BindIsEnabled(hasImage);
 
-        // 自動保存のトグル（切り出しの右。 有効な間は画像が変わるたびに保存する）
+        // 自動保存のトグル（保存ボタンの右。 有効な間は画像が変わるたびに保存する）。
+        // 高さは保存ボタンのアイコンの見える高さ（16 DIP）に合わせる。
         // ツールヒントは付けない（MewUI 0.21.1 はツールヒント表示中の押下を取り消すため、
         // トグルが反応しないことがある。 文言は自己説明的な「自動保存」にする）
         var autoSaveButton = new ToggleButton()
             .StyleName(AppStyles.ToolbarToggle)
             .Content("自動保存")
-            .Height(AppStyles.ToolbarButtonHeight)
+            .Height(IconSize)
+            .Padding(new Thickness(6, 0, 6, 0))
             .Margin(new Thickness(1))
             .IsChecked(viewModel.AutoSave);
+        autoSaveButton.FontSize(11);
+        autoSaveButton.VerticalAlignment = VerticalAlignment.Center;
         autoSaveButton.Cursor(CursorType.Hand);
         autoSaveButton.OnCheckedChanged(isChecked => viewModel.AutoSave = isChecked);
 
@@ -301,14 +330,13 @@ internal static class CapturePage
                 AppStyles.CreateToolbarDivider(),
                 template,
                 save,
+                autoSaveButton,
                 AppStyles.CreateToolbarDivider(),
                 screenSelect,
                 windowSelect,
                 areaSelect,
                 AppStyles.CreateToolbarDivider(),
-                cropButton,
-                AppStyles.CreateToolbarDivider(),
-                autoSaveButton);
+                cropButton);
 
         // ファイル名テンプレートの幅をテキストの実測に合わせる（上限は折り返さない幅）。
         // ツールバーの幅が変わったら計算し直す
@@ -377,10 +405,21 @@ internal static class CapturePage
         messageLabel.Foreground(AnnounceColor());
         messageLabel.Bind(Label.TextProperty, viewModel, static x => x.StatusMessage);
 
+        // ファイル名と通知の間は全角 1 文字分にする
+        var nameMessageGap = new Label();
+        nameMessageGap.FontSize(AppStyles.StatusFontSize);
+        nameMessageGap.VerticalAlignment = VerticalAlignment.Center;
+        nameMessageGap.Text("　");
+
+        var nameAndMessage = new StackPanel()
+            .Horizontal()
+            .Spacing(0)
+            .Children(savedFileLabel, nameMessageGap, messageLabel);
+
         var statusLeft = new StackPanel()
             .Horizontal()
             .Spacing(4)
-            .Children(pointerLabel, imageSizeLabel, savedFileLabel, messageLabel);
+            .Children(pointerLabel, imageSizeLabel, nameAndMessage);
 
         // 右: 拡大率（⊖ / ⊕ / Fit / % 表示。 % はクリックで拡大率メニューを出す）
         var zoomOut = StatusIconButton("ic_fluent_subtract_circle_24_regular.svg", "ズームアウト", crop.ZoomOut, iconImages);
@@ -485,7 +524,12 @@ internal static class CapturePage
         root.Add(zoomMenu.Column(0));
 
         // テーマが変わったらスタイルで表せない値（アイコンの色）を描き直す
-        AppStyles.ThemeChanged += (_, _) => RefreshIcons(iconImages);
+        AppStyles.ThemeChanged += (_, _) =>
+        {
+            RefreshIcons(iconImages);
+            // 保存アイコンは可否に応じた色を持つため、描き直した後に上書きする
+            ApplySaveIcon();
+        };
 
         return new PageContent(
             root,
@@ -650,9 +694,14 @@ internal static class CapturePage
         Add("Image - 元に戻す", () => EditHistory.Undo(services), () => viewModel.HasPreviewImage, "Ctrl+Z");
         Add("Image - 元に戻すを取り消す", () => EditHistory.Redo(services), () => viewModel.HasPreviewImage, "Ctrl+Y");
         AddSeparator();
-        Add("Capture - スクリーン選択", () => CaptureFlow.Start(CaptureType.ScreenSelect, captureSession), iconFile: CaptureIconFiles.ScreenSelect);
-        Add("Capture - ウィンドウ選択", () => CaptureFlow.Start(CaptureType.WindowSelect, captureSession), iconFile: CaptureIconFiles.WindowSelect);
-        Add("Capture - 範囲選択", () => CaptureFlow.Start(CaptureType.AreaSelect, captureSession), iconFile: CaptureIconFiles.AreaSelect);
+        // 撮影のショートカットはグローバル ホットキーの設定を表示する（キー処理はホットキーが担う）
+        var hotKeys = services.Settings.Current;
+        Add("Capture - スクリーン選択", () => CaptureFlow.Start(CaptureType.ScreenSelect, captureSession),
+            gesture: hotKeys.SelectScreenHotKey.ToString(), iconFile: CaptureIconFiles.ScreenSelect);
+        Add("Capture - ウィンドウ選択", () => CaptureFlow.Start(CaptureType.WindowSelect, captureSession),
+            gesture: hotKeys.WindowSelectHotKey.ToString(), iconFile: CaptureIconFiles.WindowSelect);
+        Add("Capture - 範囲選択", () => CaptureFlow.Start(CaptureType.AreaSelect, captureSession),
+            gesture: hotKeys.AreaSelectHotKey.ToString(), iconFile: CaptureIconFiles.AreaSelect);
         AddSeparator();
         Add("Crop - 切り出し", toggleCrop, () => viewModel.CanCopy, "Ctrl+R", CaptureIconFiles.Crop);
         Add("Crop - 自動切り出し", () => viewModel.AutoCropWindowCommand.Execute(null), () => viewModel.CanCopy);
@@ -817,6 +866,18 @@ internal static class CapturePage
     /// <returns>文字色。</returns>
     private static MewUIColor AnnounceColor()
         => MewUIColor.FromArgb(255, 0, 122, 204);
+
+    /// <summary>無効なアイコンの色を取得する（Avalonia 版・WinUI 3 版と同じ色調）。</summary>
+    /// <returns>アイコンの色。</returns>
+    private static MewUIColor DisabledIconColor()
+    {
+        var argb = AppPalette.DisabledForeground(IconLoader.IsDarkTheme());
+        return MewUIColor.FromArgb(
+            (byte)(argb >> 24),
+            (byte)(argb >> 16),
+            (byte)(argb >> 8),
+            (byte)argb);
+    }
 
     /// <summary>プレビュー（クロップビュー）と切り出しのオーバーレイを重ねた領域を生成する。</summary>
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
@@ -1013,6 +1074,9 @@ internal static class CapturePage
         viewModel.SetPreviewImage(captured);
         // 通知の文言はコアが単一所有する（キャプチャ結果は画像の差し替えより後に通知する）
         viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
+
+        // 設定が有効なら撮影した画像をクリップボードへコピーする
+        _ = viewModel.CopyAfterEditIfEnabledAsync();
     }
 
     /// <summary>切り出しの開始・確定・キャンセルを 1 つの操作で切り替える（ボタン・キー・メニュー共通）。</summary>

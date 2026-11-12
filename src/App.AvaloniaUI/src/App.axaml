@@ -36,6 +36,9 @@
             <Setter Property="Padding" Value="{StaticResource ToolbarButtonPadding}"/>
             <Setter Property="FontSize" Value="{StaticResource ToolbarFontSize}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <!-- 文字を上下左右の中央へ置く（既定は上寄せになり、ボタン内の文字が上へずれて見える） -->
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
             <Setter Property="Background" Value="{DynamicResource ToolbarButtonFaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource ToolbarButtonBorderBrush}"/>
@@ -70,6 +73,10 @@
         <Style Selector="Button.toolbar-icon:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <!-- 無効（保存できない等）のアイコンは灰色にする（画像はテーマの不透明度に追従しないため） -->
+        <Style Selector="Button.toolbar-icon:disabled PathIcon">
+            <Setter Property="Foreground" Value="{DynamicResource DisabledForegroundBrush}"/>
         </Style>
         <Style Selector="Button.toolbar-icon:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="BorderBrush" Value="Transparent"/>

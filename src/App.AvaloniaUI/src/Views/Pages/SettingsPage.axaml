@@ -122,6 +122,9 @@
                         <CheckBox IsChecked="{Binding Settings.HideMainWindowOnCapture}"
                                   Content="キャプチャ時にメインウィンドウを隠す"
                                   Margin="0,5,0,0"/>
+                        <CheckBox IsChecked="{Binding Settings.CopyAfterCapture}"
+                                  Content="撮影・切り出しの後に画像をクリップボードへコピーする"
+                                  Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
 

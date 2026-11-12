@@ -808,6 +808,9 @@ public sealed partial class MainWindow : Window
             // 通知メッセージは画像の差し替え（SetPreviewImage が StatusMessage を空にする）より後に設定する
             // （先に設定すると消える）。 文言はコア（StatusMessages）が単一所有する
             _viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
+
+            // 設定が有効なら撮影した画像をクリップボードへコピーする
+            _ = _viewModel.CopyAfterEditIfEnabledAsync();
         }
     }
 }

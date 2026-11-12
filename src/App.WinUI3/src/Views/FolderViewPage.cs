@@ -49,8 +49,13 @@ internal static class FolderViewPage
         viewModel.SelectedViewModeIndex = ViewModeDisplay.ClampIndex(settingsService.Current.FolderViewModeIndex);
         viewModel.IsSortAscending = settingsService.Current.FolderViewSortAscending;
 
-        // 一覧は Undo 一覧と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
-        var list = new ThumbnailControl();
+        // 一覧は Undo 一覧と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う。
+        // 画像と項目数の変化を記録できるようにする（サムネイルが出ない原因をログだけで追えるようにする）
+        var list = new ThumbnailControl
+        {
+            Log = s_logger,
+            LogPrefix = "[Thumbnail]",
+        };
 
         // 一覧の下地は 4 UI 版で同じ色にする（テーマの変更にも追随させる）
         void ApplyListBackground() => list.Background = AppStyles.ListBackground;
@@ -73,8 +78,11 @@ internal static class FolderViewPage
         // 保存先フォルダは青字 + 下線で表示し、クリックでエクスプローラーを開く
         folderText.Foreground = AppStyles.LinkForeground;
         folderText.TextDecorations = Windows.UI.Text.TextDecorations.Underline;
-        ToolTipService.SetToolTip(folderText, "クリックでエクスプローラーを開く");
-        folderText.Tapped += (_, _) =>
+        ToolTipService.SetToolTip(folderText, "クリックでエクスプローラーを開く（右クリックでメニュー）");
+        folderText.Tapped += (_, _) => OpenFolderInExplorer();
+
+        // 保存先フォルダをエクスプローラーで開く
+        void OpenFolderInExplorer()
         {
             var folderPath = viewModel.FolderPathText;
             if (string.IsNullOrEmpty(folderPath))
@@ -90,7 +98,7 @@ internal static class FolderViewPage
             {
                 s_logger.LogOpenFolderError(ex, folderPath);
             }
-        };
+        }
 
         var modeButtons = new ToggleButton[ViewModeDisplay.Count];
         var sortButtons = new ToggleButton[2];
@@ -257,6 +265,16 @@ internal static class FolderViewPage
                     request, ThumbnailPriority.FromRange(bounds.Y, bounds.Bottom, top, bottom, index));
             }
         }
+
+        // 右クリックのメニュー: 一覧は「削除」、保存先パスは「エクスプローラで表示」
+        // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
+        var deleteItem = new MenuFlyoutItem { Text = "削除" };
+        deleteItem.Click += (_, _) => _ = DeleteSelectedAsync();
+        list.ContextFlyout = new MenuFlyout { Items = { deleteItem } };
+
+        var openFolderItem = new MenuFlyoutItem { Text = "エクスプローラで表示" };
+        openFolderItem.Click += (_, _) => OpenFolderInExplorer();
+        folderText.ContextFlyout = new MenuFlyout { Items = { openFolderItem } };
 
         list.ScrollChanged += (_, _) => UpdatePriorities();
         list.ItemActivated += (_, e) =>

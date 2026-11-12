@@ -120,7 +120,20 @@ internal static class FolderViewPage
         list.Scroll += (_, _) => Reprioritize();
 
         // ステータス バーのパス（青字 + 下線）のクリックでエクスプローラーを開く
-        folderLabel.LinkClicked += (_, _) =>
+        folderLabel.LinkClicked += (_, _) => OpenFolderInExplorer();
+
+        // 右クリックのメニュー: 一覧は「削除」、保存先パスは「エクスプローラで表示」
+        // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
+        var deleteMenu = new ContextMenuStrip();
+        deleteMenu.Items.Add("削除", null, (_, _) => DeleteSelected());
+        list.ContextMenuStrip = deleteMenu;
+
+        var openFolderMenu = new ContextMenuStrip();
+        openFolderMenu.Items.Add("エクスプローラで表示", null, (_, _) => OpenFolderInExplorer());
+        folderLabel.ContextMenuStrip = openFolderMenu;
+
+        // 保存先フォルダをエクスプローラーで開く
+        void OpenFolderInExplorer()
         {
             var folderPath = folderView.FolderPathText;
             if (string.IsNullOrEmpty(folderPath))
@@ -136,7 +149,7 @@ internal static class FolderViewPage
             {
                 s_logger.LogOpenFolderError(ex, folderPath);
             }
-        };
+        }
 
         ApplyAppearance();
         SyncSortButtons();
