@@ -43,6 +43,16 @@ internal static class WinClipboardDib
         return read ? result : null;
     }
 
+    /// <summary>クリップボードを開くときの再試行の回数。</summary>
+    /// <remarks>
+    /// 他のアプリがクリップボードを開いている短い間に当たると <c>OpenClipboard</c> は失敗する（実測 2026-11-12）。<br/>
+    /// 直後は空くことが多いため、短い間隔で数回試す（利用者に「コピーされない」と見せない）。
+    /// </remarks>
+    private const int OpenRetryCount = 6;
+
+    /// <summary>クリップボードを開くときの再試行の間隔（ミリ秒）。</summary>
+    private const int OpenRetryDelayMs = 30;
+
     /// <summary>画像をクリップボードへ書き込む。</summary>
     /// <param name="image">書き込む画像。</param>
     /// <param name="ownerWindow">クリップボードの所有者にするウィンドウ（<c>OpenClipboard</c> の引数）。</param>
@@ -67,7 +77,7 @@ internal static class WinClipboardDib
         var imageSize = width * height * 4;
         var total = HeaderSize + imageSize;
 
-        if (OpenClipboard(ownerWindow) == false)
+        if (!TryOpenClipboard(ownerWindow))
         {
             return false;
         }
@@ -134,6 +144,28 @@ internal static class WinClipboardDib
         {
             _ = CloseClipboard();
         }
+    }
+
+    /// <summary>クリップボードを開く（他のアプリが使用中の場合は短い間隔で再試行する）。</summary>
+    /// <param name="ownerWindow">クリップボードの所有者にするウィンドウ。</param>
+    /// <returns>開けた場合は true。</returns>
+    /// <remarks>
+    /// 他のアプリがクリップボードを開いている短い間に当たると失敗するため、数回まで試す<br/>
+    /// （失敗したままだと「コピーしても何も起きない」と見える）。
+    /// </remarks>
+    private static bool TryOpenClipboard(IntPtr ownerWindow)
+    {
+        for (var attempt = 0; attempt < OpenRetryCount; attempt++)
+        {
+            if (OpenClipboard(ownerWindow))
+            {
+                return true;
+            }
+
+            Thread.Sleep(OpenRetryDelayMs);
+        }
+
+        return false;
     }
 
     /// <summary>BITMAPINFOHEADER を書き込む。</summary>
