@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.Thumbnail;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -397,10 +398,16 @@ internal static class FolderViewPage
 
             var filePath = builtFiles[index];
 
-            // 画像はファイルから等倍で読み込み、4 UI 版で共通の ClipboardImage（CF_DIB）へ書き込む
-            if (!ClipboardImage.TryCopyFile(filePath, IntPtr.Zero))
+            // キャプチャ ページのコピーと同じ実装（PNG を WinRT のクリップボードへ置く）を使う。
+            // 一覧はサムネイルしか持たないため、ファイルから等倍で読み込む
+            try
             {
-                s_logger.LogClipboardCopyError(filePath);
+                using var image = EsReadOnlyBitmap.Load(filePath);
+                _ = CaptureClipboard.Copy(image);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                s_logger.LogClipboardCopyError(ex, filePath);
             }
         }
 

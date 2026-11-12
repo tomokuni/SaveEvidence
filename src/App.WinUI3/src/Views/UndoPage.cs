@@ -3,6 +3,7 @@ using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
+using EsUtil.SaveEvidence.App.WinUI3.Services;
 using EsUtil.Ui.WinUI3.Thumbnail;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI.Xaml;
@@ -243,11 +244,9 @@ internal static class UndoPage
                 return;
             }
 
-            // 一覧は表示用に縮小した画像を持つため、コピーには元画像を使う（等倍で貼り付けられる）
-            if (!ClipboardImage.TryCopy(image, IntPtr.Zero))
-            {
-                s_logger.LogClipboardCopyImageError();
-            }
+            // 一覧は表示用に縮小した画像を持つため、コピーには元画像を使う（等倍で貼り付けられる）。
+            // キャプチャ ページのコピーと同じ実装（PNG を WinRT のクリップボードへ置く）を使う
+            _ = CaptureClipboard.Copy(image);
         }
     }
 

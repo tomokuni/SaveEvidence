@@ -4,6 +4,7 @@ using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
+using EsUtil.SaveEvidence.App.WinForms.Services;
 using EsUtil.Ui.WinForms.Thumbnail;
 using Microsoft.Extensions.Logging;
 
@@ -163,16 +164,9 @@ internal static class UndoPage
                 return;
             }
 
-            if (list.FindForm() is not { } form)
-            {
-                return;
-            }
-
-            // 一覧は表示用に縮小した画像を持つため、コピーには元画像を使う（等倍で貼り付けられる）
-            if (!ClipboardImage.TryCopy(itemSources[index], form.Handle))
-            {
-                s_logger.LogClipboardCopyImageError();
-            }
+            // 一覧は表示用に縮小した画像を持つため、コピーには元画像を使う（等倍で貼り付けられる）。
+            // キャプチャ ページのコピーと同じ実装（GDI+ のビットマップを OLE へ複製する）を使う
+            _ = ClipboardImageService.CopyAsync(itemSources[index]);
         }
 
         // ────────────────────────────────────────────────────────────────

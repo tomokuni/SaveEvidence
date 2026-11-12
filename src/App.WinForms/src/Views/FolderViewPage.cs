@@ -5,6 +5,7 @@ using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
+using EsUtil.SaveEvidence.App.WinForms.Services;
 using EsUtil.Ui.WinForms.Thumbnail;
 using Microsoft.Extensions.Logging;
 
@@ -405,15 +406,17 @@ internal static class FolderViewPage
             }
 
             var filePath = currentFiles[index];
-            if (list.FindForm() is not { } form)
-            {
-                return;
-            }
 
-            // 画像はファイルから等倍で読み込み、4 UI 版で共通の ClipboardImage（CF_DIB）へ書き込む
-            if (!ClipboardImage.TryCopyFile(filePath, form.Handle))
+            // キャプチャ ページのコピーと同じ実装（GDI+ のビットマップを OLE へ複製する）を使う。
+            // 一覧はサムネイルしか持たないため、ファイルから等倍で読み込む
+            try
             {
-                s_logger.LogClipboardCopyError(filePath);
+                using var image = EsReadOnlyBitmap.Load(filePath);
+                _ = ClipboardImageService.CopyAsync(image);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                s_logger.LogClipboardCopyError(ex, filePath);
             }
         }
 
