@@ -67,8 +67,8 @@
 | `システム` | OS のダーク / ライト設定に追従（既定値） |
 
 - **反映方式**: `ThemeMode`（`Settings.ThemeMode`）→ `App.RequestedThemeVariant` へ反映。 FluentAvalonia の DynamicResource により全コントロールの色が自動的に切り替わる
-- **テーマの実装**: Avalonia 標準の `FluentTheme` ではなく、**FluentAvalonia の `FluentAvaloniaTheme`** を読み込む（確認ダイアログに Fluent の `FAContentDialog` を使うため。 WinUI 3 の見た目に近づく）。 アクセント色は 4 UI 版で共通の `#0067C0`（`AppPalette` と同じ）に固定する（既定はシステムのアクセント色になり、他の UI 版と色が変わる）
-- **コントロールのテンプレート**: FluentAvalonia のボタン テンプレートは `ContentPresenter` ではなく `Border` を持つため、ツールバーなど見た目を上書きするスタイルは `/template/ Border` を対象にする
+- **テーマの実装**: **FluentAvalonia の `FluentAvaloniaTheme` と Avalonia 標準の `FluentTheme` を重ねる**（確認ダイアログに Fluent の `FAContentDialog` を使うため。 また FluentAvalonia は `ContextMenu` の見た目を持たず、単独では右クリック メニューが開かない）。 後に置いた `FluentTheme` の色の資源を優先する（逆順ではコンテキスト メニューの下地が透明になる。 実測 2026-11-12）。 アクセント色は 4 UI 版で共通の `#0067C0`（`AppPalette` と同じ）に固定する
+- **コントロールのテンプレート**: ボタンのテンプレートは FluentAvalonia のものと `ContentPresenter` の名前が異なるため、ツールバーなど見た目を上書きするスタイルは `/template/ Border` を対象にする
 - **設定ファイル**: enum は文字列で保存（`"ThemeMode": "Dark"`）
 
 **色の表記**: 同じ「外観設定」で、色選択コントロールの入力欄の表記を選べます。
@@ -109,7 +109,8 @@
 
 - **Delete キー**: 一覧で選んだ画像を確認のうえ**ごみ箱へ移動**する（完全削除しない）。 移動できた場合だけ一覧を読み直す
 - **確認ダイアログ**: Fluent の `FAContentDialog`（タイトル・本文・右下の「はい」/「いいえ」。 既定のボタンは「いいえ」）をオーナーの中央へモーダル表示する（WinUI 3 版の `ContentDialog` と同じ系統）
-- **右クリック メニュー**: 一覧は「削除」（Delete キーと同じ処理）、ステータスバー右のパスは「エクスプローラで表示」
+- **右クリック メニュー**: 一覧は「コピー」（選択中の画像を等倍でクリップボードへ。 押した位置の画像を選択してから出す）と「削除」（Delete キーと同じ処理）、ステータスバー右のパスは「エクスプローラで表示」
+- **`Ctrl+C`**: 一覧で選んだ画像をクリップボードへコピーする（4 UI 版で共通の `ClipboardImage`（`CF_DIB`）を使う）
 - **保存先パス**: ステータスバー右のパスは**青字 + 下線**で表示し、クリックするとエクスプローラーを開く（ファイル名と通知の間は全角スペース 1 文字分）
 - **保存タイミング**: 表示モード・ソート切替操作のたびに保存（`SaveViewModeSettings`）
 - **復元タイミング**: ページ初期化 / `Loaded` / ナビゲーションで表示されるたび（`IsVisible` 変更時）
@@ -146,6 +147,7 @@
 - **現在の画像の強調**: 現在のキャプチャページに表示中の画像は青枠（`BorderBrush #0078D4`・`BorderThickness 3`）で強調表示する
 - **表示モード**: ツールバーの特大 / 大 / 中 ボタンで切替可能。 選択状態は `Settings.UndoViewModeIndex`（0=特大, 1=大, 2=中、既定 1=大）に保存・復元される。 アイコンサイズはフォルダビューと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する
 - **外部ツール表示**: サムネイルのダブルクリックで一時フォルダへ PNG として保存し、OS の既定アプリ（外部ツール）で開く（Undo / Redo スタックの画像はファイルではなく Bitmap のため）
+- **コピー**: 選んだ画像をクリップボードへコピーする（`Ctrl+C` または右クリックのメニュー「コピー」。 一覧は縮小した画像を持つため、コピーには元画像を使う。 書き込みは 4 UI 版で共通の `ClipboardImage`（`CF_DIB`））
 - **サムネイルの縮小**: コアの `EsReadOnlyBitmap.Resize`（`EsImageScalingMode.WicFant` = 面積平均と同じフィルタ）を使う（フォルダビューがコーデックの縮小デコードを使う理由との比較は §4.2 を参照）
 - **更新タイミング**: ナビゲーションで Undo 一覧を表示するたびに最新の履歴を読み込む（`UndoPage` が `IsVisible` 変更を監視し、保存済み設定の復元と一覧の再構築を行う。 UndoHistory / MainViewModel は DI シングルトンから取得）
 - **表示モードの保存・復元**: 表示モード切替操作のたびに保存（`SaveViewModeSettings`）。 復元はページ表示時（範囲チェック付き・`ViewModeDisplay.ClampIndex`）

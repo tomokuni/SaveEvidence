@@ -87,15 +87,72 @@ public sealed partial class FolderViewPage : ViewModePageBase
         FileListBox.ScrollChanged += (_, _) => UpdateThumbnailPriorities();
         FileListBox.ItemActivated += OnItemActivated;
 
-        // 右クリックのメニュー: 一覧は「削除」、保存先パスは「エクスプローラで表示」
-        // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
-        AddContextMenu(FileListBox, "削除", () => _ = DeleteSelectedAsync());
-        AddContextMenu(FolderPathText, "エクスプローラで表示", OpenFolderInExplorer);
+        // 右クリックのメニュー: 一覧は「コピー」「削除」、保存先パスは「エクスプローラで表示」
+        // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）。
+        // **ContextMenu ではなく MenuFlyout を使う**: FluentAvalonia のテーマでは ContextMenu の
+        // ポップアップの下地が透明になり、一覧の画像の上に文字だけが重なって読めない（実測 2026-11-12）。
+        _listMenu = CreateListMenu();
+        _pathMenu = CreatePathMenu();
+        FileListBox.AddHandler(PointerPressedEvent, OnListRightPressed, RoutingStrategies.Tunnel);
+        FolderPathText.PointerPressed += OnPathRightPressed;
 
         InitializeViewModePage(
             Program.SettingsService,
             Program.ServiceProvider.GetRequiredService<MainViewModel>(),
             ExtraLargeButton, LargeButton, MediumButton);
+    }
+
+    /// <summary>一覧の右クリック メニュー（コピー / 削除）。</summary>
+    private readonly MenuFlyout _listMenu = null!;
+
+    /// <summary>保存先パスの右クリック メニュー（エクスプローラで表示）。</summary>
+    private readonly MenuFlyout _pathMenu = null!;
+
+    /// <summary>一覧の上で右ボタンが押されたときに、押した項目を選んでメニューを出す。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">ポインターのイベント引数。</param>
+    /// <remarks>
+    /// 右クリックでは項目が選ばれない（一覧は左ボタンだけで選択を移す）ため、押した位置の項目を<br/>
+    /// 先に選択する（選んでいない画像を削除・コピーしない）。
+    /// </remarks>
+    private void OnListRightPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(FileListBox).Properties.IsRightButtonPressed) return;
+
+        if (FindFileIndexAt(e.GetPosition(FileListBox)) is var index and >= 0)
+        {
+            FileListBox.SelectedIndex = index;
+        }
+
+        _listMenu.ShowAt(FileListBox, showAtPointer: true);
+        e.Handled = true;
+    }
+
+    /// <summary>保存先パスの上で右ボタンが押されたときにメニューを出す。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">ポインターのイベント引数。</param>
+    private void OnPathRightPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(FolderPathText).Properties.IsRightButtonPressed) return;
+
+        _pathMenu.ShowAt(FolderPathText, showAtPointer: true);
+        e.Handled = true;
+    }
+
+    /// <summary>一覧の中で指定した位置にある項目の添字を返す。</summary>
+    /// <param name="position">一覧（スクロール領域）内の位置。</param>
+    /// <returns>項目の添字。 項目が無い位置の場合は -1。</returns>
+    /// <remarks>項目の配置（<see cref="ThumbnailControl.SlotBounds"/>）は内容座標のため、スクロール量を足して比べる。</remarks>
+    private int FindFileIndexAt(Point position)
+    {
+        var content = position + FileListBox.Offset;
+        for (var i = 0; i < FileListBox.ItemCount; i++)
+        {
+            var bounds = FileListBox.SlotBounds(i);
+            if (content.X >= bounds.X && content.X <= bounds.Right && content.Y >= bounds.Y && content.Y <= bounds.Bottom) return i;
+        }
+
+        return -1;
     }
 
     /// <summary>ビジュアル ツリーへ添付されたときに Delete キーをウィンドウへ登録する。</summary>
@@ -127,19 +184,28 @@ public sealed partial class FolderViewPage : ViewModePageBase
         _shortcutTopLevel = null;
     }
 
-    /// <summary>Delete キーで選択中の画像をごみ箱へ移動する。</summary>
+    /// <summary>Delete キーで選択中の画像をごみ箱へ移動する（Ctrl+C は選択中の画像をコピーする）。</summary>
     /// <param name="sender">イベント送信元。</param>
     /// <param name="e">キーイベント。</param>
     /// <remarks>
-    /// テキスト入力中（ファイル名テンプレート等）の Delete は文字編集を優先する。<br/>
+    /// テキスト入力中（ファイル名テンプレート等）の Delete・Ctrl+C は文字編集を優先する。<br/>
     /// 確認はダイアログ（<see cref="ConfirmDialog"/>）で行い、移動できた場合だけ一覧を読み直す。
     /// </remarks>
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (!IsEffectivelyVisible || e.Key != Key.Delete || e.Source is TextBox) return;
+        if (!IsEffectivelyVisible || e.Source is TextBox) return;
 
-        e.Handled = true;
-        _ = DeleteSelectedAsync();
+        switch (e.Key)
+        {
+            case Key.Delete:
+                e.Handled = true;
+                _ = DeleteSelectedAsync();
+                break;
+            case Key.C when (e.KeyModifiers & KeyModifiers.Control) != 0:
+                e.Handled = true;
+                CopySelected();
+                break;
+        }
     }
 
     /// <summary>選択中の画像をごみ箱へ移動する（確認ダイアログあり）。</summary>
@@ -198,15 +264,44 @@ public sealed partial class FolderViewPage : ViewModePageBase
         }
     }
 
-    /// <summary>要素へ 1 項目の右クリック メニューを付ける。</summary>
-    /// <param name="target">メニューを付ける要素。</param>
-    /// <param name="header">項目の文言。</param>
-    /// <param name="action">項目を選んだときの処理。</param>
-    private static void AddContextMenu(Control target, string header, Action action)
+    /// <summary>一覧の右クリック メニュー（コピー / 削除）を作る。</summary>
+    /// <returns>右クリックで表示するメニュー。</returns>
+    private MenuFlyout CreateListMenu()
     {
-        var item = new MenuItem { Header = header };
-        item.Click += (_, _) => action();
-        target.ContextMenu = new ContextMenu { Items = { item } };
+        var copy = new MenuItem { Header = "コピー" };
+        copy.Click += (_, _) => CopySelected();
+        var delete = new MenuItem { Header = "削除" };
+        delete.Click += (_, _) => _ = DeleteSelectedAsync();
+
+        return new MenuFlyout { Items = { copy, delete } };
+    }
+
+    /// <summary>保存先パスの右クリック メニューを作る。</summary>
+    /// <returns>右クリックで表示するメニュー。</returns>
+    private MenuFlyout CreatePathMenu()
+    {
+        var open = new MenuItem { Header = "エクスプローラで表示" };
+        open.Click += (_, _) => OpenFolderInExplorer();
+        return new MenuFlyout { Items = { open } };
+    }
+
+    /// <summary>選択中の画像をクリップボードへコピーする。</summary>
+    /// <remarks>
+    /// 画像はファイルから等倍で読み込み、4 UI 版で共通の <see cref="ClipboardImage"/>（<c>CF_DIB</c>）へ書き込む<br/>
+    /// （Avalonia のクリップボードは Paint など一部のアプリが読めない DIB を書くため使わない）。
+    /// </remarks>
+    private void CopySelected()
+    {
+        var index = FileListBox.SelectedIndex;
+        if (index < 0 || index >= _filePaths.Count) return;
+
+        var filePath = _filePaths[index];
+        if (TopLevel.GetTopLevel(this)?.TryGetPlatformHandle()?.Handle is not { } handle || handle == IntPtr.Zero) return;
+
+        if (!ClipboardImage.TryCopyFile(filePath, handle))
+        {
+            s_logger.LogClipboardCopyError(filePath);
+        }
     }
 
     /// <summary>ページの表示状態に合わせてサムネイル生成の負荷を切り替える。</summary>

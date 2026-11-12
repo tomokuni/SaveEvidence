@@ -201,6 +201,27 @@ internal static partial class AppLog
     public static void LogFileDeleteError(this ILogger logger, Exception ex, string filePath)
         => logger.LogFileDeleteErrorCore(Prefix, ex, filePath);
 
+    /// <summary>選択した画像をクリップボードへコピーできなかったことを記録する。</summary>
+    /// <remarks>LogLevel: Warning <br/>出力書式: <c>画像をクリップボードへコピーできませんでした: {FilePath}</c></remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="filePath">対象のファイルパス。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} 画像をクリップボードへコピーできませんでした: {FilePath}")]
+    private static partial void LogClipboardCopyErrorCore(this ILogger logger, string prefix, string filePath);
+
+    public static void LogClipboardCopyError(this ILogger logger, string filePath)
+        => logger.LogClipboardCopyErrorCore(Prefix, filePath);
+
+    /// <summary>履歴の画像をクリップボードへコピーできなかったことを記録する。</summary>
+    /// <remarks>LogLevel: Warning <br/>出力書式: <c>履歴の画像をクリップボードへコピーできませんでした</c></remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} 履歴の画像をクリップボードへコピーできませんでした")]
+    private static partial void LogClipboardCopyImageErrorCore(this ILogger logger, string prefix);
+
+    public static void LogClipboardCopyImageError(this ILogger logger)
+        => logger.LogClipboardCopyImageErrorCore(Prefix);
+
     /// <summary>保存先フォルダをエクスプローラーで開けなかったことを記録する。</summary>
     /// <remarks>LogLevel: Warning <br/>出力書式: <c>エクスプローラーを起動できませんでした: {FolderPath}</c></remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>

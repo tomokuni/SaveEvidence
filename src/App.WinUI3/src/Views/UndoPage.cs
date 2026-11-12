@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Windows.Storage;
+using Windows.System;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 
@@ -154,6 +155,11 @@ internal static class UndoPage
             }
         };
 
+        // 右クリックのメニュー: 選択中の画像をコピーする（Ctrl+C も同じ処理）
+        var copyItem = new MenuFlyoutItem { Text = "コピー" };
+        copyItem.Click += (_, _) => CopySelected();
+        list.ContextFlyout = new MenuFlyout { Items = { copyItem } };
+
         void Rebuild()
         {
             iconSize = settingsService.Current.GetIconSize(view.SelectedViewModeIndex);
@@ -215,8 +221,41 @@ internal static class UndoPage
             {
                 Rebuild();
                 s_logger.LogThumbnailWarmUp("Undo 一覧", list.ItemCount);
+            },
+            // Ctrl+C で選択中の画像をコピーする
+            OnKeyDown: args =>
+            {
+                if (args.Key != VirtualKey.C || !IsControlDown())
+                {
+                    return;
+                }
+
+                args.Handled = true;
+                CopySelected();
             });
+
+        // 選択中の画像をクリップボードへコピーする
+        void CopySelected()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= builtItems.Count || builtItems[index] is not EsReadOnlyBitmap image)
+            {
+                return;
+            }
+
+            // 一覧は表示用に縮小した画像を持つため、コピーには元画像を使う（等倍で貼り付けられる）
+            if (!ClipboardImage.TryCopy(image, IntPtr.Zero))
+            {
+                s_logger.LogClipboardCopyImageError();
+            }
+        }
     }
+
+    /// <summary>Ctrl キーが押されているかどうかを取得する。</summary>
+    /// <returns>押されている場合は true。</returns>
+    private static bool IsControlDown()
+        => (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+            & Windows.UI.Core.CoreVirtualKeyStates.Down) != 0;
 
     /// <summary>画像を一時ファイル（PNG）へ書き出し、OS の既定アプリで開く。</summary>
     /// <param name="image">対象の画像（借用。 破棄しない）。</param>

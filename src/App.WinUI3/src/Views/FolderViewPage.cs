@@ -266,11 +266,13 @@ internal static class FolderViewPage
             }
         }
 
-        // 右クリックのメニュー: 一覧は「削除」、保存先パスは「エクスプローラで表示」
+        // 右クリックのメニュー: 一覧は「コピー」「削除」、保存先パスは「エクスプローラで表示」
         // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
+        var copyItem = new MenuFlyoutItem { Text = "コピー" };
+        copyItem.Click += (_, _) => CopySelected();
         var deleteItem = new MenuFlyoutItem { Text = "削除" };
         deleteItem.Click += (_, _) => _ = DeleteSelectedAsync();
-        list.ContextFlyout = new MenuFlyout { Items = { deleteItem } };
+        list.ContextFlyout = new MenuFlyout { Items = { copyItem, deleteItem } };
 
         var openFolderItem = new MenuFlyoutItem { Text = "エクスプローラで表示" };
         openFolderItem.Click += (_, _) => OpenFolderInExplorer();
@@ -365,9 +367,16 @@ internal static class FolderViewPage
                 Rebuild();
                 s_logger.LogThumbnailWarmUp("フォルダビュー", list.ItemCount);
             },
-            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）
+            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）。 Ctrl+C はコピーする
             OnKeyDown: args =>
             {
+                if (args.Key == VirtualKey.C && IsControlDown())
+                {
+                    args.Handled = true;
+                    CopySelected();
+                    return;
+                }
+
                 if (args.Key != VirtualKey.Delete)
                 {
                     return;
@@ -376,6 +385,24 @@ internal static class FolderViewPage
                 args.Handled = true;
                 _ = DeleteSelectedAsync();
             });
+
+        // 選択中の画像をクリップボードへコピーする
+        void CopySelected()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= builtFiles.Count)
+            {
+                return;
+            }
+
+            var filePath = builtFiles[index];
+
+            // 画像はファイルから等倍で読み込み、4 UI 版で共通の ClipboardImage（CF_DIB）へ書き込む
+            if (!ClipboardImage.TryCopyFile(filePath, IntPtr.Zero))
+            {
+                s_logger.LogClipboardCopyError(filePath);
+            }
+        }
 
         // 選択中の画像をごみ箱へ移動する（確認ダイアログあり）
         async Task DeleteSelectedAsync()
@@ -414,6 +441,11 @@ internal static class FolderViewPage
         }
     }
 
+    /// <summary>Ctrl キーが押されているかどうかを取得する。</summary>
+    /// <returns>押されている場合は true。</returns>
+    private static bool IsControlDown()
+        => (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+            & Windows.UI.Core.CoreVirtualKeyStates.Down) != 0;
     /// <summary>画像ファイルを名前順で列挙する。</summary>
     /// <param name="folderPath">対象のフォルダ パス。</param>
     /// <param name="isSortAscending">true の場合は昇順。</param>

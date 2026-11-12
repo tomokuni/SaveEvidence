@@ -280,11 +280,14 @@ internal static class FolderViewPage
         statusGrid.Add(status.Column(0));
         statusGrid.Add(folderLink.Column(1));
 
-        // 右クリックのメニュー: 一覧は「削除」、保存先パスは「エクスプローラで表示」
+        // 右クリックのメニュー: 一覧は「コピー」「削除」、保存先パスは「エクスプローラで表示」
         // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
+        var copyCommand = new Command("folderView.copy", "コピー", null);
+        list.Commands.Register(copyCommand, () => CopySelected(list, currentFiles), static () => true);
         var deleteCommand = new Command("folderView.delete", "削除", null);
         list.Commands.Register(deleteCommand, () => _ = DeleteSelectedAsync(list, currentFiles, Rebuild), static () => true);
         list.ContextMenu = new ContextMenu();
+        list.ContextMenu.AddItem("コピー", copyCommand);
         list.ContextMenu.AddItem("削除", deleteCommand);
 
         var openFolderCommand = new Command("folderView.openInExplorer", "エクスプローラで表示", null);
@@ -370,14 +373,40 @@ internal static class FolderViewPage
             content, Activate,
             OnDeactivated: () => thumbnails.IsActive = false,
             OnWarmUp: WarmUp,
-            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）
+            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）。 Ctrl+C はコピーする
             OnKeyDown: e =>
             {
+                if (e.ControlKey && e.Key == Key.C)
+                {
+                    e.Handled = true;
+                    CopySelected(list, currentFiles);
+                    return;
+                }
+
                 if (e.Key != Key.Delete) return;
 
                 e.Handled = true;
                 _ = DeleteSelectedAsync(list, currentFiles, Rebuild);
             });
+    }
+
+    /// <summary>選択中の画像をクリップボードへコピーする。</summary>
+    /// <param name="list">選択状態を持つ一覧。</param>
+    /// <param name="files">一覧に並べたファイルのパス（一覧の位置と対応する）。</param>
+    /// <remarks>
+    /// 画像はファイルから等倍で読み込み、4 UI 版で共通の <see cref="ClipboardImage"/>（<c>CF_DIB</c>）へ書き込む。
+    /// </remarks>
+    private static void CopySelected(ThumbnailControl list, IReadOnlyList<string> files)
+    {
+        var index = list.SelectedIndex;
+        if (index < 0 || index >= files.Count) return;
+        if (list.FindVisualRoot() is not Window owner) return;
+
+        var filePath = files[index];
+        if (!ClipboardImage.TryCopyFile(filePath, owner.Handle))
+        {
+            s_logger.LogClipboardCopyError(filePath);
+        }
     }
 
     /// <summary>選択中の画像をごみ箱へ移動する（確認ダイアログあり）。</summary>

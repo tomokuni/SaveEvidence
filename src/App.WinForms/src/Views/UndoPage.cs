@@ -107,6 +107,11 @@ internal static class UndoPage
 
         list.Scroll += (_, _) => Reprioritize();
 
+        // 右クリックのメニュー: 選択中の画像をコピーする（Ctrl+C も同じ処理）
+        var copyMenu = new ContextMenuStrip();
+        copyMenu.Items.Add("コピー", null, (_, _) => CopySelected());
+        list.ContextMenuStrip = copyMenu;
+
         viewModel.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(MainViewModel.PreviewImage), StringComparison.Ordinal))
@@ -134,7 +139,41 @@ internal static class UndoPage
                 selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.UndoViewModeIndex);
                 SyncModeButtons();
                 Rebuild(force: false);
+            },
+            // Ctrl+C で選択中の画像をコピーする
+            OnShortcut: keyData =>
+            {
+                if (keyData != (Keys.Control | Keys.C))
+                {
+                    return false;
+                }
+
+                CopySelected();
+                return true;
             });
+
+        // ────────────────────────────────────────────────────────────────
+
+        // 選択中の画像をクリップボードへコピーする。
+        void CopySelected()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= itemSources.Count)
+            {
+                return;
+            }
+
+            if (list.FindForm() is not { } form)
+            {
+                return;
+            }
+
+            // 一覧は表示用に縮小した画像を持つため、コピーには元画像を使う（等倍で貼り付けられる）
+            if (!ClipboardImage.TryCopy(itemSources[index], form.Handle))
+            {
+                s_logger.LogClipboardCopyImageError();
+            }
+        }
 
         // ────────────────────────────────────────────────────────────────
 

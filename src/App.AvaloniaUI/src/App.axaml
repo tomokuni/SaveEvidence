@@ -20,12 +20,16 @@
     </Application.Resources>
 
     <Application.Styles>
-        <!-- テーマは FluentAvalonia のものを使う（Avalonia 標準の FluentTheme は置き換える）。
-             確認ダイアログに Fluent の ContentDialog（FAContentDialog）を使うため、
-             FluentAvalonia のテーマ全体（色・コントロールの見た目）を読み込む。
-             アクセント色は 4 UI 版で共通の値（AppPalette の #0067C0）に固定する
+        <!-- テーマは 2 つを重ねる:
+             - FluentAvalonia（確認ダイアログの ContentDialog と WinUI 3 に近いコントロールの見た目）
+             - Avalonia 標準の FluentTheme（ContextMenu・ToolTip など、FluentAvalonia が持たない
+               コントロールの見た目と色の資源を補う）
+             後に置いた FluentTheme の資源を優先する（FluentAvalonia に無い色の資源があり、
+             そのままだとコンテキスト メニューの下地が透明になる。 実測 2026-11-12）。
+             FluentAvalonia のアクセント色は 4 UI 版で共通の値（AppPalette の #0067C0）に固定する
              （既定はシステムのアクセント色になり、他の UI 版と色が変わる）。 -->
         <styling:FluentAvaloniaTheme CustomAccentColor="#FF0067C0" />
+        <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
 
         <!-- テキスト選択色の上書き（TextBox / ComboBox / NumericUpDown 等のテキスト選択時）。

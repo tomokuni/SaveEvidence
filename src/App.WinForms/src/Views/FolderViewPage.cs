@@ -122,9 +122,10 @@ internal static class FolderViewPage
         // ステータス バーのパス（青字 + 下線）のクリックでエクスプローラーを開く
         folderLabel.LinkClicked += (_, _) => OpenFolderInExplorer();
 
-        // 右クリックのメニュー: 一覧は「削除」、保存先パスは「エクスプローラで表示」
+        // 右クリックのメニュー: 一覧は「コピー」「削除」、保存先パスは「エクスプローラで表示」
         // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
         var deleteMenu = new ContextMenuStrip();
+        deleteMenu.Items.Add("コピー", null, (_, _) => CopySelected());
         deleteMenu.Items.Add("削除", null, (_, _) => DeleteSelected());
         list.ContextMenuStrip = deleteMenu;
 
@@ -172,9 +173,15 @@ internal static class FolderViewPage
                 SyncModeButtons();
                 Rebuild(force: false);
             },
-            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）
+            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）。 Ctrl+C はコピーする
             OnShortcut: keyData =>
             {
+                if (keyData == (Keys.Control | Keys.C))
+                {
+                    CopySelected();
+                    return true;
+                }
+
                 if ((keyData & Keys.KeyCode) != Keys.Delete)
                 {
                     return false;
@@ -385,6 +392,28 @@ internal static class FolderViewPage
                 var priority = ThumbnailPriority.FromRange(
                     bounds.Top, bounds.Bottom, 0, list.ClientSize.Height, i);
                 _ = scheduler.Reprioritize(request, priority);
+            }
+        }
+
+        // 選択中の画像をクリップボードへコピーする。
+        void CopySelected()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= currentFiles.Count)
+            {
+                return;
+            }
+
+            var filePath = currentFiles[index];
+            if (list.FindForm() is not { } form)
+            {
+                return;
+            }
+
+            // 画像はファイルから等倍で読み込み、4 UI 版で共通の ClipboardImage（CF_DIB）へ書き込む
+            if (!ClipboardImage.TryCopyFile(filePath, form.Handle))
+            {
+                s_logger.LogClipboardCopyError(filePath);
             }
         }
 
