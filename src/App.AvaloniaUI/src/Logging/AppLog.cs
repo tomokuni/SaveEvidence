@@ -239,6 +239,17 @@ internal static partial class AppLog
     internal static void LogClipboardCopyError(this ILogger logger, string filePath)
         => logger.LogClipboardCopyErrorCore(Prefix, filePath);
 
+    /// <summary>Fluent の確認ダイアログを表示できず、標準のダイアログへ切り替えたことを記録する。</summary>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <remarks>LogLevel: Warning<br/>出力書式: <c>確認ダイアログを表示できませんでした（標準のダイアログで表示します）</c></remarks>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} 確認ダイアログを表示できませんでした（標準のダイアログで表示します）")]
+    private static partial void LogConfirmDialogFallbackCore(this ILogger logger, string prefix, Exception ex);
+
+    internal static void LogConfirmDialogFallback(this ILogger logger, Exception ex)
+        => logger.LogConfirmDialogFallbackCore(Prefix, ex);
+
     /// <summary>履歴（Undo / Redo）の画像をクリップボードへコピーできなかったことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
