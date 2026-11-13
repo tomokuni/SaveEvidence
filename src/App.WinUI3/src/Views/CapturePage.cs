@@ -105,13 +105,18 @@ internal static class CapturePage
         var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(
             text => MeasureStatusText(text, AppStyles.StatusFontSize));
 
-        // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
-        // 余白（Margin）を足すと空きが「WW」より広くなるため、右の余白は 0 にする
+        // **文字を右端へ寄せ、空きは独立した要素にする**: 幅に空きを含めると、値が短いときに
+        // 余りが空きへ加わって「WW」より広く見える（規則は StatusBarMetrics が単一所有する）
+        var statusGapWidth = Math.Max(0, statusFieldWidths.Gap - StatusBarGapCompensation);
         var zoomText = CreateLabel(viewModel.ZoomDisplayText, AppStyles.StatusFontSize);
         var pointerText = CreateLabel(viewModel.PointerDisplayText, AppStyles.StatusFontSize);
         pointerText.Width = statusFieldWidths.Position;
+        pointerText.TextAlignment = TextAlignment.Right;
+        var pointerGap = new Border { Width = statusGapWidth };
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
         imageSizeText.Width = statusFieldWidths.ImageSize;
+        imageSizeText.TextAlignment = TextAlignment.Right;
+        var imageSizeGap = new Border { Width = statusGapWidth };
         var savedFileNameText = CreateLabel(viewModel.SavedFileName, AppStyles.StatusFontSize);
         var messageText = CreateLabel(viewModel.StatusMessage, AppStyles.StatusFontSize);
         messageText.Foreground = new SolidColorBrush(s_announceColor);
@@ -146,7 +151,9 @@ internal static class CapturePage
         var toolbar = BuildToolbar(services, viewModel, ToggleCrop, captureSession);
         var statusLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
         statusLeft.Children.Add(pointerText);
+        statusLeft.Children.Add(pointerGap);
         statusLeft.Children.Add(imageSizeText);
+        statusLeft.Children.Add(imageSizeGap);
 
         // ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する）
         var nameAndMessage = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
@@ -923,6 +930,13 @@ internal static class CapturePage
     /// <returns>生成したラベル。</returns>
     private static TextBlock CreateLabel(string text, double fontSize)
         => new() { Text = text, FontSize = fontSize, VerticalAlignment = VerticalAlignment.Center };
+
+    /// <summary>ステータス バーの空きから差し引く、TextBlock が文字を内側へ寄せる分（DIP）。</summary>
+    /// <remarks>
+    /// 文字の右端と次の文字の開始位置には、グリフの左右の空き（サイド ベアリング）が入る。<br/>
+    /// 差し引かないと、空きが「WW」の送り幅より 3 DIP ほど広く見える（実測 2026-11-13）。
+    /// </remarks>
+    private const double StatusBarGapCompensation = 3;
 
     /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>
     /// <param name="text">測る文字列。</param>

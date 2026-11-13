@@ -123,8 +123,15 @@ internal static class CapturePage
 
         var pointerLabel = UiFactory.CreateStatusLabel(0, "カーソル位置（画像ピクセル）");
         pointerLabel.AutoSize = false;
+        // **文字を右端へ寄せる**: 左へ寄せると、値が短いとき（"-" や "640 x 400"）に余りが
+        // 右側の空きへ加わり、「WW」より広く見える（実測 2026-11-13: "-" の右が 103 px）
+        pointerLabel.TextAlign = ContentAlignment.MiddleRight;
         var sizeLabel = UiFactory.CreateStatusLabel(0, "プレビュー画像のサイズ");
         sizeLabel.AutoSize = false;
+        sizeLabel.TextAlign = ContentAlignment.MiddleRight;
+        // 項目の右側に「WW」ちょうどの空きを置く（幅の計算は StatusBarMetrics が単一所有する）
+        var pointerGap = new Panel { Margin = new Padding(0), BackColor = Color.Transparent };
+        var sizeGap = new Panel { Margin = new Padding(0), BackColor = Color.Transparent };
         // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（DIP。 表示のたびに DPI で拡大する）
         var statusFieldWidths = UiFactory.ResolveStatusFieldWidths();
         var savedFileLabel = UiFactory.CreateStatusLabel(0, "直前に保存したファイル名");
@@ -159,7 +166,7 @@ internal static class CapturePage
             BackColor = Color.Transparent,
         };
         nameAndMessage.Controls.AddRange([savedFileLabel, nameMessageGap, messageLabel]);
-        statusFlow.Controls.AddRange([pointerLabel, sizeLabel, nameAndMessage]);
+        statusFlow.Controls.AddRange([pointerLabel, pointerGap, sizeLabel, sizeGap, nameAndMessage]);
 
         var zoomPanel = new FlowLayoutPanel
         {
@@ -341,7 +348,13 @@ internal static class CapturePage
             pointerLabel.Margin = new Padding(0, 0, 0, 0);
             sizeLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.ImageSize));
             sizeLabel.Margin = new Padding(0, 0, 0, 0);
-            // 画像サイズの右の空きも「WW」ちょうどにする（次の項目の左余白が加わるとその分広くなる）
+            // 空きは独立した要素で「WW」ちょうどにする（文字の余りは右端寄せで左側へ逃がす）
+            var statusGapWidth = Math.Max(1, UiFactory.ResolveGapWidth());
+            pointerGap.Width = statusGapWidth;
+            pointerGap.Height = UiFactory.StatusBarContentHeight;
+            sizeGap.Width = statusGapWidth;
+            sizeGap.Height = UiFactory.StatusBarContentHeight;
+            // 次の項目の左余白も 0 にする（加わると空きが「WW」より広くなる）
             savedFileLabel.Margin = new Padding(0, 0, 6, 0);
             // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
             canvas.BackColor = AppStyles.ImageAreaBackground;

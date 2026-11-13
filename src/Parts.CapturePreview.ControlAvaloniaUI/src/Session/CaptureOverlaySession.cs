@@ -140,14 +140,12 @@ internal sealed class CaptureOverlaySession(
         SetupVirtualScreenContinuation(
             window, captureTask, () => origin.ToAvaloniaPixelPoint(), targetPosition, ownerScope, completion);
 
-        // **表示した直後に画面外へ置き直す**: ウィンドウは `Show` の時点では既定の位置（画面の左上）で
-        // 作られ、`Position` の指定はその後にしか効かない（実測 2026-11-13: `Show` の 108 ms 後まで
-        // (0,0) に見えていた）。 不透明のまま画面外で描き切れば、画面内へ移した時点で画像が出ている
-        // （不透明度の切り替えは層付きウィンドウの属性更新を伴い、その瞬間に最前面の並びが変わって
-        //  タスク バーが前面へ戻る = 明滅の原因になる。 WinUI 3 版と同じく不透明度は使わない）。
+        // **位置が確定するまで内容を見せない**: ウィンドウは `Show` の時点では既定の位置（画面の左上）で
+        // 作られ、`Position` の指定はその後にしか効かない（実測 2026-11-13: 仮想スクリーンの原点が
+        // (0,-1200) の環境で、`Show` の 108 ms 後まで (0,0) に見えていた）。
+        // 内容を非表示にしておけば、位置と内容が確定してから表示するだけで済む（MewUI 版と同じ狙い）。
+        window.Opacity = 0;
         window.Show(owner);
-        window.Position = new PixelPoint(
-            CaptureTiming.OwnerOffScreenCoord, CaptureTiming.OwnerOffScreenCoord);
         try
         {
             var result = await completion.Task;
@@ -362,6 +360,8 @@ internal sealed class CaptureOverlaySession(
                 return;
             }
 
+            window.Opacity = 1;
+
             // 表示した次のフレームでオーナーを退避する（退避の瞬間を見せない）
             await WaitForFramesAsync(window, OwnerOffScreenFrameCount).ConfigureAwait(true);
             if (!completion.Task.IsCompleted)
@@ -375,6 +375,7 @@ internal sealed class CaptureOverlaySession(
             // （オーバーレイは画面外のまま残らないよう、位置だけは移す）
             _log.LogOperationError(ex, nameof(ApplyBackgroundAsync));
             window.Position = targetPosition;
+            window.Opacity = 1;
         }
     }
 

@@ -31,6 +31,13 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// </remarks>
 internal static class CapturePage
 {
+    /// <summary>ステータス バーの空きから差し引く、Label が文字を内側へ寄せる分（DIP）。</summary>
+    /// <remarks>
+    /// 幅は Label の余白込みで測るが、空きは送り幅で測るため、その差を空きから引く<br/>
+    /// （引かないと、文字の右端から次の文字までが「WW」より広く見える。 実測 2026-11-13）。
+    /// </remarks>
+    private const double StatusBarGapCompensation = 1;
+
     /// <summary>ロガー（Avalonia 版と同じ書式のログへ出力する。 ファイルは UI 版ごとに分かれる）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(CapturePage));
 
@@ -390,7 +397,7 @@ internal static class CapturePage
         // コントロールの内部余白を含めて測ると空きが「WW」より広くなる。
         // 文字は Label の内部余白の分だけ右へずれ、次の項目も同じだけ左へずれるため、
         // 見た目の空きは「WW」の送り幅になる（4 UI 版で同じ式が成り立つ）。
-        var statusMeasure = new TextBlock().FontSize(AppStyles.StatusFontSize);
+        var statusMeasure = new Label().FontSize(AppStyles.StatusFontSize);
         double MeasureStatusText(string text)
         {
             statusMeasure.Text(text);
@@ -398,22 +405,34 @@ internal static class CapturePage
             return statusMeasure.DesiredSize.Width;
         }
 
+        // 幅は Label の余白込みで測る（送り幅だけだと文字が欠ける）。 空きは送り幅で測り、
+        // Label が文字を内側へ寄せる分を差し引く（差し引かないと「WW」より広く見える）
         var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(MeasureStatusText);
+        statusFieldWidths = statusFieldWidths with
+        {
+            Gap = Math.Max(0, statusFieldWidths.Gap - StatusBarGapCompensation),
+        };
 
+        // **文字を右端へ寄せ、空きは独立した要素にする**: 幅に空きを含めると、値が短いときに
+        // 余りが空きへ加わって「WW」より広く見える（規則は StatusBarMetrics が単一所有する）
         var pointerLabel = new Label
         {
             Width = statusFieldWidths.Position,
         };
         pointerLabel.FontSize(AppStyles.StatusFontSize);
+        pointerLabel.TextAlignment(TextAlignment.Right);
         pointerLabel.VerticalAlignment = VerticalAlignment.Center;
         pointerLabel.Bind(Label.TextProperty, viewModel, static x => x.PointerDisplayText);
         pointerLabel.ToolTip("マウスポインタ位置（対象座標 = 画像ピクセル）");
+
+        var pointerGap = new Border { Width = statusFieldWidths.Gap };
 
         var imageSizeLabel = new Label
         {
             Width = statusFieldWidths.ImageSize,
         };
         imageSizeLabel.FontSize(AppStyles.StatusFontSize);
+        imageSizeLabel.TextAlignment(TextAlignment.Right);
         imageSizeLabel.VerticalAlignment = VerticalAlignment.Center;
         imageSizeLabel.Bind(Label.TextProperty, viewModel, static x => x.ImageSizeDisplayText);
         imageSizeLabel.ToolTip("画像サイズ（対象座標 = 元画像ピクセル）");
@@ -435,10 +454,12 @@ internal static class CapturePage
             .Spacing(0)
             .Children(savedFileLabel, nameMessageGap, messageLabel);
 
+        var imageSizeGap = new Border { Width = statusFieldWidths.Gap };
+
         var statusLeft = new StackPanel()
             .Horizontal()
             .Spacing(0)
-            .Children(pointerLabel, imageSizeLabel, nameAndMessage);
+            .Children(pointerLabel, pointerGap, imageSizeLabel, imageSizeGap, nameAndMessage);
 
         // 右: 拡大率（⊖ / ⊕ / Fit / % 表示。 % はクリックで拡大率メニューを出す）
         var zoomOut = StatusIconButton("ic_fluent_subtract_circle_24_regular.svg", "ズームアウト", crop.ZoomOut, iconImages);

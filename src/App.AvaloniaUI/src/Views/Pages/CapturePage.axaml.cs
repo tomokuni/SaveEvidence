@@ -108,13 +108,22 @@ public sealed partial class CapturePage : UserControl
         var typeface = new Typeface(PointerText.FontFamily, PointerText.FontStyle, PointerText.FontWeight, PointerText.FontStretch);
         var widths = StatusBarMetrics.ResolveFieldWidths(text => MeasureText(typeface, text));
 
-        // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
-        // 余白（Margin）を足すと空きが「WW」より広くなるため、右の余白は 0 にする
+        // 幅は「8888 x 8888」ちょうど（規則は StatusBarMetrics が単一所有する）。
+        // 空きは独立した要素で「WW」ちょうどにする（幅に含めると、値が短いときに余りが加わって広く見える）
         PointerText.Width = widths.Position;
         PointerText.Margin = default;
         ImageSizeText.Width = widths.ImageSize;
         ImageSizeText.Margin = default;
+        // 文字の右端と次の文字の開始位置にはグリフの左右の空きが入るため、その分を差し引く
+        // （差し引かないと、空きが「WW」の送り幅より 3〜4 DIP 広く見える。 実測 2026-11-13）
+        var gapWidth = Math.Max(0, widths.Gap - StatusBarGapCompensation);
+        PointerGap.Width = gapWidth;
+        ImageSizeGap.Width = gapWidth;
     }
+
+    /// <summary>ステータス バーの空きから差し引く、グリフの左右の空き（サイド ベアリング）の合計（DIP）。</summary>
+    /// <remarks>実測 2026-11-13: 差し引かないと、文字の右端から次の文字までが「WW」より 4 DIP 広かった。</remarks>
+    private const double StatusBarGapCompensation = 3;
 
     /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>
     /// <param name="typeface">測る文字の書体。</param>

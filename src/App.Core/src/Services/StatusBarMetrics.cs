@@ -39,30 +39,40 @@ public static class StatusBarMetrics
 
     /// <summary>固定幅の項目（マウスポインタ位置・画像サイズ）の寸法を求める。</summary>
     /// <param name="measureTight">文字の送り幅（= 描画される文字の幅）だけを測る関数（DIP で返す。 ステータス バーの文字で測ること）。</param>
-    /// <returns>各項目の表示幅（右側の「WW」の空きを含む）。</returns>
+    /// <returns>各項目の表示幅と、項目の右側に置く空きの幅。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="measureTight"/> が null の場合。</exception>
     /// <remarks>
-    /// <b>右側の空きを幅に含める理由</b>: 利用者の要求は「『8888 x 8888』の右の文字描画開始位置までの<br/>
-    /// スペースを『WW』の幅にする」である。 余白（Margin）とコントロールの内部余白（Padding）を<br/>
-    /// 別々に足すと、UI 版ごとに差が出て「WW」より広くなる（実測 2026-11-13: 余白 28 px に<br/>
-    /// 内部余白とマージンが加わり 36 px になっていた）。<br/>
-    /// <b>幅 = 文字の送り幅 + 「WW」の送り幅</b> とし、UI 版は右の余白と次の項目の左の余白を 0 にする。<br/>
-    /// 文字はコントロールの内部余白の分だけ右へずれて描かれ、次の項目も同じだけ左へずれるため、<br/>
-    /// 見た目の空き（文字の右端から次の文字の左端まで）はちょうど「WW」の送り幅になる。<br/>
-    /// 内部余白を文字の左に持たないコントロール（<c>TextBlock</c> など）でも同じ式で成り立つ。<br/>
+    /// <b>空きを項目の幅に含めない理由</b>: 幅に含めると、値が短いとき（例: <c>640 x 400</c> や <c>-</c>）に<br/>
+    /// 文字の右側の余りがそのまま空きへ加わり、「WW」より広く見える（実測 2026-11-13: <c>-</c> の右が 103 px）。<br/>
+    /// 幅は「8888 x 8888」ちょうどに固定し、<b>文字を項目の右端へ寄せ</b>、<b>空きは独立した要素</b>にする。<br/>
+    /// これで値の長さによらず「文字の右端から次の文字の開始位置まで」が常に「WW」の送り幅になる。<br/>
     /// <br/>
     /// <b>測るのは UI の仕事</b>: 文字の送り幅はフォントと文字整形の実装で決まるため、コアは測れない。<br/>
     /// そのためコアは<b>基準の文字列と規則</b>だけを持ち、幅の計算は本メソッドへ集約する。
     /// </remarks>
     public static StatusBarFieldWidths ResolveFieldWidths(Func<string, double> measureTight)
-    {
-        ArgumentNullException.ThrowIfNull(measureTight);
+        => ResolveFieldWidths(measureTight, measureTight);
 
-        // 区切りの「WW」の送り幅を各項目の幅へ含める（本文の文字幅 + 区切り = 次の文字までの空き）
-        var gap = measureTight(RightPaddingReferenceText);
+    /// <summary>固定幅の項目の寸法を、項目の幅と右側の空きで別々の関数を使って求める。</summary>
+    /// <param name="measureFieldText">項目の幅を測る関数（コントロールが描画時に足す余白を含めること。 含めないと文字が欠ける）。</param>
+    /// <param name="measureGapText">右側の空きを測る関数（文字の送り幅だけを返すこと）。</param>
+    /// <returns>各項目の表示幅と、項目の右側に置く空きの幅。</returns>
+    /// <exception cref="ArgumentNullException">いずれかの引数が null の場合。</exception>
+    /// <remarks>
+    /// <b>幅と空きで測り方を変える理由</b>: 幅は文字が欠けないようコントロールの内部余白を含める必要がある。<br/>
+    /// 一方、空きは「文字の右端から次の文字の開始位置まで」を「WW」にするため、内部余白を含めない<br/>
+    /// 送り幅で測る（含めると空きが「WW」より広くなる）。<br/>
+    /// コントロールが描画時に文字を右端から内側へ寄せる分は <c>GapCompensation</c> として UI が差し引く。
+    /// </remarks>
+    public static StatusBarFieldWidths ResolveFieldWidths(
+        Func<string, double> measureFieldText, Func<string, double> measureGapText)
+    {
+        ArgumentNullException.ThrowIfNull(measureFieldText);
+        ArgumentNullException.ThrowIfNull(measureGapText);
 
         return new StatusBarFieldWidths(
-            measureTight(PositionWidthReferenceText) + gap,
-            measureTight(ImageSizeWidthReferenceText) + gap);
+            measureFieldText(PositionWidthReferenceText),
+            measureFieldText(ImageSizeWidthReferenceText),
+            measureGapText(RightPaddingReferenceText));
     }
 }

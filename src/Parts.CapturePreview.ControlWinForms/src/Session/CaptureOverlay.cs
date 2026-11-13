@@ -97,13 +97,6 @@ internal sealed class CaptureOverlay
     /// <remarks>表示の前に「カーソル下のモニター・ウィンドウ」をハイライトするために使う。</remarks>
     private static readonly ICursorService s_cursor = new WinCursorService();
 
-    /// <summary>画面外で撮影画像を描き終えるまで待つ時間。</summary>
-    /// <remarks>
-    /// 画面外では DWM の合成が走らないことがあるため、フレーム数の代わりに時間で待つ（60 Hz の 2 フレーム分）。<br/>
-    /// 待たずに画面内へ移すと、画像が載る前の下地が 1〜2 フレーム見える（実測 2026-11-13）。
-    /// </remarks>
-    private static readonly TimeSpan s_revealSettleDelay = TimeSpan.FromMilliseconds(35);
-
     /// <summary>キャプチャ種別（操作ラベル・情報ラベルの文言に影響する）。</summary>
     private readonly CaptureType _type;
 
@@ -399,12 +392,8 @@ internal sealed class CaptureOverlay
             // その 1 フレームが明るい画面に見えない。 通常は画像が最初の描画で載るため見えない）
             BackColor = ImageColorMath.Composite(
                 ImageColorMath.AverageColor(Screen), _settings.OverlayColor!.Value),
-            // **大きさは最終と同じにし、位置は画面外にする**: 画面内で表示すると、撮影画像を描き終える前の
-            // 下地（暗転色）の 1〜2 フレームが帯のように見える（実測 2026-11-13: タスク バーの位置が暗くなる）。
-            // 画面外で描き切ってから位置だけ移せば、移した時点で画像が出ている（WinUI 3 版と同じ方式）。
-            Bounds = new Rectangle(
-                CaptureTiming.OwnerOffScreenCoord, CaptureTiming.OwnerOffScreenCoord,
-                _screenBounds.Width, _screenBounds.Height),
+            // 位置とサイズは画面物理ピクセルで指定する（生成直後のちらつきを抑える）
+            Bounds = _screenBounds.ToRectangle(),
         };
         _overlay = form;
 
@@ -507,6 +496,18 @@ internal sealed class CaptureOverlay
         var closed = new TaskCompletionSource();
         form.Shown += (_, _) =>
         {
+            // 位置とサイズは OS の作業領域補正を受けない物理ピクセル指定で確定させる
+            try
+            {
+                services.Window.SetBounds(form.ToEsPlatformHandle(), _screenBounds);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                // 配置できないと全モニターの選択ができないが、表示の完了を例外で中断すると
+                // セッションが終了できなくなるため、境界で記録して続行する
+                _log.LogOperationError(ex, nameof(RunAsync));
+            }
+
             // 画像ピクセル ↔ DIP の倍率は表示に使うウィンドウの DPI で決める
             // （フォームのクライアント座標は物理ピクセルで届くため、この倍率で画像ピクセルへ戻せる）
             var scale = DpiScaler.ToScaling(form.DeviceDpi);
@@ -516,8 +517,16 @@ internal sealed class CaptureOverlay
                 _selector.SetCoordTransform(CreatePort());
             }
 
-            // **画面外のまま描き切ってから画面内へ移す**（表示直後の既定配置も打ち消す）
-            _ = RevealAsync(form, services, ownerScope);
+            // 画像と暗転マスクを描き切る
+            form.Refresh();
+
+            // オーナーの退避は、キャプチャ除外が効かない場合だけ行う（自ウィンドウが撮影画像へ写るため）。
+            // 除外が効いている場合は退避しない: オーバーレイが画面全体を覆っているため見た目は変わらないが、
+            // 退避の瞬間にウィンドウが再合成され、一瞬だけ明るい画面が見える（実測）
+            if (!ownerScope.IsExcluded)
+            {
+                ownerScope.ApplyPendingHide();
+            }
 
             // 他のウィンドウへ切り替わった（非アクティブ化した）場合はキャンセルする
             // （最前面のオーバーレイが残り続けるのを防ぐ）
@@ -529,61 +538,6 @@ internal sealed class CaptureOverlay
         form.Show(owner);
 
         await closed.Task.ConfigureAwait(true);
-    }
-
-    /// <summary>画面外で描き切ってからオーバーレイを画面内へ移す。</summary>
-    /// <param name="form">対象のオーバーレイ フォーム。</param>
-    /// <param name="services">ウィンドウ操作サービス。</param>
-    /// <param name="ownerScope">オーナーの退避と復帰のスコープ。</param>
-    /// <returns>画面内へ移したときに完了するタスク。</returns>
-    /// <remarks>
-    /// <b>順序</b>: 画面外のまま画像と暗転マスクを描き切る → 合成を待つ → 位置だけ画面内へ移す。<br/>
-    /// 画面内で描くと、描き終える前の下地（暗転色）が 1〜2 フレーム見える（実測 2026-11-13）。<br/>
-    /// 大きさは変えない（変えると再レイアウトが走り、その瞬間に下地が見える）。
-    /// </remarks>
-    private async Task RevealAsync(Form form, CaptureOverlayServices services, CaptureOwnerScope ownerScope)
-    {
-        // 表示直後の既定配置（作業領域内へ補正される）を打ち消し、画面外のまま描く
-        var offScreen = new EsRectInt(
-            CaptureTiming.OwnerOffScreenCoord, CaptureTiming.OwnerOffScreenCoord,
-            _screenBounds.Width, _screenBounds.Height);
-        try
-        {
-            services.Window.SetBounds(form.ToEsPlatformHandle(), offScreen);
-        }
-        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
-        {
-            _log.LogOperationError(ex, nameof(RevealAsync));
-        }
-
-        form.Refresh();
-
-        // 撮影画像の合成が済むのを待つ（画面外では合成が走らない環境もあるため上限を設ける）
-        await Task.Delay(s_revealSettleDelay).ConfigureAwait(true);
-        if (form.IsDisposed)
-        {
-            return;
-        }
-
-        // 位置だけ画面内へ移す（大きさは変えない）
-        try
-        {
-            services.Window.SetBounds(form.ToEsPlatformHandle(), _screenBounds);
-        }
-        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
-        {
-            _log.LogOperationError(ex, nameof(RevealAsync));
-        }
-
-        form.Refresh();
-
-        // オーナーの退避は、キャプチャ除外が効かない場合だけ行う（自ウィンドウが撮影画像へ写るため）。
-        // 除外が効いている場合は退避しない: オーバーレイが画面全体を覆っているため見た目は変わらないが、
-        // 退避の瞬間にウィンドウが再合成され、一瞬だけ明るい画面が見える（実測）
-        if (!ownerScope.IsExcluded)
-        {
-            ownerScope.ApplyPendingHide();
-        }
     }
 
     /// <summary>サイズラベル・情報ラベルの文言を選択コントロールへ反映する。</summary>
