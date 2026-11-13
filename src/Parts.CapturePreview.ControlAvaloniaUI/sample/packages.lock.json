@@ -236,7 +236,7 @@
           "EsUtil.Ui.AvaloniaUI.Loupe": "[0.6.3, )",
           "EsUtil.Ui.AvaloniaUI.Marquee": "[0.6.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
-          "Parts.CapturePreview.Core": "[0.1.5, )"
+          "Parts.CapturePreview.Core": "[0.2.0, )"
         }
       },
       "parts.capturepreview.core": {
