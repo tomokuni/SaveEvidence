@@ -5,6 +5,11 @@
     <RootNamespace>EsUtil.SaveEvidence.Parts.CapturePreview.Core</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- ソース生成の P/Invoke（LibraryImport）を使うための指定。
+         対象は CaptureTaskbarScope（撮影中のタスク バーの退避）だけで、この 1 クラスが
+         ネイティブ呼び出しを単一所有する。 LibraryImport は生成コードが unsafe を要求する
+         （SYSLIB1062。 手書きの unsafe ブロックは無い）。 -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

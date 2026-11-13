@@ -48,6 +48,14 @@ internal sealed class CaptureOverlaySession(
     /// <summary>表示中の選択オーバーレイウィンドウ（キャンセル用）。</summary>
     private CaptureOverlayWindow? _window;
 
+    /// <summary>撮影中に隠したタスク バー（撮影の完了後に設定し、セッションの終了で戻す）。</summary>
+    /// <remarks>
+    /// この UI 版は画面の撮影を<b>背景で</b>行うため、撮影が済むまでタスク バーを隠せない<br/>
+    /// （先に隠すと撮影画像からタスク バーが消える）。 そのため撮影の完了を待つ継続<br/>
+    /// （<see cref="ApplyBackgroundAsync"/>）で隠し、<see cref="RunAsync"/> の終了で戻す。
+    /// </remarks>
+    private CaptureTaskbarScope? _taskbarScope;
+
     /// <summary>オーバーレイを表示するまでに待つ描画フレーム数。</summary>
     /// <remarks>
     /// 撮影画像は設定の次のフレームで合成される（1 フレームでは未合成の面が出る）。<br/>
@@ -154,6 +162,10 @@ internal sealed class CaptureOverlaySession(
             _window = null;
             // 例外経路でも復帰させる（二重呼び出しは無害）
             ownerScope.Dispose();
+            // タスク バーはオーバーレイを閉じる直前に戻す（先に戻すと帯が一瞬見える。
+            // 閉じるのと同じ描画の間に行う）
+            _taskbarScope?.Dispose();
+            _taskbarScope = null;
             // オーナーの復帰後に閉じる（閉じた瞬間に、新しい画像を表示したアプリが見える）
             window.Close();
         }
@@ -337,6 +349,14 @@ internal sealed class CaptureOverlaySession(
             }
 
             window.Opacity = 1;
+
+            // **オーバーレイを見せるのと同じ描画の間にタスク バーを隠す**: 隠さないと、半透明（アクリル）の
+            // タスク バーが背後へ入った暗転マスクを透かして暗く見え、シェルが前面へ戻すと明るくなる
+            // （= 明滅。 実測 2026-11-13: 輝度 220 → 174 → 220）。 撮影画像に写っているタスク バーが
+            // そのまま見えるため、隠しても見た目は変わらない。 別の描画で隠すと、覆われる前の
+            // 数十ミリ秒だけ帯の跡が見える
+            // （手順は コアの CaptureTaskbarScope が単一所有する。 4 UI 版で同じ症状が出たため集約した）
+            _taskbarScope ??= CaptureTaskbarScope.Hide();
 
             // 表示した次のフレームでオーナーを退避する（退避の瞬間を見せない）
             await WaitForFramesAsync(window, OwnerOffScreenFrameCount).ConfigureAwait(true);
