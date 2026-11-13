@@ -104,18 +104,14 @@ internal static class CapturePage
         // （基準の文字列と規則は StatusBarMetrics が単一所有する）
         var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(
             text => MeasureStatusText(text, AppStyles.StatusFontSize));
-        var statusFieldPadding = new Thickness(0, 0, statusFieldWidths.RightPadding, 0);
-        // 測った幅は実描画より 1〜3 px 狭い（ヒンティングのため）。 余裕を足して末尾が欠けないようにする
-        var statusFieldPositionWidth = statusFieldWidths.Position + StatusBarMetrics.FieldWidthSafetyDips;
-        var statusFieldImageSizeWidth = statusFieldWidths.ImageSize + StatusBarMetrics.FieldWidthSafetyDips;
 
+        // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
+        // 余白（Margin）を足すと空きが「WW」より広くなるため、右の余白は 0 にする
         var zoomText = CreateLabel(viewModel.ZoomDisplayText, AppStyles.StatusFontSize);
         var pointerText = CreateLabel(viewModel.PointerDisplayText, AppStyles.StatusFontSize);
-        pointerText.Width = statusFieldPositionWidth;
-        pointerText.Margin = statusFieldPadding;
+        pointerText.Width = statusFieldWidths.Position;
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
-        imageSizeText.Width = statusFieldImageSizeWidth;
-        imageSizeText.Margin = statusFieldPadding;
+        imageSizeText.Width = statusFieldWidths.ImageSize;
         var savedFileNameText = CreateLabel(viewModel.SavedFileName, AppStyles.StatusFontSize);
         var messageText = CreateLabel(viewModel.StatusMessage, AppStyles.StatusFontSize);
         messageText.Foreground = new SolidColorBrush(s_announceColor);

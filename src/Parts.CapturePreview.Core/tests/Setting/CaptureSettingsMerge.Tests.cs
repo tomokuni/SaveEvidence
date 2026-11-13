@@ -44,6 +44,21 @@ public class CaptureSettingsMergeTests
     }
 
     [Fact]
+    internal void Merge_タスクバーの設定も上書きする()
+    {
+        // 項目を追加したときにマージの列挙へ足し忘れると、設定画面の値が撮影へ届かない
+        // （実測 2026-11-13: HideTaskbar が常に false のままになっていた）
+        var current = Current();
+
+        var merged = CaptureSettingsMerge.Merge(new CaptureSettings { HideTaskbar = true }, current);
+
+        Assert.True(merged.HideTaskbar!.Value);
+        // 現在値が true の場合は false へも上書きできる
+        var cleared = CaptureSettingsMerge.Merge(new CaptureSettings { HideTaskbar = false }, merged);
+        Assert.False(cleared.HideTaskbar!.Value);
+    }
+
+    [Fact]
     internal void Merge_現在値未指定なら既定値へマージする()
     {
         // 現在値が無い場合は ToNonNull の既定値を基点にする

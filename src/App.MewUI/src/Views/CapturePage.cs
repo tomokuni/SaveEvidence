@@ -385,10 +385,12 @@ internal static class CapturePage
         // ── ステータスバー ──
         // 左: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存ファイル名 | 通知
         // バインドはプロパティ名を推定するためインライン式で指定する
-        // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（StatusBarMetrics が単一所有する）
-        // **Label で測る理由**: 実際に描画するのも Label であり、内部の余白（Padding）を含めた幅が要る。
-        // TextBlock で測ると余白の分だけ狭く出て、右端の文字が欠ける（実測 2026-11-13: 125% の環境で欠けた）。
-        var statusMeasure = new Label().FontSize(AppStyles.StatusFontSize);
+        // 幅は「8888 x 8888」の文字幅 + 右側の「WW」の空き（規則は StatusBarMetrics が単一所有する）
+        // **TextBlock（内部余白を持たない）で測る理由**: 幅には区切りの「WW」を含めるため、
+        // コントロールの内部余白を含めて測ると空きが「WW」より広くなる。
+        // 文字は Label の内部余白の分だけ右へずれ、次の項目も同じだけ左へずれるため、
+        // 見た目の空きは「WW」の送り幅になる（4 UI 版で同じ式が成り立つ）。
+        var statusMeasure = new TextBlock().FontSize(AppStyles.StatusFontSize);
         double MeasureStatusText(string text)
         {
             statusMeasure.Text(text);
@@ -398,15 +400,9 @@ internal static class CapturePage
 
         var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(MeasureStatusText);
 
-        // 測った幅は実描画より 1〜3 px 狭い（Label が描画時に内部の余白を足すため）。
-        // 余裕を足して末尾が欠けないようにする（実測 2026-11-13: 125% の環境で「3840 x 2160」が欠けた）
-        var statusFieldPositionWidth = statusFieldWidths.Position + StatusBarMetrics.FieldWidthSafetyDips;
-        var statusFieldImageSizeWidth = statusFieldWidths.ImageSize + StatusBarMetrics.FieldWidthSafetyDips;
-
         var pointerLabel = new Label
         {
-            Width = statusFieldPositionWidth,
-            Margin = new Thickness(0, 0, statusFieldWidths.RightPadding, 0),
+            Width = statusFieldWidths.Position,
         };
         pointerLabel.FontSize(AppStyles.StatusFontSize);
         pointerLabel.VerticalAlignment = VerticalAlignment.Center;
@@ -415,8 +411,7 @@ internal static class CapturePage
 
         var imageSizeLabel = new Label
         {
-            Width = statusFieldImageSizeWidth,
-            Margin = new Thickness(0, 0, statusFieldWidths.RightPadding, 0),
+            Width = statusFieldWidths.ImageSize,
         };
         imageSizeLabel.FontSize(AppStyles.StatusFontSize);
         imageSizeLabel.VerticalAlignment = VerticalAlignment.Center;

@@ -108,14 +108,12 @@ public sealed partial class CapturePage : UserControl
         var typeface = new Typeface(PointerText.FontFamily, PointerText.FontStyle, PointerText.FontWeight, PointerText.FontStretch);
         var widths = StatusBarMetrics.ResolveFieldWidths(text => MeasureText(typeface, text));
 
-        // 測った幅は実描画より 1〜3 px 狭い（ヒンティングのため）。 余裕を足して末尾が欠けないようにする
-        var position = widths.Position + StatusBarMetrics.FieldWidthSafetyDips;
-        var imageSize = widths.ImageSize + StatusBarMetrics.FieldWidthSafetyDips;
-
-        PointerText.Width = position;
-        PointerText.Margin = new Thickness(0, 0, widths.RightPadding, 0);
-        ImageSizeText.Width = imageSize;
-        ImageSizeText.Margin = new Thickness(0, 0, widths.RightPadding, 0);
+        // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
+        // 余白（Margin）を足すと空きが「WW」より広くなるため、右の余白は 0 にする
+        PointerText.Width = widths.Position;
+        PointerText.Margin = default;
+        ImageSizeText.Width = widths.ImageSize;
+        ImageSizeText.Margin = default;
     }
 
     /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>

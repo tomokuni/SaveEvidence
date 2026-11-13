@@ -105,29 +105,24 @@ internal static class UiFactory
     public const int StatusBarContentHeight = StatusBarHeight - 2;
 
     /// <summary>ステータス バーの固定幅の項目（マウスポインタ位置・画像サイズ）の寸法（物理ピクセル）を測る。</summary>
-    /// <returns>各項目の表示幅と右側の余白（物理ピクセル。 画面の DPI で測った値）。</returns>
+    /// <returns>各項目の表示幅（右側の「WW」の空きを含む。 画面の DPI で測った物理ピクセル）。</returns>
     /// <remarks>
-    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
+    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths"/>）。
     /// 文字の送り幅はフォントと描画の実装で決まるため、測るのは UI の仕事である。<br/>
-    /// <b><see cref="TextRenderer"/> を余白込み（既定のフラグ）で使う理由</b>: <c>Label</c> は描画時に
-    /// 文字の前後に余白を足す。 送り幅だけ（<c>TextFormatFlags.NoPadding</c>）で測ると、その分だけ
-    /// 実際の描画より狭く出て右端の文字が欠ける（実測 2026-11-13: 125% の環境で「3840 x 2160」の末尾が
-    /// 欠けた。 送り幅 79 px に対し <c>Label</c> が必要とする幅は 88 px）。<br/>
+    /// <b>送り幅だけ（<c>TextFormatFlags.NoPadding</c>）で測る理由</b>: 幅には区切りの「WW」を含めるため、
+    /// <c>TextRenderer</c> の既定の余白（左右 3〜4 px）を含めると空きが「WW」より広くなる。<br/>
+    /// <c>Label</c> は内部余白の分だけ文字を右へずらして描き、次の項目も同じだけ左へずれるため、<br/>
+    /// 見た目の空きは「WW」の送り幅になる（4 UI 版で同じ式が成り立つ）。<br/>
     /// <b>画面の DPI で測る理由</b>: 実際に描画されるのもその DPI である。 DIP で測って後から拡大すると、
-    /// 端数（文字のヒンティング）がずれて同じく欠ける。 呼び出し側はこの値をそのまま <c>Width</c> に使う。
+    /// 端数（文字のヒンティング）がずれて末尾が欠ける。 呼び出し側はこの値をそのまま <c>Width</c> に使う。
     /// </remarks>
     public static StatusBarFieldWidths ResolveStatusFieldWidths()
     {
-        // 項目の幅は余白込み（既定のフラグ）で測る: Label の描画と同じ値になり、末尾が欠けない
-        // （Label の PreferredWidth と一致することを実測で確認済み）。
-        // 区切りは送り幅だけで測る: 余白まで含めると見た目の空きが「WW」より広くなる
-        return StatusBarMetrics.ResolveFieldWidths(
-            text => TextRenderer.MeasureText(text, AppStyles.StatusBarFont).Width,
-            text => TextRenderer.MeasureText(
-                text,
-                AppStyles.StatusBarFont,
-                new Size(int.MaxValue, int.MaxValue),
-                TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix).Width);
+        return StatusBarMetrics.ResolveFieldWidths(text => TextRenderer.MeasureText(
+            text,
+            AppStyles.StatusBarFont,
+            new Size(int.MaxValue, int.MaxValue),
+            TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix).Width);
     }
 
     /// <summary>ステータス バーの中身を垂直方向中央へ揃える。</summary>

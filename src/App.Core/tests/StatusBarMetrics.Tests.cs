@@ -29,16 +29,17 @@ public class StatusBarMetricsTests
 
     /// <summary>幅を基準の文字列で測ることを検証する（測る関数は UI が与える）。</summary>
     [Fact]
-    internal void ResolveFieldWidths_基準の文字列で測る()
+    internal void ResolveFieldWidths_基準の文字列で測り右側の空きを幅に含める()
     {
         // 1 文字 10 DIP の等幅フォントとみなす（測る関数をテストが差し替えられる）
         static double Measure(string text) => text.Length * 10;
 
         var widths = StatusBarMetrics.ResolveFieldWidths(Measure);
 
-        Assert.Equal(110, widths.Position);
-        Assert.Equal(110, widths.ImageSize);
-        Assert.Equal(20, widths.RightPadding);
+        // 「8888 x 8888」(11 文字 = 110) + 「WW」(2 文字 = 20) = 130。
+        // 右側の空きを幅に含めるため、使う側は余白を足さない（足すと「WW」より広くなる）
+        Assert.Equal(130, widths.Position);
+        Assert.Equal(130, widths.ImageSize);
     }
 
     /// <summary>測る関数が null の場合は例外になることを検証する。</summary>

@@ -334,16 +334,14 @@ internal static class CapturePage
             // ファイル名と通知の間の空きは DPI で物理ピクセルが変わるため、表示のたびに合わせ直す
             var statusScaling = DpiScaler.ToScaling(statusBar.DeviceDpi);
             nameMessageGap.Width = DpiScaler.ScaleToPixel(StatusBarMetrics.NameMessageGapWidth, statusScaling);
-            // 固定幅の項目（マウスポインタ位置・画像サイズ）の幅と右側の余白は、実際の描画と同じ
-            // TextRenderer が物理ピクセルで返す（基準の文字列と規則は StatusBarMetrics が単一所有する）。
-            // 測った幅は実描画より 1〜4 px 狭い（Label が描画時に内部の余白を足すため）。
-            // 余裕を足して末尾が欠けないようにする（実測 2026-11-13: 125% の環境で「3840 x 2160」が欠けた）
-            var statusFieldSafety = DpiScaler.ScaleToPixel(StatusBarMetrics.FieldWidthSafetyDips, statusScaling);
-            pointerLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.Position) + statusFieldSafety);
-            pointerLabel.Margin = new Padding(0, 0, Math.Max(0, (int)Math.Ceiling(statusFieldWidths.RightPadding)), 0);
-            sizeLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.ImageSize) + statusFieldSafety);
-            sizeLabel.Margin = new Padding(0, 0, Math.Max(0, (int)Math.Ceiling(statusFieldWidths.RightPadding)), 0);
-            // 画像サイズの右の空きも「WW」ちょうどにする（既定の左余白が加わると 2 px 広くなる）
+            // 固定幅の項目（マウスポインタ位置・画像サイズ）の幅は、文字の送り幅 + 右側の「WW」の空き
+            // （規則は StatusBarMetrics が単一所有する。 実測は TextRenderer が物理ピクセルで返す）。
+            // 右の余白を足すと空きが「WW」より広くなるため、幅だけを使い余白は 0 にする
+            pointerLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.Position));
+            pointerLabel.Margin = new Padding(0, 0, 0, 0);
+            sizeLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.ImageSize));
+            sizeLabel.Margin = new Padding(0, 0, 0, 0);
+            // 画像サイズの右の空きも「WW」ちょうどにする（次の項目の左余白が加わるとその分広くなる）
             savedFileLabel.Margin = new Padding(0, 0, 6, 0);
             // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
             canvas.BackColor = AppStyles.ImageAreaBackground;
