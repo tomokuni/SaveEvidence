@@ -299,8 +299,8 @@
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "EsUtil.Platform.Core": "[0.6.3, )",
-          "Parts.CapturePreview.Core": "[0.2.0, )",
-          "Parts.LineDetection": "[0.2.0, )",
+          "Parts.CapturePreview.Core": "[0.3.0, )",
+          "Parts.LineDetection": "[0.3.0, )",
           "Serilog": "[4.4.0, )",
           "Serilog.Extensions.Logging": "[10.0.0, )",
           "Serilog.Sinks.File": "[7.0.0, )"
@@ -315,7 +315,7 @@
           "EsUtil.Ui.WinUI3.Marquee": "[0.6.3, )",
           "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2957, )",
           "Microsoft.WindowsAppSDK": "[2.6.5, )",
-          "Parts.CapturePreview.Core": "[0.2.0, )"
+          "Parts.CapturePreview.Core": "[0.3.0, )"
         }
       },
       "parts.capturepreview.core": {
@@ -337,7 +337,7 @@
       "SaveEvidence.WinUI3": {
         "type": "Project",
         "dependencies": {
-          "App.Core": "[0.2.0, )",
+          "App.Core": "[0.3.0, )",
           "EsUtil.Ui.WinUI3.ColorSelector": "[0.6.3, )",
           "EsUtil.Ui.WinUI3.Interop": "[0.6.3, )",
           "EsUtil.Ui.WinUI3.Thumbnail": "[0.6.3, )",
@@ -345,8 +345,8 @@
           "Microsoft.Extensions.Logging": "[11.0.0, )",
           "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2957, )",
           "Microsoft.WindowsAppSDK": "[2.6.5, )",
-          "Parts.CapturePreview.ControlWinUI3": "[0.2.0, )",
-          "Parts.CapturePreview.Core": "[0.2.0, )",
+          "Parts.CapturePreview.ControlWinUI3": "[0.3.0, )",
+          "Parts.CapturePreview.Core": "[0.3.0, )",
           "Serilog": "[4.4.0, )",
           "Serilog.Extensions.Logging": "[10.0.0, )",
           "Serilog.Sinks.File": "[7.0.0, )"
