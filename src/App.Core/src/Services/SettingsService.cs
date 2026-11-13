@@ -56,7 +56,7 @@ public sealed class SettingsService : ISettingsService
 
         _jsonOptions = CreateJsonOptions(context);
         _jsonOptions.MakeReadOnly();
-        _settingsTypeInfo = (JsonTypeInfo<Settings>)_jsonOptions.GetTypeInfo(typeof(Settings));
+        _settingsTypeInfo = _jsonOptions.GetTypeInfo<Settings>();
         _current = LoadInternal();
     }
 

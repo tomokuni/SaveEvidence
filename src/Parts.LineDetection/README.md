@@ -39,7 +39,7 @@ Avalonia UI 用の**ウィンドウ枠となる辺（線分）の検出ライブ
 
 ## 3. システム要件
 
-- .NET 10
+- .NET 11
 - Avalonia 12.1 以降
 - OpenCvSharp5（ロジック方式・内部利用）
   - OpenCvSharp5.runtime.win.slim（ネイティブ。 `videoio` を除く縮小構成。 動画入出力を使わないため `opencv_videoio_ffmpeg500_64.dll` を持ち込まない）

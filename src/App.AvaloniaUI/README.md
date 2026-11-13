@@ -3,7 +3,7 @@
 ![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
 ![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?branch=main)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
-![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
+![.NET](https://img.shields.io/badge/.NET-11.0-512BD4)
 ![Avalonia](https://img.shields.io/badge/UI-Avalonia-8D46D6)
 ![License](https://img.shields.io/badge/License-MIT-3DA639)
 
@@ -37,7 +37,7 @@
 
 ## 1. 概要
 
-Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
+Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 11.0 / C# 14 / MVVM）。
 
 キャプチャ（全画面 / ウィンドウ選択 / 範囲選択）、切出し、ズーム・パン表示、ファイル名テンプレートによる保存、フォルダビュー、Undo / Redo 履歴、テーマ切替を提供します。
 
@@ -59,7 +59,7 @@ Windows デスクトップ上の画面をキャプチャし、プレビュー・
 
 ## 3. システム要件
 
-- .NET 10 SDK
+- .NET 11 SDK
 - Windows 10 / 11
 - Avalonia 12.1
 

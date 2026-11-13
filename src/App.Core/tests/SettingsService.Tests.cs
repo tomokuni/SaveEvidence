@@ -80,7 +80,7 @@ public partial class SettingsServiceJsonTests
         var json = Serialize(settings, TestSettingsJsonContext.Default);
 
         var options = SettingsService.CreateJsonOptions(TestSettingsJsonContext.Default);
-        var restored = JsonSerializer.Deserialize(json, (System.Text.Json.Serialization.Metadata.JsonTypeInfo<Settings>)options.GetTypeInfo(typeof(Settings)));
+        var restored = JsonSerializer.Deserialize(json, options.GetTypeInfo<Settings>());
 
         Assert.NotNull(restored);
         Assert.Equal(settings.FileNameTemplate, restored!.FileNameTemplate);
@@ -113,7 +113,7 @@ public partial class SettingsServiceJsonTests
         var options = SettingsService.CreateJsonOptions(resolver);
         options.MakeReadOnly();
 
-        var typeInfo = (System.Text.Json.Serialization.Metadata.JsonTypeInfo<Settings>)options.GetTypeInfo(typeof(Settings));
+        var typeInfo = options.GetTypeInfo<Settings>();
         return JsonSerializer.Serialize(settings, typeInfo);
     }
 }

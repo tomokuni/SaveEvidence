@@ -194,7 +194,10 @@ internal sealed class CaptureOverlaySession(
         {
             var frame = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             topLevel.RequestAnimationFrame(_ => frame.TrySetResult());
-            var completed = await Task.WhenAny(frame.Task, Task.Delay(s_frameTimeout)).ConfigureAwait(true);
+            // フレームが来たらタイマーを止める（止めないと、完了後もタイムアウトまで動き続ける。 CA2027）
+            using var timeoutSource = new CancellationTokenSource();
+            var completed = await Task.WhenAny(frame.Task, Task.Delay(s_frameTimeout, timeoutSource.Token)).ConfigureAwait(true);
+            await timeoutSource.CancelAsync().ConfigureAwait(true);
             if (!ReferenceEquals(completed, frame.Task))
             {
                 // フレームが来ない（以降も来ない可能性が高い）ため打ち切る

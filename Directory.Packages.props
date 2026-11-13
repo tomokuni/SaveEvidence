@@ -38,23 +38,25 @@
 
   <ItemGroup Label="サードパーティ">
     <PackageVersion Include="Aprillz.MewUI.Windows" Version="0.22.1" />
-    <PackageVersion Include="Avalonia" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Desktop" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Headless" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Headless.XUnit" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Skia" Version="12.1.5" />
-    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.5" />
+    <PackageVersion Include="Avalonia" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Headless" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Headless.XUnit" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Skia" Version="12.1.6" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.6" />
     <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="coverlet.collector" Version="10.1.0" />
     <PackageVersion Include="FluentAvaloniaUI" Version="3.1.0" />
-    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.321" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.339" />
     <PackageVersion Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="5.6.0" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="11.0.0" />
+    <!-- 版の単一所有。 .NET 11 では Microsoft.Extensions.Logging.Abstractions がフレームワーク
+         提供になり、直接参照すると NU1510（復元の警告をエラーにする）で失敗するため項目を持たない
+         （実測 2026-11-13）。 -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
     <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2957" />
     <!-- **2.6.4 と 2.6.5 は描画に影響しない**（実測 2026-11-09: ネイティブの差分は版スタンプの 8〜40 バイトだけで、
@@ -63,8 +65,8 @@
          版を動かす理由は「EsUtil が要求するランタイムの版以上にする」ことだけである。
          EsUtil の版を上げたら本行も追随させる（規則は .github/RELEASE.md「依存関係の更新」）。 -->
     <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
-    <PackageVersion Include="OpenCvSharp5" Version="5.0.0.20261107" />
-    <PackageVersion Include="OpenCvSharp5.runtime.win.slim" Version="5.0.0.20261107" />
+    <PackageVersion Include="OpenCvSharp5" Version="5.0.0.20261109" />
+    <PackageVersion Include="OpenCvSharp5.runtime.win.slim" Version="5.0.0.20261109" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />

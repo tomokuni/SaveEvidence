@@ -26,7 +26,7 @@
 
 | 項目 | 内容 |
 | --- | --- |
-| 言語 / フレームワーク | C# 14 / .NET 10（`net10.0-windows10.0.17763.0`。 `EsUtil` のパッケージが Windows 専用のため） |
+| 言語 / フレームワーク | C# 14 / .NET 11（`net11.0-windows10.0.17763.0`。 `EsUtil` のパッケージが Windows 専用のため） |
 | 依存パッケージ | `Microsoft.Extensions.Logging.Abstractions`（ログ定義のソース生成。 `System.Drawing.Primitives` は共有フレームワーク） |
 | テスト | xUnit v3（`Parts.CapturePreview.Core.Tests`） |
 

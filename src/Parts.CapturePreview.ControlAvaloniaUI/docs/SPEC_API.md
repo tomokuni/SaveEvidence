@@ -56,7 +56,7 @@
 | 対象 | `Parts.CapturePreview.ControlAvaloniaUI` |
 | プロジェクト | `src/Parts.CapturePreview.ControlAvaloniaUI/src/Parts.CapturePreview.ControlAvaloniaUI.csproj` |
 | 名前空間 | `EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI` |
-| 対象フレームワーク | `net10.0-windows10.0.17763.0` |
+| 対象フレームワーク | `net11.0-windows10.0.17763.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要設計パターン | Facade（CaptureSessionControl / CropViewControl / SelectionOverlayControl）/ セッション（CaptureOverlaySession / CropSession）/ Composite（内包コントロールの統合）/ 薄い統括者 |
 | 主な用途 | 画面キャプチャ（全画面 / ウィンドウ選択 / 範囲選択）と切出し（Crop）の統括 API の提供、および画像表示 + 領域選択の複合コントロールの提供 |

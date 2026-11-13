@@ -168,8 +168,10 @@ internal static class UndoPage
             // 同じ内容なら並べ直さない: 並べ直すと項目の要素とサムネイルの変換を作り直すため、
             // ページを表示するたびに作り直すと切り替えが待たされる（実測 2026-10-25）。
             // 履歴が変わったときだけ作り直す
-            var currentOrder = history.GetRedoHistory().Concat<object>(
-                viewModel.PreviewImage is { } preview ? [preview] : []).Concat(history.GetUndoHistory()).ToList();
+            var previewItems = viewModel.PreviewImage is { } preview
+                ? new object[] { preview }
+                : Array.Empty<object>();
+            var currentOrder = history.GetRedoHistory().Concat(previewItems).Concat(history.GetUndoHistory()).ToList();
             if (iconSize == builtIconSize
                 && currentOrder.Count == builtItems.Count
                 && currentOrder.SequenceEqual(builtItems, ReferenceEqualityComparer.Instance))

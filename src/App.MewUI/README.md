@@ -3,7 +3,7 @@
 ![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
 ![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?branch=main)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
-![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
+![.NET](https://img.shields.io/badge/.NET-11.0-512BD4)
 ![MewUI](https://img.shields.io/badge/UI-MewUI-00BFFF)
 ![License](https://img.shields.io/badge/License-MIT-3DA639)
 
@@ -20,7 +20,7 @@ SaveEvidence の **MewUI 版アプリ**（実行ファイル `SaveEvidence.MewUI
 
 ## 2. 前提
 
-- .NET 10 / Windows 10 以降
+- .NET 11 / Windows 10 以降
 - `Aprillz.MewUI` **0.21.1 固定**（API が安定化中（0.x）のため、破壊的変更を避けて固定する）
 - MewUI は **コードファースト**（XAML を持たない）。 画面は C# のマークアップで組む
 
@@ -49,7 +49,7 @@ src/App.MewUI/
 ├── mewui-initial.png        # 検証時の実行結果（証跡）
 ├── mewui-resized.png        # ウィンドウ縮小時の実行結果（証跡）
 └── src/
-    ├── App.MewUI.csproj     # WinExe / net10.0-windows10.0.17763.0 / MewUI 0.21.1 固定
+    ├── App.MewUI.csproj     # WinExe / net11.0-windows10.0.17763.0 / MewUI 0.21.1 固定
     ├── Program.cs           # 登録 → コアの組み立て（AppServices） → ホットキー登録 → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoHistory / FolderView）
     ├── Services/
@@ -68,7 +68,7 @@ src/App.MewUI/
         ├── UndoPage.cs           # Undo 一覧ページ（サムネイル一覧・表示モード・ダブルクリックで外部表示）
         ├── SettingsPage.cs       # 設定ページ（テーマ / 保存 / キャプチャ / ホットキー / 一覧 / 外観）
     └── tests/
-    ├── App.MewUI.Tests.csproj           # xUnit v3（net10.0-windows）
+    ├── App.MewUI.Tests.csproj           # xUnit v3（net11.0-windows）
     ├── TestHelper.cs                    # テスト共通ユーティリティ
     ```
 

@@ -18,7 +18,7 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 
 ## 2. 技術スタック
 
-- .NET 10 / C# 14
+- .NET 11 / C# 14
 - UI フレームワークは一切参照しない
 - 外部依存は `CommunityToolkit.Mvvm`（UI フレームワーク非依存の MVVM ツールキット）のみ
 - **Win32 の呼び出しは原則 `EsUtil.Platform.Core` が単一所有する**（`WinWindowFrame` / `WinAppUserModelId` / `WinMessageBox` / `WinClipboard`）。 **EsUtil に該当する API が無い 2 つだけ**（ごみ箱への移動 `SHFileOperationW`・画像クリップボード `CF_DIB`）は `src/App.Core/src/Native/` が直接呼ぶ（CsWin32 は使わず、宣言はそのファイルに閉じる）

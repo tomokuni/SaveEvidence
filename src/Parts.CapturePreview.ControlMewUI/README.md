@@ -228,7 +228,7 @@ session.Dispose();
 
 ```text
 src/
-│   ├── Parts.CapturePreview.ControlMewUI.csproj  # ライブラリ（net10.0-windows）
+│   ├── Parts.CapturePreview.ControlMewUI.csproj  # ライブラリ（net11.0-windows）
 │   ├── Crop/                               # 切り出しビュー（画像ビューポート + 領域選択 + 矩形オーバーレイ + 強調オーバーレイ）
 │   │   ├── CropViewControl.cs              # 切り出しビュー（公開）
 │   │   ├── RectOverlayCanvas.cs            # 透明な矩形オーバーレイ（internal）

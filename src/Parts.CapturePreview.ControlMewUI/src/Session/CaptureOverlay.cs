@@ -837,8 +837,11 @@ internal sealed class CaptureOverlay
         window.FrameRendered += OnFrame;
         try
         {
-            // 上限は合計で 1 回分（フレームが来ない環境で閉じる操作を待たせ続けない）
-            await Task.WhenAny(completed.Task, Task.Delay(timeout ?? s_frameTimeout)).ConfigureAwait(true);
+            // 上限は合計で 1 回分（フレームが来ない環境で閉じる操作を待たせ続けない）。
+            // フレームが来たらタイマーを止める（止めないと、完了後もタイムアウトまで動き続ける。 CA2027）
+            using var timeoutSource = new CancellationTokenSource();
+            await Task.WhenAny(completed.Task, Task.Delay(timeout ?? s_frameTimeout, timeoutSource.Token)).ConfigureAwait(true);
+            await timeoutSource.CancelAsync().ConfigureAwait(true);
         }
         finally
         {
