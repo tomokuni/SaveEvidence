@@ -386,7 +386,9 @@ internal static class CapturePage
         // 左: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存ファイル名 | 通知
         // バインドはプロパティ名を推定するためインライン式で指定する
         // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（StatusBarMetrics が単一所有する）
-        var statusMeasure = new TextBlock().FontSize(AppStyles.StatusFontSize);
+        // **Label で測る理由**: 実際に描画するのも Label であり、内部の余白（Padding）を含めた幅が要る。
+        // TextBlock で測ると余白の分だけ狭く出て、右端の文字が欠ける（実測 2026-11-13: 125% の環境で欠けた）。
+        var statusMeasure = new Label().FontSize(AppStyles.StatusFontSize);
         double MeasureStatusText(string text)
         {
             statusMeasure.Text(text);

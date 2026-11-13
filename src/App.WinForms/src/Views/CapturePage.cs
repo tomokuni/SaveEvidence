@@ -334,12 +334,12 @@ internal static class CapturePage
             // ファイル名と通知の間の空きは DPI で物理ピクセルが変わるため、表示のたびに合わせ直す
             var statusScaling = DpiScaler.ToScaling(statusBar.DeviceDpi);
             nameMessageGap.Width = DpiScaler.ScaleToPixel(StatusBarMetrics.NameMessageGapWidth, statusScaling);
-            // 固定幅の項目（マウスポインタ位置・画像サイズ）の幅と右側の余白も DPI で変わる
-            // （基準の文字列と規則は StatusBarMetrics が単一所有する。 測るのは UI の仕事）
-            pointerLabel.Width = DpiScaler.ScaleToPixel(statusFieldWidths.Position, statusScaling);
-            pointerLabel.Margin = new Padding(0, 0, DpiScaler.ScaleToPixel(statusFieldWidths.RightPadding, statusScaling), 0);
-            sizeLabel.Width = DpiScaler.ScaleToPixel(statusFieldWidths.ImageSize, statusScaling);
-            sizeLabel.Margin = new Padding(0, 0, DpiScaler.ScaleToPixel(statusFieldWidths.RightPadding, statusScaling), 0);
+            // 固定幅の項目（マウスポインタ位置・画像サイズ）の幅と右側の余白は、実際の描画と同じ
+            // TextRenderer が物理ピクセルで返す（基準の文字列と規則は StatusBarMetrics が単一所有する）
+            pointerLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.Position));
+            pointerLabel.Margin = new Padding(0, 0, Math.Max(0, (int)Math.Ceiling(statusFieldWidths.RightPadding)), 0);
+            sizeLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.ImageSize));
+            sizeLabel.Margin = new Padding(0, 0, Math.Max(0, (int)Math.Ceiling(statusFieldWidths.RightPadding)), 0);
             // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
             canvas.BackColor = AppStyles.ImageAreaBackground;
             templateBox.ForeColor = AppStyles.Foreground;
