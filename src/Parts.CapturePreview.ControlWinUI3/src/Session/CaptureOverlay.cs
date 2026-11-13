@@ -474,7 +474,7 @@ internal sealed class CaptureOverlay
         // 大きさはそのままで画面内へ移す（再レイアウトを起こさず、合成済みの面がそのまま出る）
         // 移す前にハイライトを確定する（全面マスクのフレームを見せない。 詳しくは ApplyInitialHighlight）
         ApplyInitialHighlight();
-        OverlayWindowPlacer.MoveClientArea(window.AppWindow, _screenBounds);
+        MoveToClientArea(window, _screenBounds);
         // 最前面の提示（IsAlwaysOnTop）だけでは前面に出ないことがあるため、Z 順も明示的に最前面へする
         // （オーナーを退避しない場合、オーナーの背後に隠れてオーバーレイが見えなくなる）
         window.AppWindow.MoveInZOrderAtTop();
@@ -844,6 +844,35 @@ internal sealed class CaptureOverlay
         }
 
         _selector.FocusMarquee();
+    }
+
+    /// <summary>ウィンドウを、クライアント領域が指定の矩形に一致する位置へ移す（大きさは変えない）。</summary>
+    /// <param name="window">対象のウィンドウ。</param>
+    /// <param name="target">クライアント領域に一致させたい矩形（画面物理ピクセル）。</param>
+    /// <remarks>
+    /// <b>位置だけを動かす理由</b>: 共通基盤の <c>OverlayWindowPlacer.MoveClientArea</c> は
+    /// 「素直に置く → 枠の分だけ外側へ広げる」の 2 回動かすため、その間の 1 フレームに
+    /// <b>枠の分だけ小さいクライアント領域</b>ができる（実測 2026-11-13: 3840x3360 → 3846x3366 の 15 ms）。
+    /// 撮影画像はクライアント領域いっぱいへ描くため、その 1 フレームだけ画像がわずかに縮小されて見える。<br/>
+    /// 画面外へ置くときに既に枠の分だけ広げてあるため、<b>枠の太さを保ったまま位置だけ動かせば</b>
+    /// 大きさは変わらず、レイアウトのやり直しも起きない（合成済みの面がそのまま出る）。
+    /// </remarks>
+    private static void MoveToClientArea(Window window, EsRectInt target)
+    {
+        var appWindow = window.AppWindow;
+        var frameWidth = Math.Max(0, appWindow.Size.Width - appWindow.ClientSize.Width);
+        var frameHeight = Math.Max(0, appWindow.Size.Height - appWindow.ClientSize.Height);
+        if (frameWidth == 0 && frameHeight == 0)
+        {
+            // 枠を測れない場合は従来の手順（大きさの指定で一致させる）
+            OverlayWindowPlacer.MoveClientArea(appWindow, target);
+            return;
+        }
+
+        // 枠は左右・上下に均等に付くため、半分ずつ外側へずらす
+        appWindow.Move(new PointInt32(
+            target.X - (frameWidth / 2),
+            target.Y - (frameHeight / 2)));
     }
 
     /// <summary>ルート要素のキー入力を処理する（Enter = 確定 / Escape = キャンセル）。</summary>

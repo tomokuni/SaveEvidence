@@ -456,14 +456,23 @@ internal sealed class CaptureOverlay
         // 表示直後の 1 フレームは下地色（撮影画像の平均色へ暗転色を重ねた色）だけが見える。
         // 透明（Opacity = 0）にして後から不透明にすると、その切り替えで未描画の面が一瞬白く合成されるため、
         // 透明度は使わず、下地色を最終の見た目に合わせておく（下地の選択は ImageColorMath が単一所有する）
+
+        // **初回の描画より前にハイライトと倍率を確定する**: フォームは最終の位置・大きさで表示するため、
+        // `Shown` まで待つと「全体がマスクされた 1 フレーム」が見える。 また座標変換の倍率が既定値（1.0）の
+        // ままだと、125% の環境ではマスクの穴が実際の位置とずれる（実測 2026-11-13）。
+        var initialScale = MonitorDpi.GetScaleForPoint(
+            s_cursor.TryGetCursorScreenPoint(out var cursor) ? cursor : _screenBounds.TopLeft);
+        if (DpiScaler.IsValidScaling(initialScale))
+        {
+            _scale = initialScale;
+            _selector.SetCoordTransform(CreatePort());
+        }
+
+        ApplyInitialHighlight();
+
         var closed = new TaskCompletionSource();
         form.Shown += (_, _) =>
         {
-            // **位置を確定する前にハイライトを決める**: 全体をマスクした状態で 1 フレームでも見せると、
-            // カーソル下のモニター・ウィンドウだけが後から明るくなる（= マスクが一度掛かってから解除される）
-            // ように見え、ちらつきとして知覚される（実測 2026-11-13）
-            ApplyInitialHighlight();
-
             // 位置とサイズは OS の作業領域補正を受けない物理ピクセル指定で確定させる
             try
             {

@@ -72,8 +72,25 @@ internal sealed partial class CaptureOverlayWindow
             return;
         }
 
-        ApplyHighlight(CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint));
+        // **画像の原点で変換する**: 表示前はウィンドウがまだ最終の位置に無い（`Show` の時点では
+        // 画面の左上に作られ、`Position` は後から効く）。 ウィンドウの現在位置で変換すると、
+        // ハイライトの穴が原点の分だけずれる（実測 2026-11-13: 原点 (0,-1200) の環境で 1200 px ずれた）。
+        ApplyHighlightAt(CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint));
         RequestOverlayRender();
+    }
+
+    /// <summary>検出結果を、画像の原点を基準にハイライトへ反映する。</summary>
+    /// <param name="detection">要素の検出結果（画面物理座標）。</param>
+    /// <returns>ハイライトの状態。</returns>
+    /// <remarks>
+    /// 通常のポインター移動（<see cref="ApplyHighlight"/>）はウィンドウの現在位置を使うが、
+    /// 表示前はウィンドウが最終の位置に無いため、画像の原点（撮影した仮想スクリーンの原点）を使う。
+    /// </remarks>
+    private CaptureHighlight ApplyHighlightAt(ElementFinderResults detection)
+    {
+        var highlight = _highlight.Update(_captureType, detection, CaptureImageBounds.TopLeft);
+        SelectionOverlay.HighlightSourceRect = highlight.SourceRect is { } rect ? rect.ToAvaloniaRect() : null;
+        return highlight;
     }
 
     /// <summary>カーソル位置の取得（表示前のハイライトの初期化に使う。 状態を持たないため共有できる）。</summary>

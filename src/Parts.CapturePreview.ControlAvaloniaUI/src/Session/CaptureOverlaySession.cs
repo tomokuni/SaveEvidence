@@ -124,8 +124,12 @@ internal sealed class CaptureOverlaySession(
         SetupVirtualScreenContinuation(
             window, captureTask, () => origin.ToAvaloniaPixelPoint(), targetPosition, ownerScope, completion);
 
+        // **位置が確定するまで内容を見せない**: ウィンドウは `Show` の時点では既定の位置（画面の左上）で
+        // 作られ、`Position` の指定はその後にしか効かない（実測 2026-11-13: 仮想スクリーンの原点が
+        // (0,-1200) の環境で、`Show` の 108 ms 後まで (0,0) に見えていた）。
+        // 内容を非表示にしておけば、位置と内容が確定してから表示するだけで済む（MewUI 版と同じ狙い）。
+        window.Opacity = 0;
         window.Show(owner);
-
         try
         {
             var result = await completion.Task;
@@ -323,7 +327,18 @@ internal sealed class CaptureOverlaySession(
 
             window.Position = targetPosition;
 
-            // 画面内へ移した次のフレームでオーナーを退避する（退避の瞬間を見せない）
+            // **位置が確定したフレームを待ってから内容を見せる**: 位置の反映（とモニターが変わった場合の
+            // レイアウトのやり直し）が済む前に見せると、移動前の座標・倍率で描かれた 1 フレームが見える
+            // （実測 2026-11-13: 「全画面の画像が一瞬ずれた位置に出る」ちらつき）。
+            await WaitForFramesAsync(window, OwnerOffScreenFrameCount).ConfigureAwait(true);
+            if (completion.Task.IsCompleted)
+            {
+                return;
+            }
+
+            window.Opacity = 1;
+
+            // 表示した次のフレームでオーナーを退避する（退避の瞬間を見せない）
             await WaitForFramesAsync(window, OwnerOffScreenFrameCount).ConfigureAwait(true);
             if (!completion.Task.IsCompleted)
             {
@@ -336,6 +351,7 @@ internal sealed class CaptureOverlaySession(
             // （オーバーレイは画面外のまま残らないよう、位置だけは移す）
             _log.LogOperationError(ex, nameof(ApplyBackgroundAsync));
             window.Position = targetPosition;
+            window.Opacity = 1;
         }
     }
 
