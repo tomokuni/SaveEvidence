@@ -105,13 +105,16 @@ internal static class CapturePage
         var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(
             text => MeasureStatusText(text, AppStyles.StatusFontSize));
         var statusFieldPadding = new Thickness(0, 0, statusFieldWidths.RightPadding, 0);
+        // 測った幅は実描画より 1〜3 px 狭い（ヒンティングのため）。 余裕を足して末尾が欠けないようにする
+        var statusFieldPositionWidth = statusFieldWidths.Position + StatusBarMetrics.FieldWidthSafetyDips;
+        var statusFieldImageSizeWidth = statusFieldWidths.ImageSize + StatusBarMetrics.FieldWidthSafetyDips;
 
         var zoomText = CreateLabel(viewModel.ZoomDisplayText, AppStyles.StatusFontSize);
         var pointerText = CreateLabel(viewModel.PointerDisplayText, AppStyles.StatusFontSize);
-        pointerText.Width = statusFieldWidths.Position;
+        pointerText.Width = statusFieldPositionWidth;
         pointerText.Margin = statusFieldPadding;
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
-        imageSizeText.Width = statusFieldWidths.ImageSize;
+        imageSizeText.Width = statusFieldImageSizeWidth;
         imageSizeText.Margin = statusFieldPadding;
         var savedFileNameText = CreateLabel(viewModel.SavedFileName, AppStyles.StatusFontSize);
         var messageText = CreateLabel(viewModel.StatusMessage, AppStyles.StatusFontSize);
@@ -930,7 +933,7 @@ internal static class CapturePage
     /// <param name="fontSize">文字サイズ（DIP）。</param>
     /// <returns>描画幅（DIP）。</returns>
     /// <remarks>
-    /// 幅を決める基準の文字列はコアが単一所有する（<see cref="StatusBarMetrics.ResolveFieldWidths"/>）。
+    /// 幅を決める基準の文字列はコアが単一所有する（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
     /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。
     /// </remarks>
     private static double MeasureStatusText(string text, double fontSize)

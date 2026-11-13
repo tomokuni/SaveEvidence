@@ -202,6 +202,19 @@ internal sealed class CaptureOverlay
         // 復帰をフォームのクローズ前に行えるよう、スコープを保持する（破棄は Finish が行う）
         _ownerScope = ownerScope;
 
+        // **タスク バーは撮影の間ずっと隠す**（写すか写さないかだけを設定で選ぶ）。
+        // 隠さないと、半透明（アクリル）のタスク バーが暗転マスクを透かして暗く見え、シェルが前面へ
+        // 戻すと明るくなる（= 明滅。 実測 2026-11-13: 輝度 220 → 174 → 220）。
+        // 写さない設定では撮影の前に隠し、写す設定では撮影の後に隠す（撮影画像に写るかどうかが変わる）。
+        // 隠した反映は 1〜2 フレーム後になるため、撮影・表示の前に消えるまで待つ
+        // （待たないと、その数フレームだけタスク バーが覆われて明滅が残る。 実測 2026-11-13）
+        // 手順は コアの CaptureTaskbarScope が単一所有する（4 UI 版で同じ症状が出たため集約した）
+        if (_settings.HideTaskbar == true)
+        {
+            _taskbarScope = CaptureTaskbarScope.Hide();
+            await Task.Delay(CaptureTaskbarScope.HideSettleDelay).ConfigureAwait(true);
+        }
+
         // 全モニターを包含する 1 枚の画像として取得する（オーナーは撮影から除外済み）
         if (!CaptureScreen(services))
         {
@@ -518,15 +531,9 @@ internal sealed class CaptureOverlay
             // 他のウィンドウへ切り替わった（非アクティブ化した）場合はキャンセルする
             // （最前面のオーバーレイが残り続けるのを防ぐ）
             form.Deactivate += (_, _) => Cancel();
+
         };
         form.FormClosed += (_, _) => closed.TrySetResult();
-
-        // **オーバーレイを見せるのと同じ描画の間にタスク バーを隠す**: 隠さないと、半透明（アクリル）の
-        // タスク バーが背後へ入った暗転マスクを透かして暗く見え、シェルが前面へ戻すと明るくなる（= 明滅。
-        // 実測 2026-11-13: 輝度 220 → 174 → 220）。 撮影画像に写っているタスク バーがそのまま見えるため、
-        // 隠しても見た目は変わらない。 別の描画で隠すと、覆われる前の数十ミリ秒だけ帯の跡が見える
-        // （手順は コアの CaptureTaskbarScope が単一所有する。 4 UI 版で同じ症状が出たため集約した）
-        _taskbarScope ??= CaptureTaskbarScope.Hide();
 
         form.Show(owner);
 

@@ -231,6 +231,15 @@ internal sealed class CaptureOverlay
         _ownerScope = ownerScope;
         _ownerWindow = owner;
 
+        // **タスク バーを写さない設定のときは、撮影より前に隠す**（撮影後に隠すと画像に写ったままになる）。
+        // 写す設定のときは隠さず、オーバーレイの領域からタスク バーの矩形を除く（表示の直後に行う）。
+        // 手順は コアの CaptureTaskbarScope が単一所有する（4 UI 版で同じ症状が出たため集約した）
+        if (_settings.HideTaskbar == true)
+        {
+            _taskbarScope = CaptureTaskbarScope.Hide();
+            await Task.Delay(CaptureTaskbarScope.HideSettleDelay).ConfigureAwait(true);
+        }
+
         // 全モニターを包含する 1 枚の画像として取得する。
         // 1 モニターに限定すると、カーソルのあるモニターでしか選択できない（別のモニターへ
         // 移動しての選択操作ができない）ため、仮想スクリーン全体を対象にする。
@@ -251,6 +260,10 @@ internal sealed class CaptureOverlay
         // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する）
         _log.LogVirtualScreen(origin, Screen);
 
+        // **撮影が済んだ後にタスク バーを隠す**（写さない設定では撮影の前に隠し済み）。
+        // 隠さないと、半透明（アクリル）のタスク バーが暗転マスクを透かして暗く見え、
+        // シェルが前面へ戻すと明るくなる（= 明滅）。 反映は 1〜2 フレーム後になるため、
+        // 画像を見せる前に消えるまで待つ（手順は コアの CaptureTaskbarScope が単一所有する）
         try
         {
             // 確定・キャンセルまで待つ（入れ子ループを作らない非同期の待機）
@@ -502,12 +515,6 @@ internal sealed class CaptureOverlay
 
         window.Activate();
         _isShown = true;
-
-        // **画面を覆い終えてからタスク バーを隠す**: 隠さないと、半透明（アクリル）のタスク バーが
-        // 背後へ入った暗転マスクを透かして暗く見え、シェルが前面へ戻すと明るくなる（= 明滅。
-        // 実測 2026-11-13）。 撮影画像に写っているタスク バーがそのまま見えるため、隠しても見た目は変わらない
-        // （手順は コアの CaptureTaskbarScope が単一所有する。 4 UI 版で同じ症状が出たため集約した）
-        _taskbarScope ??= CaptureTaskbarScope.Hide();
 
         // ウィンドウが閉じるまで待つ（閉じる経路は CompleteCapture / Cancel / ウィンドウの閉じる操作）
         await _closed.Task.ConfigureAwait(true);

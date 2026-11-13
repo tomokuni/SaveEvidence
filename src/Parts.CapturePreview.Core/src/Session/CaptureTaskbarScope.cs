@@ -10,19 +10,18 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 /// 背後を覆うオーバーレイの色が透けるため、前面関係を直しても帯の色が変わり続ける。<br/>
 /// 実測 2026-11-13: タスク バーの帯の輝度が 220 → 174 → 220 と 2〜8 フレーム変化した<br/>
 /// （AvaloniaUI 版 2 回 / MewUI 版 1〜2 回 / WinForms 版 1 回）。 これが「タスク バーの明滅」の正体である。<br/>
-/// 撮影の間だけタスク バーを隠すと、オーバーレイの静止画に写っているタスク バーがそのまま見えるため、<br/>
-/// 見た目を変えずに明滅だけを消せる。<br/>
 /// <br/>
-/// <b>隠す順序</b>: <b>画面の撮影が済んだ後</b>、かつ<b>オーバーレイを見せる前</b>に呼ぶ。<br/>
-/// 撮影より先に隠すと撮影画像からタスク バーが消え、オーバーレイを見せた後に隠すと、<br/>
-/// 隠した瞬間に帯の見た目が変わる（= 明滅として見える）。<br/>
+/// <b>隠すと明滅が消える理由</b>: 覆う相手がいなくなるため、シェルが前面へ戻す動きも起きない。<br/>
+/// オーバーレイの静止画に写っているタスク バーがそのまま見えるので、見た目も変わらない<br/>
+/// （設定で撮影画像に写さないことも選べる）。<br/>
+/// <br/>
+/// <b>待つ必要がある理由</b>: <c>ShowWindow(SW_HIDE)</c> の反映は DWM の合成 1〜2 フレーム後になる。<br/>
+/// 隠した直後にオーバーレイを表示すると、その 1〜2 フレームだけタスク バーが暗転マスクで覆われ、<br/>
+/// 明滅として見える（実測 2026-11-13）。 そのため <see cref="HideSettleDelay"/> だけ待ってから表示する。<br/>
 /// <br/>
 /// <b>ネイティブ呼び出しを本クラスが単一所有する理由</b>: 4 つの UI 版が同じ手順を書き分けると、<br/>
 /// 版ごとにタイミングがずれて同じ症状が再発する（実際に 3 つの版で再発した）。 呼び出し位置だけを<br/>
-/// 各 UI 版が持ち、手順はここへ集約する。<br/>
-/// <br/>
-/// <b>使用例</b>: <c>using var taskbar = CaptureTaskbarScope.Hide();</c> の後、撮影を終えて<br/>
-/// オーバーレイを閉じると、スコープの破棄（または <see cref="Dispose"/>）でタスク バーが戻る。
+/// 各 UI 版が持ち、手順はここへ集約する。
 /// </remarks>
 public sealed partial class CaptureTaskbarScope : IDisposable
 {
@@ -41,7 +40,6 @@ public sealed partial class CaptureTaskbarScope : IDisposable
     /// <summary>実際に隠したタスク バーのハンドル（隠せなかったものは含めない）。</summary>
     private readonly List<nint> _hidden = [];
 
-    /// <summary>復帰済みかどうか（多重呼び出しを防ぐ）。</summary>
     private bool _disposed;
 
     /// <summary>タスク バーを隠す。</summary>
@@ -57,11 +55,19 @@ public sealed partial class CaptureTaskbarScope : IDisposable
         }
     }
 
+    /// <summary>隠したタスク バーが画面から消えるまで待つ時間。</summary>
+    /// <remarks>
+    /// <c>ShowWindow(SW_HIDE)</c> の反映は DWM の合成 1〜2 フレーム後になる（60 Hz で 17〜34 ms）。<br/>
+    /// 実測 2026-11-13: 隠した直後にオーバーレイを表示すると、1〜3 フレームだけタスク バーが<br/>
+    /// 暗転マスクで覆われて明滅して見えた。 余裕をみて 3 フレーム分（50 ms）待つ。
+    /// </remarks>
+    public static readonly TimeSpan HideSettleDelay = TimeSpan.FromMilliseconds(50);
+
     /// <summary>すべてのタスク バーを隠す（タスク バーの無い環境では何もしない）。</summary>
     /// <returns>撮影の完了時に <see cref="Dispose"/> してタスク バーを戻すスコープ。</returns>
     /// <remarks>
     /// 撮影が例外で終わっても戻すため、必ず <c>using</c> で使うこと。<br/>
-    /// <b>画面の撮影が済んだ後</b>、かつ<b>オーバーレイを見せる前</b>に呼ぶこと（理由は型のコメントを参照）。
+    /// オーバーレイを表示する前に <see cref="HideSettleDelay"/> だけ待つこと（待たないと明滅が残る）。
     /// </remarks>
     public static CaptureTaskbarScope Hide() => new();
 

@@ -306,6 +306,15 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private bool _hideMainWindowOnCapture = true;
 
+    /// <summary>キャプチャ時にタスク バーを写さない（隠す）かどうかを取得または設定する。</summary>
+    /// <remarks>
+    /// デフォルトは false（タスク バーを写す）。 true にすると撮影画像からタスク バーが消える。<br/>
+    /// false の場合はタスク バーを写したまま、オーバーレイの領域からタスク バーの矩形を除いて覆わない<br/>
+    /// （覆うと半透明のタスク バーが暗転マスクを透かして明滅して見えるため）。
+    /// </remarks>
+    [ObservableProperty]
+    private bool _hideTaskbarOnCapture;
+
     /// <summary>外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・ラベル）をデフォルト値へ戻す。</summary>
     /// <remarks>
     /// 設定画面の外観設定にある「デフォルト値に戻す」ボタンから呼び出される。<br/>

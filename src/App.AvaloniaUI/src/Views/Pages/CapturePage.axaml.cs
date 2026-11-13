@@ -99,7 +99,7 @@ public sealed partial class CapturePage : UserControl
 
     /// <summary>マウスポインタ位置・画像サイズの表示幅と右側の余白を、ステータス バーの文字で測って決める。</summary>
     /// <remarks>
-    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths"/>）。
+    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
     /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。<br/>
     /// 値を固定すると、座標が変わるたびに右側の項目が動いて読みにくい（実測）。
     /// </remarks>
@@ -108,9 +108,13 @@ public sealed partial class CapturePage : UserControl
         var typeface = new Typeface(PointerText.FontFamily, PointerText.FontStyle, PointerText.FontWeight, PointerText.FontStretch);
         var widths = StatusBarMetrics.ResolveFieldWidths(text => MeasureText(typeface, text));
 
-        PointerText.Width = widths.Position;
+        // 測った幅は実描画より 1〜3 px 狭い（ヒンティングのため）。 余裕を足して末尾が欠けないようにする
+        var position = widths.Position + StatusBarMetrics.FieldWidthSafetyDips;
+        var imageSize = widths.ImageSize + StatusBarMetrics.FieldWidthSafetyDips;
+
+        PointerText.Width = position;
         PointerText.Margin = new Thickness(0, 0, widths.RightPadding, 0);
-        ImageSizeText.Width = widths.ImageSize;
+        ImageSizeText.Width = imageSize;
         ImageSizeText.Margin = new Thickness(0, 0, widths.RightPadding, 0);
     }
 

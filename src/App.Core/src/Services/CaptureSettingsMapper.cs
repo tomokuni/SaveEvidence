@@ -22,6 +22,7 @@ internal static class CaptureSettingsMapper
         // Settings → CaptureSettings に変換（全メンバーを明示的に設定。 色は Color 型で渡す）
         return new CaptureSettings(
             HideOwnerWindow: settings.HideMainWindowOnCapture,
+            HideTaskbar: settings.HideTaskbarOnCapture,
             MinSelectionSize: settings.MinSelectionSize,
             BorderColor: ParseColor(settings.CaptureBorderColor),
             BorderThickness: settings.CaptureBorderThickness,

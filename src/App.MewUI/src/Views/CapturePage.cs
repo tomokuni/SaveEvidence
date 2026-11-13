@@ -398,9 +398,14 @@ internal static class CapturePage
 
         var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(MeasureStatusText);
 
+        // 測った幅は実描画より 1〜3 px 狭い（Label が描画時に内部の余白を足すため）。
+        // 余裕を足して末尾が欠けないようにする（実測 2026-11-13: 125% の環境で「3840 x 2160」が欠けた）
+        var statusFieldPositionWidth = statusFieldWidths.Position + StatusBarMetrics.FieldWidthSafetyDips;
+        var statusFieldImageSizeWidth = statusFieldWidths.ImageSize + StatusBarMetrics.FieldWidthSafetyDips;
+
         var pointerLabel = new Label
         {
-            Width = statusFieldWidths.Position,
+            Width = statusFieldPositionWidth,
             Margin = new Thickness(0, 0, statusFieldWidths.RightPadding, 0),
         };
         pointerLabel.FontSize(AppStyles.StatusFontSize);
@@ -410,7 +415,7 @@ internal static class CapturePage
 
         var imageSizeLabel = new Label
         {
-            Width = statusFieldWidths.ImageSize,
+            Width = statusFieldImageSizeWidth,
             Margin = new Thickness(0, 0, statusFieldWidths.RightPadding, 0),
         };
         imageSizeLabel.FontSize(AppStyles.StatusFontSize);

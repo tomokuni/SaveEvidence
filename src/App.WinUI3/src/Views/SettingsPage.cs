@@ -197,6 +197,9 @@ internal static class SettingsPage
                 "キャプチャ時にメイン ウィンドウを隠す",
                 CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, null)),
             Row(
+                "キャプチャ時にタスク バーを隠す（撮影画像に写さない）",
+                CheckRow(settings.HideTaskbarOnCapture, value => settings.HideTaskbarOnCapture = value, null)),
+            Row(
                 "撮影・切り出しの後にクリップボードへコピーする",
                 CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, null)));
 

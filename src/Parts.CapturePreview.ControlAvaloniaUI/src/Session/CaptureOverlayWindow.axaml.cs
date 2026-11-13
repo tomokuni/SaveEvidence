@@ -78,6 +78,14 @@ internal sealed partial class CaptureOverlayWindow : Window
     /// <summary>ウィンドウが覆う仮想スクリーンの範囲（画面物理ピクセル）。 画像未取得時の切り出し範囲の判定に使う。</summary>
     private EsRectInt _screenBounds;
 
+    /// <summary>ウィンドウが覆う仮想スクリーンの範囲（画面物理ピクセル）を取得する。</summary>
+    /// <value>撮影画像の占有範囲と同じ値（原点は負値になりうる）。</value>
+    /// <remarks>
+    /// オーバーレイの領域からタスク バーの矩形を除くときに使う（画面物理座標で渡す必要があるため、<br/>
+    /// DIP の <c>Bounds</c> ではなく本値を使う）。
+    /// </remarks>
+    internal EsRectInt ScreenBounds => _screenBounds;
+
     /// <summary>撮影した画像の保持（差し替え時の旧値の破棄・クローズ後の破棄・未取得時の範囲をコアが単一所有する）。</summary>
     private readonly CaptureImageHolder _captureImage;
 

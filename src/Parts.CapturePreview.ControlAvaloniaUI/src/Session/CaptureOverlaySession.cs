@@ -101,6 +101,14 @@ internal sealed class CaptureOverlaySession(
         using var ownerScope = CaptureOwnerScope.Enter(
             windowService, ownerHandle, new OwnerWindowAdapter(owner), hideOwner);
 
+        // **タスク バーを写さない設定のときは、撮影より前に隠す**（撮影後に隠すと画像に写ったままになる）。
+        // 写す設定のときは隠さず、オーバーレイの領域からタスク バーの矩形を除く（表示の直後に行う）。
+        // 手順は コアの CaptureTaskbarScope が単一所有する（4 UI 版で同じ症状が出たため集約した）
+        if (settings.HideTaskbar == true)
+        {
+            _taskbarScope = CaptureTaskbarScope.Hide();
+        }
+
         // 背景キャプチャをバックグラウンドで開始する（完了を待たずにオーバーレイを表示する = 選択可能までの高速化）。
         // 全モード共通で取得し、確定時にこの Bitmap から切り出す（確定時の再キャプチャなしで高速化）。
         // キャプチャ完了前に確定された場合は CaptureOverlayWindow.ExtractClip が CaptureArea でフォールバックする。
@@ -325,6 +333,10 @@ internal sealed class CaptureOverlaySession(
                 window.SetVirtualScreen(bitmap, origin);
             }
 
+            // **撮影が済んだ後にタスク バーを隠す**（写さない設定では撮影の前に隠し済み）。
+            // 隠さないと、半透明（アクリル）のタスク バーが暗転マスクを透かして暗く見え、
+            // シェルが前面へ戻すと明るくなる（= 明滅）。 反映は 1〜2 フレーム後になるため、
+            // 画像を見せる前に消えるまで待つ（手順は コアの CaptureTaskbarScope が単一所有する）
             // **画面内へ移す前にハイライトを確定する**: 全体をマスクした状態で 1 フレームでも見せると、
             // カーソル下のモニター・ウィンドウだけが後から明るくなる（= マスクが一度掛かってから解除される）
             // ように見え、ちらつきとして知覚される（実測 2026-11-13）
@@ -349,14 +361,6 @@ internal sealed class CaptureOverlaySession(
             }
 
             window.Opacity = 1;
-
-            // **オーバーレイを見せるのと同じ描画の間にタスク バーを隠す**: 隠さないと、半透明（アクリル）の
-            // タスク バーが背後へ入った暗転マスクを透かして暗く見え、シェルが前面へ戻すと明るくなる
-            // （= 明滅。 実測 2026-11-13: 輝度 220 → 174 → 220）。 撮影画像に写っているタスク バーが
-            // そのまま見えるため、隠しても見た目は変わらない。 別の描画で隠すと、覆われる前の
-            // 数十ミリ秒だけ帯の跡が見える
-            // （手順は コアの CaptureTaskbarScope が単一所有する。 4 UI 版で同じ症状が出たため集約した）
-            _taskbarScope ??= CaptureTaskbarScope.Hide();
 
             // 表示した次のフレームでオーナーを退避する（退避の瞬間を見せない）
             await WaitForFramesAsync(window, OwnerOffScreenFrameCount).ConfigureAwait(true);

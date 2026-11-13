@@ -5,6 +5,6 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// <param name="ImageSize">画像サイズの表示幅。</param>
 /// <param name="RightPadding">各項目の右側の余白（区切りの幅）。</param>
 /// <remarks>
-/// 値を <see cref="StatusBarMetrics.ResolveFieldWidths"/> が求める（基準の文字列と測り方は同クラスが単一所有する）。
+/// 値を <see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/> が求める（基準の文字列と測り方は同クラスが単一所有する）。
 /// </remarks>
 public readonly record struct StatusBarFieldWidths(double Position, double ImageSize, double RightPadding);
