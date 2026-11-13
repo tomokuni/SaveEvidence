@@ -33,7 +33,7 @@
     {
       "name": "AvaloniaUI",
       "script": "buildScript/publish_AvaloniaUI.bat",
-      "output": "publish/avaloniaui-win-x64-aot",
+      "output": "publish/avaloniaui-win-x64-single",
       "exe": "SaveEvidence.AvaloniaUI.exe",
       "asset": "SaveEvidence.AvaloniaUI.v{version}.zip",
       "zip": true

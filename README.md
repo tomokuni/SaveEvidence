@@ -289,7 +289,7 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
 **単体のプロジェクトを直接発行する場合**（方式を自分で選ぶ場合）:
 
 ```powershell
-dotnet publish src/App.AvaloniaUI/src/App.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishAot=true -p:SelfContained=true -o publish/avaloniaui-win-x64-aot
+dotnet publish src/App.AvaloniaUI/src/App.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/avaloniaui-win-x64-single
 ```
 
 ### 4.2 検証（変更をコミットする前）
