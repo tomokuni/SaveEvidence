@@ -112,6 +112,22 @@
                     VerticalAlignment="Center">
                 <PathIcon x:Name="SaveIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
             </Button>
+            <!-- 自動保存（有効な間は画像が変わるたびに保存する）。
+                 高さは 4 UI 版で揃える（ToolbarMetrics.AutoSaveHeight。 既定の最小高に負けないよう
+                 MinHeight も同じ値にする） -->
+            <ToggleButton x:Name="AutoSaveButton"
+                          Classes="toolbar"
+                          Content="自動保存"
+                          IsChecked="{Binding AutoSave, Mode=TwoWay}"
+                          ToolTip.Tip="画像が変わったら自動で保存する"
+                          Height="{DynamicResource ToolbarAutoSaveHeight}"
+                          MinHeight="{DynamicResource ToolbarAutoSaveHeight}"
+                          Padding="6,0"
+                          FontSize="11"
+                          VerticalAlignment="Center"
+                          VerticalContentAlignment="Center"
+                          HorizontalContentAlignment="Center"
+                          Margin="1"/>
             <Border Classes="toolbar-separator"/>
             <Button ToolTip.Tip="スクリーン選択キャプチャ" Classes="toolbar toolbar-icon" Click="OnCaptureScreenClick" Margin="1" VerticalAlignment="Center">
                 <PathIcon x:Name="ScreenSelectIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
@@ -126,7 +142,6 @@
             <Button x:Name="CropButton" Classes="toolbar toolbar-icon" ToolTip.Tip="切り出し（切出しモード開始/終了）" IsEnabled="{Binding CanCopy}" Click="OnCropButtonClick" Margin="1" VerticalAlignment="Center">
                 <PathIcon x:Name="CropIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
             </Button>
-
         </WrapPanel>
 
         <!-- メイン画像エリア（背景色は他の UI 版と同じ。 テーマ別の値は AppPalette が単一所有する） -->
@@ -146,17 +161,26 @@
 
         </Grid>
 
-        <!-- ステータスバー（左: 保存済み/未 | 保存ファイル名 / 右: 拡大率（スライダ + % + フライアウト）） -->
+        <!-- ステータスバー（左: 保存ファイル名・通知 / 右: 拡大率（スライダ + % + フライアウト）） -->
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="4,1" MinHeight="32" VerticalAlignment="Center">
-            <!-- 左側（左寄せ）: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存済み/未 | 保存ファイル名 -->
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                <TextBlock Classes="status" Text="{Binding PointerDisplayText}" Width="70"
+            <!-- 左側（左寄せ）: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存ファイル名 + 通知 -->
+            <!-- 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（StatusBarMetrics が単一所有する） -->
+            <StackPanel x:Name="StatusLeft" Grid.Column="0" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
+                <!-- 文字は左寄せ（幅は「9999, 9999」/「9999 x 9999」+「WW」。 規則は StatusBarMetrics が単一所有する） -->
+                <TextBlock x:Name="PointerText" Classes="status" Text="{Binding PointerDisplayText}"
+                           TextAlignment="Left"
                            ToolTip.Tip="マウスポインタ位置（対象座標 = 画像ピクセル）"/>
-                <TextBlock Classes="status" Text="{Binding ImageSizeDisplayText}" Width="80"
+                <TextBlock x:Name="ImageSizeText" Classes="status" Text="{Binding ImageSizeDisplayText}"
+                           TextAlignment="Left"
                            ToolTip.Tip="画像サイズ（対象座標 = 元画像ピクセル）"/>
-                <TextBlock Classes="status" Text="{Binding SaveStatusText}"/>
-                <TextBlock Classes="status" Text="{Binding SavedFileName}"/>
-                <TextBlock Classes="status" Text="{Binding StatusMessage}" Foreground="{StaticResource AnnounceForeground}"/>
+
+                <!-- ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する） -->
+                <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
+                    <TextBlock Classes="status" Text="{Binding SavedFileName}"/>
+                    <Border Width="{DynamicResource StatusBarNameMessageGapWidth}"/>
+                    <TextBlock Classes="status" Text="{Binding StatusMessage}"
+                               Foreground="{DynamicResource AnnounceForegroundBrush}"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- 右側（右寄せ）: 拡大率 -->

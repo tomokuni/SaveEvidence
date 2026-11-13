@@ -61,6 +61,9 @@ internal static class UndoPage
         // （一覧を組み立てるローカル関数（CreateModeButton → OnModeChanged → Rebuild）から参照するため、 最初に宣言する）
         var thumbnails = new List<EsReadOnlyBitmap>();
 
+        // 一覧に並べた元画像（一覧の位置と対応する。 コピーに使う）
+        var sources = new List<EsReadOnlyBitmap>();
+
         // 表示用の縮小（面積平均）は背景で行う（表示中は並列・非表示では 1 件ずつ）
         var scheduler = ThumbnailBackground.CreateScheduler();
 
@@ -158,8 +161,9 @@ internal static class UndoPage
 
             list.ClearItems();
             list.ImageWidth = iconSize;
+            sources.Clear();
 
-            var placeholder = ThumbnailBackground.Placeholder(iconSize);
+            var placeholder = ThumbnailPlaceholder.Get(iconSize);
             void AddItem(EsReadOnlyBitmap image, string label, bool isCurrent)
             {
                 // 強調は選択（提示層は「現在項目」を持たない）で表す
@@ -168,6 +172,8 @@ internal static class UndoPage
                 {
                     list.SelectedIndex = index;
                 }
+
+                sources.Add(image);
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 requested.Add((scheduler.Enqueue(
@@ -239,6 +245,12 @@ internal static class UndoPage
         // 見え方が変わったら優先度を付け直す（スクロールと、ウィンドウの大きさの変化）
         // 可視領域は一覧（コントロール）が単一所有する
         list.ScrollChanged += (_, _) => UpdatePriorities();
+
+        // 右クリックのメニュー: 選択中の画像をコピーする（Ctrl+C も同じ処理）
+        var copyCommand = new Command("undo.copy", "コピー", null);
+        list.Commands.Register(copyCommand, () => CopySelected(list, sources), static () => true);
+        list.ContextMenu = new ContextMenu();
+        list.ContextMenu.AddItem("コピー", copyCommand);
         list.ItemActivated += (_, e) =>
         {
             if (e.Tag is EsReadOnlyBitmap image)
@@ -315,7 +327,37 @@ internal static class UndoPage
                     .Child(new Grid().Rows("Auto").Columns("*").Children(statusGrid)));
 
         Restore();
-        return new PageContent(content, Activate, OnDeactivated: () => scheduler.IsActive = false, OnWarmUp: WarmUp);
+        return new PageContent(
+            content, Activate,
+            OnDeactivated: () => scheduler.IsActive = false,
+            OnWarmUp: WarmUp,
+            // Ctrl+C で選択中の画像をコピーする
+            OnKeyDown: e =>
+            {
+                if (!e.ControlKey || e.Key != Key.C) return;
+
+                e.Handled = true;
+                CopySelected(list, sources);
+            });
+    }
+
+    /// <summary>選択中の画像をクリップボードへコピーする。</summary>
+    /// <param name="list">選択状態を持つ一覧。</param>
+    /// <param name="sources">一覧に並べた元画像（一覧の位置と対応する）。</param>
+    /// <remarks>
+    /// 一覧は表示用に縮小した画像を持つため、コピーには元画像を使う（等倍で貼り付けられる）。<br/>
+    /// 書き込みは 4 UI 版で共通の <see cref="ClipboardImage"/>（<c>CF_DIB</c>）が担う。
+    /// </remarks>
+    private static void CopySelected(ThumbnailControl list, IReadOnlyList<EsReadOnlyBitmap> sources)
+    {
+        var index = list.SelectedIndex;
+        if (index < 0 || index >= sources.Count) return;
+        if (list.FindVisualRoot() is not Window owner) return;
+
+        if (!ClipboardImage.TryCopy(sources[index], owner.Handle))
+        {
+            s_logger.LogHistoryImageCopyError();
+        }
     }
 
     /// <summary>最後に一覧を構築したときの履歴の状態（同じなら再構築しない）。</summary>

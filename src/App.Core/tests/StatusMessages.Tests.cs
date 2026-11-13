@@ -34,6 +34,10 @@ public class StatusMessagesTests
         => Assert.False(string.IsNullOrWhiteSpace(StatusMessages.SaveFailed()));
 
     [Fact]
+    internal void SaveCompleted_は日時を含まない保存の通知()
+        => Assert.Equal("保存しました", StatusMessages.SaveCompleted());
+
+    [Fact]
     internal void SaveUnavailable_はテンプレートが無効なら検証結果を含む()
         => Assert.Contains("拡張子がありません", StatusMessages.SaveUnavailable(true, "拡張子がありません"), StringComparison.Ordinal);
 

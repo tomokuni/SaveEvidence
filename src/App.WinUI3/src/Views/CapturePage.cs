@@ -100,12 +100,21 @@ internal static class CapturePage
         var synchronizingZoom = false;
         Slider? zoomSlider = null;
 
+        // 幅は「pt: 8888, 8888」「size: 8888 x 8888」+「W」をステータス バーの文字で測って決める
+        // （基準の文字列と規則は StatusBarMetrics が単一所有する）
+        // TextBlock は文字の左右に内部余白を足さない（推奨幅 = 送り幅）ため、幅はそのまま使える
+        var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(
+            text => MeasureStatusText(text, AppStyles.StatusFontSize));
+
+        // 幅には右側の「W」の空きが含まれる（規則は StatusBarMetrics が単一所有する）
         var zoomText = CreateLabel(viewModel.ZoomDisplayText, AppStyles.StatusFontSize);
         var pointerText = CreateLabel(viewModel.PointerDisplayText, AppStyles.StatusFontSize);
-        pointerText.Width = 70;
+        // 幅 = 基準の文字列 + 「W」（規則は StatusBarMetrics が単一所有する）。 文字は左寄せ
+        pointerText.Width = statusFieldWidths.Position;
+        pointerText.TextAlignment = TextAlignment.Left;
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
-        imageSizeText.Width = 80;
-        var saveStatusText = CreateLabel(viewModel.SaveStatusText, AppStyles.StatusFontSize);
+        imageSizeText.Width = statusFieldWidths.ImageSize;
+        imageSizeText.TextAlignment = TextAlignment.Left;
         var savedFileNameText = CreateLabel(viewModel.SavedFileName, AppStyles.StatusFontSize);
         var messageText = CreateLabel(viewModel.StatusMessage, AppStyles.StatusFontSize);
         messageText.Foreground = new SolidColorBrush(s_announceColor);
@@ -138,12 +147,16 @@ internal static class CapturePage
         };
 
         var toolbar = BuildToolbar(services, viewModel, ToggleCrop, captureSession);
-        var statusLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
+        var statusLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
         statusLeft.Children.Add(pointerText);
         statusLeft.Children.Add(imageSizeText);
-        statusLeft.Children.Add(saveStatusText);
-        statusLeft.Children.Add(savedFileNameText);
-        statusLeft.Children.Add(messageText);
+
+        // ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する）
+        var nameAndMessage = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
+        nameAndMessage.Children.Add(savedFileNameText);
+        nameAndMessage.Children.Add(new Border { Width = StatusBarMetrics.NameMessageGapWidth });
+        nameAndMessage.Children.Add(messageText);
+        statusLeft.Children.Add(nameAndMessage);
 
         var statusRight = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         statusRight.Children.Add(zoomOut);
@@ -194,15 +207,36 @@ internal static class CapturePage
         zoomIn.IsEnabled = cropView.CanZoomIn;
         zoomOut.IsEnabled = cropView.CanZoomOut;
 
-        SubscribeViewModel(viewModel, settings, cropView, saveStatusText, savedFileNameText, messageText, imageSizeText, pointerText, zoomText);
+        SubscribeViewModel(viewModel, settings, cropView, savedFileNameText, messageText, imageSizeText, pointerText, zoomText);
 
         return new PageContent(page, OnKeyDown: args =>
         {
-            // 切り出しの開始・確定・キャンセルを Ctrl+R でも操作できるようにする
-            if (args.Key == VirtualKey.R && IsControlDown())
+            if (!IsControlDown())
             {
-                ToggleCrop();
-                args.Handled = true;
+                return;
+            }
+
+            switch (args.Key)
+            {
+                // 保存（文字編集のショートカットではないため、テンプレート入力中でも行う。
+                // コピー・貼り付けはテキスト ボックスが先に処理するため、ここへは届かない）
+                case VirtualKey.S:
+                    _ = viewModel.SaveImageAsync();
+                    args.Handled = true;
+                    return;
+                case VirtualKey.C:
+                    _ = viewModel.CopyToClipboardAsync();
+                    args.Handled = true;
+                    return;
+                case VirtualKey.V:
+                    _ = PasteAsync(services);
+                    args.Handled = true;
+                    return;
+                // 切り出しの開始・確定・キャンセルを Ctrl+R でも操作できるようにする
+                case VirtualKey.R:
+                    ToggleCrop();
+                    args.Handled = true;
+                    return;
             }
         });
     }
@@ -239,11 +273,12 @@ internal static class CapturePage
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(1),
         };
-        ToolTipService.SetToolTip(templateBox, "保存するファイル名のテンプレート（{date} / {time} / 連番 が使えます）");
+        // ツールチップの文言はコアが単一所有する（4 UI 版で同じ説明を出す）
+        ToolTipService.SetToolTip(templateBox, FileNameTemplate.BuildHelpText());
         templateBox.TextChanged += (_, _) => viewModel.FileNameTemplateText = templateBox.Text;
         items.Children.Add(templateBox);
 
-        var save = CreateIconButton(CaptureIconFiles.Save, "画像を保存", () => _ = viewModel.SaveImageAsync(), AppStyles.ToolbarIconSize);
+        var save = CreateIconButton(CaptureIconFiles.Save, "画像を保存", () => _ = viewModel.SaveImageAsync(), AppStyles.ToolbarIconSize, out var saveIcon);
         var screen = CreateIconButton(
             CaptureIconFiles.ScreenSelect, "スクリーン選択キャプチャ",
             () => CaptureFlow.Start(CaptureType.ScreenSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
@@ -255,9 +290,29 @@ internal static class CapturePage
             () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession), AppStyles.ToolbarIconSize);
         var crop = CreateIconButton(CaptureIconFiles.Crop, "切り出し（切出しモード開始/終了）", toggleCrop, AppStyles.ToolbarIconSize);
 
-        // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 撮影 3 種 | 切り出し）。
+        // 自動保存のトグル（保存ボタンの右。 有効な間は画像が変わるたびに保存する）。
+        // 高さは 4 UI 版で揃える（既定の最小高に負けないよう MinHeight も同じ値にする）
+        var autoSave = new ToggleButton
+        {
+            Content = "自動保存",
+            FontSize = 11,
+            IsChecked = viewModel.AutoSave,
+            Height = ToolbarMetrics.AutoSaveHeight,
+            MinHeight = ToolbarMetrics.AutoSaveHeight,
+            Padding = new Thickness(6, 0, 6, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(1),
+        };
+        ToolTipService.SetToolTip(autoSave, "画像が変わったら自動で保存する");
+        autoSave.Checked += (_, _) => viewModel.AutoSave = true;
+        autoSave.Unchecked += (_, _) => viewModel.AutoSave = false;
+
+        // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 自動保存 | 撮影 3 種 | 切り出し）。
         // 元に戻す・やり直しはメニューから実行する（ツールバーに置かない）
         items.Children.Add(save);
+        items.Children.Add(autoSave);
         items.Children.Add(AppStyles.CreateToolbarSeparator());
         items.Children.Add(screen);
         items.Children.Add(windowSelect);
@@ -265,10 +320,23 @@ internal static class CapturePage
         items.Children.Add(AppStyles.CreateToolbarSeparator());
         items.Children.Add(crop);
 
+        // 保存の可否に合わせて保存ボタンを灰色にする（アイコンはテーマの不透明度に追従しないため色で表す）
+        void ApplySaveEnabled()
+        {
+            save.IsEnabled = viewModel.CanSave;
+            saveIcon.Source = IconLoader.LoadImage(
+                CaptureIconFiles.Save,
+                AppStyles.IconRasterSize,
+                viewModel.CanSave
+                    ? IconLoader.ForegroundColor()
+                    : AppPalette.DisabledForeground(AppStyles.IsDarkTheme));
+        }
+        AppStyles.ThemeChanged += (_, _) => ApplySaveEnabled();
+
         // 画像の状態とテンプレートの妥当性に追従して可否を更新する
         viewModel.PropertyChanged += (_, e) =>
         {
-            save.IsEnabled = viewModel.CanSave;
+            ApplySaveEnabled();
             crop.IsEnabled = viewModel.HasPreviewImage;
 
             if (!string.Equals(e.PropertyName, nameof(MainViewModel.FileNameTemplateText), StringComparison.Ordinal))
@@ -283,7 +351,7 @@ internal static class CapturePage
             }
         };
 
-        save.IsEnabled = viewModel.CanSave;
+        ApplySaveEnabled();
         crop.IsEnabled = viewModel.HasPreviewImage;
 
         // 上書き確認で使う保存先をツールチップへ反映する
@@ -400,8 +468,8 @@ internal static class CapturePage
         var save = CreateMenuItem("File - 画像を保存", "Ctrl+S", () => _ = viewModel.SaveImageAsync(), CaptureIconFiles.Save);
         var copy = CreateMenuItem("Clipboard - コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
         var paste = CreateMenuItem("Clipboard - 貼り付け", "Ctrl+V", () => _ = PasteAsync(services));
-        var undo = CreateMenuItem("Image - 元に戻す", "Ctrl+Z", () => EditHistory.Undo(services));
-        var redo = CreateMenuItem("Image - 元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services));
+        var undo = CreateMenuItem("Image - 元に戻す", "Ctrl+Z", () => EditHistory.Undo(services.Main, services.UndoHistory));
+        var redo = CreateMenuItem("Image - 元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services.Main, services.UndoHistory));
         var screen = CreateMenuItem("Capture - スクリーン選択", "Ctrl+Shift+Q", () => CaptureFlow.Start(CaptureType.ScreenSelect, AppContext(), captureSession), CaptureIconFiles.ScreenSelect);
         var windowSelect = CreateMenuItem("Capture - ウィンドウ選択", "Ctrl+Shift+W", () => CaptureFlow.Start(CaptureType.WindowSelect, AppContext(), captureSession), CaptureIconFiles.WindowSelect);
         var area = CreateMenuItem("Capture - 範囲選択", "Ctrl+Shift+E", () => CaptureFlow.Start(CaptureType.AreaSelect, AppContext(), captureSession), CaptureIconFiles.AreaSelect);
@@ -598,7 +666,7 @@ internal static class CapturePage
 
         zoomView.PointerExited += (_, _) =>
         {
-            viewModel.PointerDisplayText = "-";
+            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             viewModel.HoveredRect = null;
         };
 
@@ -663,7 +731,6 @@ internal static class CapturePage
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
     /// <param name="settings">設定。</param>
     /// <param name="cropView">プレビュー（中央寄せの反映先）。</param>
-    /// <param name="saveStatusText">保存状態の表示。</param>
     /// <param name="savedFileNameText">保存ファイル名の表示。</param>
     /// <param name="messageText">通知メッセージの表示。</param>
     /// <param name="imageSizeText">画像サイズの表示。</param>
@@ -671,16 +738,13 @@ internal static class CapturePage
     /// <param name="zoomText">拡大率の表示。</param>
     private static void SubscribeViewModel(
         MainViewModel viewModel, Settings settings, CropViewControl cropView,
-        TextBlock saveStatusText, TextBlock savedFileNameText, TextBlock messageText,
+        TextBlock savedFileNameText, TextBlock messageText,
         TextBlock imageSizeText, TextBlock pointerText, TextBlock zoomText)
     {
         viewModel.PropertyChanged += (_, e) =>
         {
             switch (e.PropertyName)
             {
-                case nameof(MainViewModel.SaveStatusText):
-                    saveStatusText.Text = viewModel.SaveStatusText;
-                    break;
                 case nameof(MainViewModel.SavedFileName):
                     savedFileNameText.Text = viewModel.SavedFileName;
                     break;
@@ -735,6 +799,9 @@ internal static class CapturePage
         viewModel.SetPreviewImage(captured);
         // 通知の文言はコアが単一所有する（キャプチャ結果は画像の差し替えより後に通知する）
         viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
+
+        // 設定が有効なら撮影した画像をクリップボードへコピーする
+        _ = viewModel.CopyAfterEditIfEnabledAsync();
     }
 
     /// <summary>切り出しの開始・確定・キャンセルを 1 つの操作で切り替える（ボタン・キー・メニュー共通）。</summary>
@@ -806,7 +873,7 @@ internal static class CapturePage
     {
         if (viewModel.PreviewImage is not { } image)
         {
-            viewModel.PointerDisplayText = "-";
+            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             return;
         }
 
@@ -815,14 +882,13 @@ internal static class CapturePage
         var y = cursorDip.Y - imageRect.Y;
         if (x < 0 || y < 0 || x >= imageRect.Width || y >= imageRect.Height)
         {
-            viewModel.PointerDisplayText = "-";
+            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             return;
         }
 
         var content = view.ClientToDisplayedSource(cursorDip);
-        viewModel.PointerDisplayText = string.Create(
-            System.Globalization.CultureInfo.InvariantCulture,
-            $"{(int)Math.Clamp(content.X, 0, image.Width - 1)}, {(int)Math.Clamp(content.Y, 0, image.Height - 1)}");
+        viewModel.PointerDisplayText = StatusBarTexts.FormatPointer(
+            (int)Math.Clamp(content.X, 0, image.Width - 1), (int)Math.Clamp(content.Y, 0, image.Height - 1));
     }
 
     /// <summary>プレビュー上のカーソル位置にある自動切り出しの矩形（面積が最小のもの）を求める。</summary>
@@ -860,6 +926,21 @@ internal static class CapturePage
     private static TextBlock CreateLabel(string text, double fontSize)
         => new() { Text = text, FontSize = fontSize, VerticalAlignment = VerticalAlignment.Center };
 
+    /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>
+    /// <param name="text">測る文字列。</param>
+    /// <param name="fontSize">文字サイズ（DIP）。</param>
+    /// <returns>描画幅（DIP）。</returns>
+    /// <remarks>
+    /// 幅を決める基準の文字列はコアが単一所有する（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
+    /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。
+    /// </remarks>
+    private static double MeasureStatusText(string text, double fontSize)
+    {
+        var probe = new TextBlock { Text = text, FontSize = fontSize };
+        probe.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+        return probe.DesiredSize.Width;
+    }
+
     /// <summary>アイコン付きのボタンを生成する。</summary>
     /// <param name="icon">アイコンの SVG ファイル名。</param>
     /// <param name="toolTip">ツールチップの文言。</param>
@@ -867,8 +948,19 @@ internal static class CapturePage
     /// <param name="iconSize">アイコンの一辺（DIP）。</param>
     /// <returns>生成したボタン。</returns>
     private static Button CreateIconButton(string icon, string toolTip, Action? onClick, double iconSize)
+        => CreateIconButton(icon, toolTip, onClick, iconSize, out _);
+
+    /// <summary>アイコン付きのボタンを生成し、アイコンの画像要素も返す。</summary>
+    /// <param name="icon">アイコンの SVG ファイル名。</param>
+    /// <param name="toolTip">ツールチップの文言。</param>
+    /// <param name="onClick">クリック時の処理。 null の場合は何もしない。</param>
+    /// <param name="iconSize">アイコンの一辺（DIP）。</param>
+    /// <param name="content">生成したアイコンの画像要素（無効時に灰色で描き直すために使う）。</param>
+    /// <returns>生成したボタン。</returns>
+    private static Button CreateIconButton(
+        string icon, string toolTip, Action? onClick, double iconSize, out Image content)
     {
-        var content = new Image
+        content = new Image
         {
             Source = IconLoader.LoadThemedImage(icon, AppStyles.IconRasterSize),
             Width = iconSize,
@@ -893,10 +985,11 @@ internal static class CapturePage
 
         ApplyIconButtonColors(button);
 
-        // テーマが変わったらアイコンの色を描き直す
+        // テーマが変わったらアイコンの色を描き直す（out パラメーターはラムダで使えないためローカルへ写す）
+        var iconContent = content;
         AppStyles.ThemeChanged += (_, _) =>
         {
-            content.Source = IconLoader.LoadThemedImage(icon, AppStyles.IconRasterSize);
+            iconContent.Source = IconLoader.LoadThemedImage(icon, AppStyles.IconRasterSize);
             ApplyIconButtonColors(button);
         };
         return button;

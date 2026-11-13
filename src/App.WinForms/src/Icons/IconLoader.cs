@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.SaveEvidence.App.Core.Icons;
 using EsUtil.SaveEvidence.App.Core.Services;
 
@@ -61,20 +62,18 @@ internal static class IconLoader
 
         // 図形の実寸（余白を除いた外接矩形）を一辺いっぱいへ広げる。
         // Avalonia 版の PathIcon はジオメトリの外接矩形を枠いっぱいへ引き伸ばすため、
-        // SVG の viewBox（24x24）基準で描くとアイコンだけが小さく見える（実測）
+        // SVG の viewBox（24x24）基準で描くとアイコンだけが小さく見える（実測）。
+        // 式はコア（IconFit）が単一所有する（4 つの UI 版で同じ大きさに見えるようにする）
         var bounds = path.GetBounds();
-        if (bounds.Width <= 0 || bounds.Height <= 0)
+        if (IconFit.Resolve(
+                new EsRect(bounds.X, bounds.Y, bounds.Width, bounds.Height), pixels) is not { } fit)
         {
             return bitmap;
         }
 
-        var scale = Math.Min(pixels / bounds.Width, pixels / bounds.Height);
-        var offsetX = ((pixels - (bounds.Width * scale)) / 2f) - (bounds.X * scale);
-        var offsetY = ((pixels - (bounds.Height * scale)) / 2f) - (bounds.Y * scale);
-
         var state = graphics.Save();
-        graphics.TranslateTransform(offsetX, offsetY);
-        graphics.ScaleTransform(scale, scale);
+        graphics.TranslateTransform((float)fit.OffsetX, (float)fit.OffsetY);
+        graphics.ScaleTransform((float)fit.Scale, (float)fit.Scale);
         try
         {
             using var brush = new SolidBrush(color);

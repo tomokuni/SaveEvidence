@@ -48,6 +48,14 @@ internal sealed class CaptureOverlaySession(
     /// <summary>表示中の選択オーバーレイウィンドウ（キャンセル用）。</summary>
     private CaptureOverlayWindow? _window;
 
+    /// <summary>撮影中に隠したタスク バー（撮影の完了後に設定し、セッションの終了で戻す）。</summary>
+    /// <remarks>
+    /// この UI 版は画面の撮影を<b>背景で</b>行うため、撮影が済むまでタスク バーを隠せない<br/>
+    /// （先に隠すと撮影画像からタスク バーが消える）。 そのため撮影の完了を待つ継続<br/>
+    /// （<see cref="ApplyBackgroundAsync"/>）で隠し、<see cref="RunAsync"/> の終了で戻す。
+    /// </remarks>
+    private CaptureTaskbarScope? _taskbarScope;
+
     /// <summary>オーバーレイを表示するまでに待つ描画フレーム数。</summary>
     /// <remarks>
     /// 撮影画像は設定の次のフレームで合成される（1 フレームでは未合成の面が出る）。<br/>
@@ -93,6 +101,14 @@ internal sealed class CaptureOverlaySession(
         using var ownerScope = CaptureOwnerScope.Enter(
             windowService, ownerHandle, new OwnerWindowAdapter(owner), hideOwner);
 
+        // **タスク バーを写さない設定のときは、撮影より前に隠す**（撮影後に隠すと画像に写ったままになる）。
+        // 写す設定のときは隠さず、オーバーレイの領域からタスク バーの矩形を除く（表示の直後に行う）。
+        // 手順は コアの CaptureTaskbarScope が単一所有する（4 UI 版で同じ症状が出たため集約した）
+        if (settings.HideTaskbar == true)
+        {
+            _taskbarScope = CaptureTaskbarScope.Hide();
+        }
+
         // 背景キャプチャをバックグラウンドで開始する（完了を待たずにオーバーレイを表示する = 選択可能までの高速化）。
         // 全モード共通で取得し、確定時にこの Bitmap から切り出す（確定時の再キャプチャなしで高速化）。
         // キャプチャ完了前に確定された場合は CaptureOverlayWindow.ExtractClip が CaptureArea でフォールバックする。
@@ -124,8 +140,12 @@ internal sealed class CaptureOverlaySession(
         SetupVirtualScreenContinuation(
             window, captureTask, () => origin.ToAvaloniaPixelPoint(), targetPosition, ownerScope, completion);
 
+        // **位置が確定するまで内容を見せない**: ウィンドウは `Show` の時点では既定の位置（画面の左上）で
+        // 作られ、`Position` の指定はその後にしか効かない（実測 2026-11-13: 仮想スクリーンの原点が
+        // (0,-1200) の環境で、`Show` の 108 ms 後まで (0,0) に見えていた）。
+        // 内容を非表示にしておけば、位置と内容が確定してから表示するだけで済む（MewUI 版と同じ狙い）。
+        window.Opacity = 0;
         window.Show(owner);
-
         try
         {
             var result = await completion.Task;
@@ -150,6 +170,10 @@ internal sealed class CaptureOverlaySession(
             _window = null;
             // 例外経路でも復帰させる（二重呼び出しは無害）
             ownerScope.Dispose();
+            // タスク バーはオーバーレイを閉じる直前に戻す（先に戻すと帯が一瞬見える。
+            // 閉じるのと同じ描画の間に行う）
+            _taskbarScope?.Dispose();
+            _taskbarScope = null;
             // オーナーの復帰後に閉じる（閉じた瞬間に、新しい画像を表示したアプリが見える）
             window.Close();
         }
@@ -309,6 +333,15 @@ internal sealed class CaptureOverlaySession(
                 window.SetVirtualScreen(bitmap, origin);
             }
 
+            // **撮影が済んだ後にタスク バーを隠す**（写さない設定では撮影の前に隠し済み）。
+            // 隠さないと、半透明（アクリル）のタスク バーが暗転マスクを透かして暗く見え、
+            // シェルが前面へ戻すと明るくなる（= 明滅）。 反映は 1〜2 フレーム後になるため、
+            // 画像を見せる前に消えるまで待つ（手順は コアの CaptureTaskbarScope が単一所有する）
+            // **画面内へ移す前にハイライトを確定する**: 全体をマスクした状態で 1 フレームでも見せると、
+            // カーソル下のモニター・ウィンドウだけが後から明るくなる（= マスクが一度掛かってから解除される）
+            // ように見え、ちらつきとして知覚される（実測 2026-11-13）
+            window.ApplyInitialHighlight();
+
             // 撮影画像が合成されたフレームを待ってから、位置だけ画面内へ移す
             await WaitForFramesAsync(window, RevealFrameCount).ConfigureAwait(true);
             if (completion.Task.IsCompleted)
@@ -318,7 +351,18 @@ internal sealed class CaptureOverlaySession(
 
             window.Position = targetPosition;
 
-            // 画面内へ移した次のフレームでオーナーを退避する（退避の瞬間を見せない）
+            // **位置が確定したフレームを待ってから内容を見せる**: 位置の反映（とモニターが変わった場合の
+            // レイアウトのやり直し）が済む前に見せると、移動前の座標・倍率で描かれた 1 フレームが見える
+            // （実測 2026-11-13: 「全画面の画像が一瞬ずれた位置に出る」ちらつき）。
+            await WaitForFramesAsync(window, OwnerOffScreenFrameCount).ConfigureAwait(true);
+            if (completion.Task.IsCompleted)
+            {
+                return;
+            }
+
+            window.Opacity = 1;
+
+            // 表示した次のフレームでオーナーを退避する（退避の瞬間を見せない）
             await WaitForFramesAsync(window, OwnerOffScreenFrameCount).ConfigureAwait(true);
             if (!completion.Task.IsCompleted)
             {
@@ -331,6 +375,7 @@ internal sealed class CaptureOverlaySession(
             // （オーバーレイは画面外のまま残らないよう、位置だけは移す）
             _log.LogOperationError(ex, nameof(ApplyBackgroundAsync));
             window.Position = targetPosition;
+            window.Opacity = 1;
         }
     }
 

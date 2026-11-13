@@ -3,6 +3,7 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
@@ -92,6 +93,10 @@ internal sealed class CaptureOverlay
     /// <summary>カーソル下の要素を検出するサービス（ハイライト型（スクリーン選択 / ウィンドウ選択）のみ使用する）。</summary>
     private readonly IElementFinder _finder;
 
+    /// <summary>カーソル位置の取得（表示前のハイライトの初期化に使う。 状態を持たないため共有できる）。</summary>
+    /// <remarks>表示の前に「カーソル下のモニター・ウィンドウ」をハイライトするために使う。</remarks>
+    private static readonly ICursorService s_cursor = new WinCursorService();
+
     /// <summary>キャプチャ種別（操作ラベル・情報ラベルの文言に影響する）。</summary>
     private readonly CaptureType _type;
 
@@ -121,6 +126,13 @@ internal sealed class CaptureOverlay
     /// 両方から呼ばれるが、二重呼び出しは無害（コアのスコープが 1 回だけ実行する）。
     /// </remarks>
     private CaptureOwnerScope? _ownerScope;
+
+    /// <summary>撮影中に隠したタスク バー（オーバーレイを閉じる直前に戻す）。</summary>
+    /// <remarks>
+    /// オーバーレイが画面を覆い終えてから隠す（先に隠すと、覆うまでの数十ミリ秒だけタスク バーの跡が<br/>
+    /// 背景として見える）。 戻すのは閉じる直前（同じ描画の間）にする（先に戻すと帯が一瞬見える）。
+    /// </remarks>
+    private CaptureTaskbarScope? _taskbarScope;
 
     /// <summary>キャプチャ選択オーバーレイを初期化する。</summary>
     /// <param name="type">キャプチャ種別。</param>
@@ -190,6 +202,19 @@ internal sealed class CaptureOverlay
         // 復帰をフォームのクローズ前に行えるよう、スコープを保持する（破棄は Finish が行う）
         _ownerScope = ownerScope;
 
+        // **タスク バーは撮影の間ずっと隠す**（写すか写さないかだけを設定で選ぶ）。
+        // 隠さないと、半透明（アクリル）のタスク バーが暗転マスクを透かして暗く見え、シェルが前面へ
+        // 戻すと明るくなる（= 明滅。 実測 2026-11-13: 輝度 220 → 174 → 220）。
+        // 写さない設定では撮影の前に隠し、写す設定では撮影の後に隠す（撮影画像に写るかどうかが変わる）。
+        // 隠した反映は 1〜2 フレーム後になるため、撮影・表示の前に消えるまで待つ
+        // （待たないと、その数フレームだけタスク バーが覆われて明滅が残る。 実測 2026-11-13）
+        // 手順は コアの CaptureTaskbarScope が単一所有する（4 UI 版で同じ症状が出たため集約した）
+        if (_settings.HideTaskbar == true)
+        {
+            _taskbarScope = CaptureTaskbarScope.Hide();
+            await Task.Delay(CaptureTaskbarScope.HideSettleDelay).ConfigureAwait(true);
+        }
+
         // 全モニターを包含する 1 枚の画像として取得する（オーナーは撮影から除外済み）
         if (!CaptureScreen(services))
         {
@@ -208,6 +233,9 @@ internal sealed class CaptureOverlay
         finally
         {
             _ownerScope = null;
+            // 例外経路でもタスク バーを戻す（二重呼び出しは無害）
+            _taskbarScope?.Dispose();
+            _taskbarScope = null;
             // 画像はセッションの終了時に破棄する（以降の描画・切り出しは発生しない）
             _screen?.Dispose();
             _screen = null;
@@ -451,6 +479,20 @@ internal sealed class CaptureOverlay
         // 表示直後の 1 フレームは下地色（撮影画像の平均色へ暗転色を重ねた色）だけが見える。
         // 透明（Opacity = 0）にして後から不透明にすると、その切り替えで未描画の面が一瞬白く合成されるため、
         // 透明度は使わず、下地色を最終の見た目に合わせておく（下地の選択は ImageColorMath が単一所有する）
+
+        // **初回の描画より前にハイライトと倍率を確定する**: フォームは最終の位置・大きさで表示するため、
+        // `Shown` まで待つと「全体がマスクされた 1 フレーム」が見える。 また座標変換の倍率が既定値（1.0）の
+        // ままだと、125% の環境ではマスクの穴が実際の位置とずれる（実測 2026-11-13）。
+        var initialScale = MonitorDpi.GetScaleForPoint(
+            s_cursor.TryGetCursorScreenPoint(out var cursor) ? cursor : _screenBounds.TopLeft);
+        if (DpiScaler.IsValidScaling(initialScale))
+        {
+            _scale = initialScale;
+            _selector.SetCoordTransform(CreatePort());
+        }
+
+        ApplyInitialHighlight();
+
         var closed = new TaskCompletionSource();
         form.Shown += (_, _) =>
         {
@@ -489,6 +531,7 @@ internal sealed class CaptureOverlay
             // 他のウィンドウへ切り替わった（非アクティブ化した）場合はキャンセルする
             // （最前面のオーバーレイが残り続けるのを防ぐ）
             form.Deactivate += (_, _) => Cancel();
+
         };
         form.FormClosed += (_, _) => closed.TrySetResult();
 
@@ -618,6 +661,9 @@ internal sealed class CaptureOverlay
         _selector.ClearLoupe();
         var overlay = _overlay;
         _overlay = null;
+        // タスク バーは閉じる直前に戻す（先に戻すと帯が一瞬見える。 閉じるのと同じ描画の間に行う）
+        _taskbarScope?.Dispose();
+        _taskbarScope = null;
         overlay?.Close();
     }
 
@@ -643,6 +689,29 @@ internal sealed class CaptureOverlay
         {
             _selector.RequestRedraw();
         }
+    }
+
+    /// <summary>表示の前に、カーソル下の要素でハイライトを確定する。</summary>
+    /// <remarks>
+    /// <b>なぜ必要か</b>: ハイライトはマウス移動でしか更新しないため、表示直後は<b>全面がマスクされた状態</b>に
+    /// なり、最初の移動でカーソル下のモニター・ウィンドウのマスクが解除される。 これは
+    /// 「一度マスクされた後に明るくなる」= ちらつきとして知覚される（実測 2026-11-13）。<br/>
+    /// <b>対象</b>: ハイライト型（スクリーン選択 / ウィンドウ選択）だけ。 範囲選択はドラッグで矩形を作るため対象外。<br/>
+    /// <b>取得できない場合</b>: カーソル位置が取れない環境では何もしない（全面マスクのまま操作できる）。
+    /// </remarks>
+    private void ApplyInitialHighlight()
+    {
+        if (!CaptureTypeTraits.IsHighlighted(_type) || _highlight.SourceRect is not null)
+        {
+            return;
+        }
+
+        if (!s_cursor.TryGetCursorScreenPoint(out var screenPoint))
+        {
+            return;
+        }
+
+        Highlight(screenPoint);
     }
 
     /// <summary>クライアント座標（物理ピクセル）を画面物理ピクセルの座標へ変換する。</summary>

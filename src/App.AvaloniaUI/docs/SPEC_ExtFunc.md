@@ -66,7 +66,9 @@
 | `ダーク` | 常にダークテーマ |
 | `システム` | OS のダーク / ライト設定に追従（既定値） |
 
-- **反映方式**: `ThemeMode`（`Settings.ThemeMode`）→ `App.RequestedThemeVariant` へ反映。 FluentTheme の DynamicResource により全コントロールの色が自動的に切り替わる
+- **反映方式**: `ThemeMode`（`Settings.ThemeMode`）→ `App.RequestedThemeVariant` へ反映。 FluentAvalonia の DynamicResource により全コントロールの色が自動的に切り替わる
+- **テーマの実装**: **FluentAvalonia の `FluentAvaloniaTheme` と Avalonia 標準の `FluentTheme` を重ねる**（確認ダイアログに Fluent の `FAContentDialog` を使うため。 また FluentAvalonia は `ContextMenu` の見た目を持たず、単独では右クリック メニューが開かない）。 後に置いた `FluentTheme` の色の資源を優先する（逆順ではコンテキスト メニューの下地が透明になる。 実測 2026-11-12）。 アクセント色は 4 UI 版で共通の `#0067C0`（`AppPalette` と同じ）に固定する
+- **コントロールのテンプレート**: ボタンのテンプレートは FluentAvalonia のものと `ContentPresenter` の名前が異なるため、ツールバーなど見た目を上書きするスタイルは `/template/ Border` を対象にする
 - **設定ファイル**: enum は文字列で保存（`"ThemeMode": "Dark"`）
 
 **色の表記**: 同じ「外観設定」で、色選択コントロールの入力欄の表記を選べます。
@@ -105,6 +107,11 @@
 | 表示モード | `Settings.FolderViewModeIndex`（0=特大, 1=大, 2=中） | 1（大） |
 | ソート順 | `Settings.FolderViewSortAscending`（true=昇順, false=降順） | true（昇順） |
 
+- **Delete キー**: 一覧で選んだ画像を確認のうえ**ごみ箱へ移動**する（完全削除しない）。 移動できた場合だけ一覧を読み直す
+- **確認ダイアログ**: Fluent の `FAContentDialog`（タイトル・本文・右下の「はい」/「いいえ」。 既定のボタンは「いいえ」）をオーナーの中央へモーダル表示する（WinUI 3 版の `ContentDialog` と同じ系統）
+- **右クリック メニュー**: 一覧は「コピー」（選択中の画像を等倍でクリップボードへ。 押した位置の画像を選択してから出す）と「削除」（Delete キーと同じ処理）、ステータスバー右のパスは「エクスプローラで表示」
+- **`Ctrl+C`**: 一覧で選んだ画像をクリップボードへコピーする（4 UI 版で共通の `ClipboardImage`（`CF_DIB`）を使う）
+- **保存先パス**: ステータスバー右のパスは**青字 + 下線**で表示し、クリックするとエクスプローラーを開く（ファイル名と通知の間は全角スペース 1 文字分）
 - **保存タイミング**: 表示モード・ソート切替操作のたびに保存（`SaveViewModeSettings`）
 - **復元タイミング**: ページ初期化 / `Loaded` / ナビゲーションで表示されるたび（`IsVisible` 変更時）
 - **復元時の同期**: 復元した表示モード・ソート順を ToggleButton の選択状態（チェック）へ同期する。 同期対象は対応するボタン群のみ（表示モードボタンは Tag=0〜2、ソートボタンは Tag=asc/desc。 他グループには触れない）
@@ -140,6 +147,7 @@
 - **現在の画像の強調**: 現在のキャプチャページに表示中の画像は青枠（`BorderBrush #0078D4`・`BorderThickness 3`）で強調表示する
 - **表示モード**: ツールバーの特大 / 大 / 中 ボタンで切替可能。 選択状態は `Settings.UndoViewModeIndex`（0=特大, 1=大, 2=中、既定 1=大）に保存・復元される。 アイコンサイズはフォルダビューと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する
 - **外部ツール表示**: サムネイルのダブルクリックで一時フォルダへ PNG として保存し、OS の既定アプリ（外部ツール）で開く（Undo / Redo スタックの画像はファイルではなく Bitmap のため）
+- **コピー**: 選んだ画像をクリップボードへコピーする（`Ctrl+C` または右クリックのメニュー「コピー」。 一覧は縮小した画像を持つため、コピーには元画像を使う。 書き込みは 4 UI 版で共通の `ClipboardImage`（`CF_DIB`））
 - **サムネイルの縮小**: コアの `EsReadOnlyBitmap.Resize`（`EsImageScalingMode.WicFant` = 面積平均と同じフィルタ）を使う（フォルダビューがコーデックの縮小デコードを使う理由との比較は §4.2 を参照）
 - **更新タイミング**: ナビゲーションで Undo 一覧を表示するたびに最新の履歴を読み込む（`UndoPage` が `IsVisible` 変更を監視し、保存済み設定の復元と一覧の再構築を行う。 UndoHistory / MainViewModel は DI シングルトンから取得）
 - **表示モードの保存・復元**: 表示モード切替操作のたびに保存（`SaveViewModeSettings`）。 復元はページ表示時（範囲チェック付き・`ViewModeDisplay.ClampIndex`）
@@ -174,7 +182,7 @@
 
 - **Capture 系はホットキーに一本化**: `Capture - スクリーン / ウィンドウ / 範囲選択` は Ctrl ショートカット（Ctrl+Q/W/E）を実装しない。 グローバルホットキー（WM_HOTKEY）がアプリ内外で動作するため、ショートカットの重複を避ける
 
-- **実装**: 全ショートカットは `CapturePage.OnGlobalKeyDown`（`KeyDown` を Tunnel で購読）で一括処理する。 テキスト入力中（ファイル名テンプレート等）はテキスト編集ショートカット（Ctrl+C/V/Z/Y）を優先するため無視する
+- **実装**: 全ショートカットは `CapturePage.OnGlobalKeyDown`（ウィンドウの `KeyDown` を Tunnel で購読）で一括処理する。 **ページ内にフォーカスが無い場合も効かせるため、ページではなくウィンドウ（`TopLevel`）へ登録する**。 ページが表示されている間だけ処理する。 テキスト入力中（ファイル名テンプレート等）はテキスト編集ショートカット（Ctrl+C/V/Z/Y）を優先するため無視するが、**保存（`Ctrl+S`）は入力中でも行う**
 - **メニュー項目への表記**: 各メニュー項目の `InputGesture` に `KeyGesture` を設定し、メニュー展開時に項目の右側へショートカットキーを表示する。 `InputGesture` は表示のみでキー処理は行わない（処理は `OnGlobalKeyDown` またはグローバルホットキーが担当）。 ショートカット未実装の項目（Crop - 自動切り出し 等）には表示しない
 - **Capture 系メニューはホットキー設定を表示**: `Capture - スクリーン / ウィンドウ / 範囲選択` の `InputGesture` は**ホットキー設定**（`SelectScreenHotKey` / `WindowSelectHotKey` / `AreaSelectHotKey`、settings.json の値）を表示する。 設定画面でホットキーを変更するとメニュー表示も即時更新される。 ホットキーが未設定（`Key.None`）の場合は表示しない。 キー操作はグローバルホットキー（WM_HOTKEY）が担当する
 - **Alt アクセラレータは無効**: メニューの Header にアクセラレータ文字（`(_X)`）を含めないため、メニュー展開中の `Alt+S` 等は機能しない（Alt はメニュー展開専用）
@@ -186,11 +194,18 @@
 
 - **無効条件**: 空文字、またはファイル名に使用できない文字（`\ / : * ? " < > |`）を含む
 - **赤枠表示**: バリデーションエラー時はテキストボックスの枠線が赤くなる（`validation-error` クラス）
-- **保存ボタン無効化**: `CanSave` は画像あり（`PreviewImage` 非 null）+ テンプレート有効（`HasValidTemplate`）+ 未保存（`IsSaved` が false）の場合のみ true
-  - 保存が完了すると `IsSaved` が true になり、保存ボタン・メニューの「画像を保存」が無効化される（同一画像の二重保存防止）
+- **保存ボタン無効化**: `CanSave` は画像あり（`PreviewImage` 非 null）+ **初期画像ではない** + テンプレート有効（`HasValidTemplate`）+「**未保存、または保存後にテンプレートが変わった**」（`!IsSaved || HasTemplateChangedSinceSave`）の場合のみ true
+  - 保存が完了すると `IsSaved` が true になり、保存ボタン・メニューの「画像を保存」が無効化される（同一画像の二重保存防止。 灰色表示。 アイコン画像も灰色）
+  - **保存時のオートインクリメントで +1 されただけの状態は「変わっていない」とみなす**（`HasTemplateChangedSinceSave` が保存時の文字列と比較する。 数字を元へ戻した場合・+2 した場合は保存できる）
+  - **起動直後の初期画像（プレースホルダ）は保存できない**（`IsStartupImage`。 利用者の画像ではないため）
+  - ショートカット（`Ctrl+S`）も同じ判定を通る（キー リピートや連打で同じ画像を保存しない）
   - 画像の変更（新規キャプチャ・切り出し・貼り付け・Undo / Redo 復元）で `IsSaved` が false に戻り、再び保存可能になる
+  - 保存後にステータスバーへ出す通知は**青字**（`AppPalette.Announce`）
 - **エラーメッセージ**: `ValidationMessage`（例: 「ファイル名に使用できない文字 ('/') が含まれています。」）
 - **即時反映**: テキスト入力中も含め即時検証・反映され、エラー解消で自動的に通常表示へ戻る
+- **自動保存**: ツールバーの「自動保存」トグル（**保存ボタンの右**。 高さは 4 UI 版で共通の `ToolbarMetrics.AutoSaveHeight` = 22.4 DIP）が有効な間は、画像が変わるたびに自動で保存する（`Settings.AutoSave`。 4 UI 版で共有）。 同名のファイルがある場合は確認せずに中止する（`StatusMessages.AutoSaveSkipped`）
+- **クリップボードへのコピー**: Avalonia の `Clipboard.SetDataObject`（`SetBitmapAsync`）ではなく、**共通基盤の `ClipboardImage`（`CF_DIB`。 下から上の向き）**へ書き込む（Avalonia の実装は上から下の DIB を書き、Paint など一部のアプリが画像として貼り付けできない。 実測 2026-11-12）。 書き込めない場合だけ Avalonia のクリップボードへ委譲する
+- **撮影後のコピー**: 設定「撮影・切り出しの後に画像をクリップボードへコピーする」（`Settings.CopyAfterCapture`）が有効な間は、撮影・切り出しの完了後に画像をクリップボードへ置く（`MainViewModel.CopyAfterEditIfEnabledAsync`）
 - **オートインクリメント**: 保存成功後に、テンプレート文字列の**右端の数値**をインクリメントして次のファイル名を自動生成する（`FileNameTemplate.IncrementRightmostNumber`。 桁数は維持: `screenshot_001.png` → `screenshot_002.png`）。 数値がなければそのまま維持される
 - **入力欄の幅**: 入力した文字列の実測幅に合わせて広がる（最小 100 DIP・左右の余白 24 DIP）。 上限は**ツールバーが折り返さない幅**（ツールバーの幅から自分以外の要素と余白を除いた幅）で、超える分は入力欄の中でスクロールする（アイコン類が 2 段にならない）。 ウィンドウの幅が変わったときも上限を計算し直す
 - **アイコン ボタンの外観**: WinUI 3 の既定のボタンと同じ外観にする（面 + 1 DIP の枠線 + 角丸 4 DIP。 面・枠線・選択中のアクセント色は `AppPalette.ButtonFace` / `ButtonBorder` / `ButtonCheckedFace` が単一所有し、MewUI 版・WinUI 3 版と揃える）。 マウスを重ねると薄いグレー、押している間はさらに濃くなる。 表示モードの `ToggleButton` は選択中にアクセント色で塗り、文字色を反転する（明色は白 / 暗色は黒）
@@ -213,7 +228,7 @@
 - プレースホルダ内でトークンを自由に組み合わせられる（例: `{yyyyMMdd}` → `20260819`、`{HHmm}` → `2352`、`{date}` → `20260819`）
 - 未定義の文字列（例: `{example}`）はトークン置換されず、中括弧が外れてそのまま出力される
 - 日時は保存実行時点の現在日時で置換される（`FileNameTemplate.Generate`。 `now` 引数へ日時を渡すと呼び出し側が時刻を固定できる）
-- ToolTip にはプレースホルダの説明が表示される（`{date}` / `{time}` 等は XAML マークアップ拡張と衝突するためコードビハインドで構築）
+- ToolTip にはプレースホルダの説明が表示される。 文言は `FileNameTemplate.BuildHelpText`（App.Core）が単一所有し（4 UI 版で同じ説明）、`{date}` / `{time}` 等は XAML マークアップ拡張と衝突しないようコードビハインドで設定する
 
 ### 5.2 エスケープ
 
@@ -263,7 +278,7 @@
 
 - **拡大率表示**: `CropView.ZoomChanged` イベントの `e.ZoomPercent` から `MainViewModel.ZoomDisplayText`（例: "120%"）を生成し、ステータスバーがバインディングで表示する。 Fit 中も実効倍率の % を表示する（「自動」表記なし）
 - **ズーム操作ボタンの下地**: ステータスバーの ⊖ / ⊕ / Fit / 拡大率のボタンは通常時の下地を塗らない（`Button.status`。 ホバー・押下は Fluent テーマの既定のまま）
-- **座標表示**: `CapturePage.OnImagePointerMoved` が `CropView.ImageRectViewport()` / `CropView.ClientToSource()`（`ClientToSource` ヘルパー経由）でポインタの対象座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `-`）
+- **座標表示**: `CapturePage.OnImagePointerMoved` が `CropView.ImageRectViewport()` / `CropView.ClientToSource()`（`ClientToSource` ヘルパー経由）でポインタの対象座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `pt: -`）。 **接頭辞（`pt:` / `size:`）と書式は `StatusBarTexts`、幅の基準は `StatusBarMetrics`（App.Core）が単一所有**し、座標と画像サイズは左寄せの固定幅で表示する
 - **通知メッセージ**: 撮影が確定したら `MainWindow.OnCaptureCompleted` が `MainViewModel.StatusMessage` へ「キャプチャしました（W x H）」を設定する。 `MainViewModel.SetPreviewImage` は `StatusMessage` を空にするため、**画像の差し替えより後**に設定する。 文言は `StatusMessages`（App.Core）が単一所有し、切り出し・貼り付け・保存失敗・自動切り出しの通知はコアが設定する。 文字色は他の UI 版と同じ青 `#007ACC`
 - **フライアウト選択肢**: 拡大率ボタンのクリックで表示されるフライアウト（0=自動 + 固定倍率 10〜500% の 13 段階）から選択し、`CropView.ZoomPercent`（`MainViewModel.ZoomPercent`）を設定する（`CapturePage.OnZoomFlyoutItemClick`）
 - **切り出し中のズーム・パン**: 切り出し中は選択オーバーレイがプレビューを覆うため、ホイールは `CropViewControl` が内部でビューポートへ転送する（Ctrl+ホイール = カーソル位置を中心にズーム / 通常ホイール = パン / Shift+ホイール = 横パン）。 ステータスバーの ⊕⊖ ボタン・スライダ・`Ctrl +` / `Ctrl -` は切り出し中も使用できる（選択矩形は対象座標で不変のため維持される）。 スクロールバーはオーバーレイの下になり掴めないため、パンはホイールで行う

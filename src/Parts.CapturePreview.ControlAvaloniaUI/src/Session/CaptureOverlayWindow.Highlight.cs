@@ -1,6 +1,7 @@
 using Avalonia.Input;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.Ui.AvaloniaUI.Interop.Coord;
 using EsUtil.Ui.AvaloniaUI.Interop;
@@ -44,24 +45,58 @@ internal sealed partial class CaptureOverlayWindow
     /// </remarks>
     private CaptureHighlight ApplyHighlight(ElementFinderResults detection)
     {
-        var highlight = _highlight.Update(_captureType, detection, Position.ToEsPointInt());
+        // **画像の原点で変換する**: ハイライトの矩形は画像ローカルの座標であるため、ウィンドウの現在位置ではなく
+        // 撮影した画像の原点を使う。 表示前はウィンドウが最終の位置に無い（`Show` の時点では画面の左上に作られ、
+        // `Position` は後から効く）ため、現在位置で変換すると原点の分だけ穴がずれる（実測 2026-11-13）。
+        var highlight = _highlight.Update(_captureType, detection, CaptureImageBounds.TopLeft);
         // 未検出は null で表す（null が「ハイライトしない」を意味する）
         SelectionOverlay.HighlightSourceRect = highlight.SourceRect is { } rect ? rect.ToAvaloniaRect() : null;
         return highlight;
     }
 
+    /// <summary>表示の前に、カーソル下の要素でハイライトを確定する。</summary>
+    /// <remarks>
+    /// <b>なぜ必要か</b>: ハイライトはポインター移動でしか更新しないため、表示直後は<b>全面がマスクされた状態</b>に
+    /// なり、最初の移動でカーソル下のモニター・ウィンドウのマスクが解除される。 これは
+    /// 「一度マスクされたかに見える」= ちらつきとして知覚される（実測 2026-11-13）。<br/>
+    /// <b>呼ぶ位置</b>: 撮影画像を背景へ設定した後、オーバーレイを画面内へ移す前（画面外・不可視の間）。<br/>
+    /// <b>対象</b>: ハイライト型（スクリーン選択 / ウィンドウ選択）だけ。 範囲選択はドラッグで矩形を作るため対象外。<br/>
+    /// <b>取得できない場合</b>: カーソル位置が取れない環境では何もしない（全面マスクのまま操作できる）。
+    /// </remarks>
+    internal void ApplyInitialHighlight()
+    {
+        if (!CaptureTypeTraits.IsHighlighted(_captureType) || _highlight.SourceRect is not null)
+        {
+            return;
+        }
+
+        if (!s_cursor.TryGetCursorScreenPoint(out var screenPoint))
+        {
+            return;
+        }
+
+        // **画像の原点で変換する**（ApplyHighlight が行う）: 表示前はウィンドウがまだ最終の位置に無いため、
+        // ウィンドウの現在位置で変換すると、ハイライトの穴が原点の分だけずれる（実測 2026-11-13）。
+        ApplyHighlight(CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint));
+        RequestOverlayRender();
+    }
+
+    /// <summary>カーソル位置の取得（表示前のハイライトの初期化に使う。 状態を持たないため共有できる）。</summary>
+    /// <remarks>表示の前に「カーソル下のモニター・ウィンドウ」をハイライトするために使う。</remarks>
+    private static readonly ICursorService s_cursor = new WinCursorService();
+
     /// <summary>対象矩形の中心が含まれるモニタのスケーリング係数を返す（サイズラベルの DisplayScale 表示用）。</summary>
-    /// <param name="sourceRect">対象矩形（= 画面物理 − Position。 ウィンドウローカル物理ピクセル）。</param>
+    /// <param name="sourceRect">対象矩形（= 画面物理 − 画像の原点。 画像ローカル物理ピクセル）。</param>
     /// <returns>矩形中心のモニタのスケーリング係数。 該当なしはオーバーレイのスケーリング（<see cref="_scaling"/>）。</returns>
     /// <remarks>
-    /// 対象矩形の中心に <c>Position</c> を加算して画面物理座標へ戻し、中心を含むモニタを特定する。<br/>
+    /// 対象矩形の中心に画像の原点（撮影した仮想スクリーンの原点）を加算して画面物理座標へ戻し、中心を含むモニタを特定する。<br/>
     /// 「原点の加算」「中心で判定する」「該当なしはフォールバック」という規則はコア（<see cref="MonitorScalingMath"/>）が単一所有する<br/>
     /// （UI ごとに判定点がずれると、同じ矩形で表示倍率が食い違う）。<br/>
     /// モニタ一覧は構築時に 1 回だけ解決したものを再利用する（描画のたびに列挙・配列生成をしない）。
     /// </remarks>
     private double GetMonitorScalingForRect(EsRect sourceRect)
         => MonitorScalingMath.ResolveForSourceRect(
-            sourceRect, Position.ToEsPointInt(), _monitors, _scaling);
+            sourceRect, CaptureImageBounds.TopLeft, _monitors, _scaling);
 
     /// <summary>サイズラベルの対象となる確定矩形（対象座標）を解決する。</summary>
     /// <returns>確定対象の矩形。 対象がない場合は null。</returns>

@@ -1,6 +1,8 @@
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.Feature.Thumbnail;
 using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using EsUtil.SaveEvidence.App.WinUI3.Services;
@@ -10,6 +12,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Windows.Storage;
+using Windows.System;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 
@@ -47,8 +50,13 @@ internal static class FolderViewPage
         viewModel.SelectedViewModeIndex = ViewModeDisplay.ClampIndex(settingsService.Current.FolderViewModeIndex);
         viewModel.IsSortAscending = settingsService.Current.FolderViewSortAscending;
 
-        // 一覧は Undo 一覧と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
-        var list = new ThumbnailControl();
+        // 一覧は Undo 一覧と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う。
+        // 画像と項目数の変化を記録できるようにする（サムネイルが出ない原因をログだけで追えるようにする）
+        var list = new ThumbnailControl
+        {
+            Log = s_logger,
+            LogPrefix = "[Thumbnail]",
+        };
 
         // 一覧の下地は 4 UI 版で同じ色にする（テーマの変更にも追随させる）
         void ApplyListBackground() => list.Background = AppStyles.ListBackground;
@@ -68,6 +76,30 @@ internal static class FolderViewPage
         var folderText = CreateStatusLabel(viewModel.FolderPathText);
         folderText.HorizontalAlignment = HorizontalAlignment.Right;
         folderText.TextTrimming = TextTrimming.CharacterEllipsis;
+        // 保存先フォルダは青字 + 下線で表示し、クリックでエクスプローラーを開く
+        folderText.Foreground = AppStyles.LinkForeground;
+        folderText.TextDecorations = Windows.UI.Text.TextDecorations.Underline;
+        ToolTipService.SetToolTip(folderText, "クリックでエクスプローラーを開く（右クリックでメニュー）");
+        folderText.Tapped += (_, _) => OpenFolderInExplorer();
+
+        // 保存先フォルダをエクスプローラーで開く
+        void OpenFolderInExplorer()
+        {
+            var folderPath = viewModel.FolderPathText;
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            try
+            {
+                FileSystemActions.OpenInExplorer(folderPath);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                s_logger.LogOpenFolderError(ex, folderPath);
+            }
+        }
 
         var modeButtons = new ToggleButton[ViewModeDisplay.Count];
         var sortButtons = new ToggleButton[2];
@@ -235,6 +267,18 @@ internal static class FolderViewPage
             }
         }
 
+        // 右クリックのメニュー: 一覧は「コピー」「削除」、保存先パスは「エクスプローラで表示」
+        // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
+        var copyItem = new MenuFlyoutItem { Text = "コピー" };
+        copyItem.Click += (_, _) => CopySelected();
+        var deleteItem = new MenuFlyoutItem { Text = "削除" };
+        deleteItem.Click += (_, _) => _ = DeleteSelectedAsync();
+        list.ContextFlyout = new MenuFlyout { Items = { copyItem, deleteItem } };
+
+        var openFolderItem = new MenuFlyoutItem { Text = "エクスプローラで表示" };
+        openFolderItem.Click += (_, _) => OpenFolderInExplorer();
+        folderText.ContextFlyout = new MenuFlyout { Items = { openFolderItem } };
+
         list.ScrollChanged += (_, _) => UpdatePriorities();
         list.ItemActivated += (_, e) =>
         {
@@ -283,7 +327,7 @@ internal static class FolderViewPage
 
                 // 高さは一覧が元画像の縦横比から決める（生成後に大きさを変えない）
                 list.Add(
-                    ThumbnailBackground.Placeholder(iconSize),
+                    ThumbnailPlaceholder.Get(iconSize),
                     Path.GetFileName(file),
                     toolTip: file,
                     tag: file);
@@ -323,9 +367,92 @@ internal static class FolderViewPage
                 // 表示前に一覧を構築し、低負荷で生成を始める（キャプチャ ページの操作は妨げない）
                 Rebuild();
                 s_logger.LogThumbnailWarmUp("フォルダビュー", list.ItemCount);
+            },
+            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）。 Ctrl+C はコピーする
+            OnKeyDown: args =>
+            {
+                if (args.Key == VirtualKey.C && IsControlDown())
+                {
+                    args.Handled = true;
+                    CopySelected();
+                    return;
+                }
+
+                if (args.Key != VirtualKey.Delete)
+                {
+                    return;
+                }
+
+                args.Handled = true;
+                _ = DeleteSelectedAsync();
             });
+
+        // 選択中の画像をクリップボードへコピーする
+        void CopySelected()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= builtFiles.Count)
+            {
+                return;
+            }
+
+            var filePath = builtFiles[index];
+
+            // キャプチャ ページのコピーと同じ実装（PNG を WinRT のクリップボードへ置く）を使う。
+            // 一覧はサムネイルしか持たないため、ファイルから等倍で読み込む
+            try
+            {
+                using var image = EsReadOnlyBitmap.Load(filePath);
+                _ = CaptureClipboard.Copy(image);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                s_logger.LogClipboardCopyError(ex, filePath);
+            }
+        }
+
+        // 選択中の画像をごみ箱へ移動する（確認ダイアログあり）
+        async Task DeleteSelectedAsync()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= builtFiles.Count)
+            {
+                return;
+            }
+
+            var filePath = builtFiles[index];
+            if (page.XamlRoot is not { } xamlRoot)
+            {
+                return;
+            }
+
+            var confirmed = await ConfirmDialog.ShowAsync(
+                xamlRoot, "削除の確認", $"「{Path.GetFileName(filePath)}」をごみ箱へ移動しますか？");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            try
+            {
+                FileSystemActions.DeleteToRecycleBin(filePath);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                // 移動できなかったファイルは一覧に残す（原因はログへ残す）
+                s_logger.LogFileDeleteError(ex, filePath);
+                return;
+            }
+
+            Rebuild();
+        }
     }
 
+    /// <summary>Ctrl キーが押されているかどうかを取得する。</summary>
+    /// <returns>押されている場合は true。</returns>
+    private static bool IsControlDown()
+        => (Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+            & Windows.UI.Core.CoreVirtualKeyStates.Down) != 0;
     /// <summary>画像ファイルを名前順で列挙する。</summary>
     /// <param name="folderPath">対象のフォルダ パス。</param>
     /// <param name="isSortAscending">true の場合は昇順。</param>

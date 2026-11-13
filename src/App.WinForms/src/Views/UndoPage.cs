@@ -4,6 +4,7 @@ using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
+using EsUtil.SaveEvidence.App.WinForms.Services;
 using EsUtil.Ui.WinForms.Thumbnail;
 using Microsoft.Extensions.Logging;
 
@@ -107,6 +108,11 @@ internal static class UndoPage
 
         list.Scroll += (_, _) => Reprioritize();
 
+        // 右クリックのメニュー: 選択中の画像をコピーする（Ctrl+C も同じ処理）
+        var copyMenu = new ContextMenuStrip();
+        copyMenu.Items.Add("コピー", null, (_, _) => CopySelected());
+        list.ContextMenuStrip = copyMenu;
+
         viewModel.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(MainViewModel.PreviewImage), StringComparison.Ordinal))
@@ -134,7 +140,34 @@ internal static class UndoPage
                 selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.UndoViewModeIndex);
                 SyncModeButtons();
                 Rebuild(force: false);
+            },
+            // Ctrl+C で選択中の画像をコピーする
+            OnShortcut: keyData =>
+            {
+                if (keyData != (Keys.Control | Keys.C))
+                {
+                    return false;
+                }
+
+                CopySelected();
+                return true;
             });
+
+        // ────────────────────────────────────────────────────────────────
+
+        // 選択中の画像をクリップボードへコピーする。
+        void CopySelected()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= itemSources.Count)
+            {
+                return;
+            }
+
+            // 一覧は表示用に縮小した画像を持つため、コピーには元画像を使う（等倍で貼り付けられる）。
+            // キャプチャ ページのコピーと同じ実装（GDI+ のビットマップを OLE へ複製する）を使う
+            _ = ClipboardImageService.CopyAsync(itemSources[index]);
+        }
 
         // ────────────────────────────────────────────────────────────────
 

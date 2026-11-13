@@ -116,6 +116,9 @@ public sealed partial class App : Application
         Resources["ListBackgroundBrush"] = new SolidColorBrush(ToColor(AppPalette.ListBackground(isDark)));
         Resources["NavItemSelectedBrush"] = new SolidColorBrush(ToColor(AppPalette.NavItemSelected(isDark)));
         Resources["NavSelectionAccentBrush"] = new SolidColorBrush(ToColor(AppPalette.NavItemSelectionAccent(isDark)));
+        Resources["LinkForegroundBrush"] = new SolidColorBrush(ToColor(AppPalette.Link(isDark)));
+        Resources["AnnounceForegroundBrush"] = new SolidColorBrush(ToColor(AppPalette.Announce(isDark)));
+        Resources["DisabledForegroundBrush"] = new SolidColorBrush(ToColor(AppPalette.DisabledForeground(isDark)));
         Resources["ToolbarButtonFaceBrush"] = new SolidColorBrush(ToColor(AppPalette.ButtonFace(isDark)));
         Resources["ToolbarButtonBorderBrush"] = new SolidColorBrush(ToColor(AppPalette.ButtonBorder(isDark)));
         Resources["ToolbarButtonCheckedFaceBrush"] = new SolidColorBrush(ToColor(AppPalette.ButtonCheckedFace(isDark)));

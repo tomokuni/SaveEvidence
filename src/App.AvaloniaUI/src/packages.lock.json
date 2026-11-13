@@ -43,36 +43,36 @@
       },
       "EsUtil.Ui.AvaloniaUI.ColorSelector": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "SfQCGPENzpXvUZiqSVJfusNe60kzLdmSZMdg+Mhu89HhmERsJkyGflRT23DWdI+L3WrdLrldNkqCwPSeNMFVjg==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "fjlpAb3EqAOuR/AsUvwvV5VtQrLtVm+kSnAUF/xGVC7wEeiehPY3RaDbMcAEfaMGhBAaIe1YxpDxjqtEXgcHcA==",
         "dependencies": {
           "Avalonia": "12.1.4",
           "Avalonia.Controls.ColorPicker": "12.1.4",
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Ui.AvaloniaUI.Interop": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "YWQofrJwENKTh1a80F2O/LldYUgehbA6SzukghngMe2bJ+YWFuMvnB0dSZ4JBY/OAiMbahhMdxWbRHeS+TcQdg==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "qqM43OvTYVMqj3+s5tzaVhlpVwqHpIDt3btCyJFOlDEL6VsKPbxdguJ1bVZ0YzabdVNql3LQcFMxu9Cb7A3ggg==",
         "dependencies": {
           "Avalonia": "12.1.4",
-          "EsUtil.Platform.Core": "0.6.2"
+          "EsUtil.Platform.Core": "0.6.3"
         }
       },
       "EsUtil.Ui.AvaloniaUI.Thumbnail": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "HDYDsMCEL7G0RTXMWYnm0xfCsAi2utCgBb8Q5/uFNUeRR/oYnkjgbUw06OcKr2lLLPDfX0IaMjMBA3pvkNunkQ==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "mGJsICX5N01djlMf8EvfzuByXtTik6jupABO/HqFPDHcaKTE1jpvpHsIY6GoGIuwfemDzu+Gys3jR2XsHMBrmQ==",
         "dependencies": {
           "Avalonia": "12.1.4",
-          "EsUtil.Feature.Thumbnail.Core": "0.6.2",
-          "EsUtil.Platform.Core": "0.6.2",
-          "EsUtil.Ui.AvaloniaUI.Interop": "0.6.2",
+          "EsUtil.Feature.Thumbnail.Core": "0.6.3",
+          "EsUtil.Platform.Core": "0.6.3",
+          "EsUtil.Ui.AvaloniaUI.Interop": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
@@ -336,35 +336,38 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
-          "EsUtil.Platform.Core": "[0.6.2, )",
-          "Parts.CapturePreview.Core": "[0.1.5, )",
-          "Parts.LineDetection": "[0.1.5, )"
+          "EsUtil.Platform.Core": "[0.6.3, )",
+          "Parts.CapturePreview.Core": "[0.2.0, )",
+          "Parts.LineDetection": "[0.2.0, )",
+          "Serilog": "[4.4.0, )",
+          "Serilog.Extensions.Logging": "[10.0.0, )",
+          "Serilog.Sinks.File": "[7.0.0, )"
         }
       },
       "parts.capturepreview.controlavaloniaui": {
         "type": "Project",
         "dependencies": {
           "Avalonia.Desktop": "[12.1.5, )",
-          "EsUtil.Ui.AvaloniaUI.Interop": "[0.6.2, )",
-          "EsUtil.Ui.AvaloniaUI.Loupe": "[0.6.2, )",
-          "EsUtil.Ui.AvaloniaUI.Marquee": "[0.6.2, )",
+          "EsUtil.Ui.AvaloniaUI.Interop": "[0.6.3, )",
+          "EsUtil.Ui.AvaloniaUI.Loupe": "[0.6.3, )",
+          "EsUtil.Ui.AvaloniaUI.Marquee": "[0.6.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
-          "Parts.CapturePreview.Core": "[0.1.5, )"
+          "Parts.CapturePreview.Core": "[0.2.0, )"
         }
       },
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.6.2, )",
-          "EsUtil.Feature.Marquee.Core": "[0.6.2, )",
-          "EsUtil.Platform.Core": "[0.6.2, )",
+          "EsUtil.Feature.Loupe.Core": "[0.6.3, )",
+          "EsUtil.Feature.Marquee.Core": "[0.6.3, )",
+          "EsUtil.Platform.Core": "[0.6.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )"
         }
       },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.6.2, )",
+          "EsUtil.Platform.Core": "[0.6.3, )",
           "OpenCvSharp5": "[5.0.0.20261107, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261107, )"
         }
@@ -397,63 +400,63 @@
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "IOgjwnFEIC9m6qturBruA9BGbPI8qLfTaFwKrePLHwQ/nw741GTlrAZg3obkLJfhSiUZ6Fe0O1zX7hb/21Fp8A==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "yNyzGl5H8g0WwN8LjwfmrlxGPOVGY9Buqt+MN59gGcYPjdmectA/+PU6OMXqC4K2Y2LKPxg8g4DwEpj0nTJ5LQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "Cb4D1nxcKB4wpLfD4e5OZcKdhmewGseLucZdhdXqMqTQBE1gNChceBIf6BznzkQIpyAilSXC4vLWQE0OSkI75w==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "fj7KPX8oSCc9PBTLU6te138MDFcVP2TuEqz7QoD6botAhQDe70R/K1qqWIrUsf1C3D1mATsq+2hUm9HbkMq0LQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Thumbnail.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "hMzzao8awBMgGbCfjoN7sz/KwtPKq0/RyfSq94oO88iv3xxjSv7dccpUkRntfgdSN8GscQu6W7pPYF9/7Q/IOA==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "h5rrPwQXyYHNeTcREa5png7bIm7rqt3pGg3BuHwNAZb1d3Np5vbo4/YcmTjqkeHqAEbUtIvqC4d7OAEV1jWXDA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "u08Uu8OXNBfUF/o6ESHJRuwmvPONY9gS5g0rFN1myZq73Wm4756W6FS5dmTUyTI3CLeQ9wrRm6BwZJSSlqDQkg=="
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "5jck282pVjqsCvoA0VIAARbsJ/tW/vdbTtpJPzF0qp1u4p0RrOW/6zCiGaVdeipGEYSublR/xhBsBQ8c+kVnZg=="
       },
       "EsUtil.Ui.AvaloniaUI.Loupe": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "xcAok0GoRBiORkDeAN33t7WTMrCzN2c+GWSYsELY4aYGbKhs7/PfsGaTwtHFcrOUI134zSP9V0Z+5dEg+AtXpw==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "9n0s+PeSlaC64roygMKmCr56X+vFOW6LtJ/BqxXHy5+0/0d1ZeyXAb+67F1Gkgo5F5inPntJS6VDV7h+NMeK8w==",
         "dependencies": {
           "Avalonia": "12.1.4",
-          "EsUtil.Feature.Loupe.Core": "0.6.2",
-          "EsUtil.Platform.Core": "0.6.2",
-          "EsUtil.Ui.AvaloniaUI.Interop": "0.6.2",
+          "EsUtil.Feature.Loupe.Core": "0.6.3",
+          "EsUtil.Platform.Core": "0.6.3",
+          "EsUtil.Ui.AvaloniaUI.Interop": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Ui.AvaloniaUI.Marquee": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "hXAkJs842Qor6mRGtb2zaX2lDNrnfJMIum5tR4p6AdtCuydntCCweWSwvOIPqNsZzNX8FQWBoDfxBwXG/iPx3w==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "T3cexGNdJzuut/daHb0M76AE+74pj3vPUMUPJn8VWzCBIauTUbK9Dfgp2S/jx0noFl1eYG2z2Bn7hEXJl0dXeQ==",
         "dependencies": {
           "Avalonia": "12.1.4",
-          "EsUtil.Feature.Marquee.Core": "0.6.2",
-          "EsUtil.Platform.Core": "0.6.2",
-          "EsUtil.Ui.AvaloniaUI.Interop": "0.6.2",
+          "EsUtil.Feature.Marquee.Core": "0.6.3",
+          "EsUtil.Platform.Core": "0.6.3",
+          "EsUtil.Ui.AvaloniaUI.Interop": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },

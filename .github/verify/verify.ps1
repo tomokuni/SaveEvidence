@@ -381,7 +381,7 @@ else {
 }
 
 
-# 2e) 配布物の名前（`<製品名>.<UI名>.exe` / `<製品名>.<UI名>.zip`）
+# 2e) 配布物の名前（`<製品名>.<UI名>.exe` / `<製品名>.<UI名>.v<版数>.zip`）
 #     exe と zip の名前が UI ごとに揃っていないと、利用者がどれを展開すべきか分からなくなる
 #     （実測 2026-10-28: 1 つの UI だけ `<製品名>.zip` で、他は `<製品名>.<UI名>.zip` だった）。
 #     規則の所有者は .github/命名規約.md「アセンブリ名」。
@@ -395,11 +395,11 @@ foreach ($ui in @($releaseConfig.uis)) {
 
     # 1 つの UI が複数の形態（AOT / 自己完結 Single など）を配布する場合は `outputs` を持つ。
     # 形態名は出力フォルダーの末尾（例: publish/winui3-win-x64-single → single）から取る。
-    # 既定の形態だけは形態名を省いた `<製品名>.<UI名>.<版数>.zip` を使える（利用者が最初に選ぶ 1 つ）。
+    # 既定の形態だけは形態名を省いた `<製品名>.<UI名>.v<版数>.zip` を使える（利用者が最初に選ぶ 1 つ）。
     $outputs = if ($ui.outputs) { @($ui.outputs) } else { @([pscustomobject]@{ output = $ui.output; asset = $ui.asset }) }
     foreach ($output in $outputs) {
         $shape = ($output.output -split '-')[-1]
-        $allowed = @("$product.$($ui.name).{version}.zip", "$product.$($ui.name).$shape.{version}.zip")
+        $allowed = @("$product.$($ui.name).v{version}.zip", "$product.$($ui.name).$shape.v{version}.zip")
         if ($allowed -notcontains $output.asset) {
             $distIssues.Add(("{0}: asset が {1} です（{2} にする）" -f $ui.name, $output.asset, ($allowed -join " または ")))
         }

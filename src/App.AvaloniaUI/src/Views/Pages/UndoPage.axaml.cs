@@ -1,10 +1,14 @@
 using System.Diagnostics;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Threading;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using EsUtil.Ui.AvaloniaUI.Thumbnail;
@@ -47,6 +51,12 @@ public sealed partial class UndoPage : ViewModePageBase
     /// <summary>一覧へ設定した表示用の射影（アイテムを差し替えたときに解放する）。</summary>
     private readonly List<EsBitmapAdapter> _adapters = [];
 
+    /// <summary>一覧に並べた元画像（一覧の位置と対応する。 コピーに使う）。</summary>
+    private readonly List<EsReadOnlyBitmap> _sources = [];
+
+    /// <summary>Ctrl+C を登録したウィンドウ（未添付の間は null）。</summary>
+    private TopLevel? _shortcutTopLevel;
+
     /// <summary>最後に優先度を付けた可視領域の上端（変わっていなければ付け直さない）。</summary>
     private double _lastViewportTop = double.NaN;
 
@@ -81,6 +91,9 @@ public sealed partial class UndoPage : ViewModePageBase
         UndoListBox.ScrollChanged += (_, _) => UpdateThumbnailPriorities();
         UndoListBox.ItemActivated += OnItemActivated;
 
+        // 右クリックのメニュー: 選択中の画像をコピーする（Ctrl+C も同じ処理）
+        UndoListBox.ContextMenu = CreateListMenu();
+
         InitializeViewModePage(
             Program.SettingsService,
             Program.ServiceProvider.GetRequiredService<MainViewModel>(),
@@ -95,6 +108,35 @@ public sealed partial class UndoPage : ViewModePageBase
                 RebuildList();
             }
         };
+    }
+
+    /// <summary>ビジュアル ツリーへ添付されたときに Ctrl+C をウィンドウへ登録する。</summary>
+    /// <param name="e">添付の情報。</param>
+    /// <remarks>
+    /// 一覧にフォーカスが無い場合も効かせるため、ページではなく <see cref="TopLevel"/>（ウィンドウ）へ<br/>
+    /// トンネル段階で登録する。 表示されていない間は <see cref="OnKeyDown"/> が何もしない。
+    /// </remarks>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        DetachShortcutHandler();
+        _shortcutTopLevel = TopLevel.GetTopLevel(this);
+        _shortcutTopLevel?.AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    /// <summary>ビジュアル ツリーから外れたときに Ctrl+C の登録を解除する。</summary>
+    /// <param name="e">解除の情報。</param>
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        DetachShortcutHandler();
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    /// <summary>Ctrl+C の登録を解除する。</summary>
+    private void DetachShortcutHandler()
+    {
+        _shortcutTopLevel?.RemoveHandler(KeyDownEvent, OnKeyDown);
+        _shortcutTopLevel = null;
     }
 
     /// <summary>ページの表示状態に合わせて表示用の射影の生成の負荷を切り替える。</summary>
@@ -178,6 +220,7 @@ public sealed partial class UndoPage : ViewModePageBase
         // 前回の生成要求を破棄する（別の寸法・別の一覧向けの生成を残さない）
         _thumbnailScheduler.Clear();
         _thumbnailRequests.Clear();
+        _sources.Clear();
         _lastViewportTop = double.NaN;
         _lastViewportBottom = double.NaN;
 
@@ -185,7 +228,7 @@ public sealed partial class UndoPage : ViewModePageBase
         _thumbnailScheduler.IsActive = IsVisible;
 
         var placeholder = ThumbnailPlaceholder.Get(size);
-        var sources = new List<EsReadOnlyBitmap>();
+        var sources = _sources;
 
         // 新しい一覧を先に組み、旧一覧の射影は表示から外れた後に解放する
         // （表示が旧サムネイルを参照している間に破棄すると、描画が破棄済みバッファへ触れて例外になる）。
@@ -344,6 +387,54 @@ public sealed partial class UndoPage : ViewModePageBase
         {
             // 外部ツールで開けなくてもユーザー操作を妨げない
         }
+    }
+
+    /// <summary>一覧の右クリック メニュー（コピー）を作る。</summary>
+    /// <returns>右クリックで表示するメニュー。</returns>
+    /// <remarks>項目の可否は開くたびに評価する（メニューは 1 度だけ作り、表示のたびに作り直さない）。</remarks>
+    private ContextMenu CreateListMenu()
+    {
+        var copy = new MenuItem { Header = "コピー" };
+        copy.Click += (_, _) => CopySelected();
+
+        var menu = new ContextMenu { Items = { copy } };
+        menu.Opening += (_, _) => copy.IsEnabled = SelectedSource() is not null;
+        return menu;
+    }
+
+    /// <summary>選択中の画像をクリップボードへコピーする。</summary>
+    /// <remarks>
+    /// 一覧は表示用の射影（縮小済み）を保持するため、コピーにはタグの元画像を使う（等倍で貼り付けられる）。<br/>
+    /// 書き込みは 4 UI 版で共通の <see cref="ClipboardImage"/>（<c>CF_DIB</c>）が担う。
+    /// </remarks>
+    private void CopySelected()
+    {
+        if (SelectedSource() is not { } source) return;
+        if (TopLevel.GetTopLevel(this)?.TryGetPlatformHandle()?.Handle is not { } handle || handle == IntPtr.Zero) return;
+
+        if (!ClipboardImage.TryCopy(source, handle))
+        {
+            s_logger.LogClipboardCopyUnavailable();
+        }
+    }
+
+    /// <summary>選択中の項目の元画像を取得する。</summary>
+    /// <returns>選択中の元画像。 未選択の場合は null。</returns>
+    private EsReadOnlyBitmap? SelectedSource()
+    {
+        var index = UndoListBox.SelectedIndex;
+        return index >= 0 && index < _sources.Count ? _sources[index] : null;
+    }
+
+    /// <summary>Ctrl+C で選択中の画像をコピーする。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">キーイベント。</param>
+    private void OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (!IsEffectivelyVisible || (e.KeyModifiers & KeyModifiers.Control) == 0 || e.Key != Key.C) return;
+
+        e.Handled = true;
+        CopySelected();
     }
 }
 

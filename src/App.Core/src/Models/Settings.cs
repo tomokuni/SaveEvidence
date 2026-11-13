@@ -105,6 +105,22 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private StartupPreviewMode _startupPreview = StartupPreviewMode.Gradient;
 
+    /// <summary>自動保存が有効かどうかを取得または設定する。</summary>
+    /// <remarks>
+    /// 有効な場合、画像が変わると自動で保存する（4 つの UI 版で共有する）。<br/>
+    /// 初期画像（起動直後のプレースホルダ）と保存できない状態では保存しない。
+    /// </remarks>
+    [ObservableProperty]
+    private bool _autoSave;
+
+    /// <summary>撮影・切り出しの後に画像をクリップボードへコピーするかどうかを取得または設定する。</summary>
+    /// <remarks>
+    /// 有効な場合、撮影（スクリーン / ウィンドウ / 領域選択）と切り出しの確定後に自動でコピーする<br/>
+    /// （4 つの UI 版で共有する。 既定は無効）。
+    /// </remarks>
+    [ObservableProperty]
+    private bool _copyAfterCapture;
+
     /// <summary>キャプチャ時（SnipOverlayWindow）の選択枠境界線色を取得または設定する。</summary>
     /// <remarks>色と不透明度を統合した <c>#AARRGGBB</c> 形式（デフォルト: DarkGray = <c>#FFA9A9A9</c>）。</remarks>
     [ObservableProperty]
@@ -289,6 +305,15 @@ public sealed partial class Settings : ObservableObject
     /// <remarks>デフォルトは true（設定画面の現在値）。</remarks>
     [ObservableProperty]
     private bool _hideMainWindowOnCapture = true;
+
+    /// <summary>キャプチャ時にタスク バーを写さない（隠す）かどうかを取得または設定する。</summary>
+    /// <remarks>
+    /// デフォルトは false（タスク バーを写す）。 true にすると撮影画像からタスク バーが消える。<br/>
+    /// false の場合はタスク バーを写したまま、オーバーレイの領域からタスク バーの矩形を除いて覆わない<br/>
+    /// （覆うと半透明のタスク バーが暗転マスクを透かして明滅して見えるため）。
+    /// </remarks>
+    [ObservableProperty]
+    private bool _hideTaskbarOnCapture;
 
     /// <summary>外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・ラベル）をデフォルト値へ戻す。</summary>
     /// <remarks>

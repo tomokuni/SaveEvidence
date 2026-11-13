@@ -2,8 +2,10 @@ using EsUtil.Feature.Thumbnail;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.App.Core.Models;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
+using EsUtil.SaveEvidence.App.WinForms.Services;
 using EsUtil.Ui.WinForms.Thumbnail;
 using Microsoft.Extensions.Logging;
 
@@ -41,6 +43,9 @@ internal static class FolderViewPage
             ex => s_logger.LogThumbnailGenerateError(ex), idleInterval: TimeSpan.FromMilliseconds(100));
         var requests = new List<(int Index, ThumbnailScheduler.ThumbnailRequest Request)>();
 
+        // 一覧に並べたファイルのパス（一覧の位置と対応する。 選択項目の削除に使う）
+        var currentFiles = new List<string>();
+
         // 直前の組み立ての条件（同じ条件では組み直さない）。
         string? builtKey = null;
         var scanGeneration = 0;
@@ -54,7 +59,7 @@ internal static class FolderViewPage
         var countLabel = UiFactory.CreateStatusLabel(0, "一覧の件数");
         var modeLabel = UiFactory.CreateStatusLabel(0, "表示モード");
         var sortLabel = UiFactory.CreateStatusLabel(0, "並べ替え");
-        var folderLabel = UiFactory.CreateStatusLabel(0, "一覧しているフォルダ");
+        var folderLabel = UiFactory.CreateStatusLink("クリックでエクスプローラーを開く");
 
         var statusBar = UiFactory.CreateStatusBar();
         var statusFlow = new FlowLayoutPanel
@@ -115,6 +120,39 @@ internal static class FolderViewPage
 
         list.Scroll += (_, _) => Reprioritize();
 
+        // ステータス バーのパス（青字 + 下線）のクリックでエクスプローラーを開く
+        folderLabel.LinkClicked += (_, _) => OpenFolderInExplorer();
+
+        // 右クリックのメニュー: 一覧は「コピー」「削除」、保存先パスは「エクスプローラで表示」
+        // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
+        var deleteMenu = new ContextMenuStrip();
+        deleteMenu.Items.Add("コピー", null, (_, _) => CopySelected());
+        deleteMenu.Items.Add("削除", null, (_, _) => DeleteSelected());
+        list.ContextMenuStrip = deleteMenu;
+
+        var openFolderMenu = new ContextMenuStrip();
+        openFolderMenu.Items.Add("エクスプローラで表示", null, (_, _) => OpenFolderInExplorer());
+        folderLabel.ContextMenuStrip = openFolderMenu;
+
+        // 保存先フォルダをエクスプローラーで開く
+        void OpenFolderInExplorer()
+        {
+            var folderPath = folderView.FolderPathText;
+            if (string.IsNullOrEmpty(folderPath))
+            {
+                return;
+            }
+
+            try
+            {
+                FileSystemActions.OpenInExplorer(folderPath);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                s_logger.LogOpenFolderError(ex, folderPath);
+            }
+        }
+
         ApplyAppearance();
         SyncSortButtons();
 
@@ -135,6 +173,23 @@ internal static class FolderViewPage
                 selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.FolderViewModeIndex);
                 SyncModeButtons();
                 Rebuild(force: false);
+            },
+            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）。 Ctrl+C はコピーする
+            OnShortcut: keyData =>
+            {
+                if (keyData == (Keys.Control | Keys.C))
+                {
+                    CopySelected();
+                    return true;
+                }
+
+                if ((keyData & Keys.KeyCode) != Keys.Delete)
+                {
+                    return false;
+                }
+
+                DeleteSelected();
+                return true;
             });
 
         // ────────────────────────────────────────────────────────────────
@@ -289,6 +344,7 @@ internal static class FolderViewPage
             if (files.Count == 0)
             {
                 list.ClearItems();
+                currentFiles.Clear();
                 countLabel.Text = ViewModeDisplay.GetItemCountText(0);
                 folderView.ItemCount = 0;
                 return;
@@ -296,6 +352,8 @@ internal static class FolderViewPage
 
             list.ClearItems();
             list.ImageWidth = iconSize;
+            currentFiles.Clear();
+            currentFiles.AddRange(files);
             foreach (var file in files)
             {
                 list.Add(null, Path.GetFileName(file), toolTip: file, tag: file);
@@ -336,6 +394,71 @@ internal static class FolderViewPage
                     bounds.Top, bounds.Bottom, 0, list.ClientSize.Height, i);
                 _ = scheduler.Reprioritize(request, priority);
             }
+        }
+
+        // 選択中の画像をクリップボードへコピーする。
+        void CopySelected()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= currentFiles.Count)
+            {
+                return;
+            }
+
+            var filePath = currentFiles[index];
+
+            // キャプチャ ページのコピーと同じ実装（GDI+ のビットマップを OLE へ複製する）を使う。
+            // 一覧はサムネイルしか持たないため、ファイルから等倍で読み込む
+            try
+            {
+                using var image = EsReadOnlyBitmap.Load(filePath);
+                _ = ClipboardImageService.CopyAsync(image);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                s_logger.LogClipboardCopyError(ex, filePath);
+            }
+        }
+
+        // 選択中の画像をごみ箱へ移動する（確認ダイアログあり）。
+        void DeleteSelected()
+        {
+            var index = list.SelectedIndex;
+            if (index < 0 || index >= currentFiles.Count)
+            {
+                return;
+            }
+
+            var filePath = currentFiles[index];
+            if (list.FindForm() is not { } form)
+            {
+                return;
+            }
+
+            var answer = MessageBox.Show(
+                form,
+                $"「{Path.GetFileName(filePath)}」をごみ箱へ移動しますか？",
+                "削除の確認",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question,
+                MessageBoxDefaultButton.Button2);
+            if (answer != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                FileSystemActions.DeleteToRecycleBin(filePath);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                // 移動できなかったファイルは一覧に残す（原因はログへ残す）
+                s_logger.LogFileDeleteError(ex, filePath);
+                return;
+            }
+
+            Rebuild(force: true);
         }
 
         // フォルダ内の画像ファイルを列挙する。

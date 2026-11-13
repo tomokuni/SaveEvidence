@@ -33,6 +33,7 @@ public static class CaptureSettingsMerge
         return baseline with
         {
             HideOwnerWindow = input.HideOwnerWindow ?? baseline.HideOwnerWindow,
+            HideTaskbar = input.HideTaskbar ?? baseline.HideTaskbar,
             MinSelectionSize = input.MinSelectionSize ?? baseline.MinSelectionSize,
             BorderColor = input.BorderColor ?? baseline.BorderColor,
             BorderThickness = input.BorderThickness ?? baseline.BorderThickness,

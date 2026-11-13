@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core;
+using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
@@ -120,9 +121,15 @@ internal static class CapturePage
         var zoomInButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomIn, "拡大", () => crop.ZoomIn()));
         var zoomFitButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomFit, "ウィンドウに合わせる", () => crop.ZoomFit()));
 
-        var pointerLabel = UiFactory.CreateStatusLabel(70, "カーソル位置（画像ピクセル）");
-        var sizeLabel = UiFactory.CreateStatusLabel(80, "プレビュー画像のサイズ");
-        var saveStateLabel = UiFactory.CreateStatusLabel(54, "保存済み / 未保存");
+        var pointerLabel = UiFactory.CreateStatusLabel(0, "カーソル位置（画像ピクセル）");
+        pointerLabel.AutoSize = false;
+        // 文字は左寄せ（幅は基準の文字列 + 「W」。 値が基準より短いときは余りが右側に出る）
+        pointerLabel.TextAlign = ContentAlignment.MiddleLeft;
+        var sizeLabel = UiFactory.CreateStatusLabel(0, "プレビュー画像のサイズ");
+        sizeLabel.AutoSize = false;
+        sizeLabel.TextAlign = ContentAlignment.MiddleLeft;
+        // 幅は「pt: 8888, 8888」「size: 8888 x 8888」+「W」をステータス バーの文字で測って決める（DIP。 表示のたびに DPI で拡大する）
+        var statusFieldWidths = UiFactory.ResolveStatusFieldWidths();
         var savedFileLabel = UiFactory.CreateStatusLabel(0, "直前に保存したファイル名");
         var messageLabel = UiFactory.CreateStatusLabel(0);
         messageLabel.ForeColor = AppStyles.Announce;
@@ -136,7 +143,26 @@ internal static class CapturePage
             Margin = new Padding(0),
             Padding = new Padding(0),
         };
-        statusFlow.Controls.AddRange([pointerLabel, sizeLabel, saveStateLabel, savedFileLabel, messageLabel]);
+        // ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する。
+        // 空白のラベルを置くとラベルの余白まで加わり、全角 1 文字より広くなる）
+        var nameAndMessage = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Margin = new Padding(0),
+            Padding = new Padding(0),
+        };
+        var nameMessageGap = new Panel
+        {
+            Width = DpiScaler.ScaleToPixel(
+                StatusBarMetrics.NameMessageGapWidth, DpiScaler.ToScaling(crop.DeviceDpi)),
+            Height = UiFactory.StatusBarContentHeight,
+            Margin = new Padding(0),
+            BackColor = Color.Transparent,
+        };
+        nameAndMessage.Controls.AddRange([savedFileLabel, nameMessageGap, messageLabel]);
+        statusFlow.Controls.AddRange([pointerLabel, sizeLabel, nameAndMessage]);
 
         var zoomPanel = new FlowLayoutPanel
         {
@@ -163,7 +189,7 @@ internal static class CapturePage
             Height = 24,
             Margin = new Padding(3, 3, 3, 3),
         };
-        UiFactory.AttachToolTip(templateBox, "ファイル名テンプレート（例: screenshot_007_{date}-{time}.png）");
+        UiFactory.AttachToolTip(templateBox, FileNameTemplate.BuildHelpText());
         templateBox.TextChanged += (_, _) => viewModel.FileNameTemplateText = templateBox.Text;
 
         var menuButton = new ToolButton(AppIcon.Menu, "メニュー");
@@ -172,7 +198,24 @@ internal static class CapturePage
         toolbar.Controls.Add(menuButton);
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(templateBox);
-        toolbar.Controls.Add(UiFactory.CreateToolButton(AppIcon.Save, "保存", SaveImage, isBorderless: true));
+        var saveButton = UiFactory.CreateToolButton(AppIcon.Save, "保存", SaveImage, isBorderless: true);
+        toolbar.Controls.Add(saveButton);
+
+        // 自動保存のトグル（保存ボタンの右。 有効な間は画像が変わるたびに保存する）。
+        // 選択状態は面の色で表すため、枠なしにせず既定のツールバー ボタンとして描く
+        var autoSaveButton = UiFactory.CreateToolButton(
+            null, "画像が変わったら自動で保存する", () => { }, "自動保存");
+        autoSaveButton.Click += (_, _) => ToggleAutoSave();
+        autoSaveButton.IsSelected = viewModel.AutoSave;
+        // 高さは 4 UI 版で揃える（ToolbarMetrics.AutoSaveHeight。 端数は物理ピクセルへ丸める）。
+        // 文字が縦に潰れないようフォントは小さくし、GDI+ の描画（UseCompatibleTextRendering）を使う
+        autoSaveButton.Height = DpiScaler.ScaleToPixel(ToolbarMetrics.AutoSaveHeight, DpiScaler.ToScaling(crop.DeviceDpi));
+        autoSaveButton.Font = new Font(autoSaveButton.Font.FontFamily, 8F);
+        autoSaveButton.Padding = Padding.Empty;
+        autoSaveButton.TextAlign = ContentAlignment.MiddleCenter;
+        autoSaveButton.UseCompatibleTextRendering = true;
+        toolbar.Controls.Add(autoSaveButton);
+
         toolbar.Controls.Add(UiFactory.CreateSeparator());
         toolbar.Controls.Add(UiFactory.CreateToolButton(
             AppIcon.ScreenSelect, "スクリーン選択で撮影", () => StartCapture(CaptureType.ScreenSelect), isBorderless: true));
@@ -219,6 +262,7 @@ internal static class CapturePage
         // 表示のたびに作って破棄すると、WinForms のメニュー フィルターが破棄済みのメニューを参照し、
         // ウィンドウの非アクティブ化の際に ObjectDisposedException で落ちる（実測）。
         // 破棄はページの破棄に合わせる
+        ToolStripMenuItem? saveMenuItem = null;
         var menu = CreateMenu();
         root.Disposed += (_, _) =>
         {
@@ -259,6 +303,14 @@ internal static class CapturePage
                 ApplyAutoCropRects();
             }
 
+            // 保存後のインクリメント等、ViewModel 側で変わったテンプレートを入力欄へ戻す
+            // （戻さないと、次に入力した文字列で古い値が上書きされ、番号が戻る）
+            if (e.PropertyName is nameof(MainViewModel.FileNameTemplateText)
+                && !string.Equals(templateBox.Text, viewModel.FileNameTemplateText, StringComparison.Ordinal))
+            {
+                templateBox.Text = viewModel.FileNameTemplateText;
+            }
+
             UpdateStatus();
         };
 
@@ -282,6 +334,22 @@ internal static class CapturePage
             statusFlow.BackColor = pageBackground;
             zoomPanel.BackColor = pageBackground;
             root.BackColor = pageBackground;
+            // ファイル名と通知の間の空きは DPI で物理ピクセルが変わるため、表示のたびに合わせ直す
+            var statusScaling = DpiScaler.ToScaling(statusBar.DeviceDpi);
+            nameMessageGap.Width = DpiScaler.ScaleToPixel(StatusBarMetrics.NameMessageGapWidth, statusScaling);
+            // 幅 = 基準の文字列の推奨幅 + 「W」（規則は StatusBarMetrics が単一所有する。
+            // 実測は TextRenderer が物理ピクセルで返す）。
+            // 余白（Margin・Padding）は 0 にする（足すと「W」より広くなる）
+            pointerLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.Position));
+            pointerLabel.Margin = new Padding(0);
+            pointerLabel.Padding = new Padding(0);
+            sizeLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.ImageSize));
+            sizeLabel.Margin = new Padding(0);
+            sizeLabel.Padding = new Padding(0);
+            // 空きは幅に含めてあるため、次の項目の左余白も 0 にする
+            // （加わると空きが「W」より広くなる）。
+            // 上下の余白は中央揃えのため残す（0 にすると文字が上へずれる）
+            UiFactory.SetStatusLabelSideMargins(savedFileLabel, 0, 6);
             // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
             canvas.BackColor = AppStyles.ImageAreaBackground;
             templateBox.ForeColor = AppStyles.Foreground;
@@ -302,7 +370,7 @@ internal static class CapturePage
             crop.SizeLabelOverrideProvider = () =>
                 CropLabelTexts.ResolveSizeLabel(crop.HasSelection, crop.SelectionSourceRect, crop.ZoomPercent);
 
-            foreach (var label in new[] { pointerLabel, sizeLabel, saveStateLabel, savedFileLabel, messageLabel, zoomText })
+            foreach (var label in new[] { pointerLabel, sizeLabel, savedFileLabel, messageLabel, zoomText })
             {
                 label.ForeColor = AppStyles.Foreground;
             }
@@ -352,9 +420,23 @@ internal static class CapturePage
         {
             pointerLabel.Text = viewModel.PointerDisplayText;
             sizeLabel.Text = viewModel.ImageSizeDisplayText;
-            saveStateLabel.Text = viewModel.SaveStatusText;
             savedFileLabel.Text = viewModel.SavedFileName;
             messageLabel.Text = viewModel.StatusMessage;
+
+            // 保存できない間（未変更・初期画像・テンプレート無効）はボタンとメニューを無効にする（灰色表示）
+            var canSave = viewModel.CanSave;
+            saveButton.Enabled = canSave;
+            if (saveMenuItem is not null)
+            {
+                saveMenuItem.Enabled = canSave;
+            }
+        }
+
+        // 自動保存の有効・無効を切り替える。
+        void ToggleAutoSave()
+        {
+            viewModel.AutoSave = !viewModel.AutoSave;
+            autoSaveButton.IsSelected = viewModel.AutoSave;
         }
 
         // 撮影を開始する。
@@ -472,7 +554,7 @@ internal static class CapturePage
                 source.X < 0 || source.Y < 0 ||
                 source.X >= image.Size.Width || source.Y >= image.Size.Height)
             {
-                viewModel.PointerDisplayText = "-";
+                viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
                 UpdateStatus();
                 if (viewModel.IsAutoCropActive)
                 {
@@ -483,8 +565,8 @@ internal static class CapturePage
                 return;
             }
 
-            viewModel.PointerDisplayText =
-                $"{UiFactory.FormatNumber(Math.Round(source.X), "0")}, {UiFactory.FormatNumber(Math.Round(source.Y), "0")}";
+            viewModel.PointerDisplayText = StatusBarTexts.FormatPointer(
+                (int)Math.Round(source.X), (int)Math.Round(source.Y));
             UpdateStatus();
 
             if (!viewModel.IsAutoCropActive)
@@ -524,16 +606,21 @@ internal static class CapturePage
         ContextMenuStrip CreateMenu()
         {
             var menuStrip = new ContextMenuStrip();
-            AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage, AppIcon.Save);
+            saveMenuItem = AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage, AppIcon.Save);
             AddMenuItem(menuStrip, "コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
             AddMenuItem(menuStrip, "貼り付け", "Ctrl+V", () => _ = PasteCoreAsync());
             menuStrip.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menuStrip, "元に戻す", "Ctrl+Z", () => EditHistory.Undo(services, ApplyAppearance));
-            AddMenuItem(menuStrip, "元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services, ApplyAppearance));
+            AddMenuItem(menuStrip, "元に戻す", "Ctrl+Z", () => EditHistory.Undo(services.Main, services.UndoHistory, ApplyAppearance));
+            AddMenuItem(menuStrip, "元に戻すを取り消す", "Ctrl+Y", () => EditHistory.Redo(services.Main, services.UndoHistory, ApplyAppearance));
             menuStrip.Items.Add(new ToolStripSeparator());
-            AddMenuItem(menuStrip, "撮影 - スクリーン選択", "", () => StartCapture(CaptureType.ScreenSelect), AppIcon.ScreenSelect);
-            AddMenuItem(menuStrip, "撮影 - ウィンドウ選択", "", () => StartCapture(CaptureType.WindowSelect), AppIcon.WindowSelect);
-            AddMenuItem(menuStrip, "撮影 - 範囲選択", "", () => StartCapture(CaptureType.AreaSelect), AppIcon.AreaSelect);
+            // 撮影のショートカットはグローバル ホットキーの設定を表示する（キー処理はホットキーが担う）
+            var hotKeys = settingsService.Current;
+            AddMenuItem(menuStrip, "撮影 - スクリーン選択", hotKeys.SelectScreenHotKey.ToString(),
+                () => StartCapture(CaptureType.ScreenSelect), AppIcon.ScreenSelect);
+            AddMenuItem(menuStrip, "撮影 - ウィンドウ選択", hotKeys.WindowSelectHotKey.ToString(),
+                () => StartCapture(CaptureType.WindowSelect), AppIcon.WindowSelect);
+            AddMenuItem(menuStrip, "撮影 - 範囲選択", hotKeys.AreaSelectHotKey.ToString(),
+                () => StartCapture(CaptureType.AreaSelect), AppIcon.AreaSelect);
             menuStrip.Items.Add(new ToolStripSeparator());
             AddMenuItem(menuStrip, "切り出し", "Ctrl+R", ToggleCrop, AppIcon.Crop);
             AddMenuItem(menuStrip, "Crop - 自動切り出し", "", AutoCrop);
@@ -565,6 +652,16 @@ internal static class CapturePage
         // ページ固有のショートカット キーを処理する。
         bool HandleShortcut(Keys keyData)
         {
+            var key = keyData & Keys.KeyCode;
+
+            // 保存（Ctrl+S）は文字編集のショートカットではないため、テキスト入力中でも行う
+            // （テンプレート欄へ入力した直後に保存できず、フォーカスを移す操作を強いるのを避ける）
+            if ((keyData & Keys.Control) == Keys.Control && key == Keys.S)
+            {
+                SaveImage();
+                return true;
+            }
+
             // テキスト入力中のショートカットは文字編集を優先する
             // （Ctrl+V を画像の貼り付けとして横取りすると、テンプレート欄へ文字列を貼れない）
             if (IsTextInputFocused())
@@ -572,7 +669,6 @@ internal static class CapturePage
                 return false;
             }
 
-            var key = keyData & Keys.KeyCode;
             if ((keyData & Keys.Control) != Keys.Control)
             {
                 if (key == Keys.Escape && viewModel.IsAutoCropActive)
@@ -586,9 +682,6 @@ internal static class CapturePage
 
             switch (key)
             {
-                case Keys.S:
-                    SaveImage();
-                    return true;
                 case Keys.C:
                     _ = viewModel.CopyToClipboardAsync();
                     return true;
@@ -596,10 +689,10 @@ internal static class CapturePage
                     _ = PasteCoreAsync();
                     return true;
                 case Keys.Z:
-                    EditHistory.Undo(services, ApplyAppearance);
+                    EditHistory.Undo(services.Main, services.UndoHistory, ApplyAppearance);
                     return true;
                 case Keys.Y:
-                    EditHistory.Redo(services, ApplyAppearance);
+                    EditHistory.Redo(services.Main, services.UndoHistory, ApplyAppearance);
                     return true;
                 case Keys.R:
                     ToggleCrop();
@@ -639,6 +732,9 @@ internal static class CapturePage
         viewModel.SetPreviewImage(captured);
         // 通知の文言はコアが単一所有する（キャプチャ結果は画像の差し替えより後に通知する）
         viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
+
+        // 設定が有効なら撮影した画像をクリップボードへコピーする
+        _ = viewModel.CopyAfterEditIfEnabledAsync();
     }
 
     /// <summary>上書きの確認ダイアログを表示する。</summary>
@@ -660,7 +756,7 @@ internal static class CapturePage
     /// <param name="shortcut">右端へ表示するショートカット（表示のみ）。</param>
     /// <param name="action">選択時の処理。</param>
     /// <param name="icon">メニュー項目に表示するアイコン。</param>
-    private static void AddMenuItem(ContextMenuStrip menu, string text, string shortcut, Action action, AppIcon? icon = null)
+    private static ToolStripMenuItem AddMenuItem(ContextMenuStrip menu, string text, string shortcut, Action action, AppIcon? icon = null)
     {
         var item = new ToolStripMenuItem(text);
         if (icon is { } appIcon)
@@ -678,6 +774,7 @@ internal static class CapturePage
 
         item.Click += (_, _) => action();
         menu.Items.Add(item);
+        return item;
     }
 
     /// <summary>コアの整数矩形を小数の矩形へ変換する。</summary>

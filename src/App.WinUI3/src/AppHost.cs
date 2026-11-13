@@ -64,6 +64,7 @@ internal static class AppHost
         collection.AddSingleton<MainViewModel>();
         collection.AddSingleton<UndoHistory>();
         collection.AddSingleton<FolderViewViewModel>();
+        collection.AddSingleton<UndoViewModel>();
 
         // コンテナはアプリの生存期間で保持する（破棄すると共有サービスも破棄される）
         var provider = collection.BuildServiceProvider();
@@ -77,7 +78,7 @@ internal static class AppHost
         // Undo 履歴は画像編集の直前に現在の画像を積む（撮影・切り出しの前の状態へ戻せるようにする）
         viewModel.BeforeEditAction = () => undoHistory.Push(viewModel.PreviewImage);
 
-        s_services = new AppServices(viewModel, settings, undoHistory, folderView);
+        s_services = new AppServices(viewModel, settings, undoHistory, folderView, provider.GetRequiredService<UndoViewModel>());
 
         // 保存の失敗はコアがイベントで通知する（記録はログの所有者であるアプリが行う）
         settings.SaveFailed += (_, e) => s_logger.LogSettingsSaveFailed(e.Error, e.FilePath);

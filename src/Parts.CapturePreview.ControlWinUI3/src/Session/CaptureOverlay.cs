@@ -3,6 +3,7 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Contract;
@@ -75,7 +76,12 @@ internal sealed class CaptureOverlay
     private readonly CaptureCompletion<CaptureResult?> _result = new();
 
     /// <summary>最初の描画フレームを待つ上限（画面外の 1x1 では合成が走らないことがあるため）。</summary>
-    private static readonly TimeSpan s_firstFrameTimeout = TimeSpan.FromMilliseconds(400);
+    /// <remarks>
+    /// 上限を短くするのは、**待てない環境でデスクトップが見える時間を延ばさない**ためである（画面外では<br/>
+    /// 合成が走らないことがあり、その場合は待っても画像は描かれない。 待つほど「アプリが消えてから暗転が<br/>
+    /// 掛かるまで」の間が伸び、ちらつきとして見える）。 合成待ちの余裕（<see cref="s_composeSettleDelay"/>）は残す。
+    /// </remarks>
+    private static readonly TimeSpan s_firstFrameTimeout = TimeSpan.FromMilliseconds(150);
 
     /// <summary>最初のフレームの後に合成の完了を待つ時間（白い下地を見せないための実測値）。</summary>
     private static readonly TimeSpan s_composeSettleDelay = TimeSpan.FromMilliseconds(200);
@@ -119,6 +125,10 @@ internal sealed class CaptureOverlay
     /// <summary>カーソル下の要素を検出するサービス（ハイライト型（スクリーン選択 / ウィンドウ選択）のみ使用する）。</summary>
     private readonly IElementFinder _finder;
 
+    /// <summary>カーソル位置の取得（表示前のハイライトの初期化に使う。 状態を持たないため共有できる）。</summary>
+    /// <remarks>表示の前に「カーソル下のモニター・ウィンドウ」をハイライトするために使う。</remarks>
+    private static readonly ICursorService s_cursor = new WinCursorService();
+
     /// <summary>キャプチャ種別（操作ラベル・情報ラベルの文言に影響する）。</summary>
     private readonly CaptureType _type;
 
@@ -148,6 +158,13 @@ internal sealed class CaptureOverlay
     /// 両方から呼ばれるが、二重呼び出しは無害（コアのスコープが 1 回だけ実行する）。
     /// </remarks>
     private CaptureOwnerScope? _ownerScope;
+
+    /// <summary>撮影中に隠したタスク バー（オーバーレイを閉じる直前に戻す）。</summary>
+    /// <remarks>
+    /// オーバーレイが画面を覆い終えてから隠す（先に隠すと、覆うまでの数十ミリ秒だけタスク バーの跡が<br/>
+    /// 背景として見える）。 戻すのは閉じる直前（同じ描画の間）にする（先に戻すと帯が一瞬見える）。
+    /// </remarks>
+    private CaptureTaskbarScope? _taskbarScope;
 
     /// <summary>セッションを生成する（撮影は行わない）。</summary>
     /// <param name="type">キャプチャ種別。</param>
@@ -214,6 +231,15 @@ internal sealed class CaptureOverlay
         _ownerScope = ownerScope;
         _ownerWindow = owner;
 
+        // **タスク バーを写さない設定のときは、撮影より前に隠す**（撮影後に隠すと画像に写ったままになる）。
+        // 写す設定のときは隠さず、オーバーレイの領域からタスク バーの矩形を除く（表示の直後に行う）。
+        // 手順は コアの CaptureTaskbarScope が単一所有する（4 UI 版で同じ症状が出たため集約した）
+        if (_settings.HideTaskbar == true)
+        {
+            _taskbarScope = CaptureTaskbarScope.Hide();
+            await Task.Delay(CaptureTaskbarScope.HideSettleDelay).ConfigureAwait(true);
+        }
+
         // 全モニターを包含する 1 枚の画像として取得する。
         // 1 モニターに限定すると、カーソルのあるモニターでしか選択できない（別のモニターへ
         // 移動しての選択操作ができない）ため、仮想スクリーン全体を対象にする。
@@ -234,6 +260,10 @@ internal sealed class CaptureOverlay
         // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する）
         _log.LogVirtualScreen(origin, Screen);
 
+        // **撮影が済んだ後にタスク バーを隠す**（写さない設定では撮影の前に隠し済み）。
+        // 隠さないと、半透明（アクリル）のタスク バーが暗転マスクを透かして暗く見え、
+        // シェルが前面へ戻すと明るくなる（= 明滅）。 反映は 1〜2 フレーム後になるため、
+        // 画像を見せる前に消えるまで待つ（手順は コアの CaptureTaskbarScope が単一所有する）
         try
         {
             // 確定・キャンセルまで待つ（入れ子ループを作らない非同期の待機）
@@ -248,6 +278,9 @@ internal sealed class CaptureOverlay
         {
             _ownerScope = null;
             _ownerWindow = null;
+            // 例外経路でもタスク バーを戻す（二重呼び出しは無害）
+            _taskbarScope?.Dispose();
+            _taskbarScope = null;
             // 画像はセッションの終了時に破棄する（以降の描画・切り出しは発生しない）
             _screen?.Dispose();
             _screen = null;
@@ -444,6 +477,11 @@ internal sealed class CaptureOverlay
                 new TimeoutException("撮影画像の読み込み完了を待てませんでした。"), nameof(ShowAsync));
         }
 
+        // **ハイライトは画面内へ移す前のフレームに載せる**: 移す直前に適用すると、ハイライトを反映した
+        // 合成が提示される前のフレーム（全面マスク）が画面内に出る（実測 2026-11-13）。
+        // 座標変換は Loaded（上のフレーム待ちの前）で確定しているため、ここで適用してから待つ。
+        ApplyInitialHighlight();
+
         // **画像が合成されたフレームをもう 1 回待つ**: 読み込みが終わっても、その画像を含むフレームが
         // DWM へ提示されるのは次の描画である。 提示前に画面内へ移すと、縮小された画像や下地の色が
         // 1〜2 フレーム見える（実測 2026-10-25: スクリーン選択で「小さい画面」が一瞬出た）。
@@ -462,7 +500,7 @@ internal sealed class CaptureOverlay
         await Task.Delay(s_composeSettleDelay).ConfigureAwait(true);
 
         // 大きさはそのままで画面内へ移す（再レイアウトを起こさず、合成済みの面がそのまま出る）
-        OverlayWindowPlacer.MoveClientArea(window.AppWindow, _screenBounds);
+        MoveToClientArea(window, _screenBounds);
         // 最前面の提示（IsAlwaysOnTop）だけでは前面に出ないことがあるため、Z 順も明示的に最前面へする
         // （オーナーを退避しない場合、オーナーの背後に隠れてオーバーレイが見えなくなる）
         window.AppWindow.MoveInZOrderAtTop();
@@ -716,6 +754,10 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private void Close()
     {
+        // タスク バーは閉じる直前に戻す（先に戻すと帯が一瞬見える。 閉じるのと同じ描画の間に行う）
+        _taskbarScope?.Dispose();
+        _taskbarScope = null;
+
         if (_window is { } window)
         {
             _window = null;
@@ -748,6 +790,29 @@ internal sealed class CaptureOverlay
         {
             _selector.RequestRedraw();
         }
+    }
+
+    /// <summary>表示の前に、カーソル下の要素でハイライトを確定する。</summary>
+    /// <remarks>
+    /// <b>なぜ必要か</b>: ハイライトはポインター移動でしか更新しないため、表示直後は<b>全面がマスクされた状態</b>に
+    /// なり、最初の移動でカーソル下のモニター・ウィンドウのマスクが解除される。 これは
+    /// 「一度マスクされた後に明るくなる」= ちらつきとして知覚される（実測 2026-11-13）。<br/>
+    /// <b>対象</b>: ハイライト型（スクリーン選択 / ウィンドウ選択）だけ。 範囲選択はドラッグで矩形を作るため対象外。<br/>
+    /// <b>取得できない場合</b>: カーソル位置が取れない環境では何もしない（全面マスクのまま操作できる）。
+    /// </remarks>
+    private void ApplyInitialHighlight()
+    {
+        if (!CaptureTypeTraits.IsHighlighted(_type) || _highlight.SourceRect is not null)
+        {
+            return;
+        }
+
+        if (!s_cursor.TryGetCursorScreenPoint(out var screenPoint))
+        {
+            return;
+        }
+
+        Highlight(screenPoint);
     }
 
     /// <summary>ルート要素のローカル座標（DIP）を画面物理ピクセルの座標へ変換する。</summary>
@@ -809,6 +874,35 @@ internal sealed class CaptureOverlay
         }
 
         _selector.FocusMarquee();
+    }
+
+    /// <summary>ウィンドウを、クライアント領域が指定の矩形に一致する位置へ移す（大きさは変えない）。</summary>
+    /// <param name="window">対象のウィンドウ。</param>
+    /// <param name="target">クライアント領域に一致させたい矩形（画面物理ピクセル）。</param>
+    /// <remarks>
+    /// <b>位置だけを動かす理由</b>: 共通基盤の <c>OverlayWindowPlacer.MoveClientArea</c> は
+    /// 「素直に置く → 枠の分だけ外側へ広げる」の 2 回動かすため、その間の 1 フレームに
+    /// <b>枠の分だけ小さいクライアント領域</b>ができる（実測 2026-11-13: 3840x3360 → 3846x3366 の 15 ms）。
+    /// 撮影画像はクライアント領域いっぱいへ描くため、その 1 フレームだけ画像がわずかに縮小されて見える。<br/>
+    /// 画面外へ置くときに既に枠の分だけ広げてあるため、<b>枠の太さを保ったまま位置だけ動かせば</b>
+    /// 大きさは変わらず、レイアウトのやり直しも起きない（合成済みの面がそのまま出る）。
+    /// </remarks>
+    private static void MoveToClientArea(Window window, EsRectInt target)
+    {
+        var appWindow = window.AppWindow;
+        var frameWidth = Math.Max(0, appWindow.Size.Width - appWindow.ClientSize.Width);
+        var frameHeight = Math.Max(0, appWindow.Size.Height - appWindow.ClientSize.Height);
+        if (frameWidth == 0 && frameHeight == 0)
+        {
+            // 枠を測れない場合は従来の手順（大きさの指定で一致させる）
+            OverlayWindowPlacer.MoveClientArea(appWindow, target);
+            return;
+        }
+
+        // 枠は左右・上下に均等に付くため、半分ずつ外側へずらす
+        appWindow.Move(new PointInt32(
+            target.X - (frameWidth / 2),
+            target.Y - (frameHeight / 2)));
     }
 
     /// <summary>ルート要素のキー入力を処理する（Enter = 確定 / Escape = キャンセル）。</summary>

@@ -17,43 +17,43 @@
       },
       "EsUtil.Platform.Core": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "u08Uu8OXNBfUF/o6ESHJRuwmvPONY9gS5g0rFN1myZq73Wm4756W6FS5dmTUyTI3CLeQ9wrRm6BwZJSSlqDQkg=="
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "5jck282pVjqsCvoA0VIAARbsJ/tW/vdbTtpJPzF0qp1u4p0RrOW/6zCiGaVdeipGEYSublR/xhBsBQ8c+kVnZg=="
       },
       "EsUtil.Ui.MewUI.Interop": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "+gPMiXlmJqiOe+oj4uJHcfdBtTNeBiA7kOf+KSbp6RVeCaeBG/+lvftQscIwzkIvAepY4Ipi/JhipitOXk/jAw==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "OrGLBj4/4YGKqGzWwOUtbCYaVI55TJ6bNMWJdAD8JdR09dBF90BgJceX6vUN+n9EvAVdQPfKnoJkxkMTMtolYg==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Platform.Core": "0.6.2"
+          "EsUtil.Platform.Core": "0.6.3"
         }
       },
       "EsUtil.Ui.MewUI.Loupe": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "G5rtSMPwQ9R+G9HBWOkfhfH1tFCoSDE3MwoYFlTxLijO7WCOSeMXOF5bIMGVAvAPaGaYs5zNoXD7hhP0aa9+1g==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "GgpIudwBGBOHNVJy2kHK7tR/ayk0YwGoEdh9DNcGIKkTY+y9tToUCps48hQhb699qXoD198zR1ZcmuLHgIcLLg==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Loupe.Core": "0.6.2",
-          "EsUtil.Platform.Core": "0.6.2",
-          "EsUtil.Ui.MewUI.Interop": "0.6.2",
+          "EsUtil.Feature.Loupe.Core": "0.6.3",
+          "EsUtil.Platform.Core": "0.6.3",
+          "EsUtil.Ui.MewUI.Interop": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Ui.MewUI.Marquee": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "1Xe6YlIsaRqFzQT2aF29Xp+Qzf+sXECz5sQrC3tcc+6s4k6zRlzAQ/NEDnC8YXBakkRfjNS1gSa2GaSsCxXQlQ==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "hHoVxBn1KgCC+9ZpgNf1H65AgnDBx515BKGpcXMwfClKv/AMfD+GEfb/iJwQ/HcJiAac+NdXfFlPYzd7MsFWmQ==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Marquee.Core": "0.6.2",
-          "EsUtil.Platform.Core": "0.6.2",
-          "EsUtil.Ui.MewUI.Interop": "0.6.2",
+          "EsUtil.Feature.Marquee.Core": "0.6.3",
+          "EsUtil.Platform.Core": "0.6.3",
+          "EsUtil.Ui.MewUI.Interop": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
@@ -147,29 +147,29 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.6.2, )",
-          "EsUtil.Feature.Marquee.Core": "[0.6.2, )",
-          "EsUtil.Platform.Core": "[0.6.2, )",
+          "EsUtil.Feature.Loupe.Core": "[0.6.3, )",
+          "EsUtil.Feature.Marquee.Core": "[0.6.3, )",
+          "EsUtil.Platform.Core": "[0.6.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )"
         }
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "IOgjwnFEIC9m6qturBruA9BGbPI8qLfTaFwKrePLHwQ/nw741GTlrAZg3obkLJfhSiUZ6Fe0O1zX7hb/21Fp8A==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "yNyzGl5H8g0WwN8LjwfmrlxGPOVGY9Buqt+MN59gGcYPjdmectA/+PU6OMXqC4K2Y2LKPxg8g4DwEpj0nTJ5LQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "Cb4D1nxcKB4wpLfD4e5OZcKdhmewGseLucZdhdXqMqTQBE1gNChceBIf6BznzkQIpyAilSXC4vLWQE0OSkI75w==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "fj7KPX8oSCc9PBTLU6te138MDFcVP2TuEqz7QoD6botAhQDe70R/K1qqWIrUsf1C3D1mATsq+2hUm9HbkMq0LQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       }

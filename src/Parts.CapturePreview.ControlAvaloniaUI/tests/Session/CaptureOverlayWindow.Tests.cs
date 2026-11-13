@@ -83,9 +83,12 @@ public class CaptureOverlayWindowTests
         /// <summary>ウィンドウ検出の結果（既定は未検出）。</summary>
         public ElementFinderResults WindowResult { get; set; }
 
+        /// <summary>モニターの一覧（既定は空。 仮想スクリーンの原点を決めるために使う）。</summary>
+        public IReadOnlyList<ElementFinderResults> Screens { get; set; } = [];
+
         public ElementFinderResults FindWindowUnderCursor(EsPointInt screenPoint) => WindowResult;
         public ElementFinderResults FindScreenUnderCursor(EsPointInt screenPoint) => ScreenResult;
-        public IReadOnlyList<ElementFinderResults> ListScreens() => [];
+        public IReadOnlyList<ElementFinderResults> ListScreens() => Screens;
         public IReadOnlyList<ElementFinderResults> ListWindows() => [];
     }
 
@@ -512,11 +515,41 @@ public class CaptureOverlayWindowTests
         var window = CreateWindow(CaptureType.ScreenSelect, elementFinder: finder);
         window.Position = new PixelPoint(100, 50);
 
-        // 検出（画面物理 (200,100)-(2120,1180)）→ 対象（ウィンドウローカル物理）へ変換して反映
+        // 検出（画面物理 (200,100)-(2120,1180)）→ 画像ローカルへ変換して反映
         InvokeApplyHighlight(window, new EsPointInt(500, 500));
 
         Assert.NotNull(window.SelectionOverlay.HighlightSourceRect);
-        Assert.Equal(new Rect(100, 50, 1920, 1080), window.SelectionOverlay.HighlightSourceRect);
+        Assert.Equal(new Rect(200, 100, 1920, 1080), window.SelectionOverlay.HighlightSourceRect);
+    }
+
+    [AvaloniaFact]
+    internal void 検出_ハイライトの変換はウィンドウの位置ではなく画像の原点を使う()
+    {
+        // 表示前はウィンドウが最終の位置に無い（`Show` の時点では画面の左上に作られる）。
+        // 変換の基準をウィンドウの位置にすると、穴が原点の分だけずれる（実測 2026-11-13）。
+        var finder = new MockElementFinder
+        {
+            ScreenResult = new ElementFinderResults(
+                new EsRectInt(0, 0, 3840, 2160),
+                IsDetected: true,
+                Title: "Screen 0"),
+        };
+        var window = CreateWindow(CaptureType.ScreenSelect, elementFinder: finder);
+
+        // 撮影した画像の原点を (0,-1200) にする（仮想スクリーンが上へはみ出している環境）
+        using (var bitmap = EsBitmap.Create(3840, 3360))
+        {
+            window.SetVirtualScreen(bitmap, new PixelPoint(0, -1200));
+        }
+
+        // 位置はまだ最終の位置に無い（(0,0)）
+        window.Position = new PixelPoint(0, 0);
+
+        InvokeApplyHighlight(window, new EsPointInt(500, 500));
+
+        Assert.NotNull(window.SelectionOverlay.HighlightSourceRect);
+        // 画像の原点 (0,-1200) を引くため、y は 0 ではなく 1200 になる
+        Assert.Equal(new Rect(0, 1200, 3840, 2160), window.SelectionOverlay.HighlightSourceRect);
     }
 
     [AvaloniaFact]
@@ -566,11 +599,11 @@ public class CaptureOverlayWindowTests
         var window = CreateWindow(CaptureType.WindowSelect, elementFinder: finder);
         window.Position = new PixelPoint(100, 50);
 
-        // 検出（画面物理 (300,200)-(1100,800)）→ 対象へ変換して反映
+        // 検出（画面物理 (300,200)-(1100,800)）→ 画像ローカルへ変換して反映
         InvokeApplyHighlight(window, new EsPointInt(500, 500));
 
         Assert.NotNull(window.SelectionOverlay.HighlightSourceRect);
-        Assert.Equal(new Rect(200, 150, 800, 600), window.SelectionOverlay.HighlightSourceRect);
+        Assert.Equal(new Rect(300, 200, 800, 600), window.SelectionOverlay.HighlightSourceRect);
         Assert.Equal("Sample Window", window.SelectionOverlay.InfoTextProvider?.Invoke());
     }
 

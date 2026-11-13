@@ -64,6 +64,57 @@ public static class AppPalette
     /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
     public static uint NavPanel(bool isDark) => isDark ? NavPanelDark : NavPanelLight;
 
+    /// <summary>文字とアイコンの前景色（明色テーマ）。</summary>
+    public const uint ForegroundLight = 0xFF1A1A1A;
+
+    /// <summary>文字とアイコンの前景色（暗色テーマ）。</summary>
+    public const uint ForegroundDark = 0xFFEEEEEE;
+
+    /// <summary>文字とアイコンの前景色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>
+    /// <b>4 UI 版で同じ値を使う理由</b>: 各 UI のテーマの既定色はそれぞれ違う（WinUI 3 と AvaloniaUI は
+    /// 明色で <c>#000000</c>、WinForms はコントロールの既定色）。 同じアプリの同じ画面に見えるよう、
+    /// アプリの前景色を 1 か所で決める（実測 2026-11-09: UI 版ごとに文字の黒さが違って見えた）。
+    /// </remarks>
+    public static uint Foreground(bool isDark) => isDark ? ForegroundDark : ForegroundLight;
+
+    /// <summary>枠線（区切り・カードの縁）の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint Border(bool isDark) => isDark ? 0xFF5A5A5A : 0xFFC8C8C8;
+
+    /// <summary>ナビゲーション項目にカーソルが重なったときの背景色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint NavItemHover(bool isDark) => isDark ? 0xFF30343C : 0xFFE5E9F0;
+
+    /// <summary>ウィンドウを閉じるボタンにカーソルが重なったときの背景色を取得する。</summary>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>テーマによらず赤にする（閉じる操作の意味を色でも示す。 Windows の標準と同じ）。</remarks>
+    public const uint CloseButtonHover = 0xFFC42B1C;
+
+    /// <summary>メニュー（ポップアップ）の下地の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint MenuBackground(bool isDark) => isDark ? 0xFF323232 : 0xFFFCFCFC;
+
+    /// <summary>メニュー（ポップアップ）の縁の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint MenuBorder(bool isDark) => isDark ? 0xFF5A5A5A : 0xFFC8C8C8;
+
+    /// <summary>カード（設定のまとまり）の縁の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint CardBorder(bool isDark) => isDark ? 0xFF5A5A5A : 0xFFCCCCCC;
+
+    /// <summary>強調（選択・リンク）の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint Accent(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF0078D4;
+
     /// <summary>ナビゲーション項目の選択中の背景色（薄いグレー）を取得する。</summary>
     /// <param name="isDark">暗色テーマかどうか。</param>
     /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
@@ -75,6 +126,33 @@ public static class AppPalette
     /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
     /// <remarks>WinUI 3 の選択マークと同じ値（明色 <c>#0067C0</c> / 暗色 <c>#4CC2FF</c>。 実測 2026-10-17）。</remarks>
     public static uint NavItemSelectionAccent(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF0067C0;
+
+    /// <summary>リンク（青字）の文字色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>
+    /// アクセント色と同じ値（明色 <c>#0067C0</c> / 暗色 <c>#4CC2FF</c>）を使う<br/>
+    /// （暗色の下地では濃い青が沈むため、明るい青へ切り替える）。
+    /// </remarks>
+    public static uint Link(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF0067C0;
+
+    /// <summary>通知メッセージ（「保存しました」等）の文字色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>
+    /// 4 UI 版で同じ青（<c>#007ACC</c>）にする。 暗色では明るい青へ切り替える<br/>
+    /// （濃い青は暗い下地に沈む）。
+    /// </remarks>
+    public static uint Announce(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF007ACC;
+
+    /// <summary>無効（操作できない）ボタンのアイコンの色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>
+    /// **アイコンは無効でも色が変わらない**（画像のためテーマの不透明度が効かない）。<br/>
+    /// 無効であることが分かるよう、地色に近い灰色で描く。
+    /// </remarks>
+    public static uint DisabledForeground(bool isDark) => isDark ? 0xFF6A6A6A : 0xFFA0A0A0;
 
     /// <summary>ツールバーのアイコン ボタンの角丸（DIP）。</summary>
     public const double ToolbarButtonCornerRadius = 4;

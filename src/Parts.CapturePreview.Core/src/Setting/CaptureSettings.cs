@@ -4,6 +4,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 
 /// <summary>キャプチャの外観および拡大鏡の設定値を保持するレコード型。</summary>
 /// <param name="HideOwnerWindow">キャプチャ時にオーナーウィンドウを非表示にするか。</param>
+/// <param name="HideTaskbar">キャプチャ時にタスク バーを写さない（隠す）か。</param>
 /// <param name="MinSelectionSize">選択矩形の最小サイズ。 単位はモードにより異なる: AreaSelect では物理ピクセル、Crop では論理座標（元画像ピクセル）。</param>
 /// <param name="BorderColor">選択枠線の色（不透明度は色のアルファに統合）。</param>
 /// <param name="BorderThickness">選択枠線の太さ（DIP）。</param>
@@ -55,6 +56,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 /// </remarks>
 public sealed record CaptureSettings(
     bool? HideOwnerWindow = null,
+    bool? HideTaskbar = null,
     int? MinSelectionSize = null,
     Color? BorderColor = null,
     double? BorderThickness = null,
@@ -120,6 +122,7 @@ public sealed record CaptureSettings(
     public CaptureSettings ToNonNull()
         => new(
             HideOwnerWindow: HideOwnerWindow ?? true,
+            HideTaskbar: HideTaskbar ?? false,
             MinSelectionSize: MinSelectionSize ?? 6,
             BorderColor: BorderColor ?? Color.FromArgb(0xFF, 169, 169, 169),
             BorderThickness: BorderThickness ?? 2.0,

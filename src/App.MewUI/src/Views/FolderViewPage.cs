@@ -59,6 +59,9 @@ internal static class FolderViewPage
         // 生成中の要求と、その項目の要素（一覧の位置は上方が小さい）
         var requested = new List<(ThumbnailScheduler.ThumbnailRequest Request, int Index)>();
 
+        // 一覧に並べたファイルのパス（一覧の位置と対応する。 選択項目の削除に使う）
+        var currentFiles = new List<string>();
+
         // 最後に優先度を付けた可視領域（変わっていなければ付け直さない）
         var lastViewportTop = double.NaN;
         var lastViewportBottom = double.NaN;
@@ -110,6 +113,9 @@ internal static class FolderViewPage
             var files = LoadFiles(folderPath, viewModel.IsSortAscending);
             var iconSize = settingsService.Current.GetIconSize(viewModel.SelectedViewModeIndex);
 
+            currentFiles.Clear();
+            currentFiles.AddRange(files);
+
             // 保持数は表示する件数以上にする（生成の途中で表示中のサムネイルが破棄されないようにする）
             var capacity = Math.Max(CacheCapacity, files.Count);
 
@@ -119,7 +125,7 @@ internal static class FolderViewPage
 
                 // 生成が終わるまでは代替画像を表示し、生成は背景へ依頼する
                 var index = list.Add(
-                    ThumbnailBackground.Placeholder(iconSize), Path.GetFileName(file), toolTip: file, tag: file);
+                    ThumbnailPlaceholder.Get(iconSize), Path.GetFileName(file), toolTip: file, tag: file);
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 requested.Add((thumbnails.Enqueue(
@@ -230,10 +236,68 @@ internal static class FolderViewPage
         var folderText = new TextBlock().Bind(TextBlock.TextProperty, viewModel, static x => x.FolderPathText).FontSize(AppStyles.StatusFontSize);
         folderText.HorizontalAlignment = HorizontalAlignment.Right;
         folderText.VerticalAlignment = VerticalAlignment.Center;
+        folderText.Foreground(AppStyles.CurrentLinkForeground);
+
+        // パスは青字 + 下線で表示し、クリックでエクスプローラーを開く（下線は下端の枠線で描く）。
+        // 入力は Button で受ける（MewUI の Border・TextBlock はマウス ヒット テストの対象にならない）
+        var folderButton = new Button
+        {
+            Content = folderText,
+            Padding = new Thickness(0),
+            CornerRadius = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            StyleName = AppStyles.FlatButton,
+        };
+        folderButton.Cursor(CursorType.Hand);
+        folderButton.ToolTip("クリックでエクスプローラーを開く（右クリックでメニュー）");
+        folderButton.OnClick(OpenFolderInExplorer);
+
+        var folderLink = new Border()
+            .Child(folderButton)
+            .Background(AppStyles.CurrentPageBackground)
+            .BorderBrush(AppStyles.CurrentLinkForeground)
+            .BorderThickness(new Thickness(0, 0, 0, 1))
+            .Padding(new Thickness(0))
+            .VerticalAlignment(VerticalAlignment.Center);
+
+        // 保存先フォルダをエクスプローラーで開く
+        void OpenFolderInExplorer()
+        {
+            var folderPath = viewModel.FolderPathText;
+            if (string.IsNullOrEmpty(folderPath)) return;
+
+            try
+            {
+                FileSystemActions.OpenInExplorer(folderPath);
+            }
+            catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+            {
+                s_logger.LogOpenFolderError(ex, folderPath);
+            }
+        }
 
         var statusGrid = new Grid().Columns("*,Auto");
         statusGrid.Add(status.Column(0));
-        statusGrid.Add(folderText.Column(1));
+        statusGrid.Add(folderLink.Column(1));
+
+        // 右クリックのメニュー: 一覧は「コピー」「削除」、保存先パスは「エクスプローラで表示」
+        // （左クリックの操作はそのまま残す。 Delete キーの削除も維持する）
+        var copyCommand = new Command("folderView.copy", "コピー", null);
+        list.Commands.Register(copyCommand, () => CopySelected(list, currentFiles), static () => true);
+        var deleteCommand = new Command("folderView.delete", "削除", null);
+        list.Commands.Register(deleteCommand, () => _ = DeleteSelectedAsync(list, currentFiles, Rebuild), static () => true);
+        list.ContextMenu = new ContextMenu();
+        list.ContextMenu.AddItem("コピー", copyCommand);
+        list.ContextMenu.AddItem("削除", deleteCommand);
+
+        var openFolderCommand = new Command("folderView.openInExplorer", "エクスプローラで表示", null);
+        folderButton.Commands.Register(openFolderCommand, OpenFolderInExplorer, static () => true);
+        // 右クリックのメニューは「背景を持つ要素」に付ける必要がある（MewUI はマウス位置の要素から
+        // 親をたどって ContextMenu を探すが、背景が無い要素はヒット テストの対象にならない）
+        var folderMenu = new ContextMenu();
+        folderMenu.AddItem("エクスプローラで表示", openFolderCommand);
+        folderLink.ContextMenu = folderMenu;
+        folderButton.ContextMenu = folderMenu;
 
         // 見え方が変わったら優先度を付け直す（スクロールと、ウィンドウの大きさの変化）
         list.ScrollChanged += (_, _) => UpdatePriorities();
@@ -305,7 +369,87 @@ internal static class FolderViewPage
                     .Child(new Grid().Rows("Auto").Columns("*").Children(statusGrid)));
 
         Restore();
-        return new PageContent(content, Activate, OnDeactivated: () => thumbnails.IsActive = false, OnWarmUp: WarmUp);
+        return new PageContent(
+            content, Activate,
+            OnDeactivated: () => thumbnails.IsActive = false,
+            OnWarmUp: WarmUp,
+            // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）。 Ctrl+C はコピーする
+            OnKeyDown: e =>
+            {
+                if (e.ControlKey && e.Key == Key.C)
+                {
+                    e.Handled = true;
+                    CopySelected(list, currentFiles);
+                    return;
+                }
+
+                if (e.Key != Key.Delete) return;
+
+                e.Handled = true;
+                _ = DeleteSelectedAsync(list, currentFiles, Rebuild);
+            });
+    }
+
+    /// <summary>選択中の画像をクリップボードへコピーする。</summary>
+    /// <param name="list">選択状態を持つ一覧。</param>
+    /// <param name="files">一覧に並べたファイルのパス（一覧の位置と対応する）。</param>
+    /// <remarks>
+    /// 画像はファイルから等倍で読み込み、4 UI 版で共通の <see cref="ClipboardImage"/>（<c>CF_DIB</c>）へ書き込む。
+    /// </remarks>
+    private static void CopySelected(ThumbnailControl list, IReadOnlyList<string> files)
+    {
+        var index = list.SelectedIndex;
+        if (index < 0 || index >= files.Count) return;
+        if (list.FindVisualRoot() is not Window owner) return;
+
+        var filePath = files[index];
+        if (!ClipboardImage.TryCopyFile(filePath, owner.Handle))
+        {
+            s_logger.LogClipboardCopyError(filePath);
+        }
+    }
+
+    /// <summary>選択中の画像をごみ箱へ移動する（確認ダイアログあり）。</summary>
+    /// <param name="list">選択状態を持つ一覧。</param>
+    /// <param name="files">一覧に並べたファイルのパス（一覧の位置と対応する）。</param>
+    /// <param name="onDeleted">移動できたときに一覧を読み直す処理。</param>
+    /// <returns>待機タスク。</returns>
+    /// <remarks>
+    /// 移動できなかった場合は一覧を変えない（原因はログへ残す）。
+    /// </remarks>
+    private static async Task DeleteSelectedAsync(
+        ThumbnailControl list, IReadOnlyList<string> files, Action onDeleted)
+    {
+        var index = list.SelectedIndex;
+        if (index < 0 || index >= files.Count)
+        {
+            return;
+        }
+
+        var filePath = files[index];
+        if (list.FindVisualRoot() is not Window owner)
+        {
+            return;
+        }
+
+        var confirmed = await ConfirmDialog.ShowAsync(
+            owner, "削除の確認", $"「{Path.GetFileName(filePath)}」をごみ箱へ移動しますか？");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            FileSystemActions.DeleteToRecycleBin(filePath);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            s_logger.LogFileDeleteError(ex, filePath);
+            return;
+        }
+
+        onDeleted();
     }
 
     /// <summary>1 件分のサムネイル生成の処理を生成する。</summary>
@@ -329,7 +473,7 @@ internal static class FolderViewPage
 
             // 読み込めない画像は null で返る（その場合は代替画像のまま表示する）
             var thumbnail = ThumbnailImageLoader.Load(filePath, iconSize, capacity);
-            var fallback = ThumbnailBackground.Placeholder(iconSize);
+            var fallback = ThumbnailPlaceholder.Get(iconSize);
 
             ThumbnailBackground.Post(() =>
             {

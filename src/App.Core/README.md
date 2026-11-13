@@ -25,6 +25,15 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `ViewModels.FolderViewViewModel` | `public` | フォルダビューの表示モード・ソート状態 |
 | `ViewModels.UndoViewModel` | `public` | Undo 一覧の表示モード状態 |
 | `ViewModels.MainViewModel` | `public` | メイン画面の状態（プレビュー画像・ズーム表示・保存・自動切り出し）。 UI 依存はコールバック（クリップボード / 上書き確認）で注入する |
+| `Services.EditHistory` | `internal` | 履歴（`UndoHistory`）から画像を取り出してプレビューへ差し替える Undo / Redo の手順 |
+| `Services.AppServices` | `internal` | アプリ全体で共有するコア オブジェクトの束（メイン VM・設定・履歴・フォルダビュー・Undo 一覧）。 **4 つの UI 版で共通** |
+| `Services.StatusBarFieldWidths` | `public` | ステータス バーの固定幅の項目（マウスポインタ位置・画像サイズ）の寸法と右側の空き |
+| `Services.StatusBarTexts` | `public` | ステータス バーの「マウスポインタ位置」「画像サイズ」の文言（接頭辞 `pt:` / `size:` と書式の単一所有者） |
+| `Services.CaptureLauncher` | `internal` | 撮影の開始を受け付け、実行中の多重起動を防ぐ（完了時に状態を戻す） |
+| `Services.ThumbnailPlaceholder` | `internal` | サムネイル生成が終わるまで表示する透明な正方形（寸法ごとに 1 枚を共有する） |
+| `Services.IconFit` / `Services.IconFitTransform` | `internal` | アイコンの図形（外接矩形）を枠いっぱいへ広げる変換（4 つの UI 版で同じ大きさにする） |
+| `Logging.AppLogging` | `internal` | ログの出力先・行の書式・3 文字のレベル表記（Serilog の構成）。 **4 つの UI 版で 1 つ** |
+| `Logging.AppLogMessage` | `internal` | **4 つの UI 版で共通のログ文言**（`LoggerMessage` ソース生成）。 接頭辞は各 UI の `AppLog` が渡す |
 
 `internal` の型は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests`）で UI 実装とテストからのみ参照できます。
 
@@ -56,7 +65,8 @@ App.AvaloniaUI（Avalonia 実装） / App.MewUI
          └──> LineDetection（窓枠検出。UI 非依存）
 ```
 
-UI フレームワークへ依存しません。 外部依存は MVVM の `CommunityToolkit.Mvvm`（UI フレームワーク非依存）のみです。
+UI フレームワークへ依存しません。 外部依存は MVVM の `CommunityToolkit.Mvvm`（UI フレームワーク非依存）と、
+ログの `Serilog` 系（これも UI フレームワーク非依存。 出力先と行の書式を 4 つの UI 版で 1 つにするため本層が持つ）です。
 
 ## 6. UI 依存の注入（依存性逆転）
 

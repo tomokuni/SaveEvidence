@@ -5,10 +5,18 @@
     <RootNamespace>EsUtil.SaveEvidence.App.Core</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- クリップボードの DIB の解析（Native/WinClipboardDib）で画素のポインターを扱う
+         （4 UI 版のうち MewUI は画像クリップボードの API を持たないため、共通基盤が担う） -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
+    <!-- ログの出力先と行の書式（Logging/AppLogging）は 4 つの UI 版で 1 つである。
+         UI 非依存の層に置けるのは、Serilog が UI フレームワークに依存しないため（.github/依存関係.md §4） -->
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
   </ItemGroup>
 
   <ItemGroup>

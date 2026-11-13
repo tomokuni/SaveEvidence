@@ -343,6 +343,21 @@ public class MainViewModelStateTests
         Assert.Equal("abc", FileNameTemplate.IncrementRightmostNumber("abc"));
     }
 
+    [Fact]
+    internal void BuildHelpText_はプレースホルダとオートインクリメントを説明し例を固定日時で示す()
+    {
+        var help = FileNameTemplate.BuildHelpText(new DateTime(2026, 11, 11, 21, 4, 5));
+
+        // ツールチップに必要な項目（プレースホルダ・オートインクリメント・例）が含まれる
+        Assert.Contains("{date}", help, StringComparison.Ordinal);
+        Assert.Contains("{time}", help, StringComparison.Ordinal);
+        Assert.Contains("オートインクリメント", help, StringComparison.Ordinal);
+        Assert.Contains("20261111_210405_01.png", help, StringComparison.Ordinal);
+
+        // 例の日時は呼び出し側が渡した値で固定される（呼び出しのたびに文言が変わらない）
+        Assert.Equal(help, FileNameTemplate.BuildHelpText(new DateTime(2026, 11, 11, 21, 4, 5)));
+    }
+
     // ====================================================================
     // ファイル名テンプレートのバリデーション（HasValidTemplate / HasInvalidTemplate）
     // ====================================================================

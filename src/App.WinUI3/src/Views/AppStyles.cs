@@ -127,8 +127,8 @@ internal static class AppStyles
     /// <summary>閉じるのアイコン。</summary>
     public const string CaptionGlyphClose = "\uE8BB";
 
-    /// <summary>閉じるボタンのホバー背景（他の UI 版と同じ赤）。</summary>
-    public static Windows.UI.Color CloseButtonHoverBackground => Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C);
+    /// <summary>閉じるボタンのホバー背景（他の UI 版と同じ赤）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    public static Windows.UI.Color CloseButtonHoverBackground => ToColor(AppPalette.CloseButtonHover);
 
     /// <summary>設定ページのグループ名（セクション見出し）の文字サイズ（DIP）。</summary>
     public const double SectionHeaderFontSize = SettingsMetrics.FontSize;
@@ -184,6 +184,11 @@ internal static class AppStyles
     /// <value>現在のテーマの色。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</value>
     /// <remarks>4 UI 版で同じ色にする（影の見え方を揃えるため。 詳細は <see cref="AppPalette.ListBackground"/>）。</remarks>
     public static SolidColorBrush ListBackground => new(ToColor(AppPalette.ListBackground(IsDarkTheme)));
+
+    /// <summary>リンク（青字・下線）の文字色を取得する。</summary>
+    /// <value>現在のテーマの色。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</value>
+    /// <remarks>暗色の下地では明るい青へ切り替える（<see cref="AppPalette.Link"/>）。</remarks>
+    public static SolidColorBrush LinkForeground => new(ToColor(AppPalette.Link(IsDarkTheme)));
 
     /// <summary>ツールバーの区切り（縦線）を生成する。</summary>
     /// <returns>幅 1・高さ 20 DIP の縦線。</returns>

@@ -1,5 +1,6 @@
 using System.Globalization;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
@@ -103,6 +104,23 @@ internal static class UiFactory
     /// <summary>ステータス バーの内側の高さ（DIP。 上下の余白を除いた高さ）。</summary>
     public const int StatusBarContentHeight = StatusBarHeight - 2;
 
+    /// <summary>ステータス バーの固定幅の項目（マウスポインタ位置・画像サイズ）の寸法（物理ピクセル）を測る。</summary>
+    /// <returns>各項目の幅と右側の空き（画面の DPI で測った物理ピクセル）。</returns>
+    /// <remarks>
+    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths"/>）。
+    /// 文字の送り幅はフォントと描画の実装で決まるため、測るのは UI の仕事である。<br/>
+    /// 幅に内部余白（<c>TextRenderer</c> の既定の測定との差）を足さないのは、足すと右の空きが
+    /// 「W」より広く見えるため（実測 2026-11-13: 19 px = 「W」11 px + 内部余白 8 px）。<br/>
+    /// 文字は左寄せで描くため、送り幅で足りる。
+    /// </remarks>
+    public static StatusBarFieldWidths ResolveStatusFieldWidths()
+        => StatusBarMetrics.ResolveFieldWidths(
+            text => TextRenderer.MeasureText(
+                text,
+                AppStyles.StatusBarFont,
+                new Size(int.MaxValue, int.MaxValue),
+                TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix).Width);
+
     /// <summary>ステータス バーの中身を垂直方向中央へ揃える。</summary>
     /// <param name="control">対象のコントロール。</param>
     /// <param name="height">中身の高さ（DIP）。 コントロールの高さをこの値へ揃える。</param>
@@ -157,6 +175,56 @@ internal static class UiFactory
         }
 
         return label;
+    }
+
+    /// <summary>ステータス バーのラベルの左右の余白だけを変える（上下は中央揃えの余白のまま残す）。</summary>
+    /// <param name="label">対象のラベル。</param>
+    /// <param name="left">左の余白（物理ピクセル）。</param>
+    /// <param name="right">右の余白（物理ピクセル）。</param>
+    /// <remarks>
+    /// 幅を自動にしたラベルの上下の余白は <see cref="CreateStatusLabel"/> が中央揃えのために割り当てている。<br/>
+    /// <see cref="Control.Margin"/> を丸ごと置き換えると上下が 0 になり、文字が上へずれる（実測 2026-11-13）。
+    /// </remarks>
+    public static void SetStatusLabelSideMargins(Label label, int left, int right)
+    {
+        ArgumentNullException.ThrowIfNull(label);
+
+        label.Margin = new Padding(left, label.Margin.Top, right, label.Margin.Bottom);
+    }
+
+    /// <summary>ステータス バーのリンク（青字 + 下線）を生成する。</summary>
+    /// <param name="toolTip">ツールヒントの文言（省略可）。</param>
+    /// <returns>生成したリンク ラベル。</returns>
+    /// <remarks>
+    /// 文字サイズ・余白は <see cref="CreateStatusLabel"/> と同じにする（同じ行に並べるため）。<br/>
+    /// 色は <see cref="AppStyles.Link"/>（<see cref="App.Core.Services.AppPalette"/> が単一所有する）。
+    /// </remarks>
+    public static LinkLabel CreateStatusLink(string toolTip = "")
+    {
+        var link = new LinkLabel
+        {
+            AutoSize = true,
+            Font = AppStyles.StatusBarFont,
+            LinkColor = AppStyles.Link,
+            ActiveLinkColor = AppStyles.Link,
+            VisitedLinkColor = AppStyles.Link,
+            LinkBehavior = LinkBehavior.AlwaysUnderline,
+            BackColor = Color.Transparent,
+            Height = StatusBarContentHeight,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(2, 0, 6, 0),
+        };
+
+        // 幅を自動にすると高さも文字の高さになり、上端へ寄る（CreateStatusLabel と同じ扱い）
+        var space = Math.Max(0, StatusBarContentHeight - link.PreferredHeight);
+        link.Margin = new Padding(2, space / 2, 6, space - (space / 2));
+
+        if (toolTip.Length > 0)
+        {
+            AttachToolTip(link, toolTip);
+        }
+
+        return link;
     }
 
     /// <summary>書式を固定した数値入力（小数）を生成する。</summary>

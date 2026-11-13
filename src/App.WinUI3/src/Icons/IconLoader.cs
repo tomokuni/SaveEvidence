@@ -2,6 +2,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using EsUtil.Platform.Core.Caching;
 using EsUtil.Platform.Core.Svg;
 using EsUtil.SaveEvidence.App.Core.Icons;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Views;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -24,11 +25,11 @@ internal static class IconLoader
     /// <summary>画像キャッシュの最大保持数。</summary>
     private const int CacheCapacity = 48;
 
-    /// <summary>アイコン色（明色テーマ用）。</summary>
-    private const uint ForegroundLight = 0xFF1A1A1A;
+    /// <summary>アイコン色（明色テーマ用）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    private const uint ForegroundLight = AppPalette.ForegroundLight;
 
-    /// <summary>アイコン色（暗色テーマ用）。</summary>
-    private const uint ForegroundDark = 0xFFEEEEEE;
+    /// <summary>アイコン色（暗色テーマ用）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    private const uint ForegroundDark = AppPalette.ForegroundDark;
 
     /// <summary>生成済み画像のキャッシュ（ファイル名・サイズ・色で一意）。</summary>
     private static readonly CapacityLimitedCache<(string File, int Size, uint Argb), ImageSource> s_cache =

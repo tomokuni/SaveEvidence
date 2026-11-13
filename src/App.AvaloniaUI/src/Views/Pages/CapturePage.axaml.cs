@@ -70,6 +70,13 @@ public sealed partial class CapturePage : UserControl
     // キャプチャ中フラグ
     private bool _isCaptureInProgress;
 
+    /// <summary>Ctrl ショートカットを登録したウィンドウ（未添付の間は null）。</summary>
+    /// <remarks>
+    /// ページ内にフォーカスが無い場合（ナビゲーションやウィンドウ自身にフォーカスがある場合）も<br/>
+    /// ショートカットを効かせるため、ページではなくウィンドウ（<see cref="TopLevel"/>）へ登録する。
+    /// </remarks>
+    private TopLevel? _shortcutTopLevel;
+
     // アプリケーションロガー
     private static readonly ILogger s_logger = AppLog.CreateLogger("CapturePage");
 
@@ -84,8 +91,71 @@ public sealed partial class CapturePage : UserControl
 
         if (Design.IsDesignMode) return;
 
+        ApplyStatusFieldWidths();
+
         // Undo / Redo スタックは DI から取得する（UndoPage と同一インスタンスを共有するため）
         _undoHistory = Program.ServiceProvider.GetRequiredService<UndoHistory>();
+    }
+
+    /// <summary>マウスポインタ位置・画像サイズの表示幅と右側の余白を、ステータス バーの文字で測って決める。</summary>
+    /// <remarks>
+    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
+    /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。<br/>
+    /// 値を固定すると、座標が変わるたびに右側の項目が動いて読みにくい（実測）。
+    /// </remarks>
+    private void ApplyStatusFieldWidths()
+    {
+        var typeface = new Typeface(PointerText.FontFamily, PointerText.FontStyle, PointerText.FontWeight, PointerText.FontStretch);
+
+        // TextBlock は文字の左右に内部余白を足さない（推奨幅 = 送り幅）ため、幅はそのまま使える
+        var widths = StatusBarMetrics.ResolveFieldWidths(text => MeasureText(typeface, text));
+
+        // 幅 = 基準の文字列（「pt: 8888, 8888」「size: 8888 x 8888」）+ 「W」
+        // （規則は StatusBarMetrics が単一所有する）。 文字は左寄せにし、余白は 0 にする
+        // （足すと「W」より広くなる）
+        PointerText.Width = widths.Position;
+        PointerText.Margin = default;
+        ImageSizeText.Width = widths.ImageSize;
+        ImageSizeText.Margin = default;
+    }
+
+    /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>
+    /// <param name="typeface">測る文字の書体。</param>
+    /// <param name="text">測る文字列。</param>
+    /// <returns>描画幅（DIP）。</returns>
+    private static double MeasureText(Typeface typeface, string text)
+        => new FormattedText(
+            text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface,
+            StatusBarMetrics.FontSize, Brushes.Black).Width;
+
+    /// <summary>ビジュアル ツリーへ添付されたときに Ctrl ショートカットをウィンドウへ登録する。</summary>
+    /// <param name="e">添付の情報。</param>
+    /// <remarks>
+    /// ページ内にフォーカスが無い場合もショートカットを効かせるため、ページではなく<br/>
+    /// <see cref="TopLevel"/>（ウィンドウ）へトンネル段階で登録する。<br/>
+    /// 表示されていない間は <see cref="OnGlobalKeyDown"/> が何もしない（他ページの操作を横取りしない）。
+    /// </remarks>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        DetachShortcutHandler();
+        _shortcutTopLevel = TopLevel.GetTopLevel(this);
+        _shortcutTopLevel?.AddHandler(KeyDownEvent, OnGlobalKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    /// <summary>ビジュアル ツリーから外れたときに Ctrl ショートカットの登録を解除する。</summary>
+    /// <param name="e">解除の情報。</param>
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        DetachShortcutHandler();
+        base.OnDetachedFromVisualTree(e);
+    }
+
+    /// <summary>Ctrl ショートカットの登録を解除する。</summary>
+    private void DetachShortcutHandler()
+    {
+        _shortcutTopLevel?.RemoveHandler(KeyDownEvent, OnGlobalKeyDown);
+        _shortcutTopLevel = null;
     }
 
     /// <summary>MainWindow から初期化される。</summary>
@@ -201,9 +271,8 @@ public sealed partial class CapturePage : UserControl
         // 保存ボタンの ToolTip（保存先フォルダ付き）を設定する
         UpdateSaveButtonToolTip();
 
-        // メニューを開かずに効く Ctrl ショートカット（Ctrl+S 等）を登録する
-        // Tunnel で登録し、メニューのアクセラレータ文字（(_X)）は Alt 用として削除済み（Alt は無効化）
-        AddHandler(KeyDownEvent, OnGlobalKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
+        // メニューを開かずに効く Ctrl ショートカット（Ctrl+S 等）は、ウィンドウ（TopLevel）で受ける
+        // （ページ内にフォーカスが無い場合も効かせる。 登録は添付時 = OnAttachedToVisualTree が行う）
 
         // Capture メニューにホットキー設定（SelectScreenHotKey 等）を表示する
         // ホットキーはグローバル登録（WM_HOTKEY）のため、Ctrl ショートカット（Ctrl+Q 等）とは独立して動作する
@@ -274,6 +343,9 @@ public sealed partial class CapturePage : UserControl
     /// </remarks>
     private void OnGlobalKeyDown(object? sender, KeyEventArgs e)
     {
+        // 表示されていないページのショートカットは発火させない（ウィンドウで受けているため）
+        if (!IsEffectivelyVisible || _viewModel is null) return;
+
         // 自動切り出し中は Escape でキャンセルする（切り出しモードと同じ操作）。
         // 自動切り出しはオーバーレイコントロールを持たない（ViewModel の状態で表示する）ため、
         // テキスト入力中でも優先して処理する。
@@ -284,8 +356,10 @@ public sealed partial class CapturePage : UserControl
             return;
         }
 
-        // テキスト入力中はテキスト編集ショートカットを優先する（Ctrl+C/V/Z/Y 等を横取りしない）
-        if (e.Source is TextBox) return;
+        // テキスト入力中はテキスト編集ショートカットを優先する（Ctrl+C/V/Z/Y 等を横取りしない）。
+        // 保存（Ctrl+S）は文字編集のショートカットではないため、入力中でも行う
+        // （テンプレート欄へ入力した直後に保存できず、フォーカスを移す操作を強いるのを避ける）。
+        if (e.Source is TextBox && e.Key != Key.S) return;
 
         // Ctrl 押下時のみ処理（Alt / Shift との併用は対象外）
         if (!IsCtrlShortcut(e.KeyModifiers)) return;
@@ -390,137 +464,12 @@ public sealed partial class CapturePage : UserControl
         };
 
     /// <summary>ファイル名テンプレートの ToolTip（プレースホルダ・オートインクリメントの説明）を構築する。</summary>
-    /// <returns>ToolTip として表示するパネル。</returns>
+    /// <returns>ToolTip として表示する文言。</returns>
     /// <remarks>
-    /// <c>{date}</c> / <c>{time}</c> は XAML ではマークアップ拡張と解釈されるため、<br/>
-    /// コードビハインドで構築する（AXAML の属性/要素構文では表現できない）。
+    /// 文言は <see cref="FileNameTemplate.BuildHelpText"/>（コア）が単一所有する<br/>
+    /// （4 つの UI 版で同じ説明を出す。 例の日時も実際の保存名と同じ書式になる）。
     /// </remarks>
-    private static object BuildFileNameTemplateToolTip()
-    {
-        var now = DateTime.Now;
-
-        // 幅はコンテンツの自然幅（最長の NoWrap 行）に合わせ、長い行は折り返す（画面からはみ出さない上限）
-        var panel = new StackPanel { MaxWidth = 600 };
-
-        // 見出し
-        panel.Children.Add(new TextBlock
-        {
-            Text = "保存ファイル名テンプレート",
-            FontWeight = FontWeight.Bold,
-            Margin = new Thickness(0, 0, 0, 4),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = "テンプレート文字列から保存ファイル名を生成します。",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 6),
-        });
-
-        // プレースホルダ
-        panel.Children.Add(new TextBlock
-        {
-            Text = "プレースホルダ",
-            FontWeight = FontWeight.Bold,
-            Margin = new Thickness(0, 0, 0, 2),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"{{date}} → 日付（例: {now:yyyyMMdd} = yyyyMMdd）",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"{{time}} → 時刻（例: {now:HHmmss} = HHmmss）",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"{{yyyy}} → 年（例: {now:yyyy} = yyyy）",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"{{MM}} → 月（例: {now:MM} = MM）",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"{{dd}} → 日（例: {now:dd} = dd）",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"{{HH}} → 時（例: {now:HH} = HH）",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"{{mm}} → 分（例: {now:mm} = mm）",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"{{ss}} → 秒（例: {now:ss} = ss）",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 6),
-        });
-
-        // オートインクリメント
-        panel.Children.Add(new TextBlock
-        {
-            Text = "オートインクリメント",
-            FontWeight = FontWeight.Bold,
-            Margin = new Thickness(0, 0, 0, 2),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = "一番右の数値連続が保存ごとに +1 されます。",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = "必要桁数が増えない限り桁数は維持されます。",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = "（01 → 02、99 → 100、099 → 100）",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 6),
-        });
-
-        // 具体例
-        panel.Children.Add(new TextBlock
-        {
-            Text = "例",
-            FontWeight = FontWeight.Bold,
-            Margin = new Thickness(0, 0, 0, 2),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"screenshot_{{date}}_{{time}}_01.png →",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 1),
-        });
-        panel.Children.Add(new TextBlock
-        {
-            Text = $"screenshot_{now:yyyyMMdd}_{now:HHmmss}_01.png",
-            TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(8, 0, 0, 0),
-        });
-
-        return panel;
-    }
-
+    private static string BuildFileNameTemplateToolTip() => FileNameTemplate.BuildHelpText();
     /// <summary>ViewModel にコールバックを設定する。</summary>
     private void SetupViewModelCallbacks()
     {
@@ -909,7 +858,7 @@ public sealed partial class CapturePage : UserControl
     {
         if (_viewModel.PreviewImage is not { } img)
         {
-            _viewModel.PointerDisplayText = "-";
+            _viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             UpdateAutoCropHover(null);
             return;
         }
@@ -921,7 +870,7 @@ public sealed partial class CapturePage : UserControl
         if (displayPoint.X < 0 || displayPoint.Y < 0 ||
             displayPoint.X >= imageRect.Width || displayPoint.Y >= imageRect.Height)
         {
-            _viewModel.PointerDisplayText = "-";
+            _viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             UpdateAutoCropHover(null);
             return;
         }
@@ -930,7 +879,7 @@ public sealed partial class CapturePage : UserControl
         var contentPos = ClientToSource(viewportPos);
         var x = (int)Math.Clamp(contentPos.X, 0, img.Size.Width - 1);
         var y = (int)Math.Clamp(contentPos.Y, 0, img.Size.Height - 1);
-        _viewModel.PointerDisplayText = $"{x}, {y}";
+        _viewModel.PointerDisplayText = StatusBarTexts.FormatPointer(x, y);
         UpdateAutoCropHover(new Point(x, y));
     }
 
@@ -940,7 +889,7 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>移動イベントは領域外では発生しないため、ホバー強調の残留を防ぐために本ハンドラを購読する。</remarks>
     private void OnImagePointerExited(object? sender, PointerEventArgs e)
     {
-        _viewModel.PointerDisplayText = "-";
+        _viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
         UpdateAutoCropHover(null);
     }
 

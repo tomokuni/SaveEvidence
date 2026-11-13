@@ -7,7 +7,10 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 /// <remarks>
 /// WinUI 3 の <see cref="ContentDialog"/> を使い、オーナー ウィンドウの中央へモーダル表示する。<br/>
 /// 用途: 保存時の上書き確認など（メイン ViewModel の上書き確認コールバックへ配線する）。<br/>
-/// <b>閉じられた場合</b>はキャンセル（「いいえ」）と同じ扱いにする（保存を続行しない）。
+/// <b>閉じられた場合</b>はキャンセル（「いいえ」）と同じ扱いにする（保存を続行しない）。<br/>
+/// <b>配色はアプリのテーマに合わせる</b>: <see cref="ContentDialog"/> は XAML ルートのテーマを継承せず、
+/// OS のテーマで描かれるため、ダーク モードでも白いダイアログになる（実測 2026-11-12）。
+/// 呼び出し側が決めた要素テーマを明示して 4 UI 版の見た目を揃える。
 /// </remarks>
 internal static class ConfirmDialog
 {
@@ -33,6 +36,8 @@ internal static class ConfirmDialog
             PrimaryButtonText = "はい",
             CloseButtonText = "いいえ",
             DefaultButton = ContentDialogButton.Close,
+            // アプリの配色（ダーク / ライト）に合わせる（継承しないため明示する）
+            RequestedTheme = AppStyles.IsDarkTheme ? ElementTheme.Dark : ElementTheme.Light,
         };
 
         var result = await dialog.ShowAsync();

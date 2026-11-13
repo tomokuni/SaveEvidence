@@ -17,35 +17,35 @@
       },
       "EsUtil.Ui.MewUI.ColorSelector": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "OwDBXCNMLUoVaq6XB8C1NwaUhjx5WH8mlOsGGjJs4QN9pPLbOFdSUMox5gGozxutwDTF7pSx5RKIdecHMoz4Zw==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "X6k07qYbDaDn9HRmrft5fkqFp+X+1HzYXKtwIr120VaZdDyNkyG13N0Bah2wuLMpcGbIr9IC5HHJP11SryqTsA==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Ui.MewUI.Interop": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "+gPMiXlmJqiOe+oj4uJHcfdBtTNeBiA7kOf+KSbp6RVeCaeBG/+lvftQscIwzkIvAepY4Ipi/JhipitOXk/jAw==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "OrGLBj4/4YGKqGzWwOUtbCYaVI55TJ6bNMWJdAD8JdR09dBF90BgJceX6vUN+n9EvAVdQPfKnoJkxkMTMtolYg==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Platform.Core": "0.6.2"
+          "EsUtil.Platform.Core": "0.6.3"
         }
       },
       "EsUtil.Ui.MewUI.Thumbnail": {
         "type": "Direct",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "oCxVeUP85SeHV9J5tUdu6rpiCULp9fbNYZk7gEVx77693Z11gEnGn0qW5ILG79ymct8I5qGAi5vANFUY3lWUXA==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "QB8iQp4BFJVPcqzWi6kFzqCGjuwTF5dJyJWmA4kZS+GvRWsl/hkH2q8s5auv/o9ZRRIotu9nYhTK1Q+Y1yy92w==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Thumbnail.Core": "0.6.2",
-          "EsUtil.Platform.Core": "0.6.2",
-          "EsUtil.Ui.MewUI.Interop": "0.6.2",
+          "EsUtil.Feature.Thumbnail.Core": "0.6.3",
+          "EsUtil.Platform.Core": "0.6.3",
+          "EsUtil.Ui.MewUI.Interop": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
@@ -181,36 +181,39 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
-          "EsUtil.Platform.Core": "[0.6.2, )",
-          "Parts.CapturePreview.Core": "[0.1.5, )",
-          "Parts.LineDetection": "[0.1.5, )"
+          "EsUtil.Platform.Core": "[0.6.3, )",
+          "Parts.CapturePreview.Core": "[0.2.0, )",
+          "Parts.LineDetection": "[0.2.0, )",
+          "Serilog": "[4.4.0, )",
+          "Serilog.Extensions.Logging": "[10.0.0, )",
+          "Serilog.Sinks.File": "[7.0.0, )"
         }
       },
       "parts.capturepreview.controlmewui": {
         "type": "Project",
         "dependencies": {
           "Aprillz.MewUI.Windows": "[0.22.1, )",
-          "EsUtil.Platform.Core": "[0.6.2, )",
-          "EsUtil.Ui.MewUI.Interop": "[0.6.2, )",
-          "EsUtil.Ui.MewUI.Loupe": "[0.6.2, )",
-          "EsUtil.Ui.MewUI.Marquee": "[0.6.2, )",
+          "EsUtil.Platform.Core": "[0.6.3, )",
+          "EsUtil.Ui.MewUI.Interop": "[0.6.3, )",
+          "EsUtil.Ui.MewUI.Loupe": "[0.6.3, )",
+          "EsUtil.Ui.MewUI.Marquee": "[0.6.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )",
-          "Parts.CapturePreview.Core": "[0.1.5, )"
+          "Parts.CapturePreview.Core": "[0.2.0, )"
         }
       },
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.6.2, )",
-          "EsUtil.Feature.Marquee.Core": "[0.6.2, )",
-          "EsUtil.Platform.Core": "[0.6.2, )",
+          "EsUtil.Feature.Loupe.Core": "[0.6.3, )",
+          "EsUtil.Feature.Marquee.Core": "[0.6.3, )",
+          "EsUtil.Platform.Core": "[0.6.3, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )"
         }
       },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.6.2, )",
+          "EsUtil.Platform.Core": "[0.6.3, )",
           "OpenCvSharp5": "[5.0.0.20261107, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261107, )"
         }
@@ -223,63 +226,63 @@
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "IOgjwnFEIC9m6qturBruA9BGbPI8qLfTaFwKrePLHwQ/nw741GTlrAZg3obkLJfhSiUZ6Fe0O1zX7hb/21Fp8A==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "yNyzGl5H8g0WwN8LjwfmrlxGPOVGY9Buqt+MN59gGcYPjdmectA/+PU6OMXqC4K2Y2LKPxg8g4DwEpj0nTJ5LQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "Cb4D1nxcKB4wpLfD4e5OZcKdhmewGseLucZdhdXqMqTQBE1gNChceBIf6BznzkQIpyAilSXC4vLWQE0OSkI75w==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "fj7KPX8oSCc9PBTLU6te138MDFcVP2TuEqz7QoD6botAhQDe70R/K1qqWIrUsf1C3D1mATsq+2hUm9HbkMq0LQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Feature.Thumbnail.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "hMzzao8awBMgGbCfjoN7sz/KwtPKq0/RyfSq94oO88iv3xxjSv7dccpUkRntfgdSN8GscQu6W7pPYF9/7Q/IOA==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "h5rrPwQXyYHNeTcREa5png7bIm7rqt3pGg3BuHwNAZb1d3Np5vbo4/YcmTjqkeHqAEbUtIvqC4d7OAEV1jWXDA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.2",
+          "EsUtil.Platform.Core": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "u08Uu8OXNBfUF/o6ESHJRuwmvPONY9gS5g0rFN1myZq73Wm4756W6FS5dmTUyTI3CLeQ9wrRm6BwZJSSlqDQkg=="
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "5jck282pVjqsCvoA0VIAARbsJ/tW/vdbTtpJPzF0qp1u4p0RrOW/6zCiGaVdeipGEYSublR/xhBsBQ8c+kVnZg=="
       },
       "EsUtil.Ui.MewUI.Loupe": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "G5rtSMPwQ9R+G9HBWOkfhfH1tFCoSDE3MwoYFlTxLijO7WCOSeMXOF5bIMGVAvAPaGaYs5zNoXD7hhP0aa9+1g==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "GgpIudwBGBOHNVJy2kHK7tR/ayk0YwGoEdh9DNcGIKkTY+y9tToUCps48hQhb699qXoD198zR1ZcmuLHgIcLLg==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Loupe.Core": "0.6.2",
-          "EsUtil.Platform.Core": "0.6.2",
-          "EsUtil.Ui.MewUI.Interop": "0.6.2",
+          "EsUtil.Feature.Loupe.Core": "0.6.3",
+          "EsUtil.Platform.Core": "0.6.3",
+          "EsUtil.Ui.MewUI.Interop": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },
       "EsUtil.Ui.MewUI.Marquee": {
         "type": "CentralTransitive",
-        "requested": "[0.6.2, )",
-        "resolved": "0.6.2",
-        "contentHash": "1Xe6YlIsaRqFzQT2aF29Xp+Qzf+sXECz5sQrC3tcc+6s4k6zRlzAQ/NEDnC8YXBakkRfjNS1gSa2GaSsCxXQlQ==",
+        "requested": "[0.6.3, )",
+        "resolved": "0.6.3",
+        "contentHash": "hHoVxBn1KgCC+9ZpgNf1H65AgnDBx515BKGpcXMwfClKv/AMfD+GEfb/iJwQ/HcJiAac+NdXfFlPYzd7MsFWmQ==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Marquee.Core": "0.6.2",
-          "EsUtil.Platform.Core": "0.6.2",
-          "EsUtil.Ui.MewUI.Interop": "0.6.2",
+          "EsUtil.Feature.Marquee.Core": "0.6.3",
+          "EsUtil.Platform.Core": "0.6.3",
+          "EsUtil.Ui.MewUI.Interop": "0.6.3",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
         }
       },

@@ -422,12 +422,21 @@ public sealed partial class MainWindow : Window
     {
         _viewModel.CopyToClipboardCallback = async image =>
         {
+            // **共通基盤の CF_DIB 書き込みを使う**: Avalonia のクリップボードは DIB を上から下の向きで
+            // 書くため、Paint など一部のアプリが画像として読めない（貼り付けできない。 実測 2026-11-12）。
+            // 共通基盤（MewUI 版と同じ実装）は下から上の DIB を書くため、Windows の標準的な読み取りで扱える。
+            if (TryGetPlatformHandle()?.Handle is { } handle && handle != IntPtr.Zero
+                && ClipboardImage.TryCopy(image, handle))
+            {
+                return true;
+            }
+
             if (Clipboard is null)
             {
                 return false;
             }
 
-            // クリップボードは Avalonia Bitmap を要求するため、境界で変換する（所有権は本メソッド内で完結）
+            // 共通基盤で書けない場合だけ Avalonia のクリップボードへ委譲する（所有権は本メソッド内で完結）
             using var bitmap = image.ToAvaloniaBitmap();
             await Clipboard.SetBitmapAsync(bitmap);
             return true;
@@ -808,6 +817,9 @@ public sealed partial class MainWindow : Window
             // 通知メッセージは画像の差し替え（SetPreviewImage が StatusMessage を空にする）より後に設定する
             // （先に設定すると消える）。 文言はコア（StatusMessages）が単一所有する
             _viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
+
+            // 設定が有効なら撮影した画像をクリップボードへコピーする
+            _ = _viewModel.CopyAfterEditIfEnabledAsync();
         }
     }
 }

@@ -69,7 +69,7 @@ public static class StartupPreviewImage
             return false;
         }
 
-        viewModel.SetPreviewImage(CreateGradient());
+        viewModel.SetStartupPreviewImage(CreateGradient());
         return true;
     }
 

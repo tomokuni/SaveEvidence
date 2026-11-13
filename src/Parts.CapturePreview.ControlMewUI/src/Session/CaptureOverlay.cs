@@ -5,6 +5,7 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Native;
+using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
 using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Capture;
@@ -98,6 +99,13 @@ internal sealed class CaptureOverlay
     /// <summary>カーソル下の要素を検出するサービス（ハイライト型（スクリーン選択 / ウィンドウ選択）のみ使用する）。</summary>
     private readonly IElementFinder _finder;
 
+    /// <summary>カーソル位置の取得（表示前のハイライトの初期化に使う。 状態を持たないため共有できる）。</summary>
+    /// <remarks>
+    /// 表示の前に「カーソル下のモニター・ウィンドウ」をハイライトするために使う（WIC 等と同じく
+    /// Windows 専用の具象で問題ない。 切り出しのカーソル上書き抑制も同じ形で具象を持つ）。
+    /// </remarks>
+    private static readonly ICursorService s_cursor = new WinCursorService();
+
     /// <summary>キャプチャ種別（操作ラベル・情報ラベルの文言に影響する）。</summary>
     private readonly CaptureType _type;
 
@@ -131,6 +139,13 @@ internal sealed class CaptureOverlay
     /// 両方から呼ばれるが、二重呼び出しは無害（コアのスコープが 1 回だけ実行する）。
     /// </remarks>
     private CaptureOwnerScope? _ownerScope;
+
+    /// <summary>撮影中に隠したタスク バー（オーバーレイを閉じる直前に戻す）。</summary>
+    /// <remarks>
+    /// オーバーレイが画面を覆い終えてから隠す（先に隠すと、覆うまでの数十ミリ秒だけタスク バーの跡が<br/>
+    /// 背景として見える）。 戻すのは閉じる直前（同じ描画の間）にする（先に戻すと帯が一瞬見える）。
+    /// </remarks>
+    private CaptureTaskbarScope? _taskbarScope;
 
     /// <summary>キャプチャ完了の通知先（結果をホストへ中継する）。</summary>
     /// <remarks>
@@ -220,6 +235,15 @@ internal sealed class CaptureOverlay
         // 復帰をウィンドウのクローズ前に行えるよう、スコープを保持する（破棄は Finish が行う）
         _ownerScope = ownerScope;
 
+        // **タスク バーを写さない設定のときは、撮影より前に隠す**（撮影後に隠すと画像に写ったままになる）。
+        // 写す設定のときは隠さず、オーバーレイの領域からタスク バーの矩形を除く（表示の直後に行う）。
+        // 手順は コアの CaptureTaskbarScope が単一所有する（4 UI 版で同じ症状が出たため集約した）
+        if (_settings.HideTaskbar == true)
+        {
+            _taskbarScope = CaptureTaskbarScope.Hide();
+            await Task.Delay(CaptureTaskbarScope.HideSettleDelay).ConfigureAwait(true);
+        }
+
         // 全モニターを包含する 1 枚の画像として取得する（Avalonia 版と同じ）。
         // 1 モニターに限定すると、カーソルのあるモニターでしか選択できない（別のモニターへ
         // 移動しての選択操作ができない）ため、仮想スクリーン全体を対象にする。
@@ -240,6 +264,10 @@ internal sealed class CaptureOverlay
         // 撮影範囲の原点とサイズを記録する（書式はコアが単一所有する。 Avalonia 版と同じ診断情報を残す）
         _log.LogVirtualScreen(origin, Screen);
 
+        // **撮影が済んだ後にタスク バーを隠す**（写さない設定では撮影の前に隠し済み）。
+        // 隠さないと、半透明（アクリル）のタスク バーが暗転マスクを透かして暗く見え、
+        // シェルが前面へ戻すと明るくなる（= 明滅）。 反映は 1〜2 フレーム後になるため、
+        // 画像を見せる前に消えるまで待つ（手順は コアの CaptureTaskbarScope が単一所有する）
         try
         {
             // 確定・キャンセルまで待つ（入れ子ループを作らない非同期の待機。 ホストの継続は呼び出し側へ戻る）
@@ -254,6 +282,9 @@ internal sealed class CaptureOverlay
         {
             _ownerScope = null;
             _ownerWindow = null;
+            // 例外経路でもタスク バーを戻す（二重呼び出しは無害）
+            _taskbarScope?.Dispose();
+            _taskbarScope = null;
             // 画像はセッションの終了時に破棄する（以降の描画・切り出しは発生しない）
             _screen?.Dispose();
             _screen = null;
@@ -348,6 +379,14 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private static readonly TimeSpan s_frameTimeout = TimeSpan.FromMilliseconds(200);
 
+    /// <summary>オーバーレイを画面内へ出す前に、画面外での描画を待つ上限。</summary>
+    /// <remarks>
+    /// <see cref="s_frameTimeout"/> より短くするのは、**待てない環境でデスクトップが見える時間を延ばさない**ためである<br/>
+    /// （画面外では合成が走らないことがあり、その場合は待っても画像は描かれない。 待つほど「アプリが消えてから<br/>
+    /// 暗転が掛かるまで」の間が伸び、ちらつきとして見える。 60 ms は 60 Hz の 2 フレーム強に相当する）。
+    /// </remarks>
+    private static readonly TimeSpan s_revealFrameTimeout = TimeSpan.FromMilliseconds(60);
+
     /// <summary>画面外で画像を描き終えたかどうか（画面内へ移したか）。</summary>
     private bool _placed;
 
@@ -410,6 +449,12 @@ internal sealed class CaptureOverlay
         // 明るい面として目立たないようにする。 画面外で描き終えてから移すため、通常は見えない）。
         window.Background = AverageColor(Screen);
 
+        // **配置が済むまで透明にする**: MewUI はウィンドウを表示するときに既定の配置（画面の左上）を
+        // 一瞬適用してから指定の位置へ移すため、その 1〜2 フレームが「画面がずれて見える」ちらつきになる
+        // （実測 2026-11-12: 仮想スクリーンの原点が (0,-1200) の環境で、0,0 の位置に 1 フレーム出た）。
+        // 透明にしておけば、位置が確定して画像が合成された後に不透明へ戻すだけで済む。
+        window.Opacity = 0;
+
         // **画面外に置いた状態で表示し、画像を描き終えてから画面内へ移す**
         // （画面内で表示してから画像を合成すると、合成前の 1〜2 フレームに下地の色やデスクトップが見える）。
         // 大きさは変えずに位置だけ動かすのは、大きさを変えると再レイアウトが走り、
@@ -460,6 +505,11 @@ internal sealed class CaptureOverlay
 
         window.Loaded += () =>
         {
+            // **表示された直後にもう一度だけ画面外へ置き直す**: ウィンドウは最初の表示で
+            // 既定の位置・大きさ（画面中央）が適用されることがあり、その 1 フレームが
+            // 「小さい画面」のちらつきになる（WinUI 3 版と同じ対策。 実測 2026-11-12）
+            window.StartManualPosition(offScreen.X, offScreen.Y);
+
             // 画像ピクセル ↔ DIP の倍率は表示に使うウィンドウの DPI で決める
             // （ウィンドウのクライアント座標は物理ピクセルで届くため、この倍率で画像ピクセルへ戻せる。
             //  モニターごとに倍率が異なっても、ウィンドウの倍率は 1 つに定まるため全域で同じ式が使える）
@@ -661,6 +711,9 @@ internal sealed class CaptureOverlay
     {
         var overlay = _overlayWindow;
         _overlayWindow = null;
+        // タスク バーは閉じる直前に戻す（先に戻すと帯が一瞬見える。 閉じるのと同じ描画の間に行う）
+        _taskbarScope?.Dispose();
+        _taskbarScope = null;
         overlay?.Close();
     }
 
@@ -679,7 +732,14 @@ internal sealed class CaptureOverlay
     /// </remarks>
     private async Task RevealAsync(Window window, CaptureOverlayServices services, CaptureOwnerScope ownerScope)
     {
-        await WaitForFramesAsync(window, FramesBeforePlace).ConfigureAwait(true);
+        // **表示の前にハイライトを確定する**: 全体をマスクした状態で 1 フレームでも見せると、
+        // カーソル下のモニター・ウィンドウだけが後から明るくなる（= マスクが一度掛かってから解除される）
+        // ように見え、ちらつきとして知覚される（実測 2026-11-13）。 画面外・透明の間に済ませる。
+        ApplyInitialHighlight();
+
+        // **待つ上限は短くする**: 画面外では合成が走らないことがあり、その場合は待っても画像は描かれない。
+        // 待つほど「アプリが消えてから暗転が掛かるまで」の間が伸び、ちらつきとして見える
+        await WaitForFramesAsync(window, FramesBeforePlace, s_revealFrameTimeout).ConfigureAwait(true);
         // 画像の転送（GPU へのアップロード）がフレームに遅れる環境向けの余裕
         await Task.Delay(s_revealSettleDelay).ConfigureAwait(true);
 
@@ -690,12 +750,23 @@ internal sealed class CaptureOverlay
 
         PlaceOnScreen(window, services);
 
-        // 画面内へ移した次のフレームでオーナーを退避する（退避の瞬間を見せない）
-        await WaitForFramesAsync(window, FramesBeforeHideOwner).ConfigureAwait(true);
+        // 位置が確定した次のフレームで不透明へ戻す（透明のまま表示していた内容がこの時点で出る。
+        // 画像は画面外で合成済みのため、不透明にした瞬間から正しい内容が見える）
+        await WaitForFramesAsync(window, FramesBeforePlace, s_revealFrameTimeout).ConfigureAwait(true);
+
+        window.Opacity = 1;
+
+        // 画面内へ移した次のフレームでオーナーを退避する（退避の瞬間を見せない）。
+        // **キャプチャ除外が効いている場合は退避しない**: オーバーレイが画面全体を覆っているため見た目は変わらないが、
+        // 退避の瞬間にウィンドウが再合成され、一瞬だけちらつく（WinUI 3 版・WinForms 版と同じ判断）
+        await WaitForFramesAsync(window, FramesBeforeHideOwner, s_revealFrameTimeout).ConfigureAwait(true);
         if (!_ownerHidden && _overlayWindow is not null)
         {
             _ownerHidden = true;
-            ownerScope.ApplyPendingHide();
+            if (!ownerScope.IsExcluded)
+            {
+                ownerScope.ApplyPendingHide();
+            }
         }
     }
 
@@ -741,12 +812,13 @@ internal sealed class CaptureOverlay
     /// <summary>指定したウィンドウの描画フレームを待つ（合計で上限時間）。</summary>
     /// <param name="window">対象のウィンドウ。</param>
     /// <param name="frameCount">待つフレーム数。</param>
+    /// <param name="timeout">待つ上限（省略時は <see cref="s_frameTimeout"/>）。</param>
     /// <returns>待機が完了したときに完了するタスク。</returns>
     /// <remarks>
     /// 画面外・最小化では合成が走らないことがあるため、<see cref="s_frameTimeout"/> で打ち切る。<br/>
     /// 打ち切った場合は待機を続けない（閉じる操作を止めない）。
     /// </remarks>
-    private static async Task WaitForFramesAsync(Window window, int frameCount)
+    private static async Task WaitForFramesAsync(Window window, int frameCount, TimeSpan? timeout = null)
     {
         var remaining = frameCount;
         var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -766,7 +838,7 @@ internal sealed class CaptureOverlay
         try
         {
             // 上限は合計で 1 回分（フレームが来ない環境で閉じる操作を待たせ続けない）
-            await Task.WhenAny(completed.Task, Task.Delay(s_frameTimeout)).ConfigureAwait(true);
+            await Task.WhenAny(completed.Task, Task.Delay(timeout ?? s_frameTimeout)).ConfigureAwait(true);
         }
         finally
         {
@@ -796,6 +868,29 @@ internal sealed class CaptureOverlay
         {
             _selector.RequestRedraw();
         }
+    }
+
+    /// <summary>表示の前に、カーソル下の要素でハイライトを確定する。</summary>
+    /// <remarks>
+    /// <b>なぜ必要か</b>: ハイライトはポインタ移動でしか更新しないため、表示直後は<b>全面がマスクされた状態</b>に
+    /// なり、最初のポインタ移動でカーソル下のモニター・ウィンドウのマスクが解除される。 これは
+    /// 「一度マスクされた後に明るくなる」= ちらつきとして知覚される（実測 2026-11-13）。<br/>
+    /// <b>対象</b>: ハイライト型（スクリーン選択 / ウィンドウ選択）だけ。 範囲選択はドラッグで矩形を作るため対象外。<br/>
+    /// <b>取得できない場合</b>: カーソル位置が取れない環境では何もしない（全面マスクのまま操作できる）。
+    /// </remarks>
+    private void ApplyInitialHighlight()
+    {
+        if (!CaptureTypeTraits.IsHighlighted(_type) || _highlight.SourceRect is not null)
+        {
+            return;
+        }
+
+        if (!s_cursor.TryGetCursorScreenPoint(out var screenPoint))
+        {
+            return;
+        }
+
+        Highlight(screenPoint);
     }
 
     /// <summary>マウス位置（画面物理ピクセル）をそのままコア型へ変換する。</summary>

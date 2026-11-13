@@ -56,7 +56,7 @@ public class FolderViewPageTests : IDisposable
 
         var view = new FolderViewViewModel();
         var main = new MainViewModel(settings, new EsBitmapImageWriter());
-        return (new AppServices(main, settings, new UndoHistory(), view), view);
+        return (new AppServices(main, settings, new UndoHistory(), view, new UndoViewModel()), view);
     }
 
     /// <summary>先読みで一覧が構築され、その後に表示しても件数が変わらないことを確認する。</summary>

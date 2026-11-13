@@ -17,4 +17,7 @@ public static class CaptureIconFiles
 
     /// <summary>切り出しのアイコン。</summary>
     public const string Crop = "ic_fluent_crop_24_regular.svg";
+
+    /// <summary>メニュー（三本線）のアイコン。</summary>
+    public const string Menu = "ic_fluent_navigation_24_regular.svg";
 }

@@ -2,6 +2,7 @@ using Aprillz.MewUI;
 using EsUtil.Platform.Core.Caching;
 using EsUtil.Platform.Core.Svg;
 using EsUtil.SaveEvidence.App.Core.Icons;
+using EsUtil.SaveEvidence.App.Core.Services;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Icons;
 
@@ -24,11 +25,17 @@ internal static class IconLoader
     private static readonly CapacityLimitedCache<(string File, int Size, uint Argb), ImageSource> s_cache =
         new(static k => RasterizeToImage(k.File, k.Size, k.Argb), CacheCapacity);
 
-    /// <summary>アイコン色（明色テーマ用）。</summary>
-    private static readonly Color s_foregroundLight = new(255, 26, 26, 26);
+    /// <summary>アイコン色（明色テーマ用）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    private static readonly Color s_foregroundLight = ToColor(AppPalette.Foreground(isDark: false));
 
-    /// <summary>アイコン色（暗色テーマ用）。</summary>
-    private static readonly Color s_foregroundDark = new(255, 238, 238, 238);
+    /// <summary>アイコン色（暗色テーマ用）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    private static readonly Color s_foregroundDark = ToColor(AppPalette.Foreground(isDark: true));
+
+    /// <summary>32 ビットの色値（0xAARRGGBB）を MewUI の色へ変換する。</summary>
+    /// <param name="argb">色（0xAARRGGBB）。</param>
+    /// <returns>MewUI の色。</returns>
+    private static Color ToColor(uint argb)
+        => Color.FromArgb((byte)(argb >> 24), (byte)(argb >> 16), (byte)(argb >> 8), (byte)argb);
 
     /// <summary>現在のテーマが暗色かどうかを取得する。</summary>
     /// <returns>暗色テーマの場合は true。</returns>

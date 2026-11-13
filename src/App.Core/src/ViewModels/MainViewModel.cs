@@ -28,7 +28,35 @@ public sealed partial class MainViewModel : ObservableObject
 
     private readonly IImageWriter _imageWriter;
 
+    /// <summary>初期画像（起動直後のプレースホルダ）を表示しているかどうか。</summary>
+    /// <remarks>
+    /// プレースホルダは利用者の画像ではないため保存できない（<see cref="CanSave"/>）。<br/>
+    /// 通常の画像を設定すると <c>OnPreviewImageChanging</c> が解除する。
+    /// </remarks>
+    private bool _isStartupImage;
+
+    /// <summary>初期画像の設定中かどうか（差し替えの経路が初期画像の印を消さないようにする）。</summary>
+    /// <remarks>
+    /// <see cref="SetStartupPreviewImage"/> は <see cref="PreviewImage"/> を設定するため差し替えの経路を通る。<br/>
+    /// その経路は印を消す（利用者の画像として扱う）ため、設定中だけは消さずに引き継ぐ。
+    /// </remarks>
+    private bool _settingStartupImage;
+
+    /// <summary>最後に保存したファイル名（未保存の場合は空）。 保存のたびに更新して表示へ通知する。</summary>
+    /// <remarks>
+    /// <b>観測可能にしている理由</b>: 保存済みのまま再保存すると <see cref="IsSaved"/> が true のまま変わらず、<br/>
+    /// 通知が発火しないため、ステータスバーの表示が前回のファイル名のまま残る（実測 2026-11-11）。
+    /// </remarks>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SavedFileName))]
     private string _lastSavedFileName = "";
+
+    /// <summary>最後に保存した直後のファイル名テンプレート（未保存の場合は null）。</summary>
+    /// <remarks>
+    /// 保存するとテンプレートの番号は自動で +1 される。 その +1 だけでは「変化した」とみなさず、<br/>
+    /// 保存を無効のままにする（利用者の操作ではないため）。 番号を戻した・さらに進めた・文字を変えた場合は保存できる。
+    /// </remarks>
+    private string? _savedTemplateText;
 
     /// <summary>ファイル名テンプレートの検証結果（有効時は null）。</summary>
     private string? _validationMessage;
@@ -116,14 +144,12 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasPreviewImage))]
     [NotifyPropertyChangedFor(nameof(CanCopy))]
     [NotifyPropertyChangedFor(nameof(CanSave))]
-    [NotifyPropertyChangedFor(nameof(SaveStatusText))]
     [NotifyPropertyChangedFor(nameof(SavedFileName))]
     [NotifyPropertyChangedFor(nameof(ImageSizeDisplayText))]
     private EsReadOnlyBitmap? _previewImage;
 
     /// <summary>画像が保存済みかどうか</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SaveStatusText))]
     [NotifyPropertyChangedFor(nameof(SavedFileName))]
     [NotifyPropertyChangedFor(nameof(CanSave))]
     private bool _isSaved;
@@ -212,8 +238,87 @@ public sealed partial class MainViewModel : ObservableObject
     public bool CanCopy => PreviewImage is not null;
 
     /// <summary>保存可能かどうかを取得する（画像があり、かつ有効なファイル名テンプレートの場合のみ保存可能）。</summary>
-    /// <remarks>保存済み（<see cref="IsSaved"/>）の場合は無効化する（画像変更で保存済み状態が解除される）。</remarks>
-    public bool CanSave => PreviewImage is not null && HasValidTemplate && !IsSaved;
+    /// <remarks>
+    /// 次のいずれかでは保存できない（保存ボタン・メニュー・ショートカットを同じ判定で無効にする）。<br/>
+    /// - 画像が無い（<see cref="PreviewImage"/> が null）。<br/>
+    /// - 起動直後の初期画像を表示している（<see cref="IsStartupImage"/>。 利用者の画像ではない）。<br/>
+    /// - ファイル名テンプレートが無効。<br/>
+    /// - 保存済みで<b>画像もテンプレートも変わっていない</b>。 保存時の自動インクリメント（+1）は変化とみなさない<br/>
+    ///   （<see cref="_savedTemplateText"/>。 番号を戻した・さらに進めた・文字を変えた場合は保存できる）。
+    /// </remarks>
+    public bool CanSave
+        => PreviewImage is not null
+            && HasValidTemplate
+            && !IsStartupImage
+            && (!IsSaved || HasTemplateChangedSinceSave);
+
+    /// <summary>最後の保存以降にファイル名テンプレートが変わったかどうかを取得する。</summary>
+    /// <value>変わった場合は true。 未保存（比較対象が無い）場合も true。</value>
+    /// <remarks>保存時の自動インクリメントは「変わっていない」として扱う（<see cref="CanSave"/>）。</remarks>
+    public bool HasTemplateChangedSinceSave
+        => _savedTemplateText is null
+            || !string.Equals(FileNameTemplateText, _savedTemplateText, StringComparison.Ordinal);
+
+    /// <summary>起動直後の初期画像（プレースホルダ）を表示しているかどうかを取得する。</summary>
+    /// <value>初期画像の場合は true。 撮影・切り出し・貼り付け等で差し替えると false。</value>
+    /// <remarks>初期画像は利用者の画像ではないため保存できない（<see cref="CanSave"/> が false になる）。</remarks>
+    public bool IsStartupImage => _isStartupImage;
+
+    /// <summary>自動保存が有効かどうかを取得または設定する。</summary>
+    /// <value>有効な場合、画像が変わると自動で保存する（設定へ保存する）。</value>
+    /// <remarks>
+    /// 値の保持と永続化は <see cref="Models.Settings.AutoSave"/> が担う（4 つの UI 版で共有する）。<br/>
+    /// 自動保存は<b>保存できない状態では行わない</b>（初期画像・テンプレート無効・変更なし）。<br/>
+    /// 同名のファイルがある場合は確認せずに中止する（自動保存で確認ダイアログを出さない）。
+    /// </remarks>
+    public bool AutoSave
+    {
+        get => Settings.AutoSave;
+        set
+        {
+            if (Settings.AutoSave == value)
+            {
+                return;
+            }
+
+            Settings.AutoSave = value;
+            _settingsService.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>撮影・切り出しの後に画像をクリップボードへコピーするかどうかを取得または設定する。</summary>
+    /// <value>有効な場合、撮影と切り出しの確定後に自動でコピーする（設定へ保存する）。</value>
+    /// <remarks>値の保持と永続化は <see cref="Models.Settings.CopyAfterCapture"/> が担う（4 つの UI 版で共有する）。</remarks>
+    public bool CopyAfterCapture
+    {
+        get => Settings.CopyAfterCapture;
+        set
+        {
+            if (Settings.CopyAfterCapture == value)
+            {
+                return;
+            }
+
+            Settings.CopyAfterCapture = value;
+            _settingsService.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>設定が有効な場合に画像をクリップボードへコピーする（撮影・切り出しの確定後に呼ぶ）。</summary>
+    /// <returns>待機タスク。</returns>
+    /// <remarks>
+    /// 撮影は UI 側のハンドラーが、切り出しは <see cref="CropPreview"/> 等が呼ぶ（手順を UI ごとに書かない）。
+    /// </remarks>
+    public async Task CopyAfterEditIfEnabledAsync()
+    {
+        if (CopyAfterCapture && CanCopy)
+        {
+            await CopyToClipboardAsync();
+        }
+    }
+
 
     /// <summary>貼り付け可能かどうかを取得する。</summary>
     public bool CanPaste => PasteFromClipboardCallback is not null;
@@ -234,12 +339,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     private static readonly StartupPreviewMode[] s_startupPreviewModes = Enum.GetValues<StartupPreviewMode>();
 
-    /// <summary>現在の状態テキスト（左側: 保存済み/未）。</summary>
-    /// <remarks>表示している画像が保存済みなら「保存済み」、画像変更後（キャプチャ・Crop・貼り付け等）または初期表示なら「未」。</remarks>
-    public string SaveStatusText => IsSaved ? "保存済み" : "未";
-
     /// <summary>保存済みファイル名（未保存の場合は空欄）。</summary>
-    public string SavedFileName => IsSaved ? _lastSavedFileName : "";
+    public string SavedFileName => IsSaved ? LastSavedFileName : "";
 
     /// <summary>拡大率の表示テキスト（Fit 時も実効拡大率を % で表示する。 「自動」表記は行わない）。 View 側から設定される。</summary>
     [ObservableProperty]
@@ -247,11 +348,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>マウスポインタ位置の対象座標（画像ピクセル）の表示テキスト。 画像外は "-"。 View 側から設定される。</summary>
     [ObservableProperty]
-    private string _pointerDisplayText = "-";
+    private string _pointerDisplayText = StatusBarTexts.PointerUnavailableText;
 
     /// <summary>画像サイズ（対象座標 = 元画像ピクセル）の表示テキスト。</summary>
     /// <remarks>画像未設定時は空欄。 画像サイズはズーム状態に依存しない固定値。</remarks>
-    public string ImageSizeDisplayText => PreviewImage is { } img ? $"{img.Size.Width} x {img.Size.Height}" : "";
+    public string ImageSizeDisplayText => PreviewImage is { } img
+        ? StatusBarTexts.FormatImageSize(img.Size.Width, img.Size.Height)
+        : StatusBarTexts.ImageSizeUnavailableText;
 
     /// <summary>ファイル名テンプレートが有効かどうかを取得する。</summary>
     /// <remarks><see cref="ValidationMessage"/> が null かどうかで判定する。</remarks>
@@ -280,7 +383,16 @@ public sealed partial class MainViewModel : ObservableObject
         // 前回の画像を保持（OnPreviewImageChanged で破棄。 Image.Source 更新前に破棄しない）
         _previousPreviewImage = _previewImage;
         IsSaved = false;
-        _lastSavedFileName = "";
+        LastSavedFileName = "";
+
+        // 差し替えは利用者の画像（撮影・切り出し・貼り付け等）のため初期画像ではない
+        // （初期画像を設定する経路は SetStartupPreviewImage が印を引き継がせる）
+        var wasStartupImage = _isStartupImage;
+        _isStartupImage = _settingStartupImage;
+        if (wasStartupImage != _isStartupImage)
+        {
+            OnPropertyChanged(nameof(IsStartupImage));
+        }
     }
 
     /// <summary>プレビュー画像変更後に前回の画像を破棄する。</summary>
@@ -299,6 +411,29 @@ public sealed partial class MainViewModel : ObservableObject
         DetectedRects = [];
         HoveredRect = null;
         StatusMessage = "";
+
+        // 自動保存が有効なら、画像が変わった時点で保存する
+        // （保存できない状態（初期画像・テンプレート無効）は Core 側で判定する）
+        if (AutoSave && CanSave)
+        {
+            _ = SaveAfterImageChangedAsync();
+        }
+    }
+
+    /// <summary>画像の変更後に自動保存する（変更を通知した側の後処理が終わってから保存する）。</summary>
+    /// <returns>待機タスク。</returns>
+    /// <remarks>
+    /// <b>1 度待つ理由</b>: 画像を差し替えた側（キャプチャ等）は、この後に「キャプチャしました（…）」を<br/>
+    /// ステータスへ設定する。 待たずに保存すると、その通知に「保存しました」が上書きされる（実測 2026-11-11）。
+    /// </remarks>
+    private async Task SaveAfterImageChangedAsync()
+    {
+        await Task.Yield();
+
+        if (AutoSave && CanSave)
+        {
+            await SaveCoreAsync(confirmOverwrite: false);
+        }
     }
 
     /// <summary>ファイル名テンプレート変更時に検証結果を更新し、設定を保存する。</summary>
@@ -307,6 +442,10 @@ public sealed partial class MainViewModel : ObservableObject
         _settingsService.Current.FileNameTemplate = value;
         _settingsService.Save();
         UpdateValidation();
+
+        // テンプレートが変わると保存できるようになる（未保存のまま・保存時の +1 のままは保存できない）
+        OnPropertyChanged(nameof(HasTemplateChangedSinceSave));
+        OnPropertyChanged(nameof(CanSave));
     }
 
     /// <summary>保存先フォルダ変更時に解決結果を更新し、設定を保存する。</summary>
@@ -352,6 +491,33 @@ public sealed partial class MainViewModel : ObservableObject
         PreviewImage = ToReadOnly(image);
     }
 
+    /// <summary>起動直後の初期画像（プレースホルダ）をプレビューとして設定する。</summary>
+    /// <param name="image">設定する画像（書き換え可能）。 凍結して 0 コピーでプレビューへ渡す。</param>
+    /// <remarks>
+    /// 初期画像は利用者の画像ではないため<b>保存できない</b>（<see cref="CanSave"/> が false になる）。<br/>
+    /// 撮影・切り出し・貼り付け等で差し替えると通常の画像として扱われる。
+    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="image"/> が null の場合。</exception>
+    public void SetStartupPreviewImage(EsBitmap image)
+    {
+        ArgumentNullException.ThrowIfNull(image);
+
+        // 差し替えの経路（OnPreviewImageChanging）が印を消すため、設定中だけは引き継がせる
+        _settingStartupImage = true;
+        try
+        {
+            PreviewImage = ToReadOnly(image);
+        }
+        finally
+        {
+            _settingStartupImage = false;
+        }
+
+        _isStartupImage = true;
+        OnPropertyChanged(nameof(IsStartupImage));
+        OnPropertyChanged(nameof(CanSave));
+    }
+
     /// <summary>画像をクリップボードにコピーする。</summary>
     [RelayCommand]
     public async Task CopyToClipboardAsync()
@@ -378,6 +544,9 @@ public sealed partial class MainViewModel : ObservableObject
         var image = await PasteFromClipboardCallback();
         if (image is not null)
         {
+            // 貼り付けは画像の差し替えのため、Undo の対象にする（撮影・切り出しと同じ扱い）
+            BeforeEditAction?.Invoke();
+
             // 貼り付け結果の所有権は本型へ移る（画素は読み取りの面が共有して引き継ぐ）
             PreviewImage = TakeReadOnly(image);
             StatusMessage = StatusMessages.PasteCompleted();
@@ -397,6 +566,9 @@ public sealed partial class MainViewModel : ObservableObject
         if (ApplyPixelEdit(srcData => srcData.Crop(bounds.X, bounds.Y, bounds.Width, bounds.Height)))
         {
             StatusMessage = StatusMessages.CropCompleted(bounds.Width, bounds.Height);
+
+            // 設定が有効なら切り出した画像をクリップボードへコピーする
+            _ = CopyAfterEditIfEnabledAsync();
         }
     }
 
@@ -494,6 +666,9 @@ public sealed partial class MainViewModel : ObservableObject
         if (ApplyPixelEdit(srcData => srcData.Crop(bounds.X, bounds.Y, bounds.Width, bounds.Height)))
         {
             StatusMessage = StatusMessages.CropCompleted(bounds.Width, bounds.Height);
+
+            // 設定が有効なら切り出した画像をクリップボードへコピーする
+            _ = CopyAfterEditIfEnabledAsync();
         }
     }
 
@@ -543,10 +718,18 @@ public sealed partial class MainViewModel : ObservableObject
     /// 保存後にファイル名の数値をインクリメントし、設定を更新する。<br/>
     /// 同名ファイルが存在する場合は、<see cref="ConfirmOverwriteAsync"/> で確認する。<br/>
     /// 画像形式は拡張子から自動判定する（既定は PNG）。<br/>
+    /// <b>保存できる状態のときだけ保存する</b>（<see cref="CanSave"/>。 画像が変わっていない・初期画像・
+    /// テンプレート無効の場合は何もしない）。 この判定により、ショートカットの連打やキー リピートでも同じ画像を保存しない。
     /// </remarks>
     /// <returns>保存に成功したかどうか</returns>
     [RelayCommand]
     public async Task<bool> SaveImageAsync()
+        => CanSave && await SaveCoreAsync(confirmOverwrite: true);
+
+    /// <summary>保存の本体（判定を除く）。</summary>
+    /// <param name="confirmOverwrite">同名のファイルがある場合に確認するかどうか（自動保存は false）。</param>
+    /// <returns>保存に成功したかどうか。</returns>
+    private async Task<bool> SaveCoreAsync(bool confirmOverwrite)
     {
         if (PreviewImage is null)
         {
@@ -561,6 +744,13 @@ public sealed partial class MainViewModel : ObservableObject
 
             if (File.Exists(filePath))
             {
+                // 自動保存は確認ダイアログを出さない（同名のファイルは壊さずに中止する）
+                if (!confirmOverwrite)
+                {
+                    StatusMessage = StatusMessages.AutoSaveSkipped(fileName);
+                    return false;
+                }
+
                 if (ConfirmOverwriteAsync is not null)
                 {
                     var shouldOverwrite = await ConfirmOverwriteAsync(fileName);
@@ -587,8 +777,16 @@ public sealed partial class MainViewModel : ObservableObject
 
             FileNameTemplateText = FileNameTemplate.IncrementRightmostNumber(FileNameTemplateText);
 
-            _lastSavedFileName = fileName;
+            LastSavedFileName = fileName;
             IsSaved = true;
+
+            // 保存直後のテンプレート（自動で +1 された値）を控える。 この +1 だけでは「変化」とみなさない
+            _savedTemplateText = FileNameTemplateText;
+            OnPropertyChanged(nameof(HasTemplateChangedSinceSave));
+            OnPropertyChanged(nameof(CanSave));
+
+            // 撮影の通知を保存の通知で置き換える（保存後に何が起きたかがステータスバーで分かるようにする）
+            StatusMessage = StatusMessages.SaveCompleted();
 
             return true;
         }

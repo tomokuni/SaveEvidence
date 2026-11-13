@@ -290,6 +290,22 @@ internal static class SettingsPage
                 settingsService.Current.HideMainWindowOnCapture = value;
                 settingsService.Save();
             }));
+        section.Body.Controls.Add(CreateCheckBox(
+            "キャプチャ時にタスク バーを隠す（撮影画像に写さない）",
+            settingsService.Current.HideTaskbarOnCapture,
+            value =>
+            {
+                settingsService.Current.HideTaskbarOnCapture = value;
+                settingsService.Save();
+            }));
+        section.Body.Controls.Add(CreateCheckBox(
+            "撮影・切り出しの後にクリップボードへコピーする",
+            settingsService.Current.CopyAfterCapture,
+            value =>
+            {
+                settingsService.Current.CopyAfterCapture = value;
+                settingsService.Save();
+            }));
         return section;
     }
 

@@ -61,7 +61,7 @@ internal static class Program
         viewModel.BeforeEditAction = () => undoStack.Push(viewModel.PreviewImage);
 
         // フォルダビューの表示状態（表示モード・ソート順）もコアが保持し、設定へ保存する
-        var services = new AppServices(viewModel, settings, undoStack, new FolderViewViewModel());
+        var services = new AppServices(viewModel, settings, undoStack, new FolderViewViewModel(), new UndoViewModel());
 
         // キャプチャの開始は ViewModel のコールバック（ツールバーのボタン）とグローバルホットキーの両方から呼ぶ。
         // ホットキーの開始経路（StartSelectionMode）は、撮影・切り出しのセッション寿命を所有するページが
@@ -72,6 +72,13 @@ internal static class Program
 
         // ウィンドウ配置（位置・サイズ・状態）とナビ開閉は設定から復元し、終了時に保存する
         var window = MainWindow.Create(services);
+
+        // 画像のコピー・貼り付けは Windows のクリップボード（CF_DIB）を使う
+        // （MewUI のクリップボード API はテキスト専用のため、共通基盤の実装を使う。
+        //  これが無いと貼り付けは常に「クリップボードに画像がありません」になっていた。
+        //  書き込みはクリップボードの所有者が要るため、自ウィンドウのハンドルを渡す）
+        viewModel.CopyToClipboardCallback = image => Task.FromResult(ClipboardImage.TryCopy(image, window.Handle));
+        viewModel.PasteFromClipboardCallback = () => Task.FromResult(ClipboardImage.TryGet());
 
         // グローバルホットキーはウィンドウハンドルとメッセージフックを必要とするため、初回描画後に登録する
         // （登録・解除の失敗は OS 操作の失敗として同じログ基盤へ記録する）

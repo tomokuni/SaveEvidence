@@ -222,11 +222,11 @@ internal static class AppStyles
     /// <summary>選択中のトグル ボタンの文字色（暗色テーマ）。</summary>
     private static readonly MewUIColor s_checkedForegroundDark = ToColor(AppPalette.ButtonCheckedForeground(isDark: true));
 
-    /// <summary>ナビ項目のホバー背景色（明色テーマ）。</summary>
-    private static readonly MewUIColor s_navHoverLight = MewUIColor.FromArgb(255, 229, 233, 240);
+    /// <summary>ナビ項目のホバー背景色（明色テーマ）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    private static readonly MewUIColor s_navHoverLight = ToColor(AppPalette.NavItemHover(isDark: false));
 
-    /// <summary>ナビ項目のホバー背景色（暗色テーマ）。</summary>
-    private static readonly MewUIColor s_navHoverDark = MewUIColor.FromArgb(255, 48, 52, 60);
+    /// <summary>ナビ項目のホバー背景色（暗色テーマ）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    private static readonly MewUIColor s_navHoverDark = ToColor(AppPalette.NavItemHover(isDark: true));
 
     /// <summary>ナビ項目の選択背景色（明色テーマ）。 薄いグレー（WinUI 3 と同じ）。</summary>
     private static readonly MewUIColor s_navSelectedLight = ToColor(AppPalette.NavItemSelected(isDark: false));
@@ -234,8 +234,8 @@ internal static class AppStyles
     /// <summary>ナビ項目の選択背景色（暗色テーマ）。</summary>
     private static readonly MewUIColor s_navSelectedDark = ToColor(AppPalette.NavItemSelected(isDark: true));
 
-    /// <summary>閉じるボタンのホバー背景色（赤。 Windows の標準と同じ）。</summary>
-    private static readonly MewUIColor s_closeHover = MewUIColor.FromArgb(255, 196, 43, 28);
+    /// <summary>閉じるボタンのホバー背景色（赤。 Windows の標準と同じ）。 値は <see cref="AppPalette"/> が単一所有する。</summary>
+    private static readonly MewUIColor s_closeHover = ToColor(AppPalette.CloseButtonHover);
 
     /// <summary>ウィンドウ操作ボタンのホバー背景色（半透明のグレー）。</summary>
     /// <remarks>半透明のため下地の色に応じて明暗し、明色・暗色のどちらのテーマでも「薄いグレー」に見える。</remarks>
@@ -280,24 +280,23 @@ internal static class AppStyles
     /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（4 つの UI 版で同じ色にする）。</remarks>
     private static readonly MewUIColor s_listBackgroundDark = ToColor(AppPalette.ListBackground(isDark: true));
 
-    /// <summary>プルダウンの背景色（明色テーマ用）。</summary>
-    private static readonly MewUIColor s_menuBackgroundLight = MewUIColor.FromArgb(255, 252, 252, 252);
+    /// <summary>プルダウンの背景色（明色テーマ用）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    private static readonly MewUIColor s_menuBackgroundLight = ToColor(AppPalette.MenuBackground(isDark: false));
 
-    /// <summary>プルダウンの背景色（暗色テーマ用）。</summary>
-    private static readonly MewUIColor s_menuBackgroundDark = MewUIColor.FromArgb(255, 50, 50, 50);
+    /// <summary>プルダウンの背景色（暗色テーマ用）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    private static readonly MewUIColor s_menuBackgroundDark = ToColor(AppPalette.MenuBackground(isDark: true));
 
-    /// <summary>プルダウンの枠・区切り線の色（明色テーマ用）。</summary>
-    private static readonly MewUIColor s_menuBorderLight = MewUIColor.FromArgb(255, 200, 200, 200);
+    /// <summary>プルダウンの枠・区切り線の色（明色テーマ用）。 値は <see cref="AppPalette"/> が単一所有する。</summary>
+    private static readonly MewUIColor s_menuBorderLight = ToColor(AppPalette.MenuBorder(isDark: false));
 
-    /// <summary>プルダウンの枠・区切り線の色（暗色テーマ用）。</summary>
-    private static readonly MewUIColor s_menuBorderDark = MewUIColor.FromArgb(255, 90, 90, 90);
+    /// <summary>プルダウンの枠・区切り線の色（暗色テーマ用）。 値は <see cref="AppPalette"/> が単一所有する。</summary>
+    private static readonly MewUIColor s_menuBorderDark = ToColor(AppPalette.MenuBorder(isDark: true));
 
-    /// <summary>設定ページのカードの枠線の色（明色テーマ用）。</summary>
-    /// <remarks>Avalonia 版の <c>SystemControlForegroundBaseLowBrush</c> の実測値と同じ。</remarks>
-    private static readonly MewUIColor s_cardBorderLight = MewUIColor.FromArgb(255, 204, 204, 204);
+    /// <summary>設定ページのカードの枠線の色（明色テーマ用）。 値は <see cref="AppPalette"/> が単一所有する。</summary>
+    private static readonly MewUIColor s_cardBorderLight = ToColor(AppPalette.CardBorder(isDark: false));
 
-    /// <summary>設定ページのカードの枠線の色（暗色テーマ用）。</summary>
-    private static readonly MewUIColor s_cardBorderDark = MewUIColor.FromArgb(255, 90, 90, 90);
+    /// <summary>設定ページのカードの枠線の色（暗色テーマ用）。 値は <see cref="AppPalette"/> が単一所有する。</summary>
+    private static readonly MewUIColor s_cardBorderDark = ToColor(AppPalette.CardBorder(isDark: true));
 
     /// <summary>一覧アイテムのホバー時の背景色を取得する（現在のテーマ）。</summary>
     /// <returns>ホバー時の背景色。 値は <see cref="ThumbnailTileMetrics.HoverBackground"/>（App.Core）が単一所有する。</returns>
@@ -474,6 +473,14 @@ internal static class AppStyles
     /// <returns>一覧の背景色。</returns>
     public static MewUIColor ListBackground(Theme theme)
         => theme.IsDark ? s_listBackgroundDark : s_listBackgroundLight;
+
+    /// <summary>リンク（青字・下線）の文字色を取得する（現在のテーマ）。</summary>
+    /// <remarks>
+    /// 色は <see cref="AppPalette"/>（App.Core）が単一所有する<br/>
+    /// （暗色の下地では明るい青へ切り替える）。
+    /// </remarks>
+    public static MewUIColor CurrentLinkForeground
+        => ToColor(AppPalette.Link(IconLoader.IsDarkTheme()));
 
     /// <summary>プルダウン（メニュー）の背景色を取得する。</summary>
     /// <param name="theme">現在のテーマ。</param>

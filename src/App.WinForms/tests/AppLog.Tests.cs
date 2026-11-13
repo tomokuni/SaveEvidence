@@ -1,3 +1,5 @@
+using EsUtil.Platform.Core.Capture;
+using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.WinForms.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -45,7 +47,7 @@ public class AppLogTests
         Assert.Equal("[App.WinForms] 未処理の例外: AppDomain.UnhandledException", logger.Messages[2]);
         Assert.Equal("[App.WinForms] 一覧の読み込みで例外が発生: C:\\images", logger.Messages[3]);
         Assert.Equal("[App.WinForms] ウィンドウ配置の保存で例外が発生", logger.Messages[4]);
-        Assert.Equal("[App.WinForms] ホットキーの登録に失敗: ScreenSelect (Ctrl + Shift + Q)", logger.Messages[5]);
+        Assert.Equal("[App.WinForms] ホットキーを登録できませんでした: ScreenSelect, key=Q", logger.Messages[5]);
         Assert.Equal("[App.WinForms] サムネイルの生成で例外が発生", logger.Messages[6]);
         Assert.Equal("[App.WinForms] サムネイルの先読みを開始: FolderView 対象=6 件", logger.Messages[7]);
         Assert.Equal("[App.WinForms] ファイルを外部ツールで表示できません: C:\\images\\a.png", logger.Messages[8]);
@@ -61,7 +63,7 @@ public class AppLogTests
         logger.LogUnhandledException(new InvalidOperationException("test"), "AppDomain.UnhandledException");
         logger.LogFolderLoadError(new IOException("test"), @"C:\images");
         logger.LogWindowPlacementSaveError(new IOException("test"));
-        logger.LogHotKeyRegisterFailed("ScreenSelect", "Ctrl + Shift + Q");
+        logger.LogHotKeyRegisterFailed(CaptureType.ScreenSelect, EsKey.Q);
         logger.LogThumbnailGenerateError(new InvalidOperationException("test"));
         logger.LogThumbnailWarmUp("FolderView", 6);
         logger.LogOpenFileError(new IOException("test"), @"C:\images\a.png");
