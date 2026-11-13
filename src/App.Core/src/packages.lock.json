@@ -10,9 +10,9 @@
       },
       "EsUtil.Platform.Core": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "5jck282pVjqsCvoA0VIAARbsJ/tW/vdbTtpJPzF0qp1u4p0RrOW/6zCiGaVdeipGEYSublR/xhBsBQ8c+kVnZg=="
+        "requested": "[0.6.5, )",
+        "resolved": "0.6.5",
+        "contentHash": "cGGilU7BlaTrjoCyN9SlYVqg7vpHGtcz3mMseEB2acWfMvdOPyAAAPxcOjoqOdCSa2QH8+Td4Zm0oilEZMSk7A=="
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
@@ -60,35 +60,35 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.6.3, )",
-          "EsUtil.Feature.Marquee.Core": "[0.6.3, )",
-          "EsUtil.Platform.Core": "[0.6.3, )"
+          "EsUtil.Feature.Loupe.Core": "[0.6.5, )",
+          "EsUtil.Feature.Marquee.Core": "[0.6.5, )",
+          "EsUtil.Platform.Core": "[0.6.5, )"
         }
       },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.6.3, )",
+          "EsUtil.Platform.Core": "[0.6.5, )",
           "OpenCvSharp5": "[5.0.0.20261109, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261109, )"
         }
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "yNyzGl5H8g0WwN8LjwfmrlxGPOVGY9Buqt+MN59gGcYPjdmectA/+PU6OMXqC4K2Y2LKPxg8g4DwEpj0nTJ5LQ==",
+        "requested": "[0.6.5, )",
+        "resolved": "0.6.5",
+        "contentHash": "nNjHSUMV1nMgXAN2cQCoIxUu2IF6vF0zYuDxTsKRt3hFcppcFtnot3BKIxplVdOl7WbvvBfKDOPkDgmCfHGX6w==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.3"
+          "EsUtil.Platform.Core": "0.6.5"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "fj7KPX8oSCc9PBTLU6te138MDFcVP2TuEqz7QoD6botAhQDe70R/K1qqWIrUsf1C3D1mATsq+2hUm9HbkMq0LQ==",
+        "requested": "[0.6.5, )",
+        "resolved": "0.6.5",
+        "contentHash": "eJicqtNcA/F/OsRFXkJVJcg8gkGuPrn4OG/PtljJz7rMoN/dqnzif6QCh4ubscWjdK+1bbxSMRSQ4QK+n8o28g==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.3"
+          "EsUtil.Platform.Core": "0.6.5"
         }
       },
       "Microsoft.Extensions.DependencyInjection": {
