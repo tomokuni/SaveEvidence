@@ -347,8 +347,9 @@ internal static class CapturePage
             sizeLabel.Margin = new Padding(0);
             sizeLabel.Padding = new Padding(0);
             // 空きは幅に含めてあるため、次の項目の左余白も 0 にする
-            // （加わると空きが「W」より広くなる）
-            savedFileLabel.Margin = new Padding(0, 0, 6, 0);
+            // （加わると空きが「W」より広くなる）。
+            // 上下の余白は中央揃えのため残す（0 にすると文字が上へずれる）
+            UiFactory.SetStatusLabelSideMargins(savedFileLabel, 0, 6);
             // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
             canvas.BackColor = AppStyles.ImageAreaBackground;
             templateBox.ForeColor = AppStyles.Foreground;

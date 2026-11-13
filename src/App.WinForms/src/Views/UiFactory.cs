@@ -177,6 +177,21 @@ internal static class UiFactory
         return label;
     }
 
+    /// <summary>ステータス バーのラベルの左右の余白だけを変える（上下は中央揃えの余白のまま残す）。</summary>
+    /// <param name="label">対象のラベル。</param>
+    /// <param name="left">左の余白（物理ピクセル）。</param>
+    /// <param name="right">右の余白（物理ピクセル）。</param>
+    /// <remarks>
+    /// 幅を自動にしたラベルの上下の余白は <see cref="CreateStatusLabel"/> が中央揃えのために割り当てている。<br/>
+    /// <see cref="Control.Margin"/> を丸ごと置き換えると上下が 0 になり、文字が上へずれる（実測 2026-11-13）。
+    /// </remarks>
+    public static void SetStatusLabelSideMargins(Label label, int left, int right)
+    {
+        ArgumentNullException.ThrowIfNull(label);
+
+        label.Margin = new Padding(left, label.Margin.Top, right, label.Margin.Bottom);
+    }
+
     /// <summary>ステータス バーのリンク（青字 + 下線）を生成する。</summary>
     /// <param name="toolTip">ツールヒントの文言（省略可）。</param>
     /// <returns>生成したリンク ラベル。</returns>
