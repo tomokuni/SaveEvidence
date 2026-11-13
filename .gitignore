@@ -1,6 +1,6 @@
 # Build results
-bin/
-obj/
+[Bb]in/
+[Oo]bj/
 
 # Release artifacts (buildScript の出力先)
 publish/
