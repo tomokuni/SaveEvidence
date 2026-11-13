@@ -45,7 +45,10 @@ internal sealed partial class CaptureOverlayWindow
     /// </remarks>
     private CaptureHighlight ApplyHighlight(ElementFinderResults detection)
     {
-        var highlight = _highlight.Update(_captureType, detection, Position.ToEsPointInt());
+        // **画像の原点で変換する**: ハイライトの矩形は画像ローカルの座標であるため、ウィンドウの現在位置ではなく
+        // 撮影した画像の原点を使う。 表示前はウィンドウが最終の位置に無い（`Show` の時点では画面の左上に作られ、
+        // `Position` は後から効く）ため、現在位置で変換すると原点の分だけ穴がずれる（実測 2026-11-13）。
+        var highlight = _highlight.Update(_captureType, detection, CaptureImageBounds.TopLeft);
         // 未検出は null で表す（null が「ハイライトしない」を意味する）
         SelectionOverlay.HighlightSourceRect = highlight.SourceRect is { } rect ? rect.ToAvaloniaRect() : null;
         return highlight;
@@ -72,25 +75,10 @@ internal sealed partial class CaptureOverlayWindow
             return;
         }
 
-        // **画像の原点で変換する**: 表示前はウィンドウがまだ最終の位置に無い（`Show` の時点では
-        // 画面の左上に作られ、`Position` は後から効く）。 ウィンドウの現在位置で変換すると、
-        // ハイライトの穴が原点の分だけずれる（実測 2026-11-13: 原点 (0,-1200) の環境で 1200 px ずれた）。
-        ApplyHighlightAt(CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint));
+        // **画像の原点で変換する**（ApplyHighlight が行う）: 表示前はウィンドウがまだ最終の位置に無いため、
+        // ウィンドウの現在位置で変換すると、ハイライトの穴が原点の分だけずれる（実測 2026-11-13）。
+        ApplyHighlight(CaptureTypeTraits.FindUnderCursor(_detector, _captureType, screenPoint));
         RequestOverlayRender();
-    }
-
-    /// <summary>検出結果を、画像の原点を基準にハイライトへ反映する。</summary>
-    /// <param name="detection">要素の検出結果（画面物理座標）。</param>
-    /// <returns>ハイライトの状態。</returns>
-    /// <remarks>
-    /// 通常のポインター移動（<see cref="ApplyHighlight"/>）はウィンドウの現在位置を使うが、
-    /// 表示前はウィンドウが最終の位置に無いため、画像の原点（撮影した仮想スクリーンの原点）を使う。
-    /// </remarks>
-    private CaptureHighlight ApplyHighlightAt(ElementFinderResults detection)
-    {
-        var highlight = _highlight.Update(_captureType, detection, CaptureImageBounds.TopLeft);
-        SelectionOverlay.HighlightSourceRect = highlight.SourceRect is { } rect ? rect.ToAvaloniaRect() : null;
-        return highlight;
     }
 
     /// <summary>カーソル位置の取得（表示前のハイライトの初期化に使う。 状態を持たないため共有できる）。</summary>
@@ -98,17 +86,17 @@ internal sealed partial class CaptureOverlayWindow
     private static readonly ICursorService s_cursor = new WinCursorService();
 
     /// <summary>対象矩形の中心が含まれるモニタのスケーリング係数を返す（サイズラベルの DisplayScale 表示用）。</summary>
-    /// <param name="sourceRect">対象矩形（= 画面物理 − Position。 ウィンドウローカル物理ピクセル）。</param>
+    /// <param name="sourceRect">対象矩形（= 画面物理 − 画像の原点。 画像ローカル物理ピクセル）。</param>
     /// <returns>矩形中心のモニタのスケーリング係数。 該当なしはオーバーレイのスケーリング（<see cref="_scaling"/>）。</returns>
     /// <remarks>
-    /// 対象矩形の中心に <c>Position</c> を加算して画面物理座標へ戻し、中心を含むモニタを特定する。<br/>
+    /// 対象矩形の中心に画像の原点（撮影した仮想スクリーンの原点）を加算して画面物理座標へ戻し、中心を含むモニタを特定する。<br/>
     /// 「原点の加算」「中心で判定する」「該当なしはフォールバック」という規則はコア（<see cref="MonitorScalingMath"/>）が単一所有する<br/>
     /// （UI ごとに判定点がずれると、同じ矩形で表示倍率が食い違う）。<br/>
     /// モニタ一覧は構築時に 1 回だけ解決したものを再利用する（描画のたびに列挙・配列生成をしない）。
     /// </remarks>
     private double GetMonitorScalingForRect(EsRect sourceRect)
         => MonitorScalingMath.ResolveForSourceRect(
-            sourceRect, Position.ToEsPointInt(), _monitors, _scaling);
+            sourceRect, CaptureImageBounds.TopLeft, _monitors, _scaling);
 
     /// <summary>サイズラベルの対象となる確定矩形（対象座標）を解決する。</summary>
     /// <returns>確定対象の矩形。 対象がない場合は null。</returns>
