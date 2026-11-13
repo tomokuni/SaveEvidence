@@ -110,9 +110,12 @@ public sealed partial class CapturePage : UserControl
 
         // 幅は「8888 x 8888」ちょうど（規則は StatusBarMetrics が単一所有する）。
         // 空きは独立した要素で「WW」ちょうどにする（幅に含めると、値が短いときに余りが加わって広く見える）
-        PointerText.Width = widths.Position;
+        // 幅には余裕を足す: 右端寄せで測った幅ちょうどだと、環境によって末尾の 1 文字が欠ける
+        // （実測 2026-11-13: MewUI 版で発生）。 文字は右端へ寄せてあるため、幅を広げても
+        // 右側の空き（「WW」）は変わらない（空きは独立した要素である）
+        PointerText.Width = widths.Position + StatusBarFieldSafetyDips;
         PointerText.Margin = default;
-        ImageSizeText.Width = widths.ImageSize;
+        ImageSizeText.Width = widths.ImageSize + StatusBarFieldSafetyDips;
         ImageSizeText.Margin = default;
         // 文字の右端と次の文字の開始位置にはグリフの左右の空きが入るため、その分を差し引く
         // （差し引かないと、空きが「WW」の送り幅より 3〜4 DIP 広く見える。 実測 2026-11-13）
@@ -120,6 +123,13 @@ public sealed partial class CapturePage : UserControl
         PointerGap.Width = gapWidth;
         ImageSizeGap.Width = gapWidth;
     }
+
+    /// <summary>ステータス バーの固定幅の項目に足す余裕（DIP）。</summary>
+    /// <remarks>
+    /// 右端寄せで測った幅ちょうどだと、環境によって末尾の 1 文字が欠ける（実測 2026-11-13: MewUI 版）。<br/>
+    /// 文字は右端へ寄せてあるため、幅を広げても右側の空き（「WW」）は変わらない。
+    /// </remarks>
+    private const double StatusBarFieldSafetyDips = 4;
 
     /// <summary>ステータス バーの空きから差し引く、グリフの左右の空き（サイド ベアリング）の合計（DIP）。</summary>
     /// <remarks>実測 2026-11-13: 差し引かないと、文字の右端から次の文字までが「WW」より 4 DIP 広かった。</remarks>

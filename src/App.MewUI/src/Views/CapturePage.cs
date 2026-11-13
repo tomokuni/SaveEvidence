@@ -31,6 +31,13 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// </remarks>
 internal static class CapturePage
 {
+    /// <summary>ステータス バーの固定幅の項目に足す余裕（DIP）。</summary>
+    /// <remarks>
+    /// 右端寄せの <c>Label</c> は、測った幅ちょうどだと末尾の 1 文字が欠ける（実測 2026-11-13）。<br/>
+    /// 文字は右端へ寄せてあるため、幅を広げても右側の空き（「WW」）は変わらない。
+    /// </remarks>
+    private const double StatusBarFieldSafetyDips = 4;
+
     /// <summary>ステータス バーの空きから差し引く、Label が文字を内側へ寄せる分（DIP）。</summary>
     /// <remarks>
     /// 幅は Label の余白込みで測るが、空きは送り幅で測るため、その差を空きから引く<br/>
@@ -406,10 +413,14 @@ internal static class CapturePage
         }
 
         // 幅は Label の余白込みで測る（送り幅だけだと文字が欠ける）。 空きは送り幅で測り、
-        // Label が文字を内側へ寄せる分を差し引く（差し引かないと「WW」より広く見える）
+        // Label が文字を内側へ寄せる分を差し引く（差し引かないと「WW」より広く見える）。
+        // 幅には余裕を足す: 右端寄せの Label は測った幅ちょうどだと末尾が 1 文字分欠ける（実測 2026-11-13）。
+        // 文字は右端へ寄せてあるため、幅を広げても右側の空きは変わらない（空きは独立した要素である）
         var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(MeasureStatusText);
         statusFieldWidths = statusFieldWidths with
         {
+            Position = statusFieldWidths.Position + StatusBarFieldSafetyDips,
+            ImageSize = statusFieldWidths.ImageSize + StatusBarFieldSafetyDips,
             Gap = Math.Max(0, statusFieldWidths.Gap - StatusBarGapCompensation),
         };
 

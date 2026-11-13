@@ -110,11 +110,14 @@ internal static class CapturePage
         var statusGapWidth = Math.Max(0, statusFieldWidths.Gap - StatusBarGapCompensation);
         var zoomText = CreateLabel(viewModel.ZoomDisplayText, AppStyles.StatusFontSize);
         var pointerText = CreateLabel(viewModel.PointerDisplayText, AppStyles.StatusFontSize);
-        pointerText.Width = statusFieldWidths.Position;
+        // 幅には余裕を足す: 右端寄せで測った幅ちょうどだと、環境によって末尾の 1 文字が欠ける
+        // （実測 2026-11-13: MewUI 版で発生）。 文字は右端へ寄せてあるため、幅を広げても
+        // 右側の空き（「WW」）は変わらない（空きは独立した要素である）
+        pointerText.Width = statusFieldWidths.Position + StatusBarFieldSafetyDips;
         pointerText.TextAlignment = TextAlignment.Right;
         var pointerGap = new Border { Width = statusGapWidth };
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
-        imageSizeText.Width = statusFieldWidths.ImageSize;
+        imageSizeText.Width = statusFieldWidths.ImageSize + StatusBarFieldSafetyDips;
         imageSizeText.TextAlignment = TextAlignment.Right;
         var imageSizeGap = new Border { Width = statusGapWidth };
         var savedFileNameText = CreateLabel(viewModel.SavedFileName, AppStyles.StatusFontSize);
@@ -930,6 +933,13 @@ internal static class CapturePage
     /// <returns>生成したラベル。</returns>
     private static TextBlock CreateLabel(string text, double fontSize)
         => new() { Text = text, FontSize = fontSize, VerticalAlignment = VerticalAlignment.Center };
+
+    /// <summary>ステータス バーの固定幅の項目に足す余裕（DIP）。</summary>
+    /// <remarks>
+    /// 右端寄せで測った幅ちょうどだと、環境によって末尾の 1 文字が欠ける（実測 2026-11-13: MewUI 版）。<br/>
+    /// 文字は右端へ寄せてあるため、幅を広げても右側の空き（「WW」）は変わらない。
+    /// </remarks>
+    private const double StatusBarFieldSafetyDips = 4;
 
     /// <summary>ステータス バーの空きから差し引く、TextBlock が文字を内側へ寄せる分（DIP）。</summary>
     /// <remarks>
