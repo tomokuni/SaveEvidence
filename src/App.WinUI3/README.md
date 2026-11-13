@@ -3,7 +3,7 @@
 ![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
 ![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?branch=main)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
-![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
+![.NET](https://img.shields.io/badge/.NET-11.0-512BD4)
 ![WinUI3](https://img.shields.io/badge/UI-WinUI%203-0078D4)
 ![License](https://img.shields.io/badge/License-MIT-3DA639)
 
@@ -21,7 +21,7 @@ SaveEvidence の **WinUI 3 版アプリ**（実行ファイル `SaveEvidence.Win
 
 ## 2. 前提
 
-- .NET 10 / Windows 10（19041）以降
+- .NET 11 / Windows 10（19041）以降
 - `Microsoft.WindowsAppSDK` 2.6（アンパッケージ / フレームワーク依存）と **Windows App Runtime 2.6（x64）**
   （PC に無ければ起動時に案内を出して導入します）
 - WinUI 3 の `App.xaml` 以外に XAML ファイルを持たず、**画面は C# のマークアップで組む**
@@ -43,7 +43,7 @@ dotnet run --project src/App.WinUI3/src/App.WinUI3.csproj
 stowed exception `0xC000027B` で即座に終了します。 実測 2026-10-17）。 ビルド成果物の exe を直接起動してください。
 
 ```powershell
-src/App.WinUI3/src/bin/Debug/net10.0-windows10.0.22621.0/win-x64/SaveEvidence.WinUI3.exe
+src/App.WinUI3/src/bin/Debug/net11.0-windows10.0.22621.0/win-x64/SaveEvidence.WinUI3.exe
 ```
 
 VS Code のデバッグ構成（[`.vscode/launch.json`](../../.vscode/launch.json) の `WinUI3: SaveEvidence`）は、
@@ -144,7 +144,7 @@ src/App.WinUI3/
 │   ├── SPEC_ExtFunc.md      # 外部機能仕様書（利用者から見た機能）
 │   └── SPEC_System.md       # システム仕様書（構造・依存・設計判断）
 ├── src/
-│   ├── App.WinUI3.csproj    # WinExe / net10.0-windows10.0.22621.0 / アンパッケージ
+│   ├── App.WinUI3.csproj    # WinExe / net11.0-windows10.0.22621.0 / アンパッケージ
 │   ├── app.manifest         # DPI 認識（PerMonitorV2）の宣言
 │   ├── App.xaml             # XAML アプリケーション定義（既定スタイルの読み込みのみ）
 │   ├── App.xaml.cs          # メイン ウィンドウの生成と UI スレッド例外の記録

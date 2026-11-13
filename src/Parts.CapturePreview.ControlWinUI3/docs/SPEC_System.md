@@ -27,7 +27,7 @@
 
 | 項目 | 値 |
 | --- | --- |
-| 対象フレームワーク | `net10.0-windows10.0.22621.0` |
+| 対象フレームワーク | `net11.0-windows10.0.22621.0` |
 | UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 1.x。 `UseWinUI` を有効にする） |
 | 最低対応 OS | `10.0.19041.0` |
 | 表示 | Composition（`SpriteVisual` + `LoadedImageSurface`）と XAML の要素（`Rectangle`） |

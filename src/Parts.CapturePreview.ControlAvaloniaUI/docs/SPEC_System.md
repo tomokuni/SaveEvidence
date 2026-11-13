@@ -32,7 +32,7 @@
 
 ## 1. システム概要
 
-SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
+SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 11.0 / C# 14 / MVVM）。
 
 本プロジェクト（Parts.CapturePreview.ControlAvaloniaUI）は、このシステムのうち**画面キャプチャ（ScreenSelect / WindowSelect / AreaSelect）と切出し（Crop）のセッション統括**を担います。 上位 AP（app）へは Task ベースの公開 Facade（`CaptureSessionControl`）を提供し、内部でオーバーレイ（`CaptureOverlayWindow`）と複合コントロール（`SelectionOverlayControl`）を組み立てて実行します。
 
@@ -44,9 +44,9 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | --- | --- |
 | **プロジェクト** | `Parts.CapturePreview.ControlAvaloniaUI` |
 | **ルート名前空間** | `EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI` |
-| **言語** | C# 14（.NET 10.0） |
+| **言語** | C# 14（.NET 11.0） |
 | **UI フレームワーク** | Avalonia UI 12.1 |
-| **ターゲットフレームワーク** | net10.0-windows10.0.17763.0 |
+| **ターゲットフレームワーク** | net11.0-windows10.0.17763.0 |
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |

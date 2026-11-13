@@ -614,7 +614,7 @@ internal static class CapturePage
         {
             // ホバー中の 1 件はコントロール側の強調（枠線 + 半透明の塗り）へ委ねる
             var hovered = viewModel.IsAutoCropActive ? viewModel.HoveredRect : null;
-            crop.Rects = [.. viewModel.DetectedRects
+            crop.Rects = (OverlayRect[])[.. viewModel.DetectedRects
                 .Where(rect => rect != hovered)
                 .Select(rect => new OverlayRect(
                     new EsRect(rect.X, rect.Y, rect.Width, rect.Height), OverlayLineStyle.Solid,

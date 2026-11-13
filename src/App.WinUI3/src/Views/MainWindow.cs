@@ -1066,7 +1066,7 @@ internal sealed class MainWindow : Window
     /// </remarks>
     private void WarmUpPages()
     {
-        var pending = new Queue<AppPage>([AppPage.FolderView, AppPage.Undo, AppPage.Settings]);
+        var pending = new Queue<AppPage>((AppPage[])[AppPage.FolderView, AppPage.Undo, AppPage.Settings]);
         ScheduleNext();
 
         void ScheduleNext()

@@ -58,7 +58,12 @@ public static class CaptureVirtualScreen
         ArgumentNullException.ThrowIfNull(captureTask);
         var limit = timeout ?? CaptureTiming.ScreenCaptureTimeout;
 
-        var done = await Task.WhenAny(captureTask, Task.Delay(limit)).ConfigureAwait(false);
+        // 取得が先に完了したらタイマーを止める（止めないと、完了後もタイムアウトまで
+        // タイマーが動き続ける。 CA2027）。
+        using var timeoutSource = new CancellationTokenSource();
+        var done = await Task.WhenAny(captureTask, Task.Delay(limit, timeoutSource.Token)).ConfigureAwait(false);
+        await timeoutSource.CancelAsync().ConfigureAwait(false);
+
         if (done == captureTask)
         {
             return await captureTask.ConfigureAwait(false);

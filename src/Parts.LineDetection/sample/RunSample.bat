@@ -17,7 +17,7 @@ rem     RunSample.bat
 rem ====================================================================
 
 set "PROJECT=%~dp0Parts.LineDetection.Sample.csproj"
-set "EXE=%~dp0bin\Release\net10.0-windows10.0.17763.0\Parts.LineDetection.Sample.exe"
+set "EXE=%~dp0bin\Release\net11.0-windows10.0.17763.0\Parts.LineDetection.Sample.exe"
 
 echo [1/2] Building the sample in Release...
 dotnet build "%PROJECT%" -c Release --nologo

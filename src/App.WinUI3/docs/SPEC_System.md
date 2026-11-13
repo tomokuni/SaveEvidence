@@ -36,9 +36,9 @@
 
 | 項目 | 値 |
 | --- | --- |
-| 言語 / ランタイム | C# 14 / .NET 10 |
+| 言語 / ランタイム | C# 14 / .NET 11 |
 | UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 2.6） |
-| 対象フレームワーク | `net10.0-windows10.0.22621.0`（`SupportedOSPlatformVersion` は 10.0.19041.0） |
+| 対象フレームワーク | `net11.0-windows10.0.22621.0`（`SupportedOSPlatformVersion` は 10.0.19041.0） |
 | 配置 | アンパッケージ（`WindowsPackageType=None`）/ Windows App SDK フレームワーク依存（**Windows App Runtime 2.6（x64）** が要り、無ければ起動時に `EsUtil.Ui.WinUI3.Interop` の Bootstrapper が導入する）/ `win-x64` |
 | 要求する Windows App Runtime | **このアプリのビルドに使った `Microsoft.WindowsAppSDK` の版**（`WindowsAppRuntimeRequirement`）。 `WindowsAppSdkIncludeVersionInfo` が生成する `Microsoft.WindowsAppSDK.Runtime.Version` から取り、`WindowsAppRuntimeBootstrapOptions.RequiredVersion` へ渡す |
 | 画像処理 | Windows App SDK の WIC（サムネイルの縮小デコード・画像の符号化）と自前の SVG ラスタライズ（アイコン） |

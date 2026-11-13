@@ -38,7 +38,7 @@
 | 項目 | 要件 |
 | --- | --- |
 | OS | Windows 10（バージョン 19041）以降 |
-| ランタイム | .NET 10（デスクトップ） |
+| ランタイム | .NET 11（デスクトップ） |
 | グラフィックス | WinUI 3（DirectX・Composition）と XAML の要素 |
 | 配置 | アンパッケージ / Windows App SDK フレームワーク依存（**Windows App Runtime 2.6（x64）** が要り、無ければ起動時に案内して導入する） |
 

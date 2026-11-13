@@ -1,7 +1,7 @@
 {
   "version": 2,
   "dependencies": {
-    "net10.0-windows10.0.17763": {
+    "net11.0-windows10.0.17763": {
       "CommunityToolkit.Mvvm": {
         "type": "Direct",
         "requested": "[8.4.2, )",
@@ -16,9 +16,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.321, )",
-        "resolved": "3.0.321",
-        "contentHash": "aFP7GiBBIb2x9rBTuUpw/jSs0JVbTofADlt6WxmYVYQ24KPAjFYyxcnNNVVf4F/eqKyzjik170nOpURmmyJDKg=="
+        "requested": "[3.0.339, )",
+        "resolved": "3.0.339",
+        "contentHash": "oB0KVTYO0CkqscgCp2Fce6Q4G9gIVvVy39ULQLU2eOJfTNWS63Lk7VZbgerx6XMdUxPC4bprv87r8f7EZfp6gQ=="
       },
       "Microsoft.CodeAnalysis.BannedApiAnalyzers": {
         "type": "Direct",
@@ -57,40 +57,20 @@
           "Serilog": "4.2.0"
         }
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
-        "type": "Transitive",
-        "resolved": "10.0.14",
-        "contentHash": "QtpQzuSZVyTPCuHW058yCs9Nj0394uUkNyFHS813nOmK9UgUdBdaprJ5PPsBgsQIpxADTsTkbaMMonykem6qdw=="
-      },
-      "Microsoft.Extensions.Options": {
-        "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "8oCAgXOow5XDrY9HaXX1QmH3ORsyZO/ANVHBlhLyCeWTH5Sg4UuqZeOTWJi6484M+LqSx0RqQXDJtdYy2BNiLQ==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Primitives": "10.0.0"
-        }
-      },
-      "Microsoft.Extensions.Primitives": {
-        "type": "Transitive",
-        "resolved": "10.0.0",
-        "contentHash": "inRnbpCS0nwO/RuoZIAqxQUuyjaknOOnCEZB55KSMMjRhl0RQDttSmLSGsUJN3RQ3ocf5NDLFd2mOQViHqMK5w=="
-      },
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
           "EsUtil.Feature.Loupe.Core": "[0.6.3, )",
           "EsUtil.Feature.Marquee.Core": "[0.6.3, )",
-          "EsUtil.Platform.Core": "[0.6.3, )",
-          "Microsoft.Extensions.Logging.Abstractions": "[10.0.14, )"
+          "EsUtil.Platform.Core": "[0.6.3, )"
         }
       },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
           "EsUtil.Platform.Core": "[0.6.3, )",
-          "OpenCvSharp5": "[5.0.0.20261107, )",
-          "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261107, )"
+          "OpenCvSharp5": "[5.0.0.20261109, )",
+          "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261109, )"
         }
       },
       "EsUtil.Feature.Loupe.Core": {
@@ -99,8 +79,7 @@
         "resolved": "0.6.3",
         "contentHash": "yNyzGl5H8g0WwN8LjwfmrlxGPOVGY9Buqt+MN59gGcYPjdmectA/+PU6OMXqC4K2Y2LKPxg8g4DwEpj0nTJ5LQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.3",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
+          "EsUtil.Platform.Core": "0.6.3"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
@@ -109,50 +88,35 @@
         "resolved": "0.6.3",
         "contentHash": "fj7KPX8oSCc9PBTLU6te138MDFcVP2TuEqz7QoD6botAhQDe70R/K1qqWIrUsf1C3D1mATsq+2hUm9HbkMq0LQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.3",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.14"
+          "EsUtil.Platform.Core": "0.6.3"
         }
       },
       "Microsoft.Extensions.DependencyInjection": {
         "type": "CentralTransitive",
-        "requested": "[10.0.14, )",
+        "requested": "[11.0.0, )",
         "resolved": "10.0.0",
-        "contentHash": "f0RBabswJq+gRu5a+hWIobrLWiUYPKMhCD9WO3sYBAdSy3FFH14LMvLVFZc2kPSCimBLxSuitUhsd6tb0TAY6A==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.0"
-        }
+        "contentHash": "f0RBabswJq+gRu5a+hWIobrLWiUYPKMhCD9WO3sYBAdSy3FFH14LMvLVFZc2kPSCimBLxSuitUhsd6tb0TAY6A=="
       },
       "Microsoft.Extensions.Logging": {
         "type": "CentralTransitive",
-        "requested": "[10.0.14, )",
+        "requested": "[11.0.0, )",
         "resolved": "10.0.0",
         "contentHash": "BStFkd5CcnEtarlcgYDBcFzGYCuuNMzPs02wN3WBsOFoYIEmYoUdAiU+au6opzoqfTYJsMTW00AeqDdnXH2CvA==",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection": "10.0.0",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.0",
-          "Microsoft.Extensions.Options": "10.0.0"
-        }
-      },
-      "Microsoft.Extensions.Logging.Abstractions": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.14, )",
-        "resolved": "10.0.14",
-        "contentHash": "SwcbEBtkECq3D2oywvHkm46fyrX9Dd2JPWphDnHUc2+cUWR1Mdo41atAjh/9iZjgQxuvbKfZKXqostT/LZfefA==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.14"
+          "Microsoft.Extensions.DependencyInjection": "10.0.0"
         }
       },
       "OpenCvSharp5": {
         "type": "CentralTransitive",
-        "requested": "[5.0.0.20261107, )",
-        "resolved": "5.0.0.20261107",
-        "contentHash": "TYx+9vo6SMEiL+la/Xu/Xsbd8HB+4Enk1KePsMmIZekTw0ZCGC08bVwDPobO3x2W5AvkbKTNVKBqx97NQ0kI0g=="
+        "requested": "[5.0.0.20261109, )",
+        "resolved": "5.0.0.20261109",
+        "contentHash": "tzeUegRQDXivBHq23f1zdtOYY/lZndPZ9EO89sBUTU+DyoulNCcbhMVQZIaTidfaQwDKxQpu6ekA3KMwetj+fA=="
       },
       "OpenCvSharp5.runtime.win.slim": {
         "type": "CentralTransitive",
-        "requested": "[5.0.0.20261107, )",
-        "resolved": "5.0.0.20261107",
-        "contentHash": "Ikh5t+PHblp/BuT1jJdOyIBwGKwEWQtmPbpqs8ihCakeTookCWO3AIT0wf+HmoWkj05XgKrXF+MXx27QMa2ldQ=="
+        "requested": "[5.0.0.20261109, )",
+        "resolved": "5.0.0.20261109",
+        "contentHash": "nPE5HxAukKaWisVv7kl8ovLCDpQvCBnWtHN67gDr9ZfsS8ziYhHtNGncUZrcn1mlnjM8ZJT3GQCBXwGVl3alQw=="
       }
     }
   }

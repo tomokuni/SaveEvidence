@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
+    <TargetFramework>net11.0-windows10.0.22621.0</TargetFramework>
     <UseWinUI>true</UseWinUI>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
@@ -68,6 +68,12 @@
          Program.Main はこの定数があるときだけ `MICROSOFT_WINDOWSAPPRUNTIME_BASE_DIRECTORY` を設定する
          （Windows App SDK の単一ファイル配布の要件。 実測 2026-11-10）。 -->
     <DefineConstants>$(DefineConstants);SE_WINDOWSAPPSDK_BUNDLED</DefineConstants>
+    <!-- .NET 11 は IncludeAllContentForSelfExtract を非推奨として警告する（NETSDK1244）が、
+         Windows App SDK 2.6.5 の単一ファイル配布は Dll の SxS リダイレクトのために同プロパティを要求する
+         （実測 2026-11-13: false にすると `PublishSingleFile requires IncludeAllContentForSelfExtract for
+         Dll SxS redirection` で公開が失敗する）。 警告をメッセージへ落とす
+         （抑止の理由は .github/ビルド設定規約.md 付録 A）。 -->
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);NETSDK1244</MSBuildWarningsAsMessages>
   </PropertyGroup>
 
   <!-- publish（AOT）のときだけ有効にする指定。 buildScript/publish_WinUI3.bat が

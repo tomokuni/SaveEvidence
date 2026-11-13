@@ -67,12 +67,13 @@ internal sealed class GlobalHotKeyRegistration : IDisposable
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        var failed = _service.RegisterAll(
+        (CaptureType Action, EsUtil.Platform.Core.Input.HotKeySetting Setting)[] bindings =
         [
             (CaptureType.ScreenSelect, settings.SelectScreenHotKey),
             (CaptureType.WindowSelect, settings.WindowSelectHotKey),
             (CaptureType.AreaSelect, settings.AreaSelectHotKey),
-        ]);
+        ];
+        var failed = _service.RegisterAll(bindings);
 
         foreach (var (action, setting) in failed)
         {

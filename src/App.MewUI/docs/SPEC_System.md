@@ -43,7 +43,7 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 
 | 区分 | 採用技術 |
 | --- | --- |
-| 対象フレームワーク | .NET 10（`net10.0-windows10.0.17763.0`） |
+| 対象フレームワーク | .NET 11（`net11.0-windows10.0.17763.0`） |
 | 言語 | C# 14 |
 | UI フレームワーク | MewUI（`Aprillz.MewUI` 0.21.1 固定） |
 | グラフィックス | MewUI の標準描画（`IGraphicsContext`。 画像は `ImageSource.FromBgraPixels` で取り込む） |
@@ -135,7 +135,7 @@ src/App.MewUI/src/
     ├── SettingsPage.cs               設定ページ（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観）
 
 tests/
-├── App.MewUI.Tests.csproj      xUnit v3（net10.0-windows）
+├── App.MewUI.Tests.csproj      xUnit v3（net11.0-windows）
 ├── TestHelper.cs               テスト共通ユーティリティ
 ├── AppLog.Tests.cs             ログ定義の書式と IsEnabled 分岐
 ```

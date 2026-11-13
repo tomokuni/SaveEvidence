@@ -30,7 +30,7 @@
 
 ## 1. システム概要
 
-SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 10.0 / C# 14 / MVVM）。
+SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 11.0 / C# 14 / MVVM）。
 
 本プロジェクト（app）は、このシステムの**実行可能アプリケーション本体**です。 UI（ウィンドウ・ページ・コントロール）・ViewModel・設定サービスを統括し、キャプチャ・切出し・保存・ズーム・フォルダビュー・設定画面をユーザーに提供します。 キャプチャ・切出しのセッションは Parts.CapturePreview.ControlAvaloniaUI、色選択は EsUtil.Ui.AvaloniaUI.ColorSelector、プラットフォーム抽象は EsUtil.Ui.AvaloniaUI.Interop を利用します。
 
@@ -40,10 +40,10 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | --- | --- |
 | **プロジェクト** | `App.AvaloniaUI` |
 | **ルート名前空間** | `App.AvaloniaUI` |
-| **言語** | C# 14（.NET 10.0） |
+| **言語** | C# 14（.NET 11.0） |
 | **UI フレームワーク** | Avalonia UI 12.1（Avalonia.Desktop / Avalonia.Themes.Fluent / FluentAvaloniaUI） |
 | **MVVM フレームワーク** | CommunityToolkit.Mvvm 8.x（ソースジェネレーター） |
-| **ターゲットフレームワーク** | net10.0-windows10.0.17763.0 |
+| **ターゲットフレームワーク** | net11.0-windows10.0.17763.0 |
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **DI** | Microsoft.Extensions.DependencyInjection |
 | **ログ** | Serilog 4.x + Serilog.Sinks.File（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.AvaloniaUI.<yyyyMMdd>.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |

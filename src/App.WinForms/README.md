@@ -3,7 +3,7 @@
 ![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
 ![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?branch=main)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
-![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)
+![.NET](https://img.shields.io/badge/.NET-11.0-512BD4)
 ![WinForms](https://img.shields.io/badge/UI-WinForms-512BD4)
 ![License](https://img.shields.io/badge/License-MIT-3DA639)
 
@@ -26,7 +26,7 @@ UI 非依存のコア（`App.Core`）と撮影スタック（`Parts.CapturePrevi
 | 項目 | 内容 |
 | --- | --- |
 | OS | Windows 10 以降（Win32 の画面キャプチャ・要素検出・ウィンドウ操作を使う） |
-| ランタイム | .NET 10（デスクトップ ランタイム） |
+| ランタイム | .NET 11（デスクトップ ランタイム） |
 | DPI | モニター単位（Per-Monitor V2）。 起動時に有効化します |
 
 ## 3. ビルド
@@ -44,7 +44,7 @@ dotnet build SaveEvidence.slnx -c Release
 ## 4. 実行
 
 ```powershell
-src/App.WinForms/src/bin/Release/net10.0-windows/SaveEvidence.WinForms.exe
+src/App.WinForms/src/bin/Release/net11.0-windows/SaveEvidence.WinForms.exe
 ```
 
 起動すると左にナビゲーション パネル（キャプチャ / フォルダビュー / Undo 一覧 / 設定）、右にページ内容が表示されます。 起動直後はプレースホルダ画像がプレビューに入っており、保存・コピー・切り出しの操作をすぐに試せます。
@@ -121,7 +121,7 @@ App.WinForms/
 ├── README.md                # 本ファイル
 ├── docs/                    # SPEC_ExtFunc.md（外部機能仕様書）/ SPEC_System.md（システム仕様書）
 └── src/
-    ├── App.WinForms.csproj  # WinExe / net10.0-windows10.0.17763.0 / UseWindowsForms
+    ├── App.WinForms.csproj  # WinExe / net11.0-windows10.0.17763.0 / UseWindowsForms
     ├── Program.cs           # DPI 対応 → コアの組み立て（AppServices） → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / 履歴 / 一覧の状態）
     ├── Icons/
