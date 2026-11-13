@@ -105,57 +105,24 @@ internal static class UiFactory
     public const int StatusBarContentHeight = StatusBarHeight - 2;
 
     /// <summary>ステータス バーの固定幅の項目（マウスポインタ位置・画像サイズ）の寸法（物理ピクセル）を測る。</summary>
-    /// <returns>各項目の表示幅（右側の「WW」の空きを含む。 画面の DPI で測った物理ピクセル）。</returns>
+    /// <returns>各項目の幅と右側の余白（画面の DPI で測った物理ピクセル）。</returns>
     /// <remarks>
-    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
-    /// 文字の送り幅はフォントと描画の実装で決まるため、測るのは UI の仕事である。<br/>
-    /// <b>送り幅だけ（<c>TextFormatFlags.NoPadding</c>）で測る理由</b>: 幅には区切りの「WW」を含めるため、
-    /// <c>TextRenderer</c> の既定の余白（左右 3〜4 px）を含めると空きが「WW」より広くなる。<br/>
-    /// <c>Label</c> は内部余白の分だけ文字を右へずらして描き、次の項目も同じだけ左へずれるため、<br/>
-    /// 見た目の空きは「WW」の送り幅になる（4 UI 版で同じ式が成り立つ）。<br/>
-    /// <b>画面の DPI で測る理由</b>: 実際に描画されるのもその DPI である。 DIP で測って後から拡大すると、
-    /// 端数（文字のヒンティング）がずれて末尾が欠ける。 呼び出し側はこの値をそのまま <c>Width</c> に使う。
+    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths"/>）。
+    /// 文字の送り幅と内部余白はフォントと描画の実装で決まるため、測るのは UI の仕事である。<br/>
+    /// <b>幅に推奨幅（<c>TextRenderer</c> の既定の測定）を使う理由</b>: 送り幅だけで幅を決めると、
+    /// 値が基準の文字列よりわずかに広いときに <c>Label</c> が折り返す（実測 2026-11-13）。<br/>
+    /// 右の余白は「WW」の送り幅から内部余白を引いた値で、幅 + 余白は一定になる（列が動かない）。
     /// </remarks>
     public static StatusBarFieldWidths ResolveStatusFieldWidths()
-    {
-        // 幅は余白込みで測る（Label が描画時に左右へ余白を足すため、送り幅だけだと文字が欠ける）。
-        // 空きは送り幅だけで測り、Label が文字を右端から内側へ寄せる分（左右で約 9 px。 実測 2026-11-13）
-        // を差し引く（差し引かないと、文字の右端から次の文字までが「WW」より 9 px 広くなる）
-        var widths = StatusBarMetrics.ResolveFieldWidths(
-            text => TextRenderer.MeasureText(text, AppStyles.StatusBarFont).Width,
+        => StatusBarMetrics.ResolveFieldWidths(
+            // 送り幅（余白を含まない）
             text => TextRenderer.MeasureText(
                 text,
                 AppStyles.StatusBarFont,
                 new Size(int.MaxValue, int.MaxValue),
-                TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix).Width);
-
-        return widths with { Gap = Math.Max(0, widths.Gap - StatusBarGapCompensation) };
-    }
-
-    /// <summary>ステータス バーの空きから差し引く、Label が文字を内側へ寄せる分（物理ピクセル）。</summary>
-    /// <remarks>
-    /// <c>Label</c> は <c>TextRenderer</c> の既定の余白（左右 3〜4 px）だけ内側に文字を描く。<br/>
-    /// 幅を測るときはこの余白を含めるが、空きは含めないため、その差を空きから引く<br/>
-    /// （実測 2026-11-13: 「WW」の送り幅 28 px に対し、文字の右端から次の文字までが 37 px あった）。
-    /// </remarks>
-    private const int StatusBarGapCompensation = 11;
-
-    /// <summary>ステータス バーの空きの幅（物理ピクセル）を求める。</summary>
-    /// <returns>置くべき空きの幅（物理ピクセル）。</returns>
-    /// <remarks>
-    /// 「WW」の送り幅から、<c>Label</c> が文字を右端から内側へ寄せる分を差し引く<br/>
-    /// （差し引かないと、文字の右端から次の文字までが「WW」より広く見える。 実測 2026-11-13）。
-    /// </remarks>
-    public static int ResolveGapWidth()
-    {
-        var reference = StatusBarMetrics.ResolveFieldWidths(
-            text => TextRenderer.MeasureText(
-                text,
-                AppStyles.StatusBarFont,
-                new Size(int.MaxValue, int.MaxValue),
-                TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix).Width);
-        return (int)Math.Round(Math.Max(0, reference.Gap - StatusBarGapCompensation));
-    }
+                TextFormatFlags.NoPadding | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix).Width,
+            // 推奨幅（内部余白を含む。 Label が折り返さない幅）
+            text => TextRenderer.MeasureText(text, AppStyles.StatusBarFont).Width);
 
     /// <summary>ステータス バーの中身を垂直方向中央へ揃える。</summary>
     /// <param name="control">対象のコントロール。</param>

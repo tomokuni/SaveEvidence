@@ -166,16 +166,14 @@
             <!-- 左側（左寄せ）: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存ファイル名 + 通知 -->
             <!-- 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（StatusBarMetrics が単一所有する） -->
             <StackPanel x:Name="StatusLeft" Grid.Column="0" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
-                <!-- 文字は右端へ寄せる（左へ寄せると、値が短いときに余りが右側の空きへ加わり「WW」より広く見える） -->
+                <!-- 文字は右端へ寄せる（幅に「WW」の空きを含む。 左へ寄せると余りが右側へ加わって広く見える） -->
                 <TextBlock x:Name="PointerText" Classes="status" Text="{Binding PointerDisplayText}"
                            TextAlignment="Right"
                            ToolTip.Tip="マウスポインタ位置（対象座標 = 画像ピクセル）"/>
-                <!-- 右側の空きは「WW」ちょうどの要素にする（幅は StatusBarMetrics が単一所有する） -->
-                <Border x:Name="PointerGap"/>
                 <TextBlock x:Name="ImageSizeText" Classes="status" Text="{Binding ImageSizeDisplayText}"
                            TextAlignment="Right"
                            ToolTip.Tip="画像サイズ（対象座標 = 元画像ピクセル）"/>
-                <Border x:Name="ImageSizeGap"/>
+
                 <!-- ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する） -->
                 <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
                     <TextBlock Classes="status" Text="{Binding SavedFileName}"/>

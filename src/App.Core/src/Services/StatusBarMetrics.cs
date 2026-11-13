@@ -38,41 +38,39 @@ public static class StatusBarMetrics
     public const string RightPaddingReferenceText = "WW";
 
     /// <summary>固定幅の項目（マウスポインタ位置・画像サイズ）の寸法を求める。</summary>
-    /// <param name="measureTight">文字の送り幅（= 描画される文字の幅）だけを測る関数（DIP で返す。 ステータス バーの文字で測ること）。</param>
-    /// <returns>各項目の表示幅と、項目の右側に置く空きの幅。</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="measureTight"/> が null の場合。</exception>
-    /// <remarks>
-    /// <b>空きを項目の幅に含めない理由</b>: 幅に含めると、値が短いとき（例: <c>640 x 400</c> や <c>-</c>）に<br/>
-    /// 文字の右側の余りがそのまま空きへ加わり、「WW」より広く見える（実測 2026-11-13: <c>-</c> の右が 103 px）。<br/>
-    /// 幅は「8888 x 8888」ちょうどに固定し、<b>文字を項目の右端へ寄せ</b>、<b>空きは独立した要素</b>にする。<br/>
-    /// これで値の長さによらず「文字の右端から次の文字の開始位置まで」が常に「WW」の送り幅になる。<br/>
-    /// <br/>
-    /// <b>測るのは UI の仕事</b>: 文字の送り幅はフォントと文字整形の実装で決まるため、コアは測れない。<br/>
-    /// そのためコアは<b>基準の文字列と規則</b>だけを持ち、幅の計算は本メソッドへ集約する。
-    /// </remarks>
-    public static StatusBarFieldWidths ResolveFieldWidths(Func<string, double> measureTight)
-        => ResolveFieldWidths(measureTight, measureTight);
-
-    /// <summary>固定幅の項目の寸法を、項目の幅と右側の空きで別々の関数を使って求める。</summary>
-    /// <param name="measureFieldText">項目の幅を測る関数（コントロールが描画時に足す余白を含めること。 含めないと文字が欠ける）。</param>
-    /// <param name="measureGapText">右側の空きを測る関数（文字の送り幅だけを返すこと）。</param>
-    /// <returns>各項目の表示幅と、項目の右側に置く空きの幅。</returns>
+    /// <param name="measureAdvance">文字の送り幅（= 描画される文字の幅）だけを測る関数（DIP）。</param>
+    /// <param name="measureBox">
+    /// コントロールが必要とする幅（内部余白込みの推奨幅。 DIP）。 文字より小さくすると折り返すため、
+    /// 幅にはこの値を使う。 内部余白を持たないコントロールでは <paramref name="measureAdvance"/> と同じ値を返す。
+    /// </param>
+    /// <returns>各項目の幅（コントロールへ設定する値）と、右側の余白（<c>Margin</c> の右へ設定する値）。</returns>
     /// <exception cref="ArgumentNullException">いずれかの引数が null の場合。</exception>
     /// <remarks>
-    /// <b>幅と空きで測り方を変える理由</b>: 幅は文字が欠けないようコントロールの内部余白を含める必要がある。<br/>
-    /// 一方、空きは「文字の右端から次の文字の開始位置まで」を「WW」にするため、内部余白を含めない<br/>
-    /// 送り幅で測る（含めると空きが「WW」より広くなる）。<br/>
-    /// コントロールが描画時に文字を右端から内側へ寄せる分は <c>GapCompensation</c> として UI が差し引く。
+    /// <b>幅 = コントロールの推奨幅（基準の文字列）、右の余白 = 「WW」の送り幅 - 内部余白</b>。<br/>
+    /// 文字を右端へ寄せると、コントロールの内部余白（右）の分だけ内側で止まり、次の項目は余白の分だけ離れる。<br/>
+    /// そのため内部余白を余白の値から差し引くと、「文字の右端から次の項目の文字の開始位置まで」が<br/>
+    /// 値の長さによらず「WW」になる（短い値の余りは文字の左側へ逃げる）。<br/>
+    /// <b>幅に推奨幅を使う理由</b>: 送り幅だけで幅を決めると、値が基準の文字列よりわずかに広い場合に<br/>
+    /// 折り返す（実測 2026-11-13: WinForms 版で「1920 x 1200」が 2 行になった）。<br/>
+    /// <b>合計は一定</b>: 幅 + 余白 = 基準の文字列の送り幅 + 「WW」の送り幅 になり、値が変わっても列は動かない。<br/>
+    /// <br/>
+    /// <b>測るのは UI の仕事</b>: 文字の送り幅と内部余白はフォントと描画の実装で決まるため、コアは測れない。
     /// </remarks>
     public static StatusBarFieldWidths ResolveFieldWidths(
-        Func<string, double> measureFieldText, Func<string, double> measureGapText)
+        Func<string, double> measureAdvance, Func<string, double> measureBox)
     {
-        ArgumentNullException.ThrowIfNull(measureFieldText);
-        ArgumentNullException.ThrowIfNull(measureGapText);
+        ArgumentNullException.ThrowIfNull(measureAdvance);
+        ArgumentNullException.ThrowIfNull(measureBox);
+
+        // 内部余白 = 推奨幅 - 送り幅（コントロールが文字の左右に足す分の合計）
+        var innerPadding = measureBox(PositionWidthReferenceText) - measureAdvance(PositionWidthReferenceText);
+
+        // 右の余白 = 「WW」の送り幅 - 内部余白（合計が「基準の文字幅 + WW」になるようにする）
+        var margin = Math.Max(0, measureAdvance(RightPaddingReferenceText) - innerPadding);
 
         return new StatusBarFieldWidths(
-            measureFieldText(PositionWidthReferenceText),
-            measureFieldText(ImageSizeWidthReferenceText),
-            measureGapText(RightPaddingReferenceText));
+            measureBox(PositionWidthReferenceText),
+            measureBox(ImageSizeWidthReferenceText),
+            margin);
     }
 }

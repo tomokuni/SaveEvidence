@@ -27,24 +27,37 @@ public class StatusBarMetricsTests
         Assert.Equal("WW", StatusBarMetrics.RightPaddingReferenceText);
     }
 
-    /// <summary>幅を基準の文字列で測ることを検証する（測る関数は UI が与える）。</summary>
+    /// <summary>幅は推奨幅、右の余白は「WW」から内部余白を引いた値になることを検証する。</summary>
     [Fact]
-    internal void ResolveFieldWidths_基準の文字列で測り空きは別に持つ()
+    internal void ResolveFieldWidths_幅は推奨幅で余白はWWから内部余白を引く()
     {
-        // 1 文字 10 DIP の等幅フォントとみなす（測る関数をテストが差し替えられる）
-        static double Measure(string text) => text.Length * 10;
+        // 1 文字 10 DIP の等幅フォントとみなし、内部余白を 8 DIP とする（Label を模す）
+        static double Advance(string text) => text.Length * 10;
+        static double Box(string text) => (text.Length * 10) + 8;
 
-        var widths = StatusBarMetrics.ResolveFieldWidths(Measure);
+        var widths = StatusBarMetrics.ResolveFieldWidths(Advance, Box);
 
-        // 幅は「8888 x 8888」(11 文字 = 110) ちょうど。 空きは別の値（20）として持つ
-        // （幅に含めると、値が短いときに余りが空きへ加わって「WW」より広く見える）
-        Assert.Equal(110, widths.Position);
-        Assert.Equal(110, widths.ImageSize);
-        Assert.Equal(20, widths.Gap);
+        // 幅は推奨幅: 「8888 x 8888」(11 文字 = 110) + 内部余白 8 = 118
+        Assert.Equal(118, widths.Position);
+        Assert.Equal(118, widths.ImageSize);
+        // 右の余白は「WW」(20) - 内部余白 8 = 12。 幅 + 余白 = 130 で一定
+        Assert.Equal(12, widths.Gap);
+        Assert.Equal(130, widths.Position + widths.Gap);
     }
 
+    /// <summary>内部余白を持たないコントロールでは、右の余白が「WW」の送り幅になることを検証する。</summary>
+    [Fact]
+    internal void ResolveFieldWidths_内部余白が無ければ余白はWWの送り幅()
+    {
+        static double Advance(string text) => text.Length * 10;
+
+        var widths = StatusBarMetrics.ResolveFieldWidths(Advance, Advance);
+
+        Assert.Equal(110, widths.Position);
+        Assert.Equal(20, widths.Gap);
+    }
     /// <summary>測る関数が null の場合は例外になることを検証する。</summary>
     [Fact]
     internal void ResolveFieldWidths_測る関数がnullの場合は例外になる()
-        => Assert.Throws<ArgumentNullException>(() => StatusBarMetrics.ResolveFieldWidths(null!));
+        => Assert.Throws<ArgumentNullException>(() => StatusBarMetrics.ResolveFieldWidths(null!, null!));
 }

@@ -99,41 +99,28 @@ public sealed partial class CapturePage : UserControl
 
     /// <summary>マウスポインタ位置・画像サイズの表示幅と右側の余白を、ステータス バーの文字で測って決める。</summary>
     /// <remarks>
-    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
+    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double}, Func{string, double})"/>）。
     /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。<br/>
     /// 値を固定すると、座標が変わるたびに右側の項目が動いて読みにくい（実測）。
     /// </remarks>
     private void ApplyStatusFieldWidths()
     {
         var typeface = new Typeface(PointerText.FontFamily, PointerText.FontStyle, PointerText.FontWeight, PointerText.FontStretch);
-        var widths = StatusBarMetrics.ResolveFieldWidths(text => MeasureText(typeface, text));
 
-        // 幅は「8888 x 8888」ちょうど（規則は StatusBarMetrics が単一所有する）。
-        // 空きは独立した要素で「WW」ちょうどにする（幅に含めると、値が短いときに余りが加わって広く見える）
-        // 幅には余裕を足す: 右端寄せで測った幅ちょうどだと、環境によって末尾の 1 文字が欠ける
-        // （実測 2026-11-13: MewUI 版で発生）。 文字は右端へ寄せてあるため、幅を広げても
-        // 右側の空き（「WW」）は変わらない（空きは独立した要素である）
-        PointerText.Width = widths.Position + StatusBarFieldSafetyDips;
-        PointerText.Margin = default;
-        ImageSizeText.Width = widths.ImageSize + StatusBarFieldSafetyDips;
-        ImageSizeText.Margin = default;
-        // 文字の右端と次の文字の開始位置にはグリフの左右の空きが入るため、その分を差し引く
-        // （差し引かないと、空きが「WW」の送り幅より 3〜4 DIP 広く見える。 実測 2026-11-13）
-        var gapWidth = Math.Max(0, widths.Gap - StatusBarGapCompensation);
-        PointerGap.Width = gapWidth;
-        ImageSizeGap.Width = gapWidth;
+        // TextBlock は文字の左右に内部余白を足さない（推奨幅 = 送り幅）ため、幅はそのまま使える
+        var widths = StatusBarMetrics.ResolveFieldWidths(
+            text => MeasureText(typeface, text), text => MeasureText(typeface, text));
+
+        // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
+        // 空きを別の要素にせず項目の中へ収めることで、次の項目との間で余白が二重にならない。
+        // 文字は右端へ寄せる（値の余りは左側へ逃げる）
+        // 幅 + 右の余白（「WW」）で固定幅になる（合計は一定で、列は動かない）。
+        // 右端寄せの文字は幅の右端に接し、余白の分だけ次の項目と離れる
+        PointerText.Width = widths.Position;
+        PointerText.Margin = new Thickness(0, 0, widths.Gap, 0);
+        ImageSizeText.Width = widths.ImageSize;
+        ImageSizeText.Margin = new Thickness(0, 0, widths.Gap, 0);
     }
-
-    /// <summary>ステータス バーの固定幅の項目に足す余裕（DIP）。</summary>
-    /// <remarks>
-    /// 右端寄せで測った幅ちょうどだと、環境によって末尾の 1 文字が欠ける（実測 2026-11-13: MewUI 版）。<br/>
-    /// 文字は右端へ寄せてあるため、幅を広げても右側の空き（「WW」）は変わらない。
-    /// </remarks>
-    private const double StatusBarFieldSafetyDips = 4;
-
-    /// <summary>ステータス バーの空きから差し引く、グリフの左右の空き（サイド ベアリング）の合計（DIP）。</summary>
-    /// <remarks>実測 2026-11-13: 差し引かないと、文字の右端から次の文字までが「WW」より 4 DIP 広かった。</remarks>
-    private const double StatusBarGapCompensation = 3;
 
     /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>
     /// <param name="typeface">測る文字の書体。</param>

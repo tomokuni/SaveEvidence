@@ -102,24 +102,23 @@ internal static class CapturePage
 
         // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める
         // （基準の文字列と規則は StatusBarMetrics が単一所有する）
+        // TextBlock は文字の左右に内部余白を足さない（推奨幅 = 送り幅）ため、幅はそのまま使える
         var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(
+            text => MeasureStatusText(text, AppStyles.StatusFontSize),
             text => MeasureStatusText(text, AppStyles.StatusFontSize));
 
-        // **文字を右端へ寄せ、空きは独立した要素にする**: 幅に空きを含めると、値が短いときに
-        // 余りが空きへ加わって「WW」より広く見える（規則は StatusBarMetrics が単一所有する）
-        var statusGapWidth = Math.Max(0, statusFieldWidths.Gap - StatusBarGapCompensation);
+        // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
+        // 空きを別の要素にせず項目の中へ収める。 文字は右端へ寄せる（値の余りは左側へ逃げる）
         var zoomText = CreateLabel(viewModel.ZoomDisplayText, AppStyles.StatusFontSize);
         var pointerText = CreateLabel(viewModel.PointerDisplayText, AppStyles.StatusFontSize);
-        // 幅には余裕を足す: 右端寄せで測った幅ちょうどだと、環境によって末尾の 1 文字が欠ける
-        // （実測 2026-11-13: MewUI 版で発生）。 文字は右端へ寄せてあるため、幅を広げても
-        // 右側の空き（「WW」）は変わらない（空きは独立した要素である）
-        pointerText.Width = statusFieldWidths.Position + StatusBarFieldSafetyDips;
+        // 幅 + 右の余白（「WW」）で固定幅になる（合計は一定で、列は動かない）
+        pointerText.Width = statusFieldWidths.Position;
+        pointerText.Margin = new Thickness(0, 0, statusFieldWidths.Gap, 0);
         pointerText.TextAlignment = TextAlignment.Right;
-        var pointerGap = new Border { Width = statusGapWidth };
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
-        imageSizeText.Width = statusFieldWidths.ImageSize + StatusBarFieldSafetyDips;
+        imageSizeText.Width = statusFieldWidths.ImageSize;
+        imageSizeText.Margin = new Thickness(0, 0, statusFieldWidths.Gap, 0);
         imageSizeText.TextAlignment = TextAlignment.Right;
-        var imageSizeGap = new Border { Width = statusGapWidth };
         var savedFileNameText = CreateLabel(viewModel.SavedFileName, AppStyles.StatusFontSize);
         var messageText = CreateLabel(viewModel.StatusMessage, AppStyles.StatusFontSize);
         messageText.Foreground = new SolidColorBrush(s_announceColor);
@@ -154,9 +153,7 @@ internal static class CapturePage
         var toolbar = BuildToolbar(services, viewModel, ToggleCrop, captureSession);
         var statusLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
         statusLeft.Children.Add(pointerText);
-        statusLeft.Children.Add(pointerGap);
         statusLeft.Children.Add(imageSizeText);
-        statusLeft.Children.Add(imageSizeGap);
 
         // ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する）
         var nameAndMessage = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
@@ -934,26 +931,12 @@ internal static class CapturePage
     private static TextBlock CreateLabel(string text, double fontSize)
         => new() { Text = text, FontSize = fontSize, VerticalAlignment = VerticalAlignment.Center };
 
-    /// <summary>ステータス バーの固定幅の項目に足す余裕（DIP）。</summary>
-    /// <remarks>
-    /// 右端寄せで測った幅ちょうどだと、環境によって末尾の 1 文字が欠ける（実測 2026-11-13: MewUI 版）。<br/>
-    /// 文字は右端へ寄せてあるため、幅を広げても右側の空き（「WW」）は変わらない。
-    /// </remarks>
-    private const double StatusBarFieldSafetyDips = 4;
-
-    /// <summary>ステータス バーの空きから差し引く、TextBlock が文字を内側へ寄せる分（DIP）。</summary>
-    /// <remarks>
-    /// 文字の右端と次の文字の開始位置には、グリフの左右の空き（サイド ベアリング）が入る。<br/>
-    /// 差し引かないと、空きが「WW」の送り幅より 3 DIP ほど広く見える（実測 2026-11-13）。
-    /// </remarks>
-    private const double StatusBarGapCompensation = 3;
-
     /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>
     /// <param name="text">測る文字列。</param>
     /// <param name="fontSize">文字サイズ（DIP）。</param>
     /// <returns>描画幅（DIP）。</returns>
     /// <remarks>
-    /// 幅を決める基準の文字列はコアが単一所有する（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
+    /// 幅を決める基準の文字列はコアが単一所有する（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double}, Func{string, double})"/>）。
     /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。
     /// </remarks>
     private static double MeasureStatusText(string text, double fontSize)
