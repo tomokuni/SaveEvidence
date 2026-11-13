@@ -164,10 +164,11 @@
         <!-- ステータスバー（左: 保存ファイル名・通知 / 右: 拡大率（スライダ + % + フライアウト）） -->
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="4,1" MinHeight="32" VerticalAlignment="Center">
             <!-- 左側（左寄せ）: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存ファイル名 + 通知 -->
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                <TextBlock Classes="status" Text="{Binding PointerDisplayText}" Width="70"
+            <!-- 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（StatusBarMetrics が単一所有する） -->
+            <StackPanel x:Name="StatusLeft" Grid.Column="0" Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">
+                <TextBlock x:Name="PointerText" Classes="status" Text="{Binding PointerDisplayText}"
                            ToolTip.Tip="マウスポインタ位置（対象座標 = 画像ピクセル）"/>
-                <TextBlock Classes="status" Text="{Binding ImageSizeDisplayText}" Width="80"
+                <TextBlock x:Name="ImageSizeText" Classes="status" Text="{Binding ImageSizeDisplayText}"
                            ToolTip.Tip="画像サイズ（対象座標 = 元画像ピクセル）"/>
                 <!-- ファイル名と通知の間は全角 1 文字分の空きにする（幅は App.Core が単一所有する） -->
                 <StackPanel Orientation="Horizontal" Spacing="0" VerticalAlignment="Center">

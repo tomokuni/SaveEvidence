@@ -385,13 +385,32 @@ internal static class CapturePage
         // ── ステータスバー ──
         // 左: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存ファイル名 | 通知
         // バインドはプロパティ名を推定するためインライン式で指定する
-        var pointerLabel = new Label { Width = 70 };
+        // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（StatusBarMetrics が単一所有する）
+        var statusMeasure = new TextBlock().FontSize(AppStyles.StatusFontSize);
+        double MeasureStatusText(string text)
+        {
+            statusMeasure.Text(text);
+            statusMeasure.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            return statusMeasure.DesiredSize.Width;
+        }
+
+        var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(MeasureStatusText);
+
+        var pointerLabel = new Label
+        {
+            Width = statusFieldWidths.Position,
+            Margin = new Thickness(0, 0, statusFieldWidths.RightPadding, 0),
+        };
         pointerLabel.FontSize(AppStyles.StatusFontSize);
         pointerLabel.VerticalAlignment = VerticalAlignment.Center;
         pointerLabel.Bind(Label.TextProperty, viewModel, static x => x.PointerDisplayText);
         pointerLabel.ToolTip("マウスポインタ位置（対象座標 = 画像ピクセル）");
 
-        var imageSizeLabel = new Label { Width = 80 };
+        var imageSizeLabel = new Label
+        {
+            Width = statusFieldWidths.ImageSize,
+            Margin = new Thickness(0, 0, statusFieldWidths.RightPadding, 0),
+        };
         imageSizeLabel.FontSize(AppStyles.StatusFontSize);
         imageSizeLabel.VerticalAlignment = VerticalAlignment.Center;
         imageSizeLabel.Bind(Label.TextProperty, viewModel, static x => x.ImageSizeDisplayText);
@@ -416,7 +435,7 @@ internal static class CapturePage
 
         var statusLeft = new StackPanel()
             .Horizontal()
-            .Spacing(4)
+            .Spacing(0)
             .Children(pointerLabel, imageSizeLabel, nameAndMessage);
 
         // 右: 拡大率（⊖ / ⊕ / Fit / % 表示。 % はクリックで拡大率メニューを出す）

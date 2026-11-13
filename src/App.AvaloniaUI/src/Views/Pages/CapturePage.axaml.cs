@@ -91,9 +91,37 @@ public sealed partial class CapturePage : UserControl
 
         if (Design.IsDesignMode) return;
 
+        ApplyStatusFieldWidths();
+
         // Undo / Redo スタックは DI から取得する（UndoPage と同一インスタンスを共有するため）
         _undoHistory = Program.ServiceProvider.GetRequiredService<UndoHistory>();
     }
+
+    /// <summary>マウスポインタ位置・画像サイズの表示幅と右側の余白を、ステータス バーの文字で測って決める。</summary>
+    /// <remarks>
+    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths"/>）。
+    /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。<br/>
+    /// 値を固定すると、座標が変わるたびに右側の項目が動いて読みにくい（実測）。
+    /// </remarks>
+    private void ApplyStatusFieldWidths()
+    {
+        var typeface = new Typeface(PointerText.FontFamily, PointerText.FontStyle, PointerText.FontWeight, PointerText.FontStretch);
+        var widths = StatusBarMetrics.ResolveFieldWidths(text => MeasureText(typeface, text));
+
+        PointerText.Width = widths.Position;
+        PointerText.Margin = new Thickness(0, 0, widths.RightPadding, 0);
+        ImageSizeText.Width = widths.ImageSize;
+        ImageSizeText.Margin = new Thickness(0, 0, widths.RightPadding, 0);
+    }
+
+    /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>
+    /// <param name="typeface">測る文字の書体。</param>
+    /// <param name="text">測る文字列。</param>
+    /// <returns>描画幅（DIP）。</returns>
+    private static double MeasureText(Typeface typeface, string text)
+        => new FormattedText(
+            text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface,
+            StatusBarMetrics.FontSize, Brushes.Black).Width;
 
     /// <summary>ビジュアル ツリーへ添付されたときに Ctrl ショートカットをウィンドウへ登録する。</summary>
     /// <param name="e">添付の情報。</param>

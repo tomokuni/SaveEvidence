@@ -61,7 +61,7 @@ internal static class Program
         viewModel.BeforeEditAction = () => undoStack.Push(viewModel.PreviewImage);
 
         // フォルダビューの表示状態（表示モード・ソート順）もコアが保持し、設定へ保存する
-        var services = new AppServices(viewModel, settings, undoStack, new FolderViewViewModel());
+        var services = new AppServices(viewModel, settings, undoStack, new FolderViewViewModel(), new UndoViewModel());
 
         // キャプチャの開始は ViewModel のコールバック（ツールバーのボタン）とグローバルホットキーの両方から呼ぶ。
         // ホットキーの開始経路（StartSelectionMode）は、撮影・切り出しのセッション寿命を所有するページが

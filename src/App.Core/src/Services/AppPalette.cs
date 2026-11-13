@@ -64,6 +64,57 @@ public static class AppPalette
     /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
     public static uint NavPanel(bool isDark) => isDark ? NavPanelDark : NavPanelLight;
 
+    /// <summary>文字とアイコンの前景色（明色テーマ）。</summary>
+    public const uint ForegroundLight = 0xFF1A1A1A;
+
+    /// <summary>文字とアイコンの前景色（暗色テーマ）。</summary>
+    public const uint ForegroundDark = 0xFFEEEEEE;
+
+    /// <summary>文字とアイコンの前景色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>
+    /// <b>4 UI 版で同じ値を使う理由</b>: 各 UI のテーマの既定色はそれぞれ違う（WinUI 3 と AvaloniaUI は
+    /// 明色で <c>#000000</c>、WinForms はコントロールの既定色）。 同じアプリの同じ画面に見えるよう、
+    /// アプリの前景色を 1 か所で決める（実測 2026-11-09: UI 版ごとに文字の黒さが違って見えた）。
+    /// </remarks>
+    public static uint Foreground(bool isDark) => isDark ? ForegroundDark : ForegroundLight;
+
+    /// <summary>枠線（区切り・カードの縁）の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint Border(bool isDark) => isDark ? 0xFF5A5A5A : 0xFFC8C8C8;
+
+    /// <summary>ナビゲーション項目にカーソルが重なったときの背景色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint NavItemHover(bool isDark) => isDark ? 0xFF30343C : 0xFFE5E9F0;
+
+    /// <summary>ウィンドウを閉じるボタンにカーソルが重なったときの背景色を取得する。</summary>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    /// <remarks>テーマによらず赤にする（閉じる操作の意味を色でも示す。 Windows の標準と同じ）。</remarks>
+    public const uint CloseButtonHover = 0xFFC42B1C;
+
+    /// <summary>メニュー（ポップアップ）の下地の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint MenuBackground(bool isDark) => isDark ? 0xFF323232 : 0xFFFCFCFC;
+
+    /// <summary>メニュー（ポップアップ）の縁の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint MenuBorder(bool isDark) => isDark ? 0xFF5A5A5A : 0xFFC8C8C8;
+
+    /// <summary>カード（設定のまとまり）の縁の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint CardBorder(bool isDark) => isDark ? 0xFF5A5A5A : 0xFFCCCCCC;
+
+    /// <summary>強調（選択・リンク）の色を取得する。</summary>
+    /// <param name="isDark">暗色テーマかどうか。</param>
+    /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
+    public static uint Accent(bool isDark) => isDark ? 0xFF4CC2FF : 0xFF0078D4;
+
     /// <summary>ナビゲーション項目の選択中の背景色（薄いグレー）を取得する。</summary>
     /// <param name="isDark">暗色テーマかどうか。</param>
     /// <returns>色（<c>0xAARRGGBB</c>）。</returns>

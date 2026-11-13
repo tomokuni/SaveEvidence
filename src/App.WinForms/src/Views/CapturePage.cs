@@ -121,8 +121,12 @@ internal static class CapturePage
         var zoomInButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomIn, "拡大", () => crop.ZoomIn()));
         var zoomFitButton = UiFactory.CenterInStatusBar(UiFactory.CreateToolButton(AppIcon.ZoomFit, "ウィンドウに合わせる", () => crop.ZoomFit()));
 
-        var pointerLabel = UiFactory.CreateStatusLabel(70, "カーソル位置（画像ピクセル）");
-        var sizeLabel = UiFactory.CreateStatusLabel(80, "プレビュー画像のサイズ");
+        var pointerLabel = UiFactory.CreateStatusLabel(0, "カーソル位置（画像ピクセル）");
+        pointerLabel.AutoSize = false;
+        var sizeLabel = UiFactory.CreateStatusLabel(0, "プレビュー画像のサイズ");
+        sizeLabel.AutoSize = false;
+        // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（DIP。 表示のたびに DPI で拡大する）
+        var statusFieldWidths = UiFactory.ResolveStatusFieldWidths();
         var savedFileLabel = UiFactory.CreateStatusLabel(0, "直前に保存したファイル名");
         var messageLabel = UiFactory.CreateStatusLabel(0);
         messageLabel.ForeColor = AppStyles.Announce;
@@ -328,8 +332,14 @@ internal static class CapturePage
             zoomPanel.BackColor = pageBackground;
             root.BackColor = pageBackground;
             // ファイル名と通知の間の空きは DPI で物理ピクセルが変わるため、表示のたびに合わせ直す
-            nameMessageGap.Width = DpiScaler.ScaleToPixel(
-                StatusBarMetrics.NameMessageGapWidth, DpiScaler.ToScaling(statusBar.DeviceDpi));
+            var statusScaling = DpiScaler.ToScaling(statusBar.DeviceDpi);
+            nameMessageGap.Width = DpiScaler.ScaleToPixel(StatusBarMetrics.NameMessageGapWidth, statusScaling);
+            // 固定幅の項目（マウスポインタ位置・画像サイズ）の幅と右側の余白も DPI で変わる
+            // （基準の文字列と規則は StatusBarMetrics が単一所有する。 測るのは UI の仕事）
+            pointerLabel.Width = DpiScaler.ScaleToPixel(statusFieldWidths.Position, statusScaling);
+            pointerLabel.Margin = new Padding(0, 0, DpiScaler.ScaleToPixel(statusFieldWidths.RightPadding, statusScaling), 0);
+            sizeLabel.Width = DpiScaler.ScaleToPixel(statusFieldWidths.ImageSize, statusScaling);
+            sizeLabel.Margin = new Padding(0, 0, DpiScaler.ScaleToPixel(statusFieldWidths.RightPadding, statusScaling), 0);
             // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
             canvas.BackColor = AppStyles.ImageAreaBackground;
             templateBox.ForeColor = AppStyles.Foreground;

@@ -64,30 +64,35 @@ internal static class AppStyles
     public static Color ButtonPressed => ToColor(AppPalette.ToolbarButtonBackground(isDark: false, isPressed: true));
 
     /// <summary>文字の色を取得する。</summary>
-    public static Color Foreground => Color.FromArgb(0x1A, 0x1A, 0x1A);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（明色テーマの値）。</remarks>
+    public static Color Foreground => ToColor(AppPalette.Foreground(isDark: false));
 
     /// <summary>リンク（青字 + 下線）の文字色を取得する。</summary>
     /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（明色テーマの値）。</remarks>
     public static Color Link => ToColor(AppPalette.Link(isDark: false));
 
     /// <summary>枠線の色を取得する。</summary>
-    public static Color Border => Color.FromArgb(0xC8, 0xC8, 0xC8);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（明色テーマの値）。</remarks>
+    public static Color Border => ToColor(AppPalette.Border(isDark: false));
 
     /// <summary>通知メッセージ（「キャプチャしました」など）の文字色を取得する。</summary>
-    /// <remarks>他の UI 版（WinUI3 / MewUI / AvaloniaUI）と同じ青（<c>#007ACC</c>）にする。</remarks>
-    public static Color Announce => Color.FromArgb(0x00, 0x7A, 0xCC);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（明色テーマの値）。</remarks>
+    public static Color Announce => ToColor(AppPalette.Announce(isDark: false));
 
     /// <summary>選択中のナビ項目の背景色を取得する。</summary>
-    public static Color NavItemSelected => Color.FromArgb(0xD0, 0xD0, 0xD0);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（明色テーマの値）。</remarks>
+    public static Color NavItemSelected => ToColor(AppPalette.NavItemSelected(isDark: false));
 
     /// <summary>ナビ項目にカーソルが重なったときの背景色を取得する。</summary>
-    public static Color NavItemHover => Color.FromArgb(0xDC, 0xDC, 0xDC);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（明色テーマの値）。</remarks>
+    public static Color NavItemHover => ToColor(AppPalette.NavItemHover(isDark: false));
 
     /// <summary>一覧の項目にカーソルが重なったときの背景色を取得する。</summary>
     public static Color ItemHover => ToColor(ThumbnailTileMetrics.HoverBackground(isDark: false));
 
     /// <summary>強調（選択・リンク）の色を取得する。</summary>
-    public static Color Accent => Color.FromArgb(0x00, 0x78, 0xD4);
+    /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（明色テーマの値）。</remarks>
+    public static Color Accent => ToColor(AppPalette.Accent(isDark: false));
 
     /// <summary>ツールバーとステータスバーの背景色を取得する。</summary>
     /// <remarks>

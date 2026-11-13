@@ -100,11 +100,19 @@ internal static class CapturePage
         var synchronizingZoom = false;
         Slider? zoomSlider = null;
 
+        // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める
+        // （基準の文字列と規則は StatusBarMetrics が単一所有する）
+        var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(
+            text => MeasureStatusText(text, AppStyles.StatusFontSize));
+        var statusFieldPadding = new Thickness(0, 0, statusFieldWidths.RightPadding, 0);
+
         var zoomText = CreateLabel(viewModel.ZoomDisplayText, AppStyles.StatusFontSize);
         var pointerText = CreateLabel(viewModel.PointerDisplayText, AppStyles.StatusFontSize);
-        pointerText.Width = 70;
+        pointerText.Width = statusFieldWidths.Position;
+        pointerText.Margin = statusFieldPadding;
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
-        imageSizeText.Width = 80;
+        imageSizeText.Width = statusFieldWidths.ImageSize;
+        imageSizeText.Margin = statusFieldPadding;
         var savedFileNameText = CreateLabel(viewModel.SavedFileName, AppStyles.StatusFontSize);
         var messageText = CreateLabel(viewModel.StatusMessage, AppStyles.StatusFontSize);
         messageText.Foreground = new SolidColorBrush(s_announceColor);
@@ -137,7 +145,7 @@ internal static class CapturePage
         };
 
         var toolbar = BuildToolbar(services, viewModel, ToggleCrop, captureSession);
-        var statusLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
+        var statusLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
         statusLeft.Children.Add(pointerText);
         statusLeft.Children.Add(imageSizeText);
 
@@ -916,6 +924,21 @@ internal static class CapturePage
     /// <returns>生成したラベル。</returns>
     private static TextBlock CreateLabel(string text, double fontSize)
         => new() { Text = text, FontSize = fontSize, VerticalAlignment = VerticalAlignment.Center };
+
+    /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>
+    /// <param name="text">測る文字列。</param>
+    /// <param name="fontSize">文字サイズ（DIP）。</param>
+    /// <returns>描画幅（DIP）。</returns>
+    /// <remarks>
+    /// 幅を決める基準の文字列はコアが単一所有する（<see cref="StatusBarMetrics.ResolveFieldWidths"/>）。
+    /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。
+    /// </remarks>
+    private static double MeasureStatusText(string text, double fontSize)
+    {
+        var probe = new TextBlock { Text = text, FontSize = fontSize };
+        probe.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+        return probe.DesiredSize.Width;
+    }
 
     /// <summary>アイコン付きのボタンを生成する。</summary>
     /// <param name="icon">アイコンの SVG ファイル名。</param>

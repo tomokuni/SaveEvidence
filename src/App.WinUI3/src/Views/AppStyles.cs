@@ -127,8 +127,8 @@ internal static class AppStyles
     /// <summary>閉じるのアイコン。</summary>
     public const string CaptionGlyphClose = "\uE8BB";
 
-    /// <summary>閉じるボタンのホバー背景（他の UI 版と同じ赤）。</summary>
-    public static Windows.UI.Color CloseButtonHoverBackground => Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C);
+    /// <summary>閉じるボタンのホバー背景（他の UI 版と同じ赤）。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</summary>
+    public static Windows.UI.Color CloseButtonHoverBackground => ToColor(AppPalette.CloseButtonHover);
 
     /// <summary>設定ページのグループ名（セクション見出し）の文字サイズ（DIP）。</summary>
     public const double SectionHeaderFontSize = SettingsMetrics.FontSize;

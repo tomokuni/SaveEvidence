@@ -1,5 +1,6 @@
 using System.Globalization;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinForms.Icons;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
@@ -102,6 +103,24 @@ internal static class UiFactory
 
     /// <summary>ステータス バーの内側の高さ（DIP。 上下の余白を除いた高さ）。</summary>
     public const int StatusBarContentHeight = StatusBarHeight - 2;
+
+    /// <summary>ステータス バーの固定幅の項目（マウスポインタ位置・画像サイズ）の寸法（DIP）を測る。</summary>
+    /// <returns>各項目の表示幅と右側の余白（DIP）。</returns>
+    /// <remarks>
+    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths"/>）。
+    /// 文字の送り幅はフォントと描画の実装で決まるため、測るのは UI の仕事である。<br/>
+    /// <b>96 DPI の描画面で測る理由</b>: <c>TextRenderer</c> は画面の DPI で測るため、実行環境で値が変わる。
+    /// ここでは DIP として測り、使うときにコントロールの DPI で拡大する（余白の他の値と同じ扱い）。
+    /// </remarks>
+    public static StatusBarFieldWidths ResolveStatusFieldWidths()
+    {
+        using var bitmap = new Bitmap(1, 1);
+        bitmap.SetResolution(96, 96);
+        using var graphics = Graphics.FromImage(bitmap);
+
+        return StatusBarMetrics.ResolveFieldWidths(
+            text => graphics.MeasureString(text, AppStyles.StatusBarFont, int.MaxValue, StringFormat.GenericTypographic).Width);
+    }
 
     /// <summary>ステータス バーの中身を垂直方向中央へ揃える。</summary>
     /// <param name="control">対象のコントロール。</param>
