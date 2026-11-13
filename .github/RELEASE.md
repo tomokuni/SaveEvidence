@@ -261,14 +261,14 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 | UI | 添付ファイル | 方式（実測 2026-11-10） | zip の中身 |
 | --- | --- | --- | --- |
 | MewUI 版 | `SaveEvidence.MewUI.v<版数>.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
-| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.v<版数>.zip` | Single + AOT | exe 1 個 + ネイティブ DLL |
+| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.v<版数>.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
 | WinForms 版 | `SaveEvidence.WinForms.v<版数>.zip` | Single | exe 1 個（自己完結ランタイムを同梱） |
 | WinUI 3 版（AOT） | `SaveEvidence.WinUI3.v<版数>.zip` | AOT（フォルダー配布。 Windows App SDK はフレームワーク依存） | exe 1 個 + ネイティブ DLL + `.pri` |
 | WinUI 3 版（Single） | `SaveEvidence.WinUI3.Single.v<版数>.zip` | 自己完結 + 単一ファイル（Windows App Runtime と .NET を同梱） | exe 1 個（293.5 MB。 起動時に一時フォルダーへ展開） |
 
 - **zip の名前は `<アセンブリ名>.v<版数>.zip` です**（例: `SaveEvidence.WinForms.v0.1.4.zip`）。 **同じ UI が複数の形態を配布するときは形態名を版数の前へ入れます**（例: `SaveEvidence.WinUI3.Single.v0.1.4.zip`）。 版数は `Directory.Build.props` の `<Version>` で、**`uis[].outputs[].asset` の `{version}` を `publish.yml` が置き換えます**（利用者が「どの版・どの形態か」をファイル名だけで判別できるようにするため）。 規則の所有者は [`命名規約.md`](命名規約.md)「アセンブリ名」です。
 
-- **方式が Single AOT でない UI は、その理由を本節が持ちます**（WinForms は SDK がトリミングを拒否する `NETSDK1175`）。
+- **方式が Single AOT でない UI は、その理由を本節が持ちます**（WinForms は SDK がトリミングを拒否する `NETSDK1175`。 **Avalonia UI 版は FluentAvaloniaUI が参照する `Avalonia.Controls.DataGrid` 12.1.x が `IL2070` / `IL3050` を出し、`-warnaserror` で AOT が失敗するため Single**。 実測 2026-11-13: `DataGrid` 12.1.0 / 12.1.2 のどちらでも同じ。 AOT へ戻すには、`DataGrid` の依存が無くなるか注釈が付いた後に `buildScript/publish_AvaloniaUI.bat` の `SE_MODES` を外し、`uis[].output` を `-aot` へ戻します）。
 - **WinUI 3 版は AOT と Single の 2 形態を作ります**（[../buildScript/publish_WinUI3.bat](../buildScript/publish_WinUI3.bat) が `publish_ui.bat` を 2 回呼びます。 出力は `publish/winui3-win-x64-aot` と `publish/winui3-win-x64-single`）。
   - **AOT 版**: **Native AOT はネイティブ DLL を exe へ内包できない**（実測 2026-10-20）。 Windows App SDK フレームワーク依存のままでは `PublishSingleFile` も拒否されるため、フォルダー配布になります。
   - **Single 版**: `SaveEvidenceSelfContained=true`（Windows App Runtime と .NET を同梱）+ `PublishSingleFile=true` + `IncludeNativeLibrariesForSelfExtract=true` で **1 つの exe** になります（実測 2026-11-10: 293.5 MB。 起動・描画・終了・設定の往復を確認）。 **何も導入できない環境（Windows Sandbox・まっさらな VM）向け**です。
@@ -279,7 +279,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 - **Windows App Runtime が無い環境への導入は `EsUtil.Ui.WinUI3.Interop` が担います**（`Bootstrapping.WindowsAppRuntimeBootstrap`。 EsUtil 0.5.2 で公開）。 **WinUI 3 版は起動時にその実装で確認し、無ければ案内（自動インストール / ダウンロード ページ / 終了）を出して導入します**（SDK の自動初期化は `WindowsAppSdkBootstrapInitialize=false` で止めています）。 **テストと配布物の起動検証は同じランタイムが要る**ため、CI はビルドの前と配布物の起動検証の前に導入します（`.github/scripts/installWindowsAppRuntime.ps1`。 [`検証手順.md`](検証手順.md) §17）。
 - **WinUI 3 の配布物は、exe へ入れられない非ネイティブのファイルを公開時に絞ります**（`src/App.WinUI3/src/App.WinUI3.csproj` の `TrimWinUI3PublishNoise`）。 残す必須のファイルは **アプリの `.pri`・`ja-JP` と `en-us` の `.mui`・`Microsoft.UI.Xaml\Assets`・`NpuDetect`** です（1 種類ずつ削除して起動・終了・設定の往復を実測。 **アプリの `.pri` を削除すると起動せず、`.mui` を削除すると終了時に `0xC000027B` で落ちます**）。 `.winmd`・他の言語の `.mui`・アプリ以外の `.pri`・`workloads*.json`・`App.xaml`・`app.manifest`・`WindowsAppRuntime.png`・WebView2 関連・`UniversalBGTask` は削除してよいことを実測済みです。
 - **WinUI 3 版は SkiaSharp を含みません**（描画は Windows App SDK 標準）。 そのためトリミング・AOT 解析の警告（`IL2026` 等）を抑止していません。
-- **Avalonia UI 版の AOT は、以前は `IL2070` / `IL3050` で失敗していました**（`EsUtil.Ui.AvaloniaUI.Loupe` が `Expression.Compile` と `Type.GetMethod` で表示アダプタの契約を解決していたため）。 反射を削除して方式 1 へ戻しています（方式 1 へ戻せなくなったら、まず EsUtil 側で反射が復活していないかを疑います）。
+- **Avalonia UI 版の AOT は、以前は `IL2070` / `IL3050` で失敗していました**（`EsUtil.Ui.AvaloniaUI.Loupe` が `Expression.Compile` と `Type.GetMethod` で表示アダプタの契約を解決していたため）。 反射を削除して方式 1 へ戻していましたが、**0.2.0 で FluentAvaloniaUI をテーマに使うようになったため再び失敗します**（`Avalonia.Controls.DataGrid` の `TypeHelper.GetPropertyOrIndexer`。 実測 2026-11-13）。 現在は **Single で配布**します（理由と戻し方は上の「方式が Single AOT でない UI」を参照）。
 - **ネイティブ ライブラリ（OpenCvSharp と Avalonia の GL 実装）は exe へ同梱できない**ため、同じフォルダーへ並べて配布します（ファイル数とサイズはコードの変更で変わるため、文書へ書かず `.github/verify/verifyPublish.ps1` が実測して表示します）。 MewUI 版は Native AOT で **exe 1 個 + ネイティブ DLL** になりました（Skia を外したため）。
 - **WinUI 3 版の本体プロジェクトは `EnableMsixTooling` を必要とします**（付けないと publish が `.pri` を発行せず、起動はしても終了時に `0xC000027B` / `0x80008083`（WinRT の stowed exception）で落ちます。 実測）。 アンパッケージ（`WindowsPackageType=None`）+ Windows App SDK フレームワーク依存（`WindowsAppSDKSelfContained=false`）+ Native AOT で配布します。
 - **publish はリポジトリ外の一時領域（`%TEMP%`）へ発行し、必要なファイルだけを `publish/` へ配置します**（リポジトリ内へ直接発行すると、参照プロジェクト側のディレクトリにも `publish` が作られます）。

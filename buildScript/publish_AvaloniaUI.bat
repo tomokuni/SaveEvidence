@@ -10,13 +10,14 @@ rem  position in decoded characters, so non-ASCII text garbles the output and ca
 rem  execute fragments of the file as commands.  The chcp below keeps the UTF-8 log of
 rem  dotnet readable (safe because this file is ASCII).  Rules: .github/RELEASE.md.
 rem
-rem  The mode (aot ^> single ^> exe) is chosen by buildScript/publish_ui.bat.
-rem  Measured 2026-10-16: mode 1 (single + AOT) is used.  Mode 1 failed before that because
-rem  EsUtil.Ui.AvaloniaUI.Loupe resolved the display adapter contract with
-rem  Expression.Compile and Type.GetMethod (IL2070 / IL3050); removing the reflection fixed
-rem  it.  If mode 1 stops working, first check whether reflection came back in EsUtil (the
-rem  public contract is: the source image is received as a core image, and the projection
-rem  for display is passed as an argument).
+rem  The mode is restricted to single (see the SE_MODES line below).
+rem  AOT worked until 0.1.5.  It now fails because FluentAvaloniaUI (the Fluent theme,
+rem  used for the confirmation dialog) references Avalonia.Controls.DataGrid 12.1.x, whose
+rem  TypeHelper.GetPropertyOrIndexer produces IL2070 / IL3050 (reported as the assembly
+rem  summaries IL2104 / IL3053).  The publish runs with -warnaserror, so AOT cannot be used
+rem  (measured 2026-11-13: the same failure with DataGrid 12.1.0 and 12.1.2).
+rem  To go back to AOT, remove this restriction after the DataGrid dependency is gone or
+rem  annotated, and update uis[].output in .github/release-config.json (.github/RELEASE.md).
 rem
 rem  Prerequisite: linking for Native AOT needs link.exe from the Visual Studio C++ build
 rem  tools.
@@ -41,6 +42,10 @@ rem ============================================================
 
 rem Move from the script folder (buildScript) to the repository root.
 pushd "%~dp0.."
+
+rem Single only (reason above).  publish_ui.bat falls back to exe if single fails.
+set "SE_MODES=single"
+
 call "%~dp0publish_ui.bat" avaloniaui "src\App.AvaloniaUI\src\App.AvaloniaUI.csproj" %*
 set "RESULT=%ERRORLEVEL%"
 popd
