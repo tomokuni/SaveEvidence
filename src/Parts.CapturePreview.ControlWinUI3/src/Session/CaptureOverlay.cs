@@ -454,6 +454,11 @@ internal sealed class CaptureOverlay
                 new TimeoutException("撮影画像の読み込み完了を待てませんでした。"), nameof(ShowAsync));
         }
 
+        // **ハイライトは画面内へ移す前のフレームに載せる**: 移す直前に適用すると、ハイライトを反映した
+        // 合成が提示される前のフレーム（全面マスク）が画面内に出る（実測 2026-11-13）。
+        // 座標変換は Loaded（上のフレーム待ちの前）で確定しているため、ここで適用してから待つ。
+        ApplyInitialHighlight();
+
         // **画像が合成されたフレームをもう 1 回待つ**: 読み込みが終わっても、その画像を含むフレームが
         // DWM へ提示されるのは次の描画である。 提示前に画面内へ移すと、縮小された画像や下地の色が
         // 1〜2 フレーム見える（実測 2026-10-25: スクリーン選択で「小さい画面」が一瞬出た）。
@@ -472,8 +477,6 @@ internal sealed class CaptureOverlay
         await Task.Delay(s_composeSettleDelay).ConfigureAwait(true);
 
         // 大きさはそのままで画面内へ移す（再レイアウトを起こさず、合成済みの面がそのまま出る）
-        // 移す前にハイライトを確定する（全面マスクのフレームを見せない。 詳しくは ApplyInitialHighlight）
-        ApplyInitialHighlight();
         MoveToClientArea(window, _screenBounds);
         // 最前面の提示（IsAlwaysOnTop）だけでは前面に出ないことがあるため、Z 順も明示的に最前面へする
         // （オーナーを退避しない場合、オーナーの背後に隠れてオーバーレイが見えなくなる）
