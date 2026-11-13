@@ -14,7 +14,7 @@
 リリースは **`dry-run`（検証のみ）→ `dry-run-pack`（配布物まで）→ `release` の 3 段階**で行います。 **版はリリース前にコミットしておきます**（自動採番しません）。
 
 1. **版を上げてコミットする**（`Directory.Build.props` の `<Version>`。 **桁は [`コミット規約.md`](コミット規約.md) §5 の表で決める**）。 `dev` で上げ、`main` へマージする
-2. Pull Request の `ci`（必須チェック）が成功していることを確認する（**Merge commit** で `main` へマージする。 検証したマージ結果のコミットをそのまま `main` の HEAD にするため）
+2. Pull Request の `ci`（必須チェック）が成功していることを確認する（**Merge commit** で `main` へマージする。 検証したマージ結果と同じ親・同じツリーのコミットを `main` の HEAD にするため）
 3. `Actions` → **Release** → `Run workflow` で、**モード `dry-run`** を選んで実行する（版・ブランチ・タグ・CHANGELOG の検証だけ。 **配布物も SBOM も作らない**）
    - 配布物の中身まで確かめたいときは、**モード `dry-run-pack`** を選ぶ（配布物の作成（全 UI の publish）・起動検証・**SBOM の作成**まで行い、**公開もタグ作成もしません**）
    - `version` は省略できます（省略するとコミット済みの版を使います）
@@ -154,7 +154,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 | Target branches | `~DEFAULT_BRANCH`（既定ブランチ＝`main`） |
 | Rules | **Restrict deletions** / **Block force pushes** / **Require a pull request before merging** / **Require status checks to pass**（`ci`） |
 | Required approvals | **0**（承認者は不要。 「PR 経由」だけを強制する） |
-| Allowed merge methods | **Merge commit のみ**（Squash / Rebase を許可しない。 検証したマージ結果のコミットをそのまま `main` の HEAD にするため。 [`コミット規約.md`](コミット規約.md) §3） |
+| Allowed merge methods | **Merge commit のみ**（Squash / Rebase を許可しない。 検証したマージ結果と同じ親・同じツリーのコミットを `main` の HEAD にするため。 [`コミット規約.md`](コミット規約.md) §3） |
 | Bypass list | **なし**（管理者も迂回できない。 非常時は ruleset 自体を編集する） |
 
 **設定手順**: `gh api -X POST repos/<owner>/<repo>/rulesets --input .github/rulesets/protect-main.json`
@@ -388,7 +388,7 @@ Get-MaxVersion -Versions @('1.0.0', '1.2.0')      # -> 1.2.0
 - **NuGet のメジャー更新は作成されません**（テストの書き方が変わるため、手動で判断します）。
 - Dependabot は**指定したディレクトリ直下のみを走査します**（再帰しません）。 プロジェクトを増やした場合は
   `dependabot.yml` の `directories` にも追加してください。
-- Pull Request の内容を確認して `main` へ **Merge commit** でマージします（Squash / Rebase は使わない。 検証した `refs/pull/<番号>/merge` のコミットをそのまま `main` の HEAD にするため。 [`コミット規約.md`](コミット規約.md) §3）。 必須チェック `ci` は Pull Request で実行されるため、マージ後の再実行はありません。
+- Pull Request の内容を確認して `main` へ **Merge commit** でマージします（Squash / Rebase は使わない。 検証した `refs/pull/<番号>/merge` と**同じ親・同じツリー**のコミットを `main` の HEAD にするため。 [`コミット規約.md`](コミット規約.md) §3）。 必須チェック `ci` は Pull Request で実行されるため、マージ後の再実行はありません。
 - **Dependabot は `packages.lock.json` を一部のプロジェクトしか更新しません**（Dependabot の制限）。 そのため NuGet の Pull Request は、**そのままでは CI が `NU1004`（lock が古い）で失敗します**。 ブランチを取得して `dotnet restore <ソリューション> --force-evaluate` を実行し、lock を追加コミットしてからマージします（版の更新自体は PR の内容のままです）。
 - 破壊的な変更（`actions/upload-artifact` のメジャー更新など）は、CI が失敗した内容を確認して修正します。
 
