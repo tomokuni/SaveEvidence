@@ -99,6 +99,7 @@ UI の追加・変更は **`release-config.json` の `uis[]` を編集します*
 - リリースバージョンは `Directory.Build.props` の `<Version>` に記載し、**各 `.csproj` には記載しないでください**。
   リリース時に `release.yml` がこの 1 行を入力値へ書き換えてコミットします。
 - **.NET SDK のバージョンは `global.json` に記載し、ワークフローには記載しないでください**
+  （**ランナー イメージに .NET 11 SDK が含まれないため、ワークフローは `actions/setup-dotnet` で `global.json` の版を導入します**。 実測 2026-11-13: `windows-2025` のイメージは 10.0.4xx まで）。
   （`actions/setup-dotnet` が `global.json` を読むため、`dotnet-version` の指定は不要です）。
 - **テストの実行基盤もリポジトリで 1 つに決め、`global.json` と `build.yml` のどちらか一方にだけ書いてください。**
   本リポジトリは xunit.v3 3 系 + `Microsoft.NET.Test.Sdk`（VSTest）のため `test.runner` は不要で、
