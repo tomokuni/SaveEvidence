@@ -17,42 +17,42 @@
       },
       "EsUtil.Platform.Core": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "5jck282pVjqsCvoA0VIAARbsJ/tW/vdbTtpJPzF0qp1u4p0RrOW/6zCiGaVdeipGEYSublR/xhBsBQ8c+kVnZg=="
+        "requested": "[0.6.5, )",
+        "resolved": "0.6.5",
+        "contentHash": "cGGilU7BlaTrjoCyN9SlYVqg7vpHGtcz3mMseEB2acWfMvdOPyAAAPxcOjoqOdCSa2QH8+Td4Zm0oilEZMSk7A=="
       },
       "EsUtil.Ui.MewUI.Interop": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "OrGLBj4/4YGKqGzWwOUtbCYaVI55TJ6bNMWJdAD8JdR09dBF90BgJceX6vUN+n9EvAVdQPfKnoJkxkMTMtolYg==",
+        "requested": "[0.6.5, )",
+        "resolved": "0.6.5",
+        "contentHash": "eWHI5zn0Rf/AhTfn6UUcb4acMf5GSosnTV8lJJdeCS5lvm10m87EH35hU4kY/5sFJdLakHuG9dhx1YJW+kCSWg==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Platform.Core": "0.6.3"
+          "EsUtil.Platform.Core": "0.6.5"
         }
       },
       "EsUtil.Ui.MewUI.Loupe": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "GgpIudwBGBOHNVJy2kHK7tR/ayk0YwGoEdh9DNcGIKkTY+y9tToUCps48hQhb699qXoD198zR1ZcmuLHgIcLLg==",
+        "requested": "[0.6.5, )",
+        "resolved": "0.6.5",
+        "contentHash": "oM9AtSlBwwfVB2xMKAFw9f0QZ4KBHZRLhnbQqCHjgPFReiK1+a9Y17d4sKEe5fwCAfu5XUfoaUNIpCmqZ8HNIw==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Loupe.Core": "0.6.3",
-          "EsUtil.Platform.Core": "0.6.3",
-          "EsUtil.Ui.MewUI.Interop": "0.6.3"
+          "EsUtil.Feature.Loupe.Core": "0.6.5",
+          "EsUtil.Platform.Core": "0.6.5",
+          "EsUtil.Ui.MewUI.Interop": "0.6.5"
         }
       },
       "EsUtil.Ui.MewUI.Marquee": {
         "type": "Direct",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "hHoVxBn1KgCC+9ZpgNf1H65AgnDBx515BKGpcXMwfClKv/AMfD+GEfb/iJwQ/HcJiAac+NdXfFlPYzd7MsFWmQ==",
+        "requested": "[0.6.5, )",
+        "resolved": "0.6.5",
+        "contentHash": "umDl20iInTjDOB3fJN3App/ypYyC1pd853fwrRhKs4j+/lib2nKi6x0LKATCegNNHAEgEiajmPv+1yBaSYb9HA==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Marquee.Core": "0.6.3",
-          "EsUtil.Platform.Core": "0.6.3",
-          "EsUtil.Ui.MewUI.Interop": "0.6.3"
+          "EsUtil.Feature.Marquee.Core": "0.6.5",
+          "EsUtil.Platform.Core": "0.6.5",
+          "EsUtil.Ui.MewUI.Interop": "0.6.5"
         }
       },
       "Meziantou.Analyzer": {
@@ -131,27 +131,27 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.6.3, )",
-          "EsUtil.Feature.Marquee.Core": "[0.6.3, )",
-          "EsUtil.Platform.Core": "[0.6.3, )"
+          "EsUtil.Feature.Loupe.Core": "[0.6.5, )",
+          "EsUtil.Feature.Marquee.Core": "[0.6.5, )",
+          "EsUtil.Platform.Core": "[0.6.5, )"
         }
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "yNyzGl5H8g0WwN8LjwfmrlxGPOVGY9Buqt+MN59gGcYPjdmectA/+PU6OMXqC4K2Y2LKPxg8g4DwEpj0nTJ5LQ==",
+        "requested": "[0.6.5, )",
+        "resolved": "0.6.5",
+        "contentHash": "nNjHSUMV1nMgXAN2cQCoIxUu2IF6vF0zYuDxTsKRt3hFcppcFtnot3BKIxplVdOl7WbvvBfKDOPkDgmCfHGX6w==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.3"
+          "EsUtil.Platform.Core": "0.6.5"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.3, )",
-        "resolved": "0.6.3",
-        "contentHash": "fj7KPX8oSCc9PBTLU6te138MDFcVP2TuEqz7QoD6botAhQDe70R/K1qqWIrUsf1C3D1mATsq+2hUm9HbkMq0LQ==",
+        "requested": "[0.6.5, )",
+        "resolved": "0.6.5",
+        "contentHash": "eJicqtNcA/F/OsRFXkJVJcg8gkGuPrn4OG/PtljJz7rMoN/dqnzif6QCh4ubscWjdK+1bbxSMRSQ4QK+n8o28g==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.3"
+          "EsUtil.Platform.Core": "0.6.5"
         }
       }
     }

@@ -11,7 +11,7 @@
 
 ### 変更
 
-- 依存パッケージを最新化しました（Avalonia 12.1.6・Microsoft.Extensions 11.0.0・OpenCvSharp5 5.0.0.20261109・その他の分析ツール）。
+- 依存パッケージを最新化しました（EsUtil 0.6.5・Avalonia 12.1.6・Microsoft.Extensions 11.0.0・OpenCvSharp5 5.0.0.20261109・その他の分析ツール）。
 - **.NET 11 で新しく有効になった解析規則に追随しました**（`CA2027` の待機タイマー、`CA2263` のジェネリック版の利用、WinUI 3 のコレクション式）。 動作は変わりません。
 - **CI は `actions/setup-dotnet` で `global.json` の .NET SDK を導入するようにしました**（ランナー イメージに .NET 11 SDK が含まれないため）。 NuGet のキャッシュは従来どおり使います。
 
