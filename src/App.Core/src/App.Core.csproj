@@ -28,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" VersionOverride="11.0.0" />
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <PackageReference Include="EsUtil.Platform.Core" />
     <!-- 自動切り出しの矩形検出（LineDetection は UI 非依存） -->
