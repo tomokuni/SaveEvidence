@@ -114,12 +114,12 @@ public sealed partial class CapturePage : UserControl
         // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
         // 空きを別の要素にせず項目の中へ収めることで、次の項目との間で余白が二重にならない。
         // 文字は右端へ寄せる（値の余りは左側へ逃げる）
-        // 幅 + 右の余白（「WW」）で固定幅になる（合計は一定で、列は動かない）。
-        // 右端寄せの文字は幅の右端に接し、余白の分だけ次の項目と離れる
+        // 幅 = 基準の文字列 + 「WW」（規則は StatusBarMetrics が単一所有する）。 文字は左寄せ。
+        // 余白は 0 にする（足すと「WW」より広くなる）
         PointerText.Width = widths.Position;
-        PointerText.Margin = new Thickness(0, 0, widths.Gap, 0);
+        PointerText.Margin = default;
         ImageSizeText.Width = widths.ImageSize;
-        ImageSizeText.Margin = new Thickness(0, 0, widths.Gap, 0);
+        ImageSizeText.Margin = default;
     }
 
     /// <summary>ステータス バーの文字で文字列の描画幅（DIP）を測る。</summary>

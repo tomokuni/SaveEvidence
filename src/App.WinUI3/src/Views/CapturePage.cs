@@ -111,14 +111,12 @@ internal static class CapturePage
         // 空きを別の要素にせず項目の中へ収める。 文字は右端へ寄せる（値の余りは左側へ逃げる）
         var zoomText = CreateLabel(viewModel.ZoomDisplayText, AppStyles.StatusFontSize);
         var pointerText = CreateLabel(viewModel.PointerDisplayText, AppStyles.StatusFontSize);
-        // 幅 + 右の余白（「WW」）で固定幅になる（合計は一定で、列は動かない）
+        // 幅 = 基準の文字列 + 「WW」（規則は StatusBarMetrics が単一所有する）。 文字は左寄せ
         pointerText.Width = statusFieldWidths.Position;
-        pointerText.Margin = new Thickness(0, 0, statusFieldWidths.Gap, 0);
-        pointerText.TextAlignment = TextAlignment.Right;
+        pointerText.TextAlignment = TextAlignment.Left;
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
         imageSizeText.Width = statusFieldWidths.ImageSize;
-        imageSizeText.Margin = new Thickness(0, 0, statusFieldWidths.Gap, 0);
-        imageSizeText.TextAlignment = TextAlignment.Right;
+        imageSizeText.TextAlignment = TextAlignment.Left;
         var savedFileNameText = CreateLabel(viewModel.SavedFileName, AppStyles.StatusFontSize);
         var messageText = CreateLabel(viewModel.StatusMessage, AppStyles.StatusFontSize);
         messageText.Foreground = new SolidColorBrush(s_announceColor);

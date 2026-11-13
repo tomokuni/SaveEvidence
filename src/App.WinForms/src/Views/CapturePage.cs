@@ -123,15 +123,11 @@ internal static class CapturePage
 
         var pointerLabel = UiFactory.CreateStatusLabel(0, "カーソル位置（画像ピクセル）");
         pointerLabel.AutoSize = false;
-        // **文字を右端へ寄せる**: 左へ寄せると、値が短いとき（"-" や "640 x 400"）に余りが
-        // 右側の空きへ加わり、「WW」より広く見える（実測 2026-11-13: "-" の右が 103 px）
-        pointerLabel.TextAlign = ContentAlignment.MiddleRight;
-        // 右の内部余白へ「WW」の幅を入れる（右端寄せの文字が内側で止まり、次の項目までの空きが「WW」になる。
-        // 左・上下の余白は 0 にする）
-        pointerLabel.Padding = new Padding(0);
+        // 文字は左寄せ（幅は基準の文字列 + 「WW」。 値が基準より短いときは余りが右側に出る）
+        pointerLabel.TextAlign = ContentAlignment.MiddleLeft;
         var sizeLabel = UiFactory.CreateStatusLabel(0, "プレビュー画像のサイズ");
         sizeLabel.AutoSize = false;
-        sizeLabel.TextAlign = ContentAlignment.MiddleRight;
+        sizeLabel.TextAlign = ContentAlignment.MiddleLeft;
         // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（DIP。 表示のたびに DPI で拡大する）
         var statusFieldWidths = UiFactory.ResolveStatusFieldWidths();
         var savedFileLabel = UiFactory.CreateStatusLabel(0, "直前に保存したファイル名");
@@ -344,13 +340,14 @@ internal static class CapturePage
             // 固定幅の項目（マウスポインタ位置・画像サイズ）の幅は、文字の送り幅 + 右側の「WW」の空き
             // （規則は StatusBarMetrics が単一所有する。 実測は TextRenderer が物理ピクセルで返す）。
             // 右の余白を足すと空きが「WW」より広くなるため、幅だけを使い余白は 0 にする
-            // 幅は推奨幅、右の余白は「WW」から内部余白を引いた値（合計は一定で、列は動かない）。
-            // 右端寄せの文字は内部余白の分だけ内側で止まり、余白の分だけ次の項目と離れる
-            var statusGap = Math.Max(0, (int)Math.Round(statusFieldWidths.Gap));
+            // 幅 = 基準の文字列 + 「WW」 + 内部余白（規則は StatusBarMetrics が単一所有する）。
+            // 余白（Margin・Padding）は 0 にする（足すと「WW」より広くなる）
             pointerLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.Position));
-            pointerLabel.Margin = new Padding(0, 0, statusGap, 0);
+            pointerLabel.Margin = new Padding(0);
+            pointerLabel.Padding = new Padding(0);
             sizeLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.ImageSize));
-            sizeLabel.Margin = new Padding(0, 0, statusGap, 0);
+            sizeLabel.Margin = new Padding(0);
+            sizeLabel.Padding = new Padding(0);
             // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
             // 空きを別の要素にせず項目の中へ収めることで、次の項目との間で余白が二重にならない
             // 次の項目の左余白も 0 にする（加わると空きが「WW」より広くなる）

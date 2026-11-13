@@ -419,9 +419,8 @@ internal static class CapturePage
             Width = statusFieldWidths.Position,
         };
         pointerLabel.FontSize(AppStyles.StatusFontSize);
-        // 右の余白は「WW」の幅（幅と合わせて固定幅になり、列は動かない）。 内部余白は使わない
-        pointerLabel.Margin(new Thickness(0, 0, statusFieldWidths.Gap, 0));
-        pointerLabel.TextAlignment(TextAlignment.Right);
+
+        pointerLabel.TextAlignment(TextAlignment.Left);
         pointerLabel.VerticalAlignment = VerticalAlignment.Center;
         pointerLabel.Bind(Label.TextProperty, viewModel, static x => x.PointerDisplayText);
         pointerLabel.ToolTip("マウスポインタ位置（対象座標 = 画像ピクセル）");
@@ -431,8 +430,8 @@ internal static class CapturePage
             Width = statusFieldWidths.ImageSize,
         };
         imageSizeLabel.FontSize(AppStyles.StatusFontSize);
-        imageSizeLabel.Margin(new Thickness(0, 0, statusFieldWidths.Gap, 0));
-        imageSizeLabel.TextAlignment(TextAlignment.Right);
+
+        imageSizeLabel.TextAlignment(TextAlignment.Left);
         imageSizeLabel.VerticalAlignment = VerticalAlignment.Center;
         imageSizeLabel.Bind(Label.TextProperty, viewModel, static x => x.ImageSizeDisplayText);
         imageSizeLabel.ToolTip("画像サイズ（対象座標 = 元画像ピクセル）");

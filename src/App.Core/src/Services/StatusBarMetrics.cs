@@ -23,13 +23,13 @@ public static class StatusBarMetrics
     /// <summary>マウスポインタ位置の表示幅を決める基準の文字列（最も長い値）。</summary>
     /// <remarks>
     /// 値の長さで幅が変わると、座標が変わるたびに右側の項目が動いて読みにくい（実測）。<br/>
-    /// 4 桁どうしの座標（最大 <c>3840 x 2160</c> のような表示）が入る幅で固定する。
+    /// ポインタ位置は <c>9999, 9999</c> の書式で表示するため、その最も長い形を基準にする。
     /// </remarks>
-    public const string PositionWidthReferenceText = "8888 x 8888";
+    public const string PositionWidthReferenceText = "9999, 9999";
 
     /// <summary>画像サイズの表示幅を決める基準の文字列（最も長い値）。</summary>
-    /// <remarks>マウスポインタ位置と同じ書式・同じ桁数で表示するため、同じ基準を使う。</remarks>
-    public const string ImageSizeWidthReferenceText = "8888 x 8888";
+    /// <remarks>画像サイズは <c>9999 x 9999</c> の書式で表示するため、その最も長い形を基準にする。</remarks>
+    public const string ImageSizeWidthReferenceText = "9999 x 9999";
 
     /// <summary>固定幅の項目の右側に置く余白の基準の文字列。</summary>
     /// <remarks>
@@ -46,13 +46,12 @@ public static class StatusBarMetrics
     /// <returns>各項目の幅（コントロールへ設定する値）と、右側の余白（<c>Margin</c> の右へ設定する値）。</returns>
     /// <exception cref="ArgumentNullException">いずれかの引数が null の場合。</exception>
     /// <remarks>
-    /// <b>幅 = コントロールの推奨幅（基準の文字列）、右の余白 = 「WW」の送り幅 - 内部余白</b>。<br/>
-    /// 文字を右端へ寄せると、コントロールの内部余白（右）の分だけ内側で止まり、次の項目は余白の分だけ離れる。<br/>
-    /// そのため内部余白を余白の値から差し引くと、「文字の右端から次の項目の文字の開始位置まで」が<br/>
-    /// 値の長さによらず「WW」になる（短い値の余りは文字の左側へ逃げる）。<br/>
-    /// <b>幅に推奨幅を使う理由</b>: 送り幅だけで幅を決めると、値が基準の文字列よりわずかに広い場合に<br/>
-    /// 折り返す（実測 2026-11-13: WinForms 版で「1920 x 1200」が 2 行になった）。<br/>
-    /// <b>合計は一定</b>: 幅 + 余白 = 基準の文字列の送り幅 + 「WW」の送り幅 になり、値が変わっても列は動かない。<br/>
+    /// <b>幅 = 基準の文字列の推奨幅 + 「WW」の送り幅</b>。 文字は左寄せで表示する。<br/>
+    /// 基準の文字列と同じ長さの値なら、右側は「WW」の空きになる（基準より短い値では、その余りが<br/>
+    /// 右側に出る。 左寄せのため）。<br/>
+    /// <b>推奨幅（内部余白込み）を使う理由</b>: 送り幅だけで幅を決めると、描画がわずかにはみ出して<br/>
+    /// 次の項目に接する（実測 2026-11-13: MewUI 版で「1920 x 1200」がファイル名に接した。 WinForms 版では折り返した）。<br/>
+    /// <b>幅は基準の文字列で決まる</b>ため、値が変わっても右側の項目は動かない。<br/>
     /// <br/>
     /// <b>測るのは UI の仕事</b>: 文字の送り幅と内部余白はフォントと描画の実装で決まるため、コアは測れない。
     /// </remarks>
@@ -62,15 +61,14 @@ public static class StatusBarMetrics
         ArgumentNullException.ThrowIfNull(measureAdvance);
         ArgumentNullException.ThrowIfNull(measureBox);
 
-        // 内部余白 = 推奨幅 - 送り幅（コントロールが文字の左右に足す分の合計）
-        var innerPadding = measureBox(PositionWidthReferenceText) - measureAdvance(PositionWidthReferenceText);
-
-        // 右の余白 = 「WW」の送り幅 - 内部余白（合計が「基準の文字幅 + WW」になるようにする）
-        var margin = Math.Max(0, measureAdvance(RightPaddingReferenceText) - innerPadding);
+        // 幅 = コントロールの推奨幅（基準の文字列） + 「WW」の幅。
+        // 推奨幅を使うのは、送り幅だけだと描画がわずかにはみ出して次の項目に接するため
+        // （実測 2026-11-13: MewUI 版で「1920 x 1200」がファイル名に接した）。
+        var gap = measureAdvance(RightPaddingReferenceText);
 
         return new StatusBarFieldWidths(
-            measureBox(PositionWidthReferenceText),
-            measureBox(ImageSizeWidthReferenceText),
-            margin);
+            measureBox(PositionWidthReferenceText) + gap,
+            measureBox(ImageSizeWidthReferenceText) + gap,
+            gap);
     }
 }
