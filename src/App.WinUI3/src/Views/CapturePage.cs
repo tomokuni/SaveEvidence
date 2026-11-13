@@ -100,18 +100,16 @@ internal static class CapturePage
         var synchronizingZoom = false;
         Slider? zoomSlider = null;
 
-        // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める
+        // 幅は「pt: 8888, 8888」「size: 8888 x 8888」+「W」をステータス バーの文字で測って決める
         // （基準の文字列と規則は StatusBarMetrics が単一所有する）
         // TextBlock は文字の左右に内部余白を足さない（推奨幅 = 送り幅）ため、幅はそのまま使える
         var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(
-            text => MeasureStatusText(text, AppStyles.StatusFontSize),
             text => MeasureStatusText(text, AppStyles.StatusFontSize));
 
-        // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
-        // 空きを別の要素にせず項目の中へ収める。 文字は右端へ寄せる（値の余りは左側へ逃げる）
+        // 幅には右側の「W」の空きが含まれる（規則は StatusBarMetrics が単一所有する）
         var zoomText = CreateLabel(viewModel.ZoomDisplayText, AppStyles.StatusFontSize);
         var pointerText = CreateLabel(viewModel.PointerDisplayText, AppStyles.StatusFontSize);
-        // 幅 = 基準の文字列 + 「WW」（規則は StatusBarMetrics が単一所有する）。 文字は左寄せ
+        // 幅 = 基準の文字列 + 「W」（規則は StatusBarMetrics が単一所有する）。 文字は左寄せ
         pointerText.Width = statusFieldWidths.Position;
         pointerText.TextAlignment = TextAlignment.Left;
         var imageSizeText = CreateLabel(viewModel.ImageSizeDisplayText, AppStyles.StatusFontSize);
@@ -668,7 +666,7 @@ internal static class CapturePage
 
         zoomView.PointerExited += (_, _) =>
         {
-            viewModel.PointerDisplayText = "-";
+            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             viewModel.HoveredRect = null;
         };
 
@@ -875,7 +873,7 @@ internal static class CapturePage
     {
         if (viewModel.PreviewImage is not { } image)
         {
-            viewModel.PointerDisplayText = "-";
+            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             return;
         }
 
@@ -884,14 +882,13 @@ internal static class CapturePage
         var y = cursorDip.Y - imageRect.Y;
         if (x < 0 || y < 0 || x >= imageRect.Width || y >= imageRect.Height)
         {
-            viewModel.PointerDisplayText = "-";
+            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             return;
         }
 
         var content = view.ClientToDisplayedSource(cursorDip);
-        viewModel.PointerDisplayText = string.Create(
-            System.Globalization.CultureInfo.InvariantCulture,
-            $"{(int)Math.Clamp(content.X, 0, image.Width - 1)}, {(int)Math.Clamp(content.Y, 0, image.Height - 1)}");
+        viewModel.PointerDisplayText = StatusBarTexts.FormatPointer(
+            (int)Math.Clamp(content.X, 0, image.Width - 1), (int)Math.Clamp(content.Y, 0, image.Height - 1));
     }
 
     /// <summary>プレビュー上のカーソル位置にある自動切り出しの矩形（面積が最小のもの）を求める。</summary>
@@ -934,7 +931,7 @@ internal static class CapturePage
     /// <param name="fontSize">文字サイズ（DIP）。</param>
     /// <returns>描画幅（DIP）。</returns>
     /// <remarks>
-    /// 幅を決める基準の文字列はコアが単一所有する（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double}, Func{string, double})"/>）。
+    /// 幅を決める基準の文字列はコアが単一所有する（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
     /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。
     /// </remarks>
     private static double MeasureStatusText(string text, double fontSize)

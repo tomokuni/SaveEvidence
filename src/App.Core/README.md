@@ -27,7 +27,8 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `ViewModels.MainViewModel` | `public` | メイン画面の状態（プレビュー画像・ズーム表示・保存・自動切り出し）。 UI 依存はコールバック（クリップボード / 上書き確認）で注入する |
 | `Services.EditHistory` | `internal` | 履歴（`UndoHistory`）から画像を取り出してプレビューへ差し替える Undo / Redo の手順 |
 | `Services.AppServices` | `internal` | アプリ全体で共有するコア オブジェクトの束（メイン VM・設定・履歴・フォルダビュー・Undo 一覧）。 **4 つの UI 版で共通** |
-| `Services.StatusBarFieldWidths` | `public` | ステータス バーの固定幅の項目（マウスポインタ位置・画像サイズ）の寸法と右側の余白 |
+| `Services.StatusBarFieldWidths` | `public` | ステータス バーの固定幅の項目（マウスポインタ位置・画像サイズ）の寸法と右側の空き |
+| `Services.StatusBarTexts` | `public` | ステータス バーの「マウスポインタ位置」「画像サイズ」の文言（接頭辞 `pt:` / `size:` と書式の単一所有者） |
 | `Services.CaptureLauncher` | `internal` | 撮影の開始を受け付け、実行中の多重起動を防ぐ（完了時に状態を戻す） |
 | `Services.ThumbnailPlaceholder` | `internal` | サムネイル生成が終わるまで表示する透明な正方形（寸法ごとに 1 枚を共有する） |
 | `Services.IconFit` / `Services.IconFitTransform` | `internal` | アイコンの図形（外接矩形）を枠いっぱいへ広げる変換（4 つの UI 版で同じ大きさにする） |

@@ -23,52 +23,51 @@ public static class StatusBarMetrics
     /// <summary>マウスポインタ位置の表示幅を決める基準の文字列（最も長い値）。</summary>
     /// <remarks>
     /// 値の長さで幅が変わると、座標が変わるたびに右側の項目が動いて読みにくい（実測）。<br/>
-    /// ポインタ位置は <c>9999, 9999</c> の書式で表示するため、その最も長い形を基準にする。
+    /// ポインタ位置は <c>pt: 8888, 8888</c> の書式で表示するため、その最も長い形を基準にする。
     /// </remarks>
-    public const string PositionWidthReferenceText = "9999, 9999";
+    public const string PositionWidthReferenceText =
+        StatusBarTexts.PointerPrefix + StatusBarTexts.PointerReferenceValueText;
 
     /// <summary>画像サイズの表示幅を決める基準の文字列（最も長い値）。</summary>
-    /// <remarks>画像サイズは <c>9999 x 9999</c> の書式で表示するため、その最も長い形を基準にする。</remarks>
-    public const string ImageSizeWidthReferenceText = "9999 x 9999";
+    /// <remarks>画像サイズは <c>size: 8888 x 8888</c> の書式で表示するため、その最も長い形を基準にする。</remarks>
+    public const string ImageSizeWidthReferenceText =
+        StatusBarTexts.ImageSizePrefix + StatusBarTexts.ImageSizeReferenceValueText;
 
-    /// <summary>固定幅の項目の右側に置く余白の基準の文字列。</summary>
+    /// <summary>固定幅の項目の右側に置く空きの基準の文字列。</summary>
     /// <remarks>
-    /// 区切りの幅を「W」2 文字分にする（空白文字の送り幅は UI の文字整形に依存し、幅が揃わない）。
+    /// 区切りの幅を「W」1 文字分にする（空白文字の送り幅は UI の文字整形に依存し、幅が揃わない）。
+    /// 幅は<b>プロポーショナル フォントでの送り幅</b>を測る（文字数では決まらない）。
     /// </remarks>
-    public const string RightPaddingReferenceText = "WW";
+    public const string RightPaddingReferenceText = "W";
 
     /// <summary>固定幅の項目（マウスポインタ位置・画像サイズ）の寸法を求める。</summary>
-    /// <param name="measureAdvance">文字の送り幅（= 描画される文字の幅）だけを測る関数（DIP）。</param>
-    /// <param name="measureBox">
-    /// コントロールが必要とする幅（内部余白込みの推奨幅。 DIP）。 文字より小さくすると折り返すため、
-    /// 幅にはこの値を使う。 内部余白を持たないコントロールでは <paramref name="measureAdvance"/> と同じ値を返す。
+    /// <param name="measureAdvance">
+    /// 文字の送り幅（= 実際に描画される文字の幅。 内部余白を含めない）を測る関数（DIP）。
     /// </param>
-    /// <returns>各項目の幅（コントロールへ設定する値）と、右側の余白（<c>Margin</c> の右へ設定する値）。</returns>
-    /// <exception cref="ArgumentNullException">いずれかの引数が null の場合。</exception>
+    /// <returns>各項目の幅（コントロールへ設定する値）と、右側の空きの幅。</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="measureAdvance"/> が null の場合。</exception>
     /// <remarks>
-    /// <b>幅 = 基準の文字列の推奨幅 + 「WW」の送り幅</b>。 文字は左寄せで表示する。<br/>
-    /// 基準の文字列と同じ長さの値なら、右側は「WW」の空きになる（基準より短い値では、その余りが<br/>
-    /// 右側に出る。 左寄せのため）。<br/>
-    /// <b>推奨幅（内部余白込み）を使う理由</b>: 送り幅だけで幅を決めると、描画がわずかにはみ出して<br/>
-    /// 次の項目に接する（実測 2026-11-13: MewUI 版で「1920 x 1200」がファイル名に接した。 WinForms 版では折り返した）。<br/>
+    /// <b>幅 = 基準の文字列の送り幅 + 「W」の送り幅</b>。 文字は左寄せで表示する。<br/>
+    /// 基準の文字列と同じ長さの値なら、右側の空きはちょうど「W」になる（基準より短い値では、<br/>
+    /// その余りが右側に出る。 左寄せのため）。<br/>
+    /// <b>幅を文字数で決めない理由</b>: 文字はプロポーショナル フォントで描くため、文字数が同じでも<br/>
+    /// 幅は同じにならない（<paramref name="measureAdvance"/> で実際の文字列を測る）。<br/>
+    /// <b>内部余白を足さない理由</b>: コントロールの測定値（内部余白込みの推奨幅）を使うと、余白の分だけ<br/>
+    /// 右の空きが「W」より広くなる（実測 2026-11-13: WinForms 版で 19 px = 「W」11 px + 内部余白 8 px）。<br/>
+    /// 文字は左寄せで描くため、送り幅で足りる。<br/>
     /// <b>幅は基準の文字列で決まる</b>ため、値が変わっても右側の項目は動かない。<br/>
     /// <br/>
-    /// <b>測るのは UI の仕事</b>: 文字の送り幅と内部余白はフォントと描画の実装で決まるため、コアは測れない。
+    /// <b>測るのは UI の仕事</b>: 送り幅はフォントと描画の実装で決まるため、コアは測れない。
     /// </remarks>
-    public static StatusBarFieldWidths ResolveFieldWidths(
-        Func<string, double> measureAdvance, Func<string, double> measureBox)
+    public static StatusBarFieldWidths ResolveFieldWidths(Func<string, double> measureAdvance)
     {
         ArgumentNullException.ThrowIfNull(measureAdvance);
-        ArgumentNullException.ThrowIfNull(measureBox);
 
-        // 幅 = コントロールの推奨幅（基準の文字列） + 「WW」の幅。
-        // 推奨幅を使うのは、送り幅だけだと描画がわずかにはみ出して次の項目に接するため
-        // （実測 2026-11-13: MewUI 版で「1920 x 1200」がファイル名に接した）。
         var gap = measureAdvance(RightPaddingReferenceText);
 
         return new StatusBarFieldWidths(
-            measureBox(PositionWidthReferenceText) + gap,
-            measureBox(ImageSizeWidthReferenceText) + gap,
+            measureAdvance(PositionWidthReferenceText) + gap,
+            measureAdvance(ImageSizeWidthReferenceText) + gap,
             gap);
     }
 }

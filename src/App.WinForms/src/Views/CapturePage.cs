@@ -123,12 +123,12 @@ internal static class CapturePage
 
         var pointerLabel = UiFactory.CreateStatusLabel(0, "カーソル位置（画像ピクセル）");
         pointerLabel.AutoSize = false;
-        // 文字は左寄せ（幅は基準の文字列 + 「WW」。 値が基準より短いときは余りが右側に出る）
+        // 文字は左寄せ（幅は基準の文字列 + 「W」。 値が基準より短いときは余りが右側に出る）
         pointerLabel.TextAlign = ContentAlignment.MiddleLeft;
         var sizeLabel = UiFactory.CreateStatusLabel(0, "プレビュー画像のサイズ");
         sizeLabel.AutoSize = false;
         sizeLabel.TextAlign = ContentAlignment.MiddleLeft;
-        // 幅と右側の余白は「8888 x 8888」「WW」をステータス バーの文字で測って決める（DIP。 表示のたびに DPI で拡大する）
+        // 幅は「pt: 8888, 8888」「size: 8888 x 8888」+「W」をステータス バーの文字で測って決める（DIP。 表示のたびに DPI で拡大する）
         var statusFieldWidths = UiFactory.ResolveStatusFieldWidths();
         var savedFileLabel = UiFactory.CreateStatusLabel(0, "直前に保存したファイル名");
         var messageLabel = UiFactory.CreateStatusLabel(0);
@@ -337,20 +337,17 @@ internal static class CapturePage
             // ファイル名と通知の間の空きは DPI で物理ピクセルが変わるため、表示のたびに合わせ直す
             var statusScaling = DpiScaler.ToScaling(statusBar.DeviceDpi);
             nameMessageGap.Width = DpiScaler.ScaleToPixel(StatusBarMetrics.NameMessageGapWidth, statusScaling);
-            // 固定幅の項目（マウスポインタ位置・画像サイズ）の幅は、文字の送り幅 + 右側の「WW」の空き
-            // （規則は StatusBarMetrics が単一所有する。 実測は TextRenderer が物理ピクセルで返す）。
-            // 右の余白を足すと空きが「WW」より広くなるため、幅だけを使い余白は 0 にする
-            // 幅 = 基準の文字列 + 「WW」 + 内部余白（規則は StatusBarMetrics が単一所有する）。
-            // 余白（Margin・Padding）は 0 にする（足すと「WW」より広くなる）
+            // 幅 = 基準の文字列の推奨幅 + 「W」（規則は StatusBarMetrics が単一所有する。
+            // 実測は TextRenderer が物理ピクセルで返す）。
+            // 余白（Margin・Padding）は 0 にする（足すと「W」より広くなる）
             pointerLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.Position));
             pointerLabel.Margin = new Padding(0);
             pointerLabel.Padding = new Padding(0);
             sizeLabel.Width = Math.Max(1, (int)Math.Ceiling(statusFieldWidths.ImageSize));
             sizeLabel.Margin = new Padding(0);
             sizeLabel.Padding = new Padding(0);
-            // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
-            // 空きを別の要素にせず項目の中へ収めることで、次の項目との間で余白が二重にならない
-            // 次の項目の左余白も 0 にする（加わると空きが「WW」より広くなる）
+            // 空きは幅に含めてあるため、次の項目の左余白も 0 にする
+            // （加わると空きが「W」より広くなる）
             savedFileLabel.Margin = new Padding(0, 0, 6, 0);
             // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
             canvas.BackColor = AppStyles.ImageAreaBackground;
@@ -556,7 +553,7 @@ internal static class CapturePage
                 source.X < 0 || source.Y < 0 ||
                 source.X >= image.Size.Width || source.Y >= image.Size.Height)
             {
-                viewModel.PointerDisplayText = "-";
+                viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
                 UpdateStatus();
                 if (viewModel.IsAutoCropActive)
                 {
@@ -567,8 +564,8 @@ internal static class CapturePage
                 return;
             }
 
-            viewModel.PointerDisplayText =
-                $"{UiFactory.FormatNumber(Math.Round(source.X), "0")}, {UiFactory.FormatNumber(Math.Round(source.Y), "0")}";
+            viewModel.PointerDisplayText = StatusBarTexts.FormatPointer(
+                (int)Math.Round(source.X), (int)Math.Round(source.Y));
             UpdateStatus();
 
             if (!viewModel.IsAutoCropActive)

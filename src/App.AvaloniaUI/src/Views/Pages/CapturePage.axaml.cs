@@ -99,7 +99,7 @@ public sealed partial class CapturePage : UserControl
 
     /// <summary>マウスポインタ位置・画像サイズの表示幅と右側の余白を、ステータス バーの文字で測って決める。</summary>
     /// <remarks>
-    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double}, Func{string, double})"/>）。
+    /// <b>基準の文字列と規則はコアが単一所有する</b>（<see cref="StatusBarMetrics.ResolveFieldWidths(Func{string, double})"/>）。
     /// 文字の送り幅はフォントと文字整形の実装で決まるため、測るのは UI の仕事である。<br/>
     /// 値を固定すると、座標が変わるたびに右側の項目が動いて読みにくい（実測）。
     /// </remarks>
@@ -108,14 +108,11 @@ public sealed partial class CapturePage : UserControl
         var typeface = new Typeface(PointerText.FontFamily, PointerText.FontStyle, PointerText.FontWeight, PointerText.FontStretch);
 
         // TextBlock は文字の左右に内部余白を足さない（推奨幅 = 送り幅）ため、幅はそのまま使える
-        var widths = StatusBarMetrics.ResolveFieldWidths(
-            text => MeasureText(typeface, text), text => MeasureText(typeface, text));
+        var widths = StatusBarMetrics.ResolveFieldWidths(text => MeasureText(typeface, text));
 
-        // 幅には右側の「WW」の空きが含まれる（規則は StatusBarMetrics が単一所有する）。
-        // 空きを別の要素にせず項目の中へ収めることで、次の項目との間で余白が二重にならない。
-        // 文字は右端へ寄せる（値の余りは左側へ逃げる）
-        // 幅 = 基準の文字列 + 「WW」（規則は StatusBarMetrics が単一所有する）。 文字は左寄せ。
-        // 余白は 0 にする（足すと「WW」より広くなる）
+        // 幅 = 基準の文字列（「pt: 8888, 8888」「size: 8888 x 8888」）+ 「W」
+        // （規則は StatusBarMetrics が単一所有する）。 文字は左寄せにし、余白は 0 にする
+        // （足すと「W」より広くなる）
         PointerText.Width = widths.Position;
         PointerText.Margin = default;
         ImageSizeText.Width = widths.ImageSize;
@@ -861,7 +858,7 @@ public sealed partial class CapturePage : UserControl
     {
         if (_viewModel.PreviewImage is not { } img)
         {
-            _viewModel.PointerDisplayText = "-";
+            _viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             UpdateAutoCropHover(null);
             return;
         }
@@ -873,7 +870,7 @@ public sealed partial class CapturePage : UserControl
         if (displayPoint.X < 0 || displayPoint.Y < 0 ||
             displayPoint.X >= imageRect.Width || displayPoint.Y >= imageRect.Height)
         {
-            _viewModel.PointerDisplayText = "-";
+            _viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             UpdateAutoCropHover(null);
             return;
         }
@@ -882,7 +879,7 @@ public sealed partial class CapturePage : UserControl
         var contentPos = ClientToSource(viewportPos);
         var x = (int)Math.Clamp(contentPos.X, 0, img.Size.Width - 1);
         var y = (int)Math.Clamp(contentPos.Y, 0, img.Size.Height - 1);
-        _viewModel.PointerDisplayText = $"{x}, {y}";
+        _viewModel.PointerDisplayText = StatusBarTexts.FormatPointer(x, y);
         UpdateAutoCropHover(new Point(x, y));
     }
 
@@ -892,7 +889,7 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>移動イベントは領域外では発生しないため、ホバー強調の残留を防ぐために本ハンドラを購読する。</remarks>
     private void OnImagePointerExited(object? sender, PointerEventArgs e)
     {
-        _viewModel.PointerDisplayText = "-";
+        _viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
         UpdateAutoCropHover(null);
     }
 

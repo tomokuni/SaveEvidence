@@ -278,7 +278,7 @@
 
 - **拡大率表示**: `CropView.ZoomChanged` イベントの `e.ZoomPercent` から `MainViewModel.ZoomDisplayText`（例: "120%"）を生成し、ステータスバーがバインディングで表示する。 Fit 中も実効倍率の % を表示する（「自動」表記なし）
 - **ズーム操作ボタンの下地**: ステータスバーの ⊖ / ⊕ / Fit / 拡大率のボタンは通常時の下地を塗らない（`Button.status`。 ホバー・押下は Fluent テーマの既定のまま）
-- **座標表示**: `CapturePage.OnImagePointerMoved` が `CropView.ImageRectViewport()` / `CropView.ClientToSource()`（`ClientToSource` ヘルパー経由）でポインタの対象座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `-`）
+- **座標表示**: `CapturePage.OnImagePointerMoved` が `CropView.ImageRectViewport()` / `CropView.ClientToSource()`（`ClientToSource` ヘルパー経由）でポインタの対象座標（画像ピクセル）を算出し、ステータスバーへ表示する（画像外は `pt: -`）。 **接頭辞（`pt:` / `size:`）と書式は `StatusBarTexts`、幅の基準は `StatusBarMetrics`（App.Core）が単一所有**し、座標と画像サイズは左寄せの固定幅で表示する
 - **通知メッセージ**: 撮影が確定したら `MainWindow.OnCaptureCompleted` が `MainViewModel.StatusMessage` へ「キャプチャしました（W x H）」を設定する。 `MainViewModel.SetPreviewImage` は `StatusMessage` を空にするため、**画像の差し替えより後**に設定する。 文言は `StatusMessages`（App.Core）が単一所有し、切り出し・貼り付け・保存失敗・自動切り出しの通知はコアが設定する。 文字色は他の UI 版と同じ青 `#007ACC`
 - **フライアウト選択肢**: 拡大率ボタンのクリックで表示されるフライアウト（0=自動 + 固定倍率 10〜500% の 13 段階）から選択し、`CropView.ZoomPercent`（`MainViewModel.ZoomPercent`）を設定する（`CapturePage.OnZoomFlyoutItemClick`）
 - **切り出し中のズーム・パン**: 切り出し中は選択オーバーレイがプレビューを覆うため、ホイールは `CropViewControl` が内部でビューポートへ転送する（Ctrl+ホイール = カーソル位置を中心にズーム / 通常ホイール = パン / Shift+ホイール = 横パン）。 ステータスバーの ⊕⊖ ボタン・スライダ・`Ctrl +` / `Ctrl -` は切り出し中も使用できる（選択矩形は対象座標で不変のため維持される）。 スクロールバーはオーバーレイの下になり掴めないため、パンはホイールで行う

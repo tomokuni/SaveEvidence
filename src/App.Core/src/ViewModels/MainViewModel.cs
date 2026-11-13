@@ -348,11 +348,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     /// <summary>マウスポインタ位置の対象座標（画像ピクセル）の表示テキスト。 画像外は "-"。 View 側から設定される。</summary>
     [ObservableProperty]
-    private string _pointerDisplayText = "-";
+    private string _pointerDisplayText = StatusBarTexts.PointerUnavailableText;
 
     /// <summary>画像サイズ（対象座標 = 元画像ピクセル）の表示テキスト。</summary>
     /// <remarks>画像未設定時は空欄。 画像サイズはズーム状態に依存しない固定値。</remarks>
-    public string ImageSizeDisplayText => PreviewImage is { } img ? $"{img.Size.Width} x {img.Size.Height}" : "";
+    public string ImageSizeDisplayText => PreviewImage is { } img
+        ? StatusBarTexts.FormatImageSize(img.Size.Width, img.Size.Height)
+        : StatusBarTexts.ImageSizeUnavailableText;
 
     /// <summary>ファイル名テンプレートが有効かどうかを取得する。</summary>
     /// <remarks><see cref="ValidationMessage"/> が null かどうかで判定する。</remarks>

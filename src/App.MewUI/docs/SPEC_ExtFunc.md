@@ -84,7 +84,7 @@
 | 検出矩形 | 自動切り出しの検出結果を**水色の実線枠**（2 DIP。 Avalonia 版と同じ）でオーバーレイ表示する。 ホバー中の矩形（面積が最小のもの）は**赤色**で強調する |
 | ルーペ | 切り出し中のみカーソル位置を拡大し、カーソルの右下（設定のオフセット）へ追従する。 切り出しを確定・キャンセルすると消える。 詳細は [`../../../../EsUtil/EsUtil.Ui.MewUI/Loupe/docs/SPEC_API.md`](../../../../EsUtil/EsUtil.Ui.MewUI/Loupe/docs/SPEC_API.md) |
 | 選択矩形の破線 | 撮影・切り出しの選択中は、ルーペ画像へ選択矩形の破線（2 色交互）を重ねる。 色は設定 `LoupeSelectionRectColorA` / `LoupeSelectionRectColorB`。 詳細は [`../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md`](../../Parts.CapturePreview.ControlMewUI/docs/SPEC_API.md) |
-| ステータス | カーソル座標 / 画像サイズ / 保存ファイル名 / 通知メッセージを表示する。 保存すると通知メッセージが**「保存しました」**に変わる |
+| ステータス | カーソル座標（`pt:` 付き）/ 画像サイズ（`size:` 付き）/ 保存ファイル名 / 通知メッセージを表示する。 座標と画像サイズは**左寄せの固定幅**（幅の基準は `StatusBarMetrics`、文言は `StatusBarTexts`。 App.Core が単一所有する）。 保存すると通知メッセージが**「保存しました」**に変わる |
 
 ### 3.2 キャプチャ選択の操作
 

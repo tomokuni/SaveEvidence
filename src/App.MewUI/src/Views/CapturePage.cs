@@ -385,14 +385,9 @@ internal static class CapturePage
         // ── ステータスバー ──
         // 左: ポインタ座標（固定幅） | 画像サイズ（固定幅） | 保存ファイル名 | 通知
         // バインドはプロパティ名を推定するためインライン式で指定する
-        // 幅は「8888 x 8888」の文字幅 + 右側の「WW」の空き（規則は StatusBarMetrics が単一所有する）
-        // **TextBlock（内部余白を持たない）で測る理由**: 幅には区切りの「WW」を含めるため、
-        // コントロールの内部余白を含めて測ると空きが「WW」より広くなる。
-        // 文字は Label の内部余白の分だけ右へずれ、次の項目も同じだけ左へずれるため、
-        // 見た目の空きは「WW」の送り幅になる（4 UI 版で同じ式が成り立つ）。
-        // 幅は「文字の送り幅 + 『WW』の空き」（規則は StatusBarMetrics が単一所有する）。
-        // 内部余白を持たない TextBlock で測る（Label は左右に内部余白を足し、右端寄せの文字が
-        // 内側へ入って空きが広がる。 項目の内部余白は 0 にしてあるため、送り幅で測れば一致する）
+        // 幅 = 基準の文字列（「pt: 8888, 8888」「size: 8888 x 8888」）+ 「W」
+        // （規則は StatusBarMetrics が単一所有する）
+        // 内部余白を持たない TextBlock で測る（Label の推奨幅は内部余白を含み、右の空きが広がる）
         var statusMeasureTight = new TextBlock().FontSize(AppStyles.StatusFontSize);
         double MeasureTight(string text)
         {
@@ -401,19 +396,9 @@ internal static class CapturePage
             return statusMeasureTight.DesiredSize.Width;
         }
 
-        // 推奨幅（Label の内部余白込み）で幅を決める（送り幅だけだと値によって折り返す）
-        var statusMeasureBox = new Label().FontSize(AppStyles.StatusFontSize);
-        double MeasureBox(string text)
-        {
-            statusMeasureBox.Text(text);
-            statusMeasureBox.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            return statusMeasureBox.DesiredSize.Width;
-        }
+        var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(MeasureTight);
 
-        var statusFieldWidths = StatusBarMetrics.ResolveFieldWidths(MeasureTight, MeasureBox);
-
-        // **文字を右端へ寄せ、空きは独立した要素にする**: 幅に空きを含めると、値が短いときに
-        // 余りが空きへ加わって「WW」より広く見える（規則は StatusBarMetrics が単一所有する）
+        // 文字は左寄せ。 幅に空きを含めてあるため、余白（Margin・Padding）は 0 にする
         var pointerLabel = new Label
         {
             Width = statusFieldWidths.Position,
@@ -1021,7 +1006,7 @@ internal static class CapturePage
 
         zoomView.OnMouseLeave(() =>
         {
-            viewModel.PointerDisplayText = "-";
+            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             viewModel.HoveredRect = null;
         });
 
@@ -1198,7 +1183,7 @@ internal static class CapturePage
     {
         if (viewModel.PreviewImage is not { } image || cursorDip is not { } position)
         {
-            viewModel.PointerDisplayText = "-";
+            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             return;
         }
 
@@ -1209,13 +1194,13 @@ internal static class CapturePage
 
         if (x < 0 || y < 0 || x >= imageRect.Width || y >= imageRect.Height)
         {
-            viewModel.PointerDisplayText = "-";
+            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             return;
         }
 
         var content = view.ClientToDisplayedSource(position);
-        viewModel.PointerDisplayText =
-            $"{(int)Math.Clamp(content.X, 0, image.Width - 1)}, {(int)Math.Clamp(content.Y, 0, image.Height - 1)}";
+        viewModel.PointerDisplayText = StatusBarTexts.FormatPointer(
+            (int)Math.Clamp(content.X, 0, image.Width - 1), (int)Math.Clamp(content.Y, 0, image.Height - 1));
     }
 
     /// <summary>プレビュー上のカーソル位置にある自動切り出しの矩形（面積が最小のもの）を求める。</summary>

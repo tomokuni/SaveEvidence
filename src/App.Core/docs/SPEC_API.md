@@ -47,6 +47,7 @@
 - [35. `Services.LogLevelText`（内部・静的クラス）](#35-serviceslogleveltext内部静的クラス)
 - [36. `Services.FileSystemActions`（静的クラス）](#36-servicesfilesystemactions静的クラス)
 - [37. `Services.ClipboardImage`（静的クラス）](#37-servicesclipboardimage静的クラス)
+- [38. `Services.StatusBarTexts`（静的クラス）](#38-servicesstatusbartexts静的クラス)
 
 ## 1. 公開 API の可視性
 
@@ -417,12 +418,21 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 
 ## 23. `Services.StatusBarMetrics`（静的クラス）
 
-ステータス バーの文字サイズを単一所有します（UI 版ごとに文字の大きさがずれないようにするため）。
+ステータス バーの文字サイズと、固定幅の項目（マウスポインタ位置・画像サイズ）の幅の規則を単一所有します（UI 版ごとに文字の大きさ・列の位置がずれないようにするため）。
 
 | 定数 | 値 | 意味 |
 | --- | --- | --- |
 | FontSize | 12 DIP | ステータス バーの文字サイズ（4 つの UI 版で共通） |
 | NameMessageGapWidth | 12 DIP | 保存したファイル名と通知メッセージの間隔（全角 1 文字分。 全角スペースの送り幅 = 文字サイズ） |
+| PositionWidthReferenceText | `pt: 8888, 8888` | マウスポインタ位置の幅の基準（最も長い値） |
+| ImageSizeWidthReferenceText | `size: 8888 x 8888` | 画像サイズの幅の基準（最も長い値） |
+| RightPaddingReferenceText | `W` | 固定幅の項目の右側に置く空きの基準（1 文字分） |
+
+**`ResolveFieldWidths(measureAdvance)` の規則**: **幅 = 基準の文字列の送り幅 + 「W」の送り幅**。 文字は**左寄せ**で表示するため、基準と同じ長さの値なら右側の空きがちょうど「W」になります（基準より短い値では、その余りが右側に出ます）。 幅は基準の文字列で決まるため、値が変わっても右側の項目は動きません。
+
+- **文字数で幅を決めません**。 文字はプロポーショナル フォントで描くため、`measureAdvance` で実際の文字列を測ります（測るのは UI の仕事。 送り幅はフォントと描画の実装で決まるため）。
+- **内部余白は足しません**。 コントロールの測定値（内部余白込みの推奨幅）を使うと、余白の分だけ右の空きが「W」より広くなります（実測 2026-11-13: WinForms 版で 19 px = 「W」11 px + 内部余白 8 px。 WinForms 版は `TextRenderer` を `NoPadding` で測ります）。
+- 使う側は、幅に `Position` / `ImageSize` を設定し、**余白（`Margin`・`Padding`）を 0** にします（足すと空きが「W」より広くなります）。
 
 **経緯**: AvaloniaUI 版だけがテーマの既定（14 DIP）を使い、他の UI 版より 1 回り大きく見えました。 4 UI 版とも同じ値を使います。
 
@@ -650,3 +660,22 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 - 実装は `Native.WinClipboardDib` が単一所有します（解析・書き込みの手順を UI 側へ漏らさない）。
 - 読み取りの対象は 32 / 24 / 16 / 8 bpp（上下反転の有無を含む）です。 圧縮 DIB（JPEG / PNG）は対象外です。
 - **書き込みは下から上（`biHeight` が正値）にします**。 上から下（負値）は規格上は正しいものの、受け取る側が対応していないことがあるためです（実測 2026-11-12: 上から下だと `System.Windows.Forms.Clipboard.GetImage` が null を返し、Avalonia の `TryGetBitmapAsync` も読めませんでした）。
+
+## 38. `Services.StatusBarTexts`（静的クラス）
+
+ステータス バーの「マウスポインタ位置」「画像サイズ」の文言を単一所有します（接頭辞を UI 版ごとに組み立てると、幅の基準（§23）と実際の表示がずれるため）。
+
+| メンバー | 値・説明 |
+| --- | --- |
+| `PointerPrefix` | マウスポインタ位置の接頭辞（`pt:` + 半角スペース） |
+| `ImageSizePrefix` | 画像サイズの接頭辞（`size:` + 半角スペース） |
+| `NoValueText` | 値が無いときの表示（`-`） |
+| `PointerReferenceValueText` | 幅の基準にする最も長い値（`8888, 8888`） |
+| `ImageSizeReferenceValueText` | 幅の基準にする最も長い値（`8888 x 8888`） |
+| `PointerUnavailableText` | 画像外のときの表示（`pt: -`） |
+| `ImageSizeUnavailableText` | 画像が無いときの表示（空欄） |
+| `FormatPointer(int x, int y)` | ポインタ位置の表示テキスト（例: `pt: 1920, 1080`） |
+| `FormatImageSize(int width, int height)` | 画像サイズの表示テキスト（例: `size: 1920 x 1080`） |
+
+- 数値は**現在のカルチャに依存させません**（桁区切りが入ると幅の基準を超えるため）。
+- 幅の基準（§23 の `PositionWidthReferenceText` / `ImageSizeWidthReferenceText`）は、この接頭辞と最も長い値から組み立てます（接頭辞を変えたときに基準が追随します）。
