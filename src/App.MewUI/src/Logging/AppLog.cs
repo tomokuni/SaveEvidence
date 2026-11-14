@@ -49,9 +49,28 @@ internal static partial class AppLog
     /// <param name="logger">ロガー。</param>
     /// <param name="version">アプリケーションのバージョン。</param>
     public static void LogAppStart(this ILogger logger, string version)
-        => logger.LogAppStartCore(Prefix, version);
+        => logger.LogAppStartCore(Prefix, version, AppVersion.EsUtilVersion);
 
 
+    /// <summary>実行環境（OS・.NET・セッション・画面・倍率・GPU）を記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="rasterizationScale">ウィンドウの表示倍率（1.0 = 100%）。</param>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、値の収集は <see cref="RenderEnvironment"/> が単一所有する。
+    /// Windows App Runtime を使わない UI 版のため、ランタイムの欄は <c>(対象外)</c> になる。</remarks>
+    public static void LogEnvironment(this ILogger logger, double rasterizationScale)
+        => logger.LogEnvironmentCore(
+            Prefix,
+            RenderEnvironment.DescribeOperatingSystem(),
+            RenderEnvironment.DescribeDotNet(),
+            "(対象外)",
+            "(対象外)",
+            "(対象外)",
+            RenderEnvironment.SessionName,
+            RenderEnvironment.ClientName,
+            RenderEnvironment.DescribeVirtualScreen(),
+            rasterizationScale,
+            RenderEnvironment.DescribeMonitorScales(),
+            RenderEnvironment.DescribeAdapters());
     /// <summary>アプリケーション終了を記録する。</summary>
     /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
     /// <param name="logger">ロガー。</param>

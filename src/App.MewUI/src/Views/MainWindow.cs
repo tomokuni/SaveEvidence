@@ -554,6 +554,9 @@ internal sealed partial class MainWindow
         {
             ApplyMinimumOuterSize(window);
             ApplyInitialOuterSize(window, settingsService);
+            // 描画の不具合はアプリの値ではなく環境（OS・GPU・倍率）で決まることがある。
+            // 倍率が確定する最初の描画後に 1 度だけ残す（次回からログだけで切り分けられる）
+            s_logger.LogEnvironment(DpiScaler.NormalizeScaling(window.GetDpi() / 96.0));
             WarmUpPages();
         };
 

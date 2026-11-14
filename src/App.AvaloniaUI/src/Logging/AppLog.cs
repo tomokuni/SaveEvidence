@@ -61,9 +61,9 @@ internal static partial class AppLog
     /// <b>注意</b>: すべての例外（握りつぶされるものも含む）が対象のため、ログ量が非常に多くなる。<br/>
     /// 次回の不具合調査時にのみ有効化することを推奨する（既定では「記録しない」フラグで制御する）。
     /// LogLevel: Trace<br/>
-    /// 出力書式: <c>FirstChanceException: {message}</c>
+    /// 出力書式: <c>初回例外: {message}</c>
     /// </remarks>
-    [LoggerMessage(LogLevel.Trace, "{Prefix} FirstChanceException: {message}")]
+    [LoggerMessage(LogLevel.Trace, "{Prefix} 初回例外: {message}")]
     private static partial void LogFirstChanceExceptionCore(this ILogger logger, string prefix, Exception ex, string message);
 
     internal static void LogFirstChanceException(this ILogger logger, Exception ex, string message)
@@ -75,9 +75,28 @@ internal static partial class AppLog
     /// <param name="logger">ロガー。</param>
     /// <param name="version">アプリケーションのバージョン。</param>
     internal static void LogAppStart(this ILogger logger, string version)
-        => logger.LogAppStartCore(Prefix, version);
+        => logger.LogAppStartCore(Prefix, version, AppVersion.EsUtilVersion);
 
 
+    /// <summary>実行環境（OS・.NET・セッション・画面・倍率・GPU）を記録する。</summary>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="rasterizationScale">ウィンドウの表示倍率（1.0 = 100%）。</param>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、値の収集は <see cref="RenderEnvironment"/> が単一所有する。
+    /// Windows App Runtime を使わない UI 版のため、ランタイムの欄は <c>(対象外)</c> になる。</remarks>
+    public static void LogEnvironment(this ILogger logger, double rasterizationScale)
+        => logger.LogEnvironmentCore(
+            Prefix,
+            RenderEnvironment.DescribeOperatingSystem(),
+            RenderEnvironment.DescribeDotNet(),
+            "(対象外)",
+            "(対象外)",
+            "(対象外)",
+            RenderEnvironment.SessionName,
+            RenderEnvironment.ClientName,
+            RenderEnvironment.DescribeVirtualScreen(),
+            rasterizationScale,
+            RenderEnvironment.DescribeMonitorScales(),
+            RenderEnvironment.DescribeAdapters());
     /// <summary>アプリケーション終了を記録する。</summary>
     /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
     /// <param name="logger">ロガー。</param>
@@ -233,8 +252,8 @@ internal static partial class AppLog
     /// <summary>WM_HOTKEY メッセージを受信したことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <remarks>LogLevel: Information<br/>出力書式: <c>WndProc: WM_HOTKEY received</c></remarks>
-    [LoggerMessage(LogLevel.Information, "{Prefix} WndProc: WM_HOTKEY received")]
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>ウィンドウ メッセージ: WM_HOTKEY を受信</c></remarks>
+    [LoggerMessage(LogLevel.Information, "{Prefix} ウィンドウ メッセージ: WM_HOTKEY を受信")]
     private static partial void LogHotKeyReceivedCore(this ILogger logger, string prefix);
 
     internal static void LogHotKeyReceived(this ILogger logger)
@@ -244,8 +263,8 @@ internal static partial class AppLog
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="captureType">決定されたキャプチャ種別。</param>
-    /// <remarks>LogLevel: Information<br/>出力書式: <c>WndProc: hotkey -> {captureType}</c></remarks>
-    [LoggerMessage(LogLevel.Information, "{Prefix} WndProc: hotkey -> {captureType}")]
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>ウィンドウ メッセージ: ホットキー → {captureType}</c></remarks>
+    [LoggerMessage(LogLevel.Information, "{Prefix} ウィンドウ メッセージ: ホットキー → {captureType}")]
     private static partial void LogHotKeyTriggeredCore(this ILogger logger, string prefix, CaptureType captureType);
 
     internal static void LogHotKeyTriggered(this ILogger logger, CaptureType captureType)
@@ -254,8 +273,8 @@ internal static partial class AppLog
     /// <summary>ウィンドウがアクティブ化されたことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <remarks>LogLevel: Information<br/>出力書式: <c>Activated</c></remarks>
-    [LoggerMessage(LogLevel.Information, "{Prefix} Activated")]
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>ウィンドウがアクティブになりました</c></remarks>
+    [LoggerMessage(LogLevel.Information, "{Prefix} ウィンドウがアクティブになりました")]
     private static partial void LogActivatedCore(this ILogger logger, string prefix);
 
     internal static void LogActivated(this ILogger logger)
@@ -264,8 +283,8 @@ internal static partial class AppLog
     /// <summary>ウィンドウが非アクティブ化されたことを記録する。</summary>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <remarks>LogLevel: Information<br/>出力書式: <c>Deactivated</c></remarks>
-    [LoggerMessage(LogLevel.Information, "{Prefix} Deactivated")]
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>ウィンドウが非アクティブになりました</c></remarks>
+    [LoggerMessage(LogLevel.Information, "{Prefix} ウィンドウが非アクティブになりました")]
     private static partial void LogDeactivatedCore(this ILogger logger, string prefix);
 
     internal static void LogDeactivated(this ILogger logger)
@@ -275,8 +294,8 @@ internal static partial class AppLog
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="captureType">開始するキャプチャ種別。</param>
-    /// <remarks>LogLevel: Information<br/>出力書式: <c>StartSelectionMode: {captureType}</c></remarks>
-    [LoggerMessage(LogLevel.Information, "{Prefix} StartSelectionMode: {captureType}")]
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>キャプチャ開始: {captureType}</c></remarks>
+    [LoggerMessage(LogLevel.Information, "{Prefix} キャプチャ開始: {captureType}")]
     private static partial void LogStartSelectionModeCore(this ILogger logger, string prefix, CaptureType captureType);
 
     internal static void LogStartSelectionMode(this ILogger logger, CaptureType captureType)
@@ -287,8 +306,8 @@ internal static partial class AppLog
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="imageInfo">キャプチャ画像サイズ（null の場合は "null"）。</param>
     /// <param name="bounds">キャプチャ元矩形（null の場合は "null"）。</param>
-    /// <remarks>LogLevel: Information<br/>出力書式: <c>StartSelectionMode session returned bitmap={imageInfo}, bounds={bounds}</c></remarks>
-    [LoggerMessage(LogLevel.Information, "{Prefix} StartSelectionMode session returned bitmap={imageInfo}, bounds={bounds}")]
+    /// <remarks>LogLevel: Information<br/>出力書式: <c>キャプチャが戻りました: 画像={imageInfo}, 範囲={bounds}</c></remarks>
+    [LoggerMessage(LogLevel.Information, "{Prefix} キャプチャが戻りました: 画像={imageInfo}, 範囲={bounds}")]
     private static partial void LogSessionReturnedCore(this ILogger logger, string prefix, string imageInfo, string bounds);
 
     internal static void LogSessionReturned(this ILogger logger, string imageInfo, string bounds)
@@ -299,8 +318,8 @@ internal static partial class AppLog
     /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
     /// <param name="ex">発生した例外。</param>
     /// <param name="captureType">開始しようとしたキャプチャ種別。</param>
-    /// <remarks>LogLevel: Error<br/>出力書式: <c>StartSelectionMode で例外が発生: {captureType}</c></remarks>
-    [LoggerMessage(LogLevel.Error, "{Prefix} StartSelectionMode で例外が発生: {captureType}")]
+    /// <remarks>LogLevel: Error<br/>出力書式: <c>キャプチャ開始で例外が発生: {captureType}</c></remarks>
+    [LoggerMessage(LogLevel.Error, "{Prefix} キャプチャ開始で例外が発生: {captureType}")]
     private static partial void LogCaptureStartErrorCore(this ILogger logger, string prefix, Exception ex, CaptureType captureType);
 
     internal static void LogCaptureStartError(this ILogger logger, Exception ex, CaptureType captureType)

@@ -19,15 +19,48 @@ internal static partial class AppLogMessage
     /// <summary>アプリケーション起動のログ。</summary>
     /// <remarks>
     /// LogLevel: Information <br/>
-    /// 出力書式: <c>[App.&lt;UI&gt;] アプリケーション起動 (version={Version})</c>
+    /// 出力書式: <c>[App.&lt;UI&gt;] アプリケーション起動 (version={Version}, esutil={EsUtilVersion})</c><br/>
+    /// 使っている EsUtil の版も残す（パッケージ参照のため、ログだけでは版が分からない）。
     /// </remarks>
     /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
     /// <param name="prefix">接頭辞（ホストの <c>AppLog</c> が自分の接頭辞を渡す）。</param>
     /// <param name="version">アプリケーションのバージョン。</param>
-    [LoggerMessage(LogLevel.Information, "{Prefix} アプリケーション起動 (version={Version})")]
-    internal static partial void LogAppStartCore(this ILogger logger, string prefix, string version);
+    /// <param name="esUtilVersion">使っている EsUtil の版。</param>
+    [LoggerMessage(LogLevel.Information, "{Prefix} アプリケーション起動 (version={Version}, esutil={EsUtilVersion})")]
+    internal static partial void LogAppStartCore(this ILogger logger, string prefix, string version, string esUtilVersion);
+
+    /// <summary>実行環境（OS・.NET・セッション・画面・倍率・GPU）のログ。</summary>
+    /// <remarks>
+    /// LogLevel: Information <br/>
+    /// 出力書式: <c>[App.&lt;UI&gt;] 環境情報: OS={OperatingSystem} / .NET={DotNet} / Windows App Runtime={RuntimeInstalled} …</c><br/>
+    /// 描画の不具合は「アプリの値」ではなく環境（リモート セッション・GPU・倍率）で決まることがあるため、
+    /// 起動時に 1 行で残す（4 つの UI 版で同じ書式にする）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞（ホストの <c>AppLog</c> が自分の接頭辞を渡す）。</param>
+    /// <param name="operatingSystem">OS の版とアーキテクチャ。</param>
+    /// <param name="dotNet">実行している .NET の版。</param>
+    /// <param name="runtimeInstalled">インストール済みの Windows App Runtime の版（使わない UI 版は <c>(対象外)</c>）。</param>
+    /// <param name="runtimeRequired">必要な Windows App Runtime の版（同上）。</param>
+    /// <param name="runtimeLoaded">実際に読み込んでいる Windows App Runtime の版（同上）。</param>
+    /// <param name="sessionName">セッション名（<c>SESSIONNAME</c>）。</param>
+    /// <param name="clientName">接続元の名前（<c>CLIENTNAME</c>）。</param>
+    /// <param name="virtualScreen">仮想スクリーンの矩形（物理ピクセル）。</param>
+    /// <param name="rasterizationScale">ウィンドウの表示倍率（1.0 = 100%）。</param>
+    /// <param name="monitorScales">仮想スクリーンの位置から解決したモニターの倍率。</param>
+    /// <param name="adapters">表示アダプター（ドライバーの説明と VRAM）。</param>
+    [LoggerMessage(LogLevel.Information, "{Prefix} 環境情報: OS={OperatingSystem} / .NET={DotNet} / Windows App Runtime={RuntimeInstalled} (required={RuntimeRequired}, loaded={RuntimeLoaded}) / セッション={SessionName} / クライアント={ClientName} / 仮想スクリーン={VirtualScreen} / ウィンドウ倍率={RasterizationScale} / モニター倍率={MonitorScales} / アダプター={Adapters}")]
+    internal static partial void LogEnvironmentCore(
+        this ILogger logger, string prefix, string operatingSystem, string dotNet,
+        string runtimeInstalled, string runtimeRequired, string runtimeLoaded,
+        string sessionName, string clientName,
+        string virtualScreen, double rasterizationScale, string monitorScales, string adapters);
 
     /// <summary>アプリケーション終了のログ。</summary>
+    /// <remarks>
+    /// LogLevel: Information <br/>
+    /// 出力書式: <c>[App.&lt;UI&gt;] アプリケーション終了 (exitCode={ExitCode})</c>
+    /// </remarks>
     /// <remarks>
     /// LogLevel: Information <br/>
     /// 出力書式: <c>[App.&lt;UI&gt;] アプリケーション終了 (exitCode={ExitCode})</c>

@@ -570,8 +570,9 @@ public sealed partial class CapturePage : UserControl
     /// <param name="box">対象の TextBox。</param>
     /// <remarks>
     /// <see cref="FormattedText"/> でテキスト幅を計測し、左右パディングを加算して
-    /// MinWidth〜MaxWidth の範囲にクランプした値を Width に設定する。<br/>
-    /// テキストが短い場合は MinWidth（220）、長い場合は MaxWidth（260）に固定され、<br/>
+    /// <c>MinWidth</c>〜上限（<see cref="ResolveFileNameTemplateMaxWidth"/>）の範囲にクランプした値を
+    /// <c>Width</c> に設定する。<br/>
+    /// テキストが短い場合は <c>MinWidth</c>（XAML の <c>100</c>）、長い場合はツールバーが折り返さない幅に固定され、<br/>
     /// 中間の長さではテキスト全体が収まる幅になる（超過時は TextBox 内部でスクロール）。
     /// </remarks>
     private void UpdateFileNameTemplateWidth(TextBox box)

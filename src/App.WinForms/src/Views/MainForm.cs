@@ -297,6 +297,10 @@ internal sealed class MainForm : Form
         _services.Settings.Current.PropertyChanged += OnSettingsChanged;
         RegisterHotKeys();
 
+        // 描画の不具合はアプリの値ではなく環境（OS・GPU・倍率）で決まることがある。
+        // DPI が確定する表示後に 1 度だけ残す（次回からログだけで切り分けられる）
+        s_logger.LogEnvironment(DpiScaler.ToScaling(DeviceDpi));
+
         if (_isWarmedUp)
         {
             return;

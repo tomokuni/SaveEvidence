@@ -21,9 +21,17 @@ public class AppVersionTests
     }
 
     [Fact]
-    internal void For_はUI名と版を空白2つとv付きで並べる()
+    internal void For_はUI名と版を改行で分ける()
     {
-        Assert.Equal($"AvaloniaUI  v{AppVersion.Current}", AppVersion.For("AvaloniaUI"));
+        Assert.Equal($"AvaloniaUI{Environment.NewLine}v{AppVersion.Current}", AppVersion.For("AvaloniaUI"));
+    }
+
+    [Fact]
+    internal void EsUtilVersion_は版だけを返しコミットを含まない()
+    {
+        // 製品バージョンは <版>+esutil.<EsUtil の版>[.<SourceLink の SHA>] の形になる。
+        // 起動ログへ出すため、埋め込まれた EsUtil の版だけを返す（SHA は含めない）
+        Assert.DoesNotContain("+esutil.", AppVersion.EsUtilVersion, StringComparison.Ordinal);
     }
 
     [Fact]
