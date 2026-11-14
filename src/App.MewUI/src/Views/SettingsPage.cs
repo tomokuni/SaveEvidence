@@ -77,7 +77,7 @@ internal static class SettingsPage
                 BuildThemeSection(settings),
                 BuildSaveSection(services),
                 BuildImageSection(settings),
-                BuildCaptureSection(settings),
+                BuildCaptureSection(settings, services.Main),
                 BuildSelectionLimitSection(settings),
                 BuildHotKeySection(settings),
                 BuildAppearanceSection(settings));
@@ -183,13 +183,31 @@ internal static class SettingsPage
 
     /// <summary>キャプチャ設定のセクションを構築する。</summary>
     /// <param name="settings">設定。</param>
+    /// <param name="viewModel">アプリのメイン ViewModel（タスク バーの設定の単一の入口）。</param>
     /// <returns>セクションの要素。</returns>
-    private static Element BuildCaptureSection(Settings settings)
-        => Section(
+    private static Element BuildCaptureSection(Settings settings, MainViewModel viewModel)
+    {
+        // キャプチャ ページのツールバーと同じ項目を編集するため、値は ViewModel を通す
+        // （変更通知でツールバーのチェック表示も追従する）
+        var hideTaskbar = new CheckBox().IsChecked(viewModel.HideTaskbarOnCapture).OnCheckedChanged(
+            value => viewModel.HideTaskbarOnCapture = value);
+        hideTaskbar.FontSize(SettingsMetrics.FontSize);
+        hideTaskbar.Content("キャプチャ時にタスク バーを隠す（撮影画像に写さない）");
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.HideTaskbarOnCapture), StringComparison.Ordinal)
+                && hideTaskbar.IsChecked != viewModel.HideTaskbarOnCapture)
+            {
+                hideTaskbar.IsChecked = viewModel.HideTaskbarOnCapture;
+            }
+        };
+
+        return Section(
             "キャプチャ設定",
             Row("", CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, "キャプチャ時にメインウィンドウを隠す")),
-            Row("", CheckRow(settings.HideTaskbarOnCapture, value => settings.HideTaskbarOnCapture = value, "キャプチャ時にタスク バーを隠す（撮影画像に写さない）")),
+            Row("", hideTaskbar),
             Row("", CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, "撮影・切り出しの後にクリップボードへコピーする")));
+    }
 
     /// <summary>矩形選択範囲の制限のセクションを構築する。</summary>
     /// <param name="settings">設定。</param>

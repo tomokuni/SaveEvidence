@@ -227,6 +227,29 @@ internal static class CapturePage
         toolbar.Controls.Add(UiFactory.CreateToolButton(
             AppIcon.Crop, "切り出し（開始 / 確定 / キャンセル）", ToggleCrop, isBorderless: true));
 
+        // キャプチャ時にタスク バーを隠す（設定ページの同じ項目と連動する）。
+        // 設定は ViewModel が単一の入口で、変更通知で表示を追従させる
+        var hideTaskbarBox = new CheckBox
+        {
+            Text = "タスクバーを隠す",
+            AutoSize = true,
+            Font = AppStyles.ToolbarFont,
+            Checked = viewModel.HideTaskbarOnCapture,
+            Margin = new Padding(6, 6, 0, 0),
+        };
+        UiFactory.AttachToolTip(hideTaskbarBox, "キャプチャ時にタスク バーを隠す（撮影画像に写さない）");
+        hideTaskbarBox.CheckedChanged += (_, _) => viewModel.HideTaskbarOnCapture = hideTaskbarBox.Checked;
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.HideTaskbarOnCapture), StringComparison.Ordinal)
+                && hideTaskbarBox.Checked != viewModel.HideTaskbarOnCapture)
+            {
+                hideTaskbarBox.Checked = viewModel.HideTaskbarOnCapture;
+            }
+        };
+        toolbar.Controls.Add(UiFactory.CreateSeparator());
+        toolbar.Controls.Add(hideTaskbarBox);
+
         // 幅は入力された文字列の幅に合わせる（最小 100 DIP・上限はツールバーが折り返さない幅）。
         // 上限を取るのは、幅を広げすぎるとツールバーのアイコンが 2 段になるため（他の UI 版と同じ）。
         void UpdateTemplateWidth()
@@ -354,6 +377,8 @@ internal static class CapturePage
             canvas.BackColor = AppStyles.ImageAreaBackground;
             templateBox.ForeColor = AppStyles.Foreground;
             templateBox.BackColor = pageBackground;
+            hideTaskbarBox.ForeColor = AppStyles.Foreground;
+            hideTaskbarBox.BackColor = AppStyles.BarBackground;
             zoomSlider.BackColor = pageBackground;
 
             // Fit は影も含めて収める（画像の周囲に影を描くため、その分だけ内側へ収めた大きさで計算する）

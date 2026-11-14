@@ -72,7 +72,7 @@ internal static class SettingsPage
         // 本 UI 版はダークテーマを使用しないため、テーマの選択は表示しない（設定ファイルの値も反映しない）
         stack.Controls.Add(BuildSaveFolderSection(settingsService));
         stack.Controls.Add(BuildImageSection(settingsService));
-        stack.Controls.Add(BuildCaptureSection(settingsService));
+        stack.Controls.Add(BuildCaptureSection(services));
         stack.Controls.Add(BuildSelectionClampSection(settingsService));
         stack.Controls.Add(BuildHotKeySection(settingsService));
         stack.Controls.Add(BuildAppearanceSection(settingsService));
@@ -277,10 +277,12 @@ internal static class SettingsPage
     }
 
     /// <summary>キャプチャ設定のセクションを生成する。</summary>
-    /// <param name="settingsService">設定サービス。</param>
+    /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <returns>生成したセクション。</returns>
-    private static Control BuildCaptureSection(ISettingsService settingsService)
+    private static Control BuildCaptureSection(AppServices services)
     {
+        var settingsService = services.Settings;
+        var viewModel = services.Main;
         var section = CreateSection("キャプチャ設定");
         section.Body.Controls.Add(CreateCheckBox(
             "キャプチャ時にメイン ウィンドウを隠す",
@@ -290,14 +292,23 @@ internal static class SettingsPage
                 settingsService.Current.HideMainWindowOnCapture = value;
                 settingsService.Save();
             }));
-        section.Body.Controls.Add(CreateCheckBox(
+
+        // キャプチャ ページのツールバーと同じ項目を編集するため、値は ViewModel を通す
+        // （変更通知でツールバーのチェック表示も追従する）
+        var hideTaskbar = CreateCheckBox(
             "キャプチャ時にタスク バーを隠す（撮影画像に写さない）",
-            settingsService.Current.HideTaskbarOnCapture,
-            value =>
+            viewModel.HideTaskbarOnCapture,
+            value => viewModel.HideTaskbarOnCapture = value);
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.HideTaskbarOnCapture), StringComparison.Ordinal)
+                && hideTaskbar.Checked != viewModel.HideTaskbarOnCapture)
             {
-                settingsService.Current.HideTaskbarOnCapture = value;
-                settingsService.Save();
-            }));
+                hideTaskbar.Checked = viewModel.HideTaskbarOnCapture;
+            }
+        };
+        section.Body.Controls.Add(hideTaskbar);
+
         section.Body.Controls.Add(CreateCheckBox(
             "撮影・切り出しの後にクリップボードへコピーする",
             settingsService.Current.CopyAfterCapture,

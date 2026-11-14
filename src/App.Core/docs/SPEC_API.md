@@ -94,6 +94,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `IsNavigationExpanded` | `bool` | ナビゲーションパネルの展開状態 |
 | `StartupPreview` | `StartupPreviewMode` | 起動直後のキャプチャ ページに置く画像（`Gradient` = グラデーション画像 / `Blank` = 空白。 既定は `Gradient`） |
 | `AutoSave` | `bool` | 自動保存（有効な間は画像が変わるたびに保存する。 4 UI 版で共有。 既定は無効） |
+| `HideTaskbarOnCapture` | `bool` | キャプチャ時にタスク バーを隠す（撮影画像に写さない。 4 UI 版で共有。 既定は無効） |
 | `CopyAfterCapture` | `bool` | 撮影・切り出しの後に画像をクリップボードへコピーする（4 UI 版で共有。 既定は無効） |
 | `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | フォルダビューのアイコンサイズ |
 
@@ -280,6 +281,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `IsStartupImage` | `bool` | 起動直後の初期画像（プレースホルダ）を表示しているか（true の間は保存できない） |
 | `HasTemplateChangedSinceSave` | `bool` | 保存後にファイル名テンプレートが変わったか（保存時の自動インクリメントで +1 されただけの状態は「変わっていない」とみなす。 `CanSave` の判定に使う） |
 | `AutoSave` | `bool` | 自動保存（`Settings.AutoSave` を読み書きし、設定へ保存する） |
+| `HideTaskbarOnCapture` | `bool` | キャプチャ時にタスク バーを隠す（`Settings.HideTaskbarOnCapture` を読み書きし、設定へ保存する。 キャプチャ ページのツールバーと設定ページが共有する） |
 | `CopyAfterCapture` | `bool` | 撮影・切り出しの後にクリップボードへコピーする（`Settings.CopyAfterCapture` を読み書きし、設定へ保存する） |
 | `FileNameTemplateText` | `string` | ファイル名テンプレート（変更時に検証と保存） |
 | `SaveFolderPath` / `SaveFolderPathResolved` / `HasInvalidSaveFolder` | `string` / `bool` | 保存先フォルダ |

@@ -324,6 +324,26 @@ internal static class CapturePage
         autoSaveButton.Cursor(CursorType.Hand);
         autoSaveButton.OnCheckedChanged(isChecked => viewModel.AutoSave = isChecked);
 
+        // キャプチャ時にタスク バーを隠す（設定ページの同じ項目と連動する）。
+        // ツールヒントは付けない（MewUI はツールヒント表示中の押下を取り消すため）
+        var hideTaskbar = new CheckBox()
+            .Content("タスクバーを隠す")
+            .IsChecked(viewModel.HideTaskbarOnCapture);
+        hideTaskbar.FontSize(ToolbarMetrics.FontSize);
+        hideTaskbar.VerticalAlignment = VerticalAlignment.Center;
+        hideTaskbar.Margin(new Thickness(1, 0, 1, 0));
+        hideTaskbar.OnCheckedChanged(isChecked => viewModel.HideTaskbarOnCapture = isChecked);
+
+        // 設定ページからの変更を表示へ反映する（設定は ViewModel が単一の入口）
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.HideTaskbarOnCapture), StringComparison.Ordinal)
+                && hideTaskbar.IsChecked != viewModel.HideTaskbarOnCapture)
+            {
+                hideTaskbar.IsChecked = viewModel.HideTaskbarOnCapture;
+            }
+        };
+
         var toolbar = new WrapPanel()
             .Margin(new Thickness(2, AppStyles.ToolbarMarginTop, AppStyles.ToolbarMarginRight, AppStyles.ToolbarMarginBottom))
             .Children(
@@ -337,7 +357,9 @@ internal static class CapturePage
                 windowSelect,
                 areaSelect,
                 AppStyles.CreateToolbarDivider(),
-                cropButton);
+                cropButton,
+                AppStyles.CreateToolbarDivider(),
+                hideTaskbar);
 
         // ファイル名テンプレートの幅をテキストの実測に合わせる（上限は折り返さない幅）。
         // ツールバーの幅が変わったら計算し直す

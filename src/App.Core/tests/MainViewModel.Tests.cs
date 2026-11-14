@@ -212,6 +212,32 @@ public class MainViewModelTests
     }
 
     [Fact]
+    internal void HideTaskbarOnCapture_設定の値を変更する()
+    {
+        var settings = new MockSettingsService();
+        var vm = new MainViewModel(settings, new MockImageWriter());
+        var notified = 0;
+        vm.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.HideTaskbarOnCapture), StringComparison.Ordinal))
+            {
+                notified++;
+            }
+        };
+
+        // キャプチャ ページのツールバーと設定ページは本プロパティを共有するため、設定へ反映する
+        vm.HideTaskbarOnCapture = true;
+
+        Assert.True(settings.Current.HideTaskbarOnCapture);
+        Assert.True(vm.HideTaskbarOnCapture);
+        Assert.Equal(1, notified);
+
+        // 同じ値の設定は通知しない（購読側の表示更新を空振りさせない）
+        vm.HideTaskbarOnCapture = true;
+        Assert.Equal(1, notified);
+    }
+
+    [Fact]
     internal void AutoSave_初期画像は自動保存しない()
     {
         using var tempDir = new TempDir();

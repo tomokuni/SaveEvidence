@@ -266,6 +266,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | 設定項目 | Settings プロパティ | 反映先コントロール / プロパティ |
 | --- | --- | --- |
 | キャプチャ時にメインウィンドウを隠す | `HideMainWindowOnCapture` | `CaptureSettings.HideOwnerWindow` |
+| キャプチャ時にタスク バーを隠す | `HideTaskbarOnCapture` | `CaptureSettings.HideTaskbar`（撮影範囲からタスク バーの矩形を除く） |
 | キャプチャ枠の色（不透明度含む） | `CaptureBorderColor` | `MarqueeControl.Appearance.HandleBorderColor` / `MarqueeControl.Appearance.BorderColor`（同じ値。 アルファ込み） |
 | キャプチャ枠の太さ | `CaptureBorderThickness` | `MarqueeAppearance.BorderThickness`（装飾の寸法が単一所有する。 ハンドルの枠線太さはコア内部の固定値 1.5） |
 | 暗転オーバーレイの色（不透明度含む） | `CaptureOverlayColor` | `MarqueeControl.Appearance.OuterMaskColor`（アルファ込み） |

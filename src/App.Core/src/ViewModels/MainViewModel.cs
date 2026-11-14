@@ -306,6 +306,29 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    /// <summary>キャプチャ時にタスク バーを隠すかどうかを取得または設定する。</summary>
+    /// <value>有効な場合、撮影画像にタスク バーを写さない（設定へ保存する）。</value>
+    /// <remarks>
+    /// 値の保持と永続化は <see cref="Models.Settings.HideTaskbarOnCapture"/> が担う（4 つの UI 版で共有する）。<br/>
+    /// キャプチャ ページのツールバーと設定ページの両方から変更できるため、両者は本プロパティを唯一の入口とする
+    /// （変更通知で互いの表示が追従する）。
+    /// </remarks>
+    public bool HideTaskbarOnCapture
+    {
+        get => Settings.HideTaskbarOnCapture;
+        set
+        {
+            if (Settings.HideTaskbarOnCapture == value)
+            {
+                return;
+            }
+
+            Settings.HideTaskbarOnCapture = value;
+            _settingsService.Save();
+            OnPropertyChanged();
+        }
+    }
+
     /// <summary>設定が有効な場合に画像をクリップボードへコピーする（撮影・切り出しの確定後に呼ぶ）。</summary>
     /// <returns>待機タスク。</returns>
     /// <remarks>
