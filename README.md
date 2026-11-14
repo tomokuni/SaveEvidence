@@ -284,12 +284,12 @@ SaveEvidence は Windows デスクトップ上の画面をキャプチャし、�
  cmd /c buildScript\publish_WinForms.bat
 ```
 
-出力先はスクリプトが表示します（`publish/<UI>-win-x64-<方式>`。 例: `publish/avaloniaui-win-x64-single`）。 **WinUI 3 版だけは 2 つの形を作ります**（`publish/winui3-win-x64-aot` と `publish/winui3-win-x64-single`）。 リポジトリ外の一時領域へ発行してから必要なファイルだけを配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。
+出力先はスクリプトが表示します（`publish/<UI>-win-x64-<方式>`。 例: `publish/avaloniaui-win-x64-aot`）。 **WinUI 3 版だけは 2 つの形を作ります**（`publish/winui3-win-x64-aot` と `publish/winui3-win-x64-single`）。 リポジトリ外の一時領域へ発行してから必要なファイルだけを配置します（直接 `-o` で発行すると参照プロジェクトにも `publish` が作られます）。
 
 **単体のプロジェクトを直接発行する場合**（方式を自分で選ぶ場合）:
 
 ```powershell
-dotnet publish src/App.AvaloniaUI/src/App.AvaloniaUI.csproj -c Release -r win-x64 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/avaloniaui-win-x64-single
+dotnet publish src/App.AvaloniaUI/src/App.AvaloniaUI.csproj -c Release -r win-x64 -p:SaveEvidencePublishAot=true -p:PublishSingleFile=true -o publish/avaloniaui-win-x64-aot
 ```
 
 ### 4.2 検証（変更をコミットする前）
@@ -310,7 +310,7 @@ pwsh -NoProfile -File .github/verify/verify.ps1
 | UI | 実行ファイル | 構成 |
 | --- | --- | --- |
 | MewUI 版 | `SaveEvidence.MewUI.exe` | exe + ネイティブ DLL |
-| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.exe` | exe 1 個（単一ファイル） |
+| Avalonia UI 版 | `SaveEvidence.AvaloniaUI.exe` | exe + ネイティブ DLL（Native AOT） |
 | WinForms 版 | `SaveEvidence.WinForms.exe` | exe 1 個（単一ファイル） |
 | WinUI 3 版 | `SaveEvidence.WinUI3.exe` | **AOT 版**: exe + ネイティブ DLL / `.pri` など（フォルダー単位で配置） / **Single 版**: exe 1 個（Windows App Runtime と .NET を同梱） |
 

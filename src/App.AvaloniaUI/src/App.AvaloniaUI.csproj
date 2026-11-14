@@ -29,9 +29,24 @@
          ここへ書かない。 構成（Release）へ書くと `dotnet build -c Release` が自己完結として扱われ、
          本プロジェクトを参照するテスト プロジェクトが NETSDK1151（自己完結の exe は参照できない）で
          ビルドできなくなる（復元は既定の Debug 構成で走るため NETSDK1047 も出る）。
-         publish は buildScript/publish_AvaloniaUI.bat が -r <RID> -p:PublishAot=true -p:SelfContained=true を
+         publish は buildScript/publish_AvaloniaUI.bat が -r <RID> -p:SaveEvidencePublishAot=true を
          明示して実行する。 -->
   </PropertyGroup>
+
+  <!-- publish（AOT）のときだけ有効にする指定。 buildScript/publish_AvaloniaUI.bat が
+       `-p:SaveEvidencePublishAot=true` を渡す。 通常のビルドとテストには影響しない。 -->
+  <PropertyGroup Condition="'$(SaveEvidencePublishAot)' == 'true'">
+    <PublishAot>true</PublishAot>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(SaveEvidencePublishAot)' == 'true'">
+    <!-- Avalonia.Controls.DataGrid（FluentAvaloniaUI のテーマが取り込む）の
+         TypeHelper.GetPropertyOrIndexer が IL2070 / IL3050 を出し、-warnaserror の AOT 公開が失敗する。
+         本アプリは DataGrid を使わないため、AOT 公開のときだけこの 2 つを除外する
+         （それ以外の警告は従来どおりエラー。 理由は .github/ビルド設定規約.md 付録 A）。
+         ILC の応答ファイルへ 1 行で渡すため、引用符と区切り（; → %3B）を MSBuild の属性としてエスケープする。 -->
+    <IlcArg Include="--nowarn:&quot;IL2070%3BIL3050&quot;" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- ヘッドレステスト（App.AvaloniaUI.Tests）から internal メンバーへアクセスできるようにする -->
