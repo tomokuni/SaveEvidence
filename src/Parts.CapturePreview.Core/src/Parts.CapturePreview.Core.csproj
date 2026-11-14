@@ -10,6 +10,7 @@
          ネイティブ呼び出しを単一所有する。 LibraryImport は生成コードが unsafe を要求する
          （SYSLIB1062。 手書きの unsafe ブロックは無い）。 -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,8 +6,8 @@ namespace EsUtil.SaveEvidence.App.WinForms.Services;
 /// <summary>設定に保存する色文字列（<c>#AARRGGBB</c>）と GDI+ の色の相互変換。</summary>
 /// <remarks>
 /// 設定（<c>Settings</c>）は色と不透明度を統合した <c>#AARRGGBB</c> 形式の文字列で保持する。<br/>
-/// <b>形式と解釈は <see cref="DrawingColorExtensions.TryParseHexText"/> が単一所有する</b>
-/// （以前は 3 つの UI 版が同じ解析をそれぞれ持っていた）。 本クラスは自 UI の色型との相互変換だけを担う。<br/>
+/// <b>形式と解釈は <see cref="DrawingColorExtensions.TryParseHexText"/> が単一所有する</b>。
+/// 本クラスは自 UI の色型との相互変換だけを担う。<br/>
 /// <b>失敗時</b>: 解析できない文字列は既定色へフォールバックする（設定の破損で描画が落ちないようにする）。
 /// </remarks>
 internal static class SettingsColorMath

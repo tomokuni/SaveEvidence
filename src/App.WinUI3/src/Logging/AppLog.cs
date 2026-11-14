@@ -2,6 +2,7 @@ using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Logging;
 using EsUtil.SaveEvidence.App.Core.Services;
+using EsUtil.SaveEvidence.App.WinUI3.Services;
 using Microsoft.Extensions.Logging;
 // ILogger は Serilog.ILogger と衝突するため、Microsoft.Extensions.Logging 側を優先する別名で解決する。
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -48,7 +49,7 @@ internal static partial class AppLog
     /// <param name="logger">ロガー。</param>
     /// <param name="version">アプリケーションのバージョン。</param>
     public static void LogAppStart(this ILogger logger, string version)
-        => logger.LogAppStartCore(Prefix, version);
+        => logger.LogAppStartCore(Prefix, version, AppVersion.EsUtilVersion);
 
 
     /// <summary>アプリケーション終了を記録する。</summary>
@@ -359,38 +360,24 @@ internal static partial class AppLog
     // ====================================================================
 
     /// <summary>実行環境（OS・ランタイム・表示経路・倍率・GPU）を記録する。</summary>
-    /// <remarks>
-    /// LogLevel: Information <br/>
-    /// 出力書式: <c>環境情報: OS={OperatingSystem} / .NET={DotNet} / Windows App Runtime={RuntimeInstalled}
-    /// (required={RuntimeRequired}) / セッション={SessionName} / クライアント={ClientName}
-    /// / 仮想スクリーン={VirtualScreen} / ウィンドウ倍率={RasterizationScale} / モニター倍率={MonitorScales}
-    /// / アダプター={Adapters}</c><br/>
-    /// 描画の不具合はアプリの値ではなく環境（リモート セッション・GPU・倍率・ランタイムの版）で決まることがある。<br/>
-    /// 実測 2026-11-08: Windows Sandbox（Indirect Display・VRAM 128MB・GPU パーティション）だけ文字が描かれず、<br/>
-    /// ホスト機では正常だった。 実測 2026-11-10: アプリを 2.6.5 でビルドしながら 2.6.4 のランタイムで動くと<br/>
-    /// 本文のグリフだけが描かれなかった。 この 1 行で環境の差と版の不一致を判別できるようにする。<br/>
-    /// <b>起動ごとに 1 回だけ出す</b>（値は起動中に変わらない）。
-    /// </remarks>
-    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
-    /// <param name="prefix">接頭辞（公開ラッパーが <see cref="Prefix"/> を渡す）。</param>
-    /// <param name="operatingSystem">OS の版とアーキテクチャ。</param>
-    /// <param name="dotNet">実行している .NET の版。</param>
-    /// <param name="runtimeInstalled">インストール済みの Windows App Runtime の版（新しい順）。</param>
-    /// <param name="runtimeRequired">このビルドが要求する Windows App Runtime の版。</param>
-    /// <param name="runtimeLoaded">実際に読み込んでいる Windows App Runtime の版。</param>
-    /// <param name="sessionName">セッション名（<c>SESSIONNAME</c>。 例: Console / RDP-Tcp#3）。</param>
-    /// <param name="clientName">接続元の名前（<c>CLIENTNAME</c>。 ローカル実行では "(ローカル)"）。</param>
-    /// <param name="virtualScreen">仮想スクリーンの矩形（物理ピクセル）。</param>
+    /// <param name="logger">ロガー。</param>
     /// <param name="rasterizationScale">ウィンドウの表示倍率（1.0 = 100%）。</param>
-    /// <param name="monitorScales">仮想スクリーンの位置から解決したモニターの倍率。</param>
-    /// <param name="adapters">表示アダプター（ドライバーの説明と VRAM）。 取得できない場合はその旨。</param>
-    [LoggerMessage(LogLevel.Information, "{Prefix} 環境情報: OS={OperatingSystem} / .NET={DotNet} / Windows App Runtime={RuntimeInstalled} (required={RuntimeRequired}, loaded={RuntimeLoaded}) / セッション={SessionName} / クライアント={ClientName} / 仮想スクリーン={VirtualScreen} / ウィンドウ倍率={RasterizationScale} / モニター倍率={MonitorScales} / アダプター={Adapters}")]
-    private static partial void LogEnvironmentCore(
-        this ILogger logger, string prefix, string operatingSystem, string dotNet,
-        string runtimeInstalled, string runtimeRequired, string runtimeLoaded,
-        string sessionName, string clientName,
-        string virtualScreen, double rasterizationScale, string monitorScales, string adapters);
-
+    /// <remarks>文言は <see cref="AppLogMessage"/>、値の収集は <see cref="RenderEnvironment"/> が単一所有する
+    /// （4 つの UI 版で同じ書式）。 ランタイムの版だけは WinUI 3 版の実装（Windows App SDK）が渡す。</remarks>
+    public static void LogEnvironment(this ILogger logger, double rasterizationScale)
+        => logger.LogEnvironmentCore(
+            Prefix,
+            RenderEnvironment.DescribeOperatingSystem(),
+            RenderEnvironment.DescribeDotNet(),
+            WindowsAppRuntimeEnvironment.DescribeInstalledVersion(),
+            WindowsAppRuntimeEnvironment.RequiredVersion,
+            WindowsAppRuntimeEnvironment.DescribeLoadedVersion(),
+            RenderEnvironment.SessionName,
+            RenderEnvironment.ClientName,
+            RenderEnvironment.DescribeVirtualScreen(),
+            rasterizationScale,
+            RenderEnvironment.DescribeMonitorScales(),
+            RenderEnvironment.DescribeAdapters());
     /// <summary>要求する Windows App Runtime の版が指定されていないことを記録する。</summary>
     /// <remarks>
     /// LogLevel: Warning <br/>
@@ -411,28 +398,6 @@ internal static partial class AppLog
     /// <param name="libraryVersion">EsUtil のビルド版（フォールバック先）。</param>
     public static void LogWindowsAppRuntimeVersionNotSpecified(this ILogger logger, string libraryVersion)
         => logger.LogWindowsAppRuntimeVersionNotSpecifiedCore(Prefix, libraryVersion);
-
-    /// <summary>実行環境を記録する。</summary>
-    /// <param name="logger">ロガー。</param>
-    /// <param name="operatingSystem">OS の版とアーキテクチャ。</param>
-    /// <param name="dotNet">実行している .NET の版。</param>
-    /// <param name="runtimeInstalled">インストール済みの Windows App Runtime の版。</param>
-    /// <param name="runtimeRequired">要求する Windows App Runtime の版。</param>
-    /// <param name="runtimeLoaded">実際に読み込んでいる Windows App Runtime の版。</param>
-    /// <param name="sessionName">セッション名。</param>
-    /// <param name="clientName">接続元の名前。</param>
-    /// <param name="virtualScreen">仮想スクリーンの矩形。</param>
-    /// <param name="rasterizationScale">ウィンドウの表示倍率。</param>
-    /// <param name="monitorScales">モニターの倍率。</param>
-    /// <param name="adapters">表示アダプター。</param>
-    public static void LogEnvironment(
-        this ILogger logger, string operatingSystem, string dotNet,
-        string runtimeInstalled, string runtimeRequired, string runtimeLoaded,
-        string sessionName, string clientName,
-        string virtualScreen, double rasterizationScale, string monitorScales, string adapters)
-        => logger.LogEnvironmentCore(
-            Prefix, operatingSystem, dotNet, runtimeInstalled, runtimeRequired, runtimeLoaded,
-            sessionName, clientName, virtualScreen, rasterizationScale, monitorScales, adapters);
 
     /// <summary>文字が描かれない環境かを切り分けるための値を記録する。</summary>
     /// <remarks>

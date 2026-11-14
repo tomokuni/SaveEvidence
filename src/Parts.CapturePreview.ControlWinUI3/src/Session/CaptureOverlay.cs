@@ -894,7 +894,7 @@ internal sealed class CaptureOverlay
         var frameHeight = Math.Max(0, appWindow.Size.Height - appWindow.ClientSize.Height);
         if (frameWidth == 0 && frameHeight == 0)
         {
-            // 枠を測れない場合は従来の手順（大きさの指定で一致させる）
+            // 枠を測れない場合は、大きさを指定して一致させる
             OverlayWindowPlacer.MoveClientArea(appWindow, target);
             return;
         }

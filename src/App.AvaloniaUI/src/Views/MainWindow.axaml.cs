@@ -174,6 +174,9 @@ public sealed partial class MainWindow : Window
         {
             ApplyMinimumOuterSize();
             ApplyInitialOuterSize();
+            // 描画の不具合はアプリの値ではなく環境（OS・GPU・倍率）で決まることがある。
+            // 倍率が確定するここで 1 度だけ残す（次回からログだけで切り分けられる）
+            s_logger.LogEnvironment(RenderScaling);
             Dispatcher.UIThread.Post(WarmUpThumbnails, DispatcherPriority.Background);
         };
     }

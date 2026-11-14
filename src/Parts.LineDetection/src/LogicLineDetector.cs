@@ -103,7 +103,7 @@ public sealed class LogicLineDetector : ILineDetector
             return [.. rectangles.OrderByDescending(r => r.Score)];
         }
 
-        // 矩形を構成できない場合は、従来どおりフィルタして出力する
+        // 矩形を構成できない場合は、線分をフィルタして出力する
         var results = new List<LineDetectionResult>();
         results.AddRange(FilterAndScore(mergedH, isHorizontal: true, edges));
         results.AddRange(FilterAndScore(mergedV, isHorizontal: false, edges));

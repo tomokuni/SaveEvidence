@@ -190,18 +190,7 @@ internal sealed class MainWindow : Window
         {
             // 描画の不具合はアプリの値ではなく環境（OS・ランタイムの版・表示経路・GPU・倍率）で決まることがある。
             // 倍率が確定するここで 1 度だけ残す（次回からログだけで切り分けられる）
-            s_logger.LogEnvironment(
-                RenderEnvironment.DescribeOperatingSystem(),
-                RenderEnvironment.DescribeDotNet(),
-                RenderEnvironment.DescribeWindowsAppRuntime(),
-                RenderEnvironment.RequiredWindowsAppRuntime,
-                RenderEnvironment.DescribeLoadedWindowsAppRuntime(),
-                RenderEnvironment.SessionName,
-                RenderEnvironment.ClientName,
-                RenderEnvironment.DescribeVirtualScreen(),
-                RasterizationScale,
-                RenderEnvironment.DescribeMonitorScales(),
-                RenderEnvironment.DescribeAdapters());
+            s_logger.LogEnvironment(RasterizationScale);
 
             // 文字だけが描かれない現象は、レイアウトが 0（フォント解決）か、描画されないだけかを分けて読む
             s_logger.LogTextRenderProbe(

@@ -122,7 +122,7 @@
                         <CheckBox IsChecked="{Binding Settings.HideMainWindowOnCapture}"
                                   Content="キャプチャ時にメインウィンドウを隠す"
                                   Margin="0,5,0,0"/>
-                        <CheckBox IsChecked="{Binding Settings.HideTaskbarOnCapture}"
+                        <CheckBox IsChecked="{Binding HideTaskbarOnCapture}"
                                   Content="キャプチャ時にタスク バーを隠す（撮影画像に写さない）"
                                   ToolTip.Tip="オフのときはタスク バーを写したまま、暗転マスクで覆わずに表示します"
                                   Margin="0,5,0,0"/>

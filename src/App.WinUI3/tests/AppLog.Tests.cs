@@ -1,5 +1,6 @@
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -38,7 +39,7 @@ public class AppLogTests
         var logger = new RecordingLogger();
         InvokeAll(logger);
 
-        Assert.Equal("[App.WinUI3] アプリケーション起動 (version=1.0.0)", logger.Messages[0]);
+        Assert.Equal($"[App.WinUI3] アプリケーション起動 (version=1.0.0, esutil={AppVersion.EsUtilVersion})", logger.Messages[0]);
         Assert.Equal("[App.WinUI3] アプリケーション終了 (exitCode=0)", logger.Messages[1]);
         Assert.Equal("[App.WinUI3] 一覧の読み込みで例外が発生: C:\\images", logger.Messages[3]);
         Assert.Equal("[App.WinUI3] ウィンドウ配置の保存で例外が発生", logger.Messages[4]);
@@ -52,12 +53,26 @@ public class AppLogTests
             + " — アプリは自分のビルド版を指定してください",
             logger.Messages[12]);
         Assert.Equal(LogLevel.Warning, logger.Levels[12]);
-        Assert.Equal(
-            "[App.WinUI3] 環境情報: OS=Windows 11 (X64) / .NET=.NET 10.0.0 (10.0.0)"
-            + " / Windows App Runtime=2.6.5.0, 2.6.4.0 (required=2.6.5, loaded=2.6.5.0)"
-            + " / セッション=Console / クライアント=(ローカル) / 仮想スクリーン=0,0 1920x1080"
-            + " / ウィンドウ倍率=1.25 / モニター倍率=1.25x / アダプター=GPU (8192 MB)",
-            logger.Messages[13]);
+        // 環境の値は実行機に依存するため、定型の見出しと区切りだけを固定する
+        // （書式の所有者は App.Core の LogEnvironmentCore。 値の並びは .github/ログ規約.md §4 が定める）
+        var environment = logger.Messages[13];
+        Assert.StartsWith("[App.WinUI3] 環境情報: OS=", environment, StringComparison.Ordinal);
+        foreach (var label in new[]
+        {
+            " / .NET=",
+            " / Windows App Runtime=",
+            " (required=",
+            ", loaded=",
+            " / セッション=",
+            " / クライアント=",
+            " / 仮想スクリーン=",
+            " / ウィンドウ倍率=1.25",
+            " / モニター倍率=",
+            " / アダプター=",
+        })
+        {
+            Assert.Contains(label, environment, StringComparison.Ordinal);
+        }
         Assert.Equal(LogLevel.Information, logger.Levels[13]);
         Assert.Equal(
             "[App.WinUI3] 文字の描画: 文字倍率=1 / 実測=既定 18x19 / Segoe UI 18x19 / テーマ=Light",
@@ -82,9 +97,7 @@ public class AppLogTests
         logger.LogWindowsAppRuntimeUnavailable("2.6.4", "(なし)", "(なし)");
         logger.LogWindowsAppRuntimeReady("2.6.4", "(なし)", "2.6.5.0", true);
         logger.LogWindowsAppRuntimeVersionNotSpecified("2.6.4");
-        logger.LogEnvironment(
-            "Windows 11 (X64)", ".NET 10.0.0 (10.0.0)", "2.6.5.0, 2.6.4.0", "2.6.5", "2.6.5.0",
-            "Console", "(ローカル)", "0,0 1920x1080", 1.25, "1.25x", "GPU (8192 MB)");
+        logger.LogEnvironment(1.25);
         logger.LogTextRenderProbe(1.0, "既定 18x19 / Segoe UI 18x19", "Light");
     }
 }

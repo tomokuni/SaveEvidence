@@ -18,7 +18,7 @@ internal static class ZoomMath
 {
     /// <summary>画像未設定・ビューポート未確定時の Fit 実効倍率（%）のフォールバック。</summary>
     /// <remarks>
-    /// Fit 実効倍率が確定できない場合でも表示・通知に使える値が必要なため、本値が単一所有する（従来 100%）。<br/>
+    /// Fit 実効倍率が確定できない場合でも表示・通知に使える値が必要なため、本値が単一所有する（100%）。<br/>
     /// UI 層にリテラル 100 を置かない。
     /// </remarks>
     internal const double FallbackFitZoomPercent = 100.0;

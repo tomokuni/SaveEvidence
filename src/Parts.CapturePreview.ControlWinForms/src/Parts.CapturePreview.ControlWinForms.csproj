@@ -6,6 +6,7 @@
     <RootNamespace>EsUtil.SaveEvidence.Parts.CapturePreview.WinForms</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>

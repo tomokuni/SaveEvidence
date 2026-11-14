@@ -53,7 +53,7 @@ internal static class SettingsPage
         root.Children.Add(BuildThemeSection(window, settings));
         root.Children.Add(BuildSaveSection(window, viewModel, settings));
         root.Children.Add(BuildImageSection(settings));
-        root.Children.Add(BuildCaptureSection(settings));
+        root.Children.Add(BuildCaptureSection(settings, viewModel));
         root.Children.Add(BuildSelectionLimitSection(settings));
         root.Children.Add(BuildHotKeySection(settings));
         root.Children.Add(BuildAppearanceSection(settings));
@@ -189,19 +189,40 @@ internal static class SettingsPage
 
     /// <summary>キャプチャのセクションを生成する。</summary>
     /// <param name="settings">設定。</param>
+    /// <param name="viewModel">アプリのメイン ViewModel（タスク バーの設定の単一の入口）。</param>
     /// <returns>生成したセクション。</returns>
-    private static FrameworkElement BuildCaptureSection(Settings settings)
-        => Section(
+    private static FrameworkElement BuildCaptureSection(Settings settings, MainViewModel viewModel)
+    {
+        // キャプチャ ページのツールバーと同じ項目を編集するため、値は ViewModel を通す
+        // （変更通知でツールバーのチェック表示も追従する）
+        var hideTaskbar = new CheckBox
+        {
+            IsChecked = viewModel.HideTaskbarOnCapture,
+            FontSize = SettingsMetrics.FontSize,
+        };
+        hideTaskbar.Checked += (_, _) => viewModel.HideTaskbarOnCapture = true;
+        hideTaskbar.Unchecked += (_, _) => viewModel.HideTaskbarOnCapture = false;
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.HideTaskbarOnCapture), StringComparison.Ordinal)
+                && hideTaskbar.IsChecked != viewModel.HideTaskbarOnCapture)
+            {
+                hideTaskbar.IsChecked = viewModel.HideTaskbarOnCapture;
+            }
+        };
+
+        return Section(
             "キャプチャ設定",
             Row(
                 "キャプチャ時にメイン ウィンドウを隠す",
                 CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, null)),
             Row(
                 "キャプチャ時にタスク バーを隠す（撮影画像に写さない）",
-                CheckRow(settings.HideTaskbarOnCapture, value => settings.HideTaskbarOnCapture = value, null)),
+                hideTaskbar),
             Row(
                 "撮影・切り出しの後にクリップボードへコピーする",
                 CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, null)));
+    }
 
     /// <summary>矩形選択範囲の制限のセクションを生成する。</summary>
     /// <param name="settings">設定。</param>

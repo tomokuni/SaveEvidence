@@ -309,7 +309,31 @@ internal static class CapturePage
         autoSave.Checked += (_, _) => viewModel.AutoSave = true;
         autoSave.Unchecked += (_, _) => viewModel.AutoSave = false;
 
-        // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 自動保存 | 撮影 3 種 | 切り出し）。
+        // キャプチャ時にタスク バーを隠す（設定ページの同じ項目と連動する）。
+        // 設定は ViewModel が単一の入口で、変更通知で表示を追従させる
+        var hideTaskbar = new CheckBox
+        {
+            Content = "タスクバーを隠す",
+            FontSize = AppStyles.ToolbarFontSize,
+            IsChecked = viewModel.HideTaskbarOnCapture,
+            MinWidth = 0,
+            VerticalAlignment = VerticalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(1),
+        };
+        ToolTipService.SetToolTip(hideTaskbar, "キャプチャ時にタスク バーを隠す（撮影画像に写さない）");
+        hideTaskbar.Checked += (_, _) => viewModel.HideTaskbarOnCapture = true;
+        hideTaskbar.Unchecked += (_, _) => viewModel.HideTaskbarOnCapture = false;
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.HideTaskbarOnCapture), StringComparison.Ordinal)
+                && hideTaskbar.IsChecked != viewModel.HideTaskbarOnCapture)
+            {
+                hideTaskbar.IsChecked = viewModel.HideTaskbarOnCapture;
+            }
+        };
+
+        // 並びと区切りは他の UI 版と同じにする（☰ | テンプレート | 保存 | 自動保存 | 撮影 3 種 | 切り出し | タスクバーを隠す）。
         // 元に戻す・やり直しはメニューから実行する（ツールバーに置かない）
         items.Children.Add(save);
         items.Children.Add(autoSave);
@@ -319,6 +343,8 @@ internal static class CapturePage
         items.Children.Add(area);
         items.Children.Add(AppStyles.CreateToolbarSeparator());
         items.Children.Add(crop);
+        items.Children.Add(AppStyles.CreateToolbarSeparator());
+        items.Children.Add(hideTaskbar);
 
         // 保存の可否に合わせて保存ボタンを灰色にする（アイコンはテーマの不透明度に追従しないため色で表す）
         void ApplySaveEnabled()

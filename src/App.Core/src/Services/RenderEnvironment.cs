@@ -3,21 +3,20 @@ using System.Runtime.InteropServices;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Native.Win;
-using EsUtil.Ui.WinUI3.Interop.Bootstrapping;
 using Microsoft.Win32;
 
-namespace EsUtil.SaveEvidence.App.WinUI3.Services;
+namespace EsUtil.SaveEvidence.App.Core.Services;
 
-/// <summary>実行環境（OS・ランタイム・表示経路・倍率・GPU）を診断用の値として取得する。</summary>
+/// <summary>実行環境（OS・.NET・セッション・画面・GPU）を診断用の値として取得する。</summary>
 /// <remarks>
-/// <b>なぜ必要か</b>: WinUI 3 の描画の不具合は「アプリの値」ではなく環境（リモート セッション・GPU・倍率）で<br/>
-/// 決まることがある。 実測 2026-11-08: Windows Sandbox（Indirect Display・VRAM 128MB・GPU パーティション）では<br/>
-/// 文字が描かれず撮影画像も崩れたが、同じ exe をホスト機で動かすと正常だった。<br/>
-/// 環境を 1 行で残せば、次回からログだけで切り分けられる。<br/>
-/// <b>失敗を例外にしない</b>: 診断のための値であり、取得できなくても起動・描画を妨げない<br/>
+/// <b>なぜ必要か</b>: 描画の不具合は「アプリの値」ではなく環境（リモート セッション・GPU・倍率）で決まることがある。
+/// 実測 2026-11-08: Windows Sandbox（Indirect Display・VRAM 128MB・GPU パーティション）では文字が描かれず
+/// 撮影画像も崩れたが、同じ exe をホスト機で動かすと正常だった。<br/>
+/// 環境を 1 行で残せば、次回からログだけで切り分けられる（4 つの UI 版で同じ書式にする）。<br/>
+/// <b>失敗を例外にしない</b>: 診断のための値であり、取得できなくても起動・描画を妨げない
 /// （[`.github/例外処理規約.md`](../../../../.github/例外処理規約.md) §3）。
 /// </remarks>
-internal static class RenderEnvironment
+public static class RenderEnvironment
 {
     /// <summary>モニターの DPI の照会（コアが単一所有する実装を使う）。</summary>
     private static readonly WinMonitorDpi s_monitorDpi = new();
@@ -34,10 +33,14 @@ internal static class RenderEnvironment
     /// <remarks>リモート セッションかを判別するために使う（Win32 を呼ばずに済む値）。</remarks>
     public static string SessionName => Environment.GetEnvironmentVariable("SESSIONNAME") ?? "(不明)";
 
+    /// <summary>接続元の名前を取得する。</summary>
+    /// <value><c>CLIENTNAME</c> の値。 ローカル実行の場合は <c>(ローカル)</c>。</value>
+    public static string ClientName => Environment.GetEnvironmentVariable("CLIENTNAME") ?? "(ローカル)";
+
     /// <summary>OS の版を取得する。</summary>
     /// <returns>「<c>Microsoft Windows NT 10.0.26100.0 (X64)</c>」の形。 取得できない場合は <c>(不明)</c>。</returns>
     /// <remarks>
-    /// <b>Sandbox との比較に要る</b>: Windows Sandbox は同じ OS でも表示経路が違い、それが描画の差になる<br/>
+    /// <b>Sandbox との比較に要る</b>: Windows Sandbox は同じ OS でも表示経路が違い、それが描画の差になる
     /// （実測 2026-11-10）。 版とアーキテクチャを 1 か所に残す。
     /// </remarks>
     public static string DescribeOperatingSystem()
@@ -56,10 +59,10 @@ internal static class RenderEnvironment
     }
 
     /// <summary>.NET の版を取得する。</summary>
-    /// <returns>「<c>10.0.0 (10.0.0)</c>」の形（説明と実行時の版）。 取得できない場合は <c>(不明)</c>。</returns>
+    /// <returns>「<c>.NET 11.0.0 (11.0.0)</c>」の形（説明と実行時の版）。 取得できない場合は <c>(不明)</c>。</returns>
     /// <remarks>
-    /// アプリの版（<c>AppDomain</c> の版）とは別に、**実行している .NET の版**を残す<br/>
-    /// （Framework-dependent と自己完結で実際に読み込まれる版が変わるため）。
+    /// アプリの版（<c>AppDomain</c> の版）とは別に、<b>実行している .NET の版</b>を残す
+    /// （フレームワーク依存と自己完結で実際に読み込まれる版が変わるため）。
     /// </remarks>
     public static string DescribeDotNet()
     {
@@ -76,60 +79,18 @@ internal static class RenderEnvironment
         }
     }
 
-    /// <summary>インストール済みの Windows App Runtime の版を取得する。</summary>
-    /// <returns>「<c>2.6.5.0, 2.6.4.0</c>」の形（新しい順）。 1 件も無い場合は <c>(なし)</c>。</returns>
-    /// <remarks>
-    /// 自己完結の配置（Windows App Runtime を同封）では 1 件も無いことがある（同封物を使うため）。<br/>
-    /// 実際に使った版は起動時の「Windows App Runtime を用意しました」の行が表す。
-    /// </remarks>
-    public static string DescribeWindowsAppRuntime()
-    {
-        try
-        {
-            var versions = WindowsAppRuntimeInventory.GetInstalledVersions();
-            return versions.Count == 0
-                ? "(なし)"
-                : string.Join(", ", versions.Select(version => version.ToString(4)));
-        }
-        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
-        {
-            // 診断用の値であり、取得できなくても描画を妨げない
-            return "(不明)";
-        }
-    }
-
-    /// <summary>このプロセスが実際に読み込んでいる Windows App Runtime の版を取得します。</summary>
-    /// <returns>「<c>2.6.5.0</c>」の形。 取得できない場合は <c>(不明)</c>。</returns>
-    /// <remarks>
-    /// <b>「入っている版」と「使っている版」は別である</b>: 要求版より古いランタイムが選ばれると、
-    /// レイアウトは正常なのに本文のグリフだけ描かれない等の分かりにくい不具合になる（実測 2026-11-10）。
-    /// 環境ログの <c>loaded</c> がこれを表す。
-    /// </remarks>
-    public static string DescribeLoadedWindowsAppRuntime()
-        => WindowsAppRuntimeInventory.TryGetLoadedVersion(out var loaded)
-            ? loaded.ToString(4)
-            : "(不明)";
-
-    /// <summary>このビルドが要求する Windows App Runtime の版を取得する。</summary>
-    /// <value>要求する版の文字列（例: <c>2.6.5</c>）。</value>
-    public static string RequiredWindowsAppRuntime => WindowsAppRuntimeRequirement.Version.ToString(3);
-
-    /// <summary>接続元の名前を取得する。</summary>
-    /// <value><c>CLIENTNAME</c> の値。 ローカル実行の場合は <c>(ローカル)</c>。</value>
-    public static string ClientName => Environment.GetEnvironmentVariable("CLIENTNAME") ?? "(ローカル)";
-
     /// <summary>仮想スクリーン（全モニターを包含する矩形）を取得する。</summary>
     /// <returns>「<c>x,y 幅x高さ</c>」（画面物理ピクセル）。</returns>
     public static string DescribeVirtualScreen()
     {
         var bounds = WinVirtualScreen.Bounds;
-        return $"{bounds.X},{bounds.Y} {bounds.Width}x{bounds.Height}";
+        return string.Create(CultureInfo.InvariantCulture, $"{bounds.X},{bounds.Y} {bounds.Width}x{bounds.Height}");
     }
 
     /// <summary>仮想スクリーンの位置からモニターの表示倍率を解決する。</summary>
     /// <returns>重複を除いた倍率（例: <c>1.25x, 1x</c>）。 解決できない場合は <c>(不明)</c>。</returns>
     /// <remarks>
-    /// モニターの列挙をせず、四隅と中央の位置から実効 DPI を照会して重複を除く<br/>
+    /// モニターの列挙をせず、四隅と中央の位置から実効 DPI を照会して重複を除く
     /// （ウィンドウやキャプチャが使う値と同じ経路で解決する）。
     /// </remarks>
     public static string DescribeMonitorScales()
@@ -166,7 +127,7 @@ internal static class RenderEnvironment
     /// <summary>表示アダプター（ドライバーの説明と VRAM）を取得する。</summary>
     /// <returns>「<c>説明 (VRAM MB) / 説明2 …</c>」。 取得できない場合は <c>(不明)</c> またはその旨。</returns>
     /// <remarks>
-    /// GPU の情報は WinRT / DXGI の射影だけでは取れないため、表示クラスのレジストリを読む（読み取りのみ）。<br/>
+    /// GPU の情報は WinRT / DXGI の射影だけでは取れないため、表示クラスのレジストリを読む（読み取りのみ）。
     /// 仮想 GPU（パーティション）のアダプターは VRAM を登録しないことがある（その場合は説明だけを返す）。
     /// </remarks>
     public static string DescribeAdapters()
@@ -194,7 +155,7 @@ internal static class RenderEnvironment
                 }
 
                 descriptions.Add(ReadVramMegabytes(key) is { } megabytes
-                    ? $"{description} ({megabytes} MB)"
+                    ? string.Create(CultureInfo.InvariantCulture, $"{description} ({megabytes} MB)")
                     : description);
             }
 
@@ -209,8 +170,7 @@ internal static class RenderEnvironment
 
     /// <summary>アダプターの VRAM をメガバイトで取得する。</summary>
     /// <param name="key">アダプターのレジストリ キー。</param>
-    /// <returns>VRAM（MB）。 登録が無い・読めない場合は <see langword="null"/>。</returns>
-    /// <remarks>値は <c>REG_QWORD</c>（<see langword="long"/>）か 8 バイトのバイナリで登録される。</remarks>
+    /// <returns>VRAM（MB）。 登録が無い・読めない場合は null。</returns>
     private static long? ReadVramMegabytes(RegistryKey key)
     {
         var bytes = key.GetValue(@"HardwareInformation.qwMemorySize") switch

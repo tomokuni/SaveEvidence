@@ -1,3 +1,4 @@
+using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -22,7 +23,7 @@ public class AppLogTests
         InvokeAll(logger);
 
         Assert.True(logger.IsEnabled(LogLevel.Trace));
-        Assert.Equal(5, logger.Messages.Count);
+        Assert.Equal(6, logger.Messages.Count);
     }
 
     /// <summary>無効ロガーでも全ログメソッドが安全に実行されることを検証する。</summary>
@@ -40,7 +41,7 @@ public class AppLogTests
         var logger = new RecordingLogger();
         InvokeAll(logger);
 
-        Assert.Equal("[App.MewUI] アプリケーション起動 (version=1.0.0)", logger.Messages[0]);
+        Assert.Equal($"[App.MewUI] アプリケーション起動 (version=1.0.0, esutil={AppVersion.EsUtilVersion})", logger.Messages[0]);
         Assert.Equal("[App.MewUI] アプリケーション終了 (exitCode=0)", logger.Messages[1]);
         Assert.Equal("[App.MewUI] 未処理の例外: AppDomain.UnhandledException", logger.Messages[2]);
         Assert.Equal("[App.MewUI] 一覧の読み込みで例外が発生: C:\\images", logger.Messages[3]);
@@ -56,5 +57,6 @@ public class AppLogTests
         logger.LogUnhandledException(new InvalidOperationException("test"), "AppDomain.UnhandledException");
         logger.LogFolderLoadError(new IOException("test"), @"C:\images");
         logger.LogWindowPlacementSaveError(new IOException("test"));
+        logger.LogEnvironment(1.25);
     }
 }

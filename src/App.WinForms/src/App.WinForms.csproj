@@ -11,6 +11,7 @@
     <AssemblyName>SaveEvidence.WinForms</AssemblyName>
     <!-- 起動型は名前空間と一致しない（アプリの論理名を付けるため）ので明示する。 -->
     <StartupObject>EsUtil.SaveEvidence.App.WinForms.Program</StartupObject>
+  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>

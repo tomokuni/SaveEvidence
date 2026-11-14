@@ -9,6 +9,7 @@
     <IsPackable>false</IsPackable>
     <!-- xUnit v3 はテスト アセンブリが実行可能であることを要求する -->
     <OutputType>Exe</OutputType>
+  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>

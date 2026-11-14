@@ -38,7 +38,7 @@
 | --- | --- |
 | 言語 / ランタイム | C# 14 / .NET 11 |
 | UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 2.6） |
-| 対象フレームワーク | `net11.0-windows10.0.22621.0`（`SupportedOSPlatformVersion` は 10.0.19041.0） |
+| 対象フレームワーク | `net11.0-windows10.0.22621.0`（`SupportedOSPlatformVersion` は 10.0.18362.0） |
 | 配置 | アンパッケージ（`WindowsPackageType=None`）/ Windows App SDK フレームワーク依存（**Windows App Runtime 2.6（x64）** が要り、無ければ起動時に `EsUtil.Ui.WinUI3.Interop` の Bootstrapper が導入する）/ `win-x64` |
 | 要求する Windows App Runtime | **このアプリのビルドに使った `Microsoft.WindowsAppSDK` の版**（`WindowsAppRuntimeRequirement`）。 `WindowsAppSdkIncludeVersionInfo` が生成する `Microsoft.WindowsAppSDK.Runtime.Version` から取り、`WindowsAppRuntimeBootstrapOptions.RequiredVersion` へ渡す |
 | 画像処理 | Windows App SDK の WIC（サムネイルの縮小デコード・画像の符号化）と自前の SVG ラスタライズ（アイコン） |
@@ -88,7 +88,7 @@ graph TD
 
 - **ページは 1 度だけ生成**し、選択のたびに同じ要素を表示します（状態と購読を保持するため）。
   表示のたびに必要な処理（一覧の再構築・背景生成の負荷切り替え）は `PageContent` のコールバックで明示的に呼びます。
-- **切り替えの時間はログで分けて測ります**（`ページ切り替え:` は可視性の切り替えと活性化、`ページ描画:` は最初の描画フレームまで）。 実測 2026-10-25（125% の画面）では、可視性の切り替えは 0.006〜2.6 ms・活性化は 0〜1.0 ms で、**体感の遅さは最初の描画**（フォルダビュー 258 ms / キャプチャ 130 ms）でした。 2 回目以降の同じページは 1〜12 ms です（初回だけ要素ツリーの実体化を伴うため）。
+- **切り替えの時間はログで分けて測ります**（`ページ切り替え:` は可視性の切り替えと活性化、`ページ描画:` は最初の描画フレームまで）。 **体感の遅さは最初の描画**で決まり、2 回目以降の同じページは短時間で切り替わります（初回だけ要素ツリーの実体化を伴うため。 数値は計測結果文書が所有します）。
 - **変更通知で表示を更新**します（バインディング エンジンを使わず、必要な箇所だけを更新する）。
 - **UI スレッドを跨ぐ処理**（サムネイルの背景生成）は結果の反映だけを UI スレッドへ戻します。
 - 図の `ThumbnailScheduler` はコア（`App.Core`）が単一所有する型です（本プロジェクトは型を持たずに使います。 §4.2・§5.2）。
@@ -268,9 +268,9 @@ sequenceDiagram
 - **先読みの起点は要素ツリーの実体化（`Loaded`）** です。 表示が済んでから一覧ページを構築し、
   サムネイル生成を低負荷で始めます（キャプチャ ページの操作を妨げません）。
 - **描画環境は要素ツリーの実体化時に 1 度だけ記録します**（`RenderEnvironment` → `AppLog.LogRenderEnvironment`）。
-  描画の不具合はアプリの値ではなく環境（リモート セッション・GPU・倍率）で決まることがあり、
-  実測 2026-11-08 では Windows Sandbox（Indirect Display・VRAM 128MB・GPU パーティション）でだけ
-  文字が描かれず撮影画像も崩れ、同じ exe をホスト機で動かすと正常でした。
+  描画の不具合はアプリの値ではなく環境（リモート セッション・GPU・倍率）で決まります
+  （Windows Sandbox（Indirect Display・VRAM 128MB・GPU パーティション）では文字が描かれず撮影画像も崩れ、
+  同じ exe でもホスト機では正常です）。
   ログの 1 行で環境の差（セッション名・仮想スクリーン・倍率・アダプター）を判別できます。
 - **文字が描かれるかは同じ位置で計測して記録します**（`TextRenderProbe` → `AppLog.LogTextRenderProbe`）。
   「レイアウトが 0（フォント解決・文字倍率の異常）」と「大きさは正常なのに描画されない（ラスタライズの異常）」を
