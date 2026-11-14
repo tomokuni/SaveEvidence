@@ -436,9 +436,9 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 - **内部余白は足しません**。 コントロールの測定値（内部余白込みの推奨幅）を使うと、余白の分だけ右の空きが「W」より広くなります（実測 2026-11-13: WinForms 版で 19 px = 「W」11 px + 内部余白 8 px。 WinForms 版は `TextRenderer` を `NoPadding` で測ります）。
 - 使う側は、幅に `Position` / `ImageSize` を設定し、**余白（`Margin`・`Padding`）を 0** にします（足すと空きが「W」より広くなります）。
 
-**経緯**: AvaloniaUI 版だけがテーマの既定（14 DIP）を使い、他の UI 版より 1 回り大きく見えました。 4 UI 版とも同じ値を使います。
+**文字サイズは 4 UI 版とも同じ値を使います**（テーマの既定は UI 版ごとに異なり、AvaloniaUI の既定は 14 DIP。 既定に任せると同じ行の文字の大きさが揃いません）。
 
-**間隔を空白文字で表さない理由**: 空白文字を置くと、UI 版ごとの余白（ラベルの Margin・Spacing）が加わり、全角 1 文字より広くなります（WinForms 版が広すぎ、WinUI 3 版は逆に詰まって見えました）。 幅を明示した空き要素を置きます。
+**間隔を空白文字で表さない理由**: 空白文字を置くと、UI 版ごとの余白（ラベルの Margin・Spacing）が加わり、全角 1 文字より広くなります。 幅を明示した空き要素を置きます。
 
 WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します（`AppStyles.StatusBarFont` が換算済みのフォントを 1 つだけ生成して共用する）。
 
@@ -488,7 +488,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 **型（1 型 1 ファイル）**: `ShadowSide`（辺）・`ShadowStop`（停止点 = 位置と色）・`ShadowInsets`（余白）・`ShadowEdgePlan`（辺の計画）・`ShadowBand`（1 画素の帯）・`ShadowPlan`（上表）。
 
-**4 辺を同じ濃さにする理由**: 影を下方向へずらすと上辺だけが薄くなり、画像と影の間に白っぽい隙間が見えます（実測で指摘）。 4 辺とも画像の端で最も濃く、外側へ向けて同じ割合で薄くします。
+**4 辺を同じ濃さにする理由**: 影を下方向へずらすと上辺だけが薄くなり、画像と影の間に白っぽい隙間が見えます。 4 辺とも画像の端で最も濃く、外側へ向けて同じ割合で薄くします。
 
 **描き方**は 1 通りです。 `BuildDeviceBands` の帯（1 画素）を**単色で塗るだけ**です（4 辺も 4 隅も同じ帯。 隅の帯は行ごとに同じ濃さの画素をまとめて 1 本にしてあります）。 各 UI 版は自分の描画 API へ写します（AvaloniaUI は `DrawRectangle` と `BoxShadow`（一覧のサムネイル）、WinUI 3 は `Border` / Skia の `DrawRect` と `RadialGradientBrush`（一覧の隅だけ）、WinForms と MewUI は GDI+ / Skia の `FillRectangle`）。
 

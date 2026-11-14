@@ -5,8 +5,7 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 
 /// <summary><see cref="StatusBarMetrics"/> の仕様テスト（ステータス バーの寸法）。</summary>
 /// <remarks>
-/// ステータス バーの文字サイズは 4 つの UI 版で共通に使うため、値を固定する。<br/>
-/// <b>経緯</b>: AvaloniaUI 版だけがテーマの既定（14 DIP）を使い、他の UI 版より文字が大きく見えた。
+/// ステータス バーの文字サイズは 4 つの UI 版で共通に使うため、値を固定する（テーマの既定は UI 版ごとに異なり、既定に任せると揃わない）。
 /// </remarks>
 public class StatusBarMetricsTests
 {

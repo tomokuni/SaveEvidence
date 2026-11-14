@@ -239,7 +239,7 @@ public sealed partial class CapturePage : UserControl
         UpdateZoomButtonState(CropView.CanZoomIn, CropView.CanZoomOut);
 
         // マウスポインタ移動でステータスバーの座標表示（対象座標）と自動切り出しのホバーを更新する
-        // （旧実装は自動切り出し用の Canvas が入力を占有していたため、ホイールでズーム・パンができなかった）
+        // （自動切り出し用の Canvas が入力を受け取ると、ホイールでのズーム・パンができない）
         CropView.PointerMoved += OnImagePointerMoved;
         CropView.PointerExited += OnImagePointerExited;
         CropView.PointerPressed += OnImageDoubleClicked;

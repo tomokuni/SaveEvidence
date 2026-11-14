@@ -41,7 +41,7 @@ public sealed record LineDetectionOptions
     /// <summary>矩形の対辺の長さの差の許容比率。 0 以上。</summary>
     public double OppositeSpanRatio { get; init; }
 
-    /// <summary>従来の定数値に基づく既定の設定。</summary>
+    /// <summary>検出器の既定値に基づく既定の設定。</summary>
     public static LineDetectionOptions Default { get; } = new()
     {
         CannyThreshold1 = 20,

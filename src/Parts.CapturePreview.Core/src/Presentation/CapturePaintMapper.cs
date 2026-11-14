@@ -44,7 +44,7 @@ internal static class CapturePaintMapper
             OuterMaskColor = settings.OverlayColor!.Value,
             BorderColor = settings.BorderColor!.Value,
             BorderThickness = settings.BorderThickness!.Value,
-            // 色が透明でも描画の可否は設定のフラグが決める（従来の「アルファ 0 = 描かない」を明示フラグで表現する）
+            // 色が透明でも描画の可否は設定のフラグが決める（アルファ 0 を「描かない」と解釈しない）
             ShowOuterMask = settings.OverlayColor!.Value.IsVisible(),
             ShowBorder = settings.BorderColor!.Value.IsVisible(),
             ShowSizeLabel = settings.SizeLabelVisible!.Value,

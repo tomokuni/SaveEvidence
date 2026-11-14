@@ -95,7 +95,7 @@ public class CapturePaintMapperTests
     }
 
     /// <summary>透明な色は描画しない扱いになることを検証する。</summary>
-    /// <remarks>従来の「アルファ 0 = 描かない」を明示フラグ（表示可否）で表現する。</remarks>
+    /// <remarks>アルファ 0 でも、描画の可否は明示フラグ（表示可否）が決める。</remarks>
     [Fact]
     internal void 変換_透明な色は描画しない()
     {

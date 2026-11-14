@@ -255,7 +255,7 @@ semver 形式で入力します。 数値部分の**先頭 0 は使用できま�
 - 配布物（zip）からは「どの依存のどの版を使ったか」が分からない。 SBOM があれば、**公開済みの配布物から依存を辿れる**。
 - **EsUtil の版も SBOM に載る**（`EsUtil.*` はパッケージ参照のため、exe のプロパティだけでは分からない）。 アプリ側の版と併せて追跡できる。
 - SBOM は **`dry-run-pack` と `release` で作る**（`dry-run` では作らない。 作れない状態を公開前に検出するため、公開物の中身まで確かめたいときは `dry-run-pack` を使う）。
-- **SBOM の作成は配布物の作成と並列に走ります**（配布物は SBOM を使わないため。 直列にすると SBOM の約 2 分を毎回待っていました。 実測 2026-10-26: dry-run 313 秒 → 190 秒）。 順序は `verify` →（`sbom` と `publish` が同時）→ `release` です。
+- **SBOM の作成は配布物の作成と並列に走ります**（配布物は SBOM を使わないため。 直列にすると SBOM の所要時間を毎回待つことになります）。 順序は `verify` →（`sbom` と `publish` が同時）→ `release` です。
 
 **発行方式は UI ごとに、Single AOT → Single（非 AOT）→ EXE（フォルダー）の優先順で「可能なもの」が選ばれます**（実装は [../buildScript/publish_ui.bat](../buildScript/publish_ui.bat)。 可否は UI とフレームワークが決めます）。
 
