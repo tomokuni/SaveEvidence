@@ -17,10 +17,12 @@
     <UseWindowsForms>false</UseWindowsForms>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <IsPublishable>True</IsPublishable>
+  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -31,12 +33,14 @@
          ビルドできなくなる（復元は既定の Debug 構成で走るため NETSDK1047 も出る）。
          publish は buildScript/publish_AvaloniaUI.bat が -r <RID> -p:SaveEvidencePublishAot=true を
          明示して実行する。 -->
+  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <!-- publish（AOT）のときだけ有効にする指定。 buildScript/publish_AvaloniaUI.bat が
        `-p:SaveEvidencePublishAot=true` を渡す。 通常のビルドとテストには影響しない。 -->
   <PropertyGroup Condition="'$(SaveEvidencePublishAot)' == 'true'">
     <PublishAot>true</PublishAot>
+  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(SaveEvidencePublishAot)' == 'true'">

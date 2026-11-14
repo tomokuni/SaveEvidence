@@ -9,6 +9,7 @@
     <RootNamespace>EsUtil.SaveEvidence.App.MewUI</RootNamespace>
     <!-- 実行ファイルの名前は製品名を優先する（配布物の exe 名。 命名規約の例外）。 -->
     <AssemblyName>SaveEvidence.MewUI</AssemblyName>
+  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>
