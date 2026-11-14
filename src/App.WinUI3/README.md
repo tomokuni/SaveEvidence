@@ -21,7 +21,7 @@ SaveEvidence の **WinUI 3 版アプリ**（実行ファイル `SaveEvidence.Win
 
 ## 2. 前提
 
-- .NET 11 / Windows 10（19041）以降
+- .NET 11 / Windows 10（18362）以降
 - `Microsoft.WindowsAppSDK` 2.6（アンパッケージ / フレームワーク依存）と **Windows App Runtime 2.6（x64）**
   （PC に無ければ起動時に案内を出して導入します）
 - WinUI 3 の `App.xaml` 以外に XAML ファイルを持たず、**画面は C# のマークアップで組む**
