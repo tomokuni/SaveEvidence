@@ -197,7 +197,7 @@ internal static class SettingsPage
 
         return Section(
             "画像設定",
-            Row("画像を中央に配置", CheckRow(settings.CenterAlign, value => settings.CenterAlign = value, null)),
+            CheckRow(settings.CenterAlign, value => settings.CenterAlign = value, "画像を中央に配置"),
             Row("起動時の画像", ChoiceRow(options, selected, index => settings.StartupPreview = modes[index])));
     }
 
@@ -212,6 +212,7 @@ internal static class SettingsPage
         var hideTaskbar = new CheckBox
         {
             IsChecked = viewModel.HideTaskbarOnCapture,
+            Content = "キャプチャ時にタスク バーを隠す（撮影画像に写さない）",
             FontSize = SettingsMetrics.FontSize,
         };
         hideTaskbar.Checked += (_, _) => viewModel.HideTaskbarOnCapture = true;
@@ -227,31 +228,21 @@ internal static class SettingsPage
 
         return Section(
             "キャプチャ設定",
-            Row(
-                "キャプチャ時にメイン ウィンドウを隠す",
-                CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, null)),
-            Row(
-                "キャプチャ時にタスク バーを隠す（撮影画像に写さない）",
-                hideTaskbar),
-            Row(
-                "撮影・切り出しの後にクリップボードへコピーする",
-                CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, null)),
-            Row(
+            CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, "キャプチャ時にメイン ウィンドウを隠す"),
+            hideTaskbar,
+            CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, "撮影・切り出しの後にクリップボードへコピーする"),
+            GatedCheckRow(
+                settings.UseWindowsGraphicsCapture,
+                value => settings.UseWindowsGraphicsCapture = value,
                 "画面の取得に Windows.Graphics.Capture を使う",
-                GatedCheckRow(
-                    settings.UseWindowsGraphicsCapture,
-                    value => settings.UseWindowsGraphicsCapture = value,
-                    WindowsGraphicsCaptureSupport.IsSupported,
-                    WindowsGraphicsCaptureSupport.DescribeUnsupportedReason()),
-                WindowsGraphicsCaptureSupport.IsSupported),
-            Row(
+                WindowsGraphicsCaptureSupport.IsSupported,
+                WindowsGraphicsCaptureSupport.DescribeUnsupportedReason()),
+            GatedCheckRow(
+                settings.HideCaptureBorder,
+                value => settings.HideCaptureBorder = value,
                 "撮影中の枠を消す",
-                GatedCheckRow(
-                    settings.HideCaptureBorder,
-                    value => settings.HideCaptureBorder = value,
-                    WindowsGraphicsCaptureSupport.IsBorderControlSupported,
-                    BorderControlUnsupportedReason),
-                WindowsGraphicsCaptureSupport.IsBorderControlSupported));
+                WindowsGraphicsCaptureSupport.IsBorderControlSupported,
+                BorderControlUnsupportedReason));
     }
 
     /// <summary>矩形選択範囲の制限のセクションを生成する。</summary>
@@ -260,7 +251,7 @@ internal static class SettingsPage
     private static FrameworkElement BuildSelectionLimitSection(Settings settings)
         => Section(
             "矩形選択範囲の制限",
-            Row("画像外の選択を禁止", CheckRow(settings.ClampToSourceBounds, value => settings.ClampToSourceBounds = value, null)));
+            CheckRow(settings.ClampToSourceBounds, value => settings.ClampToSourceBounds = value, "画像外の選択を禁止"));
 
     /// <summary>ホットキーのセクションを生成する。</summary>
     /// <param name="settings">設定。</param>
@@ -503,13 +494,12 @@ internal static class SettingsPage
     /// <summary>ラベルと設定値の行を生成する。</summary>
     /// <param name="label">項目名。</param>
     /// <param name="control">設定値の入力。</param>
-    /// <param name="isLabelEnabled">項目名を有効として表示するか。 false の場合は淡色にする。</param>
     /// <returns>生成した行。</returns>
     /// <remarks>
-    /// <b>項目名も淡色にする理由</b>: 項目名はチェック ボックスの外側の <see cref="TextBlock"/> にあるため、
-    /// チェック ボックスだけを無効にすると文字が黒いまま残り、有効時の未チェックと見分けが付かない。
+    /// 真偽値の項目は本メソッドを使わず、<see cref="CheckRow"/> の文言として項目名を渡す
+    /// （チェック ボックスの印が文言の左へ来る。 他の UI 版と同じ並びになる）。
     /// </remarks>
-    private static FrameworkElement Row(string label, FrameworkElement control, bool isLabelEnabled = true)
+    private static FrameworkElement Row(string label, FrameworkElement control)
     {
         var grid = new Grid { ColumnSpacing = 5 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -521,7 +511,6 @@ internal static class SettingsPage
             VerticalAlignment = VerticalAlignment.Center,
             MinWidth = 170,
             FontSize = SettingsMetrics.FontSize,
-            Opacity = isLabelEnabled ? 1.0 : DisabledOpacity,
         };
         Grid.SetColumn(labelText, 0);
         Grid.SetColumn(control, 1);
@@ -533,18 +522,19 @@ internal static class SettingsPage
     /// <summary>実行環境で使えない場合に無効化するチェック ボックスを生成する。</summary>
     /// <param name="initial">初期値。</param>
     /// <param name="apply">変更を設定へ反映する処理。</param>
+    /// <param name="text">チェック ボックスの文言。</param>
     /// <param name="isSupported">この環境で設定できるか。</param>
     /// <param name="reason">使えない理由。 使える場合は使わない。</param>
     /// <returns>生成したチェック ボックス（使えない場合は理由を並べたもの）。</returns>
     /// <remarks>
     /// 使えない項目は<b>値も読み取り専用にする</b>（無効に見えるのに保存値が変わると、次の起動で
-    /// 効いているように見える）。 <b>理由は入力の隣へ淡色で書く</b>（無効にした要素はポインター入力を受けないため、
+    /// 効いているように見える）。 <b>理由は文言の右へ淡色で書く</b>（無効にした要素はポインター入力を受けないため、
     /// ツールチップは表示されない）。
     /// </remarks>
     private static FrameworkElement GatedCheckRow(
-        bool initial, Action<bool> apply, bool isSupported, string reason)
+        bool initial, Action<bool> apply, string text, bool isSupported, string reason)
     {
-        var check = (CheckBox)CheckRow(initial, apply, null);
+        var check = CheckRow(initial, apply, text);
         check.IsEnabled = isSupported;
         if (isSupported)
         {
@@ -572,7 +562,8 @@ internal static class SettingsPage
     /// <param name="apply">変更を設定へ反映する処理。</param>
     /// <param name="text">チェック ボックスの文言。 null の場合は空。</param>
     /// <returns>生成したチェック ボックス。</returns>
-    private static FrameworkElement CheckRow(bool initial, Action<bool> apply, string? text)
+    /// <remarks>項目名を文言として渡すと、チェック ボックスの印が文言の左へ来る（他の UI 版と同じ並び）。</remarks>
+    private static CheckBox CheckRow(bool initial, Action<bool> apply, string? text)
     {
         var check = new CheckBox
         {
