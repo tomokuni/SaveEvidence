@@ -1066,6 +1066,7 @@ internal static class CapturePage
         captureSession = new CaptureSessionControl(
             CaptureSettingsMapper.From(settings, ResolveRenderScaling(cropView)),
             AppLog.CreateLogger(nameof(CaptureSessionControl)));
+        ApplyCaptureSource(captureSession, settings);
 
         // 設定変更を Facade へ即時反映する（部分更新・検証・同値スキップ・適用ログはコアが単一所有する）。
         // ページは 1 度だけ生成されるため、購読しないと設定画面での変更が切り出し・撮影へ届かない。
@@ -1078,6 +1079,7 @@ internal static class CapturePage
             {
                 session.AppearanceSettings = CaptureSettingsMapper.From(
                     settings, ResolveRenderScaling(cropView));
+                ApplyCaptureSource(session, settings);
             }
             catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
@@ -1085,6 +1087,16 @@ internal static class CapturePage
             }
         };
         return host;
+    }
+
+    /// <summary>画面の取得方式と枠の設定を撮影セッションへ反映する。</summary>
+    /// <param name="session">撮影セッション。</param>
+    /// <param name="settings">アプリ設定。</param>
+    /// <remarks>使える方式かどうかの判定は撮影セッション（<c>CaptureServiceFactory</c>）が行う。</remarks>
+    private static void ApplyCaptureSource(CaptureSessionControl session, Settings settings)
+    {
+        session.CaptureMethod = CaptureSettingsMapper.ToCaptureMethod(settings);
+        session.ShouldHideCaptureBorder = settings.HideCaptureBorder;
     }
 
     /// <summary>プレビューを表示している画面の描画倍率を求める（100% = 1.0）。</summary>

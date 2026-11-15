@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Capture;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 
@@ -69,6 +70,12 @@ internal static class CaptureSettingsMapper
             SubLineBackgroundColor: ParseColor(settings.SubLineBackgroundColor),
             DisplayScaleScaling: 0);
     }
+
+    /// <summary>設定から画面の取得方式を求める。</summary>
+    /// <param name="settings">アプリ設定。</param>
+    /// <returns>取得方式。 <c>WindowsGraphicsCapture</c> を選んでいても、実行環境で使えない場合は GDI になる。</returns>
+    public static CaptureMethod ToCaptureMethod(Settings settings)
+        => settings.UseWindowsGraphicsCapture ? CaptureMethod.WindowsGraphicsCapture : CaptureMethod.Gdi;
 
     /// <summary>設定の色文字列（<c>#AARRGGBB</c> / <c>#RRGGBB</c>）を色へ変換する。</summary>
     /// <param name="argb">設定の色文字列。 前後の空白と <c>#</c> は省略可能。</param>

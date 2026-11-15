@@ -240,7 +240,7 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
-          "EsUtil.Platform.Core": "[0.7.2, )",
+          "EsUtil.Platform.Core": "[0.7.5, )",
           "Parts.CapturePreview.Core": "[0.6.0, )",
           "Parts.LineDetection": "[0.6.0, )",
           "Serilog": "[4.4.0, )",
@@ -252,25 +252,25 @@
         "type": "Project",
         "dependencies": {
           "Aprillz.MewUI.Windows": "[0.22.1, )",
-          "EsUtil.Platform.Core": "[0.7.2, )",
-          "EsUtil.Ui.MewUI.Interop": "[0.7.2, )",
-          "EsUtil.Ui.MewUI.Loupe": "[0.7.2, )",
-          "EsUtil.Ui.MewUI.Marquee": "[0.7.2, )",
+          "EsUtil.Platform.Core": "[0.7.5, )",
+          "EsUtil.Ui.MewUI.Interop": "[0.7.5, )",
+          "EsUtil.Ui.MewUI.Loupe": "[0.7.5, )",
+          "EsUtil.Ui.MewUI.Marquee": "[0.7.5, )",
           "Parts.CapturePreview.Core": "[0.6.0, )"
         }
       },
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.7.2, )",
-          "EsUtil.Feature.Marquee.Core": "[0.7.2, )",
-          "EsUtil.Platform.Core": "[0.7.2, )"
+          "EsUtil.Feature.Loupe.Core": "[0.7.5, )",
+          "EsUtil.Feature.Marquee.Core": "[0.7.5, )",
+          "EsUtil.Platform.Core": "[0.7.5, )"
         }
       },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.7.2, )",
+          "EsUtil.Platform.Core": "[0.7.5, )",
           "OpenCvSharp5": "[5.0.0.20261109, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261109, )"
         }
@@ -280,9 +280,9 @@
         "dependencies": {
           "App.Core": "[0.6.0, )",
           "Aprillz.MewUI.Windows": "[0.22.1, )",
-          "EsUtil.Ui.MewUI.ColorSelector": "[0.7.2, )",
-          "EsUtil.Ui.MewUI.Interop": "[0.7.2, )",
-          "EsUtil.Ui.MewUI.Thumbnail": "[0.7.2, )",
+          "EsUtil.Ui.MewUI.ColorSelector": "[0.7.5, )",
+          "EsUtil.Ui.MewUI.Interop": "[0.7.5, )",
+          "EsUtil.Ui.MewUI.Thumbnail": "[0.7.5, )",
           "Microsoft.Extensions.Logging": "[11.0.0, )",
           "Parts.CapturePreview.ControlMewUI": "[0.6.0, )",
           "Parts.CapturePreview.Core": "[0.6.0, )",
@@ -312,91 +312,91 @@
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "BntICrDgGid6/zCnuzNYbgWuTqveNcaH8lT6FYemXHQ/CtE8bLZp9u8G2yRG/3z0vKdblk064PMaNwTPskxd0g==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "Ha33RK2lz/L+xdpp/Cz8BfCvKeCYuQnC0vvHZXafaMtqsohkJUKrPIF6LAfZmswM7AVRw/KhrSiLyq/aPAB69Q==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "S4IC2Rsauzgn+mj3EA7v+SKsot/FdDZd2WYPkZZL4SY1BBA1KFInF+wJaisVBPezLylipBn+bojPtCpaqnW3fA==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "vsxtbciPVwVJOfF/ZH8pue1AjZoJ4FpQICPWcQ3Cai3SUTUYmM0fXVfkDrmWsoil82DX//Acidw4/gAgiFC2NA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Feature.Thumbnail.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "94X2DkLFH/5ILXiAX/5tefPY71ggx2HfuBS1jJSf0i67cS7F83I4/BOQ9FQ+wL99z9+n8llLqbQngr+NXcbRgg==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "2ZMQ98CJly1w+E2W/nR5DNgWrbHNhDGgMCGig/6w3mIaBNGH1IkEMkR9jR9ioTsFLQ/AWpej2D76j08es2005w==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "5FewWXY8yzOEMZzqqP3o0dEQEXTib9dOuZgOArFqIfHvRsbDxSj4nUEl9ViMBnM/eBKshvarY/w+DKAAbIcO+A=="
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "z5qbdH8q81UjmEvzoQctIx0OLaTxZul0p8ZBOqvfR7GtkWK/DmMPILrXW6hh3XmXFaaR0t5jGeLV38fEXSeJMg=="
       },
       "EsUtil.Ui.MewUI.ColorSelector": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "FNi2eeaZ9Gb+YhmqhRsUqiSz2grsESRaxw5dEinPeTJDzRqQPnFgfm+Wkx75oS8ZcvDxf/HNYxC+TNG7YW6zyQ==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "nFa2/iLFC38RJLd/AURPgL1Bf97U/EBhYo9kxHyrQxhE6/vlJCuOkiM723g21XRY+k1rWwHYiyLjUSVOMZBchQ==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Ui.MewUI.Interop": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "Rt+NAQBziOzEYnau2hn7ivdt+c/UbNzG63qCSJ7Mz01S0bZvVd4kBAeVGqwqRI0vktAhpjvuMuUTAEtjoxiugA==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "CTYgDzihSImCvzKiRIzoMPDsqXMRx+HJD+dLHlFj4lVgjzEfxtQCs89d1tJ8yqZvkVpcxCTHz0/dpPAUbEr7KA==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Ui.MewUI.Loupe": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "+4XwjpyydbAkE53QHbVgxmChPBKsSSI/48ONb1rFo5wccnOz52uRo3y1PdvQujkNpllH7w9mJH29tn/QGrIU2Q==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "FGBmlE00UJZNF8UqvKL/BLx8lfOZoduNbINQTJ/eoGW2WhTGzWYhGOdVUECkG6f+jqUsU8ly7Hv0MV0ITNH3dg==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Loupe.Core": "0.7.2",
-          "EsUtil.Platform.Core": "0.7.2",
-          "EsUtil.Ui.MewUI.Interop": "0.7.2"
+          "EsUtil.Feature.Loupe.Core": "0.7.5",
+          "EsUtil.Platform.Core": "0.7.5",
+          "EsUtil.Ui.MewUI.Interop": "0.7.5"
         }
       },
       "EsUtil.Ui.MewUI.Marquee": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "jPJ1Z4w/upbJE+UOVODAxkcErMyErldgQbxS7GNwJNLrA0fXuGe/1r6Av1qx6U7L1JDPXRTHdi5Ro2EG66Mq6Q==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "wMs/0QiG9CNFdmF28YkOnwRzWCgfRS2qRvYGeXrEwV8hp4moKoWXWVzPsXd2rErlBh8syQhhqu5/rs2Vx5yODw==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Marquee.Core": "0.7.2",
-          "EsUtil.Platform.Core": "0.7.2",
-          "EsUtil.Ui.MewUI.Interop": "0.7.2"
+          "EsUtil.Feature.Marquee.Core": "0.7.5",
+          "EsUtil.Platform.Core": "0.7.5",
+          "EsUtil.Ui.MewUI.Interop": "0.7.5"
         }
       },
       "EsUtil.Ui.MewUI.Thumbnail": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "tv983j3Fe8hiHOtW8GbQBEq8DJbdJM8jQMNMZbtB3MM7J7sLtjKLkmKZTQahr6F8pGaBzfhATcit3GORArfpuQ==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "DszNCXbWUZYNQvCJyuppgXpM17hrE2fw06i98WUiauzmp4oSctpeaWECL2Gj6SAyLoTqsoeeP+0SxJaZ6p7Ifg==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Thumbnail.Core": "0.7.2",
-          "EsUtil.Platform.Core": "0.7.2",
-          "EsUtil.Ui.MewUI.Interop": "0.7.2"
+          "EsUtil.Feature.Thumbnail.Core": "0.7.5",
+          "EsUtil.Platform.Core": "0.7.5",
+          "EsUtil.Ui.MewUI.Interop": "0.7.5"
         }
       },
       "Microsoft.Extensions.DependencyInjection": {

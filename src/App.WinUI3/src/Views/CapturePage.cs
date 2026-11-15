@@ -611,6 +611,7 @@ internal static class CapturePage
             CaptureSettingsMapper.From(settings, ReadRenderScaling(crop)),
             AppLog.CreateLogger(nameof(CaptureSessionControl)));
         captureSession = session;
+        ApplyCaptureSource(session, settings);
 
         // 設定変更を撮影セッションへ即時反映する（部分更新・検証・同値スキップはコアが単一所有する）
         PropertyChangedEventHandler applyAppearance = (_, e) =>
@@ -618,6 +619,7 @@ internal static class CapturePage
             try
             {
                 session.AppearanceSettings = CaptureSettingsMapper.From(settings, ReadRenderScaling(crop));
+                ApplyCaptureSource(session, settings);
             }
             catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
@@ -736,6 +738,16 @@ internal static class CapturePage
             session.Dispose();
         };
         return host;
+    }
+
+    /// <summary>画面の取得方式と枠の設定を撮影セッションへ反映する。</summary>
+    /// <param name="session">撮影セッション。</param>
+    /// <param name="settings">アプリ設定。</param>
+    /// <remarks>使える方式かどうかの判定は撮影セッション（<c>CaptureServiceFactory</c>）が行う。</remarks>
+    private static void ApplyCaptureSource(CaptureSessionControl session, Settings settings)
+    {
+        session.CaptureMethod = CaptureSettingsMapper.ToCaptureMethod(settings);
+        session.ShouldHideCaptureBorder = settings.HideCaptureBorder;
     }
 
     /// <summary>プレビューの下地色（画像領域の背景色）を反映する。</summary>

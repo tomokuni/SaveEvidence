@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Capture;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Xunit;
@@ -74,6 +75,17 @@ public class CaptureSettingsMapperTests
         var result = CaptureSettingsMapper.From(settings, 1.0);
 
         Assert.Equal((byte)0, result.BorderColor!.Value.A);
+    }
+
+    /// <summary>撮影方式が設定どおりに写ることを検証する。</summary>
+    [Fact]
+    internal void 撮影方式は設定に従う()
+    {
+        Assert.Equal(CaptureMethod.Gdi, CaptureSettingsMapper.ToCaptureMethod(new Settings()));
+
+        var settings = new Settings { UseWindowsGraphicsCapture = true };
+
+        Assert.Equal(CaptureMethod.WindowsGraphicsCapture, CaptureSettingsMapper.ToCaptureMethod(settings));
     }
 
     /// <summary>サイズ ラベルの文字色が「キャプチャ文字色」と共用されることを検証する。</summary>
