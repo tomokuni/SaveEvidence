@@ -303,7 +303,7 @@
           "EsUtil.Ui.WinUI3.Marquee": "[0.7.5, )",
           "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2957, )",
           "Microsoft.WindowsAppSDK": "[2.6.5, )",
-          "Parts.CapturePreview.Core": "[0.6.0, )"
+          "Parts.CapturePreview.Core": "[0.7.0, )"
         }
       },
       "parts.capturepreview.core": {
