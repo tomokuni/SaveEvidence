@@ -13,7 +13,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.Crop;
 /// Fit の中央寄せ補正を含めて画像と正確に一致する。<br/>
 /// ヒットテストは無効化し、下のズームビューが入力を受け取れるようにする。<br/>
 /// <b>XAML の図形だけを使う</b>: 描画内容は <see cref="DrawList"/> を組み立てて <see cref="RectShapeLayer"/> へ渡す<br/>
-/// （移行前の Skia のキャンバスは使わない）。
+/// （Skia のキャンバスは使わない）。
 /// </remarks>
 internal sealed partial class RectOverlayCanvas : Grid
 {

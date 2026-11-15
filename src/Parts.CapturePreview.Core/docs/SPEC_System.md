@@ -432,7 +432,7 @@ sequenceDiagram
 - **一方の UI だけが使うコア型もコアに置く**: `ImageColorMath`（撮影の下地色の決定。 現在は MewUI が使用）と `OverlayRectRasterizer`（ルーペ画像への矩形ラスタライズ。 現在は Avalonia が使用）は、**UI フレームワークに依存しない規則**であり、コアに置く（UI 側へ移すと、もう一方の UI が同じ必要を持った時点で再びコピーになる。 「どちらの UI が使うか」は配置の基準にしない）。
 - **ズームの表示規則（中央寄せ・スクロールバー値の範囲）はコアが単一所有する**: 中央寄せ補正は `ZoomMath.MaxCentered`（Fit 中は `ComputeImageOrigin`）、スクロールバー値の [0, 最大オフセット] へのクランプは `ZoomScrollBarMetrics.ClampOffset` が持ち、UI は自前の式を書かない（UI ごとに条件を書くと、画像がビューポートに収まる軸の扱いがずれる）。
 - **ログ定義は本アセンブリで 1 つ**: 撮影・切り出し・ズーム・設定のログは `CapturePreviewLogMessage` が同居する（[`.github/ログ規約.md`](../../../.github/ログ規約.md) の「定義クラスはアセンブリごとに 1 つ」に従う）。 カテゴリ別に分割しない。
-- **依存の宣言は推移参照で省略しない**: 本プロジェクトは機能アセンブリ（`EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Loupe.Core`）を**直接宣言する**（`Parts.CapturePreview.Core.csproj`）。 本プロジェクトは UI 非依存のコアであり、UI コントロール（`EsUtil.Ui.*`）の**参照元ではない**ため、推移参照では解決できない（[`.github/依存関係.md`](../../../.github/依存関係.md) §1）。 外観型とコアの設定型（`MarqueeOptions` / `LoupeOptions`）は 0.4.0 以降同じパッケージが公開するため、宣言は機能ごとに 1 つで足りる。
+- **依存の宣言は推移参照で省略しない**: 本プロジェクトは機能アセンブリ（`EsUtil.Feature.Marquee.Core` / `EsUtil.Feature.Loupe.Core`）を**直接宣言する**（`Parts.CapturePreview.Core.csproj`）。 本プロジェクトは UI 非依存のコアであり、UI コントロール（`EsUtil.Ui.*`）の**参照元ではない**ため、推移参照では解決できない（[`.github/依存関係.md`](../../../.github/依存関係.md) §1）。 外観型とコアの設定型（`MarqueeOptions` / `LoupeOptions`）は同じパッケージが公開するため、宣言は機能ごとに 1 つで足りる。
 
 ## 8. 検証
 

@@ -129,7 +129,7 @@ internal static class AppStyles
 
     /// <summary>ツールバーのボタン（押している間）のスタイル名。</summary>
     /// <remarks>
-    /// MewUI 0.21.1 ではツールヒントを閉じる際に押下状態（<c>IsPressed</c>）が失われるため、<br/>
+    /// MewUI ではツールヒントを閉じる際に押下状態（<c>IsPressed</c>）が失われるため、<br/>
     /// 押している間の背景は <see cref="VisualStateFlags.Pressed"/> に頼らず、<br/>
     /// 押下を検出した側がスタイル名を差し替えて表す（<c>ClickableToolTip</c> と同じ回避策）。
     /// </remarks>

@@ -29,7 +29,7 @@
 - [20. テスト方針](#20-テスト方針)
   - [20.1 実機検証（手順）](#201-実機検証手順)
   - [20.2 端に接する UI の当たり判定（`WM_NCHITTEST` の実測）](#202-端に接する-ui-の当たり判定wm_nchittest-の実測)
-  - [20.3 実測知見（MewUI 0.21.1）](#203-実測知見mewui-0211)
+  - [20.3 実測知見（MewUI）](#203-実測知見mewui)
 
 ## 1. システム概要
 
@@ -45,7 +45,7 @@ Avalonia 版 `App.AvaloniaUI` と**同じコア**を使うため、設定ファ�
 | --- | --- |
 | 対象フレームワーク | .NET 11（`net11.0-windows10.0.17763.0`） |
 | 言語 | C# 14 |
-| UI フレームワーク | MewUI（`Aprillz.MewUI` 0.21.1 固定） |
+| UI フレームワーク | MewUI（`Aprillz.MewUI.Windows`。 版は `Directory.Packages.props` が単一所有する） |
 | グラフィックス | MewUI の標準描画（`IGraphicsContext`。 画像は `ImageSource.FromBgraPixels` で取り込む） |
 | 描画バックエンド | Direct2D + Win32 プラットフォームホスト（Skia を使わない） |
 | MVVM | `CommunityToolkit.Mvvm`（コアの `MainViewModel` をそのまま使用） |
@@ -749,7 +749,7 @@ MewUI のウィンドウは**端から 6 DIP をサイズ変更の判定領域**
 未対応だと座標と撮影が `96/dpi` に仮想化され、ウィンドウの下端・右端が切れた画像になり、
 レイアウトの誤判定（実際に発生）を招く。
 
-### 20.3 実測知見（MewUI 0.21.1）
+### 20.3 実測知見（MewUI）
 
 ウィンドウ配置の復元を実装する過程で実測した API の挙動。 同じ症状に再遭遇したときの判断材料とする。
 

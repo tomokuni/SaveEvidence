@@ -28,7 +28,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.ZoomView;
 /// <br/>
 /// <b>描画ライブラリを持たない</b>: 画像は <see cref="CompositionImageView"/>（Composition のサーフェス）へ、<br/>
 /// スクロールバーは <see cref="RectShapeLayer"/>（XAML の矩形）へ写す。 拡大・縮小とクリップは GPU が行うため、<br/>
-/// 画素処理のコードを持たない（移行前の Skia のキャンバスは使わない）。<br/>
+/// 画素処理のコードを持たない（Skia のキャンバスは使わない）。<br/>
 /// 見た目（スクロールバーの太さ・余白・下地色）は <see cref="ZoomViewAppearance"/> が単一所有し、ホストが設定する。
 /// </remarks>
 public sealed partial class ZoomViewControl : Grid
@@ -106,8 +106,7 @@ public sealed partial class ZoomViewControl : Grid
     /// <param name="blurRadius">ぼかしの半径（DIP）。</param>
     /// <param name="argb">影の色（<c>0xAARRGGBB</c>）。</param>
     /// <remarks>
-    /// 移行前は <c>SurroundRenderer</c> フックで 1 画素の帯を数百枚描いて影を近似していた。<br/>
-    /// 現在は Composition の <c>DropShadow</c> を使うため、画像の輪郭へ実際のぼかしが付く<br/>
+    /// Composition の <c>DropShadow</c> を使うため、画像の輪郭へ実際のぼかしが付く<br/>
     /// （要素を増やさず、画像の端の混色と影の間に線が出ない）。
     /// </remarks>
     public void SetShadow(double blurRadius, uint argb) => _image.SetShadow(blurRadius, argb);

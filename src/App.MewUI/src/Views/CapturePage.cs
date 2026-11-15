@@ -309,7 +309,7 @@ internal static class CapturePage
 
         // 自動保存のトグル（保存ボタンの右。 有効な間は画像が変わるたびに保存する）。
         // 高さは 4 UI 版で揃える（既定の最小高に負けないよう MinHeight も同じ値にする）。
-        // ツールヒントは付けない（MewUI 0.21.1 はツールヒント表示中の押下を取り消すため、
+        // ツールヒントは付けない（MewUI はツールヒント表示中の押下を取り消すため、
         // トグルが反応しないことがある。 文言は自己説明的な「自動保存」にする）
         var autoSaveButton = new ToggleButton()
             .StyleName(AppStyles.ToolbarToggle)
@@ -802,7 +802,7 @@ internal static class CapturePage
         button.WithToolTip(toolTip, onClick);
 
         // 押している間は背景を濃くする（ホバーより濃い）。
-        // MewUI 0.21.1 はツールヒントを閉じる際に押下状態を失うため（ClickableToolTip のコメント参照）、
+        // MewUI はツールヒントを閉じる際に押下状態を失うため（ClickableToolTip のコメント参照）、
         // 状態ではなくスタイル名の差し替えで表す。
         button.MouseDown += e =>
         {

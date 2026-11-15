@@ -21,7 +21,7 @@ SaveEvidence の **MewUI 版アプリ**（実行ファイル `SaveEvidence.MewUI
 ## 2. 前提
 
 - .NET 11 / Windows 10 バージョン 1809（ビルド 17763）以降
-- `Aprillz.MewUI` **0.21.1 固定**（API が安定化中（0.x）のため、破壊的変更を避けて固定する）
+- `Aprillz.MewUI.Windows` を**固定の版**で参照する（API が安定化中（0.x）のため、破壊的変更を避ける。 版は `Directory.Packages.props` が単一所有する）
 - MewUI は **コードファースト**（XAML を持たない）。 画面は C# のマークアップで組む
 
 ## 3. 実行
@@ -49,7 +49,7 @@ src/App.MewUI/
 ├── mewui-initial.png        # 検証時の実行結果（証跡）
 ├── mewui-resized.png        # ウィンドウ縮小時の実行結果（証跡）
 └── src/
-    ├── App.MewUI.csproj     # WinExe / net11.0-windows10.0.17763.0 / MewUI 0.21.1 固定
+    ├── App.MewUI.csproj     # WinExe / net11.0-windows10.0.17763.0 / MewUI（版は Directory.Packages.props）
     ├── Program.cs           # 登録 → コアの組み立て（AppServices） → ホットキー登録 → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / UndoHistory / FolderView）
     ├── Services/
