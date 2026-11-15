@@ -74,13 +74,13 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 
 **描画計画のまとめ型**: 描画計画（`XxxDrawPlan`）は「フレーム 1 枚分」のまとめ型であり、Presenter から UI へ渡す唯一の描画契約です。 項目が複数の値を 1 つの概念としてまとめる場合にだけ専用型を作ります（単一のコレクションで足りる項目に型を作りません）。
 
-アセンブリ参照の向きは `UI → 提示層（Presenter）→ Core` です（提示層は Core の幾何（`XxxGeometry`）を使う）。 **逆向きの参照はありません**（Core は提示層もブリッジ（`EsUtil.Ui.*.Interop`）も参照しない）。 0.4.0 以降、`EsUtil` 側では提示層がコアと同じアセンブリ（`EsUtil.Feature.<機能>.Core`）に入っており、層の分離は**フォルダと名前空間**（`src/Core/` / `src/Presenter/`）だけが担います（コアから提示層への参照は禁止のままです）。
+アセンブリ参照の向きは `UI → 提示層（Presenter）→ Core` です（提示層は Core の幾何（`XxxGeometry`）を使う）。 **逆向きの参照はありません**（Core は提示層もブリッジ（`EsUtil.Ui.*.Interop`）も参照しない）。 `EsUtil` 側では提示層がコアと同じアセンブリ（`EsUtil.Feature.<機能>.Core`）に入っており、層の分離は**フォルダと名前空間**（`src/Core/` / `src/Presenter/`）だけが担います（コアから提示層への参照は禁止のままです）。
 
 **コントロールを差し替えるには**: 描画計画の構成を変える場合は `XxxPresenter` を継承して `ResolveDrawPlan` を上書きする（または `XxxPresenterXxx` を作る）。 見た目だけを変える場合は外観（`XxxAppearance`）を差し替える。 コアの公開 API だけで描画計画を組み立てられるため、`XxxPresenter` を使わない独自実装も可能です。
 
 ## 5. コントロールごとの層
 
-| コントロール | Core | Presenter（提示。 0.4.0 以降は Core と同一アセンブリ） | UI |
+| コントロール | Core | Presenter（提示。 Core と同一アセンブリ） | UI |
 | --- | --- | --- | --- |
 | `MarqueeControl` | あり | あり（提示 + 外観。 `EsUtil.Feature.Marquee.Core` に同梱） | AvaloniaUI / MewUI / WinUI3 / WinForms |
 | `LoupeControl` | あり | あり（提示 + 外観。 `EsUtil.Feature.Loupe.Core` に同梱） | AvaloniaUI / MewUI / WinUI3 / WinForms |

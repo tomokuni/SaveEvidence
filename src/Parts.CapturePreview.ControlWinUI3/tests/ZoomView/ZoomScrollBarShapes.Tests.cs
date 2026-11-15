@@ -10,7 +10,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.Tests.ZoomView;
 /// <summary><see cref="ZoomScrollBarShapes"/> のテスト（描画リストの内容と順序）。</summary>
 /// <remarks>
 /// 画素ではなく描画リストを検証する（XAML の要素はウィンドウ無しで生成できないため、要素の生成は対象外とする）。<br/>
-/// 検証するのは「どの矩形がどの色で、どの順に並ぶか」であり、移行前の画素テストと同じ回帰検出力を持つ。
+/// 検証するのは「どの矩形がどの色で、どの順に並ぶか」であり、画素で比べるテストと同じ回帰検出力を持つ。
 /// </remarks>
 public class ZoomScrollBarShapesTests
 {

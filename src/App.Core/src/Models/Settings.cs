@@ -317,7 +317,7 @@ public sealed partial class Settings : ObservableObject
 
     /// <summary>画面の取得に Windows.Graphics.Capture を使うかどうかを取得または設定する。</summary>
     /// <remarks>
-    /// デフォルトは false（GDI の <c>BitBlt</c>）。 true にすると隠れた領域も写るが、本ビルドではカーソルも写る。<br/>
+    /// デフォルトは false（GDI の <c>BitBlt</c>）。 true にすると隠れた領域も写る。 撮影はカーソルを含めて行う。<br/>
     /// **使えるかは実行環境に依存する**（Windows 10 バージョン 1809 / ビルド 17763 以降）。 設定画面は
     /// <c>WindowsGraphicsCaptureSupport.IsSupported</c> が false のときこの項目を無効にする。
     /// </remarks>
@@ -326,8 +326,8 @@ public sealed partial class Settings : ObservableObject
 
     /// <summary>Windows.Graphics.Capture の撮影中に枠（OS が描く枠）を消すかどうかを取得または設定する。</summary>
     /// <remarks>
-    /// デフォルトは false（枠を描く）。 対象フレームワーク（17763）の射影に <c>IsBorderRequired</c> が無いため、
-    /// **本ビルドでは設定できない**。 設定画面は <c>WindowsGraphicsCaptureSupport.IsBorderControlSupported</c> が
+    /// デフォルトは false（枠を描く）。 設定できるかは OS が決める（<c>IsBorderRequired</c> は Windows 11 /
+    /// ビルド 22000 以降）。 設定画面は <c>WindowsGraphicsCaptureSupport.IsBorderControlSupported</c> が
     /// false のときこの項目を無効にする。
     /// </remarks>
     [ObservableProperty]

@@ -103,7 +103,7 @@ Common-Controls v6 を宣言しています。
 
 - Windows App Runtime と .NET を**同梱**します（`SaveEvidenceSelfContained=true` + `PublishSingleFile=true`。
   `App.WinUI3.csproj` の条件付きプロパティ）。 ランタイムが 1 つも入っていない環境でもそのまま起動します。
-- サイズは大きくなります（実測 2026-11-10: **293.5 MB の単一 exe**。 AOT 版は約 79 MB）。
+- サイズは大きくなります（配布物の構成とサイズは `.github/verify/verifyPublish.ps1` が実測して表示します）。
 - 起動時に一時フォルダーへ展開するため、初回の起動は AOT 版より遅くなります。
 - **`-p:WindowsAppSDKSelfContained=true` をコマンド ラインへ直接渡さないでください**（参照プロジェクトへ
   伝播し、`WindowsAppSDKSelfContained requires a supported Windows architecture` で失敗します。 実測 2026-11-09）。
