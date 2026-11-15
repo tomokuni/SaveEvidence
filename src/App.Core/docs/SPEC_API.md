@@ -96,7 +96,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `AutoSave` | `bool` | 自動保存（有効な間は画像が変わるたびに保存する。 4 UI 版で共有。 既定は無効） |
 | `HideTaskbarOnCapture` | `bool` | キャプチャ時にタスク バーを隠す（撮影画像に写さない。 4 UI 版で共有。 既定は無効） |
 | `UseWindowsGraphicsCapture` | `bool` | 画面の取得に Windows.Graphics.Capture を使う（既定は無効 = GDI。 4 UI 版で共有） |
-| `HideCaptureBorder` | `bool` | 撮影中の枠を消す（既定は無効。 本ビルドでは枠を制御できないため無視される） |
+| `HideCaptureBorder` | `bool` | 撮影中の枠を消す（既定は無効。 Windows 11 / ビルド 22000 未満では無視される） |
 | `CopyAfterCapture` | `bool` | 撮影・切り出しの後に画像をクリップボードへコピーする（4 UI 版で共有。 既定は無効） |
 | `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | フォルダビューのアイコンサイズ |
 

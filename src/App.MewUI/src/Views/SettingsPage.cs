@@ -32,7 +32,7 @@ internal static class SettingsPage
     /// <remarks>Avalonia 版と同じ値（<c>MinWidth="180"</c>）。</remarks>
     /// <summary>「撮影中の枠を消す」が使えない理由（ツールヒントに出す）。</summary>
     private const string BorderControlUnsupportedReason =
-        "このビルドでは撮影中の枠を消せません（対象 OS の API が使えないため）";
+        "この環境では撮影中の枠を消せません（Windows 11 / ビルド 22000 以降が必要です）";
 
     /// <summary>設定できない項目の淡色の不透明度。</summary>
     private const double DisabledOpacity = 0.45;
