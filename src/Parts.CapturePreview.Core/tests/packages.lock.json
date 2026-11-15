@@ -1,7 +1,7 @@
 {
   "version": 2,
   "dependencies": {
-    "net11.0-windows10.0.17763": {
+    "net11.0-windows10.0.20348": {
       "coverlet.collector": {
         "type": "Direct",
         "requested": "[10.1.0, )",
@@ -184,34 +184,34 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.6.5, )",
-          "EsUtil.Feature.Marquee.Core": "[0.6.5, )",
-          "EsUtil.Platform.Core": "[0.6.5, )"
+          "EsUtil.Feature.Loupe.Core": "[0.7.1, )",
+          "EsUtil.Feature.Marquee.Core": "[0.7.1, )",
+          "EsUtil.Platform.Core": "[0.7.1, )"
         }
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.5, )",
-        "resolved": "0.6.5",
-        "contentHash": "nNjHSUMV1nMgXAN2cQCoIxUu2IF6vF0zYuDxTsKRt3hFcppcFtnot3BKIxplVdOl7WbvvBfKDOPkDgmCfHGX6w==",
+        "requested": "[0.7.1, )",
+        "resolved": "0.7.1",
+        "contentHash": "X1gMjq7ci6pvIkfwYcnpW15oVQZ8IPUlzGbwngFVVzupoLyekr8R9ThQsEMDodPqTlC3BH4uUZDyp2DmHhpLGA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.5"
+          "EsUtil.Platform.Core": "0.7.1"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.5, )",
-        "resolved": "0.6.5",
-        "contentHash": "eJicqtNcA/F/OsRFXkJVJcg8gkGuPrn4OG/PtljJz7rMoN/dqnzif6QCh4ubscWjdK+1bbxSMRSQ4QK+n8o28g==",
+        "requested": "[0.7.1, )",
+        "resolved": "0.7.1",
+        "contentHash": "vBHvVvjfuUDRf3hhu79GsNsprVjQ+/qCDDAzceR496fjl2TDFLptr5aPBED6+XOF1WAKbgfNlWaND8PMvwJ2gA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.6.5"
+          "EsUtil.Platform.Core": "0.7.1"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.6.5, )",
-        "resolved": "0.6.5",
-        "contentHash": "cGGilU7BlaTrjoCyN9SlYVqg7vpHGtcz3mMseEB2acWfMvdOPyAAAPxcOjoqOdCSa2QH8+Td4Zm0oilEZMSk7A=="
+        "requested": "[0.7.1, )",
+        "resolved": "0.7.1",
+        "contentHash": "PnxlqWl1OAjRTKeKgILmlaUopvTENM8++St+v4Udr42fFs3dkMr1nOBFiHIHEq8KesM/0s4u32pe8B0xW4qlJQ=="
       }
     }
   }
