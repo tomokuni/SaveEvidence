@@ -34,6 +34,13 @@ internal static class SettingsPage
     private const string BorderControlUnsupportedReason =
         "この環境では撮影中の枠を消せません（Windows 11 / ビルド 22000 以降が必要です）";
 
+    /// <summary>「撮影中の枠を消す」が他の設定に依存して使えない理由（ツールヒントに出す）。</summary>
+    private const string BorderRequiresWgcReason =
+        "「画面の取得に Windows.Graphics.Capture を使う」がオンのときだけ使えます";
+
+    /// <summary>「撮影中の枠を消す」を置く行の段下げ（DIP）。</summary>
+    private const double BorderRowIndent = 20;
+
     /// <summary>設定できない項目の淡色の不透明度。</summary>
     private const double DisabledOpacity = 0.45;
 
@@ -210,13 +217,52 @@ internal static class SettingsPage
             }
         };
 
+        var useWindowsGraphicsCapture = GatedCheckRow(
+            settings.UseWindowsGraphicsCapture,
+            value => settings.UseWindowsGraphicsCapture = value,
+            "画面の取得に Windows.Graphics.Capture を使う",
+            WindowsGraphicsCaptureSupport.IsSupported,
+            WindowsGraphicsCaptureSupport.DescribeUnsupportedReason());
+        var hideCaptureBorder = GatedCheckRow(
+            settings.HideCaptureBorder,
+            value => settings.HideCaptureBorder = value,
+            "撮影中の枠を消す",
+            IsBorderAvailable(),
+            BorderUnavailableReason());
+
+        // 画面の取得方式に依存することを示すため段下げする
+        hideCaptureBorder.Row.Margin(new Thickness(BorderRowIndent, 0, 0, 0));
+
+        // 枠を消せるのは Windows.Graphics.Capture のときだけなので、取得方式の選択へ追従させる
+        settings.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(Settings.UseWindowsGraphicsCapture), StringComparison.Ordinal))
+            {
+                ApplyBorderAvailability();
+            }
+        };
+
         return Section(
             "キャプチャ設定",
             Row("", CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, "キャプチャ時にメインウィンドウを隠す")),
             Row("", hideTaskbar),
             Row("", CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, "撮影・切り出しの後にクリップボードへコピーする")),
-            Row("", GatedCheckRow(settings.UseWindowsGraphicsCapture, value => settings.UseWindowsGraphicsCapture = value, "画面の取得に Windows.Graphics.Capture を使う", WindowsGraphicsCaptureSupport.IsSupported, WindowsGraphicsCaptureSupport.DescribeUnsupportedReason())),
-            Row("", GatedCheckRow(settings.HideCaptureBorder, value => settings.HideCaptureBorder = value, "撮影中の枠を消す", WindowsGraphicsCaptureSupport.IsBorderControlSupported, BorderControlUnsupportedReason)));
+            Row("", useWindowsGraphicsCapture.Row),
+            Row("", hideCaptureBorder.Row));
+
+        bool IsBorderAvailable()
+            => WindowsGraphicsCaptureSupport.IsBorderControlSupported && settings.UseWindowsGraphicsCapture;
+
+        string BorderUnavailableReason()
+            => WindowsGraphicsCaptureSupport.IsBorderControlSupported ? BorderRequiresWgcReason : BorderControlUnsupportedReason;
+
+        void ApplyBorderAvailability()
+        {
+            var isAvailable = IsBorderAvailable();
+            hideCaptureBorder.Box.IsEnabled(isAvailable);
+            hideCaptureBorder.Hint.Text(BorderUnavailableReason());
+            hideCaptureBorder.Hint.IsVisible = !isAvailable;
+        }
     }
 
     /// <summary>矩形選択範囲の制限のセクションを構築する。</summary>
@@ -487,31 +533,29 @@ internal static class SettingsPage
         return box;
     }
 
-    /// <summary>実行環境で使えない場合に無効化するチェック ボックスを構築する。</summary>
+    /// <summary>実行環境や他の設定に依存して無効にするチェック ボックスを構築する。</summary>
     /// <param name="initial">初期値。</param>
     /// <param name="apply">変更を設定へ反映する処理。</param>
     /// <param name="text">チェック ボックスの文言。</param>
-    /// <param name="isSupported">この環境で設定できるか。</param>
+    /// <param name="isAvailable">この時点で設定できるか。</param>
     /// <param name="reason">使えない理由。</param>
-    /// <returns>チェック ボックス（使えない場合は理由を並べたもの）。</returns>
+    /// <returns>チェック ボックス・使えない理由・両者を並べた行。</returns>
     /// <remarks>使えない項目は値を変更させない。 理由は入力の隣へ淡色で書く（無効な要素はツールチップを出さない）。</remarks>
-    private static FrameworkElement GatedCheckRow(bool initial, Action<bool> apply, string text, bool isSupported, string reason)
+    private static (CheckBox Box, Label Hint, FrameworkElement Row) GatedCheckRow(
+        bool initial, Action<bool> apply, string text, bool isAvailable, string reason)
     {
         var box = (CheckBox)CheckRow(initial, apply, text);
-        box.IsEnabled(isSupported);
-        if (isSupported)
-        {
-            return box;
-        }
+        box.IsEnabled(isAvailable);
 
         var hint = new Label().Text(reason).FontSize(SettingsMetrics.HintFontSize);
         hint.Opacity = DisabledOpacity;
         hint.VerticalAlignment(VerticalAlignment.Center);
         hint.Margin(new Thickness(8, 0, 0, 0));
+        hint.IsVisible = !isAvailable;
 
         var row = new StackPanel().Orientation(Orientation.Horizontal);
         row.Children(box, hint);
-        return row;
+        return (box, hint, row);
     }
 
     /// <summary>数値入力の行を構築する。</summary>

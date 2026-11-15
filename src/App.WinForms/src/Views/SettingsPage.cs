@@ -281,6 +281,13 @@ internal static class SettingsPage
     private const string BorderControlUnsupportedReason =
         "この環境では撮影中の枠を消せません（Windows 11 / ビルド 22000 以降が必要です）";
 
+    /// <summary>「撮影中の枠を消す」が他の設定に依存して使えない理由（ツールヒントに出す）。</summary>
+    private const string BorderRequiresWgcReason =
+        "「画面の取得に Windows.Graphics.Capture を使う」がオンのときだけ使えます";
+
+    /// <summary>「撮影中の枠を消す」を置く行の段下げ（DIP）。</summary>
+    private const int BorderRowIndent = 20;
+
     /// <summary>キャプチャ設定のセクションを生成する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <returns>生成したセクション。</returns>
@@ -323,7 +330,7 @@ internal static class SettingsPage
                 settingsService.Save();
             }));
 
-        section.Body.Controls.Add(CreateGatedCheckBox(
+        var useWindowsGraphicsCapture = CreateGatedCheckBox(
             "画面の取得に Windows.Graphics.Capture を使う",
             settingsService.Current.UseWindowsGraphicsCapture,
             value =>
@@ -332,9 +339,10 @@ internal static class SettingsPage
                 settingsService.Save();
             },
             WindowsGraphicsCaptureSupport.IsSupported,
-            WindowsGraphicsCaptureSupport.DescribeUnsupportedReason()));
+            WindowsGraphicsCaptureSupport.DescribeUnsupportedReason());
+        section.Body.Controls.Add(useWindowsGraphicsCapture.Row);
 
-        section.Body.Controls.Add(CreateGatedCheckBox(
+        var hideCaptureBorder = CreateGatedCheckBox(
             "撮影中の枠を消す",
             settingsService.Current.HideCaptureBorder,
             value =>
@@ -342,9 +350,31 @@ internal static class SettingsPage
                 settingsService.Current.HideCaptureBorder = value;
                 settingsService.Save();
             },
-            WindowsGraphicsCaptureSupport.IsBorderControlSupported,
-            BorderControlUnsupportedReason));
+            IsBorderAvailable(),
+            BorderUnavailableReason());
+
+        // 画面の取得方式に依存することを示すため段下げする
+        hideCaptureBorder.Row.Margin = new Padding(BorderRowIndent, 0, 0, 0);
+        section.Body.Controls.Add(hideCaptureBorder.Row);
+
+        // 枠を消せるのは Windows.Graphics.Capture のときだけなので、取得方式の選択へ追従させる
+        useWindowsGraphicsCapture.Box.CheckedChanged += (_, _) => ApplyBorderAvailability();
+
         return section;
+
+        bool IsBorderAvailable()
+            => WindowsGraphicsCaptureSupport.IsBorderControlSupported && settingsService.Current.UseWindowsGraphicsCapture;
+
+        string BorderUnavailableReason()
+            => WindowsGraphicsCaptureSupport.IsBorderControlSupported ? BorderRequiresWgcReason : BorderControlUnsupportedReason;
+
+        void ApplyBorderAvailability()
+        {
+            var isAvailable = IsBorderAvailable();
+            hideCaptureBorder.Box.Enabled = isAvailable;
+            hideCaptureBorder.Hint.Text = BorderUnavailableReason();
+            hideCaptureBorder.Hint.Visible = !isAvailable;
+        }
     }
 
     /// <summary>矩形選択範囲の制限のセクションを生成する。</summary>
@@ -735,26 +765,22 @@ internal static class SettingsPage
         }
     }
 
-    /// <summary>実行環境で使えない場合に無効化するチェック ボックスを生成する。</summary>
+    /// <summary>実行環境や他の設定に依存して無効にするチェック ボックスを生成する。</summary>
     /// <param name="caption">表示する文言。</param>
     /// <param name="value">初期値。</param>
     /// <param name="onChanged">変更を設定へ反映する処理。</param>
-    /// <param name="isSupported">この環境で設定できるか。</param>
-    /// <param name="reason">使えない理由。</param>
-    /// <returns>生成したチェック ボックス（使えない場合は理由を並べたもの）。</returns>
+    /// <param name="isAvailable">この時点で設定できるか。</param>
+    /// <param name="reason">使えない理由。 使える場合は表示しない。</param>
+    /// <returns>チェック ボックス・使えない理由・両者を並べた行。</returns>
     /// <remarks>
     /// 使えない項目は値を変更させない（無効に見えるのに保存値が変わらないようにする）。
     /// 理由は入力の隣へ淡色で書く（<see cref="ToolTip"/> は無効なコントロールでは表示されない）。
     /// </remarks>
-    private static Control CreateGatedCheckBox(
-        string caption, bool value, Action<bool> onChanged, bool isSupported, string reason)
+    private static (CheckBox Box, Label Hint, Control Row) CreateGatedCheckBox(
+        string caption, bool value, Action<bool> onChanged, bool isAvailable, string reason)
     {
         var box = CreateCheckBox(caption, value, onChanged);
-        box.Enabled = isSupported;
-        if (isSupported)
-        {
-            return box;
-        }
+        box.Enabled = isAvailable;
 
         var hint = new Label
         {
@@ -764,6 +790,7 @@ internal static class SettingsPage
             Font = AppStyles.SettingsHintFont,
             Margin = new Padding(8, 0, 0, 0),
             Anchor = AnchorStyles.Left,
+            Visible = !isAvailable,
         };
 
         var row = new FlowLayoutPanel
@@ -776,7 +803,7 @@ internal static class SettingsPage
         };
         row.Controls.Add(box);
         row.Controls.Add(hint);
-        return row;
+        return (box, hint, row);
     }
 
     /// <summary>チェック ボックスの行を生成する。</summary>

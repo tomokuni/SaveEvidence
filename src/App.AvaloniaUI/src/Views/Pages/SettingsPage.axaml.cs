@@ -27,6 +27,10 @@ public sealed partial class SettingsPage : UserControl
     private const string BorderControlUnsupportedReason =
         "この環境では撮影中の枠を消せません（Windows 11 / ビルド 22000 以降が必要です）";
 
+    /// <summary>「撮影中の枠を消す」が他の設定に依存して使えない理由（ツールチップに出す）。</summary>
+    private const string BorderRequiresWgcReason =
+        "「画面の取得に Windows.Graphics.Capture を使う」がオンのときだけ使えます";
+
     private readonly MainViewModel _viewModel = null!;
     private readonly SettingsService _settingsService = null!;
     private TextBox? _currentHotkeyTextBox;
@@ -51,6 +55,15 @@ public sealed partial class SettingsPage : UserControl
         // 全設定変更を即時ファイル保存する
         _settingsService.Current.PropertyChanged += (_, _) => _settingsService.Save();
 
+        // 「撮影中の枠を消す」は画面の取得に Windows.Graphics.Capture を使うときだけ効くため、選択に追従させる
+        _settingsService.Current.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(Settings.UseWindowsGraphicsCapture), StringComparison.Ordinal))
+            {
+                ApplyCaptureSourceAvailability();
+            }
+        };
+
         // 保存先フォルダの ToolTip（{MyPictures} はマークアップ拡張と衝突するためコード側で構築）
         ToolTip.SetTip(SaveFolderTextBox, BuildSaveFolderToolTip());
 
@@ -61,7 +74,8 @@ public sealed partial class SettingsPage : UserControl
     /// <summary>撮影の設定を使えるかどうかに合わせて、項目の有効・無効と理由を反映する。</summary>
     /// <remarks>
     /// 使えない項目は入力も無効にする（無効に見えるのに保存値が変わると、次の起動で効いているように見える）。
-    /// 判定は <see cref="WindowsGraphicsCaptureSupport"/> が単一所有する。
+    /// 判定は <see cref="WindowsGraphicsCaptureSupport"/> が単一所有する。<br/>
+    /// 枠の制御は Windows.Graphics.Capture のときだけ効くため、取得方式の選択にも依存させる。
     /// </remarks>
     private void ApplyCaptureSourceAvailability()
     {
@@ -72,8 +86,13 @@ public sealed partial class SettingsPage : UserControl
             WindowsGraphicsCaptureSupport.IsSupported,
             WindowsGraphicsCaptureSupport.DescribeUnsupportedReason());
 
-        HideCaptureBorderCheck.IsEnabled = WindowsGraphicsCaptureSupport.IsBorderControlSupported;
-        ShowUnsupportedReason(HideCaptureBorderHint, WindowsGraphicsCaptureSupport.IsBorderControlSupported, BorderControlUnsupportedReason);
+        var canControlBorder = WindowsGraphicsCaptureSupport.IsBorderControlSupported;
+        var isBorderAvailable = canControlBorder && _settingsService.Current.UseWindowsGraphicsCapture;
+        HideCaptureBorderCheck.IsEnabled = isBorderAvailable;
+        ShowUnsupportedReason(
+            HideCaptureBorderHint,
+            isBorderAvailable,
+            canControlBorder ? BorderRequiresWgcReason : BorderControlUnsupportedReason);
     }
 
     /// <summary>使えない理由の表示を切り替える。</summary>

@@ -326,9 +326,10 @@ public sealed partial class Settings : ObservableObject
 
     /// <summary>Windows.Graphics.Capture の撮影中に枠（OS が描く枠）を消すかどうかを取得または設定する。</summary>
     /// <remarks>
-    /// デフォルトは false（枠を描く）。 設定できるかは OS が決める（<c>IsBorderRequired</c> は Windows 11 /
-    /// ビルド 22000 以降）。 設定画面は <c>WindowsGraphicsCaptureSupport.IsBorderControlSupported</c> が
-    /// false のときこの項目を無効にする。
+    /// デフォルトは false（枠を描く）。 **<c>UseWindowsGraphicsCapture</c> がオンのときだけ効く**（GDI は枠を描かない）。
+    /// 設定できるかは OS が決める（<c>IsBorderRequired</c> は Windows 11 / ビルド 22000 以降）。 設定画面は
+    /// <c>WindowsGraphicsCaptureSupport.IsBorderControlSupported</c> が false のとき、または
+    /// <c>UseWindowsGraphicsCapture</c> が false のときこの項目を無効にする。
     /// </remarks>
     [ObservableProperty]
     private bool _hideCaptureBorder;

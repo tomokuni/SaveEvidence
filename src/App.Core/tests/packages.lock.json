@@ -195,8 +195,8 @@
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "EsUtil.Platform.Core": "[0.7.6, )",
-          "Parts.CapturePreview.Core": "[0.8.1, )",
-          "Parts.LineDetection": "[0.8.1, )",
+          "Parts.CapturePreview.Core": "[0.8.2, )",
+          "Parts.LineDetection": "[0.8.2, )",
           "Serilog": "[4.4.0, )",
           "Serilog.Extensions.Logging": "[10.0.0, )",
           "Serilog.Sinks.File": "[7.0.0, )"
