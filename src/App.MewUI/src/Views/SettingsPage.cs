@@ -34,6 +34,9 @@ internal static class SettingsPage
     private const string BorderControlUnsupportedReason =
         "このビルドでは撮影中の枠を消せません（対象 OS の API が使えないため）";
 
+    /// <summary>設定できない項目の淡色の不透明度。</summary>
+    private const double DisabledOpacity = 0.45;
+
     private const double CategoryWidth = 180;
 
     /// <summary>外観設定のカテゴリ列と項目名の間隔（DIP）。</summary>
@@ -489,18 +492,26 @@ internal static class SettingsPage
     /// <param name="apply">変更を設定へ反映する処理。</param>
     /// <param name="text">チェック ボックスの文言。</param>
     /// <param name="isSupported">この環境で設定できるか。</param>
-    /// <param name="reason">使えない理由（ツールヒントに出す）。</param>
-    /// <returns>チェック ボックス。</returns>
+    /// <param name="reason">使えない理由。</param>
+    /// <returns>チェック ボックス（使えない場合は理由を並べたもの）。</returns>
+    /// <remarks>使えない項目は値を変更させない。 理由は入力の隣へ淡色で書く（無効な要素はツールチップを出さない）。</remarks>
     private static FrameworkElement GatedCheckRow(bool initial, Action<bool> apply, string text, bool isSupported, string reason)
     {
         var box = (CheckBox)CheckRow(initial, apply, text);
         box.IsEnabled(isSupported);
-        if (!isSupported)
+        if (isSupported)
         {
-            box.ToolTip(reason);
+            return box;
         }
 
-        return box;
+        var hint = new Label().Text(reason).FontSize(SettingsMetrics.HintFontSize);
+        hint.Opacity = DisabledOpacity;
+        hint.VerticalAlignment(VerticalAlignment.Center);
+        hint.Margin(new Thickness(8, 0, 0, 0));
+
+        var row = new StackPanel().Orientation(Orientation.Horizontal);
+        row.Children(box, hint);
+        return row;
     }
 
     /// <summary>数値入力の行を構築する。</summary>
