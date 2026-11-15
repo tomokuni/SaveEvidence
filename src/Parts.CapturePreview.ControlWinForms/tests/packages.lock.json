@@ -188,7 +188,7 @@
           "EsUtil.Ui.WinForms.Interop": "[0.7.5, )",
           "EsUtil.Ui.WinForms.Loupe": "[0.7.5, )",
           "EsUtil.Ui.WinForms.Marquee": "[0.7.5, )",
-          "Parts.CapturePreview.Core": "[0.7.0, )"
+          "Parts.CapturePreview.Core": "[0.7.1, )"
         }
       },
       "parts.capturepreview.core": {
