@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -22,6 +23,10 @@ namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 /// </remarks>
 public sealed partial class SettingsPage : UserControl
 {
+    /// <summary>「撮影中の枠を消す」が使えない理由（ツールチップに出す）。</summary>
+    private const string BorderControlUnsupportedReason =
+        "このビルドでは撮影中の枠を消せません（対象 OS の API が使えないため）";
+
     private readonly MainViewModel _viewModel = null!;
     private readonly SettingsService _settingsService = null!;
     private TextBox? _currentHotkeyTextBox;
@@ -48,6 +53,29 @@ public sealed partial class SettingsPage : UserControl
 
         // 保存先フォルダの ToolTip（{MyPictures} はマークアップ拡張と衝突するためコード側で構築）
         ToolTip.SetTip(SaveFolderTextBox, BuildSaveFolderToolTip());
+
+        // 実行環境で使えない撮影の設定は無効にする（理由はツールチップで示す）
+        ApplyCaptureSourceAvailability();
+    }
+
+    /// <summary>撮影の設定を使えるかどうかに合わせて、項目の有効・無効と理由を反映する。</summary>
+    /// <remarks>
+    /// 使えない項目は入力も無効にする（無効に見えるのに保存値が変わると、次の起動で効いているように見える）。
+    /// 判定は <see cref="WindowsGraphicsCaptureSupport"/> が単一所有する。
+    /// </remarks>
+    private void ApplyCaptureSourceAvailability()
+    {
+        UseWindowsGraphicsCaptureCheck.IsEnabled = WindowsGraphicsCaptureSupport.IsSupported;
+        if (!WindowsGraphicsCaptureSupport.IsSupported)
+        {
+            ToolTip.SetTip(UseWindowsGraphicsCaptureCheck, WindowsGraphicsCaptureSupport.DescribeUnsupportedReason());
+        }
+
+        HideCaptureBorderCheck.IsEnabled = WindowsGraphicsCaptureSupport.IsBorderControlSupported;
+        if (!WindowsGraphicsCaptureSupport.IsBorderControlSupported)
+        {
+            ToolTip.SetTip(HideCaptureBorderCheck, BorderControlUnsupportedReason);
+        }
     }
 
     /// <summary>保存先フォルダの ToolTip（プレースホルダの説明）を構築する。</summary>

@@ -1,6 +1,7 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.Ui.MewUI.ColorSelector;
 using EsUtil.SaveEvidence.App.Core.Enums;
@@ -29,6 +30,10 @@ internal static class SettingsPage
 
     /// <summary>外観設定のカテゴリ列の最小幅（DIP）。</summary>
     /// <remarks>Avalonia 版と同じ値（<c>MinWidth="180"</c>）。</remarks>
+    /// <summary>「撮影中の枠を消す」が使えない理由（ツールヒントに出す）。</summary>
+    private const string BorderControlUnsupportedReason =
+        "このビルドでは撮影中の枠を消せません（対象 OS の API が使えないため）";
+
     private const double CategoryWidth = 180;
 
     /// <summary>外観設定のカテゴリ列と項目名の間隔（DIP）。</summary>
@@ -206,7 +211,9 @@ internal static class SettingsPage
             "キャプチャ設定",
             Row("", CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, "キャプチャ時にメインウィンドウを隠す")),
             Row("", hideTaskbar),
-            Row("", CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, "撮影・切り出しの後にクリップボードへコピーする")));
+            Row("", CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, "撮影・切り出しの後にクリップボードへコピーする")),
+            Row("", GatedCheckRow(settings.UseWindowsGraphicsCapture, value => settings.UseWindowsGraphicsCapture = value, "画面の取得に Windows.Graphics.Capture を使う", WindowsGraphicsCaptureSupport.IsSupported, WindowsGraphicsCaptureSupport.DescribeUnsupportedReason())),
+            Row("", GatedCheckRow(settings.HideCaptureBorder, value => settings.HideCaptureBorder = value, "撮影中の枠を消す", WindowsGraphicsCaptureSupport.IsBorderControlSupported, BorderControlUnsupportedReason)));
     }
 
     /// <summary>矩形選択範囲の制限のセクションを構築する。</summary>
@@ -472,6 +479,25 @@ internal static class SettingsPage
         if (text is not null)
         {
             box.Content(text);
+        }
+
+        return box;
+    }
+
+    /// <summary>実行環境で使えない場合に無効化するチェック ボックスを構築する。</summary>
+    /// <param name="initial">初期値。</param>
+    /// <param name="apply">変更を設定へ反映する処理。</param>
+    /// <param name="text">チェック ボックスの文言。</param>
+    /// <param name="isSupported">この環境で設定できるか。</param>
+    /// <param name="reason">使えない理由（ツールヒントに出す）。</param>
+    /// <returns>チェック ボックス。</returns>
+    private static FrameworkElement GatedCheckRow(bool initial, Action<bool> apply, string text, bool isSupported, string reason)
+    {
+        var box = (CheckBox)CheckRow(initial, apply, text);
+        box.IsEnabled(isSupported);
+        if (!isSupported)
+        {
+            box.ToolTip(reason);
         }
 
         return box;

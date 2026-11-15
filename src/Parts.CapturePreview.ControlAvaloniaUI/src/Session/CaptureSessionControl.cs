@@ -92,6 +92,16 @@ public sealed class CaptureSessionControl : IDisposable
         _windowService = new WinWindowService();
     }
 
+    /// <summary>撮影に使う方式を取得または設定する。</summary>
+    /// <value>既定は <see cref="CaptureMethod.Gdi"/>。 実行環境で使えない方式を設定した場合は GDI で撮影する。</value>
+    /// <remarks>撮影のたびに <c>CaptureServiceFactory</c> で実装を選ぶため、変更は次の撮影から効く。</remarks>
+    public CaptureMethod CaptureMethod { get; set; } = CaptureMethod.Gdi;
+
+    /// <summary>撮影中の枠（Windows.Graphics.Capture が描く枠）を消すかどうかを取得または設定する。</summary>
+    /// <value>既定は false（消さない）。</value>
+    /// <remarks>枠を制御できない環境では値は無視される（枠が描かれたまま撮影する）。</remarks>
+    public bool ShouldHideCaptureBorder { get; set; }
+
     /// <summary>現在の外観・動作設定を取得する（getter は現在有効な値、すなわち全メンバー non-null の CaptureSettings を返す）。</summary>
     /// <remarks>
     /// 設定時は null メンバーのみ現在値を維持し、それ以外を反映する（部分更新）。<br/>
@@ -139,7 +149,7 @@ public sealed class CaptureSessionControl : IDisposable
 
             var session = new CaptureOverlaySession(
                 _windowService,
-                new WinCaptureService(),
+                CaptureServiceFactory.Create(CaptureMethod, includeCursor: true, ShouldHideCaptureBorder),
                 new WinElementFinder(),
                 type, _currentSettings, scaling,
                 // キャプチャ完了イベントを公開イベントへ中継する（同期実行 → ホストの画像変更後に再表示）

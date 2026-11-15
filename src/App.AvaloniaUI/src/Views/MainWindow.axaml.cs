@@ -749,6 +749,9 @@ public sealed partial class MainWindow : Window
 
         // 設定を CaptureSessionControl に反映（部分更新）
         _captureSessionControl.AppearanceSettings = capSettings;
+        // 画面の取得方式と枠の設定（使えるかどうかの判定は撮影セッションが行う）
+        _captureSessionControl.CaptureMethod = CaptureSettingsMapper.ToCaptureMethod(_settingsService.Current);
+        _captureSessionControl.ShouldHideCaptureBorder = _settingsService.Current.HideCaptureBorder;
     }
 
     /// <summary>CaptureSessionControl 設定の反映を例外保護付きで行う（失敗時はログに記録）。</summary>

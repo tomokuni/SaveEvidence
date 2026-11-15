@@ -65,6 +65,7 @@ internal static class CapturePage
         var captureSession = new CaptureSessionControl(
             CaptureSettingsMapper.From(settingsService.Current, 1.0),
             AppLog.CreateLogger(nameof(CaptureSessionControl)));
+        ApplyCaptureSource(captureSession, settingsService.Current);
 
         var crop = new CropViewControl
         {
@@ -413,6 +414,7 @@ internal static class CapturePage
             {
                 captureSession.AppearanceSettings =
                     CaptureSettingsMapper.From(settingsService.Current, owner.DeviceDpi / 96.0);
+                ApplyCaptureSource(captureSession, settingsService.Current);
             }
             catch (Exception ex) when (EsErrors.IsRecoverable(ex))
             {
@@ -734,6 +736,16 @@ internal static class CapturePage
             var focused = owner.ActiveControl;
             return focused is TextBoxBase or ComboBox or NumericUpDown;
         }
+    }
+
+    /// <summary>画面の取得方式と枠の設定を撮影セッションへ反映する。</summary>
+    /// <param name="session">撮影セッション。</param>
+    /// <param name="settings">アプリ設定。</param>
+    /// <remarks>使える方式かどうかの判定は撮影セッション（<c>CaptureServiceFactory</c>）が行う。</remarks>
+    private static void ApplyCaptureSource(CaptureSessionControl session, Settings settings)
+    {
+        session.CaptureMethod = CaptureSettingsMapper.ToCaptureMethod(settings);
+        session.ShouldHideCaptureBorder = settings.HideCaptureBorder;
     }
 
     /// <summary>撮影結果をプレビューへ反映する。</summary>

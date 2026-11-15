@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
@@ -25,6 +26,16 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 /// </remarks>
 internal static class SettingsPage
 {
+    /// <summary>外観設定のカテゴリ名の最大幅（DIP）。 狭いウィンドウでは折り返す。</summary>
+    private const double CategoryNameMaxWidth = 220;
+
+    /// <summary>「撮影中の枠を消す」が使えない理由（ツールチップに出す）。</summary>
+    private const string BorderControlUnsupportedReason =
+        "このビルドでは撮影中の枠を消せません（対象 OS の API が使えないため）";
+
+    /// <summary>外観設定の項目名の最大幅（DIP）。 狭いウィンドウでは折り返す。</summary>
+    private const double ItemNameMaxWidth = 190;
+
     /// <summary>ロガー（保存先の選択などの失敗を記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(SettingsPage));
 
@@ -221,7 +232,21 @@ internal static class SettingsPage
                 hideTaskbar),
             Row(
                 "撮影・切り出しの後にクリップボードへコピーする",
-                CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, null)));
+                CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, null)),
+            Row(
+                "画面の取得に Windows.Graphics.Capture を使う",
+                GatedCheckRow(
+                    settings.UseWindowsGraphicsCapture,
+                    value => settings.UseWindowsGraphicsCapture = value,
+                    WindowsGraphicsCaptureSupport.IsSupported,
+                    WindowsGraphicsCaptureSupport.DescribeUnsupportedReason)),
+            Row(
+                "撮影中の枠を消す",
+                GatedCheckRow(
+                    settings.HideCaptureBorder,
+                    value => settings.HideCaptureBorder = value,
+                    WindowsGraphicsCaptureSupport.IsBorderControlSupported,
+                    static () => BorderControlUnsupportedReason)));
     }
 
     /// <summary>矩形選択範囲の制限のセクションを生成する。</summary>
@@ -334,8 +359,9 @@ internal static class SettingsPage
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        // 行番号: 先頭に区切り線の行を 1 つ入れる
-        var row = 1;
+        // 行番号は RowDefinitions の追加と必ず 1 対 1 にする
+        // （定義より大きい行番号を指定すると最後の行へ寄せられ、項目が重なる）
+        var row = 0;
         for (var c = 0; c < categories.Length; c++)
         {
             var category = categories[c];
@@ -374,6 +400,8 @@ internal static class SettingsPage
                     {
                         Text = name,
                         VerticalAlignment = VerticalAlignment.Center,
+                        MaxWidth = ItemNameMaxWidth,
+                        TextWrapping = TextWrapping.Wrap,
                         FontSize = SettingsMetrics.FontSize,
                     };
                     Grid.SetRow(label, row);
@@ -392,6 +420,10 @@ internal static class SettingsPage
                 Text = category.Category,
                 VerticalAlignment = VerticalAlignment.Top,
                 HorizontalAlignment = HorizontalAlignment.Right,
+                // ウィンドウが狭いときは列が縮む。 折り返して読めるようにし、右端を揃える
+                MaxWidth = CategoryNameMaxWidth,
+                TextWrapping = TextWrapping.Wrap,
+                TextAlignment = TextAlignment.Right,
                 Margin = new Thickness(0, 5, 0, 0),
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             };
@@ -485,6 +517,29 @@ internal static class SettingsPage
         grid.Children.Add(labelText);
         grid.Children.Add(control);
         return grid;
+    }
+
+    /// <summary>実行環境で使えない場合に無効化するチェック ボックスを生成する。</summary>
+    /// <param name="initial">初期値。</param>
+    /// <param name="apply">変更を設定へ反映する処理。</param>
+    /// <param name="isSupported">この環境で設定できるか。</param>
+    /// <param name="describeUnsupported">使えない理由を返す処理（ツールチップに出す）。</param>
+    /// <returns>生成したチェック ボックス。</returns>
+    /// <remarks>
+    /// 使えない項目は<b>値も読み取り専用にする</b>（無効に見えるのに保存値が変わると、次の起動で
+    /// 効いているように見える）。 理由は <see cref="ToolTipService"/> で示す。
+    /// </remarks>
+    private static FrameworkElement GatedCheckRow(
+        bool initial, Action<bool> apply, bool isSupported, Func<string> describeUnsupported)
+    {
+        var check = (CheckBox)CheckRow(initial, apply, null);
+        check.IsEnabled = isSupported;
+        if (!isSupported)
+        {
+            ToolTipService.SetToolTip(check, describeUnsupported());
+        }
+
+        return check;
     }
 
     /// <summary>チェック ボックスの行を生成する。</summary>

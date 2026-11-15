@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core;
+using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -276,6 +277,10 @@ internal static class SettingsPage
         return section;
     }
 
+    /// <summary>「撮影中の枠を消す」が使えない理由（ツールヒントに出す）。</summary>
+    private const string BorderControlUnsupportedReason =
+        "このビルドでは撮影中の枠を消せません（対象 OS の API が使えないため）";
+
     /// <summary>キャプチャ設定のセクションを生成する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <returns>生成したセクション。</returns>
@@ -317,6 +322,28 @@ internal static class SettingsPage
                 settingsService.Current.CopyAfterCapture = value;
                 settingsService.Save();
             }));
+
+        section.Body.Controls.Add(CreateGatedCheckBox(
+            "画面の取得に Windows.Graphics.Capture を使う",
+            settingsService.Current.UseWindowsGraphicsCapture,
+            value =>
+            {
+                settingsService.Current.UseWindowsGraphicsCapture = value;
+                settingsService.Save();
+            },
+            WindowsGraphicsCaptureSupport.IsSupported,
+            WindowsGraphicsCaptureSupport.DescribeUnsupportedReason()));
+
+        section.Body.Controls.Add(CreateGatedCheckBox(
+            "撮影中の枠を消す",
+            settingsService.Current.HideCaptureBorder,
+            value =>
+            {
+                settingsService.Current.HideCaptureBorder = value;
+                settingsService.Save();
+            },
+            WindowsGraphicsCaptureSupport.IsBorderControlSupported,
+            BorderControlUnsupportedReason));
         return section;
     }
 
@@ -708,9 +735,31 @@ internal static class SettingsPage
         }
     }
 
-    /// <param name="caption">文言。</param>
+    /// <summary>実行環境で使えない場合に無効化するチェック ボックスを生成する。</summary>
+    /// <param name="caption">表示する文言。</param>
     /// <param name="value">初期値。</param>
-    /// <param name="onChanged">変更時の処理。</param>
+    /// <param name="onChanged">変更を設定へ反映する処理。</param>
+    /// <param name="isSupported">この環境で設定できるか。</param>
+    /// <param name="reason">使えない理由（ツールヒントに出す）。</param>
+    /// <returns>生成したチェック ボックス。</returns>
+    /// <remarks>使えない項目は値を変更させない（無効に見えるのに保存値が変わらないようにする）。</remarks>
+    private static CheckBox CreateGatedCheckBox(
+        string caption, bool value, Action<bool> onChanged, bool isSupported, string reason)
+    {
+        var box = CreateCheckBox(caption, value, onChanged);
+        box.Enabled = isSupported;
+        if (!isSupported)
+        {
+            UiFactory.AttachToolTip(box, reason);
+        }
+
+        return box;
+    }
+
+    /// <summary>チェック ボックスの行を生成する。</summary>
+    /// <param name="caption">表示する文言。</param>
+    /// <param name="value">初期値。</param>
+    /// <param name="onChanged">変更を設定へ反映する処理。</param>
     /// <returns>生成したチェック ボックス。</returns>
     private static CheckBox CreateCheckBox(string caption, bool value, Action<bool> onChanged)
     {

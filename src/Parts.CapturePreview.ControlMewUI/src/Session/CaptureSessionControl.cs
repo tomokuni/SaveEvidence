@@ -58,9 +58,6 @@ public sealed class CaptureSessionControl : IDisposable
     /// <summary>内部ロガー（インスタンス単位。 複数インスタンスで混線しない）。</summary>
     private readonly ILogger _log;
 
-    /// <summary>画面キャプチャサービス（Facade が生成・所有する。 Avalonia 版と同じ分担）。</summary>
-    private readonly ICaptureService _captureService;
-
     /// <summary>要素検出サービス（カーソル下のモニター・ウィンドウ）。</summary>
     private readonly IElementFinder _finder;
 
@@ -103,10 +100,19 @@ public sealed class CaptureSessionControl : IDisposable
         // 入力なし（null）は既定値で埋める（規則はコアが単一所有する）
         _settings = CaptureSettingsMerge.Merge(initialSettings);
         _log = logger ?? NullLogger.Instance;
-        _captureService = new WinCaptureService();
         _finder = new WinElementFinder();
         _windowService = new WinWindowService();
     }
+
+    /// <summary>撮影に使う方式を取得または設定する。</summary>
+    /// <value>既定は <see cref="CaptureMethod.Gdi"/>。 実行環境で使えない方式を設定した場合は GDI で撮影する。</value>
+    /// <remarks>撮影のたびに <c>CaptureServiceFactory</c> で実装を選ぶため、変更は次の撮影から効く。</remarks>
+    public CaptureMethod CaptureMethod { get; set; } = CaptureMethod.Gdi;
+
+    /// <summary>撮影中の枠（Windows.Graphics.Capture が描く枠）を消すかどうかを取得または設定する。</summary>
+    /// <value>既定は false（消さない）。</value>
+    /// <remarks>枠を制御できない環境では値は無視される（枠が描かれたまま撮影する）。</remarks>
+    public bool ShouldHideCaptureBorder { get; set; }
 
     /// <summary>現在の設定（全メンバー non-null）を取得または設定する。</summary>
     /// <value>現在有効な設定。</value>
@@ -358,7 +364,11 @@ public sealed class CaptureSessionControl : IDisposable
     /// <summary>撮影セッションへ渡すサービスを組み立てる。</summary>
     /// <returns>撮影が必要とするサービスの束（本クラスが生成したインスタンスを束ねるだけ）。</returns>
     private CaptureOverlayServices CreateServices()
-        => new(_captureService, _finder, _windowService, _log);
+        => new(
+            CaptureServiceFactory.Create(CaptureMethod, includeCursor: true, ShouldHideCaptureBorder),
+            _finder,
+            _windowService,
+            _log);
 
     /// <summary>破棄済みなら例外を投げる。</summary>
     private void ThrowIfDisposed()
