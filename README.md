@@ -4,7 +4,7 @@
 
 ![Release](https://github.com/tomokuni/SaveEvidence/actions/workflows/release.yml/badge.svg)
 ![Build](https://github.com/tomokuni/SaveEvidence/actions/workflows/build.yml/badge.svg?event=pull_request)
-![Platform](https://img.shields.io/badge/Platform-Windows%2010%2B-0078D6)
+![Platform](https://img.shields.io/badge/Platform-Windows%2010%20(1809%2C%2017763)%2B-0078D6)
 ![.NET](https://img.shields.io/badge/.NET-11.0-512BD4)
 ![Avalonia](https://img.shields.io/badge/UI-Avalonia-8D46D6)
 ![MewUI](https://img.shields.io/badge/UI-MewUI-00BFFF)
