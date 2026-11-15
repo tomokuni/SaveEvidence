@@ -45,9 +45,9 @@ public class AppLogMessageTests
     {
         var logger = new RecordingLogger();
 
-        logger.LogAppStartCore("[App.Test]", "1.0.0", "0.6.5");
+        logger.LogAppStartCore("[App.Test]", "1.0.0", "0.7.1");
 
-        Assert.Equal("[App.Test] アプリケーション起動 (version=1.0.0, esutil=0.6.5)", logger.Messages[0]);
+        Assert.Equal("[App.Test] アプリケーション起動 (version=1.0.0, esutil=0.7.1)", logger.Messages[0]);
     }
 
     /// <summary>整形後の文字列とレベルを記録するロガー。</summary>

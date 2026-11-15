@@ -2,10 +2,9 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net11.0-windows10.0.22621.0</TargetFramework>
+    <TargetFramework>net11.0-windows10.0.20348.0</TargetFramework>
     <UseWinUI>true</UseWinUI>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <SupportedOSPlatformVersion>10.0.18362.0</SupportedOSPlatformVersion>
     <!-- publish のときだけ必要な指定（ビルドとテストには影響しない）。
          付けないと publish が自分自身の .pri（リソース インデックス）を発行せず、配布物の起動時に
          XAML の読み込みが失敗して 0xC000027B（stowed exception）で終了する（実測）。

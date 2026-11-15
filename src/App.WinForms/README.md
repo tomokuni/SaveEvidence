@@ -25,7 +25,7 @@ UI 非依存のコア（`App.Core`）と撮影スタック（`Parts.CapturePrevi
 
 | 項目 | 内容 |
 | --- | --- |
-| OS | Windows 10 以降（Win32 の画面キャプチャ・要素検出・ウィンドウ操作を使う） |
+| OS | Windows Server 2022 / Windows 11（ビルド 20348）以降（Win32 の画面キャプチャ・要素検出・ウィンドウ操作を使う） |
 | ランタイム | .NET 11（デスクトップ ランタイム） |
 | DPI | モニター単位（Per-Monitor V2）。 起動時に有効化します |
 
@@ -121,7 +121,7 @@ App.WinForms/
 ├── README.md                # 本ファイル
 ├── docs/                    # SPEC_ExtFunc.md（外部機能仕様書）/ SPEC_System.md（システム仕様書）
 └── src/
-    ├── App.WinForms.csproj  # WinExe / net11.0-windows10.0.17763.0 / UseWindowsForms
+    ├── App.WinForms.csproj  # WinExe / net11.0-windows10.0.20348.0 / UseWindowsForms
     ├── Program.cs           # DPI 対応 → コアの組み立て（AppServices） → ウィンドウ表示
     ├── AppServices.cs       # 共有するコアオブジェクトの束（ViewModel / 設定 / 履歴 / 一覧の状態）
     ├── Icons/

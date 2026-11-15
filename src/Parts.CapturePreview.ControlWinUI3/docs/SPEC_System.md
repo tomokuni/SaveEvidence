@@ -27,9 +27,9 @@
 
 | 項目 | 値 |
 | --- | --- |
-| 対象フレームワーク | `net11.0-windows10.0.22621.0` |
+| 対象フレームワーク | `net11.0-windows10.0.20348.0` |
 | UI フレームワーク | WinUI 3（`Microsoft.WindowsAppSDK` 1.x。 `UseWinUI` を有効にする） |
-| 最低対応 OS | `10.0.18362.0` |
+| 最低対応 OS | `10.0.20348.0` |
 | 表示 | Composition（`SpriteVisual` + `LoadedImageSurface`）と XAML の要素（`Rectangle`） |
 | 画像とログ | `EsUtil.Platform.Core`（画像型・Win32 サービス）、`Microsoft.Extensions.Logging.Abstractions` |
 | テスト | xUnit v3（`OutputType` は `Exe` を明示する） |

@@ -61,7 +61,7 @@ Windows デスクトップ上の画面をキャプチャし、プレビュー・
 ## 3. システム要件
 
 - .NET 11 SDK
-- Windows 10 / 11
+- Windows Server 2022 / Windows 11（ビルド 20348）以降
 - Avalonia 12.1
 
 ## 4. ビルドと実行

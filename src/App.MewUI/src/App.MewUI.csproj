@@ -2,14 +2,13 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net11.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework>net11.0-windows10.0.20348.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>EsUtil.SaveEvidence.App.MewUI</RootNamespace>
     <!-- 実行ファイルの名前は製品名を優先する（配布物の exe 名。 命名規約の例外）。 -->
     <AssemblyName>SaveEvidence.MewUI</AssemblyName>
-  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>

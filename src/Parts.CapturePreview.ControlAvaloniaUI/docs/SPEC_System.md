@@ -46,7 +46,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **ルート名前空間** | `EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI` |
 | **言語** | C# 14（.NET 11.0） |
 | **UI フレームワーク** | Avalonia UI 12.1 |
-| **ターゲットフレームワーク** | net11.0-windows10.0.17763.0 |
+| **ターゲットフレームワーク** | net11.0-windows10.0.20348.0 |
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **ログ** | Microsoft.Extensions.Logging.Abstractions（LoggerMessage ソース生成） |
 | **テスト** | xUnit v3 / Avalonia.Headless.XUnit |

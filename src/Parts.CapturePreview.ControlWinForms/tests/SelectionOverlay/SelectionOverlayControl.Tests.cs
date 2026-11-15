@@ -15,6 +15,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Tests.SelectionOverl
 /// ハンドルを必要としない範囲（状態と配置の解決）を検証できる。<br/>
 /// 入力の受付・ドラッグの判断は内包コントロールとコアが単一所有するため本テストの対象外とする。
 /// </remarks>
+[Collection(LogPrefixCollectionDefinition.Name)]
 public sealed class SelectionOverlayControlTests
 {
     /// <summary>既定のモードと設定が適用されることを検証する。</summary>

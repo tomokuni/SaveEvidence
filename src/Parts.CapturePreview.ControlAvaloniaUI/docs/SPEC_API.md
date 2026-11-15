@@ -56,7 +56,7 @@
 | 対象 | `Parts.CapturePreview.ControlAvaloniaUI` |
 | プロジェクト | `src/Parts.CapturePreview.ControlAvaloniaUI/src/Parts.CapturePreview.ControlAvaloniaUI.csproj` |
 | 名前空間 | `EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI` |
-| 対象フレームワーク | `net11.0-windows10.0.17763.0` |
+| 対象フレームワーク | `net11.0-windows10.0.20348.0` |
 | UIフレームワーク | Avalonia 12.1 |
 | 主要設計パターン | Facade（CaptureSessionControl / CropViewControl / SelectionOverlayControl）/ セッション（CaptureOverlaySession / CropSession）/ Composite（内包コントロールの統合）/ 薄い統括者 |
 | 主な用途 | 画面キャプチャ（全画面 / ウィンドウ選択 / 範囲選択）と切出し（Crop）の統括 API の提供、および画像表示 + 領域選択の複合コントロールの提供 |
@@ -560,7 +560,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 - `StartCropAsync` の `cropView` は `CropViewControl`（ズーム + 領域選択 + ルーペを内包した複合コントロール）です。 選択矩形のオーバーレイ（Marquee / Loupe）はセッションが `CropViewControl.Rects` へ配置するため、利用側での配置は不要です（ズーム・パン・Fit・座標変換は内包する `ZoomViewControl` が単一所有）。 切り出しの対象画像は `cropView.Source` に `EsBitmapAvaloniaAdapter` として設定しておく必要があります（未設定・非対応の場合は開始せず結果 null。 `EsBitmapAvaloniaAdapter` は `IImage` の非所有契約のため、差し替え時に旧アダプタを破棄するのは画像を設定する側です）。
 - `CropViewControl` / `SelectionOverlayControl` は本アセンブリが公開する複合コントロールです（別プロジェクトではありません）。
 - `CaptureSettings` の数値メンバーは `Validate()` で範囲チェックされ、範囲外は `ArgumentOutOfRangeException` を投げます。
-- キャプチャ画像へのオーバーレイ写り込みは `IWindowService.SetCaptureExclusion`（Windows 10 2004+）で防止します。 それ以前の Windows では写り込みが発生する可能性があります。
+- キャプチャ画像へのオーバーレイ写り込みは `IWindowService.SetCaptureExclusion`（Windows 10 2004 以降の API。 本アプリの下限 20348 では常に使えます）で防止します。
 - `ZoomPercent`（実効ズーム率）は 0 にならない（`ZoomPercent` setter に 0 以下を設定しても無視される）。 Fit 表示は `ZoomFit` で行います。
 - Fit 中はパン不可（画像がビューポートに収まるため）。 スクロールバーも非表示になります。
 - `Ctrl + マウスホイール` は画像ビューポートが捕捉し、通常のパンには伝播しません（Ctrl を離すとパンに戻る）。

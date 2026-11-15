@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// <remarks>
 /// バージョンの出所は <c>Directory.Build.props</c> の <c>&lt;Version&gt;</c>（全プロジェクト共通の単一所有者）であり、<br/>
 /// 実行時はアセンブリのバージョンから読む。 <c>0.1.0.0</c> のように末尾が 0 の桁は表示しない（<c>0.1.0</c>）。<br/>
-/// <b>EsUtil の版</b>: 製品バージョン（<c>0.1.0+esutil.0.6.5</c>）へ埋め込まれる。 EsUtil はパッケージ参照であり、<br/>
+/// <b>EsUtil の版</b>: 製品バージョン（<c>0.4.0+esutil.0.7.1</c>）へ埋め込まれる。 EsUtil はパッケージ参照であり、<br/>
 /// ログだけを見ても版が分からないため、起動ログへ残す。<br/>
 /// <br/>
 /// <b>UI 名を含める理由</b>: 4 つの UI 版は設定ファイルとログを共有するため、どの版を起動しているかを<br/>
@@ -34,7 +34,7 @@ public static class AppVersion
     /// <value>バージョン文字列。 取得できない場合は <c>unknown</c>。</value>
     public static string Current => Format(typeof(AppVersion).Assembly);
 
-    /// <summary>本アプリが使っている EsUtil の版を取得する（例: <c>0.6.5</c>）。</summary>
+    /// <summary>本アプリが使っている EsUtil の版を取得する（例: <c>0.7.1</c>）。</summary>
     /// <value>EsUtil の版。 製品バージョンに埋め込まれていない場合は <c>unknown</c>。</value>
     public static string EsUtilVersion => s_esUtilVersion;
 
@@ -92,7 +92,7 @@ public static class AppVersion
     }
 
     /// <summary>版の文字列の末尾から SourceLink のコミット SHA を取り除く。</summary>
-    /// <param name="value">版の文字列（例: <c>0.6.5.&lt;sha&gt;</c>）。</param>
+    /// <param name="value">版の文字列（例: <c>0.7.1.&lt;sha&gt;</c>）。</param>
     /// <returns>コミット SHA を取り除いた版の文字列。</returns>
     /// <remarks>版の一部（<c>-preview.1</c> など）と取り違えないよう、末尾が 16 進 40 桁のときだけ取り除く。</remarks>
     private static string RemoveSourceRevision(string value)

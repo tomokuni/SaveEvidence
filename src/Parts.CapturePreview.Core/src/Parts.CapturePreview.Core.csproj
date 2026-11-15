@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net11.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework>net11.0-windows10.0.20348.0</TargetFramework>
     <RootNamespace>EsUtil.SaveEvidence.Parts.CapturePreview.Core</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -10,7 +10,6 @@
          ネイティブ呼び出しを単一所有する。 LibraryImport は生成コードが unsafe を要求する
          （SYSLIB1062。 手書きの unsafe ブロックは無い）。 -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  <SupportedOSPlatformVersion>10.0.15063.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>

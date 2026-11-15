@@ -43,7 +43,7 @@ SaveEvidence は、Windows デスクトップ上の画面をキャプチャし�
 | **言語** | C# 14（.NET 11.0） |
 | **UI フレームワーク** | Avalonia UI 12.1（Avalonia.Desktop / Avalonia.Themes.Fluent / FluentAvaloniaUI） |
 | **MVVM フレームワーク** | CommunityToolkit.Mvvm 8.x（ソースジェネレーター） |
-| **ターゲットフレームワーク** | net11.0-windows10.0.17763.0 |
+| **ターゲットフレームワーク** | net11.0-windows10.0.20348.0 |
 | **ビルドツール** | MSBuild / .NET SDK 10.0 |
 | **DI** | Microsoft.Extensions.DependencyInjection |
 | **ログ** | Serilog 4.x + Serilog.Sinks.File（ファイル出力 `%LOCALAPPDATA%\SaveEvidence\logs\SaveEvidence.AvaloniaUI.<yyyyMMdd>.log`）+ Microsoft.Extensions.Logging（LoggerMessage ソース生成） |
