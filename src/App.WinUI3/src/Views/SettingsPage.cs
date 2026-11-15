@@ -33,6 +33,9 @@ internal static class SettingsPage
     private const string BorderControlUnsupportedReason =
         "このビルドでは撮影中の枠を消せません（対象 OS の API が使えないため）";
 
+    /// <summary>設定できない項目の淡色の不透明度。</summary>
+    private const double DisabledOpacity = 0.45;
+
     /// <summary>外観設定の項目名の最大幅（DIP）。 狭いウィンドウでは折り返す。</summary>
     private const double ItemNameMaxWidth = 190;
 
@@ -239,14 +242,16 @@ internal static class SettingsPage
                     settings.UseWindowsGraphicsCapture,
                     value => settings.UseWindowsGraphicsCapture = value,
                     WindowsGraphicsCaptureSupport.IsSupported,
-                    WindowsGraphicsCaptureSupport.DescribeUnsupportedReason)),
+                    WindowsGraphicsCaptureSupport.DescribeUnsupportedReason()),
+                WindowsGraphicsCaptureSupport.IsSupported),
             Row(
                 "撮影中の枠を消す",
                 GatedCheckRow(
                     settings.HideCaptureBorder,
                     value => settings.HideCaptureBorder = value,
                     WindowsGraphicsCaptureSupport.IsBorderControlSupported,
-                    static () => BorderControlUnsupportedReason)));
+                    BorderControlUnsupportedReason),
+                WindowsGraphicsCaptureSupport.IsBorderControlSupported));
     }
 
     /// <summary>矩形選択範囲の制限のセクションを生成する。</summary>
@@ -498,8 +503,13 @@ internal static class SettingsPage
     /// <summary>ラベルと設定値の行を生成する。</summary>
     /// <param name="label">項目名。</param>
     /// <param name="control">設定値の入力。</param>
+    /// <param name="isLabelEnabled">項目名を有効として表示するか。 false の場合は淡色にする。</param>
     /// <returns>生成した行。</returns>
-    private static FrameworkElement Row(string label, FrameworkElement control)
+    /// <remarks>
+    /// <b>項目名も淡色にする理由</b>: 項目名はチェック ボックスの外側の <see cref="TextBlock"/> にあるため、
+    /// チェック ボックスだけを無効にすると文字が黒いまま残り、有効時の未チェックと見分けが付かない。
+    /// </remarks>
+    private static FrameworkElement Row(string label, FrameworkElement control, bool isLabelEnabled = true)
     {
         var grid = new Grid { ColumnSpacing = 5 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -511,6 +521,7 @@ internal static class SettingsPage
             VerticalAlignment = VerticalAlignment.Center,
             MinWidth = 170,
             FontSize = SettingsMetrics.FontSize,
+            Opacity = isLabelEnabled ? 1.0 : DisabledOpacity,
         };
         Grid.SetColumn(labelText, 0);
         Grid.SetColumn(control, 1);
@@ -523,23 +534,37 @@ internal static class SettingsPage
     /// <param name="initial">初期値。</param>
     /// <param name="apply">変更を設定へ反映する処理。</param>
     /// <param name="isSupported">この環境で設定できるか。</param>
-    /// <param name="describeUnsupported">使えない理由を返す処理（ツールチップに出す）。</param>
-    /// <returns>生成したチェック ボックス。</returns>
+    /// <param name="reason">使えない理由。 使える場合は使わない。</param>
+    /// <returns>生成したチェック ボックス（使えない場合は理由を並べたもの）。</returns>
     /// <remarks>
     /// 使えない項目は<b>値も読み取り専用にする</b>（無効に見えるのに保存値が変わると、次の起動で
-    /// 効いているように見える）。 理由は <see cref="ToolTipService"/> で示す。
+    /// 効いているように見える）。 <b>理由は入力の隣へ淡色で書く</b>（無効にした要素はポインター入力を受けないため、
+    /// ツールチップは表示されない）。
     /// </remarks>
     private static FrameworkElement GatedCheckRow(
-        bool initial, Action<bool> apply, bool isSupported, Func<string> describeUnsupported)
+        bool initial, Action<bool> apply, bool isSupported, string reason)
     {
         var check = (CheckBox)CheckRow(initial, apply, null);
         check.IsEnabled = isSupported;
-        if (!isSupported)
+        if (isSupported)
         {
-            ToolTipService.SetToolTip(check, describeUnsupported());
+            return check;
         }
 
-        return check;
+        var hint = new TextBlock
+        {
+            Text = reason,
+            FontSize = SettingsMetrics.HintFontSize,
+            Opacity = DisabledOpacity,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(8, 0, 0, 0),
+        };
+
+        var row = new StackPanel { Orientation = Orientation.Horizontal };
+        row.Children.Add(check);
+        row.Children.Add(hint);
+        return row;
     }
 
     /// <summary>チェック ボックスの行を生成する。</summary>

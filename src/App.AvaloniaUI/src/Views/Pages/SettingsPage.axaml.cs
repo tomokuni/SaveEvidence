@@ -65,17 +65,26 @@ public sealed partial class SettingsPage : UserControl
     /// </remarks>
     private void ApplyCaptureSourceAvailability()
     {
+        // 理由は入力の隣へ淡色で書く（無効にした要素はポインター入力を受けないため、ツールチップは出ない）
         UseWindowsGraphicsCaptureCheck.IsEnabled = WindowsGraphicsCaptureSupport.IsSupported;
-        if (!WindowsGraphicsCaptureSupport.IsSupported)
-        {
-            ToolTip.SetTip(UseWindowsGraphicsCaptureCheck, WindowsGraphicsCaptureSupport.DescribeUnsupportedReason());
-        }
+        ShowUnsupportedReason(
+            UseWindowsGraphicsCaptureHint,
+            WindowsGraphicsCaptureSupport.IsSupported,
+            WindowsGraphicsCaptureSupport.DescribeUnsupportedReason());
 
         HideCaptureBorderCheck.IsEnabled = WindowsGraphicsCaptureSupport.IsBorderControlSupported;
-        if (!WindowsGraphicsCaptureSupport.IsBorderControlSupported)
-        {
-            ToolTip.SetTip(HideCaptureBorderCheck, BorderControlUnsupportedReason);
-        }
+        ShowUnsupportedReason(HideCaptureBorderHint, WindowsGraphicsCaptureSupport.IsBorderControlSupported, BorderControlUnsupportedReason);
+    }
+
+    /// <summary>使えない理由の表示を切り替える。</summary>
+    /// <param name="hint">理由を表示する要素。</param>
+    /// <param name="isSupported">この環境で設定できるか。</param>
+    /// <param name="reason">使えない理由。</param>
+    private static void ShowUnsupportedReason(TextBlock hint, bool isSupported, string reason)
+    {
+        hint.FontSize = SettingsMetrics.HintFontSize;
+        hint.Text = reason;
+        hint.IsVisible = !isSupported;
     }
 
     /// <summary>保存先フォルダの ToolTip（プレースホルダの説明）を構築する。</summary>

@@ -740,20 +740,43 @@ internal static class SettingsPage
     /// <param name="value">初期値。</param>
     /// <param name="onChanged">変更を設定へ反映する処理。</param>
     /// <param name="isSupported">この環境で設定できるか。</param>
-    /// <param name="reason">使えない理由（ツールヒントに出す）。</param>
-    /// <returns>生成したチェック ボックス。</returns>
-    /// <remarks>使えない項目は値を変更させない（無効に見えるのに保存値が変わらないようにする）。</remarks>
-    private static CheckBox CreateGatedCheckBox(
+    /// <param name="reason">使えない理由。</param>
+    /// <returns>生成したチェック ボックス（使えない場合は理由を並べたもの）。</returns>
+    /// <remarks>
+    /// 使えない項目は値を変更させない（無効に見えるのに保存値が変わらないようにする）。
+    /// 理由は入力の隣へ淡色で書く（<see cref="ToolTip"/> は無効なコントロールでは表示されない）。
+    /// </remarks>
+    private static Control CreateGatedCheckBox(
         string caption, bool value, Action<bool> onChanged, bool isSupported, string reason)
     {
         var box = CreateCheckBox(caption, value, onChanged);
         box.Enabled = isSupported;
-        if (!isSupported)
+        if (isSupported)
         {
-            UiFactory.AttachToolTip(box, reason);
+            return box;
         }
 
-        return box;
+        var hint = new Label
+        {
+            Text = reason,
+            AutoSize = true,
+            ForeColor = AppStyles.Foreground,
+            Font = AppStyles.SettingsHintFont,
+            Margin = new Padding(8, 0, 0, 0),
+            Anchor = AnchorStyles.Left,
+        };
+
+        var row = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Margin = new Padding(0),
+        };
+        row.Controls.Add(box);
+        row.Controls.Add(hint);
+        return row;
     }
 
     /// <summary>チェック ボックスの行を生成する。</summary>
