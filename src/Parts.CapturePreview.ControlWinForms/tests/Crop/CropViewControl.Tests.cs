@@ -17,6 +17,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Tests.Crop;
 /// （座標変換の検証はビューポートを確定させる必要があり、ハンドル（ウィンドウ）を必要とする）。<br/>
 /// 描画の検証は描画層（<c>ZoomGraphicsRenderer</c> / <c>RectOverlayGraphicsRenderer</c>）のテストが担う。
 /// </remarks>
+[Collection(LogPrefixCollectionDefinition.Name)]
 public sealed class CropViewControlTests
 {
     /// <summary>内包するコントロールが生成され、既定のモードが切り出しであることを検証する。</summary>
