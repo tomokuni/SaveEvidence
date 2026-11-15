@@ -560,7 +560,7 @@ Marquee の選択矩形（範囲選択）は半開区間（`幅 = 終点 − 始
 - `StartCropAsync` の `cropView` は `CropViewControl`（ズーム + 領域選択 + ルーペを内包した複合コントロール）です。 選択矩形のオーバーレイ（Marquee / Loupe）はセッションが `CropViewControl.Rects` へ配置するため、利用側での配置は不要です（ズーム・パン・Fit・座標変換は内包する `ZoomViewControl` が単一所有）。 切り出しの対象画像は `cropView.Source` に `EsBitmapAvaloniaAdapter` として設定しておく必要があります（未設定・非対応の場合は開始せず結果 null。 `EsBitmapAvaloniaAdapter` は `IImage` の非所有契約のため、差し替え時に旧アダプタを破棄するのは画像を設定する側です）。
 - `CropViewControl` / `SelectionOverlayControl` は本アセンブリが公開する複合コントロールです（別プロジェクトではありません）。
 - `CaptureSettings` の数値メンバーは `Validate()` で範囲チェックされ、範囲外は `ArgumentOutOfRangeException` を投げます。
-- キャプチャ画像へのオーバーレイ写り込みは `IWindowService.SetCaptureExclusion`（Windows 10 2004 以降の API）で防止します。 **本アプリの下限（17763）では使えない環境がある**ため、戻り値の `false`（非対応）を許容し、写り込んでも撮影は続行します。
+- キャプチャ画像へのオーバーレイ写り込みは `IWindowService.SetCaptureExclusion`（Windows 10 2004 以降の API）で防止します。 **本アプリの下限（Windows 10 バージョン 1809 / ビルド 17763）では使えない環境がある**ため、戻り値の `false`（非対応）を許容し、写り込んでも撮影は続行します。
 - `ZoomPercent`（実効ズーム率）は 0 にならない（`ZoomPercent` setter に 0 以下を設定しても無視される）。 Fit 表示は `ZoomFit` で行います。
 - Fit 中はパン不可（画像がビューポートに収まるため）。 スクロールバーも非表示になります。
 - `Ctrl + マウスホイール` は画像ビューポートが捕捉し、通常のパンには伝播しません（Ctrl を離すとパンに戻る）。
