@@ -99,7 +99,7 @@ public sealed class CaptureSessionControl : IDisposable
 
     /// <summary>撮影中の枠（Windows.Graphics.Capture が描く枠）を消すかどうかを取得または設定する。</summary>
     /// <value>既定は false（消さない）。</value>
-    /// <remarks>枠を制御できない環境では値は無視される（枠が描かれたまま撮影する）。</remarks>
+    /// <remarks>枠を制御できない環境（Windows 11 / ビルド 22000 未満）では値は無視される（枠が描かれたまま撮影する）。</remarks>
     public bool ShouldHideCaptureBorder { get; set; }
 
     /// <summary>現在の外観・動作設定を取得する（getter は現在有効な値、すなわち全メンバー non-null の CaptureSettings を返す）。</summary>

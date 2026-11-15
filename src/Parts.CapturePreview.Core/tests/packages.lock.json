@@ -184,34 +184,34 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.7.5, )",
-          "EsUtil.Feature.Marquee.Core": "[0.7.5, )",
-          "EsUtil.Platform.Core": "[0.7.5, )"
+          "EsUtil.Feature.Loupe.Core": "[0.7.6, )",
+          "EsUtil.Feature.Marquee.Core": "[0.7.6, )",
+          "EsUtil.Platform.Core": "[0.7.6, )"
         }
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.5, )",
-        "resolved": "0.7.5",
-        "contentHash": "Ha33RK2lz/L+xdpp/Cz8BfCvKeCYuQnC0vvHZXafaMtqsohkJUKrPIF6LAfZmswM7AVRw/KhrSiLyq/aPAB69Q==",
+        "requested": "[0.7.6, )",
+        "resolved": "0.7.6",
+        "contentHash": "tIJMZThVIAf8RFu13U143QiRXpxpMCwWWs250fgfC5i2qirqU3VZz3Yry8N0YwSNXwwVz2RYVm2rgSCi931VVA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.5"
+          "EsUtil.Platform.Core": "0.7.6"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.5, )",
-        "resolved": "0.7.5",
-        "contentHash": "vsxtbciPVwVJOfF/ZH8pue1AjZoJ4FpQICPWcQ3Cai3SUTUYmM0fXVfkDrmWsoil82DX//Acidw4/gAgiFC2NA==",
+        "requested": "[0.7.6, )",
+        "resolved": "0.7.6",
+        "contentHash": "PIZhD6kIsbAD9PmC4e39SF2BvHvDRD2bEdJQkUStZiYkdX9rvRUy/QRpcveXfeNkA2SXrMydatSxJh59BfcOHw==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.5"
+          "EsUtil.Platform.Core": "0.7.6"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.5, )",
-        "resolved": "0.7.5",
-        "contentHash": "z5qbdH8q81UjmEvzoQctIx0OLaTxZul0p8ZBOqvfR7GtkWK/DmMPILrXW6hh3XmXFaaR0t5jGeLV38fEXSeJMg=="
+        "requested": "[0.7.6, )",
+        "resolved": "0.7.6",
+        "contentHash": "nd2Zm2V3J/VBBLDAHEnWeS/MvId4SF825BPSKAxpHCHy117bUIb8RVAHo+nCf/Xx8JtH/d+2HPu41K11elR7ww=="
       }
     }
   }

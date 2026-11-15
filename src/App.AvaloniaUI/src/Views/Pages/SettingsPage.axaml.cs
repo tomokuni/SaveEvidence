@@ -25,7 +25,7 @@ public sealed partial class SettingsPage : UserControl
 {
     /// <summary>「撮影中の枠を消す」が使えない理由（ツールチップに出す）。</summary>
     private const string BorderControlUnsupportedReason =
-        "このビルドでは撮影中の枠を消せません（対象 OS の API が使えないため）";
+        "この環境では撮影中の枠を消せません（Windows 11 / ビルド 22000 以降が必要です）";
 
     private readonly MainViewModel _viewModel = null!;
     private readonly SettingsService _settingsService = null!;
