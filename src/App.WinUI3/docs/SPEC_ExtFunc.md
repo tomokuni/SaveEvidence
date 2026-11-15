@@ -37,7 +37,7 @@
 
 | 項目 | 要件 |
 | --- | --- |
-| OS | Windows Server 2022 / Windows 11（ビルド 20348）以降 |
+| OS | Windows 10 バージョン 1809（ビルド 17763）以降 |
 | ランタイム | .NET 11（デスクトップ） |
 | グラフィックス | WinUI 3（DirectX・Composition）と XAML の要素 |
 | 配置 | アンパッケージ / Windows App SDK フレームワーク依存（**Windows App Runtime 2.6（x64）** が要り、無ければ起動時に案内して導入する） |
