@@ -138,7 +138,8 @@
                                        Margin="8,0,0,0" Opacity="0.45"
                                        TextWrapping="Wrap"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                        <!-- 画面の取得方式に依存するため段下げする -->
+                        <StackPanel Orientation="Horizontal" Margin="20,5,0,0">
                             <CheckBox x:Name="HideCaptureBorderCheck"
                                       IsChecked="{Binding Settings.HideCaptureBorder}"
                                       Content="撮影中の枠を消す"/>
