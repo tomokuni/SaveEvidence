@@ -4,35 +4,35 @@
     "net11.0-windows10.0.17763": {
       "EsUtil.Ui.WinUI3.ColorSelector": {
         "type": "Direct",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "8WCcnapgoHInLLgYujuVCdwv0S3ZIguL9wc8nPng+RU2q+2heqd0CMsMNTTdMQJoJyZMm/A+tWVpFF5oiVifIw==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "yRQIiM2e1DH/MfCe3ihk4cr8xEccaI48aXcnKbnRAGvm5RSvsfmdqZZt6IW2iNZmYjHItowLUNmKSsMi6Hb7Xg==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2",
+          "EsUtil.Platform.Core": "0.7.5",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.0.1"
         }
       },
       "EsUtil.Ui.WinUI3.Interop": {
         "type": "Direct",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "8XtlRd6H0GbXsjzefsuMQe5up7xu+luYjyjfvyu62VHem5BBf5alJInSKKxZzO00lrQZgBNFTOdxQHR5/Y0osw==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "5qKkyEj8lm/Ndywq8xGsXd6bU1PMvK/JSYKSOUQ5B0ks/ganujeg3tJNEek/V7I5JZf7Xhq7HtTzVeWwwFqo/Q==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2",
+          "EsUtil.Platform.Core": "0.7.5",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.0.1"
         }
       },
       "EsUtil.Ui.WinUI3.Thumbnail": {
         "type": "Direct",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "QmzqCRH82hZFN+bdb0xym9IToES+A16SGaYX5oIbr+kxZN25aAxtxcR/d05VocfwQmChT2Cv6wzCTFPaSc8iHw==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "TcNEaRWWFEsTvja/CWl7W9iltbRdL/pdJabsIXsNV8HLRf6ODD5Hwl/NPKSi+0dMZggemmqCKP40jtx5YQUeQA==",
         "dependencies": {
-          "EsUtil.Feature.Thumbnail.Core": "0.7.2",
-          "EsUtil.Platform.Core": "0.7.2",
-          "EsUtil.Ui.WinUI3.Interop": "0.7.2",
+          "EsUtil.Feature.Thumbnail.Core": "0.7.5",
+          "EsUtil.Platform.Core": "0.7.5",
+          "EsUtil.Ui.WinUI3.Interop": "0.7.5",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.0.1"
         }
@@ -236,7 +236,7 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
-          "EsUtil.Platform.Core": "[0.7.2, )",
+          "EsUtil.Platform.Core": "[0.7.5, )",
           "Parts.CapturePreview.Core": "[0.6.0, )",
           "Parts.LineDetection": "[0.6.0, )",
           "Serilog": "[4.4.0, )",
@@ -247,10 +247,10 @@
       "parts.capturepreview.controlwinui3": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.7.2, )",
-          "EsUtil.Ui.WinUI3.Interop": "[0.7.2, )",
-          "EsUtil.Ui.WinUI3.Loupe": "[0.7.2, )",
-          "EsUtil.Ui.WinUI3.Marquee": "[0.7.2, )",
+          "EsUtil.Platform.Core": "[0.7.5, )",
+          "EsUtil.Ui.WinUI3.Interop": "[0.7.5, )",
+          "EsUtil.Ui.WinUI3.Loupe": "[0.7.5, )",
+          "EsUtil.Ui.WinUI3.Marquee": "[0.7.5, )",
           "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2957, )",
           "Microsoft.WindowsAppSDK": "[2.6.5, )",
           "Parts.CapturePreview.Core": "[0.6.0, )"
@@ -259,15 +259,15 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.7.2, )",
-          "EsUtil.Feature.Marquee.Core": "[0.7.2, )",
-          "EsUtil.Platform.Core": "[0.7.2, )"
+          "EsUtil.Feature.Loupe.Core": "[0.7.5, )",
+          "EsUtil.Feature.Marquee.Core": "[0.7.5, )",
+          "EsUtil.Platform.Core": "[0.7.5, )"
         }
       },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.7.2, )",
+          "EsUtil.Platform.Core": "[0.7.5, )",
           "OpenCvSharp5": "[5.0.0.20261109, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261109, )"
         }
@@ -280,59 +280,59 @@
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "BntICrDgGid6/zCnuzNYbgWuTqveNcaH8lT6FYemXHQ/CtE8bLZp9u8G2yRG/3z0vKdblk064PMaNwTPskxd0g==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "Ha33RK2lz/L+xdpp/Cz8BfCvKeCYuQnC0vvHZXafaMtqsohkJUKrPIF6LAfZmswM7AVRw/KhrSiLyq/aPAB69Q==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "S4IC2Rsauzgn+mj3EA7v+SKsot/FdDZd2WYPkZZL4SY1BBA1KFInF+wJaisVBPezLylipBn+bojPtCpaqnW3fA==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "vsxtbciPVwVJOfF/ZH8pue1AjZoJ4FpQICPWcQ3Cai3SUTUYmM0fXVfkDrmWsoil82DX//Acidw4/gAgiFC2NA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Feature.Thumbnail.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "94X2DkLFH/5ILXiAX/5tefPY71ggx2HfuBS1jJSf0i67cS7F83I4/BOQ9FQ+wL99z9+n8llLqbQngr+NXcbRgg==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "2ZMQ98CJly1w+E2W/nR5DNgWrbHNhDGgMCGig/6w3mIaBNGH1IkEMkR9jR9ioTsFLQ/AWpej2D76j08es2005w==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "5FewWXY8yzOEMZzqqP3o0dEQEXTib9dOuZgOArFqIfHvRsbDxSj4nUEl9ViMBnM/eBKshvarY/w+DKAAbIcO+A=="
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "z5qbdH8q81UjmEvzoQctIx0OLaTxZul0p8ZBOqvfR7GtkWK/DmMPILrXW6hh3XmXFaaR0t5jGeLV38fEXSeJMg=="
       },
       "EsUtil.Ui.WinUI3.Loupe": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "OgSbngBx/+LMBvBPugayWjkDp9fJ/aMPCD5uh6dIYYDbt9dNCn2cGz62H+8bNlNmgK/vb7ZoQxfCJKHS7xDd7Q==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "m+RWRg/NWtBg2EudKs5i/VR14D/kVurBbn4x7u+M4Ypq5BkSYPgF4R7TrRcUfy0TJF2/dRvgqO441HnVuQGlmA==",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "0.7.2",
-          "EsUtil.Platform.Core": "0.7.2",
-          "EsUtil.Ui.WinUI3.Interop": "0.7.2",
+          "EsUtil.Feature.Loupe.Core": "0.7.5",
+          "EsUtil.Platform.Core": "0.7.5",
+          "EsUtil.Ui.WinUI3.Interop": "0.7.5",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.0.1"
         }
       },
       "EsUtil.Ui.WinUI3.Marquee": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "KR0LQBqH722lJA9W27cYRbYPb6Pwl/ejM08jf5KCeCYloG/Yb3OVulEVsKM7lqtQpo0podDZm59SwUUm5X9sjw==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "lMjJWhvGI0be2QX6TLsgnlKRUPEdqpTbPTQS0Y9ge9V3fGNqSZbpOVQTjiEVSOb1P3lMFL51exp9SjHhzMxTLw==",
         "dependencies": {
-          "EsUtil.Feature.Marquee.Core": "0.7.2",
-          "EsUtil.Platform.Core": "0.7.2",
-          "EsUtil.Ui.WinUI3.Interop": "0.7.2",
+          "EsUtil.Feature.Marquee.Core": "0.7.5",
+          "EsUtil.Platform.Core": "0.7.5",
+          "EsUtil.Ui.WinUI3.Interop": "0.7.5",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.0.1"
         }

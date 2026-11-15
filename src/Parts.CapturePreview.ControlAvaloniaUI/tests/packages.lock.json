@@ -360,18 +360,18 @@
         "type": "Project",
         "dependencies": {
           "Avalonia.Desktop": "[12.1.6, )",
-          "EsUtil.Ui.AvaloniaUI.Interop": "[0.7.2, )",
-          "EsUtil.Ui.AvaloniaUI.Loupe": "[0.7.2, )",
-          "EsUtil.Ui.AvaloniaUI.Marquee": "[0.7.2, )",
+          "EsUtil.Ui.AvaloniaUI.Interop": "[0.7.5, )",
+          "EsUtil.Ui.AvaloniaUI.Loupe": "[0.7.5, )",
+          "EsUtil.Ui.AvaloniaUI.Marquee": "[0.7.5, )",
           "Parts.CapturePreview.Core": "[0.6.0, )"
         }
       },
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.7.2, )",
-          "EsUtil.Feature.Marquee.Core": "[0.7.2, )",
-          "EsUtil.Platform.Core": "[0.7.2, )"
+          "EsUtil.Feature.Loupe.Core": "[0.7.5, )",
+          "EsUtil.Feature.Marquee.Core": "[0.7.5, )",
+          "EsUtil.Platform.Core": "[0.7.5, )"
         }
       },
       "Avalonia": {
@@ -410,60 +410,60 @@
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "BntICrDgGid6/zCnuzNYbgWuTqveNcaH8lT6FYemXHQ/CtE8bLZp9u8G2yRG/3z0vKdblk064PMaNwTPskxd0g==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "Ha33RK2lz/L+xdpp/Cz8BfCvKeCYuQnC0vvHZXafaMtqsohkJUKrPIF6LAfZmswM7AVRw/KhrSiLyq/aPAB69Q==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "S4IC2Rsauzgn+mj3EA7v+SKsot/FdDZd2WYPkZZL4SY1BBA1KFInF+wJaisVBPezLylipBn+bojPtCpaqnW3fA==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "vsxtbciPVwVJOfF/ZH8pue1AjZoJ4FpQICPWcQ3Cai3SUTUYmM0fXVfkDrmWsoil82DX//Acidw4/gAgiFC2NA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "5FewWXY8yzOEMZzqqP3o0dEQEXTib9dOuZgOArFqIfHvRsbDxSj4nUEl9ViMBnM/eBKshvarY/w+DKAAbIcO+A=="
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "z5qbdH8q81UjmEvzoQctIx0OLaTxZul0p8ZBOqvfR7GtkWK/DmMPILrXW6hh3XmXFaaR0t5jGeLV38fEXSeJMg=="
       },
       "EsUtil.Ui.AvaloniaUI.Interop": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "cCV9WogrFPZ+mm5fSF8SzizpOyLgTszue+AMvMjm5x8JIoe57eJRVQ/XoeDvW+5VplBtvhOdthISFWD3aXOHCw==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "MB1khOv0almJYMCPvfHuU7hszo/j5w7rJAe1TvtV4hhRlhuHvdBCzMA2OjWfGvgT5TlFhsDCE6nfOCjW5wYQuw==",
         "dependencies": {
           "Avalonia": "12.1.6",
-          "EsUtil.Platform.Core": "0.7.2"
+          "EsUtil.Platform.Core": "0.7.5"
         }
       },
       "EsUtil.Ui.AvaloniaUI.Loupe": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "MME9F0jej/s5gv7n+89gfWPDjnG+TmGvnZ7YCihMQczHS1nfLlUpQnHEvQuD+OxNK5ntujcoYpvkCN+p4RxqIQ==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "PTqsgoHDLndjyy9gma9UZf4oK9/y9munDN/N5uPxC9GfAbACIJg9q6kg9NLACJKPY40dlM7h2d1unvSHoJ8VXg==",
         "dependencies": {
           "Avalonia": "12.1.6",
-          "EsUtil.Feature.Loupe.Core": "0.7.2",
-          "EsUtil.Platform.Core": "0.7.2",
-          "EsUtil.Ui.AvaloniaUI.Interop": "0.7.2"
+          "EsUtil.Feature.Loupe.Core": "0.7.5",
+          "EsUtil.Platform.Core": "0.7.5",
+          "EsUtil.Ui.AvaloniaUI.Interop": "0.7.5"
         }
       },
       "EsUtil.Ui.AvaloniaUI.Marquee": {
         "type": "CentralTransitive",
-        "requested": "[0.7.2, )",
-        "resolved": "0.7.2",
-        "contentHash": "yGblGyL/wNURtt9B54tMrKOgdHoavOHWm89QXkO7yzOZ8o9Au6XlpfqGipSkZ/0R472BQeujymWXDhC6uZu/Wg==",
+        "requested": "[0.7.5, )",
+        "resolved": "0.7.5",
+        "contentHash": "GvVOVN2ugSmCLQ600iwfD1ZKExhqjcEsT1Pb98BKSkBuKL8kaxzNhWIM/p+I4IbYwpOuE+appErA19X0bfMehw==",
         "dependencies": {
           "Avalonia": "12.1.6",
-          "EsUtil.Feature.Marquee.Core": "0.7.2",
-          "EsUtil.Platform.Core": "0.7.2",
-          "EsUtil.Ui.AvaloniaUI.Interop": "0.7.2"
+          "EsUtil.Feature.Marquee.Core": "0.7.5",
+          "EsUtil.Platform.Core": "0.7.5",
+          "EsUtil.Ui.AvaloniaUI.Interop": "0.7.5"
         }
       }
     }

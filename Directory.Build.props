@@ -1,66 +1,66 @@
-<Project>
-
-  <PropertyGroup>
-    <!-- リリースバージョン。全プロジェクトで単一所有し、各 .csproj では指定しない。 -->
-    <!-- 自動インクリメントは行わない。リリース時に版を上げてコミットする（.github/RELEASE.md）。 -->
-    <Version>0.6.0</Version>
-
-    <!-- 本リポジトリが使う EsUtil の版（公開済みのパッケージ）。 版の値はここが単一所有し、
-         Directory.Packages.props の PackageVersion と InformationalVersion が参照する
-         （Directory.Packages.props は本ファイルより後に読み込まれるため、値はここで定義する）。 -->
-    <!-- アプリの版から「使った EsUtil の版」を辿れるようにする（`+esutil.0.5.1`）。
-         EsUtil はパッケージ参照であり、配布物だけを見ても版が分からないため、製品バージョンへ残す。
-         SourceLink のコミット（`+<sha>`）は SDK が後ろへ足す。 -->
-    <EsUtilVersion>0.7.2</EsUtilVersion>
-    <InformationalVersion Condition="'$(EsUtilVersion)' != ''">$(Version)+esutil.$(EsUtilVersion)</InformationalVersion>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <!-- 復元の再現性: 依存の版を packages.lock.json へ固定する（**コミットする**）。
-         同じ版でも、取得元や解決の揺れで別の中身が入る事故を防ぐ（実測 2026-10-26: ローカルのキャッシュに
-         同じ版番号で依存の違うパッケージがあり、NU1605 になった）。
-         CI は -p:RestoreLockedMode=true で「lock と違う解決」を失敗させる。
-         規則は .github/ビルド設定規約.md §4。 -->
-    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <!-- コード スタイルとドキュメントコメントの検証（全プロジェクト共通。 各 .csproj では指定しない）。
-         目的は「機械的に判定できる規約をビルドの警告にする」こと（0 件が合否。 .github/検証手順.md）。 -->
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <!-- XML は検証だけに使う（bin へも publish へも出さない）。
-         CopyDocumentationFileToOutputDirectory だけでは publish が MSB3030（XML が見つからない）で
-         失敗するため、PublishDocumentationFiles も false にする（対で指定する）。 -->
-    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
-    <PublishDocumentationFiles>false</PublishDocumentationFiles>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <!-- アナライザーの解析モード（全プロジェクト共通。 各 .csproj では指定しない）。
-         `Recommended` は SDK が推奨する規則をまとめて有効にする（規則の列挙を .editorconfig へ手書きしない）。
-         無効にする規則だけを .editorconfig に `severity = none` で明示する（opt-out 方式）。 -->
-    <AnalysisLevel>latest</AnalysisLevel>
-    <AnalysisMode>Recommended</AnalysisMode>
-    <!-- 警告をエラーにする（「dotnet build が通れば規約に準拠している」を終了コードで判定できる）。
-         検証スクリプトの `-warnaserror` に依存しない（素の `dotnet build` でも検出できる）。 -->
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <!-- 使用を禁止する API（buildScript/BannedSymbols.txt）をコンパイラで検出する。
-         規則の所有者は .github/コーディング規約.md（例: フラグ enum は HasFlag ではなくビット演算を使う）。
-         一覧をルート直下に置かないのは、ルートのファイルを減らすため（規則は .github/ビルド設定規約.md §1）。 -->
-    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)buildScript\BannedSymbols.txt" />
-
-    <!-- 規約のうち、SDK のアナライザー（AnalysisMode=Recommended）が検出しない項目を補うアナライザー。
-         有効にする規則は .editorconfig が単一所有する（既定の重要度のまま使わない）。 -->
-    <!-- 非同期の書き方（`async void` の禁止・`Async` 接尾辞）。 規則は .github/コーディング規約.md §7 / .github/命名規約.md。 -->
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" />
-    <!-- ファイル名と型名の一致（MA0048）/ 名前空間セグメントと型名の一致の禁止（MA0049）。
-         規則は .github/命名規約.md（「1 ファイル 1 型」「ファイル名は型名と一致」「名前空間セグメントと型名を一致させない」）。 -->
-    <PackageReference Include="Meziantou.Analyzer" PrivateAssets="all" />
-  </ItemGroup>
-
-</Project>
+<Project>
+
+  <PropertyGroup>
+    <!-- リリースバージョン。全プロジェクトで単一所有し、各 .csproj では指定しない。 -->
+    <!-- 自動インクリメントは行わない。リリース時に版を上げてコミットする（.github/RELEASE.md）。 -->
+    <Version>0.6.0</Version>
+
+    <!-- 本リポジトリが使う EsUtil の版（公開済みのパッケージ）。 版の値はここが単一所有し、
+         Directory.Packages.props の PackageVersion と InformationalVersion が参照する
+         （Directory.Packages.props は本ファイルより後に読み込まれるため、値はここで定義する）。 -->
+    <!-- アプリの版から「使った EsUtil の版」を辿れるようにする（`+esutil.0.5.1`）。
+         EsUtil はパッケージ参照であり、配布物だけを見ても版が分からないため、製品バージョンへ残す。
+         SourceLink のコミット（`+<sha>`）は SDK が後ろへ足す。 -->
+    <EsUtilVersion>0.7.5</EsUtilVersion>
+    <InformationalVersion Condition="'$(EsUtilVersion)' != ''">$(Version)+esutil.$(EsUtilVersion)</InformationalVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- 復元の再現性: 依存の版を packages.lock.json へ固定する（**コミットする**）。
+         同じ版でも、取得元や解決の揺れで別の中身が入る事故を防ぐ（実測 2026-10-26: ローカルのキャッシュに
+         同じ版番号で依存の違うパッケージがあり、NU1605 になった）。
+         CI は -p:RestoreLockedMode=true で「lock と違う解決」を失敗させる。
+         規則は .github/ビルド設定規約.md §4。 -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- コード スタイルとドキュメントコメントの検証（全プロジェクト共通。 各 .csproj では指定しない）。
+         目的は「機械的に判定できる規約をビルドの警告にする」こと（0 件が合否。 .github/検証手順.md）。 -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- XML は検証だけに使う（bin へも publish へも出さない）。
+         CopyDocumentationFileToOutputDirectory だけでは publish が MSB3030（XML が見つからない）で
+         失敗するため、PublishDocumentationFiles も false にする（対で指定する）。 -->
+    <CopyDocumentationFileToOutputDirectory>false</CopyDocumentationFileToOutputDirectory>
+    <PublishDocumentationFiles>false</PublishDocumentationFiles>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- アナライザーの解析モード（全プロジェクト共通。 各 .csproj では指定しない）。
+         `Recommended` は SDK が推奨する規則をまとめて有効にする（規則の列挙を .editorconfig へ手書きしない）。
+         無効にする規則だけを .editorconfig に `severity = none` で明示する（opt-out 方式）。 -->
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <!-- 警告をエラーにする（「dotnet build が通れば規約に準拠している」を終了コードで判定できる）。
+         検証スクリプトの `-warnaserror` に依存しない（素の `dotnet build` でも検出できる）。 -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 使用を禁止する API（buildScript/BannedSymbols.txt）をコンパイラで検出する。
+         規則の所有者は .github/コーディング規約.md（例: フラグ enum は HasFlag ではなくビット演算を使う）。
+         一覧をルート直下に置かないのは、ルートのファイルを減らすため（規則は .github/ビルド設定規約.md §1）。 -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory)buildScript\BannedSymbols.txt" />
+
+    <!-- 規約のうち、SDK のアナライザー（AnalysisMode=Recommended）が検出しない項目を補うアナライザー。
+         有効にする規則は .editorconfig が単一所有する（既定の重要度のまま使わない）。 -->
+    <!-- 非同期の書き方（`async void` の禁止・`Async` 接尾辞）。 規則は .github/コーディング規約.md §7 / .github/命名規約.md。 -->
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" />
+    <!-- ファイル名と型名の一致（MA0048）/ 名前空間セグメントと型名の一致の禁止（MA0049）。
+         規則は .github/命名規約.md（「1 ファイル 1 型」「ファイル名は型名と一致」「名前空間セグメントと型名を一致させない」）。 -->
+    <PackageReference Include="Meziantou.Analyzer" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
