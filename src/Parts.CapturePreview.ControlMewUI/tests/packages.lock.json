@@ -244,7 +244,7 @@
           "EsUtil.Ui.MewUI.Interop": "[0.7.5, )",
           "EsUtil.Ui.MewUI.Loupe": "[0.7.5, )",
           "EsUtil.Ui.MewUI.Marquee": "[0.7.5, )",
-          "Parts.CapturePreview.Core": "[0.6.0, )"
+          "Parts.CapturePreview.Core": "[0.7.0, )"
         }
       },
       "parts.capturepreview.core": {

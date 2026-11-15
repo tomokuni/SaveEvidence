@@ -229,7 +229,7 @@
           "EsUtil.Ui.AvaloniaUI.Interop": "[0.7.5, )",
           "EsUtil.Ui.AvaloniaUI.Loupe": "[0.7.5, )",
           "EsUtil.Ui.AvaloniaUI.Marquee": "[0.7.5, )",
-          "Parts.CapturePreview.Core": "[0.6.0, )"
+          "Parts.CapturePreview.Core": "[0.7.0, )"
         }
       },
       "parts.capturepreview.core": {
