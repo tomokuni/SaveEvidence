@@ -7,10 +7,11 @@
 - **`AnnotationLayerControl`**: 画像の表示・注釈の描画・入力の受付を担います。
 - **判断は `EsUtil.Feature.Annotation` が単一所有**します（当たり判定・折り返し・描画計画）。 本コントロールは自 UI の描画 API へ写すだけです。
 - **選択枠と 8 方向のハンドルは Marquee の提示層を再利用**します（移動・サイズ変更・方向キーの nudge・カーソル形状が 4 つの UI 版で同じになる）。
-- **本文の編集はホストが行います**（ダブルクリックで `EditTextRequested` が発生し、ホストが入力欄を重ねる）。
+- **本文はその場で編集します**（ダブルクリックまたは Enter でキャレットが立ち、表示中のレイアウトのまま入力できます）。 IME（日本語入力）にも対応します。
 
-**現状**: 本文の編集は単一書式の入力欄で行い、**書式（文字単位）は選択範囲への適用**で変えます
-（右クリックのフライアウト、ホストが重ねる書式バー、`Ctrl+B` / `Ctrl+I` / `Ctrl+U`）。
+**現状**: 本文は**入力欄を重ねずにその場で編集**します（キャレット・選択範囲を本文の上に描く。 IME 対応）。
+**書式（文字単位）は選択範囲への適用**で変わり、**適用するとその場で反映**されます
+（右クリックのフライアウト、ホストが置く書式バー）。
 描画は run ごとの書式（太字・斜体・下線・取り消し線・色・大きさ・フォント）に対応しています。
 
 **色の選択は `EsUtil.Ui.AvaloniaUI.ColorSelector` を使います**（自前の色入力を作らない）。
@@ -33,9 +34,9 @@ var layer = new AnnotationLayerControl
 layer.AddFrame(new EsRect(60, 60, 340, 220));
 layer.AddBubble(new EsRect(900, 120, 380, 170), "ここが重要です。");
 
-// 編集の要求（ホストが入力欄を重ね、確定した文字列を戻す）
-layer.EditTextRequested += (_, _) => ShowEditor(layer.GetSelectedBodyRect());
-layer.SetSelectedText("新しい本文");
+// 本文の編集（その場で編集する。 ホストは書式バーを出すだけ）
+layer.BeginTextEditing();
+layer.EndTextEditing();
 
 // 保存（注釈 JSON と合成画像の書き出し）はホストが行う
 var path = AnnotationJson.GetDocumentPath(imagePath);
@@ -57,10 +58,12 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | `MoveSelectedToFront()` / `MoveSelectedToBack()` | 重なり順の変更 |
 | `Undo()` / `Redo()` / `CanUndo` / `CanRedo` | 元に戻す・やり直す（1 操作 = 1 手。 ドラッグは押下から離すまでで 1 手） |
 | `ShowStyleEditor()` | 外観・書式・重なり順の編集フライアウトを表示する（右クリックと同じ） |
-| `GetSelectedBodyRect()` | 本文の矩形（DIP。 ホストが入力欄を重ねる位置） |
-| `DocumentChanged` / `SelectionChanged` / `EditTextRequested` | 変更・選択・編集要求の通知 |
+| `BeginTextEditing()` / `EndTextEditing()` / `IsEditingText` | 本文の**その場編集**の開始・終了 |
+| `CaretIndex` / `SelectionStart` / `SelectionEnd` / `EditingChanged` | キャレットと選択範囲、編集の開始・終了の通知 |
+| `GetSelectedBodyRect()` | 本文の矩形（DIP。 ホストが書式バーを置く位置） |
+| `DocumentChanged` / `SelectionChanged` | 変更・選択の通知 |
 
-**文字単位の書式**: 本文を編集中に文字を選び、書式バー（ホストが重ねる）か `Ctrl+B` / `Ctrl+I` / `Ctrl+U` を押します。
+**文字単位の書式**: 本文を編集中に文字を選び、書式バー（ホストが置く）か `Ctrl+B` / `Ctrl+I` / `Ctrl+U` を押します。
 選択が無ければ本文全体へ適用します。 編集中でなければ、右クリックのフライアウトが `TextSelectionRange` の範囲へ適用します。
 
 **操作**: クリックで選択 / ドラッグで移動 / ハンドルでサイズ変更 / しっぽの先端（円）をドラッグで移動 /

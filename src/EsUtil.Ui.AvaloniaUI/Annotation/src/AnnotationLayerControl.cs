@@ -16,14 +16,14 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 /// <b>選択枠と 8 方向のハンドルは Marquee の提示層を再利用する</b>（枠・ハンドル・nudge・カーソルを 4 つの UI 版で揃えるため）。
 /// ハンドルの当たり判定も <b>同じ解決結果（<c>MarqueeDrawPlan</c>）と <c>HandleHitRadius</c> を使う</b>ため、
 /// 「カーソルが変わる範囲」と「押して操作できる範囲」が一致する。<br/>
-/// <b>本文の編集はホストが行う</b>: ダブルクリックで <see cref="EditTextRequested"/> を発生させ、ホストが入力欄を
-/// 重ねる（コントロールは子要素を持たないため）。 確定した文字列は <see cref="SetSelectedText"/> で戻し、
-/// 書式は <see cref="TextSelectionRange"/> と <see cref="ApplyTextStyle(AnnotationTextStyle)"/> で文字単位に適用する。<br/>
+/// <b>本文の編集はその場で行う</b>: ダブルクリックまたは Enter で編集を始め、表示中のレイアウトのまま
+/// キャレット・選択範囲を描いて入力する（<see cref="BeginTextEditing"/>）。 書式は <see cref="TextSelectionRange"/> と
+/// <c>TransformTextStyle</c> で文字単位に適用し、入力中も反映される。<br/>
 /// <b>外観と書式の編集は右クリックのフライアウト</b>（<see cref="ShowStyleEditor"/>）で行う。 サンプルは同じ編集 UI を
 /// 設定ペインから使える（既定値の編集）。<br/>
 /// <b>座標</b>: 注釈は元画像ピクセルで保持し、描画時は表示倍率で写す（画像へ焼き込まない）。
 /// </remarks>
-public sealed class AnnotationLayerControl : Control
+public sealed partial class AnnotationLayerControl : Control
 {
     /// <summary>画像を取得または設定する。</summary>
     /// <value>背景に表示する画像。 null の場合は注釈だけを描く。</value>
@@ -93,6 +93,11 @@ public sealed class AnnotationLayerControl : Control
         };
         _marquee.SetCoordTransform(CoordinateTransform);
         _marquee.Subscribe(OnMarqueeNotice);
+
+        // 本文をその場で編集するため、IME（日本語入力）の窓口を渡す。
+        // フォーカスを得た時点で問い合わせが来るため、編集中かどうかで分けずに常に同じクライアントを返す
+        // （編集の開始時に問い合わせ直せないため。 編集中でなければ変換は受け取らない）。
+        TextInputMethodClientRequested += (_, e) => e.Client = TextInputClient;
     }
 
     /// <summary>画像を取得または設定する。</summary>
@@ -131,6 +136,11 @@ public sealed class AnnotationLayerControl : Control
         get => _document;
         set
         {
+            if (_isEditingText)
+            {
+                EndTextEditing();
+            }
+
             _document = value ?? new AnnotationDocument(SourcePixelWidth, SourcePixelHeight);
             _history.Clear();
             _undoCandidate = null;
@@ -203,9 +213,6 @@ public sealed class AnnotationLayerControl : Control
     /// <summary>選択が変わったときに発生する。</summary>
     public event EventHandler? SelectionChanged;
 
-    /// <summary>本文の編集が要求されたときに発生する（ダブルクリック・Enter）。</summary>
-    /// <remarks>ホストは <see cref="GetSelectedBodyRect"/> の位置へ入力欄を置き、確定した文字列を <see cref="SetSelectedText"/> へ渡す。</remarks>
-    public event EventHandler? EditTextRequested;
 
     /// <summary>選択中の注釈を取得する。</summary>
     /// <value>選択が無い場合は <see langword="null"/>。</value>
@@ -492,11 +499,20 @@ public sealed class AnnotationLayerControl : Control
 
         var id = SelectedId;
         _document = document;
+        ClampCaretToText();
 
         if (id is not null && _document.Find(id) is { } item)
         {
             SelectedId = id;
-            _marquee.SetSelection(item.Bounds);
+            if (_isEditingText)
+            {
+                // 編集中は選択枠を出さない（本文の見た目を優先する）
+                _marquee.ResetSelection();
+            }
+            else
+            {
+                _marquee.SetSelection(item.Bounds);
+            }
         }
         else
         {
@@ -595,6 +611,9 @@ public sealed class AnnotationLayerControl : Control
                 {
                     AnnotationPainter.DrawShape(context, shape);
                 }
+
+                // 本文の編集中は、選択範囲とキャレットを注釈と同じ座標系で描く（表示中のレイアウトのまま編集する）
+                DrawTextEditing(context, scale);
             }
         }
 
@@ -631,6 +650,21 @@ public sealed class AnnotationLayerControl : Control
 
         var source = ToSource(point.Position);
 
+        // 本文の編集中は、本文の内側の押下をキャレットの移動・選択に使う（外側なら編集を終える）
+        if (_isEditingText)
+        {
+            if (Selected is BubbleAnnotation editingBubble && editingBubble.Bounds.Contains(source))
+            {
+                _undoCandidate = null;
+                _isSelectingText = true;
+                SetCaretFromPoint(source, (e.KeyModifiers & KeyModifiers.Shift) != 0);
+                InvalidateVisual();
+                return;
+            }
+
+            EndTextEditing();
+        }
+
         if (Selected is not null)
         {
             if (Selected is BubbleAnnotation selectedBubble && IsNearTailTip(selectedBubble, source))
@@ -659,7 +693,9 @@ public sealed class AnnotationLayerControl : Control
 
             if (e.ClickCount >= 2 && hit is BubbleAnnotation)
             {
-                EditTextRequested?.Invoke(this, EventArgs.Empty);
+                BeginTextEditing();
+                e.Handled = true;
+                return;
             }
 
             _marquee.Press(source, e.ClickCount);
@@ -681,6 +717,14 @@ public sealed class AnnotationLayerControl : Control
         var position = e.GetPosition(this);
         var source = ToSource(position);
         _lastPointerSource = source;
+
+        // 本文の編集中にドラッグしている間は、キャレットを伸ばして選択する
+        if (_isEditingText && _isSelectingText)
+        {
+            SetCaretFromPoint(source, extend: true);
+            InvalidateVisual();
+            return;
+        }
 
         if (_isDraggingTail)
         {
@@ -711,6 +755,14 @@ public sealed class AnnotationLayerControl : Control
     {
         base.OnPointerReleased(e);
 
+        if (_isSelectingText)
+        {
+            _isSelectingText = false;
+            e.Pointer.Capture(null);
+            InvalidateVisual();
+            return;
+        }
+
         if (_isDraggingTail)
         {
             _isDraggingTail = false;
@@ -728,6 +780,13 @@ public sealed class AnnotationLayerControl : Control
     {
         base.OnKeyDown(e);
 
+        // 本文の編集中は、キー入力を本文の編集へ渡す（Delete で注釈を消さない）
+        if (_isEditingText && HandleTextEditingKey(e))
+        {
+            e.Handled = true;
+            return;
+        }
+
         // Ctrl+Z / Ctrl+Y（元に戻す・やり直す）。 本文の編集中はホストの入力欄が受け取る。
         if ((e.KeyModifiers & KeyModifiers.Control) != 0 && e.Key is Key.Z or Key.Y)
         {
@@ -741,9 +800,9 @@ public sealed class AnnotationLayerControl : Control
             return;
         }
 
-        if (e.Key == Key.Enter && SelectedId is not null)
+        if (e.Key == Key.Enter && Selected is BubbleAnnotation)
         {
-            EditTextRequested?.Invoke(this, EventArgs.Empty);
+            BeginTextEditing();
             e.Handled = true;
             return;
         }
@@ -874,6 +933,12 @@ public sealed class AnnotationLayerControl : Control
     /// <param name="id">選択する注釈の識別子（解除は null）。</param>
     private void Select(string? id)
     {
+        // 別の注釈を選んだら本文の編集を終える（編集中の本文を見失わないようにする）
+        if (_isEditingText && !string.Equals(SelectedId, id, StringComparison.Ordinal))
+        {
+            EndTextEditing();
+        }
+
         SelectedId = id;
         TextSelectionRange = default;
         if (id is null || _document.Find(id) is not { } item)

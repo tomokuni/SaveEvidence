@@ -45,15 +45,18 @@ public static class AnnotationEditorControls
         VerticalAlignment = VerticalAlignment.Center,
     };
 
-    /// <summary>色の選択を作る。</summary>
+    /// <summary>色の選択を作る（項目名とコントロールを横に並べる）。</summary>
     /// <param name="label">項目名。</param>
     /// <param name="initial">現在の色。</param>
     /// <param name="apply">適用する処理。</param>
     /// <returns>色の選択。</returns>
+    /// <remarks>
+    /// <b>他の項目と同じ横並びにする</b>: 項目名を上へ置くと 1 行を使い、選択の列が縦に間延びする（実測で指摘）。
+    /// </remarks>
     public static Control ColorRow(string label, DrawingColor initial, Action<DrawingColor> apply)
     {
-        var panel = new StackPanel { Spacing = 2 };
-        panel.Children.Add(Label(label));
+        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        row.Children.Add(Label(label));
 
         var selector = new ColorSelectorControl
         {
@@ -72,8 +75,8 @@ public static class AnnotationEditorControls
             }
         };
 
-        panel.Children.Add(selector);
-        return panel;
+        row.Children.Add(selector);
+        return row;
     }
 
     /// <summary>数値の入力を作る。</summary>

@@ -71,6 +71,8 @@
 | `RichText.TransformStyle(start, length, transform)` | **指定範囲の書式を 1 文字ずつ変換する**（変えない属性を保つ。 「太字にする」「色だけ変える」はこちら） |
 | `RichText.StyleAt(index)` | 指定位置の文字の書式（範囲外は末尾へフォールバック。 書式ツールバーの初期表示に使う） |
 | `RichText.WithPlainText(text)` | 書式を**文字位置で引き継いで**文字列だけを差し替える（本文の編集に使う） |
+| `RichText.Insert(index, text)` | 指定位置へ文字列を挿入する（**直前の文字**の書式を引き継ぐ） |
+| `RichText.Remove(start, length)` | 指定範囲の文字を除く（残りの書式は保つ） |
 | `AnnotationTextStyle` | `FontFamily` / `FontSize`（元画像ピクセル）/ `Color` / `IsBold` / `IsItalic` / `IsUnderline` / `IsStrike` |
 | `AnnotationTextStyle.Default` / `Normalized()` | 既定の書式（`Yu Gothic UI` 優先）/ 安全域への補正 |
 

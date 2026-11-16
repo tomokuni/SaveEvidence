@@ -1,0 +1,607 @@
+using Avalonia;
+using Avalonia.Input;
+using Avalonia.Media;
+using Avalonia.Threading;
+using EsUtil.Feature.Annotation;
+using EsUtil.Platform.Core.Geometry;
+
+namespace EsUtil.Ui.AvaloniaUI.Annotation;
+
+/// <summary>注釈レイヤーの本文の編集（表示中のレイアウトのまま、その場で編集する）。</summary>
+/// <remarks>
+/// <b>入力欄を重ねない</b>: 本文はコントロールが描いているため、入力欄を重ねると書式が反映されず、
+/// 書式バーを押すたびにフォーカスが移って選択が分からなくなる。 本文を直接編集し、キー入力のたびに
+/// 文書を書き換える（書式はその場で反映される）。<br/>
+/// <b>座標の対応</b>: 折り返しは <see cref="AnnotationPresenter"/> が解決した行を使い、行の開始位置は
+/// 本文の文字列から数え直す（改行は行の区切りとして 1 文字を消費する）。<br/>
+/// <b>日本語入力</b>: <see cref="AnnotationTextInputClient"/> で IME の変換中文字列を受け取り、キャレットの位置へ
+/// 下線付きで描く（変換中の文字列は文書へ入れない）。
+/// </remarks>
+public sealed partial class AnnotationLayerControl
+{
+    /// <summary>キャレットの太さ（DIP）。</summary>
+    private const double CaretThicknessDip = 1.6;
+
+    /// <summary>選択範囲の色（本文の上に薄く重ねる）。</summary>
+    private static readonly IBrush s_textSelectionBrush = new SolidColorBrush(Color.FromArgb(72, 0, 120, 215));
+
+    /// <summary>キャレットの色。</summary>
+    private static readonly IBrush s_caretBrush = new SolidColorBrush(Color.FromArgb(255, 20, 20, 20));
+
+    /// <summary>キャレットを点滅させる間隔。</summary>
+    private static readonly TimeSpan s_caretBlinkInterval = TimeSpan.FromMilliseconds(500);
+
+    /// <summary>本文を編集中かどうか。</summary>
+    private bool _isEditingText;
+
+    /// <summary>キャレットの位置（文字数。 0 は先頭）。</summary>
+    private int _caretIndex;
+
+    /// <summary>選択の起点（<see cref="_caretIndex"/> と同じなら選択なし）。</summary>
+    private int _selectionAnchor;
+
+    /// <summary>IME の変換中文字列（文書へは入れない）。</summary>
+    private string _preeditText = string.Empty;
+
+    /// <summary>ポインターで文字を選んでいる最中かどうか。</summary>
+    private bool _isSelectingText;
+
+    /// <summary>キャレットを表示する状態かどうか（点滅に使う）。</summary>
+    private bool _isCaretVisible;
+
+    /// <summary>キャレットの点滅タイマー。</summary>
+    private DispatcherTimer? _caretTimer;
+
+    /// <summary>IME へ渡すクライアント（編集中だけ使う）。</summary>
+    private AnnotationTextInputClient? _textInputClient;
+
+    /// <summary>本文の編集中に発生する（開始・終了の両方）。</summary>
+    /// <remarks>ホストは書式バーの表示・非表示を切り替える。</remarks>
+    public event EventHandler? EditingChanged;
+
+    /// <summary>本文を編集中かどうかを取得する。</summary>
+    /// <value>編集中の場合は <see langword="true"/>。</value>
+    public bool IsEditingText => _isEditingText;
+
+    /// <summary>キャレットの位置（文字数）を取得する。</summary>
+    public int CaretIndex => _caretIndex;
+
+    /// <summary>選択範囲の開始位置（文字数）を取得する。</summary>
+    public int SelectionStart => Math.Min(_selectionAnchor, _caretIndex);
+
+    /// <summary>選択範囲の終了位置（文字数）を取得する。</summary>
+    public int SelectionEnd => Math.Max(_selectionAnchor, _caretIndex);
+
+    /// <summary>選択中の本文を編集する（表示中のレイアウトのまま、その場で入力する）。</summary>
+    /// <returns>編集を始めた場合は <see langword="true"/>。 枠線を選んでいる場合は <see langword="false"/>。</returns>
+    /// <remarks>キャレットは本文の末尾に置く。 選択枠のハンドルは編集中は隠す（本文の見た目を優先する）。</remarks>
+    public bool BeginTextEditing()
+    {
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        if (_isEditingText)
+        {
+            return true;
+        }
+
+        _isEditingText = true;
+        _preeditText = string.Empty;
+        _isSelectingText = false;
+        _caretIndex = bubble.Text.PlainText.Length;
+        _selectionAnchor = _caretIndex;
+        _marquee.ResetSelection();
+        SyncTextSelectionRange();
+        StartCaretBlink();
+        Focus();
+        RaiseEditingChanged();
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>本文の編集を終える（内容は既に文書へ入っている）。</summary>
+    public void EndTextEditing()
+    {
+        if (!_isEditingText)
+        {
+            return;
+        }
+
+        _isEditingText = false;
+        _preeditText = string.Empty;
+        _isSelectingText = false;
+        StopCaretBlink();
+        TextSelectionRange = default;
+
+        if (Selected is { } item)
+        {
+            _marquee.SetSelection(item.Bounds);
+        }
+
+        RaiseEditingChanged();
+        InvalidateVisual();
+    }
+
+    /// <summary>本文の文字列（IME へ渡す）。</summary>
+    internal string TextForInput => Selected is BubbleAnnotation bubble ? bubble.Text.PlainText : string.Empty;
+
+    /// <summary>キャレットの矩形（コントロール座標の DIP。 IME の変換候補の位置に使う）。</summary>
+    /// <returns>キャレットの矩形。 解決できない場合は空の矩形。</returns>
+    internal Rect GetCaretRectForInput()
+    {
+        if (!TryResolveCaretSource(_caretIndex, out var caret))
+        {
+            return default;
+        }
+
+        var (scale, offset) = ResolveImageTransform();
+        return new Rect(
+            (caret.X * scale) + offset.X,
+            (caret.Y * scale) + offset.Y,
+            CaretThicknessDip,
+            caret.Height * scale);
+    }
+
+    /// <summary>IME から選択範囲を設定する。</summary>
+    /// <param name="start">開始位置（文字数）。</param>
+    /// <param name="end">終了位置（文字数）。</param>
+    internal void SetSelectionFromInput(int start, int end)
+    {
+        var length = TextForInput.Length;
+        _selectionAnchor = Math.Clamp(start, 0, length);
+        _caretIndex = Math.Clamp(end, 0, length);
+        SyncTextSelectionRange();
+        InvalidateVisual();
+    }
+
+    /// <summary>IME の変換中文字列を設定する（文書へは入れない）。</summary>
+    /// <param name="preeditText">変換中の文字列（<see langword="null"/> は変換の終了）。</param>
+    internal void SetPreeditTextForInput(string? preeditText)
+    {
+        _preeditText = preeditText ?? string.Empty;
+        InvalidateVisual();
+    }
+
+    /// <summary>IME へ渡すクライアントを取得する。</summary>
+    internal AnnotationTextInputClient TextInputClient => _textInputClient ??= new AnnotationTextInputClient(this);
+
+    /// <summary>本文の編集でキーが押されたときの処理。</summary>
+    /// <param name="e">キーの引数。</param>
+    /// <returns>処理した場合は <see langword="true"/>。</returns>
+    private bool HandleTextEditingKey(KeyEventArgs e)
+    {
+        var control = (e.KeyModifiers & KeyModifiers.Control) != 0;
+        var shift = (e.KeyModifiers & KeyModifiers.Shift) != 0;
+
+        switch (e.Key)
+        {
+            case Key.Escape:
+                EndTextEditing();
+                return true;
+            case Key.Enter when control:
+                EndTextEditing();
+                return true;
+            case Key.Enter:
+                ReplaceSelection("\n");
+                return true;
+            case Key.Back:
+                DeleteAtCaret(forward: false);
+                return true;
+            case Key.Delete:
+                DeleteAtCaret(forward: true);
+                return true;
+            case Key.Left:
+                MoveCaret(_caretIndex - 1, shift);
+                return true;
+            case Key.Right:
+                MoveCaret(_caretIndex + 1, shift);
+                return true;
+            case Key.Up:
+                MoveCaretToNeighbourLine(-1, shift);
+                return true;
+            case Key.Down:
+                MoveCaretToNeighbourLine(1, shift);
+                return true;
+            case Key.Home:
+                MoveCaretToLineEdge(first: true, shift);
+                return true;
+            case Key.End:
+                MoveCaretToLineEdge(first: false, shift);
+                return true;
+            case Key.A when control:
+                _selectionAnchor = 0;
+                _caretIndex = TextForInput.Length;
+                SyncTextSelectionRange();
+                InvalidateVisual();
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>文字入力を処理する（IME の確定文字列もここへ来る）。</summary>
+    /// <param name="e">入力の引数。</param>
+    protected override void OnTextInput(TextInputEventArgs e)
+    {
+        base.OnTextInput(e);
+
+        if (!_isEditingText || string.IsNullOrEmpty(e.Text))
+        {
+            return;
+        }
+
+        ReplaceSelection(e.Text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace("\r", string.Empty, StringComparison.Ordinal));
+        e.Handled = true;
+    }
+
+    /// <summary>選択範囲を指定された文字列で置き換える。</summary>
+    /// <param name="text">置き換える文字列（空なら削除）。</param>
+    /// <returns>文書を変えた場合は <see langword="true"/>。</returns>
+    private bool ReplaceSelection(string text)
+    {
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        var start = SelectionStart;
+        var length = SelectionEnd - SelectionStart;
+        if (length == 0 && text.Length == 0)
+        {
+            return false;
+        }
+
+        PrepareUndo();
+        _document = _document.WithText(bubble, bubble.Text.Remove(start, length).Insert(start, text));
+        RaiseDocumentChanged();
+
+        _caretIndex = start + text.Length;
+        _selectionAnchor = _caretIndex;
+        SyncTextSelectionRange();
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>選択範囲、またはキャレットの前後の 1 文字を削除する。</summary>
+    /// <param name="forward">キャレットの次の文字を削除する場合は <see langword="true"/>。</param>
+    private void DeleteAtCaret(bool forward)
+    {
+        if (SelectionEnd > SelectionStart)
+        {
+            ReplaceSelection(string.Empty);
+            return;
+        }
+
+        var index = forward ? _caretIndex : _caretIndex - 1;
+        if (index < 0 || index >= TextForInput.Length)
+        {
+            return;
+        }
+
+        _selectionAnchor = index;
+        _caretIndex = index + 1;
+        ReplaceSelection(string.Empty);
+    }
+
+    /// <summary>キャレットを移動する（<paramref name="extend"/> なら選択を広げる）。</summary>
+    /// <param name="index">移動先（文字数）。</param>
+    /// <param name="extend">選択を広げる場合は <see langword="true"/>。</param>
+    private void MoveCaret(int index, bool extend)
+    {
+        _caretIndex = Math.Clamp(index, 0, TextForInput.Length);
+        if (!extend)
+        {
+            _selectionAnchor = _caretIndex;
+        }
+
+        SyncTextSelectionRange();
+        InvalidateVisual();
+    }
+
+    /// <summary>キャレットを上下の行の同じ桁へ移す。</summary>
+    /// <param name="delta">移動する行数。</param>
+    /// <param name="extend">選択を広げる場合は <see langword="true"/>。</param>
+    private void MoveCaretToNeighbourLine(int delta, bool extend)
+    {
+        if (ResolveTextLayout() is not { } layout || layout.Lines.Count == 0)
+        {
+            return;
+        }
+
+        var lineIndex = LineIndexOf(layout, _caretIndex);
+        var target = Math.Clamp(lineIndex + delta, 0, layout.Lines.Count - 1);
+        var column = _caretIndex - layout.Starts[lineIndex];
+        MoveCaret(layout.Starts[target] + Math.Min(column, LineTextLength(layout.Lines[target])), extend);
+    }
+
+    /// <summary>キャレットを行の先頭・末尾へ移す。</summary>
+    /// <param name="first">行の先頭へ移す場合は <see langword="true"/>。</param>
+    /// <param name="extend">選択を広げる場合は <see langword="true"/>。</param>
+    private void MoveCaretToLineEdge(bool first, bool extend)
+    {
+        if (ResolveTextLayout() is not { } layout || layout.Lines.Count == 0)
+        {
+            MoveCaret(first ? 0 : TextForInput.Length, extend);
+            return;
+        }
+
+        var lineIndex = LineIndexOf(layout, _caretIndex);
+        var line = layout.Lines[lineIndex];
+        MoveCaret(first ? layout.Starts[lineIndex] : layout.Starts[lineIndex] + LineTextLength(line), extend);
+    }
+
+    /// <summary>選択範囲を <see cref="TextSelectionRange"/> へ写す（書式の適用先に使う）。</summary>
+    private void SyncTextSelectionRange()
+        => TextSelectionRange = (SelectionStart, SelectionEnd - SelectionStart);
+
+    /// <summary>履歴から戻した後にキャレットを本文の範囲へ収める。</summary>
+    private void ClampCaretToText()
+    {
+        if (!_isEditingText)
+        {
+            return;
+        }
+
+        var length = TextForInput.Length;
+        _caretIndex = Math.Clamp(_caretIndex, 0, length);
+        _selectionAnchor = Math.Clamp(_selectionAnchor, 0, length);
+        SyncTextSelectionRange();
+    }
+
+    /// <summary>キャレットの点滅を始める。</summary>
+    private void StartCaretBlink()
+    {
+        _isCaretVisible = true;
+        _caretTimer ??= new DispatcherTimer { Interval = s_caretBlinkInterval };
+        _caretTimer.Tick -= OnCaretTimerTick;
+        _caretTimer.Tick += OnCaretTimerTick;
+        _caretTimer.Start();
+    }
+
+    /// <summary>キャレットの点滅を止める。</summary>
+    private void StopCaretBlink()
+    {
+        _isCaretVisible = false;
+        if (_caretTimer is { } timer)
+        {
+            timer.Stop();
+            timer.Tick -= OnCaretTimerTick;
+        }
+    }
+
+    /// <summary>点滅の 1 周期（表示と非表示を切り替える）。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">引数。</param>
+    private void OnCaretTimerTick(object? sender, EventArgs e)
+    {
+        _isCaretVisible = !_isCaretVisible;
+        InvalidateVisual();
+    }
+
+    /// <summary>編集の開始・終了を通知する。</summary>
+    private void RaiseEditingChanged() => EditingChanged?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>本文の編集（選択範囲・キャレット・変換中の文字列）を描く（元画像座標）。</summary>
+    /// <param name="context">描画先。</param>
+    /// <param name="scale">表示倍率（キャレットの太さを DIP 一定にする）。</param>
+    private void DrawTextEditing(DrawingContext context, double scale)
+    {
+        if (!_isEditingText || ResolveTextLayout() is not { } layout || layout.Lines.Count == 0)
+        {
+            return;
+        }
+
+        var start = SelectionStart;
+        var end = SelectionEnd;
+        for (var i = 0; i < layout.Lines.Count; i++)
+        {
+            var line = layout.Lines[i];
+            var lineStart = layout.Starts[i];
+            var from = Math.Max(start, lineStart);
+            var to = Math.Min(end, lineStart + LineTextLength(line));
+            if (to <= from)
+            {
+                continue;
+            }
+
+            var x1 = line.Bounds.X + MeasureLinePrefix(line, from - lineStart);
+            var x2 = line.Bounds.X + MeasureLinePrefix(line, to - lineStart);
+            context.FillRectangle(
+                s_textSelectionBrush, new Rect(x1, line.Bounds.Y, x2 - x1, line.Bounds.Height));
+        }
+
+        if (!TryResolveCaretSource(_caretIndex, out var caret))
+        {
+            return;
+        }
+
+        if (_isCaretVisible)
+        {
+            var thickness = CaretThicknessDip / Math.Max(scale, 0.01);
+            context.FillRectangle(s_caretBrush, new Rect(caret.X, caret.Y, thickness, caret.Height));
+        }
+
+        if (_preeditText.Length > 0)
+        {
+            var style = SelectedTextStyle with { IsUnderline = true };
+            var formatted = AnnotationPainter.CreateText(_preeditText, style);
+            context.DrawText(formatted, new Point(caret.X, caret.Y + ((caret.Height - formatted.Height) / 2)));
+        }
+    }
+
+    /// <summary>キャレットを点（元画像ピクセル）の位置へ移す（選択の起点は現在の位置に保つ）。</summary>
+    /// <param name="point">位置（元画像ピクセル）。</param>
+    /// <param name="extend">選択を広げる場合は <see langword="true"/>。</param>
+    private void SetCaretFromPoint(EsPoint point, bool extend)
+    {
+        _caretIndex = Math.Clamp(ResolveIndexAt(point), 0, TextForInput.Length);
+        if (!extend)
+        {
+            _selectionAnchor = _caretIndex;
+        }
+
+        SyncTextSelectionRange();
+        InvalidateVisual();
+    }
+
+    /// <summary>キャレットの位置（元画像ピクセル）を求める。</summary>
+    /// <param name="index">文字位置。</param>
+    /// <param name="caret">キャレットの左上と行の高さ。</param>
+    /// <returns>求めた場合は <see langword="true"/>。</returns>
+    private bool TryResolveCaretSource(int index, out (double X, double Y, double Height) caret)
+    {
+        caret = default;
+        if (ResolveTextLayout() is not { } layout || layout.Lines.Count == 0)
+        {
+            return false;
+        }
+
+        var lineIndex = LineIndexOf(layout, index);
+        var line = layout.Lines[lineIndex];
+        var offset = Math.Clamp(index - layout.Starts[lineIndex], 0, LineTextLength(line));
+        caret = (line.Bounds.X + MeasureLinePrefix(line, offset), line.Bounds.Y, line.Bounds.Height);
+        return true;
+    }
+
+    /// <summary>点（元画像ピクセル）に最も近い文字位置を求める。</summary>
+    /// <param name="point">位置（元画像ピクセル）。</param>
+    /// <returns>文字位置。</returns>
+    private int ResolveIndexAt(EsPoint point)
+    {
+        if (ResolveTextLayout() is not { } layout || layout.Lines.Count == 0)
+        {
+            return 0;
+        }
+
+        var lineIndex = 0;
+        for (var i = 0; i < layout.Lines.Count; i++)
+        {
+            if (point.Y < layout.Lines[i].Bounds.Y + layout.Lines[i].Bounds.Height || i == layout.Lines.Count - 1)
+            {
+                lineIndex = i;
+                break;
+            }
+        }
+
+        var line = layout.Lines[lineIndex];
+        var lineStart = layout.Starts[lineIndex];
+        var localX = point.X - line.Bounds.X;
+        var offset = 0;
+        var best = double.MaxValue;
+        var length = LineTextLength(line);
+        for (var i = 0; i <= length; i++)
+        {
+            var distance = Math.Abs(MeasureLinePrefix(line, i) - localX);
+            if (distance < best)
+            {
+                best = distance;
+                offset = i;
+            }
+        }
+
+        return lineStart + offset;
+    }
+
+    /// <summary>行の先頭から指定した文字数までの幅を求める（元画像ピクセル）。</summary>
+    /// <param name="line">行。</param>
+    /// <param name="count">文字数（0 なら 0）。</param>
+    /// <returns>幅（元画像ピクセル）。</returns>
+    private static double MeasureLinePrefix(AnnotationTextLinePlan line, int count)
+    {
+        if (count <= 0)
+        {
+            return 0;
+        }
+
+        var remaining = count;
+        var x = 0.0;
+        foreach (var segment in line.Segments)
+        {
+            if (remaining <= 0)
+            {
+                break;
+            }
+
+            var take = Math.Min(remaining, segment.Text.Length);
+            var text = take == segment.Text.Length ? segment.Text : segment.Text[..take];
+            x += MeasureText(text, segment.Style).Width;
+            remaining -= take;
+        }
+
+        return x;
+    }
+
+    /// <summary>行の文字数を求める（区間の文字数の合計）。</summary>
+    /// <param name="line">行。</param>
+    /// <returns>文字数。</returns>
+    internal static int LineTextLength(AnnotationTextLinePlan line)
+    {
+        var length = 0;
+        foreach (var segment in line.Segments)
+        {
+            length += segment.Text.Length;
+        }
+
+        return length;
+    }
+
+    /// <summary>指定位置の文字が入る行を求める。</summary>
+    /// <param name="layout">本文の行。</param>
+    /// <param name="index">文字位置。</param>
+    /// <returns>行の位置。</returns>
+    private static int LineIndexOf(TextLayout layout, int index)
+    {
+        for (var i = 0; i < layout.Lines.Count; i++)
+        {
+            if (index <= layout.Starts[i] + LineTextLength(layout.Lines[i]))
+            {
+                return i;
+            }
+        }
+
+        return layout.Lines.Count - 1;
+    }
+
+    /// <summary>選択中の吹き出しの本文の行を解決する。</summary>
+    /// <returns>行と、各行の開始位置（文字数）。 解決できない場合は <see langword="null"/>。</returns>
+    /// <remarks>
+    /// <b>行の開始位置は本文から数え直す</b>: 折り返しは明示改行を区切りとして扱うため、行の文字数を足した後に
+    /// 改行 1 文字を進める（この規則を 1 か所に閉じ込める）。
+    /// </remarks>
+    private TextLayout? ResolveTextLayout()
+    {
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return null;
+        }
+
+        var plan = _presenter.ResolveDrawPlan(_document, MeasureText, SelectedId);
+        var shape = plan.Shapes.FirstOrDefault(candidate => string.Equals(candidate.Id, bubble.Id, StringComparison.Ordinal));
+        if (shape is null || shape.Lines.Count == 0)
+        {
+            return null;
+        }
+
+        var plain = bubble.Text.PlainText;
+        var starts = new List<int>(shape.Lines.Count);
+        var index = 0;
+        foreach (var line in shape.Lines)
+        {
+            starts.Add(index);
+            index += LineTextLength(line);
+            if (index < plain.Length && plain[index] == '\n')
+            {
+                index++;
+            }
+        }
+
+        return new TextLayout(shape.Lines, starts);
+    }
+
+    /// <summary>本文の行と、各行の開始位置。</summary>
+    /// <param name="Lines">行の並び。</param>
+    /// <param name="Starts">各行の開始位置（文字数）。</param>
+    private sealed record TextLayout(IReadOnlyList<AnnotationTextLinePlan> Lines, IReadOnlyList<int> Starts);
+}

@@ -30,7 +30,10 @@
 | `MoveSelectedToFront()` / `MoveSelectedToBack()` | method | 重なり順を変える |
 | `Undo()` / `Redo()` / `CanUndo` / `CanRedo` | method / property | 元に戻す・やり直す（変更の単位は 1 操作。 ドラッグは押下から離すまでで 1 手。 選択は識別子で引き継ぐ） |
 | `ShowStyleEditor()` | method | 外観・書式・重なり順の編集フライアウトを表示する（右クリックと同じ） |
-| `GetSelectedBodyRect()` | method | 本文の矩形（DIP）。 ホストが入力欄を重ねる位置に使う |
+| `BeginTextEditing()` / `EndTextEditing()` / `IsEditingText` | method / property | 本文を**その場で編集**する（キャレット・選択範囲を本文のレイアウトのまま描く。 入力欄を重ねない） |
+| `CaretIndex` / `SelectionStart` / `SelectionEnd` | property | キャレットと選択範囲（文字数） |
+| `EditingChanged` | event | 本文の編集の開始・終了（ホストは書式バーを出し入れする） |
+| `GetSelectedBodyRect()` | method | 本文の矩形（DIP）。 ホストが書式バーを置く位置に使う |
 | `DocumentChanged` / `SelectionChanged` / `EditTextRequested` | event | 文書の変更・選択の変更・本文の編集要求 |
 
 操作の割り当ては次のとおりです。
@@ -42,9 +45,9 @@
 | ドラッグ（本体） | 移動 |
 | ドラッグ（8 方向のハンドル） | サイズ変更 |
 | ドラッグ（しっぽの先端の円） | しっぽの移動（本体と独立。 円の上ではカーソルが手の形になる） |
-| ダブルクリック / Enter | 本文の編集要求 |
+| ダブルクリック / Enter | 本文の編集を始める（その場で編集。 キャレットと選択範囲を本文の上に描く） |
 | **右クリック** | **外観・本文の書式・重なり順の編集フライアウト**（選択していない注釈なら先に選択する） |
-| Delete | 選択中の注釈を削除 |
+| Delete | 選択中の注釈を削除（**本文の編集中は 1 文字削除**） |
 | Ctrl+Z / Ctrl+Y | 元に戻す・やり直す（本文の編集中は入力欄が受け取る） |
 | 方向キー（`Shift` 併用） | nudge（1 px / 10 px） |
 

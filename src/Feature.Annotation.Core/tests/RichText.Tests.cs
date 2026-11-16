@@ -121,4 +121,55 @@ public class RichTextTests
         Assert.Single(updated.Runs);
         Assert.Equal("あいう", updated.Runs[0].Text);
     }
+
+    /// <summary>挿入した文字が位置の書式を引き継ぐことを検証する。</summary>
+    [Fact]
+    internal void Insert_位置の書式を引き継ぐ()
+    {
+        var bold = AnnotationDefaults.TextStyle with { IsBold = true };
+        var text = RichText.Create("あいう", AnnotationDefaults.TextStyle).ApplyStyle(1, 1, bold);
+
+        var updated = text.Insert(2, "X");
+
+        Assert.Equal("あいXう", updated.PlainText);
+        Assert.True(updated.StyleAt(2).IsBold);
+        Assert.False(updated.StyleAt(0).IsBold);
+    }
+
+    /// <summary>範囲外の位置へ挿入しても例外にせず端へ丸めることを検証する。</summary>
+    [Fact]
+    internal void Insert_範囲外は端へ丸める()
+    {
+        var text = RichText.Create("あい", AnnotationDefaults.TextStyle);
+
+        Assert.Equal("Xあい", text.Insert(-5, "X").PlainText);
+        Assert.Equal("あいX", text.Insert(99, "X").PlainText);
+        Assert.Equal("あい", text.Insert(1, string.Empty).PlainText);
+    }
+
+    /// <summary>指定範囲を削除すると残りの書式が保たれることを検証する。</summary>
+    [Fact]
+    internal void Remove_範囲を削除して書式を保つ()
+    {
+        var red = AnnotationDefaults.TextStyle with { Color = DrawingColor.FromArgb(255, 255, 0, 0) };
+        var text = RichText.Create("あいうえ", AnnotationDefaults.TextStyle).ApplyStyle(0, 1, red);
+
+        var updated = text.Remove(1, 2);
+
+        Assert.Equal("あえ", updated.PlainText);
+        Assert.Equal(red.Color, updated.Runs[0].Style.Color);
+        Assert.Equal(AnnotationDefaults.TextStyle.Color, updated.Runs[1].Style.Color);
+    }
+
+    /// <summary>改行を含む文字列の削除で行が詰まることを検証する。</summary>
+    [Fact]
+    internal void Remove_改行を削除する()
+    {
+        var text = RichText.Create("あ\nい", AnnotationDefaults.TextStyle);
+
+        var updated = text.Remove(1, 1);
+
+        Assert.Equal("あい", updated.PlainText);
+        Assert.Single(updated.Runs);
+    }
 }

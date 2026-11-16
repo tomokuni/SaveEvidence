@@ -8,28 +8,22 @@ using EsUtil.Ui.AvaloniaUI.ColorSelector;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation.Sample;
 
-/// <summary>本文を編集中に入力欄の上へ出す書式バー（文字単位の書式）。</summary>
+/// <summary>本文を編集中に入力欄の代わりに出す書式バー（文字単位の書式）。</summary>
 /// <remarks>
-/// <b>行を分けて崩れを防ぐ</b>: 1 行に全部並べると幅が足りず、数値の入力欄が切れる（実測で指摘）。
-/// 1 行目は説明と「完了」、2 行目は適用先、3 行目は書式の操作にする。<br/>
-/// <b>適用しても閉じない</b>: 選択した文字に対して続けて書式を変えられる（結果は確定後に本文へ出る）。
+/// <b>本文はコントロールが直接編集する</b>ため、このバーは「選択中の範囲へ書式を適用する」だけを行う。
+/// 適用しても編集は続き、結果はその場で本文へ反映される（入力欄を重ねない）。<br/>
+/// <b>押した後は本文へフォーカスを戻す</b>: バーの操作でキーボードの入力先が移ると、続けて入力できない。
 /// </remarks>
 internal sealed class FormatBar : Border
 {
     /// <summary>バーの幅（DIP。画像の内側へ収める計算に使う）。</summary>
-    internal const double BarWidth = 720;
+    internal const double BarWidth = 760;
 
-    /// <summary>バーのおおよその高さ（DIP。入力欄の上へ置く位置の計算に使う）。</summary>
-    internal const double EstimatedHeight = 92;
+    /// <summary>バーのおおよその高さ（DIP。本文の上へ置く位置の計算に使う）。</summary>
+    internal const double EstimatedHeight = 96;
 
     /// <summary>編集対象のコントロール。</summary>
     private readonly AnnotationLayerControl _layer;
-
-    /// <summary>書式を適用する処理。</summary>
-    private readonly Action<Func<AnnotationTextStyle, AnnotationTextStyle>> _apply;
-
-    /// <summary>編集を確定する処理。</summary>
-    private readonly Action _commit;
 
     /// <summary>適用先の表示。</summary>
     private readonly TextBlock _target = new() { FontSize = 11, Opacity = 0.75, TextWrapping = TextWrapping.Wrap };
@@ -60,16 +54,10 @@ internal sealed class FormatBar : Border
 
     /// <summary>書式バーを初期化する。</summary>
     /// <param name="layer">編集対象のコントロール。</param>
-    /// <param name="apply">書式を適用する処理。</param>
-    /// <param name="commit">編集を確定する処理。</param>
-    public FormatBar(
-        AnnotationLayerControl layer,
-        Action<Func<AnnotationTextStyle, AnnotationTextStyle>> apply,
-        Action commit)
+    /// <param name="close">編集を終える処理。</param>
+    public FormatBar(AnnotationLayerControl layer, Action close)
     {
         _layer = layer;
-        _apply = apply;
-        _commit = commit;
 
         var fonts = AnnotationFonts.All;
         _font = new ComboBox { Width = 150, ItemsSource = fonts, SelectedIndex = 0 };
@@ -78,7 +66,7 @@ internal sealed class FormatBar : Border
             if (!_isRefreshing && _font.SelectedIndex >= 0)
             {
                 var family = fonts[_font.SelectedIndex];
-                _apply(style => style with { FontFamily = family });
+                Apply(style => style with { FontFamily = family });
             }
         };
 
@@ -94,13 +82,13 @@ internal sealed class FormatBar : Border
         {
             if (!_isRefreshing && _size.Value is { } value)
             {
-                _apply(style => style with { FontSize = (double)value });
+                Apply(style => style with { FontSize = (double)value });
             }
         };
 
         _color = new ColorSelectorControl
         {
-            Width = 150,
+            Width = 160,
             TextFontSize = 12,
             HighlightBorderOnError = true,
         };
@@ -110,7 +98,7 @@ internal sealed class FormatBar : Border
                 && e.Property == ColorSelectorControl.SelectedColorProperty
                 && EsUtil.Platform.Core.Imaging.DrawingColorExtensions.TryParseHexText(_color.SelectedColor, out var color))
             {
-                _apply(style => style with { Color = color });
+                Apply(style => style with { Color = color });
             }
         };
 
@@ -125,12 +113,16 @@ internal sealed class FormatBar : Border
         _strike.Click += (_, _) => ToggleDecoration(style => style.IsStrike, (style, value) => style with { IsStrike = value });
 
         var done = new Button { Content = "完了" };
-        done.Click += (_, _) => _commit();
+        done.Click += (_, _) =>
+        {
+            close();
+            layer.Focus();
+        };
 
         var header = new DockPanel();
         var hint = new TextBlock
         {
-            Text = "書式: 文字を選んで押します（選択が無ければ本文全体）。 Ctrl+B / I / U も同じです。",
+            Text = "本文をその場で編集しています。 文字を選んで書式を押すと、その範囲だけに反映されます（選択が無ければ全体）。 Ctrl+B / I / U も同じです。",
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = 11,
             TextWrapping = TextWrapping.Wrap,
@@ -160,7 +152,7 @@ internal sealed class FormatBar : Border
         Background = Brushes.White;
         BorderBrush = Brushes.DodgerBlue;
         BorderThickness = new Thickness(1);
-        Padding = new Thickness(6, 4);
+        Padding = new Thickness(8, 5);
         Child = panel;
     }
 
@@ -189,6 +181,18 @@ internal sealed class FormatBar : Border
         {
             _isRefreshing = false;
         }
+    }
+
+    /// <summary>選択中の範囲へ書式を適用し、表示とフォーカスを戻す。</summary>
+    /// <param name="change">書式を新しい値へ変える処理（変えない属性は <c>TransformTextStyle</c> が保つ）。</param>
+    private void Apply(Func<AnnotationTextStyle, AnnotationTextStyle> change)
+    {
+        var (start, length) = _layer.TextSelectionRange;
+        _layer.TransformTextStyle(start, length, change);
+        Refresh();
+
+        // バーの操作でフォーカスが移るため、本文へ戻して続けて入力できるようにする
+        _layer.Focus();
     }
 
     /// <summary>装飾の切り替えボタンを作る。</summary>
@@ -226,8 +230,5 @@ internal sealed class FormatBar : Border
     private void ToggleDecoration(
         Func<AnnotationTextStyle, bool> read,
         Func<AnnotationTextStyle, bool, AnnotationTextStyle> write)
-    {
-        var current = read(_layer.SelectedTextStyle);
-        _apply(style => write(style, !current));
-    }
+        => Apply(style => write(style, !read(_layer.SelectedTextStyle)));
 }

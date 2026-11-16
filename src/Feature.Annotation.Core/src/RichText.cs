@@ -197,6 +197,74 @@ public sealed class RichText
         return Runs.LastOrDefault()?.Style ?? AnnotationTextStyle.Default;
     }
 
+    /// <summary>指定位置へ文字列を挿入した新しい <see cref="RichText"/> を返す（本文の入力に使う）。</summary>
+    /// <param name="index">挿入位置（0 起点。 文字数で数える）。</param>
+    /// <param name="text">挿入する文字列（明示改行は <c>\n</c>）。</param>
+    /// <returns>挿入後の新しい値（元の値は変更しない）。</returns>
+    /// <remarks>
+    /// <b>挿入する文字は位置の書式を引き継ぐ</b>（一般的な入力欄と同じ。 太字の途中へ入力すると太字になる）。
+    /// 位置が範囲外の場合は先頭・末尾へ丸める（例外にしない）。
+    /// </remarks>
+    public RichText Insert(int index, string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (text.Length == 0)
+        {
+            return this;
+        }
+
+        var plain = PlainText;
+        var at = Math.Clamp(index, 0, plain.Length);
+
+        // 挿入する文字は「直前の文字」の書式を引き継ぐ（文末で入力しても直前の書式が続く）
+        var style = StyleAt(at > 0 ? at - 1 : 0);
+
+        var runs = ImmutableArray.CreateBuilder<TextRun>();
+        AddRange(runs, plain, 0, at);
+        AddMerged(runs, new TextRun(text, style));
+        AddRange(runs, plain, at, plain.Length);
+        return new RichText(runs.ToImmutable());
+    }
+
+    /// <summary>指定範囲の文字を除いた新しい <see cref="RichText"/> を返す（本文の削除に使う）。</summary>
+    /// <param name="start">範囲の開始位置（0 起点）。</param>
+    /// <param name="length">範囲の長さ（文字数）。</param>
+    /// <returns>削除後の新しい値（元の値は変更しない）。</returns>
+    /// <remarks>範囲が文字数を超える場合は末尾までに丸める（例外にしない）。</remarks>
+    public RichText Remove(int start, int length)
+    {
+        if (length <= 0)
+        {
+            return this;
+        }
+
+        var plain = PlainText;
+        var from = Math.Clamp(start, 0, plain.Length);
+        var to = Math.Clamp(from + length, from, plain.Length);
+        if (from == to)
+        {
+            return this;
+        }
+
+        var runs = ImmutableArray.CreateBuilder<TextRun>();
+        AddRange(runs, plain, 0, from);
+        AddRange(runs, plain, to, plain.Length);
+        return new RichText(runs.ToImmutable());
+    }
+
+    /// <summary>文字列の範囲を、位置ごとの書式で run へ追加する。</summary>
+    /// <param name="runs">追加先。</param>
+    /// <param name="plain">元の文字列。</param>
+    /// <param name="from">開始位置（含む）。</param>
+    /// <param name="to">終了位置（含まない）。</param>
+    private void AddRange(ImmutableArray<TextRun>.Builder runs, string plain, int from, int to)
+    {
+        for (var i = from; i < to; i++)
+        {
+            AddMerged(runs, new TextRun(plain[i].ToString(), StyleAt(i)));
+        }
+    }
+
     /// <summary>末尾の run と同じ書式なら連結して追加する（run が細かく分かれないようにする）。</summary>
     /// <param name="runs">追加先。</param>
     /// <param name="run">追加する run。</param>
