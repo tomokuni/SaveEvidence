@@ -11,13 +11,20 @@
        ============================================================ -->
   <Target Name="ValidateProjectReferences" BeforeTargets="Build" Condition="'$(MSBuildProjectName)' != ''">
 
+    <PropertyGroup>
+      <!-- リポジトリのルート（本ファイルのあるフォルダ）。「外」の判定は実際の解決先のパスで行う
+           （階層の深いプロジェクトから `..\..\..\src\...` と書いても、リポジトリの内側なら許可する）。 -->
+      <_SeRepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</_SeRepoRoot>
+    </PropertyGroup>
+
     <ItemGroup>
       <_SeRef Include="@(ProjectReference)">
         <Name>%(Filename)</Name>
       </_SeRef>
       <!-- 本リポジトリの外を指す参照（`..\..\..\..\EsUtil\…` のような隣のリポジトリ）。
            別リポジトリの層は**公開パッケージ**として参照する（ソースの一致は保証できないため）。 -->
-      <_SeOutsideRef Include="@(ProjectReference)" Condition="$([System.Text.RegularExpressions.Regex]::IsMatch('%(Identity)', '^(\.\.[\\/]){3,}'))">
+      <_SeOutsideRef Include="@(ProjectReference)"
+                     Condition="!$([System.String]::Copy('%(FullPath)').StartsWith('$(_SeRepoRoot)'))">
         <Name>%(Filename)</Name>
       </_SeOutsideRef>
     </ItemGroup>
