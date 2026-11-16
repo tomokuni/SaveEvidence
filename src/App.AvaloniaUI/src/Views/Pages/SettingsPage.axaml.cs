@@ -7,17 +7,19 @@ using Avalonia.Platform.Storage;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
+using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.Ui.AvaloniaUI.Interop;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
 /// <summary>アプリケーション設定ページ。</summary>
 /// <remarks>
-/// キャプチャ設定、保存設定、ルーペ設定、ホットキー設定、画像設定、色設定を
+/// キャプチャ設定、保存設定、ルーペ設定、ホットキー設定、画像設定、色設定、ログの表示を
 /// 一画面で編集する。<br/>
 /// 全設定は変更即座に自動保存される。 ホットキーの有効化はキャプチャページ表示時に行う。<br/>
 /// </remarks>
@@ -30,6 +32,9 @@ public sealed partial class SettingsPage : UserControl
     /// <summary>「撮影中の枠を消す」が他の設定に依存して使えない理由（ツールチップに出す）。</summary>
     private const string BorderRequiresWgcReason =
         "「画面の取得に Windows.Graphics.Capture を使う」がオンのときだけ使えます";
+
+    /// <summary>ロガー（ログ ファイルを開く操作の失敗を記録する）。</summary>
+    private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(SettingsPage));
 
     private readonly MainViewModel _viewModel = null!;
     private readonly SettingsService _settingsService = null!;
@@ -51,6 +56,9 @@ public sealed partial class SettingsPage : UserControl
 
         // 保存先フォルダの補足（文言は SettingsMetrics（App.Core）が単一所有する）
         SaveFolderHint.Text = SettingsMetrics.SaveFolderHint;
+
+        // ログ ファイルを表示するボタンの補足（文言は SettingsMetrics（App.Core）が単一所有する）
+        LogFileHint.Text = SettingsMetrics.LogFileHint;
 
         // 全設定変更を即時ファイル保存する
         _settingsService.Current.PropertyChanged += (_, _) => _settingsService.Save();
@@ -204,6 +212,25 @@ public sealed partial class SettingsPage : UserControl
         if (folders.Count > 0)
         {
             _viewModel.SaveFolderPath = folders[0].Path.LocalPath;
+        }
+    }
+
+    /// <summary>当日のログ ファイルを既定のアプリで開く（設定ページの「ログファイルを表示」）。</summary>
+    /// <param name="sender">イベント送信元。</param>
+    /// <param name="e">イベント引数。</param>
+    /// <remarks>
+    /// 手順（当日分が無いときにフォルダを開く）は <see cref="LogFileActions.ShowCurrentLogFile"/> が単一所有する。<br/>
+    /// 失敗はログへ記録して続行する（ボタンの操作で他の設定を壊さない）。
+    /// </remarks>
+    private void OnShowLogFileClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            LogFileActions.ShowCurrentLogFile(AppLog.AssemblyName);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            s_logger.LogOpenLogFileError(ex);
         }
     }
 

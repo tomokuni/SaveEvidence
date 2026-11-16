@@ -24,7 +24,7 @@
         <ScrollViewer Grid.Row="1"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   Margin="10">
 
                 <!-- 外観設定 -->
@@ -485,6 +485,37 @@
                                            Minimum="6" Maximum="48" Increment="1"
                                            Grid.Row="37" Grid.Column="2" MinWidth="120"/>
                         </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ログ -->
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" Grid.Row="7" Margin="0,0,0,5" Padding="5">
+                    <StackPanel>
+                        <TextBlock Text="ログ" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="5">
+                            <Label Content="出力ログレベル:" Grid.Column="0"/>
+                            <!-- 変更は即時反映する（ログの構成は App.Core の AppLogging が単一所有する） -->
+                            <ComboBox ItemsSource="{Binding LogOutputLevels}"
+                                      SelectedItem="{Binding Settings.LogOutputLevel}"
+                                      Grid.Column="1"
+                                      MinWidth="200"
+                                      HorizontalAlignment="Left"
+                                      ToolTip.Tip="このレベル以上の記録だけをログ ファイルへ書きます（変更は再起動なしで反映されます）">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="enum:LogOutputLevel">
+                                        <TextBlock Text="{Binding Converter={StaticResource EnumToDisplayNameConverter}}"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+                        <Button Content="ログファイルを表示" Click="OnShowLogFileClick" HorizontalAlignment="Left" Margin="0,5,0,0"/>
+                        <!-- ボタンの動作の説明（文言は SettingsMetrics（App.Core）が単一所有する） -->
+                        <TextBlock x:Name="LogFileHint"
+                                   FontSize="11"
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
                     </StackPanel>
                 </Border>
 

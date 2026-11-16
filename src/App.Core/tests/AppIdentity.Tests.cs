@@ -63,6 +63,25 @@ public class AppIdentityTests
     internal void ログファイル名_はアセンブリ名が空なら例外()
         => Assert.Throws<ArgumentException>(() => AppIdentity.GetLogFilePath(" "));
 
+    /// <summary>当日のログ ファイル名が <c>&lt;アセンブリ名&gt;.&lt;yyyyMMdd&gt;.log</c> になることを検証する。</summary>
+    /// <remarks>
+    /// 設定ページの「ログファイルを表示」はこの名前で実際のファイルを探すため、<br/>
+    /// Serilog が作る名前（<see cref="AppIdentity.GetLogFilePath"/> の基点へ日付を挿入したもの）と一致させる必要がある。<br/>
+    /// 規則の所有者は <c>.github/ログ規約.md</c> §1.1。
+    /// </remarks>
+    [Fact]
+    internal void 当日のログファイル名_は実際のファイルと一致する()
+    {
+        var path = AppIdentity.GetDailyLogFilePath("SaveEvidence.WinForms", new DateTime(2026, 11, 9, 23, 59, 0));
+
+        Assert.Equal(AppIdentity.LogsFolder, Path.GetDirectoryName(path));
+        Assert.Equal("SaveEvidence.WinForms.20261109.log", Path.GetFileName(path));
+    }
+
+    [Fact]
+    internal void 当日のログファイル名_はアセンブリ名が空なら例外()
+        => Assert.Throws<ArgumentException>(() => AppIdentity.GetDailyLogFilePath(" ", DateTime.Now));
+
     [Fact]
     internal void 一時フォルダ_はTEMP配下の製品フォルダ()
         => Assert.Equal(

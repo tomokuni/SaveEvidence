@@ -173,6 +173,18 @@ internal static partial class AppLogMessage
     [LoggerMessage(LogLevel.Warning, "{Prefix} エクスプローラーを起動できませんでした: {FolderPath}")]
     internal static partial void LogOpenFolderErrorCore(this ILogger logger, string prefix, Exception ex, string folderPath);
 
+    /// <summary>ログ ファイルを開けなかったことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Warning <br/>
+    /// 出力書式: <c>[App.&lt;UI&gt;] ログ ファイルを開けませんでした</c>（例外はスタックトレース込み）<br/>
+    /// 設定ページの「ログファイルを表示」の失敗である（対象のパスは例外メッセージに含まれる）。 操作は継続する。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞。</param>
+    /// <param name="ex">発生した例外。</param>
+    [LoggerMessage(LogLevel.Warning, "{Prefix} ログ ファイルを開けませんでした")]
+    internal static partial void LogOpenLogFileErrorCore(this ILogger logger, string prefix, Exception ex);
+
     /// <summary>背景のサムネイル生成で想定外の例外が発生したことを記録する。</summary>
     /// <remarks>
     /// LogLevel: Warning <br/>

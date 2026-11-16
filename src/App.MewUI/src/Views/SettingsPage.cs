@@ -8,7 +8,9 @@ using EsUtil.SaveEvidence.App.Core.Enums;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
+using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.Ui.MewUI.Interop;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 
@@ -21,7 +23,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <b>テーマ</b>: <c>ThemeMode</c> は <c>Application.SetThemeMode</c> へ即時反映する。<br/>
 /// <b>色</b>: 設定は <c>#AARRGGBB</c> の文字列で保持し、入力は <see cref="ColorSelectorControl"/> が担う（規則はコアの <c>Palette</c> が単一所有する）。<br/>
 /// <b>ホットキー</b>: テキストボックス上で修飾キー付きのキーを押すとその組み合わせを設定する（テキスト入力でも解釈する）。<br/>
-/// <b>構成</b>: 折り畳みなしの縦 1 列（テーマ / 保存 / キャプチャ / ホットキー / 一覧表示 / 外観）をスクロール表示する。
+/// <b>構成</b>: 折り畳みなしの縦 1 列（テーマ / 保存 / キャプチャ / ホットキー / 一覧表示 / 外観 / ログ）をスクロール表示する。
 /// </remarks>
 internal static class SettingsPage
 {
@@ -67,12 +69,15 @@ internal static class SettingsPage
     /// <summary>数値入力の幅（DIP）。</summary>
     private const double NumberWidth = 110;
 
+    /// <summary>ロガー（ログ ファイルを開く操作の失敗を記録する）。</summary>
+    private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(SettingsPage));
+
     /// <summary>設定ページを構築する。</summary>
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <returns>ページの内容（表示のたびの更新は不要。 設定は即時反映される）。</returns>
     /// <remarks>
     /// 1. 設定の変更通知を購読し、変更のたびに設定ファイルへ保存する。<br/>
-    /// 2. 各セクション（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観）を縦 1 列で積む。<br/>
+    /// 2. 各セクション（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観 / ログ）を縦 1 列で積む。<br/>
     /// 3. 全体をスクロールビューへ入れる（項目がウィンドウ高さを超えるため）。
     /// </remarks>
     public static PageContent Build(AppServices services)
@@ -95,7 +100,8 @@ internal static class SettingsPage
                 BuildCaptureSection(settings, services.Main),
                 BuildSelectionLimitSection(settings),
                 BuildHotKeySection(settings),
-                BuildAppearanceSection(settings));
+                BuildAppearanceSection(settings),
+                BuildLogSection(settings));
 
         // タイトルバー領域（上端）にはページ内容を表示しない
         // （Avalonia 版は同領域を空のツールバー帯として確保し、内容をその下から始める）
@@ -286,6 +292,43 @@ internal static class SettingsPage
             HotkeyRow("範囲選択キャプチャ",
                 () => settings.AreaSelectHotKey, value => settings.AreaSelectHotKey = value),
             Row("", new Label().Text("テキストボックスへフォーカスし、修飾キー付きのキーを押すと設定されます。").FontSize(SettingsMetrics.HintFontSize)));
+
+    /// <summary>ログのセクションを構築する。</summary>
+    /// <param name="settings">設定（出力ログレベルの所有者）。</param>
+    /// <returns>セクションの要素。</returns>
+    /// <remarks>
+    /// 出力ログレベルを選ぶと、以後の記録の下限が変わる（切り替えは <c>AppLogging</c> が単一所有する）。<br/>
+    /// 「ログファイルを表示」は当日のログ ファイルを既定のアプリで開く
+    /// （手順（当日分が無いときにフォルダを開く）は <see cref="LogFileActions.ShowCurrentLogFile"/> が単一所有する）。
+    /// </remarks>
+    private static Element BuildLogSection(Settings settings)
+    {
+        var levels = MainViewModel.LogOutputLevels;
+        var options = levels.Select(EnumDisplayNames.Get).ToArray();
+        var selected = Math.Max(0, levels.ToList().IndexOf(settings.LogOutputLevel));
+
+        var show = new Button().Content("ログファイルを表示").FontSize(SettingsMetrics.FontSize).OnClick(ShowLogFile);
+
+        return Section(
+            "ログ",
+            Row("出力ログレベル", ChoiceRow(options, selected, index => settings.LogOutputLevel = levels[index])),
+            Row("", show),
+            Row("", new Label().Text(SettingsMetrics.LogFileHint).FontSize(SettingsMetrics.HintFontSize)));
+    }
+
+    /// <summary>当日のログ ファイルを既定のアプリで開く。</summary>
+    /// <remarks>失敗はログへ記録して続行する（ボタンの操作で他の設定を壊さない）。</remarks>
+    private static void ShowLogFile()
+    {
+        try
+        {
+            LogFileActions.ShowCurrentLogFile(AppLog.AssemblyName);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            s_logger.LogOpenLogFileError(ex);
+        }
+    }
 
     /// <summary>外観（選択枠・暗転・ハンドル・ルーペ・ラベル）のセクションを構築する。</summary>
     /// <param name="settings">設定。</param>

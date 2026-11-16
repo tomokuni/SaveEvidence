@@ -1,3 +1,4 @@
+using EsUtil.SaveEvidence.App.Core.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -42,6 +43,11 @@ internal static class Program
         // 設定は UI 非依存の共通実装を使う（%LOCALAPPDATA%\SaveEvidence\settings.json）
         // JSON ソース生成コンテキストを渡すことで、トリミング / Native AOT でも設定を読み書きできる
         var settings = new SettingsService(SettingsJsonContext.Default);
+
+        // 設定の出力ログレベルをログの構成へ反映する（起動後に設定ページで変えた分は
+        // AppLogging が変更通知を購読して切り替える。 再起動は要らない）
+        AppLogging.ApplySettings(settings.Current);
+
         var viewModel = new MainViewModel(settings, new EsBitmapImageWriter());
 
         // 履歴はキャプチャページと Undo 一覧で共有する（画像編集の直前に現在の画像を積む）

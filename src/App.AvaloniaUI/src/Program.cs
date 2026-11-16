@@ -7,6 +7,7 @@ using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Services;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Views;
+using EsUtil.SaveEvidence.App.Core.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -89,6 +90,10 @@ internal static class Program
             var services = new ServiceCollection();
             ConfigureServices(services);
             ServiceProvider = services.BuildServiceProvider();
+
+            // 設定の出力ログレベルをログの構成へ反映する（起動後に設定ページで変えた分は
+            // AppLogging が変更通知を購読して切り替える。 再起動は要らない）
+            AppLogging.ApplySettings(SettingsService.Current);
 
             // Avalonia アプリケーションを起動（戻り値 = 終了コード）
             var exitCode = BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);

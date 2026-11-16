@@ -1,3 +1,4 @@
+using EsUtil.SaveEvidence.App.Core.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -71,6 +72,11 @@ internal static class AppHost
         s_provider = provider;
 
         var settings = provider.GetRequiredService<ISettingsService>();
+
+        // 設定の出力ログレベルをログの構成へ反映する（起動後に設定ページで変えた分は
+        // AppLogging が変更通知を購読して切り替える。 再起動は要らない）
+        AppLogging.ApplySettings(settings.Current);
+
         var viewModel = provider.GetRequiredService<MainViewModel>();
         var undoHistory = provider.GetRequiredService<UndoHistory>();
         var folderView = provider.GetRequiredService<FolderViewViewModel>();

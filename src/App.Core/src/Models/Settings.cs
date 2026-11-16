@@ -56,6 +56,15 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private ThemeMode _themeMode = ThemeMode.System;
 
+    /// <summary>ログの出力レベル（このレベル以上の記録だけをファイルへ書く）を取得または設定する。</summary>
+    /// <remarks>
+    /// 既定は <see cref="Enums.LogOutputLevel.Trace"/>（すべて出力する = これまでの動作）。<br/>
+    /// 反映は <c>Logging.AppLogging.ApplySettings</c> が行い、<b>変更は再起動を要さず即時に効く</b>
+    /// （Serilog の <c>LoggingLevelSwitch</c> を経由する）。 絞り込みの規則は <c>.github/ログ規約.md</c> §2 が定める。
+    /// </remarks>
+    [ObservableProperty]
+    private LogOutputLevel _logOutputLevel = LogOutputLevel.Trace;
+
     /// <summary>色選択コントロールの入力欄へ出す表記を取得または設定する。</summary>
     /// <remarks>
     /// 保存値は表記に依らず <c>#AARRGGBB</c> のままである（表記は画面に出す文字列だけを決める）。<br/>

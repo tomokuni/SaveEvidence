@@ -44,11 +44,14 @@ public partial class SettingsServiceJsonTests
         var settings = CreateSettings();
         settings.ThemeMode = ThemeMode.Dark;
         settings.MainWindowState = EsWindowState.Maximized;
+        settings.LogOutputLevel = LogOutputLevel.Warning;
 
         var json = Serialize(settings, TestSettingsJsonContext.Default);
 
         Assert.Contains("\"ThemeMode\": \"Dark\"", json, StringComparison.Ordinal);
         Assert.Contains("\"MainWindowState\": \"Maximized\"", json, StringComparison.Ordinal);
+        // 数値で保存されると、enum の並びを変えたときに出力レベルが別の重大度になる
+        Assert.Contains("\"LogOutputLevel\": \"Warning\"", json, StringComparison.Ordinal);
     }
 
     /// <summary>ウィンドウ矩形は X / Y / Width / Height の 4 項目のみで保存されることを検証する。</summary>

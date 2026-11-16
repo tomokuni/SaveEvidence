@@ -153,6 +153,7 @@ public sealed class SettingsService : ISettingsService
                 new JsonStringEnumConverter<ThemeMode>(),
                 new JsonStringEnumConverter<StartupPreviewMode>(),
                 new JsonStringEnumConverter<ColorTextFormat>(),
+                new JsonStringEnumConverter<LogOutputLevel>(),
             },
         };
 

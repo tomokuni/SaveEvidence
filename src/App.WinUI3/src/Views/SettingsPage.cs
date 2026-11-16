@@ -20,7 +20,7 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 /// <summary>設定ページ（WinUI 3 版）。</summary>
 /// <remarks>
 /// 設定は変更のたびに即時保存する（保存ボタンを持たない）。 セクションと項目の構成は他の UI 版と同じにする。<br/>
-/// <b>セクション</b>: テーマ / 保存 / 画像 / キャプチャ / 矩形選択範囲の制限 / ホットキー / 外観。<br/>
+/// <b>セクション</b>: テーマ / 保存 / 画像 / キャプチャ / 矩形選択範囲の制限 / ホットキー / 外観 / ログ。<br/>
 /// <b>外観の入力</b>: 真偽値はチェック ボックス、数値は増減入力、色は色ピッカー（現在値の表示付き）を使う。<br/>
 /// <b>ファイル名テンプレート</b>はキャプチャ ページのツールバーで編集する（設定ページには置かない）。
 /// </remarks>
@@ -78,6 +78,7 @@ internal static class SettingsPage
         root.Children.Add(BuildSelectionLimitSection(settings));
         root.Children.Add(BuildHotKeySection(settings));
         root.Children.Add(BuildAppearanceSection(settings));
+        root.Children.Add(BuildLogSection(settings));
 
         var page = new Grid
         {
@@ -461,6 +462,52 @@ internal static class SettingsPage
         }
 
         return grid;
+    }
+
+    /// <summary>ログのセクションを生成する。</summary>
+    /// <param name="settings">設定（出力ログレベルの所有者）。</param>
+    /// <returns>生成したセクション。</returns>
+    /// <remarks>
+    /// 出力ログレベルを選ぶと、以後の記録の下限が変わる（切り替えは <c>AppLogging</c> が単一所有する）。<br/>
+    /// 「ログファイルを表示」は当日のログ ファイルを既定のアプリで開く
+    /// （手順（当日分が無いときにフォルダを開く）は <see cref="LogFileActions.ShowCurrentLogFile"/> が単一所有する）。
+    /// </remarks>
+    private static FrameworkElement BuildLogSection(Settings settings)
+    {
+        var levels = MainViewModel.LogOutputLevels;
+        var options = levels.Select(EnumDisplayNames.Get).ToArray();
+        var selected = Math.Max(0, levels.ToList().IndexOf(settings.LogOutputLevel));
+
+        var show = new Button { Content = "ログファイルを表示", FontSize = SettingsMetrics.FontSize };
+        show.Click += (_, _) => ShowLogFile();
+
+        var hint = new TextBlock
+        {
+            Text = SettingsMetrics.LogFileHint,
+            FontSize = SettingsMetrics.HintFontSize,
+            Opacity = DisabledOpacity,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        return Section(
+            "ログ",
+            Row("出力ログレベル", ChoiceRow(options, selected, index => settings.LogOutputLevel = levels[index])),
+            show,
+            hint);
+    }
+
+    /// <summary>当日のログ ファイルを既定のアプリで開く。</summary>
+    /// <remarks>失敗はログへ記録して続行する（ボタンの操作で他の設定を壊さない）。</remarks>
+    private static void ShowLogFile()
+    {
+        try
+        {
+            LogFileActions.ShowCurrentLogFile(AppLog.AssemblyName);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            s_logger.LogOpenLogFileError(ex);
+        }
     }
 
     /// <summary>セクション（枠付きの見出しと行）を生成する。</summary>

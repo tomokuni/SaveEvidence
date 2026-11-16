@@ -358,9 +358,18 @@ public sealed partial class MainViewModel : ObservableObject
     /// <remarks>設定画面のコンボ ボックスの選択肢に使用する（表示名は列挙の説明属性が単一所有する）。</remarks>
     public static IReadOnlyList<StartupPreviewMode> StartupPreviewModes => s_startupPreviewModes;
 
+    /// <summary>ログの出力レベルの選択肢（すべて / デバッグ / 情報 / 警告 / エラー / 重大）を取得する。</summary>
+    /// <remarks>
+    /// 設定画面のコンボ ボックスの選択肢に使用する（表示名は列挙の説明属性が単一所有する）。<br/>
+    /// 並びは重大度の順である（<c>Enum.GetValues</c> は値の順に返す）。
+    /// </remarks>
+    public static IReadOnlyList<LogOutputLevel> LogOutputLevels => s_logOutputLevels;
+
     private static readonly ThemeMode[] s_themeModes = Enum.GetValues<ThemeMode>();
 
     private static readonly StartupPreviewMode[] s_startupPreviewModes = Enum.GetValues<StartupPreviewMode>();
+
+    private static readonly LogOutputLevel[] s_logOutputLevels = Enum.GetValues<LogOutputLevel>();
 
     /// <summary>保存済みファイル名（未保存の場合は空欄）。</summary>
     public string SavedFileName => IsSaved ? LastSavedFileName : "";

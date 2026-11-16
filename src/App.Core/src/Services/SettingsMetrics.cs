@@ -23,4 +23,13 @@ public static class SettingsMetrics
     /// </remarks>
     public const string SaveFolderHint =
         "例: {MyPictures}\\SaveEvidence（{MyPictures} はピクチャフォルダへ展開されます）";
+
+    /// <summary>ログ ファイルを表示するボタンの補足の文言。</summary>
+    /// <remarks>
+    /// ボタンの動作（当日分を既定のアプリで開く・無ければフォルダを開く）の説明であり、手順は
+    /// <see cref="LogFileActions.ShowCurrentLogFile"/> が単一所有する。<br/>
+    /// 文言は 4 つの UI 版で共通にする（動作の説明が版ごとにずれないようにする）。
+    /// </remarks>
+    public const string LogFileHint =
+        "当日のログ ファイルを既定のアプリで開きます（無い場合はログ フォルダを開きます）。";
 }

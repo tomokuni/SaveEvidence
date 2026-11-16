@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace EsUtil.SaveEvidence.App.Core.Services;
 
 /// <summary>アプリの同一性（名前・識別子・保存先）の唯一の定義。</summary>
@@ -50,6 +52,27 @@ public static class AppIdentity
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(assemblyName);
         return Path.Combine(LogsFolder, assemblyName + "..log");
+    }
+
+    /// <summary>指定されたアセンブリが書く当日のログ ファイルのパスを取得する。</summary>
+    /// <param name="assemblyName">ログを書くアセンブリ名（例: <c>SaveEvidence.WinUI3</c>）。</param>
+    /// <param name="date">対象の日付（ローカル時刻。 日次ローテーションの区切りと同じ）。</param>
+    /// <returns><c>&lt;アセンブリ名&gt;.&lt;yyyyMMdd&gt;.log</c> のフル パス。</returns>
+    /// <remarks>
+    /// <b>実際にできるファイルの名前を返す</b>: <see cref="GetLogFilePath"/> はシンクへ渡す基点
+    /// （<c>&lt;アセンブリ名&gt;..log</c>）であり、Serilog が拡張子の直前に日付を挿入した結果が本メソッドの値である
+    /// （規則は <c>.github/ログ規約.md</c> §1.1）。 <b>ログ ファイルを開く側は本メソッドで名前を解決する</b>
+    /// （日付の書式を書き分けると、実際のファイルと綴りがずれる）。<br/>
+    /// 日付は<b>ローカル時刻</b>（Serilog と同じ）で、書式は<b>文化に依存させない</b>
+    /// （タイ仏暦などの暦を使う環境でファイル名が変わり、実際のファイルを見失うため）。
+    /// </remarks>
+    /// <exception cref="ArgumentException"><paramref name="assemblyName"/> が空または空白のみの場合。</exception>
+    public static string GetDailyLogFilePath(string assemblyName, DateTime date)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(assemblyName);
+        return Path.Combine(
+            LogsFolder,
+            assemblyName + "." + date.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + ".log");
     }
 
     /// <summary>設定ファイル（<c>%LOCALAPPDATA%\SaveEvidence\settings.json</c>）を取得する。</summary>

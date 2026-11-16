@@ -185,6 +185,7 @@ flowchart TB
 - **外観設定**: テーマ（`ThemeMode`: Light / Dark / System）を ComboBox で選択。 System は OS の設定に追従。 右下の「デフォルト値に戻す」ボタンで外観設定（選択枠・暗転・ハンドル・マーカー・ルーペ・ラベル）を `Settings.ResetAppearanceToDefaults()` により一括復元（外観設定以外は変更されない）
 - **ラベル設定**: キャプチャ選択画面の左上ラベル（1 行目 = サイズ / 2 行目 = 操作 / 3 行目 = 情報）を行ごとに設定。 各行で表示・文字色・背景色・フォントサイズを個別に設定可能（背景色は不透明度を統合した `#AARRGGBB` 形式。 カラーピッカーでアルファも設定できる）
 - **設定項目の対応先**: 全設定項目と反映先コントロールの対応は `SPEC_SettingTargetTable.md` を参照
+- **ログ**: 「出力ログレベル」（すべて / デバッグ / 情報 / 警告 / エラー / 重大。 **変更は再起動なしで反映**）。 「ログファイルを表示」で当日のログ ファイル（`%LOCALAPPDATA%\SaveEvidence\logs\<アセンブリ名>.<yyyyMMdd>.log`）を既定のアプリで開く。 当日分が無いときはログ フォルダをエクスプローラーで開く（手順は `LogFileActions.ShowCurrentLogFile`、レベルの切り替えは `AppLogging`（いずれも App.Core）が単一所有する）
 - **依存**: SettingsService / EsUtil.Ui.AvaloniaUI.ColorSelector（色選択）
 
 ### 6.6 CropViewControl（ズーム・パン表示と領域選択）

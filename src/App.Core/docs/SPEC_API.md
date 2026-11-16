@@ -48,17 +48,20 @@
 - [36. `Services.FileSystemActions`（静的クラス）](#36-servicesfilesystemactions静的クラス)
 - [37. `Services.ClipboardImage`（静的クラス）](#37-servicesclipboardimage静的クラス)
 - [38. `Services.StatusBarTexts`（静的クラス）](#38-servicesstatusbartexts静的クラス)
+- [39. `Services.LogFileActions`（静的クラス）](#39-serviceslogfileactions静的クラス)
+- [40. `Enums.LogOutputLevel`（列挙型）](#40-enumslogoutputlevel列挙型)
 
 ## 1. 公開 API の可視性
 
 | 型 | 可視性 | 参照可能なアセンブリ |
 | --- | --- | --- |
-| `Enums.AppPage` / `Enums.ThemeMode` | `public` | 任意 |
+| `Enums.AppPage` / `Enums.ThemeMode` / `Enums.LogOutputLevel` | `public` | 任意 |
 | `Models.Settings` / `Models.FileNameTemplate` / `Models.UndoHistory` | `public` | 任意 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 任意 |
 | `Services.StatusMessages` / `Services.AppPalette` / `Services.NavPanelMetrics` / `Services.StartupPreviewImage` / `Services.EnumDisplayNames` / `Services.ColorTextFormatDisplay` / `Services.SettingsMetrics` / `Services.ToolbarMetrics` / `Services.ZoomMenuLevels` / `Icons.CaptureIconFiles` | `public` | 任意 |
 | `Services.IImageWriter` | `public` | 任意 |
 | `Services.FileSystemActions` | `public` | 任意 |
+| `Services.LogFileActions` | `public` | 任意 |
 | `Services.ClipboardImage` | `public` | 任意（MewUI 版が使う。 画像クリップボードの API を持たない UI のため） |
 | `Models.ThumbnailScheduler` | `internal` | 同上 |
 | `Models.ThumbnailPriority` | `internal` | 同上 |
@@ -90,6 +93,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `SelectScreenHotKey` / `WindowSelectHotKey` / `AreaSelectHotKey` | `HotKeySetting` | グローバルホットキー |
 | `FileNameTemplate` / `SaveFolderPath` | `string` | ファイル名テンプレート・保存先フォルダ |
 | `ThemeMode` | `ThemeMode` | テーマモード |
+| `LogOutputLevel` | `LogOutputLevel` | ログの出力レベル（このレベル以上の記録だけをファイルへ書く。 `Trace` = すべて（既定）〜 `Critical` = 重大。 変更は再起動なしで反映） |
 | `ColorTextFormat` | `ColorTextFormat`（EsUtil.Platform.Core.Palette） | 色選択コントロールの入力欄へ出す表記（`NameWithAlpha` = 色名 + 不透明度 / `HexCode` = `#AARRGGBB`）。 保存値は変わらない |
 | `IsNavigationExpanded` | `bool` | ナビゲーションパネルの展開状態 |
 | `StartupPreview` | `StartupPreviewMode` | 起動直後のキャプチャ ページに置く画像（`Gradient` = グラデーション画像 / `Blank` = 空白。 既定は `Gradient`） |
@@ -453,6 +457,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 | FontSize | 14 DIP | 設定ページの文字サイズ（見出し・項目名・チェック ボックス・コンボ ボックス） |
 | HintFontSize | 11 DIP | 補足（例・説明）の文字サイズ |
 | SaveFolderHint | 文字列 | 保存先フォルダの入力欄の下へ出す補足（例: {MyPictures}\SaveEvidence（…）） |
+| LogFileHint | 文字列 | 「ログファイルを表示」ボタンの下へ出す補足（当日のログ ファイルを既定のアプリで開く。 無い場合はログ フォルダを開く） |
 
 WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 に換算します。
 
@@ -513,6 +518,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 | `IconFileName` | `ic_fluent_scan_table_24_regular.svg` | ウィンドウ（タスク バー）アイコン（4 UI 版が共有） |
 | `LocalAppDataFolder` | `%LOCALAPPDATA%\SaveEvidence` | 設定・ログの置き場 |
 | `LogsFolder` / `GetLogFilePath` | `…\logs` / `…\logs\<アセンブリ名>..log`（実際のファイル名は `<アセンブリ名>.<yyyyMMdd>.log`） | ログ出力（Serilog） |
+| `GetDailyLogFilePath` | `…\logs\<アセンブリ名>.<yyyyMMdd>.log` | 当日のログ ファイルの解決（設定ページの「ログファイルを表示」） |
 | `SettingsFilePath` | `…\settings.json` | 設定ファイル |
 | `TempFolder` | `%TEMP%\SaveEvidence` | 実行時に組み立てるファイル（ICO 等） |
 
@@ -683,3 +689,33 @@ MewUI の既定値 12 DIP に揃えます。 AvaloniaUI と WinUI 3 のテーマ
 
 - 数値は**現在のカルチャに依存させません**（桁区切りが入ると幅の基準を超えるため）。
 - 幅の基準（§23 の `PositionWidthReferenceText` / `ImageSizeWidthReferenceText`）は、この接頭辞と最も長い値から組み立てます（接頭辞を変えたときに基準が追随します）。
+
+## 39. `Services.LogFileActions`（静的クラス）
+
+設定ページの「ログファイルを表示」が行う手順（**当日のログ ファイルを既定のアプリで開く・無ければログ フォルダを開く**）を単一所有します。 4 つの UI 版が同じ手順を使います（UI 版ごとに書くと、当日分が無いときに何を開くかが版ごとにずれるため）。 **失敗は例外で表し、記録は呼び出し側（各 UI 版のロガー）が行います**（コアはロガーを持ちません）。
+
+| メソッド | 説明 |
+| --- | --- |
+| `ShowCurrentLogFile(string assemblyName)` | 当日のログ ファイル（`AppIdentity.GetDailyLogFilePath` が解決する `<アセンブリ名>.<yyyyMMdd>.log`）を既定の関連付けのアプリで開く。 **当日分が無いときはログ フォルダ**（`AppIdentity.LogsFolder`）をエクスプローラーで開く |
+
+- 表示は**既定の関連付けに任せます**（`.log` の関連付け（メモ帳等）が利用者の環境の見方に合う。 アプリ内に読み込み専用のビューアを持たない）。
+- **当日分が無いときにフォルダを開く理由**: ボタンが無反応に見えるのを避けるためです（日次ローテーションの直後や、書き込みに失敗している環境でも置き場所へ辿れます）。
+- 起動に失敗した場合は `InvalidOperationException`、ログ ファイルもログ フォルダも無い場合は `DirectoryNotFoundException` を投げます。
+
+## 40. `Enums.LogOutputLevel`（列挙型）
+
+ログの出力レベル（**このレベル以上の記録だけをファイルへ書く**）です。 値は重大度の順で、`Microsoft.Extensions.Logging.LogLevel` と同じ並びにします（Serilog の `LogEventLevel` へ 1 対 1 で写すため）。 表示名は `DescriptionAttribute` が単一所有します（設定ページの選択肢は `Services.EnumDisplayNames` で読みます）。
+
+| 値 | 表示名 | 書き出される記録 |
+| --- | --- | --- |
+| `Trace`（0・既定） | すべて（トレース） | すべて（`TRC` 以上） |
+| `Debug`（1） | デバッグ | `DBG` 以上 |
+| `Information`（2） | 情報 | `INF` 以上 |
+| `Warning`（3） | 警告 | `WRN` 以上 |
+| `Error`（4） | エラー | `ERR` 以上 |
+| `Critical`（5） | 重大 | `CRT` だけ |
+
+- **切り替えは `Logging.AppLogging` が単一所有します**（Serilog の `LoggingLevelSwitch` を経由し、**ロガーを作り直さずに実行中でも反映**します）。 各 UI 版の合成ルートが起動時に `AppLogging.ApplySettings` を 1 回呼び、以後は `Settings.LogOutputLevel` の変更通知で追従します（設定ページは値を書き換えるだけです）。
+- **Serilog のレベルへの写像は `AppLogging.ToLogEventLevel`** です（`Trace` → `Verbose` / `Critical` → `Fatal` の 2 つだけ名前が違う）。
+- 設定ファイルへは**名前で保存**します（例: `"LogOutputLevel": "Warning"`。 数値で保存すると enum の並びを変えたときに別の重大度になるため）。
+- 既定は `Trace`（すべて出力）であり、これまでの動作を変えません。 絞り込みの規則は [`.github/ログ規約.md`](../../../.github/ログ規約.md) §2 が定めます。

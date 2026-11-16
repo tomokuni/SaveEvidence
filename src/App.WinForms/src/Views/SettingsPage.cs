@@ -3,13 +3,15 @@ using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
+using EsUtil.SaveEvidence.App.WinForms.Logging;
 using EsUtil.SaveEvidence.App.WinForms.Services;
+using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
 
 /// <summary>設定ページ（7 セクションの縦 1 列。 変更はその場で設定ファイルへ保存する）。</summary>
 /// <remarks>
-/// <b>セクション</b>: 外観テーマ / 保存 / 画像 / キャプチャ / 矩形選択範囲の制限 / ホットキー / 外観設定。<br/>
+/// <b>セクション</b>: 保存 / 画像 / キャプチャ / 矩形選択範囲の制限 / ホットキー / 外観設定 / ログ。<br/>
 /// <b>即時保存</b>: 入力のたびに <see cref="ISettingsService.Save"/> を呼ぶ（「適用」ボタンを持たない）。<br/>
 /// <b>色の入力</b>: 色の選択は GDI+ の色ダイアログで行う（色と不透明度は設定の <c>#AARRGGBB</c> 形式で保持する）。<br/>
 /// <b>反映</b>: 外観設定の変更は設定の変更通知を通じてキャプチャページの撮影セッションへ反映される。
@@ -18,6 +20,9 @@ internal static class SettingsPage
 {
     /// <summary>値の列の幅（DIP）。</summary>
     private const int ValueColumnWidth = 260;
+
+    /// <summary>ロガー（ログ ファイルを開く操作の失敗を記録する）。</summary>
+    private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(SettingsPage));
 
     /// <summary>サブグループの区切り行の高さ（ピクセル）。 線（1）と上下の余白を含む。</summary>
     private const int SeparatorHeight = 11;
@@ -77,6 +82,7 @@ internal static class SettingsPage
         stack.Controls.Add(BuildSelectionClampSection(settingsService));
         stack.Controls.Add(BuildHotKeySection(settingsService));
         stack.Controls.Add(BuildAppearanceSection(settingsService));
+        stack.Controls.Add(BuildLogSection(settingsService));
 
         // セクションの幅をウィンドウ幅へ追従させる（FlowLayoutPanel は子を引き伸ばさないため明示する）
         void LayoutSections()
@@ -651,6 +657,82 @@ internal static class SettingsPage
         section.Body.ResumeLayout(performLayout: true);
 
         return section;
+    }
+
+    /// <summary>ログのセクションを生成する。</summary>
+    /// <param name="settingsService">設定サービス（出力ログレベルの所有者）。</param>
+    /// <returns>生成したセクション。</returns>
+    /// <remarks>
+    /// 出力ログレベルを選ぶと、以後の記録の下限が変わる（切り替えは <c>AppLogging</c> が単一所有する）。<br/>
+    /// 「ログファイルを表示」は当日のログ ファイルを既定のアプリで開く
+    /// （手順（当日分が無いときにフォルダを開く）は <see cref="LogFileActions.ShowCurrentLogFile"/> が単一所有する）。
+    /// </remarks>
+    private static Control BuildLogSection(ISettingsService settingsService)
+    {
+        var section = CreateSection("ログ");
+
+        var levels = MainViewModel.LogOutputLevels;
+        var level = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 200,
+            Height = AppStyles.SettingsControlHeight,
+        };
+        foreach (var item in levels)
+        {
+            level.Items.Add(EnumDisplayNames.Get(item));
+        }
+
+        // 表示と設定値を合わせる（設定ファイルの値から選ぶ）
+        level.SelectedIndex = Math.Max(0, levels.ToList().IndexOf(settingsService.Current.LogOutputLevel));
+        level.SelectedIndexChanged += (_, _) =>
+        {
+            if (level.SelectedIndex < 0)
+            {
+                return;
+            }
+
+            settingsService.Current.LogOutputLevel = levels[level.SelectedIndex];
+            settingsService.Save();
+        };
+        section.Body.Controls.Add(UiFactory.CreateRow("出力ログレベル", level));
+
+        var show = new Button
+        {
+            // 文言と文字サイズ（DPI で変わる）に合わせて自動で大きさを決める
+            Text = "ログファイルを表示",
+            AutoSize = true,
+            FlatStyle = FlatStyle.Flat,
+            TabStop = false,
+        };
+        show.Click += (_, _) => ShowLogFile();
+        section.Body.Controls.Add(show);
+
+        // ボタンの動作の説明（文言は SettingsMetrics（App.Core）が単一所有する）
+        section.Body.Controls.Add(new Label
+        {
+            Text = SettingsMetrics.LogFileHint,
+            AutoSize = true,
+            Font = AppStyles.SettingsHintFont,
+            ForeColor = AppStyles.Foreground,
+            Margin = new Padding(0, 0, 0, 4),
+        });
+
+        return section;
+    }
+
+    /// <summary>当日のログ ファイルを既定のアプリで開く。</summary>
+    /// <remarks>失敗はログへ記録して続行する（ボタンの操作で他の設定を壊さない）。</remarks>
+    private static void ShowLogFile()
+    {
+        try
+        {
+            LogFileActions.ShowCurrentLogFile(AppLog.AssemblyName);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            s_logger.LogOpenLogFileError(ex);
+        }
     }
 
     /// <summary>セクションの枠（見出し付きの入れ物）を生成する。</summary>

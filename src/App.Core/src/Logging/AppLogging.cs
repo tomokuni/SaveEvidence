@@ -1,7 +1,10 @@
 using System.Globalization;
+using EsUtil.SaveEvidence.App.Core.Enums;
+using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Events;
 
 namespace EsUtil.SaveEvidence.App.Core.Logging;
 
@@ -17,6 +20,16 @@ namespace EsUtil.SaveEvidence.App.Core.Logging;
 /// </remarks>
 internal static class AppLogging
 {
+    /// <summary>出力する下限レベル（設定 <c>Settings.LogOutputLevel</c> に追従する）。</summary>
+    /// <remarks>
+    /// <b>スイッチを経由する理由</b>: Serilog の <see cref="Serilog.Core.LoggingLevelSwitch"/> は
+    /// ロガーを作り直さずに下限を切り替えられる（設定の変更が<b>再起動なしで</b>効く）。 既定は
+    /// <see cref="LogOutputLevel.Trace"/>（すべて出力する）。<br/>
+    /// <b>本クラスが単一所有する</b>: 下限の決定（設定 → レベル）はログの構成の一部であり、UI 版ごとに
+    /// 書くと片方だけ写像がずれる（規則の所有者は <c>.github/ログ規約.md</c> §2）。
+    /// </remarks>
+    private static readonly Serilog.Core.LoggingLevelSwitch s_levelSwitch = new(LogEventLevel.Verbose);
+
     /// <summary>Serilog のファイル シンクと MEL ブリッジを初期化する。</summary>
     /// <param name="assemblyName">ログ ファイル名の先頭に使うアセンブリ名（ホストの実行ファイル）。</param>
     /// <returns>Serilog へ転送する <see cref="ILoggerFactory"/>。</returns>
@@ -36,13 +49,65 @@ internal static class AppLogging
         return LoggerFactory.Create(builder => builder.AddSerilog(dispose: false));
     }
 
+    /// <summary>設定の出力レベルをログの構成へ反映し、以後の変更にも追従させる。</summary>
+    /// <param name="settings">アプリの設定（<c>LogOutputLevel</c> の所有者）。</param>
+    /// <exception cref="ArgumentNullException"><paramref name="settings"/> が null の場合。</exception>
+    /// <remarks>
+    /// <b>起動時に各 UI 版の合成ルートが 1 回だけ呼ぶ</b>（設定を読み込んだ直後）。 以後は
+    /// <see cref="Settings.LogOutputLevel"/> の変更通知で下限を切り替えるため、設定ページは
+    /// 値を書き換えるだけでよい（UI 版ごとに切り替えの手順を書かない）。<br/>
+    /// <b>本メソッドはプロセスで 1 回だけ呼ぶ</b>（複数回呼ぶと変更通知の購読が重複する）。
+    /// </remarks>
+    public static void ApplySettings(Settings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        SetMinimumLevel(settings.LogOutputLevel);
+        settings.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(Settings.LogOutputLevel), StringComparison.Ordinal))
+            {
+                SetMinimumLevel(settings.LogOutputLevel);
+            }
+        };
+    }
+
+    /// <summary>出力する下限レベルを切り替える。</summary>
+    /// <param name="level">設定の出力レベル。</param>
+    /// <remarks>同じ値を再設定しても何も起きない（<see cref="Serilog.Core.LoggingLevelSwitch"/> が吸収する）。</remarks>
+    internal static void SetMinimumLevel(LogOutputLevel level)
+        => s_levelSwitch.MinimumLevel = ToLogEventLevel(level);
+
+    /// <summary>出力する下限レベル（現在値）を取得する。</summary>
+    /// <remarks>設定の反映を確かめるための参照（テストと診断用。 ログの出力そのものには使わない）。</remarks>
+    internal static LogEventLevel MinimumLevel => s_levelSwitch.MinimumLevel;
+
+    /// <summary>設定の出力レベルを Serilog のレベルへ写す。</summary>
+    /// <param name="level">設定の出力レベル。</param>
+    /// <returns>Serilog のレベル。</returns>
+    /// <remarks>
+    /// <b>名前が違うのは 2 つだけ</b>である（<c>Trace</c> は Serilog では <c>Verbose</c>、
+    /// <c>Critical</c> は <c>Fatal</c>）。 取り違えると下限が 1 段ずれるため、写像はここだけに置く
+    /// （規則の所有者は <c>.github/ログ規約.md</c> §2）。
+    /// </remarks>
+    internal static LogEventLevel ToLogEventLevel(LogOutputLevel level) => level switch
+    {
+        LogOutputLevel.Trace => LogEventLevel.Verbose,
+        LogOutputLevel.Debug => LogEventLevel.Debug,
+        LogOutputLevel.Information => LogEventLevel.Information,
+        LogOutputLevel.Warning => LogEventLevel.Warning,
+        LogOutputLevel.Error => LogEventLevel.Error,
+        LogOutputLevel.Critical => LogEventLevel.Fatal,
+        _ => LogEventLevel.Verbose,
+    };
+
     /// <summary>Serilog のファイル出力構成を作成する。</summary>
     /// <param name="assemblyName">ログ ファイル名の先頭に使うアセンブリ名。</param>
     /// <returns>ログを <c>%LOCALAPPDATA%\SaveEvidence\logs\&lt;アセンブリ名&gt;.&lt;yyyyMMdd&gt;.log</c>（日次ローテーション・7 日保持）へ書き込む構成。</returns>
     private static LoggerConfiguration CreateConfiguration(string assemblyName)
     {
         return new LoggerConfiguration()
-            .MinimumLevel.Verbose()
+            .MinimumLevel.ControlledBy(s_levelSwitch)
             .Enrich.FromLogContext()
             // レベルは 3 文字（[TRC] 等）で表す。 {Level:u3} は Verbose を VRB と表すため使わない
             // （規則の所有者は .github/ログ規約.md §4.1）

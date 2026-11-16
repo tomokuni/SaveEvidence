@@ -12,6 +12,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | --- | --- | --- |
 | `Enums.AppPage` | `public` | ナビゲーションページの識別子 |
 | `Enums.ThemeMode` | `public` | テーマモード（`Description` 属性で表示名を保持） |
+| `Enums.LogOutputLevel` | `public` | ログの出力レベル（このレベル以上をファイルへ書く。 `Description` 属性で表示名を保持。 既定は `Trace` = すべて） |
 | `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。 ウィンドウ位置は `EsRectInt`、状態は `EsWindowState` で保持 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。 JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
 | `Services.IImageWriter` | `public` | 画像（`EsReadOnlyBitmap`）のファイル書き込みの抽象 |
@@ -32,7 +33,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `Services.CaptureLauncher` | `internal` | 撮影の開始を受け付け、実行中の多重起動を防ぐ（完了時に状態を戻す） |
 | `Services.ThumbnailPlaceholder` | `internal` | サムネイル生成が終わるまで表示する透明な正方形（寸法ごとに 1 枚を共有する） |
 | `Services.IconFit` / `Services.IconFitTransform` | `internal` | アイコンの図形（外接矩形）を枠いっぱいへ広げる変換（4 つの UI 版で同じ大きさにする） |
-| `Logging.AppLogging` | `internal` | ログの出力先・行の書式・3 文字のレベル表記（Serilog の構成）。 **4 つの UI 版で 1 つ** |
+| `Logging.AppLogging` | `internal` | ログの出力先・行の書式・3 文字のレベル表記（Serilog の構成）と**出力する下限レベルの切り替え**（`LoggingLevelSwitch` を経由するため再起動不要）。 **4 つの UI 版で 1 つ** |
 | `Logging.AppLogMessage` | `internal` | **4 つの UI 版で共通のログ文言**（`LoggerMessage` ソース生成）。 接頭辞は各 UI の `AppLog` が渡す |
 
 `internal` の型は `InternalsVisibleTo`（`SaveEvidence` / `SaveEvidence.MewUI` / `App.AvaloniaUI.Tests` / `App.Core.Tests` / `App.MewUI.Tests`）で UI 実装とテストからのみ参照できます。

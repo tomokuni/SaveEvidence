@@ -35,6 +35,9 @@ internal static partial class AppLog
     /// <summary>アプリ共有の Serilog ロガー（出力先と行の書式はコアの <c>AppLogging</c> が単一所有する）。</summary>
     private static readonly ILoggerFactory s_factory = AppLogging.CreateFactory(s_assemblyName);
 
+    /// <summary>このアセンブリの名前（ログ ファイル名の解決に使う）。</summary>
+    internal static string AssemblyName => s_assemblyName;
+
     /// <summary>指定カテゴリ名のロガーを生成する。</summary>
     /// <param name="categoryName">ロガーカテゴリ名（例: "CapturePage"）。</param>
     /// <returns>生成したロガー。</returns>
@@ -187,6 +190,13 @@ internal static partial class AppLog
     /// <param name="folderPath">対象のフォルダパス。</param>
     public static void LogOpenFolderError(this ILogger logger, Exception ex, string folderPath)
         => logger.LogOpenFolderErrorCore(Prefix, ex, folderPath);
+
+    /// <summary>ログ ファイルを開けなかったことを記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="ex">発生した例外。</param>
+    internal static void LogOpenLogFileError(this ILogger logger, Exception ex)
+        => logger.LogOpenLogFileErrorCore(Prefix, ex);
 
 
     /// <summary>サムネイル生成の失敗を記録する。</summary>
