@@ -3,6 +3,8 @@
 ## 目次
 
 - [1. `AnnotationLayerControl`（クラス）](#1-annotationlayercontrolクラス)
+- [2. `AnnotationEditorControls`（クラス）](#2-annotationeditorcontrolsクラス)
+- [3. `AnnotationFonts`（クラス）](#3-annotationfontsクラス)
 
 ## 1. `AnnotationLayerControl`（クラス）
 
@@ -22,7 +24,7 @@
 | `AddFrame(bounds)` / `AddBubble(bounds, text)` | method | 注釈を追加し、追加した注釈を選択する（戻り値は識別子） |
 | `DeleteSelected()` | method | 選択中の注釈を削除する |
 | `SetSelectedText(text)` | method | 選択中の吹き出しの本文を置き換える（**書式は文字位置で引き継ぐ**） |
-| `ApplyTextStyle(style)` / `UpdateTextStyle(transform)` | method | 本文へ書式を適用する（`TextSelectionRange` の範囲。 **文字単位**） |
+| `ApplyTextStyle(style)` / `ApplyTextStyle(start, length, style)` / `TransformTextStyle(transform)` / `TransformTextStyle(start, length, transform)` | method | 本文へ書式を適用する（`TextSelectionRange` の範囲、または指定した範囲。 **文字単位**。 長さ 0 は全体）。 `ApplyTextStyle` は**書式を丸ごと差し替える**、`TransformTextStyle` は**指定した属性だけを書く**（他の属性を保つ） |
 | `UpdateSelectedAppearance(transform)` | method | 外観（枠線・内側・角丸）を差し替える |
 | `SetSelectedBodyPadding(padding)` / `UpdateSelectedTail(transform)` | method | 吹き出しの本文の余白・しっぽ（幅・辺）を差し替える |
 | `MoveSelectedToFront()` / `MoveSelectedToBack()` | method | 重なり順を変える |
@@ -45,3 +47,29 @@
 | 方向キー（`Shift` 併用） | nudge（1 px / 10 px） |
 
 **注意**: 保存（注釈 JSON・合成画像）は行いません。 ホストが `AnnotationJson` とプラットフォームの描画 API で書き出します。
+
+## 2. `AnnotationEditorControls`（クラス）
+
+注釈の編集 UI で使う行の部品です（右クリックのフライアウトとホストの設定ペインが共有する）。
+
+| メンバー | 種別 | 説明 |
+| --- | --- | --- |
+| `LabelWidth` | const | 項目名のラベルの幅（DIP。 既定 104） |
+| `Heading(text)` | method | 見出しを作る |
+| `Label(text)` | method | 項目名のラベルを作る |
+| `ColorRow(label, initial, apply)` | method | 色の行を作る（**`ColorSelectorControl` を使う**。 `apply` へは検証済みの色だけを渡す） |
+| `NumberRow(label, initial, minimum, maximum, apply, increment)` | method | 数値の行を作る（`NumericUpDown`） |
+| `ChoiceRow(label, options, selectedIndex, apply)` | method | 選択肢の行を作る（`ComboBox`） |
+| `Toggle(text, isChecked, apply, bold, italic, underline, strike)` | method | 装飾の切り替え（B / I / U / S）を作る |
+| `ToHex(color)` | method | 色を `#AARRGGBB` の文字列へ変換する |
+
+**前提**: `ColorRow` は `Avalonia.Controls.ColorPicker` のテーマを要求します（ホストが
+`avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml` を読み込む）。
+
+## 3. `AnnotationFonts`（クラス）
+
+| メンバー | 種別 | 説明 |
+| --- | --- | --- |
+| `All` | property | 本文で選べるフォント名の一覧（`IReadOnlyList<string>`）。 `AnnotationDefaults.PreferredFontFamilies` を先頭に置き、その後にインストール済みのフォントを並べる |
+
+一覧は起動時に 1 度だけ作ります（フォントの列挙は重い）。

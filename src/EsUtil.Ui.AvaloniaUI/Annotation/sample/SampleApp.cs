@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Themes.Fluent;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation.Sample;
@@ -11,6 +12,12 @@ internal sealed class SampleApp : Application
     public override void OnFrameworkInitializationCompleted()
     {
         Styles.Add(new FluentTheme());
+
+        // ColorSelectorControl は ColorPicker のテーマを要求する（同梱しないのでホストが読み込む）
+        Styles.Add(new StyleInclude(new Uri("avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml"))
+        {
+            Source = new Uri("avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml"),
+        });
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

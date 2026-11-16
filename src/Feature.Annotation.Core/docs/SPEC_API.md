@@ -66,6 +66,7 @@
 | `RichText.Runs` | `TextRun` の並び（**run が自分の文字列を持つ**。 文字の挿入・削除が他の書式へ影響しない） |
 | `RichText.PlainText` / `IsEmpty` / `Create(text, style)` | 書式を除いた文字列・空判定・単一書式からの生成 |
 | `RichText.ApplyStyle(start, length, style)` | **指定範囲の書式を差し替える**（run を境界で分割し、同じ書式は連結する。 長さ 0 は全体） |
+| `RichText.TransformStyle(start, length, transform)` | **指定範囲の書式を 1 文字ずつ変換する**（変えない属性を保つ。 「太字にする」「色だけ変える」はこちら） |
 | `RichText.StyleAt(index)` | 指定位置の文字の書式（範囲外は末尾へフォールバック。 書式ツールバーの初期表示に使う） |
 | `RichText.WithPlainText(text)` | 書式を**文字位置で引き継いで**文字列だけを差し替える（本文の編集に使う） |
 | `AnnotationTextStyle` | `FontFamily` / `FontSize`（元画像ピクセル）/ `Color` / `IsBold` / `IsItalic` / `IsUnderline` / `IsStrike` |

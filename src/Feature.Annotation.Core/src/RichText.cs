@@ -70,7 +70,33 @@ public sealed class RichText
     public RichText ApplyStyle(int start, int length, AnnotationTextStyle style)
     {
         ArgumentNullException.ThrowIfNull(style);
+        return WriteStyle(start, length, _ => style);
+    }
 
+    /// <summary>指定された範囲の書式を 1 文字ずつ変換した新しい <see cref="RichText"/> を返す。</summary>
+    /// <param name="start">範囲の開始位置（0 起点。 文字数で数える）。</param>
+    /// <param name="length">範囲の長さ（文字数。 0 以下は「全体」）。</param>
+    /// <param name="transform">現在の書式を受け取って新しい書式を返す関数（run ごとに呼ぶ）。</param>
+    /// <returns>書式を変換した新しい値（元の値は変更しない）。</returns>
+    /// <remarks>
+    /// <b>変えない属性を保つ</b>: 「太字にする」「色だけ変える」のように 1 つの属性だけを変えるときは
+    /// <see cref="ApplyStyle"/> ではなく本メソッドを使う（範囲内の run ごとに他の属性を残せる）。<br/>
+    /// <b>切り替えの判断は呼び出し側で 1 回だけ行う</b>: 範囲の先頭の書式で「太字にする／戻す」を決め、
+    /// その値を transform で全 run へ書く（run ごとに反転すると範囲の中で太字と通常が入れ替わる）。
+    /// </remarks>
+    public RichText TransformStyle(int start, int length, Func<AnnotationTextStyle, AnnotationTextStyle> transform)
+    {
+        ArgumentNullException.ThrowIfNull(transform);
+        return WriteStyle(start, length, transform);
+    }
+
+    /// <summary>指定された範囲の書式を書き換えた新しい <see cref="RichText"/> を返す。</summary>
+    /// <param name="start">範囲の開始位置（0 起点）。</param>
+    /// <param name="length">範囲の長さ（0 以下は全体）。</param>
+    /// <param name="styleFor">現在の書式から新しい書式を作る関数。</param>
+    /// <returns>書き換えた新しい値。</returns>
+    private RichText WriteStyle(int start, int length, Func<AnnotationTextStyle, AnnotationTextStyle> styleFor)
+    {
         if (IsEmpty)
         {
             return this;
@@ -106,7 +132,7 @@ public sealed class RichText
                 AddMerged(runs, run with { Text = run.Text[..localFrom] });
             }
 
-            AddMerged(runs, new TextRun(run.Text[localFrom..localTo], style));
+            AddMerged(runs, new TextRun(run.Text[localFrom..localTo], styleFor(run.Style)));
 
             if (localTo < run.Text.Length)
             {

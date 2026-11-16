@@ -18,7 +18,7 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 /// 「カーソルが変わる範囲」と「押して操作できる範囲」が一致する。<br/>
 /// <b>本文の編集はホストが行う</b>: ダブルクリックで <see cref="EditTextRequested"/> を発生させ、ホストが入力欄を
 /// 重ねる（コントロールは子要素を持たないため）。 確定した文字列は <see cref="SetSelectedText"/> で戻し、
-/// 書式は <see cref="TextSelectionRange"/> と <see cref="ApplyTextStyle"/> で文字単位に適用する。<br/>
+/// 書式は <see cref="TextSelectionRange"/> と <see cref="ApplyTextStyle(AnnotationTextStyle)"/> で文字単位に適用する。<br/>
 /// <b>外観と書式の編集は右クリックのフライアウト</b>（<see cref="ShowStyleEditor"/>）で行う。 サンプルは同じ編集 UI を
 /// 設定ペインから使える（既定値の編集）。<br/>
 /// <b>座標</b>: 注釈は元画像ピクセルで保持し、描画時は表示倍率で写す（画像へ焼き込まない）。
@@ -156,7 +156,7 @@ public sealed class AnnotationLayerControl : Control
     /// <value>開始位置と長さ（0 起点）。 長さ 0 は「全体」を表す。</value>
     /// <remarks>
     /// 本文の入力欄はホストが持つため、入力欄の選択範囲をホストがここへ写す。
-    /// 右クリックのフライアウトと <see cref="ApplyTextStyle"/> は本値の範囲へ適用する。
+    /// 右クリックのフライアウトと <see cref="ApplyTextStyle(AnnotationTextStyle)"/> は本値の範囲へ適用する。
     /// </remarks>
     public (int Start, int Length) TextSelectionRange { get; set; }
 
@@ -291,25 +291,64 @@ public sealed class AnnotationLayerControl : Control
     /// <remarks>長さ 0 は「全体」へ適用する。 文字単位の書式は run の分割で表す（コアが単一所有する）。</remarks>
     public bool ApplyTextStyle(AnnotationTextStyle style)
     {
+        var range = EffectiveTextRange();
+        return ApplyTextStyle(range.Start, range.Length, style);
+    }
+
+    /// <summary>選択中の吹き出しの本文へ、指定した範囲の書式を適用する。</summary>
+    /// <param name="start">開始位置（文字数。 0 起点）。</param>
+    /// <param name="length">長さ（文字数）。 0 以下は本文全体。</param>
+    /// <param name="style">適用する書式。</param>
+    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>範囲は本文の文字数で数える</b>（入力欄の選択位置をそのまま渡せる）。 範囲の解決と run の分割は
+    /// コアの <c>RichText.ApplyStyle</c> が単一所有する。
+    /// </remarks>
+    public bool ApplyTextStyle(int start, int length, AnnotationTextStyle style)
+    {
         if (Selected is not BubbleAnnotation bubble)
         {
             return false;
         }
 
-        var range = EffectiveTextRange();
-        _document = _document.WithText(bubble, bubble.Text.ApplyStyle(range.Start, range.Length, style));
+        _document = _document.WithText(bubble, bubble.Text.ApplyStyle(start, length, style));
         RaiseDocumentChanged();
         InvalidateVisual();
         return true;
     }
 
-    /// <summary>選択中の吹き出しの書式をまとめて差し替える（現在の書式の一部だけを変える）。</summary>
-    /// <param name="transform">現在の書式を受け取って新しい書式を返す関数。</param>
+    /// <summary>選択中の吹き出しの本文の書式を 1 文字ずつ変換する（変えない属性を保つ）。</summary>
+    /// <param name="transform">現在の書式を受け取って新しい書式を返す関数（run ごとに呼ぶ）。</param>
     /// <returns>適用した場合は <see langword="true"/>。</returns>
-    public bool UpdateTextStyle(Func<AnnotationTextStyle, AnnotationTextStyle> transform)
+    /// <remarks>
+    /// <b>「太字にする」「色だけ変える」は本メソッドを使う</b>: <see cref="ApplyTextStyle(AnnotationTextStyle)"/> は
+    /// 範囲の書式を丸ごと差し替えるため、指定しなかった属性（色・大きさなど）が既定へ戻る。
+    /// 切り替えの判断（太字にする／戻す）は呼び出し側で 1 回だけ行い、その値を transform で書く。
+    /// </remarks>
+    public bool TransformTextStyle(Func<AnnotationTextStyle, AnnotationTextStyle> transform)
+    {
+        var range = EffectiveTextRange();
+        return TransformTextStyle(range.Start, range.Length, transform);
+    }
+
+    /// <summary>選択中の吹き出しの本文の、指定した範囲の書式を 1 文字ずつ変換する。</summary>
+    /// <param name="start">開始位置（文字数。 0 起点）。</param>
+    /// <param name="length">長さ（文字数）。 0 以下は本文全体。</param>
+    /// <param name="transform">現在の書式を受け取って新しい書式を返す関数（run ごとに呼ぶ）。</param>
+    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    public bool TransformTextStyle(int start, int length, Func<AnnotationTextStyle, AnnotationTextStyle> transform)
     {
         ArgumentNullException.ThrowIfNull(transform);
-        return ApplyTextStyle(transform(SelectedTextStyle));
+
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        _document = _document.WithText(bubble, bubble.Text.TransformStyle(start, length, transform));
+        RaiseDocumentChanged();
+        InvalidateVisual();
+        return true;
     }
 
     /// <summary>選択中の注釈の外観を差し替える。</summary>

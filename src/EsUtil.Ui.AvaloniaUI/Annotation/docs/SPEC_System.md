@@ -6,6 +6,7 @@
 - [2. 技術スタック](#2-技術スタック)
 - [3. アーキテクチャ](#3-アーキテクチャ)
 - [4. コンポーネント](#4-コンポーネント)
+  - [4.1 本文の書式を変える経路](#41-本文の書式を変える経路)
 - [5. 依存関係](#5-依存関係)
 - [6. 例外処理ポリシー](#6-例外処理ポリシー)
 
@@ -26,6 +27,7 @@
 | 対象フレームワーク | `net11.0-windows10.0.17763.0` |
 | UI | Avalonia（`Control` を継承した自前描画。 XAML のテンプレートを持たない） |
 | 選択枠 | `EsUtil.Feature.Marquee.Core` の提示層（`MarqueePresenter`） |
+| 色の選択 | `EsUtil.Ui.AvaloniaUI.ColorSelector`（`ColorSelectorControl`。 テーマの読み込みはホストの責務） |
 | 画像 | `IImage`（ホストが `EsBitmapAdapter` 等で用意する） |
 
 ## 3. アーキテクチャ
@@ -51,14 +53,29 @@ flowchart TB
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
 | `AnnotationLayerControl` | `public` | 画像の表示・注釈の描画・入力の受付・選択の同期・文書の変更通知 |
+| `AnnotationStyleFlyout`（内部） | `internal` | 右クリックの編集 UI（外観・吹き出し・本文の書式・重なり順）。 `AnnotationEditorControls` の部品で組み立てる |
+| `AnnotationEditorControls` | `public` | 編集 UI の行の部品（見出し・項目名・色・数値・選択肢・装飾の切り替え）。 フライアウトとホストの設定ペインが共有する |
+| `AnnotationFonts` | `public` | 本文で選べるフォント名の一覧（優先フォントを先頭に置く） |
 | `AnnotationPainter`（内部） | `internal` | 描画計画の写像（角丸・しっぽ・文字・下線/取り消し線）と文字の実寸計測 |
 | `AnnotationMarqueeEffects`（内部） | `internal` | Marquee が要求する効果（再描画・フォーカス・カーソル・キャプチャ）の写像 |
+
+### 4.1 本文の書式を変える経路
+
+| 経路 | 範囲の決め方 | 使いどころ |
+| --- | --- | --- |
+| 右クリックのフライアウト | `TextSelectionRange`（0 文字なら本文全体）。 画面に「適用先」を表示する | 本文を編集していないとき |
+| ホストが重ねる書式バー | 入力欄の選択範囲（選択なしは全体）。 適用すると編集を終了して結果を見せる | 本文を編集中 |
+| `Ctrl+B` / `Ctrl+I` / `Ctrl+U` | 入力欄の選択範囲（選択なしは全体） | 本文を編集中（バーを探さない） |
+
+**適用は 1 文字単位**です（`RichText.ApplyStyle` が run を分割・結合する。 コアが単一所有）。
+ホストは入力欄の選択範囲をそのまま `TransformTextStyle(start, length, transform)` へ渡せます
+（`ApplyTextStyle` は書式を丸ごと差し替えるため、色や大きさが既定へ戻る。 1 つの属性だけを変えるときは使わない）。
 
 ## 5. 依存関係
 
 | 方向 | 内容 |
 | --- | --- |
-| 許可 | 本アセンブリ → `EsUtil.Feature.Annotation.Core` / `EsUtil.Feature.Marquee.Core` / `EsUtil.Platform.Core` |
+| 許可 | 本アセンブリ → `EsUtil.Feature.Annotation.Core` / `EsUtil.Feature.Marquee.Core` / `EsUtil.Platform.Core` / `EsUtil.Ui.AvaloniaUI.ColorSelector` |
 | 禁止 | 本アセンブリ → アプリ（`App.*`） |
 | 禁止 | 本アセンブリ → 撮影スタック（`Parts.CapturePreview.*`） |
 

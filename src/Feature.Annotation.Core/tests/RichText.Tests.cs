@@ -77,4 +77,48 @@ public class RichTextTests
         // 範囲外は末尾の書式へフォールバックする（ツールバーの初期表示用）
         Assert.True(text.StyleAt(99).IsBold);
     }
+
+    /// <summary>範囲へ 1 つの属性だけを書くとき、他の属性が保たれることを検証する。</summary>
+    [Fact]
+    internal void TransformStyle_変えない属性を保つ()
+    {
+        var red = AnnotationDefaults.TextStyle with { Color = DrawingColor.FromArgb(255, 255, 0, 0) };
+        var text = RichText.Create("あいう", AnnotationDefaults.TextStyle).ApplyStyle(1, 1, red);
+
+        // 「全体を太字にする」: 赤い run の色はそのまま残る（ApplyStyle なら色が既定へ戻る）
+        var updated = text.TransformStyle(0, 0, style => style with { IsBold = true });
+
+        Assert.Equal(3, updated.Runs.Length);
+        Assert.All(updated.Runs, run => Assert.True(run.Style.IsBold));
+        Assert.Equal(AnnotationDefaults.TextStyle.Color, updated.Runs[0].Style.Color);
+        Assert.Equal(red.Color, updated.Runs[1].Style.Color);
+    }
+
+    /// <summary>run ごとに別の属性を保ったまま、指定した属性だけが同じ値になることを検証する。</summary>
+    [Fact]
+    internal void TransformStyle_範囲内のrunごとに属性を保つ()
+    {
+        var first = AnnotationDefaults.TextStyle with { FontSize = 30 };
+        var text = RichText.Create("あいう", AnnotationDefaults.TextStyle).ApplyStyle(0, 1, first);
+
+        var updated = text.TransformStyle(0, 0, style => style with { Color = DrawingColor.FromArgb(255, 0, 0, 255) });
+
+        Assert.Equal(2, updated.Runs.Length);
+        Assert.Equal(30, updated.Runs[0].Style.FontSize);
+        Assert.Equal(AnnotationDefaults.TextStyle.FontSize, updated.Runs[1].Style.FontSize);
+        Assert.All(updated.Runs, run => Assert.Equal(DrawingColor.FromArgb(255, 0, 0, 255), run.Style.Color));
+    }
+
+    /// <summary>変換しても書式が同じ run は連結されることを検証する。</summary>
+    [Fact]
+    internal void TransformStyle_同じ書式になったrunは連結する()
+    {
+        var text = RichText.Create("あいう", AnnotationDefaults.TextStyle)
+            .ApplyStyle(1, 1, AnnotationDefaults.TextStyle with { IsItalic = true });
+
+        var updated = text.TransformStyle(0, 0, style => style with { IsItalic = false });
+
+        Assert.Single(updated.Runs);
+        Assert.Equal("あいう", updated.Runs[0].Text);
+    }
 }

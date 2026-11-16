@@ -9,8 +9,12 @@
 - **選択枠と 8 方向のハンドルは Marquee の提示層を再利用**します（移動・サイズ変更・方向キーの nudge・カーソル形状が 4 つの UI 版で同じになる）。
 - **本文の編集はホストが行います**（ダブルクリックで `EditTextRequested` が発生し、ホストが入力欄を重ねる）。
 
-**現状**: 本文の編集は単一書式の入力欄で行い、**書式（文字単位）は選択範囲への適用**で変えます（右クリックのフライアウト）。
+**現状**: 本文の編集は単一書式の入力欄で行い、**書式（文字単位）は選択範囲への適用**で変えます
+（右クリックのフライアウト、ホストが重ねる書式バー、`Ctrl+B` / `Ctrl+I` / `Ctrl+U`）。
 描画は run ごとの書式（太字・斜体・下線・取り消し線・色・大きさ・フォント）に対応しています。
+
+**色の選択は `EsUtil.Ui.AvaloniaUI.ColorSelector` を使います**（自前の色入力を作らない）。
+編集 UI の行の部品は `AnnotationEditorControls` が単一所有し、右クリックのフライアウトとホストの設定ペインが共有します。
 
 **現状（対応範囲）**: 4 つの UI 版のうち Avalonia UI 版のみです（MewUI / WinUI 3 / WinForms は後段）。
 
@@ -46,12 +50,26 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | `Document` / `SelectedId` | 注釈の文書と選択中の注釈 |
 | `AddFrame(bounds)` / `AddBubble(bounds, text)` | 注釈の追加（既定の外観） |
 | `DeleteSelected()` / `SetSelectedText(text)` | 削除と本文の置き換え |
+| `TextSelectionRange` / `SelectedTextStyle` | 書式を適用する範囲（文字数）と、その位置の書式 |
+| `ApplyTextStyle(style)` / `ApplyTextStyle(start, length, style)` | 選択範囲（長さ 0 は本文全体）の書式を**丸ごと差し替える** |
+| `TransformTextStyle(transform)` / `TransformTextStyle(start, length, transform)` | 範囲内の各 run の書式を**指定した属性だけ変える**（色や大きさを保つ。 B / I / U / S の切り替えはこちら） |
+| `UpdateSelectedAppearance(...)` / `UpdateSelectedTail(...)` / `SetSelectedBodyPadding(...)` | 外観・しっぽ・本文の余白の変更 |
+| `MoveSelectedToFront()` / `MoveSelectedToBack()` | 重なり順の変更 |
+| `ShowStyleEditor()` | 外観・書式・重なり順の編集フライアウトを表示する（右クリックと同じ） |
 | `GetSelectedBodyRect()` | 本文の矩形（DIP。 ホストが入力欄を重ねる位置） |
 | `DocumentChanged` / `SelectionChanged` / `EditTextRequested` | 変更・選択・編集要求の通知 |
+
+**文字単位の書式**: 本文を編集中に文字を選び、書式バー（ホストが重ねる）か `Ctrl+B` / `Ctrl+I` / `Ctrl+U` を押します。
+選択が無ければ本文全体へ適用します。 編集中でなければ、右クリックのフライアウトが `TextSelectionRange` の範囲へ適用します。
 
 **操作**: クリックで選択 / ドラッグで移動 / ハンドルでサイズ変更 / しっぽの先端（円）をドラッグで移動 /
 ダブルクリックまたは Enter で本文編集 / **右クリックで外観・書式・重なり順の編集** / Delete で削除 /
 方向キーで nudge（`Shift` 併用で 10 px）。
+
+**編集 UI の部品**: `AnnotationEditorControls`（見出し・項目名・色・数値・選択肢・装飾の切り替え）は
+フライアウトとホストの設定ペインが共有します。 `AnnotationFonts.All` は選べるフォントの一覧
+（`AnnotationDefaults.PreferredFontFamilies` を先頭に置く）です。 色の行は `ColorSelectorControl` を使うため、
+ホストは `Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml` を読み込む必要があります。
 
 **既定値**: `DraftDefaults`（枠線・吹き出し・本文）は新規作成時に使います。 既存の注釈は各注釈が持つ外観・書式で描きます。
 

@@ -74,6 +74,15 @@
         "resolved": "11.3.2",
         "contentHash": "qHDToxto1e3hci5YqbG9n0Ty8mlp3zBUN5wT66wKqaDVzXyQ0do3EnRILd4Ke9jpvsktaPpgE0YjEk7hornryQ=="
       },
+      "Avalonia.Controls.ColorPicker": {
+        "type": "Transitive",
+        "resolved": "12.1.6",
+        "contentHash": "Pf5mGlKt/Y0EFT07tY6ZldyxSeGUwE5CfaWyCTjN54QUAZyzjseQB10mtutchdScuh1fszZBmXHtj2G4qYz/7Q==",
+        "dependencies": {
+          "Avalonia": "12.1.6",
+          "Avalonia.Remote.Protocol": "12.1.6"
+        }
+      },
       "Avalonia.FreeDesktop": {
         "type": "Transitive",
         "resolved": "12.1.6",
@@ -214,7 +223,8 @@
         "dependencies": {
           "Avalonia": "[12.1.6, )",
           "EsUtil.Feature.Annotation.Core": "[0.8.2, )",
-          "EsUtil.Feature.Marquee.Core": "[0.7.8, )"
+          "EsUtil.Feature.Marquee.Core": "[0.7.8, )",
+          "EsUtil.Ui.AvaloniaUI.ColorSelector": "[0.7.8, )"
         }
       },
       "Avalonia.Skia": {
@@ -246,6 +256,17 @@
         "requested": "[0.7.8, )",
         "resolved": "0.7.8",
         "contentHash": "Clk4PWTF7wMMnD6svOPfz3+fUtkaDdoXLIBo1h5F+GSduF8w7TfmIoEKGOiyB9M01xDuM8jXQAfR/B8YjdLfjw=="
+      },
+      "EsUtil.Ui.AvaloniaUI.ColorSelector": {
+        "type": "CentralTransitive",
+        "requested": "[0.7.8, )",
+        "resolved": "0.7.8",
+        "contentHash": "XJVFZLz05I5Ehfh1bFentFgBsnoy3gtK2AjyTB2WxhnUgaZsWf8XPCiduEh7hBDpBZ4Wnx6oPj8WTamzebjNeA==",
+        "dependencies": {
+          "Avalonia": "12.1.6",
+          "Avalonia.Controls.ColorPicker": "12.1.6",
+          "EsUtil.Platform.Core": "0.7.8"
+        }
       }
     }
   }

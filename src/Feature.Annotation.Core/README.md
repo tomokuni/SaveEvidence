@@ -50,7 +50,7 @@ var composedPath = AnnotationJson.GetComposedPath(imagePath);   // <画像名>.a
 | `AnnotationDocument` | 注釈の集合（並び順が重なり順）・画像の寸法・JSON の版 |
 | `FrameAnnotation` / `BubbleAnnotation` | 枠線（矩形 + 角丸）/ 吹き出し（本文 + しっぽ） |
 | `BubbleTail` / `BubbleEdge` | しっぽ（先端は本体と独立・付け根は本体の辺に追従） |
-| `RichText` / `TextRun` / `AnnotationTextStyle` | 文字単位の書式（フォント・大きさ・色・太字・斜体・下線・取り消し線） |
+| `RichText` / `TextRun` / `AnnotationTextStyle` | 文字単位の書式（フォント・大きさ・色・太字・斜体・下線・取り消し線）。 範囲の書式は `ApplyStyle`（差し替え）と `TransformStyle`（1 属性だけ変える）で変える |
 | `AnnotationAppearance` | 注釈の外観（枠線の色・太さ・内側の色・角丸） |
 | `AnnotationPresenter` / `AnnotationDrawPlan` / `AnnotationShapePlan` | 折り返しと描画計画の解決 |
 | `AnnotationHitTest` | 選択としっぽの当たり判定（最前面から探す） |
