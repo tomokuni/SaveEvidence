@@ -68,6 +68,11 @@ internal sealed class SettingsPane : StackPanel
             value => SetDefaults(_defaults with { TailWidth = value })));
 
         Children.Add(SubHeading("本文の書式"));
+        Children.Add(AnnotationEditorControls.ChoiceRow(
+            "フォント",
+            [.. AnnotationFonts.All],
+            Math.Max(0, AnnotationFonts.All.ToList().IndexOf(_defaults.TextStyle.FontFamily)),
+            index => SetText(_defaults.TextStyle with { FontFamily = AnnotationFonts.All[index] })));
         Children.Add(AnnotationEditorControls.ColorRow("文字色", _defaults.TextStyle.Color,
             color => SetText(_defaults.TextStyle with { Color = color })));
         Children.Add(AnnotationEditorControls.NumberRow("大きさ", _defaults.TextStyle.FontSize,

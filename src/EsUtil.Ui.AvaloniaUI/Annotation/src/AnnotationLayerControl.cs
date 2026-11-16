@@ -1041,13 +1041,12 @@ public sealed partial class AnnotationLayerControl : Control
             return;
         }
 
-        var fill = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255));
-        var pen = new Pen(new SolidColorBrush(Color.FromArgb(255, 220, 38, 38)), 1.5);
-        context.DrawEllipse(fill, pen, center, TailHandleRadiusDip, TailHandleRadiusDip);
-
-        // 中心の点（先端の位置を読み取りやすくする）
-        context.DrawEllipse(
-            new SolidColorBrush(Color.FromArgb(255, 220, 38, 38)), null, center, 1.5, 1.5);
+        // 本体のハンドルと同じ外観にする（白の塗り + 灰色の枠。 色は Marquee の既定値を共有する）
+        var size = HandleSize;
+        var fill = AnnotationPainter.ToBrush(MarqueeAppearance.Default.HandleColor);
+        var pen = new Pen(AnnotationPainter.ToBrush(MarqueeAppearance.Default.HandleBorderColor), 1);
+        var rect = new Rect(center.X - (size / 2), center.Y - (size / 2), size, size);
+        context.DrawRectangle(fill, pen, rect);
     }
 
     /// <summary>Avalonia のキーをコアのキーへ写す（nudge に使う 4 方向だけ）。</summary>

@@ -174,6 +174,26 @@ public sealed partial class AnnotationLayerControl
     {
         var control = (e.KeyModifiers & KeyModifiers.Control) != 0;
         var shift = (e.KeyModifiers & KeyModifiers.Shift) != 0;
+        var alt = (e.KeyModifiers & KeyModifiers.Alt) != 0;
+
+        // 装飾のショートカット（一般的な表記に合わせる。 取り消し線は Alt+Shift+5）
+        if (control && !shift && !alt)
+        {
+            switch (e.Key)
+            {
+                case Key.B:
+                    return ToggleDecoration(style => style.IsBold, (style, value) => style with { IsBold = value });
+                case Key.I:
+                    return ToggleDecoration(style => style.IsItalic, (style, value) => style with { IsItalic = value });
+                case Key.U:
+                    return ToggleDecoration(style => style.IsUnderline, (style, value) => style with { IsUnderline = value });
+            }
+        }
+
+        if (alt && shift && !control && e.Key is Key.D5 or Key.NumPad5)
+        {
+            return ToggleDecoration(style => style.IsStrike, (style, value) => style with { IsStrike = value });
+        }
 
         switch (e.Key)
         {
@@ -330,6 +350,23 @@ public sealed partial class AnnotationLayerControl
         var lineIndex = LineIndexOf(layout, _caretIndex);
         var line = layout.Lines[lineIndex];
         MoveCaret(first ? layout.Starts[lineIndex] : layout.Starts[lineIndex] + LineTextLength(line), extend);
+    }
+
+    /// <summary>選択範囲の装飾（太字・斜体・下線・取り消し線）を切り替える。</summary>
+    /// <param name="read">属性を読む関数。</param>
+    /// <param name="write">属性を書く関数。</param>
+    /// <returns>処理した場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>切り替えの向きは 1 回だけ決める</b>: 範囲の中に太字と通常が混ざっていても、選んだ文字の先頭の状態で
+    /// 「付ける／外す」を決め、範囲の全 run へ同じ値を書く（run ごとに反転すると混ざったままになる）。
+    /// </remarks>
+    private bool ToggleDecoration(
+        Func<AnnotationTextStyle, bool> read,
+        Func<AnnotationTextStyle, bool, AnnotationTextStyle> write)
+    {
+        var value = !read(SelectedTextStyle);
+        var range = EffectiveTextRange();
+        return TransformTextStyle(range.Start, range.Length, style => write(style, value));
     }
 
     /// <summary>選択範囲を <see cref="TextSelectionRange"/> へ写す（書式の適用先に使う）。</summary>

@@ -176,6 +176,8 @@ public static class AnnotationEditorControls
             Content = content,
             IsChecked = isChecked,
             Width = 36,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
         };
 
         button.IsCheckedChanged += (_, _) => apply();

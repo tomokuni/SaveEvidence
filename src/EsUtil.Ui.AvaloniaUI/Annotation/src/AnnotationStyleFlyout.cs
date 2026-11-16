@@ -26,8 +26,6 @@ internal static class AnnotationStyleFlyout
         {
             content.Children.Add(Separator());
             content.Children.Add(BuildBubbleGroup(owner));
-            content.Children.Add(Separator());
-            content.Children.Add(BuildTextGroup(owner));
         }
 
         content.Children.Add(Separator());
@@ -111,94 +109,6 @@ internal static class AnnotationStyleFlyout
 
         return panel;
     }
-
-    /// <summary>本文の書式（フォント・大きさ・色・装飾）の編集を作る。</summary>
-    /// <param name="owner">編集対象の注釈を持つコントロール。</param>
-    /// <returns>書式の編集。</returns>
-    /// <remarks>
-    /// <b>適用先を画面に書く</b>: 本文を編集中なら選択範囲（選択が無ければ全体）、編集していなければ全体である。
-    /// 範囲の指定方法が分かりにくいという指摘を受けて、フライアウトの中に適用先を明記する。
-    /// </remarks>
-    private static Control BuildTextGroup(AnnotationLayerControl owner)
-    {
-        var style = owner.SelectedTextStyle;
-        var panel = new StackPanel { Spacing = 6 };
-        var (start, length) = owner.TextSelectionRange;
-
-        panel.Children.Add(AnnotationEditorControls.Heading("本文の書式"));
-        panel.Children.Add(new TextBlock
-        {
-            Text = length > 0
-                ? $"適用先: {start + 1}〜{start + length} 文字目（選択範囲）"
-                : "適用先: 本文全体（本文を編集中に文字を選ぶと、その範囲だけに適用できます）",
-            FontSize = 11,
-            Opacity = 0.75,
-            TextWrapping = TextWrapping.Wrap,
-        });
-        panel.Children.Add(AnnotationEditorControls.ChoiceRow(
-            "フォント",
-            [.. AnnotationFonts.All],
-            Math.Max(0, AnnotationFonts.All.ToList().IndexOf(style.FontFamily)),
-            index => owner.TransformTextStyle(current => current with { FontFamily = AnnotationFonts.All[index] })));
-        panel.Children.Add(AnnotationEditorControls.NumberRow(
-            "大きさ",
-            style.FontSize,
-            AnnotationLimits.FontSizeMin,
-            AnnotationLimits.FontSizeMax,
-            value => owner.TransformTextStyle(current => current with { FontSize = value })));
-        panel.Children.Add(AnnotationEditorControls.ColorRow(
-            "文字色",
-            style.Color,
-            color => owner.TransformTextStyle(current => current with { Color = color })));
-        panel.Children.Add(BuildDecorations(owner, style));
-
-        return panel;
-    }
-
-    /// <summary>太字・斜体・下線・取り消し線の切り替えを作る。</summary>
-    /// <param name="owner">編集対象の注釈を持つコントロール。</param>
-    /// <param name="style">現在の書式。</param>
-    /// <returns>切り替えの行。</returns>
-    private static Control BuildDecorations(AnnotationLayerControl owner, AnnotationTextStyle style)
-    {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        row.Children.Add(AnnotationEditorControls.Label("装飾"));
-
-        row.Children.Add(AnnotationEditorControls.Toggle(
-            "B", style.IsBold,
-            () => ToggleDecoration(owner, style, s => s.IsBold, (s, value) => s with { IsBold = value }),
-            bold: true));
-        row.Children.Add(AnnotationEditorControls.Toggle(
-            "I", style.IsItalic,
-            () => ToggleDecoration(owner, style, s => s.IsItalic, (s, value) => s with { IsItalic = value }),
-            italic: true));
-        row.Children.Add(AnnotationEditorControls.Toggle(
-            "U", style.IsUnderline,
-            () => ToggleDecoration(owner, style, s => s.IsUnderline, (s, value) => s with { IsUnderline = value }),
-            underline: true));
-        row.Children.Add(AnnotationEditorControls.Toggle(
-            "S", style.IsStrike,
-            () => ToggleDecoration(owner, style, s => s.IsStrike, (s, value) => s with { IsStrike = value }),
-            strike: true));
-
-        return row;
-    }
-
-    /// <summary>装飾（B / I / U / S）を切り替える。</summary>
-    /// <param name="owner">編集対象の注釈を持つコントロール。</param>
-    /// <param name="current">現在の書式（切り替えの判断はこの値で 1 回だけ行う）。</param>
-    /// <param name="read">属性を読む関数。</param>
-    /// <param name="write">属性を書く関数。</param>
-    /// <remarks>
-    /// <b>範囲の全 run へ同じ値を書く</b>: run ごとに反転すると、太字と通常が混ざった範囲で入れ替わってしまう。
-    /// 他の属性（色・大きさなど）は <c>TransformTextStyle</c> が保つ。
-    /// </remarks>
-    private static void ToggleDecoration(
-        AnnotationLayerControl owner,
-        AnnotationTextStyle current,
-        Func<AnnotationTextStyle, bool> read,
-        Func<AnnotationTextStyle, bool, AnnotationTextStyle> write)
-        => owner.TransformTextStyle(style => write(style, !read(current)));
 
     /// <summary>重なり順の編集を作る。</summary>
     /// <param name="owner">編集対象の注釈を持つコントロール。</param>

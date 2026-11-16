@@ -57,17 +57,17 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | `UpdateSelectedAppearance(...)` / `UpdateSelectedTail(...)` / `SetSelectedBodyPadding(...)` | 外観・しっぽ・本文の余白の変更 |
 | `MoveSelectedToFront()` / `MoveSelectedToBack()` | 重なり順の変更 |
 | `Undo()` / `Redo()` / `CanUndo` / `CanRedo` | 元に戻す・やり直す（1 操作 = 1 手。 ドラッグは押下から離すまでで 1 手） |
-| `ShowStyleEditor()` | 外観・書式・重なり順の編集フライアウトを表示する（右クリックと同じ） |
+| `ShowStyleEditor()` | 外観・重なり順の編集フライアウトを表示する（右クリックと同じ。 本文の書式は書式バーで編集する） |
 | `BeginTextEditing()` / `EndTextEditing()` / `IsEditingText` | 本文の**その場編集**の開始・終了 |
 | `CaretIndex` / `SelectionStart` / `SelectionEnd` / `EditingChanged` | キャレットと選択範囲、編集の開始・終了の通知 |
 | `GetSelectedBodyRect()` | 本文の矩形（DIP。 ホストが書式バーを置く位置） |
 | `DocumentChanged` / `SelectionChanged` | 変更・選択の通知 |
 
-**文字単位の書式**: 本文を編集中に文字を選び、書式バー（ホストが置く）か `Ctrl+B` / `Ctrl+I` / `Ctrl+U` を押します。
-選択が無ければ本文全体へ適用します。 編集中でなければ、右クリックのフライアウトが `TextSelectionRange` の範囲へ適用します。
+**文字単位の書式**: 本文を編集中に文字を選び、書式バー（ホストが置く）か `Ctrl+B` / `Ctrl+I` / `Ctrl+U`（取り消し線は `Alt+Shift+5`）を押します。
+選択が無ければ本文全体へ適用します。 書式バーはホストが置く（サンプル参照）。
 
 **操作**: クリックで選択 / ドラッグで移動 / ハンドルでサイズ変更 / しっぽの先端（円）をドラッグで移動 /
-ダブルクリックまたは Enter で本文編集 / **右クリックで外観・書式・重なり順の編集** / Delete で削除 /
+ダブルクリックまたは Enter で本文編集 / **右クリックで外観・重なり順の編集**（本文の書式は書式バーで編集） / Delete で削除 /
 方向キーで nudge（`Shift` 併用で 10 px）/ **Ctrl+Z で元に戻す・Ctrl+Y でやり直す**。
 
 **編集 UI の部品**: `AnnotationEditorControls`（見出し・項目名・色・数値・選択肢・装飾の切り替え）は
