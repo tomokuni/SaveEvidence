@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0-windows10.0.17763.0</TargetFramework>
+    <!-- 名前空間とアセンブリ名は EsUtil の UI 層と同じにする（将来 EsUtil.Ui.AvaloniaUI へ移設する前提）。 -->
+    <RootNamespace>EsUtil.Ui.AvaloniaUI.Annotation</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <!-- 選択枠とハンドルは Marquee の提示層を再利用する（枠の見た目を 4 つの UI 版で揃えるため） -->
+    <PackageReference Include="EsUtil.Feature.Marquee.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Feature.Annotation.Core\src\EsUtil.Feature.Annotation.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="EsUtil.Ui.AvaloniaUI.Annotation.Tests" />
+  </ItemGroup>
+
+</Project>

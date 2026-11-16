@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0-windows10.0.17763.0</TargetFramework>
+    <!-- 名前空間とアセンブリ名は EsUtil の機能アセンブリと同じにする（将来 EsUtil リポジトリへ
+         フォルダごと移設する前提。 命名規約「アセンブリ名」）。 -->
+    <RootNamespace>EsUtil.Feature.Annotation</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 値型（EsRect / EsPoint / DrawingColor）とエラー境界だけを使う（UI 非依存）。
+         矩形や色の値は EsUtil.Platform.Core が単一所有するため、独自の型を作らない。 -->
+    <PackageReference Include="EsUtil.Platform.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 内部手順（折り返し・ログ定義・JSON 変換）はテストからのみ参照する -->
+    <InternalsVisibleTo Include="EsUtil.Feature.Annotation.Core.Tests" />
+  </ItemGroup>
+
+</Project>
