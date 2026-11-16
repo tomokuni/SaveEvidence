@@ -55,6 +55,7 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | `TransformTextStyle(transform)` / `TransformTextStyle(start, length, transform)` | 範囲内の各 run の書式を**指定した属性だけ変える**（色や大きさを保つ。 B / I / U / S の切り替えはこちら） |
 | `UpdateSelectedAppearance(...)` / `UpdateSelectedTail(...)` / `SetSelectedBodyPadding(...)` | 外観・しっぽ・本文の余白の変更 |
 | `MoveSelectedToFront()` / `MoveSelectedToBack()` | 重なり順の変更 |
+| `Undo()` / `Redo()` / `CanUndo` / `CanRedo` | 元に戻す・やり直す（1 操作 = 1 手。 ドラッグは押下から離すまでで 1 手） |
 | `ShowStyleEditor()` | 外観・書式・重なり順の編集フライアウトを表示する（右クリックと同じ） |
 | `GetSelectedBodyRect()` | 本文の矩形（DIP。 ホストが入力欄を重ねる位置） |
 | `DocumentChanged` / `SelectionChanged` / `EditTextRequested` | 変更・選択・編集要求の通知 |
@@ -64,12 +65,13 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 
 **操作**: クリックで選択 / ドラッグで移動 / ハンドルでサイズ変更 / しっぽの先端（円）をドラッグで移動 /
 ダブルクリックまたは Enter で本文編集 / **右クリックで外観・書式・重なり順の編集** / Delete で削除 /
-方向キーで nudge（`Shift` 併用で 10 px）。
+方向キーで nudge（`Shift` 併用で 10 px）/ **Ctrl+Z で元に戻す・Ctrl+Y でやり直す**。
 
 **編集 UI の部品**: `AnnotationEditorControls`（見出し・項目名・色・数値・選択肢・装飾の切り替え）は
 フライアウトとホストの設定ペインが共有します。 `AnnotationFonts.All` は選べるフォントの一覧
 （`AnnotationDefaults.PreferredFontFamilies` を先頭に置く）です。 色の行は `ColorSelectorControl` を使うため、
 ホストは `Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml` を読み込む必要があります。
+色の行の幅は `AnnotationEditorControls.ColorSelectorWidth` で固定します（横いっぱいへ広げると 1 行が間延びします）。
 
 **既定値**: `DraftDefaults`（枠線・吹き出し・本文）は新規作成時に使います。 既存の注釈は各注釈が持つ外観・書式で描きます。
 

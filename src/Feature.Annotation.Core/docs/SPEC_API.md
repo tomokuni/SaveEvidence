@@ -15,6 +15,7 @@
 - [9. `AnnotationJson`（静的クラス）](#9-annotationjson静的クラス)
 - [10. `AnnotationDefaults` / `AnnotationLimits`（静的クラス）](#10-annotationdefaults--annotationlimits静的クラス)
 - [11. `AnnotationDraftDefaults`（レコード）](#11-annotationdraftdefaultsレコード)
+- [12. `AnnotationHistory`（クラス）](#12-annotationhistoryクラス)
 
 ## 1. 公開 API の可視性
 
@@ -38,12 +39,13 @@
 | `Find(id)` / `IndexOf(id)` | 識別子からの取得（無い場合は null / -1） |
 | `BringToFront(id)` / `SendToBack(id)` | 重なり順の変更（最前面・最背面へ移す） |
 | `WithText(bubble, text)` | 吹き出しの本文だけを差し替える |
+| `Clone()` | 同じ内容の複製を作る（注釈も複製する。 変更履歴に使う） |
 
 ## 3. `AnnotationItem` / `FrameAnnotation` / `BubbleAnnotation`（クラス）
 
 | 型 | 内容 |
 | --- | --- |
-| `AnnotationItem`（抽象） | `Id` / `Bounds`（元画像ピクセル）/ `Appearance`。 JSON では `Kind`（`Frame` / `Bubble`）で型を判別する |
+| `AnnotationItem`（抽象） | `Id` / `Bounds`（元画像ピクセル）/ `Appearance`。 JSON では `Kind`（`Frame` / `Bubble`）で型を判別する。 `Clone()` は複製を返す（派生型は参照型の値も複製する） |
 | `FrameAnnotation` | 枠線の注釈（矩形 + 角丸。 入れ子の二重枠・破線・楕円・矢印は持たない） |
 | `BubbleAnnotation` | 吹き出し（`Text` / `Tail` / `BodyPadding` / `ResolveBodyRect()`） |
 
@@ -133,3 +135,18 @@
 | `TextStyle` | 本文の既定の書式 |
 | `BodyPadding` / `TailWidth` / `TailEdge` | 本文の余白・しっぽの幅・しっぽを出す辺 |
 | `Default` | `AnnotationDefaults` と同じ値 |
+
+## 12. `AnnotationHistory`（クラス）
+
+**注釈の変更履歴**（元に戻す・やり直す）。 文書の複製を積むため、ドラッグ中の書き換えで過去の状態が変わりません。
+
+| メンバー | 説明 |
+| --- | --- |
+| `Capacity` / `UndoCount` / `RedoCount` | 保持数（既定 50）と、戻せる・やり直せる回数 |
+| `CanUndo` / `CanRedo` | 戻せる・やり直せるかどうか |
+| `Record(document)` | **変更の直前**の文書を記録する（やり直しは消える） |
+| `Undo(current)` / `Redo(current)` | 戻した・やり直した文書を返す（できない場合は `null`。 現在の文書は反対側へ複製して保持する） |
+| `Clear()` | 履歴を空にする（別の画像を読み込んだとき） |
+
+- **記録の単位は呼び出し側が決めます**（UI は「追加・削除・移動・サイズ変更・しっぽの移動・外観・書式・重なり順」の 1 操作 = 1 手）。
+- 同じ内容の操作（文字を変えずに確定しただけ等）は記録しません。

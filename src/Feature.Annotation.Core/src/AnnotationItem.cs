@@ -24,4 +24,12 @@ public abstract class AnnotationItem
 
     /// <summary>外観（枠線・内側・角丸）を取得または設定する。</summary>
     public AnnotationAppearance Appearance { get; set; } = AnnotationAppearance.Default;
+
+    /// <summary>同じ内容の複製を作る（変更履歴の記録に使う）。</summary>
+    /// <returns>複製。 識別子も同じ値を持つ（同じ注釈を指す）。</returns>
+    /// <remarks>
+    /// <b>複製は変更履歴のために行う</b>: 注釈の座標・しっぽはドラッグ中に書き換わるため、
+    /// 記録した文書をそのまま持つと過去の状態が書き換わる。 派生型は自分が持つ参照型の値を複製する。
+    /// </remarks>
+    public virtual AnnotationItem Clone() => (AnnotationItem)MemberwiseClone();
 }

@@ -142,4 +142,13 @@ public sealed class AnnotationDocument
         SchemaVersion = SchemaVersion,
         Items = items,
     };
+
+    /// <summary>同じ内容の複製を作る（注釈も複製する）。</summary>
+    /// <returns>複製。 変更履歴の記録に使う。</returns>
+    public AnnotationDocument Clone()
+        => new(ImageWidth, ImageHeight, ImageFileName)
+        {
+            SchemaVersion = SchemaVersion,
+            Items = [.. Items.Select(item => item.Clone())],
+        };
 }

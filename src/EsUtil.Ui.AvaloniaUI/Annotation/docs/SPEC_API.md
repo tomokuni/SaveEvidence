@@ -28,6 +28,7 @@
 | `UpdateSelectedAppearance(transform)` | method | 外観（枠線・内側・角丸）を差し替える |
 | `SetSelectedBodyPadding(padding)` / `UpdateSelectedTail(transform)` | method | 吹き出しの本文の余白・しっぽ（幅・辺）を差し替える |
 | `MoveSelectedToFront()` / `MoveSelectedToBack()` | method | 重なり順を変える |
+| `Undo()` / `Redo()` / `CanUndo` / `CanRedo` | method / property | 元に戻す・やり直す（変更の単位は 1 操作。 ドラッグは押下から離すまでで 1 手。 選択は識別子で引き継ぐ） |
 | `ShowStyleEditor()` | method | 外観・書式・重なり順の編集フライアウトを表示する（右クリックと同じ） |
 | `GetSelectedBodyRect()` | method | 本文の矩形（DIP）。 ホストが入力欄を重ねる位置に使う |
 | `DocumentChanged` / `SelectionChanged` / `EditTextRequested` | event | 文書の変更・選択の変更・本文の編集要求 |
@@ -44,6 +45,7 @@
 | ダブルクリック / Enter | 本文の編集要求 |
 | **右クリック** | **外観・本文の書式・重なり順の編集フライアウト**（選択していない注釈なら先に選択する） |
 | Delete | 選択中の注釈を削除 |
+| Ctrl+Z / Ctrl+Y | 元に戻す・やり直す（本文の編集中は入力欄が受け取る） |
 | 方向キー（`Shift` 併用） | nudge（1 px / 10 px） |
 
 **注意**: 保存（注釈 JSON・合成画像）は行いません。 ホストが `AnnotationJson` とプラットフォームの描画 API で書き出します。
@@ -55,9 +57,10 @@
 | メンバー | 種別 | 説明 |
 | --- | --- | --- |
 | `LabelWidth` | const | 項目名のラベルの幅（DIP。 既定 104） |
+| `ColorSelectorWidth` | const | 色の選択の幅（DIP。 既定 220。 **横いっぱいへ広げない**） |
 | `Heading(text)` | method | 見出しを作る |
 | `Label(text)` | method | 項目名のラベルを作る |
-| `ColorRow(label, initial, apply)` | method | 色の行を作る（**`ColorSelectorControl` を使う**。 `apply` へは検証済みの色だけを渡す） |
+| `ColorRow(label, initial, apply)` | method | 色の行を作る（**`ColorSelectorControl` を使う**。 幅は `ColorSelectorWidth` へ固定する。 `apply` へは検証済みの色だけを渡す） |
 | `NumberRow(label, initial, minimum, maximum, apply, increment)` | method | 数値の行を作る（`NumericUpDown`） |
 | `ChoiceRow(label, options, selectedIndex, apply)` | method | 選択肢の行を作る（`ComboBox`） |
 | `Toggle(text, isChecked, apply, bold, italic, underline, strike)` | method | 装飾の切り替え（B / I / U / S）を作る |

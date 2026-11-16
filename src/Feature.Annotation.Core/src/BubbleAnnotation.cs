@@ -18,6 +18,18 @@ public sealed class BubbleAnnotation : AnnotationItem
     /// <summary>本文と枠線の間の余白（元画像ピクセル）を取得または設定する。</summary>
     public double BodyPadding { get; set; } = AnnotationDefaults.BodyPaddingDefault;
 
+    /// <summary>同じ内容の複製を作る（本文も複製する）。</summary>
+    /// <returns>複製。</returns>
+    public override AnnotationItem Clone() => new BubbleAnnotation
+    {
+        Id = Id,
+        Bounds = Bounds,
+        Appearance = Appearance,
+        Text = new RichText(Text.Runs),
+        Tail = Tail,
+        BodyPadding = BodyPadding,
+    };
+
     /// <summary>本文を置く矩形（枠線の内側・余白を除いた領域）を求める。</summary>
     /// <returns>本文の矩形（元画像ピクセル）。</returns>
     /// <remarks>枠線の半分だけ内側へ寄せる（枠線の中心が矩形の辺に乗るため、内側の端は半分だけ内側になる）。</remarks>

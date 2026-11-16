@@ -56,6 +56,7 @@ var composedPath = AnnotationJson.GetComposedPath(imagePath);   // <画像名>.a
 | `AnnotationHitTest` | 選択としっぽの当たり判定（最前面から探す） |
 | `AnnotationJson` | JSON の読み書きとパスの解決 |
 | `AnnotationDefaults` / `AnnotationLimits` | 既定値と安全域（設定・JSON・入力の共通の補正） |
+| `AnnotationHistory` | 変更履歴（元に戻す・やり直す。 文書を複製して積む） |
 
 ## 3. テスト
 

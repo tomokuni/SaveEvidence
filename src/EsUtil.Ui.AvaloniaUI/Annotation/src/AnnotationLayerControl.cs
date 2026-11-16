@@ -64,6 +64,12 @@ public sealed class AnnotationLayerControl : Control
     /// <summary>注釈の文書。</summary>
     private AnnotationDocument _document = new(1, 1);
 
+    /// <summary>変更履歴（元に戻す・やり直す）。</summary>
+    private readonly AnnotationHistory _history = new();
+
+    /// <summary>これから記録する変更の直前の文書（変更が起きるまで保持する）。</summary>
+    private AnnotationDocument? _undoCandidate;
+
     /// <summary>しっぽの先端をドラッグ中かどうか。</summary>
     private bool _isDraggingTail;
 
@@ -126,6 +132,8 @@ public sealed class AnnotationLayerControl : Control
         set
         {
             _document = value ?? new AnnotationDocument(SourcePixelWidth, SourcePixelHeight);
+            _history.Clear();
+            _undoCandidate = null;
             SelectedId = null;
             _marquee.ResetSelection();
             RaiseDocumentChanged();
@@ -216,6 +224,7 @@ public sealed class AnnotationLayerControl : Control
     /// <returns>追加した注釈の識別子。</returns>
     public string AddFrame(EsRect bounds)
     {
+        PrepareUndo();
         var frame = new FrameAnnotation { Bounds = bounds, Appearance = DraftDefaults.FrameAppearance };
         _document = _document.Add(frame);
         RaiseDocumentChanged();
@@ -230,6 +239,7 @@ public sealed class AnnotationLayerControl : Control
     /// <remarks>しっぽの先端は本体の下辺の中央から 40 px 下に置く（追加後すぐ掴めるようにする）。</remarks>
     public string AddBubble(EsRect bounds, string text)
     {
+        PrepareUndo();
         var defaults = DraftDefaults;
         var bubble = new BubbleAnnotation
         {
@@ -259,6 +269,7 @@ public sealed class AnnotationLayerControl : Control
             return false;
         }
 
+        PrepareUndo();
         _document = _document.Remove(id);
         Select(null);
         RaiseDocumentChanged();
@@ -279,6 +290,13 @@ public sealed class AnnotationLayerControl : Control
             return false;
         }
 
+        // 同じ文字列なら何もしない（履歴に同じ内容の手が増えないようにする）
+        if (string.Equals(bubble.Text.PlainText, text, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        PrepareUndo();
         _document = _document.WithText(bubble, bubble.Text.WithPlainText(text));
         RaiseDocumentChanged();
         InvalidateVisual();
@@ -311,6 +329,7 @@ public sealed class AnnotationLayerControl : Control
             return false;
         }
 
+        PrepareUndo();
         _document = _document.WithText(bubble, bubble.Text.ApplyStyle(start, length, style));
         RaiseDocumentChanged();
         InvalidateVisual();
@@ -345,6 +364,7 @@ public sealed class AnnotationLayerControl : Control
             return false;
         }
 
+        PrepareUndo();
         _document = _document.WithText(bubble, bubble.Text.TransformStyle(start, length, transform));
         RaiseDocumentChanged();
         InvalidateVisual();
@@ -363,6 +383,7 @@ public sealed class AnnotationLayerControl : Control
             return false;
         }
 
+        PrepareUndo();
         item.Appearance = transform(item.Appearance).Normalized();
         RaiseDocumentChanged();
         InvalidateVisual();
@@ -379,6 +400,7 @@ public sealed class AnnotationLayerControl : Control
             return false;
         }
 
+        PrepareUndo();
         bubble.BodyPadding = AnnotationLimits.CoerceBodyPadding(padding);
         RaiseDocumentChanged();
         InvalidateVisual();
@@ -397,6 +419,7 @@ public sealed class AnnotationLayerControl : Control
             return false;
         }
 
+        PrepareUndo();
         bubble.Tail = transform(bubble.Tail).Normalized();
         RaiseDocumentChanged();
         InvalidateVisual();
@@ -412,6 +435,7 @@ public sealed class AnnotationLayerControl : Control
             return false;
         }
 
+        PrepareUndo();
         _document = _document.BringToFront(id);
         RaiseDocumentChanged();
         InvalidateVisual();
@@ -427,8 +451,61 @@ public sealed class AnnotationLayerControl : Control
             return false;
         }
 
+        PrepareUndo();
         _document = _document.SendToBack(id);
         RaiseDocumentChanged();
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>元に戻せるかどうかを取得する。</summary>
+    /// <value>変更履歴に戻せる状態がある場合は <see langword="true"/>。</value>
+    public bool CanUndo => _history.CanUndo;
+
+    /// <summary>やり直せるかどうかを取得する。</summary>
+    /// <value>元に戻した変更が残っている場合は <see langword="true"/>。</value>
+    public bool CanRedo => _history.CanRedo;
+
+    /// <summary>直前の変更を元に戻す。</summary>
+    /// <returns>戻した場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>選択は識別子で引き継ぐ</b>（戻した後も同じ注釈を選んだまま、続けて操作できるようにする）。
+    /// 変更の単位は「追加・削除・移動・サイズ変更・しっぽの移動・外観・書式・重なり順」である
+    /// （ドラッグは押下から離すまでで 1 手）。
+    /// </remarks>
+    public bool Undo() => ApplyHistory(_history.Undo(_document));
+
+    /// <summary>元に戻した変更をやり直す。</summary>
+    /// <returns>やり直した場合は <see langword="true"/>。</returns>
+    public bool Redo() => ApplyHistory(_history.Redo(_document));
+
+    /// <summary>履歴から取り出した文書を現在の文書にする（選択を引き継ぐ）。</summary>
+    /// <param name="document">適用する文書（<see langword="null"/> は何もしない）。</param>
+    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    private bool ApplyHistory(AnnotationDocument? document)
+    {
+        _undoCandidate = null;
+        if (document is null)
+        {
+            return false;
+        }
+
+        var id = SelectedId;
+        _document = document;
+
+        if (id is not null && _document.Find(id) is { } item)
+        {
+            SelectedId = id;
+            _marquee.SetSelection(item.Bounds);
+        }
+        else
+        {
+            SelectedId = null;
+            _marquee.ResetSelection();
+        }
+
+        // 履歴の操作自体は記録しない（RaiseDocumentChanged を経由しない）
+        DocumentChanged?.Invoke(this, EventArgs.Empty);
         InvalidateVisual();
         return true;
     }
@@ -548,6 +625,10 @@ public sealed class AnnotationLayerControl : Control
         Focus();
         e.Pointer.Capture(this);
 
+        // 押下から始まる操作（移動・サイズ変更・しっぽの移動）を 1 手として記録する。
+        // 実際に文書が変わらなければ履歴へは積まれない（選択だけのクリックで手数が増えない）。
+        PrepareUndo();
+
         var source = ToSource(point.Position);
 
         if (Selected is not null)
@@ -647,6 +728,13 @@ public sealed class AnnotationLayerControl : Control
     {
         base.OnKeyDown(e);
 
+        // Ctrl+Z / Ctrl+Y（元に戻す・やり直す）。 本文の編集中はホストの入力欄が受け取る。
+        if ((e.KeyModifiers & KeyModifiers.Control) != 0 && e.Key is Key.Z or Key.Y)
+        {
+            e.Handled = e.Key == Key.Z ? Undo() : Redo();
+            return;
+        }
+
         if (e.Key == Key.Delete)
         {
             e.Handled = DeleteSelected();
@@ -662,6 +750,7 @@ public sealed class AnnotationLayerControl : Control
 
         if (e.Key is Key.Left or Key.Right or Key.Up or Key.Down)
         {
+            PrepareUndo();
             e.Handled = _marquee.KeyDown(ToEsKey(e.Key), _lastPointerSource);
             InvalidateVisual();
         }
@@ -922,6 +1011,22 @@ public sealed class AnnotationLayerControl : Control
         return (dx * dx) + (dy * dy) <= radius * radius;
     }
 
-    /// <summary>文書が変わったことを通知する。</summary>
-    private void RaiseDocumentChanged() => DocumentChanged?.Invoke(this, EventArgs.Empty);
+    /// <summary>これから変更することを履歴へ準備する（変更の直前に呼ぶ）。</summary>
+    /// <remarks>
+    /// <b>記録は変更が起きたときだけ行う</b>: 押しただけで動かなかった操作（選択だけのクリック）で
+    /// 元に戻す手数が増えないよう、直前の文書を控えておき、実際に文書が変わった時点で履歴へ積む。
+    /// </remarks>
+    private void PrepareUndo() => _undoCandidate ??= _document.Clone();
+
+    /// <summary>文書が変わったことを通知する（控えた文書があれば履歴へ積む）。</summary>
+    private void RaiseDocumentChanged()
+    {
+        if (_undoCandidate is { } candidate)
+        {
+            _history.Record(candidate);
+            _undoCandidate = null;
+        }
+
+        DocumentChanged?.Invoke(this, EventArgs.Empty);
+    }
 }

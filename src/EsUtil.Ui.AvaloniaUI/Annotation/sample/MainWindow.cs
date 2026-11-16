@@ -1,12 +1,11 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Geometry;
-using EsUtil.Ui.AvaloniaUI.ColorSelector;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation.Sample;
@@ -35,16 +34,13 @@ internal sealed class MainWindow : Window
     private TextBox? _editor;
 
     /// <summary>編集中に出す書式バー（編集中でなければ null）。</summary>
-    private Border? _formatBar;
+    private FormatBar? _formatBar;
 
     /// <summary>本文の編集対象の識別子（編集を始めたときに固定する）。</summary>
     private string? _editingId;
 
     /// <summary>書式バーの幅（DIP。画像の内側へ収めるために使う）。</summary>
-    private const double FormatBarWidth = 700;
-
-    /// <summary>書式の適用中かどうか（適用中はフォーカス喪失で編集を確定しない）。</summary>
-    private bool _isApplyingFormat;
+    private const double FormatBarWidth = FormatBar.BarWidth;
 
     /// <summary>サンプル ウィンドウを初期化する。</summary>
     public MainWindow()
@@ -77,6 +73,9 @@ internal sealed class MainWindow : Window
 
         _layer.EditTextRequested += (_, _) => BeginEdit();
 
+        // 入力欄と書式バーの外側を押したら編集を確定する（フォーカスの喪失ではポップアップで閉じてしまう）
+        AddHandler(PointerPressedEvent, OnWindowPointerPressed, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+
         var canvas = new Canvas { Background = Brushes.LightGray };
         canvas.Children.Add(_layer);
         canvas.Children.Add(_overlay);
@@ -84,6 +83,12 @@ internal sealed class MainWindow : Window
         _layer.Height = ImageHeight;
         Canvas.SetLeft(_layer, 8);
         Canvas.SetTop(_layer, 8);
+
+        // 入力欄の置き場は画像と同じ大きさにする（大きさが 0 だと子要素がマウスを受け取れない）
+        _overlay.Width = ImageWidth;
+        _overlay.Height = ImageHeight;
+        Canvas.SetLeft(_overlay, 8);
+        Canvas.SetTop(_overlay, 8);
 
         var settings = new ScrollViewer
         {
@@ -143,6 +148,12 @@ internal sealed class MainWindow : Window
         var remove = new Button { Content = "削除" };
         remove.Click += (_, _) => _layer.DeleteSelected();
 
+        var undo = new Button { Content = "元に戻す" };
+        undo.Click += (_, _) => _layer.Undo();
+
+        var redo = new Button { Content = "やり直す" };
+        redo.Click += (_, _) => _layer.Redo();
+
         var bar = new StackPanel
         {
             Orientation = Orientation.Horizontal,
@@ -153,9 +164,11 @@ internal sealed class MainWindow : Window
         bar.Children.Add(addBubble);
         bar.Children.Add(edit);
         bar.Children.Add(remove);
+        bar.Children.Add(undo);
+        bar.Children.Add(redo);
         bar.Children.Add(new TextBlock
         {
-            Text = "右クリックで外観・書式を編集 / ダブルクリックで本文（編集中は上のバーで文字単位の書式）/ Delete で削除 / 方向キーで移動",
+            Text = "右クリックで外観・書式を編集 / ダブルクリックで本文（編集中は上のバーで文字単位の書式）/ Delete で削除 / 方向キーで移動 / Ctrl+Z で元に戻す",
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 0, 0),
             Opacity = 0.7,
@@ -164,7 +177,11 @@ internal sealed class MainWindow : Window
         return bar;
     }
 
-    /// <summary>選択中の吹き出しの本文編集を開始する（本文の矩形へ入力欄を重ねる）。</summary>
+    /// <summary>選択中の吹き出しの本文編集を開始する（本文の矩形へ入力欄と書式バーを重ねる）。</summary>
+    /// <remarks>
+    /// <b>本文は <see cref="RichText.PlainText"/> から作る</b>: run を改行で連結すると、run の境界へ
+    /// 改行が入り、編集のたびに本文が崩れる（実測で指摘）。
+    /// </remarks>
     private void BeginEdit()
     {
         CommitEdit();
@@ -177,7 +194,7 @@ internal sealed class MainWindow : Window
 
         _editingId = _layer.SelectedId;
         var text = _layer.Document.Find(_editingId) is BubbleAnnotation bubble
-            ? string.Join("\n", bubble.Text.Runs.Select(run => run.Text))
+            ? bubble.Text.PlainText
             : string.Empty;
 
         var editor = new TextBox
@@ -185,61 +202,31 @@ internal sealed class MainWindow : Window
             Text = text,
             AcceptsReturn = true,
             TextWrapping = TextWrapping.Wrap,
+            // 内側の余白を 0 にして本文の矩形へぴったり重ねる（余白があると下の本文が左端に覗く。 実測で確認）
+            Padding = new Thickness(0),
             Background = Brushes.White,
             BorderBrush = Brushes.DodgerBlue,
             BorderThickness = new Thickness(1),
         };
 
-        Canvas.SetLeft(editor, 8 + rect.X);
+        // 入力欄は本文の矩形より少し左へ広げる（TextBox の内側の余白の分だけ下の本文が左端に覗くため。 実測で確認）
+        const double EditorInsetLeft = 10;
+        Canvas.SetLeft(editor, 8 + rect.X - EditorInsetLeft);
         Canvas.SetTop(editor, 8 + rect.Y);
-        editor.Width = rect.Width;
+        editor.Width = rect.Width + EditorInsetLeft;
         editor.Height = rect.Height;
 
-        editor.LostFocus += (_, _) =>
-        {
-            // 書式バーへ移っただけなら編集を続ける（バーの操作で本文の編集が閉じないようにする）
-            // フォーカスの移動は LostFocus の時点では確定していないため、移動後に判定する
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (_isApplyingFormat || IsInFormatBar())
-                {
-                    return;
-                }
+        // 先に受け取る（TextBox が Enter を改行として扱うより前に、Ctrl+Enter を確定として扱う）
+        editor.AddHandler(
+            KeyDownEvent,
+            (_, e) => OnEditorKeyDown(e),
+            Avalonia.Interactivity.RoutingStrategies.Tunnel);
 
-                CommitEdit();
-            });
-        };
-        editor.KeyDown += (_, e) =>
-        {
-            if (e.Key == Avalonia.Input.Key.Escape)
-            {
-                e.Handled = true;
-                CancelEdit();
-            }
-            else if (e.Key == Avalonia.Input.Key.Enter && e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Control))
-            {
-                e.Handled = true;
-                CommitEdit();
-            }
-            else if (e.KeyModifiers.HasFlag(Avalonia.Input.KeyModifiers.Control) && TryHandleShortcut(e.Key))
-            {
-                e.Handled = true;
-            }
-        };
-
-        // 選択範囲をコントロールへ写す（右クリックの書式編集がこの範囲へ適用される）。
-        // TextBox の選択はプロパティで公開されているため、入力・キー操作のたびに読み直す。
-        // 書式バーへフォーカスが移ると選択が 0 文字で通知されるため、その通知は無視する
-        // （無視しないと「全体」への適用になり、選択した範囲だけに適用できない。 実測で確認）。
+        // 選択範囲をコントロールへ写す（右クリックのフライアウトも同じ範囲へ適用する）
         void SyncSelection()
         {
-            var length = editor.SelectionEnd - editor.SelectionStart;
-            if (!editor.IsFocused && length == 0)
-            {
-                return;
-            }
-
-            _layer.TextSelectionRange = (editor.SelectionStart, length);
+            _layer.TextSelectionRange = (editor.SelectionStart, Math.Max(0, editor.SelectionEnd - editor.SelectionStart));
+            _formatBar?.Refresh();
         }
 
         editor.PropertyChanged += (_, e) =>
@@ -251,23 +238,68 @@ internal sealed class MainWindow : Window
         };
         editor.KeyUp += (_, _) => SyncSelection();
         editor.PointerReleased += (_, _) => SyncSelection();
-        SyncSelection();
 
         _overlay.Children.Add(editor);
         _editor = editor;
 
-        // 書式バーを入力欄の上へ置く（本文の書式は「編集中に選択して適用」であることを画面で示す）
-        // 画像の右端ではバーが窓の外へ出るため、画像の幅へ収まる位置まで左へ寄せる（実測: 右端の吹き出しで切れた）
-        var bar = BuildFormatBar();
+        // 書式バーを入力欄の上へ置く（右端・上端では画像の内側へ寄せる。 実測: はみ出して切れた）
+        var bar = new FormatBar(_layer, ApplyFormat, CommitEdit);
         Canvas.SetLeft(bar, Math.Max(8, Math.Min(8 + rect.X, 8 + ImageWidth - FormatBarWidth)));
-        Canvas.SetTop(bar, Math.Max(8, (8 + rect.Y) - 62));
+        Canvas.SetTop(bar, Math.Max(8, (8 + rect.Y) - FormatBar.EstimatedHeight - 8));
         _overlay.Children.Add(bar);
         _formatBar = bar;
 
+        _layer.TextSelectionRange = default;
+        editor.CaretIndex = text.Length;
         editor.Focus();
+        bar.Refresh();
     }
 
-    /// <summary>編集中の文字列を選択中の吹き出しへ反映する。</summary>
+    /// <summary>本文の入力欄でキーが押されたときの処理。</summary>
+    /// <param name="e">キーの引数。</param>
+    private void OnEditorKeyDown(KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            e.Handled = true;
+            CancelEdit();
+            return;
+        }
+
+        if (e.Key == Key.Enter && (e.KeyModifiers & KeyModifiers.Control) != 0)
+        {
+            e.Handled = true;
+            CommitEdit();
+            return;
+        }
+
+        if ((e.KeyModifiers & KeyModifiers.Control) == 0)
+        {
+            return;
+        }
+
+        // 切り替えの判断は 1 回だけ行う（TransformTextStyle は run ごとに呼ばれるため）
+        var style = _layer.SelectedTextStyle;
+        switch (e.Key)
+        {
+            case Key.B:
+                ApplyFormat(s => s with { IsBold = !style.IsBold });
+                e.Handled = true;
+                break;
+            case Key.I:
+                ApplyFormat(s => s with { IsItalic = !style.IsItalic });
+                e.Handled = true;
+                break;
+            case Key.U:
+                ApplyFormat(s => s with { IsUnderline = !style.IsUnderline });
+                e.Handled = true;
+                break;
+            default:
+                break;
+        }
+    }
+
+    /// <summary>編集を確定して入力欄と書式バーを閉じる。</summary>
     private void CommitEdit()
     {
         if (_editor is not { } editor)
@@ -276,27 +308,31 @@ internal sealed class MainWindow : Window
         }
 
         var text = (editor.Text ?? "").Replace("\r\n", "\n", StringComparison.Ordinal);
+        var id = _editingId;
         CancelEdit();
 
-        if (_editingId is not null)
+        if (id is not null)
         {
-            _layer.SelectedId = _editingId;
-            _layer.SetSelectedText(text);
-            _layer.TextSelectionRange = default;
+            _layer.SelectedId = id;
+
+            // 文字が変わっていなければ本文を置き換えない（履歴に同じ内容の手が増えないようにする）
+            if (_layer.Document.Find(id) is BubbleAnnotation bubble && !string.Equals(bubble.Text.PlainText, text, StringComparison.Ordinal))
+            {
+                _layer.SetSelectedText(text);
+            }
+
             _editingId = null;
         }
     }
 
-    /// <summary>編集を取り消す。</summary>
+    /// <summary>編集を取り消す（本文へは反映しない）。</summary>
     private void CancelEdit()
     {
-        if (_editor is not { } editor)
+        if (_editor is { } editor)
         {
-            return;
+            _overlay.Children.Remove(editor);
+            _editor = null;
         }
-
-        _overlay.Children.Remove(editor);
-        _editor = null;
 
         if (_formatBar is { } bar)
         {
@@ -304,144 +340,15 @@ internal sealed class MainWindow : Window
             _formatBar = null;
         }
 
+        _editingId = null;
         _layer.TextSelectionRange = default;
     }
 
-    /// <summary>編集中のショートカット（Ctrl+B / I / U / S）を処理する。</summary>
-    /// <param name="key">押されたキー。</param>
-    /// <returns>処理した場合は <see langword="true"/>。</returns>
-    /// <remarks>書式バーと同じ処理へ流す（バーを探さなくても、一般的なショートカットで書式を変えられる）。</remarks>
-    private bool TryHandleShortcut(Avalonia.Input.Key key)
-    {
-        // 切り替えの判断は 1 回だけ行う（TransformTextStyle は run ごとに呼ばれるため）
-        var style = _layer.SelectedTextStyle;
-        return key switch
-        {
-            Avalonia.Input.Key.B => ApplyAndReport(s => s with { IsBold = !style.IsBold }),
-            Avalonia.Input.Key.I => ApplyAndReport(s => s with { IsItalic = !style.IsItalic }),
-            Avalonia.Input.Key.U => ApplyAndReport(s => s with { IsUnderline = !style.IsUnderline }),
-            _ => false,
-        };
-    }
-
-    /// <summary>ショートカットから書式を適用する（常に適用したことを返す）。</summary>
-    /// <param name="change">書式の変更。</param>
-    /// <returns><see langword="true"/>。</returns>
-    private bool ApplyAndReport(Func<AnnotationTextStyle, AnnotationTextStyle> change)
-    {
-        ApplyFormat(change);
-        return true;
-    }
-
-    /// <summary>現在のフォーカスが書式バーの内側にあるかどうかを判定する。</summary>
-    /// <returns>書式バーの中にフォーカスがある場合は <see langword="true"/>。</returns>
-    private bool IsInFormatBar()
-    {
-        if (_formatBar is null || TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is not Visual focused)
-        {
-            return false;
-        }
-
-        for (var visual = focused; visual is not null; visual = visual.GetVisualParent())
-        {
-            if (ReferenceEquals(visual, _formatBar))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /// <summary>書式バーを作る（編集中の選択範囲へ書式を適用する）。</summary>
-    /// <returns>書式バー。</returns>
-    /// <remarks>
-    /// <b>操作方法をバーに書く</b>: 「文字を選んで押す」ことが分からないという指摘があったため、
-    /// バーの先頭に操作方法を出し、適用すると編集を終了して結果を見せる。
-    /// </remarks>
-    private Border BuildFormatBar()
-    {
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-
-        row.Children.Add(new TextBlock
-        {
-            Text = "書式（文字を選んで押す／選択なしは全体／Ctrl+B・I・U）",
-            VerticalAlignment = VerticalAlignment.Center,
-            FontSize = 11,
-            Margin = new Thickness(0, 0, 4, 0),
-        });
-
-        var style = _layer.SelectedTextStyle;
-        var fonts = AnnotationFonts.All;
-        var fontBox = new ComboBox
-        {
-            Width = 120,
-            ItemsSource = fonts,
-            SelectedIndex = Math.Max(0, fonts.ToList().IndexOf(style.FontFamily)),
-        };
-        fontBox.SelectionChanged += (_, _) =>
-        {
-            if (fontBox.SelectedIndex >= 0)
-            {
-                ApplyFormat(s => s with { FontFamily = fonts[fontBox.SelectedIndex] });
-            }
-        };
-        row.Children.Add(fontBox);
-
-        var sizeBox = new NumericUpDown
-        {
-            Value = (decimal)style.FontSize,
-            Minimum = 6m,
-            Maximum = 512m,
-            Increment = 1m,
-            FormatString = "0.#",
-            Width = 96,
-        };
-        sizeBox.ValueChanged += (_, _) =>
-        {
-            if (sizeBox.Value is { } value)
-            {
-                ApplyFormat(s => s with { FontSize = (double)value });
-            }
-        };
-        row.Children.Add(sizeBox);
-
-        var color = new ColorSelectorControl
-        {
-            Width = 82,
-            SelectedColor = AnnotationEditorControls.ToHex(style.Color),
-            TextFontSize = 12,
-        };
-        color.PropertyChanged += (_, e) =>
-        {
-            if (e.Property == ColorSelectorControl.SelectedColorProperty
-                && EsUtil.Platform.Core.Imaging.DrawingColorExtensions.TryParseHexText(color.SelectedColor, out var value))
-            {
-                ApplyFormat(s => s with { Color = value });
-            }
-        };
-        row.Children.Add(color);
-
-        row.Children.Add(AnnotationEditorControls.Toggle("B", style.IsBold, () => ApplyFormat(s => s with { IsBold = !style.IsBold }), bold: true));
-        row.Children.Add(AnnotationEditorControls.Toggle("I", style.IsItalic, () => ApplyFormat(s => s with { IsItalic = !style.IsItalic }), italic: true));
-        row.Children.Add(AnnotationEditorControls.Toggle("U", style.IsUnderline, () => ApplyFormat(s => s with { IsUnderline = !style.IsUnderline }), underline: true));
-        row.Children.Add(AnnotationEditorControls.Toggle("S", style.IsStrike, () => ApplyFormat(s => s with { IsStrike = !style.IsStrike }), strike: true));
-
-        return new Border
-        {
-            Background = Brushes.White,
-            BorderBrush = Brushes.DodgerBlue,
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(6, 3),
-            Child = row,
-        };
-    }
-
-    /// <summary>編集中の文字列を確定してから、選択範囲へ書式を適用する。</summary>
+    /// <summary>編集中の選択範囲へ書式を適用する（編集は続ける）。</summary>
     /// <param name="change">書式を新しい値へ変える処理（変えない属性は <c>TransformTextStyle</c> が保つ）。</param>
     /// <remarks>
-    /// <b>適用したら編集を終了する</b>: 入力欄（TextBox）は書式を持てないため、入力中は結果が見えない。
-    /// 適用と同時に確定・終了して、レイヤーの描画で結果を見せる。
+    /// <b>編集を閉じない</b>: 書式は入力欄の選択範囲に対して続けて適用できる（太字にしてから色を変える等）。
+    /// 入力欄は書式を持てないため、結果は確定後（完了・外側のクリック・<b>Ctrl+Enter</b>）に本文へ出る。
     /// </remarks>
     private void ApplyFormat(Func<AnnotationTextStyle, AnnotationTextStyle> change)
     {
@@ -450,32 +357,62 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        _isApplyingFormat = true;
-        try
-        {
-            var text = (editor.Text ?? "").Replace("\r\n", "\n", StringComparison.Ordinal);
-            // 選択は入力欄から直接読む（入力欄はまだ生きているため、フォーカス移動の有無に左右されない）
-            var start = editor.SelectionStart;
-            var length = Math.Max(0, editor.SelectionEnd - editor.SelectionStart);
-            var current = _layer.SelectedTextStyle;
+        var text = (editor.Text ?? "").Replace("\r\n", "\n", StringComparison.Ordinal);
+        var start = editor.SelectionStart;
+        var length = Math.Max(0, editor.SelectionEnd - editor.SelectionStart);
 
-            _overlay.Children.Remove(editor);
-            _editor = null;
-            if (_formatBar is { } bar)
+        _layer.SelectedId = id;
+
+        _layer.SetSelectedText(text);
+
+        _layer.TextSelectionRange = (start, length);
+        _layer.TransformTextStyle(start, length, change);
+        _formatBar?.Refresh();
+
+        editor.Focus();
+    }
+
+    /// <summary>書式バーと入力欄の外側が押されたときに編集を確定する。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">ポインターの引数。</param>
+    /// <remarks>
+    /// <b>フォーカスの喪失では確定しない</b>: 書式バーの選択肢（ポップアップ）へフォーカスが移ると
+    /// 入力欄が閉じ、選んだ書式が適用されない（実測で確認）。 押した位置で判定する。
+    /// </remarks>
+    private void OnWindowPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_editor is not { } editor)
+        {
+            return;
+        }
+
+        if (IsInside(e.Source as Visual, editor) || IsInside(e.Source as Visual, _formatBar))
+        {
+            return;
+        }
+
+        CommitEdit();
+    }
+
+    /// <summary>指定された要素が指定された祖先の内側にあるかどうかを判定する。</summary>
+    /// <param name="visual">判定する要素。</param>
+    /// <param name="ancestor">祖先（<see langword="null"/> なら常に <see langword="false"/>）。</param>
+    /// <returns>内側にある場合は <see langword="true"/>。</returns>
+    private static bool IsInside(Visual? visual, Visual? ancestor)
+    {
+        if (ancestor is null)
+        {
+            return false;
+        }
+
+        for (var current = visual; current is not null; current = current.GetVisualParent())
+        {
+            if (ReferenceEquals(current, ancestor))
             {
-                _overlay.Children.Remove(bar);
-                _formatBar = null;
+                return true;
             }
+        }
 
-            _layer.SelectedId = id;
-            _layer.SetSelectedText(text);
-            _layer.TransformTextStyle(start, length, change);
-            _layer.TextSelectionRange = default;
-            _editingId = null;
-        }
-        finally
-        {
-            _isApplyingFormat = false;
-        }
+        return false;
     }
 }

@@ -19,6 +19,13 @@ public static class AnnotationEditorControls
     /// <summary>項目名のラベルの幅（DIP）。</summary>
     public const double LabelWidth = 104;
 
+    /// <summary>色の選択の幅（DIP）。</summary>
+    /// <remarks>
+    /// <b>横いっぱいへ広げない</b>: <see cref="ColorSelectorControl"/> を伸長すると、入力欄とボタンの間が
+    /// 間延びして 1 行が使えなくなる（実測で指摘）。 値とボタンが収まる幅へ固定する。
+    /// </remarks>
+    public const double ColorSelectorWidth = 220;
+
     /// <summary>見出しを作る。</summary>
     /// <param name="text">見出しの文言。</param>
     /// <returns>見出し。</returns>
@@ -53,7 +60,8 @@ public static class AnnotationEditorControls
             SelectedColor = ToHex(initial),
             HighlightBorderOnError = true,
             TextFontSize = 12,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Width = ColorSelectorWidth,
+            HorizontalAlignment = HorizontalAlignment.Left,
         };
         selector.PropertyChanged += (_, e) =>
         {
