@@ -22,11 +22,11 @@ internal sealed class MainWindow : Window
     /// <summary>サンプル画像の高さ（ピクセル）。</summary>
     private const int ImageHeight = 640;
 
-    /// <summary>注釈を重ねるレイヤー。</summary>
-    private readonly AnnotationLayerControl _layer = new();
+    /// <summary>本文の表示・その場編集と書式バーをまとめたコントロール。</summary>
+    private readonly AnnotationTextEditor _editor = new();
 
-    /// <summary>編集中に出す書式バー（編集中でなければ null）。</summary>
-    private FormatBar? _formatBar;
+    /// <summary>注釈を重ねるレイヤー。</summary>
+    private readonly AnnotationLayerControl _layer;
 
     /// <summary>サンプル ウィンドウを初期化する。</summary>
     public MainWindow()
@@ -34,6 +34,8 @@ internal sealed class MainWindow : Window
         Title = "Annotation サンプル";
         Width = 1420;
         Height = 900;
+
+        _layer = _editor.Layer;
 
         var bitmap = CreateSampleImage();
         _layer.Source = bitmap;
@@ -57,16 +59,12 @@ internal sealed class MainWindow : Window
                 ]),
             });
 
-        // 本文の編集の開始・終了に合わせて書式バーを出す・消す
-        _layer.EditingChanged += (_, _) => SyncFormatBar();
-        _layer.DocumentChanged += (_, _) => _formatBar?.Refresh();
-
         var canvas = new Canvas { Background = Brushes.LightGray };
-        canvas.Children.Add(_layer);
-        _layer.Width = ImageWidth;
-        _layer.Height = ImageHeight;
-        Canvas.SetLeft(_layer, 8);
-        Canvas.SetTop(_layer, 8);
+        canvas.Children.Add(_editor);
+        _editor.Width = ImageWidth;
+        _editor.Height = ImageHeight;
+        Canvas.SetLeft(_editor, 8);
+        Canvas.SetTop(_editor, 8);
 
         var settings = new ScrollViewer
         {
@@ -153,37 +151,5 @@ internal sealed class MainWindow : Window
         });
 
         return bar;
-    }
-
-    /// <summary>本文の編集状態に合わせて書式バーを出す・消す。</summary>
-    private void SyncFormatBar()
-    {
-        if (!_layer.IsEditingText)
-        {
-            if (_formatBar is { } closing)
-            {
-                (_formatBar.Parent as Panel)?.Children.Remove(closing);
-                _formatBar = null;
-            }
-
-            return;
-        }
-
-        var rect = _layer.GetSelectedBodyRect();
-        if (rect.Width <= 0 || rect.Height <= 0)
-        {
-            return;
-        }
-
-        if (_formatBar is null)
-        {
-            var bar = new FormatBar(_layer, _layer.EndTextEditing);
-            Canvas.SetLeft(bar, 8 + Math.Max(0, Math.Min(rect.X, ImageWidth - FormatBar.BarWidth)));
-            Canvas.SetTop(bar, 8 + Math.Max(0, rect.Y - FormatBar.EstimatedHeight - 6));
-            ((Canvas)_layer.Parent!).Children.Add(bar);
-            _formatBar = bar;
-        }
-
-        _formatBar.Refresh();
     }
 }

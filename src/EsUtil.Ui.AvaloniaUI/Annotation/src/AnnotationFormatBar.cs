@@ -9,7 +9,7 @@ using Avalonia.VisualTree;
 using EsUtil.Feature.Annotation;
 using EsUtil.Ui.AvaloniaUI.ColorSelector;
 
-namespace EsUtil.Ui.AvaloniaUI.Annotation.Sample;
+namespace EsUtil.Ui.AvaloniaUI.Annotation;
 
 /// <summary>本文を編集中に本文の上へ出す書式バー（文字単位の書式）。</summary>
 /// <remarks>
@@ -18,7 +18,7 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation.Sample;
 /// <b>項目名は出さない</b>: 幅が限られるため、意味はツールチップで示す（フォント名・大きさ・装飾名とショートカット）。<br/>
 /// <b>同じ値でも適用できる</b>: 文字単位で書式が混ざっている範囲を一律に揃えるため、選び直しただけでも適用する。
 /// </remarks>
-internal sealed class FormatBar : Border
+internal sealed class AnnotationFormatBar : Border
 {
     /// <summary>バーの幅（DIP。画像の内側へ収める計算に使う）。</summary>
     internal const double BarWidth = 720;
@@ -59,7 +59,7 @@ internal sealed class FormatBar : Border
     /// <summary>書式バーを初期化する。</summary>
     /// <param name="layer">編集対象のコントロール。</param>
     /// <param name="close">編集を終える処理。</param>
-    public FormatBar(AnnotationLayerControl layer, Action close)
+    public AnnotationFormatBar(AnnotationLayerControl layer, Action close)
     {
         _layer = layer;
 
@@ -91,7 +91,7 @@ internal sealed class FormatBar : Border
             ShowThemeColorTab = false,
             ShowNamedColorTab = false,
             ShowTabTitles = false,
-            CustomTabs = RepresentativeTabs,
+            CustomTabs = AnnotationPalette.Tabs,
         };
         _color.PropertyChanged += (_, e) =>
         {
@@ -156,30 +156,6 @@ internal sealed class FormatBar : Border
         // 大きさと色は Enter で確定する（同じ値でも適用する）
         AddHandler(KeyDownEvent, OnBarKeyDown, RoutingStrategies.Tunnel);
     }
-
-    /// <summary>「代表色」タブの定義（よく使う 16 色）。</summary>
-    /// <remarks>色名の一覧を開かずに代表色を選べるようにする（既存のタブは書式バーでは出さない）。</remarks>
-    internal static IReadOnlyList<ColorSelectorCustomTab> RepresentativeTabs { get; } =
-    [
-        new ColorSelectorCustomTab("代表色", [
-            new ColorSelectorCustomColor("黒", "#FF000000"),
-            new ColorSelectorCustomColor("濃い灰色", "#FF404040"),
-            new ColorSelectorCustomColor("灰色", "#FF808080"),
-            new ColorSelectorCustomColor("薄い灰色", "#FFC0C0C0"),
-            new ColorSelectorCustomColor("白", "#FFFFFFFF"),
-            new ColorSelectorCustomColor("赤", "#FFDC2626"),
-            new ColorSelectorCustomColor("橙", "#FFEA580C"),
-            new ColorSelectorCustomColor("黄", "#FFEAB308"),
-            new ColorSelectorCustomColor("黄緑", "#FF65A30D"),
-            new ColorSelectorCustomColor("緑", "#FF16A34A"),
-            new ColorSelectorCustomColor("青緑", "#FF0D9488"),
-            new ColorSelectorCustomColor("水色", "#FF0284C7"),
-            new ColorSelectorCustomColor("青", "#FF2563EB"),
-            new ColorSelectorCustomColor("紫", "#FF7C3AED"),
-            new ColorSelectorCustomColor("桃", "#FFDB2777"),
-            new ColorSelectorCustomColor("茶", "#FF92400E"),
-        ]),
-    ];
 
     /// <summary>現在の書式を表示へ反映する（選択範囲の先頭の書式）。</summary>
     public void Refresh()

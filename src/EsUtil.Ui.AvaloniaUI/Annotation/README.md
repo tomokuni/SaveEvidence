@@ -4,7 +4,8 @@
 
 ## 1. 概要
 
-- **`AnnotationLayerControl`**: 画像の表示・注釈の描画・入力の受付を担います。
+- **`AnnotationTextEditor`**: **本文の表示・その場編集と書式バーを 1 つにまとめたコントロール**です（内側の `Layer` で画像・文書・選択を操作します）。 ホストはこれ 1 つを置けば、本文の編集と書式の変更ができます。
+- **`AnnotationLayerControl`**: 画像の表示・注釈の描画・入力の受付を担います（`AnnotationTextEditor.Layer` として使います）。
 - **判断は `EsUtil.Feature.Annotation` が単一所有**します（当たり判定・折り返し・描画計画）。 本コントロールは自 UI の描画 API へ写すだけです。
 - **選択枠と 8 方向のハンドルは Marquee の提示層を再利用**します（移動・サイズ変更・方向キーの nudge・カーソル形状が 4 つの UI 版で同じになる）。
 - **本文はその場で編集します**（ダブルクリックまたは Enter でキャレットが立ち、表示中のレイアウトのまま入力できます）。 IME（日本語入力）にも対応します。
@@ -15,6 +16,7 @@
 描画は run ごとの書式（太字・斜体・下線・取り消し線・色・大きさ・フォント）に対応しています。
 
 **色の選択は `EsUtil.Ui.AvaloniaUI.ColorSelector` を使います**（自前の色入力を作らない）。
+注釈の色は**代表色 16 色（色名付き）のタブだけ**を出し、カラーピッカー（…）とテーマ・色名のタブは隠します（`AnnotationPalette`）。
 編集 UI の行の部品は `AnnotationEditorControls` が単一所有し、右クリックのフライアウトとホストの設定ペインが共有します。
 
 **現状（対応範囲）**: 4 つの UI 版のうち Avalonia UI 版のみです（MewUI / WinUI 3 / WinForms は後段）。
@@ -22,19 +24,19 @@
 ## 2. 使い方
 
 ```csharp
-var layer = new AnnotationLayerControl
-{
-    Source = image,             // IImage（例: EsBitmapAdapter）
-    SourcePixelWidth = 1920,
-    SourcePixelHeight = 1080,
-    Document = new AnnotationDocument(1920, 1080, "shot.png"),
-};
+// 本文の表示・その場編集と書式バーをまとめたコントロール（これ 1 つを置く）
+var editor = new AnnotationTextEditor { Width = 1920, Height = 1080 };
+var layer = editor.Layer;
+layer.Source = image;           // IImage（例: EsBitmapAdapter）
+layer.SourcePixelWidth = 1920;
+layer.SourcePixelHeight = 1080;
+layer.Document = new AnnotationDocument(1920, 1080, "shot.png");
 
 // 追加（既定の外観を使う）
 layer.AddFrame(new EsRect(60, 60, 340, 220));
 layer.AddBubble(new EsRect(900, 120, 380, 170), "ここが重要です。");
 
-// 本文の編集（その場で編集する。 ホストは書式バーを出すだけ）
+// 本文の編集（書式バーは AnnotationTextEditor が出し入れする）
 layer.BeginTextEditing();
 layer.EndTextEditing();
 
@@ -47,6 +49,7 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 
 | メンバー | 説明 |
 | --- | --- |
+| `AnnotationTextEditor.Layer` / `IsEditingText` | 本文の表示・その場編集と書式バーをまとめたコントロール（レイヤーは `Layer` から操作する） |
 | `Source` / `SourcePixelWidth` / `SourcePixelHeight` | 表示する画像と、その画素数（縦横比を保って中央へ表示する） |
 | `Document` / `SelectedId` | 注釈の文書と選択中の注釈 |
 | `AddFrame(bounds)` / `AddBubble(bounds, text)` | 注釈の追加（既定の外観） |

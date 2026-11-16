@@ -28,7 +28,7 @@
 | 対象フレームワーク | `net11.0-windows10.0.17763.0` |
 | UI | Avalonia（`Control` を継承した自前描画。 XAML のテンプレートを持たない） |
 | 選択枠 | `EsUtil.Feature.Marquee.Core` の提示層（`MarqueePresenter`） |
-| 色の選択 | `EsUtil.Ui.AvaloniaUI.ColorSelector`（`ColorSelectorControl`。 テーマの読み込みはホストの責務） |
+| 色の選択 | `EsUtil.Ui.AvaloniaUI.ColorSelector`（`ColorSelectorControl`。 注釈では代表色 16 色のタブだけを出す） |
 | 画像 | `IImage`（ホストが `EsBitmapAdapter` 等で用意する） |
 
 ## 3. アーキテクチャ
@@ -54,6 +54,9 @@ flowchart TB
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
 | `AnnotationLayerControl` | `public` | 画像の表示・注釈の描画・入力の受付・選択の同期・文書の変更通知 |
+| `AnnotationTextEditor` | `public` | 本文の表示・その場編集と書式バーを 1 つにまとめたコントロール（`Layer` を内側で持ち、編集の開始・終了と本文の位置に合わせてバーを配置する） |
+| `AnnotationFormatBar`（内部） | `internal` | 本文の上に出す書式バー（フォント・大きさ・色・B / I / U / S。 項目名は出さずツールチップで示す） |
+| `AnnotationPalette` | `public` | 注釈の色選択で使う代表色 16 色（色名付き）と、色の選択をその構成にする処理 |
 | `AnnotationStyleFlyout`（内部） | `internal` | 右クリックの編集 UI（外観・吹き出し・本文の書式・重なり順）。 `AnnotationEditorControls` の部品で組み立てる |
 | `AnnotationEditorControls` | `public` | 編集 UI の行の部品（見出し・項目名・色・数値・選択肢・装飾の切り替え）。 フライアウトとホストの設定ペインが共有する |
 | `AnnotationFonts` | `public` | 本文で選べるフォント名の一覧（優先フォントを先頭に置く） |

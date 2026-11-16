@@ -2,11 +2,26 @@
 
 ## 目次
 
-- [1. `AnnotationLayerControl`（クラス）](#1-annotationlayercontrolクラス)
-- [2. `AnnotationEditorControls`（クラス）](#2-annotationeditorcontrolsクラス)
-- [3. `AnnotationFonts`（クラス）](#3-annotationfontsクラス)
+- [1. `AnnotationTextEditor`（クラス）](#1-annotationtexteditorクラス)
+- [2. `AnnotationLayerControl`（クラス）](#2-annotationlayercontrolクラス)
+- [3. `AnnotationEditorControls`（クラス）](#3-annotationeditorcontrolsクラス)
+- [4. `AnnotationFonts`（クラス）](#4-annotationfontsクラス)
+- [5. `AnnotationPalette`（静的クラス）](#5-annotationpalette静的クラス)
 
-## 1. `AnnotationLayerControl`（クラス）
+## 1. `AnnotationTextEditor`（クラス）
+
+**本文の表示・その場編集と書式バーを 1 つにまとめたコントロール**です（`Panel` の派生）。 ホストはこれを 1 つ置けば、本文の編集と文字単位の書式変更ができます。
+
+| メンバー | 種別 | 説明 |
+| --- | --- | --- |
+| `Layer` | property | 内側の `AnnotationLayerControl`（画像・文書・選択・元に戻すはここから操作する） |
+| `IsEditingText` | property | 本文を編集中かどうか（編集中は書式バーが出ている） |
+
+- **書式バーは内側で出し入れします**（`Layer.EditingChanged` を購読する）。 ホストがバーを置く必要はありません。
+- **配置**: レイヤーは与えられた領域いっぱい、書式バーは**本文の矩形の上**（上・左右にはみ出すときは内側へ寄せる）。
+- 文書の変更と選択の変更でバーの表示（現在の書式）と位置を追随させます。
+
+## 2. `AnnotationLayerControl`（クラス）
 
 画像と注釈を重ねて表示し、選択・移動・サイズ変更・しっぽの移動・本文の編集要求を行うコントロールです。
 
@@ -55,7 +70,7 @@
 
 **注意**: 保存（注釈 JSON・合成画像）は行いません。 ホストが `AnnotationJson` とプラットフォームの描画 API で書き出します。
 
-## 2. `AnnotationEditorControls`（クラス）
+## 3. `AnnotationEditorControls`（クラス）
 
 注釈の編集 UI で使う行の部品です（右クリックのフライアウトとホストの設定ペインが共有する）。
 
@@ -74,10 +89,23 @@
 **前提**: `ColorRow` は `Avalonia.Controls.ColorPicker` のテーマを要求します（ホストが
 `avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml` を読み込む）。
 
-## 3. `AnnotationFonts`（クラス）
+## 4. `AnnotationFonts`（クラス）
 
 | メンバー | 種別 | 説明 |
 | --- | --- | --- |
 | `All` | property | 本文で選べるフォント名の一覧（`IReadOnlyList<string>`）。 `AnnotationDefaults.PreferredFontFamilies` を先頭に置き、その後にインストール済みのフォントを並べる |
 
 一覧は起動時に 1 度だけ作ります（フォントの列挙は重い）。
+
+## 5. `AnnotationPalette`（静的クラス）
+
+注釈の色選択で使う**代表色（色名付きの 16 色）**です。
+
+| メンバー | 種別 | 説明 |
+| --- | --- | --- |
+| `RepresentativeColors` | property | 代表色の並び（`IReadOnlyList<ColorSelectorCustomColor>`。 無彩色 → 暖色 → 寒色の順） |
+| `GetHex(name)` / `TryGetColor(name, out color)` | method | 色名から保存値（`#AARRGGBB`）・色を取得する |
+
+- **書式バー・右クリックのフライアウト・設定ペインが同じ並びを使います**（画面ごとに色が違わない）。
+- 色の選択は**代表色のタブだけ**を出し、カラーピッカー（…）とテーマ・色名のタブは隠します（タブが 1 つなので題名も出しません）。
+- 16 進や色名を直接打ち込む入力欄は残します（代表色に無い色を指定できる）。

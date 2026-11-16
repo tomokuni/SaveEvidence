@@ -51,7 +51,9 @@ public static class AnnotationEditorControls
     /// <param name="apply">適用する処理。</param>
     /// <returns>色の選択。</returns>
     /// <remarks>
-    /// <b>他の項目と同じ横並びにする</b>: 項目名を上へ置くと 1 行を使い、選択の列が縦に間延びする（実測で指摘）。
+    /// <b>他の項目と同じ横並びにする</b>: 項目名を上へ置くと 1 行を使い、選択の列が縦に間延びする（実測で指摘）。<br/>
+    /// <b>注釈向けの構成にする</b>: テーマの色・色名のタブとカラーピッカー（…）を隠し、代表色 16 色のタブだけを出す
+    /// （<see cref="AnnotationPalette.Configure"/>）。
     /// </remarks>
     public static Control ColorRow(string label, DrawingColor initial, Action<DrawingColor> apply)
     {
@@ -66,6 +68,7 @@ public static class AnnotationEditorControls
             Width = ColorSelectorWidth,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
+        AnnotationPalette.Configure(selector);
         selector.PropertyChanged += (_, e) =>
         {
             if (e.Property == ColorSelectorControl.SelectedColorProperty
