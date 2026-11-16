@@ -14,6 +14,7 @@
 - [8. `AnnotationHitTest`（静的クラス）](#8-annotationhittest静的クラス)
 - [9. `AnnotationJson`（静的クラス）](#9-annotationjson静的クラス)
 - [10. `AnnotationDefaults` / `AnnotationLimits`（静的クラス）](#10-annotationdefaults--annotationlimits静的クラス)
+- [11. `AnnotationDraftDefaults`（レコード）](#11-annotationdraftdefaultsレコード)
 
 ## 1. 公開 API の可視性
 
@@ -35,6 +36,7 @@
 | `Items` | 注釈の並び（不変。 変更は下のメソッドが新しい文書を返す） |
 | `Add(item)` / `Replace(item)` / `Remove(id)` | 追加・差し替え・削除（**元の文書は変更しない**） |
 | `Find(id)` / `IndexOf(id)` | 識別子からの取得（無い場合は null / -1） |
+| `BringToFront(id)` / `SendToBack(id)` | 重なり順の変更（最前面・最背面へ移す） |
 | `WithText(bubble, text)` | 吹き出しの本文だけを差し替える |
 
 ## 3. `AnnotationItem` / `FrameAnnotation` / `BubbleAnnotation`（クラス）
@@ -63,6 +65,9 @@
 | --- | --- |
 | `RichText.Runs` | `TextRun` の並び（**run が自分の文字列を持つ**。 文字の挿入・削除が他の書式へ影響しない） |
 | `RichText.PlainText` / `IsEmpty` / `Create(text, style)` | 書式を除いた文字列・空判定・単一書式からの生成 |
+| `RichText.ApplyStyle(start, length, style)` | **指定範囲の書式を差し替える**（run を境界で分割し、同じ書式は連結する。 長さ 0 は全体） |
+| `RichText.StyleAt(index)` | 指定位置の文字の書式（範囲外は末尾へフォールバック。 書式ツールバーの初期表示に使う） |
+| `RichText.WithPlainText(text)` | 書式を**文字位置で引き継いで**文字列だけを差し替える（本文の編集に使う） |
 | `AnnotationTextStyle` | `FontFamily` / `FontSize`（元画像ピクセル）/ `Color` / `IsBold` / `IsItalic` / `IsUnderline` / `IsStrike` |
 | `AnnotationTextStyle.Default` / `Normalized()` | 既定の書式（`Yu Gothic UI` 優先）/ 安全域への補正 |
 
@@ -116,3 +121,14 @@
 | `AnnotationDefaults.FrameAppearance` / `BubbleAppearance` / `TextStyle` | 新規作成時の既定（設定ページの初期値と同じ値） |
 | `AnnotationDefaults.*Default` | 文字の大きさ・枠線の太さ・角丸・余白・しっぽの幅の既定値 |
 | `AnnotationLimits` | 各値の安全域と補正（枠線 `1〜64`・角丸 `0〜4096`・文字 `6〜512`） |
+
+## 11. `AnnotationDraftDefaults`（レコード）
+
+**新規作成時の既定値**（設定ページ・サンプルが変える値）。 既存の注釈には影響しません（各注釈が自分の外観・書式を持ちます）。
+
+| メンバー | 説明 |
+| --- | --- |
+| `FrameAppearance` / `BubbleAppearance` | 枠線・吹き出しの既定の外観（枠線の色・太さ・内側の色・角丸） |
+| `TextStyle` | 本文の既定の書式 |
+| `BodyPadding` / `TailWidth` / `TailEdge` | 本文の余白・しっぽの幅・しっぽを出す辺 |
+| `Default` | `AnnotationDefaults` と同じ値 |

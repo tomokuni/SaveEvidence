@@ -38,8 +38,8 @@ internal sealed class MainWindow : Window
     public MainWindow()
     {
         Title = "Annotation サンプル";
-        Width = 1100;
-        Height = 820;
+        Width = 1420;
+        Height = 900;
 
         var bitmap = CreateSampleImage();
         _layer.Source = bitmap;
@@ -59,7 +59,7 @@ internal sealed class MainWindow : Window
                 Text = new RichText([
                     new TextRun("ここが重要です。", AnnotationDefaults.TextStyle),
                     new TextRun("文字単位の書式", AnnotationDefaults.TextStyle with { IsBold = true, Color = System.Drawing.Color.FromArgb(255, 200, 0, 0) }),
-                    new TextRun("は後段で対応します。", AnnotationDefaults.TextStyle),
+                    new TextRun("は右クリックで編集できます。", AnnotationDefaults.TextStyle),
                 ]),
             });
 
@@ -73,10 +73,19 @@ internal sealed class MainWindow : Window
         Canvas.SetLeft(_layer, 8);
         Canvas.SetTop(_layer, 8);
 
+        var settings = new ScrollViewer
+        {
+            Content = new SettingsPane(_layer),
+            Width = 320,
+            Background = new SolidColorBrush(Color.FromArgb(255, 248, 248, 248)),
+        };
+
         var root = new DockPanel();
         var toolbar = BuildToolbar();
         DockPanel.SetDock(toolbar, Dock.Top);
         root.Children.Add(toolbar);
+        DockPanel.SetDock(settings, Dock.Left);
+        root.Children.Add(settings);
         root.Children.Add(new ScrollViewer { Content = canvas });
         Content = root;
     }
@@ -133,7 +142,7 @@ internal sealed class MainWindow : Window
         bar.Children.Add(remove);
         bar.Children.Add(new TextBlock
         {
-            Text = "ダブルクリックで本文を編集 / Delete で削除 / 方向キーで移動",
+            Text = "右クリックで外観・書式を編集 / ダブルクリックで本文 / Delete で削除 / 方向キーで移動",
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(12, 0, 0, 0),
             Opacity = 0.7,
@@ -188,6 +197,22 @@ internal sealed class MainWindow : Window
             }
         };
 
+        // 選択範囲をコントロールへ写す（右クリックの書式編集がこの範囲へ適用される）。
+        // TextBox の選択はプロパティで公開されているため、入力・キー操作のたびに読み直す。
+        void SyncSelection()
+            => _layer.TextSelectionRange = (editor.SelectionStart, editor.SelectionEnd - editor.SelectionStart);
+
+        editor.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == TextBox.SelectionStartProperty || e.Property == TextBox.SelectionEndProperty)
+            {
+                SyncSelection();
+            }
+        };
+        editor.KeyUp += (_, _) => SyncSelection();
+        editor.PointerReleased += (_, _) => SyncSelection();
+        SyncSelection();
+
         _overlay.Children.Add(editor);
         _editor = editor;
         editor.Focus();
@@ -208,6 +233,7 @@ internal sealed class MainWindow : Window
         {
             _layer.SelectedId = _editingId;
             _layer.SetSelectedText(text);
+            _layer.TextSelectionRange = default;
             _editingId = null;
         }
     }

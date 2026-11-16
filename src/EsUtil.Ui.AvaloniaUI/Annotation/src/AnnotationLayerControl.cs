@@ -11,12 +11,16 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 
 /// <summary>画像の上へ注釈（枠線・吹き出し）を重ねるレイヤー コントロール（Avalonia UI 版）。</summary>
 /// <remarks>
-/// <b>役割</b>: 画像の表示・注釈の描画・入力の受付を担う。 判断（当たり判定・折り返し・描画計画）は
-/// <c>EsUtil.Feature.Annotation</c> が単一所有し、本クラスは自 UI の描画 API へ写すだけである。<br/>
-/// <b>選択枠とハンドルは Marquee の提示層を再利用する</b>（枠・ハンドル・nudge・カーソルを 4 つの UI 版で揃えるため）。<br/>
+/// <b>役割</b>: 画像の表示・注釈の描画・入力の受付・外観と書式の編集を担う。 判断（当たり判定・折り返し・
+/// 描画計画）は <c>EsUtil.Feature.Annotation</c> が単一所有し、本クラスは自 UI の描画 API へ写すだけである。<br/>
+/// <b>選択枠と 8 方向のハンドルは Marquee の提示層を再利用する</b>（枠・ハンドル・nudge・カーソルを 4 つの UI 版で揃えるため）。
+/// ハンドルの当たり判定も <b>同じ解決結果（<c>MarqueeDrawPlan</c>）と <c>HandleHitRadius</c> を使う</b>ため、
+/// 「カーソルが変わる範囲」と「押して操作できる範囲」が一致する。<br/>
 /// <b>本文の編集はホストが行う</b>: ダブルクリックで <see cref="EditTextRequested"/> を発生させ、ホストが入力欄を
-/// 重ねる（コントロールは子要素を持たないため、入力欄の生成は UI 版のホストの仕事にする）。 確定した文字列は
-/// <see cref="SetSelectedText"/> で戻す。<br/>
+/// 重ねる（コントロールは子要素を持たないため）。 確定した文字列は <see cref="SetSelectedText"/> で戻し、
+/// 書式は <see cref="TextSelectionRange"/> と <see cref="ApplyTextStyle"/> で文字単位に適用する。<br/>
+/// <b>外観と書式の編集は右クリックのフライアウト</b>（<see cref="ShowStyleEditor"/>）で行う。 サンプルは同じ編集 UI を
+/// 設定ペインから使える（既定値の編集）。<br/>
 /// <b>座標</b>: 注釈は元画像ピクセルで保持し、描画時は表示倍率で写す（画像へ焼き込まない）。
 /// </remarks>
 public sealed class AnnotationLayerControl : Control
@@ -37,6 +41,9 @@ public sealed class AnnotationLayerControl : Control
     /// <summary>選択中の注釈の識別子を取得または設定する。</summary>
     public static readonly StyledProperty<string?> SelectedIdProperty =
         AvaloniaProperty.Register<AnnotationLayerControl, string?>(nameof(SelectedId));
+
+    /// <summary>しっぽのハンドルの半径（DIP。 描画と当たり判定で同じ値を使う）。</summary>
+    private const double TailHandleRadiusDip = AnnotationHitTest.TailHandleRadiusDefault;
 
     /// <summary>注釈の描画計画を解決する提示層。</summary>
     private readonly AnnotationPresenter _presenter = new();
@@ -65,6 +72,9 @@ public sealed class AnnotationLayerControl : Control
 
     /// <summary>最後に観測したポインター位置（元画像ピクセル。 nudge の起点に使う）。</summary>
     private EsPoint _lastPointerSource;
+
+    /// <summary>外観・書式の編集フライアウト（開いている間だけ保持する）。</summary>
+    private Flyout? _flyout;
 
     /// <summary>注釈レイヤーを初期化する。</summary>
     public AnnotationLayerControl()
@@ -123,6 +133,61 @@ public sealed class AnnotationLayerControl : Control
         }
     }
 
+    /// <summary>新規作成時の既定値を取得または設定する。</summary>
+    /// <value>枠線・吹き出し・本文の既定。 既定は <see cref="AnnotationDraftDefaults.Default"/>。</value>
+    /// <remarks>
+    /// <b>既存の注釈には影響しない</b>（各注釈が自分の外観・書式を持つ）。 設定ページやサンプルの設定ペインから変える。
+    /// </remarks>
+    public AnnotationDraftDefaults DraftDefaults { get; set; } = AnnotationDraftDefaults.Default;
+
+    /// <summary>行間の倍率を取得または設定する。</summary>
+    /// <value>文字の実寸の高さに対する行の高さの比。 既定は 1.25。</value>
+    public double LineHeightFactor
+    {
+        get => _presenter.LineHeightFactor;
+        set
+        {
+            _presenter.LineHeightFactor = value;
+            InvalidateVisual();
+        }
+    }
+
+    /// <summary>本文の書式を適用する範囲（文字数）を取得または設定する。</summary>
+    /// <value>開始位置と長さ（0 起点）。 長さ 0 は「全体」を表す。</value>
+    /// <remarks>
+    /// 本文の入力欄はホストが持つため、入力欄の選択範囲をホストがここへ写す。
+    /// 右クリックのフライアウトと <see cref="ApplyTextStyle"/> は本値の範囲へ適用する。
+    /// </remarks>
+    public (int Start, int Length) TextSelectionRange { get; set; }
+
+    /// <summary>選択枠のハンドルを掴む半径（DIP）を取得または設定する。</summary>
+    /// <value>ハンドルの中心からの距離。 既定は 12。</value>
+    /// <remarks>
+    /// <b>描画（カーソルの変化）と押下の当たり判定が同じ値を使う</b>（Marquee の <c>HandleHitRadius</c>）。
+    /// 見えているハンドルの大きさは <see cref="HandleSize"/> で別に決める。
+    /// </remarks>
+    public double HandleHitRadius
+    {
+        get => _marquee.Options.HandleHitRadius;
+        set
+        {
+            _marquee.Options = _marquee.Options with { HandleHitRadius = value };
+            InvalidateVisual();
+        }
+    }
+
+    /// <summary>選択枠のハンドルの一辺の大きさ（DIP）を取得または設定する。</summary>
+    /// <value>既定は 10。</value>
+    public double HandleSize
+    {
+        get => _marquee.Options.HandleSize;
+        set
+        {
+            _marquee.Options = _marquee.Options with { HandleSize = value };
+            InvalidateVisual();
+        }
+    }
+
     /// <summary>文書が変わったときに発生する。</summary>
     /// <remarks>保存（注釈ファイルの書き出し）はホストが行う（本クラスはファイルへ書かない）。</remarks>
     public event EventHandler? DocumentChanged;
@@ -130,16 +195,28 @@ public sealed class AnnotationLayerControl : Control
     /// <summary>選択が変わったときに発生する。</summary>
     public event EventHandler? SelectionChanged;
 
-    /// <summary>本文の編集が要求されたときに発生する（ダブルクリック）。</summary>
+    /// <summary>本文の編集が要求されたときに発生する（ダブルクリック・Enter）。</summary>
     /// <remarks>ホストは <see cref="GetSelectedBodyRect"/> の位置へ入力欄を置き、確定した文字列を <see cref="SetSelectedText"/> へ渡す。</remarks>
     public event EventHandler? EditTextRequested;
+
+    /// <summary>選択中の注釈を取得する。</summary>
+    /// <value>選択が無い場合は <see langword="null"/>。</value>
+    public AnnotationItem? Selected => SelectedId is null ? null : _document.Find(SelectedId);
+
+    /// <summary>選択中の吹き出しの本文の書式（選択範囲の先頭の文字）を取得する。</summary>
+    /// <value>選択が吹き出しでない場合は <see cref="AnnotationDefaults.TextStyle"/>。</value>
+    /// <remarks>フライアウトの初期表示に使う。</remarks>
+    public AnnotationTextStyle SelectedTextStyle
+        => Selected is BubbleAnnotation bubble
+            ? bubble.Text.StyleAt(TextSelectionRange.Length <= 0 ? 0 : TextSelectionRange.Start)
+            : AnnotationDefaults.TextStyle;
 
     /// <summary>枠線の注釈を追加する。</summary>
     /// <param name="bounds">矩形（元画像ピクセル）。</param>
     /// <returns>追加した注釈の識別子。</returns>
     public string AddFrame(EsRect bounds)
     {
-        var frame = new FrameAnnotation { Bounds = bounds, Appearance = AnnotationDefaults.FrameAppearance };
+        var frame = new FrameAnnotation { Bounds = bounds, Appearance = DraftDefaults.FrameAppearance };
         _document = _document.Add(frame);
         RaiseDocumentChanged();
         Select(frame.Id);
@@ -153,12 +230,18 @@ public sealed class AnnotationLayerControl : Control
     /// <remarks>しっぽの先端は本体の下辺の中央から 40 px 下に置く（追加後すぐ掴めるようにする）。</remarks>
     public string AddBubble(EsRect bounds, string text)
     {
+        var defaults = DraftDefaults;
         var bubble = new BubbleAnnotation
         {
             Bounds = bounds,
-            Appearance = AnnotationDefaults.BubbleAppearance,
-            Text = RichText.Create(text, AnnotationDefaults.TextStyle),
-            Tail = new BubbleTail(new EsPoint(bounds.Center.X, bounds.Bottom + 40)),
+            Appearance = defaults.BubbleAppearance,
+            BodyPadding = defaults.BodyPadding,
+            Text = RichText.Create(text, defaults.TextStyle),
+            Tail = new BubbleTail(
+                new EsPoint(bounds.Center.X, bounds.Bottom + 40),
+                defaults.TailEdge,
+                AnnotationDefaults.TailBaseOffsetDefault,
+                defaults.TailWidth),
         };
 
         _document = _document.Add(bubble);
@@ -185,19 +268,139 @@ public sealed class AnnotationLayerControl : Control
     /// <summary>選択中の吹き出しの本文を置き換える。</summary>
     /// <param name="text">新しい本文（明示改行は <c>\n</c>）。</param>
     /// <returns>置き換えた場合は <see langword="true"/>。</returns>
-    /// <remarks>書式は既存の先頭 run のものを引き継ぐ（文字単位の書式の編集は後段で対応する）。</remarks>
+    /// <remarks>
+    /// <b>書式は文字位置で引き継ぐ</b>: 先頭から同じ長さの範囲は元の run の書式を保ち、増えた部分は先頭 run の書式にする
+    /// （編集のたびにすべての書式が消えないようにする）。
+    /// </remarks>
     public bool SetSelectedText(string text)
     {
-        if (SelectedId is null || _document.Find(SelectedId) is not BubbleAnnotation bubble)
+        if (Selected is not BubbleAnnotation bubble)
         {
             return false;
         }
 
-        var style = bubble.Text.Runs.FirstOrDefault()?.Style ?? AnnotationDefaults.TextStyle;
-        _document = _document.WithText(bubble, RichText.Create(text, style));
+        _document = _document.WithText(bubble, bubble.Text.WithPlainText(text));
         RaiseDocumentChanged();
         InvalidateVisual();
         return true;
+    }
+
+    /// <summary>選択中の吹き出しの本文へ書式を適用する（<see cref="TextSelectionRange"/> の範囲）。</summary>
+    /// <param name="style">適用する書式。</param>
+    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    /// <remarks>長さ 0 は「全体」へ適用する。 文字単位の書式は run の分割で表す（コアが単一所有する）。</remarks>
+    public bool ApplyTextStyle(AnnotationTextStyle style)
+    {
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        var range = EffectiveTextRange();
+        _document = _document.WithText(bubble, bubble.Text.ApplyStyle(range.Start, range.Length, style));
+        RaiseDocumentChanged();
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>選択中の吹き出しの書式をまとめて差し替える（現在の書式の一部だけを変える）。</summary>
+    /// <param name="transform">現在の書式を受け取って新しい書式を返す関数。</param>
+    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    public bool UpdateTextStyle(Func<AnnotationTextStyle, AnnotationTextStyle> transform)
+    {
+        ArgumentNullException.ThrowIfNull(transform);
+        return ApplyTextStyle(transform(SelectedTextStyle));
+    }
+
+    /// <summary>選択中の注釈の外観を差し替える。</summary>
+    /// <param name="transform">現在の外観を受け取って新しい外観を返す関数。</param>
+    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    public bool UpdateSelectedAppearance(Func<AnnotationAppearance, AnnotationAppearance> transform)
+    {
+        ArgumentNullException.ThrowIfNull(transform);
+
+        if (Selected is not { } item)
+        {
+            return false;
+        }
+
+        item.Appearance = transform(item.Appearance).Normalized();
+        RaiseDocumentChanged();
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>選択中の吹き出しの本文の余白を差し替える。</summary>
+    /// <param name="padding">本文の余白（元画像ピクセル）。</param>
+    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    public bool SetSelectedBodyPadding(double padding)
+    {
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        bubble.BodyPadding = AnnotationLimits.CoerceBodyPadding(padding);
+        RaiseDocumentChanged();
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>選択中の吹き出しのしっぽの太さ・辺を差し替える。</summary>
+    /// <param name="transform">現在のしっぽを受け取って新しいしっぽを返す関数。</param>
+    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    public bool UpdateSelectedTail(Func<BubbleTail, BubbleTail> transform)
+    {
+        ArgumentNullException.ThrowIfNull(transform);
+
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        bubble.Tail = transform(bubble.Tail).Normalized();
+        RaiseDocumentChanged();
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>選択中の注釈を最前面へ移す。</summary>
+    /// <returns>移した場合は <see langword="true"/>。</returns>
+    public bool MoveSelectedToFront()
+    {
+        if (SelectedId is not { } id)
+        {
+            return false;
+        }
+
+        _document = _document.BringToFront(id);
+        RaiseDocumentChanged();
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>選択中の注釈を最背面へ移す。</summary>
+    /// <returns>移した場合は <see langword="true"/>。</returns>
+    public bool MoveSelectedToBack()
+    {
+        if (SelectedId is not { } id)
+        {
+            return false;
+        }
+
+        _document = _document.SendToBack(id);
+        RaiseDocumentChanged();
+        InvalidateVisual();
+        return true;
+    }
+
+    /// <summary>外観と書式の編集フライアウトを表示する（右クリック）。</summary>
+    /// <remarks>選択中の注釈を編集する。 項目は枠線・吹き出しの外観、本文の書式、重なり順である。</remarks>
+    public void ShowStyleEditor()
+    {
+        _flyout?.Hide();
+        _flyout = AnnotationStyleFlyout.Create(this);
+        _flyout.ShowAt(this, showAtPointer: true);
     }
 
     /// <summary>選択中の吹き出しの本文の矩形（DIP）を取得する。</summary>
@@ -205,7 +408,7 @@ public sealed class AnnotationLayerControl : Control
     /// <remarks>ホストが入力欄を重ねる位置に使う（コントロールは子要素を持たない）。</remarks>
     public Rect GetSelectedBodyRect()
     {
-        if (SelectedId is null || _document.Find(SelectedId) is not BubbleAnnotation bubble)
+        if (Selected is not BubbleAnnotation bubble)
         {
             return default;
         }
@@ -216,6 +419,19 @@ public sealed class AnnotationLayerControl : Control
         return new Rect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 
+    /// <summary>しっぽのハンドルの中心（DIP）を取得する（描画と当たり判定で共有する）。</summary>
+    /// <returns>中心（DIP）。 吹き出しを選んでいない場合は <see langword="null"/>。</returns>
+    internal Point? GetTailHandleCenterDip()
+    {
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return null;
+        }
+
+        var tip = ToClientDip(bubble.Tail.Tip);
+        return new Point(tip.X, tip.Y);
+    }
+
     /// <summary>Marquee のカーソル形状を適用する。</summary>
     /// <param name="kind">カーソル種別。</param>
     internal void ApplyCursor(MarqueeCursorKind kind)
@@ -224,7 +440,14 @@ public sealed class AnnotationLayerControl : Control
     /// <summary>Marquee の要求でポインター キャプチャを取得する（押下時にコントロールが取得済みのため何もしない）。</summary>
     internal void CapturePointerForMarquee() => _ = this;
 
-    /// <summary>コントロールの寸法が変わったら選択枠を追従させる。</summary>
+    /// <summary>文書が変わったことを通知する（フライアウトの編集結果もホストへ伝える）。</summary>
+    internal void NotifyDocumentChanged()
+    {
+        RaiseDocumentChanged();
+        InvalidateVisual();
+    }
+
+    /// <summary>コントロールの寸法が変わったら再描画する。</summary>
     /// <param name="e">サイズ変更の引数。</param>
     protected override void OnSizeChanged(SizeChangedEventArgs e)
     {
@@ -232,7 +455,7 @@ public sealed class AnnotationLayerControl : Control
         InvalidateVisual();
     }
 
-    /// <summary>描画する（画像 → 注釈 → 選択枠の順）。</summary>
+    /// <summary>描画する（画像 → 注釈 → 選択枠 → しっぽのハンドルの順）。</summary>
     /// <param name="context">描画先。</param>
     public override void Render(DrawingContext context)
     {
@@ -260,15 +483,24 @@ public sealed class AnnotationLayerControl : Control
         }
 
         DrawSelection(context);
+        DrawTailHandle(context);
     }
 
-    /// <summary>ポインターが押されたときの処理。</summary>
+    /// <summary>ポインターが押されたときの処理（左: 選択・移動・サイズ変更。 右: 編集メニュー）。</summary>
     /// <param name="e">ポインターの引数。</param>
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
 
         var point = e.GetCurrentPoint(this);
+
+        if (point.Properties.IsRightButtonPressed)
+        {
+            HandleRightButton(point.Position);
+            e.Handled = true;
+            return;
+        }
+
         if (!point.Properties.IsLeftButtonPressed)
         {
             return;
@@ -278,13 +510,24 @@ public sealed class AnnotationLayerControl : Control
         e.Pointer.Capture(this);
 
         var source = ToSource(point.Position);
-        if (SelectedId is not null
-            && _document.Find(SelectedId) is BubbleAnnotation selected
-            && IsNearTailTip(selected, source))
+
+        if (Selected is not null)
         {
-            _isDraggingTail = true;
-            InvalidateVisual();
-            return;
+            if (Selected is BubbleAnnotation selectedBubble && IsNearTailTip(selectedBubble, source))
+            {
+                _isDraggingTail = true;
+                InvalidateVisual();
+                return;
+            }
+
+            // ハンドルの当たり判定（カーソルが変わる範囲と同じ判定）を注釈の当たり判定より先に見る。
+            // ここを飛ばすと、ハンドルの外周を押したときに「注釈の外側」と判定されて選択が解除される。
+            if (HitsSelectionHandle(point.Position))
+            {
+                _marquee.Press(source, e.ClickCount);
+                InvalidateVisual();
+                return;
+            }
         }
 
         if (AnnotationHitTest.HitTest(_document, source) is { } hit)
@@ -309,17 +552,19 @@ public sealed class AnnotationLayerControl : Control
         InvalidateVisual();
     }
 
-    /// <summary>ポインターが動いたときの処理。</summary>
+    /// <summary>ポインターが動いたときの処理（ドラッグとカーソル形状）。</summary>
     /// <param name="e">ポインターの引数。</param>
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
 
-        var source = ToSource(e.GetPosition(this));
+        var position = e.GetPosition(this);
+        var source = ToSource(position);
         _lastPointerSource = source;
+
         if (_isDraggingTail)
         {
-            if (SelectedId is not null && _document.Find(SelectedId) is BubbleAnnotation bubble)
+            if (Selected is BubbleAnnotation bubble)
             {
                 bubble.Tail = bubble.Tail with { Tip = source };
                 RaiseDocumentChanged();
@@ -330,6 +575,13 @@ public sealed class AnnotationLayerControl : Control
         }
 
         _marquee.Move(source);
+
+        // しっぽのハンドルの上では専用のカーソルにする（Marquee の Move が設定した形状を上書きする）
+        if (Selected is BubbleAnnotation selectedBubble && IsNearTailTip(selectedBubble, source))
+        {
+            Cursor = new Cursor(StandardCursorType.Hand);
+        }
+
         InvalidateVisual();
     }
 
@@ -376,6 +628,61 @@ public sealed class AnnotationLayerControl : Control
         }
     }
 
+    /// <summary>右クリックを処理する（選択してから編集メニューを出す）。</summary>
+    /// <param name="position">位置（DIP）。</param>
+    private void HandleRightButton(Point position)
+    {
+        var source = ToSource(position);
+        if (AnnotationHitTest.HitTest(_document, source) is { } hit
+            && !string.Equals(SelectedId, hit.Id, StringComparison.Ordinal))
+        {
+            Select(hit.Id);
+        }
+
+        if (Selected is null)
+        {
+            return;
+        }
+
+        Focus();
+        ShowStyleEditor();
+    }
+
+    /// <summary>選択中の注釈のいずれかのハンドル（8 方向）の当たり判定に含まれるかどうかを判定する。</summary>
+    /// <param name="dip">位置（DIP）。</param>
+    /// <returns>ハンドルの範囲内の場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>Marquee と同じ判定にする</b>: ハンドルの中心は <c>MarqueeDrawPlan.Handles</c> の矩形の中心、半径は
+    /// <c>MarqueeOptions.HandleHitRadius</c>（DIP）を使う。 中心や半径を自前で計算すると、カーソルが変わる範囲と
+    /// 押して操作できる範囲がずれる（実測: ハンドルの外周を押すと選択が解除されていた）。
+    /// </remarks>
+    private bool HitsSelectionHandle(Point dip)
+    {
+        var plan = _marquee.ResolveDrawPlan(
+            new EsSize(Bounds.Width, Bounds.Height), (text, size) => new EsSize(text.Length * size * 0.5, size));
+        if (plan.Handles is not { } handles)
+        {
+            return false;
+        }
+
+        var radius = _marquee.Options.HandleHitRadius;
+        var squared = radius * radius;
+        for (var i = 0; i < MarqueeHandleRects.Count; i++)
+        {
+            var rect = handles.HandleDipRects[i];
+            var centerX = rect.X + (rect.Width / 2);
+            var centerY = rect.Y + (rect.Height / 2);
+            var dx = centerX - dip.X;
+            var dy = centerY - dip.Y;
+            if ((dx * dx) + (dy * dy) <= squared)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>本文の実寸を測る（フォントの実寸に依存する部分だけを UI が担う）。</summary>
     /// <param name="text">文字列。</param>
     /// <param name="style">書式。</param>
@@ -384,6 +691,14 @@ public sealed class AnnotationLayerControl : Control
     {
         var formatted = AnnotationPainter.CreateText(text, style);
         return new EsSize(formatted.Width, formatted.Height);
+    }
+
+    /// <summary>書式を適用する範囲を求める（長さ 0 は全体）。</summary>
+    /// <returns>開始位置と長さ。</returns>
+    private (int Start, int Length) EffectiveTextRange()
+    {
+        var range = TextSelectionRange;
+        return range.Length <= 0 ? (0, 0) : (Math.Max(0, range.Start), range.Length);
     }
 
     /// <summary>画像の表示倍率と位置を求める（縦横比を保って中央に置く）。</summary>
@@ -432,6 +747,7 @@ public sealed class AnnotationLayerControl : Control
     private void Select(string? id)
     {
         SelectedId = id;
+        TextSelectionRange = default;
         if (id is null || _document.Find(id) is not { } item)
         {
             _marquee.ResetSelection();
@@ -494,7 +810,8 @@ public sealed class AnnotationLayerControl : Control
             return;
         }
 
-        var plan = _marquee.ResolveDrawPlan(new EsSize(Bounds.Width, Bounds.Height), (text, size) => new EsSize(text.Length * size * 0.5, size));
+        var plan = _marquee.ResolveDrawPlan(
+            new EsSize(Bounds.Width, Bounds.Height), (text, size) => new EsSize(text.Length * size * 0.5, size));
         if (plan.Appearance.ShowBorder)
         {
             var brush = AnnotationPainter.ToBrush(plan.Appearance.BorderColor);
@@ -518,6 +835,28 @@ public sealed class AnnotationLayerControl : Control
         }
     }
 
+    /// <summary>しっぽのハンドル（円）を描く。</summary>
+    /// <param name="context">描画先。</param>
+    /// <remarks>
+    /// <b>当たり判定と同じ半径で描く</b>（<see cref="TailHandleRadiusDip"/>）。 表示倍率の影響を受けないよう、
+    /// 注釈の座標変換の外（DIP）で描く。
+    /// </remarks>
+    private void DrawTailHandle(DrawingContext context)
+    {
+        if (GetTailHandleCenterDip() is not { } center)
+        {
+            return;
+        }
+
+        var fill = new SolidColorBrush(Color.FromArgb(200, 255, 255, 255));
+        var pen = new Pen(new SolidColorBrush(Color.FromArgb(255, 220, 38, 38)), 1.5);
+        context.DrawEllipse(fill, pen, center, TailHandleRadiusDip, TailHandleRadiusDip);
+
+        // 中心の点（先端の位置を読み取りやすくする）
+        context.DrawEllipse(
+            new SolidColorBrush(Color.FromArgb(255, 220, 38, 38)), null, center, 1.5, 1.5);
+    }
+
     /// <summary>Avalonia のキーをコアのキーへ写す（nudge に使う 4 方向だけ）。</summary>
     /// <param name="key">Avalonia のキー。</param>
     /// <returns>コアのキー。 対象外は <see cref="EsUtil.Platform.Core.Input.EsKey.None"/>。</returns>
@@ -530,15 +869,15 @@ public sealed class AnnotationLayerControl : Control
         _ => EsUtil.Platform.Core.Input.EsKey.None,
     };
 
-    /// <summary>しっぽの先端の近くかどうかを判定する。</summary>
+    /// <summary>しっぽの先端の近くかどうかを判定する（描画したハンドルと同じ半径）。</summary>
     /// <param name="bubble">対象の吹き出し。</param>
     /// <param name="source">位置（元画像ピクセル）。</param>
     /// <returns>近くの場合は <see langword="true"/>。</returns>
-    /// <remarks>掴む半径は元画像ピクセルで一定にする（表示倍率が変わっても画面上の掴みやすさを保つ）。</remarks>
+    /// <remarks>半径は画面上で一定（DIP）にするため、表示倍率で割った値を対象座標の半径として使う。</remarks>
     private bool IsNearTailTip(BubbleAnnotation bubble, EsPoint source)
     {
         var (scale, _) = ResolveImageTransform();
-        var radius = AnnotationHitTest.TailHandleRadiusDefault / Math.Max(scale, 0.0001);
+        var radius = TailHandleRadiusDip / Math.Max(scale, 0.0001);
         var dx = bubble.Tail.Tip.X - source.X;
         var dy = bubble.Tail.Tip.Y - source.Y;
         return (dx * dx) + (dy * dy) <= radius * radius;

@@ -10,7 +10,11 @@ namespace EsUtil.Feature.Annotation;
 /// </remarks>
 public static class AnnotationHitTest
 {
-    /// <summary>しっぽの先端を掴むための既定の半径（元画像ピクセル）を取得する。</summary>
+    /// <summary>しっぽの先端を掴むための既定の半径を取得する。</summary>
+    /// <remarks>
+    /// <b>呼び出し側の座標系で解釈する</b>: UI は画面上で一定の大きさ（DIP）で掴めるよう、
+    /// 表示倍率で割った値を対象座標の半径として渡す（<see cref="HitTestTail"/> の <c>radius</c>）。
+    /// </remarks>
     public const double TailHandleRadiusDefault = 10.0;
 
     /// <summary>指定された位置にある最も前面の注釈を取得する。</summary>
@@ -37,7 +41,7 @@ public static class AnnotationHitTest
     /// <summary>指定された位置にあるしっぽの先端を持つ吹き出しを取得する。</summary>
     /// <param name="document">対象の文書。</param>
     /// <param name="point">位置（元画像ピクセル）。</param>
-    /// <param name="radius">掴む半径（元画像ピクセル）。 0 以下は <see cref="TailHandleRadiusDefault"/>。</param>
+    /// <param name="radius">掴む半径（<paramref name="point"/> と同じ座標系）。 0 以下は <see cref="TailHandleRadiusDefault"/>。</param>
     /// <returns>見つかった吹き出し。 無い場合は <see langword="null"/>。</returns>
     /// <remarks>
     /// <b>先端は本体より優先する</b>（本体の内側にある先端も掴めるようにするため、本体の判定より先に使う）。

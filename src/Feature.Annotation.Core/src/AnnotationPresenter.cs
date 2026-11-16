@@ -21,7 +21,7 @@ public sealed class AnnotationPresenter
 
     /// <summary>行間の倍率を取得または設定する。</summary>
     /// <value>文字の実寸の高さに対する行の高さの比。 既定は <see cref="LineHeightFactorDefault"/>。</value>
-    public double LineHeightFactor { get; init; } = LineHeightFactorDefault;
+    public double LineHeightFactor { get; set; } = LineHeightFactorDefault;
 
     /// <summary>描画計画を解決する。</summary>
     /// <param name="document">対象の文書。</param>

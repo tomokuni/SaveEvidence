@@ -114,6 +114,26 @@ public sealed class AnnotationDocument
         return -1;
     }
 
+    /// <summary>指定された注釈を最前面へ移した新しい文書を返す。</summary>
+    /// <param name="id">対象の注釈の識別子。</param>
+    /// <returns>移動後の文書（見つからない場合は元の文書と同じ内容）。</returns>
+    public AnnotationDocument BringToFront(string id)
+    {
+        var index = IndexOf(id);
+        return index < 0 || index == Items.Length - 1
+            ? this
+            : WithItems(Items.RemoveAt(index).Add(Items[index]));
+    }
+
+    /// <summary>指定された注釈を最背面へ移した新しい文書を返す。</summary>
+    /// <param name="id">対象の注釈の識別子。</param>
+    /// <returns>移動後の文書（見つからない場合は元の文書と同じ内容）。</returns>
+    public AnnotationDocument SendToBack(string id)
+    {
+        var index = IndexOf(id);
+        return index <= 0 ? this : WithItems(Items.RemoveAt(index).Insert(0, Items[index]));
+    }
+
     /// <summary>注釈の並びだけを差し替えた複製を返す。</summary>
     /// <param name="items">新しい並び。</param>
     /// <returns>複製。</returns>
