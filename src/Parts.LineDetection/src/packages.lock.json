@@ -4,9 +4,9 @@
     "net11.0-windows10.0.17763": {
       "EsUtil.Platform.Core": {
         "type": "Direct",
-        "requested": "[0.8.2, )",
-        "resolved": "0.8.2",
-        "contentHash": "tOqspD4PkxYJutcoFDwYtSkiFKeS8xGYkW8dLXC0FHGWwAKF65l9WKpq4bv45WM49nf1M3lUyIt79x/lPvG8Yw=="
+        "requested": "[0.8.4, )",
+        "resolved": "0.8.4",
+        "contentHash": "LP4EplwhoWb6IZREqmikOyu/BI+RpHbopljWqfwk7WJ3OPrLGOdgGX8eyjznUntbbiHc3aHpfEiOeMT2yYoEGw=="
       },
       "Meziantou.Analyzer": {
         "type": "Direct",

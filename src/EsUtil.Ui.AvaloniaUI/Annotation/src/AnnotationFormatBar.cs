@@ -23,8 +23,8 @@ internal sealed class AnnotationFormatBar : Border
     /// <summary>バーの幅（DIP。画像の内側へ収める計算に使う）。</summary>
     internal const double BarWidth = 720;
 
-    /// <summary>色の選択の幅（DIP。「■ + 色名」が入り、16 進や色名の直接入力もできる幅）。</summary>
-    internal const double ColorSelectorWidth = 140;
+    /// <summary>色の選択の幅（DIP。「■ + 全角 4 文字の色名」が入る幅。 16 色のうち最も長い色名で決める）。</summary>
+    internal const double ColorSelectorWidth = 112;
 
     /// <summary>バーのおおよその高さ（DIP。本文の上へ置く位置の計算に使う）。</summary>
     internal const double EstimatedHeight = 64;
@@ -62,6 +62,9 @@ internal sealed class AnnotationFormatBar : Border
     /// <summary>代表色の並べ方（色名付きの一覧 / 色の四角だけを 6 列）。</summary>
     private ColorSelectorTabLayout _paletteLayout = ColorSelectorTabLayout.List;
 
+    /// <summary>書式バーに出す代表色の組。</summary>
+    private AnnotationPaletteKind _palette = AnnotationPaletteKind.Representative;
+
     /// <summary>書式バーを初期化する。</summary>
     /// <param name="layer">編集対象のコントロール。</param>
     /// <param name="close">編集を終える処理。</param>
@@ -94,7 +97,7 @@ internal sealed class AnnotationFormatBar : Border
         };
 
         // 代表色のタブとカラーピッカーのタブを出す（既存のタブは出さない。 タブが 1 つなら題名も出さない）
-        AnnotationPalette.Configure(_color, _paletteLayout, showPicker: true);
+        ConfigurePalette();
         _color.PropertyChanged += (_, e) =>
         {
             if (e.Property == ColorSelectorControl.SelectedColorProperty)
@@ -206,9 +209,29 @@ internal sealed class AnnotationFormatBar : Border
             }
 
             _paletteLayout = value;
-            AnnotationPalette.Configure(_color, value, showPicker: true);
+            ConfigurePalette();
         }
     }
+
+    /// <summary>書式バーに出す代表色の組を取得または設定する（代表色 1 / 代表色 2）。</summary>
+    /// <value>既定は代表色 1（<see cref="AnnotationPaletteKind.Representative"/>）。</value>
+    public AnnotationPaletteKind Palette
+    {
+        get => _palette;
+        set
+        {
+            if (_palette == value)
+            {
+                return;
+            }
+
+            _palette = value;
+            ConfigurePalette();
+        }
+    }
+
+    /// <summary>代表色の組と並べ方を色の選択へ反映する。</summary>
+    private void ConfigurePalette() => AnnotationPalette.Configure(_color, _palette, _paletteLayout, showPicker: true);
 
     /// <summary>バーの中で Enter が押されたら、大きさと色を今の値で適用する。</summary>
     /// <param name="sender">送信元。</param>

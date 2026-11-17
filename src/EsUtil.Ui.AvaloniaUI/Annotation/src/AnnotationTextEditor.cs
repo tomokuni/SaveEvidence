@@ -94,6 +94,14 @@ public sealed class AnnotationTextEditor : Panel
         set => _formatBar.PaletteLayout = value;
     }
 
+    /// <summary>書式バーに出す代表色の組を取得または設定する（代表色 1 / 代表色 2）。</summary>
+    /// <value>既定は代表色 1（<see cref="AnnotationPaletteKind.Representative"/>）。</value>
+    public AnnotationPaletteKind Palette
+    {
+        get => _formatBar.Palette;
+        set => _formatBar.Palette = value;
+    }
+
     /// <summary>子要素の寸法を測る。</summary>
     /// <param name="availableSize">使える領域。</param>
     /// <returns>必要な寸法（レイヤーの希望寸法）。</returns>

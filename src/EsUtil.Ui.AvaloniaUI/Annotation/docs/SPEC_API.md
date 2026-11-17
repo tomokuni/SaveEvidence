@@ -17,6 +17,7 @@
 | `Layer` | property | 内側の `AnnotationLayerControl`（画像・文書・選択・元に戻すはここから操作する） |
 | `IsEditingText` | property | 本文を編集中かどうか（編集中は書式バーが出ている） |
 | `PaletteLayout` | property | 書式バーの代表色の並べ方（`ColorSelectorTabLayout.List` = 色名の一覧 / `Grid` = 色の四角だけを 6 列。 既定は一覧） |
+| `Palette` | property | 書式バーに出す代表色の組（`AnnotationPaletteKind.Representative` = 代表色 1 / `Accent` = 代表色 2。 既定は代表色 1） |
 
 - **書式バーは内側で出し入れします**（`Layer.EditingChanged` を購読する）。 ホストがバーを置く必要はありません。
 - **配置**: レイヤーは与えられた領域いっぱい、書式バーは**本文の矩形の上**（上・左右にはみ出すときは内側へ寄せる）。
@@ -84,6 +85,8 @@
 | `Heading(text)` | method | 見出しを作る |
 | `Label(text)` | method | 項目名のラベルを作る |
 | `ColorRow(label, initial, apply)` | method | 色の行を作る（**`ColorSelectorControl` を使う**。 幅は `ColorSelectorWidth` へ固定する。 `apply` へは検証済みの色だけを渡す） |
+| `ColorRow(label, selector, apply)` | method | 構成済みの色の選択を並べた行を作る（タブの構成を呼び出し側が決めるときに使う） |
+| `CreateSelector(initial, kind, layout, allPalettes)` | method | 注釈向けに構成した色の選択を作る（`allPalettes` は代表色 1・2 + 標準のタブ。 設定画面向け） |
 | `NumberRow(label, initial, minimum, maximum, apply, increment)` | method | 数値の行を作る（`NumericUpDown`） |
 | `ChoiceRow(label, options, selectedIndex, apply)` | method | 選択肢の行を作る（`ComboBox`） |
 | `Toggle(text, isChecked, apply, bold, italic, underline, strike)` | method | 装飾の切り替え（B / I / U / S）を作る |
@@ -102,15 +105,21 @@
 
 ## 5. `AnnotationPalette`（静的クラス）
 
-注釈の色選択で使う**代表色（色名付きの 16 色）**です。
+注釈の色選択で使う**代表色（色名付きの 16 色 × 2 組）**です。
 
 | メンバー | 種別 | 説明 |
 | --- | --- | --- |
-| `RepresentativeColors` | property | 代表色の並び（`IReadOnlyList<ColorSelectorCustomColor>`。 無彩色 → 暖色 → 寒色の順） |
+| `RepresentativeColors` | property | 代表色 1 の並び（`IReadOnlyList<ColorSelectorCustomColor>`。 無彩色 → 暖色 → 寒色の順） |
+| `AccentColors` | property | 代表色 2 の並び（和名の 16 色。 **代表色 1 と重ならない色**） |
+| `GetColors(kind)` / `GetTitle(kind)` | method | 組（`AnnotationPaletteKind`）から色の並び・タブの題名（`代表色１` / `代表色２`）を取得する |
+| `CreateTab(kind, layout)` | method | 代表色のタブの定義を作る（並べ方は一覧 / 色の四角 6 列） |
+| `CreateAllTabs(layout)` | method | 代表色 1 と代表色 2 のタブの定義を作る（設定画面向け） |
+| `ConfigureAll(selector, layout)` | method | 色の選択を「代表色 1・代表色 2 + テーマカラー・色名・ColorPicker」の構成にする（設定画面向け。 題名も出す） |
 | `GetHex(name)` / `TryGetColor(name, out color)` | method | 色名から保存値（`#AARRGGBB`）・色を取得する |
+| `AnnotationPaletteKind` | enum | 代表色の組（`Representative` = 代表色 1 / `Accent` = 代表色 2） |
 
 - **書式バー・右クリックのフライアウト・設定ペインが同じ並びを使います**（画面ごとに色が違わない）。
 - 色の選択の入力欄は**「■ + 色名」**（現在色の四角 + 色名）で表示します。
-- タブは**代表色**を出し、テーマ・色名のタブは隠します（タブが 1 つなので題名も出しません）。 **書式バーは「ColorPicker」タブも出します**（右クリックのフライアウトは出しません）。
+- タブは**選んだ代表色**を出し、テーマ・色名のタブは隠します（タブが 1 つなので題名も出しません）。 **書式バーは「ColorPicker」タブも出します**（右クリックのフライアウトは出しません）。
 - 代表色の並べは**色名の一覧**と**色の四角だけを 6 列**から選べます（`AnnotationTextEditor.PaletteLayout`）。
 - 16 進や色名を直接打ち込む入力欄は残します（代表色に無い色を指定できる）。

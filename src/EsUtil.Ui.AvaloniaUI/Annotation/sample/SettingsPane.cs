@@ -4,6 +4,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using EsUtil.Feature.Annotation;
 using EsUtil.Ui.AvaloniaUI.ColorSelector;
+using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation.Sample;
 
@@ -25,6 +26,12 @@ internal sealed class SettingsPane : StackPanel
     /// <summary>現在の既定値（編集のたびに新しい値へ置き換える）。</summary>
     private AnnotationDraftDefaults _defaults = AnnotationDraftDefaults.Default;
 
+    /// <summary>この設定ペインが作った色の選択（並べ方の変更をまとめて反映する）。</summary>
+    private readonly List<ColorSelectorControl> _selectors = [];
+
+    /// <summary>代表色の並べ方（設定ペインのすべての色の選択が使う）。</summary>
+    private ColorSelectorTabLayout _layout = ColorSelectorTabLayout.List;
+
     /// <summary>ペインを初期化する。</summary>
     /// <param name="editor">既定値と書式バーの設定を適用するコントロール。</param>
     public SettingsPane(AnnotationTextEditor editor)
@@ -43,24 +50,24 @@ internal sealed class SettingsPane : StackPanel
         Children.Add(AnnotationEditorControls.Heading("既定値（新規作成時に使う）"));
 
         Children.Add(SubHeading("枠線"));
-        Children.Add(AnnotationEditorControls.ColorRow("枠線の色", _defaults.FrameAppearance.Border,
+        Children.Add(ColorRow("枠線の色", _defaults.FrameAppearance.Border,
             color => SetFrame(_defaults.FrameAppearance with { Border = color })));
         Children.Add(AnnotationEditorControls.NumberRow("枠線の太さ", _defaults.FrameAppearance.BorderThickness,
             AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax,
             value => SetFrame(_defaults.FrameAppearance with { BorderThickness = value })));
-        Children.Add(AnnotationEditorControls.ColorRow("内側の色", _defaults.FrameAppearance.Fill,
+        Children.Add(ColorRow("内側の色", _defaults.FrameAppearance.Fill,
             color => SetFrame(_defaults.FrameAppearance with { Fill = color })));
         Children.Add(AnnotationEditorControls.NumberRow("角丸", _defaults.FrameAppearance.CornerRadius,
             0, AnnotationLimits.CornerRadiusMax,
             value => SetFrame(_defaults.FrameAppearance with { CornerRadius = value })));
 
         Children.Add(SubHeading("吹き出し"));
-        Children.Add(AnnotationEditorControls.ColorRow("枠線の色", _defaults.BubbleAppearance.Border,
+        Children.Add(ColorRow("枠線の色", _defaults.BubbleAppearance.Border,
             color => SetBubble(_defaults.BubbleAppearance with { Border = color })));
         Children.Add(AnnotationEditorControls.NumberRow("枠線の太さ", _defaults.BubbleAppearance.BorderThickness,
             AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax,
             value => SetBubble(_defaults.BubbleAppearance with { BorderThickness = value })));
-        Children.Add(AnnotationEditorControls.ColorRow("内側の色", _defaults.BubbleAppearance.Fill,
+        Children.Add(ColorRow("内側の色", _defaults.BubbleAppearance.Fill,
             color => SetBubble(_defaults.BubbleAppearance with { Fill = color })));
         Children.Add(AnnotationEditorControls.NumberRow("角丸", _defaults.BubbleAppearance.CornerRadius,
             0, AnnotationLimits.CornerRadiusMax,
@@ -78,7 +85,7 @@ internal sealed class SettingsPane : StackPanel
             [.. AnnotationFonts.All],
             Math.Max(0, AnnotationFonts.All.ToList().IndexOf(_defaults.TextStyle.FontFamily)),
             index => SetText(_defaults.TextStyle with { FontFamily = AnnotationFonts.All[index] })));
-        Children.Add(AnnotationEditorControls.ColorRow("文字色", _defaults.TextStyle.Color,
+        Children.Add(ColorRow("文字色", _defaults.TextStyle.Color,
             color => SetText(_defaults.TextStyle with { Color = color })));
         Children.Add(AnnotationEditorControls.NumberRow("大きさ", _defaults.TextStyle.FontSize,
             AnnotationLimits.FontSizeMin, AnnotationLimits.FontSizeMax,
@@ -93,11 +100,17 @@ internal sealed class SettingsPane : StackPanel
 
         Children.Add(SubHeading("書式バー"));
         Children.Add(AnnotationEditorControls.ChoiceRow(
-            "色の選択",
+            "代表色",
+            [AnnotationPalette.GetTitle(AnnotationPaletteKind.Representative),
+             AnnotationPalette.GetTitle(AnnotationPaletteKind.Accent)],
+            _editor.Palette == AnnotationPaletteKind.Accent ? 1 : 0,
+            index => _editor.Palette =
+                index == 1 ? AnnotationPaletteKind.Accent : AnnotationPaletteKind.Representative));
+        Children.Add(AnnotationEditorControls.ChoiceRow(
+            "代表色の並べ方",
             ["色名の一覧", "■ だけ（6 列）"],
-            _editor.PaletteLayout == ColorSelectorTabLayout.Grid ? 1 : 0,
-            index => _editor.PaletteLayout =
-                index == 1 ? ColorSelectorTabLayout.Grid : ColorSelectorTabLayout.List));
+            _layout == ColorSelectorTabLayout.Grid ? 1 : 0,
+            index => SetLayout(index == 1 ? ColorSelectorTabLayout.Grid : ColorSelectorTabLayout.List)));
 
         var edit = new Button { Content = "選択中の注釈を編集（右クリックと同じ）" };
         edit.Click += (_, _) => _layer.ShowStyleEditor();
@@ -108,6 +121,34 @@ internal sealed class SettingsPane : StackPanel
     /// <param name="appearance">新しい外観。</param>
     private void SetFrame(AnnotationAppearance appearance)
         => SetDefaults(_defaults with { FrameAppearance = appearance });
+
+    /// <summary>色の行を作る（このペインの色の選択は代表色 1・2 と標準のタブを出す）。</summary>
+    /// <param name="label">項目名。</param>
+    /// <param name="initial">現在の色。</param>
+    /// <param name="apply">適用する処理。</param>
+    /// <returns>項目名と色の選択を並べた行。</returns>
+    /// <remarks>
+    /// <b>設定ペインの色はすべて同じ構成</b>にする（代表色 1・2 + テーマカラー・色名・カラーピッカー）。
+    /// 並べ方は「書式バー」の設定に合わせ、変更したら全行へ反映する（<see cref="SetLayout"/>）。
+    /// </remarks>
+    private Control ColorRow(string label, DrawingColor initial, Action<DrawingColor> apply)
+    {
+        var selector = AnnotationEditorControls.CreateSelector(initial, layout: _layout, allPalettes: true);
+        _selectors.Add(selector);
+        return AnnotationEditorControls.ColorRow(label, selector, apply);
+    }
+
+    /// <summary>代表色の並べ方を変え、このペインの色の選択と書式バーへ反映する。</summary>
+    /// <param name="layout">新しい並べ方。</param>
+    private void SetLayout(ColorSelectorTabLayout layout)
+    {
+        _layout = layout;
+        _editor.PaletteLayout = layout;
+        foreach (var selector in _selectors)
+        {
+            AnnotationPalette.ConfigureAll(selector, layout);
+        }
+    }
 
     /// <summary>吹き出しの既定値を差し替える。</summary>
     /// <param name="appearance">新しい外観。</param>

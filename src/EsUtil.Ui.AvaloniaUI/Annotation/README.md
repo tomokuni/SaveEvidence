@@ -17,8 +17,10 @@
 
 **色の選択は `EsUtil.Ui.AvaloniaUI.ColorSelector` を使います**（自前の色入力を作らない）。
 入力欄は**「■ + 色名」**（現在色の四角 + 色名）で表示します。
-書式バーは**代表色 16 色（色名付き）と ColorPicker** のタブ、右クリックのフライアウトは**代表色 16 色**のタブを出します（テーマ・色名のタブは隠す。 タブが 1 つなら題名も出さない）。
-代表色の並べは**色名の一覧**と**色の四角だけを 6 列**から選べます（`AnnotationTextEditor.PaletteLayout`）。
+代表色は**2 組（代表色 1 / 代表色 2）**あり、書式バーは**選んだ組と ColorPicker** のタブを出します（テーマ・色名のタブは隠す。 タブが 1 つなら題名も出さない）。
+右クリックのフライアウトは**代表色 1** のタブを出します。
+代表色の並べは**色名の一覧**と**色の四角だけを 6 列**から選べます（`AnnotationTextEditor.PaletteLayout` / `Palette`）。
+設定画面のように任意の色を選ばせたいときは `AnnotationPalette.ConfigureAll` で**代表色 1・代表色 2 + 標準のタブ**を出せます。
 編集 UI の行の部品は `AnnotationEditorControls` が単一所有し、右クリックのフライアウトとホストの設定ペインが共有します。
 
 **現状（対応範囲）**: 4 つの UI 版のうち Avalonia UI 版のみです（MewUI / WinUI 3 / WinForms は後段）。
@@ -53,6 +55,7 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | --- | --- |
 | `AnnotationTextEditor.Layer` / `IsEditingText` | 本文の表示・その場編集と書式バーをまとめたコントロール（レイヤーは `Layer` から操作する） |
 | `AnnotationTextEditor.PaletteLayout` | 書式バーの代表色の並べ方（`List` = 色名の一覧 / `Grid` = 色の四角だけを 6 列） |
+| `AnnotationTextEditor.Palette` | 書式バーに出す代表色の組（`Representative` = 代表色 1 / `Accent` = 代表色 2） |
 | `Source` / `SourcePixelWidth` / `SourcePixelHeight` | 表示する画像と、その画素数（縦横比を保って中央へ表示する） |
 | `Document` / `SelectedId` | 注釈の文書と選択中の注釈 |
 | `AddFrame(bounds)` / `AddBubble(bounds, text)` | 注釈の追加（既定の外観） |

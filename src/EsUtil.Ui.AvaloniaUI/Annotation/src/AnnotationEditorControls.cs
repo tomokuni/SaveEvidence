@@ -56,19 +56,25 @@ public static class AnnotationEditorControls
     /// （<see cref="AnnotationPalette.Configure"/>）。
     /// </remarks>
     public static Control ColorRow(string label, DrawingColor initial, Action<DrawingColor> apply)
+        => ColorRow(label, CreateSelector(initial), apply);
+
+    /// <summary>色の選択を作る（項目名とコントロールを横に並べる）。</summary>
+    /// <param name="label">項目名。</param>
+    /// <param name="selector">色の選択（構成は呼び出し側が決める）。</param>
+    /// <param name="apply">適用する処理。</param>
+    /// <returns>項目名と色の選択を並べた行。</returns>
+    /// <remarks>
+    /// <b>構成済みの色の選択を渡せる</b>: 設定画面は「代表色 1・代表色 2 + 標準のタブ」を出し、
+    /// 書式バーは代表色だけを出す（画面ごとにタブの構成が異なる）。 並べ方やタブを差し替えたい呼び出し側は
+    /// 先に構成した <paramref name="selector"/> を渡す。
+    /// </remarks>
+    public static Control ColorRow(string label, ColorSelectorControl selector, Action<DrawingColor> apply)
     {
+        ArgumentNullException.ThrowIfNull(selector);
+        ArgumentNullException.ThrowIfNull(apply);
+
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
         row.Children.Add(Label(label));
-
-        var selector = new ColorSelectorControl
-        {
-            SelectedColor = ToHex(initial),
-            HighlightBorderOnError = true,
-            TextFontSize = 12,
-            Width = ColorSelectorWidth,
-            HorizontalAlignment = HorizontalAlignment.Left,
-        };
-        AnnotationPalette.Configure(selector);
         selector.PropertyChanged += (_, e) =>
         {
             if (e.Property == ColorSelectorControl.SelectedColorProperty
@@ -80,6 +86,44 @@ public static class AnnotationEditorControls
 
         row.Children.Add(selector);
         return row;
+    }
+
+    /// <summary>注釈向けの構成にした色の選択を作る（代表色のタブだけを出す）。</summary>
+    /// <param name="initial">現在の色。</param>
+    /// <param name="kind">代表色の組（代表色 1 / 代表色 2）。</param>
+    /// <param name="layout">代表色の並べ方（色名付きの一覧 / 色の四角だけを 6 列）。</param>
+    /// <param name="allPalettes">代表色 1 と代表色 2 の両方と標準のタブを出すかどうか（設定画面向け）。</param>
+    /// <returns>構成した色の選択。</returns>
+    /// <remarks>
+    /// <b>注釈向けの構成にする</b>: フライアウトは代表色 16 色のタブだけにし（テーマの色・色名・カラーピッカーを
+    /// 隠す）、設定画面は両方の代表色と標準のタブを出す（<see cref="AnnotationPalette.Configure"/> /
+    /// <see cref="AnnotationPalette.ConfigureAll"/>）。
+    /// </remarks>
+    public static ColorSelectorControl CreateSelector(
+        DrawingColor initial,
+        AnnotationPaletteKind kind = AnnotationPaletteKind.Representative,
+        ColorSelectorTabLayout layout = ColorSelectorTabLayout.List,
+        bool allPalettes = false)
+    {
+        var selector = new ColorSelectorControl
+        {
+            SelectedColor = ToHex(initial),
+            HighlightBorderOnError = true,
+            TextFontSize = 12,
+            Width = ColorSelectorWidth,
+            HorizontalAlignment = HorizontalAlignment.Left,
+        };
+
+        if (allPalettes)
+        {
+            AnnotationPalette.ConfigureAll(selector, layout);
+        }
+        else
+        {
+            AnnotationPalette.Configure(selector, kind, layout);
+        }
+
+        return selector;
     }
 
     /// <summary>数値の入力を作る。</summary>
