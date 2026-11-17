@@ -4,27 +4,27 @@
     "net11.0-windows10.0.17763": {
       "EsUtil.Feature.Loupe.Core": {
         "type": "Direct",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "m1kWG7iEKPbeU492qmSRM1wJYW93/pAQ6ie9Ofn+47rjkuYkYMfBd5l4fdJlXQLsemR+sHNSihcQAeJCpmkW0A==",
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "inBG4rXckBzF0qMO566elZAhaOQ0D1xaSaEoK9/VGwNEsoLxms7HjvgN7eqZsuZmcLT4IqvcQluPkaDpViDnRw==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.4"
+          "EsUtil.Platform.Core": "0.8.5"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "Direct",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "gCYAu95ZJ/nuNU3Kq3MA1nbjb4TsJAFS2F5984c4NKweoQItzY7vPvR220DpyZPNyCo6N4U32L4PLeFbLxfS1Q==",
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "IaHMoaD7RA1I4Oleyl1aX+vA7DI5WPucau2epf6EIqY1FSLPdiOab7sz/SqZ6GVnOGlK4HR5TxbL9pmXSed/TA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.4"
+          "EsUtil.Platform.Core": "0.8.5"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "Direct",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "LP4EplwhoWb6IZREqmikOyu/BI+RpHbopljWqfwk7WJ3OPrLGOdgGX8eyjznUntbbiHc3aHpfEiOeMT2yYoEGw=="
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "xQwLd/vEM1jmF0QJiPO8PqBuhcy6Ss4JhF5wSpVKx04aPYiXM8WvN1YwcKQM14jLXkPupwebh3cN/PnlvWYz5w=="
       },
       "Meziantou.Analyzer": {
         "type": "Direct",

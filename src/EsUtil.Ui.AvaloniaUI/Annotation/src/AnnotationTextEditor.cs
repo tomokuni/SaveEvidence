@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using EsUtil.Ui.AvaloniaUI.ColorSelector;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
 
@@ -28,7 +27,7 @@ public sealed class AnnotationTextEditor : Panel
     public AnnotationTextEditor()
     {
         _layer = new AnnotationLayerControl();
-        _formatBar = new AnnotationFormatBar(_layer, _layer.EndTextEditing) { IsVisible = false };
+        _formatBar = new AnnotationFormatBar(_layer) { IsVisible = false };
 
         Children.Add(_layer);
         Children.Add(_formatBar);
@@ -82,25 +81,20 @@ public sealed class AnnotationTextEditor : Panel
     /// <value>編集中の場合は <see langword="true"/>（書式バーが出ている）。</value>
     public bool IsEditingText => _layer.IsEditingText;
 
-    /// <summary>書式バーの色の選択の並べ方を取得または設定する（色名付きの一覧 / 色の四角だけを 6 列）。</summary>
-    /// <value>既定は色名付きの一覧（<see cref="ColorSelectorTabLayout.List"/>）。</value>
+    /// <summary>書式バーの代表色パレット（■ を並べる格子）の列数を取得または設定する。</summary>
+    /// <value>1 以上の列数。 既定は <see cref="AnnotationPalette.DefaultPaletteColumns"/>（8 列）。</value>
     /// <remarks>
-    /// <b>幅を取らずに選びたいときに格子にする</b>: 格子は色の四角だけを 6 列に並べるため、
-    /// スクロールせずに 16 色から選べる（色名はツールチップで示す）。
+    /// <b>列数を増やすほど横に広がる</b>: 40 色なら 8 列 × 5 行に収まり、スクロールせずに選べる。
     /// </remarks>
-    public ColorSelectorTabLayout PaletteLayout
+    public int PaletteColumns
     {
-        get => _formatBar.PaletteLayout;
-        set => _formatBar.PaletteLayout = value;
+        get => _formatBar.PaletteColumns;
+        set => _formatBar.PaletteColumns = value;
     }
 
-    /// <summary>書式バーに出す代表色の組を取得または設定する（代表色 1 / 代表色 2）。</summary>
-    /// <value>既定は代表色 1（<see cref="AnnotationPaletteKind.Representative"/>）。</value>
-    public AnnotationPaletteKind Palette
-    {
-        get => _formatBar.Palette;
-        set => _formatBar.Palette = value;
-    }
+    /// <summary>書式バーの色の選択の幅（DIP）を取得する。</summary>
+    /// <value>「■ + 全角 4 文字 + 100%」と「■ + <c>#FFFFFFFF</c>」の狭いほうの幅。</value>
+    public double ColorWidth => _formatBar.ColorWidth;
 
     /// <summary>子要素の寸法を測る。</summary>
     /// <param name="availableSize">使える領域。</param>

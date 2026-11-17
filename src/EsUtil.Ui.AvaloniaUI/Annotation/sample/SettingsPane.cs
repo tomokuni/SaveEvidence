@@ -29,8 +29,8 @@ internal sealed class SettingsPane : StackPanel
     /// <summary>この設定ペインが作った色の選択（並べ方の変更をまとめて反映する）。</summary>
     private readonly List<ColorSelectorControl> _selectors = [];
 
-    /// <summary>代表色の並べ方（設定ペインのすべての色の選択が使う）。</summary>
-    private ColorSelectorTabLayout _layout = ColorSelectorTabLayout.List;
+    /// <summary>代表色パレット（■ の格子）の列数（設定ペインのすべての色の選択が使う）。</summary>
+    private int _columns = AnnotationPalette.DefaultPaletteColumns;
 
     /// <summary>ペインを初期化する。</summary>
     /// <param name="editor">既定値と書式バーの設定を適用するコントロール。</param>
@@ -99,18 +99,8 @@ internal sealed class SettingsPane : StackPanel
             value => _layer.HandleHitRadius = value));
 
         Children.Add(SubHeading("書式バー"));
-        Children.Add(AnnotationEditorControls.ChoiceRow(
-            "代表色",
-            [AnnotationPalette.GetTitle(AnnotationPaletteKind.Representative),
-             AnnotationPalette.GetTitle(AnnotationPaletteKind.Accent)],
-            _editor.Palette == AnnotationPaletteKind.Accent ? 1 : 0,
-            index => _editor.Palette =
-                index == 1 ? AnnotationPaletteKind.Accent : AnnotationPaletteKind.Representative));
-        Children.Add(AnnotationEditorControls.ChoiceRow(
-            "代表色の並べ方",
-            ["色名の一覧", "■ だけ（6 列）"],
-            _layout == ColorSelectorTabLayout.Grid ? 1 : 0,
-            index => SetLayout(index == 1 ? ColorSelectorTabLayout.Grid : ColorSelectorTabLayout.List)));
+        Children.Add(AnnotationEditorControls.NumberRow(
+            "代表色パレットの列数", _columns, 1, 16, value => SetColumns((int)Math.Round(value))));
 
         var edit = new Button { Content = "選択中の注釈を編集（右クリックと同じ）" };
         edit.Click += (_, _) => _layer.ShowStyleEditor();
@@ -122,31 +112,31 @@ internal sealed class SettingsPane : StackPanel
     private void SetFrame(AnnotationAppearance appearance)
         => SetDefaults(_defaults with { FrameAppearance = appearance });
 
-    /// <summary>色の行を作る（このペインの色の選択は代表色 1・2 と標準のタブを出す）。</summary>
+    /// <summary>色の行を作る（このペインの色の選択は代表色と標準のタブを出す）。</summary>
     /// <param name="label">項目名。</param>
     /// <param name="initial">現在の色。</param>
     /// <param name="apply">適用する処理。</param>
     /// <returns>項目名と色の選択を並べた行。</returns>
     /// <remarks>
-    /// <b>設定ペインの色はすべて同じ構成</b>にする（代表色 1・2 + テーマカラー・色名・カラーピッカー）。
-    /// 並べ方は「書式バー」の設定に合わせ、変更したら全行へ反映する（<see cref="SetLayout"/>）。
+    /// <b>設定ペインの色はすべて同じ構成</b>にする（代表色パレット・代表色 + テーマカラー・色名・カラーピッカー）。
+    /// 列数は「書式バー」の設定に合わせ、変更したら全行へ反映する（<see cref="SetColumns"/>）。
     /// </remarks>
     private Control ColorRow(string label, DrawingColor initial, Action<DrawingColor> apply)
     {
-        var selector = AnnotationEditorControls.CreateSelector(initial, layout: _layout, allPalettes: true);
+        var selector = AnnotationEditorControls.CreateSelector(initial, _columns, allPalettes: true);
         _selectors.Add(selector);
         return AnnotationEditorControls.ColorRow(label, selector, apply);
     }
 
-    /// <summary>代表色の並べ方を変え、このペインの色の選択と書式バーへ反映する。</summary>
-    /// <param name="layout">新しい並べ方。</param>
-    private void SetLayout(ColorSelectorTabLayout layout)
+    /// <summary>代表色パレットの列数を変え、このペインの色の選択と書式バーへ反映する。</summary>
+    /// <param name="columns">新しい列数（1 以上）。</param>
+    private void SetColumns(int columns)
     {
-        _layout = layout;
-        _editor.PaletteLayout = layout;
+        _columns = columns;
+        _editor.PaletteColumns = columns;
         foreach (var selector in _selectors)
         {
-            AnnotationPalette.ConfigureAll(selector, layout);
+            AnnotationPalette.ConfigureAll(selector, columns);
         }
     }
 

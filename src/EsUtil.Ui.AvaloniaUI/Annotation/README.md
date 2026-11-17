@@ -17,10 +17,11 @@
 
 **色の選択は `EsUtil.Ui.AvaloniaUI.ColorSelector` を使います**（自前の色入力を作らない）。
 入力欄は**「■ + 色名」**（現在色の四角 + 色名）で表示します。
-代表色は**2 組（代表色 1 / 代表色 2）**あり、書式バーは**選んだ組と ColorPicker** のタブを出します（テーマ・色名のタブは隠す。 タブが 1 つなら題名も出さない）。
-右クリックのフライアウトは**代表色 1** のタブを出します。
-代表色の並べは**色名の一覧**と**色の四角だけを 6 列**から選べます（`AnnotationTextEditor.PaletteLayout` / `Palette`）。
-設定画面のように任意の色を選ばせたいときは `AnnotationPalette.ConfigureAll` で**代表色 1・代表色 2 + 標準のタブ**を出せます。
+代表色は**40 色**あり、**■ だけを並べた「代表色パレット」**（列数は指定可）と**色名付きの「代表色」**の 2 つのタブで出します。
+書式バーは**その 2 つと ColorPicker** のタブを出し、テーマ・色名のタブは隠します。
+右クリックのフライアウトは**代表色パレットと代表色**のタブを出します。
+代表色パレットの列数は `AnnotationTextEditor.PaletteColumns`（既定 8 列）で変えられます。
+設定画面のように任意の色を選ばせたいときは `AnnotationPalette.ConfigureAll` で**代表色 + 標準のタブ**を出せます。
 編集 UI の行の部品は `AnnotationEditorControls` が単一所有し、右クリックのフライアウトとホストの設定ペインが共有します。
 
 **現状（対応範囲）**: 4 つの UI 版のうち Avalonia UI 版のみです（MewUI / WinUI 3 / WinForms は後段）。
@@ -54,8 +55,8 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | メンバー | 説明 |
 | --- | --- |
 | `AnnotationTextEditor.Layer` / `IsEditingText` | 本文の表示・その場編集と書式バーをまとめたコントロール（レイヤーは `Layer` から操作する） |
-| `AnnotationTextEditor.PaletteLayout` | 書式バーの代表色の並べ方（`List` = 色名の一覧 / `Grid` = 色の四角だけを 6 列） |
-| `AnnotationTextEditor.Palette` | 書式バーに出す代表色の組（`Representative` = 代表色 1 / `Accent` = 代表色 2） |
+| `AnnotationTextEditor.PaletteColumns` | 代表色パレット（■ の格子）の列数（既定 8 列。 40 色なら 8 列 × 5 行） |
+| `AnnotationTextEditor.ColorWidth` | 書式バーの色の選択の幅（「■ + 全角 4 文字 + 100%」と「■ + `#FFFFFFFF`」の狭いほう） |
 | `Source` / `SourcePixelWidth` / `SourcePixelHeight` | 表示する画像と、その画素数（縦横比を保って中央へ表示する） |
 | `Document` / `SelectedId` | 注釈の文書と選択中の注釈 |
 | `AddFrame(bounds)` / `AddBubble(bounds, text)` | 注釈の追加（既定の外観） |
@@ -74,8 +75,9 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | `GetSelectedBodyRect()` | 本文の矩形（DIP。 ホストが書式バーを置く位置） |
 | `DocumentChanged` / `SelectionChanged` | 変更・選択の通知 |
 
-**文字単位の書式**: 本文を編集中に文字を選び、書式バー（ホストが置く）か `Ctrl+B` / `Ctrl+I` / `Ctrl+U`（取り消し線は `Alt+Shift+5`）を押します。
-選択が無ければ本文全体へ適用します。 書式バーの装飾ボタンは、**選択範囲のすべてがその装飾のときだけ押された状態**になります（選択を変えると追随します）。
+**文字単位の書式**: 本文を編集中に文字を選び、書式バー（本文の上に出る）か `Ctrl+B` / `Ctrl+I` / `Ctrl+U`（取り消し線は `Alt+Shift+5`）を押します。
+**書式バーは文字を選んでいる間だけ操作できます**（選択が無い間は各操作を無効にする。 適用先が決まらないため）。
+書式バーの装飾ボタンは、**選択範囲のすべてがその装飾のときだけ押された状態**になります（選択を変えると追随します）。
 色は**一覧で同じ色を選び直しても適用**されます（文字単位で混ざった色を一律にそろえるため）。
 書式バーは `AnnotationTextEditor` が出し入れします（ホストは何も置かなくてよい）。
 

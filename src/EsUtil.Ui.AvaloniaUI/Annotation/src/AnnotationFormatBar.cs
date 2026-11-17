@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.VisualTree;
 using EsUtil.Feature.Annotation;
 using EsUtil.Ui.AvaloniaUI.ColorSelector;
+using System.Globalization;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
 
@@ -16,21 +17,32 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 /// <b>本文はコントロールが直接編集する</b>ため、このバーは「選択中の範囲へ書式を適用する」だけを行う。
 /// 適用しても編集は続き、結果はその場で本文へ反映される。<br/>
 /// <b>項目名は出さない</b>: 幅が限られるため、意味はツールチップで示す（フォント名・大きさ・装飾名とショートカット）。<br/>
-/// <b>同じ値でも適用できる</b>: 文字単位で書式が混ざっている範囲を一律に揃えるため、選び直しただけでも適用する。
+/// <b>同じ値でも適用できる</b>: 文字単位で書式が混ざっている範囲を一律に揃えるため、選び直しただけでも適用する。<br/>
+/// <b>文字を選んでいない間は操作できない</b>: 適用先が決まらないため、書式の操作をすべて無効にする（実測で指摘）。<br/>
+/// <b>大きさは中身に合わせる</b>: 説明の行と「完了」は置かず、書式の操作だけを 1 行に並べる（編集の邪魔をしない）。
 /// </remarks>
 internal sealed class AnnotationFormatBar : Border
 {
     /// <summary>バーの幅（DIP。画像の内側へ収める計算に使う）。</summary>
     internal const double BarWidth = 720;
 
-    /// <summary>色の選択の幅（DIP。「■ + 全角 4 文字の色名」が入る幅。 16 色のうち最も長い色名で決める）。</summary>
-    internal const double ColorSelectorWidth = 112;
-
     /// <summary>バーのおおよその高さ（DIP。本文の上へ置く位置の計算に使う）。</summary>
-    internal const double EstimatedHeight = 64;
+    internal const double EstimatedHeight = 40;
 
     /// <summary>取り消し線のショートカット（一般的な表記に合わせる）。</summary>
     internal const string StrikeShortcut = "Alt+Shift+5";
+
+    /// <summary>色の入力欄の左の余白（DIP。 現在色の四角の分。 <c>ColorSelectorControl</c> と同じ値）。</summary>
+    private const double ColorTextIndent = 24;
+
+    /// <summary>色の入力欄の展開ボタンの幅（DIP。 <c>ColorSelectorControl</c> と同じ値）。</summary>
+    private const double ColorToggleWidth = 34;
+
+    /// <summary>色の幅を測る文字サイズ（DIP）。</summary>
+    private const double ColorFontSize = 12;
+
+    /// <summary>色の幅を測れなかったときの幅（DIP。 実測値の近似）。</summary>
+    private const double ColorSelectorWidthFallback = 84;
 
     /// <summary>編集対象のコントロール。</summary>
     private readonly AnnotationLayerControl _layer;
@@ -59,44 +71,45 @@ internal sealed class AnnotationFormatBar : Border
     /// <summary>表示を更新している最中かどうか（操作の再入を防ぐ）。</summary>
     private bool _isRefreshing;
 
-    /// <summary>代表色の並べ方（色名付きの一覧 / 色の四角だけを 6 列）。</summary>
-    private ColorSelectorTabLayout _paletteLayout = ColorSelectorTabLayout.List;
+    /// <summary>代表色パレットの列数（■ を何列で並べるか）。</summary>
+    private int _paletteColumns = AnnotationPalette.DefaultPaletteColumns;
 
-    /// <summary>書式バーに出す代表色の組。</summary>
-    private AnnotationPaletteKind _palette = AnnotationPaletteKind.Representative;
+    /// <summary>色の選択の幅（DIP。 <see cref="ResolveColorSelectorWidth"/> が決める）。</summary>
+    private readonly double _colorWidth;
 
     /// <summary>書式バーを初期化する。</summary>
     /// <param name="layer">編集対象のコントロール。</param>
-    /// <param name="close">編集を終える処理。</param>
-    public AnnotationFormatBar(AnnotationLayerControl layer, Action close)
+    public AnnotationFormatBar(AnnotationLayerControl layer)
     {
         _layer = layer;
 
         var fonts = AnnotationFonts.All;
-        _font = new ComboBox { Width = 150, ItemsSource = fonts, SelectedIndex = 0 };
+        _font = new ComboBox { Width = FontSelectorWidth, ItemsSource = fonts, SelectedIndex = 0 };
         _font.SelectionChanged += (_, _) => ApplyFont();
 
         // 同じ値を選び直したときは SelectionChanged が来ないため、閉じたときにも適用する
         _font.DropDownClosed += (_, _) => ApplyFont();
+        ToolTip.SetTip(_font, "フォント");
 
         _size = new NumericUpDown
         {
-            Width = 112,
+            Width = SizeSelectorWidth,
             Minimum = 6m,
             Maximum = 512m,
             Increment = 1m,
             FormatString = "0.#",
         };
         _size.ValueChanged += (_, _) => ApplySize();
+        ToolTip.SetTip(_size, "大きさ");
 
+        _colorWidth = ResolveColorSelectorWidth();
         _color = new ColorSelectorControl
         {
-            // 「■ + 色名」が出る幅（16 進の入力や色名の直接入力もできるだけの幅を残す）
-            Width = ColorSelectorWidth,
+            Width = _colorWidth,
             HighlightBorderOnError = true,
         };
 
-        // 代表色のタブとカラーピッカーのタブを出す（既存のタブは出さない。 タブが 1 つなら題名も出さない）
+        // ■ だけの「代表色パレット」と色名の「代表色」を出し、カラーピッカーも使えるようにする
         ConfigurePalette();
         _color.PropertyChanged += (_, e) =>
         {
@@ -107,11 +120,11 @@ internal sealed class AnnotationFormatBar : Border
         };
 
         // 同じ色を選び直したときは値が変わらず変更通知が出ないため、一覧・カラーピッカーの確定でも適用する
-        // （文字単位で色が混ざった範囲を一律にそろえるため。 入力欄へ打ち込んだ場合は LostFocus で適用する）
         _color.ColorApplied += (_, _) => ApplyColor();
 
         // 色の入力欄から離れたら、値が変わっていなくても適用する
         _color.LostFocus += (_, _) => ApplyColor();
+        ToolTip.SetTip(_color, "色");
 
         _bold = Toggle("B", "太字（Ctrl+B）", bold: true);
         _italic = Toggle("I", "斜体（Ctrl+I）", italic: true);
@@ -123,26 +136,7 @@ internal sealed class AnnotationFormatBar : Border
         _underline.Click += (_, _) => ToggleDecoration(style => style.IsUnderline, (style, value) => style with { IsUnderline = value });
         _strike.Click += (_, _) => ToggleDecoration(style => style.IsStrike, (style, value) => style with { IsStrike = value });
 
-        var done = new Button { Content = "完了" };
-        done.Click += (_, _) =>
-        {
-            close();
-            layer.Focus();
-        };
-
-        var header = new DockPanel();
-        var hint = new TextBlock
-        {
-            Text = "本文をその場で編集しています。 文字を選んで書式を押すと、その範囲だけに反映されます（選択が無ければ全体）。",
-            VerticalAlignment = VerticalAlignment.Center,
-            FontSize = 11,
-            TextWrapping = TextWrapping.Wrap,
-        };
-        DockPanel.SetDock(done, Dock.Right);
-        header.Children.Add(done);
-        header.Children.Add(hint);
-
-        var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = ControlSpacing };
         controls.Children.Add(_font);
         controls.Children.Add(_size);
         controls.Children.Add(_color);
@@ -151,25 +145,92 @@ internal sealed class AnnotationFormatBar : Border
         controls.Children.Add(_underline);
         controls.Children.Add(_strike);
 
-        var panel = new StackPanel { Spacing = 4 };
-        panel.Children.Add(header);
-        panel.Children.Add(controls);
-
-        Width = BarWidth;
         Background = Brushes.White;
         BorderBrush = Brushes.DodgerBlue;
         BorderThickness = new Thickness(1);
-        Padding = new Thickness(8, 5);
-        Child = panel;
+        Padding = new Thickness(6, 3);
+        Child = controls;
 
         // 大きさと色は Enter で確定する（同じ値でも適用する）
         AddHandler(KeyDownEvent, OnBarKeyDown, RoutingStrategies.Tunnel);
     }
 
+    /// <summary>フォントの選択の幅（DIP。 設定ペインのフォントの選択と同じ幅）。</summary>
+    internal const double FontSelectorWidth = 210;
+
+    /// <summary>大きさの入力の幅（DIP）。</summary>
+    internal const double SizeSelectorWidth = 104;
+
+    /// <summary>操作の間の余白（DIP）。</summary>
+    private const double ControlSpacing = 4;
+
+    /// <summary>代表色パレットの列数を取得または設定する（■ を何列で並べるか）。</summary>
+    /// <value>1 以上の列数。 既定は <see cref="AnnotationPalette.DefaultPaletteColumns"/>。</value>
+    public int PaletteColumns
+    {
+        get => _paletteColumns;
+        set
+        {
+            var columns = Math.Max(1, value);
+            if (_paletteColumns == columns)
+            {
+                return;
+            }
+
+            _paletteColumns = columns;
+            ConfigurePalette();
+        }
+    }
+
+    /// <summary>色の選択の幅（DIP）を取得する。</summary>
+    /// <value>「■ + 全角 4 文字 + 100%」と「■ + <c>#FFFFFFFF</c>」の狭いほうの幅。</value>
+    public double ColorWidth => _colorWidth;
+
+    /// <summary>色の選択の幅を求める（「■ + 全角 4 文字 + 100%」と「■ + #FFFFFFFF」の狭いほう）。</summary>
+    /// <returns>幅（DIP）。 測れない場合は <see cref="ColorSelectorWidthFallback"/>。</returns>
+    /// <remarks>
+    /// <b>狭いほうに合わせる</b>: 代表色で最も長い色名は全角 4 文字（「薄い灰色」）で、不透明度が付くと
+    /// <c>+100%</c> が加わる。 16 進の入力（<c>#FFFFFFFF</c>）より長くなることはないため、
+    /// 両方の実寸を測って狭いほうへ合わせる（余白を残さず、書式バーを細く保つ）。
+    /// </remarks>
+    internal static double ResolveColorSelectorWidth()
+    {
+        var typeface = new Typeface(FontFamily.Default);
+        var nameWidth = MeasureText(typeface, "薄い灰色+100%");
+        var hexWidth = MeasureText(typeface, "#FFFFFFFF");
+        var text = Math.Min(nameWidth, hexWidth);
+        if (text <= 0)
+        {
+            return ColorSelectorWidthFallback;
+        }
+
+        return Math.Ceiling(ColorTextIndent + text + ColorToggleWidth);
+    }
+
+    /// <summary>文字列の実寸の幅を測る。</summary>
+    /// <param name="typeface">書体。</param>
+    /// <param name="text">測る文字列。</param>
+    /// <returns>幅（DIP）。 測れない場合は 0。</returns>
+    private static double MeasureText(Typeface typeface, string text)
+    {
+        var formatted = new FormattedText(
+            text,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            typeface,
+            ColorFontSize,
+            Brushes.Black);
+        return formatted.WidthIncludingTrailingWhitespace;
+    }
+
+    /// <summary>代表色のタブを色の選択へ反映する。</summary>
+    private void ConfigurePalette() => AnnotationPalette.Configure(_color, _paletteColumns, showPicker: true);
+
     /// <summary>現在の書式を表示へ反映する（選択範囲の先頭の書式）。</summary>
     public void Refresh()
     {
         var style = _layer.SelectedTextStyle;
+        var enabled = _layer.HasTextSelection;
 
         _isRefreshing = true;
         try
@@ -188,57 +249,31 @@ internal sealed class AnnotationFormatBar : Border
             // 幅が狭いとフォント名・大きさが読めないため、現在値をツールチップにも出す
             ToolTip.SetTip(_font, style.FontFamily);
             ToolTip.SetTip(_size, $"{style.FontSize:0.#}");
+
+            // 文字を選んでいない間は適用先が決まらないため、操作をすべて無効にする
+            _font.IsEnabled = enabled;
+            _size.IsEnabled = enabled;
+            _color.IsEnabled = enabled;
+            _bold.IsEnabled = enabled;
+            _italic.IsEnabled = enabled;
+            _underline.IsEnabled = enabled;
+            _strike.IsEnabled = enabled;
         }
         finally
         {
             _isRefreshing = false;
         }
+
+        // 無効の切り替えで必要な幅が変わるため測り直させる
+        InvalidateMeasure();
     }
-
-    /// <summary>代表色の並べ方を取得または設定する（色名付きの一覧 / 色の四角だけを 6 列）。</summary>
-    /// <value>既定は色名付きの一覧（<see cref="ColorSelectorTabLayout.List"/>）。</value>
-    /// <remarks>色名を読まずに選びたいときは <see cref="ColorSelectorTabLayout.Grid"/> にする（スクロールせずに選べる）。</remarks>
-    public ColorSelectorTabLayout PaletteLayout
-    {
-        get => _paletteLayout;
-        set
-        {
-            if (_paletteLayout == value)
-            {
-                return;
-            }
-
-            _paletteLayout = value;
-            ConfigurePalette();
-        }
-    }
-
-    /// <summary>書式バーに出す代表色の組を取得または設定する（代表色 1 / 代表色 2）。</summary>
-    /// <value>既定は代表色 1（<see cref="AnnotationPaletteKind.Representative"/>）。</value>
-    public AnnotationPaletteKind Palette
-    {
-        get => _palette;
-        set
-        {
-            if (_palette == value)
-            {
-                return;
-            }
-
-            _palette = value;
-            ConfigurePalette();
-        }
-    }
-
-    /// <summary>代表色の組と並べ方を色の選択へ反映する。</summary>
-    private void ConfigurePalette() => AnnotationPalette.Configure(_color, _palette, _paletteLayout, showPicker: true);
 
     /// <summary>バーの中で Enter が押されたら、大きさと色を今の値で適用する。</summary>
     /// <param name="sender">送信元。</param>
     /// <param name="e">キーの引数。</param>
     private void OnBarKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key != Key.Enter || e.Source is not Visual source)
+        if (e.Key != Key.Enter || e.Source is not Visual source || !_layer.HasTextSelection)
         {
             return;
         }
@@ -313,6 +348,11 @@ internal sealed class AnnotationFormatBar : Border
     /// <param name="change">書式を新しい値へ変える処理（変えない属性は <c>TransformTextStyle</c> が保つ）。</param>
     private void Apply(Func<AnnotationTextStyle, AnnotationTextStyle> change)
     {
+        if (!_layer.HasTextSelection)
+        {
+            return;
+        }
+
         var (start, length) = _layer.TextSelectionRange;
         _layer.TransformTextStyle(start, length, change);
         Refresh();
@@ -354,13 +394,16 @@ internal sealed class AnnotationFormatBar : Border
         var button = new ToggleButton
         {
             Content = content,
-            Width = 34,
+            Width = ToggleWidth,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
         };
         ToolTip.SetTip(button, toolTip);
         return button;
     }
+
+    /// <summary>装飾の切り替えボタンの幅（DIP）。</summary>
+    private const double ToggleWidth = 34;
 
     /// <summary>装飾を切り替える（適用先の先頭の書式で切り替えの向きを決める）。</summary>
     /// <param name="read">属性を読む関数。</param>

@@ -22,9 +22,10 @@ public static class AnnotationEditorControls
     /// <summary>色の選択の幅（DIP）。</summary>
     /// <remarks>
     /// <b>横いっぱいへ広げない</b>: <see cref="ColorSelectorControl"/> を伸長すると、入力欄とボタンの間が
-    /// 間延びして 1 行が使えなくなる（実測で指摘）。 値とボタンが収まる幅へ固定する。
+    /// 間延びして 1 行が使えなくなる（実測で指摘）。 値とボタンが収まる幅へ固定する。<br/>
+    /// 設定ペインのフォントの選択（<see cref="ChoiceRow"/>）と同じ幅にそろえる（行の右端が揃う）。
     /// </remarks>
-    public const double ColorSelectorWidth = 220;
+    public const double ColorSelectorWidth = 210;
 
     /// <summary>見出しを作る。</summary>
     /// <param name="text">見出しの文言。</param>
@@ -90,19 +91,17 @@ public static class AnnotationEditorControls
 
     /// <summary>注釈向けの構成にした色の選択を作る（代表色のタブだけを出す）。</summary>
     /// <param name="initial">現在の色。</param>
-    /// <param name="kind">代表色の組（代表色 1 / 代表色 2）。</param>
-    /// <param name="layout">代表色の並べ方（色名付きの一覧 / 色の四角だけを 6 列）。</param>
-    /// <param name="allPalettes">代表色 1 と代表色 2 の両方と標準のタブを出すかどうか（設定画面向け）。</param>
+    /// <param name="columns">代表色パレット（■ の格子）の列数。</param>
+    /// <param name="allPalettes">代表色に加えて標準のタブ（テーマカラー・色名・ColorPicker）も出すかどうか（設定画面向け）。</param>
     /// <returns>構成した色の選択。</returns>
     /// <remarks>
-    /// <b>注釈向けの構成にする</b>: フライアウトは代表色 16 色のタブだけにし（テーマの色・色名・カラーピッカーを
-    /// 隠す）、設定画面は両方の代表色と標準のタブを出す（<see cref="AnnotationPalette.Configure"/> /
+    /// <b>注釈向けの構成にする</b>: フライアウトは代表色（■ の格子と色名の一覧）のタブだけにし（テーマの色・色名・
+    /// カラーピッカーを隠す）、設定画面は標準のタブも出す（<see cref="AnnotationPalette.Configure"/> /
     /// <see cref="AnnotationPalette.ConfigureAll"/>）。
     /// </remarks>
     public static ColorSelectorControl CreateSelector(
         DrawingColor initial,
-        AnnotationPaletteKind kind = AnnotationPaletteKind.Representative,
-        ColorSelectorTabLayout layout = ColorSelectorTabLayout.List,
+        int columns = AnnotationPalette.DefaultPaletteColumns,
         bool allPalettes = false)
     {
         var selector = new ColorSelectorControl
@@ -116,11 +115,11 @@ public static class AnnotationEditorControls
 
         if (allPalettes)
         {
-            AnnotationPalette.ConfigureAll(selector, layout);
+            AnnotationPalette.ConfigureAll(selector, columns);
         }
         else
         {
-            AnnotationPalette.Configure(selector, kind, layout);
+            AnnotationPalette.Configure(selector, columns);
         }
 
         return selector;

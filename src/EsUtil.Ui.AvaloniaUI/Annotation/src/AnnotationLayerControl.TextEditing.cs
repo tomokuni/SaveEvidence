@@ -73,6 +73,11 @@ public sealed partial class AnnotationLayerControl
     /// <summary>キャレットの位置（文字数）を取得する。</summary>
     public int CaretIndex => _caretIndex;
 
+    /// <summary>本文の文字を選んでいるかどうかを取得する（書式の適用先があるか）。</summary>
+    /// <value>編集中で、かつ選択範囲に 1 文字以上ある場合は <see langword="true"/>。</value>
+    /// <remarks>書式バーはこの値で各操作の有効・無効を切り替える（選択が無いと適用先が決まらない）。</remarks>
+    public bool HasTextSelection => _isEditingText && TextSelectionRange.Length > 0;
+
     /// <summary>選択範囲の開始位置（文字数）を取得する。</summary>
     public int SelectionStart => Math.Min(_selectionAnchor, _caretIndex);
 

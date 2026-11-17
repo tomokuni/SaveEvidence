@@ -4,39 +4,39 @@
     "net11.0-windows10.0.17763": {
       "EsUtil.Platform.Core": {
         "type": "Direct",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "LP4EplwhoWb6IZREqmikOyu/BI+RpHbopljWqfwk7WJ3OPrLGOdgGX8eyjznUntbbiHc3aHpfEiOeMT2yYoEGw=="
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "xQwLd/vEM1jmF0QJiPO8PqBuhcy6Ss4JhF5wSpVKx04aPYiXM8WvN1YwcKQM14jLXkPupwebh3cN/PnlvWYz5w=="
       },
       "EsUtil.Ui.WinForms.Interop": {
         "type": "Direct",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "+qvlq2gwrgozcjNmfTimkkZqYcy+aayVAAZazMDJSVQQTkGwncYdqKeFONoOlhsicGzpUUpyl0PU0NGnEr1GAw==",
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "fbenmVkDuqLVNixg0NFAJz52KaRis+brxi4WJm9wPP5WBKPjdywAWjbr+2/0RTaagNQBe0UpIqB1slK9fseNFw==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.4"
+          "EsUtil.Platform.Core": "0.8.5"
         }
       },
       "EsUtil.Ui.WinForms.Loupe": {
         "type": "Direct",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "dXStgbwB5Fl1x2W+p6gi1oTGd5HB4EXZb5jfogofjxcgYtzmODft0ZJ8Ccu5iRZxy8v43FXiV42R4lHTxm9lpw==",
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "HdTNE+21J8lB5vsbNoWGDI9JmwjnANaOXsTQds0auVmb7LVQes1IXkAAzIW0HE/H+DeaD1momFiVoAbRY9AyHw==",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "0.8.4",
-          "EsUtil.Platform.Core": "0.8.4",
-          "EsUtil.Ui.WinForms.Interop": "0.8.4"
+          "EsUtil.Feature.Loupe.Core": "0.8.5",
+          "EsUtil.Platform.Core": "0.8.5",
+          "EsUtil.Ui.WinForms.Interop": "0.8.5"
         }
       },
       "EsUtil.Ui.WinForms.Marquee": {
         "type": "Direct",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "otqatsIA6+Zw1nd/rplLditii4M5w11HbwSikJqEje/sQZaV1V79ojYyOjdutrLB6/vearO9Shrt9lo3PR2tdg==",
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "8QWlfFmZsTNaHVdZek2NFe2UU4/qp6RFasywPgJwtMPfLM2CGWG3wWJahAUjEKH4xc12KAyFwVeQGji9VkV0LQ==",
         "dependencies": {
-          "EsUtil.Feature.Marquee.Core": "0.8.4",
-          "EsUtil.Platform.Core": "0.8.4",
-          "EsUtil.Ui.WinForms.Interop": "0.8.4"
+          "EsUtil.Feature.Marquee.Core": "0.8.5",
+          "EsUtil.Platform.Core": "0.8.5",
+          "EsUtil.Ui.WinForms.Interop": "0.8.5"
         }
       },
       "Meziantou.Analyzer": {
@@ -60,27 +60,27 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.8.4, )",
-          "EsUtil.Feature.Marquee.Core": "[0.8.4, )",
-          "EsUtil.Platform.Core": "[0.8.4, )"
+          "EsUtil.Feature.Loupe.Core": "[0.8.5, )",
+          "EsUtil.Feature.Marquee.Core": "[0.8.5, )",
+          "EsUtil.Platform.Core": "[0.8.5, )"
         }
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "m1kWG7iEKPbeU492qmSRM1wJYW93/pAQ6ie9Ofn+47rjkuYkYMfBd5l4fdJlXQLsemR+sHNSihcQAeJCpmkW0A==",
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "inBG4rXckBzF0qMO566elZAhaOQ0D1xaSaEoK9/VGwNEsoLxms7HjvgN7eqZsuZmcLT4IqvcQluPkaDpViDnRw==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.4"
+          "EsUtil.Platform.Core": "0.8.5"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "gCYAu95ZJ/nuNU3Kq3MA1nbjb4TsJAFS2F5984c4NKweoQItzY7vPvR220DpyZPNyCo6N4U32L4PLeFbLxfS1Q==",
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "IaHMoaD7RA1I4Oleyl1aX+vA7DI5WPucau2epf6EIqY1FSLPdiOab7sz/SqZ6GVnOGlK4HR5TxbL9pmXSed/TA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.4"
+          "EsUtil.Platform.Core": "0.8.5"
         }
       }
     }

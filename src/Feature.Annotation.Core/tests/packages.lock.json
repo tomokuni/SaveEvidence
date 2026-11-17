@@ -184,14 +184,14 @@
       "esutil.feature.annotation.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.8.4, )"
+          "EsUtil.Platform.Core": "[0.8.5, )"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.4, )",
-        "resolved": "0.8.4",
-        "contentHash": "LP4EplwhoWb6IZREqmikOyu/BI+RpHbopljWqfwk7WJ3OPrLGOdgGX8eyjznUntbbiHc3aHpfEiOeMT2yYoEGw=="
+        "requested": "[0.8.5, )",
+        "resolved": "0.8.5",
+        "contentHash": "xQwLd/vEM1jmF0QJiPO8PqBuhcy6Ss4JhF5wSpVKx04aPYiXM8WvN1YwcKQM14jLXkPupwebh3cN/PnlvWYz5w=="
       }
     }
   }
