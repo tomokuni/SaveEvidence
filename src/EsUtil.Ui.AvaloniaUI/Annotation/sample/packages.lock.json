@@ -38,12 +38,12 @@
       },
       "EsUtil.Ui.AvaloniaUI.Interop": {
         "type": "Direct",
-        "requested": "[0.7.9, )",
-        "resolved": "0.7.9",
-        "contentHash": "B7EBZvQzhsuf3QcxX2F6ArGmM5g1JYdezHi8JztGX8cOirhKaqIvk7dXlV13mqgfsLwYUSdGwxmZU99tmQBnkA==",
+        "requested": "[0.8.1, )",
+        "resolved": "0.8.1",
+        "contentHash": "4f5I/EY7xpt7hSgUodn2beOtTd7xKc+OLsel0MdsaxJgUH9uPtdMhZp57yYFs2FozWk/EpqVERwjhH8Im4eL1w==",
         "dependencies": {
           "Avalonia": "12.1.6",
-          "EsUtil.Platform.Core": "0.7.9"
+          "EsUtil.Platform.Core": "0.8.1"
         }
       },
       "Meziantou.Analyzer": {
@@ -215,7 +215,7 @@
       "esutil.feature.annotation.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.7.9, )"
+          "EsUtil.Platform.Core": "[0.8.1, )"
         }
       },
       "esutil.ui.avaloniaui.annotation": {
@@ -223,8 +223,8 @@
         "dependencies": {
           "Avalonia": "[12.1.6, )",
           "EsUtil.Feature.Annotation.Core": "[0.8.2, )",
-          "EsUtil.Feature.Marquee.Core": "[0.7.9, )",
-          "EsUtil.Ui.AvaloniaUI.ColorSelector": "[0.7.9, )"
+          "EsUtil.Feature.Marquee.Core": "[0.8.1, )",
+          "EsUtil.Ui.AvaloniaUI.ColorSelector": "[0.8.1, )"
         }
       },
       "Avalonia.Skia": {
@@ -244,28 +244,28 @@
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.9, )",
-        "resolved": "0.7.9",
-        "contentHash": "0U9GCTDSyx3AfnV0pYgDctKfCmGEv8PG57DzS6+qOWsYaGl6KgLi9yWMG1mLi0LhYMN3uJsRBOtgrWpdylEfxQ==",
+        "requested": "[0.8.1, )",
+        "resolved": "0.8.1",
+        "contentHash": "TpPZ32yELsAX2RyAc1yc23ZQ7vva/RmQzLBvUfiZgQkH+qlzgAzm+Ij27bWKON0Hr9sTnl5WU0uc+AwECXzV4g==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.7.9"
+          "EsUtil.Platform.Core": "0.8.1"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.7.9, )",
-        "resolved": "0.7.9",
-        "contentHash": "Wwj86A9G6mTza6V3hpSaw1xDTskNkeGqoJveq5BFnML31fA6O4Eu6IJPIpFziZMlcSCWZU9/KUTNnjfdxLwSkw=="
+        "requested": "[0.8.1, )",
+        "resolved": "0.8.1",
+        "contentHash": "WoFrnNmkBXriR0Q/+JAknMf9Fa7897zVEK5XeXO8Q+hRU9zg0EW7MXdBvUTjc7zC5dqanlsbi/QXDvSB0XmTCg=="
       },
       "EsUtil.Ui.AvaloniaUI.ColorSelector": {
         "type": "CentralTransitive",
-        "requested": "[0.7.9, )",
-        "resolved": "0.7.9",
-        "contentHash": "hYGj28k9Z64d3gpwQfLbhN2N1mcb/tsvmGWtqYF/QadWov2P0/JeA5Y9jR6ZSO3X9B1kwCbRo3V+mb8mT4mrRg==",
+        "requested": "[0.8.1, )",
+        "resolved": "0.8.1",
+        "contentHash": "PGe1jQ+S73JzCypf5UyOVqcpwBq3TIiWnHfVR3fm0UgPIUiDl9nlyiMxJOT/IH+8UIPY2D+9IbwoLTtEcuibmQ==",
         "dependencies": {
           "Avalonia": "12.1.6",
           "Avalonia.Controls.ColorPicker": "12.1.6",
-          "EsUtil.Platform.Core": "0.7.9"
+          "EsUtil.Platform.Core": "0.8.1"
         }
       }
     }

@@ -16,7 +16,7 @@
 描画は run ごとの書式（太字・斜体・下線・取り消し線・色・大きさ・フォント）に対応しています。
 
 **色の選択は `EsUtil.Ui.AvaloniaUI.ColorSelector` を使います**（自前の色入力を作らない）。
-注釈の色は**代表色 16 色（色名付き）のタブだけ**を出し、カラーピッカー（…）とテーマ・色名のタブは隠します（`AnnotationPalette`）。
+注釈の色は**代表色 16 色（色名付き）のタブだけ**を出し、ColorPicker とテーマ・色名のタブは隠します（`AnnotationPalette`。 入力欄は標準のコンボボックス）。
 編集 UI の行の部品は `AnnotationEditorControls` が単一所有し、右クリックのフライアウトとホストの設定ペインが共有します。
 
 **現状（対応範囲）**: 4 つの UI 版のうち Avalonia UI 版のみです（MewUI / WinUI 3 / WinForms は後段）。

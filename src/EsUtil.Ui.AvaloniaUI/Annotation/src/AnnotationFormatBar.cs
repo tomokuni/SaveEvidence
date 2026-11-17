@@ -85,14 +85,10 @@ internal sealed class AnnotationFormatBar : Border
             Width = 170,
             TextFontSize = 12,
             HighlightBorderOnError = true,
-
-            // 入力欄と代表色だけを使う（… と既存のタブは出さない。 タブが 1 つなので題名も出さない）
-            ShowPickerButton = false,
-            ShowThemeColorTab = false,
-            ShowNamedColorTab = false,
-            ShowTabTitles = false,
-            CustomTabs = AnnotationPalette.Tabs,
         };
+
+        // 入力欄と代表色だけを使う（ColorPicker と既存のタブは出さない。 タブが 1 つなので題名も出さない）
+        AnnotationPalette.Configure(_color);
         _color.PropertyChanged += (_, e) =>
         {
             if (e.Property == ColorSelectorControl.SelectedColorProperty)

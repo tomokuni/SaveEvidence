@@ -41,12 +41,12 @@ public static class AnnotationPalette
     /// <summary>色の選択を注釈向けの構成にする（代表色のタブだけを出す）。</summary>
     /// <param name="selector">構成する色の選択。</param>
     /// <remarks>
-    /// <b>カラーピッカー（…）と既存のタブは出さない</b>: 入力欄と代表色で足りるため、幅を取るボタンとタブを省く。
+    /// <b>ColorPicker と既存のタブは出さない</b>: 入力欄と代表色で足りるため、幅を取るタブを省く。<br/>
     /// 16 進や色名を直接打ち込む入力欄は残す（代表色に無い色を指定できる）。
     /// </remarks>
     internal static void Configure(ColorSelectorControl selector)
     {
-        selector.ShowPickerButton = false;
+        selector.ShowPickerTab = false;
         selector.ShowThemeColorTab = false;
         selector.ShowNamedColorTab = false;
         selector.ShowTabTitles = false;
