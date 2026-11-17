@@ -93,7 +93,7 @@ public sealed class AnnotationTextEditor : Panel
     }
 
     /// <summary>書式バーの色の選択の幅（DIP）を取得する。</summary>
-    /// <value>「■ + 全角 4 文字 + 100%」と「■ + <c>#FFFFFFFF</c>」の狭いほうの幅。</value>
+    /// <value>「■ + 全角 4 文字 + 100%」と「■ + <c>#FFFFFFFF</c>」の広いほうの幅。</value>
     public double ColorWidth => _formatBar.ColorWidth;
 
     /// <summary>子要素の寸法を測る。</summary>

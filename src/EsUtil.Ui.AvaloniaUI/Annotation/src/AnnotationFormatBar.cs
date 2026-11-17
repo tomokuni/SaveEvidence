@@ -42,7 +42,7 @@ internal sealed class AnnotationFormatBar : Border
     private const double ColorFontSize = 12;
 
     /// <summary>色の幅を測れなかったときの幅（DIP。 実測値の近似）。</summary>
-    private const double ColorSelectorWidthFallback = 84;
+    private const double ColorSelectorWidthFallback = 96;
 
     /// <summary>編集対象のコントロール。</summary>
     private readonly AnnotationLayerControl _layer;
@@ -183,22 +183,22 @@ internal sealed class AnnotationFormatBar : Border
     }
 
     /// <summary>色の選択の幅（DIP）を取得する。</summary>
-    /// <value>「■ + 全角 4 文字 + 100%」と「■ + <c>#FFFFFFFF</c>」の狭いほうの幅。</value>
+    /// <value>「■ + 全角 4 文字 + 100%」と「■ + <c>#FFFFFFFF</c>」の広いほうの幅。</value>
     public double ColorWidth => _colorWidth;
 
-    /// <summary>色の選択の幅を求める（「■ + 全角 4 文字 + 100%」と「■ + #FFFFFFFF」の狭いほう）。</summary>
+    /// <summary>色の選択の幅を求める（「■ + 全角 4 文字 + 100%」と「■ + #FFFFFFFF」の広いほう）。</summary>
     /// <returns>幅（DIP）。 測れない場合は <see cref="ColorSelectorWidthFallback"/>。</returns>
     /// <remarks>
-    /// <b>狭いほうに合わせる</b>: 代表色で最も長い色名は全角 4 文字（「薄い灰色」）で、不透明度が付くと
-    /// <c>+100%</c> が加わる。 16 進の入力（<c>#FFFFFFFF</c>）より長くなることはないため、
-    /// 両方の実寸を測って狭いほうへ合わせる（余白を残さず、書式バーを細く保つ）。
+    /// <b>広いほうに合わせる</b>: 代表色で最も長い色名は全角 4 文字（「薄い灰色」）で、不透明度が付くと
+    /// <c>+100%</c> が加わる。 16 進の入力（<c>#FFFFFFFF</c>）はさらに長いため、
+    /// 両方の実寸を測って広いほうへ合わせる（どちらの表記でも文字が切れない）。
     /// </remarks>
     internal static double ResolveColorSelectorWidth()
     {
         var typeface = new Typeface(FontFamily.Default);
         var nameWidth = MeasureText(typeface, "薄い灰色+100%");
         var hexWidth = MeasureText(typeface, "#FFFFFFFF");
-        var text = Math.Min(nameWidth, hexWidth);
+        var text = Math.Max(nameWidth, hexWidth);
         if (text <= 0)
         {
             return ColorSelectorWidthFallback;

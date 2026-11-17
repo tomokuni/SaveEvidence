@@ -60,7 +60,6 @@ public static class AnnotationPalette
         new ColorSelectorCustomColor("黄緑", "#FF65A30D"),
         new ColorSelectorCustomColor("若草", "#FF84CC16"),
         new ColorSelectorCustomColor("鶯", "#FF4D7C0F"),
-        new ColorSelectorCustomColor("苔", "#FF3F6212"),
         new ColorSelectorCustomColor("緑", "#FF16A34A"),
         new ColorSelectorCustomColor("常磐", "#FF047857"),
         new ColorSelectorCustomColor("青緑", "#FF0D9488"),

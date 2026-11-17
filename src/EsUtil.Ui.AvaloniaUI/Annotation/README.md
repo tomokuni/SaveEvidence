@@ -56,7 +56,7 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | --- | --- |
 | `AnnotationTextEditor.Layer` / `IsEditingText` | 本文の表示・その場編集と書式バーをまとめたコントロール（レイヤーは `Layer` から操作する） |
 | `AnnotationTextEditor.PaletteColumns` | 代表色パレット（■ の格子）の列数（既定 8 列。 40 色なら 8 列 × 5 行） |
-| `AnnotationTextEditor.ColorWidth` | 書式バーの色の選択の幅（「■ + 全角 4 文字 + 100%」と「■ + `#FFFFFFFF`」の狭いほう） |
+| `AnnotationTextEditor.ColorWidth` | 書式バーの色の選択の幅（「■ + 全角 4 文字 + 100%」と「■ + `#FFFFFFFF`」の広いほう） |
 | `Source` / `SourcePixelWidth` / `SourcePixelHeight` | 表示する画像と、その画素数（縦横比を保って中央へ表示する） |
 | `Document` / `SelectedId` | 注釈の文書と選択中の注釈 |
 | `AddFrame(bounds)` / `AddBubble(bounds, text)` | 注釈の追加（既定の外観） |
