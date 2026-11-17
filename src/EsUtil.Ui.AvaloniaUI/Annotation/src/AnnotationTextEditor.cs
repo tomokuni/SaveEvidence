@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using EsUtil.Ui.AvaloniaUI.ColorSelector;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
 
@@ -62,6 +63,15 @@ public sealed class AnnotationTextEditor : Panel
                 InvalidateArrange();
             }
         };
+
+        // 選択範囲の変更で、書式バーの押下状態（太字・斜体・下線・取り消し線）を追随させる
+        _layer.TextSelectionChanged += (_, _) =>
+        {
+            if (_formatBar.IsVisible)
+            {
+                _formatBar.Refresh();
+            }
+        };
     }
 
     /// <summary>注釈の表示と編集を担うレイヤーを取得する。</summary>
@@ -71,6 +81,18 @@ public sealed class AnnotationTextEditor : Panel
     /// <summary>本文を編集中かどうかを取得する。</summary>
     /// <value>編集中の場合は <see langword="true"/>（書式バーが出ている）。</value>
     public bool IsEditingText => _layer.IsEditingText;
+
+    /// <summary>書式バーの色の選択の並べ方を取得または設定する（色名付きの一覧 / 色の四角だけを 6 列）。</summary>
+    /// <value>既定は色名付きの一覧（<see cref="ColorSelectorTabLayout.List"/>）。</value>
+    /// <remarks>
+    /// <b>幅を取らずに選びたいときに格子にする</b>: 格子は色の四角だけを 6 列に並べるため、
+    /// スクロールせずに 16 色から選べる（色名はツールチップで示す）。
+    /// </remarks>
+    public ColorSelectorTabLayout PaletteLayout
+    {
+        get => _formatBar.PaletteLayout;
+        set => _formatBar.PaletteLayout = value;
+    }
 
     /// <summary>子要素の寸法を測る。</summary>
     /// <param name="availableSize">使える領域。</param>

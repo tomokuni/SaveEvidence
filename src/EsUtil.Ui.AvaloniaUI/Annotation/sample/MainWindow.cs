@@ -68,7 +68,7 @@ internal sealed class MainWindow : Window
 
         var settings = new ScrollViewer
         {
-            Content = new SettingsPane(_layer),
+            Content = new SettingsPane(_editor),
             Width = 344,
             Background = new SolidColorBrush(Color.FromArgb(255, 248, 248, 248)),
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,

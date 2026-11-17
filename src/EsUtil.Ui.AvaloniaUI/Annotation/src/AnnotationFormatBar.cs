@@ -23,6 +23,9 @@ internal sealed class AnnotationFormatBar : Border
     /// <summary>バーの幅（DIP。画像の内側へ収める計算に使う）。</summary>
     internal const double BarWidth = 720;
 
+    /// <summary>色の選択の幅（DIP。「■ + 色名」が入り、16 進や色名の直接入力もできる幅）。</summary>
+    internal const double ColorSelectorWidth = 140;
+
     /// <summary>バーのおおよその高さ（DIP。本文の上へ置く位置の計算に使う）。</summary>
     internal const double EstimatedHeight = 64;
 
@@ -56,6 +59,9 @@ internal sealed class AnnotationFormatBar : Border
     /// <summary>表示を更新している最中かどうか（操作の再入を防ぐ）。</summary>
     private bool _isRefreshing;
 
+    /// <summary>代表色の並べ方（色名付きの一覧 / 色の四角だけを 6 列）。</summary>
+    private ColorSelectorTabLayout _paletteLayout = ColorSelectorTabLayout.List;
+
     /// <summary>書式バーを初期化する。</summary>
     /// <param name="layer">編集対象のコントロール。</param>
     /// <param name="close">編集を終える処理。</param>
@@ -82,13 +88,13 @@ internal sealed class AnnotationFormatBar : Border
 
         _color = new ColorSelectorControl
         {
-            Width = 170,
-            TextFontSize = 12,
+            // 「■ + 色名」が出る幅（16 進の入力や色名の直接入力もできるだけの幅を残す）
+            Width = ColorSelectorWidth,
             HighlightBorderOnError = true,
         };
 
-        // 入力欄と代表色だけを使う（ColorPicker と既存のタブは出さない。 タブが 1 つなので題名も出さない）
-        AnnotationPalette.Configure(_color);
+        // 代表色のタブとカラーピッカーのタブを出す（既存のタブは出さない。 タブが 1 つなら題名も出さない）
+        AnnotationPalette.Configure(_color, _paletteLayout, showPicker: true);
         _color.PropertyChanged += (_, e) =>
         {
             if (e.Property == ColorSelectorControl.SelectedColorProperty)
@@ -96,6 +102,10 @@ internal sealed class AnnotationFormatBar : Border
                 ApplyColor();
             }
         };
+
+        // 同じ色を選び直したときは値が変わらず変更通知が出ないため、一覧・カラーピッカーの確定でも適用する
+        // （文字単位で色が混ざった範囲を一律にそろえるため。 入力欄へ打ち込んだ場合は LostFocus で適用する）
+        _color.ColorApplied += (_, _) => ApplyColor();
 
         // 色の入力欄から離れたら、値が変わっていなくても適用する
         _color.LostFocus += (_, _) => ApplyColor();
@@ -165,10 +175,12 @@ internal sealed class AnnotationFormatBar : Border
             _font.SelectedIndex = index >= 0 ? index : -1;
             _size.Value = (decimal)style.FontSize;
             _color.SelectedColor = AnnotationEditorControls.ToHex(style.Color);
-            _bold.IsChecked = style.IsBold;
-            _italic.IsChecked = style.IsItalic;
-            _underline.IsChecked = style.IsUnderline;
-            _strike.IsChecked = style.IsStrike;
+
+            // 装飾は「選択範囲のすべてが同じ属性か」で押下状態を決める（一部だけ太字の範囲で押されて見えないように）
+            _bold.IsChecked = _layer.SelectedTextMatches(textStyle => textStyle.IsBold);
+            _italic.IsChecked = _layer.SelectedTextMatches(textStyle => textStyle.IsItalic);
+            _underline.IsChecked = _layer.SelectedTextMatches(textStyle => textStyle.IsUnderline);
+            _strike.IsChecked = _layer.SelectedTextMatches(textStyle => textStyle.IsStrike);
 
             // 幅が狭いとフォント名・大きさが読めないため、現在値をツールチップにも出す
             ToolTip.SetTip(_font, style.FontFamily);
@@ -177,6 +189,24 @@ internal sealed class AnnotationFormatBar : Border
         finally
         {
             _isRefreshing = false;
+        }
+    }
+
+    /// <summary>代表色の並べ方を取得または設定する（色名付きの一覧 / 色の四角だけを 6 列）。</summary>
+    /// <value>既定は色名付きの一覧（<see cref="ColorSelectorTabLayout.List"/>）。</value>
+    /// <remarks>色名を読まずに選びたいときは <see cref="ColorSelectorTabLayout.Grid"/> にする（スクロールせずに選べる）。</remarks>
+    public ColorSelectorTabLayout PaletteLayout
+    {
+        get => _paletteLayout;
+        set
+        {
+            if (_paletteLayout == value)
+            {
+                return;
+            }
+
+            _paletteLayout = value;
+            AnnotationPalette.Configure(_color, value, showPicker: true);
         }
     }
 

@@ -34,23 +34,30 @@ public static class AnnotationPalette
         new ColorSelectorCustomColor("茶", "#FF92400E"),
     ];
 
-    /// <summary>代表色を並べるタブの定義。</summary>
-    internal static IReadOnlyList<ColorSelectorCustomTab> Tabs { get; } =
-        [new ColorSelectorCustomTab("代表色", RepresentativeColors)];
+    /// <summary>代表色を並べるタブの定義を作る。</summary>
+    /// <param name="layout">並べ方（色名付きの一覧 / 色の四角だけを 6 列）。</param>
+    /// <returns>代表色のタブ。</returns>
+    internal static IReadOnlyList<ColorSelectorCustomTab> CreateTabs(ColorSelectorTabLayout layout) =>
+        [new ColorSelectorCustomTab("代表色", RepresentativeColors, layout)];
 
-    /// <summary>色の選択を注釈向けの構成にする（代表色のタブだけを出す）。</summary>
+    /// <summary>色の選択を注釈向けの構成にする（代表色のタブを出す）。</summary>
     /// <param name="selector">構成する色の選択。</param>
+    /// <param name="layout">代表色の並べ方（色名付きの一覧 / 色の四角だけを 6 列）。</param>
+    /// <param name="showPicker">カラーピッカーのタブを出すかどうか。</param>
     /// <remarks>
-    /// <b>ColorPicker と既存のタブは出さない</b>: 入力欄と代表色で足りるため、幅を取るタブを省く。<br/>
+    /// <b>テーマカラーと色名のタブは出さない</b>: 注釈の色は「枠線・内側・文字」の 3 種類しかなく、
+    /// 色の全一覧を開くと目的の色へ届くまでに手数がかかる。<br/>
+    /// <b>タブが 1 つなら題名は出さない</b>: 切り替える相手が無いため、一覧を狭くできる。<br/>
     /// 16 進や色名を直接打ち込む入力欄は残す（代表色に無い色を指定できる）。
     /// </remarks>
-    internal static void Configure(ColorSelectorControl selector)
+    internal static void Configure(
+        ColorSelectorControl selector, ColorSelectorTabLayout layout = ColorSelectorTabLayout.List, bool showPicker = false)
     {
-        selector.ShowPickerTab = false;
+        selector.ShowPickerTab = showPicker;
         selector.ShowThemeColorTab = false;
         selector.ShowNamedColorTab = false;
         selector.ShowTabTitles = false;
-        selector.CustomTabs = Tabs;
+        selector.CustomTabs = CreateTabs(layout);
     }
 
     /// <summary>代表色を <c>#AARRGGBB</c> の文字列として取得する。</summary>

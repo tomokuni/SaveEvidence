@@ -117,7 +117,6 @@ public sealed class AnnotationPresenter
 
         // 行の高さは行内で最も大きい文字に合わせる（書式が混ざっても行の間隔が揃う）
         var heights = new double[wrapped.Length];
-        var totalHeight = 0.0;
         for (var i = 0; i < wrapped.Length; i++)
         {
             var height = 0.0;
@@ -127,6 +126,13 @@ public sealed class AnnotationPresenter
             }
 
             heights[i] = height;
+        }
+
+        FillEmptyLineHeights(heights, measureText, lineHeightFactor);
+
+        var totalHeight = 0.0;
+        foreach (var height in heights)
+        {
             totalHeight += height;
         }
 
@@ -150,6 +156,41 @@ public sealed class AnnotationPresenter
         }
 
         return lines.ToImmutable();
+    }
+
+    /// <summary>文字を持たない行（空行）にも高さを与える。</summary>
+    /// <param name="heights">行の高さ（空行は 0 で入っている）。 本メソッドが書き換える。</param>
+    /// <param name="measureText">文字列と書式から実寸を測る関数。</param>
+    /// <param name="lineHeightFactor">行間の倍率。</param>
+    /// <remarks>
+    /// <b>空行を 0 にしない</b>: 0 のままだと、明示改行で空けた行が詰まって見え（空行を入れられない）、
+    /// キャレットも高さを持たない。 近い行の高さへ合わせ、前後に行が無ければ既定の文字の高さを使う。
+    /// </remarks>
+    private static void FillEmptyLineHeights(
+        double[] heights, Func<string, AnnotationTextStyle, EsSize> measureText, double lineHeightFactor)
+    {
+        var fallback = measureText("Ag", AnnotationDefaults.TextStyle).Height * lineHeightFactor;
+        for (var i = 0; i < heights.Length; i++)
+        {
+            if (heights[i] > 0)
+            {
+                continue;
+            }
+
+            // 直前の行 → 直後の行 → 既定の高さ の順に使う（書式が大きい本文でも行の間隔が揃う）
+            var height = 0.0;
+            for (var previous = i - 1; previous >= 0 && height <= 0; previous--)
+            {
+                height = heights[previous];
+            }
+
+            for (var next = i + 1; next < heights.Length && height <= 0; next++)
+            {
+                height = heights[next];
+            }
+
+            heights[i] = height > 0 ? height : fallback;
+        }
     }
 
     /// <summary>外観の既定値（枠線）を取得する。</summary>

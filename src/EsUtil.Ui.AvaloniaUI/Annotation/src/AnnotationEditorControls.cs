@@ -52,7 +52,7 @@ public static class AnnotationEditorControls
     /// <returns>色の選択。</returns>
     /// <remarks>
     /// <b>他の項目と同じ横並びにする</b>: 項目名を上へ置くと 1 行を使い、選択の列が縦に間延びする（実測で指摘）。<br/>
-    /// <b>注釈向けの構成にする</b>: テーマの色・色名のタブとカラーピッカー（…）を隠し、代表色 16 色のタブだけを出す
+    /// <b>注釈向けの構成にする</b>: テーマの色・色名のタブと ColorPicker タブを隠し、代表色 16 色のタブだけを出す
     /// （<see cref="AnnotationPalette.Configure"/>）。
     /// </remarks>
     public static Control ColorRow(string label, DrawingColor initial, Action<DrawingColor> apply)

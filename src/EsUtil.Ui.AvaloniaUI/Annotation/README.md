@@ -16,7 +16,9 @@
 描画は run ごとの書式（太字・斜体・下線・取り消し線・色・大きさ・フォント）に対応しています。
 
 **色の選択は `EsUtil.Ui.AvaloniaUI.ColorSelector` を使います**（自前の色入力を作らない）。
-注釈の色は**代表色 16 色（色名付き）のタブだけ**を出し、ColorPicker とテーマ・色名のタブは隠します（`AnnotationPalette`。 入力欄は標準のコンボボックス）。
+入力欄は**「■ + 色名」**（現在色の四角 + 色名）で表示します。
+書式バーは**代表色 16 色（色名付き）と ColorPicker** のタブ、右クリックのフライアウトは**代表色 16 色**のタブを出します（テーマ・色名のタブは隠す。 タブが 1 つなら題名も出さない）。
+代表色の並べは**色名の一覧**と**色の四角だけを 6 列**から選べます（`AnnotationTextEditor.PaletteLayout`）。
 編集 UI の行の部品は `AnnotationEditorControls` が単一所有し、右クリックのフライアウトとホストの設定ペインが共有します。
 
 **現状（対応範囲）**: 4 つの UI 版のうち Avalonia UI 版のみです（MewUI / WinUI 3 / WinForms は後段）。
@@ -50,11 +52,13 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | メンバー | 説明 |
 | --- | --- |
 | `AnnotationTextEditor.Layer` / `IsEditingText` | 本文の表示・その場編集と書式バーをまとめたコントロール（レイヤーは `Layer` から操作する） |
+| `AnnotationTextEditor.PaletteLayout` | 書式バーの代表色の並べ方（`List` = 色名の一覧 / `Grid` = 色の四角だけを 6 列） |
 | `Source` / `SourcePixelWidth` / `SourcePixelHeight` | 表示する画像と、その画素数（縦横比を保って中央へ表示する） |
 | `Document` / `SelectedId` | 注釈の文書と選択中の注釈 |
 | `AddFrame(bounds)` / `AddBubble(bounds, text)` | 注釈の追加（既定の外観） |
 | `DeleteSelected()` / `SetSelectedText(text)` | 削除と本文の置き換え |
 | `TextSelectionRange` / `SelectedTextStyle` | 書式を適用する範囲（文字数）と、その位置の書式 |
+| `SelectedTextMatches(match)` | 選択範囲の**すべての文字**が条件を満たすか（書式バーの押下状態。 選択が無ければキャレットの位置で判定） |
 | `ApplyTextStyle(style)` / `ApplyTextStyle(start, length, style)` | 選択範囲（長さ 0 は本文全体）の書式を**丸ごと差し替える** |
 | `TransformTextStyle(transform)` / `TransformTextStyle(start, length, transform)` | 範囲内の各 run の書式を**指定した属性だけ変える**（色や大きさを保つ。 B / I / U / S の切り替えはこちら） |
 | `UpdateSelectedAppearance(...)` / `UpdateSelectedTail(...)` / `SetSelectedBodyPadding(...)` | 外観・しっぽ・本文の余白の変更 |
@@ -63,11 +67,14 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | `ShowStyleEditor()` | 外観・重なり順の編集フライアウトを表示する（右クリックと同じ。 本文の書式は書式バーで編集する） |
 | `BeginTextEditing()` / `EndTextEditing()` / `IsEditingText` | 本文の**その場編集**の開始・終了 |
 | `CaretIndex` / `SelectionStart` / `SelectionEnd` / `EditingChanged` | キャレットと選択範囲、編集の開始・終了の通知 |
+| `TextSelectionChanged` | 本文の選択範囲（キャレット）が変わった通知（書式バーの現在値を追随させる） |
 | `GetSelectedBodyRect()` | 本文の矩形（DIP。 ホストが書式バーを置く位置） |
 | `DocumentChanged` / `SelectionChanged` | 変更・選択の通知 |
 
 **文字単位の書式**: 本文を編集中に文字を選び、書式バー（ホストが置く）か `Ctrl+B` / `Ctrl+I` / `Ctrl+U`（取り消し線は `Alt+Shift+5`）を押します。
-選択が無ければ本文全体へ適用します。 書式バーはホストが置く（サンプル参照）。
+選択が無ければ本文全体へ適用します。 書式バーの装飾ボタンは、**選択範囲のすべてがその装飾のときだけ押された状態**になります（選択を変えると追随します）。
+色は**一覧で同じ色を選び直しても適用**されます（文字単位で混ざった色を一律にそろえるため）。
+書式バーは `AnnotationTextEditor` が出し入れします（ホストは何も置かなくてよい）。
 
 **操作**: クリックで選択 / ドラッグで移動 / ハンドルでサイズ変更 / しっぽの先端（円）をドラッグで移動 /
 ダブルクリックまたは Enter で本文編集 / **右クリックで外観・重なり順の編集**（本文の書式は書式バーで編集） / Delete で削除 /

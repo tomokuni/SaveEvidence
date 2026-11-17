@@ -59,6 +59,13 @@ public sealed partial class AnnotationLayerControl
     /// <remarks>ホストは書式バーの表示・非表示を切り替える。</remarks>
     public event EventHandler? EditingChanged;
 
+    /// <summary>本文の選択範囲（キャレットの位置）が変わったときに発生する。</summary>
+    /// <remarks>
+    /// ホストは書式バーの現在値（太字・斜体・下線・取り消し線の押下状態）を更新する。<br/>
+    /// 選択の変更では文書は変わらないため、<see cref="DocumentChanged"/> では代用できない。
+    /// </remarks>
+    public event EventHandler? TextSelectionChanged;
+
     /// <summary>本文を編集中かどうかを取得する。</summary>
     /// <value>編集中の場合は <see langword="true"/>。</value>
     public bool IsEditingText => _isEditingText;
@@ -371,7 +378,41 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>選択範囲を <see cref="TextSelectionRange"/> へ写す（書式の適用先に使う）。</summary>
     private void SyncTextSelectionRange()
-        => TextSelectionRange = (SelectionStart, SelectionEnd - SelectionStart);
+    {
+        var current = (SelectionStart, SelectionEnd - SelectionStart);
+        if (TextSelectionRange == current)
+        {
+            return;
+        }
+
+        TextSelectionRange = current;
+        RaiseTextSelectionChanged();
+    }
+
+    /// <summary><see cref="TextSelectionChanged"/> を発生させる。</summary>
+    private void RaiseTextSelectionChanged() => TextSelectionChanged?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>選択範囲の文字がすべて条件を満たすかどうかを取得する（書式ボタンの押下状態に使う）。</summary>
+    /// <param name="match">書式が条件を満たすかどうかを返す関数。</param>
+    /// <returns>すべて満たす場合は <see langword="true"/>。 吹き出しを選んでいない場合は <see langword="false"/>。</returns>
+    /// <remarks>
+    /// <b>範囲のすべてで判定する</b>: 一部だけ太字の範囲でボタンが押されて見えないよう、先頭の文字ではなく
+    /// 範囲のすべてが同じ属性かで決める。 選択が無い（キャレットだけ）ときはキャレットの位置の文字で判定する。
+    /// </remarks>
+    public bool SelectedTextMatches(Func<AnnotationTextStyle, bool> match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        var range = TextSelectionRange;
+        return range.Length <= 0
+            ? match(bubble.Text.StyleAt(Math.Max(0, range.Start)))
+            : bubble.Text.AllMatch(range.Start, range.Length, match);
+    }
 
     /// <summary>履歴から戻した後にキャレットを本文の範囲へ収める。</summary>
     private void ClampCaretToText()

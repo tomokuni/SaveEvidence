@@ -53,6 +53,35 @@ public class RichTextTests
         Assert.True(updated.Runs[0].Style.IsBold);
     }
 
+    /// <summary>範囲のすべての文字が条件を満たすかを判定できることを検証する。</summary>
+    /// <remarks>
+    /// 書式ツールバーの押下状態は「範囲のすべてが同じ属性か」で決める（一部だけ太字の範囲で
+    /// ボタンが押されて見えるのを防ぐ）。
+    /// </remarks>
+    [Fact]
+    internal void AllMatch_範囲のすべてが条件を満たすかで判定する()
+    {
+        var bold = AnnotationDefaults.TextStyle with { IsBold = true };
+        var text = RichText.Create("あいうえお", AnnotationDefaults.TextStyle).ApplyStyle(1, 2, bold);
+
+        Assert.True(text.AllMatch(1, 2, style => style.IsBold));
+        Assert.False(text.AllMatch(0, 3, style => style.IsBold));
+        Assert.False(text.AllMatch(3, 2, style => style.IsBold));
+        Assert.True(text.AllMatch(3, 2, style => !style.IsBold));
+    }
+
+    /// <summary>長さ 0 は全体、文字が無い範囲は false になることを検証する。</summary>
+    [Fact]
+    internal void AllMatch_長さ0は全体で空の範囲はfalse()
+    {
+        var bold = AnnotationDefaults.TextStyle with { IsBold = true };
+        var text = RichText.Create("あいう", bold);
+
+        Assert.True(text.AllMatch(0, 0, style => style.IsBold));
+        Assert.False(text.AllMatch(1, 0, style => !style.IsBold));
+        Assert.False(RichText.Empty.AllMatch(0, 0, style => style.IsBold));
+    }
+
     /// <summary>範囲が文字数を超えても例外にせず末尾までへ丸めることを検証する。</summary>
     [Fact]
     internal void ApplyStyle_範囲外は末尾までへ丸める()

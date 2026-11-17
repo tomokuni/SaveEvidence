@@ -81,6 +81,38 @@ public class AnnotationPresenterTests
         Assert.True(shape.Lines[1].Bounds.Y - shape.Lines[0].Bounds.Y > AnnotationDefaults.FontSizeDefault);
     }
 
+    /// <summary>空行（明示改行だけの行）にも高さが付くことを検証する。</summary>
+    /// <remarks>
+    /// 高さ 0 にすると空けた行が詰まって見え（空行を入れられない）、キャレットも高さを持たない。
+    /// 空行の高さは近い行の高さへ合わせる。
+    /// </remarks>
+    [Fact]
+    internal void 行の配置_空行にも高さが付く()
+    {
+        var style = AnnotationDefaults.TextStyle with { FontSize = 20 };
+        var bubble = CreateBubble("1行目\n\n3行目", style, width: 600);
+
+        var plan = new AnnotationPresenter().ResolveDrawPlan(CreateDocument(bubble), FixedTextMetrics.Measure);
+        var shape = Assert.Single(plan.Shapes);
+
+        Assert.Equal(3, shape.Lines.Count);
+        Assert.True(shape.Lines[1].Bounds.Height > 0, "空行の高さが 0");
+        Assert.Equal(shape.Lines[0].Bounds.Height, shape.Lines[1].Bounds.Height, 3);
+        Assert.True(shape.Lines[2].Bounds.Y > shape.Lines[1].Bounds.Y);
+    }
+
+    /// <summary>空行だけの本文でも 1 行分の高さを持つことを検証する。</summary>
+    [Fact]
+    internal void 行の配置_空行だけでも高さが付く()
+    {
+        var bubble = CreateBubble("\n", AnnotationDefaults.TextStyle, width: 600);
+
+        var plan = new AnnotationPresenter().ResolveDrawPlan(CreateDocument(bubble), FixedTextMetrics.Measure);
+        var shape = Assert.Single(plan.Shapes);
+
+        Assert.All(shape.Lines, line => Assert.True(line.Bounds.Height > 0, "空行の高さが 0"));
+    }
+
     /// <summary>検証用の吹き出しを生成する。</summary>
     /// <param name="text">本文。</param>
     /// <param name="style">書式。</param>

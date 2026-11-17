@@ -16,10 +16,11 @@
 | --- | --- | --- |
 | `Layer` | property | 内側の `AnnotationLayerControl`（画像・文書・選択・元に戻すはここから操作する） |
 | `IsEditingText` | property | 本文を編集中かどうか（編集中は書式バーが出ている） |
+| `PaletteLayout` | property | 書式バーの代表色の並べ方（`ColorSelectorTabLayout.List` = 色名の一覧 / `Grid` = 色の四角だけを 6 列。 既定は一覧） |
 
 - **書式バーは内側で出し入れします**（`Layer.EditingChanged` を購読する）。 ホストがバーを置く必要はありません。
 - **配置**: レイヤーは与えられた領域いっぱい、書式バーは**本文の矩形の上**（上・左右にはみ出すときは内側へ寄せる）。
-- 文書の変更と選択の変更でバーの表示（現在の書式）と位置を追随させます。
+- 文書の変更・選択の変更（`Layer.TextSelectionChanged`）でバーの表示（現在の書式・装飾の押下状態）と位置を追随させます。
 
 ## 2. `AnnotationLayerControl`（クラス）
 
@@ -36,6 +37,7 @@
 | `HandleHitRadius` / `HandleSize` | property | ハンドルを掴む半径・見えている一辺の大きさ（DIP。 描画と当たり判定で同じ値を共有する） |
 | `TextSelectionRange` | property | 本文の書式を適用する範囲（開始位置・長さ。 長さ 0 は全体）。 ホストが入力欄の選択範囲を写す |
 | `SelectedTextStyle` | property | 選択中の本文の書式（範囲の先頭の文字。 フライアウトの初期表示） |
+| `SelectedTextMatches(match)` | method | 選択範囲の**すべての文字**が条件を満たすか（書式バーの押下状態。 選択が無ければキャレットの位置で判定） |
 | `AddFrame(bounds)` / `AddBubble(bounds, text)` | method | 注釈を追加し、追加した注釈を選択する（戻り値は識別子） |
 | `DeleteSelected()` | method | 選択中の注釈を削除する |
 | `SetSelectedText(text)` | method | 選択中の吹き出しの本文を置き換える（**書式は文字位置で引き継ぐ**） |
@@ -48,6 +50,7 @@
 | `BeginTextEditing()` / `EndTextEditing()` / `IsEditingText` | method / property | 本文を**その場で編集**する（キャレット・選択範囲を本文のレイアウトのまま描く。 入力欄を重ねない） |
 | `CaretIndex` / `SelectionStart` / `SelectionEnd` | property | キャレットと選択範囲（文字数） |
 | `EditingChanged` | event | 本文の編集の開始・終了（ホストは書式バーを出し入れする） |
+| `TextSelectionChanged` | event | 本文の選択範囲（キャレット）の変更（書式バーの現在値を追随させる） |
 | `GetSelectedBodyRect()` | method | 本文の矩形（DIP）。 ホストが書式バーを置く位置に使う |
 | `DocumentChanged` / `SelectionChanged` / `EditTextRequested` | event | 文書の変更・選択の変更・本文の編集要求 |
 
@@ -107,5 +110,7 @@
 | `GetHex(name)` / `TryGetColor(name, out color)` | method | 色名から保存値（`#AARRGGBB`）・色を取得する |
 
 - **書式バー・右クリックのフライアウト・設定ペインが同じ並びを使います**（画面ごとに色が違わない）。
-- 色の選択は**代表色のタブだけ**を出し、ColorPicker とテーマ・色名のタブは隠します（タブが 1 つなので題名も出しません。 入力欄は標準のコンボボックスです）。
+- 色の選択の入力欄は**「■ + 色名」**（現在色の四角 + 色名）で表示します。
+- タブは**代表色**を出し、テーマ・色名のタブは隠します（タブが 1 つなので題名も出しません）。 **書式バーは「ColorPicker」タブも出します**（右クリックのフライアウトは出しません）。
+- 代表色の並べは**色名の一覧**と**色の四角だけを 6 列**から選べます（`AnnotationTextEditor.PaletteLayout`）。
 - 16 進や色名を直接打ち込む入力欄は残します（代表色に無い色を指定できる）。

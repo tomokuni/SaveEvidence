@@ -197,6 +197,48 @@ public sealed class RichText
         return Runs.LastOrDefault()?.Style ?? AnnotationTextStyle.Default;
     }
 
+    /// <summary>指定された範囲の文字がすべて条件を満たすかどうかを返す。</summary>
+    /// <param name="start">範囲の開始位置（0 起点。 文字数で数える）。</param>
+    /// <param name="length">範囲の長さ（文字数。 0 以下は「全体」）。</param>
+    /// <param name="match">書式が条件を満たすかどうかを返す関数。</param>
+    /// <returns>範囲のすべての文字が条件を満たす場合は <see langword="true"/>。 範囲に文字が無い場合は <see langword="false"/>。</returns>
+    /// <remarks>
+    /// <b>「範囲のすべて」で判定する</b>: 書式ツールバーの押下状態は、範囲の先頭の文字ではなく
+    /// <b>範囲のすべてが同じ属性か</b>で決める（一部だけ太字の範囲でボタンが押されて見えるのを防ぐ）。
+    /// </remarks>
+    public bool AllMatch(int start, int length, Func<AnnotationTextStyle, bool> match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+
+        var total = PlainText.Length;
+        var from = Math.Clamp(start, 0, total);
+        var to = length <= 0 ? total : Math.Clamp(from + length, from, total);
+        if (from >= to)
+        {
+            return false;
+        }
+
+        var position = 0;
+        foreach (var run in Runs)
+        {
+            var runStart = position;
+            var runEnd = position + run.Text.Length;
+            position = runEnd;
+
+            if (runEnd <= from || runStart >= to)
+            {
+                continue;
+            }
+
+            if (!match(run.Style))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /// <summary>指定位置へ文字列を挿入した新しい <see cref="RichText"/> を返す（本文の入力に使う）。</summary>
     /// <param name="index">挿入位置（0 起点。 文字数で数える）。</param>
     /// <param name="text">挿入する文字列（明示改行は <c>\n</c>）。</param>

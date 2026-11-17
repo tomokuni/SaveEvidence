@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using EsUtil.Feature.Annotation;
+using EsUtil.Ui.AvaloniaUI.ColorSelector;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation.Sample;
 
@@ -15,6 +16,9 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation.Sample;
 /// </remarks>
 internal sealed class SettingsPane : StackPanel
 {
+    /// <summary>本文の表示と書式バーをまとめたコントロール。</summary>
+    private readonly AnnotationTextEditor _editor;
+
     /// <summary>編集対象のコントロール。</summary>
     private readonly AnnotationLayerControl _layer;
 
@@ -22,10 +26,11 @@ internal sealed class SettingsPane : StackPanel
     private AnnotationDraftDefaults _defaults = AnnotationDraftDefaults.Default;
 
     /// <summary>ペインを初期化する。</summary>
-    /// <param name="layer">既定値を適用するコントロール。</param>
-    public SettingsPane(AnnotationLayerControl layer)
+    /// <param name="editor">既定値と書式バーの設定を適用するコントロール。</param>
+    public SettingsPane(AnnotationTextEditor editor)
     {
-        _layer = layer;
+        _editor = editor;
+        _layer = editor.Layer;
         Width = 320;
         Spacing = 6;
         Margin = new Thickness(8);
@@ -85,6 +90,14 @@ internal sealed class SettingsPane : StackPanel
             value => _layer.LineHeightFactor = value, increment: 0.05m));
         Children.Add(AnnotationEditorControls.NumberRow("ハンドルの掴む半径", _layer.HandleHitRadius, 2, 64,
             value => _layer.HandleHitRadius = value));
+
+        Children.Add(SubHeading("書式バー"));
+        Children.Add(AnnotationEditorControls.ChoiceRow(
+            "色の選択",
+            ["色名の一覧", "■ だけ（6 列）"],
+            _editor.PaletteLayout == ColorSelectorTabLayout.Grid ? 1 : 0,
+            index => _editor.PaletteLayout =
+                index == 1 ? ColorSelectorTabLayout.Grid : ColorSelectorTabLayout.List));
 
         var edit = new Button { Content = "選択中の注釈を編集（右クリックと同じ）" };
         edit.Click += (_, _) => _layer.ShowStyleEditor();
