@@ -82,6 +82,8 @@ composed.Save(AnnotationJson.GetComposedPath(imagePath)); // PNG
 
 ## 4. ドキュメント
 
+- API リファレンス … [`docs/SPEC_API.md`](docs/SPEC_API.md)
+- システム仕様書 … [`docs/SPEC_System.md`](docs/SPEC_System.md)
 - コア（モデル・描画計画） … [`../../Feature.Annotation.Core/README.md`](../../Feature.Annotation.Core/README.md)
 - Avalonia UI 版（移植元。 操作と描画の規則は同じ） … [`../../EsUtil.Ui.AvaloniaUI/Annotation/README.md`](../../EsUtil.Ui.AvaloniaUI/Annotation/README.md)
 

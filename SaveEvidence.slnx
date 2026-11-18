@@ -31,6 +31,7 @@
   </Folder>
   <Folder Name="/src/EsUtil.Ui.MewUI/Annotation/">
     <Project Path="src/EsUtil.Ui.MewUI/Annotation/src/EsUtil.Ui.MewUI.Annotation.csproj" />
+    <Project Path="src/EsUtil.Ui.MewUI/Annotation/tests/EsUtil.Ui.MewUI.Annotation.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Parts.CapturePreview.Core/" />
   <Folder Name="/src/Parts.CapturePreview.Core/src/">
