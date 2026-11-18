@@ -117,6 +117,15 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>画像編集（切り出し等）前に View 側で Undo をプッシュするためのコールバック。</summary>
     public Action? BeforeEditAction { get; set; }
 
+    /// <summary>注釈など画像に付随するファイル（<c>*.annotations.json</c> / <c>*.annotated.*</c>）を保存するコールバック（View 側から設定）。</summary>
+    /// <remarks>
+    /// 引数は保存した画像のパスであり、付随ファイルのパスはそのパスから求める。<br/>
+    /// <b>合成画像の描画は UI の仕事</b>である（描画 API は UI フレームワーク固有）。 本コアは保存の順序と
+    /// 保存の可否だけを決め、付随ファイルの書き出しは UI へ委譲する。<br/>
+    /// <b>設定されていない場合</b>は付随ファイルを書かない（注釈を使わない UI）。
+    /// </remarks>
+    public Func<string, Task>? SaveCompanionFilesAsync { get; set; }
+
     /// <summary>MainViewModel の新しいインスタンスを初期化する。</summary>
     /// <param name="settingsService">設定サービス</param>
     /// <param name="imageWriter">画像書き込みサービス。 本番は <see cref="EsBitmapImageWriter"/>（コアの保存へ委譲する）を注入する。</param>
@@ -153,6 +162,20 @@ public sealed partial class MainViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(SavedFileName))]
     [NotifyPropertyChangedFor(nameof(CanSave))]
     private bool _isSaved;
+
+    /// <summary>保存していない注釈の変更があるかどうかを取得または設定する。</summary>
+    /// <value>注釈を追加・編集・削除した後に true。 付随ファイルを書き出した後に false。</value>
+    /// <remarks>
+    /// <b>画像が保存済みでも保存できるようにする</b>ため、<see cref="CanSave"/> の判定へ加える
+    /// （注釈だけを変えたときに、同じ画像の注釈を書き直せる）。 値の更新は注釈を持つ UI が行う。
+    /// </remarks>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanSave))]
+    private bool _hasPendingAnnotationSave;
+
+    /// <summary>直近に保存した画像の絶対パス（未保存の場合は null）。</summary>
+    /// <remarks>注釈だけを変えて再保存するときに、同じ画像の付随ファイルを書き直すために使う。</remarks>
+    private string? _lastSavedFilePath;
 
     /// <summary>ファイル名テンプレート文字列</summary>
     [ObservableProperty]
@@ -250,7 +273,7 @@ public sealed partial class MainViewModel : ObservableObject
         => PreviewImage is not null
             && HasValidTemplate
             && !IsStartupImage
-            && (!IsSaved || HasTemplateChangedSinceSave);
+            && (!IsSaved || HasTemplateChangedSinceSave || HasPendingAnnotationSave);
 
     /// <summary>最後の保存以降にファイル名テンプレートが変わったかどうかを取得する。</summary>
     /// <value>変わった場合は true。 未保存（比較対象が無い）場合も true。</value>
@@ -416,6 +439,10 @@ public sealed partial class MainViewModel : ObservableObject
         _previousPreviewImage = _previewImage;
         IsSaved = false;
         LastSavedFileName = "";
+
+        // 注釈は画像に属する（画像を差し替えたら前の画像の注釈は保存しない）
+        _lastSavedFilePath = null;
+        HasPendingAnnotationSave = false;
 
         // 差し替えは利用者の画像（撮影・切り出し・貼り付け等）のため初期画像ではない
         // （初期画像を設定する経路は SetStartupPreviewImage が印を引き継がせる）
@@ -751,12 +778,30 @@ public sealed partial class MainViewModel : ObservableObject
     /// 同名ファイルが存在する場合は、<see cref="ConfirmOverwriteAsync"/> で確認する。<br/>
     /// 画像形式は拡張子から自動判定する（既定は PNG）。<br/>
     /// <b>保存できる状態のときだけ保存する</b>（<see cref="CanSave"/>。 画像が変わっていない・初期画像・
-    /// テンプレート無効の場合は何もしない）。 この判定により、ショートカットの連打やキー リピートでも同じ画像を保存しない。
+    /// テンプレート無効の場合は何もしない）。 この判定により、ショートカットの連打やキー リピートでも同じ画像を保存しない。<br/>
+    /// <b>注釈だけが変わったとき</b>は画像を書き直さず、同じ画像の付随ファイル（<c>*.annotations.json</c> /
+    /// <c>*.annotated.*</c>）だけを書き直す（<see cref="SaveCompanionFilesAsync"/>）。
     /// </remarks>
     /// <returns>保存に成功したかどうか</returns>
     [RelayCommand]
     public async Task<bool> SaveImageAsync()
-        => CanSave && await SaveCoreAsync(confirmOverwrite: true);
+    {
+        if (!CanSave)
+        {
+            return false;
+        }
+
+        // 画像が保存済みで、テンプレートも変わっておらず、注釈だけが変わった場合は付随ファイルだけを書き直す
+        if (IsSaved
+            && !HasTemplateChangedSinceSave
+            && HasPendingAnnotationSave
+            && _lastSavedFilePath is { } savedPath)
+        {
+            return await SaveCompanionsWithStatusAsync(savedPath);
+        }
+
+        return await SaveCoreAsync(confirmOverwrite: true);
+    }
 
     /// <summary>保存の本体（判定を除く）。</summary>
     /// <param name="confirmOverwrite">同名のファイルがある場合に確認するかどうか（自動保存は false）。</param>
@@ -806,6 +851,7 @@ public sealed partial class MainViewModel : ObservableObject
             // 画像エンコード・ファイル書き込みを IImageWriter に委譲する（本番は Avalonia Skia でエンコード）
             // 保存は画像を読むだけであり、プレビューは読み取りの面のためそのまま渡せる
             _imageWriter.Save(PreviewImage, filePath);
+            _lastSavedFilePath = filePath;
 
             FileNameTemplateText = FileNameTemplate.IncrementRightmostNumber(FileNameTemplateText);
 
@@ -820,6 +866,13 @@ public sealed partial class MainViewModel : ObservableObject
             // 撮影の通知を保存の通知で置き換える（保存後に何が起きたかがステータスバーで分かるようにする）
             StatusMessage = StatusMessages.SaveCompleted();
 
+            // 注釈などの付随ファイルを書く（設定されていない UI は注釈を使わない）
+            if (HasPendingAnnotationSave && SaveCompanionFilesAsync is not null)
+            {
+                await SaveCompanionFilesAsync(filePath);
+                HasPendingAnnotationSave = false;
+            }
+
             return true;
         }
         catch (Exception ex) when (EsErrors.IsRecoverable(ex))
@@ -828,6 +881,33 @@ public sealed partial class MainViewModel : ObservableObject
             StatusMessage = StatusMessages.SaveFailed();
             // 原因はイベントでホストへ渡す（記録はログの所有者であるアプリが行う）
             RaiseSaveFailed(new SaveFailedEventArgs(ex, filePath));
+            return false;
+        }
+    }
+
+    /// <summary>付随ファイル（注釈）だけを書き直し、結果をステータスへ反映する。</summary>
+    /// <param name="imagePath">対象の画像パス。</param>
+    /// <returns>書き出しに成功したかどうか。</returns>
+    /// <remarks>画像は書き直さない（注釈だけを変えたときの保存）。 失敗は <see cref="SaveFailed"/> で通知する。</remarks>
+    private async Task<bool> SaveCompanionsWithStatusAsync(string imagePath)
+    {
+        if (SaveCompanionFilesAsync is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            await SaveCompanionFilesAsync(imagePath);
+            HasPendingAnnotationSave = false;
+            StatusMessage = StatusMessages.SaveCompleted();
+            return true;
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            StatusMessage = StatusMessages.SaveFailed();
+            // 原因はイベントでホストへ渡す（記録はログの所有者であるアプリが行う）
+            RaiseSaveFailed(new SaveFailedEventArgs(ex, imagePath));
             return false;
         }
     }

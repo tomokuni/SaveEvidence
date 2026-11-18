@@ -59,7 +59,8 @@ internal static class AnnotationStyleFlyout
         panel.Children.Add(AnnotationEditorControls.ColorRow(
             "枠線の色",
             appearance.Border,
-            color => owner.UpdateSelectedAppearance(a => a with { Border = color })));
+            color => owner.UpdateSelectedAppearance(a => a with { Border = color }),
+            owner.ColorTextFormat));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
             "枠線の太さ",
             appearance.BorderThickness,
@@ -69,7 +70,8 @@ internal static class AnnotationStyleFlyout
         panel.Children.Add(AnnotationEditorControls.ColorRow(
             "内側の色",
             appearance.Fill,
-            color => owner.UpdateSelectedAppearance(a => a with { Fill = color })));
+            color => owner.UpdateSelectedAppearance(a => a with { Fill = color }),
+            owner.ColorTextFormat));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
             "角丸",
             appearance.CornerRadius,

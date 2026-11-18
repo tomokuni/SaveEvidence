@@ -132,12 +132,13 @@ flowchart TB
 - **分類**: 公開ページ（`public sealed partial class : UserControl`）
 - **責務**:
   - 画像プレビュー（`CropViewControl`（ズーム + 領域選択 + ルーペを内包））の統括
+  - 注釈（`AnnotationTextEditor`。 枠線・吹き出しの編集・元に戻す / やり直す）の統括と、保存時の `*.annotations.json` / `*.annotated.*` の書き出し
   - 切出し（Crop）セッションの開始・確定・キャンセル
   - キャプチャメニュー（全画面 / ウィンドウ / 範囲選択）の受付
   - ステータスバーへのポインタ座標・画像サイズ表示
   - Ctrl ショートカット（保存 / コピー / 貼り付け / Undo / Redo / 切り出し / ズーム）の一括処理（`OnGlobalKeyDown`）
 - **公開メンバー**: `Initialize(...)` / `ExitCropMode()` / `CleanupCaptureResources()` 等
-- **依存**: MainViewModel / CropViewControl（Parts.CapturePreview.ControlAvaloniaUI 経由の推移的依存）/ CaptureSessionControl / UndoHistory / AppLog
+- **依存**: MainViewModel / CropViewControl（Parts.CapturePreview.ControlAvaloniaUI 経由の推移的依存）/ `AnnotationTextEditor`（EsUtil.Ui.AvaloniaUI.Annotation）/ CaptureSessionControl / UndoHistory / AppLog
 
 ### 6.3 FolderViewPage
 
@@ -230,6 +231,7 @@ flowchart TB
 - サービスはインターフェース（`ISettingsService`）を介して注入される（DIP）。
 - ズーム計算・表示は `CropViewControl`（`ZoomViewControl` を内包。 Parts.CapturePreview.ControlAvaloniaUI 経由の推移的依存）に委譲し、app は `CropViewControl` の `Source` 設定・`ZoomChanged` 購読で操作を指示する（一方向依存）。
 - キャプチャ・切出しの詳細は Parts.CapturePreview.ControlAvaloniaUI に委譲し、app は公開 Facade（CaptureSessionControl）のみに依存する。
+- 注釈の描画・入力・変更履歴は `EsUtil.Ui.AvaloniaUI.Annotation`（`AnnotationTextEditor` / `AnnotationLayerControl`）と `EsUtil.Feature.Annotation` に委譲し、app は保存（JSON と合成画像の書き出し）だけを担う。
 
 ## 8. ログ
 

@@ -48,6 +48,10 @@ layer.EndTextEditing();
 // 保存（注釈 JSON と合成画像の書き出し）はホストが行う
 var path = AnnotationJson.GetDocumentPath(imagePath);
 File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encoding(false));
+
+// 合成画像はレイヤーの描画を 1:1 で書き出す（選択枠・キャレットは含まない）
+using var composed = layer.RenderComposedImage();
+composed.Save(AnnotationJson.GetComposedPath(imagePath)); // PNG
 ```
 
 主な API は次のとおりです。
@@ -57,8 +61,10 @@ File.WriteAllText(path, AnnotationJson.Serialize(layer.Document), new UTF8Encodi
 | `AnnotationTextEditor.Layer` / `IsEditingText` | 本文の表示・その場編集と書式バーをまとめたコントロール（レイヤーは `Layer` から操作する） |
 | `AnnotationTextEditor.PaletteColumns` | 代表色パレット（■ の格子）の列数（既定 8 列。 40 色なら 8 列 × 5 行） |
 | `AnnotationTextEditor.ColorWidth` | 書式バーの色の選択の幅（「■ + 全角 4 文字 + 100%」と「■ + `#FFFFFFFF`」の広いほう） |
+| `AnnotationTextEditor.TextFormat` | 書式バーと右クリックのフライアウトの色の表記（色名 + 不透明度 / カラーコード）。 カラーコードは `<c>#AARRGGBB</c>` |
 | `Source` / `SourcePixelWidth` / `SourcePixelHeight` | 表示する画像と、その画素数（縦横比を保って中央へ表示する） |
 | `Document` / `SelectedId` | 注釈の文書と選択中の注釈 |
+| `RenderComposedImage()` | 画像と注釈を元画像ピクセルの 1:1 で合成したビットマップ（保存用。 選択枠・キャレットは描かない） |
 | `AddFrame(bounds)` / `AddBubble(bounds, text)` | 注釈の追加（既定の外観） |
 | `DeleteSelected()` / `SetSelectedText(text)` | 削除と本文の置き換え |
 | `TextSelectionRange` / `SelectedTextStyle` | 書式を適用する範囲（文字数）と、その位置の書式 |

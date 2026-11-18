@@ -74,6 +74,47 @@ public sealed partial class Settings : ObservableObject
     [ObservableProperty]
     private ColorTextFormat _colorTextFormat = ColorTextFormat.NameWithAlpha;
 
+    /// <summary>注釈の枠線の色を取得または設定する（<c>#AARRGGBB</c>）。</summary>
+    /// <remarks>新しく追加する枠線へ適用する（既存の注釈は変わらない）。 既定は赤。</remarks>
+    [ObservableProperty]
+    private string _annotationFrameBorderColor = "#FFDC2626";
+
+    /// <summary>注釈の枠線の太さ（元画像ピクセル）を取得または設定する。</summary>
+    [ObservableProperty]
+    private double _annotationFrameBorderThickness = 3.0;
+
+    /// <summary>注釈の枠線の内側の色を取得または設定する（<c>#AARRGGBB</c>。 透明なら塗らない）。</summary>
+    [ObservableProperty]
+    private string _annotationFrameFillColor = "#00000000";
+
+    /// <summary>注釈の角丸の半径（元画像ピクセル）を取得または設定する。</summary>
+    [ObservableProperty]
+    private double _annotationFrameCornerRadius = 8.0;
+
+    /// <summary>注釈の吹き出しの枠線の色を取得または設定する（<c>#AARRGGBB</c>）。</summary>
+    [ObservableProperty]
+    private string _annotationBubbleBorderColor = "#FF000000";
+
+    /// <summary>注釈の吹き出しの内側の色を取得または設定する（<c>#AARRGGBB</c>）。</summary>
+    [ObservableProperty]
+    private string _annotationBubbleFillColor = "#FFFFFFFF";
+
+    /// <summary>注釈の本文の文字色を取得または設定する（<c>#AARRGGBB</c>）。</summary>
+    [ObservableProperty]
+    private string _annotationTextColor = "#FF000000";
+
+    /// <summary>注釈の本文の文字サイズ（元画像ピクセル）を取得または設定する。</summary>
+    [ObservableProperty]
+    private double _annotationTextFontSize = 20.0;
+
+    /// <summary>注釈の本文の余白（元画像ピクセル）を取得または設定する。</summary>
+    [ObservableProperty]
+    private double _annotationBodyPadding = 12.0;
+
+    /// <summary>注釈の吹き出しのしっぽの幅（元画像ピクセル）を取得または設定する。</summary>
+    [ObservableProperty]
+    private double _annotationTailWidth = 28.0;
+
     /// <summary>FolderViewForm の特大アイコンサイズ（ピクセル）。</summary>
     [ObservableProperty]
     private int _folderExtraLargeIconSize = 320;

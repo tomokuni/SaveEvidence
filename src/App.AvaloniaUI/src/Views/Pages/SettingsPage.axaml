@@ -24,7 +24,7 @@
         <ScrollViewer Grid.Row="1"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   Margin="10">
 
                 <!-- 外観設定 -->
@@ -516,6 +516,77 @@
                                    Margin="0,3,0,0"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 注釈（新しく追加する枠線・吹き出し・本文の既定値。 既存の注釈は変わらない） -->
+                <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" Grid.Row="8" Margin="0,0,0,5" Padding="5">
+                    <StackPanel>
+                        <TextBlock Text="注釈" FontWeight="Bold" Margin="0,0,0,5"/>
+                        <TextBlock Text="新しく追加する枠線・吹き出し・本文へ適用します（既存の注釈は変わりません）。"
+                                   FontSize="11"
+                                   Margin="0,0,0,5"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                              ColumnSpacing="5" RowSpacing="5">
+                            <Label Content="枠線の色:" Grid.Row="0" Grid.Column="0"/>
+                            <controls:ColorSelectorControl x:Name="AnnotationFrameBorderColorPicker"
+                                                           HighlightBorderOnError="True"
+                                                           TextFormat="{Binding Settings.ColorTextFormat}"
+                                                           SelectedColor="{Binding Settings.AnnotationFrameBorderColor, Mode=TwoWay}"
+                                                           Grid.Row="0" Grid.Column="1" MinWidth="200"
+                                                           HorizontalAlignment="Left"/>
+                            <Label Content="枠線の太さ:" Grid.Row="1" Grid.Column="0"/>
+                            <NumericUpDown Value="{Binding Settings.AnnotationFrameBorderThickness}"
+                                           Minimum="1" Maximum="64" Increment="1"
+                                           Grid.Row="1" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
+                            <Label Content="枠線の内側の色:" Grid.Row="2" Grid.Column="0"/>
+                            <controls:ColorSelectorControl x:Name="AnnotationFrameFillColorPicker"
+                                                           HighlightBorderOnError="True"
+                                                           TextFormat="{Binding Settings.ColorTextFormat}"
+                                                           SelectedColor="{Binding Settings.AnnotationFrameFillColor, Mode=TwoWay}"
+                                                           Grid.Row="2" Grid.Column="1" MinWidth="200"
+                                                           HorizontalAlignment="Left"/>
+                            <Label Content="角丸:" Grid.Row="3" Grid.Column="0"/>
+                            <NumericUpDown Value="{Binding Settings.AnnotationFrameCornerRadius}"
+                                           Minimum="0" Maximum="4096" Increment="1"
+                                           Grid.Row="3" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
+                            <Label Content="吹き出しの枠線の色:" Grid.Row="4" Grid.Column="0"/>
+                            <controls:ColorSelectorControl x:Name="AnnotationBubbleBorderColorPicker"
+                                                           HighlightBorderOnError="True"
+                                                           TextFormat="{Binding Settings.ColorTextFormat}"
+                                                           SelectedColor="{Binding Settings.AnnotationBubbleBorderColor, Mode=TwoWay}"
+                                                           Grid.Row="4" Grid.Column="1" MinWidth="200"
+                                                           HorizontalAlignment="Left"/>
+                            <Label Content="吹き出しの内側の色:" Grid.Row="5" Grid.Column="0"/>
+                            <controls:ColorSelectorControl x:Name="AnnotationBubbleFillColorPicker"
+                                                           HighlightBorderOnError="True"
+                                                           TextFormat="{Binding Settings.ColorTextFormat}"
+                                                           SelectedColor="{Binding Settings.AnnotationBubbleFillColor, Mode=TwoWay}"
+                                                           Grid.Row="5" Grid.Column="1" MinWidth="200"
+                                                           HorizontalAlignment="Left"/>
+                            <Label Content="本文の文字サイズ:" Grid.Row="6" Grid.Column="0"/>
+                            <NumericUpDown Value="{Binding Settings.AnnotationTextFontSize}"
+                                           Minimum="6" Maximum="512" Increment="1"
+                                           Grid.Row="6" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
+                            <Label Content="本文の文字色:" Grid.Row="7" Grid.Column="0"/>
+                            <controls:ColorSelectorControl x:Name="AnnotationTextColorPicker"
+                                                           HighlightBorderOnError="True"
+                                                           TextFormat="{Binding Settings.ColorTextFormat}"
+                                                           SelectedColor="{Binding Settings.AnnotationTextColor, Mode=TwoWay}"
+                                                           Grid.Row="7" Grid.Column="1" MinWidth="200"
+                                                           HorizontalAlignment="Left"/>
+                            <Label Content="本文の余白:" Grid.Row="8" Grid.Column="0"/>
+                            <NumericUpDown Value="{Binding Settings.AnnotationBodyPadding}"
+                                           Minimum="0" Maximum="4096" Increment="1"
+                                           Grid.Row="8" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
+                            <Label Content="しっぽの幅:" Grid.Row="9" Grid.Column="0"/>
+                            <NumericUpDown Value="{Binding Settings.AnnotationTailWidth}"
+                                           Minimum="1" Maximum="4096" Increment="1"
+                                           Grid.Row="9" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
+                        </Grid>
                     </StackPanel>
                 </Border>
 

@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using EsUtil.Platform.Core.Palette;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
 
@@ -95,6 +96,22 @@ public sealed class AnnotationTextEditor : Panel
     /// <summary>書式バーの色の選択の幅（DIP）を取得する。</summary>
     /// <value>「■ + 全角 4 文字 + 100%」と「■ + <c>#FFFFFFFF</c>」の広いほうの幅。</value>
     public double ColorWidth => _formatBar.ColorWidth;
+
+    /// <summary>書式バーの色の入力欄へ出す表記を取得または設定する。</summary>
+    /// <value>色名 + 不透明度（既定）またはカラーコード（<c>#AARRGGBB</c>）。</value>
+    /// <remarks>
+    /// <b>右クリックのフライアウトと揃える</b>: 同じ値を <see cref="AnnotationLayerControl.ColorTextFormat"/> へも写す
+    /// （書式バーとフライアウトで色の見え方が食い違わない）。
+    /// </remarks>
+    public ColorTextFormat TextFormat
+    {
+        get => _formatBar.TextFormat;
+        set
+        {
+            _formatBar.TextFormat = value;
+            _layer.ColorTextFormat = value;
+        }
+    }
 
     /// <summary>子要素の寸法を測る。</summary>
     /// <param name="availableSize">使える領域。</param>

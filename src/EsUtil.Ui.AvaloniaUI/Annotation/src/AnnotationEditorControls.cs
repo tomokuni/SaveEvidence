@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using EsUtil.Platform.Core.Palette;
 using EsUtil.Ui.AvaloniaUI.ColorSelector;
 using DrawingColor = System.Drawing.Color;
 
@@ -50,14 +51,19 @@ public static class AnnotationEditorControls
     /// <param name="label">項目名。</param>
     /// <param name="initial">現在の色。</param>
     /// <param name="apply">適用する処理。</param>
+    /// <param name="textFormat">入力欄へ出す表記（色名 + 不透明度 / カラーコード）。</param>
     /// <returns>色の選択。</returns>
     /// <remarks>
     /// <b>他の項目と同じ横並びにする</b>: 項目名を上へ置くと 1 行を使い、選択の列が縦に間延びする（実測で指摘）。<br/>
-    /// <b>注釈向けの構成にする</b>: テーマの色・色名のタブと ColorPicker タブを隠し、代表色 16 色のタブだけを出す
+    /// <b>注釈向けの構成にする</b>: テーマの色・色名のタブと ColorPicker タブを隠し、代表色 40 色のタブだけを出す
     /// （<see cref="AnnotationPalette.Configure"/>）。
     /// </remarks>
-    public static Control ColorRow(string label, DrawingColor initial, Action<DrawingColor> apply)
-        => ColorRow(label, CreateSelector(initial), apply);
+    public static Control ColorRow(
+        string label,
+        DrawingColor initial,
+        Action<DrawingColor> apply,
+        ColorTextFormat textFormat = ColorTextFormat.NameWithAlpha)
+        => ColorRow(label, CreateSelector(initial, textFormat: textFormat), apply);
 
     /// <summary>色の選択を作る（項目名とコントロールを横に並べる）。</summary>
     /// <param name="label">項目名。</param>
@@ -93,6 +99,7 @@ public static class AnnotationEditorControls
     /// <param name="initial">現在の色。</param>
     /// <param name="columns">代表色パレット（■ の格子）の列数。</param>
     /// <param name="allPalettes">代表色に加えて標準のタブ（テーマカラー・色名・ColorPicker）も出すかどうか（設定画面向け）。</param>
+    /// <param name="textFormat">入力欄へ出す表記（色名 + 不透明度 / カラーコード）。</param>
     /// <returns>構成した色の選択。</returns>
     /// <remarks>
     /// <b>注釈向けの構成にする</b>: フライアウトは代表色（■ の格子と色名の一覧）のタブだけにし（テーマの色・色名・
@@ -102,13 +109,15 @@ public static class AnnotationEditorControls
     public static ColorSelectorControl CreateSelector(
         DrawingColor initial,
         int columns = AnnotationPalette.DefaultPaletteColumns,
-        bool allPalettes = false)
+        bool allPalettes = false,
+        ColorTextFormat textFormat = ColorTextFormat.NameWithAlpha)
     {
         var selector = new ColorSelectorControl
         {
             SelectedColor = ToHex(initial),
             HighlightBorderOnError = true,
             TextFontSize = 12,
+            TextFormat = textFormat,
             Width = ColorSelectorWidth,
             HorizontalAlignment = HorizontalAlignment.Left,
         };

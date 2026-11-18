@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text;
 using DrawingColor = System.Drawing.Color;
 using Avalonia;
 using Avalonia.Controls;
@@ -7,6 +9,9 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
@@ -60,6 +65,15 @@ public sealed partial class CapturePage : UserControl
     /// <summary>プレビューの表示用画像（ViewModel の画像を借りて包む非所有アダプタ）。 差し替え時に本ページが破棄する。</summary>
     /// <remarks><see cref="IImage"/> は非所有の契約のため、設定しただけでは破棄されない（射影が残る）。</remarks>
     private EsBitmapAdapter? _cropViewSource;
+
+    /// <summary>注釈の文書（現在のプレビュー画像に属する）。 画像を差し替えると作り直す。</summary>
+    private AnnotationDocument? _annotationDocument;
+
+    /// <summary>注釈の編集モードかどうか。</summary>
+    private bool _isAnnotationMode;
+
+    /// <summary>注釈の文書を作り直している最中かどうか（利用者の変更として扱わない）。</summary>
+    private bool _isResettingAnnotationDocument;
 
     // Undo スタック（DI から取得するシングルトン。 UndoPage と共有）
     private readonly UndoHistory _undoHistory = null!;
@@ -168,6 +182,11 @@ public sealed partial class CapturePage : UserControl
 
         SetupViewModelCallbacks();
 
+        // 注釈の保存（合成画像の描画は UI の仕事）と、色の表記・新規作成時の既定値を設定から反映する
+        _viewModel.SaveCompanionFilesAsync = SaveAnnotationFilesAsync;
+        AnnotationEditor.Layer.DocumentChanged += OnAnnotationDocumentChanged;
+        ApplyAnnotationSettings();
+
         // CropViewControl（自己完結型複合コントロール）にロガーを注入する
         CropView.Log = s_logger;
 
@@ -207,7 +226,6 @@ public sealed partial class CapturePage : UserControl
             switch (e.PropertyName)
             {
                 case nameof(MainViewModel.PreviewImage):
-                    OnPreviewImageChanged();
                     // PreviewImage（コアの読み取りの面）を表示境界で Avalonia 画像（IImage）へ変換して CropView へ設定する。
                     // 画像の所有は ViewModel（PreviewImage）が保持し、本ページは非所有アダプタで包むだけ。
                     // IImage は非所有のため、差し替え時に本ページが旧アダプタを破棄する（射影の解放）。
@@ -217,6 +235,7 @@ public sealed partial class CapturePage : UserControl
                     _cropViewSource = _viewModel.PreviewImage is { } read ? new EsBitmapAdapter(read) : null;
                     CropView.Source = _cropViewSource;
                     previousSource?.Dispose();
+                    OnPreviewImageChanged();
                     break;
                 case nameof(MainViewModel.SaveFolderPath):
                     // 保存先フォルダの変更を保存ボタンの ToolTip に反映する
@@ -293,8 +312,52 @@ public sealed partial class CapturePage : UserControl
             case nameof(Settings.AreaSelectHotKey):
                 UpdateCaptureHotKeyGestures();
                 break;
+            case nameof(Settings.ColorTextFormat):
+            case nameof(Settings.AnnotationFrameBorderColor):
+            case nameof(Settings.AnnotationFrameBorderThickness):
+            case nameof(Settings.AnnotationFrameFillColor):
+            case nameof(Settings.AnnotationFrameCornerRadius):
+            case nameof(Settings.AnnotationBubbleBorderColor):
+            case nameof(Settings.AnnotationBubbleFillColor):
+            case nameof(Settings.AnnotationTextColor):
+            case nameof(Settings.AnnotationTextFontSize):
+            case nameof(Settings.AnnotationBodyPadding):
+            case nameof(Settings.AnnotationTailWidth):
+                ApplyAnnotationSettings();
+                break;
         }
     }
+
+    /// <summary>注釈の色の表記と新規作成時の既定値を、現在の設定から反映する。</summary>
+    private void ApplyAnnotationSettings()
+    {
+        var settings = _settingsService.Current;
+        AnnotationEditor.TextFormat = settings.ColorTextFormat;
+        AnnotationEditor.Layer.DraftDefaults = new AnnotationDraftDefaults(
+            new AnnotationAppearance(
+                ParseAnnotationColor(settings.AnnotationFrameBorderColor),
+                settings.AnnotationFrameBorderThickness,
+                ParseAnnotationColor(settings.AnnotationFrameFillColor),
+                settings.AnnotationFrameCornerRadius),
+            new AnnotationAppearance(
+                ParseAnnotationColor(settings.AnnotationBubbleBorderColor),
+                settings.AnnotationFrameBorderThickness,
+                ParseAnnotationColor(settings.AnnotationBubbleFillColor),
+                settings.AnnotationFrameCornerRadius),
+            new AnnotationTextStyle(
+                AnnotationDefaults.PreferredFontFamilies[0],
+                settings.AnnotationTextFontSize,
+                ParseAnnotationColor(settings.AnnotationTextColor)),
+            settings.AnnotationBodyPadding,
+            settings.AnnotationTailWidth,
+            BubbleEdge.Bottom);
+    }
+
+    /// <summary>設定の色文字列を注釈の色へ変換する（解釈できない場合は既定色）。</summary>
+    private static DrawingColor ParseAnnotationColor(string text)
+        => EsUtil.Platform.Core.Imaging.DrawingColorExtensions.TryParseHexText(text, out var color)
+            ? color
+            : DrawingColor.Transparent;
 
     /// <summary>Capture メニュー項目の InputGesture にホットキー設定を反映する。</summary>
     /// <remarks>
@@ -378,15 +441,33 @@ public sealed partial class CapturePage : UserControl
                 e.Handled = true;
                 _ = PasteFromClipboardAsync();
                 break;
-            case Key.Z: // Image - 元に戻す
+            case Key.Z: // Image - 元に戻す（注釈の編集中は注釈の変更を戻す）
                 e.Handled = true;
-                RestoreUndo();
+                if (_isAnnotationMode)
+                {
+                    OnAnnotationUndoClick(sender, e);
+                }
+                else
+                {
+                    RestoreUndo();
+                }
                 break;
-            case Key.Y: // Image - 元に戻すを取り消す
+            case Key.Y: // Image - 元に戻すを取り消す（注釈の編集中は注釈の変更をやり直す）
                 e.Handled = true;
-                RestoreRedo();
+                if (_isAnnotationMode)
+                {
+                    OnAnnotationRedoClick(sender, e);
+                }
+                else
+                {
+                    RestoreRedo();
+                }
                 break;
-            case Key.R: // Crop - 切り出し
+            case Key.R: // Crop - 切り出し（注釈の編集中は使わない）
+                if (_isAnnotationMode)
+                {
+                    return;
+                }
                 e.Handled = true;
                 OnCropButtonClick(sender, e);
                 break;
@@ -490,7 +571,225 @@ public sealed partial class CapturePage : UserControl
         if (_isCaptureInProgress) return;
         CancelCropSession();
 
+        // 注釈は画像に属する（前の画像の注釈を見せない・保存しない）
+        ExitAnnotationMode();
+        ResetAnnotationDocument();
+
         UpdateCropButtonText();
+    }
+
+    /// <summary>注釈の文書を現在のプレビュー画像に合わせて作り直す。</summary>
+    /// <remarks>
+    /// <b>画像を差し替えたら注釈は空になる</b>（注釈の座標は元画像ピクセルであり、別の画像へは写せない）。
+    /// 注釈レイヤーの描画先も同じ画像へ向け直す（注釈モードを開いていなくても保存時に合成できる）。
+    /// </remarks>
+    private void ResetAnnotationDocument()
+    {
+        var layer = AnnotationEditor.Layer;
+
+        // 作り直しは利用者の変更ではない（保存の要否を立てない）
+        _isResettingAnnotationDocument = true;
+        try
+        {
+            if (_viewModel.PreviewImage is { } image)
+            {
+                _annotationDocument = new AnnotationDocument(image.Size.Width, image.Size.Height, "");
+                layer.Source = _cropViewSource;
+                layer.SourcePixelWidth = image.Size.Width;
+                layer.SourcePixelHeight = image.Size.Height;
+                layer.Document = _annotationDocument;
+            }
+            else
+            {
+                _annotationDocument = null;
+                layer.Source = null;
+                layer.Document = new AnnotationDocument(1, 1);
+            }
+        }
+        finally
+        {
+            _isResettingAnnotationDocument = false;
+        }
+
+        _viewModel.HasPendingAnnotationSave = false;
+        UpdateAnnotationButtons();
+    }
+
+    /// <summary>注釈の編集モードを切り替える（トグル ボタン）。</summary>
+    private void OnAnnotationButtonClick(object? sender, RoutedEventArgs e)
+    {
+        if (_isAnnotationMode)
+        {
+            ExitAnnotationMode();
+        }
+        else
+        {
+            EnterAnnotationMode();
+        }
+    }
+
+    /// <summary>注釈の編集モードへ入る（画像の上へ注釈レイヤーを重ねる）。</summary>
+    private void EnterAnnotationMode()
+    {
+        if (_viewModel.PreviewImage is not { } image)
+        {
+            AnnotationButton.IsChecked = false;
+            return;
+        }
+
+        if (_annotationDocument is null
+            || _annotationDocument.ImageWidth != image.Size.Width
+            || _annotationDocument.ImageHeight != image.Size.Height)
+        {
+            ResetAnnotationDocument();
+        }
+
+        ApplyAnnotationSettings();
+        _isAnnotationMode = true;
+        AnnotationArea.IsVisible = true;
+        CropView.IsVisible = false;
+        AnnotationButton.IsChecked = true;
+        UpdateAnnotationButtons();
+        AnnotationEditor.Focus();
+    }
+
+    /// <summary>注釈の編集モードを終える（注釈は保持し、保存に使う）。</summary>
+    private void ExitAnnotationMode()
+    {
+        if (!_isAnnotationMode)
+        {
+            return;
+        }
+
+        _isAnnotationMode = false;
+        AnnotationArea.IsVisible = false;
+        CropView.IsVisible = true;
+        AnnotationButton.IsChecked = false;
+    }
+
+    /// <summary>注釈の文書が変わったときに、保存の要否と元に戻す・やり直すの可否を更新する。</summary>
+    /// <remarks>
+    /// <b>注釈をすべて削除した場合も保存が必要</b>である（既に書き出した付随ファイルを消すため）。
+    /// そのため「注釈があるか」ではなく「文書が変わったか」で保存の要否を立てる。
+    /// </remarks>
+    private void OnAnnotationDocumentChanged(object? sender, EventArgs e)
+    {
+        if (_isResettingAnnotationDocument)
+        {
+            return;
+        }
+
+        _annotationDocument = AnnotationEditor.Layer.Document;
+        _viewModel.HasPendingAnnotationSave = true;
+        UpdateAnnotationButtons();
+    }
+
+    /// <summary>元に戻す・やり直すボタンの使用可否を注釈の履歴へ合わせる。</summary>
+    private void UpdateAnnotationButtons()
+    {
+        AnnotationUndoButton.IsEnabled = AnnotationEditor.Layer.CanUndo;
+        AnnotationRedoButton.IsEnabled = AnnotationEditor.Layer.CanRedo;
+    }
+
+    /// <summary>注釈の枠線を画像の中央へ追加する。</summary>
+    private void OnAddFrameClick(object? sender, RoutedEventArgs e)
+    {
+        var layer = AnnotationEditor.Layer;
+        var width = Math.Max(1, layer.SourcePixelWidth);
+        var height = Math.Max(1, layer.SourcePixelHeight);
+        layer.AddFrame(new EsRect(width * 0.15, height * 0.15, width * 0.35, height * 0.25));
+        UpdateAnnotationButtons();
+    }
+
+    /// <summary>注釈の吹き出しを画像の中央へ追加する。</summary>
+    private void OnAddBubbleClick(object? sender, RoutedEventArgs e)
+    {
+        var layer = AnnotationEditor.Layer;
+        var width = Math.Max(1, layer.SourcePixelWidth);
+        var height = Math.Max(1, layer.SourcePixelHeight);
+        layer.AddBubble(new EsRect(width * 0.45, height * 0.55, width * 0.4, height * 0.25), "本文を入力");
+        UpdateAnnotationButtons();
+    }
+
+    /// <summary>注釈の変更を元に戻す。</summary>
+    private void OnAnnotationUndoClick(object? sender, RoutedEventArgs e)
+    {
+        AnnotationEditor.Layer.Undo();
+        UpdateAnnotationButtons();
+    }
+
+    /// <summary>注釈の変更をやり直す。</summary>
+    private void OnAnnotationRedoClick(object? sender, RoutedEventArgs e)
+    {
+        AnnotationEditor.Layer.Redo();
+        UpdateAnnotationButtons();
+    }
+
+    /// <summary>注釈の付随ファイル（<c>*.annotations.json</c> / <c>*.annotated.*</c>）を書き出す。</summary>
+    /// <param name="imagePath">保存した画像のパス。</param>
+    /// <returns>待機タスク。</returns>
+    /// <remarks>
+    /// <b>注釈が無いときは書かず、既に書き出した付随ファイルを消す</b>（注釈をすべて削除した後に
+    /// 古い注釈ファイルが残ると、画像と食い違う）。<br/>
+    /// <b>合成画像は元画像ピクセルの 1:1</b>で描く（表示倍率に依存しない）。 形式は元画像の拡張子に合わせる
+    /// （<see cref="AnnotationJson.GetComposedPath"/> が拡張子を保つ）。
+    /// </remarks>
+    private async Task SaveAnnotationFilesAsync(string imagePath)
+    {
+        var jsonPath = AnnotationJson.GetDocumentPath(imagePath);
+        var composedPath = AnnotationJson.GetComposedPath(imagePath);
+
+        if (_annotationDocument is null || _annotationDocument.Items.Length == 0)
+        {
+            File.Delete(jsonPath);
+            File.Delete(composedPath);
+            return;
+        }
+
+        var json = AnnotationJson.Serialize(_annotationDocument);
+        await File.WriteAllTextAsync(jsonPath, json, new UTF8Encoding(false));
+
+        using var rendered = AnnotationEditor.Layer.RenderComposedImage();
+        SaveComposedImage(rendered, composedPath);
+    }
+
+    /// <summary>合成したビットマップをファイルへ保存する（拡張子が形式を決める）。</summary>
+    /// <param name="rendered">合成したビットマップ。</param>
+    /// <param name="filePath">保存先。</param>
+    /// <remarks>
+    /// <b>画素をコアの画像へ写してから保存する</b>: 保存形式（PNG / JPEG 等）の判定とエンコードは
+    /// <see cref="EsBitmap.Save(string)"/> が単一所有する（UI の保存 API は PNG だけである）。
+    /// 行の余白（<see cref="ILockedFramebuffer.RowBytes"/>）を詰めて BGRA8888 の連続した領域にする。
+    /// </remarks>
+    private static void SaveComposedImage(RenderTargetBitmap rendered, string filePath)
+    {
+        var width = rendered.PixelSize.Width;
+        var height = rendered.PixelSize.Height;
+
+        using var target = new WriteableBitmap(rendered.PixelSize, new Vector(96, 96));
+        using var buffer = target.Lock();
+        rendered.CopyPixels(buffer);
+
+        var stride = buffer.RowBytes;
+        var row = new byte[stride];
+        var pixels = new byte[width * 4 * height];
+        for (var y = 0; y < height; y++)
+        {
+            Marshal.Copy(buffer.Address + (y * stride), row, 0, stride);
+            Buffer.BlockCopy(row, 0, pixels, y * width * 4, width * 4);
+        }
+
+        // Rgba8888 の環境では赤と青が入れ替わるため、BGRA8888 へそろえる
+        if (buffer.Format == PixelFormat.Rgba8888)
+        {
+            for (var i = 0; i < pixels.Length; i += 4)
+            {
+                (pixels[i], pixels[i + 2]) = (pixels[i + 2], pixels[i]);
+            }
+        }
+
+        using var image = EsBitmap.FromPixelCopy(width, height, pixels);
+        image.Save(filePath);
     }
 
     /// <summary>設定変更（中央寄せ/原点寄せ）を監視して画像配置へ即時反映する。</summary>
@@ -543,7 +842,17 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>キャプチャ中フラグを設定する（MainWindowから呼ばれる）。</summary>
-    public void SetIsCaptureInProgress(bool value) => _isCaptureInProgress = value;
+    public void SetIsCaptureInProgress(bool value)
+    {
+        _isCaptureInProgress = value;
+
+        // キャプチャ中は画像の変更通知で注釈を作り直さない（撮影結果の確定後に 1 回だけ作り直す）
+        if (!value)
+        {
+            ExitAnnotationMode();
+            ResetAnnotationDocument();
+        }
+    }
 
     // ====================================================================
     // 画像系ボタン
@@ -633,6 +942,9 @@ public sealed partial class CapturePage : UserControl
 
     private async void OnCropButtonClick(object? sender, RoutedEventArgs e)
     {
+        // 注釈モード中は先に切り出しビューへ戻す（注釈レイヤーの上で切り出しの選択はできない）
+        ExitAnnotationMode();
+
         // どの操作を行うか（開始 / 確定 / キャンセル）の判断はコア（CropSessionActions）が単一所有する。
         // ホストは返された操作を効果へ写すだけにする（同じ 3 分岐を UI に書かない）
         switch (_captureSessionControl.ResolveCropAction())

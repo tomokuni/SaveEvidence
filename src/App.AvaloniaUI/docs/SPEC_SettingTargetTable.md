@@ -28,6 +28,7 @@
 - [11. ホットキー設定](#11-ホットキー設定)
 - [12. 設定外・自動保存（フォルダビュー / Undo 一覧 / ウィンドウ状態）](#12-設定外自動保存フォルダビュー--undo-一覧--ウィンドウ状態)
 - [13. 外観設定のデフォルト値への復元](#13-外観設定のデフォルト値への復元)
+- [14. 注釈](#14-注釈)
 
 ## 1. 文書概要
 
@@ -386,3 +387,24 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 - デフォルト値は各コントロール（`MarqueeControl` / `LoupeControl` の `Options` と `Appearance` / 装飾の `MarqueeAppearance`）の既定値と一致させる
 - 変更は `PropertyChanged` 購読により自動保存される
 - 外観設定以外（テーマ・保存設定・ホットキー等）は変更されない
+
+## 14. 注釈
+
+設定画面「注釈」は、**新しく追加する注釈の既定値**を変える（既存の注釈は各注釈が持つ値のまま）。
+
+| 設定項目 | `Settings` プロパティ | 反映先 |
+| --- | --- | --- |
+| 枠線の色 | `AnnotationFrameBorderColor` | `AnnotationDraftDefaults.FrameAppearance.Border` |
+| 枠線の太さ | `AnnotationFrameBorderThickness` | `FrameAppearance.BorderThickness` / `BubbleAppearance.BorderThickness` |
+| 枠線の内側の色 | `AnnotationFrameFillColor` | `FrameAppearance.Fill` |
+| 角丸 | `AnnotationFrameCornerRadius` | `FrameAppearance.CornerRadius` / `BubbleAppearance.CornerRadius` |
+| 吹き出しの枠線の色 | `AnnotationBubbleBorderColor` | `BubbleAppearance.Border` |
+| 吹き出しの内側の色 | `AnnotationBubbleFillColor` | `BubbleAppearance.Fill` |
+| 本文の文字サイズ | `AnnotationTextFontSize` | `TextStyle.FontSize` |
+| 本文の文字色 | `AnnotationTextColor` | `TextStyle.Color` |
+| 本文の余白 | `AnnotationBodyPadding` | `AnnotationDraftDefaults.BodyPadding` |
+| しっぽの幅 | `AnnotationTailWidth` | `AnnotationDraftDefaults.TailWidth` |
+
+- 反映は `CapturePage.ApplyAnnotationSettings()` が行い、設定の変更通知で即時に追随する。
+- 色の入力欄の表記は設定画面の「色の表記」（`ColorTextFormat`）に従う。
+- 注釈の保存（`*.annotations.json` / `*.annotated.*`）と元に戻す / やり直しは [`../README.md`](../README.md) §8.3 を参照。

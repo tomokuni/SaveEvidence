@@ -284,6 +284,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `IsAutoCropActive` | `bool` | 自動切り出しモード中かどうか |
 | `StatusMessage` / `ZoomDisplayText` / `PointerDisplayText` | `string` | 画面表示用テキスト |
 | `IsSaved` / `SavedFileName` | `bool` / `string` | 保存済み状態と保存したファイル名（保存状態の専用ラベルは持たない。 保存のたびに通知する） |
+| `HasPendingAnnotationSave` | `bool` | 保存していない注釈の変更があるか（true の間は保存済みでも `CanSave` が true。 注釈を持つ UI が更新する） |
 | `IsStartupImage` | `bool` | 起動直後の初期画像（プレースホルダ）を表示しているか（true の間は保存できない） |
 | `HasTemplateChangedSinceSave` | `bool` | 保存後にファイル名テンプレートが変わったか（保存時の自動インクリメントで +1 されただけの状態は「変わっていない」とみなす。 `CanSave` の判定に使う） |
 | `AutoSave` | `bool` | 自動保存（`Settings.AutoSave` を読み書きし、設定へ保存する） |
@@ -304,7 +305,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `SetPreviewImage(EsReadOnlyBitmap)` / `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る）。 書き換え可能な画像を渡す版は、渡した実体を**凍結**して 0 コピーで共有する |
 | `SetStartupPreviewImage(EsBitmap)` | 起動直後の初期画像を設定する（`IsStartupImage` を立て、**保存できない**状態にする） |
 | `CopyAfterEditIfEnabledAsync()` | 撮影・切り出しの直後に呼ぶ。 `CopyAfterCapture` が有効なら現在の画像をクリップボードへコピーする（撮影の完了通知は変えない） |
-| `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`）。 失敗時は `StatusMessage` と `SaveFailed` へ通知する |
+| `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`）。 失敗時は `StatusMessage` と `SaveFailed` へ通知する。 **画像が保存済みで注釈だけが変わった場合は、画像を書き直さず付随ファイルだけを書く** |
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`）。 成功時に `切り出しました（W x H）` を通知する |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`）。 検出結果とキャンセルを通知する |
 | `HitDetectedRect(double x, double y)` | 指定座標（画像ピクセル）を含む検出矩形のうち面積が最小のものを返す（無ければ null）。 両 UI のホバー強調と確定・キャンセル判定が共用する |
@@ -318,6 +319,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `PasteFromClipboardAsync` | `Func<Task<EsBitmap?>>?` | null（貼り付けは画像を**作る**操作であるため、書き換え可能な型を返すコールバックを受ける） |
 | `ConfirmOverwriteAsync` | `Func<string, Task<bool>>?` | null（未設定時は上書きしない） |
 | `BeforeEditAction` | `Action?` | null |
+| `SaveCompanionFilesAsync` | `Func<string, Task>?` | null（注釈の付随ファイル（`*.annotations.json` / `*.annotated.*`）を保存するコールバック。 引数は保存した画像のパス。 未設定時は付随ファイルを書かない） |
 | `StartSelectionMode` | `Action<CaptureType>?` | null |
 
 ## 17. `Services.StatusMessages`（静的クラス）

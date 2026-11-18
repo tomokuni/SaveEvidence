@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:EsUtil.SaveEvidence.App.Core.ViewModels;assembly=App.Core"
              xmlns:crop="clr-namespace:EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.Crop;assembly=Parts.CapturePreview.ControlAvaloniaUI"
+             xmlns:annotation="clr-namespace:EsUtil.Ui.AvaloniaUI.Annotation;assembly=EsUtil.Ui.AvaloniaUI.Annotation"
              x:Class="EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages.CapturePage"
              x:DataType="vm:MainViewModel">
     <UserControl.Resources>
@@ -142,6 +143,15 @@
             <Button x:Name="CropButton" Classes="toolbar toolbar-icon" ToolTip.Tip="切り出し（切出しモード開始/終了）" IsEnabled="{Binding CanCopy}" Click="OnCropButtonClick" Margin="1" VerticalAlignment="Center">
                 <PathIcon x:Name="CropIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
             </Button>
+            <!-- 注釈（枠線・吹き出し）の編集モード。 オンにすると画像の上へ注釈レイヤーを重ねる -->
+            <ToggleButton x:Name="AnnotationButton"
+                          Classes="toolbar"
+                          Content="注釈"
+                          ToolTip.Tip="注釈（枠線・吹き出し）を編集する"
+                          IsEnabled="{Binding HasPreviewImage}"
+                          Click="OnAnnotationButtonClick"
+                          Margin="1"
+                          VerticalAlignment="Center"/>
             <!-- キャプチャ時にタスク バーを隠す（設定ページの同じ項目と連動する。 変更通知で互いの表示が追従する） -->
             <Border Classes="toolbar-separator"/>
             <CheckBox x:Name="HideTaskbarCheckBox"
@@ -167,6 +177,28 @@
                  本コントロールへ委譲する（ホストはコントロールを重ねない）。 -->
 <crop:CropViewControl x:Name="CropView"
                            Background="Transparent"/>
+
+            <!-- 注釈の編集モード（オンにすると画像の上へ注釈レイヤーを重ねる）。
+                 AnnotationTextEditor は本文の表示・その場編集と書式バーをまとめて持つ。 -->
+            <Grid x:Name="AnnotationArea" IsVisible="False" Background="{DynamicResource ImageAreaBackgroundBrush}">
+                <annotation:AnnotationTextEditor x:Name="AnnotationEditor" Margin="8"/>
+                <!-- 注釈の操作（追加・元に戻す・やり直す）。 画像の上へ重ねず、左上へ置く -->
+                <Border HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Margin="12"
+                        Padding="4"
+                        CornerRadius="4"
+                        Background="#F2FFFFFF"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <Button x:Name="AddFrameButton" Classes="toolbar" Content="枠線を追加" Click="OnAddFrameClick"/>
+                        <Button x:Name="AddBubbleButton" Classes="toolbar" Content="吹き出しを追加" Click="OnAddBubbleClick"/>
+                        <Button x:Name="AnnotationUndoButton" Classes="toolbar" Content="元に戻す" IsEnabled="False" Click="OnAnnotationUndoClick"/>
+                        <Button x:Name="AnnotationRedoButton" Classes="toolbar" Content="やり直す" IsEnabled="False" Click="OnAnnotationRedoClick"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
 
         </Grid>
 

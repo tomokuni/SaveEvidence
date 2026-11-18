@@ -493,6 +493,94 @@ public class MainViewModelTests
         Assert.True(vm.CanSave);
     }
 
+    // ====================================================================
+    // 注釈の付随ファイル（*.annotations.json / *.annotated.*）
+    // ====================================================================
+
+    /// <summary>注釈の変更だけがあるときは画像を書き直さず、同じ画像の付随ファイルだけを書くことを検証する。</summary>
+    /// <remarks>
+    /// 画像を保存した後に注釈を足した場合、画像を作り直すとファイルが増える。
+    /// 付随ファイルの書き出し先は直近に保存した画像のパスである。
+    /// </remarks>
+    [Fact]
+    internal async Task SaveImageAsync_注釈の変更だけなら画像を書き直さず付随ファイルを書く()
+    {
+        using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
+        var companionPaths = new List<string>();
+
+        var vm = new MainViewModel(new MockSettingsService(), writer)
+        {
+            PreviewImage = CreateBitmap(),
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+            SaveCompanionFilesAsync = path =>
+            {
+                companionPaths.Add(path);
+                return Task.CompletedTask;
+            },
+        };
+
+        // 1 回目の保存（注釈なし）では付随ファイルを書かない
+        Assert.True(await vm.SaveImageAsync());
+        Assert.Empty(companionPaths);
+        var imagePath = Assert.Single(writer.SavedPaths);
+
+        // 注釈を変えただけなら、画像を書き直さず同じ画像の付随ファイルだけを書く
+        vm.HasPendingAnnotationSave = true;
+        Assert.True(vm.CanSave);
+        Assert.True(await vm.SaveImageAsync());
+
+        Assert.Single(writer.SavedPaths);
+        Assert.Equal(imagePath, Assert.Single(companionPaths));
+        Assert.False(vm.HasPendingAnnotationSave);
+        Assert.Equal(StatusMessages.SaveCompleted(), vm.StatusMessage);
+    }
+
+    /// <summary>注釈がある初回保存では、画像の保存後に付随ファイルを書くことを検証する。</summary>
+    [Fact]
+    internal async Task SaveImageAsync_注釈がある保存では付随ファイルを書く()
+    {
+        using var tempDir = new TempDir();
+        var writer = new MockImageWriter();
+        var companionPaths = new List<string>();
+
+        var vm = new MainViewModel(new MockSettingsService(), writer)
+        {
+            PreviewImage = CreateBitmap(),
+            FileNameTemplateText = "screenshot_001.png",
+            SaveFolderPath = tempDir.Path,
+            HasPendingAnnotationSave = true,
+            SaveCompanionFilesAsync = path =>
+            {
+                companionPaths.Add(path);
+                return Task.CompletedTask;
+            },
+        };
+
+        Assert.True(await vm.SaveImageAsync());
+
+        Assert.Single(writer.SavedPaths);
+        Assert.Equal(writer.SavedPaths[0], Assert.Single(companionPaths));
+        Assert.False(vm.HasPendingAnnotationSave);
+    }
+
+    /// <summary>画像を差し替えると、前の画像の注釈は保存対象から外れることを検証する。</summary>
+    /// <remarks>注釈の座標は元画像ピクセルであるため、別の画像へは写せない。</remarks>
+    [Fact]
+    internal void PreviewImageの変更で注釈の変更は取り消される()
+    {
+        var vm = new MainViewModel(new MockSettingsService(), new MockImageWriter())
+        {
+            PreviewImage = CreateBitmap(),
+            HasPendingAnnotationSave = true,
+        };
+
+        vm.SetPreviewImage(CreateBitmap());
+
+        Assert.False(vm.HasPendingAnnotationSave);
+    }
+
     /// <summary>切り出しコマンドの引数型がコア型（<see cref="EsRectInt"/>）であることを検証する。</summary>
     /// <remarks>
     /// <see cref="CommunityToolkit.Mvvm.Input.RelayCommand{T}"/> は引数の型が一致しないと <see cref="ArgumentException"/> を投げる。<br/>

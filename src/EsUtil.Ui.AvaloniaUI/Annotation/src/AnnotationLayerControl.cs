@@ -2,10 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using EsUtil.Feature.Annotation;
 using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Palette;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
 
@@ -157,6 +159,14 @@ public sealed partial class AnnotationLayerControl : Control
     /// <b>既存の注釈には影響しない</b>（各注釈が自分の外観・書式を持つ）。 設定ページやサンプルの設定ペインから変える。
     /// </remarks>
     public AnnotationDraftDefaults DraftDefaults { get; set; } = AnnotationDraftDefaults.Default;
+
+    /// <summary>色の入力欄へ出す表記を取得または設定する。</summary>
+    /// <value>色名 + 不透明度（既定）またはカラーコード（<c>#AARRGGBB</c>）。</value>
+    /// <remarks>
+    /// <b>保存値は表記に依らず <c>#AARRGGBB</c></b>である。 右クリックのフライアウトの色は本表記で表示する
+    /// （書式バーの色は <c>AnnotationFormatBar.TextFormat</c> が同じ値を受ける）。
+    /// </remarks>
+    public ColorTextFormat ColorTextFormat { get; set; } = ColorTextFormat.NameWithAlpha;
 
     /// <summary>行間の倍率を取得または設定する。</summary>
     /// <value>文字の実寸の高さに対する行の高さの比。 既定は 1.25。</value>
@@ -585,6 +595,39 @@ public sealed partial class AnnotationLayerControl : Control
     {
         base.OnSizeChanged(e);
         InvalidateVisual();
+    }
+
+    /// <summary>画像と注釈を元画像ピクセルの 1:1 で合成したビットマップを作る（保存用）。</summary>
+    /// <returns>合成したビットマップ（<see cref="SourcePixelWidth"/> × <see cref="SourcePixelHeight"/>）。</returns>
+    /// <remarks>
+    /// <b>選択枠・ハンドル・キャレットは描かない</b>（編集中の一時的な表示であり、保存する絵ではない）。<br/>
+    /// <b>座標は元画像ピクセル</b>である: 表示倍率を掛けず、注釈を 1:1 で描く（どの表示倍率でも同じ絵になる）。
+    /// 呼び出し側は返したビットマップを破棄する。
+    /// </remarks>
+    public RenderTargetBitmap RenderComposedImage()
+    {
+        var width = Math.Max(1, SourcePixelWidth);
+        var height = Math.Max(1, SourcePixelHeight);
+
+        var bitmap = new RenderTargetBitmap(new PixelSize(width, height), new Vector(96, 96));
+        using (var context = bitmap.CreateDrawingContext())
+        {
+            if (Source is { } image)
+            {
+                context.DrawImage(image, new Rect(0, 0, width, height));
+            }
+
+            if (_document.Items.Length > 0)
+            {
+                var plan = _presenter.ResolveDrawPlan(_document, MeasureText, selectedId: null);
+                foreach (var shape in plan.Shapes)
+                {
+                    AnnotationPainter.DrawShape(context, shape);
+                }
+            }
+        }
+
+        return bitmap;
     }
 
     /// <summary>描画する（画像 → 注釈 → 選択枠 → しっぽのハンドルの順）。</summary>

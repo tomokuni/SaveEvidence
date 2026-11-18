@@ -18,6 +18,7 @@
 | `IsEditingText` | property | 本文を編集中かどうか（編集中は書式バーが出ている） |
 | `PaletteColumns` | property | 書式バーの代表色パレット（■ の格子）の列数（1 以上。 既定 8 列） |
 | `ColorWidth` | property | 書式バーの色の選択の幅（「■ + 全角 4 文字 + 100%」と「■ + `#FFFFFFFF`」の広いほう） |
+| `TextFormat` | property | 書式バーと右クリックのフライアウトの色の表記（色名 + 不透明度 / カラーコード）。 カラーコードは `#AARRGGBB` |
 
 - **書式バーは内側で出し入れします**（`Layer.EditingChanged` を購読する）。 ホストがバーを置く必要はありません。
 - **配置**: レイヤーは与えられた領域いっぱい、書式バーは**本文の矩形の上**（上・左右にはみ出すときは内側へ寄せる）。 バーの大きさは**中身に合わせる**（説明の行と「完了」は置かない）。
@@ -35,6 +36,7 @@
 | `Document` | property | 注釈の文書。 差し替えると選択を解除する |
 | `SelectedId` / `Selected` | property | 選択中の注釈（識別子・実体） |
 | `DraftDefaults` | property | 新規作成時の既定値（`AnnotationDraftDefaults`。 既存の注釈は変わらない） |
+| `ColorTextFormat` | property | 色の入力欄へ出す表記（色名 + 不透明度 / カラーコード）。 `AnnotationTextEditor.TextFormat` が同じ値を写す |
 | `LineHeightFactor` | property | 行間の倍率（既定 1.25） |
 | `HandleHitRadius` / `HandleSize` | property | ハンドルを掴む半径・見えている一辺の大きさ（DIP。 描画と当たり判定で同じ値を共有する） |
 | `TextSelectionRange` | property | 本文の書式を適用する範囲（開始位置・長さ。 長さ 0 は全体）。 ホストが入力欄の選択範囲を写す |
@@ -54,6 +56,7 @@
 | `EditingChanged` | event | 本文の編集の開始・終了（ホストは書式バーを出し入れする） |
 | `TextSelectionChanged` | event | 本文の選択範囲（キャレット）の変更（書式バーの現在値を追随させる） |
 | `GetSelectedBodyRect()` | method | 本文の矩形（DIP）。 ホストが書式バーを置く位置に使う |
+| `RenderComposedImage()` | method | 画像と注釈を元画像ピクセルの 1:1 で合成した `RenderTargetBitmap` を作る（保存用。 選択枠・ハンドル・キャレットは描かない） |
 | `DocumentChanged` / `SelectionChanged` / `EditTextRequested` | event | 文書の変更・選択の変更・本文の編集要求 |
 
 操作の割り当ては次のとおりです。
@@ -73,7 +76,7 @@
 | Alt+Shift+5（編集中） | 選択範囲の取り消し線を切り替える |
 | 方向キー（`Shift` 併用） | nudge（1 px / 10 px） |
 
-**注意**: 保存（注釈 JSON・合成画像）は行いません。 ホストが `AnnotationJson` とプラットフォームの描画 API で書き出します。
+**注意**: 保存（注釈 JSON・合成画像）は行いません。 ホストが `AnnotationJson` と `RenderComposedImage()` で書き出します。
 
 ## 3. `AnnotationEditorControls`（クラス）
 
@@ -85,9 +88,9 @@
 | `ColorSelectorWidth` | const | 色の選択の幅（DIP。 既定 210 = 項目名 + 選択の行が収まる幅。 **横いっぱいへ広げない**） |
 | `Heading(text)` | method | 見出しを作る |
 | `Label(text)` | method | 項目名のラベルを作る |
-| `ColorRow(label, initial, apply)` | method | 色の行を作る（**`ColorSelectorControl` を使う**。 幅は `ColorSelectorWidth` へ固定する。 `apply` へは検証済みの色だけを渡す） |
+| `ColorRow(label, initial, apply, textFormat)` | method | 色の行を作る（**`ColorSelectorControl` を使う**。 幅は `ColorSelectorWidth` へ固定する。 `apply` へは検証済みの色だけを渡す。 `textFormat` は入力欄の表記） |
 | `ColorRow(label, selector, apply)` | method | 構成済みの色の選択を並べた行を作る（タブの構成を呼び出し側が決めるときに使う） |
-| `CreateSelector(initial, columns, allPalettes)` | method | 注釈向けに構成した色の選択を作る（`allPalettes` は代表色 + 標準のタブ。 設定画面向け） |
+| `CreateSelector(initial, columns, allPalettes, textFormat)` | method | 注釈向けに構成した色の選択を作る（`allPalettes` は代表色 + 標準のタブ。 設定画面向け。 `textFormat` は入力欄の表記） |
 | `NumberRow(label, initial, minimum, maximum, apply, increment)` | method | 数値の行を作る（`NumericUpDown`） |
 | `ChoiceRow(label, options, selectedIndex, apply)` | method | 選択肢の行を作る（`ComboBox`） |
 | `Toggle(text, isChecked, apply, bold, italic, underline, strike)` | method | 装飾の切り替え（B / I / U / S）を作る |

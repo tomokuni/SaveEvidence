@@ -27,6 +27,7 @@
   <Folder Name="/src/EsUtil.Ui.AvaloniaUI/Annotation/">
     <Project Path="src/EsUtil.Ui.AvaloniaUI/Annotation/src/EsUtil.Ui.AvaloniaUI.Annotation.csproj" />
     <Project Path="src/EsUtil.Ui.AvaloniaUI/Annotation/sample/EsUtil.Ui.AvaloniaUI.Annotation.Sample.csproj" />
+    <Project Path="src/EsUtil.Ui.AvaloniaUI/Annotation/tests/EsUtil.Ui.AvaloniaUI.Annotation.Tests.csproj" />
   </Folder>
   <Folder Name="/src/Parts.CapturePreview.Core/" />
   <Folder Name="/src/Parts.CapturePreview.Core/src/">

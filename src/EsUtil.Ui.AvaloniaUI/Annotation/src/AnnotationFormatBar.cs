@@ -7,6 +7,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using EsUtil.Feature.Annotation;
+using EsUtil.Platform.Core.Palette;
 using EsUtil.Ui.AvaloniaUI.ColorSelector;
 using System.Globalization;
 
@@ -180,6 +181,18 @@ internal sealed class AnnotationFormatBar : Border
             _paletteColumns = columns;
             ConfigurePalette();
         }
+    }
+
+    /// <summary>色の入力欄へ出す表記を取得または設定する。</summary>
+    /// <value>色名 + 不透明度（既定）またはカラーコード（<c>#AARRGGBB</c>）。</value>
+    /// <remarks>
+    /// <b>保存値は変わらない</b>（表記は画面に出す文字列だけを決める）。 カラーコードの表記では不透明度を
+    /// アルファとして含む <c>#AARRGGBB</c> を出す（6 桁の <c>#RRGGBB</c> では不透明度が分からない）。
+    /// </remarks>
+    public ColorTextFormat TextFormat
+    {
+        get => _color.TextFormat;
+        set => _color.TextFormat = value;
     }
 
     /// <summary>色の選択の幅（DIP）を取得する。</summary>
