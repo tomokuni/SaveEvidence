@@ -1,56 +1,90 @@
-using System.Collections.Immutable;
 using EsUtil.Feature.Annotation;
+using EsUtil.Platform.Core.Geometry;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
 using Windows.System;
-using Windows.UI;
-using DrawingColor = System.Drawing.Color;
+using Windows.UI.Text.Core;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
 
 /// <summary>注釈レイヤーの本文の編集（WinUI 3 版）。</summary>
 /// <remarks>
-/// <b>リッチ テキストの入力欄を本文の矩形へ重ねる</b>: WinUI 3 の <see cref="RichEditBox"/> が IME・選択・
-/// 書式の適用・クリップボードを担う（自前でキャレットと変換を実装すると、OS の入力規則から外れる）。<br/>
-/// <b>モデルは入力欄から写す</b>: 入力のたびに本文と文字単位の書式を読み取り、コアの <see cref="RichText"/> へ写す
-/// （保存・描画・元に戻すは常にコアのモデルを見る）。<br/>
-/// <b>編集中は本文を描かない</b>: 入力欄が本文を表示するため、下の注釈の本文は隠す（二重に表示しない）。
+/// <b>入力欄を重ねない</b>: 本文はコントロールが <see cref="TextBlock"/> で描いているため、入力欄を重ねると
+/// 折り返し・行の高さ・余白が入力欄の規則になり、<b>表示と編集で見た目が変わる</b>。 表示中のレイアウトのまま
+/// キャレットと選択範囲を描いて入力する（Avalonia UI 版・MewUI 版と同じ規則）。<br/>
+/// <b>日本語入力（IME）</b>: <see cref="CoreTextEditContext"/> を本文へ繋ぎ、変換候補の位置と周囲の文字列を渡す。
+/// 変換中の文字列は文書へ入れず、キャレットの位置へ下線付きで描く（確定した文字列だけを入れる）。<br/>
+/// <b>座標の対応</b>: 折り返しは <see cref="AnnotationPresenter"/> が解決した行を
+/// <see cref="AnnotationTextLineIndex"/> で文字位置へ対応させる。
 /// </remarks>
 public sealed partial class AnnotationLayerControl
 {
-    /// <summary>本文の入力欄を並べる層。</summary>
-    private readonly Canvas _editorLayer = new();
+    /// <summary>キャレットの太さ（DIP）。</summary>
+    private const double CaretThicknessDip = 1.6;
 
-    /// <summary>本文の入力欄（編集中だけ保持する）。</summary>
-    private RichEditBox? _editor;
+    /// <summary>選択範囲の色（本文の上に薄く重ねる）。</summary>
+    private static readonly Windows.UI.Color s_textSelectionColor = Windows.UI.Color.FromArgb(72, 0, 120, 215);
 
-    /// <summary>入力欄の変更をモデルへ写している最中かどうか（再入防止）。</summary>
-    private bool _isSyncingEditor;
+    /// <summary>キャレットの色。</summary>
+    private static readonly Windows.UI.Color s_caretColor = Windows.UI.Color.FromArgb(255, 20, 20, 20);
 
-    /// <summary>本文の選択範囲（キャレットの位置）が変わったときに発生する。</summary>
-    public event EventHandler? TextSelectionChanged;
+    /// <summary>編集の表示（選択範囲・キャレット・変換中の文字列）を並べる層。</summary>
+    private readonly Canvas _editing = new() { IsHitTestVisible = false };
+
+    /// <summary>本文を編集中かどうか。</summary>
+    private bool _isEditingText;
+
+    /// <summary>キャレットの位置（文字数。 0 は先頭）。</summary>
+    private int _caretIndex;
+
+    /// <summary>選択の起点（<see cref="_caretIndex"/> と同じなら選択なし）。</summary>
+    private int _selectionAnchor;
+
+    /// <summary>IME の変換中文字列（文書へは入れない）。</summary>
+    private string _preeditText = string.Empty;
+
+    /// <summary>IME の変換中かどうか。</summary>
+    private bool _isComposing;
+
+    /// <summary>IME との窓口（編集中だけ保持する）。</summary>
+    private CoreTextEditContext? _ime;
+
+    /// <summary>IME の窓口を作るときのサービス（初回に取得して使い回す）。</summary>
+    private CoreTextServicesManager? _imeManager;
 
     /// <summary>本文の編集中に発生する（開始・終了の両方）。</summary>
     public event EventHandler? EditingChanged;
 
+    /// <summary>本文の選択範囲（キャレットの位置）が変わったときに発生する。</summary>
+    public event EventHandler? TextSelectionChanged;
+
     /// <summary>本文を編集中かどうかを取得する。</summary>
-    public bool IsEditingText => _editor is not null;
+    public bool IsEditingText => _isEditingText;
 
-    /// <summary>本文の選択範囲の開始位置（文字数）を取得する。</summary>
-    public int TextSelectionStart => _editor is null
-        ? 0
-        : Math.Max(0, _editor.Document.Selection.StartPosition);
+    /// <summary>キャレットの位置（文字数）を取得する。</summary>
+    public int CaretIndex => _caretIndex;
 
-    /// <summary>本文の選択範囲の長さ（文字数）を取得する。</summary>
-    public int TextSelectionLength => _editor is null
-        ? 0
-        : Math.Max(0, _editor.Document.Selection.EndPosition - _editor.Document.Selection.StartPosition);
+    /// <summary>本文の文字を選んでいるかどうかを取得する（書式の適用先があるか）。</summary>
+    public bool HasTextSelection => _isEditingText && TextSelectionLength > 0;
 
-    /// <summary>本文の選択範囲（開始位置と長さ）を取得する。</summary>
-    /// <value>編集中でないときは (0, 0)。</value>
+    /// <summary>選択範囲の開始位置（文字数）を取得する。</summary>
+    public int TextSelectionStart => Math.Min(_selectionAnchor, _caretIndex);
+
+    /// <summary>選択範囲の終了位置（文字数）を取得する。</summary>
+    public int TextSelectionEnd => Math.Max(_selectionAnchor, _caretIndex);
+
+    /// <summary>選択範囲の長さ（文字数）を取得する。</summary>
+    public int TextSelectionLength => TextSelectionEnd - TextSelectionStart;
+
+    /// <summary>選択範囲（開始位置と長さ）を取得する。</summary>
     public (int Start, int Length) TextSelectionRange => (TextSelectionStart, TextSelectionLength);
+
+    /// <summary>本文の文字列（IME へ渡す）。</summary>
+    internal string TextForInput => Selected is BubbleAnnotation bubble ? bubble.Text.PlainText : string.Empty;
 
     /// <summary>本文の編集を始める（吹き出しを選んでいるときだけ）。</summary>
     /// <returns>編集を始めた場合は <see langword="true"/>。 枠線を選んでいる場合は <see langword="false"/>。</returns>
@@ -61,71 +95,296 @@ public sealed partial class AnnotationLayerControl
             return false;
         }
 
-        if (_editor is not null)
+        if (_isEditingText)
         {
             return true;
         }
 
-        var editor = new RichEditBox
-        {
-            AcceptsReturn = true,
-            TextWrapping = TextWrapping.Wrap,
-            IsSpellCheckEnabled = false,
-            Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Color.FromArgb(0, 0, 0, 0)),
-            BorderThickness = new Thickness(0),
-            Padding = new Thickness(0),
-            FontSize = 14,
-        };
-
-        _editor = editor;
-        if (!_editorLayer.Children.Contains(editor))
-        {
-            _editorLayer.Children.Add(editor);
-        }
-
-        _isSyncingEditor = true;
-        try
-        {
-            var plain = bubble.Text.PlainText;
-            editor.Document.SetText(TextSetOptions.None, plain.Replace("\n", "\r", StringComparison.Ordinal));
-            ApplyTextToEditor(bubble.Text);
-            editor.Document.Selection.SetRange(plain.Length, plain.Length);
-        }
-        finally
-        {
-            _isSyncingEditor = false;
-        }
-
-        editor.TextChanged += OnEditorTextChanged;
-        editor.KeyUp += OnEditorKeyUp;
-        editor.KeyDown += OnEditorKeyDown;
-
-        UpdateEditorBounds();
-        _ = editor.Focus(FocusState.Programmatic);
-
+        _isEditingText = true;
+        _preeditText = string.Empty;
+        _isComposing = false;
+        _caretIndex = bubble.Text.PlainText.Length;
+        _selectionAnchor = _caretIndex;
+        _marquee.ResetSelection();
+        _ = Focus(FocusState.Programmatic);
+        AttachIme();
         RaiseEditingChanged();
         Redraw();
         return true;
     }
 
-    /// <summary>本文の編集を終える（内容は入力のたびにモデルへ写している）。</summary>
+    /// <summary>本文の編集を終える（内容は既に文書へ入っている）。</summary>
     public void EndTextEditing()
     {
-        if (_editor is not { } editor)
+        if (!_isEditingText)
         {
             return;
         }
 
-        CommitFromEditor();
-        _editor = null;
+        _isEditingText = false;
+        _preeditText = string.Empty;
+        _isComposing = false;
+        DetachIme();
 
-        editor.TextChanged -= OnEditorTextChanged;
-        editor.KeyUp -= OnEditorKeyUp;
-        editor.KeyDown -= OnEditorKeyDown;
-        _editorLayer.Children.Remove(editor);
+        if (Selected is { } item)
+        {
+            _marquee.SetSelection(item.Bounds);
+        }
 
         RaiseEditingChanged();
         Redraw();
+    }
+
+    /// <summary>IME の窓口を本文へ繋ぐ。</summary>
+    private void AttachIme()
+    {
+        if (_ime is not null)
+        {
+            return;
+        }
+
+        try
+        {
+            _imeManager ??= CoreTextServicesManager.GetForCurrentView();
+            var context = _imeManager.CreateEditContext();
+            context.InputScope = CoreTextInputScope.Text;
+            context.TextRequested += OnImeTextRequested;
+            context.SelectionRequested += OnImeSelectionRequested;
+            context.TextUpdating += OnImeTextUpdating;
+            context.CompositionStarted += OnImeCompositionStarted;
+            context.CompositionCompleted += OnImeCompositionCompleted;
+            context.LayoutRequested += OnImeLayoutRequested;
+            context.FocusRemoved += OnImeFocusRemoved;
+            _ime = context;
+            NotifyImeSelection();
+        }
+        catch (Exception ex) when (ex is NotSupportedException or InvalidCastException)
+        {
+            // XAML の窓口が無い環境（ウィンドウを持たない検証）では IME を使わない。
+            // 入力はキーボードの文字入力（CharacterReceived）で継続できるため、ここでは窓口だけを諦める
+            _ime = null;
+        }
+    }
+
+    /// <summary>IME の窓口を外す。</summary>
+    private void DetachIme()
+    {
+        if (_ime is not { } context)
+        {
+            return;
+        }
+
+        context.TextRequested -= OnImeTextRequested;
+        context.SelectionRequested -= OnImeSelectionRequested;
+        context.TextUpdating -= OnImeTextUpdating;
+        context.CompositionStarted -= OnImeCompositionStarted;
+        context.CompositionCompleted -= OnImeCompositionCompleted;
+        context.LayoutRequested -= OnImeLayoutRequested;
+        context.FocusRemoved -= OnImeFocusRemoved;
+        _ime = null;
+    }
+
+    /// <summary>IME へ本文の選択範囲を知らせる。</summary>
+    private void NotifyImeSelection()
+    {
+        if (_ime is not { } context)
+        {
+            return;
+        }
+
+        var length = TextForInput.Length;
+        context.NotifySelectionChanged(new CoreTextRange
+        {
+            StartCaretPosition = Math.Clamp(TextSelectionStart, 0, length),
+            EndCaretPosition = Math.Clamp(TextSelectionEnd, 0, length),
+        });
+    }
+
+    /// <summary>IME から周囲の文字列を求められたときに返す。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">要求の引数。</param>
+    private void OnImeTextRequested(CoreTextEditContext sender, CoreTextTextRequestedEventArgs e)
+    {
+        _ = sender;
+
+        var text = TextForInput;
+        var range = e.Request.Range;
+        var start = Math.Clamp(range.StartCaretPosition, 0, text.Length);
+        var end = Math.Clamp(range.EndCaretPosition, 0, text.Length);
+        if (end < start)
+        {
+            (start, end) = (end, start);
+        }
+
+        e.Request.Text = text[start..end];
+    }
+
+    /// <summary>IME から選択範囲を変えられたときに反映する。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">要求の引数。</param>
+    private void OnImeSelectionRequested(CoreTextEditContext sender, CoreTextSelectionRequestedEventArgs e)
+    {
+        _ = sender;
+
+        var length = TextForInput.Length;
+        _selectionAnchor = Math.Clamp(e.Request.Selection.StartCaretPosition, 0, length);
+        _caretIndex = Math.Clamp(e.Request.Selection.EndCaretPosition, 0, length);
+        SyncTextSelectionRange();
+        Redraw();
+        NotifyImeSelection();
+    }
+
+    /// <summary>IME（またはキーボード）から文字の置き換えを求められたときに本文へ入れる。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">要求の引数。</param>
+    private void OnImeTextUpdating(CoreTextEditContext sender, CoreTextTextUpdatingEventArgs e)
+    {
+        _ = sender;
+
+        if (!_isEditingText)
+        {
+            e.Result = CoreTextTextUpdatingResult.Failed;
+            return;
+        }
+
+        var text = TextForInput;
+        var start = Math.Clamp(e.Range.StartCaretPosition, 0, text.Length);
+        var end = Math.Clamp(e.Range.EndCaretPosition, 0, text.Length);
+        if (end < start)
+        {
+            (start, end) = (end, start);
+        }
+
+        ReplaceRange(start, end, e.Text ?? string.Empty);
+        e.Result = CoreTextTextUpdatingResult.Succeeded;
+        NotifyImeSelection();
+    }
+
+    /// <summary>IME の変換が始まったときに変換中の表示へ切り替える。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">変換の引数。</param>
+    private void OnImeCompositionStarted(CoreTextEditContext sender, CoreTextCompositionStartedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        _isComposing = true;
+        _preeditText = string.Empty;
+        Redraw();
+    }
+
+    /// <summary>IME の変換が終わったときに確定した文字列を本文へ入れる。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">変換の引数。</param>
+    private void OnImeCompositionCompleted(CoreTextEditContext sender, CoreTextCompositionCompletedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+
+        // 確定した文字列は TextUpdating で届く（本イベントでは変換中の表示だけを消す）
+        _isComposing = false;
+        _preeditText = string.Empty;
+        Redraw();
+    }
+
+    /// <summary>IME から変換候補の位置を求められたときに返す。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">要求の引数。</param>
+    private void OnImeLayoutRequested(CoreTextEditContext sender, CoreTextLayoutRequestedEventArgs e)
+    {
+        _ = sender;
+
+        var caret = ResolveCaretDip();
+        var bounds = e.Request.LayoutBounds;
+        bounds.TextBounds = new Windows.Foundation.Rect(
+            caret.X, caret.Y, Math.Max(1, CaretThicknessDip), Math.Max(1, caret.Height));
+        bounds.ControlBounds = new Windows.Foundation.Rect(0, 0, Math.Max(0, ActualWidth), Math.Max(0, ActualHeight));
+    }
+
+    /// <summary>IME のフォーカスが外れたら編集を終える。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">引数。</param>
+    private void OnImeFocusRemoved(CoreTextEditContext sender, object e)
+    {
+        _ = sender;
+        _ = e;
+        EndTextEditing();
+    }
+
+    /// <summary>選択範囲、またはキャレットの前後の 1 文字を削除する。</summary>
+    /// <param name="forward">キャレットの次の文字を削除する場合は <see langword="true"/>。</param>
+    private void DeleteAtCaret(bool forward)
+    {
+        if (TextSelectionEnd > TextSelectionStart)
+        {
+            ReplaceSelection(string.Empty);
+            return;
+        }
+
+        var index = forward ? _caretIndex : _caretIndex - 1;
+        if (index < 0 || index >= TextForInput.Length)
+        {
+            return;
+        }
+
+        ReplaceRange(index, index + 1, string.Empty);
+        NotifyImeSelection();
+    }
+
+    /// <summary>選択範囲を指定された文字列で置き換える。</summary>
+    /// <param name="text">置き換える文字列（空なら削除）。</param>
+    /// <returns>文書を変えた場合は <see langword="true"/>。</returns>
+    private bool ReplaceSelection(string text)
+    {
+        var start = TextSelectionStart;
+        var end = TextSelectionEnd;
+        if (start == end && text.Length == 0)
+        {
+            return false;
+        }
+
+        var changed = ReplaceRange(start, end, text);
+        NotifyImeSelection();
+        return changed;
+    }
+
+    /// <summary>指定した範囲を文字列で置き換えて文書へ反映する。</summary>
+    /// <param name="start">開始位置（文字数）。</param>
+    /// <param name="end">終了位置（文字数）。</param>
+    /// <param name="text">置き換える文字列。</param>
+    /// <returns>文書を変えた場合は <see langword="true"/>。</returns>
+    private bool ReplaceRange(int start, int end, string text)
+    {
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        _isComposing = false;
+        _preeditText = string.Empty;
+        PrepareUndo();
+        _document = _document.WithText(
+            bubble,
+            bubble.Text.Remove(start, end - start).Insert(start, text));
+        RaiseDocumentChanged();
+
+        _caretIndex = start + text.Length;
+        _selectionAnchor = _caretIndex;
+        SyncTextSelectionRange();
+        Redraw();
+        return true;
+    }
+
+    /// <summary>選択範囲の装飾（太字・斜体・下線・取り消し線）を切り替える。</summary>
+    /// <param name="read">属性を読む関数。</param>
+    /// <param name="write">属性を書く関数。</param>
+    /// <returns>処理した場合は <see langword="true"/>。</returns>
+    internal bool ToggleDecoration(
+        Func<AnnotationTextStyle, bool> read,
+        Func<AnnotationTextStyle, bool, AnnotationTextStyle> write)
+    {
+        var value = !read(SelectedTextStyle);
+        var range = TextSelectionRange;
+        return TransformTextStyle(range.Start, range.Length, style => write(style, value));
     }
 
     /// <summary>選択範囲の文字がすべて条件を満たすかどうかを取得する（書式ボタンの押下状態に使う）。</summary>
@@ -141,268 +400,277 @@ public sealed partial class AnnotationLayerControl
             return false;
         }
 
-        if (_editor is { } editor)
-        {
-            return match(ReadEditorStyle(editor));
-        }
-
         var range = TextSelectionRange;
         return range.Length <= 0
             ? match(bubble.Text.StyleAt(Math.Max(0, range.Start)))
             : bubble.Text.AllMatch(range.Start, range.Length, match);
     }
 
-    /// <summary>書式を切り替える（選択範囲、または本文全体）。</summary>
-    /// <param name="apply">入力欄の選択範囲へ書式を適用する処理。</param>
-    /// <param name="applyToModel">モデルの本文へ書式を適用する処理。</param>
-    internal void ToggleDecoration(
-        Action<Microsoft.UI.Text.ITextCharacterFormat> apply,
-        Func<AnnotationTextStyle, AnnotationTextStyle> applyToModel)
+    /// <summary>選択範囲の書式を変換する（1 つの属性だけ変える）。</summary>
+    /// <param name="transform">書式を変える処理。</param>
+    internal void TransformSelectionStyle(Func<AnnotationTextStyle, AnnotationTextStyle> transform)
     {
-        ArgumentNullException.ThrowIfNull(apply);
-        ArgumentNullException.ThrowIfNull(applyToModel);
-
-        if (_editor is { } editor)
-        {
-            apply(editor.Document.Selection.CharacterFormat);
-            CommitFromEditor();
-            Redraw();
-            return;
-        }
-
         var range = TextSelectionRange;
-        TransformTextStyle(range.Start, range.Length, applyToModel);
+        TransformTextStyle(range.Start, range.Length, transform);
     }
 
     /// <summary>選択範囲へ書式を丸ごと適用する（色・大きさ・フォント）。</summary>
     /// <param name="style">書式。</param>
-    internal void ApplyFullStyle(AnnotationTextStyle style)
+    internal void ApplyFullStyle(AnnotationTextStyle style) => ApplyTextStyle(style);
+
+    /// <summary>選択範囲を <see cref="TextSelectionRange"/> へ写す（書式の適用先に使う）。</summary>
+    private void SyncTextSelectionRange()
     {
-        if (_editor is { } editor)
-        {
-            var start = editor.Document.Selection.StartPosition;
-            var end = editor.Document.Selection.EndPosition;
-            WriteFormat(editor.Document.GetRange(start, end).CharacterFormat, style);
-            CommitFromEditor();
-            Redraw();
-            return;
-        }
-
-        ApplyTextStyle(style);
-    }
-
-    /// <summary>入力欄の位置と大きさを本文の矩形へ合わせる。</summary>
-    private void UpdateEditorBounds()
-    {
-        if (_editor is not { } editor)
-        {
-            return;
-        }
-
-        var body = GetSelectedBodyRect();
-        if (body.Width <= 0 || body.Height <= 0)
-        {
-            editor.Visibility = Visibility.Collapsed;
-            return;
-        }
-
-        editor.Visibility = Visibility.Visible;
-        editor.Width = body.Width;
-        editor.Height = body.Height;
-        Canvas.SetLeft(editor, body.X);
-        Canvas.SetTop(editor, body.Y);
-    }
-
-    /// <summary>入力欄が変わったらモデルへ写す。</summary>
-    /// <param name="sender">イベントの送信元。</param>
-    /// <param name="e">変更の引数。</param>
-    private void OnEditorTextChanged(object sender, RoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-
-        if (_isSyncingEditor)
-        {
-            return;
-        }
-
-        CommitFromEditor();
-        Redraw();
-    }
-
-    /// <summary>選択範囲が変わったら書式バーへ通知する。</summary>
-    /// <param name="sender">イベントの送信元。</param>
-    /// <param name="e">キーの引数。</param>
-    private void OnEditorKeyUp(object sender, KeyRoutedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
         TextSelectionChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    /// <summary>Esc で編集を終える。</summary>
-    /// <param name="sender">イベントの送信元。</param>
-    /// <param name="e">キーの引数。</param>
-    private void OnEditorKeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        _ = sender;
-
-        if (e.Key == VirtualKey.Escape)
-        {
-            EndTextEditing();
-            e.Handled = true;
-        }
-    }
-
-    /// <summary>入力欄の本文と書式をモデルへ写す。</summary>
-    private void CommitFromEditor()
-    {
-        if (_editor is not { } editor || Selected is not BubbleAnnotation bubble)
-        {
-            return;
-        }
-
-        _isSyncingEditor = true;
-        try
-        {
-            var text = ReadEditorText(editor);
-            var runs = ReadEditorRuns(editor, text);
-            PrepareUndo();
-            _document = _document.WithText(bubble, new RichText(runs));
-            RaiseDocumentChanged();
-        }
-        finally
-        {
-            _isSyncingEditor = false;
-        }
-    }
-
-    /// <summary>入力欄の本文を読み取る（段落記号を <c>\n</c> へ揃える）。</summary>
-    /// <param name="editor">入力欄。</param>
-    /// <returns>本文。</returns>
-    private static string ReadEditorText(RichEditBox editor)
-    {
-        editor.Document.GetText(TextGetOptions.None, out var raw);
-        if (raw.Length > 0 && raw[^1] == '\r')
-        {
-            raw = raw[..^1];
-        }
-
-        return raw.Replace("\r", "\n", StringComparison.Ordinal);
-    }
-
-    /// <summary>入力欄の文字単位の書式を run の並びへ写す。</summary>
-    /// <param name="editor">入力欄。</param>
-    /// <param name="text">本文（<c>\n</c> へ揃えたもの）。</param>
-    /// <returns>run の並び。</returns>
-    private static ImmutableArray<TextRun> ReadEditorRuns(RichEditBox editor, string text)
-    {
-        if (text.Length == 0)
-        {
-            return [];
-        }
-
-        var builder = ImmutableArray.CreateBuilder<TextRun>();
-        var runStart = 0;
-        var current = ReadEditorStyleAt(editor, 0);
-        for (var i = 1; i < text.Length; i++)
-        {
-            var style = ReadEditorStyleAt(editor, i);
-            if (style.Equals(current))
-            {
-                continue;
-            }
-
-            builder.Add(new TextRun(text[runStart..i], current));
-            runStart = i;
-            current = style;
-        }
-
-        builder.Add(new TextRun(text[runStart..], current));
-        return builder.ToImmutable();
-    }
-
-    /// <summary>指定した文字位置の書式を入力欄から読み取る。</summary>
-    /// <param name="editor">入力欄。</param>
-    /// <param name="index">文字位置。</param>
-    /// <returns>書式。</returns>
-    private static AnnotationTextStyle ReadEditorStyleAt(RichEditBox editor, int index)
-        => ToStyle(editor.Document.GetRange(index, index + 1).CharacterFormat);
-
-    /// <summary>選択範囲の書式を入力欄から読み取る。</summary>
-    /// <param name="editor">入力欄。</param>
-    /// <returns>書式。</returns>
-    private static AnnotationTextStyle ReadEditorStyle(RichEditBox editor)
-        => ToStyle(editor.Document.Selection.CharacterFormat);
-
-    /// <summary>入力欄の書式をコアの書式へ写す。</summary>
-    /// <param name="format">入力欄の書式。</param>
-    /// <returns>コアの書式。</returns>
-    private static AnnotationTextStyle ToStyle(ITextCharacterFormat format)
-    {
-        var color = format.ForegroundColor;
-        return new AnnotationTextStyle(
-            string.IsNullOrWhiteSpace(format.Name) ? AnnotationDefaults.PreferredFontFamilies[0] : format.Name,
-            format.Size > 0 ? format.Size : AnnotationDefaults.FontSizeDefault,
-            DrawingColor.FromArgb(255, color.R, color.G, color.B),
-            format.Bold == FormatEffect.On,
-            format.Italic == FormatEffect.On,
-            format.Underline != UnderlineType.None,
-            format.Strikethrough == FormatEffect.On);
-    }
-
-    /// <summary>コアの本文を入力欄へ写す（本文と書式）。</summary>
-    /// <param name="text">本文。</param>
-    private void ApplyTextToEditor(RichText text)
-    {
-        if (_editor is not { } editor)
-        {
-            return;
-        }
-
-        var index = 0;
-        foreach (var run in text.Runs)
-        {
-            var end = Math.Min(index + run.Text.Length, text.PlainText.Length);
-            var range = editor.Document.GetRange(index, end);
-            WriteFormat(range.CharacterFormat, run.Style);
-            index = end;
-        }
-    }
-
-    /// <summary>書式を入力欄へ書き込む。</summary>
-    /// <param name="format">書き込む先の書式。</param>
-    /// <param name="style">コアの書式。</param>
-    private static void WriteFormat(ITextCharacterFormat format, AnnotationTextStyle style)
-    {
-        format.Bold = style.IsBold ? FormatEffect.On : FormatEffect.Off;
-        format.Italic = style.IsItalic ? FormatEffect.On : FormatEffect.Off;
-        format.Underline = style.IsUnderline ? UnderlineType.Single : UnderlineType.None;
-        format.Strikethrough = style.IsStrike ? FormatEffect.On : FormatEffect.Off;
-        format.ForegroundColor = Color.FromArgb(255, style.Color.R, style.Color.G, style.Color.B);
-        format.Size = (float)style.FontSize;
-        format.Name = style.FontFamily;
     }
 
     /// <summary>編集の開始・終了を通知する。</summary>
     private void RaiseEditingChanged() => EditingChanged?.Invoke(this, EventArgs.Empty);
 
-    /// <summary>モデルが変わったときに入力欄の書式を写し直す。</summary>
-    private void SyncEditorFromModel()
+    /// <summary>本文の編集（選択範囲・キャレット・変換中の文字列）を描く。</summary>
+    private void DrawEditing()
     {
-        if (_editor is null || Selected is not BubbleAnnotation bubble)
+        _editing.Children.Clear();
+        if (!_isEditingText || ResolveLineIndex() is not { } index)
         {
             return;
         }
 
-        _isSyncingEditor = true;
-        try
+        var (scale, offset) = ResolveImageTransform();
+
+        foreach (var rect in index.ResolveSelectionRects(TextSelectionStart, TextSelectionEnd, MeasureText))
         {
-            ApplyTextToEditor(bubble.Text);
+            var shape = new Rectangle
+            {
+                Width = Math.Max(1, rect.Width * scale),
+                Height = Math.Max(1, rect.Height * scale),
+                Fill = new SolidColorBrush(s_textSelectionColor),
+            };
+
+            Canvas.SetLeft(shape, (rect.X * scale) + offset.X);
+            Canvas.SetTop(shape, (rect.Y * scale) + offset.Y);
+            _editing.Children.Add(shape);
         }
-        finally
+
+        var caret = ResolveCaretDip();
+        var caretShape = new Rectangle
         {
-            _isSyncingEditor = false;
+            Width = CaretThicknessDip,
+            Height = Math.Max(1, caret.Height),
+            Fill = new SolidColorBrush(s_caretColor),
+        };
+
+        Canvas.SetLeft(caretShape, caret.X);
+        Canvas.SetTop(caretShape, caret.Y);
+        _editing.Children.Add(caretShape);
+
+        if (_preeditText.Length == 0)
+        {
+            return;
         }
+
+        var style = SelectedTextStyle with { IsUnderline = true };
+        var preedit = new TextBlock
+        {
+            Text = _preeditText,
+            FontFamily = new FontFamily(style.FontFamily),
+            FontSize = style.FontSize * scale,
+            FontWeight = style.IsBold ? FontWeights.Bold : FontWeights.Normal,
+            FontStyle = style.IsItalic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
+            Foreground = AnnotationTextMetrics.ToBrush(style.Color),
+            TextDecorations = Windows.UI.Text.TextDecorations.Underline,
+            IsHitTestVisible = false,
+        };
+
+        Canvas.SetLeft(preedit, caret.X + CaretThicknessDip);
+        Canvas.SetTop(preedit, caret.Y);
+        _editing.Children.Add(preedit);
+    }
+
+    /// <summary>キャレットの位置（DIP）を求める。</summary>
+    /// <returns>キャレットの左上と行の高さ。</returns>
+    private (double X, double Y, double Height) ResolveCaretDip()
+    {
+        if (ResolveLineIndex() is not { } index || index.ResolveCaret(_caretIndex, MeasureText) is not { } caret)
+        {
+            return default;
+        }
+
+        var (scale, offset) = ResolveImageTransform();
+        return (
+            (caret.X * scale) + offset.X,
+            (caret.Y * scale) + offset.Y,
+            Math.Max(1, caret.Height * scale));
+    }
+
+    /// <summary>選択中の吹き出しの行と文字位置の対応を解決する。</summary>
+    /// <returns>対応。 解決できない場合は <see langword="null"/>。</returns>
+    private AnnotationTextLineIndex? ResolveLineIndex()
+    {
+        if (Selected is not BubbleAnnotation bubble)
+        {
+            return null;
+        }
+
+        var plan = _presenter.ResolveDrawPlan(_document, MeasureText, SelectedId);
+        var shape = plan.Shapes.FirstOrDefault(
+            candidate => string.Equals(candidate.Id, bubble.Id, StringComparison.Ordinal));
+        return shape is null ? null : AnnotationTextLineIndex.Create(shape, bubble.Text.PlainText);
+    }
+
+    /// <summary>本文の編集でキーが押されたときの処理。</summary>
+    /// <param name="e">キーの引数。</param>
+    /// <returns>処理した場合は <see langword="true"/>。</returns>
+    private bool HandleTextEditingKey(KeyRoutedEventArgs e)
+    {
+        var control = IsDown(VirtualKey.Control);
+        var shift = IsDown(VirtualKey.Shift);
+
+        if (control && !shift)
+        {
+            switch (e.Key)
+            {
+                case VirtualKey.B:
+                    return ToggleDecoration(style => style.IsBold, static (style, value) => style with { IsBold = value });
+                case VirtualKey.I:
+                    return ToggleDecoration(style => style.IsItalic, static (style, value) => style with { IsItalic = value });
+                case VirtualKey.U:
+                    return ToggleDecoration(style => style.IsUnderline, static (style, value) => style with { IsUnderline = value });
+                case VirtualKey.A:
+                    _selectionAnchor = 0;
+                    _caretIndex = TextForInput.Length;
+                    SyncTextSelectionRange();
+                    Redraw();
+                    return true;
+            }
+        }
+
+        switch (e.Key)
+        {
+            case VirtualKey.Escape:
+                EndTextEditing();
+                return true;
+            case VirtualKey.Enter:
+                ReplaceSelection("\n");
+                return true;
+            case VirtualKey.Back:
+                DeleteAtCaret(forward: false);
+                return true;
+            case VirtualKey.Delete:
+                DeleteAtCaret(forward: true);
+                return true;
+            case VirtualKey.Left:
+                MoveCaret(shift ? _caretIndex - 1 : TextSelectionStart - 1, shift);
+                return true;
+            case VirtualKey.Right:
+                MoveCaret(shift ? _caretIndex + 1 : TextSelectionEnd + 1, shift);
+                return true;
+            case VirtualKey.Up:
+                MoveCaretToNeighbourLine(-1, shift);
+                return true;
+            case VirtualKey.Down:
+                MoveCaretToNeighbourLine(1, shift);
+                return true;
+            case VirtualKey.Home:
+                MoveCaretToLineEdge(first: true, shift);
+                return true;
+            case VirtualKey.End:
+                MoveCaretToLineEdge(first: false, shift);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>確定した文字列を受け取る（IME の変換中は受け取らない）。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">文字入力の引数。</param>
+    private void OnCharacterReceived(UIElement sender, CharacterReceivedRoutedEventArgs e)
+    {
+        _ = sender;
+
+        if (!_isEditingText || _isComposing)
+        {
+            return;
+        }
+
+        var text = e.Character.ToString();
+        if (string.IsNullOrEmpty(text) || char.IsControl(e.Character))
+        {
+            return;
+        }
+
+        ReplaceSelection(text);
+        e.Handled = true;
+    }
+
+    /// <summary>キャレットを移動する（<paramref name="extend"/> なら選択を広げる）。</summary>
+    /// <param name="index">移動先（文字数）。</param>
+    /// <param name="extend">選択を広げる場合は <see langword="true"/>。</param>
+    private void MoveCaret(int index, bool extend)
+    {
+        _caretIndex = Math.Clamp(index, 0, TextForInput.Length);
+        if (!extend)
+        {
+            _selectionAnchor = _caretIndex;
+        }
+
+        SyncTextSelectionRange();
+        NotifyImeSelection();
+        Redraw();
+    }
+
+    /// <summary>キャレットを上下の行の同じ桁へ移す。</summary>
+    /// <param name="delta">移動する行数。</param>
+    /// <param name="extend">選択を広げる場合は <see langword="true"/>。</param>
+    private void MoveCaretToNeighbourLine(int delta, bool extend)
+    {
+        if (ResolveLineIndex() is not { } index || index.Lines.Count == 0)
+        {
+            return;
+        }
+
+        var lineIndex = index.LineIndexOf(_caretIndex);
+        var target = Math.Clamp(lineIndex + delta, 0, index.Lines.Count - 1);
+        var column = _caretIndex - index.LineStart(lineIndex);
+        var length = AnnotationTextLineIndex.LineTextLength(index.Lines[target]);
+        MoveCaret(index.LineStart(target) + Math.Min(column, length), extend);
+    }
+
+    /// <summary>キャレットを行の先頭・末尾へ移す。</summary>
+    /// <param name="first">行の先頭へ移す場合は <see langword="true"/>。</param>
+    /// <param name="extend">選択を広げる場合は <see langword="true"/>。</param>
+    private void MoveCaretToLineEdge(bool first, bool extend)
+    {
+        if (ResolveLineIndex() is not { } index || index.Lines.Count == 0)
+        {
+            MoveCaret(first ? 0 : TextForInput.Length, extend);
+            return;
+        }
+
+        var lineIndex = index.LineIndexOf(_caretIndex);
+        var length = AnnotationTextLineIndex.LineTextLength(index.Lines[lineIndex]);
+        MoveCaret(first ? index.LineStart(lineIndex) : index.LineStart(lineIndex) + length, extend);
+    }
+
+    /// <summary>点（元画像ピクセル）の位置へキャレットを移す。</summary>
+    /// <param name="point">位置（元画像ピクセル）。</param>
+    /// <param name="extend">選択を広げる場合は <see langword="true"/>。</param>
+    private void SetCaretFromPoint(EsPoint point, bool extend)
+    {
+        if (ResolveLineIndex() is not { } index)
+        {
+            return;
+        }
+
+        _caretIndex = Math.Clamp(index.IndexAt(point, MeasureText), 0, TextForInput.Length);
+        if (!extend)
+        {
+            _selectionAnchor = _caretIndex;
+        }
+
+        SyncTextSelectionRange();
+        NotifyImeSelection();
+        Redraw();
     }
 }

@@ -1,6 +1,5 @@
 using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Palette;
-using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -54,18 +53,10 @@ internal sealed class AnnotationFormatBar : ContentControl
         VerticalAlignment = VerticalAlignment.Top;
 
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        _bold = AnnotationEditorControls.Toggle("B", false, value => ApplyDecoration(
-            format => format.Bold = value ? FormatEffect.On : FormatEffect.Off,
-            style => style with { IsBold = value }), bold: true);
-        _italic = AnnotationEditorControls.Toggle("I", false, value => ApplyDecoration(
-            format => format.Italic = value ? FormatEffect.On : FormatEffect.Off,
-            style => style with { IsItalic = value }), italic: true);
-        _underline = AnnotationEditorControls.Toggle("U", false, value => ApplyDecoration(
-            format => format.Underline = value ? UnderlineType.Single : UnderlineType.None,
-            style => style with { IsUnderline = value }));
-        _strike = AnnotationEditorControls.Toggle("S", false, value => ApplyDecoration(
-            format => format.Strikethrough = value ? FormatEffect.On : FormatEffect.Off,
-            style => style with { IsStrike = value }));
+        _bold = AnnotationEditorControls.Toggle("B", false, value => ApplyDecoration(style => style with { IsBold = value }), bold: true);
+        _italic = AnnotationEditorControls.Toggle("I", false, value => ApplyDecoration(style => style with { IsItalic = value }), italic: true);
+        _underline = AnnotationEditorControls.Toggle("U", false, value => ApplyDecoration(style => style with { IsUnderline = value }));
+        _strike = AnnotationEditorControls.Toggle("S", false, value => ApplyDecoration(style => style with { IsStrike = value }));
 
         _font = new ComboBox
         {
@@ -170,14 +161,11 @@ internal sealed class AnnotationFormatBar : ContentControl
         }
     }
 
-    /// <summary>装飾を切り替える（入力欄と本文の両方へ適用する）。</summary>
-    /// <param name="applyToEditor">入力欄へ適用する処理。</param>
+    /// <summary>装飾を切り替える（選択範囲の本文へ適用する）。</summary>
     /// <param name="applyToModel">本文へ適用する処理。</param>
-    private void ApplyDecoration(
-        Action<Microsoft.UI.Text.ITextCharacterFormat> applyToEditor,
-        Func<AnnotationTextStyle, AnnotationTextStyle> applyToModel)
+    private void ApplyDecoration(Func<AnnotationTextStyle, AnnotationTextStyle> applyToModel)
     {
-        _layer.ToggleDecoration(applyToEditor, applyToModel);
+        _layer.TransformSelectionStyle(applyToModel);
         Refresh();
     }
 

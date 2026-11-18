@@ -5,7 +5,7 @@ using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Palette;
-using EsUtil.Ui.WinUI3.Interop.Drawing;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -16,8 +16,8 @@ namespace EsUtil.Ui.WinUI3.Annotation;
 /// <b>役割</b>: 画像の表示・注釈の描画・入力の受付を担う。 判断（当たり判定・折り返し・描画計画）は
 /// <c>EsUtil.Feature.Annotation</c> が単一所有し、本クラスは XAML の図形と文字へ写すだけである。<br/>
 /// <b>選択枠と 8 方向のハンドルは Marquee の提示層を再利用する</b>（枠・ハンドル・nudge を UI 版で揃えるため）。<br/>
-/// <b>本文の編集はリッチ テキストの入力欄を本文の矩形へ重ねて行う</b>: WinUI 3 の <see cref="RichEditBox"/> が
-/// IME・選択・書式の適用を担う（読み込み時と確定時に書式をコアのモデルへ写す）。<br/>
+/// <b>本文の編集はその場で行う</b>: 表示中のレイアウトのままキャレットと選択範囲を描いて入力する（入力欄を重ねない）。
+/// 日本語入力（IME）の変換中文字列は文書へ入れず、キャレットの位置へ下線付きで描く。<br/>
 /// <b>座標</b>: 注釈は元画像ピクセルで保持し、描画時は表示倍率で写す（画像へ焼き込まない）。
 /// </remarks>
 public sealed partial class AnnotationLayerControl : Grid
@@ -31,8 +31,20 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <summary>選択枠・ハンドルを解決する Marquee の提示層。</summary>
     private readonly MarqueePresenter _marquee;
 
-    /// <summary>画像を表示する面（Composition のサーフェス）。</summary>
-    private readonly CompositionImageView _image = new() { IsHitTestVisible = false };
+    /// <summary>画像を表示する面（XAML の画像。 注釈と同じ描画順に載せる）。</summary>
+    private readonly Image _image = new()
+    {
+        IsHitTestVisible = false,
+        Stretch = Microsoft.UI.Xaml.Media.Stretch.Fill,
+        HorizontalAlignment = HorizontalAlignment.Left,
+        VerticalAlignment = VerticalAlignment.Top,
+    };
+
+    /// <summary>表示中の画像（差し替え時に作り直す）。</summary>
+    private WriteableBitmap? _imageBitmap;
+
+    /// <summary>画像を作り直した元（同じ画像なら作り直さない）。</summary>
+    private EsReadOnlyBitmap? _imageSource;
 
     /// <summary>注釈を並べる層。</summary>
     private readonly Canvas _shapes = new() { IsHitTestVisible = false };
@@ -83,12 +95,14 @@ public sealed partial class AnnotationLayerControl : Grid
         Children.Add(_image);
         Children.Add(_shapes);
         Children.Add(_selection);
-        Children.Add(_editorLayer);
+        Children.Add(_editing);
 
         PointerPressed += OnPointerPressed;
         PointerMoved += OnPointerMoved;
         PointerReleased += OnPointerReleased;
         KeyDown += OnKeyDown;
+        CharacterReceived += OnCharacterReceived;
+        CharacterReceived += OnCharacterReceived;
 
         SizeChanged += (_, _) => Redraw();
         Loaded += (_, _) => Redraw();
@@ -105,7 +119,22 @@ public sealed partial class AnnotationLayerControl : Grid
 
     /// <summary>表示する画像を取得または設定する。</summary>
     /// <value>背景に表示する画像。</value>
-    public EsReadOnlyBitmap? Source { get; set; }
+    /// <remarks>差し替えると表示用のビットマップを作り直す（作り直しは次の描画で行う）。</remarks>
+    public EsReadOnlyBitmap? Source
+    {
+        get => _imageSource;
+        set
+        {
+            if (ReferenceEquals(_imageSource, value))
+            {
+                return;
+            }
+
+            _imageSource = value;
+            _imageBitmap = null;
+            Redraw();
+        }
+    }
 
     /// <summary>元画像の幅（ピクセル）を取得または設定する。</summary>
     public int SourcePixelWidth { get; set; } = 1;
@@ -306,7 +335,6 @@ public sealed partial class AnnotationLayerControl : Grid
         PrepareUndo();
         _document = _document.WithText(bubble, change(bubble.Text));
         RaiseDocumentChanged();
-        SyncEditorFromModel();
         Redraw();
         return true;
     }

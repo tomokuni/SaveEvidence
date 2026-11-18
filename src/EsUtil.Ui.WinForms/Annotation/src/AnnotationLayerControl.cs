@@ -63,12 +63,6 @@ public sealed partial class AnnotationLayerControl : Control
     /// <summary>表示用に変換した画像（差し替え時に解放する）。</summary>
     private Bitmap? _image;
 
-    /// <summary>本文の入力欄（編集中だけ保持する）。</summary>
-    private RichTextBox? _editor;
-
-    /// <summary>入力欄の変更をモデルへ写している最中かどうか（再入防止）。</summary>
-    private bool _isSyncingEditor;
-
     /// <summary>注釈レイヤーを初期化する。</summary>
     public AnnotationLayerControl()
     {
@@ -78,6 +72,8 @@ public sealed partial class AnnotationLayerControl : Control
             true);
 
         TabStop = true;
+        // 入力欄を重ねないため、IME のメッセージは自前で扱う（本文のその場編集）
+        ImeMode = ImeMode.NoControl;
         _coordinateTransform = CreateCoordinateTransform(this);
         _marquee = new MarqueePresenter(new AnnotationMarqueeEffects(this))
         {
@@ -95,12 +91,6 @@ public sealed partial class AnnotationLayerControl : Control
 
     /// <summary>選択が変わったときに発生する。</summary>
     public event EventHandler? SelectionChanged;
-
-    /// <summary>本文の編集の開始・終了で発生する。</summary>
-    public event EventHandler? EditingChanged;
-
-    /// <summary>本文の選択範囲が変わったときに発生する。</summary>
-    public event EventHandler? TextSelectionChanged;
 
     /// <summary>表示する画像を取得または設定する。</summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -205,18 +195,6 @@ public sealed partial class AnnotationLayerControl : Control
 
     /// <summary>やり直すことができるかどうかを取得する。</summary>
     public bool CanRedo => _history.CanRedo;
-
-    /// <summary>本文を編集中かどうかを取得する。</summary>
-    public bool IsEditingText => _editor is not null;
-
-    /// <summary>本文の選択範囲の開始位置（文字数）を取得する。</summary>
-    public int TextSelectionStart => _editor is null ? 0 : Math.Max(0, _editor.SelectionStart);
-
-    /// <summary>本文の選択範囲の長さ（文字数）を取得する。</summary>
-    public int TextSelectionLength => _editor is null ? 0 : Math.Max(0, _editor.SelectionLength);
-
-    /// <summary>本文の選択範囲（開始位置と長さ）を取得する。</summary>
-    public (int Start, int Length) TextSelectionRange => (TextSelectionStart, TextSelectionLength);
 
     /// <summary>枠線を追加する。</summary>
     /// <param name="bounds">位置と大きさ（元画像ピクセル）。</param>
@@ -327,7 +305,6 @@ public sealed partial class AnnotationLayerControl : Control
         PrepareUndo();
         _document = _document.WithText(bubble, change(bubble.Text));
         RaiseDocumentChanged();
-        SyncEditorFromModel();
         Invalidate();
         return true;
     }
@@ -617,14 +594,12 @@ public sealed partial class AnnotationLayerControl : Control
         _ => Cursors.Default,
     };
 
-    /// <summary>子要素（入力欄）も含めて破棄する。</summary>
+    /// <summary>表示用の画像を破棄する。</summary>
     /// <param name="disposing">マネージド リソースを解放する場合は <see langword="true"/>。</param>
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            _editor?.Dispose();
-            _editor = null;
             _image?.Dispose();
             _image = null;
         }

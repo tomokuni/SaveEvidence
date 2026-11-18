@@ -383,7 +383,9 @@ internal sealed partial class MainWindow
         // 同名ファイルが存在する場合の上書き確認は、オーナーウィンドウの中央にダイアログを出して問い合わせる
         // （未設定のままだと SaveImageAsync が確認なしに保存を中止し、操作が無言で無効になる）
         viewModel.ConfirmOverwriteAsync = fileName => ConfirmDialog.ShowAsync(
-            window, "上書き確認", $"ファイル「{fileName}」は既に存在します。上書きしますか？");
+            window, "上書き確認", viewModel.HasPendingAnnotationSave
+                ? $"ファイル「{fileName}」は既に存在します。上書きしますか？\n注釈のファイル（*.annotations.json / *.annotated.*）も上書きします。"
+                : $"ファイル「{fileName}」は既に存在します。上書きしますか？");
 
         RestoreWindowState(window, settingsService);
         ApplyNavigationLayout();

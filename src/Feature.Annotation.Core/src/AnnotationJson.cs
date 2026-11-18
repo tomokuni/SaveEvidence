@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using EsUtil.Feature.Annotation.Core;
 
@@ -77,8 +78,66 @@ public static class AnnotationJson
         return string.IsNullOrEmpty(directory) ? name : Path.Combine(directory, name);
     }
 
-    /// <summary>JSON のオプションを生成する。</summary>
-    /// <returns>読み書きに使うオプション（読み取り専用）。</returns>
+    /// <summary>注釈ファイルから元画像のパスを求める。</summary>
+    /// <param name="documentPath">注釈ファイルのパス（例: <c>…\screenshot.annotations.json</c>）。</param>
+    /// <param name="document">読み込んだ文書（元画像のファイル名を持つ）。</param>
+    /// <returns>元画像のパス。 見つからない場合は <see langword="null"/>。</returns>
+    /// <remarks>
+    /// <b>探す順序</b>: 1) 注釈ファイルと同じフォルダの <see cref="AnnotationDocument.ImageFileName"/>、
+    /// 2) 注釈ファイルの名前から <see cref="FileSuffix"/> を外した名前に画像拡張子を付けたもの。<br/>
+    /// 見つからない場合は呼び出し側が利用者へ知らせる（注釈だけを開いても画像が無ければ表示できない）。
+    /// </remarks>
+    /// <exception cref="ArgumentException"><paramref name="documentPath"/> が空白の場合。</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="document"/> が null の場合。</exception>
+    public static string? ResolveImagePath(string documentPath, AnnotationDocument document)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(documentPath);
+        ArgumentNullException.ThrowIfNull(document);
+
+        var directory = Path.GetDirectoryName(documentPath);
+        if (!string.IsNullOrEmpty(directory) && !string.IsNullOrWhiteSpace(document.ImageFileName))
+        {
+            var candidate = Path.Combine(directory, document.ImageFileName);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        var fileName = Path.GetFileName(documentPath);
+        var stem = fileName.EndsWith(FileSuffix, StringComparison.OrdinalIgnoreCase)
+            ? fileName[..^FileSuffix.Length]
+            : Path.GetFileNameWithoutExtension(fileName);
+
+        foreach (var extension in s_imageExtensions)
+        {
+            var candidate = Path.Combine(directory ?? string.Empty, stem + extension);
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>注釈ファイルを読み込む。</summary>
+    /// <param name="documentPath">注釈ファイルのパス。</param>
+    /// <returns>読み込んだ文書。</returns>
+    /// <exception cref="ArgumentException"><paramref name="documentPath"/> が空白の場合。</exception>
+    /// <exception cref="IOException">ファイルを読めない場合。</exception>
+    /// <exception cref="JsonException">JSON として解釈できない場合。</exception>
+    /// <remarks>文字コードは UTF-8（BOM の有無は問わない）。 書式の解釈は <see cref="Deserialize"/> が単一所有する。</remarks>
+    public static AnnotationDocument Load(string documentPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(documentPath);
+        return Deserialize(File.ReadAllText(documentPath, Encoding.UTF8));
+    }
+
+    /// <summary>元画像として扱える拡張子（探す順序）。</summary>
+    private static readonly string[] s_imageExtensions = [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"];
+
+    /// <summary>JSON のオプションを生成する。</summary>    /// <returns>読み書きに使うオプション（読み取り専用）。</returns>
     /// <remarks>
     /// <b>変換器はインスタンスで渡す</b>: 属性で型を指定する方式は、変換器の生成に反射を使うため
     /// Native AOT で警告になる（実測ではなく設計上の理由。 設定ファイルと同じ方針）。

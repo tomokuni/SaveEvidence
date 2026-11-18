@@ -281,7 +281,7 @@ internal static class CapturePage
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        var menuButton = CreateMenuButton(services, viewModel, toggleCrop, captureSession);
+        var menuButton = CreateMenuButton(services, viewModel, toggleCrop, captureSession, annotation);
         items.Children.Add(menuButton);
         items.Children.Add(AppStyles.CreateToolbarSeparator());
 
@@ -555,13 +555,18 @@ internal static class CapturePage
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
     /// <param name="toggleCrop">切り出しの開始・確定・キャンセルを行う窓口。</param>
     /// <param name="captureSession">撮影・切り出しの撮影セッション。</param>
+    /// <param name="annotation">注釈の編集コントロール（注釈を開く操作の接続先）。</param>
     /// <returns>組み立てたボタン。</returns>
     /// <remarks>
     /// 他の UI 版と同じ項目・同じ区切り・同じショートカット表記で並べる。<br/>
     /// ショートカットは表示だけにする（<c>KeyboardAcceleratorTextOverride</c> は登録を行わない）。
     /// </remarks>
     private static Button CreateMenuButton(
-        AppServices services, MainViewModel viewModel, Action toggleCrop, CaptureSessionControl captureSession)
+        AppServices services,
+        MainViewModel viewModel,
+        Action toggleCrop,
+        CaptureSessionControl captureSession,
+        AnnotationTextEditor annotation)
     {
         var flyout = new MenuFlyout
         {
@@ -570,6 +575,7 @@ internal static class CapturePage
             Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
         };
         var save = CreateMenuItem("File - 画像を保存", "Ctrl+S", () => _ = viewModel.SaveImageAsync(), CaptureIconFiles.Save);
+        var openAnnotations = CreateMenuItem("File - 注釈を開く", null, () => _ = OpenAnnotationsAsync(annotation, viewModel));
         var copy = CreateMenuItem("Clipboard - コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
         var paste = CreateMenuItem("Clipboard - 貼り付け", "Ctrl+V", () => _ = PasteAsync(services));
         var undo = CreateMenuItem("Image - 元に戻す", "Ctrl+Z", () => EditHistory.Undo(services.Main, services.UndoHistory));
@@ -581,6 +587,7 @@ internal static class CapturePage
         var autoCrop = CreateMenuItem("Crop - 自動切り出し", null, () => viewModel.AutoCropWindowCommand.Execute(null));
 
         flyout.Items.Add(save);
+        flyout.Items.Add(openAnnotations);
         flyout.Items.Add(new MenuFlyoutSeparator());
         flyout.Items.Add(copy);
         flyout.Items.Add(paste);
@@ -870,6 +877,56 @@ internal static class CapturePage
             session.Dispose();
         };
         return host;
+    }
+
+    /// <summary>保存済みの注釈ファイルを開く（元画像と注釈を読み直す）。</summary>
+    /// <param name="annotation">注釈の編集コントロール。</param>
+    /// <param name="viewModel">アプリのメイン ViewModel。</param>
+    /// <returns>開く処理の非同期タスク。</returns>
+    /// <remarks>
+    /// <b>元画像も読み直す</b>: 注釈は元画像に属するため、注釈だけを差し替えると別の画像の注釈になる。<br/>
+    /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。
+    /// </remarks>
+    private static async Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel)
+    {
+        var picker = new Windows.Storage.Pickers.FileOpenPicker
+        {
+            SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary,
+            ViewMode = Windows.Storage.Pickers.PickerViewMode.List,
+        };
+
+        picker.FileTypeFilter.Add(".json");
+
+        var file = await picker.PickSingleFileAsync();
+        if (file is null || string.IsNullOrEmpty(file.Path))
+        {
+            return;
+        }
+
+        try
+        {
+            var document = AnnotationJson.Load(file.Path);
+            var imagePath = AnnotationJson.ResolveImagePath(file.Path, document);
+            if (imagePath is null)
+            {
+                viewModel.StatusMessage = "注釈に対応する元画像が見つかりません。";
+                return;
+            }
+
+            using (var bitmap = EsUtil.Platform.Core.Imaging.EsBitmap.Load(imagePath))
+            {
+                viewModel.SetPreviewImage(bitmap);
+            }
+
+            annotation.Layer.Document = document;
+            viewModel.MarkImageSaved(imagePath);
+            viewModel.StatusMessage = "注釈を開きました。";
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            s_logger.LogAnnotationOpenError(ex, file.Path);
+            viewModel.StatusMessage = "注釈ファイルを開けませんでした。";
+        }
     }
 
     /// <summary>注釈の付随ファイル（<c>*.annotations.json</c> / <c>*.annotated.*</c>）を書き出す。</summary>

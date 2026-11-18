@@ -157,7 +157,9 @@ internal sealed class MainWindow : Window
 
         // 上書き確認とクリップボードは UI 型を要求するため、UI 層の実装をコールバックへ配線する
         viewModel.ConfirmOverwriteAsync = fileName => ConfirmDialog.ShowAsync(
-            (Content as FrameworkElement)!.XamlRoot!, "上書きの確認", $"{fileName} は既に存在します。上書きしますか？");
+            (Content as FrameworkElement)!.XamlRoot!, "上書きの確認", viewModel.HasPendingAnnotationSave
+                ? $"{fileName} は既に存在します。上書きしますか？\n注釈のファイル（*.annotations.json / *.annotated.*）も上書きします。"
+                : $"{fileName} は既に存在します。上書きしますか？");
         viewModel.CopyToClipboardCallback = image => Task.FromResult(CaptureClipboard.Copy(image));
         viewModel.PasteFromClipboardCallback = CaptureClipboard.PasteAsync;
 

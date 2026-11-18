@@ -107,6 +107,14 @@ internal static partial class AppLog
     internal static void LogAppExit(this ILogger logger, int exitCode)
         => logger.LogAppExitCore(Prefix, exitCode);
 
+    /// <summary>注釈ファイルを開けなかったことを記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="path">開こうとした注釈ファイルのパス。</param>
+    public static void LogAnnotationOpenError(this ILogger logger, Exception ex, string path)
+        => logger.LogAnnotationOpenErrorCore(Prefix, ex, path);
+
     // ====================================================================
     // CapturePage（キャプチャメニュー）
     // ====================================================================

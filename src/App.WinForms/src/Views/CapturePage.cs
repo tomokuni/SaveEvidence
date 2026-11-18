@@ -82,7 +82,7 @@ internal static class CapturePage
         // UI 依存の操作はコールバックとして ViewModel へ渡す（UI 非依存のコアを保つ）
         viewModel.CopyToClipboardCallback = ClipboardImageService.CopyAsync;
         viewModel.PasteFromClipboardCallback = ClipboardImageService.PasteAsync;
-        viewModel.ConfirmOverwriteAsync = fileName => Task.FromResult(ConfirmOverwrite(owner, fileName));
+        viewModel.ConfirmOverwriteAsync = fileName => Task.FromResult(ConfirmOverwrite(owner, viewModel, fileName));
 
         // 撮影結果の反映はイベント（同期）で行う（オーナーの再表示より前に画像を差し替える）
         captureSession.CaptureCompleted += (_, e) => ApplyCaptureResult(services, viewModel, e);
@@ -716,6 +716,7 @@ internal static class CapturePage
         {
             var menuStrip = new ContextMenuStrip();
             saveMenuItem = AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage, AppIcon.Save);
+            AddMenuItem(menuStrip, "注釈を開く", "", () => _ = OpenAnnotationsAsync(annotation, viewModel, owner));
             AddMenuItem(menuStrip, "コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
             AddMenuItem(menuStrip, "貼り付け", "Ctrl+V", () => _ = PasteCoreAsync());
             menuStrip.Items.Add(new ToolStripSeparator());
@@ -841,6 +842,67 @@ internal static class CapturePage
         return button;
     }
 
+    /// <summary>保存済みの注釈ファイルを開く（元画像と注釈を読み直す）。</summary>
+    /// <param name="annotation">注釈の編集コントロール。</param>
+    /// <param name="viewModel">アプリのメイン ViewModel。</param>
+    /// <param name="owner">ダイアログのオーナー。</param>
+    /// <returns>開く処理の非同期タスク。</returns>
+    /// <remarks>
+    /// <b>元画像も読み直す</b>: 注釈は元画像に属するため、注釈だけを差し替えると別の画像の注釈になる。<br/>
+    /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。
+    /// </remarks>
+    private static Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel, Form owner)
+    {
+        using var dialog = new OpenFileDialog
+        {
+            Title = "注釈を開く",
+            Filter = "注釈ファイル (*.annotations.json)|*.annotations.json|すべてのファイル (*.*)|*.*",
+            CheckFileExists = true,
+        };
+
+        if (dialog.ShowDialog(owner) != DialogResult.OK)
+        {
+            return Task.CompletedTask;
+        }
+
+        try
+        {
+            var document = AnnotationJson.Load(dialog.FileName);
+            var imagePath = AnnotationJson.ResolveImagePath(dialog.FileName, document);
+            if (imagePath is null)
+            {
+                MessageBox.Show(
+                    owner,
+                    "注釈ファイルに対応する元画像が見つかりません。 元画像を同じフォルダへ置いてから開いてください。",
+                    "注釈を開く",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                return Task.CompletedTask;
+            }
+
+            using (var bitmap = EsUtil.Platform.Core.Imaging.EsBitmap.Load(imagePath))
+            {
+                viewModel.SetPreviewImage(bitmap);
+            }
+
+            annotation.Layer.Document = document;
+            viewModel.MarkImageSaved(imagePath);
+            viewModel.StatusMessage = "注釈を開きました。";
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            s_logger.LogAnnotationOpenError(ex, dialog.FileName);
+            MessageBox.Show(
+                owner,
+                "注釈ファイルを開けませんでした。 ファイルが壊れている可能性があります。",
+                "注釈を開く",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+
+        return Task.CompletedTask;
+    }
+
     /// <summary>注釈の付随ファイル（<c>*.annotations.json</c> / <c>*.annotated.*</c>）を書き出す。</summary>
     /// <param name="annotation">注釈の編集コントロール。</param>
     /// <param name="imagePath">保存した画像のパス（付随ファイルの名前の基になる）。</param>
@@ -923,12 +985,15 @@ internal static class CapturePage
 
     /// <summary>上書きの確認ダイアログを表示する。</summary>
     /// <param name="owner">ダイアログのオーナー。</param>
+    /// <param name="viewModel">アプリのメイン ViewModel（付随ファイルの有無を判定する）。</param>
     /// <param name="fileName">既に存在するファイル名。</param>
     /// <returns>上書きする場合は true。</returns>
-    private static bool ConfirmOverwrite(Form owner, string fileName)
+    private static bool ConfirmOverwrite(Form owner, MainViewModel viewModel, string fileName)
         => MessageBox.Show(
             owner,
-            $"ファイル「{fileName}」は既に存在します。上書きしますか？",
+            viewModel.HasPendingAnnotationSave
+                ? $"ファイル「{fileName}」は既に存在します。上書きしますか？\n注釈のファイル（*.annotations.json / *.annotated.*）も上書きします。"
+                : $"ファイル「{fileName}」は既に存在します。上書きしますか？",
             "上書き確認",
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Question,

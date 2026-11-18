@@ -43,6 +43,8 @@
                                   Command="{Binding SaveImageCommand}"
                                   IsEnabled="{Binding CanSave}"
                                   InputGesture="Ctrl+S"/>
+                        <MenuItem Header="File - 注釈を開く"
+                                  Click="OnOpenAnnotationsMenuClick"/>
                         <Separator/>
                         <MenuItem Header="Clipboard - コピー"
                                   Command="{Binding CopyToClipboardCommand}"

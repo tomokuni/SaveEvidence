@@ -20,7 +20,7 @@
 描画は run ごとの書式（太字・斜体・下線・色・大きさ・フォント）に対応しています。
 **斜体は行の高さとベースラインを変えません**（Avalonia UI 版と同じ規則。 幅は指定どおりの書式で測り、行の高さは斜体を外した書式で測り、描画は行のベースラインで揃える）。
 
-**現状**: MewUI 版のみ実装済みです（Avalonia UI 版は [`../../EsUtil.Ui.AvaloniaUI/Annotation/README.md`](../../EsUtil.Ui.AvaloniaUI/Annotation/README.md)。 WinUI 3 / WinForms は後段）。
+**現状**: 4 つの UI 版すべてで使えます（Avalonia UI 版は [`../../EsUtil.Ui.AvaloniaUI/Annotation/README.md`](../../EsUtil.Ui.AvaloniaUI/Annotation/README.md)）。
 下線・取り消し線は MewUI のテキスト描画 API に無いため、**区間の罫線として自前で引きます**（4 つの UI 版で同じ見た目にするため）。
 
 ## 2. 使い方

@@ -533,6 +533,34 @@ public sealed partial class MainViewModel : ObservableObject
     /// <param name="image">設定する画像（読み取りの面）。 所有権が本型へ移る。</param>
     public void SetPreviewImage(EsReadOnlyBitmap image) => PreviewImage = image;
 
+    /// <summary>保存済みの画像を開いたことを記録する（注釈だけを保存し直せるようにする）。</summary>
+    /// <param name="imagePath">開いた画像の絶対パス。</param>
+    /// <returns>記録した場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>注釈ファイルを開く導線のため</b>: <c>*.annotations.json</c> を開いた画像は既に保存済みである。
+    /// これを記録しないと、注釈だけを変えて保存したときに<b>元画像を書き直してしまう</b>
+    /// （<see cref="HasPendingAnnotationSave"/> だけでは付随ファイルの書き直しに進めない）。<br/>
+    /// 画像が設定されていない・初期画像の場合は記録しない（保存済みとして扱わない）。
+    /// </remarks>
+    /// <exception cref="ArgumentException"><paramref name="imagePath"/> が空白の場合。</exception>
+    public bool MarkImageSaved(string imagePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(imagePath);
+
+        if (PreviewImage is null || IsStartupImage)
+        {
+            return false;
+        }
+
+        _lastSavedFilePath = imagePath;
+        LastSavedFileName = Path.GetFileName(imagePath);
+        IsSaved = true;
+        _savedTemplateText = FileNameTemplateText;
+        OnPropertyChanged(nameof(HasTemplateChangedSinceSave));
+        OnPropertyChanged(nameof(CanSave));
+        return true;
+    }
+
     /// <summary>指定された画像をプレビューとして設定する（書き換え可能な画像を受け取る版）。</summary>
     /// <param name="image">設定する画像（書き換え可能）。 凍結して 0 コピーでプレビューへ渡す。</param>
     /// <remarks>

@@ -11,6 +11,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Platform.Storage;
 using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Geometry;
@@ -1044,6 +1045,83 @@ public sealed partial class CapturePage : UserControl
 
     private void OnUndoMenuClick(object? sender, RoutedEventArgs e) => RestoreUndo();
 
+    /// <summary>メニューから保存済みの注釈ファイルを開く。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">イベントの引数。</param>
+    private async void OnOpenAnnotationsMenuClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await OpenAnnotationsAsync();
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            // ファイルの読み取りに失敗した場合は利用者へ知らせる（アプリは止めない）
+            s_logger.LogAnnotationOpenError(ex, string.Empty);
+            await ConfirmDialog.ShowAsync(
+                (Window)TopLevel.GetTopLevel(this)!,
+                "注釈を開く",
+                "注釈ファイルを開けませんでした。 ファイルが壊れている可能性があります。");
+        }
+    }
+
+    /// <summary>保存済みの注釈ファイルを開く（元画像と注釈を読み直す）。</summary>
+    /// <returns>開く処理の非同期タスク。</returns>
+    /// <remarks>
+    /// <b>元画像も読み直す</b>: 注釈は元画像に属するため、注釈だけを差し替えると別の画像の注釈になる。<br/>
+    /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。
+    /// </remarks>
+    private async Task OpenAnnotationsAsync()
+    {
+        if (TopLevel.GetTopLevel(this)?.StorageProvider is not { } storage)
+        {
+            return;
+        }
+
+        var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "注釈を開く",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("注釈ファイル") { Patterns = ["*.annotations.json"] },
+                new FilePickerFileType("すべてのファイル") { Patterns = ["*.*"] },
+            ],
+        });
+
+        if (files.Count == 0 || files[0].TryGetLocalPath() is not { Length: > 0 } documentPath)
+        {
+            return;
+        }
+
+        var document = AnnotationJson.Load(documentPath);
+        var imagePath = AnnotationJson.ResolveImagePath(documentPath, document);
+        if (imagePath is null)
+        {
+            await ConfirmDialog.ShowAsync(
+                (Window)TopLevel.GetTopLevel(this)!,
+                "注釈を開く",
+                "注釈ファイルに対応する元画像が見つかりません。 元画像を同じフォルダへ置いてから開いてください。");
+            return;
+        }
+
+        using (var bitmap = EsBitmap.Load(imagePath))
+        {
+            _viewModel.SetPreviewImage(bitmap);
+        }
+
+        // 画像の差し替え通知が注釈を作り直すため、その後に読み込んだ注釈を設定する
+        _annotationDocument = document;
+        var layer = AnnotationEditor.Layer;
+        layer.Source = _cropViewSource;
+        layer.SourcePixelWidth = document.ImageWidth;
+        layer.SourcePixelHeight = document.ImageHeight;
+        layer.Document = document;
+
+        _viewModel.MarkImageSaved(imagePath);
+        EnterAnnotationMode();
+        _viewModel.StatusMessage = "注釈を開きました。";
+    }
     /// <summary>メニュー「Image - 元に戻すの取り消し」のクリック時に画像を Redo スタックから復元する。</summary>
     private void OnRedoMenuClick(object? sender, RoutedEventArgs e) => RestoreRedo();
 

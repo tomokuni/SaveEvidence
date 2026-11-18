@@ -37,7 +37,7 @@ WinForms 版の注釈レイヤーが公開する API の一覧です。 操作�
 | `UpdateSelectedAppearance(...)` / `UpdateSelectedTail(...)` / `SetSelectedBodyPadding(...)` | 外観・しっぽ・本文の余白の変更 |
 | `MoveSelectedToFront()` / `MoveSelectedToBack()` | 重なり順の変更 |
 | `Undo()` / `Redo()` / `CanUndo` / `CanRedo` | 元に戻す・やり直す（1 操作 = 1 手） |
-| `BeginTextEditing()` / `EndTextEditing()` / `IsEditingText` | 本文の編集の開始・終了（`RichTextBox` を重ねる） |
+| `BeginTextEditing()` / `EndTextEditing()` / `IsEditingText` | 本文のその場編集の開始・終了（入力欄を重ねず、キャレットと選択範囲を描く） |
 | `TextSelectionStart` / `TextSelectionLength` / `TextSelectionRange` | 入力欄の選択範囲 |
 | `GetSelectedBodyRect()` | 本文の矩形（DIP。 入力欄と書式バーの位置を決める） |
 | `RenderComposedImage()` | 画像と注釈を 1:1 で合成した画像（保存用） |

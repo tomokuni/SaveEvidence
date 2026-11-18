@@ -6,6 +6,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
+using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.System;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
@@ -32,11 +34,12 @@ public sealed partial class AnnotationLayerControl
     {
         var (scale, offset) = ResolveImageTransform();
 
-        if (Source is { } source && ActualWidth > 0 && ActualHeight > 0)
+        ApplyImageSource();
+        if (_image.Source is not null && ActualWidth > 0 && ActualHeight > 0)
         {
-            _image.Source = source;
-            _image.SetBounds(new Windows.Foundation.Rect(
-                offset.X, offset.Y, SourcePixelWidth * scale, SourcePixelHeight * scale));
+            _image.Width = SourcePixelWidth * scale;
+            _image.Height = SourcePixelHeight * scale;
+            _image.Margin = new Thickness(offset.X, offset.Y, 0, 0);
             _image.Visibility = Visibility.Visible;
         }
         else
@@ -54,17 +57,38 @@ public sealed partial class AnnotationLayerControl
             IsEditingText ? SelectedId : null,
             MeasureText);
 
+        DrawEditing();
+
         DrawSelection();
         Clip = new RectangleGeometry
         {
             Rect = new Windows.Foundation.Rect(0, 0, Math.Max(0, ActualWidth), Math.Max(0, ActualHeight)),
         };
 
-        UpdateEditorBounds();
     }
 
     /// <summary>再描画を要求する。</summary>
     internal void Invalidate() => Redraw();
+
+    /// <summary>表示用の画像を作り直す（同じ画像なら作り直さない）。</summary>
+    private void ApplyImageSource()
+    {
+        if (_imageBitmap is not null || Source is not { IsDisposed: false } source)
+        {
+            _image.Source = _imageBitmap;
+            return;
+        }
+
+        var bitmap = new WriteableBitmap(source.Width, source.Height);
+        var pixels = source.ReadOnlyPixels.ToArray();
+        using (var stream = bitmap.PixelBuffer.AsStream())
+        {
+            stream.Write(pixels, 0, pixels.Length);
+        }
+
+        _imageBitmap = bitmap;
+        _image.Source = bitmap;
+    }
 
     /// <summary>Marquee の要求に従ってポインター キャプチャを取得・解放する。</summary>
     /// <param name="capture">取得する場合は <see langword="true"/>。</param>
@@ -193,6 +217,15 @@ public sealed partial class AnnotationLayerControl
 
         if (IsEditingText)
         {
+            // 編集中は本文の内側を押したらキャレットを移す（外側を押したら編集を終える）
+            if (Selected is BubbleAnnotation editingBubble && editingBubble.Bounds.Contains(source))
+            {
+                _undoCandidate = null;
+                SetCaretFromPoint(source, IsDown(VirtualKey.Shift));
+                e.Handled = true;
+                return;
+            }
+
             EndTextEditing();
         }
 
@@ -297,6 +330,11 @@ public sealed partial class AnnotationLayerControl
 
         if (IsEditingText)
         {
+            if (HandleTextEditingKey(e))
+            {
+                e.Handled = true;
+            }
+
             return;
         }
 

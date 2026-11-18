@@ -59,7 +59,7 @@ flowchart LR
 | `AnnotationLayerControl` | 画像・注釈の表示と入力の受付（`Input` / `TextEditing` の部分クラスへ分ける） |
 | `AnnotationPainter` | 描画計画を XAML の図形（`Rectangle` / `Polygon`）と `TextBlock` へ写す |
 | `AnnotationComposer` | 保存用の合成画像を GDI+ で描く |
-| `AnnotationTextRunMeasure` | 本文の実寸を WinUI 3 のテキスト エンジンで測る |
+| `AnnotationTextRunMeasure` | 本文の実寸を WinUI 3 のテキスト エンジンで測る（ホストが `MeasureText` へ設定する） |
 | `AnnotationFormatBar` | 文字単位の書式（B / I / U / S・色・大きさ・フォント）の操作 |
 | `AnnotationStylePanel` | 外観・しっぽ・重なり順の編集 |
 | `AnnotationEditorControls` | 編集 UI の行の部品（書式バーと外観パネルが共有する） |
@@ -73,7 +73,7 @@ flowchart LR
 
 ### 4.2 本文の編集と書式
 
-本文の編集は `RichEditBox` を本文の矩形へ重ねて行います。 入力のたびに本文と文字単位の書式を読み取り、コアの `RichText`（run の並び）へ写します。
+本文の編集は**その場で**行います（表示中のレイアウトのままキャレットと選択範囲を描き、入力欄を重ねません）。 入力のたびに本文と文字単位の書式をコアの `RichText`（run の並び）へ写します。 日本語入力は `CoreTextEditContext` を本文へ繋ぎ、変換中の文字列はキャレットの位置へ下線付きで描きます。
 書式バーの操作は入力欄の選択範囲へ適用し、同じ内容をモデルへ写します（保存・描画・元に戻すは常にコアのモデルを見る）。
 編集中は下の注釈の本文を描きません（入力欄と二重に表示しない）。
 

@@ -471,7 +471,9 @@ public sealed partial class MainWindow : Window
             return await ConfirmDialog.ShowAsync(
                 this,
                 "上書き確認",
-                $"ファイル「{fileName}」は既に存在します。上書きしますか？");
+                _viewModel.HasPendingAnnotationSave
+                    ? $"ファイル「{fileName}」は既に存在します。上書きしますか？\n注釈のファイル（*.annotations.json / *.annotated.*）も上書きします。"
+                    : $"ファイル「{fileName}」は既に存在します。上書きしますか？");
         };
     }
 

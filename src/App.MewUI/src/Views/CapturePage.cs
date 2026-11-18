@@ -192,7 +192,7 @@ internal static class CapturePage
         // ── メニュー（☰ の下へ出すプルダウン。 Avalonia 版の MenuFlyout に相当）──
         // 項目を選んで閉じたときも覆いを隠す（隠さないと次のクリックが覆いに吸われる）
         var menuPanel = BuildMenu(
-            viewModel, services, captureSession, ToggleCrop, iconImages, () => dismissLayer.IsVisible = false);
+            viewModel, services, captureSession, ToggleCrop, annotation, iconImages, () => dismissLayer.IsVisible = false);
 
         // ── 拡大率メニュー（% 表示のクリックで出す。 Avalonia 版のフライアウトに相当）──
         var zoomMenu = BuildZoomMenu(crop);
@@ -697,6 +697,7 @@ internal static class CapturePage
     /// <param name="services">アプリ全体で共有するコアオブジェクト。</param>
     /// <param name="captureSession">撮影・切り出しの Facade（切り出しメニューの接続先）。</param>
     /// <param name="toggleCrop">切り出しの開始・確定・キャンセルを行う窓口（ツールバー・キーと同じもの）。</param>
+    /// <param name="annotation">注釈の編集コントロール（注釈を開く操作の接続先）。</param>
     /// <param name="icons">テーマに応じて再生成するメニュー アイコン。</param>
     /// <param name="onClosed">項目の選択でメニューを閉じたときに呼ぶ処理（外側クリック用の覆いを隠す）。</param>
     /// <returns>初期状態で非表示のプルダウン。</returns>
@@ -709,6 +710,7 @@ internal static class CapturePage
         AppServices services,
         CaptureSessionControl captureSession,
         Action toggleCrop,
+        AnnotationTextEditor annotation,
         List<IconImage> icons,
         Action? onClosed = null)
     {
@@ -794,6 +796,7 @@ internal static class CapturePage
             });
 
         Add("File - 画像を保存", () => _ = viewModel.SaveImageAsync(), () => viewModel.CanSave, "Ctrl+S", CaptureIconFiles.Save);
+        Add("File - 注釈を開く", () => _ = OpenAnnotationsAsync(annotation, viewModel));
         AddSeparator();
         Add("Clipboard - コピー", () => _ = viewModel.CopyToClipboardAsync(), () => viewModel.CanCopy, "Ctrl+C");
         Add("Clipboard - 貼り付け", () => _ = viewModel.PasteFromClipboardAsync(), () => viewModel.CanPaste, "Ctrl+V");
@@ -1202,6 +1205,65 @@ internal static class CapturePage
             }
         };
         return host;
+    }
+
+    /// <summary>保存済みの注釈ファイルを開く（元画像と注釈を読み直す）。</summary>
+    /// <param name="annotation">注釈の編集コントロール。</param>
+    /// <param name="viewModel">アプリのメイン ViewModel。</param>
+    /// <returns>開く処理の非同期タスク。</returns>
+    /// <remarks>
+    /// <b>元画像も読み直す</b>: 注釈は元画像に属するため、注釈だけを差し替えると別の画像の注釈になる。<br/>
+    /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。
+    /// </remarks>
+    private static Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel)
+    {
+        var dialog = Application.Current?.PlatformServices.FileDialog;
+        if (dialog is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var selected = dialog.OpenFile(new OpenFileDialogOptions
+        {
+            Title = "注釈を開く",
+            Filters =
+            [
+                new FileFilter("注釈ファイル (*.annotations.json)", ["*.annotations.json"]),
+                new FileFilter("すべてのファイル (*.*)", ["*.*"]),
+            ],
+        });
+
+        if (selected is not { Length: > 0 } || selected[0] is not { Length: > 0 } documentPath)
+        {
+            return Task.CompletedTask;
+        }
+
+        try
+        {
+            var document = AnnotationJson.Load(documentPath);
+            var imagePath = AnnotationJson.ResolveImagePath(documentPath, document);
+            if (imagePath is null)
+            {
+                viewModel.StatusMessage = "注釈に対応する元画像が見つかりません。";
+                return Task.CompletedTask;
+            }
+
+            using (var bitmap = EsUtil.Platform.Core.Imaging.EsBitmap.Load(imagePath))
+            {
+                viewModel.SetPreviewImage(bitmap);
+            }
+
+            annotation.Layer.Document = document;
+            viewModel.MarkImageSaved(imagePath);
+            viewModel.StatusMessage = "注釈を開きました。";
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            s_logger.LogAnnotationOpenError(ex, documentPath);
+            viewModel.StatusMessage = "注釈ファイルを開けませんでした。";
+        }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>注釈の付随ファイル（<c>*.annotations.json</c> / <c>*.annotated.*</c>）を書き出す。</summary>

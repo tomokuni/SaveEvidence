@@ -98,6 +98,20 @@ internal static partial class AppLogMessage
     internal static partial void LogAnnotationCompanionUpdateErrorCore(
         this ILogger logger, string prefix, Exception ex, string path);
 
+    /// <summary>注釈ファイルを開けなかったことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Error <br/>
+    /// 出力書式: <c>[App.&lt;UI&gt;] 注釈ファイルを開けませんでした: {Path}</c>（例外はスタックトレース込み）<br/>
+    /// 壊れた JSON や読み取り権限の不足で起こる。 利用者へはダイアログで知らせ、アプリは止めない。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="path">開こうとした注釈ファイルのパス。</param>
+    [LoggerMessage(LogLevel.Error, "{Prefix} 注釈ファイルを開けませんでした: {Path}")]
+    internal static partial void LogAnnotationOpenErrorCore(
+        this ILogger logger, string prefix, Exception ex, string path);
+
     /// <summary>終了時のウィンドウ配置の保存で例外が発生したことを記録する。</summary>
     /// <remarks>
     /// LogLevel: Warning <br/>

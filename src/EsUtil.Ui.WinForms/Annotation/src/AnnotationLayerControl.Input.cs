@@ -45,6 +45,7 @@ public sealed partial class AnnotationLayerControl
         AnnotationPainter.Draw(graphics, plan, scale, offset.X, offset.Y, IsEditingText ? SelectedId : null);
 
         DrawSelection(graphics);
+        DrawEditing(graphics);
     }
 
     /// <summary>選択枠としっぽのハンドルを描く。</summary>
@@ -138,6 +139,14 @@ public sealed partial class AnnotationLayerControl
 
         if (IsEditingText)
         {
+            // 編集中は本文の内側を押したらキャレットを移す（外側を押したら編集を終える）
+            if (Selected is BubbleAnnotation editingBubble && editingBubble.Bounds.Contains(source))
+            {
+                _undoCandidate = null;
+                SetCaretFromPoint(source, (ModifierKeys & Keys.Shift) == Keys.Shift);
+                return;
+            }
+
             EndTextEditing();
         }
 
@@ -230,6 +239,12 @@ public sealed partial class AnnotationLayerControl
 
         if (IsEditingText)
         {
+            if (HandleTextEditingKey(e))
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+
             return;
         }
 
@@ -264,6 +279,27 @@ public sealed partial class AnnotationLayerControl
             e.Handled = _marquee.KeyDown(ToEsKey(e.KeyCode), _lastPointerSource);
             Invalidate();
         }
+    }
+
+    /// <summary>文字入力を受け取る（IME の変換中は受け取らない）。</summary>
+    /// <param name="e">キーの引数。</param>
+    protected override void OnKeyPress(KeyPressEventArgs e)
+    {
+        ArgumentNullException.ThrowIfNull(e);
+        base.OnKeyPress(e);
+
+        if (!IsEditingText || _isComposing || e.Handled)
+        {
+            return;
+        }
+
+        if (char.IsControl(e.KeyChar))
+        {
+            return;
+        }
+
+        ReplaceSelection(e.KeyChar.ToString());
+        e.Handled = true;
     }
 
     /// <summary>キーをコアのキーへ写す（nudge に使う 4 方向だけ）。</summary>
