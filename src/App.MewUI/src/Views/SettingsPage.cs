@@ -23,7 +23,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <b>テーマ</b>: <c>ThemeMode</c> は <c>Application.SetThemeMode</c> へ即時反映する。<br/>
 /// <b>色</b>: 設定は <c>#AARRGGBB</c> の文字列で保持し、入力は <see cref="ColorSelectorControl"/> が担う（規則はコアの <c>Palette</c> が単一所有する）。<br/>
 /// <b>ホットキー</b>: テキストボックス上で修飾キー付きのキーを押すとその組み合わせを設定する（テキスト入力でも解釈する）。<br/>
-/// <b>構成</b>: 折り畳みなしの縦 1 列（テーマ / 保存 / キャプチャ / ホットキー / 一覧表示 / 外観 / ログ）をスクロール表示する。
+/// <b>構成</b>: 折り畳みなしの縦 1 列（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観 / 注釈 / ログ）をスクロール表示する。
 /// </remarks>
 internal static class SettingsPage
 {
@@ -77,7 +77,7 @@ internal static class SettingsPage
     /// <returns>ページの内容（表示のたびの更新は不要。 設定は即時反映される）。</returns>
     /// <remarks>
     /// 1. 設定の変更通知を購読し、変更のたびに設定ファイルへ保存する。<br/>
-    /// 2. 各セクション（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観 / ログ）を縦 1 列で積む。<br/>
+    /// 2. 各セクション（テーマ / 保存 / 画像 / キャプチャ / 選択制限 / ホットキー / 外観 / 注釈 / ログ）を縦 1 列で積む。<br/>
     /// 3. 全体をスクロールビューへ入れる（項目がウィンドウ高さを超えるため）。
     /// </remarks>
     public static PageContent Build(AppServices services)
@@ -101,6 +101,7 @@ internal static class SettingsPage
                 BuildSelectionLimitSection(settings),
                 BuildHotKeySection(settings),
                 BuildAppearanceSection(settings),
+                BuildAnnotationSection(settings),
                 BuildLogSection(settings));
 
         // タイトルバー領域（上端）にはページ内容を表示しない
@@ -407,6 +408,30 @@ internal static class SettingsPage
 
         return SectionWithAction("外観設定", reset, BuildAppearanceGrid(categories));
     }
+
+    /// <summary>注釈設定のセクションを構築する。</summary>
+    /// <param name="settings">アプリ設定。</param>
+    /// <returns>セクション。</returns>
+    /// <remarks>
+    /// 新しく追加する枠線・吹き出し・本文へ適用する（既存の注釈は変えない）。 項目は Avalonia 版と同じ並びにする。<br/>
+    /// 色の表記（16 進の桁数）は <see cref="Settings.ColorTextFormat"/> が単一所有するため、ここでは持たない。
+    /// </remarks>
+    private static Element BuildAnnotationSection(Settings settings)
+        => Section(
+            "注釈",
+            Row("", new Label()
+                .Text("新しく追加する枠線・吹き出し・本文へ適用します（既存の注釈は変わりません）。")
+                .FontSize(SettingsMetrics.HintFontSize)),
+            Row("枠線の色", ColorRow(settings, settings.AnnotationFrameBorderColor, value => settings.AnnotationFrameBorderColor = value)),
+            Row("枠線の太さ", NumberRow(settings.AnnotationFrameBorderThickness, 1, 64, 1, false, value => settings.AnnotationFrameBorderThickness = value)),
+            Row("枠線の内側の色", ColorRow(settings, settings.AnnotationFrameFillColor, value => settings.AnnotationFrameFillColor = value)),
+            Row("角丸", NumberRow(settings.AnnotationFrameCornerRadius, 0, 4096, 1, false, value => settings.AnnotationFrameCornerRadius = value)),
+            Row("吹き出しの枠線の色", ColorRow(settings, settings.AnnotationBubbleBorderColor, value => settings.AnnotationBubbleBorderColor = value)),
+            Row("吹き出しの内側の色", ColorRow(settings, settings.AnnotationBubbleFillColor, value => settings.AnnotationBubbleFillColor = value)),
+            Row("本文の文字サイズ", NumberRow(settings.AnnotationTextFontSize, 6, 512, 1, false, value => settings.AnnotationTextFontSize = value)),
+            Row("本文の文字色", ColorRow(settings, settings.AnnotationTextColor, value => settings.AnnotationTextColor = value)),
+            Row("本文の余白", NumberRow(settings.AnnotationBodyPadding, 0, 4096, 1, false, value => settings.AnnotationBodyPadding = value)),
+            Row("しっぽの幅", NumberRow(settings.AnnotationTailWidth, 1, 4096, 1, false, value => settings.AnnotationTailWidth = value)));
 
     /// <summary>外観設定のカテゴリと項目を 3 列のグリッドへ並べる。</summary>
     /// <param name="categories">カテゴリと項目（項目名が空の項目はチェックボックスとして 2 列分を使う）。</param>

@@ -29,6 +29,8 @@
     <!-- 撮影・切り出しの共通規則（切り出し矩形の計算） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlMewUI\src\Parts.CapturePreview.ControlMewUI.csproj" />
+    <!-- 注釈（枠線・吹き出し）の編集レイヤー -->
+    <ProjectReference Include="..\..\EsUtil.Ui.MewUI\Annotation\src\EsUtil.Ui.MewUI.Annotation.csproj" />
     <PackageReference Include="EsUtil.Ui.MewUI.Interop" />
     <PackageReference Include="EsUtil.Ui.MewUI.Thumbnail" />
     <!-- 設定画面の色選択（色名・16 進・ピッカーを 1 つにまとめたコントロール） -->

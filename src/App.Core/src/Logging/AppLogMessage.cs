@@ -84,6 +84,20 @@ internal static partial class AppLogMessage
     [LoggerMessage(LogLevel.Error, "{Prefix} 設定変更の撮影セッション反映で例外が発生: {PropertyName}")]
     internal static partial void LogSettingsApplyErrorCore(this ILogger logger, string prefix, Exception ex, string propertyName);
 
+    /// <summary>注釈の付随ファイルの更新で例外が発生したことを記録する。</summary>
+    /// <remarks>
+    /// LogLevel: Error <br/>
+    /// 出力書式: <c>[App.&lt;UI&gt;] 注釈の付随ファイルの更新で例外が発生: {Path}</c>（例外はスタックトレース込み）<br/>
+    /// 付随ファイルは画像の保存後に書くため、失敗しても画像の保存結果は残る（画像だけの状態と食い違う点を記録する）。
+    /// </remarks>
+    /// <param name="logger">ロガー（拡張メソッドのレシーバー。 呼び出し側で省略できる）。</param>
+    /// <param name="prefix">接頭辞。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="path">対象の付随ファイルのパス。</param>
+    [LoggerMessage(LogLevel.Error, "{Prefix} 注釈の付随ファイルの更新で例外が発生: {Path}")]
+    internal static partial void LogAnnotationCompanionUpdateErrorCore(
+        this ILogger logger, string prefix, Exception ex, string path);
+
     /// <summary>終了時のウィンドウ配置の保存で例外が発生したことを記録する。</summary>
     /// <remarks>
     /// LogLevel: Warning <br/>

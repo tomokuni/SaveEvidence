@@ -108,15 +108,6 @@
           "Aprillz.MewUI.Platform.Win32": "0.22.1"
         }
       },
-      "Aprillz.MewUI.Backend.Gdi": {
-        "type": "Transitive",
-        "resolved": "0.22.1",
-        "contentHash": "fva2n+6vdbEMI22/eFq86bsjlGPyuXMJ2TvwRoauW6sArhTEG3Iqra/Y4GEBRWyX+GU0I+IW4rLKgXZgtvrrZg==",
-        "dependencies": {
-          "Aprillz.MewUI.Core": "0.22.1",
-          "Aprillz.MewUI.Platform.Win32": "0.22.1"
-        }
-      },
       "Aprillz.MewUI.Backend.MewVG.Win32": {
         "type": "Transitive",
         "resolved": "0.22.1",
@@ -127,11 +118,6 @@
           "Aprillz.MewVG.Core": "0.10.1",
           "Aprillz.MewVG.GL": "0.10.1"
         }
-      },
-      "Aprillz.MewUI.Core": {
-        "type": "Transitive",
-        "resolved": "0.22.1",
-        "contentHash": "+X6xnOzVYtsbSd87Ekku9qphyFvZEcTsxbKQAlj+bseDAqOenbVe1/oOxaqkFzNxlnYO50R4+6+qhzv/tCyv+A=="
       },
       "Aprillz.MewUI.Platform.Win32": {
         "type": "Transitive",
@@ -166,6 +152,21 @@
           "Serilog.Sinks.File": "[7.0.0, )"
         }
       },
+      "esutil.feature.annotation.core": {
+        "type": "Project",
+        "dependencies": {
+          "EsUtil.Platform.Core": "[0.8.7, )"
+        }
+      },
+      "esutil.ui.mewui.annotation": {
+        "type": "Project",
+        "dependencies": {
+          "Aprillz.MewUI.Core": "[0.22.1, )",
+          "EsUtil.Feature.Annotation.Core": "[0.8.2, )",
+          "EsUtil.Feature.Marquee.Core": "[0.8.7, )",
+          "EsUtil.Ui.MewUI.ColorSelector": "[0.8.7, )"
+        }
+      },
       "parts.capturepreview.controlmewui": {
         "type": "Project",
         "dependencies": {
@@ -192,6 +193,22 @@
           "OpenCvSharp5": "[5.0.0.20261109, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261109, )"
         }
+      },
+      "Aprillz.MewUI.Backend.Gdi": {
+        "type": "CentralTransitive",
+        "requested": "[0.22.1, )",
+        "resolved": "0.22.1",
+        "contentHash": "fva2n+6vdbEMI22/eFq86bsjlGPyuXMJ2TvwRoauW6sArhTEG3Iqra/Y4GEBRWyX+GU0I+IW4rLKgXZgtvrrZg==",
+        "dependencies": {
+          "Aprillz.MewUI.Core": "0.22.1",
+          "Aprillz.MewUI.Platform.Win32": "0.22.1"
+        }
+      },
+      "Aprillz.MewUI.Core": {
+        "type": "CentralTransitive",
+        "requested": "[0.22.1, )",
+        "resolved": "0.22.1",
+        "contentHash": "+X6xnOzVYtsbSd87Ekku9qphyFvZEcTsxbKQAlj+bseDAqOenbVe1/oOxaqkFzNxlnYO50R4+6+qhzv/tCyv+A=="
       },
       "CommunityToolkit.Mvvm": {
         "type": "CentralTransitive",

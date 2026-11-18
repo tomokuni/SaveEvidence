@@ -11,6 +11,9 @@ using EsUtil.SaveEvidence.App.Core.ViewModels;
 using EsUtil.SaveEvidence.App.MewUI.Icons;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.SaveEvidence.App.MewUI.Services;
+using EsUtil.Ui.MewUI.Annotation;
+using EsUtil.Feature.Annotation;
+using System.Text;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
@@ -25,7 +28,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <summary>キャプチャページ（MewUI 版）。</summary>
 /// <remarks>
 /// Avalonia 版 <c>CapturePage.axaml</c> に相当する。<br/>
-/// プレビュー（ズーム・パン・矩形オーバーレイ）・ルーペ（カーソル追従）・切り出し・撮影・履歴操作を担う。<br/>
+/// プレビュー（ズーム・パン・矩形オーバーレイ）・ルーペ（カーソル追従）・切り出し・撮影・履歴操作・注釈を担う。<br/>
 /// 書き出し形式の判定は <see cref="IImageWriter"/>（<see cref="EsBitmapImageWriter"/>。 コアの保存）が担い、撮影は <see cref="CaptureFlow"/>、
 /// 切り出しは <see cref="CaptureSessionControl"/>（Facade）、履歴は <see cref="EditHistory"/> へ委譲する。
 /// </remarks>
@@ -96,7 +99,10 @@ internal static class CapturePage
     {
         var viewModel = services.Main;
         var settings = services.Settings.Current;
-        var preview = BuildPreview(viewModel, settings, out var crop, out var captureSession);
+        var preview = BuildPreview(viewModel, settings, out var crop, out var captureSession, out var annotation);
+
+        // 注釈の付随ファイル（*.annotations.json / *.annotated.*）の書き出しは UI が担う（コアは順序と可否だけを決める）
+        viewModel.SaveCompanionFilesAsync = path => SaveAnnotationFilesAsync(annotation, path);
 
         // グローバルホットキーからの開始経路も同じ Facade を通す（撮影と切り出しの排他を 1 箇所で効かせる）
         viewModel.StartSelectionMode = type => CaptureFlow.Start(type, captureSession);
@@ -344,6 +350,62 @@ internal static class CapturePage
             }
         };
 
+        // 注釈（枠線・吹き出し）の編集モード。 トグルで切り替え、注釈の操作はその右へ並べる。
+        // 注釈モードの間は切り出しビューを隠す（入力の取り合いを避ける）
+        var annotationToggle = new ToggleButton
+        {
+            Content = new TextBlock { Text = "注釈" },
+            Height = AppStyles.ToolbarButtonHeight,
+            Padding = new Thickness(AppStyles.ToolbarPaddingX, AppStyles.ToolbarPaddingY),
+            StyleName = AppStyles.ToolbarToggle,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(1, 0, 1, 0),
+        };
+        annotationToggle.FontSize(AppStyles.ToolbarFontSize);
+
+        var annotationTools = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 4,
+            IsVisible = false,
+        };
+
+        var addFrame = new Button { Content = new TextBlock { Text = "枠線を追加" } };
+        addFrame.OnClick(() =>
+        {
+            var layer = annotation.Layer;
+            var width = Math.Max(1, layer.SourcePixelWidth);
+            var height = Math.Max(1, layer.SourcePixelHeight);
+            layer.AddFrame(new EsRect(width * 0.15, height * 0.15, width * 0.35, height * 0.25));
+        });
+
+        var addBubble = new Button { Content = new TextBlock { Text = "吹き出しを追加" } };
+        addBubble.OnClick(() =>
+        {
+            var layer = annotation.Layer;
+            var width = Math.Max(1, layer.SourcePixelWidth);
+            var height = Math.Max(1, layer.SourcePixelHeight);
+            layer.AddBubble(new EsRect(width * 0.45, height * 0.55, width * 0.4, height * 0.25), "本文を入力");
+        });
+
+        var annotationUndo = new Button { Content = new TextBlock { Text = "元に戻す" } };
+        annotationUndo.OnClick(() => annotation.Layer.Undo());
+
+        var annotationRedo = new Button { Content = new TextBlock { Text = "やり直す" } };
+        annotationRedo.OnClick(() => annotation.Layer.Redo());
+
+        annotationTools.Add(addFrame);
+        annotationTools.Add(addBubble);
+        annotationTools.Add(annotationUndo);
+        annotationTools.Add(annotationRedo);
+
+        annotationToggle.OnCheckedChanged(isChecked =>
+        {
+            annotation.IsVisible = isChecked;
+            annotationTools.IsVisible = isChecked;
+            crop.IsVisible = !isChecked;
+        });
+
         var toolbar = new WrapPanel()
             .Margin(new Thickness(2, AppStyles.ToolbarMarginTop, AppStyles.ToolbarMarginRight, AppStyles.ToolbarMarginBottom))
             .Children(
@@ -358,9 +420,10 @@ internal static class CapturePage
                 areaSelect,
                 AppStyles.CreateToolbarDivider(),
                 cropButton,
+                annotationToggle,
+                annotationTools,
                 AppStyles.CreateToolbarDivider(),
                 hideTaskbar);
-
         // ファイル名テンプレートの幅をテキストの実測に合わせる（上限は折り返さない幅）。
         // ツールバーの幅が変わったら計算し直す
         var measureText = new TextBlock().FontSize(template.FontSize);
@@ -928,6 +991,7 @@ internal static class CapturePage
     /// <param name="settings">設定（切り出しの外観）。</param>
     /// <param name="crop">生成したクロップビュー（ツールバーから操作するため返す）。</param>
     /// <param name="captureSession">生成した撮影・切り出しの Facade（ツールバーのボタン・メニューから開始する）。</param>
+    /// <param name="annotation">生成した注釈エディター（ツールバーのトグル・保存から操作する）。</param>
     /// <returns>プレビューと切り出しを重ねた要素。</returns>
     /// <remarks>
     /// プレビューは MewUI 版の <see cref="CropViewControl"/> を使う（内部でズームビューを内包し、矩形オーバーレイを重ねる）。<br/>
@@ -936,7 +1000,11 @@ internal static class CapturePage
     /// 切り出しのオーバーレイはセッションの開始時に最上層へ加え、終了時に取り外す（Facade が担う）。
     /// </remarks>
     private static FrameworkElement BuildPreview(
-        MainViewModel viewModel, Settings settings, out CropViewControl crop, out CaptureSessionControl captureSession)
+        MainViewModel viewModel,
+        Settings settings,
+        out CropViewControl crop,
+        out CaptureSessionControl captureSession,
+        out AnnotationTextEditor annotation)
     {
         crop = new CropViewControl();
 
@@ -996,6 +1064,53 @@ internal static class CapturePage
         ApplyPreviewBackground(cropView);
         cropView.CenterAlign = settings.CenterAlign;
         host.Children(cropView);
+
+        // 注釈の編集モード（トグルで表示する）。 画像の上へレイヤーを重ね、本文のその場編集と書式バーをまとめて持つ。
+        // out パラメーターはラムダ内で参照できないため、ローカル変数へコピーして使う
+        var annotationEditor = new AnnotationTextEditor
+        {
+            IsVisible = false,
+            TextFormat = settings.ColorTextFormat,
+        };
+        annotation = annotationEditor;
+        host.Children(annotationEditor);
+
+        void SyncAnnotation()
+        {
+            var layer = annotationEditor.Layer;
+            if (viewModel.PreviewImage is { } image)
+            {
+                layer.Source = image;
+                layer.SourcePixelWidth = image.Size.Width;
+                layer.SourcePixelHeight = image.Size.Height;
+                layer.Document = new AnnotationDocument(image.Size.Width, image.Size.Height, "");
+            }
+            else
+            {
+                layer.Source = null;
+                layer.Document = new AnnotationDocument(1, 1);
+            }
+
+            viewModel.HasPendingAnnotationSave = false;
+        }
+
+        SyncAnnotation();
+        viewModel.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(MainViewModel.PreviewImage), StringComparison.Ordinal))
+            {
+                SyncAnnotation();
+            }
+        };
+
+        annotationEditor.Layer.DocumentChanged += (_, _) => viewModel.HasPendingAnnotationSave = true;
+        settings.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(Settings.ColorTextFormat), StringComparison.Ordinal))
+            {
+                annotationEditor.TextFormat = settings.ColorTextFormat;
+            }
+        };
 
         // 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）。
         // 画像と同じ描画面へ先に描く（重ねると画像の端の混色の下地が背景になり、白い線として見える）
@@ -1087,6 +1202,50 @@ internal static class CapturePage
             }
         };
         return host;
+    }
+
+    /// <summary>注釈の付随ファイル（<c>*.annotations.json</c> / <c>*.annotated.*</c>）を書き出す。</summary>
+    /// <param name="annotation">注釈エディター。</param>
+    /// <param name="imagePath">保存した画像のパス（付随ファイルの名前の基になる）。</param>
+    /// <returns>書き出しの非同期処理。</returns>
+    /// <remarks>注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。</remarks>
+    private static async Task SaveAnnotationFilesAsync(AnnotationTextEditor annotation, string imagePath)
+    {
+        var document = annotation.Layer.Document;
+        var jsonPath = AnnotationJson.GetDocumentPath(imagePath);
+        var composedPath = AnnotationJson.GetComposedPath(imagePath);
+
+        if (document.Items.IsEmpty)
+        {
+            DeleteIfExists(jsonPath);
+            DeleteIfExists(composedPath);
+            return;
+        }
+
+        await File.WriteAllTextAsync(jsonPath, AnnotationJson.Serialize(document), new UTF8Encoding(false))
+            .ConfigureAwait(false);
+
+        using var composed = annotation.Layer.RenderComposedImage();
+        composed?.Save(composedPath);
+
+        static void DeleteIfExists(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch (IOException ex)
+            {
+                s_logger.LogAnnotationCompanionUpdateError(ex, path);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                s_logger.LogAnnotationCompanionUpdateError(ex, path);
+            }
+        }
     }
 
     /// <summary>画面の取得方式と枠の設定を撮影セッションへ反映する。</summary>

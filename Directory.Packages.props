@@ -37,6 +37,8 @@
   </ItemGroup>
 
   <ItemGroup Label="サードパーティ">
+    <PackageVersion Include="Aprillz.MewUI.Backend.Gdi" Version="0.22.1" />
+    <PackageVersion Include="Aprillz.MewUI.Core" Version="0.22.1" />
     <PackageVersion Include="Aprillz.MewUI.Windows" Version="0.22.1" />
     <PackageVersion Include="Avalonia" Version="12.1.6" />
     <PackageVersion Include="Avalonia.Desktop" Version="12.1.6" />
