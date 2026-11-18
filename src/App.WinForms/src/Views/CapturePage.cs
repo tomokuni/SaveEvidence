@@ -2,6 +2,8 @@ using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core;
+using EsUtil.Feature.Annotation;
+using System.Text;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -16,6 +18,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.ZoomView;
+using EsUtil.Ui.WinForms.Annotation;
 using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
@@ -86,6 +89,35 @@ internal static class CapturePage
 
         var canvas = new Panel { Dock = DockStyle.Fill, BackColor = AppStyles.ImageAreaBackground };
         canvas.Controls.Add(crop);
+
+        // 注釈の編集モード（トグルで表示する）。 画像の上へレイヤーを重ね、本文の編集と書式バーをまとめて持つ
+        var annotation = new AnnotationTextEditor { Dock = DockStyle.Fill, Visible = false };
+        canvas.Controls.Add(annotation);
+
+        void SyncAnnotation()
+        {
+            var layer = annotation.Layer;
+            if (viewModel.PreviewImage is { } image)
+            {
+                layer.Source = image;
+                layer.SourcePixelWidth = image.Size.Width;
+                layer.SourcePixelHeight = image.Size.Height;
+                layer.Document = new AnnotationDocument(image.Size.Width, image.Size.Height, string.Empty);
+            }
+            else
+            {
+                layer.Source = null;
+                layer.Document = new AnnotationDocument(1, 1);
+            }
+
+            viewModel.HasPendingAnnotationSave = false;
+        }
+
+        SyncAnnotation();
+        annotation.Layer.DocumentChanged += (_, _) => viewModel.HasPendingAnnotationSave = true;
+
+        // 注釈の付随ファイル（*.annotations.json / *.annotated.*）の書き出しは UI が担う
+        viewModel.SaveCompanionFilesAsync = path => SaveAnnotationFilesAsync(annotation, path);
 
         // 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）。
         // 画像と同じ描画面へ先に描く（重ねると画像の端の混色の下地が背景になり、白い線として見える）
@@ -228,6 +260,55 @@ internal static class CapturePage
         toolbar.Controls.Add(UiFactory.CreateToolButton(
             AppIcon.Crop, "切り出し（開始 / 確定 / キャンセル）", ToggleCrop, isBorderless: true));
 
+        // 注釈（枠線・吹き出し）の編集モード。 トグルで切り替え、注釈の操作はその右へ並べる
+        var annotationToggle = UiFactory.CreateToolButton(
+            null, "注釈（枠線・吹き出し）を編集する", () => { }, "注釈");
+        annotationToggle.Height = DpiScaler.ScaleToPixel(
+            ToolbarMetrics.AutoSaveHeight, DpiScaler.ToScaling(crop.DeviceDpi));
+        annotationToggle.Font = new Font(annotationToggle.Font.FontFamily, 8F);
+        annotationToggle.Padding = Padding.Empty;
+        annotationToggle.TextAlign = ContentAlignment.MiddleCenter;
+        annotationToggle.UseCompatibleTextRendering = true;
+
+        var annotationTools = new FlowLayoutPanel
+        {
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Visible = false,
+            Margin = new Padding(0),
+        };
+
+        annotationTools.Controls.Add(CreateAnnotationButton("枠線を追加", "枠線の注釈を追加する", () =>
+        {
+            var layer = annotation.Layer;
+            var width = Math.Max(1, layer.SourcePixelWidth);
+            var height = Math.Max(1, layer.SourcePixelHeight);
+            layer.AddFrame(new EsRect(width * 0.15, height * 0.15, width * 0.35, height * 0.25));
+        }));
+        annotationTools.Controls.Add(CreateAnnotationButton("吹き出しを追加", "吹き出しの注釈を追加する", () =>
+        {
+            var layer = annotation.Layer;
+            var width = Math.Max(1, layer.SourcePixelWidth);
+            var height = Math.Max(1, layer.SourcePixelHeight);
+            layer.AddBubble(new EsRect(width * 0.45, height * 0.55, width * 0.4, height * 0.25), "本文を入力");
+        }));
+        annotationTools.Controls.Add(CreateAnnotationButton("元に戻す", "注釈の操作を元に戻す（Ctrl+Z）", () => annotation.Layer.Undo()));
+        annotationTools.Controls.Add(CreateAnnotationButton("やり直す", "注釈の操作をやり直す（Ctrl+Y）", () => annotation.Layer.Redo()));
+
+        annotationToggle.Click += (_, _) =>
+        {
+            var enabled = !annotation.Visible;
+            annotation.Visible = enabled;
+            crop.Visible = !enabled;
+            annotationTools.Visible = enabled;
+            annotationToggle.IsSelected = enabled;
+        };
+
+        toolbar.Controls.Add(annotationToggle);
+        toolbar.Controls.Add(annotationTools);
+
         // キャプチャ時にタスク バーを隠す（設定ページの同じ項目と連動する）。
         // 設定は ViewModel が単一の入口で、変更通知で表示を追従させる
         var hideTaskbarBox = new CheckBox
@@ -320,6 +401,7 @@ internal static class CapturePage
                 crop.Source = viewModel.PreviewImage;
                 crop.ClearLoupe();
                 crop.NotifyViewportChanged();
+                SyncAnnotation();
             }
 
             if (e.PropertyName is nameof(MainViewModel.DetectedRects) or nameof(MainViewModel.IsAutoCropActive))
@@ -735,6 +817,71 @@ internal static class CapturePage
         {
             var focused = owner.ActiveControl;
             return focused is TextBoxBase or ComboBox or NumericUpDown;
+        }
+    }
+
+    /// <summary>注釈の操作ボタンを作る（ツールバーの行に収まる高さ・文字サイズにする）。</summary>
+    /// <param name="text">ボタンの文字列。</param>
+    /// <param name="toolTip">ツールチップの文言。</param>
+    /// <param name="onClick">押されたときの処理。</param>
+    /// <returns>生成したボタン。</returns>
+    private static Button CreateAnnotationButton(string text, string toolTip, Action onClick)
+    {
+        var button = new Button
+        {
+            Text = text,
+            AutoSize = true,
+            Font = AppStyles.ToolbarFont,
+            Margin = new Padding(1),
+            UseCompatibleTextRendering = true,
+        };
+
+        UiFactory.AttachToolTip(button, toolTip);
+        button.Click += (_, _) => onClick();
+        return button;
+    }
+
+    /// <summary>注釈の付随ファイル（<c>*.annotations.json</c> / <c>*.annotated.*</c>）を書き出す。</summary>
+    /// <param name="annotation">注釈の編集コントロール。</param>
+    /// <param name="imagePath">保存した画像のパス（付随ファイルの名前の基になる）。</param>
+    /// <returns>書き出しの非同期処理。</returns>
+    /// <remarks>注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。</remarks>
+    private static async Task SaveAnnotationFilesAsync(AnnotationTextEditor annotation, string imagePath)
+    {
+        var document = annotation.Layer.Document;
+        var jsonPath = AnnotationJson.GetDocumentPath(imagePath);
+        var composedPath = AnnotationJson.GetComposedPath(imagePath);
+
+        if (document.Items.IsEmpty)
+        {
+            DeleteCompanionFile(jsonPath);
+            DeleteCompanionFile(composedPath);
+            return;
+        }
+
+        await File.WriteAllTextAsync(jsonPath, AnnotationJson.Serialize(document), new UTF8Encoding(false))
+            .ConfigureAwait(false);
+
+        using var composed = annotation.Layer.RenderComposedImage();
+        composed?.Save(composedPath);
+
+        static void DeleteCompanionFile(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch (IOException ex)
+            {
+                s_logger.LogAnnotationCompanionUpdateError(ex, path);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                s_logger.LogAnnotationCompanionUpdateError(ex, path);
+            }
         }
     }
 

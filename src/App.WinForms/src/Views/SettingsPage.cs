@@ -82,6 +82,7 @@ internal static class SettingsPage
         stack.Controls.Add(BuildSelectionClampSection(settingsService));
         stack.Controls.Add(BuildHotKeySection(settingsService));
         stack.Controls.Add(BuildAppearanceSection(settingsService));
+        stack.Controls.Add(BuildAnnotationSection(settingsService));
         stack.Controls.Add(BuildLogSection(settingsService));
 
         // セクションの幅をウィンドウ幅へ追従させる（FlowLayoutPanel は子を引き伸ばさないため明示する）
@@ -656,6 +657,76 @@ internal static class SettingsPage
         table.ResumeLayout(performLayout: true);
         section.Body.ResumeLayout(performLayout: true);
 
+        return section;
+    }
+
+    /// <summary>注釈設定のセクションを生成する。</summary>
+    /// <param name="settingsService">設定サービス。</param>
+    /// <returns>生成したセクション。</returns>
+    /// <remarks>新しく追加する枠線・吹き出し・本文へ適用する（既存の注釈は変えない）。</remarks>
+    private static Control BuildAnnotationSection(ISettingsService settingsService)
+    {
+        var settings = settingsService.Current;
+        var section = CreateSection("注釈");
+
+        var table = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 2,
+            Padding = new Padding(0, 4, 0, 0),
+        };
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, ValueColumnWidth));
+
+        table.SuspendLayout();
+        section.Body.SuspendLayout();
+        section.Body.Controls.Add(table);
+
+        void AddRow(string caption, Control input)
+        {
+            var row = table.RowCount;
+            table.RowCount++;
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            table.Controls.Add(new Label { Text = caption, AutoSize = true, Margin = new Padding(0, 6, 8, 0) }, 0, row);
+            table.Controls.Add(input, 1, row);
+        }
+
+        void AddColor(string caption, Func<string?> get, Action<string> set)
+        {
+            var color = SettingsColorMath.ToDrawingColor(get(), Color.Transparent);
+            AddRow(caption, UiFactory.CreateColorButton(color, selected =>
+            {
+                set(UiFactory.FormatColor(selected));
+                settingsService.Save();
+            }));
+        }
+
+        void AddNumber(string caption, Func<double> get, Action<double> set, double minimum, double maximum)
+        {
+            var input = UiFactory.CreateDecimalInput(get(), minimum, maximum, 1, decimals: 1);
+            input.ValueChanged += (_, _) =>
+            {
+                set((double)input.Value);
+                settingsService.Save();
+            };
+            AddRow(caption, input);
+        }
+
+        AddColor("枠線の色", () => settings.AnnotationFrameBorderColor, value => settings.AnnotationFrameBorderColor = value);
+        AddNumber("枠線の太さ", () => settings.AnnotationFrameBorderThickness, value => settings.AnnotationFrameBorderThickness = value, 1, 64);
+        AddColor("枠線の内側の色", () => settings.AnnotationFrameFillColor, value => settings.AnnotationFrameFillColor = value);
+        AddNumber("角丸", () => settings.AnnotationFrameCornerRadius, value => settings.AnnotationFrameCornerRadius = value, 0, 4096);
+        AddColor("吹き出しの枠線の色", () => settings.AnnotationBubbleBorderColor, value => settings.AnnotationBubbleBorderColor = value);
+        AddColor("吹き出しの内側の色", () => settings.AnnotationBubbleFillColor, value => settings.AnnotationBubbleFillColor = value);
+        AddNumber("本文の文字サイズ", () => settings.AnnotationTextFontSize, value => settings.AnnotationTextFontSize = value, 6, 512);
+        AddColor("本文の文字色", () => settings.AnnotationTextColor, value => settings.AnnotationTextColor = value);
+        AddNumber("本文の余白", () => settings.AnnotationBodyPadding, value => settings.AnnotationBodyPadding = value, 0, 4096);
+        AddNumber("しっぽの幅", () => settings.AnnotationTailWidth, value => settings.AnnotationTailWidth = value, 1, 4096);
+
+        table.ResumeLayout(performLayout: true);
+        section.Body.ResumeLayout(performLayout: true);
         return section;
     }
 

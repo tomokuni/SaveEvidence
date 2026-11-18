@@ -112,6 +112,8 @@
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <!-- WinUI 3 版の撮影セッション（オーバーレイ・切り出しビュー） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlWinUI3\src\Parts.CapturePreview.ControlWinUI3.csproj" />
+    <!-- 注釈（枠線・吹き出し）の編集レイヤー -->
+    <ProjectReference Include="..\..\EsUtil.Ui.WinUI3\Annotation\src\EsUtil.Ui.WinUI3.Annotation.csproj" />
     <!-- WinUI 3 版 Interop（コア型 ⇔ WinUI 型・ウィンドウ配置の換算・表示の描画基盤） -->
     <PackageReference Include="EsUtil.Ui.WinUI3.Interop" />
     <PackageReference Include="EsUtil.Ui.WinUI3.Thumbnail" />

@@ -1,0 +1,133 @@
+using EsUtil.Feature.Annotation;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using DrawingColor = System.Drawing.Color;
+namespace EsUtil.Ui.WinUI3.Annotation;
+
+/// <summary>注釈の外観（枠線・内側・角丸・しっぽ・重なり順）を編集するパネル（WinUI 3 版）。</summary>
+/// <remarks>
+/// <b>選択中の注釈だけに効く</b>（設定画面の既定値は新しく追加する注釈へ効く）。<br/>
+/// <b>本文の書式は書式バーが担う</b>（このパネルは外観と重なり順だけを扱う）。
+/// </remarks>
+internal sealed class AnnotationStylePanel : ContentControl
+{
+    /// <summary>しっぽの向きの選択肢（毎回作らない）。</summary>
+    private static readonly string[] s_edgeOptions = ["下", "上", "左", "右"];
+
+    /// <summary>対象のレイヤー。</summary>
+    private readonly AnnotationLayerControl _layer;
+
+    /// <summary>パネルを閉じる処理。</summary>
+    private readonly Action _close;
+
+    /// <summary>外観パネルを初期化する。</summary>
+    /// <param name="layer">対象のレイヤー。</param>
+    /// <param name="close">パネルを閉じる処理。</param>
+    internal AnnotationStylePanel(AnnotationLayerControl layer, Action close)
+    {
+        _layer = layer;
+        _close = close;
+
+        Background = AnnotationEditorControls.PanelBackground();
+        HorizontalAlignment = HorizontalAlignment.Right;
+        VerticalAlignment = VerticalAlignment.Top;
+        Margin = new Thickness(8);
+        Width = 240;
+
+        Content = new Border
+        {
+            Background = AnnotationEditorControls.PanelBackground(),
+            BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(70, 0, 0, 0)),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(8),
+            Child = Build(),
+        };
+    }
+
+    /// <summary>パネルの中身を組み立てる。</summary>
+    /// <returns>縦に積んだ要素。</returns>
+    private FrameworkElement Build()
+    {
+        var panel = new StackPanel { Spacing = 2 };
+
+        var close = new Button
+        {
+            Content = "閉じる",
+            HorizontalAlignment = HorizontalAlignment.Right,
+            FontSize = AnnotationEditorControls.FontSize,
+        };
+        close.Click += (_, _) => _close();
+
+        panel.Children.Add(AnnotationEditorControls.Heading("外観"));
+        panel.Children.Add(close);
+        panel.Children.Add(AnnotationEditorControls.Divider());
+
+        if (_layer.Selected is not { } item)
+        {
+            panel.Children.Add(AnnotationEditorControls.Label("注釈を選んでください。"));
+            return panel;
+        }
+
+        var appearance = item.Appearance;
+        panel.Children.Add(AnnotationEditorControls.ColorRow(
+            "枠線の色", AnnotationEditorControls.ToHex(appearance.Border), _layer.ColorTextFormat,
+            value => _layer.UpdateSelectedAppearance(current => current with { Border = ParseColor(value, current.Border) })));
+        panel.Children.Add(AnnotationEditorControls.NumberRow(
+            "枠線の太さ", appearance.BorderThickness, 0.5, 64,
+            value => _layer.UpdateSelectedAppearance(current => current with { BorderThickness = value })));
+        panel.Children.Add(AnnotationEditorControls.ColorRow(
+            "内側の色", AnnotationEditorControls.ToHex(appearance.Fill), _layer.ColorTextFormat,
+            value => _layer.UpdateSelectedAppearance(current => current with { Fill = ParseColor(value, current.Fill) })));
+        panel.Children.Add(AnnotationEditorControls.NumberRow(
+            "角丸", appearance.CornerRadius, 0, 4096,
+            value => _layer.UpdateSelectedAppearance(current => current with { CornerRadius = value })));
+
+        if (item is BubbleAnnotation bubble)
+        {
+            panel.Children.Add(AnnotationEditorControls.Divider());
+            panel.Children.Add(AnnotationEditorControls.NumberRow(
+                "本文の余白", bubble.BodyPadding, 0, 4096, value => _layer.SetSelectedBodyPadding(value)));
+            panel.Children.Add(AnnotationEditorControls.NumberRow(
+                "しっぽの幅", bubble.Tail.Width, 1, 4096,
+                value => _layer.UpdateSelectedTail(tail => tail with { Width = value })));
+            panel.Children.Add(AnnotationEditorControls.ChoiceRow(
+                "しっぽの向き",
+                s_edgeOptions,
+                (int)bubble.Tail.BaseEdge,
+                value => _layer.UpdateSelectedTail(tail => tail with { BaseEdge = (BubbleEdge)value })));
+        }
+
+        panel.Children.Add(AnnotationEditorControls.Divider());
+        var order = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        var front = new Button { Content = "最前面へ", FontSize = AnnotationEditorControls.FontSize };
+        front.Click += (_, _) => _layer.MoveSelectedToFront();
+        var back = new Button { Content = "最背面へ", FontSize = AnnotationEditorControls.FontSize };
+        back.Click += (_, _) => _layer.MoveSelectedToBack();
+        order.Children.Add(front);
+        order.Children.Add(back);
+        panel.Children.Add(order);
+
+        return panel;
+    }
+
+    /// <summary>保存値（<c>#AARRGGBB</c>）を色へ変換する。</summary>
+    /// <param name="text">保存値。</param>
+    /// <param name="fallback">解釈できない場合の色。</param>
+    /// <returns>色。</returns>
+    private static DrawingColor ParseColor(string? text, DrawingColor fallback)
+    {
+        if (text is { Length: 9 } && text[0] == '#'
+            && uint.TryParse(text[1..], System.Globalization.NumberStyles.HexNumber, null, out var value))
+        {
+            return DrawingColor.FromArgb(
+                (byte)((value >> 24) & 0xFF),
+                (byte)((value >> 16) & 0xFF),
+                (byte)((value >> 8) & 0xFF),
+                (byte)(value & 0xFF));
+        }
+
+        return fallback;
+    }
+}

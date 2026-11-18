@@ -78,6 +78,7 @@ internal static class SettingsPage
         root.Children.Add(BuildSelectionLimitSection(settings));
         root.Children.Add(BuildHotKeySection(settings));
         root.Children.Add(BuildAppearanceSection(settings));
+        root.Children.Add(BuildAnnotationSection(settings));
         root.Children.Add(BuildLogSection(settings));
 
         var page = new Grid
@@ -464,8 +465,39 @@ internal static class SettingsPage
         return grid;
     }
 
-    /// <summary>ログのセクションを生成する。</summary>
-    /// <param name="settings">設定（出力ログレベルの所有者）。</param>
+    /// <summary>注釈設定のセクションを構築する。</summary>
+    /// <param name="settings">アプリ設定。</param>
+    /// <returns>セクション。</returns>
+    /// <remarks>
+    /// 新しく追加する枠線・吹き出し・本文へ適用する（既存の注釈は変えない）。 項目は AvaloniaUI 版と同じ並びにする。
+    /// </remarks>
+    private static FrameworkElement BuildAnnotationSection(Settings settings)
+    {
+        var hint = new TextBlock
+        {
+            Text = "新しく追加する枠線・吹き出し・本文へ適用します（既存の注釈は変わりません）。",
+            FontSize = SettingsMetrics.HintFontSize,
+            Opacity = DisabledOpacity,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        return Section(
+            "注釈",
+            hint,
+            Row("枠線の色", ColorRow(settings, settings.AnnotationFrameBorderColor, value => settings.AnnotationFrameBorderColor = value)),
+            Row("枠線の太さ", NumberRow(settings.AnnotationFrameBorderThickness, 1, 64, 1, false, value => settings.AnnotationFrameBorderThickness = value)),
+            Row("枠線の内側の色", ColorRow(settings, settings.AnnotationFrameFillColor, value => settings.AnnotationFrameFillColor = value)),
+            Row("角丸", NumberRow(settings.AnnotationFrameCornerRadius, 0, 4096, 1, false, value => settings.AnnotationFrameCornerRadius = value)),
+            Row("吹き出しの枠線の色", ColorRow(settings, settings.AnnotationBubbleBorderColor, value => settings.AnnotationBubbleBorderColor = value)),
+            Row("吹き出しの内側の色", ColorRow(settings, settings.AnnotationBubbleFillColor, value => settings.AnnotationBubbleFillColor = value)),
+            Row("本文の文字サイズ", NumberRow(settings.AnnotationTextFontSize, 6, 512, 1, false, value => settings.AnnotationTextFontSize = value)),
+            Row("本文の文字色", ColorRow(settings, settings.AnnotationTextColor, value => settings.AnnotationTextColor = value)),
+            Row("本文の余白", NumberRow(settings.AnnotationBodyPadding, 0, 4096, 1, false, value => settings.AnnotationBodyPadding = value)),
+            Row("しっぽの幅", NumberRow(settings.AnnotationTailWidth, 1, 4096, 1, false, value => settings.AnnotationTailWidth = value)));
+    }
+
+    /// <summary>ログ設定のセクションを構築する。</summary>
+    /// <param name="settings">アプリ設定。</param>
     /// <returns>生成したセクション。</returns>
     /// <remarks>
     /// 出力ログレベルを選ぶと、以後の記録の下限が変わる（切り替えは <c>AppLogging</c> が単一所有する）。<br/>

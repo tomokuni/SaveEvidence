@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0-windows10.0.17763.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>EsUtil.Ui.WinForms.Annotation</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型・画像の変換） -->
+    <PackageReference Include="EsUtil.Ui.WinForms.Interop" />
+    <!-- コア幾何型 -->
+    <PackageReference Include="EsUtil.Platform.Core" />
+    <!-- 選択枠とハンドルは Marquee の提示層を再利用する -->
+    <PackageReference Include="EsUtil.Feature.Marquee.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Feature.Annotation.Core\src\EsUtil.Feature.Annotation.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="EsUtil.Ui.WinForms.Annotation.Tests" />
+  </ItemGroup>
+
+</Project>

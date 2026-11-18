@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0-windows10.0.17763.0</TargetFramework>
+    <UseWinUI>true</UseWinUI>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <RootNamespace>EsUtil.Ui.WinUI3.Annotation</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- 参照側（アプリ）の単一ファイル配布へ追従する（理由は Parts.CapturePreview.ControlWinUI3 と同じ）。 -->
+    <EnableMsixTooling Condition="'$(RuntimeIdentifier)' != ''">true</EnableMsixTooling>
+    <WindowsAppSDKSingleFileVerifyConfiguration Condition="'$(PublishSingleFile)' == 'true'">false</WindowsAppSDKSingleFileVerifyConfiguration>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 単一ファイル配布で packages.lock.json が発行物へ入り、参照側と衝突するのを防ぐ -->
+    <None Remove="packages.lock.json" />
+    <None Remove="packages.*.lock.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WinUI 3 のコントロール（注釈は XAML の図形と TextBlock で描く） -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <!-- 合成画像（注釈を焼き込んだ画像）の書き出しは GDI+ で 1:1 に行う -->
+    <PackageReference Include="System.Drawing.Common" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WinUI 3 版 Interop（画像の表示・コア型の変換） -->
+    <PackageReference Include="EsUtil.Ui.WinUI3.Interop" />
+    <!-- コア幾何型 -->
+    <PackageReference Include="EsUtil.Platform.Core" />
+    <!-- 選択枠とハンドルは Marquee の提示層を再利用する -->
+    <PackageReference Include="EsUtil.Feature.Marquee.Core" />
+    <!-- 色の選択は UI の色選択コントロールを使う -->
+    <PackageReference Include="EsUtil.Ui.WinUI3.ColorSelector" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Feature.Annotation.Core\src\EsUtil.Feature.Annotation.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="EsUtil.Ui.WinUI3.Annotation.Tests" />
+  </ItemGroup>
+
+</Project>

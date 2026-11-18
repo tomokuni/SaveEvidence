@@ -472,7 +472,7 @@ internal static class FolderViewPage
             try
             {
                 var files = Directory.GetFiles(folderPath, "*.*")
-                    .Where(EsImageFileExtensions.IsImageFile)
+                    .Where(path => EsImageFileExtensions.IsImageFile(path) && !AnnotationCompanions.IsCompanion(path))
                     .OrderBy(path => Path.GetFileName(path), StringComparer.OrdinalIgnoreCase)
                     .ToList();
                 return files;

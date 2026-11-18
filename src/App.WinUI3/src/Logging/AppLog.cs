@@ -146,6 +146,15 @@ internal static partial class AppLog
         => logger.LogSettingsApplyErrorCore(Prefix, ex, propertyName);
 
 
+    /// <summary>注釈の付随ファイルの更新の失敗を記録する。</summary>
+    /// <remarks>文言は <see cref="AppLogMessage"/>、出力先と行の書式は <see cref="AppLogging"/> が単一所有する。</remarks>
+    /// <param name="logger">ロガー。</param>
+    /// <param name="ex">発生した例外。</param>
+    /// <param name="path">対象の付随ファイルのパス。</param>
+    public static void LogAnnotationCompanionUpdateError(this ILogger logger, Exception ex, string path)
+        => logger.LogAnnotationCompanionUpdateErrorCore(Prefix, ex, path);
+
+
     /// <summary>ウィンドウ配置の保存失敗を記録する。</summary>
     /// <param name="logger">ロガー。</param>
     /// <param name="ex">発生した例外。</param>
