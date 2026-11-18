@@ -29,7 +29,7 @@
 ## 1. 対象利用者
 
 - `App.MewUI` を起動して画面キャプチャを行う**エンドユーザー**
-- 同じコア（`App.Core`）を使う**別 UI の実装者**（Avalonia 版 `App.AvaloniaUI` / 将来の UI）
+- 同じコア（`App.Core`）を使う**別 UI の実装者**（Avalonia 版 `App.AvaloniaUI` / WinUI 3 版 `App.WinUI3` / WinForms 版 `App.WinForms`）
 
 ## 2. 起動要件
 

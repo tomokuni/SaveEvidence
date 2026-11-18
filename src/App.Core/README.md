@@ -1,10 +1,10 @@
 # App.Core
 
-SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の MewUI ホストが共有する、**UI フレームワーク非依存のモデル・ユーティリティ・ViewModel** を提供するプロジェクトです。
+SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI` / MewUI 実装 `App.MewUI` / WinUI 3 実装 `App.WinUI3` / WinForms 実装 `App.WinForms`）が共有する、**UI フレームワーク非依存のモデル・ユーティリティ・ViewModel** を提供するプロジェクトです。
 
 ## 1. 目的
 
-アプリ本体のうち、UI フレームワークの型（`Avalonia.Point` / `PixelRect` / `Bitmap` 等）を使わない部分を本プロジェクトへ切り出すことで、同じロジックを MewUI ホストからも再利用できます。
+アプリ本体のうち、UI フレームワークの型（`Avalonia.Point` / `PixelRect` / `Bitmap` 等）を使わない部分を本プロジェクトへ切り出すことで、同じロジックを 4 つの UI 実装からも再利用できます。
 
 ## 2. 収録する型
 
@@ -16,7 +16,7 @@ SaveEvidence 本体（Avalonia UI 実装 `App.AvaloniaUI`）および将来の M
 | `Models.Settings` | `public` | アプリケーション設定（変更通知付き）。 ウィンドウ位置は `EsRectInt`、状態は `EsWindowState` で保持 |
 | `Services.ISettingsService` / `Services.SettingsService` | `public` | 設定の読み書き（`%LOCALAPPDATA%\SaveEvidence\settings.json`、`Lock` による排他制御）。 JSON ソース生成コンテキストを注入するとトリミング / Native AOT でも動作する |
 | `Services.IImageWriter` | `public` | 画像（`EsReadOnlyBitmap`）のファイル書き込みの抽象 |
-| `Services.EsBitmapImageWriter` | `public` | `IImageWriter` の**唯一の本番実装**（Windows 専用）。 コアの `EsReadOnlyBitmap.Save` へ委譲する。 両 UI が同じ実装を使う（保存結果が UI で食い違わない） |
+| `Services.EsBitmapImageWriter` | `public` | `IImageWriter` の**唯一の本番実装**（Windows 専用）。 コアの `EsReadOnlyBitmap.Save` へ委譲する。 4 つの UI 実装が同じ実装を使う（保存結果が UI で食い違わない） |
 | `Models.FileNameTemplate` | `public` | ファイル名テンプレートの解析・生成・検証（`GeneratedRegex` による最適化） |
 | `Models.UndoHistory` | `public` | 画像の Undo / Redo スタック（`EsReadOnlyBitmap` の複製（`Copy`）を保持。 最大 5 段） |
 | `Models.ThumbnailScheduler` | `internal` | 背景の処理（サムネイルの生成）をページの表示状態に応じた負荷で実行するスケジューラ（非表示では 1 件ずつ、表示中は並列。 優先度順に実行する） |
