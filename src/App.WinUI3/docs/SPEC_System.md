@@ -122,8 +122,8 @@ src/App.WinUI3/src/
     ├── PageContent.cs                  ページの内容と表示ライフサイクルの処理
     ├── AppStyles.cs                    共通の寸法とテーマの適用
     ├── CapturePage.cs                  キャプチャ ページ
-    ├── FolderViewPage.cs               フォルダビュー ページ
-    ├── UndoPage.cs                     Undo 一覧ページ
+    ├── FolderViewPage.cs               保存フォルダ ページ
+    ├── UndoPage.cs                     履歴ページ
     ├── SettingsPage.cs                 設定ページ
     ├── ConfirmDialog.cs                上書き確認ダイアログ
 ```
@@ -135,7 +135,7 @@ src/App.WinUI3/src/
 | `Program` | 未処理の例外の記録を登録し、合成 → XAML アプリケーションの開始 → 終了の記録を行う |
 | `App` | XAML のアプリケーション定義。 メイン ウィンドウの生成（UI スレッド）と UI スレッド例外の記録を担う |
 | `AppHost` | 合成ルート。 DI コンテナと共有オブジェクト（`AppServices`）を組み立て、メイン ウィンドウを生成する |
-| `AppServices` | ページへ渡すコア オブジェクトの束（メイン ViewModel / 設定サービス / 編集履歴 / フォルダビューの表示状態） |
+| `AppServices` | ページへ渡すコア オブジェクトの束（メイン ViewModel / 設定サービス / 編集履歴 / 保存フォルダの表示状態） |
 | `MainWindow` | ナビゲーション ペイン・ページの切り替え・キーの転送・ウィンドウ配置の保存と復元・ホットキーの登録。 **ページは初回に 1 度だけホストへ加え、切り替えは可視性（`Visibility`）で行う**（要素を付け替えると一覧の項目が作り直され、切り替えが待たされるため。 実測 2026-10-25） |
 | `PageContent` | 1 ページ分の内容と、表示 / 非表示 / 先読み / キー入力で実行する処理 |
 | `AppStyles` | 共通の寸法とテーマの適用（テーマ変更の通知を含む） |

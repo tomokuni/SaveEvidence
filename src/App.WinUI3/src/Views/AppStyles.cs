@@ -180,7 +180,7 @@ internal static class AppStyles
     /// <value>現在のテーマの色。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</value>
     public static SolidColorBrush ImageAreaBackground => new(ToColor(AppPalette.ImageArea(IsDarkTheme)));
 
-    /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色を取得する。</summary>
+    /// <summary>一覧（保存フォルダ / 履歴）の背景色を取得する。</summary>
     /// <value>現在のテーマの色。 値は <see cref="AppPalette"/>（App.Core）が単一所有する。</value>
     /// <remarks>4 UI 版で同じ色にする（影の見え方を揃えるため。 詳細は <see cref="AppPalette.ListBackground"/>）。</remarks>
     public static SolidColorBrush ListBackground => new(ToColor(AppPalette.ListBackground(IsDarkTheme)));

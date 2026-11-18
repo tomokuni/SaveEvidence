@@ -21,10 +21,10 @@ internal enum AppIcon
     /// <summary>キャプチャ（アプリのアイコン。 ウィンドウ アイコンにも使う）。</summary>
     Capture,
 
-    /// <summary>フォルダビュー。</summary>
+    /// <summary>保存フォルダ。</summary>
     Folder,
 
-    /// <summary>Undo 一覧。</summary>
+    /// <summary>履歴。</summary>
     Undo,
 
     /// <summary>設定。</summary>

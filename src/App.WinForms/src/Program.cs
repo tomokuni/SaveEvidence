@@ -50,7 +50,7 @@ internal static class Program
 
         var viewModel = new MainViewModel(settings, new EsBitmapImageWriter());
 
-        // 履歴はキャプチャページと Undo 一覧で共有する（画像編集の直前に現在の画像を積む）
+        // 履歴はキャプチャページと 履歴で共有する（画像編集の直前に現在の画像を積む）
         var undoHistory = new UndoHistory();
         viewModel.BeforeEditAction = () => undoHistory.Push(viewModel.PreviewImage);
 

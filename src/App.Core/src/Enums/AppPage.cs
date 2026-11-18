@@ -10,10 +10,10 @@ public enum AppPage
     /// <summary>キャプチャ（画像プレビュー）ページ。</summary>
     Capture = 0,
 
-    /// <summary>フォルダビューページ。</summary>
+    /// <summary>保存フォルダページ。</summary>
     FolderView = 1,
 
-    /// <summary>Undo 一覧ページ。</summary>
+    /// <summary>履歴ページ。</summary>
     Undo = 2,
 
     /// <summary>設定ページ。</summary>

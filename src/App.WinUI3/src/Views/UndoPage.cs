@@ -14,7 +14,7 @@ using Windows.System;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 
-/// <summary>Undo 一覧ページ（WinUI 3 版）。</summary>
+/// <summary>履歴ページ（WinUI 3 版）。</summary>
 /// <remarks>
 /// 編集履歴と現在の画像をサムネイルで一覧表示する。 表示順は Redo（新しい未来）→ 現在 → Undo（古い過去）で固定し、<br/>
 /// 現在の画像は青い太枠で強調する。<br/>
@@ -53,7 +53,7 @@ internal static class UndoPage
 
         var iconSize = settingsService.Current.GetIconSize(view.SelectedViewModeIndex);
 
-        // 一覧はフォルダビューと同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
+        // 一覧は保存フォルダと同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
         var list = new ThumbnailControl();
 
         // 一覧の下地は 4 UI 版で同じ色にする（テーマの変更にも追随させる）
@@ -120,7 +120,7 @@ internal static class UndoPage
 
         var toolbarItems = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
 
-        // 4 UI 版で同じ並びにする（Undo 一覧は履歴が自動で更新されるため「最新の情報に更新」は置かない）
+        // 4 UI 版で同じ並びにする（履歴は履歴が自動で更新されるため「最新の情報に更新」は置かない）
         foreach (var button in modeButtons)
         {
             toolbarItems.Children.Add(button);
@@ -223,7 +223,7 @@ internal static class UndoPage
             OnWarmUp: () =>
             {
                 Rebuild();
-                s_logger.LogThumbnailWarmUp("Undo 一覧", list.ItemCount);
+                s_logger.LogThumbnailWarmUp("履歴", list.ItemCount);
             },
             // Ctrl+C で選択中の画像をコピーする
             OnKeyDown: args =>

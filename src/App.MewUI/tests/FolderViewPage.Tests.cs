@@ -48,7 +48,7 @@ public class FolderViewPageTests : IDisposable
     }
 
     /// <summary>テスト用のサービス束を生成する（保存先を一時フォルダへ向ける）。</summary>
-    /// <returns>サービス束とフォルダビューの ViewModel。</returns>
+    /// <returns>サービス束と保存フォルダの ViewModel。</returns>
     private (AppServices Services, FolderViewViewModel View) CreateServices()
     {
         var settings = new TestSettingsService();

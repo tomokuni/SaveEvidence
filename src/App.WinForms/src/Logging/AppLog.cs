@@ -107,7 +107,7 @@ internal static partial class AppLog
         => logger.LogHotKeyRegisterFailedCore(Prefix, captureType, key);
 
     // ====================================================================
-    // フォルダビュー / Undo 一覧
+    // 保存フォルダ / 履歴
     // ====================================================================
 
 

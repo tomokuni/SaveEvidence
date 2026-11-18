@@ -75,7 +75,7 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 - **文字コードは UTF-8（BOM なし）**で統一する（[`.editorconfig`](../.editorconfig) の `charset = utf-8`。 既存の `.cs` / `.md` / `.ps1` はすべて BOM なし）。
 - **作業ツリーの改行コードは CRLF**（[`.editorconfig`](../.editorconfig) の `end_of_line = crlf`。 リポジトリのブロブは [`.gitattributes`](../.gitattributes) が LF へ正規化する）。
 - **`App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する**（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
-- **注釈は AvaloniaUI 版だけが使える**（`App.AvaloniaUI` が `EsUtil.Ui.AvaloniaUI.Annotation` を参照する）。 キャプチャ ページの「注釈」トグルで編集モードへ入り、`Ctrl+S` の保存時に元画像へ加えて `<画像>.annotations.json` と `<画像名>.annotated.<拡張子>` を書き出す（注釈が 1 件以上のときだけ）。 注釈の元に戻す・やり直すは `Ctrl+Z` / `Ctrl+Y` と注釈ツールバーのボタンで行う（画像の Undo / Redo とは別の履歴）。 設定画面の「注釈」セクションは**新しく追加する注釈の既定値**を変える（既存の注釈は変わらない）。
+- **注釈は AvaloniaUI 版だけが使える**（`App.AvaloniaUI` が `EsUtil.Ui.AvaloniaUI.Annotation` を参照する）。 キャプチャ ページの「注釈」トグルで編集モードへ入り、`Ctrl+S` の保存時に元画像へ加えて `<画像名>.annotations.json` と `<画像名>.annotated.<拡張子>` を書き出す（注釈が 1 件以上のときだけ）。 注釈の元に戻す・やり直すは `Ctrl+Z` / `Ctrl+Y` と注釈ツールバーのボタンで行う（画像の Undo / Redo とは別の履歴）。 設定画面の「注釈」セクションは**新しく追加する注釈の既定値**を変える（既存の注釈は変わらない）。
 - **`AVLN3001` は `App.AvaloniaUI` だけが抑止する**（理由は csproj のコメントに記載。 [`検証手順.md`](検証手順.md) §1）。
 - **CI は GitHub Actions で実行する**（`main` 向け PR と手動実行。 **push では実行しない**）。 [`workflows/build.yml`](workflows/build.yml) は `.github/verify/verify.ps1` を Release 構成で実行する（ローカルの既定は Debug 構成。 合否基準は [`検証手順.md`](検証手順.md)）。
 - **`EsUtil` 側の検証は EsUtil リポジトリで実行する**（本リポジトリの走査は `src/` 配下だけを対象にし、EsUtil の文書は走査しない）。

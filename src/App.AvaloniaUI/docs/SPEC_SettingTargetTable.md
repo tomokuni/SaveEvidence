@@ -26,7 +26,7 @@
   - [10.2 2 行目: 操作ラベル](#102-2-行目-操作ラベル)
   - [10.3 3 行目: 情報ラベル](#103-3-行目-情報ラベル)
 - [11. ホットキー設定](#11-ホットキー設定)
-- [12. 設定外・自動保存（フォルダビュー / Undo 一覧 / ウィンドウ状態）](#12-設定外自動保存フォルダビュー--undo-一覧--ウィンドウ状態)
+- [12. 設定外・自動保存（保存フォルダ / 履歴 / ウィンドウ状態）](#12-設定外自動保存保存フォルダ--履歴--ウィンドウ状態)
 - [13. 外観設定のデフォルト値への復元](#13-外観設定のデフォルト値への復元)
 - [14. 注釈](#14-注釈)
 
@@ -361,15 +361,15 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | ウィンドウ選択キャプチャ | `WindowSelectHotKey` | `WinGlobalHotKeyService`（WM_HOTKEY 登録） |
 | 範囲選択キャプチャ | `AreaSelectHotKey` | `WinGlobalHotKeyService`（WM_HOTKEY 登録） |
 
-## 12. 設定外・自動保存（フォルダビュー / Undo 一覧 / ウィンドウ状態）
+## 12. 設定外・自動保存（保存フォルダ / 履歴 / ウィンドウ状態）
 
 設定画面には表示しないが、`Settings` に保存され起動時に復元される項目。
 
 | 項目 | Settings プロパティ | 反映先 |
 | --- | --- | --- |
-| フォルダビューの表示モード（特大 / 大 / 中） | `FolderViewModeIndex` | `FolderViewPage`（ToggleButton 選択状態） |
-| フォルダビューのソート順 | `FolderViewSortAscending` | `FolderViewPage`（ソート処理・ToggleButton） |
-| Undo 一覧の表示モード（特大 / 大 / 中） | `UndoViewModeIndex` | `UndoPage`（ToggleButton 選択状態） |
+| 保存フォルダの表示モード（特大 / 大 / 中） | `FolderViewModeIndex` | `FolderViewPage`（ToggleButton 選択状態） |
+| 保存フォルダのソート順 | `FolderViewSortAscending` | `FolderViewPage`（ソート処理・ToggleButton） |
+| 履歴の表示モード（特大 / 大 / 中） | `UndoViewModeIndex` | `UndoPage`（ToggleButton 選択状態） |
 | ナビゲーションパネルの展開状態 | `IsNavigationExpanded` | `MainWindow`（ナビパネル幅は `NavPanelMetrics`（App.Core）が単一所有。 展開 136 / 収納 40 DIP） |
 | ウィンドウの位置・サイズ | `MainWindowBounds` | `MainWindow`（起動時復元・終了時保存） |
 | ウィンドウの状態 | `MainWindowState` | `MainWindow`（起動時復元・終了時保存） |
@@ -377,7 +377,7 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 - `MainWindowBounds` は**画面物理ピクセルのウィンドウ外寸**（枠を含む）で、4 UI 版が同じ単位を使う。 Avalonia の `Position` は物理ピクセル、`Width` / `Height` はクライアント DIP のため、実際の枠を測定して保存・復元時に換算する（換算は `EsWindowPlacementMath`（EsUtil.Platform.Core）が単一所有する）
 - 復元してよいか（画面外・最小化）の判定も `EsWindowPlacementMath` が単一所有し、復元できない場合は既定の配置で表示する
 
-- Undo 一覧のアイコンサイズはフォルダビューと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する
+- 履歴のアイコンサイズは保存フォルダと同じ値（`FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize`）を使用する
 
 ## 13. 外観設定のデフォルト値への復元
 

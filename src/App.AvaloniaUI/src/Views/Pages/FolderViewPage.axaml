@@ -18,7 +18,7 @@
             <ToggleButton x:Name="SortDescendingButton" Classes="toolbar" Content="▼ 降順" Click="OnSortDescendingClick" Tag="desc" Margin="1"/>
         </WrapPanel>
 
-        <!-- サムネイル一覧（Undo 一覧と同じ共通コントロール。 枠・影・名前の行は EsUtil.Feature.Thumbnail が単一所有する） -->
+        <!-- サムネイル一覧（履歴と同じ共通コントロール。 枠・影・名前の行は EsUtil.Feature.Thumbnail が単一所有する） -->
         <!-- 一覧の下地は 4 UI 版で同じ色にする（値は AppPalette.ListBackground（App.Core）が単一所有する） -->
         <thumb:ThumbnailControl x:Name="FileListBox" Grid.Row="1"
                                 Background="{DynamicResource ListBackgroundBrush}"/>

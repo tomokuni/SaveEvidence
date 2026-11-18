@@ -42,7 +42,7 @@
             <Setter Property="SelectionForegroundBrush" Value="#FF000000"/>
         </Style>
 
-        <!-- ツールバーボタン（各ページのツールバー高さを統一する。フォルダビューの標準ボタンサイズが基準）。
+        <!-- ツールバーボタン（各ページのツールバー高さを統一する。保存フォルダの標準ボタンサイズが基準）。
              外観は WinUI 3 の既定のボタンに合わせる（面 + 1 DIP の枠線 + 角丸 4 DIP。
              色は AppPalette（App.Core）が単一所有する）。 -->
         <Style Selector="Button.toolbar, ToggleButton.toolbar">

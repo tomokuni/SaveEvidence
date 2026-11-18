@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
 
-/// <summary>Undo 一覧ページ（編集履歴の画像をサムネイルで一覧する）。</summary>
+/// <summary>履歴ページ（編集履歴の画像をサムネイルで一覧する）。</summary>
 /// <remarks>
 /// <b>並び順</b>: やり直し（現在に近い未来から）→ 現在 → 取り消し（現在の直前から過去へ）。<br/>
 /// キャプチャページ・設定ページと同じ履歴（<see cref="UndoHistory"/>）を共有する。<br/>

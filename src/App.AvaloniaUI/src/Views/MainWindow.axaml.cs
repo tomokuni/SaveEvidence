@@ -289,7 +289,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>一覧ページ（フォルダビュー / Undo 一覧）のサムネイルを低負荷で先に生成しておく。</summary>
+    /// <summary>一覧ページ（保存フォルダ / 履歴）のサムネイルを低負荷で先に生成しておく。</summary>
     /// <remarks>
     /// 各ページはウィンドウの内容として生成済みであり（<c>IsVisible=False</c>）、本メソッドは
     /// ページを表示せずに一覧を構築して生成要求を積む。 一覧を構築しておくと、最初の切り替えでは
@@ -406,7 +406,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>ナビパネルのトグルボタンとアイテム（キャプチャ / フォルダビュー / Undo 一覧 / 設定）のアイコンを SVG から設定する。</summary>
+    /// <summary>ナビパネルのトグルボタンとアイテム（キャプチャ / 保存フォルダ / 履歴 / 設定）のアイコンを SVG から設定する。</summary>
     /// <remarks>各アイコンのジオメトリは <see cref="Icons.IconLoader.LoadGeometry"/> で読み込む。</remarks>
     private void SetupNavIcons()
     {
@@ -642,7 +642,7 @@ public sealed partial class MainWindow : Window
     /// <param name="page">遷移先ページ（<see cref="AppPage"/>）。</param>
     /// <remarks>
     /// ページ遷移は enum で管理し、index のマジックナンバーによる誤遷移（ページ追加時のずれ）を防ぐ。<br/>
-    /// Undo 一覧は <see cref="Views.Pages.UndoPage"/> 自身が IsVisible 変更を監視して最新の履歴を読み込むため、
+    /// 履歴は <see cref="Views.Pages.UndoPage"/> 自身が IsVisible 変更を監視して最新の履歴を読み込むため、
     /// MainWindow からの明示的な Refresh 呼び出しは不要。
     /// </remarks>
     private void NavigateTo(AppPage page)
@@ -713,14 +713,14 @@ public sealed partial class MainWindow : Window
         CollapseNavigation();
     }
 
-    /// <summary>ナビ「フォルダビュー」クリック。</summary>
+    /// <summary>ナビ「保存フォルダ」クリック。</summary>
     private void OnNavFolderViewClick(object? sender, RoutedEventArgs e)
     {
         NavigateTo(AppPage.FolderView);
         CollapseNavigation();
     }
 
-    /// <summary>ナビ「Undo 一覧」クリック。</summary>
+    /// <summary>ナビ「履歴」クリック。</summary>
     private void OnNavUndoClick(object? sender, RoutedEventArgs e)
     {
         NavigateTo(AppPage.Undo);

@@ -14,10 +14,10 @@ public static class AppPalette
     /// <summary>画像領域（プレビューの下地）の背景色（明色）。</summary>
     public const uint ImageAreaLight = 0xFFF7F7F7;
 
-    /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色（明色）。</summary>
+    /// <summary>一覧（保存フォルダ / 履歴）の背景色（明色）。</summary>
     public const uint ListBackgroundLight = 0xFFF2F2F2;
 
-    /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色（暗色）。</summary>
+    /// <summary>一覧（保存フォルダ / 履歴）の背景色（暗色）。</summary>
     public const uint ListBackgroundDark = 0xFF2B2B2B;
 
     /// <summary>画像領域（プレビューの下地）の背景色（暗色）。</summary>
@@ -49,7 +49,7 @@ public static class AppPalette
     /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
     public static uint ImageArea(bool isDark) => isDark ? ImageAreaDark : ImageAreaLight;
 
-    /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色を取得する。</summary>
+    /// <summary>一覧（保存フォルダ / 履歴）の背景色を取得する。</summary>
     /// <param name="isDark">暗色テーマかどうか。</param>
     /// <returns>色（<c>0xAARRGGBB</c>）。</returns>
     /// <remarks>

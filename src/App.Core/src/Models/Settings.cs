@@ -128,17 +128,17 @@ public sealed partial class Settings : ObservableObject
     private int _folderMediumIconSize = 160;
 
     /// <summary>FolderViewForm の表示モード（0=特大, 1=大, 2=中）。</summary>
-    /// <remarks>フォルダビューの表示モード選択状態。 起動時に復元される。</remarks>
+    /// <remarks>保存フォルダの表示モード選択状態。 起動時に復元される。</remarks>
     [ObservableProperty]
     private int _folderViewModeIndex = 1;
 
     /// <summary>FolderViewForm のソート順（true=昇順, false=降順）。</summary>
-    /// <remarks>フォルダビューのソート順選択状態。 起動時に復元される。</remarks>
+    /// <remarks>保存フォルダのソート順選択状態。 起動時に復元される。</remarks>
     [ObservableProperty]
     private bool _folderViewSortAscending = true;
 
-    /// <summary>Undo 一覧の表示モード（0=特大, 1=大, 2=中）。</summary>
-    /// <remarks>Undo 一覧ページの表示モード選択状態。 起動時に復元される。</remarks>
+    /// <summary>履歴の表示モード（0=特大, 1=大, 2=中）。</summary>
+    /// <remarks>履歴ページの表示モード選択状態。 起動時に復元される。</remarks>
     [ObservableProperty]
     private int _undoViewModeIndex = 1;
 
@@ -441,7 +441,7 @@ public sealed partial class Settings : ObservableObject
     /// <summary>表示モードインデックスに対応するアイコンサイズを取得する。</summary>
     /// <param name="viewModeIndex">表示モード（0=特大, 1=大, 2=中）。 範囲外は中アイコン。</param>
     /// <returns>アイコンサイズ（ピクセル）。</returns>
-    /// <remarks>フォルダビューと Undo 一覧のサムネイルサイズで共用する（単一所有・DRY）。</remarks>
+    /// <remarks>保存フォルダと 履歴のサムネイルサイズで共用する（単一所有・DRY）。</remarks>
     public int GetIconSize(int viewModeIndex) => viewModeIndex switch
     {
         0 => FolderExtraLargeIconSize,

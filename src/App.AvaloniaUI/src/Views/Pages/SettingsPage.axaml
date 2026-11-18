@@ -17,8 +17,8 @@
         </Style>
     </UserControl.Styles>
     <Grid RowDefinitions="Auto,*">
-        <!-- ツールバー領域（フォルダビュー / キャプチャと同じサイズ・レイアウト。上部の余白はタイトルバー領域とのスペース、右側の余白はウィンドウ右上のシステムボタンとの重なりを防止。中身は空） -->
-        <!-- MinHeight はフォルダビューのツールバーボタン（toolbar クラス Height=32）と同じ高さを確保する -->
+        <!-- ツールバー領域（保存フォルダ / キャプチャと同じサイズ・レイアウト。上部の余白はタイトルバー領域とのスペース、右側の余白はウィンドウ右上のシステムボタンとの重なりを防止。中身は空） -->
+        <!-- MinHeight は保存フォルダのツールバーボタン（toolbar クラス Height=32）と同じ高さを確保する -->
         <WrapPanel Grid.Row="0" Orientation="Horizontal" Margin="2,6,140,2" MinHeight="32"/>
 
         <ScrollViewer Grid.Row="1"

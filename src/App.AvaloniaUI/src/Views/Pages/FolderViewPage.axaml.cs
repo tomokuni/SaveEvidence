@@ -20,7 +20,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
-/// <summary>保存先フォルダの画像一覧を表示するフォルダビューページ。</summary>
+/// <summary>保存先フォルダの画像一覧を表示する保存フォルダページ。</summary>
 /// <remarks>
 /// 画像ファイルのサムネイル一覧を表示し、クリックでメイン画面のプレビューに読み込む。<br/>
 /// 表示モード（特大/大/中）、ソート切替、更新機能を提供する。<br/>
@@ -319,7 +319,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
     internal void WarmUp()
     {
         LoadFiles();
-        s_logger.LogThumbnailWarmUp("フォルダビュー", _viewModel.ItemCount);
+        s_logger.LogThumbnailWarmUp("保存フォルダ", _viewModel.ItemCount);
     }
 
     /// <summary>現在の表示モードのインデックス（0=特大, 1=大, 2=中）。</summary>
@@ -344,7 +344,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
     }
 
     /// <summary>現在の表示モード・ソート順を設定へ保存する。</summary>
-    /// <remarks>フォルダビューの操作（表示モード切替・ソート切替）のたびに呼び出し、設定ファイルへ反映する。</remarks>
+    /// <remarks>保存フォルダの操作（表示モード切替・ソート切替）のたびに呼び出し、設定ファイルへ反映する。</remarks>
     protected override void SaveViewModeSettings()
     {
         var settings = SettingsService.Current;
@@ -359,7 +359,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
     /// <summary>ファイル一覧を読み込む。</summary>
     /// <remarks>
     /// フォルダ列挙・サムネイル生成で例外が発生してもナビゲーションを継続できるよう、全体を try/catch で保護する<br/>
-    /// （ファイルアクセス拒否・破損画像等で「ナビからフォルダビューのクリックで落ちる」ことを防ぐ）。<br/>
+    /// （ファイルアクセス拒否・破損画像等で「ナビから保存フォルダのクリックで落ちる」ことを防ぐ）。<br/>
     /// 失敗時はアイテム数を 0 にし、一覧を空にする。
     /// </remarks>
     private void LoadFiles()

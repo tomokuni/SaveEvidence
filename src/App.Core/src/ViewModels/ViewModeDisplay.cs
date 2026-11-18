@@ -1,6 +1,6 @@
 namespace EsUtil.SaveEvidence.App.Core.ViewModels;
 
-/// <summary>表示モード（特大 / 大 / 中）の表示名とアイテム数テキストの単一所有（FolderView と Undo 一覧で共有）。</summary>
+/// <summary>表示モード（特大 / 大 / 中）の表示名とアイテム数テキストの単一所有（FolderView と 履歴で共有）。</summary>
 internal static class ViewModeDisplay
 {
     /// <summary>表示モードの数（有効なインデックスは 0 〜 <see cref="Count"/> - 1）。</summary>

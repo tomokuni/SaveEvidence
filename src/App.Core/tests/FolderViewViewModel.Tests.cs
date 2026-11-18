@@ -3,10 +3,10 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.Core.Tests;
 
-/// <summary>FolderViewViewModel（フォルダビューの表示モード・ソート状態）の単体テスト。</summary>
+/// <summary>FolderViewViewModel（保存フォルダの表示モード・ソート状態）の単体テスト。</summary>
 /// <remarks>
 /// 表示モード（特大/大/中）とソート順（昇順/降順）の初期値・変更通知を検証する。<br/>
-/// フォルダビューの表示モード・ソート順は設定（Settings）へ保存・起動時復元されるため、
+/// 保存フォルダの表示モード・ソート順は設定（Settings）へ保存・起動時復元されるため、
 /// 本 ViewModel が正しく状態を保持・通知できることが前提となる。
 /// </remarks>
 public class FolderViewViewModelTests

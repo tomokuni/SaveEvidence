@@ -27,7 +27,7 @@ public static class ClipboardImage
     /// <param name="ownerWindow">クリップボードの所有者にするウィンドウ（<c>SetClipboardData</c> の要件）。</param>
     /// <returns>書き込めた場合は true。 復号できない・他アプリが使用中の場合は false。</returns>
     /// <remarks>
-    /// 一覧（フォルダビュー）から選んだ画像をコピーするために使う（等倍で読み込む。<br/>
+    /// 一覧（保存フォルダ）から選んだ画像をコピーするために使う（等倍で読み込む。<br/>
     /// 縮小すると貼り付け先で粗くなる）。 復号の失敗は例外にせず false で表す（記録は呼び出し側が行う）。
     /// </remarks>
     public static bool TryCopyFile(string filePath, IntPtr ownerWindow)

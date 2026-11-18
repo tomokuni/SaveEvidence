@@ -16,7 +16,7 @@ using Windows.System;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 
-/// <summary>フォルダビュー ページ（WinUI 3 版）。</summary>
+/// <summary>保存フォルダ ページ（WinUI 3 版）。</summary>
 /// <remarks>
 /// 保存先フォルダの画像をサムネイルで一覧表示する。 サムネイルの生成は背景で行い（<see cref="ThumbnailScheduler"/>）、<br/>
 /// 一覧の表示を生成時間で待たせない。 表示モード（特大 / 大 / 中）とソート順は設定へ保存し、<br/>
@@ -50,7 +50,7 @@ internal static class FolderViewPage
         viewModel.SelectedViewModeIndex = ViewModeDisplay.ClampIndex(settingsService.Current.FolderViewModeIndex);
         viewModel.IsSortAscending = settingsService.Current.FolderViewSortAscending;
 
-        // 一覧は Undo 一覧と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う。
+        // 一覧は 履歴と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う。
         // 画像と項目数の変化を記録できるようにする（サムネイルが出ない原因をログだけで追えるようにする）
         var list = new ThumbnailControl
         {
@@ -366,7 +366,7 @@ internal static class FolderViewPage
             {
                 // 表示前に一覧を構築し、低負荷で生成を始める（キャプチャ ページの操作は妨げない）
                 Rebuild();
-                s_logger.LogThumbnailWarmUp("フォルダビュー", list.ItemCount);
+                s_logger.LogThumbnailWarmUp("保存フォルダ", list.ItemCount);
             },
             // Delete キーで選択中の画像をごみ箱へ移動する（確認ダイアログあり）。 Ctrl+C はコピーする
             OnKeyDown: args =>

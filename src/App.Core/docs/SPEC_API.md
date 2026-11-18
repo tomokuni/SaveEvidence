@@ -102,7 +102,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `UseWindowsGraphicsCapture` | `bool` | 画面の取得に Windows.Graphics.Capture を使う（既定は無効 = GDI。 4 UI 版で共有） |
 | `HideCaptureBorder` | `bool` | 撮影中の枠を消す（既定は無効。 **`UseWindowsGraphicsCapture` がオンのときだけ効く**。 Windows 11 / ビルド 22000 未満では無視される） |
 | `CopyAfterCapture` | `bool` | 撮影・切り出しの後に画像をクリップボードへコピーする（4 UI 版で共有。 既定は無効） |
-| `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | フォルダビューのアイコンサイズ |
+| `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | 保存フォルダのアイコンサイズ |
 
 ## 5. `Services.ISettingsService` / `Services.SettingsService`（クラス）
 
@@ -214,7 +214,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 - **起動時は仕事をしません**: 生成は要求（`Enqueue`）が積まれて初めて動きます。 生成ループは要求が無い間は信号待ちであり、ページを表示するまで負荷をかけません（起動を遅くしない）。
 - **失敗は `onError` へ渡して次の要求へ進みます**（1 件の失敗でループを止めません）。
 - **`Clear()` は実行中の要求のトークンをキャンセルしますが、CTS を破棄しません**（実行側がトークンを参照しているため。 世代番号で古い結果を無効化する）。 `Dispose()` も同様です。
-- 用途はフォルダビュー / Undo 一覧のサムネイル生成（両 UI で共用）です。 表示中の全力生成と、**起動後の先読み**（ウィンドウを表示した後に低負荷で生成しておき、ページの切り替えを待たせない）の両方に使います。 `Enqueue` が返す `ThumbnailRequest`（入れ子型）は `Reprioritize` の識別子として呼び出し側が保持します。
+- 用途は保存フォルダ / 履歴のサムネイル生成（両 UI で共用）です。 表示中の全力生成と、**起動後の先読み**（ウィンドウを表示した後に低負荷で生成しておき、ページの切り替えを待たせない）の両方に使います。 `Enqueue` が返す `ThumbnailRequest`（入れ子型）は `Reprioritize` の識別子として呼び出し側が保持します。
 
 ## 12. `Models.ThumbnailPriority`（内部・構造体）
 
@@ -242,7 +242,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 ## 14. `ViewModels.FolderViewViewModel`（クラス）
 
-フォルダビューの表示モード・ソート順の状態を保持し、変更を通知します（`ObservableObject`）。
+保存フォルダの表示モード・ソート順の状態を保持し、変更を通知します（`ObservableObject`）。
 
 | メンバー | 説明 |
 | --- | --- |
@@ -253,7 +253,7 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 
 ## 15. `ViewModels.UndoViewModel`（クラス）
 
-Undo 一覧の表示モード状態を保持し、変更を通知します（`ObservableObject`）。
+履歴の表示モード状態を保持し、変更を通知します（`ObservableObject`）。
 
 | メンバー | 説明 |
 | --- | --- |
@@ -357,7 +357,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | ページ（ウィンドウ）の下地 | `#FFFFFF` | `#202020` | `Page(bool isDark)` |
 | ナビゲーション項目の選択中の背景（薄いグレー） | `#DEDEDE` | `#373737` | `NavItemSelected(bool isDark)` |
 | ナビゲーション項目の選択マーク（左端の青） | `#0067C0` | `#4CC2FF` | `NavItemSelectionAccent(bool isDark)` |
-| 一覧（フォルダビュー / Undo 一覧）の背景 | `#F2F2F2` | `#2B2B2B` | `ListBackground(bool isDark)` |
+| 一覧（保存フォルダ / 履歴）の背景 | `#F2F2F2` | `#2B2B2B` | `ListBackground(bool isDark)` |
 | リンク（青字 + 下線）の文字 | `#0067C0` | `#4CC2FF` | `Link(bool isDark)` |
 | ボタンの面（通常時） | `#FFFFFF` | `#2D2D2D` | `ButtonFace(bool isDark)` |
 | ボタンの枠線 | `#D6D6D6` | `#303030` | `ButtonBorder(bool isDark)` |
@@ -386,7 +386,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `SelectionMarkWidth` / `SelectionMarkLeft` | 3 / 4 | 選択中のマークの幅と左端 |
 | `IconSize` | 16 | 項目のアイコンの一辺（開閉ボタン・左上のアプリ アイコン・ツールバーも同じ値） |
 | `IconSpacing` | 8 | アイコンと文字の間隔 |
-| `LabelWidth` | 68 | 最も長い項目名（「フォルダビュー」）の実測幅 |
+| `LabelWidth` | 68 | 最も長い項目名（「保存フォルダ」）の実測幅 |
 | `TrailingSlack` | 20 | UI ごとの内部余白の差を吸収する α |
 | `CompactWidth` | 40 | 収納時の幅（左右の余白 + アイコン） |
 | `ExpandedWidth` | 136 | 展開時の幅（左右の余白 + アイコン + 間隔 + 文字 + α） |
@@ -465,7 +465,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 ## 25. `Services.ThumbnailTileMetrics`（静的クラス）
 
-一覧（フォルダビュー / Undo 一覧）のサムネイル 1 件の見た目の寸法を単一所有します（UI 版ごとに影の濃さ・名前の位置がずれないようにするため）。 **画像の周りに枠線・下地は置きません**（影だけを付けます）。
+一覧（保存フォルダ / 履歴）のサムネイル 1 件の見た目の寸法を単一所有します（UI 版ごとに影の濃さ・名前の位置がずれないようにするため）。 **画像の周りに枠線・下地は置きません**（影だけを付けます）。
 
 | 定数 | 値 | 意味 |
 | --- | --- | --- |
@@ -478,11 +478,11 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 
 `ImageHeight(double width, int pixelWidth, int pixelHeight)` は、幅を固定したときの表示高さ（縦横比を保つ）を返します。 一覧のアイテムはこの高さを持ち、行の高さは「その行の最大アイテム高さ」、アイテムは行内で下端揃えになります（AvaloniaUI 版の `BottomAlignWrapPanel` と同じ並べ方）。
 
-**影は `Services.ShadowPlan` が単一所有します**（下記「`Services.ShadowPlan`」）。 Undo 一覧も同じ寸法を使い、現在表示中の画像は**枠を変えずに名前を太字にする**ため、影・ホバーがフォルダビューと一致します。
+**影は `Services.ShadowPlan` が単一所有します**（下記「`Services.ShadowPlan`」）。 履歴も同じ寸法を使い、現在表示中の画像は**枠を変えずに名前を太字にする**ため、影・ホバーが保存フォルダと一致します。
 
 **`Services.ShadowPlan`（静的クラス）と影の計画**
 
-画像の 4 辺と 4 隅へ落とす影の**唯一の定義**です（キャプチャページの画像・フォルダビュー・Undo 一覧のサムネイルが同じ影になる）。 値は AvaloniaUI 版の `BoxShadow`（ぼかし 10 DIP・黒 54%）を実測して写したものです。
+画像の 4 辺と 4 隅へ落とす影の**唯一の定義**です（キャプチャページの画像・保存フォルダ・履歴のサムネイルが同じ影になる）。 値は AvaloniaUI 版の `BoxShadow`（ぼかし 10 DIP・黒 54%）を実測して写したものです。
 
 | メンバー | 値 | 意味 |
 | --- | --- | --- |

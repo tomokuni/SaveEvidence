@@ -171,7 +171,7 @@ internal static class AppStyles
     /// <summary>設定ページのカードのスタイル名。</summary>
     public const string SettingsCard = "settings-card";
 
-    /// <summary>一覧（フォルダビュー / Undo 一覧）の背景のスタイル名。</summary>
+    /// <summary>一覧（保存フォルダ / 履歴）の背景のスタイル名。</summary>
     public const string ListSurface = "list-surface";
 
     // ====================================================================
@@ -248,7 +248,7 @@ internal static class AppStyles
     private static readonly MewUIColor s_closeHoverForeground = MewUIColor.FromArgb(255, 255, 255, 255);
 
     // ====================================================================
-    // サムネイル（フォルダビュー / Undo 一覧）
+    // サムネイル（保存フォルダ / 履歴）
     // ====================================================================
 
     /// <summary>ナビパネルの背景色（明色テーマ用）。</summary>
@@ -272,11 +272,11 @@ internal static class AppStyles
     /// <summary>画像領域（プレビューの下地）の背景色（暗色テーマ用）。</summary>
     private static readonly MewUIColor s_imageAreaBackgroundDark = ToColor(AppPalette.ImageArea(isDark: true));
 
-    /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色（明色テーマ用）。</summary>
+    /// <summary>一覧（保存フォルダ / 履歴）の背景色（明色テーマ用）。</summary>
     /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（4 つの UI 版で同じ色にする）。</remarks>
     private static readonly MewUIColor s_listBackgroundLight = ToColor(AppPalette.ListBackground(isDark: false));
 
-    /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色（暗色テーマ用）。</summary>
+    /// <summary>一覧（保存フォルダ / 履歴）の背景色（暗色テーマ用）。</summary>
     /// <remarks>色は <see cref="AppPalette"/>（App.Core）が単一所有する（4 つの UI 版で同じ色にする）。</remarks>
     private static readonly MewUIColor s_listBackgroundDark = ToColor(AppPalette.ListBackground(isDark: true));
 
@@ -305,7 +305,7 @@ internal static class AppStyles
 
     /// <summary>ツールバーの区切り線（縦の細線）を生成する。</summary>
     /// <returns>高さ 20 DIP の縦線。</returns>
-    /// <remarks>3 ページ（キャプチャ / フォルダビュー / Undo 一覧）のツールバーで共有する。</remarks>
+    /// <remarks>3 ページ（キャプチャ / 保存フォルダ / 履歴）のツールバーで共有する。</remarks>
     public static Border CreateToolbarDivider()
         => new()
         {
@@ -396,7 +396,7 @@ internal static class AppStyles
             Setters = [Setter.Create(Control.BackgroundProperty, _ => MewUIColor.Transparent)],
         });
 
-        // 一覧（フォルダビュー / Undo 一覧）の背景（Avalonia 版の ListBox 背景相当）
+        // 一覧（保存フォルダ / 履歴）の背景（Avalonia 版の ListBox 背景相当）
         sheet.Define(ListSurface, () => new Style(typeof(Border))
         {
             Setters = [Setter.Create(Control.BackgroundProperty, t => ListBackground(t))],
@@ -468,7 +468,7 @@ internal static class AppStyles
     public static MewUIColor CurrentPageBackground
         => IconLoader.IsDarkTheme() ? s_pageBackgroundDark : s_pageBackgroundLight;
 
-    /// <summary>一覧（フォルダビュー / Undo 一覧）の背景色を取得する。</summary>
+    /// <summary>一覧（保存フォルダ / 履歴）の背景色を取得する。</summary>
     /// <param name="theme">現在のテーマ。</param>
     /// <returns>一覧の背景色。</returns>
     public static MewUIColor ListBackground(Theme theme)

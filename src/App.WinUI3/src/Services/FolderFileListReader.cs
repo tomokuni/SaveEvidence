@@ -4,7 +4,7 @@ namespace EsUtil.SaveEvidence.App.WinUI3.Services;
 
 /// <summary>保存先フォルダの画像ファイル一覧を読み込む。</summary>
 /// <remarks>
-/// <b>役割</b>: フォルダビューが表示する画像ファイルの列挙をビューから分離する<br/>
+/// <b>役割</b>: 保存フォルダが表示する画像ファイルの列挙をビューから分離する<br/>
 /// （列挙の規則をウィンドウなしで検証できるようにする）。<br/>
 /// <b>対象</b>: 画像拡張子（<see cref="EsImageFileExtensions.IsImageFile"/>）を持つファイルだけを返す。<br/>
 /// <b>並び順</b>: 名前の昇順または降順。 大文字小文字は区別しない（文化に依存しない比較を使う）。<br/>

@@ -8,7 +8,7 @@ using Xunit;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Tests;
 
-/// <summary>フォルダビューの一覧が実際にサムネイルを描くことを検証するテスト。</summary>
+/// <summary>保存フォルダの一覧が実際にサムネイルを描くことを検証するテスト。</summary>
 /// <remarks>
 /// <b>非表示のウィンドウへホストする</b>: フォルダの列挙は背景で行い、結果を UI スレッドへ戻すため、<br/>
 /// テストでも所有ウィンドウのハンドルとメッセージ キューを用意する。 描画は
@@ -50,7 +50,7 @@ public class FolderViewPageTests : IDisposable
     }
 
     /// <summary>テスト用のサービス束を生成する（保存先を一時フォルダへ向ける）。</summary>
-    /// <returns>サービス束とフォルダビューの ViewModel。</returns>
+    /// <returns>サービス束と保存フォルダの ViewModel。</returns>
     private (AppServices Services, FolderViewViewModel View) CreateServices()
     {
         var settings = new TestSettingsService();

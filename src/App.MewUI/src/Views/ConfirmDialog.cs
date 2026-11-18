@@ -7,7 +7,7 @@ namespace EsUtil.SaveEvidence.App.MewUI.Views;
 /// <remarks>
 /// MewUI 標準の <see cref="MessageBox"/>（<see cref="MessageBoxOptions"/>）を使い、オーナーの中央へモーダル表示する。<br/>
 /// 見た目・ボタンの並び・既定のボタンはフレームワークが決める（独自のウィンドウを組み立てない）。<br/>
-/// 用途: 保存時の上書き確認・フォルダビューの削除確認など。<br/>
+/// 用途: 保存時の上書き確認・保存フォルダの削除確認など。<br/>
 /// <b>閉じられた場合</b>はキャンセル（「いいえ」）と同じ扱いにする。
 /// </remarks>
 internal static class ConfirmDialog

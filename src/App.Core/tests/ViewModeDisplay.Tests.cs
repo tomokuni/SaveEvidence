@@ -5,7 +5,7 @@ namespace EsUtil.SaveEvidence.App.Core.Tests;
 
 /// <summary><see cref="ViewModeDisplay"/> の単体テスト（表示モードの名前・範囲補正・件数テキスト）。</summary>
 /// <remarks>
-/// 表示モード（特大 / 大 / 中）の名前と範囲補正は FolderView と Undo 一覧で共有するため、<br/>
+/// 表示モード（特大 / 大 / 中）の名前と範囲補正は FolderView と 履歴で共有するため、<br/>
 /// 境界値（負値・上限超過・int の最小最大）を含めて仕様を固定する。
 /// </remarks>
 public class ViewModeDisplayTests

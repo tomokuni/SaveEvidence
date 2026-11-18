@@ -12,7 +12,7 @@
             <ToggleButton x:Name="MediumButton" Classes="toolbar" Content="中" Click="OnViewModeClick" Tag="2" Margin="1"/>
         </WrapPanel>
 
-        <!-- 画像履歴一覧（フォルダビューと同じ共通コントロール。 表示順: 新しい → 古い = やり直し → 現在 → 元に戻す） -->
+        <!-- 画像履歴一覧（保存フォルダと同じ共通コントロール。 表示順: 新しい → 古い = やり直し → 現在 → 元に戻す） -->
         <!-- 一覧の下地は 4 UI 版で同じ色にする（値は AppPalette.ListBackground（App.Core）が単一所有する） -->
         <thumb:ThumbnailControl x:Name="UndoListBox" Grid.Row="1"
                                 Background="{DynamicResource ListBackgroundBrush}"/>

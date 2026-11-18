@@ -32,7 +32,7 @@
 
 SaveEvidence は、Windows デスクトップ上の画面をキャプチャし、プレビュー・編集・保存するための Avalonia UI アプリケーションです（.NET 11.0 / C# 14 / MVVM）。
 
-本プロジェクト（app）は、このシステムの**実行可能アプリケーション本体**です。 UI（ウィンドウ・ページ・コントロール）・ViewModel・設定サービスを統括し、キャプチャ・切出し・保存・ズーム・フォルダビュー・設定画面をユーザーに提供します。 キャプチャ・切出しのセッションは Parts.CapturePreview.ControlAvaloniaUI、色選択は EsUtil.Ui.AvaloniaUI.ColorSelector、プラットフォーム抽象は EsUtil.Ui.AvaloniaUI.Interop を利用します。
+本プロジェクト（app）は、このシステムの**実行可能アプリケーション本体**です。 UI（ウィンドウ・ページ・コントロール）・ViewModel・設定サービスを統括し、キャプチャ・切出し・保存・ズーム・保存フォルダ・設定画面をユーザーに提供します。 キャプチャ・切出しのセッションは Parts.CapturePreview.ControlAvaloniaUI、色選択は EsUtil.Ui.AvaloniaUI.ColorSelector、プラットフォーム抽象は EsUtil.Ui.AvaloniaUI.Interop を利用します。
 
 ## 2. 技術スタック
 
@@ -119,7 +119,7 @@ flowchart TB
 
 - **分類**: 公開ウィンドウ（`public sealed partial class : Window`）
 - **責務**:
-  - ナビゲーション（キャプチャ / フォルダビュー / Undo 一覧 / 設定）の統括
+  - ナビゲーション（キャプチャ / 保存フォルダ / 履歴 / 設定）の統括
   - キャプチャ（ScreenSelect / WindowSelect / AreaSelect）の開始と結果の反映
   - グローバルホットキーの登録・WM_HOTKEY 受信（`IGlobalHotKeyService` 経由）
   - 設定変更の CaptureSessionControl への即時反映（`ApplyCaptureSessionSettings`）
@@ -198,8 +198,8 @@ flowchart TB
 | コンポーネント | 分類 | 責務 |
 | --- | --- | --- |
 | `MainViewModel` | `ObservableObject` | メイン画面の状態（PreviewImage / ZoomPercent / ZoomDisplayText / PointerDisplayText / 保存・コピーコマンド等）。 テーマ選択肢 `ThemeModes` を提供 |
-| `FolderViewViewModel` | `ObservableObject` | フォルダビューの状態（ItemCount / SelectedViewModeIndex / IsSortAscending / FolderPathText） |
-| `UndoViewModel` | `ObservableObject` | Undo 一覧の状態（ItemCount / SelectedViewModeIndex） |
+| `FolderViewViewModel` | `ObservableObject` | 保存フォルダの状態（ItemCount / SelectedViewModeIndex / IsSortAscending / FolderPathText） |
+| `UndoViewModel` | `ObservableObject` | 履歴の状態（ItemCount / SelectedViewModeIndex） |
 
 ### 6.8 SettingsService
 
@@ -222,7 +222,7 @@ flowchart TB
 - **分類**: アプリケーションエントリポイント（`public sealed partial class : Application`）
 - **責務**: DI コンテナ初期化（Program.cs）・MainWindow 表示・テーマ（`ThemeMode`）の `RequestedThemeVariant` への反映
 - **テーマ反映**: 起動時に `Settings.ThemeMode` を反映し、変更時は `PropertyChanged` 購読で即時反映する。 `Light` → `ThemeVariant.Light` / `Dark` → `ThemeVariant.Dark` / `System` → `ThemeVariant.Default`（OS 追従）
-- **特徴**: FluentTheme の DynamicResource により、テーマ切替で全コントロールの色が自動的に切り替わる。 フォルダビュー等は標準リソース（`SystemControlBackgroundAltHighBrush` 等）を参照し、サムネイル影のみ App リソース（`ThumbnailShadow`）で定義する
+- **特徴**: FluentTheme の DynamicResource により、テーマ切替で全コントロールの色が自動的に切り替わる。 保存フォルダ等は標準リソース（`SystemControlBackgroundAltHighBrush` 等）を参照し、サムネイル影のみ App リソース（`ThumbnailShadow`）で定義する
 
 ## 7. 依存ルール
 

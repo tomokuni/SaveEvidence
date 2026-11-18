@@ -62,11 +62,11 @@ internal static class Program
 
         var viewModel = new MainViewModel(settings, new EsBitmapImageWriter());
 
-        // Undo / Redo 履歴はキャプチャページと Undo 一覧で共有する（画像編集の直前に現在の画像を積む）
+        // Undo / Redo 履歴はキャプチャページと 履歴で共有する（画像編集の直前に現在の画像を積む）
         var undoStack = new UndoHistory();
         viewModel.BeforeEditAction = () => undoStack.Push(viewModel.PreviewImage);
 
-        // フォルダビューの表示状態（表示モード・ソート順）もコアが保持し、設定へ保存する
+        // 保存フォルダの表示状態（表示モード・ソート順）もコアが保持し、設定へ保存する
         var services = new AppServices(viewModel, settings, undoStack, new FolderViewViewModel(), new UndoViewModel());
 
         // キャプチャの開始は ViewModel のコールバック（ツールバーのボタン）とグローバルホットキーの両方から呼ぶ。

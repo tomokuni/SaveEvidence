@@ -49,7 +49,7 @@ internal static class UndoPage
         // 表示モードはラムダ間で共有するためローカルに保持する（設定が単一所有元）
         var selectedIndex = ViewModeDisplay.ClampIndex(settingsService.Current.UndoViewModeIndex);
 
-        // 一覧はフォルダビューと同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
+        // 一覧は保存フォルダと同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
         var list = new ThumbnailControl();
 
         var countText = new ObservableValue<string>(ViewModeDisplay.GetItemCountText(0));

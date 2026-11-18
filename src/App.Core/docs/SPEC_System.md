@@ -46,7 +46,7 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 | `src/App.Core/src/Models/Settings.cs` | `public sealed partial class` | アプリケーション設定（変更通知付き） |
 | `src/App.Core/src/Models/FileNameTemplate.cs` | `public static partial class` | ファイル名テンプレートの書式と使用不可文字の検証・解析・生成（**唯一の所有者**） |
 | `src/App.Core/src/Models/UndoHistory.cs` | `public sealed class` | 画像の Undo / Redo スタック |
-| `src/App.Core/src/Models/ThumbnailScheduler.cs` | `internal sealed class` | 背景の処理（サムネイルの生成）をページの表示状態に応じた負荷で実行するスケジューラ（非表示では 1 件ずつ、表示中は並列。 優先度順に実行し、見えている項目を先に回す。 両 UI のフォルダビュー / Undo 一覧が使う**唯一の所有者**） |
+| `src/App.Core/src/Models/ThumbnailScheduler.cs` | `internal sealed class` | 背景の処理（サムネイルの生成）をページの表示状態に応じた負荷で実行するスケジューラ（非表示では 1 件ずつ、表示中は並列。 優先度順に実行し、見えている項目を先に回す。 両 UI の保存フォルダ / 履歴が使う**唯一の所有者**） |
 | `src/App.Core/src/Models/ThumbnailPriority.cs` | `internal readonly record struct` | サムネイル生成の優先度（見えている帯 / 見えていない帯と、帯の中の位置。 可視判定は純粋関数） |
 | `src/App.Core/src/Icons/AppIcons.cs` | `internal static class` | アイコンの読み込み元（`App.Core` に埋め込んだ SVG。 解析はコアの `SvgIconSource` が担う） |
 | `src/App.Core/src/Layout/BottomAlignWrapLayout.cs` | `internal static class` | 折り返しパネルの行高さ・下端揃えの配置計算（Avalonia / MewUI 両版のパネルが委譲する単一所有） |
@@ -60,8 +60,8 @@ SaveEvidence の AvaloniaUI / MewUI / WinUI 3 / WinForms ホストが共有す�
 | `src/App.Core/src/Native/WinClipboardDib.cs` | `internal static class` | `CF_DIB` の解析と書き込み（32 / 24 / 16 / 8 bpp・上下反転・圧縮なしの書き込み） |
 | `src/App.Core/src/Icons/CaptureIconFiles.cs` | `public static class` | キャプチャ ページのツールバーとメニューで使う共通 SVG 名 |
 | `src/App.Core/src/ViewModels/ViewModeDisplay.cs` | `internal static class` | 表示モード（特大 / 大 / 中）の名称・件数表示（**唯一の所有者**。 `FolderViewViewModel` / `UndoViewModel` が委譲する） |
-| `src/App.Core/src/ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | フォルダビューの表示モード・ソート状態 |
-| `src/App.Core/src/ViewModels/UndoViewModel.cs` | `public sealed partial class` | Undo 一覧の表示モード状態 |
+| `src/App.Core/src/ViewModels/FolderViewViewModel.cs` | `public sealed partial class` | 保存フォルダの表示モード・ソート状態 |
+| `src/App.Core/src/ViewModels/UndoViewModel.cs` | `public sealed partial class` | 履歴の表示モード状態 |
 | `src/App.Core/src/ViewModels/MainViewModel.cs` | `public sealed partial class` | メイン画面の状態（プレビュー画像・保存・自動切り出し・ズーム表示）。 **プレビュー画像の所有権とライフサイクル（差し替え時の破棄順序）の唯一の所有者**（`OnPreviewImageChanging` / `OnPreviewImageChanged`） |
 
 ## 5. UI 依存の注入（依存性逆転）

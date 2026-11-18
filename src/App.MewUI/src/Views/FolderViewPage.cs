@@ -50,7 +50,7 @@ internal static class FolderViewPage
         var settingsService = services.Settings;
         var viewModel = services.FolderView;
 
-        // 一覧は Undo 一覧と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
+        // 一覧は 履歴と同じ共通コントロール（EsUtil.Feature.Thumbnail）を使う
         var list = new ThumbnailControl();
 
         // サムネイルの生成は背景で行う（表示中は並列・非表示では 1 件ずつ）
@@ -344,7 +344,7 @@ internal static class FolderViewPage
         void WarmUp()
         {
             Restore();
-            s_logger.LogThumbnailWarmUp("フォルダビュー", viewModel.ItemCount);
+            s_logger.LogThumbnailWarmUp("保存フォルダ", viewModel.ItemCount);
         }
 
         // ツールバー（上端 6 DIP。 タイトルバー領域の下） / 一覧（残余） / ステータスの 3 段。

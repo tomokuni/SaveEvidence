@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
 
-/// <summary>フォルダビュー ページ（保存先フォルダの画像をサムネイルで一覧する）。</summary>
+/// <summary>保存フォルダ ページ（保存先フォルダの画像をサムネイルで一覧する）。</summary>
 /// <remarks>
 /// <b>構成</b>: ツールバー（最新の情報に更新 / 表示モード 3 種 / 並べ替え）/ サムネイル一覧 / ステータスバー。<br/>
 /// <b>縮小は背景で行う</b>: 一覧の構築では縮小せず、全項目を先に並べてから縮小を依頼し、<br/>

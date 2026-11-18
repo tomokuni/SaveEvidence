@@ -1,6 +1,6 @@
 namespace EsUtil.SaveEvidence.App.Core.Services;
 
-/// <summary>サムネイル 1 件（フォルダビュー / Undo 一覧）の見た目の寸法（4 つの UI 版で共通）。</summary>
+/// <summary>サムネイル 1 件（保存フォルダ / 履歴）の見た目の寸法（4 つの UI 版で共通）。</summary>
 /// <remarks>
 /// サムネイルの影と名前の行を 1 か所で決める（UI 版ごとに影の濃さ・名前の位置がずれないようにする）。<br/>
 /// <br/>

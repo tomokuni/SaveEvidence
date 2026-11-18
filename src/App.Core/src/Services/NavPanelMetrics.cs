@@ -8,7 +8,7 @@ namespace EsUtil.SaveEvidence.App.Core.Services;
 /// 展開したパネルはページ領域の上にオーバーレイし、領域の外を操作したら閉じる（各 UI 版のホストが担う）。<br/>
 /// <br/>
 /// <b>展開時の幅の決め方</b>: 「アイコン + 文字 + 余白」で決める。 文字の幅は最も長い項目名<br/>
-/// （「フォルダビュー」）を標準の文字サイズ（<see cref="ItemFontSize"/>）で描いた実測値を使う。<br/>
+/// （「保存フォルダ」）を標準の文字サイズ（<see cref="ItemFontSize"/>）で描いた実測値を使う。<br/>
 /// 末尾の <see cref="TrailingSlack"/> は UI ごとの内部余白の差（WinUI 3 の項目はアイコンの列が<br/>
 /// 他より広い）を吸収するための <b>α</b> であり、実測で文字が欠けない最小値にしている。<br/>
 /// <br/>
@@ -44,7 +44,7 @@ public static class NavPanelMetrics
     /// <summary>選択中のマークの左端（DIP）。</summary>
     public const double SelectionMarkLeft = 4;
 
-    /// <summary>最も長い項目名（「フォルダビュー」）の幅（DIP・<see cref="ItemFontSize"/> で実測）。</summary>
+    /// <summary>最も長い項目名（「保存フォルダ」）の幅（DIP・<see cref="ItemFontSize"/> で実測）。</summary>
     public const double LabelWidth = 68;
 
     /// <summary>UI ごとの内部余白の差を吸収する α（DIP）。</summary>

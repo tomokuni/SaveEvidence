@@ -56,8 +56,8 @@ internal sealed class MainWindow : Window
     private static readonly NavEntry[] s_entries =
     [
         new(AppPage.Capture, "キャプチャ", "ic_fluent_scan_table_24_regular.svg", static w => CapturePage.Build(w.Services, w)),
-        new(AppPage.FolderView, "フォルダビュー", "ic_fluent_folder_search_24_regular.svg", static w => FolderViewPage.Build(w.Services)),
-        new(AppPage.Undo, "Undo 一覧", "ic_fluent_arrow_undo_24_regular.svg", static w => UndoPage.Build(w.Services)),
+        new(AppPage.FolderView, "保存フォルダ", "ic_fluent_folder_search_24_regular.svg", static w => FolderViewPage.Build(w.Services)),
+        new(AppPage.Undo, "履歴", "ic_fluent_arrow_undo_24_regular.svg", static w => UndoPage.Build(w.Services)),
         new(AppPage.Settings, "設定", "ic_fluent_settings_24_regular.svg", static w => SettingsPage.Build(w.Services, w)),
     ];
 

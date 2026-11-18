@@ -90,7 +90,7 @@ public class AppLogTests
         logger.LogFolderLoadError(new IOException("test"), @"C:\images");
         logger.LogWindowPlacementSaveError(new IOException("test"));
         logger.LogThumbnailGenerateError(new InvalidOperationException("test"));
-        logger.LogThumbnailWarmUp("フォルダビュー", 3);
+        logger.LogThumbnailWarmUp("保存フォルダ", 3);
         logger.LogSettingsApplyError(new InvalidOperationException("test"), "LoupeSize");
         logger.LogClipboardError(new InvalidOperationException("test"), "コピー");
         logger.LogHotKeyRegisterFailed(CaptureType.ScreenSelect, EsKey.Q);

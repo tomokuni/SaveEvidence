@@ -48,9 +48,9 @@ SaveEvidence は Windows デスクトップの画面をキャプチャし、プ�
 | 画面キャプチャ | スクリーン選択 / ウィンドウ選択 / 範囲選択（既定 `Ctrl + Shift + Q` / `W` / `E`、設定で変更可） | [Avalonia UI](src/App.AvaloniaUI/README.md) · [MewUI](src/App.MewUI/README.md) · [WinUI 3](src/App.WinUI3/README.md) · [WinForms](src/App.WinForms/README.md) |
 | プレビューと編集 | 切り出し（8 方向ハンドル）・自動ウィンドウ検出切り出し・ズーム / パン・Fit・ルーペ | 同上（[ズーム・切り出しのコントロール仕様](src/Parts.CapturePreview.ControlAvaloniaUI/docs/SPEC_API.md)） |
 | クリップボード | 画像のコピー / 貼り付け（`Ctrl + C` / `Ctrl + V`）。 撮影・切り出し後の自動コピーも設定可 | 同上 |
-| 履歴 | アンドゥ / リドゥ（最大 5 段階。 `Ctrl + Z` / `Ctrl + Y`）。  Undo 一覧ページ | 同上 |
+| 履歴 | アンドゥ / リドゥ（最大 5 段階。 `Ctrl + Z` / `Ctrl + Y`）。  履歴ページ | 同上 |
 | 保存 | ファイル名テンプレート（日時プレースホルダ・オートインクリメント・検証）・上書き確認・自動保存・保存先フォルダ | [ファイル名テンプレート](src/App.AvaloniaUI/README.md#81-ファイル名テンプレート) |
-| 一覧 | フォルダビュー（サムネイル・表示モード・ソート・ごみ箱へ移動） | [Avalonia UI](src/App.AvaloniaUI/README.md) |
+| 一覧 | 保存フォルダ（サムネイル・表示モード・ソート・ごみ箱へ移動） | [Avalonia UI](src/App.AvaloniaUI/README.md) |
 | 外観 | テーマ（ライト / ダーク / システム）・選択枠 / 暗転 / ハンドル / ルーペ / ラベルの色と寸法 | [設定項目の対応表](src/App.AvaloniaUI/docs/SPEC_SettingTargetTable.md) |
 | タスク バー | 撮影時にタスク バーを隠す（ツールバーと設定ページで共通の設定） | 各 UI の README |
 

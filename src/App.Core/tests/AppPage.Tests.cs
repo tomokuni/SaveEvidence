@@ -24,7 +24,7 @@ public class AppPageTests
     [Fact]
     internal void AppPage_定義順がナビゲーション順と一致する()
     {
-        // ナビパネルの並び順（キャプチャ → フォルダビュー → Undo 一覧 → 設定）と一致させる
+        // ナビパネルの並び順（キャプチャ → 保存フォルダ → 履歴 → 設定）と一致させる
         Assert.Equal(0, (int)AppPage.Capture);
         Assert.Equal(1, (int)AppPage.FolderView);
         Assert.Equal(2, (int)AppPage.Undo);

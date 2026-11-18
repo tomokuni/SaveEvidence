@@ -150,7 +150,7 @@ internal static partial class AppLogMessage
     [LoggerMessage(LogLevel.Warning, "{Prefix} 画像をクリップボードへコピーできませんでした: {FilePath}")]
     internal static partial void LogClipboardCopyErrorCore(this ILogger logger, string prefix, Exception? ex, string filePath);
 
-    /// <summary>履歴（Undo 一覧）の画像をクリップボードへコピーできなかったことを記録する。</summary>
+    /// <summary>履歴（履歴）の画像をクリップボードへコピーできなかったことを記録する。</summary>
     /// <remarks>
     /// LogLevel: Warning <br/>
     /// 出力書式: <c>[App.&lt;UI&gt;] 履歴の画像をクリップボードへコピーできませんでした</c><br/>

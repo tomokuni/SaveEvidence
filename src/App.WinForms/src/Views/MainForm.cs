@@ -124,8 +124,8 @@ internal sealed class MainForm : Form
         _entries =
         [
             new(AppPage.Capture, "キャプチャ", AppIcon.Capture, () => CapturePage.Build(services, this)),
-            new(AppPage.FolderView, "フォルダビュー", AppIcon.Folder, () => FolderViewPage.Build(services)),
-            new(AppPage.Undo, "Undo 一覧", AppIcon.Undo, () => UndoPage.Build(services)),
+            new(AppPage.FolderView, "保存フォルダ", AppIcon.Folder, () => FolderViewPage.Build(services)),
+            new(AppPage.Undo, "履歴", AppIcon.Undo, () => UndoPage.Build(services)),
             new(AppPage.Settings, "設定", AppIcon.Settings, () => SettingsPage.Build(services)),
         ];
         _pages = new PageContent?[_entries.Length];

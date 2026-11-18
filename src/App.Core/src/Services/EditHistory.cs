@@ -18,7 +18,7 @@ internal static class EditHistory
 {
     /// <summary>Undo を実行し、直前の画像をプレビューへ復元する。</summary>
     /// <param name="main">アプリのメイン ViewModel（プレビューの所有者）。</param>
-    /// <param name="history">Undo / Redo の履歴（キャプチャページと Undo 一覧で共有する）。</param>
+    /// <param name="history">Undo / Redo の履歴（キャプチャページと 履歴で共有する）。</param>
     /// <param name="restore">復元した画像をプレビューへ設定した後の後処理（切出しの座標系の再計算など。 省略可）。</param>
     /// <exception cref="ArgumentNullException"><paramref name="main"/> または <paramref name="history"/> が null の場合。</exception>
     /// <remarks>
