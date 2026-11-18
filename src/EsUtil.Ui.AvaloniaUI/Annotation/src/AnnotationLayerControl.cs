@@ -917,10 +917,15 @@ public sealed partial class AnnotationLayerControl : Control
     /// <param name="text">文字列。</param>
     /// <param name="style">書式。</param>
     /// <returns>実寸（元画像ピクセル）。</returns>
+    /// <remarks>
+    /// <b>行の高さは斜体で変えない</b>: 幅（折り返しの判定）は指定どおりの書式で測り、高さだけは斜体を外した
+    /// 書式で測る。 斜体は字を傾けるだけであり、行の高さを変えると 1 行ごとに間隔が変わる（実測 2026-11-18）。
+    /// </remarks>
     private static EsSize MeasureText(string text, AnnotationTextStyle style)
     {
         var formatted = AnnotationPainter.CreateText(text, style);
-        return new EsSize(formatted.Width, formatted.Height);
+        var lineHeight = AnnotationPainter.CreateLineMetrics(style).Height;
+        return new EsSize(formatted.Width, lineHeight);
     }
 
     /// <summary>書式を適用する範囲を求める（長さ 0 は全体）。</summary>

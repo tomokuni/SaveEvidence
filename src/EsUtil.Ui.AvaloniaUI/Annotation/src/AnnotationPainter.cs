@@ -55,17 +55,69 @@ internal static class AnnotationPainter
 
         foreach (var line in shape.Lines)
         {
+            // 行のベースラインは 1 本に決める（区間ごとに縦位置を決めると、斜体で実寸が変わったときに
+            // 文字が上下へずれる。 実測 2026-11-18）
+            var baseline = ResolveLineBaseline(line);
+
             foreach (var segment in line.Segments)
             {
                 var formatted = CreateText(segment.Text, segment.Style);
-                var origin = new Point(
-                    segment.Bounds.X,
-                    segment.Bounds.Y + ((segment.Bounds.Height - formatted.Height) / 2));
-                context.DrawText(formatted, origin);
-                DrawDecorations(context, segment, formatted);
+                var top = baseline - formatted.Baseline;
+                context.DrawText(formatted, new Point(segment.Bounds.X, top));
+                DrawDecorations(context, segment, formatted, top);
             }
         }
     }
+
+    /// <summary>行のベースライン（元画像ピクセル）を求める。</summary>
+    /// <param name="line">行の描画計画。</param>
+    /// <returns>ベースラインの Y 座標（行の上端から、いちばん背の高い区間の書式で決める）。</returns>
+    /// <remarks>
+    /// <b>斜体・太字を外した実寸で決める</b>: 装飾によって実寸（<c>FormattedText.Height</c> /
+    /// <c>Baseline</c>）が変わっても、行のベースラインは動かさない（斜体にすると文字が上へずれ、
+    /// 行の高さが増える。 実測 2026-11-18）。
+    /// </remarks>
+    private static double ResolveLineBaseline(AnnotationTextLinePlan line)
+    {
+        var height = 0.0;
+        double referenceHeight = 0;
+        double referenceBaseline = 0;
+        foreach (var segment in line.Segments)
+        {
+            var metrics = CreateLineMetrics(segment.Style);
+            if (metrics.Height <= height)
+            {
+                continue;
+            }
+
+            height = metrics.Height;
+            referenceHeight = metrics.Height;
+            referenceBaseline = metrics.Baseline;
+        }
+
+        return ResolveBaseline(line.Bounds.Y, line.Bounds.Height, referenceHeight, referenceBaseline);
+    }
+
+    /// <summary>行の高さいっぱいへ中央寄せしたときのベースラインを求める。</summary>
+    /// <param name="lineTop">行の上端（元画像ピクセル）。</param>
+    /// <param name="lineHeight">行の高さ。</param>
+    /// <param name="referenceHeight">基準の書式の実寸の高さ。</param>
+    /// <param name="referenceBaseline">基準の書式のベースライン（上端から）。</param>
+    /// <returns>ベースラインの Y 座標。</returns>
+    /// <remarks>計算だけを切り出す（斜体で実寸が変わっても位置が動かないことを単体テストで固定するため）。</remarks>
+    internal static double ResolveBaseline(
+        double lineTop, double lineHeight, double referenceHeight, double referenceBaseline)
+        => lineTop + ((lineHeight - referenceHeight) / 2) + referenceBaseline;
+
+    /// <summary>行の高さとベースラインを測るための整形（斜体を外した書式）を作る。</summary>
+    /// <param name="style">書式。</param>
+    /// <returns>整形済みの文字列（<c>Ag</c>）。</returns>
+    /// <remarks>
+    /// <b>斜体を外す</b>: 斜体は字を傾けるだけで行の高さを変えない（合成斜体では実寸が変わる環境がある）。
+    /// 幅は <see cref="CreateText"/>（指定どおりの書式）で測る（折り返しは実際の送り幅に従う）。
+    /// </remarks>
+    internal static FormattedText CreateLineMetrics(AnnotationTextStyle style)
+        => CreateText("Ag", style with { IsItalic = false });
 
     /// <summary>色をブラシへ変換する。</summary>
     /// <param name="color">色。</param>
@@ -103,7 +155,9 @@ internal static class AnnotationPainter
     /// <param name="context">描画先。</param>
     /// <param name="segment">区間。</param>
     /// <param name="formatted">整形済みの文字列（文字の実寸を取るため）。</param>
-    private static void DrawDecorations(DrawingContext context, AnnotationTextSegmentPlan segment, FormattedText formatted)
+    /// <param name="top">文字の上端（ベースラインから求めた描画位置）。</param>
+    private static void DrawDecorations(
+        DrawingContext context, AnnotationTextSegmentPlan segment, FormattedText formatted, double top)
     {
         if (!segment.Style.IsUnderline && !segment.Style.IsStrike)
         {
@@ -117,13 +171,13 @@ internal static class AnnotationPainter
 
         if (segment.Style.IsUnderline)
         {
-            var y = segment.Bounds.Y + ((segment.Bounds.Height - formatted.Height) / 2) + formatted.Height - (thickness * 2);
+            var y = top + formatted.Height - (thickness * 2);
             context.DrawLine(pen, new Point(left, y), new Point(right, y));
         }
 
         if (segment.Style.IsStrike)
         {
-            var y = segment.Bounds.Y + (segment.Bounds.Height / 2);
+            var y = top + (formatted.Height / 2);
             context.DrawLine(pen, new Point(left, y), new Point(right, y));
         }
     }

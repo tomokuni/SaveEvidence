@@ -510,7 +510,12 @@ public sealed partial class AnnotationLayerControl
         {
             var style = SelectedTextStyle with { IsUnderline = true };
             var formatted = AnnotationPainter.CreateText(_preeditText, style);
-            context.DrawText(formatted, new Point(caret.X, caret.Y + ((caret.Height - formatted.Height) / 2)));
+
+            // 本文と同じベースラインへ載せる（斜体・太字で実寸が変わっても文字が上下へずれない）
+            var metrics = AnnotationPainter.CreateLineMetrics(style);
+            var baseline = AnnotationPainter.ResolveBaseline(
+                caret.Y, caret.Height, metrics.Height, metrics.Baseline);
+            context.DrawText(formatted, new Point(caret.X, baseline - formatted.Baseline));
         }
     }
 
