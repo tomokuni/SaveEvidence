@@ -17,34 +17,34 @@
       },
       "EsUtil.Ui.MewUI.ColorSelector": {
         "type": "Direct",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "XQAa6cCm7d9hl7KpaWQfXU1+U68w+2qI6y2o2nNCgVJSQCnoNFtN/hJIo3qs0k6lIlVCoLYDOZNgpsQf2LVLug==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "fhrLrUKYy9TpySlBfUYxsZpR6+D3poqOHWOVzsOYSi6CkkdrhjEDmCLNtHAT7/mJ1sNIMzy2MNYEDmLTQV0MhQ==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Platform.Core": "0.8.6"
+          "EsUtil.Platform.Core": "0.8.7"
         }
       },
       "EsUtil.Ui.MewUI.Interop": {
         "type": "Direct",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "gPmLJTygYIfjoRA3TwS0i8mOBsAfYkxko5hU2uNbJaa60gjiW87Dz0iXQiBiY5Wmm//Xcdf3HxuaGWYLC/eY1g==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "wO3+YKCG0aSgNFWIK7tDQ/ldWzvV5NRCG50RQ08jq5NhJznAFNUWpiWbcrspDAinR8ngv8z3Vru/9dStenc0VQ==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Platform.Core": "0.8.6"
+          "EsUtil.Platform.Core": "0.8.7"
         }
       },
       "EsUtil.Ui.MewUI.Thumbnail": {
         "type": "Direct",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "3j8rUWO1b1ORMWkxlmw6T4BKMwDxuXVeFADCzqLK+F76yNvFiaEvXqXOfWHkxMMshEJ12zeBJlTMM3kyEyZOkA==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "2tgIbz6ZEsjIX76ecwb2JzrMrL+qtOx54uQEqaqKf1r5yGGHrOhhGxtLE73A1I188UC5pFCYd38MJGteVK0G8A==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Thumbnail.Core": "0.8.6",
-          "EsUtil.Platform.Core": "0.8.6",
-          "EsUtil.Ui.MewUI.Interop": "0.8.6"
+          "EsUtil.Feature.Thumbnail.Core": "0.8.7",
+          "EsUtil.Platform.Core": "0.8.7",
+          "EsUtil.Ui.MewUI.Interop": "0.8.7"
         }
       },
       "Meziantou.Analyzer": {
@@ -158,7 +158,7 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
-          "EsUtil.Platform.Core": "[0.8.6, )",
+          "EsUtil.Platform.Core": "[0.8.7, )",
           "Parts.CapturePreview.Core": "[0.8.2, )",
           "Parts.LineDetection": "[0.8.2, )",
           "Serilog": "[4.4.0, )",
@@ -170,25 +170,25 @@
         "type": "Project",
         "dependencies": {
           "Aprillz.MewUI.Windows": "[0.22.1, )",
-          "EsUtil.Platform.Core": "[0.8.6, )",
-          "EsUtil.Ui.MewUI.Interop": "[0.8.6, )",
-          "EsUtil.Ui.MewUI.Loupe": "[0.8.6, )",
-          "EsUtil.Ui.MewUI.Marquee": "[0.8.6, )",
+          "EsUtil.Platform.Core": "[0.8.7, )",
+          "EsUtil.Ui.MewUI.Interop": "[0.8.7, )",
+          "EsUtil.Ui.MewUI.Loupe": "[0.8.7, )",
+          "EsUtil.Ui.MewUI.Marquee": "[0.8.7, )",
           "Parts.CapturePreview.Core": "[0.8.2, )"
         }
       },
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.8.6, )",
-          "EsUtil.Feature.Marquee.Core": "[0.8.6, )",
-          "EsUtil.Platform.Core": "[0.8.6, )"
+          "EsUtil.Feature.Loupe.Core": "[0.8.7, )",
+          "EsUtil.Feature.Marquee.Core": "[0.8.7, )",
+          "EsUtil.Platform.Core": "[0.8.7, )"
         }
       },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.8.6, )",
+          "EsUtil.Platform.Core": "[0.8.7, )",
           "OpenCvSharp5": "[5.0.0.20261109, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261109, )"
         }
@@ -201,59 +201,59 @@
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "vYFD5pf8NDgb2G9NhtT64Rp55gv8O/BVq9m6bzMYd9ildnfqF38+8hnnucE/H8dp/w1bfAwQVX3pH5ibuuDJmw==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "zKaRUmTd4bAnxayt++H2FT0N1qcpAgXzbwP1DgGDf3cQ+d1kIOj2xd1uJgL9O1jEzF8RMM04BcK9Y6dQBSh+SA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.6"
+          "EsUtil.Platform.Core": "0.8.7"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "BYTtyVaS266qXQ0e2NZDrj+b2rWW2Oc7G+SNf8trDBE23dRpqnufSGXxmH+Y44al/lbqc1HoiZ8V+bcIfjeU5w==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "N6zLtoKL+cvqf0fJJILClEn/0pHS04lJcXytJdHaPeWw8KunEBeGX2TT8cq9R5w6MT13apmcPqpex+YiZ8b5uw==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.6"
+          "EsUtil.Platform.Core": "0.8.7"
         }
       },
       "EsUtil.Feature.Thumbnail.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "12x/KCnbrLAcea7q1jq5+I7kmwBK15jNNEOEmCgtSpKRQs3D6vUD94wwZZTT+10R8RLWLEswARjhLmg7sqAqew==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "Lo0/31oKlS2ae3ldQXrkJn66Eh2UQD34LyKh/DtdTwpQ5qbly84nfKBtyxH6jxYTShqMpWM3MBHxLCu22/ZiBQ==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.6"
+          "EsUtil.Platform.Core": "0.8.7"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "GW8BAYuO/wlV4pbW7e9jcYrrKFym11y5TTgYDxcZKlwv3YkkoRz1iWzFtDVOG6PhwZisXiA+iR6r6YHI16UG9Q=="
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "iibJaREtHTFmH86+1X1R5bIY94O0M95rJsbI8NcxmnJl30yGs3r+9kVD2PkX5nFXyl+kBti1pBj4FFVz+xrRWQ=="
       },
       "EsUtil.Ui.MewUI.Loupe": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "muNguWj+ttswTuMsFVRHac9sdwUCw9yO7f+/DecoELfNWbSQjvfV4yFW9pTmn0dVrQQGElkaVvnI1elg4p/DOg==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "1yQhPz/JKEspFmuZ2q63Clyp+zt+Wx44tRykO6IJ/srOHwH4bV54TV6IDBOcAL5EFZMMM4kaglxwOUkyjcGk3A==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Loupe.Core": "0.8.6",
-          "EsUtil.Platform.Core": "0.8.6",
-          "EsUtil.Ui.MewUI.Interop": "0.8.6"
+          "EsUtil.Feature.Loupe.Core": "0.8.7",
+          "EsUtil.Platform.Core": "0.8.7",
+          "EsUtil.Ui.MewUI.Interop": "0.8.7"
         }
       },
       "EsUtil.Ui.MewUI.Marquee": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "G/RFSSLUJHMYK2bJydnKiZVa9RzcbIhFrN2kQViaefqcQOI55LFLQHXmn/sapGhJBE/HU59pjXvTR6M7fbbyIw==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "KdzxebROFC2uMir6g5soRzYxGfz8KStMr/JUaOJ2RSxh6bqek8gtgHDPlaMiC2Q9aIJhXk0nluqXlJ78FvSeRQ==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Feature.Marquee.Core": "0.8.6",
-          "EsUtil.Platform.Core": "0.8.6",
-          "EsUtil.Ui.MewUI.Interop": "0.8.6"
+          "EsUtil.Feature.Marquee.Core": "0.8.7",
+          "EsUtil.Platform.Core": "0.8.7",
+          "EsUtil.Ui.MewUI.Interop": "0.8.7"
         }
       },
       "Microsoft.Extensions.DependencyInjection": {

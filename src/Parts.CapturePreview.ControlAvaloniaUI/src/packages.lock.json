@@ -18,36 +18,36 @@
       },
       "EsUtil.Ui.AvaloniaUI.Interop": {
         "type": "Direct",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "WRStHXpKHkdUZFDA8FgGfZsKZJno8Z0kYp7lKkpn6wkPxpr8RFsDi2uOM7NJUjnpbRFmOP1IWnJwsuEfARFvUw==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "KMbJSXyNkS0H4CkXZjaCjIxOCBX0kivti2ymSXRdrXha6nmAazB/93Sg4a3Iy/uK36/A7hvtrlkm6BOG9LUKFg==",
         "dependencies": {
           "Avalonia": "12.1.6",
-          "EsUtil.Platform.Core": "0.8.6"
+          "EsUtil.Platform.Core": "0.8.7"
         }
       },
       "EsUtil.Ui.AvaloniaUI.Loupe": {
         "type": "Direct",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "aQKLKMO2MhLbPRiDV7+9w0MNWhK74JKmxFAvqg0y6d32QTrqTX1YjDE1riwpXnRPJDA3hOHrHLnzGzkOFAa6IQ==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "eewxYNQ0ZBGyDa0Gg8fwmlnPohsfYoIm91tMbVbM1l6RBRCPDKLjgUVVP1nEGLuCzd4cKyTMo99W0EbyUvJw/g==",
         "dependencies": {
           "Avalonia": "12.1.6",
-          "EsUtil.Feature.Loupe.Core": "0.8.6",
-          "EsUtil.Platform.Core": "0.8.6",
-          "EsUtil.Ui.AvaloniaUI.Interop": "0.8.6"
+          "EsUtil.Feature.Loupe.Core": "0.8.7",
+          "EsUtil.Platform.Core": "0.8.7",
+          "EsUtil.Ui.AvaloniaUI.Interop": "0.8.7"
         }
       },
       "EsUtil.Ui.AvaloniaUI.Marquee": {
         "type": "Direct",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "tpyEEHHD6bVXrefTTMY3dkdvca8CkeqWktrF9AXXwUpPdgd+w9uvbn7Wn16LIrArkDeYn2xk5aktxCzXM2WcBw==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "PjLQoxEScoW2/ceYdcX4cc1RJP3vkMaEs+NU0cn+/Wb1HG20rjikHCkMRFFKkTrqEFqCmcwf9BgJsapYeULlJw==",
         "dependencies": {
           "Avalonia": "12.1.6",
-          "EsUtil.Feature.Marquee.Core": "0.8.6",
-          "EsUtil.Platform.Core": "0.8.6",
-          "EsUtil.Ui.AvaloniaUI.Interop": "0.8.6"
+          "EsUtil.Feature.Marquee.Core": "0.8.7",
+          "EsUtil.Platform.Core": "0.8.7",
+          "EsUtil.Ui.AvaloniaUI.Interop": "0.8.7"
         }
       },
       "Meziantou.Analyzer": {
@@ -210,9 +210,9 @@
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Loupe.Core": "[0.8.6, )",
-          "EsUtil.Feature.Marquee.Core": "[0.8.6, )",
-          "EsUtil.Platform.Core": "[0.8.6, )"
+          "EsUtil.Feature.Loupe.Core": "[0.8.7, )",
+          "EsUtil.Feature.Marquee.Core": "[0.8.7, )",
+          "EsUtil.Platform.Core": "[0.8.7, )"
         }
       },
       "Avalonia": {
@@ -243,27 +243,27 @@
       },
       "EsUtil.Feature.Loupe.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "vYFD5pf8NDgb2G9NhtT64Rp55gv8O/BVq9m6bzMYd9ildnfqF38+8hnnucE/H8dp/w1bfAwQVX3pH5ibuuDJmw==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "zKaRUmTd4bAnxayt++H2FT0N1qcpAgXzbwP1DgGDf3cQ+d1kIOj2xd1uJgL9O1jEzF8RMM04BcK9Y6dQBSh+SA==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.6"
+          "EsUtil.Platform.Core": "0.8.7"
         }
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "BYTtyVaS266qXQ0e2NZDrj+b2rWW2Oc7G+SNf8trDBE23dRpqnufSGXxmH+Y44al/lbqc1HoiZ8V+bcIfjeU5w==",
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "N6zLtoKL+cvqf0fJJILClEn/0pHS04lJcXytJdHaPeWw8KunEBeGX2TT8cq9R5w6MT13apmcPqpex+YiZ8b5uw==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.6"
+          "EsUtil.Platform.Core": "0.8.7"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.6, )",
-        "resolved": "0.8.6",
-        "contentHash": "GW8BAYuO/wlV4pbW7e9jcYrrKFym11y5TTgYDxcZKlwv3YkkoRz1iWzFtDVOG6PhwZisXiA+iR6r6YHI16UG9Q=="
+        "requested": "[0.8.7, )",
+        "resolved": "0.8.7",
+        "contentHash": "iibJaREtHTFmH86+1X1R5bIY94O0M95rJsbI8NcxmnJl30yGs3r+9kVD2PkX5nFXyl+kBti1pBj4FFVz+xrRWQ=="
       }
     }
   }
