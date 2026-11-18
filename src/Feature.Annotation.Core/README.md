@@ -7,7 +7,7 @@ UI フレームワークに依存せず、4 つの UI 版（Avalonia UI / MewUI 
 
 - **注釈は画像に焼き込まない**（レイヤーとして保持し、いつでも編集できる）。
 - **座標と文字の大きさは元画像ピクセル**である（表示倍率・DPI に依存しない。 保存画像と比率が一致する）。
-- **注釈は JSON で保存できる**（`<元画像>.annotations.json`。 スキーマ版を持つ）。
+- **注釈は JSON で保存できる**（`<画像名>.annotations.json`。 スキーマ版を持つ）。
 - **描画計画（何を描くか）は本層が解決し、UI は自分の描画 API へ写すだけ**にする（4 つの UI 版で見た目がずれない）。
 
 **現状**: `EsUtil.Platform.Core` をパッケージ参照し、UI 層は `src/EsUtil.Ui.AvaloniaUI/Annotation` の 1 つだけです（MewUI / WinUI 3 / WinForms は後段）。
@@ -39,7 +39,7 @@ var json = AnnotationJson.Serialize(document);
 var restored = AnnotationJson.Deserialize(json);
 
 // 4. 保存する 3 つのパスのうち、注釈と合成画像のパスを求める
-var annotationPath = AnnotationJson.GetDocumentPath(imagePath); // <画像>.annotations.json
+var annotationPath = AnnotationJson.GetDocumentPath(imagePath); // <画像名>.annotations.json
 var composedPath = AnnotationJson.GetComposedPath(imagePath);   // <画像名>.annotated.<拡張子>
 ```
 

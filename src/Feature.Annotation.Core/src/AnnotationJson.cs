@@ -43,13 +43,22 @@ public static class AnnotationJson
 
     /// <summary>元画像のパスから注釈ファイルのパスを求める。</summary>
     /// <param name="imagePath">元画像のパス（例: <c>…\screenshot.png</c>）。</param>
-    /// <returns>注釈ファイルのパス（例: <c>…\screenshot.png.annotations.json</c>）。</returns>
-    /// <remarks>拡張子を置き換えず後ろへ付ける（元画像の形式が何であっても衝突しない）。</remarks>
+    /// <returns>注釈ファイルのパス（例: <c>…\screenshot.annotations.json</c>）。</returns>
+    /// <remarks>
+    /// <b>拡張子を置き換える</b>: 合成画像（<c>screenshot.annotated.png</c>）と同じく
+    /// <c>&lt;ファイル名&gt;.annotations.json</c> にする。 元画像の拡張子を残すと
+    /// <c>screenshot.png.annotations.json</c> になり、1 枚の画像に対する付随ファイルの名前が
+    /// 合成画像と揃わない（利用者が対応を読み取りにくい）。
+    /// </remarks>
     /// <exception cref="ArgumentException"><paramref name="imagePath"/> が空白の場合。</exception>
     public static string GetDocumentPath(string imagePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(imagePath);
-        return imagePath + FileSuffix;
+
+        var directory = Path.GetDirectoryName(imagePath);
+        var name = Path.GetFileNameWithoutExtension(imagePath) + FileSuffix;
+
+        return string.IsNullOrEmpty(directory) ? name : Path.Combine(directory, name);
     }
 
     /// <summary>合成画像のパスを求める。</summary>

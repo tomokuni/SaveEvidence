@@ -111,8 +111,8 @@
 | メンバー | 説明 |
 | --- | --- |
 | `Serialize(document)` / `Deserialize(json)` | JSON の読み書き（ソース生成 + 明示の変換器。 反射を使わない） |
-| `GetDocumentPath(imagePath)` | `<画像>.annotations.json` のパス |
-| `GetComposedPath(imagePath)` | `<画像名>.annotated.<拡張子>` のパス |
+| `GetDocumentPath(imagePath)` | `<画像名>.annotations.json` のパス（拡張子を置き換える） |
+| `GetComposedPath(imagePath)` | `<画像名>.annotated.<拡張子>` のパス（拡張子を保つ） |
 | `FileSuffix` | 注釈ファイルの接尾辞（`.annotations.json`） |
 
 - **矩形・点は `X` / `Y` / `Width` / `Height` だけ**、色は **`#AARRGGBB`** で保存します。

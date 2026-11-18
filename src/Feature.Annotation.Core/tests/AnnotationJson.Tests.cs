@@ -60,13 +60,24 @@ public class AnnotationJsonTests
     }
 
     /// <summary>注釈ファイルと合成画像のパスを検証する。</summary>
+    /// <remarks>どちらも<b>元画像の拡張子を置き換える</b>（<c>&lt;ファイル名&gt;.annotations.json</c> / <c>&lt;ファイル名&gt;.annotated.&lt;拡張子&gt;</c>）。</remarks>
     [Fact]
-    internal void パス_注釈は元画像名の後ろへ付き合成は拡張子の前へ入る()
+    internal void パス_注釈は拡張子を置き換え合成は拡張子の前へ入る()
     {
         var imagePath = Path.Combine("C:\\", "pictures", "shot.png");
 
-        Assert.Equal(imagePath + ".annotations.json", AnnotationJson.GetDocumentPath(imagePath));
+        Assert.Equal(
+            Path.Combine("C:\\", "pictures", "shot.annotations.json"),
+            AnnotationJson.GetDocumentPath(imagePath));
         Assert.Equal(Path.Combine("C:\\", "pictures", "shot.annotated.png"), AnnotationJson.GetComposedPath(imagePath));
+    }
+
+    /// <summary>ディレクトリを持たないパスでも注釈ファイルのパスを求められることを検証する。</summary>
+    [Fact]
+    internal void パス_ディレクトリが無くても注釈ファイルのパスを求める()
+    {
+        Assert.Equal("shot.annotations.json", AnnotationJson.GetDocumentPath("shot.png"));
+        Assert.Equal("shot.annotated.png", AnnotationJson.GetComposedPath("shot.png"));
     }
 
     /// <summary>未知の種別は読み込み時に例外になることを検証する（前方互換は版で扱う）。</summary>
