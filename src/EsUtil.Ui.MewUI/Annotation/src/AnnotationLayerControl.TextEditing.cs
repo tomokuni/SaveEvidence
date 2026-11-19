@@ -207,6 +207,24 @@ public sealed partial class AnnotationLayerControl
             case Key.End:
                 MoveCaretToLineEdge(first: false, shift);
                 return true;
+            case Key.C when control:
+                CopySelection();
+                return true;
+            case Key.X when control:
+                if (CopySelection())
+                {
+                    ReplaceSelection(string.Empty);
+                }
+
+                return true;
+            case Key.V when control:
+                var pasted = AnnotationClipboard.GetText();
+                if (pasted.Length > 0)
+                {
+                    ReplaceSelection(NormalizeInput(pasted));
+                }
+
+                return true;
             case Key.A when control:
                 _selectionAnchor = 0;
                 _caretIndex = TextForInput.Length;
@@ -443,6 +461,16 @@ public sealed partial class AnnotationLayerControl
 
         TextSelectionRange = current;
         TextSelectionChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>選択中の文字をクリップボードへコピーする。</summary>
+    /// <returns>コピーした場合は <see langword="true"/>。</returns>
+    private bool CopySelection()
+    {
+        var text = TextForInput;
+        var start = Math.Clamp(SelectionStart, 0, text.Length);
+        var end = Math.Clamp(SelectionEnd, 0, text.Length);
+        return end > start && AnnotationClipboard.TrySetText(text[start..end]);
     }
 
     /// <summary>選択範囲の文字がすべて条件を満たすかどうかを取得する（書式ボタンの押下状態に使う）。</summary>

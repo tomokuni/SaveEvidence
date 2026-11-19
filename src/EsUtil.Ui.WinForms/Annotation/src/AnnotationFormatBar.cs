@@ -45,6 +45,7 @@ internal sealed class AnnotationFormatBar : Panel
         AutoSize = true;
         AutoSizeMode = AutoSizeMode.GrowAndShrink;
         BackColor = Color.FromArgb(250, 250, 250);
+        BorderStyle = BorderStyle.FixedSingle;
         Padding = new Padding(4);
 
         _bold = AnnotationEditorControls.Toggle("B", false, value => Toggle(style => style with { IsBold = value }), bold: true);

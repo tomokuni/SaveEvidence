@@ -169,6 +169,7 @@ public sealed partial class AnnotationLayerControl
         }
 
         Focus();
+        _isPointerDown = true;
         CapturePointer();
 
         // 押下から始まる操作（移動・サイズ変更・しっぽの移動）を 1 手として記録する。
@@ -263,6 +264,12 @@ public sealed partial class AnnotationLayerControl
 
         _marquee.Move(source);
 
+        // 注釈の外へ出たら入力を受け取らない（プレビューのズーム・パンへ渡す）
+        if (!_isPointerDown && !_isEditingText && !HitTestAt(position))
+        {
+            IsHitTestVisible = false;
+        }
+
         if (Selected is BubbleAnnotation selected && IsNearTailTip(selected, source))
         {
             Cursor = CursorType.Hand;
@@ -293,6 +300,7 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
+        _isPointerDown = false;
         _marquee.Release(ToSource(e.GetPosition(this)));
         ReleasePointer();
         InvalidateVisual();

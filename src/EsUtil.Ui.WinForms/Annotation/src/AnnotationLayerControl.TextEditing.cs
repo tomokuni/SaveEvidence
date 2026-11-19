@@ -137,6 +137,17 @@ public sealed partial class AnnotationLayerControl
     /// <param name="m">メッセージ。</param>
     protected override void WndProc(ref Message m)
     {
+        if (m.Msg == 0x0084 && !_isEditingText)
+        {
+            // 注釈の無い場所は下のコントロール（プレビュー）へ入力とホイールを渡す
+            var screen = new Point((short)(m.LParam.ToInt32() & 0xFFFF), (short)((m.LParam.ToInt32() >> 16) & 0xFFFF));
+            if (!HitTestAt(PointToClient(screen)))
+            {
+                m.Result = new IntPtr(-1);
+                return;
+            }
+        }
+
         if (_isEditingText)
         {
             switch (m.Msg)
@@ -407,6 +418,12 @@ public sealed partial class AnnotationLayerControl
             return true;
         }
 
+        if (e.Control && e.KeyCode is Keys.C or Keys.X or Keys.V)
+        {
+            HandleClipboard(e.KeyCode);
+            return true;
+        }
+
         if (e.Control && e.KeyCode is Keys.B or Keys.I or Keys.U)
         {
             return e.KeyCode switch
@@ -451,6 +468,33 @@ public sealed partial class AnnotationLayerControl
                 return true;
             default:
                 return false;
+        }
+    }
+
+    /// <summary>クリップボードの操作（コピー・切り取り・貼り付け）を行う。</summary>
+    /// <param name="key">押されたキー。</param>
+    private void HandleClipboard(Keys key)
+    {
+        var start = TextSelectionStart;
+        var length = TextSelectionLength;
+        if (key == Keys.V)
+        {
+            if (Clipboard.ContainsText())
+            {
+                ReplaceSelection(Clipboard.GetText().Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'));
+            }
+
+        }
+
+        if (length == 0)
+        {
+            return;
+        }
+
+        Clipboard.SetText(TextForInput.Substring(start, length));
+        if (key == Keys.X)
+        {
+            ReplaceSelection(string.Empty);
         }
     }
 

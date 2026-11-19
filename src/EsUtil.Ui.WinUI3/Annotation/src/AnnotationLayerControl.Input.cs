@@ -35,7 +35,11 @@ public sealed partial class AnnotationLayerControl
         var (scale, offset) = ResolveImageTransform();
 
         ApplyImageSource();
-        if (_image.Source is not null && ActualWidth > 0 && ActualHeight > 0)
+        if (!ShowImage)
+        {
+            _image.Visibility = Visibility.Collapsed;
+        }
+        else if (_image.Source is not null && ActualWidth > 0 && ActualHeight > 0)
         {
             _image.Width = SourcePixelWidth * scale;
             _image.Height = SourcePixelHeight * scale;

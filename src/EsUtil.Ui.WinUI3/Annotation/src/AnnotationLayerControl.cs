@@ -136,6 +136,47 @@ public sealed partial class AnnotationLayerControl : Grid
         }
     }
 
+    /// <summary>画像を自分で描くかどうかを取得または設定する。</summary>
+    public bool ShowImage { get; set; } = true;
+
+    /// <summary>プレビュー内の画像の表示矩形（DIP）を取得または設定する。</summary>
+    public EsRect? PreviewImageRect { get; set; }
+
+    /// <summary>指定した位置（DIP）を左上として枠線を追加する。</summary>
+    /// <param name="dip">左上の位置（ローカル DIP）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddFrameAt(Windows.Foundation.Point dip) => AddFrame(ResolveDefaultBounds(ToSource(new EsPoint(dip.X, dip.Y))));
+
+    /// <summary>指定した位置（DIP）を左上として吹き出しを追加する。</summary>
+    /// <param name="dip">左上の位置（ローカル DIP）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddBubbleAt(Windows.Foundation.Point dip) => AddBubble(ResolveDefaultBounds(ToSource(new EsPoint(dip.X, dip.Y))), string.Empty);
+
+    /// <summary>追加する注釈の既定の矩形を求める。</summary>
+    /// <param name="sourcePoint">左上の位置（元画像ピクセル）。</param>
+    /// <returns>画像の内側へ収めた矩形。</returns>
+    private EsRect ResolveDefaultBounds(EsPoint sourcePoint)
+    {
+        var imageWidth = Math.Max(1, SourcePixelWidth);
+        var imageHeight = Math.Max(1, SourcePixelHeight);
+        var width = Math.Min(240, imageWidth);
+        var height = Math.Min(160, imageHeight);
+        return new EsRect(
+            Math.Clamp(sourcePoint.X, 0, Math.Max(0, imageWidth - width)),
+            Math.Clamp(sourcePoint.Y, 0, Math.Max(0, imageHeight - height)),
+            width,
+            height);
+    }
+
+    /// <summary>指定した位置（DIP）に注釈があるかどうかを判定する。</summary>
+    /// <param name="dip">位置（ローカル DIP）。</param>
+    /// <returns>注釈の近くにある場合は <see langword="true"/>。</returns>
+    public bool HitTestAt(Windows.Foundation.Point dip)
+    {
+        var source = ToSource(new EsPoint(dip.X, dip.Y));
+        return AnnotationHitTest.HitTest(_document, source) is not null;
+    }
+
     /// <summary>元画像の幅（ピクセル）を取得または設定する。</summary>
     public int SourcePixelWidth { get; set; } = 1;
 
@@ -619,6 +660,11 @@ public sealed partial class AnnotationLayerControl : Grid
         if (clientWidth <= 0 || clientHeight <= 0)
         {
             return (1, default);
+        }
+
+        if (PreviewImageRect is { Width: > 0 } preview)
+        {
+            return (preview.Width / width, new EsPoint(preview.X, preview.Y));
         }
 
         var scale = Math.Min(clientWidth / width, clientHeight / height);

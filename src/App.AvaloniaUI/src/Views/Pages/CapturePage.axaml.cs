@@ -198,6 +198,22 @@ public sealed partial class CapturePage : UserControl
         // 画像と同じ描画面へ先に描く（重ねると画像の端の混色の下地が背景になり、白い線として見える）
         CropView.SurroundRenderer = ShadowRenderer.Render;
 
+        // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
+        AnnotationEditor.Layer.ShowImage = false;
+        AnnotationEditor.Layer.IsHitTestVisible = false;
+        CropView.ZoomChanged += (_, _) => ApplyAnnotationOverlayTransform();
+        CropView.ViewportChanged += (_, _) => ApplyAnnotationOverlayTransform();
+
+        // 注釈の上にポインタがある間だけ注釈レイヤーが入力を受け取る（それ以外はプレビューのズーム・パンへ渡す）
+        CropView.PointerMoved += (_, e) =>
+        {
+            var layer = AnnotationEditor.Layer;
+            if (!layer.IsEditingText)
+            {
+                layer.IsHitTestVisible = layer.HitTestAt(e.GetPosition(AnnotationEditor));
+            }
+        };
+
         // 自動切り出しのホバー強調の外観（内側の塗りと枠線）を CropViewControl へ与える。
         // 色・枠線の太さ・表示可否は描画にだけ必要な設定であり、強調の描画手順は CropViewControl（Parts）が単一所有する。
         // 枠線は外枠（注目矩形の辺）で描く（提示層の外観は内側だけの枠線を持たない）。
@@ -442,27 +458,13 @@ public sealed partial class CapturePage : UserControl
                 e.Handled = true;
                 _ = PasteFromClipboardAsync();
                 break;
-            case Key.Z: // Image - 元に戻す（注釈の編集中は注釈の変更を戻す）
+            case Key.Z: // Image - 元に戻す
                 e.Handled = true;
-                if (_isAnnotationMode)
-                {
-                    OnAnnotationUndoClick(sender, e);
-                }
-                else
-                {
-                    RestoreUndo();
-                }
+                RestoreUndo();
                 break;
-            case Key.Y: // Image - 元に戻すを取り消す（注釈の編集中は注釈の変更をやり直す）
+            case Key.Y: // Image - 元に戻すを取り消す
                 e.Handled = true;
-                if (_isAnnotationMode)
-                {
-                    OnAnnotationRedoClick(sender, e);
-                }
-                else
-                {
-                    RestoreRedo();
-                }
+                RestoreRedo();
                 break;
             case Key.R: // Crop - 切り出し（注釈の編集中は使わない）
                 if (_isAnnotationMode)
@@ -579,6 +581,26 @@ public sealed partial class CapturePage : UserControl
         UpdateCropButtonText();
     }
 
+    /// <summary>注釈の文書が変わったときに、保存の要否を更新する。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">イベントの引数。</param>
+    /// <remarks>
+    /// <b>注釈をすべて削除した場合も保存が必要</b>である（既に書き出した付随ファイルを消すため）。
+    /// そのため「注釈があるか」ではなく「文書が変わったか」で保存の要否を立てる。
+    /// </remarks>
+    private void OnAnnotationDocumentChanged(object? sender, EventArgs e)
+    {
+        _ = sender;
+        _ = e;
+
+        if (_isResettingAnnotationDocument)
+        {
+            return;
+        }
+
+        _annotationDocument = AnnotationEditor.Layer.Document;
+        _viewModel.HasPendingAnnotationSave = true;
+    }
     /// <summary>注釈の文書を現在のプレビュー画像に合わせて作り直す。</summary>
     /// <remarks>
     /// <b>画像を差し替えたら注釈は空になる</b>（注釈の座標は元画像ピクセルであり、別の画像へは写せない）。
@@ -613,28 +635,27 @@ public sealed partial class CapturePage : UserControl
         }
 
         _viewModel.HasPendingAnnotationSave = false;
-        UpdateAnnotationButtons();
     }
 
-    /// <summary>注釈の編集モードを切り替える（トグル ボタン）。</summary>
-    private void OnAnnotationButtonClick(object? sender, RoutedEventArgs e)
+    /// <summary>注釈の編集モードを切り替える（注釈レイヤーは常にプレビューの上へ重ねる）。</summary>
+    private void OnAnnotationButtonClick(object? sender, RoutedEventArgs e) => _ = (sender, e);
+
+    /// <summary>注釈レイヤーをプレビューの表示位置（ズーム・パン）へ合わせる。</summary>
+    private void ApplyAnnotationOverlayTransform()
     {
-        if (_isAnnotationMode)
-        {
-            ExitAnnotationMode();
-        }
-        else
-        {
-            EnterAnnotationMode();
-        }
+        AnnotationEditor.Layer.PreviewImageRect = new EsRect(
+            CropView.ImageRectViewport().X,
+            CropView.ImageRectViewport().Y,
+            CropView.ImageRectViewport().Width,
+            CropView.ImageRectViewport().Height);
+        AnnotationEditor.Layer.InvalidateVisual();
     }
 
-    /// <summary>注釈の編集モードへ入る（画像の上へ注釈レイヤーを重ねる）。</summary>
+    /// <summary>プレビューの上へ注釈レイヤーを重ねる（画像・影・ズームはプレビューが描く）。</summary>
     private void EnterAnnotationMode()
     {
         if (_viewModel.PreviewImage is not { } image)
         {
-            AnnotationButton.IsChecked = false;
             return;
         }
 
@@ -646,84 +667,48 @@ public sealed partial class CapturePage : UserControl
         }
 
         ApplyAnnotationSettings();
+        ApplyAnnotationOverlayTransform();
         _isAnnotationMode = true;
-        AnnotationArea.IsVisible = true;
-        CropView.IsVisible = false;
-        AnnotationButton.IsChecked = true;
-        UpdateAnnotationButtons();
-        AnnotationEditor.Focus();
     }
 
-    /// <summary>注釈の編集モードを終える（注釈は保持し、保存に使う）。</summary>
+    /// <summary>注釈の編集状態を終える（注釈は保持し、保存に使う）。</summary>
     private void ExitAnnotationMode()
     {
-        if (!_isAnnotationMode)
-        {
-            return;
-        }
-
+        AnnotationEditor.Layer.EndTextEditing();
         _isAnnotationMode = false;
-        AnnotationArea.IsVisible = false;
-        CropView.IsVisible = true;
-        AnnotationButton.IsChecked = false;
     }
 
-    /// <summary>注釈の文書が変わったときに、保存の要否と元に戻す・やり直すの可否を更新する。</summary>
-    /// <remarks>
-    /// <b>注釈をすべて削除した場合も保存が必要</b>である（既に書き出した付随ファイルを消すため）。
-    /// そのため「注釈があるか」ではなく「文書が変わったか」で保存の要否を立てる。
-    /// </remarks>
-    private void OnAnnotationDocumentChanged(object? sender, EventArgs e)
+    /// <summary>プレビューの右クリック位置を左上として注釈を追加するメニューを出す。</summary>
+    /// <param name="viewportPosition">右クリックした位置（ズーム ビューの座標）。</param>
+    private void ShowAnnotationAddMenu(Point viewportPosition)
     {
-        if (_isResettingAnnotationDocument)
+        if (_viewModel.PreviewImage is null)
         {
             return;
         }
 
-        _annotationDocument = AnnotationEditor.Layer.Document;
-        _viewModel.HasPendingAnnotationSave = true;
-        UpdateAnnotationButtons();
+        EnsureAnnotationDocument();
+        ApplyAnnotationOverlayTransform();
+
+        var menu = new ContextMenu();
+        var frame = new MenuItem { Header = "枠線を追加" };
+        frame.Click += (_, _) => AnnotationEditor.Layer.AddFrameAt(viewportPosition);
+        var bubble = new MenuItem { Header = "吹き出しを追加" };
+        bubble.Click += (_, _) => AnnotationEditor.Layer.AddBubbleAt(viewportPosition);
+        menu.Items.Add(frame);
+        menu.Items.Add(bubble);
+        menu.Open(CropView);
     }
 
-    /// <summary>元に戻す・やり直すボタンの使用可否を注釈の履歴へ合わせる。</summary>
-    private void UpdateAnnotationButtons()
+    /// <summary>注釈の文書を現在のプレビュー画像に合わせて用意する。</summary>
+    private void EnsureAnnotationDocument()
     {
-        AnnotationUndoButton.IsEnabled = AnnotationEditor.Layer.CanUndo;
-        AnnotationRedoButton.IsEnabled = AnnotationEditor.Layer.CanRedo;
-    }
+        if (_annotationDocument is not null)
+        {
+            return;
+        }
 
-    /// <summary>注釈の枠線を画像の中央へ追加する。</summary>
-    private void OnAddFrameClick(object? sender, RoutedEventArgs e)
-    {
-        var layer = AnnotationEditor.Layer;
-        var width = Math.Max(1, layer.SourcePixelWidth);
-        var height = Math.Max(1, layer.SourcePixelHeight);
-        layer.AddFrame(new EsRect(width * 0.15, height * 0.15, width * 0.35, height * 0.25));
-        UpdateAnnotationButtons();
-    }
-
-    /// <summary>注釈の吹き出しを画像の中央へ追加する。</summary>
-    private void OnAddBubbleClick(object? sender, RoutedEventArgs e)
-    {
-        var layer = AnnotationEditor.Layer;
-        var width = Math.Max(1, layer.SourcePixelWidth);
-        var height = Math.Max(1, layer.SourcePixelHeight);
-        layer.AddBubble(new EsRect(width * 0.45, height * 0.55, width * 0.4, height * 0.25), "本文を入力");
-        UpdateAnnotationButtons();
-    }
-
-    /// <summary>注釈の変更を元に戻す。</summary>
-    private void OnAnnotationUndoClick(object? sender, RoutedEventArgs e)
-    {
-        AnnotationEditor.Layer.Undo();
-        UpdateAnnotationButtons();
-    }
-
-    /// <summary>注釈の変更をやり直す。</summary>
-    private void OnAnnotationRedoClick(object? sender, RoutedEventArgs e)
-    {
-        AnnotationEditor.Layer.Redo();
-        UpdateAnnotationButtons();
+        ResetAnnotationDocument();
     }
 
     /// <summary>注釈の付随ファイル（<c>*.annotations.json</c> / <c>*.annotated.*</c>）を書き出す。</summary>
@@ -1303,6 +1288,12 @@ public sealed partial class CapturePage : UserControl
         {
             // 自動切り出しモード中は右クリックでキャンセルする
             _viewModel.CancelAutoCropCommand.Execute(null);
+            e.Handled = true;
+        }
+        else if (isRight)
+        {
+            // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す
+            ShowAnnotationAddMenu(e.GetPosition(CropView));
             e.Handled = true;
         }
     }

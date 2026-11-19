@@ -1,8 +1,11 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
 using Avalonia.Threading;
 using EsUtil.Feature.Annotation;
+using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
@@ -247,6 +250,15 @@ public sealed partial class AnnotationLayerControl
                 _caretIndex = TextForInput.Length;
                 SyncTextSelectionRange();
                 InvalidateVisual();
+                return true;
+            case Key.C when control:
+                _ = CopySelectionAsync();
+                return true;
+            case Key.X when control:
+                _ = CutSelectionAsync();
+                return true;
+            case Key.V when control:
+                _ = PasteAsync();
                 return true;
             default:
                 return false;
@@ -650,6 +662,78 @@ public sealed partial class AnnotationLayerControl
         }
 
         return layout.Lines.Count - 1;
+    }
+
+    /// <summary>選択中の文字をクリップボードへコピーする。</summary>
+    /// <returns>コピーの非同期処理。</returns>
+    private async Task CopySelectionAsync()
+    {
+        var text = SelectedText();
+        if (text.Length == 0 || TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard)
+        {
+            return;
+        }
+
+        try
+        {
+            await clipboard.SetTextAsync(text);
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            // クリップボードを掴めない環境ではコピーを諦める（編集は続けられる）
+        }
+    }
+
+    /// <summary>選択中の文字をクリップボードへ切り取る。</summary>
+    /// <returns>切り取りの非同期処理。</returns>
+    private async Task CutSelectionAsync()
+    {
+        var text = SelectedText();
+        if (text.Length == 0)
+        {
+            return;
+        }
+
+        await CopySelectionAsync();
+        ReplaceSelection(string.Empty);
+    }
+
+    /// <summary>クリップボードの文字を挿入する（選択範囲は置き換える）。</summary>
+    /// <returns>貼り付けの非同期処理。</returns>
+    private async Task PasteAsync()
+    {
+        if (TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard)
+        {
+            return;
+        }
+
+        string? text;
+        try
+        {
+            text = await clipboard.TryGetTextAsync();
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            // クリップボードを掴めない環境では貼り付けを諦める（編集は続けられる）
+            return;
+        }
+
+        if (string.IsNullOrEmpty(text))
+        {
+            return;
+        }
+
+        ReplaceSelection(text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace("\r", string.Empty, StringComparison.Ordinal));
+    }
+
+    /// <summary>選択中の文字を取得する。</summary>
+    /// <returns>選択中の文字列（選択が無い場合は空）。</returns>
+    private string SelectedText()
+    {
+        var text = TextForInput;
+        var start = Math.Clamp(SelectionStart, 0, text.Length);
+        var end = Math.Clamp(SelectionEnd, 0, text.Length);
+        return end <= start ? string.Empty : text[start..end];
     }
 
     /// <summary>選択中の吹き出しの本文の行を解決する。</summary>

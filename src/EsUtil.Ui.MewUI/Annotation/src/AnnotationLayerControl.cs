@@ -112,6 +112,65 @@ public sealed partial class AnnotationLayerControl : Panel
         }
     }
 
+    /// <summary>画像を自分で描くかどうかを取得または設定する。</summary>
+    /// <value>プレビューへ重ねるときは <see langword="false"/>（画像と影はプレビューが描く）。</value>
+    public bool ShowImage { get; set; } = true;
+
+    /// <summary>プレビュー内の画像の表示矩形（DIP）を取得または設定する。</summary>
+    /// <value>プレビューが画像を表示している矩形。 未設定の場合は自分の領域いっぱいへ中央寄せで表示する。</value>
+    public EsRect? PreviewImageRect { get; set; }
+
+    /// <summary>指定した位置（DIP）を左上として枠線を追加する。</summary>
+    /// <param name="dip">左上の位置（ローカル DIP）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddFrameAt(EsPoint dip) => AddFrameAt(new Point(dip.X, dip.Y));
+
+    /// <summary>指定した位置（DIP）を左上として枠線を追加する。</summary>
+    /// <param name="dip">左上の位置（ローカル DIP）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddFrameAt(Point dip) => AddFrame(ResolveDefaultBounds(ToSource(dip)));
+
+    /// <summary>指定した位置（DIP）を左上として吹き出しを追加する。</summary>
+    /// <param name="dip">左上の位置（ローカル DIP）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddBubbleAt(EsPoint dip) => AddBubbleAt(new Point(dip.X, dip.Y));
+
+    /// <summary>指定した位置（DIP）を左上として吹き出しを追加する。</summary>
+    /// <param name="dip">左上の位置（ローカル DIP）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddBubbleAt(Point dip) => AddBubble(ResolveDefaultBounds(ToSource(dip)), string.Empty);
+
+    /// <summary>追加する注釈の既定の矩形を求める（指定した位置を左上にし、画像の内側へ収める）。</summary>
+    /// <param name="sourcePoint">左上の位置（元画像ピクセル）。</param>
+    /// <returns>画像の内側へ収めた矩形。</returns>
+    private EsRect ResolveDefaultBounds(EsPoint sourcePoint)
+    {
+        var imageWidth = Math.Max(1, SourcePixelWidth);
+        var imageHeight = Math.Max(1, SourcePixelHeight);
+        var width = Math.Min(240, imageWidth);
+        var height = Math.Min(160, imageHeight);
+        var x = Math.Clamp(sourcePoint.X, 0, Math.Max(0, imageWidth - width));
+        var y = Math.Clamp(sourcePoint.Y, 0, Math.Max(0, imageHeight - height));
+        return new EsRect(x, y, width, height);
+    }
+
+    /// <summary>ポインターを押している間かどうか（離した後に注釈の外なら入力を受け取らない）。</summary>
+    private bool _isPointerDown;
+
+    /// <summary>指定した位置（DIP）に注釈があるかどうかを判定する（プレビューの入力を受け取るかの判断に使う）。</summary>
+    /// <param name="dip">位置（ローカル DIP）。</param>
+    /// <returns>注釈・ハンドル・しっぽの近くにある場合は <see langword="true"/>。</returns>
+    public bool HitTestAt(Point dip)
+    {
+        var source = ToSource(dip);
+        if (AnnotationHitTest.HitTest(_document, source) is not null)
+        {
+            return true;
+        }
+
+        return Selected is BubbleAnnotation bubble && IsNearTailTip(bubble, source);
+    }
+
     /// <summary>元画像の幅（ピクセル）を取得または設定する。</summary>
     public int SourcePixelWidth { get; set; } = 1;
 
@@ -604,6 +663,11 @@ public sealed partial class AnnotationLayerControl : Panel
         if (clientWidth <= 0 || clientHeight <= 0)
         {
             return (1, default);
+        }
+
+        if (PreviewImageRect is { Width: > 0 } preview)
+        {
+            return (preview.Width / width, new Point(preview.X, preview.Y));
         }
 
         var scale = Math.Min(clientWidth / width, clientHeight / height);

@@ -536,6 +536,15 @@ public sealed partial class AnnotationLayerControl
                     return ToggleDecoration(style => style.IsItalic, static (style, value) => style with { IsItalic = value });
                 case VirtualKey.U:
                     return ToggleDecoration(style => style.IsUnderline, static (style, value) => style with { IsUnderline = value });
+                case VirtualKey.C:
+                    _ = CopySelectionAsync();
+                    return true;
+                case VirtualKey.X:
+                    _ = CutSelectionAsync();
+                    return true;
+                case VirtualKey.V:
+                    _ = PasteAsync();
+                    return true;
                 case VirtualKey.A:
                     _selectionAnchor = 0;
                     _caretIndex = TextForInput.Length;
@@ -580,6 +589,62 @@ public sealed partial class AnnotationLayerControl
             default:
                 return false;
         }
+    }
+
+    /// <summary>選択中の文字をクリップボードへコピーする。</summary>
+    /// <returns>コピーの非同期処理。</returns>
+    private async Task CopySelectionAsync()
+    {
+        var text = SelectedText();
+        if (text.Length == 0)
+        {
+            return;
+        }
+
+        var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+        package.SetText(text);
+        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+        await Task.CompletedTask;
+    }
+
+    /// <summary>選択中の文字を切り取る。</summary>
+    /// <returns>切り取りの非同期処理。</returns>
+    private async Task CutSelectionAsync()
+    {
+        if (SelectedText().Length == 0)
+        {
+            return;
+        }
+
+        await CopySelectionAsync();
+        ReplaceSelection(string.Empty);
+    }
+
+    /// <summary>クリップボードの文字を挿入する。</summary>
+    /// <returns>貼り付けの非同期処理。</returns>
+    private async Task PasteAsync()
+    {
+        var content = Windows.ApplicationModel.DataTransfer.Clipboard.GetContent();
+        if (!content.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.Text))
+        {
+            return;
+        }
+
+        var text = await content.GetTextAsync();
+        if (!string.IsNullOrEmpty(text))
+        {
+            ReplaceSelection(text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n'));
+        }
+    }
+
+    /// <summary>選択中の文字を取得する。</summary>
+    /// <returns>選択中の文字列（選択が無い場合は空）。</returns>
+    private string SelectedText()
+    {
+        var text = TextForInput;
+        var start = Math.Clamp(TextSelectionStart, 0, text.Length);
+        var end = Math.Clamp(TextSelectionEnd, 0, text.Length);
+        return end <= start ? string.Empty : text[start..end];
     }
 
     /// <summary>確定した文字列を受け取る（IME の変換中は受け取らない）。</summary>

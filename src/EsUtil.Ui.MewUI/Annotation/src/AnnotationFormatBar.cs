@@ -108,7 +108,18 @@ public sealed class AnnotationFormatBar : ContentControl
     internal const double SizeSelectorWidth = 104;
 
     /// <summary>色の選択の幅（DIP）。</summary>
-    internal const double ColorSelectorWidth = 220;
+    /// <summary>色の選択の幅（DIP。 AvaloniaUI 版と同じ計算で求める）。</summary>
+    internal static readonly double ColorSelectorWidth = ResolveColorSelectorWidth();
+
+    /// <summary>色の選択の幅を求める（「■ + 全角 4 文字 + 100%」と「■ + #FFFFFFFF」の広いほう）。</summary>
+    /// <returns>幅（DIP）。</returns>
+    private static double ResolveColorSelectorWidth()
+    {
+        var style = AnnotationDefaults.TextStyle with { FontSize = 12 };
+        var nameWidth = AnnotationTextMetrics.Measure("薄い灰色+100%", style).Width;
+        var hexWidth = AnnotationTextMetrics.Measure("#FFFFFFFF", style).Width;
+        return Math.Ceiling(24 + Math.Max(nameWidth, hexWidth) + 34);
+    }
 
     /// <summary>操作の間の余白（DIP）。</summary>
     private const double ControlSpacing = 4;
@@ -169,9 +180,11 @@ public sealed class AnnotationFormatBar : ContentControl
             Text = text,
             FontWeight = bold ? FontWeight.Bold : FontWeight.Normal,
             FontStyle = italic ? FontStyle.Italic : FontStyle.Normal,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
         };
 
-        return new ToggleButton { Content = content, Width = 34 };
+        return new ToggleButton { Content = content, Width = 34, Padding = new Thickness(0) };
     }
 
     /// <summary>選択中の範囲へフォントを適用する（同じ値でも適用する）。</summary>

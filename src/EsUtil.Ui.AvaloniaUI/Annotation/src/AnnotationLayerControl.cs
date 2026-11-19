@@ -32,6 +32,14 @@ public sealed partial class AnnotationLayerControl : Control
     public static readonly StyledProperty<IImage?> SourceProperty =
         AvaloniaProperty.Register<AnnotationLayerControl, IImage?>(nameof(Source));
 
+    /// <summary>画像を自分で描くかどうかを取得または設定する。</summary>
+    /// <value>プレビューへ重ねるときは <see langword="false"/>（画像と影はプレビューが描く）。</value>
+    public bool ShowImage { get; set; } = true;
+
+    /// <summary>プレビュー内の画像の表示矩形（DIP）を取得または設定する。</summary>
+    /// <value>プレビューが画像を表示している矩形。 未設定の場合は自分の領域いっぱいへ中央寄せで表示する。</value>
+    /// <remarks><b>プレビューのズーム・パンへ追従する</b>: ホストがズームの変化のたびに設定する。</remarks>
+    public EsRect? PreviewImageRect { get; set; }
     /// <summary>元画像の幅（ピクセル）を取得または設定する。</summary>
     public static readonly StyledProperty<int> SourcePixelWidthProperty =
         AvaloniaProperty.Register<AnnotationLayerControl, int>(nameof(SourcePixelWidth), 1);
@@ -235,6 +243,65 @@ public sealed partial class AnnotationLayerControl : Control
         => Selected is BubbleAnnotation bubble
             ? bubble.Text.StyleAt(TextSelectionRange.Length <= 0 ? 0 : TextSelectionRange.Start)
             : AnnotationDefaults.TextStyle;
+
+    /// <summary>指定した位置を左上として枠線を追加する（右クリックのメニューから追加する）。</summary>
+    /// <param name="sourcePoint">左上の位置（元画像ピクセル）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddFrameAt(EsPoint sourcePoint) => AddFrame(ResolveDefaultBounds(sourcePoint));
+
+    /// <summary>指定した位置（DIP）を左上として枠線を追加する。</summary>
+    /// <param name="dip">左上の位置（ローカル DIP）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddFrameAt(Point dip) => AddFrameAt(ToSource(dip));
+
+    /// <summary>指定した位置を左上として吹き出しを追加する（右クリックのメニューから追加する）。</summary>
+    /// <param name="sourcePoint">左上の位置（元画像ピクセル）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddBubbleAt(EsPoint sourcePoint) => AddBubble(ResolveDefaultBounds(sourcePoint), string.Empty);
+
+    /// <summary>指定した位置（DIP）を左上として吹き出しを追加する。</summary>
+    /// <param name="dip">左上の位置（ローカル DIP）。</param>
+    /// <returns>追加した注釈の識別子。</returns>
+    public string AddBubbleAt(Point dip) => AddBubbleAt(ToSource(dip));
+
+    /// <summary>追加する注釈の既定の矩形を求める（指定した位置を左上にし、画像の内側へ収める）。</summary>
+    /// <param name="sourcePoint">左上の位置（元画像ピクセル）。</param>
+    /// <returns>画像の内側へ収めた矩形。</returns>
+    private EsRect ResolveDefaultBounds(EsPoint sourcePoint)
+    {
+        var imageWidth = Math.Max(1, SourcePixelWidth);
+        var imageHeight = Math.Max(1, SourcePixelHeight);
+        var width = Math.Min(DefaultNewWidth, imageWidth);
+        var height = Math.Min(DefaultNewHeight, imageHeight);
+        var x = Math.Clamp(sourcePoint.X, 0, Math.Max(0, imageWidth - width));
+        var y = Math.Clamp(sourcePoint.Y, 0, Math.Max(0, imageHeight - height));
+        return new EsRect(x, y, width, height);
+    }
+
+    /// <summary>右クリックのメニューから追加する注釈の既定の幅（元画像ピクセル）。</summary>
+    private const double DefaultNewWidth = 240;
+
+    /// <summary>右クリックのメニューから追加する注釈の既定の高さ（元画像ピクセル）。</summary>
+    private const double DefaultNewHeight = 160;
+
+    /// <summary>指定した位置（DIP）に注釈があるかどうかを判定する（プレビューの入力を受け取るかの判断に使う）。</summary>
+    /// <param name="dip">位置（ローカル DIP）。</param>
+    /// <returns>注釈・ハンドル・しっぽの近くにある場合は <see langword="true"/>。</returns>
+    public bool HitTestAt(Point dip)
+    {
+        var source = ToSource(dip);
+        if (AnnotationHitTest.HitTest(_document, source) is not null)
+        {
+            return true;
+        }
+
+        if (Selected is BubbleAnnotation bubble && IsNearTailTip(bubble, source))
+        {
+            return true;
+        }
+
+        return HitsSelectionHandle(dip);
+    }
 
     /// <summary>枠線の注釈を追加する。</summary>
     /// <param name="bounds">矩形（元画像ピクセル）。</param>
@@ -637,7 +704,7 @@ public sealed partial class AnnotationLayerControl : Control
         base.Render(context);
 
         var (scale, offset) = ResolveImageTransform();
-        if (Source is { } image)
+        if (ShowImage && Source is { } image)
         {
             context.DrawImage(image, new Rect(offset.X, offset.Y, SourcePixelWidth * scale, SourcePixelHeight * scale));
         }
@@ -664,6 +731,9 @@ public sealed partial class AnnotationLayerControl : Control
         DrawTailHandle(context);
     }
 
+    /// <summary>ポインターを押している間かどうか（離した後に注釈の外なら入力を受け取らない）。</summary>
+    private bool _isPointerDown;
+
     /// <summary>ポインターが押されたときの処理（左: 選択・移動・サイズ変更。 右: 編集メニュー）。</summary>
     /// <param name="e">ポインターの引数。</param>
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -671,6 +741,7 @@ public sealed partial class AnnotationLayerControl : Control
         base.OnPointerPressed(e);
 
         var point = e.GetCurrentPoint(this);
+        _isPointerDown = true;
 
         if (point.Properties.IsRightButtonPressed)
         {
@@ -783,6 +854,12 @@ public sealed partial class AnnotationLayerControl : Control
 
         _marquee.Move(source);
 
+        // 注釈の外へ出たら入力を受け取らない（プレビューのズーム・パンへ渡す）
+        if (!_isPointerDown && !_isEditingText && !HitTestAt(e.GetPosition(this)))
+        {
+            IsHitTestVisible = false;
+        }
+
         // しっぽのハンドルの上では専用のカーソルにする（Marquee の Move が設定した形状を上書きする）
         if (Selected is BubbleAnnotation selectedBubble && IsNearTailTip(selectedBubble, source))
         {
@@ -812,6 +889,7 @@ public sealed partial class AnnotationLayerControl : Control
             return;
         }
 
+        _isPointerDown = false;
         _marquee.Release(ToSource(e.GetPosition(this)));
         e.Pointer.Capture(null);
         InvalidateVisual();

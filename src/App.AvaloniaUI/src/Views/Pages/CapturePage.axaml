@@ -180,27 +180,9 @@
 <crop:CropViewControl x:Name="CropView"
                            Background="Transparent"/>
 
-            <!-- 注釈の編集モード（オンにすると画像の上へ注釈レイヤーを重ねる）。
-                 AnnotationTextEditor は本文の表示・その場編集と書式バーをまとめて持つ。 -->
-            <Grid x:Name="AnnotationArea" IsVisible="False" Background="{DynamicResource ImageAreaBackgroundBrush}">
-                <annotation:AnnotationTextEditor x:Name="AnnotationEditor" Margin="8"/>
-                <!-- 注釈の操作（追加・元に戻す・やり直す）。 画像の上へ重ねず、左上へ置く -->
-                <Border HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Margin="12"
-                        Padding="4"
-                        CornerRadius="4"
-                        Background="#F2FFFFFF"
-                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                        BorderThickness="1">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <Button x:Name="AddFrameButton" Classes="toolbar" Content="枠線を追加" Click="OnAddFrameClick"/>
-                        <Button x:Name="AddBubbleButton" Classes="toolbar" Content="吹き出しを追加" Click="OnAddBubbleClick"/>
-                        <Button x:Name="AnnotationUndoButton" Classes="toolbar" Content="元に戻す" IsEnabled="False" Click="OnAnnotationUndoClick"/>
-                        <Button x:Name="AnnotationRedoButton" Classes="toolbar" Content="やり直す" IsEnabled="False" Click="OnAnnotationRedoClick"/>
-                    </StackPanel>
-                </Border>
-            </Grid>
+            <!-- 注釈レイヤー（プレビュー画像の上へ重ねる。 画像・影・ズーム・パンは CropViewControl が描く）。
+                 注釈の無い場所では入力を受け取らず、プレビューの操作（ズーム・パン）を妨げない。 -->
+            <annotation:AnnotationTextEditor x:Name="AnnotationEditor"/>
 
         </Grid>
 

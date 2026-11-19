@@ -99,7 +99,8 @@ internal static class CapturePage
     {
         var viewModel = services.Main;
         var settings = services.Settings.Current;
-        var preview = BuildPreview(viewModel, settings, out var crop, out var captureSession, out var annotation);
+        Action<Point> showAddAnnotationMenu = _ => { };
+        var preview = BuildPreview(viewModel, settings, out var crop, out var captureSession, out var annotation, position => showAddAnnotationMenu(position));
 
         // 注釈の付随ファイル（*.annotations.json / *.annotated.*）の書き出しは UI が担う（コアは順序と可否だけを決める）
         viewModel.SaveCompanionFilesAsync = path => SaveAnnotationFilesAsync(annotation, path);
@@ -350,62 +351,6 @@ internal static class CapturePage
             }
         };
 
-        // 注釈（枠線・吹き出し）の編集モード。 トグルで切り替え、注釈の操作はその右へ並べる。
-        // 注釈モードの間は切り出しビューを隠す（入力の取り合いを避ける）
-        var annotationToggle = new ToggleButton
-        {
-            Content = new TextBlock { Text = "注釈" },
-            Height = AppStyles.ToolbarButtonHeight,
-            Padding = new Thickness(AppStyles.ToolbarPaddingX, AppStyles.ToolbarPaddingY),
-            StyleName = AppStyles.ToolbarToggle,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(1, 0, 1, 0),
-        };
-        annotationToggle.FontSize(AppStyles.ToolbarFontSize);
-
-        var annotationTools = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 4,
-            IsVisible = false,
-        };
-
-        var addFrame = new Button { Content = new TextBlock { Text = "枠線を追加" } };
-        addFrame.OnClick(() =>
-        {
-            var layer = annotation.Layer;
-            var width = Math.Max(1, layer.SourcePixelWidth);
-            var height = Math.Max(1, layer.SourcePixelHeight);
-            layer.AddFrame(new EsRect(width * 0.15, height * 0.15, width * 0.35, height * 0.25));
-        });
-
-        var addBubble = new Button { Content = new TextBlock { Text = "吹き出しを追加" } };
-        addBubble.OnClick(() =>
-        {
-            var layer = annotation.Layer;
-            var width = Math.Max(1, layer.SourcePixelWidth);
-            var height = Math.Max(1, layer.SourcePixelHeight);
-            layer.AddBubble(new EsRect(width * 0.45, height * 0.55, width * 0.4, height * 0.25), "本文を入力");
-        });
-
-        var annotationUndo = new Button { Content = new TextBlock { Text = "元に戻す" } };
-        annotationUndo.OnClick(() => annotation.Layer.Undo());
-
-        var annotationRedo = new Button { Content = new TextBlock { Text = "やり直す" } };
-        annotationRedo.OnClick(() => annotation.Layer.Redo());
-
-        annotationTools.Add(addFrame);
-        annotationTools.Add(addBubble);
-        annotationTools.Add(annotationUndo);
-        annotationTools.Add(annotationRedo);
-
-        annotationToggle.OnCheckedChanged(isChecked =>
-        {
-            annotation.IsVisible = isChecked;
-            annotationTools.IsVisible = isChecked;
-            crop.IsVisible = !isChecked;
-        });
-
         var toolbar = new WrapPanel()
             .Margin(new Thickness(2, AppStyles.ToolbarMarginTop, AppStyles.ToolbarMarginRight, AppStyles.ToolbarMarginBottom))
             .Children(
@@ -420,8 +365,6 @@ internal static class CapturePage
                 areaSelect,
                 AppStyles.CreateToolbarDivider(),
                 cropButton,
-                annotationToggle,
-                annotationTools,
                 AppStyles.CreateToolbarDivider(),
                 hideTaskbar);
         // ファイル名テンプレートの幅をテキストの実測に合わせる（上限は折り返さない幅）。
@@ -630,6 +573,57 @@ internal static class CapturePage
         root.Add(menuPanel.Column(0));
         root.Add(zoomMenu.Column(0));
 
+        // 注釈の追加メニュー（プレビューの右クリック位置へ出す）
+        Border? annotationAddMenu = null;
+        showAddAnnotationMenu = position =>
+        {
+            if (annotationAddMenu is not null)
+            {
+                page.Remove(annotationAddMenu);
+                annotationAddMenu = null;
+            }
+
+            var items = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
+            Border? menu = null;
+
+            void AddItem(string text, Action action)
+            {
+                var button = new Button
+                {
+                    Content = new TextBlock().Text(text).FontSize(12),
+                    Padding = new Thickness(10, 6, 10, 6),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    CornerRadius = 0,
+                    StyleName = AppStyles.FlatButton,
+                };
+
+                button.OnClick(() =>
+                {
+                    if (menu is not null)
+                    {
+                        page.Remove(menu);
+                        annotationAddMenu = null;
+                    }
+
+                    action();
+                });
+                items.Add(button);
+            }
+
+            AddItem("枠線を追加", () => annotation.Layer.AddFrameAt(position));
+            AddItem("吹き出しを追加", () => annotation.Layer.AddBubbleAt(position));
+            menu = new Border
+            {
+                Child = items,
+                StyleName = AppStyles.MenuSurface,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(position.X, position.Y, 0, 0),
+            };
+
+            annotationAddMenu = menu;
+            page.Add(menu.Row(1));
+        };
         // テーマが変わったらスタイルで表せない値（アイコンの色）を描き直す
         AppStyles.ThemeChanged += (_, _) =>
         {
@@ -994,7 +988,8 @@ internal static class CapturePage
     /// <param name="settings">設定（切り出しの外観）。</param>
     /// <param name="crop">生成したクロップビュー（ツールバーから操作するため返す）。</param>
     /// <param name="captureSession">生成した撮影・切り出しの Facade（ツールバーのボタン・メニューから開始する）。</param>
-    /// <param name="annotation">生成した注釈エディター（ツールバーのトグル・保存から操作する）。</param>
+    /// <param name="annotation">生成した注釈エディター（保存・追加メニューから操作する）。</param>
+    /// <param name="showAddAnnotationMenu">右クリック位置へ注釈の追加メニューを出す処理。</param>
     /// <returns>プレビューと切り出しを重ねた要素。</returns>
     /// <remarks>
     /// プレビューは MewUI 版の <see cref="CropViewControl"/> を使う（内部でズームビューを内包し、矩形オーバーレイを重ねる）。<br/>
@@ -1007,7 +1002,8 @@ internal static class CapturePage
         Settings settings,
         out CropViewControl crop,
         out CaptureSessionControl captureSession,
-        out AnnotationTextEditor annotation)
+        out AnnotationTextEditor annotation,
+        Action<Point> showAddAnnotationMenu)
     {
         crop = new CropViewControl();
 
@@ -1072,9 +1068,12 @@ internal static class CapturePage
         // out パラメーターはラムダ内で参照できないため、ローカル変数へコピーして使う
         var annotationEditor = new AnnotationTextEditor
         {
-            IsVisible = false,
             TextFormat = settings.ColorTextFormat,
         };
+
+        // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
+        annotationEditor.Layer.ShowImage = false;
+        annotationEditor.Layer.IsHitTestVisible = false;
         annotation = annotationEditor;
         host.Children(annotationEditor);
 
@@ -1107,6 +1106,13 @@ internal static class CapturePage
         };
 
         annotationEditor.Layer.DocumentChanged += (_, _) => viewModel.HasPendingAnnotationSave = true;
+
+        // プレビューのズーム・パンへ注釈を追従させる（out パラメーターはラムダ内で参照できないためローカルへコピーする）
+        var cropForAnnotation = crop;
+        void SyncAnnotationOverlay() => annotationEditor.Layer.PreviewImageRect = cropForAnnotation.ImageRectViewport();
+        SyncAnnotationOverlay();
+        cropForAnnotation.ZoomChanged += (_, _) => SyncAnnotationOverlay();
+        cropForAnnotation.ViewportChanged += (_, _) => SyncAnnotationOverlay();
         settings.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(Settings.ColorTextFormat), StringComparison.Ordinal))
@@ -1133,6 +1139,12 @@ internal static class CapturePage
             var point = new EsPoint(position.X, position.Y);
             UpdatePointerText(viewModel, zoomView, point);
 
+            // 注釈の上にポインタがある間だけ注釈レイヤーが入力を受け取る（それ以外はプレビューのズーム・パンへ渡す）
+            if (!annotationEditor.Layer.IsEditingText)
+            {
+                annotationEditor.Layer.IsHitTestVisible = annotationEditor.Layer.HitTestAt(position);
+            }
+
             // 自動切り出し中はホバー中の矩形を更新する（Avalonia 版と同じ判定）
             if (viewModel.IsAutoCropActive)
             {
@@ -1151,6 +1163,19 @@ internal static class CapturePage
         });
 
         // ダブルクリックで矩形を確定し、矩形の外側ならキャンセルする（Avalonia 版と同じ操作）
+        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す
+        zoomView.OnMouseDown(e =>
+        {
+            if (!e.RightButton || viewModel.PreviewImage is null)
+            {
+                return;
+            }
+
+            var position = e.GetPosition(zoomView);
+            showAddAnnotationMenu(position);
+            e.Handled = true;
+        });
+
         zoomView.OnMouseDoubleClick(e =>
         {
             if (!viewModel.IsAutoCropActive)

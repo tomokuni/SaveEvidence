@@ -30,7 +30,7 @@ public sealed partial class AnnotationLayerControl
         graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
         var (scale, offset) = ResolveImageTransform();
-        if (_image is { } image)
+        if (ShowImage && _image is { } image)
         {
             graphics.DrawImage(
                 image,
