@@ -99,8 +99,7 @@ internal static class CapturePage
     {
         var viewModel = services.Main;
         var settings = services.Settings.Current;
-        Action<Point> showAddAnnotationMenu = _ => { };
-        var preview = BuildPreview(viewModel, settings, out var crop, out var captureSession, out var annotation, position => showAddAnnotationMenu(position));
+        var preview = BuildPreview(viewModel, settings, out var crop, out var captureSession, out var annotation);
 
         // 注釈の付随ファイル（*.annotations.json / *.annotated.*）の書き出しは UI が担う（コアは順序と可否だけを決める）
         viewModel.SaveCompanionFilesAsync = path => SaveAnnotationFilesAsync(annotation, path);
@@ -573,57 +572,6 @@ internal static class CapturePage
         root.Add(menuPanel.Column(0));
         root.Add(zoomMenu.Column(0));
 
-        // 注釈の追加メニュー（プレビューの右クリック位置へ出す）
-        Border? annotationAddMenu = null;
-        showAddAnnotationMenu = position =>
-        {
-            if (annotationAddMenu is not null)
-            {
-                page.Remove(annotationAddMenu);
-                annotationAddMenu = null;
-            }
-
-            var items = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
-            Border? menu = null;
-
-            void AddItem(string text, Action action)
-            {
-                var button = new Button
-                {
-                    Content = new TextBlock().Text(text).FontSize(12),
-                    Padding = new Thickness(10, 6, 10, 6),
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    CornerRadius = 0,
-                    StyleName = AppStyles.FlatButton,
-                };
-
-                button.OnClick(() =>
-                {
-                    if (menu is not null)
-                    {
-                        page.Remove(menu);
-                        annotationAddMenu = null;
-                    }
-
-                    action();
-                });
-                items.Add(button);
-            }
-
-            AddItem("枠線を追加", () => annotation.Layer.AddFrameAt(position));
-            AddItem("吹き出しを追加", () => annotation.Layer.AddBubbleAt(position));
-            menu = new Border
-            {
-                Child = items,
-                StyleName = AppStyles.MenuSurface,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(position.X, position.Y, 0, 0),
-            };
-
-            annotationAddMenu = menu;
-            page.Add(menu.Row(1));
-        };
         // テーマが変わったらスタイルで表せない値（アイコンの色）を描き直す
         AppStyles.ThemeChanged += (_, _) =>
         {
@@ -790,7 +738,7 @@ internal static class CapturePage
             });
 
         Add("File - 画像を保存", () => _ = viewModel.SaveImageAsync(), () => viewModel.CanSave, "Ctrl+S", CaptureIconFiles.Save);
-        Add("File - 注釈を開く", () => _ = OpenAnnotationsAsync(annotation, viewModel));
+        Add("File - 注釈を開く", () => _ = OpenAnnotationsAsync(annotation, viewModel, services.Settings.Current.SaveFolderPath));
         AddSeparator();
         Add("Clipboard - コピー", () => _ = viewModel.CopyToClipboardAsync(), () => viewModel.CanCopy, "Ctrl+C");
         Add("Clipboard - 貼り付け", () => _ = viewModel.PasteFromClipboardAsync(), () => viewModel.CanPaste, "Ctrl+V");
@@ -989,7 +937,6 @@ internal static class CapturePage
     /// <param name="crop">生成したクロップビュー（ツールバーから操作するため返す）。</param>
     /// <param name="captureSession">生成した撮影・切り出しの Facade（ツールバーのボタン・メニューから開始する）。</param>
     /// <param name="annotation">生成した注釈エディター（保存・追加メニューから操作する）。</param>
-    /// <param name="showAddAnnotationMenu">右クリック位置へ注釈の追加メニューを出す処理。</param>
     /// <returns>プレビューと切り出しを重ねた要素。</returns>
     /// <remarks>
     /// プレビューは MewUI 版の <see cref="CropViewControl"/> を使う（内部でズームビューを内包し、矩形オーバーレイを重ねる）。<br/>
@@ -1002,8 +949,7 @@ internal static class CapturePage
         Settings settings,
         out CropViewControl crop,
         out CaptureSessionControl captureSession,
-        out AnnotationTextEditor annotation,
-        Action<Point> showAddAnnotationMenu)
+        out AnnotationTextEditor annotation)
     {
         crop = new CropViewControl();
 
@@ -1071,9 +1017,60 @@ internal static class CapturePage
             TextFormat = settings.ColorTextFormat,
         };
 
+        // 右クリック位置へ注釈の追加メニューを出す（プレビューと同じ座標系の host へ重ねる）
+        Border? annotationAddMenu = null;
+        void ShowAnnotationMenu(Point position)
+        {
+            if (annotationAddMenu is not null)
+            {
+                host.Remove(annotationAddMenu);
+                annotationAddMenu = null;
+            }
+
+            var items = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
+            Border? menu = null;
+
+            void AddItem(string text, Action action)
+            {
+                var button = new Button
+                {
+                    Content = new TextBlock().Text(text).FontSize(12),
+                    Padding = new Thickness(10, 6, 10, 6),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    CornerRadius = 0,
+                    StyleName = AppStyles.FlatButton,
+                };
+
+                button.OnClick(() =>
+                {
+                    if (menu is not null)
+                    {
+                        host.Remove(menu);
+                        annotationAddMenu = null;
+                    }
+
+                    action();
+                });
+                items.Add(button);
+            }
+
+            AddItem("枠線を追加", () => annotationEditor.Layer.AddFrameAt(position));
+            AddItem("吹き出しを追加", () => annotationEditor.Layer.AddBubbleAt(position));
+            menu = new Border
+            {
+                Child = items,
+                StyleName = AppStyles.MenuSurface,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(position.X, position.Y, 0, 0),
+            };
+
+            annotationAddMenu = menu;
+            host.Add(menu);
+        }
         // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
         annotationEditor.Layer.ShowImage = false;
-        annotationEditor.Layer.IsHitTestVisible = false;
+        annotationEditor.IsHitTestVisible = false;
         annotation = annotationEditor;
         host.Children(annotationEditor);
 
@@ -1133,16 +1130,19 @@ internal static class CapturePage
         // 座標系は CropViewControl と一致する。
         var zoomView = cropView.ZoomView;
 
-        zoomView.OnMouseMove(e =>
+        // マウス操作はヒットテストされた要素から親へ伝わる（兄弟へは伝わらない）。 注釈レイヤーはヒットテストを
+        // 透過するため、実際の宛先は注釈レイヤー・切り出しビューのいずれかになる。 どちらでも受け取れるよう、
+        // 共通の親（プレビューと同じ座標系の host）で受ける。
+        void HandleMouseMove(Point position)
         {
-            var position = e.GetPosition(zoomView);
             var point = new EsPoint(position.X, position.Y);
             UpdatePointerText(viewModel, zoomView, point);
 
             // 注釈の上にポインタがある間だけ注釈レイヤーが入力を受け取る（それ以外はプレビューのズーム・パンへ渡す）
             if (!annotationEditor.Layer.IsEditingText)
             {
-                annotationEditor.Layer.IsHitTestVisible = annotationEditor.Layer.HitTestAt(position);
+                // 注釈の無い場所の入力はプレビュー（ズーム・パン）へ渡すため、重ねた要素ごと透過させる
+                annotationEditor.IsHitTestVisible = annotationEditor.Layer.HitTestAt(position);
             }
 
             // 自動切り出し中はホバー中の矩形を更新する（Avalonia 版と同じ判定）
@@ -1154,26 +1154,40 @@ internal static class CapturePage
                     viewModel.HoveredRect = hovered;
                 }
             }
-        });
+        }
+
+        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す。
+        // 注釈の外を左クリックしたら選択と編集を解除する。
+        bool HandleMouseDown(Point position, bool rightButton)
+        {
+            if (viewModel.PreviewImage is null)
+            {
+                return false;
+            }
+
+            if (!rightButton)
+            {
+                if (!annotationEditor.Layer.HitTestAt(position))
+                {
+                    annotationEditor.Layer.ClearSelection();
+                }
+
+                return false;
+            }
+
+            ShowAnnotationMenu(position);
+            return true;
+        }
+
+        // 左ボタンはズームビューがパンのためにハンドルする（祖先へ伝わらない）ため、押下の通知を受けて
+        // 選択の解除と右クリックメニューの表示を行う。
+        zoomView.MousePressed += (_, e) => HandleMouseDown(e.Position, e.IsRightButton);
+        host.OnMouseMove(e => HandleMouseMove(e.GetPosition(host)));
 
         zoomView.OnMouseLeave(() =>
         {
             viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             viewModel.HoveredRect = null;
-        });
-
-        // ダブルクリックで矩形を確定し、矩形の外側ならキャンセルする（Avalonia 版と同じ操作）
-        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す
-        zoomView.OnMouseDown(e =>
-        {
-            if (!e.RightButton || viewModel.PreviewImage is null)
-            {
-                return;
-            }
-
-            var position = e.GetPosition(zoomView);
-            showAddAnnotationMenu(position);
-            e.Handled = true;
         });
 
         zoomView.OnMouseDoubleClick(e =>
@@ -1235,12 +1249,13 @@ internal static class CapturePage
     /// <summary>保存済みの注釈ファイルを開く（元画像と注釈を読み直す）。</summary>
     /// <param name="annotation">注釈の編集コントロール。</param>
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
+    /// <param name="saveFolder">既定のフォルダ（保存フォルダ）。</param>
     /// <returns>開く処理の非同期タスク。</returns>
     /// <remarks>
     /// <b>元画像も読み直す</b>: 注釈は元画像に属するため、注釈だけを差し替えると別の画像の注釈になる。<br/>
     /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。
     /// </remarks>
-    private static Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel)
+    private static Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel, string saveFolder)
     {
         var dialog = Application.Current?.PlatformServices.FileDialog;
         if (dialog is null)
@@ -1251,6 +1266,7 @@ internal static class CapturePage
         var selected = dialog.OpenFile(new OpenFileDialogOptions
         {
             Title = "注釈を開く",
+            InitialDirectory = Directory.Exists(saveFolder) ? saveFolder : null,
             Filters =
             [
                 new FileFilter("注釈ファイル (*.annotations.json)", ["*.annotations.json"]),

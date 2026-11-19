@@ -340,6 +340,39 @@ public sealed class ZoomViewControl : Control
         }
     }
 
+    /// <summary>重ねた要素から転送されたドラッグのパンを開始する。</summary>
+    /// <param name="position">ポインタ位置（クライアント座標の DIP）。</param>
+    /// <remarks>注釈レイヤーが入力を透過する間も、背面のパンを成立させるために使用する。</remarks>
+    public void BeginDragPan(EsPoint position)
+    {
+        Apply(_session.TryBeginScrollBarDrag(position)
+            ? new ZoomFeedback { ShouldCapturePointer = true }
+            : _session.Press(position));
+    }
+
+    /// <summary>重ねた要素から転送されたドラッグ中のポインタ位置を反映する。</summary>
+    /// <param name="position">ポインタ位置（クライアント座標の DIP）。</param>
+    public void DragPan(EsPoint position)
+    {
+        var feedback = _session.IsDraggingScrollBar
+            ? _session.UpdateScrollBarDrag(position)
+            : _session.Move(position);
+        if (feedback != default)
+        {
+            Apply(feedback);
+        }
+    }
+
+    /// <summary>重ねた要素から転送されたドラッグのパンを終了する。</summary>
+    public void EndDragPan()
+    {
+        var feedback = _session.IsDraggingScrollBar ? _session.ReleaseScrollBarDrag() : _session.Release();
+        if (feedback != default)
+        {
+            Apply(feedback);
+        }
+    }
+
     /// <summary>描画に使うスケーリング係数（DIP → 物理ピクセル）を解決する。</summary>
     /// <returns>スケーリング係数（0.1〜8.0 へ補正済み）。</returns>
     /// <remarks>

@@ -236,6 +236,12 @@ public sealed partial class AnnotationLayerControl : Control
     /// <summary>やり直すことができるかどうかを取得する。</summary>
     public bool CanRedo => _history.CanRedo;
 
+    /// <summary>選択と本文の編集を解除する（注釈の外をクリックしたとき）。</summary>
+    public void ClearSelection()
+    {
+        EndTextEditing();
+        Select(null);
+    }
     /// <summary>枠線を追加する。</summary>
     /// <param name="bounds">位置と大きさ（元画像ピクセル）。</param>
     /// <returns>追加した注釈の識別子。</returns>
@@ -262,7 +268,11 @@ public sealed partial class AnnotationLayerControl : Control
             Bounds = bounds,
             Appearance = DraftDefaults.BubbleAppearance,
             BodyPadding = DraftDefaults.BodyPadding,
-            Tail = new BubbleTail(default, DraftDefaults.TailEdge, 0.5, DraftDefaults.TailWidth),
+            Tail = new BubbleTail(
+                new EsPoint(bounds.Center.X, bounds.Bottom + 40),
+                DraftDefaults.TailEdge,
+                AnnotationDefaults.TailBaseOffsetDefault,
+                DraftDefaults.TailWidth),
             Text = RichText.Create(text, DraftDefaults.TextStyle),
         };
 

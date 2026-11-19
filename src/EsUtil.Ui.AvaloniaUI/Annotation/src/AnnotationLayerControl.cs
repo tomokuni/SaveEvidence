@@ -303,6 +303,12 @@ public sealed partial class AnnotationLayerControl : Control
         return HitsSelectionHandle(dip);
     }
 
+    /// <summary>選択と本文の編集を解除する（注釈の外をクリックしたとき）。</summary>
+    public void ClearSelection()
+    {
+        EndTextEditing();
+        Select(null);
+    }
     /// <summary>枠線の注釈を追加する。</summary>
     /// <param name="bounds">矩形（元画像ピクセル）。</param>
     /// <returns>追加した注釈の識別子。</returns>

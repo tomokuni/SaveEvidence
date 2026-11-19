@@ -23,6 +23,9 @@ public sealed partial class AnnotationLayerControl
     /// <summary>ポインター キャプチャ中のポインター（解放に使う）。</summary>
     private Microsoft.UI.Xaml.Input.Pointer? _capturedPointer;
 
+    /// <summary>ポインターを押している間かどうか（離した後に注釈の外なら入力を受け取らない）。</summary>
+    private bool _isPointerDown;
+
     /// <summary>最後に押下した時刻（ダブルクリックの判定）。</summary>
     private DateTimeOffset _lastPressedAt = DateTimeOffset.MinValue;
 
@@ -205,6 +208,7 @@ public sealed partial class AnnotationLayerControl
         }
 
         _ = Focus(FocusState.Pointer);
+        _isPointerDown = true;
         _capturedPointer = e.Pointer;
         CapturePointer(e.Pointer);
 
@@ -292,6 +296,13 @@ public sealed partial class AnnotationLayerControl
         }
 
         _marquee.Move(source);
+
+        // 注釈の外へ出たら入力を受け取らない（プレビューのズーム・パンへ渡す）
+        if (!_isPointerDown && !IsEditingText && !HitTestAt(point.Position))
+        {
+            IsHitTestVisible = false;
+        }
+
         Redraw();
     }
 
@@ -305,6 +316,7 @@ public sealed partial class AnnotationLayerControl
         var point = e.GetCurrentPoint(this);
         var source = ToSource(new EsPoint(point.Position.X, point.Position.Y));
 
+        _isPointerDown = false;
         if (_isDraggingTail)
         {
             _isDraggingTail = false;

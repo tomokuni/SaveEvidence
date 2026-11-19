@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using EsUtil.Platform.Core.Palette;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
@@ -21,6 +22,9 @@ public sealed class AnnotationTextEditor : Panel
     /// <summary>書式バー（編集中だけ表示する）。</summary>
     private readonly AnnotationFormatBar _formatBar;
 
+    /// <summary>書式バーを載せるポップアップ（ウィンドウの外へ出せるようにする）。</summary>
+    private readonly Popup _formatBarPopup;
+
     /// <summary>注釈の表示と編集を担うレイヤー。</summary>
     private readonly AnnotationLayerControl _layer;
 
@@ -30,8 +34,17 @@ public sealed class AnnotationTextEditor : Panel
         _layer = new AnnotationLayerControl();
         _formatBar = new AnnotationFormatBar(_layer) { IsVisible = false };
 
+        // バーはポップアップへ載せる（ウィンドウが小さくても本文の上へ出せる。画面の外へは出ない）
+        _formatBarPopup = new Popup
+        {
+            PlacementTarget = _layer,
+            Placement = PlacementMode.Top,
+            Child = _formatBar,
+            IsLightDismissEnabled = false,
+        };
+
         Children.Add(_layer);
-        Children.Add(_formatBar);
+        Children.Add(_formatBarPopup);
 
         // 編集の開始・終了でバーを出し入れする（本文の位置は編集のたびに変わりうるため配置もやり直す）
         _layer.EditingChanged += (_, _) =>
@@ -44,6 +57,7 @@ public sealed class AnnotationTextEditor : Panel
 
             InvalidateMeasure();
             InvalidateArrange();
+            UpdateFormatBarPopup();
         };
 
         // 文字・書式の変更で表示を追随させる（バーの現在値が古くならないようにする）
@@ -61,6 +75,7 @@ public sealed class AnnotationTextEditor : Panel
             if (_formatBar.IsVisible)
             {
                 InvalidateArrange();
+                UpdateFormatBarPopup();
             }
         };
 
@@ -129,27 +144,31 @@ public sealed class AnnotationTextEditor : Panel
         return _layer.DesiredSize;
     }
 
-    /// <summary>子要素を配置する（レイヤーは全面、バーは本文の上）。</summary>
+    /// <summary>子要素を配置する（レイヤーは全面。 書式バーはポップアップが置く）。</summary>
     /// <param name="finalSize">最終的な領域。</param>
     /// <returns>配置した寸法。</returns>
     protected override Size ArrangeOverride(Size finalSize)
     {
         _layer.Arrange(new Rect(finalSize));
+        return finalSize;
+    }
 
+    /// <summary>書式バーのポップアップを本文の位置へ合わせて開く（編集中でなければ閉じる）。</summary>
+    /// <remarks>
+    /// <b>ウィンドウの外へ出せる</b>: バーをポップアップへ載せ、本文の矩形を基準に置く（ウィンドウが小さくても
+    /// 本文の上に出せる。 画面の外へは出ないようプラットフォームが寄せる）。
+    /// </remarks>
+    private void UpdateFormatBarPopup()
+    {
         if (!_formatBar.IsVisible)
         {
-            return finalSize;
+            _formatBarPopup.IsOpen = false;
+            return;
         }
 
-        var desired = _formatBar.DesiredSize;
         var body = _layer.GetSelectedBodyRect();
-        var x = body.Width > 0 ? body.X : 0;
-        var y = body.Height > 0 ? body.Y - desired.Height - BarGap : 0;
-
-        // 上・左右にはみ出す場合は内側へ寄せる（バーが切れると操作できない）
-        x = Math.Clamp(x, 0, Math.Max(0, finalSize.Width - desired.Width));
-        y = Math.Clamp(y, 0, Math.Max(0, finalSize.Height - desired.Height));
-        _formatBar.Arrange(new Rect(x, y, desired.Width, desired.Height));
-        return finalSize;
+        var y = body.Height > 0 ? body.Y - BarGap : 0;
+        _formatBarPopup.PlacementRect = new Rect(Math.Max(0, body.X), Math.Max(0, y), 1, 1);
+        _formatBarPopup.IsOpen = true;
     }
 }

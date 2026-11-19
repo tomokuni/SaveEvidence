@@ -34,7 +34,7 @@ public sealed partial class AnnotationLayerControl
     /// <param name="offset">画像の左上（DIP）。</param>
     private void DrawAll(IGraphicsContext context, bool includeSelection, double scale, Point offset)
     {
-        if (ResolveImage() is { } image)
+        if (ShowImage && ResolveImage() is { } image)
         {
             context.DrawImage(
                 image,

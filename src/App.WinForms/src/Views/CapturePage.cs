@@ -93,9 +93,14 @@ internal static class CapturePage
         // 注釈の編集モード（トグルで表示する）。 画像の上へレイヤーを重ね、本文の編集と書式バーをまとめて持つ
         var annotation = new AnnotationTextEditor { Dock = DockStyle.Fill };
 
-        // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
-        annotation.Layer.ShowImage = false;
+        // 注釈はプレビューの上へ重ねる。 WinForms のコントロールは透明にできない（下のプレビューが隠れる）ため、
+        // この UI だけはレイヤーが画像も描く（ズーム・パンへは PreviewImageRect で追従する）。
+        annotation.Layer.ShowImage = true;
+        annotation.BackColor = AppStyles.ImageAreaBackground;
         canvas.Controls.Add(annotation);
+
+        // 注釈はプレビューの手前へ置く（WinForms は後から追加したコントロールが背面になるため）
+        annotation.BringToFront();
 
         void SyncAnnotation()
         {
@@ -349,11 +354,25 @@ internal static class CapturePage
 
         crop.ViewportChanged += (_, _) => captureSession.NotifyViewportChanged();
 
-        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す
-        crop.ZoomView.MouseDown += (_, e) =>
+        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す。
+        // 注釈レイヤーは当たり判定を透過する（HTTRANSPARENT）ため、押下は注釈レイヤーの親（編集コントロール）へ
+        // 渡る（WinForms のイベントは親子で伝播せず、透過した子のメッセージは親が受け取る）。
+        // 編集コントロールは注釈レイヤーと同じ大きさ・同じ座標系なので、その位置をそのまま使う。
+        annotation.MouseDown += (_, e) =>
         {
-            if (e.Button != MouseButtons.Right || viewModel.PreviewImage is null)
+            if (viewModel.PreviewImage is null)
             {
+                return;
+            }
+
+            if (e.Button != MouseButtons.Right)
+            {
+                // 注釈の外を左クリックしたら選択と編集を解除する
+                if (!annotation.Layer.HitTestAt(e.Location))
+                {
+                    annotation.Layer.ClearSelection();
+                }
+
                 return;
             }
 
@@ -364,11 +383,24 @@ internal static class CapturePage
             bubble.Click += (_, _) => annotation.Layer.AddBubbleAt(e.Location);
             menu.Items.Add(frame);
             menu.Items.Add(bubble);
-            menu.Show(crop.ZoomView, e.Location);
+            menu.Show(annotation, e.Location);
         };
         // 入力はズームビューが受け取る（切り出しビュー自身は子へ入力を渡すだけのため）
         crop.ZoomView.MouseMove += (_, e) => OnPointerMoved(e.Location);
         crop.ZoomView.MouseDoubleClick += (_, e) => OnCanvasDoubleClick(e.Location);
+        // 注釈レイヤーが入力を受ける間も、ポインタ位置の表示・ホイールのズーム・ドラッグのパンを
+        // プレビューへ渡す（レイヤーは透過するが、編集コントロールが受け取るためここで転送する）。
+        annotation.MouseMove += (_, e) => OnPointerMoved(e.Location);
+        annotation.MouseWheel += (_, e) => crop.ZoomView.ZoomByWheel(e.Delta > 0, new EsPoint(e.X, e.Y));
+        annotation.MouseDown += (_, e) =>
+        {
+            if (e.Button == MouseButtons.Left && !annotation.Layer.HitTestAt(e.Location))
+            {
+                crop.ZoomView.BeginDragPan(new EsPoint(e.X, e.Y));
+            }
+        };
+        annotation.MouseMove += (_, e) => crop.ZoomView.DragPan(new EsPoint(e.X, e.Y));
+        annotation.MouseUp += (_, _) => crop.ZoomView.EndDragPan();
 
         viewModel.PropertyChanged += (_, e) =>
         {
@@ -434,6 +466,7 @@ internal static class CapturePage
             UiFactory.SetStatusLabelSideMargins(savedFileLabel, 0, 6);
             // 画像領域（プレビューの下地）だけは他の UI 版と同じ色にする（色は AppPalette が単一所有する）
             canvas.BackColor = AppStyles.ImageAreaBackground;
+            annotation.BackColor = AppStyles.ImageAreaBackground;
             templateBox.ForeColor = AppStyles.Foreground;
             templateBox.BackColor = pageBackground;
             hideTaskbarBox.ForeColor = AppStyles.Foreground;
@@ -692,7 +725,7 @@ internal static class CapturePage
         {
             var menuStrip = new ContextMenuStrip();
             saveMenuItem = AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage, AppIcon.Save);
-            AddMenuItem(menuStrip, "注釈を開く", "", () => _ = OpenAnnotationsAsync(annotation, viewModel, owner));
+            AddMenuItem(menuStrip, "注釈を開く", "", () => _ = OpenAnnotationsAsync(annotation, viewModel, owner, settingsService.Current.SaveFolderPath));
             AddMenuItem(menuStrip, "コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
             AddMenuItem(menuStrip, "貼り付け", "Ctrl+V", () => _ = PasteCoreAsync());
             menuStrip.Items.Add(new ToolStripSeparator());
@@ -801,18 +834,20 @@ internal static class CapturePage
     /// <param name="annotation">注釈の編集コントロール。</param>
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
     /// <param name="owner">ダイアログのオーナー。</param>
+    /// <param name="saveFolder">既定のフォルダ（保存フォルダ）。</param>
     /// <returns>開く処理の非同期タスク。</returns>
     /// <remarks>
     /// <b>元画像も読み直す</b>: 注釈は元画像に属するため、注釈だけを差し替えると別の画像の注釈になる。<br/>
     /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。
     /// </remarks>
-    private static Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel, Form owner)
+    private static Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel, Form owner, string saveFolder)
     {
         using var dialog = new OpenFileDialog
         {
             Title = "注釈を開く",
             Filter = "注釈ファイル (*.annotations.json)|*.annotations.json|すべてのファイル (*.*)|*.*",
             CheckFileExists = true,
+            InitialDirectory = Directory.Exists(saveFolder) ? saveFolder : string.Empty,
         };
 
         if (dialog.ShowDialog(owner) != DialogResult.OK)

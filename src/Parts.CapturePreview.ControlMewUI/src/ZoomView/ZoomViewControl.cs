@@ -107,6 +107,13 @@ public sealed class ZoomViewControl : Control
     /// </remarks>
     public event EventHandler? ViewportChanged;
 
+    /// <summary>マウスのボタンが押されたときに発火する（左ボタン以外も通知する）。</summary>
+    /// <remarks>
+    /// 押下を自分で処理した場合はイベントをハンドル済みにするため、祖先の要素へは伝わらない。<br/>
+    /// 祖先が押下を扱う（右クリックメニューを出す等）ために使用する。
+    /// </remarks>
+    public event EventHandler<MousePressedEventArgs>? MousePressed;
+
     /// <summary>表示する画像（ズーム対象）を取得または設定する。</summary>
     /// <value>ズーム対象の画像。 null の場合は何も表示しない。 設定すると Fit 表示へリセットする。</value>
     public EsReadOnlyBitmap? Source
@@ -348,11 +355,14 @@ public sealed class ZoomViewControl : Control
     /// <param name="e">マウスの情報。</param>
     /// <remarks>
     /// スクロールバーのサム・トラック上ならドラッグを開始する（パンより優先する。 判断はコア）。<br/>
-    /// それ以外は grab 方式のパンを開始する（掴んだ位置のコンテンツ座標をセッションが保存する）。
+    /// それ以外は grab 方式のパンを開始する（掴んだ位置のコンテンツ座標をセッションが保存する）。<br/>
+    /// 押下は <see cref="MousePressed"/> で祖先へ通知する（ハンドル済みのイベントは祖先へ伝わらないため）。
     /// </remarks>
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
+
+        MousePressed?.Invoke(this, new MousePressedEventArgs(e.GetPosition(this), e.RightButton));
 
         if (!e.LeftButton)
         {

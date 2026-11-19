@@ -592,6 +592,18 @@ public sealed partial class AnnotationLayerControl
     }
 
     /// <summary>選択中の文字をクリップボードへコピーする。</summary>
+    /// <remarks>キー入力が注釈レイヤーへ届かない環境向けの入口（ホストのキー処理から呼ぶ）。</remarks>
+    public void CopyTextSelection() => _ = CopySelectionAsync();
+
+    /// <summary>選択中の文字を切り取る。</summary>
+    /// <remarks>キー入力が注釈レイヤーへ届かない環境向けの入口（ホストのキー処理から呼ぶ）。</remarks>
+    public void CutTextSelection() => _ = CutSelectionAsync();
+
+    /// <summary>クリップボードの文字を挿入する。</summary>
+    /// <remarks>キー入力が注釈レイヤーへ届かない環境向けの入口（ホストのキー処理から呼ぶ）。</remarks>
+    public void PasteText() => _ = PasteAsync();
+
+    /// <summary>選択中の文字をクリップボードへコピーする。</summary>
     /// <returns>コピーの非同期処理。</returns>
     private async Task CopySelectionAsync()
     {
@@ -619,6 +631,7 @@ public sealed partial class AnnotationLayerControl
         await CopySelectionAsync();
         ReplaceSelection(string.Empty);
     }
+
 
     /// <summary>クリップボードの文字を挿入する。</summary>
     /// <returns>貼り付けの非同期処理。</returns>

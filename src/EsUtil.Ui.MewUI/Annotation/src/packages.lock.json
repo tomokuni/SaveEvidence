@@ -10,21 +10,21 @@
       },
       "EsUtil.Feature.Marquee.Core": {
         "type": "Direct",
-        "requested": "[0.8.7, )",
-        "resolved": "0.8.7",
-        "contentHash": "N6zLtoKL+cvqf0fJJILClEn/0pHS04lJcXytJdHaPeWw8KunEBeGX2TT8cq9R5w6MT13apmcPqpex+YiZ8b5uw==",
+        "requested": "[0.8.8, )",
+        "resolved": "0.8.8",
+        "contentHash": "p8IUTcSw174dK0iTEx1SjdUuEffZu8nxXGOnUWkGttzn5V083zdf8H3C7tjUW6Ek4m5gk9Z+Li1O2xWRLxk0Gw==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.7"
+          "EsUtil.Platform.Core": "0.8.8"
         }
       },
       "EsUtil.Ui.MewUI.ColorSelector": {
         "type": "Direct",
-        "requested": "[0.8.7, )",
-        "resolved": "0.8.7",
-        "contentHash": "fhrLrUKYy9TpySlBfUYxsZpR6+D3poqOHWOVzsOYSi6CkkdrhjEDmCLNtHAT7/mJ1sNIMzy2MNYEDmLTQV0MhQ==",
+        "requested": "[0.8.8, )",
+        "resolved": "0.8.8",
+        "contentHash": "R8iQ15DI8z56z4A9GQuBZ1SnMgCeFUDaeEb6Ica7Fx1qLA2ThZcE2prev4jEey4pXHSAm8NTeWLO3WsMzWGepA==",
         "dependencies": {
           "Aprillz.MewUI.Core": "0.22.1",
-          "EsUtil.Platform.Core": "0.8.7"
+          "EsUtil.Platform.Core": "0.8.8"
         }
       },
       "Meziantou.Analyzer": {
@@ -48,14 +48,14 @@
       "esutil.feature.annotation.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.8.7, )"
+          "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.7, )",
-        "resolved": "0.8.7",
-        "contentHash": "iibJaREtHTFmH86+1X1R5bIY94O0M95rJsbI8NcxmnJl30yGs3r+9kVD2PkX5nFXyl+kBti1pBj4FFVz+xrRWQ=="
+        "requested": "[0.8.8, )",
+        "resolved": "0.8.8",
+        "contentHash": "qaeRDf4USx35i19ZQUEYGwtcfXCA5ZkZ1JlgCyfklanw1FlwFnRczud1LOVREME1SPPPBXAnneJ0NE2FTqzMzw=="
       }
     }
   }

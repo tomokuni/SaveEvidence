@@ -1063,10 +1063,16 @@ public sealed partial class CapturePage : UserControl
             return;
         }
 
+        var saveFolder = _settingsService.Current.SaveFolderPath;
+        var startFolder = string.IsNullOrWhiteSpace(saveFolder)
+            ? null
+            : await storage.TryGetFolderFromPathAsync(saveFolder);
+
         var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "注釈を開く",
             AllowMultiple = false,
+            SuggestedStartLocation = startFolder,
             FileTypeFilter =
             [
                 new FilePickerFileType("注釈ファイル") { Patterns = ["*.annotations.json"] },
@@ -1279,6 +1285,12 @@ public sealed partial class CapturePage : UserControl
         var isRight = point.Properties.IsRightButtonPressed;
         var hasCropTask = _cropTask is not null;
         s_logger.LogPreviewPointerPressed(isRight, hasCropTask);
+
+        // 注釈の外を左クリックしたら、選択と本文の編集を解除する
+        if (!isRight && !AnnotationEditor.Layer.IsEditingText)
+        {
+            AnnotationEditor.Layer.ClearSelection();
+        }
         if (isRight && hasCropTask)
         {
             ShowCropContextMenu();

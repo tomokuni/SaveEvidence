@@ -1,6 +1,6 @@
 using EsUtil.Platform.Core.Palette;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
 
@@ -19,6 +19,9 @@ public sealed class AnnotationTextEditor : Grid
     /// <summary>本文の書式を操作するバー。</summary>
     private readonly AnnotationFormatBar _formatBar;
 
+    /// <summary>書式バーを載せるフライアウト（ウィンドウの外へ出せるようにする）。</summary>
+    private readonly Flyout _formatBarFlyout;
+
     /// <summary>外観・重なり順の編集パネル（開いている間だけ保持する）。</summary>
     private AnnotationStylePanel? _stylePanel;
 
@@ -26,22 +29,26 @@ public sealed class AnnotationTextEditor : Grid
     public AnnotationTextEditor()
     {
         _layer = new AnnotationLayerControl();
-        _formatBar = new AnnotationFormatBar(_layer)
+        _formatBar = new AnnotationFormatBar(_layer);
+        _formatBarFlyout = new Flyout
         {
-            Visibility = Visibility.Collapsed,
-            Margin = new Thickness(8),
+            Content = _formatBar,
+            Placement = FlyoutPlacementMode.Top,
+            ShouldConstrainToRootBounds = false,
         };
 
         Children.Add(_layer);
-        Children.Add(_formatBar);
 
         _layer.EditingChanged += (_, _) =>
         {
-            _formatBar.Visibility = _layer.IsEditingText ? Visibility.Visible : Visibility.Collapsed;
-            if (_layer.IsEditingText)
+            if (!_layer.IsEditingText)
             {
-                _formatBar.Refresh();
+                _formatBarFlyout.Hide();
+                return;
             }
+
+            _formatBar.Refresh();
+            ShowFormatBar();
         };
 
         _layer.TextSelectionChanged += (_, _) =>
@@ -67,6 +74,14 @@ public sealed class AnnotationTextEditor : Grid
         };
 
         _layer.StyleEditorRequested += (_, _) => ShowStylePanel();
+    }
+
+    /// <summary>書式バーを本文の上へ出す（ウィンドウの外へ出せる）。</summary>
+    private void ShowFormatBar()
+    {
+        var body = _layer.GetSelectedBodyRect();
+        _ = body;
+        _formatBarFlyout.ShowAt(_layer);
     }
 
     /// <summary>注釈の表示と編集を担うレイヤーを取得する。</summary>

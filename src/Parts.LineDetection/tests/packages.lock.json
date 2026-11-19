@@ -327,7 +327,7 @@
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.8.7, )",
+          "EsUtil.Platform.Core": "[0.8.8, )",
           "OpenCvSharp5": "[5.0.0.20261109, )",
           "OpenCvSharp5.runtime.win.slim": "[5.0.0.20261109, )"
         }
@@ -343,9 +343,9 @@
       },
       "EsUtil.Platform.Core": {
         "type": "CentralTransitive",
-        "requested": "[0.8.7, )",
-        "resolved": "0.8.7",
-        "contentHash": "iibJaREtHTFmH86+1X1R5bIY94O0M95rJsbI8NcxmnJl30yGs3r+9kVD2PkX5nFXyl+kBti1pBj4FFVz+xrRWQ=="
+        "requested": "[0.8.8, )",
+        "resolved": "0.8.8",
+        "contentHash": "qaeRDf4USx35i19ZQUEYGwtcfXCA5ZkZ1JlgCyfklanw1FlwFnRczud1LOVREME1SPPPBXAnneJ0NE2FTqzMzw=="
       }
     }
   }

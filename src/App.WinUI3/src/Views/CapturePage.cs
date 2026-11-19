@@ -216,6 +216,33 @@ internal static class CapturePage
 
         SubscribeViewModel(viewModel, settings, cropView, savedFileNameText, messageText, imageSizeText, pointerText, zoomText);
 
+        // 注釈の本文を編集中は、本文のコピー・切り取り・貼り付けを優先する。
+        // 編集中のフォーカスはテンプレートのテキスト ボックスに残るため、フォーカスより先に届く
+        // プレビュー（トンネル）のキー入力で振り分ける。
+        page.PreviewKeyDown += (_, args) =>
+        {
+            if (!IsControlDown() || annotation is not { IsEditingText: true })
+            {
+                return;
+            }
+
+            switch (args.Key)
+            {
+                case VirtualKey.C:
+                    annotation.Layer.CopyTextSelection();
+                    args.Handled = true;
+                    return;
+                case VirtualKey.X:
+                    annotation.Layer.CutTextSelection();
+                    args.Handled = true;
+                    return;
+                case VirtualKey.V:
+                    annotation.Layer.PasteText();
+                    args.Handled = true;
+                    return;
+            }
+        };
+
         return new PageContent(page, OnKeyDown: args =>
         {
             if (!IsControlDown())
@@ -226,7 +253,7 @@ internal static class CapturePage
             switch (args.Key)
             {
                 // 保存（文字編集のショートカットではないため、テンプレート入力中でも行う。
-                // コピー・貼り付けはテキスト ボックスが先に処理するため、ここへは届かない）
+                // コピー・貼り付けは、注釈の本文を編集中でなければアプリの操作として扱う）
                 case VirtualKey.S:
                     _ = viewModel.SaveImageAsync();
                     args.Handled = true;
@@ -752,30 +779,50 @@ internal static class CapturePage
 
         // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
         annotationEditor.Layer.ShowImage = false;
-        annotationEditor.Layer.IsHitTestVisible = false;
 
-        // 注釈の上にポインタがある間だけ注釈レイヤーが入力を受け取る（それ以外はプレビューのズーム・パンへ渡す）
-        zoomView.PointerMoved += (_, e) =>
-        {
-            if (!annotationEditor.Layer.IsEditingText)
+        // 注釈の上にポインタがある間だけ注釈レイヤーが入力を受け取る（それ以外はプレビューのズーム・パンへ渡す）。
+        // 重ねた要素は子ごと透過させないとプレビューへ入力が届かないため、親（エディター）の可否を切り替える。
+        annotationEditor.IsHitTestVisible = false;
+        host.AddHandler(
+            UIElement.PointerMovedEvent,
+            new Microsoft.UI.Xaml.Input.PointerEventHandler((_, e) =>
             {
-                annotationEditor.Layer.IsHitTestVisible =
-                    annotationEditor.Layer.HitTestAt(e.GetCurrentPoint(zoomView).Position);
-            }
-        };
+                if (!annotationEditor.Layer.IsEditingText)
+                {
+                    annotationEditor.IsHitTestVisible =
+                        annotationEditor.Layer.HitTestAt(e.GetCurrentPoint(host).Position);
+                }
+            }),
+            handledEventsToo: true);
 
-        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す
-        zoomView.PointerPressed += (_, e) =>
-        {
-            var current = e.GetCurrentPoint(zoomView);
-            if (!current.Properties.IsRightButtonPressed || viewModel.PreviewImage is null)
+        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す。
+        // プレビューのズーム・パンは押下をハンドルするため、ハンドル済みでも受け取れるようにする
+        // （注釈レイヤーは切り出しビューの兄弟であり、切り出しビューへは伝わらない）。
+        host.AddHandler(
+            UIElement.PointerPressedEvent,
+            new Microsoft.UI.Xaml.Input.PointerEventHandler((_, e) =>
             {
-                return;
-            }
+                var current = e.GetCurrentPoint(host);
+                if (viewModel.PreviewImage is null)
+                {
+                    return;
+                }
 
-            ShowAnnotationAddMenu(annotationEditor, current.Position, zoomView);
-            e.Handled = true;
-        };
+                if (!current.Properties.IsRightButtonPressed)
+                {
+                    // 注釈の外を左クリックしたら選択と編集を解除する
+                    if (!annotationEditor.Layer.HitTestAt(current.Position))
+                    {
+                        annotationEditor.Layer.ClearSelection();
+                    }
+
+                    return;
+                }
+
+                ShowAnnotationAddMenu(annotationEditor, current.Position, host);
+                e.Handled = true;
+            }),
+            handledEventsToo: true);
 
         annotation = annotationEditor;
 

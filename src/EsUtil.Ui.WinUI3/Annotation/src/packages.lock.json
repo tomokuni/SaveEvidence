@@ -4,37 +4,37 @@
     "net11.0-windows10.0.17763": {
       "EsUtil.Feature.Marquee.Core": {
         "type": "Direct",
-        "requested": "[0.8.7, )",
-        "resolved": "0.8.7",
-        "contentHash": "N6zLtoKL+cvqf0fJJILClEn/0pHS04lJcXytJdHaPeWw8KunEBeGX2TT8cq9R5w6MT13apmcPqpex+YiZ8b5uw==",
+        "requested": "[0.8.8, )",
+        "resolved": "0.8.8",
+        "contentHash": "p8IUTcSw174dK0iTEx1SjdUuEffZu8nxXGOnUWkGttzn5V083zdf8H3C7tjUW6Ek4m5gk9Z+Li1O2xWRLxk0Gw==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.7"
+          "EsUtil.Platform.Core": "0.8.8"
         }
       },
       "EsUtil.Platform.Core": {
         "type": "Direct",
-        "requested": "[0.8.7, )",
-        "resolved": "0.8.7",
-        "contentHash": "iibJaREtHTFmH86+1X1R5bIY94O0M95rJsbI8NcxmnJl30yGs3r+9kVD2PkX5nFXyl+kBti1pBj4FFVz+xrRWQ=="
+        "requested": "[0.8.8, )",
+        "resolved": "0.8.8",
+        "contentHash": "qaeRDf4USx35i19ZQUEYGwtcfXCA5ZkZ1JlgCyfklanw1FlwFnRczud1LOVREME1SPPPBXAnneJ0NE2FTqzMzw=="
       },
       "EsUtil.Ui.WinUI3.ColorSelector": {
         "type": "Direct",
-        "requested": "[0.8.7, )",
-        "resolved": "0.8.7",
-        "contentHash": "gHx+kkWiBozWEyyeM4EPlQqLo903/VgKAoUwxHerhB8Qx4u8J1b12WG5g1XTy4kMmy5IZCbggIpfRhz6rDShsQ==",
+        "requested": "[0.8.8, )",
+        "resolved": "0.8.8",
+        "contentHash": "yZbrFO0pv1LnUy6Mq2jMx56EkE5sKP9PoJ7YZ4JtDXbtZ/57kQyBiS9GT+vl+cKr1gEqghZx0R0Xp1usCYE8Lg==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.7",
+          "EsUtil.Platform.Core": "0.8.8",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.0.1"
         }
       },
       "EsUtil.Ui.WinUI3.Interop": {
         "type": "Direct",
-        "requested": "[0.8.7, )",
-        "resolved": "0.8.7",
-        "contentHash": "pzMPCeJSJfjjrSAg0R3/ZfmfRVuk7yvi685gXLLb8iS5qBYXI05yTjX3FOXcDWV/2hHa7u4maRyTp55K9C5/RA==",
+        "requested": "[0.8.8, )",
+        "resolved": "0.8.8",
+        "contentHash": "2RbKB8GOAVhXTTKYlR2HCzmkZbw5yFhp2U5zhnDbB++i1Z3cNcRAm7r8kA+USSxn3gsnC5VpiMM6WvZ+UK80Xg==",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.7",
+          "EsUtil.Platform.Core": "0.8.8",
           "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
           "Microsoft.WindowsAppSDK": "2.0.1"
         }
@@ -211,7 +211,7 @@
       "esutil.feature.annotation.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "[0.8.7, )"
+          "EsUtil.Platform.Core": "[0.8.8, )"
         }
       }
     }

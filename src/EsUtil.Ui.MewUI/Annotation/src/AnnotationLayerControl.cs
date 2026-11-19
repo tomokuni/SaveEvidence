@@ -291,7 +291,11 @@ public sealed partial class AnnotationLayerControl : Panel
             Bounds = bounds,
             Appearance = DraftDefaults.BubbleAppearance,
             BodyPadding = DraftDefaults.BodyPadding,
-            Tail = new BubbleTail(default, DraftDefaults.TailEdge, 0.5, DraftDefaults.TailWidth),
+            Tail = new BubbleTail(
+                new EsPoint(bounds.Center.X, bounds.Bottom + 40),
+                DraftDefaults.TailEdge,
+                AnnotationDefaults.TailBaseOffsetDefault,
+                DraftDefaults.TailWidth),
             Text = RichText.Create(text, DraftDefaults.TextStyle),
         };
 
@@ -550,6 +554,13 @@ public sealed partial class AnnotationLayerControl : Panel
         }
 
         return EsBitmap.FromPixelCopy(width, height, pixels);
+    }
+
+    /// <summary>選択と本文の編集を解除する（注釈の外をクリックしたとき）。</summary>
+    public void ClearSelection()
+    {
+        EndTextEditing();
+        Select(null);
     }
 
     /// <summary>選択中の注釈を選択する。</summary>
