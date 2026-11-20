@@ -43,6 +43,9 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>表示中のパネルのウィンドウ（種別ごとに 1 つ）。</summary>
     private readonly Dictionary<AnnotationPanelKind, Window> _windows = [];
 
+    /// <summary>表示中のパネルの根（使い回すために保持する）。</summary>
+    private readonly Dictionary<AnnotationPanelKind, Border> _roots = [];
+
     /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
     private Border? _draggingRoot;
 
@@ -198,19 +201,29 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             return;
         }
 
-        var root = new Border
+        var root = _roots.TryGetValue(kind, out var existingRoot) ? existingRoot : new Border();
+        _roots[kind] = root;
+
+        // **書式バーは作り直さない**: 購読が増えるため使い回す。 根も使い回すことで、要素が
+        // 「既に親を持つ」状態になって付け替えに失敗するのを防ぐ（実測 2026-11-20: WinUI 3 版で
+        // Border.Child が E_INVALIDARG になった）。
+        var content = kind == AnnotationPanelKind.FormatBar
+            ? _formatBar
+            : AnnotationStyleFlyout.BuildContent(_layer, appearance);
+        if (!ReferenceEquals(root.Child, content))
         {
-            Child = kind == AnnotationPanelKind.FormatBar
-                ? _formatBar
-                : AnnotationStyleFlyout.BuildContent(_layer, appearance),
-            Background = ToBrush(appearance.Background),
-            BorderBrush = ToBrush(appearance.Border),
-            BorderThickness = new Thickness(appearance.BorderThickness),
-            CornerRadius = new CornerRadius(appearance.CornerRadius),
-            Padding = new Thickness(
-                appearance.Padding, appearance.VerticalPadding,
-                appearance.Padding, appearance.VerticalPadding),
-        };
+            // 先に外してから付け直す（古い子が親を持ったままだと付け替えに失敗する UI がある）
+            root.Child = null;
+            root.Child = content;
+        }
+
+        root.Background = ToBrush(appearance.Background);
+        root.BorderBrush = ToBrush(appearance.Border);
+        root.BorderThickness = new Thickness(appearance.BorderThickness);
+        root.CornerRadius = new CornerRadius(appearance.CornerRadius);
+        root.Padding = new Thickness(
+            appearance.Padding, appearance.VerticalPadding,
+            appearance.Padding, appearance.VerticalPadding);
 
         var window = new Window
         {
@@ -429,9 +442,8 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>種別のパネルを閉じる（表示していなければ何もしない）。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <remarks>
-    /// <b>中身を先に外す</b>: ウィンドウを閉じても中身（書式バー）は根の子のまま残る。 外さずに
-    /// 次を作ると、既に親を持つ要素として追加されず、<b>2 回目以降にバーが表示されない</b>
-    /// （実測 2026-11-20）。
+    /// <b>根と中身は残す</b>: 根（<c>Border</c>）と書式バーは作り直さずに使い回す（購読が増えない）。
+    /// ここで外すのはウィンドウとの結び付きだけにする。
     /// </remarks>
     private void DestroyPanel(AnnotationPanelKind kind)
     {
@@ -440,11 +452,6 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         if (!_windows.Remove(kind, out var window))
         {
             return;
-        }
-
-        if (window.Content is Border root)
-        {
-            root.Child = null;
         }
 
         window.Content = null;

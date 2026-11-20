@@ -47,6 +47,9 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <summary>表示中のパネルの左上（物理ピクセル）。</summary>
     private readonly Dictionary<AnnotationPanelKind, EsPointInt> _positions = [];
 
+    /// <summary>表示中のパネルの根（中身を外すために保持する）。</summary>
+    private readonly Dictionary<AnnotationPanelKind, Border> _roots = [];
+
     /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
     private Border? _draggingRoot;
 
@@ -124,19 +127,29 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     {
         DestroyPanel(kind);
 
-        var root = new Border
+        // **根は 1 度だけ作って使い回す**: 書式バーは作り直さない（購読が増えるため）。
+        // 根を作り直すと、前の根が書式バーを子として保持したままになり、`Border.Child` へ
+        // 渡せず E_INVALIDARG（パラメーターが間違っています）になる（実測 2026-11-20）。
+        if (!_roots.TryGetValue(kind, out var root))
         {
-            Child = kind == AnnotationPanelKind.FormatBar
-                ? _formatBar
-                : new AnnotationStylePanel(_layer),
-            Background = ToBrush(appearance.Background),
-            BorderBrush = ToBrush(appearance.Border),
-            BorderThickness = new Thickness(appearance.BorderThickness),
-            CornerRadius = new CornerRadius(appearance.CornerRadius),
-            Padding = new Thickness(appearance.Padding, appearance.VerticalPadding, appearance.Padding, appearance.VerticalPadding),
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Top,
-        };
+            root = new Border
+            {
+                Child = kind == AnnotationPanelKind.FormatBar
+                    ? _formatBar
+                    : new AnnotationStylePanel(_layer),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+            };
+
+            _roots[kind] = root;
+        }
+
+        root.Background = ToBrush(appearance.Background);
+        root.BorderBrush = ToBrush(appearance.Border);
+        root.BorderThickness = new Thickness(appearance.BorderThickness);
+        root.CornerRadius = new CornerRadius(appearance.CornerRadius);
+        root.Padding = new Thickness(
+            appearance.Padding, appearance.VerticalPadding, appearance.Padding, appearance.VerticalPadding);
 
         var window = new Window
         {
@@ -182,6 +195,7 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         root.PointerReleased += (_, e) => EndPanelDrag(kind, root, e);
 
         _windows[kind] = window;
+        _roots[kind] = root;
         _positions[kind] = screenPosition;
 
         // **表示は入力の処理が終わってから行う**: 押下の処理の中で新しいウィンドウを
@@ -462,6 +476,10 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
 
     /// <summary>種別のパネルを閉じる（表示していなければ何もしない）。</summary>
     /// <param name="kind">パネルの種別。</param>
+    /// <remarks>
+    /// <b>根は残す</b>: 根（<c>Border</c>）と中身（書式バー）は作り直さずに使い回す。 ここで外すのは
+    /// ウィンドウとの結び付きだけにする（中身を外すと、次に付け直せない）。
+    /// </remarks>
     private void DestroyPanel(AnnotationPanelKind kind)
     {
         Controller(kind).Close();
@@ -472,6 +490,8 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         }
 
         _positions.Remove(kind);
+
+        // 根を次のウィンドウへ付け替えられるようにする（根と中身は残す）
         window.Content = null;
         window.Close();
     }
