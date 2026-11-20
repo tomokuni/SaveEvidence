@@ -146,6 +146,9 @@ public sealed class AnnotationTextEditor : Grid
             presenter.IsMinimizable = false;
         }
 
+        // タスク バーと Alt+Tab の一覧へ出さない（パネルはアプリの一部として扱う）
+        window.AppWindow.IsShownInSwitchers = false;
+
         // 位置はポインタ（画面座標）。 アプリのウィンドウの内側へ収めない
         if (NativeCursor.TryGetScreenPosition(out var screenX, out var screenY))
         {
