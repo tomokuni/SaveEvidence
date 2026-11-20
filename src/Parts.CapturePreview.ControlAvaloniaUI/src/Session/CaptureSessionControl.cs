@@ -149,7 +149,7 @@ public sealed class CaptureSessionControl : IDisposable
 
             var session = new CaptureOverlaySession(
                 _windowService,
-                CaptureServiceFactory.Create(CaptureMethod, includeCursor: true, ShouldHideCaptureBorder),
+                CaptureServiceFactory.Create(CaptureMethod, includeCursor: false, ShouldHideCaptureBorder),
                 new WinElementFinder(),
                 type, _currentSettings, scaling,
                 // キャプチャ完了イベントを公開イベントへ中継する（同期実行 → ホストの画像変更後に再表示）

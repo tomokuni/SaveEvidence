@@ -113,6 +113,10 @@ public sealed partial class AnnotationLayerControl
         base.OnMouseDown(e);
 
         var position = new EsPoint(e.X, e.Y);
+
+        // 押下をホストへ知らせる（表示中のメニューを外側の押下で閉じるために使う）
+        RaisePreviewGesture(AnnotationPreviewGesture.Press, position, 1, 0);
+
         if (e.Button == MouseButtons.Right)
         {
             HandleRightButton(position);

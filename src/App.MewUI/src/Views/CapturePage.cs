@@ -1017,14 +1017,16 @@ internal static class CapturePage
             TextFormat = settings.ColorTextFormat,
         };
 
-        // 右クリック位置へ注釈の追加メニューを出す（ポップアップなのでアプリのウィンドウからはみ出してよい）
-        Popup? annotationAddMenu = null;
+        // 右クリック位置へ注釈の追加メニューを出す（プレビューと同じ座標系の host へ重ねる）
+        Border? annotationAddMenu = null;
+        long annotationAddMenuOpenedAt = 0;
+
         void ShowAnnotationMenu(Point position)
         {
             CloseAnnotationMenu();
 
             var items = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
-            Popup? menuPopup = null;
+            Border? menu = null;
 
             void AddItem(string text, Action action)
             {
@@ -1047,24 +1049,18 @@ internal static class CapturePage
 
             AddItem("枠線を追加", () => annotationEditor.Layer.AddFrameAt(position));
             AddItem("吹き出しを追加", () => annotationEditor.Layer.AddBubbleAt(position));
-
-            var popup = new Popup
+            menu = new Border
             {
-                // 外側のクリックで閉じる（メニューの外を押したら消える）
-                StaysOpen = false,
-                Content = new Border { Child = items, StyleName = AppStyles.MenuSurface },
-            };
-            popup.Closed += (_, _) =>
-            {
-                if (ReferenceEquals(annotationAddMenu, menuPopup))
-                {
-                    annotationAddMenu = null;
-                }
+                Child = items,
+                StyleName = AppStyles.MenuSurface,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(position.X, position.Y, 0, 0),
             };
 
-            menuPopup = popup;
-            annotationAddMenu = popup;
-            popup.ShowAt(host, new Rect(position.X, position.Y, 1, 1), PopupAnchorSide.Below);
+            annotationAddMenu = menu;
+            annotationAddMenuOpenedAt = Environment.TickCount64;
+            host.Add(menu);
         }
 
         void CloseAnnotationMenu()
@@ -1072,8 +1068,26 @@ internal static class CapturePage
             if (annotationAddMenu is { } open)
             {
                 annotationAddMenu = null;
-                open.Close();
+                host.Remove(open);
             }
+        }
+
+        // メニューの表示中に外側を押したら閉じる（開いた押下そのものでは閉じない）。
+        // 押下は注釈レイヤーが受け取り、Press としてここへ届く。
+        bool CloseAnnotationMenuOnOutsidePress()
+        {
+            if (annotationAddMenu is null)
+            {
+                return false;
+            }
+
+            if (Environment.TickCount64 - annotationAddMenuOpenedAt < 300)
+            {
+                return false;
+            }
+
+            CloseAnnotationMenu();
+            return true;
         }
         // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
         annotationEditor.Layer.ShowImage = false;
@@ -1142,12 +1156,28 @@ internal static class CapturePage
         // 共通の親（プレビューと同じ座標系の host）で受ける。
         // 注釈の無い場所の操作は、注釈レイヤーが受け取ってここへ渡す（入力の所有者は注釈レイヤー）
         annotationEditor.Layer.PreviewGestureRequested += (_, e) => ForwardAnnotationGesture(e);
-        annotationEditor.Layer.AddMenuRequested += (_, e) => ShowAnnotationMenu(new Point(e.X, e.Y));
+        // 追加メニューは画像の上（枠線・注釈を描く範囲）を右クリックしたときだけ出す
+        annotationEditor.Layer.AddMenuRequested += (_, e) =>
+        {
+            var rect = zoomView.ImageRectViewport();
+            if (e.X < rect.X || e.Y < rect.Y || e.X >= rect.X + rect.Width || e.Y >= rect.Y + rect.Height)
+            {
+                return;
+            }
+
+            ShowAnnotationMenu(new Point(e.X, e.Y));
+        };
 
         // 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック）は、注釈レイヤーが受け取って
         // ここへ渡す（入力の所有者は注釈レイヤー。 座標系はプレビューと同じ）。
         void ForwardAnnotationGesture(AnnotationPreviewGestureEventArgs e)
         {
+            // 追加メニューの表示中の押下は、閉じるだけにする（メニューの外を押したら消える）
+            if (e.Gesture == AnnotationPreviewGesture.Press && CloseAnnotationMenuOnOutsidePress())
+            {
+                return;
+            }
+
             var point = new EsPoint(e.X, e.Y);
             switch (e.Gesture)
             {
@@ -1265,6 +1295,9 @@ internal static class CapturePage
 
         var selected = dialog.OpenFile(new OpenFileDialogOptions
         {
+            // ネイティブのダイアログはオーナー未指定だと既定のフォルダを無視することがある
+            Owner = Application.Current?.MainWindow,
+            PreferNative = true,
             Title = "注釈を開く",
             InitialDirectory = Directory.Exists(saveFolder) ? saveFolder : null,
             Filters =

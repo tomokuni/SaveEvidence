@@ -83,6 +83,9 @@ internal sealed class AnnotationFormatBar : Border
     public AnnotationFormatBar(AnnotationLayerControl layer)
     {
         _layer = layer;
+        // バーは独立したトップレベルへ出るため、キー入力がバーへ届く環境では本文のキー操作が止まる。
+        // 本文の編集キー（カーソル移動・Shift+矢印の選択など）は本文へ転送する。
+        AddHandler(KeyDownEvent, OnFormatBarKeyForward, RoutingStrategies.Tunnel);
 
         var fonts = AnnotationFonts.All;
         _font = new ComboBox { Width = FontSelectorWidth, ItemsSource = fonts, SelectedIndex = 0 };
@@ -279,6 +282,19 @@ internal sealed class AnnotationFormatBar : Border
 
         // 無効の切り替えで必要な幅が変わるため測り直させる
         InvalidateMeasure();
+    }
+
+    /// <summary>書式バーへ届いた本文の編集キーを本文へ転送する（カーソル移動・選択の変更を保つ）。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">キーの引数。</param>
+    private void OnFormatBarKeyForward(object? sender, KeyEventArgs e)
+    {
+        _ = sender;
+
+        if (_layer.TryHandleEditingKey(e.Key, e.KeyModifiers))
+        {
+            e.Handled = true;
+        }
     }
 
     /// <summary>バーの中で Enter が押されたら、大きさと色を今の値で適用する。</summary>

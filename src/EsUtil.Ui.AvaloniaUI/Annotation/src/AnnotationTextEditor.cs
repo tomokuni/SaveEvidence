@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
+using Avalonia.Threading;
 using EsUtil.Platform.Core.Palette;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
@@ -174,5 +175,17 @@ public sealed class AnnotationTextEditor : Panel
         var y = body.Height > 0 ? body.Y - BarGap : 0;
         _formatBarPopup.PlacementRect = new Rect(Math.Max(0, body.X), Math.Max(0, y), 1, 1);
         _formatBarPopup.IsOpen = true;
+
+        // バーは独立したトップレベルへ出るため、開くと本文から入力フォーカスが移る。
+        // キー操作（カーソル移動・Shift+矢印の選択）を本文へ戻すため、フォーカスを本文へ戻す。
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (_layer.IsEditingText)
+                {
+                    _layer.Focus();
+                }
+            },
+            DispatcherPriority.Background);
     }
 }

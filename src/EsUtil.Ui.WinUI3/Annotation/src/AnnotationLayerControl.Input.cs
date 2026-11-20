@@ -195,6 +195,9 @@ public sealed partial class AnnotationLayerControl
         var point = e.GetCurrentPoint(this);
         var position = new EsPoint(point.Position.X, point.Position.Y);
 
+        // 押下をホストへ知らせる（表示中のメニューを外側の押下で閉じるために使う）
+        RaisePreviewGesture(AnnotationPreviewGesture.Press, point.Position, 1, 0);
+
         if (point.Properties.IsRightButtonPressed)
         {
             HandleRightButton(position);

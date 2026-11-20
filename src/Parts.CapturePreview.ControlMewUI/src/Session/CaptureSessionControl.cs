@@ -365,7 +365,7 @@ public sealed class CaptureSessionControl : IDisposable
     /// <returns>撮影が必要とするサービスの束（本クラスが生成したインスタンスを束ねるだけ）。</returns>
     private CaptureOverlayServices CreateServices()
         => new(
-            CaptureServiceFactory.Create(CaptureMethod, includeCursor: true, ShouldHideCaptureBorder),
+            CaptureServiceFactory.Create(CaptureMethod, includeCursor: false, ShouldHideCaptureBorder),
             _finder,
             _windowService,
             _log);

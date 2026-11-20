@@ -148,11 +148,11 @@ public sealed class AnnotationTextEditor : Panel
         {
             var desired = _formatBar.DesiredSize;
             var body = _layer.GetSelectedBodyRect();
-            var x = body.Width > 0 ? body.X : 0;
-            var y = body.Height > 0 ? body.Y - desired.Height - BarGap : 0;
+            var x = Math.Clamp(body.Width > 0 ? body.X : 0, 0, Math.Max(0, bounds.Width - desired.Width));
 
-            // 上・左右にはみ出す場合は内側へ寄せる（バーが切れると操作できない）
-            x = Math.Clamp(x, 0, Math.Max(0, bounds.Width - desired.Width));
+            // 本文の上へ置く。 上が足りなければ下へ置く（上へ寄せるとツールバーに重なる）
+            var above = body.Y - desired.Height - BarGap;
+            var y = above >= 0 ? above : body.Y + body.Height + BarGap;
             y = Math.Clamp(y, 0, Math.Max(0, bounds.Height - desired.Height));
             _formatBar.Arrange(new Rect(x, y, desired.Width, desired.Height));
         }

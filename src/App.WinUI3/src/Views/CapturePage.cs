@@ -50,6 +50,12 @@ internal static class CapturePage
     /// <summary>表示中の注釈の追加メニュー（外側のクリックで閉じるために保持する）。</summary>
     private static MenuFlyout? s_annotationAddMenu;
 
+    /// <summary>追加メニューを開いた時刻（開いた押下で閉じないための猶予に使う）。</summary>
+    private static long s_annotationAddMenuOpenedAt;
+
+    /// <summary>追加メニューを開いた押下を、外側の押下と見なさない猶予（ミリ秒）。</summary>
+    private const long OutsidePressGraceMs = 300;
+
     /// <summary>自動切り出しの検出矩形の枠線の太さ（DIP）。</summary>
     private const double AutoCropBorderThickness = 2;
 
@@ -755,21 +761,31 @@ internal static class CapturePage
         // 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック・右クリック）は、注釈レイヤーが
         // 受け取ってここへ渡す（入力の所有者は注釈レイヤー。 座標系はプレビューと同じ）。
         annotationEditor.Layer.PreviewGestureRequested += (_, e) => ForwardAnnotationGesture(e);
-        annotationEditor.Layer.AddMenuRequested +=
-            (_, e) => ShowAnnotationAddMenu(annotationEditor, new Windows.Foundation.Point(e.X, e.Y), host);
+        // 追加メニューは画像の上（枠線・注釈を描く範囲）を右クリックしたときだけ出す
+        annotationEditor.Layer.AddMenuRequested += (_, e) =>
+        {
+            var point = new Windows.Foundation.Point(e.X, e.Y);
+            var imageRect = crop.ImageRectViewport();
+            if (e.X < imageRect.X || e.Y < imageRect.Y
+                || e.X >= imageRect.X + imageRect.Width || e.Y >= imageRect.Y + imageRect.Height)
+            {
+                return;
+            }
+
+            ShowAnnotationAddMenu(annotationEditor, point, host);
+        };
 
         // 注釈の上を押したときも追加メニューを閉じる（メニューの外を押したら消える）
         host.AddHandler(
             UIElement.PointerPressedEvent,
-            new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) => CloseAnnotationAddMenu()),
+            new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) => CloseAnnotationAddMenuOnOutsidePress()),
             handledEventsToo: true);
 
         void ForwardAnnotationGesture(EsUtil.Feature.Annotation.AnnotationPreviewGestureEventArgs e)
         {
             // 追加メニューの表示中は、外側の押下で閉じるだけにする（メニューの外を押したら消える）
-            if (s_annotationAddMenu is not null)
+            if (CloseAnnotationAddMenuOnOutsidePress())
             {
-                CloseAnnotationAddMenu();
                 return;
             }
 
@@ -913,11 +929,43 @@ internal static class CapturePage
         flyout.Items.Add(bubble);
         flyout.Closed += (_, _) => s_annotationAddMenu = null;
         s_annotationAddMenu = flyout;
+        s_annotationAddMenuOpenedAt = Environment.TickCount64;
         flyout.ShowAt(target, new FlyoutShowOptions { Position = position });
     }
 
     /// <summary>表示中の注釈の追加メニューを閉じる（表示中でなければ何もしない）。</summary>
-    private static void CloseAnnotationAddMenu() => s_annotationAddMenu?.Hide();
+    private static void CloseAnnotationAddMenu()
+    {
+        if (s_annotationAddMenu is not { } menu)
+        {
+            return;
+        }
+
+        s_annotationAddMenu = null;
+        menu.Hide();
+    }
+
+    /// <summary>外側の押下で追加メニューを閉じる（開いた押下そのものでは閉じない）。</summary>
+    /// <returns>閉じた（押下を消費すべき）場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// メニューを開いた押下は、メニューを開いた後に同じ入力としてホストへ届く。 時刻で区別しないと
+    /// 開いた直後に閉じてしまい、メニューが一度も見えない（実測 2026-11-20）。
+    /// </remarks>
+    private static bool CloseAnnotationAddMenuOnOutsidePress()
+    {
+        if (s_annotationAddMenu is null)
+        {
+            return false;
+        }
+
+        if (Environment.TickCount64 - s_annotationAddMenuOpenedAt < OutsidePressGraceMs)
+        {
+            return false;
+        }
+
+        CloseAnnotationAddMenu();
+        return true;
+    }
     /// <summary>保存済みの注釈ファイルを開く（元画像と注釈を読み直す）。</summary>
     /// <param name="annotation">注釈の編集コントロール。</param>
     /// <param name="viewModel">アプリのメイン ViewModel。</param>

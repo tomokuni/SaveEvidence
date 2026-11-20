@@ -782,6 +782,10 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
         var point = e.GetCurrentPoint(this);
 
+        // 押下をホストへ知らせる（表示中のメニューを外側の押下で閉じるために使う）
+        RaisePreviewGesture(
+            AnnotationPreviewGesture.Press, point.Position, 1, 0, e.KeyModifiers);
+
         if (point.Properties.IsRightButtonPressed)
         {
             HandleRightButton(point.Position);
@@ -1015,6 +1019,8 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+
+        System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "avl-focus.log"), $"key {e.Key} editing={_isEditingText}{Environment.NewLine}");
 
         // 本文の編集中は、キー入力を本文の編集へ渡す（Delete で注釈を消さない）
         if (_isEditingText && HandleTextEditingKey(e))

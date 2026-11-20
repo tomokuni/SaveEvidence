@@ -8,6 +8,9 @@ namespace EsUtil.Feature.Annotation;
 /// </remarks>
 public enum AnnotationPreviewGesture
 {
+    /// <summary>ポインターの押下（ボタンの種類を問わない）。 メニューの外側クリックを閉じるために使う。</summary>
+    Press,
+
     /// <summary>ドラッグの開始（左ボタンの押下）。</summary>
     DragStart,
 

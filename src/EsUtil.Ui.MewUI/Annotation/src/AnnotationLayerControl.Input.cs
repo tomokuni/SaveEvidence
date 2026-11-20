@@ -161,6 +161,10 @@ public sealed partial class AnnotationLayerControl
         base.OnMouseDown(e);
 
         var position = e.GetPosition(this);
+
+        // 押下をホストへ知らせる（表示中のメニューを外側の押下で閉じるために使う）
+        RaisePreviewGesture(AnnotationPreviewGesture.Press, position, 1, 0, e.ShiftKey, e.ControlKey);
+
         if (e.RightButton)
         {
             HandleRightButton(position);
@@ -174,6 +178,9 @@ public sealed partial class AnnotationLayerControl
         }
 
         Focus();
+
+        // 押下の間はポインターを捕まえる（MewUI は捕まえないと 2 回目の押下をダブルクリックとして通知しない。 解放は Up で行う）
+        CapturePointer();
 
         // 押下から始まる操作（移動・サイズ変更・しっぽの移動）を 1 手として記録する。
         // 実際に文書が変わらなければ履歴へは積まれない（選択だけのクリックで手数が増えない）
@@ -252,6 +259,26 @@ public sealed partial class AnnotationLayerControl
         InvalidateVisual();
     }
 
+    /// <summary>ダブルクリックで本文の編集を始める。</summary>
+    /// <param name="e">マウスの引数。</param>
+    /// <remarks>
+    /// <b>ダブルクリックは専用のイベントで受ける</b>: MewUI は押下の <c>ClickCount</c> を 1 のまま返し、
+    /// 2 回目の押下を本イベントとして通知する（実測 2026-11-20）。 <c>ClickCount</c> だけを見ると
+    /// 本文の編集を始められない。
+    /// </remarks>
+    protected override void OnMouseDoubleClick(MouseEventArgs e)
+    {
+        base.OnMouseDoubleClick(e);
+
+        var position = e.GetPosition(this);
+        var source = ToSource(position);
+        if (!IsEditingText && AnnotationHitTest.HitTest(_document, source) is BubbleAnnotation)
+        {
+            CapturePointer();
+            BeginTextEditing();
+            e.Handled = true;
+        }
+    }
     /// <summary>ポインターが動いたときの処理（ドラッグとカーソル形状）。</summary>
     /// <param name="e">ポインターの引数。</param>
     protected override void OnMouseMove(MouseEventArgs e)
@@ -412,12 +439,13 @@ public sealed partial class AnnotationLayerControl
         }
     }
 
-    /// <summary>フォーカスを失ったときに本文の編集を終える（キャレットを残さない）。</summary>
-    protected override void OnLostFocus()
-    {
-        base.OnLostFocus();
-        EndTextEditing();
-    }
+    /// <summary>フォーカスを失ったときの処理。</summary>
+    /// <remarks>
+    /// <b>編集は終えない</b>: 書式バーはポップアップへ出すため、開くとフォーカスが一時的に移る。
+    /// ここで編集を終えると書式バーが出た瞬間に編集が終わってしまう（実測 2026-11-20）。
+    /// 編集を終えるのは、外側のクリック・Esc・Ctrl+Enter のいずれかである。
+    /// </remarks>
+    protected override void OnLostFocus() => base.OnLostFocus();
 
     /// <summary>右クリックを処理する（注釈の上なら編集パネルを出す。 注釈の外なら追加メニューを要求する）。</summary>
     /// <param name="position">位置（DIP）。</param>

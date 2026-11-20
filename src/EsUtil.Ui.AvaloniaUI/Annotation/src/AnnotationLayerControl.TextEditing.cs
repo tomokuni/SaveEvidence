@@ -182,6 +182,30 @@ public sealed partial class AnnotationLayerControl
     /// <summary>IME へ渡すクライアントを取得する。</summary>
     internal AnnotationTextInputClient TextInputClient => _textInputClient ??= new AnnotationTextInputClient(this);
 
+    /// <summary>本文の編集キーを、引数の組み立てなしで適用する（書式バーからの転送に使う）。</summary>
+    /// <param name="key">キー。</param>
+    /// <param name="modifiers">修飾キー。</param>
+    /// <returns>処理した場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>フォーカスが書式バーへ移っても本文のキー操作を保つ</b>: 書式バーは独立したトップレベルへ出るため、
+    /// 環境によってはキー入力がバー側へ届く。 その場合もカーソル移動・選択の変更を本文へ適用する。
+    /// </remarks>
+    internal bool TryHandleEditingKey(Key key, KeyModifiers modifiers)
+    {
+        if (!_isEditingText)
+        {
+            return false;
+        }
+
+        var args = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Key = key,
+            KeyModifiers = modifiers,
+        };
+        return HandleTextEditingKey(args);
+    }
+
     /// <summary>本文の編集でキーが押されたときの処理。</summary>
     /// <param name="e">キーの引数。</param>
     /// <returns>処理した場合は <see langword="true"/>。</returns>
