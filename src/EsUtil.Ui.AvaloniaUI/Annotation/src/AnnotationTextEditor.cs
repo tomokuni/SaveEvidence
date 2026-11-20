@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using EsUtil.Platform.Core.Palette;
 
@@ -22,8 +23,8 @@ public sealed class AnnotationTextEditor : Panel
     /// <summary>書式バー（編集中だけ表示する）。</summary>
     private readonly AnnotationFormatBar _formatBar;
 
-    /// <summary>外観フライアウト（右クリック）の入れ物。 位置は Margin で決める。</summary>
-    private Border? _styleHost;
+    /// <summary>外観フライアウトの入れ物（独立したウィンドウとして表示する）。</summary>
+    private Window? _styleWindow;
 
     /// <summary>注釈の表示と編集を担うレイヤー。</summary>
     private readonly AnnotationLayerControl _layer;
@@ -142,13 +143,10 @@ public sealed class AnnotationTextEditor : Panel
             _formatBar.Measure(Size.Infinity);
         }
 
-        // 外観フライアウトも測る（測らないと配置されず表示されない）
-        _styleHost?.Measure(Size.Infinity);
-
         return _layer.DesiredSize;
     }
 
-    /// <summary>子要素を配置する（レイヤーは全面。 書式バーは本文の上、外観フライアウトは右クリック位置）。</summary>
+    /// <summary>子要素を配置する（レイヤーは全面。 書式バーは本文の上）。</summary>
     /// <param name="finalSize">最終的な領域。</param>
     /// <returns>配置した寸法。</returns>
     protected override Size ArrangeOverride(Size finalSize)
@@ -164,9 +162,6 @@ public sealed class AnnotationTextEditor : Panel
             _formatBar.Arrange(new Rect(Math.Max(0, body.X), Math.Max(0, y), desired.Width, desired.Height));
         }
 
-        // Margin と配置の両方でずらさない（Marquee は Margin を加味して配置される）
-        _styleHost?.Arrange(new Rect(finalSize));
-
         return finalSize;
     }
 
@@ -174,81 +169,88 @@ public sealed class AnnotationTextEditor : Panel
     /// <param name="x">位置（このコントロールの座標）。</param>
     /// <param name="y">位置（このコントロールの座標）。</param>
     /// <remarks>
-    /// <b>ウィンドウの内側へ収めない</b>: 収めると狭いウィンドウでパネルが潰れる。 はみ出してよい
-    /// （パネルはドラッグで動かせる）。<br/>
-    /// <b>パネルは移動できる</b>: 見出し（<c>外観</c> の行）をドラッグすると動く。
+    /// <b>独立したウィンドウへ出す</b>: アプリのウィンドウの子として置くと、ウィンドウの縁で切れて項目が
+    /// 選べなくなる（実測 2026-11-21）。 位置はアプリのウィンドウへ収めない。<br/>
+    /// <b>閉じるのは外側のクリックだけ</b>: ウィンドウが非アクティブになったら閉じる（ポインタが外れても閉じない）。
+    /// 閉じるボタンは置かない。<br/>
+    /// <b>パネルは移動できる</b>: 余白（見出し・枠）を押したまま動かすとウィンドウが動く。
     /// </remarks>
     public void ShowStylePanel(double x, double y)
     {
         CloseStylePanel();
 
-        var content = AnnotationStyleFlyout.BuildContent(_layer);
+        if (TopLevel.GetTopLevel(this) is not { } top)
+        {
+            return;
+        }
+
         var host = new Border
         {
-            Child = content,
+            Child = AnnotationStyleFlyout.BuildContent(_layer),
             Background = (IBrush?)this.FindResource("SystemControlBackgroundAltHighBrush") ?? Brushes.White,
             BorderBrush = (IBrush?)this.FindResource("SystemControlForegroundBaseMediumLowBrush") ?? Brushes.Gray,
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
             Padding = new Thickness(10),
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
-            Margin = new Thickness(Math.Max(0, x), Math.Max(0, y), 0, 0),
-            ZIndex = 20,
         };
 
-        // 見出しのドラッグで移動する（本文の編集を妨げないよう、パネルの上だけで完結させる）
-        Point? dragOrigin = null;
-        Thickness originMargin = default;
-        host.PointerPressed += (_, e) =>
+        var window = new Window
         {
-            if (e.GetCurrentPoint(host).Properties.IsLeftButtonPressed)
+            WindowDecorations = WindowDecorations.None,
+            ShowInTaskbar = false,
+            CanResize = false,
+            CanMinimize = false,
+            CanMaximize = false,
+            Topmost = false,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            Position = top.PointToScreen(new Point(x, y)),
+            Background = host.Background,
+            Content = host,
+        };
+
+        // 注釈の外を押したら閉じる（ウィンドウが非アクティブになる）
+        window.Deactivated += (_, _) => CloseStylePanel();
+
+        // 操作できる項目（ボタン・コンボボックス）の上では動かさない（押下を奪わない）
+        host.AddHandler(
+            PointerPressedEvent,
+            (_, e) =>
             {
-                dragOrigin = e.GetPosition(this);
-                originMargin = host.Margin;
-                e.Pointer.Capture(host);
+                if (e.Handled || !e.GetCurrentPoint(host).Properties.IsLeftButtonPressed)
+                {
+                    return;
+                }
+
+                window.BeginMoveDrag(e);
                 e.Handled = true;
-            }
-        };
-        host.PointerMoved += (_, e) =>
-        {
-            if (dragOrigin is not { } origin)
-            {
-                return;
-            }
+            },
+            RoutingStrategies.Bubble);
 
-            var current = e.GetPosition(this);
-            host.Margin = new Thickness(
-                originMargin.Left + (current.X - origin.X),
-                originMargin.Top + (current.Y - origin.Y),
-                0,
-                0);
-            e.Handled = true;
-        };
-        host.PointerReleased += (_, e) =>
-        {
-            dragOrigin = null;
-            e.Pointer.Capture(null);
-            e.Handled = true;
-        };
+        _styleWindow = window;
 
-        _styleHost = host;
-        Children.Add(host);
-        InvalidateArrange();
+        // 親のウィンドウの子として出す（アプリを閉じたら一緒に閉じる）
+        if (top as Window is { } owner)
+        {
+            window.Show(owner);
+        }
+        else
+        {
+            window.Show();
+        }
     }
 
     /// <summary>外観フライアウトを閉じる（出ていなければ何もしない）。</summary>
     public void CloseStylePanel()
     {
-        if (_styleHost is not { } host)
+        if (_styleWindow is not { } window)
         {
             return;
         }
 
-        _styleHost = null;
-        Children.Remove(host);
+        _styleWindow = null;
+        window.Close();
     }
 
     /// <summary>外観フライアウトが出ているかどうかを取得する。</summary>
-    public bool IsStylePanelOpen => _styleHost is not null;
+    public bool IsStylePanelOpen => _styleWindow is not null;
 }

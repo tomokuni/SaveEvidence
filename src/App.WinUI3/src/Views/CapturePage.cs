@@ -777,17 +777,14 @@ internal static class CapturePage
 
         void ForwardAnnotationGesture(EsUtil.Feature.Annotation.AnnotationPreviewGestureEventArgs e)
         {
-            // 追加メニューの表示中は、外側の押下で閉じるだけにする（メニューの外を押したら消える）
-            if (CloseAnnotationAddMenuOnOutsidePress(new Windows.Foundation.Point(e.X, e.Y)))
+            // 追加メニューは押下でだけ閉じる（ポインタの移動で閉じない）。
+            // 外観フライアウトは独立したウィンドウなので、外側の押下でウィンドウが非アクティブになって閉じる。
+            if (e.Gesture == EsUtil.Feature.Annotation.AnnotationPreviewGesture.Press)
             {
-                return;
-            }
-
-            // 外観フライアウトの表示中に外側を押したら閉じる（閉じるボタンは置かない）
-            if (annotationEditor.IsStylePanelOpen
-                && !annotationEditor.IsStylePanelHit(e.X, e.Y))
-            {
-                annotationEditor.CloseStylePanel();
+                if (CloseAnnotationAddMenuOnOutsidePress(new Windows.Foundation.Point(e.X, e.Y)))
+                {
+                    return;
+                }
             }
 
             var position = new EsPoint(e.X, e.Y);

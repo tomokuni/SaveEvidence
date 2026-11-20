@@ -18,6 +18,15 @@ public sealed class AnnotationStylePanel : ContentControl
         ArgumentNullException.ThrowIfNull(layer);
 
         var content = new StackPanel { Spacing = 8, Width = 340 };
+
+        // 見出しはタイトル バーのような帯にする（この面と余白を押したまま動かすとウィンドウが移動する）
+        content.Add(new Border
+        {
+            Padding = new Thickness(4, 3, 4, 4),
+            Background = new Color(255, 240, 240, 240),
+            Child = AnnotationEditorControls.Heading("外観"),
+        });
+
         content.Add(BuildAppearanceGroup(layer));
 
         if (layer.Selected is BubbleAnnotation)
@@ -58,7 +67,6 @@ public sealed class AnnotationStylePanel : ContentControl
         var appearance = layer.Selected?.Appearance ?? AnnotationAppearance.Default;
         var panel = new StackPanel { Spacing = 6 };
 
-        panel.Add(AnnotationEditorControls.Heading("外観"));
         panel.Add(AnnotationEditorControls.ColorRow(
             "枠線の色",
             appearance.Border,

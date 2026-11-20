@@ -187,7 +187,7 @@ public sealed partial class AnnotationLayerControl
     /// <param name="modifiers">修飾キー。</param>
     /// <returns>処理した場合は <see langword="true"/>。</returns>
     /// <remarks>
-    /// <b>フォーカスが書式バーへ移っても本文のキー操作を保つ</b>: 書式バーは独立したトップレベルへ出るため、
+    /// <b>フォーカスが書式バーへ移っても本文のキー操作を保つ</b>: 書式バーへフォーカスが移ることがあり、
     /// 環境によってはキー入力がバー側へ届く。 その場合もカーソル移動・選択の変更を本文へ適用する。
     /// </remarks>
     internal bool TryHandleEditingKey(Key key, KeyModifiers modifiers)

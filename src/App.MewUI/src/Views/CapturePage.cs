@@ -1180,14 +1180,7 @@ internal static class CapturePage
                 return;
             }
 
-            // 外観フライアウトの表示中に外側を押したら閉じる（閉じるボタンは置かない）
-            if (e.Gesture == AnnotationPreviewGesture.Press
-                && annotationEditor.IsStylePanelOpen
-                && !annotationEditor.IsStylePanelHit(e.X, e.Y))
-            {
-                annotationEditor.CloseStylePanel();
-            }
-
+            // 外観フライアウトは独立したウィンドウなので、外側の押下でウィンドウが非アクティブになって閉じる
             var point = new EsPoint(e.X, e.Y);
             switch (e.Gesture)
             {

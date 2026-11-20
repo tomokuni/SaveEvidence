@@ -1,6 +1,10 @@
 using EsUtil.Platform.Core.Palette;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
+using Windows.Graphics;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
 
@@ -24,6 +28,9 @@ public sealed class AnnotationTextEditor : Grid
 
     /// <summary>外観・重なり順の編集パネル（開いている間だけ保持する）。</summary>
     private AnnotationStylePanel? _stylePanel;
+
+    /// <summary>外観パネルを載せるウィンドウ（開いている間だけ保持する）。</summary>
+    private Window? _styleWindow;
 
     /// <summary>注釈の本文編集と書式バーをまとめたコントロールを初期化する。</summary>
     public AnnotationTextEditor()
@@ -104,87 +111,160 @@ public sealed class AnnotationTextEditor : Grid
     /// <param name="x">位置（このコントロールの座標）。</param>
     /// <param name="y">位置（このコントロールの座標）。</param>
     /// <remarks>
-    /// <b>ウィンドウの内側へ収めない</b>: 収めると狭いウィンドウでパネルが潰れる。 はみ出してよい
-    /// （パネルはドラッグで動かせる）。
+    /// <b>独立したウィンドウへ出す</b>: アプリのウィンドウの子として置くと、ウィンドウの縁で切れて項目が
+    /// 選べなくなる（実測 2026-11-21）。 位置はアプリのウィンドウへ収めない。<br/>
+    /// <b>閉じるのは外側のクリックだけ</b>: ウィンドウが非アクティブになったら閉じる（ポインタが外れても閉じない）。
+    /// 閉じるボタンは置かない。<br/>
+    /// <b>パネルは移動できる</b>: 余白（見出し・枠）を押したまま動かすとウィンドウが動く。
     /// </remarks>
     public void ShowStylePanel(double x, double y)
     {
+        // 位置は OS のポインター位置を使う（DIP から画面座標への変換はウィンドウの枠の分だけ
+        // ずれるため。 引数は 4 つの UI 版で同じ形に揃えるために受け取る）。
+        _ = x;
+        _ = y;
+
         CloseStylePanel();
+        var panel = new AnnotationStylePanel(_layer);
+        panel.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
 
-        var panel = new AnnotationStylePanel(_layer)
+        var scale = XamlRoot?.RasterizationScale ?? 1.0;
+        var width = Math.Max(1, (int)Math.Ceiling(panel.DesiredSize.Width * scale));
+        var height = Math.Max(1, (int)Math.Ceiling(panel.DesiredSize.Height * scale));
+
+        var window = new Window
         {
-            HorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment.Left,
-            VerticalAlignment = Microsoft.UI.Xaml.VerticalAlignment.Top,
-            Margin = new Microsoft.UI.Xaml.Thickness(Math.Max(0, x), Math.Max(0, y), 0, 0),
+            Content = panel,
+            ExtendsContentIntoTitleBar = true,
         };
 
-        // 押したまま動かすと移動する（パネルの上で完結させる）
-        Windows.Foundation.Point? origin = null;
-        Microsoft.UI.Xaml.Thickness originMargin = default;
-        panel.PointerPressed += (_, e) =>
+        if (window.AppWindow.Presenter is OverlappedPresenter presenter)
         {
-            if (!e.GetCurrentPoint(panel).Properties.IsLeftButtonPressed)
+            presenter.SetBorderAndTitleBar(false, false);
+            presenter.IsResizable = false;
+            presenter.IsMaximizable = false;
+            presenter.IsMinimizable = false;
+        }
+
+        // 位置はポインタ（画面座標）。 アプリのウィンドウの内側へ収めない
+        if (NativeCursor.TryGetScreenPosition(out var screenX, out var screenY))
+        {
+            window.AppWindow.Move(new PointInt32(screenX, screenY));
+        }
+
+        window.AppWindow.Resize(new SizeInt32(width, height));
+
+        // 注釈の外を押したら閉じる（ウィンドウが非アクティブになる）。
+        // 表示直後は入力の途中でいったん非アクティブになることがあるため、直後の通知は無視する
+        var shownAt = Environment.TickCount64;
+        window.Activated += (_, e) =>
+        {
+            if (e.WindowActivationState == WindowActivationState.Deactivated
+                && Environment.TickCount64 - shownAt > DeactivateGraceMs)
             {
-                return;
+                CloseStylePanel();
             }
-
-            origin = e.GetCurrentPoint(this).Position;
-            originMargin = panel.Margin;
-            panel.CapturePointer(e.Pointer);
-            e.Handled = true;
         };
+
+        // 操作できる項目（ボタン・コンボボックス）の上では動かさない（押下を奪わない）
+        var dragging = false;
+        var last = default(Windows.Foundation.Point);
+        panel.AddHandler(
+            UIElement.PointerPressedEvent,
+            new PointerEventHandler((_, e) =>
+            {
+                if (e.Handled || !e.GetCurrentPoint(panel).Properties.IsLeftButtonPressed)
+                {
+                    return;
+                }
+
+                dragging = true;
+                last = e.GetCurrentPoint(null).Position;
+                panel.CapturePointer(e.Pointer);
+                e.Handled = true;
+            }),
+            handledEventsToo: false);
         panel.PointerMoved += (_, e) =>
         {
-            if (origin is not { } start)
+            if (!dragging)
             {
                 return;
             }
 
-            var current = e.GetCurrentPoint(this).Position;
-            panel.Margin = new Microsoft.UI.Xaml.Thickness(
-                originMargin.Left + (current.X - start.X),
-                originMargin.Top + (current.Y - start.Y),
-                0,
-                0);
+            var current = e.GetCurrentPoint(null).Position;
+            var dx = (int)Math.Round((current.X - last.X) * scale);
+            var dy = (int)Math.Round((current.Y - last.Y) * scale);
+            var origin = window.AppWindow.Position;
+            window.AppWindow.Move(new PointInt32(origin.X + dx, origin.Y + dy));
+            last = current;
             e.Handled = true;
         };
         panel.PointerReleased += (_, e) =>
         {
-            origin = null;
+            if (!dragging)
+            {
+                return;
+            }
+
+            dragging = false;
             panel.ReleasePointerCapture(e.Pointer);
             e.Handled = true;
         };
 
+        // パネルの自然な寸法にウィンドウを合わせる。
+        // 読み込み前の測定はスタイル適用前で小さいため、読み込んだ後に測り直す。
+        // **寸法の変化で追従しない**: ウィンドウを縮めるとパネルも縮み、寸法が縮み続ける（実測 2026-11-21）。
+        panel.Loaded += (_, _) =>
+        {
+            if (_styleWindow != window)
+            {
+                return;
+            }
+
+            panel.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+            var natural = panel.DesiredSize;
+            if (natural.Width <= 0 || natural.Height <= 0)
+            {
+                return;
+            }
+
+            window.AppWindow.Resize(new SizeInt32(
+                Math.Max(1, (int)Math.Ceiling(natural.Width * scale)),
+                Math.Max(1, (int)Math.Ceiling(natural.Height * scale))));
+            panel.InvalidateMeasure();
+        };
+
         _stylePanel = panel;
-        Children.Add(panel);
+        _styleWindow = window;
+
+        // 表示直後の押下の途中で非アクティブ化されるのを避けるため、入力の処理が終わってから出す
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (_styleWindow != window)
+            {
+                return;
+            }
+
+            window.Activate();
+        });
     }
+
+    /// <summary>表示直後の非アクティブ化を無視する時間（ミリ秒）。</summary>
+    private const int DeactivateGraceMs = 500;
 
     /// <summary>外観の編集パネルが出ているかどうかを取得する。</summary>
-    public bool IsStylePanelOpen => _stylePanel is not null;
+    public bool IsStylePanelOpen => _styleWindow is not null;
 
-    /// <summary>指定した位置が外観の編集パネルの上かどうかを判定する。</summary>
-    /// <param name="x">位置（このコントロールの座標）。</param>
-    /// <param name="y">位置（このコントロールの座標）。</param>
-    /// <returns>パネルの上の場合は <see langword="true"/>。</returns>
-    public bool IsStylePanelHit(double x, double y)
-    {
-        if (_stylePanel is not { } panel)
-        {
-            return false;
-        }
-
-        return x >= panel.Margin.Left && y >= panel.Margin.Top
-            && x < panel.Margin.Left + panel.ActualWidth && y < panel.Margin.Top + panel.ActualHeight;
-    }
     /// <summary>外観・重なり順の編集パネルを閉じる。</summary>
     public void CloseStylePanel()
     {
-        if (_stylePanel is not { } panel)
+        if (_styleWindow is not { } window)
         {
             return;
         }
 
         _stylePanel = null;
-        Children.Remove(panel);
+        _styleWindow = null;
+        window.Close();
     }
 }

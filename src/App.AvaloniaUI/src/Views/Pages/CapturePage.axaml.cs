@@ -435,7 +435,7 @@ public sealed partial class CapturePage : UserControl
         if (e.Source is TextBox && e.Key != Key.S) return;
 
         // 注釈の本文を編集中は、本文の編集を優先する（コピー・切り取り・貼り付け・元に戻す・やり直す）。
-        // 書式バーはポップアップへ出すためフォーカスが本文に残らず、キーはここへ届く。
+        // 本文の編集中は、編集のショートカットをここで本文へ渡す（アプリの操作と取り違えない）。
         if (AnnotationEditor.IsEditingText && e.Key is Key.C or Key.X or Key.V)
         {
             e.Handled = true;
@@ -1291,10 +1291,6 @@ public sealed partial class CapturePage : UserControl
         var position = new Point(e.X, e.Y);
         switch (e.Gesture)
         {
-            case AnnotationPreviewGesture.Press:
-                // 外観フライアウトの表示中の押下は、外側なら閉じる（閉じるボタンは置かない）
-                AnnotationEditor.CloseStylePanel();
-                break;
             case AnnotationPreviewGesture.DragStart:
                 CropView.BeginPan(position);
                 break;

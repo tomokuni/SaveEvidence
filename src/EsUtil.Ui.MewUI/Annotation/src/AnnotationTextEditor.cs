@@ -23,11 +23,8 @@ public sealed class AnnotationTextEditor : Panel
     /// <summary>注釈の表示と編集を担うレイヤー。</summary>
     private readonly AnnotationLayerControl _layer;
 
-    /// <summary>外観・書式の編集パネル（右クリックで開く間だけ保持する）。</summary>
-    private AnnotationStylePanel? _stylePanel;
-
-    /// <summary>外観フライアウトの左上（このコントロールの座標）。</summary>
-    private Point _stylePanelPosition;
+    /// <summary>外観パネルを載せるウィンドウ（開いている間だけ保持する）。</summary>
+    private Window? _styleWindow;
 
     /// <summary>注釈の本文編集と書式バーをまとめたコントロールを初期化する。</summary>
     public AnnotationTextEditor()
@@ -103,84 +100,95 @@ public sealed class AnnotationTextEditor : Panel
     /// <param name="x">位置（このコントロールの座標）。</param>
     /// <param name="y">位置（このコントロールの座標）。</param>
     /// <remarks>
-    /// <b>ウィンドウの内側へ収めない</b>: 収めると狭いウィンドウでパネルが潰れる。 はみ出してよい
-    /// （パネルはドラッグで動かせる）。<br/>
-    /// <b>パネルは移動できる</b>: パネルを押したまま動かすと移動する。
+    /// <b>独立したウィンドウへ出す</b>: アプリのウィンドウの子として置くと、ウィンドウの縁で切れて項目が
+    /// 選べなくなる（実測 2026-11-21。 MewUI の <c>Popup</c> もウィンドウの内側に描かれるため使えない）。<br/>
+    /// <b>閉じるのは外側のクリックだけ</b>: ウィンドウが非アクティブになったら閉じる（ポインタが外れても閉じない）。
+    /// 閉じるボタンは置かない。<br/>
+    /// <b>パネルは移動できる</b>: 余白（見出し・枠）を押したまま動かすとウィンドウが動く。
     /// </remarks>
     public void ShowStylePanel(double x, double y)
     {
+        _ = x;
+        _ = y;
+
         CloseStylePanel();
 
-        var panel = new AnnotationStylePanel(_layer)
-        {
-            HorizontalAlignment = HorizontalAlignment.Left,
-            VerticalAlignment = VerticalAlignment.Top,
-        };
-
-        // 押したまま動かすと移動する（パネルの上で完結させる）
-        Point? origin = null;
-        Thickness originMargin = default;
-        panel.OnMouseDown(e =>
-        {
-            if (!e.LeftButton)
-            {
-                return;
-            }
-
-            origin = e.GetPosition(this);
-            originMargin = new Thickness(_stylePanelPosition.X, _stylePanelPosition.Y, 0, 0);
-        });
-        panel.OnMouseMove(e =>
-        {
-            if (origin is not { } start)
-            {
-                return;
-            }
-
-            var current = e.GetPosition(this);
-            _stylePanelPosition = new Point(
-                originMargin.Left + (current.X - start.X),
-                originMargin.Top + (current.Y - start.Y));
-            InvalidateArrange();
-        });
-        panel.OnMouseUp(_ => origin = null);
-
-        _stylePanelPosition = new Point(Math.Max(0, x), Math.Max(0, y));
-        _stylePanel = panel;
-        Add(panel);
-        InvalidateMeasure();
-        InvalidateArrange();
-    }
-
-    /// <summary>外観の編集パネルが出ているかどうかを取得する。</summary>
-    public bool IsStylePanelOpen => _stylePanel is not null;
-
-    /// <summary>指定した位置が外観の編集パネルの上かどうかを判定する。</summary>
-    /// <param name="x">位置（このコントロールの座標）。</param>
-    /// <param name="y">位置（このコントロールの座標）。</param>
-    /// <returns>パネルの上の場合は <see langword="true"/>。</returns>
-    public bool IsStylePanelHit(double x, double y)
-    {
-        if (_stylePanel is not { } panel)
-        {
-            return false;
-        }
-
-        var desired = panel.DesiredSize;
-        return x >= _stylePanelPosition.X && y >= _stylePanelPosition.Y
-            && x < _stylePanelPosition.X + desired.Width && y < _stylePanelPosition.Y + desired.Height;
-    }
-    /// <summary>外観・書式の編集パネルを閉じる。</summary>
-    public void CloseStylePanel()
-    {
-        if (_stylePanel is not { } panel)
+        if (FindVisualRoot() is not Window owner)
         {
             return;
         }
 
-        _stylePanel = null;
-        Remove(panel);
-        InvalidateArrange();
+        var panel = new AnnotationStylePanel(_layer);
+        var window = new Window
+        {
+            Borderless = true,
+            ShowInTaskbar = false,
+            Topmost = false,
+            StartupLocation = WindowStartupLocation.Manual,
+            Content = panel,
+            WindowSize = WindowSize.FitContentSize(640, 960),
+        };
+
+        // 位置はポインタ（画面座標）。 アプリのウィンドウの内側へ収めない
+        var scale = owner.DpiScale > 0 ? owner.DpiScale : 1.0;
+        if (MewUiNativeCursor.TryGetScreenPosition(out var screenX, out var screenY))
+        {
+            window.StartManualPosition(screenX / scale, screenY / scale);
+        }
+
+        // 注釈の外を押したら閉じる（ウィンドウが非アクティブになる）
+        window.Deactivated += () => CloseStylePanel();
+
+        // パネルの余白・見出しの帯を押したまま動かすと、ウィンドウが動く。
+        // MewUI はイベントを親へ伝播せず、当たり判定は最も深い「当たる」要素になる。
+        // パネル自身が押されたときだけ動かすため、ボタン・コンボボックスの上では動かない。
+        // **位置は OS のポインターで測る**: ウィンドウを動かすとパネル内の座標は動かないため、
+        // パネル内の座標で差分を取ると 1 回で止まる（実測 2026-11-21）。
+        Point? originWindow = null;
+        var originCursor = default(System.Drawing.Point);
+        panel.OnMouseDown(e =>
+        {
+            if (!e.LeftButton || !MewUiNativeCursor.TryGetScreenPosition(out var x, out var y))
+            {
+                return;
+            }
+
+            originWindow = window.Position;
+            originCursor = new System.Drawing.Point(x, y);
+        });
+        panel.OnMouseMove(e =>
+        {
+            _ = e;
+
+            if (originWindow is not { } start
+                || !MewUiNativeCursor.TryGetScreenPosition(out var x, out var y))
+            {
+                return;
+            }
+
+            window.MoveTo(
+                start.X + ((x - originCursor.X) / scale),
+                start.Y + ((y - originCursor.Y) / scale));
+        });
+        panel.OnMouseUp(_ => originWindow = null);
+
+        _styleWindow = window;
+        window.Show(owner);
+    }
+
+    /// <summary>外観の編集パネルが出ているかどうかを取得する。</summary>
+    public bool IsStylePanelOpen => _styleWindow is not null;
+
+    /// <summary>外観・書式の編集パネルを閉じる。</summary>
+    public void CloseStylePanel()
+    {
+        if (_styleWindow is not { } window)
+        {
+            return;
+        }
+
+        _styleWindow = null;
+        window.Close();
     }
 
     /// <summary>子要素の寸法を測る。</summary>
@@ -196,11 +204,10 @@ public sealed class AnnotationTextEditor : Panel
             _formatBar.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         }
 
-        _stylePanel?.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         return _layer.DesiredSize;
     }
 
-    /// <summary>子要素を配置する（レイヤーは全面、バーは本文の上、編集パネルは右上）。</summary>
+    /// <summary>子要素を配置する（レイヤーは全面、バーは本文の上）。</summary>
     /// <param name="bounds">最終的な領域。</param>
     protected override void ArrangeContent(Rect bounds)
     {
@@ -217,13 +224,6 @@ public sealed class AnnotationTextEditor : Panel
             var y = above >= 0 ? above : body.Y + body.Height + BarGap;
             y = Math.Clamp(y, 0, Math.Max(0, bounds.Height - desired.Height));
             _formatBar.Arrange(new Rect(x, y, desired.Width, desired.Height));
-        }
-
-        if (_stylePanel is { } panel)
-        {
-            // 位置は右クリック位置（ドラッグで動かせる）
-            var desired = panel.DesiredSize;
-            panel.Arrange(new Rect(_stylePanelPosition.X, _stylePanelPosition.Y, desired.Width, desired.Height));
         }
     }
 }

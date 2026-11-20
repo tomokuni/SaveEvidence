@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using EsUtil.Feature.Annotation;
@@ -106,6 +107,9 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         // フォーカスを得た時点で問い合わせが来るため、編集中かどうかで分けずに常に同じクライアントを返す
         // （編集の開始時に問い合わせ直せないため。 編集中でなければ変換は受け取らない）。
         TextInputMethodClientRequested += (_, e) => e.Client = TextInputClient;
+
+        // 方向キーはフォーカス移動より先に受け取る（Avalonia は方向キーを XY ナビゲーションで処理済みにする）。
+        AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
     /// <summary>画像を取得または設定する。</summary>
@@ -1025,40 +1029,67 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     {
         base.OnKeyDown(e);
 
-        System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "avl-focus.log"), $"key {e.Key} editing={_isEditingText}{Environment.NewLine}");
+        if (TryHandleKeyDown(e))
+        {
+            e.Handled = true;
+        }
+    }
 
+    /// <summary>キー入力をこのコントロールの操作へ適用する。</summary>
+    /// <param name="e">キーの引数。</param>
+    /// <returns>処理した場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>方向キーはトンネル段階でも渡す</b>: Avalonia は方向キーをフォーカス移動（XY ナビゲーション）へ使い、
+    /// トンネル段階でイベントを処理済みにする。 そのままだと本文のキャレット移動・Shift+矢印の選択・
+    /// 枠線の nudge が効かない（実測 2026-11-21: 修飾キーだけが届き、方向キーは届かなかった）。
+    /// </remarks>
+    private bool TryHandleKeyDown(KeyEventArgs e)
+    {
         // 本文の編集中は、キー入力を本文の編集へ渡す（Delete で注釈を消さない）
         if (_isEditingText && HandleTextEditingKey(e))
         {
-            e.Handled = true;
-            return;
+            return true;
         }
 
         // Ctrl+Z / Ctrl+Y（元に戻す・やり直す）。 本文の編集中はホストの入力欄が受け取る。
         if ((e.KeyModifiers & KeyModifiers.Control) != 0 && e.Key is Key.Z or Key.Y)
         {
-            e.Handled = e.Key == Key.Z ? Undo() : Redo();
-            return;
+            return e.Key == Key.Z ? Undo() : Redo();
         }
 
         if (e.Key == Key.Delete)
         {
-            e.Handled = DeleteSelected();
-            return;
+            return DeleteSelected();
         }
 
         if (e.Key == Key.Enter && Selected is BubbleAnnotation)
         {
             BeginTextEditing();
-            e.Handled = true;
-            return;
+            return true;
         }
 
         if (e.Key is Key.Left or Key.Right or Key.Up or Key.Down)
         {
             PrepareUndo();
-            e.Handled = _marquee.KeyDown(ToEsKey(e.Key), _lastPointerSource);
+            var handled = _marquee.KeyDown(ToEsKey(e.Key), _lastPointerSource);
             InvalidateVisual();
+            return handled;
+        }
+
+        return false;
+    }
+
+    /// <summary>フォーカス移動より先に方向キーを受け取る（処理済みでも受け取る）。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">キーの引数。</param>
+    private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
+    {
+        _ = sender;
+
+        if (e.Key is Key.Left or Key.Right or Key.Up or Key.Down or Key.Home or Key.End
+            && TryHandleKeyDown(e))
+        {
+            e.Handled = true;
         }
     }
 

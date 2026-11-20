@@ -83,7 +83,7 @@ internal sealed class AnnotationFormatBar : Border
     public AnnotationFormatBar(AnnotationLayerControl layer)
     {
         _layer = layer;
-        // バーは独立したトップレベルへ出るため、キー入力がバーへ届く環境では本文のキー操作が止まる。
+        // バーは本文と同じ画面の子として重ねるが、バーへフォーカスが移ると本文のキー操作が止まる。
         // 本文の編集キー（カーソル移動・Shift+矢印の選択など）は本文へ転送する。
         AddHandler(KeyDownEvent, OnFormatBarKeyForward, RoutingStrategies.Tunnel);
 

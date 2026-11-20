@@ -25,7 +25,7 @@ public static class AnnotationEditorControls
     /// <summary>見出しを作る。</summary>
     /// <param name="text">見出しの文言。</param>
     /// <returns>見出し。</returns>
-    public static Element Heading(string text) => new TextBlock
+    public static UIElement Heading(string text) => new TextBlock
     {
         Text = text,
         FontWeight = FontWeight.SemiBold,
