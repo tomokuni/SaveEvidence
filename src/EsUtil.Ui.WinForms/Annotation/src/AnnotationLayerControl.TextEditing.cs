@@ -135,19 +135,13 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>ウィンドウ メッセージから IME の変換内容を受け取る。</summary>
     /// <param name="m">メッセージ。</param>
+    /// <remarks>
+    /// <b>当たり判定を透過しない</b>: 注釈レイヤーはプレビュー領域の入力を単一所有し、注釈の無い場所の操作は
+    /// <see cref="AnnotationLayerControl.PreviewGestureRequested"/> でホストへ渡す（透過させると、透過した先の
+    /// 要素が入力を受け取り、注釈を選び直せなくなる。 実測 2026-11-20）。
+    /// </remarks>
     protected override void WndProc(ref Message m)
     {
-        if (m.Msg == 0x0084 && !_isEditingText)
-        {
-            // 注釈の無い場所は下のコントロール（プレビュー）へ入力とホイールを渡す
-            var screen = new Point((short)(m.LParam.ToInt32() & 0xFFFF), (short)((m.LParam.ToInt32() >> 16) & 0xFFFF));
-            if (!HitTestAt(PointToClient(screen)))
-            {
-                m.Result = new IntPtr(-1);
-                return;
-            }
-        }
-
         if (_isEditingText)
         {
             switch (m.Msg)

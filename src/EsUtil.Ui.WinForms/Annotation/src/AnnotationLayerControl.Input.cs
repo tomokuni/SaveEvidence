@@ -168,6 +168,16 @@ public sealed partial class AnnotationLayerControl
         if (AnnotationHitTest.HitTest(_document, source) is not { } hit)
         {
             Select(null);
+
+            // 注釈の無い場所はプレビューの操作（パン・ダブルクリック）へ渡す
+            if (isDoubleClick)
+            {
+                RaisePreviewGesture(AnnotationPreviewGesture.DoubleClick, position, 2, 0);
+                return;
+            }
+
+            _isPreviewDragging = true;
+            RaisePreviewGesture(AnnotationPreviewGesture.DragStart, position, 1, 0);
             return;
         }
 
@@ -188,8 +198,16 @@ public sealed partial class AnnotationLayerControl
         ArgumentNullException.ThrowIfNull(e);
         base.OnMouseMove(e);
 
-        var source = ToSource(new EsPoint(e.X, e.Y));
+        var position = new EsPoint(e.X, e.Y);
+        var source = ToSource(position);
         _lastPointerSource = source;
+
+        // 注釈の無い場所を押したまま動かしたら、プレビューのパンへ渡す
+        if (_isPreviewDragging)
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.DragMove, position, 1, 0);
+            return;
+        }
 
         if (_isDraggingTail)
         {
@@ -204,6 +222,13 @@ public sealed partial class AnnotationLayerControl
         }
 
         _marquee.Move(source);
+
+        // 注釈の上に無い間は、プレビューのホバー表示（座標・自動切り出しの強調）へ位置を渡す
+        if (!HitTestAt(new Point(e.X, e.Y)))
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.Hover, position, 1, 0);
+        }
+
         Invalidate();
     }
 
@@ -215,7 +240,12 @@ public sealed partial class AnnotationLayerControl
         base.OnMouseUp(e);
 
         var source = ToSource(new EsPoint(e.X, e.Y));
-        if (_isDraggingTail)
+        if (_isPreviewDragging)
+        {
+            _isPreviewDragging = false;
+            RaisePreviewGesture(AnnotationPreviewGesture.DragEnd, new EsPoint(e.X, e.Y), 1, 0);
+        }
+        else if (_isDraggingTail)
         {
             _isDraggingTail = false;
             RaiseDocumentChanged();
@@ -314,7 +344,7 @@ public sealed partial class AnnotationLayerControl
         _ => EsKey.None,
     };
 
-    /// <summary>右クリックを処理する（選択してから編集パネルを出す）。</summary>
+    /// <summary>右クリックを処理する（注釈の上なら編集パネルを出す。 注釈の外なら追加メニューを要求する）。</summary>
     /// <param name="position">位置（DIP）。</param>
     private void HandleRightButton(EsPoint position)
     {
@@ -326,10 +356,57 @@ public sealed partial class AnnotationLayerControl
 
         if (Selected is null)
         {
+            // 注釈の外は「枠線・吹き出しを追加」のメニューを出す（見た目はホストが決める）
+            AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
             return;
         }
 
         ShowStyleEditor();
+    }
+
+    /// <summary>プレビューへ操作を渡す。</summary>
+    /// <param name="gesture">操作の種類。</param>
+    /// <param name="position">位置（ローカル DIP）。</param>
+    /// <param name="clickCount">クリック回数。</param>
+    /// <param name="wheelDelta">ホイールの移動量。</param>
+    private void RaisePreviewGesture(
+        AnnotationPreviewGesture gesture,
+        EsPoint position,
+        int clickCount,
+        int wheelDelta)
+        => PreviewGestureRequested?.Invoke(
+            this,
+            new AnnotationPreviewGestureEventArgs(
+                gesture,
+                position.X,
+                position.Y,
+                clickCount,
+                wheelDelta,
+                (ModifierKeys & Keys.Shift) == Keys.Shift,
+                (ModifierKeys & Keys.Control) == Keys.Control));
+
+    /// <summary>ホイールが回されたときの処理（ズーム・スクロールはプレビューへ渡す）。</summary>
+    /// <param name="e">マウスの引数。</param>
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        ArgumentNullException.ThrowIfNull(e);
+        base.OnMouseWheel(e);
+
+        RaisePreviewGesture(
+            AnnotationPreviewGesture.Wheel, new EsPoint(e.X, e.Y), 1, e.Delta);
+    }
+
+    /// <summary>マウスが領域から外れたときの処理（プレビューのホバー表示を消す）。</summary>
+    /// <param name="e">マウスの引数。</param>
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        ArgumentNullException.ThrowIfNull(e);
+        base.OnMouseLeave(e);
+
+        if (!_isPreviewDragging && !IsEditingText)
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.Leave, default, 1, 0);
+        }
     }
 
     /// <summary>選択中の注釈のハンドルを押したかどうかを判定する。</summary>

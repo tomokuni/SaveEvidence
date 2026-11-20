@@ -54,6 +54,9 @@ public sealed partial class AnnotationLayerControl : Control
     /// <summary>しっぽの先端をドラッグ中かどうか。</summary>
     private bool _isDraggingTail;
 
+    /// <summary>注釈の無い場所でドラッグしている間かどうか（プレビューのパンへ渡す）。</summary>
+    private bool _isPreviewDragging;
+
     /// <summary>Marquee からの通知で文書を更新している最中かどうか（再入防止）。</summary>
     private bool _isApplyingMarquee;
 
@@ -91,6 +94,17 @@ public sealed partial class AnnotationLayerControl : Control
 
     /// <summary>選択が変わったときに発生する。</summary>
     public event EventHandler? SelectionChanged;
+
+    /// <summary>注釈の無い場所の操作をプレビューへ渡すときに発生する。</summary>
+    /// <remarks>
+    /// <b>入力の所有者は本レイヤー</b>である: 注釈の無い場所の押下・ドラッグ・ホイールは、本イベントで
+    /// ホストへ知らせ、ホストがプレビュー（ズーム・パン・自動切り出し）へ渡す。
+    /// </remarks>
+    public event EventHandler<AnnotationPreviewGestureEventArgs>? PreviewGestureRequested;
+
+    /// <summary>注釈の無い場所が右クリックされたときに発生する（追加メニューを出す）。</summary>
+    /// <remarks>メニューの見た目は UI ごとに異なるため、位置だけを知らせてホストが自分のメニューを出す。</remarks>
+    public event EventHandler<AnnotationAddMenuRequestedEventArgs>? AddMenuRequested;
 
     /// <summary>表示する画像を取得または設定する。</summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]

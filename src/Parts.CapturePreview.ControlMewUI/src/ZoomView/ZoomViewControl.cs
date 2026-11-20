@@ -106,14 +106,6 @@ public sealed class ZoomViewControl : Control
     /// ズーム率の変更・パン・ビューポートのサイズ変更で発火する。
     /// </remarks>
     public event EventHandler? ViewportChanged;
-
-    /// <summary>マウスのボタンが押されたときに発火する（左ボタン以外も通知する）。</summary>
-    /// <remarks>
-    /// 押下を自分で処理した場合はイベントをハンドル済みにするため、祖先の要素へは伝わらない。<br/>
-    /// 祖先が押下を扱う（右クリックメニューを出す等）ために使用する。
-    /// </remarks>
-    public event EventHandler<MousePressedEventArgs>? MousePressed;
-
     /// <summary>表示する画像（ズーム対象）を取得または設定する。</summary>
     /// <value>ズーム対象の画像。 null の場合は何も表示しない。 設定すると Fit 表示へリセットする。</value>
     public EsReadOnlyBitmap? Source
@@ -355,25 +347,66 @@ public sealed class ZoomViewControl : Control
     /// <param name="e">マウスの情報。</param>
     /// <remarks>
     /// スクロールバーのサム・トラック上ならドラッグを開始する（パンより優先する。 判断はコア）。<br/>
-    /// それ以外は grab 方式のパンを開始する（掴んだ位置のコンテンツ座標をセッションが保存する）。<br/>
-    /// 押下は <see cref="MousePressed"/> で祖先へ通知する（ハンドル済みのイベントは祖先へ伝わらないため）。
+    /// それ以外は grab 方式のパンを開始する（掴んだ位置のコンテンツ座標をセッションが保存する）。
     /// </remarks>
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
-
-        MousePressed?.Invoke(this, new MousePressedEventArgs(e.GetPosition(this), e.RightButton));
 
         if (!e.LeftButton)
         {
             return;
         }
 
-        var position = e.GetPosition(this).ToEsPoint();
-        Apply(_session.TryBeginScrollBarDrag(position)
+        BeginPan(e.GetPosition(this).ToEsPoint());
+        e.Handled = true;
+    }
+
+    /// <summary>重ねた要素から転送されたドラッグのパンを開始する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    /// <remarks>注釈レイヤーがプレビュー領域の入力を受け取るため、パンの開始をここへ転送する。</remarks>
+    public void BeginPan(EsPoint position)
+        => Apply(_session.TryBeginScrollBarDrag(position)
             ? new ZoomFeedback { ShouldCapturePointer = true }
             : _session.Press(position));
-        e.Handled = true;
+
+    /// <summary>重ねた要素から転送されたドラッグ中のポインタ位置を反映する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void PanTo(EsPoint position)
+    {
+        var feedback = _session.IsDraggingScrollBar
+            ? _session.UpdateScrollBarDrag(position)
+            : _session.Move(position);
+        if (feedback != default)
+        {
+            Apply(feedback);
+        }
+    }
+
+    /// <summary>重ねた要素から転送されたドラッグのパンを終了する。</summary>
+    public void EndPan()
+    {
+        var feedback = _session.IsDraggingScrollBar ? _session.ReleaseScrollBarDrag() : _session.Release();
+        if (feedback != default)
+        {
+            Apply(feedback);
+        }
+    }
+
+    /// <summary>重ねた要素から転送されたホイールの操作を反映する。</summary>
+    /// <param name="delta">ホイールの移動量。</param>
+    /// <param name="shift">Shift キーが押されているかどうか。</param>
+    /// <param name="zoomIn">拡大するかどうか（Ctrl 併用時）。</param>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void ForwardWheel(Vector delta, bool shift, bool zoomIn, EsPoint position)
+    {
+        if (zoomIn)
+        {
+            Apply(_session.ZoomByWheel(delta.Y > 0, position));
+            return;
+        }
+
+        Apply(_session.PanByWheel(new EsVector(delta.X, delta.Y), shift));
     }
 
     /// <summary>ドラッグ中は掴んだ位置がポインタに追従するようパンする（スクロールバーのドラッグも処理する）。</summary>

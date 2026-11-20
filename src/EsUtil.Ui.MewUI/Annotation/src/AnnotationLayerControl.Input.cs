@@ -1,4 +1,5 @@
 using Aprillz.MewUI;
+using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Rendering;
 using EsUtil.Feature.Annotation;
 using EsUtil.Feature.Marquee;
@@ -151,6 +152,10 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>ポインターが押されたときの処理（左: 選択・移動・サイズ変更。 右: 編集パネル）。</summary>
     /// <param name="e">ポインターの引数。</param>
+    /// <remarks>
+    /// <b>注釈の無い場所も本レイヤーが受け取る</b>: 選択の解除と、プレビューへの操作の引き渡しを行う。
+    /// 入力を要素の切り替えで振り分けると、切り替えた側が次の押下を受け取れない（実測 2026-11-20）。
+    /// </remarks>
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
@@ -169,7 +174,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         Focus();
-        _isPointerDown = true;
         CapturePointer();
 
         // 押下から始まる操作（移動・サイズ変更・しっぽの移動）を 1 手として記録する。
@@ -229,6 +233,16 @@ public sealed partial class AnnotationLayerControl
         else
         {
             Select(null);
+
+            // 注釈の無い場所はプレビューの操作（パン・ダブルクリック）へ渡す
+            if (e.ClickCount >= 2)
+            {
+                RaisePreviewGesture(AnnotationPreviewGesture.DoubleClick, position, e.ClickCount, 0, e.ShiftKey, e.ControlKey);
+                return;
+            }
+
+            _isPreviewDragging = true;
+            RaisePreviewGesture(AnnotationPreviewGesture.DragStart, position, 1, 0, e.ShiftKey, e.ControlKey);
         }
 
         InvalidateVisual();
@@ -243,6 +257,13 @@ public sealed partial class AnnotationLayerControl
         var position = e.GetPosition(this);
         var source = ToSource(position);
         _lastPointerSource = source;
+
+        // 注釈の無い場所を押したまま動かしたら、プレビューのパンへ渡す
+        if (_isPreviewDragging)
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.DragMove, position, 1, 0, e.ShiftKey, e.ControlKey);
+            return;
+        }
 
         if (_isSelectingText)
         {
@@ -264,10 +285,10 @@ public sealed partial class AnnotationLayerControl
 
         _marquee.Move(source);
 
-        // 注釈の外へ出たら入力を受け取らない（プレビューのズーム・パンへ渡す）
-        if (!_isPointerDown && !_isEditingText && !HitTestAt(position))
+        // 注釈の上に無い間は、プレビューのホバー表示（座標・自動切り出しの強調）へ位置を渡す
+        if (!HitTestAt(position))
         {
-            IsHitTestVisible = false;
+            RaisePreviewGesture(AnnotationPreviewGesture.Hover, position, 1, 0, e.ShiftKey, e.ControlKey);
         }
 
         if (Selected is BubbleAnnotation selected && IsNearTailTip(selected, source))
@@ -300,11 +321,53 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        _isPointerDown = false;
+        if (_isPreviewDragging)
+        {
+            _isPreviewDragging = false;
+            RaisePreviewGesture(AnnotationPreviewGesture.DragEnd, e.GetPosition(this), 1, 0, e.ShiftKey, e.ControlKey);
+            ReleasePointer();
+            return;
+        }
+
         _marquee.Release(ToSource(e.GetPosition(this)));
         ReleasePointer();
         InvalidateVisual();
     }
+
+    /// <summary>ホイールが回されたときの処理（ズーム・スクロールはプレビューへ渡す）。</summary>
+    /// <param name="e">ホイールの引数。</param>
+    protected override void OnMouseWheel(MouseWheelEventArgs e)
+    {
+        base.OnMouseWheel(e);
+
+        RaisePreviewGesture(
+            AnnotationPreviewGesture.Wheel, e.GetPosition(this), 1, (int)e.Delta.Y, e.ShiftKey, e.ControlKey);
+        e.Handled = true;
+    }
+
+    /// <summary>ポインターが領域から外れたときの処理（プレビューのホバー表示を消す）。</summary>
+    protected override void OnMouseLeave()
+    {
+        base.OnMouseLeave();
+
+        if (!_isPreviewDragging && !_isEditingText)
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.Leave, default, 1, 0, false, false);
+        }
+    }
+
+    /// <summary>この位置が入力の対象かどうかを判定する。</summary>
+    /// <param name="point">位置（このコントロールの座標）。</param>
+    /// <returns>このレイヤー（注釈レイヤーがプレビュー領域の入力を単一所有する）。</returns>
+    /// <remarks>
+    /// <b>下地を描かない面でも入力を受ける</b>: 画像の上へ重ねるため背景を塗らないが、MewUI の
+    /// パネルは背景の無い面をヒットテストの対象にしない。 常に対象とする（実測 2026-11-20）。
+    /// </remarks>
+    protected override UIElement OnHitTest(Point point)
+        => IsVisible && IsHitTestVisible
+            && point.X >= 0 && point.Y >= 0 && point.X < RenderSize.Width && point.Y < RenderSize.Height
+                ? this
+                : null!;
 
     /// <summary>キーが押されたときの処理（本文の編集・削除・nudge）。</summary>
     /// <param name="e">キーの引数。</param>
@@ -352,7 +415,7 @@ public sealed partial class AnnotationLayerControl
         EndTextEditing();
     }
 
-    /// <summary>右クリックを処理する（選択してから編集パネルを出す）。</summary>
+    /// <summary>右クリックを処理する（注釈の上なら編集パネルを出す。 注釈の外なら追加メニューを要求する）。</summary>
     /// <param name="position">位置（DIP）。</param>
     private void HandleRightButton(Point position)
     {
@@ -365,12 +428,33 @@ public sealed partial class AnnotationLayerControl
 
         if (Selected is null)
         {
+            // 注釈の外は「枠線・吹き出しを追加」のメニューを出す（見た目はホストが決める）
+            AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
             return;
         }
 
         Focus();
         ShowStyleEditor();
     }
+
+    /// <summary>プレビューへ操作を渡す。</summary>
+    /// <param name="gesture">操作の種類。</param>
+    /// <param name="position">位置（ローカル DIP）。</param>
+    /// <param name="clickCount">クリック回数。</param>
+    /// <param name="wheelDelta">ホイールの移動量。</param>
+    /// <param name="shift">Shift キーが押されているかどうか。</param>
+    /// <param name="control">Ctrl キーが押されているかどうか。</param>
+    private void RaisePreviewGesture(
+        AnnotationPreviewGesture gesture,
+        Point position,
+        int clickCount,
+        int wheelDelta,
+        bool shift,
+        bool control)
+        => PreviewGestureRequested?.Invoke(
+            this,
+            new AnnotationPreviewGestureEventArgs(
+                gesture, position.X, position.Y, clickCount, wheelDelta, shift, control));
 
     /// <summary>選択中の注釈のハンドルを押したかどうかを判定する。</summary>
     /// <param name="dip">位置（DIP）。</param>

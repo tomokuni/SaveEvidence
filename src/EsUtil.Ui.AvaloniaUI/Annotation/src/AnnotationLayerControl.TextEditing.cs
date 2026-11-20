@@ -664,6 +664,15 @@ public sealed partial class AnnotationLayerControl
         return layout.Lines.Count - 1;
     }
 
+    /// <summary>選択中の文字をクリップボードへコピーする（ホストのキー処理から呼ぶ入口）。</summary>
+    public void CopyTextSelection() => _ = CopySelectionAsync();
+
+    /// <summary>選択中の文字を切り取る（ホストのキー処理から呼ぶ入口）。</summary>
+    public void CutTextSelection() => _ = CutSelectionAsync();
+
+    /// <summary>クリップボードの文字を挿入する（ホストのキー処理から呼ぶ入口）。</summary>
+    public void PasteText() => _ = PasteAsync();
+
     /// <summary>選択中の文字をクリップボードへコピーする。</summary>
     /// <returns>コピーの非同期処理。</returns>
     private async Task CopySelectionAsync()

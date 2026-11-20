@@ -101,6 +101,8 @@ public sealed partial class AnnotationLayerControl : Grid
         Children.Add(_editing);
 
         PointerPressed += OnPointerPressed;
+        PointerWheelChanged += OnPointerWheelChanged;
+        PointerExited += OnPointerExited;
         PointerMoved += OnPointerMoved;
         PointerReleased += OnPointerReleased;
         KeyDown += OnKeyDown;
@@ -118,6 +120,17 @@ public sealed partial class AnnotationLayerControl : Grid
 
     /// <summary>選択が変わったときに発生する。</summary>
     public event EventHandler? SelectionChanged;
+
+    /// <summary>注釈の無い場所の操作をプレビューへ渡すときに発生する。</summary>
+    /// <remarks>
+    /// <b>入力の所有者は本レイヤー</b>である: 注釈の無い場所の押下・ドラッグ・ホイールは、本イベントで
+    /// ホストへ知らせ、ホストがプレビュー（ズーム・パン・自動切り出し）へ渡す。
+    /// </remarks>
+    public event EventHandler<AnnotationPreviewGestureEventArgs>? PreviewGestureRequested;
+
+    /// <summary>注釈の無い場所が右クリックされたときに発生する（追加メニューを出す）。</summary>
+    /// <remarks>メニューの見た目は UI ごとに異なるため、位置だけを知らせてホストが自分のメニューを出す。</remarks>
+    public event EventHandler<AnnotationAddMenuRequestedEventArgs>? AddMenuRequested;
 
     /// <summary>表示する画像を取得または設定する。</summary>
     /// <value>背景に表示する画像。</value>

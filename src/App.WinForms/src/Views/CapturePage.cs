@@ -354,37 +354,59 @@ internal static class CapturePage
 
         crop.ViewportChanged += (_, _) => captureSession.NotifyViewportChanged();
 
-        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す。
-        // 注釈レイヤーは当たり判定を透過する（HTTRANSPARENT）ため、押下は注釈レイヤーの親（編集コントロール）へ
-        // 渡る（WinForms のイベントは親子で伝播せず、透過した子のメッセージは親が受け取る）。
-        // 編集コントロールは注釈レイヤーと同じ大きさ・同じ座標系なので、その位置をそのまま使う。
-        annotation.MouseDown += (_, e) =>
+        // 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック・右クリック）は、注釈レイヤーが
+        // 受け取ってここへ渡す（入力の所有者は注釈レイヤー。 座標はプレビューと同じ）。
+        annotation.Layer.PreviewGestureRequested += (_, e) => ForwardAnnotationGesture(e);
+        annotation.Layer.AddMenuRequested += (_, e) => ShowAnnotationAddMenu(new Point((int)e.X, (int)e.Y));
+
+        void ForwardAnnotationGesture(AnnotationPreviewGestureEventArgs e)
+        {
+            var position = new Point((int)e.X, (int)e.Y);
+            var esPoint = new EsPoint(e.X, e.Y);
+            switch (e.Gesture)
+            {
+                case AnnotationPreviewGesture.DragStart:
+                    crop.ZoomView.BeginDragPan(esPoint);
+                    break;
+                case AnnotationPreviewGesture.DragMove:
+                    crop.ZoomView.DragPan(esPoint);
+                    break;
+                case AnnotationPreviewGesture.DragEnd:
+                    crop.ZoomView.EndDragPan();
+                    break;
+                case AnnotationPreviewGesture.Wheel:
+                    crop.ZoomView.ForwardWheel(
+                        new EsVector(0, e.WheelDelta), e.IsShiftDown, e.IsControlDown, esPoint);
+                    break;
+                case AnnotationPreviewGesture.Hover:
+                    OnPointerMoved(position);
+                    break;
+                case AnnotationPreviewGesture.Leave:
+                    viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
+                    viewModel.HoveredRect = null;
+                    break;
+                case AnnotationPreviewGesture.DoubleClick:
+                    OnCanvasDoubleClick(position);
+                    break;
+            }
+        }
+
+        void ShowAnnotationAddMenu(Point location)
         {
             if (viewModel.PreviewImage is null)
             {
                 return;
             }
 
-            if (e.Button != MouseButtons.Right)
-            {
-                // 注釈の外を左クリックしたら選択と編集を解除する
-                if (!annotation.Layer.HitTestAt(e.Location))
-                {
-                    annotation.Layer.ClearSelection();
-                }
-
-                return;
-            }
-
-            var menu = new ContextMenuStrip();
+            var addMenu = new ContextMenuStrip();
             var frame = new ToolStripMenuItem("枠線を追加");
-            frame.Click += (_, _) => annotation.Layer.AddFrameAt(e.Location);
+            frame.Click += (_, _) => annotation.Layer.AddFrameAt(location);
             var bubble = new ToolStripMenuItem("吹き出しを追加");
-            bubble.Click += (_, _) => annotation.Layer.AddBubbleAt(e.Location);
-            menu.Items.Add(frame);
-            menu.Items.Add(bubble);
-            menu.Show(annotation, e.Location);
-        };
+            bubble.Click += (_, _) => annotation.Layer.AddBubbleAt(location);
+            addMenu.Items.Add(frame);
+            addMenu.Items.Add(bubble);
+            addMenu.Show(annotation, location);
+        }
         // 入力はズームビューが受け取る（切り出しビュー自身は子へ入力を渡すだけのため）
         crop.ZoomView.MouseMove += (_, e) => OnPointerMoved(e.Location);
         crop.ZoomView.MouseDoubleClick += (_, e) => OnCanvasDoubleClick(e.Location);
@@ -609,7 +631,17 @@ internal static class CapturePage
         // 切り出しの直前の画像は MainViewModel.ApplyPixelEdit が履歴へ積む（ここでは積まない）。
         async Task StartCropCoreAsync()
         {
-            var bounds = await captureSession.StartCropAsync(crop, owner).ConfigureAwait(true);
+            // 切り出し中は注釈を隠す（注釈が切り出し範囲の選択を妨げないようにする）
+            annotation.Visible = false;
+            EsRectInt? bounds;
+            try
+            {
+                bounds = await captureSession.StartCropAsync(crop, owner).ConfigureAwait(true);
+            }
+            finally
+            {
+                annotation.Visible = true;
+            }
             if (bounds is not { } rect || rect.IsEmpty)
             {
                 return;

@@ -91,6 +91,7 @@ UI 層に残すのは「フレームワーク固有の型を使うもの」と�
 | `ThumbnailControl` | あり（`EsUtil.Feature.Thumbnail.Core`） | あり（`EsUtil.Feature.Thumbnail.Core` に同梱。 提示 + 外観 + 影） | AvaloniaUI / WinForms（EsUtil のコントロール） |
 | `AnnotationLayerControl` | あり（本リポジトリの `Feature.Annotation.Core`） | あり（同アセンブリ。 折り返しと描画計画） | AvaloniaUI / MewUI / WinUI3 / WinForms |
 
+**プレビューへ重ねる注釈レイヤーは、プレビュー領域の入力を単一所有します**: 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック・右クリック）は注釈レイヤーが受け取り、`PreviewGestureRequested` / `AddMenuRequested` でホストへ渡します（ホストがプレビューへ転送する）。 **入力を「注釈の上か」で要素ごとに切り替えてはいけません**（切り替えた側が次の押下を受け取れず、選択の解除・再選択・移動ができなくなります。 実測 2026-11-20）。 座標変換は `PreviewImageRect`（プレビュー内の画像の表示矩形）だけを使い、自前で Fit を計算しません（ズーム・パンで注釈がずれます）。
 `CropViewControl` と `SelectionOverlayControl` は `Parts.CapturePreview.ControlAvaloniaUI` / `Parts.CapturePreview.ControlMewUI` / `Parts.CapturePreview.ControlWinUI3` / `Parts.CapturePreview.ControlWinForms` が公開する複合コントロールです（独立したプロジェクトではありません。 撮影セッションの Facade と同じアセンブリに収録されます）。 `ZoomViewControl` も同じアセンブリに収録され、`CropViewControl` が内包する画像ビューポートです（ZoomView の UI 層も独立したプロジェクトではありません。 ズーム・パンの状態と判断は UI 非依存コアの `Parts.CapturePreview.Core` が単一所有します）。
 
 **コントロール化を前提とした処理は UI が持ちます**: ホイール操作（どの入力がズーム・パンかを決める）・ビューポートの変化の追従・組み込み先の概念は、コントロールを何かへ組み込んで初めて必要になるためです。

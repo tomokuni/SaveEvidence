@@ -98,7 +98,7 @@ internal static class CapturePage
         // グローバル ホットキーからの開始経路も同じ撮影セッションを通す（撮影と切り出しの排他を 1 箇所で効かせる）
         viewModel.StartSelectionMode = type => CaptureFlow.Start(type, window, captureSession);
 
-        void ToggleCrop() => ToggleCropSession(captureSession, cropView, viewModel, services);
+        void ToggleCrop() => ToggleCropSession(captureSession, cropView, viewModel, services, annotation);
 
         // 注釈モードの間は切り出しビューを隠す（入力の取り合いを避ける）
         // 撮影結果の反映（Undo 退避・プレビュー差し替え・ステータス通知）
@@ -726,46 +726,10 @@ internal static class CapturePage
         // カーソル移動はヒットテスト対象の要素（ズーム ビュー）だけが受け取るため、ズーム ビューへ購読する。
         // ズーム ビューはプレビュー領域全体を占めるため、座標系は切り出しビューと一致する
         var zoomView = crop.ZoomView;
-        zoomView.PointerMoved += (_, e) =>
-        {
-            var point = ToEsPoint(e.GetCurrentPoint(zoomView).Position);
-            UpdatePointerText(viewModel, zoomView, point);
+        _ = zoomView;
 
-            if (!viewModel.IsAutoCropActive)
-            {
-                return;
-            }
-
-            var hovered = FindAutoCropHit(viewModel, zoomView, point);
-            if (viewModel.HoveredRect != hovered)
-            {
-                viewModel.HoveredRect = hovered;
-            }
-        };
-
-        zoomView.PointerExited += (_, _) =>
-        {
-            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
-            viewModel.HoveredRect = null;
-        };
-
-        // ダブルクリックで矩形を確定し、矩形の外側ならキャンセルする
-        zoomView.DoubleTapped += (_, e) =>
-        {
-            if (!viewModel.IsAutoCropActive)
-            {
-                return;
-            }
-
-            var point = ToEsPoint(e.GetPosition(zoomView));
-            if (FindAutoCropHit(viewModel, zoomView, point) is { } hit)
-            {
-                viewModel.ConfirmAutoCropCommand.Execute(hit);
-                return;
-            }
-
-            viewModel.CancelAutoCropCommand.Execute(null);
-        };
+        // ポインタの移動・退出・ダブルクリックは注釈レイヤーが受け取って PreviewGestureRequested で通知する
+        // （注釈レイヤーがプレビュー領域の入力の所有者である）。
 
         var host = new Grid { Background = new SolidColorBrush(Colors.Transparent) };
         host.Children.Add(crop);
@@ -780,49 +744,62 @@ internal static class CapturePage
         // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
         annotationEditor.Layer.ShowImage = false;
 
-        // 注釈の上にポインタがある間だけ注釈レイヤーが入力を受け取る（それ以外はプレビューのズーム・パンへ渡す）。
-        // 重ねた要素は子ごと透過させないとプレビューへ入力が届かないため、親（エディター）の可否を切り替える。
-        annotationEditor.IsHitTestVisible = false;
-        host.AddHandler(
-            UIElement.PointerMovedEvent,
-            new Microsoft.UI.Xaml.Input.PointerEventHandler((_, e) =>
-            {
-                if (!annotationEditor.Layer.IsEditingText)
-                {
-                    annotationEditor.IsHitTestVisible =
-                        annotationEditor.Layer.HitTestAt(e.GetCurrentPoint(host).Position);
-                }
-            }),
-            handledEventsToo: true);
+        // 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック・右クリック）は、注釈レイヤーが
+        // 受け取ってここへ渡す（入力の所有者は注釈レイヤー。 座標系はプレビューと同じ）。
+        annotationEditor.Layer.PreviewGestureRequested += (_, e) => ForwardAnnotationGesture(e);
+        annotationEditor.Layer.AddMenuRequested +=
+            (_, e) => ShowAnnotationAddMenu(annotationEditor, new Windows.Foundation.Point(e.X, e.Y), host);
 
-        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す。
-        // プレビューのズーム・パンは押下をハンドルするため、ハンドル済みでも受け取れるようにする
-        // （注釈レイヤーは切り出しビューの兄弟であり、切り出しビューへは伝わらない）。
-        host.AddHandler(
-            UIElement.PointerPressedEvent,
-            new Microsoft.UI.Xaml.Input.PointerEventHandler((_, e) =>
+        void ForwardAnnotationGesture(EsUtil.Feature.Annotation.AnnotationPreviewGestureEventArgs e)
+        {
+            var position = new EsPoint(e.X, e.Y);
+            switch (e.Gesture)
             {
-                var current = e.GetCurrentPoint(host);
-                if (viewModel.PreviewImage is null)
-                {
-                    return;
-                }
-
-                if (!current.Properties.IsRightButtonPressed)
-                {
-                    // 注釈の外を左クリックしたら選択と編集を解除する
-                    if (!annotationEditor.Layer.HitTestAt(current.Position))
+                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.DragStart:
+                    crop.BeginPan(position);
+                    break;
+                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.DragMove:
+                    crop.PanTo(position);
+                    break;
+                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.DragEnd:
+                    crop.EndPan();
+                    break;
+                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.Wheel:
+                    crop.ForwardWheel(
+                        new EsVector(0, e.WheelDelta), e.IsShiftDown, e.IsControlDown, position);
+                    break;
+                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.Hover:
+                    UpdatePointerText(viewModel, crop.ZoomView, position);
+                    if (viewModel.IsAutoCropActive)
                     {
-                        annotationEditor.Layer.ClearSelection();
+                        var hovered = FindAutoCropHit(viewModel, crop.ZoomView, position);
+                        if (viewModel.HoveredRect != hovered)
+                        {
+                            viewModel.HoveredRect = hovered;
+                        }
                     }
 
-                    return;
-                }
+                    break;
+                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.Leave:
+                    viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
+                    viewModel.HoveredRect = null;
+                    break;
+                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.DoubleClick:
+                    if (viewModel.IsAutoCropActive)
+                    {
+                        if (FindAutoCropHit(viewModel, crop.ZoomView, position) is { } autoCropHit)
+                        {
+                            viewModel.ConfirmAutoCropCommand.Execute(autoCropHit);
+                        }
+                        else
+                        {
+                            viewModel.CancelAutoCropCommand.Execute(null);
+                        }
+                    }
 
-                ShowAnnotationAddMenu(annotationEditor, current.Position, host);
-                e.Handled = true;
-            }),
-            handledEventsToo: true);
+                    break;
+            }
+        }
 
         annotation = annotationEditor;
 
@@ -1110,17 +1087,19 @@ internal static class CapturePage
     /// <param name="cropView">切り出しを行う複合コントロール（表示中の画像が切り出しの対象）。</param>
     /// <param name="viewModel">アプリのメイン ViewModel（切り出しの適用先）。</param>
     /// <param name="services">アプリ全体で共有するコア オブジェクト（履歴の所有者）。</param>
+    /// <param name="annotation">注釈の編集コントロール（切り出し中は隠す）。</param>
     /// <remarks>
     /// どの操作を行うかの判断はコア（<c>CropSessionActions</c>）が単一所有する<br/>
     /// （未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）。
     /// </remarks>
     private static void ToggleCropSession(
-        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services)
+        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services,
+        AnnotationTextEditor annotation)
     {
         switch (captureSession.ResolveCropAction())
         {
             case CropSessionAction.Start:
-                _ = StartCropSessionAsync(captureSession, cropView, viewModel, services);
+                _ = StartCropSessionAsync(captureSession, cropView, viewModel, services, annotation);
                 break;
             case CropSessionAction.Confirm:
                 captureSession.Confirm();
@@ -1140,15 +1119,27 @@ internal static class CapturePage
     /// <param name="cropView">切り出しを行う複合コントロール。</param>
     /// <param name="viewModel">アプリのメイン ViewModel（切り出しの適用先）。</param>
     /// <param name="services">アプリ全体で共有するコア オブジェクト（履歴の所有者）。</param>
+    /// <param name="annotation">注釈の編集コントロール（切り出し中は隠す）。</param>
     /// <returns>待機タスク。</returns>
     /// <remarks>
     /// 確定（Enter / 確定操作）で切り出し範囲、キャンセルで空の矩形が返る。<br/>
     /// 開始できなかった場合（他のセッションが実行中）は結果 null が即時返る。
     /// </remarks>
     private static async Task StartCropSessionAsync(
-        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services)
+        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services,
+        AnnotationTextEditor annotation)
     {
-        var bounds = await captureSession.StartCropAsync(cropView, AppContext());
+        // 切り出し中は注釈を隠す（注釈が切り出し範囲の選択を妨げないようにする）
+        annotation.Visibility = Visibility.Collapsed;
+        EsRectInt? bounds;
+        try
+        {
+            bounds = await captureSession.StartCropAsync(cropView, AppContext());
+        }
+        finally
+        {
+            annotation.Visibility = Visibility.Visible;
+        }
         if (bounds is not { } rect || rect.IsEmpty)
         {
             return;
@@ -1376,11 +1367,6 @@ internal static class CapturePage
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
     private static void UpdateSaveToolTip(Button save, MainViewModel viewModel)
         => ToolTipService.SetToolTip(save, $"画像を保存（保存先: {viewModel.SaveFolderPathResolved}）");
-
-    /// <summary>カーソル位置をコアの座標型へ変換する。</summary>
-    /// <param name="point">変換する座標。</param>
-    /// <returns>変換した座標。</returns>
-    private static EsPoint ToEsPoint(Windows.Foundation.Point point) => new(point.X, point.Y);
 
     /// <summary>プレビューのスケーリング（DIP → 物理ピクセル）を取得する。</summary>
     /// <param name="cropView">対象のプレビュー。</param>

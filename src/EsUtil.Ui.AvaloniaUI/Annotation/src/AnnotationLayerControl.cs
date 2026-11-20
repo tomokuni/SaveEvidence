@@ -25,7 +25,7 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 /// 設定ペインから使える（既定値の編集）。<br/>
 /// <b>座標</b>: 注釈は元画像ピクセルで保持し、描画時は表示倍率で写す（画像へ焼き込まない）。
 /// </remarks>
-public sealed partial class AnnotationLayerControl : Control
+public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering.ICustomHitTest
 {
     /// <summary>画像を取得または設定する。</summary>
     /// <value>背景に表示する画像。 null の場合は注釈だけを描く。</value>
@@ -230,6 +230,18 @@ public sealed partial class AnnotationLayerControl : Control
 
     /// <summary>選択が変わったときに発生する。</summary>
     public event EventHandler? SelectionChanged;
+
+    /// <summary>注釈の無い場所の操作をプレビューへ渡すときに発生する。</summary>
+    /// <remarks>
+    /// <b>入力の所有者は本レイヤー</b>である: 注釈の無い場所の押下・ドラッグ・ホイールは、本イベントで
+    /// ホストへ知らせ、ホストがプレビュー（ズーム・パン・自動切り出し）へ渡す。 入力を「どの要素が受け取るか」で
+    /// 切り替えると、受け取らなかった側が次の操作を受け取れなくなる（実測 2026-11-20）。
+    /// </remarks>
+    public event EventHandler<AnnotationPreviewGestureEventArgs>? PreviewGestureRequested;
+
+    /// <summary>注釈の無い場所が右クリックされたときに発生する（追加メニューを出す）。</summary>
+    /// <remarks>メニューの見た目は UI ごとに異なるため、位置だけを知らせてホストが自分のメニューを出す。</remarks>
+    public event EventHandler<AnnotationAddMenuRequestedEventArgs>? AddMenuRequested;
 
 
     /// <summary>選択中の注釈を取得する。</summary>
@@ -737,17 +749,30 @@ public sealed partial class AnnotationLayerControl : Control
         DrawTailHandle(context);
     }
 
-    /// <summary>ポインターを押している間かどうか（離した後に注釈の外なら入力を受け取らない）。</summary>
-    private bool _isPointerDown;
+    /// <summary>注釈の無い場所でドラッグしている間かどうか（プレビューのパンへ渡す）。</summary>
+    private bool _isPreviewDragging;
 
+    /// <summary>この位置が入力の対象かどうかを判定する。</summary>
+    /// <param name="point">位置（このコントロールの座標）。</param>
+    /// <returns>領域内の場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>下地を描かない面でも入力を受ける</b>: 画像の上へ重ねるため背景を塗らないが、Avalonia の既定の
+    /// ヒットテストは背景の無い面を対象にしない。 注釈レイヤーはプレビュー領域の入力を単一所有するため、
+    /// 常に対象とする（実測 2026-11-20）。
+    /// </remarks>
+    public bool HitTest(Point point)
+        => IsVisible && IsHitTestVisible && new Rect(Bounds.Size).Contains(point);
     /// <summary>ポインターが押されたときの処理（左: 選択・移動・サイズ変更。 右: 編集メニュー）。</summary>
     /// <param name="e">ポインターの引数。</param>
+    /// <remarks>
+    /// <b>注釈の無い場所も本レイヤーが受け取る</b>: 選択の解除と、プレビューへの操作の引き渡しを行う。
+    /// 入力を要素の切り替えで振り分けると、切り替えた側が次の押下を受け取れない（実測 2026-11-20）。
+    /// </remarks>
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
 
         var point = e.GetCurrentPoint(this);
-        _isPointerDown = true;
 
         if (point.Properties.IsRightButtonPressed)
         {
@@ -823,6 +848,17 @@ public sealed partial class AnnotationLayerControl : Control
         else
         {
             Select(null);
+
+            // 注釈の無い場所はプレビューの操作（パン）へ渡す（ダブルクリックは自動切り出しの確定に使う）
+            if (e.ClickCount >= 2)
+            {
+                RaisePreviewGesture(
+                    AnnotationPreviewGesture.DoubleClick, point.Position, e.ClickCount, 0, e.KeyModifiers);
+                return;
+            }
+
+            _isPreviewDragging = true;
+            RaisePreviewGesture(AnnotationPreviewGesture.DragStart, point.Position, 1, 0, e.KeyModifiers);
         }
 
         InvalidateVisual();
@@ -837,6 +873,19 @@ public sealed partial class AnnotationLayerControl : Control
         var position = e.GetPosition(this);
         var source = ToSource(position);
         _lastPointerSource = source;
+
+        // 注釈の無い場所を押したまま動かしたら、プレビューのパンへ渡す
+        if (_isPreviewDragging)
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.DragMove, position, 1, 0, e.KeyModifiers);
+            return;
+        }
+
+        // 注釈の上に無い間は、プレビューのホバー表示（座標・自動切り出しの強調）へ位置を渡す
+        if (!HitTestAt(position))
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.Hover, position, 1, 0, e.KeyModifiers);
+        }
 
         // 本文の編集中にドラッグしている間は、キャレットを伸ばして選択する
         if (_isEditingText && _isSelectingText)
@@ -859,12 +908,6 @@ public sealed partial class AnnotationLayerControl : Control
         }
 
         _marquee.Move(source);
-
-        // 注釈の外へ出たら入力を受け取らない（プレビューのズーム・パンへ渡す）
-        if (!_isPointerDown && !_isEditingText && !HitTestAt(e.GetPosition(this)))
-        {
-            IsHitTestVisible = false;
-        }
 
         // しっぽのハンドルの上では専用のカーソルにする（Marquee の Move が設定した形状を上書きする）
         if (Selected is BubbleAnnotation selectedBubble && IsNearTailTip(selectedBubble, source))
@@ -895,11 +938,65 @@ public sealed partial class AnnotationLayerControl : Control
             return;
         }
 
-        _isPointerDown = false;
+        if (_isPreviewDragging)
+        {
+            _isPreviewDragging = false;
+            RaisePreviewGesture(
+                AnnotationPreviewGesture.DragEnd, e.GetPosition(this), 1, 0, e.KeyModifiers);
+            e.Pointer.Capture(null);
+            return;
+        }
+
         _marquee.Release(ToSource(e.GetPosition(this)));
         e.Pointer.Capture(null);
         InvalidateVisual();
     }
+
+    /// <summary>ホイールが回されたときの処理（ズーム・スクロールはプレビューへ渡す）。</summary>
+    /// <param name="e">ホイールの引数。</param>
+    protected override void OnPointerWheelChanged(PointerWheelEventArgs e)
+    {
+        base.OnPointerWheelChanged(e);
+
+        RaisePreviewGesture(
+            AnnotationPreviewGesture.Wheel, e.GetPosition(this), 1, (int)e.Delta.Y, e.KeyModifiers);
+        e.Handled = true;
+    }
+
+    /// <summary>ポインターが領域から外れたときの処理（プレビューのホバー表示を消す）。</summary>
+    /// <param name="e">ポインターの引数。</param>
+    protected override void OnPointerExited(PointerEventArgs e)
+    {
+        base.OnPointerExited(e);
+
+        if (!_isPreviewDragging && !_isEditingText)
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.Leave, e.GetPosition(this), 1, 0, e.KeyModifiers);
+        }
+    }
+
+    /// <summary>プレビューへ操作を渡す。</summary>
+    /// <param name="gesture">操作の種類。</param>
+    /// <param name="position">位置（ローカル DIP）。</param>
+    /// <param name="clickCount">クリック回数。</param>
+    /// <param name="wheelDelta">ホイールの移動量。</param>
+    /// <param name="modifiers">修飾キー。</param>
+    private void RaisePreviewGesture(
+        AnnotationPreviewGesture gesture,
+        Point position,
+        int clickCount,
+        int wheelDelta,
+        KeyModifiers modifiers)
+        => PreviewGestureRequested?.Invoke(
+            this,
+            new AnnotationPreviewGestureEventArgs(
+                gesture,
+                position.X,
+                position.Y,
+                clickCount,
+                wheelDelta,
+                (modifiers & KeyModifiers.Shift) != 0,
+                (modifiers & KeyModifiers.Control) != 0));
 
     /// <summary>キーが押されたときの処理（Delete・Enter・方向キーの nudge）。</summary>
     /// <param name="e">キーの引数。</param>
@@ -942,7 +1039,7 @@ public sealed partial class AnnotationLayerControl : Control
         }
     }
 
-    /// <summary>右クリックを処理する（選択してから編集メニューを出す）。</summary>
+    /// <summary>右クリックを処理する（注釈の上なら書式を出す。 注釈の外なら追加メニューを要求する）。</summary>
     /// <param name="position">位置（DIP）。</param>
     private void HandleRightButton(Point position)
     {
@@ -955,6 +1052,8 @@ public sealed partial class AnnotationLayerControl : Control
 
         if (Selected is null)
         {
+            // 注釈の外は「枠線・吹き出しを追加」のメニューを出す（見た目はホストが決める）
+            AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
             return;
         }
 
@@ -1020,12 +1119,23 @@ public sealed partial class AnnotationLayerControl : Control
         return range.Length <= 0 ? (0, 0) : (Math.Max(0, range.Start), range.Length);
     }
 
-    /// <summary>画像の表示倍率と位置を求める（縦横比を保って中央に置く）。</summary>
+    /// <summary>画像の表示倍率と位置を求める（プレビューの表示矩形に従う）。</summary>
     /// <returns>倍率と左上の位置（DIP）。</returns>
+    /// <remarks>
+    /// <b>倍率と位置はプレビューが単一所有する</b>: <see cref="PreviewImageRect"/>（プレビュー内の画像の表示矩形）を
+    /// そのまま使う。 ズーム・パンで画像の位置が変わっても注釈の座標がずれない。<br/>
+    /// 未設定（サンプルが単体で置く場合）だけ、自分の領域へ画像を収めた倍率で代用する。
+    /// </remarks>
     private (double Scale, Point Offset) ResolveImageTransform()
     {
         var width = Math.Max(1, SourcePixelWidth);
         var height = Math.Max(1, SourcePixelHeight);
+
+        if (PreviewImageRect is { Width: > 0, Height: > 0 } preview)
+        {
+            return (preview.Width / width, new Point(preview.X, preview.Y));
+        }
+
         var client = Bounds.Size;
         if (client.Width <= 0 || client.Height <= 0)
         {

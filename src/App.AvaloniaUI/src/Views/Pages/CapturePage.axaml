@@ -167,8 +167,7 @@
 
         <!-- メイン画像エリア（背景色は他の UI 版と同じ。 テーマ別の値は AppPalette が単一所有する） -->
         <Grid Grid.Row="1" x:Name="ImageAreaGrid"
-              Background="{DynamicResource ImageAreaBackgroundBrush}"
-              PointerPressed="OnImageAreaPointerPressed">
+              Background="{DynamicResource ImageAreaBackgroundBrush}">
             <!-- 画像の 4 辺・4 隅の影（幅・濃さは App.Core の ShadowPlan が単一所有する）は
                  CropViewControl.SurroundRenderer が同じ描画面へ先に描く（重ねると画像の端の混色の
                  下地が背景になり、画像と影の間に白い線として見える）。 -->

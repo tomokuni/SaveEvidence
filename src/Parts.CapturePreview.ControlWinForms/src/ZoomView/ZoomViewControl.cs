@@ -373,6 +373,21 @@ public sealed class ZoomViewControl : Control
         }
     }
 
+    /// <summary>重ねた要素から転送されたホイールの操作を反映する。</summary>
+    /// <param name="delta">ホイールの移動量。</param>
+    /// <param name="shift">Shift キーが押されているかどうか。</param>
+    /// <param name="zoomIn">拡大するかどうか（Ctrl 併用時）。</param>
+    /// <param name="position">ポインタ位置（クライアント座標の DIP）。</param>
+    public void ForwardWheel(EsVector delta, bool shift, bool zoomIn, EsPoint position)
+    {
+        if (zoomIn)
+        {
+            ZoomByWheel(delta.Y > 0, position);
+            return;
+        }
+
+        PanByWheel(delta, shift);
+    }
     /// <summary>描画に使うスケーリング係数（DIP → 物理ピクセル）を解決する。</summary>
     /// <returns>スケーリング係数（0.1〜8.0 へ補正済み）。</returns>
     /// <remarks>

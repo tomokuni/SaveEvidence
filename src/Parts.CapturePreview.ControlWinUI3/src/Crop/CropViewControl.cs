@@ -269,6 +269,25 @@ public sealed partial class CropViewControl : Grid
         }
     }
 
+    /// <summary>重ねた要素から転送されたドラッグのパンを開始する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void BeginPan(EsPoint position) => _zoomView.BeginPan(position);
+
+    /// <summary>重ねた要素から転送されたドラッグ中のポインタ位置を反映する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void PanTo(EsPoint position) => _zoomView.PanTo(position);
+
+    /// <summary>重ねた要素から転送されたドラッグのパンを終了する。</summary>
+    public void EndPan() => _zoomView.EndPan();
+
+    /// <summary>重ねた要素から転送されたホイールの操作を反映する。</summary>
+    /// <param name="delta">ホイールの移動量。</param>
+    /// <param name="shift">Shift キーが押されているかどうか。</param>
+    /// <param name="zoomIn">拡大するかどうか（Ctrl 併用時）。</param>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void ForwardWheel(EsVector delta, bool shift, bool zoomIn, EsPoint position)
+        => _zoomView.ForwardWheel(delta, shift, zoomIn, position);
+
     /// <summary>Fit 表示（ビューポートに収まる自動倍率）へ戻す。</summary>
     public void ZoomFit()
     {

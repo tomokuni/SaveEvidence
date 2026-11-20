@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Media;
 using EsUtil.Platform.Core.Palette;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
@@ -33,6 +34,9 @@ public sealed class AnnotationTextEditor : Panel
     {
         _layer = new AnnotationLayerControl();
         _formatBar = new AnnotationFormatBar(_layer) { IsVisible = false };
+
+        // 下地を持たないとパネルが入力の対象にならない（Avalonia は背景が無い面をヒットテストしない）
+        Background = Brushes.Transparent;
 
         // バーはポップアップへ載せる（ウィンドウが小さくても本文の上へ出せる。画面の外へは出ない）
         _formatBarPopup = new Popup

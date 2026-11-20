@@ -407,6 +407,26 @@ public sealed partial class CropViewControl : Panel
         remove => _zoomView.ZoomChanged -= value;
     }
 
+    /// <summary>重ねた要素から転送されたドラッグのパンを開始する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    /// <remarks>注釈レイヤーがプレビュー領域の入力を受け取るため、パンの開始をここへ転送する。</remarks>
+    public void BeginPan(Point position) => _zoomView.BeginPan(position);
+
+    /// <summary>重ねた要素から転送されたドラッグ中のポインタ位置を反映する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void PanTo(Point position) => _zoomView.PanTo(position);
+
+    /// <summary>重ねた要素から転送されたドラッグのパンを終了する。</summary>
+    public void EndPan() => _zoomView.EndPan();
+
+    /// <summary>重ねた要素から転送されたホイールの操作を反映する。</summary>
+    /// <param name="delta">ホイールの移動量。</param>
+    /// <param name="shift">Shift キーが押されているかどうか。</param>
+    /// <param name="zoomIn">拡大するかどうか（Ctrl 併用時）。</param>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void ForwardWheel(Vector delta, bool shift, bool zoomIn, Point position)
+        => _zoomView.ForwardWheel(delta, shift, zoomIn, position);
+
     /// <summary>ビューポート（パン・ズーム・表示状態）が変化したときに発火するイベント（<see cref="ZoomViewControl.ViewportChanged"/> へ委譲）。</summary>
     public event EventHandler? ViewportChanged
     {

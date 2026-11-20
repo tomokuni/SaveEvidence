@@ -406,6 +406,52 @@ public sealed partial class ZoomViewControl : Grid
         e.Handled = true;
     }
 
+    /// <summary>重ねた要素から転送されたドラッグのパンを開始する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    /// <remarks>注釈レイヤーがプレビュー領域の入力を受け取るため、パンの開始をここへ転送する。</remarks>
+    public void BeginPan(EsPoint position)
+        => Apply(_session.TryBeginScrollBarDrag(position)
+            ? new ZoomFeedback { ShouldCapturePointer = true }
+            : _session.Press(position));
+
+    /// <summary>重ねた要素から転送されたドラッグ中のポインタ位置を反映する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void PanTo(EsPoint position)
+    {
+        var feedback = _session.IsDraggingScrollBar
+            ? _session.UpdateScrollBarDrag(position)
+            : _session.Move(position);
+        if (feedback != default)
+        {
+            Apply(feedback);
+        }
+    }
+
+    /// <summary>重ねた要素から転送されたドラッグのパンを終了する。</summary>
+    public void EndPan()
+    {
+        var feedback = _session.IsDraggingScrollBar ? _session.ReleaseScrollBarDrag() : _session.Release();
+        if (feedback != default)
+        {
+            Apply(feedback);
+        }
+    }
+
+    /// <summary>重ねた要素から転送されたホイールの操作を反映する。</summary>
+    /// <param name="delta">ホイールの移動量。</param>
+    /// <param name="shift">Shift キーが押されているかどうか。</param>
+    /// <param name="zoomIn">拡大するかどうか（Ctrl 併用時）。</param>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void ForwardWheel(EsVector delta, bool shift, bool zoomIn, EsPoint position)
+    {
+        if (zoomIn)
+        {
+            ZoomByWheel(delta.Y > 0, position);
+            return;
+        }
+
+        PanByWheel(delta, shift);
+    }
     /// <summary>ドラッグ中は掴んだ位置がポインターに追従するようパンする（スクロールバーのドラッグも処理する）。</summary>
     /// <param name="sender">イベントの送信元（本コントロール）。</param>
     /// <param name="e">ポインターの情報。</param>

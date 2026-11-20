@@ -23,8 +23,8 @@ public sealed partial class AnnotationLayerControl
     /// <summary>ポインター キャプチャ中のポインター（解放に使う）。</summary>
     private Microsoft.UI.Xaml.Input.Pointer? _capturedPointer;
 
-    /// <summary>ポインターを押している間かどうか（離した後に注釈の外なら入力を受け取らない）。</summary>
-    private bool _isPointerDown;
+    /// <summary>注釈の無い場所でドラッグしている間かどうか（プレビューのパンへ渡す）。</summary>
+    private bool _isPreviewDragging;
 
     /// <summary>最後に押下した時刻（ダブルクリックの判定）。</summary>
     private DateTimeOffset _lastPressedAt = DateTimeOffset.MinValue;
@@ -208,7 +208,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         _ = Focus(FocusState.Pointer);
-        _isPointerDown = true;
         _capturedPointer = e.Pointer;
         CapturePointer(e.Pointer);
 
@@ -257,6 +256,17 @@ public sealed partial class AnnotationLayerControl
         if (AnnotationHitTest.HitTest(_document, source) is not { } hit)
         {
             Select(null);
+
+            // 注釈の無い場所はプレビューの操作（パン・ダブルクリック）へ渡す
+            if (isDoubleClick)
+            {
+                RaisePreviewGesture(AnnotationPreviewGesture.DoubleClick, point.Position, 2, 0);
+                return;
+            }
+
+            _isPreviewDragging = true;
+            RaisePreviewGesture(AnnotationPreviewGesture.DragStart, point.Position, 1, 0);
+            e.Handled = true;
             return;
         }
 
@@ -295,12 +305,19 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
+        // 注釈の無い場所を押したまま動かしたら、プレビューのパンへ渡す
+        if (_isPreviewDragging)
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.DragMove, point.Position, 1, 0);
+            return;
+        }
+
         _marquee.Move(source);
 
-        // 注釈の外へ出たら入力を受け取らない（プレビューのズーム・パンへ渡す）
-        if (!_isPointerDown && !IsEditingText && !HitTestAt(point.Position))
+        // 注釈の上に無い間は、プレビューのホバー表示（座標・自動切り出しの強調）へ位置を渡す
+        if (!HitTestAt(point.Position))
         {
-            IsHitTestVisible = false;
+            RaisePreviewGesture(AnnotationPreviewGesture.Hover, point.Position, 1, 0);
         }
 
         Redraw();
@@ -316,8 +333,12 @@ public sealed partial class AnnotationLayerControl
         var point = e.GetCurrentPoint(this);
         var source = ToSource(new EsPoint(point.Position.X, point.Position.Y));
 
-        _isPointerDown = false;
-        if (_isDraggingTail)
+        if (_isPreviewDragging)
+        {
+            _isPreviewDragging = false;
+            RaisePreviewGesture(AnnotationPreviewGesture.DragEnd, point.Position, 1, 0);
+        }
+        else if (_isDraggingTail)
         {
             _isDraggingTail = false;
             RaiseDocumentChanged();
@@ -402,7 +423,7 @@ public sealed partial class AnnotationLayerControl
         _ => EsKey.None,
     };
 
-    /// <summary>右クリックを処理する（選択してから編集パネルを出す）。</summary>
+    /// <summary>右クリックを処理する（注釈の上なら編集パネルを出す。 注釈の外なら追加メニューを要求する）。</summary>
     /// <param name="position">位置（DIP）。</param>
     private void HandleRightButton(EsPoint position)
     {
@@ -414,10 +435,61 @@ public sealed partial class AnnotationLayerControl
 
         if (Selected is null)
         {
+            // 注釈の外は「枠線・吹き出しを追加」のメニューを出す（見た目はホストが決める）
+            AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
             return;
         }
 
         ShowStyleEditor();
+    }
+
+    /// <summary>プレビューへ操作を渡す。</summary>
+    /// <param name="gesture">操作の種類。</param>
+    /// <param name="position">位置（ローカル DIP）。</param>
+    /// <param name="clickCount">クリック回数。</param>
+    /// <param name="wheelDelta">ホイールの移動量。</param>
+    private void RaisePreviewGesture(
+        AnnotationPreviewGesture gesture,
+        Windows.Foundation.Point position,
+        int clickCount,
+        int wheelDelta)
+        => PreviewGestureRequested?.Invoke(
+            this,
+            new AnnotationPreviewGestureEventArgs(
+                gesture,
+                position.X,
+                position.Y,
+                clickCount,
+                wheelDelta,
+                IsDown(VirtualKey.Shift),
+                IsDown(VirtualKey.Control)));
+
+    /// <summary>ホイールが回されたときの処理（ズーム・スクロールはプレビューへ渡す）。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">ポインターの引数。</param>
+    private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        _ = sender;
+
+        RaisePreviewGesture(
+            AnnotationPreviewGesture.Wheel,
+            e.GetCurrentPoint(this).Position,
+            1,
+            e.GetCurrentPoint(this).Properties.MouseWheelDelta);
+        e.Handled = true;
+    }
+
+    /// <summary>ポインターが領域から外れたときの処理（プレビューのホバー表示を消す）。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">ポインターの引数。</param>
+    private void OnPointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        _ = sender;
+
+        if (!_isPreviewDragging && !IsEditingText)
+        {
+            RaisePreviewGesture(AnnotationPreviewGesture.Leave, e.GetCurrentPoint(this).Position, 1, 0);
+        }
     }
 
     /// <summary>選択中の注釈のハンドルを押したかどうかを判定する。</summary>

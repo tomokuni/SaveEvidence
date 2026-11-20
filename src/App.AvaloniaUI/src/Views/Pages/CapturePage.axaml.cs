@@ -200,19 +200,16 @@ public sealed partial class CapturePage : UserControl
 
         // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
         AnnotationEditor.Layer.ShowImage = false;
-        AnnotationEditor.Layer.IsHitTestVisible = false;
         CropView.ZoomChanged += (_, _) => ApplyAnnotationOverlayTransform();
         CropView.ViewportChanged += (_, _) => ApplyAnnotationOverlayTransform();
 
-        // 注釈の上にポインタがある間だけ注釈レイヤーが入力を受け取る（それ以外はプレビューのズーム・パンへ渡す）
-        CropView.PointerMoved += (_, e) =>
-        {
-            var layer = AnnotationEditor.Layer;
-            if (!layer.IsEditingText)
-            {
-                layer.IsHitTestVisible = layer.HitTestAt(e.GetPosition(AnnotationEditor));
-            }
-        };
+        // 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック）は、注釈レイヤーが受け取ってここへ渡す。
+        // 入力を「注釈の有無」で切り替えると、切り替えた側が次の押下を受け取れなくなる（実測 2026-11-20）。
+        AnnotationEditor.Layer.PreviewGestureRequested += (_, e) => ForwardAnnotationGesture(e);
+
+        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す
+        // （切り出し中・自動切り出し中は、それぞれの操作を優先する）。
+        AnnotationEditor.Layer.AddMenuRequested += (_, e) => OnPreviewRightPressed(new Point(e.X, e.Y));
 
         // 自動切り出しのホバー強調の外観（内側の塗りと枠線）を CropViewControl へ与える。
         // 色・枠線の太さ・表示可否は描画にだけ必要な設定であり、強調の描画手順は CropViewControl（Parts）が単一所有する。
@@ -274,11 +271,8 @@ public sealed partial class CapturePage : UserControl
         SyncZoomSlider(_viewModel.ZoomPercent);
         UpdateZoomButtonState(CropView.CanZoomIn, CropView.CanZoomOut);
 
-        // マウスポインタ移動でステータスバーの座標表示（対象座標）と自動切り出しのホバーを更新する
-        // （自動切り出し用の Canvas が入力を受け取ると、ホイールでのズーム・パンができない）
-        CropView.PointerMoved += OnImagePointerMoved;
-        CropView.PointerExited += OnImagePointerExited;
-        CropView.PointerPressed += OnImageDoubleClicked;
+        // マウスポインタの移動・退出・ダブルクリックは、注釈レイヤーが受け取って
+        // PreviewGestureRequested で通知する（注釈レイヤーがプレビュー領域の入力の所有者である）。
 
         // ビューポート（パン・ズーム・表示サイズ）の変化を Crop オーバーレイへ通知する
         // （暗転マスク・選択枠・ルーペの追従。 ScrollViewer 連携の ScrollChanged に相当する中継）。
@@ -440,6 +434,29 @@ public sealed partial class CapturePage : UserControl
         // 保存（Ctrl+S）は文字編集のショートカットではないため、入力中でも行う
         // （テンプレート欄へ入力した直後に保存できず、フォーカスを移す操作を強いるのを避ける）。
         if (e.Source is TextBox && e.Key != Key.S) return;
+
+        // 注釈の本文を編集中は、本文の編集を優先する（コピー・切り取り・貼り付け・元に戻す・やり直す）。
+        // 書式バーはポップアップへ出すためフォーカスが本文に残らず、キーはここへ届く。
+        if (AnnotationEditor.IsEditingText && e.Key is Key.C or Key.X or Key.V)
+        {
+            e.Handled = true;
+            switch (e.Key)
+            {
+                case Key.C:
+                    AnnotationEditor.Layer.CopyTextSelection();
+                    break;
+                case Key.X:
+                    AnnotationEditor.Layer.CutTextSelection();
+                    break;
+                case Key.V:
+                    AnnotationEditor.Layer.PasteText();
+                    break;
+                default:
+                    break;
+            }
+
+            return;
+        }
 
         // Ctrl 押下時のみ処理（Alt / Shift との併用は対象外）
         if (!IsCtrlShortcut(e.KeyModifiers)) return;
@@ -964,8 +981,14 @@ public sealed partial class CapturePage : UserControl
         _cropTask = _captureSessionControl.StartCropAsync(CropView, _parentWindow!);
         UpdateCropButtonText();
 
+        // 切り出し中は注釈レイヤーの入力と描画を止める（注釈が切り出し範囲の選択を妨げないようにする）
+        AnnotationEditor.IsHitTestVisible = false;
+        AnnotationEditor.Opacity = 0.35;
+
         var result = await _cropTask;
         _cropTask = null;
+        AnnotationEditor.IsHitTestVisible = true;
+        AnnotationEditor.Opacity = 1;
         UpdateCropButtonText();
 
         // 確定時のみ切り出しを実行する（開始できなかった場合は結果 null、キャンセルは空の矩形。
@@ -1227,28 +1250,25 @@ public sealed partial class CapturePage : UserControl
         CropView.ZoomPercent = zoom;
     }
 
-    /// <summary>マウスポインタ移動時に、ポインタ位置の対象座標（画像ピクセル）をステータスバーへ表示する。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">ポインタイベント。</param>
+    /// <summary>ポインタ位置の対象座標（画像ピクセル）をステータスバーへ表示し、自動切り出しのホバーを更新する。</summary>
+    /// <param name="position">ポインタ位置（プレビューの座標）。</param>
     /// <remarks>
     /// ビューポート座標 → コンテンツ座標（元画像ピクセル）の変換は CropView が行う。<br/>
     /// 画像外（ビューポートの空き領域）では "-" を表示する。<br/>
-    /// 画像サイズ（対象座標）は <see cref="MainViewModel.ImageSizeDisplayText"/> にバインディングで表示される。<br/>
     /// 自動切り出し中は、同じ位置の検出矩形をホバーとして設定する（判定は <see cref="MainViewModel.HitDetectedRect"/> が単一所有する）。
     /// </remarks>
-    private void OnImagePointerMoved(object? sender, PointerEventArgs e)
+    private void UpdatePointerFromPosition(Point position)
     {
-        if (_viewModel.PreviewImage is not { } img)
+        if (_viewModel.PreviewImage is not { } image)
         {
             _viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
             UpdateAutoCropHover(null);
             return;
         }
 
-        var viewportPos = e.GetPosition(CropView);
         // 画像内かどうかを判定する（画像原点を起点とした表示サイズ内か。 矩形は 1 回の計算で取得）
         var imageRect = CropView.ImageRectViewport();
-        var displayPoint = viewportPos - imageRect.Position;
+        var displayPoint = position - imageRect.Position;
         if (displayPoint.X < 0 || displayPoint.Y < 0 ||
             displayPoint.X >= imageRect.Width || displayPoint.Y >= imageRect.Height)
         {
@@ -1258,58 +1278,98 @@ public sealed partial class CapturePage : UserControl
         }
 
         // 表示座標 → 対象座標（元画像ピクセル）へ変換し、画像範囲内にクランプする
-        var contentPos = ClientToSource(viewportPos);
-        var x = (int)Math.Clamp(contentPos.X, 0, img.Size.Width - 1);
-        var y = (int)Math.Clamp(contentPos.Y, 0, img.Size.Height - 1);
+        var contentPos = ClientToSource(position);
+        var x = (int)Math.Clamp(contentPos.X, 0, image.Size.Width - 1);
+        var y = (int)Math.Clamp(contentPos.Y, 0, image.Size.Height - 1);
         _viewModel.PointerDisplayText = StatusBarTexts.FormatPointer(x, y);
         UpdateAutoCropHover(new Point(x, y));
     }
-
-    /// <summary>マウスポインタがプレビュー領域から外れたときに、座標表示と自動切り出しのホバーを消す。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">ポインタイベント。</param>
-    /// <remarks>移動イベントは領域外では発生しないため、ホバー強調の残留を防ぐために本ハンドラを購読する。</remarks>
-    private void OnImagePointerExited(object? sender, PointerEventArgs e)
-    {
-        _viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
-        UpdateAutoCropHover(null);
-    }
-
     // ====================================================================
     // ポインターイベント
     // ====================================================================
 
-    private void OnImageAreaPointerPressed(object? sender, PointerPressedEventArgs e)
+    /// <summary>注釈レイヤーが受け取った、プレビューへ渡す操作を反映する。</summary>
+    /// <param name="e">操作の内容（注釈レイヤーの座標）。</param>
+    /// <remarks>
+    /// <b>座標系は同じ</b>: 注釈レイヤーはプレビュー（<see cref="CropView"/>）と同じ領域を覆うため、
+    /// 位置はそのまま渡せる。 パン・ズームの判断はプレビューのコアが単一所有する。
+    /// </remarks>
+    private void ForwardAnnotationGesture(AnnotationPreviewGestureEventArgs e)
     {
-        var point = e.GetCurrentPoint(CropView);
-        var isRight = point.Properties.IsRightButtonPressed;
-        var hasCropTask = _cropTask is not null;
-        s_logger.LogPreviewPointerPressed(isRight, hasCropTask);
+        var position = new Point(e.X, e.Y);
+        switch (e.Gesture)
+        {
+            case AnnotationPreviewGesture.DragStart:
+                CropView.BeginPan(position);
+                break;
+            case AnnotationPreviewGesture.DragMove:
+                CropView.PanTo(position);
+                break;
+            case AnnotationPreviewGesture.DragEnd:
+                CropView.EndPan();
+                break;
+            case AnnotationPreviewGesture.Wheel:
+                CropView.ForwardWheel(new Vector(0, e.WheelDelta), e.IsShiftDown, e.IsControlDown, position);
+                break;
+            case AnnotationPreviewGesture.Hover:
+                UpdatePointerFromPosition(position);
+                break;
+            case AnnotationPreviewGesture.Leave:
+                _viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
+                UpdateAutoCropHover(null);
+                break;
+            case AnnotationPreviewGesture.DoubleClick:
+                // 自動切り出し中は、ダブルクリックでホバー中の矩形を確定する
+                if (_viewModel.IsAutoCropActive)
+                {
+                    ConfirmAutoCropAt(position);
+                }
 
-        // 注釈の外を左クリックしたら、選択と本文の編集を解除する
-        if (!isRight && !AnnotationEditor.Layer.IsEditingText)
-        {
-            AnnotationEditor.Layer.ClearSelection();
-        }
-        if (isRight && hasCropTask)
-        {
-            ShowCropContextMenu();
-            e.Handled = true;
-        }
-        else if (isRight && _viewModel.IsAutoCropActive)
-        {
-            // 自動切り出しモード中は右クリックでキャンセルする
-            _viewModel.CancelAutoCropCommand.Execute(null);
-            e.Handled = true;
-        }
-        else if (isRight)
-        {
-            // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す
-            ShowAnnotationAddMenu(e.GetPosition(CropView));
-            e.Handled = true;
+                break;
         }
     }
 
+    /// <summary>注釈の無い場所が右クリックされたときの処理（切り出し・自動切り出し・注釈の追加）。</summary>
+    /// <param name="position">右クリックした位置（プレビューの座標）。</param>
+    private void OnPreviewRightPressed(Point position)
+    {
+        s_logger.LogPreviewPointerPressed(isRight: true, hasCropTask: _cropTask is not null);
+
+        if (_cropTask is not null)
+        {
+            ShowCropContextMenu();
+            return;
+        }
+
+        if (_viewModel.IsAutoCropActive)
+        {
+            // 自動切り出しモード中は右クリックでキャンセルする
+            _viewModel.CancelAutoCropCommand.Execute(null);
+            return;
+        }
+
+        ShowAnnotationAddMenu(position);
+    }
+
+    /// <summary>自動切り出しモード中のダブルクリックで、領域内の最小矩形を確定する（領域外はキャンセル）。</summary>
+    /// <param name="position">ダブルクリックした位置（プレビューの座標）。</param>
+    /// <remarks>
+    /// クリック位置（対象座標）を含む矩形のうち<b>面積が最小</b>のものを確定し、
+    /// <see cref="MainViewModel.ConfirmAutoCropCommand"/> で切り出す。<br/>
+    /// 矩形を含まない領域のダブルクリックは<b>キャンセル</b>とする
+    /// （切り出しモードの「矩形外クリック: キャンセル」と同じ操作）。
+    /// </remarks>
+    private void ConfirmAutoCropAt(Point position)
+    {
+        var contentPos = ClientToSource(position);
+        if (_viewModel.HitDetectedRect(contentPos.X, contentPos.Y) is { } hit)
+        {
+            _viewModel.ConfirmAutoCropCommand.Execute(hit);
+            return;
+        }
+
+        _viewModel.CancelAutoCropCommand.Execute(null);
+    }
     // ====================================================================
     // 自動切り出し（LineDetection 矩形選択）
     // ====================================================================
@@ -1374,46 +1434,6 @@ public sealed partial class CapturePage : UserControl
             _viewModel.HoveredRect = hovered;
         }
     }
-
-    /// <summary>自動切り出しモード中のダブルクリックで、領域内の最小矩形を確定する（領域外はキャンセル）。</summary>
-    /// <param name="sender">イベント送信元。</param>
-    /// <param name="e">ポインタイベント。</param>
-    /// <remarks>
-    /// クリック位置（対象座標）を含む矩形のうち<b>面積が最小</b>のものを確定し、
-    /// <see cref="MainViewModel.ConfirmAutoCropCommand"/> で切り出す。<br/>
-    /// 矩形を含まない領域のダブルクリックは<b>キャンセル</b>とする<br/>
-    /// （切り出しモードの「矩形外クリック: キャンセル」と同じ操作）。<br/>
-    /// 本ハンドラは <see cref="CropViewControl"/> の <c>PointerPressed</c> へ購読するため、<br/>
-    /// ポインター位置の座標系は CropView のローカル DIP である（旧オーバーレイの Canvas と同一領域）。
-    /// </remarks>
-    private void OnImageDoubleClicked(object? sender, PointerPressedEventArgs e)
-    {
-        if (!_viewModel.IsAutoCropActive)
-        {
-            return;
-        }
-
-        // ダブルクリックのみ確定・キャンセル（単一クリックでは何もしない）
-        var point = e.GetCurrentPoint(CropView);
-        if (!point.Properties.IsLeftButtonPressed || e.ClickCount < 2)
-        {
-            return;
-        }
-
-        var viewportPos = e.GetPosition(CropView);
-        var contentPos = ClientToSource(viewportPos);
-
-        // 矩形の判定はコア（MainViewModel.HitDetectedRect）が単一所有する
-        if (_viewModel.HitDetectedRect(contentPos.X, contentPos.Y) is { } hit)
-        {
-            _viewModel.ConfirmAutoCropCommand.Execute(hit);
-            return;
-        }
-
-        // 矩形を含まない領域のダブルクリックはキャンセルとする
-        _viewModel.CancelAutoCropCommand.Execute(null);
-    }
-
     /// <summary>ビューポート座標を対象座標（元画像ピクセル）へ変換する。</summary>
     /// <param name="viewportPos">ビューポート座標。</param>
     /// <returns>対象座標。</returns>

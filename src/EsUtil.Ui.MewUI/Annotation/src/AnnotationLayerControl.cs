@@ -81,6 +81,17 @@ public sealed partial class AnnotationLayerControl : Panel
     /// <summary>選択が変わったときに発生する。</summary>
     public event EventHandler? SelectionChanged;
 
+    /// <summary>注釈の無い場所の操作をプレビューへ渡すときに発生する。</summary>
+    /// <remarks>
+    /// <b>入力の所有者は本レイヤー</b>である: 注釈の無い場所の押下・ドラッグ・ホイールは、本イベントで
+    /// ホストへ知らせ、ホストがプレビュー（ズーム・パン・自動切り出し）へ渡す。
+    /// </remarks>
+    public event EventHandler<AnnotationPreviewGestureEventArgs>? PreviewGestureRequested;
+
+    /// <summary>注釈の無い場所が右クリックされたときに発生する（追加メニューを出す）。</summary>
+    /// <remarks>メニューの見た目は UI ごとに異なるため、位置だけを知らせてホストが自分のメニューを出す。</remarks>
+    public event EventHandler<AnnotationAddMenuRequestedEventArgs>? AddMenuRequested;
+
     /// <summary>注釈レイヤーを初期化する。</summary>
     public AnnotationLayerControl()
     {
@@ -154,8 +165,8 @@ public sealed partial class AnnotationLayerControl : Panel
         return new EsRect(x, y, width, height);
     }
 
-    /// <summary>ポインターを押している間かどうか（離した後に注釈の外なら入力を受け取らない）。</summary>
-    private bool _isPointerDown;
+    /// <summary>注釈の無い場所でドラッグしている間かどうか（プレビューのパンへ渡す）。</summary>
+    private bool _isPreviewDragging;
 
     /// <summary>指定した位置（DIP）に注釈があるかどうかを判定する（プレビューの入力を受け取るかの判断に使う）。</summary>
     /// <param name="dip">位置（ローカル DIP）。</param>

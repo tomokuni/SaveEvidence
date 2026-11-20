@@ -109,7 +109,7 @@ internal static class CapturePage
 
         // 切り出しの開始・確定・キャンセルの判断は 1 つの窓口へ集約する
         // （ボタン・キー・メニューの 3 経路で同じ規則を使う。 Avalonia 版と同じ）
-        void ToggleCrop() => ToggleCropSession(captureSession, crop, viewModel, services);
+        void ToggleCrop() => ToggleCropSession(captureSession, crop, viewModel, services, annotation);
 
         // 撮影結果の反映（Undo 退避・プレビュー差し替え・ステータス通知）は CaptureCompleted（同期）で行う。
         // イベントはオーナーの再表示より前に発行されるため、画像を差し替えてからアプリが再表示される
@@ -1070,9 +1070,9 @@ internal static class CapturePage
         }
         // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
         annotationEditor.Layer.ShowImage = false;
-        annotationEditor.IsHitTestVisible = false;
         annotation = annotationEditor;
         host.Children(annotationEditor);
+
 
         void SyncAnnotation()
         {
@@ -1133,17 +1133,51 @@ internal static class CapturePage
         // マウス操作はヒットテストされた要素から親へ伝わる（兄弟へは伝わらない）。 注釈レイヤーはヒットテストを
         // 透過するため、実際の宛先は注釈レイヤー・切り出しビューのいずれかになる。 どちらでも受け取れるよう、
         // 共通の親（プレビューと同じ座標系の host）で受ける。
-        void HandleMouseMove(Point position)
-        {
-            var point = new EsPoint(position.X, position.Y);
-            UpdatePointerText(viewModel, zoomView, point);
+        // 注釈の無い場所の操作は、注釈レイヤーが受け取ってここへ渡す（入力の所有者は注釈レイヤー）
+        annotationEditor.Layer.PreviewGestureRequested += (_, e) => ForwardAnnotationGesture(e);
+        annotationEditor.Layer.AddMenuRequested += (_, e) => ShowAnnotationMenu(new Point(e.X, e.Y));
 
-            // 注釈の上にポインタがある間だけ注釈レイヤーが入力を受け取る（それ以外はプレビューのズーム・パンへ渡す）
-            if (!annotationEditor.Layer.IsEditingText)
+        // 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック）は、注釈レイヤーが受け取って
+        // ここへ渡す（入力の所有者は注釈レイヤー。 座標系はプレビューと同じ）。
+        void ForwardAnnotationGesture(AnnotationPreviewGestureEventArgs e)
+        {
+            var point = new EsPoint(e.X, e.Y);
+            switch (e.Gesture)
             {
-                // 注釈の無い場所の入力はプレビュー（ズーム・パン）へ渡すため、重ねた要素ごと透過させる
-                annotationEditor.IsHitTestVisible = annotationEditor.Layer.HitTestAt(position);
+                case AnnotationPreviewGesture.DragStart:
+                    zoomView.BeginPan(point);
+                    break;
+                case AnnotationPreviewGesture.DragMove:
+                    zoomView.PanTo(point);
+                    break;
+                case AnnotationPreviewGesture.DragEnd:
+                    zoomView.EndPan();
+                    break;
+                case AnnotationPreviewGesture.Wheel:
+                    zoomView.ForwardWheel(
+                        new Vector(0, e.WheelDelta), e.IsShiftDown, e.IsControlDown, point);
+                    break;
+                case AnnotationPreviewGesture.Hover:
+                    HandleHover(point.X, point.Y);
+                    break;
+                case AnnotationPreviewGesture.Leave:
+                    viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
+                    viewModel.HoveredRect = null;
+                    break;
+                case AnnotationPreviewGesture.DoubleClick:
+                    if (viewModel.IsAutoCropActive)
+                    {
+                        ConfirmAutoCropAt(point.X, point.Y);
+                    }
+
+                    break;
             }
+        }
+
+        void HandleHover(double x, double y)
+        {
+            var point = new EsPoint(x, y);
+            UpdatePointerText(viewModel, zoomView, point);
 
             // 自動切り出し中はホバー中の矩形を更新する（Avalonia 版と同じ判定）
             if (viewModel.IsAutoCropActive)
@@ -1156,49 +1190,9 @@ internal static class CapturePage
             }
         }
 
-        // 注釈の無い場所の右クリックは、その位置を左上とする注釈の追加メニューを出す。
-        // 注釈の外を左クリックしたら選択と編集を解除する。
-        bool HandleMouseDown(Point position, bool rightButton)
+        void ConfirmAutoCropAt(double x, double y)
         {
-            if (viewModel.PreviewImage is null)
-            {
-                return false;
-            }
-
-            if (!rightButton)
-            {
-                if (!annotationEditor.Layer.HitTestAt(position))
-                {
-                    annotationEditor.Layer.ClearSelection();
-                }
-
-                return false;
-            }
-
-            ShowAnnotationMenu(position);
-            return true;
-        }
-
-        // 左ボタンはズームビューがパンのためにハンドルする（祖先へ伝わらない）ため、押下の通知を受けて
-        // 選択の解除と右クリックメニューの表示を行う。
-        zoomView.MousePressed += (_, e) => HandleMouseDown(e.Position, e.IsRightButton);
-        host.OnMouseMove(e => HandleMouseMove(e.GetPosition(host)));
-
-        zoomView.OnMouseLeave(() =>
-        {
-            viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
-            viewModel.HoveredRect = null;
-        });
-
-        zoomView.OnMouseDoubleClick(e =>
-        {
-            if (!viewModel.IsAutoCropActive)
-            {
-                return;
-            }
-
-            var position = e.GetPosition(zoomView);
-            if (FindAutoCropHit(viewModel, zoomView, new EsPoint(position.X, position.Y)) is { } hit)
+            if (FindAutoCropHit(viewModel, zoomView, new EsPoint(x, y)) is { } hit)
             {
                 viewModel.ConfirmAutoCropCommand.Execute(hit);
                 return;
@@ -1206,8 +1200,7 @@ internal static class CapturePage
 
             // 領域外のダブルクリックはキャンセル（切り出しモードの「矩形外クリック: キャンセル」と同じ）
             viewModel.CancelAutoCropCommand.Execute(null);
-        });
-
+        }
         // 中央寄せを変えたときにプレビューへ即時反映する
         settings.PropertyChanged += (_, e) =>
         {
@@ -1402,17 +1395,19 @@ internal static class CapturePage
     /// <param name="cropView">切り出しを行う複合コントロール（表示中の画像が切り出しの対象）。</param>
     /// <param name="viewModel">アプリのメイン ViewModel（切り出しの適用先）。</param>
     /// <param name="services">アプリ全体で共有するコアオブジェクト（履歴の所有者）。</param>
+    /// <param name="annotation">注釈の編集コントロール（切り出し中は隠す）。</param>
     /// <remarks>
     /// どの操作を行うかの判断はコア（<c>CropSessionActions.Resolve</c>）が単一所有する<br/>
     /// （未開始なら開始 / 選択済みなら確定 / 未選択ならキャンセル）。 Avalonia 版の切り出しボタンと同じ規則を使う。
     /// </remarks>
     private static void ToggleCropSession(
-        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services)
+        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services,
+        AnnotationTextEditor annotation)
     {
         switch (captureSession.ResolveCropAction())
         {
             case CropSessionAction.Start:
-                _ = StartCropSessionAsync(captureSession, cropView, viewModel, services);
+                _ = StartCropSessionAsync(captureSession, cropView, viewModel, services, annotation);
                 break;
             case CropSessionAction.Confirm:
                 // 開始済み・矩形あり → 現在の選択矩形で確定（既に待機しているタスクが完了する）
@@ -1434,6 +1429,7 @@ internal static class CapturePage
     /// <param name="cropView">切り出しを行う複合コントロール（表示中の画像が切り出しの対象）。</param>
     /// <param name="viewModel">アプリのメイン ViewModel（切り出しの適用先）。</param>
     /// <param name="services">アプリ全体で共有するコアオブジェクト（履歴の所有者）。</param>
+    /// <param name="annotation">注釈の編集コントロール（切り出し中は隠す）。</param>
     /// <returns>待機タスク。</returns>
     /// <remarks>
     /// 切り出しの対象画像は表示中の画像（<see cref="CropViewControl.Source"/>）から解決されるため、画像を別引数で渡さない。<br/>
@@ -1441,14 +1437,25 @@ internal static class CapturePage
     /// 開始できなかった場合（他のセッションが実行中）は結果 null が即時返る（無駄な待機をしない）。
     /// </remarks>
     private static async Task StartCropSessionAsync(
-        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services)
+        CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services,
+        AnnotationTextEditor annotation)
     {
         if (Application.Current?.MainWindow is not { } hostWindow)
         {
             return;
         }
 
-        var bounds = await captureSession.StartCropAsync(cropView, hostWindow).ConfigureAwait(true);
+        // 切り出し中は注釈を隠す（注釈が切り出し範囲の選択を妨げないようにする）
+        annotation.IsVisible = false;
+        EsRectInt? bounds;
+        try
+        {
+            bounds = await captureSession.StartCropAsync(cropView, hostWindow).ConfigureAwait(true);
+        }
+        finally
+        {
+            annotation.IsVisible = true;
+        }
 
         // 確定時のみ切り出す（開始できなかった場合は null、キャンセルは空の矩形。
         // 空の判定はコアの契約（EsRectInt.IsEmpty）が単一所有する）

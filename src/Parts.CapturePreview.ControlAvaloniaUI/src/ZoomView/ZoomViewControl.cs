@@ -212,6 +212,44 @@ public sealed class ZoomViewControl : Panel
     public void ZoomByWheel(bool zoomIn, Point? pointerPosition = null)
         => _zoomableView.ApplyFeedback(Session.ZoomByWheel(zoomIn, pointerPosition?.ToEsPoint()));
 
+    /// <summary>重ねた要素から転送されたドラッグのパンを開始する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    /// <remarks>スクロールバーのサム・トラック上ならスクロールバーのドラッグを優先する（判断はコア）。</remarks>
+    public void BeginPan(Point position)
+    {
+        var point = position.ToEsPoint();
+        _zoomableView.ApplyFeedback(Session.TryBeginScrollBarDrag(point)
+            ? new ZoomFeedback { ShouldCapturePointer = true }
+            : Session.Press(point));
+    }
+
+    /// <summary>重ねた要素から転送されたドラッグ中のポインタ位置を反映する。</summary>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void PanTo(Point position)
+        => _zoomableView.ApplyFeedback(Session.IsDraggingScrollBar
+            ? Session.UpdateScrollBarDrag(position.ToEsPoint())
+            : Session.Move(position.ToEsPoint()));
+
+    /// <summary>重ねた要素から転送されたドラッグのパンを終了する。</summary>
+    public void EndPan()
+        => _zoomableView.ApplyFeedback(Session.IsDraggingScrollBar ? Session.ReleaseScrollBarDrag() : Session.Release());
+
+    /// <summary>重ねた要素から転送されたホイールの操作を反映する。</summary>
+    /// <param name="delta">ホイールの移動量。</param>
+    /// <param name="shift">Shift キーが押されているかどうか。</param>
+    /// <param name="zoomIn">拡大するかどうか（Ctrl 併用時）。</param>
+    /// <param name="position">ポインタ位置（このコントロールの座標）。</param>
+    public void ForwardWheel(Vector delta, bool shift, bool zoomIn, Point position)
+    {
+        if (zoomIn)
+        {
+            ZoomByWheel(delta.Y > 0, position);
+            return;
+        }
+
+        PanByWheel(delta, shift);
+    }
+
     /// <summary>画像の表示矩形（ビューポート座標・DIP）を取得する。</summary>
     /// <returns>画像の表示矩形。 画像未設定時は空。</returns>
     /// <remarks>ホストが重ねるオーバーレイの位置決めに使用する（値はコアが確定する）。</remarks>
