@@ -125,7 +125,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         Focus();
-        Capture = true;
         PrepareUndo();
 
         var source = ToSource(position);
@@ -142,6 +141,7 @@ public sealed partial class AnnotationLayerControl
             // 編集中は本文の内側を押したらキャレットを移す（外側を押したら編集を終える）
             if (Selected is BubbleAnnotation editingBubble && editingBubble.Bounds.Contains(source))
             {
+                Capture = true;
                 _undoCandidate = null;
                 SetCaretFromPoint(source, (ModifierKeys & Keys.Shift) == Keys.Shift);
                 return;
@@ -154,12 +154,14 @@ public sealed partial class AnnotationLayerControl
         {
             if (selected is BubbleAnnotation bubble && IsNearTailTip(bubble, source))
             {
+                Capture = true;
                 _isDraggingTail = true;
                 return;
             }
 
             if (HitsSelectionHandle(position))
             {
+                Capture = true;
                 _marquee.Press(source, 1);
                 return;
             }
@@ -184,10 +186,12 @@ public sealed partial class AnnotationLayerControl
         Select(hit.Id);
         if (isDoubleClick && hit is BubbleAnnotation)
         {
+            Capture = true;
             BeginTextEditing();
             return;
         }
 
+        Capture = true;
         _marquee.Press(source, 1);
     }
 

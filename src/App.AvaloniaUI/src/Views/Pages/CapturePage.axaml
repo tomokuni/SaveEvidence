@@ -145,15 +145,7 @@
             <Button x:Name="CropButton" Classes="toolbar toolbar-icon" ToolTip.Tip="切り出し（切出しモード開始/終了）" IsEnabled="{Binding CanCopy}" Click="OnCropButtonClick" Margin="1" VerticalAlignment="Center">
                 <PathIcon x:Name="CropIcon" Width="{DynamicResource ToolbarIconSize}" Height="{DynamicResource ToolbarIconSize}"/>
             </Button>
-            <!-- 注釈（枠線・吹き出し）の編集モード。 オンにすると画像の上へ注釈レイヤーを重ねる -->
-            <ToggleButton x:Name="AnnotationButton"
-                          Classes="toolbar"
-                          Content="注釈"
-                          ToolTip.Tip="注釈（枠線・吹き出し）を編集する"
-                          IsEnabled="{Binding HasPreviewImage}"
-                          Click="OnAnnotationButtonClick"
-                          Margin="1"
-                          VerticalAlignment="Center"/>
+
             <!-- キャプチャ時にタスク バーを隠す（設定ページの同じ項目と連動する。 変更通知で互いの表示が追従する） -->
             <Border Classes="toolbar-separator"/>
             <CheckBox x:Name="HideTaskbarCheckBox"

@@ -664,7 +664,15 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     internal void ApplyCursor(MarqueeCursorKind kind)
         => Cursor = new Cursor(AnnotationMarqueeEffects.ToStandardCursor(kind));
 
-    /// <summary>Marquee の要求でポインター キャプチャを取得する（押下時にコントロールが取得済みのため何もしない）。</summary>
+    /// <summary>ポインターのキャプチャを取得する（注釈の操作を始めるときだけ呼ぶ）。</summary>
+    /// <param name="e">押下の引数。</param>
+    /// <remarks>
+    /// <b>注釈の無い場所ではキャプチャしない</b>: プレビューのパンはキャプチャ不要であり、
+    /// キャプチャが残るとカーソルがウィンドウへ掴まれたままになる（実測 2026-11-20）。
+    /// </remarks>
+    private void CapturePointer(PointerPressedEventArgs e) => e.Pointer.Capture(this);
+
+    /// <summary>Marquee の要求でポインター キャプチャを取得する（押下時に取得済みのため何もしない）。</summary>
     internal void CapturePointerForMarquee() => _ = this;
 
     /// <summary>文書が変わったことを通知する（フライアウトの編集結果もホストへ伝える）。</summary>
@@ -787,7 +795,6 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         }
 
         Focus();
-        e.Pointer.Capture(this);
 
         // 押下から始まる操作（移動・サイズ変更・しっぽの移動）を 1 手として記録する。
         // 実際に文書が変わらなければ履歴へは積まれない（選択だけのクリックで手数が増えない）。
@@ -800,6 +807,7 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         {
             if (Selected is BubbleAnnotation editingBubble && editingBubble.Bounds.Contains(source))
             {
+                CapturePointer(e);
                 _undoCandidate = null;
                 _isSelectingText = true;
                 SetCaretFromPoint(source, (e.KeyModifiers & KeyModifiers.Shift) != 0);
@@ -814,6 +822,7 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         {
             if (Selected is BubbleAnnotation selectedBubble && IsNearTailTip(selectedBubble, source))
             {
+                CapturePointer(e);
                 _isDraggingTail = true;
                 InvalidateVisual();
                 return;
@@ -823,6 +832,7 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
             // ここを飛ばすと、ハンドルの外周を押したときに「注釈の外側」と判定されて選択が解除される。
             if (HitsSelectionHandle(point.Position))
             {
+                CapturePointer(e);
                 _marquee.Press(source, e.ClickCount);
                 InvalidateVisual();
                 return;
@@ -838,11 +848,13 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
             if (e.ClickCount >= 2 && hit is BubbleAnnotation)
             {
+                CapturePointer(e);
                 BeginTextEditing();
                 e.Handled = true;
                 return;
             }
 
+            CapturePointer(e);
             _marquee.Press(source, e.ClickCount);
         }
         else

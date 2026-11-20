@@ -208,8 +208,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         _ = Focus(FocusState.Pointer);
-        _capturedPointer = e.Pointer;
-        CapturePointer(e.Pointer);
 
         // 押下から始まる操作（移動・サイズ変更・しっぽの移動）を 1 手として記録する
         PrepareUndo();
@@ -227,6 +225,7 @@ public sealed partial class AnnotationLayerControl
             // 編集中は本文の内側を押したらキャレットを移す（外側を押したら編集を終える）
             if (Selected is BubbleAnnotation editingBubble && editingBubble.Bounds.Contains(source))
             {
+                CapturePointerHere(e);
                 _undoCandidate = null;
                 SetCaretFromPoint(source, IsDown(VirtualKey.Shift));
                 e.Handled = true;
@@ -240,6 +239,7 @@ public sealed partial class AnnotationLayerControl
         {
             if (selected is BubbleAnnotation bubble && IsNearTailTip(bubble, source))
             {
+                CapturePointerHere(e);
                 _isDraggingTail = true;
                 e.Handled = true;
                 return;
@@ -247,6 +247,7 @@ public sealed partial class AnnotationLayerControl
 
             if (HitsSelectionHandle(position))
             {
+                CapturePointerHere(e);
                 _marquee.Press(source, 1);
                 e.Handled = true;
                 return;
@@ -273,13 +274,27 @@ public sealed partial class AnnotationLayerControl
         Select(hit.Id);
         if (isDoubleClick && hit is BubbleAnnotation)
         {
+            CapturePointerHere(e);
             BeginTextEditing();
             e.Handled = true;
             return;
         }
 
+        CapturePointerHere(e);
         _marquee.Press(source, 1);
         e.Handled = true;
+    }
+
+    /// <summary>ポインターのキャプチャを取得する（注釈の操作を始めるときだけ呼ぶ）。</summary>
+    /// <param name="e">押下の引数。</param>
+    /// <remarks>
+    /// <b>注釈の無い場所ではキャプチャしない</b>: プレビューのパンはキャプチャ不要であり、
+    /// キャプチャが残るとカーソルがウィンドウへ掴まれたままになる（実測 2026-11-20）。
+    /// </remarks>
+    private void CapturePointerHere(PointerRoutedEventArgs e)
+    {
+        _capturedPointer = e.Pointer;
+        CapturePointer(e.Pointer);
     }
 
     /// <summary>ポインターが動いたときの処理。</summary>

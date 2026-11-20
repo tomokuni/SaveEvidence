@@ -738,7 +738,7 @@ internal static class CapturePage
             });
 
         Add("File - 画像を保存", () => _ = viewModel.SaveImageAsync(), () => viewModel.CanSave, "Ctrl+S", CaptureIconFiles.Save);
-        Add("File - 注釈を開く", () => _ = OpenAnnotationsAsync(annotation, viewModel, services.Settings.Current.SaveFolderPath));
+        Add("File - 注釈を開く", () => _ = OpenAnnotationsAsync(annotation, viewModel, viewModel.SaveFolderPathResolved));
         AddSeparator();
         Add("Clipboard - コピー", () => _ = viewModel.CopyToClipboardAsync(), () => viewModel.CanCopy, "Ctrl+C");
         Add("Clipboard - 貼り付け", () => _ = viewModel.PasteFromClipboardAsync(), () => viewModel.CanPaste, "Ctrl+V");
@@ -1017,18 +1017,14 @@ internal static class CapturePage
             TextFormat = settings.ColorTextFormat,
         };
 
-        // 右クリック位置へ注釈の追加メニューを出す（プレビューと同じ座標系の host へ重ねる）
-        Border? annotationAddMenu = null;
+        // 右クリック位置へ注釈の追加メニューを出す（ポップアップなのでアプリのウィンドウからはみ出してよい）
+        Popup? annotationAddMenu = null;
         void ShowAnnotationMenu(Point position)
         {
-            if (annotationAddMenu is not null)
-            {
-                host.Remove(annotationAddMenu);
-                annotationAddMenu = null;
-            }
+            CloseAnnotationMenu();
 
             var items = new StackPanel().Vertical().Spacing(0).Padding(new Thickness(4));
-            Border? menu = null;
+            Popup? menuPopup = null;
 
             void AddItem(string text, Action action)
             {
@@ -1043,12 +1039,7 @@ internal static class CapturePage
 
                 button.OnClick(() =>
                 {
-                    if (menu is not null)
-                    {
-                        host.Remove(menu);
-                        annotationAddMenu = null;
-                    }
-
+                    CloseAnnotationMenu();
                     action();
                 });
                 items.Add(button);
@@ -1056,17 +1047,33 @@ internal static class CapturePage
 
             AddItem("枠線を追加", () => annotationEditor.Layer.AddFrameAt(position));
             AddItem("吹き出しを追加", () => annotationEditor.Layer.AddBubbleAt(position));
-            menu = new Border
+
+            var popup = new Popup
             {
-                Child = items,
-                StyleName = AppStyles.MenuSurface,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Top,
-                Margin = new Thickness(position.X, position.Y, 0, 0),
+                // 外側のクリックで閉じる（メニューの外を押したら消える）
+                StaysOpen = false,
+                Content = new Border { Child = items, StyleName = AppStyles.MenuSurface },
+            };
+            popup.Closed += (_, _) =>
+            {
+                if (ReferenceEquals(annotationAddMenu, menuPopup))
+                {
+                    annotationAddMenu = null;
+                }
             };
 
-            annotationAddMenu = menu;
-            host.Add(menu);
+            menuPopup = popup;
+            annotationAddMenu = popup;
+            popup.ShowAt(host, new Rect(position.X, position.Y, 1, 1), PopupAnchorSide.Below);
+        }
+
+        void CloseAnnotationMenu()
+        {
+            if (annotationAddMenu is { } open)
+            {
+                annotationAddMenu = null;
+                open.Close();
+            }
         }
         // 注釈はプレビューの上へ重ねる（画像・影はプレビューが描く）。 ズーム・パンへ追従させる
         annotationEditor.Layer.ShowImage = false;

@@ -757,7 +757,7 @@ internal static class CapturePage
         {
             var menuStrip = new ContextMenuStrip();
             saveMenuItem = AddMenuItem(menuStrip, "画像を保存", "Ctrl+S", SaveImage, AppIcon.Save);
-            AddMenuItem(menuStrip, "注釈を開く", "", () => _ = OpenAnnotationsAsync(annotation, viewModel, owner, settingsService.Current.SaveFolderPath));
+            AddMenuItem(menuStrip, "注釈を開く", "", () => _ = OpenAnnotationsAsync(annotation, viewModel, owner, viewModel.SaveFolderPathResolved));
             AddMenuItem(menuStrip, "コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
             AddMenuItem(menuStrip, "貼り付け", "Ctrl+V", () => _ = PasteCoreAsync());
             menuStrip.Items.Add(new ToolStripSeparator());

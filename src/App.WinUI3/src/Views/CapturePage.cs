@@ -19,6 +19,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.ZoomView;
 using EsUtil.Ui.WinUI3.Annotation;
+using EsUtil.Ui.WinUI3.Interop;
 using Microsoft.Extensions.Logging;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -45,6 +46,9 @@ internal static class CapturePage
 {
     /// <summary>ロガー（設定の反映など、ホスト固有の失敗を記録する）。</summary>
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(CapturePage));
+
+    /// <summary>表示中の注釈の追加メニュー（外側のクリックで閉じるために保持する）。</summary>
+    private static MenuFlyout? s_annotationAddMenu;
 
     /// <summary>自動切り出しの検出矩形の枠線の太さ（DIP）。</summary>
     private const double AutoCropBorderThickness = 2;
@@ -153,7 +157,7 @@ internal static class CapturePage
             }
         };
 
-        var toolbar = BuildToolbar(services, viewModel, ToggleCrop, captureSession, annotation);
+        var toolbar = BuildToolbar(services, viewModel, ToggleCrop, captureSession, annotation, window);
         var statusLeft = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 0, VerticalAlignment = VerticalAlignment.Center };
         statusLeft.Children.Add(pointerText);
         statusLeft.Children.Add(imageSizeText);
@@ -281,6 +285,7 @@ internal static class CapturePage
     /// <param name="toggleCrop">切り出しの開始・確定・キャンセルを行う窓口。</param>
     /// <param name="captureSession">撮影・切り出しの撮影セッション。</param>
     /// <param name="annotation">注釈の編集コントロール（ツールバーのトグルと操作から使う）。</param>
+    /// <param name="window">ダイアログのオーナー ウィンドウ。</param>
     /// <returns>組み立てたツールバー。</returns>
     /// <remarks>
     /// 左端にメニュー（☰）、続いてファイル名テンプレート、右側にコマンドのボタンを並べる。<br/>
@@ -291,7 +296,8 @@ internal static class CapturePage
         MainViewModel viewModel,
         Action toggleCrop,
         CaptureSessionControl captureSession,
-        AnnotationTextEditor annotation)
+        AnnotationTextEditor annotation,
+        MainWindow window)
     {
         var items = new StackPanel
         {
@@ -300,7 +306,7 @@ internal static class CapturePage
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        var menuButton = CreateMenuButton(services, viewModel, toggleCrop, captureSession, annotation);
+        var menuButton = CreateMenuButton(services, viewModel, toggleCrop, captureSession, annotation, window);
         items.Children.Add(menuButton);
         items.Children.Add(AppStyles.CreateToolbarSeparator());
 
@@ -517,6 +523,7 @@ internal static class CapturePage
     /// <param name="toggleCrop">切り出しの開始・確定・キャンセルを行う窓口。</param>
     /// <param name="captureSession">撮影・切り出しの撮影セッション。</param>
     /// <param name="annotation">注釈の編集コントロール（注釈を開く操作の接続先）。</param>
+    /// <param name="window">ダイアログのオーナー ウィンドウ。</param>
     /// <returns>組み立てたボタン。</returns>
     /// <remarks>
     /// 他の UI 版と同じ項目・同じ区切り・同じショートカット表記で並べる。<br/>
@@ -527,7 +534,8 @@ internal static class CapturePage
         MainViewModel viewModel,
         Action toggleCrop,
         CaptureSessionControl captureSession,
-        AnnotationTextEditor annotation)
+        AnnotationTextEditor annotation,
+        MainWindow window)
     {
         var flyout = new MenuFlyout
         {
@@ -536,7 +544,7 @@ internal static class CapturePage
             Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
         };
         var save = CreateMenuItem("File - 画像を保存", "Ctrl+S", () => _ = viewModel.SaveImageAsync(), CaptureIconFiles.Save);
-        var openAnnotations = CreateMenuItem("File - 注釈を開く", null, () => _ = OpenAnnotationsAsync(annotation, viewModel));
+        var openAnnotations = CreateMenuItem("File - 注釈を開く", null, () => _ = OpenAnnotationsAsync(annotation, viewModel, window));
         var copy = CreateMenuItem("Clipboard - コピー", "Ctrl+C", () => _ = viewModel.CopyToClipboardAsync());
         var paste = CreateMenuItem("Clipboard - 貼り付け", "Ctrl+V", () => _ = PasteAsync(services));
         var undo = CreateMenuItem("Image - 元に戻す", "Ctrl+Z", () => EditHistory.Undo(services.Main, services.UndoHistory));
@@ -750,8 +758,21 @@ internal static class CapturePage
         annotationEditor.Layer.AddMenuRequested +=
             (_, e) => ShowAnnotationAddMenu(annotationEditor, new Windows.Foundation.Point(e.X, e.Y), host);
 
+        // 注釈の上を押したときも追加メニューを閉じる（メニューの外を押したら消える）
+        host.AddHandler(
+            UIElement.PointerPressedEvent,
+            new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) => CloseAnnotationAddMenu()),
+            handledEventsToo: true);
+
         void ForwardAnnotationGesture(EsUtil.Feature.Annotation.AnnotationPreviewGestureEventArgs e)
         {
+            // 追加メニューの表示中は、外側の押下で閉じるだけにする（メニューの外を押したら消える）
+            if (s_annotationAddMenu is not null)
+            {
+                CloseAnnotationAddMenu();
+                return;
+            }
+
             var position = new EsPoint(e.X, e.Y);
             switch (e.Gesture)
             {
@@ -877,43 +898,68 @@ internal static class CapturePage
     private static void ShowAnnotationAddMenu(
         AnnotationTextEditor annotation, Windows.Foundation.Point position, FrameworkElement target)
     {
-        var flyout = new MenuFlyout();
+        CloseAnnotationAddMenu();
+
+        var flyout = new MenuFlyout
+        {
+            // メニューはアプリのウィンドウからはみ出してよい（画面の内側へはプラットフォームが収める）
+            ShouldConstrainToRootBounds = false,
+        };
         var frame = new MenuFlyoutItem { Text = "枠線を追加" };
         frame.Click += (_, _) => annotation.Layer.AddFrameAt(position);
         var bubble = new MenuFlyoutItem { Text = "吹き出しを追加" };
         bubble.Click += (_, _) => annotation.Layer.AddBubbleAt(position);
         flyout.Items.Add(frame);
         flyout.Items.Add(bubble);
+        flyout.Closed += (_, _) => s_annotationAddMenu = null;
+        s_annotationAddMenu = flyout;
         flyout.ShowAt(target, new FlyoutShowOptions { Position = position });
     }
+
+    /// <summary>表示中の注釈の追加メニューを閉じる（表示中でなければ何もしない）。</summary>
+    private static void CloseAnnotationAddMenu() => s_annotationAddMenu?.Hide();
     /// <summary>保存済みの注釈ファイルを開く（元画像と注釈を読み直す）。</summary>
     /// <param name="annotation">注釈の編集コントロール。</param>
     /// <param name="viewModel">アプリのメイン ViewModel。</param>
+    /// <param name="window">ダイアログのオーナー ウィンドウ（既定のフォルダの指定と表示に使う）。</param>
     /// <returns>開く処理の非同期タスク。</returns>
     /// <remarks>
     /// <b>元画像も読み直す</b>: 注釈は元画像に属するため、注釈だけを差し替えると別の画像の注釈になる。<br/>
-    /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。
+    /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。<br/>
+    /// <b>ダイアログはウィンドウを指定して出す</b>: <see cref="Windows.Storage.Pickers.FileOpenPicker"/> は
+    /// オーナー ウィンドウを指定しないと表示されない（WinUI 3 のデスクトップ アプリの制約）。
     /// </remarks>
-    private static async Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel)
+    private static async Task OpenAnnotationsAsync(
+        AnnotationTextEditor annotation, MainViewModel viewModel, MainWindow window)
     {
-        var picker = new Windows.Storage.Pickers.FileOpenPicker
+        string? filePath;
+        try
         {
-            SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary,
-            ViewMode = Windows.Storage.Pickers.PickerViewMode.List,
-        };
+            // 既定のフォルダは保存フォルダ（WinRT の FileOpenPicker はフォルダを指定できないため COM を使う）
+            filePath = NativeFileDialog.ShowOpenFile(
+                window.ToEsPlatformHandle().Handle,
+                viewModel.SaveFolderPathResolved,
+                "注釈を開く",
+                "注釈ファイル (*.annotations.json)",
+                "*.annotations.json");
+        }
+        catch (Exception ex) when (EsErrors.IsRecoverable(ex))
+        {
+            // ダイアログを出せない環境でもアプリを止めない
+            s_logger.LogAnnotationOpenError(ex, string.Empty);
+            viewModel.StatusMessage = "注釈を開くダイアログを表示できませんでした。";
+            return;
+        }
 
-        picker.FileTypeFilter.Add(".json");
-
-        var file = await picker.PickSingleFileAsync();
-        if (file is null || string.IsNullOrEmpty(file.Path))
+        if (string.IsNullOrEmpty(filePath))
         {
             return;
         }
 
         try
         {
-            var document = AnnotationJson.Load(file.Path);
-            var imagePath = AnnotationJson.ResolveImagePath(file.Path, document);
+            var document = AnnotationJson.Load(filePath);
+            var imagePath = AnnotationJson.ResolveImagePath(filePath, document);
             if (imagePath is null)
             {
                 viewModel.StatusMessage = "注釈に対応する元画像が見つかりません。";
@@ -931,7 +977,7 @@ internal static class CapturePage
         }
         catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
-            s_logger.LogAnnotationOpenError(ex, file.Path);
+            s_logger.LogAnnotationOpenError(ex, filePath);
             viewModel.StatusMessage = "注釈ファイルを開けませんでした。";
         }
     }

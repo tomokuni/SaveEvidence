@@ -71,7 +71,6 @@ public sealed partial class CapturePage : UserControl
     private AnnotationDocument? _annotationDocument;
 
     /// <summary>注釈の編集モードかどうか。</summary>
-    private bool _isAnnotationMode;
 
     /// <summary>注釈の文書を作り直している最中かどうか（利用者の変更として扱わない）。</summary>
     private bool _isResettingAnnotationDocument;
@@ -483,8 +482,8 @@ public sealed partial class CapturePage : UserControl
                 e.Handled = true;
                 RestoreRedo();
                 break;
-            case Key.R: // Crop - 切り出し（注釈の編集中は使わない）
-                if (_isAnnotationMode)
+            case Key.R: // Crop - 切り出し（本文の編集中は使わない）
+                if (AnnotationEditor.IsEditingText)
                 {
                     return;
                 }
@@ -592,7 +591,7 @@ public sealed partial class CapturePage : UserControl
         CancelCropSession();
 
         // 注釈は画像に属する（前の画像の注釈を見せない・保存しない）
-        ExitAnnotationMode();
+        EndAnnotationTextEditing();
         ResetAnnotationDocument();
 
         UpdateCropButtonText();
@@ -654,9 +653,6 @@ public sealed partial class CapturePage : UserControl
         _viewModel.HasPendingAnnotationSave = false;
     }
 
-    /// <summary>注釈の編集モードを切り替える（注釈レイヤーは常にプレビューの上へ重ねる）。</summary>
-    private void OnAnnotationButtonClick(object? sender, RoutedEventArgs e) => _ = (sender, e);
-
     /// <summary>注釈レイヤーをプレビューの表示位置（ズーム・パン）へ合わせる。</summary>
     private void ApplyAnnotationOverlayTransform()
     {
@@ -668,8 +664,8 @@ public sealed partial class CapturePage : UserControl
         AnnotationEditor.Layer.InvalidateVisual();
     }
 
-    /// <summary>プレビューの上へ注釈レイヤーを重ねる（画像・影・ズームはプレビューが描く）。</summary>
-    private void EnterAnnotationMode()
+    /// <summary>注釈レイヤーをプレビューへ重ねる準備をする（画像・影・ズームはプレビューが描く）。</summary>
+    private void PrepareAnnotationOverlay()
     {
         if (_viewModel.PreviewImage is not { } image)
         {
@@ -685,15 +681,10 @@ public sealed partial class CapturePage : UserControl
 
         ApplyAnnotationSettings();
         ApplyAnnotationOverlayTransform();
-        _isAnnotationMode = true;
     }
 
-    /// <summary>注釈の編集状態を終える（注釈は保持し、保存に使う）。</summary>
-    private void ExitAnnotationMode()
-    {
-        AnnotationEditor.Layer.EndTextEditing();
-        _isAnnotationMode = false;
-    }
+    /// <summary>注釈の本文の編集を終える（注釈は保持し、保存に使う）。</summary>
+    private void EndAnnotationTextEditing() => AnnotationEditor.Layer.EndTextEditing();
 
     /// <summary>プレビューの右クリック位置を左上として注釈を追加するメニューを出す。</summary>
     /// <param name="viewportPosition">右クリックした位置（ズーム ビューの座標）。</param>
@@ -852,7 +843,7 @@ public sealed partial class CapturePage : UserControl
         // キャプチャ中は画像の変更通知で注釈を作り直さない（撮影結果の確定後に 1 回だけ作り直す）
         if (!value)
         {
-            ExitAnnotationMode();
+            EndAnnotationTextEditing();
             ResetAnnotationDocument();
         }
     }
@@ -946,7 +937,7 @@ public sealed partial class CapturePage : UserControl
     private async void OnCropButtonClick(object? sender, RoutedEventArgs e)
     {
         // 注釈モード中は先に切り出しビューへ戻す（注釈レイヤーの上で切り出しの選択はできない）
-        ExitAnnotationMode();
+        EndAnnotationTextEditing();
 
         // どの操作を行うか（開始 / 確定 / キャンセル）の判断はコア（CropSessionActions）が単一所有する。
         // ホストは返された操作を効果へ写すだけにする（同じ 3 分岐を UI に書かない）
@@ -1086,7 +1077,8 @@ public sealed partial class CapturePage : UserControl
             return;
         }
 
-        var saveFolder = _settingsService.Current.SaveFolderPath;
+        // 既定のフォルダは保存フォルダ（プレースホルダを展開した実際のパスを使う）
+        var saveFolder = _viewModel.SaveFolderPathResolved;
         var startFolder = string.IsNullOrWhiteSpace(saveFolder)
             ? null
             : await storage.TryGetFolderFromPathAsync(saveFolder);
@@ -1133,7 +1125,7 @@ public sealed partial class CapturePage : UserControl
         layer.Document = document;
 
         _viewModel.MarkImageSaved(imagePath);
-        EnterAnnotationMode();
+        PrepareAnnotationOverlay();
         _viewModel.StatusMessage = "注釈を開きました。";
     }
     /// <summary>メニュー「Image - 元に戻すの取り消し」のクリック時に画像を Redo スタックから復元する。</summary>

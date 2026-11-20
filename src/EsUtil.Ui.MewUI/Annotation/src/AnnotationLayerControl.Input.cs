@@ -174,7 +174,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         Focus();
-        CapturePointer();
 
         // 押下から始まる操作（移動・サイズ変更・しっぽの移動）を 1 手として記録する。
         // 実際に文書が変わらなければ履歴へは積まれない（選択だけのクリックで手数が増えない）
@@ -186,6 +185,7 @@ public sealed partial class AnnotationLayerControl
         {
             if (Selected is BubbleAnnotation editingBubble && editingBubble.Bounds.Contains(source))
             {
+                CapturePointer();
                 _undoCandidate = null;
                 _isSelectingText = true;
                 SetCaretFromPoint(source, e.ShiftKey);
@@ -200,6 +200,7 @@ public sealed partial class AnnotationLayerControl
         {
             if (Selected is BubbleAnnotation selectedBubble && IsNearTailTip(selectedBubble, source))
             {
+                CapturePointer();
                 _isDraggingTail = true;
                 InvalidateVisual();
                 return;
@@ -208,6 +209,7 @@ public sealed partial class AnnotationLayerControl
             // ハンドルの当たり判定を注釈の当たり判定より先に見る（外周を押したときに選択が解除されない）
             if (HitsSelectionHandle(position))
             {
+                CapturePointer();
                 _marquee.Press(source, e.ClickCount);
                 InvalidateVisual();
                 return;
@@ -223,11 +225,13 @@ public sealed partial class AnnotationLayerControl
 
             if (e.ClickCount >= 2 && hit is BubbleAnnotation)
             {
+                CapturePointer();
                 BeginTextEditing();
                 e.Handled = true;
                 return;
             }
 
+            CapturePointer();
             _marquee.Press(source, e.ClickCount);
         }
         else
