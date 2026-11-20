@@ -90,8 +90,6 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     private EsPoint _lastPointerSource;
 
     /// <summary>外観・書式の編集フライアウト（開いている間だけ保持する）。</summary>
-    private Flyout? _flyout;
-
     /// <summary>注釈レイヤーを初期化する。</summary>
     public AnnotationLayerControl()
     {
@@ -242,6 +240,9 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     /// <summary>注釈の無い場所が右クリックされたときに発生する（追加メニューを出す）。</summary>
     /// <remarks>メニューの見た目は UI ごとに異なるため、位置だけを知らせてホストが自分のメニューを出す。</remarks>
     public event EventHandler<AnnotationAddMenuRequestedEventArgs>? AddMenuRequested;
+
+    /// <summary>外観・書式の編集パネルを要求する（ホストが右クリック位置へ表示する）。</summary>
+    public event EventHandler<AnnotationStyleEditorRequestedEventArgs>? StyleEditorRequested;
 
 
     /// <summary>選択中の注釈を取得する。</summary>
@@ -625,9 +626,7 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     /// <remarks>選択中の注釈を編集する。 項目は枠線・吹き出しの外観、本文の書式、重なり順である。</remarks>
     public void ShowStyleEditor()
     {
-        _flyout?.Hide();
-        _flyout = AnnotationStyleFlyout.Create(this);
-        _flyout.ShowAt(this, showAtPointer: true);
+        StyleEditorRequested?.Invoke(this, new AnnotationStyleEditorRequestedEventArgs(_styleEditorX, _styleEditorY));
     }
 
     /// <summary>選択中の吹き出しの本文の矩形（DIP）を取得する。</summary>
@@ -759,6 +758,12 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
     /// <summary>注釈の無い場所でドラッグしている間かどうか（プレビューのパンへ渡す）。</summary>
     private bool _isPreviewDragging;
+
+    /// <summary>外観フライアウトを出した位置（ローカル DIP）。</summary>
+    private double _styleEditorX;
+
+    /// <summary>外観フライアウトを出した位置（ローカル DIP）。</summary>
+    private double _styleEditorY;
 
     /// <summary>この位置が入力の対象かどうかを判定する。</summary>
     /// <param name="point">位置（このコントロールの座標）。</param>
@@ -1062,19 +1067,23 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     private void HandleRightButton(Point position)
     {
         var source = ToSource(position);
-        if (AnnotationHitTest.HitTest(_document, source) is { } hit
-            && !string.Equals(SelectedId, hit.Id, StringComparison.Ordinal))
-        {
-            Select(hit.Id);
-        }
 
-        if (Selected is null)
+        // 外観フライアウトは注釈（枠線・吹き出し）の上を右クリックしたときだけ出す。
+        // 注釈の外は「枠線・吹き出しを追加」のメニューにする（選択も解除する）。
+        if (AnnotationHitTest.HitTest(_document, source) is not { } hit)
         {
-            // 注釈の外は「枠線・吹き出しを追加」のメニューを出す（見た目はホストが決める）
+            Select(null);
             AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
             return;
         }
 
+        if (!string.Equals(SelectedId, hit.Id, StringComparison.Ordinal))
+        {
+            Select(hit.Id);
+        }
+
+        _styleEditorX = position.X;
+        _styleEditorY = position.Y;
         Focus();
         ShowStyleEditor();
     }

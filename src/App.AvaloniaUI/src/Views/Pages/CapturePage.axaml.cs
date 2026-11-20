@@ -1291,6 +1291,10 @@ public sealed partial class CapturePage : UserControl
         var position = new Point(e.X, e.Y);
         switch (e.Gesture)
         {
+            case AnnotationPreviewGesture.Press:
+                // 外観フライアウトの表示中の押下は、外側なら閉じる（閉じるボタンは置かない）
+                AnnotationEditor.CloseStylePanel();
+                break;
             case AnnotationPreviewGesture.DragStart:
                 CropView.BeginPan(position);
                 break;

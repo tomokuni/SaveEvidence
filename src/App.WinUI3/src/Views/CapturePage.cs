@@ -48,7 +48,7 @@ internal static class CapturePage
     private static readonly ILogger s_logger = AppLog.CreateLogger(nameof(CapturePage));
 
     /// <summary>表示中の注釈の追加メニュー（外側のクリックで閉じるために保持する）。</summary>
-    private static MenuFlyout? s_annotationAddMenu;
+    private static FrameworkElement? s_annotationAddMenu;
 
     /// <summary>追加メニューを開いた時刻（開いた押下で閉じないための猶予に使う）。</summary>
     private static long s_annotationAddMenuOpenedAt;
@@ -775,18 +775,19 @@ internal static class CapturePage
             ShowAnnotationAddMenu(annotationEditor, point, host);
         };
 
-        // 注釈の上を押したときも追加メニューを閉じる（メニューの外を押したら消える）
-        host.AddHandler(
-            UIElement.PointerPressedEvent,
-            new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) => CloseAnnotationAddMenuOnOutsidePress()),
-            handledEventsToo: true);
-
         void ForwardAnnotationGesture(EsUtil.Feature.Annotation.AnnotationPreviewGestureEventArgs e)
         {
             // 追加メニューの表示中は、外側の押下で閉じるだけにする（メニューの外を押したら消える）
-            if (CloseAnnotationAddMenuOnOutsidePress())
+            if (CloseAnnotationAddMenuOnOutsidePress(new Windows.Foundation.Point(e.X, e.Y)))
             {
                 return;
+            }
+
+            // 外観フライアウトの表示中に外側を押したら閉じる（閉じるボタンは置かない）
+            if (annotationEditor.IsStylePanelOpen
+                && !annotationEditor.IsStylePanelHit(e.X, e.Y))
+            {
+                annotationEditor.CloseStylePanel();
             }
 
             var position = new EsPoint(e.X, e.Y);
@@ -907,30 +908,61 @@ internal static class CapturePage
         return host;
     }
 
-    /// <summary>プレビューの右クリック位置を左上として注釈を追加するメニューを出す。</summary>
+    /// <summary>プレビューの右クリック位置へ注釈を追加するメニューを出す。</summary>
     /// <param name="annotation">注釈の編集コントロール。</param>
-    /// <param name="position">右クリックした位置（ズーム ビューの座標）。</param>
-    /// <param name="target">メニューを表示する要素。</param>
+    /// <param name="position">右クリックした位置（プレビューの座標）。</param>
+    /// <param name="target">メニューを載せる要素（プレビューと同じ座標系）。</param>
+    /// <remarks>
+    /// <b>メニューは重ねた要素として出す</b>: <see cref="MenuFlyout"/> はウィンドウの制約を外すと項目を
+    /// 押せなくなる（実測 2026-11-20）。 追加メニューは他の UI 版と同じく、押した場所へ重ねる。
+    /// </remarks>
     private static void ShowAnnotationAddMenu(
-        AnnotationTextEditor annotation, Windows.Foundation.Point position, FrameworkElement target)
+        AnnotationTextEditor annotation, Windows.Foundation.Point position, Panel target)
     {
         CloseAnnotationAddMenu();
 
-        var flyout = new MenuFlyout
+        var items = new StackPanel { Spacing = 0 };
+        Border? menu = null;
+
+        void AddItem(string text, Action action)
         {
-            // メニューはアプリのウィンドウからはみ出してよい（画面の内側へはプラットフォームが収める）
-            ShouldConstrainToRootBounds = false,
+            var button = new Button
+            {
+                Content = new TextBlock { Text = text, FontSize = 12 },
+                Padding = new Thickness(12, 6, 12, 6),
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                CornerRadius = new CornerRadius(0),
+                Background = new SolidColorBrush(Colors.Transparent),
+                BorderThickness = new Thickness(0),
+            };
+            button.Click += (_, _) =>
+            {
+                CloseAnnotationAddMenu();
+                action();
+            };
+            items.Children.Add(button);
+        }
+
+        AddItem("枠線を追加", () => annotation.Layer.AddFrameAt(position));
+        AddItem("吹き出しを追加", () => annotation.Layer.AddBubbleAt(position));
+
+        menu = new Border
+        {
+            Child = items,
+            Background = (Brush)Application.Current.Resources["SystemControlBackgroundAltHighBrush"],
+            BorderBrush = (Brush)Application.Current.Resources["SystemControlForegroundBaseMediumLowBrush"],
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(2),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = new Thickness(position.X, position.Y, 0, 0),
         };
-        var frame = new MenuFlyoutItem { Text = "枠線を追加" };
-        frame.Click += (_, _) => annotation.Layer.AddFrameAt(position);
-        var bubble = new MenuFlyoutItem { Text = "吹き出しを追加" };
-        bubble.Click += (_, _) => annotation.Layer.AddBubbleAt(position);
-        flyout.Items.Add(frame);
-        flyout.Items.Add(bubble);
-        flyout.Closed += (_, _) => s_annotationAddMenu = null;
-        s_annotationAddMenu = flyout;
+
+        s_annotationAddMenu = menu;
         s_annotationAddMenuOpenedAt = Environment.TickCount64;
-        flyout.ShowAt(target, new FlyoutShowOptions { Position = position });
+        target.Children.Add(menu);
     }
 
     /// <summary>表示中の注釈の追加メニューを閉じる（表示中でなければ何もしない）。</summary>
@@ -942,7 +974,10 @@ internal static class CapturePage
         }
 
         s_annotationAddMenu = null;
-        menu.Hide();
+        if (menu.Parent is Panel parent)
+        {
+            parent.Children.Remove(menu);
+        }
     }
 
     /// <summary>外側の押下で追加メニューを閉じる（開いた押下そのものでは閉じない）。</summary>
@@ -951,14 +986,22 @@ internal static class CapturePage
     /// メニューを開いた押下は、メニューを開いた後に同じ入力としてホストへ届く。 時刻で区別しないと
     /// 開いた直後に閉じてしまい、メニューが一度も見えない（実測 2026-11-20）。
     /// </remarks>
-    private static bool CloseAnnotationAddMenuOnOutsidePress()
+    private static bool CloseAnnotationAddMenuOnOutsidePress(Windows.Foundation.Point position)
     {
-        if (s_annotationAddMenu is null)
+        if (s_annotationAddMenu is not { } menu)
         {
             return false;
         }
 
         if (Environment.TickCount64 - s_annotationAddMenuOpenedAt < OutsidePressGraceMs)
+        {
+            return false;
+        }
+
+        // メニューの上の押下は閉じない（項目を作業させる）
+        if (position.X >= menu.Margin.Left && position.Y >= menu.Margin.Top
+            && position.X < menu.Margin.Left + menu.ActualWidth
+            && position.Y < menu.Margin.Top + menu.ActualHeight)
         {
             return false;
         }

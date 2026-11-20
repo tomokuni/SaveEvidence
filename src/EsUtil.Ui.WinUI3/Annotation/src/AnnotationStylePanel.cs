@@ -18,16 +18,11 @@ internal sealed class AnnotationStylePanel : ContentControl
     /// <summary>対象のレイヤー。</summary>
     private readonly AnnotationLayerControl _layer;
 
-    /// <summary>パネルを閉じる処理。</summary>
-    private readonly Action _close;
-
     /// <summary>外観パネルを初期化する。</summary>
     /// <param name="layer">対象のレイヤー。</param>
-    /// <param name="close">パネルを閉じる処理。</param>
-    internal AnnotationStylePanel(AnnotationLayerControl layer, Action close)
+    internal AnnotationStylePanel(AnnotationLayerControl layer)
     {
         _layer = layer;
-        _close = close;
 
         Background = AnnotationEditorControls.PanelBackground();
         HorizontalAlignment = HorizontalAlignment.Right;
@@ -52,16 +47,7 @@ internal sealed class AnnotationStylePanel : ContentControl
     {
         var panel = new StackPanel { Spacing = 2 };
 
-        var close = new Button
-        {
-            Content = "閉じる",
-            HorizontalAlignment = HorizontalAlignment.Right,
-            FontSize = AnnotationEditorControls.FontSize,
-        };
-        close.Click += (_, _) => _close();
-
         panel.Children.Add(AnnotationEditorControls.Heading("外観"));
-        panel.Children.Add(close);
         panel.Children.Add(AnnotationEditorControls.Divider());
 
         if (_layer.Selected is not { } item)

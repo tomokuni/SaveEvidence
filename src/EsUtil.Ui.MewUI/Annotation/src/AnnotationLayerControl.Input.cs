@@ -452,18 +452,23 @@ public sealed partial class AnnotationLayerControl
     private void HandleRightButton(Point position)
     {
         var source = ToSource(position);
-        if (AnnotationHitTest.HitTest(_document, source) is { } hit
-            && !string.Equals(SelectedId, hit.Id, StringComparison.Ordinal))
+
+        // 外観フライアウトは注釈（枠線・吹き出し）の上を右クリックしたときだけ出す。
+        // 注釈の外は「枠線・吹き出しを追加」のメニューにする（選択も解除する）。
+        if (AnnotationHitTest.HitTest(_document, source) is not { } hit)
+        {
+            Select(null);
+            AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
+            return;
+        }
+
+        if (!string.Equals(SelectedId, hit.Id, StringComparison.Ordinal))
         {
             Select(hit.Id);
         }
 
-        if (Selected is null)
-        {
-            // 注釈の外は「枠線・吹き出しを追加」のメニューを出す（見た目はホストが決める）
-            AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
-            return;
-        }
+        _styleEditorX = position.X;
+        _styleEditorY = position.Y;
 
         Focus();
         ShowStyleEditor();

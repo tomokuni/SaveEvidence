@@ -1165,7 +1165,9 @@ internal static class CapturePage
                 return;
             }
 
-            ShowAnnotationMenu(new Point(e.X, e.Y));
+            // 注釈レイヤーの座標を host の座標へ写す（重なりの余白・配置の違いでずれないようにする）
+            var inHost = annotationEditor.Layer.TranslatePoint(new Point(e.X, e.Y), host);
+            ShowAnnotationMenu(inHost);
         };
 
         // 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック）は、注釈レイヤーが受け取って
@@ -1176,6 +1178,14 @@ internal static class CapturePage
             if (e.Gesture == AnnotationPreviewGesture.Press && CloseAnnotationMenuOnOutsidePress())
             {
                 return;
+            }
+
+            // 外観フライアウトの表示中に外側を押したら閉じる（閉じるボタンは置かない）
+            if (e.Gesture == AnnotationPreviewGesture.Press
+                && annotationEditor.IsStylePanelOpen
+                && !annotationEditor.IsStylePanelHit(e.X, e.Y))
+            {
+                annotationEditor.CloseStylePanel();
             }
 
             var point = new EsPoint(e.X, e.Y);

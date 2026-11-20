@@ -13,11 +13,9 @@ public sealed class AnnotationStylePanel : ContentControl
 {
     /// <summary>編集パネルを初期化する。</summary>
     /// <param name="layer">編集対象のコントロール。</param>
-    /// <param name="close">閉じる処理。</param>
-    public AnnotationStylePanel(AnnotationLayerControl layer, Action close)
+    public AnnotationStylePanel(AnnotationLayerControl layer)
     {
         ArgumentNullException.ThrowIfNull(layer);
-        ArgumentNullException.ThrowIfNull(close);
 
         var content = new StackPanel { Spacing = 8, Width = 340 };
         content.Add(BuildAppearanceGroup(layer));
@@ -29,7 +27,7 @@ public sealed class AnnotationStylePanel : ContentControl
         }
 
         content.Add(Separator());
-        content.Add(BuildOrderGroup(layer, close));
+        content.Add(BuildOrderGroup(layer));
 
         Background = new Color(255, 250, 250, 250);
         BorderBrush = new Color(255, 160, 160, 160);
@@ -119,21 +117,17 @@ public sealed class AnnotationStylePanel : ContentControl
 
     /// <summary>重なり順の編集を作る。</summary>
     /// <param name="layer">編集対象のコントロール。</param>
-    /// <param name="close">閉じる処理。</param>
     /// <returns>重なり順の編集。</returns>
-    private static Element BuildOrderGroup(AnnotationLayerControl layer, Action close)
+    private static Element BuildOrderGroup(AnnotationLayerControl layer)
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
         var front = CreateButton("最前面へ");
         front.OnClick(() => layer.MoveSelectedToFront());
         var back = CreateButton("最背面へ");
         back.OnClick(() => layer.MoveSelectedToBack());
-        var closeButton = CreateButton("閉じる");
-        closeButton.OnClick(close);
 
         row.Add(front);
         row.Add(back);
-        row.Add(closeButton);
         return row;
     }
 }

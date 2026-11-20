@@ -57,6 +57,12 @@ public sealed partial class AnnotationLayerControl : Control
     /// <summary>注釈の無い場所でドラッグしている間かどうか（プレビューのパンへ渡す）。</summary>
     private bool _isPreviewDragging;
 
+    /// <summary>外観フライアウトを出した位置（ローカル DIP）。</summary>
+    private double _styleEditorX;
+
+    /// <summary>外観フライアウトを出した位置（ローカル DIP）。</summary>
+    private double _styleEditorY;
+
     /// <summary>Marquee からの通知で文書を更新している最中かどうか（再入防止）。</summary>
     private bool _isApplyingMarquee;
 
@@ -87,7 +93,7 @@ public sealed partial class AnnotationLayerControl : Control
     }
 
     /// <summary>外観・書式の編集パネルを要求する（ホストが表示する）。</summary>
-    public event EventHandler? StyleEditorRequested;
+    public event EventHandler<AnnotationStyleEditorRequestedEventArgs>? StyleEditorRequested;
 
     /// <summary>文書が変わったときに発生する。</summary>
     public event EventHandler? DocumentChanged;
@@ -452,7 +458,7 @@ public sealed partial class AnnotationLayerControl : Control
         }
 
         Focus();
-        StyleEditorRequested?.Invoke(this, EventArgs.Empty);
+        StyleEditorRequested?.Invoke(this, new AnnotationStyleEditorRequestedEventArgs(_styleEditorX, _styleEditorY));
     }
 
     /// <summary>選択中の本文の矩形（DIP）を取得する。</summary>

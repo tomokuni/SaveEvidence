@@ -57,11 +57,10 @@ public sealed class AnnotationTextEditor : UserControl
             if (_stylePanel is not null)
             {
                 CloseStylePanel();
-                ShowStylePanel();
             }
         };
 
-        _layer.StyleEditorRequested += (_, _) => ShowStylePanel();
+        _layer.StyleEditorRequested += (_, e) => ShowStylePanel(e.X, e.Y);
     }
 
     /// <summary>注釈の表示と編集を担うレイヤーを取得する。</summary>
@@ -82,20 +81,64 @@ public sealed class AnnotationTextEditor : UserControl
         }
     }
 
-    /// <summary>外観・重なり順の編集パネルを表示する（右クリックと同じ）。</summary>
-    public void ShowStylePanel()
+    /// <summary>右クリック位置へ外観の編集パネルを表示する。</summary>
+    /// <param name="x">位置（このコントロールの座標）。</param>
+    /// <param name="y">位置（このコントロールの座標）。</param>
+    /// <remarks>
+    /// <b>ウィンドウの内側へ収めない</b>: 収めると狭いウィンドウでパネルが潰れる。 はみ出してよい
+    /// （パネルはドラッグで動かせる）。
+    /// </remarks>
+    public void ShowStylePanel(double x, double y)
     {
         CloseStylePanel();
 
         var panel = new AnnotationStylePanel(_layer, CloseStylePanel)
         {
-            Location = new Point(Math.Max(8, Width - 244), 8),
+            Location = new Point((int)Math.Max(0, x), (int)Math.Max(0, y)),
         };
+
+        // 押したまま動かすと移動する
+        Point? origin = null;
+        Point originLocation = default;
+        panel.MouseDown += (_, e) =>
+        {
+            if (e.Button != MouseButtons.Left)
+            {
+                return;
+            }
+
+            origin = e.Location;
+            originLocation = panel.Location;
+        };
+        panel.MouseMove += (_, e) =>
+        {
+            if (origin is not { } start)
+            {
+                return;
+            }
+
+            panel.Location = new Point(
+                originLocation.X + (e.X - start.X),
+                originLocation.Y + (e.Y - start.Y));
+        };
+        panel.MouseUp += (_, _) => origin = null;
 
         _stylePanel = panel;
         Controls.Add(panel);
         panel.BringToFront();
     }
+
+    /// <summary>外観の編集パネルが出ているかどうかを取得する。</summary>
+    public bool IsStylePanelOpen => _stylePanel is not null;
+
+    /// <summary>指定した位置が外観の編集パネルの上かどうかを判定する。</summary>
+    /// <param name="x">位置（このコントロールの座標）。</param>
+    /// <param name="y">位置（このコントロールの座標）。</param>
+    /// <returns>パネルの上の場合は <see langword="true"/>。</returns>
+    public bool IsStylePanelHit(double x, double y)
+        => _stylePanel is { } panel
+            && x >= panel.Left && y >= panel.Top
+            && x < panel.Right && y < panel.Bottom;
 
     /// <summary>外観・重なり順の編集パネルを閉じる。</summary>
     public void CloseStylePanel()

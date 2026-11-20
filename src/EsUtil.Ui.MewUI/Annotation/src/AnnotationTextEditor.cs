@@ -26,6 +26,9 @@ public sealed class AnnotationTextEditor : Panel
     /// <summary>外観・書式の編集パネル（右クリックで開く間だけ保持する）。</summary>
     private AnnotationStylePanel? _stylePanel;
 
+    /// <summary>外観フライアウトの左上（このコントロールの座標）。</summary>
+    private Point _stylePanelPosition;
+
     /// <summary>注釈の本文編集と書式バーをまとめたコントロールを初期化する。</summary>
     public AnnotationTextEditor()
     {
@@ -76,7 +79,7 @@ public sealed class AnnotationTextEditor : Panel
         };
 
         // 右クリックの編集パネル（外観・吹き出し・重なり順）
-        _layer.StyleEditorRequested += (_, _) => ShowStylePanel();
+        _layer.StyleEditorRequested += (_, e) => ShowStylePanel(e.X, e.Y);
     }
 
     /// <summary>注釈の表示と編集を担うレイヤーを取得する。</summary>
@@ -96,18 +99,77 @@ public sealed class AnnotationTextEditor : Panel
         }
     }
 
-    /// <summary>外観・書式の編集パネルを表示する（右クリックと同じ）。</summary>
-    public void ShowStylePanel()
+    /// <summary>右クリック位置へ外観の編集パネルを表示する。</summary>
+    /// <param name="x">位置（このコントロールの座標）。</param>
+    /// <param name="y">位置（このコントロールの座標）。</param>
+    /// <remarks>
+    /// <b>ウィンドウの内側へ収めない</b>: 収めると狭いウィンドウでパネルが潰れる。 はみ出してよい
+    /// （パネルはドラッグで動かせる）。<br/>
+    /// <b>パネルは移動できる</b>: パネルを押したまま動かすと移動する。
+    /// </remarks>
+    public void ShowStylePanel(double x, double y)
     {
         CloseStylePanel();
 
-        var panel = new AnnotationStylePanel(_layer, CloseStylePanel);
+        var panel = new AnnotationStylePanel(_layer)
+        {
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+        };
+
+        // 押したまま動かすと移動する（パネルの上で完結させる）
+        Point? origin = null;
+        Thickness originMargin = default;
+        panel.OnMouseDown(e =>
+        {
+            if (!e.LeftButton)
+            {
+                return;
+            }
+
+            origin = e.GetPosition(this);
+            originMargin = new Thickness(_stylePanelPosition.X, _stylePanelPosition.Y, 0, 0);
+        });
+        panel.OnMouseMove(e =>
+        {
+            if (origin is not { } start)
+            {
+                return;
+            }
+
+            var current = e.GetPosition(this);
+            _stylePanelPosition = new Point(
+                originMargin.Left + (current.X - start.X),
+                originMargin.Top + (current.Y - start.Y));
+            InvalidateArrange();
+        });
+        panel.OnMouseUp(_ => origin = null);
+
+        _stylePanelPosition = new Point(Math.Max(0, x), Math.Max(0, y));
         _stylePanel = panel;
         Add(panel);
         InvalidateMeasure();
         InvalidateArrange();
     }
 
+    /// <summary>外観の編集パネルが出ているかどうかを取得する。</summary>
+    public bool IsStylePanelOpen => _stylePanel is not null;
+
+    /// <summary>指定した位置が外観の編集パネルの上かどうかを判定する。</summary>
+    /// <param name="x">位置（このコントロールの座標）。</param>
+    /// <param name="y">位置（このコントロールの座標）。</param>
+    /// <returns>パネルの上の場合は <see langword="true"/>。</returns>
+    public bool IsStylePanelHit(double x, double y)
+    {
+        if (_stylePanel is not { } panel)
+        {
+            return false;
+        }
+
+        var desired = panel.DesiredSize;
+        return x >= _stylePanelPosition.X && y >= _stylePanelPosition.Y
+            && x < _stylePanelPosition.X + desired.Width && y < _stylePanelPosition.Y + desired.Height;
+    }
     /// <summary>外観・書式の編集パネルを閉じる。</summary>
     public void CloseStylePanel()
     {
@@ -159,9 +221,9 @@ public sealed class AnnotationTextEditor : Panel
 
         if (_stylePanel is { } panel)
         {
+            // 位置は右クリック位置（ドラッグで動かせる）
             var desired = panel.DesiredSize;
-            var x = Math.Max(0, bounds.Width - desired.Width - 12);
-            panel.Arrange(new Rect(x, 12, desired.Width, desired.Height));
+            panel.Arrange(new Rect(_stylePanelPosition.X, _stylePanelPosition.Y, desired.Width, desired.Height));
         }
     }
 }

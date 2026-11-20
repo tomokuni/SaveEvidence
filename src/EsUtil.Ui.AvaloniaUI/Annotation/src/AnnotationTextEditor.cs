@@ -1,8 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Media;
-using Avalonia.Threading;
 using EsUtil.Platform.Core.Palette;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
@@ -24,8 +22,8 @@ public sealed class AnnotationTextEditor : Panel
     /// <summary>書式バー（編集中だけ表示する）。</summary>
     private readonly AnnotationFormatBar _formatBar;
 
-    /// <summary>書式バーを載せるポップアップ（ウィンドウの外へ出せるようにする）。</summary>
-    private readonly Popup _formatBarPopup;
+    /// <summary>外観フライアウト（右クリック）の入れ物。 位置は Margin で決める。</summary>
+    private Border? _styleHost;
 
     /// <summary>注釈の表示と編集を担うレイヤー。</summary>
     private readonly AnnotationLayerControl _layer;
@@ -39,17 +37,17 @@ public sealed class AnnotationTextEditor : Panel
         // 下地を持たないとパネルが入力の対象にならない（Avalonia は背景が無い面をヒットテストしない）
         Background = Brushes.Transparent;
 
-        // バーはポップアップへ載せる（ウィンドウが小さくても本文の上へ出せる。画面の外へは出ない）
-        _formatBarPopup = new Popup
-        {
-            PlacementTarget = _layer,
-            Placement = PlacementMode.Top,
-            Child = _formatBar,
-            IsLightDismissEnabled = false,
-        };
+        // 書式バーは同じ画面の子として重ねる（別ウィンドウへ出すとキー入力がそちらへ移り、
+        // 本文のキャレット移動・Shift+矢印の選択が効かなくなる。 実測 2026-11-20）
+        _formatBar.ZIndex = 10;
+        _formatBar.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left;
+        _formatBar.VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top;
 
         Children.Add(_layer);
-        Children.Add(_formatBarPopup);
+        Children.Add(_formatBar);
+
+        // 右クリックの外観フライアウト（位置はレイヤーが知らせる）
+        _layer.StyleEditorRequested += (_, e) => ShowStylePanel(e.X, e.Y);
 
         // 編集の開始・終了でバーを出し入れする（本文の位置は編集のたびに変わりうるため配置もやり直す）
         _layer.EditingChanged += (_, _) =>
@@ -62,7 +60,6 @@ public sealed class AnnotationTextEditor : Panel
 
             InvalidateMeasure();
             InvalidateArrange();
-            UpdateFormatBarPopup();
         };
 
         // 文字・書式の変更で表示を追随させる（バーの現在値が古くならないようにする）
@@ -80,7 +77,6 @@ public sealed class AnnotationTextEditor : Panel
             if (_formatBar.IsVisible)
             {
                 InvalidateArrange();
-                UpdateFormatBarPopup();
             }
         };
 
@@ -146,46 +142,113 @@ public sealed class AnnotationTextEditor : Panel
             _formatBar.Measure(Size.Infinity);
         }
 
+        // 外観フライアウトも測る（測らないと配置されず表示されない）
+        _styleHost?.Measure(Size.Infinity);
+
         return _layer.DesiredSize;
     }
 
-    /// <summary>子要素を配置する（レイヤーは全面。 書式バーはポップアップが置く）。</summary>
+    /// <summary>子要素を配置する（レイヤーは全面。 書式バーは本文の上、外観フライアウトは右クリック位置）。</summary>
     /// <param name="finalSize">最終的な領域。</param>
     /// <returns>配置した寸法。</returns>
     protected override Size ArrangeOverride(Size finalSize)
     {
         _layer.Arrange(new Rect(finalSize));
+
+        if (_formatBar.IsVisible)
+        {
+            var desired = _formatBar.DesiredSize;
+            var body = _layer.GetSelectedBodyRect();
+            var above = body.Height > 0 ? body.Y - desired.Height - BarGap : 0;
+            var y = above >= 0 ? above : body.Y + body.Height + BarGap;
+            _formatBar.Arrange(new Rect(Math.Max(0, body.X), Math.Max(0, y), desired.Width, desired.Height));
+        }
+
+        // Margin と配置の両方でずらさない（Marquee は Margin を加味して配置される）
+        _styleHost?.Arrange(new Rect(finalSize));
+
         return finalSize;
     }
 
-    /// <summary>書式バーのポップアップを本文の位置へ合わせて開く（編集中でなければ閉じる）。</summary>
+    /// <summary>右クリック位置へ外観フライアウトを出す（既に出ていれば閉じる）。</summary>
+    /// <param name="x">位置（このコントロールの座標）。</param>
+    /// <param name="y">位置（このコントロールの座標）。</param>
     /// <remarks>
-    /// <b>ウィンドウの外へ出せる</b>: バーをポップアップへ載せ、本文の矩形を基準に置く（ウィンドウが小さくても
-    /// 本文の上に出せる。 画面の外へは出ないようプラットフォームが寄せる）。
+    /// <b>ウィンドウの内側へ収めない</b>: 収めると狭いウィンドウでパネルが潰れる。 はみ出してよい
+    /// （パネルはドラッグで動かせる）。<br/>
+    /// <b>パネルは移動できる</b>: 見出し（<c>外観</c> の行）をドラッグすると動く。
     /// </remarks>
-    private void UpdateFormatBarPopup()
+    public void ShowStylePanel(double x, double y)
     {
-        if (!_formatBar.IsVisible)
+        CloseStylePanel();
+
+        var content = AnnotationStyleFlyout.BuildContent(_layer);
+        var host = new Border
         {
-            _formatBarPopup.IsOpen = false;
+            Child = content,
+            Background = (IBrush?)this.FindResource("SystemControlBackgroundAltHighBrush") ?? Brushes.White,
+            BorderBrush = (IBrush?)this.FindResource("SystemControlForegroundBaseMediumLowBrush") ?? Brushes.Gray,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4),
+            Padding = new Thickness(10),
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+            Margin = new Thickness(Math.Max(0, x), Math.Max(0, y), 0, 0),
+            ZIndex = 20,
+        };
+
+        // 見出しのドラッグで移動する（本文の編集を妨げないよう、パネルの上だけで完結させる）
+        Point? dragOrigin = null;
+        Thickness originMargin = default;
+        host.PointerPressed += (_, e) =>
+        {
+            if (e.GetCurrentPoint(host).Properties.IsLeftButtonPressed)
+            {
+                dragOrigin = e.GetPosition(this);
+                originMargin = host.Margin;
+                e.Pointer.Capture(host);
+                e.Handled = true;
+            }
+        };
+        host.PointerMoved += (_, e) =>
+        {
+            if (dragOrigin is not { } origin)
+            {
+                return;
+            }
+
+            var current = e.GetPosition(this);
+            host.Margin = new Thickness(
+                originMargin.Left + (current.X - origin.X),
+                originMargin.Top + (current.Y - origin.Y),
+                0,
+                0);
+            e.Handled = true;
+        };
+        host.PointerReleased += (_, e) =>
+        {
+            dragOrigin = null;
+            e.Pointer.Capture(null);
+            e.Handled = true;
+        };
+
+        _styleHost = host;
+        Children.Add(host);
+        InvalidateArrange();
+    }
+
+    /// <summary>外観フライアウトを閉じる（出ていなければ何もしない）。</summary>
+    public void CloseStylePanel()
+    {
+        if (_styleHost is not { } host)
+        {
             return;
         }
 
-        var body = _layer.GetSelectedBodyRect();
-        var y = body.Height > 0 ? body.Y - BarGap : 0;
-        _formatBarPopup.PlacementRect = new Rect(Math.Max(0, body.X), Math.Max(0, y), 1, 1);
-        _formatBarPopup.IsOpen = true;
-
-        // バーは独立したトップレベルへ出るため、開くと本文から入力フォーカスが移る。
-        // キー操作（カーソル移動・Shift+矢印の選択）を本文へ戻すため、フォーカスを本文へ戻す。
-        Dispatcher.UIThread.Post(
-            () =>
-            {
-                if (_layer.IsEditingText)
-                {
-                    _layer.Focus();
-                }
-            },
-            DispatcherPriority.Background);
+        _styleHost = null;
+        Children.Remove(host);
     }
+
+    /// <summary>外観フライアウトが出ているかどうかを取得する。</summary>
+    public bool IsStylePanelOpen => _styleHost is not null;
 }

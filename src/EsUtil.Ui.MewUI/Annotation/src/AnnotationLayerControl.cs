@@ -73,7 +73,13 @@ public sealed partial class AnnotationLayerControl : Panel
     private IImage? _image;
 
     /// <summary>外観・書式の編集パネルを要求する（ホストが表示する）。</summary>
-    public event EventHandler? StyleEditorRequested;
+    public event EventHandler<AnnotationStyleEditorRequestedEventArgs>? StyleEditorRequested;
+
+    /// <summary>外観フライアウトを出した位置（ローカル DIP）。</summary>
+    private double _styleEditorX;
+
+    /// <summary>外観フライアウトを出した位置（ローカル DIP）。</summary>
+    private double _styleEditorY;
 
     /// <summary>文書が変わったときに発生する。</summary>
     public event EventHandler? DocumentChanged;
@@ -514,7 +520,7 @@ public sealed partial class AnnotationLayerControl : Panel
         }
 
         Focus();
-        StyleEditorRequested?.Invoke(this, EventArgs.Empty);
+        StyleEditorRequested?.Invoke(this, new AnnotationStyleEditorRequestedEventArgs(_styleEditorX, _styleEditorY));
     }
 
     /// <summary>選択中の本文の矩形（DIP）を取得する。</summary>

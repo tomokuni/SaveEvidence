@@ -14,10 +14,14 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 /// </remarks>
 internal static class AnnotationStyleFlyout
 {
-    /// <summary>フライアウトを生成する。</summary>
+    /// <summary>外観フライアウトの中身を組み立てる。</summary>
     /// <param name="owner">編集対象の注釈を持つコントロール。</param>
-    /// <returns>表示用のフライアウト。</returns>
-    internal static Flyout Create(AnnotationLayerControl owner)
+    /// <returns>表示用の内容（パネルはホストが置く）。</returns>
+    /// <remarks>
+    /// <b>位置と移動はホストが担う</b>: 表示位置（右クリックした位置）とドラッグでの移動は
+    /// <c>AnnotationTextEditor</c> が持つ。 本クラスは中身だけを返す。
+    /// </remarks>
+    internal static Control BuildContent(AnnotationLayerControl owner)
     {
         var content = new StackPanel { Spacing = 8, Width = 340 };
         content.Children.Add(BuildAppearanceGroup(owner));
@@ -31,12 +35,8 @@ internal static class AnnotationStyleFlyout
         content.Children.Add(Separator());
         content.Children.Add(BuildOrderGroup(owner));
 
-        return new Flyout
-        {
-            // 画面の高さに収める（はみ出すと上端が切れる。 実測: 640 では画面外へ出た）
-            Content = new ScrollViewer { Content = content, MaxHeight = 460 },
-            Placement = PlacementMode.Pointer,
-        };
+        // 画面の高さに収める（はみ出すと操作できない項目が出る）
+        return new ScrollViewer { Content = content, MaxHeight = 460 };
     }
 
     /// <summary>区切り線を作る。</summary>

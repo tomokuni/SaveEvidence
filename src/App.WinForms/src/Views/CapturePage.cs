@@ -365,6 +365,14 @@ internal static class CapturePage
             var esPoint = new EsPoint(e.X, e.Y);
             switch (e.Gesture)
             {
+                case AnnotationPreviewGesture.Press:
+                    // 外観フライアウトの表示中の押下は、外側なら閉じる（閉じるボタンは置かない）
+                    if (annotation.IsStylePanelOpen && !annotation.IsStylePanelHit(e.X, e.Y))
+                    {
+                        annotation.CloseStylePanel();
+                    }
+
+                    break;
                 case AnnotationPreviewGesture.DragStart:
                     crop.ZoomView.BeginDragPan(esPoint);
                     break;
