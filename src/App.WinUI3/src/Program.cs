@@ -1,3 +1,4 @@
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.WinUI3.Logging;
@@ -54,6 +55,8 @@ internal static class Program
         }
 
         // タスク バーのグループ分けを 4 つの UI 版で揃える（ウィンドウを作る前に設定する）
+        // 撮影中に強制終了するとタスク バーが隠れたまま残るため、起動時に一度だけ戻す（コアが単一所有）。
+        CaptureTaskbarScope.EnsureVisible();
         TaskbarIdentity.Apply();
         // 未処理の例外を記録する（クラッシュ原因をログから特定できるようにする）
         RegisterExceptionLogging();

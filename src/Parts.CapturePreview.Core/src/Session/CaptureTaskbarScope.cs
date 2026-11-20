@@ -53,6 +53,20 @@ public sealed partial class CaptureTaskbarScope : IDisposable
                 _hidden.Add(handle);
             }
         }
+
+        // **強制終了でも戻す**: 撮影中にプロセスが強制終了すると、隠したままのタスク バーが
+        // 残る（実測 2026-11-20）。 終了処理で戻せる範囲は戻し、戻せない場合は起動時の
+        // <see cref="EnsureVisible"/> が直す。
+        AppDomain.CurrentDomain.ProcessExit += OnProcessExit;
+    }
+
+    /// <summary>プロセス終了時にタスク バーを戻す。</summary>
+    /// <param name="sender">送信元。</param>
+    /// <param name="e">引数。</param>
+    private void OnProcessExit(object? sender, EventArgs e)
+    {
+        AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
+        Dispose();
     }
 
     /// <summary>隠したタスク バーが画面から消えるまで待つ時間。</summary>
@@ -71,6 +85,21 @@ public sealed partial class CaptureTaskbarScope : IDisposable
     /// </remarks>
     public static CaptureTaskbarScope Hide() => new();
 
+    /// <summary>すべてのタスク バーを表示へ戻す（起動時に呼ぶ）。</summary>
+    /// <remarks>
+    /// <b>強制終了の後始末</b>: 撮影中にプロセスが強制終了されると、隠したままのタスク バーが残る
+    /// （<c>Dispose</c> も <c>ProcessExit</c> も走らない。 実測 2026-11-20）。 起動時に一度だけ
+    /// 表示へ戻すことで、次の起動で必ず復旧する。<br/>
+    /// 撮影中に別のプロセスが起動しても、そのプロセスは撮影していないためタスク バーを隠さない。
+    /// </remarks>
+    public static void EnsureVisible()
+    {
+        foreach (var handle in FindTaskbars())
+        {
+            _ = ShowWindow(handle, SwShowNoActivate);
+        }
+    }
+
     /// <summary>隠したタスク バーを表示へ戻す（アクティブ化はしない）。</summary>
     /// <remarks>2 回目以降の呼び出しは何もしない（確定・キャンセルのどちらの経路でも呼べる）。</remarks>
     public void Dispose()
@@ -81,6 +110,7 @@ public sealed partial class CaptureTaskbarScope : IDisposable
         }
 
         _disposed = true;
+        AppDomain.CurrentDomain.ProcessExit -= OnProcessExit;
 
         foreach (var handle in _hidden)
         {

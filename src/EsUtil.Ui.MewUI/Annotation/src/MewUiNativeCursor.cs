@@ -2,12 +2,11 @@ using System.Runtime.InteropServices;
 
 namespace EsUtil.Ui.MewUI.Annotation;
 
-/// <summary>マウス ポインターの画面座標を取得する（フライアウトの初期位置に使う）。</summary>
+/// <summary>マウス ポインターの画面座標と、OS のウィンドウ操作を行う。</summary>
 /// <remarks>
-/// <b>ポインター位置を使う</b>: 右クリックした位置は、コントロールの座標（DIP）から画面座標へ変換するより、
-/// OS のポインター位置をそのまま使うほうが DPI の倍率に依存せず正しい。<br/>
-/// <b>座標系</b>: <see cref="GetCursorPos"/> は物理ピクセルの画面座標を返す（ウィンドウの位置は DIP で指定するため、
-/// 呼び出し側で倍率を使って割る）。
+/// <b>座標の単位は物理ピクセル</b>: <see cref="GetCursorPos"/> は物理ピクセルの画面座標を返す
+/// （コアのフローティング パネルは物理ピクセルで位置を扱う）。 MewUI のウィンドウの位置は DIP のため、
+/// 呼び出し側が倍率で割る。
 /// </remarks>
 internal static class MewUiNativeCursor
 {

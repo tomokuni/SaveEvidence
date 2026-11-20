@@ -16,14 +16,17 @@ internal static class AnnotationStyleFlyout
 {
     /// <summary>外観フライアウトの中身を組み立てる。</summary>
     /// <param name="owner">編集対象の注釈を持つコントロール。</param>
+    /// <param name="appearance">パネルの外観（中身の幅と高さの上限を使う）。</param>
     /// <returns>表示用の内容（パネルはホストが置く）。</returns>
     /// <remarks>
     /// <b>位置と移動はホストが担う</b>: 表示位置（右クリックした位置）とドラッグでの移動は
     /// <c>AnnotationTextEditor</c> が持つ。 本クラスは中身だけを返す。
     /// </remarks>
-    internal static Control BuildContent(AnnotationLayerControl owner)
+    internal static Control BuildContent(AnnotationLayerControl owner, AnnotationPanelAppearance appearance)
     {
-        var content = new StackPanel { Spacing = 8, Width = 340 };
+        ArgumentNullException.ThrowIfNull(appearance);
+
+        var content = new StackPanel { Spacing = 8, Width = appearance.ContentWidth };
         content.Children.Add(BuildAppearanceGroup(owner));
 
         if (owner.Selected is BubbleAnnotation)
@@ -36,7 +39,7 @@ internal static class AnnotationStyleFlyout
         content.Children.Add(BuildOrderGroup(owner));
 
         // 画面の高さに収める（はみ出すと操作できない項目が出る）
-        return new ScrollViewer { Content = content, MaxHeight = 460 };
+        return new ScrollViewer { Content = content, MaxHeight = appearance.MaxContentHeight };
     }
 
     /// <summary>区切り線を作る。</summary>

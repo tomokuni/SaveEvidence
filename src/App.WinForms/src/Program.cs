@@ -1,3 +1,4 @@
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.App.Core.Logging;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -32,6 +33,8 @@ internal static class Program
     private static void Main()
     {
         // タスク バーのグループ分けを 4 つの UI 版で揃える（ウィンドウを作る前に設定する）
+        // 撮影中に強制終了するとタスク バーが隠れたまま残るため、起動時に一度だけ戻す（コアが単一所有）。
+        CaptureTaskbarScope.EnsureVisible();
         TaskbarIdentity.Apply();
         // DPI 対応を有効化する（他の API より前に呼ぶ必要がある）
         _ = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);

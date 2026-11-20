@@ -118,15 +118,10 @@ internal sealed class AnnotationFormatBar : ContentControl
         panel.Children.Add(_font);
         panel.Children.Add(_size);
         panel.Children.Add(_color);
-        Content = new Border
-        {
-            Background = AnnotationEditorControls.PanelBackground(),
-            BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(70, 0, 0, 0)),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(8, 4, 8, 4),
-            Child = panel,
-        };
+
+        // 枠・余白・下地はコアの外観（AnnotationPanelAppearance）が単一所有する。
+        // ここで持つと、パネルの枠と二重になって「余計な辺枠」に見える。
+        Content = panel;
 
         Refresh();
     }

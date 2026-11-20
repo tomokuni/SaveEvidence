@@ -2,11 +2,11 @@ using System.Runtime.InteropServices;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
 
-/// <summary>マウス ポインターの画面座標を取得する（フライアウトの初期位置に使う）。</summary>
+/// <summary>マウス ポインターの画面座標を取得する（フローティング パネルの位置に使う）。</summary>
 /// <remarks>
-/// <b>ポインター位置を使う</b>: 右クリックした位置は、コントロールの座標（DIP）から画面座標（物理ピクセル）へ
-/// 変換するより、OS のポインター位置をそのまま使うほうが DPI の倍率に依存せず正しい。<br/>
-/// <b>座標系</b>: <see cref="GetCursorPos"/> は物理ピクセルの画面座標を返す（<c>AppWindow.Move</c> と同じ座標系）。
+/// <b>座標の単位は物理ピクセル</b>: <see cref="GetCursorPos"/> は物理ピクセルの画面座標を返す
+/// （<c>AppWindow.Move</c> と同じ座標系）。 ウィンドウの枠を外す手順はコアの
+/// <see cref="EsUtil.Feature.Annotation.AnnotationPanelWindow"/> が単一所有する。
 /// </remarks>
 internal static class NativeCursor
 {

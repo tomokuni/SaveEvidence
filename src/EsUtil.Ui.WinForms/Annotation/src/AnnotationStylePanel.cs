@@ -18,13 +18,21 @@ internal sealed class AnnotationStylePanel : Panel
     /// <summary>外観パネルを初期化する。</summary>
     /// <param name="layer">対象のレイヤー。</param>
     /// <param name="close">パネルを閉じる処理。</param>
-    internal AnnotationStylePanel(AnnotationLayerControl layer, Action close)
+    /// <param name="appearance">パネルの外観（下地の色。 コアが単一所有する）。</param>
+    internal AnnotationStylePanel(
+        AnnotationLayerControl layer, Action close, AnnotationPanelAppearance appearance)
     {
+        ArgumentNullException.ThrowIfNull(appearance);
+
         _layer = layer;
         _close = close;
         Width = 236;
         Height = 320;
-        BackColor = Color.FromArgb(250, 250, 250);
+
+        // 下地の色はコアの外観に合わせる（他の UI 版と同じ白）。
+        // WinForms は枠を 1 本しか描けないため、枠は FixedSingle のままにする
+        BackColor = Color.FromArgb(
+            appearance.Background.A, appearance.Background.R, appearance.Background.G, appearance.Background.B);
         BorderStyle = BorderStyle.FixedSingle;
         AutoScroll = true;
 

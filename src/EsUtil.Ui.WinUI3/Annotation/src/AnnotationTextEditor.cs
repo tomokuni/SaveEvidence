@@ -1,66 +1,81 @@
+using EsUtil.Feature.Annotation;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Palette;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Windows.Graphics;
+using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
 
 /// <summary>注釈の本文（表示とその場編集）と書式バーを 1 つにまとめたコントロール（WinUI 3 版）。</summary>
 /// <remarks>
-/// <b>セットで使う</b>: レイヤー（画像・注釈・入力）と書式バーを重ねて持つ。 2 つを別々に置くと、
+/// <b>セットで使う</b>: レイヤー（画像・注釈・入力）と書式バーを持つ。 2 つを別々に置くと、
 /// 位置合わせと表示の切り替えをホストが書くことになる。<br/>
-/// <b>レイヤーは <see cref="Layer"/> から触る</b>: 画像・文書・選択・元に戻すなどは
-/// <see cref="AnnotationLayerControl"/> の API を使う（本コントロールは配置だけを担う）。
+/// <b>位置と開閉はコアが決める</b>: <see cref="AnnotationPanelController"/> が「どこへ出すか・ドラッグで
+/// どう動くか・いつ閉じるか」を単一所有する。 本クラスは <see cref="IAnnotationPanelHost"/> を実装し、
+/// ウィンドウの生成・移動・破棄だけを行う（4 つの UI 版で動作を揃えるため）。<br/>
+/// <b>ウィンドウの内側へ収めない</b>: 書式バーも右クリックの外観フライアウトも、独立した枠なしウィンドウ
+/// として出す（アプリのウィンドウの縁で切れない）。
 /// </remarks>
-public sealed class AnnotationTextEditor : Grid
+public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
 {
+    /// <summary>書式バーと本文の間の余白（DIP）。</summary>
+    private const double BarGap = 6;
+
     /// <summary>注釈の表示と編集を担うレイヤー。</summary>
     private readonly AnnotationLayerControl _layer;
 
     /// <summary>本文の書式を操作するバー。</summary>
     private readonly AnnotationFormatBar _formatBar;
 
-    /// <summary>書式バーを載せるフライアウト（ウィンドウの外へ出せるようにする）。</summary>
-    private readonly Flyout _formatBarFlyout;
+    /// <summary>パネルの外観（コアが単一所有する値）。</summary>
+    private readonly AnnotationPanelAppearance _appearance = AnnotationPanelAppearance.Default;
 
-    /// <summary>外観・重なり順の編集パネル（開いている間だけ保持する）。</summary>
-    private AnnotationStylePanel? _stylePanel;
+    /// <summary>書式バーのウィンドウを出すコントローラー。</summary>
+    private readonly AnnotationPanelController _formatBarPanel;
 
-    /// <summary>外観パネルを載せるウィンドウ（開いている間だけ保持する）。</summary>
-    private Window? _styleWindow;
+    /// <summary>右クリックの外観フライアウトを出すコントローラー。</summary>
+    private readonly AnnotationPanelController _stylePanel;
+
+    /// <summary>表示中のパネルのウィンドウ（種別ごとに 1 つ）。</summary>
+    private readonly Dictionary<AnnotationPanelKind, Window> _windows = [];
+
+    /// <summary>表示中のパネルの左上（物理ピクセル）。</summary>
+    private readonly Dictionary<AnnotationPanelKind, EsPointInt> _positions = [];
+
+    /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
+    private Border? _draggingRoot;
 
     /// <summary>注釈の本文編集と書式バーをまとめたコントロールを初期化する。</summary>
     public AnnotationTextEditor()
     {
         _layer = new AnnotationLayerControl();
         _formatBar = new AnnotationFormatBar(_layer);
-        _formatBarFlyout = new Flyout
-        {
-            Content = _formatBar,
-            Placement = FlyoutPlacementMode.Top,
-            ShouldConstrainToRootBounds = false,
-        };
+
+        _formatBarPanel = new AnnotationPanelController(this, _appearance);
+        _stylePanel = new AnnotationPanelController(this, _appearance);
 
         Children.Add(_layer);
 
         _layer.EditingChanged += (_, _) =>
         {
-            if (!_layer.IsEditingText)
+            if (_layer.IsEditingText)
             {
-                _formatBarFlyout.Hide();
+                _formatBar.Refresh();
+                ShowFormatBar();
                 return;
             }
 
-            _formatBar.Refresh();
-            ShowFormatBar();
+            _formatBarPanel.Close();
         };
 
         _layer.TextSelectionChanged += (_, _) =>
         {
-            if (_layer.IsEditingText)
+            if (_formatBarPanel.IsOpen)
             {
                 _formatBar.Refresh();
             }
@@ -71,23 +86,11 @@ public sealed class AnnotationTextEditor : Grid
             if (_layer.IsEditingText)
             {
                 _formatBar.Refresh();
-            }
-
-            if (_stylePanel is not null)
-            {
-                CloseStylePanel();
+                ShowFormatBar();
             }
         };
 
         _layer.StyleEditorRequested += (_, e) => ShowStylePanel(e.X, e.Y);
-    }
-
-    /// <summary>書式バーを本文の上へ出す（ウィンドウの外へ出せる）。</summary>
-    private void ShowFormatBar()
-    {
-        var body = _layer.GetSelectedBodyRect();
-        _ = body;
-        _formatBarFlyout.ShowAt(_layer);
     }
 
     /// <summary>注釈の表示と編集を担うレイヤーを取得する。</summary>
@@ -107,35 +110,39 @@ public sealed class AnnotationTextEditor : Grid
         }
     }
 
-    /// <summary>右クリック位置へ外観の編集パネルを表示する。</summary>
-    /// <param name="x">位置（このコントロールの座標）。</param>
-    /// <param name="y">位置（このコントロールの座標）。</param>
-    /// <remarks>
-    /// <b>独立したウィンドウへ出す</b>: アプリのウィンドウの子として置くと、ウィンドウの縁で切れて項目が
-    /// 選べなくなる（実測 2026-11-21）。 位置はアプリのウィンドウへ収めない。<br/>
-    /// <b>閉じるのは外側のクリックだけ</b>: ウィンドウが非アクティブになったら閉じる（ポインタが外れても閉じない）。
-    /// 閉じるボタンは置かない。<br/>
-    /// <b>パネルは移動できる</b>: 余白（見出し・枠）を押したまま動かすとウィンドウが動く。
-    /// </remarks>
-    public void ShowStylePanel(double x, double y)
+    /// <summary>表示中のパネルの左上（物理ピクセル）を取得する。</summary>
+    /// <value>表示していない場合は原点。</value>
+    public EsPointInt PanelPosition
+        => _positions.Count > 0 ? _positions.Values.First() : default;
+
+    /// <summary>パネルのウィンドウを作って表示する。</summary>
+    /// <param name="kind">パネルの種別（中身を決める）。</param>
+    /// <param name="appearance">外観（枠・余白・幅）。</param>
+    /// <param name="screenPosition">左上の位置（物理ピクセル）。</param>
+    public void CreatePanel(
+        AnnotationPanelKind kind, AnnotationPanelAppearance appearance, EsPointInt screenPosition)
     {
-        // 位置は OS のポインター位置を使う（DIP から画面座標への変換はウィンドウの枠の分だけ
-        // ずれるため。 引数は 4 つの UI 版で同じ形に揃えるために受け取る）。
-        _ = x;
-        _ = y;
+        DestroyPanel(kind);
 
-        CloseStylePanel();
-        var panel = new AnnotationStylePanel(_layer);
-        panel.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
-
-        var scale = XamlRoot?.RasterizationScale ?? 1.0;
-        var width = Math.Max(1, (int)Math.Ceiling(panel.DesiredSize.Width * scale));
-        var height = Math.Max(1, (int)Math.Ceiling(panel.DesiredSize.Height * scale));
+        var root = new Border
+        {
+            Child = kind == AnnotationPanelKind.FormatBar
+                ? _formatBar
+                : new AnnotationStylePanel(_layer),
+            Background = ToBrush(appearance.Background),
+            BorderBrush = ToBrush(appearance.Border),
+            BorderThickness = new Thickness(appearance.BorderThickness),
+            CornerRadius = new CornerRadius(appearance.CornerRadius),
+            Padding = new Thickness(appearance.Padding),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top,
+        };
 
         var window = new Window
         {
-            Content = panel,
+            // ウィンドウの飾りを消す（残すとパネルの枠と二重になり、余計な辺枠に見える）
             ExtendsContentIntoTitleBar = true,
+            Content = root,
         };
 
         if (window.AppWindow.Presenter is OverlappedPresenter presenter)
@@ -146,128 +153,270 @@ public sealed class AnnotationTextEditor : Grid
             presenter.IsMinimizable = false;
         }
 
-        // タスク バーと Alt+Tab の一覧へ出さない（パネルはアプリの一部として扱う）
-        window.AppWindow.IsShownInSwitchers = false;
+        // **Alt+Tab の一覧から外さない**: `IsShownInSwitchers = false` にするとウィンドウが
+        // アクティブにならず、パネルが表示されない（実測 2026-11-21）。 タスク バーへ出さない
+        // 手段が他に無いため、一覧へは出す（見た目と操作の正しさを優先する）。
 
-        // 位置はポインタ（画面座標）。 アプリのウィンドウの内側へ収めない
-        if (NativeCursor.TryGetScreenPosition(out var screenX, out var screenY))
+        window.AppWindow.Move(new PointInt32(screenPosition.X, screenPosition.Y));
+
+        // 寸法は中身に合わせる（幅も高さも中身で決まる）。 実寸はスタイル適用後に決まるため、
+        // 読み込んだ後に測り直す
+        var scale = RenderScale();
+        root.Loaded += (_, _) => ResizeToContent(kind, window, root, appearance, scale);
+
+        if (kind == AnnotationPanelKind.StyleEditor)
         {
-            window.AppWindow.Move(new PointInt32(screenX, screenY));
+            // 外側をクリックすると非アクティブになる（閉じるのは押下だけ）
+            window.Activated += (_, e) =>
+            {
+                if (e.WindowActivationState == WindowActivationState.Deactivated)
+                {
+                    _stylePanel.Close();
+                }
+            };
         }
 
-        window.AppWindow.Resize(new SizeInt32(width, height));
+        // 余白（中身の無いところ）を押したまま動かすとウィンドウが動く
+        root.PointerPressed += (_, e) => BeginPanelDrag(kind, root, e);
+        root.PointerMoved += (_, e) => ContinuePanelDrag(kind, root, e);
+        root.PointerReleased += (_, e) => EndPanelDrag(kind, root, e);
 
-        // 注釈の外を押したら閉じる（ウィンドウが非アクティブになる）。
-        // 表示直後は入力の途中でいったん非アクティブになることがあるため、直後の通知は無視する
-        var shownAt = Environment.TickCount64;
-        window.Activated += (_, e) =>
-        {
-            if (e.WindowActivationState == WindowActivationState.Deactivated
-                && Environment.TickCount64 - shownAt > DeactivateGraceMs)
-            {
-                CloseStylePanel();
-            }
-        };
+        _windows[kind] = window;
+        _positions[kind] = screenPosition;
 
-        // 操作できる項目（ボタン・コンボボックス）の上では動かさない（押下を奪わない）
-        var dragging = false;
-        var last = default(Windows.Foundation.Point);
-        panel.AddHandler(
-            UIElement.PointerPressedEvent,
-            new PointerEventHandler((_, e) =>
-            {
-                if (e.Handled || !e.GetCurrentPoint(panel).Properties.IsLeftButtonPressed)
-                {
-                    return;
-                }
-
-                dragging = true;
-                last = e.GetCurrentPoint(null).Position;
-                panel.CapturePointer(e.Pointer);
-                e.Handled = true;
-            }),
-            handledEventsToo: false);
-        panel.PointerMoved += (_, e) =>
-        {
-            if (!dragging)
-            {
-                return;
-            }
-
-            var current = e.GetCurrentPoint(null).Position;
-            var dx = (int)Math.Round((current.X - last.X) * scale);
-            var dy = (int)Math.Round((current.Y - last.Y) * scale);
-            var origin = window.AppWindow.Position;
-            window.AppWindow.Move(new PointInt32(origin.X + dx, origin.Y + dy));
-            last = current;
-            e.Handled = true;
-        };
-        panel.PointerReleased += (_, e) =>
-        {
-            if (!dragging)
-            {
-                return;
-            }
-
-            dragging = false;
-            panel.ReleasePointerCapture(e.Pointer);
-            e.Handled = true;
-        };
-
-        // パネルの自然な寸法にウィンドウを合わせる。
-        // 読み込み前の測定はスタイル適用前で小さいため、読み込んだ後に測り直す。
-        // **寸法の変化で追従しない**: ウィンドウを縮めるとパネルも縮み、寸法が縮み続ける（実測 2026-11-21）。
-        panel.Loaded += (_, _) =>
-        {
-            if (_styleWindow != window)
-            {
-                return;
-            }
-
-            panel.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
-            var natural = panel.DesiredSize;
-            if (natural.Width <= 0 || natural.Height <= 0)
-            {
-                return;
-            }
-
-            window.AppWindow.Resize(new SizeInt32(
-                Math.Max(1, (int)Math.Ceiling(natural.Width * scale)),
-                Math.Max(1, (int)Math.Ceiling(natural.Height * scale))));
-            panel.InvalidateMeasure();
-        };
-
-        _stylePanel = panel;
-        _styleWindow = window;
-
-        // 表示直後の押下の途中で非アクティブ化されるのを避けるため、入力の処理が終わってから出す
+        // **表示は入力の処理が終わってから行う**: 押下の処理の中で新しいウィンドウを
+        // アクティブにすると、内容が配置されないまま表示されない（実測 2026-11-21）。
         DispatcherQueue.TryEnqueue(() =>
         {
-            if (_styleWindow != window)
+            if (!_windows.TryGetValue(kind, out var current) || !ReferenceEquals(current, window))
             {
                 return;
             }
 
             window.Activate();
+
+            // DWM の枠は表示後に消す（作成時はまだネイティブ ウィンドウが揃っていない）
+            AnnotationPanelWindow.RemoveSystemFrame(
+                WinRT.Interop.WindowNative.GetWindowHandle(window));
         });
+
+        // **書式バーは本文へフォーカスを戻す**: アクティブがパネルへ移ると本文の入力（文字・IME）が
+        // そちらへ行き、その場編集が成り立たない。
+        if (kind == AnnotationPanelKind.FormatBar)
+        {
+            _ = _layer.Focus(FocusState.Programmatic);
+        }
     }
 
-    /// <summary>表示直後の非アクティブ化を無視する時間（ミリ秒）。</summary>
-    private const int DeactivateGraceMs = 500;
-
-    /// <summary>外観の編集パネルが出ているかどうかを取得する。</summary>
-    public bool IsStylePanelOpen => _styleWindow is not null;
-
-    /// <summary>外観・重なり順の編集パネルを閉じる。</summary>
-    public void CloseStylePanel()
+    /// <summary>パネルのウィンドウを移動する。</summary>
+    /// <param name="screenPosition">左上の位置（物理ピクセル）。</param>
+    public void MovePanel(EsPointInt screenPosition)
     {
-        if (_styleWindow is not { } window)
+        var entry = _windows.FirstOrDefault();
+        if (entry.Value is not { } window)
         {
             return;
         }
 
-        _stylePanel = null;
-        _styleWindow = null;
+        _positions[entry.Key] = screenPosition;
+        window.AppWindow.Move(new PointInt32(screenPosition.X, screenPosition.Y));
+    }
+
+    /// <summary>表示中のパネルのウィンドウを閉じて破棄する。</summary>
+    public void DestroyPanel()
+    {
+        foreach (var kind in _windows.Keys.ToArray())
+        {
+            DestroyPanel(kind);
+        }
+    }
+
+    /// <summary>右クリック位置へ外観の編集パネルを表示する。</summary>
+    /// <param name="x">位置（このコントロールの座標）。</param>
+    /// <param name="y">位置（このコントロールの座標）。</param>
+    /// <remarks>
+    /// <b>位置と寿命はコアが決める</b>: ウィンドウの内側へ収めず、右クリックした位置へ出し、
+    /// 外側をクリックすると閉じる。 余白を押したまま動かすと移動する。
+    /// </remarks>
+    public void ShowStylePanel(double x, double y)
+        => _stylePanel.Show(AnnotationPanelKind.StyleEditor, ToScreenPixels(new Windows.Foundation.Point(x, y)));
+
+    /// <summary>外観の編集パネルが出ているかどうかを取得する。</summary>
+    public bool IsStylePanelOpen => _stylePanel.IsOpen;
+
+    /// <summary>外観の編集パネルを閉じる。</summary>
+    public void CloseStylePanel() => _stylePanel.Close();
+
+    /// <summary>書式バーを本文の上へ出す（ウィンドウの内側へは収めない）。</summary>
+    private void ShowFormatBar()
+    {
+        var body = _layer.GetSelectedBodyRect();
+        _formatBarPanel.Show(
+            AnnotationPanelKind.FormatBar, ToScreenPixels(new Windows.Foundation.Point(body.X, body.Y - BarGap)));
+    }
+
+    /// <summary>パネルの寸法を中身に合わせる。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <param name="window">パネルのウィンドウ。</param>
+    /// <param name="root">パネルの根。</param>
+    /// <param name="appearance">外観。</param>
+    /// <param name="scale">物理ピクセル / DIP の倍率。</param>
+    /// <remarks>
+    /// <b>後から寸法を測り直さない</b>: ウィンドウを縮めると中身も縮み、寸法が縮み続ける
+    /// （実測 2026-11-21）。 読み込んだ時点の自然な寸法で 1 回だけ決める。
+    /// </remarks>
+    private void ResizeToContent(
+        AnnotationPanelKind kind,
+        Window window,
+        Border root,
+        AnnotationPanelAppearance appearance,
+        double scale)
+    {
+        if (!_windows.TryGetValue(kind, out var current) || !ReferenceEquals(current, window))
+        {
+            return;
+        }
+
+        root.Measure(new Windows.Foundation.Size(
+            appearance.MaxWidth, appearance.MaxContentHeight));
+        var natural = root.DesiredSize;
+        if (natural.Width <= 0 || natural.Height <= 0)
+        {
+            return;
+        }
+
+        window.AppWindow.Resize(new SizeInt32(
+            (int)Math.Ceiling(Math.Min(natural.Width, appearance.MaxWidth) * scale),
+            (int)Math.Ceiling(natural.Height * scale)));
+    }
+
+    /// <summary>このコントロールの座標（DIP）を画面座標（物理ピクセル）へ変換する。</summary>
+    /// <param name="point">このコントロールの座標。</param>
+    /// <returns>画面座標（物理ピクセル）。 取得できない場合は原点。</returns>
+    private EsPointInt ToScreenPixels(Windows.Foundation.Point point)
+    {
+        if (AppWindowOf() is not { } appWindow)
+        {
+            return default;
+        }
+
+        var scale = RenderScale();
+        var origin = TransformToVisual(null).TransformPoint(new Windows.Foundation.Point(0, 0));
+        return new EsPointInt(
+            (int)Math.Round(appWindow.Position.X + ((origin.X + point.X) * scale)),
+            (int)Math.Round(appWindow.Position.Y + ((origin.Y + point.Y) * scale)));
+    }
+
+    /// <summary>このコントロールが載っているウィンドウの <c>AppWindow</c> を取得する。</summary>
+    /// <returns>取得できた場合は <c>AppWindow</c>。 取得できない場合は <see langword="null"/>。</returns>
+    /// <remarks>
+    /// <b>XamlRoot の識別子から引く</b>: WinUI 3 の <c>Window</c> は <c>UIElement</c> ではないため、
+    /// 親をたどってウィンドウへ到達できない。 表示中の島（<c>ContentIslandEnvironment</c>）が
+    /// 自分のウィンドウの識別子を持つので、それを使う。<br/>
+    /// <b>取得できなくても止めない</b>: 識別子が未確定の間は例外になる。 その場合は位置を既定値にして、
+    /// パネル自体は出す（出せないより出すほうがよい）。
+    /// </remarks>
+    private AppWindow? AppWindowOf()
+    {
+        try
+        {
+            return XamlRoot?.ContentIslandEnvironment?.AppWindowId is { } windowId
+                ? AppWindow.GetFromWindowId(windowId)
+                : null;
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            // 識別子が未確定の間は引けない。 位置は既定値にしてパネル自体は出す
+            // （出せないより、少しずれた位置に出るほうがよい）
+            return null;
+        }
+    }
+
+    /// <summary>物理ピクセル / DIP の倍率を取得する。</summary>
+    /// <returns>1 以上の倍率。</returns>
+    private double RenderScale()
+    {
+        var scale = XamlRoot?.RasterizationScale ?? 1.0;
+        return scale > 0 ? scale : 1.0;
+    }
+
+    /// <summary>パネルのドラッグを始める（余白を押したときだけ）。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <param name="root">パネルの根。</param>
+    /// <param name="e">押下の引数。</param>
+    private void BeginPanelDrag(AnnotationPanelKind kind, Border root, PointerRoutedEventArgs e)
+    {
+        // 中身（ボタン・入力欄）の押下では動かさない（操作を奪わない）
+        if (!ReferenceEquals(e.OriginalSource, root)
+            || !e.GetCurrentPoint(root).Properties.IsLeftButtonPressed
+            || !NativeCursor.TryGetScreenPosition(out var x, out var y))
+        {
+            return;
+        }
+
+        _draggingRoot = root;
+        Controller(kind).BeginDrag(new EsPointInt(x, y));
+        root.CapturePointer(e.Pointer);
+        e.Handled = true;
+    }
+
+    /// <summary>パネルをドラッグして動かす。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <param name="root">パネルの根。</param>
+    /// <param name="e">ポインターの引数。</param>
+    /// <remarks>
+    /// <b>位置は OS のポインターで測る</b>: ウィンドウを動かしてもパネル内の座標は変わらないため、
+    /// パネル内座標の差分では 1 回で止まる。
+    /// </remarks>
+    private void ContinuePanelDrag(AnnotationPanelKind kind, Border root, PointerRoutedEventArgs e)
+    {
+        if (!ReferenceEquals(_draggingRoot, root)
+            || !NativeCursor.TryGetScreenPosition(out var x, out var y))
+        {
+            return;
+        }
+
+        Controller(kind).DragTo(new EsPointInt(x, y));
+        e.Handled = true;
+    }
+
+    /// <summary>パネルのドラッグを終える。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <param name="root">パネルの根。</param>
+    /// <param name="e">ポインターの引数。</param>
+    private void EndPanelDrag(AnnotationPanelKind kind, Border root, PointerRoutedEventArgs e)
+    {
+        _draggingRoot = null;
+        Controller(kind).EndDrag();
+        root.ReleasePointerCapture(e.Pointer);
+        e.Handled = true;
+    }
+
+    /// <summary>種別ごとのコントローラーを取得する。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <returns>コントローラー。</returns>
+    private AnnotationPanelController Controller(AnnotationPanelKind kind)
+        => kind == AnnotationPanelKind.FormatBar ? _formatBarPanel : _stylePanel;
+
+    /// <summary>種別のパネルを閉じる（表示していなければ何もしない）。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    private void DestroyPanel(AnnotationPanelKind kind)
+    {
+        Controller(kind).Close();
+
+        if (!_windows.Remove(kind, out var window))
+        {
+            return;
+        }
+
+        _positions.Remove(kind);
+        window.Content = null;
         window.Close();
     }
+
+    /// <summary>コアの色を WinUI のブラシへ変換する。</summary>
+    /// <param name="color">色。</param>
+    /// <returns>不透明な塗りつぶしのブラシ。</returns>
+    private static SolidColorBrush ToBrush(DrawingColor color)
+        => new(Windows.UI.Color.FromArgb(color.A, color.R, color.G, color.B));
 }

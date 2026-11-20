@@ -149,10 +149,8 @@ internal sealed class AnnotationFormatBar : Border
         controls.Children.Add(_underline);
         controls.Children.Add(_strike);
 
-        Background = Brushes.White;
-        BorderBrush = Brushes.DodgerBlue;
-        BorderThickness = new Thickness(1);
-        Padding = new Thickness(6, 3);
+        // 枠・余白・下地はコアの外観（AnnotationPanelAppearance）が単一所有する。
+        // ここで持つと、パネルの枠と二重になって「余計な辺枠」に見える。
         Child = controls;
 
         // 大きさと色は Enter で確定する（同じ値でも適用する）

@@ -1,8 +1,8 @@
 using EsUtil.Feature.Annotation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using DrawingColor = System.Drawing.Color;
+
 namespace EsUtil.Ui.WinUI3.Annotation;
 
 /// <summary>注釈の外観（枠線・内側・角丸・しっぽ・重なり順）を編集するパネル（WinUI 3 版）。</summary>
@@ -24,21 +24,12 @@ internal sealed class AnnotationStylePanel : ContentControl
     {
         _layer = layer;
 
-        Background = AnnotationEditorControls.PanelBackground();
-        HorizontalAlignment = HorizontalAlignment.Right;
+        // 枠・余白・幅はコアの外観（AnnotationPanelAppearance）が単一所有する。
+        // ここで持つと、ウィンドウの枠と二重になって「余計な辺枠」に見える。
+        HorizontalAlignment = HorizontalAlignment.Stretch;
         VerticalAlignment = VerticalAlignment.Top;
-        Margin = new Thickness(8);
-        Width = 240;
 
-        Content = new Border
-        {
-            Background = AnnotationEditorControls.PanelBackground(),
-            BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(70, 0, 0, 0)),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(8),
-            Child = Build(),
-        };
+        Content = Build();
     }
 
     /// <summary>パネルの中身を組み立てる。</summary>

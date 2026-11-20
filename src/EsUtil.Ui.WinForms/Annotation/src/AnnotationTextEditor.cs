@@ -1,3 +1,4 @@
+using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Palette;
 
 namespace EsUtil.Ui.WinForms.Annotation;
@@ -92,7 +93,7 @@ public sealed class AnnotationTextEditor : UserControl
     {
         CloseStylePanel();
 
-        var panel = new AnnotationStylePanel(_layer, CloseStylePanel)
+        var panel = new AnnotationStylePanel(_layer, CloseStylePanel, AnnotationPanelAppearance.Default)
         {
             Location = new Point((int)Math.Max(0, x), (int)Math.Max(0, y)),
         };

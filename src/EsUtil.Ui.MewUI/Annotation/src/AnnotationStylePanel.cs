@@ -13,11 +13,14 @@ public sealed class AnnotationStylePanel : ContentControl
 {
     /// <summary>編集パネルを初期化する。</summary>
     /// <param name="layer">編集対象のコントロール。</param>
-    public AnnotationStylePanel(AnnotationLayerControl layer)
+    /// <param name="appearance">パネルの外観（中身の幅と高さの上限を使う）。</param>
+    public AnnotationStylePanel(AnnotationLayerControl layer, AnnotationPanelAppearance appearance)
     {
         ArgumentNullException.ThrowIfNull(layer);
 
-        var content = new StackPanel { Spacing = 8, Width = 340 };
+        ArgumentNullException.ThrowIfNull(appearance);
+
+        var content = new StackPanel { Spacing = 8, Width = appearance.ContentWidth };
 
         // 見出しはタイトル バーのような帯にする（この面と余白を押したまま動かすとウィンドウが移動する）
         content.Add(new Border
@@ -38,12 +41,9 @@ public sealed class AnnotationStylePanel : ContentControl
         content.Add(Separator());
         content.Add(BuildOrderGroup(layer));
 
-        Background = new Color(255, 250, 250, 250);
-        BorderBrush = new Color(255, 160, 160, 160);
-        BorderThickness = 1;
-        CornerRadius = 4;
-        Padding = new Thickness(8);
-        Content = new ScrollViewer { Content = content, MaxHeight = 460 };
+        // 枠・余白・幅はコアの外観（AnnotationPanelAppearance）が単一所有する。
+        // ここで持つと、ウィンドウの枠と二重になって「余計な辺枠」に見える。
+        Content = new ScrollViewer { Content = content };
     }
 
     /// <summary>区切り線を作る。</summary>

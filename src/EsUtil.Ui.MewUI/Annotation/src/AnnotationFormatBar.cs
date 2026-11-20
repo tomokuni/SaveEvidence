@@ -94,10 +94,8 @@ public sealed class AnnotationFormatBar : ContentControl
         controls.Add(_underline);
         controls.Add(_strike);
 
-        Background = new Color(255, 255, 255, 255);
-        BorderBrush = new Color(255, 30, 144, 255);
-        BorderThickness = 1;
-        Padding = new Thickness(6, 3);
+        // 枠・余白・下地はコアの外観（AnnotationPanelAppearance）が単一所有する。
+        // ここで持つと、パネルの枠と二重になって「余計な辺枠」に見える。
         Content = controls;
     }
 

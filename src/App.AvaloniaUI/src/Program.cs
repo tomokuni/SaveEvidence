@@ -1,3 +1,4 @@
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Threading;
@@ -38,6 +39,8 @@ internal static class Program
     private static void Main(string[] args)
     {
         // タスク バーのグループ分けを 4 つの UI 版で揃える（ウィンドウを作る前に設定する）
+        // 撮影中に強制終了するとタスク バーが隠れたまま残るため、起動時に一度だけ戻す（コアが単一所有）。
+        CaptureTaskbarScope.EnsureVisible();
         TaskbarIdentity.Apply();
         // Serilog を初期化（ファイル出力先は AppLog.CreateLoggingConfiguration と整合させる）。
         // グローバル例外ハンドラの即時ログ出力に使用するため、Log.Logger を設定する。
