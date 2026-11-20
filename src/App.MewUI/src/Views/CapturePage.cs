@@ -1094,9 +1094,12 @@ internal static class CapturePage
         annotation = annotationEditor;
         host.Children(annotationEditor);
 
-
         void SyncAnnotation()
         {
+            // **画像の表示矩形を取り直す**: 画像を差し替えると縦横比が変わり、表示矩形も変わる。
+            // 取り直さないと前の画像の矩形のまま注釈がずれる（実測 2026-11-20）
+            annotationEditor.Layer.PreviewImageRect = cropView.ImageRectViewport();
+
             var layer = annotationEditor.Layer;
             if (viewModel.PreviewImage is { } image)
             {
@@ -1131,6 +1134,11 @@ internal static class CapturePage
         SyncAnnotationOverlay();
         cropForAnnotation.ZoomChanged += (_, _) => SyncAnnotationOverlay();
         cropForAnnotation.ViewportChanged += (_, _) => SyncAnnotationOverlay();
+
+        // **寸法が変わったときも取り直す**: 画像の差し替えやウィンドウの大きさの変更では
+        // ZoomChanged / ViewportChanged が出ない。 取り直さないと、前の画像の表示矩形のまま
+        // 注釈がずれる（実測 2026-11-20: 縦長の画像で枠が画像の左・上へはみ出した）
+        cropForAnnotation.SizeChanged += _ => SyncAnnotationOverlay();
         settings.PropertyChanged += (_, e) =>
         {
             if (string.Equals(e.PropertyName, nameof(Settings.ColorTextFormat), StringComparison.Ordinal))

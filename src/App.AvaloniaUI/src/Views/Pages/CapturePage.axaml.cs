@@ -202,6 +202,11 @@ public sealed partial class CapturePage : UserControl
         CropView.ZoomChanged += (_, _) => ApplyAnnotationOverlayTransform();
         CropView.ViewportChanged += (_, _) => ApplyAnnotationOverlayTransform();
 
+        // **寸法が変わったときも取り直す**: 画像の差し替えやウィンドウの大きさの変更では
+        // ZoomChanged / ViewportChanged が出ない。 取り直さないと前の画像の表示矩形のまま
+        // 注釈がずれる（実測 2026-11-20: MewUI 版で枠が画像の左・上へはみ出した）
+        CropView.SizeChanged += (_, _) => ApplyAnnotationOverlayTransform();
+
         // 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック）は、注釈レイヤーが受け取ってここへ渡す。
         // 入力を「注釈の有無」で切り替えると、切り替えた側が次の押下を受け取れなくなる（実測 2026-11-20）。
         AnnotationEditor.Layer.PreviewGestureRequested += (_, e) => ForwardAnnotationGesture(e);

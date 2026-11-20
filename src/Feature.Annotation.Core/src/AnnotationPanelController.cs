@@ -29,14 +29,14 @@ public sealed class AnnotationPanelController
 
     /// <summary>フローティング パネルの制御を初期化する。</summary>
     /// <param name="host">パネルのウィンドウを操作する窓口。</param>
-    /// <param name="appearance">パネルの外観（省略すると <see cref="AnnotationPanelAppearance.Default"/>）。</param>
+    /// <param name="appearance">パネルの外観（省略すると <see cref="AnnotationPanelAppearance.StyleEditor"/>）。</param>
     public AnnotationPanelController(
         IAnnotationPanelHost host,
         AnnotationPanelAppearance? appearance = null)
     {
         ArgumentNullException.ThrowIfNull(host);
         _host = host;
-        _appearance = appearance ?? AnnotationPanelAppearance.Default;
+        _appearance = appearance ?? AnnotationPanelAppearance.StyleEditor;
     }
 
     /// <summary>パネルを表示しているかどうかを取得する。</summary>
@@ -73,18 +73,38 @@ public sealed class AnnotationPanelController
     /// 無視する。
     /// </remarks>
     public void Show(AnnotationPanelKind kind, EsPointInt anchorScreen)
+        => ShowAt(kind, AnnotationPanelPlacement.ResolveInitial(anchorScreen));
+
+    /// <summary>対象（編集中の注釈）に被さらない位置へパネルを表示する。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <param name="targetScreen">被せたくない矩形（物理ピクセル）。</param>
+    /// <param name="panelSize">パネルの大きさ（物理ピクセル）。</param>
+    /// <param name="gap">対象とパネルの間の余白（物理ピクセル）。</param>
+    /// <remarks>
+    /// <b>書式バーはこれを使う</b>: 編集中の本文の上へ重ねると文字が隠れて読めない（実測 2026-11-20）。
+    /// 位置の判断は <see cref="AnnotationPanelPlacement.ResolveOutside"/> が単一所有する。
+    /// </remarks>
+    public void ShowOutside(
+        AnnotationPanelKind kind, EsRect targetScreen, EsSizeInt panelSize, int gap)
+        => ShowAt(
+            kind,
+            AnnotationPanelPlacement.ResolveOutside(targetScreen, panelSize, _host.WorkArea, gap));
+
+    /// <summary>位置を指定してパネルを表示する。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <param name="screenPosition">左上の位置（物理ピクセル）。</param>
+    private void ShowAt(AnnotationPanelKind kind, EsPointInt screenPosition)
     {
         if (IsOpen)
         {
             Close();
         }
 
-        var position = AnnotationPanelPlacement.ResolveInitial(anchorScreen);
         _shownAtTicks = Environment.TickCount64;
         _isCreating = true;
         try
         {
-            _host.CreatePanel(kind, _appearance, position);
+            _host.CreatePanel(kind, _appearance, screenPosition);
         }
         finally
         {

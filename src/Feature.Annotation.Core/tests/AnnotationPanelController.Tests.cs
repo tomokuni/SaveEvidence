@@ -19,7 +19,7 @@ public sealed class AnnotationPanelControllerTests
         Assert.Equal(AnnotationPanelKind.StyleEditor, controller.Kind);
         Assert.Equal(1, host.CreateCount);
         Assert.Equal(new EsPointInt(640, 480), host.LastCreatePosition);
-        Assert.Equal(AnnotationPanelAppearance.Default, host.LastAppearance);
+        Assert.Equal(AnnotationPanelAppearance.StyleEditor, host.LastAppearance);
     }
 
     /// <summary>別の種別を表示すると、前のパネルを閉じてから作り直す（同時に 2 つ出さない）。</summary>
@@ -85,6 +85,24 @@ public sealed class AnnotationPanelControllerTests
         Assert.Equal(0, host.MoveCount);
     }
 
+    /// <summary>対象に被せない位置へ出す（本文の外へ置く）。</summary>
+    [Fact]
+    internal void ShowOutside_対象の外へ出す()
+    {
+        var host = new HostSpy();
+        var controller = new AnnotationPanelController(host);
+
+        controller.ShowOutside(
+            AnnotationPanelKind.FormatBar,
+            targetScreen: new EsRect(400, 500, 200, 100),
+            panelSize: new EsSizeInt(300, 40),
+            gap: 8);
+
+        Assert.True(controller.IsOpen);
+        Assert.Equal(400, host.LastCreatePosition.X);
+        Assert.Equal(500 - 8 - 40, host.LastCreatePosition.Y);
+    }
+
     /// <summary>ホストの呼び出しを記録するスパイ。</summary>
     private sealed class HostSpy : IAnnotationPanelHost
     {
@@ -108,6 +126,12 @@ public sealed class AnnotationPanelControllerTests
 
         /// <summary>パネルの左上（作成・移動で更新する）。</summary>
         public EsPointInt PanelPosition { get; private set; }
+
+        /// <summary>パネルの大きさ（物理ピクセル）。</summary>
+        public EsSizeInt PanelSize { get; set; } = new(300, 120);
+
+        /// <summary>画面の作業領域（物理ピクセル）。</summary>
+        public EsRect WorkArea { get; set; } = new(0, 0, 1920, 1040);
 
         /// <inheritdoc/>
         public void CreatePanel(

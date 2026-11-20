@@ -93,7 +93,7 @@ public sealed class AnnotationTextEditor : UserControl
     {
         CloseStylePanel();
 
-        var panel = new AnnotationStylePanel(_layer, CloseStylePanel, AnnotationPanelAppearance.Default)
+        var panel = new AnnotationStylePanel(_layer, CloseStylePanel, AnnotationPanelAppearance.StyleEditor)
         {
             Location = new Point((int)Math.Max(0, x), (int)Math.Max(0, y)),
         };

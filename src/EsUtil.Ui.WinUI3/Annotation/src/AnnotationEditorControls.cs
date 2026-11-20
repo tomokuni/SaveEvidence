@@ -59,9 +59,13 @@ internal static class AnnotationEditorControls
                 Text = text,
                 FontWeight = bold ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
                 FontStyle = italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
+                VerticalAlignment = VerticalAlignment.Center,
             },
             IsChecked = isChecked,
             MinWidth = 28,
+
+            // **高さを明示する**: 既定の高さでは 12 DIP の文字の上が欠ける（実測 2026-11-20）
+            MinHeight = 26,
             Padding = new Thickness(4, 1, 4, 1),
             FontSize = FontSize,
         };

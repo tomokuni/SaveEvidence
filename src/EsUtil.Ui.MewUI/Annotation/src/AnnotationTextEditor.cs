@@ -30,7 +30,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     private readonly AnnotationLayerControl _layer;
 
     /// <summary>パネルの外観（コアが単一所有する値）。</summary>
-    private readonly AnnotationPanelAppearance _appearance = AnnotationPanelAppearance.Default;
+    private readonly AnnotationPanelAppearance _appearance = AnnotationPanelAppearance.StyleEditor;
 
     /// <summary>書式バーのウィンドウを出すコントローラー。</summary>
     private readonly AnnotationPanelController _formatBarPanel;
@@ -53,7 +53,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         _layer = new AnnotationLayerControl();
         _formatBar = new AnnotationFormatBar(_layer);
 
-        _formatBarPanel = new AnnotationPanelController(this, _appearance);
+        _formatBarPanel = new AnnotationPanelController(this, AnnotationPanelAppearance.FormatBar);
         _stylePanel = new AnnotationPanelController(this, _appearance);
 
         Add(_layer);
@@ -64,7 +64,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             if (_layer.IsEditingText)
             {
                 _formatBar.Refresh();
-                ShowFormatBar();
+                ShowFormatBar(_layer.GetSelectedBodyRect());
                 return;
             }
 
@@ -85,7 +85,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         {
             if (_formatBarPanel.IsOpen)
             {
-                ShowFormatBar();
+                ShowFormatBar(_layer.GetSelectedBodyRect());
             }
         };
 
@@ -124,6 +124,20 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     public EsPointInt PanelPosition
         => _positions.Count > 0 ? _positions.Values.First() : default;
 
+    /// <summary>表示中のパネルの大きさ（物理ピクセル）を取得する。</summary>
+    /// <value>表示していない場合は原点。</value>
+    public EsSizeInt PanelSize
+        => _windows.Values.FirstOrDefault() is { } window
+            ? new EsSizeInt(
+                (int)Math.Ceiling(window.Width * Scale(window)),
+                (int)Math.Ceiling(window.Height * Scale(window)))
+            : default;
+
+    /// <summary>パネルを置く画面の作業領域（物理ピクセル）を取得する。</summary>
+    /// <value>取得できない場合は仮想スクリーン全体。</value>
+    public EsRect WorkArea
+        => MewUiScreen.TryGetWorkArea(out var area) ? area : default;
+
     /// <summary>パネルのウィンドウを作って表示する。</summary>
     /// <param name="kind">パネルの種別（中身を決める）。</param>
     /// <param name="appearance">外観（枠・余白・幅）。</param>
@@ -147,7 +161,9 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             BorderBrush = ToColor(appearance.Border),
             BorderThickness = appearance.BorderThickness,
             CornerRadius = appearance.CornerRadius,
-            Padding = new Thickness(appearance.Padding),
+            Padding = new Thickness(
+                appearance.Padding, appearance.VerticalPadding,
+                appearance.Padding, appearance.VerticalPadding),
         };
 
         var window = new Window
@@ -158,7 +174,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             CornerRadius = 0,
             Background = ToColor(appearance.Background),
             ShowInTaskbar = false,
-            Topmost = false,
+            Topmost = true,
             StartupLocation = WindowStartupLocation.Manual,
             Content = root,
             WindowSize = WindowSize.FitContentSize(
@@ -237,12 +253,23 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>外観の編集パネルを閉じる。</summary>
     public void CloseStylePanel() => _stylePanel.Close();
 
-    /// <summary>書式バーを本文の上へ出す（ウィンドウの内側へは収めない）。</summary>
-    private void ShowFormatBar()
+    /// <summary>書式バーを本文の外（本文に被さらない位置）へ出す。</summary>
+    /// <param name="bodyDip">本文の矩形（このコントロールの座標）。</param>
+    /// <remarks>
+    /// <b>本文に被せない</b>: 編集中の文字が隠れて読めない（実測 2026-11-20）。 位置の判断は
+    /// コア（<see cref="AnnotationPanelPlacement.ResolveOutside"/>）が単一所有する。
+    /// </remarks>
+    private void ShowFormatBar(EsRect bodyDip)
     {
-        var body = _layer.GetSelectedBodyRect();
-        _formatBarPanel.Show(
-            AnnotationPanelKind.FormatBar, ToScreenPixels(new Point(body.X, body.Y - BarGap)));
+        var target = ToScreenRect(bodyDip);
+        var scale = RenderScale();
+        _formatBarPanel.ShowOutside(
+            AnnotationPanelKind.FormatBar,
+            target,
+            new EsSizeInt(
+                (int)Math.Ceiling(Math.Max(1, _formatBar.DesiredSize.Width) * scale),
+                (int)Math.Ceiling(Math.Max(1, _formatBar.DesiredSize.Height) * scale)),
+            (int)Math.Round(BarGap * scale));
     }
 
     /// <summary>このコントロールの座標（DIP）を画面座標（物理ピクセル）へ変換する。</summary>
@@ -250,18 +277,34 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <returns>画面座標（物理ピクセル）。 取得できない場合は原点。</returns>
     private EsPointInt ToScreenPixels(Point point)
     {
+        var rect = ToScreenRect(new EsRect(point.X, point.Y, 0, 0));
+        return new EsPointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y));
+    }
+
+    /// <summary>このコントロールの矩形（DIP）を画面座標（物理ピクセル）へ変換する。</summary>
+    /// <param name="rect">このコントロールの矩形。</param>
+    /// <returns>画面座標の矩形（物理ピクセル）。</returns>
+    private EsRect ToScreenRect(EsRect rect)
+    {
         if (FindVisualRoot() is not Window owner)
         {
             return default;
         }
 
         var client = owner.PointToScreen(new Point(0, 0));
-        var scale = Scale(owner);
-        var local = _layer.TranslatePoint(point, this);
-        return new EsPointInt(
-            (int)Math.Round(client.X + (local.X * scale)),
-            (int)Math.Round(client.Y + (local.Y * scale)));
+        var scale = RenderScale();
+        var local = _layer.TranslatePoint(new Point(rect.X, rect.Y), this);
+        return new EsRect(
+            client.X + (local.X * scale),
+            client.Y + (local.Y * scale),
+            rect.Width * scale,
+            rect.Height * scale);
     }
+
+    /// <summary>物理ピクセル / DIP の倍率を取得する。</summary>
+    /// <returns>1 以上の倍率。</returns>
+    private double RenderScale()
+        => FindVisualRoot() is Window owner ? Scale(owner) : 1.0;
 
     /// <summary>ウィンドウの倍率（物理ピクセル / DIP）を取得する。</summary>
     /// <param name="window">対象のウィンドウ。</param>
@@ -322,6 +365,11 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
 
     /// <summary>種別のパネルを閉じる（表示していなければ何もしない）。</summary>
     /// <param name="kind">パネルの種別。</param>
+    /// <remarks>
+    /// <b>中身を先に外す</b>: ウィンドウを閉じても中身（書式バー）は根の子のまま残る。 外さずに
+    /// 次を作ると、既に親を持つ要素として追加されず、<b>2 回目以降にバーが表示されない</b>
+    /// （実測 2026-11-20）。
+    /// </remarks>
     private void DestroyPanel(AnnotationPanelKind kind)
     {
         Controller(kind).Close();
@@ -332,6 +380,11 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         }
 
         _positions.Remove(kind);
+        if (window.Content is Border root)
+        {
+            root.Child = null;
+        }
+
         window.Content = null;
         window.Close();
     }

@@ -3,7 +3,6 @@ using EsUtil.Platform.Core.Palette;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Media;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
@@ -63,7 +62,11 @@ internal sealed class AnnotationFormatBar : ContentControl
             ItemsSource = AnnotationFonts.All,
             SelectedIndex = 0,
             Width = 130,
+
+            // **高さを明示する**: 既定の高さでは文字の上が欠ける（実測 2026-11-20）
+            MinHeight = 26,
             FontSize = AnnotationEditorControls.FontSize,
+            VerticalContentAlignment = VerticalAlignment.Center,
         };
 
         _font.SelectionChanged += (_, _) =>
@@ -83,6 +86,7 @@ internal sealed class AnnotationFormatBar : ContentControl
             SmallChange = 1,
             Value = AnnotationDefaults.FontSizeDefault,
             Width = 90,
+            MinHeight = 26,
             FontSize = AnnotationEditorControls.FontSize,
             SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
         };
@@ -110,14 +114,23 @@ internal sealed class AnnotationFormatBar : ContentControl
             ApplyFull(style => style with { Color = color });
         };
 
-        panel.Children.Add(_bold);
-        panel.Children.Add(_italic);
-        panel.Children.Add(_underline);
-        panel.Children.Add(_strike);
-        panel.Children.Add(new Border { Width = 1, Background = new SolidColorBrush(Windows.UI.Color.FromArgb(60, 0, 0, 0)) });
-        panel.Children.Add(_font);
-        panel.Children.Add(_size);
-        panel.Children.Add(_color);
+        // 並び順はコア（AnnotationFormatBarLayout.Order）が単一所有する。
+        // ここで順を決めると 4 つの UI 版で操作の位置がずれる（実測 2026-11-20）。
+        var items = new Dictionary<AnnotationFormatBarItem, UIElement>
+        {
+            [AnnotationFormatBarItem.Bold] = _bold,
+            [AnnotationFormatBarItem.Italic] = _italic,
+            [AnnotationFormatBarItem.Underline] = _underline,
+            [AnnotationFormatBarItem.Strike] = _strike,
+            [AnnotationFormatBarItem.Font] = _font,
+            [AnnotationFormatBarItem.Size] = _size,
+            [AnnotationFormatBarItem.Color] = _color,
+        };
+
+        foreach (var item in AnnotationFormatBarLayout.Order)
+        {
+            panel.Children.Add(items[item]);
+        }
 
         // 枠・余白・下地はコアの外観（AnnotationPanelAppearance）が単一所有する。
         // ここで持つと、パネルの枠と二重になって「余計な辺枠」に見える。

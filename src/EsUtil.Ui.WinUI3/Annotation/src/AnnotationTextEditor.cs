@@ -33,7 +33,7 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     private readonly AnnotationFormatBar _formatBar;
 
     /// <summary>パネルの外観（コアが単一所有する値）。</summary>
-    private readonly AnnotationPanelAppearance _appearance = AnnotationPanelAppearance.Default;
+    private readonly AnnotationPanelAppearance _appearance = AnnotationPanelAppearance.StyleEditor;
 
     /// <summary>書式バーのウィンドウを出すコントローラー。</summary>
     private readonly AnnotationPanelController _formatBarPanel;
@@ -56,7 +56,7 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         _layer = new AnnotationLayerControl();
         _formatBar = new AnnotationFormatBar(_layer);
 
-        _formatBarPanel = new AnnotationPanelController(this, _appearance);
+        _formatBarPanel = new AnnotationPanelController(this, AnnotationPanelAppearance.FormatBar);
         _stylePanel = new AnnotationPanelController(this, _appearance);
 
         Children.Add(_layer);
@@ -133,7 +133,7 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
             BorderBrush = ToBrush(appearance.Border),
             BorderThickness = new Thickness(appearance.BorderThickness),
             CornerRadius = new CornerRadius(appearance.CornerRadius),
-            Padding = new Thickness(appearance.Padding),
+            Padding = new Thickness(appearance.Padding, appearance.VerticalPadding, appearance.Padding, appearance.VerticalPadding),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
         };
@@ -154,8 +154,8 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         }
 
         // **Alt+Tab の一覧から外さない**: `IsShownInSwitchers = false` にするとウィンドウが
-        // アクティブにならず、パネルが表示されない（実測 2026-11-21）。 タスク バーへ出さない
-        // 手段が他に無いため、一覧へは出す（見た目と操作の正しさを優先する）。
+        // アクティブにならず、パネルが表示されない（実測 2026-11-21）。 タスク バーからは
+        // `AnnotationPanelWindow.RemoveSystemFrame` が拡張スタイルで外す。
 
         window.AppWindow.Move(new PointInt32(screenPosition.X, screenPosition.Y));
 
@@ -195,9 +195,11 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
 
             window.Activate();
 
-            // DWM の枠は表示後に消す（作成時はまだネイティブ ウィンドウが揃っていない）
-            AnnotationPanelWindow.RemoveSystemFrame(
-                WinRT.Interop.WindowNative.GetWindowHandle(window));
+            // DWM の枠を消し、タスク バーから外し、アプリより前へ出す
+            // （表示の後でないとハンドルが揃わない）
+            var handle = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            AnnotationPanelWindow.RemoveSystemFrame(handle);
+            AnnotationPanelWindow.BringToFront(handle);
         });
 
         // **書式バーは本文へフォーカスを戻す**: アクティブがパネルへ移ると本文の入力（文字・IME）が
@@ -247,12 +249,80 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <summary>外観の編集パネルを閉じる。</summary>
     public void CloseStylePanel() => _stylePanel.Close();
 
-    /// <summary>書式バーを本文の上へ出す（ウィンドウの内側へは収めない）。</summary>
+    /// <summary>書式バーを本文の外（本文に被さらない位置）へ出す。</summary>
+    /// <remarks>
+    /// <b>本文に被せない</b>: 編集中の文字が隠れて読めない（実測 2026-11-20）。 位置の判断は
+    /// コア（<see cref="AnnotationPanelPlacement.ResolveOutside"/>）が単一所有する。
+    /// </remarks>
     private void ShowFormatBar()
     {
         var body = _layer.GetSelectedBodyRect();
-        _formatBarPanel.Show(
-            AnnotationPanelKind.FormatBar, ToScreenPixels(new Windows.Foundation.Point(body.X, body.Y - BarGap)));
+        var scale = RenderScale();
+        _formatBarPanel.ShowOutside(
+            AnnotationPanelKind.FormatBar,
+            ToScreenRect(body),
+            new EsSizeInt(
+                (int)Math.Ceiling(Math.Max(1, _formatBar.DesiredSize.Width) * scale),
+                (int)Math.Ceiling(Math.Max(1, _formatBar.DesiredSize.Height) * scale)),
+            (int)Math.Round(BarGap * scale));
+    }
+
+    /// <summary>表示中のパネルの大きさ（物理ピクセル）を取得する。</summary>
+    /// <value>表示していない場合は原点。</value>
+    public EsSizeInt PanelSize
+        => _windows.Values.FirstOrDefault() is { } window
+            ? new EsSizeInt(window.AppWindow.Size.Width, window.AppWindow.Size.Height)
+            : default;
+
+    /// <summary>パネルを置く画面の作業領域（物理ピクセル）を取得する。</summary>
+    /// <value>取得できない場合は仮想スクリーン全体。</value>
+    public EsRect WorkArea
+    {
+        get
+        {
+            if (AppWindowOf() is not { } appWindow)
+            {
+                return default;
+            }
+
+            var work = Microsoft.UI.Windowing.DisplayArea
+                .GetFromWindowId(appWindow.Id, Microsoft.UI.Windowing.DisplayAreaFallback.Primary)
+                .WorkArea;
+            return new EsRect(work.X, work.Y, work.Width, work.Height);
+        }
+    }
+
+    /// <summary>このコントロールの矩形（DIP）を画面座標（物理ピクセル）へ変換する。</summary>
+    /// <param name="rect">このコントロールの矩形。</param>
+    /// <returns>画面座標の矩形（物理ピクセル）。 取得できない場合は原点。</returns>
+    /// <remarks>
+    /// <b>例外を外へ出さない</b>: 要素がまだツリーへ繋がっていない間は変換が例外になる
+    /// （<c>ArgumentException</c>。 実測 2026-11-20）。 その場合は原点を返し、パネル自体は出す。
+    /// </remarks>
+    private EsRect ToScreenRect(EsRect rect)
+    {
+        if (AppWindowOf() is not { } appWindow)
+        {
+            return default;
+        }
+
+        Windows.Foundation.Point origin;
+        try
+        {
+            origin = TransformToVisual(null).TransformPoint(new Windows.Foundation.Point(0, 0));
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            // ツリーへ繋がっていない間は位置を求められない。 位置はアプリのウィンドウの左上にする
+            return default;
+        }
+
+        var scale = RenderScale();
+        return new EsRect(
+            appWindow.Position.X + ((origin.X + rect.X) * scale),
+            appWindow.Position.Y + ((origin.Y + rect.Y) * scale),
+            rect.Width * scale,
+            rect.Height * scale);
     }
 
     /// <summary>パネルの寸法を中身に合わせる。</summary>
@@ -295,16 +365,8 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <returns>画面座標（物理ピクセル）。 取得できない場合は原点。</returns>
     private EsPointInt ToScreenPixels(Windows.Foundation.Point point)
     {
-        if (AppWindowOf() is not { } appWindow)
-        {
-            return default;
-        }
-
-        var scale = RenderScale();
-        var origin = TransformToVisual(null).TransformPoint(new Windows.Foundation.Point(0, 0));
-        return new EsPointInt(
-            (int)Math.Round(appWindow.Position.X + ((origin.X + point.X) * scale)),
-            (int)Math.Round(appWindow.Position.Y + ((origin.Y + point.Y) * scale)));
+        var rect = ToScreenRect(new EsRect(point.X, point.Y, 0, 0));
+        return new EsPointInt((int)Math.Round(rect.X), (int)Math.Round(rect.Y));
     }
 
     /// <summary>このコントロールが載っているウィンドウの <c>AppWindow</c> を取得する。</summary>

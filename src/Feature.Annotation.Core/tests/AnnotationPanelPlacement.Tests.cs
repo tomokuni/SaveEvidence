@@ -39,4 +39,58 @@ public sealed class AnnotationPanelPlacementTests
 
         Assert.Equal(origin, position);
     }
+
+    /// <summary>本文の上へ余白を空けて置く（本文に被せない）。</summary>
+    [Fact]
+    internal void ResolveOutside_本文の上へ置く()
+    {
+        var position = AnnotationPanelPlacement.ResolveOutside(
+            target: new EsRect(200, 400, 300, 200),
+            panel: new EsSizeInt(400, 40),
+            workArea: new EsRect(0, 0, 1920, 1040),
+            gap: 8);
+
+        Assert.Equal(200, position.X);
+        Assert.Equal(400 - 8 - 40, position.Y);
+    }
+
+    /// <summary>上に入りきらないときは本文の下へ置く。</summary>
+    [Fact]
+    internal void ResolveOutside_上に入らなければ下へ置く()
+    {
+        var position = AnnotationPanelPlacement.ResolveOutside(
+            target: new EsRect(200, 10, 300, 200),
+            panel: new EsSizeInt(400, 40),
+            workArea: new EsRect(0, 0, 1920, 1040),
+            gap: 8);
+
+        Assert.Equal(10 + 200 + 8, position.Y);
+    }
+
+    /// <summary>上下とも入りきらないときは本文の右へ置く。</summary>
+    [Fact]
+    internal void ResolveOutside_上下に入らなければ右へ置く()
+    {
+        var position = AnnotationPanelPlacement.ResolveOutside(
+            target: new EsRect(200, 10, 300, 1000),
+            panel: new EsSizeInt(400, 40),
+            workArea: new EsRect(0, 0, 1920, 1040),
+            gap: 8);
+
+        Assert.Equal(200 + 300 + 8, position.X);
+    }
+
+    /// <summary>画面の作業領域からはみ出さない（掴めなくならない）。</summary>
+    [Fact]
+    internal void ResolveOutside_作業領域からはみ出さない()
+    {
+        var position = AnnotationPanelPlacement.ResolveOutside(
+            target: new EsRect(1800, 400, 100, 100),
+            panel: new EsSizeInt(400, 40),
+            workArea: new EsRect(0, 0, 1920, 1040),
+            gap: 8);
+
+        Assert.InRange(position.X, 0, 1920 - 400);
+        Assert.InRange(position.Y, 0, 1040 - 40);
+    }
 }

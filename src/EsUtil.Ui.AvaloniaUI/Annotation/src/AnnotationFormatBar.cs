@@ -141,13 +141,24 @@ internal sealed class AnnotationFormatBar : Border
         _strike.Click += (_, _) => ToggleDecoration(style => style.IsStrike, (style, value) => style with { IsStrike = value });
 
         var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = ControlSpacing };
-        controls.Children.Add(_font);
-        controls.Children.Add(_size);
-        controls.Children.Add(_color);
-        controls.Children.Add(_bold);
-        controls.Children.Add(_italic);
-        controls.Children.Add(_underline);
-        controls.Children.Add(_strike);
+
+        // 並び順はコア（AnnotationFormatBarLayout.Order）が単一所有する。
+        // ここで順を決めると 4 つの UI 版で操作の位置がずれる（実測 2026-11-20）。
+        var items = new Dictionary<AnnotationFormatBarItem, Control>
+        {
+            [AnnotationFormatBarItem.Bold] = _bold,
+            [AnnotationFormatBarItem.Italic] = _italic,
+            [AnnotationFormatBarItem.Underline] = _underline,
+            [AnnotationFormatBarItem.Strike] = _strike,
+            [AnnotationFormatBarItem.Font] = _font,
+            [AnnotationFormatBarItem.Size] = _size,
+            [AnnotationFormatBarItem.Color] = _color,
+        };
+
+        foreach (var item in AnnotationFormatBarLayout.Order)
+        {
+            controls.Children.Add(items[item]);
+        }
 
         // 枠・余白・下地はコアの外観（AnnotationPanelAppearance）が単一所有する。
         // ここで持つと、パネルの枠と二重になって「余計な辺枠」に見える。

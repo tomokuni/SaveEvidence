@@ -16,6 +16,14 @@ public interface IAnnotationPanelHost
     /// <value>表示していない場合の値は不定（呼び出し側は表示中だけ読む）。</value>
     EsPointInt PanelPosition { get; }
 
+    /// <summary>表示中のパネルの大きさ（物理ピクセル）を取得する。</summary>
+    /// <value>表示していない場合の値は不定（呼び出し側は表示中だけ読む）。</value>
+    EsSizeInt PanelSize { get; }
+
+    /// <summary>画面の作業領域（物理ピクセル）を取得する。</summary>
+    /// <value>パネルを置く画面の、タスク バーを除いた領域。</value>
+    EsRect WorkArea { get; }
+
     /// <summary>パネルを作って表示する（既に出ている場合は作り直す）。</summary>
     /// <param name="kind">パネルの種別（中身を決める）。</param>
     /// <param name="appearance">外観（枠・余白・幅。 そのまま適用する）。</param>

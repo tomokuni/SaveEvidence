@@ -55,13 +55,16 @@ public sealed partial class AnnotationLayerControl
         }
 
         var plan = _presenter.ResolveDrawPlan(_document, MeasureText, SelectedId);
+
+        // **編集中も本文を描く**: WinUI 3 は本文を別の入力欄で表示しないため、編集中に本文を
+        // 描かないと文字が消える（実測 2026-11-20）。 キャレットと選択範囲は後から重ねる。
         AnnotationPainter.Draw(
             _shapes,
             plan,
             scale,
             offset.X,
             offset.Y,
-            IsEditingText ? SelectedId : null,
+            null,
             MeasureText);
 
         DrawEditing();
