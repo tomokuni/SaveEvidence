@@ -42,7 +42,6 @@ public sealed partial class AnnotationLayerControl : Grid
 
     /// <summary>表示中の画像（差し替え時に作り直す）。</summary>
     private WriteableBitmap? _imageBitmap;
-
     /// <summary>画像を作り直した元（同じ画像なら作り直さない）。</summary>
     private EsReadOnlyBitmap? _imageSource;
 
@@ -73,6 +72,9 @@ public sealed partial class AnnotationLayerControl : Grid
 
     /// <summary>しっぽの先端をドラッグ中かどうか。</summary>
     private bool _isDraggingTail;
+
+    /// <summary>本文の選択範囲をマウスのドラッグで広げている最中かどうか。</summary>
+    private bool _isSelectingText;
 
     /// <summary>Marquee からの通知で文書を更新している最中かどうか（再入防止）。</summary>
     private bool _isApplyingMarquee;
@@ -705,22 +707,11 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <returns>倍率と左上の位置（DIP）。</returns>
     internal (double Scale, EsPoint Offset) ResolveImageTransform()
     {
-        var width = Math.Max(1, SourcePixelWidth);
-        var height = Math.Max(1, SourcePixelHeight);
-        var clientWidth = ActualWidth;
-        var clientHeight = ActualHeight;
-        if (clientWidth <= 0 || clientHeight <= 0)
-        {
-            return (1, default);
-        }
-
-        if (PreviewImageRect is { Width: > 0 } preview)
-        {
-            return (preview.Width / width, new EsPoint(preview.X, preview.Y));
-        }
-
-        var scale = Math.Min(clientWidth / width, clientHeight / height);
-        return (scale, new EsPoint((clientWidth - (width * scale)) / 2, (clientHeight - (height * scale)) / 2));
+        // 表示矩形の検証（縦横比・レイヤー内か）はコアが単一所有する（4 つの UI 版で同じ結果にする）
+        return AnnotationImageLayout.Resolve(
+            new EsSize(ActualWidth, ActualHeight),
+            new EsSize(SourcePixelWidth, SourcePixelHeight),
+            PreviewImageRect is { Width: > 0, Height: > 0 } preview ? preview : null);
     }
 
     /// <summary>ローカル DIP を元画像ピクセルへ変換する。</summary>

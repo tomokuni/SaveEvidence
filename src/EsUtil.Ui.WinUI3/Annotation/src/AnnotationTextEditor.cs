@@ -23,9 +23,6 @@ namespace EsUtil.Ui.WinUI3.Annotation;
 /// </remarks>
 public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
 {
-    /// <summary>書式バーと本文の間の余白（DIP）。</summary>
-    private const double BarGap = 6;
-
     /// <summary>注釈の表示と編集を担うレイヤー。</summary>
     private readonly AnnotationLayerControl _layer;
 
@@ -114,18 +111,20 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     }
 
     /// <summary>パネルを置ける領域（DIP）を取得する。</summary>
-    /// <value>キャプチャ ページのうちプレビューが占める範囲（重ねた先の座標）。</value>
+    /// <value>注釈レイヤー（画像の表示領域）が占める範囲（重ねた先の座標）。</value>
     /// <remarks>
-    /// <b>アプリの画面の全体にはしない</b>: プレビューの外へ出すとキャプチャ ページから
-    /// はみ出して見える（実測 2026-11-21）。 ページの内側に収めれば画像の内側で切れることもない。
+    /// <b>画像の表示領域に収める</b>: ページ全体を領域にすると、ツール バーや余白の外へ出て
+    /// 画像の外に表示される（実測 2026-11-21）。 画像の表示領域に収めれば、画像の内側で切れない。
     /// </remarks>
     public EsRect AvailableArea
     {
         get
         {
+            var width = _layer.ActualWidth > 0 ? _layer.ActualWidth : ActualWidth;
+            var height = _layer.ActualHeight > 0 ? _layer.ActualHeight : ActualHeight;
             var origin = ToOverlayPoint(default);
-            return ActualWidth > 0 && ActualHeight > 0
-                ? new EsRect(origin.X, origin.Y, ActualWidth, ActualHeight)
+            return width > 0 && height > 0
+                ? new EsRect(origin.X, origin.Y, width, height)
                 : default;
         }
     }
@@ -253,8 +252,8 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     {
         var body = ToOverlayRect(_layer.GetSelectedBoundsRect());
         _formatBarPanel.ShowOutside(
-            AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), BarGap);
-        _formatBarPanel.RepositionOutside(body, BarGap);
+            AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), AnnotationPanelMetrics.FormatBarGap);
+        _formatBarPanel.RepositionOutside(body, AnnotationPanelMetrics.FormatBarGap);
     }
 
     /// <summary>書式バーの大きさ（DIP）を測る。</summary>
@@ -284,6 +283,10 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <summary>パネルの大きさ（DIP）を測る。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <returns>実寸。 まだ置いていない場合は希望寸法。</returns>
+    /// <remarks>
+    /// <b>根ではなく中身を測る</b>: 根はレイアウトのたびに引き伸ばされることがあり、実寸が画面の
+    /// 大きさになる（実測 2026-11-22: WinUI 3 版で高さ 16040 DIP と測定された）。
+    /// </remarks>
     private EsSize MeasurePanel(AnnotationPanelKind kind)
     {
         if (!_roots.TryGetValue(kind, out var root))
@@ -291,16 +294,28 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
             return default;
         }
 
-        if (root.ActualWidth > 0 && root.ActualHeight > 0)
+        if (root.Child is FrameworkElement content)
         {
-            return new EsSize(root.ActualWidth, root.ActualHeight);
+            content.Measure(new Windows.Foundation.Size(
+                double.PositiveInfinity, double.PositiveInfinity));
+            var desired = content.DesiredSize;
+            var appearance = KindAppearance(kind);
+            desired.Height = Math.Max(desired.Height, appearance.MinContentHeight);
+            return new EsSize(
+                desired.Width + (appearance.Padding * 2) + (appearance.BorderThickness * 2),
+                desired.Height + (appearance.VerticalPadding * 2) + (appearance.BorderThickness * 2));
         }
 
-        root.Measure(new Windows.Foundation.Size(
-            double.PositiveInfinity, double.PositiveInfinity));
-        var desired = root.DesiredSize;
-        return new EsSize(desired.Width, desired.Height);
+        return new EsSize(root.ActualWidth, root.ActualHeight);
     }
+
+    /// <summary>種別の外観を取得する（パネルはどちらか 1 つしか持たない）。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <returns>外観。</returns>
+    private static AnnotationPanelAppearance KindAppearance(AnnotationPanelKind kind)
+        => kind == AnnotationPanelKind.FormatBar
+            ? AnnotationPanelAppearance.FormatBar
+            : AnnotationPanelAppearance.StyleEditor;
 
     /// <summary>種別のパネルを画面から外す（根と中身は残す）。</summary>
     /// <param name="kind">パネルの種別。</param>

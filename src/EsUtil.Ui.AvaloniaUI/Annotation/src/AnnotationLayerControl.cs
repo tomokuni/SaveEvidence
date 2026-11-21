@@ -1209,22 +1209,15 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     /// </remarks>
     private (double Scale, Point Offset) ResolveImageTransform()
     {
-        var width = Math.Max(1, SourcePixelWidth);
-        var height = Math.Max(1, SourcePixelHeight);
+        // 表示矩形の検証（縦横比・レイヤー内か）はコアが単一所有する（4 つの UI 版で同じ結果にする）
+        var (scale, offset) = AnnotationImageLayout.Resolve(
+            new EsSize(Bounds.Width, Bounds.Height),
+            new EsSize(SourcePixelWidth, SourcePixelHeight),
+            PreviewImageRect is { Width: > 0, Height: > 0 } preview
+                ? new EsRect(preview.X, preview.Y, preview.Width, preview.Height)
+                : null);
 
-        if (PreviewImageRect is { Width: > 0, Height: > 0 } preview)
-        {
-            return (preview.Width / width, new Point(preview.X, preview.Y));
-        }
-
-        var client = Bounds.Size;
-        if (client.Width <= 0 || client.Height <= 0)
-        {
-            return (1, default);
-        }
-
-        var scale = Math.Min(client.Width / width, client.Height / height);
-        return (scale, new Point((client.Width - (width * scale)) / 2, (client.Height - (height * scale)) / 2));
+        return (scale, new Point(offset.X, offset.Y));
     }
 
     /// <summary>ローカル DIP を元画像ピクセルへ変換する。</summary>

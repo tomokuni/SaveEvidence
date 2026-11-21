@@ -660,7 +660,12 @@ public sealed partial class AnnotationLayerControl
             => owner._cursor.TrySetCursorScreenPoint(screenPoint);
 
         /// <inheritdoc/>
-        public override void ShowCursor(bool show) => owner._cursor.ShowCursor(show);
+        /// <remarks>
+        /// <b>ポインタは隠さない</b>: 隠すと入力位置を見失い、他のウィンドウへフォーカスするまで戻らない
+        /// （Win32 の <c>ShowCursor</c> はカウンタ式のため、対応が崩れると復元できない）。 nudge 中も
+        /// 表示したままにする（実測 2026-11-21）。
+        /// </remarks>
+        public override void ShowCursor(bool show) => _ = show;
 
         /// <inheritdoc/>
         public override EsPointInt ToScreenPoint(EsPoint sourcePoint)

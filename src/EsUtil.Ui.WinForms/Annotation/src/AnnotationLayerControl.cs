@@ -597,22 +597,11 @@ public sealed partial class AnnotationLayerControl : Control
     /// <returns>倍率と左上の位置（DIP）。</returns>
     internal (double Scale, EsPoint Offset) ResolveImageTransform()
     {
-        var width = Math.Max(1, SourcePixelWidth);
-        var height = Math.Max(1, SourcePixelHeight);
-        if (ClientSize.Width <= 0 || ClientSize.Height <= 0)
-        {
-            return (1, default);
-        }
-
-        if (PreviewImageRect is { Width: > 0 } preview)
-        {
-            return (preview.Width / width, new EsPoint(preview.X, preview.Y));
-        }
-
-        var scale = Math.Min((double)ClientSize.Width / width, (double)ClientSize.Height / height);
-        return (scale, new EsPoint(
-            (ClientSize.Width - (width * scale)) / 2,
-            (ClientSize.Height - (height * scale)) / 2));
+        // 表示矩形の検証（縦横比・レイヤー内か）はコアが単一所有する（4 つの UI 版で同じ結果にする）
+        return AnnotationImageLayout.Resolve(
+            new EsSize(ClientSize.Width, ClientSize.Height),
+            new EsSize(SourcePixelWidth, SourcePixelHeight),
+            PreviewImageRect is { Width: > 0, Height: > 0 } preview ? preview : null);
     }
 
     /// <summary>ローカル DIP を元画像ピクセルへ変換する。</summary>

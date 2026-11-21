@@ -118,7 +118,7 @@ public sealed class AnnotationDocument
     /// <returns>変更した場合は <see langword="true"/>（見つからない・吹き出しでない・同じ値の場合は <see langword="false"/>）。</returns>
     /// <remarks>
     /// <b>しっぽの先端を変更できる唯一の入口</b>である（<see cref="BubbleAnnotation.Tail"/> の設定子は Core の内部）。
-    /// 収める規則は <see cref="AnnotationGeometry.ClampPoint"/> が単一所有する。
+    /// 収める規則は <see cref="AnnotationGeometry.ClampTailTip"/> が単一所有する。
     /// </remarks>
     public bool SetTailTip(string id, EsPoint tip)
     {
@@ -144,7 +144,7 @@ public sealed class AnnotationDocument
             return false;
         }
 
-        var clamped = tail with { Tip = AnnotationGeometry.ClampPoint(tail.Tip, ImageSize) };
+        var clamped = tail with { Tip = AnnotationGeometry.ClampTailTip(tail.Tip, ImageSize) };
         if (bubble.Tail == clamped)
         {
             return false;

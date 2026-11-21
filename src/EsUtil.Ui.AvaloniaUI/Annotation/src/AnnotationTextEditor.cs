@@ -26,9 +26,6 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 /// </remarks>
 public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
 {
-    /// <summary>書式バーと本文の間の余白（DIP）。</summary>
-    private const double BarGap = 6;
-
     /// <summary>書式バー（編集中だけ表示する）。</summary>
     private readonly AnnotationFormatBar _formatBar;
 
@@ -148,11 +145,10 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     }
 
     /// <summary>パネルを置ける領域（DIP）を取得する。</summary>
-    /// <value>キャプチャ ページのうちプレビューが占める範囲（重ねた先の座標）。</value>
+    /// <value>注釈レイヤー（画像の表示領域）が占める範囲（重ねた先の座標）。</value>
     /// <remarks>
-    /// <b>アプリの画面の全体にはしない</b>: プレビューの外（ツール バーやページの余白）へ出すと、
-    /// キャプチャ ページからはみ出して見える（実測 2026-11-21）。 ページの内側に収めれば、
-    /// 画像の内側で切れることもない。
+    /// <b>画像の表示領域に収める</b>: ページ全体を領域にすると、ツール バーや余白の外へ出て
+    /// 画像の外に表示される（実測 2026-11-21）。 画像の表示領域に収めれば、画像の内側で切れない。
     /// </remarks>
     public EsRect AvailableArea
     {
@@ -286,10 +282,10 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         EnsureOutsidePressHook();
         var body = ToOverlayRect(ToEsRect(_layer.GetSelectedBoundsRect()));
         _formatBarPanel.ShowOutside(
-            AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), BarGap);
+            AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), AnnotationPanelMetrics.FormatBarGap);
 
         // レイアウト後の実寸で置き直す（レイアウト前の測定は高さを正しく返さないことがある）
-        _formatBarPanel.RepositionOutside(body, BarGap);
+        _formatBarPanel.RepositionOutside(body, AnnotationPanelMetrics.FormatBarGap);
     }
 
     /// <summary>書式バーの大きさ（DIP）を測る。</summary>

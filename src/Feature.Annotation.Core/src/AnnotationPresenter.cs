@@ -82,7 +82,7 @@ public sealed class AnnotationPresenter
     private static BubbleAnnotation ClampBubble(BubbleAnnotation bubble, EsSize imageSize)
     {
         var bounds = AnnotationGeometry.ClampRect(bubble.Bounds, imageSize);
-        var tip = AnnotationGeometry.ClampPoint(bubble.Tail.Tip, imageSize);
+        var tip = AnnotationGeometry.ClampTailTip(bubble.Tail.Tip, imageSize);
         if (bounds.NearlyEquals(bubble.Bounds) && tip.NearlyEquals(bubble.Tail.Tip))
         {
             return bubble;

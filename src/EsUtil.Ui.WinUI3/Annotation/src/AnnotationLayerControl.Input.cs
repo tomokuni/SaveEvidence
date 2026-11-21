@@ -228,12 +228,16 @@ public sealed partial class AnnotationLayerControl
 
         if (IsEditingText)
         {
-            // 編集中は本文の内側を押したらキャレットを移す（外側を押したら編集を終える）
+            // 編集中は本文の内側を押したらキャレットを移す（外側を押したら編集を終える）。
+            // 押したまま動かすと選択範囲を広げる（_isSelectingText）。 矢印キーだけでなく
+            // マウスのドラッグでも選択できるようにする（実測 2026-11-21: マウスで選択できなかった）。
             if (Selected is BubbleAnnotation editingBubble && editingBubble.Bounds.Contains(source))
             {
                 CapturePointerHere(e);
                 _undoCandidate = null;
+                _isSelectingText = true;
                 SetCaretFromPoint(source, IsDown(VirtualKey.Shift));
+                Redraw();
                 e.Handled = true;
                 return;
             }
@@ -314,6 +318,14 @@ public sealed partial class AnnotationLayerControl
         var source = ToSource(new EsPoint(point.Position.X, point.Position.Y));
         _lastPointerSource = source;
 
+        // 本文を押したまま動かしている間は、選択範囲を広げる（マウスでの選択）
+        if (_isSelectingText)
+        {
+            SetCaretFromPoint(source, extend: true);
+            Redraw();
+            return;
+        }
+
         if (_isDraggingTail)
         {
             if (Selected is BubbleAnnotation bubble && _document.SetTailTip(bubble.Id, source))
@@ -353,7 +365,12 @@ public sealed partial class AnnotationLayerControl
         var point = e.GetCurrentPoint(this);
         var source = ToSource(new EsPoint(point.Position.X, point.Position.Y));
 
-        if (_isPreviewDragging)
+        if (_isSelectingText)
+        {
+            _isSelectingText = false;
+            Redraw();
+        }
+        else if (_isPreviewDragging)
         {
             _isPreviewDragging = false;
             RaisePreviewGesture(AnnotationPreviewGesture.DragEnd, point.Position, 1, 0);

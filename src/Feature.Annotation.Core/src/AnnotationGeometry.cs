@@ -61,6 +61,29 @@ public static class AnnotationGeometry
     public static bool Contains(EsPoint point, EsSize imageSize)
         => point.X >= 0 && point.Y >= 0 && point.X < imageSize.Width && point.Y < imageSize.Height;
 
+    /// <summary>しっぽの先端を画像の内側へ収める（掴める余白を残す）。</summary>
+    /// <param name="point">収める点（元画像ピクセル）。</param>
+    /// <param name="imageSize">画像の大きさ（元画像ピクセル）。</param>
+    /// <returns>画像の内側に収まった点。</returns>
+    /// <remarks>
+    /// <b>辺の上には置かない</b>: 先端が画像の端ちょうどにあると、ハンドルが画像の外へはみ出して
+    /// 切られ、掴めない（移動できない）。 ハンドルの半径ぶんの余白（<see cref="TailGrabMargin"/>）を
+    /// 残した内側へ収める（実測 2026-11-21）。
+    /// </remarks>
+    public static EsPoint ClampTailTip(EsPoint point, EsSize imageSize)
+    {
+        var margin = TailGrabMargin;
+        var maxX = Math.Max(margin, imageSize.Width - margin);
+        var maxY = Math.Max(margin, imageSize.Height - margin);
+        return new EsPoint(
+            Math.Clamp(point.X, Math.Min(margin, maxX), maxX),
+            Math.Clamp(point.Y, Math.Min(margin, maxY), maxY));
+    }
+
+    /// <summary>しっぽの先端を画像の端から離しておく距離（元画像ピクセル）。</summary>
+    /// <remarks>しっぽのハンドル（半径 5〜6 DIP）が画像の内側に収まる大きさ。</remarks>
+    internal const double TailGrabMargin = 10;
+
     /// <summary>枠線の注釈を作る（矩形を画像の内側へ収める）。</summary>
     /// <param name="bounds">矩形（元画像ピクセル）。</param>
     /// <param name="appearance">外観。</param>
@@ -103,7 +126,7 @@ public static class AnnotationGeometry
             Appearance = defaults.BubbleAppearance,
             BodyPadding = defaults.BodyPadding,
             Text = text,
-            Tail = resolved with { Tip = ClampPoint(resolved.Tip, imageSize) },
+            Tail = resolved with { Tip = ClampTailTip(resolved.Tip, imageSize) },
         };
     }
 

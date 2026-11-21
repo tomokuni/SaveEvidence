@@ -1574,18 +1574,12 @@ internal static class CapturePage
     /// </remarks>
     private static EsRect ResolveOverlayRect(EsRect rect, ZoomViewControl view, AnnotationLayerControl target)
     {
-        try
-        {
-            var origin = view.TranslatePoint(new Point(rect.X, rect.Y), target);
-            return double.IsNaN(origin.X) || double.IsNaN(origin.Y)
-                ? rect
-                : new EsRect(origin.X, origin.Y, rect.Width, rect.Height);
-        }
-        catch (InvalidOperationException)
-        {
-            // まだ同じ視覚ツリーに無い（生成の途中）。 矩形そのものは正しいのでそのまま使う
-            return rect;
-        }
+        // **MewUI の Bounds はウィンドウの絶対座標**である（親からの相対ではない）。 したがって
+        // 差を取るだけで写せる。 <c>TranslatePoint</c> は対象が同じ視覚ツリーに無い場合に変換せず
+        // 元の値を返すことがあり、注釈が画像からずれる（実測 2026-11-21: 右上方向へずれた）。
+        var offsetX = view.Bounds.X - target.Bounds.X;
+        var offsetY = view.Bounds.Y - target.Bounds.Y;
+        return new EsRect(rect.X + offsetX, rect.Y + offsetY, rect.Width, rect.Height);
     }
 
     /// <summary>プレビュー上のカーソル位置にある自動切り出しの矩形（面積が最小のもの）を求める。</summary>

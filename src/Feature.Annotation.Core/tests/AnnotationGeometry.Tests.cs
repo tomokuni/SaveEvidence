@@ -54,7 +54,7 @@ public sealed class AnnotationGeometryTests
             new EsSize(1000, 600));
 
         Assert.True(bubble.Bounds.Right <= 1000 && bubble.Bounds.Bottom <= 600);
-        Assert.True(bubble.Tail.Tip.X <= 1000 && bubble.Tail.Tip.Y <= 600);
+        Assert.True(bubble.Tail.Tip.X <= 1000 - 10 && bubble.Tail.Tip.Y <= 600 - 10);
     }
 
     /// <summary>文書経由の変更でも矩形としっぽの先端は画像の外へ出ない。</summary>
@@ -73,7 +73,10 @@ public sealed class AnnotationGeometryTests
 
         Assert.True(document.SetTailTip(bubble.Id, new EsPoint(999, 999)));
         var tip = Assert.IsType<BubbleAnnotation>(document.Find(bubble.Id)).Tail.Tip;
-        Assert.Equal(new EsPoint(400, 300), tip);
+
+        // 端ちょうどではなく、ハンドルを掴める余白を残した内側へ収める
+        Assert.True(tip.X <= 400 - 10 && tip.Y <= 300 - 10);
+        Assert.True(tip.X >= 10 && tip.Y >= 10);
     }
 
     /// <summary>同じ値なら変更しない（履歴に同じ手が積まれない）。</summary>

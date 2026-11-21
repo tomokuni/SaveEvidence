@@ -21,6 +21,7 @@ namespace EsUtil.Feature.Annotation;
 /// <param name="ContentWidth">中身の幅（DIP）。 0 は中身に合わせる（書式バー）。</param>
 /// <param name="MaxWidth">パネルの幅の上限（DIP）。</param>
 /// <param name="MaxContentHeight">中身の高さの上限（DIP）。 超える場合は中身をスクロールさせる。</param>
+/// <param name="MinContentHeight">中身の最小の高さ（DIP）。 希望寸法がこれより小さくてもこの高さを保つ。</param>
 public sealed record AnnotationPanelAppearance(
     DrawingColor Background,
     DrawingColor Border,
@@ -30,7 +31,8 @@ public sealed record AnnotationPanelAppearance(
     double VerticalPadding,
     double ContentWidth,
     double MaxWidth,
-    double MaxContentHeight)
+    double MaxContentHeight,
+    double MinContentHeight)
 {
     /// <summary>右クリックの外観フライアウトの外観を取得する。</summary>
     /// <value>下地 <c>#FFFFFF</c> / 枠 <c>#999999</c> / 枠 1 DIP / 角丸 4 DIP / 余白 10 DIP / 中身の幅 340 DIP / 幅の上限 640 DIP / 高さの上限 460 DIP。</value>
@@ -47,14 +49,15 @@ public sealed record AnnotationPanelAppearance(
         VerticalPadding: 10,
         ContentWidth: 340,
         MaxWidth: 640,
-        MaxContentHeight: 460);
+        MaxContentHeight: 460,
+        MinContentHeight: 0);
 
     /// <summary>書式バーの外観を取得する。</summary>
     /// <value>下地 <c>#FFFFFF</c> / 枠 <c>#999999</c> / 枠 1 DIP / 角丸 0 DIP / 余白 6,3 DIP / 幅は中身に合わせる / 幅の上限 2400 DIP / 高さの上限 200 DIP。</value>
     /// <remarks>
     /// <b>幅を固定しない</b>: 中身（フォント名・大きさ・色）で幅が決まる。 固定すると項目が枠から
     /// はみ出す（実測 2026-11-20）。<br/>
-    /// <b>角を丸めない</b>: 高さが低いため、丸めると項目の角が欠けて見える。
+    /// <b>角を丸めない</b>: 高さが低いため、丸めると項目の角が欠けて見える。<br/>`r`n    /// <b>中身の最小の高さを 44 DIP にする</b>: UI ごとに中身の希望寸法が実際より小さく出るため、`r`n    /// これより低いと中身が枠からはみ出し、書式バーが注釈に重なる（実測 2026-11-21）。
     /// </remarks>
     public static AnnotationPanelAppearance FormatBar { get; } = new(
         Background: DrawingColor.FromArgb(255, 255, 255, 255),
@@ -65,5 +68,6 @@ public sealed record AnnotationPanelAppearance(
         VerticalPadding: 3,
         ContentWidth: 0,
         MaxWidth: 2400,
-        MaxContentHeight: 200);
+        MaxContentHeight: 200,
+        MinContentHeight: 26);
 }

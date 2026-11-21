@@ -1061,6 +1061,32 @@ foreach ($f in $allCs) {
 Add-Result '禁止した識別子' ($identIssues.Count -eq 0) "略語・禁止語 $($identIssues.Count) 件"
 $identIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
 
+# 8o-2) ポインタを隠さない（コーディング規約: UI の指針 / 非同期・UI）
+#     マウス ポインタを隠すと入力位置を見失い、他のウィンドウへフォーカスするまで戻らない
+#     （Win32 の ShowCursor はカウンタ式のため、対応が崩れると復元できない）。
+#     隠す実装（ShowCursor(false) / Cursors.None / 標準カーソルの None）を禁止する。
+$cursorHideIssues = [System.Collections.Generic.List[string]]::new()
+$cursorHidePatterns = @(
+    [regex]'ShowCursor\s*\(\s*false\s*\)',
+    [regex]'Cursors\.None',
+    [regex]'StandardCursorType\.None',
+    [regex]'InputSystemCursorShape\.None'
+)
+foreach ($f in $allCs) {
+    $rel = $f.FullName.Substring($repoRoot.Length + 1).Replace('\', '/')
+    $lines = Get-Lines $f.FullName
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '^\s*(//|///|\*)') { continue }
+        foreach ($rx in $cursorHidePatterns) {
+            if ($rx.IsMatch($lines[$i])) {
+                $cursorHideIssues.Add(("{0}:{1}  {2}" -f $rel, ($i + 1), $lines[$i].Trim()))
+            }
+        }
+    }
+}
+Add-Result 'ポインタを隠さない' ($cursorHideIssues.Count -eq 0) "$($cursorHideIssues.Count) 件"
+$cursorHideIssues | Select-Object -First 10 | ForEach-Object { "      $_" }
+
 # 8p) 例外の扱い（例外処理規約 §4: 捕捉したら記録する / 空の catch を作らない）
 #     記録とは「ログ・Debug/Trace 出力・理由コメント」のいずれかである。
 $catchIssues = [System.Collections.Generic.List[string]]::new()
