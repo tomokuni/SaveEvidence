@@ -54,8 +54,10 @@ internal sealed class AnnotationFormatBar : ContentControl
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
         _bold = AnnotationEditorControls.Toggle("B", false, value => ApplyDecoration(style => style with { IsBold = value }), bold: true);
         _italic = AnnotationEditorControls.Toggle("I", false, value => ApplyDecoration(style => style with { IsItalic = value }), italic: true);
-        _underline = AnnotationEditorControls.Toggle("U", false, value => ApplyDecoration(style => style with { IsUnderline = value }));
-        _strike = AnnotationEditorControls.Toggle("S", false, value => ApplyDecoration(style => style with { IsStrike = value }));
+        _underline = AnnotationEditorControls.Toggle(
+            "U", false, value => ApplyDecoration(style => style with { IsUnderline = value }), underline: true);
+        _strike = AnnotationEditorControls.Toggle(
+            "S", false, value => ApplyDecoration(style => style with { IsStrike = value }), strike: true);
 
         _font = new ComboBox
         {
@@ -64,7 +66,8 @@ internal sealed class AnnotationFormatBar : ContentControl
             Width = 130,
 
             // **高さを明示する**: 既定の高さでは文字の上が欠ける（実測 2026-11-20）
-            MinHeight = 26,
+            MinHeight = AnnotationFormatBarLayout.ItemHeight,
+            Height = AnnotationFormatBarLayout.ItemHeight,
             FontSize = AnnotationEditorControls.FontSize,
             VerticalContentAlignment = VerticalAlignment.Center,
         };
@@ -86,7 +89,8 @@ internal sealed class AnnotationFormatBar : ContentControl
             SmallChange = 1,
             Value = AnnotationDefaults.FontSizeDefault,
             Width = 90,
-            MinHeight = 26,
+            MinHeight = AnnotationFormatBarLayout.ItemHeight,
+            Height = AnnotationFormatBarLayout.ItemHeight,
             FontSize = AnnotationEditorControls.FontSize,
             SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
         };

@@ -71,10 +71,15 @@ public sealed class AnnotationFormatBar : ContentControl
         AnnotationPalette.Configure(_color, showPicker: true);
         _color.SelectedColorChanged += (_, _) => ApplyColor();
 
+        // 高さはコア（AnnotationFormatBarLayout）が単一所有する。 項目ごとに高さが違うと縦位置が揃わない
+        _font.Height = AnnotationFormatBarLayout.ItemHeight;
+        _size.Height = AnnotationFormatBarLayout.ItemHeight;
+        _color.Height = AnnotationFormatBarLayout.ItemHeight;
+
         _bold = CreateToggle("B", bold: true);
         _italic = CreateToggle("I", italic: true);
-        _underline = CreateToggle("U");
-        _strike = CreateToggle("S");
+        _underline = CreateToggle("U", underline: true);
+        _strike = CreateToggle("S", strike: true);
 
         _bold.OnCheckedChanged(_ => ToggleDecoration(
             style => style.IsBold, static (style, value) => style with { IsBold = value }));
@@ -133,6 +138,9 @@ public sealed class AnnotationFormatBar : ContentControl
     /// <summary>操作の間の余白（DIP）。</summary>
     private const double ControlSpacing = 4;
 
+    /// <summary>装飾の切り替えボタンの幅（DIP）。</summary>
+    private const double ToggleWidth = 34;
+
     /// <summary>色の入力欄へ出す表記を取得または設定する。</summary>
     public ColorTextFormat TextFormat
     {
@@ -181,19 +189,73 @@ public sealed class AnnotationFormatBar : ContentControl
     /// <param name="text">文言。</param>
     /// <param name="bold">太字で表示するかどうか。</param>
     /// <param name="italic">斜体で表示するかどうか。</param>
+    /// <param name="underline">下線を引いて表示するかどうか。</param>
+    /// <param name="strike">取り消し線を引いて表示するかどうか。</param>
     /// <returns>切り替えボタン。</returns>
-    private static ToggleButton CreateToggle(string text, bool bold = false, bool italic = false)
+    private static ToggleButton CreateToggle(
+        string text, bool bold = false, bool italic = false, bool underline = false, bool strike = false)
     {
-        var content = new TextBlock
+        const double height = AnnotationFormatBarLayout.ItemHeight;
+        var label = new TextBlock
         {
             Text = text,
             FontWeight = bold ? FontWeight.Bold : FontWeight.Normal,
             FontStyle = italic ? FontStyle.Italic : FontStyle.Normal,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
+
+            // **高さをコアの値で固定し、縦方向の中央へ寄せる**: 項目ごとに高さが違うと縦位置が揃わない
+            Width = ToggleWidth,
+            Height = height,
+            TextAlignment = TextAlignment.Center,
+            VerticalTextAlignment = TextAlignment.Center,
         };
 
-        return new ToggleButton { Content = content, Width = 34, Padding = new Thickness(0) };
+        Element content = label;
+
+        // **記号自体にも装飾を描く**: 「U」「S」の文字だけでは意味が伝わらない（実測 2026-11-21）。
+        // MewUI の TextBlock は TextDecorations を持たないため、線を重ねて描く
+        if (underline || strike)
+        {
+            var canvas = new Canvas { Width = ToggleWidth, Height = height };
+            Canvas.SetLeft(label, 0);
+            Canvas.SetTop(label, 0);
+            canvas.Add(label);
+            canvas.Add(DecorationLine(underline, strike, height));
+            content = canvas;
+        }
+
+        return new ToggleButton
+        {
+            Content = content,
+            Width = ToggleWidth,
+            Height = height,
+            Padding = new Thickness(0),
+        };
+    }
+
+    /// <summary>記号へ重ねる下線・取り消し線を作る。</summary>
+    /// <param name="underline">下線を引くかどうか。</param>
+    /// <param name="strike">取り消し線を引くかどうか。</param>
+    /// <param name="height">ボタンの高さ（DIP）。</param>
+    /// <returns>線の描画要素。</returns>
+    /// <remarks>線は記号の幅（約 8 DIP）に合わせて中央へ置く。</remarks>
+    private static Element DecorationLine(bool underline, bool strike, double height)
+    {
+        const double glyphWidth = 8;
+        var left = (ToggleWidth - glyphWidth) / 2;
+        var y = underline && !strike ? height - 5 : height / 2;
+
+        var line = new Line
+        {
+            X1 = left,
+            Y1 = y,
+            X2 = left + glyphWidth,
+            Y2 = y,
+            Stroke = AnnotationTextMetrics.ToMewColor(AnnotationDefaults.TextStyle.Color),
+            StrokeThickness = 1,
+            IsHitTestVisible = false,
+        };
+
+        return line;
     }
 
     /// <summary>選択中の範囲へフォントを適用する（同じ値でも適用する）。</summary>

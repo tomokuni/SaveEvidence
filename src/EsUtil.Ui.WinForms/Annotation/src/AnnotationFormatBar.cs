@@ -81,13 +81,24 @@ internal sealed class AnnotationFormatBar : Panel
         _color = AnnotationEditorControls.ColorButton(
             AnnotationDefaults.TextStyle.Color, color => ApplyFull(style => style with { Color = color }));
 
-        Controls.Add(_bold);
-        Controls.Add(_italic);
-        Controls.Add(_underline);
-        Controls.Add(_strike);
-        Controls.Add(_font);
-        Controls.Add(_size);
-        Controls.Add(_color);
+        // 並び順はコア（AnnotationFormatBarLayout.Order）が単一所有する。
+        // ここで順を決めると 4 つの UI 版で操作の位置がずれる（実測 2026-11-20）。
+        var items = new Dictionary<AnnotationFormatBarItem, Control>
+        {
+            [AnnotationFormatBarItem.Bold] = _bold,
+            [AnnotationFormatBarItem.Italic] = _italic,
+            [AnnotationFormatBarItem.Underline] = _underline,
+            [AnnotationFormatBarItem.Strike] = _strike,
+            [AnnotationFormatBarItem.Font] = _font,
+            [AnnotationFormatBarItem.Size] = _size,
+            [AnnotationFormatBarItem.Color] = _color,
+        };
+
+        foreach (var item in AnnotationFormatBarLayout.Order)
+        {
+            Controls.Add(items[item]);
+        }
+
         LayoutRow();
 
         RefreshState();
@@ -152,6 +163,8 @@ internal sealed class AnnotationFormatBar : Panel
         var x = Padding.Left;
         foreach (Control control in Controls)
         {
+            // 高さはコア（AnnotationFormatBarLayout）が単一所有する。 項目ごとに高さが違うと縦位置が揃わない
+            control.Height = (int)Math.Round(AnnotationFormatBarLayout.ItemHeight);
             control.Location = new Point(x, Padding.Top);
             x += control.Width + control.Margin.Horizontal;
         }

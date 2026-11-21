@@ -382,8 +382,13 @@ public sealed partial class AnnotationLayerControl
         Func<AnnotationTextStyle, bool> read,
         Func<AnnotationTextStyle, bool, AnnotationTextStyle> write)
     {
+        // 選択が無ければ適用しない（キャレット以降の文字が意図せず変わらないようにする）
+        if (AnnotationTextStyleEdit.ResolveRange(TextSelectionRange.Start, TextSelectionRange.Length) is not { } range)
+        {
+            return false;
+        }
+
         var value = !read(SelectedTextStyle);
-        var range = TextSelectionRange;
         return TransformTextStyle(range.Start, range.Length, style => write(style, value));
     }
 
@@ -409,10 +414,9 @@ public sealed partial class AnnotationLayerControl
     /// <summary>選択範囲の書式を変換する（1 つの属性だけ変える）。</summary>
     /// <param name="transform">書式を変える処理。</param>
     internal void TransformSelectionStyle(Func<AnnotationTextStyle, AnnotationTextStyle> transform)
-    {
-        var range = TextSelectionRange;
-        TransformTextStyle(range.Start, range.Length, transform);
-    }
+        // 選択が無ければ適用しない（キャレット以降の文字が意図せず変わらないようにする）
+        => _ = AnnotationTextStyleEdit.ResolveRange(TextSelectionRange.Start, TextSelectionRange.Length) is { } range
+            && TransformTextStyle(range.Start, range.Length, transform);
 
     /// <summary>選択範囲へ書式を丸ごと適用する（色・大きさ・フォント）。</summary>
     /// <param name="style">書式。</param>

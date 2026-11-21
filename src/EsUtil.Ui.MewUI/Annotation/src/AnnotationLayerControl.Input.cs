@@ -24,7 +24,7 @@ public sealed partial class AnnotationLayerControl
     {
         base.OnRender(context);
 
-        var (scale, offset) = ResolveImageTransform();
+        var (scale, offset) = _frozenTransform ?? ResolveImageTransform();
         DrawAll(context, includeSelection: !_isEditingText, scale, offset);
     }
 

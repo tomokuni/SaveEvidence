@@ -382,14 +382,14 @@ internal static class CapturePage
 
         double ResolveTemplateMaxWidth()
         {
-            // **利用できる幅はツール バー自身ではなく画面から求める**: WrapPanel の Bounds は
-            // 中身の合計幅になることがあり、その値を使うとテンプレートが伸びて折り返す
+            // **利用できる幅はツール バー自身ではなく「入れ物」から求める**: WrapPanel の Bounds は
+            // 中身の合計幅になることがあり、その値を使うとテンプレートが伸びて折り返す。
+            // 画面の幅から引くと、ナビの幅・枠・余白の分だけ広く見積もって折り返す
             // （実測 2026-11-21: 初期表示で「タスクバーを隠す」が 2 行目へ落ちた）。
-            var available = template.FindVisualRoot() is Window window && window.ClientSize.Width > 0
-                ? window.ClientSize.Width
-                    - NavPanelMetrics.CompactWidth
-                    - toolbar.Margin.Left - toolbar.Margin.Right
-                    - ToolbarSafetyMargin
+            // ツールバーを入れている格子（page）の実幅が正解。
+            var host = toolbar.Parent as FrameworkElement;
+            var available = host is not null && host.ActualWidth > 1
+                ? host.ActualWidth - toolbar.Margin.Left - toolbar.Margin.Right - ToolbarSafetyMargin
                 : toolbar.Bounds.Width;
             if (available <= 1)
             {

@@ -1,3 +1,4 @@
+using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Palette;
 using EsUtil.Ui.WinUI3.ColorSelector;
 using Microsoft.UI.Xaml;
@@ -49,25 +50,59 @@ internal static class AnnotationEditorControls
     /// <param name="apply">押された状態が変わったときに呼ぶ処理。</param>
     /// <param name="bold">太字で表示する場合は <see langword="true"/>。</param>
     /// <param name="italic">斜体で表示する場合は <see langword="true"/>。</param>
+    /// <param name="underline">下線を引く場合は <see langword="true"/>。</param>
+    /// <param name="strike">取り消し線を引く場合は <see langword="true"/>。</param>
     /// <returns>切り替えボタン。</returns>
-    internal static ToggleButton Toggle(string text, bool isChecked, Action<bool> apply, bool bold = false, bool italic = false)
+    internal static ToggleButton Toggle(
+        string text,
+        bool isChecked,
+        Action<bool> apply,
+        bool bold = false,
+        bool italic = false,
+        bool underline = false,
+        bool strike = false)
     {
+        var decorations = Windows.UI.Text.TextDecorations.None;
+        if (underline)
+        {
+            decorations |= Windows.UI.Text.TextDecorations.Underline;
+        }
+
+        if (strike)
+        {
+            decorations |= Windows.UI.Text.TextDecorations.Strikethrough;
+        }
+
+        var content = new TextBlock
+        {
+            Text = text,
+            FontWeight = bold ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
+            FontStyle = italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
+
+            // **記号自体にも装飾を描く**: 「U」「S」の文字だけでは意味が伝わらない（実測 2026-11-21）
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center,
+        };
+
+        if (decorations != Windows.UI.Text.TextDecorations.None)
+        {
+            content.TextDecorations = decorations;
+        }
+
         var button = new ToggleButton
         {
-            Content = new TextBlock
-            {
-                Text = text,
-                FontWeight = bold ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
-                FontStyle = italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
-                VerticalAlignment = VerticalAlignment.Center,
-            },
+            Content = content,
             IsChecked = isChecked,
             MinWidth = 28,
 
-            // **高さを明示する**: 既定の高さでは 12 DIP の文字の上が欠ける（実測 2026-11-20）
-            MinHeight = 26,
-            Padding = new Thickness(4, 1, 4, 1),
+            // **高さを明示する**: 既定の高さでは 12 DIP の文字の上が欠ける（実測 2026-11-20）。
+            // 高さはコア（AnnotationFormatBarLayout）が単一所有する
+            MinHeight = AnnotationFormatBarLayout.ItemHeight,
+            Height = AnnotationFormatBarLayout.ItemHeight,
+            Padding = new Thickness(4, 0, 4, 0),
             FontSize = FontSize,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
         };
 
         button.Checked += (_, _) => apply(true);

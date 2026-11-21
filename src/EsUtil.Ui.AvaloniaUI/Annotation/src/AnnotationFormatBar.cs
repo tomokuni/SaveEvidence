@@ -130,6 +130,11 @@ internal sealed class AnnotationFormatBar : Border
         _color.LostFocus += (_, _) => ApplyColor();
         ToolTip.SetTip(_color, "色");
 
+        // 高さはコア（AnnotationFormatBarLayout）が単一所有する。 項目ごとに高さが違うと縦位置が揃わない
+        _font.Height = AnnotationFormatBarLayout.ItemHeight;
+        _size.Height = AnnotationFormatBarLayout.ItemHeight;
+        _color.Height = AnnotationFormatBarLayout.ItemHeight;
+
         _bold = Toggle("B", "太字（Ctrl+B）", bold: true);
         _italic = Toggle("I", "斜体（Ctrl+I）", italic: true);
         _underline = Toggle("U", "下線（Ctrl+U）", underline: true);
@@ -433,6 +438,11 @@ internal sealed class AnnotationFormatBar : Border
         {
             Content = content,
             Width = ToggleWidth,
+
+            // 高さはコア（AnnotationFormatBarLayout）が単一所有する。 項目ごとに高さが違うと縦位置が揃わない
+            Height = AnnotationFormatBarLayout.ItemHeight,
+            MinHeight = AnnotationFormatBarLayout.ItemHeight,
+            Padding = new Avalonia.Thickness(0),
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
         };

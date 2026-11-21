@@ -763,7 +763,9 @@ public sealed partial class AnnotationLayerControl : Panel
     /// <returns>ローカル DIP の座標。</returns>
     private EsPoint ToClientDip(EsPoint source)
     {
-        var (scale, offset) = ResolveImageTransform();
+        // **押下中は描画も固定した変換を使う**: 変換が途中で変わると、枠と注釈がカーソルからずれ、
+        // ヒット判定とも食い違う（実測 2026-11-21: 右上方向へずれた）。
+        var (scale, offset) = _frozenTransform ?? ResolveImageTransform();
         return new EsPoint(offset.X + (source.X * scale), offset.Y + (source.Y * scale));
     }
 
