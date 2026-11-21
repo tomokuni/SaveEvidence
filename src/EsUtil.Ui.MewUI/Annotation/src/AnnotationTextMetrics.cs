@@ -32,6 +32,19 @@ internal static class AnnotationTextMetrics
         return new EsSize(layout.MeasuredSize.Width, line.Height);
     }
 
+    /// <summary>行の高さとベースラインを測る。</summary>
+    /// <param name="style">書式。</param>
+    /// <returns>行の実寸（高さとベースライン）。</returns>
+    /// <remarks>
+    /// <b>斜体を外して測る</b>: 斜体にしても行の高さ・ベースラインは変えない。 4 つの UI 版で同じ
+    /// 結果になるよう、この規則は本メソッドが単一所有する。
+    /// </remarks>
+    internal static TextLineMetrics MeasureLineMetrics(AnnotationTextStyle style)
+    {
+        var (height, baseline) = ResolveLineMetrics(style);
+        return new TextLineMetrics(height, baseline);
+    }
+
     /// <summary>行の高さとベースライン（上端から）を求める。</summary>
     /// <param name="style">書式。</param>
     /// <returns>行の高さとベースライン。</returns>

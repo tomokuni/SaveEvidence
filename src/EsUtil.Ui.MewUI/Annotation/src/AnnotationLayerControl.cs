@@ -777,14 +777,6 @@ public sealed partial class AnnotationLayerControl : Panel
     /// <summary>行の文字数を求める（区間の文字数の合計）。</summary>
     /// <param name="line">行。</param>
     /// <returns>文字数。</returns>
-    internal static int LineTextLength(AnnotationTextLinePlan line)
-    {
-        var length = 0;
-        foreach (var segment in line.Segments)
-        {
-            length += segment.Text.Length;
-        }
-
-        return length;
-    }
+    /// <remarks>数え方はコアが単一所有する（<see cref="AnnotationTextLineLayout.Length"/>）。</remarks>
+    internal static int LineTextLength(AnnotationTextLinePlan line) => AnnotationTextLineLayout.Length(line);
 }

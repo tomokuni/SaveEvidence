@@ -110,6 +110,10 @@ public sealed class AnnotationTextLineIndex
     /// <param name="measureText">文字列と書式から実寸を測る関数。</param>
     /// <returns>幅（元画像ピクセル）。</returns>
     /// <exception cref="ArgumentNullException"><paramref name="line"/> または <paramref name="measureText"/> が null の場合。</exception>
+    /// <remarks>
+    /// <b>区間の原点から測る</b>: 位置の決め方は <see cref="AnnotationTextLineLayout"/> が単一所有する
+    /// （行頭から幅を積み上げると、区間の境界・末尾の空白・丸めの分だけ描画とずれる）。
+    /// </remarks>
     public static double MeasurePrefix(
         AnnotationTextLinePlan line,
         int count,
@@ -118,28 +122,18 @@ public sealed class AnnotationTextLineIndex
         ArgumentNullException.ThrowIfNull(line);
         ArgumentNullException.ThrowIfNull(measureText);
 
-        if (count <= 0)
-        {
-            return 0;
-        }
-
-        var remaining = count;
-        var x = 0.0;
-        foreach (var segment in line.Segments)
-        {
-            if (remaining <= 0)
-            {
-                break;
-            }
-
-            var take = Math.Min(remaining, segment.Text.Length);
-            var text = take == segment.Text.Length ? segment.Text : segment.Text[..take];
-            x += measureText(text, segment.Style).Width;
-            remaining -= take;
-        }
-
-        return x;
+        var x = AnnotationTextLineLayout.ResolveX(line, count, MakePrefixMeasure(measureText));
+        return x - line.Bounds.X;
     }
+
+    /// <summary>区間の先頭から指定した文字数までの幅を測る関数を作る。</summary>
+    /// <param name="measureText">文字列と書式から実寸を測る関数。</param>
+    /// <returns>区間と文字数から幅を返す関数。</returns>
+    private static AnnotationTextLineLayout.MeasurePrefix MakePrefixMeasure(
+        Func<string, AnnotationTextStyle, EsSize> measureText)
+        => (segment, count) => count <= 0
+            ? 0
+            : measureText(count >= segment.Text.Length ? segment.Text : segment.Text[..count], segment.Style).Width;
 
     /// <summary>点に最も近い文字位置を求める。</summary>
     /// <param name="point">位置（元画像ピクセル）。</param>
@@ -162,21 +156,8 @@ public sealed class AnnotationTextLineIndex
         }
 
         var line = _lines[lineIndex];
-        var localX = point.X - line.Bounds.X;
-        var best = double.MaxValue;
-        var offset = 0;
-        var length = LineTextLength(line);
-        for (var i = 0; i <= length; i++)
-        {
-            var distance = Math.Abs(MeasurePrefix(line, i, measureText) - localX);
-            if (distance < best)
-            {
-                best = distance;
-                offset = i;
-            }
-        }
-
-        return _starts[lineIndex] + offset;
+        return _starts[lineIndex]
+            + AnnotationTextLineLayout.ResolveOffset(line, point.X, MakePrefixMeasure(measureText));
     }
 
     /// <summary>キャレットの位置（元画像ピクセル）を求める。</summary>
@@ -196,7 +177,7 @@ public sealed class AnnotationTextLineIndex
         var lineIndex = LineIndexOf(index);
         var line = _lines[lineIndex];
         var offset = Math.Clamp(index - _starts[lineIndex], 0, LineTextLength(line));
-        var x = line.Bounds.X + MeasurePrefix(line, offset, measureText);
+        var x = AnnotationTextLineLayout.ResolveX(line, offset, MakePrefixMeasure(measureText));
         return new AnnotationCaretRect(x, line.Bounds.Y, line.Bounds.Height);
     }
 
@@ -219,6 +200,7 @@ public sealed class AnnotationTextLineIndex
         }
 
         var rects = new List<EsRect>(_lines.Count);
+        var measurePrefix = MakePrefixMeasure(measureText);
         for (var i = 0; i < _lines.Count; i++)
         {
             var line = _lines[i];
@@ -230,8 +212,8 @@ public sealed class AnnotationTextLineIndex
                 continue;
             }
 
-            var x1 = line.Bounds.X + MeasurePrefix(line, from - lineStart, measureText);
-            var x2 = line.Bounds.X + MeasurePrefix(line, to - lineStart, measureText);
+            var x1 = AnnotationTextLineLayout.ResolveX(line, from - lineStart, measurePrefix);
+            var x2 = AnnotationTextLineLayout.ResolveX(line, to - lineStart, measurePrefix);
             rects.Add(new EsRect(x1, line.Bounds.Y, x2 - x1, line.Bounds.Height));
         }
 

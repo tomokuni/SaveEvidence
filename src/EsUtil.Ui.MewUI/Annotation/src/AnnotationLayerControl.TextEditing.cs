@@ -526,14 +526,15 @@ public sealed partial class AnnotationLayerControl
             var line = layout.Lines[i];
             var lineStart = layout.Starts[i];
             var from = Math.Max(start, lineStart);
-            var to = Math.Min(end, lineStart + LineTextLength(line));
+            var to = Math.Min(end, lineStart + AnnotationTextLineLayout.Length(line));
             if (to <= from)
             {
                 continue;
             }
 
-            var x1 = line.Bounds.X + MeasureLinePrefix(line, from - lineStart);
-            var x2 = line.Bounds.X + MeasureLinePrefix(line, to - lineStart);
+            // **選択範囲も描画と同じ規則で求める**（区間の原点からの距離。 Core が単一所有する）
+            var x1 = AnnotationTextLineLayout.ResolveX(line, from - lineStart, MeasureSegmentPrefix);
+            var x2 = AnnotationTextLineLayout.ResolveX(line, to - lineStart, MeasureSegmentPrefix);
             context.FillRectangle(new Rect(x1, line.Bounds.Y, x2 - x1, line.Bounds.Height), s_textSelectionColor);
         }
 
@@ -595,13 +596,14 @@ public sealed partial class AnnotationLayerControl
 
         var lineIndex = LineIndexOf(layout, index);
         var line = layout.Lines[lineIndex];
-        var offset = Math.Clamp(index - layout.Starts[lineIndex], 0, LineTextLength(line));
-        var style = SelectedTextStyle;
-        var metrics = AnnotationTextMetrics.ResolveLineMetrics(style);
-        var baseline = AnnotationTextMetrics.ResolveBaseline(
-            line.Bounds.Y, line.Bounds.Height, metrics.Height, metrics.Baseline);
+        var offset = Math.Clamp(index - layout.Starts[lineIndex], 0, AnnotationTextLineLayout.Length(line));
+
+        // **位置は描画と同じ規則で求める**: 区間の原点（描画に使う Bounds.X）からの距離で決める
+        // （規則の所有者は Core の AnnotationTextLineLayout。行頭から積み上げると文字からずれる）
+        var metrics = AnnotationTextMetrics.MeasureLineMetrics(SelectedTextStyle);
+        var baseline = AnnotationTextLineLayout.ResolveBaseline(line, AnnotationTextMetrics.MeasureLineMetrics);
         caret = (
-            line.Bounds.X + MeasureLinePrefix(line, offset),
+            AnnotationTextLineLayout.ResolveX(line, offset, MeasureSegmentPrefix),
             baseline - metrics.Baseline,
             metrics.Height);
         return true;
@@ -628,59 +630,30 @@ public sealed partial class AnnotationLayerControl
         }
 
         var line = layout.Lines[lineIndex];
-        var lineStart = layout.Starts[lineIndex];
-        var localX = point.X - line.Bounds.X;
-        var offset = 0;
-        var best = double.MaxValue;
-        var length = LineTextLength(line);
-        for (var i = 0; i <= length; i++)
-        {
-            var distance = Math.Abs(MeasureLinePrefix(line, i) - localX);
-            if (distance < best)
-            {
-                best = distance;
-                offset = i;
-            }
-        }
-
-        return lineStart + offset;
+        return layout.Starts[lineIndex]
+            + AnnotationTextLineLayout.ResolveOffset(line, point.X, MeasureSegmentPrefix);
     }
 
-    /// <summary>行の先頭から指定した文字数までの幅を求める（元画像ピクセル）。</summary>
-    /// <param name="line">行。</param>
-    /// <param name="count">文字数（0 なら 0）。</param>
+    /// <summary>区間の先頭から指定した文字数までの幅を求める（元画像ピクセル）。</summary>
+    /// <param name="segment">区間。</param>
+    /// <param name="count">文字数。</param>
     /// <returns>幅（元画像ピクセル）。</returns>
     /// <remarks>
-    /// <b>描画と同じレイアウトで測る</b>: 文字列を切り出して測り直すと、カーニングや字形の差で
-    /// 実際に描かれる文字の位置とずれ、キャレットや選択範囲が文字からずれる（実測 2026-11-21）。
-    /// 描画（<c>AnnotationPainter</c>）が使うのと同じレイアウトを作り、文字位置の輪郭を問い合わせる。
+    /// <b>描画と同じレイアウトで測る</b>: 描画（<c>AnnotationPainter</c>）は区間の文字列から作った
+    /// レイアウトを区間の原点へ置く。 位置をこのレイアウトの中で測れば、カーニング・字形・末尾の空白の
+    /// 扱いが描画と必ず一致する（実測 2026-11-21: 文字列を切り出して測り直すと文字からずれた）。
     /// </remarks>
-    private static double MeasureLinePrefix(AnnotationTextLinePlan line, int count)
+    private static double MeasureSegmentPrefix(AnnotationTextSegmentPlan segment, int count)
     {
         if (count <= 0)
         {
             return 0;
         }
 
-        var remaining = count;
-        var x = 0.0;
-        foreach (var segment in line.Segments)
-        {
-            if (remaining <= 0)
-            {
-                break;
-            }
-
-            var take = Math.Min(remaining, segment.Text.Length);
-            var layout = AnnotationTextMetrics.CreateLayout(segment.Text, segment.Style, ignoreItalic: false);
-            var width = take >= segment.Text.Length
-                ? layout.MeasuredSize.Width
-                : layout.GetCaretBounds(new CharacterHit(take, 0)).X;
-            x += width;
-            remaining -= take;
-        }
-
-        return x;
+        var layout = AnnotationTextMetrics.CreateLayout(segment.Text, segment.Style, ignoreItalic: false);
+        return count >= segment.Text.Length
+            ? layout.MeasuredSize.Width
+            : layout.GetCaretBounds(new CharacterHit(count, 0)).X;
     }
 
     /// <summary>指定位置の文字が入る行を求める。</summary>

@@ -67,27 +67,12 @@ internal static class AnnotationPainter
     /// <summary>行のベースライン（元画像ピクセル）を求める。</summary>
     /// <param name="line">行の描画計画。</param>
     /// <returns>ベースラインの Y 座標。</returns>
+    /// <remarks>
+    /// <b>決め方はコアが単一所有する</b>（<see cref="AnnotationTextLineLayout.ResolveBaseline"/>）:
+    /// キャレット・選択範囲も同じベースラインを使うため、ここで独自に計算してはいけない。
+    /// </remarks>
     private static double ResolveLineBaseline(AnnotationTextLinePlan line)
-    {
-        var height = 0.0;
-        var referenceHeight = 0.0;
-        var referenceBaseline = 0.0;
-        foreach (var segment in line.Segments)
-        {
-            var metrics = AnnotationTextMetrics.ResolveLineMetrics(segment.Style);
-            if (metrics.Height <= height)
-            {
-                continue;
-            }
-
-            height = metrics.Height;
-            referenceHeight = metrics.Height;
-            referenceBaseline = metrics.Baseline;
-        }
-
-        return AnnotationTextMetrics.ResolveBaseline(
-            line.Bounds.Y, line.Bounds.Height, referenceHeight, referenceBaseline);
-    }
+        => AnnotationTextLineLayout.ResolveBaseline(line, AnnotationTextMetrics.MeasureLineMetrics);
 
     /// <summary>文字列を描画する。</summary>
     /// <param name="context">描画先。</param>

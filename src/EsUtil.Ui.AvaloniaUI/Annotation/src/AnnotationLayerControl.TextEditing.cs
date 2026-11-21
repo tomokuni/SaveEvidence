@@ -477,14 +477,15 @@ public sealed partial class AnnotationLayerControl
             var line = layout.Lines[i];
             var lineStart = layout.Starts[i];
             var from = Math.Max(start, lineStart);
-            var to = Math.Min(end, lineStart + LineTextLength(line));
+            var to = Math.Min(end, lineStart + AnnotationTextLineLayout.Length(line));
             if (to <= from)
             {
                 continue;
             }
 
-            var x1 = line.Bounds.X + MeasureLinePrefix(line, from - lineStart);
-            var x2 = line.Bounds.X + MeasureLinePrefix(line, to - lineStart);
+            // 選択範囲も描画と同じ規則で求める（区間の原点からの距離。 コアが単一所有する）
+            var x1 = AnnotationTextLineLayout.ResolveX(line, from - lineStart, MeasureSegmentPrefix);
+            var x2 = AnnotationTextLineLayout.ResolveX(line, to - lineStart, MeasureSegmentPrefix);
             context.FillRectangle(
                 s_textSelectionBrush, new Rect(x1, line.Bounds.Y, x2 - x1, line.Bounds.Height));
         }
@@ -542,7 +543,12 @@ public sealed partial class AnnotationLayerControl
         var lineIndex = LineIndexOf(layout, index);
         var line = layout.Lines[lineIndex];
         var offset = Math.Clamp(index - layout.Starts[lineIndex], 0, LineTextLength(line));
-        caret = (line.Bounds.X + MeasureLinePrefix(line, offset), line.Bounds.Y, line.Bounds.Height);
+
+        // 位置の決め方はコアが単一所有する（区間の原点からの距離。 行頭から積み上げない）
+        caret = (
+            AnnotationTextLineLayout.ResolveX(line, offset, MeasureSegmentPrefix),
+            line.Bounds.Y,
+            line.Bounds.Height);
         return true;
     }
 
@@ -567,66 +573,30 @@ public sealed partial class AnnotationLayerControl
         }
 
         var line = layout.Lines[lineIndex];
-        var lineStart = layout.Starts[lineIndex];
-        var localX = point.X - line.Bounds.X;
-        var offset = 0;
-        var best = double.MaxValue;
-        var length = LineTextLength(line);
-        for (var i = 0; i <= length; i++)
-        {
-            var distance = Math.Abs(MeasureLinePrefix(line, i) - localX);
-            if (distance < best)
-            {
-                best = distance;
-                offset = i;
-            }
-        }
-
-        return lineStart + offset;
+        return layout.Starts[lineIndex]
+            + AnnotationTextLineLayout.ResolveOffset(line, point.X, MeasureSegmentPrefix);
     }
 
-    /// <summary>行の先頭から指定した文字数までの幅を求める（元画像ピクセル）。</summary>
-    /// <param name="line">行。</param>
-    /// <param name="count">文字数（0 なら 0）。</param>
+    /// <summary>区間の先頭から指定した文字数までの幅を求める（元画像ピクセル）。</summary>
+    /// <param name="segment">区間。</param>
+    /// <param name="count">文字数。</param>
     /// <returns>幅（元画像ピクセル）。</returns>
-    private static double MeasureLinePrefix(AnnotationTextLinePlan line, int count)
+    private static double MeasureSegmentPrefix(AnnotationTextSegmentPlan segment, int count)
     {
         if (count <= 0)
         {
             return 0;
         }
 
-        var remaining = count;
-        var x = 0.0;
-        foreach (var segment in line.Segments)
-        {
-            if (remaining <= 0)
-            {
-                break;
-            }
-
-            var take = Math.Min(remaining, segment.Text.Length);
-            var text = take == segment.Text.Length ? segment.Text : segment.Text[..take];
-            x += MeasureText(text, segment.Style).Width;
-            remaining -= take;
-        }
-
-        return x;
+        var text = count >= segment.Text.Length ? segment.Text : segment.Text[..count];
+        return MeasureText(text, segment.Style).Width;
     }
 
     /// <summary>行の文字数を求める（区間の文字数の合計）。</summary>
     /// <param name="line">行。</param>
     /// <returns>文字数。</returns>
-    internal static int LineTextLength(AnnotationTextLinePlan line)
-    {
-        var length = 0;
-        foreach (var segment in line.Segments)
-        {
-            length += segment.Text.Length;
-        }
-
-        return length;
-    }
+    /// <remarks>数え方はコアが単一所有する（<see cref="AnnotationTextLineLayout.Length"/>）。</remarks>
+    internal static int LineTextLength(AnnotationTextLinePlan line) => AnnotationTextLineLayout.Length(line);
 
     /// <summary>指定位置の文字が入る行を求める。</summary>
     /// <param name="layout">本文の行。</param>
