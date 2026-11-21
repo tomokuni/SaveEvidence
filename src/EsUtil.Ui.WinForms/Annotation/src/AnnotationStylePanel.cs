@@ -53,18 +53,18 @@ internal sealed class AnnotationStylePanel : Panel
         var appearance = item.Appearance;
         AddColor("枠線の色", appearance.Border, ref y,
             value => _layer.UpdateSelectedAppearance(current => current with { Border = value }));
-        AddNumber("枠線の太さ", appearance.BorderThickness, 0.5, 64, ref y,
+        AddNumber("枠線の太さ", appearance.BorderThickness, AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax, ref y,
             value => _layer.UpdateSelectedAppearance(current => current with { BorderThickness = value }));
         AddColor("内側の色", appearance.Fill, ref y,
             value => _layer.UpdateSelectedAppearance(current => current with { Fill = value }));
-        AddNumber("角丸", appearance.CornerRadius, 0, 4096, ref y,
+        AddNumber("角丸", appearance.CornerRadius, 0, AnnotationLimits.CornerRadiusMax, ref y,
             value => _layer.UpdateSelectedAppearance(current => current with { CornerRadius = value }));
 
         if (item is BubbleAnnotation bubble)
         {
-            AddNumber("本文の余白", bubble.BodyPadding, 0, 4096, ref y,
+            AddNumber("本文の余白", bubble.BodyPadding, 0, AnnotationLimits.BodyPaddingMax, ref y,
                 value => _layer.SetSelectedBodyPadding(value));
-            AddNumber("しっぽの幅", bubble.Tail.Width, 1, 4096, ref y,
+            AddNumber("しっぽの幅", bubble.Tail.Width, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax, ref y,
                 value => _layer.UpdateSelectedTail(tail => tail with { Width = value }));
             AddChoice("しっぽの向き", ["下", "上", "左", "右"], (int)bubble.Tail.BaseEdge, ref y,
                 value => _layer.UpdateSelectedTail(tail => tail with { BaseEdge = (BubbleEdge)value }));

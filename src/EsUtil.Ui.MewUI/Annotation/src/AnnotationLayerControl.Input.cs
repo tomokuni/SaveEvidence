@@ -70,12 +70,16 @@ public sealed partial class AnnotationLayerControl
                 context.Translate(offset.X, offset.Y);
                 context.Scale(scale, scale);
 
+                // **同じフレームでは同じレイアウト実体を使う**: 文字の描画とキャレット・選択範囲の
+                // 位置計算でレイアウトを作り直すと、丸めやキャッシュの差で位置が食い違う
+                // （実測 2026-11-22: 文字とキャレットが一致しないとの指摘）。 生成器を 1 つ渡す。
+                var layouts = new AnnotationTextLayoutCache();
                 foreach (var shape in plan.Shapes)
                 {
-                    AnnotationPainter.DrawShape(context, shape);
+                    AnnotationPainter.DrawShape(context, shape, layouts.Create);
                 }
 
-                DrawTextEditing(context, scale);
+                DrawTextEditing(context, scale, layouts.Create);
             }
             finally
             {

@@ -51,22 +51,22 @@ internal sealed class AnnotationStylePanel : ContentControl
             "枠線の色", AnnotationEditorControls.ToHex(appearance.Border), _layer.ColorTextFormat,
             value => _layer.UpdateSelectedAppearance(current => current with { Border = ParseColor(value, current.Border) })));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
-            "枠線の太さ", appearance.BorderThickness, 0.5, 64,
+            "枠線の太さ", appearance.BorderThickness, AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax,
             value => _layer.UpdateSelectedAppearance(current => current with { BorderThickness = value })));
         panel.Children.Add(AnnotationEditorControls.ColorRow(
             "内側の色", AnnotationEditorControls.ToHex(appearance.Fill), _layer.ColorTextFormat,
             value => _layer.UpdateSelectedAppearance(current => current with { Fill = ParseColor(value, current.Fill) })));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
-            "角丸", appearance.CornerRadius, 0, 4096,
+            "角丸", appearance.CornerRadius, 0, AnnotationLimits.CornerRadiusMax,
             value => _layer.UpdateSelectedAppearance(current => current with { CornerRadius = value })));
 
         if (item is BubbleAnnotation bubble)
         {
             panel.Children.Add(AnnotationEditorControls.Divider());
             panel.Children.Add(AnnotationEditorControls.NumberRow(
-                "本文の余白", bubble.BodyPadding, 0, 4096, value => _layer.SetSelectedBodyPadding(value)));
+                "本文の余白", bubble.BodyPadding, 0, AnnotationLimits.BodyPaddingMax, value => _layer.SetSelectedBodyPadding(value)));
             panel.Children.Add(AnnotationEditorControls.NumberRow(
-                "しっぽの幅", bubble.Tail.Width, 1, 4096,
+                "しっぽの幅", bubble.Tail.Width, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax,
                 value => _layer.UpdateSelectedTail(tail => tail with { Width = value })));
             panel.Children.Add(AnnotationEditorControls.ChoiceRow(
                 "しっぽの向き",

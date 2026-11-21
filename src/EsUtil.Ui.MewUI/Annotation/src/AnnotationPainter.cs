@@ -19,8 +19,11 @@ internal static class AnnotationPainter
     /// <summary>注釈 1 件を描く（元画像ピクセルの座標系で呼ぶ）。</summary>
     /// <param name="context">描画先。</param>
     /// <param name="shape">描画計画。</param>
-    internal static void DrawShape(IGraphicsContext context, AnnotationShapePlan shape)
+    /// <param name="layouts">文字のレイアウトを取得する関数（同じフレームでは同じ実体を返す）。</param>
+    internal static void DrawShape(
+        IGraphicsContext context, AnnotationShapePlan shape, Func<string, AnnotationTextStyle, ITextLayout> layouts)
     {
+        ArgumentNullException.ThrowIfNull(layouts);
         var fill = shape.HasFill ? AnnotationTextMetrics.ToMewColor(shape.Fill) : (Color?)null;
         var border = AnnotationTextMetrics.ToMewColor(shape.Border);
 
@@ -50,7 +53,7 @@ internal static class AnnotationPainter
 
             foreach (var segment in line.Segments)
             {
-                var layout = AnnotationTextMetrics.CreateLayout(segment.Text, segment.Style, ignoreItalic: false);
+                var layout = layouts(segment.Text, segment.Style);
                 var top = baseline - layout.Lines[0].Baseline;
                 DrawText(context, layout, segment.Bounds.X, top, segment.Style.Color);
                 DrawDecorations(context, segment, layout, top);

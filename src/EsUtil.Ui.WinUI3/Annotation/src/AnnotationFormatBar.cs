@@ -90,8 +90,8 @@ internal sealed class AnnotationFormatBar : ContentControl
 
         _size = new NumberBox
         {
-            Minimum = 6,
-            Maximum = 512,
+            Minimum = AnnotationLimits.FontSizeMin,
+            Maximum = AnnotationLimits.FontSizeMax,
             SmallChange = 1,
             Value = AnnotationDefaults.FontSizeDefault,
             Width = AnnotationFormatBarLayout.SizeSelectorWidth,

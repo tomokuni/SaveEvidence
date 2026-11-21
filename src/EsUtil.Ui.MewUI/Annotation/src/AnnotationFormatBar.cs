@@ -58,7 +58,7 @@ public sealed class AnnotationFormatBar : ContentControl
         _font.SelectedIndex = 0;
         _font.OnSelectionChanged(_ => ApplyFont());
 
-        _size = new NumericUpDown().Minimum(6).Maximum(512).Step(1);
+        _size = new NumericUpDown().Minimum(AnnotationLimits.FontSizeMin).Maximum(AnnotationLimits.FontSizeMax).Step(1);
         _size.Width = SizeSelectorWidth;
         _size.Value = AnnotationDefaults.FontSizeDefault;
         _size.OnValueChanged(_ => ApplySize());

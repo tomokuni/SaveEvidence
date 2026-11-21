@@ -511,7 +511,9 @@ public sealed partial class AnnotationLayerControl
     /// <summary>本文の編集（選択範囲・キャレット・変換中の文字列）を描く（元画像座標）。</summary>
     /// <param name="context">描画先。</param>
     /// <param name="scale">表示倍率（キャレットの太さを DIP 一定にする）。</param>
-    private void DrawTextEditing(IGraphicsContext context, double scale)
+    /// <param name="layouts">文字のレイアウトを取得する関数（描画と同じ実体を返す）。</param>
+    private void DrawTextEditing(
+        IGraphicsContext context, double scale, Func<string, AnnotationTextStyle, ITextLayout> layouts)
     {
         if (!_isEditingText || ResolveTextLayout() is not { } layout || layout.Lines.Count == 0)
         {
@@ -532,12 +534,12 @@ public sealed partial class AnnotationLayerControl
             }
 
             // **選択範囲も描画と同じ規則で求める**（区間の原点からの距離。 Core が単一所有する）
-            var x1 = AnnotationTextLineLayout.ResolveX(line, from - lineStart, MeasureSegmentPrefix);
-            var x2 = AnnotationTextLineLayout.ResolveX(line, to - lineStart, MeasureSegmentPrefix);
+            var x1 = AnnotationTextLineLayout.ResolveX(line, from - lineStart, PrefixMeasure(layouts));
+            var x2 = AnnotationTextLineLayout.ResolveX(line, to - lineStart, PrefixMeasure(layouts));
             context.FillRectangle(new Rect(x1, line.Bounds.Y, x2 - x1, line.Bounds.Height), s_textSelectionColor);
         }
 
-        if (!TryResolveCaretSource(_caretIndex, out var caret))
+        if (!TryResolveCaretSource(_caretIndex, layouts, out var caret))
         {
             return;
         }
@@ -578,6 +580,7 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>キャレットの位置（元画像ピクセル）を求める。</summary>
     /// <param name="index">文字位置。</param>
+    /// <param name="layouts">文字のレイアウトを取得する関数（描画と同じ実体を返す）。</param>
     /// <param name="caret">キャレットの左上と高さ。</param>
     /// <returns>求めた場合は <see langword="true"/>。</returns>
     /// <remarks>
@@ -585,8 +588,10 @@ public sealed partial class AnnotationLayerControl
     /// キャレットが上へずれる（実測 2026-11-21）。 文字の描画（<c>AnnotationPainter</c>）と同じ
     /// ベースラインから上端と高さを求め、文字の範囲に揃える。
     /// </remarks>
-    internal bool TryResolveCaretSource(int index, out (double X, double Y, double Height) caret)
+    internal bool TryResolveCaretSource(
+        int index, Func<string, AnnotationTextStyle, ITextLayout> layouts, out (double X, double Y, double Height) caret)
     {
+        ArgumentNullException.ThrowIfNull(layouts);
         caret = default;
         if (ResolveTextLayout() is not { } layout || layout.Lines.Count == 0)
         {
@@ -599,12 +604,13 @@ public sealed partial class AnnotationLayerControl
 
         // **位置は描画と同じ規則で求める**: 区間の原点（描画に使う Bounds.X）からの距離で決める
         // （規則の所有者は Core の AnnotationTextLineLayout。行頭から積み上げると文字からずれる）
-        var x = AnnotationTextLineLayout.ResolveX(line, offset, MeasureSegmentPrefix);
+        var prefix = PrefixMeasure(layouts);
+        var x = AnnotationTextLineLayout.ResolveX(line, offset, prefix);
 
         // **縦位置も描画と同じ区間の書式で決める**: キャレットの位置の書式で測ると、太字や大きさの違う
         // 区間へキャレットが入ったときに上下へずれる（実測 2026-11-22）。 描画は区間ごとのレイアウトで
         // 上端を決めているため、同じレイアウトのベースライン・高さを使う。
-        var (top, height) = ResolveCaretVertical(line, offset);
+        var (top, height) = ResolveCaretVertical(line, offset, layouts);
         caret = (x, top, height);
         return true;
     }
@@ -612,8 +618,10 @@ public sealed partial class AnnotationLayerControl
     /// <summary>キャレットの上端と高さ（元画像ピクセル）を、その位置を描く区間から求める。</summary>
     /// <param name="line">行。</param>
     /// <param name="offset">行の先頭からの文字位置。</param>
+    /// <param name="layouts">文字のレイアウトを取得する関数（描画と同じ実体を返す）。</param>
     /// <returns>上端と高さ。</returns>
-    private static (double Top, double Height) ResolveCaretVertical(AnnotationTextLinePlan line, int offset)
+    private static (double Top, double Height) ResolveCaretVertical(
+        AnnotationTextLinePlan line, int offset, Func<string, AnnotationTextStyle, ITextLayout> layouts)
     {
         if (line.Segments.Count == 0)
         {
@@ -622,7 +630,7 @@ public sealed partial class AnnotationLayerControl
 
         var (segmentIndex, _) = AnnotationTextLineLayout.Locate(line, offset);
         var segment = line.Segments[segmentIndex];
-        var segmentLayout = AnnotationTextMetrics.CreateLayout(segment.Text, segment.Style, ignoreItalic: false);
+        var segmentLayout = layouts(segment.Text, segment.Style);
         var baseline = AnnotationTextLineLayout.ResolveBaseline(line, AnnotationTextMetrics.MeasureLineMetrics);
         var segmentBaseline = segmentLayout.Lines.Count > 0 ? segmentLayout.Lines[0].Baseline : segmentLayout.MeasuredSize.Height;
         return (baseline - segmentBaseline, segmentLayout.MeasuredSize.Height);
@@ -650,31 +658,35 @@ public sealed partial class AnnotationLayerControl
 
         var line = layout.Lines[lineIndex];
         return layout.Starts[lineIndex]
-            + AnnotationTextLineLayout.ResolveOffset(line, point.X, MeasureSegmentPrefix);
+            + AnnotationTextLineLayout.ResolveOffset(line, point.X, PrefixMeasure(DefaultLayouts));
     }
 
-    /// <summary>区間の先頭から指定した文字数までの幅を求める（元画像ピクセル）。</summary>
-    /// <param name="segment">区間。</param>
-    /// <param name="count">文字数。</param>
-    /// <returns>幅（元画像ピクセル）。</returns>
+    /// <summary>1 度だけ使うレイアウトの生成器（当たり判定など、描画と同じフレームに居ない処理で使う）。</summary>
+    private static readonly Func<string, AnnotationTextStyle, ITextLayout> DefaultLayouts =
+        static (text, style) => AnnotationTextMetrics.CreateLayout(text, style, ignoreItalic: false);
+
+    /// <summary>区間の先頭から指定した文字数までの幅を測る関数を作る。</summary>
+    /// <param name="layouts">文字のレイアウトを取得する関数（描画と同じ実体を返す）。</param>
+    /// <returns>区間と文字数から幅を返す関数（元画像ピクセル）。</returns>
     /// <remarks>
-    /// <b>描画と同じレイアウトで測る</b>: 描画（<c>AnnotationPainter</c>）は区間の文字列から作った
-    /// レイアウトを区間の原点へ置く。 位置をこのレイアウトの中で測れば、カーニング・字形・末尾の空白の
-    /// 扱いが描画と必ず一致する（実測 2026-11-21: 文字列を切り出して測り直すと文字からずれた）。
+    /// <b>描画と同じレイアウト実体で測る</b>: 描画（`AnnotationPainter`）は区間の文字列から作った
+    /// レイアウトを区間の原点へ置く。 位置を同じ実体の中で測れば、カーニング・字形・末尾の空白の扱いが
+    /// 描画と必ず一致する（実測 2026-11-21・2026-11-22: 作り直すと文字からずれた）。
     /// </remarks>
-    private static double MeasureSegmentPrefix(AnnotationTextSegmentPlan segment, int count)
-    {
-        if (count <= 0)
+    private static AnnotationTextLineLayout.MeasurePrefix PrefixMeasure(
+        Func<string, AnnotationTextStyle, ITextLayout> layouts)
+        => (segment, count) =>
         {
-            return 0;
-        }
+            if (count <= 0)
+            {
+                return 0;
+            }
 
-        var layout = AnnotationTextMetrics.CreateLayout(segment.Text, segment.Style, ignoreItalic: false);
-        return count >= segment.Text.Length
-            ? layout.MeasuredSize.Width
-            : layout.GetCaretBounds(new CharacterHit(count, 0)).X;
-    }
-
+            var layout = layouts(segment.Text, segment.Style);
+            return count >= segment.Text.Length
+                ? layout.MeasuredSize.Width
+                : layout.GetCaretBounds(new CharacterHit(count, 0)).X;
+        };
     /// <summary>指定位置の文字が入る行を求める。</summary>
     /// <param name="layout">本文の行。</param>
     /// <param name="index">文字位置。</param>
