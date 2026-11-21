@@ -553,15 +553,28 @@ public sealed partial class SelectionOverlayControl : Panel
     }
 
     /// <summary>ルーペの表示可否をモード・拡大元画像・中心から更新する。</summary>
-    /// <remarks>表示可否の判断はコアの <c>SelectionOverlayState</c> が単一所有する。</remarks>
+    /// <remarks>
+    /// 表示可否の判断はコアの <c>SelectionOverlayState.IsLoupeVisible</c> が、
+    /// カーソル位置の座標ラベルの可否は <c>SelectionOverlayState.ShouldShowCursorCoordLabel</c> が単一所有する。
+    /// </remarks>
     private void UpdateLoupeVisibility()
     {
-        // WinUI 3 の要素は可視性を列挙型（Visibility）で表すため、コアの判断（真偽）を写す
-        var visible = SelectionOverlayState
-            .Resolve(_mode)
-            .IsLoupeVisible(_loupe.Source is not null, _loupe.CenterPoint is not null);
+        var state = SelectionOverlayState.Resolve(_mode);
+        var isVisible = state.IsLoupeVisible(
+            _loupe.Source is not null, _loupe.CenterPoint is not null);
 
-        _loupe.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        // WinUI 3 の要素は可視性を列挙型（Visibility）で表すため、コアの判断（真偽）を写す
+        _loupe.Visibility = isVisible ? Visibility.Visible : Visibility.Collapsed;
+
+        // ルーペは中心座標を自分の左上へ出すため、カーソル横の座標ラベルを出すと同じ座標が 2 か所で重なる
+        var showCoordLabel = SelectionOverlayState.ShouldShowCursorCoordLabel(
+            _hostAppearance.ShowCoordLabel, isVisible);
+        if (_marquee.Appearance.ShowCoordLabel != showCoordLabel)
+        {
+            _marquee.Appearance = _marquee.Appearance with { ShowCoordLabel = showCoordLabel };
+            _marquee.InvalidateRender();
+        }
+
         InvalidateArrange();
     }
 

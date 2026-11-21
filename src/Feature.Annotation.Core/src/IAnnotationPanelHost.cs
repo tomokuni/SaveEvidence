@@ -19,12 +19,19 @@ public interface IAnnotationPanelHost
     EsRect AvailableArea { get; }
 
     /// <summary>表示中のパネルの左上（DIP）を取得する。</summary>
-    /// <value>表示していない場合の値は不定（呼び出し側は表示中だけ読む）。</value>
-    EsPoint PanelPosition { get; }
+    /// <param name="kind">パネルの種別。</param>
+    /// <returns>左上の位置。 表示していない場合は原点。</returns>
+    /// <remarks>
+    /// <b>種別ごとに答える</b>: 書式バーと外観フライアウトは同時に出るため、
+    /// 「どちらか 1 つ」を返すと外側押下の判定とドラッグの起点が食い違う（実測 2026-11-21）。
+    /// </remarks>
+    EsPoint GetPanelPosition(AnnotationPanelKind kind);
 
     /// <summary>表示中のパネルの大きさ（DIP）を取得する。</summary>
-    /// <value>表示していない場合の値は不定（呼び出し側は表示中だけ読む）。</value>
-    EsSize PanelSize { get; }
+    /// <param name="kind">パネルの種別。</param>
+    /// <returns>パネルの大きさ。 表示していない場合は原点。</returns>
+    /// <remarks>種別ごとに答える理由は <see cref="GetPanelPosition"/> と同じ。</remarks>
+    EsSize GetPanelSize(AnnotationPanelKind kind);
 
     /// <summary>パネルを作って表示する（既に出ている場合は作り直す）。</summary>
     /// <param name="kind">パネルの種別（中身を決める）。</param>
@@ -33,9 +40,11 @@ public interface IAnnotationPanelHost
     void CreatePanel(AnnotationPanelKind kind, AnnotationPanelAppearance appearance, EsPoint position);
 
     /// <summary>パネルを移動する。</summary>
+    /// <param name="kind">パネルの種別。</param>
     /// <param name="position">左上の位置（アプリの画面の左上を原点とする DIP）。</param>
-    void MovePanel(EsPoint position);
+    void MovePanel(AnnotationPanelKind kind, EsPoint position);
 
     /// <summary>パネルを画面から外す。</summary>
-    void DestroyPanel();
+    /// <param name="kind">パネルの種別。</param>
+    void DestroyPanel(AnnotationPanelKind kind);
 }

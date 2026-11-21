@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Media;
-using Avalonia.Threading;
 using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
@@ -31,9 +30,6 @@ public sealed partial class AnnotationLayerControl
     /// <summary>キャレットの色。</summary>
     private static readonly IBrush s_caretBrush = new SolidColorBrush(Color.FromArgb(255, 20, 20, 20));
 
-    /// <summary>キャレットを点滅させる間隔。</summary>
-    private static readonly TimeSpan s_caretBlinkInterval = TimeSpan.FromMilliseconds(500);
-
     /// <summary>本文を編集中かどうか。</summary>
     private bool _isEditingText;
 
@@ -48,12 +44,6 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>ポインターで文字を選んでいる最中かどうか。</summary>
     private bool _isSelectingText;
-
-    /// <summary>キャレットを表示する状態かどうか（点滅に使う）。</summary>
-    private bool _isCaretVisible;
-
-    /// <summary>キャレットの点滅タイマー。</summary>
-    private DispatcherTimer? _caretTimer;
 
     /// <summary>IME へ渡すクライアント（編集中だけ使う）。</summary>
     private AnnotationTextInputClient? _textInputClient;
@@ -109,7 +99,6 @@ public sealed partial class AnnotationLayerControl
         _selectionAnchor = _caretIndex;
         _marquee.ResetSelection();
         SyncTextSelectionRange();
-        StartCaretBlink();
         Focus();
         RaiseEditingChanged();
         InvalidateVisual();
@@ -127,7 +116,6 @@ public sealed partial class AnnotationLayerControl
         _isEditingText = false;
         _preeditText = string.Empty;
         _isSelectingText = false;
-        StopCaretBlink();
         TextSelectionRange = default;
 
         if (Selected is { } item)
@@ -469,36 +457,6 @@ public sealed partial class AnnotationLayerControl
         SyncTextSelectionRange();
     }
 
-    /// <summary>キャレットの点滅を始める。</summary>
-    private void StartCaretBlink()
-    {
-        _isCaretVisible = true;
-        _caretTimer ??= new DispatcherTimer { Interval = s_caretBlinkInterval };
-        _caretTimer.Tick -= OnCaretTimerTick;
-        _caretTimer.Tick += OnCaretTimerTick;
-        _caretTimer.Start();
-    }
-
-    /// <summary>キャレットの点滅を止める。</summary>
-    private void StopCaretBlink()
-    {
-        _isCaretVisible = false;
-        if (_caretTimer is { } timer)
-        {
-            timer.Stop();
-            timer.Tick -= OnCaretTimerTick;
-        }
-    }
-
-    /// <summary>点滅の 1 周期（表示と非表示を切り替える）。</summary>
-    /// <param name="sender">送信元。</param>
-    /// <param name="e">引数。</param>
-    private void OnCaretTimerTick(object? sender, EventArgs e)
-    {
-        _isCaretVisible = !_isCaretVisible;
-        InvalidateVisual();
-    }
-
     /// <summary>編集の開始・終了を通知する。</summary>
     private void RaiseEditingChanged() => EditingChanged?.Invoke(this, EventArgs.Empty);
 
@@ -536,11 +494,10 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        if (_isCaretVisible)
-        {
-            var thickness = CaretThicknessDip / Math.Max(scale, 0.01);
-            context.FillRectangle(s_caretBrush, new Rect(caret.X, caret.Y, thickness, caret.Height));
-        }
+        // キャレットは常に描く（点滅させない）: 点滅は「消えている間」だけを見ると入力位置を失ったように見え、
+        // キー操作の直後に復帰しないことがある（実測 2026-11-21）
+        var thickness = CaretThicknessDip / Math.Max(scale, 0.01);
+        context.FillRectangle(s_caretBrush, new Rect(caret.X, caret.Y, thickness, caret.Height));
 
         if (_preeditText.Length > 0)
         {

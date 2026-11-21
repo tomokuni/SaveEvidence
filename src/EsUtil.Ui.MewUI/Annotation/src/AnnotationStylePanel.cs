@@ -43,7 +43,7 @@ public sealed class AnnotationStylePanel : ContentControl
 
         // 枠・余白・幅はコアの外観（AnnotationPanelAppearance）が単一所有する。
         // ここで持つと、ウィンドウの枠と二重になって「余計な辺枠」に見える。
-        Content = new ScrollViewer { Content = content };
+        Content = new ScrollViewer { Content = content, MaxHeight = appearance.MaxContentHeight };
     }
 
     /// <summary>区切り線を作る。</summary>

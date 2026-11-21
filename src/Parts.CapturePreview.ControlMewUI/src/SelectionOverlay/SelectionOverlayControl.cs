@@ -573,9 +573,20 @@ public sealed class SelectionOverlayControl : Panel
     /// <remarks>表示可否の判断はコアの <c>SelectionOverlayState.IsLoupeVisible</c> が単一所有する。</remarks>
     private void UpdateLoupeVisibility()
     {
-        _loupe.IsVisible = SelectionOverlayState
-            .Resolve(_mode)
-            .IsLoupeVisible(_loupe.Source is not null, _loupe.CenterPoint is not null);
+        var state = SelectionOverlayState.Resolve(_mode);
+        var isVisible = state.IsLoupeVisible(
+            _loupe.Source is not null, _loupe.CenterPoint is not null);
+        _loupe.IsVisible = isVisible;
+
+        // ルーペは中心座標を自分の左上へ出すため、カーソル横の座標ラベルを出すと同じ座標が 2 か所で重なる
+        var showCoordLabel = SelectionOverlayState.ShouldShowCursorCoordLabel(
+            _hostAppearance.ShowCoordLabel, isVisible);
+        if (_marquee.Appearance.ShowCoordLabel != showCoordLabel)
+        {
+            _marquee.Appearance = _marquee.Appearance with { ShowCoordLabel = showCoordLabel };
+            _marquee.InvalidateRender();
+        }
+
         InvalidateArrange();
     }
 

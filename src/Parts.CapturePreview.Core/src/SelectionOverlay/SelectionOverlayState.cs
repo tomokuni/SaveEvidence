@@ -43,4 +43,16 @@ internal readonly record struct SelectionOverlayState(bool UsesSelection)
     /// 選択矩形を使わないモードでは、画像と中心が設定されていても表示しない。
     /// </remarks>
     public bool IsLoupeVisible(bool hasSource, bool hasCenter) => UsesSelection && hasSource && hasCenter;
+
+    /// <summary>カーソル位置の座標ラベルを表示するかどうかを判定する。</summary>
+    /// <param name="showLabel">設定でカーソル位置の座標ラベルが有効かどうか。</param>
+    /// <param name="isLoupeVisible">ルーペを表示しているかどうか。</param>
+    /// <returns>表示する場合は true。</returns>
+    /// <remarks>
+    /// <b>ルーペ表示中はカーソル位置の座標ラベルを出さない</b>: ルーペは中心座標ラベルを自分の左上へ出すため、
+    /// 同じ座標が 2 か所に重なって読めなくなる（実測 2026-11-21）。 ルーペはカーソルの右下へ置かれるため、
+    /// カーソル横のラベルは必ずルーペの左上へ重なる。
+    /// </remarks>
+    public static bool ShouldShowCursorCoordLabel(bool showLabel, bool isLoupeVisible)
+        => showLabel && !isLoupeVisible;
 }

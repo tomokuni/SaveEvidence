@@ -93,10 +93,63 @@ public sealed class AnnotationPanelController
             return;
         }
 
+        var kind = Kind!.Value;
         IsOpen = false;
         Kind = null;
         IsDragging = false;
-        _host.DestroyPanel();
+        _host.DestroyPanel(kind);
+    }
+
+    /// <summary>パネルの外側を押されたときに閉じる。</summary>
+    /// <param name="point">押された位置（パネルを置く座標系の DIP）。</param>
+    /// <returns>閉じた場合は <see langword="true"/>（表示していない・内側の場合は <see langword="false"/>）。</returns>
+    /// <remarks>
+    /// <b>閉じるのは外側の押下だけ</b>で、ポインタが外れただけでは閉じない。 判定は本メソッドが単一所有する
+    /// （4 つの UI 版が「自分のパネルの矩形」と「押した位置」を渡すだけで同じ動作になる）。
+    /// </remarks>
+    public bool CloseIfOutside(EsPoint point)
+    {
+        if (Kind is not { } kind)
+        {
+            return false;
+        }
+
+        var position = _host.GetPanelPosition(kind);
+        var size = _host.GetPanelSize(kind);
+        if (size.Width <= 0 || size.Height <= 0)
+        {
+            return false;
+        }
+
+        if (new EsRect(position.X, position.Y, size.Width, size.Height).Contains(point))
+        {
+            return false;
+        }
+
+        Close();
+        return true;
+    }
+
+    /// <summary>実寸が分かったパネルを置ける領域の内側へ収める。</summary>
+    /// <param name="panelSize">パネルの実寸（DIP）。</param>
+    /// <remarks>
+    /// <b>実寸は置いた後でしか分からない</b>（中身の幅はフォント名・大きさ・色で決まる）。 UI はパネルを
+    /// 置いて測った実寸を渡すだけでよく、位置の補正は本メソッドが単一所有する。
+    /// </remarks>
+    public void Constrain(EsSize panelSize)
+    {
+        if (Kind is not { } kind || panelSize.Width <= 0 || panelSize.Height <= 0)
+        {
+            return;
+        }
+
+        var current = _host.GetPanelPosition(kind);
+        var clamped = AnnotationPanelPlacement.Clamp(
+            current, panelSize.Width, panelSize.Height, _host.AvailableArea);
+        if (clamped.X != current.X || clamped.Y != current.Y)
+        {
+            _host.MovePanel(kind, clamped);
+        }
     }
 
     /// <summary>パネルのドラッグを始める。</summary>
@@ -110,7 +163,7 @@ public sealed class AnnotationPanelController
         }
 
         IsDragging = true;
-        _dragOrigin = _host.PanelPosition;
+        _dragOrigin = Kind is { } kind ? _host.GetPanelPosition(kind) : cursor;
         _dragOriginCursor = cursor;
     }
 
@@ -119,12 +172,21 @@ public sealed class AnnotationPanelController
     /// <remarks>ドラッグしていない場合は何もしない。</remarks>
     public void DragTo(EsPoint cursor)
     {
-        if (!IsOpen || !IsDragging)
+        if (!IsOpen || !IsDragging || Kind is not { } kind)
         {
             return;
         }
 
-        _host.MovePanel(AnnotationPanelPlacement.ResolveDrag(_dragOrigin, _dragOriginCursor, cursor));
+        var moved = AnnotationPanelPlacement.ResolveDrag(_dragOrigin, _dragOriginCursor, cursor);
+        var size = _host.GetPanelSize(kind);
+        if (size.Width > 0 && size.Height > 0)
+        {
+            // 掴めなくなる位置へは動かさない（置ける領域の内側へ収める）
+            moved = AnnotationPanelPlacement.Clamp(
+                moved, size.Width, size.Height, _host.AvailableArea);
+        }
+
+        _host.MovePanel(kind, moved);
     }
 
     /// <summary>パネルのドラッグを終える。</summary>

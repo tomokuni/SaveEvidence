@@ -444,11 +444,26 @@ public sealed class SelectionOverlayControl : Panel
     }
 
     /// <summary>ルーペの表示可否をモード・拡大元画像・中心から更新する。</summary>
-    /// <remarks>表示可否の判断はコアの <c>SelectionOverlayState.IsLoupeVisible</c> が単一所有する。</remarks>
+    /// <remarks>
+    /// 表示可否の判断はコアの <c>SelectionOverlayState.IsLoupeVisible</c> が、
+    /// カーソル位置の座標ラベルの可否は <c>SelectionOverlayState.ShouldShowCursorCoordLabel</c> が単一所有する。
+    /// </remarks>
     private void UpdateLoupeVisibility()
-        => _loupeControl.IsVisible = SelectionOverlayState
-            .Resolve(_mode)
-            .IsLoupeVisible(_loupeControl.Source is not null, _loupeControl.CenterPoint is not null);
+    {
+        var state = SelectionOverlayState.Resolve(_mode);
+        var isVisible = state.IsLoupeVisible(
+            _loupeControl.Source is not null, _loupeControl.CenterPoint is not null);
+        _loupeControl.IsVisible = isVisible;
+
+        // ルーペは中心座標を自分の左上へ出すため、カーソル横の座標ラベルを出すと同じ座標が 2 か所で重なる
+        var showCoordLabel = SelectionOverlayState.ShouldShowCursorCoordLabel(
+            _hostAppearance.ShowCoordLabel, isVisible);
+        if (_marquee.Appearance.ShowCoordLabel != showCoordLabel)
+        {
+            _marquee.Appearance = _marquee.Appearance with { ShowCoordLabel = showCoordLabel };
+            _marquee.InvalidateRender();
+        }
+    }
 
     /// <summary>選択オーバーレイ（暗転マスク・ハイライト・選択矩形）の再描画を要求する。</summary>
     /// <remarks>ハイライト等の状態を変更した後に呼び出す。</remarks>
