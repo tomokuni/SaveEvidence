@@ -179,6 +179,9 @@ public sealed partial class AnnotationLayerControl
 
         Focus();
 
+        // 押下中の座標変換を固定する（ドラッグ中に倍率が変わってもカーソルと 1:1 で動かす）
+        FreezeTransform();
+
         // 押下の間はポインターを捕まえる（MewUI は捕まえないと 2 回目の押下をダブルクリックとして通知しない。 解放は Up で行う）
         CapturePointer();
 
@@ -296,6 +299,15 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
+        // 本文を押したまま動かしている間は、選択範囲を広げる（マウスでの選択）。
+        // ダブルクリックで編集を始めた押下は `_isSelectingText` が立たないため、押下中に本文の内側へ
+        // 入った場合も選択を始める（実測 2026-11-21: 矢印キーでは選べるがマウスでは選べなかった）。
+        if (!_isSelectingText && _isEditingText && e.LeftButton && !_isDraggingTail && !_isPreviewDragging
+            && Selected is BubbleAnnotation editing && editing.Bounds.Contains(source))
+        {
+            _isSelectingText = true;
+        }
+
         if (_isSelectingText)
         {
             SetCaretFromPoint(source, extend: true);
@@ -334,6 +346,9 @@ public sealed partial class AnnotationLayerControl
     protected override void OnMouseUp(MouseEventArgs e)
     {
         base.OnMouseUp(e);
+
+        // 押下中に固定した変換を解除する（次の押下で最新の表示矩形から取り直す）
+        ReleaseTransform();
 
         if (_isSelectingText)
         {

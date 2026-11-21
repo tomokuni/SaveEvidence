@@ -7,6 +7,7 @@ using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.Ui.WinUI3.Interop.Imaging;
 using EsUtil.Ui.WinUI3.Loupe;
 using EsUtil.Ui.WinUI3.Marquee;
@@ -49,7 +50,7 @@ namespace EsUtil.SaveEvidence.Parts.CapturePreview.WinUI3.SelectionOverlay;
 public sealed partial class SelectionOverlayControl : Panel
 {
     /// <summary>ドラッグ選択コントロール（選択矩形・ハンドル・nudge と、外側の装飾（暗転マスク・枠・ラベル）の描画）。</summary>
-    private readonly MarqueeControl _marquee = new() { IsHitTestVisible = true };
+    private readonly MarqueeControl _marquee = new(new NeverHideCursorService()) { IsHitTestVisible = true };
 
     /// <summary>ルーペコントロール（表示位置は本クラスが配置する）。</summary>
     private readonly LoupeControl _loupe = new() { IsHitTestVisible = false, Visibility = Visibility.Collapsed };

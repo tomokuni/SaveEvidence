@@ -304,7 +304,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         var appearance = AnnotationPanelAppearance.FormatBar;
         return new EsSize(
             size.Width + (appearance.Padding * 2) + (appearance.BorderThickness * 2),
-            size.Height + (appearance.VerticalPadding * 2) + (appearance.BorderThickness * 2));
+            appearance.ResolvePanelHeight(size.Height));
     }
 
     /// <summary>パネルの大きさ（DIP）を測る。</summary>

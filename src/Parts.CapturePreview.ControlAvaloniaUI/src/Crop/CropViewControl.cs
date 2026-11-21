@@ -16,6 +16,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.Ui.AvaloniaUI.Interop;
@@ -87,7 +88,7 @@ public sealed partial class CropViewControl : Panel
 
     /// <summary>強調オーバーレイ（ホストが与える強調矩形を描く装飾専用の選択矩形コントロール）。</summary>
     /// <remarks>入力は受けず（<c>IsHitTestVisible = false</c>）描画のみを担う（ズーム・ドラッグは下のレイヤが受ける）。</remarks>
-    private readonly MarqueeControl _highlight = new() { ZIndex = 30, IsHitTestVisible = false };
+    private readonly MarqueeControl _highlight = new(new NeverHideCursorService()) { ZIndex = 30, IsHitTestVisible = false };
 
     /// <summary>画像の周囲（影など）を画像より奥へ描く子（入力は受けない）。</summary>
     private readonly SurroundPainter _surround = new() { ZIndex = -1 };

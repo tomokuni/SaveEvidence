@@ -129,6 +129,9 @@ public sealed partial class AnnotationLayerControl
         }
 
         Focus();
+
+        // 押下中の座標変換を固定する（ドラッグ中に倍率が変わってもカーソルと 1:1 で動かす）
+        FreezeTransform();
         PrepareUndo();
 
         var source = ToSource(position);
@@ -245,6 +248,9 @@ public sealed partial class AnnotationLayerControl
     {
         ArgumentNullException.ThrowIfNull(e);
         base.OnMouseUp(e);
+
+        // 押下中に固定した変換を解除する
+        ReleaseTransform();
 
         var source = ToSource(new EsPoint(e.X, e.Y));
         if (_isPreviewDragging)

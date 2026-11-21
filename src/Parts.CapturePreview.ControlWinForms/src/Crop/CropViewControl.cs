@@ -8,6 +8,7 @@ using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.ZoomView;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.SelectionOverlay;
@@ -48,7 +49,7 @@ public sealed class CropViewControl : UserControl
 
     /// <summary>強調オーバーレイ（ホストが与える強調矩形を描く装飾専用の選択矩形コントロール）。</summary>
     /// <remarks>入力は受けず（無効状態）描画のみを担う（ズーム・ドラッグは下のレイヤが受ける）。</remarks>
-    private readonly MarqueeControl _highlight = new();
+    private readonly MarqueeControl _highlight = new(new NeverHideCursorService());
 
     /// <summary>外部提供矩形（対象座標）。</summary>
     private IReadOnlyList<OverlayRect> _rects = [];

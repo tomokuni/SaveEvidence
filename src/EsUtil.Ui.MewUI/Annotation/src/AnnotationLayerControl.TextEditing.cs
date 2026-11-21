@@ -1,4 +1,5 @@
 using Aprillz.MewUI;
+using Aprillz.MewUI.Text;
 using Aprillz.MewUI.Rendering;
 using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Geometry;
@@ -649,6 +650,11 @@ public sealed partial class AnnotationLayerControl
     /// <param name="line">行。</param>
     /// <param name="count">文字数（0 なら 0）。</param>
     /// <returns>幅（元画像ピクセル）。</returns>
+    /// <remarks>
+    /// <b>描画と同じレイアウトで測る</b>: 文字列を切り出して測り直すと、カーニングや字形の差で
+    /// 実際に描かれる文字の位置とずれ、キャレットや選択範囲が文字からずれる（実測 2026-11-21）。
+    /// 描画（<c>AnnotationPainter</c>）が使うのと同じレイアウトを作り、文字位置の輪郭を問い合わせる。
+    /// </remarks>
     private static double MeasureLinePrefix(AnnotationTextLinePlan line, int count)
     {
         if (count <= 0)
@@ -666,8 +672,11 @@ public sealed partial class AnnotationLayerControl
             }
 
             var take = Math.Min(remaining, segment.Text.Length);
-            var text = take == segment.Text.Length ? segment.Text : segment.Text[..take];
-            x += AnnotationTextMetrics.Measure(text, segment.Style).Width;
+            var layout = AnnotationTextMetrics.CreateLayout(segment.Text, segment.Style, ignoreItalic: false);
+            var width = take >= segment.Text.Length
+                ? layout.MeasuredSize.Width
+                : layout.GetCaretBounds(new CharacterHit(take, 0)).X;
+            x += width;
             remaining -= take;
         }
 

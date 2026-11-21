@@ -300,10 +300,9 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
                 double.PositiveInfinity, double.PositiveInfinity));
             var desired = content.DesiredSize;
             var appearance = KindAppearance(kind);
-            desired.Height = Math.Max(desired.Height, appearance.MinContentHeight);
             return new EsSize(
                 desired.Width + (appearance.Padding * 2) + (appearance.BorderThickness * 2),
-                desired.Height + (appearance.VerticalPadding * 2) + (appearance.BorderThickness * 2));
+                appearance.ResolvePanelHeight(desired.Height));
         }
 
         return new EsSize(root.ActualWidth, root.ActualHeight);

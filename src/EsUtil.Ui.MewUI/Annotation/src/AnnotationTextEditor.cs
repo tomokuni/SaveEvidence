@@ -45,12 +45,6 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
     private UIElement? _draggingRoot;
 
-    /// <summary>書式バーの対象（編集中の注釈の矩形）。 実寸が確定したらこの矩形で置き直す。</summary>
-    private EsRect? _formatBarTarget;
-
-    /// <summary>描画ごとの置き直しを繋いだかどうか（二重に繋がない）。</summary>
-    private bool _frameHook;
-
     /// <summary>注釈の本文編集と書式バーをまとめたコントロールを初期化する。</summary>
     public AnnotationTextEditor()
     {
@@ -182,27 +176,6 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         // 書式バーも操作できなくなる（実測 2026-11-21）。 位置は余白（Margin）で与える。
         _overlay = overlayLayer;
 
-        // **実寸が確定したら置き直す**: レイアウト前の中身の希望寸法は実際より小さいことがあり、
-        // その値で位置を決めると書式バーが注釈に重なる（実測 2026-11-21）。
-        // 描画のたびに実寸で決め直す（同じ位置なら動かない）。
-        if (!_frameHook)
-        {
-            _frameHook = true;
-            owner.FrameRendered += () =>
-            {
-                // 実寸（子の配置後の大きさ）で根の大きさを確定してから置き直す
-                foreach (var (panelKind, panelRoot) in _roots)
-                {
-                    FitRoot(panelKind, panelRoot, KindAppearance(panelKind));
-                }
-
-                if (_formatBarTarget is { } target && _formatBarPanel.IsOpen)
-                {
-                    _formatBarPanel.RepositionOutside(target, AnnotationPanelMetrics.FormatBarGap);
-                }
-            };
-        }
-
         // 根は種別ごとに 1 度だけ作って使い回す（中身を作り直すと購読が増える）
         if (!_roots.TryGetValue(kind, out var root))
         {
@@ -307,7 +280,6 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     private void ShowFormatBar()
     {
         var body = ToOverlayRect(_layer.GetSelectedBoundsRect());
-        _formatBarTarget = body;
         _formatBarPanel.ShowOutside(
             AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), AnnotationPanelMetrics.FormatBarGap);
         _formatBarPanel.RepositionOutside(body, AnnotationPanelMetrics.FormatBarGap);
@@ -337,50 +309,6 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     private EsSize MeasurePanel(AnnotationPanelKind kind)
         => MeasureContentSize(kind, KindAppearance(kind));
 
-    /// <summary>中身の実寸に合わせて根の大きさを確定する。</summary>
-    /// <param name="kind">パネルの種別。</param>
-    /// <param name="root">パネルの根。</param>
-    /// <param name="appearance">外観（枠と余白）。</param>
-    /// <remarks>
-    /// <b>希望寸法では足りない</b>: 中身（コンボボックス・数値入力・色選択）の希望寸法は実際より
-    /// 小さく出ることがあり、その値で根を固定すると中身が根からはみ出して注釈に重なる
-    /// （実測 2026-11-21）。 配置後の子の大きさから根の大きさを決める。
-    /// </remarks>
-    private static void FitRoot(
-        AnnotationPanelKind kind, Border root, AnnotationPanelAppearance appearance)
-    {
-        _ = kind;
-        if (root.Child is not Panel content || content.Children.Count == 0)
-        {
-            return;
-        }
-
-        var maxWidth = 0.0;
-        var maxHeight = 0.0;
-        foreach (var child in content.Children)
-        {
-            maxWidth = Math.Max(maxWidth, child.RenderSize.Width);
-            maxHeight = Math.Max(maxHeight, child.RenderSize.Height);
-        }
-
-        if (maxWidth <= 0 || maxHeight <= 0)
-        {
-            return;
-        }
-
-        var width = maxWidth + (appearance.Padding * 2) + (appearance.BorderThickness * 2);
-        var height = maxHeight + (appearance.VerticalPadding * 2) + (appearance.BorderThickness * 2);
-        if (Math.Abs(root.Width - width) > 0.5)
-        {
-            root.Width = width;
-        }
-
-        if (Math.Abs(root.Height - height) > 0.5)
-        {
-            root.Height = height;
-        }
-    }
-
     /// <summary>種別の外観を取得する（既定値。 パネルはどちらか 1 つしか持たない）。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <returns>外観。</returns>
@@ -407,23 +335,22 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         // レイアウト済みなら実寸（中身の RenderSize）を使う。 未レイアウトの中身は希望寸法が
         // 実際より小さく出ることがあり、その値で位置を決めると注釈に重なる（実測 2026-11-21）。
         var measured = content.RenderSize.Width > 0 && content.RenderSize.Height > 0
-            ? new Size(content.RenderSize.Width, Math.Max(content.RenderSize.Height, appearance.MinContentHeight))
-            : MeasureContent(content, appearance);
+            ? new Size(content.RenderSize.Width, content.RenderSize.Height)
+            : MeasureContent(content);
 
         return new EsSize(
             measured.Width + (appearance.Padding * 2) + (appearance.BorderThickness * 2),
-            measured.Height + (appearance.VerticalPadding * 2) + (appearance.BorderThickness * 2));
+            appearance.ResolvePanelHeight(measured.Height));
     }
 
-    /// <summary>中身の希望寸法を測る（最小の高さはコアの外観が所有する）。</summary>
+    /// <summary>中身の希望寸法を測る。</summary>
     /// <param name="content">中身。</param>
-    /// <param name="appearance">外観（最小の高さ）。</param>
     /// <returns>希望寸法。</returns>
-    private static Size MeasureContent(Element content, AnnotationPanelAppearance appearance)
+    private static Size MeasureContent(Element content)
     {
         content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         var desired = content.DesiredSize;
-        return new Size(desired.Width, Math.Max(desired.Height, appearance.MinContentHeight));
+        return new Size(desired.Width, desired.Height);
     }
 
     /// <summary>種別のパネルを画面から外す（根と中身は残す）。</summary>

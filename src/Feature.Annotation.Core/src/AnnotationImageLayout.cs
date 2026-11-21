@@ -16,9 +16,6 @@ public static class AnnotationImageLayout
     /// <summary>縦横比の許容差（比の相対誤差）。</summary>
     private const double AspectTolerance = 0.02;
 
-    /// <summary>位置の許容差（DIP）。</summary>
-    private const double EdgeTolerance = 1.5;
-
     /// <summary>画像の表示倍率と左上の位置を求める。</summary>
     /// <param name="clientSize">注釈レイヤーの大きさ（DIP）。</param>
     /// <param name="imageSize">元画像の大きさ（ピクセル）。</param>
@@ -56,19 +53,20 @@ public static class AnnotationImageLayout
     /// <param name="clientWidth">レイヤーの幅（DIP）。</param>
     /// <param name="clientHeight">レイヤーの高さ（DIP）。</param>
     /// <returns>使ってよい場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>レイヤーの外へはみ出す値も正しい</b>: 画像がプレビューより大きい（ズーム 100% で見切れる）場合、
+    /// 表示矩形の左上は負になる。 はみ出しを不正とすると、実際の画像と注釈で別の倍率・位置を使って
+    /// 右上へずれる（実測 2026-11-21）。 判定は「有限・正の大きさ・縦横比が画像と一致」だけにする。
+    /// </remarks>
     private static bool IsPlausible(
         EsRect rect, EsSize imageSize, double clientWidth, double clientHeight)
     {
-        if (rect.Width <= 0 || rect.Height <= 0
-            || !double.IsFinite(rect.X) || !double.IsFinite(rect.Y))
-        {
-            return false;
-        }
+        _ = clientWidth;
+        _ = clientHeight;
 
-        // レイヤーの外へ出る（余白の分だけはみ出すのは許す）
-        if (rect.X < -EdgeTolerance || rect.Y < -EdgeTolerance
-            || rect.Right > clientWidth + EdgeTolerance
-            || rect.Bottom > clientHeight + EdgeTolerance)
+        if (rect.Width <= 0 || rect.Height <= 0
+            || !double.IsFinite(rect.X) || !double.IsFinite(rect.Y)
+            || !double.IsFinite(rect.Width) || !double.IsFinite(rect.Height))
         {
             return false;
         }

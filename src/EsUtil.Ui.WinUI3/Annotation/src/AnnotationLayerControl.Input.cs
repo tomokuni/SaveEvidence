@@ -215,6 +215,9 @@ public sealed partial class AnnotationLayerControl
 
         _ = Focus(FocusState.Pointer);
 
+        // 押下中の座標変換を固定する（ドラッグ中に倍率が変わってもカーソルと 1:1 で動かす）
+        FreezeTransform();
+
         // 押下から始まる操作（移動・サイズ変更・しっぽの移動）を 1 手として記録する
         PrepareUndo();
 
@@ -361,6 +364,9 @@ public sealed partial class AnnotationLayerControl
     private void OnPointerReleased(object sender, PointerRoutedEventArgs e)
     {
         _ = sender;
+
+        // 押下中に固定した変換を解除する
+        ReleaseTransform();
 
         var point = e.GetCurrentPoint(this);
         var source = ToSource(new EsPoint(point.Position.X, point.Position.Y));

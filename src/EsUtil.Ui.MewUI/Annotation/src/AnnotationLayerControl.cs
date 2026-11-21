@@ -60,6 +60,9 @@ public sealed partial class AnnotationLayerControl : Panel
     /// <summary>Marquee からの通知で文書を更新している最中かどうか（再入防止）。</summary>
     private bool _isApplyingMarquee;
 
+    /// <summary>押下中に固定した変換（null は固定していない）。</summary>
+    private (double Scale, Point Offset)? _frozenTransform;
+
     /// <summary>最後に観測したポインター位置（元画像ピクセル。 nudge の起点に使う）。</summary>
     private EsPoint _lastPointerSource;
 
@@ -720,11 +723,22 @@ public sealed partial class AnnotationLayerControl : Panel
     /// <summary>ローカル DIP を元画像ピクセルへ変換する。</summary>
     /// <param name="dip">ローカル DIP の座標。</param>
     /// <returns>元画像ピクセルの座標。</returns>
+    /// <remarks>
+    /// <b>押下中は変換を固定する</b>: ドラッグ中にホストが表示矩形を更新すると倍率が変わり、
+    /// 注釈がカーソルからずれる（実測 2026-11-21: 150 px 動かしても注釈は 140 px しか動かなかった）。
+    /// 押下時に決めた変換を解放まで使い続ける。
+    /// </remarks>
     private EsPoint ToSource(Point dip)
     {
-        var (scale, offset) = ResolveImageTransform();
+        var (scale, offset) = _frozenTransform ?? ResolveImageTransform();
         return new EsPoint((dip.X - offset.X) / scale, (dip.Y - offset.Y) / scale);
     }
+
+    /// <summary>押下中に使う変換を固定する（押下のたびに呼ぶ）。</summary>
+    private void FreezeTransform() => _frozenTransform = ResolveImageTransform();
+
+    /// <summary>固定した変換を解除する（ポインターを離したら呼ぶ）。</summary>
+    private void ReleaseTransform() => _frozenTransform = null;
 
     /// <summary>元画像ピクセルをローカル DIP へ変換する。</summary>
     /// <param name="source">元画像ピクセルの座標。</param>

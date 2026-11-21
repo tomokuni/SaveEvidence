@@ -51,6 +51,9 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <summary>選択枠とハンドルを並べる層。</summary>
     private readonly Canvas _selection = new() { IsHitTestVisible = false };
 
+    /// <summary>押下中に固定した変換（null は固定していない）。 ドラッグ中に表示矩形が変わっても 1:1 で動かす。</summary>
+    private (double Scale, EsPoint Offset)? _frozenTransform;
+
     /// <summary>選択枠の外観（暗転・ラベル・マーカーは使わない）。</summary>
     private static readonly MarqueeAppearance s_marqueeAppearance = MarqueeAppearance.Default with
     {
@@ -719,9 +722,15 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <returns>元画像ピクセルの座標。</returns>
     internal EsPoint ToSource(EsPoint dip)
     {
-        var (scale, offset) = ResolveImageTransform();
+        var (scale, offset) = _frozenTransform ?? ResolveImageTransform();
         return new EsPoint((dip.X - offset.X) / scale, (dip.Y - offset.Y) / scale);
     }
+
+    /// <summary>押下中の座標変換を固定する（ドラッグ中に倍率が変わってもカーソルと 1:1 で動かす）。</summary>
+    private void FreezeTransform() => _frozenTransform = ResolveImageTransform();
+
+    /// <summary>固定した変換を解除する（ポインターを離したら呼ぶ）。</summary>
+    private void ReleaseTransform() => _frozenTransform = null;
 
     /// <summary>元画像ピクセルをローカル DIP へ変換する。</summary>
     /// <param name="source">元画像ピクセルの座標。</param>

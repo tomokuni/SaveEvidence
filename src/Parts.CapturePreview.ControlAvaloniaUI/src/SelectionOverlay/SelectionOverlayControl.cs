@@ -12,6 +12,7 @@ using EsUtil.Platform.Core;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Logging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Presentation;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
+using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Session;
 using EsUtil.Ui.AvaloniaUI.Interop;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using EsUtil.Ui.AvaloniaUI.Loupe;
@@ -68,7 +69,7 @@ public sealed class SelectionOverlayControl : Panel
 {
 
     /// <summary>ドラッグ選択コントロール（選択矩形・ハンドル・nudge と、外側の装飾（暗転マスク・枠・ラベル）の描画）。</summary>
-    private readonly MarqueeControl _marquee = new() { IsHitTestVisible = true, ZIndex = 60, ClipToBounds = true };
+    private readonly MarqueeControl _marquee = new(new NeverHideCursorService()) { IsHitTestVisible = true, ZIndex = 60, ClipToBounds = true };
 
     /// <summary>ルーペコントロール（外観・表示状態の真のソース）。</summary>
     private readonly LoupeControl _loupeControl = new() { ZIndex = 70, IsHitTestVisible = false };
