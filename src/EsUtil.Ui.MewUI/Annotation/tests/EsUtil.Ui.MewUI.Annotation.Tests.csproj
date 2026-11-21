@@ -24,4 +24,8 @@
     <ProjectReference Include="..\src\EsUtil.Ui.MewUI.Annotation.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="EsUtil.Feature.Annotation.Core" />
+    <Using Include="EsUtil.Feature.Annotation.Presenter" />
+  </ItemGroup>
 </Project>

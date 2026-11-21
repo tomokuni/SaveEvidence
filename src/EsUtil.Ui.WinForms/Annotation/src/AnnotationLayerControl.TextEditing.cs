@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using System.Text;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Ui.WinForms.Annotation;
@@ -80,8 +79,24 @@ public sealed partial class AnnotationLayerControl
     /// <summary>選択範囲の長さ（文字数）を取得する。</summary>
     public int TextSelectionLength => TextSelectionEnd - TextSelectionStart;
 
-    /// <summary>選択範囲（開始位置と長さ）を取得する。</summary>
-    public (int Start, int Length) TextSelectionRange => (TextSelectionStart, TextSelectionLength);
+    /// <summary>選択範囲（開始位置と長さ）を取得または設定する。</summary>
+    [System.ComponentModel.Browsable(false)]
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public (int Start, int Length) TextSelectionRange
+    {
+        get => (TextSelectionStart, TextSelectionLength);
+        set
+        {
+            // 範囲はキャレットと選択の起点で表す（範囲から位置を戻す規則はここ 1 か所）
+            var length = TextForInput.Length;
+            var start = Math.Clamp(value.Start, 0, length);
+            var end = Math.Clamp(start + Math.Max(0, value.Length), start, length);
+            _selectionAnchor = start;
+            _caretIndex = end;
+            SyncTextSelectionRange();
+            Invalidate();
+        }
+    }
 
     /// <summary>本文の文字列（IME へ渡す）。</summary>
     internal string TextForInput => Selected is BubbleAnnotation bubble ? bubble.Text.PlainText : string.Empty;

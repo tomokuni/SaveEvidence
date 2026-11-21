@@ -1,7 +1,6 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
-using EsUtil.Feature.Annotation;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;

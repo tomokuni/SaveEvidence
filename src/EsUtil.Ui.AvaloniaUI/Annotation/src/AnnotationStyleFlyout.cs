@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using EsUtil.Feature.Annotation;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
 

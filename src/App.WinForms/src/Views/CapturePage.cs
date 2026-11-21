@@ -2,7 +2,6 @@ using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core;
-using EsUtil.Feature.Annotation;
 using System.Text;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;

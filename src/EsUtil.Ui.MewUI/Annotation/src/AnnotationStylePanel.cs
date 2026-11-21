@@ -1,6 +1,5 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Feature.Annotation;
 
 namespace EsUtil.Ui.MewUI.Annotation;
 

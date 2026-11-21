@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Rendering;
 using Aprillz.MewUI.Text;
-using EsUtil.Feature.Annotation;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Ui.MewUI.Annotation;

@@ -1,5 +1,4 @@
 using System.Drawing.Drawing2D;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Ui.WinUI3.Annotation;

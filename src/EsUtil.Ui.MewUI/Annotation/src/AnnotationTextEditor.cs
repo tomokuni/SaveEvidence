@@ -1,6 +1,5 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Palette;
 using MewUIColor = Aprillz.MewUI.Color;

@@ -12,7 +12,6 @@ using EsUtil.SaveEvidence.App.MewUI.Icons;
 using EsUtil.SaveEvidence.App.MewUI.Logging;
 using EsUtil.SaveEvidence.App.MewUI.Services;
 using EsUtil.Ui.MewUI.Annotation;
-using EsUtil.Feature.Annotation;
 using System.Text;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Overlay;

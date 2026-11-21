@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Text;
 using Aprillz.MewUI.Rendering;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Ui.MewUI.Annotation;
@@ -600,13 +599,33 @@ public sealed partial class AnnotationLayerControl
 
         // **位置は描画と同じ規則で求める**: 区間の原点（描画に使う Bounds.X）からの距離で決める
         // （規則の所有者は Core の AnnotationTextLineLayout。行頭から積み上げると文字からずれる）
-        var metrics = AnnotationTextMetrics.MeasureLineMetrics(SelectedTextStyle);
-        var baseline = AnnotationTextLineLayout.ResolveBaseline(line, AnnotationTextMetrics.MeasureLineMetrics);
-        caret = (
-            AnnotationTextLineLayout.ResolveX(line, offset, MeasureSegmentPrefix),
-            baseline - metrics.Baseline,
-            metrics.Height);
+        var x = AnnotationTextLineLayout.ResolveX(line, offset, MeasureSegmentPrefix);
+
+        // **縦位置も描画と同じ区間の書式で決める**: キャレットの位置の書式で測ると、太字や大きさの違う
+        // 区間へキャレットが入ったときに上下へずれる（実測 2026-11-22）。 描画は区間ごとのレイアウトで
+        // 上端を決めているため、同じレイアウトのベースライン・高さを使う。
+        var (top, height) = ResolveCaretVertical(line, offset);
+        caret = (x, top, height);
         return true;
+    }
+
+    /// <summary>キャレットの上端と高さ（元画像ピクセル）を、その位置を描く区間から求める。</summary>
+    /// <param name="line">行。</param>
+    /// <param name="offset">行の先頭からの文字位置。</param>
+    /// <returns>上端と高さ。</returns>
+    private static (double Top, double Height) ResolveCaretVertical(AnnotationTextLinePlan line, int offset)
+    {
+        if (line.Segments.Count == 0)
+        {
+            return (line.Bounds.Y, line.Bounds.Height);
+        }
+
+        var (segmentIndex, _) = AnnotationTextLineLayout.Locate(line, offset);
+        var segment = line.Segments[segmentIndex];
+        var segmentLayout = AnnotationTextMetrics.CreateLayout(segment.Text, segment.Style, ignoreItalic: false);
+        var baseline = AnnotationTextLineLayout.ResolveBaseline(line, AnnotationTextMetrics.MeasureLineMetrics);
+        var segmentBaseline = segmentLayout.Lines.Count > 0 ? segmentLayout.Lines[0].Baseline : segmentLayout.MeasuredSize.Height;
+        return (baseline - segmentBaseline, segmentLayout.MeasuredSize.Height);
     }
 
     /// <summary>点（元画像ピクセル）に最も近い文字位置を求める。</summary>

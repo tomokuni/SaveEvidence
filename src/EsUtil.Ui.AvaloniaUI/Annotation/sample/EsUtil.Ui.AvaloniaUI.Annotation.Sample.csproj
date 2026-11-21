@@ -22,4 +22,8 @@
     <ProjectReference Include="..\src\EsUtil.Ui.AvaloniaUI.Annotation.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="EsUtil.Feature.Annotation.Core" />
+    <Using Include="EsUtil.Feature.Annotation.Presenter" />
+  </ItemGroup>
 </Project>

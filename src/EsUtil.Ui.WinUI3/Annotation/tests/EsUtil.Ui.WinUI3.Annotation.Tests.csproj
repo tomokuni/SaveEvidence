@@ -25,4 +25,8 @@
     <ProjectReference Include="..\src\EsUtil.Ui.WinUI3.Annotation.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="EsUtil.Feature.Annotation.Core" />
+    <Using Include="EsUtil.Feature.Annotation.Presenter" />
+  </ItemGroup>
 </Project>

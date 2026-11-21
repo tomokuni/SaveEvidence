@@ -3,7 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Media;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 

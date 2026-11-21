@@ -1,4 +1,3 @@
-using EsUtil.Feature.Annotation;
 using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Input;
@@ -321,9 +320,22 @@ public sealed partial class AnnotationLayerControl
         var source = ToSource(new EsPoint(point.Position.X, point.Position.Y));
         _lastPointerSource = source;
 
+        // **ボタンを押していない移動では何も動かさない**: 捕捉の解放や Up の取りこぼしで
+        // 「押していないのにドラッグ中」の状態が残ると、ホバーだけで枠線や注釈が動き続ける
+        // （実測 2026-11-22: MewUI 版で再現）。 押下中だけ動かす。
+        var isPressed = point.Properties.IsLeftButtonPressed;
+
         // 本文を押したまま動かしている間は、選択範囲を広げる（マウスでの選択）
         if (_isSelectingText)
         {
+            if (!isPressed)
+            {
+                _isSelectingText = false;
+                ReleasePointerCapture(e.Pointer);
+                Redraw();
+                return;
+            }
+
             SetCaretFromPoint(source, extend: true);
             Redraw();
             return;
@@ -331,6 +343,14 @@ public sealed partial class AnnotationLayerControl
 
         if (_isDraggingTail)
         {
+            if (!isPressed)
+            {
+                _isDraggingTail = false;
+                RaiseDocumentChanged();
+                Redraw();
+                return;
+            }
+
             if (Selected is BubbleAnnotation bubble && _document.SetTailTip(bubble.Id, source))
             {
                 RaiseDocumentChanged();
@@ -347,7 +367,15 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        _marquee.Move(source);
+        if (isPressed)
+        {
+            _marquee.Move(source);
+        }
+        else if (_marquee.CreateSnapshot(source).State is MarqueeInteractionState.Dragging
+            or MarqueeInteractionState.DraggingNudging)
+        {
+            _marquee.Release(source);
+        }
 
         // 注釈の上に無い間は、プレビューのホバー表示（座標・自動切り出しの強調）へ位置を渡す
         if (!HitTestAt(point.Position))

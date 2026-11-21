@@ -45,4 +45,9 @@
     <InternalsVisibleTo Include="EsUtil.Ui.WinUI3.Annotation.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="EsUtil.Feature.Annotation.Core" />
+    <Using Include="EsUtil.Feature.Annotation.Presenter" />
+  </ItemGroup>
 </Project>
+

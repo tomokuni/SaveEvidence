@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
-using EsUtil.Feature.Annotation;
 using EsUtil.Ui.AvaloniaUI.ColorSelector;
 using DrawingColor = System.Drawing.Color;
 

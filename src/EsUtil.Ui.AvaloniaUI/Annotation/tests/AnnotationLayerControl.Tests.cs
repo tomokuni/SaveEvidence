@@ -2,7 +2,6 @@ using Avalonia;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Geometry;
 using Xunit;
 

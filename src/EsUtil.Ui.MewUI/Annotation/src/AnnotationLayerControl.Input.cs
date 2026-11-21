@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Rendering;
-using EsUtil.Feature.Annotation;
 using EsUtil.Feature.Marquee;
 using EsUtil.Feature.Marquee.Core.Contract;
 using EsUtil.Platform.Core.Geometry;
@@ -326,12 +325,30 @@ public sealed partial class AnnotationLayerControl
 
         if (_isSelectingText)
         {
+            // **ボタンを離した後の移動では選択を広げない**（解放を取りこぼすと、ホバーだけで
+            // 選択範囲が伸び続ける。 実測 2026-11-22）
+            if (!e.LeftButton)
+            {
+                _isSelectingText = false;
+                ReleasePointer();
+                InvalidateVisual();
+                return;
+            }
+
             SetCaretFromPoint(source, extend: true);
             return;
         }
 
         if (_isDraggingTail)
         {
+            if (!e.LeftButton)
+            {
+                _isDraggingTail = false;
+                RaiseDocumentChanged();
+                InvalidateVisual();
+                return;
+            }
+
             if (Selected is BubbleAnnotation bubble && _document.SetTailTip(bubble.Id, source))
             {
                 RaiseDocumentChanged();
@@ -341,7 +358,21 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        _marquee.Move(source);
+        // **押していない移動では注釈を動かさない**: 解放の通知を取りこぼすと（ポインターの捕獲が
+        // ウィンドウへ移った場合など）マーキーがドラッグ中のまま残り、ホバーだけで枠線や注釈が
+        // 動き続ける（実測 2026-11-22）。 押下中だけドラッグを適用し、押していないときは解除する。
+        if (!e.LeftButton)
+        {
+            if (_marquee.CreateSnapshot(source).State is MarqueeInteractionState.Dragging
+                or MarqueeInteractionState.DraggingNudging)
+            {
+                _marquee.Release(source);
+            }
+        }
+        else
+        {
+            _marquee.Move(source);
+        }
 
         // 注釈の上に無い間は、プレビューのホバー表示（座標・自動切り出しの強調）へ位置を渡す
         if (!HitTestAt(position))

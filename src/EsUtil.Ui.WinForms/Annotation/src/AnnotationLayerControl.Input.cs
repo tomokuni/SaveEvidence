@@ -1,5 +1,4 @@
 using System.Drawing.Drawing2D;
-using EsUtil.Feature.Annotation;
 using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Input;

@@ -1,7 +1,6 @@
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using EsUtil.Feature.Annotation;
 using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
@@ -264,11 +263,17 @@ public sealed partial class AnnotationLayerControl : Control
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public AnnotationItem? Selected => SelectedId is null ? null : _document.Find(SelectedId);
 
-    /// <summary>選択中の本文の書式を取得する（選択範囲の先頭の書式）。</summary>
+    /// <summary>選択中の本文の書式を取得または設定する（選択範囲の先頭の書式。 設定すると選択範囲へ適用する）。</summary>
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public AnnotationTextStyle SelectedTextStyle
-        => Selected is BubbleAnnotation bubble
-            ? bubble.Text.StyleAt(Math.Max(0, TextSelectionStart))
-            : AnnotationDefaults.TextStyle;
+    {
+        get => AnnotationSelectionPresenter.ResolveTextStyle(_document, SelectedId, TextSelectionRange);
+        set
+        {
+            // 適用の規則（選択が無ければ適用しない）はコアが単一所有する
+            _ = ApplyTextStyle(value);
+        }
+    }
 
     /// <summary>元に戻すことができるかどうかを取得する。</summary>
     public bool CanUndo => _history.CanUndo;
@@ -395,6 +400,22 @@ public sealed partial class AnnotationLayerControl : Control
         return true;
     }
 
+    /// <summary>選択中の注釈の外観（枠線・内側・角丸）を取得または設定する。</summary>
+    /// <value>外観。 何も選んでいない場合は `null`。 設定するとその注釈の外観を差し替える。</value>
+    /// <remarks>値の解決と適用の規則はコア（`AnnotationSelectionPresenter`）が単一所有する。</remarks>
+    [System.ComponentModel.Browsable(false)]
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public AnnotationAppearance? SelectedAppearance
+    {
+        get => AnnotationSelectionPresenter.ResolveAppearance(_document, SelectedId);
+        set
+        {
+            if (value is { } appearance)
+            {
+                _ = UpdateSelectedAppearance(_ => appearance);
+            }
+        }
+    }
     /// <summary>選択中の注釈の外観を差し替える。</summary>
     /// <param name="transform">外観を変える処理。</param>
     /// <returns>変えた場合は <see langword="true"/>。</returns>

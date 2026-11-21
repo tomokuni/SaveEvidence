@@ -1,4 +1,3 @@
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Palette;
 
 namespace EsUtil.Ui.WinForms.Annotation;
@@ -56,7 +55,7 @@ internal sealed class AnnotationFormatBar : Panel
         _font = new ComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 128,
+            Width = (int)Math.Round(AnnotationFormatBarLayout.FontSelectorWidth),
             Font = new Font("Yu Gothic UI", AnnotationEditorControls.FontSize),
             Margin = new Padding(1),
         };

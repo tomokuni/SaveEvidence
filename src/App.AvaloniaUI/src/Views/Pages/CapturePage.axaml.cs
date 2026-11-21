@@ -12,7 +12,6 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;

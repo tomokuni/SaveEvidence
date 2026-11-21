@@ -5,7 +5,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.VisualTree;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Palette;
 using DrawingColor = System.Drawing.Color;

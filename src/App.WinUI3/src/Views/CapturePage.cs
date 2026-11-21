@@ -1,7 +1,6 @@
 using DrawingColor = System.Drawing.Color;
 using System.ComponentModel;
 using System.Text;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core;
@@ -765,11 +764,11 @@ internal static class CapturePage
         annotationEditor.Layer.AddMenuRequested += (_, e) =>
             ShowAnnotationAddMenu(annotationEditor, new Windows.Foundation.Point(e.X, e.Y), host);
 
-        void ForwardAnnotationGesture(EsUtil.Feature.Annotation.AnnotationPreviewGestureEventArgs e)
+        void ForwardAnnotationGesture(AnnotationPreviewGestureEventArgs e)
         {
             // 追加メニューは押下でだけ閉じる（ポインタの移動で閉じない）。
             // 外観フライアウトは独立したウィンドウなので、外側の押下でウィンドウが非アクティブになって閉じる。
-            if (e.Gesture == EsUtil.Feature.Annotation.AnnotationPreviewGesture.Press)
+            if (e.Gesture == AnnotationPreviewGesture.Press)
             {
                 if (CloseAnnotationAddMenuOnOutsidePress(new Windows.Foundation.Point(e.X, e.Y)))
                 {
@@ -780,20 +779,20 @@ internal static class CapturePage
             var position = new EsPoint(e.X, e.Y);
             switch (e.Gesture)
             {
-                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.DragStart:
+                case AnnotationPreviewGesture.DragStart:
                     crop.BeginPan(position);
                     break;
-                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.DragMove:
+                case AnnotationPreviewGesture.DragMove:
                     crop.PanTo(position);
                     break;
-                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.DragEnd:
+                case AnnotationPreviewGesture.DragEnd:
                     crop.EndPan();
                     break;
-                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.Wheel:
+                case AnnotationPreviewGesture.Wheel:
                     crop.ForwardWheel(
                         new EsVector(0, e.WheelDelta), e.IsShiftDown, e.IsControlDown, position);
                     break;
-                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.Hover:
+                case AnnotationPreviewGesture.Hover:
                     UpdatePointerText(viewModel, crop.ZoomView, position);
                     if (viewModel.IsAutoCropActive)
                     {
@@ -805,11 +804,11 @@ internal static class CapturePage
                     }
 
                     break;
-                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.Leave:
+                case AnnotationPreviewGesture.Leave:
                     viewModel.PointerDisplayText = StatusBarTexts.PointerUnavailableText;
                     viewModel.HoveredRect = null;
                     break;
-                case EsUtil.Feature.Annotation.AnnotationPreviewGesture.DoubleClick:
+                case AnnotationPreviewGesture.DoubleClick:
                     if (viewModel.IsAutoCropActive)
                     {
                         if (FindAutoCropHit(viewModel, crop.ZoomView, position) is { } autoCropHit)
@@ -847,13 +846,13 @@ internal static class CapturePage
                 layer.Source = image;
                 layer.SourcePixelWidth = image.Size.Width;
                 layer.SourcePixelHeight = image.Size.Height;
-                layer.Document = new EsUtil.Feature.Annotation.AnnotationDocument(
+                layer.Document = new AnnotationDocument(
                     image.Size.Width, image.Size.Height, string.Empty);
             }
             else
             {
                 layer.Source = null;
-                layer.Document = new EsUtil.Feature.Annotation.AnnotationDocument(1, 1);
+                layer.Document = new AnnotationDocument(1, 1);
             }
 
             viewModel.HasPendingAnnotationSave = false;

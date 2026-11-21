@@ -1,4 +1,3 @@
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Palette;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -70,7 +69,7 @@ internal sealed class AnnotationFormatBar : ContentControl
         {
             ItemsSource = AnnotationFonts.All,
             SelectedIndex = 0,
-            Width = 130,
+            Width = AnnotationFormatBarLayout.FontSelectorWidth,
 
             // **高さを明示する**: 既定の高さでは文字の上が欠ける（実測 2026-11-20）
             MinHeight = AnnotationFormatBarLayout.ItemHeight,
@@ -95,7 +94,7 @@ internal sealed class AnnotationFormatBar : ContentControl
             Maximum = 512,
             SmallChange = 1,
             Value = AnnotationDefaults.FontSizeDefault,
-            Width = 90,
+            Width = AnnotationFormatBarLayout.SizeSelectorWidth,
             MinHeight = AnnotationFormatBarLayout.ItemHeight,
             Height = AnnotationFormatBarLayout.ItemHeight,
             FontSize = AnnotationEditorControls.FontSize,

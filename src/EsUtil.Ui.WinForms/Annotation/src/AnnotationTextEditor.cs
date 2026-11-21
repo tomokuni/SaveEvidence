@@ -1,4 +1,3 @@
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Palette;
 
 namespace EsUtil.Ui.WinForms.Annotation;

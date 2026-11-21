@@ -4,7 +4,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using EsUtil.Feature.Annotation;
 using EsUtil.Feature.Marquee;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
@@ -275,9 +274,14 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     /// <value>選択が吹き出しでない場合は <see cref="AnnotationDefaults.TextStyle"/>。</value>
     /// <remarks>フライアウトの初期表示に使う。</remarks>
     public AnnotationTextStyle SelectedTextStyle
-        => Selected is BubbleAnnotation bubble
-            ? bubble.Text.StyleAt(TextSelectionRange.Length <= 0 ? 0 : TextSelectionRange.Start)
-            : AnnotationDefaults.TextStyle;
+    {
+        get => AnnotationSelectionPresenter.ResolveTextStyle(_document, SelectedId, TextSelectionRange);
+        set
+        {
+            // 適用の規則（選択が無ければ適用しない）はコアが単一所有する
+            _ = ApplyTextStyle(value);
+        }
+    }
 
     /// <summary>指定した位置を左上として枠線を追加する（右クリックのメニューから追加する）。</summary>
     /// <param name="sourcePoint">左上の位置（元画像ピクセル）。</param>
@@ -492,6 +496,20 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         return true;
     }
 
+    /// <summary>選択中の注釈の外観（枠線・内側・角丸）を取得または設定する。</summary>
+    /// <value>外観。 何も選んでいない場合は `null`。 設定するとその注釈の外観を差し替える。</value>
+    /// <remarks>値の解決と適用の規則はコア（`AnnotationSelectionPresenter`）が単一所有する。</remarks>
+    public AnnotationAppearance? SelectedAppearance
+    {
+        get => AnnotationSelectionPresenter.ResolveAppearance(_document, SelectedId);
+        set
+        {
+            if (value is { } appearance)
+            {
+                _ = UpdateSelectedAppearance(_ => appearance);
+            }
+        }
+    }
     /// <summary>選択中の注釈の外観を差し替える。</summary>
     /// <param name="transform">現在の外観を受け取って新しい外観を返す関数。</param>
     /// <returns>適用した場合は <see langword="true"/>。</returns>

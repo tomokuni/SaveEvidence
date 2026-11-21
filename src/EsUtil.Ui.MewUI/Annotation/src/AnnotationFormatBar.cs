@@ -1,7 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using Aprillz.MewUI.Text;
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Palette;
 using EsUtil.Ui.MewUI.ColorSelector;
@@ -129,25 +128,15 @@ public sealed class AnnotationFormatBar : ContentControl
         Content = controls;
     }
 
-    /// <summary>フォントの選択の幅（DIP）。</summary>
-    internal const double FontSelectorWidth = 210;
+    /// <summary>フォントの選択の幅（DIP。 値はコアが単一所有する）。</summary>
+    internal const double FontSelectorWidth = AnnotationFormatBarLayout.FontSelectorWidth;
 
-    /// <summary>大きさの入力の幅（DIP）。</summary>
-    internal const double SizeSelectorWidth = 104;
+    /// <summary>大きさの入力の幅（DIP。 値はコアが単一所有する）。</summary>
+    internal const double SizeSelectorWidth = AnnotationFormatBarLayout.SizeSelectorWidth;
 
-    /// <summary>色の選択の幅（DIP）。</summary>
-    /// <summary>色の選択の幅（DIP。 AvaloniaUI 版と同じ計算で求める）。</summary>
-    internal static readonly double ColorSelectorWidth = ResolveColorSelectorWidth();
-
-    /// <summary>色の選択の幅を求める（「■ + 全角 4 文字 + 100%」と「■ + #FFFFFFFF」の広いほう）。</summary>
-    /// <returns>幅（DIP）。</returns>
-    private static double ResolveColorSelectorWidth()
-    {
-        var style = AnnotationDefaults.TextStyle with { FontSize = 12 };
-        var nameWidth = AnnotationTextMetrics.Measure("薄い灰色+100%", style).Width;
-        var hexWidth = AnnotationTextMetrics.Measure("#FFFFFFFF", style).Width;
-        return Math.Ceiling(24 + Math.Max(nameWidth, hexWidth) + 34);
-    }
+    /// <summary>色の選択の幅（DIP。 規則はコアが単一所有する）。</summary>
+    internal static readonly double ColorSelectorWidth =
+        AnnotationFormatBarLayout.ResolveColorSelectorWidth(AnnotationTextMetrics.Measure);
 
     /// <summary>操作の間の余白（DIP）。</summary>
     private const double ControlSpacing = 4;

@@ -6,7 +6,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
-using EsUtil.Feature.Annotation;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Palette;
 using EsUtil.Ui.AvaloniaUI.ColorSelector;
 using System.Globalization;
@@ -32,15 +32,6 @@ internal sealed class AnnotationFormatBar : Border
 
     /// <summary>取り消し線のショートカット（一般的な表記に合わせる）。</summary>
     internal const string StrikeShortcut = "Alt+Shift+5";
-
-    /// <summary>色の入力欄の左の余白（DIP。 現在色の四角の分。 <c>ColorSelectorControl</c> と同じ値）。</summary>
-    private const double ColorTextIndent = 24;
-
-    /// <summary>色の入力欄の展開ボタンの幅（DIP。 <c>ColorSelectorControl</c> と同じ値）。</summary>
-    private const double ColorToggleWidth = 34;
-
-    /// <summary>色の幅を測る文字サイズ（DIP）。</summary>
-    private const double ColorFontSize = 12;
 
     /// <summary>色の幅を測れなかったときの幅（DIP。 実測値の近似）。</summary>
     private const double ColorSelectorWidthFallback = 96;
@@ -181,11 +172,11 @@ internal sealed class AnnotationFormatBar : Border
         AddHandler(KeyDownEvent, OnBarKeyDown, RoutingStrategies.Tunnel);
     }
 
-    /// <summary>フォントの選択の幅（DIP。 設定ペインのフォントの選択と同じ幅）。</summary>
-    internal const double FontSelectorWidth = 210;
+    /// <summary>フォント名の選択の幅（DIP。 値はコアが単一所有する）。</summary>
+    internal const double FontSelectorWidth = AnnotationFormatBarLayout.FontSelectorWidth;
 
-    /// <summary>大きさの入力の幅（DIP）。</summary>
-    internal const double SizeSelectorWidth = 104;
+    /// <summary>大きさの入力の幅（DIP。 値はコアが単一所有する）。</summary>
+    internal const double SizeSelectorWidth = AnnotationFormatBarLayout.SizeSelectorWidth;
 
     /// <summary>操作の間の余白（DIP）。</summary>
     private const double ControlSpacing = 4;
@@ -233,30 +224,26 @@ internal sealed class AnnotationFormatBar : Border
     /// </remarks>
     internal static double ResolveColorSelectorWidth()
     {
-        var typeface = new Typeface(FontFamily.Default);
-        var nameWidth = MeasureText(typeface, "薄い灰色+100%");
-        var hexWidth = MeasureText(typeface, "#FFFFFFFF");
-        var text = Math.Max(nameWidth, hexWidth);
-        if (text <= 0)
-        {
-            return ColorSelectorWidthFallback;
-        }
-
-        return Math.Ceiling(ColorTextIndent + text + ColorToggleWidth);
+        // **幅の規則はコアが単一所有する**: UI ごとに四角の余白・展開ボタンの幅を決めると、
+        // 同じ表記でも幅が変わり、はっきり余る幅が空く（実測 2026-11-22）
+        var width = AnnotationFormatBarLayout.ResolveColorSelectorWidth(
+            static (text, style) => new EsSize(MeasureText(new Typeface(style.FontFamily), text, style.FontSize), 0));
+        return width > 0 ? width : ColorSelectorWidthFallback;
     }
 
     /// <summary>文字列の実寸の幅を測る。</summary>
     /// <param name="typeface">書体。</param>
     /// <param name="text">測る文字列。</param>
+    /// <param name="fontSize">文字の大きさ（DIP）。</param>
     /// <returns>幅（DIP）。 測れない場合は 0。</returns>
-    private static double MeasureText(Typeface typeface, string text)
+    private static double MeasureText(Typeface typeface, string text, double fontSize)
     {
         var formatted = new FormattedText(
             text,
             CultureInfo.CurrentCulture,
             FlowDirection.LeftToRight,
             typeface,
-            ColorFontSize,
+            fontSize,
             Brushes.Black);
         return formatted.WidthIncludingTrailingWhitespace;
     }

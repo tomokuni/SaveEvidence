@@ -1,4 +1,3 @@
-using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Palette;
 using EsUtil.Ui.WinUI3.ColorSelector;
 using Microsoft.UI.Xaml;
@@ -135,9 +134,10 @@ internal static class AnnotationEditorControls
             SelectedColor = color,
             TextFormat = textFormat,
 
-            // **幅を広くする**: フォーカスが当たると入力欄の枠が内側へ入り、色のテキストが欠ける
-            // （実測 2026-11-21）。 表記（色名 + 100% / #AARRGGBB）が収まる幅を確保する
-            Width = 240,
+            // **幅は表記から決める（規則はコアが単一所有する）**: 固定の 240 DIP では、はっきり余る幅が
+            // 空いて「不必要に長い」見た目になる（実測 2026-11-22）。 表記（色名 + 100% / #AARRGGBB）が
+            // 収まる幅を求める。
+            Width = AnnotationFormatBarLayout.ResolveColorSelectorWidth(AnnotationTextMetrics.Measure),
             FontSize = FontSize,
         };
 
