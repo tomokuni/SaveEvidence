@@ -42,6 +42,12 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>パネルを重ねた先（アプリの画面の最上位）。</summary>
     private OverlayLayer? _overlay;
 
+    /// <summary>書式バーの対象（注釈の矩形）。 実寸が確定したらこの矩形で置き直す。</summary>
+    private EsRect? _formatBarTarget;
+
+    /// <summary>描画ごとの置き直しを繋いだかどうか（二重に繋がない）。</summary>
+    private bool _frameHook;
+
     /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
     private UIElement? _draggingRoot;
 
@@ -176,6 +182,20 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         // 書式バーも操作できなくなる（実測 2026-11-21）。 位置は余白（Margin）で与える。
         _overlay = overlayLayer;
 
+        // **実寸が確定したら置き直す**: 置いた時点の見積りより実際の描画が高いことがあり、
+        // その差だけ書式バーが注釈へ重なる（実測 2026-11-21）。 描画のたびに実寸で決め直す。
+        if (!_frameHook)
+        {
+            _frameHook = true;
+            owner.FrameRendered += () =>
+            {
+                if (_formatBarTarget is { } bar && _formatBarPanel.IsOpen)
+                {
+                    _formatBarPanel.RepositionOutside(bar, AnnotationPanelMetrics.FormatBarGap);
+                }
+            };
+        }
+
         // 根は種別ごとに 1 度だけ作って使い回す（中身を作り直すと購読が増える）
         if (!_roots.TryGetValue(kind, out var root))
         {
@@ -189,6 +209,13 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             };
 
             _roots[kind] = root;
+        }
+
+        // **中身は表示のたびに作り直す**: 吹き出しの設定は「吹き出しを選んでいるとき」だけ出す。
+        // 一度作った中身を使い回すと、最初に枠線を右クリックした後は吹き出しの設定が出ない（実測 2026-11-21）。
+        if (kind != AnnotationPanelKind.FormatBar)
+        {
+            root.Child = new AnnotationStylePanel(_layer, appearance);
         }
 
         root.Background = ToColor(appearance.Background);
@@ -210,7 +237,11 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
 
         var size = MeasureContentSize(kind, appearance);
         root.Width = size.Width;
-        root.Height = size.Height;
+        // **高さはコアの固定値をそのまま使う**: 中身の希望寸法と実際の描画高さがずれると、
+        // 置いた位置と実寸が食い違って書式バーが注釈に重なる（実測 2026-11-21）。
+        root.Height = appearance.FixedContentHeight > 0
+            ? appearance.ResolvePanelHeight(appearance.FixedContentHeight)
+            : size.Height;
 
         // 余白（中身の無いところ）を押したまま動かすとパネルが動く。
         // MewUI のイベントは子から親へ伝播しないため、子（ボタン・入力欄）の押下はここへ来ない
@@ -280,6 +311,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     private void ShowFormatBar()
     {
         var body = ToOverlayRect(_layer.GetSelectedBoundsRect());
+        _formatBarTarget = body;
         _formatBarPanel.ShowOutside(
             AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), AnnotationPanelMetrics.FormatBarGap);
         _formatBarPanel.RepositionOutside(body, AnnotationPanelMetrics.FormatBarGap);
@@ -373,7 +405,20 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// パネルがアプリの左上へずれる（実測 2026-11-22: 書式バーがウィンドウの左上へ出た）。
     /// </remarks>
     private EsPoint ToOverlayPoint(Point point)
-        => new(_layer.Bounds.X + point.X, _layer.Bounds.Y + point.Y);
+    {
+        // **毎回ウィンドウ座標へ写す**: <c>Bounds</c> を足すだけだと、ツール バーの高さが変わった直後など
+        // レイアウトが確定する前の値を使ったときにずれる（実測 2026-11-21: 約 28 DIP 下へずれた）。
+        if ((FindVisualRoot() as Window)?.Content is { } root)
+        {
+            var local = _layer.TranslatePoint(point, root);
+            if (!double.IsNaN(local.X) && !double.IsNaN(local.Y) && (local.X != 0 || local.Y != 0 || (point.X == 0 && point.Y == 0)))
+            {
+                return new EsPoint(local.X, local.Y);
+            }
+        }
+
+        return new EsPoint(_layer.Bounds.X + point.X, _layer.Bounds.Y + point.Y);
+    }
 
     /// <summary>このコントロールの矩形（DIP）を重ねた先の座標（DIP）へ変換する。</summary>
     /// <param name="rect">このコントロールの矩形。</param>

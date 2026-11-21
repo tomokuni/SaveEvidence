@@ -169,6 +169,18 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
             _roots[kind] = root;
         }
 
+        // **中身は表示のたびに作り直す**: 吹き出しの設定は「吹き出しを選んでいるとき」だけ出す。
+        // 一度作った中身を使い回すと、最初に枠線を右クリックした後は吹き出しの設定が出ない（実測 2026-11-21）。
+        if (kind != AnnotationPanelKind.FormatBar)
+        {
+            root.Child = new AnnotationStylePanel(_layer);
+        }
+        else
+        {
+            // 高さはコアの固定値で確定する（見積りと実寸のずれで注釈に重なるのを防ぐ）
+            root.Height = appearance.ResolvePanelHeight(appearance.FixedContentHeight);
+        }
+
         root.Background = ToBrush(appearance.Background);
         root.BorderBrush = ToBrush(appearance.Border);
         root.BorderThickness = new Thickness(appearance.BorderThickness);

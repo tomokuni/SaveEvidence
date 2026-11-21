@@ -75,6 +75,9 @@ internal static class CapturePage
     /// <summary>ファイル名テンプレートの幅に足す左右の余白（DIP・枠とカーソル分）。 Avalonia 版と同じ値。</summary>
     private const double TemplateHorizontalPadding = 24;
 
+    /// <summary>折り返しを避けるために確保する余白（DIP。 スクロール バー・丸めの分）。</summary>
+    private const double ToolbarSafetyMargin = 24;
+
     /// <summary>自動切り出しの検出矩形の枠線色（水色・不透明。 Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropBorder = System.Drawing.Color.FromArgb(255, 0, 191, 255);
 
@@ -379,7 +382,15 @@ internal static class CapturePage
 
         double ResolveTemplateMaxWidth()
         {
-            var available = toolbar.Bounds.Width;
+            // **利用できる幅はツール バー自身ではなく画面から求める**: WrapPanel の Bounds は
+            // 中身の合計幅になることがあり、その値を使うとテンプレートが伸びて折り返す
+            // （実測 2026-11-21: 初期表示で「タスクバーを隠す」が 2 行目へ落ちた）。
+            var available = template.FindVisualRoot() is Window window && window.ClientSize.Width > 0
+                ? window.ClientSize.Width
+                    - NavPanelMetrics.CompactWidth
+                    - toolbar.Margin.Left - toolbar.Margin.Right
+                    - ToolbarSafetyMargin
+                : toolbar.Bounds.Width;
             if (available <= 1)
             {
                 return TemplateMinWidth;
@@ -1099,7 +1110,7 @@ internal static class CapturePage
             // **画像の表示矩形を取り直す**: 画像を差し替えると縦横比が変わり、表示矩形も変わる。
             // 取り直さないと前の画像の矩形のまま注釈がずれる（実測 2026-11-20）。
             // 座標はズーム ビューから注釈レイヤーへ写す（内部の余白・枠の分のずれを吸収する）
-            annotationEditor.Layer.PreviewImageRect = ResolveOverlayRect(
+            annotationEditor.Layer.ImageRectProvider = () => ResolveOverlayRect(
                 cropView.ImageRectViewport(), cropView.ZoomView, annotationEditor.Layer);
 
             var layer = annotationEditor.Layer;
@@ -1137,7 +1148,7 @@ internal static class CapturePage
             // **ズーム ビューの座標を注釈レイヤーの座標へ写す**: 2 つは同じ領域を覆うが、
             // 内部の余白・枠の分だけ原点がずれることがある。 写さないと注釈が画像の左上へ
             // ずれてはみ出す（実測 2026-11-21）。
-            annotationEditor.Layer.PreviewImageRect = ResolveOverlayRect(
+            annotationEditor.Layer.ImageRectProvider = () => ResolveOverlayRect(
                 cropForAnnotation.ImageRectViewport(), cropForAnnotation.ZoomView, annotationEditor.Layer);
         }
 

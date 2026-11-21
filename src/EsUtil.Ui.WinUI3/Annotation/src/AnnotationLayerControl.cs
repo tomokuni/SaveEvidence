@@ -166,7 +166,22 @@ public sealed partial class AnnotationLayerControl : Grid
     public bool ShowImage { get; set; } = true;
 
     /// <summary>プレビュー内の画像の表示矩形（DIP）を取得または設定する。</summary>
-    public EsRect? PreviewImageRect { get; set; }
+    public EsRect? PreviewImageRect => ImageRectProvider?.Invoke() ?? _previewImageRect;
+
+    /// <summary>画像の表示矩形を取り直す関数（ホストが設定する）。</summary>
+    /// <remarks>
+    /// <b>毎回ホストへ問い合わせる</b>: レイアウトの途中で取得した値は古くなる（レイアウト確定前に
+    /// 取得すると、その後ウィンドウやツール バーの寸法が変わって画像の位置がずれる）。 値を持ち回すと
+    /// 注釈だけが画像からずれるため（実測 2026-11-21）、使うたびに取り直す。
+    /// </remarks>
+    public Func<EsRect?>? ImageRectProvider { get; set; }
+
+    /// <summary>画像の表示矩形を設定する（<see cref="ImageRectProvider"/> が無い場合だけ使う）。</summary>
+    /// <param name="rect">矩形（このコントロールの座標）。</param>
+    public void SetPreviewImageRect(EsRect? rect) => _previewImageRect = rect;
+
+    /// <summary>ホストから渡された画像の表示矩形。</summary>
+    private EsRect? _previewImageRect;
 
     /// <summary>指定した位置（DIP）を左上として枠線を追加する。</summary>
     /// <param name="dip">左上の位置（ローカル DIP）。</param>
@@ -371,7 +386,9 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <param name="style">書式。</param>
     /// <returns>適用した場合は <see langword="true"/>。</returns>
     public bool ApplyTextStyle(AnnotationTextStyle style)
-        => ApplyTextStyle(TextSelectionStart, TextSelectionLength, style);
+        // 選択が無ければ適用しない（キャレット以降の文字が意図せず変わらないようにする）
+        => AnnotationTextStyleEdit.ResolveRange(TextSelectionStart, TextSelectionLength) is { } selection
+            && ApplyTextStyle(selection.Start, selection.Length, style);
 
     /// <summary>選択中の本文へ書式を適用する。</summary>
     /// <param name="start">開始位置（文字数）。</param>

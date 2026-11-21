@@ -661,11 +661,13 @@ public sealed partial class CapturePage : UserControl
     /// <summary>注釈レイヤーをプレビューの表示位置（ズーム・パン）へ合わせる。</summary>
     private void ApplyAnnotationOverlayTransform()
     {
-        AnnotationEditor.Layer.PreviewImageRect = new EsRect(
-            CropView.ImageRectViewport().X,
-            CropView.ImageRectViewport().Y,
-            CropView.ImageRectViewport().Width,
-            CropView.ImageRectViewport().Height);
+        // **毎回取り直す**: レイアウトの途中で取得した値を保持すると、ツール バーや余白の寸法が
+        // 変わった後で注釈だけが画像からずれる（実測 2026-11-21）。
+        AnnotationEditor.Layer.ImageRectProvider = () =>
+        {
+            var rect = CropView.ImageRectViewport();
+            return new EsRect(rect.X, rect.Y, rect.Width, rect.Height);
+        };
         AnnotationEditor.Layer.InvalidateVisual();
     }
 
