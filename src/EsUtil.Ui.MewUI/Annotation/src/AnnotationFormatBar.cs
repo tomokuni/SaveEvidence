@@ -1,5 +1,6 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
+using Aprillz.MewUI.Text;
 using EsUtil.Feature.Annotation;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Palette;
@@ -90,7 +91,14 @@ public sealed class AnnotationFormatBar : ContentControl
         _strike.OnCheckedChanged(_ => ToggleDecoration(
             style => style.IsStrike, static (style, value) => style with { IsStrike = value }));
 
-        var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = ControlSpacing };
+        var controls = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = ControlSpacing,
+
+            // 高さの違う項目が混ざっても縦位置を揃える（規則の所有者はコアの ItemHeight）
+            VerticalAlignment = VerticalAlignment.Center,
+        };
 
         // 並び順はコア（AnnotationFormatBarLayout.Order）が単一所有する。
         // ここで順を決めると 4 つの UI 版で操作の位置がずれる（実測 2026-11-20）。
@@ -107,7 +115,13 @@ public sealed class AnnotationFormatBar : ContentControl
 
         foreach (var item in AnnotationFormatBarLayout.Order)
         {
-            controls.Add(items[item]);
+            // **高さは項目ごとに違ってはいけない**: 揃えないと縦位置がずれ、押す位置も変わる
+            // （実測 2026-11-21）。 値はコアの AnnotationFormatBarLayout.ItemHeight が単一所有する
+            var element = (FrameworkElement)items[item];
+            element.Height = AnnotationFormatBarLayout.ItemHeight;
+            element.MinHeight = AnnotationFormatBarLayout.ItemHeight;
+            element.VerticalAlignment = VerticalAlignment.Center;
+            controls.Add(element);
         }
 
         // 枠・余白・下地はコアの外観（AnnotationPanelAppearance）が単一所有する。
@@ -196,66 +210,35 @@ public sealed class AnnotationFormatBar : ContentControl
         string text, bool bold = false, bool italic = false, bool underline = false, bool strike = false)
     {
         const double height = AnnotationFormatBarLayout.ItemHeight;
+
+        // **記号自体にも装飾を描く**: 「U」「S」の文字だけでは意味が伝わらない（実測 2026-11-21）。
+        // 線は文字へ持たせる（MewUI の TextBlock は文字単位の装飾を Run で持てる）。 図形を重ねると
+        // 文字との位置がずれ、線だけが別の場所に見える（実測 2026-11-21）。
         var label = new TextBlock
         {
-            Text = text,
-            FontWeight = bold ? FontWeight.Bold : FontWeight.Normal,
-            FontStyle = italic ? FontStyle.Italic : FontStyle.Normal,
-
-            // **高さをコアの値で固定し、縦方向の中央へ寄せる**: 項目ごとに高さが違うと縦位置が揃わない
             Width = ToggleWidth,
             Height = height,
             TextAlignment = TextAlignment.Center,
             VerticalTextAlignment = TextAlignment.Center,
         };
 
-        Element content = label;
-
-        // **記号自体にも装飾を描く**: 「U」「S」の文字だけでは意味が伝わらない（実測 2026-11-21）。
-        // MewUI の TextBlock は TextDecorations を持たないため、線を重ねて描く
-        if (underline || strike)
+        label.Inlines.Add(new Run
         {
-            var canvas = new Canvas { Width = ToggleWidth, Height = height };
-            Canvas.SetLeft(label, 0);
-            Canvas.SetTop(label, 0);
-            canvas.Add(label);
-            canvas.Add(DecorationLine(underline, strike, height));
-            content = canvas;
-        }
+            Text = text,
+            FontWeight = bold ? FontWeight.Bold : FontWeight.Normal,
+            Italic = italic,
+            Decoration = strike
+                ? TextDecoration.Strikethrough
+                : underline ? TextDecoration.Underline : TextDecoration.None,
+        });
 
         return new ToggleButton
         {
-            Content = content,
+            Content = label,
             Width = ToggleWidth,
             Height = height,
             Padding = new Thickness(0),
         };
-    }
-
-    /// <summary>記号へ重ねる下線・取り消し線を作る。</summary>
-    /// <param name="underline">下線を引くかどうか。</param>
-    /// <param name="strike">取り消し線を引くかどうか。</param>
-    /// <param name="height">ボタンの高さ（DIP）。</param>
-    /// <returns>線の描画要素。</returns>
-    /// <remarks>線は記号の幅（約 8 DIP）に合わせて中央へ置く。</remarks>
-    private static Element DecorationLine(bool underline, bool strike, double height)
-    {
-        const double glyphWidth = 8;
-        var left = (ToggleWidth - glyphWidth) / 2;
-        var y = underline && !strike ? height - 5 : height / 2;
-
-        var line = new Line
-        {
-            X1 = left,
-            Y1 = y,
-            X2 = left + glyphWidth,
-            Y2 = y,
-            Stroke = AnnotationTextMetrics.ToMewColor(AnnotationDefaults.TextStyle.Color),
-            StrokeThickness = 1,
-            IsHitTestVisible = false,
-        };
-
-        return line;
     }
 
     /// <summary>選択中の範囲へフォントを適用する（同じ値でも適用する）。</summary>

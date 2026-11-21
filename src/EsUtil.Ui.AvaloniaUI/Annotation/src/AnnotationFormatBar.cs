@@ -130,11 +130,6 @@ internal sealed class AnnotationFormatBar : Border
         _color.LostFocus += (_, _) => ApplyColor();
         ToolTip.SetTip(_color, "色");
 
-        // 高さはコア（AnnotationFormatBarLayout）が単一所有する。 項目ごとに高さが違うと縦位置が揃わない
-        _font.Height = AnnotationFormatBarLayout.ItemHeight;
-        _size.Height = AnnotationFormatBarLayout.ItemHeight;
-        _color.Height = AnnotationFormatBarLayout.ItemHeight;
-
         _bold = Toggle("B", "太字（Ctrl+B）", bold: true);
         _italic = Toggle("I", "斜体（Ctrl+I）", italic: true);
         _underline = Toggle("U", "下線（Ctrl+U）", underline: true);
@@ -145,7 +140,14 @@ internal sealed class AnnotationFormatBar : Border
         _underline.Click += (_, _) => ToggleDecoration(style => style.IsUnderline, (style, value) => style with { IsUnderline = value });
         _strike.Click += (_, _) => ToggleDecoration(style => style.IsStrike, (style, value) => style with { IsStrike = value });
 
-        var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = ControlSpacing };
+        var controls = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = ControlSpacing,
+
+            // 高さの違う項目が混ざっても縦位置を揃える（規則の所有者はコアの ItemHeight）
+            VerticalAlignment = VerticalAlignment.Center,
+        };
 
         // 並び順はコア（AnnotationFormatBarLayout.Order）が単一所有する。
         // ここで順を決めると 4 つの UI 版で操作の位置がずれる（実測 2026-11-20）。
@@ -162,7 +164,13 @@ internal sealed class AnnotationFormatBar : Border
 
         foreach (var item in AnnotationFormatBarLayout.Order)
         {
-            controls.Children.Add(items[item]);
+            // **高さは項目ごとに違ってはいけない**: 揃えないと縦位置がずれ、押す位置も変わる
+            // （実測 2026-11-21）。 値はコアの AnnotationFormatBarLayout.ItemHeight が単一所有する
+            var control = items[item];
+            control.Height = AnnotationFormatBarLayout.ItemHeight;
+            control.MinHeight = AnnotationFormatBarLayout.ItemHeight;
+            control.VerticalAlignment = VerticalAlignment.Center;
+            controls.Children.Add(control);
         }
 
         // 枠・余白・下地はコアの外観（AnnotationPanelAppearance）が単一所有する。

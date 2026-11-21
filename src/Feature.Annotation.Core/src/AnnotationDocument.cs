@@ -108,7 +108,23 @@ public sealed class AnnotationDocument
             return false;
         }
 
+        var previous = item.Bounds;
         item.Bounds = clamped;
+
+        // **しっぽは本体に付いて動く**: 本体だけ動かすと、しっぽが元の位置に取り残されて
+        // 本体から離れた細い三角形になる（実測 2026-11-21）。 しっぽの規則（収める）は
+        // SetTail が単一所有するため、移動量を足してから同じ入口へ渡す。
+        if (item is BubbleAnnotation bubble)
+        {
+            var dx = clamped.X - previous.X;
+            var dy = clamped.Y - previous.Y;
+            if (dx != 0 || dy != 0)
+            {
+                var tip = new EsPoint(bubble.Tail.Tip.X + dx, bubble.Tail.Tip.Y + dy);
+                SetTail(bubble.Id, bubble.Tail with { Tip = tip });
+            }
+        }
+
         return true;
     }
 

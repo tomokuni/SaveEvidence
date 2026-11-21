@@ -316,7 +316,6 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), AnnotationPanelMetrics.FormatBarGap);
         _formatBarPanel.RepositionOutside(body, AnnotationPanelMetrics.FormatBarGap);
     }
-
     /// <summary>書式バーの大きさ（DIP）を測る。</summary>
     /// <returns>実寸。 測れない場合は希望寸法。</returns>
     private EsSize MeasureFormatBar()

@@ -737,7 +737,6 @@ public sealed partial class AnnotationLayerControl : Panel
 
         return (scale, new Point(offset.X, offset.Y));
     }
-
     /// <summary>ローカル DIP を元画像ピクセルへ変換する。</summary>
     /// <param name="dip">ローカル DIP の座標。</param>
     /// <returns>元画像ピクセルの座標。</returns>

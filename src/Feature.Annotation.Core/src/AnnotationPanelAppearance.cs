@@ -86,7 +86,11 @@ public sealed record AnnotationPanelAppearance(
     /// <remarks>
     /// <b>幅を固定しない</b>: 中身（フォント名・大きさ・色）で幅が決まる。 固定すると項目が枠から
     /// はみ出す（実測 2026-11-20）。<br/>
-    /// <b>角を丸めない</b>: 高さが低いため、丸めると項目の角が欠けて見える。<br/>`r`n    /// <b>中身の最小の高さを 44 DIP にする</b>: UI ごとに中身の希望寸法が実際より小さく出るため、`r`n    /// これより低いと中身が枠からはみ出し、書式バーが注釈に重なる（実測 2026-11-21）。
+    /// <b>角を丸めない</b>: 高さが低いため、丸めると項目の角が欠けて見える。<br/>
+    /// <b>中身の高さは項目の高さと同じにする</b>: 項目の高さは
+    /// <see cref="AnnotationFormatBarLayout.ItemHeight"/> が単一所有する。 これより低いと中身が
+    /// 枠からはみ出して上下の枠線が切れ、高いと余白が空く（実測 2026-11-21: 26 DIP の項目に対して
+    /// 34 DIP の固定値を与えたため、色の入力欄の上下の枠線が切れた）。
     /// </remarks>
     public static AnnotationPanelAppearance FormatBar { get; } = new(
         Background: DrawingColor.FromArgb(255, 255, 255, 255),
@@ -98,8 +102,8 @@ public sealed record AnnotationPanelAppearance(
         ContentWidth: 0,
         MaxWidth: 2400,
         MaxContentHeight: 200,
-        MinContentHeight: 34)
+        MinContentHeight: AnnotationFormatBarLayout.ItemHeight)
     {
-        FixedContentHeight = 34,
+        FixedContentHeight = AnnotationFormatBarLayout.ItemHeight,
     };
 }

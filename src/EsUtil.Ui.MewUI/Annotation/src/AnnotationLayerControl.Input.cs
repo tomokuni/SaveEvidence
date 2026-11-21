@@ -20,12 +20,28 @@ public sealed partial class AnnotationLayerControl
 {
     /// <summary>注釈・画像・選択枠を描く。</summary>
     /// <param name="context">描画先。</param>
+    /// <remarks>
+    /// <b>描画の座標はウィンドウ基準である</b>: MewUI の <see cref="Element.Bounds"/> はウィンドウの
+    /// 絶対座標で、描画コンテキストの原点もウィンドウの左上になる。 ここで自分の左上を足さないと、
+    /// 図形とハンドルは互いに揃ったまま<b>画像から (Bounds.X, Bounds.Y) だけ左上へずれる</b>
+    /// （実測 2026-11-21: 注釈が 40, 42.4 DIP 左上へ描かれ、ヒット判定・書式バーと食い違った）。
+    /// </remarks>
     protected override void OnRender(IGraphicsContext context)
     {
         base.OnRender(context);
 
-        var (scale, offset) = _frozenTransform ?? ResolveImageTransform();
-        DrawAll(context, includeSelection: !_isEditingText, scale, offset);
+        context.Save();
+        try
+        {
+            // 以降はローカル座標で描けるようにする（入力の座標系と一致させる）
+            context.Translate(Bounds.X, Bounds.Y);
+            var (scale, offset) = _frozenTransform ?? ResolveImageTransform();
+            DrawAll(context, includeSelection: !_isEditingText, scale, offset);
+        }
+        finally
+        {
+            context.Restore();
+        }
     }
 
     /// <summary>画像・注釈・選択枠を描く。</summary>

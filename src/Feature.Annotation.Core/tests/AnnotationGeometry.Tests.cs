@@ -90,4 +90,27 @@ public sealed class AnnotationGeometryTests
         Assert.False(document.SetBounds(frame.Id, new EsRect(10, 10, 100, 60)));
         Assert.False(document.SetTailTip(frame.Id, new EsPoint(10, 10)));
     }
+
+    /// <summary>本体を動かすとしっぽも同じだけ動く（しっぽが取り残されない）。</summary>
+    /// <remarks>
+    /// 本体だけ動かすと、しっぽが元の位置に残って本体から離れた細い三角形になる
+    /// （実測 2026-11-21: 吹き出しを移動したら、しっぽだけが数百ピクセル離れた場所へ描かれた）。
+    /// </remarks>
+    [Fact]
+    internal void SetBounds_しっぽも本体に付いて動く()
+    {
+        var bubble = AnnotationGeometry.CreateBubble(
+            new EsRect(50, 40, 100, 60),
+            RichText.Create("test", AnnotationDefaults.TextStyle),
+            AnnotationDraftDefaults.Default,
+            new EsSize(400, 300));
+        var document = new AnnotationDocument(400, 300).Add(bubble);
+        var before = Assert.IsType<BubbleAnnotation>(document.Find(bubble.Id)).Tail.Tip;
+
+        Assert.True(document.SetBounds(bubble.Id, new EsRect(150, 130, 100, 60)));
+        var after = Assert.IsType<BubbleAnnotation>(document.Find(bubble.Id)).Tail.Tip;
+
+        Assert.Equal(before.X + 100, after.X, 3);
+        Assert.Equal(before.Y + 90, after.Y, 3);
+    }
 }

@@ -160,12 +160,15 @@ internal sealed class AnnotationFormatBar : Panel
     /// <summary>子要素を左から順に並べる。</summary>
     private void LayoutRow()
     {
+        // 行の高さはコア（AnnotationFormatBarLayout）が単一所有する。 項目ごとに高さが違うと縦位置が揃わない。
+        // ComboBox（DropDownList）は高さを指定できないため、実際の高さで縦方向の中央へ寄せる
+        var rowHeight = (int)Math.Round(AnnotationFormatBarLayout.ItemHeight);
         var x = Padding.Left;
         foreach (Control control in Controls)
         {
-            // 高さはコア（AnnotationFormatBarLayout）が単一所有する。 項目ごとに高さが違うと縦位置が揃わない
-            control.Height = (int)Math.Round(AnnotationFormatBarLayout.ItemHeight);
-            control.Location = new Point(x, Padding.Top);
+            control.Height = rowHeight;
+            control.Left = x;
+            control.Top = Padding.Top + Math.Max(0, (rowHeight - control.Height) / 2);
             x += control.Width + control.Margin.Horizontal;
         }
     }

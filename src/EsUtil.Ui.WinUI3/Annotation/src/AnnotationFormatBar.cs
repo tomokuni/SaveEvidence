@@ -51,7 +51,14 @@ internal sealed class AnnotationFormatBar : ContentControl
         HorizontalAlignment = HorizontalAlignment.Left;
         VerticalAlignment = VerticalAlignment.Top;
 
-        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
+        var panel = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 4,
+
+            // 高さの違う項目が混ざっても縦位置を揃える（規則の所有者はコアの ItemHeight）
+            VerticalAlignment = VerticalAlignment.Center,
+        };
         _bold = AnnotationEditorControls.Toggle("B", false, value => ApplyDecoration(style => style with { IsBold = value }), bold: true);
         _italic = AnnotationEditorControls.Toggle("I", false, value => ApplyDecoration(style => style with { IsItalic = value }), italic: true);
         _underline = AnnotationEditorControls.Toggle(
@@ -133,7 +140,13 @@ internal sealed class AnnotationFormatBar : ContentControl
 
         foreach (var item in AnnotationFormatBarLayout.Order)
         {
-            panel.Children.Add(items[item]);
+            // **高さは項目ごとに違ってはいけない**: 揃えないと縦位置がずれ、押す位置も変わる
+            // （実測 2026-11-21）。 値はコアの AnnotationFormatBarLayout.ItemHeight が単一所有する
+            var element = (FrameworkElement)items[item];
+            element.Height = AnnotationFormatBarLayout.ItemHeight;
+            element.MinHeight = AnnotationFormatBarLayout.ItemHeight;
+            element.VerticalAlignment = VerticalAlignment.Center;
+            panel.Children.Add(element);
         }
 
         // 枠・余白・下地はコアの外観（AnnotationPanelAppearance）が単一所有する。
