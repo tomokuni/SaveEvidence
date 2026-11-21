@@ -40,15 +40,14 @@ public class AnnotationLayerControlTests
             SourcePixelWidth = width,
             SourcePixelHeight = height,
             Document = new AnnotationDocument(width, height)
-                .Add(new FrameAnnotation
-                {
-                    Bounds = new EsRect(8, 8, 24, 16),
-                    Appearance = new AnnotationAppearance(
+                .Add(AnnotationGeometry.CreateFrame(
+                    new EsRect(8, 8, 24, 16),
+                    new AnnotationAppearance(
                         System.Drawing.Color.FromArgb(255, 255, 0, 0),
                         4,
                         System.Drawing.Color.Transparent,
                         0),
-                }),
+                    new EsSize(width, height))),
         };
 
         using var composed = layer.RenderComposedImage();

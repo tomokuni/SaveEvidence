@@ -41,23 +41,20 @@ internal sealed class MainWindow : Window
         _layer.Source = bitmap;
         _layer.SourcePixelWidth = ImageWidth;
         _layer.SourcePixelHeight = ImageHeight;
+        var imageSize = new EsSize(ImageWidth, ImageHeight);
         _layer.Document = new AnnotationDocument(ImageWidth, ImageHeight, "sample.png")
-            .Add(new FrameAnnotation
-            {
-                Bounds = new EsRect(60, 60, 340, 220),
-                Appearance = AnnotationDefaults.FrameAppearance,
-            })
-            .Add(new BubbleAnnotation
-            {
-                Bounds = new EsRect(520, 340, 380, 170),
-                Appearance = AnnotationDefaults.BubbleAppearance,
-                Tail = new BubbleTail(new EsPoint(430, 200), BubbleEdge.Top, 0.3, 26),
-                Text = new RichText([
+            .Add(AnnotationGeometry.CreateFrame(
+                new EsRect(60, 60, 340, 220), AnnotationDefaults.FrameAppearance, imageSize))
+            .Add(AnnotationGeometry.CreateBubble(
+                new EsRect(520, 340, 380, 170),
+                new RichText([
                     new TextRun("ここが重要です。", AnnotationDefaults.TextStyle),
                     new TextRun("文字単位の書式", AnnotationDefaults.TextStyle with { IsBold = true, Color = System.Drawing.Color.FromArgb(255, 200, 0, 0) }),
                     new TextRun("は右クリックで編集できます。", AnnotationDefaults.TextStyle),
                 ]),
-            });
+                AnnotationDraftDefaults.Default,
+                imageSize,
+                new BubbleTail(new EsPoint(430, 200), BubbleEdge.Top, 0.3, 26)));
 
         var canvas = new Canvas { Background = Brushes.LightGray };
         canvas.Children.Add(_editor);

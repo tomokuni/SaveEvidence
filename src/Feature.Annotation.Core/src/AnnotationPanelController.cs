@@ -70,6 +70,31 @@ public sealed class AnnotationPanelController
             kind,
             AnnotationPanelPlacement.ResolveOutside(target, panelSize, _host.AvailableArea, gap));
 
+    /// <summary>配置済みのパネルを、ホストが報告する実寸で置き直す。</summary>
+    /// <param name="target">被せたくない矩形（DIP）。</param>
+    /// <param name="gap">対象とパネルの間の余白（DIP）。</param>
+    /// <remarks>
+    /// <b>実寸はレイアウト後にしか分からない</b>: レイアウト前の測定は枠の高さを正しく返さないことがある
+    /// （実測 2026-11-22: WinUI 3 版で高さ 16040 DIP と測定され、パネルが左上へ寄った）。 UI は
+    /// <see cref="ShowOutside"/> で仮に置いた後、レイアウトを確定させてから本メソッドを呼ぶ。
+    /// </remarks>
+    public void RepositionOutside(EsRect target, double gap)
+    {
+        if (Kind is not { } kind)
+        {
+            return;
+        }
+
+        var size = _host.GetPanelSize(kind);
+        if (size.Width <= 0 || size.Height <= 0)
+        {
+            return;
+        }
+
+        _host.MovePanel(
+            kind, AnnotationPanelPlacement.ResolveOutside(target, size, _host.AvailableArea, gap));
+    }
+
     /// <summary>位置を指定してパネルを表示する。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <param name="position">左上の位置（DIP）。</param>

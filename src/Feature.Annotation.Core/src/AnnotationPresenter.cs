@@ -37,18 +37,61 @@ public sealed class AnnotationPresenter
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(measureText);
 
+        var imageSize = AnnotationGeometry.ResolveImageSize(document);
         var shapes = ImmutableArray.CreateBuilder<AnnotationShapePlan>(document.Items.Length);
         foreach (var item in document.Items)
         {
-            shapes.Add(item is BubbleAnnotation bubble
-                ? ResolveBubble(bubble, measureText, LineHeightFactor)
-                : ResolveFrame(item));
+            // **描画の直前に画像の内側へ収める**: 画像の外へ出た注釈は見えず掴めない。
+            // 追加・移動の経路が増えても、描画の入口で必ず収まるようにする（実測 2026-11-22）。
+            var clamped = item is BubbleAnnotation bubble
+                ? ClampBubble(bubble, imageSize)
+                : ClampFrame(item, imageSize);
+
+            shapes.Add(clamped is BubbleAnnotation clampedBubble
+                ? ResolveBubble(clampedBubble, measureText, LineHeightFactor)
+                : ResolveFrame(clamped));
         }
 
         return new AnnotationDrawPlan(
-            new EsSize(document.ImageWidth, document.ImageHeight),
+            imageSize,
             selectedId,
             shapes.ToImmutable());
+    }
+
+    /// <summary>枠線の注釈を画像の内側へ収めた複製を返す。</summary>
+    /// <param name="item">対象の注釈。</param>
+    /// <param name="imageSize">画像の大きさ。</param>
+    /// <returns>収めた注釈（収まっている場合は元の注釈）。</returns>
+    private static AnnotationItem ClampFrame(AnnotationItem item, EsSize imageSize)
+    {
+        var bounds = AnnotationGeometry.ClampRect(item.Bounds, imageSize);
+        if (bounds.NearlyEquals(item.Bounds))
+        {
+            return item;
+        }
+
+        var copy = item.Clone();
+        copy.Bounds = bounds;
+        return copy;
+    }
+
+    /// <summary>吹き出しの注釈を画像の内側へ収めた複製を返す。</summary>
+    /// <param name="bubble">対象の吹き出し。</param>
+    /// <param name="imageSize">画像の大きさ。</param>
+    /// <returns>収めた吹き出し（収まっている場合は元の吹き出し）。</returns>
+    private static BubbleAnnotation ClampBubble(BubbleAnnotation bubble, EsSize imageSize)
+    {
+        var bounds = AnnotationGeometry.ClampRect(bubble.Bounds, imageSize);
+        var tip = AnnotationGeometry.ClampPoint(bubble.Tail.Tip, imageSize);
+        if (bounds.NearlyEquals(bubble.Bounds) && tip.NearlyEquals(bubble.Tail.Tip))
+        {
+            return bubble;
+        }
+
+        var copy = (BubbleAnnotation)bubble.Clone();
+        copy.Bounds = bounds;
+        copy.Tail = bubble.Tail with { Tip = tip };
+        return copy;
     }
 
     /// <summary>枠線の注釈の計画を解決する。</summary>

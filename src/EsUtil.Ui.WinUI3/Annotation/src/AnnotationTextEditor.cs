@@ -185,9 +185,14 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         if (!overlay.Children.Contains(root))
         {
             overlay.Children.Add(root);
+            SpanOverlay(overlay, root);
         }
 
         ApplyPosition(kind, root, position);
+
+        // **実寸を確定させる**: レイアウト前の測定は高さを正しく返さない（実測 2026-11-22: 16040 DIP）。
+        // ここでレイアウトを走らせると、ホストが実寸を報告でき、コアが位置を決め直せる。
+        root.UpdateLayout();
     }
 
     /// <summary>パネルを移動する。</summary>
@@ -212,6 +217,11 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <b>位置と寿命はコアが決める</b>: 置ける領域（キャプチャ ページ）の内側へ収め、右クリックした位置へ出し、
     /// 外側をクリックすると閉じる。 余白を押したまま動かすと移動する。
     /// </remarks>
+    /// <remarks>
+    /// <b>位置はコアが決める</b>: 右クリックした位置へ出し、置ける領域の内側へ収める
+    /// （<see cref="AnnotationPanelController.Constrain"/>）。 レイアウト前の測定ではなく、レイアウト後の
+    /// 実寸で収める（<see cref="CreatePanel"/> がレイアウトを確定させる）。
+    /// </remarks>
     public void ShowStylePanel(double x, double y)
     {
         _stylePanel.Show(
@@ -232,16 +242,27 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <b>大きさは実寸を使う</b>: 中身（フォント名・大きさ・色）で幅が決まるため、固定値だと
     /// 枠からはみ出す。 一度置いてから実寸で出し直す。
     /// </remarks>
+    /// <summary>書式バーを本文の外（本文に被さらない位置）へ出し直す。</summary>
+    /// <remarks>
+    /// <b>本文に被せない</b>: 編集中の文字が隠れて読めない（実測 2026-11-20）。 位置の判断は
+    /// コア（<see cref="AnnotationPanelPlacement.ResolveOutside"/>）が単一所有する。<br/>
+    /// <b>実寸で置き直す</b>: レイアウト前の測定は高さを正しく返さないことがあるため、一度置いて
+    /// レイアウトを確定させてからコアに実寸で決め直させる。
+    /// </remarks>
     private void ShowFormatBar()
     {
-        var body = ToOverlayRect(_layer.GetSelectedBodyRect());
+        var body = ToOverlayRect(_layer.GetSelectedBoundsRect());
         _formatBarPanel.ShowOutside(
             AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), BarGap);
-        _formatBarPanel.Constrain(MeasureFormatBar());
+        _formatBarPanel.RepositionOutside(body, BarGap);
     }
 
     /// <summary>書式バーの大きさ（DIP）を測る。</summary>
     /// <returns>実寸。 測れない場合は希望寸法。</returns>
+    /// <remarks>
+    /// <b>置ける幅を上限にして測る</b>: 幅を無限にして測ると中身（フォント名・色）が伸びきった寸法が返り、
+    /// その寸法で位置を決めると置ける領域の外へ出る（実測 2026-11-22: WinUI 3 版で書式バーが左上へ寄った）。
+    /// </remarks>
     private EsSize MeasureFormatBar()
     {
         var measured = MeasurePanel(AnnotationPanelKind.FormatBar);
@@ -251,8 +272,9 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         }
 
         var appearance = AnnotationPanelAppearance.FormatBar;
-        _formatBar.Measure(new Windows.Foundation.Size(
-            double.PositiveInfinity, double.PositiveInfinity));
+        var area = AvailableArea;
+        var widthLimit = area.Width > 0 ? area.Width : double.PositiveInfinity;
+        _formatBar.Measure(new Windows.Foundation.Size(widthLimit, double.PositiveInfinity));
         var size = _formatBar.DesiredSize;
         return new EsSize(
             size.Width + (appearance.Padding * 2) + (appearance.BorderThickness * 2),
@@ -288,6 +310,28 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         {
             _overlay?.Children.Remove(root);
         }
+    }
+
+    /// <summary>重ねる先が格子の場合は、パネルを全列・全行にまたがらせる。</summary>
+    /// <param name="overlay">重ねる先。</param>
+    /// <param name="root">パネルの根。</param>
+    /// <remarks>
+    /// <b>格子の 1 列目へ置くと見えない</b>: アプリの根は左ナビ（40 DIP）と内容の 2 列の格子である。
+    /// 列を指定しない子は 1 列目（40 DIP）へ入り、幅 40 の枠で切られて表示されない（実測 2026-11-22:
+    /// WinUI 3 版で書式バーと右クリックのフライアウトが出なかった）。 全列・全行にまたがらせれば
+    /// 余白（<c>Margin</c>）で画面の任意の位置へ置ける。
+    /// </remarks>
+    private static void SpanOverlay(Panel overlay, Border root)
+    {
+        if (overlay is not Grid grid)
+        {
+            return;
+        }
+
+        Grid.SetColumn(root, 0);
+        Grid.SetColumnSpan(root, Math.Max(1, grid.ColumnDefinitions.Count));
+        Grid.SetRow(root, 0);
+        Grid.SetRowSpan(root, Math.Max(1, grid.RowDefinitions.Count));
     }
 
     /// <summary>パネルの位置を適用する（左上の余白として与える）。</summary>

@@ -1175,14 +1175,9 @@ internal static class CapturePage
         // 注釈の無い場所の操作は、注釈レイヤーが受け取ってここへ渡す（入力の所有者は注釈レイヤー）
         annotationEditor.Layer.PreviewGestureRequested += (_, e) => ForwardAnnotationGesture(e);
         // 追加メニューは画像の上（枠線・注釈を描く範囲）を右クリックしたときだけ出す
+        // 追加メニューを出すかの判断（画像の内側か）は注釈レイヤーが行う（規則はコアが単一所有する）
         annotationEditor.Layer.AddMenuRequested += (_, e) =>
         {
-            var rect = zoomView.ImageRectViewport();
-            if (e.X < rect.X || e.Y < rect.Y || e.X >= rect.X + rect.Width || e.Y >= rect.Y + rect.Height)
-            {
-                return;
-            }
-
             // 注釈レイヤーの座標を host の座標へ写す（重なりの余白・配置の違いでずれないようにする）
             var inHost = annotationEditor.Layer.TranslatePoint(new Point(e.X, e.Y), host);
             ShowAnnotationMenu(inHost);

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Feature.Annotation;
@@ -12,8 +13,13 @@ public sealed class BubbleAnnotation : AnnotationItem
     /// <summary>本文（書式付きの文字列）を取得または設定する。</summary>
     public RichText Text { get; set; } = RichText.Empty;
 
-    /// <summary>しっぽ（吹き出し口）を取得または設定する。</summary>
-    public BubbleTail Tail { get; set; } = BubbleTail.Default;
+    /// <summary>しっぽ（吹き出し口）を取得する。</summary>
+    /// <remarks>
+    /// <b>設定子は Core の内部に閉じる</b>: 先端が画像の外へ出ると掴めなくなるため、変更は
+    /// <see cref="AnnotationDocument.SetTailTip"/>（画像の内側へ収める）を通す。
+    /// </remarks>
+    [JsonInclude]
+    public BubbleTail Tail { get; internal set; } = BubbleTail.Default;
 
     /// <summary>本文と枠線の間の余白（元画像ピクセル）を取得または設定する。</summary>
     public double BodyPadding { get; set; } = AnnotationDefaults.BodyPaddingDefault;

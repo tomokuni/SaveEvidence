@@ -761,19 +761,9 @@ internal static class CapturePage
         // 注釈の無い場所の操作（パン・ズーム・ホバー・ダブルクリック・右クリック）は、注釈レイヤーが
         // 受け取ってここへ渡す（入力の所有者は注釈レイヤー。 座標系はプレビューと同じ）。
         annotationEditor.Layer.PreviewGestureRequested += (_, e) => ForwardAnnotationGesture(e);
-        // 追加メニューは画像の上（枠線・注釈を描く範囲）を右クリックしたときだけ出す
+        // 追加メニューを出すかの判断（画像の内側か）は注釈レイヤーが行う（規則はコアが単一所有する）
         annotationEditor.Layer.AddMenuRequested += (_, e) =>
-        {
-            var point = new Windows.Foundation.Point(e.X, e.Y);
-            var imageRect = crop.ImageRectViewport();
-            if (e.X < imageRect.X || e.Y < imageRect.Y
-                || e.X >= imageRect.X + imageRect.Width || e.Y >= imageRect.Y + imageRect.Height)
-            {
-                return;
-            }
-
-            ShowAnnotationAddMenu(annotationEditor, point, host);
-        };
+            ShowAnnotationAddMenu(annotationEditor, new Windows.Foundation.Point(e.X, e.Y), host);
 
         void ForwardAnnotationGesture(EsUtil.Feature.Annotation.AnnotationPreviewGestureEventArgs e)
         {

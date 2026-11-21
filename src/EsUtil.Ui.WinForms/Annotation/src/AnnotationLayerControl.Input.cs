@@ -219,9 +219,8 @@ public sealed partial class AnnotationLayerControl
 
         if (_isDraggingTail)
         {
-            if (Selected is BubbleAnnotation bubble)
+            if (Selected is BubbleAnnotation bubble && _document.SetTailTip(bubble.Id, source))
             {
-                bubble.Tail = bubble.Tail with { Tip = source };
                 RaiseDocumentChanged();
                 Invalidate();
             }
@@ -360,10 +359,15 @@ public sealed partial class AnnotationLayerControl
 
         // 外観フライアウトは注釈（枠線・吹き出し）の上を右クリックしたときだけ出す。
         // 注釈の外は「枠線・吹き出しを追加」のメニューにする（選択も解除する）。
+        // 追加できるのは画像の内側だけである（規則はコアが単一所有する）
         if (AnnotationHitTest.HitTest(_document, source) is not { } hit)
         {
             Select(null);
-            AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
+            if (AnnotationGeometry.Contains(source, _document.ImageSize))
+            {
+                AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
+            }
+
             return;
         }
 
@@ -474,17 +478,14 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        if (item.Bounds.X == rect.X && item.Bounds.Y == rect.Y
-            && item.Bounds.Width == rect.Width && item.Bounds.Height == rect.Height)
-        {
-            return;
-        }
-
         _isApplyingMarquee = true;
         try
         {
-            item.Bounds = rect;
-            RaiseDocumentChanged();
+            // 画像の外へは出さない（収める規則はコアが単一所有する）
+            if (_document.SetBounds(item.Id, rect))
+            {
+                RaiseDocumentChanged();
+            }
         }
         finally
         {

@@ -292,14 +292,12 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <summary>枠線を追加する。</summary>
     /// <param name="bounds">位置と大きさ（元画像ピクセル）。</param>
     /// <returns>追加した注釈の識別子。</returns>
+    /// <remarks>矩形はコア（<see cref="AnnotationGeometry.CreateFrame"/>）が画像の内側へ収める。</remarks>
     public string AddFrame(EsRect bounds)
     {
         PrepareUndo();
-        var item = new FrameAnnotation
-        {
-            Bounds = bounds,
-            Appearance = DraftDefaults.FrameAppearance,
-        };
+        var item = AnnotationGeometry.CreateFrame(
+            bounds, DraftDefaults.FrameAppearance, _document.ImageSize);
 
         _document = _document.Add(item);
         Select(item.Id);
@@ -312,21 +310,13 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <param name="bounds">位置と大きさ（元画像ピクセル）。</param>
     /// <param name="text">本文。</param>
     /// <returns>追加した注釈の識別子。</returns>
+    /// <remarks>矩形もしっぽの先端もコア（<see cref="AnnotationGeometry.CreateBubble"/>）が画像の内側へ収める。</remarks>
     public string AddBubble(EsRect bounds, string text)
     {
         PrepareUndo();
-        var item = new BubbleAnnotation
-        {
-            Bounds = bounds,
-            Appearance = DraftDefaults.BubbleAppearance,
-            BodyPadding = DraftDefaults.BodyPadding,
-            Tail = new BubbleTail(
-                new EsPoint(bounds.Center.X, bounds.Bottom + 40),
-                DraftDefaults.TailEdge,
-                AnnotationDefaults.TailBaseOffsetDefault,
-                DraftDefaults.TailWidth),
-            Text = RichText.Create(text, DraftDefaults.TextStyle),
-        };
+        var defaults = DraftDefaults;
+        var item = AnnotationGeometry.CreateBubble(
+            bounds, RichText.Create(text, defaults.TextStyle), defaults, _document.ImageSize);
 
         _document = _document.Add(item);
         Select(item.Id);
@@ -432,14 +422,25 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <summary>選択中の吹き出しのしっぽを差し替える。</summary>
     /// <param name="transform">しっぽを変える処理。</param>
     /// <returns>変えた場合は <see langword="true"/>。</returns>
+    /// <remarks>先端はコア（<see cref="AnnotationDocument.SetTail"/>）が画像の内側へ収める。</remarks>
     public bool UpdateSelectedTail(Func<BubbleTail, BubbleTail> transform)
-        => UpdateSelected(item =>
+    {
+        if (Selected is not BubbleAnnotation bubble)
         {
-            if (item is BubbleAnnotation bubble)
-            {
-                bubble.Tail = transform(bubble.Tail);
-            }
-        });
+            return false;
+        }
+
+        PrepareUndo();
+        if (!_document.SetTail(bubble.Id, transform(bubble.Tail)))
+        {
+            _undoCandidate = null;
+            return false;
+        }
+
+        RaiseDocumentChanged();
+        Redraw();
+        return true;
+    }
 
     /// <summary>選択中の注釈を最前面へ移す。</summary>
     /// <returns>移した場合は <see langword="true"/>。</returns>
@@ -522,6 +523,26 @@ public sealed partial class AnnotationLayerControl : Grid
         StyleEditorRequested?.Invoke(this, new AnnotationStyleEditorRequestedEventArgs(_styleEditorX, _styleEditorY));
     }
 
+    /// <summary>選択中の注釈の矩形（このコントロールの座標）を取得する。</summary>
+    /// <returns>矩形。 選択していない場合は空。</returns>
+    /// <remarks>
+    /// <b>書式バーを注釈に被せないための対象矩形</b>である。 本文の矩形ではなく枠線を含む矩形を使う
+    /// （本文で判定するとバーが枠線の上へ数ピクセル重なる。 実測 2026-11-22）。
+    /// </remarks>
+    public EsRect GetSelectedBoundsRect()
+    {
+        if (Selected is not { } item)
+        {
+            return default;
+        }
+
+        var (scale, offset) = ResolveImageTransform();
+        return new EsRect(
+            (item.Bounds.X * scale) + offset.X,
+            (item.Bounds.Y * scale) + offset.Y,
+            item.Bounds.Width * scale,
+            item.Bounds.Height * scale);
+    }
     /// <summary>選択中の本文の矩形（DIP）を取得する。</summary>
     /// <returns>本文の矩形。 吹き出しを選んでいない場合は空の矩形。</returns>
     public EsRect GetSelectedBodyRect()

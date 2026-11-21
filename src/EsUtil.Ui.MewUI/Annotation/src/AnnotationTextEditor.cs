@@ -45,9 +45,6 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>パネルを重ねた先（アプリの画面の最上位）。</summary>
     private OverlayLayer? _overlay;
 
-    /// <summary>パネルを載せているウィンドウ（座標変換とドラッグの基準）。</summary>
-    private Window? _owner;
-
     /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
     private UIElement? _draggingRoot;
 
@@ -178,7 +175,6 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         // **重ねる先はアプリの画面の最上位**: プレビューの内側へ置くと画像の外で切れる。
         // **全面を覆う Canvas を挟まない**: 挟むとパネルの外側の押下を吸ってしまい、注釈も
         // 書式バーも操作できなくなる（実測 2026-11-21）。 位置は余白（Margin）で与える。
-        _owner = owner;
         _overlay = overlayLayer;
 
         // 根は種別ごとに 1 度だけ作って使い回す（中身を作り直すと購読が増える）
@@ -203,6 +199,19 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         root.Padding = new Thickness(
             appearance.Padding, appearance.VerticalPadding,
             appearance.Padding, appearance.VerticalPadding);
+
+        // **大きさを中身に合わせて確定する**: MewUI の <c>OverlayLayer</c> は子を渡された領域いっぱいに
+        // 配置するため、大きさを指定しないとパネルが縦に伸び、中身が上下の中央へ寄る（実測 2026-11-22:
+        // 書式バーが注釈に重なった）。 中身を左上へ寄せ、根の大きさを実寸にする。
+        if (root.Child is Control content)
+        {
+            content.HorizontalAlignment = HorizontalAlignment.Left;
+            content.VerticalAlignment = VerticalAlignment.Top;
+        }
+
+        var size = MeasureContentSize(kind, appearance);
+        root.Width = size.Width;
+        root.Height = size.Height;
 
         // 余白（中身の無いところ）を押したまま動かすとパネルが動く。
         // MewUI のイベントは子から親へ伝播しないため、子（ボタン・入力欄）の押下はここへ来ない
@@ -271,10 +280,10 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// </remarks>
     private void ShowFormatBar()
     {
-        var body = ToOverlayRect(_layer.GetSelectedBodyRect());
+        var body = ToOverlayRect(_layer.GetSelectedBoundsRect());
         _formatBarPanel.ShowOutside(
             AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), BarGap);
-        _formatBarPanel.Constrain(MeasureFormatBar());
+        _formatBarPanel.RepositionOutside(body, BarGap);
     }
 
     /// <summary>書式バーの大きさ（DIP）を測る。</summary>
@@ -299,20 +308,36 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="kind">パネルの種別。</param>
     /// <returns>実寸。 まだ置いていない場合は希望寸法。</returns>
     private EsSize MeasurePanel(AnnotationPanelKind kind)
+        => MeasureContentSize(kind, KindAppearance(kind));
+
+    /// <summary>種別の外観を取得する（既定値。 パネルはどちらか 1 つしか持たない）。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <returns>外観。</returns>
+    private static AnnotationPanelAppearance KindAppearance(AnnotationPanelKind kind)
+        => kind == AnnotationPanelKind.FormatBar
+            ? AnnotationPanelAppearance.FormatBar
+            : AnnotationPanelAppearance.StyleEditor;
+
+    /// <summary>中身の実寸へ枠と余白を足したパネルの大きさを求める。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <param name="appearance">外観（枠と余白）。</param>
+    /// <returns>パネルの大きさ（DIP）。 中身が無い場合は原点。</returns>
+    /// <remarks>
+    /// <b>根ではなく中身を測る</b>: <c>OverlayLayer</c> の子は渡された領域へ引き伸ばされるため、
+    /// 根の実寸は画面の大きさになる（実測 2026-11-22）。
+    /// </remarks>
+    private EsSize MeasureContentSize(AnnotationPanelKind kind, AnnotationPanelAppearance appearance)
     {
-        if (!_roots.TryGetValue(kind, out var root))
+        if (!_roots.TryGetValue(kind, out var root) || root.Child is not { } content)
         {
             return default;
         }
 
-        if (root.RenderSize.Width > 0 && root.RenderSize.Height > 0)
-        {
-            return new EsSize(root.RenderSize.Width, root.RenderSize.Height);
-        }
-
-        root.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        var desired = root.DesiredSize;
-        return new EsSize(desired.Width, desired.Height);
+        content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var desired = content.DesiredSize;
+        return new EsSize(
+            desired.Width + (appearance.Padding * 2) + (appearance.BorderThickness * 2),
+            desired.Height + (appearance.VerticalPadding * 2) + (appearance.BorderThickness * 2));
     }
 
     /// <summary>種別のパネルを画面から外す（根と中身は残す）。</summary>
@@ -327,24 +352,15 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
 
     /// <summary>このコントロールの座標（DIP）を重ねた先の座標（DIP）へ変換する。</summary>
     /// <param name="point">このコントロールの座標。</param>
-    /// <returns>重ねた先の座標。 取得できない場合はそのまま返す。</returns>
-    /// <remarks>重ねた先はウィンドウの最上位（<c>OverlayLayer</c>）のため、ウィンドウ座標へ写す。</remarks>
+    /// <returns>重ねた先の座標。</returns>
+    /// <remarks>
+    /// <b>MewUI の <c>Bounds</c> はウィンドウの絶対座標</b>である（親からの相対ではない）。 したがって
+    /// レイヤーの左上を足すだけでウィンドウ座標になる（<c>OverlayLayer</c> もウィンドウ座標で置く）。<br/>
+    /// <b><c>TranslatePoint</c> は使わない</b>: ウィンドウやその内容の根を渡すと変換せず (0,0) を返すことがあり、
+    /// パネルがアプリの左上へずれる（実測 2026-11-22: 書式バーがウィンドウの左上へ出た）。
+    /// </remarks>
     private EsPoint ToOverlayPoint(Point point)
-    {
-        // 置ける領域はパネルを置く前に問い合わせられるため、ウィンドウは都度解決する
-        if (_owner is null && FindVisualRoot() is Window owner)
-        {
-            _owner = owner;
-        }
-
-        if (_owner is not { } resolved)
-        {
-            return new EsPoint(point.X, point.Y);
-        }
-
-        var local = _layer.TranslatePoint(point, resolved);
-        return new EsPoint(local.X, local.Y);
-    }
+        => new(_layer.Bounds.X + point.X, _layer.Bounds.Y + point.Y);
 
     /// <summary>このコントロールの矩形（DIP）を重ねた先の座標（DIP）へ変換する。</summary>
     /// <param name="rect">このコントロールの矩形。</param>
@@ -420,7 +436,11 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     }
 
     /// <summary>子要素を配置する（レイヤーは全面）。</summary>
-    /// <param name="bounds">最終的な領域。</param>
-    protected override void ArrangeContent(Rect bounds)
-        => _layer.Arrange(new Rect(0, 0, bounds.Width, bounds.Height));
+    /// <param name="bounds">最終的な領域（ウィンドウの絶対座標）。</param>
+    /// <remarks>
+    /// <b>絶対座標のまま渡す</b>: MewUI の <c>Bounds</c> はウィンドウの絶対座標であり、
+    /// 親は子へ絶対座標の矩形を渡して配置する。 0 起点で渡すとレイヤーの <c>Bounds</c> が (0,0) になり、
+    /// 注釈の位置をウィンドウ座標へ写せない（実測 2026-11-22: 書式バーがアプリの左上へ出た）。
+    /// </remarks>
+    protected override void ArrangeContent(Rect bounds) => _layer.Arrange(bounds);
 }

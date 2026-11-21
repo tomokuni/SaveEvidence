@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
+using EsUtil.Platform.Core.Geometry;
 
 namespace EsUtil.Feature.Annotation;
 
@@ -28,6 +30,12 @@ public sealed class AnnotationDocument
 
     /// <summary>注釈の並び（先頭が最背面、末尾が最前面）を取得または設定する。</summary>
     public ImmutableArray<AnnotationItem> Items { get; set; } = [];
+
+    /// <summary>対象の画像の大きさ（1 未満は 1 として扱う）を取得する。</summary>
+    /// <value>元画像ピクセルの大きさ。</value>
+    /// <remarks>幅と高さから導く値のため JSON には書かない（保存形式は <see cref="ImageWidth"/> / <see cref="ImageHeight"/> が単一所有する）。</remarks>
+    [JsonIgnore]
+    public EsSize ImageSize => AnnotationGeometry.ResolveImageSize(this);
 
     /// <summary>画像の寸法を指定して初期化する。</summary>
     /// <param name="imageWidth">元画像の幅（ピクセル）。</param>
@@ -78,6 +86,73 @@ public sealed class AnnotationDocument
     /// <returns>見つかった注釈。 無い場合は <see langword="null"/>。</returns>
     public AnnotationItem? Find(string? id)
         => string.IsNullOrEmpty(id) ? null : Items.FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.Ordinal));
+
+    /// <summary>指定された識別子の注釈の矩形を、画像の内側へ収めたうえで変更する。</summary>
+    /// <param name="id">注釈の識別子。</param>
+    /// <param name="bounds">新しい矩形（元画像ピクセル。 画像の外へ出た分は収める）。</param>
+    /// <returns>変更した場合は <see langword="true"/>（見つからない・同じ値の場合は <see langword="false"/>）。</returns>
+    /// <remarks>
+    /// <b>矩形を変更できる唯一の入口</b>である（<see cref="AnnotationItem.Bounds"/> の設定子は Core の内部）。
+    /// 収める規則は <see cref="AnnotationGeometry.ClampRect"/> が単一所有する。
+    /// </remarks>
+    public bool SetBounds(string id, EsRect bounds)
+    {
+        if (Find(id) is not { } item)
+        {
+            return false;
+        }
+
+        var clamped = AnnotationGeometry.ClampRect(bounds, ImageSize);
+        if (item.Bounds.NearlyEquals(clamped))
+        {
+            return false;
+        }
+
+        item.Bounds = clamped;
+        return true;
+    }
+
+    /// <summary>指定された吹き出しのしっぽの先端を、画像の内側へ収めたうえで変更する。</summary>
+    /// <param name="id">吹き出しの識別子。</param>
+    /// <param name="tip">新しい先端（元画像ピクセル。 画像の外へ出た分は収める）。</param>
+    /// <returns>変更した場合は <see langword="true"/>（見つからない・吹き出しでない・同じ値の場合は <see langword="false"/>）。</returns>
+    /// <remarks>
+    /// <b>しっぽの先端を変更できる唯一の入口</b>である（<see cref="BubbleAnnotation.Tail"/> の設定子は Core の内部）。
+    /// 収める規則は <see cref="AnnotationGeometry.ClampPoint"/> が単一所有する。
+    /// </remarks>
+    public bool SetTailTip(string id, EsPoint tip)
+    {
+        if (Find(id) is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        return SetTail(id, bubble.Tail with { Tip = tip });
+    }
+
+    /// <summary>指定された吹き出しのしっぽを、先端を画像の内側へ収めたうえで変更する。</summary>
+    /// <param name="id">吹き出しの識別子。</param>
+    /// <param name="tail">新しいしっぽ（先端は画像の外へ出た分を収める）。</param>
+    /// <returns>変更した場合は <see langword="true"/>（見つからない・吹き出しでない・同じ値の場合は <see langword="false"/>）。</returns>
+    /// <remarks>
+    /// <b>しっぽを変更できる唯一の入口</b>である（幅・辺・根本の位置を変える場合もここを通す）。
+    /// </remarks>
+    public bool SetTail(string id, BubbleTail tail)
+    {
+        if (Find(id) is not BubbleAnnotation bubble)
+        {
+            return false;
+        }
+
+        var clamped = tail with { Tip = AnnotationGeometry.ClampPoint(tail.Tip, ImageSize) };
+        if (bubble.Tail == clamped)
+        {
+            return false;
+        }
+
+        bubble.Tail = clamped;
+        return true;
+    }
 
     /// <summary>本文の書式を指定された範囲で差し替えた新しい文書を返す（<see cref="BubbleAnnotation"/> だけが対象）。</summary>
     /// <param name="bubble">対象の吹き出し（現在の文書に含まれるもの）。</param>

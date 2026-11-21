@@ -329,10 +329,11 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     /// <summary>枠線の注釈を追加する。</summary>
     /// <param name="bounds">矩形（元画像ピクセル）。</param>
     /// <returns>追加した注釈の識別子。</returns>
+    /// <remarks>矩形はコア（<see cref="AnnotationGeometry.CreateFrame"/>）が画像の内側へ収める。</remarks>
     public string AddFrame(EsRect bounds)
     {
         PrepareUndo();
-        var frame = new FrameAnnotation { Bounds = bounds, Appearance = DraftDefaults.FrameAppearance };
+        var frame = AnnotationGeometry.CreateFrame(bounds, DraftDefaults.FrameAppearance, _document.ImageSize);
         _document = _document.Add(frame);
         RaiseDocumentChanged();
         Select(frame.Id);
@@ -343,23 +344,16 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     /// <param name="bounds">本体の矩形（元画像ピクセル）。</param>
     /// <param name="text">本文。</param>
     /// <returns>追加した注釈の識別子。</returns>
-    /// <remarks>しっぽの先端は本体の下辺の中央から 40 px 下に置く（追加後すぐ掴めるようにする）。</remarks>
+    /// <remarks>
+    /// 矩形もしっぽの先端もコア（<see cref="AnnotationGeometry.CreateBubble"/>）が画像の内側へ収める
+    /// （しっぽが画像の外へ出ると掴めなくなる）。
+    /// </remarks>
     public string AddBubble(EsRect bounds, string text)
     {
         PrepareUndo();
         var defaults = DraftDefaults;
-        var bubble = new BubbleAnnotation
-        {
-            Bounds = bounds,
-            Appearance = defaults.BubbleAppearance,
-            BodyPadding = defaults.BodyPadding,
-            Text = RichText.Create(text, defaults.TextStyle),
-            Tail = new BubbleTail(
-                new EsPoint(bounds.Center.X, bounds.Bottom + 40),
-                defaults.TailEdge,
-                AnnotationDefaults.TailBaseOffsetDefault,
-                defaults.TailWidth),
-        };
+        var bubble = AnnotationGeometry.CreateBubble(
+            bounds, RichText.Create(text, defaults.TextStyle), defaults, _document.ImageSize);
 
         _document = _document.Add(bubble);
         RaiseDocumentChanged();
@@ -527,7 +521,12 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         }
 
         PrepareUndo();
-        bubble.Tail = transform(bubble.Tail).Normalized();
+        if (!_document.SetTail(bubble.Id, transform(bubble.Tail).Normalized()))
+        {
+            _undoCandidate = null;
+            return false;
+        }
+
         RaiseDocumentChanged();
         InvalidateVisual();
         return true;
@@ -646,6 +645,24 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         var body = bubble.ResolveBodyRect();
         var topLeft = ToClientDip(body.TopLeft);
         var bottomRight = ToClientDip(body.BottomRight);
+        return new Rect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
+    }
+
+    /// <summary>選択中の注釈の矩形（DIP）を取得する。</summary>
+    /// <returns>矩形（DIP）。 選択していない場合は空。</returns>
+    /// <remarks>
+    /// <b>書式バーを注釈に被せないための対象矩形</b>である。 本文の矩形ではなく枠線を含む矩形を使う
+    /// （本文で判定するとバーが枠線の上へ数ピクセル重なる。 実測 2026-11-22）。
+    /// </remarks>
+    public Rect GetSelectedBoundsRect()
+    {
+        if (Selected is not { } item)
+        {
+            return default;
+        }
+
+        var topLeft = ToClientDip(item.Bounds.TopLeft);
+        var bottomRight = ToClientDip(item.Bounds.BottomRight);
         return new Rect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
     }
 
@@ -922,9 +939,9 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
         if (_isDraggingTail)
         {
-            if (Selected is BubbleAnnotation bubble)
+            if (Selected is BubbleAnnotation bubble
+                && _document.SetTailTip(bubble.Id, source))
             {
-                bubble.Tail = bubble.Tail with { Tip = source };
                 RaiseDocumentChanged();
                 InvalidateVisual();
             }
@@ -1101,10 +1118,16 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
         // 外観フライアウトは注釈（枠線・吹き出し）の上を右クリックしたときだけ出す。
         // 注釈の外は「枠線・吹き出しを追加」のメニューにする（選択も解除する）。
+        // 追加できるのは画像の内側だけである（規則はコアが単一所有する）
         if (AnnotationHitTest.HitTest(_document, source) is not { } hit)
         {
             Select(null);
-            AddMenuRequested?.Invoke(this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
+            if (AnnotationGeometry.Contains(source, _document.ImageSize))
+            {
+                AddMenuRequested?.Invoke(
+                    this, new AnnotationAddMenuRequestedEventArgs(position.X, position.Y));
+            }
+
             return;
         }
 
@@ -1274,17 +1297,14 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
             return;
         }
 
-        if (item.Bounds.X == rect.X && item.Bounds.Y == rect.Y
-            && item.Bounds.Width == rect.Width && item.Bounds.Height == rect.Height)
-        {
-            return;
-        }
-
         _isApplyingMarquee = true;
         try
         {
-            item.Bounds = rect;
-            RaiseDocumentChanged();
+            // 画像の外へは出さない（収める規則はコアが単一所有する）
+            if (_document.SetBounds(item.Id, rect))
+            {
+                RaiseDocumentChanged();
+            }
         }
         finally
         {

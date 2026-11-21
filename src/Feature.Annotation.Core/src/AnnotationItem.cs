@@ -19,8 +19,14 @@ public abstract class AnnotationItem
     /// <remarks>選択・編集・JSON の参照に使う（利用者が書き換えない）。</remarks>
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
-    /// <summary>注釈の矩形（元画像ピクセル）を取得または設定する。</summary>
-    public EsRect Bounds { get; set; }
+    /// <summary>注釈の矩形（元画像ピクセル）を取得する。</summary>
+    /// <remarks>
+    /// <b>設定子は Core の内部に閉じる</b>: 画像の外へ出た注釈は掴めなくなるため、変更は
+    /// <see cref="AnnotationDocument.SetBounds"/>（画像の内側へ収める）を通す。 UI から直接書き換えると
+    /// 版ごとに収め忘れが起きる（実測 2026-11-21: しっぽの先端と矩形が画像の外へ出た）。
+    /// </remarks>
+    [JsonInclude]
+    public EsRect Bounds { get; internal set; }
 
     /// <summary>外観（枠線・内側・角丸）を取得または設定する。</summary>
     public AnnotationAppearance Appearance { get; set; } = AnnotationAppearance.Default;

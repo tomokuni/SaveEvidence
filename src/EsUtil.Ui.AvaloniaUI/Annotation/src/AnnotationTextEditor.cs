@@ -284,10 +284,12 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     private void ShowFormatBar()
     {
         EnsureOutsidePressHook();
-        var body = ToOverlayRect(ToEsRect(_layer.GetSelectedBodyRect()));
+        var body = ToOverlayRect(ToEsRect(_layer.GetSelectedBoundsRect()));
         _formatBarPanel.ShowOutside(
             AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), BarGap);
-        _formatBarPanel.Constrain(MeasureFormatBar());
+
+        // レイアウト後の実寸で置き直す（レイアウト前の測定は高さを正しく返さないことがある）
+        _formatBarPanel.RepositionOutside(body, BarGap);
     }
 
     /// <summary>書式バーの大きさ（DIP）を測る。</summary>
