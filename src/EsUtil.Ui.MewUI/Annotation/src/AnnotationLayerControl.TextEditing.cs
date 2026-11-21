@@ -577,8 +577,13 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>キャレットの位置（元画像ピクセル）を求める。</summary>
     /// <param name="index">文字位置。</param>
-    /// <param name="caret">キャレットの左上と行の高さ。</param>
+    /// <param name="caret">キャレットの左上と高さ。</param>
     /// <returns>求めた場合は <see langword="true"/>。</returns>
+    /// <remarks>
+    /// <b>文字と同じベースラインで上下を決める</b>: 行の上端をそのまま使うと、実際に描かれる文字より
+    /// キャレットが上へずれる（実測 2026-11-21）。 文字の描画（<c>AnnotationPainter</c>）と同じ
+    /// ベースラインから上端と高さを求め、文字の範囲に揃える。
+    /// </remarks>
     internal bool TryResolveCaretSource(int index, out (double X, double Y, double Height) caret)
     {
         caret = default;
@@ -590,7 +595,14 @@ public sealed partial class AnnotationLayerControl
         var lineIndex = LineIndexOf(layout, index);
         var line = layout.Lines[lineIndex];
         var offset = Math.Clamp(index - layout.Starts[lineIndex], 0, LineTextLength(line));
-        caret = (line.Bounds.X + MeasureLinePrefix(line, offset), line.Bounds.Y, line.Bounds.Height);
+        var style = SelectedTextStyle;
+        var metrics = AnnotationTextMetrics.ResolveLineMetrics(style);
+        var baseline = AnnotationTextMetrics.ResolveBaseline(
+            line.Bounds.Y, line.Bounds.Height, metrics.Height, metrics.Baseline);
+        caret = (
+            line.Bounds.X + MeasureLinePrefix(line, offset),
+            baseline - metrics.Baseline,
+            metrics.Height);
         return true;
     }
 

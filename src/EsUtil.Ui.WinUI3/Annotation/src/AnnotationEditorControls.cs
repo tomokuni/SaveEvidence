@@ -99,7 +99,10 @@ internal static class AnnotationEditorControls
         {
             SelectedColor = color,
             TextFormat = textFormat,
-            Width = 200,
+
+            // **幅を広くする**: フォーカスが当たると入力欄の枠が内側へ入り、色のテキストが欠ける
+            // （実測 2026-11-21）。 表記（色名 + 100% / #AARRGGBB）が収まる幅を確保する
+            Width = 240,
             FontSize = FontSize,
         };
 

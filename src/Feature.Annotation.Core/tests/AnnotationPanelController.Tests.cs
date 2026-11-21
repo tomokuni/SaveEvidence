@@ -13,28 +13,31 @@ public sealed class AnnotationPanelControllerTests
         var host = new HostSpy();
         var controller = new AnnotationPanelController(host);
 
-        controller.Show(AnnotationPanelKind.StyleEditor, new EsPointInt(640, 480));
+        controller.Show(AnnotationPanelKind.StyleEditor, new EsPoint(640, 480));
 
         Assert.True(controller.IsOpen);
         Assert.Equal(AnnotationPanelKind.StyleEditor, controller.Kind);
         Assert.Equal(1, host.CreateCount);
-        Assert.Equal(new EsPointInt(640, 480), host.LastCreatePosition);
+        Assert.Equal(new EsPoint(640, 480), host.LastCreatePosition);
         Assert.Equal(AnnotationPanelAppearance.StyleEditor, host.LastAppearance);
     }
 
-    /// <summary>別の種別を表示すると、前のパネルを閉じてから作り直す（同時に 2 つ出さない）。</summary>
+    /// <summary>対象に被せない位置へ出す（本文の外へ置く）。</summary>
     [Fact]
-    internal void Show_種別が変わると作り直す()
+    internal void ShowOutside_対象の外へ出す()
     {
         var host = new HostSpy();
         var controller = new AnnotationPanelController(host);
-        controller.Show(AnnotationPanelKind.StyleEditor, new EsPointInt(10, 20));
 
-        controller.Show(AnnotationPanelKind.FormatBar, new EsPointInt(30, 40));
+        controller.ShowOutside(
+            AnnotationPanelKind.FormatBar,
+            target: new EsRect(400, 500, 200, 100),
+            panelSize: new EsSize(300, 40),
+            gap: 8);
 
-        Assert.Equal(2, host.CreateCount);
-        Assert.Equal(1, host.DestroyCount);
-        Assert.Equal(AnnotationPanelKind.FormatBar, controller.Kind);
+        Assert.True(controller.IsOpen);
+        Assert.Equal(400, host.LastCreatePosition.X);
+        Assert.Equal(500 - 8 - 40, host.LastCreatePosition.Y);
     }
 
     /// <summary>閉じるとホストへ破棄が伝わる（2 回目は何もしない）。</summary>
@@ -43,7 +46,7 @@ public sealed class AnnotationPanelControllerTests
     {
         var host = new HostSpy();
         var controller = new AnnotationPanelController(host);
-        controller.Show(AnnotationPanelKind.FormatBar, new EsPointInt(1, 2));
+        controller.Show(AnnotationPanelKind.FormatBar, new EsPoint(1, 2));
 
         controller.Close();
         controller.Close();
@@ -59,12 +62,12 @@ public sealed class AnnotationPanelControllerTests
     {
         var host = new HostSpy();
         var controller = new AnnotationPanelController(host);
-        controller.Show(AnnotationPanelKind.StyleEditor, new EsPointInt(100, 200));
+        controller.Show(AnnotationPanelKind.StyleEditor, new EsPoint(100, 200));
 
-        controller.BeginDrag(new EsPointInt(110, 210));
-        controller.DragTo(new EsPointInt(130, 240));
+        controller.BeginDrag(new EsPoint(110, 210));
+        controller.DragTo(new EsPoint(130, 240));
 
-        Assert.Equal(new EsPointInt(120, 230), host.LastMovePosition);
+        Assert.Equal(new EsPoint(120, 230), host.LastMovePosition);
         Assert.True(controller.IsDragging);
 
         controller.EndDrag();
@@ -78,29 +81,11 @@ public sealed class AnnotationPanelControllerTests
         var host = new HostSpy();
         var controller = new AnnotationPanelController(host);
 
-        controller.BeginDrag(new EsPointInt(0, 0));
-        controller.DragTo(new EsPointInt(50, 50));
+        controller.BeginDrag(new EsPoint(0, 0));
+        controller.DragTo(new EsPoint(50, 50));
 
         Assert.False(controller.IsDragging);
         Assert.Equal(0, host.MoveCount);
-    }
-
-    /// <summary>対象に被せない位置へ出す（本文の外へ置く）。</summary>
-    [Fact]
-    internal void ShowOutside_対象の外へ出す()
-    {
-        var host = new HostSpy();
-        var controller = new AnnotationPanelController(host);
-
-        controller.ShowOutside(
-            AnnotationPanelKind.FormatBar,
-            targetScreen: new EsRect(400, 500, 200, 100),
-            panelSize: new EsSizeInt(300, 40),
-            gap: 8);
-
-        Assert.True(controller.IsOpen);
-        Assert.Equal(400, host.LastCreatePosition.X);
-        Assert.Equal(500 - 8 - 40, host.LastCreatePosition.Y);
     }
 
     /// <summary>ホストの呼び出しを記録するスパイ。</summary>
@@ -116,40 +101,40 @@ public sealed class AnnotationPanelControllerTests
         public int DestroyCount { get; private set; }
 
         /// <summary>最後に作成を頼まれた位置。</summary>
-        public EsPointInt LastCreatePosition { get; private set; }
+        public EsPoint LastCreatePosition { get; private set; }
 
         /// <summary>最後に渡された外観。</summary>
         public AnnotationPanelAppearance? LastAppearance { get; private set; }
 
         /// <summary>最後に移動を頼まれた位置。</summary>
-        public EsPointInt LastMovePosition { get; private set; }
+        public EsPoint LastMovePosition { get; private set; }
+
+        /// <summary>パネルを置ける領域。</summary>
+        public EsRect AvailableArea { get; set; } = new(0, 0, 1280, 800);
 
         /// <summary>パネルの左上（作成・移動で更新する）。</summary>
-        public EsPointInt PanelPosition { get; private set; }
+        public EsPoint PanelPosition { get; private set; }
 
-        /// <summary>パネルの大きさ（物理ピクセル）。</summary>
-        public EsSizeInt PanelSize { get; set; } = new(300, 120);
-
-        /// <summary>画面の作業領域（物理ピクセル）。</summary>
-        public EsRect WorkArea { get; set; } = new(0, 0, 1920, 1040);
+        /// <summary>パネルの大きさ。</summary>
+        public EsSize PanelSize { get; set; } = new(300, 120);
 
         /// <inheritdoc/>
         public void CreatePanel(
-            AnnotationPanelKind kind, AnnotationPanelAppearance appearance, EsPointInt screenPosition)
+            AnnotationPanelKind kind, AnnotationPanelAppearance appearance, EsPoint position)
         {
             _ = kind;
             CreateCount++;
             LastAppearance = appearance;
-            LastCreatePosition = screenPosition;
-            PanelPosition = screenPosition;
+            LastCreatePosition = position;
+            PanelPosition = position;
         }
 
         /// <inheritdoc/>
-        public void MovePanel(EsPointInt screenPosition)
+        public void MovePanel(EsPoint position)
         {
             MoveCount++;
-            LastMovePosition = screenPosition;
-            PanelPosition = screenPosition;
+            LastMovePosition = position;
+            PanelPosition = position;
         }
 
         /// <inheritdoc/>

@@ -8,6 +8,7 @@ using EsUtil.Platform.Core.Palette;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
 
@@ -114,6 +115,18 @@ public sealed partial class AnnotationLayerControl : Grid
 
     /// <summary>外観・書式の編集パネルを要求する（ホストが表示する）。</summary>
     public event EventHandler<AnnotationStyleEditorRequestedEventArgs>? StyleEditorRequested;
+
+    /// <summary>キー入力を本文の編集へ渡す（根で受けたキーの転送に使う）。</summary>
+    /// <param name="e">キーの引数。</param>
+    /// <remarks>
+    /// <b>フォーカスに依存しない入力</b>: レイヤーへフォーカスが無くても文字を入力できるよう、
+    /// ホストが根で受けたキーをここへ渡す（実測 2026-11-21）。
+    /// </remarks>
+    internal void ForwardKey(KeyRoutedEventArgs e) => OnKeyDown(this, e);
+
+    /// <summary>文字入力を本文の編集へ渡す（根で受けた文字の転送に使う）。</summary>
+    /// <param name="e">文字入力の引数。</param>
+    internal void ForwardCharacter(CharacterReceivedRoutedEventArgs e) => OnCharacterReceived(this, e);
 
     /// <summary>外観フライアウトを出した位置（ローカル DIP）。</summary>
     private double _styleEditorX;

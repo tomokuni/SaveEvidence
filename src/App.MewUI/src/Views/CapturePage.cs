@@ -1097,8 +1097,10 @@ internal static class CapturePage
         void SyncAnnotation()
         {
             // **画像の表示矩形を取り直す**: 画像を差し替えると縦横比が変わり、表示矩形も変わる。
-            // 取り直さないと前の画像の矩形のまま注釈がずれる（実測 2026-11-20）
-            annotationEditor.Layer.PreviewImageRect = cropView.ImageRectViewport();
+            // 取り直さないと前の画像の矩形のまま注釈がずれる（実測 2026-11-20）。
+            // 座標はズーム ビューから注釈レイヤーへ写す（内部の余白・枠の分のずれを吸収する）
+            annotationEditor.Layer.PreviewImageRect = ResolveOverlayRect(
+                cropView.ImageRectViewport(), cropView.ZoomView, annotationEditor.Layer);
 
             var layer = annotationEditor.Layer;
             if (viewModel.PreviewImage is { } image)
@@ -1130,7 +1132,15 @@ internal static class CapturePage
 
         // プレビューのズーム・パンへ注釈を追従させる（out パラメーターはラムダ内で参照できないためローカルへコピーする）
         var cropForAnnotation = crop;
-        void SyncAnnotationOverlay() => annotationEditor.Layer.PreviewImageRect = cropForAnnotation.ImageRectViewport();
+        void SyncAnnotationOverlay()
+        {
+            // **ズーム ビューの座標を注釈レイヤーの座標へ写す**: 2 つは同じ領域を覆うが、
+            // 内部の余白・枠の分だけ原点がずれることがある。 写さないと注釈が画像の左上へ
+            // ずれてはみ出す（実測 2026-11-21）。
+            annotationEditor.Layer.PreviewImageRect = ResolveOverlayRect(
+                cropForAnnotation.ImageRectViewport(), cropForAnnotation.ZoomView, annotationEditor.Layer);
+        }
+
         SyncAnnotationOverlay();
         cropForAnnotation.ZoomChanged += (_, _) => SyncAnnotationOverlay();
         cropForAnnotation.ViewportChanged += (_, _) => SyncAnnotationOverlay();
@@ -1555,6 +1565,32 @@ internal static class CapturePage
         var content = view.ClientToDisplayedSource(position);
         viewModel.PointerDisplayText = StatusBarTexts.FormatPointer(
             (int)Math.Clamp(content.X, 0, image.Width - 1), (int)Math.Clamp(content.Y, 0, image.Height - 1));
+    }
+
+    /// <summary>画像の表示矩形を、注釈レイヤーの座標へ写す。</summary>
+    /// <param name="rect">ズーム ビューの座標での画像の表示矩形。</param>
+    /// <param name="view">ズーム ビュー。</param>
+    /// <param name="target">写す先（注釈レイヤー）。</param>
+    /// <returns>注釈レイヤーの座標での画像の表示矩形。</returns>
+    /// <remarks>
+    /// <b>同じ視覚ツリーに無い場合はそのまま返す</b>: 生成の途中ではまだ重なっていないため
+    /// <c>TranslatePoint</c> が例外になる（実測 2026-11-21）。 その場合も矩形そのものは正しいので
+    /// そのまま使う（重なった後の再計算で直る）。
+    /// </remarks>
+    private static EsRect ResolveOverlayRect(EsRect rect, ZoomViewControl view, AnnotationLayerControl target)
+    {
+        try
+        {
+            var origin = view.TranslatePoint(new Point(rect.X, rect.Y), target);
+            return double.IsNaN(origin.X) || double.IsNaN(origin.Y)
+                ? rect
+                : new EsRect(origin.X, origin.Y, rect.Width, rect.Height);
+        }
+        catch (InvalidOperationException)
+        {
+            // まだ同じ視覚ツリーに無い（生成の途中）。 矩形そのものは正しいのでそのまま使う
+            return rect;
+        }
     }
 
     /// <summary>プレビュー上のカーソル位置にある自動切り出しの矩形（面積が最小のもの）を求める。</summary>

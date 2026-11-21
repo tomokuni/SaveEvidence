@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
 using EsUtil.Feature.Annotation;
@@ -12,13 +13,14 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 /// <summary>注釈の本文（表示とその場編集）と書式バーを 1 つにまとめたコントロール。</summary>
 /// <remarks>
 /// <b>セットで使う</b>: 本文の表示・キャレット・選択範囲は <see cref="AnnotationLayerControl"/> が描き、
-/// 書式バーは独立したウィンドウとして本文の近くへ出す。 2 つを別々に置くと、位置合わせと表示の切り替えを
+/// 書式バーはアプリの画面へ重ねて出す。 2 つを別々に置くと、位置合わせと表示の切り替えを
 /// ホストが書くことになる（サンプルごとにずれる）。<br/>
 /// <b>位置と開閉はコアが決める</b>: <see cref="AnnotationPanelController"/> が「どこへ出すか・ドラッグで
 /// どう動くか・いつ閉じるか」を単一所有する。 本クラスは <see cref="IAnnotationPanelHost"/> を実装し、
-/// ウィンドウの生成・移動・破棄だけを行う（4 つの UI 版で動作を揃えるため）。<br/>
-/// <b>ウィンドウの内側へ収めない</b>: 書式バーも右クリックの外観フライアウトも、アプリのウィンドウの外へ
-/// 出してよい（狭いウィンドウで切れるのを避ける）。
+/// 重ねる先への追加・移動・削除だけを行う（4 つの UI 版で動作を揃えるため）。<br/>
+/// <b>独立したウィンドウを作らない</b>: ウィンドウはタスク バーへ出る・アプリの後ろへ回る・フォーカスを
+/// 奪うといった問題が版ごとに出るため、アプリの画面の最上位（<see cref="OverlayLayer"/>）へ重ねる。
+/// 画像（プレビュー）の内側では切れない。
 /// </remarks>
 public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
 {
@@ -31,20 +33,17 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>注釈の表示と編集を担うレイヤー。</summary>
     private readonly AnnotationLayerControl _layer;
 
-    /// <summary>書式バーの外観（コアが単一所有する値）。</summary>
-    private readonly AnnotationPanelAppearance _appearance = AnnotationPanelAppearance.StyleEditor;
-
-    /// <summary>書式バーのウィンドウを出すコントローラー。</summary>
+    /// <summary>書式バーを出すコントローラー。</summary>
     private readonly AnnotationPanelController _formatBarPanel;
 
     /// <summary>右クリックの外観フライアウトを出すコントローラー。</summary>
     private readonly AnnotationPanelController _stylePanel;
 
-    /// <summary>表示中のパネルのウィンドウ（種別ごとに 1 つ）。</summary>
-    private readonly Dictionary<AnnotationPanelKind, Window> _windows = [];
-
-    /// <summary>表示中のパネルの根（使い回すために保持する）。</summary>
+    /// <summary>表示中のパネルの根（種別ごとに 1 つ。 使い回す）。</summary>
     private readonly Dictionary<AnnotationPanelKind, Border> _roots = [];
+
+    /// <summary>パネルを重ねた先（アプリの画面の最上位）。</summary>
+    private OverlayLayer? _overlay;
 
     /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
     private Border? _draggingRoot;
@@ -59,7 +58,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         Background = Brushes.Transparent;
 
         _formatBarPanel = new AnnotationPanelController(this, AnnotationPanelAppearance.FormatBar);
-        _stylePanel = new AnnotationPanelController(this, _appearance);
+        _stylePanel = new AnnotationPanelController(this, AnnotationPanelAppearance.StyleEditor);
 
         Children.Add(_layer);
 
@@ -72,7 +71,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             if (_layer.IsEditingText)
             {
                 _formatBar.Refresh();
-                ShowFormatBar(ToEsRect(_layer.GetSelectedBodyRect()));
+                ShowFormatBar();
                 return;
             }
 
@@ -93,7 +92,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         {
             if (_formatBarPanel.IsOpen)
             {
-                ShowFormatBar(ToEsRect(_layer.GetSelectedBodyRect()));
+                ShowFormatBar();
             }
         };
 
@@ -143,78 +142,60 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         }
     }
 
-    /// <summary>表示中のパネルの左上（物理ピクセル）を取得する。</summary>
+    /// <summary>パネルを置ける領域（DIP）を取得する。</summary>
+    /// <value>アプリの画面の全体（重ねた先の大きさ）。</value>
+    public EsRect AvailableArea
+        => _overlay is { } overlay && overlay.Bounds.Width > 0
+            ? new EsRect(0, 0, overlay.Bounds.Width, overlay.Bounds.Height)
+            : TopLevel.GetTopLevel(this) is { } top
+                ? new EsRect(0, 0, top.ClientSize.Width, top.ClientSize.Height)
+                : default;
+
+    /// <summary>表示中のパネルの左上（DIP）を取得する。</summary>
     /// <value>表示していない場合は原点。</value>
-    public EsPointInt PanelPosition
-        => _windows.Values.FirstOrDefault()?.Position is { } position
-            ? new EsPointInt(position.X, position.Y)
+    public EsPoint PanelPosition
+        => _roots.Values.FirstOrDefault(root => Canvas.GetLeft(root) is not double.NaN) is { } root
+            ? new EsPoint(
+                double.IsNaN(Canvas.GetLeft(root)) ? 0 : Canvas.GetLeft(root),
+                double.IsNaN(Canvas.GetTop(root)) ? 0 : Canvas.GetTop(root))
             : default;
 
-    /// <summary>表示中のパネルの大きさ（物理ピクセル）を取得する。</summary>
+    /// <summary>表示中のパネルの大きさ（DIP）を取得する。</summary>
     /// <value>表示していない場合は原点。</value>
-    public EsSizeInt PanelSize
-        => _windows.Values.FirstOrDefault()?.ClientSize is { } size
-            ? new EsSizeInt((int)Math.Round(size.Width), (int)Math.Round(size.Height))
+    public EsSize PanelSize
+        => _roots.Values.FirstOrDefault() is { } root
+            ? new EsSize(root.Bounds.Width, root.Bounds.Height)
             : default;
 
-    /// <summary>パネルを置く画面の作業領域（物理ピクセル）を取得する。</summary>
-    /// <value>スクリーンが取得できない場合は仮想スクリーン全体。</value>
-    /// <remarks>パネルはアプリのウィンドウの内側へ収めないが、画面の外へは出さない（掴めなくなるため）。</remarks>
-    public EsRect WorkArea
-    {
-        get
-        {
-            if (TopLevel.GetTopLevel(this) is not { } top)
-            {
-                return default;
-            }
-
-            var screens = top.Screens;
-            if (screens is null)
-            {
-                return default;
-            }
-
-            var screen = (top as WindowBase is { } windowBase ? screens.ScreenFromWindow(windowBase) : null)
-                ?? screens.Primary;
-            if (screen is null)
-            {
-                return default;
-            }
-
-            var area = screen.WorkingArea;
-            return new EsRect(area.X, area.Y, area.Width, area.Height);
-        }
-    }
-
-    /// <summary>パネルのウィンドウを作って表示する。</summary>
+    /// <summary>パネルを作って表示する。</summary>
     /// <param name="kind">パネルの種別（中身を決める）。</param>
     /// <param name="appearance">外観（枠・余白・幅）。</param>
-    /// <param name="screenPosition">左上の位置（物理ピクセル）。</param>
+    /// <param name="position">左上の位置（アプリの画面の左上を原点とする DIP）。</param>
     public void CreatePanel(
-        AnnotationPanelKind kind, AnnotationPanelAppearance appearance, EsPointInt screenPosition)
+        AnnotationPanelKind kind, AnnotationPanelAppearance appearance, EsPoint position)
     {
         DestroyPanel(kind);
 
-        if (TopLevel.GetTopLevel(this) is not { } top)
+        if (OverlayLayer.GetOverlayLayer(this) is not { } overlay)
         {
             return;
         }
 
-        var root = _roots.TryGetValue(kind, out var existingRoot) ? existingRoot : new Border();
-        _roots[kind] = root;
+        _overlay = overlay;
 
-        // **書式バーは作り直さない**: 購読が増えるため使い回す。 根も使い回すことで、要素が
-        // 「既に親を持つ」状態になって付け替えに失敗するのを防ぐ（実測 2026-11-20: WinUI 3 版で
-        // Border.Child が E_INVALIDARG になった）。
-        var content = kind == AnnotationPanelKind.FormatBar
-            ? _formatBar
-            : AnnotationStyleFlyout.BuildContent(_layer, appearance);
-        if (!ReferenceEquals(root.Child, content))
+        // **根は種別ごとに 1 度だけ作って使い回す**: 書式バーは作り直さない（購読が増えるため）。
+        // 根を作り直すと、前の根が書式バーを子として保持したままになり、付け替えに失敗する
+        // （実測 2026-11-20: WinUI 3 版で E_INVALIDARG になった）。
+        if (!_roots.TryGetValue(kind, out var root))
         {
-            // 先に外してから付け直す（古い子が親を持ったままだと付け替えに失敗する UI がある）
-            root.Child = null;
-            root.Child = content;
+            root = new Border
+            {
+                Child = kind == AnnotationPanelKind.FormatBar
+                    ? _formatBar
+                    : AnnotationStyleFlyout.BuildContent(_layer, appearance),
+            };
+
+            _roots[kind] = root;
         }
 
         root.Background = ToBrush(appearance.Background);
@@ -225,72 +206,37 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             appearance.Padding, appearance.VerticalPadding,
             appearance.Padding, appearance.VerticalPadding);
 
-        var window = new Window
-        {
-            // ウィンドウの飾りを消す（残すとパネルの枠と二重になり、余計な辺枠に見える）
-            WindowDecorations = WindowDecorations.None,
-            ShowInTaskbar = false,
-            CanResize = false,
-            CanMinimize = false,
-            CanMaximize = false,
-
-            // **アプリより前面に出す**: 既定ではアプリのウィンドウの後ろへ回ることがある
-            Topmost = true,
-            SizeToContent = SizeToContent.WidthAndHeight,
-            WindowStartupLocation = WindowStartupLocation.Manual,
-            Position = new PixelPoint(screenPosition.X, screenPosition.Y),
-            Background = ToBrush(appearance.Background),
-            Content = root,
-            MaxWidth = appearance.MaxWidth,
-            MaxHeight = appearance.MaxContentHeight,
-
-            // **書式バーはアクティブにしない**: アクティブにすると本文の入力（文字・IME）が
-            // そちらへ移り、その場編集が成り立たない。
-            ShowActivated = kind == AnnotationPanelKind.StyleEditor,
-        };
-
-        if (kind == AnnotationPanelKind.StyleEditor)
-        {
-            // 外側をクリックすると非アクティブになる（閉じるのは押下だけ）
-            window.Deactivated += (_, _) => _stylePanel.CloseOnDeactivate();
-        }
-
-        // 余白（中身の無いところ）を押したまま動かすとウィンドウが動く
-        root.PointerPressed += (_, e) => BeginPanelDrag(kind, root, top, e);
-        root.PointerMoved += (_, e) => ContinuePanelDrag(kind, root, top, e);
+        // 余白（中身の無いところ）を押したまま動かすとパネルが動く
+        root.PointerPressed += (_, e) => BeginPanelDrag(kind, root, e);
+        root.PointerMoved += (_, e) => ContinuePanelDrag(kind, root, e);
         root.PointerReleased += (_, e) => EndPanelDrag(kind, e);
 
-        _windows[kind] = window;
-
-        if (top is Window owner)
+        if (!overlay.Children.Contains(root))
         {
-            window.Show(owner);
-        }
-        else
-        {
-            window.Show();
+            overlay.Children.Add(root);
         }
 
-        // OS の枠（DWM が描く 1 ピクセルの枠と角丸）を消す。 残すとパネルの枠と二重になる。
-        // ハンドルは表示の後でないと取れないため Opened で行う
-        window.Opened += (_, _) =>
-            AnnotationPanelWindow.RemoveSystemFrame(window.TryGetPlatformHandle()?.Handle ?? nint.Zero);
+        Canvas.SetLeft(root, position.X);
+        Canvas.SetTop(root, position.Y);
     }
 
-    /// <summary>パネルのウィンドウを移動する。</summary>
-    /// <param name="screenPosition">左上の位置（物理ピクセル）。</param>
-    public void MovePanel(EsPointInt screenPosition)
+    /// <summary>パネルを移動する。</summary>
+    /// <param name="position">左上の位置（アプリの画面の左上を原点とする DIP）。</param>
+    public void MovePanel(EsPoint position)
     {
-        if (_windows.Values.FirstOrDefault() is { } window)
+        if (_roots.Values.FirstOrDefault() is not { } root)
         {
-            window.Position = new PixelPoint(screenPosition.X, screenPosition.Y);
+            return;
         }
+
+        Canvas.SetLeft(root, position.X);
+        Canvas.SetTop(root, position.Y);
     }
 
-    /// <summary>表示中のパネルのウィンドウを閉じて破棄する。</summary>
+    /// <summary>表示中のパネルを画面から外す（根と中身は残す）。</summary>
     public void DestroyPanel()
     {
-        foreach (var kind in _windows.Keys.ToArray())
+        foreach (var kind in _roots.Keys.ToArray())
         {
             DestroyPanel(kind);
         }
@@ -300,11 +246,11 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="x">位置（このコントロールの座標）。</param>
     /// <param name="y">位置（このコントロールの座標）。</param>
     /// <remarks>
-    /// <b>位置と寿命はコアが決める</b>: ウィンドウの内側へ収めず、右クリックした位置へ出し、
-    /// 外側をクリックすると閉じる。 見出し（余白）を押したまま動かすと移動する。
+    /// <b>位置と寿命はコアが決める</b>: アプリの画面の内側へ収め、右クリックした位置へ出し、
+    /// 外側をクリックすると閉じる。 余白を押したまま動かすと移動する。
     /// </remarks>
     public void ShowStylePanel(double x, double y)
-        => _stylePanel.Show(AnnotationPanelKind.StyleEditor, ToScreenPixels(new Point(x, y)));
+        => _stylePanel.Show(AnnotationPanelKind.StyleEditor, ToOverlayPoint(new Point(x, y)));
 
     /// <summary>外観フライアウトを閉じる（出ていなければ何もしない）。</summary>
     public void CloseStylePanel() => _stylePanel.Close();
@@ -312,61 +258,82 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>外観フライアウトが出ているかどうかを取得する。</summary>
     public bool IsStylePanelOpen => _stylePanel.IsOpen;
 
-    /// <summary>書式バーを本文の外（本文に被さらない位置）へ出す。</summary>
-    /// <param name="bodyDip">本文の矩形（このコントロールの座標）。</param>
+    /// <summary>書式バーを本文の外（本文に被さらない位置）へ出し直す。</summary>
     /// <remarks>
     /// <b>本文に被せない</b>: 編集中の文字が隠れて読めない（実測 2026-11-20）。 位置の判断は
     /// コア（<see cref="AnnotationPanelPlacement.ResolveOutside"/>）が単一所有する。
+    /// <b>大きさは実寸を使う</b>: 中身（フォント名・大きさ・色）で幅が決まるため、固定値だと
+    /// 枠からはみ出す。 一度置いてから実寸で出し直す。
     /// </remarks>
-    private void ShowFormatBar(EsRect bodyDip)
+    private void ShowFormatBar()
     {
-        var target = ToScreenRect(bodyDip);
-        var panel = new EsSizeInt(
-            (int)Math.Ceiling(_formatBar.Bounds.Width * RenderScale()),
-            (int)Math.Ceiling(_formatBar.Bounds.Height * RenderScale()));
-        var size = panel.Width > 0 && panel.Height > 0
-            ? panel
-            : new EsSizeInt(
-                (int)Math.Ceiling(_formatBar.DesiredSize.Width * RenderScale()),
-                (int)Math.Ceiling(_formatBar.DesiredSize.Height * RenderScale()));
+        var body = ToOverlayRect(ToEsRect(_layer.GetSelectedBodyRect()));
+        _formatBarPanel.ShowOutside(
+            AnnotationPanelKind.FormatBar, body, MeasureFormatBar(), BarGap);
 
-        _formatBarPanel.ShowOutside(AnnotationPanelKind.FormatBar, target, size, BarGapPixels);
+        // 実寸が測れたら、その大きさで置き直す（初回は中身が未測定のため）
+        if (_roots.TryGetValue(AnnotationPanelKind.FormatBar, out var root))
+        {
+            var size = MeasureFormatBar();
+            if (root.Bounds.Width > 0 && Math.Abs(root.Bounds.Width - size.Width) > 0.5)
+            {
+                _formatBarPanel.ShowOutside(AnnotationPanelKind.FormatBar, body, size, BarGap);
+            }
+        }
     }
 
-    /// <summary>本文の外へ出すときの余白（物理ピクセル）。</summary>
-    private int BarGapPixels => (int)Math.Round(BarGap * RenderScale());
+    /// <summary>書式バーの大きさ（DIP）を測る。</summary>
+    /// <returns>実寸。 測れない場合は希望寸法。</returns>
+    private EsSize MeasureFormatBar()
+    {
+        if (_roots.TryGetValue(AnnotationPanelKind.FormatBar, out var root)
+            && root.Bounds.Width > 0 && root.Bounds.Height > 0)
+        {
+            return new EsSize(root.Bounds.Width, root.Bounds.Height);
+        }
 
-    /// <summary>このコントロールの座標（DIP）を画面座標（物理ピクセル）へ変換する。</summary>
+        _formatBar.Measure(Size.Infinity);
+        var bounds = _formatBar.Bounds.Size;
+        var size = bounds.Width > 0 ? bounds : _formatBar.DesiredSize;
+        var appearance = AnnotationPanelAppearance.FormatBar;
+        return new EsSize(
+            size.Width + (appearance.Padding * 2) + (appearance.BorderThickness * 2),
+            size.Height + (appearance.VerticalPadding * 2) + (appearance.BorderThickness * 2));
+    }
+
+    /// <summary>種別のパネルを画面から外す（根と中身は残す）。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    private void DestroyPanel(AnnotationPanelKind kind)
+    {
+        Controller(kind).Close();
+
+        if (_roots.TryGetValue(kind, out var root))
+        {
+            _overlay?.Children.Remove(root);
+        }
+    }
+
+    /// <summary>このコントロールの座標（DIP）を重ねた先の座標（DIP）へ変換する。</summary>
     /// <param name="point">このコントロールの座標。</param>
-    /// <returns>画面座標（物理ピクセル）。 取得できない場合は原点。</returns>
-    private EsPointInt ToScreenPixels(Point point)
+    /// <returns>重ねた先の座標。 取得できない場合はそのまま返す。</returns>
+    private EsPoint ToOverlayPoint(Point point)
     {
         if (TopLevel.GetTopLevel(this) is not { } top)
         {
-            return default;
+            return new EsPoint(point.X, point.Y);
         }
 
-        var screen = top.PointToScreen(point);
-        return new EsPointInt(screen.X, screen.Y);
+        var screen = top.PointToClient(top.PointToScreen(point));
+        return new EsPoint(screen.X, screen.Y);
     }
 
-    /// <summary>このコントロールの矩形（DIP）を画面座標（物理ピクセル）へ変換する。</summary>
+    /// <summary>このコントロールの矩形（DIP）を重ねた先の座標（DIP）へ変換する。</summary>
     /// <param name="rect">このコントロールの矩形。</param>
-    /// <returns>画面座標の矩形（物理ピクセル）。</returns>
-    private EsRect ToScreenRect(EsRect rect)
+    /// <returns>重ねた先の矩形。</returns>
+    private EsRect ToOverlayRect(EsRect rect)
     {
-        if (TopLevel.GetTopLevel(this) is not { } top)
-        {
-            return default;
-        }
-
-        var scale = RenderScale();
-        var origin = top.PointToScreen(default);
-        return new EsRect(
-            origin.X + (rect.X * scale),
-            origin.Y + (rect.Y * scale),
-            rect.Width * scale,
-            rect.Height * scale);
+        var origin = ToOverlayPoint(new Point(rect.X, rect.Y));
+        return new EsRect(origin.X, origin.Y, rect.Width, rect.Height);
     }
 
     /// <summary>コントロールの矩形をコアの矩形へ変換する。</summary>
@@ -374,21 +341,11 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <returns>コアの矩形。</returns>
     private static EsRect ToEsRect(Rect rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
 
-    /// <summary>物理ピクセル / DIP の倍率を取得する。</summary>
-    /// <returns>1 以上の倍率。</returns>
-    private double RenderScale()
-    {
-        var scale = TopLevel.GetTopLevel(this)?.RenderScaling ?? 1.0;
-        return scale > 0 ? scale : 1.0;
-    }
-
     /// <summary>パネルのドラッグを始める（余白を押したときだけ）。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <param name="root">パネルの根。</param>
-    /// <param name="top">画面。</param>
     /// <param name="e">押下の引数。</param>
-    private void BeginPanelDrag(
-        AnnotationPanelKind kind, Border root, TopLevel top, PointerPressedEventArgs e)
+    private void BeginPanelDrag(AnnotationPanelKind kind, Border root, PointerPressedEventArgs e)
     {
         // 中身（ボタン・入力欄）の押下では動かさない（操作を奪わない）
         if (!ReferenceEquals(e.Source, root)
@@ -398,8 +355,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         }
 
         _draggingRoot = root;
-        var cursor = top.PointToScreen(e.GetPosition(top));
-        Controller(kind).BeginDrag(new EsPointInt(cursor.X, cursor.Y));
+        Controller(kind).BeginDrag(ToOverlayPoint(e.GetPosition(this)));
         e.Pointer.Capture(root);
         e.Handled = true;
     }
@@ -407,18 +363,15 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>パネルをドラッグして動かす。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <param name="root">パネルの根。</param>
-    /// <param name="top">画面。</param>
     /// <param name="e">ポインターの引数。</param>
-    private void ContinuePanelDrag(
-        AnnotationPanelKind kind, Border root, TopLevel top, PointerEventArgs e)
+    private void ContinuePanelDrag(AnnotationPanelKind kind, Border root, PointerEventArgs e)
     {
         if (!ReferenceEquals(_draggingRoot, root))
         {
             return;
         }
 
-        var cursor = top.PointToScreen(e.GetPosition(top));
-        Controller(kind).DragTo(new EsPointInt(cursor.X, cursor.Y));
+        Controller(kind).DragTo(ToOverlayPoint(e.GetPosition(this)));
         e.Handled = true;
     }
 
@@ -438,25 +391,6 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <returns>コントローラー。</returns>
     private AnnotationPanelController Controller(AnnotationPanelKind kind)
         => kind == AnnotationPanelKind.FormatBar ? _formatBarPanel : _stylePanel;
-
-    /// <summary>種別のパネルを閉じる（表示していなければ何もしない）。</summary>
-    /// <param name="kind">パネルの種別。</param>
-    /// <remarks>
-    /// <b>根と中身は残す</b>: 根（<c>Border</c>）と書式バーは作り直さずに使い回す（購読が増えない）。
-    /// ここで外すのはウィンドウとの結び付きだけにする。
-    /// </remarks>
-    private void DestroyPanel(AnnotationPanelKind kind)
-    {
-        Controller(kind).Close();
-
-        if (!_windows.Remove(kind, out var window))
-        {
-            return;
-        }
-
-        window.Content = null;
-        window.Close();
-    }
 
     /// <summary>コアの色を Avalonia のブラシへ変換する。</summary>
     /// <param name="color">色。</param>
