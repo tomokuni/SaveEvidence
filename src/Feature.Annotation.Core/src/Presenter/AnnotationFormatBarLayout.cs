@@ -77,11 +77,20 @@ public static class AnnotationFormatBarLayout
 
         var style = AnnotationDefaults.TextStyle with { FontSize = ColorMeasureFontSize };
         var hexWidth = measureText(HexTextForMeasure, style).Width;
-        return Math.Ceiling(ColorSwatchIndent + hexWidth + ColorToggleWidth);
+        return Math.Ceiling(ColorSwatchIndent + hexWidth + ColorToggleWidth + HexTextSlack);
     }
 
     /// <summary>色の入力欄の幅を測るための最も長い表記（<c>#AARRGGBB</c>）。</summary>
     private const string HexTextForMeasure = "#FFFFFFFF";
+
+    /// <summary>色の入力欄の内側の余白の見込み（DIP）。</summary>
+    /// <remarks>
+    /// <b>文字の実寸だけでは足りない</b>: 入力欄は文字の左右に内側の余白を持ち、文字の実寸は
+    /// その外側の幅です。 余白を見込まないと、<c>#FFFFFFFF</c> の末尾が切れます
+    /// （実測 2026-11-22: WinUI 3 版で 8 桁のコードが見切れた）。 実測の近似（<c>文字数 × サイズ × 0.5</c>）を
+    /// 使う UI もあるため、余裕を持たせます。
+    /// </remarks>
+    private const double HexTextSlack = 14;
 
     /// <summary>項目の高さ（DIP）を取得する。</summary>
     /// <value>32 DIP。</value>

@@ -539,11 +539,25 @@ if (-not $SkipPackage) {
     # NU1004 で失敗する）。 監査は --force-evaluate で lock を書き換え得るため、この検査を先に行う。
     # 構成は指定しない（CI の復元と同じ条件にする）。 `packages.lock.json` は 1 つしか持てないため、
     # 構成で解決が変わるプロジェクトがあると、構成を変えるだけで NU1004 になる（実測 2026-10-26）。
-    $locked = Invoke-DotNet @('restore', $Solution, '-p:RestoreLockedMode=true')
-    $lockedText = $locked.Text + $locked.ErrorText
-    $lockedIssues = @($lockedText -split "`r?`n" | Where-Object { $_ -match 'NU1004|error' })
-    Add-Result 'ロックどおりの復元' ($locked.ExitCode -eq 0) "終了コード $($locked.ExitCode)"
-    if ($locked.ExitCode -ne 0) { $lockedIssues | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" } }
+    # **暫定**: 隣のリポジトリのソースを ProjectReference で参照している間は、パッケージの閉包が
+    # lock と違うため検査しない（規則は .github/依存関係.md §1。 参照を戻したら再び検査する）。
+    $useEsUtilSource = $false
+    $buildProps = Join-Path $repoRoot 'Directory.Build.props'
+    if (Test-Path -LiteralPath $buildProps) {
+        $propsText = [IO.File]::ReadAllText($buildProps)
+        $useEsUtilSource = $propsText -match '<EsUtilUseProjectReference[^>]*>true</EsUtilUseProjectReference>'
+    }
+
+    if ($useEsUtilSource) {
+        Add-Result 'ロックどおりの復元' $true '省略（EsUtil をソース参照中）'
+    }
+    else {
+        $locked = Invoke-DotNet @('restore', $Solution, '-p:RestoreLockedMode=true')
+        $lockedText = $locked.Text + $locked.ErrorText
+        $lockedIssues = @($lockedText -split "`r?`n" | Where-Object { $_ -match 'NU1004|error' })
+        Add-Result 'ロックどおりの復元' ($locked.ExitCode -eq 0) "終了コード $($locked.ExitCode)"
+        if ($locked.ExitCode -ne 0) { $lockedIssues | Select-Object -First 5 | ForEach-Object { "      $($_.Trim())" } }
+    }
 
     # 脆弱性は復元の NuGet 監査で検出する（推移的依存も対象。 実測 2.7 秒。 同じ結果を
     # `dotnet package list --vulnerable --include-transitive` で取ると 35 秒かかる）。

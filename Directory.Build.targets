@@ -67,8 +67,10 @@
            Code="DEP0006"
            Text="依存関係違反: プラットフォーム層は上位（アプリ・Parts・Feature）を参照できません（違反: @(_SeBad6->'%(Name)', ', ')）。 規則は .github/依存関係.md §4。" />
 
-    <!-- R7: 本リポジトリの外のプロジェクトは ProjectReference で参照しない（公開パッケージを使う） -->
-    <Error Condition="'@(_SeOutsideRef)' != ''"
+    <!-- R7: 本リポジトリの外のプロジェクトは ProjectReference で参照しない（公開パッケージを使う）。
+         **暫定**: 隣のリポジトリのソースを試すときだけ `EsUtilUseProjectReference=true` で外す
+         （規則は .github/依存関係.md §1）。 -->
+    <Error Condition="'@(_SeOutsideRef)' != '' and '$(EsUtilUseProjectReference)' != 'true'"
            Code="DEP0007"
            Text="依存関係違反: 本リポジトリの外のプロジェクトを ProjectReference で参照できません（参照: @(_SeOutsideRef->'%(Name)', ', ')）。 別リポジトリの層は PackageReference で参照します。 規則は .github/依存関係.md §1。" />
 
@@ -118,5 +120,17 @@
            Text="命名規約違反: テスト プロジェクト '$(MSBuildProjectName)' の RootNamespace '$(RootNamespace)' が .Tests で終わっていません。 規則は .github/テスト規約.md §1。" />
 
   </Target>
+  <!-- ============================================================
+       **暫定**: EsUtilUseProjectReference=true のときだけ、`EsUtil.*` の PackageReference を
+       隣のリポジトリ（..\EsUtil）の ProjectReference へ置き換える。
+       未公開の修正を試すための切り替えであり、通常のビルドでは使わない
+       （規則は .github/依存関係.md §1。 復元の固定と DEP0007 の検査はこの間だけ外れる）。
+       ============================================================ -->
+  <ItemGroup Condition="'$(EsUtilUseProjectReference)' == 'true'">
+    <_SeEsUtilPackageReference Include="@(PackageReference)"
+                               Condition="$([System.String]::Copy('%(Identity)').StartsWith('EsUtil.'))" />
+    <PackageReference Remove="@(_SeEsUtilPackageReference)" />
+    <ProjectReference Include="@(_SeEsUtilPackageReference->'$(EsUtilRepoRoot)\**\%(Identity).csproj')" />
+  </ItemGroup>
 
 </Project>

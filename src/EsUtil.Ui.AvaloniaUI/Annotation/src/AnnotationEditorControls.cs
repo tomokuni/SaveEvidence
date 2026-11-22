@@ -218,6 +218,7 @@ public static class AnnotationEditorControls
             FontFamily = new FontFamily(AnnotationEditorLayout.ToggleFontFamily),
             FontWeight = bold ? FontWeight.Bold : FontWeight.Normal,
             FontStyle = italic ? FontStyle.Italic : FontStyle.Normal,
+            RenderTransform = new TranslateTransform(0, 2),
         };
 
         if (underline)

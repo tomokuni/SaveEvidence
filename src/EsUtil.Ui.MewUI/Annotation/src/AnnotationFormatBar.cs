@@ -22,8 +22,14 @@ public sealed class AnnotationFormatBar : ContentControl
     /// <summary>編集対象のコントロール。</summary>
     private readonly AnnotationLayerControl _layer;
 
-    /// <summary>フォントの選択。</summary>
+    /// <summary>フォントの選択（枠と展開ボタンだけを描く）。</summary>
     private readonly ComboBox _font;
+
+    /// <summary>フォント名の入力（コンボボックスの文字の位置へ重ねる）。</summary>
+    private readonly TextBox _fontText;
+
+    /// <summary>フォントの入力と選択を重ねた入れ物。</summary>
+    private readonly Grid _fontCell;
 
     /// <summary>文字の大きさの入力。</summary>
     private readonly NumericUpDown _size;
@@ -53,10 +59,51 @@ public sealed class AnnotationFormatBar : ContentControl
         ArgumentNullException.ThrowIfNull(layer);
         _layer = layer;
 
+        // **フォント名は直接入力できる**: MewUI の ComboBox は読み取り専用のため、
+        // コンボボックスが枠と展開ボタンを描き、その文字の位置へ**枠も背景も持たない文字入力**を重ねる
+        // （EsUtil の色選択と同じ作り。 実測 2026-11-22: MewUI 版だけ直接入力できなかった）。
+        // 標準のテキスト入力を使うため、Ctrl+C / Ctrl+V もそのまま使える。
         _font = new ComboBox().Items([.. AnnotationFonts.All]);
         _font.Width = FontSelectorWidth;
         _font.SelectedIndex = 0;
-        _font.OnSelectionChanged(_ => ApplyFont());
+        _font.OnSelectionChanged(_ =>
+        {
+            if (!_isRefreshing && _font.SelectedIndex >= 0)
+            {
+                SetFontText(AnnotationFonts.All[_font.SelectedIndex]);
+            }
+
+            ApplyFont();
+        });
+
+        // 文字の入力は**コンボボックスの内側**へ重ねる（入力欄の枠・▼はコンボボックスが描く）
+        _fontText = new TextBox
+        {
+            Text = AnnotationFonts.All.Count > 0 ? AnnotationFonts.All[0] : string.Empty,
+            Width = FontSelectorWidth - FontArrowAreaWidth,
+            MinHeight = AnnotationFormatBarLayout.ItemHeight,
+            Height = AnnotationFormatBarLayout.ItemHeight,
+            BorderThickness = 0,
+            CornerRadius = 0,
+            Background = Color.Transparent,
+            Padding = new Thickness(FontTextLeftIndent, 0, 0, 0),
+            Margin = new Thickness(0, 0, FontArrowAreaWidth, 0),
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        _fontText.KeyDown += e =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                ApplyFont();
+                e.Handled = true;
+            }
+        };
+        _fontText.LostFocus += () => ApplyFont();
+
+        _fontCell = new Grid { Width = FontSelectorWidth };
+        _fontCell.Add(_font);
+        _fontCell.Add(_fontText);
 
         _size = new NumericUpDown().Minimum(AnnotationLimits.FontSizeMin).Maximum(AnnotationLimits.FontSizeMax).Step(1);
         _size.Width = SizeSelectorWidth;
@@ -111,7 +158,7 @@ public sealed class AnnotationFormatBar : ContentControl
             [AnnotationFormatBarItem.Italic] = _italic,
             [AnnotationFormatBarItem.Underline] = _underline,
             [AnnotationFormatBarItem.Strike] = _strike,
-            [AnnotationFormatBarItem.Font] = _font,
+            [AnnotationFormatBarItem.Font] = _fontCell,
             [AnnotationFormatBarItem.Size] = _size,
             [AnnotationFormatBarItem.Color] = _color,
         };
@@ -145,6 +192,22 @@ public sealed class AnnotationFormatBar : ContentControl
     /// <summary>操作の間の余白（DIP）。</summary>
     private const double ControlSpacing = AnnotationEditorLayout.RowSpacing;
 
+    /// <summary>コンボボックスの展開ボタンへ空ける幅（DIP。 文字入力が矢印へ重ならないようにする）。</summary>
+    private const double FontArrowAreaWidth = 24;
+
+    /// <summary>文字入力の左の余白（DIP。 コンボボックスの内側の余白に合わせる）。</summary>
+    private const double FontTextLeftIndent = 8;
+
+    /// <summary>フォント名の入力を表示へ反映する。</summary>
+    /// <param name="family">フォント名。</param>
+    private void SetFontText(string family)
+    {
+        if (!string.Equals(_fontText.Text, family, StringComparison.Ordinal))
+        {
+            _fontText.Text = family;
+        }
+    }
+
     /// <summary>装飾の切り替えボタンの幅（DIP）。</summary>
     private const double ToggleWidth = AnnotationEditorLayout.ToggleWidth;
 
@@ -174,6 +237,7 @@ public sealed class AnnotationFormatBar : ContentControl
         {
             var index = AnnotationFonts.All.ToList().IndexOf(style.FontFamily);
             _font.SelectedIndex = index >= 0 ? index : -1;
+            SetFontText(style.FontFamily);
             _size.Value = style.FontSize;
             _color.SelectedColor = AnnotationEditorControls.ToHex(style.Color);
 
@@ -211,6 +275,11 @@ public sealed class AnnotationFormatBar : ContentControl
             Width = ToggleWidth,
             Height = height,
 
+            // **上下中央へ寄せる**: 記号は字面の上下に余白を持たない（Consolas の "B" "I" は行の
+            // 上寄りに描かれる）ため、そのままでは下へ 4 DIP ずれて見える（実測 2026-11-22）。
+            // MewUI の負の上余白は半分だけ効くため、倍の値を与える。
+            Margin = new Thickness(0, -2, 0, 0),
+
             // **記号は行の文字より一回り大きくする**（値はコアの AnnotationEditorLayout が単一所有する）
             FontSize = AnnotationEditorLayout.ToggleFontSize,
             FontFamily = AnnotationEditorLayout.ToggleFontFamily,
@@ -240,12 +309,21 @@ public sealed class AnnotationFormatBar : ContentControl
     /// <summary>選択中の範囲へフォントを適用する（同じ値でも適用する）。</summary>
     private void ApplyFont()
     {
-        if (_isRefreshing || _font.SelectedIndex < 0)
+        if (_isRefreshing)
         {
             return;
         }
 
-        var family = AnnotationFonts.All[_font.SelectedIndex];
+        // 一覧から選んだ値でも、直接入力した値でも同じように適用する
+        var family = string.IsNullOrWhiteSpace(_fontText.Text)
+            ? _font.SelectedIndex >= 0 ? AnnotationFonts.All[_font.SelectedIndex] : null
+            : _fontText.Text;
+
+        if (string.IsNullOrWhiteSpace(family))
+        {
+            return;
+        }
+
         Apply(style => style with { FontFamily = family });
     }
 

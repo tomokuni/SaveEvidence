@@ -445,6 +445,10 @@ internal sealed class AnnotationFormatBar : Border
             FontStyle = italic ? FontStyle.Italic : FontStyle.Normal,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
+
+            // **上下中央へ寄せる**: Consolas の記号は行の下寄りに描かれるため、そのままでは
+            // 上へ 2 DIP ずれて見える（実測 2026-11-22）。 位置は描画だけを動かす（レイアウトは変えない）。
+            RenderTransform = new TranslateTransform(0, 2),
         };
 
         if (underline)
