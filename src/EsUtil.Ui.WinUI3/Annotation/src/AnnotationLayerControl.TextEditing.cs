@@ -347,6 +347,14 @@ public sealed partial class AnnotationLayerControl
 
         ReplaceRange(start, end, e.Text ?? string.Empty);
         e.Result = CoreTextTextUpdatingResult.Succeeded;
+
+        // **変換中は変換中の文字列として覚える**: 確定の通知で取りこぼさないようにする
+        if (_isComposing)
+        {
+            _preeditText = e.Text ?? string.Empty;
+            Redraw();
+        }
+
         NotifyImeSelection();
     }
 
@@ -370,9 +378,25 @@ public sealed partial class AnnotationLayerControl
         _ = sender;
         _ = e;
 
-        // 確定した文字列は TextUpdating で届く（本イベントでは変換中の表示だけを消す）
+        // 確定した文字列は TextUpdating で届く（本イベントでは変換中の表示だけを消す）。
+        // **届いていない場合はここで入れる**: IME によっては確定の通知だけが来る（実測 2026-11-22）。
+        var preedit = _preeditText;
         _isComposing = false;
         _preeditText = string.Empty;
+
+        if (preedit.Length > 0)
+        {
+            var text = TextForInput;
+            var start = TextSelectionStart - preedit.Length;
+            var applied = start >= 0
+                && start + preedit.Length <= text.Length
+                && string.CompareOrdinal(text, start, preedit, 0, preedit.Length) == 0;
+            if (!applied)
+            {
+                ReplaceSelection(preedit);
+            }
+        }
+
         Redraw();
     }
 
@@ -457,7 +481,13 @@ public sealed partial class AnnotationLayerControl
             bubble,
             AnnotationTextStyleEdit.Insert(bubble.Text, start, end - start, text, _typingStyle.Value));
         RaiseDocumentChanged();
-        NotifyImeTextChanged(start, end - start, text.Length);
+
+        // **変換中は知らせない**: 変換の途中で「本文が変わった」と伝えると IME の変換が中断され、
+        // 1 キーごとに確定してしまう（実測 2026-11-22）。 確定したときだけ知らせる。
+        if (!_isComposing)
+        {
+            NotifyImeTextChanged(start, end - start, text.Length);
+        }
 
         _caretIndex = start + text.Length;
         _selectionAnchor = _caretIndex;

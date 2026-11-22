@@ -126,12 +126,16 @@ internal sealed class AnnotationFormatBar : ContentControl
             Value = AnnotationDefaults.FontSizeDefault,
             Width = AnnotationFormatBarLayout.SizeSelectorWidth,
 
+            // **枠の高さを他の項目と揃える**: 高さを指定しないと既定の高さ（他の項目より低い）になり、
+            // 行の中で枠だけが小さく見える（実測 2026-11-22）。
+            MinHeight = AnnotationFormatBarLayout.ItemHeight,
+            Height = AnnotationFormatBarLayout.ItemHeight,
+
             // **描画だけを下げる**: 高さは変えないため、要素（枠）は行の中に揃ったまま、内側の数字だけが下がる。
             RenderTransform = new Microsoft.UI.Xaml.Media.TranslateTransform { Y = NumberBoxVerticalTrim },
 
-            // **数字を上下中央へ置く**: NumberBox は内側の入力欄を上寄りに描き、`VerticalContentAlignment`
-            // を受け付けない（実測 2026-11-22: 行の中央より 3.5 DIP 上に出た）。 項目の高さより低くして
-            // 上下中央へ寄せると、内側の入力欄も中央に来る。
+            // **数字は上下中央へ置く**: NumberBox は内側の入力欄を上寄りに描き、`VerticalContentAlignment`
+            // を受け付けない（実測 2026-11-22）。 枠は他の項目と同じ高さにし、描画だけを 2 DIP 下げる。
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = AnnotationEditorControls.FontSize,
             SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,

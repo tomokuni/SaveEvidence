@@ -181,6 +181,9 @@ public sealed partial class AnnotationLayerControl
     {
         _preeditText = preeditText ?? string.Empty;
         InvalidateVisual();
+
+        // **候補の位置をキャレットへ合わせる**（MewUI に IME の位置を伝える API が無いため Win32 を呼ぶ）
+        PositionImeCandidateWindow();
     }
 
     /// <summary>本文の編集でキーが押されたときの処理。</summary>
@@ -369,6 +372,66 @@ public sealed partial class AnnotationLayerControl
         e.Handled = true;
     }
 
+    /// <summary>IME の変換候補の表示位置をキャレットの位置へ合わせる。</summary>
+    /// <remarks>
+    /// <b>合わせないと候補が画面の隅に出る</b>: MewUI には IME へ候補の位置を伝える API が無いため、
+    /// 既定の位置（画面の右下など）に候補が出ます（実測 2026-11-22）。 Win32 の
+    /// <c>ImmSetCandidateWindow</c> でキャレットの位置を伝えます。
+    /// </remarks>
+    private void PositionImeCandidateWindow()
+    {
+        if (_inputWindow is not { } window || window.Handle == IntPtr.Zero)
+        {
+            return;
+        }
+
+        // 変換中の文字列の末尾（キャレット）の位置を画面座標へ直す
+        if (!TryResolveCaretSource(
+            AnnotationCompositionPreview.ResolveCaret(_caretIndex, _preeditText), DefaultLayouts, out var caret))
+        {
+            return;
+        }
+
+        var local = new Point(caret.X, caret.Y + caret.Height);
+        Point screen;
+        try
+        {
+            screen = PointToScreen(local);
+        }
+        catch (InvalidOperationException)
+        {
+            // 画面座標へ直せない（ウィンドウが無い・閉じている）ときは候補の位置を指定しない（例外は投げない）
+            return;
+        }
+
+        var context = NativeIme.ImmGetContext(window.Handle);
+        if (context == IntPtr.Zero)
+        {
+            return;
+        }
+
+        try
+        {
+            var form = new NativeIme.CandidateForm
+            {
+                Index = 0,
+                Style = NativeIme.CfsCandidatePos,
+                CurrentPos = new NativeIme.Point { X = (int)screen.X, Y = (int)screen.Y },
+                Area = new NativeIme.Rect
+                {
+                    Left = (int)screen.X,
+                    Top = (int)screen.Y,
+                    Right = (int)screen.X + 1,
+                    Bottom = (int)screen.Y + 1,
+                },
+            };
+            _ = NativeIme.ImmSetCandidateWindow(context, ref form);
+        }
+        finally
+        {
+            _ = NativeIme.ImmReleaseContext(window.Handle, context);
+        }
+    }
     /// <summary>ウィンドウがフォーカスを失ったら入力の購読を解除する（別ウィンドウへ入力を漏らさない）。</summary>
     private void OnWindowLostFocus() => DetachInputWindow();
 
