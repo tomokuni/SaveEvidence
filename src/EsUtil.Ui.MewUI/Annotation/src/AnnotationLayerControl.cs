@@ -53,6 +53,9 @@ public sealed partial class AnnotationLayerControl : Panel
     /// <summary>以降の入力へ効かせる書式（選択が無いときの書式変更の行き先）。</summary>
     private readonly AnnotationTypingStyle _typingStyle = new();
 
+    /// <summary>直近に描いた選択枠のハンドル（DIP。 ポインターの形を決めるのに使う）。</summary>
+    private IReadOnlyList<EsRect>? _handleDipRects;
+
     /// <summary>これから記録する変更の直前の文書（変更が起きるまで保持する）。</summary>
     private AnnotationDocument? _undoCandidate;
 

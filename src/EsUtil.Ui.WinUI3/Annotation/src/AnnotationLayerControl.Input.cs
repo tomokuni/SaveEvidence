@@ -172,6 +172,9 @@ public sealed partial class AnnotationLayerControl
             }
         }
 
+        // ポインターの形を決めるのに使う（描いた値と同じ値を使い、判定と見た目をずらさない）
+        _handleDipRects = handles;
+
         AnnotationPainter.DrawSelection(
             _selection,
             plan.BorderDipRects,
@@ -408,6 +411,12 @@ public sealed partial class AnnotationLayerControl
             RaisePreviewGesture(AnnotationPreviewGesture.Hover, point.Position, 1, 0);
         }
 
+        // **ポインターの形で「何ができるか」を示す**（規則はコアの AnnotationPointerPolicy が単一所有する）
+        if (!isPressed)
+        {
+            ApplyHoverCursor(source, point.Position);
+        }
+
         Redraw();
     }
 
@@ -582,12 +591,45 @@ public sealed partial class AnnotationLayerControl
         e.Handled = true;
     }
 
+    /// <summary>ホバー中のポインターの形を決めて適用する。</summary>
+    /// <param name="source">位置（元画像ピクセル）。</param>
+    /// <param name="position">位置（ローカル DIP）。</param>
+    private void ApplyHoverCursor(EsPoint source, Windows.Foundation.Point position)
+    {
+        var (scale, _) = ResolveImageTransform();
+        var kind = AnnotationPointerPolicy.Resolve(
+            _document,
+            SelectedId,
+            source,
+            new EsPoint(position.X, position.Y),
+            _handleDipRects,
+            TailHandleRadiusDip / (scale > 0 ? scale : 1.0));
+
+        ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(kind switch
+        {
+            AnnotationPointerKind.Move => Microsoft.UI.Input.InputSystemCursorShape.SizeAll,
+            AnnotationPointerKind.ResizeTop or AnnotationPointerKind.ResizeBottom
+                => Microsoft.UI.Input.InputSystemCursorShape.SizeNorthSouth,
+            AnnotationPointerKind.ResizeLeft or AnnotationPointerKind.ResizeRight
+                => Microsoft.UI.Input.InputSystemCursorShape.SizeWestEast,
+            AnnotationPointerKind.ResizeTopLeft or AnnotationPointerKind.ResizeBottomRight
+                => Microsoft.UI.Input.InputSystemCursorShape.SizeNorthwestSoutheast,
+            AnnotationPointerKind.ResizeTopRight or AnnotationPointerKind.ResizeBottomLeft
+                => Microsoft.UI.Input.InputSystemCursorShape.SizeNortheastSouthwest,
+            AnnotationPointerKind.Tail => Microsoft.UI.Input.InputSystemCursorShape.Hand,
+            _ => Microsoft.UI.Input.InputSystemCursorShape.Arrow,
+        });
+    }
+
     /// <summary>ポインターが領域から外れたときの処理（プレビューのホバー表示を消す）。</summary>
     /// <param name="sender">イベントの送信元。</param>
     /// <param name="e">ポインターの引数。</param>
     private void OnPointerExited(object sender, PointerRoutedEventArgs e)
     {
         _ = sender;
+
+        // 外へ出たら既定の形へ戻す（戻さないと移動の合図が残る）
+        ProtectedCursor = Microsoft.UI.Input.InputSystemCursor.Create(Microsoft.UI.Input.InputSystemCursorShape.Arrow);
 
         if (!_isPreviewDragging && !IsEditingText)
         {

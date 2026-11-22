@@ -158,6 +158,15 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
+        // ポインターの形を決めるのに使う（描いた値と同じ値を使い、判定と見た目をずらさない）
+        var handleRects = new EsRect[MarqueeHandleRects.Count];
+        for (var i = 0; i < handleRects.Length; i++)
+        {
+            handleRects[i] = handles.HandleDipRects[i];
+        }
+
+        _handleDipRects = handleRects;
+
         var fill = AnnotationPainter.ToColor(plan.Appearance.HandleColor);
         var border = AnnotationPainter.ToColor(plan.Appearance.HandleBorderColor);
         for (var i = 0; i < MarqueeHandleRects.Count; i++)
@@ -286,16 +295,12 @@ public sealed partial class AnnotationLayerControl
                 Select(hit.Id);
             }
 
-            if (e.ClickCount >= 2 && hit is BubbleAnnotation)
-            {
-                CapturePointer();
-                BeginTextEditing();
-                e.Handled = true;
-                return;
-            }
-
+            // **押下は常に移動として始める**: ダブルクリックの判定は専用のイベント
+            // （<see cref="OnMouseDoubleClick"/>）が担う。 ここで回数を見ると、直前の押下（追加メニューや
+            // 選択のクリック）と近い位置での押下が 2 回と数えられ、**最初のドラッグが本文の編集に化けて
+            // 未選択からの移動ができない**（実測 2026-11-22: MewUI 版だけ 1 回目のドラッグで動かなかった）。
             CapturePointer();
-            _marquee.Press(source, e.ClickCount);
+            _marquee.Press(source, 1);
         }
         else
         {
@@ -418,12 +423,40 @@ public sealed partial class AnnotationLayerControl
             RaisePreviewGesture(AnnotationPreviewGesture.Hover, position, 1, 0, e.ShiftKey, e.ControlKey);
         }
 
-        if (Selected is BubbleAnnotation selected && IsNearTailTip(selected, source))
+        // **ポインターの形で「何ができるか」を示す**（規則はコアの AnnotationPointerPolicy が単一所有する）。
+        // 押下中は Marquee が操作に合った形を設定するため、ホバーのときだけ決める。
+        if (!e.LeftButton)
         {
-            Cursor = CursorType.Hand;
+            ApplyHoverCursor(source, position);
         }
 
         InvalidateVisual();
+    }
+
+    /// <summary>ホバー中のポインターの形を決めて適用する。</summary>
+    /// <param name="source">位置（元画像ピクセル）。</param>
+    /// <param name="position">位置（ローカル DIP）。</param>
+    private void ApplyHoverCursor(EsPoint source, Point position)
+    {
+        var (scale, _) = ResolveImageTransform();
+        var kind = AnnotationPointerPolicy.Resolve(
+            _document,
+            SelectedId,
+            source,
+            new EsPoint(position.X, position.Y),
+            _handleDipRects,
+            TailHandleRadiusDip / (scale > 0 ? scale : 1.0));
+
+        Cursor = kind switch
+        {
+            AnnotationPointerKind.Move => CursorType.SizeAll,
+            AnnotationPointerKind.ResizeTop or AnnotationPointerKind.ResizeBottom => CursorType.SizeNS,
+            AnnotationPointerKind.ResizeLeft or AnnotationPointerKind.ResizeRight => CursorType.SizeWE,
+            AnnotationPointerKind.ResizeTopLeft or AnnotationPointerKind.ResizeBottomRight => CursorType.SizeNWSE,
+            AnnotationPointerKind.ResizeTopRight or AnnotationPointerKind.ResizeBottomLeft => CursorType.SizeNESW,
+            AnnotationPointerKind.Tail => CursorType.Hand,
+            _ => CursorType.Arrow,
+        };
     }
 
     /// <summary>ポインターが離されたときの処理。</summary>
@@ -479,6 +512,9 @@ public sealed partial class AnnotationLayerControl
     protected override void OnMouseLeave()
     {
         base.OnMouseLeave();
+
+        // 外へ出たら既定の形へ戻す（戻さないと移動の合図が残る）
+        Cursor = CursorType.Arrow;
 
         if (!_isPreviewDragging && !_isEditingText)
         {

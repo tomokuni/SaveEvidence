@@ -85,6 +85,9 @@ public sealed partial class AnnotationLayerControl
             }
         }
 
+        // ポインターの形を決めるのに使う（描いた値と同じ値を使い、判定と見た目をずらさない）
+        _handleDipRects = handles;
+
         AnnotationPainter.DrawSelection(
             graphics,
             plan.BorderDipRects,
@@ -292,7 +295,39 @@ public sealed partial class AnnotationLayerControl
             RaisePreviewGesture(AnnotationPreviewGesture.Hover, position, 1, 0);
         }
 
+        // **ポインターの形で「何ができるか」を示す**（規則はコアの AnnotationPointerPolicy が単一所有する）
+        if (!isPressed)
+        {
+            ApplyHoverCursor(source, position);
+        }
+
         Invalidate();
+    }
+
+    /// <summary>ホバー中のポインターの形を決めて適用する。</summary>
+    /// <param name="source">位置（元画像ピクセル）。</param>
+    /// <param name="position">位置（ローカル DIP）。</param>
+    private void ApplyHoverCursor(EsPoint source, EsPoint position)
+    {
+        var (scale, _) = ResolveImageTransform();
+        var kind = AnnotationPointerPolicy.Resolve(
+            _document,
+            SelectedId,
+            source,
+            position,
+            _handleDipRects,
+            TailHandleRadiusDip / (scale > 0 ? scale : 1.0));
+
+        Cursor = kind switch
+        {
+            AnnotationPointerKind.Move => Cursors.SizeAll,
+            AnnotationPointerKind.ResizeTop or AnnotationPointerKind.ResizeBottom => Cursors.SizeNS,
+            AnnotationPointerKind.ResizeLeft or AnnotationPointerKind.ResizeRight => Cursors.SizeWE,
+            AnnotationPointerKind.ResizeTopLeft or AnnotationPointerKind.ResizeBottomRight => Cursors.SizeNWSE,
+            AnnotationPointerKind.ResizeTopRight or AnnotationPointerKind.ResizeBottomLeft => Cursors.SizeNESW,
+            AnnotationPointerKind.Tail => Cursors.Hand,
+            _ => Cursors.Default,
+        };
     }
 
     /// <summary>マウスが離されたときの処理。</summary>
@@ -475,6 +510,9 @@ public sealed partial class AnnotationLayerControl
     {
         ArgumentNullException.ThrowIfNull(e);
         base.OnMouseLeave(e);
+
+        // 外へ出たら既定の形へ戻す（戻さないと移動の合図が残る）
+        Cursor = Cursors.Default;
 
         if (!_isPreviewDragging && !IsEditingText)
         {

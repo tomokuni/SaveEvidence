@@ -52,9 +52,11 @@ internal sealed class AnnotationFormatBar : Panel
         _underline = AnnotationEditorControls.Toggle("U", false, value => Toggle(style => style with { IsUnderline = value }));
         _strike = AnnotationEditorControls.Toggle("S", false, value => Toggle(style => style with { IsStrike = value }));
 
+        // **フォント名は直接入力できる**（一覧に無いフォントも指定できる。 標準の編集可の
+        // コンボボックスであるため Ctrl+C / Ctrl+V もそのまま使える）
         _font = new ComboBox
         {
-            DropDownStyle = ComboBoxStyle.DropDownList,
+            DropDownStyle = ComboBoxStyle.DropDown,
             Width = (int)Math.Round(AnnotationFormatBarLayout.FontSelectorWidth),
             Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
             Margin = new Padding(1),
@@ -71,6 +73,24 @@ internal sealed class AnnotationFormatBar : Panel
             if (!_refreshing && _font.SelectedItem is string family)
             {
                 ApplyFull(style => style with { FontFamily = family });
+            }
+        };
+
+        // 入力したフォント名は Enter とフォーカスを外したときに適用する（1 文字ごとに適用しない）
+        _font.KeyDown += (_, e) =>
+        {
+            if (e.KeyCode == Keys.Enter && !_refreshing && !string.IsNullOrWhiteSpace(_font.Text))
+            {
+                ApplyFull(style => style with { FontFamily = _font.Text });
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+        };
+        _font.Validated += (_, _) =>
+        {
+            if (!_refreshing && !string.IsNullOrWhiteSpace(_font.Text))
+            {
+                ApplyFull(style => style with { FontFamily = _font.Text });
             }
         };
 

@@ -149,10 +149,15 @@ public sealed class AnnotationFormatBar : ContentControl
     private const double ToggleWidth = AnnotationEditorLayout.ToggleWidth;
 
     /// <summary>色の入力欄へ出す表記を取得または設定する。</summary>
+    /// <value>常にカラーコード（<c>#AARRGGBB</c>）。</value>
+    /// <remarks>
+    /// <b>書式バーは常に 8 桁のカラーコードで出す</b>: 色名の表記では、名前の無い色が 6 桁（<c>#RRGGBB</c>）で
+    /// 出て不透明度が分からず、色名の有無で桁数も変わる（実測 2026-11-22）。 色名は右クリックのフライアウトで確認できる。
+    /// </remarks>
     public ColorTextFormat TextFormat
     {
-        get => _color.TextFormat;
-        set => _color.TextFormat = value;
+        get => ColorTextFormat.HexCode;
+        set => _color.TextFormat = ColorTextFormat.HexCode;
     }
 
     /// <summary>現在の書式を表示へ反映する（選択範囲の先頭の書式）。</summary>
@@ -208,6 +213,7 @@ public sealed class AnnotationFormatBar : ContentControl
 
             // **記号は行の文字より一回り大きくする**（値はコアの AnnotationEditorLayout が単一所有する）
             FontSize = AnnotationEditorLayout.ToggleFontSize,
+            FontFamily = AnnotationEditorLayout.ToggleFontFamily,
             TextAlignment = TextAlignment.Center,
             VerticalTextAlignment = TextAlignment.Center,
         };

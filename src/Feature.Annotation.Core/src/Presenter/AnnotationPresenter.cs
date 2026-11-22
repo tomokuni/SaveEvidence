@@ -42,13 +42,20 @@ public sealed class AnnotationPresenter
         {
             // **描画の直前に画像の内側へ収める**: 画像の外へ出た注釈は見えず掴めない。
             // 追加・移動の経路が増えても、描画の入口で必ず収まるようにする（実測 2026-11-22）。
-            var clamped = item is BubbleAnnotation bubble
-                ? ClampBubble(bubble, imageSize)
-                : ClampFrame(item, imageSize);
+            //
+            // **種類ごとの描き方は 1 か所で決める**: 選択・移動・当たり判定・ポインターの形は
+            // すべて `Bounds` を使うため、種類を増やすときに触るのはここだけである
+            // （新しい種類は `AnnotationItem` を派生させ、この分岐へ 1 つ足す）。
+            shapes.Add(item switch
+            {
+                BubbleAnnotation bubble => ResolveBubble(
+                    ClampBubble(bubble, imageSize), measureText, LineHeightFactor),
+                FrameAnnotation frame => ResolveFrame(ClampFrame(frame, imageSize)),
 
-            shapes.Add(clamped is BubbleAnnotation clampedBubble
-                ? ResolveBubble(clampedBubble, measureText, LineHeightFactor)
-                : ResolveFrame(clamped));
+                // 未知の種類は矩形として描く（読み込んだファイルに新しい種類が入っていても、
+                // 見えなくなる・掴めなくなることを避ける）
+                _ => ResolveFrame(ClampFrame(item, imageSize)),
+            });
         }
 
         return new AnnotationDrawPlan(

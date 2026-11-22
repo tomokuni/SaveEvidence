@@ -72,6 +72,11 @@ internal sealed class AnnotationFormatBar : ContentControl
             SelectedIndex = 0,
             Width = AnnotationFormatBarLayout.FontSelectorWidth,
 
+            // **フォント名は直接入力できる**（一覧に無いフォントも指定できる。 標準の編集可の
+            // コンボボックスであるため Ctrl+C / Ctrl+V もそのまま使える）
+            IsEditable = true,
+            IsTextSearchEnabled = true,
+
             // **高さを明示する**: 既定の高さでは文字の上が欠ける（実測 2026-11-20）
             MinHeight = AnnotationFormatBarLayout.ItemHeight,
             Height = AnnotationFormatBarLayout.ItemHeight,
@@ -87,6 +92,23 @@ internal sealed class AnnotationFormatBar : ContentControl
             }
 
             ApplyFull(style => style with { FontFamily = family });
+        };
+
+        // 入力したフォント名は Enter とフォーカスを外したときに適用する（1 文字ごとに適用しない）
+        _font.TextSubmitted += (_, e) =>
+        {
+            if (!_refreshing && !string.IsNullOrWhiteSpace(e.Text))
+            {
+                ApplyFull(style => style with { FontFamily = e.Text });
+            }
+        };
+        _font.LostFocus += (_, _) =>
+        {
+            var family = _font.Text;
+            if (!_refreshing && !string.IsNullOrWhiteSpace(family))
+            {
+                ApplyFull(style => style with { FontFamily = family });
+            }
         };
 
         _size = new NumberBox
@@ -157,10 +179,15 @@ internal sealed class AnnotationFormatBar : ContentControl
     }
 
     /// <summary>書式バーの色の入力欄へ出す表記を取得または設定する。</summary>
+    /// <value>常にカラーコード（<c>#AARRGGBB</c>）。</value>
+    /// <remarks>
+    /// <b>書式バーは常に 8 桁のカラーコードで出す</b>: 色名の表記では、名前の無い色が 6 桁（<c>#RRGGBB</c>）で
+    /// 出て不透明度が分からず、色名の有無で桁数も変わる（実測 2026-11-22）。 色名は右クリックのフライアウトで確認できる。
+    /// </remarks>
     internal ColorTextFormat TextFormat
     {
-        get => _color.TextFormat;
-        set => _color.TextFormat = value;
+        get => ColorTextFormat.HexCode;
+        set => _color.TextFormat = ColorTextFormat.HexCode;
     }
 
     /// <summary>現在の選択範囲の書式を各操作へ反映する。</summary>

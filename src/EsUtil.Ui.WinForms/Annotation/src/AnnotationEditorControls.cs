@@ -63,7 +63,7 @@ internal static class AnnotationEditorControls
             Size = new Size(28, 24),
             Checked = isChecked,
             Font = new Font(
-                UiFontFamily,
+                AnnotationEditorLayout.ToggleFontFamily,
                 ToggleFontSize,
                 bold ? FontStyle.Bold : italic ? FontStyle.Italic : FontStyle.Regular),
             Margin = new Padding(1),

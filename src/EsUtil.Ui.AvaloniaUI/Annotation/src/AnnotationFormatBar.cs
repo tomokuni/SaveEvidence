@@ -77,12 +77,33 @@ internal sealed class AnnotationFormatBar : Border
         AddHandler(KeyDownEvent, OnFormatBarKeyForward, RoutingStrategies.Tunnel);
 
         var fonts = AnnotationFonts.All;
-        _font = new ComboBox { Width = FontSelectorWidth, ItemsSource = fonts, SelectedIndex = 0 };
+
+        // **フォント名は直接入力できる**（一覧に無いフォントも指定できる。 入力した文字は
+        // そのままフォント名として適用する）。 入力欄は標準の編集可のコンボボックスであるため、
+        // Ctrl+C / Ctrl+V もそのまま使える（実測 2026-11-22）。
+        _font = new ComboBox
+        {
+            Width = FontSelectorWidth,
+            ItemsSource = fonts,
+            SelectedIndex = 0,
+            IsEditable = true,
+        };
         _font.SelectionChanged += (_, _) => ApplyFont();
 
         // 同じ値を選び直したときは SelectionChanged が来ないため、閉じたときにも適用する
         _font.DropDownClosed += (_, _) => ApplyFont();
-        ToolTip.SetTip(_font, "フォント");
+
+        // 入力したフォント名は Enter とフォーカスを外したときに適用する（1 文字ごとに適用しない）
+        _font.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Enter)
+            {
+                ApplyFont();
+                e.Handled = true;
+            }
+        };
+        _font.LostFocus += (_, _) => ApplyFont();
+        ToolTip.SetTip(_font, "フォント（直接入力できます）");
 
         _size = new NumericUpDown
         {
@@ -208,15 +229,16 @@ internal sealed class AnnotationFormatBar : Border
     }
 
     /// <summary>色の入力欄へ出す表記を取得または設定する。</summary>
-    /// <value>色名 + 不透明度（既定）またはカラーコード（<c>#AARRGGBB</c>）。</value>
+    /// <value>常にカラーコード（<c>#AARRGGBB</c>）。</value>
     /// <remarks>
-    /// <b>保存値は変わらない</b>（表記は画面に出す文字列だけを決める）。 カラーコードの表記では不透明度を
-    /// アルファとして含む <c>#AARRGGBB</c> を出す（6 桁の <c>#RRGGBB</c> では不透明度が分からない）。
+    /// <b>書式バーは常に 8 桁のカラーコードで出す</b>: 色名の表記では、名前の無い色が 6 桁
+    /// （<c>#RRGGBB</c>）で出て<b>不透明度が分からず、色名の有無で桁数も変わる</b>（実測 2026-11-22）。
+    /// 幅が限られる 1 行のバーでは、常に同じ桁数で出るほうが読みやすい。 色名は右クリックのフライアウトで確認できる。
     /// </remarks>
     public ColorTextFormat TextFormat
     {
-        get => _color.TextFormat;
-        set => _color.TextFormat = value;
+        get => ColorTextFormat.HexCode;
+        set => _color.TextFormat = ColorTextFormat.HexCode;
     }
 
     /// <summary>色の選択の幅（DIP）を取得する。</summary>
@@ -255,6 +277,7 @@ internal sealed class AnnotationFormatBar : Border
         {
             var index = AnnotationFonts.All.ToList().IndexOf(style.FontFamily);
             _font.SelectedIndex = index >= 0 ? index : -1;
+            _font.Text = style.FontFamily;
             _size.Value = (decimal)style.FontSize;
             _color.SelectedColor = AnnotationEditorControls.ToHex(style.Color);
 
@@ -279,9 +302,20 @@ internal sealed class AnnotationFormatBar : Border
     /// <summary>書式バーへ届いた本文の編集キーを本文へ転送する（カーソル移動・選択の変更を保つ）。</summary>
     /// <param name="sender">送信元。</param>
     /// <param name="e">キーの引数。</param>
+    /// <remarks>
+    /// <b>入力欄の中では転送しない</b>: 色の入力欄やフォント名の入力欄にフォーカスがあるときは、
+    /// <c>Ctrl+C</c> / <c>Ctrl+V</c> や文字入力をその入力欄へ渡します。 転送すると本文のコピー・貼り付けが
+    /// 走り、入力欄へ貼り付けられません（実測 2026-11-22）。
+    /// </remarks>
     private void OnFormatBarKeyForward(object? sender, KeyEventArgs e)
     {
         _ = sender;
+
+        if (e.Source is Visual source
+            && (IsInside(source, _color) || IsInside(source, _size) || IsInside(source, _font)))
+        {
+            return;
+        }
 
         if (_layer.TryHandleEditingKey(e.Key, e.KeyModifiers))
         {
@@ -331,12 +365,21 @@ internal sealed class AnnotationFormatBar : Border
     /// <summary>選択中の範囲へフォントを適用する（同じ値でも適用する）。</summary>
     private void ApplyFont()
     {
-        if (_isRefreshing || _font.SelectedIndex < 0)
+        if (_isRefreshing)
         {
             return;
         }
 
-        var family = AnnotationFonts.All[_font.SelectedIndex];
+        // 一覧から選んだ値でも、直接入力した値でも同じように適用する
+        var family = string.IsNullOrWhiteSpace(_font.Text)
+            ? _font.SelectedIndex >= 0 ? AnnotationFonts.All[_font.SelectedIndex] : null
+            : _font.Text;
+
+        if (string.IsNullOrWhiteSpace(family))
+        {
+            return;
+        }
+
         Apply(style => style with { FontFamily = family });
         ToolTip.SetTip(_font, family);
     }
@@ -397,6 +440,7 @@ internal sealed class AnnotationFormatBar : Border
             // **記号は行の文字より一回り大きくする**: 記号 1 文字だけのボタンは、行の他の文字と同じ
             // 大きさだと線（下線・取り消し線）と字面が小さく、押せる場所としても見えにくい（実測 2026-11-22）
             FontSize = AnnotationEditorLayout.ToggleFontSize,
+            FontFamily = new FontFamily(AnnotationEditorLayout.ToggleFontFamily),
             FontWeight = bold ? FontWeight.Bold : FontWeight.Normal,
             FontStyle = italic ? FontStyle.Italic : FontStyle.Normal,
             HorizontalAlignment = HorizontalAlignment.Center,

@@ -215,6 +215,7 @@ public static class AnnotationEditorControls
 
             // **記号は行の文字より一回り大きくする**（値はコアの AnnotationEditorLayout が単一所有する）
             FontSize = AnnotationEditorLayout.ToggleFontSize,
+            FontFamily = new FontFamily(AnnotationEditorLayout.ToggleFontFamily),
             FontWeight = bold ? FontWeight.Bold : FontWeight.Normal,
             FontStyle = italic ? FontStyle.Italic : FontStyle.Normal,
         };

@@ -98,6 +98,9 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     /// <summary>以降の入力へ効かせる書式（選択が無いときの書式変更の行き先）。</summary>
     private readonly AnnotationTypingStyle _typingStyle = new();
 
+    /// <summary>直近に描いた選択枠のハンドル（DIP。 ポインターの形を決めるのに使う）。</summary>
+    private IReadOnlyList<EsRect>? _handleDipRects;
+
     /// <summary>これから記録する変更の直前の文書（変更が起きるまで保持する）。</summary>
     private AnnotationDocument? _undoCandidate;
 
@@ -1083,13 +1086,44 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
             _marquee.Release(source);
         }
 
-        // しっぽのハンドルの上では専用のカーソルにする（Marquee の Move が設定した形状を上書きする）
-        if (Selected is BubbleAnnotation selectedBubble && IsNearTailTip(selectedBubble, source))
+        // **ポインターの形で「何ができるか」を示す**（規則はコアの AnnotationPointerPolicy が単一所有する）。
+        // 押下中は Marquee が操作に合った形を設定するため、ホバーのときだけ決める。
+        if (!isPressed)
         {
-            Cursor = new Cursor(StandardCursorType.Hand);
+            ApplyHoverCursor(source, position);
         }
 
         InvalidateVisual();
+    }
+
+    /// <summary>ホバー中のポインターの形を決めて適用する。</summary>
+    /// <param name="source">位置（元画像ピクセル）。</param>
+    /// <param name="position">位置（ローカル DIP）。</param>
+    private void ApplyHoverCursor(EsPoint source, Point position)
+    {
+        var (scale, _) = ResolveImageTransform();
+        var kind = AnnotationPointerPolicy.Resolve(
+            _document,
+            SelectedId,
+            source,
+            new EsPoint(position.X, position.Y),
+            _handleDipRects,
+            TailHandleRadiusDip / (scale > 0 ? scale : 1.0));
+
+        Cursor = kind switch
+        {
+            AnnotationPointerKind.Move => new Cursor(StandardCursorType.SizeAll),
+            AnnotationPointerKind.ResizeTop or AnnotationPointerKind.ResizeBottom
+                => new Cursor(StandardCursorType.SizeNorthSouth),
+            AnnotationPointerKind.ResizeLeft or AnnotationPointerKind.ResizeRight
+                => new Cursor(StandardCursorType.SizeWestEast),
+            AnnotationPointerKind.ResizeTopLeft => new Cursor(StandardCursorType.TopLeftCorner),
+            AnnotationPointerKind.ResizeTopRight => new Cursor(StandardCursorType.TopRightCorner),
+            AnnotationPointerKind.ResizeBottomLeft => new Cursor(StandardCursorType.BottomLeftCorner),
+            AnnotationPointerKind.ResizeBottomRight => new Cursor(StandardCursorType.BottomRightCorner),
+            AnnotationPointerKind.Tail => new Cursor(StandardCursorType.Hand),
+            _ => new Cursor(StandardCursorType.Arrow),
+        };
     }
 
     /// <summary>ポインターが離されたときの処理。</summary>
@@ -1145,6 +1179,9 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     protected override void OnPointerExited(PointerEventArgs e)
     {
         base.OnPointerExited(e);
+
+        // 外へ出たら既定の形へ戻す（戻さないと移動の合図が残る）
+        Cursor = new Cursor(StandardCursorType.Arrow);
 
         if (!_isPreviewDragging && !_isEditingText)
         {
@@ -1481,6 +1518,15 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         {
             return;
         }
+
+        // ポインターの形を決めるのに使う（描いた値と同じ値を使い、判定と見た目をずらさない）
+        var handleRects = new EsRect[MarqueeHandleRects.Count];
+        for (var i = 0; i < handleRects.Length; i++)
+        {
+            handleRects[i] = handles.HandleDipRects[i];
+        }
+
+        _handleDipRects = handleRects;
 
         var fill = AnnotationPainter.ToBrush(plan.Appearance.HandleColor);
         var border = new Pen(AnnotationPainter.ToBrush(plan.Appearance.HandleBorderColor), handles.BorderThickness);

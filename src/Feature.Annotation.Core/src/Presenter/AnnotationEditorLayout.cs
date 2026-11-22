@@ -34,4 +34,14 @@ public static class AnnotationEditorLayout
     /// UI の既定の文字サイズ（12 DIP）より 1 段大きい 14 DIP にします。
     /// </remarks>
     public const double ToggleFontSize = 14;
+
+    /// <summary>装飾の切り替え（B / I / U / S）のフォント名。</summary>
+    /// <remarks>
+    /// <b>「I」を見分けられるフォントにする</b>: UI の既定フォント（<c>Yu Gothic UI</c> / <c>Segoe UI</c>）の
+    /// 斜体の「I」は単なる斜線に見え、太字の「B」とも形が近く、押す意味が伝わりません。
+    /// <c>Consolas</c> は Windows に標準で入っており（環境が変わっても解決できる）、
+    /// <b>「I」の上下にセリフ</b>が付くため、記号として読めます（実測 2026-11-22）。
+    /// 斜体の「I」が読めるかを優先し、欧文の記号用フォントとして選びます。
+    /// </remarks>
+    public const string ToggleFontFamily = "Consolas";
 }
