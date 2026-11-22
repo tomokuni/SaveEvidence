@@ -121,7 +121,7 @@ internal sealed class AnnotationFormatBar : Panel
 
             var index = AnnotationFonts.All.ToList().IndexOf(style.FontFamily);
             _font.SelectedIndex = index >= 0 ? index : 0;
-            _size.Value = (decimal)Math.Clamp(style.FontSize, 6, 512);
+            _size.Value = (decimal)AnnotationLimits.CoerceFontSize(style.FontSize);
             _color.BackColor = style.Color;
         }
         finally

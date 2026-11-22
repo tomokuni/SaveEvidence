@@ -139,10 +139,10 @@ public sealed class AnnotationFormatBar : ContentControl
         AnnotationFormatBarLayout.ResolveColorSelectorWidth(AnnotationTextMetrics.Measure);
 
     /// <summary>操作の間の余白（DIP）。</summary>
-    private const double ControlSpacing = 4;
+    private const double ControlSpacing = AnnotationEditorLayout.RowSpacing;
 
     /// <summary>装飾の切り替えボタンの幅（DIP）。</summary>
-    private const double ToggleWidth = 34;
+    private const double ToggleWidth = AnnotationEditorLayout.ToggleWidth;
 
     /// <summary>色の入力欄へ出す表記を取得または設定する。</summary>
     public ColorTextFormat TextFormat

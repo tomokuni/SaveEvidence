@@ -875,14 +875,17 @@ public sealed partial class CapturePage : UserControl
         if (sender is TextBox box) UpdateFileNameTemplateWidth(box);
     }
 
+    /// <summary>ファイル名テンプレートの幅の上限から残す余裕（DIP。 合計が利用幅と同じでも折り返すため）。</summary>
+    private const double FileNameTemplateWrapReserve = 12;
+
     /// <summary>ファイル名テンプレートの幅をテキスト内容に応じて自動調整する。</summary>
     /// <param name="box">対象の TextBox。</param>
     /// <remarks>
     /// <see cref="FormattedText"/> でテキスト幅を計測し、左右パディングを加算して
-    /// <c>MinWidth</c>〜上限（<see cref="ResolveFileNameTemplateMaxWidth"/>）の範囲にクランプした値を
-    /// <c>Width</c> に設定する。<br/>
+    /// 上限（<see cref="ResolveFileNameTemplateMaxWidth"/>）までの範囲にクランプした値を <c>Width</c> に設定する。<br/>
     /// テキストが短い場合は <c>MinWidth</c>（XAML の <c>100</c>）、長い場合はツールバーが折り返さない幅に固定され、<br/>
-    /// 中間の長さではテキスト全体が収まる幅になる（超過時は TextBox 内部でスクロール）。
+    /// 中間の長さではテキスト全体が収まる幅になる（超過時は TextBox 内部でスクロール）。<br/>
+    /// 上限が <c>MinWidth</c> より狭いときは <b><c>MinWidth</c> を諦める</b>（守ると必ず折り返すため）。
     /// </remarks>
     private void UpdateFileNameTemplateWidth(TextBox box)
     {
@@ -898,7 +901,23 @@ public sealed partial class CapturePage : UserControl
 
         // 上限は「ツールバーが折り返さない幅」（超えるとアイコン類が 2 段になる）
         var maxWidth = ResolveFileNameTemplateMaxWidth(box);
-        box.Width = Math.Clamp(width, box.MinWidth, Math.Max(box.MinWidth, maxWidth));
+        if (double.IsPositiveInfinity(maxWidth))
+        {
+            box.Width = Math.Max(box.MinWidth, width);
+            return;
+        }
+
+        // **最小幅を守れないときは最小幅を諦める**: 余地が最小幅より狭いのに最小幅を守ると、
+        // 合計が必ず余地を超えて折り返す（実測 2026-11-22: MewUI 版で 2 段になった原因の 1 つ。
+        // 4 つの UI 版で同じ規則にする）。 丸めの分だけ余裕も残す
+        var room = Math.Max(0, maxWidth - FileNameTemplateWrapReserve);
+        if (room < box.MinWidth)
+        {
+            box.Width = Math.Max(0, room);
+            return;
+        }
+
+        box.Width = Math.Clamp(width, box.MinWidth, room);
     }
 
     /// <summary>ファイル名テンプレートの幅の上限（ツールバーが折り返さない幅）を求める。</summary>

@@ -529,6 +529,48 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         return true;
     }
 
+    /// <summary>選択中の吹き出しの本文の余白を取得または設定する（元画像ピクセル）。</summary>
+    /// <value>余白。 吹き出しを選んでいない場合は <see langword="null"/>。 設定するとその吹き出しの余白を変える。</value>
+    public double? SelectedBodyPadding
+    {
+        get => AnnotationSelectionPresenter.ResolveBubble(_document, SelectedId)?.BodyPadding;
+        set
+        {
+            if (value is { } padding)
+            {
+                _ = SetSelectedBodyPadding(padding);
+            }
+        }
+    }
+
+    /// <summary>選択中の吹き出しのしっぽの幅を取得または設定する（元画像ピクセル）。</summary>
+    /// <value>幅。 吹き出しを選んでいない場合は <see langword="null"/>。 設定するとその吹き出しのしっぽの幅を変える。</value>
+    public double? SelectedTailWidth
+    {
+        get => AnnotationSelectionPresenter.ResolveBubble(_document, SelectedId)?.Tail.Width;
+        set
+        {
+            if (value is { } width)
+            {
+                _ = UpdateSelectedTail(tail => tail with { Width = width });
+            }
+        }
+    }
+
+    /// <summary>選択中の吹き出しのしっぽの辺を取得または設定する。</summary>
+    /// <value>辺。 吹き出しを選んでいない場合は <see langword="null"/>。 設定するとその吹き出しのしっぽの辺を変える。</value>
+    public BubbleEdge? SelectedTailBaseEdge
+    {
+        get => AnnotationSelectionPresenter.ResolveBubble(_document, SelectedId)?.Tail.BaseEdge;
+        set
+        {
+            if (value is { } edge)
+            {
+                _ = UpdateSelectedTail(tail => tail with { BaseEdge = edge });
+            }
+        }
+    }
+
     /// <summary>選択中の吹き出しの本文の余白を差し替える。</summary>
     /// <param name="padding">本文の余白（元画像ピクセル）。</param>
     /// <returns>適用した場合は <see langword="true"/>。</returns>
@@ -957,6 +999,11 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         var source = ToSource(position);
         _lastPointerSource = source;
 
+        // **ボタンを押していない移動では何も動かさない**: 捕捉の解放や Up の取りこぼしで
+        // 「押していないのにドラッグ中」の状態が残ると、ホバーだけで枠線や注釈が動き続ける
+        // （実測 2026-11-22: MewUI 版・WinUI 3 版で再現）。 押下中だけ動かす（4 つの UI 版で同じ規則）。
+        var isPressed = e.GetCurrentPoint(this).Properties.IsLeftButtonPressed;
+
         // 注釈の無い場所を押したまま動かしたら、プレビューのパンへ渡す
         if (_isPreviewDragging)
         {
@@ -973,6 +1020,13 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         // 本文の編集中にドラッグしている間は、キャレットを伸ばして選択する
         if (_isEditingText && _isSelectingText)
         {
+            if (!isPressed)
+            {
+                _isSelectingText = false;
+                InvalidateVisual();
+                return;
+            }
+
             SetCaretFromPoint(source, extend: true);
             InvalidateVisual();
             return;
@@ -980,6 +1034,14 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
         if (_isDraggingTail)
         {
+            if (!isPressed)
+            {
+                _isDraggingTail = false;
+                RaiseDocumentChanged();
+                InvalidateVisual();
+                return;
+            }
+
             if (Selected is BubbleAnnotation bubble
                 && _document.SetTailTip(bubble.Id, source))
             {
@@ -990,7 +1052,15 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
             return;
         }
 
-        _marquee.Move(source);
+        if (isPressed)
+        {
+            _marquee.Move(source);
+        }
+        else if (_marquee.CreateSnapshot(source).State is MarqueeInteractionState.Dragging
+            or MarqueeInteractionState.DraggingNudging)
+        {
+            _marquee.Release(source);
+        }
 
         // しっぽのハンドルの上では専用のカーソルにする（Marquee の Move が設定した形状を上書きする）
         if (Selected is BubbleAnnotation selectedBubble && IsNearTailTip(selectedBubble, source))

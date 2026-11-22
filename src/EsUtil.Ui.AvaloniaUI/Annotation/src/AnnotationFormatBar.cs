@@ -189,7 +189,7 @@ internal sealed class AnnotationFormatBar : Border
     }
 
     /// <summary>操作の間の余白（DIP）。</summary>
-    private const double ControlSpacing = 4;
+    private const double ControlSpacing = AnnotationEditorLayout.RowSpacing;
 
     /// <summary>代表色パレットの列数を取得または設定する（■ を何列で並べるか）。</summary>
     /// <value>1 以上の列数。 既定は <see cref="AnnotationPalette.DefaultPaletteColumns"/>。</value>
@@ -456,7 +456,7 @@ internal sealed class AnnotationFormatBar : Border
     }
 
     /// <summary>装飾の切り替えボタンの幅（DIP）。</summary>
-    private const double ToggleWidth = 34;
+    private const double ToggleWidth = AnnotationEditorLayout.ToggleWidth;
 
     /// <summary>装飾を切り替える（適用先の先頭の書式で切り替えの向きを決める）。</summary>
     /// <param name="read">属性を読む関数。</param>

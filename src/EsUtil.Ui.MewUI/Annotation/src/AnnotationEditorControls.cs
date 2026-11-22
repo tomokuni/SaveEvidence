@@ -17,10 +17,10 @@ namespace EsUtil.Ui.MewUI.Annotation;
 public static class AnnotationEditorControls
 {
     /// <summary>項目名のラベルの幅（DIP）。</summary>
-    public const double LabelWidth = 104;
+    public const double LabelWidth = AnnotationEditorLayout.LabelWidth;
 
     /// <summary>色の選択の幅（DIP）。</summary>
-    public const double ColorSelectorWidth = 210;
+    public const double ColorSelectorWidth = AnnotationEditorLayout.ColorSelectorWidth;
 
     /// <summary>見出しを作る。</summary>
     /// <param name="text">見出しの文言。</param>

@@ -16,10 +16,10 @@ namespace EsUtil.Ui.WinUI3.Annotation;
 internal static class AnnotationEditorControls
 {
     /// <summary>行の文字サイズ（DIP）。</summary>
-    internal const double FontSize = 12;
+    internal const double FontSize = AnnotationEditorLayout.FontSizeDip;
 
     /// <summary>項目間の余白（DIP）。</summary>
-    internal const double Gap = 6;
+    internal const double Gap = AnnotationEditorLayout.GroupSpacing;
 
     /// <summary>見出しを作る。</summary>
     /// <param name="text">見出しの文字列。</param>
@@ -92,7 +92,7 @@ internal static class AnnotationEditorControls
         {
             Content = content,
             IsChecked = isChecked,
-            MinWidth = 28,
+            MinWidth = AnnotationEditorLayout.ToggleMinWidth,
 
             // **高さを明示する**: 既定の高さでは 12 DIP の文字の上が欠ける（実測 2026-11-20）。
             // 高さはコア（AnnotationFormatBarLayout）が単一所有する

@@ -447,6 +447,48 @@ public sealed partial class AnnotationLayerControl : Panel
     public bool UpdateSelectedAppearance(Func<AnnotationAppearance, AnnotationAppearance> transform)
         => UpdateSelected(item => item.Appearance = transform(item.Appearance));
 
+    /// <summary>選択中の吹き出しの本文の余白を取得または設定する（元画像ピクセル）。</summary>
+    /// <value>余白。 吹き出しを選んでいない場合は ``null``。 設定するとその吹き出しの余白を変える。</value>
+    /// <remarks>値の解決と補正はコアが単一所有する（<see cref="AnnotationSelectionPresenter"/> / <see cref="AnnotationLimits"/>）。</remarks>
+    public double? SelectedBodyPadding
+    {
+        get => AnnotationSelectionPresenter.ResolveBubble(_document, SelectedId)?.BodyPadding;
+        set
+        {
+            if (value is { } padding)
+            {
+                _ = SetSelectedBodyPadding(padding);
+            }
+        }
+    }
+
+    /// <summary>選択中の吹き出しのしっぽの幅を取得または設定する（元画像ピクセル）。</summary>
+    /// <value>幅。 吹き出しを選んでいない場合は ``null``。 設定するとその吹き出しのしっぽの幅を変える。</value>
+    public double? SelectedTailWidth
+    {
+        get => AnnotationSelectionPresenter.ResolveBubble(_document, SelectedId)?.Tail.Width;
+        set
+        {
+            if (value is { } width)
+            {
+                _ = UpdateSelectedTail(tail => tail with { Width = width });
+            }
+        }
+    }
+
+    /// <summary>選択中の吹き出しのしっぽの辺を取得または設定する。</summary>
+    /// <value>辺。 吹き出しを選んでいない場合は ``null``。 設定するとその吹き出しのしっぽの辺を変える。</value>
+    public BubbleEdge? SelectedTailBaseEdge
+    {
+        get => AnnotationSelectionPresenter.ResolveBubble(_document, SelectedId)?.Tail.BaseEdge;
+        set
+        {
+            if (value is { } edge)
+            {
+                _ = UpdateSelectedTail(tail => tail with { BaseEdge = edge });
+            }
+        }
+    }
     /// <summary>選択中の吹き出しの本文の余白を設定する。</summary>
     /// <param name="padding">余白（元画像ピクセル）。</param>
     /// <returns>変えた場合は <see langword="true"/>。</returns>

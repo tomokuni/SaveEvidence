@@ -8,7 +8,7 @@ internal static class AnnotationEditorControls
     internal const float FontSize = 9F;
 
     /// <summary>項目間の余白（ピクセル）。</summary>
-    internal const int Gap = 4;
+    internal const int Gap = (int)AnnotationEditorLayout.RowSpacing;
 
     /// <summary>項目名のラベルを作る。</summary>
     /// <param name="text">項目名。</param>

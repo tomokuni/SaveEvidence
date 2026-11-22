@@ -42,6 +42,21 @@ public static class AnnotationSelectionPresenter
         return document.Find(selectedId ?? string.Empty)?.Appearance;
     }
 
+    /// <summary>選択中の吹き出しを取得する。</summary>
+    /// <param name="document">文書。</param>
+    /// <param name="selectedId">選択中の注釈の識別子（無い場合は <see langword="null"/>）。</param>
+    /// <returns>吹き出し。 選んでいない・吹き出しでない場合は <see langword="null"/>。</returns>
+    /// <remarks>
+    /// <b>吹き出しだけが持つ値の入口</b>である（本文の余白・しっぽの幅・しっぽの辺）。
+    /// UI が <c>Selected as BubbleAnnotation</c> を書くと、同じ判定が 4 つの UI 版へ散らばる。
+    /// </remarks>
+    public static BubbleAnnotation? ResolveBubble(AnnotationDocument document, string? selectedId)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        return FindBubble(document, selectedId);
+    }
+
     /// <summary>選択範囲に文字書式を適用する。</summary>
     /// <param name="document">文書。</param>
     /// <param name="selectedId">選択中の注釈の識別子。</param>

@@ -18,7 +18,7 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 public static class AnnotationEditorControls
 {
     /// <summary>項目名のラベルの幅（DIP）。</summary>
-    public const double LabelWidth = 104;
+    public const double LabelWidth = AnnotationEditorLayout.LabelWidth;
 
     /// <summary>色の選択の幅（DIP）。</summary>
     /// <remarks>
@@ -26,7 +26,7 @@ public static class AnnotationEditorControls
     /// 間延びして 1 行が使えなくなる（実測で指摘）。 値とボタンが収まる幅へ固定する。<br/>
     /// 設定ペインのフォントの選択（<see cref="ChoiceRow"/>）と同じ幅にそろえる（行の右端が揃う）。
     /// </remarks>
-    public const double ColorSelectorWidth = 210;
+    public const double ColorSelectorWidth = AnnotationEditorLayout.ColorSelectorWidth;
 
     /// <summary>見出しを作る。</summary>
     /// <param name="text">見出しの文言。</param>

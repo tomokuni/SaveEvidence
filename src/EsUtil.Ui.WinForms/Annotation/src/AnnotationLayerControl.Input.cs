@@ -212,6 +212,11 @@ public sealed partial class AnnotationLayerControl
         var source = ToSource(position);
         _lastPointerSource = source;
 
+        // **ボタンを押していない移動では何も動かさない**: Up の取りこぼしで「押していないのに
+        // ドラッグ中」の状態が残ると、ホバーだけで枠線や注釈が動き続ける（実測 2026-11-22:
+        // MewUI 版・WinUI 3 版で再現）。 押下中だけ動かす（4 つの UI 版で同じ規則）。
+        var isPressed = (e.Button & MouseButtons.Left) != 0;
+
         // 注釈の無い場所を押したまま動かしたら、プレビューのパンへ渡す
         if (_isPreviewDragging)
         {
@@ -221,6 +226,14 @@ public sealed partial class AnnotationLayerControl
 
         if (_isDraggingTail)
         {
+            if (!isPressed)
+            {
+                _isDraggingTail = false;
+                RaiseDocumentChanged();
+                Invalidate();
+                return;
+            }
+
             if (Selected is BubbleAnnotation bubble && _document.SetTailTip(bubble.Id, source))
             {
                 RaiseDocumentChanged();
@@ -230,7 +243,15 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        _marquee.Move(source);
+        if (isPressed)
+        {
+            _marquee.Move(source);
+        }
+        else if (_marquee.CreateSnapshot(source).State is MarqueeInteractionState.Dragging
+            or MarqueeInteractionState.DraggingNudging)
+        {
+            _marquee.Release(source);
+        }
 
         // 注釈の上に無い間は、プレビューのホバー表示（座標・自動切り出しの強調）へ位置を渡す
         if (!HitTestAt(new Point(e.X, e.Y)))
