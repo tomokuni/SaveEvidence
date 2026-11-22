@@ -44,7 +44,7 @@ internal sealed class AnnotationFormatBar : ContentControl
     /// <b>NumberBox は内側の文字を上寄りに描く</b>（実測 2026-11-22: 行の中央より 3.5 DIP 上）。
     /// 高さを変えても内側の入力欄は上寄りのままなので、描画だけを下げます（レイアウトは変えません）。
     /// </remarks>
-    private const double NumberBoxVerticalTrim = 3;
+    private const double NumberBoxVerticalTrim = 2;
 
     /// <summary>通知による更新中かどうか（利用者の操作と区別する）。</summary>
     private bool _refreshing;
@@ -126,7 +126,7 @@ internal sealed class AnnotationFormatBar : ContentControl
             Value = AnnotationDefaults.FontSizeDefault,
             Width = AnnotationFormatBarLayout.SizeSelectorWidth,
 
-            // 描画だけを下げる（レイアウトは変えない）
+            // **描画だけを下げる**: 高さは変えないため、要素（枠）は行の中に揃ったまま、内側の数字だけが下がる。
             RenderTransform = new Microsoft.UI.Xaml.Media.TranslateTransform { Y = NumberBoxVerticalTrim },
 
             // **数字を上下中央へ置く**: NumberBox は内側の入力欄を上寄りに描き、`VerticalContentAlignment`

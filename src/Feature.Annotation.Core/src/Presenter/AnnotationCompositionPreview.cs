@@ -27,9 +27,17 @@ public static class AnnotationCompositionPreview
             return document;
         }
 
-        return document.Find(bubbleId) is BubbleAnnotation bubble
-            ? document.WithText(bubble, bubble.Text.Insert(caret, preedit))
-            : document;
+        if (document.Find(bubbleId) is not BubbleAnnotation bubble)
+        {
+            return document;
+        }
+
+        // **変換中の文字列には下線を引く**: 未確定であることを示す（一般的な入力欄と同じ）。
+        // 書式はキャレットの位置のものを引き継ぎ、下線だけを足す（色・大きさは本文のまま）。
+        var at = Math.Clamp(caret, 0, bubble.Text.PlainText.Length);
+        var style = bubble.Text.StyleAt(at > 0 ? at - 1 : 0) with { IsUnderline = true };
+        var inserted = bubble.Text.Insert(at, preedit).ApplyStyle(at, preedit.Length, style);
+        return document.WithText(bubble, inserted);
     }
 
     /// <summary>変換中の文字列を入れた後のキャレットの位置を求める。</summary>

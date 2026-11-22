@@ -90,6 +90,7 @@ public sealed partial class AnnotationLayerControl
         SyncTextSelectionRange();
         Focus();
         AttachInputWindow();
+        RestartCaretBlink();
         RaiseEditingChanged();
         InvalidateVisual();
         return true;
@@ -107,6 +108,7 @@ public sealed partial class AnnotationLayerControl
         _preeditText = string.Empty;
         _isSelectingText = false;
         TextSelectionRange = default;
+        StopCaretBlink();
         DetachInputWindow();
 
         if (Selected is { } item)
@@ -118,6 +120,46 @@ public sealed partial class AnnotationLayerControl
         InvalidateVisual();
     }
 
+    /// <summary>キャレットの点滅を始めた時刻。</summary>
+    private DateTimeOffset _caretBlinkStart = DateTimeOffset.UtcNow;
+
+    /// <summary>キャレットの点滅を進めるタイマー（編集中だけ動かす）。</summary>
+    private DispatcherTimer? _caretTimer;
+
+    /// <summary>いまキャレットを点灯して描くかどうかを取得する。</summary>
+    /// <value>点滅の位相が点灯の間は <see langword="true"/>。</value>
+    private bool IsCaretVisible => AnnotationCaretBlink.IsVisible(DateTimeOffset.UtcNow - _caretBlinkStart);
+
+    /// <summary>キャレットの点滅を点灯から始め直す（文字入力・キャレット移動の直後に呼ぶ）。</summary>
+    private void RestartCaretBlink()
+    {
+        _caretBlinkStart = DateTimeOffset.UtcNow;
+        if (_caretTimer is null)
+        {
+            var timer = new DispatcherTimer(AnnotationCaretBlink.Interval);
+            timer.Tick += () =>
+            {
+                if (_isEditingText)
+                {
+                    InvalidateVisual();
+                }
+                else
+                {
+                    timer.Stop();
+                }
+            };
+
+            _caretTimer = timer;
+        }
+
+        if (!_caretTimer.IsEnabled)
+        {
+            _caretTimer.Start();
+        }
+    }
+
+    /// <summary>キャレットの点滅を止める（編集を終えたとき）。</summary>
+    private void StopCaretBlink() => _caretTimer?.Stop();
     /// <summary>本文の文字列（IME へ渡す）。</summary>
     internal string TextForInput => Selected is BubbleAnnotation bubble ? bubble.Text.PlainText : string.Empty;
 
@@ -457,6 +499,7 @@ public sealed partial class AnnotationLayerControl
 
         TextSelectionRange = current;
         TextSelectionChanged?.Invoke(this, EventArgs.Empty);
+        RestartCaretBlink();
     }
 
     /// <summary>選択中の文字をクリップボードへコピーする。</summary>
@@ -543,8 +586,12 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        var thickness = CaretThicknessDip / Math.Max(scale, 0.01);
-        context.FillRectangle(new Rect(caret.X, caret.Y, thickness, caret.Height), s_caretColor);
+        // **キャレットは一般的な速さで点滅させる**（規則はコアの AnnotationCaretBlink が単一所有する）
+        if (IsCaretVisible)
+        {
+            var thickness = CaretThicknessDip / Math.Max(scale, 0.01);
+            context.FillRectangle(new Rect(caret.X, caret.Y, thickness, caret.Height), s_caretColor);
+        }
 
         // **変換中の文字列は本文として描く**（RenderDocument が入れている）ため、ここでは重ねて描かない。
         // 重ねて描くと既存の文字と二重になる（実測 2026-11-22）。

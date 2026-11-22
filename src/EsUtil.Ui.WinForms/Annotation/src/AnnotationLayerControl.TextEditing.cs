@@ -98,6 +98,49 @@ public sealed partial class AnnotationLayerControl
         }
     }
 
+    /// <summary>キャレットの点滅を始めた時刻。</summary>
+    private DateTimeOffset _caretBlinkStart = DateTimeOffset.UtcNow;
+
+    /// <summary>キャレットの点滅を進めるタイマー（編集中だけ動かす）。</summary>
+    private System.Windows.Forms.Timer? _caretTimer;
+
+    /// <summary>いまキャレットを点灯して描くかどうかを取得する。</summary>
+    /// <value>点滅の位相が点灯の間は <see langword="true"/>。</value>
+    private bool IsCaretVisible => AnnotationCaretBlink.IsVisible(DateTimeOffset.UtcNow - _caretBlinkStart);
+
+    /// <summary>キャレットの点滅を点灯から始め直す（文字入力・キャレット移動の直後に呼ぶ）。</summary>
+    private void RestartCaretBlink()
+    {
+        _caretBlinkStart = DateTimeOffset.UtcNow;
+        if (_caretTimer is null)
+        {
+            var timer = new System.Windows.Forms.Timer
+            {
+                Interval = AnnotationCaretBlink.IntervalMilliseconds,
+            };
+            timer.Tick += (_, _) =>
+            {
+                if (_isEditingText)
+                {
+                    Invalidate();
+                }
+                else
+                {
+                    timer.Stop();
+                }
+            };
+
+            _caretTimer = timer;
+        }
+
+        if (!_caretTimer.Enabled)
+        {
+            _caretTimer.Start();
+        }
+    }
+
+    /// <summary>キャレットの点滅を止める（編集を終えたとき）。</summary>
+    private void StopCaretBlink() => _caretTimer?.Stop();
     /// <summary>本文の文字列（IME へ渡す）。</summary>
     internal string TextForInput => Selected is BubbleAnnotation bubble ? bubble.Text.PlainText : string.Empty;
 
@@ -122,6 +165,7 @@ public sealed partial class AnnotationLayerControl
         _selectionAnchor = _caretIndex;
         _marquee.ResetSelection();
         Focus();
+        RestartCaretBlink();
         RaiseEditingChanged();
         Invalidate();
         return true;
@@ -138,6 +182,7 @@ public sealed partial class AnnotationLayerControl
         _isEditingText = false;
         _preeditText = string.Empty;
         _isComposing = false;
+        StopCaretBlink();
 
         if (Selected is { } item)
         {
@@ -355,30 +400,35 @@ public sealed partial class AnnotationLayerControl
         }
 
         var caret = ResolveCaretDip();
-        using var caretBrush = new SolidBrush(s_caretColor);
-        graphics.FillRectangle(caretBrush, (float)caret.X, (float)caret.Y, CaretThicknessDip, Math.Max(1F, (float)caret.Height));
+        var caretX = (float)caret.X;
 
-        if (_preeditText.Length == 0)
+        // **変換中の文字列はキャレットの位置へ置き、キャレットはその末尾へ移す**: 重ねると既存の文字と
+        // 二重になり、キャレットが動かないため「入力が反映されていない」ように見える（実測 2026-11-22）。
+        // 変換中の文字列には下線を引く（未確定であることを示す）。
+        if (_preeditText.Length > 0)
         {
-            return;
+            var style = SelectedTextStyle with { IsUnderline = true };
+            using var font = AnnotationTextMetrics.CreateFont(style with { IsUnderline = false, IsStrike = false });
+            using var brush = new SolidBrush(style.Color);
+            using var format = new StringFormat(StringFormat.GenericTypographic) { FormatFlags = StringFormatFlags.NoWrap };
+            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            graphics.DrawString(
+                _preeditText, font, brush, new PointF(caretX, (float)caret.Y), format);
+
+            var width = (float)graphics.MeasureString(_preeditText, font, int.MaxValue, format).Width;
+            using var pen = new Pen(style.Color, Math.Max(1F, (float)(style.FontSize * 0.06)));
+            var underlineY = (float)(caret.Y + caret.Height - 1);
+            graphics.DrawLine(pen, caretX, underlineY, caretX + width, underlineY);
+            caretX += width;
         }
 
-        var style = SelectedTextStyle with { IsUnderline = true };
-        using var font = AnnotationTextMetrics.CreateFont(style with { IsUnderline = false, IsStrike = false });
-        using var brush = new SolidBrush(style.Color);
-        using var format = new StringFormat(StringFormat.GenericTypographic) { FormatFlags = StringFormatFlags.NoWrap };
-        graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-        graphics.DrawString(
-            _preeditText,
-            font,
-            brush,
-            new PointF((float)(caret.X + CaretThicknessDip), (float)caret.Y),
-            format);
-
-        var width = (float)graphics.MeasureString(_preeditText, font, int.MaxValue, format).Width;
-        using var pen = new Pen(style.Color, Math.Max(1F, (float)(style.FontSize * 0.06)));
-        var y = (float)(caret.Y + caret.Height - 1);
-        graphics.DrawLine(pen, (float)(caret.X + CaretThicknessDip), y, (float)(caret.X + CaretThicknessDip) + width, y);
+        // **キャレットは一般的な速さで点滅させる**（規則はコアの AnnotationCaretBlink が単一所有する）
+        if (IsCaretVisible)
+        {
+            using var caretBrush = new SolidBrush(s_caretColor);
+            graphics.FillRectangle(
+                caretBrush, caretX, (float)caret.Y, CaretThicknessDip, Math.Max(1F, (float)caret.Height));
+        }
     }
 
     /// <summary>キャレットの位置（DIP）を求める。</summary>

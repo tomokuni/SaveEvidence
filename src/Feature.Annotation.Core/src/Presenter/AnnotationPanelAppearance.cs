@@ -75,7 +75,7 @@ public sealed record AnnotationPanelAppearance(
         VerticalPadding: 10,
         ContentWidth: ResolveStyleEditorContentWidth(),
         MaxWidth: 640,
-        MaxContentHeight: 460,
+        MaxContentHeight: 720,
         MinContentHeight: 0)
     {
         FixedContentHeight = 0,

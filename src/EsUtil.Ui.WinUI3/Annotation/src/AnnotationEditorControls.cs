@@ -94,7 +94,7 @@ internal static class AnnotationEditorControls
 
             // **上下中央へ寄せる**: Consolas の記号は行の上寄りに描かれるため、そのままでは
             // 下へ 2 DIP ずれて見える（実測 2026-11-22）。 描画だけを動かす（レイアウトは変えない）。
-            RenderTransform = new Microsoft.UI.Xaml.Media.TranslateTransform { Y = -1 },
+            RenderTransform = new Microsoft.UI.Xaml.Media.TranslateTransform { Y = 0 },
         };
 
         if (decorations != Windows.UI.Text.TextDecorations.None)

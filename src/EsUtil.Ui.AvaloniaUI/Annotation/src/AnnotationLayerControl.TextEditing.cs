@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Media;
+using Avalonia.Threading;
 using EsUtil.Platform.Core;
 using EsUtil.Platform.Core.Geometry;
 
@@ -99,6 +100,7 @@ public sealed partial class AnnotationLayerControl
         _marquee.ResetSelection();
         SyncTextSelectionRange();
         Focus();
+        RestartCaretBlink();
         RaiseEditingChanged();
         InvalidateVisual();
         return true;
@@ -116,6 +118,7 @@ public sealed partial class AnnotationLayerControl
         _preeditText = string.Empty;
         _isSelectingText = false;
         TextSelectionRange = default;
+        StopCaretBlink();
 
         if (Selected is { } item)
         {
@@ -126,6 +129,49 @@ public sealed partial class AnnotationLayerControl
         InvalidateVisual();
     }
 
+    /// <summary>キャレットの点滅を始めた時刻。</summary>
+    private DateTimeOffset _caretBlinkStart = DateTimeOffset.UtcNow;
+
+    /// <summary>キャレットの点滅を進めるタイマー（編集中だけ動かす）。</summary>
+    private DispatcherTimer? _caretTimer;
+
+    /// <summary>いまキャレットを点灯して描くかどうかを取得する。</summary>
+    /// <value>点滅の位相が点灯の間は <see langword="true"/>。</value>
+    private bool IsCaretVisible => AnnotationCaretBlink.IsVisible(DateTimeOffset.UtcNow - _caretBlinkStart);
+
+    /// <summary>キャレットの点滅を点灯から始め直す（文字入力・キャレット移動の直後に呼ぶ）。</summary>
+    /// <remarks>
+    /// <b>点灯から始める</b>: 消えた瞬間に操作すると入力位置を見失うため、操作の直後は必ず点灯にします。
+    /// </remarks>
+    private void RestartCaretBlink()
+    {
+        _caretBlinkStart = DateTimeOffset.UtcNow;
+        if (_caretTimer is null)
+        {
+            var timer = new DispatcherTimer { Interval = AnnotationCaretBlink.Interval };
+            timer.Tick += (_, _) =>
+            {
+                if (_isEditingText)
+                {
+                    InvalidateVisual();
+                }
+                else
+                {
+                    timer.Stop();
+                }
+            };
+
+            _caretTimer = timer;
+        }
+
+        if (!_caretTimer.IsEnabled)
+        {
+            _caretTimer.Start();
+        }
+    }
+
+    /// <summary>キャレットの点滅を止める（編集を終えたとき）。</summary>
+    private void StopCaretBlink() => _caretTimer?.Stop();
     /// <summary>本文の文字列（IME へ渡す）。</summary>
     internal string TextForInput => Selected is BubbleAnnotation bubble ? bubble.Text.PlainText : string.Empty;
 
@@ -325,6 +371,7 @@ public sealed partial class AnnotationLayerControl
 
         // **本文が変わったことを IME へ知らせる**（周囲の文字列を渡し直し、変換の基準を最新にする）
         TextInputClient.NotifyTextChanged();
+        RestartCaretBlink();
         InvalidateVisual();
         return true;
     }
@@ -422,6 +469,7 @@ public sealed partial class AnnotationLayerControl
 
         TextSelectionRange = current;
         RaiseTextSelectionChanged();
+        RestartCaretBlink();
 
         // **IME へ知らせる**: 知らせないと変換候補が古いキャレット位置に出て、選択範囲も取り残される
         // （実測 2026-11-22: 日本語入力でキャレットと既存の文字が動かない、と見えました）
@@ -511,10 +559,13 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        // キャレットは常に描く（点滅させない）: 点滅は「消えている間」だけを見ると入力位置を失ったように見え、
-        // キー操作の直後に復帰しないことがある（実測 2026-11-21）
-        var thickness = CaretThicknessDip / Math.Max(scale, 0.01);
-        context.FillRectangle(s_caretBrush, new Rect(caret.X, caret.Y, thickness, caret.Height));
+        // **キャレットは一般的な速さで点滅させる**（規則はコアの AnnotationCaretBlink が単一所有する）。
+        // 文字入力・キャレット移動の直後は点灯から始める（消えた瞬間に操作すると入力位置を見失う）。
+        if (IsCaretVisible)
+        {
+            var thickness = CaretThicknessDip / Math.Max(scale, 0.01);
+            context.FillRectangle(s_caretBrush, new Rect(caret.X, caret.Y, thickness, caret.Height));
+        }
 
         // **変換中の文字列は本文として描く**（RenderDocument が入れている）ため、ここでは重ねて描かない。
         // 重ねて描くと既存の文字と二重になり、確定した文字と位置が食い違って見える（実測 2026-11-22）。

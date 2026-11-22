@@ -96,6 +96,46 @@ public sealed partial class AnnotationLayerControl
         }
     }
 
+    /// <summary>キャレットの点滅を始めた時刻。</summary>
+    private DateTimeOffset _caretBlinkStart = DateTimeOffset.UtcNow;
+
+    /// <summary>キャレットの点滅を進めるタイマー（編集中だけ動かす）。</summary>
+    private Microsoft.UI.Xaml.DispatcherTimer? _caretTimer;
+
+    /// <summary>いまキャレットを点灯して描くかどうかを取得する。</summary>
+    /// <value>点滅の位相が点灯の間は <see langword="true"/>。</value>
+    private bool IsCaretVisible => AnnotationCaretBlink.IsVisible(DateTimeOffset.UtcNow - _caretBlinkStart);
+
+    /// <summary>キャレットの点滅を点灯から始め直す（文字入力・キャレット移動の直後に呼ぶ）。</summary>
+    private void RestartCaretBlink()
+    {
+        _caretBlinkStart = DateTimeOffset.UtcNow;
+        if (_caretTimer is null)
+        {
+            var timer = new Microsoft.UI.Xaml.DispatcherTimer { Interval = AnnotationCaretBlink.Interval };
+            timer.Tick += (_, _) =>
+            {
+                if (_isEditingText)
+                {
+                    Redraw();
+                }
+                else
+                {
+                    timer.Stop();
+                }
+            };
+
+            _caretTimer = timer;
+        }
+
+        if (!_caretTimer.IsEnabled)
+        {
+            _caretTimer.Start();
+        }
+    }
+
+    /// <summary>キャレットの点滅を止める（編集を終えたとき）。</summary>
+    private void StopCaretBlink() => _caretTimer?.Stop();
     /// <summary>本文の文字列（IME へ渡す）。</summary>
     internal string TextForInput => Selected is BubbleAnnotation bubble ? bubble.Text.PlainText : string.Empty;
 
@@ -121,6 +161,7 @@ public sealed partial class AnnotationLayerControl
         _marquee.ResetSelection();
         _ = Focus(FocusState.Programmatic);
         AttachIme();
+        RestartCaretBlink();
         RaiseEditingChanged();
         Redraw();
         return true;
@@ -137,6 +178,7 @@ public sealed partial class AnnotationLayerControl
         _isEditingText = false;
         _preeditText = string.Empty;
         _isComposing = false;
+        StopCaretBlink();
         DetachIme();
 
         if (Selected is { } item)
@@ -467,6 +509,7 @@ public sealed partial class AnnotationLayerControl
     private void SyncTextSelectionRange()
     {
         TextSelectionChanged?.Invoke(this, EventArgs.Empty);
+        RestartCaretBlink();
     }
 
     /// <summary>編集の開始・終了を通知する。</summary>
@@ -498,6 +541,39 @@ public sealed partial class AnnotationLayerControl
         }
 
         var caret = ResolveCaretDip();
+
+        // **変換中の文字列はキャレットの位置へ置き、キャレットはその末尾へ移す**: 重ねると既存の文字と
+        // 二重になり、キャレットが動かないため「入力が反映されていない」ように見える（実測 2026-11-22）。
+        // 変換中の文字列には下線を引く（未確定であることを示す）。
+        var caretX = caret.X;
+        if (_preeditText.Length > 0)
+        {
+            var style = SelectedTextStyle with { IsUnderline = true };
+            var preedit = new TextBlock
+            {
+                Text = _preeditText,
+                FontFamily = new FontFamily(style.FontFamily),
+                FontSize = style.FontSize * scale,
+                FontWeight = style.IsBold ? FontWeights.Bold : FontWeights.Normal,
+                FontStyle = style.IsItalic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
+                Foreground = AnnotationTextMetrics.ToBrush(style.Color),
+                TextDecorations = Windows.UI.Text.TextDecorations.Underline,
+                IsHitTestVisible = false,
+            };
+
+            preedit.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(preedit, caret.X);
+            Canvas.SetTop(preedit, caret.Y);
+            _editing.Children.Add(preedit);
+            caretX = caret.X + preedit.DesiredSize.Width;
+        }
+
+        // **キャレットは一般的な速さで点滅させる**（規則はコアの AnnotationCaretBlink が単一所有する）
+        if (!IsCaretVisible)
+        {
+            return;
+        }
+
         var caretShape = new Rectangle
         {
             Width = CaretThicknessDip,
@@ -505,31 +581,9 @@ public sealed partial class AnnotationLayerControl
             Fill = new SolidColorBrush(s_caretColor),
         };
 
-        Canvas.SetLeft(caretShape, caret.X);
+        Canvas.SetLeft(caretShape, caretX);
         Canvas.SetTop(caretShape, caret.Y);
         _editing.Children.Add(caretShape);
-
-        if (_preeditText.Length == 0)
-        {
-            return;
-        }
-
-        var style = SelectedTextStyle with { IsUnderline = true };
-        var preedit = new TextBlock
-        {
-            Text = _preeditText,
-            FontFamily = new FontFamily(style.FontFamily),
-            FontSize = style.FontSize * scale,
-            FontWeight = style.IsBold ? FontWeights.Bold : FontWeights.Normal,
-            FontStyle = style.IsItalic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
-            Foreground = AnnotationTextMetrics.ToBrush(style.Color),
-            TextDecorations = Windows.UI.Text.TextDecorations.Underline,
-            IsHitTestVisible = false,
-        };
-
-        Canvas.SetLeft(preedit, caret.X + CaretThicknessDip);
-        Canvas.SetTop(preedit, caret.Y);
-        _editing.Children.Add(preedit);
     }
 
     /// <summary>キャレットの位置（DIP）を求める。</summary>
