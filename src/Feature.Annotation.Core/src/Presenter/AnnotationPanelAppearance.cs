@@ -73,13 +73,27 @@ public sealed record AnnotationPanelAppearance(
         CornerRadius: 4,
         Padding: 10,
         VerticalPadding: 10,
-        ContentWidth: 340,
+        ContentWidth: ResolveStyleEditorContentWidth(),
         MaxWidth: 640,
         MaxContentHeight: 460,
         MinContentHeight: 0)
     {
         FixedContentHeight = 0,
     };
+
+    /// <summary>右クリックの外観フライアウトの中身の幅（DIP）を求める。</summary>
+    /// <returns>幅（DIP）。</returns>
+    /// <remarks>
+    /// <b>項目名と入力欄から決める</b>: 入力欄の幅を揃えたうえで、その合計に余白と枠を足します。
+    /// 固定値（340 DIP）にすると、入力欄の右側に使わない幅が空いて「間延びした」見た目になります
+    /// （実測 2026-11-22）。
+    /// </remarks>
+    private static double ResolveStyleEditorContentWidth()
+        => AnnotationEditorLayout.LabelWidth
+            + AnnotationEditorLayout.RowSpacing
+            + AnnotationEditorLayout.FieldWidth
+            + (10 * 2)   // 左右の余白（Padding）
+            + (1 * 2);   // 左右の枠
 
     /// <summary>書式バーの外観を取得する。</summary>
     /// <value>下地 <c>#FFFFFF</c> / 枠 <c>#999999</c> / 枠 1 DIP / 角丸 0 DIP / 余白 6,3 DIP / 幅は中身に合わせる / 幅の上限 2400 DIP / 高さの上限 200 DIP。</value>

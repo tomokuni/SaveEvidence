@@ -20,13 +20,15 @@ public static class AnnotationEditorControls
     /// <summary>項目名のラベルの幅（DIP）。</summary>
     public const double LabelWidth = AnnotationEditorLayout.LabelWidth;
 
-    /// <summary>色の選択の幅（DIP）。</summary>
+    /// <summary>行の入力欄の幅（DIP。 値はコアが単一所有する）。</summary>
     /// <remarks>
-    /// <b>カラーコードが収まる幅にする</b>: 行の他の入力欄（数値・選択肢）と同じ幅に揃え、右側が
-    /// 間延びしないようにする。 色名は数文字しかないため、色名まで収める幅にすると右側が大きく空く
-    /// （実測 2026-11-22: 右クリックのフライアウトが「不必要に長い」との指摘）。 幅の規則はコアが単一所有する。
+    /// <b>数値・選択肢・色を同じ幅にする</b>: 幅が違うと行の右端が揃わず、入力部がばらばらに見える
+    /// （実測 2026-11-22）。 フライアウトの幅もこの値から決まる（<see cref="AnnotationPanelAppearance.StyleEditor"/>）。
     /// </remarks>
-    public static double ColorSelectorWidth => AnnotationFormatBarLayout.ResolveHexColorSelectorWidth(AnnotationPainter.Measure);
+    public const double FieldWidth = AnnotationEditorLayout.FieldWidth;
+
+    /// <summary>色の選択の幅（DIP。 行の入力欄と同じ幅に揃える）。</summary>
+    public static double ColorSelectorWidth => FieldWidth;
 
     /// <summary>見出しを作る。</summary>
     /// <param name="text">見出しの文言。</param>
@@ -118,7 +120,7 @@ public static class AnnotationEditorControls
             HighlightBorderOnError = true,
             TextFontSize = 12,
             TextFormat = textFormat,
-            Width = ColorSelectorWidth,
+            Width = FieldWidth,
             HorizontalAlignment = HorizontalAlignment.Left,
         };
 
@@ -155,7 +157,7 @@ public static class AnnotationEditorControls
             Maximum = (decimal)maximum,
             Increment = increment,
             FormatString = "0.##",
-            Width = 140,
+            Width = FieldWidth,
         };
         box.ValueChanged += (_, _) =>
         {
@@ -181,7 +183,7 @@ public static class AnnotationEditorControls
 
         var combo = new ComboBox
         {
-            Width = 210,
+            Width = FieldWidth,
             ItemsSource = options,
             SelectedIndex = Math.Max(0, selectedIndex),
         };

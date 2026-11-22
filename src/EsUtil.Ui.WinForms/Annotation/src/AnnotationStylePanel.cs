@@ -74,7 +74,7 @@ internal sealed class AnnotationStylePanel : Panel
         var front = new Button
         {
             Text = AnnotationEditorText.MoveToFront,
-            Width = 100,
+            Width = (int)Math.Round(AnnotationEditorLayout.FieldWidth),
             Height = 24,
             Location = new Point(6, y),
             Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
@@ -85,7 +85,7 @@ internal sealed class AnnotationStylePanel : Panel
         var back = new Button
         {
             Text = AnnotationEditorText.MoveToBack,
-            Width = 100,
+            Width = (int)Math.Round(AnnotationEditorLayout.FieldWidth),
             Height = 24,
             Location = new Point(110, y),
             Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
@@ -97,7 +97,7 @@ internal sealed class AnnotationStylePanel : Panel
         var close = new Button
         {
             Text = "閉じる",
-            Width = 100,
+            Width = (int)Math.Round(AnnotationEditorLayout.FieldWidth),
             Height = 24,
             Location = new Point(6, y),
             Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
@@ -106,6 +106,9 @@ internal sealed class AnnotationStylePanel : Panel
         Controls.Add(close);
     }
 
+    /// <summary>入力欄の左端（ピクセル。 項目名の幅と行の間隔から決める）。</summary>
+    private static readonly int FieldLeft =
+        (int)Math.Round(AnnotationEditorLayout.LabelWidth + AnnotationEditorLayout.RowSpacing);
     /// <summary>色の行を追加する。</summary>
     /// <param name="label">項目名。</param>
     /// <param name="color">現在の色。</param>
@@ -115,7 +118,7 @@ internal sealed class AnnotationStylePanel : Panel
     {
         Add(AnnotationEditorControls.Label(label), ref y, new Point(6, y));
         var button = AnnotationEditorControls.ColorButton(color, apply);
-        button.Location = new Point(120, y - 22);
+        button.Location = new Point(FieldLeft, y - 22);
         Controls.Add(button);
     }
 
@@ -130,7 +133,7 @@ internal sealed class AnnotationStylePanel : Panel
     {
         Add(AnnotationEditorControls.Label(label), ref y, new Point(6, y));
         var box = AnnotationEditorControls.NumberBox(value, minimum, maximum, apply);
-        box.Location = new Point(120, y - 22);
+        box.Location = new Point(FieldLeft, y - 22);
         Controls.Add(box);
     }
 
@@ -146,8 +149,8 @@ internal sealed class AnnotationStylePanel : Panel
         var combo = new ComboBox
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
-            Width = 100,
-            Location = new Point(120, y - 22),
+            Width = (int)Math.Round(AnnotationEditorLayout.FieldWidth),
+            Location = new Point(FieldLeft, y - 22),
             Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
         };
 

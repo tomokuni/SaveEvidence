@@ -163,6 +163,10 @@ public sealed partial class AnnotationLayerControl
     internal void SetPreeditTextForInput(string? preeditText)
     {
         _preeditText = preeditText ?? string.Empty;
+
+        // **変換中の文字列の長さの分だけキャレットを進めて見せる**: 進めないと、変換中の文字が
+        // キャレットの位置へ重なって描かれ、確定した文字と位置が食い違って見える（実測 2026-11-22）
+        TextInputClient.NotifySelectionChanged();
         InvalidateVisual();
     }
 
@@ -318,6 +322,9 @@ public sealed partial class AnnotationLayerControl
         _caretIndex = start + text.Length;
         _selectionAnchor = _caretIndex;
         SyncTextSelectionRange();
+
+        // **本文が変わったことを IME へ知らせる**（周囲の文字列を渡し直し、変換の基準を最新にする）
+        TextInputClient.NotifyTextChanged();
         InvalidateVisual();
         return true;
     }
@@ -415,6 +422,13 @@ public sealed partial class AnnotationLayerControl
 
         TextSelectionRange = current;
         RaiseTextSelectionChanged();
+
+        // **IME へ知らせる**: 知らせないと変換候補が古いキャレット位置に出て、選択範囲も取り残される
+        // （実測 2026-11-22: 日本語入力でキャレットと既存の文字が動かない、と見えました）
+        if (_isEditingText)
+        {
+            TextInputClient.NotifySelectionChanged();
+        }
     }
 
     /// <summary><see cref="TextSelectionChanged"/> を発生させる。</summary>

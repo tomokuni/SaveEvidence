@@ -213,6 +213,33 @@ public sealed partial class AnnotationLayerControl
         });
     }
 
+    /// <summary>IME へ本文が変わったことを知らせる（周囲の文字列を渡し直す）。</summary>
+    /// <param name="start">変えた範囲の開始位置（文字数）。</param>
+    /// <param name="oldLength">変える前の長さ（文字数）。</param>
+    /// <param name="newLength">変えた後の長さ（文字数）。</param>
+    /// <remarks>
+    /// <b>知らせないと変換の基準が古いままになる</b>: IME は周囲の文字列を問い合わせて変換するため、
+    /// 本文が変わったことを知らせないと、確定した文字が重複したり、キャレットの位置がずれます
+    /// （実測 2026-11-22: 日本語入力で既存の文字と位置が合わない、と見えました）。
+    /// </remarks>
+    private void NotifyImeTextChanged(int start, int oldLength, int newLength)
+    {
+        if (_ime is not { } context)
+        {
+            return;
+        }
+
+        var length = TextForInput.Length;
+        var from = Math.Clamp(start, 0, length);
+        context.NotifyTextChanged(
+            new CoreTextRange { StartCaretPosition = from, EndCaretPosition = from + Math.Max(0, newLength) },
+            Math.Max(0, oldLength),
+            new CoreTextRange
+            {
+                StartCaretPosition = Math.Clamp(TextSelectionStart, 0, length),
+                EndCaretPosition = Math.Clamp(TextSelectionEnd, 0, length),
+            });
+    }
     /// <summary>IME から周囲の文字列を求められたときに返す。</summary>
     /// <param name="sender">送信元。</param>
     /// <param name="e">要求の引数。</param>
@@ -380,6 +407,7 @@ public sealed partial class AnnotationLayerControl
             bubble,
             AnnotationTextStyleEdit.Insert(bubble.Text, start, end - start, text, _typingStyle.Value));
         RaiseDocumentChanged();
+        NotifyImeTextChanged(start, end - start, text.Length);
 
         _caretIndex = start + text.Length;
         _selectionAnchor = _caretIndex;

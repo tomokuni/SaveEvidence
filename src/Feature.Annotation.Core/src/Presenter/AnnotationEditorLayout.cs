@@ -12,6 +12,14 @@ public static class AnnotationEditorLayout
     /// <summary>項目名の幅（DIP）。</summary>
     public const double LabelWidth = 104;
 
+    /// <summary>入力欄の幅（DIP。 右クリックのフライアウトの行で使う）。</summary>
+    /// <remarks>
+    /// <b>行の入力欄はすべて同じ幅にする</b>: 数値・選択肢・色で幅が違うと、行の右端が揃わず
+    /// 「入力部がばらばら」に見えます（実測 2026-11-22）。 フライアウトの幅もこの値から決めます
+    /// （<see cref="AnnotationPanelAppearance.StyleEditor"/>）。
+    /// </remarks>
+    public const double FieldWidth = 160;
+
     /// <summary>行の中の項目の間隔（DIP）。</summary>
     public const double RowSpacing = 4;
 

@@ -40,4 +40,26 @@ internal sealed class AnnotationTextInputClient(AnnotationLayerControl owner) : 
     /// <param name="preeditText">変換中の文字列（<see langword="null"/> は変換の終了）。</param>
     public override void SetPreeditText(string? preeditText)
         => owner.SetPreeditTextForInput(preeditText);
+
+    /// <summary>選択範囲が変わったことを IME へ知らせる。</summary>
+    /// <remarks>
+    /// <b>知らせないと IME の変換候補が古い位置に出る</b>: <see cref="Selection"/> と
+    /// <see cref="CursorRectangle"/> は IME が問い合わせる値であり、変わったことを通知しないと
+    /// キャレットを動かしても候補の位置と選択範囲が取り残されます（実測 2026-11-22: 日本語入力で
+    /// キャレットと既存の入力文字が動かない、と見えました）。
+    /// </remarks>
+    internal void NotifySelectionChanged()
+    {
+        RaiseSelectionChanged();
+        RaiseCursorRectangleChanged();
+    }
+
+    /// <summary>本文の文字列が変わったことを IME へ知らせる。</summary>
+    /// <remarks>周囲の文字列（<see cref="SurroundingText"/>）を渡し直し、変換の基準を最新にします。</remarks>
+    internal void NotifyTextChanged()
+    {
+        RaiseSurroundingTextChanged();
+        RaiseSelectionChanged();
+        RaiseCursorRectangleChanged();
+    }
 }

@@ -81,7 +81,7 @@ internal static class AnnotationEditorControls
     {
         var button = new Button
         {
-            Width = 48,
+            Width = (int)Math.Round(AnnotationEditorLayout.FieldWidth),
             Height = 24,
             BackColor = color,
             FlatStyle = FlatStyle.Flat,
@@ -143,7 +143,7 @@ internal static class AnnotationEditorControls
             DecimalPlaces = 1,
             Increment = 1,
             Value = (decimal)Math.Clamp(value, minimum, maximum),
-            Width = 76,
+            Width = (int)Math.Round(AnnotationEditorLayout.FieldWidth),
             Font = new Font(UiFontFamily, FontSize),
             Margin = new Padding(1),
         };

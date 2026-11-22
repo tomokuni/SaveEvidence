@@ -15,6 +15,12 @@ namespace EsUtil.Ui.WinUI3.Annotation;
 /// </remarks>
 internal static class AnnotationEditorControls
 {
+    /// <summary>行の入力欄の幅（DIP。 値はコアが単一所有する）。</summary>
+    /// <remarks>
+    /// <b>数値・選択肢・色を同じ幅にする</b>: 幅が違うと行の右端が揃わず、入力部がばらばらに見える
+    /// （実測 2026-11-22）。 フライアウトの幅もこの値から決まる（<see cref="AnnotationPanelAppearance.StyleEditor"/>）。
+    /// </remarks>
+    internal const double FieldWidth = AnnotationEditorLayout.FieldWidth;
     /// <summary>行の文字サイズ（DIP）。</summary>
     internal const double FontSize = AnnotationEditorLayout.FontSizeDip;
 
@@ -144,7 +150,7 @@ internal static class AnnotationEditorControls
 
             // **幅はカラーコードから決める（規則はコアが単一所有する）**: 固定の 240 DIP では、はっきり余る幅が
             // 空いて「不必要に長い」見た目になる（実測 2026-11-22）。 行の他の入力欄と同じ幅に揃える。
-            Width = AnnotationFormatBarLayout.ResolveHexColorSelectorWidth(AnnotationTextMetrics.Measure),
+            Width = FieldWidth,
             FontSize = FontSize,
         };
 
@@ -169,7 +175,7 @@ internal static class AnnotationEditorControls
             Maximum = maximum,
             SmallChange = 1,
             SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
-            Width = 120,
+            Width = FieldWidth,
             FontSize = FontSize,
         };
 
@@ -190,7 +196,7 @@ internal static class AnnotationEditorControls
         {
             ItemsSource = options,
             SelectedIndex = Math.Clamp(selectedIndex, 0, Math.Max(0, options.Count - 1)),
-            Width = 140,
+            Width = FieldWidth,
             FontSize = FontSize,
         };
 
