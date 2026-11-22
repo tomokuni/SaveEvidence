@@ -67,7 +67,8 @@ public sealed partial class AnnotationLayerControl
 
         if (_document.Items.Length > 0)
         {
-            var plan = _presenter.ResolveDrawPlan(_document, AnnotationTextMetrics.Measure, SelectedId);
+            // **変換中の文字列も本文として描く**（規則はコアの AnnotationCompositionPreview が単一所有する）
+            var plan = _presenter.ResolveDrawPlan(RenderDocument, AnnotationTextMetrics.Measure, SelectedId);
             _selectedBodyRectSource = Selected is BubbleAnnotation bubble
                 ? bubble.ResolveBodyRect()
                 : null;

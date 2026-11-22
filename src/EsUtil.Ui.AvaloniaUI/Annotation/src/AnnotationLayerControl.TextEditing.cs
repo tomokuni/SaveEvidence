@@ -503,7 +503,10 @@ public sealed partial class AnnotationLayerControl
                 s_textSelectionBrush, new Rect(x1, line.Bounds.Y, x2 - x1, line.Bounds.Height));
         }
 
-        if (!TryResolveCaretSource(_caretIndex, out var caret))
+        // **変換中はキャレットを変換中の文字列の末尾へ置く**: 末尾へ置かないと、変換中の文字が
+        // キャレットの位置に重なって見える（実測 2026-11-22）
+        if (!TryResolveCaretSource(
+            AnnotationCompositionPreview.ResolveCaret(_caretIndex, _preeditText), out var caret))
         {
             return;
         }
@@ -513,17 +516,8 @@ public sealed partial class AnnotationLayerControl
         var thickness = CaretThicknessDip / Math.Max(scale, 0.01);
         context.FillRectangle(s_caretBrush, new Rect(caret.X, caret.Y, thickness, caret.Height));
 
-        if (_preeditText.Length > 0)
-        {
-            var style = SelectedTextStyle with { IsUnderline = true };
-            var formatted = AnnotationPainter.CreateText(_preeditText, style);
-
-            // 本文と同じベースラインへ載せる（斜体・太字で実寸が変わっても文字が上下へずれない）
-            var metrics = AnnotationPainter.CreateLineMetrics(style);
-            var baseline = AnnotationPainter.ResolveBaseline(
-                caret.Y, caret.Height, metrics.Height, metrics.Baseline);
-            context.DrawText(formatted, new Point(caret.X, baseline - formatted.Baseline));
-        }
+        // **変換中の文字列は本文として描く**（RenderDocument が入れている）ため、ここでは重ねて描かない。
+        // 重ねて描くと既存の文字と二重になり、確定した文字と位置が食い違って見える（実測 2026-11-22）。
     }
 
     /// <summary>キャレットを点（元画像ピクセル）の位置へ移す（選択の起点は現在の位置に保つ）。</summary>
@@ -722,7 +716,7 @@ public sealed partial class AnnotationLayerControl
             return null;
         }
 
-        var plan = _presenter.ResolveDrawPlan(_document, MeasureText, SelectedId);
+        var plan = _presenter.ResolveDrawPlan(RenderDocument, MeasureText, SelectedId);
         var shape = plan.Shapes.FirstOrDefault(candidate => string.Equals(candidate.Id, bubble.Id, StringComparison.Ordinal));
         if (shape is null || shape.Lines.Count == 0)
         {

@@ -38,8 +38,6 @@ public sealed partial class AnnotationLayerControl
     /// <summary>IME の変換中文字列（文書へは入れない）。</summary>
     private string _preeditText = string.Empty;
 
-    /// <summary>IME の変換中かどうか（確定した文字列の二重入力を防ぐ）。</summary>
-    private bool _isComposing;
 
     /// <summary>ポインターで文字を選んでいる最中かどうか。</summary>
     private bool _isSelectingText;
@@ -85,7 +83,6 @@ public sealed partial class AnnotationLayerControl
 
         _isEditingText = true;
         _preeditText = string.Empty;
-        _isComposing = false;
         _isSelectingText = false;
         _caretIndex = bubble.Text.PlainText.Length;
         _selectionAnchor = _caretIndex;
@@ -108,7 +105,6 @@ public sealed partial class AnnotationLayerControl
 
         _isEditingText = false;
         _preeditText = string.Empty;
-        _isComposing = false;
         _isSelectingText = false;
         TextSelectionRange = default;
         DetachInputWindow();
@@ -266,15 +262,19 @@ public sealed partial class AnnotationLayerControl
         }
     }
 
-    /// <summary>確定した文字列を受け取る（IME の変換中は受け取らない）。</summary>
+    /// <summary>確定した文字列を受け取る。</summary>
     /// <param name="e">入力の引数。</param>
     private void OnWindowTextInput(TextInputEventArgs e)
     {
-        if (!_isEditingText || !IsFocused || _isComposing || string.IsNullOrEmpty(e.Text))
+        if (!_isEditingText || !IsFocused || string.IsNullOrEmpty(e.Text))
         {
             return;
         }
 
+        // **変換中に届いた確定文字列を取りこぼさない**: IME によっては確定した文字列が
+        // 変換の終了より先にここへ届く。 変換中だからと捨てると、**確定した瞬間に文字が消える**
+        // （実測 2026-11-22: MewUI 版だけで発生）。 ここで変換を終えたものとして本文へ入れる。
+        _preeditText = string.Empty;
         ReplaceSelection(NormalizeInput(e.Text));
         e.Handled = true;
     }
@@ -288,7 +288,6 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        _isComposing = true;
         SetPreeditTextForInput(e.Text);
         e.Handled = true;
     }
@@ -302,7 +301,6 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        _isComposing = true;
         SetPreeditTextForInput(e.Text);
         e.Handled = true;
     }
@@ -316,7 +314,6 @@ public sealed partial class AnnotationLayerControl
             return;
         }
 
-        _isComposing = false;
         _preeditText = string.Empty;
         if (!string.IsNullOrEmpty(e.Text))
         {
@@ -356,7 +353,6 @@ public sealed partial class AnnotationLayerControl
             return false;
         }
 
-        _isComposing = false;
         _preeditText = string.Empty;
         PrepareUndo();
 
@@ -540,7 +536,9 @@ public sealed partial class AnnotationLayerControl
             context.FillRectangle(new Rect(x1, line.Bounds.Y, x2 - x1, line.Bounds.Height), s_textSelectionColor);
         }
 
-        if (!TryResolveCaretSource(_caretIndex, layouts, out var caret))
+        // **変換中はキャレットを変換中の文字列の末尾へ置く**（規則はコアの AnnotationCompositionPreview）
+        if (!TryResolveCaretSource(
+            AnnotationCompositionPreview.ResolveCaret(_caretIndex, _preeditText), layouts, out var caret))
         {
             return;
         }
@@ -548,20 +546,8 @@ public sealed partial class AnnotationLayerControl
         var thickness = CaretThicknessDip / Math.Max(scale, 0.01);
         context.FillRectangle(new Rect(caret.X, caret.Y, thickness, caret.Height), s_caretColor);
 
-        if (_preeditText.Length > 0)
-        {
-            var style = SelectedTextStyle with { IsUnderline = true };
-            var metrics = AnnotationTextMetrics.ResolveLineMetrics(style);
-            var baseline = AnnotationTextMetrics.ResolveBaseline(
-                caret.Y, caret.Height, metrics.Height, metrics.Baseline);
-            var layoutText = AnnotationTextMetrics.CreateLayout(_preeditText, style, ignoreItalic: false);
-            var top = baseline - layoutText.Lines[0].Baseline;
-            var options = new Aprillz.MewUI.Text.TextDrawOptions
-            {
-                Foreground = AnnotationTextMetrics.ToMewColor(style.Color),
-            };
-            context.Text.Draw(layoutText, new Point(caret.X, top), in options);
-        }
+        // **変換中の文字列は本文として描く**（RenderDocument が入れている）ため、ここでは重ねて描かない。
+        // 重ねて描くと既存の文字と二重になる（実測 2026-11-22）。
     }
 
     /// <summary>キャレットを点（元画像ピクセル）の位置へ移す（選択の起点は現在の位置に保つ）。</summary>
@@ -718,7 +704,7 @@ public sealed partial class AnnotationLayerControl
             return null;
         }
 
-        var plan = _presenter.ResolveDrawPlan(_document, AnnotationTextMetrics.Measure, SelectedId);
+        var plan = _presenter.ResolveDrawPlan(RenderDocument, AnnotationTextMetrics.Measure, SelectedId);
         var shape = plan.Shapes.FirstOrDefault(
             candidate => string.Equals(candidate.Id, bubble.Id, StringComparison.Ordinal));
         if (shape is null || shape.Lines.Count == 0)

@@ -736,6 +736,12 @@ public sealed partial class AnnotationLayerControl : Panel
     /// <summary>選択の変更を通知する。</summary>
     private void RaiseSelectionChanged() => SelectionChanged?.Invoke(this, EventArgs.Empty);
 
+    /// <summary>描画に使う文書を取得する（変換中の文字列を入れた複製を含む）。</summary>
+    /// <value>変換中でなければ本文の文書。 変換中は変換中の文字列を入れた描画用の複製。</value>
+    private AnnotationDocument RenderDocument
+        => _isEditingText
+            ? AnnotationCompositionPreview.Apply(_document, SelectedId, _caretIndex, _preeditText)
+            : _document;
     /// <summary>これから変更することを履歴へ準備する（変更の直前に呼ぶ）。</summary>
     private void PrepareUndo() => _undoCandidate ??= _document.Clone();
 

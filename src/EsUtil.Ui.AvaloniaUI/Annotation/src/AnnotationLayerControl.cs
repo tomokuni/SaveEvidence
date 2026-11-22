@@ -842,6 +842,12 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         return bitmap;
     }
 
+    /// <summary>描画に使う文書を取得する（変換中の文字列を入れた複製を含む）。</summary>
+    /// <value>変換中でなければ本文の文書。 変換中は変換中の文字列を入れた描画用の複製。</value>
+    private AnnotationDocument RenderDocument
+        => _isEditingText
+            ? AnnotationCompositionPreview.Apply(_document, SelectedId, _caretIndex, _preeditText)
+            : _document;
     /// <summary>描画する（画像 → 注釈 → 選択枠 → しっぽのハンドルの順）。</summary>
     /// <param name="context">描画先。</param>
     public override void Render(DrawingContext context)
@@ -856,7 +862,10 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
         if (_document.Items.Length > 0)
         {
-            var plan = _presenter.ResolveDrawPlan(_document, MeasureText, SelectedId);
+            // **変換中の文字列も本文として描く**: キャレットの位置へ重ねて描くと既存の文字と重なり、
+            // キャレットも動かないため「入力が反映されていない」ように見える（実測 2026-11-22）。
+            // 文書は変えず、描画用の複製にだけ入れる（規則はコアの AnnotationCompositionPreview が単一所有する）。
+            var plan = _presenter.ResolveDrawPlan(RenderDocument, MeasureText, SelectedId);
 
             // 注釈は元画像座標で描く（枠線の太さ・文字の大きさを保存画像と同じ比率にする）
             using (context.PushTransform(

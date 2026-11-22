@@ -39,6 +39,13 @@ internal sealed class AnnotationFormatBar : ContentControl
     /// <summary>色の入力。</summary>
     private readonly EsUtil.Ui.WinUI3.ColorSelector.ColorSelectorControl _color;
 
+    /// <summary>サイズの入力欄を上下中央へ寄せるために描画を下げる量（DIP）。</summary>
+    /// <remarks>
+    /// <b>NumberBox は内側の文字を上寄りに描く</b>（実測 2026-11-22: 行の中央より 3.5 DIP 上）。
+    /// 高さを変えても内側の入力欄は上寄りのままなので、描画だけを下げます（レイアウトは変えません）。
+    /// </remarks>
+    private const double NumberBoxVerticalTrim = 3;
+
     /// <summary>通知による更新中かどうか（利用者の操作と区別する）。</summary>
     private bool _refreshing;
 
@@ -118,13 +125,15 @@ internal sealed class AnnotationFormatBar : ContentControl
             SmallChange = 1,
             Value = AnnotationDefaults.FontSizeDefault,
             Width = AnnotationFormatBarLayout.SizeSelectorWidth,
-            MinHeight = AnnotationFormatBarLayout.ItemHeight,
-            Height = AnnotationFormatBarLayout.ItemHeight,
-            FontSize = AnnotationEditorControls.FontSize,
 
-            // **数字を上下中央へ置く**: 既定では入力欄の文字が上寄りに描かれ、行の他の項目より
-            // 数字だけが高く見える（実測 2026-11-22）。 入力欄の内側の配置を中央にする。
-            VerticalContentAlignment = VerticalAlignment.Center,
+            // 描画だけを下げる（レイアウトは変えない）
+            RenderTransform = new Microsoft.UI.Xaml.Media.TranslateTransform { Y = NumberBoxVerticalTrim },
+
+            // **数字を上下中央へ置く**: NumberBox は内側の入力欄を上寄りに描き、`VerticalContentAlignment`
+            // を受け付けない（実測 2026-11-22: 行の中央より 3.5 DIP 上に出た）。 項目の高さより低くして
+            // 上下中央へ寄せると、内側の入力欄も中央に来る。
+            VerticalAlignment = VerticalAlignment.Center,
+            FontSize = AnnotationEditorControls.FontSize,
             SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
         };
 

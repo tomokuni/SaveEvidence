@@ -169,6 +169,11 @@ public sealed partial class AnnotationLayerControl
             context.LayoutRequested += OnImeLayoutRequested;
             context.FocusRemoved += OnImeFocusRemoved;
             _ime = context;
+
+            // **IME を有効にする**: 窓口を作っただけでは IME は入力モードへ切り替わらない。
+            // フォーカスを得たことを知らせないと、日本語入力モードへ切り替わらないままになる
+            // （実測 2026-11-22: WinUI 3 版だけ IME モードが切り替わらなかった）。
+            context.NotifyFocusEnter();
             NotifyImeSelection();
         }
         catch (Exception ex) when (ex is NotSupportedException or InvalidCastException)
@@ -194,6 +199,9 @@ public sealed partial class AnnotationLayerControl
         context.CompositionCompleted -= OnImeCompositionCompleted;
         context.LayoutRequested -= OnImeLayoutRequested;
         context.FocusRemoved -= OnImeFocusRemoved;
+
+        // **IME を解放する**: 知らせないと、本文の編集を終えた後も IME が入力モードのまま残る
+        context.NotifyFocusLeave();
         _ime = null;
     }
 
