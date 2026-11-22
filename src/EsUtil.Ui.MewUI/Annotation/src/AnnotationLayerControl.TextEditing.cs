@@ -677,12 +677,16 @@ public sealed partial class AnnotationLayerControl
         Func<string, AnnotationTextStyle, ITextLayout> layouts)
         => (segment, count) =>
         {
+            var layout = layouts(segment.Text, segment.Style);
             if (count <= 0)
             {
                 return 0;
             }
 
-            var layout = layouts(segment.Text, segment.Style);
+            // **末尾は実測値（MeasuredSize）を使う**: `GetCaretBounds(全文字数)` は
+            // 「最後の文字の開始位置」を返すため、末尾のキャレットが最後の 1 文字の内側へ入る
+            // （実測 2026-11-22: 20 文字で 1 文字分ずれた）。 途中の位置は「k 文字送った位置」を
+            // 返す `GetCaretBounds(k)` を使う（描画が次に文字を置く位置と一致する）。
             return count >= segment.Text.Length
                 ? layout.MeasuredSize.Width
                 : layout.GetCaretBounds(new CharacterHit(count, 0)).X;

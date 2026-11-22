@@ -14,11 +14,22 @@ namespace EsUtil.Ui.MewUI.Annotation;
 /// </remarks>
 internal static class AnnotationTextMetrics
 {
-    /// <summary>文字の実寸を測る DPI（元画像ピクセルの座標系で測るため 96 に固定する）。</summary>
-    private const uint MeasureDpi = 96;
+    /// <summary>文字の実寸を測る基準の DPI（画面の倍率を掛けて使う）。</summary>
+    private const uint BaseDpi = 96;
 
     /// <summary>行の高さとベースラインを測るための文字列。</summary>
     private const string LineMetricsText = "Ag";
+
+    /// <summary>レイアウトを作るときの画面の倍率を取得または設定する。</summary>
+    /// <value>画面の DPI 倍率（125% なら 1.25）。 既定は 1.0。</value>
+    /// <remarks>
+    /// <b>測定と描画で同じ送りを使う</b>: レイアウトを <c>Dpi = 96</c> で作ると、描画側は画面の DPI
+    /// （実測 120 DPI）でグリフを組むため、<b>1 文字あたり約 6.7% 送りが広く</b>なり、長い文字列ほど
+    /// 文字とキャレットがずれる（実測 2026-11-22: 10 文字で 7 px、キャレットが末尾の文字の内側へ入った）。
+    /// 画面の倍率を渡して、測定と描画で同じ DPI を使う。
+    /// 値は描画の直前に UI（<c>OnRender</c> の <c>DpiScale</c>）が設定する。
+    /// </remarks>
+    internal static double DpiScale { get; set; } = 1.0;
 
     /// <summary>文字列と書式から実寸を測る。</summary>
     /// <param name="text">文字列。</param>
@@ -80,7 +91,7 @@ internal static class AnnotationTextMetrics
         => Application.DefaultGraphicsFactory.TextEngine.CreateLayout(new TextLayoutRequest
         {
             Text = text.AsMemory(),
-            Dpi = MeasureDpi,
+            Dpi = (uint)Math.Max(BaseDpi, Math.Round(BaseDpi * DpiScale)),
             DefaultStyle = new TextRunStyle
             {
                 FontFamily = style.FontFamily,

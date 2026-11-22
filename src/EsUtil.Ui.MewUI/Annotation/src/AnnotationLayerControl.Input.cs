@@ -29,6 +29,11 @@ public sealed partial class AnnotationLayerControl
     {
         base.OnRender(context);
 
+        // **測定と描画で同じ DPI を使う**: 文字のレイアウトは DPI によって送りが変わる。 画面の倍率を
+        // 渡さないと、描画（実機の DPI）と測定（96 固定）で 1 文字あたり約 6.7% 食い違い、
+        // 長い文字列ほど文字とキャレットがずれる（実測 2026-11-22: 10 文字で 7 px）。
+        AnnotationTextMetrics.DpiScale = context.DpiScale;
+
         context.Save();
         try
         {
@@ -69,6 +74,10 @@ public sealed partial class AnnotationLayerControl
             {
                 context.Translate(offset.X, offset.Y);
                 context.Scale(scale, scale);
+
+                // **グリフの位置をデバイス ピクセルへ丸めない**: 丸めると描画の送りだけが変わることがある。
+                // 測定と描画で同じ送りにするため（DPI の一致と併せて）、本文の描画では丸めを切る。
+                context.TextPixelSnap = false;
 
                 // **同じフレームでは同じレイアウト実体を使う**: 文字の描画とキャレット・選択範囲の
                 // 位置計算でレイアウトを作り直すと、丸めやキャッシュの差で位置が食い違う
