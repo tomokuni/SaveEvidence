@@ -3,6 +3,7 @@ using EsUtil.Platform.Core.Palette;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Media;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
@@ -39,12 +40,13 @@ internal sealed class AnnotationFormatBar : ContentControl
     /// <summary>色の入力。</summary>
     private readonly EsUtil.Ui.WinUI3.ColorSelector.ColorSelectorControl _color;
 
-    /// <summary>サイズの入力欄を上下中央へ寄せるために描画を下げる量（DIP）。</summary>
+    /// <summary>サイズの入力欄を上下中央へ寄せるために内側の入力欄で調整する量（DIP）。</summary>
     /// <remarks>
-    /// <b>NumberBox は内側の文字を上寄りに描く</b>（実測 2026-11-22: 行の中央より 3.5 DIP 上）。
-    /// 高さを変えても内側の入力欄は上寄りのままなので、描画だけを下げます（レイアウトは変えません）。
+    /// <b>NumberBox は内側の文字を上寄りに描く</b>（実測 2026-11-23: 他の項目の文字の中心より 2.4 DIP 上）。
+    /// <b>枠は内側の入力欄が描く</b>ため、入力欄そのものを動かすと枠もずれる（実測 2026-11-23）。
+    /// 枠を他の項目と揃えたまま文字だけを中央へ寄せるには、内側の余白と縦の寄せで調整します。
     /// </remarks>
-    private const double NumberBoxVerticalTrim = 2;
+    private const double NumberBoxTextTrim = 2.4;
 
     /// <summary>通知による更新中かどうか（利用者の操作と区別する）。</summary>
     private bool _refreshing;
@@ -126,20 +128,19 @@ internal sealed class AnnotationFormatBar : ContentControl
             Value = AnnotationDefaults.FontSizeDefault,
             Width = AnnotationFormatBarLayout.SizeSelectorWidth,
 
-            // **枠の高さを他の項目と揃える**: 高さを指定しないと既定の高さ（他の項目より低い）になり、
-            // 行の中で枠だけが小さく見える（実測 2026-11-22）。
+            // **枠は動かさない**: NumberBox 自体を動かすと枠もずれる（実測 2026-11-23）。
+            // 内側の文字は Loaded 後に `ShiftInnerText` で下げる。
             MinHeight = AnnotationFormatBarLayout.ItemHeight,
             Height = AnnotationFormatBarLayout.ItemHeight,
 
-            // **描画だけを下げる**: 高さは変えないため、要素（枠）は行の中に揃ったまま、内側の数字だけが下がる。
-            RenderTransform = new Microsoft.UI.Xaml.Media.TranslateTransform { Y = NumberBoxVerticalTrim },
-
             // **数字は上下中央へ置く**: NumberBox は内側の入力欄を上寄りに描き、`VerticalContentAlignment`
-            // を受け付けない（実測 2026-11-22）。 枠は他の項目と同じ高さにし、描画だけを 2 DIP 下げる。
+            // を受け付けない（実測 2026-11-22）。 枠は他の項目と同じ高さにし、内側の入力欄だけを下げる。
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = AnnotationEditorControls.FontSize,
             SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact,
         };
+
+        _size.Loaded += (_, _) => ShiftInnerText(_size, NumberBoxTextTrim);
 
         _size.ValueChanged += (_, e) =>
         {
@@ -253,4 +254,29 @@ internal sealed class AnnotationFormatBar : ContentControl
     /// <remarks>文字列の解釈は <see cref="DrawingColorExtensions.TryParseHexText"/> が単一所有する（自前で桁数を数えない）。</remarks>
     private static DrawingColor ParseColor(string? text)
         => DrawingColorExtensions.TryParseHexText(text, out var color) ? color : AnnotationDefaults.TextStyle.Color;
+
+    /// <summary>要素の内側にある入力欄の文字を上下中央へ置く。</summary>
+    /// <param name="root">対象の要素。</param>
+    /// <param name="trim">文字を下げる量（DIP）。</param>
+    /// <remarks>
+    /// <b>枠は内側の入力欄（<see cref="TextBox"/>）が描く</b>ため、入力欄を動かすと枠も一緒にずれる
+    /// （実測 2026-11-23）。 枠を他の項目と揃えたまま文字だけを下げるには、内側の余白を増やします。
+    /// </remarks>
+    private static void ShiftInnerText(DependencyObject root, double trim)
+    {
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is TextBox box)
+            {
+                var padding = box.Padding;
+                box.Padding = new Thickness(padding.Left, padding.Top + trim, padding.Right, padding.Bottom);
+                box.VerticalContentAlignment = VerticalAlignment.Center;
+                return;
+            }
+
+            ShiftInnerText(child, trim);
+        }
+    }
 }
