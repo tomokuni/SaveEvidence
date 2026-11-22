@@ -74,8 +74,11 @@ internal static class CapturePage
     /// <summary>ファイル名テンプレートの幅に足す左右の余白（DIP・枠とカーソル分）。 Avalonia 版と同じ値。</summary>
     private const double TemplateHorizontalPadding = 24;
 
-    /// <summary>折り返しを避けるために確保する余白（DIP。 スクロール バー・丸めの分）。</summary>
-    private const double ToolbarSafetyMargin = 24;
+    /// <summary>折り返しの判定に残す余裕（DIP。 合計が利用幅と同じでも WrapPanel は折り返すため）。</summary>
+    private const double ToolbarWrapReserve = 12;
+
+    /// <summary>テキストボックスをこれ以上狭くしない幅（DIP。 狭すぎると入力できないため折り返しを選ぶ）。</summary>
+    private const double TemplateCompactWidth = 48;
 
     /// <summary>自動切り出しの検出矩形の枠線色（水色・不透明。 Avalonia 版と同じ）。</summary>
     private static readonly System.Drawing.Color s_autoCropBorder = System.Drawing.Color.FromArgb(255, 0, 191, 255);
@@ -269,11 +272,12 @@ internal static class CapturePage
         });
 
         // 保存するファイル名テンプレート（保存ボタンの左）
-        // 幅はテキストの実測に合わせ、ツールバーが折り返さない幅を上限にする（下の UpdateTemplateWidth）
+        // 幅はテキストの実測に合わせ、ツールバーが折り返さない幅を上限にする（下の UpdateTemplateWidth）。
+        // **MinWidth は与えない**: 与えると計算した幅より広く配置され、折り返しを防ぐために縮められなく
+        // なる（実測 2026-11-22: 93.6 を指定しても 100 で配置された）。 下限は ResolveTemplateWidth が決める
         var template = new TextBox
         {
             Text = viewModel.FileNameTemplateText,
-            MinWidth = TemplateMinWidth,
             Height = AppStyles.ToolbarButtonHeight,
             Margin = new Thickness(1),
             VerticalAlignment = VerticalAlignment.Center,
@@ -375,26 +379,75 @@ internal static class CapturePage
         {
             measureText.Text(template.Text ?? string.Empty);
             measureText.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            var width = measureText.DesiredSize.Width + TemplateHorizontalPadding;
-            template.Width = Math.Max(TemplateMinWidth, Math.Min(width, ResolveTemplateMaxWidth()));
+            var textWidth = measureText.DesiredSize.Width + TemplateHorizontalPadding;
+            template.Width = ResolveTemplateWidth(textWidth);
         }
 
-        double ResolveTemplateMaxWidth()
+        // レイアウトの後に決め直す（レイアウト中に幅を変えても再配置されないため）。
+        // レイアウト中に変えてはいけない: SizeChanged は配置の最中に通知されるため、その中で幅を
+        // 変えても無効化が捨てられ、画面が古い幅のまま残る（実測 2026-11-22: 幅を 93.6 にしても
+        // 222 のまま 2 段だった）。 次のレイアウト機会へ回す。
+        // 同じ値なら何もしない: 呼び直しで無限にレイアウトが続くのを防ぐ。
+        void ScheduleTemplateWidth()
         {
-            // **利用できる幅はツール バー自身ではなく「入れ物」から求める**: WrapPanel の Bounds は
-            // 中身の合計幅になることがあり、その値を使うとテンプレートが伸びて折り返す。
-            // 画面の幅から引くと、ナビの幅・枠・余白の分だけ広く見積もって折り返す
-            // （実測 2026-11-21: 初期表示で「タスクバーを隠す」が 2 行目へ落ちた）。
-            // ツールバーを入れている格子（page）の実幅が正解。
-            var host = toolbar.Parent as FrameworkElement;
-            var available = host is not null && host.ActualWidth > 1
-                ? host.ActualWidth - toolbar.Margin.Left - toolbar.Margin.Right - ToolbarSafetyMargin
-                : toolbar.Bounds.Width;
-            if (available <= 1)
+            if (Application.Current?.Dispatcher is not { } dispatcher)
             {
+                UpdateTemplateWidth();
+                return;
+            }
+
+            dispatcher.BeginInvoke(DispatcherPriority.Layout, () =>
+            {
+                var previous = template.Width;
+                UpdateTemplateWidth();
+                if (Math.Abs(template.Width - previous) > 0.01)
+                {
+                    toolbar.InvalidateMeasure();
+                }
+            });
+        }
+
+        // テンプレートへ与える幅を決める（折り返さないことを最優先にする）
+        double ResolveTemplateWidth(double textWidth)
+        {
+            var limit = ResolveTemplateLimit();
+            if (double.IsNaN(limit))
+            {
+                // まだ配置されていない（入れ物の実幅が無い）。 レイアウト後に決め直す
+                return Math.Max(TemplateMinWidth, textWidth);
+            }
+
+            // **折り返しの判定に残す余裕**: 合計が利用幅と「ちょうど同じ」でも WrapPanel は折り返す
+            // （実測 2026-11-22: 105.6 + 他の項目 457.6 + 余白 2 = 565.2 が利用幅 565.2 と一致し、
+            // 2 段になった）。 丸めの分だけ残す。
+            var room = limit - ToolbarWrapReserve;
+
+            // **最小幅を守れないときは最小幅を諦める**: 余地が最小幅より狭いのに最小幅を守ると、
+            // 合計が必ず余地を超えて折り返す（実測 2026-11-22: 初期表示で 2 段になった）
+            var max = Math.Max(0, room);
+            if (max < TemplateCompactWidth)
+            {
+                // 余地が小さすぎる（入力欄が使い物にならない）。 ここだけは折り返しを受け入れる
                 return TemplateMinWidth;
             }
 
+            var min = Math.Min(TemplateMinWidth, max);
+            return Math.Clamp(textWidth, min, max);
+        }
+
+        // テンプレートに割り当てられる幅（DIP）を求める（まだ配置されていない場合は NaN）。
+        // 入れ物（ページ）の実幅から引く（WrapPanel の Bounds は中身の合計幅になることがある）。
+        // 余白は二重に引かない: ツールバーの右余白（ToolbarMarginRight）がシステム ボタンの領域を
+        // 確保しているため、さらに安全余白を引くと最小幅でも収まらず必ず折り返す
+        // （実測 2026-11-22: ページ 707 DIP・他の項目 457.6 DIP・最小幅 100 DIP で 18 DIP 超えた）。
+        double ResolveTemplateLimit()
+        {
+            if (toolbar.Parent is not FrameworkElement host || host.ActualWidth <= 1)
+            {
+                return double.NaN;
+            }
+
+            var available = host.ActualWidth - toolbar.Margin.Left - toolbar.Margin.Right;
             var others = 0.0;
             foreach (var child in toolbar.Children)
             {
@@ -407,16 +460,16 @@ internal static class CapturePage
                 others += child.DesiredSize.Width + element.Margin.Left + element.Margin.Right;
             }
 
-            return Math.Max(TemplateMinWidth, available - others - template.Margin.Left - template.Margin.Right);
+            return available - others - template.Margin.Left - template.Margin.Right;
         }
 
         // 入力に合わせて幅を計算し直す（テキスト変更・ツールバーの幅の変更）
         template.OnTextChanged(value =>
         {
             viewModel.FileNameTemplateText = value;
-            UpdateTemplateWidth();
+            ScheduleTemplateWidth();
         });
-        toolbar.SizeChanged += _ => UpdateTemplateWidth();
+        toolbar.SizeChanged += _ => ScheduleTemplateWidth();
         UpdateTemplateWidth();
 
         // ── ステータスバー ──
@@ -563,6 +616,11 @@ internal static class CapturePage
             .Rows("Auto,*,Auto")
             .Columns("*")
             .Children(toolbar, preview, statusBar);
+
+        // **入れ物（ページ）の幅が確定したら決め直す**: ツールバー自身の大きさは中身で決まるため、
+        // ページの幅が変わっても通知されないことがある（実測 2026-11-22: 初期表示でテキスト幅の
+        // まま 2 段になった）。
+        page.SizeChanged += _ => ScheduleTemplateWidth();
 
         // ページの左上へメニューのプルダウンを重ねる（ツールバーの直下に出す）
         menuPanel.HorizontalAlignment = HorizontalAlignment.Left;
