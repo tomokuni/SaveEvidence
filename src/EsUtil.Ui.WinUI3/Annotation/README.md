@@ -12,7 +12,7 @@
 - **斜体は行の高さとベースラインを変えません**（行の高さは斜体を外した書式で測り、各 run は行の高さいっぱいの中央へ置く）。
 
 **色の選択は `EsUtil.Ui.WinUI3.ColorSelector` を使います**（自前の色入力を作らない）。
-書式バーは**代表色パレット・代表色・カラーピッカー**のタブを出し、テーマ・色名のタブは隠します（`AnnotationPalette.Configure`）。
+書式バーと右クリックのフライアウトは**「代表色」と「ColorPicker」**のタブを出し、テーマ・色名のタブは隠します（`AnnotationPalette.Configure`）。
 
 **現状**: 4 つの UI 版すべてで使えます（Avalonia UI 版 / MewUI 版 / WinUI 3 版 / WinForms 版）。
 

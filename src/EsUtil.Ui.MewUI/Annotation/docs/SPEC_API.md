@@ -67,9 +67,7 @@ MewUI 版の注釈レイヤーが公開する API の一覧です。 操作と�
 | メンバー | 説明 |
 | --- | --- |
 | `RepresentativeColors` | 代表色（40 色） |
-| `ListTabTitle` | 代表色のタブの名前 |
-| `CreatePaletteTab(columns)` / `CreateListTab()` | ■ だけを並べたタブと、色名付きのタブ |
-| `CreateTabs(columns)` | 書式バー用の 2 つのタブ（代表色パレット / 代表色） |
+| `CreatePaletteTab(columns)` | ■ だけを並べた「代表色」のタブ |
 | `Configure(selector, ...)` / `ConfigureAll(selector, ...)` | 出すタブの選択（書式バーはテーマ・色名を出さず、設定画面はすべて出す） |
 
 ## 5. `AnnotationFonts`（静的クラス）

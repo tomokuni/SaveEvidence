@@ -16,7 +16,7 @@
 | --- | --- | --- |
 | `Layer` | property | 内側の `AnnotationLayerControl`（画像・文書・選択・元に戻すはここから操作する） |
 | `IsEditingText` | property | 本文を編集中かどうか（編集中は書式バーが出ている） |
-| `PaletteColumns` | property | 書式バーの代表色パレット（■ の格子）の列数（1 以上。 既定 8 列） |
+| `PaletteColumns` | property | 書式バーの代表色（■ の格子）の列数（1 以上。 既定 8 列） |
 | `ColorWidth` | property | 書式バーの色の選択の幅（「■ + 全角 4 文字 + 100%」と「■ + `#FFFFFFFF`」の広いほう） |
 | `TextFormat` | property | 書式バーと右クリックのフライアウトの色の表記（色名 + 不透明度 / カラーコード）。 カラーコードは `#AARRGGBB` |
 
@@ -114,16 +114,14 @@
 | メンバー | 種別 | 説明 |
 | --- | --- | --- |
 | `RepresentativeColors` | property | 代表色の並び（`IReadOnlyList<ColorSelectorCustomColor>`。 無彩色 → 赤系 → 橙・黄系 → 緑系 → 青系 → 紫・桃系の順。 40 色すべて異なる値） |
-| `DefaultPaletteColumns` | const | 代表色パレットの既定の列数（8。 40 色なら 8 列 × 5 行） |
-| `PaletteTabTitle` / `ListTabTitle` | const | タブの題名（`代表色パレット` / `代表色`） |
+| `DefaultPaletteColumns` | const | 代表色の既定の列数（8。 40 色なら 8 列 × 5 行） |
+| `PaletteTabTitle` | const | タブの題名（`代表色`） |
 | `CreatePaletteTab(columns)` | method | ■ だけを指定した列数で並べるタブの定義を作る |
-| `CreateListTab()` | method | 色名付きの一覧のタブの定義を作る |
-| `CreateTabs(columns)` | method | 上の 2 つ（パレット → 一覧）を作る |
-| `ConfigureAll(selector, columns)` | method | 色の選択を「代表色パレット・代表色 + テーマカラー・色名・ColorPicker」の構成にする（設定画面向け） |
+| `ConfigureAll(selector, columns)` | method | 色の選択を「代表色 + テーマカラー・色名・ColorPicker」の構成にする（設定画面向け） |
 | `GetHex(name)` / `TryGetColor(name, out color)` | method | 色名から保存値（`#AARRGGBB`）・色を取得する |
 
 - **書式バー・右クリックのフライアウト・設定ペインが同じ並びを使います**（画面ごとに色が違わない）。
 - 色の選択の入力欄は**「■ + 色名」**（現在色の四角 + 色名）で表示します。
-- タブは**代表色パレット（■ の格子）と代表色（色名の一覧）**を出し、テーマ・色名のタブは隠します。 **書式バーは「ColorPicker」タブも出します**（右クリックのフライアウトは出しません）。
-- 代表色パレットの列数は `AnnotationTextEditor.PaletteColumns`（既定 8 列）で変えられます。
+- タブは**「代表色」（■ の格子）と「ColorPicker」の 2 つ**を出し、テーマ・色名のタブは隠します。 設定ペインはテーマカラー・色名のタブも出します。
+- 代表色の列数は `AnnotationTextEditor.PaletteColumns`（既定 8 列）で変えられます。
 - 16 進や色名を直接打ち込む入力欄は残します（代表色に無い色を指定できる）。

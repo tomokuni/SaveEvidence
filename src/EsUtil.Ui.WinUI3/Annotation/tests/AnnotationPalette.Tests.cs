@@ -9,18 +9,20 @@ namespace EsUtil.Ui.WinUI3.Annotation.Tests;
 /// </remarks>
 public class AnnotationPaletteTests
 {
-    /// <summary>代表色は 40 色あり、パレットと代表色の 2 つのタブを作る。</summary>
+    /// <summary>代表色は 40 色あり、「代表色」のタブを 1 つ作る（ColorPicker は別のフラグで出す）。</summary>
     [Fact]
-    internal void 代表色は40色でタブは2つ()
+    internal void 代表色は40色でタブは代表色の1つ()
     {
+        var tab = AnnotationPalette.CreatePaletteTab();
+
         Assert.Equal(40, AnnotationPalette.RepresentativeColors.Count);
-        Assert.Equal(2, AnnotationPalette.CreateTabs().Count);
-        Assert.Equal(AnnotationPalette.ListTabTitle, AnnotationPalette.CreateTabs()[1].Title);
+        Assert.Equal(AnnotationPalette.PaletteTabTitle, tab.Title);
+        Assert.Equal(40, tab.Colors.Count);
     }
 
-    /// <summary>代表色パレットのタブは指定した列数を持つ。</summary>
+    /// <summary>代表色のタブは指定した列数を持つ。</summary>
     [Fact]
-    internal void 代表色パレットは指定した列数を持つ()
+    internal void 代表色は指定した列数を持つ()
     {
         var tab = AnnotationPalette.CreatePaletteTab(5);
 

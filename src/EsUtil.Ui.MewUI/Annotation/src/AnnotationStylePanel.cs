@@ -26,7 +26,7 @@ public sealed class AnnotationStylePanel : ContentControl
         {
             Padding = new Thickness(4, 3, 4, 4),
             Background = new Color(255, 240, 240, 240),
-            Child = AnnotationEditorControls.Heading("外観"),
+            Child = AnnotationEditorControls.Heading(AnnotationEditorText.AppearanceHeading),
         });
 
         content.Add(BuildAppearanceGroup(layer));
@@ -67,23 +67,23 @@ public sealed class AnnotationStylePanel : ContentControl
         var panel = new StackPanel { Spacing = 6 };
 
         panel.Add(AnnotationEditorControls.ColorRow(
-            "枠線の色",
+            AnnotationEditorText.BorderColor,
             appearance.Border,
             color => layer.UpdateSelectedAppearance(a => a with { Border = color }),
             layer.ColorTextFormat));
         panel.Add(AnnotationEditorControls.NumberRow(
-            "枠線の太さ",
+            AnnotationEditorText.BorderThickness,
             appearance.BorderThickness,
             AnnotationLimits.BorderThicknessMin,
             AnnotationLimits.BorderThicknessMax,
             value => layer.UpdateSelectedAppearance(a => a with { BorderThickness = value })));
         panel.Add(AnnotationEditorControls.ColorRow(
-            "内側の色",
+            AnnotationEditorText.FillColor,
             appearance.Fill,
             color => layer.UpdateSelectedAppearance(a => a with { Fill = color }),
             layer.ColorTextFormat));
         panel.Add(AnnotationEditorControls.NumberRow(
-            "角丸",
+            AnnotationEditorText.CornerRadius,
             appearance.CornerRadius,
             0,
             AnnotationLimits.CornerRadiusMax,
@@ -100,15 +100,15 @@ public sealed class AnnotationStylePanel : ContentControl
         var bubble = (BubbleAnnotation)layer.Selected!;
         var panel = new StackPanel { Spacing = 6 };
 
-        panel.Add(AnnotationEditorControls.Heading("吹き出し"));
+        panel.Add(AnnotationEditorControls.Heading(AnnotationEditorText.BubbleHeading));
         panel.Add(AnnotationEditorControls.NumberRow(
-            "本文の余白",
+            AnnotationEditorText.BodyPadding,
             bubble.BodyPadding,
             0,
             AnnotationLimits.BodyPaddingMax,
             value => layer.SetSelectedBodyPadding(value)));
         panel.Add(AnnotationEditorControls.NumberRow(
-            "しっぽの幅",
+            AnnotationEditorText.TailWidth,
             bubble.Tail.Width,
             AnnotationLimits.TailWidthMin,
             AnnotationLimits.TailWidthMax,
@@ -128,9 +128,9 @@ public sealed class AnnotationStylePanel : ContentControl
     private static Element BuildOrderGroup(AnnotationLayerControl layer)
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        var front = CreateButton("最前面へ");
+        var front = CreateButton(AnnotationEditorText.MoveToFront);
         front.OnClick(() => layer.MoveSelectedToFront());
-        var back = CreateButton("最背面へ");
+        var back = CreateButton(AnnotationEditorText.MoveToBack);
         back.OnClick(() => layer.MoveSelectedToBack());
 
         row.Add(front);

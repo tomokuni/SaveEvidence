@@ -11,7 +11,7 @@
 - **本文はその場で編集します**（ダブルクリックまたは Enter でキャレットが立ち、表示中のレイアウトのまま入力できます）。 IME（日本語入力）にも対応します。
 
 **色の選択は `EsUtil.Ui.MewUI.ColorSelector` を使います**（自前の色入力を作らない）。
-書式バーは**代表色パレット・代表色・カラーピッカー**のタブを出し、テーマ・色名のタブは隠します（`AnnotationPalette.Configure`）。
+書式バーと右クリックのフライアウトは**「代表色」と「ColorPicker」**のタブを出し、テーマ・色名のタブは隠します（`AnnotationPalette.Configure`）。
 任意の色を選ばせたいときは `AnnotationPalette.ConfigureAll` を使います。
 編集 UI の行の部品は `AnnotationEditorControls` が単一所有し、右クリックのフライアウトとホストの設定ペインが共有します。
 

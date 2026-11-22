@@ -9,18 +9,20 @@ namespace EsUtil.Feature.Annotation.Presenter;
 /// 4 つの UI 版がそれぞれ色名と値を持っていたため、版ごとに色が違う危険がありました
 /// （実測 2026-11-21: 同じ 40 色を 4 か所で重複して持っていました）。<br/>
 /// <b>UI はタブの見た目だけを作る</b>: 色選択コントロールの型は UI ごとに違うため、
-/// 「代表色パレット」「代表色」のタブを組み立てるのは各 UI が行い、色名と値は本クラスから取ります。
+/// タブを組み立てるのは各 UI が行い、色名と値は本クラスから取ります。
 /// </remarks>
 public static class AnnotationPaletteCatalog
 {
-    /// <summary>代表色パレットの既定の列数（40 色なら 8 列 × 5 行に収まり、スクロールせずに選べる）。</summary>
+    /// <summary>代表色の既定の列数（40 色なら 8 列 × 5 行に収まり、スクロールせずに選べる）。</summary>
     public const int DefaultPaletteColumns = 8;
 
-    /// <summary>代表色パレットの題名。</summary>
-    public const string PaletteTabTitle = "代表色パレット";
-
-    /// <summary>代表色（色名の一覧）の題名。</summary>
-    public const string ListTabTitle = "代表色";
+    /// <summary>代表色のタブの題名。</summary>
+    /// <remarks>
+    /// <b>タブは 2 つだけ</b>（「代表色」と「ColorPicker」）: ■ の格子と色名の一覧を別のタブに分けると、
+    /// 目的の色へ届くまでの手数が増えるだけで、同じ 40 色を 2 通りに見せる意味が薄い（実測 2026-11-22）。
+    /// 格子の各 ■ の色名は入力欄へ出るため、一覧が無くても色名は分かる。
+    /// </remarks>
+    public const string PaletteTabTitle = "代表色";
 
     /// <summary>代表色の並び（色名と保存値 <c>#AARRGGBB</c>）。</summary>
     /// <remarks>

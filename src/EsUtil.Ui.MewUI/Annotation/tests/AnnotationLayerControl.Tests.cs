@@ -98,14 +98,14 @@ public class AnnotationLayerControlTests
         Assert.Equal(32, composed.Height);
     }
 
-    /// <summary>書式バー用のタブは、代表色パレットと代表色の 2 つ（ピッカーは別のフラグで出す）。</summary>
+    /// <summary>書式バー用のタブは「代表色」の 1 つ（ピッカーは別のフラグで出す）。</summary>
     [Fact]
-    internal void 書式バーのタブはパレットと代表色の2つ()
+    internal void 書式バーのタブは代表色の1つ()
     {
-        var tabs = AnnotationPalette.CreateTabs();
+        var tab = AnnotationPalette.CreatePaletteTab();
 
-        Assert.Equal(2, tabs.Count);
-        Assert.Equal(AnnotationPalette.ListTabTitle, tabs[1].Title);
+        Assert.Equal(AnnotationPalette.PaletteTabTitle, tab.Title);
+        Assert.Equal(AnnotationPaletteCatalog.RepresentativeColors.Count, tab.Colors.Count);
     }
 
     /// <summary>指定サイズの画像を持つレイヤーを作る（枠線の色は <see cref="s_borderColor"/>）。</summary>

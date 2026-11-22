@@ -28,7 +28,7 @@ internal sealed class SettingsPane : StackPanel
     /// <summary>この設定ペインが作った色の選択（並べ方の変更をまとめて反映する）。</summary>
     private readonly List<ColorSelectorControl> _selectors = [];
 
-    /// <summary>代表色パレット（■ の格子）の列数（設定ペインのすべての色の選択が使う）。</summary>
+    /// <summary>代表色（■ の格子）の列数（設定ペインのすべての色の選択が使う）。</summary>
     private int _columns = AnnotationPalette.DefaultPaletteColumns;
 
     /// <summary>ペインを初期化する。</summary>
@@ -99,7 +99,7 @@ internal sealed class SettingsPane : StackPanel
 
         Children.Add(SubHeading("書式バー"));
         Children.Add(AnnotationEditorControls.NumberRow(
-            "代表色パレットの列数", _columns, 1, 16, value => SetColumns((int)Math.Round(value))));
+            "代表色の列数", _columns, 1, 16, value => SetColumns((int)Math.Round(value))));
 
         var edit = new Button { Content = "選択中の注釈を編集（右クリックと同じ）" };
         edit.Click += (_, _) => _layer.ShowStyleEditor();
@@ -117,7 +117,7 @@ internal sealed class SettingsPane : StackPanel
     /// <param name="apply">適用する処理。</param>
     /// <returns>項目名と色の選択を並べた行。</returns>
     /// <remarks>
-    /// <b>設定ペインの色はすべて同じ構成</b>にする（代表色パレット・代表色 + テーマカラー・色名・カラーピッカー）。
+    /// <b>設定ペインの色はすべて同じ構成</b>にする（代表色 + テーマカラー・色名・カラーピッカー）。
     /// 列数は「書式バー」の設定に合わせ、変更したら全行へ反映する（<see cref="SetColumns"/>）。
     /// </remarks>
     private Control ColorRow(string label, DrawingColor initial, Action<DrawingColor> apply)
@@ -127,7 +127,7 @@ internal sealed class SettingsPane : StackPanel
         return AnnotationEditorControls.ColorRow(label, selector, apply);
     }
 
-    /// <summary>代表色パレットの列数を変え、このペインの色の選択と書式バーへ反映する。</summary>
+    /// <summary>代表色の列数を変え、このペインの色の選択と書式バーへ反映する。</summary>
     /// <param name="columns">新しい列数（1 以上）。</param>
     private void SetColumns(int columns)
     {

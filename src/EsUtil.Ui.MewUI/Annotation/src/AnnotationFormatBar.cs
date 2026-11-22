@@ -76,6 +76,10 @@ public sealed class AnnotationFormatBar : ContentControl
         _size.Height = AnnotationFormatBarLayout.ItemHeight;
         _color.Height = AnnotationFormatBarLayout.ItemHeight;
 
+        // **中の入力欄も同じ高さにする**: 色の選択の中の ComboBox は自分の高さを持ち、外側の高さでは
+        // 伸びない。 揃えないと色の入力欄だけが低く見える（実測 2026-11-22）
+        AnnotationEditorControls.AlignInputHeight(_color, AnnotationFormatBarLayout.ItemHeight);
+
         _bold = CreateToggle("B", bold: true);
         _italic = CreateToggle("I", italic: true);
         _underline = CreateToggle("U", underline: true);
@@ -201,6 +205,9 @@ public sealed class AnnotationFormatBar : ContentControl
         {
             Width = ToggleWidth,
             Height = height,
+
+            // **記号は行の文字より一回り大きくする**（値はコアの AnnotationEditorLayout が単一所有する）
+            FontSize = AnnotationEditorLayout.ToggleFontSize,
             TextAlignment = TextAlignment.Center,
             VerticalTextAlignment = TextAlignment.Center,
         };

@@ -75,6 +75,9 @@ internal static class AnnotationEditorControls
         var content = new TextBlock
         {
             Text = text,
+
+            // **記号は行の文字より一回り大きくする**（値はコアの AnnotationEditorLayout が単一所有する）
+            FontSize = AnnotationEditorLayout.ToggleFontSize,
             FontWeight = bold ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal,
             FontStyle = italic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
 
@@ -134,10 +137,9 @@ internal static class AnnotationEditorControls
             SelectedColor = color,
             TextFormat = textFormat,
 
-            // **幅は表記から決める（規則はコアが単一所有する）**: 固定の 240 DIP では、はっきり余る幅が
-            // 空いて「不必要に長い」見た目になる（実測 2026-11-22）。 表記（色名 + 100% / #AARRGGBB）が
-            // 収まる幅を求める。
-            Width = AnnotationFormatBarLayout.ResolveColorSelectorWidth(AnnotationTextMetrics.Measure),
+            // **幅はカラーコードから決める（規則はコアが単一所有する）**: 固定の 240 DIP では、はっきり余る幅が
+            // 空いて「不必要に長い」見た目になる（実測 2026-11-22）。 行の他の入力欄と同じ幅に揃える。
+            Width = AnnotationFormatBarLayout.ResolveHexColorSelectorWidth(AnnotationTextMetrics.Measure),
             FontSize = FontSize,
         };
 

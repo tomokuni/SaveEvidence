@@ -56,9 +56,32 @@ public static class AnnotationFormatBarLayout
 
         var style = AnnotationDefaults.TextStyle with { FontSize = ColorMeasureFontSize };
         var nameWidth = measureText("薄い灰色+100%", style).Width;
-        var hexWidth = measureText("#FFFFFFFF", style).Width;
+        var hexWidth = measureText(HexTextForMeasure, style).Width;
         return Math.Ceiling(ColorSwatchIndent + Math.Max(nameWidth, hexWidth) + ColorToggleWidth);
     }
+
+    /// <summary>色の入力欄の幅（DIP）を求める（カラーコードだけを収める）。</summary>
+    /// <param name="measureText">文字列と書式から実寸を測る関数（UI が渡す）。</param>
+    /// <returns>幅（DIP）。</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="measureText"/> が null の場合。</exception>
+    /// <remarks>
+    /// <b>フライアウトの行はカラーコードの幅で足りる</b>: 行の他の入力欄（数値・選択肢）と同じ幅に揃えると
+    /// 1 列の見た目が整います。 色名まで収める幅にすると、色名は数文字しかないのに
+    /// <b>右側が大きく空きます</b>（実測 2026-11-22: 右クリックのフライアウトが「不必要に長い」との指摘）。
+    /// <c>#FFFFFFFF</c> は入力欄に出る最も長い表記であるため、これが収まれば足ります。
+    /// </remarks>
+    public static double ResolveHexColorSelectorWidth(
+        Func<string, AnnotationTextStyle, EsUtil.Platform.Core.Geometry.EsSize> measureText)
+    {
+        ArgumentNullException.ThrowIfNull(measureText);
+
+        var style = AnnotationDefaults.TextStyle with { FontSize = ColorMeasureFontSize };
+        var hexWidth = measureText(HexTextForMeasure, style).Width;
+        return Math.Ceiling(ColorSwatchIndent + hexWidth + ColorToggleWidth);
+    }
+
+    /// <summary>色の入力欄の幅を測るための最も長い表記（<c>#AARRGGBB</c>）。</summary>
+    private const string HexTextForMeasure = "#FFFFFFFF";
 
     /// <summary>項目の高さ（DIP）を取得する。</summary>
     /// <value>32 DIP。</value>

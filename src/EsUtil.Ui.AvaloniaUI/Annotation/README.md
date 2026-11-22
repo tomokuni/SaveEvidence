@@ -17,10 +17,10 @@
 
 **色の選択は `EsUtil.Ui.AvaloniaUI.ColorSelector` を使います**（自前の色入力を作らない）。
 入力欄は**「■ + 色名」**（現在色の四角 + 色名）で表示します。
-代表色は**40 色**あり、**■ だけを並べた「代表色パレット」**（列数は指定可）と**色名付きの「代表色」**の 2 つのタブで出します。
+代表色は**40 色**あり、**■ を並べた「代表色」**（列数は指定可）のタブで出します。 色名は入力欄に出ます。
 書式バーは**その 2 つと ColorPicker** のタブを出し、テーマ・色名のタブは隠します。
-右クリックのフライアウトは**代表色パレットと代表色**のタブを出します。
-代表色パレットの列数は `AnnotationTextEditor.PaletteColumns`（既定 8 列）で変えられます。
+右クリックのフライアウトも**「代表色」と「ColorPicker」**のタブを出します。
+代表色の列数は `AnnotationTextEditor.PaletteColumns`（既定 8 列）で変えられます。
 設定画面のように任意の色を選ばせたいときは `AnnotationPalette.ConfigureAll` で**代表色 + 標準のタブ**を出せます。
 編集 UI の行の部品は `AnnotationEditorControls` が単一所有し、右クリックのフライアウトとホストの設定ペインが共有します。
 
@@ -59,7 +59,7 @@ composed.Save(AnnotationJson.GetComposedPath(imagePath)); // PNG
 | メンバー | 説明 |
 | --- | --- |
 | `AnnotationTextEditor.Layer` / `IsEditingText` | 本文の表示・その場編集と書式バーをまとめたコントロール（レイヤーは `Layer` から操作する） |
-| `AnnotationTextEditor.PaletteColumns` | 代表色パレット（■ の格子）の列数（既定 8 列。 40 色なら 8 列 × 5 行） |
+| `AnnotationTextEditor.PaletteColumns` | 代表色（■ の格子）の列数（既定 8 列。 40 色なら 8 列 × 5 行） |
 | `AnnotationTextEditor.ColorWidth` | 書式バーの色の選択の幅（「■ + 全角 4 文字 + 100%」と「■ + `#FFFFFFFF`」の広いほう） |
 | `AnnotationTextEditor.TextFormat` | 書式バーと右クリックのフライアウトの色の表記（色名 + 不透明度 / カラーコード）。 カラーコードは `<c>#AARRGGBB</c>` |
 | `Source` / `SourcePixelWidth` / `SourcePixelHeight` | 表示する画像と、その画素数（縦横比を保って中央へ表示する） |

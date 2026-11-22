@@ -12,9 +12,6 @@ public static class AnnotationEditorLayout
     /// <summary>項目名の幅（DIP）。</summary>
     public const double LabelWidth = 104;
 
-    /// <summary>色の入力の幅（DIP。 フライアウトの行で使う）。</summary>
-    public const double ColorSelectorWidth = 210;
-
     /// <summary>行の中の項目の間隔（DIP）。</summary>
     public const double RowSpacing = 4;
 
@@ -30,6 +27,11 @@ public static class AnnotationEditorLayout
     /// <summary>本文の文字サイズ（DIP。 編集 UI の文字）。</summary>
     public const double FontSizeDip = 12;
 
-    /// <summary>色の入力の幅（DIP。 書式バーの行で使う。 表記に合わせて広げる場合はこの値を下限にする）。</summary>
-    public const double FormatBarColorSelectorWidth = 210;
+    /// <summary>装飾の切り替え（B / I / U / S）の文字サイズ（DIP）。</summary>
+    /// <remarks>
+    /// <b>編集 UI の文字より一回り大きくする</b>: 記号 1 文字だけのボタンは、行の他の文字と同じ大きさだと
+    /// 線（下線・取り消し線）と字面が小さく、押せる場所としても見えにくい（実測 2026-11-22）。
+    /// UI の既定の文字サイズ（12 DIP）より 1 段大きい 14 DIP にします。
+    /// </remarks>
+    public const double ToggleFontSize = 14;
 }

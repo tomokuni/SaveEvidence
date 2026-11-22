@@ -57,25 +57,25 @@ internal static class AnnotationStyleFlyout
         var appearance = owner.Selected?.Appearance ?? AnnotationAppearance.Default;
         var panel = new StackPanel { Spacing = 6 };
 
-        panel.Children.Add(AnnotationEditorControls.Heading("外観"));
+        panel.Children.Add(AnnotationEditorControls.Heading(AnnotationEditorText.AppearanceHeading));
         panel.Children.Add(AnnotationEditorControls.ColorRow(
-            "枠線の色",
+            AnnotationEditorText.BorderColor,
             appearance.Border,
             color => owner.UpdateSelectedAppearance(a => a with { Border = color }),
             owner.ColorTextFormat));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
-            "枠線の太さ",
+            AnnotationEditorText.BorderThickness,
             appearance.BorderThickness,
             AnnotationLimits.BorderThicknessMin,
             AnnotationLimits.BorderThicknessMax,
             value => owner.UpdateSelectedAppearance(a => a with { BorderThickness = value })));
         panel.Children.Add(AnnotationEditorControls.ColorRow(
-            "内側の色",
+            AnnotationEditorText.FillColor,
             appearance.Fill,
             color => owner.UpdateSelectedAppearance(a => a with { Fill = color }),
             owner.ColorTextFormat));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
-            "角丸",
+            AnnotationEditorText.CornerRadius,
             appearance.CornerRadius,
             0,
             AnnotationLimits.CornerRadiusMax,
@@ -92,15 +92,15 @@ internal static class AnnotationStyleFlyout
         var bubble = (BubbleAnnotation)owner.Selected!;
         var panel = new StackPanel { Spacing = 6 };
 
-        panel.Children.Add(AnnotationEditorControls.Heading("吹き出し"));
+        panel.Children.Add(AnnotationEditorControls.Heading(AnnotationEditorText.BubbleHeading));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
-            "本文の余白",
+            AnnotationEditorText.BodyPadding,
             bubble.BodyPadding,
             0,
             AnnotationLimits.BodyPaddingMax,
             value => owner.SetSelectedBodyPadding(value)));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
-            "しっぽの幅",
+            AnnotationEditorText.TailWidth,
             bubble.Tail.Width,
             AnnotationLimits.TailWidthMin,
             AnnotationLimits.TailWidthMax,
@@ -120,9 +120,9 @@ internal static class AnnotationStyleFlyout
     private static Control BuildOrderGroup(AnnotationLayerControl owner)
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        var front = new Button { Content = "最前面へ" };
+        var front = new Button { Content = AnnotationEditorText.MoveToFront };
         front.Click += (_, _) => owner.MoveSelectedToFront();
-        var back = new Button { Content = "最背面へ" };
+        var back = new Button { Content = AnnotationEditorText.MoveToBack };
         back.Click += (_, _) => owner.MoveSelectedToBack();
         row.Children.Add(front);
         row.Children.Add(back);

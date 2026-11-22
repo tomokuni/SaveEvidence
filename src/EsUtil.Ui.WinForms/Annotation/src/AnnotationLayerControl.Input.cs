@@ -58,8 +58,22 @@ public sealed partial class AnnotationLayerControl
 
         var plan = _marquee.ResolveDrawPlan(
             new EsSize(ClientSize.Width, ClientSize.Height),
-            static (text, size) => new EsSize(text.Length * size * 0.5, size),
+            AnnotationMarqueeMetrics.MeasureText,
             false);
+
+        // **本文を編集中は破線だけを描く**: ハンドルは動かせないため出さない。 代わりに「どの注釈を
+        // 編集中か」を破線で示す（規則はコアの AnnotationEditingOutline が単一所有する）。
+        // 編集中はマーキーの選択を解除している（枠を出さない）ため、矩形は文書と表示倍率から求める。
+        if (IsEditingText && Selected is { } editingItem)
+        {
+            var (editScale, editOffset) = ResolveImageTransform();
+            DrawEditingOutline(
+                graphics,
+                AnnotationEditingOutline.Resolve(
+                    AnnotationEditingOutline.ResolveSourceRect(editingItem), editScale, editOffset),
+                _marquee.Appearance.BorderColor);
+            return;
+        }
 
         List<EsRect>? handles = null;
         if (plan.Handles is { } source)
@@ -90,6 +104,25 @@ public sealed partial class AnnotationLayerControl
             HandleSize,
             plan.Appearance.HandleColor,
             plan.Appearance.HandleBorderColor);
+    }
+
+    /// <summary>本文を編集中の注釈を破線で囲む。</summary>
+    /// <param name="graphics">描画先（DIP）。</param>
+    /// <param name="rect">破線を描く矩形（DIP）。</param>
+    /// <param name="color">線の色。</param>
+    /// <remarks>
+    /// <b>見た目はコアが単一所有する</b>（<see cref="AnnotationEditingOutline"/>）: 移動できない状態で
+    /// ハンドルを出すと「掴めるのに動かない枠」に見えるため、破線で「いま対象の枠」だけを示す。
+    /// </remarks>
+    private static void DrawEditingOutline(Graphics graphics, EsRect rect, Color color)
+    {
+        using var pen = new Pen(color, (float)AnnotationEditingOutline.Thickness)
+        {
+            DashPattern = [.. AnnotationEditingOutline.DashPattern.Select(static value => (float)value)],
+            DashStyle = System.Drawing.Drawing2D.DashStyle.Custom,
+        };
+        graphics.DrawRectangle(
+            pen, (float)rect.X, (float)rect.Y, (float)rect.Width, (float)rect.Height);
     }
 
     /// <summary>しっぽの先端のハンドルの中心（DIP）を求める。</summary>
@@ -461,7 +494,7 @@ public sealed partial class AnnotationLayerControl
 
         var plan = _marquee.ResolveDrawPlan(
             new EsSize(ClientSize.Width, ClientSize.Height),
-            static (text, size) => new EsSize(text.Length * size * 0.5, size),
+            AnnotationMarqueeMetrics.MeasureText,
             false);
         if (plan.Handles is not { } handles)
         {

@@ -6,10 +6,8 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
-using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Palette;
 using EsUtil.Ui.AvaloniaUI.ColorSelector;
-using System.Globalization;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
 
@@ -63,7 +61,7 @@ internal sealed class AnnotationFormatBar : Border
     /// <summary>表示を更新している最中かどうか（操作の再入を防ぐ）。</summary>
     private bool _isRefreshing;
 
-    /// <summary>代表色パレットの列数（■ を何列で並べるか）。</summary>
+    /// <summary>代表色の列数（■ を何列で並べるか）。</summary>
     private int _paletteColumns = AnnotationPalette.DefaultPaletteColumns;
 
     /// <summary>色の選択の幅（DIP。 <see cref="ResolveColorSelectorWidth"/> が決める）。</summary>
@@ -104,7 +102,7 @@ internal sealed class AnnotationFormatBar : Border
             HighlightBorderOnError = true,
         };
 
-        // ■ だけの「代表色パレット」と色名の「代表色」を出し、カラーピッカーも使えるようにする
+        // **タブは「代表色」と「ColorPicker」の 2 つ**（規則はコアの AnnotationPaletteCatalog が単一所有する）
         ConfigurePalette();
         _color.PropertyChanged += (_, e) =>
         {
@@ -191,7 +189,7 @@ internal sealed class AnnotationFormatBar : Border
     /// <summary>操作の間の余白（DIP）。</summary>
     private const double ControlSpacing = AnnotationEditorLayout.RowSpacing;
 
-    /// <summary>代表色パレットの列数を取得または設定する（■ を何列で並べるか）。</summary>
+    /// <summary>代表色の列数を取得または設定する（■ を何列で並べるか）。</summary>
     /// <value>1 以上の列数。 既定は <see cref="AnnotationPalette.DefaultPaletteColumns"/>。</value>
     public int PaletteColumns
     {
@@ -236,26 +234,8 @@ internal sealed class AnnotationFormatBar : Border
     {
         // **幅の規則はコアが単一所有する**: UI ごとに四角の余白・展開ボタンの幅を決めると、
         // 同じ表記でも幅が変わり、はっきり余る幅が空く（実測 2026-11-22）
-        var width = AnnotationFormatBarLayout.ResolveColorSelectorWidth(
-            static (text, style) => new EsSize(MeasureText(new Typeface(style.FontFamily), text, style.FontSize), 0));
+        var width = AnnotationFormatBarLayout.ResolveColorSelectorWidth(AnnotationPainter.Measure);
         return width > 0 ? width : ColorSelectorWidthFallback;
-    }
-
-    /// <summary>文字列の実寸の幅を測る。</summary>
-    /// <param name="typeface">書体。</param>
-    /// <param name="text">測る文字列。</param>
-    /// <param name="fontSize">文字の大きさ（DIP）。</param>
-    /// <returns>幅（DIP）。 測れない場合は 0。</returns>
-    private static double MeasureText(Typeface typeface, string text, double fontSize)
-    {
-        var formatted = new FormattedText(
-            text,
-            CultureInfo.CurrentCulture,
-            FlowDirection.LeftToRight,
-            typeface,
-            fontSize,
-            Brushes.Black);
-        return formatted.WidthIncludingTrailingWhitespace;
     }
 
     /// <summary>代表色のタブを色の選択へ反映する。</summary>
@@ -413,6 +393,10 @@ internal sealed class AnnotationFormatBar : Border
         var content = new TextBlock
         {
             Text = text,
+
+            // **記号は行の文字より一回り大きくする**: 記号 1 文字だけのボタンは、行の他の文字と同じ
+            // 大きさだと線（下線・取り消し線）と字面が小さく、押せる場所としても見えにくい（実測 2026-11-22）
+            FontSize = AnnotationEditorLayout.ToggleFontSize,
             FontWeight = bold ? FontWeight.Bold : FontWeight.Normal,
             FontStyle = italic ? FontStyle.Italic : FontStyle.Normal,
             HorizontalAlignment = HorizontalAlignment.Center,

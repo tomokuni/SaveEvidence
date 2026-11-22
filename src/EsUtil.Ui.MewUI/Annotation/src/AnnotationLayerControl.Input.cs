@@ -40,7 +40,10 @@ public sealed partial class AnnotationLayerControl
             // 以降はローカル座標で描けるようにする（入力の座標系と一致させる）
             context.Translate(Bounds.X, Bounds.Y);
             var (scale, offset) = _frozenTransform ?? ResolveImageTransform();
-            DrawAll(context, includeSelection: !_isEditingText, scale, offset);
+
+            // **選択枠は編集中も描く**: 描く中身は DrawSelection が決める（編集中は破線だけを描き、
+            // ハンドルは出さない）。 ここで止めると「どの注釈を編集中か」が分からなくなる（実測 2026-11-22）
+            DrawAll(context, includeSelection: true, scale, offset);
         }
         finally
         {
@@ -102,7 +105,12 @@ public sealed partial class AnnotationLayerControl
         }
 
         DrawSelection(context);
-        DrawTailHandle(context);
+
+        // 本文の編集中はハンドルを出さない（動かせないため。 破線だけが「編集中の枠」を示す）
+        if (!IsEditingText)
+        {
+            DrawTailHandle(context);
+        }
     }
 
     /// <summary>選択枠（枠・8 方向のハンドル）を描く。</summary>
@@ -116,8 +124,25 @@ public sealed partial class AnnotationLayerControl
 
         var plan = _marquee.ResolveDrawPlan(
             new EsSize(RenderSize.Width, RenderSize.Height),
-            static (text, size) => new EsSize(text.Length * size * 0.5, size),
+            AnnotationMarqueeMetrics.MeasureText,
             false);
+
+        // **本文を編集中は破線だけを描く**: ハンドルは動かせないため出さない。 代わりに「どの注釈を
+        // 編集中か」を破線で示す（規則はコアの AnnotationEditingOutline が単一所有する）。
+        // 編集中はマーキーの選択を解除している（枠を出さない）ため、矩形は文書と表示倍率から求める。
+        if (IsEditingText && Selected is { } editingItem)
+        {
+            var (editScale, editOffset) = ResolveImageTransform();
+            var outline = AnnotationEditingOutline.Resolve(
+                AnnotationEditingOutline.ResolveSourceRect(editingItem), editScale, new EsPoint(editOffset.X, editOffset.Y));
+            context.DrawRectangle(
+                new Rect(outline.X, outline.Y, outline.Width, outline.Height),
+                new Pen(
+                    AnnotationPainter.ToColor(_marquee.Appearance.BorderColor),
+                    AnnotationEditingOutline.Thickness,
+                    new StrokeStyle { DashArray = [.. AnnotationEditingOutline.DashPattern] }));
+            return;
+        }
 
         if (plan.Appearance.ShowBorder)
         {
@@ -585,7 +610,7 @@ public sealed partial class AnnotationLayerControl
 
         var plan = _marquee.ResolveDrawPlan(
             new EsSize(RenderSize.Width, RenderSize.Height),
-            static (text, size) => new EsSize(text.Length * size * 0.5, size),
+            AnnotationMarqueeMetrics.MeasureText,
             false);
         if (plan.Handles is not { } handles)
         {

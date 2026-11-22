@@ -35,37 +35,37 @@ internal sealed class AnnotationStylePanel : ContentControl
     {
         var panel = new StackPanel { Spacing = 2 };
 
-        panel.Children.Add(AnnotationEditorControls.Heading("外観"));
+        panel.Children.Add(AnnotationEditorControls.Heading(AnnotationEditorText.AppearanceHeading));
         panel.Children.Add(AnnotationEditorControls.Divider());
 
         if (_layer.Selected is not { } item)
         {
-            panel.Children.Add(AnnotationEditorControls.Label("注釈を選んでください。"));
+            panel.Children.Add(AnnotationEditorControls.Label(AnnotationEditorText.NoSelection));
             return panel;
         }
 
         var appearance = item.Appearance;
         panel.Children.Add(AnnotationEditorControls.ColorRow(
-            "枠線の色", AnnotationEditorControls.ToHex(appearance.Border), _layer.ColorTextFormat,
+            AnnotationEditorText.BorderColor, AnnotationEditorControls.ToHex(appearance.Border), _layer.ColorTextFormat,
             value => _layer.UpdateSelectedAppearance(current => current with { Border = ParseColor(value, current.Border) })));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
-            "枠線の太さ", appearance.BorderThickness, AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax,
+            AnnotationEditorText.BorderThickness, appearance.BorderThickness, AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax,
             value => _layer.UpdateSelectedAppearance(current => current with { BorderThickness = value })));
         panel.Children.Add(AnnotationEditorControls.ColorRow(
-            "内側の色", AnnotationEditorControls.ToHex(appearance.Fill), _layer.ColorTextFormat,
+            AnnotationEditorText.FillColor, AnnotationEditorControls.ToHex(appearance.Fill), _layer.ColorTextFormat,
             value => _layer.UpdateSelectedAppearance(current => current with { Fill = ParseColor(value, current.Fill) })));
         panel.Children.Add(AnnotationEditorControls.NumberRow(
-            "角丸", appearance.CornerRadius, 0, AnnotationLimits.CornerRadiusMax,
+            AnnotationEditorText.CornerRadius, appearance.CornerRadius, 0, AnnotationLimits.CornerRadiusMax,
             value => _layer.UpdateSelectedAppearance(current => current with { CornerRadius = value })));
 
         if (item is BubbleAnnotation bubble)
         {
             panel.Children.Add(AnnotationEditorControls.Divider());
-            panel.Children.Add(AnnotationEditorControls.Heading("吹き出し"));
+            panel.Children.Add(AnnotationEditorControls.Heading(AnnotationEditorText.BubbleHeading));
             panel.Children.Add(AnnotationEditorControls.NumberRow(
-                "本文の余白", bubble.BodyPadding, 0, AnnotationLimits.BodyPaddingMax, value => _layer.SetSelectedBodyPadding(value)));
+                AnnotationEditorText.BodyPadding, bubble.BodyPadding, 0, AnnotationLimits.BodyPaddingMax, value => _layer.SetSelectedBodyPadding(value)));
             panel.Children.Add(AnnotationEditorControls.NumberRow(
-                "しっぽの幅", bubble.Tail.Width, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax,
+                AnnotationEditorText.TailWidth, bubble.Tail.Width, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax,
                 value => _layer.UpdateSelectedTail(tail => tail with { Width = value })));
             panel.Children.Add(AnnotationEditorControls.ChoiceRow(
                 AnnotationBubbleEdgeCatalog.Label,
@@ -76,9 +76,9 @@ internal sealed class AnnotationStylePanel : ContentControl
 
         panel.Children.Add(AnnotationEditorControls.Divider());
         var order = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        var front = new Button { Content = "最前面へ", FontSize = AnnotationEditorControls.FontSize };
+        var front = new Button { Content = AnnotationEditorText.MoveToFront, FontSize = AnnotationEditorControls.FontSize };
         front.Click += (_, _) => _layer.MoveSelectedToFront();
-        var back = new Button { Content = "最背面へ", FontSize = AnnotationEditorControls.FontSize };
+        var back = new Button { Content = AnnotationEditorText.MoveToBack, FontSize = AnnotationEditorControls.FontSize };
         back.Click += (_, _) => _layer.MoveSelectedToBack();
         order.Children.Add(front);
         order.Children.Add(back);

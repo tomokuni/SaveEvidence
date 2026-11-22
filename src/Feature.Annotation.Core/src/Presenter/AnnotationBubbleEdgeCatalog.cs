@@ -10,7 +10,7 @@ namespace EsUtil.Feature.Annotation.Presenter;
 public static class AnnotationBubbleEdgeCatalog
 {
     /// <summary>項目名を取得する。</summary>
-    public static string Label => "しっぽの辺";
+    public static string Label => AnnotationEditorText.TailEdge;
 
     /// <summary>選択肢を取得する（<see cref="BubbleEdge"/> の値の順）。</summary>
     public static IReadOnlyList<string> Options { get; } = ["上", "右", "下", "左"];

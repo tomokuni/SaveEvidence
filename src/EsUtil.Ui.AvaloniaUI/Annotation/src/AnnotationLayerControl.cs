@@ -870,7 +870,12 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         }
 
         DrawSelection(context);
-        DrawTailHandle(context);
+
+        // 本文の編集中はハンドルを出さない（動かせないため。 破線だけが「編集中の枠」を示す）
+        if (!IsEditingText)
+        {
+            DrawTailHandle(context);
+        }
     }
 
     /// <summary>注釈の無い場所でドラッグしている間かどうか（プレビューのパンへ渡す）。</summary>
@@ -1283,7 +1288,7 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     private bool HitsSelectionHandle(Point dip)
     {
         var plan = _marquee.ResolveDrawPlan(
-            new EsSize(Bounds.Width, Bounds.Height), (text, size) => new EsSize(text.Length * size * 0.5, size));
+            new EsSize(Bounds.Width, Bounds.Height), AnnotationMarqueeMetrics.MeasureText);
         if (plan.Handles is not { } handles)
         {
             return false;
@@ -1445,7 +1450,24 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         }
 
         var plan = _marquee.ResolveDrawPlan(
-            new EsSize(Bounds.Width, Bounds.Height), (text, size) => new EsSize(text.Length * size * 0.5, size));
+            new EsSize(Bounds.Width, Bounds.Height), AnnotationMarqueeMetrics.MeasureText);
+
+        // **本文を編集中は破線だけを描く**: ハンドルは動かせないため出さない。 代わりに「どの注釈を
+        // 編集中か」を破線で示す（規則はコアの AnnotationEditingOutline が単一所有する）。
+        // 編集中はマーキーの選択を解除している（枠を出さない）ため、矩形は文書と表示倍率から求める。
+        if (IsEditingText && Selected is { } editingItem)
+        {
+            var (editScale, editOffset) = ResolveImageTransform();
+            DrawEditingOutline(
+                context,
+                AnnotationEditingOutline.Resolve(
+                    AnnotationEditingOutline.ResolveSourceRect(editingItem),
+                    editScale,
+                    new EsPoint(editOffset.X, editOffset.Y)),
+                _marquee.Appearance.BorderColor);
+            return;
+        }
+
         if (plan.Appearance.ShowBorder)
         {
             var brush = AnnotationPainter.ToBrush(plan.Appearance.BorderColor);
@@ -1467,6 +1489,23 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
             var rect = handles.HandleDipRects[i];
             context.DrawRectangle(fill, border, new Rect(rect.X, rect.Y, rect.Width, rect.Height));
         }
+    }
+
+    /// <summary>本文を編集中の注釈を破線で囲む。</summary>
+    /// <param name="context">描画先。</param>
+    /// <param name="rect">破線を描く矩形（DIP）。</param>
+    /// <param name="color">線の色。</param>
+    /// <remarks>
+    /// <b>見た目はコアが単一所有する</b>（<see cref="AnnotationEditingOutline"/>）: 移動できない状態で
+    /// ハンドルを出すと「掴めるのに動かない枠」に見えるため、破線で「いま対象の枠」だけを示す。
+    /// </remarks>
+    private static void DrawEditingOutline(DrawingContext context, EsRect rect, System.Drawing.Color color)
+    {
+        var pen = new Pen(
+            AnnotationPainter.ToBrush(color),
+            AnnotationEditingOutline.Thickness,
+            new DashStyle(AnnotationEditingOutline.DashPattern, 0));
+        context.DrawRectangle(null, pen, new Rect(rect.X, rect.Y, rect.Width, rect.Height));
     }
 
     /// <summary>しっぽのハンドル（円）を描く。</summary>

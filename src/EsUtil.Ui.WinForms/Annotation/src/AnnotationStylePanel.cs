@@ -42,30 +42,30 @@ internal sealed class AnnotationStylePanel : Panel
     private void Build()
     {
         var y = 6;
-        Add(AnnotationEditorControls.Heading("外観"), ref y);
+        Add(AnnotationEditorControls.Heading(AnnotationEditorText.AppearanceHeading), ref y);
 
         if (_layer.Selected is not { } item)
         {
-            Add(AnnotationEditorControls.Label("注釈を選んでください。"), ref y);
+            Add(AnnotationEditorControls.Label(AnnotationEditorText.NoSelection), ref y);
             return;
         }
 
         var appearance = item.Appearance;
-        AddColor("枠線の色", appearance.Border, ref y,
+        AddColor(AnnotationEditorText.BorderColor, appearance.Border, ref y,
             value => _layer.UpdateSelectedAppearance(current => current with { Border = value }));
-        AddNumber("枠線の太さ", appearance.BorderThickness, AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax, ref y,
+        AddNumber(AnnotationEditorText.BorderThickness, appearance.BorderThickness, AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax, ref y,
             value => _layer.UpdateSelectedAppearance(current => current with { BorderThickness = value }));
-        AddColor("内側の色", appearance.Fill, ref y,
+        AddColor(AnnotationEditorText.FillColor, appearance.Fill, ref y,
             value => _layer.UpdateSelectedAppearance(current => current with { Fill = value }));
-        AddNumber("角丸", appearance.CornerRadius, 0, AnnotationLimits.CornerRadiusMax, ref y,
+        AddNumber(AnnotationEditorText.CornerRadius, appearance.CornerRadius, 0, AnnotationLimits.CornerRadiusMax, ref y,
             value => _layer.UpdateSelectedAppearance(current => current with { CornerRadius = value }));
 
         if (item is BubbleAnnotation bubble)
         {
-            Add(AnnotationEditorControls.Heading("吹き出し"), ref y);
-            AddNumber("本文の余白", bubble.BodyPadding, 0, AnnotationLimits.BodyPaddingMax, ref y,
+            Add(AnnotationEditorControls.Heading(AnnotationEditorText.BubbleHeading), ref y);
+            AddNumber(AnnotationEditorText.BodyPadding, bubble.BodyPadding, 0, AnnotationLimits.BodyPaddingMax, ref y,
                 value => _layer.SetSelectedBodyPadding(value));
-            AddNumber("しっぽの幅", bubble.Tail.Width, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax, ref y,
+            AddNumber(AnnotationEditorText.TailWidth, bubble.Tail.Width, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax, ref y,
                 value => _layer.UpdateSelectedTail(tail => tail with { Width = value }));
             AddChoice(AnnotationBubbleEdgeCatalog.Label, [.. AnnotationBubbleEdgeCatalog.Options], (int)bubble.Tail.BaseEdge, ref y,
                 value => _layer.UpdateSelectedTail(tail => tail with { BaseEdge = (BubbleEdge)value }));
@@ -73,7 +73,7 @@ internal sealed class AnnotationStylePanel : Panel
 
         var front = new Button
         {
-            Text = "最前面へ",
+            Text = AnnotationEditorText.MoveToFront,
             Width = 100,
             Height = 24,
             Location = new Point(6, y),
@@ -84,7 +84,7 @@ internal sealed class AnnotationStylePanel : Panel
 
         var back = new Button
         {
-            Text = "最背面へ",
+            Text = AnnotationEditorText.MoveToBack,
             Width = 100,
             Height = 24,
             Location = new Point(110, y),

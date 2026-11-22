@@ -132,8 +132,33 @@ public sealed partial class AnnotationLayerControl
 
         var plan = _marquee.ResolveDrawPlan(
             new EsSize(Math.Max(0, ActualWidth), Math.Max(0, ActualHeight)),
-            static (text, size) => new EsSize(text.Length * size * 0.5, size),
+            AnnotationMarqueeMetrics.MeasureText,
             false);
+
+        // **本文を編集中は破線だけを描く**: ハンドルは動かせないため出さない。 代わりに「どの注釈を
+        // 編集中か」を破線で示す（規則はコアの AnnotationEditingOutline が単一所有する）。
+        // 編集中はマーキーの選択を解除している（枠を出さない）ため、矩形は文書と表示倍率から求める。
+        if (IsEditingText && Selected is { } editingItem)
+        {
+            // 前のフレームのハンドルを残さない（残すと「動かせる枠」に見える）
+            _selection.Children.Clear();
+
+            var (editScale, editOffset) = ResolveImageTransform();
+            var outline = AnnotationEditingOutline.Resolve(
+                AnnotationEditingOutline.ResolveSourceRect(editingItem), editScale, editOffset);
+            var outlineRect = new Microsoft.UI.Xaml.Shapes.Rectangle
+            {
+                Width = outline.Width,
+                Height = outline.Height,
+                Stroke = AnnotationTextMetrics.ToBrush(s_marqueeAppearance.BorderColor),
+                StrokeThickness = AnnotationEditingOutline.Thickness,
+                StrokeDashArray = [.. AnnotationEditingOutline.DashPattern],
+            };
+            Canvas.SetLeft(outlineRect, outline.X);
+            Canvas.SetTop(outlineRect, outline.Y);
+            _selection.Children.Add(outlineRect);
+            return;
+        }
 
         var handles = plan.Handles is { } value
             ? new List<EsRect>(8)
@@ -582,7 +607,7 @@ public sealed partial class AnnotationLayerControl
 
         var plan = _marquee.ResolveDrawPlan(
             new EsSize(Math.Max(0, ActualWidth), Math.Max(0, ActualHeight)),
-            static (text, size) => new EsSize(text.Length * size * 0.5, size),
+            AnnotationMarqueeMetrics.MeasureText,
             false);
         if (plan.Handles is not { } handles)
         {

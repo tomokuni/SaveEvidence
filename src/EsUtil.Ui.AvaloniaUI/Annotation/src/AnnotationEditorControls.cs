@@ -22,11 +22,11 @@ public static class AnnotationEditorControls
 
     /// <summary>色の選択の幅（DIP）。</summary>
     /// <remarks>
-    /// <b>横いっぱいへ広げない</b>: <see cref="ColorSelectorControl"/> を伸長すると、入力欄とボタンの間が
-    /// 間延びして 1 行が使えなくなる（実測で指摘）。 値とボタンが収まる幅へ固定する。<br/>
-    /// 設定ペインのフォントの選択（<see cref="ChoiceRow"/>）と同じ幅にそろえる（行の右端が揃う）。
+    /// <b>カラーコードが収まる幅にする</b>: 行の他の入力欄（数値・選択肢）と同じ幅に揃え、右側が
+    /// 間延びしないようにする。 色名は数文字しかないため、色名まで収める幅にすると右側が大きく空く
+    /// （実測 2026-11-22: 右クリックのフライアウトが「不必要に長い」との指摘）。 幅の規則はコアが単一所有する。
     /// </remarks>
-    public const double ColorSelectorWidth = AnnotationEditorLayout.ColorSelectorWidth;
+    public static double ColorSelectorWidth => AnnotationFormatBarLayout.ResolveHexColorSelectorWidth(AnnotationPainter.Measure);
 
     /// <summary>見出しを作る。</summary>
     /// <param name="text">見出しの文言。</param>
@@ -71,7 +71,7 @@ public static class AnnotationEditorControls
     /// <param name="apply">適用する処理。</param>
     /// <returns>項目名と色の選択を並べた行。</returns>
     /// <remarks>
-    /// <b>構成済みの色の選択を渡せる</b>: 設定画面は「代表色 1・代表色 2 + 標準のタブ」を出し、
+    /// <b>構成済みの色の選択を渡せる</b>: 設定画面は「代表色 + 標準のタブ」を出し、
     /// 書式バーは代表色だけを出す（画面ごとにタブの構成が異なる）。 並べ方やタブを差し替えたい呼び出し側は
     /// 先に構成した <paramref name="selector"/> を渡す。
     /// </remarks>
@@ -95,15 +95,15 @@ public static class AnnotationEditorControls
         return row;
     }
 
-    /// <summary>注釈向けの構成にした色の選択を作る（代表色のタブだけを出す）。</summary>
+    /// <summary>注釈向けの構成にした色の選択を作る（「代表色」と「ColorPicker」のタブを出す）。</summary>
     /// <param name="initial">現在の色。</param>
-    /// <param name="columns">代表色パレット（■ の格子）の列数。</param>
-    /// <param name="allPalettes">代表色に加えて標準のタブ（テーマカラー・色名・ColorPicker）も出すかどうか（設定画面向け）。</param>
+    /// <param name="columns">代表色（■ の格子）の列数。</param>
+    /// <param name="allPalettes">代表色に加えて標準のタブ（テーマカラー・色名）も出すかどうか（設定画面向け）。</param>
     /// <param name="textFormat">入力欄へ出す表記（色名 + 不透明度 / カラーコード）。</param>
     /// <returns>構成した色の選択。</returns>
     /// <remarks>
-    /// <b>注釈向けの構成にする</b>: フライアウトは代表色（■ の格子と色名の一覧）のタブだけにし（テーマの色・色名・
-    /// カラーピッカーを隠す）、設定画面は標準のタブも出す（<see cref="AnnotationPalette.Configure"/> /
+    /// <b>注釈向けの構成にする</b>: フライアウトは代表色（■ の格子）と ColorPicker のタブだけにし（テーマの色・色名を
+    /// 隠す）、設定画面は標準のタブも出す（<see cref="AnnotationPalette.Configure"/> /
     /// <see cref="AnnotationPalette.ConfigureAll"/>）。
     /// </remarks>
     public static ColorSelectorControl CreateSelector(
@@ -128,7 +128,7 @@ public static class AnnotationEditorControls
         }
         else
         {
-            AnnotationPalette.Configure(selector, columns);
+            AnnotationPalette.Configure(selector, columns, showPicker: true);
         }
 
         return selector;
@@ -212,6 +212,9 @@ public static class AnnotationEditorControls
         var content = new TextBlock
         {
             Text = text,
+
+            // **記号は行の文字より一回り大きくする**（値はコアの AnnotationEditorLayout が単一所有する）
+            FontSize = AnnotationEditorLayout.ToggleFontSize,
             FontWeight = bold ? FontWeight.Bold : FontWeight.Normal,
             FontStyle = italic ? FontStyle.Italic : FontStyle.Normal,
         };

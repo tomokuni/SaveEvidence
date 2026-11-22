@@ -11,7 +11,7 @@ namespace EsUtil.Ui.WinUI3.Annotation;
 /// <remarks>
 /// <b>適用先は選択範囲</b>: 選んだ書式は選択範囲へ適用し、選択が無いときは以降の入力へ回す
 /// （既存の文字は変えない。 判定はレイヤーが単一所有する）。<br/>
-/// <b>色は色選択コントロールを使う</b>: 代表色パレット・代表色・カラーピッカーから選ぶ（自前の色入力を作らない）。
+/// <b>色は色選択コントロールを使う</b>: 代表色と ColorPicker から選ぶ（自前の色入力を作らない）。
 /// </remarks>
 internal sealed class AnnotationFormatBar : ContentControl
 {

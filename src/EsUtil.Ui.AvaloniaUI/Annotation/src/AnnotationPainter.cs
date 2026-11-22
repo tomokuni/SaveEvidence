@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
+using EsUtil.Platform.Core.Geometry;
 using DrawingColor = System.Drawing.Color;
 
 namespace EsUtil.Ui.AvaloniaUI.Annotation;
@@ -31,6 +32,16 @@ internal static class AnnotationPainter
                 style.IsBold ? FontWeight.Bold : FontWeight.Normal),
             style.FontSize,
             ToBrush(style.Color));
+
+    /// <summary>文字列の実寸を測る（幅と行の高さ）。</summary>
+    /// <param name="text">文字列。</param>
+    /// <param name="style">書式。</param>
+    /// <returns>実寸（元画像ピクセル）。</returns>
+    internal static EsSize Measure(string text, AnnotationTextStyle style)
+    {
+        var formatted = CreateText(text, style);
+        return new EsSize(formatted.WidthIncludingTrailingWhitespace, formatted.Height);
+    }
 
     /// <summary>注釈 1 件を描く（元画像ピクセルの座標系で呼ぶ）。</summary>
     /// <param name="context">描画先。</param>

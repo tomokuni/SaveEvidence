@@ -115,7 +115,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <value>編集中の場合は <see langword="true"/>（書式バーが出ている）。</value>
     public bool IsEditingText => _layer.IsEditingText;
 
-    /// <summary>書式バーの代表色パレット（■ を並べる格子）の列数を取得または設定する。</summary>
+    /// <summary>書式バーの代表色（■ を並べる格子）の列数を取得または設定する。</summary>
     /// <value>1 以上の列数。 既定は <see cref="AnnotationPalette.DefaultPaletteColumns"/>（8 列）。</value>
     public int PaletteColumns
     {

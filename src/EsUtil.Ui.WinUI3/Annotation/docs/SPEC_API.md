@@ -62,7 +62,7 @@ WinUI 3 のテキスト エンジン（`TextBlock`）で本文の実寸を測り
 | メンバー | 説明 |
 | --- | --- |
 | `RepresentativeColors` | 代表色（40 色） |
-| `CreateTabs(columns)` / `CreatePaletteTab(columns)` / `CreateListTab()` | 書式バー用のタブ（代表色パレット / 代表色） |
+| `CreatePaletteTab(columns)` | 書式バー用の「代表色」のタブ（ColorPicker は別のフラグで出す） |
 | `Configure(selector, ...)` / `ConfigureAll(selector, ...)` | 出すタブの選択 |
 
 ## 5. `AnnotationFonts`（静的クラス）

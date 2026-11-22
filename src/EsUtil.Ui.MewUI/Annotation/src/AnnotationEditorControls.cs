@@ -20,7 +20,11 @@ public static class AnnotationEditorControls
     public const double LabelWidth = AnnotationEditorLayout.LabelWidth;
 
     /// <summary>色の選択の幅（DIP）。</summary>
-    public const double ColorSelectorWidth = AnnotationEditorLayout.ColorSelectorWidth;
+    /// <remarks>
+    /// <b>カラーコードが収まる幅にする</b>: 行の他の入力欄（数値・選択肢）と同じ幅に揃え、右側が
+    /// 間延びしないようにする。 幅の規則はコアが単一所有する（<see cref="AnnotationFormatBarLayout"/>）。
+    /// </remarks>
+    public static double ColorSelectorWidth => AnnotationFormatBarLayout.ResolveHexColorSelectorWidth(AnnotationTextMetrics.Measure);
 
     /// <summary>見出しを作る。</summary>
     /// <param name="text">見出しの文言。</param>
@@ -78,9 +82,9 @@ public static class AnnotationEditorControls
         return row;
     }
 
-    /// <summary>注釈向けの構成にした色の選択を作る（代表色のタブだけを出す）。</summary>
+    /// <summary>注釈向けの構成にした色の選択を作る（「代表色」と「ColorPicker」のタブを出す）。</summary>
     /// <param name="initial">現在の色。</param>
-    /// <param name="columns">代表色パレット（■ の格子）の列数。</param>
+    /// <param name="columns">代表色（■ の格子）の列数。</param>
     /// <param name="allPalettes">標準のタブも出すかどうか（設定画面向け）。</param>
     /// <param name="textFormat">入力欄へ出す表記。</param>
     /// <returns>構成した色の選択。</returns>
@@ -106,7 +110,7 @@ public static class AnnotationEditorControls
         }
         else
         {
-            AnnotationPalette.Configure(selector, columns);
+            AnnotationPalette.Configure(selector, columns, showPicker: true);
         }
 
         // 色の入力欄は MewUI の ComboBox が描く（色の選択は内部の ComboBox を公開していない）。
@@ -127,17 +131,9 @@ public static class AnnotationEditorControls
     /// <param name="element">対象の要素。</param>
     private static void PaintInputs(Element element)
     {
-        if (element is ComboBox combo)
+        foreach (var combo in FindInputs(element))
         {
             combo.Background = InputBackground;
-        }
-
-        if (element is Panel panel)
-        {
-            foreach (var child in panel.Children)
-            {
-                PaintInputs(child);
-            }
         }
     }
 
@@ -223,4 +219,50 @@ public static class AnnotationEditorControls
     /// <param name="color">色。</param>
     /// <returns><c>#AARRGGBB</c> 形式の文字列。</returns>
     public static string ToHex(DrawingColor color) => DrawingColorExtensions.ToHexText(color);
+
+    /// <summary>色の選択の中の入力欄の高さを揃える。</summary>
+    /// <param name="selector">色の選択。</param>
+    /// <param name="height">高さ（DIP）。</param>
+    /// <remarks>
+    /// <b>外側の高さだけでは中の入力欄が伸びない</b>: MewUI の <see cref="ComboBox"/> は自分の高さを持ち、
+    /// 親の高さへ合わせて伸びません。 数値の入力と並べると<b>色の入力欄だけが低く</b>見えます
+    /// （実測 2026-11-22: 書式バーで色の入力欄だけ 4 DIP 低い）。 高さの規則（書式バーの項目の高さ）は
+    /// コアが単一所有するため、ここでは受け取った値を中の入力欄へも与えます。
+    /// </remarks>
+    public static void AlignInputHeight(ColorSelectorControl selector, double height)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+
+        if (height <= 0)
+        {
+            return;
+        }
+
+        foreach (var combo in FindInputs(selector))
+        {
+            combo.Height = height;
+        }
+    }
+
+    /// <summary>含まれる入力欄（<see cref="ComboBox"/>）を列挙する。</summary>
+    /// <param name="element">対象の要素。</param>
+    /// <returns>入力欄。</returns>
+    private static IEnumerable<ComboBox> FindInputs(Element element)
+    {
+        if (element is ComboBox combo)
+        {
+            yield return combo;
+        }
+
+        if (element is Panel panel)
+        {
+            foreach (var child in panel.Children)
+            {
+                foreach (var found in FindInputs(child))
+                {
+                    yield return found;
+                }
+            }
+        }
+    }
 }

@@ -7,45 +7,27 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 /// <remarks>
 /// <b>色名付きの 40 色を 1 か所で持つ</b>: 注釈の色は「枠線・内側・文字」の 3 種類しかなく、テーマの色や
 /// 色名の全一覧を開くと目的の色へ届くまでに手数がかかる。 よく使う 40 色を 1 つにまとめる。<br/>
-/// <b>同じ並びを 2 通りで出す</b>: ■ だけを並べた「代表色パレット」（速く選べる）と、色名付きの「代表色」
-/// （探しやすい）を出す。 並びが同じため、一覧で見つけた色を格子でも同じ位置で選べる。<br/>
+/// <b>タブは「代表色」と「ColorPicker」の 2 つ</b>である（■ の格子だけを出し、色名は入力欄に出す）。<br/>
 /// <b>定義は 1 か所</b>: 書式バー・右クリックのフライアウト・設定ペインが同じ並びを使う（画面ごとに色が違わない）。
 /// </remarks>
 public static class AnnotationPalette
 {
-    /// <summary>代表色パレットの既定の列数（40 色なら 8 列 × 5 行に収まり、スクロールせずに選べる）。</summary>
+    /// <summary>代表色の既定の列数（40 色なら 8 列 × 5 行に収まり、スクロールせずに選べる）。</summary>
     public const int DefaultPaletteColumns = AnnotationPaletteCatalog.DefaultPaletteColumns;
 
-    /// <summary>代表色パレットの題名。</summary>
+    /// <summary>代表色のタブの題名。</summary>
     public const string PaletteTabTitle = AnnotationPaletteCatalog.PaletteTabTitle;
 
-    /// <summary>代表色（色名の一覧）の題名。</summary>
-    public const string ListTabTitle = AnnotationPaletteCatalog.ListTabTitle;
-
-    /// <summary>代表色の並び（色名と保存値 <c>#AARRGGBB</c>）。</summary>
-    /// <remarks>
-    /// 無彩色 → 赤系 → 橙・黄系 → 緑系 → 青系 → 紫・桃系の順に並べる（同じ系統の色を続けて選びやすくする）。
-    /// 値は 40 色すべて異なる。
-    /// </remarks>
     /// <summary>代表色の並び（色名と保存値 <c>#AARRGGBB</c>）。</summary>
     /// <remarks>定義はコアが単一所有する（<see cref="AnnotationPaletteCatalog.RepresentativeColors"/>）。</remarks>
     public static IReadOnlyList<ColorSelectorCustomColor> RepresentativeColors { get; } =
         [.. AnnotationPaletteCatalog.RepresentativeColors.Select(color => new ColorSelectorCustomColor(color.Name, color.Value))];
-    /// <summary>代表色パレットのタブ（■ だけを指定した列数で並べる）を作る。</summary>
+
+    /// <summary>代表色のタブ（■ だけを指定した列数で並べる）を作る。</summary>
     /// <param name="columns">■ の列数（1 以上。 既定は <see cref="DefaultPaletteColumns"/>）。</param>
     /// <returns>■ だけの格子のタブ。</returns>
     public static ColorSelectorCustomTab CreatePaletteTab(int columns = DefaultPaletteColumns)
         => new(PaletteTabTitle, RepresentativeColors, Math.Max(1, columns));
-
-    /// <summary>代表色（色名の一覧）のタブを作る。</summary>
-    /// <returns>色名付きの一覧のタブ。</returns>
-    public static ColorSelectorCustomTab CreateListTab() => new(ListTabTitle, RepresentativeColors);
-
-    /// <summary>代表色のタブ（■ の格子と色名の一覧）を作る。</summary>
-    /// <param name="columns">■ の列数（1 以上。 既定は <see cref="DefaultPaletteColumns"/>）。</param>
-    /// <returns>2 つのタブ（パレット → 一覧 の順）。</returns>
-    public static IReadOnlyList<ColorSelectorCustomTab> CreateTabs(int columns = DefaultPaletteColumns)
-        => [CreatePaletteTab(columns), CreateListTab()];
 
     /// <summary>色の選択を注釈向けの構成にする（代表色のタブだけを出す）。</summary>
     /// <param name="selector">構成する色の選択。</param>
@@ -63,10 +45,10 @@ public static class AnnotationPalette
         selector.ShowThemeColorTab = false;
         selector.ShowNamedColorTab = false;
         selector.ShowTabTitles = true;
-        selector.CustomTabs = CreateTabs(columns);
+        selector.CustomTabs = [CreatePaletteTab(columns)];
     }
 
-    /// <summary>色の選択を「代表色パレット・代表色 + 標準のタブ」の構成にする（設定画面向け）。</summary>
+    /// <summary>色の選択を「代表色と標準のタブ」の構成にする（設定画面向け）。</summary>
     /// <param name="selector">構成する色の選択。</param>
     /// <param name="columns">■ の列数（1 以上。 既定は <see cref="DefaultPaletteColumns"/>）。</param>
     /// <remarks>
@@ -78,7 +60,7 @@ public static class AnnotationPalette
         selector.ShowThemeColorTab = true;
         selector.ShowNamedColorTab = true;
         selector.ShowTabTitles = true;
-        selector.CustomTabs = CreateTabs(columns);
+        selector.CustomTabs = [CreatePaletteTab(columns)];
     }
 
     /// <summary>代表色を <c>#AARRGGBB</c> の文字列として取得する。</summary>
