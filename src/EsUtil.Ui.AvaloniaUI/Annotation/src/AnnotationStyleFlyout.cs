@@ -106,8 +106,8 @@ internal static class AnnotationStyleFlyout
             AnnotationLimits.TailWidthMax,
             value => owner.UpdateSelectedTail(tail => tail with { Width = value })));
         panel.Children.Add(AnnotationEditorControls.ChoiceRow(
-            "しっぽの辺",
-            ["上", "右", "下", "左"],
+            AnnotationBubbleEdgeCatalog.Label,
+            [.. AnnotationBubbleEdgeCatalog.Options],
             (int)bubble.Tail.BaseEdge,
             index => owner.UpdateSelectedTail(tail => tail with { BaseEdge = (BubbleEdge)index })));
 

@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using DrawingColor = System.Drawing.Color;
@@ -11,9 +12,6 @@ namespace EsUtil.Ui.WinUI3.Annotation;
 /// </remarks>
 internal sealed class AnnotationStylePanel : ContentControl
 {
-    /// <summary>しっぽの向きの選択肢（毎回作らない）。</summary>
-    private static readonly string[] s_edgeOptions = ["下", "上", "左", "右"];
-
     /// <summary>対象のレイヤー。</summary>
     private readonly AnnotationLayerControl _layer;
 
@@ -70,8 +68,8 @@ internal sealed class AnnotationStylePanel : ContentControl
                 "しっぽの幅", bubble.Tail.Width, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax,
                 value => _layer.UpdateSelectedTail(tail => tail with { Width = value })));
             panel.Children.Add(AnnotationEditorControls.ChoiceRow(
-                "しっぽの向き",
-                s_edgeOptions,
+                AnnotationBubbleEdgeCatalog.Label,
+                AnnotationBubbleEdgeCatalog.Options,
                 (int)bubble.Tail.BaseEdge,
                 value => _layer.UpdateSelectedTail(tail => tail with { BaseEdge = (BubbleEdge)value })));
         }
@@ -93,18 +91,7 @@ internal sealed class AnnotationStylePanel : ContentControl
     /// <param name="text">保存値。</param>
     /// <param name="fallback">解釈できない場合の色。</param>
     /// <returns>色。</returns>
+    /// <remarks>文字列の解釈は <see cref="DrawingColorExtensions.TryParseHexText"/> が単一所有する（自前で桁数を数えない）。</remarks>
     private static DrawingColor ParseColor(string? text, DrawingColor fallback)
-    {
-        if (text is { Length: 9 } && text[0] == '#'
-            && uint.TryParse(text[1..], System.Globalization.NumberStyles.HexNumber, null, out var value))
-        {
-            return DrawingColor.FromArgb(
-                (byte)((value >> 24) & 0xFF),
-                (byte)((value >> 16) & 0xFF),
-                (byte)((value >> 8) & 0xFF),
-                (byte)(value & 0xFF));
-        }
-
-        return fallback;
-    }
+        => DrawingColorExtensions.TryParseHexText(text, out var color) ? color : fallback;
 }

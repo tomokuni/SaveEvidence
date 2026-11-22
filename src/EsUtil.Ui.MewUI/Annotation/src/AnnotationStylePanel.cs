@@ -114,8 +114,8 @@ public sealed class AnnotationStylePanel : ContentControl
             AnnotationLimits.TailWidthMax,
             value => layer.UpdateSelectedTail(tail => tail with { Width = value })));
         panel.Add(AnnotationEditorControls.ChoiceRow(
-            "しっぽの辺",
-            ["上", "右", "下", "左"],
+            AnnotationBubbleEdgeCatalog.Label,
+            [.. AnnotationBubbleEdgeCatalog.Options],
             (int)bubble.Tail.BaseEdge,
             index => layer.UpdateSelectedTail(tail => tail with { BaseEdge = (BubbleEdge)index })));
 

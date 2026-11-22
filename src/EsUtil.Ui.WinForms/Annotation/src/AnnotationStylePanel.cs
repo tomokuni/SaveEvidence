@@ -67,7 +67,7 @@ internal sealed class AnnotationStylePanel : Panel
                 value => _layer.SetSelectedBodyPadding(value));
             AddNumber("しっぽの幅", bubble.Tail.Width, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax, ref y,
                 value => _layer.UpdateSelectedTail(tail => tail with { Width = value }));
-            AddChoice("しっぽの向き", ["下", "上", "左", "右"], (int)bubble.Tail.BaseEdge, ref y,
+            AddChoice(AnnotationBubbleEdgeCatalog.Label, [.. AnnotationBubbleEdgeCatalog.Options], (int)bubble.Tail.BaseEdge, ref y,
                 value => _layer.UpdateSelectedTail(tail => tail with { BaseEdge = (BubbleEdge)value }));
         }
 
@@ -77,7 +77,7 @@ internal sealed class AnnotationStylePanel : Panel
             Width = 100,
             Height = 24,
             Location = new Point(6, y),
-            Font = new Font("Yu Gothic UI", AnnotationEditorControls.FontSize),
+            Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
         };
         front.Click += (_, _) => _layer.MoveSelectedToFront();
         Controls.Add(front);
@@ -88,7 +88,7 @@ internal sealed class AnnotationStylePanel : Panel
             Width = 100,
             Height = 24,
             Location = new Point(110, y),
-            Font = new Font("Yu Gothic UI", AnnotationEditorControls.FontSize),
+            Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
         };
         back.Click += (_, _) => _layer.MoveSelectedToBack();
         Controls.Add(back);
@@ -100,7 +100,7 @@ internal sealed class AnnotationStylePanel : Panel
             Width = 100,
             Height = 24,
             Location = new Point(6, y),
-            Font = new Font("Yu Gothic UI", AnnotationEditorControls.FontSize),
+            Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
         };
         close.Click += (_, _) => _close();
         Controls.Add(close);
@@ -148,7 +148,7 @@ internal sealed class AnnotationStylePanel : Panel
             DropDownStyle = ComboBoxStyle.DropDownList,
             Width = 100,
             Location = new Point(120, y - 22),
-            Font = new Font("Yu Gothic UI", AnnotationEditorControls.FontSize),
+            Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
         };
 
         foreach (var option in options)

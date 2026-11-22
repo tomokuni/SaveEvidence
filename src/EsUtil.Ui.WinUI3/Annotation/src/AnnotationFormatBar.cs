@@ -1,3 +1,4 @@
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Palette;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -8,8 +9,8 @@ namespace EsUtil.Ui.WinUI3.Annotation;
 
 /// <summary>本文の書式（文字単位）を操作するバー（WinUI 3 版）。</summary>
 /// <remarks>
-/// <b>適用先は選択範囲</b>: 本文を編集中は入力欄の選択範囲、編集していないときは本文全体へ適用する
-/// （適用先が決まらない操作は無効にする）。<br/>
+/// <b>適用先は選択範囲</b>: 選んだ書式は選択範囲へ適用し、選択が無いときは以降の入力へ回す
+/// （既存の文字は変えない。 判定はレイヤーが単一所有する）。<br/>
 /// <b>色は色選択コントロールを使う</b>: 代表色パレット・代表色・カラーピッカーから選ぶ（自前の色入力を作らない）。
 /// </remarks>
 internal sealed class AnnotationFormatBar : ContentControl
@@ -204,18 +205,7 @@ internal sealed class AnnotationFormatBar : ContentControl
     /// <summary>保存値（<c>#AARRGGBB</c>）を色へ変換する。</summary>
     /// <param name="text">保存値。</param>
     /// <returns>色。 解釈できない場合は既定の文字色。</returns>
+    /// <remarks>文字列の解釈は <see cref="DrawingColorExtensions.TryParseHexText"/> が単一所有する（自前で桁数を数えない）。</remarks>
     private static DrawingColor ParseColor(string? text)
-    {
-        if (text is { Length: 9 } && text[0] == '#'
-            && uint.TryParse(text[1..], System.Globalization.NumberStyles.HexNumber, null, out var value))
-        {
-            return DrawingColor.FromArgb(
-                (byte)((value >> 24) & 0xFF),
-                (byte)((value >> 16) & 0xFF),
-                (byte)((value >> 8) & 0xFF),
-                (byte)(value & 0xFF));
-        }
-
-        return AnnotationDefaults.TextStyle.Color;
-    }
+        => DrawingColorExtensions.TryParseHexText(text, out var color) ? color : AnnotationDefaults.TextStyle.Color;
 }

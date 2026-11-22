@@ -56,7 +56,7 @@ internal sealed class AnnotationFormatBar : Panel
         {
             DropDownStyle = ComboBoxStyle.DropDownList,
             Width = (int)Math.Round(AnnotationFormatBarLayout.FontSelectorWidth),
-            Font = new Font("Yu Gothic UI", AnnotationEditorControls.FontSize),
+            Font = new Font(AnnotationEditorControls.UiFontFamily, AnnotationEditorControls.FontSize),
             Margin = new Padding(1),
         };
 

@@ -7,6 +7,10 @@ internal static class AnnotationEditorControls
     /// <summary>行の文字サイズ（ポイント）。</summary>
     internal const float FontSize = 9F;
 
+    /// <summary>編集 UI の文字に使うフォント名を取得する。</summary>
+    /// <remarks>本文の既定フォント（<see cref="AnnotationDefaults.PreferredFontFamilies"/> の先頭）と揃える。</remarks>
+    internal static string UiFontFamily => AnnotationDefaults.PreferredFontFamilies[0];
+
     /// <summary>項目間の余白（ピクセル）。</summary>
     internal const int Gap = (int)AnnotationEditorLayout.RowSpacing;
 
@@ -17,7 +21,7 @@ internal static class AnnotationEditorControls
     {
         Text = text,
         AutoSize = true,
-        Font = new Font("Yu Gothic UI", FontSize),
+        Font = new Font(UiFontFamily, FontSize),
         TextAlign = ContentAlignment.MiddleLeft,
         Margin = new Padding(0, Gap, Gap, 0),
     };
@@ -29,7 +33,7 @@ internal static class AnnotationEditorControls
     {
         Text = text,
         AutoSize = true,
-        Font = new Font("Yu Gothic UI", FontSize, FontStyle.Bold),
+        Font = new Font(UiFontFamily, FontSize, FontStyle.Bold),
         Margin = new Padding(0, Gap, Gap, 0),
     };
 
@@ -51,7 +55,7 @@ internal static class AnnotationEditorControls
             Size = new Size(28, 24),
             Checked = isChecked,
             Font = new Font(
-                "Yu Gothic UI",
+                UiFontFamily,
                 FontSize,
                 bold ? FontStyle.Bold : italic ? FontStyle.Italic : FontStyle.Regular),
             Margin = new Padding(1),
@@ -132,7 +136,7 @@ internal static class AnnotationEditorControls
             Increment = 1,
             Value = (decimal)Math.Clamp(value, minimum, maximum),
             Width = 76,
-            Font = new Font("Yu Gothic UI", FontSize),
+            Font = new Font(UiFontFamily, FontSize),
             Margin = new Padding(1),
         };
 
