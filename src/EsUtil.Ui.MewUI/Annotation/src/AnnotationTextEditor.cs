@@ -14,9 +14,9 @@ namespace EsUtil.Ui.MewUI.Annotation;
 /// <b>位置と開閉はコアが決める</b>: <see cref="AnnotationPanelController"/> が「どこへ出すか・ドラッグで
 /// どう動くか・いつ閉じるか」を単一所有する。 本クラスは <see cref="IAnnotationPanelHost"/> を実装し、
 /// 重ねる先への追加・移動・削除だけを行う（4 つの UI 版で動作を揃えるため）。<br/>
-/// <b>独立したウィンドウを作らない</b>: ウィンドウはタスク バーへ出る・アプリの後ろへ回る・フォーカスを
-/// 奪うといった問題が版ごとに出るため、アプリの画面の最上位（<c>Window.OverlayLayer</c>）へ重ねる。
-/// 画像（プレビュー）の内側では切れない。
+/// <b>ウィンドウの外へ出せる <see cref="Popup"/> へ置く</b>: アプリの画面（<c>Window.OverlayLayer</c>）へ
+/// 重ねると、**ウィンドウの外へ出た部分が切れます**（色選択のフライアウトは出せるのに、書式バーと
+/// 右クリックのフライアウトだけ出せない、との指摘。 実測 2026-11-23）。 位置はウィンドウ座標で与えます。
 /// </remarks>
 public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
 {
@@ -38,8 +38,13 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>表示中のパネルの左上（DIP）。</summary>
     private readonly Dictionary<AnnotationPanelKind, EsPoint> _positions = [];
 
-    /// <summary>パネルを重ねた先（アプリの画面の最上位）。</summary>
-    private OverlayLayer? _overlay;
+    /// <summary>パネルを載せるポップアップ（種別ごとに 1 つ。 使い回す）。</summary>
+    /// <remarks>
+    /// <b>ウィンドウの外へ出せる</b>: <see cref="OverlayLayer"/> へ重ねるとウィンドウの内側で切れる。
+    /// <see cref="Popup"/> は独立したウィンドウとして描かれるため、画面の端まで出せる
+    /// （色選択のフライアウトと同じ。 実測 2026-11-23）。
+    /// </remarks>
+    private readonly Dictionary<AnnotationPanelKind, Popup> _popups = [];
 
     /// <summary>書式バーの対象（注釈の矩形）。 実寸が確定したらこの矩形で置き直す。</summary>
     private EsRect? _formatBarTarget;
@@ -171,17 +176,12 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     {
         RemovePanel(kind);
 
-        if (FindVisualRoot() is not Window owner || owner.OverlayLayer is not { } overlayLayer)
+        if (FindVisualRoot() is not Window owner)
         {
             return;
         }
 
-        // **重ねる先はアプリの画面の最上位**: プレビューの内側へ置くと画像の外で切れる。
-        // **全面を覆う Canvas を挟まない**: 挟むとパネルの外側の押下を吸ってしまい、注釈も
-        // 書式バーも操作できなくなる（実測 2026-11-21）。 位置は余白（Margin）で与える。
-        _overlay = overlayLayer;
-
-        // **実寸が確定したら置き直す**: 置いた時点の見積りより実際の描画が高いことがあり、
+        // **描画のたびに位置を決め直す**: 置いた時点の見積りより実際の描画が高いことがあり、
         // その差だけ書式バーが注釈へ重なる（実測 2026-11-21）。 描画のたびに実寸で決め直す。
         if (!_frameHook)
         {
@@ -248,11 +248,15 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         root.OnMouseMove(e => ContinuePanelDrag(kind, root, owner, e));
         root.OnMouseUp(_ => EndPanelDrag(kind));
 
-        if (!overlayLayer.Contains(root))
+        // **ウィンドウの外へ出せるポップアップへ載せる**: アプリの画面（OverlayLayer）へ重ねると
+        // ウィンドウの内側で切れる（実測 2026-11-23）。
+        if (!_popups.TryGetValue(kind, out var popup))
         {
-            overlayLayer.Add(root);
+            popup = new Popup { StaysOpen = true };
+            _popups[kind] = popup;
         }
 
+        popup.Content = root;
         ApplyPosition(kind, root, position);
     }
 
@@ -271,14 +275,33 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="kind">パネルの種別。</param>
     public void DestroyPanel(AnnotationPanelKind kind) => RemovePanel(kind);
 
-    /// <summary>パネルの位置を適用する（左上の余白として与える）。</summary>
+    /// <summary>パネルの位置を適用する（ポップアップを左上の位置へ出す・動かす）。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <param name="root">パネルの根。</param>
-    /// <param name="position">左上の位置（DIP）。</param>
+    /// <param name="position">左上の位置（DIP。 ウィンドウ座標）。</param>
+    /// <remarks>
+    /// <b>位置はウィンドウ座標で与える</b>: MewUI の <see cref="Popup.ShowAt"/> は
+    /// アンカーの矩形をウィンドウ座標で受け取ります。 幅・高さ 1 の矩形を位置に置き、
+    /// その下（<see cref="PopupAnchorSide.Below"/>）へ出すことで、左上が指定の位置になります。
+    /// </remarks>
     private void ApplyPosition(AnnotationPanelKind kind, Border root, EsPoint position)
     {
         _positions[kind] = position;
-        root.Margin = new Thickness(position.X, position.Y, 0, 0);
+        root.Margin = new Thickness(0);
+
+        if (!_popups.TryGetValue(kind, out var popup))
+        {
+            return;
+        }
+
+        var anchor = new Rect(position.X, position.Y - 1, 1, 1);
+        if (popup.IsOpen)
+        {
+            popup.MoveTo(anchor, PopupAnchorSide.Below);
+            return;
+        }
+
+        popup.ShowAt(this, anchor, PopupAnchorSide.Below);
     }
 
     /// <summary>右クリック位置へ外観の編集パネルを表示する。</summary>
@@ -387,9 +410,9 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="kind">パネルの種別。</param>
     private void RemovePanel(AnnotationPanelKind kind)
     {
-        if (_roots.TryGetValue(kind, out var root))
+        if (_popups.TryGetValue(kind, out var popup) && popup.IsOpen)
         {
-            _overlay?.Remove(root);
+            popup.Close();
         }
     }
 
