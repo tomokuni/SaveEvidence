@@ -38,6 +38,9 @@ public sealed partial class AnnotationLayerControl
     /// <summary>IME の変換中文字列（文書へは入れない）。</summary>
     private string _preeditText = string.Empty;
 
+    /// <summary>変換中の文字列の先頭の位置（文字数。 IME へ位置を答えるのに使う）。</summary>
+    private int _compositionStart;
+
 
     /// <summary>ポインターで文字を選んでいる最中かどうか。</summary>
     private bool _isSelectingText;
@@ -177,13 +180,17 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>IME の変換中文字列を設定する（文書へは入れない）。</summary>
     /// <param name="preeditText">変換中の文字列（<see langword="null"/> は変換の終了）。</param>
+    /// <remarks>
+    /// <b>候補の位置は自前で指定しない</b>: MewUI のバックエンドがフォーカス中の要素
+    /// （<c>Aprillz.MewUI.Input.ITextCompositionClient</c>）から変換中の文字の矩形を得て位置を決めます
+    /// （本レイヤーは <c>AnnotationLayerControl.Ime.cs</c> で実装）。
+    /// 自前で <c>ImmSetCandidateWindow</c> を呼ぶと、後からバックエンドが上書きするため効果がありません
+    /// （実測 2026-11-23）。
+    /// </remarks>
     internal void SetPreeditTextForInput(string? preeditText)
     {
         _preeditText = preeditText ?? string.Empty;
         InvalidateVisual();
-
-        // **候補の位置をキャレットへ合わせる**（MewUI に IME の位置を伝える API が無いため Win32 を呼ぶ）
-        PositionImeCandidateWindow();
     }
 
     /// <summary>本文の編集でキーが押されたときの処理。</summary>
@@ -309,7 +316,11 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>確定した文字列を受け取る。</summary>
     /// <param name="e">入力の引数。</param>
-    private void OnWindowTextInput(TextInputEventArgs e)
+    private void OnWindowTextInput(TextInputEventArgs e) => ApplyTextInput(e);
+
+    /// <summary>確定した文字列を本文へ入れる（ウィンドウのプレビューと IME の入口を 1 つにする）。</summary>
+    /// <param name="e">入力の引数。</param>
+    private void ApplyTextInput(TextInputEventArgs e)
     {
         if (!_isEditingText || !IsFocused || string.IsNullOrEmpty(e.Text))
         {
@@ -320,26 +331,38 @@ public sealed partial class AnnotationLayerControl
         // 変換の終了より先にここへ届く。 変換中だからと捨てると、**確定した瞬間に文字が消える**
         // （実測 2026-11-22: MewUI 版だけで発生）。 ここで変換を終えたものとして本文へ入れる。
         _preeditText = string.Empty;
+        _compositionStart = _caretIndex;
         ReplaceSelection(NormalizeInput(e.Text));
         e.Handled = true;
     }
 
     /// <summary>IME の変換を開始する（変換中の文字は文書へ入れない）。</summary>
     /// <param name="e">変換の引数。</param>
-    private void OnWindowCompositionStart(TextCompositionEventArgs e)
+    private void OnWindowCompositionStart(TextCompositionEventArgs e) => ApplyCompositionStart(e);
+
+    /// <summary>IME の変換の開始を反映する。</summary>
+    /// <param name="e">変換の引数。</param>
+    private void ApplyCompositionStart(TextCompositionEventArgs e)
     {
         if (!_isEditingText || !IsFocused)
         {
             return;
         }
 
+        // **変換の先頭を覚える**: 候補の位置は「変換中の文字列の先頭の文字の矩形」から決まる
+        // （MewUI は本値と GetCharRectInWindow で IME の位置を決める）
+        _compositionStart = SelectionStart;
         SetPreeditTextForInput(e.Text);
         e.Handled = true;
     }
 
     /// <summary>IME の変換中の文字列を更新する。</summary>
     /// <param name="e">変換の引数。</param>
-    private void OnWindowCompositionUpdate(TextCompositionEventArgs e)
+    private void OnWindowCompositionUpdate(TextCompositionEventArgs e) => ApplyCompositionUpdate(e);
+
+    /// <summary>IME の変換中の文字列の更新を反映する。</summary>
+    /// <param name="e">変換の引数。</param>
+    private void ApplyCompositionUpdate(TextCompositionEventArgs e)
     {
         if (!_isEditingText || !IsFocused)
         {
@@ -352,7 +375,11 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>IME の変換を確定する（確定した文字列だけを本文へ入れる）。</summary>
     /// <param name="e">変換の引数。</param>
-    private void OnWindowCompositionEnd(TextCompositionEventArgs e)
+    private void OnWindowCompositionEnd(TextCompositionEventArgs e) => ApplyCompositionEnd(e);
+
+    /// <summary>IME の変換の確定を反映する。</summary>
+    /// <param name="e">変換の引数。</param>
+    private void ApplyCompositionEnd(TextCompositionEventArgs e)
     {
         if (!_isEditingText || !IsFocused)
         {
@@ -360,6 +387,7 @@ public sealed partial class AnnotationLayerControl
         }
 
         _preeditText = string.Empty;
+        _compositionStart = _caretIndex;
         if (!string.IsNullOrEmpty(e.Text))
         {
             ReplaceSelection(NormalizeInput(e.Text));
@@ -372,66 +400,6 @@ public sealed partial class AnnotationLayerControl
         e.Handled = true;
     }
 
-    /// <summary>IME の変換候補の表示位置をキャレットの位置へ合わせる。</summary>
-    /// <remarks>
-    /// <b>合わせないと候補が画面の隅に出る</b>: MewUI には IME へ候補の位置を伝える API が無いため、
-    /// 既定の位置（画面の右下など）に候補が出ます（実測 2026-11-22）。 Win32 の
-    /// <c>ImmSetCandidateWindow</c> でキャレットの位置を伝えます。
-    /// </remarks>
-    private void PositionImeCandidateWindow()
-    {
-        if (_inputWindow is not { } window || window.Handle == IntPtr.Zero)
-        {
-            return;
-        }
-
-        // 変換中の文字列の末尾（キャレット）の位置を画面座標へ直す
-        if (!TryResolveCaretSource(
-            AnnotationCompositionPreview.ResolveCaret(_caretIndex, _preeditText), DefaultLayouts, out var caret))
-        {
-            return;
-        }
-
-        var local = new Point(caret.X, caret.Y + caret.Height);
-        Point screen;
-        try
-        {
-            screen = PointToScreen(local);
-        }
-        catch (InvalidOperationException)
-        {
-            // 画面座標へ直せない（ウィンドウが無い・閉じている）ときは候補の位置を指定しない（例外は投げない）
-            return;
-        }
-
-        var context = NativeIme.ImmGetContext(window.Handle);
-        if (context == IntPtr.Zero)
-        {
-            return;
-        }
-
-        try
-        {
-            var form = new NativeIme.CandidateForm
-            {
-                Index = 0,
-                Style = NativeIme.CfsCandidatePos,
-                CurrentPos = new NativeIme.Point { X = (int)screen.X, Y = (int)screen.Y },
-                Area = new NativeIme.Rect
-                {
-                    Left = (int)screen.X,
-                    Top = (int)screen.Y,
-                    Right = (int)screen.X + 1,
-                    Bottom = (int)screen.Y + 1,
-                },
-            };
-            _ = NativeIme.ImmSetCandidateWindow(context, ref form);
-        }
-        finally
-        {
-            _ = NativeIme.ImmReleaseContext(window.Handle, context);
-        }
-    }
     /// <summary>ウィンドウがフォーカスを失ったら入力の購読を解除する（別ウィンドウへ入力を漏らさない）。</summary>
     private void OnWindowLostFocus() => DetachInputWindow();
 

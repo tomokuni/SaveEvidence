@@ -663,7 +663,15 @@ internal static class CapturePage
                 }
 
                 var focused = (template.FindVisualRoot() as Window)?.FocusManager.FocusedElement;
-                if (e.ControlKey && focused is not TextBox)
+
+                // **注釈の入力中は画像のコピー・貼り付けを行わない**: 色の入力はコンボボックスと
+                // 文字入力を重ねて作るため、フォーカスの要素だけでは判断できない（実測 2026-11-23:
+                // 色の欄で Ctrl+V しても画像の貼り付けになった）。 注釈を編集している間・
+                // 右クリックのフライアウトを出している間は、文字の編集を優先する。
+                var isTextInput = focused is TextBox or ComboBox
+                    || annotation.IsEditingText
+                    || annotation.IsStylePanelOpen;
+                if (e.ControlKey && !isTextInput)
                 {
                     if (e.Key == Key.C)
                     {

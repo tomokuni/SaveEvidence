@@ -242,6 +242,14 @@ public sealed partial class AnnotationLayerControl
 
         Focus();
 
+        // **新しい押下は前の操作を必ず終わらせる**: 離した通知を取りこぼすと
+        // `_isPreviewDragging` などが立ったまま残り、以後のドラッグがプレビューのパンとして
+        // 扱われて**注釈（枠線・吹き出し）が動かなくなる**（実測 2026-11-23:
+        // 空いている場所を一度押した後のドラッグで枠線が動かなかった）。
+        _isPreviewDragging = false;
+        _isDraggingTail = false;
+        _isSelectingText = false;
+
         // 押下中の座標変換を固定する（ドラッグ中に倍率が変わってもカーソルと 1:1 で動かす）
         FreezeTransform();
 
@@ -314,6 +322,11 @@ public sealed partial class AnnotationLayerControl
                 return;
             }
 
+            // **押している間はポインターを捕まえる**: 捕まえないと離した通知が届かず、
+            // `_isPreviewDragging` が立ったまま残る。 以後のドラッグがすべてプレビューのパンとして
+            // 扱われ、**注釈（枠線・吹き出し）が動かなくなる**（実測 2026-11-23: 空いている場所を
+            // 一度クリックした後のドラッグで枠線が動かなかった）。
+            CapturePointer();
             _isPreviewDragging = true;
             RaisePreviewGesture(AnnotationPreviewGesture.DragStart, position, 1, 0, e.ShiftKey, e.ControlKey);
         }
@@ -354,6 +367,16 @@ public sealed partial class AnnotationLayerControl
         // 注釈の無い場所を押したまま動かしたら、プレビューのパンへ渡す
         if (_isPreviewDragging)
         {
+            // **離した後の移動ではパンを続けない**: 解放を取りこぼしたまま動き続けると、
+            // 次のドラッグが注釈へ届かない（実測 2026-11-23）
+            if (!e.LeftButton)
+            {
+                _isPreviewDragging = false;
+                ReleasePointer();
+                RaisePreviewGesture(AnnotationPreviewGesture.DragEnd, position, 1, 0, e.ShiftKey, e.ControlKey);
+                return;
+            }
+
             RaisePreviewGesture(AnnotationPreviewGesture.DragMove, position, 1, 0, e.ShiftKey, e.ControlKey);
             return;
         }

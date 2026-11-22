@@ -215,6 +215,8 @@ public sealed partial class AnnotationLayerControl
             // **IME を有効にする**: 窓口を作っただけでは IME は入力モードへ切り替わらない。
             // フォーカスを得たことを知らせないと、日本語入力モードへ切り替わらないままになる
             // （実測 2026-11-22: WinUI 3 版だけ IME モードが切り替わらなかった）。
+            // `CoreTextEditContext` に入力を有効にするプロパティは無い（`IsInputActive` は
+            // この SDK に存在しない。 実測 2026-11-23）。 フォーカスと本文の通知で有効にする。
             context.NotifyFocusEnter();
             NotifyImeSelection();
         }
@@ -345,12 +347,15 @@ public sealed partial class AnnotationLayerControl
             (start, end) = (end, start);
         }
 
+        // **変換中かどうかを控える**: `ReplaceRange` は変換の状態を落とすため、呼ぶ前に控えます
+        var composing = _isComposing;
         ReplaceRange(start, end, e.Text ?? string.Empty);
         e.Result = CoreTextTextUpdatingResult.Succeeded;
 
-        // **変換中は変換中の文字列として覚える**: 確定の通知で取りこぼさないようにする
-        if (_isComposing)
+        // **変換中の文字列として覚える**: 確定の通知で取りこぼさないようにする
+        if (composing)
         {
+            _isComposing = true;
             _preeditText = e.Text ?? string.Empty;
             Redraw();
         }
@@ -473,6 +478,10 @@ public sealed partial class AnnotationLayerControl
             return false;
         }
 
+        // **変換中かどうかを先に控える**: ここで `_isComposing` を落としてから判定すると、
+        // 変換中でも「本文が変わった」と IME へ伝えてしまい、変換が中断されて
+        // **1 キーごとに確定**する（実測 2026-11-23: 代入の順序が逆になっていた）。
+        var wasComposing = _isComposing;
         _isComposing = false;
         _preeditText = string.Empty;
         PrepareUndo();
@@ -484,7 +493,7 @@ public sealed partial class AnnotationLayerControl
 
         // **変換中は知らせない**: 変換の途中で「本文が変わった」と伝えると IME の変換が中断され、
         // 1 キーごとに確定してしまう（実測 2026-11-22）。 確定したときだけ知らせる。
-        if (!_isComposing)
+        if (!wasComposing)
         {
             NotifyImeTextChanged(start, end - start, text.Length);
         }
