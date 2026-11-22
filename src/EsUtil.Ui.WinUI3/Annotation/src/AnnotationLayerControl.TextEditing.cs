@@ -347,15 +347,18 @@ public sealed partial class AnnotationLayerControl
             (start, end) = (end, start);
         }
 
-        // **変換中かどうかを控える**: `ReplaceRange` は変換の状態を落とすため、呼ぶ前に控えます
+        // **変換中かどうかを先に控える**: `ReplaceRange` は変換の状態を落とすため、呼ぶ前に控えます。
+        // ここで控えた値を「IME へ知らせるか」の判断に使います（変換中に知らせると変換が中断され、
+        // 1 キーごとに確定してしまう）。
         var composing = _isComposing;
         ReplaceRange(start, end, e.Text ?? string.Empty);
         e.Result = CoreTextTextUpdatingResult.Succeeded;
 
-        // **変換中の文字列として覚える**: 確定の通知で取りこぼさないようにする
+        // **変換中の文字列として覚える**: 確定の通知で取りこぼさないようにする。
+        // `_isComposing` は書き戻さない（変換の開始・終了の通知だけが決める。 書き戻すと
+        // IME の状態と食い違い、日本語入力へ切り替わらなくなる。 実測 2026-11-23）。
         if (composing)
         {
-            _isComposing = true;
             _preeditText = e.Text ?? string.Empty;
             Redraw();
         }

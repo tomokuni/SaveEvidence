@@ -284,7 +284,16 @@ public sealed partial class AnnotationLayerControl
         }
     }
 
-    /// <summary>ウィンドウの入力イベントを購読する（確定文字列の受け取り）。</summary>
+    /// <summary>ウィンドウの入力イベントを購読する（フォーカスを失ったときの後片付けだけ）。</summary>
+    /// <remarks>
+    /// <b>文字と変換はウィンドウのプレビューで受け取らない</b>: プレビューで <c>Handled</c> を立てると、
+    /// MewUI のバックエンドが <b>変換候補の位置を設定する処理を行わなくなります</b>
+    /// （<c>RaisePreviewTextCompositionStart</c> の後、<c>Handled</c> が立っていると
+    /// <c>ITextCompositionClient</c> の呼び出しと <c>PositionImeWindow</c> を飛ばす。 実測 2026-11-23）。
+    /// そのため候補が画面の隅（右下）に出ます。 文字と変換は
+    /// <see cref="Aprillz.MewUI.Input.ITextInputClient"/> / <see cref="Aprillz.MewUI.Input.ITextCompositionClient"/>
+    /// （<c>AnnotationLayerControl.Ime.cs</c>）で受け取り、バックエンドに位置を決めさせます。
+    /// </remarks>
     private void AttachInputWindow()
     {
         if (_inputWindow is not null || FindVisualRoot() is not Window window)
@@ -293,10 +302,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         _inputWindow = window;
-        window.PreviewTextInput += OnWindowTextInput;
-        window.PreviewTextCompositionStart += OnWindowCompositionStart;
-        window.PreviewTextCompositionUpdate += OnWindowCompositionUpdate;
-        window.PreviewTextCompositionEnd += OnWindowCompositionEnd;
         window.LostFocus += OnWindowLostFocus;
     }
 
@@ -305,20 +310,12 @@ public sealed partial class AnnotationLayerControl
     {
         if (_inputWindow is { } window)
         {
-            window.PreviewTextInput -= OnWindowTextInput;
-            window.PreviewTextCompositionStart -= OnWindowCompositionStart;
-            window.PreviewTextCompositionUpdate -= OnWindowCompositionUpdate;
-            window.PreviewTextCompositionEnd -= OnWindowCompositionEnd;
             window.LostFocus -= OnWindowLostFocus;
             _inputWindow = null;
         }
     }
 
-    /// <summary>確定した文字列を受け取る。</summary>
-    /// <param name="e">入力の引数。</param>
-    private void OnWindowTextInput(TextInputEventArgs e) => ApplyTextInput(e);
-
-    /// <summary>確定した文字列を本文へ入れる（ウィンドウのプレビューと IME の入口を 1 つにする）。</summary>
+    /// <summary>確定した文字列を本文へ入れる。</summary>
     /// <param name="e">入力の引数。</param>
     private void ApplyTextInput(TextInputEventArgs e)
     {
@@ -336,10 +333,6 @@ public sealed partial class AnnotationLayerControl
         e.Handled = true;
     }
 
-    /// <summary>IME の変換を開始する（変換中の文字は文書へ入れない）。</summary>
-    /// <param name="e">変換の引数。</param>
-    private void OnWindowCompositionStart(TextCompositionEventArgs e) => ApplyCompositionStart(e);
-
     /// <summary>IME の変換の開始を反映する。</summary>
     /// <param name="e">変換の引数。</param>
     private void ApplyCompositionStart(TextCompositionEventArgs e)
@@ -356,10 +349,6 @@ public sealed partial class AnnotationLayerControl
         e.Handled = true;
     }
 
-    /// <summary>IME の変換中の文字列を更新する。</summary>
-    /// <param name="e">変換の引数。</param>
-    private void OnWindowCompositionUpdate(TextCompositionEventArgs e) => ApplyCompositionUpdate(e);
-
     /// <summary>IME の変換中の文字列の更新を反映する。</summary>
     /// <param name="e">変換の引数。</param>
     private void ApplyCompositionUpdate(TextCompositionEventArgs e)
@@ -372,10 +361,6 @@ public sealed partial class AnnotationLayerControl
         SetPreeditTextForInput(e.Text);
         e.Handled = true;
     }
-
-    /// <summary>IME の変換を確定する（確定した文字列だけを本文へ入れる）。</summary>
-    /// <param name="e">変換の引数。</param>
-    private void OnWindowCompositionEnd(TextCompositionEventArgs e) => ApplyCompositionEnd(e);
 
     /// <summary>IME の変換の確定を反映する。</summary>
     /// <param name="e">変換の引数。</param>

@@ -224,8 +224,6 @@ public sealed partial class AnnotationLayerControl
         base.OnMouseDown(e);
 
         var position = e.GetPosition(this);
-
-        // 押下をホストへ知らせる（表示中のメニューを外側の押下で閉じるために使う）
         RaisePreviewGesture(AnnotationPreviewGesture.Press, position, 1, 0, e.ShiftKey, e.ControlKey);
 
         if (e.RightButton)
