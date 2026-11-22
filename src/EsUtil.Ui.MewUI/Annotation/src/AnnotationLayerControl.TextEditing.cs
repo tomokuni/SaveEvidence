@@ -339,7 +339,7 @@ public sealed partial class AnnotationLayerControl
     private static string NormalizeInput(string text)
         => text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace("\r", string.Empty, StringComparison.Ordinal);
 
-    /// <summary>選択範囲を指定された文字列で置き換える。</summary>
+    /// <summary>入力した文字列で選択範囲を置き換える（以降の入力へ効かせる書式も同時に反映する）。</summary>
     /// <param name="text">置き換える文字列（空なら削除）。</param>
     /// <returns>文書を変えた場合は <see langword="true"/>。</returns>
     private bool ReplaceSelection(string text)
@@ -359,7 +359,10 @@ public sealed partial class AnnotationLayerControl
         _isComposing = false;
         _preeditText = string.Empty;
         PrepareUndo();
-        _document = _document.WithText(bubble, bubble.Text.Remove(start, length).Insert(start, text));
+
+        // 挿入した文字へ保留している書式を反映する（規則はコアが単一所有する）
+        _document = _document.WithText(
+            bubble, AnnotationTextStyleEdit.Insert(bubble.Text, start, length, text, _typingStyle.Value));
         RaiseDocumentChanged();
 
         _caretIndex = start + text.Length;
@@ -444,11 +447,8 @@ public sealed partial class AnnotationLayerControl
     private bool ToggleDecoration(
         Func<AnnotationTextStyle, bool> read,
         Func<AnnotationTextStyle, bool, AnnotationTextStyle> write)
-    {
-        var value = !read(SelectedTextStyle);
-        var range = EffectiveTextRange();
-        return TransformTextStyle(range.Start, range.Length, style => write(style, value));
-    }
+        // 適用先（選択範囲・選択が無ければ以降の入力）の決定は Apply/Transform が単一所有する
+        => TransformTextStyle(style => write(style, !read(style)));
 
     /// <summary>選択範囲を <see cref="TextSelectionRange"/> へ写す（書式の適用先に使う）。</summary>
     private void SyncTextSelectionRange()
@@ -476,6 +476,7 @@ public sealed partial class AnnotationLayerControl
     /// <summary>選択範囲の文字がすべて条件を満たすかどうかを取得する（書式ボタンの押下状態に使う）。</summary>
     /// <param name="match">書式が条件を満たすかどうかを返す関数。</param>
     /// <returns>すべて満たす場合は <see langword="true"/>。</returns>
+    /// <remarks>選択が無い間は、書式バーで選んだ書式（以降の入力へ効く値）で判定する。</remarks>
     public bool SelectedTextMatches(Func<AnnotationTextStyle, bool> match)
     {
         ArgumentNullException.ThrowIfNull(match);
@@ -487,7 +488,7 @@ public sealed partial class AnnotationLayerControl
 
         var range = TextSelectionRange;
         return range.Length <= 0
-            ? match(bubble.Text.StyleAt(Math.Max(0, range.Start)))
+            ? match(SelectedTextStyle)
             : bubble.Text.AllMatch(range.Start, range.Length, match);
     }
 

@@ -62,6 +62,7 @@ internal sealed class AnnotationStylePanel : Panel
 
         if (item is BubbleAnnotation bubble)
         {
+            Add(AnnotationEditorControls.Heading("吹き出し"), ref y);
             AddNumber("本文の余白", bubble.BodyPadding, 0, AnnotationLimits.BodyPaddingMax, ref y,
                 value => _layer.SetSelectedBodyPadding(value));
             AddNumber("しっぽの幅", bubble.Tail.Width, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax, ref y,

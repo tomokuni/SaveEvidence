@@ -63,6 +63,7 @@ internal sealed class AnnotationStylePanel : ContentControl
         if (item is BubbleAnnotation bubble)
         {
             panel.Children.Add(AnnotationEditorControls.Divider());
+            panel.Children.Add(AnnotationEditorControls.Heading("吹き出し"));
             panel.Children.Add(AnnotationEditorControls.NumberRow(
                 "本文の余白", bubble.BodyPadding, 0, AnnotationLimits.BodyPaddingMax, value => _layer.SetSelectedBodyPadding(value)));
             panel.Children.Add(AnnotationEditorControls.NumberRow(

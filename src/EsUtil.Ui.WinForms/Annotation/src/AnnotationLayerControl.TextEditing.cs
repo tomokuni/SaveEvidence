@@ -285,9 +285,10 @@ public sealed partial class AnnotationLayerControl
         _isComposing = false;
         _preeditText = string.Empty;
         PrepareUndo();
+        // 挿入した文字へ保留している書式を反映する（規則はコアが単一所有する）
         _document = _document.WithText(
             bubble,
-            bubble.Text.Remove(start, end - start).Insert(start, text));
+            AnnotationTextStyleEdit.Insert(bubble.Text, start, end - start, text, _typingStyle.Value));
         RaiseDocumentChanged();
 
         _caretIndex = start + text.Length;
@@ -312,19 +313,15 @@ public sealed partial class AnnotationLayerControl
 
         var range = TextSelectionRange;
         return range.Length <= 0
-            ? match(bubble.Text.StyleAt(Math.Max(0, range.Start)))
+            ? match(SelectedTextStyle)
             : bubble.Text.AllMatch(range.Start, range.Length, match);
     }
 
     /// <summary>選択範囲の書式を変換する（1 つの属性だけ変える）。</summary>
     /// <param name="transform">書式を変える処理。</param>
+    /// <remarks>選択が無ければ以降の入力へ回す（判定は <see cref="TransformTextStyle(Func{AnnotationTextStyle, AnnotationTextStyle})"/> が持つ）。</remarks>
     internal void TransformSelectionStyle(Func<AnnotationTextStyle, AnnotationTextStyle> transform)
-    {
-        ArgumentNullException.ThrowIfNull(transform);
-
-        var range = TextSelectionRange;
-        TransformTextStyle(range.Start, range.Length, transform);
-    }
+        => _ = TransformTextStyle(transform);
 
     /// <summary>選択範囲へ書式を丸ごと適用する（色・大きさ・フォント）。</summary>
     /// <param name="style">書式。</param>
@@ -513,11 +510,8 @@ public sealed partial class AnnotationLayerControl
     /// <returns>処理した場合は <see langword="true"/>。</returns>
     private bool ToggleDecoration(
         Func<AnnotationTextStyle, bool> read, Func<AnnotationTextStyle, bool, AnnotationTextStyle> write)
-    {
-        var value = !read(SelectedTextStyle);
-        var range = TextSelectionRange;
-        return TransformTextStyle(range.Start, range.Length, style => write(style, value));
-    }
+        // 適用先（選択範囲・選択が無ければ以降の入力）の決定は Apply/Transform が単一所有する
+        => TransformTextStyle(style => write(style, !read(style)));
 
     /// <summary>キャレットを移動する（<paramref name="extend"/> なら選択を広げる）。</summary>
     /// <param name="index">移動先（文字数）。</param>

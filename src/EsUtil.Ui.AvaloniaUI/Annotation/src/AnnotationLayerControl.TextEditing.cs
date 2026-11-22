@@ -309,7 +309,10 @@ public sealed partial class AnnotationLayerControl
         }
 
         PrepareUndo();
-        _document = _document.WithText(bubble, bubble.Text.Remove(start, length).Insert(start, text));
+
+        // 挿入した文字へ保留している書式を反映する（規則はコアが単一所有する）
+        _document = _document.WithText(
+            bubble, AnnotationTextStyleEdit.Insert(bubble.Text, start, length, text, _typingStyle.Value));
         RaiseDocumentChanged();
 
         _caretIndex = start + text.Length;
@@ -398,11 +401,8 @@ public sealed partial class AnnotationLayerControl
     private bool ToggleDecoration(
         Func<AnnotationTextStyle, bool> read,
         Func<AnnotationTextStyle, bool, AnnotationTextStyle> write)
-    {
-        var value = !read(SelectedTextStyle);
-        var range = EffectiveTextRange();
-        return TransformTextStyle(range.Start, range.Length, style => write(style, value));
-    }
+        // 適用先（選択範囲・選択が無ければ以降の入力）の決定は Apply/Transform が単一所有する
+        => TransformTextStyle(style => write(style, !read(style)));
 
     /// <summary>選択範囲を <see cref="TextSelectionRange"/> へ写す（書式の適用先に使う）。</summary>
     private void SyncTextSelectionRange()
@@ -425,7 +425,7 @@ public sealed partial class AnnotationLayerControl
     /// <returns>すべて満たす場合は <see langword="true"/>。 吹き出しを選んでいない場合は <see langword="false"/>。</returns>
     /// <remarks>
     /// <b>範囲のすべてで判定する</b>: 一部だけ太字の範囲でボタンが押されて見えないよう、先頭の文字ではなく
-    /// 範囲のすべてが同じ属性かで決める。 選択が無い（キャレットだけ）ときはキャレットの位置の文字で判定する。
+    /// 範囲のすべてが同じ属性かで決める。 選択が無い（キャレットだけ）ときは書式バーで選んだ書式で判定する。
     /// </remarks>
     public bool SelectedTextMatches(Func<AnnotationTextStyle, bool> match)
     {
@@ -438,7 +438,7 @@ public sealed partial class AnnotationLayerControl
 
         var range = TextSelectionRange;
         return range.Length <= 0
-            ? match(bubble.Text.StyleAt(Math.Max(0, range.Start)))
+            ? match(SelectedTextStyle)
             : bubble.Text.AllMatch(range.Start, range.Length, match);
     }
 

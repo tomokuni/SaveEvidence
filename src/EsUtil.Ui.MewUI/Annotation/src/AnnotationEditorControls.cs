@@ -28,7 +28,7 @@ public static class AnnotationEditorControls
     public static UIElement Heading(string text) => new TextBlock
     {
         Text = text,
-        FontWeight = FontWeight.SemiBold,
+        FontWeight = FontWeight.Bold,
     };
 
     /// <summary>項目名のラベルを作る。</summary>
@@ -109,7 +109,36 @@ public static class AnnotationEditorControls
             AnnotationPalette.Configure(selector, columns);
         }
 
+        // 色の入力欄は MewUI の ComboBox が描く（色の選択は内部の ComboBox を公開していない）。
+        PaintInputs(selector);
         return selector;
+    }
+
+    /// <summary>入力欄の背景（有効時の色）を取得する。</summary>
+    /// <value>テーマの入力欄の色。 テーマを解決できない場合（<c>Application.Run</c> 前）は白。</value>
+    /// <remarks>
+    /// <b>MewUI の ComboBox は既定で灰色</b>である（実測 2026-11-22: <c>#E8E8E8</c>）。 白い数値の入力と
+    /// 並ぶと無効に見えるため、有効時の入力欄の色（数値の入力と同じ色）で塗る。
+    /// </remarks>
+    private static Color InputBackground
+        => Application.IsRunning ? Application.Current.Theme.Palette.ControlBackground : Color.White;
+
+    /// <summary>含まれる入力欄（<see cref="ComboBox"/>）を有効時の背景で塗る。</summary>
+    /// <param name="element">対象の要素。</param>
+    private static void PaintInputs(Element element)
+    {
+        if (element is ComboBox combo)
+        {
+            combo.Background = InputBackground;
+        }
+
+        if (element is Panel panel)
+        {
+            foreach (var child in panel.Children)
+            {
+                PaintInputs(child);
+            }
+        }
     }
 
     /// <summary>数値の入力を作る。</summary>
@@ -151,6 +180,7 @@ public static class AnnotationEditorControls
 
         var combo = new ComboBox().Items(options);
         combo.Width = 210;
+        combo.Background = InputBackground;
         combo.SelectedIndex = Math.Max(0, selectedIndex);
         combo.OnSelectionChanged(_ =>
         {

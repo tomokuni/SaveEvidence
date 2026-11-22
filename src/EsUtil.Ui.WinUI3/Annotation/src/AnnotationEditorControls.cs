@@ -28,7 +28,7 @@ internal static class AnnotationEditorControls
     {
         Text = text,
         FontSize = FontSize,
-        FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+        FontWeight = Microsoft.UI.Text.FontWeights.Bold,
         Margin = new Thickness(0, 0, 0, 2),
     };
 
@@ -206,7 +206,10 @@ internal static class AnnotationEditorControls
 
         if (label.Length > 0)
         {
-            row.Children.Add(Label(label));
+            // 項目名の幅を固定する（揃えないと入力欄の横位置が項目ごとにずれる。 幅はコアが単一所有する）
+            var caption = Label(label);
+            caption.Width = AnnotationEditorLayout.LabelWidth;
+            row.Children.Add(caption);
         }
 
         row.Children.Add(control);

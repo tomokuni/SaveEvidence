@@ -69,6 +69,9 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <summary>変更履歴（元に戻す・やり直す）。</summary>
     private readonly AnnotationHistory _history = new();
 
+    /// <summary>以降の入力へ効かせる書式（選択が無いときの書式変更の行き先）。</summary>
+    private readonly AnnotationTypingStyle _typingStyle = new();
+
     /// <summary>これから記録する変更の直前の文書（変更が起きるまで保持する）。</summary>
     private AnnotationDocument? _undoCandidate;
 
@@ -291,12 +294,15 @@ public sealed partial class AnnotationLayerControl : Grid
     public AnnotationItem? Selected => SelectedId is null ? null : _document.Find(SelectedId);
 
     /// <summary>選択中の本文の書式を取得する（選択範囲の先頭の書式）。</summary>
+    /// <remarks>選択が無い間は、書式バーで選んだ書式（以降の入力へ効く値）を返す。</remarks>
     public AnnotationTextStyle SelectedTextStyle
     {
-        get => AnnotationSelectionPresenter.ResolveTextStyle(_document, SelectedId, TextSelectionRange);
+        get => _typingStyle.ResolveDisplay(
+            AnnotationSelectionPresenter.ResolveTextStyle(_document, SelectedId, TextSelectionRange),
+            HasTextSelection);
         set
         {
-            // 適用の規則（選択が無ければ適用しない）はコアが単一所有する
+            // 適用先の規則（選択が無ければ以降の入力へ回す）はコアが単一所有する
             _ = ApplyTextStyle(value);
         }
     }
@@ -388,11 +394,19 @@ public sealed partial class AnnotationLayerControl : Grid
 
     /// <summary>選択中の本文へ書式を適用する（<see cref="TextSelectionStart"/> と <see cref="TextSelectionLength"/> の範囲）。</summary>
     /// <param name="style">書式。</param>
-    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    /// <returns>選択範囲へ適用した場合は <see langword="true"/>。 選択が無く以降の入力へ回した場合は <see langword="false"/>。</returns>
+    /// <remarks>
+    /// <b>選択が無ければ以降の入力へ回す</b>: 既存の文字は変えず、次に入力する文字へ適用する
+    /// （規則は <see cref="AnnotationTextStyleEdit"/> と <see cref="AnnotationTypingStyle"/> が単一所有する）。
+    /// </remarks>
     public bool ApplyTextStyle(AnnotationTextStyle style)
-        // 選択が無ければ適用しない（キャレット以降の文字が意図せず変わらないようにする）
-        => AnnotationTextStyleEdit.ResolveRange(TextSelectionStart, TextSelectionLength) is { } selection
+    {
+        ArgumentNullException.ThrowIfNull(style);
+
+        _typingStyle.Remember(style);
+        return AnnotationTextStyleEdit.ResolveRange(TextSelectionStart, TextSelectionLength) is { } selection
             && ApplyTextStyle(selection.Start, selection.Length, style);
+    }
 
     /// <summary>選択中の本文へ書式を適用する。</summary>
     /// <param name="start">開始位置（文字数）。</param>
@@ -409,6 +423,21 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <returns>適用した場合は <see langword="true"/>。</returns>
     public bool TransformTextStyle(int start, int length, Func<AnnotationTextStyle, AnnotationTextStyle> transform)
         => SetTextStyle(text => text.TransformStyle(start, length, transform));
+
+    /// <summary>選択中の本文の書式を変換する（選択範囲。 選択が無ければ以降の入力へ回す）。</summary>
+    /// <param name="transform">書式を変える処理。</param>
+    /// <returns>選択範囲へ適用した場合は <see langword="true"/>。 選択が無く以降の入力へ回した場合は <see langword="false"/>。</returns>
+    /// <remarks>変換の元になる書式は <see cref="SelectedTextStyle"/>（直前に入力した文字、または選んだ書式）である。</remarks>
+    public bool TransformTextStyle(Func<AnnotationTextStyle, AnnotationTextStyle> transform)
+    {
+        ArgumentNullException.ThrowIfNull(transform);
+
+        var next = transform(SelectedTextStyle);
+        _typingStyle.Remember(next);
+
+        return AnnotationTextStyleEdit.ResolveRange(TextSelectionStart, TextSelectionLength) is { } selection
+            && TransformTextStyle(selection.Start, selection.Length, _ => next);
+    }
 
     /// <summary>選択中の本文の書式を置き換える。</summary>
     /// <param name="change">本文を変える処理。</param>

@@ -262,10 +262,13 @@ internal sealed class AnnotationFormatBar : Border
     private void ConfigurePalette() => AnnotationPalette.Configure(_color, _paletteColumns, showPicker: true);
 
     /// <summary>現在の書式を表示へ反映する（選択範囲の先頭の書式）。</summary>
+    /// <remarks>
+    /// <b>文字を選んでいなくても操作できる</b>: 選択が無いときに選んだ書式は、以降の入力へ効く
+    /// （無効にすると「書式を変えられない」と見える。 実測 2026-11-22）。
+    /// </remarks>
     public void Refresh()
     {
         var style = _layer.SelectedTextStyle;
-        var enabled = _layer.HasTextSelection;
 
         _isRefreshing = true;
         try
@@ -284,22 +287,12 @@ internal sealed class AnnotationFormatBar : Border
             // 幅が狭いとフォント名・大きさが読めないため、現在値をツールチップにも出す
             ToolTip.SetTip(_font, style.FontFamily);
             ToolTip.SetTip(_size, $"{style.FontSize:0.#}");
-
-            // 文字を選んでいない間は適用先が決まらないため、操作をすべて無効にする
-            _font.IsEnabled = enabled;
-            _size.IsEnabled = enabled;
-            _color.IsEnabled = enabled;
-            _bold.IsEnabled = enabled;
-            _italic.IsEnabled = enabled;
-            _underline.IsEnabled = enabled;
-            _strike.IsEnabled = enabled;
         }
         finally
         {
             _isRefreshing = false;
         }
 
-        // 無効の切り替えで必要な幅が変わるため測り直させる
         InvalidateMeasure();
     }
 
@@ -394,15 +387,12 @@ internal sealed class AnnotationFormatBar : Border
 
     /// <summary>選択中の範囲へ書式を適用し、表示とフォーカスを戻す。</summary>
     /// <param name="change">書式を新しい値へ変える処理（変えない属性は <c>TransformTextStyle</c> が保つ）。</param>
+    /// <remarks>
+    /// <b>選択が無いときは以降の入力へ回す</b>（判定はレイヤーが単一所有するので、ここでは分けない）。
+    /// </remarks>
     private void Apply(Func<AnnotationTextStyle, AnnotationTextStyle> change)
     {
-        if (!_layer.HasTextSelection)
-        {
-            return;
-        }
-
-        var (start, length) = _layer.TextSelectionRange;
-        _layer.TransformTextStyle(start, length, change);
+        _layer.TransformTextStyle(change);
         Refresh();
 
         // バーの操作でフォーカスが移るため、本文へ戻して続けて入力できるようにする

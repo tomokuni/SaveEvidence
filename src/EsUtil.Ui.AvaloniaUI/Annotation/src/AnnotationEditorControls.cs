@@ -34,7 +34,7 @@ public static class AnnotationEditorControls
     public static Control Heading(string text) => new TextBlock
     {
         Text = text,
-        FontWeight = FontWeight.SemiBold,
+        FontWeight = FontWeight.Bold,
     };
 
     /// <summary>項目名のラベルを作る。</summary>

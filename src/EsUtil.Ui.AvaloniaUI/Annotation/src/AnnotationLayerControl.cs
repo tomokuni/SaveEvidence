@@ -95,6 +95,9 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
     /// <summary>変更履歴（元に戻す・やり直す）。</summary>
     private readonly AnnotationHistory _history = new();
 
+    /// <summary>以降の入力へ効かせる書式（選択が無いときの書式変更の行き先）。</summary>
+    private readonly AnnotationTypingStyle _typingStyle = new();
+
     /// <summary>これから記録する変更の直前の文書（変更が起きるまで保持する）。</summary>
     private AnnotationDocument? _undoCandidate;
 
@@ -272,13 +275,15 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
     /// <summary>選択中の吹き出しの本文の書式（選択範囲の先頭の文字）を取得する。</summary>
     /// <value>選択が吹き出しでない場合は <see cref="AnnotationDefaults.TextStyle"/>。</value>
-    /// <remarks>フライアウトの初期表示に使う。</remarks>
+    /// <remarks>フライアウトの初期表示に使う。 選択が無い間は書式バーで選んだ書式（以降の入力へ効く値）を返す。</remarks>
     public AnnotationTextStyle SelectedTextStyle
     {
-        get => AnnotationSelectionPresenter.ResolveTextStyle(_document, SelectedId, TextSelectionRange);
+        get => _typingStyle.ResolveDisplay(
+            AnnotationSelectionPresenter.ResolveTextStyle(_document, SelectedId, TextSelectionRange),
+            HasTextSelection);
         set
         {
-            // 適用の規則（選択が無ければ適用しない）はコアが単一所有する
+            // 適用先の規則（選択が無ければ以降の入力へ回す）はコアが単一所有する
             _ = ApplyTextStyle(value);
         }
     }
@@ -428,11 +433,16 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
     /// <summary>選択中の吹き出しの本文へ書式を適用する（<see cref="TextSelectionRange"/> の範囲）。</summary>
     /// <param name="style">適用する書式。</param>
-    /// <returns>適用した場合は <see langword="true"/>。</returns>
-    /// <remarks>長さ 0 は「全体」へ適用する。 文字単位の書式は run の分割で表す（コアが単一所有する）。</remarks>
+    /// <returns>選択範囲へ適用した場合は <see langword="true"/>。 選択が無く以降の入力へ回した場合は <see langword="false"/>。</returns>
+    /// <remarks>
+    /// 長さ 0 は「全体」へ適用する。 文字単位の書式は run の分割で表す（コアが単一所有する）。
+    /// <b>選択が無ければ以降の入力へ回す</b>: 既存の文字は変えず、次に入力する文字へ適用する。
+    /// </remarks>
     public bool ApplyTextStyle(AnnotationTextStyle style)
     {
-        // 選択が無ければ適用しない（キャレット以降の文字が意図せず変わらないようにする）
+        ArgumentNullException.ThrowIfNull(style);
+
+        _typingStyle.Remember(style);
         var range = AnnotationTextStyleEdit.ResolveRange(TextSelectionRange.Start, TextSelectionRange.Length);
         return range is { } selection && ApplyTextStyle(selection.Start, selection.Length, style);
     }
@@ -462,17 +472,23 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
 
     /// <summary>選択中の吹き出しの本文の書式を 1 文字ずつ変換する（変えない属性を保つ）。</summary>
     /// <param name="transform">現在の書式を受け取って新しい書式を返す関数（run ごとに呼ぶ）。</param>
-    /// <returns>適用した場合は <see langword="true"/>。</returns>
+    /// <returns>選択範囲へ適用した場合は <see langword="true"/>。 選択が無く以降の入力へ回した場合は <see langword="false"/>。</returns>
     /// <remarks>
     /// <b>「太字にする」「色だけ変える」は本メソッドを使う</b>: <see cref="ApplyTextStyle(AnnotationTextStyle)"/> は
     /// 範囲の書式を丸ごと差し替えるため、指定しなかった属性（色・大きさなど）が既定へ戻る。
-    /// 切り替えの判断（太字にする／戻す）は呼び出し側で 1 回だけ行い、その値を transform で書く。
+    /// 切り替えの判断（太字にする／戻す）は呼び出し側で 1 回だけ行い、その値を transform で書く。<br/>
+    /// <b>選択が無ければ以降の入力へ回す</b>: 変換の元になる書式は <see cref="SelectedTextStyle"/> である。
     /// </remarks>
     public bool TransformTextStyle(Func<AnnotationTextStyle, AnnotationTextStyle> transform)
     {
-        // 選択が無ければ適用しない（キャレット以降の文字が意図せず変わらないようにする）
+        ArgumentNullException.ThrowIfNull(transform);
+
+        // 変換は「表示している書式」に対して行う（選択が無い間は書式バーで選んだ値を起点にする）
+        var next = transform(SelectedTextStyle);
+        _typingStyle.Remember(next);
+
         var range = AnnotationTextStyleEdit.ResolveRange(TextSelectionRange.Start, TextSelectionRange.Length);
-        return range is { } selection && TransformTextStyle(selection.Start, selection.Length, transform);
+        return range is { } selection && TransformTextStyle(selection.Start, selection.Length, _ => next);
     }
 
     /// <summary>選択中の吹き出しの本文の、指定した範囲の書式を 1 文字ずつ変換する。</summary>
@@ -1304,14 +1320,6 @@ public sealed partial class AnnotationLayerControl : Control, Avalonia.Rendering
         var formatted = AnnotationPainter.CreateText(text, style);
         var lineHeight = AnnotationPainter.CreateLineMetrics(style).Height;
         return new EsSize(formatted.Width, lineHeight);
-    }
-
-    /// <summary>書式を適用する範囲を求める（長さ 0 は全体）。</summary>
-    /// <returns>開始位置と長さ。</returns>
-    private (int Start, int Length) EffectiveTextRange()
-    {
-        var range = TextSelectionRange;
-        return range.Length <= 0 ? (0, 0) : (Math.Max(0, range.Start), range.Length);
     }
 
     /// <summary>画像の表示倍率と位置を求める（プレビューの表示矩形に従う）。</summary>
