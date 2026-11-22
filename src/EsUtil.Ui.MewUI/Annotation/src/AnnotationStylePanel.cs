@@ -42,7 +42,15 @@ public sealed class AnnotationStylePanel : ContentControl
 
         // 枠・余白・幅はコアの外観（AnnotationPanelAppearance）が単一所有する。
         // ここで持つと、ウィンドウの枠と二重になって「余計な辺枠」に見える。
-        Content = new ScrollViewer { Content = content, MaxHeight = appearance.MaxContentHeight };
+        // **スクロール バーは必要なときだけ出す**: MewUI の ScrollViewer の既定は `ScrollMode.Visible`
+        // （常にバーを出す）ため、中身が収まっていても縦バーが付く（実測 2026-11-22）。
+        Content = new ScrollViewer
+        {
+            Content = content,
+            MaxHeight = appearance.MaxContentHeight,
+            VerticalScroll = ScrollMode.Auto,
+            HorizontalScroll = ScrollMode.Disabled,
+        };
     }
 
     /// <summary>区切り線を作る。</summary>

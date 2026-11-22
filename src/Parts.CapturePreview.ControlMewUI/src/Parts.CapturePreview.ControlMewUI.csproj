@@ -14,12 +14,12 @@
   <ItemGroup>
     <!-- 撮影・切り出しの共通規則と提示の写像（切り出し矩形・設定・セッション状態・色の写像） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
-    <PackageReference Include="EsUtil.Ui.MewUI.Interop" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Interop\src\EsUtil.Ui.MewUI.Interop.csproj" />
     <!-- コア幾何型と Skia の描画プリミティブ -->
-    <PackageReference Include="EsUtil.Platform.Core" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->
-    <PackageReference Include="EsUtil.Ui.MewUI.Marquee" />
-    <PackageReference Include="EsUtil.Ui.MewUI.Loupe" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Marquee\src\EsUtil.Ui.MewUI.Marquee.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Loupe\src\EsUtil.Ui.MewUI.Loupe.csproj" />
   </ItemGroup>
 
   <ItemGroup>

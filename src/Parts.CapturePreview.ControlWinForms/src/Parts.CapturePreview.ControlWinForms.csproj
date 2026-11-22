@@ -15,12 +15,12 @@
     <!-- 撮影・切り出しの共通規則と提示の写像（切り出し矩形・設定・セッション状態・色の写像） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型）・DIP 変換・画像の表示ビュー -->
-    <PackageReference Include="EsUtil.Ui.WinForms.Interop" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Interop\src\EsUtil.Ui.WinForms.Interop.csproj" />
     <!-- コア幾何型 -->
-    <PackageReference Include="EsUtil.Platform.Core" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- 複合コントロールを構成する内包コントロール -->
-    <PackageReference Include="EsUtil.Ui.WinForms.Marquee" />
-    <PackageReference Include="EsUtil.Ui.WinForms.Loupe" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Marquee\src\EsUtil.Ui.WinForms.Marquee.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Loupe\src\EsUtil.Ui.WinForms.Loupe.csproj" />
   </ItemGroup>
 
   <ItemGroup>

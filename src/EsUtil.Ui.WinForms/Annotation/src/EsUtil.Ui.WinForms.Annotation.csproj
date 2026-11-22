@@ -10,11 +10,11 @@
 
   <ItemGroup>
     <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型・画像の変換） -->
-    <PackageReference Include="EsUtil.Ui.WinForms.Interop" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Interop\src\EsUtil.Ui.WinForms.Interop.csproj" />
     <!-- コア幾何型 -->
-    <PackageReference Include="EsUtil.Platform.Core" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- 選択枠とハンドルは Marquee の提示層を再利用する -->
-    <PackageReference Include="EsUtil.Feature.Marquee.Core" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil\Feature.Marquee.Core\src\EsUtil.Feature.Marquee.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

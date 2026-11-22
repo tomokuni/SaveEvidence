@@ -305,6 +305,15 @@
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
+      "esutil.feature.marquee.core": {
+        "type": "Project",
+        "dependencies": {
+          "EsUtil.Platform.Core": "[0.8.8, )"
+        }
+      },
+      "esutil.platform.core": {
+        "type": "Project"
+      },
       "esutil.ui.winui3.annotation": {
         "type": "Project",
         "dependencies": {
@@ -318,41 +327,20 @@
           "System.Drawing.Common": "[11.0.0, )"
         }
       },
-      "EsUtil.Feature.Marquee.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "p8IUTcSw174dK0iTEx1SjdUuEffZu8nxXGOnUWkGttzn5V083zdf8H3C7tjUW6Ek4m5gk9Z+Li1O2xWRLxk0Gw==",
+      "esutil.ui.winui3.colorselector": {
+        "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.8"
+          "EsUtil.Platform.Core": "[0.8.8, )",
+          "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2957, )",
+          "Microsoft.WindowsAppSDK": "[2.0.1, )"
         }
       },
-      "EsUtil.Platform.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "qaeRDf4USx35i19ZQUEYGwtcfXCA5ZkZ1JlgCyfklanw1FlwFnRczud1LOVREME1SPPPBXAnneJ0NE2FTqzMzw=="
-      },
-      "EsUtil.Ui.WinUI3.ColorSelector": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "yZbrFO0pv1LnUy6Mq2jMx56EkE5sKP9PoJ7YZ4JtDXbtZ/57kQyBiS9GT+vl+cKr1gEqghZx0R0Xp1usCYE8Lg==",
+      "esutil.ui.winui3.interop": {
+        "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.8",
-          "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
-          "Microsoft.WindowsAppSDK": "2.0.1"
-        }
-      },
-      "EsUtil.Ui.WinUI3.Interop": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "2RbKB8GOAVhXTTKYlR2HCzmkZbw5yFhp2U5zhnDbB++i1Z3cNcRAm7r8kA+USSxn3gsnC5VpiMM6WvZ+UK80Xg==",
-        "dependencies": {
-          "EsUtil.Platform.Core": "0.8.8",
-          "Microsoft.Windows.SDK.BuildTools": "10.0.28000.2957",
-          "Microsoft.WindowsAppSDK": "2.0.1"
+          "EsUtil.Platform.Core": "[0.8.8, )",
+          "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2957, )",
+          "Microsoft.WindowsAppSDK": "[2.0.1, )"
         }
       },
       "Microsoft.Windows.SDK.BuildTools": {

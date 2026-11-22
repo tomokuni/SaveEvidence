@@ -181,6 +181,21 @@
           "xunit.v3.runner.common": "[3.2.2]"
         }
       },
+      "esutil.feature.loupe.core": {
+        "type": "Project",
+        "dependencies": {
+          "EsUtil.Platform.Core": "[0.8.8, )"
+        }
+      },
+      "esutil.feature.marquee.core": {
+        "type": "Project",
+        "dependencies": {
+          "EsUtil.Platform.Core": "[0.8.8, )"
+        }
+      },
+      "esutil.platform.core": {
+        "type": "Project"
+      },
       "parts.capturepreview.core": {
         "type": "Project",
         "dependencies": {
@@ -188,30 +203,6 @@
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
-      },
-      "EsUtil.Feature.Loupe.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "XbXaPf1yR4U800SXNnG5ztdGpx+N5OyEJY2rmFa2//npQHdxpMeKu+pZFrZB25Q4pqkwy5ZCoGwU2Wt7Cr3a4w==",
-        "dependencies": {
-          "EsUtil.Platform.Core": "0.8.8"
-        }
-      },
-      "EsUtil.Feature.Marquee.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "p8IUTcSw174dK0iTEx1SjdUuEffZu8nxXGOnUWkGttzn5V083zdf8H3C7tjUW6Ek4m5gk9Z+Li1O2xWRLxk0Gw==",
-        "dependencies": {
-          "EsUtil.Platform.Core": "0.8.8"
-        }
-      },
-      "EsUtil.Platform.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "qaeRDf4USx35i19ZQUEYGwtcfXCA5ZkZ1JlgCyfklanw1FlwFnRczud1LOVREME1SPPPBXAnneJ0NE2FTqzMzw=="
       }
     }
   }

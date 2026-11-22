@@ -324,6 +324,9 @@
           "xunit.v3.runner.common": "[3.2.2]"
         }
       },
+      "esutil.platform.core": {
+        "type": "Project"
+      },
       "parts.linedetection": {
         "type": "Project",
         "dependencies": {
@@ -340,12 +343,6 @@
         "dependencies": {
           "Avalonia": "12.1.6"
         }
-      },
-      "EsUtil.Platform.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "qaeRDf4USx35i19ZQUEYGwtcfXCA5ZkZ1JlgCyfklanw1FlwFnRczud1LOVREME1SPPPBXAnneJ0NE2FTqzMzw=="
       }
     }
   }

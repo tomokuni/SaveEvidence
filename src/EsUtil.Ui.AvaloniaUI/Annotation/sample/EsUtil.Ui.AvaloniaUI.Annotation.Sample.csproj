@@ -15,7 +15,7 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <!-- コアの画像（EsBitmap）を Avalonia の画像として表示するアダプタ -->
-    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Interop" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Interop\src\EsUtil.Ui.AvaloniaUI.Interop.csproj" />
   </ItemGroup>
 
   <ItemGroup>

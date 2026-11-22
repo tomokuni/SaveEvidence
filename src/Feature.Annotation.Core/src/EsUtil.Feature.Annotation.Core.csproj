@@ -12,7 +12,7 @@
   <ItemGroup>
     <!-- 値型（EsRect / EsPoint / DrawingColor）とエラー境界だけを使う（UI 非依存）。
          矩形や色の値は EsUtil.Platform.Core が単一所有するため、独自の型を作らない。 -->
-    <PackageReference Include="EsUtil.Platform.Core" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

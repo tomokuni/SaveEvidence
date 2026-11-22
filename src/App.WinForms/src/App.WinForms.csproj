@@ -31,8 +31,8 @@
     <!-- 注釈（枠線・吹き出し）の編集レイヤー -->
     <ProjectReference Include="..\..\EsUtil.Ui.WinForms\Annotation\src\EsUtil.Ui.WinForms.Annotation.csproj" />
     <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型）と GDI+ の表示ビュー -->
-    <PackageReference Include="EsUtil.Ui.WinForms.Interop" />
-    <PackageReference Include="EsUtil.Ui.WinForms.Thumbnail" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Interop\src\EsUtil.Ui.WinForms.Interop.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Thumbnail\src\EsUtil.Ui.WinForms.Thumbnail.csproj" />
   </ItemGroup>
 
   <ItemGroup>

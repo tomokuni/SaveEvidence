@@ -28,13 +28,13 @@
 
   <ItemGroup>
     <!-- WinUI 3 版 Interop（画像の表示・コア型の変換） -->
-    <PackageReference Include="EsUtil.Ui.WinUI3.Interop" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\Interop\src\EsUtil.Ui.WinUI3.Interop.csproj" />
     <!-- コア幾何型 -->
-    <PackageReference Include="EsUtil.Platform.Core" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
     <!-- 選択枠とハンドルは Marquee の提示層を再利用する -->
-    <PackageReference Include="EsUtil.Feature.Marquee.Core" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil\Feature.Marquee.Core\src\EsUtil.Feature.Marquee.Core.csproj" />
     <!-- 色の選択は UI の色選択コントロールを使う -->
-    <PackageReference Include="EsUtil.Ui.WinUI3.ColorSelector" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil.Ui.WinUI3\ColorSelector\src\EsUtil.Ui.WinUI3.ColorSelector.csproj" />
   </ItemGroup>
 
   <ItemGroup>

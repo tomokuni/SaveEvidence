@@ -187,6 +187,15 @@
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
+      "esutil.feature.marquee.core": {
+        "type": "Project",
+        "dependencies": {
+          "EsUtil.Platform.Core": "[0.8.8, )"
+        }
+      },
+      "esutil.platform.core": {
+        "type": "Project"
+      },
       "esutil.ui.winforms.annotation": {
         "type": "Project",
         "dependencies": {
@@ -196,28 +205,10 @@
           "EsUtil.Ui.WinForms.Interop": "[0.8.8, )"
         }
       },
-      "EsUtil.Feature.Marquee.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "p8IUTcSw174dK0iTEx1SjdUuEffZu8nxXGOnUWkGttzn5V083zdf8H3C7tjUW6Ek4m5gk9Z+Li1O2xWRLxk0Gw==",
+      "esutil.ui.winforms.interop": {
+        "type": "Project",
         "dependencies": {
-          "EsUtil.Platform.Core": "0.8.8"
-        }
-      },
-      "EsUtil.Platform.Core": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "qaeRDf4USx35i19ZQUEYGwtcfXCA5ZkZ1JlgCyfklanw1FlwFnRczud1LOVREME1SPPPBXAnneJ0NE2FTqzMzw=="
-      },
-      "EsUtil.Ui.WinForms.Interop": {
-        "type": "CentralTransitive",
-        "requested": "[0.8.8, )",
-        "resolved": "0.8.8",
-        "contentHash": "8SECMue3LA+Gp3twujS3Il8XCQPtfvLUjYgOojB3gsYaos0nrFcCKIJZWJmoSqiPLswasgpduvdSpXQrP4iAQw==",
-        "dependencies": {
-          "EsUtil.Platform.Core": "0.8.8"
+          "EsUtil.Platform.Core": "[0.8.8, )"
         }
       }
     }

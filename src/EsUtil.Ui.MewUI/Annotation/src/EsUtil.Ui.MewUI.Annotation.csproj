@@ -10,9 +10,9 @@
   <ItemGroup>
     <PackageReference Include="Aprillz.MewUI.Core" />
     <!-- 選択枠とハンドルは Marquee の提示層を再利用する（枠の見た目を 4 つの UI 版で揃えるため） -->
-    <PackageReference Include="EsUtil.Feature.Marquee.Core" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil\Feature.Marquee.Core\src\EsUtil.Feature.Marquee.Core.csproj" />
     <!-- 色の選択は UI の色選択コントロールを使う（色名・16 進・ピッカーの解釈を 1 つに集約する） -->
-    <PackageReference Include="EsUtil.Ui.MewUI.ColorSelector" />
+    <ProjectReference Include="..\..\..\..\..\EsUtil\EsUtil.Ui.MewUI\ColorSelector\src\EsUtil.Ui.MewUI.ColorSelector.csproj" />
   </ItemGroup>
 
   <ItemGroup>

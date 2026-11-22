@@ -71,9 +71,9 @@
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlAvaloniaUI\src\Parts.CapturePreview.ControlAvaloniaUI.csproj" />
     <!-- 注釈レイヤー（Avalonia UI 版）。 保存・設定はホスト（本アプリ）が担う -->
     <ProjectReference Include="..\..\EsUtil.Ui.AvaloniaUI\Annotation\src\EsUtil.Ui.AvaloniaUI.Annotation.csproj" />
-    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Interop" />
-    <PackageReference Include="EsUtil.Ui.AvaloniaUI.ColorSelector" />
-    <PackageReference Include="EsUtil.Ui.AvaloniaUI.Thumbnail" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Interop\src\EsUtil.Ui.AvaloniaUI.Interop.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\ColorSelector\src\EsUtil.Ui.AvaloniaUI.ColorSelector.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.AvaloniaUI\Thumbnail\src\EsUtil.Ui.AvaloniaUI.Thumbnail.csproj" />
   </ItemGroup>
 
   <ItemGroup>
