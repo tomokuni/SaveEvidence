@@ -21,6 +21,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Crop;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.MewUI.ZoomView;
 using Microsoft.Extensions.Logging;
+using EsUtil.Feature.Annotation.Core.Contract;
 
 namespace EsUtil.SaveEvidence.App.MewUI.Views;
 
@@ -1406,7 +1407,7 @@ internal static class CapturePage
 
         try
         {
-            var document = AnnotationJson.Load(documentPath);
+            var document = annotation.Layer.Core.Load(documentPath);
             var imagePath = AnnotationJson.ResolveImagePath(documentPath, document);
             if (imagePath is null)
             {

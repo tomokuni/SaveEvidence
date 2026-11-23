@@ -51,6 +51,12 @@
           "Serilog": "4.2.0"
         }
       },
+      "esutil.feature.annotation.core": {
+        "type": "Project",
+        "dependencies": {
+          "EsUtil.Platform.Core": "[0.8.8, )"
+        }
+      },
       "esutil.feature.loupe.core": {
         "type": "Project",
         "dependencies": {

@@ -30,6 +30,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Platform.Core\src\EsUtil.Platform.Core.csproj" />
+    <!-- 注釈ファイルの名前の規則（接尾辞・目印）は注釈のコアが単一所有する -->
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil\Feature.Annotation.Core\src\EsUtil.Feature.Annotation.Core.csproj" />
     <!-- 自動切り出しの矩形検出（LineDetection は UI 非依存） -->
     <ProjectReference Include="..\..\Parts.LineDetection\src\Parts.LineDetection.csproj" />
   </ItemGroup>

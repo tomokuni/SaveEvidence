@@ -33,6 +33,8 @@ using EsUtil.Ui.AvaloniaUI.Interop;
 using EsUtil.Ui.AvaloniaUI.Interop.Imaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using EsUtil.Feature.Annotation.Core.Contract;
+using EsUtil.Feature.Annotation.Core.Defaults;
 
 namespace EsUtil.SaveEvidence.App.AvaloniaUI.Views.Pages;
 
@@ -1125,7 +1127,7 @@ public sealed partial class CapturePage : UserControl
             return;
         }
 
-        var document = AnnotationJson.Load(documentPath);
+        var document = AnnotationEditor.Layer.Core.Load(documentPath);
         var imagePath = AnnotationJson.ResolveImagePath(documentPath, document);
         if (imagePath is null)
         {

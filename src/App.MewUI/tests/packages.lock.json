@@ -226,6 +226,7 @@
         "type": "Project",
         "dependencies": {
           "CommunityToolkit.Mvvm": "[8.4.2, )",
+          "EsUtil.Feature.Annotation.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )",
           "Parts.CapturePreview.Core": "[0.8.2, )",
           "Parts.LineDetection": "[0.8.2, )",

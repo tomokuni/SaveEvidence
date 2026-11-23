@@ -19,6 +19,7 @@ using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.Session;
 using EsUtil.SaveEvidence.Parts.CapturePreview.WinForms.ZoomView;
 using EsUtil.Ui.WinForms.Annotation;
 using Microsoft.Extensions.Logging;
+using EsUtil.Feature.Annotation.Core.Contract;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
 
@@ -898,7 +899,7 @@ internal static class CapturePage
 
         try
         {
-            var document = AnnotationJson.Load(dialog.FileName);
+            var document = annotation.Layer.Core.Load(dialog.FileName);
             var imagePath = AnnotationJson.ResolveImagePath(dialog.FileName, document);
             if (imagePath is null)
             {

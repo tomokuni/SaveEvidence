@@ -28,6 +28,7 @@ using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
+using EsUtil.Feature.Annotation.Core.Contract;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
 
@@ -1038,7 +1039,7 @@ internal static class CapturePage
 
         try
         {
-            var document = AnnotationJson.Load(filePath);
+            var document = annotation.Layer.Core.Load(filePath);
             var imagePath = AnnotationJson.ResolveImagePath(filePath, document);
             if (imagePath is null)
             {
