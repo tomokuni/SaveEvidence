@@ -223,7 +223,7 @@
       "esutil.ui.winforms.annotation": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Annotation.Core": "[0.8.2, )",
+          "EsUtil.Feature.Annotation.Core": "[0.8.8, )",
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )",
           "EsUtil.Ui.WinForms.Interop": "[0.8.8, )"
@@ -289,7 +289,7 @@
         "type": "Project",
         "dependencies": {
           "App.Core": "[0.8.2, )",
-          "EsUtil.Ui.WinForms.Annotation": "[0.8.2, )",
+          "EsUtil.Ui.WinForms.Annotation": "[0.8.8, )",
           "EsUtil.Ui.WinForms.Interop": "[0.8.8, )",
           "EsUtil.Ui.WinForms.Thumbnail": "[0.8.8, )",
           "Microsoft.Extensions.Logging": "[11.0.0, )",

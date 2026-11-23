@@ -30,7 +30,7 @@
     <ProjectReference Include="..\..\Parts.CapturePreview.Core\src\Parts.CapturePreview.Core.csproj" />
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlMewUI\src\Parts.CapturePreview.ControlMewUI.csproj" />
     <!-- 注釈（枠線・吹き出し）の編集レイヤー -->
-    <ProjectReference Include="..\..\EsUtil.Ui.MewUI\Annotation\src\EsUtil.Ui.MewUI.Annotation.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Annotation\src\EsUtil.Ui.MewUI.Annotation.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Interop\src\EsUtil.Ui.MewUI.Interop.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.MewUI\Thumbnail\src\EsUtil.Ui.MewUI.Thumbnail.csproj" />
     <!-- 設定画面の色選択（色名・16 進・ピッカーを 1 つにまとめたコントロール） -->

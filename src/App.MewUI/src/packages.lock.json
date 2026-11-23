@@ -151,8 +151,9 @@
         "type": "Project",
         "dependencies": {
           "Aprillz.MewUI.Core": "[0.22.1, )",
-          "EsUtil.Feature.Annotation.Core": "[0.8.2, )",
+          "EsUtil.Feature.Annotation.Core": "[0.8.8, )",
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
+          "EsUtil.Platform.Core": "[0.8.8, )",
           "EsUtil.Ui.MewUI.ColorSelector": "[0.8.8, )"
         }
       },

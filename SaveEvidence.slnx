@@ -20,27 +20,6 @@
     <Project Path="src/App.WinUI3/src/App.WinUI3.csproj" />
     <Project Path="src/App.WinUI3/tests/App.WinUI3.Tests.csproj" />
   </Folder>
-  <Folder Name="/src/Feature.Annotation.Core/">
-    <Project Path="src/Feature.Annotation.Core/src/EsUtil.Feature.Annotation.Core.csproj" />
-    <Project Path="src/Feature.Annotation.Core/tests/EsUtil.Feature.Annotation.Core.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/EsUtil.Ui.AvaloniaUI/Annotation/">
-    <Project Path="src/EsUtil.Ui.AvaloniaUI/Annotation/src/EsUtil.Ui.AvaloniaUI.Annotation.csproj" />
-    <Project Path="src/EsUtil.Ui.AvaloniaUI/Annotation/sample/EsUtil.Ui.AvaloniaUI.Annotation.Sample.csproj" />
-    <Project Path="src/EsUtil.Ui.AvaloniaUI/Annotation/tests/EsUtil.Ui.AvaloniaUI.Annotation.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/EsUtil.Ui.MewUI/Annotation/">
-    <Project Path="src/EsUtil.Ui.MewUI/Annotation/src/EsUtil.Ui.MewUI.Annotation.csproj" />
-    <Project Path="src/EsUtil.Ui.MewUI/Annotation/tests/EsUtil.Ui.MewUI.Annotation.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/EsUtil.Ui.WinUI3/Annotation/">
-    <Project Path="src/EsUtil.Ui.WinUI3/Annotation/src/EsUtil.Ui.WinUI3.Annotation.csproj" />
-    <Project Path="src/EsUtil.Ui.WinUI3/Annotation/tests/EsUtil.Ui.WinUI3.Annotation.Tests.csproj" />
-  </Folder>
-  <Folder Name="/src/EsUtil.Ui.WinForms/Annotation/">
-    <Project Path="src/EsUtil.Ui.WinForms/Annotation/src/EsUtil.Ui.WinForms.Annotation.csproj" />
-    <Project Path="src/EsUtil.Ui.WinForms/Annotation/tests/EsUtil.Ui.WinForms.Annotation.Tests.csproj" />
-  </Folder>
   <Folder Name="/src/Parts.CapturePreview.Core/" />
   <Folder Name="/src/Parts.CapturePreview.Core/src/">
     <Project Path="src/Parts.CapturePreview.Core/src/Parts.CapturePreview.Core.csproj" />

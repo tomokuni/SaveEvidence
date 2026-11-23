@@ -14,22 +14,27 @@
     <PackageVersion Include="EsUtil.Feature.Loupe.Core" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Feature.Marquee.Core" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Feature.Thumbnail.Core" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Feature.Annotation.Core" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Platform.Core" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.AvaloniaUI.Annotation" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.AvaloniaUI.ColorSelector" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.AvaloniaUI.Interop" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.AvaloniaUI.Loupe" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.AvaloniaUI.Marquee" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.AvaloniaUI.Thumbnail" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.MewUI.ColorSelector" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.MewUI.Annotation" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.MewUI.Interop" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.MewUI.Loupe" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.MewUI.Marquee" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.MewUI.Thumbnail" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.WinForms.Interop" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinForms.Annotation" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.WinForms.Loupe" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.WinForms.Marquee" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.WinForms.Thumbnail" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.WinUI3.ColorSelector" Version="$(EsUtilVersion)" />
+    <PackageVersion Include="EsUtil.Ui.WinUI3.Annotation" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.WinUI3.Interop" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.WinUI3.Loupe" Version="$(EsUtilVersion)" />
     <PackageVersion Include="EsUtil.Ui.WinUI3.Marquee" Version="$(EsUtilVersion)" />

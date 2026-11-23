@@ -46,9 +46,8 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 | 区分 | プロジェクト | 所在 |
 | --- | --- | --- |
 | 共通基盤（可搬） | `EsUtil.Platform.Core` / `.Windows` | `../EsUtil` |
-| 再利用可能なコントロール（可搬） | `EsUtil.Feature.Marquee.Core` / `EsUtil.Ui.<UI>.Marquee`、`EsUtil.Feature.Loupe.Core` / `EsUtil.Ui.<UI>.Loupe`、`EsUtil.Feature.Thumbnail.Core` / `EsUtil.Ui.<UI>.Thumbnail`（`<UI>` = `AvaloniaUI` / `MewUI` / `WinUI3` / `WinForms`）、`EsUtil.Ui.AvaloniaUI.ColorSelector` / `EsUtil.Ui.MewUI.ColorSelector` / `EsUtil.Ui.WinUI3.ColorSelector` | `../EsUtil` |
+| 再利用可能なコントロール（可搬） | `EsUtil.Feature.Marquee.Core` / `EsUtil.Ui.<UI>.Marquee`、`EsUtil.Feature.Loupe.Core` / `EsUtil.Ui.<UI>.Loupe`、`EsUtil.Feature.Thumbnail.Core` / `EsUtil.Ui.<UI>.Thumbnail`、`EsUtil.Feature.Annotation.Core` / `EsUtil.Ui.<UI>.Annotation`（`<UI>` = `AvaloniaUI` / `MewUI` / `WinUI3` / `WinForms`）、`EsUtil.Ui.AvaloniaUI.ColorSelector` / `EsUtil.Ui.MewUI.ColorSelector` / `EsUtil.Ui.WinUI3.ColorSelector` | `../EsUtil` |
 | 画像処理（可搬） | `Parts.LineDetection` | 本リポジトリ |
-| 注釈（可搬・将来 EsUtil へ移設） | `EsUtil.Feature.Annotation.Core`（`src/Feature.Annotation.Core`）/ `EsUtil.Ui.AvaloniaUI.Annotation`（`src/EsUtil.Ui.AvaloniaUI/Annotation`）/ `EsUtil.Ui.MewUI.Annotation`（`src/EsUtil.Ui.MewUI/Annotation`）/ `EsUtil.Ui.WinUI3.Annotation`（`src/EsUtil.Ui.WinUI3/Annotation`）/ `EsUtil.Ui.WinForms.Annotation`（`src/EsUtil.Ui.WinForms/Annotation`）。 4 つのアプリが注釈の編集・保存（`*.annotations.json` / `*.annotated.*`）を行う | 本リポジトリ |
 | ブリッジ（可搬） | `EsUtil.Ui.AvaloniaUI.Interop` / `EsUtil.Ui.MewUI.Interop` / `EsUtil.Ui.WinUI3.Interop` / `EsUtil.Ui.WinForms.Interop` | `../EsUtil` |
 | 撮影スタック（製品固有） | `Parts.CapturePreview.Core` / `.ControlAvaloniaUI` / `.ControlMewUI` / `.ControlWinUI3` / `.ControlWinForms` | 本リポジトリ |
 | アプリ | `App.Core` / `App.AvaloniaUI` / `App.MewUI` / `App.WinUI3` / `App.WinForms` | 本リポジトリ |
@@ -75,6 +74,7 @@ SaveEvidence は Windows デスクトップの画面キャプチャ アプリで
 - **文字コードは UTF-8（BOM なし）**で統一する（[`.editorconfig`](../.editorconfig) の `charset = utf-8`。 既存の `.cs` / `.md` / `.ps1` はすべて BOM なし）。
 - **作業ツリーの改行コードは CRLF**（[`.editorconfig`](../.editorconfig) の `end_of_line = crlf`。 リポジトリのブロブは [`.gitattributes`](../.gitattributes) が LF へ正規化する）。
 - **`App.AvaloniaUI`（ホスト）は `CropViewControl` の `Source` を設定し、`ZoomChanged` を購読してズーム率・可否を同期する**（切り出しビューが内包する `ZoomViewControl` へ委譲される）。
+- **注釈のコントロールは EsUtil リポジトリが所有する**（`EsUtil.Feature.Annotation.Core` / `EsUtil.Ui.<UI>.Annotation`）。 本リポジトリは公開パッケージとして参照し、コントロールの実装・仕様・テストを本リポジトリへ置かない（仕様は EsUtil の各プロジェクトの `README.md` / `docs/SPEC_*.md` が持つ）。
 - **注釈は 4 つの UI 版すべてで使える**（`App.AvaloniaUI` は `EsUtil.Ui.AvaloniaUI.Annotation`、`App.MewUI` は `EsUtil.Ui.MewUI.Annotation`、`App.WinUI3` は `EsUtil.Ui.WinUI3.Annotation`、`App.WinForms` は `EsUtil.Ui.WinForms.Annotation` を参照する）。 キャプチャ ページの「注釈」トグルで編集モードへ入り、`Ctrl+S` の保存時に元画像へ加えて `<画像名>.annotations.json` と `<画像名>.annotated.<拡張子>` を書き出す（注釈が 1 件以上のときだけ）。 注釈の元に戻す・やり直すは `Ctrl+Z` / `Ctrl+Y` と注釈ツールバーのボタンで行う（画像の Undo / Redo とは別の履歴）。 設定画面の「注釈」セクションは**新しく追加する注釈の既定値**を変える（既存の注釈は変わらない）。
 - **`AVLN3001` は `App.AvaloniaUI` だけが抑止する**（理由は csproj のコメントに記載。 [`検証手順.md`](検証手順.md) §1）。
 - **CI は GitHub Actions で実行する**（`main` 向け PR と手動実行。 **push では実行しない**）。 [`workflows/build.yml`](workflows/build.yml) は `.github/verify/verify.ps1` を Release 構成で実行する（ローカルの既定は Debug 構成。 合否基準は [`検証手順.md`](検証手順.md)）。

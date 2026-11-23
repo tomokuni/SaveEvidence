@@ -96,7 +96,7 @@
       "esutil.ui.winforms.annotation": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Annotation.Core": "[0.8.2, )",
+          "EsUtil.Feature.Annotation.Core": "[0.8.8, )",
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )",
           "EsUtil.Ui.WinForms.Interop": "[0.8.8, )"

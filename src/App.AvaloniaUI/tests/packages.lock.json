@@ -421,8 +421,9 @@
         "type": "Project",
         "dependencies": {
           "Avalonia": "[12.1.6, )",
-          "EsUtil.Feature.Annotation.Core": "[0.8.2, )",
+          "EsUtil.Feature.Annotation.Core": "[0.8.8, )",
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
+          "EsUtil.Platform.Core": "[0.8.8, )",
           "EsUtil.Ui.AvaloniaUI.ColorSelector": "[0.8.8, )"
         }
       },
@@ -502,7 +503,7 @@
           "Avalonia.Themes.Fluent": "[12.1.6, )",
           "AvaloniaUI.DiagnosticsSupport": "[2.2.3, )",
           "CommunityToolkit.Mvvm": "[8.4.2, )",
-          "EsUtil.Ui.AvaloniaUI.Annotation": "[0.8.2, )",
+          "EsUtil.Ui.AvaloniaUI.Annotation": "[0.8.8, )",
           "EsUtil.Ui.AvaloniaUI.ColorSelector": "[0.8.8, )",
           "EsUtil.Ui.AvaloniaUI.Interop": "[0.8.8, )",
           "EsUtil.Ui.AvaloniaUI.Thumbnail": "[0.8.8, )",

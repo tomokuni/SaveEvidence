@@ -29,7 +29,7 @@
     <!-- WinForms 版の撮影セッション（オーバーレイ・切り出しビュー・選択オーバーレイ） -->
     <ProjectReference Include="..\..\Parts.CapturePreview.ControlWinForms\src\Parts.CapturePreview.ControlWinForms.csproj" />
     <!-- 注釈（枠線・吹き出し）の編集レイヤー -->
-    <ProjectReference Include="..\..\EsUtil.Ui.WinForms\Annotation\src\EsUtil.Ui.WinForms.Annotation.csproj" />
+    <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Annotation\src\EsUtil.Ui.WinForms.Annotation.csproj" />
     <!-- WinForms 版 Interop（コア型 ⇔ GDI+ 型）と GDI+ の表示ビュー -->
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Interop\src\EsUtil.Ui.WinForms.Interop.csproj" />
     <ProjectReference Include="..\..\..\..\EsUtil\EsUtil.Ui.WinForms\Thumbnail\src\EsUtil.Ui.WinForms.Thumbnail.csproj" />
