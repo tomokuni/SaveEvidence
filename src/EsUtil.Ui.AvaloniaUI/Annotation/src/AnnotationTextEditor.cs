@@ -40,8 +40,9 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>表示中のパネルの根（種別ごとに 1 つ。 使い回す）。</summary>
     private readonly Dictionary<AnnotationPanelKind, Border> _roots = [];
 
-    /// <summary>パネルを重ねた先（アプリの画面の最上位）。</summary>
-    private OverlayLayer? _overlay;
+    /// <summary>パネルを載せる別ウィンドウ（種別ごとに 1 つ。 ウィンドウの外へ出せる）。</summary>
+    private readonly Dictionary<AnnotationPanelKind, Window> _windows = [];
+
 
     /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
     private Border? _draggingRoot;
@@ -187,12 +188,10 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     {
         RemovePanel(kind);
 
-        if (OverlayLayer.GetOverlayLayer(this) is not { } overlay)
+        if (TopLevel.GetTopLevel(this) is not { } top)
         {
             return;
         }
-
-        _overlay = overlay;
 
         // **根は種別ごとに 1 度だけ作って使い回す**: 書式バーは作り直さない（購読が増えるため）。
         // 根を作り直すと、前の根が書式バーを子として保持したままになり、付け替えに失敗する
@@ -219,6 +218,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         {
             // 高さはコアの固定値で確定する（見積りと実寸のずれで注釈に重なるのを防ぐ）
             root.Height = appearance.ResolvePanelHeight(appearance.FixedContentHeight);
+            root.Width = MeasureFormatBar().Width;
         }
 
         root.Background = ToBrush(appearance.Background);
@@ -234,29 +234,33 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         root.PointerMoved += (_, e) => ContinuePanelDrag(kind, root, e);
         root.PointerReleased += (_, e) => EndPanelDrag(kind, e);
 
-        if (!overlay.Children.Contains(root))
+        // **別ウィンドウへ載せる**: ポップアップ（<see cref="Popup"/>）の子にすると、書式バーの列が
+        // 潰れて中身（色・大きさ・フォント）が欠けました（実測 2026-11-23）。 枠なしのウィンドウなら
+        // レイアウトは普通のウィンドウと同じで、ウィンドウの外（画面の内側）へも出せます。
+        if (!_windows.TryGetValue(kind, out var window))
         {
-            overlay.Children.Add(root);
+            window = new Window
+            {
+                WindowDecorations = Avalonia.Controls.WindowDecorations.None,
+                ShowInTaskbar = false,
+                CanResize = false,
+                SizeToContent = SizeToContent.WidthAndHeight,
+                WindowStartupLocation = WindowStartupLocation.Manual,
+                Topmost = false,
+                Content = root,
+            };
+
+            _windows[kind] = window;
+            window.Show(top as Window ?? (Window)top);
         }
 
-        Canvas.SetLeft(root, position.X);
-        Canvas.SetTop(root, position.Y);
+        ApplyPosition(kind, position);
     }
 
     /// <summary>パネルを移動する。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <param name="position">左上の位置（アプリの画面の左上を原点とする DIP）。</param>
-    public void MovePanel(AnnotationPanelKind kind, EsPoint position)
-    {
-        if (!_roots.TryGetValue(kind, out var root))
-        {
-            return;
-        }
-
-        Canvas.SetLeft(root, position.X);
-        Canvas.SetTop(root, position.Y);
-    }
-
+    public void MovePanel(AnnotationPanelKind kind, EsPoint position) => ApplyPosition(kind, position);
     /// <summary>表示中のパネルを画面から外す（根と中身は残す）。</summary>
     /// <param name="kind">パネルの種別。</param>
     public void DestroyPanel(AnnotationPanelKind kind) => RemovePanel(kind);
@@ -338,16 +342,41 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         return new EsSize(desired.Width, desired.Height);
     }
 
-    /// <summary>種別のパネルを画面から外す（根と中身は残す）。</summary>
-    /// <param name="kind">パネルの種別。</param>
     private void RemovePanel(AnnotationPanelKind kind)
     {
-        if (_roots.TryGetValue(kind, out var root))
+        if (_windows.TryGetValue(kind, out var window))
         {
-            _overlay?.Children.Remove(root);
+            window.Hide();
         }
     }
 
+    /// <summary>パネルの位置を別ウィンドウへ適用する。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <param name="position">左上の位置（アプリの画面の左上を原点とする DIP）。</param>
+    /// <remarks>
+    /// <b>ウィンドウの位置は画面座標</b>であるため、アプリのウィンドウの位置を足してから置きます。
+    /// <b>画面の外へは出さない</b>: 画面の作業領域へ収めます（見えなくなるのを防ぐ）。
+    /// </remarks>
+    private void ApplyPosition(AnnotationPanelKind kind, EsPoint position)
+    {
+        if (!_windows.TryGetValue(kind, out var window) || TopLevel.GetTopLevel(this) is not Window main)
+        {
+            return;
+        }
+
+        var x = main.Position.X + (int)position.X;
+        var y = main.Position.Y + (int)position.Y;
+        if (main.Screens.ScreenFromWindow(main) is { } screen)
+        {
+            var area = screen.WorkingArea;
+            var width = window.Bounds.Width > 0 ? window.Bounds.Width : window.Width;
+            var height = window.Bounds.Height > 0 ? window.Bounds.Height : window.Height;
+            x = Math.Clamp(x, area.X, Math.Max(area.X, area.Right - (int)width));
+            y = Math.Clamp(y, area.Y, Math.Max(area.Y, area.Bottom - (int)height));
+        }
+
+        window.Position = new PixelPoint(x, y);
+    }
     /// <summary>このコントロールの座標（DIP）を重ねた先の座標（DIP）へ変換する。</summary>
     /// <param name="point">このコントロールの座標。</param>
     /// <returns>重ねた先の座標。 取得できない場合はそのまま返す。</returns>

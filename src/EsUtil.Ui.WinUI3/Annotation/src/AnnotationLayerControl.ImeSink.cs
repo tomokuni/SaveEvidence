@@ -15,13 +15,17 @@ namespace EsUtil.Ui.WinUI3.Annotation;
 /// <b>実際の <see cref="TextBox"/> を置く</b>: 変換・候補の位置・未確定の下線は OS 側が行います。
 /// 見た目は本レイヤーが書式付きで描くため、受け口は透明・1×1・入力は受け取らない
 /// （フォーカスと IME のためだけに存在する）。<br/>
-/// <b>置き場所</b>: レイアウトへ影響させないよう、専用の <see cref="Canvas"/>
 /// （<see cref="_imeSinkHost"/>）へ載せ、キャレットの位置だけを合わせます。
 /// </remarks>
 public sealed partial class AnnotationLayerControl
 {
     /// <summary>入力の受け口（IME の変換を任せる入力欄）。 編集中だけ置く。</summary>
     private TextBox? _imeSink;
+
+
+    /// <summary>受け口の文字列をこちらから書き換えている間は <see langword="true"/>（再入を防ぐ）。</summary>
+    /// <summary>変換候補と入力中の文字の間の距離（DIP）。</summary>
+    private const double PickerCandidateGap = 10;
 
     /// <summary>受け口の文字列をこちらから書き換えている間は <see langword="true"/>（再入を防ぐ）。</summary>
     private bool _sinkSyncing;
@@ -110,7 +114,8 @@ public sealed partial class AnnotationLayerControl
         // **行の高さと文字の大きさを合わせる**: 1×1 のままだと OS は変換中の文字を点として扱い、
         // **変換候補が入力中の文字に重なります**（実測 2026-11-23）。 行の高さを与えると候補は行の下へ出ます。
         var (scale, _) = ResolveImageTransform();
-        sink.Height = Math.Max(1, caret.Height);
+        // **候補との距離を空ける**: 候補は受け口の下へ出るため、行の高さより少し高くする（実測 2026-11-23: 近すぎた）。
+        sink.Height = Math.Max(1, caret.Height) + PickerCandidateGap;
         sink.FontSize = Math.Max(1, style.FontSize * scale);
         Canvas.SetLeft(sink, Math.Max(0, caret.X));
         Canvas.SetTop(sink, Math.Max(0, TextTopDip(caret, style)));
@@ -157,6 +162,12 @@ public sealed partial class AnnotationLayerControl
     /// <summary>受け口へ入った文字を本文へ入れる（変換中は確定まで待つ）。</summary>
     /// <param name="sender">送信元。</param>
     /// <param name="e">引数。</param>
+    /// <remarks>
+    /// <b>確定は次の描画へ回す</b>: <c>TextChanged</c> は変換の通知（<c>TextCompositionChanged</c>）より
+    /// **先に**届くことがあります。 その場で確定すると変換中の文字まで本文へ入り、
+    /// 変換中の表示と二重になります（実測 2026-11-23: 入力中の文字が既存文字に重なった）。
+    /// 1 度待ってから「変換中か」を見直し、変換中なら確定しません。
+    /// </remarks>
     private void OnImeSinkTextChanged(object sender, TextChangedEventArgs e)
     {
         _ = e;
@@ -166,11 +177,32 @@ public sealed partial class AnnotationLayerControl
         }
 
         var typed = sink.Text;
-        ClearImeSink();
-        ReplaceSelection(typed);
-        PlaceImeSink();
-    }
+        void Commit()
+        {
+            // **待つ間に変換が始まっていたら確定しない**（変換中の表示と二重になる）
+            if (_sinkSyncing || _isComposing || _preeditText.Length > 0 || _imeSink is not { } current)
+            {
+                return;
+            }
 
+            if (!string.Equals(current.Text, typed, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            ClearImeSink();
+            ReplaceSelection(typed);
+            PlaceImeSink();
+        }
+
+        if (DispatcherQueue is { } queue)
+        {
+            queue.TryEnqueue(Commit);
+            return;
+        }
+
+        Commit();
+    }
     /// <summary>IME の変換が始まったときに変換中の表示へ切り替える。</summary>
     /// <param name="sender">送信元。</param>
     /// <param name="e">引数。</param>
@@ -189,6 +221,10 @@ public sealed partial class AnnotationLayerControl
     private void OnImeSinkCompositionChanged(TextBox sender, TextCompositionChangedEventArgs e)
     {
         _ = sender;
+
+        // **変換中として扱う**: `TextCompositionStarted` が来ない IME があるため、
+        // ここでも立てる（立てないと確定して文字が二重になる。 実測 2026-11-23）。
+        _isComposing = true;
 
         var text = _imeSink?.Text ?? string.Empty;
         var start = Math.Clamp(e.StartIndex, 0, text.Length);

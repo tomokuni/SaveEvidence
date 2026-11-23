@@ -123,10 +123,14 @@ public sealed class AnnotationTextEditor : UserControl
 
         window.Controls.Add(content);
         window.Show();
+
+        // **画面の外へは出さない**: ウィンドウの外へ出せるようにしたため、作業領域で挟む（実測 2026-11-23）。
+        var area = Screen.FromPoint(window.Location).WorkingArea;
+        window.Location = new Point(
+            Math.Clamp(window.Location.X, area.X, Math.Max(area.X, area.Right - window.Width)),
+            Math.Clamp(window.Location.Y, area.Y, Math.Max(area.Y, area.Bottom - window.Height)));
         return window;
     }
-
-    /// <summary>書式バーのウィンドウを出し入れする。</summary>
     /// <param name="show">出す場合は <see langword="true"/>。</param>
     private void ShowFormatBarWindow(bool show)
     {

@@ -374,8 +374,24 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
             return;
         }
 
-        popup.HorizontalOffset = position.X;
-        popup.VerticalOffset = position.Y;
+        // **画面の外へは出さない**: ウィンドウの外へ出せるようにしたため、画面の作業領域で挟む
+        // （見えなくなるのを防ぐ。 実測 2026-11-23）。
+        var x = position.X;
+        var y = position.Y;
+        if (XamlRoot?.Content is FrameworkElement root && root.XamlRoot is not null)
+        {
+            var work = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
+                Microsoft.UI.Win32Interop.GetWindowIdFromWindow(
+                    WinRT.Interop.WindowNative.GetWindowHandle(this)),
+                Microsoft.UI.Windowing.DisplayAreaFallback.Nearest).WorkArea;
+            var width = popup.ActualWidth > 0 ? popup.ActualWidth : popup.Width;
+            var height = popup.ActualHeight > 0 ? popup.ActualHeight : popup.Height;
+            x = Math.Clamp(x, work.X, Math.Max(work.X, work.X + work.Width - width));
+            y = Math.Clamp(y, work.Y, Math.Max(work.Y, work.Y + work.Height - height));
+        }
+
+        popup.HorizontalOffset = x;
+        popup.VerticalOffset = y;
     }
     /// <summary>パネルを重ねる先（アプリの画面の最上位）を取得する。</summary>
     /// <returns>重ねる先。 取得できない場合は <see langword="null"/>。</returns>

@@ -42,9 +42,12 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     private readonly Dictionary<AnnotationPanelKind, EsPoint> _positions = [];
 
 
-    /// <summary>パネルを載せるポップアップ（ウィンドウの外へ出せる）。</summary>
-    private readonly Dictionary<AnnotationPanelKind, Popup> _popups = [];
+    /// <summary>パネルを載せる別ウィンドウ（種類ごとに 1 つ。 ウィンドウの外へ出せる）。</summary>
+    private readonly Dictionary<AnnotationPanelKind, Window> _windows = [];
 
+
+    /// <summary>表示したことのあるパネルの窓（<see cref="Window.Show(Window)"/> は 1 度だけ呼ぶ）。</summary>
+    private readonly HashSet<AnnotationPanelKind> _shown = [];
     /// <summary>書式バーの対象（注釈の矩形）。 実寸が確定したらこの矩形で置き直す。</summary>
     private EsRect? _formatBarTarget;
 
@@ -251,13 +254,27 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         root.OnMouseMove(e => ContinuePanelDrag(kind, root, owner, e));
         root.OnMouseUp(_ => EndPanelDrag(kind));
 
-        if (!_popups.TryGetValue(kind, out var popup))
+        // **別ウィンドウへ載せる**: ポップアップ（<see cref="Popup"/>）へ載せると、その中から開く
+        // 色選択やカラーピッカーの**入れ子のポップアップが入力も描画も受け取れません**
+        // （実測 2026-11-23: ColorPicker が表示されなくなった）。 枠なしのウィンドウなら、
+        // 中から開くポップアップは普通のウィンドウの子になり、ウィンドウの外へも出せます。
+        if (!_windows.TryGetValue(kind, out var window))
         {
-            popup = new Popup();
-            _popups[kind] = popup;
+            window = new Window
+            {
+                Borderless = true,
+                ShowInTaskbar = false,
+                Title = kind == AnnotationPanelKind.FormatBar ? "書式バー" : "外観",
+            };
+
+            _windows[kind] = window;
         }
 
-        popup.Content(root);
+        window.Content = root;
+        window.WindowSize = WindowSize.Fixed(
+            root.Width + (appearance.BorderThickness * 2),
+            root.Height + (appearance.BorderThickness * 2));
+
         ApplyPosition(kind, position);
     }
 
@@ -266,7 +283,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="position">左上の位置（アプリの画面の左上を原点とする DIP）。</param>
     public void MovePanel(AnnotationPanelKind kind, EsPoint position)
     {
-        if (_popups.ContainsKey(kind))
+        if (_windows.ContainsKey(kind))
         {
             ApplyPosition(kind, position);
         }
@@ -276,35 +293,32 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="kind">パネルの種別。</param>
     public void DestroyPanel(AnnotationPanelKind kind) => RemovePanel(kind);
 
-    /// <summary>パネルの位置を適用する（ポップアップのアンカーで与える）。</summary>
+    /// <summary>パネルの位置を適用する（別ウィンドウの位置として与える）。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <param name="position">左上の位置（DIP）。</param>
     private void ApplyPosition(AnnotationPanelKind kind, EsPoint position)
     {
         _positions[kind] = position;
-        // ポップアップは別ウィンドウなので、位置は**ウィンドウ座標のアンカー**で与える
-        if (!_popups.TryGetValue(kind, out var popup) || FindVisualRoot() is not Window)
+
+        if (!_windows.TryGetValue(kind, out var window) || FindVisualRoot() is not Window main)
         {
             return;
         }
+        // **画面座標へ直す**: 与えられる位置はアプリのウィンドウ内の座標なので、
+        // ウィンドウの位置（画面座標）を足してから別ウィンドウを置く。
+        var x = main.Position.X + position.X;
+        var y = main.Position.Y + position.Y;
 
-        var anchor = new Rect(position.X, position.Y, 1, 1);
-        if (popup.IsOpen)
+        // **先に出す**: 表示していないウィンドウへの移動は無視される（実測 2026-11-23）。
+        // **先に出す**: 表示していないウィンドウへの移動は無視される（実測 2026-11-23）。
+        if (_shown.Add(kind))
         {
-            popup.MoveTo(anchor, PopupAnchorSide.Below);
+            window.Show(main);
         }
-        else
-        {
-            popup.ShowAt(this, anchor, PopupAnchorSide.Below);
-        }
+        window.MoveTo(x, y);
     }
-
-    /// <summary>右クリック位置へ外観の編集パネルを表示する。</summary>
-    /// <param name="x">位置（このコントロールの座標）。</param>
-    /// <param name="y">位置（このコントロールの座標）。</param>
     /// <remarks>
-    /// <b>位置と寿命はコアが決める</b>: 置ける領域（キャプチャ ページ）の内側へ収め、右クリックした位置へ出し、
-    /// 外側をクリックすると閉じる。 余白を押したまま動かすと移動する。
+    /// <b>位置と寿命はコアが決める</b>: 置ける領域の内側へ収め、右クリックした位置へ出します。
     /// </remarks>
     public void ShowStylePanel(double x, double y)
     {
@@ -405,9 +419,9 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="kind">パネルの種別。</param>
     private void RemovePanel(AnnotationPanelKind kind)
     {
-        if (_popups.TryGetValue(kind, out var popup))
+        if (_windows.TryGetValue(kind, out var window))
         {
-            popup.Close();
+            window.Close();
         }
     }
 
