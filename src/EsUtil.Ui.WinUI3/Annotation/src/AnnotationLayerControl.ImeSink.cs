@@ -105,8 +105,15 @@ public sealed partial class AnnotationLayerControl
         }
 
         var caret = ResolveCaretDip();
+        var style = SelectedTextStyle;
+
+        // **行の高さと文字の大きさを合わせる**: 1×1 のままだと OS は変換中の文字を点として扱い、
+        // **変換候補が入力中の文字に重なります**（実測 2026-11-23）。 行の高さを与えると候補は行の下へ出ます。
+        var (scale, _) = ResolveImageTransform();
+        sink.Height = Math.Max(1, caret.Height);
+        sink.FontSize = Math.Max(1, style.FontSize * scale);
         Canvas.SetLeft(sink, Math.Max(0, caret.X));
-        Canvas.SetTop(sink, Math.Max(0, caret.Y));
+        Canvas.SetTop(sink, Math.Max(0, TextTopDip(caret, style)));
     }
 
     /// <summary>受け口の文字列を空へ戻す（こちらの書き換えとして扱う）。</summary>
