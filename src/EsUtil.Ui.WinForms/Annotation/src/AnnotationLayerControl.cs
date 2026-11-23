@@ -751,6 +751,28 @@ public sealed partial class AnnotationLayerControl : Control
         return new EsPoint(offset.X + (source.X * scale), offset.Y + (source.Y * scale));
     }
 
+    /// <summary>選択中の注釈の矩形（DIP）を取得する。</summary>
+    /// <returns>矩形（DIP）。 選択していない場合は空。</returns>
+    /// <remarks>
+    /// <b>書式バーを注釈に被せないための対象矩形</b>である。 本文の矩形ではなく枠線を含む矩形を使う
+    /// （本文で判定するとバーが枠線の上へ数ピクセル重なる。 実測 2026-11-22）。
+    /// </remarks>
+    public RectangleF GetSelectedBoundsRect()
+    {
+        if (Selected is not { } item)
+        {
+            return default;
+        }
+
+        var topLeft = ToClientDip(item.Bounds.TopLeft);
+        var bottomRight = ToClientDip(item.Bounds.BottomRight);
+        return new RectangleF(
+            (float)topLeft.X,
+            (float)topLeft.Y,
+            (float)(bottomRight.X - topLeft.X),
+            (float)(bottomRight.Y - topLeft.Y));
+    }
+
     /// <summary>Marquee へ渡す座標変換ポート（変換の規則が変わらないため 1 度だけ作る）。</summary>
     private readonly ICoordTransform _coordinateTransform;
 

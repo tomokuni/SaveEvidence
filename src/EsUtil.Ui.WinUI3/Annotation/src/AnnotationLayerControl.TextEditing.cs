@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Geometry;
-using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -233,10 +232,8 @@ public sealed partial class AnnotationLayerControl
             return false;
         }
 
-        // **変換中かどうかを先に控える**: ここで `_isComposing` を落としてから判定すると、
-        // 変換中でも「本文が変わった」と IME へ伝えてしまい、変換が中断されて
-        // **1 キーごとに確定**する（実測 2026-11-23: 代入の順序が逆になっていた）。
-        var wasComposing = _isComposing;
+        // **変換中かどうかを先に落とす**: 落とさずに本文を書き換えると、変換の途中で「本文が変わった」と
+        // IME へ伝えてしまい、変換が中断されて **1 キーごとに確定**する（実測 2026-11-23: 代入の順序が逆になっていた）。
         _isComposing = false;
         _preeditText = string.Empty;
         PrepareUndo();
@@ -245,12 +242,6 @@ public sealed partial class AnnotationLayerControl
             bubble,
             AnnotationTextStyleEdit.Insert(bubble.Text, start, end - start, text, _typingStyle.Value));
         RaiseDocumentChanged();
-
-        // **変換中は知らせない**: 変換の途中で「本文が変わった」と伝えると IME の変換が中断され、
-        // 1 キーごとに確定してしまう（実測 2026-11-22）。 確定したときだけ知らせる。
-        if (!wasComposing)
-        {
-        }
 
         _caretIndex = start + text.Length;
         _selectionAnchor = _caretIndex;
@@ -334,34 +325,10 @@ public sealed partial class AnnotationLayerControl
         }
 
         var caret = ResolveCaretDip();
-
-        // **変換中の文字列はキャレットの位置へ置き、キャレットはその末尾へ移す**: 重ねると既存の文字と
-        // 二重になり、キャレットが動かないため「入力が反映されていない」ように見える（実測 2026-11-22）。
-        // 変換中の文字列には下線を引く（未確定であることを示す）。
         var caretX = caret.X;
-        if (_preeditText.Length > 0)
-        {
-            // **本文と同じ位置へ置く**: 本文の run は行の高さの中央へ置かれる（AnnotationPainter）。
-            // 変換中の文字だけを行の上端へ置くと**上へずれて見えます**（実測 2026-11-23）。
-            var style = SelectedTextStyle with { IsUnderline = true };
-            var preedit = new TextBlock
-            {
-                Text = _preeditText,
-                FontFamily = new FontFamily(style.FontFamily),
-                FontSize = style.FontSize * scale,
-                FontWeight = style.IsBold ? FontWeights.Bold : FontWeights.Normal,
-                FontStyle = style.IsItalic ? Windows.UI.Text.FontStyle.Italic : Windows.UI.Text.FontStyle.Normal,
-                Foreground = AnnotationTextMetrics.ToBrush(style.Color),
-                TextDecorations = Windows.UI.Text.TextDecorations.Underline,
-                IsHitTestVisible = false,
-            };
 
-            preedit.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
-            Canvas.SetLeft(preedit, caret.X);
-            Canvas.SetTop(preedit, TextTopDip(caret, SelectedTextStyle));
-            _editing.Children.Add(preedit);
-            caretX = caret.X + preedit.DesiredSize.Width;
-        }
+        // **変換中の文字列はここで描かない**: 描画に使う文書（<see cref="RenderDocument"/>）へ
+        // 入れているため、重ねて描くと既存の文字と二重になります（実測 2026-11-23）。
 
         // **キャレットは一般的な速さで点滅させる**（規則はコアの AnnotationCaretBlink が単一所有する）
         PlaceImeSink();
@@ -399,9 +366,15 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>キャレットの位置（DIP）を求める。</summary>
     /// <returns>キャレットの左上と行の高さ。</returns>
+    /// <remarks>
+    /// <b>変換中はキャレットを変換中の文字列の末尾へ置く</b>: 規則はコアの
+    /// <see cref="AnnotationCompositionPreview.ResolveCaret"/> が単一所有します（4 つの UI 版で同じ）。
+    /// </remarks>
     private (double X, double Y, double Height) ResolveCaretDip()
     {
-        if (ResolveLineIndex() is not { } index || index.ResolveCaret(_caretIndex, MeasureText) is not { } caret)
+        var index = ResolveLineIndex();
+        var caretIndex = AnnotationCompositionPreview.ResolveCaret(_caretIndex, _preeditText);
+        if (index is null || index.ResolveCaret(caretIndex, MeasureText) is not { } caret)
         {
             return default;
         }
@@ -422,10 +395,15 @@ public sealed partial class AnnotationLayerControl
             return null;
         }
 
-        var plan = _presenter.ResolveDrawPlan(_document, MeasureText, SelectedId);
+        var document = RenderDocument;
+        var plan = _presenter.ResolveDrawPlan(document, MeasureText, SelectedId);
         var shape = plan.Shapes.FirstOrDefault(
             candidate => string.Equals(candidate.Id, bubble.Id, StringComparison.Ordinal));
-        return shape is null ? null : AnnotationTextLineIndex.Create(shape, bubble.Text.PlainText);
+        return shape is null
+            ? null
+            : AnnotationTextLineIndex.Create(shape, document.Find(bubble.Id) is BubbleAnnotation drawn
+                ? drawn.Text.PlainText
+                : bubble.Text.PlainText);
     }
 
     /// <summary>本文の編集でキーが押されたときの処理。</summary>

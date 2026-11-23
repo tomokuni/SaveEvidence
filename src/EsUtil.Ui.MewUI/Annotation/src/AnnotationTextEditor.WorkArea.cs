@@ -12,12 +12,16 @@ namespace EsUtil.Ui.MewUI.Annotation;
 public sealed partial class AnnotationTextEditor
 {
     /// <summary>指定した位置をモニターの作業領域の内側へ収める。</summary>
-    /// <param name="reference">基準にするウィンドウ（モニターを決める）。</param>
-    /// <param name="x">左上の X（画面座標）。</param>
-    /// <param name="y">左上の Y（画面座標）。</param>
-    /// <param name="width">置くウィンドウの幅。</param>
-    /// <param name="height">置くウィンドウの高さ。</param>
-    /// <returns>収めた位置。</returns>
+    /// <param name="reference">基準にするウィンドウ（モニターと表示倍率を決める）。</param>
+    /// <param name="x">左上の X（画面座標。 DIP）。</param>
+    /// <param name="y">左上の Y（画面座標。 DIP）。</param>
+    /// <param name="width">置くウィンドウの幅（DIP）。</param>
+    /// <param name="height">置くウィンドウの高さ（DIP）。</param>
+    /// <returns>収めた位置（DIP）。</returns>
+    /// <remarks>
+    /// <b>作業領域はピクセル、位置は DIP</b>です。 表示倍率（125% など）を掛けずに挟むと、
+    /// 画面の外へはみ出します（実測 2026-11-23）。
+    /// </remarks>
     private static (int X, int Y) ClampToWorkArea(Window reference, int x, int y, double width, double height)
     {
         if (!OperatingSystem.IsWindows() || reference.Handle == IntPtr.Zero)
@@ -38,9 +42,15 @@ public sealed partial class AnnotationTextEditor
             return (x, y);
         }
 
-        var maxX = Math.Max(info.Work.Left, info.Work.Right - (int)width);
-        var maxY = Math.Max(info.Work.Top, info.Work.Bottom - (int)height);
-        return (Math.Clamp(x, info.Work.Left, maxX), Math.Clamp(y, info.Work.Top, maxY));
+        // 作業領域（ピクセル）を DIP へ写してから挟む
+        var scale = reference.DpiScale > 0 ? reference.DpiScale : 1;
+        var left = (int)Math.Round(info.Work.Left / scale);
+        var top = (int)Math.Round(info.Work.Top / scale);
+        var right = (int)Math.Round(info.Work.Right / scale);
+        var bottom = (int)Math.Round(info.Work.Bottom / scale);
+        var maxX = Math.Max(left, right - (int)Math.Round(width));
+        var maxY = Math.Max(top, bottom - (int)Math.Round(height));
+        return (Math.Clamp(x, left, maxX), Math.Clamp(y, top, maxY));
     }
 
     /// <summary>モニターの作業領域を問い合わせる Win32 の窓口。</summary>

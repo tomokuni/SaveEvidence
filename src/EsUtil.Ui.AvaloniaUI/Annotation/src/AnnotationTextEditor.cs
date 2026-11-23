@@ -44,6 +44,13 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>パネルを載せる別ウィンドウ（種別ごとに 1 つ。 ウィンドウの外へ出せる）。</summary>
     private readonly Dictionary<AnnotationPanelKind, Window> _windows = [];
 
+    /// <summary>パネルを置いた位置（種別ごと。 アプリの画面の左上を原点とする DIP）。</summary>
+    /// <remarks>
+    /// <b>置いた位置を控える</b>: パネルの根はウィンドウの中にあり、位置は <see cref="Canvas.GetLeft"/>
+    /// から読めません。 外側の押下の判定はこの値を使います（<see cref="AnnotationPanelController.CloseIfOutside"/>）。
+    /// </remarks>
+    private readonly Dictionary<AnnotationPanelKind, EsPoint> _positions = [];
+
 
     /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
     private Border? _draggingRoot;
@@ -168,12 +175,14 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>表示中のパネルの左上（DIP）を取得する。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <returns>左上の位置。 表示していない場合は原点。</returns>
+    /// <remarks>
+    /// <b>置いた位置を控えて返す</b>: パネルの根は <see cref="Canvas"/> ではなくウィンドウの中にあり、
+    /// <see cref="Canvas.GetLeft"/> は常に <see cref="double.NaN"/> です。 根から読むと常に原点になり、
+    /// 外側の押下の判定が「内側」と誤って閉じなくなります（実測 2026-11-23: 他の場所を押しても
+    /// フライアウトが消えない場合があった）。
+    /// </remarks>
     public EsPoint GetPanelPosition(AnnotationPanelKind kind)
-        => _roots.TryGetValue(kind, out var root)
-            ? new EsPoint(
-                double.IsNaN(Canvas.GetLeft(root)) ? 0 : Canvas.GetLeft(root),
-                double.IsNaN(Canvas.GetTop(root)) ? 0 : Canvas.GetTop(root))
-            : default;
+        => _positions.TryGetValue(kind, out var position) ? position : default;
 
     /// <summary>表示中のパネルの大きさ（DIP）を取得する。</summary>
     /// <param name="kind">パネルの種別。</param>
@@ -255,6 +264,11 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             };
 
             _windows[kind] = window;
+
+            // **フォーカスが外れたら閉じる**: アプリの外（他のアプリ）や別ウィンドウを押した場合、
+            // アプリの画面の押下は届かないため、外側の押下の監視だけでは閉じられません
+            // （実測 2026-11-23: 他の場所を押しても消えない場合があった）。
+            window.Deactivated += (_, _) => CloseOnFocusLost(kind);
             window.Show(top as Window ?? (Window)top);
         }
 
@@ -368,12 +382,42 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         }
     }
 
+    /// <summary>パネルのウィンドウからフォーカスが外れたときに、外観フライアウトを閉じる。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <remarks>
+    /// <b>書式バーは閉じない</b>: 書式バーは本文の編集中だけ出すもので、押すたびにフォーカスが
+    /// 移るためです（閉じると書式を変えられません）。<br/>
+    /// <b>1 度待ってから決める</b>: パネルの中のポップアップ（色の一覧）が開くと、一瞬だけ
+    /// ウィンドウが非アクティブになることがあります。 すぐに閉じると色を選べません。
+    /// </remarks>
+    private void CloseOnFocusLost(AnnotationPanelKind kind)
+    {
+        if (kind != AnnotationPanelKind.StyleEditor
+            || !_stylePanel.IsOpen
+            || !_windows.TryGetValue(kind, out var window))
+        {
+            return;
+        }
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (_stylePanel.IsOpen && !window.IsActive)
+                {
+                    _stylePanel.Close();
+                }
+            },
+            DispatcherPriority.Background);
+    }
+
     /// <summary>パネルの位置を別ウィンドウへ適用する。</summary>
     /// <param name="kind">パネルの種別。</param>
     /// <param name="position">左上の位置（アプリの画面の左上を原点とする DIP）。</param>
     /// <remarks>
-    /// <b>ウィンドウの位置は画面座標</b>であるため、アプリのウィンドウの位置を足してから置きます。
-    /// <b>画面の外へは出さない</b>: 画面の作業領域へ収めます（見えなくなるのを防ぐ）。
+    /// <b>ウィンドウの位置は画面座標（ピクセル）</b>であるため、位置（画面の DIP）を表示倍率で写します
+    /// （125% の画面では DIP のまま置くと 25% ずれます）。<br/>
+    /// <b>画面の外へは出さない</b>: 実寸を表示倍率で写し、画面の作業領域へ収めます。 収めた後の位置を
+    /// 控えるため、外側の押下の判定（<see cref="GetPanelPosition"/>）と実際の位置が食い違いません。
     /// </remarks>
     private void ApplyPosition(AnnotationPanelKind kind, EsPoint position)
     {
@@ -382,18 +426,50 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             return;
         }
 
-        var x = main.Position.X + (int)position.X;
-        var y = main.Position.Y + (int)position.Y;
+        _positions[kind] = position;
+
+        // **位置はアプリの画面（ウィンドウの中）の DIP**: 画面のピクセルへ写すときに、ウィンドウの
+        // 位置（ピクセル）を足します。 足さないと、ウィンドウを動かした分だけパネルがずれます
+        // （実測 2026-11-23: ウィンドウを (200, 100) へ動かすと、パネルが左上へ 200 px・100 px ずれた）。
+        var scale = main.RenderScaling > 0 ? main.RenderScaling : 1;
+        var size = ResolvePanelSize(kind);
+        var x = main.Position.X + (int)Math.Round(position.X * scale);
+        var y = main.Position.Y + (int)Math.Round(position.Y * scale);
         if (main.Screens.ScreenFromWindow(main) is { } screen)
         {
+            // **作業領域はピクセル**であるため、パネルの実寸もピクセルへ写してから挟む
             var area = screen.WorkingArea;
-            var width = window.Bounds.Width > 0 ? window.Bounds.Width : window.Width;
-            var height = window.Bounds.Height > 0 ? window.Bounds.Height : window.Height;
-            x = Math.Clamp(x, area.X, Math.Max(area.X, area.Right - (int)width));
-            y = Math.Clamp(y, area.Y, Math.Max(area.Y, area.Bottom - (int)height));
+            var width = (int)Math.Round(size.Width * scale);
+            var height = (int)Math.Round(size.Height * scale);
+            x = Math.Clamp(x, area.X, Math.Max(area.X, area.Right - width));
+            y = Math.Clamp(y, area.Y, Math.Max(area.Y, area.Bottom - height));
+
+            // 実際に置いた位置を控える（外側の押下の判定に使う）
+            _positions[kind] = new EsPoint(
+                (x - main.Position.X) / scale,
+                (y - main.Position.Y) / scale);
         }
 
         window.Position = new PixelPoint(x, y);
+    }
+
+    /// <summary>パネルの実寸（DIP）を求める。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <returns>実寸。 測れない場合は <see cref="GetPanelSize"/> の見積り。</returns>
+    /// <remarks>
+    /// <b><c>Width</c> は使わない</b>: ウィンドウは中身に合わせて大きさを決めるため
+    /// （<see cref="SizeToContent.WidthAndHeight"/>）、<c>Width</c> は <see cref="double.NaN"/> であり、
+    /// ピクセルへ写すと 0 になって画面の外への判定が効きません（実測 2026-11-23: 画面からはみ出た）。
+    /// </remarks>
+    private EsSize ResolvePanelSize(AnnotationPanelKind kind)
+    {
+        if (_windows.TryGetValue(kind, out var window)
+            && window.Bounds is { Width: > 0, Height: > 0 } bounds)
+        {
+            return new EsSize(bounds.Width, bounds.Height);
+        }
+
+        return GetPanelSize(kind);
     }
     /// <summary>このコントロールの座標（DIP）を重ねた先の座標（DIP）へ変換する。</summary>
     /// <param name="point">このコントロールの座標。</param>

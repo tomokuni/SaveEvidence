@@ -24,8 +24,13 @@ public sealed partial class AnnotationLayerControl
 
 
     /// <summary>受け口の文字列をこちらから書き換えている間は <see langword="true"/>（再入を防ぐ）。</summary>
-    /// <summary>変換候補と入力中の文字の間の距離（DIP）。</summary>
-    private const double PickerCandidateGap = 22;
+    /// <summary>変換候補のフライアウトと入力中の文字の間の距離（DIP）。</summary>
+    /// <remarks>
+    /// <b>受け口を文字の下へずらす</b>: OS は受け口（入力欄）の中の変換中の範囲を基準に候補を出すため、
+    /// 受け口の高さを変えても候補の位置は変わりません。 受け口そのものを文字の下へ置くと候補が下がります
+    /// （実測 2026-11-23: 高さだけを変えても候補が入力中の文字に近すぎた）。
+    /// </remarks>
+    private const double PickerCandidateOffset = 12;
 
     /// <summary>受け口の文字列をこちらから書き換えている間は <see langword="true"/>（再入を防ぐ）。</summary>
     private bool _sinkSyncing;
@@ -110,15 +115,15 @@ public sealed partial class AnnotationLayerControl
 
         var caret = ResolveCaretDip();
         var style = SelectedTextStyle;
-
-        // **行の高さと文字の大きさを合わせる**: 1×1 のままだと OS は変換中の文字を点として扱い、
-        // **変換候補が入力中の文字に重なります**（実測 2026-11-23）。 行の高さを与えると候補は行の下へ出ます。
         var (scale, _) = ResolveImageTransform();
-        // **候補との距離を空ける**: 候補は受け口の下へ出るため、行の高さより少し高くする（実測 2026-11-23: 近すぎた）。
-        sink.Height = Math.Max(1, caret.Height) + PickerCandidateGap;
+
+        // **文字の下へ置く**: OS は受け口の中の変換中の範囲を基準に候補を出すため、受け口を文字の
+        // すぐ下へ置くと候補がその下に出ます（実測 2026-11-23: 受け口を文字の位置へ置いていたため
+        // 候補が入力中の文字に近すぎた）。
+        sink.Height = Math.Max(1, caret.Height);
         sink.FontSize = Math.Max(1, style.FontSize * scale);
         Canvas.SetLeft(sink, Math.Max(0, caret.X));
-        Canvas.SetTop(sink, Math.Max(0, TextTopDip(caret, style)));
+        Canvas.SetTop(sink, Math.Max(0, TextTopDip(caret, style) + caret.Height + PickerCandidateOffset));
     }
 
     /// <summary>受け口の文字列を空へ戻す（こちらの書き換えとして扱う）。</summary>

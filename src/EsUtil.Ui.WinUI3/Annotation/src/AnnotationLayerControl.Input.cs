@@ -31,6 +31,19 @@ public sealed partial class AnnotationLayerControl
     /// <summary>最後に押下した位置（ダブルクリックの判定）。</summary>
     private EsPoint _lastPressedPoint;
 
+    /// <summary>描画に使う文書を取得する（変換中の文字列を入れた複製を含む）。</summary>
+    /// <value>変換中でなければ本文の文書。 変換中は変換中の文字列を入れた描画用の複製。</value>
+    /// <remarks>
+    /// <b>変換中の文字列も本文として組む</b>: キャレットの位置へ重ねて描くと既存の文字と重なり、
+    /// 折り返しも動かないため読めません（実測 2026-11-23: WinUI 3 版だけこの経路を通っておらず、
+    /// 入力中の文字が既存の文字に被っていました）。 規則はコアの
+    /// <see cref="AnnotationCompositionPreview"/> が単一所有します（4 つの UI 版で同じ）。
+    /// </remarks>
+    private AnnotationDocument RenderDocument
+        => _isEditingText
+            ? AnnotationCompositionPreview.Apply(_document, SelectedId, _caretIndex, _preeditText)
+            : _document;
+
     /// <summary>再描画する（画像・注釈・選択枠を今の状態へ合わせる）。</summary>
     public void Redraw()
     {
@@ -53,7 +66,7 @@ public sealed partial class AnnotationLayerControl
             _image.Visibility = Visibility.Collapsed;
         }
 
-        var plan = _presenter.ResolveDrawPlan(_document, MeasureText, SelectedId);
+        var plan = _presenter.ResolveDrawPlan(RenderDocument, MeasureText, SelectedId);
 
         // **編集中も本文を描く**: WinUI 3 は本文を別の入力欄で表示しないため、編集中に本文を
         // 描かないと文字が消える（実測 2026-11-20）。 キャレットと選択範囲は後から重ねる。

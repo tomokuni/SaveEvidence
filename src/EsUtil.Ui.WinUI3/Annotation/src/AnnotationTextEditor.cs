@@ -35,6 +35,13 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <summary>右クリックの外観フライアウトを出すコントローラー。</summary>
     private readonly AnnotationPanelController _stylePanel;
 
+    /// <summary>ポップアップのウィンドウが中身のまわりに持つ影の余白（DIP）。</summary>
+    /// <remarks>
+    /// <b>見えている中身を基準に収める</b>: WinUI 3 のポップアップのウィンドウは中身のまわりに透明な
+    /// 影の余白を含むため、ウィンドウの矩形だけで挟むと中身が画面の端を越えます。
+    /// </remarks>
+    private const double PopupShadowMargin = 20;
+
     /// <summary>表示中のパネルの根（種別ごとに 1 つ。 使い回す）。</summary>
     private readonly Dictionary<AnnotationPanelKind, Border> _roots = [];
 
@@ -222,6 +229,13 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         // **実寸を確定させる**: レイアウト前の測定は高さを正しく返さない（実測 2026-11-22: 16040 DIP）。
         // ここでレイアウトを走らせると、ホストが実寸を報告でき、コアが位置を決め直せる。
         root.UpdateLayout();
+
+        // **実寸が決まってから収め直す**: 出した直後の `ActualWidth` は 0 のため、最初の収め方では
+        // 画面の外へはみ出します（実測 2026-11-23: 画面の右下で開くと右下へ 22 px はみ出した）。
+        if (DispatcherQueue is { } queue)
+        {
+            queue.TryEnqueue(() => ApplyPosition(kind, position));
+        }
     }
 
     /// <summary>パネルを移動する。</summary>
@@ -376,24 +390,52 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         // **画面の外へは出さない**: ウィンドウの外へ出せるようにしたため、パネルを置く位置を
         // アプリのウィンドウがあるモニターの作業領域で挟みます（画面外で見えなくなるのを防ぐ。
         // 実測 2026-11-23）。
+        // **単位を揃える**: ポップアップの位置（`HorizontalOffset`）はウィンドウの左上を原点とする
+        // **DIP**、作業領域は**ピクセル**です。 表示倍率（125% など）を掛けずに挟むと、
+        // 画面の外へはみ出します（実測 2026-11-23）。
         // **ウィンドウのハンドルは XamlRoot から取る**: このコントロール自身を渡すと
         // `WinRT.Interop.WindowNative.GetWindowHandle` が InvalidCastException で落ちます
         // （実測 2026-11-23: ダブルクリックで例外になり入力できなくなった）。
         var x = position.X;
         var y = position.Y;
-        if (MainWindowHandle() is { } handle && handle != IntPtr.Zero)
+        if (MainWindowHandle() is { } handle && handle != IntPtr.Zero
+            && XamlRoot is { } root)
         {
-            var work = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
-                Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle),
-                Microsoft.UI.Windowing.DisplayAreaFallback.Nearest).WorkArea;
-            var width = popup.ActualWidth > 0 ? popup.ActualWidth : popup.Width;
-            var height = popup.ActualHeight > 0 ? popup.ActualHeight : popup.Height;
-            x = Math.Clamp(x, work.X, Math.Max(work.X, work.X + work.Width - width));
-            y = Math.Clamp(y, work.Y, Math.Max(work.Y, work.Y + work.Height - height));
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle);
+            var window = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+            var work = Microsoft.UI.Windowing.DisplayArea
+                .GetFromWindowId(windowId, Microsoft.UI.Windowing.DisplayAreaFallback.Nearest)
+                .WorkArea;
+
+            var scale = root.RasterizationScale > 0 ? root.RasterizationScale : 1;
+
+            // **実寸が取れないときは中身を測る**: 出した直後の `ActualWidth` は 0 のため、それだけで
+            // 挟むと画面の外へ出ます（実測 2026-11-23: 画面の右下で開くと右下へはみ出した）。
+            var measured = GetPanelSize(kind);
+            var width = popup.ActualWidth > 0 ? popup.ActualWidth : measured.Width;
+            var height = popup.ActualHeight > 0 ? popup.ActualHeight : measured.Height;
+
+            // **影の余白を差し引く**: WinUI 3 のポップアップのウィンドウは、中身のまわりに影の
+            // 透明な余白（実測 約 11 px）を含みます。 余白を考えずに挟むと、見えている中身が
+            // 画面の端を越えます（実測 2026-11-23: 右下で 22 px はみ出した）。
+            var margin = PopupShadowMargin;
+            x = Math.Clamp(
+                x,
+                (work.X - window.Position.X) / scale,
+                Math.Max(
+                    (work.X - window.Position.X) / scale,
+                    ((work.X + work.Width - window.Position.X) / scale) - width - margin));
+            y = Math.Clamp(
+                y,
+                (work.Y - window.Position.Y) / scale,
+                Math.Max(
+                    (work.Y - window.Position.Y) / scale,
+                    ((work.Y + work.Height - window.Position.Y) / scale) - height - margin));
         }
 
         popup.HorizontalOffset = x;
         popup.VerticalOffset = y;
+        _positions[kind] = new EsPoint(x, y);
     }
 
     /// <summary>アプリのウィンドウのハンドルを取得する。</summary>
