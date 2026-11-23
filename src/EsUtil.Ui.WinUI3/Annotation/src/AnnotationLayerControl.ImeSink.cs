@@ -25,7 +25,7 @@ public sealed partial class AnnotationLayerControl
 
     /// <summary>受け口の文字列をこちらから書き換えている間は <see langword="true"/>（再入を防ぐ）。</summary>
     /// <summary>変換候補と入力中の文字の間の距離（DIP）。</summary>
-    private const double PickerCandidateGap = 10;
+    private const double PickerCandidateGap = 22;
 
     /// <summary>受け口の文字列をこちらから書き換えている間は <see langword="true"/>（再入を防ぐ）。</summary>
     private bool _sinkSyncing;

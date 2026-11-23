@@ -18,7 +18,7 @@ namespace EsUtil.Ui.MewUI.Annotation;
 /// 奪うといった問題が版ごとに出るため、**別ウィンドウ（<see cref="Popup"/>）**へ載せてウィンドウの外へも出せるようにする。
 /// 画像（プレビュー）の内側では切れない。
 /// </remarks>
-public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
+public sealed partial class AnnotationTextEditor : Panel, IAnnotationPanelHost
 {
     /// <summary>パネルを置ける領域をウィンドウの外へ広げる余白（DIP）。</summary>
     private const double PanelOutsideAllowance = 240;
@@ -270,12 +270,18 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             _windows[kind] = window;
         }
 
-        window.Content = root;
-        window.WindowSize = WindowSize.Fixed(
-            root.Width + (appearance.BorderThickness * 2),
-            root.Height + (appearance.BorderThickness * 2));
+        // **枠を描かせない**: テーマの既定の枠（太い灰色）がパネルの外側に残り、中身が
+        // ずれて見えます（実測 2026-11-23: 添付のとおり左と上に太い枠が出た）。
+        window.BorderThickness = 0;
+        window.BorderBrush = Aprillz.MewUI.Color.Transparent;
+        window.Padding = Thickness.Zero;
 
+        window.Content = root;
+
+        // **大きさは中身の実寸ちょうど**: 枠の分を足すと中身が左上へ寄ってずれます。
+        window.WindowSize = WindowSize.Fixed(root.Width, root.Height);
         ApplyPosition(kind, position);
+
     }
 
     /// <summary>パネルを移動する。</summary>
@@ -306,10 +312,10 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         }
         // **画面座標へ直す**: 与えられる位置はアプリのウィンドウ内の座標なので、
         // ウィンドウの位置（画面座標）を足してから別ウィンドウを置く。
-        var x = main.Position.X + position.X;
-        var y = main.Position.Y + position.Y;
+        var x = (int)(main.Position.X + position.X);
+        var y = (int)(main.Position.Y + position.Y);
+        (x, y) = ClampToWorkArea(main, x, y, window.WindowSize.Width, window.WindowSize.Height);
 
-        // **先に出す**: 表示していないウィンドウへの移動は無視される（実測 2026-11-23）。
         // **先に出す**: 表示していないウィンドウへの移動は無視される（実測 2026-11-23）。
         if (_shown.Add(kind))
         {
