@@ -14,15 +14,11 @@ namespace EsUtil.Ui.MewUI.Annotation;
 /// <b>位置と開閉はコアが決める</b>: <see cref="AnnotationPanelController"/> が「どこへ出すか・ドラッグで
 /// どう動くか・いつ閉じるか」を単一所有する。 本クラスは <see cref="IAnnotationPanelHost"/> を実装し、
 /// 重ねる先への追加・移動・削除だけを行う（4 つの UI 版で動作を揃えるため）。<br/>
-/// <b>独立したウィンドウを作らない</b>: ウィンドウはタスク バーへ出る・アプリの後ろへ回る・フォーカスを
-/// 奪うといった問題が版ごとに出るため、**別ウィンドウ（<see cref="Popup"/>）**へ載せてウィンドウの外へも出せるようにする。
-/// 画像（プレビュー）の内側では切れない。
+/// <b>パネルは枠なしのウィンドウへ載せる</b>: アプリの画面へ重ねるとウィンドウの外へ出られない。
+/// ウィンドウなら画面の内側まで自由に置け、はみ出さないことは位置の適用が保証する。
 /// </remarks>
 public sealed partial class AnnotationTextEditor : Panel, IAnnotationPanelHost
 {
-    /// <summary>パネルを置ける領域をウィンドウの外へ広げる余白（DIP）。</summary>
-    private const double PanelOutsideAllowance = 240;
-
     /// <summary>書式バー（編集中だけ表示する）。</summary>
     private readonly AnnotationFormatBar _formatBar;
 
@@ -141,16 +137,16 @@ public sealed partial class AnnotationTextEditor : Panel, IAnnotationPanelHost
 
     /// <summary>パネルを置ける領域（DIP）を取得する。</summary>
     /// <remarks>
-    /// <b>ウィンドウの外へも出せる</b>: パネルは別ウィンドウ（<see cref="Popup"/>）へ載せるため、
-    /// 画像の表示領域へ収める必要はありません。 ただし画面の外へは出さないよう、領域は画像の表示領域を
-    /// 基準に左右上下へ <see cref="PanelOutsideAllowance"/> だけ広げます（実測 2026-11-23）。
+    /// <b>ウィンドウの外へも出せる</b>: パネルは別ウィンドウへ載せるため、画像の表示領域へ収める必要は
+    /// ありません。 ただし画面の外へは出さないよう、領域は画像の表示領域を基準に左右上下へ
+    /// <see cref="AnnotationPanelMetrics.OutsideAllowance"/> だけ広げます（実測 2026-11-23）。
     /// </remarks>
     public EsRect AvailableArea
     {
         get
         {
             var origin = ToOverlayPoint(default);
-            var pad = PanelOutsideAllowance;
+            var pad = AnnotationPanelMetrics.OutsideAllowance;
             var width = _layer.Bounds.Width > 0 ? _layer.Bounds.Width : RenderSize.Width;
             var height = _layer.Bounds.Height > 0 ? _layer.Bounds.Height : RenderSize.Height;
             return width > 0 && height > 0
@@ -423,11 +419,17 @@ public sealed partial class AnnotationTextEditor : Panel, IAnnotationPanelHost
 
     /// <summary>種別のパネルを画面から外す（根と中身は残す）。</summary>
     /// <param name="kind">パネルの種別。</param>
+    /// <remarks>
+    /// <b><c>Close</c> ではなく <c>Hide</c> を使う</b>: MewUI の <see cref="Window.Show(Window)"/> は
+    /// 1 度しか呼べず、<c>Close</c> した窓は出し直せない。 非表示にしておけば、次に必要になったとき
+    /// そのまま出せる（実測 2026-11-23: 書式バーを消した後に注釈をダブルクリックしても出なかった）。
+    /// </remarks>
     private void RemovePanel(AnnotationPanelKind kind)
     {
         if (_windows.TryGetValue(kind, out var window))
         {
-            window.Close();
+            _shown.Remove(kind);
+            window.Hide();
         }
     }
 

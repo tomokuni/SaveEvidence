@@ -10,4 +10,12 @@ public static class AnnotationPanelMetrics
 {
     /// <summary>書式バーと注釈の間の余白（DIP）。</summary>
     public const double FormatBarGap = 24;
+
+    /// <summary>レイヤーの範囲より外側へパネルを置ける余白（DIP）。</summary>
+    /// <remarks>
+    /// <b>ウィンドウの外へ出すための余白</b>: レイヤーの範囲だけで挟むと、ウィンドウの端にある注釈の
+    /// 書式バーが内側へ押し戻され、ウィンドウの外へ出せない（実測 2026-11-23）。 画面の外へ出ない
+    /// ことは各 UI が作業領域で止める。
+    /// </remarks>
+    public const double OutsideAllowance = 240;
 }

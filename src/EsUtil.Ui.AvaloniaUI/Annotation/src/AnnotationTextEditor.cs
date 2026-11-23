@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Palette;
@@ -18,10 +19,10 @@ namespace EsUtil.Ui.AvaloniaUI.Annotation;
 /// ホストが書くことになる（サンプルごとにずれる）。<br/>
 /// <b>位置と開閉はコアが決める</b>: <see cref="AnnotationPanelController"/> が「どこへ出すか・ドラッグで
 /// どう動くか・いつ閉じるか」を単一所有する。 本クラスは <see cref="IAnnotationPanelHost"/> を実装し、
-/// 重ねる先への追加・移動・削除だけを行う（4 つの UI 版で動作を揃えるため）。<br/>
-/// <b>独立したウィンドウを作らない</b>: ウィンドウはタスク バーへ出る・アプリの後ろへ回る・フォーカスを
-/// 奪うといった問題が版ごとに出るため、アプリの画面の最上位（<see cref="OverlayLayer"/>）へ重ねる。
-/// 画像（プレビュー）の内側では切れない。
+/// パネルの作成・移動・削除だけを行う（4 つの UI 版で動作を揃えるため）。<br/>
+/// <b>パネルは枠なしのウィンドウへ載せる</b>: アプリの画面へ重ねるとウィンドウの外へ出られない。
+/// ウィンドウなら画面の内側まで自由に置け、はみ出さないことは <see cref="ApplyPosition"/> が保証する。<br/>
+/// <b>状態は Panel ではなくこの型が持つ</b>: <see cref="AnnotationLayerControl"/> は画像と注釈だけを扱う。
 /// </remarks>
 public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
 {
@@ -145,18 +146,21 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     }
 
     /// <summary>パネルを置ける領域（DIP）を取得する。</summary>
-    /// <value>注釈レイヤー（画像の表示領域）が占める範囲（重ねた先の座標）。</value>
+    /// <value>注釈レイヤー（画像の表示領域）が占める範囲を、外側へ広げたもの（重ねた先の座標）。</value>
     /// <remarks>
-    /// <b>画像の表示領域に収める</b>: ページ全体を領域にすると、ツール バーや余白の外へ出て
-    /// 画像の外に表示される（実測 2026-11-21）。 画像の表示領域に収めれば、画像の内側で切れない。
+    /// <b>ウィンドウの外へ出せる</b>: パネルは別ウィンドウへ載せるため、レイヤーの範囲に挟めると
+    /// ウィンドウの端で中へ押し戻される（<see cref="AnnotationPanelMetrics.OutsideAllowance"/> だけ
+    /// 外側を許し、画面の作業領域を超えないことは <see cref="ApplyPosition"/> が保証する）。
     /// </remarks>
     public EsRect AvailableArea
     {
         get
         {
             var origin = ToOverlayPoint(default);
+            var pad = AnnotationPanelMetrics.OutsideAllowance;
             return Bounds.Width > 0 && Bounds.Height > 0
-                ? new EsRect(origin.X, origin.Y, Bounds.Width, Bounds.Height)
+                ? new EsRect(
+                    origin.X - pad, origin.Y - pad, Bounds.Width + (pad * 2), Bounds.Height + (pad * 2))
                 : default;
         }
     }
@@ -254,7 +258,21 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             window.Show(top as Window ?? (Window)top);
         }
 
+        // **隠したウィンドウは出し直す**: いったん閉じた（<c>Hide</c> した）ウィンドウは、
+        // そのままでは二度と表示されない（外側を押して書式バーを消した後、注釈を
+        // ダブルクリックしても出なくなった。実測 2026-11-23）。
+        if (!window.IsVisible)
+        {
+            window.Show(top as Window ?? (Window)top);
+        }
+
         ApplyPosition(kind, position);
+
+        // **レイアウトが確定してから置き直す**: 出した直後の位置指定は、ウィンドウが自分の寸法を
+        // 確定する際に捨てられることがある（実測 2026-11-23: 最初の右クリックだけ画面の左上 (0,0) に
+        // 出た。 2 回目以降は正しい位置に出た）。 次の描画で置き直す。
+        Dispatcher.UIThread.Post(
+            () => ApplyPosition(kind, position), DispatcherPriority.Loaded);
     }
 
     /// <summary>パネルを移動する。</summary>

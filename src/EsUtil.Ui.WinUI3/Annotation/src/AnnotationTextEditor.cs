@@ -35,8 +35,6 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <summary>右クリックの外観フライアウトを出すコントローラー。</summary>
     private readonly AnnotationPanelController _stylePanel;
 
-    /// <summary>パネルを置ける領域をウィンドウの外へ広げる余白（DIP）。</summary>
-    private const double PanelOutsideAllowance = 240;
     /// <summary>表示中のパネルの根（種別ごとに 1 つ。 使い回す）。</summary>
     private readonly Dictionary<AnnotationPanelKind, Border> _roots = [];
 
@@ -116,10 +114,11 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     }
 
     /// <summary>パネルを置ける領域（DIP）を取得する。</summary>
-    /// <value>注釈レイヤー（画像の表示領域）が占める範囲（重ねた先の座標）。</value>
+    /// <value>注釈レイヤー（画像の表示領域）が占める範囲を、外側へ広げたもの（重ねた先の座標）。</value>
     /// <remarks>
-    /// <b>画像の表示領域に収める</b>: ページ全体を領域にすると、ツール バーや余白の外へ出て
-    /// 画像の外に表示される（実測 2026-11-21）。 画像の表示領域に収めれば、画像の内側で切れない。
+    /// <b>ウィンドウの外へも出せる</b>: パネルはウィンドウの外へ出せるポップアップへ載せるため、
+    /// 画像の表示領域へ収める必要はない。 <see cref="AnnotationPanelMetrics.OutsideAllowance"/> だけ
+    /// 外側を許し、画面の外へ出ないことは位置の適用が作業領域で止める（実測 2026-11-23）。
     /// </remarks>
     public EsRect AvailableArea
     {
@@ -128,7 +127,7 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
             var width = _layer.ActualWidth > 0 ? _layer.ActualWidth : ActualWidth;
             var height = _layer.ActualHeight > 0 ? _layer.ActualHeight : ActualHeight;
             var origin = ToOverlayPoint(default);
-            var pad = PanelOutsideAllowance;
+            var pad = AnnotationPanelMetrics.OutsideAllowance;
             return width > 0 && height > 0
                 ? new EsRect(origin.X - pad, origin.Y - pad, width + (pad * 2), height + (pad * 2))
                 : default;
@@ -374,15 +373,18 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
             return;
         }
 
-        // **画面の外へは出さない**: ウィンドウの外へ出せるようにしたため、画面の作業領域で挟む
-        // （見えなくなるのを防ぐ。 実測 2026-11-23）。
+        // **画面の外へは出さない**: ウィンドウの外へ出せるようにしたため、パネルを置く位置を
+        // アプリのウィンドウがあるモニターの作業領域で挟みます（画面外で見えなくなるのを防ぐ。
+        // 実測 2026-11-23）。
+        // **ウィンドウのハンドルは XamlRoot から取る**: このコントロール自身を渡すと
+        // `WinRT.Interop.WindowNative.GetWindowHandle` が InvalidCastException で落ちます
+        // （実測 2026-11-23: ダブルクリックで例外になり入力できなくなった）。
         var x = position.X;
         var y = position.Y;
-        if (XamlRoot?.Content is FrameworkElement root && root.XamlRoot is not null)
+        if (MainWindowHandle() is { } handle && handle != IntPtr.Zero)
         {
             var work = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
-                Microsoft.UI.Win32Interop.GetWindowIdFromWindow(
-                    WinRT.Interop.WindowNative.GetWindowHandle(this)),
+                Microsoft.UI.Win32Interop.GetWindowIdFromWindow(handle),
                 Microsoft.UI.Windowing.DisplayAreaFallback.Nearest).WorkArea;
             var width = popup.ActualWidth > 0 ? popup.ActualWidth : popup.Width;
             var height = popup.ActualHeight > 0 ? popup.ActualHeight : popup.Height;
@@ -393,6 +395,19 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         popup.HorizontalOffset = x;
         popup.VerticalOffset = y;
     }
+
+    /// <summary>アプリのウィンドウのハンドルを取得する。</summary>
+    /// <returns>ウィンドウのハンドル。 取得できない場合は <see cref="IntPtr.Zero"/>。</returns>
+    private IntPtr MainWindowHandle()
+    {
+        if (XamlRoot?.ContentIslandEnvironment is not { } environment)
+        {
+            return IntPtr.Zero;
+        }
+
+        return Microsoft.UI.Win32Interop.GetWindowFromWindowId(environment.AppWindowId);
+    }
+
     /// <summary>パネルを重ねる先（アプリの画面の最上位）を取得する。</summary>
     /// <returns>重ねる先。 取得できない場合は <see langword="null"/>。</returns>
     /// <remarks>
