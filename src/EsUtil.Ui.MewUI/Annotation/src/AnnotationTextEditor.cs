@@ -15,11 +15,14 @@ namespace EsUtil.Ui.MewUI.Annotation;
 /// どう動くか・いつ閉じるか」を単一所有する。 本クラスは <see cref="IAnnotationPanelHost"/> を実装し、
 /// 重ねる先への追加・移動・削除だけを行う（4 つの UI 版で動作を揃えるため）。<br/>
 /// <b>独立したウィンドウを作らない</b>: ウィンドウはタスク バーへ出る・アプリの後ろへ回る・フォーカスを
-/// 奪うといった問題が版ごとに出るため、アプリの画面の最上位（<c>Window.OverlayLayer</c>）へ重ねる。
+/// 奪うといった問題が版ごとに出るため、**別ウィンドウ（<see cref="Popup"/>）**へ載せてウィンドウの外へも出せるようにする。
 /// 画像（プレビュー）の内側では切れない。
 /// </remarks>
 public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
 {
+    /// <summary>パネルを置ける領域をウィンドウの外へ広げる余白（DIP）。</summary>
+    private const double PanelOutsideAllowance = 240;
+
     /// <summary>書式バー（編集中だけ表示する）。</summary>
     private readonly AnnotationFormatBar _formatBar;
 
@@ -38,8 +41,9 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <summary>表示中のパネルの左上（DIP）。</summary>
     private readonly Dictionary<AnnotationPanelKind, EsPoint> _positions = [];
 
-    /// <summary>パネルを重ねた先（アプリの画面の最上位）。</summary>
-    private OverlayLayer? _overlay;
+
+    /// <summary>パネルを載せるポップアップ（ウィンドウの外へ出せる）。</summary>
+    private readonly Dictionary<AnnotationPanelKind, Popup> _popups = [];
 
     /// <summary>書式バーの対象（注釈の矩形）。 実寸が確定したらこの矩形で置き直す。</summary>
     private EsRect? _formatBarTarget;
@@ -133,20 +137,21 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     }
 
     /// <summary>パネルを置ける領域（DIP）を取得する。</summary>
-    /// <value>注釈レイヤー（画像の表示領域）が占める範囲（ウィンドウの座標）。</value>
     /// <remarks>
-    /// <b>画像の表示領域に収める</b>: ページ全体を領域にすると、ツール バーや余白の外へ出て
-    /// 画像の外に表示される（実測 2026-11-21）。 画像の表示領域に収めれば、画像の内側で切れない。
+    /// <b>ウィンドウの外へも出せる</b>: パネルは別ウィンドウ（<see cref="Popup"/>）へ載せるため、
+    /// 画像の表示領域へ収める必要はありません。 ただし画面の外へは出さないよう、領域は画像の表示領域を
+    /// 基準に左右上下へ <see cref="PanelOutsideAllowance"/> だけ広げます（実測 2026-11-23）。
     /// </remarks>
     public EsRect AvailableArea
     {
         get
         {
             var origin = ToOverlayPoint(default);
+            var pad = PanelOutsideAllowance;
             var width = _layer.Bounds.Width > 0 ? _layer.Bounds.Width : RenderSize.Width;
             var height = _layer.Bounds.Height > 0 ? _layer.Bounds.Height : RenderSize.Height;
             return width > 0 && height > 0
-                ? new EsRect(origin.X, origin.Y, width, height)
+                ? new EsRect(origin.X - pad, origin.Y - pad, width + (pad * 2), height + (pad * 2))
                 : default;
         }
     }
@@ -171,16 +176,14 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     {
         RemovePanel(kind);
 
-        if (FindVisualRoot() is not Window owner || owner.OverlayLayer is not { } overlayLayer)
+        if (FindVisualRoot() is not Window owner)
         {
             return;
         }
 
-        // **重ねる先はアプリの画面の最上位**: プレビューの内側へ置くと画像の外で切れる。
-        // **全面を覆う Canvas を挟まない**: 挟むとパネルの外側の押下を吸ってしまい、注釈も
-        // 書式バーも操作できなくなる（実測 2026-11-21）。 位置は余白（Margin）で与える。
-        _overlay = overlayLayer;
-
+        // **パネルはポップアップへ載せる**: ウィンドウの中へ重ねるとウィンドウの外へ出せず、
+        // **ウィンドウが小さいと中身が切れます**（実測 2026-11-23）。 MewUI の <see cref="Popup"/> は
+        // 別ウィンドウなので、ウィンドウの外（画面の作業領域の内側）へも出せます。
         // **実寸が確定したら置き直す**: 置いた時点の見積りより実際の描画が高いことがあり、
         // その差だけ書式バーが注釈へ重なる（実測 2026-11-21）。 描画のたびに実寸で決め直す。
         if (!_frameHook)
@@ -225,7 +228,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
             appearance.Padding, appearance.VerticalPadding,
             appearance.Padding, appearance.VerticalPadding);
 
-        // **大きさを中身に合わせて確定する**: MewUI の <c>OverlayLayer</c> は子を渡された領域いっぱいに
+        // **大きさを中身に合わせて確定する**: ポップアップは中身の実寸で開くため、
         // 配置するため、大きさを指定しないとパネルが縦に伸び、中身が上下の中央へ寄る（実測 2026-11-22:
         // 書式バーが注釈に重なった）。 中身を左上へ寄せ、根の大きさを実寸にする。
         if (root.Child is Control content)
@@ -248,12 +251,14 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
         root.OnMouseMove(e => ContinuePanelDrag(kind, root, owner, e));
         root.OnMouseUp(_ => EndPanelDrag(kind));
 
-        if (!overlayLayer.Contains(root))
+        if (!_popups.TryGetValue(kind, out var popup))
         {
-            overlayLayer.Add(root);
+            popup = new Popup();
+            _popups[kind] = popup;
         }
 
-        ApplyPosition(kind, root, position);
+        popup.Content(root);
+        ApplyPosition(kind, position);
     }
 
     /// <summary>パネルを移動する。</summary>
@@ -261,9 +266,9 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="position">左上の位置（アプリの画面の左上を原点とする DIP）。</param>
     public void MovePanel(AnnotationPanelKind kind, EsPoint position)
     {
-        if (_roots.TryGetValue(kind, out var root))
+        if (_popups.ContainsKey(kind))
         {
-            ApplyPosition(kind, root, position);
+            ApplyPosition(kind, position);
         }
     }
 
@@ -271,14 +276,27 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="kind">パネルの種別。</param>
     public void DestroyPanel(AnnotationPanelKind kind) => RemovePanel(kind);
 
-    /// <summary>パネルの位置を適用する（左上の余白として与える）。</summary>
+    /// <summary>パネルの位置を適用する（ポップアップのアンカーで与える）。</summary>
     /// <param name="kind">パネルの種別。</param>
-    /// <param name="root">パネルの根。</param>
     /// <param name="position">左上の位置（DIP）。</param>
-    private void ApplyPosition(AnnotationPanelKind kind, Border root, EsPoint position)
+    private void ApplyPosition(AnnotationPanelKind kind, EsPoint position)
     {
         _positions[kind] = position;
-        root.Margin = new Thickness(position.X, position.Y, 0, 0);
+        // ポップアップは別ウィンドウなので、位置は**ウィンドウ座標のアンカー**で与える
+        if (!_popups.TryGetValue(kind, out var popup) || FindVisualRoot() is not Window)
+        {
+            return;
+        }
+
+        var anchor = new Rect(position.X, position.Y, 1, 1);
+        if (popup.IsOpen)
+        {
+            popup.MoveTo(anchor, PopupAnchorSide.Below);
+        }
+        else
+        {
+            popup.ShowAt(this, anchor, PopupAnchorSide.Below);
+        }
     }
 
     /// <summary>右クリック位置へ外観の編集パネルを表示する。</summary>
@@ -352,7 +370,7 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="appearance">外観（枠と余白）。</param>
     /// <returns>パネルの大きさ（DIP）。 中身が無い場合は原点。</returns>
     /// <remarks>
-    /// <b>根ではなく中身を測る</b>: <c>OverlayLayer</c> の子は渡された領域へ引き伸ばされるため、
+    /// <b>根ではなく中身を測る</b>: ポップアップの中身は希望寸法で測るため、
     /// 根の実寸は画面の大きさになる（実測 2026-11-22）。
     /// </remarks>
     private EsSize MeasureContentSize(AnnotationPanelKind kind, AnnotationPanelAppearance appearance)
@@ -387,18 +405,18 @@ public sealed class AnnotationTextEditor : Panel, IAnnotationPanelHost
     /// <param name="kind">パネルの種別。</param>
     private void RemovePanel(AnnotationPanelKind kind)
     {
-        if (_roots.TryGetValue(kind, out var root))
+        if (_popups.TryGetValue(kind, out var popup))
         {
-            _overlay?.Remove(root);
+            popup.Close();
         }
     }
 
     /// <summary>このコントロールの座標（DIP）を重ねた先の座標（DIP）へ変換する。</summary>
     /// <param name="point">このコントロールの座標。</param>
-    /// <returns>重ねた先の座標。</returns>
+    /// <returns>重ねた先の座標。 取得できない場合はそのまま返す。</returns>
     /// <remarks>
     /// <b>MewUI の <c>Bounds</c> はウィンドウの絶対座標</b>である（親からの相対ではない）。 したがって
-    /// レイヤーの左上を足すだけでウィンドウ座標になる（<c>OverlayLayer</c> もウィンドウ座標で置く）。<br/>
+    /// レイヤーの左上を足すだけでウィンドウ座標になる。
     /// <b><c>TranslatePoint</c> は使わない</b>: ウィンドウやその内容の根を渡すと変換せず (0,0) を返すことがあり、
     /// パネルがアプリの左上へずれる（実測 2026-11-22: 書式バーがウィンドウの左上へ出た）。
     /// </remarks>

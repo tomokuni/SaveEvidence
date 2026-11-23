@@ -3,6 +3,7 @@ using EsUtil.Platform.Core.Palette;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 using DrawingColor = System.Drawing.Color;
 
@@ -34,6 +35,8 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <summary>右クリックの外観フライアウトを出すコントローラー。</summary>
     private readonly AnnotationPanelController _stylePanel;
 
+    /// <summary>パネルを置ける領域をウィンドウの外へ広げる余白（DIP）。</summary>
+    private const double PanelOutsideAllowance = 240;
     /// <summary>表示中のパネルの根（種別ごとに 1 つ。 使い回す）。</summary>
     private readonly Dictionary<AnnotationPanelKind, Border> _roots = [];
 
@@ -43,6 +46,9 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <summary>パネルを重ねた先（アプリの画面の最上位）。</summary>
     private Panel? _overlay;
 
+
+    /// <summary>パネルを載せるポップアップ（種別ごとに 1 つ。 使い回す）。</summary>
+    private readonly Dictionary<AnnotationPanelKind, Popup> _popups = [];
     /// <summary>ドラッグ中のパネルの根（押下を受けた要素）。</summary>
     private Border? _draggingRoot;
 
@@ -122,8 +128,9 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
             var width = _layer.ActualWidth > 0 ? _layer.ActualWidth : ActualWidth;
             var height = _layer.ActualHeight > 0 ? _layer.ActualHeight : ActualHeight;
             var origin = ToOverlayPoint(default);
+            var pad = PanelOutsideAllowance;
             return width > 0 && height > 0
-                ? new EsRect(origin.X, origin.Y, width, height)
+                ? new EsRect(origin.X - pad, origin.Y - pad, width + (pad * 2), height + (pad * 2))
                 : default;
         }
     }
@@ -192,13 +199,26 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
         root.PointerMoved += (_, e) => ContinuePanelDrag(kind, root, e);
         root.PointerReleased += (_, e) => EndPanelDrag(kind, root, e);
 
-        if (!overlay.Children.Contains(root))
+        // **ポップアップへ載せる**: ウィンドウの中へ重ねるとウィンドウの外へ出せず、**ウィンドウが小さいと
+        // 中身が切れる**。 WinUI 3 の <see cref="Popup"/> は ShouldConstrainToRootBounds を false にすると
+        // ウィンドウの外（画面の作業領域の内側）へも出せる（実測 2026-11-23）。
+        if (!_popups.TryGetValue(kind, out var popup))
         {
-            overlay.Children.Add(root);
-            SpanOverlay(overlay, root);
+            popup = new Popup
+            {
+                XamlRoot = XamlRoot,
+                ShouldConstrainToRootBounds = false,
+                IsLightDismissEnabled = false,
+                Child = root,
+            };
+
+            _popups[kind] = popup;
         }
 
-        ApplyPosition(kind, root, position);
+        popup.Child = root;
+        popup.IsOpen = true;
+
+        ApplyPosition(kind, position);
 
         // **実寸を確定させる**: レイアウト前の測定は高さを正しく返さない（実測 2026-11-22: 16040 DIP）。
         // ここでレイアウトを走らせると、ホストが実寸を報告でき、コアが位置を決め直せる。
@@ -210,9 +230,9 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <param name="position">左上の位置（アプリの画面の左上を原点とする DIP）。</param>
     public void MovePanel(AnnotationPanelKind kind, EsPoint position)
     {
-        if (_roots.TryGetValue(kind, out var root))
+        if (_popups.ContainsKey(kind))
         {
-            ApplyPosition(kind, root, position);
+            ApplyPosition(kind, position);
         }
     }
 
@@ -331,44 +351,32 @@ public sealed class AnnotationTextEditor : Grid, IAnnotationPanelHost
     /// <param name="kind">パネルの種別。</param>
     private void RemovePanel(AnnotationPanelKind kind)
     {
-        if (_roots.TryGetValue(kind, out var root))
+        if (_popups.TryGetValue(kind, out var popup))
         {
-            _overlay?.Children.Remove(root);
+            popup.IsOpen = false;
         }
     }
 
-    /// <summary>重ねる先が格子の場合は、パネルを全列・全行にまたがらせる。</summary>
-    /// <param name="overlay">重ねる先。</param>
-    /// <param name="root">パネルの根。</param>
+    /// <summary>パネルの位置をポップアップへ適用する。</summary>
+    /// <param name="kind">パネルの種別。</param>
+    /// <param name="position">左上の位置（DIP）。</param>
     /// <remarks>
-    /// <b>格子の 1 列目へ置くと見えない</b>: アプリの根は左ナビ（40 DIP）と内容の 2 列の格子である。
-    /// 列を指定しない子は 1 列目（40 DIP）へ入り、幅 40 の枠で切られて表示されない（実測 2026-11-22:
-    /// WinUI 3 版で書式バーと右クリックのフライアウトが出なかった）。 全列・全行にまたがらせれば
-    /// 余白（<c>Margin</c>）で画面の任意の位置へ置ける。
+    /// <b>位置はポップアップのオフセットで与える</b>: 余白（<c>Margin</c>）で与えるとウィンドウの外へ出せません。
+    /// <see cref="Popup.ShouldConstrainToRootBounds"/> を <see langword="false"/> にしてあるため、
+    /// ウィンドウの外（画面の作業領域の内側）へも置けます（実測 2026-11-23）。
     /// </remarks>
-    private static void SpanOverlay(Panel overlay, Border root)
+    private void ApplyPosition(AnnotationPanelKind kind, EsPoint position)
     {
-        if (overlay is not Grid grid)
+        _positions[kind] = position;
+
+        if (!_popups.TryGetValue(kind, out var popup))
         {
             return;
         }
 
-        Grid.SetColumn(root, 0);
-        Grid.SetColumnSpan(root, Math.Max(1, grid.ColumnDefinitions.Count));
-        Grid.SetRow(root, 0);
-        Grid.SetRowSpan(root, Math.Max(1, grid.RowDefinitions.Count));
+        popup.HorizontalOffset = position.X;
+        popup.VerticalOffset = position.Y;
     }
-
-    /// <summary>パネルの位置を適用する（左上の余白として与える）。</summary>
-    /// <param name="kind">パネルの種別。</param>
-    /// <param name="root">パネルの根。</param>
-    /// <param name="position">左上の位置（DIP）。</param>
-    private void ApplyPosition(AnnotationPanelKind kind, Border root, EsPoint position)
-    {
-        _positions[kind] = position;
-        root.Margin = new Thickness(position.X, position.Y, 0, 0);
-    }
-
     /// <summary>パネルを重ねる先（アプリの画面の最上位）を取得する。</summary>
     /// <returns>重ねる先。 取得できない場合は <see langword="null"/>。</returns>
     /// <remarks>

@@ -19,20 +19,24 @@ public sealed class AnnotationTextEditor : UserControl
 
     /// <summary>外観・重なり順の編集パネル（開いている間だけ保持する）。</summary>
     private AnnotationStylePanel? _stylePanel;
+    /// <summary>書式バーを載せる枠なしウィンドウ（ウィンドウの外へ出せる）。</summary>
+    private Form? _formatBarWindow;
+
+    /// <summary>外観の編集パネルを載せる枠なしウィンドウ（ウィンドウの外へ出せる）。</summary>
+    private Form? _styleWindow;
+
 
     /// <summary>注釈の本文編集と書式バーをまとめたコントロールを初期化する。</summary>
     public AnnotationTextEditor()
     {
         _layer = new AnnotationLayerControl { Dock = DockStyle.Fill };
-        _formatBar = new AnnotationFormatBar(_layer) { Visible = false, Location = new Point(8, 8) };
-
+        _formatBar = new AnnotationFormatBar(_layer);
         Controls.Add(_layer);
-        Controls.Add(_formatBar);
-        _formatBar.BringToFront();
+
 
         _layer.EditingChanged += (_, _) =>
         {
-            _formatBar.Visible = _layer.IsEditingText;
+            ShowFormatBarWindow(_layer.IsEditingText);
             if (_layer.IsEditingText)
             {
                 _formatBar.RefreshState();
@@ -85,71 +89,87 @@ public sealed class AnnotationTextEditor : UserControl
     /// <param name="x">位置（このコントロールの座標）。</param>
     /// <param name="y">位置（このコントロールの座標）。</param>
     /// <remarks>
-    /// <b>ウィンドウの内側へ収めない</b>: 収めると狭いウィンドウでパネルが潰れる。 はみ出してよい
-    /// （パネルはドラッグで動かせる）。
+    /// <b>枠なしウィンドウへ載せる</b>: アプリのウィンドウの子にするとウィンドウの外へ出せず、
+    /// 狭いウィンドウでパネルが切れます。 枠なし・タスク バー非表示のウィンドウへ載せれば、
+    /// 画面の内側でウィンドウの外へも出せます（実測 2026-11-23）。
     /// </remarks>
     public void ShowStylePanel(double x, double y)
     {
         CloseStylePanel();
 
-        var panel = new AnnotationStylePanel(_layer, CloseStylePanel, AnnotationPanelAppearance.StyleEditor)
-        {
-            Location = new Point((int)Math.Max(0, x), (int)Math.Max(0, y)),
-        };
-
-        // 押したまま動かすと移動する
-        Point? origin = null;
-        Point originLocation = default;
-        panel.MouseDown += (_, e) =>
-        {
-            if (e.Button != MouseButtons.Left)
-            {
-                return;
-            }
-
-            origin = e.Location;
-            originLocation = panel.Location;
-        };
-        panel.MouseMove += (_, e) =>
-        {
-            if (origin is not { } start)
-            {
-                return;
-            }
-
-            panel.Location = new Point(
-                originLocation.X + (e.X - start.X),
-                originLocation.Y + (e.Y - start.Y));
-        };
-        panel.MouseUp += (_, _) => origin = null;
-
+        var panel = new AnnotationStylePanel(_layer, CloseStylePanel, AnnotationPanelAppearance.StyleEditor);
+        var location = PointToScreen(new Point((int)Math.Max(0, x), (int)Math.Max(0, y)));
         _stylePanel = panel;
-        Controls.Add(panel);
-        panel.BringToFront();
+        _styleWindow = ShowInWindow(panel, location);
     }
 
-    /// <summary>外観の編集パネルが出ているかどうかを取得する。</summary>
-    public bool IsStylePanelOpen => _stylePanel is not null;
-
-    /// <summary>指定した位置が外観の編集パネルの上かどうかを判定する。</summary>
-    /// <param name="x">位置（このコントロールの座標）。</param>
-    /// <param name="y">位置（このコントロールの座標）。</param>
-    /// <returns>パネルの上の場合は <see langword="true"/>。</returns>
-    public bool IsStylePanelHit(double x, double y)
-        => _stylePanel is { } panel
-            && x >= panel.Left && y >= panel.Top
-            && x < panel.Right && y < panel.Bottom;
-
-    /// <summary>外観・重なり順の編集パネルを閉じる。</summary>
-    public void CloseStylePanel()
+    /// <summary>コントロールを枠なしウィンドウへ載せて表示する。</summary>
+    /// <param name="content">載せる中身（自動で大きさを合わせる）。</param>
+    /// <param name="screenLocation">ウィンドウの左上（画面座標）。</param>
+    /// <returns>作ったウィンドウ。</returns>
+    private static Form ShowInWindow(Control content, Point screenLocation)
     {
-        if (_stylePanel is not { } panel)
+        content.Dock = DockStyle.Fill;
+        var window = new Form
+        {
+            FormBorderStyle = FormBorderStyle.None,
+            ShowInTaskbar = false,
+            StartPosition = FormStartPosition.Manual,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Location = screenLocation,
+            TopMost = false,
+        };
+
+        window.Controls.Add(content);
+        window.Show();
+        return window;
+    }
+
+    /// <summary>書式バーのウィンドウを出し入れする。</summary>
+    /// <param name="show">出す場合は <see langword="true"/>。</param>
+    private void ShowFormatBarWindow(bool show)
+    {
+        if (!show)
+        {
+            if (_formatBarWindow is { } closing)
+            {
+                _formatBarWindow = null;
+                closing.Controls.Remove(_formatBar);
+                closing.Close();
+                closing.Dispose();
+            }
+
+            return;
+        }
+
+        if (_formatBarWindow is not null)
         {
             return;
         }
 
+        // 本文の上端の少し上へ出す（本文に被せない）
+        var location = PointToScreen(new Point(8, 8));
+        _formatBarWindow = ShowInWindow(_formatBar, new Point(location.X, Math.Max(0, location.Y - _formatBar.Height - 8)));
+    }
+    /// <summary>外観の編集パネルが出ているかどうかを取得する。</summary>
+    public bool IsStylePanelOpen => _stylePanel is not null;
+
+
+    /// <summary>外観・重なり順の編集パネルを閉じる。</summary>
+    public void CloseStylePanel()
+    {
         _stylePanel = null;
-        Controls.Remove(panel);
-        panel.Dispose();
+
+        if (_styleWindow is not { } window)
+        {
+            return;
+        }
+
+        _styleWindow = null;
+        window.Hide();
+        window.Controls.Clear();
+        window.Close();
+        window.Dispose();
     }
 }

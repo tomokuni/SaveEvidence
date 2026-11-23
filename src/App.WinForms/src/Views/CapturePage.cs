@@ -368,11 +368,10 @@ internal static class CapturePage
             switch (e.Gesture)
             {
                 case AnnotationPreviewGesture.Press:
-                    // 外観フライアウトの表示中の押下は、外側なら閉じる（閉じるボタンは置かない）
-                    if (annotation.IsStylePanelOpen && !annotation.IsStylePanelHit(e.X, e.Y))
-                    {
+                    // 外観フライアウトは枠なしウィンドウへ出しているため、ウィンドウ内の押下はここへ届かない。
+                    // 画像側の押下は常に「外側」なので閉じる（実測 2026-11-23）。
+                    if (annotation.IsStylePanelOpen)
                         annotation.CloseStylePanel();
-                    }
 
                     break;
                 case AnnotationPreviewGesture.DragStart:

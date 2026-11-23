@@ -340,9 +340,9 @@ public sealed partial class AnnotationLayerControl
         // 変換中の文字列には下線を引く（未確定であることを示す）。
         var caretX = caret.X;
         if (_preeditText.Length > 0)
-        // **本文と同じ位置へ置く**: 本文の run は行の高さの中央へ置かれる（AnnotationPainter）。
-        // 変換中の文字だけを行の上端へ置くと**上へずれて見えます**（実測 2026-11-23）。
         {
+            // **本文と同じ位置へ置く**: 本文の run は行の高さの中央へ置かれる（AnnotationPainter）。
+            // 変換中の文字だけを行の上端へ置くと**上へずれて見えます**（実測 2026-11-23）。
             var style = SelectedTextStyle with { IsUnderline = true };
             var preedit = new TextBlock
             {
@@ -357,8 +357,8 @@ public sealed partial class AnnotationLayerControl
             };
 
             preedit.Measure(new Windows.Foundation.Size(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(preedit, caret.X);
             Canvas.SetTop(preedit, TextTopDip(caret, SelectedTextStyle));
-            Canvas.SetTop(preedit, caret.Y);
             _editing.Children.Add(preedit);
             caretX = caret.X + preedit.DesiredSize.Width;
         }
