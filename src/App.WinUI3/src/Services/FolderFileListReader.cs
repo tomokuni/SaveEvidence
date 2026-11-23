@@ -1,5 +1,4 @@
 using EsUtil.Platform.Core.Imaging;
-using EsUtil.SaveEvidence.App.Core.Models;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Services;
 
@@ -26,7 +25,7 @@ internal static class FolderFileListReader
 
         var files = Directory
             .EnumerateFiles(folderPath)
-            .Where(path => EsImageFileExtensions.IsImageFile(path) && !AnnotationCompanions.IsCompanion(path))
+            .Where(path => EsImageFileExtensions.IsImageFile(path) && !AnnotationJson.IsCompanionFile(path))
             .ToList();
 
         files.Sort(StringComparer.OrdinalIgnoreCase);

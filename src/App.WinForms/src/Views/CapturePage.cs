@@ -2,7 +2,6 @@ using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core;
-using System.Text;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.App.Core.Services;
 using EsUtil.SaveEvidence.App.Core.ViewModels;
@@ -939,44 +938,26 @@ internal static class CapturePage
     /// <param name="annotation">注釈の編集コントロール。</param>
     /// <param name="imagePath">保存した画像のパス（付随ファイルの名前の基になる）。</param>
     /// <returns>書き出しの非同期処理。</returns>
-    /// <remarks>注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。</remarks>
-    private static async Task SaveAnnotationFilesAsync(AnnotationTextEditor annotation, string imagePath)
+    /// <remarks>
+    /// 注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。<br/>
+    /// 注釈ファイルのパス・書式・文字コードはコアが単一所有する（<see cref="AnnotationCore.SaveDocument"/> /
+    /// <see cref="AnnotationCore.RemoveCompanionFiles"/>）。 本メソッドは合成画像の描画だけを持つ。
+    /// </remarks>
+    private static Task SaveAnnotationFilesAsync(AnnotationTextEditor annotation, string imagePath)
     {
         var document = annotation.Layer.Document;
-        var jsonPath = AnnotationJson.GetDocumentPath(imagePath);
-        var composedPath = AnnotationJson.GetComposedPath(imagePath);
 
         if (document.Items.IsEmpty)
         {
-            DeleteCompanionFile(jsonPath);
-            DeleteCompanionFile(composedPath);
-            return;
+            annotation.Layer.Core.RemoveCompanionFiles(imagePath);
+            return Task.CompletedTask;
         }
 
-        await File.WriteAllTextAsync(jsonPath, AnnotationJson.Serialize(document), new UTF8Encoding(false))
-            .ConfigureAwait(false);
+        annotation.Layer.Core.SaveDocument(imagePath, document);
 
         using var composed = annotation.Layer.RenderComposedImage();
-        composed?.Save(composedPath);
-
-        static void DeleteCompanionFile(string path)
-        {
-            try
-            {
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
-            catch (IOException ex)
-            {
-                s_logger.LogAnnotationCompanionUpdateError(ex, path);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                s_logger.LogAnnotationCompanionUpdateError(ex, path);
-            }
-        }
+        composed?.Save(AnnotationJson.GetComposedPath(imagePath));
+        return Task.CompletedTask;
     }
 
     /// <summary>画面の取得方式と枠の設定を撮影セッションへ反映する。</summary>

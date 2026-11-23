@@ -525,7 +525,7 @@ internal static class FolderViewPage
         try
         {
             var files = Directory.GetFiles(folderPath, "*.*")
-                .Where(static f => EsImageFileExtensions.IsImageFile(f) && !AnnotationCompanions.IsCompanion(f))
+                .Where(static f => EsImageFileExtensions.IsImageFile(f) && !AnnotationJson.IsCompanionFile(f))
                 .ToList();
 
             IComparer<string> comparer = ascending

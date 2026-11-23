@@ -404,7 +404,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
         }
 
         var files = Directory.GetFiles(folderPath, "*.*")
-            .Where(static f => EsImageFileExtensions.IsImageFile(f) && !AnnotationCompanions.IsCompanion(f))
+            .Where(static f => EsImageFileExtensions.IsImageFile(f) && !AnnotationJson.IsCompanionFile(f))
             .ToList();
 
         // ソート順を適用（比較子を選択。 名前順・大文字小文字を区別しない）

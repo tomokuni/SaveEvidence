@@ -405,6 +405,6 @@ DPI スケーリング（`ClientToSourceScaling` / `LoupeClientToPixelScaling`�
 | 本文の余白 | `AnnotationBodyPadding` | `AnnotationDraftDefaults.BodyPadding` |
 | しっぽの幅 | `AnnotationTailWidth` | `AnnotationDraftDefaults.TailWidth` |
 
-- 反映は `CapturePage.ApplyAnnotationSettings()` が行い、設定の変更通知で即時に追随する。
+- 反映は `CapturePage.ApplyAnnotationSettings()` が行い、設定の変更通知で即時に追随する。 設定項目から既定値への対応付けは `AnnotationDraftDefaultsFactory.FromText`（`EsUtil.Feature.Annotation.Core`）が単一所有する（本アプリは値を渡すだけ）。
 - 色の入力欄の表記は設定画面の「色の表記」（`ColorTextFormat`）に従う。
 - 注釈の保存（`*.annotations.json` / `*.annotated.*`）と元に戻す / やり直しは [`../README.md`](../README.md) §8.3 を参照。

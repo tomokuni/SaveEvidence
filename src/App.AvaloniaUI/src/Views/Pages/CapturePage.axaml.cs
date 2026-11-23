@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Text;
 using DrawingColor = System.Drawing.Color;
 using Avalonia;
 using Avalonia.Controls;
@@ -345,35 +344,23 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>注釈の色の表記と新規作成時の既定値を、現在の設定から反映する。</summary>
+    /// <remarks>設定の項目から既定値への対応付けは <see cref="AnnotationDraftDefaultsFactory"/> が単一所有する。</remarks>
     private void ApplyAnnotationSettings()
     {
         var settings = _settingsService.Current;
         AnnotationEditor.TextFormat = settings.ColorTextFormat;
-        AnnotationEditor.Layer.DraftDefaults = new AnnotationDraftDefaults(
-            new AnnotationAppearance(
-                ParseAnnotationColor(settings.AnnotationFrameBorderColor),
-                settings.AnnotationFrameBorderThickness,
-                ParseAnnotationColor(settings.AnnotationFrameFillColor),
-                settings.AnnotationFrameCornerRadius),
-            new AnnotationAppearance(
-                ParseAnnotationColor(settings.AnnotationBubbleBorderColor),
-                settings.AnnotationFrameBorderThickness,
-                ParseAnnotationColor(settings.AnnotationBubbleFillColor),
-                settings.AnnotationFrameCornerRadius),
-            new AnnotationTextStyle(
-                AnnotationDefaults.PreferredFontFamilies[0],
-                settings.AnnotationTextFontSize,
-                ParseAnnotationColor(settings.AnnotationTextColor)),
+        AnnotationEditor.Layer.DraftDefaults = AnnotationDraftDefaultsFactory.FromText(
+            settings.AnnotationFrameBorderColor,
+            settings.AnnotationFrameBorderThickness,
+            settings.AnnotationFrameFillColor,
+            settings.AnnotationFrameCornerRadius,
+            settings.AnnotationBubbleBorderColor,
+            settings.AnnotationBubbleFillColor,
+            settings.AnnotationTextColor,
+            settings.AnnotationTextFontSize,
             settings.AnnotationBodyPadding,
-            settings.AnnotationTailWidth,
-            BubbleEdge.Bottom);
+            settings.AnnotationTailWidth);
     }
-
-    /// <summary>設定の色文字列を注釈の色へ変換する（解釈できない場合は既定色）。</summary>
-    private static DrawingColor ParseAnnotationColor(string text)
-        => EsUtil.Platform.Core.Imaging.DrawingColorExtensions.TryParseHexText(text, out var color)
-            ? color
-            : DrawingColor.Transparent;
 
     /// <summary>Capture メニュー項目の InputGesture にホットキー設定を反映する。</summary>
     /// <remarks>
@@ -733,26 +720,26 @@ public sealed partial class CapturePage : UserControl
     /// <remarks>
     /// <b>注釈が無いときは書かず、既に書き出した付随ファイルを消す</b>（注釈をすべて削除した後に
     /// 古い注釈ファイルが残ると、画像と食い違う）。<br/>
+    /// <b>注釈ファイルのパス・書式・文字コードはコアが単一所有する</b>（<see cref="AnnotationCore.SaveDocument"/> /
+    /// <see cref="AnnotationCore.RemoveCompanionFiles"/>）。 本メソッドは合成画像の描画だけを持つ。<br/>
     /// <b>合成画像は元画像ピクセルの 1:1</b>で描く（表示倍率に依存しない）。 形式は元画像の拡張子に合わせる
     /// （<see cref="AnnotationJson.GetComposedPath"/> が拡張子を保つ）。
     /// </remarks>
-    private async Task SaveAnnotationFilesAsync(string imagePath)
+    private Task SaveAnnotationFilesAsync(string imagePath)
     {
-        var jsonPath = AnnotationJson.GetDocumentPath(imagePath);
         var composedPath = AnnotationJson.GetComposedPath(imagePath);
 
         if (_annotationDocument is null || _annotationDocument.Items.Length == 0)
         {
-            File.Delete(jsonPath);
-            File.Delete(composedPath);
-            return;
+            AnnotationEditor.Layer.Core.RemoveCompanionFiles(imagePath);
+            return Task.CompletedTask;
         }
 
-        var json = AnnotationJson.Serialize(_annotationDocument);
-        await File.WriteAllTextAsync(jsonPath, json, new UTF8Encoding(false));
+        AnnotationEditor.Layer.Core.SaveDocument(imagePath, _annotationDocument);
 
         using var rendered = AnnotationEditor.Layer.RenderComposedImage();
         SaveComposedImage(rendered, composedPath);
+        return Task.CompletedTask;
     }
 
     /// <summary>合成したビットマップをファイルへ保存する（拡張子が形式を決める）。</summary>
