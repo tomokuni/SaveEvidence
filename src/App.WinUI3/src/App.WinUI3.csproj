@@ -176,7 +176,6 @@
 
 
   <ItemGroup>
-    <Using Include="EsUtil.Feature.Annotation.Core" />
-    <Using Include="EsUtil.Feature.Annotation.Presenter" />
+    <Using Include="EsUtil.Feature.Annotation" />
   </ItemGroup>
 </Project>
