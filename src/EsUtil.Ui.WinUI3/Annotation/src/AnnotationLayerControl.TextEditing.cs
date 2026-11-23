@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.System;
-using Windows.UI.Text.Core;
 
 namespace EsUtil.Ui.WinUI3.Annotation;
 
@@ -15,7 +14,8 @@ namespace EsUtil.Ui.WinUI3.Annotation;
 /// <b>入力欄を重ねない</b>: 本文はコントロールが <see cref="TextBlock"/> で描いているため、入力欄を重ねると
 /// 折り返し・行の高さ・余白が入力欄の規則になり、<b>表示と編集で見た目が変わる</b>。 表示中のレイアウトのまま
 /// キャレットと選択範囲を描いて入力する（Avalonia UI 版・MewUI 版と同じ規則）。<br/>
-/// <b>日本語入力（IME）</b>: <see cref="CoreTextEditContext"/> を本文へ繋ぎ、変換候補の位置と周囲の文字列を渡す。
+/// <b>日本語入力（IME）</b>: OS の入力欄（<see cref="TextBox"/>）を透明に重ねて変換を任せ、
+/// 変換中の文字列は文書へ入れず、キャレットの位置へ下線付きで描く（確定した文字列だけを入れる）。
 /// 変換中の文字列は文書へ入れず、キャレットの位置へ下線付きで描く（確定した文字列だけを入れる）。<br/>
 /// <b>座標の対応</b>: 折り返しは <see cref="AnnotationPresenter"/> が解決した行を
 /// <see cref="AnnotationTextLineIndex"/> で文字位置へ対応させる。
@@ -49,11 +49,7 @@ public sealed partial class AnnotationLayerControl
     /// <summary>IME の変換中かどうか。</summary>
     private bool _isComposing;
 
-    /// <summary>IME との窓口（編集中だけ保持する）。</summary>
-    private CoreTextEditContext? _ime;
 
-    /// <summary>IME の窓口を作るときのサービス（初回に取得して使い回す）。</summary>
-    private CoreTextServicesManager? _imeManager;
 
     /// <summary>本文の編集中に発生する（開始・終了の両方）。</summary>
     public event EventHandler? EditingChanged;
@@ -160,7 +156,7 @@ public sealed partial class AnnotationLayerControl
         _selectionAnchor = _caretIndex;
         _marquee.ResetSelection();
         _ = Focus(FocusState.Programmatic);
-        AttachIme();
+        FocusImeSink();
         RestartCaretBlink();
         RaiseEditingChanged();
         Redraw();
@@ -179,7 +175,7 @@ public sealed partial class AnnotationLayerControl
         _preeditText = string.Empty;
         _isComposing = false;
         StopCaretBlink();
-        DetachIme();
+        ReleaseImeSink();
 
         if (Selected is { } item)
         {
@@ -188,248 +184,6 @@ public sealed partial class AnnotationLayerControl
 
         RaiseEditingChanged();
         Redraw();
-    }
-
-    /// <summary>IME の窓口を本文へ繋ぐ。</summary>
-    private void AttachIme()
-    {
-        if (_ime is not null)
-        {
-            return;
-        }
-
-        try
-        {
-            _imeManager ??= CoreTextServicesManager.GetForCurrentView();
-            var context = _imeManager.CreateEditContext();
-            context.InputScope = CoreTextInputScope.Text;
-            context.TextRequested += OnImeTextRequested;
-            context.SelectionRequested += OnImeSelectionRequested;
-            context.TextUpdating += OnImeTextUpdating;
-            context.CompositionStarted += OnImeCompositionStarted;
-            context.CompositionCompleted += OnImeCompositionCompleted;
-            context.LayoutRequested += OnImeLayoutRequested;
-            context.FocusRemoved += OnImeFocusRemoved;
-            _ime = context;
-
-            // **IME を有効にする**: 窓口を作っただけでは IME は入力モードへ切り替わらない。
-            // フォーカスを得たことを知らせないと、日本語入力モードへ切り替わらないままになる
-            // （実測 2026-11-22: WinUI 3 版だけ IME モードが切り替わらなかった）。
-            // `CoreTextEditContext` に入力を有効にするプロパティは無い（`IsInputActive` は
-            // この SDK に存在しない。 実測 2026-11-23）。 フォーカスと本文の通知で有効にする。
-            context.NotifyFocusEnter();
-            NotifyImeSelection();
-        }
-        catch (Exception ex) when (ex is NotSupportedException or InvalidCastException)
-        {
-            // XAML の窓口が無い環境（ウィンドウを持たない検証）では IME を使わない。
-            // 入力はキーボードの文字入力（CharacterReceived）で継続できるため、ここでは窓口だけを諦める
-            _ime = null;
-        }
-    }
-
-    /// <summary>IME の窓口を外す。</summary>
-    private void DetachIme()
-    {
-        if (_ime is not { } context)
-        {
-            return;
-        }
-
-        context.TextRequested -= OnImeTextRequested;
-        context.SelectionRequested -= OnImeSelectionRequested;
-        context.TextUpdating -= OnImeTextUpdating;
-        context.CompositionStarted -= OnImeCompositionStarted;
-        context.CompositionCompleted -= OnImeCompositionCompleted;
-        context.LayoutRequested -= OnImeLayoutRequested;
-        context.FocusRemoved -= OnImeFocusRemoved;
-
-        // **IME を解放する**: 知らせないと、本文の編集を終えた後も IME が入力モードのまま残る
-        context.NotifyFocusLeave();
-        _ime = null;
-    }
-
-    /// <summary>IME へ本文の選択範囲を知らせる。</summary>
-    private void NotifyImeSelection()
-    {
-        if (_ime is not { } context)
-        {
-            return;
-        }
-
-        var length = TextForInput.Length;
-        context.NotifySelectionChanged(new CoreTextRange
-        {
-            StartCaretPosition = Math.Clamp(TextSelectionStart, 0, length),
-            EndCaretPosition = Math.Clamp(TextSelectionEnd, 0, length),
-        });
-    }
-
-    /// <summary>IME へ本文が変わったことを知らせる（周囲の文字列を渡し直す）。</summary>
-    /// <param name="start">変えた範囲の開始位置（文字数）。</param>
-    /// <param name="oldLength">変える前の長さ（文字数）。</param>
-    /// <param name="newLength">変えた後の長さ（文字数）。</param>
-    /// <remarks>
-    /// <b>知らせないと変換の基準が古いままになる</b>: IME は周囲の文字列を問い合わせて変換するため、
-    /// 本文が変わったことを知らせないと、確定した文字が重複したり、キャレットの位置がずれます
-    /// （実測 2026-11-22: 日本語入力で既存の文字と位置が合わない、と見えました）。
-    /// </remarks>
-    private void NotifyImeTextChanged(int start, int oldLength, int newLength)
-    {
-        if (_ime is not { } context)
-        {
-            return;
-        }
-
-        var length = TextForInput.Length;
-        var from = Math.Clamp(start, 0, length);
-        context.NotifyTextChanged(
-            new CoreTextRange { StartCaretPosition = from, EndCaretPosition = from + Math.Max(0, newLength) },
-            Math.Max(0, oldLength),
-            new CoreTextRange
-            {
-                StartCaretPosition = Math.Clamp(TextSelectionStart, 0, length),
-                EndCaretPosition = Math.Clamp(TextSelectionEnd, 0, length),
-            });
-    }
-    /// <summary>IME から周囲の文字列を求められたときに返す。</summary>
-    /// <param name="sender">送信元。</param>
-    /// <param name="e">要求の引数。</param>
-    private void OnImeTextRequested(CoreTextEditContext sender, CoreTextTextRequestedEventArgs e)
-    {
-        _ = sender;
-
-        var text = TextForInput;
-        var range = e.Request.Range;
-        var start = Math.Clamp(range.StartCaretPosition, 0, text.Length);
-        var end = Math.Clamp(range.EndCaretPosition, 0, text.Length);
-        if (end < start)
-        {
-            (start, end) = (end, start);
-        }
-
-        e.Request.Text = text[start..end];
-    }
-
-    /// <summary>IME から選択範囲を変えられたときに反映する。</summary>
-    /// <param name="sender">送信元。</param>
-    /// <param name="e">要求の引数。</param>
-    private void OnImeSelectionRequested(CoreTextEditContext sender, CoreTextSelectionRequestedEventArgs e)
-    {
-        _ = sender;
-
-        var length = TextForInput.Length;
-        _selectionAnchor = Math.Clamp(e.Request.Selection.StartCaretPosition, 0, length);
-        _caretIndex = Math.Clamp(e.Request.Selection.EndCaretPosition, 0, length);
-        SyncTextSelectionRange();
-        Redraw();
-        NotifyImeSelection();
-    }
-
-    /// <summary>IME（またはキーボード）から文字の置き換えを求められたときに本文へ入れる。</summary>
-    /// <param name="sender">送信元。</param>
-    /// <param name="e">要求の引数。</param>
-    private void OnImeTextUpdating(CoreTextEditContext sender, CoreTextTextUpdatingEventArgs e)
-    {
-        _ = sender;
-
-        if (!_isEditingText)
-        {
-            e.Result = CoreTextTextUpdatingResult.Failed;
-            return;
-        }
-
-        var text = TextForInput;
-        var start = Math.Clamp(e.Range.StartCaretPosition, 0, text.Length);
-        var end = Math.Clamp(e.Range.EndCaretPosition, 0, text.Length);
-        if (end < start)
-        {
-            (start, end) = (end, start);
-        }
-
-        // **変換中かどうかを先に控える**: `ReplaceRange` は変換の状態を落とすため、呼ぶ前に控えます。
-        // ここで控えた値を「IME へ知らせるか」の判断に使います（変換中に知らせると変換が中断され、
-        // 1 キーごとに確定してしまう）。
-        var composing = _isComposing;
-        ReplaceRange(start, end, e.Text ?? string.Empty);
-        e.Result = CoreTextTextUpdatingResult.Succeeded;
-
-        // **変換中の文字列として覚える**: 確定の通知で取りこぼさないようにする。
-        // `_isComposing` は書き戻さない（変換の開始・終了の通知だけが決める。 書き戻すと
-        // IME の状態と食い違い、日本語入力へ切り替わらなくなる。 実測 2026-11-23）。
-        if (composing)
-        {
-            _preeditText = e.Text ?? string.Empty;
-            Redraw();
-        }
-
-        NotifyImeSelection();
-    }
-
-    /// <summary>IME の変換が始まったときに変換中の表示へ切り替える。</summary>
-    /// <param name="sender">送信元。</param>
-    /// <param name="e">変換の引数。</param>
-    private void OnImeCompositionStarted(CoreTextEditContext sender, CoreTextCompositionStartedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-        _isComposing = true;
-        _preeditText = string.Empty;
-        Redraw();
-    }
-
-    /// <summary>IME の変換が終わったときに確定した文字列を本文へ入れる。</summary>
-    /// <param name="sender">送信元。</param>
-    /// <param name="e">変換の引数。</param>
-    private void OnImeCompositionCompleted(CoreTextEditContext sender, CoreTextCompositionCompletedEventArgs e)
-    {
-        _ = sender;
-        _ = e;
-
-        // 確定した文字列は TextUpdating で届く（本イベントでは変換中の表示だけを消す）。
-        // **届いていない場合はここで入れる**: IME によっては確定の通知だけが来る（実測 2026-11-22）。
-        var preedit = _preeditText;
-        _isComposing = false;
-        _preeditText = string.Empty;
-
-        if (preedit.Length > 0)
-        {
-            var text = TextForInput;
-            var start = TextSelectionStart - preedit.Length;
-            var applied = start >= 0
-                && start + preedit.Length <= text.Length
-                && string.CompareOrdinal(text, start, preedit, 0, preedit.Length) == 0;
-            if (!applied)
-            {
-                ReplaceSelection(preedit);
-            }
-        }
-
-        Redraw();
-    }
-
-    /// <summary>IME から変換候補の位置を求められたときに返す。</summary>
-    /// <param name="sender">送信元。</param>
-    /// <param name="e">要求の引数。</param>
-    private void OnImeLayoutRequested(CoreTextEditContext sender, CoreTextLayoutRequestedEventArgs e)
-    {
-        _ = sender;
-
-        var caret = ResolveCaretDip();
-        var bounds = e.Request.LayoutBounds;
-        bounds.TextBounds = new Windows.Foundation.Rect(
-            caret.X, caret.Y, Math.Max(1, CaretThicknessDip), Math.Max(1, caret.Height));
-        bounds.ControlBounds = new Windows.Foundation.Rect(0, 0, Math.Max(0, ActualWidth), Math.Max(0, ActualHeight));
-    }
-
-    /// <summary>IME のフォーカスが外れたら編集を終える。</summary>
-    /// <param name="sender">送信元。</param>
-    /// <param name="e">引数。</param>
-    private void OnImeFocusRemoved(CoreTextEditContext sender, object e)
-    {
-        _ = sender;
-        _ = e;
-        EndTextEditing();
     }
 
     /// <summary>選択範囲、またはキャレットの前後の 1 文字を削除する。</summary>
@@ -449,7 +203,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         ReplaceRange(index, index + 1, string.Empty);
-        NotifyImeSelection();
     }
 
     /// <summary>選択範囲を指定された文字列で置き換える。</summary>
@@ -465,7 +218,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         var changed = ReplaceRange(start, end, text);
-        NotifyImeSelection();
         return changed;
     }
 
@@ -498,7 +250,6 @@ public sealed partial class AnnotationLayerControl
         // 1 キーごとに確定してしまう（実測 2026-11-22）。 確定したときだけ知らせる。
         if (!wasComposing)
         {
-            NotifyImeTextChanged(start, end - start, text.Length);
         }
 
         _caretIndex = start + text.Length;
@@ -611,6 +362,7 @@ public sealed partial class AnnotationLayerControl
         }
 
         // **キャレットは一般的な速さで点滅させる**（規則はコアの AnnotationCaretBlink が単一所有する）
+        PlaceImeSink();
         if (!IsCaretVisible)
         {
             return;
@@ -808,7 +560,9 @@ public sealed partial class AnnotationLayerControl
     {
         _ = sender;
 
-        if (!_isEditingText || _isComposing)
+        // **入力は受け口（_imeSink）が担う**: 受け口がある間はここへ入れない（二重に入る）。
+        // 受け口を用意できない環境（ウィンドウを持たない検証）だけ、そのまま入れる。
+        if (!_isEditingText || _isComposing || _imeSink is not null)
         {
             return;
         }
@@ -835,7 +589,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         SyncTextSelectionRange();
-        NotifyImeSelection();
         Redraw();
     }
 
@@ -889,7 +642,6 @@ public sealed partial class AnnotationLayerControl
         }
 
         SyncTextSelectionRange();
-        NotifyImeSelection();
         Redraw();
     }
 }

@@ -50,6 +50,9 @@ public sealed partial class AnnotationLayerControl : Grid
     /// <summary>選択枠とハンドルを並べる層。</summary>
     private readonly Canvas _selection = new() { IsHitTestVisible = false };
 
+    /// <summary>入力の受け口（IME）を置く層。 レイアウトへ影響させないため専用の Canvas に載せる。</summary>
+    private readonly Canvas _imeSinkHost = new() { IsHitTestVisible = false };
+
     /// <summary>押下中に固定した変換（null は固定していない）。 ドラッグ中に表示矩形が変わっても 1:1 で動かす。</summary>
     private (double Scale, EsPoint Offset)? _frozenTransform;
 
@@ -109,6 +112,7 @@ public sealed partial class AnnotationLayerControl : Grid
         Children.Add(_shapes);
         Children.Add(_selection);
         Children.Add(_editing);
+        Children.Add(_imeSinkHost);
 
         PointerPressed += OnPointerPressed;
         PointerWheelChanged += OnPointerWheelChanged;
