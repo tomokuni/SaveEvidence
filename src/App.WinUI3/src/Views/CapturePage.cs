@@ -238,15 +238,15 @@ internal static class CapturePage
             switch (args.Key)
             {
                 case VirtualKey.C:
-                    annotation.Layer.CopyTextSelection();
+                    annotation.CopyTextSelection();
                     args.Handled = true;
                     return;
                 case VirtualKey.X:
-                    annotation.Layer.CutTextSelection();
+                    annotation.CutTextSelection();
                     args.Handled = true;
                     return;
                 case VirtualKey.V:
-                    annotation.Layer.PasteText();
+                    annotation.PasteText();
                     args.Handled = true;
                     return;
             }
@@ -835,7 +835,7 @@ internal static class CapturePage
         SyncAnnotationOverlay();
         crop.ZoomChanged += (_, _) => SyncAnnotationOverlay();
         crop.ViewportChanged += (_, _) => SyncAnnotationOverlay();
-        annotationEditor.Layer.MeasureText = AnnotationTextRunMeasure.Measure;
+        annotationEditor.Layer.MeasureText = EsUtil.Ui.WinUI3.StyledText.RichTextMetrics.Measure;
         host.Children.Add(annotationEditor);
 
         void SyncAnnotation()

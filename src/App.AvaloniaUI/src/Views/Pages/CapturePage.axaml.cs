@@ -435,13 +435,13 @@ public sealed partial class CapturePage : UserControl
             switch (e.Key)
             {
                 case Key.C:
-                    AnnotationEditor.Layer.CopyTextSelection();
+                    AnnotationEditor.CopyTextSelection();
                     break;
                 case Key.X:
-                    AnnotationEditor.Layer.CutTextSelection();
+                    AnnotationEditor.CutTextSelection();
                     break;
                 case Key.V:
-                    AnnotationEditor.Layer.PasteText();
+                    AnnotationEditor.PasteText();
                     break;
                 default:
                     break;
