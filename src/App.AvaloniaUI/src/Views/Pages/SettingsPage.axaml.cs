@@ -5,6 +5,8 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using EsUtil.Platform.Core;
+using EsUtil.Feature.Annotation.Core.Defaults;
+using EsUtil.Feature.Text.Core.Defaults;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;
@@ -54,6 +56,9 @@ public sealed partial class SettingsPage : UserControl
         _settingsService = Program.SettingsService;
         DataContext = _viewModel;
 
+        // 注釈の数値の安全域は EsUtil が単一所有する（画面ごとに書き分けない）
+        ApplyAnnotationLimits();
+
         // 保存先フォルダの補足（文言は SettingsMetrics（App.Core）が単一所有する）
         SaveFolderHint.Text = SettingsMetrics.SaveFolderHint;
 
@@ -79,6 +84,23 @@ public sealed partial class SettingsPage : UserControl
         ApplyCaptureSourceAvailability();
     }
 
+    /// <summary>注釈の数値の入力範囲を安全域へ揃える。</summary>
+    /// <remarks>
+    /// 値の安全域は EsUtil が単一所有する（枠線・角丸・余白・しっぽは <see cref="AnnotationLimits"/>、
+    /// 文字の大きさは <see cref="TextLimits"/>）。 XAML へ数値を直書きすると、コアが補正する範囲と
+    /// 画面が受け付ける範囲が食い違う（入力した値が黙って補正される）。
+    /// </remarks>
+    private void ApplyAnnotationLimits()
+    {
+        AnnotationFrameBorderThicknessInput.Minimum = AnnotationLimits.BorderThicknessMinDecimal;
+        AnnotationFrameBorderThicknessInput.Maximum = AnnotationLimits.BorderThicknessMaxDecimal;
+        AnnotationFrameCornerRadiusInput.Maximum = AnnotationLimits.CornerRadiusMaxDecimal;
+        AnnotationTextFontSizeInput.Minimum = TextLimits.FontSizeMinDecimal;
+        AnnotationTextFontSizeInput.Maximum = TextLimits.FontSizeMaxDecimal;
+        AnnotationBodyPaddingInput.Maximum = AnnotationLimits.BodyPaddingMaxDecimal;
+        AnnotationTailWidthInput.Minimum = AnnotationLimits.TailWidthMinDecimal;
+        AnnotationTailWidthInput.Maximum = AnnotationLimits.TailWidthMaxDecimal;
+    }
     /// <summary>撮影の設定を使えるかどうかに合わせて、項目の有効・無効と理由を反映する。</summary>
     /// <remarks>
     /// 使えない項目は入力も無効にする（無効に見えるのに保存値が変わると、次の起動で効いているように見える）。

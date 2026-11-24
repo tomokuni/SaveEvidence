@@ -539,8 +539,8 @@
                                                            Grid.Row="0" Grid.Column="1" MinWidth="200"
                                                            HorizontalAlignment="Left"/>
                             <Label Content="枠線の太さ:" Grid.Row="1" Grid.Column="0"/>
-                            <NumericUpDown Value="{Binding Settings.AnnotationFrameBorderThickness}"
-                                           Minimum="1" Maximum="64" Increment="1"
+                            <NumericUpDown x:Name="AnnotationFrameBorderThicknessInput" Value="{Binding Settings.AnnotationFrameBorderThickness}"
+                                           Increment="1"
                                            Grid.Row="1" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
                             <Label Content="枠線の内側の色:" Grid.Row="2" Grid.Column="0"/>
                             <controls:ColorSelectorControl x:Name="AnnotationFrameFillColorPicker"
@@ -550,8 +550,8 @@
                                                            Grid.Row="2" Grid.Column="1" MinWidth="200"
                                                            HorizontalAlignment="Left"/>
                             <Label Content="角丸:" Grid.Row="3" Grid.Column="0"/>
-                            <NumericUpDown Value="{Binding Settings.AnnotationFrameCornerRadius}"
-                                           Minimum="0" Maximum="4096" Increment="1"
+                            <NumericUpDown x:Name="AnnotationFrameCornerRadiusInput" Value="{Binding Settings.AnnotationFrameCornerRadius}"
+                                           Increment="1"
                                            Grid.Row="3" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
                             <Label Content="吹き出しの枠線の色:" Grid.Row="4" Grid.Column="0"/>
                             <controls:ColorSelectorControl x:Name="AnnotationBubbleBorderColorPicker"
@@ -568,8 +568,8 @@
                                                            Grid.Row="5" Grid.Column="1" MinWidth="200"
                                                            HorizontalAlignment="Left"/>
                             <Label Content="本文の文字サイズ:" Grid.Row="6" Grid.Column="0"/>
-                            <NumericUpDown Value="{Binding Settings.AnnotationTextFontSize}"
-                                           Minimum="6" Maximum="512" Increment="1"
+                            <NumericUpDown x:Name="AnnotationTextFontSizeInput" Value="{Binding Settings.AnnotationTextFontSize}"
+                                           Increment="1"
                                            Grid.Row="6" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
                             <Label Content="本文の文字色:" Grid.Row="7" Grid.Column="0"/>
                             <controls:ColorSelectorControl x:Name="AnnotationTextColorPicker"
@@ -579,12 +579,12 @@
                                                            Grid.Row="7" Grid.Column="1" MinWidth="200"
                                                            HorizontalAlignment="Left"/>
                             <Label Content="本文の余白:" Grid.Row="8" Grid.Column="0"/>
-                            <NumericUpDown Value="{Binding Settings.AnnotationBodyPadding}"
-                                           Minimum="0" Maximum="4096" Increment="1"
+                            <NumericUpDown x:Name="AnnotationBodyPaddingInput" Value="{Binding Settings.AnnotationBodyPadding}"
+                                           Increment="1"
                                            Grid.Row="8" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
                             <Label Content="しっぽの幅:" Grid.Row="9" Grid.Column="0"/>
-                            <NumericUpDown Value="{Binding Settings.AnnotationTailWidth}"
-                                           Minimum="1" Maximum="4096" Increment="1"
+                            <NumericUpDown x:Name="AnnotationTailWidthInput" Value="{Binding Settings.AnnotationTailWidth}"
+                                           Increment="1"
                                            Grid.Row="9" Grid.Column="1" MinWidth="120" HorizontalAlignment="Left"/>
                         </Grid>
                     </StackPanel>

@@ -1,5 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using EsUtil.Feature.Annotation.Core.Defaults;
+using EsUtil.Feature.Text;
+using EsUtil.Feature.Text.Core.Defaults;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Input;
 using EsUtil.Platform.Core.Palette;
 using EsUtil.Platform.Core.Window;
@@ -77,43 +81,43 @@ public sealed partial class Settings : ObservableObject
     /// <summary>注釈の枠線の色を取得または設定する（<c>#AARRGGBB</c>）。</summary>
     /// <remarks>新しく追加する枠線へ適用する（既存の注釈は変わらない）。 既定は赤。</remarks>
     [ObservableProperty]
-    private string _annotationFrameBorderColor = "#FFDC2626";
+    private string _annotationFrameBorderColor = AnnotationDefaults.FrameAppearance.Border.ToHexText();
 
     /// <summary>注釈の枠線の太さ（元画像ピクセル）を取得または設定する。</summary>
     [ObservableProperty]
-    private double _annotationFrameBorderThickness = 3.0;
+    private double _annotationFrameBorderThickness = AnnotationDefaults.BorderThicknessDefault;
 
     /// <summary>注釈の枠線の内側の色を取得または設定する（<c>#AARRGGBB</c>。 透明なら塗らない）。</summary>
     [ObservableProperty]
-    private string _annotationFrameFillColor = "#00000000";
+    private string _annotationFrameFillColor = AnnotationDefaults.FrameAppearance.Fill.ToHexText();
 
     /// <summary>注釈の角丸の半径（元画像ピクセル）を取得または設定する。</summary>
     [ObservableProperty]
-    private double _annotationFrameCornerRadius = 8.0;
+    private double _annotationFrameCornerRadius = AnnotationDefaults.CornerRadiusDefault;
 
     /// <summary>注釈の吹き出しの枠線の色を取得または設定する（<c>#AARRGGBB</c>）。</summary>
     [ObservableProperty]
-    private string _annotationBubbleBorderColor = "#FF000000";
+    private string _annotationBubbleBorderColor = AnnotationDefaults.BubbleAppearance.Border.ToHexText();
 
     /// <summary>注釈の吹き出しの内側の色を取得または設定する（<c>#AARRGGBB</c>）。</summary>
     [ObservableProperty]
-    private string _annotationBubbleFillColor = "#FFFFFFFF";
+    private string _annotationBubbleFillColor = AnnotationDefaults.BubbleAppearance.Fill.ToHexText();
 
     /// <summary>注釈の本文の文字色を取得または設定する（<c>#AARRGGBB</c>）。</summary>
     [ObservableProperty]
-    private string _annotationTextColor = "#FF000000";
+    private string _annotationTextColor = TextStyle.Default.Color.ToHexText();
 
     /// <summary>注釈の本文の文字サイズ（元画像ピクセル）を取得または設定する。</summary>
     [ObservableProperty]
-    private double _annotationTextFontSize = 20.0;
+    private double _annotationTextFontSize = TextDefaults.FontSizeDefault;
 
     /// <summary>注釈の本文の余白（元画像ピクセル）を取得または設定する。</summary>
     [ObservableProperty]
-    private double _annotationBodyPadding = 12.0;
+    private double _annotationBodyPadding = AnnotationDefaults.BodyPaddingDefault;
 
     /// <summary>注釈の吹き出しのしっぽの幅（元画像ピクセル）を取得または設定する。</summary>
     [ObservableProperty]
-    private double _annotationTailWidth = 28.0;
+    private double _annotationTailWidth = AnnotationDefaults.TailWidthDefault;
 
     /// <summary>FolderViewForm の特大アイコンサイズ（ピクセル）。</summary>
     [ObservableProperty]

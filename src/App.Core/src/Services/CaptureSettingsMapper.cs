@@ -1,4 +1,5 @@
 using EsUtil.Platform.Core.Capture;
+using EsUtil.Platform.Core.Palette;
 using EsUtil.SaveEvidence.App.Core.Models;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.Setting;
 
@@ -81,25 +82,11 @@ internal static class CaptureSettingsMapper
     /// <param name="argb">設定の色文字列。 前後の空白と <c>#</c> は省略可能。</param>
     /// <returns>変換した色。 解析できない場合は透明。</returns>
     /// <remarks>
-    /// 設定（<c>Settings</c>）は色と不透明度を統合した 16 進文字列で保持する。<br/>
-    /// MewUI 版の <c>SettingsColorMath</c> と同じ規則（8 桁 = AARRGGBB / 6 桁 = RRGGBB・アルファ 255）。
+    /// 設定（<c>Settings</c>）は色と不透明度を統合した 16 進文字列で保持する。 <b>文字列の解釈は
+    /// <see cref="ColorString.TryParse"/> が単一所有する</b>（本メソッドは「解析できない場合は透明」という
+    /// 設定の扱いだけを決める）。
     /// </remarks>
     private static System.Drawing.Color ParseColor(string? argb)
-    {
-        var text = argb?.Trim().TrimStart('#');
-        if (string.IsNullOrEmpty(text))
-        {
-            return System.Drawing.Color.Transparent;
-        }
-
-        if (!uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, null, out var value))
-        {
-            return System.Drawing.Color.Transparent;
-        }
-
-        return text.Length <= 6
-            ? System.Drawing.Color.FromArgb(255, (byte)(value >> 16), (byte)(value >> 8), (byte)value)
-            : System.Drawing.Color.FromArgb((byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value);
-    }
+        => ColorString.TryParse(argb, out var color, out _) ? color : System.Drawing.Color.Transparent;
 }
 

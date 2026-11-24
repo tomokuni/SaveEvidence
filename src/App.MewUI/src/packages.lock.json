@@ -124,6 +124,7 @@
       "esutil.feature.annotation.core": {
         "type": "Project",
         "dependencies": {
+          "EsUtil.Feature.Text.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
@@ -134,6 +135,12 @@
         }
       },
       "esutil.feature.marquee.core": {
+        "type": "Project",
+        "dependencies": {
+          "EsUtil.Platform.Core": "[0.8.8, )"
+        }
+      },
+      "esutil.feature.text.core": {
         "type": "Project",
         "dependencies": {
           "EsUtil.Platform.Core": "[0.8.8, )"
@@ -155,7 +162,8 @@
           "EsUtil.Feature.Annotation.Core": "[0.8.8, )",
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )",
-          "EsUtil.Ui.MewUI.ColorSelector": "[0.8.8, )"
+          "EsUtil.Ui.MewUI.ColorSelector": "[0.8.8, )",
+          "EsUtil.Ui.MewUI.RichTextEditor": "[0.8.8, )"
         }
       },
       "esutil.ui.mewui.colorselector": {
@@ -188,6 +196,14 @@
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )",
           "EsUtil.Ui.MewUI.Interop": "[0.8.8, )"
+        }
+      },
+      "esutil.ui.mewui.richtexteditor": {
+        "type": "Project",
+        "dependencies": {
+          "Aprillz.MewUI.Core": "[0.22.1, )",
+          "EsUtil.Feature.Text.Core": "[0.8.8, )",
+          "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
       "esutil.ui.mewui.thumbnail": {

@@ -1,6 +1,8 @@
 using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core;
+using EsUtil.Feature.Text.Core.Defaults;
+using EsUtil.Feature.Annotation.Core.Defaults;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.Ui.MewUI.ColorSelector;
@@ -423,15 +425,15 @@ internal static class SettingsPage
                 .Text("新しく追加する枠線・吹き出し・本文へ適用します（既存の注釈は変わりません）。")
                 .FontSize(SettingsMetrics.HintFontSize)),
             Row("枠線の色", ColorRow(settings, settings.AnnotationFrameBorderColor, value => settings.AnnotationFrameBorderColor = value)),
-            Row("枠線の太さ", NumberRow(settings.AnnotationFrameBorderThickness, 1, 64, 1, false, value => settings.AnnotationFrameBorderThickness = value)),
+            Row("枠線の太さ", NumberRow(settings.AnnotationFrameBorderThickness, AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax, 1, false, value => settings.AnnotationFrameBorderThickness = value)),
             Row("枠線の内側の色", ColorRow(settings, settings.AnnotationFrameFillColor, value => settings.AnnotationFrameFillColor = value)),
-            Row("角丸", NumberRow(settings.AnnotationFrameCornerRadius, 0, 4096, 1, false, value => settings.AnnotationFrameCornerRadius = value)),
+            Row("角丸", NumberRow(settings.AnnotationFrameCornerRadius, 0, AnnotationLimits.CornerRadiusMax, 1, false, value => settings.AnnotationFrameCornerRadius = value)),
             Row("吹き出しの枠線の色", ColorRow(settings, settings.AnnotationBubbleBorderColor, value => settings.AnnotationBubbleBorderColor = value)),
             Row("吹き出しの内側の色", ColorRow(settings, settings.AnnotationBubbleFillColor, value => settings.AnnotationBubbleFillColor = value)),
-            Row("本文の文字サイズ", NumberRow(settings.AnnotationTextFontSize, 6, 512, 1, false, value => settings.AnnotationTextFontSize = value)),
+            Row("本文の文字サイズ", NumberRow(settings.AnnotationTextFontSize, TextLimits.FontSizeMin, TextLimits.FontSizeMax, 1, false, value => settings.AnnotationTextFontSize = value)),
             Row("本文の文字色", ColorRow(settings, settings.AnnotationTextColor, value => settings.AnnotationTextColor = value)),
-            Row("本文の余白", NumberRow(settings.AnnotationBodyPadding, 0, 4096, 1, false, value => settings.AnnotationBodyPadding = value)),
-            Row("しっぽの幅", NumberRow(settings.AnnotationTailWidth, 1, 4096, 1, false, value => settings.AnnotationTailWidth = value)));
+            Row("本文の余白", NumberRow(settings.AnnotationBodyPadding, 0, AnnotationLimits.BodyPaddingMax, 1, false, value => settings.AnnotationBodyPadding = value)),
+            Row("しっぽの幅", NumberRow(settings.AnnotationTailWidth, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax, 1, false, value => settings.AnnotationTailWidth = value)));
 
     /// <summary>外観設定のカテゴリと項目を 3 列のグリッドへ並べる。</summary>
     /// <param name="categories">カテゴリと項目（項目名が空の項目はチェックボックスとして 2 列分を使う）。</param>

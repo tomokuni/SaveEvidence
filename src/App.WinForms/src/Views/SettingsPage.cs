@@ -1,4 +1,6 @@
 using EsUtil.Platform.Core;
+using EsUtil.Feature.Text.Core.Defaults;
+using EsUtil.Feature.Annotation.Core.Defaults;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.Core.Services;
@@ -715,15 +717,15 @@ internal static class SettingsPage
         }
 
         AddColor("枠線の色", () => settings.AnnotationFrameBorderColor, value => settings.AnnotationFrameBorderColor = value);
-        AddNumber("枠線の太さ", () => settings.AnnotationFrameBorderThickness, value => settings.AnnotationFrameBorderThickness = value, 1, 64);
+        AddNumber("枠線の太さ", () => settings.AnnotationFrameBorderThickness, value => settings.AnnotationFrameBorderThickness = value, AnnotationLimits.BorderThicknessMin, AnnotationLimits.BorderThicknessMax);
         AddColor("枠線の内側の色", () => settings.AnnotationFrameFillColor, value => settings.AnnotationFrameFillColor = value);
-        AddNumber("角丸", () => settings.AnnotationFrameCornerRadius, value => settings.AnnotationFrameCornerRadius = value, 0, 4096);
+        AddNumber("角丸", () => settings.AnnotationFrameCornerRadius, value => settings.AnnotationFrameCornerRadius = value, 0, AnnotationLimits.CornerRadiusMax);
         AddColor("吹き出しの枠線の色", () => settings.AnnotationBubbleBorderColor, value => settings.AnnotationBubbleBorderColor = value);
         AddColor("吹き出しの内側の色", () => settings.AnnotationBubbleFillColor, value => settings.AnnotationBubbleFillColor = value);
-        AddNumber("本文の文字サイズ", () => settings.AnnotationTextFontSize, value => settings.AnnotationTextFontSize = value, 6, 512);
+        AddNumber("本文の文字サイズ", () => settings.AnnotationTextFontSize, value => settings.AnnotationTextFontSize = value, TextLimits.FontSizeMin, TextLimits.FontSizeMax);
         AddColor("本文の文字色", () => settings.AnnotationTextColor, value => settings.AnnotationTextColor = value);
-        AddNumber("本文の余白", () => settings.AnnotationBodyPadding, value => settings.AnnotationBodyPadding = value, 0, 4096);
-        AddNumber("しっぽの幅", () => settings.AnnotationTailWidth, value => settings.AnnotationTailWidth = value, 1, 4096);
+        AddNumber("本文の余白", () => settings.AnnotationBodyPadding, value => settings.AnnotationBodyPadding = value, 0, AnnotationLimits.BodyPaddingMax);
+        AddNumber("しっぽの幅", () => settings.AnnotationTailWidth, value => settings.AnnotationTailWidth = value, AnnotationLimits.TailWidthMin, AnnotationLimits.TailWidthMax);
 
         table.ResumeLayout(performLayout: true);
         section.Body.ResumeLayout(performLayout: true);

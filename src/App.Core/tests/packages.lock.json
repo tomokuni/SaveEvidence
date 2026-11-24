@@ -197,6 +197,7 @@
       "esutil.feature.annotation.core": {
         "type": "Project",
         "dependencies": {
+          "EsUtil.Feature.Text.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
@@ -207,6 +208,12 @@
         }
       },
       "esutil.feature.marquee.core": {
+        "type": "Project",
+        "dependencies": {
+          "EsUtil.Platform.Core": "[0.8.8, )"
+        }
+      },
+      "esutil.feature.text.core": {
         "type": "Project",
         "dependencies": {
           "EsUtil.Platform.Core": "[0.8.8, )"
