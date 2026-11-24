@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using EsUtil.Feature.Annotation.Core.Defaults;
-using EsUtil.Feature.Text;
-using EsUtil.Feature.Text.Core.Defaults;
+using EsUtil.Feature.StyledText;
+using EsUtil.Feature.StyledText.Core.Defaults;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core.Input;

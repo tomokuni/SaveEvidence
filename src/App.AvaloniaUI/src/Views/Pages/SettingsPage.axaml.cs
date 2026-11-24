@@ -6,7 +6,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using EsUtil.Platform.Core;
 using EsUtil.Feature.Annotation.Core.Defaults;
-using EsUtil.Feature.Text.Core.Defaults;
+using EsUtil.Feature.StyledText.Core.Defaults;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Input;
 using EsUtil.SaveEvidence.App.AvaloniaUI.Logging;

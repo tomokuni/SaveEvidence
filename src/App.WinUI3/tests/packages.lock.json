@@ -315,7 +315,7 @@
       "esutil.feature.annotation.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Text.Core": "[0.8.8, )",
+          "EsUtil.Feature.StyledText.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
@@ -331,7 +331,7 @@
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
-      "esutil.feature.text.core": {
+      "esutil.feature.styledtext.core": {
         "type": "Project",
         "dependencies": {
           "EsUtil.Platform.Core": "[0.8.8, )"
@@ -399,7 +399,7 @@
       "esutil.ui.winui3.richtexteditor": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Text.Core": "[0.8.8, )",
+          "EsUtil.Feature.StyledText.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )",
           "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2957, )",
           "Microsoft.WindowsAppSDK": "[2.0.1, )"

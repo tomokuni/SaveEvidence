@@ -288,7 +288,7 @@
       "esutil.feature.annotation.core": {
         "type": "Project",
         "dependencies": {
-          "EsUtil.Feature.Text.Core": "[0.8.8, )",
+          "EsUtil.Feature.StyledText.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
@@ -304,7 +304,7 @@
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
-      "esutil.feature.text.core": {
+      "esutil.feature.styledtext.core": {
         "type": "Project",
         "dependencies": {
           "EsUtil.Platform.Core": "[0.8.8, )"
@@ -367,7 +367,7 @@
         "type": "Project",
         "dependencies": {
           "Avalonia": "[12.1.6, )",
-          "EsUtil.Feature.Text.Core": "[0.8.8, )",
+          "EsUtil.Feature.StyledText.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )"
         }
       },
