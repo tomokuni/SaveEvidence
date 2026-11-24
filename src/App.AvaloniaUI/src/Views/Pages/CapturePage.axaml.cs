@@ -625,7 +625,7 @@ public sealed partial class CapturePage : UserControl
         {
             if (_viewModel.PreviewImage is { } image)
             {
-                _annotationDocument = new AnnotationDocument(image.Size.Width, image.Size.Height, "");
+                _annotationDocument = layer.Core.CreateDocument(image.Size.Width, image.Size.Height);
                 layer.Source = _cropViewSource;
                 layer.SourcePixelWidth = image.Size.Width;
                 layer.SourcePixelHeight = image.Size.Height;
@@ -719,26 +719,24 @@ public sealed partial class CapturePage : UserControl
     /// <returns>待機タスク。</returns>
     /// <remarks>
     /// <b>注釈が無いときは書かず、既に書き出した付随ファイルを消す</b>（注釈をすべて削除した後に
-    /// 古い注釈ファイルが残ると、画像と食い違う）。<br/>
-    /// <b>注釈ファイルのパス・書式・文字コードはコアが単一所有する</b>（<see cref="AnnotationCore.SaveDocument"/> /
-    /// <see cref="AnnotationCore.RemoveCompanionFiles"/>）。 本メソッドは合成画像の描画だけを持つ。<br/>
+    /// 古い注釈ファイルが残ると、画像と食い違う）。 判断はコアが単一所有する
+    /// （<see cref="AnnotationCore.SaveOrRemoveCompanionFiles"/>）。<br/>
     /// <b>合成画像は元画像ピクセルの 1:1</b>で描く（表示倍率に依存しない）。 形式は元画像の拡張子に合わせる
     /// （<see cref="AnnotationJson.GetComposedPath"/> が拡張子を保つ）。
     /// </remarks>
     private Task SaveAnnotationFilesAsync(string imagePath)
     {
-        var composedPath = AnnotationJson.GetComposedPath(imagePath);
-
-        if (_annotationDocument is null || _annotationDocument.Items.Length == 0)
+        if (_annotationDocument is not { } document)
         {
             AnnotationEditor.Layer.Core.RemoveCompanionFiles(imagePath);
             return Task.CompletedTask;
         }
 
-        AnnotationEditor.Layer.Core.SaveDocument(imagePath, _annotationDocument);
-
-        using var rendered = AnnotationEditor.Layer.RenderComposedImage();
-        SaveComposedImage(rendered, composedPath);
+        AnnotationEditor.Layer.Core.SaveOrRemoveCompanionFiles(imagePath, document, () =>
+        {
+            using var rendered = AnnotationEditor.Layer.RenderComposedImage();
+            SaveComposedImage(rendered, AnnotationJson.GetComposedPath(imagePath));
+        });
         return Task.CompletedTask;
     }
 

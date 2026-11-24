@@ -728,7 +728,7 @@ internal static class CapturePage
         AppServices services,
         CaptureSessionControl captureSession,
         Action toggleCrop,
-        AnnotationTextEditor annotation,
+        AnnotationEditorPanel annotation,
         List<IconImage> icons,
         Action? onClosed = null)
     {
@@ -1025,7 +1025,7 @@ internal static class CapturePage
         Settings settings,
         out CropViewControl crop,
         out CaptureSessionControl captureSession,
-        out AnnotationTextEditor annotation)
+        out AnnotationEditorPanel annotation)
     {
         crop = new CropViewControl();
 
@@ -1088,7 +1088,7 @@ internal static class CapturePage
 
         // 注釈の編集モード（トグルで表示する）。 画像の上へレイヤーを重ね、本文のその場編集と書式バーをまとめて持つ。
         // out パラメーターはラムダ内で参照できないため、ローカル変数へコピーして使う
-        var annotationEditor = new AnnotationTextEditor
+        var annotationEditor = new AnnotationEditorPanel
         {
             TextFormat = settings.ColorTextFormat,
         };
@@ -1184,7 +1184,7 @@ internal static class CapturePage
                 layer.Source = image;
                 layer.SourcePixelWidth = image.Size.Width;
                 layer.SourcePixelHeight = image.Size.Height;
-                layer.Document = new AnnotationDocument(image.Size.Width, image.Size.Height, "");
+                layer.Document = layer.Core.CreateDocument(image.Size.Width, image.Size.Height);
             }
             else
             {
@@ -1377,7 +1377,7 @@ internal static class CapturePage
     /// <b>元画像も読み直す</b>: 注釈は元画像に属するため、注釈だけを差し替えると別の画像の注釈になる。<br/>
     /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。
     /// </remarks>
-    private static Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel, string saveFolder)
+    private static Task OpenAnnotationsAsync(AnnotationEditorPanel annotation, MainViewModel viewModel, string saveFolder)
     {
         var dialog = Application.Current?.PlatformServices.FileDialog;
         if (dialog is null)
@@ -1437,24 +1437,16 @@ internal static class CapturePage
     /// <param name="imagePath">保存した画像のパス（付随ファイルの名前の基になる）。</param>
     /// <returns>書き出しの非同期処理。</returns>
     /// <remarks>
-    /// 注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。<br/>
-    /// 注釈ファイルのパス・書式・文字コードはコアが単一所有する（<see cref="AnnotationCore.SaveDocument"/> /
-    /// <see cref="AnnotationCore.RemoveCompanionFiles"/>）。 本メソッドは合成画像の描画だけを持つ。
+    /// 注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。 判断はコアが単一所有する
+    /// （<see cref="AnnotationCore.SaveOrRemoveCompanionFiles"/>）。 本メソッドは合成画像の描画だけを持つ。
     /// </remarks>
-    private static Task SaveAnnotationFilesAsync(AnnotationTextEditor annotation, string imagePath)
+    private static Task SaveAnnotationFilesAsync(AnnotationEditorPanel annotation, string imagePath)
     {
-        var document = annotation.Layer.Document;
-
-        if (document.Items.IsEmpty)
+        annotation.Layer.Core.SaveOrRemoveCompanionFiles(imagePath, annotation.Layer.Document, () =>
         {
-            annotation.Layer.Core.RemoveCompanionFiles(imagePath);
-            return Task.CompletedTask;
-        }
-
-        annotation.Layer.Core.SaveDocument(imagePath, document);
-
-        using var composed = annotation.Layer.RenderComposedImage();
-        composed?.Save(AnnotationJson.GetComposedPath(imagePath));
+            using var composed = annotation.Layer.RenderComposedImage();
+            composed?.Save(AnnotationJson.GetComposedPath(imagePath));
+        });
         return Task.CompletedTask;
     }
 
@@ -1516,7 +1508,7 @@ internal static class CapturePage
     /// </remarks>
     private static void ToggleCropSession(
         CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services,
-        AnnotationTextEditor annotation)
+        AnnotationEditorPanel annotation)
     {
         switch (captureSession.ResolveCropAction())
         {
@@ -1552,7 +1544,7 @@ internal static class CapturePage
     /// </remarks>
     private static async Task StartCropSessionAsync(
         CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services,
-        AnnotationTextEditor annotation)
+        AnnotationEditorPanel annotation)
     {
         if (Application.Current?.MainWindow is not { } hostWindow)
         {

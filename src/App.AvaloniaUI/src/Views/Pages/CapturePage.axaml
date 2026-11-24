@@ -173,7 +173,7 @@
 
             <!-- 注釈レイヤー（プレビュー画像の上へ重ねる。 画像・影・ズーム・パンは CropViewControl が描く）。
                  注釈の無い場所では入力を受け取らず、プレビューの操作（ズーム・パン）を妨げない。 -->
-            <annotation:AnnotationTextEditor x:Name="AnnotationEditor"/>
+            <annotation:AnnotationEditorPanel x:Name="AnnotationEditor"/>
 
         </Grid>
 

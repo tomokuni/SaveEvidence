@@ -301,7 +301,7 @@ internal static class CapturePage
         MainViewModel viewModel,
         Action toggleCrop,
         CaptureSessionControl captureSession,
-        AnnotationTextEditor annotation,
+        AnnotationEditorPanel annotation,
         MainWindow window)
     {
         var items = new StackPanel
@@ -539,7 +539,7 @@ internal static class CapturePage
         MainViewModel viewModel,
         Action toggleCrop,
         CaptureSessionControl captureSession,
-        AnnotationTextEditor annotation,
+        AnnotationEditorPanel annotation,
         MainWindow window)
     {
         var flyout = new MenuFlyout
@@ -643,7 +643,7 @@ internal static class CapturePage
         MainWindow window,
         out CropViewControl cropView,
         out CaptureSessionControl captureSession,
-        out AnnotationTextEditor annotation)
+        out AnnotationEditorPanel annotation)
     {
         var viewModel = services.Main;
         var settings = services.Settings.Current;
@@ -749,7 +749,7 @@ internal static class CapturePage
 
         // 注釈の編集モード（トグルで表示する）。 画像の上へレイヤーを重ね、本文の編集と書式バーをまとめて持つ。
         // out パラメーターはラムダ内で参照できないため、ローカル変数へコピーして使う
-        var annotationEditor = new AnnotationTextEditor
+        var annotationEditor = new AnnotationEditorPanel
         {
             TextFormat = settings.ColorTextFormat,
         };
@@ -846,8 +846,7 @@ internal static class CapturePage
                 layer.Source = image;
                 layer.SourcePixelWidth = image.Size.Width;
                 layer.SourcePixelHeight = image.Size.Height;
-                layer.Document = new AnnotationDocument(
-                    image.Size.Width, image.Size.Height, string.Empty);
+                layer.Document = layer.Core.CreateDocument(image.Size.Width, image.Size.Height);
             }
             else
             {
@@ -906,7 +905,7 @@ internal static class CapturePage
     /// 押せなくなる（実測 2026-11-20）。 追加メニューは他の UI 版と同じく、押した場所へ重ねる。
     /// </remarks>
     private static void ShowAnnotationAddMenu(
-        AnnotationTextEditor annotation, Windows.Foundation.Point position, Panel target)
+        AnnotationEditorPanel annotation, Windows.Foundation.Point position, Panel target)
     {
         CloseAnnotationAddMenu();
 
@@ -1010,7 +1009,7 @@ internal static class CapturePage
     /// オーナー ウィンドウを指定しないと表示されない（WinUI 3 のデスクトップ アプリの制約）。
     /// </remarks>
     private static async Task OpenAnnotationsAsync(
-        AnnotationTextEditor annotation, MainViewModel viewModel, MainWindow window)
+        AnnotationEditorPanel annotation, MainViewModel viewModel, MainWindow window)
     {
         string? filePath;
         try
@@ -1067,24 +1066,16 @@ internal static class CapturePage
     /// <param name="imagePath">保存した画像のパス（付随ファイルの名前の基になる）。</param>
     /// <returns>書き出しの非同期処理。</returns>
     /// <remarks>
-    /// 注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。<br/>
-    /// 注釈ファイルのパス・書式・文字コードはコアが単一所有する（<see cref="AnnotationCore.SaveDocument"/> /
-    /// <see cref="AnnotationCore.RemoveCompanionFiles"/>）。 本メソッドは合成画像の描画だけを持つ。
+    /// 注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。 判断はコアが単一所有する
+    /// （<see cref="AnnotationCore.SaveOrRemoveCompanionFiles"/>）。 本メソッドは合成画像の描画だけを持つ。
     /// </remarks>
-    private static Task SaveAnnotationFilesAsync(AnnotationTextEditor annotation, string imagePath)
+    private static Task SaveAnnotationFilesAsync(AnnotationEditorPanel annotation, string imagePath)
     {
-        var document = annotation.Layer.Document;
-
-        if (document.Items.IsEmpty)
+        annotation.Layer.Core.SaveOrRemoveCompanionFiles(imagePath, annotation.Layer.Document, () =>
         {
-            annotation.Layer.Core.RemoveCompanionFiles(imagePath);
-            return Task.CompletedTask;
-        }
-
-        annotation.Layer.Core.SaveDocument(imagePath, document);
-
-        using var composed = annotation.Layer.RenderComposedImage();
-        composed?.Save(AnnotationJson.GetComposedPath(imagePath));
+            using var composed = annotation.Layer.RenderComposedImage();
+            composed?.Save(AnnotationJson.GetComposedPath(imagePath));
+        });
         return Task.CompletedTask;
     }
 
@@ -1202,7 +1193,7 @@ internal static class CapturePage
     /// </remarks>
     private static void ToggleCropSession(
         CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services,
-        AnnotationTextEditor annotation)
+        AnnotationEditorPanel annotation)
     {
         switch (captureSession.ResolveCropAction())
         {
@@ -1235,7 +1226,7 @@ internal static class CapturePage
     /// </remarks>
     private static async Task StartCropSessionAsync(
         CaptureSessionControl captureSession, CropViewControl cropView, MainViewModel viewModel, AppServices services,
-        AnnotationTextEditor annotation)
+        AnnotationEditorPanel annotation)
     {
         // 切り出し中は注釈を隠す（注釈が切り出し範囲の選択を妨げないようにする）
         annotation.Visibility = Visibility.Collapsed;

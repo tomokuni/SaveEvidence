@@ -90,7 +90,7 @@ internal static class CapturePage
         canvas.Controls.Add(crop);
 
         // 注釈の編集モード（トグルで表示する）。 画像の上へレイヤーを重ね、本文の編集と書式バーをまとめて持つ
-        var annotation = new AnnotationTextEditor { Dock = DockStyle.Fill };
+        var annotation = new AnnotationEditorPanel { Dock = DockStyle.Fill };
 
         // 注釈はプレビューの上へ重ねる。 WinForms のコントロールは透明にできない（下のプレビューが隠れる）ため、
         // この UI だけはレイヤーが画像も描く（ズーム・パンへは PreviewImageRect で追従する）。
@@ -109,7 +109,7 @@ internal static class CapturePage
                 layer.Source = image;
                 layer.SourcePixelWidth = image.Size.Width;
                 layer.SourcePixelHeight = image.Size.Height;
-                layer.Document = new AnnotationDocument(image.Size.Width, image.Size.Height, string.Empty);
+                layer.Document = layer.Core.CreateDocument(image.Size.Width, image.Size.Height);
             }
             else
             {
@@ -881,7 +881,7 @@ internal static class CapturePage
     /// <b>元画像も読み直す</b>: 注釈は元画像に属するため、注釈だけを差し替えると別の画像の注釈になる。<br/>
     /// <b>元画像が見つからない場合は開かない</b>: 注釈だけを開いても表示できないため、理由を利用者へ伝える。
     /// </remarks>
-    private static Task OpenAnnotationsAsync(AnnotationTextEditor annotation, MainViewModel viewModel, Form owner, string saveFolder)
+    private static Task OpenAnnotationsAsync(AnnotationEditorPanel annotation, MainViewModel viewModel, Form owner, string saveFolder)
     {
         using var dialog = new OpenFileDialog
         {
@@ -939,24 +939,16 @@ internal static class CapturePage
     /// <param name="imagePath">保存した画像のパス（付随ファイルの名前の基になる）。</param>
     /// <returns>書き出しの非同期処理。</returns>
     /// <remarks>
-    /// 注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。<br/>
-    /// 注釈ファイルのパス・書式・文字コードはコアが単一所有する（<see cref="AnnotationCore.SaveDocument"/> /
-    /// <see cref="AnnotationCore.RemoveCompanionFiles"/>）。 本メソッドは合成画像の描画だけを持つ。
+    /// 注釈が無いときは既存の付随ファイルを消す（画像だけの状態と一致させる）。 判断はコアが単一所有する
+    /// （<see cref="AnnotationCore.SaveOrRemoveCompanionFiles"/>）。 本メソッドは合成画像の描画だけを持つ。
     /// </remarks>
-    private static Task SaveAnnotationFilesAsync(AnnotationTextEditor annotation, string imagePath)
+    private static Task SaveAnnotationFilesAsync(AnnotationEditorPanel annotation, string imagePath)
     {
-        var document = annotation.Layer.Document;
-
-        if (document.Items.IsEmpty)
+        annotation.Layer.Core.SaveOrRemoveCompanionFiles(imagePath, annotation.Layer.Document, () =>
         {
-            annotation.Layer.Core.RemoveCompanionFiles(imagePath);
-            return Task.CompletedTask;
-        }
-
-        annotation.Layer.Core.SaveDocument(imagePath, document);
-
-        using var composed = annotation.Layer.RenderComposedImage();
-        composed?.Save(AnnotationJson.GetComposedPath(imagePath));
+            using var composed = annotation.Layer.RenderComposedImage();
+            composed?.Save(AnnotationJson.GetComposedPath(imagePath));
+        });
         return Task.CompletedTask;
     }
 
