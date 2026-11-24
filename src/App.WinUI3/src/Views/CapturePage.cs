@@ -835,7 +835,6 @@ internal static class CapturePage
         SyncAnnotationOverlay();
         crop.ZoomChanged += (_, _) => SyncAnnotationOverlay();
         crop.ViewportChanged += (_, _) => SyncAnnotationOverlay();
-        annotationEditor.Layer.MeasureText = EsUtil.Ui.WinUI3.StyledText.RichTextMetrics.Measure;
         host.Children.Add(annotationEditor);
 
         void SyncAnnotation()
