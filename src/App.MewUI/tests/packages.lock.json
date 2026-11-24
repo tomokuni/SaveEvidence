@@ -277,7 +277,7 @@
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )",
           "EsUtil.Ui.MewUI.ColorSelector": "[0.8.8, )",
-          "EsUtil.Ui.MewUI.RichTextEditor": "[0.8.8, )"
+          "EsUtil.Ui.MewUI.StyledText": "[0.8.8, )"
         }
       },
       "esutil.ui.mewui.colorselector": {
@@ -312,7 +312,7 @@
           "EsUtil.Ui.MewUI.Interop": "[0.8.8, )"
         }
       },
-      "esutil.ui.mewui.richtexteditor": {
+      "esutil.ui.mewui.styledtext": {
         "type": "Project",
         "dependencies": {
           "Aprillz.MewUI.Core": "[0.22.1, )",

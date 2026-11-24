@@ -257,7 +257,7 @@
           "EsUtil.Platform.Core": "[0.8.8, )",
           "EsUtil.Ui.WinUI3.ColorSelector": "[0.8.8, )",
           "EsUtil.Ui.WinUI3.Interop": "[0.8.8, )",
-          "EsUtil.Ui.WinUI3.RichTextEditor": "[0.8.8, )",
+          "EsUtil.Ui.WinUI3.StyledText": "[0.8.8, )",
           "Microsoft.Windows.SDK.BuildTools": "[10.0.28000.2957, )",
           "Microsoft.WindowsAppSDK": "[2.0.1, )",
           "System.Drawing.Common": "[10.0.0, )"
@@ -299,7 +299,7 @@
           "Microsoft.WindowsAppSDK": "[2.0.1, )"
         }
       },
-      "esutil.ui.winui3.richtexteditor": {
+      "esutil.ui.winui3.styledtext": {
         "type": "Project",
         "dependencies": {
           "EsUtil.Feature.StyledText.Core": "[0.8.8, )",

@@ -108,7 +108,7 @@
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )",
           "EsUtil.Ui.WinForms.Interop": "[0.8.8, )",
-          "EsUtil.Ui.WinForms.RichTextEditor": "[0.8.8, )"
+          "EsUtil.Ui.WinForms.StyledText": "[0.8.8, )"
         }
       },
       "esutil.ui.winforms.interop": {
@@ -133,7 +133,7 @@
           "EsUtil.Ui.WinForms.Interop": "[0.8.8, )"
         }
       },
-      "esutil.ui.winforms.richtexteditor": {
+      "esutil.ui.winforms.styledtext": {
         "type": "Project",
         "dependencies": {
           "EsUtil.Feature.StyledText.Core": "[0.8.8, )",
