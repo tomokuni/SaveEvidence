@@ -549,7 +549,7 @@ public sealed partial class SelectionOverlayControl : Panel
 
         _marquee.InvalidateRender();
         // ルーペは描画のたびに選択矩形の破線を組み立てるため、破線色の変更は再描画で反映される
-        _loupe.RequestRedraw();
+        _loupe.InvalidateRender();
         InvalidateArrange();
     }
 
@@ -599,7 +599,7 @@ public sealed partial class SelectionOverlayControl : Panel
     /// <summary>選択矩形の変更を処理する（ルーペ画像上の破線の再描画）。</summary>
     /// <param name="sender">イベントの送信元（ドラッグ選択コントロール）。</param>
     /// <param name="e">選択矩形の情報。</param>
-    private void OnMarqueeSelectionChanged(object? sender, SelectionRectEventArgs e) => _loupe.RequestRedraw();
+    private void OnMarqueeSelectionChanged(object? sender, SelectionRectEventArgs e) => _loupe.InvalidateRender();
 
     /// <summary>ルーペ位置の通知を処理する（ホストへの転送）。</summary>
     /// <param name="sender">イベントの送信元（ドラッグ選択コントロール）。</param>

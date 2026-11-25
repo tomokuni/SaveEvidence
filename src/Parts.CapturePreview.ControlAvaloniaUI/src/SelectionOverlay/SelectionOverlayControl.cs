@@ -617,7 +617,7 @@ public sealed class SelectionOverlayControl : Panel
 
         _marquee.InvalidateRender();
         // 破線の表示可否はルーペのプロパティに現れないため、既存の Bitmap から破線を消す（または描く）ために再生成を要求する
-        _loupeControl.RequestRender();
+        _loupeControl.InvalidateRender();
     }
 
     /// <summary>選択矩形の変更時に、ルーペ画像上の破線を描き直すために再生成を要求する（SelectionChanged）。</summary>
@@ -628,7 +628,7 @@ public sealed class SelectionOverlayControl : Panel
     /// 破線はルーペの Bitmap へ焼き込まれるため、選択矩形が変わるたびに再生成を要求する。
     /// </remarks>
     private void OnSelectionChanged(object? sender, SelectionRectEventArgs e)
-        => _loupeControl.RequestRender();
+        => _loupeControl.InvalidateRender();
 
     /// <summary>描画完了時にホスト固有の付加情報（操作ラベル・情報ラベル）を描画する。</summary>
     /// <param name="sender">イベント送信元（選択矩形コントロール）。</param>
