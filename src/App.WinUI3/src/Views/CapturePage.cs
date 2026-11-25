@@ -831,7 +831,7 @@ internal static class CapturePage
         // **毎回取り直す**: レイアウトの途中で取得した値を保持すると、ツール バーや余白の寸法が
         // 変わった後で注釈だけが画像からずれる（実測 2026-11-21）。
         annotationEditor.Layer.ImageRectProvider = () => crop.ImageRectViewport();
-        void SyncAnnotationOverlay() => annotationEditor.Layer.Redraw();
+        void SyncAnnotationOverlay() => annotationEditor.Layer.InvalidateRender();
         SyncAnnotationOverlay();
         crop.ZoomChanged += (_, _) => SyncAnnotationOverlay();
         crop.ViewportChanged += (_, _) => SyncAnnotationOverlay();

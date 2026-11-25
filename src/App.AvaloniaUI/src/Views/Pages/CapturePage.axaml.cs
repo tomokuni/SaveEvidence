@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using DrawingColor = System.Drawing.Color;
 using Avalonia;
 using Avalonia.Controls;
@@ -8,8 +7,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Geometry;
@@ -734,49 +731,10 @@ public sealed partial class CapturePage : UserControl
 
         AnnotationEditor.Layer.Core.SaveOrRemoveCompanionFiles(imagePath, document, () =>
         {
-            using var rendered = AnnotationEditor.Layer.RenderComposedImage();
-            SaveComposedImage(rendered, AnnotationJson.GetComposedPath(imagePath));
+            using var composed = AnnotationEditor.Layer.RenderComposedImage();
+            composed.Save(AnnotationJson.GetComposedPath(imagePath));
         });
         return Task.CompletedTask;
-    }
-
-    /// <summary>合成したビットマップをファイルへ保存する（拡張子が形式を決める）。</summary>
-    /// <param name="rendered">合成したビットマップ。</param>
-    /// <param name="filePath">保存先。</param>
-    /// <remarks>
-    /// <b>画素をコアの画像へ写してから保存する</b>: 保存形式（PNG / JPEG 等）の判定とエンコードは
-    /// <see cref="EsBitmap.Save(string)"/> が単一所有する（UI の保存 API は PNG だけである）。
-    /// 行の余白（<see cref="ILockedFramebuffer.RowBytes"/>）を詰めて BGRA8888 の連続した領域にする。
-    /// </remarks>
-    private static void SaveComposedImage(RenderTargetBitmap rendered, string filePath)
-    {
-        var width = rendered.PixelSize.Width;
-        var height = rendered.PixelSize.Height;
-
-        using var target = new WriteableBitmap(rendered.PixelSize, new Vector(96, 96));
-        using var buffer = target.Lock();
-        rendered.CopyPixels(buffer);
-
-        var stride = buffer.RowBytes;
-        var row = new byte[stride];
-        var pixels = new byte[width * 4 * height];
-        for (var y = 0; y < height; y++)
-        {
-            Marshal.Copy(buffer.Address + (y * stride), row, 0, stride);
-            Buffer.BlockCopy(row, 0, pixels, y * width * 4, width * 4);
-        }
-
-        // Rgba8888 の環境では赤と青が入れ替わるため、BGRA8888 へそろえる
-        if (buffer.Format == PixelFormat.Rgba8888)
-        {
-            for (var i = 0; i < pixels.Length; i += 4)
-            {
-                (pixels[i], pixels[i + 2]) = (pixels[i + 2], pixels[i]);
-            }
-        }
-
-        using var image = EsBitmap.FromPixelCopy(width, height, pixels);
-        image.Save(filePath);
     }
 
     /// <summary>設定変更（中央寄せ/原点寄せ）を監視して画像配置へ即時反映する。</summary>
