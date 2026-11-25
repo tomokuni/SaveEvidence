@@ -327,6 +327,7 @@
           "EsUtil.Feature.Marquee.Core": "[0.8.8, )",
           "EsUtil.Platform.Core": "[0.8.8, )",
           "EsUtil.Ui.AvaloniaUI.ColorSelector": "[0.8.8, )",
+          "EsUtil.Ui.AvaloniaUI.Interop": "[0.8.8, )",
           "EsUtil.Ui.AvaloniaUI.StyledText": "[0.8.8, )"
         }
       },

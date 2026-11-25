@@ -47,24 +47,4 @@ public static class ThumbnailTileMetrics
     /// 暗色は同じ役割の濃い色を使う。
     /// </remarks>
     public static uint HoverBackground(bool isDark) => isDark ? 0xFF303030 : 0xFFDADADA;
-
-    /// <summary>サムネイルの表示高さを求める（幅を固定し、縦横比を保つ）。</summary>
-    /// <param name="width">表示幅（DIP）。</param>
-    /// <param name="pixelWidth">元画像の幅（ピクセル）。</param>
-    /// <param name="pixelHeight">元画像の高さ（ピクセル）。</param>
-    /// <returns>表示高さ（DIP）。</returns>
-    /// <remarks>
-    /// <b>高さを縦横比で決める理由</b>: AvaloniaUI 版は <c>Image</c> の幅だけを与えて縦横比のまま縮小するため、<br/>
-    /// 横長の画像は低く、縦長の画像は高いアイテムになる。 4 UI 版で同じ並びにするため、同じ計算を共有する。<br/>
-    /// 行の高さは「その行の最大アイテム高さ」で決め、アイテムは行内で下端を揃える（名前の位置が揃う）。
-    /// </remarks>
-    public static double ImageHeight(double width, int pixelWidth, int pixelHeight)
-    {
-        if (width <= 0 || pixelWidth <= 0 || pixelHeight <= 0)
-        {
-            return Math.Max(0, width);
-        }
-
-        return width * pixelHeight / pixelWidth;
-    }
 }
