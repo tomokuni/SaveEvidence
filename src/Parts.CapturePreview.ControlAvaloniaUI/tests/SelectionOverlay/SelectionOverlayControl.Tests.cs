@@ -9,6 +9,7 @@ using EsUtil.Feature.Loupe;
 using EsUtil.Feature.Marquee;
 using EsUtil.Ui.AvaloniaUI.Marquee;
 using EsUtil.Platform.Core.Coord;
+using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.SaveEvidence.Parts.CapturePreview.AvaloniaUI.SelectionOverlay;
 using EsUtil.SaveEvidence.Parts.CapturePreview.Core.SelectionOverlay;
@@ -385,7 +386,7 @@ public class SelectionOverlayControlTests
         var rect = new Rect(20, 30, 100, 80);
 
         // MarqueeCore.SetSelection → SelectionChanged 発火 → 複合コントロールがレンダラーへ同期
-        control.Marquee.SetSelection(rect);
+        control.Marquee.SetSelection(rect.ToEsRect());
 
         Assert.Equal(rect, control.SelectionSourceRect);
         Assert.True(control.HasSelection);
@@ -395,7 +396,7 @@ public class SelectionOverlayControlTests
     internal void ConfirmRequested_Marqueeの確定要求が中継される()
     {
         var control = new SelectionOverlayControl();
-        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
+        control.Marquee.SetSelection(new EsRect(10, 10, 50, 40));
         Rect? confirmed = null;
         control.ConfirmRequested += (_, e) => confirmed = e.SelectionSourceRect;
 
@@ -408,7 +409,7 @@ public class SelectionOverlayControlTests
     internal void ConfirmRequested_購読者がいない場合は中継されない()
     {
         var control = new SelectionOverlayControl();
-        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
+        control.Marquee.SetSelection(new EsRect(10, 10, 50, 40));
 
         // リフレクションで ConfirmRequested を直接発火する（購読者なし → ?.Invoke の null 分岐）
         var field = typeof(MarqueeControl).GetField(
@@ -462,13 +463,13 @@ public class SelectionOverlayControlTests
         // Source 未設定の間は表示しない（下地だけが見えるのを避ける仕様）
         control.SetLoupePosition(new Point(960, 540));
         Assert.False(control.Loupe.IsVisible);
-        Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
+        Assert.Equal(new EsPoint(960, 540), control.Loupe.CenterPoint);
 
         // Source 設定後に再呼び出しすると表示される
         control.Loupe.Source = CreateLoupeSource();
         control.SetLoupePosition(new Point(960, 540));
         Assert.True(control.Loupe.IsVisible);
-        Assert.Equal(new Point(960, 540), control.Loupe.CenterPoint);
+        Assert.Equal(new EsPoint(960, 540), control.Loupe.CenterPoint);
 
         window.Close();
     }
@@ -724,7 +725,7 @@ public class SelectionOverlayControlTests
         Assert.Equal(default, control.SelectionSourceRect);
 
         // 選択時: HasSelection = true かつ矩形が同期される（MarqueeCore.SetSelection → SelectionChanged → 同期）
-        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
+        control.Marquee.SetSelection(new EsRect(10, 10, 50, 40));
         Assert.True(control.HasSelection);
         Assert.Equal(new Rect(10, 10, 50, 40), control.SelectionSourceRect);
     }
@@ -755,7 +756,7 @@ public class SelectionOverlayControlTests
     internal void RefreshOverlay_選択状態を維持したまま再描画を要求する()
     {
         var control = new SelectionOverlayControl();
-        control.Marquee.SetSelection(new Rect(10, 10, 50, 40));
+        control.Marquee.SetSelection(new EsRect(10, 10, 50, 40));
 
         // 表示（パン・ズーム）の変化の通知 → 例外なく再描画・再計算できる
         control.NotifyViewportChanged();
@@ -814,11 +815,11 @@ public class SelectionOverlayControlTests
         var field = typeof(MarqueeControl).GetField(
             "LoupePositionMoved", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
-        var args = new MarqueePointEventArgs(new Point(100, 200), control.Marquee.CurrentSnapshot);
+        var args = new MarqueePointEventArgs(new EsPoint(100, 200), control.Marquee.CurrentSnapshot);
         eventDelegate?.DynamicInvoke(control.Marquee, args);
 
         // ルーペ中心が更新され、ホストへ独自イベント引数（位置）で中継される
-        Assert.Equal(new Point(100, 200), control.Loupe.CenterPoint);
+        Assert.Equal(new EsPoint(100, 200), control.Loupe.CenterPoint);
         Assert.True(control.Loupe.IsVisible);
         Assert.NotNull(received);
         Assert.Equal(new Point(100, 200), received!.Position);
@@ -835,11 +836,11 @@ public class SelectionOverlayControlTests
         var field = typeof(MarqueeControl).GetField(
             "LoupePositionMoved", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
-        var args = new MarqueePointEventArgs(new Point(100, 200), control.Marquee.CurrentSnapshot);
+        var args = new MarqueePointEventArgs(new EsPoint(100, 200), control.Marquee.CurrentSnapshot);
         eventDelegate?.DynamicInvoke(control.Marquee, args);
 
         // 購読者がいないため例外なく完了する（ルーペ中心は更新されるが表示はしない）
-        Assert.Equal(new Point(100, 200), control.Loupe.CenterPoint);
+        Assert.Equal(new EsPoint(100, 200), control.Loupe.CenterPoint);
     }
 
     // ====================================================================

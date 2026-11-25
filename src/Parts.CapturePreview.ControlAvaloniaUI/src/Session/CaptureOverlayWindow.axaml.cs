@@ -223,7 +223,7 @@ internal sealed partial class CaptureOverlayWindow : Window
         // 選択矩形・ハイライトは対象座標（ウィンドウローカル物理ピクセル）で設定し、描画時に DIP へ変換する（Marquee と同方式）
         // ClientToSource: ToSource = DIP→対象（× scaling）/ ToDip = 対象→DIP（÷ scaling）
         // Marquee / Loupe の 2 コントロールへ同一ポートを一括分配する。
-        SelectionOverlay.SetCoordTransform(CoordTransform.ClientToSource(() => _scaling));
+        SelectionOverlay.SetCoordTransform(CoordTransform.CreateClientToSource(() => _scaling));
     }
 
     /// <summary>選択オーバーレイ（SelectionOverlay）の再描画を要求する。</summary>

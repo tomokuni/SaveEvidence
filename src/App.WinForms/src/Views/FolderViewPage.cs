@@ -391,7 +391,7 @@ internal static class FolderViewPage
                 var (index, request) = requests[i];
                 var bounds = list.SlotBounds(index);
                 var priority = ThumbnailPriority.FromRange(
-                    bounds.Top, bounds.Bottom, 0, list.ClientSize.Height, i);
+                    bounds.Y, bounds.Bottom, 0, list.ClientSize.Height, i);
                 _ = scheduler.Reprioritize(request, priority);
             }
         }

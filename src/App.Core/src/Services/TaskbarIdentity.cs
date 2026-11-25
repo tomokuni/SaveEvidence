@@ -27,7 +27,7 @@ public static class TaskbarIdentity
     {
         try
         {
-            return WinAppUserModelId.SetProcessId(appUserModelId);
+            return WinAppUserModelId.TrySetProcessAppUserModelId(appUserModelId);
         }
         catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {

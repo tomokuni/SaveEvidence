@@ -250,7 +250,7 @@ public sealed class SelectionOverlayControl : Panel
     {
         if (SelectionUsability.IsUsable(rect.Width, rect.Height))
         {
-            _marquee.SetSelection(rect);
+            _marquee.SetSelection(rect.ToEsRect());
         }
         else
         {
@@ -426,7 +426,7 @@ public sealed class SelectionOverlayControl : Panel
     public void SetLoupePosition(Point sourcePos)
     {
         if (_loupeControl.Parent is null) return;
-        UpdateLoupePosition(sourcePos);
+        UpdateLoupePosition(sourcePos.ToEsPoint());
     }
 
     /// <summary>ルーペの中心位置（対象座標）を設定して表示可否を更新する。</summary>
@@ -437,7 +437,7 @@ public sealed class SelectionOverlayControl : Panel
     /// 表示可否の判断（選択矩形を使うモードでのみ表示する・拡大元画像が未設定なら表示しない）は<br/>
     /// コアの <c>SelectionOverlayState.IsLoupeVisible</c> が単一所有する。
     /// </remarks>
-    private void UpdateLoupePosition(Point sourcePos)
+    private void UpdateLoupePosition(EsPoint sourcePos)
     {
         // LoupeControl.CenterPoint は StyledProperty（UI 境界）のため、境界で設定する。
         _loupeControl.CenterPoint = sourcePos;
@@ -520,7 +520,7 @@ public sealed class SelectionOverlayControl : Panel
 
     /// <summary>ルーペ中心（対象座標）。 未設定時は null。</summary>
     /// <remarks>ルーペの表示状態の確認（テスト・座標検証）に使用する。</remarks>
-    public Point? LoupeCenterPoint => _loupeControl.CenterPoint;
+    public Point? LoupeCenterPoint => _loupeControl.CenterPoint is { } center ? center.ToAvaloniaPoint() : null;
 
     /// <summary>ルーペコントロール（Source 設定・テスト用アクセサ）。</summary>
     internal LoupeControl Loupe => _loupeControl;
@@ -754,8 +754,8 @@ public sealed class SelectionOverlayControl : Panel
 
     /// <summary>ルーペ中心更新イベントを発火する。</summary>
     /// <param name="sourcePos">ルーペ中心（対象座標）。</param>
-    private void RaiseLoupePositionMoved(Point sourcePos)
-        => LoupePositionMoved?.Invoke(this, new LoupePositionEventArgs(sourcePos));
+    private void RaiseLoupePositionMoved(EsPoint sourcePos)
+        => LoupePositionMoved?.Invoke(this, new LoupePositionEventArgs(sourcePos.ToAvaloniaPoint()));
 
     // ====================================================================
     // レイアウト
