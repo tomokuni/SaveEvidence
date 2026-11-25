@@ -300,7 +300,7 @@ internal static class UndoPage
             for (var i = 0; i < requests.Count; i++)
             {
                 var (index, request) = requests[i];
-                var bounds = list.ItemBounds(index);
+                var bounds = list.SlotBounds(index);
                 var priority = ThumbnailPriority.FromRange(
                     bounds.Top, bounds.Bottom, 0, list.ClientSize.Height, i);
                 _ = scheduler.Reprioritize(request, priority);

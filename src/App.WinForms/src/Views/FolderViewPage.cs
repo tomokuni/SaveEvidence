@@ -224,7 +224,7 @@ internal static class FolderViewPage
             settingsService.Save();
             SyncModeButtons();
             list.ImageWidth = settingsService.Current.GetIconSize(index);
-            list.RefreshLayout();
+            list.Refresh();
             Rebuild(force: true);
         }
 
@@ -389,7 +389,7 @@ internal static class FolderViewPage
             for (var i = 0; i < requests.Count; i++)
             {
                 var (index, request) = requests[i];
-                var bounds = list.ItemBounds(index);
+                var bounds = list.SlotBounds(index);
                 var priority = ThumbnailPriority.FromRange(
                     bounds.Top, bounds.Bottom, 0, list.ClientSize.Height, i);
                 _ = scheduler.Reprioritize(request, priority);
