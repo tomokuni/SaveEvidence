@@ -1176,8 +1176,8 @@ internal static class CapturePage
         // 通知の文言はコアが単一所有する（キャプチャ結果は画像の差し替えより後に通知する）
         viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
 
-        // 設定が有効なら撮影した画像をクリップボードへコピーする
-        _ = viewModel.CopyAfterEditIfEnabledAsync();
+        // 撮影した画像をクリップボードへコピーする（結果をすぐ他のアプリへ貼れるようにする）
+        _ = viewModel.CopyResultToClipboardAsync();
     }
 
     /// <summary>切り出しの開始・確定・キャンセルを 1 つの操作で切り替える（ボタン・キー・メニュー共通）。</summary>

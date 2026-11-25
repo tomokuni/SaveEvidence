@@ -5,6 +5,10 @@
 
 ## 未リリース
 
+### 変更（破壊的）
+
+- **スクリーン・ウィンドウ・領域の選択キャプチャと切り出しの結果を、設定に依らず常にクリップボードへコピーするようにしました**（4 つの UI 版）。 撮った結果をすぐ他のアプリへ貼れるようにするためです。 設定「撮影・切り出しの後に画像をクリップボードへコピーする」（`Settings.CopyAfterCapture`）と設定画面の項目は削除しました（`MainViewModel.CopyResultToClipboardAsync` が常にコピーします）。
+
 ### 追加
 
 - **注釈コントロールに右クリックのフライアウトの値を取得・設定するプロパティを追加しました**（4 つの UI 版）。 `SelectedAppearance`（枠線の色・太さ・内側の色・角丸）に加えて、`SelectedBodyPadding`（本文の余白）・`SelectedTailWidth`（しっぽの幅）・`SelectedTailBaseEdge`（しっぽの辺）を用意しました。 値の解決はコア（`AnnotationSelectionPresenter.ResolveBubble`）が単一所有します。

@@ -826,8 +826,8 @@ public sealed partial class MainWindow : Window
             // （先に設定すると消える）。 文言はコア（StatusMessages）が単一所有する
             _viewModel.StatusMessage = StatusMessages.CaptureCompleted(captured.Width, captured.Height);
 
-            // 設定が有効なら撮影した画像をクリップボードへコピーする
-            _ = _viewModel.CopyAfterEditIfEnabledAsync();
+            // 撮影した画像をクリップボードへコピーする（結果をすぐ他のアプリへ貼れるようにする）
+            _ = _viewModel.CopyResultToClipboardAsync();
         }
     }
 }

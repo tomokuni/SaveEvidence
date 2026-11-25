@@ -330,15 +330,6 @@ internal static class SettingsPage
         };
         section.Body.Controls.Add(hideTaskbar);
 
-        section.Body.Controls.Add(CreateCheckBox(
-            "撮影・切り出しの後にクリップボードへコピーする",
-            settingsService.Current.CopyAfterCapture,
-            value =>
-            {
-                settingsService.Current.CopyAfterCapture = value;
-                settingsService.Save();
-            }));
-
         var useWindowsGraphicsCapture = CreateGatedCheckBox(
             "画面の取得に Windows.Graphics.Capture を使う",
             settingsService.Current.UseWindowsGraphicsCapture,

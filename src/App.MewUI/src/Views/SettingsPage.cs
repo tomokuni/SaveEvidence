@@ -255,7 +255,6 @@ internal static class SettingsPage
             "キャプチャ設定",
             Row("", CheckRow(settings.HideMainWindowOnCapture, value => settings.HideMainWindowOnCapture = value, "キャプチャ時にメインウィンドウを隠す")),
             Row("", hideTaskbar),
-            Row("", CheckRow(settings.CopyAfterCapture, value => settings.CopyAfterCapture = value, "撮影・切り出しの後にクリップボードへコピーする")),
             Row("", useWindowsGraphicsCapture.Row),
             Row("", hideCaptureBorder.Row));
 

@@ -310,24 +310,6 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>撮影・切り出しの後に画像をクリップボードへコピーするかどうかを取得または設定する。</summary>
-    /// <value>有効な場合、撮影と切り出しの確定後に自動でコピーする（設定へ保存する）。</value>
-    /// <remarks>値の保持と永続化は <see cref="Models.Settings.CopyAfterCapture"/> が担う（4 つの UI 版で共有する）。</remarks>
-    public bool CopyAfterCapture
-    {
-        get => Settings.CopyAfterCapture;
-        set
-        {
-            if (Settings.CopyAfterCapture == value)
-            {
-                return;
-            }
-
-            Settings.CopyAfterCapture = value;
-            _settingsService.Save();
-            OnPropertyChanged();
-        }
-    }
 
     /// <summary>キャプチャ時にタスク バーを隠すかどうかを取得または設定する。</summary>
     /// <value>有効な場合、撮影画像にタスク バーを写さない（設定へ保存する）。</value>
@@ -352,14 +334,16 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>設定が有効な場合に画像をクリップボードへコピーする（撮影・切り出しの確定後に呼ぶ）。</summary>
+    /// <summary>撮影・切り出しの結果をクリップボードへコピーする（撮影と切り出しの確定後に呼ぶ）。</summary>
     /// <returns>待機タスク。</returns>
     /// <remarks>
+    /// <b>撮影と切り出しの結果は常にコピーする</b>: スクリーン・ウィンドウ・領域の選択キャプチャと切り出しは
+    /// 「撮った結果をすぐ他のアプリへ貼る」操作であり、設定で止めると結果がどこにも渡らない。<br/>
     /// 撮影は UI 側のハンドラーが、切り出しは <see cref="CropPreview"/> 等が呼ぶ（手順を UI ごとに書かない）。
     /// </remarks>
-    public async Task CopyAfterEditIfEnabledAsync()
+    public async Task CopyResultToClipboardAsync()
     {
-        if (CopyAfterCapture && CanCopy)
+        if (CanCopy)
         {
             await CopyToClipboardAsync();
         }
@@ -654,8 +638,8 @@ public sealed partial class MainViewModel : ObservableObject
         {
             StatusMessage = StatusMessages.CropCompleted(bounds.Width, bounds.Height);
 
-            // 設定が有効なら切り出した画像をクリップボードへコピーする
-            _ = CopyAfterEditIfEnabledAsync();
+            // 切り出した画像をクリップボードへコピーする（結果をすぐ他のアプリへ貼れるようにする）
+            _ = CopyResultToClipboardAsync();
         }
     }
 
@@ -754,8 +738,8 @@ public sealed partial class MainViewModel : ObservableObject
         {
             StatusMessage = StatusMessages.CropCompleted(bounds.Width, bounds.Height);
 
-            // 設定が有効なら切り出した画像をクリップボードへコピーする
-            _ = CopyAfterEditIfEnabledAsync();
+            // 切り出した画像をクリップボードへコピーする（結果をすぐ他のアプリへ貼れるようにする）
+            _ = CopyResultToClipboardAsync();
         }
     }
 

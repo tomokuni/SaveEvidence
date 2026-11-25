@@ -101,7 +101,6 @@ UI フレームワークの型ではなく、UI 非依存の型（`EsRectInt` / 
 | `HideTaskbarOnCapture` | `bool` | キャプチャ時にタスク バーを隠す（撮影画像に写さない。 4 UI 版で共有。 既定は無効） |
 | `UseWindowsGraphicsCapture` | `bool` | 画面の取得に Windows.Graphics.Capture を使う（既定は無効 = GDI。 4 UI 版で共有） |
 | `HideCaptureBorder` | `bool` | 撮影中の枠を消す（既定は無効。 **`UseWindowsGraphicsCapture` がオンのときだけ効く**。 Windows 11 / ビルド 22000 未満では無視される） |
-| `CopyAfterCapture` | `bool` | 撮影・切り出しの後に画像をクリップボードへコピーする（4 UI 版で共有。 既定は無効） |
 | `FolderExtraLargeIconSize` / `FolderLargeIconSize` / `FolderMediumIconSize` | `int` | 保存フォルダのアイコンサイズ |
 
 ## 5. `Services.ISettingsService` / `Services.SettingsService`（クラス）
@@ -289,7 +288,6 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | `HasTemplateChangedSinceSave` | `bool` | 保存後にファイル名テンプレートが変わったか（保存時の自動インクリメントで +1 されただけの状態は「変わっていない」とみなす。 `CanSave` の判定に使う） |
 | `AutoSave` | `bool` | 自動保存（`Settings.AutoSave` を読み書きし、設定へ保存する） |
 | `HideTaskbarOnCapture` | `bool` | キャプチャ時にタスク バーを隠す（`Settings.HideTaskbarOnCapture` を読み書きし、設定へ保存する。 キャプチャ ページのツールバーと設定ページが共有する） |
-| `CopyAfterCapture` | `bool` | 撮影・切り出しの後にクリップボードへコピーする（`Settings.CopyAfterCapture` を読み書きし、設定へ保存する） |
 | `FileNameTemplateText` | `string` | ファイル名テンプレート（変更時に検証と保存） |
 | `SaveFolderPath` / `SaveFolderPathResolved` / `HasInvalidSaveFolder` | `string` / `bool` | 保存先フォルダ |
 | `ValidationMessage` / `HasValidTemplate` / `HasInvalidTemplate` | `string?` / `bool` | テンプレート検証結果 |
@@ -304,7 +302,7 @@ public MainViewModel(ISettingsService settingsService, IImageWriter imageWriter)
 | --- | --- |
 | `SetPreviewImage(EsReadOnlyBitmap)` / `SetPreviewImage(EsBitmap)` | プレビュー画像を設定する（所有権が本 ViewModel へ移る）。 書き換え可能な画像を渡す版は、渡した実体を**凍結**して 0 コピーで共有する |
 | `SetStartupPreviewImage(EsBitmap)` | 起動直後の初期画像を設定する（`IsStartupImage` を立て、**保存できない**状態にする） |
-| `CopyAfterEditIfEnabledAsync()` | 撮影・切り出しの直後に呼ぶ。 `CopyAfterCapture` が有効なら現在の画像をクリップボードへコピーする（撮影の完了通知は変えない） |
+| `CopyResultToClipboardAsync()` | 撮影・切り出しの直後に呼ぶ。 現在の画像をクリップボードへコピーする（設定に依らず常にコピーする。 撮影の完了通知は変えない） |
 | `SaveImageAsync()` | プレビュー画像を保存する（テンプレートからファイル名を生成。 同名時は `ConfirmOverwriteAsync`）。 失敗時は `StatusMessage` と `SaveFailed` へ通知する。 **画像が保存済みで注釈だけが変わった場合は、画像を書き直さず付随ファイルだけを書く** |
 | `CropPreviewCommand` / `ConfirmAutoCropCommand` | 矩形で切り出す（画像座標 `EsRectInt`）。 成功時に `切り出しました（W x H）` を通知する |
 | `AutoCropWindowCommand` / `CancelAutoCropCommand` | 窓枠の自動検出（`LogicLineDetector` + `LineRectangleReconstructor`）。 検出結果とキャンセルを通知する |
