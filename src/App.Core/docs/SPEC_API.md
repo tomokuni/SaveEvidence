@@ -476,7 +476,7 @@ WinForms の Font はポイント単位のため、使う側で DIP × 72 ÷ 96 
 | `ItemGap` | 28 DIP | 隣り合う画像の間隔（`(ItemPadding + ItemMargin) × 2`） |
 | `HoverBackground(bool isDark)` | `#DADADA` / `#303030` | マウスを重ねたときの帯の色（AvaloniaUI 版の一覧の項目と同じ） |
 
-`ImageHeight(double width, int pixelWidth, int pixelHeight)` は、幅を固定したときの表示高さ（縦横比を保つ）を返します。 一覧のアイテムはこの高さを持ち、行の高さは「その行の最大アイテム高さ」、アイテムは行内で下端揃えになります（AvaloniaUI 版の `BottomAlignWrapPanel` と同じ並べ方）。
+幅を固定したときの表示高さ（縦横比を保つ）は EsUtil の `ThumbnailLayout.ResolveImageHeight` が単一所有します。 一覧のアイテムはこの高さを持ち、行の高さは「その行の最大アイテム高さ」、アイテムは行内で下端揃えになります（AvaloniaUI 版の `BottomAlignWrapPanel` と同じ並べ方）。
 
 **影は `Services.ShadowPlan` が単一所有します**（下記「`Services.ShadowPlan`」）。 履歴も同じ寸法を使い、現在表示中の画像は**枠を変えずに名前を太字にする**ため、影・ホバーが保存フォルダと一致します。
 
