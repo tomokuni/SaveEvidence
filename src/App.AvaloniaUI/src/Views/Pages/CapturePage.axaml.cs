@@ -623,7 +623,8 @@ public sealed partial class CapturePage : UserControl
             if (_viewModel.PreviewImage is { } image)
             {
                 _annotationDocument = layer.Core.CreateDocument(image.Size.Width, image.Size.Height);
-                layer.Source = _cropViewSource;
+                // 注釈レイヤーはコアの画像を受け取る（4 つの UI 版で同じ契約）。 表示境界の画像は CropView 用に別途包む
+                layer.Source = image;
                 layer.SourcePixelWidth = image.Size.Width;
                 layer.SourcePixelHeight = image.Size.Height;
                 layer.Document = _annotationDocument;
@@ -1089,7 +1090,7 @@ public sealed partial class CapturePage : UserControl
         // 画像の差し替え通知が注釈を作り直すため、その後に読み込んだ注釈を設定する
         _annotationDocument = document;
         var layer = AnnotationEditor.Layer;
-        layer.Source = _cropViewSource;
+        layer.Source = _viewModel.PreviewImage;
         layer.SourcePixelWidth = document.ImageWidth;
         layer.SourcePixelHeight = document.ImageHeight;
         layer.Document = document;
