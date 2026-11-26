@@ -345,7 +345,7 @@ public sealed partial class CapturePage : UserControl
     private void ApplyAnnotationSettings()
     {
         var settings = _settingsService.Current;
-        AnnotationEditor.TextFormat = settings.ColorTextFormat;
+        AnnotationEditor.ColorTextFormat = settings.ColorTextFormat;
         AnnotationEditor.Layer.DraftDefaults = AnnotationDraftDefaultsFactory.FromText(
             settings.AnnotationFrameBorderColor,
             settings.AnnotationFrameBorderThickness,

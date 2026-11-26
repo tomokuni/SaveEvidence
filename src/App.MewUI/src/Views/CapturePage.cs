@@ -1090,7 +1090,7 @@ internal static class CapturePage
         // out パラメーターはラムダ内で参照できないため、ローカル変数へコピーして使う
         var annotationEditor = new AnnotationEditorPanel
         {
-            TextFormat = settings.ColorTextFormat,
+            ColorTextFormat = settings.ColorTextFormat,
         };
 
         // 右クリック位置へ注釈の追加メニューを出す（プレビューと同じ座標系の host へ重ねる）
@@ -1229,7 +1229,7 @@ internal static class CapturePage
         {
             if (string.Equals(e.PropertyName, nameof(Settings.ColorTextFormat), StringComparison.Ordinal))
             {
-                annotationEditor.TextFormat = settings.ColorTextFormat;
+                annotationEditor.ColorTextFormat = settings.ColorTextFormat;
             }
         };
 
