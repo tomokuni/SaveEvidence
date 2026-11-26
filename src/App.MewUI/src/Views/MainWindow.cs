@@ -3,6 +3,7 @@ using Aprillz.MewUI;
 using Aprillz.MewUI.Controls;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Input;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
 using EsUtil.Platform.Core;
@@ -47,6 +48,8 @@ internal sealed partial class MainWindow
 
     /// <summary>タイトルバー領域の高さ（DIP）。 非クライアント領域をこの高さでクライアント領域へ拡張する。</summary>
     private const double TitleBarHeight = 32;
+
+
 
 
     /// <summary>ナビ項目の選択マークの幅（DIP）。 WinUI 3 の選択マークと同じ。</summary>
@@ -341,19 +344,11 @@ internal sealed partial class MainWindow
         root.Add(windowMenu.Column(0).ColumnSpan(2));
         window.Content(root);
 
-        // 上端の帯（タイトル バー相当）をドラッグしてウィンドウを移動する。
-        // 子の要素がクリックを処理した場合はここへ届かない（各ボタンの操作を妨げない）
-        root.OnMouseDown(e =>
-        {
-            var point = e.GetPosition(root);
-
-            // ナビの列は除く（開閉ボタンの操作をドラッグで奪わない）
-            if (point.Y < WindowLayout.TitleBarHeight && point.X >= viewModel.NavPanelWidth)
-            {
-                window.DragMove();
-                e.Handled = true;
-            }
-        });
+        // **上端の帯（タイトル バー相当）はどこを押しても**ウィンドウを移動できる。 移動の通知は
+        // ウィンドウへ届くため（実測）、ツールバーのボタンの上からでも動かせる。 ただし動かしたときだけ
+        // 移動し（<see cref="DragThreshold"/> を超えてから）、動かさなければボタンの操作になる
+        var titleDrag = new TitleBarDragState();
+        window.OnMouseMove(e => TrackTitleBarDrag(window, root, titleDrag, e));
         root.OnMouseDoubleClick(e =>
         {
             if (e.GetPosition(root).Y < WindowLayout.TitleBarHeight)
@@ -693,6 +688,43 @@ internal sealed partial class MainWindow
     private static GlyphKind WindowRestoreKind(Window window)
         => window.WindowState == WindowState.Maximized ? GlyphKind.WindowRestore : GlyphKind.WindowMaximize;
 
+    /// <summary>タイトル バー相当の帯を押したまま動かしたら、OS の移動の仕組みでウィンドウを動かす。</summary>
+    /// <param name="window">動かすウィンドウ。</param>
+    /// <param name="root">帯の判定に使う根（ウィンドウの内容）。</param>
+    /// <param name="state">このウィンドウのドラッグの状態。</param>
+    /// <param name="e">マウスの引数。</param>
+    /// <remarks>
+    /// <b>押下では動かさない</b>: 動きが <see cref="DragThreshold"/> を超えた時点で初めて動かす。 動かさなければ
+    /// 従来どおりボタンの操作になる（OS の移動の仕組みは押下を項目から取り上げるため、クリックにならない）。<br/>
+    /// <b>押した位置は移動の通知から取る</b>: 押下の通知は要素へ届かず、押す前の状態（<c>LeftButton</c> が false）
+    /// で入るため、押していない間に見た最後の位置を押した位置として使う（実測）。
+    /// </remarks>
+    private static void TrackTitleBarDrag(
+        Window window, FrameworkElement root, TitleBarDragState state, MouseEventArgs e)
+    {
+        var point = e.GetPosition(root);
+        var position = new EsPoint(point.X, point.Y);
+
+        // **押していない間の位置を覚える**: 押した位置はこの位置で表す（押下の通知は要素へ届かない）
+        if (!e.LeftButton)
+        {
+            state.RestPosition = position;
+            return;
+        }
+
+        // **帯の外は数えない**: ページの操作を移動で奪わない
+        if (position.Y >= WindowLayout.TitleBarHeight
+            || state.IsDragging
+            || !DragThreshold.IsExceeded(state.RestPosition, position))
+        {
+            return;
+        }
+
+        state.IsDragging = true;
+        window.DragMove();
+        state.IsDragging = false;
+        state.RestPosition = position;
+    }
     /// <summary>タイトルバーの最大化ボタンと同じ動作でウィンドウ状態を切り替える（最大化 ⇔ 元のサイズ）。</summary>
     /// <param name="window">対象のウィンドウ。</param>
     private static void ToggleMaximize(Window window)
@@ -872,5 +904,19 @@ internal sealed partial class MainWindow
 
         // ナビパネルの開閉は変更時に保存済みのため、ここでは配置と状態のみを保存する
         settingsService.Save();
+    }
+
+    /// <summary>タイトル バー相当の帯のドラッグの状態。</summary>
+    /// <remarks>
+    /// <b>ウィンドウごとに持つ</b>: 生成は静的工場（<c>Create</c>）で行うため、画面の状態を静的な
+    /// フィールドへ置くと、ウィンドウを作り直したときに前の状態が残る。
+    /// </remarks>
+    private sealed class TitleBarDragState
+    {
+        /// <summary>押していない間に見た位置（根の座標の DIP）。 押した位置の代わりに使う。</summary>
+        public EsPoint RestPosition { get; set; }
+
+        /// <summary>OS の移動の仕組みが動いている間かどうか。</summary>
+        public bool IsDragging { get; set; }
     }
 }

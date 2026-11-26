@@ -1,3 +1,6 @@
+using EsUtil.Platform.Core.Geometry;
+using EsUtil.Platform.Core.Input;
+using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
 using EsUtil.Platform.Core;
@@ -18,7 +21,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Windows.Foundation;
 using Windows.Graphics;
 
 namespace EsUtil.SaveEvidence.App.WinUI3.Views;
@@ -71,10 +73,22 @@ internal sealed class MainWindow : Window
     private Grid _root = null!;
 
     /// <summary>タイトル バー相当の帯をドラッグしているかどうか。</summary>
+    /// <summary>押したままのタイトル バー相当の帯かどうか（まだ移動が始まっていない押下を含む）。</summary>
+    private bool _isTitlePressed;
+
+    /// <summary>タイトル バー相当の帯のドラッグ中かどうか（<see cref="DragThreshold"/> を超えて動いた後）。</summary>
     private bool _isDragging;
 
     /// <summary>ドラッグ開始時のポインター位置（ウィンドウ座標・DIP）。</summary>
-    private Point _dragStartPointer;
+    /// <summary>押した位置（画面の DIP）。 移動量の計算に使う。</summary>
+    private EsPoint _dragStartCursor;
+
+    /// <summary>カーソルの位置（画面の物理ピクセル）を取得する手段。</summary>
+    /// <remarks>
+    /// <b>ポインターの引数からは取らない</b>: ウィンドウを動かすと、ウィンドウを基準にした位置は動いた分だけ
+    /// 戻る（移動量が打ち消される）。 画面の位置なら基準が動かない。
+    /// </remarks>
+    private readonly ICursorService _cursor = new WinCursorService();
 
     /// <summary>ドラッグ開始時のウィンドウ位置（画面物理ピクセル）。</summary>
     private PointInt32 _dragStartWindowPosition;
@@ -311,9 +325,16 @@ internal sealed class MainWindow : Window
         // タイトル バー相当の帯（見出し）の押下でウィンドウを移動する。
         // 標準のドラッグ領域（SetTitleBar）だけに頼らず、ポインターの移動量からウィンドウ位置を自前で更新する
         // （ペインの見出しは NavigationView の内部にあり、ドラッグ領域として認識されないことがある）
-        root.PointerPressed += OnTitleBarPointerPressed;
-        root.PointerMoved += OnTitleBarPointerMoved;
-        root.PointerReleased += OnTitleBarPointerReleased;
+        // **どこを押しても動かせる**: 中身（ボタン）は押下を処理済みにするため、処理済みも受ける
+        root.AddHandler(
+            UIElement.PointerPressedEvent, new PointerEventHandler(OnTitleBarPointerPressed),
+            handledEventsToo: true);
+        root.AddHandler(
+            UIElement.PointerMovedEvent, new PointerEventHandler(OnTitleBarPointerMoved),
+            handledEventsToo: true);
+        root.AddHandler(
+            UIElement.PointerReleasedEvent, new PointerEventHandler(OnTitleBarPointerReleased),
+            handledEventsToo: true);
         root.PointerCaptureLost += OnTitleBarPointerCaptureLost;
         root.DoubleTapped += OnTitleBarDoubleTapped;
 
@@ -446,8 +467,9 @@ internal sealed class MainWindow : Window
     /// </remarks>
     private void OnTitleBarPointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        if (e.Handled || sender is not UIElement element ||
-            !e.GetCurrentPoint(this.Content).Properties.IsLeftButtonPressed)
+        _ = sender;
+        if (!e.GetCurrentPoint(this.Content).Properties.IsLeftButtonPressed
+            || !_cursor.TryGetCursorScreenPoint(out var screen))
         {
             return;
         }
@@ -458,10 +480,11 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        _dragStartPointer = position;
+        // **項目の押下は妨げない**: ここでは処理済みにせず、捕捉もしない（動き始めるまで項目が使える）
+        _dragStartCursor = ToDip(screen);
         _dragStartWindowPosition = AppWindow.Position;
-        _isDragging = element.CapturePointer(e.Pointer);
-        e.Handled = _isDragging;
+        _isTitlePressed = true;
+        _isDragging = false;
     }
 
     /// <summary>ドラッグ中のポインター移動に合わせてウィンドウを移動する。</summary>
@@ -469,17 +492,42 @@ internal sealed class MainWindow : Window
     /// <param name="e">ポインターの情報。</param>
     private void OnTitleBarPointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (!_isDragging)
+        if (!_isTitlePressed || !_cursor.TryGetCursorScreenPoint(out var screen))
         {
             return;
         }
 
-        var position = e.GetCurrentPoint(this.Content).Position;
+        var cursor = ToDip(screen);
+        if (!_isDragging)
+        {
+            if (!DragThreshold.IsExceeded(_dragStartCursor, cursor))
+            {
+                return;
+            }
+
+            // **ドラッグが始まったら押下を項目から取り上げる**: 取り上げると項目は「押された」状態を
+            // 失うため、離してもクリックにならない（ドラッグをボタンの操作と見なさない）
+            _isDragging = true;
+            if (sender is UIElement element)
+            {
+                element.CapturePointer(e.Pointer);
+            }
+        }
+
         var scaling = RasterizationScale;
-        var dx = (int)Math.Round((position.X - _dragStartPointer.X) * scaling);
-        var dy = (int)Math.Round((position.Y - _dragStartPointer.Y) * scaling);
+        var dx = (int)Math.Round((cursor.X - _dragStartCursor.X) * scaling);
+        var dy = (int)Math.Round((cursor.Y - _dragStartCursor.Y) * scaling);
         AppWindow.Move(new PointInt32(_dragStartWindowPosition.X + dx, _dragStartWindowPosition.Y + dy));
         e.Handled = true;
+    }
+
+    /// <summary>画面の位置（物理ピクセル）を DIP へ写す。</summary>
+    /// <param name="screen">画面の位置（物理ピクセル）。</param>
+    /// <returns>画面の位置（DIP）。</returns>
+    private EsPoint ToDip(EsPointInt screen)
+    {
+        var scale = RasterizationScale > 0 ? RasterizationScale : 1;
+        return new EsPoint(screen.X / scale, screen.Y / scale);
     }
 
     /// <summary>ドラッグを終了する。</summary>
@@ -487,24 +535,35 @@ internal sealed class MainWindow : Window
     /// <param name="e">ポインターの情報。</param>
     private void OnTitleBarPointerReleased(object sender, PointerRoutedEventArgs e)
     {
-        if (!_isDragging)
+        if (!_isTitlePressed)
         {
             return;
         }
 
+        var wasDragging = _isDragging;
+        _isTitlePressed = false;
         _isDragging = false;
         if (sender is UIElement element)
         {
             element.ReleasePointerCapture(e.Pointer);
         }
 
-        e.Handled = true;
+        if (wasDragging)
+        {
+            e.Handled = true;
+        }
     }
 
     /// <summary>捕捉が失われたときにドラッグを終了する。</summary>
     /// <param name="sender">イベントの送信元。</param>
     /// <param name="e">ポインターの情報。</param>
-    private void OnTitleBarPointerCaptureLost(object sender, PointerRoutedEventArgs e) => _isDragging = false;
+    private void OnTitleBarPointerCaptureLost(object sender, PointerRoutedEventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        _isTitlePressed = false;
+        _isDragging = false;
+    }
 
     /// <summary>最大化と元のサイズに戻すを切り替える。</summary>
     private void ToggleMaximize()

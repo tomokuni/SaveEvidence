@@ -94,7 +94,7 @@
 
     <!-- Background を Transparent にするのは、余白（ページの背景）の押下を本 Grid で受け取るため
          （null のままだとヒットテストの対象外になり、タイトル バー相当の帯でドラッグできない） -->
-    <Grid ColumnDefinitions="Auto,*" Background="Transparent" PointerPressed="OnWindowPointerPressed">
+    <Grid ColumnDefinitions="Auto,*" Background="Transparent">
         <!-- ページ領域の左の余白（ナビゲーション パネルの収納時の幅）。
              ナビを開いてもページ領域は動かさない（開いたナビはページ領域の上へ重ねる） -->
         <Border Grid.Column="0" Width="{x:Static services:NavPanelMetrics.CompactWidth}"/>

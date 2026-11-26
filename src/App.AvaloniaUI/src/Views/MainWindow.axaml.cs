@@ -6,10 +6,12 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using EsUtil.Platform.Core.Capture;
 using EsUtil.Platform.Core.Coord;
 using EsUtil.Platform.Core.Geometry;
 using EsUtil.Platform.Core.Imaging;
+using EsUtil.Platform.Core.Input;
 using EsUtil.Platform.Core.Native;
 using EsUtil.Platform.Core.Native.Win;
 using EsUtil.Platform.Core.Window;
@@ -49,6 +51,18 @@ public sealed partial class MainWindow : Window
 
     /// <summary>Parts.CapturePreview.ControlAvaloniaUI へ注入するロガー（Serilog 経由でファイル出力）。</summary>
     private readonly ILogger _captureSessionControlLogger = null!;
+
+    /// <summary>押したままのタイトル バー相当の帯かどうか（まだ移動が始まっていない押下を含む）。</summary>
+    private bool _isTitlePressed;
+
+    /// <summary>タイトル バー相当の帯のドラッグ中かどうか（<see cref="DragThreshold"/> を超えて動いた後）。</summary>
+    private bool _isTitleDragging;
+
+    /// <summary>押した位置（画面の物理ピクセル）。 移動量の計算に使う。</summary>
+    private PixelPoint _titlePressCursor;
+
+    /// <summary>ドラッグ中のウィンドウの左上（画面の物理ピクセル）。</summary>
+    private PixelPoint _titleDragPosition;
 
     private EsRectInt? _restoredWindowBounds;
 
@@ -162,6 +176,12 @@ public sealed partial class MainWindow : Window
         // トンネル段階で購読するのは、ページのコントロールが押下を処理した（Handled）場合でも閉じるため
         AddHandler(PointerPressedEvent, OnNavigationOutsidePointerPressed, RoutingStrategies.Tunnel);
 
+        // タイトル バー相当の帯は**どこを押しても**ウィンドウを動かせる。 中身（ボタン）は押下を
+        // 処理済みにするため、トンネル段階で処理済みも受け、動かしたときだけ移動する
+        AddHandler(PointerPressedEvent, OnTitleBarPointerPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerMovedEvent, OnTitleBarPointerMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerReleasedEvent, OnTitleBarPointerReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
+
         // アンロード時の処理
         Closing += OnMainWindowClosing;
         Activated += OnMainWindowActivated;
@@ -216,38 +236,148 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    /// <summary>タイトル バー相当の帯の押下でウィンドウの移動を開始する。</summary>
+    /// <summary>タイトル バー相当の帯を押した（まだ移動は始めない）。</summary>
     /// <param name="sender">イベントの送信元。</param>
     /// <param name="e">ポインターの情報。</param>
     /// <remarks>
-    /// 押下位置がタイトル バーの高さ以内のときだけ移動を開始する（ページの操作を妨げない）。<br/>
-    /// ボタンなどが押下を処理した場合は <see cref="RoutedEventArgs.Handled"/> が立つため、本ハンドラは呼ばれない<br/>
-    /// （ツールバーのボタン操作と両立する）。 ダブルクリックで最大化と元のサイズを切り替える。
+    /// <b>帯のどこを押しても移動できる</b>: ボタンやツールバーの上からでも移動できる。 ただし
+    /// <b>動かしたときはクリックと見なさない</b>（<see cref="DragThreshold"/> を超えて動いた時点で押下を
+    /// 取り上げる）。 動かさなければ従来どおりボタンの操作になる。<br/>
+    /// <b>押下では動かさない</b>: 押しただけで動かすとボタンの操作ができなくなる。 ダブルクリックは
+    /// 最大化の切り替え（ボタンの上では項目の操作を優先する）。
     /// </remarks>
-    private void OnWindowPointerPressed(object? sender, PointerPressedEventArgs e)
+    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (e.Handled || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        _ = sender;
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             return;
         }
 
-        // ウィンドウ座標（クライアント領域の左上基準）で判定する。
-        // ナビの列は除く（アプリ アイコン・開閉ボタンの操作をドラッグで奪わない）
+        // 帯の外はページの操作に任せる
         var position = e.GetPosition(this);
-        if (position.Y > TitleBarDragHeight || position.X < _viewModel.NavPanelWidth)
+        if (position.Y > TitleBarDragHeight)
         {
             return;
         }
 
-        if (e.ClickCount == 2)
+        if (e.ClickCount == 2 && !IsFocusableSource(e.Source))
         {
             WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
             e.Handled = true;
             return;
         }
 
-        BeginMoveDrag(e);
+        // **項目の押下は妨げない**: ここでは処理済みにせず、捕捉もしない（動き始めるまで項目が使える）
+        _titlePressCursor = ToScreenPoint(position);
+        _titleDragPosition = Position;
+        _isTitlePressed = true;
+        _isTitleDragging = false;
+    }
+
+    /// <summary>タイトル バー相当の帯をドラッグしてウィンドウを動かす（動きが閾値を超えてから）。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">ポインターの情報。</param>
+    private void OnTitleBarPointerMoved(object? sender, PointerEventArgs e)
+    {
+        _ = sender;
+        if (!_isTitlePressed)
+        {
+            return;
+        }
+
+        // ボタンを離した後の通知が来たら押下を終える（ウィンドウの外で離した場合に押したままにならない）
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            EndTitlePress();
+            return;
+        }
+
+        var cursor = ToScreenPoint(e.GetPosition(this));
+        var scale = RenderScaling > 0 ? RenderScaling : 1;
+        if (!_isTitleDragging)
+        {
+            if (!DragThreshold.IsExceeded(
+                new EsPoint(_titlePressCursor.X / scale, _titlePressCursor.Y / scale),
+                new EsPoint(cursor.X / scale, cursor.Y / scale)))
+            {
+                return;
+            }
+
+            // **ドラッグが始まったら押下を項目から取り上げる**: 取り上げると項目は「押された」状態を
+            // 失うため、離してもクリックにならない（ドラッグをボタンの操作と見なさない）
+            _isTitleDragging = true;
+            e.Pointer.Capture(this);
+        }
+
+        _titleDragPosition = new PixelPoint(
+            _titleDragPosition.X + (cursor.X - _titlePressCursor.X),
+            _titleDragPosition.Y + (cursor.Y - _titlePressCursor.Y));
+        _titlePressCursor = cursor;
+        Position = _titleDragPosition;
         e.Handled = true;
+    }
+
+    /// <summary>タイトル バー相当の帯を離した。</summary>
+    /// <param name="sender">イベントの送信元。</param>
+    /// <param name="e">ポインターの情報。</param>
+    /// <remarks><b>ドラッグはクリックと見なさない</b>: ドラッグ中だった場合は処理済みにして、項目の解放処理（クリック）へ届かせない。</remarks>
+    private void OnTitleBarPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _ = sender;
+        if (!_isTitlePressed)
+        {
+            return;
+        }
+
+        var wasDragging = _isTitleDragging;
+        EndTitlePress();
+        if (ReferenceEquals(e.Pointer.Captured, this))
+        {
+            e.Pointer.Capture(null);
+        }
+
+        if (wasDragging)
+        {
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>押下の状態を終える（移動も終える）。</summary>
+    private void EndTitlePress()
+    {
+        _isTitlePressed = false;
+        _isTitleDragging = false;
+    }
+
+    /// <summary>ウィンドウ内の位置を画面の位置（物理ピクセル）へ写す。</summary>
+    /// <param name="position">ウィンドウ内の位置（DIP）。</param>
+    /// <returns>画面の位置（物理ピクセル）。</returns>
+    /// <remarks>ウィンドウの位置は動かすたびに変わるため、位置とウィンドウ内の座標から毎回求め直す。</remarks>
+    private PixelPoint ToScreenPoint(Point position)
+    {
+        var scale = RenderScaling > 0 ? RenderScaling : 1;
+        return new PixelPoint(
+            Position.X + (int)Math.Round(position.X * scale),
+            Position.Y + (int)Math.Round(position.Y * scale));
+    }
+
+    /// <summary>押下の発生元が操作可能な要素（ボタン・入力欄など）かどうかを返す。</summary>
+    /// <param name="source">押下の発生元。</param>
+    /// <returns>フォーカスを持つ要素の上なら <see langword="true"/>。</returns>
+    /// <remarks><b>ボタンの上のダブルクリックを最大化にしない</b>ためだけに使う（移動は全域で許す）。</remarks>
+    private bool IsFocusableSource(object? source)
+    {
+        for (var current = source as Visual; current is not null && !ReferenceEquals(current, this);
+            current = current.GetVisualParent())
+        {
+            if (current is InputElement { Focusable: true })
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>タイトル バー相当の領域の高さ（DIP）。 この帯の押下でウィンドウを移動する。</summary>
