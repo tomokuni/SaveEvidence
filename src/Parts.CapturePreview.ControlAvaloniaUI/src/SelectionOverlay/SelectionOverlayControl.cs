@@ -515,7 +515,7 @@ public sealed class SelectionOverlayControl : Panel
         // 表示用の射影も解除する（拡大元と対で保持するため、片方だけ残さない）
         _loupeControl.DisplaySource = null;
         _loupeControl.CenterPoint = null;
-        _loupeControl.Clear();
+        _loupeControl.IsVisible = false;
     }
 
     /// <summary>ルーペ中心（対象座標）。 未設定時は null。</summary>
