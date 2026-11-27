@@ -118,7 +118,7 @@ public sealed class SelectionOverlayControl : Panel
         // （選択矩形の描画自体と外側の装飾は選択矩形コントロールがセッションから直接読んで描画する）。
         _marquee.SelectionChanged += OnSelectionChanged;
         _marquee.LoupePositionMoved += OnLoupePositionMoved;
-        _marquee.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect);
+        _marquee.ConfirmRequested += (_, e) => RaiseConfirmRequested(e.Rect.ToAvaloniaRect());
         _marquee.CancelRequested += (_, _) => RaiseCancelRequested();
 
         // サイズラベルとカーソル座標ラベルは選択矩形コントロールがテキスト要素として配置する。

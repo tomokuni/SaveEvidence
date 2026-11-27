@@ -244,7 +244,7 @@ public sealed partial class UndoPage : ViewModePageBase
         void AddItem(EsReadOnlyBitmap source, string label, bool isCurrent)
         {
             // 強調は選択（提示層は「現在項目」を持たない）で表す
-            var index = UndoListBox.Add(placeholder, label, tag: source);
+            var index = UndoListBox.Add(placeholder.ToEsReadOnlyBitmap(), label, tag: source);
             if (isCurrent)
             {
                 UndoListBox.SelectedIndex = index;
@@ -346,7 +346,7 @@ public sealed partial class UndoPage : ViewModePageBase
                 }
 
                 _adapters.Add(adapter);
-                UndoListBox.SetImage(index, adapter);
+                UndoListBox.SetImage(index, adapter.GetEsBitmap());
             });
 
             return ValueTask.CompletedTask;

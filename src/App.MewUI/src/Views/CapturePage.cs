@@ -669,7 +669,7 @@ internal static class CapturePage
                 // 色の欄で Ctrl+V しても画像の貼り付けになった）。 注釈を編集している間・
                 // 右クリックのフライアウトを出している間は、文字の編集を優先する。
                 var isTextInput = focused is TextBox or ComboBox
-                    || annotation.IsEditingText
+                    || annotation.IsEditing
                     || annotation.IsStylePanelOpen;
                 if (e.ControlKey && !isTextInput)
                 {
@@ -1123,8 +1123,8 @@ internal static class CapturePage
                 items.Add(button);
             }
 
-            AddItem("枠線を追加", () => annotationEditor.Layer.AddFrameAt(position));
-            AddItem("吹き出しを追加", () => annotationEditor.Layer.AddBubbleAt(position));
+            AddItem("枠線を追加", () => annotationEditor.Layer.AddFrameAt(new EsPoint(position.X, position.Y)));
+            AddItem("吹き出しを追加", () => annotationEditor.Layer.AddBubbleAt(new EsPoint(position.X, position.Y)));
             menu = new Border
             {
                 Child = items,

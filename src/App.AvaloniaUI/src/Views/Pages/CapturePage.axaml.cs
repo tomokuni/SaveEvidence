@@ -426,7 +426,7 @@ public sealed partial class CapturePage : UserControl
 
         // 注釈の本文を編集中は、本文の編集を優先する（コピー・切り取り・貼り付け・元に戻す・やり直す）。
         // 本文の編集中は、編集のショートカットをここで本文へ渡す（アプリの操作と取り違えない）。
-        if (AnnotationEditor.IsEditingText && e.Key is Key.C or Key.X or Key.V)
+        if (AnnotationEditor.IsEditing && e.Key is Key.C or Key.X or Key.V)
         {
             e.Handled = true;
             switch (e.Key)
@@ -473,7 +473,7 @@ public sealed partial class CapturePage : UserControl
                 RestoreRedo();
                 break;
             case Key.R: // Crop - 切り出し（本文の編集中は使わない）
-                if (AnnotationEditor.IsEditingText)
+                if (AnnotationEditor.IsEditing)
                 {
                     return;
                 }
@@ -677,7 +677,7 @@ public sealed partial class CapturePage : UserControl
     }
 
     /// <summary>注釈の本文の編集を終える（注釈は保持し、保存に使う）。</summary>
-    private void EndAnnotationTextEditing() => AnnotationEditor.Layer.EndTextEditing();
+    private void EndAnnotationTextEditing() => AnnotationEditor.Layer.EndEdit();
 
     /// <summary>プレビューの右クリック位置を左上として注釈を追加するメニューを出す。</summary>
     /// <param name="viewportPosition">右クリックした位置（ズーム ビューの座標）。</param>
@@ -693,9 +693,9 @@ public sealed partial class CapturePage : UserControl
 
         var menu = new ContextMenu();
         var frame = new MenuItem { Header = "枠線を追加" };
-        frame.Click += (_, _) => AnnotationEditor.Layer.AddFrameAt(viewportPosition);
+        frame.Click += (_, _) => AnnotationEditor.Layer.AddFrameAt(new EsPoint(viewportPosition.X, viewportPosition.Y));
         var bubble = new MenuItem { Header = "吹き出しを追加" };
-        bubble.Click += (_, _) => AnnotationEditor.Layer.AddBubbleAt(viewportPosition);
+        bubble.Click += (_, _) => AnnotationEditor.Layer.AddBubbleAt(new EsPoint(viewportPosition.X, viewportPosition.Y));
         menu.Items.Add(frame);
         menu.Items.Add(bubble);
         menu.Open(CropView);

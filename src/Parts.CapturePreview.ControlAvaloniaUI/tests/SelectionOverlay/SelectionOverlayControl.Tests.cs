@@ -416,7 +416,7 @@ public class SelectionOverlayControlTests
             "ConfirmRequested", BindingFlags.Instance | BindingFlags.NonPublic);
         var eventDelegate = (MulticastDelegate?)field?.GetValue(control.Marquee);
         eventDelegate?.DynamicInvoke(control.Marquee,
-            new SelectionRectEventArgs(new Rect(10, 10, 50, 40), control.Marquee.CurrentSnapshot));
+            new SelectionRectEventArgs(new EsRect(10, 10, 50, 40), control.Marquee.CurrentSnapshot));
 
         // 例外なく完了する
         Assert.True(true);

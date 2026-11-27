@@ -230,7 +230,7 @@ internal static class CapturePage
         // プレビュー（トンネル）のキー入力で振り分ける。
         page.PreviewKeyDown += (_, args) =>
         {
-            if (!IsControlDown() || annotation is not { IsEditingText: true })
+            if (!IsControlDown() || annotation is not { IsEditing: true })
             {
                 return;
             }
@@ -931,8 +931,8 @@ internal static class CapturePage
             items.Children.Add(button);
         }
 
-        AddItem("枠線を追加", () => annotation.Layer.AddFrameAt(position));
-        AddItem("吹き出しを追加", () => annotation.Layer.AddBubbleAt(position));
+        AddItem("枠線を追加", () => annotation.Layer.AddFrameAt(new EsPoint(position.X, position.Y)));
+        AddItem("吹き出しを追加", () => annotation.Layer.AddBubbleAt(new EsPoint(position.X, position.Y)));
 
         menu = new Border
         {

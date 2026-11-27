@@ -434,12 +434,12 @@ public sealed partial class FolderViewPage : ViewModePageBase
             // 生成済みはその場で表示し、未生成は代替画像を表示して背景へ回す
             if (GetCachedThumbnail(file, iconSize) is { } cached)
             {
-                FileListBox.Add(cached, Path.GetFileName(file), toolTip: file, tag: file);
+                FileListBox.Add(cached.ToEsReadOnlyBitmap(), Path.GetFileName(file), toolTip: file, tag: file);
                 _thumbnailRequests.Add(null);
             }
             else
             {
-                FileListBox.Add(placeholder, Path.GetFileName(file), toolTip: file, tag: file);
+                FileListBox.Add(placeholder.ToEsReadOnlyBitmap(), Path.GetFileName(file), toolTip: file, tag: file);
 
                 // 位置は一覧の並び（上方が小さい）。 見えている帯は可視領域が確定した後に付け直す
                 _thumbnailRequests.Add(_thumbnailScheduler.Enqueue(
@@ -526,7 +526,7 @@ public sealed partial class FolderViewPage : ViewModePageBase
             {
                 if (token.IsCancellationRequested) return;
 
-                FileListBox.SetImage(index, thumbnail ?? fallback);
+                FileListBox.SetImage(index, (thumbnail ?? fallback).ToEsReadOnlyBitmap());
             });
 
             return ValueTask.CompletedTask;

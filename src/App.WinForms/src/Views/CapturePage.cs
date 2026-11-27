@@ -409,9 +409,9 @@ internal static class CapturePage
 
             var addMenu = new ContextMenuStrip();
             var frame = new ToolStripMenuItem("枠線を追加");
-            frame.Click += (_, _) => annotation.Layer.AddFrameAt(location);
+            frame.Click += (_, _) => annotation.Layer.AddFrameAt(new EsPoint(location.X, location.Y));
             var bubble = new ToolStripMenuItem("吹き出しを追加");
-            bubble.Click += (_, _) => annotation.Layer.AddBubbleAt(location);
+            bubble.Click += (_, _) => annotation.Layer.AddBubbleAt(new EsPoint(location.X, location.Y));
             addMenu.Items.Add(frame);
             addMenu.Items.Add(bubble);
             addMenu.Show(annotation, location);
@@ -425,7 +425,7 @@ internal static class CapturePage
         annotation.MouseWheel += (_, e) => crop.ZoomView.ZoomByWheel(e.Delta > 0, new EsPoint(e.X, e.Y));
         annotation.MouseDown += (_, e) =>
         {
-            if (e.Button == MouseButtons.Left && !annotation.Layer.HitTestAt(e.Location))
+            if (e.Button == MouseButtons.Left && !annotation.Layer.HitTestAt(new EsPoint(e.Location.X, e.Location.Y)))
             {
                 crop.ZoomView.BeginDragPan(new EsPoint(e.X, e.Y));
             }

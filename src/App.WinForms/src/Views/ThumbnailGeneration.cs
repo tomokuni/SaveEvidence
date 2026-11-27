@@ -1,6 +1,5 @@
 using EsUtil.Platform.Core.Imaging;
 using EsUtil.Platform.Core;
-using EsUtil.SaveEvidence.App.WinForms.Services;
 using EsUtil.Ui.WinForms.Thumbnail;
 
 namespace EsUtil.SaveEvidence.App.WinForms.Views;
@@ -28,17 +27,10 @@ internal static class ThumbnailGeneration
         ArgumentNullException.ThrowIfNull(list);
         ArgumentNullException.ThrowIfNull(load);
 
-        Bitmap? bitmap;
+        EsReadOnlyBitmap? image;
         try
         {
-            bitmap = await Task.Run(
-                () =>
-                {
-                    token.ThrowIfCancellationRequested();
-                    var source = load();
-                    return source is null ? null : GdiBitmapInterop.ToDrawingBitmap(source);
-                },
-                token).ConfigureAwait(false);
+            image = await Task.Run(load, token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -46,14 +38,8 @@ internal static class ThumbnailGeneration
             return;
         }
 
-        if (bitmap is null)
+        if (image is null || list.IsDisposed)
         {
-            return;
-        }
-
-        if (list.IsDisposed)
-        {
-            bitmap.Dispose();
             return;
         }
 
@@ -64,11 +50,10 @@ internal static class ThumbnailGeneration
         {
             if (list.IsDisposed || token.IsCancellationRequested)
             {
-                bitmap.Dispose();
                 return;
             }
 
-            list.SetImage(index, bitmap);
+            list.SetImage(index, image);
         }
 
         try
@@ -84,7 +69,7 @@ internal static class ThumbnailGeneration
         catch (Exception ex) when (EsErrors.IsRecoverable(ex))
         {
             // 一覧が既に破棄されている（組み直しと競合した）場合は表示しない
-            bitmap.Dispose();
+            _ = ex;
         }
     }
 }
